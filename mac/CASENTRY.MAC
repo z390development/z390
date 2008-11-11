@@ -5,6 +5,7 @@
 .*             REMARKS.  ADD SPM MACROS FOR CASENTRY, CASE, ENDCASE        
 .********************************************************************
 .* 09/23/08 RPI 909 upgrade to use ZSTRMAC SPE's and extend compat.
+.* 11/10/08 RPI 946 fill address table to avoid INIT x'F6' in 390  
 .********************************************************************
          CASENTRY &REG                                                                        
          COPY  ZSTRGBL
@@ -25,6 +26,7 @@
          AEND
 #@CAS_&ZSTR_LVL_TCNT(&ZSTR_LVL)_L LOCTR         
 #@CAS_&ZSTR_LVL_TCNT(&ZSTR_LVL)_T DS 0A START CASENTRY BRANCH TABLE   
+&ZSTR_CASE_LAST_INDEX SETA -1 RPI 946 START FILLING TABLE AT INDEX 0
 &SYSECT  CSECT     
          B     #@CAS_&ZSTR_LVL_TCNT(&ZSTR_LVL)_G BRANCH TO CASE CODE
          MEND

@@ -172,7 +172,8 @@ public  class  sz390 implements Runnable {
     * 06/21/08 RPI 845 remove ESTAPSW and ESTAEGPR refs.  
     * 06/23/08 RPI 866 use get_file_name to parse LOG file name 
     * 09/16/08 RPI 908 catch trap on bad SYSLOG file override
-    * 10/24/08 RPI 935 prevent recursive abort                                  
+    * 10/24/08 RPI 935 prevent recursive abort  
+    * 11/08/08 RPI 947 move get_ascii_printable_string to tz390 for use by MNOTE/TRACEP                                
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -2562,16 +2563,8 @@ public void dump_mem(ByteBuffer memory,int mem_addr,int mem_len){
 		} else {
 			dump_len = mem_len;
 		}
-		String dump_text = "";
-		int index = 0;
-		while (index < dump_len){
-			if (tz390.opt_ascii){
-				dump_text = dump_text + tz390.ascii_table.charAt(memory.array()[mem_addr+index] & 0xff);
-			} else {
-				dump_text = dump_text + tz390.ebcdic_table.charAt(memory.array()[mem_addr+index] & 0xff);
-			}
-			index++;
-		}
+		String dump_text = tz390.get_ascii_printable_string(memory.array(),mem_addr,dump_len); // RPI 947
+		
 		dump_text = tz390.left_justify(dump_text,16); // RPI 411
 	    dump_hex = pz390.bytes_to_hex(memory,mem_addr,dump_len,4); 
 		if (!last_saved){

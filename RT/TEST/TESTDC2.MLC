@@ -6,10 +6,11 @@
 * Date   - 11/18/06                                                 *
 *********************************************************************
 * 11/18/06 RPI 417 TEST BIT LENGTH FIELDS                                
+* 11/10/08 RPI 946 TEST FOR INIT VALUE X'F6' IN DS FIELDS                
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
-DCZ      DC    XL256'00'
+DCZ      DC    0XL256,256X'F6' RPI 946
 DATA     LOCTR
 CODE     LOCTR
          RT1   START

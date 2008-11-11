@@ -11,7 +11,7 @@
 .* 04/11/07 DSH - RPI 589 USE ZSTRGBL COPY AND EXPAND LEVELS TO 100         
 .* 09/23/08 DSH - RPI 909 USE ZSTRMAC SPE'S                                 
 .********************************************************************
-         ELSE  &OPT                                                        
+         ELSE  &OPT
          COPY  ZSTRGBL
          AIF   (&ZSTR_LVL EQ 0)
                MNOTE 8,'ELSE - MISSING IF'                                       

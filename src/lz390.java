@@ -6,6 +6,7 @@ import java.io.RandomAccessFile;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 import javax.swing.JTextArea;
@@ -89,7 +90,8 @@ public  class  lz390 {
     *          with no header/trailer/rlds and no rounding 
     * 08/12/08 RPI 894 support RLD 2 byte fields in 390's upt to 64k 
     * 09/16/08 RPI 908 trap error on SYSLST file output override
-    * 10/24/08 RPI 935 prevent recursive abort        
+    * 10/24/08 RPI 935 prevent recursive abort  
+    * 11/09/08 RPI 946 init 390 load module to x'F6' if option INIT (NOINIT sets x'00')      
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -1132,6 +1134,9 @@ private void load_obj_code(){
 	 */
 	if (loc_ctr > 0){
 		z390_code = new byte[loc_ctr];
+		if (tz390.opt_init){
+			Arrays.fill(z390_code,0,loc_ctr,(byte)0xF6);  // RPI 946
+		}
 		z390_code_buff = ByteBuffer.wrap(z390_code,0,loc_ctr);
 	} else {
 		abort_error(19,"no csect object code text defined for load module " + obj_file_name);  // RPI 656 RPI 827

@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
+.* 11/11/08 DSH1 RPI 950 ADD LCLC &ACTINIT TO AVOID UNDEF PC VAR ERR
+.**********************************************************************
          MACRO
 &FLDNAME DFHMDF                                                        X
                &POS=,                                                  X
@@ -45,6 +47,7 @@
          LCLB  &ZERO,&RIGHT,&INIT,&DSCT
          LCLB  &PROT,&HUM,&DRK,&FSET
          LCLB  &ICPOS
+         LCLC  &ACTINIT  DSH1 11/11/08
 .*
 .* ENSURE NO BAD PARMS
          AIF   (N'&SYSLIST NE 0).BADPOSI
@@ -1018,4 +1021,3 @@
          AGO   .GOON02
 .*
          MEND
-

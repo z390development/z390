@@ -13,6 +13,8 @@
 * 07/05/07 DSH RPI 646 ADD TEST FOR INDEX AND FIND OLD/NEW FORMATS
 * 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 * 07/30/08 RPI 886 CORRECT FUNCTION NAME DCEQUO TO DEQUOTE   
+* 11/07/08 RPI 938 CORRECT MISSING ENDING QUOTE ON MNOTE     
+* 11/09/08 RPI 943 USE SIGNED FUNCTION TO DISPLAY NEGATIVE VALUES
 *********************************************************************
 TESTOPR1 SUBENTRY
          WTO   'TESTOPR1 TEST OPERATORS UPPER, LOWER, ETC.'
@@ -31,16 +33,19 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          AIF   ('&UC' NE 'ABC').UCERR
 &LC      SETC  (LOWER &UC)
          AIF   ('&LC' NE 'abc').LCERR
-         MNOTE 'TESTING ?2? PREFIX OPERATORS
+         MNOTE 'TESTING ?2? PREFIX OPERATORS'
 &A2B     SETC  (A2B(4))
          MNOTE 'A2B(4)=&A2B'
          AIF   ('&A2B' NE '00000100').A2ERR
 &A2C     SETC  (A2C(241))
          MNOTE 'A2C(241)=&A2C'
          AIF   ('&A2C'(4,1) NE '1').A2ERR
-&A2D     SETC  (A2D(-241))
+&A2D     SETC  (A2D(241))    
+         MNOTE 'A2D(241)=&A2D'
+         AIF   ('&A2D' NE '+241').A2ERR
+&A2D     SETC  (A2D(-241))    
          MNOTE 'A2D(-241)=&A2D'
-         AIF   ('&A2D' NE '241').A2ERR
+         AIF   ('&A2D' NE '-241').A2ERR
 &A2X     SETC  (A2X(241))
          MNOTE 'A2X(241)=&A2X'
          AIF   ('&A2X' NE '000000F1').A2ERR
@@ -68,9 +73,9 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &C2X     SETC  (C2X('1'))
          MNOTE 'C2X(''1'')=&C2X'
          AIF   ('&C2X' NE '000000F1').C2ERR
-&D2A     SETA  (D2A('-1'))
-         MNOTE 'D2A(''-1'')=&D2A'
-         AIF   (&D2A NE -1).D2ERR
+&SIGNED  SETC  (SIGNED (D2A('-1')))
+         MNOTE 'D2A(''-1'')=&SIGNED'
+         AIF   ('&SIGNED' NE '-1').D2ERR
 &D2B     SETC  (D2B('241'))
          MNOTE 'D2B(''1'')=&D2B'
          AIF   ('&D2B' NE '11110001').D2ERR
@@ -144,26 +149,30 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &SLA     SETA  (1 SLA 2)
          MNOTE '1 SLA 2 = &SLA'
          AIF   (&SLA NE 4).SLAERR
-&SLA     SETA  (X'7FFFFFFF' SLA 1)
-         MNOTE 'X''7FFFFFFF'' SLA 1 = &SLA'
+&SLA     SETA  (X'7FFFFFFF' SLA 1) 
+&SIGNED  SETC  (SIGNED &SLA)                   RPI 943
+         MNOTE 'X''7FFFFFFF'' SLA 1 = &SIGNED'
          AIF   (&SLA NE X'7FFFFFFE').SLAERR
 &SLL     SETA  (1 SLL 2)
          MNOTE '1 SLL 2 = &SLL'
          AIF   (&SLL NE 4).SLLERR
-&SLL     SETA  (X'7FFFFFFF' SLL 1)
-         MNOTE 'X''7FFFFFFF'' SLL 1 = &SLL'
+&SLL     SETA  (X'7FFFFFFF' SLL 1)     
+&SIGNED  SETC  (SIGNED &SLL)                   RPI 943
+         MNOTE 'X''7FFFFFFF'' SLL 1 = &SIGNED'
          AIF   (&SLL NE X'FFFFFFFE').SLLERR
 &SRA     SETA  (4 SRA 2)
          MNOTE '4 SLA 2 = &SRA'
          AIF   (&SRA NE 1).SRAERR
 &SRA     SETA  (X'FFFFFFFE' SRA 1)
-         MNOTE 'X''FFFFFFFF'' SRA 1 = &SRA'
+&SIGNED  SETC  (SIGNED &SRA)                    RPI 943
+         MNOTE 'X''FFFFFFFF'' SRA 1 = &SIGNED'
          AIF   (&SRA NE X'FFFFFFFF').SRAERR
 &SRL     SETA  (4 SRL 2)
          MNOTE '4 SRL 2 = &SRL'
          AIF   (&SRL NE 1).SRLERR
 &SRL     SETA  (X'FFFFFFFE' SRL 1)
-         MNOTE 'X''7FFFFFFF'' SRL 1 = &SRL'
+&SIGNED  SETC  (SIGNED &SRL)                   RPI 943
+         MNOTE 'X''7FFFFFFF'' SRL 1 = &SIGNED'
          AIF   (&SRL NE X'7FFFFFFF').SRLERR
          MNOTE 'TESTING OPERATOR TYPES A,E,M,O,S,U'
          AIF   (O'PUSH      NE 'A').OTERR  ASSEMBLER  CODE

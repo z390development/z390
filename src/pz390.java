@@ -279,7 +279,8 @@ public class pz390 {
      * 07/23/08 RPI 879 fix SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
      *          to set CC3 when both neg and no borrow  
      * 08/13/08 RPI 894 change low DSA addr from 64k to 32k for testing AL2 RLD 
-     * 09/12/08 RPI 764	change trace info for GL/PL svcs               
+     * 09/12/08 RPI 764	change trace info for GL/PL svcs 
+     * 11/06/08 rpi 947 add ascii printable text display of MVC data moved              
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -16402,7 +16403,8 @@ public class pz390 {
 		case 110:// "SI" 9 CLI ooiibddd
 			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, 1, 0) + " I2="
-					+ tz390.get_hex(if2, 2);
+					+ tz390.get_hex(if2, 2)
+					+ "='" + tz390.ascii_printable_char(if2) + "'"; // RPI 947
 			break;
 		case 120:// "RI" 37 IIHH ooroiiii
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
@@ -16565,7 +16567,8 @@ break;
 			trace_parms = " S1(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, maxlen, 0) + " S2("
 					+ tz390.get_hex(bd2_loc, 8) + ")="
-					+ bytes_to_hex(mem, bd2_loc, maxlen, 0);
+					+ bytes_to_hex(mem, bd2_loc, maxlen, 0) 
+					+ "='" + tz390.get_ascii_printable_string(mem_byte,bd2_loc,maxlen) + "'"; // RPI 947
 			break;
 		case 171: // ASSIST RXSS I/O Instructions RPI 812
 			maxlen = bd2_loc;

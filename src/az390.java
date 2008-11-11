@@ -323,7 +323,12 @@ public  class  az390 implements Runnable {
         * 10/24/08 RPI 935 prevent recursive abort
         * 10/27/08 RPI 926 leave macro labels on inline and open code macro statements
         * 10/27/08 RPI 928 add DFHRESP codes: 1) TERMIDERR=F'11' 2) IOERR=F'17' 
-                     3) TRANSIDERR=F'28' 4) ENDDATA=F'29' 5) ENVDEFERR=F'56'
+        *             3) TRANSIDERR=F'28' 4) ENDDATA=F'29' 5) ENVDEFERR=F'56'
+        * 10/29/08 RPI 939 pad DC Z field on left with X'F0'
+        * 11/03/08 RPI 945 include mz and az errors on ERRSUM rpt
+        * 11/08/08 RPI 941 align start of CNOP to *2
+        * 11/09/08 RPI 949 display relative addr for RIL type LARL etc.
+        * 11/10/08 RPI 946 correct DIAGNOSE missing last byte caught by INIT F6's
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -1598,6 +1603,7 @@ private void gen_obj_text(){
 	 * in CSECT's on final pass
 	 */
 	gen_obj_code = true;
+	tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " " + "AZ390 "; // RPI 755 RPI 938 switch from mz390
 	put_prn_line("Assembler Listing");
 	loc_ctr = 0;
     cur_lit_pool = 1;
@@ -1809,7 +1815,7 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 4;
     	get_hex_op(1,2); 
-    	get_hex_zero(4);
+    	get_hex_zero(6);  // RPI 946
     	put_obj_text();
     	break;
     case 9:  // "RSI" 4 BRXH  oorriiii
@@ -2875,7 +2881,6 @@ private void process_bal_op(){
         	force_list_bal = true;        // RPI 581
     		if (bal_parms != null // RPI 503
    				&& bal_parms.length() > 0
-   				&& bal_parms.charAt(0) != '\''
    				&& bal_parms.charAt(0) != '*'){  // RPI 444
    				tz390.put_systerm("MNOTE " + bal_parms); // RPI 440
     		}
@@ -4869,7 +4874,6 @@ public void put_stats(){
 	 */
 	force_list_bal = true; // RPI 285
 	tz390.force_nocon = true; // RPI 755
-	tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " " + "AZ390 "; // RPI 755
 	if (tz390.opt_stats){  // RPI 453
 	   put_stat_line("BAL lines             = " + (tot_bal_line-1));
 	   put_stat_line("symbols               = " + tot_sym);
@@ -5407,7 +5411,7 @@ private void put_obj_text(){
 	 * 3.  Buffer output of ojbect text code for
 	 *     contiguous data in same ESD.
 	 * 4.  Called from END processing with BAL_EOF
-	 *     to flush butter.
+	 *     to flush buffer.
 	 * 5.  Reset obj_code for use by DC routines
 	 */
 	 if (tz390.z390_abort || mz390_abort){
@@ -5966,9 +5970,11 @@ private void get_hex_long(){
     String hex_llllllll = "llllllll";
 	if (calc_exp()){
 		if  (exp_type == sym_rel){
+			hex_bddd2_loc = tz390.get_hex(exp_val,6); // RPI 949
 			hex_llllllll = get_rel_exp_llllllll();
 		} else {
 		    hex_llllllll = tz390.get_hex(exp_val,8);
+		    hex_bddd2_loc = tz390.get_hex(exp_val,6); // RPI 949
 		}
 	}
 	obj_code = obj_code + hex_llllllll;
@@ -6002,7 +6008,7 @@ private String get_rel_exp_iiii(){
 }
 private String get_rel_exp_llllllll(){
 	/*
-	 * return relative signed hald word offset
+	 * return relative signed word offset
 	 * from psw_loc to symbol in same csect at
 	 * even address
 	 * Notes:
@@ -6013,7 +6019,6 @@ private String get_rel_exp_llllllll(){
 		if ((exp_val & 0x1) == 0){
 			exp_val = (exp_val - loc_start)/2;
 			hex_llllllll = tz390.get_hex(exp_val,8);
-			hex_bddd2_loc = tz390.get_hex(exp_val,6); // RPI 585
 		} else {
 			log_error(112,"relate target address odd - " + tz390.get_hex(exp_val,8));
 		}
@@ -7262,7 +7267,7 @@ private void process_dcz_data(){
 			    }
 			    dcp_len = dc_hex.length()/2;
 			    while (dcp_len < dc_len){
-			    	dc_hex = dc_hex + "F0";
+			    	dc_hex = "F0" + dc_hex; // RPI 939
 			    	dcp_len++;  // RPI 930
 			    }
                 if (dc_bit_len){
@@ -7508,6 +7513,8 @@ private void process_cnop(){
 	 * generate one or more 0700 instr.
 	 * to align to specified boundary
 	 */
+   	loc_ctr = (loc_ctr+1)/2*2; // skip odd byte preceeding CNOP RPI 941
+    loc_start = loc_ctr;
 	exp_text = bal_parms;
 	exp_index = 0;
 	int req_off = 0;
@@ -8785,7 +8792,6 @@ public void report_critical_errors(){
 	tz390.opt_list   = true;
 	put_errsum("ERRSUM Critical Error Summary Option");
     put_errsum("Fix and repeat until all nested errors resolved");
-    put_errsum("Use option ERR(0) to force assembly with errors");
 	int index = 0;
 	while (index < tot_missing_copy){
 		put_errsum("missing copy  =" + missing_copy[index]);
@@ -8808,6 +8814,11 @@ public void report_critical_errors(){
 	put_errsum("total missing   copy   files =" + tot_missing_copy);
 	put_errsum("total missing   macro  files =" + tot_missing_macro);
 	put_errsum("total undefined symbols      =" + tot_missing_sym);
+	if (mz390_call){
+		put_errsum("total mz390 errors    = " + mz390_errors); // RPI 659 RPI 945
+	}
+	put_errsum("total az390 errors    = " + az390_errors); // RPI 659 RPI 945
+	put_errsum("See PRN for detail listing of errors possibly affecting exec path"); // RPI 945
 }
 private void put_errsum(String msg){
 	/*

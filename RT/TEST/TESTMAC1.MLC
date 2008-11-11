@@ -17,6 +17,7 @@
 * 09/21/06 RPI 447 test N'&PARM(&VAR)      
 * 06/10/07 RPI 633 test macro label parameters
 * 08/22/07 RPI 673 test &var in macro inline prototype name field
+* 11/07/08 RPI 938 double quotes in MNOTE text to avoid syntax errors
 *********************************************************************
 TESTMAC1 SUBENTRY
          WTO   'TESTMAC1 TEST SUBSTRINGS, '''' (DOUBLE QUOTES), AND &&'
@@ -73,7 +74,7 @@ TESTMAC1 SUBENTRY
 &BC      SETC   'ABC'(2,*)
          MNOTE 'BC=&BC'
 * TEST SDT WITHIN STRING
-&SDT     SETC   'C''X'''
+&SDT     SETC   (DOUBLE 'C''X''')  RPI 938
          MNOTE  'SDT=&SDT'
 * TEST DUPLICATION OF STRING OPERATOR (...)'...'
 &LBL     SETC  (4)'X'
@@ -133,8 +134,9 @@ Y3       EQU    X3
 * TEST MACRO LABEL PARAMETERS FOR RPI 633
          MACRO
 &N       TESTL
+&DN      SETC  (DOUBLE &N)    RPI 938
 &TN      SETC  T'&N
-         MNOTE 'N=&N TN=&TN'
+         MNOTE 'N=&DN TN=&TN' 
          MEND
 A+B      TESTL
 A        TESTL
@@ -146,7 +148,8 @@ TESTPC1  TESTL
 &NAME SETC  'TESTN'
       MACRO
 &N    &NAME &TEXT
-&N    MNOTE &TEXT
+&DQTEXT SETC '&TEXT'(2,K'&TEXT-2)
+&N    MNOTE '&DQTEXT'
       MEND
 A     TESTN 'TEST NAME SUBSTITUTION'
       END

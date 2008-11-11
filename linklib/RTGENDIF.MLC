@@ -8,6 +8,7 @@
 *********************************************************************
 * 09/05/08 RPI 797 READ FILENAMES FOR DIF DIR, GEN ERASE FOR MATCHES
 * 09/18/08 rpi 911 replace ASELECT>ACASE, APM>ACALL               
+* 10/29/08 RPI 936 support mult Win ver with diff DIR column settings
 *********************************************************************
 *
 *  RTGENDIR READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
@@ -21,6 +22,9 @@
          :&FILE    SETC  ''
          :&TEXT    SETC  ''
          :&DIF_DIR SETC  ''
+         :&MIN_OFF SETA  10 MINIMUM OFFSET FOR DIR/FILE RECORDS 
+         :&DIR_OFF SETA  0  OFFSET TO START OF <DIR>
+         :&DSN_OFF SETA  0  OFFSET TO START OF .. OR FILE NAME 
          MNOTE 'RTGENDIF SYSPARM=&SYSPARM'
          ACALL   INIT_DIF_DIR
          ACALL   READ_TEXT
@@ -64,14 +68,26 @@
 .* PROC_TEXT (CHECK FILES FOR FC MATCH AND GEN ERASE)
 .*
          AENTRY PROC_TEXT  
-         AIF  (K'&TEXT GE 40)                   SKIP LINES < 40
-             AIF  ('&TEXT'(26,3) NE 'DIR')      SKIP DIRS
-                 AIF  ('&TEXT'(3,1)  EQ '/')    SKIP IF NO MM/DD/YYYY
+         AIF  (K'&TEXT GT &MIN_OFF)             SKIP LINES < MIN OFFSET
+           AIF  ('&TEXT'(3,1)  EQ '/')          SKIP IF NO MM/DD/YYYY
+             AIF  (&DIR_OFF GT 0)               HAS DIR_OFF BEEN SET
+               AIF  ('&TEXT'(&DIR_OFF,5) NE '<DIR>')    SKIP DIRS
                      :&FILE    SETC (UPPER '&TEXT'(40,265))
                      :&TOT_FILES SETA &TOT_FILES+1
                      ACALL CHK_FILE
-                 AEND
-             AEND
+               AEND
+             AELSE                              NO SEARCH FOR FIRST DIR
+               :&DIR_OFF SETA ('&TEXT' INDEX '<DIR>')    SET DIR OFFSET
+               AIF  (&DIR_OFF GT 0)
+                    :&FILE_OFF SETA ('&TEXT' INDEX '.')  SET FILE OFFSET
+                    AIF  (&FILE_OFF GT &DIR_OFF)
+                         :&MIN_OFF SETA &FILE_OFF        UPDATE MINIMUM
+                    AELSE
+                         MNOTE 8,'RTGENDIF DIR FORMAT UNKNOWN - &TEXT'
+                         MEXIT
+                    AEND
+               AEND
+           AEND
          AEND
          AEND
 .*

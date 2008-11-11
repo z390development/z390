@@ -22,6 +22,7 @@
 .* 06/23/08 RPI 867 JUST ISSUE WARNING FOR EXLST NOT SUPPORTED
 .* 09/11/08 RPI 764 ADD DCBIO TOTAL IO REQUESTS SINCE OPEN USED BY PL       
 .* 09/16/08 RPI 91764 ADD DCBIO TOTAL IO REQUESTS SINCE OPEN USED BY PL       
+.* 11/10/08 RPI 946 INIT ENTIRE DCB TO ZEROS TO AVOID INIT X'F6' FILLER       
 .*********************************************************************
 &N       DCB   &DSORG=PS,    PHYSICAL SEQUENTIAL                       X
                &BFALN=,      IGNORE                                    X
@@ -45,7 +46,8 @@
                &RECFM=FB,    RECORD FORMAT (F,FB,V,VB,RT,VT) IGNOR A/M X                       
                &RECORD=0,    RECORD AREA                               X
                &SYNAD=0      ERROR EXIT                                
-&N       DS    0D            RPI 915
+&N       DS    0D             RPI 915
+         DC    XL(DCBLEN)'00' RPI 946
 &NPOS    SETA  N'&SYSLIST
 .POSLOOP ANOP
          AIF   (&NPOS EQ 0).POSEND

@@ -206,6 +206,7 @@ public  class  tz390 {
     * 10/04/08 RPI 924 remove duplicate STA file entry for TRACET
     * 10/24/08 RPI 935 correct MAXWIDTH and MAXWARN settings (reversed)
     * 10/24/08 RPI 935 prevent recursive abort, correct force_nocon support
+    * 11/08/08 RPI 947 add get_ascii_printable_string for use by dump/trace
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -214,7 +215,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.03c";  //dsh
+    String version    = "V1.4.03d";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -6470,6 +6471,45 @@ public void put_trace(String text){
     		opt_errsum = true;
     		max_errors = 0;
     	}
+    }
+    public char ascii_printable_char(int mem_byte){
+    	/*
+    	 * return printable ascii char from byte RPI 947
+    	 */
+		if (opt_ascii){
+			return ascii_table.charAt(mem_byte & 0xff);
+		} else {
+			return ebcdic_table.charAt(mem_byte & 0xff);
+		}
+    }
+    public String ascii_printable_string(String text){
+    	/*
+    	 * return printable ascii string from string that
+    	 * may have non-printable ascii codes RPI 938
+    	 */
+    	int index = 0;
+    	String ascii_text = "";
+		while (index < text.length()){
+			ascii_text = ascii_text + ascii_table.charAt((byte)text.charAt(index) & 0xff);
+			index++;
+		}
+		return ascii_text;
+    }
+    public String get_ascii_printable_string(byte[] byte_array, int addr, int len){
+    	/*
+    	 * return printable ascii string from byte array RPI 947
+    	 */
+    	int index = 0;
+    	String text = "";
+		while (index < len){
+			if (opt_ascii){
+				text = text + ascii_table.charAt(byte_array[addr+index] & 0xff);
+			} else {
+				text = text + ebcdic_table.charAt(byte_array[addr+index] & 0xff);
+			}
+			index++;
+		}
+		return text;
     }
     public String get_ascii_var_string(byte[] byte_array,int mem_addr,int max_len){
     	/*

@@ -75,6 +75,8 @@
 *        Added ARCHLVL=7                                              *
 *    2008/03/22:                                                      *
 *        Validate string address for non-address bits.                *
+*    2008/09/16:                                                      *
+*        Corrected detection of DFP NAN vs. infinity.                 *
 ***********************************************************************
          MACRO
 &lbl     FPCONVRT &PFX=Fpcon,&TYPE=DSECT,&ARCHLVL=2,&LINKAGE=OS,       +
@@ -516,7 +518,7 @@
 &name    Title 'Floating Point Conversion - Module Entry'
          Print On,Gen,Data,Uhead
          Acontrol Flag(0,Align,Cont,NoImplen,Page0,Substr)
-&name    &TYPE
+&name    &TYPE ,
          aif   (&FpArchLvl eq 0).enter020
 &name    Rmode Any
          aif   (&FpArchLvl lt 3).enter010
@@ -1793,8 +1795,8 @@ ToStringNanBin010 dc 0h'0'
 ***********************************************************************
 ToStringNanDec dc 0h'0'
          TM    &PFX.ValueE,B'00000100' Infinity?
-         &J.Z  ReturnNan               no: return
-         &J    ReturnInfinity          yes: branch
+         &J.Z  ReturnInfinity          yes: branch
+         &J    ReturnNan               no: return
          space 1
          aif   ('&J' eq 'J').tos9000
          Drop  R15
@@ -2913,7 +2915,7 @@ R&r      Equ   &r&equ
 &r       seta  &r+1
          aif   (&r le 15).requ
          space 1
-Charset  Dsect                     EBCDIC/ASCII character set tables
+Charset  Dsect ,                   EBCDIC/ASCII character set tables
 CsZero      Ds C                       Zero character
 CsPlus      Ds C                       Plus sign
 CsMinus     Ds C                       Minus sign

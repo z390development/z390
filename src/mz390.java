@@ -340,7 +340,13 @@ public  class  mz390 {
      * 10/24/08 RPI 935 prevent recursive abort
      * 10/24/08 RPI 935 abort error if no macro/mend in macros 
      * 10/24/08 RPI 935 ignore comments following , for AREAD/PUNCH   
-     * 10/26/08 RPI 935 correct force_nocon left on after copyright    
+     * 10/26/08 RPI 935 correct force_nocon left on after copyright
+     * 11/01/08 RPI 944 issue error if spaces in substring notation 
+     * 11/03/08 RPI 945 force mz390 errors on BAL during ERRSUM
+     * 11/07/08 RPI 938 syntax check MNOTE, printable ascii, all but *,'..' to SYSTERM
+     * 11/08/08 RPI 947 printable ascii for TRACEP
+     * 11/09/08 RPI 943 return abs val of SETA for SETC expression, +n or -n for A2D
+     * 11/10/08 RPI 950 issue error for uninitialized var in pc code
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -456,6 +462,8 @@ public  class  mz390 {
 	int    mac_opcode_index = 0;
 	String mac_parms = null;
 	String proto_label = null;
+	int    proto_pos_parm_tot = 0; 
+	int    proto_kwd_parm_tot = 0; 
 	String proto_op = null;
 	String proto_parms = null;
 	String parm_name = null;
@@ -863,7 +871,7 @@ public  class  mz390 {
 			3, 3, 3, 7, 3, 7, 7, 8, 0, 3, 7, 7, 7, 7, 3, // 7 LL  logical compares //RPI144 (was 1,2 now 3,3)
 			3, 3, 3, 0, 0, 0, 0, 8, 0, 3, 0, 0, 0, 0, 3, // 8 '   string '....'
 			3, 3, 3,10, 0, 0, 0, 0, 9, 3, 0, 0, 0, 0, 3, // 9 ,   substring '...'(e1,e2)
-			12,12, 3,12,12,12,12, 3,12,12,12,12,12,12, 3, //10 ?'  prefix operator  //RPI145, RPI196, RPI 353
+			12,12, 3,12,12,12,12, 3,12,03,12,12,12,12, 3, //10 ?'  prefix operator  //RPI145, RPI196, RPI 353 rpi 938 O3 FOR DOUBLE ?' etc
 			3, 3, 3,13, 3, 0, 3, 3, 0, 3,13,13,13,13, 3, //11 NOT logical
 			3, 3, 3,14, 3, 0, 3, 3, 0, 3, 3,14,14,14, 3, //11 AND logical
 			3, 3, 3,15, 3, 0, 3, 3, 0, 3, 3, 3,15,15, 3, //11 OR  logical
@@ -3312,9 +3320,12 @@ public  class  mz390 {
 	}
 	private String replace_vars(String text,boolean reduce,boolean check_label){
 		/* 
-		 * replace all variables in text
-		 * and set var_replacement if changed
-		 * if reduce_quotes, replace && with & and '' with '
+		 * 1.  Replace all variables in text
+		 *     and set var_replacement if changed
+		 * 2.  if reduce then
+		 *     replace && with & and '' with '.
+		 * 3.  If check_lable then
+		 *     verify label field valid.    
 		 * Notes:
 		 *   1.  Per RPI 241 ignore undefined &vars
 		 *       and let az390 report error if not in comment
@@ -3805,15 +3816,53 @@ public  class  mz390 {
 			break;
 		case 214:  // MNOTE  RPI 238
 			bal_op_ok = true;
-			bal_parms = replace_vars(bal_parms,true,false); // RPI 659
-			int mnote_level = -1;  // RPI 444
-			if (bal_parms.length() > 0 
-					&& bal_parms.charAt(0) != '\''
-						&& bal_parms.charAt(0) != ','
-							&& bal_parms.charAt(0) != '*'){
-				mnote_level = calc_seta_exp(bal_parms,0);
+			int mnote_level = 0;  // RPI 444 RPI 938 assume '...' 
+			String mnote_text = bal_parms;
+			if (bal_parms.length() > 1){
+				if (bal_parms.charAt(0) == '*'){
+					mnote_level = -1; // RPI 938 remove from SYSTERM ERR file
+					mnote_text = bal_parms.substring(2); // RPI 938
+				} else if (bal_parms.charAt(0) == ','){
+					mnote_text = bal_parms.substring(1); // RPI 938
+				} else if (bal_parms.charAt(0) != '\''){
+				    mnote_level = calc_seta_exp(bal_parms,0);
+				    if (!mac_abort 
+				    	&& mnote_level >= 0 
+				    	&& mnote_level <= 255){
+				    	mnote_text = bal_parms.substring(exp_next_index);
+				    } else {
+				    	put_bal_line("         MNOTE " + bal_parms + " see MZ390 error");
+				    	log_error(260,"MNOTE invalid level (0 - 255) - " + bal_parms); // RPI 938
+				    }
+				}
+				if (!mac_abort){ 
+					if (mnote_text.length() > 2
+						&& mnote_text.charAt(0) == '\''){
+						tz390.parm_match = tz390.parm_pattern.matcher(mnote_text);
+	                    String mnote_parm = "";
+						if (tz390.parm_match.find() 
+							&& tz390.parm_match.start(0) == 0
+							&& (tz390.parm_match.end() >= mnote_text.length()
+								|| mnote_text.charAt(tz390.parm_match.end()) <= ' ')){
+							mnote_parm = tz390.parm_match.group();
+							if (tz390.parm_match.end() < mnote_text.length()){
+								mnote_parm = mnote_parm + mnote_text.substring(tz390.parm_match.end()); // add comments after replacement
+							}
+							mnote_parm = replace_vars(mnote_parm,true,false);
+							process_mnote(mnote_level,mnote_parm); // RPI 938
+						} else {
+							put_bal_line("         MNOTE " + bal_parms + " see MZ390 error");
+							log_error(261,"MNOTE text must be in single quotes");
+						}
+					} else {
+						put_bal_line("         MNOTE " + bal_parms + " see MZ390 error");
+						log_error(262,"MNOTE invalid 'text' - " + bal_parms); // RPI 938
+					}
+				}
+			} else {
+				put_bal_line("         MNOTE " + bal_parms + " see MZ390 error");
+				log_error(263,"MNOTE missing level,'text'"); // RPI 938
 			}
-			process_mnote(mnote_level,bal_parms);
 			break;
 		case 215:  // SETA 
 			bal_op_ok = true;
@@ -3908,7 +3957,8 @@ public  class  mz390 {
 				log_error(227,"missing quotes for SETC operand");
 			} 
 			exp_next_index = 0; // RPI 839 
-			while (bal_parms != null
+			while (!mac_abort   // RPI 944 
+				   && bal_parms != null
 				   && bal_parms.length() > exp_next_index
 				   && bal_parms.charAt(exp_next_index) > ' '){
 				if (tz390.opt_pc){
@@ -4099,25 +4149,11 @@ public  class  mz390 {
 	}
 	private String calc_setc_exp(String text,int text_index){
 		/*
-		 * evaluate setc expression
+		 * evaluate setc expression 
 		 */
 		exp_type = val_setc_type;
 		calc_exp(text,text_index);
-		switch (exp_type){
-		case 1:
-			return "" + exp_seta;
-		case 2:
-			if (exp_setb == 1){
-				return "1";
-			} else {
-				return "0";
-			}
-		case 3:
-			return exp_setc;
-		default: 
-			tz390.abort_case();
-		}
-		return "";
+		return exp_setc;
 	}
 	private void get_set_target(byte alloc_set_type){
 		/*
@@ -5235,6 +5271,8 @@ public  class  mz390 {
 				exp_push_sdt();
 	            opt_gen_pc_pusha(); 
 				skip_next_token();
+			} else if (exp_next_char() <= ' '){
+			 	log_error(258,"spaces not allowed in substring notation"); //RPI 944
 			}
 			break;
 		case 10: // ,e2) substring e2
@@ -5875,7 +5913,10 @@ public  class  mz390 {
 					skip_next_token(); // skip substring (
 					exp_stk_op[tot_exp_stk_op - 1] = "" + exp_substring_op;  // replace ' with , substring oper
 					exp_stk_op_class[tot_exp_stk_op - 1] = exp_class_str_sub2;
-					exp_set_prev_op(); 
+					exp_set_prev_op();
+					if (exp_next_char() <= ' '){
+						log_error(259,"spaces not allowed in substring notation"); //RPI 944
+					}
 				} else {
 					exp_pop_op(); // remove ' string op
 					exp_check_prev_op = false;  
@@ -6482,7 +6523,7 @@ public  class  mz390 {
 			case 3:
 				switch (exp_stk_val_type[0]){
 				case 1:
-					exp_setc = "" + exp_stk_seta[0];
+					exp_setc = "" + Math.abs(exp_stk_seta[0]); // RPI 943
 					break;
 				case 2:
 					exp_setc = "" + exp_stk_setb[0];
@@ -8053,13 +8094,13 @@ public  class  mz390 {
 		} else {
 			init_pos_parm(""); // syslist(0) null
 		}
+		int first_pos_parm = tot_pos_parm;  // RPI 313
 		if  (proto_parms.length() > 0){
 			String key_name = null;
 			String key_value = null;
 			int key_value_level = 0;
 			proto_match = proto_pattern.matcher(proto_parms);
 			byte state = 1;
-			int first_pos_parm = tot_pos_parm;  // RPI 313
 			while (proto_match.find()){
 				parm_value = proto_match.group();
 				switch (state){
@@ -8124,6 +8165,8 @@ public  class  mz390 {
 				init_key_parm(key_name,key_value);	   	  	
 			}
 		}
+		proto_pos_parm_tot = tot_pos_parm - first_pos_parm; 
+	    proto_kwd_parm_tot = tot_kwd_parm - mac_call_kwd_start[mac_call_level]; 
 	}
 	private void set_call_parm_values(){
 		/*
@@ -8142,6 +8185,7 @@ public  class  mz390 {
 		} else {
 			set_pos_parm(""); // syslist(0) null
 		}
+		int first_pos_parm = tot_pos_parm;
 		if  (bal_parms.length() > 0){
 			String key_name = null;
 			tz390.parm_match = tz390.parm_pattern.matcher(bal_parms);
@@ -8150,7 +8194,6 @@ public  class  mz390 {
 			char   token_first = '?';
 			int    token_len   = 0;
 			int level = 0;
-			int first_pos_parm = tot_pos_parm;
 			while (tz390.parm_match.find()){
 				token = tz390.parm_match.group();
 				token_first = token.charAt(0);
@@ -8523,18 +8566,19 @@ public  class  mz390 {
 		/*
 		 * create mnote on BAL and ERR
 		 */
-		process_mnote(level,"" + level + ",'" + text + "'");
+		process_mnote(level,"'" + text + "'");
 	}
 	private void process_mnote(int level,String msg){
 		/*
 		 * put mnote message on BAL and ERR files
 		 */
+		msg = tz390.ascii_printable_string(msg); // RPI 938
 		if (!tz390.opt_asm && level >= 0){ // RPI 415 let az390 report mnote in seq on ERR
-			tz390.put_systerm("MNOTE " + msg); // RPI 330, RPI 440, RPI 444
+			tz390.put_systerm("MNOTE " + level + "," + msg); // RPI 330, RPI 440, RPI 444
 		}
 		if (level > tz390.max_mnote_warning){ 
 			if (tz390.opt_traces || tz390.opt_con){  // RPI 935
-				System.out.println("MZ390E MNOTE " + msg); // RPI 882
+				System.out.println("MZ390E MNOTE " + level + "," + msg); // RPI 882
 			}
 			tot_mnote_errors++;
 			int file_index = mac_file_num[mac_line_index]; // rpi 895 
@@ -8553,7 +8597,13 @@ public  class  mz390 {
 		if (level > mac_call_sysm_sev[mac_call_level]){  // RPI 898
 			mac_call_sysm_sev[mac_call_level] = level;   // RPI 898
 		}
-		put_bal_line("         MNOTE " + msg);
+		if (level > 0){
+			put_bal_line("         MNOTE " + level + "," + msg);
+		} else if (level == 0){
+			put_bal_line("         MNOTE " + msg); // RPI 938
+		} else {
+			put_bal_line("         MNOTE *," + msg); // RPI 938
+		}
 	}
 	private void log_error(int error,String msg){
 		/*
@@ -8589,6 +8639,7 @@ public  class  mz390 {
                 	abort_error(219,"max missing copy exceeded");
                 }
 			}
+			put_bal_line("* " + error_msg); // RPI 945
 		} else {
 			if (tz390.opt_traces){
 				System.out.println("MZ390E " + msg); // RPI 882
@@ -9045,7 +9096,9 @@ public  class  mz390 {
 			    break;
 			case 3: // exec pc_op_pushv
 				if (inc_tot_exp_stk_var()){
-                    get_pc_var();
+			        if (!get_pc_var()){
+			        	return;  // RPI 950
+			        }
 					if (var_loc == var_lcl_loc){
 						var_type = lcl_set_type[var_name_index];
 					    val_type = get_val_type();
@@ -9063,7 +9116,9 @@ public  class  mz390 {
 				break;
 			case  4: // exec pc_op_pushvs calc var subscript
 				if (tot_exp_stk_var >= 1){
-	                get_pc_var();
+			        if (!get_pc_var()){
+			        	return;  // RPI 950
+			        }
 					set_sub = get_seta_stack_value(-1);
 					tot_exp_stk_var--; 
 					var_subscript_calc = true; 
@@ -9727,6 +9782,7 @@ public  class  mz390 {
 		default:
 			abort_pc("invalid pc op - " + pc_op[pc_loc]);
     	}
+    	text = tz390.ascii_printable_string(text); // RPI 947
     	if (pc_trace_gen){
     		tz390.put_trace("  GEN  PC LOC=" + tz390.right_justify("" + pc_loc,5) + " OP= " + pc_op_desc[pc_op[pc_loc]] + text);
     	} else {
@@ -10280,20 +10336,30 @@ public  class  mz390 {
             		var_name_index = find_lcl_key_index("L:" + pc_setc[pc_loc]);
             		// alloc new lcl var if not same instance of macro
        				if (var_name_index == -1){
-       					alloc_size = 1;
-       					if ((pc_op[pc_loc] == pc_op_storvs 
-       						|| pc_op[pc_loc] == pc_op_stords)
-       						&& alloc_size < min_alloc_size){
-       						alloc_size = min_alloc_size;
-       					}
-       					if (!find_var(pc_setc[pc_loc])){
-       						// dynamically alloc local set for new macro instance
-       						add_lcl_set(pc_setc[pc_loc],var_type,alloc_size);
-       						if (var_name_index != -1){
-       							pc_seta[pc_loc] = var_name_index;
-       						} else {
-       							abort_pc("local var dynamic alloc failed - " + pc_setc[pc_loc]);
-       						}
+       					if (!find_var(pc_setc[pc_loc])
+       						|| var_loc != var_lcl_loc){  // RPI 950 ignore GBL
+           					if (pc_op[pc_loc] == pc_op_storv     // RPI 950
+               					|| pc_op[pc_loc] == pc_op_storvs
+           						|| pc_op[pc_loc] == pc_op_inc    // RPI 950
+           						|| pc_op[pc_loc] == pc_op_dec    // RPI 950
+           						|| pc_op[pc_loc] == pc_op_stord  // RPI 950
+           						|| pc_op[pc_loc] == pc_op_stords){
+           						// dynamically alloc local set for new macro instance
+               					alloc_size = 1;
+               					if ((pc_op[pc_loc] == pc_op_storvs
+                       				|| pc_op[pc_loc] == pc_op_stords)
+               						&& alloc_size < min_alloc_size){
+               						alloc_size = min_alloc_size;
+               					}
+           						add_lcl_set(pc_setc[pc_loc],var_type,alloc_size);
+           						if (var_name_index == -1){
+           							abort_pc("local var dynamic alloc failed - " + pc_setc[pc_loc]);
+           							return false;
+           						}
+           					} else {
+       							abort_pc("local var not initialized - " + pc_setc[pc_loc]); // RPI 950
+       							return false;
+           					}
        					}
        				}
             		break;
@@ -10309,6 +10375,7 @@ public  class  mz390 {
             	}            	
             	pc_seta[pc_loc] = var_name_index;
             	if (var_name_index == -1){
+            		abort_pc("local variable not found -" + pc_setc[pc_loc]); // RPI 950
             		return false;
             	}
             }
@@ -10535,7 +10602,9 @@ public  class  mz390 {
     	 * exec store for storv, storvs,
     	 * storvn, inc, and dec
     	 */
-        get_pc_var();
+        if (!get_pc_var()){
+        	return;  // RPI 950
+        }
 		store_type = var_type;
 		store_loc = var_loc;
 		store_name_index = var_name_index;
@@ -10987,12 +11056,11 @@ public  class  mz390 {
     	 */
     	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
-		if (seta_value1 < 0){
-			seta_value = - seta_value1;
+		if (seta_value1 >= 0){
+			setc_value = "+" + seta_value1;  // PRI 943
 		} else {
-			seta_value = seta_value1;
-		}		
-		setc_value = Integer.toString(seta_value);
+			setc_value = "" + seta_value1; // RPI 943
+		}
 		put_setc_stack_var();
     }
     private void exec_pc_a2x(){

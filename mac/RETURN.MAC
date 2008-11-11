@@ -11,33 +11,31 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 11/10/08 RPI 942 correct to support RC=(15) and upgrade to ZSTRMAC
 .*********************************************************************
 &N       RETURN &REGS,                                                 X
                &SETFLAG,                                               X
                &MF=I,      NOT SUPPORTED                               X
                &RC=
-         AIF   ('&N' EQ '').SKIPDS
+       AIF   ('&N' NE '')       
 &N       DS    0H
-.SKIPDS  ANOP
-         AIF   ('&MF' NE 'I').ERR1
-         AIF   (N'&SYSLIST LE 2).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
-.NPOK    ANOP
-         RESTORE &REGS
-         AIF   ('&SETFLAG' NE 'T').SETRC
+       AEND
+       AIF     ('&MF' NE 'I')      
+               MNOTE 12,'RETURN MF= NOT SUPPORTED'
+               MEXIT
+       AEND
+       AIF     (N'&SYSLIST GT 2)   
+               MNOTE 12,'RETURN UNSUPPORTED OPERANDS - &SYSLIST(3)'
+               MEXIT
+       AEND
+         RESTORE &REGS,RC=&RC
+       AIF   ('&SETFLAG' EQ 'T')        
          OI    15(13),1 
-.SETRC   ANOP
-         AIF   ('&RC' EQ '').EXIT
-         AIF   ('&RC'(1,1) EQ '(').RCREG
+       AEND   
+       AIF   ('&RC' NE '')    
+             AIF   ('&RC'(1,1) NE '(')  
          LA    15,&RC
-         AGO   .EXIT
-.RCREG   ANOP 
-         ZOPTLR 15,&RC(1)
-.EXIT    ANOP
+             AEND
+       AEND
          BR    14
-         MEXIT
-.ERR     ANOP
-         MNOTE 12,'RETURN RANGE INVALID (&R1,&R2)'
-         MEXIT
-.ERR1    MNOTE 12,'RETURN MF= NOT SUPPORTED'
          MEND

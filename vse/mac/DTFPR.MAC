@@ -9,6 +9,7 @@
 .* 03/12/07 RPI 558 CONVERT Z390 MVS MACROS TO VSE MACROS     
 .* 07/10/07 RPI 655 CORRECT .DDDEF MISSING LABEL              
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 11/10/08 RPI 946 init entire DCB to zeros before ORG's                
 .*********************************************************************
 &DDNAME  DTFPR &ASOCFILE=,   ASSOCIATED FILE (IGNORED)                 X
                &BLKSIZE=,    RECORD LENGTH                             X
@@ -36,6 +37,7 @@
 &DCBE    SETC  '0'           DCBE EXTENSION ADDR
 .SKIP_DCBD ANOP
 &DDNAME  DS    0D
+         DC    XL(DCBLEN)'00'        RPI 946 INIT DCB TO ZEROS
          ORG   &DDNAME+DCBID-IHADCB             
          DC    C'DCBV1001'                 
          ORG   &DDNAME+DCBDSORG-IHADCB

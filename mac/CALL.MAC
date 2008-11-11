@@ -17,6 +17,7 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
+.* 11/08/08 RPI 942 check for (reg) parm conflict with R1, ZSTRMAC UPDT         
 .*********************************************************************
 &N      CALL   &NAME,                                                  X
                &PARMS,                                                 X
@@ -25,92 +26,116 @@
                &LINKINST=BALR,                                         X
                &MF=I           I/L/E FORMS SUPPORTED
          CNOP  0,4
-         AIF   ('&N' EQ '').SKIPDS
+         AIF   ('&N' NE '')             
 &N       DS    0F
-.SKIPDS  ANOP
-         AIF   (N'&SYSLIST GT 3).ERR1
-.NPOK    ANOP
-&NPARMS  SETA   N'&PARMS
-         AIF    (&NPARMS EQ 0 AND '&VL' NE '').ERR3 RPI 473
-         AIF   ('&MF' EQ 'I').STD
-         AIF   ('&MF' EQ 'L').LIST
-         AIF   ('&MF(1)' EQ 'E').EXEC
-         MNOTE 12,'CALL INVALID MF=&MF'
+         AEND 
+         AIF   (N'&SYSLIST GT 3)      
+               MNOTE 12,'CALL UNSUPPORTED OPERANDS - &SYSLIST(4)'
+               MEXIT
+         AEND
+         :&NPARMS SETA N'&PARMS
+         AIF   (&NPARMS EQ 0 AND '&VL' NE '')    RPI 473
+               MNOTE 12,'CALL VL INVALID WHEN NO PARMS'     
+               MEXIT
+         AEND
+         AIF   ('&MF' EQ 'I')   
+               ACALL STD_FORM
+         AELSEIF ('&MF' EQ 'L')
+               ACALL LIST_FORM
+         AELSEIF ('&MF(1)' EQ 'E')
+               ACALL EXEC_FORM
+         AELSE
+               MNOTE 12,'CALL INVALID MF=&MF'
+         AEND
          MEXIT
-.STD     ANOP
-         AIF    (&NPARMS EQ 0).ENDPARM
+.*
+.* STD FORM
+.*
+         AENTRY STD_FORM
+       AIF    (&NPARMS NE 0)
          BAL    1,*+4+&NPARMS*4
          DC     A&PARMS
-&I       SETA   0
-.REGLOOP ANOP
-&I       SETA   &I+1
-         AIF    (&I GT &NPARMS).REGEND
-         AIF    ('&PARMS(&I)'(1,1) NE '(').REGLOOP
-&OFF     SETA   &I*4-4
-         ST     &PARMS(&I),&OFF.(1)
-         AGO    .REGLOOP
-.REGEND  ANOP       
-         AIF    ('&VL' NE 'VL').SKIPVL1 
-&OFF     SETA   N'&PARMS*4-4
+                :&I SETA   1
+                AWHILE (&I LE &NPARMS)
+                    AIF ('&PARMS(&I)'(1,1) EQ '(')
+                        :&OFF     SETA   &I*4-4
+                        AIF    ('&PARMS(&I,1)' EQ 1                    X
+                                OR '&PARMS(&I,1)' EQ 'R1')
+                        MNOTE 8,'CALL (REG) TYPE PARM MUST BE (2)-(12)'
+                        MEXIT
+                        AEND
+         ST     &PARMS(&I,1),&OFF.(1)
+                    AEND
+                    :&I SETA   &I+1
+                AEND
+                AIF    ('&VL' EQ 'VL') 
+                       :&OFF     SETA   N'&PARMS*4-4
          OI     &OFF.(1),X'80'
-.SKIPVL1 ANOP
-.ENDPARM ANOP
-         AIF   ('&NAME' EQ '').BALR
-         AIF    ('&NAME'(1,1) EQ '(').REG
+                AEND
+       AEND
+       AIF   ('&NAME' NE '')      
+             AIF ('&NAME'(1,1) NE '(')
          L      15,=V(&NAME)
-         AGO    .BALR
-.REG     ANOP
+             AELSE
          ZOPTLR 15,&NAME(1)
-.BALR    ANOP
+             AEND
+       AEND
          &LINKINST 14,15
-         MEXIT
-.LIST    ANOP
-         AIF    ('&VL' EQ 'VL').VLLIST    
+         AEND
+.*
+.* LIST FORM
+.*
+         AENTRY LIST_FORM
+       AIF    ('&VL' NE 'VL')    
          DC    A&PARMS
-         MEXIT       
-.VLLIST  ANOP
-&I       SETA  0
-.VLLOOP  ANOP
-&I       SETA  &I+1
-         AIF   (&I GE &NPARMS).VLLAST
+       AELSE       
+               :&I SETA 1
+               AWHILE (&I LT &NPARMS) 
          DC    A(&PARMS(&I))
-         AGO   .VLLOOP
-.VLLAST  ANOP
+                      :&I SETA  &I+1
+               AEND
          DC    A(&PARMS(&I)+X'80000000')
-         MEXIT
-.EXEC    ANOP   RPI 473
-         AIF    ('&MF(2)' EQ '').ERR2    RPI 473
-         AIF    ('&MF(2)' EQ '(').REGPARM
+       AEND
+         AEND
+.*
+.* EXEC FORM
+.*
+         AENTRY EXEC_FORM
+         AIF    ('&MF(2)' EQ '')   RPI 473
+                MNOTE 12,'CALL EXEC FORM MISSING LIST ADDR'
+                MEXIT
+         AEND
+       AIF    ('&MF(2)' NE '(')
          LA     1,&MF(2)
-         AGO    .EXEC2
-.REGPARM ANOP
+       AELSE
          ZOPTLR 1,&MF(2,1)
-.EXEC2   ANOP
-&NPARMS  SETA   N'&PARMS
-         AIF    (&NPARMS EQ 0).ENDPARM
-&EXOFF   SETA   0
-&I       SETA   0
-.EXLOOP  ANOP
-&I       SETA   &I+1
-         AIF    (&I GT &NPARMS).EXLEND
-&EXPARM  SETC   '&PARMS(&I)'     
-         AIF    ('&EXPARM'(1,1) EQ '(').EXREGP
+       AEND
+       :&NPARMS  SETA   N'&PARMS
+       AIF    (&NPARMS GT 0)
+              :&EXOFF   SETA   0
+              :&I       SETA   1
+              AWHILE (&I LE &NPARMS)
+                    :&EXPARM  SETC   '&PARMS(&I)'              
+                    AIF    ('&EXPARM'(1,1) NE '(')
          LA     0,&EXPARM
          ST     0,&EXOFF.(1)
-         AGO    .EXNEXTP
-.EXREGP  ANOP
+                    AELSE
          ST     &EXPARM,&EXOFF.(1)   RPI 473
-.EXNEXTP ANOP
-&EXOFF   SETA   &EXOFF+4
-         AGO    .EXLOOP
-.EXLEND  ANOP    
-         AIF    ('&VL' NE 'VL' OR &EXOFF EQ 0).ENDPARM RPI 473
+                    AEND
+                    :&EXOFF   SETA   &EXOFF+4
+                    :&I SETA &I+1
+              AEND
+              AIF  ('&VL' EQ 'VL' AND &EXOFF NE 0)   RPI 473
          OI     &EXOFF-4(1),X'80'
-         AGO    .ENDPARM  RPI 473
-.ERR1    MNOTE 12,'CALL UNSUPPORTED OPERANDS - &SYSLIST(4)'
-         MEXIT
-.ERR2    MNOTE 12,'CALL EXEC FORM MISSING LIST ADDR'
-         MEXIT
-.ERR3    MNOTE 12,'CALL VL INVALID WHEN NO PARMS'     
-         MEXIT
+              AEND
+       AEND
+       AIF   ('&NAME' NE '')      
+             AIF ('&NAME'(1,1) NE '(')
+         L      15,=V(&NAME)
+             AELSE
+         ZOPTLR 15,&NAME(1)
+             AEND
+       AEND
+         &LINKINST 14,15
+         AEND
          MEND

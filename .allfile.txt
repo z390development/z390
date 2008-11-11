@@ -623,7 +623,7 @@ C:\z390\linklib\FPCONMFC.PRN
 C:\z390\linklib\FPCONMFC.STA
 C:\z390\linklib\FPCONVRT.BAL
 C:\z390\linklib\FPCONVRT.ERR
-C:\z390\linklib\FPCONVRT.MAC
+C:\z390\linklib\fpconvrt.mac
 C:\z390\linklib\FPCONVRT.MLC
 C:\z390\linklib\FPCONVRT.OBJ
 C:\z390\linklib\FPCONVRT.PRN

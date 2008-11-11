@@ -129,7 +129,8 @@ public  class  gz390
 	 *          support EEOF CTRL-F6, EINP CTRL-F7 
 	 * 06/16/08 RPI 861 don't send nulls, support fields with no data 
 	 * 06/23/08 RPI 850 support attr fld_attr_nd non-display
-	 * 10/27/08 RPI 927 display '@' for x'ff' and wrap screen address for data                                   
+	 * 10/27/08 RPI 927 display '@' for x'ff' and wrap screen address for data  
+	 * 11/08/08 RPI 940 correct input sba for field at (24,80)                                 
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -2701,16 +2702,20 @@ private void tn_formatted_input(){
 		cur_fld_addr = fld_input_addr[index];
 	    if ((scn_attr[cur_fld_addr] & tn_mdt_mask)
 		     == tn_mdt_mask){
+	    	int input_sba = cur_fld_addr+1; // RPI 940
+	    	if  (input_sba >= max_addr){
+	    		input_sba = 0;
+	    	}
 		    if (tget_index + 3 <= tget_len){
 		    	tget_byte[tget_index] = tn_sba_cmd;
-		    	tget_byte[tget_index+1] = (byte)sba_to_ebc[(cur_fld_addr+1) >> 6];
-		    	tget_byte[tget_index+2] = (byte)sba_to_ebc[(cur_fld_addr+1) & 0x3f];
+		    	tget_byte[tget_index+1] = (byte)sba_to_ebc[input_sba >> 6];    // RPI 940
+		    	tget_byte[tget_index+2] = (byte)sba_to_ebc[input_sba & 0x3f]; // RPI 940
 		    	tget_index = tget_index +3;
 		    } else {
 				abort_error(104,"tget input buffer overrun");
 			    return;
 		    }
-            int sba = cur_fld_addr + 1;
+            int sba = input_sba;
             if (sba == max_addr){
             	sba = 0;
             }

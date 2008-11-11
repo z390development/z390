@@ -17,6 +17,7 @@
 *          AND SETC ARRAY WITHOUT SUBSCRIPT REFERENCE.
 * 07/31/08 RPI 886 - TEST DEQUOTE ERROR IF QUOTES UNBALANCED         
 * 08/18/08 RPI 901 - MOVE TEST OF OPEN CODE UNDEF AGO TESTS TO ERR8/9
+* 11/07/08 RPI 938 - TEST MNOTE SYNTAX AND ALL BUT 8,'?' ON SYSTERM  
 *********************************************************************
          TITLE 'TESTERR1 TEST MZ390 ERRORS'
 TESTERR1 CSECT
@@ -126,6 +127,16 @@ A        TEST2 B,K1=C
 &TY      SETC  DEQUOTE(&TT)
 &TT      SETC  'A''B'''
 &TY      SETC  DEQUOTE(&TT)
+* RPI 938 MNOTE TESTS
+         MNOTE 'TEST 1'       OK NO LVL, NO COMMA
+         MNOTE 'TEST 2'(1,4)  ERR TEXT NOT IN '..' 1 OF 4
+         MNOTE ,'TEST 3'      OK COMMA
+         MNOTE *,'TEST 4'     OK NOT ON SYSTERM
+         MNOTE 4,'TEST 5'     OK 
+         MNOTE -1,'TEST 6'    ERR LVL < 0          2 OF 4
+         MNOTE 256,'TEST 7'   ERR LVL > 255        3 OF 4
+         MNOTE 1              ERR MISSING LVL,TEXT 4 OR 4
+
 **********************************************************
 * ADD DUPLICATE AND MISSING MACRO ERRORS IN OPEN CODE
 *

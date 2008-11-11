@@ -30,6 +30,7 @@
 * 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 * 04/24/08 RPI 840 TEST SPACES IGNORED IN P AND Z DATA FIELDS 
 * 08/09/08 RPI 893 TEST SY LONG DISP, F'Unn', H'Unn'                          
+* 11/10/08 RPI 946 CHANGE DS TO DC FOR INIT TO ZEROS                          
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -55,11 +56,11 @@ TL       DC    2L'0'
 TFD      DC    2FD'0'
 TF       DC    2F'0'
 TFE      EQU   *
-TES      DS    2E    
-TDS      DS    2D    
-TLS      DS    2L   
-TFDS     DS    2FD    
-TFS      DS    2F
+TES      DC    0E,2F'0'    2E  RPI 946         
+TDS      DC    0D,2FL8'0'  2D  RPI 946         
+TLS      DC    0L,2FL16'0' 2L  RPI 946         
+TFDS     DC    0FD,2FL8'0' 2FD RPI 946         
+TFS      DC    0F,2F'0'    2F  RPI 946         
 TFSE     EQU   *    
 CCW      CCW   OP,DATA,FLAGS,LEN
 CCWV     DC    AL1(OP),AL3(DATA),AL1(FLAGS,0),AL2(LEN)
