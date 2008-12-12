@@ -1,15 +1,16 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.**********************************************************************
          MACRO
          CICS_ABEND
-         LCLB  &CANCEL,&NODUMP
-         LCLC  &ABCODE
+         GBLB  &PARMS_0E0C
+         LCLB  &CANCEL,&NODUMP,&NOHAND
+         LCLC  &ABCODE,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
 .PLOOP   ANOP
@@ -19,6 +20,9 @@
          AIF   ('&PARM'(1,7) EQ 'ABCODE(').ABCODE
          AIF   ('&PARM'(1,6) EQ 'CANCEL').CANCEL
          AIF   ('&PARM'(1,6) EQ 'NODUMP').NODUMP
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
 .*
@@ -34,15 +38,28 @@
 &NODUMP  SETB  1
          AGO   .PLOOP
 .*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
 .ELOOP   ANOP
          AIF   (K'&ABCODE NE 0).GOTABCD
 &NODUMP  SETB  1                  NO ABCODE, NO DUMP
 .GOTABCD ANOP
-         MVC   EIBFN,=X'0E0C'     SET EIBFN
-         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
-         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
-         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
 .*
+         L     R15,=A(P0E0C)      LOAD PARM ADDRESS
+         USING (P0E0C,P0E0CEND),R15
+         XC    P0E0C(P0E0CEND-P0E0C),P0E0C CLEAR PARMS
+         MVC   P0E0CFN,=X'0E0C'   SET FUNCTION CODE
          AIF   ('&ABCODE'(1,1) EQ '''').STRING
          AIF   (K'&ABCODE NE 0).INDIR
          MVC   CICS_ABEND_&SYSNDX._ABCODE,=C'????' DEFAULT ABEND CODE
@@ -63,15 +80,23 @@
          MVI   CICS_ABEND_&SYSNDX._NODUMP,X'FF' SET NO DUMP
 .GODUMP  ANOP
          AIF   (NOT &CANCEL).NOCANCEL
-.* FREEMAIN THE ABEND BLOCK IF THERE IS ONE
-         ICM   R1,15,TCTTEABD     ANY ABEND BLOCK ADDRESS ?
-         BZ    CICS_ABEND_&SYSNDX._01 EXIT IF NONE
-         AHI   R1,-8              R1=ORIGIN ADDRESS
-         LA    R0,(ABDLENG*25)+8  R0=ABEND BLOCK TOTAL LENGTH
-         FREEMAIN R,A=(R1),LV=(R0)
-         XC    TCTTEABD,TCTTEABD  CLEAR ABEND BLOCK ANCHOR
-CICS_ABEND_&SYSNDX._01 EQU *
+         MVI   P0E0CCAN,X'FF'     SET CANCEL
 .NOCANCEL ANOP
+         ST    DFHEIBR,P0E0CEIB   SET EIB ADDRESS
+         ST    TCTTEAR,P0E0CTCT   SET TCTTE ADDRESS
+         AIF   (NOT &NOHAND).DUNNOH
+         MVI   P0E0CNOH,X'FF'     SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R1,&RESP           ADDRESS OF RESP
+         ST    R1,P0E0CRSP        SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R1,&RESP2          ADDRESS OF RESP2
+         ST    R1,P0E0CRS2        SAVE IT
+.NORESP2 ANOP
+         DROP  R15
+         ZCALL LCL0E0C,(P0E0C),MF=I CALL ABEND PROCESSOR
 .*
 .* ABEND HERE
          DC    X'0000'            ABEND POINT
@@ -83,6 +108,20 @@ CICS_ABEND_&SYSNDX._NODUMP DC X'FE' FE=TAKE DUMP  FF=NODUMP
 .LABDONE ANOP
          DC    C'ABEND'           MARKER
 CICS_ABEND_&SYSNDX._ABCODE DC CL4' ' ABEND CODE IF ANY
+*
+         AIF   (&PARMS_0E0C).BYP0E0C
+&PARMS_0E0C SETB 1
+P0E0C    EQU   *
+P0E0CFN  DS    XL2                FUNCTION CODE
+P0E0CEIB DS    AL4                EIB
+P0E0CTCT DS    AL4                TCTTE
+P0E0CCAN DS    X                  FF=CANCEL
+P0E0CRSP DS    AL4                RESP
+P0E0CRS2 DS    AL4                RESP2
+P0E0CEND EQU   *                  END MARKER
+         DS    0H
+*
+.BYP0E0C ANOP
          MEXIT
 .*
 .BADABCD MNOTE 12,'ABCODE MUST NOT BEGIN WITH ''A'''
@@ -91,4 +130,3 @@ CICS_ABEND_&SYSNDX._ABCODE DC CL4' ' ABEND CODE IF ANY
 .INVABCD MNOTE 12,'ABCODE IS INVALID'
          MEXIT
          MEND
-

@@ -1,0 +1,23 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         DFHQEADS
+*
+* ENQUEUE ELEMENT BLOCK
+*
+DFHQEADS DSECT
+QEACHNF  DS    AL4                FORWARD CHAIN
+QEARES   DS    CL255              RESOURCE NAME OR A(RESOURCE)
+QEALNTH  DS    XL2                RESOURCE LENGTH
+QEAUCT   DS    XL4                USE COUNT
+QEATERM  DS    C                  TERMID SUFFIX OF OWNER (SQ01=X'FA')
+QEAWAIT  DS    (THRDNUM)X         FF IN TERMINALS SLOT=TASK SUSPENDED
+         DS    0D
+QEALEN   EQU   *-DFHQEADS
+         THRDDSCT                 TERMINAL THREAD CONTROL AREA
+         MEND
+

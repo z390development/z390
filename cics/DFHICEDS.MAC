@@ -1,0 +1,21 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         DFHICEDS
+*
+* INTERVAL CONTROL ELEMENT
+*
+DFHICEDS DSECT
+ICECHNF  DS    AL4                FORWARD CHAIN
+ICEXTOD  DS    XL8                EXPIRY TIME
+ICETRNID DS    CL4                TRANSACTION ID
+ICETRMID DS    CL4                TERMINAL ID
+ICEREQID DS    CL8                REQUEST ID
+         DS    0D
+ICELEN   EQU   *-DFHICEDS
+         MEND
+

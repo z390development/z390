@@ -153,6 +153,5 @@ WORDS    EQU   *
          DC    AL2(7)
 *
          TN3270 SYMBOLS
-         EQUREGS
          END
 

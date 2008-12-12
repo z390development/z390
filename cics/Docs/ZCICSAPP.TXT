@@ -39,10 +39,6 @@ PROLOG inserts the following:
 
 Other macros...
   DFHEIBLK -- EIB DSECT
-  DFHEIRET -- Part of EXEC CICS RETURN
-              Some clean-up operations
-              FREEMAIN the DSA
-              Manage link-level and return to last linker
   DFHPCT   -- Transaction definition
   DFHFCT   -- File definitions and options
   EXEC     -- Converts EXEC CICS statements into a unique macro call
@@ -60,7 +56,6 @@ Register Usage
 --------------
 R0   Reserved for internal use
 R1   Reserved for internal use
-R2   Reserved for internal use
 R10  TCTTE address, must not be modified
 R11  EIB address, must not be modified
 R12  Default base register
@@ -96,6 +91,42 @@ Notes: You cannot override the first DATAREG value, it will always be R13
        ie. if you code DATAREG=(R6,R7) you will get DATAREG=(R13,R7).
 
        There is no cross-checking for register conflicts.
+
+EXEC CICS command syntax
+------------------------
+There is no formal definition of an EXEC CICS command in any IBM Manual.
+
+These assembler syntaxes are currently supported...
+
+a) In-line space separated
+name EXEC CICS function subfunction parm parm()
+
+b) In-line comma separated
+name EXEC CICS function,subfunction,parm,parm(), parm   ()
+
+c) Split, space separated
+Non-blank in col 72 is assumed for all lines except the last.
+Comments are only allowed following a dot or comma delimiter on the
+last line.
+name EXEC CICS function
+               subfunction
+               parm
+               parm() parm   ().  a nice comment
+
+d) Split, comma separated
+Non-blank in col 72 is assumed for all lines except the last.
+Comments are allowed on all lines that end with comma/space.
+name EXEC CICS function,         some
+               subfunction,           very
+               parm,                       nice
+               parm(),parm   (),                comments
+
+name is supported and optional.
+EXEC CICS is expected, EXECUTE CICS is not currently supported.
+subfunction is optional and depends on the function but must follow
+function, eg. EXEC CICS WRITEQ TS
+
+parm() without spacing and parm  () with spacing are allowed.
 
 VSAM Notes
 ----------
@@ -152,23 +183,32 @@ Supported EXEC CICS commands (summary by type)
     c) LINK PROGRAM() COMMAREA() LENGTH()
     d) LOAD PROGRAM() ENTRY()/SET() LENGTH() FLENGTH()
     e) RELEASE PROGRAM()
-    f) RETURN TRANSID() COMMAREA() LENGTH()
+    f) RETURN TRANSID() COMMAREA() LENGTH() IMMEDIATE
     g) XCTL PROGRAM() COMMAREA() LENGTH()
 
  7) Interval Control (10 and 4A)
     a) ASKTIME ABSTIME()
     b) DELAY INTERVAL()/TIME() FOR/UNTIL HOURS() MINUTES() SECONDS()
     c) FORMATTIME   all parameters
+    d) START TRANSID() INTERVAL()/TIME() TERMID()
+       REQID() FROM() LENGTH() QUEUE() RTRANSID() RTERMID()
+       AFTER/AT HOURS() MINUTES() SECONDS()
+    e) RETRIEVE INTO()/SET() LENGTH() RTRANSID() RTERMID() QUEUE()
+    f) CANCEL REQID()
 
- 8) BMS (18)
-    a) RECEIVE MAP(name) MAPSET(name)
+ 8) Task Control (12)
+    a) ENQ RESOURCE() LENGTH() NOSUSPEND
+    b) DEQ RESOURCE() LENGTH()
+
+ 9) BMS (18)
+    a) RECEIVE MAP(name) MAPSET(name) INTO()
     b) SEND MAP(name) MAPSET(name)
        CURSOR/CURSOR() DATAONLY/MAPONLY ERASE/ERASEAUP
-       ALARM FREEKB FRSET
+       FROM() LENGTH() ALARM FREEKB FRSET
     c) SEND CONTROL CURSOR/CURSOR() ERASE/ERASEAUP
        ALARM FREEKB FRSET
 
- 9) Dump Control (1C)
+10) Dump Control (1C)
     DUMP TRANSACTION DUMPCODE() COMPLETE
     FROM() LENGTH()/FLENGTH()
     SEGMENTLIST() LENGTHLIST() NUMSEGMENTS()
@@ -196,7 +236,14 @@ Supported EXEC CICS commands (detail by type)
            ...
            INDGOPA1 DC A(GOPA1)
 
+       Notes:
+          There is a current limit of 30 AIDs, please request more if
+          needed.
+
        Errors
+          AN INTERNAL ERROR HAS OCCURRED
+          NUMBER OF AIDS EXCEEDS 30
+
           BAD PARM
           HANDLE TYPE NOT RECOGNISED
 
@@ -209,7 +256,16 @@ Supported EXEC CICS commands (detail by type)
 
           See HANDLE AID for examples of these forms.
 
+       Notes:
+          There is a current limit of 30 conditions, please request more
+          if needed.
+
+          DSIDERR is supported as equivalent to FILENOTFOUND.
+
        Errors
+          AN INTERNAL ERROR HAS OCCURRED
+          NUMBER OF CONDITIONS EXCEEDS 30
+
           BAD PARM
           HANDLE TYPE NOT RECOGNISED
 
@@ -217,6 +273,8 @@ Supported EXEC CICS commands (detail by type)
 
        Notes:
           Ignoring an error may lead to unpredictable abends.
+          There is a current limit of 30 conditions, please request
+          more if needed.
 
           INVREQ, PGMIDERR or ERROR by default...
              The EXEC CICS command treated as never existed.
@@ -225,12 +283,17 @@ Supported EXEC CICS commands (detail by type)
           cannot ignore a RETURN.
 
           LENGERR or ERROR by default...
-            NOHANDLE and any outstanding HANDLE AID will not invoke
-            this condition.
+             NOHANDLE and any outstanding HANDLE AID will not invoke
+             this condition.
+
+          DSIDERR is supported as equivalent to FILENOTFOUND.
 
        Errors
           BAD PARM
           IGNORE TYPE NOT RECOGNISED
+
+          AN INTERNAL ERROR HAS OCCURRED
+          NUMBER OF CONDITIONS EXCEEDS 30
 
     d) POP HANDLE
 
@@ -238,6 +301,7 @@ Supported EXEC CICS commands (detail by type)
        RESET.
 
        Errors
+          BAD PARM
           POP TYPE NOT RECOGNISED
 
        Conditions (RESP/RESP2)
@@ -249,6 +313,7 @@ Supported EXEC CICS commands (detail by type)
        CANCEL.
 
        Errors
+          BAD PARM
           PUSH TYPE NOT RECOGNISED
 
  2) Terminal Control (04)
@@ -319,19 +384,21 @@ Supported EXEC CICS commands (detail by type)
           A literal or label must be 4 bytes and must not exceed 2G-1.
 
        LENGTH/FLENGTH notes:
-          If not a label then ...
-             If INTO is specified, then the length received is the
-             implied length of INTO. This may raise the LENGERR
-             condition if the data length is larger.
 
-             If SET is specified, the complete record is returned and
-             LENGERR cannot occur.
+          If SET is specified, LENGTH/FLENGTH are ignored and LENGERR
+          cannot occur.
 
-          If it is a label then ...
-             If INTO or SET is specified, then it specifies the maximum data
-             length that can be received. LENGERR can be raised if the
-             data length is larger. The true data length is returned in
-             label.
+          If INTO is specified and LENGTH/FLENGTH are not, then the
+          implied length of INTO is used. This may raise the LENGERR
+          condition if the data length is larger.
+
+          If LENGTH/FLENGTH is numeric then it specifies the maximum
+          data length that can be received. LENGERR can be raised if the
+          data length is larger.
+
+          If LENGTH/FLENGTH is a label then it specifies the maximum
+          data length that can be received. LENGERR can be raised if the
+          data length is larger. The true data length is returned in label.
 
        KEYLENGTH
           Can be specified as a constant or label.
@@ -853,16 +920,21 @@ Supported EXEC CICS commands (detail by type)
           May be specified as ITEM(value) or ITEM(label)
           label must point to a 2-byte hex value.
 
+          Note: For compatability with old releases of CICS, ITEM
+                is accepted without REWRITE and becomes NUMITEMS.
+                ITEM must be a label in this case.
+
        Errors
           BAD PARM
           BOTH QUEUE AND QNAME ARE SPECIFIED
           FROM IS MANDATORY
           IF NUMITEMS IS SPECIFIED, ITEM AND REWRITE ARE INVALID
           INVALID QUEUE OR QNAME
-          ITEM AND REWRITE MUST BOTH BE SPECIFIED
           LENGTH IS MANDATORY FOR INDIRECT FROM
           LENGTH WITHOUT FROM
+          NUMITEMS MUST BE A LABEL (MAY HAVE ORIGINATED AS ITEM)
           QUEUE OR QNAME MUST BE SPECIFIED
+          REWRITE REQUIRES ITEM
           WRITEQ TYPE NOT RECOGNIZED
 
        Conditions (RESP/RESP2)
@@ -997,7 +1069,7 @@ Supported EXEC CICS commands (detail by type)
           INVREQ/5
           INVREQ/6
 
-    f) RETURN TRANSID() COMMAREA(label) LENGTH()
+    f) RETURN TRANSID() COMMAREA(label) LENGTH() IMMEDIATE
 
        Returns to the last caller.
 
@@ -1023,6 +1095,7 @@ Supported EXEC CICS commands (detail by type)
 
        Errors
           BAD PARM
+          IMMEDIATE REQUIRES TRANSID
           INVALID TRANSID
           TRANSID IS MISSING
           LENGTH IS MANDATORY FOR INDIRECT COMMAREA
@@ -1081,6 +1154,8 @@ Supported EXEC CICS commands (detail by type)
           BAD PARM
 
     b) DELAY INTERVAL()/TIME() FOR/UNTIL HOURS() MINUTES() SECONDS()
+
+       REQID is not supported.
 
        INTERVAL
           Can be specified as INTERVAL(s) through to INTERVAL(hhmmss).
@@ -1156,14 +1231,121 @@ Supported EXEC CICS commands (detail by type)
        Conditions (RESP/RESP2)
           INVREQ/1
 
- 8) BMS (18)
-    a) RECEIVE MAP(name) MAPSET(name)
+    d) START TRANSID() INTERVAL()/TIME() TERMID()
+       REQID() FROM() LENGTH() QUEUE() RTRANSID() RTERMID()
+       AFTER/AT HOURS() MINUTES() SECONDS()
+
+       USERID is not supported.
+
+       INTERVAL and TIME follow the same syntax and rules as for DELAY.
+       AFTER and AT follow the same syntax and rules as FOR and UNTIL
+       in DELAY above.
+
+       Errors
+          AFTER/AT SPECIFIED, BUT NO TIME PARAMETERS
+          BAD PARM
+          BOTH AFTER AND AT ARE SPECIFIED
+          BOTH INTERVAL AND TIME ARE SPECIFIED
+          FROM/LENGTH MUST BOTH BE MISSING OR BOTH SPECIFIED
+          HOURS/MINUTES/SECONDS ARE INVALID WITH INTERVAL OR TIME
+          HOURS/MINUTES/SECONDS ARE SPECIFIED WITHOUT AFTER/AT
+          INTERVAL/TIME CANNOT BE SPECIFIED WITH AFTER/AT
+          INTERVAL/TIME MUST BE 1 TO 6 BYTES
+          INVALID QUEUE
+          INVALID REQID
+          INVALID RTERMID
+          INVALID RTRANSID
+          INVALID TERMID
+          INVALID TRANSID
+          TRANSID IS MANDATORY
+
+       Conditions (RESP/RESP2)
+          INVREQ/0
+          INVREQ/4
+          INVREQ/5
+          INVREQ/6
+          LENGERR
+          IOERR
+          TERMIDERR
+          TRANSIDERR
+
+    e) RETRIEVE INTO()/SET() LENGTH() RTRANSID() RTERMID() QUEUE()
+
+       WAIT is not supported.
+
+       Errors
+          BAD PARM
+          BOTH INTO AND SET ARE SPECIFIED
+          INTO OR SET MUST BE SPECIFIED
+          INVALID QUEUE
+          INVALID RTERMID
+          INVALID RTRANSID
+          LENGTH MUST BE A LABEL
+          SET REQUIRES LENGTH
+
+       Conditions (RESP/RESP2)
+          INVREQ/0
+          ENDDATA
+          ENVDEFERR
+          LENGERR
+
+    f) CANCEL REQID()
+
+       Note: CANCEL cannot currently be used to terminate a DELAY as
+             EXEC CICS DELAY does not support the REQID parameter.
+
+       TRANSID is not supported.
+
+       Errors
+          BAD PARM
+          INVALID REQID
+          REQID IS MANDATORY
+
+       Conditions (RESP/RESP2)
+          INVREQ
+          NOTFND
+
+ 8) Task Control (12)
+    a) ENQ RESOURCE() LENGTH() NOSUSPEND
+
+       Errors
+          BAD PARM
+          RESOURCE IS MANDATORY
+
+          *** ENQ ON ADDRESS MAY NOT WORK IN Z390\CICS
+          *** BUT THE COMMAND WILL BE PROCESSED
+          *** PLEASE CONTACT THE AUTHOR FOR ADVICE
+
+       Conditions (RESP/RESP2)
+          ENQBUSY
+          LENGERR/1
+
+    b) DEQ RESOURCE() LENGTH()
+
+       Errors
+          BAD PARM
+          RESOURCE IS MANDATORY
+
+       Conditions (RESP/RESP2)
+          LENGERR/1
+
+ 9) BMS (18)
+    a) RECEIVE MAP(name) MAPSET(name) INTO()
 
        TERMINAL and ASIS are accepted and discarded.
-       INTO, SET, FROM and LENGTH are not supported.
+       SET, FROM and LENGTH are not supported.
 
-       MAP is mandatory and must be a quoted string with a maximum of
-       7 characters.
+       MAP can be a quoted string, maximum 7 characters. or a label
+       pointing to a 7-byte field.
+
+       If MAP is a label, then INTO is mandatory.
+          Note: The map structure will not be cleared before the
+                mapping takes place.
+
+       If MAP is a string, then INTO is optional...
+          If INTO is omitted, the default is map.I
+          Note: The map structure will be cleared before the mapping
+                takes place.
 
        MAPSET can be a quoted string, maximum 7 characters. or an
        address pointing to an 8-byte field containing no more than
@@ -1172,6 +1354,7 @@ Supported EXEC CICS commands (detail by type)
 
        Errors
           BAD PARM
+          FROM NOT SUPPORTED
           INVALID MAP NAME
           INVALID MAPSET NAME
           LENGTH NOT SUPPORTED
@@ -1200,23 +1383,38 @@ Supported EXEC CICS commands (detail by type)
                      the DFHMDF LENGTH= parameter.
           MAPFAIL/7  There has been a mismatch between the physical
                      map and the DSECT.
-          MAPFAIL/8  Data to be processed by PICIN is over 31 digits or
-                     is not numeric after being PACKed.
+          MAPFAIL/8  Data to be processed by PICIN is over 31 digits.
+                     Data is not numeric after being PACKed.
+                     Data length is greater than the edit pattern allows.
 
-    b) SEND MAP(name) MAPSET(name)
+    b) SEND MAP() MAPSET()
        CURSOR/CURSOR() DATAONLY/MAPONLY ERASE/ERASEAUP
+       FROM() LENGTH()
        ALARM FREEKB FRSET
 
        TERMINAL and WAIT are accepted and discarded.
-       ACCUM, FROM and LENGTH are not supported.
+       ACCUM is not supported.
 
-       MAP is mandatory and must be a quoted string with a maximum of
-       7 characters.
+       MAP can be a quoted string, maximum 7 characters. or a label
+       pointing to a 7-byte field.
 
-       MAPSET can be a quoted string, maximum 7 characters. or an
-       address pointing to an 8-byte field containing no more than
+       If MAP is a label, then FROM and LENGTH are mandatory.
+
+       If MAP is a string, then FROM and/or LENGTH are optional...
+          If FROM is omitted, the default is map.O
+          If LENGTH is omitted, the default is map.L
+
+       LENGTH
+          Can be specified as LENGTH(value) or LENGTH(label)
+          LENGTH(value) supports the use of the length attribute.
+          label must point to a 2-byte hex value.
+          If LENGTH is shorter than the map structure length,
+          unpredictable results may occur.
+
+       MAPSET can be a quoted string, maximum 7 characters. or a
+       label pointing to an 8-byte field containing no more than
        7 characters.
-       If MAPSET is omitted, then the MAPname is used.
+       If MAPSET is omitted, then MAP is used.
 
        Errors
           BAD PARM
@@ -1224,10 +1422,10 @@ Supported EXEC CICS commands (detail by type)
           CURSOR POSITION AND SYMBOLIC CURSOR SPECIFIED
           DATAONLY AND MAPONLY SPECIFIED
           ERASE AND ERASEAUP SPECIFIED
-          FROM NOT SUPPORTED
+          FROM IS REQUIRED WHEN MAP IS A LABEL
           INVALID MAP NAME
           INVALID MAPSET NAME
-          LENGTH NOT SUPPORTED
+          LENGTH IS REQUIRED WHEN MAP IS A LABEL
           MAP IS MANDATORY
 
        Conditions (RESP/RESP2)
@@ -1237,8 +1435,9 @@ Supported EXEC CICS commands (detail by type)
           INVMPSZ/0
 
           MAPFAIL/1  The map cannot be found in the mapset.
-          MAPFAIL/8  Data to be processed by PICOUT is over 31 digits or
-                     is not numeric after being PACKed.
+          MAPFAIL/8  Data to be processed by PICOUT is over 31 digits.
+                     Data is not numeric after being PACKed.
+                     Data length is greater than the edit pattern allows.
 
     c) SEND CONTROL CURSOR/CURSOR() ERASE/ERASEAUP
        ALARM FREEKB FRSET
@@ -1256,7 +1455,7 @@ Supported EXEC CICS commands (detail by type)
           CURSOR POSITION AND SYMBOLIC CURSOR SPECIFIED
           ERASE AND ERASEAUP SPECIFIED
 
- 9) Dump Control (1C)
+10) Dump Control (1C)
     DUMP TRANSACTION DUMPCODE() COMPLETE
     FROM() LENGTH()/FLENGTH()
     SEGMENTLIST() LENGTHLIST() NUMSEGMENTS()
@@ -1323,6 +1522,26 @@ Keypress information
 
 Change Summary
 --------------
+November 24, 2008
+   Logic of READ with SET has changed slightly.
+   Extra reason for MAPFAIL/8.
+
+   GR2 has been eliminated from internal code and is available as a
+   base register (it isn't advised owing to instructions that may
+   modify it).
+
+   DFHEIRET macro has been withdrawn, it is now incorporated into
+   EXEC CICS RETURN.
+
+   Added a section on EXEC CICS command syntax.
+   SEND MAP has FROM, LENGTH and MAP(label) support.
+   RECEIVE MAP has INTO() support.
+   DSIDERR is supported for HANDLE/IGNORE CONDITION.
+   WRITEQ TS supports ITEM without REWRITE, messages changed.
+   Added START, RETRIEVE and CANCEL commands.
+   Added IMMEDIATE to EXEC CICS RETURN.
+   Added ENQ and DEQ commands.
+
 June 27, 2008
    Added ERASE EOF and ERASE INPUT to the keypress table
    Added commands RECEIVE MAP, SEND MAP, SEND CONTROL and references
@@ -1346,7 +1565,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 27, 2008
-Z390 version: V1.4.02
-Z390/CICS version: V5
+Shipping Date: November 24, 2008
+Z390 version: V1.4.04
+Z390/CICS version: V6
 

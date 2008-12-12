@@ -329,6 +329,11 @@ public  class  az390 implements Runnable {
         * 11/08/08 RPI 941 align start of CNOP to *2
         * 11/09/08 RPI 949 display relative addr for RIL type LARL etc.
         * 11/10/08 RPI 946 correct DIAGNOSE missing last byte caught by INIT F6's
+        * 11/14/08 RPI 954 correct erroneous extra parm error on LARL
+        * 11/16/08 RPI 960 only count LOCTR in pass 1 for max passes
+        * 11/18/08 RPI 951 add DFHRESP(ENQBUSY)=F'55'
+        * 12/05/08 RPI 955 correct error message for over 256 on MVC
+        * 12/05/08 RPI 959 suppress ERRSUM report if no erros
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -912,13 +917,14 @@ public  class  az390 implements Runnable {
     		  "PGMIDERR)",        //16 - =F'27'
     		  "TRANSIDERR)",      //17 - =F'28' RPI 928
     		  "ENDDATA)",         //18 - =F'29' RPI 928
-    		  "EXPIRED)",         //19   =F'31' RPI 751
-    		  "MAPFAIL)",         //20   =F'36' RPI 841
-    		  "INVMPSZ)",         //21   =F'38' RPI 841
-    		  "OVERFLOW)",        //22   =F'40' RPI 841
+    		  "EXPIRED)",         //19 - =F'31' RPI 751
+    		  "MAPFAIL)",         //20 - =F'36' RPI 841
+    		  "INVMPSZ)",         //21 - =F'38' RPI 841
+    		  "OVERFLOW)",        //22 - =F'40' RPI 841
     		  "QIDERR)",          //23 - =F'44' RPI 662
-    		  "ENVDEFERR)",       //24 - =F'56' RPI 928
-    		  "DISABLED)",        //25 - =F'84' RPI 687
+    		  "ENQBUSY)",         //24 - =F'55' RPI 951
+    		  "ENVDEFERR)",       //25 - =F'56' RPI 928
+    		  "DISABLED)",        //26 - =F'84' RPI 687
     		  };
       String[] dfhresp_lit = {
     		  "=F'0'",           // 0 "NORMAL)" 
@@ -943,10 +949,11 @@ public  class  az390 implements Runnable {
     		  "=F'31'",          //19 "EXPIRED)"  RPI 751
     		  "=F'36'",          //20 "MAPFAIL)"  RPI 841
     		  "=F'38'",          //21 "INVMPSZ)"  RPI 841
-    		  "=F'40'",          //22 "OVERFLOW)"  RPI 841
-    		  "=F'44'",          //23 "QIDERR)"  RPI 662
-    		  "=F'56'",          //24 "ENVDEFERR" RPI 928
-    		  "=F'84'",          //25 "DISABLED)" RPI 687
+    		  "=F'40'",          //22 "OVERFLOW)" RPI 841
+    		  "=F'44'",          //23 "QIDERR)"   RPI 662
+    		  "=F'55'",          //24 "ENQBUSY)"  RPI 951
+    		  "=F'56'",          //25 "ENVDEFERR" RPI 928
+    		  "=F'84'",          //26 "DISABLED)" RPI 687
     		  };
   /* 
    * end of global az390 class data and start of procs
@@ -2714,7 +2721,9 @@ private void process_bal_op(){
     case 116:  // LOCTR 0 
     	bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
     	bal_op_ok = true;
-    	tot_loc_stmt++; // RPI 920
+    	if (cur_pass == 1){  // RPI 960
+    		tot_loc_stmt++; // RPI 920
+    	}
     	process_sect(sym_lct,bal_label);
     	bal_label_ok = false;
     	break;
@@ -5853,7 +5862,7 @@ private int get_exp_ll(){
 	if (ll >= 0 && ll <= 256){
         return ll;
 	} else {
-		log_error(149,"length ll out of limit = " + ll);
+		log_error(149,"length exceeds 256 limit = " + ll); // RPI 955
 		return 1;	
 	}
 }
@@ -5968,7 +5977,8 @@ private void get_hex_long(){
 	 * append llllllll signed offset (calc for label)
 	 */
     String hex_llllllll = "llllllll";
-	if (calc_exp()){
+    calc_lit_or_exp();  // RPI 954
+	if (!bal_abort){ // RPI 954
 		if  (exp_type == sym_rel){
 			hex_bddd2_loc = tz390.get_hex(exp_val,6); // RPI 949
 			hex_llllllll = get_rel_exp_llllllll();
@@ -7200,7 +7210,7 @@ private void gen_dcp_bytes(){
 		dc_first_len = dcp_len;
 		dc_first_field = false;
 	}
-    if (dc_len > 16){
+    if (dc_len > 16 && dc_type == 'P'){ // allow Z > 16
        log_error(68,"P type field too long - " + dc_field);
     } else if (dc_op && dc_dup > 0){
     	obj_code = dc_hex;
@@ -8788,6 +8798,9 @@ public void report_critical_errors(){
 	 * report critical errors on ERR file
 	 * and console for ERRSUM option
 	 */
+	if (tot_missing_macro+tot_missing_copy+tot_missing_sym == 0){
+		return; // RPI 959
+	}
 	tz390.opt_errsum = false; // allow printing on PRN again
 	tz390.opt_list   = true;
 	put_errsum("ERRSUM Critical Error Summary Option");

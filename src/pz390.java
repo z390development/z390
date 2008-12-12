@@ -16223,7 +16223,7 @@ public class pz390 {
 		/*
 		 * init VSE COMRG fields RPI 558
 		 */
-		sz390.put_ascii_string(tz390.job_date,zcvt_comrg_jobdate,8,' ');
+		sz390.put_ascii_string(tz390.cur_date(),zcvt_comrg_jobdate,8,' ');
 		sz390.put_ascii_string(tz390.pgm_name,zcvt_comrg_comname,8,' ');
 	}
 	private void trace_ins(){

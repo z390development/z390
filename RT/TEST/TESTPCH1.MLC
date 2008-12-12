@@ -22,7 +22,7 @@ TEST1 RECORD 2
          TEST2
 .LOOP    ANOP
 &TEXT    AREAD
-         AIF   ('&TEXT' EQ 'TEST2 END OF DATA').ENDLOOP
+         AIF   ('&TEXT'(1,17) EQ 'TEST2 END OF DATA').ENDLOOP
          WTO   '&TEXT'
          AGO   .LOOP
 .ENDLOOP ANOP

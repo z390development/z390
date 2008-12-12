@@ -1,0 +1,83 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL0C04  SUBENTRY
+*
+* FN=0C04  EXEC CICS FREEMAIN
+*
+* R1  >>> P0C04 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0C04,P0C04END),R3
+         L     DFHEIBR,P0C04EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0C04TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0C04FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0C04RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0C04RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         L     R1,P0C04FMA        R1=FREEMAIN ADDRESS
+         AHI   R1,-8              -8 TO STORAGE START
+         LA    R14,TCTTESCC       R14=ANCHOR OF GETMAIN CHAIN
+LOOP     EQU   *
+         OC    0(4,R14),0(R14)    ANY GETMAIN CHAIN ?
+         BZ    INVREQ             EXIT IF NO MATCHING ADDR
+         C     R1,0(R14)          FOUND THE GETMAIN ?
+         BE    FOUND              EXIT IF FOUND
+         L     R14,0(R14)         NEXT GETMAIN AREA
+         B     LOOP               LOOP THRU CHAIN
+*
+FOUND    EQU   *
+* FOUND THE GETMAIN, REPAIR THE CHAIN THEN FREEMAIN
+         MVC   0(4,R14),0(R1)     MOVE NEXT CHAIN ADDR INTO PREVIOUS
+         L     R0,4(R1)           ACTUAL LENGTH TO FREEMAIN
+         FREEMAIN LV=(R0)         FREEMAIN
+         B     RETURN             RETURN
+*
+INVREQ   EQU   *
+* STORAGE AREA NOT FOUND, INVOKE INVREQ
+         MVI   EIBRCODE,X'E0'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         MVC   EIBRESP2,=F'1'     SET EIBRESP2=NOT GETMAINED AREA
+         ICM   R14,15,P0C04RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P0C04RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         SUBEXIT
+*
+         LTORG
+*
+P0C04    DSECT
+P0C04FN  DS    XL2                FUNCTION CODE
+P0C04EIB DS    AL4                EIB
+P0C04TCT DS    AL4                TCTTE
+P0C04FMA DS    AL4                FREEMAIN ADDRESS
+         DS    X                  FF=NOHANDLE
+P0C04RSP DS    AL4                RESP
+P0C04RS2 DS    AL4                RESP2
+P0C04END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+*
+         EQUREGS REGS=GPR
+*
+         END
+

@@ -1,0 +1,60 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL0E0C  SUBENTRY
+*
+* FN=0E0C  EXEC CICS ABEND
+*
+* R1  >>> P0E0C BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0E0C,P0E0CEND),R3
+         L     DFHEIBR,P0E0CEIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0E0CTCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0E0CFN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0E0CRSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0E0CRS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         CLI   P0E0CCAN,X'FF'     CANCEL ?
+         BNE   NOCANCEL           EXIT IF NOT
+* FREEMAIN THE ABEND BLOCK IF THERE IS ONE
+         ICM   R1,15,TCTTEABD     ANY ABEND BLOCK ADDRESS ?
+         BZ    NOCANCEL           EXIT IF NONE
+         AHI   R1,-8              R1=ORIGIN ADDRESS
+         LA    R0,(ABDLENG*25)+8  R0=ABEND BLOCK TOTAL LENGTH
+         FREEMAIN R,A=(R1),LV=(R0)
+         XC    TCTTEABD,TCTTEABD  CLEAR ABEND BLOCK ANCHOR
+NOCANCEL EQU   *
+         SUBEXIT
+*
+P0E0C    DSECT
+P0E0CFN  DS    XL2                FUNCTION CODE
+P0E0CEIB DS    AL4                EIB
+P0E0CTCT DS    AL4                TCTTE
+P0E0CCAN DS    X                  FF=CANCEL
+P0E0CRSP DS    AL4                RESP
+P0E0CRS2 DS    AL4                RESP2
+P0E0CEND EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHABBLK                 HANDLE ABEND BLOCK
+*
+         EQUREGS REGS=GPR
+*
+         END
+

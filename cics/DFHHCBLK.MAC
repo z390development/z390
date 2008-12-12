@@ -17,13 +17,14 @@ HCNCHAIN DS    A                  PUSH CHAIN
 .* ENTRY=4X'FF'   IGNORE CONDITION SET
          DS    A                   0=NORMAL
 HCNERROR DS    A                   1=ERROR
-         DS    10A                 2-11 UNUSED
+         DS    9A                  2-10 UNUSED
+         DS    A                  11=TERMIDERR
          DS    A                  12=FILENOTFOUND
          DS    A                  13=NOTFND
          DS    A                  14=DUPREC
          DS    A                  15=DUPKEY
          DS    A                  16=INVREQ
-         DS    A                  17 UNUSED
+         DS    A                  17=IOERR
          DS    A                  18=NOSPACE
          DS    A                  19=NOTOPEN
          DS    A                  20=ENDFILE
@@ -32,7 +33,9 @@ HCNERROR DS    A                   1=ERROR
          DS    3A                 23-25 UNUSED
          DS    A                  26=ITEMERR
          DS    A                  27=PGMIDERR
-         DS    3A                 28-30 UNUSED
+         DS    A                  28=TRANSIDERR
+         DS    A                  29=ENDDATA
+         DS    A                  30 UNUSED
          DS    A                  31=EXPIRED
          DS    4A                 32-35 UNUSED
          DS    A                  36=MAPFAIL
@@ -42,7 +45,10 @@ HCNERROR DS    A                   1=ERROR
          DS    A                  40=OVERFLOW
          DS    3A                 41-43 UNUSED
          DS    A                  44=QIDERR
-         DS    39A                45-83 UNUSED
+         DS    10A                45-54 UNUSED
+         DS    A                  55=ENQBUSY
+         DS    A                  56=ENVDEFERR
+         DS    27A                57-83 UNUSED
          DS    A                  84=DISABLED
 HCNLENG  EQU   *-DFHHCBLK
          MEND

@@ -22,6 +22,5 @@ TESTAEI0 DS    CL4
 TEST1L   DC    AL2(*-TEST1)
 *
          TN3270 SYMBOLS
-         EQUREGS
          END
 

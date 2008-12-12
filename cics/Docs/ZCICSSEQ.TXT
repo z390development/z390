@@ -95,7 +95,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 27, 2008
-Z390 version: V1.4.02
-Z390/CICS version: V5
+Shipping Date: November 24, 2008
+Z390 version: V1.4.04
+Z390/CICS version: V6
 

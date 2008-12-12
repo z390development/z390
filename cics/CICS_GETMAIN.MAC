@@ -1,14 +1,16 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.**********************************************************************
          MACRO
          CICS_GETMAIN
-         LCLC  &SET,&LENGTH,&FLENGTH,&INITIMG
+         GBLB  &PARMS_0C02
+         LCLB  &NOHAND
+         LCLC  &SET,&LENGTH,&FLENGTH,&INITIMG,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
 .PLOOP   ANOP
@@ -19,6 +21,9 @@
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
          AIF   ('&PARM'(1,8) EQ 'FLENGTH(').FLENGTH
          AIF   ('&PARM'(1,8) EQ 'INITIMG(').INITIMG
+         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
 .*
@@ -38,74 +43,101 @@
 &INITIMG SETC  '&PARM'(9,K'&PARM-9)
          AGO   .PLOOP
 .*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
 .ELOOP   ANOP
+         L     R15,=A(P0C02)      LOAD PARM ADDRESS
+         USING (P0C02,P0C02END),R15
+         XC    P0C02(P0C02END-P0C02),P0C02 CLEAR PARMS
+         MVC   P0C02FN,=X'0C02'   SET FUNCTION CODE
          AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BADLEN
          AIF   ('&LENGTH' EQ '' AND '&FLENGTH' EQ '').NEEDLEN
          AIF   ('&SET' EQ '').BADSET
-         MVC   EIBFN,=X'0C02'     SET EIBFN
-         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
-         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
-         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
-.* LENGTH MAY BE L' OR CONSTANT LIKE C'.' X'..'
+.* LENGTH MAY BE L' OR CONSTANT LIKE X'..'
          AIF   ('&FLENGTH' NE '').FLEN
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
-         AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
+         AIF   (T'&LENGTH NE 'N').LENLABL
 .LENNUM  ANOP
-         LH    R1,=AL2(&LENGTH)   SET NUMERIC GETMAIN LENGTH
-         AGO   .ALLDONE
+         LH    R1,=AL2(&LENGTH)   SET LENGTH
+         AGO   .SAVLEN
 .*
 .LENLABL ANOP
          LH    R1,&LENGTH         SET GETMAIN LENGTH FROM LABEL
-         AGO   .ALLDONE
+         AGO   .SAVLEN
 .*
 .FLEN    ANOP
          AIF   ('&FLENGTH'(2,1) EQ '''').FLENNUM
-         AIF   ('&FLENGTH'(1,1) LT '0' OR '&FLENGTH'(1,1) GT '9').FLENL-
-               AB
+         AIF   (T'&FLENGTH NE 'N').FLENLAB
 .FLENNUM ANOP
-         L     R1,=AL4(&FLENGTH)  SET NUMERIC GETMAIN LENGTH
-         AGO   .ALLDONE
+         L     R1,=AL4(&FLENGTH)  SET FLENGTH
+         AGO   .SAVLEN
 .*
 .FLENLAB ANOP
-         L     R1,&FLENGTH        SET GETMAIN LENGTH FROM LABEL
+         L     R1,&FLENGTH        SET FLENGTH FROM LABEL
+.SAVLEN  ANOP
+         ST    R1,P0C02LEN        SAVE LENGTH
 .*
-.ALLDONE ANOP
-         AHI   R1,8               +8 FOR PREFIX
-         GETMAIN R,LV=(R1)
-         LA    &SET,8(R1)         SET GETMAIN ADDRESS FOR REQUESTOR
-         LA    R14,TCTTESCC       R14=ANCHOR OF GETMAIN CHAIN
-CICS_GETMAIN_&SYSNDX._LOOP EQU *
-         OC    0(4,R14),0(R14)    ANY GETMAIN CHAIN ?
-         BNZ   CICS_GETMAIN_&SYSNDX._CHAIN EXIT IF THERE IS
-         ST    R1,0(R14)          SAVE GETMAIN CHAIN
-         XC    0(4,R1),0(R1)      CLEAR FORWARD CHAIN
-         ST    R0,4(R1)           SAVE LENGTH ACQUIRED IN PREFIX
-         B     CICS_GETMAIN_&SYSNDX._INIT EXIT
-.*
-CICS_GETMAIN_&SYSNDX._CHAIN EQU *
-         L     R14,0(R14)         NEXT GETMAIN AREA
-         B     CICS_GETMAIN_&SYSNDX._LOOP LOOP THRU CHAIN
-.*
-CICS_GETMAIN_&SYSNDX._INIT EQU *
-         AIF   ('&INITIMG' EQ '').DUNGETM
-         LR    R14,&SET           SET ADDRESS TO CLEAR
-         LR    R15,R0             SET LENGTH TO CLEAR
-         AHI   R15,-8             ADJUST FOR PREFIX
-         LR    R0,R14             SET 2ND ADDRESS
-         SR    R1,R1              CLEAR 2ND LENGTH
+         AIF   ('&INITIMG' EQ '').DOGETM
+         MVI   P0C02INM,X'FF'     SET INITIMG SPECIFIED
          AIF   ('&INITIMG'(2,1) EQ '''').INITNUM
-         AIF   ('&INITIMG'(1,1) LT '0' OR '&INITIMG'(1,1) GT '9').INITL-
-               AB
+         AIF   (T'&INITIMG NE 'N').INITLAB
 .INITNUM ANOP
-         ICM   R1,8,=AL1(&INITIMG) SET NUMERIC PADDING BYTE
-         AGO   .DOINIT
+         MVC   P0C02INT,=AL1(&INITIMG) SET PADDING BYTE
+         AGO   .DOGETM
 .*
 .INITLAB ANOP
-         ICM   R1,8,&INITIMG       SET PADDING BYTE FROM LABEL
-.DOINIT  ANOP
-         MVCL  R14,R0              CLEAR GETMAINED AREA WITH INITIMG
+         MVC   P0C02INT,&INITIMG  SET PADDING BYTE FROM LABEL
+.DOGETM  ANOP
+         ST    DFHEIBR,P0C02EIB   SET EIB ADDRESS
+         ST    TCTTEAR,P0C02TCT   SET TCTTE ADDRESS
+         AIF   (NOT &NOHAND).DUNNOH
+         MVI   P0C02NOH,X'FF'     SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R1,&RESP           ADDRESS OF RESP
+         ST    R1,P0C02RSP        SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R1,&RESP2          ADDRESS OF RESP2
+         ST    R1,P0C02RS2        SAVE IT
+.NORESP2 ANOP
+         ZCALL LCL0C02,(P0C02),MF=I CALL GETMAIN PROCESSOR
 .*
-.DUNGETM ANOP
+         L     R15,=A(P0C02)      LOAD PARM ADDRESS
+         L     R1,P0C02GMA        R1=GETMAIN ADDRESS
+         LA    &SET,8(R1)         SET GETMAIN ADDRESS FOR REQUESTOR
+         AIF   (&PARMS_0C02).BYP0C02
+         B     P0C02BYP_&SYSNDX   EXIT
+*
+&PARMS_0C02 SETB 1
+P0C02    EQU   *
+P0C02FN  DS    XL2                FUNCTION CODE
+P0C02EIB DS    AL4                EIB
+P0C02TCT DS    AL4                TCTTE
+P0C02LEN DS    AL4                LENGTH/FLENGTH
+P0C02INM DS    X                  FF=INITIMG SPECIFIED
+P0C02INT DS    X                  INITIMG
+P0C02GMA DS    AL4                GETMAIN ADDRESS
+P0C02NOH DS    X                  FF=NOHANDLE
+P0C02RSP DS    AL4                RESP
+P0C02RS2 DS    AL4                RESP2
+P0C02END EQU   *                  END MARKER
+         DS    0H
+*
+P0C02BYP_&SYSNDX DS 0H
+.BYP0C02 ANOP
+         DROP  R15
          MEXIT
 .*
 .BADLEN  MNOTE 12,'BOTH LENGTH AND FLENGTH ARE SPECIFIED'
@@ -117,4 +149,3 @@ CICS_GETMAIN_&SYSNDX._INIT EQU *
 .NEEDLEN MNOTE 12,'LENGTH OR FLENGTH MUST BE SPECIFIED'
          MEXIT
          MEND
-

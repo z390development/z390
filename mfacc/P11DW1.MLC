@@ -1,0 +1,92 @@
+*=====================================================================*
+*
+*        PROBLEM #11 - TO FIND A HASH TABLE WITH NO DUPLICATE KEYS
+*                      (TABLE SIZE OF 35393 FOUND WHICH HAS A DENSITY 
+*                      OF < 2.5% FOR 856 GIVEN KEYS). 
+*                    - THE FIRST BYTE OF THE OP CODE IS TRANSLATED.
+*                    - TOTAL NO OF INSTRUCTIONS USED: 952,200.
+*
+*        DATE    - 9TH SEPTEMBER 2008
+*        AUTHOR  - DAVID WILKINSON
+*
+*=====================================================================*
+P11DW1   ZMFACC CODE,START,NAME='DAVID WILKINSON'
+*
+         L     R3,=A(TABLE)      LOAD ADDR OF OPCODE TABLE
+         L     R5,=A((TABLEEND-TABLE)/10) LOAD NO OF OPCODES
+*
+LOOP1    DS    0H                LOAD HASH TABLE
+         MVC   WORKD,0(R3)       WORK AREA
+         TR    WORKD(1),TT       TRANSLATE 1ST BYTE
+         LG    R1,WORKD          LOAD 64-BIT R1 WITH NAME
+         DSG   R0,DIVISOR        DIVIDE 64-BIT R1 BY NUMBER
+         LPGR  R2,R0             LOAD & MAKE 64-BIT R2 POSITIVE 
+         SLL   R2,2              MULTIPLY 32-BIT R2 BY 4
+         L     R1,HASHTAB(R2)    LOAD CURRENT ENTRY
+*
+         LTR   R1,R1             TEST CC
+         BNE   1                 ABORT IF DUP KEY FOUND DURING LOADING
+         ST    R3,HASHTAB(R2)    STORE NEW ENTRY
+*
+         AHI   R3,LENTRY         POINT TO NEXT TABLE ENTRY
+         BCT   R5,LOOP1          BRANCH UNTIL R5 IS ZERO..
+         LA    R6,100            LOAD LOOP COUNT
+*
+LOOP2    DS    0H                REPEAT FIND LOOP 100 TIMES
+         L     R3,=A(TABLE)      LOAD ADDR OF OPCODE TABLE
+         L     R5,=A((TABLEEND-TABLE)/10) LOAD NO OF OPCODES
+*
+LOOP3    DS    0H                FIND EACH ENTRY IN TABLE
+         MVC   WORKD,0(R3)       MOVE OPCODE TO WORK AREA
+         TR    WORKD(1),TT       TRANSLATE 1ST BYTE
+         LG    R1,WORKD          LOAD 64-BIT R1 WITH NAME
+         DSG   R0,DIVISOR        DIVIDE 64-BIT R1 BY NUMBER
+         LPGR  R2,R0             LOAD & MAKE 64-BIT R2 POSITIVE 
+         SLL   R2,2              MULTIPLY 32-BIT R2 BY 4
+         L     R1,HASHTAB(R2)    LOAD CURRENT ENTRY
+         CLR   R1,R3             VERIFY MATCHING ENTRY
+         BNE   3                 ABORT IF TABLE ADDRESS WRONG
+*
+         AHI   R3,LENTRY         POINT TO NEXT TABLE ENTRY
+         BCT   R5,LOOP3          BRANCH UNTIL R5 IS ZERO..
+         BCT   R6,LOOP2          BRANCH UNTIL R6 IS ZERO..
+*
+         ZMFACC CODE,END 
+         ZMFACC INPUT,START 
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         ZMFACC OUTPUT,END
+         LTORG ,
+*
+*        TRANSLATE TABLE
+*
+TT       DC    256AL1(*-TT)       TRANSLATE TABLE 
+         ORG   TT+C'A'            A - I                  
+         DC    X'00,01,02,03,04,05,06,07,08'              
+         ORG   TT+C'J'            J - R  
+         DC    X'0A,0B,0C,0D,0E,0F,10,11,12'
+         ORG   TT+C'S'            S - Z  
+         DC    X'13,14,15,16,17,18,19,1A'
+         ORG   ,
+*
+*        HASH TABLE
+*   
+HASH     EQU   35393      
+WORKD    DS    D                  WORK AREA 
+DIVISOR  DC    A(0,HASH)          64 BIT DIVISOR
+HASHTAB  DC    (HASH)F'0'         HASH TABLE 
+*
+*        TABLE OF OPCODE MNEMONICS AND HEX OPCODES
+*
+TABLE    DS    0D
+         MACRO
+         ZOSOP &HEXOP,&DESC,&OPCODE,&TYPE,&NOP=
+&TDESC   SETC  '&DESC'(2,K'&DESC-2)
+&THEXOP  SETC  '&HEXOP'(2,K'&HEXOP-2)
+&THEXOP  SETC  '&THEXOP.00'(1,4)
+         DC    CL8&OPCODE,XL2'&THEXOP' &TDESC
+         MEND
+LENTRY   EQU   8+2
+         COPY  OPCODES
+TABLEEND EQU   *
+         END

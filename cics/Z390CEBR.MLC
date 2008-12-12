@@ -1,14 +1,14 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 *
 * BROWSE TEMPORARY STORAGE
 *
-* ### TO DO
-*   FIND, NEED GRAPHICS TO MAKE IT PRETTY
+* TO DO
+*    FIND, NEED GRAPHICS TO MAKE IT PRETTY
 *
          DFHEIGBL
          DFHEISTG
@@ -121,7 +121,8 @@ PROCESS  EQU   *
          MVC   CEBRNREQ,=C'0AFF'  SET REQUEST CODE
          MVC   CEBRNTRM,TCTTETI   SET TERMID
          MVC   CEBRNTRN,EIBTRNID  SET TRANSID
-         TCPIO SEND,MSG=CEBRQNAM,LMSG=12,PORT=3900
+         MVC   CEBRTSKN,EIBTASKN  SET TASK NUMBER
+         TCPIO SEND,MSG=CEBRQNAM,LMSG=21,PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   TCPIOERR           EXIT IF BAD
 * Z390CICS WILL ONLY SEND THE NO. OF NAMES
@@ -131,8 +132,9 @@ PROCESS  EQU   *
          ICM   R8,3,CEBRQUS       R8=NO. OF Q NAMES
          BZ    QNAMSEND           EXIT IF NONE
 * GETMAIN AN AREA AND RECEIVE ALL THE NAME TABLE
+* 60 NAMES * 18 BYTES = 1080
 * WE LET END-OF-TASK DO THE FREEMAINS
-         EXEC  CICS GETMAIN LENGTH(60*18) SET(R7)
+         EXEC  CICS GETMAIN LENGTH(1080) SET(R7)
          ST    R7,GTNAMADR        SAVE IT
          USING QNAMDATA,R7
          LA    R15,60*18          EXPECTED LENGTH
@@ -150,9 +152,9 @@ PARMFIND EQU   *
          BE    PROCQ              EXIT IF IT IS
          AHI   R7,QNAMDLEN        BUMP Q NAME POINTER
          BCT   R8,PARMFIND        LOOP TILL FOUND
+*
 DISPQNAM EQU   *
          L     R7,GTNAMADR        R7=QNAME TABLE
-*
 SHOWQ    EQU   *
          LA    R6,SNDQNAML        R6=DISPLAY ADDRESS
          USING QNAMDSCT,R6
@@ -250,7 +252,7 @@ QNAMNOFR EQU   *
                PF2(QNAMEAX)
 GETCURS  EQU   *
          BAL   R9,RECEIVE         RECEIVE
-         B     GETCURS            RETRY IF NOT ENTER OR CLEAR
+         B     GETCURS            RETRY IF NOT ENTER, CLEAR OR PF2
 *
 QNAMEAX  EQU   *
 *
@@ -910,6 +912,8 @@ CEBRQNAM DS    0F
 CEBRNREQ DS    CL4                REQUEST ID
 CEBRNTRM DS    CL4                TERMID
 CEBRNTRN DS    CL4                TRANSID
+         DS    C                  TRANSACTION TYPE (NOT USED)
+CEBRTSKN DS    PL4                TASK NUMBER
 CEBRNEND EQU   *
 *
 CEBRRCVE DS    0F
@@ -1241,7 +1245,6 @@ QLSTPF11 DS    CL26               PF11
 QLSTPF12 DS    CL26               PF12
 *
          TN3270 SYMBOLS
-         EQUREGS
 * R3   BASE 2
 * R4   BASE 3
 * R12  BASE 1

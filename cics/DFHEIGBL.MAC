@@ -1,11 +1,12 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS PROLOG GLOBALS
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS PROLOG GLOBALS   *
+.* 09/09/08 RPI 905 - ADD EQUREGS                                     *
+.**********************************************************************
          MACRO
          DFHEIGBL
 .*
@@ -14,10 +15,6 @@
 .*
          DFHEIBLK                 EXEC INTERFACE BLOCK
          DFHTCTTE                 TERMINAL TABLE ENTRY
-         DFHADBLK                 HANDLE AID BLOCK
-         DFHHCBLK                 HANDLE CONDITION BLOCK
-         DFHABBLK                 HANDLE ABEND BLOCK
-         DFHTSBLK                 TEMPORARY STORAGE PREFIX AREA
-         DFHFCBLK                 FILE CONTROL PREFIX AREA
          EQUREGS ,                DEFINE GENERAL REGISTERS RPI 905
          MEND
+

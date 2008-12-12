@@ -4,8 +4,6 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 11/11/08 DSH1 RPI 950 ADD LCLC &ACTINIT TO AVOID UNDEF PC VAR ERR
-.**********************************************************************
          MACRO
 &FLDNAME DFHMDF                                                        X
                &POS=,                                                  X
@@ -27,6 +25,7 @@
          GBLA  &MDFALLN           LENGTH OF ALL MDF FIELDS
          GBLA  &MDFNAMD           LENGTH OF ALL NAMED MDF FIELDS
          GBLA  &MDFNAMC           NO. OF NAMED MDF'S
+         GBLA  &MDFWRAP           NO. OF WRAPPED FIELDS
          GBLA  &GFELEN            SUN OF GROUP FIELD ENTRY LENGTHS
 .*
          GBLB  &MDIMODE(2)        1=OUT 2=IN BOTH=INOUT
@@ -47,7 +46,8 @@
          LCLB  &ZERO,&RIGHT,&INIT,&DSCT
          LCLB  &PROT,&HUM,&DRK,&FSET
          LCLB  &ICPOS
-         LCLC  &ACTINIT  DSH1 11/11/08
+.*
+         LCLC  &ACTINIT
 .*
 .* ENSURE NO BAD PARMS
          AIF   (N'&SYSLIST NE 0).BADPOSI
@@ -179,7 +179,7 @@
 .* ANALYZE INITIAL/XINIT
 &KXINIT  SETA  K'&XINIT
          AIF   ('&INITIAL' EQ '' AND '&XINIT' EQ '').NOINIT
-         AIF   (K'&INITIAL-2 GT &LENGTH).BIGINIT
+         AIF   (DCLEN(DEQUOTE('&INITIAL')) GT &LENGTH).BIGINIT
          AIF   (&KXINIT/2 GT &LENGTH).BIGINIT
          AIF   ('&INITIAL' NE '' AND '&XINIT' NE '').BOTHINI
 &INIT    SETB  1
@@ -344,7 +344,9 @@
          AIF   (T'&POS(2) NE 'N').BADPOS2
          AIF   (&POS(1) GT &SIZEROW).BIGPOS
          AIF   (&POS(2) GT &SIZECOL).BIGPOS
-         AIF   (&POS(2)+&LENGTH GT &SIZECOL).BIGPOS2
+         AIF   (&POS(2)+&LENGTH LE &SIZECOL).NOWRAP2
+&MDFWRAP SETA  &MDFWRAP+1
+.NOWRAP2 ANOP
 .GOON04  ANOP
 &FPOS    SETA  (&POS(1)-1)*&SIZECOL+&POS(2)-1
 .DUNPOS  ANOP
@@ -500,8 +502,16 @@
 &SPACES  SETC  ''
 .POSOK   ANOP
          AIF   (NOT &ICPOS).NOTIC
+.* PROCESS IC ATTRIBUTE
          ORG   &MDINAME._&MDIORG._CURSOR
+.* HANDLE SCREEN WRAP
+         AIF   (&FPOS+1 NE &SIZEROW*&SIZECOL).NOSWRAP
+         DC    AL2(0)
+         AGO   .DOORG
+.*
+.NOSWRAP ANOP
          DC    AL2(&FPOS+1)
+.DOORG   ANOP
          ORG
 .NOTIC   ANOP
          DC    AL2(&FPOS)          &SPACES.BMSFP    -- POSITION
@@ -532,7 +542,7 @@
 .NOGFATT ANOP
          AIF   (T'&INITIAL EQ 'O').NOINIT4
 .* EXTRACT INITIAL
-&ACTINIT SETC  '&INITIAL'(2,K'&INITIAL-2)
+&ACTINIT SETC  DCVAL(DEQUOTE('&INITIAL'))
 .NOINIT4 ANOP
          AIF   (T'&XINIT EQ 'O').OVERLAP
 .* EXTRACT XINIT ONLY IF FFXX SPECIAL
@@ -550,7 +560,11 @@
          AGO   .ACTLOOP
 .*
 .OVERLAP ANOP
-         AIF   (&SCREEN(&FPOS+&I) NE ' ').OVERPOS
+&ACTPOS  SETA  &FPOS+&I
+         AIF   (&ACTPOS LE &SIZEROW*&SIZECOL).GOODPOS
+&ACTPOS  SETA  &ACTPOS-&SIZEROW*&SIZECOL
+.GOODPOS ANOP
+         AIF   (&SCREEN(&ACTPOS) NE ' ').OVERPOS
 .GOON06  ANOP
 &SCRTYPE SETC  '@'                ASSUME ATTRIBUTE
          AIF   (&I NE 1).NOTATT
@@ -563,7 +577,7 @@
          AIF   (&SCREEN(&NEXTPOS+1) EQ '@').ADJATT
 .* POS AFTER
 &NEXTPOS SETA  &FPOS+1
-         AIF   (&FPOS NE &SIZEROW*&SIZECOL-1).FPOSAF
+         AIF   (&FPOS NE &SIZEROW*&SIZECOL).FPOSAF
 &NEXTPOS SETA  0
 .FPOSAF  ANOP
          AIF   (&SCREEN(&NEXTPOS+1) EQ '@').ADJATT
@@ -571,13 +585,17 @@
          AGO   .SETSCR
 .*
 .NOTATT  ANOP
-&SCRTYPE SETC  '&ACTINIT'(&I-1,1) ASSUME BYTE FROM INITIAL
+&SCRTYPE SETC  DOUBLE('&ACTINIT'(&I-1,1)) ASSUME BYTE FROM INITIAL
          AIF   ('&SCRTYPE' NE '').SETSCR
 &SCRTYPE SETC  ' '                ASSUME BLANK FILL
          AIF   (T'&INITIAL NE 'O').SETSCR
 &SCRTYPE SETC  '.'                SET EMPTY FIELD MARKER
 .SETSCR  ANOP
-&SCREEN(&FPOS+&I) SETC '&SCRTYPE' SET POSITION USED
+&POSUSED SETA  &FPOS+&I
+         AIF   (&POSUSED LT &SIZEROW*&SIZECOL+1).NOWRAP
+&POSUSED SETA  &POSUSED-&SIZEROW*&SIZECOL
+.NOWRAP  ANOP
+&SCREEN(&POSUSED) SETC '&SCRTYPE' SET POSITION USED
          AIF   (&GFD).NOXINIT     GROUP FIELD DESCRIPTOR
 &I       SETA  &I+1
          AIF   (&I NE &LENGTH+2).OVERLAP
@@ -618,7 +636,8 @@
          DC    AL2(3+(3*&MDFNAMC)+&MDFNAMD)
 .* OUTPUT SIZE = 3 (ESC, WRT, WCC) + 5*NO. OF FIELDS (SBA, SF)
 .*               + LENGTH OF ALL FIELDS + 4 (FOR ANY CURSOR)
-&OUTSIZE SETA  3+(5*&MDFALLC)+&MDFALLN+4
+.*               + 3*NO. OF WRAPPED FIELDS (SBA)
+&OUTSIZE SETA  3+(5*&MDFALLC)+&MDFALLN+4+(3*&MDFWRAP)
          AIF   (&OUTSIZE GT 2000).BIGMAP
          ORG   &MDINAME._&MDIORG._OUTLEN
          DC    AL2(&OUTSIZE)
@@ -925,10 +944,6 @@
          MNOTE 12,'SINGLE POS EXCEEDS DEFINED MAP SIZE'
          AGO   .GOON09
 .*
-.BIGPOS2 ANOP
-         MNOTE 12,'POS COLUMN+LENGTH EXCEEDS DEFINED MAP SIZE'
-         AGO   .GOON04
-.*
 .BADIC   ANOP
          MNOTE 12,'IC ATTRIBUTE HAS OCCURRED IN ANOTHER MDF MACRO'
          AGO   .GOON05
@@ -943,7 +958,7 @@
          AGO   .GOON03
 .*
 .OVERPOS ANOP
-&OVERERR SETA  &FPOS+&I-1
+&OVERERR SETA  &ACTPOS-1
          MNOTE 12,'POS &OVERERR OVERLAPS WITH ANOTHER FIELD'
          AGO   .GOON06
 .*
@@ -1021,3 +1036,4 @@
          AGO   .GOON02
 .*
          MEND
+

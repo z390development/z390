@@ -1,0 +1,135 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+GBL100C  SUBENTRY
+*
+* FN=100C  CANCEL
+*
+*         +0/DSCT +4/DSECT +8/IND   +12/IND +16      +20
+* R1  >>> WTOMSG, REQDSECT,ICEANCHR,CONNID, TRCEZ390,THRDCNTL
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SAVE PARM POINTER
+         L     R4,16(R3)          ADDRESS OF TRCEZ390
+         MVC   TRCEZ390,0(R4)     MOVE IT
+         L     R9,0(R3)           WTODSECT ADDRESS
+         USING WTODSECT,R9
+         L     R6,4(R3)           ADDRESS RECEIVED DATA
+         USING DFHICBLK,R6
+         MVC   WTOFN,ICPFN        SET FN
+         MVC   WTOTERM,ICPTERM    SET TERMID
+         MVC   WTOTRAN,ICPTRAN    SET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         UNPK  WTOTASKN,ICPTASKN  UNPACK TASK NUMBER
+         OI    WTOTASKN+6,X'F0'   CLEAR SIGN
+         MVC   WTODESC,=CL45'<<<Z390KCP CANCEL     REQUEST'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+         BAL   R11,CICSTRCE       TRACE IT
+         MVI   ICSWITCH,X'00'     RESET NOTFND SWITCH
+ICRESCAN EQU   *
+         L     R4,8(R3)           ADDRESS OF ICEANCHR ADDRESS
+         LR    R8,R4              R8=CHAIN FROM ANCHOR
+         ICM   R7,15,0(R4)        R7=ICE CHAIN
+         BZ    ICNOTFND           ERROR IF NO ICES
+         USING DFHICEDS,R7
+* ICE CHAIN EXISTS
+* SCAN THE ICE CHAIN FOR ANY MATCHING REQID
+ICEXLOOP EQU   *
+         CLC   ICEREQID,ICPREQID  REQID'S MATCH ?
+         BE    ICUNCHN            EXIT IF THEY DO
+         LR    R8,R7              R8=CHAINED FROM ADDRESS
+         ICM   R7,15,ICECHNF      R7=ICE CHAIN
+         BNZ   ICEXLOOP           LOOP IF MORE ICES
+         B     ICNOTFND           ERROR IF NONE
+*
+ICUNCHN  EQU   *
+* REPAIR THE CHAIN AND FREEMAIN THE ICE
+         MVC   0(4,R8),ICECHNF    REMAKE THE CHAIN
+         FREEMAIN LV=ICELEN,A=(R7) FREE ICE
+         MVI   ICSWITCH,X'FF'     SET NOTFND SWITCH
+         B     ICRESCAN           EXIT TO SCAN AGAIN
+*
+ICNOTFND EQU   *
+         CLI   ICSWITCH,X'FF'     DID WE DELETE AN ICE ?
+         BE    ICGOOD             EXIT IF WE DID
+* NOTFND IS REAL
+         MVC   ICPRETCD,DFHRESP(NOTFND) SET NOTFND
+         L     R9,0(R3)           WTODSECT ADDRESS
+         MVC   WTODESC,=CL45'>>>Z390KCP CANCEL     FAILED'
+         MVC   WTODESC+29(6),=C'NOTFND'
+         B     ICCNSEND           EXIT
+*
+ICGOOD   EQU   *
+         XC    ICPRETCD,ICPRETCD  CLEAR RETURN CODE
+         L     R9,0(R3)           WTODSECT ADDRESS
+         MVC   WTODESC,=CL45'<<<Z390KCP CANCEL     COMPLETED'
+ICCNSEND EQU   *
+         L     R8,12(R3)          R8=CONN ID ADDRESS
+         L     R8,0(R8)           R8=CONNID
+         LA    R15,ICPREFIX       R15=LENGTH TO SEND
+         TCPIO SEND,MSG=DFHICBLK,LMSG=(R15),CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         BAL   R11,CICSTRCE       TRACE IT
+         SUBEXIT
+*
+* SUBROUTINES
+*
+* MODIFIED CICSTRCE
+CICSTRCE DS    0H
+         CLI   TRCEZ390,C'N'      NO TRACING ?
+         BER   R11                RETURN IF IT IS
+         CLI   TRCEZ390,C'Y'      ALL TRACING ?
+         BE    CICSTRGO           TRACE IF IT IS
+         CLC   TRCEZ390,CICSTIND  TRACE TYPE=TRACE REQUEST ?
+         BNER  R11                RETURN IF NOT
+CICSTRGO EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM GET TIME
+         MVO   TIMEPACK,TIME      MOVE TO PACKED FIELD
+         MVC   TIMEHERE(13),TIMEEDIT MOVE EDIT WORD
+         ED    TIMEHERE(13),TIMEPACK EDIT TIME
+         MVC   WTOTIME,TIMEHERE   SET TIME
+         WTO   MF=(E,WTOMSG)      TRACE IT
+         BR    R11                RETURN
+*
+ABEND780 ABEND 780                TCPIO SEND FAILED
+*
+CICSTIND DS    C                  TRACE TYPE INDICATOR
+TRCEZ390 DS    C                  Z390 TRACE OPTION
+ICSWITCH DS    X                  CONTROL SWITCH
+*
+* TIME CONVERSION FIELDS
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402021207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+* WTO AREA DSECT
+*
+WTODSECT DSECT
+WTOMSG   DS    AL4
+WTOTIME  DS    CL13               TIME STAMP
+         DS    C
+WTOFN    DS    CL4                MODULE/FUNCTION REFERENCE (EIBFN)
+         DS    C
+WTOTERM  DS    CL4                TERMID
+         DS    C
+WTOTRAN  DS    CL4                TRANSID (OR BLANK)
+         DS    C
+WTOTYPE  DS    C                  TRANSID TYPE
+         DS    C
+WTOTASKN DS    CL7                TASK NUMBER
+         DS    C
+WTODESC  DS    CL45               DESCRIPTION
+*
+         DFHICBLK                 INTERVAL CONTROL PREFIX AREA
+         DFHICEDS                 INTERVAL CONTROL ELEMENT
+*
+         EQUREGS
+*
+         END
+

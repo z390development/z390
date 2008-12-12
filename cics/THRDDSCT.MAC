@@ -1,0 +1,31 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         THRDDSCT
+*
+* TERMINAL THREAD CONTROL AREA
+*
+THRDDSCT DSECT
+THRDIND  DS    X                  THREAD STATE
+ST_AVAIL EQU   X'00'                 AVAILABLE
+ST_RUN   EQU   X'01'                 RUNNING
+ST_SUSEQ EQU   X'02'                 SUSPENDED-ENQ
+ST_SHUT  EQU   X'FF'                 SHUTDOWN
+*
+THRDTYPE DS    C                  THREAD TYPE
+LOCAL    EQU   C'L'
+REMOTE   EQU   C'R'
+UNALLOC  EQU   X'00'
+*
+THRDTRAN DS    CL4                THREAD CURRENT TRANSACTION
+THRDREQD DS    XL8                THREAD CURRENT REQID (IC START)
+THRDLEN  EQU   *-THRDDSCT
+THRDSEQ  EQU   10                 POSITION OF SEQUENTIAL TERMINAL
+THRDNUM  EQU   11                 CURRENT NO. OF THREADS
+*
+         MEND
+

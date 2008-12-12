@@ -1,9 +1,9 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 LCL1804  SUBENTRY
 *
 * FN=1804  EXEC CICS SEND MAP
@@ -22,6 +22,14 @@ LCL1804  SUBENTRY
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P1804RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P1804RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
          L     R4,P1804MSA        ADDRESS MAPSET STRUCTURE
          AHI   R4,8               BYPASS MAPSET NAME
          USING BMSMHLL,R4
@@ -69,6 +77,10 @@ NOWCC    EQU   *
          BZ    SENDIT             EXIT IF NO FIELDS
          L     R8,P1804DSC        R8=INPUT MAP STRUCTURE ADDRESS
          USING DFHMAPST,R8
+         TM    BMSMODE,BMSMHEXT   TIOAPFX=YES ?
+         BNO   NOTPFX             EXIT IF NOT
+         AHI   R8,12              ADJUST FOR TIOAPFX
+NOTPFX   EQU   *
          LR    R9,R4              R9=NEW BASE FOR MAP FIELDS
          AH    R9,BMSMHLL         MISS MAP DESCRIPTOR
          USING BMSMDF,R9
@@ -114,7 +126,8 @@ FLDMPNTD EQU   *
 * MAPONLY AND GROUP FIELD ENTRY...SBA,DATA IF INITIAL
          TM    BMSFDFB,BMSFDDD    ANY INITIAL ?
          BNO   DOCURS             EXIT IF NONE
-         AHI   R7,1               BUMP TO DATA POSITION
+         AHI   R7,1               BUMP DATA POSITION
+         BAL   R14,WRAP           TEST FOR ROW/SCREEN WRAP
          BAL   R14,SBACONV        CONVERT TO SBA
          MVI   0(R6),SBA          SET
          STH   R12,1(R6)              SBA
@@ -177,7 +190,8 @@ FLDDTNTD EQU   *
 * DATAONLY AND GROUP FIELD ENTRY...SBA,DATA IF DATA PRESENT
          CLI   BMSGRPDT,X'00'     ANY GFE STRUCTURE DATA ?
          BE    DOCURS             EXIT IF NONE
-         AHI   R7,1               BUMP TO DATA POSITION
+         AHI   R7,1               BUMP DATA POSITION
+         BAL   R14,WRAP           TEST FOR ROW/SCREEN WRAP
          BAL   R14,SBACONV        CONVERT TO SBA
          MVI   0(R6),SBA          SET
          STH   R12,1(R6)              SBA
@@ -213,7 +227,8 @@ FLDDTNAT EQU   *
          CLI   FLDDTSBA,X'FF'     SBA SWITCH ON ?
          BE    FLDDTNSB           EXIT IF IT IS
 * SBA NOT SET
-         AHI   R7,1               BUMP TO DATA POSITION
+         AHI   R7,1               BUMP DATA POSITION
+         BAL   R14,WRAP           TEST FOR ROW/SCREEN WRAP
          BAL   R14,SBACONV        CONVERT TO SBA
          MVI   0(R6),SBA          SET
          STH   R12,1(R6)              SBA
@@ -262,7 +277,8 @@ FLDBHNTD EQU   *
          CLI   BMSGRPDT,X'00'     ANY GFE STRUCTURE DATA ?
          BE    DOCURS             EXIT IF NONE
 FLDBEGOT EQU   *
-         AHI   R7,1               BUMP TO DATA POSITION
+         AHI   R7,1               BUMP DATA POSITION
+         BAL   R14,WRAP           TEST FOR ROW/SCREEN WRAP
          BAL   R14,SBACONV        CONVERT TO SBA
          MVI   0(R6),SBA          SET
          STH   R12,1(R6)              SBA
@@ -405,7 +421,6 @@ USEIC    EQU   *
          OI    BMSCURSR,X'80'     INVALIDATE CURSOR ADDRESS
 CNVDTPOS EQU   *
          BAL   R14,RELPOS         CALC RELATIVE POS RELATED TO MAP SIZE
-*
 SETCURS  EQU   *
          BAL   R14,SBACONV        CONVERT TO SBA
          MVI   0(R6),SBA          SET
@@ -446,6 +461,7 @@ FLDBYP   EQU   *
          BNZ   FLDLOOP            LOOP IF SOME LEFT
 *
 SENDIT   EQU   *
+         NI    BMSCURSR,X'7F'     RESTORE CURSOR ADDRESS
          L     R1,P1804OUT        R1=OUTPUT AREA
          SR    R6,R1              R6=STREAM LENGTH
          CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
@@ -472,8 +488,6 @@ SENDIT   EQU   *
 *
 NOTSEQ   EQU   *
          TPUT  (R1),(R6),FULLSCR  SEND TN3270 DATA STREAM
-         NI    BMSCURSR,X'7F'     RESTORE CURSOR ADDRESS
-*
 RETURN   EQU   *
          SUBEXIT
 *
@@ -488,11 +502,19 @@ MAPFAIL8 EQU   *
 * ERROR WHILE PROCESSING PICOUT
 *    DATA LONGER THAN 31 DIGITS
 *    DATA IS NOT NUMERIC
+*    TOO MUCH DATA FOR THE EDIT PATTERN
          L     R6,PICR6           RESTORE OUTPUT POINTER
          MVC   EIBRESP2,=F'8'     SET EIBRESP2
 MAPFAIL  EQU   *
          MVI   EIBRCODE,X'04'     SET EIBRCODE
          MVC   EIBRESP,DFHRESP(MAPFAIL) SET EIBRESP=MAPFAIL
+         ICM   R14,15,P1804RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P1804RS2    R14=RESP2 ADDRESS
+         BZ    SENDIT             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
          B     SENDIT             EXIT
 *
 INVMPSZ  EQU   *
@@ -500,6 +522,13 @@ INVMPSZ  EQU   *
          MVI   EIBRCODE,X'08'     SET EIBRCODE
          MVI   EIBRCODE+3,C' '    SET EIBRCODE+3 TO GENERIC 3270
          MVC   EIBRESP,DFHRESP(INVMPSZ) SET EIBRESP=INVMPSZ
+         ICM   R14,15,P1804RSP    R14=RESP ADDRESS
+         BZ    DORSP2I            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORSP2I  EQU   *
+         ICM   R14,15,P1804RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
          B     RETURN             RETURN
 *
 * SUBROUTINES
@@ -525,17 +554,27 @@ RELPOS   EQU   *
 *
 *  THE OUTGOING ATTRIBUTE IS 80 (OFFSET 0)
 *
-*  36/35= 1 REMAINDER 1
+*  36/35= QUOTIENT=ROW 1 (OFFSET 0)  REMAINDER=COLUMN 1 (OFFSET 1)
 *  1*80=80+1=81-1=80 (-1 FOR OFFSET 0)
          AHI   R7,1               ATTRIBUTE POS (OFFSET 1)
          SR    R0,R0              CLEAR R0
          LR    R1,R7              R1=POSITION
-         LB    R12,BMSMW          R12=MAP WIDTH (35)
+         SR    R12,R12            CLEAR R12
+         IC    R12,BMSMW          R12=MAP WIDTH
          DR    R0,R12             R0=COLUMN  R1=ROW
-         LB    R12,BMSMSL         R12=MAP OFFSET ROW
+         LTR   R0,R0              POS AT RIGHT-HAND EDGE ?
+         BNZ   RELSAVE            EXIT IF NOT
+         IC    R0,BMSMW           MAKE IT RIGHT-HAND EDGE
+         BCTR  R1,0               ... OF PREVIOUS ROW
+RELSAVE  EQU   *
+         STM   R0,R1,RELCOL       SAVE TRUE MAP COL/ROW FOR WRAP TEST
+RELWRAP  EQU   *
+         SR    R12,R12            CLEAR R12
+         IC    R12,BMSMSL         R12=MAP OFFSET ROW
          AR    R1,R12             ADD OFFSET
          BCTR  R1,0                          ROW-1
-         LB    R12,BMSMSC         R12=MAP OFFSET COLUMN
+         SR    R12,R12            CLEAR R12
+         IC    R12,BMSMSC         R12=MAP OFFSET COLUMN
          AR    R0,R12             ADD OFFSET
          BCTR  R0,0                          COLUMN-1
          MS    R1,=F'80'          R1=ROW*SCREEN WIDTH
@@ -543,6 +582,31 @@ RELPOS   EQU   *
          BCTR  R1,0               -1 FOR OFFSET 0
          LR    R7,R1              REPLACE INPUT WITH RESULT
          BR    R14                RETURN
+RELCOL   DS    F                  MAP COL AS OFFSET 1
+RELROW   DS    F                  MAP ROW AS OFFSET 0
+*
+WRAP     EQU   *
+* WHEN WE INCREMENT THE POS FOR ANY REASON, WE MUST TEST TO SEE
+* IF THE COL EXCEEDS THE MAP SIZE. IF IT DOES AN SBA MUST BE
+* INSERTED TO PLACE THE DATA BYTE ON THE NEXT ROW.
+* THIS INCLUDES WRAPPING FROM END TO START OF SCREEN.
+*
+* R7  = POSITION IN THE 24X80 SCREEN AFTER INCREMENT
+*
+         ASI   RELCOL,1           MAP COLUMN+1
+         CLC   RELCOL+3(1),BMSMW  WRAPPED ROW ?
+         BNHR  R14                RETURN IF NOT
+* ROW WRAP HAS OCCURRED
+         MVI   RELCOL+3,X'01'     SET MAP COLUMN=1
+         ASI   RELROW,2           NEXT MAP ROW AS OFFSET 1
+         CLC   RELROW+3(1),BMSML  WRAPPED SCREEN ?
+         BNH   WRAPNTSC           EXIT IF NOT
+* SCREEN WRAP HAS OCCURRED
+         MVI   RELROW+3,X'01'     SET MAP ROW=1
+WRAPNTSC EQU   *
+         ASI   RELROW,-1          RETURN ROW TO OFFSET 0
+         LM    R0,R1,RELCOL       RESTORE MAP COL/ROW
+         B     RELWRAP            EXIT
 *
 SBACONV  EQU   *
 * CONVERT POSITION TO SBA
@@ -550,6 +614,7 @@ SBACONV  EQU   *
 * R7  = POSITION
 * R12 = RESULT
 *
+         STM   R0,R1,SBAR0R1      SAVE R0-R1
          SR    R0,R0              CLEAR R0
          LR    R1,R7              R1=POSITION
          D     R0,=F'64'          R0=COL OFFSET  R1=ROW OFFSET
@@ -558,40 +623,138 @@ SBACONV  EQU   *
          LR    R1,R0              SET COL OFFSET
          LA    R15,SBATAB(R1)     R15=SBA TABLE ADDRESS+COL INDEX
          ICM   R12,1,0(R15)       INSERT LOW SBA
+         LM    R0,R1,SBAR0R1      RESTORE R0-R1
          BR    R14                RETURN
+SBAR0R1  DS    2F
 *
 DATAMOVE EQU   *
 * MOVE DATA TO OUTPUT, ELIMINATE NULLS
 * IF 1ST BYTE OF DATA=X'FF' IT'S A SPECIAL XINIT, USE RA FOR THIS
+* IF A SPECIAL XINIT WRAPS ROW/SCREEN WE ONLY GENERATE RA FOR 5 OR
+* MORE CHARS, OTHERWISE GENERATE REPEATED CHARS
 *
 * R1 = DATA ADDRESS
 * R6 = OUTPUT POINTER
 *
          LH    R0,BMSFL           R0=DATA LENGTH
          CLI   0(R1),X'FF'        IS IT SPECIAL XINIT ?
-         BNE   DATLOOP            EXIT IF NOT
+         BNE   DATSTRNG           EXIT IF NOT
 * SPECIAL XINIT PROCESSING
+         ST    R14,DATAR14        SAVE RETURN ADDRESS
+         ASI   RELCOL,1           MAP COLUMN+1
+         AHI   R7,1               BUMP POSITION
+DATXCYCL EQU   *
+         L     R2,RELCOL          R2=CURRENT COLUMN
+         AR    R2,R0              + (REMAINING) LENGTH
+         CLM   R2,1,BMSMW         WILL ROW WRAP ?
+         BH    DATRWRAP           EXIT IF IT WILL
+         LR    R2,R0              R2=(REMAINING) LENGTH
+         B     DATXROW            EXIT
+*
+DATRWRAP EQU   *
+* ROW WRAP WILL OCCUR
+         SR    R2,R2              CLEAR R2
+         IC    R2,BMSMW           R2=MAP WIDTH
+         S     R2,RELCOL          -COLUMN
+         AHI   R2,1               +1 = NO. OF CHARS TO GENERATE
+         BNZ   DATXROW            EXIT IF ZERO
+         AHI   R7,1               BUMP POSITION
+         B     DATXWRAP           EXIT
+*
+DATXROW  EQU   *
+* SOME CHARS GO ON THIS ROW
+         CHI   R2,4               USE RA IF >4 ?
+         BH    DATXRA             EXIT IF WE DO
+* MOVE REPEATED CHARS
+* SBA IS NEEDED IF WE DIDN'T JUST GENERATE AN SF OR A WRAP SBA
+         AHI   R6,-3              DATA POINTER-3
+         CLI   0(R6),SBA          DID WE SET AN SBA ?
+         BE    DATXCHAR           EXIT IF WE DID
+         CLI   1(R6),SF           DID WE SET AN ATTRIBUTE BYTE ?
+         BE    DATXCHAR           EXIT IF WE DID
+* WE NEED AN SBA
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   3(R6),SBA          SET
+         STH   R12,4(R6)              SBA
+         AHI   R6,3               BUMP OUTPUT POINTER
+DATXCHAR EQU   *
+         L     R14,RELCOL         R14=CURRENT COLUMN
+         AR    R14,R2             + NO. OF CHARS GENERATED
+         ST    R14,RELCOL         SAVE IT
+         AHI   R6,3               BUMP OUTPUT POINTER
+DATXLOOP EQU   *
+         MVC   0(1,R6),1(R1)      SET CHAR
+         AHI   R6,1               BUMP OUTPUT POINTER
+         AHI   R7,1               BUMP DATA POSITION
+         BCTR  R0,0               ADJUST LENGTH
+         BCT   R2,DATXLOOP        LOOP
+         B     DATXWRAP           EXIT
+*
+DATXRA   EQU   *
+* GENERATE RA FOR (PART OF) THE STRING
          MVI   0(R6),RA           MOVE RA ORDER
          MVC   3(1,R6),1(R1)      SET CHAR TO REPEAT
-         AR    R7,R0              STOP ADDRESS
-         AHI   R7,1                            FOR RA
-         ST    R14,DATAMR14       SAVE RETURN ADDRESS
+         AR    R7,R2              R7=STOP ADDRESS FOR RA
+         L     R14,RELCOL         R14=CURRENT COLUMN
+         AR    R14,R2             + NO. OF CHARS GENERATED
+         ST    R14,RELCOL         SAVE IT
          BAL   R14,SBACONV        CONVERT TO SBA
-         L     R14,DATAMR14       RESTORE RETURN ADDRESS
          STH   R12,1(R6)          SET ENDING SBA
          AHI   R6,4               BUMP OUTPUT POINTER
+         SR    R0,R2              ADJUST LENGTH
+DATXWRAP EQU   *
+         LTR   R0,R0              ANY MORE TO DO ?
+         BZ    DATRTRN            EXIT IF NOT
+         STM   R0,R1,DATAR0R1     SAVE R0-R1
+         ST    R7,DATAR7          SAVE R7
+         BAL   R14,WRAP           TEST FOR ROW/SCREEN WRAP
+         LM    R0,R1,DATAR0R1     RESTORE R0-R1
+         C     R7,DATAR7          DID R7 CHANGE ?
+         BE    DATXCYCL           EXIT IF NOT
+* DATA HAS WRAPPED, WE NEED AN SBA
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         AHI   R6,3               BUMP OUTPUT POINTER
+         B     DATXCYCL           GO PROCESS MORE DATA
+*
+DATRTRN  EQU   *
+         L     R14,DATAR14        RESTORE RETURN ADDRESS
          BR    R14                RETURN
 *
+DATSTRNG EQU   *
+         LR    R15,R6             SAVE DATA POINTER
+         AHI   R15,-2             DATA POINTER-2
+         CLI   0(R15),SF          DID WE SET AN ATTRIBUTE BYTE ?
+         BNE   DATMOVE            EXIT IF NOT
 DATLOOP  EQU   *
+         AHI   R7,1               BUMP DATA POSITION
+         STM   R0,R1,DATAR0R1     SAVE R0-R1
+         ST    R7,DATAR7          SAVE R7
+         ST    R14,DATAR14        SAVE RETURN ADDRESS
+         BAL   R14,WRAP           TEST FOR ROW/SCREEN WRAP
+         C     R7,DATAR7          DID R7 CHANGE ?
+         BE    DATOK              EXIT IF NOT
+* DATA HAS WRAPPED, WE NEED AN SBA
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         AHI   R6,3               BUMP OUTPUT POINTER
+DATOK    EQU   *
+         LM    R0,R1,DATAR0R1     RESTORE R0-R1
+         L     R14,DATAR14        RESTORE RETURN ADDRESS
+DATMOVE  EQU   *
          CLI   0(R1),X'00'        NULL ?
-         BE    DATINCR            EXIT IF IT IS
+         BE    DATNULL            EXIT IF IT IS
          MVC   0(1,R6),0(R1)      MOVE DATA BYTE
-DATINCR  EQU   *
-         AHI   R1,1               BUMP DATA POINTER
          AHI   R6,1               BUMP OUTPUT POINTER
+DATNULL  EQU   *
+         AHI   R1,1               BUMP DATA POINTER
          BCT   R0,DATLOOP         LOOP
          BR    R14                RETURN
-DATAMR14 DS    F
+DATAR0R1 DS    2F
+DATAR7   DS    F
+DATAR14  DS    F
 *
 PIC      EQU   *
 * PROCESS PICOUT (IF ANY)
@@ -667,6 +830,9 @@ PICBUMP  EQU   *
          AHI   R14,1              BUMP POINTER
          CLI   0(R14),X'00'       IS IT END ?
          BNE   PICEDLP            LOOP IF NOT
+         AHI   R6,1               R6=ACTUAL DIGITS USED
+         CR    R6,R15             MORE OUTPUT THAN EDIT WORD DIGITS ?
+         BH    MAPFAIL8           ERROR IF IT IS
 *
          SRL   R15,1              INT(N/2)
          LNR   R15,R15            -INT(N/2)
@@ -729,6 +895,9 @@ P1804DNY EQU   X'08'                 DATAONLY
 P1804ALM EQU   X'04'                 ALARM
 P1804FKB EQU   X'02'                 FREEKB
 P1804FRS EQU   X'01'                 FRSET
+         DS    X                  FF=NOHANDLE
+P1804RSP DS    AL4                RESP
+P1804RS2 DS    AL4                RESP2
 P1804END EQU   *                  END MARKER
 *
          DFHEIBLK                 EIB

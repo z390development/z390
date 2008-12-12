@@ -25,16 +25,17 @@ BMSMS    DS    XL2                MAP LENGTH
 BMSMSI   DS    XL2                INPUT WORK AREA LENGTH
 BMSMSO   DS    XL2                OUTPUT WORK AREA LENGTH
 BMSMODE  DS    X                  MAP DESCRIPTOR FLAG BYTE
-BMSMODO  EQU   X'80'                 MODE=OUT
-BMSMODI  EQU   X'40'                 MODE=IN
-BMSMODIO EQU   X'C0'                 MODE=INOUT
+*MSMODO  EQU   X'80'                 MODE=OUT
+*MSMODI  EQU   X'40'                 MODE=IN
+*MSMODIO EQU   X'C0'                 MODE=INOUT
+BMSMHEXT EQU   X'20'                 TIOAPFX=YES
 BMSWCC   DS    X                  WCC
 BMSCURSR DS    XL2                CURSOR POSITION (FROM ATTRB IC)
 BMSMARG  DS    X                  MAP MARGIN
-BMSMARGB EQU   X'08'                 JUSTIFY=BOTTOM
-BMSMARGR EQU   X'04'                 JUSTIFY=RIGHT
-BMSMARGL EQU   X'02'                 JUSTIFY=LAST
-BMSMARGF EQU   X'01'                 JUSTIFY=FIRST
+*MSMARGB EQU   X'08'                 JUSTIFY=BOTTOM
+*MSMARGR EQU   X'04'                 JUSTIFY=RIGHT
+*MSMARGL EQU   X'02'                 JUSTIFY=LAST
+*MSMARGF EQU   X'01'                 JUSTIFY=FIRST
 BMSML    DS    X                  NO. OF ROWS
 BMSMW    DS    X                  NO. OF COLUMNS
 BMSMSL   DS    X                  STARTING ROW NUMBER
@@ -42,8 +43,8 @@ BMSMSC   DS    X                  STARTING COLUMN NUMBER
 BMSMI    DS    X                  MAP INDICATORS
 *        EQU   X'10'                 MAP AT V1.6 OR GREATER
 BMSMICL  EQU   X'08'                 CURSOR IN FIELD IND REQUIRED
-BMSMIH   EQU   X'04'                 HEADER MAP
-BMSMIT   EQU   X'02'                 TRAILER MAP
+*MSMIH   EQU   X'04'                 HEADER MAP
+*MSMIT   EQU   X'02'                 TRAILER MAP
 *
 * FIELD STRUCTURE -- MULTIPLE PER MAP
 *

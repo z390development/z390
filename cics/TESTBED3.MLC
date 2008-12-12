@@ -52,6 +52,5 @@ LINE6END EQU   *-LINE6
 LINE6LEN DC    AL2(*-LINE6)
 *
          TN3270 SYMBOLS
-         EQUREGS
          END
 

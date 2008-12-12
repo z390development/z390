@@ -1,9 +1,9 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 DFHEISTG DSECT                    DSA STORAGE
 SENDWCC  DS    X
 SENDSBA  DS    CL3
@@ -86,6 +86,5 @@ SBA1     TN3270 (SBA,3,2)
 WCC      TN3270 WRT_EW
 *
          TN3270 SYMBOLS
-         EQUREGS
          END
 

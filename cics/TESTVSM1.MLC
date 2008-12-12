@@ -1,9 +1,9 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
          DFHEIGBL
          DFHEISTG
 MYDATA   DS    CL50               DATA AREA
@@ -14,14 +14,14 @@ MYRID2   DS    XL4                RIDFLD (RBA)
 MYRID8   DS    XL8                RIDFLD (XRBA)
 FWTSBA   DS    XL4                WCC,SBA FOR FOP MSG
 FWTMSG   DS    CL(FOPLN)          FOP MESSAGE
-TESTVSM1 DFHEIENT CODEREG=(R12,R3,R4,R5,R6)
+TESTVSM1 DFHEIENT CODEREG=(R12,R3)
 *
 * TEST VSAM 1
 *
 * ESDS/VAR MYFILE01 READ RBA  REC  3
 * ESDS/VAR MYFILE01 READ RBA  REC  2
 * ESDS/VAR MYFILE01 READ XRBA REC  1
-* FILENOTFOUND CONDITION RAISED
+* DSIDERR      CONDITION RAISED (FILENOTFOUND)
 * DISABLED     CONDITION RAISED
 * NOTOPEN      CONDITION RAISED
 * NOTFND       CONDITION RAISED (READ INVALID RBA)
@@ -74,6 +74,11 @@ NOTADJC  EQU   *
          MVC   FOPRECNO,=C'  2'   SET RECORD NUMBER IN MESSAGE
          MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
          EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+* MAKE SURE SET WORKS
+         MVC   MYRID8,=FL8'0'     RIDFLD=0  RECORD 1
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         EXEC  CICS READ FILE('MYFILE01') SET(R9) LENGTH(MYLEN)        X
+               RIDFLD(MYRID8) XRBA
 *
          MVC   MYRID8,=FL8'0'     RIDFLD=0  RECORD 1
          MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
@@ -89,7 +94,7 @@ NOTADJC  EQU   *
 * RAISE SOME CONDITIONS, WE MAY NOT DO ALL THESE FOR EVERY FUNCTION
 *
          EXEC  CICS HANDLE CONDITION                                   X
-               FILENOTFOUND(VSAMFNF)                                   X
+               DSIDERR(VSAMFNF)                                        X
                DISABLED(VSAMDIS)                                       X
                NOTFND(VSAMNOTF)                                        X
                LENGERR(VSAMLNG)                                        X
@@ -98,7 +103,7 @@ NOTADJC  EQU   *
                INVREQ(VSAMINV)                                         X
                ILLOGIC(VSAMILL)
 *
-* FILENOTFOUND
+* FILENOTFOUND=DSIDERR
          MVC   FWTSBA,FOP4        MOVE WCC,SBA
          MVC   FOPNAME,=CL8'FRED' SET FILENAME IN MESSAGE
          MVC   FOPRECNO,=C'  1'   SET RECORD NUMBER IN MESSAGE
@@ -546,6 +551,5 @@ WORK     DS    XL5
 TABLE    DC    C'0123456789ABCDEF'
 *
          TN3270 SYMBOLS
-         EQUREGS
          END
 

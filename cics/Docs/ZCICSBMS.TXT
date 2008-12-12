@@ -30,11 +30,12 @@ mapset  DFHMSD  TYPE=MAP/DSECT/FINAL
                 CTRL=
                 CURSLOC=YES/NO
                 STORAGE=AUTO
-                TIOAPFX=NO
+                TIOAPFX=YES/NO
+                TERM=
 
 Notes:
    LANG=ASM is the only option supported.
-   TIOAPFX=YES is not supported.
+   TERM= is supported but discarded
 
 Errors:
    A MAXIMUM OF 3 OPERANDS ALLOWED IN CTRL
@@ -59,17 +60,17 @@ mapname DFHMDI  TYPE=MAP/DSECT
                 LINE=1
                 COLUMN=1
                 STORAGE=AUTO
-                TIOAPFX=NO
+                TIOAPFX=YES/NO
+                JUSTIFY=
 Notes:
-   TYPE, STORAGE and TIOAPFX are required here only if the DFHMSD macro
-   is omitted.
+   TYPE and STORAGE are required here only if the DFHMSD macro is
+   omitted.
 
    LANG=ASM is the only option supported.
-   TIOAPFX=YES is not supported.
 
-   Parameters TYPE, MODE, LANG, CTRL, CURSLOC, STORAGE, and TIOAPFX
-   can all be omitted if the settings specified in DFHMSD are correct
-   for this map.
+   Parameters TYPE, MODE, LANG, CTRL, CURSLOC, STORAGE and TIOAPFX can
+   all be omitted if the settings specified in DFHMSD are correct for
+   this map.
 
    MODE may be specified as an override to DFHMSD.
    This facility is an extension.
@@ -79,13 +80,17 @@ Notes:
 
    For LINE and COLUMN, only numeric parameters are supported.
 
+   JUSTIFY is discarded.
+
 Errors:
    A MAXIMUM OF 3 OPERANDS ALLOWED IN CTRL
+   COLUMN CANNOT EXCEED nn
    INVALID CTRL OPTION - ctrl
    INVALID CURSLOC -- cursloc
    INVALID MODE -- mode
    INVALID SIZE -- size
    INVALID TIOAPFX -- tioapfx
+   LINE CANNOT EXCEED nn
    MAPNAME IS MISSING
    MSD AND MDI TYPE MISMATCH
    POSITIONAL OPERAND xxxx INVALID
@@ -103,6 +108,8 @@ fldname DFHMDF  POS=n/(n,n)
                 GRPNAME=
 
 Notes:
+   POS does not have to be in sequence.
+
    If ATTRB is missing then ATTRB=(ASKIP,NORM) is assumed.
    If protection or intensity parameters are missing then a sensible
    default is assumed.
@@ -127,8 +134,8 @@ Extensions:
       Code XINIT=FF6D
 
    PICIN and PICOUT
-      Previously only available for COBOL and PL/I, it is now available
-      for assembler.
+      Previously only available for COBOL and PL/I, they are now
+      available for assembler.
 
       The parameter is (almost) a standard edit word with some
       restraints.
@@ -150,8 +157,8 @@ Extensions:
       The edit word has some strict rules at present. Suggested
       extensions are most welcome.
 
-      The first hex pair must be 40, 5C, 5B or 4D (blank, asterisk,
-      dollar, open bracket).
+      The first hex pair must be 40 (blank), 5C (asterisk), 5B (dollar)
+      or 4D (open bracket).
       Blank and asterisk are fill characters, dollar and open bracket
       are float characters.
 
@@ -239,7 +246,7 @@ Please report them.
 
 Map generation
 --------------
-See the sample MAP01.BAT.
+See the sample generation for MAP01 embedded in DFHALL.BAT.
 This generates the TYPE=DSECT (MAP01.CPY) and the TYPE=MAP (MAP01.390).
 
 As the program name is the same, the TYPE=DSECT assembler output is
@@ -247,6 +254,11 @@ renamed mapset.PR1.
 
 Change Summary
 --------------
+November 24, 2008
+   Added comment about POS
+   TIOAPFX is fully supported
+   TERM is supported but discarded
+   Extra error checking for LINE/COLUMN
 
 Trademarks
 ----------
@@ -254,7 +266,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 27, 2008
-Z390 version: V1.4.02
-Z390/CICS version: V5
+Shipping Date: November 24, 2008
+Z390 version: V1.4.04
+Z390/CICS version: V6
 

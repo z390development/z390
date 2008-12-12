@@ -117,12 +117,15 @@ b) CEMT
    The commands shown below are the minimum abbreviations, the full
    text may also be typed, eg. CEMT INQUIRE TERMINAL
 
-   CEMT I TER       Displays the state of all terminals.
-
-   CEMT I TRA       Displays the PCT.
+   CEMT I ENQ       Displays the QEA (ENQ) chain
                     Page forward/back not yet implemented.
 
    CEMT I FIL       Displays the FCT.
+                    Page forward/back not yet implemented.
+
+   CEMT I TER       Displays the state of all terminals.
+
+   CEMT I TRA       Displays the PCT.
                     Page forward/back not yet implemented.
 
    CEMT I SYS       Displays the Z390CICS.INI file.
@@ -152,6 +155,7 @@ Change Summary
 --------------
 June 27, 2008
    Added CEMT conversational mode.
+   Added CEMT I ENQ
 
 Trademarks
 ----------
@@ -159,7 +163,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 27, 2008
-Z390 version: V1.4.02
-Z390/CICS version: V5
+Shipping Date: November 24, 2008
+Z390 version: V1.4.04
+Z390/CICS version: V6
 

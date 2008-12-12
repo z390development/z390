@@ -22,6 +22,14 @@ LCL1812  SUBENTRY
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P1812RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P1812RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
          L     R6,P1812OUT        R6=OUTPUT AREA
 * SET UP ESC,WRT
          MVI   0(R6),ESC          ESCAPE
@@ -136,6 +144,8 @@ P1812CSM EQU   X'20'                 SYMBOLIC CURSOR
 P1812ALM EQU   X'04'                 ALARM
 P1812FKB EQU   X'02'                 FREEKB
 P1812FRS EQU   X'01'                 FRSET
+P1812RSP DS    AL4                RESP
+P1812RS2 DS    AL4                RESP2
 P1812END EQU   *                  END MARKER
 *
          DFHEIBLK                 EIB

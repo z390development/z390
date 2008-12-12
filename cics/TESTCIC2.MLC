@@ -24,6 +24,5 @@ MSG1SBA  TN3270 (SBA,2,2)
 MSG1     DC    C'TESTCIC2 SAYS HELLO'
 *
          TN3270 SYMBOLS
-         EQUREGS
          END
 

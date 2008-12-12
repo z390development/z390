@@ -1,0 +1,115 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+* WE CANNOT HAVE A CONVENTIONAL ENTRY
+* A FIXED SAVEAREA WOULD PREVENT LINK A TO B TO C TO A
+* WE CANNOT RETURN HERE AFTER BR R0, POST PROC IS IN THE MACRO
+* MUST OBEY THE MACRO RULES, NO EXTRA REGS
+LCL0E02  CSECT
+*
+* FN=0E02  EXEC CICS LINK
+*
+* R1  >>> P0E02 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         USING (P0E02,P0E02END),R1
+         USING *,R12
+         LR    R0,R12             R0=SAVED R12
+         LR    R12,R15            SET BASE
+         ST    R0,SAVER12         SAVE ORIGINAL R12
+         USING DFHEIBLK,DFHEIBR
+         USING DFHTCTTE,TCTTEAR
+         USING DFHEISTG,R13
+         MVC   EIBFN,P0E02FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R15,15,P0E02RSP    R15=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R15),0(R15)    CLEAR RESP
+NORESP   EQU   *
+         ICM   R15,15,P0E02RS2    R15=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R15),0(R15)    CLEAR RESP2
+NORESP2  EQU   *
+         MVC   BLDLNAME,P0E02PGM  MOVE PROGRAM FOR BLDL
+         MVC   EIBRSRCE,P0E02PGM  SET EIBRSRCE
+         MVC   EIBPROG,P0E02PGM   SET EIBPROG
+         LR    R0,R1              SAVE PARM POINTER
+         BLDL  0,BLDLLIST         BLDL
+         LR    R1,R0              RESTORE PARM POINTER
+         LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
+         BZ    LOADOK             EXIT IF OK
+* INVOKE PGMIDERR
+         MVI   EIBRCODE,X'01'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(PGMIDERR) SET EIBRESP=PGMIDERR
+         MVC   EIBRESP2,=F'3'     SET EIBRESP2=PROGRAM NOT FOUND
+         ICM   R15,15,P0E02RSP    R15=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R15),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R15,15,P0E02RS2    R15=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R15),EIBRESP2  SET RESP2
+         B     RETURN             EXIT
+*
+LOADOK   EQU   *
+* LINK LEVEL 0 HAS NO EISTG
+         CLI   P0E02LV0,X'FF'     LINK LEVEL 0 ?
+         BE    ALLDONE            EXIT IF IT IS
+         MVC   DFHEICAL,EIBCALEN  SAVE EIB COMMAREA LENGTH
+         ICM   R15,15,P0E02COM    ANY COMMAREA ADDRESS ?
+         BNZ   GOTCOMM            EXIT IF WE HAVE ONE
+* NO COMMAREA
+         XC    DFHEICAP,DFHEICAP  CLEAR COMMAREA ADDRESS
+         XC    EIBCALEN,EIBCALEN  CLEAR COMMAREA LENGTH
+         B     ALLDONE            EXIT
+*
+GOTCOMM  EQU   *
+* WE HAVE A COMMAREA
+         ST    R15,DFHEICAP       SET COMMAREA ADDRESS
+         MVC   EIBCALEN,P0E02CLN  SET COMMAREA LENGTH
+ALLDONE  EQU   *
+         LH    R0,TCTTELNK        R0=CURRENT LINK LEVEL
+         AHI   R0,1               +1
+         STH   R0,TCTTELNK        STORE BACK
+         ST    R1,SAVER1          SAVE PARM POINTER
+         LOAD  EPLOC=EIBRSRCE
+         L     R1,SAVER1          RESTORE PARM POINTER
+         LA    R1,P0E02COM        R1=A(COMMAREA)
+         L     R12,SAVER12        RESTORE ORIGINAL R12
+         BR    R0                 GO TO ENTRY POINT
+*
+RETURN   EQU   *
+         L     R12,SAVER12        RESTORE ORIGINAL R12
+         BR    R14                RETURN
+*
+SAVER1   DS    F                  SAVE R1
+SAVER12  DS    F                  SAVE R12
+*
+BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
+         DC    H'12'              BLDL ENTRY LENGTH
+BLDLNAME DS    CL8                BLDL ENTRY NAME TO FIND
+         DS    XL4
+*
+P0E02    DSECT
+P0E02FN  DS    XL2                FUNCTION CODE
+P0E02PGM DS    CL8                PROGRAM
+P0E02COM DS    AL4                COMMAREA ADDRESS
+P0E02CLN DS    XL2                COMMAREA LENGTH
+P0E02LV0 DS    X                  FF=LINK LEVEL 0
+         DS    X                  FF=NOHANDLE
+P0E02RSP DS    AL4                RESP
+P0E02RS2 DS    AL4                RESP2
+P0E02END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHEISTG                 DSA
+*
+         EQUREGS REGS=GPR
+*
+         END
+

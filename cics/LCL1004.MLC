@@ -1,0 +1,234 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL1004  SUBENTRY
+*
+* FN=1004  EXEC CICS DELAY
+*
+* R1  >>> P1004 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P1004,P1004END),R3
+         L     DFHEIBR,P1004EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P1004TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P1004FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P1004RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P1004RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         CLI   P1004INT,X'FF'     IS IT INTERVAL/TIME ?
+         BNE   UNTFOR             NO, EXIT TO UNTIL/FOR PROCESSING
+* INTERVAL/TIME
+* VALIDATE HHMMSS, MAX 995959
+         ZAP   INTCPY,P1004HMS    COPY IT
+         NC    INTCPY,=X'00000FFF' LEAVE SECS
+         CP    INTCPY,=P'0'       NEGATIVE ?
+         BL    INVREQ6            ERROR IF IT IS
+         CP    INTCPY,=P'59'      TOO MANY SECS ?
+         BH    INVREQ6            ERROR IF IT IS
+         ZAP   INTCPY,P1004HMS    COPY IT
+         NC    INTCPY,=X'000FF00F' LEAVE MINS
+         CP    INTCPY,=P'0'       NEGATIVE ?
+         BL    INVREQ5            ERROR IF IT IS
+         CP    INTCPY,=P'5900'    TOO MANY MINS ?
+         BH    INVREQ5            ERROR IF IT IS
+         ZAP   INTCPY,P1004HMS    COPY IT
+         NC    INTCPY,=X'FFF0000F' LEAVE MINS
+         CP    INTCPY,=P'0'       NEGATIVE ?
+         BL    INVREQ4            ERROR IF IT IS
+         CP    INTCPY,=P'990000'  TOO MANY HOURS ?
+         BH    INVREQ4            ERROR IF IT IS
+* CONVERT TO SECS
+         ZAP   INTCPY,P1004HMS    COPY IT
+         NC    INTCPY,=X'00000FFF' LEAVE SECS
+         SP    INTDEC,INTDEC      CLEAR WORK AREA
+         AP    INTDEC,INTCPY      ADD SECS
+         ZAP   INTCPY,P1004HMS    COPY IT
+         NC    INTCPY,=X'000FF00F' LEAVE MINS
+         SRP   INTCPY,64-2,0      /100 = MINS
+         MP    INTCPY,=P'60'      *60  = SECS
+         AP    INTDEC,INTCPY      ADD MINS*60
+         ZAP   INTCPY,P1004HMS    COPY IT
+         NC    INTCPY,=X'FFF0000F' LEAVE MINS
+         SRP   INTCPY,64-4,0      /10000 = HOURS
+         MP    INTCPY,=P'3600'    *3600  = SECS
+         AP    INTDEC,INTCPY      ADD HOURS*3600
+         SRP   INTDEC,2,0         *100 = 0.01 SECS
+GODELAY  EQU   *
+         CVB   R1,INTDEC          CONVERT TO BINARY
+         ST    R1,INTBIN          SAVE REQUESTED TIME
+         CLI   P1004TME,X'FF'     IS IT TIME ?
+         BNE   GOINT              EXIT IF INTERVAL
+* PROCESSING FOR TIME
+         TIME  BIN                GET TIME NOW IN 0.01 SECS
+* IF REQUESTED TIME-TIME NOW = 0 TO -6 TIME HAS EXPIRED
+         L     R1,INTBIN          LOAD REQUESTED TIME
+         SR    R1,R0              R1=PERIOD TO ELAPSE
+         BZ    EXPIRED            EXIT IF ZERO
+         BP    PEROK              EXIT IF +VE
+         C     R1,=AL4(-6*60*60*100) LESS THAN 6 HOURS ?
+         BNL   EXPIRED            EXIT IF IT IS
+PEROK    EQU   *
+* IF REQUESTED TIME-(TIME NOW+24 HOURS) = 0 TO -6 TIME HAS EXPIRED
+         ST    R1,LAPSE           SAVE REQ-NOW
+         A     R0,=AL4(24*60*60*100) ADD 24 HOURS
+         L     R1,INTBIN          LOAD REQUESTED TIME
+         SR    R1,R0              R1=PERIOD TO ELAPSE - 24 HOURS
+         BZ    EXPIRED            EXIT IF ZERO
+         BP    P24OK              EXIT IF +VE
+         C     R1,=AL4(-6*60*60*100) LESS THAN 6 HOURS ?
+         BNL   EXPIRED            EXIT IF IT IS
+P24OK    EQU   *
+* IF REQUESTED TIME-TIME NOW > 0  THEN THAT IS THE PERIOD TO USE
+         L     R1,LAPSE           LOAD REQ-NOW
+         ST    R1,INTBIN          SAVE REQ-NOW
+         LTR   R1,R1              +VE TIME ?
+         BP    NOTEXP             EXIT IF IT IS
+* IF REQUESTED TIME-TIME NOW < -6 THEN ADD 24 HOURS FOR THE PERIOD
+         A     R1,=AL4(24*60*60*100) ADD 24 HOURS
+         ST    R1,INTBIN          SAVE REQ-NOW+24 HOURS
+         B     NOTEXP             EXIT
+*
+GOINT    EQU   *
+* PROCESSING FOR INTERVAL
+         LTR   R1,R1              ZERO PERIOD ?
+         BZ    EXPIRED            EXIT IF IT IS
+NOTEXP   EQU   *
+         STIMER WAIT,BINTVL=INTBIN WAIT A WHILE
+         B     RETURN             EXIT
+*
+UNTFOR   EQU   *
+* UNTIL/FOR PROCESSING
+*
+* HOURS MINUTES SECONDS ... ALL 3 OR ANY 2 FORM INTERVAL (FOR) OR
+* TIME (UNTIL). HOURS (0-99), MINUTES (0-59), SECONDS (0-59)
+*
+* A SINGLE PARAMETER FORMS HOURS (0-99), MINUTES (0-5999) OR
+* SECONDS (0-359999)
+*
+         CLI   P1004IND,X'FF'     MORE THAN 1 PARM ?
+         BNE   ONLY1              EXIT IF NOT
+* MORE THAN ONE PARM
+         CP    P1004HRS,=P'0'     NEGATIVE ?
+         BL    INVREQ4            ERROR IF IT IS
+         CP    P1004HRS,=P'99'    TOO MANY HOURS ?
+         BH    INVREQ4            ERROR IF IT IS
+         ZAP   INTDEC,P1004HRS    HOURS IN WORK AREA
+         MP    INTDEC,=P'360000'  CONVERT TO 0.01 SECS
+         CP    P1004MIN,=P'0'     NEGATIVE ?
+         BL    INVREQ5            ERROR IF IT IS
+         CP    P1004MIN,=P'59'    TOO MANY MINUTES ?
+         BH    INVREQ5            ERROR IF IT IS
+         ZAP   WORK,P1004MIN      MINS IN WORK AREA
+         MP    WORK,=P'6000'      CONVERT TO 0.01 SECS
+         AP    INTDEC,WORK        SUM IT
+         CP    P1004SEC,=P'0'     NEGATIVE ?
+         BL    INVREQ6            ERROR IF IT IS
+         CP    P1004SEC,=P'59'    TOO MANY SECONDS ?
+         BH    INVREQ6            ERROR IF IT IS
+         ZAP   WORK,P1004SEC      SECS IN WORK AREA
+         MP    WORK,=P'100'       CONVERT TO 0.01 SECS
+         AP    INTDEC,WORK        SUM IT
+         B     GODELAY            EXIT
+*
+ONLY1    EQU   *
+* ONLY 1 PARM
+         CP    P1004HRS,=P'0'     NEGATIVE ?
+         BL    INVREQ4            ERROR IF IT IS
+         BE    DOMINS             EXIT IF ZERO
+         CP    P1004HRS,=P'99'    TOO MANY HOURS ?
+         BH    INVREQ4            ERROR IF IT IS
+         ZAP   INTDEC,P1004HRS    HOURS IN WORK AREA
+         MP    INTDEC,=P'360000'  CONVERT TO 0.01 SECS
+DOMINS   EQU   *
+         CP    P1004MIN,=P'0'     NEGATIVE ?
+         BL    INVREQ5            ERROR IF IT IS
+         BE    DOSECS             EXIT IF ZERO
+         CP    P1004MIN,=P'5999'  TOO MANY MINUTES ?
+         BH    INVREQ5            ERROR IF IT IS
+         ZAP   INTDEC,P1004MIN    MINS IN WORK AREA
+         MP    INTDEC,=P'6000'    CONVERT TO 0.01 SECS
+DOSECS   EQU   *
+         CP    P1004SEC,=P'0'     NEGATIVE ?
+         BL    INVREQ6            ERROR IF IT IS
+         BE    GODELAY            EXIT IF ZERO
+         CP    P1004SEC,=P'359999' TOO MANY SECONDS ?
+         BH    INVREQ6            ERROR IF IT IS
+         ZAP   INTDEC,P1004SEC    SECS IN WORK AREA
+         MP    INTDEC,=P'100'     CONVERT TO 0.01 SECS
+         B     GODELAY            EXIT
+*
+INVREQ4  EQU   *
+         MVC   EIBRESP2,=F'4'     SET EIBRESP2=BAD HOURS
+         B     INVREQ             EXIT
+*
+INVREQ5  EQU   *
+         MVC   EIBRESP2,=F'5'     SET EIBRESP2=BAD MINUTES
+         B     INVREQ             EXIT
+*
+INVREQ6  EQU   *
+         MVC   EIBRESP2,=F'6'     SET EIBRESP2=BAD SECONDS
+INVREQ   EQU   *
+* INVOKE INVREQ
+         MVI   EIBRCODE,X'FF'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         B     DORESP             EXIT
+*
+EXPIRED  EQU   *
+* INTERVAL(0) OR TIME HAS EXPIRED
+* INVOKE EXPIRED
+         MVI   EIBRCODE,X'20'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(EXPIRED) SET EIBRESP=EXPIRED
+DORESP   EQU   *
+         ICM   R14,15,P1004RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P1004RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         SUBEXIT
+*
+WORK     DC    PL8'0'             WOTK AREA
+INTDEC   DC    PL8'0'             INTERVAL IN 0.01 SECS
+INTCPY   DS    PL4                INTERVAL COPY AREA    0HHMMSS+
+INTBIN   DS    FL4                INTERVAL IN 0.01 SECS BINARY
+LAPSE    DS    FL4                TIME LAPSE IN 0.01 SECS BINARY
+*
+P1004    DSECT
+P1004FN  DS    XL2                FUNCTION CODE
+P1004EIB DS    AL4                EIB
+P1004TCT DS    AL4                TCTTE
+P1004INT DS    X                  FF=INTERVAL/TIME
+P1004TME DS    X                  00=INTERVAL/FOR  FF=TIME/UNTIL
+P1004HMS DS    PL4                0HHMMSS+
+P1004IND DS    X                  FF=MORE THAN 1 PARM IN NEXT 3
+P1004HRS DS    PL8                HOURS
+P1004MIN DS    PL8                MINUTES
+P1004SEC DS    PL8                SECONDS
+         DS    X                  FF=NOHANDLE
+P1004RSP DS    AL4                RESP
+P1004RS2 DS    AL4                RESP2
+P1004END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+*
+         EQUREGS REGS=GPR
+*
+         END
+

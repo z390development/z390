@@ -1,0 +1,117 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL020C  SUBENTRY
+*
+* FN=020C  EXEC CICS PUSH HANDLE
+*
+* R1  >>> P020C BLOCK POINTER
+* R14 = RETURN ADDRESS
+*
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P020C,P020CEND),R3
+         L     DFHEIBR,P020CEIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P020CTCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P020CFN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P020CRSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P020CRS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         USING DFHADBLK,R14
+         ICM   R14,15,P020CAID    ANY AID BLOCKS ?
+         BZ    NOAID              EXIT IF NONE
+*
+* PUSH AID BLOCK
+*
+AIDLOOP  EQU   *
+         OC    AIDCHAIN,AIDCHAIN  IS THERE A CHAIN ?
+         BZ    AIDEND             EXIT IF END OF CHAIN
+         L     R14,AIDCHAIN       R14=NEXT AID BLOCK
+         B     AIDLOOP            LOOP
+*
+AIDEND   EQU   *
+* R14=LAST AID BLOCK
+* GET ANOTHER AID BLOCK
+         LA    R1,AIDLENG         R1=AID BLOCK LENGTH
+         GETMAIN R,LV=(R1)
+         XC    0(AIDLENG,R1),0(R1) CLEAR AID BLOCK
+         ST    R1,AIDCHAIN        CHAIN AID BLOCK ADDRESS
+         MVC   0(8,R1),=C'DFHADBLK' SET HEADER
+NOAID    EQU   *
+         DROP  R14
+*
+* PUSH HANDLE CONDITION BLOCK
+*
+         USING DFHHCBLK,R14
+         ICM   R14,15,P020CHCN    ANY CONDITION BLOCKS ?
+         BZ    NOHCN              EXIT IF NONE
+HCNLOOP  EQU   *
+         OC    HCNCHAIN,HCNCHAIN  IS THERE A CHAIN ?
+         BZ    HCNEND             EXIT IF END OF CHAIN
+         L     R14,HCNCHAIN       R14=NEXT CONDITION BLOCK
+         B     HCNLOOP            LOOP
+*
+HCNEND   EQU   *
+* R14=LAST CONDITION BLOCK
+* GET ANOTHER CONDITION BLOCK
+         LA    R1,HCNLENG         R1=CONDITION BLOCK LENGTH
+         GETMAIN R,LV=(R1)
+         XC    0(256,R1),0(R1)    CLEAR CONDITION BLOCK
+         XC    256(HCNLENG-256,R1),256(R1) CLEAR CONDITION BLOCK
+         ST    R1,HCNCHAIN        CHAIN CONDITION BLOCK ADDRESS
+         MVC   0(8,R1),=C'DFHHCBLK' SET HEADER
+NOHCN    EQU   *
+         DROP  R14
+*
+* PUSH HANDLE ABEND BLOCK
+* THIS IS THE SAME AS EXEC CICS HANDLE ABEND CANCEL
+*
+         ICM   R14,15,TCTTEABD    ANY ABEND BLOCK ?
+         BZ    NOABD              EXIT IF NONE
+         USING ABDDEST,R14
+         LH    R1,TCTTELNK        R1=CURRENT LINK LEVEL
+         AHI   R1,-1              -1 FOR INDEX
+         MS    R1,=AL4(ABDLENG)   * ENTRY LENGTH
+         AR    R14,R1             R14=CORRECT ABEND BLOCK ENTRY
+         MVC   ABDACTIV,=X'FFFF'  SET ENTRY INACTIVE
+NOABD    EQU   *
+         DROP  R14
+         SUBEXIT
+*
+P020C    DSECT
+P020CFN  DS    XL2                FUNCTION CODE
+P020CEIB DS    AL4                EIB
+P020CTCT DS    AL4                TCTTE
+P020CAID DS    AL4                AID BLOCK ADDRESS
+P020CHCN DS    AL4                HANDLE CONDITION BLOCK ADDRESS
+P020CRSP DS    AL4                RESP
+P020CRS2 DS    AL4                RESP2
+P020CEND EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHADBLK                 HANDLE AID BLOCK
+         DFHHCBLK                 HANDLE CONDITION BLOCK
+         DFHABBLK                 HANDLE ABEND BLOCK
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R10 TCTTE
+* R11 EIB
+* R13 SAVE AREA AND BASE 1
+*
+         END
+

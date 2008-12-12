@@ -1,17 +1,17 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 05/06/06 RPI 308 ADD EXEC CICS SUPPORT FOR RECEIVE
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 05/06/06 RPI 308 ADD EXEC CICS SUPPORT FOR RECEIVE                 *
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.**********************************************************************
          MACRO
          CICS_RECEIVE
          GBLB  &PARMS_0402,&PARMS_1802
          LCLB  &NOHAND,&NOWAIT
-         LCLC  &INTO,&LENGTH,&MAP,&MAPSET
+         LCLC  &INTO,&FROM,&LENGTH,&MAP,&MAPSET,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
 .PLOOP   ANOP
@@ -19,9 +19,12 @@
          AIF   (&IP GT &NP).ELOOP
 &PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,5) EQ 'INTO(').INTO
+         AIF   ('&PARM'(1,5) EQ 'FROM(').FROM
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,6) EQ 'NOWAIT').NOWAIT
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
 .* ADDED FOR MAPPING SUPPORT
          AIF   ('&PARM'(1,4) EQ 'MAP(').MAP
          AIF   ('&PARM'(1,7) EQ 'MAPSET(').MAPSET
@@ -34,6 +37,10 @@
 &INTO    SETC  '&PARM'(6,K'&PARM-6)
          AGO   .PLOOP
 .*
+.FROM    ANOP
+&FROM    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
 .LENGTH  ANOP
 &LENGTH  SETC  '&PARM'(8,K'&PARM-8)
          AGO   .PLOOP
@@ -44,6 +51,15 @@
 .*
 .NOWAIT  ANOP
 &NOWAIT  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
          AGO   .PLOOP
 .*
 .MAP     ANOP
@@ -73,22 +89,24 @@
 .*
 .LENNUM  ANOP
          AIF   ('&LENGTH'(2,1) EQ '''').LENERR
-         AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
+         AIF   (T'&LENGTH NE 'N').LENLABL
 .LENERR  ANOP
          MNOTE 12,'LENGTH ERROR'
          MEXIT
 .*
 .LENLABL ANOP
-         L     R2,=A(P0402)       LOAD PARM ADDRESS
-         USING (P0402,P0402END),R2
+         L     R15,=A(P0402)      LOAD PARM ADDRESS
+         USING (P0402,P0402END),R15
+         XC    P0402(P0402END-P0402),P0402 CLEAR PARMS
+         MVC   P0402FN,=X'0402'   SET FUNCTION CODE
          ST    DFHEIBR,P0402EIB   SET EIB ADDRESS
          ST    TCTTEAR,P0402TCT   SET TCTTE ADDRESS
-         AIF   (&NOHAND).CLRADB
-         MVC   P0402ADB,DFHEIAID  SET AID BLOCK ADDRESS
+         AIF   (NOT &NOHAND).DOAID
+         MVI   P0402NOH,X'FF'     SET NOHANDLE
          AGO   .DUNADB
 .*
-.CLRADB  ANOP
-         XC    P0402ADB,P0402ADB  RESET AID BLOCK ADDRESS
+.DOAID   ANOP
+         MVC   P0402ADB,DFHEIAID  SET AID BLOCK ADDRESS
 .DUNADB  ANOP
          LA    R1,&INTO           R1=ADDRESS OF INTO
          ST    R1,P0402INT        SET A(INTO)
@@ -96,52 +114,49 @@
          STH   R1,P0402INL        SET L'INTO
          LA    R1,&LENGTH         R1=ADDRESS OF LENGTH
          ST    R1,P0402LEN        SET A(LENGTH)
-         AIF   (&NOHAND).DOHAND
-         MVI   P0402NOH,X'00'     RESET NOHANDLE
-         AGO   .TRYWAIT
-.*
-.DOHAND  ANOP
-         MVI   P0402NOH,X'FF'     SET NOHANDLE
-.TRYWAIT ANOP
-         AIF   (&NOWAIT).DOWAIT
-         MVI   P0402NOW,X'00'     RESET NOWAIT
-         AGO   .DUNWAIT
-.*
-.DOWAIT  ANOP
+         AIF   (NOT &NOWAIT).DUNWAIT
          MVI   P0402NOW,X'FF'     SET NOWAIT
 .DUNWAIT ANOP
-         CALL  LCL0402,(P0402),MF=I CALL RECEIVE PROCESSOR
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R1,&RESP           ADDRESS OF RESP
+         ST    R1,P0402RSP        SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R1,&RESP2          ADDRESS OF RESP2
+         ST    R1,P0402RS2        SAVE IT
+.NORESP2 ANOP
+         ZCALL LCL0402,(P0402),MF=I CALL RECEIVE PROCESSOR
+.*
+         L     R15,=A(P0402)      LOAD PARM ADDRESS
+         CLI   P0402NOH,X'FF'     NOHANDLE ?
+         BE    P0402BYP_&SYSNDX   EXIT IF IT IS
          OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
          BZ    P0402BYP_&SYSNDX   EXIT IF NONE
 * LENGERR
          DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
-         DC    AL4(P0402IGN_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
-*
-P0402IGN_&SYSNDX EQU *
-* RECALL RECEIVE TO HANDLE IGNORE
-         CALL  LCL0402,(P0402),MF=I CALL RECEIVE PROCESSOR
+         DC    AL4(P0402BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
 *
          AIF   (&PARMS_0402).BYP0402
-         B     P0402BYP_&SYSNDX   EXIT
-*
-         LTORG
-*
 &PARMS_0402 SETB 1
 P0402    EQU   *
-         DC    X'0402'            FUNCTION CODE
+P0402FN  DS    XL2                FUNCTION CODE
 P0402EIB DS    AL4                EIB
 P0402TCT DS    AL4                TCTTE
 P0402ADB DS    AL4                ADBLK
 P0402INT DS    AL4                INTO
 P0402INL DS    AL2                L'INTO
 P0402LEN DS    AL4                LENGTH
+P0402TGR DS    XL4                TGET RESPONSE
 P0402NOH DS    X                  FF=NOHANDLE
 P0402NOW DS    X                  FF=NOWAIT
+P0402RSP DS    AL4                RESP
+P0402RS2 DS    AL4                RESP2
 P0402END EQU   *                  END MARKER
+         DS    0H
 *
 .BYP0402 ANOP
 P0402BYP_&SYSNDX DS 0H
-         DROP  R2
+         DROP  R15
          MEXIT
 .*
 .MAPPING ANOP
@@ -155,50 +170,84 @@ P0402BYP_&SYSNDX DS 0H
          MEXIT
 .*
 .LENOK   ANOP
-         L     R2,=A(P1802)       LOAD PARM ADDRESS
-         USING (P1802,P1802END),R2
+         AIF   ('&FROM' EQ '').FROMOK
+         MNOTE 12,'FROM NOT SUPPORTED'
+         MEXIT
+.*
+.FROMOK  ANOP
+         L     R15,=A(P1802)      LOAD PARM ADDRESS
+         USING (P1802,P1802END),R15
+         XC    P1802(P1802END-P1802),P1802 CLEAR PARMS
+         MVC   P1802FN,=X'1802'   SET FUNCTION CODE
          ST    DFHEIBR,P1802EIB   SET EIB ADDRESS
          ST    TCTTEAR,P1802TCT   SET TCTTE ADDRESS
-.*
+         AIF   (NOT &NOHAND).DUNNOH
+         MVI   P1802NOH,X'FF'     SET NOHANDLE
+.DUNNOH  ANOP
          AIF   ('&MAPSET' NE '').MSETOK
 &MAPSET  SETC  '&MAP'
 .MSETOK  ANOP
-&MAPLEN  SETA  K'&MAP
-         AIF   ('&MAP'(1,1) NE '''').BADMAP
-         AIF   (&MAPLEN LT 3 OR &MAPLEN GT 9).BADMAP
+         AIF   ('&MAP'(1,1) EQ '''').MAPSTRG
+.* MAP AS LABEL
+         MVC   P1804MAP,&MAP      MOVE MAPNAME FROM LABEL
+         AIF   ('&INTO' EQ '').BADINTO
+         LA    R14,&INTO          R14=MAP STRUCTURE ADDRESS
+         ST    R14,P1802DSC       SAVE IT
+         AGO   .DEFMPST
 .*
-         AIF   (T'&MAPSET EQ 'A').LOADIT
+.MAPSTRG ANOP
+.* MAP AS STRING
+&MAPLEN  SETA  K'&MAP
+         AIF   (&MAPLEN LT 3 OR &MAPLEN GT 9).BADMAP
+         MVC   P1802MAP,=CL7&MAP  MOVE MAPNAME AS STRING
+&MAPANDI SETC  '&MAP'(2,&MAPLEN-2).'I'
+&MAPANDL SETC  '&MAP'(2,&MAPLEN-2).'L'
+         AIF   ('&INTO' EQ '').DEFINTO
+         LA    R14,&INTO          R14=MAP STRUCTURE ADDRESS
+         ST    R14,P1802DSC       SAVE IT
+         AGO   .DOLEN
+.*
+.DEFINTO ANOP
+         LA    R14,&MAPANDI       R14=DEFAULT MAP STRUCTURE ADDRESS
+         ST    R14,P1802DSC       SAVE IT
+.DOLEN   ANOP
+         LA    R14,&MAPANDL       R14=MAP STRUCTURE LENGTH
+         STH   R14,P1802DSL       SAVE IT
+.DEFMPST ANOP
+         AIF   ('&MAPSET'(1,1) NE '''').LOADIT
+.* MAPSET AS STRING
 &MAPSLEN SETA  K'&MAPSET
          AIF   (&MAPSLEN LT 3 OR &MAPSLEN GT 9).BADMAPS
 .LOADIT  ANOP
          EXEC  CICS LOAD PROGRAM(&MAPSET) ENTRY(R14) LENGTH(P1802MLN)
+         L     R15,=A(P1802)      LOAD PARM ADDRESS
+         USING (P1802,P1802END),R15
          ST    R14,P1802MSA       SAVE MAPSET ADDRESS
-         MVC   P1802MAP,=CL7&MAP  MOVE MAPNAME
 .*
 .DUNMAP  ANOP
-&MAPANDS SETC  '&MAP'(2,&MAPLEN-2).'S'
-&MAPANDL SETC  '&MAP'(2,&MAPLEN-2).'L'
-         LA    R14,&MAPANDS       R14=MAP STRUCTURE ADDRESS
-         ST    R14,P1802DSC       SAVE IT
-         LA    R14,&MAPANDL       R14=MAP STRUCTURE LENGTH
-         STH   R14,P1802DSL       SAVE IT
-         CALL  LCL1802,(P1802),MF=I CALL RECEIVE MAP PROCESSOR
+         AIF   ('&RESP' EQ '').NORSPM
+         LA    R1,&RESP           ADDRESS OF RESP
+         ST    R1,P1802RSP        SAVE IT
+.NORSPM  ANOP
+         AIF   ('&RESP2' EQ '').NORSP2M
+         LA    R1,&RESP2          ADDRESS OF RESP2
+         ST    R1,P1802RS2        SAVE IT
+.NORSP2M ANOP
+         ZCALL LCL1802,(P1802),MF=I CALL RECEIVE MAP PROCESSOR
+.*
+         L     R15,=A(P1802)      LOAD PARM ADDRESS
+         CLI   P1802NOH,X'FF'     NOHANDLE ?
+         BE    P1802BYP_&SYSNDX   EXIT IF IT IS
          OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
-         BZ    P1802IGN_&SYSNDX   EXIT IF NONE
+         BZ    P1802BYP_&SYSNDX   EXIT IF NONE
 * MAPFAIL, INVMPSZ
          DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
-         DC    AL4(P1802IGN_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+         DC    AL4(P1802BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
 *
-P1802IGN_&SYSNDX EQU *
-         EXEC  CICS RELEASE PROGRAM(&MAPSET)
          AIF   (&PARMS_1802).BYP1802
-         B     P1802BYP_&SYSNDX   EXIT
-*
-         LTORG
-*
 &PARMS_1802 SETB 1
 P1802    EQU   *
-         DC    X'1802'            FUNCTION CODE
+P1802FN  DS    XL2                FUNCTION CODE
 P1802EIB DS    AL4                EIB
 P1802TCT DS    AL4                TCTTE
 P1802MSA DS    AL4                MAPSET ADDRESS
@@ -206,12 +255,16 @@ P1802MAP DS    CL7                MAP NAME
 P1802MLN DS    XL2                MAPSET LENGTH
 P1802DSC DS    AL4                STRUCTURE ADDRESS
 P1802DSL DS    AL2                STRUCTURE LENGTH
+P1802NOH DS    X                  FF=NOHANDLE
+P1802RSP DS    AL4                RESP
+P1802RS2 DS    AL4                RESP2
 P1802END EQU   *                  END MARKER
+         DS    0H
 *
-P1802BYP_&SYSNDX DS 0H
 .BYP1802 ANOP
-         DROP  R2
-*
+P1802BYP_&SYSNDX DS 0H
+         EXEC  CICS RELEASE PROGRAM(&MAPSET)
+         DROP  R15
          MEXIT
 .*
 .BADMAP  ANOP
@@ -222,5 +275,9 @@ P1802BYP_&SYSNDX DS 0H
          MNOTE 12,'INVALID MAPSET NAME'
          MEXIT
 .*
+.BADINTO ANOP
+         MNOTE 12,'INTO IS REQUIRED WHEN MAP IS A LABEL'
+         MEXIT
+*
          MEND
 

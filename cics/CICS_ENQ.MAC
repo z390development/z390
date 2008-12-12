@@ -1,0 +1,131 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_ENQ
+         GBLB  &PARMS_1204
+         LCLB  &NOSUS,&NOHAND
+         LCLC  &RES,&LENGTH,&RESP,&RESP2
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,9) EQ 'RESOURCE(').RES
+         AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,9) EQ 'NOSUSPEND').NOSUS
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.RES     ANOP
+&RES     SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.LENGTH  ANOP
+&LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.NOSUS   ANOP
+&NOSUS   SETB  1
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   ('&RES' EQ '').MISRES
+         L     R15,=A(P1204)      LOAD PARM ADDRESS
+         USING (P1204,P1204END),R15
+         XC    P1204(P1204END-P1204),P1204 CLEAR PARMS
+         MVC   P1204FN,=X'1204'   SET FUNCTION CODE
+         LA    R1,DFHEIHCN        ADDRESS OF DFHEIHCN
+         ST    R1,P1204HCN        SAVE IT
+         AIF   ('&LENGTH' NE '').GOTLEN
+.* NO LENGTH WARNING
+         MNOTE 0,'*** ENQ ON ADDRESS MAY NOT WORK IN Z390\CICS'
+         MNOTE 0,'*** BUT THE COMMAND WILL BE PROCESSED'
+         MNOTE 0,'*** PLEASE CONTACT THE AUTHOR FOR ADVICE'
+         AGO   .DUNLEN
+.*
+.GOTLEN  ANOP
+         AIF   (T'&LENGTH NE 'N').LENLABL
+         LA    R1,&LENGTH         R1=LENGTH
+         STH   R1,P1204LEN        SAVE IT
+         AGO   .DUNLEN
+.*
+.LENLABL ANOP
+         LH    R1,&LENGTH         R1=LENGTH FROM LABEL
+         STH   R1,P1204LEN        SAVE IT
+.DUNLEN  ANOP
+.* PROCESS RESOURCE
+.* ONLY THE RESOURCE ADDRESS IS PASSED, WE HAVE NOT VALIDATED LENGTH
+         LA    R1,&RES            R1=ADDRESS OF RESOURCE
+         ST    R1,P1204RES        SAVE IT
+         AIF   (NOT &NOSUS).DOCALL
+         MVI   P1204NOS,X'FF'     SET NOSUSPEND
+.DOCALL  ANOP
+         ST    DFHEIBR,P1204EIB   SET EIB ADDRESS
+         ST    TCTTEAR,P1204TCT   SET TCTTE ADDRESS
+         AIF   (NOT &NOHAND).DUNNOH
+         MVI   P1204NOH,X'FF'     SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R1,&RESP           ADDRESS OF RESP
+         ST    R1,P1204RSP        SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R1,&RESP2          ADDRESS OF RESP2
+         ST    R1,P1204RS2        SAVE IT
+.NORESP2 ANOP
+         ZCALL LCL1204,(P1204),MF=I CALL ENQ PROCESSOR
+.*
+         L     R15,=A(P1204)      LOAD PARM ADDRESS
+         CLI   P1204NOH,X'FF'     NOHANDLE ?
+         BE    P1204BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BZ    P1204BYP_&SYSNDX   EXIT IF NONE
+* ENQBUSY, LENGERR
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P1204BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_1204).BYP1204
+&PARMS_1204 SETB 1
+P1204    EQU   *
+P1204FN  DS    XL2                FUNCTION CODE
+P1204EIB DS    AL4                EIB
+P1204TCT DS    AL4                TCTTE
+P1204RES DS    AL4                RESOURCE ADDRESS
+P1204LEN DS    XL2                LENGTH
+P1204HCN DS    AL4                A(DFHEIHCN)
+P1204NOS DS    X                  FF=NOSUSPEND
+P1204NOH DS    X                  FF=NOHANDLE
+P1204RSP DS    AL4                RESP
+P1204RS2 DS    AL4                RESP2
+P1204END EQU   *                  END MARKER
+         DS    0H
+*
+.BYP1204 ANOP
+P1204BYP_&SYSNDX DS 0H
+         DROP  R15
+         MEXIT
+.*
+.MISRES  MNOTE 12,'RESOURCE IS MANDATORY'
+         MEXIT
+         MEND

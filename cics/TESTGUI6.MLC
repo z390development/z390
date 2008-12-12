@@ -231,6 +231,5 @@ HELPLEN  DC    AL2(*-SHOW_HELP)
 *
          COPY  DFHAID
          TN3270 SYMBOLS
-         EQUREGS
          END
 

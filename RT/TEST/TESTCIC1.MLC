@@ -16,6 +16,7 @@
 * 09/19/08 RPI 905 ADD DFHRESP DSIDERR=F'12'                  
 * 10/27/08 RPI 928 ADD DFHRESP TERMIDER,TRANSIDERR,IOERR,ENDDATA,
 *                      ENVDEFERR
+* 11/18/08 RPI 951 ADD DFHRESP ENQBUSY=F'55'                        
 *********************************************************************
 TESTCIC1 RT1   MAIN
          EQUREGS
@@ -46,6 +47,7 @@ X        DS    F
          MVC   X,DFHRESP(MAPFAIL)       RPI 841
          MVC   X,DFHRESP(INVMPSZ)       RPI 841
          MVC   X,DFHRESP(OVERFLOW)       RPI 841
+         MVC   X,DFHRESP(ENQBUSY)       RPI 951
          MVC   X,DFHRESP(DISABLED)      RPI 687
          MVC   X,DFHRESP(ILLOGIC)       RPI 729
          CLC   =F'0',DFHRESP(NORMAL)      
@@ -96,6 +98,8 @@ X        DS    F
          RT1   CCE
          CLC   =F'44',DFHRESP(QIDERR)    RPI 662
          RT1   CCE
+         CLC   =F'55',DFHRESP(ENQBUSY)   RPI 951      
+         RT1   CCE
          CLC   =F'56',DFHRESP(ENVDEFERR) RPI 928      
          RT1   CCE
          CLC   =F'84',DFHRESP(DISABLED)  RPI 687      
@@ -124,6 +128,7 @@ X        DS    F
          RT1   CCE,=F'38',DFHRESP(INVMPSZ)      RPI 841
          RT1   CCE,=F'40',DFHRESP(OVERFLOW)     RPI 841
          RT1   CCE,=F'44',DFHRESP(QIDERR)       RPI 662
+         RT1   CCE,=F'55',DFHRESP(ENQBUSY)      RPI 951      
          RT1   CCE,=F'56',DFHRESP(ENVDEFERR)    RPI 928      
          RT1   CCE,=F'84',DFHRESP(DISABLED)     RPI 687
          RT1   END

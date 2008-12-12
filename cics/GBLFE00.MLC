@@ -1,11 +1,16 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 GBLFE00  SUBENTRY
 *
 * FN=FE00  CEMT I TER REQUESTED
-*
-* FN=FE00  THRDCNTL SENT BACK
+*          THRDCNTL SENT BACK
 *
 *         +0/DSCT +4/DSECT  +8      +12       +16      +20/ABS
-* R1  >>> WTOMSG, REQDSECT, MSGLEN, MSGDATA+9,THRDCNTL,THRDLEN*11,
+* R1  >>> WTOMSG, REQDSECT, MSGLEN, MSGDATA+9,THRDCNTL,THRDLEN*THRDNUM,
 *         +24/IND +28      +32
 *         CONNID, TRCEZ390,TRMPREFX
 * R14 = RETURN ADDRESS
@@ -41,15 +46,13 @@ CICSTRGO EQU   *
 *
 CICSTRDN DS    0H
          L     R4,12(R3)          ADDRESS MSGDATA+9
-         L     R6,20(R3)          R6=THRDLEN*11
+         L     R6,20(R3)          R6=THRDLEN*THRDNUM
          L     R7,16(R3)          ADDRESS THRDCNTL
          BCTR  R6,0               -1 FOR EX
          EX    R6,EXMVC           MOVE THREAD DATA
          L     R7,32(R3)          ADDRESS TRMPREFX
-         LA    R4,1(R4,R6)        ADDRESS MSGDATA+9+(THRDLEN*11)
-*        MVC   MSGDATA+9+THRDLEN*11(3),TRMPREFX MOVE TERM PREFIX
+         LA    R4,1(R4,R6)        ADDRESS MSGDATA+9+(THRDLEN*THRDNUM)
          MVC   0(3,R4),0(R7)      MOVE TERM PREFIX
-*        L     R8,CONNID          R8=CONN ID
          L     R8,24(R3)          R8=CONN ID ADDRESS
          L     R8,0(R8)           R8=CONNID
          L     R7,8(R3)           ADDRESS MSGLEN
@@ -60,7 +63,7 @@ CICSTRDN DS    0H
 *
 ABEND780 ABEND 780                TCPIO SEND FAILED
 *
-*        MVC   MSGDATA+9(THRDLEN*11),THRDCNTL MOVE THREAD DATA
+*        MVC   MSGDATA+9(THRDLEN*THRDNUM),THRDCNTL MOVE THREAD DATA
 EXMVC    MVC   0(0,R4),0(R7)      MOVE THREAD DATA
 CICSTIND DS    C                  TRACE TYPE INDICATOR
 TRCEZ390 DS    C                  Z390 TRACE OPTION

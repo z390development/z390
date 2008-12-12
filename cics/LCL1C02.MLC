@@ -1,0 +1,108 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL1C02  SUBENTRY
+*
+* FN=1C02  EXEC CICS DUMP
+*
+* R1  >>> P1C02 BLOCK POINTER
+* R14 = RETURN ADDRESS
+*
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P1C02,P1C02END),R3
+         L     DFHEIBR,P1C02EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P1C02TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P1C02FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P1C02RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P1C02RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         MVC   DCODE,P1C02DCD     MOVE DUMP CODE
+         CLI   P1C02CMP,X'FF'     COMPLETE DUMP REQUEST
+         BNE   NOCOMP             EXIT IF NOT
+* COMPLETE DUMP REQUESTED
+         MVC   DUMPID,=CL11'COMPLETE' SET SNAP TEXT
+         LA    R1,SNAPTXT         ADDRESS TEXT
+         SNAP  PDATA=ALL,ID=997,TEXT=(R1)
+NOCOMP   EQU   *
+         ICM   R4,15,P1C02FRM     R4=START ADDRESS
+         BZ    NOFROM             EXIT IF NONE
+* SNAP FROM/LENGTH
+         LR    R5,R4              R5=START ADDRESS
+         A     R5,P1C02LEN        R5=START ADDRESS+LENGTH
+         MVC   DUMPID,=CL11'AREA' SET SNAP TEXT
+         LA    R1,SNAPTXT         ADDRESS TEXT
+         SNAP  STORAGE=((R4),(R5)),ID=997,TEXT=(R1)
+NOFROM   EQU   *
+         ICM   R8,15,P1C02SEG     R8=STORAGE START ADDRESSES
+         BZ    NOSEGS             EXIT IF NONE
+* SNAP ALL SEGMENTS
+         L     R6,P1C02NSG        R6=NUMSEGMENTS
+         MVC   DUMPID,=CL11'SEGMENT' SET SNAP TEXT
+         SR    R7,R7              CLEAR INDEX
+         L     R9,P1C02LST        R8=STORAGE LENGTHS
+SEGLOOP  EQU   *
+         SLL   R7,2               INDEX*4
+         L     R4,0(R8,R7)        LOAD INDEXED STORAGE START
+         LR    R5,R4              PREPARE FOR STORAGE END
+         A     R5,0(R9,R7)        ADD INDEXED STORAGE LENGTH
+         SRL   R7,2               RESET INDEX
+         AHI   R7,1               BUMP SEGMENT NUMBER
+         CVD   R7,DEC             CONVERT TO DECIMAL
+         MVC   DUMPID+7(4),=X'40202020' MOVE EDIT WORD
+         ED    DUMPID+7(4),DEC+6  EDIT SEGMENT NUMBER
+         LA    R1,SNAPTXT         ADDRESS TEXT
+         SNAP  STORAGE=((R4),(R5)),ID=997,TEXT=(R1)
+         BCT   R6,SEGLOOP         LOOP
+*
+NOSEGS   EQU   *
+         SUBEXIT
+*
+         LTORG
+*
+SNAPTXT  DC    C'DUMP '
+DCODE    DC    CL4' '              DUMP CODE
+         DC    C' '
+DUMPID   DC    CL11' '             COMPLETE/AREA/SEGMENT NNN
+         DC    X'00'
+DEC      DC    PL8'0'
+*
+P1C02    DSECT
+P1C02FN  DS    XL2                FUNCTION CODE
+P1C02EIB DS    AL4                EIB
+P1C02TCT DS    AL4                TCTTE
+P1C02DCD DS    CL4                DUMPCODE
+P1C02FRM DS    AL4                FROM
+P1C02LEN DS    AL4                LENGTH/FLENGTH
+P1C02SEG DS    AL4                SEGMENTLIST
+P1C02LST DS    AL4                LENGTHLIST
+P1C02NSG DS    AL4                NUMSEGMENTS
+P1C02CMP DS    X                  X'FF'=COMPLETE
+P1C02RSP DS    AL4                RESP
+P1C02RS2 DS    AL4                RESP2
+P1C02END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R10 TCTTE
+* R11 EIB
+* R13 SAVE AREA AND BASE 1
+*
+         END
+

@@ -15,7 +15,8 @@
                &LINE=1,                                                X
                &COLUMN=1,                                              X
                &STORAGE=,                                              X
-               &TIOAPFX=NO
+               &JUSTIFY=,                                              X
+               &TIOAPFX=
 .*
          GBLA  &MTYPE             TYPE REQUEST
          GBLA  &NCTRL             NO. OF OPERANDS IN CTRL
@@ -26,6 +27,7 @@
          GBLA  &MDFALLN           LENGTH OF ALL MDF FIELDS
          GBLA  &MDFNAMD           LENGTH OF ALL NAMED MDF FIELDS
          GBLA  &MDFNAMC           NO. OF NAMED MDF'S
+         GBLA  &MDFWRAP           NO. OF WRAPPED FIELDS
 .*
          GBLB  &MSD               MSD SPECIFIED
          GBLB  &DEFMODE(2)        1=OUT 2=IN BOTH=INOUT (DEFAULT)
@@ -37,6 +39,7 @@
          GBLC  &MDINAME           MAP NAME
          GBLC  &MCTRL(3)          DEFAULT CTRL OPERANDS
          GBLC  &MCURSLC           CURSLOC
+         GBLC  &MTIOAPX           TIOAPFX
          GBLC  &MDIORG            CURSOR POSITION LABEL
          GBLC  &SCREEN(24*80)     POS CROSS-CHECK
 .*
@@ -91,6 +94,7 @@
 &MDFALLN SETA  0                  RESET LENGTH OF ALL MDF FIELDS
 &MDFNAMD SETA  0                  RESET LENGTH OF ALL NAMED MDF FIELDS
 &MDFNAMC SETA  0                  RESET NO. OF NAMED MDF'S
+&MDFWRAP SETA  0                  RESET NO. OF WRAPPED FIELDS
 &MDIMODE(1) SETB 0                RESET MODE=OUT
 &MDIMODE(2) SETB 0                RESET MODE=IN
          AIF   ('&MDINAME' EQ '').NODISP 1ST MAP
@@ -168,8 +172,6 @@
 .*
 .GOON03  ANOP
 .DUNMODE ANOP
-         AIF   ('&TIOAPFX' NE 'NO').BADTIOA
-.GOON01  ANOP
 .*
 .* CTRL OVERRIDE IS ALLOWED
 .* MANUAL SAYS OK, IBM RAISES ERROR IF IN MSD AND MDI, I DON'T
@@ -228,17 +230,32 @@
 &MCURSLC SETC  '&CURSLOC'
 .DUNCSLC ANOP
 &CURS    SETB  0
-         AIF   ('&MCURSLC' EQ 'NO').DUNMSD
+         AIF   ('&MCURSLC' EQ 'NO').DUNCURS
 &CURS    SETB  1
-         AIF   ('&MCURSLC' EQ 'YES').DUNMSD
+         AIF   ('&MCURSLC' EQ 'YES').DUNCURS
          AGO   .BADCURS
 .*
 .GOON02  ANOP
-.DUNMSD  ANOP
+.DUNCURS ANOP
+.* TIOAPFX OVERRIDE IS ALLOWED
+         AIF   ('&TIOAPFX' EQ '').DUNTPFX
+&MTIOAPX SETC  '&TIOAPFX'
+.DUNTPFX ANOP
+&TPFX    SETB  0
+         AIF   ('&MTIOAPX' EQ 'NO').DUNTIOA
+&TPFX    SETB  1
+         AIF   ('&MTIOAPX' EQ 'YES').DUNTIOA
+         AGO   .BADTIOA
+.*
+.GOON01  ANOP
+.DUNTIOA ANOP
          AIF   (T'&SIZE(1) NE 'N').BADSIZE
          AIF   (T'&SIZE(2) NE 'N').BADSIZE
 &SIZEROW SETA  &SIZE(1)
 &SIZECOL SETA  &SIZE(2)
+         AIF   (&SIZEROW+&LINE-1 GT 24).BADLINE
+.GOON06  ANOP
+         AIF   (&SIZECOL+&COLUMN-1 GT 80).BADCOL
 .*
 .GOON04  ANOP
          AIF   (&MTYPE EQ 1).DSECT
@@ -256,8 +273,8 @@
          DC    AL2(0)             BMSMSI   -- INPUT WORK AREA LENGTH
 &MAPNAME._&MDIORG._OUTLEN EQU *
          DC    AL2(0)             BMSMSO   -- OUTPUT WORK AREA LENGTH
-         DC    B'&MDIMODE(1)&MDIMODE(2)000000'        BMSMODE  -- IN/OU-
-               T/INOUT
+         DC    B'&MDIMODE(1)&MDIMODE(2)&TPFX.00000'        BMSMODE  -- -
+               IN/OUT/INOUT/TIOAPFX=YES
          AIF   (NOT (&ALRM OR &FRKB OR &FRST)).NULWCC
          DC    B'11000&ALRM&FRKB&FRST'        BMSWCC   -- WRITE CONTROL-
                 CHARACTER
@@ -305,7 +322,18 @@
 &KMAP    SETA  K'&MAPNAME
 &SPACES  SETC  '        '(1,7-&KMAP)
          PUNCH '&MAPNAME.S&SPACES DS    0H                 START OF MAP-
-                DEFINITION',DSNAME=&MSN..CPY
+                DEFINITION',DSNAME=&SYSIN_MEMBER..CPY
+         AIF   (&MDIMODE(1) AND &MDIMODE(2)).DOMAPIO
+         AGO   .TRYPFX
+.*
+.DOMAPIO ANOP
+         PUNCH '&MAPNAME.I&SPACES DS    0H                 START OF MAP-
+                INPUT DEFINITION'
+         PUNCH '&MAPNAME.O&SPACES DS    0H                 START OF MAP-
+                OUTPUT DEFINITION'
+.TRYPFX  ANOP
+         AIF   (NOT &TPFX).NOTOUT
+         PUNCH '         DS    12C                TIOA PREFIX'
 .NOTOUT  ANOP
          MEXIT
 .*
@@ -317,13 +345,13 @@
          MNOTE 12,'MSD AND MDI TYPE MISMATCH'
          MEXIT
 .*
-.BADTIOA ANOP
-         MNOTE 12,'INVALID TIOAPFX -- &TIOAPFX'
-         AGO   .GOON01
-.*
 .BADCURS ANOP
          MNOTE 12,'INVALID CURSLOC -- &CURSLOC'
          AGO   .GOON02
+.*
+.BADTIOA ANOP
+         MNOTE 12,'INVALID TIOAPFX -- &TIOAPFX'
+         AGO   .GOON01
 .*
 .BIGCTRL ANOP
          MNOTE 12,'A MAXIMUM OF 3 OPERANDS ALLOWED IN CTRL'
@@ -339,7 +367,17 @@
 .*
 .BADPOSI ANOP
          MNOTE 12,'POSITIONAL OPERAND &SYSLIST(1) INVALID'
-         AGO   .GOON15
+         AGO   .GOON05
+.*
+.BADLINE ANOP
+&BADLC   SETA 24-(&SIZEROW-1)
+         MNOTE 12,'LINE CANNOT EXCEED &BADLC'
+         AGO   .GOON06
+.*
+.BADCOL  ANOP
+&BADLC   SETA 80-(&SIZECOL-1)
+         MNOTE 12,'COLUMN CANNOT EXCEED &BADLC'
+         AGO   .GOON04
 .*
          MEND
 

@@ -222,6 +222,5 @@ INIT5    DC    X'05'
 *
          COPY  DFHAID
          TN3270 SYMBOLS
-         EQUREGS
          END
 

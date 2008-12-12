@@ -1,16 +1,17 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.**********************************************************************
          MACRO
          CICS_READQ
-         LCLB  &NEXT
-         LCLC  &TYPE
-         LCLC  &QUEUE,&QNAME,&INTO,&SET,&LENGTH,&NUMITEMS,&ITEM
+         GBLB  &PARMS_0A04
+         LCLB  &NEXT,&NOHAND
+         LCLC  &TYPE,&QUEUE,&QNAME,&INTO,&SET,&LENGTH,&NUMITEMS,&ITEM
+         LCLC  &RESP,&RESP2
 &TYPE    SETC  '&SYSLIST(1)'
          AIF   ('&TYPE' EQ 'TS').TS
          MNOTE 12,'READQ TYPE NOT RECOGNIZED'
@@ -24,17 +25,20 @@
          AIF   (&IP GT &NP).ELOOP
 &PARM    SETC  '&SYSLIST(&IP)'
 .* DISCARDED PARMS
-         AIF   ('&PARM'(1,4)  EQ 'MAIN').PLOOP
-         AIF   ('&PARM'(1,9)  EQ 'AUXILIARY').PLOOP
+         AIF   ('&PARM'(1,4) EQ 'MAIN').PLOOP
+         AIF   ('&PARM'(1,9) EQ 'AUXILIARY').PLOOP
 .*
-         AIF   ('&PARM'(1,6)  EQ 'QUEUE(').QUEUE
-         AIF   ('&PARM'(1,6)  EQ 'QNAME(').QNAME
-         AIF   ('&PARM'(1,5)  EQ 'INTO(').INTO
-         AIF   ('&PARM'(1,4)  EQ 'SET(').SET
-         AIF   ('&PARM'(1,7)  EQ 'LENGTH(').LENGTH
-         AIF   ('&PARM'(1,9)  EQ 'NUMITEMS(').NUMITEMS
-         AIF   ('&PARM'(1,5)  EQ 'ITEM(').ITEM
-         AIF   ('&PARM'(1,4)  EQ 'NEXT').NEXT
+         AIF   ('&PARM'(1,6) EQ 'QUEUE(').QUEUE
+         AIF   ('&PARM'(1,6) EQ 'QNAME(').QNAME
+         AIF   ('&PARM'(1,5) EQ 'INTO(').INTO
+         AIF   ('&PARM'(1,4) EQ 'SET(').SET
+         AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,9) EQ 'NUMITEMS(').NUMITEMS
+         AIF   ('&PARM'(1,5) EQ 'ITEM(').ITEM
+         AIF   ('&PARM'(1,4) EQ 'NEXT').NEXT
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
 .*
@@ -70,6 +74,19 @@
 &NEXT    SETB  1
          AGO   .PLOOP
 .*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
 .ELOOP   ANOP
          AIF   ('&QUEUE' EQ '' AND '&QNAME' EQ '').NOQUEUE
          AIF   ('&QUEUE' NE '' AND '&QNAME' NE '').BOTHQ
@@ -79,170 +96,135 @@
          AIF   ('&ITEM'  NE '' AND &NEXT).BOTHITNX
          AIF   ('&SET'   NE '' AND '&LENGTH' EQ '').NEEDLEN
 .*
-         MVC   EIBFN,=X'0A04'     SET EIBFN
-         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
-         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
-         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
-.*
-.* GETMAIN AND MOVE THE DATA TO SEND
-         LA    R1,TSPREFIX        R1=TS BLOCK LENGTH
-         GETMAIN R,LV=(R1),A=DFHEITSP
-         USING DFHTSBLK,R1
-         XC    DFHTSBLK(TSPREFIX),DFHTSBLK CLEAR TS BLOCK
-         ST    R0,TSPTCPIO        SAVE LENGTH FOR FREEMAIN
-         MVC   TSPFN,=C'0A04'     SET FUNCTION CODE
-         MVC   TSPTERM,TCTTETI    SET TERMINAL ID
-         MVC   TSPTRAN,EIBTRNID   SET TRANSID
+         L     R15,=A(P0A04)      LOAD PARM ADDRESS
+         USING (P0A04,P0A04END),R15
+         XC    P0A04(P0A04END-P0A04),P0A04 CLEAR PARMS
+         MVC   P0A04FN,=X'0A04'   SET FUNCTION CODE
 .*
          AIF   ('&QUEUE' EQ '').DOQNAME
 .* GOT QUEUE
          AIF   ('&QUEUE'(1,1) EQ '''').QUSTRING
-         MVC   EIBRSRCE,&QUEUE    SET EIBRSRCE AS LABEL
-         MVC   TSPNAME(8),&QUEUE  SET TSP QUEUE NAME AS LABEL
-         MVC   TSPNAME+8(8),=8C' ' CLEAR REMAINDER
+         MVC   P0A04QNM(8),&QUEUE SET QUEUE NAME AS LABEL
+         MVC   P0A04QNM+8(8),=8C' ' CLEAR REMAINDER
          AGO   .CHKNAME
 .*
 .QUSTRING ANOP
 &QULEN   SETA  K'&QUEUE
          AIF   (&QULEN GT 10).BADQ
-         MVC   EIBRSRCE,=CL16&QUEUE SET EIBRSRCE AS STRING
-         MVC   TSPNAME,=CL16&QUEUE SET TSP QUEUE NAME AS STRING
+         MVC   P0A04QNM,=CL16&QUEUE SET QUEUE NAME AS STRING
          AGO   .CHKNAME
 .*
 .* GOT QNAME
 .DOQNAME ANOP
          AIF   ('&QNAME'(1,1) EQ '''').QNSTRING
-         MVC   EIBRSRCE,&QNAME    SET EIBRSRCE AS LABEL
-         MVC   TSPNAME,&QNAME     SET TSP QUEUE NAME AS LABEL
+         MVC   P0A04QNM,&QNAME    SET QUEUE NAME AS LABEL
          AGO   .CHKNAME
 .*
 .QNSTRING ANOP
 &QNLEN   SETA  K'&QNAME
          AIF   (&QNLEN GT 18).BADQ
-         MVC   EIBRSRCE,=CL16&QNAME SET EIBRSRCE AS STRING
-         MVC   TSPNAME,=CL16&QNAME SET TSP QUEUE NAME AS STRING
-.*
+         MVC   P0A04QNM,=CL16&QNAME SET QUEUE NAME AS STRING
 .CHKNAME ANOP
-         OC    TSPNAME,TSPNAME    ALL ZEROS ?
-         BZ    CICS_READQ_&SYSNDX._INVREQ ERROR IF IT IS
-         CLI   TSPNAME,X'FA'      X'FA'-X'FF' ?
-         BNL   CICS_READQ_&SYSNDX._INVREQ ERROR IF IT IS
-         CLC   TSPNAME(2),=C'**'  RESERVED ID ?
-         BE    CICS_READQ_&SYSNDX._INVREQ ERROR IF IT IS
-         CLC   TSPNAME(2),=C'$$'  RESERVED ID ?
-         BE    CICS_READQ_&SYSNDX._INVREQ ERROR IF IT IS
-         CLC   TSPNAME(2),=C'DF'  RESERVED ID ?
-         BE    CICS_READQ_&SYSNDX._INVREQ ERROR IF IT IS
 .* PROCESS ITEM
          AIF   ('&ITEM' NE '').DOITEM
-         MVC   TSPITEM,=X'FFFF'   SET ITEM NUMBER TO NEXT
+         MVC   P0A04ITM,=X'FFFF'  SET ITEM NUMBER TO NEXT
          AGO   .DUNITEM
+.*
 .DOITEM  ANOP
-         AIF   ('&ITEM'(1,1) LT '0' OR '&ITEM'(1,1) GT '9').ITMLABL
-         MVC   TSPITEM,=AL2(&ITEM) MOVE NUMERIC ITEM
+         AIF   (T'&ITEM NE 'N').ITMLABL
+         MVC   P0A04ITM,=AL2(&ITEM) MOVE ITEM
          AGO   .DUNITEM
 .*
 .ITMLABL ANOP
-         MVC   TSPITEM,&ITEM      MOVE ITEM AS LABEL
+         MVC   P0A04ITM,&ITEM     MOVE ITEM AS LABEL
 .DUNITEM ANOP
-         AIF   ('&LENGTH' EQ '').NOLEN
-         AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
-         MVC   TSPLEN,=AL2(&LENGTH) MOVE NUMERIC LENGTH
+         AIF   ('&SET' EQ '').NOSET
+         MVI   P0A04SET,X'FF'     SET SET INDICATOR
+         AGO   .DOLENG
+.*
+.NOSET   ANOP
+         LA    R1,&INTO           INTO ADDRESS
+         ST    R1,P0A04INT        SAVE IT
+.DOLENG  ANOP
+         AIF   ('&LENGTH' EQ '').NOLENG
+         AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
+         AIF   (T'&LENGTH NE 'N').LENLABL
+.LENNUM  ANOP
+         LA    R1,&LENGTH         R1=LENGTH
+         STH   R1,P0A04LEN        SAVE IT
          AGO   .DUNLEN
+.*
 .LENLABL ANOP
-         MVC   TSPLEN,&LENGTH     MOVE LENGTH AS LABEL
+         AIF   ('&SET' EQ '').NOSET2
+         LHI   R1,32767           SET MAXIMUM LENGTH
+         AGO   .LENADD
+.*
+.NOSET2  ANOP
+         LH    R1,&LENGTH         R1=LENGTH FROM LABEL
+.LENADD  ANOP
+         STH   R1,P0A04LEN        SAVE IT
+         LA    R1,&LENGTH         R1=ADDRESS OF LENGTH
+         ST    R1,P0A04LAD        SAVE IT
          AGO   .DUNLEN
 .*
-.NOLEN   ANOP
-&LENGTH  SETC  'L''&INTO'
-         MVC   TSPLEN,=AL2(&LENGTH) MOVE IMPLIED LENGTH OF INTO
+.NOLENG  ANOP
+         LA    R1,L'&INTO         R1=IMPLIED LENGTH OF INTO
+         STH   R1,P0A04LEN        SAVE IT
 .DUNLEN  ANOP
-* SEND REQUEST TO SERVER, GET REPLY
-         LA    R15,TSPREFIX       R15=PREFIX LENGTH
-         L     R14,DFHEITSP       RESTORE TS BLOCK ADDRESS
-         TCPIO SEND,MSG=(R14),LMSG=(R15),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   CICS_READQ_&SYSNDX._INVREQ ERROR IF BAD
-* ONLY PREFIX IS RECEIVED, WE GET THE DATA LATER
-         TCPIO RECEIVE,MSG=(R14),LMSG==A(TSPREFIX),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   CICS_READQ_&SYSNDX._INVREQ ERROR IF BAD
-         LR    R1,R14             RE-ESTABLISH TS BLOCK BASE
-         OC    TSPRETCD,TSPRETCD  BAD RETURN CODE ?
-         BZ    CICS_READQ_&SYSNDX._01 EXIT IF NONE
-         CLC   TSPRETCD,DFHRESP(ITEMERR) ITEMERR ?
-         BE    CICS_READQ_&SYSNDX._ITEMERR EXIT IF IT IS
-         CLC   TSPRETCD,DFHRESP(QIDERR) QIDERR ?
-         BE    CICS_READQ_&SYSNDX._QIDERR EXIT IF IT IS
-* SERVER HAS SENT UNKNOWN VALUE IN TSPRETCD
-         B     CICS_READQ_&SYSNDX._INVREQ SHOULD NOT OCCUR
-.*
-CICS_READQ_&SYSNDX._01 DS 0H
-         AIF   ('&SET' EQ '').DOINTO
-         EXEC  CICS GETMAIN SET(&SET) LENGTH(&LENGTH)
-         L     R1,DFHEITSP        RESTORE TS BLOCK ADDRESS
-.* RESET EIB FIELDS
-         MVC   EIBFN,=X'0A04'     SET EIBFN
-         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
-         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
-         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
-&INTO    SETC  '(&SET)'
-.*
-.DOINTO  ANOP
-.* GET THE DATA
-         LH    R15,TSPLEN         LENGTH TO RECEIVE
-         TCPIO RECEIVE,MSG=&INTO,LMSG=(R15),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   CICS_READQ_&SYSNDX._INVREQ ERROR IF BAD
-         L     R1,DFHEITSP        RESTORE TS BLOCK ADDRESS
-         AIF   ('&LENGTH'(1,1) EQ 'L').NOLEN2
-         AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').MVLEN
-         AGO   .NOLEN2
-.MVLEN   ANOP
-         MVC   &LENGTH.(2),TSPACLEN  SET ACTUAL LENGTH OF ITEM
-.NOLEN2  ANOP
-         CLC   TSPLEN,TSPACLEN    PARTIAL DATA RECEIVED ?
-         BL    CICS_READQ_&SYSNDX._LENGERR ERROR IF IT WAS
          AIF   ('&NUMITEMS' EQ '').NONUMIT
-         MVC   &NUMITEMS.(2),TSPNUMIT SET NUMITEMS
+         LA    R1,&NUMITEMS       R1=ADDRESS OF NUMITEMS
+         ST    R1,P0A04NUM        SAVE IT
 .NONUMIT ANOP
-         DROP  R1                 DROP TS BLOCK BASE
-         B     CICS_READQ_&SYSNDX._IGNORE EXIT
+         ST    DFHEIBR,P0A04EIB   SET EIB ADDRESS
+         ST    TCTTEAR,P0A04TCT   SET TCTTE ADDRESS
+         AIF   (NOT &NOHAND).DUNNOH
+         MVI   P0A04NOH,X'FF'     SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R1,&RESP           ADDRESS OF RESP
+         ST    R1,P0A04RSP        SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R1,&RESP2          ADDRESS OF RESP2
+         ST    R1,P0A04RS2        SAVE IT
+.NORESP2 ANOP
+         ZCALL LCL0A04,(P0A04),MF=I CALL READQ PROCESSOR
 .*
-CICS_READQ_&SYSNDX._INVREQ DS 0H
-.* INVOKE INVREQ
-         MVI   EIBRCODE,X'20'     SET EIBRCODE
-         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         L     R15,=A(P0A04)      LOAD PARM ADDRESS
+         AIF   ('&SET' EQ '').NOSET3
+         L     &SET,P0A04STA      LOAD THE SET REGISTER
+.NOSET3  ANOP
+         CLI   P0A04NOH,X'FF'     NOHANDLE ?
+         BE    P0A04BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BZ    P0A04BYP_&SYSNDX   EXIT IF NONE
+* INVREQ, ITEMERR, LENGERR, QIDERR
          DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
-         DC    AL4(CICS_READQ_&SYSNDX._IGNORE) ENTPT FOR IGNORE COND
-.*
-CICS_READQ_&SYSNDX._ITEMERR DS 0H
-.* INVOKE ITEMERR
-         MVI   EIBRCODE,X'01'     SET EIBRCODE
-         MVC   EIBRESP,DFHRESP(ITEMERR) SET EIBRESP=ITEMERR
-         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
-         DC    AL4(CICS_READQ_&SYSNDX._IGNORE) ENTPT FOR IGNORE COND
-.*
-CICS_READQ_&SYSNDX._LENGERR DS 0H
-.* INVOKE LENGERR
-         MVI   EIBRCODE,X'E1'     SET EIBRCODE
-         MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
-         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
-         DC    AL4(CICS_READQ_&SYSNDX._IGNORE) ENTPT FOR IGNORE COND
-.*
-CICS_READQ_&SYSNDX._QIDERR DS 0H
-.* INVOKE QIDERR
-         MVI   EIBRCODE,X'02'     SET EIBRCODE
-         MVC   EIBRESP,DFHRESP(QIDERR) SET EIBRESP=QIDERR
-         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
-         DC    AL4(CICS_READQ_&SYSNDX._IGNORE) ENTPT FOR IGNORE COND
-.*
-CICS_READQ_&SYSNDX._IGNORE DS 0H
-         ICM   R1,15,DFHEITSP     ANY ADDRESS TO BE FREED ?
-         BZ    CICS_READQ_&SYSNDX._END EXIT IF NOT
-         FREEMAIN LV=TSPREFIX
-         XC    DFHEITSP,DFHEITSP  CLEAR ADDRESS
-CICS_READQ_&SYSNDX._END DS 0H
+         DC    AL4(P0A04BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_0A04).BYP0A04
+&PARMS_0A04 SETB 1
+P0A04    EQU   *
+P0A04FN  DS    XL2                FUNCTION CODE
+P0A04EIB DS    AL4                EIB
+P0A04TCT DS    AL4                TCTTE
+P0A04QNM DS    CL16               QUEUE NAME
+P0A04ITM DS    XL2                ITEM
+P0A04LEN DS    XL2                LENGTH
+P0A04LAD DS    AL4                ADDRESS OF LENGTH IF LABEL
+P0A04SET DS    X                  FF=SET IS SPECIFIED
+P0A04STA DS    AL4                ADDRESS FOR SET
+P0A04INT DS    AL4                ADDRESS OF INTO
+P0A04NUM DS    AL4                ADDRESS OF NUMITEMS
+P0A04NOH DS    X                  FF=NOHANDLE
+P0A04RSP DS    AL4                RESP
+P0A04RS2 DS    AL4                RESP2
+P0A04END EQU   *                  END MARKER
+         DS    0H
+*
+.BYP0A04 ANOP
+P0A04BYP_&SYSNDX DS 0H
+         DROP  R15
          MEXIT
 .*
 .NOQUEUE MNOTE 12,'QUEUE OR QNAME MUST BE SPECIFIED'
@@ -270,4 +252,3 @@ CICS_READQ_&SYSNDX._END DS 0H
          MEXIT
 .*
          MEND
-

@@ -1,4 +1,7 @@
 GUI4S    DS    0H                 START OF MAP DEFINITION
+GUI4I    DS    0H                 START OF MAP INPUT DEFINITION
+GUI4O    DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
 *
 INPUTL   DS    AL2                INPUT FIELD LENGTH
 INPUTF   DS    0X                 INPUT FIELD FLAG
@@ -20,6 +23,9 @@ GUI4L    EQU   GUI4E-GUI4S
 * * * END OF MAP DEFINITION     * * *
 *
 GUI6S    DS    0H                 START OF MAP DEFINITION
+GUI6I    DS    0H                 START OF MAP INPUT DEFINITION
+GUI6O    DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
 *
 NAMEL    DS    AL2                INPUT FIELD LENGTH
 NAMEF    DS    0X                 INPUT FIELD FLAG
@@ -170,6 +176,7 @@ GUI6L    EQU   GUI6E-GUI6S
 * * * END OF MAP DEFINITION     * * *
 *
 GUI6HS   DS    0H                 START OF MAP DEFINITION
+         DS    12C                TIOA PREFIX
 *
 GUI6HE   EQU   *
 GUI6HL   EQU   GUI6HE-GUI6HS

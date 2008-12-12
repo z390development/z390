@@ -1,11 +1,12 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.* 11/11/08 RPI 946 ADD FCTVSWA AS IT WILL NOW DEFAULT TO X'F6'       *
+.**********************************************************************
          MACRO
 .* FILE CONTROL TABLE
          DFHFCT &TYPE=,                                                X
@@ -34,7 +35,7 @@ END      OPSYN DFHFEND
 &TYPED   SETB  1
 DFHFCT   CSECT
          DS    0D
-         DC    CL8'&DATASET'
+         DC    CL8'&DATASET'      FCTFILNM
 .*
 .* FILSTAT PROCESSING
 .*
@@ -56,7 +57,7 @@ DFHFCT   CSECT
          AIF   (&FILDISA AND &FILUNEN).FILSERR
          AIF   (NOT(&FILOPEN) AND NOT(&FILCLOS)).FILSERR
          AIF   (&FILUNEN AND NOT(&FILCLOS)).FILSERR
-         DC    B'&FILOPEN&FILENAB&FILUNEN.00000'
+         DC    B'&FILOPEN&FILENAB&FILUNEN.00000' FCTFILST
 .*
 .* RECFORM PROCESSING
 .*
@@ -71,7 +72,7 @@ DFHFCT   CSECT
 .*
 .CHKREC  ANOP
          AIF   (&RECFIX AND &RECVAR).RECSERR
-         DC    B'&RECFIX.0000000'
+         DC    B'&RECFIX.0000000' FCTRECFM
 .*
 .* SERVREQ PROCESSING
 .*
@@ -94,7 +95,8 @@ DFHFCT   CSECT
 .SVQDEFR ANOP
 &SVQREAD SETB  1
 .GENSVQ  ANOP
-         DC    B'&SVQREAD&SVQDELT&SVQUPDT&SVQADD&SVQBRWS.000'
+         DC    B'&SVQREAD&SVQDELT&SVQUPDT&SVQADD&SVQBRWS.000' FCTSERV
+         DC    AL4(0)             FCTVSWA
 .*
          ACB   DDNAME=&DATASET
          MEXIT

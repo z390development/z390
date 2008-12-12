@@ -207,6 +207,9 @@ public  class  tz390 {
     * 10/24/08 RPI 935 correct MAXWIDTH and MAXWARN settings (reversed)
     * 10/24/08 RPI 935 prevent recursive abort, correct force_nocon support
     * 11/08/08 RPI 947 add get_ascii_printable_string for use by dump/trace
+    * 12/01/08 RPI 970 add key index "C:" to indicate COPY file found
+    * 12/11/08 RPI 957 chksrc(3) to chk seq field and > 80
+    * 12/11/08 RPI 963 display final options 1 per line
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -215,7 +218,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.03d";  //dsh
+    String version    = "V1.4.04";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -289,7 +292,6 @@ public  class  tz390 {
     boolean opt_zstrmac  = true;   // allow ZSTRMAC extensions
     boolean max_cmd_queue_exceeded = false;  // RPI 731
     String  cmd_parms = ""; // all options from command
-    String  final_options = ""; // RPI 755
     int     cmd_parms_len = 34; // RPI 755
     int     max_cmd_parms_line = 78; // RPI 755
     String  test_ddname = "";
@@ -341,7 +343,6 @@ public  class  tz390 {
     /*
 	 * shared pgm dir, name, type and associated dirs
 	 */
-	String job_date = null; // job date mm/dd/yy  RPI 558
 	String pgm_name = null; // from first parm else abort
 	String pgm_type = null; // from first parm override if mlc else def.
 	String file_dir;        // dir for _name RPI 700
@@ -403,7 +404,6 @@ public  class  tz390 {
     String systerm_mem   = " MB"; // RPI 797 MB if 
     String systerm_file_name      = null;
     RandomAccessFile systerm_file = null;
-	String systerm_time = "";     // hh:mm:ss if opt_timing
     String systerm_prefix = "";   // pgm_name plus space
     int    systerm_io     = 0;    // total file io count
     long systerm_ins    = 0;    // ez390 instruction count
@@ -4643,7 +4643,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     } else if (token.length() == 9
         	&& token.substring(0,7).toUpperCase().equals("CHKSRC(")){
            	opt_chksrc = token.charAt(7) - '0';
-          	if (opt_chksrc < 0 || opt_chksrc > 2){
+          	if (opt_chksrc < 0 || opt_chksrc > 3){ // RPI 957
           		add_invalid_option(opt_file_name,opt_file_line,token);
           	}
 	} else if (token.toUpperCase().equals("CICS")){
@@ -5213,17 +5213,18 @@ public void open_systerm(String z390_pgm){
     	abort_error(10,"systerm file open error " + e.toString());
     }
     String z390_j2se_versions = "";  // RPI 797
-	if (opt_timing){
+    if (opt_timing){
 		systerm_start = System.currentTimeMillis();
-        systerm_time = sdf_HHmmss.format(new Date()) + " ";
-        job_date = sdf_MMddyy.format(new Date());
-	    z390_j2se_versions = " USING z390 " + version + " ON J2SE " + System.getProperty("java.version"); // RPI 797
-	} else {
-		job_date = "MM/DD/YY";
+	    z390_j2se_versions = 
+	    	" USING z390 " + version 
+	      + " ON J2SE " + System.getProperty("java.version")
+	      + " " + cur_date(); // RPI 797
 	}
 	try {
 		systerm_io++;
-		started_msg = systerm_time + systerm_prefix + "STARTED" + z390_j2se_versions; // RPI 797
+		started_msg = cur_time(true) 
+		            + systerm_prefix 
+		            + "START" + z390_j2se_versions; // RPI 797
 		System.out.println(started_msg);
 		systerm_file.writeBytes(started_msg + newline); // RPI 500
 		if (stats_file != null){
@@ -5243,13 +5244,10 @@ public synchronized void put_systerm(String msg){ // RPI 397
 	/*
 	 * log error to systerm file
 	 */
-	if (opt_timing){
-        systerm_time = sdf_HHmmss.format(new Date()) + " ";;
-	}
 	if (systerm_file != null){ // rpi 935
 		try {
 			systerm_io++;
-			systerm_file.writeBytes(systerm_time + systerm_prefix + msg + newline); // RPI 500
+			systerm_file.writeBytes(cur_time(true) + systerm_prefix + msg + newline); // RPI 500
 		} catch (Exception e){
 	        abort_error(12,"I/O error on systerm file " + e.toString());
 		}
@@ -5259,13 +5257,10 @@ public synchronized void put_stat_line(String msg){ // RPI 397
 	/*
 	 * mod stat record on stats.sta file
 	 */
-	if (opt_timing){
-        systerm_time = sdf_HHmmss.format(new Date()) + " ";;
-	}
 	if (stats_file != null){ // RPI 935
 		try {
 			systerm_io++;
-			stats_file.writeBytes(systerm_time + systerm_prefix + msg + newline); // RPI 500
+			stats_file.writeBytes(cur_time(true) + systerm_prefix + msg + newline); // RPI 500
 		} catch (Exception e){
 			stats_file = null; 
 	        abort_error(19,"I/O error on stats file " + e.toString());
@@ -5320,14 +5315,13 @@ public void set_ended_msg(int rc){
 	}
 	if (opt_timing){
  		systerm_sec  = " SEC=" + right_justify("" + ((System.currentTimeMillis()-systerm_start)/1000),2);
-	    systerm_time = sdf_HHmmss.format(new Date()) + " ";;
 	    systerm_mem = right_justify("" + get_mem_usage(),3);
 	 }
 	 String systerm_ins_text = "";
 	 if (systerm_ins > 0){
 		 systerm_ins_text = " INS=" + systerm_ins;
 	 }
-	 ended_msg = systerm_time + systerm_prefix
+	 ended_msg = cur_time(true) + systerm_prefix
 	    + "ENDED   RC=" + right_justify("" + rc,2) 
 	    + systerm_sec 
 	    + " MEM(MB)=" + systerm_mem 
@@ -5419,14 +5413,15 @@ public int find_key_index(char user_key_type,String user_key){
 	 * Notes:
 	 *   1.  Usage my mz390
 	 *       a.  "A:" - ago gbla table pointer
-	 *       a.  "F:" - macro and copybook files
-	 *       b.  "G:" - global set variables
+	 *       b.  "C:" - copy file found  RPI 970
+	 *       c.  "F:" - macro and copybook files
+	 *       d.  "G:" - global set variables
 	 *       e.  "M:" - loaded macros
 	 *       f.  "O:" - opcode table (init_opcode_name_keys)
-	 *       h.  "R:" - opcode and macro opsyn
-	 *       i.  "S:" - ordinary symbols
-	 *       j.  "X:" - executable macro command
-	 *       z.  "Z:" - ZSTRMAC opcodes and apm names RPI 902
+	 *       g.  "R:" - opcode and macro opsyn
+	 *       h.  "S:" - ordinary symbols
+	 *       i.  "X:" - executable macro command
+	 *       j.  "Z:" - ZSTRMAC opcodes and apm names RPI 902
 	 *   2.  Usage by az390
 	 *       a.  "L:" - literals
 	 *       b.  "O:" - opcode table (init_opcode_name_keys)
@@ -6588,7 +6583,7 @@ public void put_trace(String text){
 		/*
 		 * option flags
 		 */
-		cmd_parms_len = systerm_time.length() + systerm_prefix.length() + 13;
+		cmd_parms_len = 21 + systerm_prefix.length();  
 	    if (opt_allow){ // rpi 833 allow HLASM extensions
 	        add_final_opt("ALLOW");
 	     } else {
@@ -6850,10 +6845,10 @@ public void put_trace(String text){
 	        add_final_opt("NOXREF");
 	     }
 	     if (opt_zstrmac){ // allow ZSTRMAC structured macro extensions
-		        add_final_opt("ZSTRMAC");
-		     } else {
-		        add_final_opt("NOZSTRMAC");
-		     }
+		     add_final_opt("ZSTRMAC");
+		 } else {
+		     add_final_opt("NOZSTRMAC");
+		 }
 	     /*
 	      * option limits
 	      */
@@ -6914,28 +6909,18 @@ public void put_trace(String text){
 	     add_final_opt("SYSOBJ=" + dir_obj); // SYSOBJ() lz390 object lib
 	     add_final_opt("SYSOPT=" + dir_opt); // SYSOPT() OPT options @file path defaults to dir_mac RPI 742
 	     add_final_opt("SYSTRC=" + dir_trc); // SYSTRC() trace file directory
-	     put_stat_line("final options=" + final_options);
 	}
 	private void add_final_opt(String token){
 		/*
 		 * add final option value to final_option
 		 * formatted string.
 		 */
-		if (cmd_parms_len + token.length() + 1 > max_cmd_parms_line){
-			String temp_token = token;
-			while (temp_token.length() > max_cmd_parms_line - 2){
-				final_options = final_options + "\r\n  " + temp_token.substring(0,max_cmd_parms_line - 2);
-				temp_token = temp_token.substring(max_cmd_parms_line - 2);
-			}
-			if (temp_token.length() > 0){
-				final_options = final_options + "\r\n  " + temp_token + " ";
-				cmd_parms_len = temp_token.length() + 3;
-			} else {
-				cmd_parms_len = max_cmd_parms_line;
-			}
-		} else {
-			final_options = final_options + token + " ";
-			cmd_parms_len = cmd_parms_len + token.length() + 1;
+		while (token.length() > max_cmd_parms_line - 2){
+			put_stat_line("final options=" + token.substring(0,max_cmd_parms_line - 2));
+			token = token.substring(max_cmd_parms_line - 2);
+		}
+		if (token.length() > 0){
+			put_stat_line("final_options=" + token);
 		}
 	}
 	public synchronized void abort_case(){ // RPI 646
@@ -6944,5 +6929,33 @@ public void put_trace(String text){
 		 * RPI 849 used by pz390, mz390
 		 */
 		abort_error(22,"internal error - invalid case index");
+	}
+	public String cur_date(){
+		/*
+		 * return MM/DD/YY 
+		 * or constant if notiming
+		 *      
+		 */
+		if (opt_timing){
+			return sdf_MMddyy.format(new Date());
+		} else {
+			return "MM/DD/YY";
+		}
+	}
+	public String cur_time(boolean space_pad){
+		/*
+		 * return HH:MM:SS with or without space 
+		 * or 0 length string if notiming
+		 *      
+		 */
+		if (opt_timing){
+			if (space_pad){
+				return sdf_HHmmss.format(new Date()) + " ";
+			} else {
+				return sdf_HHmmss.format(new Date());
+			}
+		} else {
+			return "";
+		}
 	}
 }

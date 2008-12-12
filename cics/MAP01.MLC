@@ -1,11 +1,11 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 MAP01    DFHMSD TYPE=&SYSPARM,STORAGE=AUTO,MODE=INOUT,LANG=ASM,        X
-               CTRL=FREEKB,CURSLOC=YES
+               CTRL=FREEKB,CURSLOC=YES,TIOAPFX=YES
 GUI4     DFHMDI SIZE=(24,44),LINE=1,COLUMN=1
          DFHMDF POS=(2,10),LENGTH=34,ATTRB=(ASKIP,BRT),                X
                INITIAL='TESTGUI4 TEST TN3270 GUI INTERFACE'
@@ -71,7 +71,7 @@ PAYME1   DFHMDF POS=(22,16),LENGTH=12,ATTRB=ASKIP
                INITIAL='CURSOR LOCATION='
 CURS     DFHMDF POS=(23,18),LENGTH=9,ATTRB=ASKIP
 *
-GUI6H    DFHMDI SIZE=(11,80),LINE=1,COLUMN=10,MODE=OUT
+GUI6H    DFHMDI SIZE=(11,70),LINE=1,COLUMN=10,MODE=OUT
          DFHMDF POS=(2,1),LENGTH=44,ATTRB=(ASKIP,IC),                  X
                INITIAL='TESTGUI6 TEST EXEC CICS TN3270 WITH 3 FIELDS'
          DFHMDF POS=(3,1),LENGTH=51,ATTRB=ASKIP,                       X

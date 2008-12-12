@@ -1,0 +1,405 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL1008  SUBENTRY
+*
+* FN=1008  EXEC CICS START
+*
+* R1  >>> P1008 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P1008,P1008END),R3
+         L     DFHEIBR,P1008EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P1008TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P1008FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P1008RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P1008RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+* SCAN THE PCT TO VERIFY THE TRANSID
+         CLC   P1008TRN,=C'CEDF'  IS IT CEDF ?
+         BE    TRANERR            ERROR IF IT IS
+         EXEC  CICS LOAD PROGRAM('DFHPCT') SET(R4) NOHANDLE
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZ   DORESP             EXIT IF THERE IS
+         MVC   EIBFN,P1008FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+PCTLOOP  EQU   *
+         CLC   0(4,R4),P1008TRN   FOUND TRANSID ?
+         BE    PCTFOUND           EXIT IF IT IS
+         AHI   R4,12              BUMP POINTER
+         CLI   0(R4),X'FF'        STOPPER ?
+         BE    TRANERR            EXIT IF BAD TRANSID
+         B     PCTLOOP            LOOP
+*
+PCTFOUND EQU   *
+         EXEC  CICS RELEASE PROGRAM('DFHPCT') NOHANDLE
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZ   DORESP             EXIT IF THERE IS
+         MVC   EIBFN,P1008FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         OC    P1008QNM,P1008QNM  ANY QUEUE ?
+         BZ    NOQURQ             EXIT IF NONE
+         OC    P1008REQ,P1008REQ  ANY REQID ?
+         BZ    NOQURQ             EXIT IF NONE
+* BOTH QUEUE AND REQID SPECIFIED
+         CLC   P1008QNM,P1008REQ  ARE THEY THE SAME ?
+         BE    INVREQ             ERROR IF THEY ARE
+NOQURQ   EQU   *
+         OC    P1008FRM,P1008FRM  ANY FROM ?
+         BZ    NOFROM             EXIT IF NONE
+* FROM MEANS WE ALSO HAVE LENGTH
+         LH    R1,P1008LEN        R1=LENGTH
+         LTR   R1,R1              IS IT 0 OR NEGATIVE ?
+         BNP   LENGERR            ERROR IF IT IS
+         CHI   R1,32763-16        VALID LENGTH ?
+         BH    LENGERR            ERROR IF TOO BIG
+NOFROM   EQU   *
+         CLI   P1008INT,X'FF'     IS IT INTERVAL/TIME ?
+         BE    INTIME             EXIT IF IT IS
+* AT/AFTER PROCESSING
+*
+* HOURS MINUTES SECONDS ... ALL 3 OR ANY 2 FORM INTERVAL (AFTER) OR
+* TIME (AT). HOURS (0-99), MINUTES (0-59), SECONDS (0-59)
+*
+* A SINGLE PARAMETER FORMS HOURS (0-99), MINUTES (0-5999) OR
+* SECONDS (0-359999)
+*
+         CLI   P1008IND,X'FF'     MORE THAN 1 PARM ?
+         BNE   ONLY1              EXIT IF NOT
+* MORE THAN ONE PARM
+         CP    P1008HRS,=P'0'     NEGATIVE ?
+         BL    INVREQ4            ERROR IF IT IS
+         CP    P1008HRS,=P'99'    TOO MANY HOURS ?
+         BH    INVREQ4            ERROR IF IT IS
+         ZAP   INTDEC,P1008HRS    HOURS IN WORK AREA
+         MP    INTDEC,=P'360000'  CONVERT TO 0.01 SECS
+         CP    P1008MIN,=P'0'     NEGATIVE ?
+         BL    INVREQ5            ERROR IF IT IS
+         CP    P1008MIN,=P'59'    TOO MANY MINUTES ?
+         BH    INVREQ5            ERROR IF IT IS
+         ZAP   WORK,P1008MIN      MINS IN WORK AREA
+         MP    WORK,=P'6000'      CONVERT TO 0.01 SECS
+         AP    INTDEC,WORK        SUM IT
+         CP    P1008SEC,=P'0'     NEGATIVE ?
+         BL    INVREQ6            ERROR IF IT IS
+         CP    P1008SEC,=P'59'    TOO MANY SECONDS ?
+         BH    INVREQ6            ERROR IF IT IS
+         ZAP   WORK,P1008SEC      SECS IN WORK AREA
+         MP    WORK,=P'100'       CONVERT TO 0.01 SECS
+         AP    INTDEC,WORK        SUM IT
+         B     GOSTART            EXIT
+*
+ONLY1    EQU   *
+* ONLY 1 PARM
+         CP    P1008HRS,=P'0'     NEGATIVE ?
+         BL    INVREQ4            ERROR IF IT IS
+         BE    DOMINS             EXIT IF ZERO
+         CP    P1008HRS,=P'99'    TOO MANY HOURS ?
+         BH    INVREQ4            ERROR IF IT IS
+         ZAP   INTDEC,P1008HRS    HOURS IN WORK AREA
+         MP    INTDEC,=P'360000'  CONVERT TO 0.01 SECS
+DOMINS   EQU   *
+         CP    P1008MIN,=P'0'     NEGATIVE ?
+         BL    INVREQ5            ERROR IF IT IS
+         BE    DOSECS             EXIT IF ZERO
+         CP    P1008MIN,=P'5999'  TOO MANY MINUTES ?
+         BH    INVREQ5            ERROR IF IT IS
+         ZAP   INTDEC,P1008MIN    MINS IN WORK AREA
+         MP    INTDEC,=P'6000'    CONVERT TO 0.01 SECS
+DOSECS   EQU   *
+         CP    P1008SEC,=P'0'     NEGATIVE ?
+         BL    INVREQ6            ERROR IF IT IS
+         BE    GOSTART            EXIT IF ZERO
+         CP    P1008SEC,=P'359999' TOO MANY SECONDS ?
+         BH    INVREQ6            ERROR IF IT IS
+         ZAP   INTDEC,P1008SEC    SECS IN WORK AREA
+         MP    INTDEC,=P'100'     CONVERT TO 0.01 SECS
+         B     GOSTART            EXIT
+*
+INTIME   EQU   *
+* INTERVAL/TIME
+* VALIDATE HHMMSS, MAX 995959
+         ZAP   INTCPY,P1008HMS    COPY IT
+         NC    INTCPY,=X'00000FFF' LEAVE SECS
+         CP    INTCPY,=P'0'       NEGATIVE ?
+         BL    INVREQ6            ERROR IF IT IS
+         CP    INTCPY,=P'59'      TOO MANY SECS ?
+         BH    INVREQ6            ERROR IF IT IS
+         ZAP   INTCPY,P1008HMS    COPY IT
+         NC    INTCPY,=X'000FF00F' LEAVE MINS
+         CP    INTCPY,=P'0'       NEGATIVE ?
+         BL    INVREQ5            ERROR IF IT IS
+         CP    INTCPY,=P'5900'    TOO MANY MINS ?
+         BH    INVREQ5            ERROR IF IT IS
+         ZAP   INTCPY,P1008HMS    COPY IT
+         NC    INTCPY,=X'FFF0000F' LEAVE MINS
+         CP    INTCPY,=P'0'       NEGATIVE ?
+         BL    INVREQ4            ERROR IF IT IS
+         CP    INTCPY,=P'990000'  TOO MANY HOURS ?
+         BH    INVREQ4            ERROR IF IT IS
+* CONVERT TO SECS
+         ZAP   INTCPY,P1008HMS    COPY IT
+         NC    INTCPY,=X'00000FFF' LEAVE SECS
+         SP    INTDEC,INTDEC      CLEAR WORK AREA
+         AP    INTDEC,INTCPY      ADD SECS
+         ZAP   INTCPY,P1008HMS    COPY IT
+         NC    INTCPY,=X'000FF00F' LEAVE MINS
+         SRP   INTCPY,64-2,0      /100 = MINS
+         MP    INTCPY,=P'60'      *60  = SECS
+         AP    INTDEC,INTCPY      ADD MINS*60
+         ZAP   INTCPY,P1008HMS    COPY IT
+         NC    INTCPY,=X'FFF0000F' LEAVE MINS
+         SRP   INTCPY,64-4,0      /10000 = HOURS
+         MP    INTCPY,=P'3600'    *3600  = SECS
+         AP    INTDEC,INTCPY      ADD HOURS*3600
+         SRP   INTDEC,2,0         *100 = 0.01 SECS
+GOSTART  EQU   *
+         CVB   R1,INTDEC          CONVERT TO BINARY
+         ST    R1,INTBIN          SAVE REQUESTED TIME
+         CLI   P1008TME,X'FF'     IS IT TIME ?
+         BNE   GOINT              EXIT IF INTERVAL
+* PROCESSING FOR TIME
+         TIME  BIN                GET TIME NOW IN 0.01 SECS
+* IF REQUESTED TIME-TIME NOW = 0 TO -6 TIME HAS EXPIRED
+         L     R1,INTBIN          LOAD REQUESTED TIME
+         SR    R1,R0              R1=PERIOD TO ELAPSE
+         BZ    EXPIRED            EXIT IF ZERO
+         BP    PEROK              EXIT IF +VE
+         C     R1,=AL4(-6*60*60*100) LESS THAN 6 HOURS ?
+         BNL   EXPIRED            EXIT IF IT IS
+PEROK    EQU   *
+* IF REQUESTED TIME-(TIME NOW+24 HOURS) = 0 TO -6 TIME HAS EXPIRED
+         ST    R1,LAPSE           SAVE REQ-NOW
+         A     R0,=AL4(24*60*60*100) ADD 24 HOURS
+         L     R1,INTBIN          LOAD REQUESTED TIME
+         SR    R1,R0              R1=PERIOD TO ELAPSE - 24 HOURS
+         BZ    EXPIRED            EXIT IF ZERO
+         BP    P24OK              EXIT IF +VE
+         C     R1,=AL4(-6*60*60*100) LESS THAN 6 HOURS ?
+         BNL   EXPIRED            EXIT IF IT IS
+P24OK    EQU   *
+* IF REQUESTED TIME-TIME NOW > 0  THEN THAT IS THE PERIOD TO USE
+         L     R1,LAPSE           LOAD REQ-NOW
+         ST    R1,INTBIN          SAVE REQ-NOW
+         LTR   R1,R1              +VE TIME ?
+         BP    NOTEXP             EXIT IF IT IS
+* IF REQUESTED TIME-TIME NOW < -6 THEN ADD 24 HOURS FOR THE PERIOD
+         A     R1,=AL4(24*60*60*100) ADD 24 HOURS
+         ST    R1,INTBIN          SAVE REQ-NOW+24 HOURS
+         B     NOTEXP             EXIT
+*
+GOINT    EQU   *
+* PROCESSING FOR INTERVAL
+         LTR   R1,R1              ZERO PERIOD ?
+         BNZ   NOTEXP             EXIT IF NOT
+EXPIRED  EQU   *
+         XC    INTBIN,INTBIN      ZERO TIME
+NOTEXP   EQU   *
+         TIME  CLOCK,STCKTIME,CLOCKTYPE=STCK
+         SGR   R0,R0              CLEAR R0
+         LG    R1,STCKTIME        R1=STCK TIME
+         SRLG  R1,R1,12           SHIFT TO uS
+         DSGF  R0,=F'10000'       REDUCE TO 0.01 SEC
+         AGF   R1,INTBIN          ADD OUR INTERVAL
+         STG   R1,STCKTIME        SAVE IT
+* BUILD REQID
+         MVC   EIBREQID,P1008REQ  MOVE REQID
+         OC    P1008REQ,P1008REQ  ANY REQID ?
+         BNZ   GOTREQ             EXIT IF NOT
+* CREATE HASH REQID
+         SR    R0,R0              CLEAR R0
+         L     R1,P1008TRN        R1=TRANSID
+         M     R0,P1008TRM        MULTIPLY BY TERMID
+         STM   R0,R1,EIBREQID     SAVE THE REQID
+         MVC   EIBREQID(2),=C'DF' OVERLAY THE TS Q PREFIX
+GOTREQ   EQU   *
+* IF FROM, RTRANSID, RTERMID OR QUEUE ARE SPECIFIED WE HAVE A TS Q
+         OC    P1008FRM(22),P1008FRM ANY FROM/RTRANSID/RTERMID/QUEUE ?
+         BZ    SENDIC             EXIT IF NOT
+* BUILD TS Q
+         LH    R4,P1008LEN        LENGTH OF DATA (IF ANY)
+         AHI   R4,16              + LENGTH OF RTRANSID/RTERMID/QUEUE
+         STH   R4,TSACLEN         SAVE TS LENGTH
+         EXEC  CICS GETMAIN LENGTH(TSACLEN) SET(R4) INITIMG(0) NOHANDLE
+         MVC   0(4,R4),P1008RTN   MOVE RTRANSID
+         MVC   4(4,R4),P1008RTM   MOVE RTERMID
+         MVC   8(8,R4),P1008QNM   MOVE QUEUE
+         ICM   R14,15,P1008FRM    ANY FROM ?
+         BZ    DOWQTS             EXIT IF NONE
+* MOVE FROM DATA
+         LH    R15,P1008LEN       R15=LENGTH FOR MOVE
+         LR    R1,R15             R1=DESTINATION LENGTH
+         LA    R0,16(R4)          R0=DESTINATION ADDRESS
+         MVCL  R0,R14             COPY DATA
+DOWQTS   EQU   *
+* IF IOERR OCCURS IT BELONGS TO IC START, NOT TO THE WRITEQ TS
+         EXEC  CICS WRITEQ TS QUEUE(EIBREQID)                          X
+               FROM(0(R4)) LENGTH(TSACLEN) NUMITEMS(TSNUMIT)           X
+               ICTRAN(P1008TRN) ICTERM(P1008TRM)                       X
+               NOHANDLE
+         CLC   EIBRESP,DFHRESP(IOERR) IS IT IOERR ?
+         BE    IOERR              EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY OTHER WRITEQ TS ERROR ?
+         BNZ   DORESP             EXIT IF THERE IS
+         MVC   EIBFN,P1008FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+SENDIC   EQU   *
+* GET AND CLEAR THE IC BLOCK
+         EXEC  CICS GETMAIN FLENGTH(=A(ICPREFIX)) SET(R5) INITIMG(0)   X
+               NOHANDLE
+         USING DFHICBLK,R5
+         MVC   ICPTCPIO,=AL4(ICPREFIX) SET PREFIX LENGTH
+         MVC   ICPFN,=C'1008'     SET FUNCTION CODE
+         MVC   ICPTERM,TCTTETI    SET TERMINAL ID
+         MVC   ICPTRAN,EIBTRNID   SET TRANSID
+         MVC   ICPTASKN,EIBTASKN  SET TASK NUMBER
+         MVC   ICPSTCK,STCKTIME   SET EXPIRY TIME
+         MVC   ICPITRAN,P1008TRN  SET INITIATED TRANSID
+         MVC   ICPITERM,P1008TRM  SET INITIATED TERMID
+         MVC   ICPREQID,EIBREQID  SET REQID
+         TCPIO SEND,MSG=(R5),LMSG==A(ICPREFIX),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+* GET THE RESPONSE
+         TCPIO RECEIVE,MSG=(R5),LMSG==A(ICPREFIX),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+         OC    ICPRETCD,ICPRETCD  BAD RETURN CODE ?
+         BZ    RETURN             EXIT IF NONE
+         CLC   ICPRETCD,DFHRESP(TERMIDERR) TERMIDERR ?
+         BE    TERMERR            EXIT IF IT IS
+* SERVER HAS SENT UNKNOWN VALUE IN ICPRETCD
+         B     INVREQ             SHOULD NOT OCCUR
+*
+INVREQ4  EQU   *
+         MVC   EIBRESP2,=F'4'     SET EIBRESP2=BAD HOURS
+         B     INVREQ             EXIT
+*
+INVREQ5  EQU   *
+         MVC   EIBRESP2,=F'5'     SET EIBRESP2=BAD MINUTES
+         B     INVREQ             EXIT
+*
+INVREQ6  EQU   *
+         MVC   EIBRESP2,=F'6'     SET EIBRESP2=BAD SECONDS
+INVREQ   EQU   *
+* INVOKE INVREQ
+         XC    EIBREQID,EIBREQID  CLEAR EIBREQID
+         MVI   EIBRCODE,X'FF'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         B     DORESP             EXIT
+*
+LENGERR  EQU   *
+         MVI   EIBRCODE,X'E1'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
+         B     DORESP             EXIT
+*
+IOERR    EQU   *
+         XC    EIBREQID,EIBREQID  CLEAR EIBREQID
+         MVC   EIBFN,P1008FN      SET EIBFN
+         MVI   EIBRCODE,X'04'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(IOERR) SET EIBRESP=IOERR
+         B     DORESP             EXIT
+*
+TRANERR  EQU   *
+         EXEC  CICS RELEASE PROGRAM('DFHPCT') NOHANDLE
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZ   DORESP             EXIT IF THERE IS
+         MVC   EIBFN,P1008FN      SET EIBFN
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         MVI   EIBRCODE,X'11'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(TRANSIDERR) SET EIBRESP=TRANSIDERR
+         B     DORESP             EXIT
+*
+TERMERR  EQU   *
+         XC    EIBREQID,EIBREQID  CLEAR EIBREQID
+         MVI   EIBRCODE,X'12'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(TERMIDERR) SET EIBRESP=TERMIDERR
+DORESP   EQU   *
+* ANY ERROR ATTEMPTS TO DELETE THE TS Q, EVEN IF WE DIDN'T BUILD ONE
+         OC    EIBREQID,EIBREQID  ANY POSSIBILITY OF A TS Q ?
+         BZ    DORESP1            EXIT IF NOT
+* A POSSIBILITY EXISTS
+         MVC   RCODE,EIBRCODE     SAVE RCODE
+         MVC   RESP,EIBRESP       SAVE RESP
+         MVC   RESP2,EIBRESP2     SAVE RESP2
+         EXEC  CICS DELETEQ TS QUEUE(EIBREQID) NOHANDLE
+         MVC   EIBFN,P1008FN      SET EIBFN
+         MVC   EIBRCODE,RCODE     RESTORE RCODE
+         MVC   EIBRESP,RESP       RESTORE RESP
+         MVC   EIBRESP2,RESP2     RESTORE RESP2
+DORESP1  EQU   *
+         ICM   R14,15,P1008RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P1008RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         SUBEXIT
+*
+WORK     DC    PL8'0'             WOTK AREA
+INTDEC   DC    PL8'0'             INTERVAL IN 0.01 SECS
+INTCPY   DS    PL4                INTERVAL COPY AREA    0HHMMSS+
+INTBIN   DS    FL4                INTERVAL IN 0.01 SECS BINARY
+LAPSE    DS    FL4                TIME LAPSE IN 0.01 SECS BINARY
+STCKTIME DS    XL8                STCK TIME
+RCODE    DS    XL4                SAVE RCODE
+RESP     DS    XL4                SAVE RESP
+RESP2    DS    XL4                SAVE RESP2
+*
+TSACLEN  DS    XL2                ACTUAL TS LENGTH
+TSNUMIT  DS    XL2                NUMITEMS
+*
+P1008    DSECT
+P1008FN  DS    XL2                FUNCTION CODE
+P1008EIB DS    AL4                EIB
+P1008TCT DS    AL4                TCTTE
+P1008TRN DS    CL4                INITIATED TRANSID
+P1008TRM DS    CL4                INITIATED TERMID (BLANK IF NON-TERM)
+P1008FRM DS    AL4                ADDRESS OF FROM
+P1008LEN DS    XL2                LENGTH
+P1008RTN DS    CL4                RTRANSID
+P1008RTM DS    CL4                RTERMID
+P1008QNM DS    CL8                QUEUE NAME
+P1008REQ DS    CL8                REQID
+P1008INT DS    X                  FF=INTERVAL/TIME
+P1008TME DS    X                  00=INTERVAL/AFTER FF=TIME/AT
+P1008HMS DS    PL4                0HHMMSS+
+P1008IND DS    X                  FF=MORE THAN 1 PARM IN NEXT 3
+P1008HRS DS    PL8                HOURS
+P1008MIN DS    PL8                MINUTES
+P1008SEC DS    PL8                SECONDS
+         DS    X                  FF=NOHANDLE
+P1008RSP DS    AL4                RESP
+P1008RS2 DS    AL4                RESP2
+P1008END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHICBLK                 INTERVAL CONTROL PREFIX AREA
+*
+         EQUREGS REGS=GPR
+*
+         END
+

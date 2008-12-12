@@ -1,0 +1,410 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.**********************************************************************
+         MACRO
+         CICS_START
+         GBLB  &PARMS_1008
+         LCLB  &AFTER,&AT,&NOHAND
+         LCLB  &ONLYH,&ONLYM,&ONLYS
+         LCLC  &INTVAL,&TIME,&HOURS,&MINS,&SECS,&REQID
+         LCLC  &TRANSID,&TERMID,&RTRANID,&RTERMID,&QUEUE,&FROM,&LENGTH
+         LCLC  &RESP,&RESP2
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,9) EQ 'INTERVAL(').INTVAL
+         AIF   ('&PARM'(1,5) EQ 'TIME(').TIME
+         AIF   ('&PARM'(1,6) EQ 'HOURS(').HOURS
+         AIF   ('&PARM'(1,8) EQ 'MINUTES(').MINS
+         AIF   ('&PARM'(1,8) EQ 'SECONDS(').SECS
+         AIF   ('&PARM'(1,5) EQ 'AFTER').AFTER
+         AIF   ('&PARM'(1,2) EQ 'AT').AT
+         AIF   ('&PARM'(1,6) EQ 'REQID(').REQID
+         AIF   ('&PARM'(1,8) EQ 'TRANSID(').TRANSID
+         AIF   ('&PARM'(1,7) EQ 'TERMID(').TERMID
+         AIF   ('&PARM'(1,9) EQ 'RTRANSID(').RTRANID
+         AIF   ('&PARM'(1,8) EQ 'RTERMID(').RTERMID
+         AIF   ('&PARM'(1,6) EQ 'QUEUE(').QUEUE
+         AIF   ('&PARM'(1,5) EQ 'FROM(').FROM
+         AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.INTVAL  ANOP
+&INTVAL  SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.TIME    ANOP
+&TIME    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.HOURS   ANOP
+&HOURS   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.MINS    ANOP
+&MINS    SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.SECS    ANOP
+&SECS    SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.REQID   ANOP
+&REQID   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.TRANSID ANOP
+&TRANSID SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.TERMID  ANOP
+&TERMID  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.RTRANID ANOP
+&RTRANID SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.RTERMID ANOP
+&RTERMID SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.QUEUE   ANOP
+&QUEUE   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.FROM    ANOP
+&FROM    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.LENGTH  ANOP
+&LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.AFTER   ANOP
+&AFTER   SETB  1
+         AGO   .PLOOP
+.*
+.AT      ANOP
+&AT      SETB  1
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   ('&TRANSID' EQ '').MISTRAN
+         AIF   ('&INTVAL' NE '' AND '&TIME' NE '').BOTHIT
+         AIF   (&AFTER AND &AT).BOTHAFA
+         AIF   ('&INTVAL' NE '' AND &AFTER).BADAFTAT
+         AIF   ('&INTVAL' NE '' AND &AT).BADAFTAT
+         AIF   ('&TIME'   NE '' AND &AFTER).BADAFTAT
+         AIF   ('&TIME'   NE '' AND &AT).BADAFTAT
+         AIF   ('&INTVAL' NE '' AND '&HOURS' NE '').BADHMS
+         AIF   ('&INTVAL' NE '' AND '&MINS'  NE '').BADHMS
+         AIF   ('&INTVAL' NE '' AND '&SECS'  NE '').BADHMS
+         AIF   ('&TIME'   NE '' AND '&HOURS' NE '').BADHMS
+         AIF   ('&TIME'   NE '' AND '&MINS'  NE '').BADHMS
+         AIF   ('&TIME'   NE '' AND '&SECS'  NE '').BADHMS
+         AIF   ('&HOURS'  NE '' AND NOT(&AFTER OR &AT)).BADHMS2
+         AIF   ('&MINS'   NE '' AND NOT(&AFTER OR &AT)).BADHMS2
+         AIF   ('&SECS'   NE '' AND NOT(&AFTER OR &AT)).BADHMS2
+         AIF   ((&AFTER OR &AT) AND '&HOURS' EQ '' AND '&MINS' EQ '' AN-
+               D '&SECS' EQ '').BADAFAT
+         AIF   ('&FROM' NE '' AND '&LENGTH' EQ '').BADFRML
+         AIF   ('&FROM' EQ '' AND '&LENGTH' NE '').BADFRML
+.* DEFAULT SETTING IS INTERVAL(0)
+         AIF   ('&INTVAL' EQ '' AND '&TIME' EQ '' AND '&HOURS' EQ '' AN-
+               D '&MINS' EQ '' AND '&SECS' EQ '').DEFINT
+         AGO   .PARMOK
+.*
+.DEFINT  ANOP
+&INTVAL  SETC  '0'
+.PARMOK  ANOP
+         L     R15,=A(P1008)      LOAD PARM ADDRESS
+         USING (P1008,P1008END),R15
+         XC    P1008(P1008END-P1008),P1008 CLEAR PARMS
+         MVC   P1008FN,=X'1008'   SET FUNCTION CODE
+.* PROCESS TRANSID
+         AIF   ('&TRANSID'(1,1) EQ '''').TRNSTRG
+.* TRANSID AS LABEL
+         MVC   P1008TRN,&TRANSID  MOVE TRANSID FROM LABEL
+         AGO   .DOTERM
+.*
+.TRNSTRG ANOP
+.* TRANSID AS STRING
+&TRNLEN  SETA  K'&TRANSID
+         AIF   (&TRNLEN LT 3 OR &TRNLEN GT 6).BADTRAN
+         MVC   P1008TRN,=CL4&TRANSID MOVE TRANSID AS STRING
+.DOTERM  ANOP
+.* PROCESS TERMID
+         AIF   ('&TERMID' NE '').GOTTERM
+.* TEMPORARY MNOTE UNTIL WE SUPPORT NON-TERM START
+         MNOTE 12,'NON-TERMINAL START NOT CURRENTLY SUPPORTED'
+         MEXIT
+         MVC   P1008TRM,=4C' '    SET DEFAULT TERMID
+         AGO   .DORTRN
+.*
+.GOTTERM ANOP
+         AIF   ('&TERMID'(1,1) EQ '''').TRMSTRG
+.* TERMID AS LABEL
+         MVC   P1008TRM,&TERMID   MOVE TERMID FROM LABEL
+         AGO   .DORTRN
+.*
+.TRMSTRG ANOP
+.* TERMID AS STRING
+&TRMLEN  SETA  K'&TERMID
+         AIF   (&TRMLEN LT 3 OR &TRMLEN GT 6).BADTERM
+         MVC   P1008TRM,=CL4&TERMID MOVE TERMID AS STRING
+.DORTRN  ANOP
+.* PROCESS RTRANSID
+         AIF   ('&RTRANID' EQ '').DORTRM
+         AIF   ('&RTRANID'(1,1) EQ '''').RTNSTRG
+.* RTRANSID AS LABEL
+         MVC   P1008RTN,&RTRANID  MOVE RTRANSID FROM LABEL
+         AGO   .DORTRM
+.*
+.RTNSTRG ANOP
+.* RTRANSID AS STRING
+&RTNLEN  SETA  K'&RTRANID
+         AIF   (&RTNLEN LT 3 OR &RTNLEN GT 6).BADRTRN
+         MVC   P1008RTN,=CL4&RTRANID MOVE RTRANSID AS STRING
+.DORTRM  ANOP
+.* PROCESS RTERMID
+         AIF   ('&RTERMID' EQ '').DOQUEUE
+         AIF   ('&RTERMID'(1,1) EQ '''').RTMSTRG
+.* RTERMID AS LABEL
+         MVC   P1008RTM,&RTERMID  MOVE RTERMID FROM LABEL
+         AGO   .DOQUEUE
+.*
+.RTMSTRG ANOP
+.* RTERMID AS STRING
+&RTMLEN  SETA  K'&RTERMID
+         AIF   (&RTMLEN LT 3 OR &RTMLEN GT 6).BADRTRM
+         MVC   P1008RTM,=CL4&RTERMID MOVE RTERMID AS STRING
+.DOQUEUE ANOP
+.* PROCESS QUEUE
+         AIF   ('&QUEUE' EQ '').DOFROM
+         AIF   ('&QUEUE'(1,1) EQ '''').QUESTRG
+.* QUEUE AS LABEL
+         MVC   P1008QNM,&QUEUE    MOVE QUEUE FROM LABEL
+         AGO   .DOFROM
+.*
+.QUESTRG ANOP
+.* QUEUE AS STRING
+&QUELEN  SETA  K'&QUEUE
+         AIF   (&QUELEN LT 3 OR &QUELEN GT 10).BADQUE
+         MVC   P1008QNM,=CL8&QUEUE MOVE QUEUE AS STRING
+.DOFROM  ANOP
+         AIF   ('&FROM' EQ '').DOREQ
+&FROMTQ  SETC  T'&FROM
+         AIF   ('&FROM'(1,1) EQ '=' OR '&FROMTQ' EQ 'A').FRMADLIT
+         LA    R1,&FROM           R1=FROM ADDRESS AS LABEL
+         ST    R1,P1008FRM        SAVE IT
+         AGO   .FROMLEN
+.*
+.FRMADLIT ANOP
+         L     R1,&FROM           R1=INDIRECT FROM ADDRESS AS LABEL
+         ST    R1,P1008FRM        SAVE IT
+.FROMLEN ANOP
+         AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
+         AIF   (T'&LENGTH NE 'N').LENLABL
+.LENNUM  ANOP
+         LA    R1,&LENGTH         R1=LENGTH
+         STH   R1,P1008LEN        SAVE IT
+         AGO   .DOREQ
+.*
+.LENLABL ANOP
+         LH    R1,&LENGTH         R1=LENGTH FROM LABEL
+         STH   R1,P1008LEN        SAVE IT
+.DOREQ   ANOP
+.* PROCESS REQID
+         AIF   ('&REQID' EQ '').DOINT
+         AIF   ('&REQID'(1,1) EQ '''').REQSTRG
+.* REQID AS LABEL
+         MVC   P1008REQ,&REQID    MOVE REQID FROM LABEL
+         AGO   .DOINT
+.*
+.REQSTRG ANOP
+.* REQID AS STRING
+&REQLEN  SETA  K'&REQID
+         AIF   (&REQLEN LT 3 OR &REQLEN GT 10).BADREQ
+         MVC   P1008REQ,=CL8&REQID MOVE REQID AS STRING
+.DOINT   ANOP
+.* JOIN UP INTERVAL AND TIME
+         AIF   ('&INTVAL' EQ '').NOTINT
+&HHMMSS  SETC  '&INTVAL'
+         MVI   P1008INT,X'FF'     SET INTERVAL/TIME INDICATOR
+         AGO   .DOHMS
+.*
+.NOTINT  ANOP
+         AIF   ('&TIME' EQ '').NOTIT
+&HHMMSS  SETC  '&TIME'
+         MVI   P1008INT,X'FF'     SET INTERVAL/TIME INDICATOR
+         MVI   P1008TME,X'FF'     SET TIME/AT
+.DOHMS   ANOP
+.* PROCESS INTERVAL/TIME
+         AIF   (T'&HHMMSS NE 'N').TIMELAB
+&KHMS    SETA  K'&HHMMSS
+         AIF   (&KHMS GT 6).BADTIME
+         ZAP   P1008HMS,=P'&HHMMSS' PACK HMS
+         AGO   .DOCALL
+.*
+.TIMELAB ANOP
+         PACK  P1008HRS+2(4),&HHMMSS.(7) PACK FROM LABEL+BYTE
+         MVO   P1008HMS,P1008HRS+2(3) MOVE HMS FROM LABEL
+         OI    P1008HMS+3,X'0C'   SET SIGN
+         AGO   .DOCALL
+.*
+.NOTIT   ANOP
+.* PROCESS HOURS MINUTES SECONDS
+.* TEST IF MORE THAN 1 PARM
+         AIF   ('&HOURS' NE '' AND '&MINS' EQ '' AND '&SECS' EQ '').DOS-
+               ING
+         AIF   ('&HOURS' EQ '' AND '&MINS' NE '' AND '&SECS' EQ '').DOS-
+               ING
+         AIF   ('&HOURS' EQ '' AND '&MINS' EQ '' AND '&SECS' NE '').DOS-
+               ING
+.* MORE THAN ONE PARM
+         MVI   P1008IND,X'FF'     SET MORE THAN 1 PARM INDICATOR
+.DOSING  ANOP
+         AIF   ('&HOURS' NE '').TRYM
+&HOURS   SETC  '0'
+.TRYM    ANOP
+         AIF   ('&MINS' NE '').TRYS
+&MINS    SETC  '0'
+.TRYS    ANOP
+         AIF   ('&SECS' NE '').DOFUHMS
+&SECS    SETC  '0'
+.DOFUHMS ANOP
+         ZAP   P1008HRS,=P'&HOURS' SET HOURS
+         ZAP   P1008MIN,=P'&MINS' SET MINUTES
+         ZAP   P1008SEC,=P'&SECS' SET SECONDS
+         AIF   (NOT &AT).DOCALL
+         MVI   P1008TME,X'FF'     SET TIME/AT
+.DOCALL  ANOP
+         ST    DFHEIBR,P1008EIB   SET EIB ADDRESS
+         ST    TCTTEAR,P1008TCT   SET TCTTE ADDRESS
+         AIF   (NOT &NOHAND).DUNNOH
+         MVI   P1008NOH,X'FF'     SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R1,&RESP           ADDRESS OF RESP
+         ST    R1,P1008RSP        SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R1,&RESP2          ADDRESS OF RESP2
+         ST    R1,P1008RS2        SAVE IT
+.NORESP2 ANOP
+         ZCALL LCL1008,(P1008),MF=I CALL START PROCESSOR
+.*
+         L     R15,=A(P1008)      LOAD PARM ADDRESS
+         CLI   P1008NOH,X'FF'     NOHANDLE ?
+         BE    P1008BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BZ    P1008BYP_&SYSNDX   EXIT IF NONE
+* INVREQ, LENGERR, IOERR, TERMIDERR, TRANSIDERR
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P1008BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_1008).BYP1008
+&PARMS_1008 SETB 1
+P1008    EQU   *
+P1008FN  DS    XL2                FUNCTION CODE
+P1008EIB DS    AL4                EIB
+P1008TCT DS    AL4                TCTTE
+P1008TRN DS    CL4                INITIATED TRANSID
+P1008TRM DS    CL4                INITIATED TERMID (BLANK IF NON-TERM)
+P1008FRM DS    AL4                ADDRESS OF FROM
+P1008LEN DS    XL2                LENGTH
+P1008RTN DS    CL4                RTRANSID
+P1008RTM DS    CL4                RTERMID
+P1008QNM DS    CL8                QUEUE NAME
+P1008REQ DS    CL8                REQID
+P1008INT DS    X                  FF=INTERVAL/TIME
+P1008TME DS    X                  00=INTERVAL/AFTER FF=TIME/AT
+P1008HMS DS    PL4                0HHMMSS+
+P1008IND DS    X                  FF=MORE THAN 1 PARM IN NEXT 3
+P1008HRS DS    PL8                HOURS
+P1008MIN DS    PL8                MINUTES
+P1008SEC DS    PL8                SECONDS
+P1008NOH DS    X                  FF=NOHANDLE
+P1008RSP DS    AL4                RESP
+P1008RS2 DS    AL4                RESP2
+P1008END EQU   *                  END MARKER
+         DS    0H
+*
+.BYP1008 ANOP
+P1008BYP_&SYSNDX DS 0H
+         DROP  R15
+         MEXIT
+.*
+.MISTRAN MNOTE 12,'TRANSID IS MANDATORY'
+         MEXIT
+.*
+.BADTRAN MNOTE 12,'INVALID TRANSID'
+         MEXIT
+.*
+.BADTERM MNOTE 12,'INVALID TERMID'
+         MEXIT
+.*
+.BADRTRN MNOTE 12,'INVALID RTRANSID'
+         MEXIT
+.*
+.BADRTRM MNOTE 12,'INVALID RTERMID'
+         MEXIT
+.*
+.BADQUE  MNOTE 12,'INVALID QUEUE'
+         MEXIT
+.*
+.BADREQ  MNOTE 12,'INVALID REQID'
+         MEXIT
+.*
+.BOTHIT  MNOTE 12,'BOTH INTERVAL AND TIME ARE SPECIFIED'
+         MEXIT
+.*
+.BOTHAFA MNOTE 12,'BOTH AFTER AND AT ARE SPECIFIED'
+         MEXIT
+.*
+.BADAFTAT MNOTE 12,'INTERVAL/TIME CANNOT BE SPECIFIED WITH AFTER/AT'
+         MEXIT
+.*
+.BADHMS  MNOTE 12,'HOURS/MINUTES/SECONDS ARE INVALID WITH INTERVAL OR T-
+               IME'
+         MEXIT
+.*
+.BADHMS2 MNOTE 12,'HOURS/MINUTES/SECONDS ARE SPECIFIED WITHOUT AFTER/AT-
+               '
+         MEXIT
+.*
+.BADTIME MNOTE 12,'INTERVAL/TIME MUST BE 1 TO 6 BYTES'
+         MEXIT
+.*
+.BADAFAT MNOTE 12,'AFTER/AT SPECIFIED, BUT NO TIME PARAMETERS'
+         MEXIT
+.*
+.BADFRML MNOTE 12,'FROM/LENGTH MUST BOTH BE MISSING OR BOTH SPECIFIED'
+         MEXIT
+         MEND

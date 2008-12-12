@@ -1,0 +1,334 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL100A  SUBENTRY
+*
+* FN=100A  EXEC CICS RETRIEVE
+*
+* R1  >>> P100A BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P100A,P100AEND),R3
+         L     DFHEIBR,P100AEIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P100ATCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P100AFN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P100ARSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P100ARS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         EXEC  CICS READQ TS QUEUE(EIBREQID) SET(R4) LENGTH(READQLEN)  X
+               NUMITEMS(READQNUM) NEXT NOHANDLE
+         OC    EIBRESP,EIBRESP    BAD RETURN CODE ?
+         BZ    READQOK            EXIT IF NONE
+         CLC   EIBRESP,DFHRESP(INVREQ) INVREQ ?
+         BE    INVREQ             EXIT IF IT IS
+         CLC   EIBRESP,DFHRESP(ITEMERR) ITEMERR ?
+         BE    ITEMERR            EXIT IF IT IS
+         CLC   EIBRESP,DFHRESP(QIDERR) QIDERR ?
+         BE    QIDERR             EXIT IF IT IS
+* UNKNOWN VALUE IN EIBRESP
+         B     INVREQ             SHOULD NOT OCCUR
+*
+READQOK  EQU   *
+* RESET EIB FIELDS
+         MVC   EIBFN,P100AFN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+* FIRST DEAL WITH THE PREFIX DATA, POINTER IS IN R4
+*    +0  RTRANSID(4)
+*    +4  RTERMID(4)
+*    +8  QUEUE(8)
+* IF RETRIEVE SPECIFIES ONE OF THE ABOVE FIELDS AND IT IS ZERO,
+* THEN ENVDEFERR IS RAISED
+* IF RETRIEVE OMITS ONE OF THE ABOVE FIELDS IT DOESN'T MATTER WHETHER
+* THERE IS DATA OR NOT.
+         ICM   R5,15,P100ARTN     ANY RTRANSID ADDRESS ?
+         BZ    TRYRTRM            EXIT IF NONE
+* RTRANSID IS EXPECTED
+         OC    0(4,R4),0(R4)      ANY RTRANSID ?
+         BZ    ENVDEFER           ERROR IF NONE
+         MVC   0(4,R5),0(R4)      MOVE RTRANSID
+TRYRTRM  EQU   *
+         ICM   R5,15,P100ARTM     ANY RTERMID ADDRESS ?
+         BZ    TRYQUE             EXIT IF NONE
+* RTERMID IS EXPECTED
+         OC    4(4,R4),4(R4)      ANY RTERMID ?
+         BZ    ENVDEFER           ERROR IF NONE
+         MVC   0(4,R5),4(R4)      MOVE RTERMID
+TRYQUE   EQU   *
+         ICM   R5,15,P100AQNM     ANY QUEUE ADDRESS ?
+         BZ    PFXDUN             EXIT IF NONE
+* QUEUE IS EXPECTED
+         OC    8(8,R4),8(R4)      ANY QUEUE ?
+         BZ    ENVDEFER           ERROR IF NONE
+         MVC   0(8,R5),8(R4)      MOVE QUEUE
+PFXDUN   EQU   *
+* SET WITH LENGTH
+*    IF LENGTH <=0 THEN
+*       IF DATALENGTH=0
+*          SET REG TO FOXES
+*          SET LENGTH=0
+*       ELSE...THERE IS DATA
+*          SET REG TO FOXES
+*          SET LENGTH=0
+*          RAISE LENGERR
+*
+*    IF LENGTH >= DATALENGTH
+*       GETMAIN AN AREA FOR DATALENGTH
+*       MOVE THE DATA
+*       SET REG
+*       SET LENGTH=DATALENGTH
+*    ELSE...
+*       GETMAIN AN AREA FOR THE PARTIAL DATA
+*       MOVE THE PARTIAL DATA
+*       SET REG
+*       SET LENGTH=DATALENGTH
+*       RAISE LENGERR
+*
+* INTO WITHOUT LENGTH
+*    IF DATALENGTH=0, DO NOTHING
+*    ELSE...
+*    MOVE THE DATA TO THE USER AREA
+*
+* INTO WITH LENGTH
+*    IF LENGTH <=0 THEN
+*       IF DATALENGTH=0
+*          SET LENGTH=0
+*       ELSE...THERE IS DATA
+*          SET LENGTH=0
+*          RAISE LENGERR
+*
+*    IF LENGTH >= DATALENGTH
+*       MOVE THE DATA TO THE USER AREA
+*       SET LENGTH=DATALENGTH
+*    ELSE...
+*       MOVE THE PARTIAL DATA TO THE USER AREA
+*       SET LENGTH=DATALENGTH
+*       RAISE LENGERR
+         CLI   P100ASET,X'FF'     SET ?
+         BNE   DOINTO             EXIT IF NOT
+* SET
+         L     R5,P100ALEN        R5=ADDRESS OF LENGTH
+         SR    R6,R6              CLEAR R6
+         ICM   R6,3,0(R5)         R6=LENGTH
+         BP    SETLENOK           EXIT IF POSITIVE
+* SET, AND LENGTH IS ZERO OR NEGATIVE
+         OC    READQLEN,READQLEN  ANY DATA ?
+         BNZ   SETNODTA           EXIT IF THERE IS
+* SET, AND LENGTH IS ZERO OR NEGATIVE, AND NO DATA
+         MVC   P100ASTA,=4X'FF'   SET REG TO FOXES
+         XC    0(2,R5),0(R5)      SET LENGTH=0
+         B     ALLDUN             EXIT
+*
+SETNODTA EQU   *
+* SET, AND LENGTH IS ZERO OR NEGATIVE, AND DATA
+         MVC   P100ASTA,=4X'FF'   SET REG TO FOXES
+         XC    0(2,R5),0(R5)      SET LENGTH=0
+         B     LENGERR            EXIT
+*
+SETLENOK EQU   *
+* SET, AND LENGTH IS POSITIVE
+         LH    R0,READQLEN        R0=ACTUAL LENGTH OF DATA
+         AHI   R0,-16             REDUCE BY PREFIX
+         CH    R0,0(R5)           DATALENGTH-16 LTEQ LENGTH ?
+         BH    SETLENHI           EXIT IF NOT
+* SET, AND LENGTH IS POSITIVE, AND DATALENGTH-16 LTEQ LENGTH
+         STH   R0,0(R5)           RETURN ACTUAL LENGTH OF DATA
+         BAL   R9,GETLEN          GETMAIN FOR SET
+         BAL   R9,MVELEN          MOVE THE DATA
+         B     ALLDUN             EXIT
+*
+SETLENHI EQU   *
+* SET, AND LENGTH IS POSITIVE, AND DATALENGTH GT LENGTH
+         BAL   R9,GETLEN          GETMAIN FOR SET
+         BAL   R9,MVELEN          MOVE THE DATA
+         LH    R0,READQLEN        R0=ACTUAL LENGTH OF DATA
+         AHI   R0,-16             REDUCE BY PREFIX
+         STH   R0,0(R5)           RETURN ACTUAL LENGTH OF DATA
+         B     LENGERR            EXIT
+*
+DOINTO   EQU   *
+* INTO
+         CLC   P100ALEN,=F'-1'    ANY LENGTH ADDRESS ?
+         BNE   GOTLEN             EXIT IF THERE IS
+* INTO, NO LENGTH
+         LH    R0,READQLEN        R0=ACTUAL LENGTH OF DATA
+         AHI   R0,-16             REDUCE BY PREFIX
+         STH   R0,SAVLEN          RETURN ACTUAL LENGTH OF DATA
+         LA    R5,SAVLEN          R5=ADDRESS OF LENGTH TO MOVE
+         L     R6,P100AINT        R6=ADDRESS OF INTO
+         BAL   R9,MVELEN          MOVE THE DATA
+         B     ALLDUN             EXIT
+*
+GOTLEN   EQU   *
+* INTO, WITH LENGTH
+         L     R5,P100ALEN        R5=ADDRESS OF LENGTH
+         SR    R6,R6              CLEAR R6
+         ICM   R6,3,0(R5)         R6=LENGTH
+         BP    INTLENOK           EXIT IF POSITIVE
+* INTO, AND LENGTH IS ZERO OR NEGATIVE
+         OC    READQLEN,READQLEN  ANY DATA ?
+         BNZ   INTNODTA           EXIT IF THERE IS
+* INTO, AND LENGTH IS ZERO OR NEGATIVE, AND NO DATA
+         XC    0(2,R5),0(R5)      SET LENGTH=0
+         B     ALLDUN             EXIT
+*
+INTNODTA EQU   *
+* INTO, AND LENGTH IS ZERO OR NEGATIVE, AND DATA
+         XC    0(2,R5),0(R5)      SET LENGTH=0
+         B     LENGERR            EXIT
+*
+INTLENOK EQU   *
+* INTO, AND LENGTH IS POSITIVE
+         LH    R0,READQLEN        R0=ACTUAL LENGTH OF DATA
+         AHI   R0,-16             REDUCE BY PREFIX
+         CH    R0,0(R5)           DATALENGTH-16 LTEQ LENGTH ?
+         BH    INTLENHI           EXIT IF NOT
+* INTO, AND LENGTH IS POSITIVE, AND DATALENGTH-16 LTEQ LENGTH
+         STH   R0,0(R5)           RETURN ACTUAL LENGTH OF DATA
+         L     R6,P100AINT        R6=ADDRESS OF INTO
+         BAL   R9,MVELEN          MOVE THE DATA
+         B     ALLDUN             EXIT
+*
+INTLENHI EQU   *
+* INTO, AND LENGTH IS POSITIVE, AND DATALENGTH-16 GT LENGTH
+         L     R6,P100AINT        R6=ADDRESS OF INTO
+         BAL   R9,MVELEN          MOVE THE DATA
+         LH    R0,READQLEN        R0=ACTUAL LENGTH OF DATA
+         AHI   R0,-16             REDUCE BY PREFIX
+         STH   R0,0(R5)           RETURN ACTUAL LENGTH OF DATA
+         B     LENGERR            EXIT
+*
+ALLDUN   EQU   *
+         CLC   READQNUM,=H'1'     NUMITEMS=1 ?
+         BNE   DORESP             EXIT IF NOT
+         EXEC  CICS DELETEQ TS QUEUE(EIBREQID) NOHANDLE
+         B     DORESP             EXIT
+*
+INVREQ   EQU   *
+* INVOKE INVREQ
+         XC    EIBREQID,EIBREQID  CLEAR EIBREQID
+         MVC   EIBFN,P100AFN      SET EIBFN
+         MVI   EIBRCODE,X'FF'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         B     DORESP             EXIT
+*
+ITEMERR  EQU   *
+* INVOKE ITEMERR
+* THIS BECOMES ENDDATA, DELETE THE Q
+         EXEC  CICS DELETEQ TS QUEUE(EIBREQID) NOHANDLE
+         XC    EIBREQID,EIBREQID  CLEAR EIBREQID
+         MVC   EIBFN,P100AFN      SET EIBFN
+         MVI   EIBRCODE,X'01'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(ENDDATA) SET EIBRESP=ENDDATA
+         B     DORESP             EXIT
+*
+ENVDEFER EQU   *
+* INVOKE ENVDEFERR
+         XC    EIBREQID,EIBREQID  CLEAR EIBREQID
+         MVI   EIBRCODE,X'E9'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(ENVDEFERR) SET EIBRESP=ENVDEFERR
+         B     DORESP             EXIT
+*
+LENGERR  EQU   *
+* INVOKE LENGERR
+* AN ATTEMPT TO RETRIEVE A SINGLE ITEM, DELETES IT
+         CLC   READQNUM,=H'1'     NUMITEMS=1 ?
+         BNE   DOLENERR           EXIT IF NOT
+         EXEC  CICS DELETEQ TS QUEUE(EIBREQID) NOHANDLE
+         XC    EIBREQID,EIBREQID  CLEAR EIBREQID
+DOLENERR EQU   *
+         MVC   EIBFN,P100AFN      SET EIBFN
+         MVI   EIBRCODE,X'E1'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
+         B     DORESP             EXIT
+*
+QIDERR   EQU   *
+* INVOKE QIDERR
+* THIS BECOMES ENDDATA
+         XC    EIBREQID,EIBREQID  CLEAR EIBREQID
+         MVC   EIBFN,P100AFN      SET EIBFN
+         MVI   EIBRCODE,X'01'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(ENDDATA) SET EIBRESP=ENDDATA
+DORESP   EQU   *
+         ICM   R14,15,P100ARSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P100ARS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         MVC   RCODE,EIBRCODE     SAVE RCODE
+         MVC   RESP,EIBRESP       SAVE RESP
+         MVC   RESP2,EIBRESP2     SAVE RESP2
+         EXEC  CICS FREEMAIN DATA(TSBLKSV) NOHANDLE
+         MVC   EIBFN,P100AFN      SET EIBFN
+         MVC   EIBRCODE,RCODE     RESTORE RCODE
+         MVC   EIBRESP,RESP       RESTORE RESP
+         MVC   EIBRESP2,RESP2     RESTORE RESP2
+         SUBEXIT
+*
+* SUBROUTINES
+*
+GETLEN   DS    0H
+* R5 POINTS TO LENGTH
+         EXEC  CICS GETMAIN LENGTH(0(R5)) SET(R6) NOHANDLE
+         ST    R6,P100ASTA        SAVE ADDRESS FOR SET
+         BR    R9                 RETURN
+*
+MVELEN   EQU   *
+* R4 POINTS TO PREFIX
+* R5 POINT TO LENGTH
+* R6 POINTS TO DATA AREA TO BE PASSED TO THE APPLICATION
+         LA    R14,16(R4)         R14=ADDRESS OF ACTUAL DATA
+         LH    R15,0(R5)          R15=LENGTH TO MOVE
+         LR    R7,R15             R7=DESTINATION LENGTH
+         MVCL  R6,R14             MOVE THE DATA
+         BR    R9                 RETURN
+*
+TSBLKSV  DS    AL4                SAVE TS BLOCK ADDRESS
+SAVLEN   DS    XL2                SAVE LENGTH FOR INTO
+READQLEN DS    XL2                READQ TS LENGTH
+READQNUM DS    XL2                READQ TS NUMITEMS
+RCODE    DS    XL4                SAVE RCODE
+RESP     DS    XL4                SAVE RESP
+RESP2    DS    XL4                SAVE RESP2
+*
+P100A    DSECT
+P100AFN  DS    XL2                FUNCTION CODE
+P100AEIB DS    AL4                EIB
+P100ATCT DS    AL4                TCTTE
+P100AINT DS    AL4                ADDRESS OF INTO
+P100ASET DS    X                  FF=SET IS SPECIFIED
+P100ASTA DS    AL4                ADDRESS FOR SET
+P100ALEN DS    AL4                ADDRESS OF LENGTH
+P100ARTN DS    AL4                ADDRESS OF RTRANSID
+P100ARTM DS    AL4                ADDRESS OF RTERMID
+P100AQNM DS    AL4                ADDRESS OF QUEUE NAME
+         DS    X                  FF=NOHANDLE
+P100ARSP DS    AL4                RESP
+P100ARS2 DS    AL4                RESP2
+P100AEND EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+*
+         EQUREGS REGS=GPR
+*
+         END
+

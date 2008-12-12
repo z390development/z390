@@ -28,7 +28,7 @@ FCTUPDT  EQU   X'20'                 UPDATE
 FCTADD   EQU   X'10'                 ADD
 FCTBRWSE EQU   X'08'                 BROWSE
 *
-FCTVSWA  DS    A                  VSWA CHAIN
+FCTVSWA  DS    AL4                VSWA CHAIN
          DS    0D
 FCTTELEN EQU   *-DFHFCTDS         FCT LENGTH+ALIGN
          DS    XL(ACBEND-IHAACB)  ACB AREA

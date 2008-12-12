@@ -1,14 +1,16 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.**********************************************************************
          MACRO
          CICS_FREEMAIN
-         LCLC  &DATA,&DATAPTR
+         GBLB  &PARMS_0C04
+         LCLB  &NOHAND
+         LCLC  &DATA,&DATAPTR,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
 .PLOOP   ANOP
@@ -17,6 +19,9 @@
 &PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,5)  EQ 'DATA(').DATA
          AIF   ('&PARM'(1,12) EQ 'DATAPOINTER(').DATAPNT
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
 .*
@@ -28,46 +33,82 @@
 &DATAPTR SETC  '&PARM'(13,K'&PARM-13)
          AGO   .PLOOP
 .*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.NOWAIT  ANOP
+&NOWAIT  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
 .ELOOP   ANOP
          AIF   ('&DATA' NE '' AND '&DATAPTR' NE '').BADDATA
          AIF   ('&DATA' EQ '' AND '&DATAPTR' EQ '').NEEDDTA
-         MVC   EIBFN,=X'0C04'     SET EIBFN
-         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
-         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
-         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         L     R15,=A(P0C04)      LOAD PARM ADDRESS
+         USING (P0C04,P0C04END),R15
+         XC    P0C04(P0C04END-P0C04),P0C04 CLEAR PARMS
+         MVC   P0C04FN,=X'0C04'   SET FUNCTION CODE
+         ST    DFHEIBR,P0C04EIB   SET EIB ADDRESS
+         ST    TCTTEAR,P0C04TCT   SET TCTTE ADDRESS
+         AIF   (NOT &NOHAND).DUNNOH
+         MVI   P0C04NOH,X'FF'     SET NOHANDLE
+.DUNNOH  ANOP
 .*
          AIF   ('&DATAPTR' NE '').DOPTR
          L     R1,&DATA           INDIRECT FREEMAIN ADDRESS
-         AGO   .DUNDATA
+         AGO   .SAVADDR
 .*
 .DOPTR   ANOP
          LR    R1,&DATAPTR        POINTER TO FREEMAIN ADDRESS
+.SAVADDR ANOP
+         ST    R1,P0C04FMA        SAVE IT
+         AIF   (NOT &NOHAND).TRYRESP
+         MVI   P0C04NOH,X'FF'     SET NOHANDLE
+.TRYRESP ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R1,&RESP           ADDRESS OF RESP
+         ST    R1,P0C04RSP        SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R1,&RESP2          ADDRESS OF RESP2
+         ST    R1,P0C04RS2        SAVE IT
+.NORESP2 ANOP
+         ZCALL LCL0C04,(P0C04),MF=I CALL FREEMAIN PROCESSOR
 .*
-.DUNDATA ANOP
-         AHI   R1,-8              -8 TO REAL STORAGE START
-         LA    R14,TCTTESCC       R14=ANCHOR OF GETMAIN CHAIN
-CICS_FREEMAIN_&SYSNDX._LOOP EQU *
-         OC    0(4,R14),0(R14)    ANY GETMAIN CHAIN ?
-         BZ    CICS_FREEMAIN_&SYSNDX._INVREQ EXIT IF NO MATCHING ADDR
-         C     R1,0(R14)          FOUND THE GETMAIN ?
-         BE    CICS_FREEMAIN_&SYSNDX._FOUND EXIT IF FOUND
-         L     R14,0(R14)         NEXT GETMAIN AREA
-         B     CICS_FREEMAIN_&SYSNDX._LOOP LOOP THRU CHAIN
-.*
-CICS_FREEMAIN_&SYSNDX._INVREQ EQU *
-.* STORAGE AREA NOT FOUND, INVOKE INVREQ
-         MVI   EIBRCODE,X'E0'     SET EIBRCODE
-         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
-         MVC   EIBRESP2,=F'1'     SET EIBRESP2=NOT GETMAINED AREA
+         L     R15,=A(P0C04)      LOAD PARM ADDRESS
+         CLI   P0C04NOH,X'FF'     NOHANDLE ?
+         BE    P0C04BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BZ    P0C04BYP_&SYSNDX   EXIT IF NONE
+* INVREQ
          DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
-         DC    AL4(CICS_FREEMAIN_&SYSNDX._IGNORE) ENTPT FOR IGNORE COND
-.*
-CICS_FREEMAIN_&SYSNDX._FOUND EQU *
-.* FOUND THE GETMAIN, REPAIR THE CHAIN THEN FREEMAIN
-         MVC   0(4,R14),0(R1)     MOVE NEXT CHAIN ADDR INTO PREVIOUS
-         L     R0,4(R1)           ACTUAL LENGTH TO FREEMAIN
-         FREEMAIN LV=(R0)         FREEMAIN
-CICS_FREEMAIN_&SYSNDX._IGNORE EQU *
+         DC    AL4(P0C04BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_0C04).BYP0C04
+&PARMS_0C04 SETB 1
+P0C04    EQU   *
+P0C04FN  DS    XL2                FUNCTION CODE
+P0C04EIB DS    AL4                EIB
+P0C04TCT DS    AL4                TCTTE
+P0C04FMA DS    AL4                FREEMAIN ADDRESS
+P0C04NOH DS    X                  FF=NOHANDLE
+P0C04RSP DS    AL4                RESP
+P0C04RS2 DS    AL4                RESP2
+P0C04END EQU   *                  END MARKER
+         DS    0H
+*
+.BYP0C04 ANOP
+P0C04BYP_&SYSNDX DS 0H
+         DROP  R15
          MEXIT
 .*
 .BADDATA MNOTE 12,'BOTH DATA AND DATAPOINTER ARE SPECIFIED'
@@ -76,4 +117,3 @@ CICS_FREEMAIN_&SYSNDX._IGNORE EQU *
 .NEEDDTA MNOTE 12,'DATA OR DATAPOINTER MUST BE SPECIFIED'
          MEXIT
          MEND
-

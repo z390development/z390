@@ -1,0 +1,28 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         DFHKCBLK
+*
+* TASK CONTROL PREFIX AREA
+*
+DFHKCBLK DSECT
+KCPTCPIO DS    AL4                LENGTH SENT TO SERVER
+KCPFN    DS    CL4                KC FUNCTION
+KCPTERM  DS    CL4                REQUESTOR TERMINAL ID
+KCPTRAN  DS    CL4                REQUESTOR TRANSACTION ID
+         DS    C                  NO TRANSACTION TYPE
+KCPTASKN DS    PL4                TASK NUMBER
+KCPRETCD DS    XL4                RETURN CODE
+KCPRES   DS    CL255              ENQ/DEQ RESOURCE
+KCPLEN   DS    XL2                ENQ/DEQ RESOURCE LENGTH
+KCPHCNQB DS    X                  FF=HANDLE ENQBUSY IS ACTIVE
+KCPNOS   DS    X                  FF=NOSUSPEND
+KCPNOH   DS    X                  FF=NOHANDLE
+         DS    0D
+KCPREFIX EQU   *-DFHKCBLK
+         MEND
+

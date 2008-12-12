@@ -1,12 +1,13 @@
-.**********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation                *
-.* This source code is part of z390 assembler/emulator package        *
-.* The z390 package is distributed under GNU general public license   *
-.* Author - Don Higgins                                               *
-.**********************************************************************
-.* 05/07/06 RPI 308 - ADD INITIAL EXEC CICS SUPPORT COMMAND PROCESSOR *
-.* 06/17/08 RPI 845 - CHANGE ESTAE ROUTINES TO USE NEW SDWA           *
-.**********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+* 05/07/06 RPI 308 ADD INITIAL EXEC CICS SUPPORT COMMAND PROCESSOR    *
+* 06/17/08 RPI 845 CHANGE ESTAE ROUTINES TO USE NEW SDWA              *
+* 11/11/08 RPI 946 CORRECTIONS TO MESSAGES TO PREVENT 6'S DISPLAYED   *
+***********************************************************************
 Z390KCP  SUBENTRY BASES=(R13,R3)
 *
 * THE Z390/CICS LOCAL MANAGER, PREVIOUSLY CALLED CICS.MLC
@@ -163,11 +164,23 @@ INITTSET EQU   *
          BE    INITGO             EXIT IF NOT
          MVC   INITBUFF(3),=X'7D40C4' FAKE ENTER,SBA(1,5)
          MVC   INITBUFF+3(4),TCTTEINT SET INITIAL TRANSID
-         MVI   KCPGOTYP,C'A'      SET INITIAL TRANSID
+         MVI   KCPGOTYP,C'A'      SET INITIAL TRANSID TYPE
          MVC   TCTTEINT,=4C'-'    NEVER AGAIN
+         XC    P0402TGR,P0402TGR  FAKE A GOOD RECEIVE
          B     INITFAKE           EXIT
 *
 INITGO   EQU   *
+         CLI   TCTTEIMM,X'FF'     RETURN IMMEDIATE SET ?
+         BNE   NOIMM              EXIT IF NOT
+* RETURN IMMEDIATE
+         MVI   TCTTEIMM,X'00'     RESET RETURN IMMEDIATE FLAG
+         MVC   INITBUFF(3),=X'7D40C4' FAKE ENTER,SBA(1,5)
+         MVC   INITBUFF+3(4),TCTTETC SET RETURN TRANSID
+         MVI   KCPGOTYP,C'C'      SET RETURN TRANSID TYPE
+         XC    P0402TGR,P0402TGR  FAKE A GOOD RECEIVE
+         B     INITFAKE           EXIT
+*
+NOIMM    EQU   *
          LA    R6,INITBUFF        AREA TO CLEAR
          LA    R7,L'INITBUFF      LENGTH TO CLEAR
          LR    R8,R6              AREA TO CLEAR
@@ -175,12 +188,10 @@ INITGO   EQU   *
          MVCLE R6,R8,X'00'        CLEAR INITBUFF
 *
 INITRCVE EQU   *
-         XC    INITRC,INITRC      CLEAR THE NOWAIT RETURN CODE
          EXEC  CICS RECEIVE INTO(INITBUFF) LENGTH(INITLEN)             X
                NOHANDLE NOWAIT
 *
-* IF NO DATA, THEN R15=4, IT CANNOT BE 4 FOR ANY OTHER REASON
-         ST    R15,INITRC         SAVE RETURN CODE
+* THE TGET RETURN CODE IS IN P0402TGR
 *
 INITFAKE EQU  *
 * BUFFER HAS AID(1), CURSOR POS(2), DATA
@@ -202,11 +213,30 @@ INITQURY EQU   *
 *
 * NOT IN SHUTDOWN
 *
-         CLC   INITRC,=F'4'       ANYTHING RECEIVED ?
+         CLC   P0402TGR,=F'4'     ANYTHING RECEIVED ?
          BNE   INITPROC           EXIT IF WE HAVE
 *
-* WE DIDN'T RECEIVE ANYTHING, WAIT A SEC AND TRY AGAIN
+* WE DIDN'T RECEIVE ANYTHING
 *
+* TEST TO SEE IF WE HAVE AN EXPIRED ICE FOR THIS TERMINAL
+* START IT IF WE DO, WAIT A WHILE IF WE DON'T
+         MVC   KCPICTRM,EIBTRMID  SET TERMID
+         LA    R6,KCPICEQ         MESSAGE TO SEND
+         BAL   R9,TCPSEND         SEND IT
+         TCPIO RECEIVE,MSG=KCPRCVE,LMSG=200,PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         OC    KCPRCTRN,KCPRCTRN  ANY TRANSID ?
+         BZ    INITWAIT           EXIT IF NONE
+* WE HAVE A TRANSID TO START
+         MVC   INITBUFF(3),=X'7D40C4' FAKE ENTER,SBA(1,5)
+         MVC   INITBUFF+3(4),KCPRCTRN SET TRANSID
+         MVC   EIBREQID,KCPRCRQD  SET REQID
+         XC    P0402TGR,P0402TGR  FAKE A GOOD RECEIVE
+         MVI   KCPGOTYP,C'D'      SET IC START TYPE
+         B     INITFAKE           EXIT
+
+INITWAIT EQU   *
          STIMER WAIT,BINTVL=INITDLAY WAIT 2 SECONDS
          B     INITRCVE           EXIT TO RETRY
 *
@@ -237,25 +267,41 @@ NOCLEAR  EQU   *
          STH   R7,EIBCPOSN        SAVE IT
 * TRANSID PRECEDENCE:
 *    INITIAL TRANSID---ONCE OFF
+*    TRANSID FROM RETURN IMMEDIATE (TCTTETC)
+*    IC STARTED TRANSID
 *    TRANSID FROM RETURN (TCTTETC)
 *    TRANSID FROM SCREEN
+         CLI   KCPGOTYP,C'D'      IC START ?
+         BNE   TRYA               EXIT IF NOT
+* IC STARTED TASK
+* IT MAY BE INTERCEPTING A PSEUDO-CONVERSATIONAL TASK
+* SO MUST NOT HARM TCTTETC
+* EXEC CICS RETURN (LCL0E08) HAS MODS FOR THIS AS WELL
+         MVC   EIBTRNID,INITBUFF+3 SET TRANSID
+         OC    EIBTRNID,=4C' '    TRANSID TO UPPER CASE
+         B     GOICTRAN           EXIT
+*
+TRYA     EQU   *
          CLI   KCPGOTYP,C'A'      INITIAL TRANSID ?
          BE    INITTRAN           EXIT IF IT IS
-         MVI   KCPGOTYP,C'C'      SET RETURN TRANSID START
+         MVI   KCPGOTYP,C'C'      SET RETURN TRANSID TYPE
          OC    TCTTETC,TCTTETC    ANY PRESET TRANSID ?
          BNZ   GOTRAN             EXIT IF WE HAVE ONE
 * TRANSID FROM SCREEN
-         MVI   KCPGOTYP,C'B'      SET SCREEN TRANSID
+         MVI   KCPGOTYP,C'B'      SET SCREEN TRANSID TYPE
          CLI   INITBUFF+3,SBA     IS IT AN SBA ?
          BE    TISSBA             EXIT IF IT IS
 INITTRAN EQU   *
          MVC   TCTTETC,INITBUFF+3 MOVE TRANSID
          B     GOTRAN             EXIT
+*
 TISSBA   EQU   *
          MVC   TCTTETC,INITBUFF+6 MOVE TRANSID
 GOTRAN   EQU   *
          OC    TCTTETC,=4C' '     TRANSID TO UPPER CASE
          MVC   EIBTRNID,TCTTETC   SET POTENTIAL TRANSID
+GOICTRAN EQU   *
+         MVC   TCTTETYP,KCPGOTYP  SET THE TRANSID TYPE IN THE TCTTE
 *
 * SCAN PCT AND DO BLDL/LINK
 * SCAN FAILURE ISSUES 'INVALID TRANSID' MSG
@@ -269,6 +315,7 @@ PCTLOOP  EQU   *
          CLI   0(R6),X'FF'        STOPPER ?
          BE    INVTRAN            EXIT IF BAD TRANSID
          B     PCTLOOP            LOOP
+*
 PCTFOUND EQU   *
          MVC   BLDLNAME,4(R6)     SAVE PROGRAM NAME
          BLDL  0,BLDLLIST         BLDL
@@ -298,24 +345,21 @@ PCTFOUND EQU   *
 *
 * GO TO THE INITIAL PROGRAM
 * THE ONLY COMMAREA WE CAN PASS HERE IS ONE FROM RETURN COMMAREA
-*
-         MVC   TCTTELNK,=H'1'     SET INITIAL PROGRAM AT LEVEL 1
-         MVC   EIBFN,=X'0E02'     SET EIBFN
-         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
-         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
-         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
-         MVC   EIBRSRCE,BLDLNAME  SET RESOURCE NAME
-         MVC   EIBPROG,BLDLNAME   SET PROGRAM NAME
-         LOAD  EPLOC=BLDLNAME     LOAD INITIAL PROGRAM
-         LA    R1,TCTTECA         ADDRESS PARM TO BE PASSED
-         LA    R14,TASKRETN       SET RETURN ADDRESS
-         BR    R0                 GO TO ENTRY POINT
+         XC    TCTTELNK,TCTTELNK  SET LEVEL 0
+         EXEC  CICS LINK PROGRAM(BLDLNAME) COMMAREA(TCTTECA)           X
+               LENGTH(TCTTECAL) LEVEL0
 *
 TASKRETN EQU   *
 * WE COME HERE AFTER TASK END OR ABEND
 * ENSURE OUR 1ST BASE IS CORRECT
          LR    R13,R3             RE-ESTABLISH
          AHI   R13,-4096                       1ST BASE
+*
+* FN=12FC  TELL Z390CICS TO DEQALL
+*
+         MVC   KCPDQTRM,EIBTRMID  SET TERMID
+         LA    R6,KCPDQALL        MESSAGE TO SEND
+         BAL   R9,TCPSEND         SEND IT
 *
 * FN=0EFF  TELL Z390CICS THAT TRANSID HAS ENDED
 *
@@ -484,7 +528,8 @@ APPHCLP  EQU   *
          OC    HCNCHAIN,HCNCHAIN  IS THERE A CHAIN ?
          BZ    APPHCEND           EXIT IF END OF CHAIN
          L     R7,HCNCHAIN        R7=NEXT CONDITION BLOCK
-         B     APPHCLP            LOOP
+         B     APPHCLP            LOOP UNTIL END
+*
 APPHCEND EQU   *
 * LAST CONDITION BLOCK LOCATED
          L     R8,EIBRESP         R8=RESP OF CONDITION
@@ -574,11 +619,13 @@ APPTABLP EQU   *
          B     APPTABDN           EXIT
 *
 APPABTAB DS    0F
+         DC    F'11',C'AEIK'      TERMIDERR
          DC    F'12',C'AEIL'      FILENOTFOUND
          DC    F'13',C'AEIM'      NOTFND
          DC    F'14',C'AEIN'      DUPREC
          DC    F'15',C'AEIO'      DUPKEY
          DC    F'16',C'AEIP'      INVREQ
+         DC    F'17',C'AEIQ'      IOERR
          DC    F'18',C'AEIR'      NOSPACE
          DC    F'19',C'AEIS'      NOTOPEN
          DC    F'20',C'AEIT'      ENDFILE
@@ -586,11 +633,15 @@ APPABTAB DS    0F
          DC    F'22',C'AEIV'      LENGERR
          DC    F'26',C'AEIZ'      ITEMERR
          DC    F'27',C'AEI0'      PGMIDERR
+         DC    F'28',C'AEI1'      TRANSIDERR
+         DC    F'29',C'AEI2'      ENDDATA
          DC    F'31',C'AEI4'      EXPIRED
          DC    F'36',C'AEI9'      MAPFAIL
          DC    F'38',C'AEYB'      INVMPSZ
 *                40               OVERFLOW CANNOT ABEND
          DC    F'44',C'AEYH'      QIDERR
+*                55               ENQBUSY CANNOT ABEND
+         DC    F'56',C'AEYT'      ENVDEFERR
          DC    F'84',C'AEXL'      DISABLED
          DC    X'FF'              STOPPER
 *
@@ -707,7 +758,7 @@ APPTERMT DS    0H
 *
 * CLEANER
 *
-* A COMBINATION OF RETURN AND DFHEIRET
+* VERY SIMILAR TO CLEANUP AFTER RETURN
 * R8 HOLDS EIBRESP, DON'T DESTROY IT
 *
 * FREE RETURN COMMAREA
@@ -745,10 +796,18 @@ CLEANDLP EQU   *
 * CLEAR LKA (BUT NOT 1ST ENTRY)
 *
 CLEANLKA EQU   *
-         XC    TCTTECA,TCTTECA    CLEAR RETURN COMMAREA ADDRESS
-         XC    TCTTECAL,TCTTECAL  CLEAR RETURN COMMAREA LENGTH
+         XC    TCTTECA(6),TCTTECA CLEAR RETURN COMMAREA ADDRESS/LENGTH
          L     R7,TCTTELKA        R7=LKA ADDRESS
          XC    4(96,R7),4(R7)     CLEAR LKA (NOT 1ST ENTRY)
+*
+* DELETE ANY IC TS Q
+*
+         OC    EIBREQID,EIBREQID  ANY REQID ?
+         BZ    CLEANDUN           EXIT IF NOT
+         MVC   APPRESP,EIBRESP    SAVE THE ORIGINAL RESP
+         EXEC  CICS DELETEQ TS QUEUE(EIBREQID) NOHANDLE
+         MVC   EIBRESP,APPRESP    RESTORE THE ORIGINAL RESP
+CLEANDUN EQU   *
 *
 * FN=0EFE  TELL Z390CICS THAT TRANSID HAS ABENDED
 *
@@ -779,6 +838,7 @@ APPPROG  DS    CL8                COPY OF ABEND PROGRAM
 APPCOMM  DS    A                  COPY OF ABEND COMMAREA ADDRESS
 APPCALEN DS    H                  COPY OF ABEND COMMAREA LENGTH
 APPABMSG DC    C'ABEND XXXX',X'00'
+APPRESP  DS    F                  SAVE EIBRESP
 *
 * ESTAE SUBROUTINE
 *
@@ -800,7 +860,11 @@ CLEANCA  EQU   *
          BZ    CLEANAID           EXIT IF NONE
          CLC   DFHEICAP,TCTTECA   SAME COMMAREA JUST FREED ?
          BE    CLEANAID           EXIT IF IT IS
-         LH    R0,EIBCALEN        R0=COMMAREA LENGTH
+* COMPLEX SITUATIONS LIKE ABEND HANDLED BY PROGRAM CAN LEAVE A
+* COMMAREA ADDRESS WITH ZERO LENGTH
+         SR    R0,R0              CLEAR R0
+         ICM   R0,3,EIBCALEN      R0=COMMAREA LENGTH
+         BZ    CLEANAID           EXIT IF ZERO
          FREEMAIN A=DFHEICAP,LV=(R0)
          XC    EIBCALEN,EIBCALEN  CLEAR COMMAREA LENGTH
 *
@@ -823,20 +887,14 @@ CLEANHCN EQU   *
 *
          USING DFHHCBLK,R1
          ICM   R1,15,DFHEIHCN     ANY CONDITION BLOCK ADDRESSES ?
-         BZ    CLEANTSP           EXIT IF NONE
+         BZR   R9                 RETURN IF NONE
 CLEANHLP EQU   *
          L     R7,HCNCHAIN        R7=NEXT CONDITION BLOCK IF ANY
          FREEMAIN LV=HCNLENG
          LTR   R1,R7              ANY MORE CONDITION BLOCKS ?
          BNZ   CLEANHLP           LOOP IF THERE ARE
-*
-* FREE TEMPORARY STORAGE AREA
-*
-CLEANTSP EQU   *
-         ICM   R1,15,DFHEITSP     ANY TS AREA ?
-         BZR   R9                 RETURN IF NONE
-         FREEMAIN LA=0(R1)
          BR    R9                 RETURN
+*
 AC2206L2 DC    AL2(AC2206Q)
 * DROP HANDLE BLOCK BASE  (R1)
 * DROP TEMP DSA BASE      (R6)
@@ -906,7 +964,6 @@ COMMADDR DC    A(0)               COMMAREA ADDRESS LAST PASSED
 COMMLEN  DC    F'0'               COMMAREA LENGTH LAST PASSED
 *
 INITBUFF DS    CL2000             INITIAL BUFFER
-INITRC   DS    F                  RECEIVE RETURN CODE
 INITDLAY DC    F'200'             NOWAIT DELAY OF 2 SECONDS
 INITLEN  DS    H                  RECEIVED LENGTH
 INIDATE  DS    C                  DATE FORMAT: K=DMY  S=MDY  R=YMD
@@ -934,7 +991,7 @@ AC2001   TN3270 WCC_KD,(SBA,24,1)
          DC    C' TRANSID='
          DS    CL4                TRANSID
          DC    C' IS NOT RECOGNISED'
-         DS    CL(80-(*-AC2001))
+         DC    CL(80-(*-AC2001))' '
          TN3270 (SBA,1,1),(SF,ATT_UA),IC
 AC2001L  DC    AL2(*-AC2001)
 *
@@ -949,7 +1006,7 @@ AC2206   TN3270 WCC_KD,(SBA,24,1)
          DS    CL8                PROGRAM
          DC    C' ABENDED '
 AC2206_ABCODE DS   CL4            ABEND CODE
-         DS    CL(80-(*-AC2206))
+         DC    CL(80-(*-AC2206))' '
          TN3270 (SBA,1,1),(SF,ATT_UA),IC
 AC2206Q  EQU   *-AC2206
 AC2206L  DC    AL2(*-AC2206)
@@ -994,10 +1051,19 @@ KCPGO    DS    0F
 KCPGOTRM DS    CL4                TERMID
 KCPGOTRN DS    CL4                TRANSID
 KCPGOTYP DS    C                  TYPE OF TRANSID START
-*                                    A = PARM()
-*                                    B = INPUT
+*                                 REFLECT THIS IN THE TCTTE
+*                                    A = .INI INITIAL TRANSID
+*                                    B = SCREEN INPUT
 *                                    C = RETURN TRANSID()
+*                                    D = IC START
 KCPGOEND EQU   *
+*
+KCPICEQ  DS    0F
+* EXPIRED ICE REQUEST
+         DC    A(KCPICEND-*)
+         DC    C'10FF'
+KCPICTRM DS    CL4                TERMID
+KCPICEND EQU   *
 *
 KCPABD   DS    0F
 * TRANSID ABENDED
@@ -1020,12 +1086,19 @@ KCPNDTRN DS    CL4                TRANSID
 KCPNDTSK DS    PL4                PACKED TASK NUMBER
 KCPNDEND EQU   *
 *
+KCPDQALL DS    0F
+* DEQALL
+         DC    A(KCPDQEND-*)
+         DC    C'12FC'
+KCPDQTRM DS    CL4                TERMID
+         DC    (KCPREFIX-12)X'00' FAKE DFHKCBLK
+KCPDQEND EQU   *
+*
 KCPSHUTQ DS    0F
 * SHUTDOWN QUERY
          DC    A(KCPSQEND-*)
          DC    C'FE04'
 KCPSQTRM DS    CL4                TERMID
-         DS    CL4                TRANSID NOT USED
 KCPSQEND EQU   *
 *
 KCPRCVE  DS    0F
@@ -1038,6 +1111,10 @@ KCPRCDTA DS    CL188              DATA
 * 04FF AREA
 KCPRCTRN DS    CL4                INITIAL TRANSID
 KCPRCDAT DS    C                  DATE FORMAT
+         ORG   KCPRCDTA
+* 10FF AREA
+         DS    CL4                TRANSID
+KCPRCRQD DS    XL8                REQID
          ORG   KCPRCDTA
 * 0E00 AREA
 KCPRCTSK DS    CL7                TASK NUMBER
@@ -1079,11 +1156,13 @@ MSGPROG  DS    CL8                PROGRAM
          DS    CL9                ' ABENDED '
 MSGABCDE DS    CL4                ABEND CODE
 *
-         DFHEIGBL
-*
-* DSA FOR ABEND ROUTINE
-*
-         DFHEISTG
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHEISTG                 DSA FOR ABEND ROUTINE
+         DFHADBLK                 HANDLE AID BLOCK
+         DFHHCBLK                 HANDLE CONDITION BLOCK
+         DFHABBLK                 HANDLE ABEND BLOCK
+         DFHKCBLK                 TASK CONTROL BLOCK
 *
          TN3270 SYMBOLS   DEFINE AID ENTER AND PF3 CODES
          GUAM   SYMBOLS   DEFINE GUAM GUI DIALOG WINDOW OPTIONS

@@ -1,3 +1,9 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 GBL0AFF  SUBENTRY
 *
 * FN=0AFF  CEBR REQUEST QNAMES
@@ -37,11 +43,9 @@ CICSTRGO EQU   *
 *
 CICSTRDN DS    0H
          USING TSNAMES,R7
-*        ICM   R7,15,TSNANCHR     R7=TS NAME TABLE
          L     R4,16(R3)          ADDRESS OF TSNANCHR ADDRESS
          ICM   R7,15,0(R4)        R7=TS NAME TABLE
          BNZ   CEBRGETS           EXIT IF WE HAVE SOME
-*        XC    CEBRQUS,CEBRQUS    CLEAR NO. OF Q NAMES
          L     R4,12(R3)          ADDRESS CEBRQUS
          XC    0(2,R4),0(R4)      CLEAR NO. OF Q NAMES
          B     CEBRSEND           EXIT
@@ -71,7 +75,6 @@ CEBRDONE EQU   *
          L     R4,12(R3)          ADDRESS CEBRQUS
          STH   R8,0(R4)           SAVE NO. OF Q NAMES
 CEBRSEND EQU   *
-*        L     R8,CONNID          R8=CONN ID
          L     R8,20(R3)          R8=CONN ID ADDRESS
          L     R8,0(R8)           R8=CONNID
          L     R7,8(R3)           ADDRESS MSGLEN
@@ -79,7 +82,6 @@ CEBRSEND EQU   *
          TCPIO SEND,MSG=(R7),LMSG=14,CONN=(R8),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   ABEND780           EXIT IF BAD
-*        ICM   R15,3,CEBRQUS      R15=NO. OF Q NAMES
          L     R4,12(R3)          ADDRESS CEBRQUS
          ICM   R15,3,0(R4)        R15=NO. OF Q NAMES
          BZ    CEBRQDUN           EXIT IF NONE
@@ -134,13 +136,7 @@ WTOTASKN DS    CL7                TASK NUMBER
          DS    C
 WTODESC  DS    CL45               DESCRIPTION
 *
-* TEMPORARY STORAGE NAME TABLE
-*
-TSNAMES  DSECT
-TSNCHAIN DS    A                  CHAIN TO NEXT TS Q NAME
-TSNQNAME DS    CL16               TS Q NAME
-         DS    A                  POINTER TO ITEM 1
-TSNNUMIT DS    H                  CURRENT NO. OF ITEMS
+         DFHTSNDS                 TEMPORARY STORAGE NAME TABLE
 *
          EQUREGS
 *

@@ -9,6 +9,118 @@ a delay before he can include it in a PTF or Release.
 
 Ver  Ship Date           Z390 version
 ---  -----------------   ------------
+V6   November 24, 2008   V1.4.04
+
+   Maintenance...
+      FORMATTIME bug fixed, gave incorrect date in leap years
+      Minor XCTL bug fixed, copied COMMAREA unnecessarily
+
+      Z390KCP bug fixed, in complex situations COMMAREA is being freed
+      causing recursive abends. Not related to XCTL bug.
+
+      Z390CEBR not sending task number resulting in bad QNAMES log
+      message.
+
+      Z390CEMT had minor bug which sometimes prevented the terminal
+      prefix from being displayed in CEMT I TER.
+
+      Z390CICS not setting the TRACE_Z390CICS parameter properly.
+
+      Eliminated GR2 as an internal register. It is now available as
+      a base register but is not recommended as it may be modified by
+      some instructions.
+
+      A label is now allowed on EXEC CICS statements.
+      eg. MYLABEL EXEC CICS READ ...
+
+      DFHEIGBL includes EQUREGS and therefore not needed in programs.
+
+      EXEC CICS HANDLE/IGNORE CONDITION now supports
+      DSIDERR=FILENOTFOUND
+
+      EXEC CICS WRITEQ TS NOHANDLE not working owing to missing restore
+      of GR15.
+
+      EXEC CICS WRITEQ TS supports ITEM without REWRITE for
+      compatability.
+
+      EXEC CICS READQ TS with SET was using LENGTH as an input field
+      incorrectly.
+
+      EXEC CICS GETMAIN not supporting NOHANDLE properly.
+
+      DFHALL.BAT amended so that GBL and LCL modules are no longer
+      link-editted.
+
+      BMS...
+         DFHMSD...
+            Support for TIOAPFX=YES
+            Support and discard TERM=
+
+         DFHMDI...
+            Bug--AGO .GOON15 should be .GOON05
+            Extra error checking for LINE/COLUMN and MAP01 corrected.
+            Support for TIOAPFX=YES
+            Support and discard JUSTIFY=
+
+         DFHMDF...
+            Support for fields that wrap row or screen.
+
+            INITIAL now supports strings that contain doubled quotes or
+            ampersands.
+
+         LCL1804 (SEND MAP)...
+            Obscure bug that may not generate a cursor location when in
+            simulation mode.
+
+            Bug fixed which may allow X'00' to be included in a data
+            stream.
+
+            Support for fields that wrap row or screen.
+
+         EXEC CICS SEND MAP now supports FROM() and LENGTH() parms and
+         MAP may now be a label.
+
+         EXEC CICS RECEIVE MAP now supports INTO() and MAP may now be
+         a label.
+
+         DFHNULL added to DFHAID.CPY
+
+   Inverval Control...
+      HANDLE/IGNORE extra conditions
+         TERMIDERR, IOERR, TRANSIDERR, ENDDATA, ENVDEFERR
+
+   Task Control...
+      HANDLE/IGNORE extra condition...ENQBUSY
+
+   Internal reconstruction...
+      This was started in CICS V5, all EXEC CICS commands now invoke
+      an external LCLhhhh module. The list can be found in Z390/CICS
+      Diagnosis Reference (Z390DRF).
+
+      As a result some changes were made to the Application program
+      structure:
+         DFHEIFCP and DFHEITSP removed from EISTG.
+         DFHEIGBL now only contains EIB and TCTTE structures.
+         Coding reconstructed for LINK, XCTL and RETURN.
+
+         DFHEIRET withdrawn, now incorporated into LCL0E08 (RETURN).
+         This means you must end a Z390/CICS program with EXEC CICS
+         RETURN.
+
+   Enhancements and changes...
+      All EXEC CICS commands now support RESP, RESP2 and NOHANDLE.
+      Added TRACE(G) to Z390KCP trace options (storage).
+
+      Additional code added to BMS to prevent PICIN/PICOUT generating
+      truncated data when too much data is input. MAPFAIL/8 is raised.
+
+      EIBDS is now supported
+      Support for EXEC CICS START, RETRIEVE and CANCEL
+      Support for IMMEDIATE on EXEC CICS RETURN
+      Support for EXEC CICS ENQ/DEQ
+      CEMT I ENQ added.
+
 V5   June 27, 2008       V1.4.02
 
    Maintenance...
@@ -18,6 +130,8 @@ V5   June 27, 2008       V1.4.02
       RPI844: Use of TROT now need aligned tables.
               Z390CEBR and Z390COMP needed amending.
       RPI845: Recode ESTAE routines in Z390KCP to use new SDWA
+      RPI946: Amend a few programs to eliminate the generation of 6's
+              for uninitialized fields.
 
       TESTBED3: Bug fixed, final lines not displayed.
                 Rebuilt the sequential terminal streams for BED1.
@@ -221,7 +335,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 27, 2008
-Z390 version: V1.4.02
-Z390/CICS version: V5
+Shipping Date: November 24, 2008
+Z390 version: V1.4.04
+Z390/CICS version: V6
 

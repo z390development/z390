@@ -10,13 +10,19 @@ Control Blocks...Client
    HANDLE AID Block
    HANDLE CONDITION Block
    Link-Level Area (LKA)
-   Terminal Control Table-Terminal Entry (TCTTE)
+   Terminal Control Table Terminal Entry (TCTTE)
    Temporary Storage request/reply block (DFHTSBLK)
    File Control request/reply block (DFHFCBLK)
+   Interval Control request/reply block (DFHICBLK)
+   Task Control request/reply block (DFHKCBLK)
 
 Control Blocks...Server
    File Control Table (DFHFCT)
    VSAM Work Area (DFHVSWAD)
+   Interval Control Element (DFHICEDS)
+   Temporary Storage Name Table (DFHTSNDS)
+   Thread control (THRDDSCT)
+   Queue Element Area (DFHQEADS)
 
 Management descriptions...
    Abend
@@ -26,13 +32,17 @@ Management descriptions...
    HANDLE/IGNORE CONDITION
    Temporary Storage
    File Control
+   Interval Control
+   ENQ/DEQ
    Sequential Terminal support
+
+LCL submodules for EXEC CICS functions
 
 Event Tracing
 
 Z390CICS
    Operation
-   Submodules
+   GBL submodules
    Internal Abends
 
 -----------------------------------------------------------------------
@@ -103,7 +113,7 @@ Link-Level Area (LKA).
    Length     : 4 (R13 value for this link-level)
    Entries    : 25
 
-Terminal Control Table-Terminal Entry (TCTTE).
+Terminal Control Table Terminal Entry (TCTTE).
    Eye catcher: 'DFHTCTTE'
    Acquired   : Z390KCP
    Released   : Close of thread
@@ -122,7 +132,7 @@ Data sent/received follows the block.
    Cleared    : No
    Length     : TSPREFIX
 
-File control request/reply block (DFHFCBLK).
+File Control request/reply block (DFHFCBLK).
 Data sent/received follows the block.
    Eye catcher: None
    Acquired   : GETMAINd by an EXEC CICS file control command
@@ -132,6 +142,24 @@ Data sent/received follows the block.
    Cleared    : Yes
    Length     : FCPREFIX
 
+Interval Control request/reply block (DFHICBLK).
+   Eye catcher: None
+   Acquired   : GETMAINd by an EXEC CICS START/CANCEL command
+   Released   : At task end
+   Anchor     : None
+   DSECT      : DFHICBLK
+   Cleared    : Yes
+   Length     : ICPREFIX
+
+Task Control request/reply block (DFHKCBLK).
+   Eye catcher: None
+   Acquired   : GETMAINd by an EXEC CICS ENQ/DEQ command
+   Released   : At task end
+   Anchor     : None
+   DSECT      : DFHKCBLK
+   Cleared    : Yes
+   Length     : KCPREFIX
+
 Control Blocks...Server
 -----------------------
 
@@ -139,7 +167,7 @@ File Control Table (DFHFCT)
 Contains the ACB for each file operation.
    Eye catcher: None
    Acquired   : Z390CICS at start
-   Released   : Never released
+   Released   : Never
    Anchor     : DFHFCTAD
    DSECT      : DFHFCTDS
    Length     : FCTABLEN
@@ -154,6 +182,50 @@ Also contains the RPL for file operations.
    DSECT      : DFHVSWAD
    Cleared    : Yes
    Length     : VSWLEN
+
+Interval Control Element (DFHICEDS)
+Chained in time order
+   Eye catcher: None
+   Acquired   : GBL1008 when a valid EXEC CICS START is processed
+   Released   : GBL100C when a valid EXEC CICS CANCEL is processed
+              : GBL10FF when an ICE scan can start a task
+   Anchor     : ICEANCHR
+   Chain      : ICECHAIN
+   DSECT      : DFHICEDS
+   Cleared    : Yes
+   Length     : ICELEN
+
+Temporary Storage Name Table (DFHTSNDS)
+   Eye catcher: None
+   Acquired   : GBL0A02 when first EXEC CICS WRITEQ TS is processed
+   Released   : GBL0A06 when EXEC CICS DELETEQ TS is processed
+   Anchor     : TSNANCHR
+   Chain      : TSNCHAIN
+   DSECT      : DFHTSNDS
+   Cleared    : Yes
+   Length     : TSNLEN
+
+Thread Control (THRDDSCT)
+One entry for each terminal to a maximum of 10.
+When SEQ_TERM=YES, the special 11th terminal is reserved for SQ01.
+   Eye catcher: None
+   Acquired   : Fixed in Z390CICS
+   Released   : Never
+   Anchor     : THRDCNTL
+   DSECT      : THRDDSCT
+   Cleared    : Yes
+   Length     : THRDLEN
+
+Queue Element Area (DFHQEADS)
+   Eye catcher: None
+   Acquired   : GBL1204 when EXEC CICS ENQ is processed
+   Released   : GBL1206 when EXEC CICS DEQ is processed
+              : GBL12FC when task end DEQALL is processed
+   Anchor     : QEAANCHR
+   Chain      : QEACHNF
+   DSECT      : DFHQEADS
+   Cleared    : Yes
+   Length     : QEALEN
 
 -----------------------------------------------------------------------
 
@@ -253,6 +325,9 @@ COMMAREA Management
           The new COMMAREA address is held in the callers DSA (DFHEICAP)
           and is passed via a small GETMAINd area. This area address is
           stored at DFHEIPRM and its existence flagged by TCTTECND=X'FF'.
+
+   See Interval Control Management for further documentation which may
+   affect COMMAREA processing.
 
 GETMAIN/FREEMAIN Management
    A chain of storage areas is anchored fron TCTTESCC.
@@ -518,6 +593,224 @@ File Control Management
          The VSWA created by the STARTBR is located.
          The VSWA is released.
 
+Interval Control Management
+   a) DELAY and ASKTIME are handled by the Client.
+   b) START
+      The module LCL1008 validates the time parameters and also the
+      TRANSID.
+
+      However the time is specified, it is converted to a STCK time
+      that has been reduced to units of 0.01 seconds.
+
+      If REQID has not been specified, one is created by multiplying
+      TRANSID and TERMID and then overlaying the first two bytes with
+      C'DF'. If TERMID is omitted then blanks are assumed as zeros would
+      produce a zero result. The REQID is then stored in EIBREQID.
+
+      If the START command contains any of the parameters FROM, QUEUE,
+      RTRANSID or RTERMID then a TS Q will be built.
+
+      The TS Q record will have a 16-byte prefix to hold any of the
+      parameters QUEUE, RTRANSID or RTERMID followed by the FROM data
+      (if any). In the prefix, any parameters not specified will be
+      X'00'.
+
+      The WRITEQ TS has two special parameters (internal use only),
+      ICTRAN and ICTERM. These are the TRANSID and TERMID parameters
+      from the START command. When the WRITEQ TS is shipped to the
+      Server for processing, these parameters are stored in the TS
+      name table. The REQID (TS Q name) must be owned by the START
+      TRANSID/TERMID combination. Any violation of that rule will
+      raise the IOERR condition. Although the WRITEQ TS detects the
+      IOERR condition, it is passed on to the START command.
+
+      The ICTRAN/ICTERM parameters also serve another purpose, in that
+      specifying them allows the writing of a DF-prefix TS record which
+      would normally raise the INVREQ condition.
+
+      The START command parameters are then shipped to the Server.
+
+      Server processing...GBL1008
+         The TERMID is validated, if invalid the TERMIDERR condition
+         is returned to the Client.
+
+         An Interval Control Element (ICE) is then created and chained
+         in expiration time order.
+
+   c) Invocation
+      This mechanism is unique to each terminal.
+
+      The IC scan mechanism is in Z390KCP.
+      On every attempt to receive data from a terminal a request
+      is sent to the Server to do an ICE scan for an expired one.
+
+      Server processing...GBL10FF
+         Assuming an an expired ICE is found for our terminal, checks
+         are made to see if the terminal is available.
+
+         Terminal not available...
+            If the ICE REQID and TRANSID are the same then this is a
+            repeated START request which has written more records to
+            the TS Q to be read by the initiated task. The ICE is
+            deleted.
+            This situation will occur if multiple tasks issue START
+            requests all with a very close expiry time.
+
+         Terminal available...
+            The Client is sent a zero return and will initiate the
+            transaction and set EIBREQID. The ICE is then deleted.
+
+            An ICE rescan is then done, and if any expired ICEs match
+            the REQID and TRANSID, they are deleted.
+            This situation will occur if one task issues multiple
+            START requests all with a very close expiry time.
+
+   d) RETRIEVE
+      An IC invoked transaction is passed the REQID in EIBREQID.
+      The module LCL100A issues a READQ TS QUEUE(EIBREQID) ...
+
+      If conditions ITEMERR or QIDERR occur these are converted to
+      condition ENDDATA and this condition is raised.
+
+      Each TS Q record has a 16-byte prefix and the fields QUEUE,
+      RTRANSID amd RTERMID are moved into the labels provided.
+      If a field is requested but is X'00', then the ENVDEFERR condition
+      is raised.
+      Note: If one of the three fields is supplied but not requested,
+            then no error is raised.
+
+      The relationship between SET/INTO and LENGTH is complex, rather
+      than repeat the logic here, I refer the reader to the text
+      following label PFXDUN in LCL100A.
+
+      INTO/SET will receive the data after the prefix.
+
+      Deletion of the TS Q...
+         The condition ENDDATA will attempt a DELETEQ TS, no error
+         occurs if this fails.
+
+         A successful READQ TS will do a DELETEQ TS if it returns
+         NUMITEMS=1.
+
+         The condition LENGERR will attempt a DELETEQ TS if NUMITEMS=1.
+         No error occurs if this fails.
+
+         If EIBREQID is not null at task end or abend, a DELETEQ TS is
+         done. No error occurs if this fails.
+
+      Mysteries...
+         It is not known how the condition NOTFND can be raised.
+         According to Hursley, it can't be raised.
+         An RCF has been raised.
+
+   e) CANCEL
+      The module LCL100C sends the REQID to the server.
+
+      The server module GBL100C scans the ICE chain for a matching
+      REQID. If found the ICE is deleted and a rescan is done.
+
+      If no ICEs are deleted then the NOTFND condition is raised.
+      Any TS Q records associated with the deleted ICEs are not deleted.
+
+   f) IC tasks initiated while a pseudo-conversational task is in
+      progress.
+
+      Note: It is unwise to change the screen in a way that would affect
+            a mapping operation. eg. don't add any unprotected fields or
+            overlay any existing attributes.
+
+      i) IC tasks that end with EXEC CICS RETURN
+         eg. message broadcasters
+         The pseudo-conversational task should continue to operate
+         correctly.
+
+     ii) IC tasks that end with EXEC CICS RETURN TRANSID()
+         The original pseudo-conversational task will no longer
+         operate. Any COMMAREA built by that task will be freed.
+         The next task initiated will be the TRANSID specified
+
+    iii) IC tasks that end with EXEC CICS RETURN TRANSID() COMMAREA()
+         The original pseudo-conversational task will no longer
+         operate. Any COMMAREA built by that task will be freed.
+         The next task initiated will be the TRANSID specified and will
+         be passed the COMMAREA specified.
+
+ENQ/DEQ Management
+   a) ENQ
+      The module LCL1204 validates the length.
+      Although an omitted LENGTH is accepted, it may not work in
+      Z390/CICS. Please consult the author for advice.
+
+      The ENQ command parameters are then shipped to the Server.
+
+      Server processing...GBL1204
+         The QEA chain is scanned.
+
+         If a QEA is found with the same resource, length and
+         originating termid, then the use count (QEAUCT) is incremented.
+
+         If no QEA is found with the same resource and length, then a
+         new QEA is built and chained.
+
+         If a QEA is found with the same resource and length but a
+         different originating termid, then a potential suspend has
+         occurred.
+            Please refer to the matrix in GBL1204 at label KCENQBSY
+            for the complete logic of the ENQBUSY condition.
+
+            The Manual omits one description, when HANDLE CONDITION
+            (ENQBUSY) is not specified, NOSUSPEND is specified and
+            there is no NOHANDLE, then NOHANDLE must be forced as
+            the task can never abend ENQBUSY (there is no abend code).
+
+         When a task is suspended the THRDCNTL entry for this terminal
+         is marked SUS-ENQ and the QEA is flagged with the termid
+         suffix (QEAWAIT).
+
+         A task is suspended because we don't respond to the shipped
+         ENQ request, this is done by the DEQ process.
+
+   b) DEQ
+      The module LCL1206 validates the length.
+
+      The DEQ command parameters are then shipped to the Server.
+
+      Server processing...GBL1206
+         The QEA chain is scanned.
+
+         If a QEA is found with the same resource, length and
+         originating termid...
+            The use count is decremented if not zero.
+            Ok response is returned.
+
+            If the use count is zero, and no tasks are waiting for this
+            resource, then the QEA is released and the chain repaired.
+            Ok response is returned.
+
+            If the use count is zero, and tasks are waiting for this
+            resource, then ok response is sent to each waiting task.
+            The terminal status is reset to RUNNING.
+            Then the QEA is released and the chain repaired.
+            Ok response is returned.
+
+   c) Task end or abend
+      Z390KCP will invoke a special DEQALL server request.
+
+      Server processing...GBL12FC
+         The QEA chain is scanned.
+
+         If a QEA is found with the same originating termid...
+
+            If no tasks are waiting for this resource, then the QEA is
+            released and the chain repaired.
+            Ok response is returned.
+
+            If tasks are waiting for this resource, then ok response is
+            sent to each waiting task.
+            The terminal status is reset to RUNNING.
+            Then the QEA is released and the chain repaired.
+            Ok response is returned.
+
 Sequential Terminal support
    Please read the Doc for this feature in Z390/CICS Sequential
    Terminal Support. This section does not cover the batch programs
@@ -535,7 +828,7 @@ Sequential Terminal support
    The internal EXEC CICS RECEIVE in Z390KCP and any in user programs
    read the next data stream from the input QSAM file.
    The internal EXEC CICS SEND in Z390KCP and any in user programs
-   writes all data streams to the output QSAM file and displays it
+   writes all data streams to the output QSAM file and displays them
    on the SQ01 terminal.
 
    When an input file reaches the end, the file number is incremented
@@ -557,13 +850,105 @@ Event Tracing
    event would have to be sent to the server and may be too great an
    overhead in this environment.
 
+Submodules for EXEC CICS processing
+      -FN-  Process
+   LCL0204  HANDLE CONDITION
+   LCL0206  HANDLE AID
+   LCL020A  IGNORE CONDITION
+   LCL020C  PUSH HANDLE
+   LCL020E  POP HANDLE
+
+   LCL0402  RECEIVE
+   LCL0404  SEND
+
+   LCL0602  READ            Embedded EXEC CICS
+   LCL060C  STARTBR         Embedded EXEC CICS
+   LCL060E  READNEXT        Embedded EXEC CICS
+   LCL0610  READPREV        Embedded EXEC CICS
+   LCL0612  ENDBR           Embedded EXEC CICS
+   LCL0614  RESETBR         Embedded EXEC CICS
+
+   LCL0A02  WRITEQ TS       Embedded EXEC CICS
+   LCL0A04  READQ TS        Embedded EXEC CICS
+   LCL0A06  DELETEQ TS      Embedded EXEC CICS
+
+   LCL0C02  GETMAIN
+   LCL0C04  FREEMAIN
+
+   LCL0E02  LINK            Direct linkage
+   LCL0E04  XCTL            Direct linkage
+   LCL0E06  LOAD
+   LCL0E08  RETURN          Direct linkage
+   LCL0E0A  RELEASE
+   LCL0E0C  ABEND
+   LCL0E0E  HANDLE ABEND
+
+   LCL1204  ENQ
+   LCL1206  DEQ
+
+   LCL1002  ASKTIME
+   LCL1004  DELAY
+   LCL1008  START           Embedded EXEC CICS
+   LCL100A  RETRIEVE        Embedded EXEC CICS
+   LCL100C  CANCEL
+
+   LCL1802  RECEIVE MAP
+   LCL1804  SEND MAP
+   LCL1812  SEND CONTROL
+
+   LCL1C02  DUMP
+
+   LCL4A02  ASKTIME ABSTIME
+   LCL4A04  FORMATTIME
+
 -----------------------------------------------------------------------
 
 Z390CICS
    Operation
-      ### to be done
+      a) The file Z390CICS.INI is opened and the parameters analysed
+         and used to set fixed fields in the program.
+         Note: CEMT I SYS can be used to display them.
 
-   Modules
+      b) A Command Prompt is started with the correct directory and
+         parameters for each local terminal requested and Z390KCP
+         is invoked in each one.
+
+      c) A 32K receive area is acquired
+
+      d) The Server port is opened.
+
+      e) The FCT is loaded and any files eligible to be opened
+         immediately are opened.
+
+      f) At READLOOP a TCPIO RECEIVE is done (the process is slightly
+         different when in shutdown mode (see later).
+
+         Z390CICS will wait here for a request sent by any client.
+         When a request is received the identity of the Client is
+         return in GR2. Occasionally more than one request is received
+         at the same time (batched), these are identified and the
+         messages are split and individually processed.
+
+         REQTABLE is then scanned for the requested process and the
+         routine is invoked.
+
+         Some routines are handled within Z390CICS and others will CALL
+         a GBL submodule (listed below).
+
+         After the process is complete a TCPIO SEND is done with return
+         codes and data (if requested) to the Client and the program
+         returns to READLOOP.
+
+      g) Shutdown processing
+         After a Client has issued CEMT P SHU (IMM) a flag (SHUTIND)
+         is set. The alternate code at READLOOP is then invoked which
+         does a TCPIO RECEIVE,NOWAIT and checks every second if all
+         Clients have closed.
+
+         Then all open VSAM files are closed and the Server (Z390CICS)
+         shuts down.
+
+   Submodules
          -FN-   Description            Program-
       GBL0602   READ                   Any
       GBL060C   STARTBR                Any
@@ -577,9 +962,18 @@ Z390CICS
       GBL0A06   DELETEQ TS             Any
       GBL0AFF   CEBR Request Qnames    Z390CEBR
 
+      GBL1008   START                  Any
+      GBL100C   CANCEL                 Any
+      GBL10FF   ICE SCAN               Z390KCP
+
+      GBL1204   ENQ                    Any
+      GBL1206   DEQ                    Any
+      GBL12FC   DEQALL                 Z390KCP
+
       GBLFE00   CEMT I TERm            Z390CEMT
       GBLFE01   CEMT I SYStem          Z390CEMT
       GBLFE05   CEMT I FILe            Z390CEMT
+      GBLFE06   CEMT I ENQueue         Z390CEMT
 
    Copy Books
       FILEERTB  VSAM Error Code Table  Z390CICS
@@ -597,6 +991,15 @@ Z390CICS
 
 Change Summary
 --------------
+November 24, 2008
+   Added section on LCL submodules
+   Added control blocks:
+      DFHICBLK, DFHICEDS, DFHTSNDS, DFHKCBLK, THRDDSCT, DFHQEADS
+   Added Interval Control Management
+   Added ENQ/DEQ Management
+   Completed Z390CICS operation
+   GBLFE06 added (CEMT I ENQ)
+
 June 27, 2008
    Z390CICS operation extensively expanded
 
@@ -609,7 +1012,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 27, 2008
-Z390 version: V1.4.02
-Z390/CICS version: V5
+Shipping Date: November 24, 2008
+Z390 version: V1.4.04
+Z390/CICS version: V6
 

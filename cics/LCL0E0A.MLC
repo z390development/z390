@@ -1,0 +1,86 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL0E0A  SUBENTRY
+*
+* FN=0E0A  EXEC CICS RELEASE
+*
+* R1  >>> P0E0A BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0E0A,P0E0AEND),R3
+         L     DFHEIBR,P0E0AEIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0E0ATCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0E0AFN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0E0ARSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0E0ARS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         MVC   BLDLNAME,P0E0APGM  MOVE PROGRAM FOR BLDL
+         MVC   EIBRSRCE,P0E0APGM  SET EIBRSRCE
+         MVC   EIBPROG,P0E0APGM   SET EIBPROG
+         BLDL  0,BLDLLIST         BLDL
+         LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
+         BZ    RLSEOK             EXIT IF OK
+* INVOKE INVREQ/6
+         MVC   EIBRESP2,=F'6'     SET EIBRESP2=PROGRAM NOT LOADED
+         B     INVREQ
+*
+RLSEOK   EQU   *
+         CLC   P0E0APGM,P0E0ACST  IS IT US ?
+         BNE   NOTUS              EXIT IF NOT
+* INVOKE INVREQ/5
+         MVC   EIBRESP2,=F'5'     SET EIBRESP2=PROGRAM IS US
+INVREQ   EQU   *
+         MVI   EIBRCODE,X'E0'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         ICM   R14,15,P0E0ARSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P0E0ARS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+         B     RETURN             RETURN
+*
+NOTUS    EQU   *
+         DELETE EPLOC=EIBRSRCE
+RETURN   EQU   *
+         SUBEXIT
+*
+BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
+         DC    H'12'              BLDL ENTRY LENGTH
+BLDLNAME DS    CL8                BLDL ENTRY NAME TO FIND
+         DS    XL4
+*
+P0E0A    DSECT
+P0E0AFN  DS    XL2                FUNCTION CODE
+P0E0AEIB DS    AL4                EIB
+P0E0ATCT DS    AL4                TCTTE
+P0E0APGM DS    CL8                PROGRAM
+P0E0ACST DS    CL8                OUR PROGRAM NAME
+         DS    X                  FF=NOHANDLE
+P0E0ARSP DS    AL4                RESP
+P0E0ARS2 DS    AL4                RESP2
+P0E0AEND EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+*
+         EQUREGS REGS=GPR
+*
+         END
+

@@ -1,0 +1,166 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+GBL1008  SUBENTRY
+*
+* FN=1008  START
+*
+*         +0/DSCT +4/DSECT +8/IND   +12/IND +16      +20
+* R1  >>> WTOMSG, REQDSECT,ICEANCHR,CONNID, TRCEZ390,TRMPREFX
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SAVE PARM POINTER
+         L     R4,16(R3)          ADDRESS OF TRCEZ390
+         MVC   TRCEZ390,0(R4)     MOVE IT
+         L     R9,0(R3)           WTODSECT ADDRESS
+         USING WTODSECT,R9
+         L     R6,4(R3)           ADDRESS RECEIVED DATA
+         USING DFHICBLK,R6
+         MVC   WTOFN,ICPFN        SET FN
+         MVC   WTOTERM,ICPTERM    SET TERMID
+         MVC   WTOTRAN,ICPTRAN    SET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         UNPK  WTOTASKN,ICPTASKN  UNPACK TASK NUMBER
+         OI    WTOTASKN+6,X'F0'   CLEAR SIGN
+         MVC   WTODESC,=CL45'<<<Z390KCP START      REQUEST'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+         BAL   R11,CICSTRCE       TRACE IT
+         CLC   ICPITERM,=C'SQ01'  SEQUENTIAL TERMINAL ?
+         BE    ICSTTMOK           EXIT IF IT IS
+         L     R4,20(R3)          R4=ADDRESS OF TRMPREFX
+         CLC   ICPITERM(3),0(R4)  TERMID PREFIX VALID ?
+         BNE   ICSTTERR           ERROR IF NOT
+         TM    ICPITERM+3,X'F0'   TERMID SUFFIX VALID ?
+         BNO   ICSTTERR           ERROR IF NOT
+ICSTTMOK EQU   *
+* GETMAIN A NEW ICE
+         LA    R1,ICELEN          ICE LENGTH
+         GETMAIN R,LV=(R1)
+         XC    0(ICELEN,R1),0(R1) CLEAR IT
+         L     R4,8(R3)           ADDRESS OF ICEANCHR ADDRESS
+         LR    R8,R4              R8=CHAIN FROM ANCHOR
+         ICM   R7,15,0(R4)        R7=ICE CHAIN
+         BNZ   ICSTLOOP           EXIT IF SOME ICES
+         USING DFHICEDS,R7
+* NO ICES, SET 1ST
+         ST    R1,0(R8)           SET 1ST AT ICEANCHR
+         B     ICSTFILL           EXIT
+*
+ICSTLOOP EQU   *
+* ICE CHAIN EXISTS, FIND THE INSERT POINT
+         CLC   ICEXTOD,ICPSTCK    FOUND INSERT POINT ?
+         BH    ICSTGOT            EXIT IF WE HAVE
+         LR    R8,R7              R8=CHAINED FROM ADDRESS
+         ICM   R7,15,ICECHNF      NEXT ICE
+         BNZ   ICSTLOOP           LOOP THRU MORE ICES
+* END OF ICE CHAIN, PUT OURS AT END
+         ST    R1,0(R8)           CHAIN AT END
+         B     ICSTFILL           EXIT
+*
+ICSTGOT  EQU   *
+* FOUND AN INSERT POINT
+         ST    R1,0(R8)           STORE OUR ADDRESS INTO PREVIOUS
+         ST    R7,0(R1)           STORE NEXT CHAIN INTO OURS
+ICSTFILL EQU   *
+* BUILD THE ICE
+         LR    R7,R1              R7=ADDRESS OF NEW ICE
+         MVC   ICEXTOD,ICPSTCK    SET TIME
+         MVC   ICETRNID,ICPITRAN  SET TRANSID
+         MVC   ICETRMID,ICPITERM  SET TERMID
+         MVC   ICEREQID,ICPREQID  SET REQID
+* START COMPLETED, TELL THE CLIENT
+         XC    ICPRETCD,ICPRETCD  CLEAR RETURN CODE
+         L     R8,12(R3)          R8=CONN ID ADDRESS
+         L     R8,0(R8)           R8=CONNID
+         LA    R15,ICPREFIX       R15=LENGTH TO SEND
+         TCPIO SEND,MSG=DFHICBLK,LMSG=(R15),CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ICSTINVR           EXIT IF BAD
+         L     R9,0(R3)           WTODSECT ADDRESS
+         MVC   WTODESC,=CL45'<<<Z390KCP START      COMPLETED'
+         B     ICSTTRCE           EXIT
+*
+ICSTINVR EQU   *
+         MVC   ICPRETCD,DFHRESP(INVREQ) SET INVREQ
+         L     R9,0(R3)           WTODSECT ADDRESS
+         MVC   WTODESC,=CL45'>>>Z390KCP START      FAILED'
+         MVC   WTODESC+29(6),=C'INVREQ'
+         B     ICSTSEND           EXIT
+*
+ICSTTERR EQU   *
+         MVC   ICPRETCD,DFHRESP(TERMIDERR) SET TERMIDERR
+         L     R9,0(R3)           WTODSECT ADDRESS
+         MVC   WTODESC,=CL45'>>>Z390KCP START      FAILED'
+         MVC   WTODESC+29(9),=C'TERMIDERR'
+ICSTSEND EQU   *
+         L     R8,12(R3)          R8=CONN ID ADDRESS
+         L     R8,0(R8)           R8=CONNID
+         LA    R15,ICPREFIX       R15=LENGTH TO SEND
+         TCPIO SEND,MSG=DFHICBLK,LMSG=(R15),CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+ICSTTRCE EQU   *
+         L     R9,0(R3)           WTODSECT ADDRESS
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+         BAL   R11,CICSTRCE       TRACE IT
+         SUBEXIT
+*
+* SUBROUTINES
+*
+* MODIFIED CICSTRCE
+CICSTRCE DS    0H
+         CLI   TRCEZ390,C'N'      NO TRACING ?
+         BER   R11                RETURN IF IT IS
+         CLI   TRCEZ390,C'Y'      ALL TRACING ?
+         BE    CICSTRGO           TRACE IF IT IS
+         CLC   TRCEZ390,CICSTIND  TRACE TYPE=TRACE REQUEST ?
+         BNER  R11                RETURN IF NOT
+CICSTRGO EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM GET TIME
+         MVO   TIMEPACK,TIME      MOVE TO PACKED FIELD
+         MVC   TIMEHERE(13),TIMEEDIT MOVE EDIT WORD
+         ED    TIMEHERE(13),TIMEPACK EDIT TIME
+         MVC   WTOTIME,TIMEHERE   SET TIME
+         WTO   MF=(E,WTOMSG)      TRACE IT
+         BR    R11                RETURN
+*
+ABEND780 ABEND 780                TCPIO SEND FAILED
+*
+CICSTIND DS    C                  TRACE TYPE INDICATOR
+TRCEZ390 DS    C                  Z390 TRACE OPTION
+*
+* TIME CONVERSION FIELDS
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402021207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+* WTO AREA DSECT
+*
+WTODSECT DSECT
+WTOMSG   DS    AL4
+WTOTIME  DS    CL13               TIME STAMP
+         DS    C
+WTOFN    DS    CL4                MODULE/FUNCTION REFERENCE (EIBFN)
+         DS    C
+WTOTERM  DS    CL4                TERMID
+         DS    C
+WTOTRAN  DS    CL4                TRANSID (OR BLANK)
+         DS    C
+WTOTYPE  DS    C                  TRANSID TYPE
+         DS    C
+WTOTASKN DS    CL7                TASK NUMBER
+         DS    C
+WTODESC  DS    CL45               DESCRIPTION
+*
+         DFHICBLK                 INTERVAL CONTROL PREFIX AREA
+         DFHICEDS                 INTERVAL CONTROL ELEMENT
+*
+         EQUREGS
+*
+         END
+

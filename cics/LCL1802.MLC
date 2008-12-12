@@ -1,9 +1,9 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 LCL1802  SUBENTRY
 *
 * FN=1802  EXEC CICS RECEIVE MAP
@@ -12,11 +12,10 @@ LCL1802  SUBENTRY
 * R14 = RETURN ADDRESS
 *
 * THE DATA STREAM IS ALWAYS INITBUFF (CL2000) FROM TCTTEDA
-* FROM() IS NOT IMPLEMENTED
+* FROM()/LENGTH() ARE NOT IMPLEMENTED
 * THE AID AND CURSOR ARE ALREADY IN THE EIB
 *
 * THE AREA ONTO WHICH THE MAP IS PLACED IS ALWAYS 24x80
-* EVERY MAP IS ASSUMED TO BE PLACED AT LINE 1 COLUMN 1, JUSTIFY LEFT
 * THE POSITION OF EACH FIELD IS RELATIVE TO THE MAP SIZE (SIZE=)
 *
          LR    R3,R1              SET BASE
@@ -30,6 +29,14 @@ LCL1802  SUBENTRY
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P1802RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P1802RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NOME
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
          L     R4,P1802MSA        ADDRESS MAPSET STRUCTURE
          AHI   R4,8               BYPASS MAPSET NAME
          USING BMSMHLL,R4
@@ -48,9 +55,12 @@ MAPLOOP  EQU   *
 GOTMAP   EQU   *
          L     R8,P1802DSC        R8=INPUT MAP STRUCTURE ADDRESS
          LH    R9,P1802DSL        R9=INPUT MAP STRUCTURE LENGTH
+         LTR   R9,R9              WAS INTO() SPECIFIED ?
+         BZ    NOCLEAR            EXIT IF IT WAS
          LR    R14,R8             AREA TO CLEAR
          SR    R15,R15            CLEAR SECOND LENGTH
          MVCLE R8,R14,X'00'       CLEAR INPUT MAP STRUCTURE
+NOCLEAR  EQU   *
          CLI   BMSMW,80           MAP WIDTH VALID ?
          BH    INVMPSZ            ERROR IF NOT
          CLI   BMSML,24           MAP HEIGHT VALID ?
@@ -79,6 +89,10 @@ GOTMAP   EQU   *
          BZ    MAPFAIL3           ERROR IF NO FIELDS
          L     R8,P1802DSC        R8=INPUT MAP STRUCTURE ADDRESS
          USING DFHMAPST,R8
+         TM    BMSMODE,BMSMHEXT   TIOAPFX=YES ?
+         BNO   NOTPFX1            EXIT IF NOT
+         AHI   R8,12              ADJUST FOR TIOAPFX
+NOTPFX1  EQU   *
          LH    R7,BMSMSI          R7=INPUT MAP STRUCTURE LENGTH
 CURSLOOP EQU   *
          TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
@@ -135,13 +149,23 @@ SBALOOP  EQU   *
          AHI   R9,1               CONVERT RESULT TO OFFSET 1
          BAL   R14,RELPOS         CALC RELATIVE POS RELATED TO MAP SIZE
          AHI   R1,-2              R1=TRUE OFFSET OF ATTRIBUTE (37-2=35)
-         BNZ   NOTEND             EXIT IF NO FIELD WRAP
-         LA    R1,1919            ATTRIBUTE IS LAST POS
+         BNM   NOTEND             EXIT IF NO SCREEN WRAP
+* CALCULATE LAST POSITION
+         SR    R14,R14            CLEAR R14
+         IC    R14,BMSML          R14=MAP HEIGHT
+         SR    R1,R1              CLEAR R1
+         IC    R1,BMSMW           R1=MAP WIDTH
+         MSR   R1,R14             R1=MAP HEIGHT*MAP WIDTH
+         AHI   R1,-1              -1 FOR OFFSET ZERO
 NOTEND   EQU   *
 * NOW HUNT FOR THE RIGHT FIELD
          SH    R5,BMSMHLL         R5=REMAINING MAP LENGTH
          BZ    MAPFAIL3           ERROR IF NO FIELDS
          L     R8,P1802DSC        R8=INPUT MAP STRUCTURE ADDRESS
+         TM    BMSMODE,BMSMHEXT   TIOAPFX=YES ?
+         BNO   NOTPFX2            EXIT IF NOT
+         AHI   R8,12              ADJUST FOR TIOAPFX
+NOTPFX2  EQU   *
          LR    R9,R4              R9=NEW BASE FOR MAP FIELDS
          AH    R9,BMSMHLL         MISS MAP DESCRIPTOR
 * REGISTER CHECK:
@@ -214,7 +238,7 @@ DUNDATA  EQU   *
          SR    R1,R0              R1=ACTUAL DATA LENGTH
          STH   R1,BMSLEN          SAVE IN INPUT MAP
          LTR   R0,R0              FIELD FILLED ?
-         BZ    ANYMORE            EXIT IF IT IS
+         BZ    DOPICIN            EXIT IF IT IS
 * OPERATE JUSTIFY
          TM    BMSFDFB,BMSFDJR    IT IS JUSTIFY RIGHT ?
          BNO   DUNSHIFT           EXIT IF NOT
@@ -249,6 +273,7 @@ JSLOOP   EQU   *
 JSINCR   EQU   *
          AHI   R7,1               BUMP DATA POINTER
          BCT   R0,JSLOOP          LOOP
+DOPICIN  EQU   *
          LA    R1,BMSINP          R1=INPUT DATA
          BAL   R14,PIC            PROCESS PICIN IF ANY
 *
@@ -297,18 +322,27 @@ MAPFAIL8 EQU   *
 * ERROR WHILE PROCESSING PICIN
 *    DATA LONGER THAN 31 DIGITS
 *    DATA IS NOT NUMERIC
+*    TOO MUCH DATA FOR THE EDIT PATTERN
          MVC   EIBRESP2,=F'8'     SET EIBRESP2
+*
 MAPFAIL  EQU   *
          MVI   EIBRCODE,X'04'     SET EIBRCODE
          MVC   EIBRESP,DFHRESP(MAPFAIL) SET EIBRESP=MAPFAIL
-         B     RETURN             RETURN
+         B     DORESP             EXIT
 *
 INVMPSZ  EQU   *
 * BAD MAP DIMENSIONS
          MVI   EIBRCODE,X'08'     SET EIBRCODE
          MVI   EIBRCODE+3,C' '    SET EIBRCODE+3 TO GENERIC 3270
          MVC   EIBRESP,DFHRESP(INVMPSZ) SET EIBRESP=INVMPSZ
-*
+DORESP   EQU   *
+         ICM   R14,15,P1802RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P1802RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
          SUBEXIT
 *
@@ -322,31 +356,34 @@ RELPOS   EQU   *
 *
 *              1         2         3    3
 *     1        0         0         0    5
-*    +-----------------------------------
-*  1 |
-*  2 |@.....@
-*  3 |
-*    +-----------------------------------
+*    +-----------------------------------+
+*  1 |                                   |
+*  2 |@.....@                            |
+*  3 |                                   |
+*    +-----------------------------------+
 *
 *  MAP SIZE IS 3x35
-*  X=ATTRIBUTE
+*  @=ATTRIBUTE
 *  FIELD POS IS 36-1=35 (OFFSET 0)
 *
 *  THE INCOMING SBA FOR THE FIELD IS 11C1D1 = POSITION 81
 *
 *  81+1=82 (OFFSET 1)
 *  82/80= 1 REMAINDER 2
-*  1*35=35+2=37-2=35 (-1 FOR OFFSET 0, -1 FOR ATTRIBUTE)
+*  1*35=35+2=37 (OFFSET 1)
          SR    R0,R0              CLEAR R0
          LR    R1,R9              R1=POSITION
          D     R0,=F'80'          R0=COLUMN  R1=ROW
-         LB    R12,BMSMSL         R12=MAP OFFSET ROW
+         SR    R12,R12            CLEAR R12
+         IC    R12,BMSMSL         R12=MAP OFFSET ROW
          SR    R1,R12             SUBTRACT OFFSET
          AHI   R1,1                               ROW+1
-         LB    R12,BMSMSC         R12=MAP OFFSET COLUMN
+         SR    R12,R12            CLEAR R12
+         IC    R12,BMSMSC         R12=MAP OFFSET COLUMN
          SR    R0,R12             SUBTRACT OFFSET
          AHI   R0,1                               COLUMN+1
-         LB    R15,BMSMW          R15=MAP WIDTH (35)
+         SR    R15,R15            CLEAR R15
+         IC    R15,BMSMW          R15=MAP WIDTH
          MSR   R1,R15             R1=ROW*MAP WIDTH
          AR    R1,R0              ADD COLUMN
          BR    R14                RETURN
@@ -422,6 +459,9 @@ PICBUMP  EQU   *
          AHI   R14,1              BUMP POINTER
          CLI   0(R14),X'00'       IS IT END ?
          BNE   PICEDLP            LOOP IF NOT
+         AHI   R6,1               R6=ACTUAL DIGITS USED
+         CR    R6,R15             MORE INPUT THAN EDIT WORD DIGITS ?
+         BH    MAPFAIL8           ERROR IF IT IS
 *
          SRL   R15,1              INT(N/2)
          LNR   R15,R15            -INT(N/2)
@@ -469,6 +509,9 @@ P1802MAP DS    CL7                MAP NAME
 P1802MLN DS    XL2                MAPSET LENGTH
 P1802DSC DS    AL4                STRUCTURE ADDRESS
 P1802DSL DS    AL2                STRUCTURE LENGTH
+         DS    X                  FF=NOHANDLE
+P1802RSP DS    AL4                RESP
+P1802RS2 DS    AL4                RESP2
 P1802END EQU   *                  END MARKER
 *
          DFHEIBLK                 EIB

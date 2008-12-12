@@ -1,0 +1,287 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL0610  SUBENTRY
+*
+* FN=0610  EXEC CICS READPREV
+*
+* R1  >>> P0610 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0610,P0610END),R3
+         L     DFHEIBR,P0610EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0610TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0610FN      SET EIBFN
+         MVC   EIBDS,P0610FIL     SET EIBDS
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0610RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0610RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+* GETMAIN AND MOVE THE DATA TO SEND
+         EXEC  CICS GETMAIN FLENGTH(=A(FCPREFIX)) SET(R5) INITIMG(0)   X
+               NOHANDLE
+         ST    R5,FCBLKSV         SAVE FC BLOCK ADDRESS FOR FREEMAIN
+         USING DFHFCBLK,R5
+* RESET EIB FIELDS
+         MVC   EIBFN,P0610FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         MVC   FCPTCPIO,=A(FCPREFIX) MOVE LENGTH TO FC BLOCK
+         MVC   FCPFN,=C'0610'     SET FUNCTION CODE
+         MVC   FCPTERM,TCTTETI    SET TERMINAL ID
+         MVC   FCPTRAN,EIBTRNID   SET TRANSID
+         MVC   FCPTASKN,EIBTASKN  SET TASK NUMBER
+         MVI   FCPCTYPE,FCPCBRWS  SET BROWSE
+         MVC   EIBRSRCE,P0610FIL  SET EIBRSRCE
+         MVC   FCPFILNM,P0610FIL  SET FILE NAME
+         MVC   FCPLEN,P0610LEN    MOVE REQUESTED LENGTH
+         MVC   FCPKEYLN,=X'7FFF'  SET MISSING KEYLENGTH
+         CLI   P0610KIN,X'FF'     ANY KEYLENGTH ?
+         BNE   DUNKLEN            EXIT IF NONE
+         MVC   FCPKEYLN,P0610KLN  MOVE KEYLENGTH
+DUNKLEN  EQU   *
+         CLI   P0610RBA,X'FF'     RBA ?
+         BNE   TRYXRBA            EXIT IF NOT
+         MVI   FCPRDOPT,FCPRDRBA  SET RIDFLD=RBA
+         B     SETRID             EXIT
+*
+TRYXRBA  EQU   *
+         CLI   P0610XRB,X'FF'     XRBA ?
+         BNE   TRYRRN             EXIT IF NOT
+         MVI   FCPRDOPT,FCPRDXRB  SET RIDFLD=XRBA
+         B     SETRID             EXIT
+*
+TRYRRN   EQU   *
+         CLI   P0610RRN,X'FF'     RRN ?
+         BNE   SETRID             EXIT IF NOT
+         MVI   FCPRDOPT,FCPRDRRN  SET RIDFLD=RRN
+SETRID   EQU    *
+         MVC   FCPRID,P0610RID    SET RIDFLD
+         MVC   FCPREQID,P0610REQ  SET REQID
+* SEND REQUEST TO SERVER, GET REPLY
+         OC    FCPLEN,FCPLEN      ANY REQUESTED LENGTH ?
+         BNZ   GOTLEN             EXIT IF THERE IS
+         MVC   FCPLEN,=X'7FFFFFFF' SET DEFAULT LENGTH
+GOTLEN   EQU   *
+         TCPIO SEND,MSG=(R5),LMSG==A(FCPREFIX),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+* ONLY THE PREFIX IS RECEIVED, WE GET THE DATA LATER
+         TCPIO RECEIVE,MSG=(R5),LMSG==A(FCPREFIX),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+         OC    FCPRETCD,FCPRETCD  BAD RETURN CODE ?
+         BZ    READOK             EXIT IF NONE
+         CLC   FCPRETCD,DFHRESP(FILENOTFOUND) FILENOTFOUND ?
+         BE    FILENTFD           EXIT IF IT IS
+         CLC   FCPRETCD,DFHRESP(INVREQ) INVREQ ?
+         BE    INVREQ             EXIT IF IT IS
+         CLC   FCPRETCD,DFHRESP(NOTFND) NOTFND ?
+         BE    NOTFND             EXIT IF IT IS
+         CLC   FCPRETCD,DFHRESP(NOTOPEN) NOTOPEN ?
+         BE    NOTOPEN            EXIT IF IT IS
+         CLC   FCPRETCD,DFHRESP(DISABLED) DISABLED ?
+         BE    DISABLED           EXIT IF IT IS
+         CLC   FCPRETCD,DFHRESP(ENDFILE) ENDFILE ?
+         BE    ENDFILE            EXIT IF IT IS
+         CLC   FCPRETCD,DFHRESP(ILLOGIC) ILLOGIC ?
+         BE    ILLOGIC            EXIT IF IT IS
+* SERVER HAS SENT UNKNOWN VALUE IN FCPRETCD
+         B     INVREQ             SHOULD NOT OCCUR
+*
+READOK   EQU   *
+         L     R4,P0610INT        R4=INTO ADDRESS BY DEFAULT
+         CLI   P0610SET,X'FF'     SET ?
+         BNE   DOINTO             EXIT IF NOT
+         EXEC  CICS GETMAIN SET(R4) FLENGTH(FCPACLEN) NOHANDLE
+         ST    R4,P0610STA        SAVE GETMAIN ADDRESS
+* RESET EIB FIELDS
+         MVC   EIBFN,P0610FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+DOINTO   EQU   *
+         L     R15,FCPLEN         R15=REQUESTED OR DEFAULT LENGTH
+         C     R15,=X'7FFFFFFF'   IS IT THE DEFAULT LENGTH ?
+         BNE   GOTLEN2            EXIT IF IT IS
+         L     R15,FCPACLEN       R15=ACTUAL LENGTH
+GOTLEN2  EQU   *
+* GET THE DATA
+* THERE MIGHT BE PROBLEMS HERE IF THE DATA LENGTH > 32K
+* WE COULD PUT MULTIPLE RECEIVES HERE IF ASKED FOR
+         TCPIO RECEIVE,MSG=(R4),LMSG=(R15),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+         ICM   R1,15,P0610LAD     ANY LENGTH AS LABEL ?
+         BZ    TRYFLEN            EXIT IF NONE
+         MVC   0(2,R1),FCPACLEN+2 SET ACTUAL LENGTH OF DATA
+         B     PARTIAL            EXIT
+*
+TRYFLEN  EQU   *
+         ICM   R1,15,P0610FAD     ANY FLENGTH AS LABEL ?
+         BZ    PARTIAL            EXIT IF NONE
+         MVC   0(4,R1),FCPACLEN   SET ACTUAL FLENGTH OF DATA
+PARTIAL  EQU   *
+         CLC   FCPLEN,FCPACLEN    PARTIAL DATA RECEIVED ?
+         BL    LENGERR            ERROR IF IT WAS
+         L     R1,P0610ARD        R1=ADDRESS OF RIDFLD
+         CLI   P0610RBA,X'FF'     IS IT RBA ?
+         BNE   TRYXRBA2           EXIT IF NOT
+         MVC   0(4,R1),FCPRBA     MOVE RIDFLD BACK
+         B     RETURN             EXIT
+*
+TRYXRBA2 EQU   *
+         CLI   P0610XRB,X'FF'     IS IT XRBA ?
+         BNE   TRYRRN2            EXIT IF NOT
+         MVC   0(8,R1),FCPXRBA    MOVE RIDFLD BACK
+         B     RETURN             EXIT
+*
+TRYRRN2  EQU   *
+         CLI   P0610RRN,X'FF'     IS IT RRN ?
+         BNE   DEFRID             EXIT IF NOT
+         MVC   0(4,R1),FCPRRN     MOVE RIDFLD BACK
+         B     RETURN             EXIT
+*
+DEFRID   EQU   *
+* DEFAULT TO KEY
+         LB    R2,P0610LRD        R2=L'RIDFLD
+         BCTR  R2,0               -1 FOR MVC
+         STC   R2,DEFMVC+1        MODIFY MVC
+DEFMVC   MVC   0(0,R1),FCPRID     MOVE RIDFLD BACK
+         B     RETURN             EXIT
+*
+INVREQ   EQU   *
+* INVOKE INVREQ
+         MVI   EIBRCODE,X'08'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         MVC   EIBRESP2,FCPRESP2  SET EIBRESP2
+         B     DORESP             EXIT
+*
+FILENTFD EQU   *
+* INVOKE FILENOTFOUND
+         MVI   EIBRCODE,X'01'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(FILENOTFOUND) SET EIBRESP=FILENOTFOUND
+         MVC   EIBRESP2,FCPRESP2  SET EIBRESP2
+         B     DORESP             EXIT
+*
+LENGERR  EQU   *
+* INVOKE LENGERR
+         MVI   EIBRCODE,X'E1'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
+         MVC   EIBRESP2,FCPRESP2  SET EIBRESP2
+         B     DORESP             EXIT
+*
+NOTFND   EQU   *
+* INVOKE NOTFND
+         MVI   EIBRCODE,X'81'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(NOTFND) SET EIBRESP=NOTFND
+         MVC   EIBRESP2+3(1),FCPRESP2+3 SET EIBRESP2
+         MVC   EIBRCODE+1(1),FCPRESP2 MOVE RPLFEEDB+1
+         MVC   EIBRCODE+2(1),FCPRESP2+1 MOVE RPLFEEDB+3
+         B     DORESP             EXIT
+*
+NOTOPEN  EQU   *
+* INVOKE NOTOPEN
+         MVI   EIBRCODE,X'0C'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(NOTOPEN) SET EIBRESP=NOTOPEN
+         MVC   EIBRESP2,FCPRESP2  SET EIBRESP2
+         B     DORESP             EXIT
+*
+DISABLED EQU   *
+* INVOKE DISABLED
+         MVI   EIBRCODE,X'0D'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(DISABLED) SET EIBRESP=DISABLED
+         MVC   EIBRESP2,FCPRESP2  SET EIBRESP2
+         B     DORESP             EXIT
+*
+ENDFILE  EQU   *
+* INVOKE ENDFILE
+         MVI   EIBRCODE,X'0F'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(ENDFILE) SET EIBRESP=ENDFILE
+         MVC   EIBRESP2+3(1),FCPRESP2+3 SET EIBRESP2
+         MVC   EIBRCODE+1(1),FCPRESP2 MOVE RPLFEEDB+1
+         MVC   EIBRCODE+2(1),FCPRESP2+1 MOVE RPLFEEDB+3
+         B     DORESP             EXIT
+*
+ILLOGIC  EQU   *
+* INVOKE ILLOGIC
+         MVI   EIBRCODE,X'02'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(ILLOGIC) SET EIBRESP=ILLOGIC
+         MVC   EIBRESP2+3(1),FCPRESP2+3 SET EIBRESP2
+         MVC   EIBRCODE+1(1),FCPRESP2 MOVE RPLFEEDB+1
+         MVC   EIBRCODE+2(1),FCPRESP2+1 MOVE RPLFEEDB+3
+DORESP   EQU   *
+         ICM   R14,15,P0610RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P0610RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+         B     RETURN             EXIT
+*
+RETURN   EQU   *
+         MVC   RCODE,EIBRCODE     SAVE RCODE
+         MVC   RESP,EIBRESP       SAVE RESP
+         MVC   RESP2,EIBRESP2     SAVE RESP2
+         EXEC  CICS FREEMAIN DATA(FCBLKSV) NOHANDLE
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZ   DORESP             EXIT IF THERE IS
+         MVC   EIBFN,P0610FN      SET EIBFN
+         MVC   EIBRCODE,RCODE     RESTORE RCODE
+         MVC   EIBRESP,RESP       RESTORE RESP
+         MVC   EIBRESP2,RESP2     RESTORE RESP2
+         SUBEXIT
+*
+FCBLKSV  DS    AL4                SAVE FC BLOCK ADDRESS
+RCODE    DS    XL4                SAVE RCODE
+RESP     DS    XL4                SAVE RESP
+RESP2    DS    XL4                SAVE RESP2
+*
+P0610    DSECT
+P0610FN  DS    XL2                FUNCTION CODE
+P0610EIB DS    AL4                EIB
+P0610TCT DS    AL4                TCTTE
+P0610FIL DS    CL8                FILENAME
+P0610SET DS    X                  FF=SET IS SPECIFIED
+P0610STA DS    AL4                ADDRESS FOR SET
+P0610INT DS    AL4                ADDRESS OF INTO
+P0610LEN DS    XL4                LENGTH
+P0610LAD DS    AL4                ADDRESS OF LENGTH IF LABEL
+P0610FAD DS    AL4                ADDRESS OF FLENGTH IF LABEL
+P0610KIN DS    X                  FF=KEYLENGTH IS VALID
+P0610KLN DS    XL2                KEYLENGTH
+P0610RID DS    XL128              RIDFLD
+P0610ARD DS    AL4                A(RIDFLD)
+P0610LRD DS    X                  L'RIDFLD
+P0610RBA DS    X                  FF=RBA
+P0610XRB DS    X                  FF=XRBA
+P0610RRN DS    X                  FF=RRN
+P0610REQ DS    XL2                REQID
+         DS    X                  FF=NOHANDLE
+P0610RSP DS    AL4                RESP
+P0610RS2 DS    AL4                RESP2
+P0610END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHFCBLK                 FILE CONTROL PREFIX AREA
+*
+         EQUREGS REGS=GPR
+*
+         END
+

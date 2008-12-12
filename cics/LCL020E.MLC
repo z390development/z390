@@ -1,0 +1,139 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL020E  SUBENTRY
+*
+* FN=020E  EXEC CICS POP HANDLE
+*
+* R1  >>> P020E BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P020E,P020EEND),R3
+         L     DFHEIBR,P020EEIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P020ETCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P020EFN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P020ERSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P020ERS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+* RAISE CONDITION ONLY IF NOTHING STACKED BY PUSH
+         L     R1,P020EAID        R1=ADDRESS OF DFHEIAID
+         ICM   R1,15,0(R1)        ANY AID BLOCKS ?
+         BNZ   SOMEBLK            EXIT IF SOME
+         L     R1,P020EHCN        R1=ADDRESS OF DFHEIHCN
+         ICM   R1,15,0(R1)        ANY CONDITION BLOCKS ?
+         BNZ   SOMEBLK            EXIT IF SOME
+* NOTHING TO POP
+* INVOKE INVREQ
+         MVI   EIBRCODE,X'E0'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         ICM   R14,15,P020ERSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P020ERS2    R14=RESP2 ADDRESS
+         BZ    NOCOND             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+         B     NOCOND             EXIT
+*
+* POP AID BLOCK
+*
+SOMEBLK  EQU   *
+         L     R2,P020EAID        R2=ADDRESS OF DFHEIAID
+         AHI   R2,-(AIDCHAIN-DFHADBLK) R2=REL. POS. OF DFHEIAID
+         USING DFHADBLK,R14
+         L     R1,P020EAID        R1=ADDRESS OF DFHEIAID
+         ICM   R14,15,0(R1)       ANY AID BLOCKS ?
+         BZ    NOAID              EXIT IF NONE
+AIDLOOP  EQU   *
+         OC    AIDCHAIN,AIDCHAIN  IS THERE A CHAIN ?
+         BZ    AIDEND             EXIT IF END OF CHAIN
+         LR    R2,R14             SAVE ADDRESS OF LAST AID BLOCK
+         L     R14,AIDCHAIN       R14=NEXT AID BLOCK
+         B     AIDLOOP            LOOP
+*
+AIDEND   EQU   *
+         LA    R0,AIDLENG         R0=AID BLOCK LENGTH
+         FREEMAIN R,A=(R14),LV=(R0)
+         LR    R14,R2             R14=LAST AID BLOCK OR DFHEIAID
+         XC    AIDCHAIN,AIDCHAIN  CLEAR CHAIN ADDRESS
+         DROP  R14
+NOAID    EQU   *
+*
+* POP HANDLE CONDITION BLOCK
+*
+         L     R2,P020EHCN        R2=ADDRESS OF DFHEIHCN
+         AHI   R2,-(HCNCHAIN-DFHHCBLK) R2=REL. POS. OF DFHEIHCN
+         USING DFHHCBLK,R14
+         L     R1,P020EHCN        R1=ADDRESS OF DFHEIHCN
+         ICM   R14,15,0(R1)       ANY CONDITION BLOCKS ?
+         BZ    NOCOND             EXIT IF NONE
+HCNLOOP  EQU   *
+         OC    HCNCHAIN,HCNCHAIN  IS THERE A CHAIN ?
+         BZ    HCNEND             EXIT IF END OF CHAIN
+         LR    R2,R14             SAVE ADDRESS OF LAST CONDITION BLOCK
+         L     R14,HCNCHAIN       R14=NEXT CONDITION BLOCK
+         B     HCNLOOP            LOOP
+*
+HCNEND   EQU   *
+         LA    R0,HCNLENG         R0=CONDITION BLOCK LENGTH
+         FREEMAIN R,A=(R14),LV=(R0)
+         LR    R14,R2             R14=LAST CONDITION BLOCK OR DFHEIHCN
+         XC    HCNCHAIN,HCNCHAIN  CLEAR CHAIN ADDRESS
+         DROP  R14
+*
+* POP HANDLE ABEND BLOCK
+* THIS IS DONE EVEN IF INVREQ IS RAISED
+* THIS IS THE SAME AS EXEC CICS HANDLE ABEND RESET
+*
+NOCOND   EQU   *
+         ICM   R14,15,TCTTEABD    ANY ABEND BLOCK ?
+         BZ    RETURN             EXIT IF NONE
+         USING ABDDEST,R14
+         LH    R1,TCTTELNK        R1=CURRENT LINK LEVEL
+         AHI   R1,-1              -1 FOR INDEX
+         MS    R1,=AL4(ABDLENG)   * ENTRY LENGTH
+         AR    R14,R1             R14=CORRECT ABEND BLOCK ENTRY
+         XC    ABDACTIV,ABDACTIV  SET ENTRY ACTIVE
+         DROP  R14
+RETURN   EQU   *
+         SUBEXIT
+*
+P020E    DSECT
+P020EFN  DS    XL2                FUNCTION CODE
+P020EEIB DS    AL4                EIB
+P020ETCT DS    AL4                TCTTE
+P020EAID DS    AL4                A(DFHEIAID)
+P020EHCN DS    AL4                A(DFHEIHCN)
+         DS    X                  FF=NOHANDLE
+P020ERSP DS    AL4                RESP
+P020ERS2 DS    AL4                RESP2
+P020EEND EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHADBLK                 HANDLE AID BLOCK
+         DFHHCBLK                 HANDLE CONDITION BLOCK
+         DFHABBLK                 HANDLE ABEND BLOCK
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R10 TCTTE
+* R11 EIB
+* R13 SAVE AREA AND BASE 1
+*
+         END
+

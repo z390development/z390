@@ -1,0 +1,623 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+         DFHEIGBL
+         DFHEISTG
+TESTIC02 DFHEIENT CODEREG=(R12,R3,R4)
+*
+* TEST INTERVAL CONTROL START/RETRIEVE/CANCEL
+*
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 1 AND EVEN NUMBERS
+* DETERMINE WHERE TO GO NEXT
+         LA    R5,PHASETAB        ADDRESS PHASE TABLE
+PHASLOOP EQU   *
+         CLC   0(2,R5),TESTNO     OUR PHASE ?
+         BNE   PHASINCR           EXIT IF NOT
+         L     R14,2(R5)          LOAD ADDRESS OF NEXT PHASE
+         BR    R14                GO TO IT
+*
+PHASINCR EQU   *
+         AHI   R5,6               BUMP PHASE TABLE POINTER
+         CLI   0(R5),X'FF'        END OF TABLE ?
+         BNE   PHASLOOP           LOOP IF NOT
+         DC    H'0'               SHOULD NOT OCCUR
+*
+* TEST 1 - SIMPLE START-NO-DATA, NO REQID, NO TIME
+TEST01   EQU   *
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)
+         B     RETURN             EXIT
+*
+* TEST 2 - SIMPLE START-NO-DATA, REQID, 2 SECS
+TEST02   EQU   *
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 3
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               REQID('MYREQID1')                                       X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+* TEST 3 - SIMPLE START-WITH-PREFIX DATA ONLY, NO REQID, 2 SECS
+*    QUEUE IS C'DF',X'8FFFE1773CE0'
+TEST03   EQU   *
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 5
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               QUEUE('MYQUEUE1') RTRANSID('RTR1') RTERMID('RTM1')      X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+* TEST 4 - SIMPLE START-WITH-PREFIX DATA ONLY,    REQID, 2 SECS
+TEST04   EQU   *
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 7
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               QUEUE('MYQUEUE2') RTRANSID('RTR2') RTERMID('RTM2')      X
+               REQID('MYREQID2')                                       X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+* TEST 5 - SIMPLE START-NO-PREFIX+DATA, NO REQID, 2 SECS
+*    THIS WILL ADD REC TO TEST03 TS Q
+TEST05   EQU   *
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 9
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               FROM(MYDATA1) LENGTH(50)                                X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+* TEST 6 - SIMPLE START-NO-PREFIX+DATA,    REQID, 2 SECS
+TEST06   EQU   *
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 11
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               FROM(MYDATA2) LENGTH(50)                                X
+               REQID('MYREQID3')                                       X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+* TEST 7 - SIMPLE START-WITH-PREFIX+DATA, NO REQID, 2 SECS
+*    THIS WILL ADD REC TO TEST03 TS Q
+TEST07   EQU   *
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 13
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               QUEUE('MYQUEUE3') RTRANSID('RTR3') RTERMID('RTM3')      X
+               FROM(MYDATA3) LENGTH(50)                                X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+* TEST 8 - SIMPLE START-WITH-PREFIX+DATA,    REQID, 2 SECS
+TEST08   EQU   *
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 15
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               QUEUE('MYQUEUE4') RTRANSID('RTR4') RTERMID('RTM4')      X
+               FROM(MYDATA4) LENGTH(50)                                X
+               REQID('MYREQID4')                                       X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+* ERROR TESTING
+ERRTEST  EQU   *
+         LA    R9,SBATAB          ADDRESS SBA TABLE
+         EXEC  CICS HANDLE CONDITION                                   X
+               INVREQ(ICINVREQ)                                        X
+               IOERR(ICIOERR)                                          X
+               LENGERR(ICLENERR)                                       X
+               TERMIDERR(ICBADTRM)                                     X
+               TRANSIDERR(ICBADTRN)                                     X
+* RAISE INVREQ/0  QUEUE=REQID
+         LA    R7,ICRETN1         R7=HANDLE RETURN
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               QUEUE('MYQUEUE4')                                       X
+               REQID('MYQUEUE4')                                       X
+               AFTER SECONDS(5)
+ICRETN1  EQU   *
+* RAISE INVREQ/4  BAD HOURS
+         LA    R7,ICRETN2         R7=HANDLE RETURN
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               REQID('MYQUEUE4')                                       X
+               AFTER HOURS(100) SECONDS(5)
+ICRETN2  EQU   *
+* RAISE INVREQ/5  BAD MINUTES
+         LA    R7,ICRETN3         R7=HANDLE RETURN
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               REQID('MYREQID5')                                       X
+               AFTER HOURS(1) MINUTES(60)
+ICRETN3  EQU   *
+* RAISE INVREQ/6  BAD SECONDS
+         LA    R7,ICRETN4         R7=HANDLE RETURN
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               REQID('MYREQID5')                                       X
+               AFTER HOURS(1) SECONDS(60)
+ICRETN4  EQU   *
+* RAISE IOERR     REQID REUSED FOR DIFFERENT TRAN/TERM
+         LA    R7,ICRETN5         R7=HANDLE RETURN
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               QUEUE('MYQUEUE4')                                       X
+               REQID('MYREQID5')                                       X
+               AFTER HOURS(1)
+         EXEC  CICS START TRANSID('IC02') TERMID('DON1')               X
+               QUEUE('MYQUEUE4')                                       X
+               REQID('MYREQID5')                                       X
+               AFTER HOURS(1)
+ICRETN5  EQU   *
+* RAISE TRANSIDERR  BAD TRANSID
+         LA    R7,ICRETN6         R7=HANDLE RETURN
+         EXEC  CICS START TRANSID('FRED') TERMID(EIBTRMID)             X
+               RTRANSID('ZZZZ')                                        X
+               REQID('MYREQID6')                                       X
+               AFTER HOURS(1)
+ICRETN6  EQU   *
+* RAISE TERMIDERR   BAD TERMID
+         LA    R7,ICRETN7         R7=HANDLE RETURN
+         EXEC  CICS START TRANSID('IC02') TERMID('FRED')               X
+               RTRANSID('YYYY')                                        X
+               REQID('MYREQID7')                                       X
+               AFTER HOURS(1)
+ICRETN7  EQU   *
+* RAISE LENGERR     BAD LENGTH
+         LA    R7,ICRETN8         R7=HANDLE RETURN
+         EXEC  CICS START TRANSID('IC02') TERMID('FRED')               X
+               FROM(MYDATA1) LENGTH(0)                                 X
+               REQID('MYREQID8')                                       X
+               AFTER HOURS(1)
+ICRETN8  EQU   *
+*
+* RETRIEVE TESTING
+*
+* TURN OFF THE HANDLES
+         EXEC  CICS HANDLE CONDITION                                   X
+               INVREQ                                                  X
+               IOERR                                                   X
+               LENGERR                                                 X
+               TERMIDERR                                               X
+               TRANSIDERR                                               X
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 17
+* 2 STARTS, SHOULD ONLY INITIATE ONE TRANSID
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               FROM(MYDATA1) LENGTH(50)                                X
+               QUEUE('MYQUEUE9') RTRANSID('RTR9') RTERMID('RTM9')      X
+               REQID('MYREQID9')                                       X
+               AFTER SECONDS(2)
+*
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               FROM(MYDATA2) LENGTH(50)                                X
+               QUEUE('MYQUEUEA') RTRANSID('RTRA') RTERMID('RTMA')      X
+               REQID('MYREQID9')                                       X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+TEST09   EQU   *
+* RETRIEVE THE DATA JUST CREATED AND CHECK IT
+         EXEC  CICS RETRIEVE                                           X
+               INTO(MYRTRVE) LENGTH(MYLEN)                             X
+               QUEUE(MYQUEUE) RTRANSID(MYRTRAN) RTERMID(MYRTERM)
+* CHECK RECORD 1, ANY FAILURES ABEND ASRA AS THEY ARE MY FAULT
+         CLC   MYRTRVE(4),=C'ABAB' DATA OK ?
+         BNE   ABEND              ERROR IF NOT
+         CLC   MYQUEUE,=C'MYQUEUE9' QUEUE OK ?
+         BNE   ABEND              ERROR IF NOT
+         CLC   MYRTRAN,=C'RTR9'   RTRANSID OK ?
+         BNE   ABEND              ERROR IF NOT
+         CLC   MYRTERM,=C'RTM9'   RTERMID OK ?
+         BNE   ABEND              ERROR IF NOT
+         EXEC  CICS RETRIEVE                                           X
+               INTO(MYRTRVE) LENGTH(MYLEN)                             X
+               QUEUE(MYQUEUE) RTRANSID(MYRTRAN) RTERMID(MYRTERM)
+* CHECK RECORD 2, ANY FAILURES ABEND ASRA AS THEY ARE MY FAULT
+         CLC   MYRTRVE(4),=C'CDCD' DATA OK ?
+         BNE   ABEND              ERROR IF NOT
+         CLC   MYQUEUE,=C'MYQUEUEA' QUEUE OK ?
+         BNE   ABEND              ERROR IF NOT
+         CLC   MYRTRAN,=C'RTRA'   RTRANSID OK ?
+         BNE   ABEND              ERROR IF NOT
+         CLC   MYRTERM,=C'RTMA'   RTERMID OK ?
+         BNE   ABEND              ERROR IF NOT
+* 3RD RETRIEVE SHOULD RAISE ENDDATA AND DELETE TS Q
+         EXEC  CICS RETRIEVE                                           X
+               INTO(MYRTRVE) LENGTH(MYLEN)                             X
+               QUEUE(MYQUEUE) RTRANSID(MYRTRAN) RTERMID(MYRTERM)       X
+               NOHANDLE
+         CLC   EIBRESP,DFHRESP(ENDDATA) IS IT ENDDATA ?
+         BNE   ABEND              EXIT IF NOT
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 19
+* 1 START, THE RETRIEVE SHOULD DELETEQ TS WITHOUT ENDDATA RAISED
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               FROM(MYDATA3) LENGTH(50)                                X
+               QUEUE('MYQUEUEA') RTRANSID('RTRA') RTERMID('RTMA')      X
+               REQID('MYREQIDA')                                       X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+TEST10   EQU   *
+* RETRIEVE THE DATA JUST CREATED AND CHECK IT
+         EXEC  CICS RETRIEVE                                           X
+               INTO(MYRTRVE) LENGTH(MYLEN)                             X
+               QUEUE(MYQUEUE) RTRANSID(MYRTRAN) RTERMID(MYRTERM)
+* CHECK RECORD 1, ANY FAILURES ABEND ASRA AS THEY ARE MY FAULT
+         CLC   MYRTRVE(4),=C'EFEF' DATA OK ?
+         BNE   ABEND              ERROR IF NOT
+         CLC   MYQUEUE,=C'MYQUEUEA' QUEUE OK ?
+         BNE   ABEND              ERROR IF NOT
+         CLC   MYRTRAN,=C'RTRA'   RTRANSID OK ?
+         BNE   ABEND              ERROR IF NOT
+         CLC   MYRTERM,=C'RTMA'   RTERMID OK ?
+         BNE   ABEND              ERROR IF NOT
+* RETRIEVE ERROR TESTING
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+* 1 START, I DELETE THE TS Q AND THEN THE RETRIEVE RAISES ENDDATA
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               FROM(MYDATA4) LENGTH(50)                                X
+               QUEUE('MYQUEUEB') RTRANSID('RTRB') RTERMID('RTMB')      X
+               REQID('MYREQIDB')                                       X
+               INTERVAL(0)
+         B     RETURN             EXIT
+*
+TEST11   EQU   *
+         EXEC  CICS HANDLE CONDITION ENDDATA(ICENDDTA)                                       X
+         LA    R7,ICRETN9         R7=HANDLE RETURN
+* DESTROY THE TS Q
+         EXEC  CICS DELETEQ TS QUEUE('MYREQIDB')
+* RETRIEVE THE DATA WHICH ISN'T THERE
+         EXEC  CICS RETRIEVE                                           X
+               INTO(MYRTRVE) LENGTH(MYLEN)                             X
+               QUEUE(MYQUEUE) RTRANSID(MYRTRAN) RTERMID(MYRTERM)
+ICRETN9  EQU   *
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+* 1 START, WITH NO RTERMID, THE RETRIEVE WANTS THE RTERMID...ENVDEFERR
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               FROM(MYDATA4) LENGTH(50)                                X
+               QUEUE('MYQUEUEC') RTRANSID('RTRC')                      X
+               REQID('MYREQIDC')                                       X
+               INTERVAL(0)
+         B     RETURN             EXIT
+*
+TEST12   EQU   *
+         EXEC  CICS HANDLE CONDITION ENVDEFERR(ICENVDEF)                                     X
+         LA    R7,ICRETN10        R7=HANDLE RETURN
+* RETRIEVE THE DATA WHICH DOESN'T HAVE RTERMID
+         EXEC  CICS RETRIEVE                                           X
+               INTO(MYRTRVE) LENGTH(MYLEN)                             X
+               RTERMID(MYRTERM)
+ICRETN10 EQU   *
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+* 1 START, WE WILL RETRIEVE SHORT DATA...LENGERR
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               FROM(MYDATA4) LENGTH(50)                                X
+               QUEUE('MYQUEUEE') RTRANSID('RTRE')                      X
+               REQID('MYREQIDE')                                       X
+               INTERVAL(0)
+         B     RETURN             EXIT
+*
+TEST13   EQU   *
+         EXEC  CICS HANDLE CONDITION LENGERR(ICLENER2)                                     X
+         LA    R7,ICRETN11        R7=HANDLE RETURN
+* RETRIEVE THE SHORT DATA
+         EXEC  CICS RETRIEVE                                           X
+               SET(R8) LENGTH(MYLEN2)                                  X
+               QUEUE(MYQUEUE) RTRANSID(MYRTRAN)
+ICRETN11 EQU   *
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 27
+* 2 STARTS, 1ST NO DATA, WE WILL CANCEL THE 2ND
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               REQID('MYREQIDF')                                       X
+               INTERVAL(0)
+         EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
+               QUEUE('MYQUEUEG') RTRANSID('RTRG')                      X
+               REQID('MYREQIDG')                                       X
+               AFTER HOURS(1)
+         B     RETURN             EXIT
+*
+TEST14   EQU   *
+         EXEC  CICS CANCEL REQID('MYREQIDG')
+* RAISE NOTFND
+         EXEC  CICS HANDLE CONDITION NOTFND(ICNOTFND)                                     X
+         LA    R7,ICRETN12        R7=HANDLE RETURN
+         EXEC  CICS CANCEL REQID('MYREQIDH')
+ICRETN12 EQU   *
+* FIRE TRANSACTION BED1 FOR MANUAL USAGE
+* THEN FIRE MULTIPLE IC03 TRANSACTIONS TO ENSURE THAT THESE DON'T
+* INTERFERE WITH BED1'S RETURN COMMAREA.
+* I WILL NEED 8 STARTS OF IC03 AT 5 SEC INTERVALS
+         EXEC  CICS START TRANSID('BED1') TERMID(EIBTRMID)             X
+               REQID('MYREQIDI')                                       X
+               INTERVAL(0)
+         EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
+               AFTER SECONDS(05)
+         EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
+               AFTER SECONDS(10)
+         EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
+               AFTER SECONDS(15)
+         EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
+               AFTER SECONDS(20)
+         EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
+               AFTER SECONDS(25)
+         EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
+               AFTER SECONDS(30)
+         EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
+               AFTER SECONDS(35)
+         EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
+               AFTER SECONDS(40)
+* FIRE TRANSACTION BED1 AGAIN FOR MANUAL USAGE
+* THIS TIME WE END WITH RETURN TRANSID COMMAREA WITH THE PURPOSE
+* OF FOOLING BED1 INTO THINKING IT HAS ENDED
+         EXEC  CICS START TRANSID('BED1') TERMID(EIBTRMID)             X
+               REQID('MYREQIDJ')                                       X
+               AFTER SECONDS(50)
+         EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
+               REQID('MYREQIDK')                                       X
+               AFTER SECONDS(55)
+         SP    TESTNO,TESTNO      ZERO TESTNO
+         EXEC  CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL)
+RETURN   EQU   *
+         EXEC  CICS RETURN
+*
+ABEND    DC    H'0'
+*
+ICINVREQ DS    0H
+         MVC   HAND1SBA,0(R9)     MOVE SBA
+         AHI   R9,3               BUMP SBA POINTER
+         L     R8,EIBRESP2        R8=RESP2
+         CVD   R8,DEC             CONVERT TO DECIMAL
+         XC    HAND1CON,HAND1CON  CLEAR CONDITION
+         MVC   HAND1CON+5(4),=X'40202120' MOVE EDIT WORD
+         ED    HAND1CON+5(4),DEC+6 EDIT RESP2
+         MVC   HAND1CON(7),=C'INVREQ/' MOVE CONDITION
+         B     ICER1SND           EXIT
+*
+ICIOERR  DS    0H
+         XC    HAND2CON,HAND2CON  CLEAR CONDITION
+         MVC   HAND2CON(5),=C'IOERR' MOVE CONDITION
+         B     ICER2SND           EXIT
+*
+ICBADTRN EQU   *
+         XC    HAND2CON,HAND2CON  CLEAR CONDITION
+         MVC   HAND2CON(10),=C'TRANSIDERR' MOVE CONDITION
+         B     ICER2SND           EXIT
+*
+ICBADTRM EQU   *
+         XC    HAND2CON,HAND2CON  CLEAR CONDITION
+         MVC   HAND2CON(9),=C'TERMIDERR' MOVE CONDITION
+         B     ICER2SND           EXIT
+*
+ICLENERR EQU   *
+         XC    HAND2CON,HAND2CON  CLEAR CONDITION
+         MVC   HAND2CON(7),=C'LENGERR' MOVE CONDITION
+         B     ICER2SND           EXIT
+*
+ICENDDTA EQU   *
+         LA    R9,SBAENDTA
+         XC    HAND2CON,HAND2CON  CLEAR CONDITION
+         MVC   HAND2CON(7),=C'ENDDATA' MOVE CONDITION
+         B     ICER2SND           EXIT
+*
+ICENVDEF EQU   *
+         LA    R9,SBAENVDF
+         XC    HAND2CON,HAND2CON  CLEAR CONDITION
+         MVC   HAND2CON(9),=C'ENVDEFERR' MOVE CONDITION
+         B     ICER2SND           EXIT
+*
+ICLENER2 EQU   *
+         LA    R9,SBALENER
+         XC    HAND2CON,HAND2CON  CLEAR CONDITION
+         MVC   HAND2CON(7),=C'LENGERR' MOVE CONDITION
+         B     ICER2SND           EXIT
+*
+ICNOTFND EQU   *
+         LA    R9,SBANTFND
+         XC    HAND2CON,HAND2CON  CLEAR CONDITION
+         MVC   HAND2CON(6),=C'NOTFND' MOVE CONDITION
+         B     ICER2SND           EXIT
+*
+ICER1SND EQU   *
+         EXEC  CICS SEND FROM(HAND1) LENGTH(HAND1L)
+         BR    R7                 RETURN TO MAIN LINE
+*
+ICER2SND EQU   *
+         MVC   HAND2SBA,0(R9)     MOVE SBA
+         AHI   R9,3               BUMP SBA POINTER
+         EXEC  CICS SEND FROM(HAND2) LENGTH(HAND2L)
+         BR    R7                 RETURN TO MAIN LINE
+*
+* SUBROUTINES
+*
+SENDMSG  EQU   *
+         LA    R5,MSGTAB          ADDRESS MESSAGE TABLE
+SENDLOOP EQU   *
+         CLC   0(2,R5),TESTNO     OUR MESSAGE ?
+         BE    SENDIT             EXIT IF IT IS
+         AHI   R5,MSGTABL         BUMP MESSAGE POINTER
+         CLI   0(R5),X'FF'        END OF TABLE ?
+         BNE   SENDLOOP           LOOP
+         DC    H'0'               SHOULD NOT OCCUR
+*
+SENDIT   EQU   *
+         EXEC  CICS SEND FROM(2(R5)) LENGTH(MSGTABS)
+         BR    R9
+*
+TESTNO   DC    PL2'0'             TEST NUMBER
+DEC      DC    PL8'0'
+MYDATA1  DC    10CL5'ABAB '
+MYDATA2  DC    10CL5'CDCD '
+MYDATA3  DC    10CL5'EFEF '
+MYDATA4  DC    10CL5'GHGH '
+MYRTRVE  DS    CL50
+MYRTERM  DS    CL4
+MYRTRAN  DS    CL4
+MYQUEUE  DS    CL8
+MYLEN    DC    H'50'
+MYLEN2   DC    H'40'
+*
+* MESSAGE TABLE
+*
+MSGTAB   EQU   *
+         DC    PL2'1'
+         TN3270 WCC_KD,(SBA,3,1)
+         DC    CL34'IC START   NO-DATA  NO REQID'
+MSGTABL  EQU   *-MSGTAB
+*
+         DC    PL2'2'
+         TN3270 WCC_KD,(SBA,4,1)
+         DC    CL34'IC START   NO-DATA  NO REQID  OK'
+*
+         DC    PL2'3'
+         TN3270 WCC_KD,(SBA,5,1)
+         DC    CL34'IC START   NO-DATA     REQID'
+*
+         DC    PL2'4'
+         TN3270 WCC_KD,(SBA,6,1)
+         DC    CL34'IC START   NO-DATA     REQID  OK'
+*
+         DC    PL2'5'
+         TN3270 WCC_KD,(SBA,7,1)
+         DC    CL34'IC START  PFX-ONLY  NO REQID'
+*
+         DC    PL2'6'
+         TN3270 WCC_KD,(SBA,8,1)
+         DC    CL34'IC START  PFX-ONLY  NO REQID  OK'
+*
+         DC    PL2'7'
+         TN3270 WCC_KD,(SBA,9,1)
+         DC    CL34'IC START  PFX-ONLY     REQID'
+*
+         DC    PL2'8'
+         TN3270 WCC_KD,(SBA,10,1)
+         DC    CL34'IC START  PFX-ONLY     REQID  OK'
+*
+         DC    PL2'9'
+         TN3270 WCC_KD,(SBA,11,1)
+         DC    CL34'IC START DATA-ONLY  NO REQID'
+*
+         DC    PL2'10'
+         TN3270 WCC_KD,(SBA,12,1)
+         DC    CL34'IC START DATA-ONLY  NO REQID  OK'
+*
+         DC    PL2'11'
+         TN3270 WCC_KD,(SBA,13,1)
+         DC    CL34'IC START DATA-ONLY     REQID'
+*
+         DC    PL2'12'
+         TN3270 WCC_KD,(SBA,14,1)
+         DC    CL34'IC START DATA-ONLY     REQID  OK'
+*
+         DC    PL2'13'
+         TN3270 WCC_KD,(SBA,15,1)
+         DC    CL34'IC START  PFX+DATA  NO REQID'
+*
+         DC    PL2'14'
+         TN3270 WCC_KD,(SBA,16,1)
+         DC    CL34'IC START  PFX+DATA  NO REQID  OK'
+*
+         DC    PL2'15'
+         TN3270 WCC_KD,(SBA,17,1)
+         DC    CL34'IC START  PFX+DATA     REQID'
+*
+         DC    PL2'16'
+         TN3270 WCC_KD,(SBA,18,1)
+         DC    CL34'IC START  PFX+DATA     REQID  OK'
+*
+         DC    PL2'17'
+         TN3270 WCC_KD,(SBA,7,42)
+         DC    CL34'| IC START/RETRIEVE 2 RECORDS'
+*
+         DC    PL2'18'
+         TN3270 WCC_KD,(SBA,8,42)
+         DC    CL34'| IC START/RETRIEVE 2 RECORDS   OK'
+*
+         DC    PL2'19'
+         TN3270 WCC_KD,(SBA,9,42)
+         DC    CL34'| IC START/RETRIEVE 1 RECORD'
+*
+         DC    PL2'20'
+         TN3270 WCC_KD,(SBA,10,42)
+         DC    CL34'| IC START/RETRIEVE 1 RECORD    OK'
+*
+* DUMMY, AS THIS WILL BECOME HANDLE ENDDATA
+         DC    PL2'22'
+         TN3270 WCC_KD,(SBA,11,42)
+         DC    CL34' '
+*
+* DUMMY, AS THIS WILL BECOME HANDLE ENVDEFERR
+         DC    PL2'24'
+         TN3270 WCC_KD,(SBA,12,42)
+         DC    CL34' '
+*
+* DUMMY, AS THIS WILL BECOME HANDLE LENGERR
+         DC    PL2'26'
+         TN3270 WCC_KD,(SBA,13,42)
+         DC    CL34' '
+*
+         DC    PL2'27'
+         TN3270 WCC_KD,(SBA,14,42)
+         DC    CL34'| IC CANCEL'
+*
+         DC    PL2'28'
+         TN3270 WCC_KD,(SBA,15,42)
+         DC    CL34'| IC CANCEL                     OK'
+*
+         DC    X'FF'              STOPPER
+MSGTABS  DC    AL2(MSGTABL-2)     LENGTH FOR SEND
+*
+HAND1    EQU   *
+         TN3270 WCC_KD
+HAND1SBA DS    XL3
+HAND1CON DC    CL12' '
+         DC    C' CONDITION RAISED'
+HAND1L   DC    AL2(*-HAND1)
+*
+HAND2    EQU   *
+         TN3270 WCC_KD
+HAND2SBA DS    XL3
+         DC    C'| '
+HAND2CON DC    CL12' '
+         DC    C' CONDITION RAISED'
+HAND2L   DC    AL2(*-HAND2)
+*
+ENDMSG   TN3270 WCC_KD,(SBA,24,1)
+         DC    C'TESTIC02 COMPLETED, PRESS CLEAR'
+ENDMSGL  DC    AL2(*-ENDMSG)
+*
+PHASETAB EQU   *
+         DC    PL2'01',AL4(TEST01)
+         DC    PL2'02',AL4(TEST02)
+         DC    PL2'04',AL4(TEST03)
+         DC    PL2'06',AL4(TEST04)
+         DC    PL2'08',AL4(TEST05)
+         DC    PL2'10',AL4(TEST06)
+         DC    PL2'12',AL4(TEST07)
+         DC    PL2'14',AL4(TEST08)
+         DC    PL2'16',AL4(ERRTEST)
+         DC    PL2'18',AL4(TEST09)
+         DC    PL2'20',AL4(TEST10)
+         DC    PL2'22',AL4(TEST11)
+         DC    PL2'24',AL4(TEST12)
+         DC    PL2'26',AL4(TEST13)
+         DC    PL2'28',AL4(TEST14)
+         DC    X'FF'
+*
+SBATAB   EQU   *
+         TN3270 (SBA,19,1)
+         TN3270 (SBA,20,1)
+         TN3270 (SBA,21,1)
+         TN3270 (SBA,22,1)
+         TN3270 (SBA,3,42)
+         TN3270 (SBA,4,42)
+         TN3270 (SBA,5,42)
+         TN3270 (SBA,6,42)
+SBAENDTA TN3270 (SBA,11,42)
+SBAENVDF TN3270 (SBA,12,42)
+SBALENER TN3270 (SBA,13,42)
+SBANTFND TN3270 (SBA,16,42)
+*
+         TN3270 SYMBOLS
+         END
+

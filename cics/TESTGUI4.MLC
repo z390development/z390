@@ -54,6 +54,5 @@ MSG3DLEN DC    AL2(REPLYL)
 *
          COPY  DFHAID
          TN3270 SYMBOLS
-         EQUREGS
          END
 

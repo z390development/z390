@@ -1,15 +1,16 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.**********************************************************************
          MACRO
          CICS_IGNORE
-         LCLA  &CONDRNG
-         LCLC  &TYPE
+         GBLB  &PARMS_020A
+         LCLA  &CONDRNG,&PARMCNT
+         LCLC  &TYPE,&RESP,&RESP2
          LCLC  &CONDS(100)
 &CONDRNG SETA  100
 &TYPE    SETC  '&SYSLIST(1)'
@@ -17,37 +18,23 @@
          MNOTE 12,'IGNORE TYPE NOT RECOGNIZED'
          MEXIT
 .*
-.* IGNORE CONDITION
-.*
 .COND    ANOP
-         MVC   EIBFN,=X'020A'     SET EIBFN
-         USING DFHHCBLK,R1
-         ICM   R1,15,DFHEIHCN     ANY CONDITION BLOCK ADDRESS ?
-         BZ    CICS_IGNORE_&SYSNDX._02 EXIT IF NO CONDITION BLOCKS
-CICS_IGNORE_&SYSNDX._05 DS 0H
-         LR    R14,R1             R14=LAST CONDITION BLOCK ADDRESS
-         ICM   R1,15,HCNCHAIN     R1=NEXT CONDITION BLOCK
-         BNZ   CICS_IGNORE_&SYSNDX._05 LOOP
-.* END OF CONDITION BLOCK CHAIN
-         LR    R1,R14             R1=LAST CONDITION BLOCK ADDRESS
-         B     CICS_IGNORE_&SYSNDX._01 EXIT
-.*
-CICS_IGNORE_&SYSNDX._02 DS 0H
-.* GET THE FIRST CONDITION BLOCK
-         LA    R1,HCNLENG         R1=CONDITION BLOCK LENGTH
-         GETMAIN R,LV=(R1)
-         XC    0(256,R1),0(R1)    CLEAR CONDITION BLOCK
-         XC    256(HCNLENG-256,R1),256(R1) CLEAR CONDITION BLOCK
-         ST    R1,DFHEIHCN        SAVE CONDITION BLOCK ADDRESS
-         MVC   HCNHEAD,=C'DFHHCBLK' SET HEADER
-CICS_IGNORE_&SYSNDX._01 DS 0H
+         L     R15,=A(P020A)      LOAD PARM ADDRESS
+         USING (P020A,P020AEND),R15
+         XC    P020A(P020AEND-P020A),P020A CLEAR PARMS
+         MVC   P020AFN,=X'020A'   SET FUNCTION CODE
+         ST    DFHEIBR,P020AEIB   SET EIB ADDRESS
+         ST    TCTTEAR,P020ATCT   SET TCTTE ADDRESS
+         LA    R14,P020ACND       R14=ADDRESS OF COND INDICATORS
 .* SET CONDITION LIST
 &CONDS(01) SETC 'ERROR'
+&CONDS(11) SETC 'TERMIDERR'
 &CONDS(12) SETC 'FILENOTFOUND'
 &CONDS(13) SETC 'NOTFND'
 &CONDS(14) SETC 'DUPREC'
 &CONDS(15) SETC 'DUPKEY'
 &CONDS(16) SETC 'INVREQ'
+&CONDS(17) SETC 'IOERR'
 &CONDS(18) SETC 'NOSPACE'
 &CONDS(19) SETC 'NOTOPEN'
 &CONDS(20) SETC 'ENDFILE'
@@ -55,16 +42,22 @@ CICS_IGNORE_&SYSNDX._01 DS 0H
 &CONDS(22) SETC 'LENGERR'
 &CONDS(26) SETC 'ITEMERR'
 &CONDS(27) SETC 'PGMIDERR'
+&CONDS(28) SETC 'TRANSIDERR'
+&CONDS(29) SETC 'ENDDATA'
 &CONDS(31) SETC 'EXPIRED'
 &CONDS(36) SETC 'MAPFAIL'
 &CONDS(38) SETC 'INVMPSZ'
 &CONDS(40) SETC 'OVERFLOW'
 &CONDS(44) SETC 'QIDERR'
+&CONDS(55) SETC 'ENQBUSY'
+&CONDS(56) SETC 'ENVDEFERR'
 &CONDS(84) SETC 'DISABLED'
+.* SPECIALS
+&CONDS(99) SETC 'DSIDERR'         CONVERTED TO 12
 .*
 &NP      SETA  N'&SYSLIST
 &IP      SETA  1
-.PLOOPC  ANOP
+.PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
 &PARM    SETC  '&SYSLIST(&IP)'
@@ -78,18 +71,69 @@ CICS_IGNORE_&SYSNDX._01 DS 0H
          AGO   .ILOOPC
 .*
 .GOTCOND ANOP
-.* IGNORE IT
-         LR    R14,R1             R14=ADDRESS OF CONDITION BLOCK
-         LA    R14,12+(&INNER*4)(R14) INDEX TO ENTRY
-         MVC   0(4,R14),=4X'FF'   IGNORE ENTRY
-         AGO   .PLOOPC
+.* PROCESS SPECIAL DSIDERR
+         AIF   (&INNER NE 99).NOTSPEC
+         MVI   0(R14),12          SET SPECIAL CONDITION NUMBER
+         AGO   .GOBUMP
+.*
+.NOTSPEC ANOP
+         MVI   0(R14),&INNER      SET CONDITION INDICATOR
+.GOBUMP  ANOP
+         AHI   R14,1              BUMP POINTER
+&PARMCNT SETA  &PARMCNT+1
+         AIF   (&PARMCNT GT 30).TOOMANY
+         AGO   .PLOOP
 .*
 .BADPARM ANOP
+         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').PLOOP
+         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
-         MEXIT
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         DROP  R1
+         LA    R1,DFHEIHCN        ADDRESS OF DFHEIHCN
+         ST    R1,P020AHCN        SAVE IT
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R1,&RESP           ADDRESS OF RESP
+         ST    R1,P020ARSP        SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R1,&RESP2          ADDRESS OF RESP2
+         ST    R1,P020ARS2        SAVE IT
+.NORESP2 ANOP
+         ZCALL LCL020A,(P020A),MF=I CALL IGNORE CONDITION PROCESSOR
+.*
+         DROP  R15
+         AIF   (&PARMS_020A).BYP020A
+         B     P020ABYP_&SYSNDX   EXIT
+*
+&PARMS_020A SETB 1
+P020A    EQU   *
+P020AFN  DS    XL2                FUNCTION CODE
+P020AEIB DS    AL4                EIB
+P020ATCT DS    AL4                TCTTE
+P020AHCN DS    AL4                A(DFHEIHCN)
+P020ACND DS    XL30               ROOM FOR 30 CONDITIONS
+P020ARSP DS    AL4                RESP
+P020ARS2 DS    AL4                RESP2
+P020AEND EQU   *                  END MARKER
+         DS    0H
+*
+P020ABYP_&SYSNDX DS 0H
+.BYP020A ANOP
+         MEXIT
+.*
+.TOOMANY ANOP
+         MNOTE *,'AN INTERNAL ERROR HAS OCCURRED'
+         MNOTE 12,'NUMBER OF CONDITIONS EXCEEDS 30'
          MEXIT
          MEND
-

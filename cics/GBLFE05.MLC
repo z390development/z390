@@ -1,8 +1,13 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 GBLFE05  SUBENTRY
 *
 * FN=FE05  CEMT I FIL REQUESTED
-*
-* FN=FE05  IFILDATA SENT BACK
+*          IFILDATA SENT BACK
 *
 *         +0/DSCT +4/DSECT  +8/IND   +12/IND +16
 * R1  >>> WTOMSG, REQDSECT ,DFHFCTAD,CONNID, TRCEZ390
@@ -40,7 +45,6 @@ CICSTRGO EQU   *
 CICSTRDN DS    0H
 * COUNT FILES
          SR    R8,R8              CLEAR R8
-*        L     R6,DFHFCTAD        ADDRESS FCT
          L     R6,8(R3)           ADDRESS FCT ADDRESS
          L     R6,0(R6)           ADDRESS FCT
 CEMTIFCT EQU   *
@@ -53,12 +57,11 @@ CEMTIFCT EQU   *
 CEMTIFGO EQU   *
 * GETMAIN AN AREA TO SEND BACK
          MS    R8,=AL4(IFILLEN)   * LENGTH OF SENT DATA
-         AHI   R8,REQLEN+1        + PREFIX + STOPPER
+         AHI   R8,12+1            + PREFIX + STOPPER
          GETMAIN R,LV=(R8),A=CEMTIFGM
          ST    R0,0(R1)           SAVE LENGTH TO SEND
          MVC   4(4,R1),=C'FE05'   SET REQUEST ID
          MVC   8(4,R1),REQTERM    SET TERMID
-*        L     R6,DFHFCTAD        ADDRESS FCT
          L     R6,8(R3)           ADDRESS FCT ADDRESS
          L     R6,0(R6)           ADDRESS FCT
          USING DFHFCTDS,R6
@@ -95,7 +98,6 @@ CEMTIFLD EQU   *
 *
 CEMTIFSD EQU   *
          MVI   IFILDFLE,X'FF'     MARK END OF FILES
-*        L     R8,CONNID          R8=CONN ID
          L     R8,12(R3)          R8=CONN ID ADDRESS
          L     R8,0(R8)           R8=CONNID
          L     R14,CEMTIFGM       R14=DATA TO SEND
@@ -139,7 +141,6 @@ REQTERM  DS    CL4                TERMINAL ID
 REQTRAN  DS    CL4                TRANSID
          DS    C                  TRANSID TYPE
 REQTASKN DS    PL4                TASK NO
-REQLEN   EQU   *-REQDSECT
 *
 * WTO AREA DSECT
 *

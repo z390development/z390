@@ -1,0 +1,188 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+* WE CANNOT HAVE A CONVENTIONAL ENTRY
+* MUST OBEY THE MACRO RULES, NO EXTRA REGS
+LCL0E08  CSECT
+*
+* FN=0E08  EXEC CICS RETURN
+*
+* R1  >>> P0E08 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         USING (P0E08,P0E08END),R1
+         USING *,R12
+         LR    R0,R12             R0=SAVED R12
+         LR    R12,R15            SET BASE
+         ST    R0,SAVER12         SAVE ORIGINAL R12
+         USING DFHEIBLK,DFHEIBR
+         USING DFHTCTTE,TCTTEAR
+         USING DFHEISTG,R13
+         MVC   EIBFN,P0E08FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R15,15,P0E08RSP    R15=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R15),0(R15)    CLEAR RESP
+NORESP   EQU   *
+         ICM   R15,15,P0E08RS2    R15=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R15),0(R15)    CLEAR RESP2
+NORESP2  EQU   *
+* IF JUST RETURN, WE ARE FINISHED
+         OC    P0E08TRN(11),P0E08TRN ANY TRANSID/COMMAREA/LENGTH/IMM ?
+         BZ    RETDONE            EXIT IF NONE
+* IT'S NOT JUST EXEC CICS RETURN
+* IF LINK-LEVEL NOT ONE, AND OTHER PARMS, THEN IT'S AN ERROR
+         CLC   TCTTELNK,=H'1'     ARE WE AT ROOT LEVEL ?
+         BE    TISROOT            EXIT IF WE ARE
+* INVOKE INVREQ
+         MVI   EIBRCODE,X'E0'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         MVC   EIBRESP2,=F'2'     SET EIBRESP2=NOT AT HIGHEST LEVEL
+         ICM   R15,15,P0E08RSP    R15=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R15),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R15,15,P0E08RS2    R15=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R15),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         L     R12,SAVER12        RESTORE ORIGINAL R12
+         BR    R14                RETURN
+*
+TISROOT  EQU   *
+* EXEC CICS RETURN TRANSID/COMMAREA/IMMEDIATE
+         MVC   TCTTEIMM,P0E08IMM  SET IMMEDIATE FLAG (IF ANY)
+         MVC   TCTTETC,P0E08TRN   SET TRANSID
+         MVC   TCTTECA,P0E08COM   SET COMMAREA ADDRESS (IF ANY)
+         MVC   TCTTECAL,P0E08CLN  SET COMMAREA LENGTH (IF ANY)
+         B     ALLDONE            EXIT
+*
+RETDONE  EQU   *
+* EXEC CICS RETURN ONLY
+* IC STARTED TASKS MUST NOT TOUCH TCTTETC OR COMMAREA FIELDS
+         CLI   TCTTETYP,C'D'      IC STARTED TASK ?
+         BE    XCTLCOMM           EXIT IF IT IS
+         XC    TCTTETC,TCTTETC    CLEAR PRESET TRANSID
+         XC    TCTTECA(6),TCTTECA CLEAR COMMAREA ADDRESS/LENGTH
+XCTLCOMM EQU   *
+* ANY XCTL COPIED COMMAREA MUST BE FREED NOW
+         CLI   TCTTECND,X'FF'     ANY XCTL COMMAREA TO BE FREED ?
+         MVI   TCTTECND,X'00'     CLEAR XCTL INDICATOR
+         BNE   ALLDONE            EXIT IF NONE
+         LH    R0,EIBCALEN        R0=COMMAREA LENGTH
+         FREEMAIN A=DFHEICAP,LV=(R0)
+         XC    EIBCALEN,EIBCALEN  CLEAR COMMAREA LENGTH
+ALLDONE  EQU   *
+*
+* THIS USED TO BE KNOWN AS THE MACRO DFHEIRET
+*
+* FREE ALL AID BLOCKS
+*
+         USING DFHADBLK,R1
+         ICM   R1,15,DFHEIAID     ANY AID BLOCK ADDRESSES ?
+         BZ    TRYHCN             EXIT IF NONE
+AIDLOOP  EQU   *
+         L     R14,AIDCHAIN       R14=NEXT AID BLOCK IF ANY
+         LA    R0,AIDLENG         R0=AID BLOCK LENGTH
+         FREEMAIN R,A=(R1),LV=(R0)
+         LTR   R1,R14             ANY MORE AID BLOCKS ?
+         BNZ   AIDLOOP            LOOP IF THERE ARE
+         DROP  R1
+TRYHCN   EQU   *
+*
+* FREE ALL HANDLE CONDITION BLOCKS
+*
+         USING DFHHCBLK,R1
+         ICM   R1,15,DFHEIHCN     ANY CONDITION BLOCK ADDRESSES ?
+         BZ    TRYRTNCM           EXIT IF NONE
+HCNLOOP  EQU    *
+         L     R14,HCNCHAIN       R14=NEXT CONDITION BLOCK IF ANY
+         LA    R0,HCNLENG         R0=CONDITION BLOCK LENGTH
+         FREEMAIN R,A=(R1),LV=(R0)
+         LTR   R1,R14             ANY MORE CONDITION BLOCKS ?
+         BNZ   HCNLOOP            LOOP IF THERE ARE
+         DROP  R1                 DROP HANDLE BLOCK BASE
+TRYRTNCM EQU   *
+*
+* IF THE RETURN COMMAREA IS WITHIN THE DSA WE MUST COPY IT NOW
+*
+         L     R1,TCTTECA         R1=COMMAREA ADDRESS
+         LR    R15,R13            R15=DSA ADDRESS
+         CR    R1,R15             HIGHER THAN DSA ADDRESS ?
+         BL    NOTDSACM           EXIT IF NOT IN DSA
+         A     R15,DFHEILEN       R15=BYTE AFTER DSA
+         CR    R1,R15             HIGHER THAN DSA+LENGTH ADDRESS ?
+         BNL   NOTDSACM           EXIT IF NOT IN DSA
+* COPY THE COMMAREA
+         LH    R1,TCTTECAL        R1=COMMAREA LENGTH
+         L     R14,TCTTECA        R14=COMMAREA ADDRESS FOR MOVE
+         GETMAIN R,LV=(R1),A=TCTTECA
+         LH    R15,TCTTECAL       R15=COMMAREA LENGTH FOR MOVE
+         STH   R0,TCTTECAL        SAVE ACTUAL LENGTH ACQUIRED
+         LR    R1,R0              R1=DESTINATION LENGTH
+         L     R0,TCTTECA         R0=DESTINATION ADDRESS
+         MVCL  R0,R14             COPY DATA
+NOTDSACM EQU   *
+*
+* FREE THE DSA
+*
+         FREEMAIN R,A=(R13),LA=DFHEILEN
+*
+* ADJUST LINK LEVEL
+*
+         LH    R0,TCTTELNK        LOAD LINK-LEVEL
+         AHI   R0,-1              -1
+         STH   R0,TCTTELNK        STORE BACK
+         LR    R14,R0             SAVE LINK LEVEL
+*
+* CLEAR HANDLE ABEND ENTRY IF ANY
+*
+         ICM   R1,15,TCTTEABD     ANY ABEND BLOCK ?
+         BZ    CLRLVL             EXIT IF NONE
+         USING ABDDEST,R1
+         MS    R14,=AL4(ABDLENG)  * ENTRY LENGTH
+         AR    R14,R1             R14=CORRECT ABEND BLOCK ENTRY
+         XC    ABDDEST(ABDLENG),ABDDEST CLEAR ABEND ENTRY
+         DROP  R1
+CLRLVL   EQU   *
+*
+* CLEAR OUR LEVEL
+* EXIT TO LAST LINKER
+* THIS RETURNS DIRECTLY TO THE CALLED PROGRAM, NOT TO THE LCL MODULE
+* AT ROOT LEVEL RETURN IS TO Z390KCP/TASKRETN
+*
+         SLL   R0,2               R0=LINK-LEVEL * 4
+         L     R1,TCTTELKA        R1=LKA ADDRESS
+         AR    R1,R0              INDEX TO LINK-LEVEL ENTRY
+         L     R13,0(R1)          R13=PREV DSA ADDRESS
+         XC    4(4,R1),4(R1)      CLEAR OUR LEVEL
+         RETURN (R14,R12)
+*
+SAVER12  DS    F                  SAVE R12
+*
+P0E08    DSECT
+P0E08FN  DS    XL2                FUNCTION CODE
+P0E08TRN DS    CL4                TRANSID
+P0E08COM DS    AL4                COMMAREA ADDRESS
+P0E08CLN DS    XL2                COMMAREA LENGTH
+P0E08IMM DS    X                  FF=IMMEDIATE
+P0E08RSP DS    AL4                RESP
+P0E08RS2 DS    AL4                RESP2
+P0E08END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHEISTG                 DSA
+         DFHADBLK                 HANDLE AID BLOCK
+         DFHHCBLK                 HANDLE CONDITION BLOCK
+         DFHABBLK                 HANDLE ABEND BLOCK
+*
+         EQUREGS REGS=GPR
+*
+         END
+

@@ -1,14 +1,13 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
          MACRO
          DFHTSBLK
 *
 * TEMPORARY STORAGE PREFIX AREA
-.* KEEP IT MULTIPLE OF 8
 *
 DFHTSBLK DSECT
 TSPTCPIO DS    A                  LENGTH SENT TO SERVER
@@ -16,14 +15,17 @@ TSPFN    DS    CL4                TS FUNCTION
 TSPTERM  DS    CL4                TERMINAL ID
 TSPTRAN  DS    CL4                TRANSACTION ID
          DS    C                  TRANSACTION TYPE (NOT USED)
+TSPTASKN DS    PL4                TASK NUMBER
 TSPNAME  DS    CL16               TS QUEUE(8) OR QNAME(16)
-TSPITEM  DS    AL2                ITEM NUMBER (>0 ASSUMES REWRITE)
+TSPITEM  DS    XL2                ITEM NUMBER (>0 ASSUMES REWRITE)
 *                                 X'FFFF'=READQ REQUESTS NEXT ITEM
-TSPNUMIT DS    AL2                NUMITEMS
-TSPRETCD DS    AL4                RETURN CODE
-TSPACLEN DS    AL2                READQ ACTUAL ITEM LENGTH
-         DS    CL3                UNUSED, ALIGN
-TSPLEN   DS    AL2                LENGTH OF FOLLOWING DATA
+TSPNUMIT DS    XL2                NUMITEMS
+TSPICTRM DS    CL4                ICTERM
+TSPICTRN DS    CL4                ICTRAN
+TSPRETCD DS    XL4                RETURN CODE
+TSPACLEN DS    XL2                READQ ACTUAL ITEM LENGTH
+TSPLEN   DS    XL2                LENGTH OF FOLLOWING DATA
+         DS    0D
 TSPREFIX EQU   *-DFHTSBLK
 TSPDATA  DS    0X                 TS DATA
          MEND

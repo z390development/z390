@@ -1,0 +1,42 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 06/08/07 RPI 639 - add RC=(reg) support                       
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 11/10/08 RPI 942 correct to support RC=(15) and upgrade to ZSTRMAC
+.* 11/17/08 RPI 953 renamed to ZRETURN to share with other maclibs    
+.*********************************************************************
+&N      ZRETURN &REGS,                                                 X
+               &SETFLAG,                                               X
+               &MF=I,      NOT SUPPORTED                               X
+               &RC=
+       AIF   ('&N' NE '')       
+&N       DS    0H
+       AEND
+       AIF     ('&MF' NE 'I')      
+               MNOTE 12,'RETURN MF= NOT SUPPORTED'
+               MEXIT
+       AEND
+       AIF     (N'&SYSLIST GT 2)   
+               MNOTE 12,'RETURN UNSUPPORTED OPERANDS - &SYSLIST(3)'
+               MEXIT
+       AEND
+         RESTORE &REGS,RC=&RC
+       AIF   ('&SETFLAG' EQ 'T')        
+         OI    15(13),1 
+       AEND   
+       AIF   ('&RC' NE '')    
+             AIF   ('&RC'(1,1) NE '(')  
+         LA    15,&RC
+             AEND
+       AEND
+         BR    14
+         MEND

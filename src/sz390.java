@@ -173,7 +173,8 @@ public  class  sz390 implements Runnable {
     * 06/23/08 RPI 866 use get_file_name to parse LOG file name 
     * 09/16/08 RPI 908 catch trap on bad SYSLOG file override
     * 10/24/08 RPI 935 prevent recursive abort  
-    * 11/08/08 RPI 947 move get_ascii_printable_string to tz390 for use by MNOTE/TRACEP                                
+    * 11/08/08 RPI 947 move get_ascii_printable_string to tz390 for use by MNOTE/TRACEP  
+    * 12/05/08 RPI 966 check TIOT index limit (X'F6F6F6F6' bad DCB)                              
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -3449,7 +3450,9 @@ private void get_cur_tiot_index(){
 	 */
 	cur_tiot_index = pz390.mem.getInt(cur_dcb_addr + dcb_iobad) - 1;
     if (cur_tiot_index  != -1){
-    	if (cur_dcb_addr == tiot_dcb_addr[cur_tiot_index]){
+    	if (cur_tiot_index >= 0   // RPI 966
+    		&& cur_tiot_index < tot_tiot_files 
+    		&& cur_dcb_addr == tiot_dcb_addr[cur_tiot_index]){
     		return;
     	} else {
     		abort_error(20,"dcb tiot index invalid DCB=" + tz390.get_hex(cur_dcb_addr,8));

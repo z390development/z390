@@ -1,0 +1,96 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL020A  SUBENTRY
+*
+* FN=020A  EXEC CICS IGNORE CONDITION
+*
+* R1  >>> P020A BLOCK POINTER
+* R14 = RETURN ADDRESS
+*
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P020A,P020AEND),R3
+         L     DFHEIBR,P020AEIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P020ATCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P020AFN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P020ARSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P020ARS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+* ONLY THE FIRST CONDITION BLOCK IS ACQUIRED HERE
+* PUSH ACQUIRES MORE
+         L     R1,P020AHCN        R1=A(DFHEIHCN)
+         ICM   R1,15,0(R1)        ANY CONDITION BLOCK ADDRESS ?
+         BZ    NOHCN              EXIT IF NONE
+         USING DFHHCBLK,R1
+HCNLOOP  EQU   *
+         LR    R14,R1             R14=LAST CONDITION BLOCK ADDRESS
+         ICM   R1,15,HCNCHAIN     R1=NEXT CONDITION BLOCK
+         BNZ   HCNLOOP            LOOP
+* END OF CONDITION BLOCK CHAIN
+         LR    R1,R14             R1=LAST CONDITION BLOCK ADDRESS
+         B     GOTHCN             EXIT
+*
+NOHCN    EQU   *
+* GET THE FIRST CONDITION BLOCK
+         LA    R1,HCNLENG         R1=CONDITION BLOCK LENGTH
+         GETMAIN R,LV=(R1)
+         XC    0(256,R1),0(R1)    CLEAR CONDITION BLOCK
+         XC    256(HCNLENG-256,R1),256(R1) CLEAR CONDITION BLOCK
+         L     R4,P020AHCN        R4=A(DFHEIHCN)
+         ST    R1,0(R4)           SAVE CONDITION BLOCK ADDRESS
+         MVC   HCNHEAD,=C'DFHHCBLK' SET HEADER
+         DROP  R1
+GOTHCN   EQU   *
+* IGNORE EACH CONDITION
+         LA    R4,P020ACND        LIST OF CONDITIONS
+         LA    R5,30              SET LOOP LIMIT
+SETHCN   EQU   *
+         CLI   0(R4),X'00'        END OF LIST ?
+         BE    ENDCOND            EXIT IF IT IS
+         LB    R6,0(R4)           R6=CONDITION
+         SLL   R6,2               *4
+         AHI   R6,12              +12 (HEADER/CHAIN)
+         AR    R6,R1              + CONDITION BLOCK ADDRESS
+         MVC   0(4,R6),=4X'FF'    IGNORE ENTRY
+         AHI   R4,1               BUMP CONDITION POINTER
+         BCT   R5,SETHCN          LOOP
+ENDCOND  EQU   *
+         SUBEXIT
+*
+P020A    DSECT
+P020AFN  DS    XL2                FUNCTION CODE
+P020AEIB DS    AL4                EIB
+P020ATCT DS    AL4                TCTTE
+P020AHCN DS    AL4                A(DFHEIHCN)
+P020ACND DS    XL30               ROOM FOR 30 CONDITIONS
+P020ARSP DS    AL4                RESP
+P020ARS2 DS    AL4                RESP2
+P020AEND EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHHCBLK                 HANDLE CONDITION BLOCK
+*
+         EQUREGS REGS=GPR
+* R1  HANDLE CONDITION BLOCK BASE
+* R3  PARM POINTER
+* R10 TCTTE
+* R11 EIB
+* R13 SAVE AREA AND BASE 1
+*
+         END
+

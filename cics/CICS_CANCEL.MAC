@@ -1,0 +1,107 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_CANCEL
+         GBLB  &PARMS_100C
+         LCLB  &NOHAND
+         LCLC  &REQID,&RESP,&RESP2
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,6) EQ 'REQID(').REQID
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.REQID   ANOP
+&REQID   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   ('&REQID' EQ '').MISRQID
+         L     R15,=A(P100C)      LOAD PARM ADDRESS
+         USING (P100C,P100CEND),R15
+         XC    P100C(P100CEND-P100C),P100C CLEAR PARMS
+         MVC   P100CFN,=X'100C'   SET FUNCTION CODE
+.* PROCESS REQID
+         AIF   ('&REQID'(1,1) EQ '''').REQSTRG
+.* REQID AS LABEL
+         MVC   P100CREQ,&REQID    MOVE REQID FROM LABEL
+         AGO   .DOCALL
+.*
+.REQSTRG ANOP
+.* REQID AS STRING
+&REQLEN  SETA  K'&REQID
+         AIF   (&REQLEN LT 3 OR &REQLEN GT 10).BADREQ
+         MVC   P100CREQ,=CL8&REQID MOVE REQID AS STRING
+.DOCALL  ANOP
+         ST    DFHEIBR,P100CEIB   SET EIB ADDRESS
+         ST    TCTTEAR,P100CTCT   SET TCTTE ADDRESS
+         AIF   (NOT &NOHAND).DUNNOH
+         MVI   P100CNOH,X'FF'     SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R1,&RESP           ADDRESS OF RESP
+         ST    R1,P100CRSP        SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R1,&RESP2          ADDRESS OF RESP2
+         ST    R1,P100CRS2        SAVE IT
+.NORESP2 ANOP
+         ZCALL LCL100C,(P100C),MF=I CALL CANCEL PROCESSOR
+.*
+         L     R15,=A(P100C)      LOAD PARM ADDRESS
+         CLI   P100CNOH,X'FF'     NOHANDLE ?
+         BE    P100CBYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BZ    P100CBYP_&SYSNDX   EXIT IF NONE
+* INVREQ, NOTFND
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P100CBYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_100C).BYP100C
+&PARMS_100C SETB 1
+P100C    EQU   *
+P100CFN  DS    XL2                FUNCTION CODE
+P100CEIB DS    AL4                EIB
+P100CTCT DS    AL4                TCTTE
+P100CREQ DS    CL8                REQID
+P100CNOH DS    X                  FF=NOHANDLE
+P100CRSP DS    AL4                RESP
+P100CRS2 DS    AL4                RESP2
+P100CEND EQU   *                  END MARKER
+         DS    0H
+*
+.BYP100C ANOP
+P100CBYP_&SYSNDX DS 0H
+         DROP  R15
+         MEXIT
+.*
+.MISRQID MNOTE 12,'REQID IS MANDATORY'
+         MEXIT
+.*
+.BADREQ  MNOTE 12,'INVALID REQID'
+         MEXIT
+         MEND

@@ -1,3 +1,9 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 GBL060E  SUBENTRY
 *
 * FN=060E  READNEXT FILE
@@ -8,21 +14,19 @@ GBL060E  SUBENTRY
          LR    R3,R1              SAVE PARM POINTER
          L     R4,16(R3)          ADDRESS OF TRCEZ390
          MVC   TRCEZ390,0(R4)     MOVE IT
-         L     R5,4(R3)           REQDSECT ADDRESS
-         USING REQDSECT,R5
          L     R9,0(R3)           WTODSECT ADDRESS
          USING WTODSECT,R9
-         LA    R6,REQLEN          ADDRESS RECEIVED DATA
+         L     R6,4(R3)           ADDRESS RECEIVED DATA
          USING DFHFCBLK,R6
-*        L     R7,DFHFCTAD        ADDRESS FCT
          L     R4,8(R3)           ADDRESS FCT ADDRESS
          L     R7,0(R4)           ADDRESS FCT
          USING DFHFCTDS,R7
          USING IHAACB,R8
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTOTRAN,REQTRAN    SET TRANSID
-         DROP  R5
+         MVC   WTOTERM,FCPTERM    SET TERMID
+         MVC   WTOTRAN,FCPTRAN    SET TRANSID
          MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         UNPK  WTOTASKN,FCPTASKN  UNPACK TASK NUMBER
+         OI    WTOTASKN+6,X'F0'   CLEAR SIGN
          MVC   WTODESC,=CL45'<<<Z390KCP READNEXT   REQUEST'
          MVI   CICSTIND,C'A'      SET APPLICATION TYPE
          BAL   R11,CICSTRCE       TRACE IT
@@ -207,9 +211,9 @@ RDNXLNOK EQU   *
 *
 RDNXSAVR EQU   *
 * RRDS
-         L     R8,RPLAREA         ADDRESS RETURNED RRN
+         L     R8,RPLARG          ADDRESS RETURNED RRN
          MVC   VSWARRN,0(R8)      SAVE RRN FOR SKIP SEQ
-         MVC   FCPRRN-DFHFCBLK(8,R5),0(R8) RETURN RRN
+         MVC   FCPRRN-DFHFCBLK(4,R5),0(R8) RETURN RRN
          B     RDNXDONE           EXIT
 *
 RDNXSAVK EQU   *
@@ -460,16 +464,6 @@ TIME     DS    CL4                HHMMSSTT
 TIMEPACK DC    PL5'0'             0HHMMSSTTC
 TIMEEDIT DC    X'402021207A20207A20204B2020'
 TIMEHERE DS    CL13
-*
-* RECEIVE MESSAGE AREA
-*
-REQDSECT DSECT
-REQLEN   DS    AL4                REQUEST LENGTH
-         DS    CL4                REQUEST CODE
-REQTERM  DS    CL4                TERMINAL ID
-REQTRAN  DS    CL4                TRANSID
-         DS    C                  TRANSID TYPE
-         DS    PL4                TASK NO
 *
 * WTO AREA DSECT
 *

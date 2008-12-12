@@ -1,17 +1,15 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
-*
-* TEST HANDLE ABEND
-*
-         DFHEIGBL
-         DFHEISTG
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+DFHEISTG DSECT
 RECAREA  DS    CL80               RECEIVE AREA
 RECLEN   DS    AL2                RECEIVED LENGTH
-TESTBED6 DFHEIENT CODEREG=(R12,R3)
+TESTBED6 CSECT
+*
+* TEST HANDLE ABEND
 *
 * TEST 1: HANDLE ASRA ABEND BY LABEL
 *         PRETEND NOTHING HAPPENED
@@ -166,6 +164,5 @@ ACOMM    DC    C'AEI0'            COMMAREA
 *
          COPY  DFHAID
          TN3270 SYMBOLS
-         EQUREGS
          END
 

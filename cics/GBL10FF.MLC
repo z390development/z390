@@ -1,0 +1,197 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+GBL10FF  SUBENTRY
+*
+* FN=10FF  ICE SCAN REQUEST
+*
+*         +0/DSCT +4/DSECT +8/IND   +12/IND +16      +20
+* R1  >>> WTOMSG, REQDSECT,ICEANCHR,CONNID, TRCEZ390,THRDCNTL
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SAVE PARM POINTER
+         L     R4,16(R3)          ADDRESS OF TRCEZ390
+         MVC   TRCEZ390,0(R4)     MOVE IT
+         L     R9,0(R3)           WTODSECT ADDRESS
+         USING WTODSECT,R9
+         L     R6,4(R3)           ADDRESS RECEIVED DATA
+         USING REQDSECT,R6
+         MVC   WTOFN,=C'10FF'     SET FN
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTOTRAN,=4C' '     NO TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         MVC   WTOTASKN,=7C' '    NO TASK NUMBER
+         MVC   WTODESC,=CL45'<<<Z390KCP ICE SCAN   REQUEST'
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R11,CICSTRCE       TRACE IT
+         MVC   S10FFTRM,REQTERM   SET TERMID
+         XC    S10FFTRN(12),S10FFTRN CLEAR TRANSID/REQID
+         MVI   ICSWITCH,X'00'     ALLOW ONLY ONE TCPIO SEND
+ICRESCAN EQU   *
+         L     R4,8(R3)           ADDRESS OF ICEANCHR ADDRESS
+         LR    R8,R4              R8=CHAIN FROM ANCHOR
+         ICM   R7,15,0(R4)        R7=ICE CHAIN
+         BZ    ICSEND             EXIT IF NO ICES
+         USING DFHICEDS,R7
+* ICE CHAIN EXISTS
+* GET THE STCKTIME NOW AND REDUCE TO 0.01 SECS
+         TIME  CLOCK,STCKTIME,CLOCKTYPE=STCK
+         SGR   R0,R0              CLEAR R0
+         LG    R1,STCKTIME        R1=STCK TIME
+         SRLG  R1,R1,12           SHIFT TO uS
+         DSGF  R0,=F'10000'       REDUCE TO 0.01 SEC
+         STG   R1,STCKTIME        SAVE IT
+* SCAN THE ICE CHAIN FOR ANY EXPIRED FOR OUR TERMINAL
+ICEXLOOP EQU   *
+         CLC   ICEXTOD,STCKTIME   HAS THIS ONE EXPIRED ?
+         BNH   ICEEXP             EXIT IF ICE HAS EXPIRED
+         SR    R7,R7              PRETEND IT'S END OF ICE CHAIN
+         B     ICSEND             EXIT
+*
+ICEEXP   EQU   *
+* ICE HAS EXPIRED
+         CLC   ICETRMID,REQTERM   OUR TERMID ?
+         BE    ICGO               EXIT IF IT IS
+ICEXCHN  EQU   *
+         LR    R8,R7              R8=CHAINED FROM ADDRESS
+         ICM   R7,15,ICECHNF      R7=ICE CHAIN
+         BNZ   ICEXLOOP           LOOP IF MORE ICES
+         B     ICSEND             EXIT
+*
+ICGO     EQU   *
+* ICE HAS EXPIRED AND IT'S OUR TERMID
+* CHECK IF THE TERMINAL IS AVAILABLE
+         L     R5,20(R3)          ADDRESS THRDCNTL
+         USING THRDDSCT,R5
+         LA    R5,THRDSEQ*THRDLEN(R5) DEFAULT TO SQ01 ENTRY
+         CLC   REQTERM,=C'SQ01'   IS IT SEQUENTIAL TERMINAL ?
+         BE    CHKTERM            EXIT IF IT IS
+         NI    REQTERM+3,X'0F'    CONVERT ID TO HEX
+         SR    R0,R0              CLEAR R0
+         IC    R0,REQTERM+3       R0=THREAD NUMBER
+         OI    REQTERM+3,X'F0'    CONVERT ID BACK TO CHAR
+         MS    R0,=AL4(THRDLEN)   INDEX TO THREAD STATE
+         AR    R5,R0              POINT TO THREAD STATE
+CHKTERM  EQU   *
+         CLI   THRDIND,ST_AVAIL   TERMINAL AVAILABLE ?
+         BE    ICFIRE             EXIT IF IT IS
+* NOT AVAILABLE
+* IF IT'S RUNNING AND BOTH TRANSID AND REQID ARE THE SAME
+* WE CAN JUST UNCHAIN THE ICE
+         CLI   THRDIND,ST_RUN     TERMINAL RUNNING ?
+         BNE   ICSEND             EXIT IF NOT
+* TERMID IS RUNNING
+         CLC   THRDTRAN,ICETRNID  TRANSIDS THE SAME ?
+         BNE   ICEXCHN            EXIT IF NOT
+         CLC   THRDREQD,ICEREQID  REQIDS THE SAME ?
+         BNE   ICEXCHN            EXIT IF NOT
+         B     ICUNCHN            EXIT
+*
+ICFIRE   EQU   *
+         MVC   S10FFTRM,ICETRMID  SET TERMID
+         MVC   S10FFTRN,ICETRNID  SET TRANSID
+         MVC   S10FFRQD,ICEREQID  SET REQID
+ICUNCHN  EQU   *
+* REPAIR THE CHAIN AND FREEMAIN THE ICE
+         MVC   0(4,R8),ICECHNF    REMAKE THE CHAIN
+         FREEMAIN LV=ICELEN,A=(R7) FREE ICE
+ICSEND   EQU   *
+* THIS SWITCH ALLOWS MULTIPLE EXPIRED ICES TO BE REMOVED IF THEY
+* ARE FOR THE SAME TERM/TRANSID/REQID, BUT WILL PREVENT EXPIRED ICES
+* FROM BEING REMOVED IF THEY ARE FOR THE SAME TERMID, BUT HAVE
+* DIFFERENT TRANSID/REQID.
+* THE LATTER WILL HAVE TO WAIT UNTIL THIS MODULE IS CALLED AGAIN.
+         CLI   ICSWITCH,X'FF'     TCPIO SEND ALREADY DONE ?
+         BE    ICDONE             YES, EXIT NOW
+         L     R8,12(R3)          R8=CONN ID ADDRESS
+         L     R8,0(R8)           R8=CONNID
+         L     R15,S10FF          R15=LENGTH TO SEND
+         TCPIO SEND,MSG=S10FF,LMSG=(R15),CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         MVI   ICSWITCH,X'FF'     SET TCPIO SEND SWITCH
+         LTR   R7,R7              END OF ICE CHAIN ?
+         BNZ   ICRESCAN           EXIT IF NOT
+ICDONE   EQU   *
+         L     R9,0(R3)           WTODSECT ADDRESS
+         MVC   WTODESC,=CL45'>>>Z390KCP ICE SCAN   COMPLETED'
+         BAL   R11,CICSTRCE       TRACE IT
+         SUBEXIT
+*
+* SUBROUTINES
+*
+* MODIFIED CICSTRCE
+CICSTRCE DS    0H
+         CLI   TRCEZ390,C'N'      NO TRACING ?
+         BER   R11                RETURN IF IT IS
+         CLI   TRCEZ390,C'Y'      ALL TRACING ?
+         BE    CICSTRGO           TRACE IF IT IS
+         CLC   TRCEZ390,CICSTIND  TRACE TYPE=TRACE REQUEST ?
+         BNER  R11                RETURN IF NOT
+CICSTRGO EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM GET TIME
+         MVO   TIMEPACK,TIME      MOVE TO PACKED FIELD
+         MVC   TIMEHERE(13),TIMEEDIT MOVE EDIT WORD
+         ED    TIMEHERE(13),TIMEPACK EDIT TIME
+         MVC   WTOTIME,TIMEHERE   SET TIME
+         WTO   MF=(E,WTOMSG)      TRACE IT
+         BR    R11                RETURN
+*
+ABEND780 ABEND 780                TCPIO SEND FAILED
+*
+CICSTIND DS    C                  TRACE TYPE INDICATOR
+TRCEZ390 DS    C                  Z390 TRACE OPTION
+ICSWITCH DS    X                  CONTROL SWITCH
+*
+* TIME CONVERSION FIELDS
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402021207A20207A20204B2020'
+TIMEHERE DS    CL13
+STCKTIME DS    XL8                SAVE STCK TIME
+*
+* SEND EXPIRED IC REQUEST
+*
+S10FF    DC    A(S10FFLEN)        LENGTH
+         DC    C'10FF'            FN
+S10FFTRM DS    CL4                TERMID
+S10FFTRN DS    CL4                TRANSID
+S10FFRQD DS    XL8                REQID
+S10FFLEN EQU   *-S10FF
+*
+* WTO AREA DSECT
+*
+WTODSECT DSECT
+WTOMSG   DS    AL4
+WTOTIME  DS    CL13               TIME STAMP
+         DS    C
+WTOFN    DS    CL4                MODULE/FUNCTION REFERENCE (EIBFN)
+         DS    C
+WTOTERM  DS    CL4                TERMID
+         DS    C
+WTOTRAN  DS    CL4                TRANSID (OR BLANK)
+         DS    C
+WTOTYPE  DS    C                  TRANSID TYPE
+         DS    C
+WTOTASKN DS    CL7                TASK NUMBER
+         DS    C
+WTODESC  DS    CL45               DESCRIPTION
+*
+* RECEIVE MESSAGE AREA
+*
+REQDSECT DSECT
+         DS    AL4                REQUEST LENGTH
+         DS    CL4                REQUEST CODE
+REQTERM  DS    CL4                TERMINAL ID
+*
+         DFHICEDS                 INTERVAL CONTROL ELEMENT
+         THRDDSCT                 TERMINAL THREAD CONTROL AREA
+*
+         EQUREGS
+*
+         END
+

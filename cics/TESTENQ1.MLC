@@ -1,0 +1,70 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+DFHEISTG DSECT                    DSA STORAGE
+TESTENQ1 CSECT
+*
+* TEST ENQ/DEQ
+*
+         AGO   .BYP1
+* EXPERIMENTAL CODE TO CREATE DEADLY EMBRACE
+* DO NOT TRY THIS AT HOME
+         CLC   EIBTRMID,=C'DON0'  1ST TERMID ?
+         BNE   NOTDON0            EXIT IF NOT
+         EXEC  CICS ENQ RESOURCE(MYRES4) LENGTH(6)
+         BAL   R9,DELAY           DELAY FOR 5 SECONDS
+         EXEC  CICS ENQ RESOURCE(MYRES5) LENGTH(6)
+         BAL   R9,DELAY           DELAY FOR 5 SECONDS
+         B     DUNDON0
+*
+NOTDON0  EQU   *
+         EXEC  CICS ENQ RESOURCE(MYRES5) LENGTH(6)
+         EXEC  CICS DELAY FOR SECONDS(5)
+         EXEC  CICS ENQ RESOURCE(MYRES4) LENGTH(6)
+         EXEC  CICS DELAY FOR SECONDS(5)
+DUNDON0  EQU   *
+.BYP1    ANOP
+* ENQ/DEQ ON ADDRESS
+         EXEC  CICS ENQ RESOURCE(MYRES1)
+         BAL   R9,DELAY           DELAY FOR 5 SECONDS
+         EXEC  CICS DEQ RESOURCE(MYRES1)
+* ENQ/DEQ ON RESOURCE
+         EXEC  CICS ENQ RESOURCE(MYRES2) LENGTH(6)
+         BAL   R9,DELAY           DELAY FOR 5 SECONDS
+         EXEC  CICS DEQ RESOURCE(MYRES2) LENGTH(6)
+* ENQ/DEQ ON RESOURCE TWICE TO CHECK USE COUNT
+         EXEC  CICS ENQ RESOURCE(MYRES3) LENGTH(6)
+         EXEC  CICS ENQ RESOURCE(MYRES3) LENGTH(6)
+         BAL   R9,DELAY           DELAY FOR 5 SECONDS
+         EXEC  CICS DEQ RESOURCE(MYRES3) LENGTH(6)
+         BAL   R9,DELAY           DELAY FOR 5 SECONDS
+         EXEC  CICS DEQ RESOURCE(MYRES3) LENGTH(6)
+* SHOULD BE NO QEAS NOW
+         EXEC  CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL)
+* RETURN TO CHECK CLEANUP
+         EXEC  CICS RETURN
+*
+* SUBROUTINES
+*
+DELAY    EQU   *
+         CLC   EIBTRMID,=C'DON0'  1ST TERMID ?
+         BNER  R9
+         EXEC  CICS DELAY FOR SECONDS(5)
+         BR    R9                 RETURN
+*
+MYRES1   DC    C'MYRES1'
+MYRES2   DC    C'MYRES2'
+MYRES3   DC    C'MYRES3'
+MYRES4   DC    C'MYRES4'
+MYRES5   DC    C'MYRES5'
+*
+ENDMSG   TN3270 WCC_KD,(SBA,24,1)
+         DC    C'TESTENQ1 COMPLETED, PRESS CLEAR'
+ENDMSGL  DC    AL2(*-ENDMSG)
+*
+         TN3270 SYMBOLS
+         END
+

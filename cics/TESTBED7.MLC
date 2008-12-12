@@ -49,6 +49,5 @@ TEST3    TN3270 WCC_KD,(SBA,7,2)
 TEST3L   DC    AL2(*-TEST3)
 *
          TN3270 SYMBOLS
-         EQUREGS
          END
 

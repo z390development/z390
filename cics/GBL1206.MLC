@@ -1,0 +1,198 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+GBL1206  SUBENTRY
+*
+* FN=1206  DEQ
+*
+*         +0/DSCT +4/DSECT +8/IND   +12/IND +16      +20
+* R1  >>> WTOMSG, REQDSECT,QEAANCHR,CONNID, TRCEZ390,THRDCNTL
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SAVE PARM POINTER
+         L     R4,16(R3)          ADDRESS OF TRCEZ390
+         MVC   TRCEZ390,0(R4)     MOVE IT
+         L     R9,0(R3)           WTODSECT ADDRESS
+         USING WTODSECT,R9
+         L     R6,4(R3)           ADDRESS RECEIVED DATA
+         USING DFHKCBLK,R6
+         MVC   WTOFN,KCPFN        SET FN
+         MVC   WTOTERM,KCPTERM    SET TERMID
+         MVC   WTOTRAN,KCPTRAN    SET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         UNPK  WTOTASKN,KCPTASKN  UNPACK TASK NUMBER
+         OI    WTOTASKN+6,X'F0'   CLEAR SIGN
+         MVC   WTODESC,=CL45'<<<Z390KCP DEQ        REQUEST'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+         BAL   R11,CICSTRCE       TRACE IT
+         L     R4,8(R3)           ADDRESS OF QEAANCHR ADDRESS
+         LR    R8,R4              R8=CHAIN FROM ANCHOR
+         ICM   R7,15,0(R4)        R7=QEA CHAIN
+         BZ    KCGOOD             EXIT IF NONE
+         USING DFHQEADS,R7
+* QEA CHAIN EXISTS
+* SCAN THE QEA CHAIN FOR ANY MATCHING ENQ RESOURCE
+KCEXLOOP EQU   *
+         CLC   QEALNTH,KCPLEN     SAME RESOURCE LENGTH ?
+         BNE   KCCHAIN            EXIT IF NOT
+         OC    QEALNTH,QEALNTH    ANY LENGTH ?
+         BZ    KCLEN0             EXIT IF NONE
+         LH    R1,QEALNTH         R1=LENGTH
+         BCTR  R1,0               -1 FOR EXECUTE
+         EX    R1,EXCLC           SAME RESOURCE ?
+         BE    KCSAMERS           EXIT IF IT IS
+         B     KCCHAIN            EXIT
+*
+EXCLC    CLC   QEARES(0),KCPRES   SAME RESOURCE ?
+*
+KCLEN0   EQU   *
+* ZERO LENGTH
+         CLC   QEARES(4),KCPRES   SAME RESOURCE ADDRESS ?
+         BNE   KCCHAIN            EXIT IF NOT
+KCSAMERS EQU   *
+* QEA FOUND WITH SAME LENGTH AND RESOURCE
+         CLC   KCPTERM,=C'SQ01'   SEQUENTIAL TERMINAL ?
+         BNE   KCNOTSEQ           EXIT IF NOT
+         CLI   QEATERM,X'FA'      SAME TERMID SUFFIX ?
+         BNE   KCCHAIN            EXIT IF NOT
+         B     KCTSTDEQ           EXIT
+*
+KCNOTSEQ EQU   *
+         CLC   QEATERM,KCPTERM+3  SAME TERMID SUFFIX ?
+         BNE   KCCHAIN            EXIT IF NOT
+KCTSTDEQ EQU   *
+* FOUND A MATCHING ENQ
+         OC    QEAUCT,QEAUCT      ANY USE COUNT ?
+         BZ    KCNOUCT            EXIT IF NONE
+         ASI   QEAUCT,-1          DECREMENT USE COUNT
+         B     KCGOOD             EXIT
+*
+KCNOUCT  EQU   *
+* FOUND A MATCHING ENQ AND USE COUNT IS ZERO
+         OC    QEAWAIT(THRDNUM),QEAWAIT ANY TASKS WAITING FOR DEQ ?
+         BZ    KCUNCHN            EXIT IF NONE
+* WE ARE GOING TO RESUME ALL WAITING TASKS AND THEN DEQ
+         LA    R5,THRDNUM         R5=NO. OF TERMINALS
+         LA    R10,QEAWAIT        ADDRESS WAIT INDICATORS
+         SR    R12,R12            CONNID
+         MVC   WTODESC,=CL45'>>>Z390KCP DEQ        RESUME TTTT'
+         MVC   WTODESC+29(3),KCPTERM MOVE TERMID PREFIX
+KCLOOP   EQU   *
+         CLI   0(R10),X'FF'       TERMID SUSPENDED ?
+         BNE   KCINCR             EXIT IF NOT
+         LR    R11,R12            SAVE CONNID
+         CHI   R12,THRDSEQ        SEQUENTIAL TERMINAL ?
+         BNE   KCNOTSQ1           EXIT IF NOT
+         SR    R12,R12            CONNID=0 FOR SEQUENTIAL TERMINAL
+KCNOTSQ1 EQU   *
+         LA    R15,KCPREFIX       R15=LENGTH TO SEND
+         TCPIO SEND,MSG=DFHKCBLK,LMSG=(R15),CONN=(R12),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         LR    R12,R11            RESTORE CONNID
+         STC   R12,WTODESC+32     MOVE TERMID SUFFIX
+         CLI   WTODESC+32,THRDSEQ SEQUENTIAL TERMINAL ?
+         BNE   KCNOTSQ2           EXIT IF NOT
+         MVC   WTODESC+29(4),=C'SQ01' MOVE SEQUENTIAL TERMID
+         L     R1,20(R3)          THRDCNTL ADDRESS
+         LA    R1,(THRDLEN*THRDSEQ)(R1) POINT TO SEQ TERM ENTRY
+         USING THRDDSCT,R1
+         MVI   THRDIND,ST_RUN     SET RUNNING STATUS
+         B     KCTRACE            EXIT
+*
+KCNOTSQ2 EQU   *
+         OI    WTODESC+32,X'F0'   TERMID SUFFIX TO CHAR
+         L     R1,20(R3)          THRDCNTL ADDRESS
+         MS    R11,=AL4(THRDLEN)  INDEX TO THREAD STATE
+         AR    R1,R11             POINT TO THREAD STATE
+         MVI   THRDIND,ST_RUN     SET SUSPENDED-ENQ STATUS
+         DROP  R1
+KCTRACE  EQU   *
+         BAL   R11,CICSTRCE       TRACE IT
+         MVC   WTODESC+29(3),KCPTERM RESET TERMID PREFIX
+KCINCR   EQU   *
+         AHI   R10,1              BUMP WAIT INDICATOR POINTER
+         AHI   R12,1              BUMP CONNID
+         BCT   R5,KCLOOP          LOOP
+* ALL TASKS RESUMED (IF ANY)
+KCUNCHN  EQU   *
+* REPAIR THE CHAIN AND FREEMAIN THE QEA
+         MVC   0(4,R8),QEACHNF    REMAKE THE CHAIN
+         FREEMAIN LV=QEALEN,A=(R7) FREE QEA
+         B     KCGOOD             EXIT
+*
+KCCHAIN  EQU   *
+         LR    R8,R7              R8=CHAINED FROM ADDRESS
+         ICM   R7,15,QEACHNF      R7=QEA CHAIN
+         BNZ   KCEXLOOP           LOOP IF MORE QEAS
+KCGOOD   EQU   *
+         XC    KCPRETCD,KCPRETCD  CLEAR RETURN CODE
+         MVC   WTODESC,=CL45'>>>Z390KCP DEQ        COMPLETED'
+         L     R8,12(R3)          R8=CONN ID ADDRESS
+         L     R8,0(R8)           R8=CONNID
+         LA    R15,KCPREFIX       R15=LENGTH TO SEND
+         TCPIO SEND,MSG=DFHKCBLK,LMSG=(R15),CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         BAL   R11,CICSTRCE       TRACE IT
+         SUBEXIT
+*
+* SUBROUTINES
+*
+* MODIFIED CICSTRCE
+CICSTRCE DS    0H
+         CLI   TRCEZ390,C'N'      NO TRACING ?
+         BER   R11                RETURN IF IT IS
+         CLI   TRCEZ390,C'Y'      ALL TRACING ?
+         BE    CICSTRGO           TRACE IF IT IS
+         CLC   TRCEZ390,CICSTIND  TRACE TYPE=TRACE REQUEST ?
+         BNER  R11                RETURN IF NOT
+CICSTRGO EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM GET TIME
+         MVO   TIMEPACK,TIME      MOVE TO PACKED FIELD
+         MVC   TIMEHERE(13),TIMEEDIT MOVE EDIT WORD
+         ED    TIMEHERE(13),TIMEPACK EDIT TIME
+         MVC   WTOTIME,TIMEHERE   SET TIME
+         WTO   MF=(E,WTOMSG)      TRACE IT
+         BR    R11                RETURN
+*
+ABEND780 ABEND 780                TCPIO SEND FAILED
+*
+CICSTIND DS    C                  TRACE TYPE INDICATOR
+TRCEZ390 DS    C                  Z390 TRACE OPTION
+*
+* TIME CONVERSION FIELDS
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402021207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+* WTO AREA DSECT
+*
+WTODSECT DSECT
+WTOMSG   DS    AL4
+WTOTIME  DS    CL13               TIME STAMP
+         DS    C
+WTOFN    DS    CL4                MODULE/FUNCTION REFERENCE (EIBFN)
+         DS    C
+WTOTERM  DS    CL4                TERMID
+         DS    C
+WTOTRAN  DS    CL4                TRANSID (OR BLANK)
+         DS    C
+WTOTYPE  DS    C                  TRANSID TYPE
+         DS    C
+WTOTASKN DS    CL7                TASK NUMBER
+         DS    C
+WTODESC  DS    CL45               DESCRIPTION
+*
+         DFHKCBLK                 TASK CONTROL BLOCK
+         DFHQEADS                 ENQUEUE ELEMENT BLOCK
+*
+         EQUREGS
+*
+         END
+

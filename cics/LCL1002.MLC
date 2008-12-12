@@ -1,0 +1,57 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL1002  SUBENTRY
+*
+* FN=1002  EXEC CICS ASKTIME
+*
+* R1  >>> P1002 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P1002,P1002END),R3
+         L     DFHEIBR,P1002EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P1002TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P1002FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P1002RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P1002RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         TIME  DEC                GET TIME/DATE
+         ST    R0,SAVETIME        SAVE TIME AS HHMMSSTT
+         MVO   EIBTIME,SAVETIME(3) MOVE AS PACKED
+         OI    EIBTIME+3,X'0C'    SET +VE SIGN
+         ST    R1,EIBDATE         SET DATE AS CCYYDDD+
+         SUBEXIT
+*
+SAVETIME DS    XL4                TIME AS HHMMSSTT
+*
+         LTORG
+*
+P1002    DSECT
+P1002FN  DS    XL2                FUNCTION CODE
+P1002EIB DS    AL4                EIB
+P1002TCT DS    AL4                TCTTE
+P1002RSP DS    AL4                RESP
+P1002RS2 DS    AL4                RESP2
+P1002END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+*
+         EQUREGS REGS=GPR
+*
+         END
+

@@ -189,8 +189,18 @@ From the 'initial screen' you can perform the following tests...
                Also builds an environment for testing CEBR.
                Can be run multiple times to extend the CEBR test queues.
 
-   IC01        Test Interval Control functions.
+   IC01        Test Interval Control ASKTIME (ABSTIME) and DELAY.
                This task may take up to 2 mins to complete.
+
+   IC02        Test Interval Control START, RETRIEVE and CANCEL.
+               Watch for HELLO FROM TEST1C03, THIS IS MESSAGE n
+               on the bottom line.
+               Press ENTER after each change of n, there are 8.
+
+               After a few seconds this message appears:
+                  HELLO FROM TEST1C03, THIS IS SUBVERSION
+               Press ENTER to complete the test, when you see
+               TESTIC02 COMPLETED, PRESS CLEAR the test is completed.
 
    VSM1        Read and browse of ESDS files.
                Records successfully read are written to the TS queue
@@ -204,7 +214,18 @@ From the 'initial screen' you can perform the following tests...
                Records successfully read are written to the TS queue
                VSM3.
 
-   BMS1        Test all functions of mapping support.
+   BMS1        Test simple functions of mapping support.
+   BMS2        Test complex functions of mapping support.
+               This is still experimental
+
+   ENQ1        This tests ENQ/DEQ
+               Ensure LOCAL_TERMINALS=2 in the .INI file
+
+               This is time critical.
+               a) On DON0, clear the logo and enter ENQ1
+               b) Switch to DON1, clear the logo and enter ENQ1
+               Steps a and b must occur within 5 seconds.
+               DON1 will suspend a number of times.
 
 Shutdown
 --------
@@ -274,6 +295,9 @@ e) Select End Process and Yes.
 
 Change Summary
 --------------
+November 24, 2008
+   Added IC01, IC02, BMS2, ENQ1  to list of test transactions
+
 June 27, 2008
    Added BMS1 to list of test transactions
 
@@ -283,7 +307,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 27, 2008
-Z390 version: V1.4.02
-Z390/CICS version: V5
+Shipping Date: November 24, 2008
+Z390 version: V1.4.04
+Z390/CICS version: V6
 

@@ -1,0 +1,120 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL0E0E  SUBENTRY
+*
+* FN=0E0E  EXEC CICS HANDLE ABEND
+*
+* R1  >>> P0E0E BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0E0E,P0E0EEND),R3
+         L     DFHEIBR,P0E0EEIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0E0ETCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0E0EFN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0E0ERSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0E0ERS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+* GET THE ABEND BLOCK IF NONE
+         ICM   R1,15,TCTTEABD     ANY ABEND BLOCK ADDRESS ?
+         BNZ   GOTABD             EXIT IF WE HAVE ONE
+* GET THE ABEND BLOCK
+         LA    R1,(ABDLENG*25)+8  R1=ABEND BLOCK TOTAL LENGTH
+         GETMAIN R,LV=(R1)
+         MVC   0(8,R1),=C'DFHABBLK' SET HEADER
+         AHI   R1,8               BYPASS EYECATCHER
+         ST    R1,TCTTEABD        SAVE ABEND BLOCK ADDRESS
+         USING ABDDEST,R1
+         LR    R14,R1             R14=AREA TO CLEAR
+         SR    R15,R15            CLEAR SECOND LENGTH
+         LR    R5,R0              R5=LENGTH TO CLEAR
+         LR    R4,R14             R4=AREA TO CLEAR
+         MVCLE R4,R14,X'00'       CLEAR ABEND BLOCK
+GOTABD   EQU   *
+         LH    R14,TCTTELNK       R14=CURRENT LINK LEVEL
+         AHI   R14,-1             -1 FOR INDEX
+         MS    R14,=AL4(ABDLENG)  * ENTRY LENGTH
+         AR    R1,R14             R1=CORRECT ABEND BLOCK ENTRY
+         CLI   P0E0ECAN,X'FF'     CANCEL REQUESTED ?
+         BNE   TRYRES             EXIT IF NOT
+*
+* CANCEL FUNCTION
+*
+         MVC   ABDACTIV,=X'FFFF'  SET ENTRY INACTIVE
+         B     RETURN             EXIT
+*
+TRYRES   EQU   *
+         CLI   P0E0ERES,X'FF'     RESET REQUESTED ?
+         BNE   TRYLAB             EXIT IF NOT
+*
+* RESET FUNCTION
+*
+         XC    ABDACTIV,ABDACTIV  SET ENTRY ACTIVE
+         B     RETURN             EXIT
+*
+TRYLAB   EQU   *
+         ICM   R14,15,P0E0ELAB    ANY LABEL ?
+         BZ    TRYPROG            EXIT IF NOT
+*
+* LABEL FUNCTION
+*
+         XC    ABDDEST,ABDDEST    CLEAR DESTINATION FIELD
+         ST    R14,ABDDEST+4      SAVE LABEL
+         XC    ABDACTIV,ABDACTIV  SET ENTRY ACTIVE
+         MVC   ABDREGS(48),P0E0EREG SAVE CALLERS REGS
+         B     RETURN             EXIT
+*
+TRYPROG  EQU   *
+*
+* PROGRAM FUNCTION
+*
+         MVC   ABDDEST,P0E0EPGM   MOVE PROGRAM AS DESTINATION
+         MVC   ABDCOMM,P0E0ECAP   SET ANY COMMAREA ADDRESS
+         MVC   ABDCALEN,EIBCALEN  SET ANY COMMAREA LENGTH
+         XC    ABDACTIV,ABDACTIV  SET ENTRY ACTIVE
+         MVC   ABDREGS(48),P0E0EREG SAVE CALLERS REGS
+         DROP  R1
+RETURN   EQU   *
+         SUBEXIT
+*
+P0E0E    DSECT
+P0E0EFN  DS    XL2                FUNCTION CODE
+P0E0EEIB DS    AL4                EIB
+P0E0ETCT DS    AL4                TCTTE
+P0E0ECAN DS    X                  FF=CANCEL
+P0E0ERES DS    X                  FF=RESET
+P0E0ELAB DS    AL4                LABEL
+P0E0EPGM DS    CL8                PROGRAM
+P0E0ECAP DS    AL4                COMMAREA ADDRESS FROM DFHEICAP
+P0E0EREG DS    12AL4              CALLERS REGS R2-R13
+P0E0ERSP DS    AL4                RESP
+P0E0ERS2 DS    AL4                RESP2
+P0E0EEND EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHABBLK                 HANDLE ABEND BLOCK
+*
+         EQUREGS REGS=GPR
+* R1  HANDLE ABEND BLOCK BASE
+* R3  PARM POINTER
+* R10 TCTTE
+* R11 EIB
+* R13 SAVE AREA AND BASE 1
+*
+         END
+

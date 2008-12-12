@@ -1,0 +1,130 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL0206  SUBENTRY
+*
+* FN=0206  EXEC CICS HANDLE AID
+*
+* R1  >>> P0206 BLOCK POINTER
+* R14 = RETURN ADDRESS
+*
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0206,P0206END),R3
+         L     DFHEIBR,P0206EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0206TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0206FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0206RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0206RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+* ONLY THE FIRST AID BLOCK IS ACQUIRED HERE
+* PUSH ACQUIRES MORE
+         L     R1,P0206AID        R1=A(DFHEIAID)
+         ICM   R1,15,0(R1)        ANY AID BLOCK ADDRESS ?
+         BZ    NOAID              EXIT IF NO AID BLOCKS
+         USING DFHADBLK,R1
+AIDLOOP  EQU   *
+         LR    R14,R1             R14=LAST AID BLOCK ADDRESS
+         ICM   R1,15,AIDCHAIN     R1=NEXT AID BLOCK
+         BNZ   AIDLOOP            LOOP
+* END OF AID BLOCK CHAIN
+         LR    R1,R14             R1=LAST AID BLOCK ADDRESS
+         B     GOTAID             EXIT
+*
+NOAID    EQU   *
+* GET THE FIRST AID BLOCK
+         LA    R1,AIDLENG         R1=AID BLOCK LENGTH
+         GETMAIN R,LV=(R1)
+         XC    0(AIDLENG,R1),0(R1) CLEAR AID BLOCK
+         L     R4,P0206AID        R4=A(DFHEIAID)
+         ST    R1,0(R4)           SAVE AID BLOCK ADDRESS
+         MVC   AIDHEAD,=C'DFHADBLK' SET HEADER
+GOTAID   EQU   *
+         LA    R4,P0206ADS        R4=AID NUMBERS
+         LA    R5,P0206ADR        R5=AID ADDRESSES
+         LA    R6,30              R6=LOOP LIMIT
+SETAID   EQU   *
+         CLI   0(R4),X'00'        END OF LIST ?
+         BE    ENDAID             EXIT IF IT IS
+         CLI   0(R5),X'FF'        IS IT AID CANCEL ?
+         BNE   AIDLABEL           EXIT IF NOT
+* PARM HAS NO LABEL...IT'S A CANCEL
+         CLI   0(R4),1            IS IT ANYKEY ?
+         BNE   NOTANY1            EXIT IF NOT
+* ANYKEY IS A SPECIAL CASE, CLEAR ALL ENTRIES EXCEPT ENTER
+         XC    AIDCLEAR(28*4),AIDCLEAR CLEAR ALL ENTRIES EXCEPT ENTER
+         B     AIDINCR            EXIT
+*
+NOTANY1  EQU   *
+         LB    R7,0(R4)           R7=AID NUMBER
+         AHI   R7,-2              ADJUST TO OFFSET
+         SLL   R7,2               *4
+         AHI   R7,12              +12 (HEADER/CHAIN)
+         AR    R7,R1              + AID BLOCK ADDRESS
+         XC    0(4,R7),0(R7)      CLEAR ENTRY
+         B     AIDINCR            EXIT
+*
+AIDLABEL EQU   *
+* PARM HAS A LABEL
+         CLI   0(R4),1            IS IT ANYKEY ?
+         BNE   NOTANY2            EXIT IF NOT
+* ANYKEY IS A SPECIAL CASE, INSERT LABEL IN ALL ENTRIES EXCEPT ENTER
+         LA    R14,AIDCLEAR       INDEX TO FIRST ANYKEY
+         LA    R15,28             R15=NO. OF ANYKEYS
+AIDANYLP EQU   *
+         MVC   0(4,R14),0(R5)     SET ANYKEY LABEL
+         AHI   R14,4              BUMP AID POINTER
+         BCT   R15,AIDANYLP       LOOP
+         B     AIDINCR            EXIT
+*
+NOTANY2  EQU   *
+         LB    R7,0(R4)           R7=AID NUMBER
+         AHI   R7,-2              ADJUST TO OFFSET
+         SLL   R7,2               *4
+         AHI   R7,12              +12 (HEADER/CHAIN)
+         AR    R7,R1              + AID BLOCK ADDRESS
+         MVC   0(4,R7),0(R5)      SET AID LABEL
+AIDINCR  EQU   *                  EXIT
+         AHI   R4,1               BUMP AID NUMBER POINTER
+         AHI   R5,4               BUMP AID ADDRESS POINTER
+         BCT   R6,SETAID          LOOP
+ENDAID   EQU   *
+         SUBEXIT
+*
+P0206    DSECT
+P0206FN  DS    XL2                FUNCTION CODE
+P0206EIB DS    AL4                EIB
+P0206TCT DS    AL4                TCTTE
+P0206AID DS    AL4                A(DFHEIAID)
+P0206ADS DS    XL30               ROOM FOR 30 AIDS
+P0206ADR DS    30AL4              ROOM FOR 30 ADDRESSES, FF......=CLEAR
+P0206RSP DS    AL4                RESP
+P0206RS2 DS    AL4                RESP2
+P0206END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHADBLK                 HANDLE AID BLOCK
+*
+         EQUREGS REGS=GPR
+* R1  HANDLE AID BLOCK BASE
+* R3  PARM POINTER
+* R10 TCTTE
+* R11 EIB
+* R13 SAVE AREA AND BASE 1
+*
+         END
+

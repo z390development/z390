@@ -44,13 +44,21 @@ VSAM limits
 For KSDSs and AIXs, there is an internal limit on all keylengths of
 128 bytes. Please raise an RPI if this is not sufficient for you.
 
+There is an internal limit in Z390/CICS on record sizes of 32K bytes.
+Please raise an RPI if this is not sufficient for you.
+
+Change Summary
+--------------
+November 24, 2008
+   Added comment about record size limit.
+
 Trademarks
 ----------
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 27, 2008
-Z390 version: V1.4.02
-Z390/CICS version: V5
+Shipping Date: November 24, 2008
+Z390 version: V1.4.04
+Z390/CICS version: V6
 

@@ -1,0 +1,33 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+MAP02    DFHMSD TYPE=&SYSPARM,STORAGE=AUTO,MODE=INOUT,LANG=ASM,        X
+               CTRL=FREEKB,CURSLOC=YES,TIOAPFX=YES
+*
+*MS2     DFHMDI SIZE=(10,40),LINE=10,COLUMN=20
+BMS2     DFHMDI SIZE=(24,80),LINE=1,COLUMN=1
+*                    10,56 '4' IS SHIFTED TO 11,20
+         DFHMDF POS=(1,37),LENGTH=4,ATTRB=(ASKIP,IC),INITIAL='1234'
+*                    11,57 '345' IS SHIFTED TO 12,20
+         DFHMDF POS=(2,38),LENGTH=5,ATTRB=(ASKIP),INITIAL='12345'
+         DFHMDF POS=(3,39),LENGTH=6,ATTRB=(ASKIP),INITIAL='123456'
+*                    13,59
+         DFHMDF POS=(4,40),LENGTH=7,ATTRB=(ASKIP),INITIAL='1234567'
+*                    14,57 @
+*                    14,58 ##
+*                    15,20 #(40)
+*                    16,20 #(40)
+*                    17,20 #
+FWRAP    DFHMDF POS=(5,38),LENGTH=83,ATTRB=(UNPROT,FSET),XINIT=FF7B
+*                    18,20 @_(39)
+         DFHMDF POS=(9,1),LENGTH=39,ATTRB=(ASKIP),XINIT=FF6D
+*                    19,59
+*        DFHMDF POS=(10,40),LENGTH=8,ATTRB=(ASKIP),XINIT=FF4C
+SWRAP    DFHMDF POS=(24,80),LENGTH=8,ATTRB=(UNPROT,FSET),XINIT=FF4C
+*
+         DFHMSD TYPE=FINAL
+         END
+

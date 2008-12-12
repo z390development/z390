@@ -1,0 +1,27 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         DFHICBLK
+*
+* INTERVAL CONTROL PREFIX AREA
+*
+DFHICBLK DSECT
+ICPTCPIO DS    AL4                LENGTH SENT TO SERVER
+ICPFN    DS    CL4                IC FUNCTION
+ICPTERM  DS    CL4                REQUESTOR TERMINAL ID
+ICPTRAN  DS    CL4                REQUESTOR TRANSACTION ID
+         DS    C                  NO TRANSACTION TYPE
+ICPTASKN DS    PL4                TASK NUMBER
+ICPRETCD DS    XL4                RETURN CODE
+ICPSTCK  DS    XL8                INITIATED EXPIRY TIME
+ICPITRAN DS    CL4                INITIATED TRANSACTION ID
+ICPITERM DS    CL4                INITIATED TERMINAL ID
+ICPREQID DS    XL8                REQID
+         DS    0D
+ICPREFIX EQU   *-DFHICBLK
+         MEND
+

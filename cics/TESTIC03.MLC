@@ -1,0 +1,46 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+DFHEISTG DSECT
+NEWCOMM  DS    AL2                COMMAREA TO FOOL TESTBED1
+TESTIC03 CSECT
+*
+* IC INITIATED TRANSACTION
+* SEND 8 MESSAGES TO LINE 24, 1 EVERY 5 SECS
+*
+* IF REQID='MYREQIDK', I FOOL BED1 INTO THINKING IT'S ENDED EARLY
+*
+         CLC   EIBREQID,=C'MYREQIDK' SPECIAL REQID ?
+         BNE   NOTSPEC            EXIT IF NOT
+         MVC   NEWCOMM,=H'7'      FOOL TESTBED1 INTO ENDING EARLY
+         EXEC  CICS SEND FROM(MSG2) LENGTH(MSG2L)
+         EXEC  CICS RETURN TRANSID('BED1') COMMAREA(NEWCOMM)
+*
+NOTSPEC  EQU   *
+         UNPK  MSGNUM,NUM         UNPACK MESSAGE NUMBER
+         OI    MSGNUM,X'F0'       SET SIGN
+         EXEC  CICS SEND FROM(MSG) LENGTH(MSGL)
+         AP    NUM,=P'1'          INCREMENT MESSAGE NUMBER
+         CP    NUM,=P'9'          DONE ENOUGH ?
+         BNE   RETURN             EXIT IF NOT
+         ZAP   NUM,=P'1'          RESET MESSAGE NUMBER
+RETURN   EQU   *
+         EXEC  CICS RETURN
+*
+NUM      DC    P'1'               MESSAGE NUMBER
+*
+MSG      TN3270 WCC_KD,(SBA,24,2)
+         DC    C'HELLO FROM TEST1C03, THIS IS MESSAGE '
+MSGNUM   DC    C'N'
+MSGL     DC    AL2(*-MSG)
+*
+MSG2     TN3270 WCC_KD,(SBA,24,2)
+         DC    C'HELLO FROM TEST1C03, THIS IS SUBVERSION'
+MSG2L    DC    AL2(*-MSG2)
+*
+         TN3270 SYMBOLS
+         END
+

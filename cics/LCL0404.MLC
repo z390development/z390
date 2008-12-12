@@ -1,9 +1,9 @@
-********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 LCL0404  SUBENTRY
 *
 * FN=0404  EXEC CICS SEND
@@ -21,6 +21,14 @@ LCL0404  SUBENTRY
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0404RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0404RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
          L     R1,P0404FRM        R1=FROM ADDRESS
          LH    R0,P0404LEN        R0=LENGTH
          CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
@@ -58,6 +66,8 @@ P0404EIB DS    AL4                EIB
 P0404TCT DS    AL4                TCTTE
 P0404FRM DS    AL4                FROM
 P0404LEN DS    AL2                LENGTH
+P0404RSP DS    AL4                RESP
+P0404RS2 DS    AL4                RESP2
 P0404END EQU   *                  END MARKER
 *
          DFHEIBLK                 EIB

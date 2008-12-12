@@ -1,0 +1,22 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         DFHTSNDS
+*
+* TEMPORARY STORAGE NAME TABLE
+*
+TSNAMES  DSECT
+TSNCHAIN DS    A                  CHAIN TO NEXT TS Q NAME
+TSNQNAME DS    CL16               TS Q NAME
+TSNITEM1 DS    A                  POINTER TO ITEM 1
+TSNNUMIT DS    H                  CURRENT NO. OF ITEMS
+TSNITRED DS    H                  ITEM NUMBER LAST READ
+TSNICTRM DS    CL4                ICTERM
+TSNICTRN DS    CL4                ICTRAN
+TSNLEN   EQU   *-TSNAMES
+         MEND
+

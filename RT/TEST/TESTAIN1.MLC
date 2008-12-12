@@ -1,0 +1,55 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 12/10/08                                                 *
+*********************************************************************
+* MAINTENANCE
+********************************************************************* 
+* 12/10/05 RPI 956 INITIAL TEST FOR AINSERT FOR AREAD/SOURCE
+********************************************************************* 
+         MACRO
+         TEST1  
+         AINSERT 'RECORD 2 &SYSTIME'
+         AINSERT 'RECORD 3 &SYSTIME',BACK
+         AINSERT 'RECORD 1 &SYSTIME',FRONT
+&REC     AREAD
+         MNOTE 'AREAD AINSERT 1 = &REC'
+&REC     AREAD
+         MNOTE 'AREAD AINSERT 2 = &REC'
+&REC     AREAD
+         MNOTE 'AREAD AINSERT 3 = &REC'
+         MEND
+         MACRO
+         TEST2
+         AINSERT ' MNOTE ''SOURCE AINSERT 1'''
+         AINSERT ' MNOTE ''SOURCE AINSERT 2'''
+         AINSERT ' MNOTE ''SOURCE AINSERT 3'''
+         AINSERT ' MACRO'
+         AINSERT ' TEST3'
+         AINSERT ' MNOTE ''HELLO FROM TEST3 INSERTED MACRO'''
+         AINSERT ' MEND'
+         AINSERT ' MACRO'
+         AINSERT ' TEST4 &&P1, 3456789012345678901234567890123456789012X                                        X
+               3456789012345678901X'  NOTE ADD 1 MORE FOR &&
+         AINSERT '               &&K1=''K1V'', 789012345678901234567890X                                        X
+               123456789012345678901X' NOTE ADD 3 MORE FOR &&,'',''
+         AINSERT '               &&K2=''K2V'''
+         AINSERT ' MNOTE ''TEST4 K1=&&K1 K2=&&K2'''
+         AINSERT '&&I SETA 5'
+         AINSERT '.LOOP ANOP'
+         AINSERT ' MNOTE ''TEST4 I=&&I'''
+         AINSERT '&&I SETA &&I-1'
+         AINSERT ' AIF (&&I GT 0).LOOP'
+         AINSERT ' MEND'
+         MEND
+TESTAIN1 SUBENTRY
+         WTO   'TEST1 STARTED'
+         TEST1
+         TEST2
+         TEST3
+         TEST4
+         WTO   'TEST1 ENDED'
+         SUBEXIT
+         END  

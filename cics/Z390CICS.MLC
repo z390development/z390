@@ -1,11 +1,11 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
-* 04/22/08 RPI 837 ADD NOTIME TO PREVENT 422 ABEND IN 15 SECONDS
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+* 04/22/08 RPI 837 ADD NOTIME TO PREVENT 422 ABEND IN 15 SECONDS      *
+***********************************************************************
 Z390CICS SUBENTRY BASES=(R13)
          LA    R3,SECTOR2         BASE 2
          USING SECTOR2,R3
@@ -13,12 +13,12 @@ Z390CICS SUBENTRY BASES=(R13)
          AHI   R4,4096                 BASE 3
          USING SECTOR2+4096,R4
 *
-* IN PROCESS OF CHANGING ALL PROCESSES TO CALLED ROUTINES
-*
 * NOTE TO ME: CALLED ROUTINES MUST NOT BE IN THE 1ST 4K
-* BECAUSE OF R13 CONFLICT, MOVE ALL NON-CALLS TO START
-* R13 SPAN IS D0C, SO FFF-D0C=755 LEFT
-* SECTOR2 SPAN IS 198D-D0C=3201   8192-3201=4991 LEFT
+* BECAUSE OF R13 CONFLICT, MOVE ALL NON-CALLS BEFORE SECTOR2
+* R13 SPAN IS D88, SO FFF-D88=277 (DEC 631 LEFT)
+*
+* SECTOR2 SPAN IS 1B79-D88=DF1  (DECIMAL 3591 USED)
+*                 1FFF-DF1=120E (DECIMAL 4622 LEFT)
 *
 * THE GLOBAL MAMAGER OF Z390/CICS
 *
@@ -111,6 +111,7 @@ PROCLTRC EQU   *
          B     INIGET             LOOP
 *
 PROCZTRC EQU   *
+         MVC   TRCEZ390,INIAREA+15 SET THE Z390 TRACE PARM
          CLI   TRCEZ390,C'N'      =NO ?
          BE    INIGET             EXIT IF OK
          CLI   TRCEZ390,C'I'      =INT ?
@@ -154,7 +155,9 @@ NOSEQTR  EQU   *
          AHI   R6,1               EXTRA TERMINAL
          XC    MAXLOCS,MAXLOCS    FORCE LOCAL_TERMINALS=0
          MVC   INITRAN,=4C'-'     RESET INITIAL_TRANSID
+* IF WE NEED TO TRACE WHILE SEQ=YES, UNCOMMENT THE MVC
          XC    KCPTRPOS,KCPTRPOS  FORCE TRACE_LOCALS=NO
+*        MVC   KCPTRPOS,KCPTRACE  FORCE TRACE_LOCALS=YES
 NOSEQT   EQU   *
 * CHECK LOCAL AND REMOTE NUMBERS ARE SENSIBLE
          A     R6,MAXREMS         R6=LOCALS+REMOTES
@@ -231,7 +234,7 @@ LOCLSTRT EQU   *
          B     LOCGOC1            EXIT
 *
 LOCNOTC1 EQU   *
-         CLI   THRDIND,RUNNING    THREAD RUNNING ?
+         CLI   THRDIND,ST_RUN     THREAD RUNNING ?
          BE    LOCLINCR           EXIT IF IT IS
          MVC   WTOTERM(3),TRMPREFX SET TERMID PREFIX
          STC   R7,WTOTERM+3       SAVE HEX TERMID NUMBER (0-9)
@@ -274,7 +277,7 @@ NOLOG    EQU   *
          BNZ   ABEND666           EXIT IF BAD
          CLI   SEQSWTCH+1,X'F0'   2ND CYCLE ?
          BE    NOSEQT2            EXIT IF IT IS
-         MVI   THRDIND,RUNNING    SET RUNNING STATUS
+         MVI   THRDIND,ST_RUN     SET RUNNING STATUS
          MVI   THRDTYPE,LOCAL     SET LOCAL
          AHI   R8,1               COUNT THREADS STARTED
 LOCLINCR EQU   *
@@ -317,8 +320,8 @@ NOSEQT2  EQU   *
          CLI   SEQSWTCH+1,X'F0'   2ND CYCLE COMPLETED ?
          BNE   LOCNSMSG           EXIT IF NOT
          MVC   CICSTMSG,=X'FE0601' SEQUENTIAL TERMINAL STARTED
-         LA    R5,THRDCNTL+(10*THRDLEN) POINT TO SEQ TERM ENTRY
-         MVI   THRDIND,RUNNING    SET RUNNING STATUS
+         LA    R5,THRDCNTL+(THRDLEN*THRDSEQ) POINT TO SEQ TERM ENTRY
+         MVI   THRDIND,ST_RUN     SET RUNNING STATUS
          MVI   THRDTYPE,LOCAL     SET LOCAL
          MVI   CICSTIND,C'I'      SET INTERNAL TYPE
          BAL   R12,CICSTRCE       TRACE IT
@@ -639,6 +642,13 @@ REQTABLE EQU   *
          DC    C'0EFE',A(TRANABD)  TRANSID ABENDED
          DC    C'0EFF',A(TRANEND)  TRANSID ENDED
 *
+         DC    C'1008',A(ICSTART)  START
+         DC    C'100C',A(ICCANCL)  CANCEL
+         DC    C'10FF',A(ICEXICE)  EXPIRED ICE REQUEST
+*
+         DC    C'1204',A(KCPENQ)   ENQ
+         DC    C'1206',A(KCPDEQ)   DEQ
+         DC    C'12FC',A(KCPDQALL) Z390KCP DEQALL
          DC    C'12FD',A(KCPABEND) Z390KCP ABENDED
          DC    C'12FE',A(KCPSHUT)  Z390KCP SHUTTERM
          DC    C'12FF',A(KCPUP)    Z390KCP READY
@@ -649,6 +659,7 @@ REQTABLE EQU   *
          DC    C'FE03',A(CEMTPSHI) CEMT P SHU IMM REQUEST
          DC    C'FE04',A(SHUTQURY) QUERY SHUTDOWN
          DC    C'FE05',A(CEMTIFIL) CEMT I FIL REQUEST
+         DC    C'FE06',A(CEMTIENQ) CEMT I ENQ REQUEST
          DC    X'FF'               STOPPER
 *
 * REQUEST PROCESSES
@@ -670,8 +681,8 @@ KCPSHUT  DS    0H
          LA    R5,THRDCNTL        ADDRESS THREAD CONTROL AREA
          CLC   REQTERM,=C'SQ01'   IS IT SEQ TERM ?
          BNE   KCPNTSQ            EXIT IF NOT
-         AHI   R5,THRDLEN*10      POINT TO 11TH ENTRY
-         LA    R7,9               R7=SEQ TERM THREAD ID
+         AHI   R5,THRDLEN*THRDSEQ POINT TO SEQ TERM ENTRY
+         LA    R7,THRDSEQ-1       R7=SEQ TERM THREAD ID
          B     KCPSHUTG           EXIT
 *
 KCPNTSQ  EQU   *
@@ -695,16 +706,17 @@ KCPSHUTG EQU   *
          AHI   R8,-1              -1
          ST    R8,LOCALS          STORE BACK
 KCPNTSQ2 EQU   *
-         MVI   THRDIND,SHUTDOWN   SET SHUTDOWN STATUS
+         MVI   THRDIND,ST_SHUT    SET SHUTDOWN STATUS
          B     KCPSHRST           EXIT
 KCPSHRMT EQU   *
          L     R8,REMOTES         R8=NO. OF REMOTES
          AHI   R8,-1              -1
          ST    R8,REMOTES         STORE BACK
-         MVI   THRDIND,AVAIL      SET AVAILABLE STATUS
+         MVI   THRDIND,ST_AVAIL   SET AVAILABLE STATUS
 KCPSHRST EQU   *
          MVI   THRDTYPE,UNALLOC   RESET LOCAL/REMOTE
          MVC   THRDTRAN,=4C' '    CLEAR CURRENT TRANSID
+         XC    THRDREQD,THRDREQD  CLEAR REQID
          CLI   SHUTIND,X'FF'      IS SHUTDOWN IN PROGRESS ?
          JE    PSHTTEST           YES, EXIT TO TEST FOR SERVER SHUTDOWN
          J     REQRETRN           EXIT
@@ -733,7 +745,7 @@ KCPABCHK EQU   *
          BE    KCPABTRC           EXIT IF NONE
          CLC   REQTERM,=C'SQ01'   IS IT SEQ TERM ?
          BNE   KCPABSQ            EXIT IF NOT
-         AHI   R5,THRDLEN*10      POINT TO 11TH ENTRY
+         AHI   R5,THRDLEN*THRDSEQ POINT TO SEQ TERM ENTRY
          B     KCPABGO            EXIT
 *
 KCPABSQ  EQU   *
@@ -758,9 +770,10 @@ KCPABRMT EQU   *
          AHI   R8,-1              -1
          ST    R8,REMOTES         STORE BACK
 KCPABRST EQU   *
-         MVI   THRDIND,AVAIL      SET AVAILABLE STATUS
+         MVI   THRDIND,ST_AVAIL   SET AVAILABLE STATUS
          MVI   THRDTYPE,UNALLOC   RESET TYPE
          MVC   THRDTRAN,=4C' '    CLEAR CURRENT TRANSID
+         XC    THRDREQD,THRDREQD  CLEAR REQID
 KCPABTRC EQU   *
          MVI   CICSTIND,C'I'      SET INTERNAL TYPE
          BAL   R12,CICSTRCE       TRACE IT
@@ -778,7 +791,7 @@ TERMREQ  EQU   *
          LA    R8,C'0'            THREAD ID
          LA    R7,10              MAXIMUM ALLOWED
 TERMRQLP EQU   *
-         CLI   THRDIND,AVAIL      AVAILABLE ?
+         CLI   THRDIND,ST_AVAIL   AVAILABLE ?
          BE    TERMRQGT           EXIT IF IT IS
          AHI   R5,THRDLEN         BUMP THREAD CONTROL AREA
          AHI   R8,1               BUMP THREAD ID
@@ -799,7 +812,7 @@ TERMRQGT EQU   *
          MVC   WTOTERM,MSGTERM    SET TERMID IN MSG
          MVC   WTOTRAN,MSGTRAN    SET INITIAL TRANSID IN MSG
          MVC   CICSTMSG,=X'04FE01' >>>Z390KCP REQUESTED TERMID
-         MVI   THRDIND,RUNNING    SET RUNNING STATUS
+         MVI   THRDIND,ST_RUN     SET RUNNING STATUS
          MVI   THRDTYPE,REMOTE    SET REMOTE
          L     R8,REMOTES         R8=REMOTES ALLOCATED
          AHI   R8,1               +1
@@ -842,7 +855,7 @@ TRANGOMS EQU   *
          LA    R5,THRDCNTL        ADDRESS THREAD CONTROL AREA
          CLC   REQTERM,=C'SQ01'   IS IT SEQ TERM ?
          BNE   TRANNTSQ           EXIT IF NOT
-         AHI   R5,THRDLEN*10      POINT TO 11TH ENTRY
+         AHI   R5,THRDLEN*THRDSEQ POINT TO SEQ TERM ENTRY
          B     TRANGO2            EXIT
 *
 TRANNTSQ EQU   *
@@ -881,7 +894,7 @@ TRANEND  DS    0H
          LA    R5,THRDCNTL        ADDRESS THREAD CONTROL AREA
          CLC   REQTERM,=C'SQ01'   IS IT SEQ TERM ?
          BNE   TRANENSQ           EXIT IF NOT
-         AHI   R5,THRDLEN*10      POINT TO 11TH ENTRY
+         AHI   R5,THRDLEN*THRDSEQ POINT TO SEQ TERM ENTRY
          B     TRANENGO           EXIT
 *
 TRANENSQ EQU   *
@@ -892,6 +905,7 @@ TRANENSQ EQU   *
          AR    R5,R8              POINT TO THREAD STATE
 TRANENGO EQU   *
          MVC   THRDTRAN,=4C' '    CLEAR TRANSID
+         XC    THRDREQD,THRDREQD  CLEAR REQID
          J     REQRETRN           RETURN
 *
 PSHTTEST EQU   *
@@ -903,9 +917,9 @@ PSHTTEST EQU   *
          LA    R6,11              R6=NO. OF THREADS + SEQ TERM
          SR    R8,R8              R8=THREAD NUMBER
 PSHTLOOP EQU   *
-         CLI   THRDIND,AVAIL      AVAILABLE TERMINAL ?
+         CLI   THRDIND,ST_AVAIL   AVAILABLE TERMINAL ?
          BE    PSHTINCR           EXIT IF IT IS
-         CLI   THRDIND,SHUTDOWN   TERMINAL ALREADY SHUTDOWN ?
+         CLI   THRDIND,ST_SHUT    TERMINAL ALREADY SHUTDOWN ?
          JNE   REQRETRN           EXIT IF NOT
 *
 PSHTINCR EQU   *
@@ -963,6 +977,22 @@ SHUTQURY DS    0H
 *
 SECTOR2  DS    0H
 *
+READFILE DS    0H
+* FN=0602  READ FILE
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL0602,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+STBRFILE DS    0H
+* FN=060C  START BROWSE FILE
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL060C,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
 RDNXFILE DS    0H
 * FN=060E  READNEXT FILE
          ST    R13,SUBRSAVE       SAVE BASE REG R13
@@ -976,22 +1006,6 @@ RDPVFILE DS    0H
          ST    R13,SUBRSAVE       SAVE BASE REG R13
          LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
          CALL  GBL0610,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
-         L     R13,SUBRSAVE       RESTORE BASE REG R13
-         J     REQRETRN           EXIT
-*
-STBRFILE DS    0H
-* FN=060C  START BROWSE FILE
-         ST    R13,SUBRSAVE       SAVE BASE REG R13
-         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
-         CALL  GBL060C,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
-         L     R13,SUBRSAVE       RESTORE BASE REG R13
-         J     REQRETRN           EXIT
-*
-READFILE DS    0H
-* FN=0602  READ FILE
-         ST    R13,SUBRSAVE       SAVE BASE REG R13
-         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
-         CALL  GBL0602,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
          L     R13,SUBRSAVE       RESTORE BASE REG R13
          J     REQRETRN           EXIT
 *
@@ -1044,24 +1058,76 @@ CEBRQNAM DS    0H
          L     R13,SUBRSAVE       RESTORE BASE REG R13
          J     REQRETRN           EXIT
 *
+ICSTART  DS    0H
+* FN=1008  START
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL1008,(WTOMSG,(R11),ICEANCHR,CONNID,TRCEZ390,         X
+               TRMPREFX),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+ICCANCL  DS    0H
+* FN=100C  CANCEL
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL100C,(WTOMSG,(R11),ICEANCHR,CONNID,TRCEZ390,         X
+               TRMPREFX),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+ICEXICE  DS    0H
+* FN=10FF  EXPIRED ICE REQUEST
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL10FF,(WTOMSG,(R11),ICEANCHR,CONNID,TRCEZ390,         X
+               THRDCNTL),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+KCPENQ   DS    0H
+* FN=1204  ENQ
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL1204,(WTOMSG,(R11),QEAANCHR,CONNID,TRCEZ390,         X
+               THRDCNTL),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+KCPDEQ   DS    0H
+* FN=1206  DEQ
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL1206,(WTOMSG,(R11),QEAANCHR,CONNID,TRCEZ390,         X
+               THRDCNTL),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+KCPDQALL DS    0H
+* FN=12FC  DEQALL
+*          NOTHING SENT BACK
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL12FC,(WTOMSG,(R11),QEAANCHR,TRCEZ390,THRDCNTL),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
 CEMTITER DS    0H
 * FN=FE00  CEMT I TER REQUESTED
-*
-* FN=FE00  THRDCNTL SENT BACK
+*          THRDCNTL SENT BACK
          ST    R13,SUBRSAVE       SAVE BASE REG R13
          LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
          CALL  GBLFE00,(WTOMSG,(R11),MSGLEN,MSGDATA+9,THRDCNTL,        X
-               THRDLEN*11,CONNID,TRCEZ390,TRMPREFX),MF=I
+               THRDLEN*THRDNUM,CONNID,TRCEZ390,TRMPREFX),MF=I
          L     R13,SUBRSAVE       RESTORE BASE REG R13
          J     REQRETRN           EXIT
 *
 CEMTISYS DS    0H
 * FN=FE01  CEMT I SYS REQUESTED
-*
-* FN=FE01  ISYSDATA SENT BACK
+*          ISYSDATA SENT BACK
          ST    R13,SUBRSAVE       SAVE BASE REG R13
          LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
-         CALL  GBLFE01,(WTOMSG,(R11),CONNID,TRCEZ390,ISYSDATA,CMD1LEN, X
+         CALL  GBLFE01,(WTOMSG,(R11),CONNID,TRCEZ390,CMD1LEN,          X
                CMD0+1,CMD1+4,CICSADDR,TRMPREFX,INIDATE,THREADS+3,      X
                LOCALS,REMOTES,MAXLOCS+3,MAXREMS+3,INITRAN,KCPTRPOS,    X
                INISEQT),MF=I
@@ -1070,11 +1136,19 @@ CEMTISYS DS    0H
 *
 CEMTIFIL DS    0H
 * FN=FE05  CEMT I FIL REQUESTED
-*
-* FN=FE05  IFILDATA SENT BACK
+*          IFILDATA SENT BACK
          ST    R13,SUBRSAVE       SAVE BASE REG R13
          LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
          CALL  GBLFE05,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+CEMTIENQ DS    0H
+* FN=FE06  CEMT I ENQ REQUESTED
+*          IENQDATA SENT BACK
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBLFE06,(WTOMSG,(R11),QEAANCHR,CONNID,TRCEZ390),MF=I
          L     R13,SUBRSAVE       RESTORE BASE REG R13
          J     REQRETRN           EXIT
 *
@@ -1106,7 +1180,7 @@ KCPDATFM DS    C                  DATE FORMAT
 KCPTRPOS DC    CL(L'KCPTRACE)' '  TRACE PARMS
          DC    X'00'              NULL TERMINATOR
 *
-KCPTRACE DC    C'LOG(....) TRACE(EQT) TS MAXSIZE(60)'
+KCPTRACE DC    C'LOG(....) TRACE(EGQT) TS MAXSIZE(60)'
 *
 * TCPIO SEND MESSAGE AREA
 *
@@ -1138,7 +1212,7 @@ REMOTES  DC    F'0'               REMOTE TERMINALS IN USE
 *
 * 10 LOCAL AND REMOTE TERMINALS...SEE THRDDSCT
 * THE 11TH ENTRY IS FOR THE SEQUENTIAL TERMINAL
-THRDCNTL DC    11XL(THRDLEN)'00'
+THRDCNTL DC    (THRDNUM)XL(THRDLEN)'00'
 *
 TASKNO   DC    PL4'0'             TASK NUMBER
 CONNID   DS    XL4                CONN ID FROM LAST RECEIVE
@@ -1174,37 +1248,16 @@ WTOTASKN DS    CL7                TASK NUMBER
 WTODESC  DS    CL45               DESCRIPTION
 WTOMEND  EQU   *
 *
-* CEMT I SYS DATA AREA
-*
-* REFLECTED BY DSECT IN CEMTISYS
-*
-ISYSDATA DS    0F
-         DC    A(ISYSLEN)
-         DC    C'FE01'            REQUEST CODE
-         DS    CL4                TERMID
-         DS    CL4                TRANSID
-         DS    C                  TRANSID TYPE
-         DS    PL4                TASK NO.
-         DC    CL50' '            JARPATH
-         DC    CL50' '            CICSPATH
-         DS    CL3                TERMID_PREFIX
-         DS    C                  DATE FORMAT
-         DS    X                  MAXTHREADS
-         DS    X                  THREADS IN USE
-         DS    X                  LOCAL_TERMINALS
-         DS    X                  LOCAL TERMINALS IN USE
-         DS    X                  REMOTE_TERMINALS
-         DS    X                  REMOTE TERMINALS IN USE
-         DS    CL4                INITIAL_TRANSID
-         DS    CL3                TRACE_LOCALS
-         DS    CL3                TRACE_Z390CICS
-         DS    CL3                SEQ_TERM
-ISYSLEN  EQU   *-ISYSDATA
-*
 * WORK AREAS
 *
 DEC      DC    PL8'0'
+*
+* RESOURCE ANCHORS
+*
 TSNANCHR DC    A(0)               ANCHOR POINT FOR TS NAME TABLE
+ICEANCHR DC    A(0)               ANCHOR POINT FOR ICE CHAIN
+QEAANCHR DC    A(0)               ANCHOR POINT FOR ENQUEUE RESOURCES
+*
 DFHFCTAD DS    A                  FCT ADDRESS
 SUBRSAVE DS    18F                SAVEAREA FOR CALLED ROUTINES
 *
@@ -1231,6 +1284,7 @@ MSGTABLE EQU   *
                SS'
          DC    X'0E0002',CL45'<<<Z390KCP TRAN STARTED'
          DC    X'0EFF01',CL45'<<<Z390KCP TRAN ENDED'
+         DC    X'120001',CL45'GLOBAL MANAGER INITIALIZED'
          DC    X'120101',CL45'START Z390KCP'
          DC    X'12FE01',CL45'<<<Z390KCP SHUTTERM'
          DC    X'12FF01',CL45'<<<Z390KCP READY'
@@ -1290,10 +1344,11 @@ MSGTABLE EQU   *
 * RECEIVE MESSAGE AREA
 *
 REQDSECT DSECT
-REQLEN   DS    AL4                REQUEST LENGTH
+REQLEN   DS    XL4                REQUEST LENGTH
 REQFN    DS    CL4                REQUEST CODE
 REQTERM  DS    CL4                TERMINAL ID
 REQTRAN  DS    CL4                TRANSID
+* REQTYPE IS DOCUMENTED IN Z390KCP AT KCPGOTYP
 REQTYPE  DS    C                  TRANSID TYPE
 REQDATA  DS    CL183              REQUEST DATA
 *
@@ -1308,25 +1363,7 @@ REQABCDE DS    CL4                ABEND CODE
 REQABEND DS    CL4                INTERNAL ABEND CODE
          ORG
 *
-THRDDSCT DSECT
-* MUST KEEP THRDCNTL AND Z390CEMT IN SYNC
-THRDIND  DS    X                  THREAD STATE
-*                                    X'00'=AVAILABLE
-*                                    X'80'=RUNNING
-*                                    X'FF'=SHUTDOWN
-AVAIL    EQU   X'00'
-RUNNING  EQU   X'80'
-SHUTDOWN EQU   X'FF'
-THRDTYPE DS    C                  THREAD TYPE
-*                                    X'00'=UNALLOCATED
-*                                    L=LOCAL
-*                                    R=REMOTE
-LOCAL    EQU   C'L'
-REMOTE   EQU   C'R'
-UNALLOC  EQU   X'00'
-THRDTRAN DS    CL4                THREAD CURRENT TRANSACTION
-THRDLEN  EQU   *-THRDDSCT
-*
+         THRDDSCT                 TERMINAL THREAD CONTROL AREA
          ACBD  ,                  VSAM ACB
          DFHFCTDS                 FILE CONTROL TABLE
          DFHVSWAD                 FILE CONTROL VSAM WORK AREA

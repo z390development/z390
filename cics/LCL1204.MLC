@@ -1,0 +1,150 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL1204  SUBENTRY
+*
+* FN=1204  EXEC CICS ENQ
+*
+* R1  >>> P1204 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P1204,P1204END),R3
+         L     DFHEIBR,P1204EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P1204TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P1204FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P1204RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P1204RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+* VALIDATE LENGTH
+         CHHSI P1204LEN,0         IS LENGTH NEGATIVE ?
+         BL    LENGERR            ERROR IF IT IS
+         CHHSI P1204LEN,255       IS LENGTH > 255 ?
+         BH    LENGERR            ERROR IF IT IS
+* GET AND CLEAR THE KC BLOCK
+         EXEC  CICS GETMAIN FLENGTH(=A(KCPREFIX)) SET(R5) INITIMG(0)   X
+               NOHANDLE
+         USING DFHKCBLK,R5
+         MVC   KCPTCPIO,=AL4(KCPREFIX) SET PREFIX LENGTH
+         MVC   KCPFN,=C'1204'     SET FUNCTION CODE
+         MVC   KCPTERM,TCTTETI    SET TERMINAL ID
+         MVC   KCPTRAN,EIBTRNID   SET TRANSID
+         MVC   KCPTASKN,EIBTASKN  SET TASK NUMBER
+         MVC   KCPLEN,P1204LEN    SET RESOURCE LENGTH
+         MVC   KCPNOS,P1204NOS    SET NOSUSPEND INDICATOR
+         MVC   KCPNOH,P1204NOH    SET NOHANDLE INDICATOR
+         CHHSI P1204LEN,0         IS LENGTH ZERO ?
+         BNE   REALRES            EXIT IF NOT
+         MVC   KCPRES(4),P1204RES MOVE ADDRESS OF RESOURCE
+         B     HCNTEST            EXIT
+*
+REALRES  EQU   *
+* WE HAVE A REAL RESOURCE
+         L     R14,P1204RES       R14=ADDRESS OF RESOURCE
+         LH    R1,P1204LEN        R1=RESOURCE LENGTH
+         BCTR  R1,0               -1 FOR EXECUTE
+         EX    R1,EXMVC           MOVE RESOURCE
+HCNTEST  EQU   *
+* FIND OUT IF WE HAVE AN ACTIVE HANDLE CONDITION ENQBUSY
+         L     R1,P1204HCN        R1=A(DFHEIHCN)
+         ICM   R1,15,0(R1)        ANY CONDITION BLOCK ADDRESS ?
+         BZ    SENDIT             EXIT IF NONE
+         USING DFHHCBLK,R1
+HCNLOOP  EQU   *
+         LR    R14,R1             R14=LAST CONDITION BLOCK ADDRESS
+         ICM   R1,15,HCNCHAIN     R1=NEXT CONDITION BLOCK
+         BNZ   HCNLOOP            LOOP
+* END OF CONDITION BLOCK CHAIN
+         LR    R1,R14             R1=LAST CONDITION BLOCK ADDRESS
+* WE HAVE A HANDLE CONDITION BLOCK
+         AHI   R1,4*55+12         INDEX TO ENQBUSY
+         OC    0(4,R1),0(R1)      IS IT INACTIVE ?
+         BZ    SENDIT             EXIT IF IT IS
+         CLC   0(4,R1),=4X'FF'    IS IT IGNORED ?
+         BE    SENDIT             EXIT IF IT IS
+* WE HAVE AN ACTIVE HANDLE CONDITION ENQBUSY
+         MVI   KCPHCNQB,X'FF'     SET HANDLE CONDITION ENQBUSY ACTIVE
+SENDIT   EQU   *
+         TCPIO SEND,MSG=(R5),LMSG==A(KCPREFIX),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+* GET THE RESPONSE
+         TCPIO RECEIVE,MSG=(R5),LMSG==A(KCPREFIX),PORT=3900
+*
+* NOTE: THE TASK WILL HANG HERE IF GBL1204 DECIDES THE TASK IS TO
+*       BE SUSPENDED
+*
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+         OC    KCPRETCD,KCPRETCD  BAD RETURN CODE ?
+         BZ    RETURN             EXIT IF NONE
+         CLC   KCPRETCD,DFHRESP(ENQBUSY) ENQBUSY ?
+         BE    ENQBUSY            EXIT IF IT IS
+* SERVER HAS SENT UNKNOWN VALUE IN KCPRETCD
+         B     INVREQ             SHOULD NOT OCCUR
+*
+EXMVC    MVC   KCPRES(0),0(R14)   MOVE RESOURCE
+*
+INVREQ   EQU   *
+* INVOKE INVREQ
+         MVI   EIBRCODE,X'E0'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         B     DORESP             EXIT
+*
+LENGERR  EQU   *
+* INVOKE LENGERR
+         MVI   EIBRCODE,X'E1'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
+         B     DORESP             EXIT
+*
+ENQBUSY  EQU   *
+* INVOKE ENQBUSY
+         MVC   P1204NOH,KCPNOH    NOHANDLE OVERRIDE (SEE GBL1204)
+         MVI   EIBRCODE,X'32'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(ENQBUSY) SET EIBRESP=ENQBUSY
+DORESP   EQU   *
+         ICM   R14,15,P1204RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P1204RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         SUBEXIT
+*
+P1204    DSECT
+P1204FN  DS    XL2                FUNCTION CODE
+P1204EIB DS    AL4                EIB
+P1204TCT DS    AL4                TCTTE
+P1204RES DS    AL4                RESOURCE ADDRESS
+P1204LEN DS    XL2                LENGTH
+P1204HCN DS    AL4                A(DFHEIHCN)
+P1204NOS DS    X                  FF=NOSUSPEND
+P1204NOH DS    X                  FF=NOHANDLE
+P1204RSP DS    AL4                RESP
+P1204RS2 DS    AL4                RESP2
+P1204END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHHCBLK                 HANDLE CONDITION BLOCK
+         DFHKCBLK                 TASK CONTROL BLOCK
+*
+         EQUREGS REGS=GPR
+*
+         END
+

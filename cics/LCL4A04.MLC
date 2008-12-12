@@ -1,0 +1,636 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL4A04  SUBENTRY
+*
+* FN=4A04  EXEC CICS FORMATTIME
+*
+* R1  >>> P4A04 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P4A04,P4A04END),R3
+         L     DFHEIBR,P4A04EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P4A04TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P4A04FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P4A04RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P4A04RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         TP    P4A04ABS           VALID PACKED FIELD ?
+         BNZ   INVREQ             EXIT IF BAD
+         ZAP   P4A04ABS,P4A04ABS  CHECK -VE ?
+         BM    INVREQ             EXIT IF BAD
+         ZAP   ABSTIME,P4A04ABS   MOVE ABSTIME
+         CVBG  R1,ABSTIME         CONVERT TO BINARY
+         SGR   R0,R0              CLEAR R0
+         DSGF  R0,=AL4(1000*60*60*24) REDUCE TO DAYS
+         AHI   R1,1               +1 FOR TRUE DAYCOUNT
+         ST    R1,DAYCOUNT        SAVE IT
+         SR    R0,R0              CLEAR R0
+         D     R0,=F'7'           DAYCOUNT MOD 7=DAY NUMBER
+         ST    R0,DAYNUMB         SAVE IT
+         L     R1,DAYCOUNT        RELOAD IT
+         AHI   R1,-1              WHOLE DAYS ELAPSED
+         MS    R1,=F'100'         *100
+         SR    R0,R0              CLEAR R0
+         D     R0,=F'36525'       YEARS SINCE 1900
+         AHI   R1,1900            TRUE YEAR
+         ST    R1,YEAR            SAVE IT
+         AHI   R1,-1900           YEARS SINCE 1900
+         SRL   R1,2               /4=LEAP YEARS SINCE 1900
+         ST    R1,LEAPS           SAVE IT
+         L     R1,YEAR            RELOAD YEAR
+         AHI   R1,-1900           YEARS SINCE 1900
+         MS    R1,=F'365'         *365
+         A     R1,LEAPS           +LEAPS=DAYS IN WHOLE YEARS
+         ST    R1,WHOLEYR         SAVE IT
+         L     R1,DAYCOUNT        RELOAD DAYCOUNT
+         S     R1,WHOLEYR         -DAYS IN WHOLE YEARS
+         ST    R1,THISYR          DAYS IN THIS YEAR
+         MVC   MNTHTAB+2(2),=H'28' SET FEB
+         TM    YEAR+3,X'03'       LEAP YEAR ?
+         BNZ   NOTLEAP            EXIT IF NOT
+         MVC   MNTHTAB+2(2),=H'29' SET LEAP FEB
+NOTLEAP  EQU   *
+         LA    R2,MNTHTAB         ADDRESS MONTH TABLE
+         SR    R0,R0              CLEAR R0
+MONTHLP  EQU   *
+         CH    R1,0(R2)           THIS MONTH ?
+         BNH   THISMTH            EXIT IF IT IS
+         AHI   R0,1               BUMP MONTH NUMBER
+         SH    R1,0(R2)           REDUCE BY MONTH'S DAYS
+         AHI   R2,2               BUMP MONTH TABLE
+         B     MONTHLP            LOOP
+*
+THISMTH  EQU   *
+         AHI   R0,1               BUMP MONTH NUMBER
+         AHI   R1,1               BUMP DAY NUMBER
+         AHI   R2,-2              MOTHE TABLE ENTRY
+         CH    R1,0(R2)           PAST END OF MONTH ?
+         BNH   NEWMHYR            EXIT IF NOT
+         LA    R1,1               DAY NUMBER=1
+         AHI   R0,1               BUMP MONTH NUMBER
+         CHI   R0,13              PAST END OF YEAR ?
+         BNE   NEWMHYR            EXIT IF NOT
+         LA    R0,1               MONTH NUMBER=1
+         L     R2,YEAR            RELOAD YEAR
+         AHI   R2,1               BUMP YEAR NUMBER
+         ST    R2,YEAR            SAVE YEAR
+NEWMHYR  EQU   *
+         ST    R0,MONTH           SAVE MONTH NUMBER
+         ST    R1,DAYNO           SAVE DAY NUMBER
+         LGF   R1,WHOLEYR         DAYS IN WHOLE YRS
+         AHI   R1,-1              WHOLE DAYS ELAPSED
+         AGF   R1,THISYR          +DAYS IN THIS YEAR
+         MSGF  R1,=AL4(1000*60*60*24) CONVERT TO mS
+         CVBG  R0,ABSTIME         CONVERT TO BINARY
+         SGR   R0,R1              R0=RESIDUAL TIME
+         LR    R1,R0              SAVE IT
+         SR    R0,R0              CLEAR R0
+         D     R0,=AL4(1000*60*60) CALC HOURS
+         ST    R1,HOURS           SAVE HOURS
+         LR    R1,R0              MOVE REMAINDER
+         SR    R0,R0              CLEAR R0
+         D     R0,=AL4(1000*60)   CALC MINUTES
+         ST    R1,MINS            SAVE MINUTES
+         LR    R1,R0              MOVE REMAINDER
+         SR    R0,R0              CLEAR R0
+         D     R0,=AL4(1000)      CALC SECONDS
+         ST    R1,SECS            SAVE SECONDS
+*
+         L     R1,DAYNO           LOAD DAY NUMBER
+         CVD   R1,CVDOUT          CONVERT TO DECIMAL
+         MVC   D,=X'212020'       MOVE EDIT WORD
+         ED    D,CVDOUT+6         EDIT DAY NUMBER
+         L     R1,MONTH           LOAD MONTH NUMBER
+         CVD   R1,CVDOUT          CONVERT TO DECIMAL
+         MVC   M,=X'212020'       MOVE EDIT WORD
+         ED    M,CVDOUT+6         EDIT MONTH NUMBER
+         L     R1,YEAR            LOAD YEAR
+         CVD   R1,CVDOUT          CONVERT TO DECIMAL
+         MVC   Y,=X'2120202020'   MOVE EDIT WORD
+         ED    Y,CVDOUT+5         EDIT YEAR
+*
+         L     R1,HOURS           LOAD HOURS
+         CVD   R1,CVDOUT          CONVERT TO DECIMAL
+         MVC   HH,=X'212020'      MOVE EDIT WORD
+         ED    HH,CVDOUT+6        EDIT HOURS
+         L     R1,MINS            LOAD MINUTES
+         CVD   R1,CVDOUT          CONVERT TO DECIMAL
+         MVC   MM,=X'212020'      MOVE EDIT WORD
+         ED    MM,CVDOUT+6        EDIT MINUTES
+         L     R1,SECS            LOAD SECONDS
+         CVD   R1,CVDOUT          CONVERT TO DECIMAL
+         MVC   SS,=X'212020'      MOVE EDIT WORD
+         ED    SS,CVDOUT+6        EDIT SECONDS
+         L     R1,THISYR          LOAD DAY NUMBER
+         AHI   R1,1               ADD THE NEXT DAY
+         CVD   R1,CVDOUT          CONVERT TO DECIMAL
+         MVC   DDD,=X'F0202020'   MOVE EDIT WORD
+         ED    DDD,CVDOUT+6       EDIT DAY NUMBER
+*
+         ICM   R1,15,P4A04DAT     ANY DATE ?
+         BZ    DUNDATE            EXIT IF NOT
+* PROCESS DATE
+         CLI   EIBDTFRM,C'K'      DMY ?
+         BNE   NOTK               EXIT IF NOT
+* DMY
+         MVC   0(2,R1),D+1        MOVE DAY
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSEPK1            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSEPK1  EQU   *
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSEPK2            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSEPK2  EQU   *
+         MVC   0(2,R1),Y+3        MOVE YEAR
+         B     DUNDATE            EXIT
+*
+NOTK     EQU   *
+         CLI   EIBDTFRM,C'S'      MDY ?
+         BNE   NOTS               EXIT IF NOT
+* MDY
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSEPS1            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSEPS1  EQU   *
+         MVC   0(2,R1),D+1        MOVE DAY
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSEPS2            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSEPS2  EQU   *
+         MVC   0(2,R1),Y+3        MOVE YEAR
+         B     DUNDATE            EXIT
+*
+NOTS     EQU   *
+* YMD
+         MVC   0(2,R1),Y+3        MOVE YEAR
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSEPR1            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSEPR1  EQU   *
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSEPR2            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSEPR2  EQU   *
+         MVC   0(2,R1),D+1        MOVE DAY
+DUNDATE  EQU   *
+*
+         ICM   R1,15,P4A04DFM     ANY DATEFORM ?
+         BZ    DUNDTFM            EXIT IF NOT
+* PROCESS DATEFORM
+         CLI   EIBDTFRM,C'K'      DMY ?
+         BNE   NOTKDF             EXIT IF NOT
+* DATEFORM=DMY
+         MVC   0(6,R1),=C'DDMMYY' MOVE FORMAT
+         B     DUNDTFM            EXIT
+*
+NOTKDF   EQU   *
+         CLI   EIBDTFRM,C'S'      MDY ?
+         BNE   NOTSDF             EXIT IF NOT
+* DATEFORM=MDY
+         MVC   0(6,R1),=C'MMDDYY' MOVE FORMAT
+         B     DUNDTFM            EXIT
+*
+NOTSDF   EQU   *
+* DATEFORM=YMD
+         MVC   0(6,R1),=C'YYMMDD' MOVE FORMAT
+DUNDTFM  EQU   *
+*
+         ICM   R1,15,P4A04FDT     ANY FULLDATE ?
+         BZ    DUNFDAT            EXIT IF NOT
+.* PROCESS FULLDATE
+         CLI   EIBDTFRM,C'K'      DMY ?
+         BNE   NOTFK              EXIT IF NOT
+* DMY
+         MVC   0(2,R1),D+1        MOVE DAY
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSPFK1            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSPFK1  EQU   *
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSPFK2            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSPFK2  EQU   *
+         MVC   0(4,R1),Y+1        MOVE YEAR
+         B     DUNFDAT            EXIT
+*
+NOTFK    EQU   *
+         CLI   EIBDTFRM,C'S'      MDY ?
+         BNE   NOTFS              EXIT IF NOT
+* MDY
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSPFS1            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSPFS1  EQU   *
+         MVC   0(2,R1),D+1        MOVE DAY
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSPFS2            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSPFS2  EQU   *
+         MVC   0(4,R1),Y+1        MOVE YEAR
+         B     DUNFDAT            EXIT
+*
+NOTFS    EQU   *
+* YMD
+         MVC   0(4,R1),Y+1        MOVE YEAR
+         AHI   R1,4               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSPFR1            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSPFR1  EQU   *
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NOSPFR2            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSPFR2  EQU   *
+         MVC   0(2,R1),D+1        MOVE DAY
+DUNFDAT  EQU   *
+*
+         ICM   R1,15,P4A04DM2     ANY DDMMYY ?
+         BZ    DUNDMY2            EXIT IF NOT
+* DDMMYY
+         MVC   0(2,R1),D+1        MOVE DAY
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPDMY21           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPDMY21 EQU   *
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPDMY22           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPDMY22 EQU   *
+         MVC   0(2,R1),Y+3        MOVE YEAR
+DUNDMY2  EQU   *
+*
+         ICM   R1,15,P4A04MD2     ANY MMDDYY ?
+         BZ    DUNMDY2            EXIT IF NOT
+* MMDDYY
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPMDY21           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPMDY21 EQU   *
+         MVC   0(2,R1),D+1        MOVE DAY
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPMDY22           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPMDY22 EQU   *
+         MVC   0(2,R1),Y+3        MOVE YEAR
+DUNMDY2  EQU   *
+*
+         ICM   R1,15,P4A04YD2     ANY YYDDMM ?
+         BZ    DUNYDM2            EXIT IF NOT
+* YYDDMM
+         MVC   0(2,R1),Y+3        MOVE YEAR
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPYDM21           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPYDM21 EQU   *
+         MVC   0(2,R1),D+1        MOVE DAY
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPYDM22           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPYDM22 EQU   *
+         MVC   0(2,R1),M+1        MOVE MONTH
+DUNYDM2  EQU   *
+*
+         ICM   R1,15,P4A04YM2     ANY YYMMDD ?
+         BZ    DUNYMD2            EXIT IF NOT
+* YYMMDD
+         MVC   0(2,R1),Y+3        MOVE YEAR
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPYMD21           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPYMD21 EQU   *
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPYMD22           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPYMD22 EQU   *
+         MVC   0(2,R1),D+1        MOVE DAY
+DUNYMD2  EQU   *
+*
+         ICM   R1,15,P4A04DM4     ANY DDMMYYYY ?
+         BZ    DUNDMY4            EXIT IF NOT
+* DDMMYYYY
+         MVC   0(2,R1),D+1        MOVE DAY
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPDMY41           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPDMY41 EQU   *
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPDMY42           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPDMY42 EQU   *
+         MVC   0(4,R1),Y+1        MOVE YEAR
+DUNDMY4  EQU   *
+*
+         ICM   R1,15,P4A04MD4     ANY MMDDYYYY ?
+         BZ    DUNMDY4            EXIT IF NOT
+* MMDDYYYY
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPMDY41           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPMDY41 EQU   *
+         MVC   0(2,R1),D+1        MOVE DAY
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPMDY42           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPMDY42 EQU   *
+         MVC   0(4,R1),Y+1        MOVE YEAR
+DUNMDY4  EQU   *
+*
+         ICM   R1,15,P4A04YD4     ANY YYYYDDMM ?
+         BZ    DUNYDM4            EXIT IF NOT
+* YYYYDDMM
+         MVC   0(4,R1),Y+1        MOVE YEAR
+         AHI   R1,4               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPYDM41           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPYDM41 EQU   *
+         MVC   0(2,R1),D+1        MOVE DAY
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPYDM42           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPYDM42 EQU   *
+         MVC   0(2,R1),M+1        MOVE MONTH
+DUNYDM4  EQU   *
+*
+         ICM   R1,15,P4A04YM4     ANY YYYYMMDD ?
+         BZ    DUNYMD4            EXIT IF NOT
+* YYYYMMDD
+         MVC   0(4,R1),Y+1        MOVE YEAR
+         AHI   R1,4               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPYMD41           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPYMD41 EQU   *
+         MVC   0(2,R1),M+1        MOVE MONTH
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPYMD42           EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPYMD42 EQU   *
+         MVC   0(2,R1),D+1        MOVE DAY
+DUNYMD4  EQU   *
+*
+         ICM   R1,15,P4A04Y2D     ANY YYDDD ?
+         BZ    DUNYD2             EXIT IF NOT
+* YYDDD
+         MVC   0(2,R1),Y+3        MOVE YEAR
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPYD21            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPYD21  EQU   *
+         MVC   0(3,R1),DDD+1      MOVE DAY NUMBER
+DUNYD2   EQU   *
+*
+         ICM   R1,15,P4A04Y4D     ANY YYYYDDD ?
+         BZ    DUNYD4             EXIT IF NOT
+* YYYYDDD
+         MVC   0(4,R1),Y+1        MOVE YEAR
+         AHI   R1,4               BUMP OUTPUT POINTER
+         CLI   P4A04DSP,X'00'     ANY DATE SEPARATOR ?
+         BE    NSPYD41            EXIT IF NONE
+         MVC   0(1,R1),P4A04DSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NSPYD41  EQU   *
+         MVC   0(3,R1),DDD+1      MOVE DAY NUMBER
+DUNYD4   EQU   *
+*
+         ICM   R1,15,P4A04DYC     ANY DAYCOUNT ?
+         BZ    DUNDYC             EXIT IF NOT
+* DAYCOUNT
+         MVC   0(4,R1),DAYCOUNT   MOVE DAY COUNT
+DUNDYC   EQU   *
+*
+         ICM   R1,15,P4A04DOW     ANY DAYOFWEEK ?
+         BZ    DUNDOW             EXIT IF NOT
+* DAY OF WEEK
+         MVC   0(4,R1),DAYNUMB    MOVE DAY OF WEEK
+DUNDOW   EQU   *
+*
+         ICM   R1,15,P4A04DOM     ANY DAYOFMONTH ?
+         BZ    DUNDOM             EXIT IF NOT
+* DAY OF MONTH
+         MVC   0(4,R1),DAYNO      MOVE DAY OF MONTH
+DUNDOM   EQU   *
+*
+         ICM   R1,15,P4A04MOY     ANY MONTHOFYEAR ?
+         BZ    DUNMOY             EXIT IF NOT
+* MONTH OF YEAR
+         MVC   0(4,R1),MONTH      MOVE MONTH
+DUNMOY   EQU   *
+*
+         ICM   R1,15,P4A04YR      ANY YEAR ?
+         BZ    DUNYR              EXIT IF NOT
+* YEAR
+         MVC   0(4,R1),YEAR       MOVE YEAR
+DUNYR    EQU   *
+*
+         ICM   R1,15,P4A04DST     ANY DATESTRING ?
+         BZ    DUNDST             EXIT IF NOT
+* DATESTRING
+         L     R2,DAYNUMB         R2=DAY NUMBER
+         MH    R2,=H'3'           * 3
+         LA    R2,DTAB(R2)        INDEX TO DAY TABLE
+         MVC   0(3,R1),0(R2)      MOVE CHAR DAY
+         MVC   3(2,R1),=C', '     COMMA/SPACE
+         MVC   5(2,R1),D+1        MOVE DAY
+         MVI   7(R1),C' '         SPACE
+         L     R2,MONTH           R2=MONTH
+         AHI   R2,-1              -1 FOR INDEX
+         MH    R2,=H'3'           * 3
+         LA    R2,MTAB(R2)        INDEX TO MONTH TAB
+         MVC   8(3,R1),0(R2)      MOVE CHAR MONTH
+         MVI   11(R1),C' '        SPACE
+         MVC   12(4,R1),Y+1       MOVE YEAR
+         MVI   16(R1),C' '        SPACE
+         MVC   17(2,R1),HH+1      MOVE HOURS
+         MVI   19(R1),C':'        COLON
+         MVC   20(2,R1),MM+1      MOVE MINS
+         MVI   22(R1),C':'        COLON
+         MVC   23(2,R1),SS+1      MOVE SECS
+DUNDST   EQU   *
+*
+         ICM   R1,15,P4A04TIM     ANY TIME ?
+         BZ    RETURN             EXIT IF NOT
+* TIME
+         MVC   0(2,R1),HH+1       MOVE HOURS
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04TSP,X'00'     ANY TIME SEPARATOR ?
+         BE    NOSEPT1            EXIT IF NONE
+         MVC   0(1,R1),P4A04TSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSEPT1  EQU   *
+         MVC   0(2,R1),MM+1       MOVE MINS
+         AHI   R1,2               BUMP OUTPUT POINTER
+         CLI   P4A04TSP,X'00'     ANY TIME SEPARATOR ?
+         BE    NOSEPT2            EXIT IF NONE
+         MVC   0(1,R1),P4A04TSP   MOVE SEPARATOR
+         AHI   R1,1               BUMP OUTPUT POINTER
+NOSEPT2  EQU   *
+         MVC   0(2,R1),SS+1       MOVE SECS
+         B     RETURN             EXIT
+*
+INVREQ   EQU   *
+* INVOKE INVREQ/1
+         MVI   EIBRCODE+3,X'01'   SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         MVC   EIBRESP2,=F'1'     SET EIBRESP2=BAD ABSTIME
+         ICM   R14,15,P4A04RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P4A04RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         SUBEXIT
+*
+ABSTIME  DS    PL16               WORK AREA
+DAYCOUNT DS    F                  DAYS SINCE 1/1/1900 +1 FOR TODAY
+LEAPS    DS    F                  LEAP YEARS SINCE 1900
+WHOLEYR  DS    F                  DAYS IN WHOLE YEARS SINCE 1900
+CVDOUT   DS    PL8                WORK AREA
+*
+* BINARY VALUES
+THISYR   DS    F                  COMPLETED DAYS THIS YEAR
+YEAR     DS    F                  YEAR
+MONTH    DS    F                  MONTH OF YEAR
+DAYNO    DS    F                  DAY OF MONTH
+DAYNUMB  DS    F                  DAY OF WEEK
+HOURS    DS    F                  HOURS
+MINS     DS    F                  MINUTES
+SECS     DS    F                  SECONDS
+*
+* CHAR VALUES
+DDD      DS    CL4                DAY IN YEAR
+D        DS    CL3                DAY IN MONTH
+M        DS    CL3                MONTH IN YEAR
+Y        DS    CL5                YEAR NUMBER
+HH       DS    CL3                HOURS
+MM       DS    CL3                MINUTES
+SS       DS    CL3                SECONDS
+*
+* TABLES
+MNTHTAB  DC    AL2(31,28,31,30,31,30,31,31,30,31,30,31)
+DTAB     DC    C'SunMonTueWedThuFriSat'
+MTAB     DC    C'JanFebMarAprMayJunJulAugSepOctNovDec'
+*
+P4A04    DSECT
+P4A04FN  DS    XL2                FUNCTION CODE
+P4A04EIB DS    AL4                EIB
+P4A04TCT DS    AL4                TCTTE
+P4A04ABS DS    PL8                ABSTIME
+P4A04DSP DS    C                  DATE SEPARATOR
+P4A04TSP DS    C                  TIME SEPARATOR
+P4A04DAT DS    AL4                DATE
+P4A04DFM DS    AL4                DATEFORM
+P4A04FDT DS    AL4                FULLDATE
+P4A04DM2 DS    AL4                DDMMYY
+P4A04MD2 DS    AL4                MMDDYY
+P4A04YD2 DS    AL4                YYDDMM
+P4A04YM2 DS    AL4                YYMMDD
+P4A04DM4 DS    AL4                DDMMYYYY
+P4A04MD4 DS    AL4                MMDDYYYY
+P4A04YD4 DS    AL4                YYYYDDMM
+P4A04YM4 DS    AL4                YYYYMMDD
+P4A04Y2D DS    AL4                YYDDD
+P4A04Y4D DS    AL4                YYYYDD
+P4A04DYC DS    AL4                DAYCOUNT
+P4A04DOW DS    AL4                DAYOFWEEK
+P4A04DOM DS    AL4                DAYOFMONTH
+P4A04MOY DS    AL4                MONTHOFYEAR
+P4A04YR  DS    AL4                YEAR
+P4A04DST DS    AL4                DATESTRING
+P4A04TIM DS    AL4                TIME
+         DS    X                  FF=NOHANDLE
+P4A04RSP DS    AL4                RESP
+P4A04RS2 DS    AL4                RESP2
+P4A04END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+*
+         EQUREGS REGS=GPR
+*
+         END
+

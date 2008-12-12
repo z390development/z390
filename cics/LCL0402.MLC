@@ -1,9 +1,9 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 LCL0402  SUBENTRY
 *
 * FN=0402  EXEC CICS RECEIVE
@@ -19,13 +19,18 @@ LCL0402  SUBENTRY
          USING DFHTCTTE,TCTTEAR
          L     R4,P0402ADB        LOAD AID BLOCK ADDRESS
          USING DFHADBLK,R4
-* TEST IF RECALL TO PROCESS IGNORE CONDITION
-         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
-         BNZ   DUNLENCK           EXIT IF IT IS
          MVC   EIBFN,P0402FN      SET EIBFN
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0402RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0402RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
          CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
          BNE   NOTSEQ             EXIT IF NOT
 * SEQUENTIAL TERMINAL PROCESSING
@@ -83,28 +88,26 @@ NOTSEQ   EQU   *
 *
 DONOWAIT EQU   *
          TGET  (R6),(R7),ASIS,NOWAIT
-         C     R15,=F'4'          ANY INPUT ?
-         BE    NOINPUT            EXIT IF NOT
+         ST    R15,P0402TGR       SAVE TGET RESPONSE
+         CFI   R15,4              ANY INPUT ?
+         BE    RETURN             RETURN IF NO INPUT
 DUNGET   EQU   *
          L     R8,P0402LEN        R8=A(LENGTH)
          STH   R1,0(R8)           SET RECEIVED LENGTH
-* NOHANDLE AVOIDS CONDITION CHECKS
-         CLI   P0402NOH,X'FF'     NOHANDLE ?
-         BE    DUNLENCK           EXIT IF IT IS
          LH    R14,P0402INL       R14=REQUESTED LENGTH
          CR    R14,R1             ACTUAL LENGTH EXCEEDS REQUESTED ?
-         BNL   DUNLENCK           EXIT IF NOT
+         BNL   PROCDATA           EXIT IF NOT
 * INVOKE LENGERR
          MVI   EIBRCODE,X'E1'     SET EIBRCODE
          MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
-         B     RETURN             RETURN
-*
-DUNLENCK DS    0H
-* ALSO RE-ENTRY POINT FOR IGNORE CONDITION
+         ICM   R14,15,P0402RSP    R14=RESP ADDRESS
+         BZ    PROCDATA           EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP=LENGERR
+PROCDATA DS    0H
          MVC   EIBAID,0(R6)       SET EIBAID
 * SET EIBCPOSN IF ENOUGH DATA
-         CH    R1,=H'3'           LENGTH >= 3 ?
-         BL    NOINPUT            EXIT IF NOT
+         CHI   R1,3               LENGTH >= 3 ?
+         BL    LOINPUT            EXIT IF NOT
 * CURSOR POS TO HEX EG. C1C6, ROW 1 COL 71, POS 70 (X'46')
          SR    R0,R0              CLEAR R0
          LR    R1,R0              CLEAR R1
@@ -115,7 +118,7 @@ DUNLENCK DS    0H
          SLL   R1,2               SHIFT OUT PARITY BITS  ..01/18...
          SRDL  R0,26              COMBINE TO 12-BITS     ..../...46
          STH   R1,EIBCPOSN        SAVE IT
-NOINPUT  EQU   *
+LOINPUT  EQU   *
 * PROCESS ANY HANDLE AID
 * NOHANDLE AVOIDS HANDLE AID CHECKS
          CLI   P0402NOH,X'FF'     NOHANDLE ?
@@ -123,7 +126,7 @@ NOINPUT  EQU   *
          LTR   R4,R4              ANY AID BLOCKS ?
          BZ    RETURN             RETURN IF NONE
 ADBLKLP  EQU   *
-         OC    AIDCHAIN,AIDCHAIN  ANY CHAIN ?
+         OC    AIDCHAIN,AIDCHAIN  ANY AID CHAIN ?
          BZ    LASTAID            EXIT IF LAST AID BLOCK
          L     R4,AIDCHAIN        CHAIN TO NEXT AID BLOCK
          B     ADBLKLP            LOOP
@@ -147,9 +150,8 @@ GOTAID   DS    0H
          BZ    RETURN             RETURN IF NONE
          L     R7,4(R13)          R7=CALLERS SAVEAREA
          MVC   12(4,R7),0(R8)     SET ROUTINE ADDRESS AS RETURN ADDRESS
-*
 RETURN   EQU   *
-         SUBEXIT RC=(R15)
+         SUBEXIT
 *
 AIDINDEX EQU   *
          DC    X'7D',AL2(0)       ENTER
@@ -193,8 +195,11 @@ P0402ADB DS    AL4                ADBLK
 P0402INT DS    AL4                INTO
 P0402INL DS    AL2                L'INTO
 P0402LEN DS    AL4                LENGTH
+P0402TGR DS    XL4                TGET RESPONSE
 P0402NOH DS    X                  FF=NOHANDLE
 P0402NOW DS    X                  FF=NOWAIT
+P0402RSP DS    AL4                RESP
+P0402RS2 DS    AL4                RESP2
 P0402END EQU   *                  END MARKER
 *
          DFHEIBLK                 EIB

@@ -1,0 +1,95 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL0E06  SUBENTRY
+*
+* FN=0E06  EXEC CICS LOAD
+*
+* R1  >>> P0E06 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0E06,P0E06END),R3
+         L     DFHEIBR,P0E06EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0E06TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0E06FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0E06RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0E06RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         MVC   BLDLNAME,P0E06PGM  MOVE PROGRAM FOR BLDL
+         MVC   EIBRSRCE,P0E06PGM  SET EIBRSRCE
+         BLDL  0,BLDLLIST         BLDL
+         LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
+         BZ    LOADOK             EXIT IF OK
+* INVOKE PGMIDERR
+         MVI   EIBRCODE,X'01'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(PGMIDERR) SET EIBRESP=PGMIDERR
+         MVC   EIBRESP2,=F'3'     SET EIBRESP2=PROGRAM NOT FOUND
+         ICM   R14,15,P0E06RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P0E06RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+         B     RETURN             RETURN
+*
+LOADOK   DS    0H
+         LOAD  EPLOC=EIBRSRCE
+         ST    R0,P0E06ENT        SAVE ENTRY POINT
+         SLL   R1,3               LENGTH * 8
+         ICM   R14,15,P0E06LEN    R14=ADDRESS OF LENGTH
+         BZ    TRYFLEN            EXIT IF NONE
+         STH   R1,0(R14)          SAVE LENGTH
+         B     DUNLEN             EXIT
+*
+TRYFLEN  EQU   *
+         ICM   R14,15,P0E06FLN    R14=ADDRESS OF FLENGTH
+         BZ    DUNLEN             EXIT IF NONE
+         ST    R1,0(R14)          SAVE FLENGTH
+DUNLEN   EQU   *
+         LR    R1,R0              R1=ENTRY POINT
+         CLC   0(2,R1),=X'1821'   PROGRAM START ?
+         BNE   RETURN             EXIT IF NOT
+         MVC   EIBPROG,EIBRSRCE   SET PROGRAM LOAD
+RETURN   EQU   *
+         SUBEXIT
+*
+BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
+         DC    H'12'              BLDL ENTRY LENGTH
+BLDLNAME DS    CL8                BLDL ENTRY NAME TO FIND
+         DS    XL4
+*
+P0E06    DSECT
+P0E06FN  DS    XL2                FUNCTION CODE
+P0E06EIB DS    AL4                EIB
+P0E06TCT DS    AL4                TCTTE
+P0E06PGM DS    CL8                PROGRAM
+P0E06LEN DS    AL4                ADDRESS OF LENGTH
+P0E06FLN DS    AL4                ADDRESS OF FLENGTH
+P0E06ENT DS    AL4                ENTRY POINT
+         DS    X                  FF=NOHANDLE
+P0E06RSP DS    AL4                RESP
+P0E06RS2 DS    AL4                RESP2
+P0E06END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+*
+         EQUREGS REGS=GPR
+*
+         END
+

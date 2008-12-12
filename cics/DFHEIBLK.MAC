@@ -1,9 +1,9 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
          MACRO
          DFHEIBLK
 *
@@ -16,12 +16,14 @@ EIBDATE  DS    PL4  0CYYDDD+
 EIBTRNID DS    CL4  TRANSACTION IDENTIFIER
 EIBTASKN DS    PL4  TASK NUMBER
 EIBTRMID DS    CL4  TERMINAL IDENTIFIER
-EIBRSVD1 DS    CL2  --RESERVED--
+         DS    CL2  --RESERVED--
 EIBCPOSN DS    XL2  CURSOR POSITION
 EIBCALEN DS    XL2  COMMAREA LENGTH
 EIBAID   DS    X    ATTENTION IDENTIFIER
 EIBFN    DS    H    FUNCTION CODE
 EIBRCODE DS    XL6  RESPONSE CODE
+EIBREQID DS    CL8  REQUEST IDENTIFIER
+EIBDS    DS    CL8  DATASET IDENTIFIER
 EIBRSRCE DS    CL8  RESOURCE IDENTIFIER
 EIBRESP  DS    XL4  RESP CODE
 EIBRESP2 DS    XL4  RESP2 CODE

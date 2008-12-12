@@ -1,0 +1,35 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+*
+* TEST COMPLEX FUNCTIONS OF BMS
+*
+* 1) FIELDS THAT WRAP ROW/SCREEN FOR INPUT AND OUTPUT
+*
+* DYNAMIC SCREEN POSITIONING AND ACCUM MAPPING WILL BE ADDED
+*
+DFHEISTG DSECT       DSA STORAGE
+         COPY  MAP02
+TESTBMS2 CSECT
+*
+         CLI   FLIP,X'FF'         RECEIVE MODE ?
+         BE    RMODE              EXIT IF NOT
+         EXEC  CICS SEND MAP('BMS2') MAPSET('MAP02') MAPONLY ERASE
+         XI    FLIP,X'FF'         FLIP THE SWITCH
+         EXEC  CICS RETURN TRANSID('BMS2')
+*
+RMODE    EQU   *
+         EXEC  CICS RECEIVE MAP('BMS2') MAPSET('MAP02')
+         XI    FLIP,X'FF'         FLIP THE SWITCH
+         LA    R14,BMS2S          ###
+         LA    R15,BMS2E          ###
+         SNAP  STORAGE=((R14),(R15)),ID=1  ###
+         EXEC  CICS RETURN
+*
+FLIP     DC    X'00'
+*
+         END
+

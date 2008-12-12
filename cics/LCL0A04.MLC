@@ -1,0 +1,185 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL0A04  SUBENTRY
+*
+* FN=0A04  EXEC CICS READQ TS
+*
+* R1  >>> P0A04 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0A04,P0A04END),R3
+         L     DFHEIBR,P0A04EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0A04TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0A04FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0A04RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0A04RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+* GETMAIN AND MOVE THE DATA TO SEND
+         EXEC  CICS GETMAIN FLENGTH(=A(TSPREFIX)) SET(R5) INITIMG(0)   X
+               NOHANDLE
+         ST    R5,TSBLKSV         SAVE TS BLOCK ADDRESS FOR FREEMAIN
+         USING DFHTSBLK,R5
+* RESET EIB FIELDS
+         MVC   EIBFN,P0A04FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         MVC   TSPTCPIO,=A(TSPREFIX) MOVE LENGTH TO TS BLOCK
+         MVC   TSPFN,=C'0A04'     SET FUNCTION CODE
+         MVC   TSPTERM,TCTTETI    SET TERMINAL ID
+         MVC   TSPTRAN,EIBTRNID   SET TRANSID
+         MVC   TSPTASKN,EIBTASKN  SET TASK NUMBER
+         MVC   EIBRSRCE,P0A04QNM  SET EIBRSRCE
+         MVC   TSPNAME,P0A04QNM   SET QUEUE NAME
+* CHECK QUEUE NAME
+         OC    TSPNAME,TSPNAME    ALL ZEROS ?
+         BZ    INVREQ             ERROR IF IT IS
+         CLI   TSPNAME,X'FA'      X'FA'-X'FF' ?
+         BNL   INVREQ             ERROR IF IT IS
+         CLC   TSPNAME(2),=C'**'  RESERVED ID ?
+         BE    INVREQ             ERROR IF IT IS
+         CLC   TSPNAME(2),=C'$$'  RESERVED ID ?
+         BE    INVREQ             ERROR IF IT IS
+* DF IS NOW PERMITTED FOR READ AS YOU NEED SPECIAL PARAMETERS
+* TO WRITE IT
+         MVC   TSPITEM,P0A04ITM   SET ITEM NUMBER
+         MVC   TSPLEN,P0A04LEN    SET LENGTH
+* SEND REQUEST TO SERVER, GET REPLY
+         TCPIO SEND,MSG=(R5),LMSG==A(TSPREFIX),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+* ONLY THE PREFIX IS RECEIVED, WE GET THE DATA LATER
+         TCPIO RECEIVE,MSG=(R5),LMSG==A(TSPREFIX),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+         OC    TSPRETCD,TSPRETCD  BAD RETURN CODE ?
+         BZ    READQOK            EXIT IF NONE
+         CLC   TSPRETCD,DFHRESP(ITEMERR) ITEMERR ?
+         BE    ITEMERR            EXIT IF IT IS
+         CLC   TSPRETCD,DFHRESP(QIDERR) QIDERR ?
+         BE    QIDERR             EXIT IF IT IS
+* SERVER HAS SENT UNKNOWN VALUE IN TSPRETCD
+         B     INVREQ             SHOULD NOT OCCUR
+*
+READQOK  EQU   *
+         L     R4,P0A04INT        R4=INTO ADDRESS BY DEFAULT
+         CLI   P0A04SET,X'FF'     SET ?
+         BNE   DOINTO             EXIT IF NOT
+* SET
+         EXEC  CICS GETMAIN SET(R4) LENGTH(TSPACLEN) NOHANDLE
+         ST    R4,P0A04STA        SAVE GETMAIN ADDRESS
+* RESET EIB FIELDS
+         MVC   EIBFN,P0A04FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+DOINTO   EQU   *
+* INTO
+* GET THE DATA
+         LH    R15,TSPLEN         R15=REQUESTED LENGTH
+         CHI   R15,32767          IS IT THE DEFAULT LENGTH ?
+         BNE   GOTLEN             EXIT IF NOT
+         LH    R15,TSPACLEN       R15=ACTUAL LENGTH
+GOTLEN   EQU   *
+         TCPIO RECEIVE,MSG=(R4),LMSG=(R15),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+         ICM   R1,15,P0A04LAD     ANY LENGTH AS LABEL ?
+         BZ    PARTIAL            EXIT IF NONE
+         MVC   0(2,R1),TSPACLEN   SET ACTUAL LENGTH OF DATA
+PARTIAL  EQU   *
+         CLC   TSPLEN,TSPACLEN    PARTIAL DATA RECEIVED ?
+         BL    LENGERR            ERROR IF IT WAS
+         ICM   R1,15,P0A04NUM     ANY NUMITEMS ADDRESS ?
+         BZ    RETURN             RETURN IF NONE
+         MVC   0(2,R1),TSPNUMIT   SET NUMITEMS
+         B     RETURN             EXIT
+*
+INVREQ   EQU   *
+* INVOKE INVREQ
+         MVI   EIBRCODE,X'20'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         B     DORESP             EXIT
+*
+ITEMERR  EQU   *
+* INVOKE ITEMERR
+         MVI   EIBRCODE,X'01'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(ITEMERR) SET EIBRESP=ITEMERR
+         B     DORESP             EXIT
+*
+LENGERR  EQU   *
+* INVOKE LENGERR
+         MVI   EIBRCODE,X'E1'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
+         B     DORESP             EXIT
+*
+QIDERR   EQU   *
+* INVOKE QIDERR
+         MVI   EIBRCODE,X'02'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(QIDERR) SET EIBRESP=QIDERR
+DORESP   EQU   *
+         ICM   R14,15,P0A04RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P0A04RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         MVC   RCODE,EIBRCODE     SAVE RCODE
+         MVC   RESP,EIBRESP       SAVE RESP
+         MVC   RESP2,EIBRESP2     SAVE RESP2
+         EXEC  CICS FREEMAIN DATA(TSBLKSV) NOHANDLE
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZ   DORESP             EXIT IF THERE IS
+         MVC   EIBFN,P0A04FN      SET EIBFN
+         MVC   EIBRCODE,RCODE     RESTORE RCODE
+         MVC   EIBRESP,RESP       RESTORE RESP
+         MVC   EIBRESP2,RESP2     RESTORE RESP2
+         SUBEXIT
+*
+TSBLKSV  DS    AL4                SAVE TS BLOCK ADDRESS
+RCODE    DS    XL4                SAVE RCODE
+RESP     DS    XL4                SAVE RESP
+RESP2    DS    XL4                SAVE RESP2
+*
+P0A04    DSECT
+P0A04FN  DS    XL2                FUNCTION CODE
+P0A04EIB DS    AL4                EIB
+P0A04TCT DS    AL4                TCTTE
+P0A04QNM DS    CL16               QUEUE NAME
+P0A04ITM DS    XL2                ITEM
+P0A04LEN DS    XL2                LENGTH
+P0A04LAD DS    AL4                ADDRESS OF LENGTH IF LABEL
+P0A04SET DS    X                  FF=SET IS SPECIFIED
+P0A04STA DS    AL4                ADDRESS FOR SET
+P0A04INT DS    AL4                ADDRESS OF INTO
+P0A04NUM DS    AL4                ADDRESS OF NUMITEMS
+         DS    X                  FF=NOHANDLE
+P0A04RSP DS    AL4                RESP
+P0A04RS2 DS    AL4                RESP2
+P0A04END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHTSBLK                 TEMPORARY STORAGE PREFIX AREA
+*
+         EQUREGS REGS=GPR
+*
+         END
+

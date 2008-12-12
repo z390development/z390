@@ -61,6 +61,7 @@ copy  mac\WTO.MAC rt\test\WTO.MCR
 call MAC    rt\test\TESTMCR1.ASM stats sysmac(rt\test\*.mcr) notiming  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTTXT1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTPC1  tracep  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTAIN1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem az390 assembler
 rem
@@ -98,6 +99,8 @@ call rt\RT1 rt\test\TESTEXT2  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTWXT1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTOBJ1 objhex  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTOBJ2 @TESTOBJ2  %1 %2 %3 %4 %5 %6 %7 %8 %9
+rem remove 32 mb file to save space and avoid compare 
+erase rt\test\testobj2.390
 call rt\RT1 rt\test\TESTPRM4 @TESTPRM4  %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem ez390 emulator

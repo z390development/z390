@@ -9,7 +9,8 @@
 * 08/12/06 RPI 363 REPACKAGE MVS_MACLIB.ZIP AND Z390_RT.ZIP RT TESTS
 * 04/19/08 RPI 833 add SETC quotes for HLASM compatibility               
 * 09/05/08 RPI 797 upgrade to use ZSTRMAC structruced programming
-* 09/18/08 rpi 911 replace ASELECT>ACASE, APM>ACALL               
+* 09/18/08 RPI 911 replace ASELECT>ACASE, APM>ACALL               
+* 12/11/08 RPI 962 replace pause for missing file with missing filename
 *********************************************************************
 *
 *  RTGENBAT READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
@@ -17,8 +18,10 @@
 *  The input txt file is sorted directory list of regression TEST
 *  source and generated files directory plus SAVE directory.  There
 *  should be 2 duplicate entries of each file to be compared.  Any
-*  file which does not have match will generate bat pause error msg.
-*  Matching files will generate fc %1file %2file > %3file. 
+*  file which does not have match will generate:     
+*     copy missing %3missing_filename.
+*  Matching files will generate:
+*     fc %1file %2file > %3file. 
 *
 *********************************************************************
          :&LAST_FILE SETC '(FILE EMPTY)' PREVIOUS FILE
@@ -47,7 +50,7 @@
          PUNCH 'REM TOT COMPARES = &TOT_COMP  TOT ERRORS =&TOT_ERR',   X
                DSNAME='&SYSPARM'
          AIF   (&TOT_ERR GT 0)
-               MNOTE 8,'RTGENCOM FILE ERRORS FOUND - SEE RTCOMP4.BAT'
+               MNOTE *,'RTGENCOM FILE ERRORS FOUND - SEE RTCOMP4.BAT'
          AEND
          PUNCH 'COPY RTGENCMP.BAT %3',                                 X
                DSNAME='&SYSPARM'
@@ -62,23 +65,21 @@
 .*
          AENTRY CHK_DUPS
          AIF   (&DUP NE 2)
-               AIF (&DUP GT 2)
-                   :&MSG SETC 'MORE THAN 2 DUPLICATE FILES FOR &LAST_FIX
-               LE'
-                   ACALL ERR_MSG
-               AELSEIF (&DUP EQ 1)
-                   :&MSG SETC 'MISSING FILE FOR &LAST_FILE'
-                   ACALL ERR_MSG
+               AIF (&DUP GT 0)
+                   ACALL MISSING_FILE_MSG
                AEND
          AEND
          AEND
 .*
-.* ERR_MSG
+.* MISSING_FILE_MSG
 .*
-         AENTRY ERR_MSG
+         AENTRY MISSING_FILE_MSG
          :&TOT_ERR SETA &TOT_ERR+1
-         PUNCH 'PAUSE &MSG',DSNAME='&SYSPARM'
-         MNOTE 8,'RTGENBAT &MSG'
+         :&MSG SETC 'MISSING FILE FOR &LAST_FILE'
+         PUNCH 'REM &MSG',DSNAME='&SYSPARM'
+         PUNCH 'COPY linklib\MISSING.TXT %3\MISSING_&LAST_FILE',DSNAME=X
+               '&SYSPARM'
+         MNOTE *,'RTGENBAT &MSG'
          AEND
 .*
 .* COMP_FILES

@@ -1,0 +1,96 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL100C  SUBENTRY
+*
+* FN=100C  EXEC CICS CANCEL
+*
+* R1  >>> P100C BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P100C,P100CEND),R3
+         L     DFHEIBR,P100CEIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P100CTCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P100CFN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P100CRSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P100CRS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         MVC   EIBREQID,P100CREQ  MOVE REQID
+* GET AND CLEAR THE IC BLOCK
+         EXEC  CICS GETMAIN FLENGTH(=A(ICPREFIX)) SET(R5) INITIMG(0)   X
+               NOHANDLE
+         USING DFHICBLK,R5
+         MVC   ICPTCPIO,=AL4(ICPREFIX) SET PREFIX LENGTH
+         MVC   ICPFN,=C'100C'     SET FUNCTION CODE
+         MVC   ICPTERM,TCTTETI    SET TERMINAL ID
+         MVC   ICPTRAN,EIBTRNID   SET TRANSID
+         MVC   ICPTASKN,EIBTASKN  SET TASK NUMBER
+         MVC   ICPREQID,EIBREQID  SET REQID
+         TCPIO SEND,MSG=(R5),LMSG==A(ICPREFIX),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+* GET THE RESPONSE
+         TCPIO RECEIVE,MSG=(R5),LMSG==A(ICPREFIX),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+         OC    ICPRETCD,ICPRETCD  BAD RETURN CODE ?
+         BZ    RETURN             EXIT IF NONE
+         CLC   ICPRETCD,DFHRESP(NOTFND) NOTFND ?
+         BE    NOTFND             EXIT IF IT IS
+* SERVER HAS SENT UNKNOWN VALUE IN ICPRETCD
+         B     INVREQ             SHOULD NOT OCCUR
+*
+INVREQ   EQU   *
+* INVOKE INVREQ
+         XC    EIBREQID,EIBREQID  CLEAR EIBREQID
+         MVI   EIBRCODE,X'FF'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         B     DORESP             EXIT
+*
+NOTFND   EQU   *
+         XC    EIBREQID,EIBREQID  CLEAR EIBREQID
+         MVI   EIBRCODE,X'81'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(NOTFND) SET EIBRESP=NOTFND
+DORESP   EQU   *
+         ICM   R14,15,P100CRSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P100CRS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         SUBEXIT
+*
+P100C    DSECT
+P100CFN  DS    XL2                FUNCTION CODE
+P100CEIB DS    AL4                EIB
+P100CTCT DS    AL4                TCTTE
+P100CREQ DS    CL8                REQID
+         DS    X                  FF=NOHANDLE
+P100CRSP DS    AL4                RESP
+P100CRS2 DS    AL4                RESP2
+P100CEND EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHICBLK                 INTERVAL CONTROL PREFIX AREA
+*
+         EQUREGS REGS=GPR
+*
+         END
+
