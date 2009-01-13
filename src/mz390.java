@@ -355,6 +355,8 @@ public  class  mz390 {
      * 12/05/08 RPI 956 add AINSERT support using LinkedList
      * 12/06/08 RPI 968 set AREAD and PUNCH record length 80 if ASM and NOALLOW
      * 12/11/08 RPI 957 chksrc(3) for seq fld and > 80
+     * 12/14/08 RPI 976 add &SYSCICS, &SYSCICS_EPILOG, &SYSCICS_PROLOG for CICS macro use 
+     * 12/16/08 RPI 977 correct error 16 when dup ACALL names in separate macros
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1680,11 +1682,6 @@ public  class  mz390 {
 			load_open_macro_file();
 			load_macro_mend_level = 1; // no macro statement
 			mac_line_index = tot_mac_line;
-			if (tz390.opt_cics && tz390.opt_prolog){  // RPI 308
-				mac_line = " DFHEIGBL";
-				mac_file_line[mac_line_index] = mac_line;
-				mac_line_index = mac_file_next_line[mac_line_index]; // RPI 956
-			}
 			if (tz390.opt_profile.length() > 0){
 				mac_line = " COPY " + tz390.opt_profile;
 				mac_file_line[mac_line_index] = mac_line;
@@ -3030,7 +3027,7 @@ public  class  mz390 {
 		if (index > 0){
 			name = name.substring(0,index);
 		}
-		zsm_acall_index = tz390.find_key_index('Z',"N" + name);
+		zsm_acall_index = tz390.find_key_index('Z',"N" + lcl_sysndx + name);  // RPI 977
 		if (zsm_acall_index >= 0){
 			return true;
 		}
@@ -7941,6 +7938,18 @@ public  class  mz390 {
 		gbl_setc[tot_gbl_setc-1] = sys_vol;
 		add_gbl_sys("&SYSASM",var_setc_type);
 		gbl_setc[tot_gbl_setc-1] = "z390";
+		add_gbl_sys("&SYSCICS",var_setb_type); // RPI 976
+		if (tz390.opt_cics){
+			gbl_setb[tot_gbl_setb-1] = 1;   // RPI 976
+		}
+		add_gbl_sys("&SYSCICS_EPILOG",var_setb_type); // RPI 976
+		if (tz390.opt_epilog){
+			gbl_setb[tot_gbl_setb-1] = 1;   // RPI 976
+		}
+		add_gbl_sys("&SYSCICS_PROLOG",var_setb_type); // RPI 976
+		if (tz390.opt_prolog){
+			gbl_setb[tot_gbl_setb-1] = 1;   // RPI 976
+		}
 		add_gbl_sys("&SYSCLOCK",var_setc_type);
 		gbl_sysclock_index = tot_gbl_setc-1;
 		add_gbl_sys("&SYSDATC",var_setc_type);
@@ -10366,6 +10375,8 @@ public  class  mz390 {
 							if (tz390.opt_traceall){
 								tz390.put_trace("SYSLIST PARM(" + var_name_index + ")=" + setc_value);
 							}
+						} else if (set_sub < 0) {
+							log_error(276,"syslist negative subscript - " + set_sub);
 						} else {
 							log_error(66,"syslist reference only allowed in macro");
 						}

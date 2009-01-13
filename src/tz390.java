@@ -210,6 +210,7 @@ public  class  tz390 {
     * 12/01/08 RPI 970 add key index "C:" to indicate COPY file found
     * 12/11/08 RPI 957 chksrc(3) to chk seq field and > 80
     * 12/11/08 RPI 963 display final options 1 per line
+    * 12/19/08 RPI 979 default SYSCPY to pgm dir prior to addition of paths
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -218,7 +219,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.04";  //dsh
+    String version    = "V1.4.04a";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -4509,6 +4510,7 @@ public void init_options(String[] args,String pgm_type){
     	}
     	dir_390 = dir_pgm + "+linklib"; // RPI 700
     	dir_bal = dir_pgm;
+    	dir_cpy = dir_pgm;
         dir_dat = dir_pgm;
         dir_err = dir_pgm;
         dir_log = dir_pgm;
@@ -4870,7 +4872,11 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
       	dir_bal = set_path_option(dir_bal,token.substring(7,token.length()-1)); 
     } else if (token.length() > 7 
       		&& token.substring(0,7).toUpperCase().equals("SYSCPY(")){
-       	dir_cpy = set_path_option(dir_cpy,token.substring(7,token.length()-1)); 
+       	if (dir_cpy == null){ // RPI 979
+       		dir_cpy = set_path_option(dir_pgm,token.substring(7,token.length()-1)); 
+       	} else {
+       		dir_cpy = set_path_option(dir_cpy,token.substring(7,token.length()-1)); 
+       	}
     } else if (token.length() > 7 
       		&& token.substring(0,7).toUpperCase().equals("SYSDAT(")){
        	dir_dat = set_path_option(dir_dat,token.substring(7,token.length()-1)); 

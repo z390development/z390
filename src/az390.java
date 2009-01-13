@@ -334,6 +334,7 @@ public  class  az390 implements Runnable {
         * 11/18/08 RPI 951 add DFHRESP(ENQBUSY)=F'55'
         * 12/05/08 RPI 955 correct error message for over 256 on MVC
         * 12/05/08 RPI 959 suppress ERRSUM report if no erros
+        * 12/17/08 RPI 978 prevent trap on DS/DC with no operands
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -3954,6 +3955,9 @@ public void process_dc(int request_type){ // RPI 415
 	     case 1: // process ds/dc statements
 	    	 check_private_csect(); 
       	     dc_field = bal_parms;
+      	     if (dc_field == null){ // RPI 978
+      	    	 log_error(205,"DS/DC missing operand");
+      	     }
 	 	     dc_index = 0;
 	         dc_lit_ref = false;
 	         dc_lit_gen = false;

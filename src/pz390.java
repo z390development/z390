@@ -280,7 +280,9 @@ public class pz390 {
      *          to set CC3 when both neg and no borrow  
      * 08/13/08 RPI 894 change low DSA addr from 64k to 32k for testing AL2 RLD 
      * 09/12/08 RPI 764	change trace info for GL/PL svcs 
-     * 11/06/08 rpi 947 add ascii printable text display of MVC data moved              
+     * 11/06/08 rpi 947 add ascii printable text display of MVC data moved  
+     * 12/13/08 RPI 975 prevent SFFF on dirty high addr bit for printable hex 
+     * 01/12/09 RPI 981 prevent PD target update after data exception           
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -4409,33 +4411,36 @@ public class pz390 {
 		case 0xF9: // 7090 "F9" "CP" "SS"
 			psw_check = false;
 			ins_setup_ssp();
-			get_pdf_ints();
-			if (pdf_is_big) {
-				psw_cc = get_big_int_comp_cc(pdf_big_int1, pdf_big_int2);
-			} else {
-				psw_cc = get_long_comp_cc(pdf_long1, pdf_long2);
+			if (get_pdf_ints()){ // RPI 981
+				if (pdf_is_big) {
+					psw_cc = get_big_int_comp_cc(pdf_big_int1, pdf_big_int2);
+				} else {
+					psw_cc = get_long_comp_cc(pdf_long1, pdf_long2);
+				}
 			}
 			break;
 		case 0xFA: // 7100 "FA" "AP" "SS"
 			psw_check = false;
 			ins_setup_ssp();
-			get_pdf_ints();
-			if (pdf_is_big) {
-				pdf_big_int = pdf_big_int1.add(pdf_big_int2);
-			} else {
-				pdf_long = pdf_long1 + pdf_long2;
+			if (get_pdf_ints()){ // RPI 981
+				if (pdf_is_big) {
+					pdf_big_int = pdf_big_int1.add(pdf_big_int2);
+				} else {
+					pdf_long = pdf_long1 + pdf_long2;
+				}
+				put_pd(mem_byte, bd1_loc, rflen1);
 			}
-			put_pd(mem_byte, bd1_loc, rflen1);
 			psw_cc = pd_cc;
 			break;
 		case 0xFB: // 7110 "FB" "SP" "SS"
 			psw_check = false;
 			ins_setup_ssp();
-			get_pdf_ints();
-			if (pdf_is_big) {
-				pdf_big_int = pdf_big_int1.subtract(pdf_big_int2);
-			} else {
-				pdf_long = pdf_long1 - pdf_long2;
+			if (get_pdf_ints()){ // RPI 981
+				if (pdf_is_big) {
+					pdf_big_int = pdf_big_int1.subtract(pdf_big_int2);
+				} else {
+					pdf_long = pdf_long1 - pdf_long2;
+				}
 			}
 			put_pd(mem_byte, bd1_loc, rflen1);
 			psw_cc = pd_cc;
@@ -4443,49 +4448,51 @@ public class pz390 {
 		case 0xFC: // 7120 "FC" "MP" "SS"
 			psw_check = false;
 			ins_setup_ssp();
-			get_pdf_ints();
-			if (pdf_is_big) {
-				pdf_big_int = pdf_big_int1
-				            .multiply(pdf_big_int2);
-			} else {
-				if (pdf_long1 < max_pos_int && pdf_long1 > min_neg_int
-						&& pdf_long2 < max_pos_int && pdf_long2 > min_neg_int) {
-					pdf_long = pdf_long1 * pdf_long2;
-				} else {
-					pdf_is_big = true;
-					pdf_big_int1 = BigInteger.valueOf(pdf_long1);
-					pdf_big_int2 = BigInteger.valueOf(pdf_long2);
+			if (get_pdf_ints()){ // RPI 981
+				if (pdf_is_big) {
 					pdf_big_int = pdf_big_int1
+				            .multiply(pdf_big_int2);
+				} else {
+					if (pdf_long1 < max_pos_int && pdf_long1 > min_neg_int
+						&& pdf_long2 < max_pos_int && pdf_long2 > min_neg_int) {
+						pdf_long = pdf_long1 * pdf_long2;
+					} else {
+						pdf_is_big = true;
+						pdf_big_int1 = BigInteger.valueOf(pdf_long1);
+						pdf_big_int2 = BigInteger.valueOf(pdf_long2);
+						pdf_big_int = pdf_big_int1
 					            .multiply(pdf_big_int2);
+					}
 				}
+				put_pd(mem_byte, bd1_loc, rflen1);
 			}
-			put_pd(mem_byte, bd1_loc, rflen1);
 			break;
 		case 0xFD: // 7130 "FD" "DP" "SS"
 			psw_check = false;
 			ins_setup_ssp();
-			get_pdf_ints();
-			if (pdf_is_big) {
-				if (pdf_big_int2.signum() == 0) {
-					psw_cc = psw_cc3;
-					set_psw_check(psw_pic_pd_div);
-				}
-				BigInteger[] big_quo_rem = pdf_big_int1
+			if (get_pdf_ints()){  // RPI 981
+				if (pdf_is_big) {
+					if (pdf_big_int2.signum() == 0) {
+						psw_cc = psw_cc3;
+						set_psw_check(psw_pic_pd_div);
+					}
+					BigInteger[] big_quo_rem = pdf_big_int1
 						.divideAndRemainder(pdf_big_int2);
-				pdf_big_int = big_quo_rem[0];
-				put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
-				pdf_big_int = big_quo_rem[1];
-				put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
-			} else {
-				if (pdf_long2 == 0) {
-					psw_cc = psw_cc3;
-					set_psw_check(psw_pic_pd_div);
-					break;
+					pdf_big_int = big_quo_rem[0];
+					put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
+					pdf_big_int = big_quo_rem[1];
+					put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
+				} else {
+					if (pdf_long2 == 0) {
+						psw_cc = psw_cc3;
+						set_psw_check(psw_pic_pd_div);
+						break;
+					}
+					pdf_long = pdf_long1 / pdf_long2;
+					put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
+					pdf_long = pdf_long1 - pdf_long * pdf_long2;
+					put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
 				}
-				pdf_long = pdf_long1 / pdf_long2;
-				put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
-				pdf_long = pdf_long1 - pdf_long * pdf_long2;
-				put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
 			}
 			break;
 		}
@@ -15665,10 +15672,11 @@ public class pz390 {
 			set_psw_check(psw_pic_exec);
 		}
     }
-	private void get_pdf_ints() {
+	private boolean get_pdf_ints() {  // RPI 981
 		/*
-		 * set pdf_is_big to true or false and set pdf_big_int1 and pdf_big_int2
-		 * or pdf_long1 and pdf_long2
+		 * 1.  Return true if ok else false.  RPI 981
+		 * 2.  Set pdf_is_big to true or false and set pdf_big_int1 and pdf_big_int2
+		 *     or pdf_long1 and pdf_long2
 		 */
 		if (get_pd(mem,bd1_loc, rflen1)) { // RPI 305
 			if (pdf_is_big) {
@@ -15680,6 +15688,8 @@ public class pz390 {
 						pdf_is_big = true;
 						pdf_big_int2 = BigInteger.valueOf(pdf_long);
 					}
+				} else {
+					return false;
 				}
 			} else {
 				pdf_long1 = pdf_long;
@@ -15692,7 +15702,10 @@ public class pz390 {
 					}
 				}
 			}
+		} else {
+			return false;
 		}
+		return true;
 	}
 
 	private boolean get_pd(ByteBuffer pd_buff, int pdf_loc, int pdf_len) {
@@ -16564,11 +16577,15 @@ break;
 			if (maxlen > 16){
 				maxlen = 16; // RPI 395
 			}
+			int mem_loc = bd2_loc;  // RPI 975
+			if (bd2_loc > tot_mem-16){
+				mem_loc = 0;
+			}
 			trace_parms = " S1(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, maxlen, 0) + " S2("
 					+ tz390.get_hex(bd2_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd2_loc, maxlen, 0) 
-					+ "='" + tz390.get_ascii_printable_string(mem_byte,bd2_loc,maxlen) + "'"; // RPI 947
+					+ "='" + tz390.get_ascii_printable_string(mem_byte,mem_loc,maxlen) + "'"; // RPI 947
 			break;
 		case 171: // ASSIST RXSS I/O Instructions RPI 812
 			maxlen = bd2_loc;
