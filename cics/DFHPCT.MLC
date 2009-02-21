@@ -1,17 +1,13 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
          DFHPCT TYPE=ENTRY,TRANSID=MMM1,PROGRAM=BADPROG  INVALID PROG
          DFHPCT TYPE=ENTRY,TRANSID=MMM2,PROGRAM=MMMMCIC2 SEND MSG/RTN
 *
          DFHPCT TYPE=ENTRY,TRANSID=TST1,PROGRAM=TESTCIC1 DON'S TEST 1
-         DFHPCT TYPE=ENTRY,TRANSID=HWD1,PROGRAM=HELLOWD1 DON'S DEMO 1
-         DFHPCT TYPE=ENTRY,TRANSID=HWD2,PROGRAM=HELLOWD2 DON'S DEMO 2
-         DFHPCT TYPE=ENTRY,TRANSID=HWD3,PROGRAM=HELLOWD3 DON'S DEMO 3
-         DFHPCT TYPE=ENTRY,TRANSID=HWD4,PROGRAM=HELLOWD4 DON'S DEMO 4
          DFHPCT TYPE=ENTRY,TRANSID=GUI4,PROGRAM=TESTGUI4 DON'S GUAM 4
          DFHPCT TYPE=ENTRY,TRANSID=GUI6,PROGRAM=TESTGUI6 DON'S GUAM 6
 *
@@ -35,7 +31,25 @@
          DFHPCT TYPE=ENTRY,TRANSID=BMS1,PROGRAM=TESTBMS1 TEST BMS 1
          DFHPCT TYPE=ENTRY,TRANSID=BMS2,PROGRAM=TESTBMS2 TEST BMS 2
 *
+* TEST COBOL PROGRAMS
+         DFHPCT TYPE=ENTRY,TRANSID=BEC1,PROGRAM=TESTBEC1 BED1 zCOBOL
+         DFHPCT TYPE=ENTRY,TRANSID=BEC2,PROGRAM=TESTBEC4 BED2 zCOBOL
+         DFHPCT TYPE=ENTRY,TRANSID=BEC3,PROGRAM=TESTBEC5 BED3 zCOBOL
+         DFHPCT TYPE=ENTRY,TRANSID=BEC4,PROGRAM=TESTBEC6 BED4 zCOBOL
+         DFHPCT TYPE=ENTRY,TRANSID=BEC5,PROGRAM=TESTBEC6 BED5 zCOBOL
+         DFHPCT TYPE=ENTRY,TRANSID=BEC9,PROGRAM=TESTBEC9 BED9 zCOBOL
+*
+         DFHPCT TYPE=ENTRY,TRANSID=VSC1,PROGRAM=TESTVSC1 VSM1 zCOBOL
+         DFHPCT TYPE=ENTRY,TRANSID=VSC2,PROGRAM=TESTVSC2 VSM2 zCOBOL
+         DFHPCT TYPE=ENTRY,TRANSID=VSC3,PROGRAM=TESTVSC3 VSM3 zCOBOL
+*
+         DFHPCT TYPE=ENTRY,TRANSID=ICC1,PROGRAM=TESTICC1 IC01 zCOBOL
+*
+         DFHPCT TYPE=ENTRY,TRANSID=BMC1,PROGRAM=TESTBMC1 BMS1 zCOBOL
+*
          DFHPCT TYPE=ENTRY,TRANSID=CEBR,PROGRAM=Z390CEBR CEBR
+         DFHPCT TYPE=ENTRY,TRANSID=CEDF,PROGRAM=Z390CEDF CEDF
+         DFHPCT TYPE=ENTRY,TRANSID=CEDZ,PROGRAM=Z390CEDF CEDF
          DFHPCT TYPE=ENTRY,TRANSID=CEMT,PROGRAM=Z390CEMT CEMT
          DFHPCT TYPE=ENTRY,TRANSID=LOGO,PROGRAM=Z390LOGO DISPLAY LOGO
 *
@@ -43,3 +57,4 @@
 *
          DFHPCT TYPE=FINAL
          END
+

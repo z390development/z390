@@ -1,14 +1,14 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
          MACRO
 &MAPNAME DFHMDI                                                        X
                &TYPE=,                                                 X
                &MODE=,                                                 X
-               &LANG=ASM,                                              X
+               &LANG=,                                                 X
                &CTRL=,                                                 X
                &CURSLOC=,                                              X
                &SIZE=(24,80),                                          X
@@ -19,6 +19,7 @@
                &TIOAPFX=
 .*
          GBLA  &MTYPE             TYPE REQUEST
+         GBLA  &MLANG             0=COBOL 2=ASM
          GBLA  &NCTRL             NO. OF OPERANDS IN CTRL
          GBLA  &SIZEROW           NO. OF ROWS
          GBLA  &SIZECOL           NO. OF COLUMNS
@@ -28,6 +29,7 @@
          GBLA  &MDFNAMD           LENGTH OF ALL NAMED MDF FIELDS
          GBLA  &MDFNAMC           NO. OF NAMED MDF'S
          GBLA  &MDFWRAP           NO. OF WRAPPED FIELDS
+         GBLA  &MDFCOBS           LENGTH OF COBOL MAP STRUCTURE
 .*
          GBLB  &MSD               MSD SPECIFIED
          GBLB  &DEFMODE(2)        1=OUT 2=IN BOTH=INOUT (DEFAULT)
@@ -64,6 +66,7 @@
          AIF   ('&MDINAME' EQ '').NEWMDI 1ST MAP
 &KMAP    SETA  K'&MDINAME
 &SPACES  SETC  '        '(1,7-&KMAP)
+         AIF   (&MLANG NE 0)
          PUNCH '*'
          PUNCH '&MDINAME.E&SPACES EQU   *'
          PUNCH '&MDINAME.L&SPACES EQU   &MDINAME.E-&MDINAME.S'
@@ -73,6 +76,12 @@
          PUNCH '*'
          PUNCH '* * * END OF MAP DEFINITION     * * *'
          PUNCH '*'
+         AELSE
+         AIF   (&MDIMODE(1) AND &MDIMODE(2))
+         PUNCH '       01  &MDINAME.O REDEFINES &MDINAME.I.'
+         PUNCH '          02  FILLER PIC X(&MDFCOBS).'
+         AEND
+         AEND
          AIF   ('&TYPE' NE 'LAST').NEWMDI
          MEXIT
 .*
@@ -321,19 +330,31 @@
          AIF   ('&TYPE' EQ 'LAST').NOTOUT
 &KMAP    SETA  K'&MAPNAME
 &SPACES  SETC  '        '(1,7-&KMAP)
+         AIF   (&MLANG NE 0)
          PUNCH '&MAPNAME.S&SPACES DS    0H                 START OF MAP-
                 DEFINITION',DSNAME=&SYSIN_MEMBER..CPY
+         AELSE
+         PUNCH '       01  &MAPNAME.I.',DSNAME=&SYSIN_MEMBER..CPZ
+&MDFCOBS SETA  0
+         AEND
          AIF   (&MDIMODE(1) AND &MDIMODE(2)).DOMAPIO
          AGO   .TRYPFX
 .*
 .DOMAPIO ANOP
+         AIF   (&MLANG NE 0)
          PUNCH '&MAPNAME.I&SPACES DS    0H                 START OF MAP-
                 INPUT DEFINITION'
          PUNCH '&MAPNAME.O&SPACES DS    0H                 START OF MAP-
                 OUTPUT DEFINITION'
+         AEND
 .TRYPFX  ANOP
          AIF   (NOT &TPFX).NOTOUT
+         AIF   (&MLANG NE 0)
          PUNCH '         DS    12C                TIOA PREFIX'
+         AELSE
+         PUNCH '           02  FILLER  PIC X(12).'
+&MDFCOBS SETA  12
+         AEND
 .NOTOUT  ANOP
          MEXIT
 .*

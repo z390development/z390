@@ -1,0 +1,386 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 zCOBOL/assembler/emulator package*
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/07/08                                                 *
+*********************************************************************
+* 11/22/08 initial coding for ZC390NUC zcobol runtime routines
+*********************************************************************
+ZC390NUC CSECT                  
+         USING ZC390CVT,R9
+         ENTRY CALL          DYNAMIC CALL
+         ENTRY CMP64R32      COMPARE G64 NOR64 R0-1=FD1, R2-3=FD2        
+         ENTRY DIV64R32      DIVIDE  G64 NOR64 R0-1=N64, R2-3=MAX64      
+         ENTRY GOBACK        GOBACK
+         ENTRY OSE64R32      ON SIZE ERR G64 NOR64 R0-1=N64, R2-3=MAX64      
+         ENTRY PERFORM       PERFORM
+         ENTRY PMCHECK       CHECK FOR PERFORM EXIT AT PG
+         ENTRY ROUNDF        ROUND FIXED
+         ENTRY STOPRUN       STOP RUN
+         ENTRY STACKORG      START OF PERFORM STACK
+         ENTRY STACKPTR      CURRENT  PERFORM STACK PTR
+         ENTRY STACKEND      END OF   PERFORM STACK
+         ENTRY TALPHAX       TEST ALPHABETIC X
+         ENTRY TNUMP         TEST NUMERIC PACKED P
+         ENTRY TNUMX         TEST NUMERIC CHARACTERS X
+         ENTRY TNUMZ         TEST NUMERIC ZONED DECIMAL Z
+*
+* INIT ZC390NUC - VERIFY ZCOBOL CALLER COMPATIBILITY WITH VER IN R1
+*
+         USING ZC390NUC,R15
+         CLC   ZCVT_VER,0(R1)  THIS VERIFY CAN BE RELAXED IN FUTURE
+         BER   R14
+         LA    R1,ZCVT_ABORT_VERSION  REBUILD ZCOBOL AND/OR ZC390LIB
+         L     R15,ZCVT_ABORT
+         BR    R15
+*
+* GEN CALL - DYNAMICALLY LOAD AND CALL PROGRAM
+*
+CALL     DS    0H
+         BASR  R2,0
+         USING *,R2
+         LR    R3,R0   R3=A(PGMNAME)
+         ST    R1,CALLPARM
+         ST    R14,CALLRTN
+         LOAD  EPLOC=(R3)
+         IF    (LTR,R15,NZ,R15)
+               LA  R1,ZCVT_ABORT_CALL
+               L   R15,ZCVT_ABORT
+               BR  R15
+         ENDIF
+         LR    R15,R0       SET CALLED PROGRAM ENTRY
+         L     R1,CALLPARM  SET CALLED PROGRAM PARM LIST
+         L     R14,CALLRTN  SET RETURN
+         BR    R15
+         DROP  R2
+CALLPARM DS    A
+CALLRTN  DS    A
+*
+* GEN CMP64R32 COMPARE 64 BIT FLD IN R0-R1 WITH FLD IN R2-R3
+*
+CMP64R32 DS    0H
+         USING *,R15
+         CR    R0,R2              COMPARE ARIM FIRST HALF
+         BNER  R14                EXIT WITH CC IF NOT EQUAL
+         CLR   R1,R3              COMPARE LOGICAL 2ND HALF
+         BER   R14                EXIT CC0 IF EQUAL
+         BH    CMP64R32_H         BRANCH IF 2ND HALF LOG HIGH
+CMP64R32_L DS  0H                               
+         LTR   R0,R0              ARE BOTH NEG
+         BMR   R14                YES, EXIT WITH CC LOW 
+         CLR   R3,R1              FORCE CC HIGH
+         BR    R14
+CMP64R32_H DS  0H
+         LTR   R0,R0              ARE BOTH POS
+         BPR   R14                YES, EXIT WITH CC HIGH
+         CLR   R3,R1              FORCE CC LOW
+         BR    R14
+         DROP  R15
+*
+* DIV64N32 DIVIDE N64 IN R0-R1 BY MAX64 IN R2-R3 GIVING REMAINDER R0-R1
+* (USE DXR TO AVOID USE OF H32 GPRS)
+*
+DIV64R32 DS    0H
+         USING *,R15
+         SAVE  (12,12)
+         STCM  R0,8,SIGN         SAVE HIGH BYTE WITH N64 SIGN
+         BAS   R12,DIV64R32_LCR  COMPLIMENT IF NEGATIVE
+         STM   R0,R1,ZCVT_WORKAREA+1
+         MVI   ZCVT_WORKAREA,X'50'   EXP = X'40' + 16 NIBBLES
+         MVI   ZCVT_WORKAREA+8,X'42' EXP = X'40' + 16 - 14 NIBBLES
+         STC   R1,ZCVT_WORKAREA+9    LOW BYTE IN 2ND HALF
+         XC    ZCVT_WORKAREA+10(6),ZCVT_WORKAREA+10 CLEAR LAST 6
+         LD    F0,ZCVT_WORKAREA
+         LD    F2,ZCVT_WORKAREA+8
+         STM   R2,R3,ZCVT_WORKAREA+1
+         MVI   ZCVT_WORKAREA,X'50'   EXCESS X'40' + 16 NIBBLES FOR FL8
+         MVI   ZCVT_WORKAREA+8,X'42' + 14 NIBBLES FOR 2ND HALF
+         STC   R3,ZCVT_WORKAREA+9    LOW BYTE IN 2ND HALF
+         LD    F1,ZCVT_WORKAREA
+         LD    F3,ZCVT_WORKAREA+8
+         DXR   F0,F1                 F0-2 = N64/MAX64
+         FIXR  F4,R0                 F4-6 = INTEGER
+         SXR   F0,F4                 F0-2 = FRACTION OF MAX64
+         MXR   F0,F1                 F0-2 = MOD(MAX64,N64)
+         LD    F4,=X'5110000000000000'  FORCE EXP 51 AND ROUND TO INT
+         LD    F6,=X'4300080000000000'
+         AXR   F0,F4                 F0-2 = MOD(MAX64,N64) SET EXP+RND     
+         STD   F0,ZCVT_WORKAREA      STORE HFP RESULT LT WITH EXP X'51'
+         STD   F2,ZCVT_WORKAREA+8
+         LM    R0,R2,ZCVT_WORKAREA   LOAD R0-R2 WITH 12 BYTES OF RESULT
+         SLDL  R0,12                 ALIGN FIRST 13 NIBBLES N64 FROM F0
+         SRL   R2,12                 ALIGN LAST 3 NIBBLES FROM F2
+         N     R2,=X'00000FFF'
+         OR    R1,R2                 OR 16 NIBLES TO FORM N64 RESULT
+         BAS   R12,DIV64R32_LCR
+         RETURN (12,12)
+DIV64R32_LCR DS 0H             COMP R0-R1 IF SIGN NEG
+         TM    SIGN,X'80'
+         BZR   R12
+         X     R0,=F'-1'
+         X     R1,=F'-1'
+         AHI   R1,1
+         ALC   R0,=F'0'
+         BR    R12
+SIGN     DS    X        HIGH BYTE OF R0 WITH SIGN BIT
+         DROP  R15
+*
+* GEN GOBACK AND STOP RUN FOR FALL THROUGH LAST PARAGRAPH.
+*
+GOBACK   DS 0H
+STOPRUN  DS 0H
+         USING *,R15
+         L     R13,4(R13)
+         L     R14,12(R13)
+         LR    R15,R1            
+         LM    2,12,28(R13)
+         BR    R14
+         DROP  R15
+*
+* ON SIZE ERROR 64 BIT USING ONLY 32 BIT REGS 
+*    R0-R1 = A(TARGET 64 BIT)
+*    R2-R3 = A(MAXDIG 64 BIT)
+*
+OSE64R32 DS    0H
+         USING *,R15
+         SAVE  (R14,R12)
+         BALR  R12,0
+         USING *,R12
+         DROP  R15
+         BO    OSE64R32_EXIT   EXIT IF OVERFLOW FROM ADD
+         LR    R4,R0           R4-R5 = TARGET
+         LR    R5,R1  
+         TMHH  R4,X'8000'
+         JNM   OSE64R32_CR
+         LHI   R6,-1
+         LHI   R7,-1           COMPLIMENT TARGET IF NEG.
+         XR    R4,R6
+         XR    R5,R7
+         AHI   R5,1
+         ALC   R4,ZCVT_ZERO
+OSE64R32_CR DS    0H            COMPARE POS N64 WITH MAX64
+         CR    R4,R2
+         BL    OSE64R32_EXIT    EXIT WITHOUT CC3 IF N64 < MAX64
+         BH    OSE64R32_CC3     SET CC3 IF HIGH
+         CLR   R5,R3
+         BL    OSE64R32_EXIT
+OSE64R32_CC3 DS 0H
+         TM    *,X'91'          SET CC3 ALL SEL BITS 1 FOR N64 >= MAX64
+OSE64R32_EXIT DS 0H
+         RETURN (R14,R12)
+*
+* GEN PERFORM
+*
+PERFORM  DS 0H
+         USING *,R15
+         LM    R2,R3,STACKPTR         R2=CUR STACK ENTRY,R3=END STACK   
+         USING PM_STACK_ENTRY,R2
+         AHI   R2,PM_STACK_ENTRY_LEN  INC TO NEXT PERFORM STACK ENTRY
+         IF    (CLR,R2,NL,R3)
+               LA  R1,ZCVT_ABORT_STACK
+               L   R15,ZCVT_ABORT
+               BR  R15
+         ENDIF
+         ST    R2,STACKPTR            UPDATE STACK PTR
+         OILH  R0,X'8000'             TURN ON AMODE31 IN PG_EXIT+6 ADDR
+         STM   R0,R1,PM_STACK_ENTRY   STORE PG_EXIT+6 AND RETURN ADDRS
+         LR    R15,R14
+         DROP  R15
+         BR    R15                    BRANCH TO STARTING PARAGRAPH
+*
+* GEN END PERFORM CHECK ENTERED VIA BAL R14,END_PERFORM_CHECK
+*
+PMCHECK  DS 0H
+         USING *,R15
+         L     R2,STACKPTR
+         USING PM_STACK_ENTRY,R2
+         CL    R14,PM_STACK_PGEND6  DOES THIS PMCHECK MATCH ENDING PG
+         BNER  R14          NO, EXIT TO NEXT SEQ. INSTRUCTION  
+         L     R14,PM_STACK_RETURN YES, SET R14 TO PERFORM EXIT ADDRESS
+         AHI   R2,-PM_STACK_ENTRY_LEN REMOVE PERFORM ENTRY FROM STACK
+         ST    R2,STACKPTR
+         BR    R14        EXIT FROM PERFORM
+         DROP  R15
+         DC    0D,CL8'**STACK*'
+MAX_PM   EQU   20  MAXIMUM NESTED PERFORMS
+STACK_ENTRY_LEN EQU 8 A(PG-EXIT+6,RETURN)
+STACKPTR DC    A(STACKORG,STACKEND)  CUR STACK PTR AND STACK END ADDRS
+STACKORG DS    0D
+         DC    (MAX_PM)XL(STACK_ENTRY_LEN)'00' STACK ENTRIES
+STACKEND EQU *
+*
+* GEN ZC_RND_F ROUND R0=REMAINDER,R1=QUOTIENT,R2=DIVISOR
+*
+ROUNDF   DS 0H
+         USING *,R15
+         LTR   R3,R0   MOVE REMAINDER TO WORK
+         BRM   RND_F_NR
+         SLA   R3,1    DOUBLE POS REMAINDER
+         LTR   R2,R2
+         BRM   RND_F_PR_ND
+RND_F_PR_PD DS 0H
+         CR    R3,R2   IS REMAINDER GE HALF OF DIVISOR
+         BRL   R14     NO, EXIT
+         AHI   R1,1    ADD 1 TO QUOTIENT (MUST BE POS TOO)
+         SR    R0,R2   SUB DIVIDOR FROM REMAINDER
+         BRU   R14     EXIT
+RND_F_PR_ND DS 0H
+         CR    R3,R2   IS REMAINDER GE HALF OF DIVISOR
+         BRL   R14     NO, EXIT
+         AHI   R1,1    ADD 1 TO QUOTIENT (MUST BE POS TOO)
+         AR    R0,R2   ADD DIVIDOR TO REMAINDER
+         BRU   R14     EXIT
+RND_F_NR DS 0H
+         SLA   R3,1    DOUBLE NEG REMAINDER
+         LTR   R2,R2   IS DIVISOR POS
+         BRM   RND_F_NR_ND
+RND_F_NR_PD DS 0F
+         LCR   R3,R3   GET POS 2*REMAINDER
+         CR    R3,R2   IS REMAINDER GE HALF OF DIVISOR
+         BRL   R14     NO, EXIT
+         AHI   R1,1    ADD 1 TO QUOTIENT (MUST BE MEG TOO)
+         SR    R0,R2   SUB DIVIDOR FROM REMAINDER
+         BRU   R14     EXIT
+RND_F_NR_ND DS 0H
+         CR    R3,R2   IS REMAINDER LE HALF OF DIVISOR
+         BRH   R14     NO, EXIT
+         AHI   R1,-1   SUB 1 FROM QUOTIENT (MUST BE NEG TOO)
+         AR    R0,R2   ADD DIVIDOR TO REMAINDER
+         BRU   R14     EXIT
+         DROP  R15
+*
+* TEST ALPHABETIC X   R1=A(FIELD) R2=LENGTH
+*
+TALPHAX  DS    0H
+         USING *,R15
+         BCTR  R2,0
+         EX    R2,TRTALPHA
+         BR    R14
+TRTALPHA TRT   0(0,R1),TABALPHA
+         DROP
+TABALPHA DC    256X'FF'  
+         ORG   TABALPHA+C'A'
+         DC    9X'00'          A-I                  
+         ORG   TABALPHA+C'J'
+         DC    9X'00'          J-R                  
+         ORG   TABALPHA+C'S'
+         DC    8X'00'          S-Z                  
+         ORG   TABALPHA+C'a'
+         DC    9X'00'          a-i                  
+         ORG   TABALPHA+C'j'
+         DC    9X'00'          j-r                  
+         ORG   TABALPHA+C's'
+         DC    8X'00'          s-z
+         ORG                  
+*
+* TEST NUMERIC PACKED   R1=A(FIELD) R2=LENGTH
+*
+TNUMP    DS    0H
+         USING *,R15
+         BCT   R2,TRTPN
+         TRT   0(1,R1),TABNUMPS  TEST SINGLE BYTE FIELD
+         BR    R14
+TRTPN    DS    0H
+         LA    R3,0(R1,R2)
+         TRT   0(1,R3),TABNUMPS  TEST LOW DIGIT AND SIGN FIRST
+         BNZR  R14
+         BCTR  R2,0
+         EX    R2,TRTNUMP
+         BR    R14
+TRTNUMP  TRT   0(0,R1),TABNUMP
+         DROP
+*                         A B C D E F
+TABNUMPS DC    10X'FF',X'FFFF0000FF00' 00-0F
+         DC    10X'FF',X'FFFF0000FF00' 10-1F
+         DC    10X'FF',X'FFFF0000FF00' 20-2F
+         DC    10X'FF',X'FFFF0000FF00' 30-3F
+         DC    10X'FF',X'FFFF0000FF00' 40-4F
+         DC    10X'FF',X'FFFF0000FF00' 50-5F
+         DC    10X'FF',X'FFFF0000FF00' 60-6F
+         DC    10X'FF',X'FFFF0000FF00' 70-7F
+         DC    10X'FF',X'FFFF0000FF00' 80-8F
+         DC    10X'FF',X'FFFF0000FF00' 90-9F
+         DC    10X'FF',X'FFFFFFFFFFFF' A0-AF
+         DC    10X'FF',X'FFFFFFFFFFFF' B0-BF
+         DC    10X'FF',X'FFFFFFFFFFFF' C0-CF
+         DC    10X'FF',X'FFFFFFFFFFFF' D0-DF
+         DC    10X'FF',X'FFFFFFFFFFFF' E0-EF
+         DC    10X'FF',X'FFFFFFFFFFFF' F0-FF
+TABNUMP  DC    10X'00',X'FFFFFFFFFFFF' 00-0F
+         DC    10X'00',X'FFFFFFFFFFFF' 10-1F
+         DC    10X'00',X'FFFFFFFFFFFF' 20-2F
+         DC    10X'00',X'FFFFFFFFFFFF' 30-3F
+         DC    10X'00',X'FFFFFFFFFFFF' 40-4F
+         DC    10X'00',X'FFFFFFFFFFFF' 50-5F
+         DC    10X'00',X'FFFFFFFFFFFF' 60-6F
+         DC    10X'00',X'FFFFFFFFFFFF' 70-7F
+         DC    10X'00',X'FFFFFFFFFFFF' 80-8F
+         DC    10X'00',X'FFFFFFFFFFFF' 90-9F
+         DC    10X'FF',X'FFFFFFFFFFFF' A0-AF
+         DC    10X'FF',X'FFFFFFFFFFFF' B0-BF
+         DC    10X'FF',X'FFFFFFFFFFFF' C0-CF
+         DC    10X'FF',X'FFFFFFFFFFFF' D0-DF
+         DC    10X'FF',X'FFFFFFFFFFFF' E0-EF
+         DC    10X'FF',X'FFFFFFFFFFFF' F0-FF
+*
+* TEST NUMERIC CHARACTERS   R1=A(FIELD) R2=LENGTH
+*
+TNUMX    DS    0H
+         USING *,R15
+         BCTR  R2,0    
+         EX    R2,TRTNUMX 
+         BR    R14
+TRTNUMX  TRT   0(0,R1),TABNUMZ
+         DROP
+*
+* TEST NUMERIC ZONED   R1=A(FIELD) R2=LENGTH
+*
+TNUMZ    DS    0H
+         USING *,R15
+         BCT   R2,TRTZN
+         TRT   0(1,R1),TABNUMZS  TEST SINGLE BYTE FIELD
+         BR    R14
+TRTZN    DS    0H
+         LA    R3,0(R1,R2)
+         TRT   0(1,R3),TABNUMZS  TEST LOW DIGIT AND SIGN FIRST
+         BNZR  R14
+         BCTR  R2,0
+         EX    R2,TRTNUMZ
+         BR    R14
+TRTNUMZ  TRT   0(0,R1),TABNUMZ
+         DROP
+*                         A B C D E F
+TABNUMZS DC    10X'FF',X'FFFFFFFFFFFF' 00-0F
+         DC    10X'FF',X'FFFFFFFFFFFF' 10-1F
+         DC    10X'FF',X'FFFFFFFFFFFF' 20-2F
+         DC    10X'FF',X'FFFFFFFFFFFF' 30-3F
+         DC    10X'FF',X'FFFFFFFFFFFF' 40-4F
+         DC    10X'FF',X'FFFFFFFFFFFF' 50-5F
+         DC    10X'FF',X'FFFFFFFFFFFF' 60-6F
+         DC    10X'FF',X'FFFFFFFFFFFF' 70-7F
+         DC    10X'FF',X'FFFFFFFFFFFF' 80-8F
+         DC    10X'FF',X'FFFFFFFFFFFF' 90-9F
+         DC    10X'FF',X'FFFFFFFFFFFF' A0-AF
+         DC    10X'FF',X'FFFFFFFFFFFF' B0-BF
+         DC    10X'00',X'FFFFFFFFFFFF' C0-CF  C ZONE POS
+         DC    10X'00',X'FFFFFFFFFFFF' D0-DF  D ZONE NEG
+         DC    10X'FF',X'FFFFFFFFFFFF' E0-EF
+         DC    10X'00',X'FFFFFFFFFFFF' F0-FF  F ZONE POS
+TABNUMZ  DC    240X'FF',10X'00',6X'FF'        F0-F9 ONLY
+*     
+* SHARED DATA
+*
+         EQUREGS REGS=GPR
+         EQUREGS REGS=FPR
+         ZSTREQU
+*
+* SHARED DSECTS
+*
+PM_STACK_ENTRY DSECT
+PM_STACK_PGEND6  DS    A  ADDRESS OF ENDING PG LABEL+6
+PM_STACK_RETURN  DS    A  ADDRESS OF PERFORM RETURN WHEN PGEND6 MATCHES
+PM_STACK_ENTRY_LEN EQU *-PM_STACK_ENTRY
+ZC390CVT DSECT
+         COPY ZC390CVT
+         END

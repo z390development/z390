@@ -1,0 +1,381 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/09/08                                                 *
+*********************************************************************
+* 01/15/09 initial coding of INSPECT call function
+*********************************************************************
+*
+*
+* NOTES:
+*  1.  TALLY RETURNS CURRENT COUNT IN GR0 FOR ADD TO V2 BY GEN_INSPECT
+*********************************************************************
+INSPECT  CSECT
+         USING INSPECT,R15
+         COPY  ASMMSP
+         SAVE  (R14,R12)
+         LA    R2,INSPECT_ROUTINES
+         AR    R2,R0
+         BR    R2
+INSPECT_ROUTINES DS 0H
+         J     TALLYING    0 - ZCVT_TALLYING
+         J     REPLACING   4 - ZCVT_REPLACING
+         J     CONVERTING  8 - ZCVT_CONVERTING
+*
+* INSPECT V1 TALLYING V2 FOR CHARACTERS BEFORE/AFTER TEST_VAR
+* INSPECT V1 TALLYING V2 FOR ALL     V3 BEFORE/AFTER TEST_VAR
+* INSPECT V1 TALLYING V2 FOR LEADING V3 BEFORE/AFTER TEST_VAR
+* CALL TALLY,(V1,L'V1,V2,L'V2,B/A+STYPE,V3,L'V3,TEST_VAR,L'TEST_VAR 
+* PARM        P1 P2   P3 P4   P5        P6 P7   P8       P9
+* OFFSET       0  4    8 12   16        20 24   28       32
+* LM REG      R4 R5   R6 R7   R8        R9 R10  R11      R12
+*
+TALLYING DS    0H
+         LM    R4,R12,0(R1)
+         BAS   R14,SET_TEST_TRT
+         STC   R8,STYPE
+         SGR   R0,R0                R0=CLEAR TALLY COUNT HIGH BITS
+         IF    (CLI,STYPE,EQ,C'C') TALLY CHARACTERS
+               BAS  R14,FIND_TEST_CHAR   
+               LR   R0,R5
+         ELSEIF (CLI,STYPE,EQ,C'A')  TALLY ALL V3
+               BAS  R14,FIND_TEST_CHAR  R11=A(FIRST TEST CHAR)
+               BAS  R14,CNT_ALL_CHAR    ALL V3 CHAR UNTIL TEST/END
+         ELSEIF (CLI,STYPE,EQ,C'L')
+               BAS  R14,FIND_TEST_CHAR   R11=A(FIRST TEST CHAR)
+               BAS  R14,CNT_LEAD_CHAR    ALL V3 CHAR UNTIL TEST/END
+         ELSE
+               WTO 'INSPECT TALLY UNKNOWN SUB-TYPE'
+         ENDIF
+         L     R14,12(R13) RESTORE R14 AND LEAVE R0=TALLY COUNT
+         RETURN (R2,R12)  RETURN TALLY COUNT IN R0 FOR GEN_INSPECT ADD
+*
+* INSPECT REPLACING
+*
+REPLACING DS   0H
+         LM    R4,R12,0(R1)
+         BAS   R14,SET_TEST_TRT
+         STC   R8,STYPE
+         SGR   R0,R0                R0=TALLY COUNT
+         IF    (CLI,STYPE,EQ,C'C') REPLACE CHARACTERS BY V3
+               BAS  R14,FIND_TEST_CHAR   R11=A(FIRST TEST CHAR)
+               BAS  R14,REP_CHAR         REPLACE SELECTED CHARACTERS
+         ELSEIF (CLI,STYPE,EQ,C'A')  REPLACE ALL V2 BY V3
+               BAS  R14,FIND_TEST_CHAR  R11=A(FIRST TEST CHAR)
+               BAS  R14,REP_ALL_CHAR    REP ALL V2 BY V3 CHAR
+         ELSEIF (CLI,STYPE,EQ,C'F')
+               BAS  R14,FIND_TEST_CHAR   R11=A(FIRST TEST CHAR)
+               BAS  R14,REP_FIRST_CHAR   REP FIRST V2 BY V3 CHAR
+         ELSEIF (CLI,STYPE,EQ,C'L')
+               BAS  R14,FIND_TEST_CHAR   R11=A(FIRST TEST CHAR)
+               BAS  R14,REP_LEAD_CHAR    REP FIRST V2 BY V3
+         ELSE
+               WTO 'INSPECT REPLACE UNKNOWN SUB-TYPE'
+         ENDIF
+         L     R14,12(R13) RESTORE R14 AND LEAVE R0=TALLY COUNT
+         RETURN (R2,R12)  RETURN TALLY COUNT IN R0 FOR GEN_INSPECT ADD
+*
+* INSPECT CONVERTING V1 CHARACTERS FROM V2 TO V3
+*
+*  R4  R5  R6  R7  R8  R9  R10 R11 R12
+*  P1  P2  P3  P4  P5  P6  P7  P8  P9
+*  V1  V1L V2  V2L TYP V3  V3L TV  TVL
+*
+CONVERTING DS  0H
+         LM    R4,R12,0(R1)
+         BAS   R14,SET_TEST_TRT
+         BAS   R14,FIND_TEST_CHAR
+         MVC   TRT_TAB,CONV_TRT_INIT  RESET TRANSLATE TABLE             
+         LR    R1,R7                 R1=CHAR COUNT IN V2/V3
+         SR    R2,R2
+         SR    R3,R3
+         DO    WHILE=(AHI,R1,NM,-1)
+               ICY   R2,0(R1,R6)     R2=V2 ORIGINAL CHAR 
+               ICY   R3,0(R1,R9)     R3=V3 REPLACEMENT CHAR
+               STC   R3,TRT_TAB(R2)  UPDATE TRANSLATE TABLE
+         ENDDO
+         LR    R1,R5
+         BCTR  R1,0
+         EX    R1,CONV_TR
+         L     R14,12(R13) RESTORE R14 AND LEAVE R0=TALLY COUNT
+         RETURN (R2,R12)  RETURN TALLY COUNT IN R0 FOR GEN_INSPECT ADD
+CONV_TR       TR 0(0,R4),TRT_TAB
+CONV_TRT_INIT DC 256AL1(*-CONV_TRT_INIT)
+*
+* REP_CHAR - REPLACE ALL CHAR B V3 UNTIL TEST
+*
+REP_CHAR DS 0H
+         BCTR  R5,0
+         BNPR  R14            EXIT IF NO CHAR TO REP
+         MVC   0(1,R4),0(R9)  REP FIRST CHAR
+         DO    WHILE=(LTR,R1,NZ,R5)
+               IF  (CHI,R1,GT,256)
+                   LA  R1,255
+               ELSE
+                   BCTR R1,0
+               ENDIF
+               EX  R1,REP_CHAR_MVC REP NEXT 256 OR LAST PART
+               LA  R4,1(R1,R4)
+               SR  R5,R1
+               BCTR R5,0
+         ENDDO
+         BR    R14
+REP_CHAR_MVC  MVC   1(*-*,R4),0(R4)
+*
+* REP_ALL_CHAR - REPLACE V2 BY V3 UNTIL TEST
+*
+REP_ALL_CHAR DS 0H
+         XC    TRT_TAB,TRT_TAB CLEAR TRT TABLE
+         SR    R1,R1                    CLEAR HIGH BITS FOR CHAR OFFSET
+         DO    WHILE=(LTR,R7,NZ,R7)
+               BCTR R7,0               DEC V2 CHAR COUNT
+               IC   R1,0(R6,R7)        R1 = V2 CHAR IN REV. ORDER
+               LA   R2,TRT_TAB(R1)       
+               LA   R3,1(R7)
+               STC  R3,0(R2)   SET INDEX OF V3+1 FOR USE IN MVC
+         ENDDO
+         SR    R2,R2
+         LA    R11,0(R4,R5)
+         DO    WHILE=(CLR,R4,LT,R11)  BYTES LEFT IN FIELD
+               LR  R1,R11
+               SR  R1,R4
+               IF  (CHI,R1,GT,256)
+                   LA  R1,255         R1=MAX LEN-1 FOR EX TRT
+               ELSE                   
+                   BCTR R1,0          R1=LAST LEN-1 FOR EX TRT
+               ENDIF
+               IF  (EX,R1,NZ,ALL_TRT) DO TRT AND CHECK IF HIT
+                   BCTR R2,0          REDUCE INDEX BY 1
+                   IC  R3,0(R2,R9)    R3=V3 CHAR TO STORE
+                   STC R3,0(R1)       STORE V3 CHAR AT V2 CHAR
+                   LA  R4,1(R1)       R4=A(NEXT CHAR TO TEST)
+                   LR  R1,R11
+                   SR  R1,R4
+               ELSE
+                   LA  R4,1(R1,R4)    R4=A(NEXT CHAR TO TEST) 
+               ENDIF
+         ENDDO   
+         BR   R14
+ALL_TRT  TRT   0(*-*,R4),TRT_TAB
+*
+* REP LEAD CHAR
+*
+REP_LEAD_CHAR DS 0H
+         XC    TRT_TAB,TRT_TAB CLEAR TRT TABLE
+         SR    R1,R1                    CLEAR HIGH BITS FOR CHAR OFFSET
+         DO    WHILE=(LTR,R7,NZ,R7)
+               BCTR R7,0               DEC V2 CHAR COUNT
+               IC   R1,0(R6,R7)        R1 = V2 CHAR IN REV. ORDER
+               LA   R2,TRT_TAB(R1)       
+               LA   R3,1(R7)
+               STC  R3,0(R2)   SET INDEX OF V3+1 FOR USE IN MVC
+         ENDDO
+         SR    R2,R2
+         LA    R11,0(R4,R5)
+         DO    WHILE=(CLR,R4,LT,R11)  BYTES LEFT IN FIELD
+               IF  (TRT,0(1,R4),NZ,TRT_TAB) DO TRT AND CHK IF HIT
+                   BCTR R2,0          REDUCE INDEX BY 1
+                   IC  R3,0(R2,R9)    R3=V3 CHAR TO STORE
+                   STC R3,0(R1)       STORE V3 CHAR AT V2 CHAR
+                   AHI R4,1           R4=A(NEXT CHAR TO TEST)
+               ELSE
+                   BR  R14  EXIT AT END OF LEADING 
+               ENDIF
+         ENDDO   
+         BR   R14
+*
+* REP FIRST CHAR
+*
+REP_FIRST_CHAR DS 0H
+         XC    TRT_TAB,TRT_TAB CLEAR TRT TABLE
+         SR    R1,R1                    CLEAR HIGH BITS FOR CHAR OFFSET
+         DO    WHILE=(LTR,R7,NZ,R7)
+               BCTR R7,0               DEC V2 CHAR COUNT
+               IC   R1,0(R6,R7)        R1 = V2 CHAR IN REV. ORDER
+               LA   R2,TRT_TAB(R1)       
+               LA   R3,1(R7)
+               STC  R3,0(R2)   SET INDEX OF V3+1 FOR USE IN MVC
+         ENDDO
+         SR    R2,R2
+         LA    R11,0(R4,R5)
+         DO    WHILE=(CLR,R4,LT,R11)  BYTES LEFT IN FIELD
+               LR  R1,R11
+               SR  R1,R4
+               IF  (CHI,R1,GT,256)
+                   LA  R1,255         R1=MAX LEN-1 FOR EX TRT
+               ELSE                   
+                   BCTR R1,0          R1=LAST LEN-1 FOR EX TRT
+               ENDIF
+               IF  (EX,R1,NZ,ALL_TRT) DO TRT AND CHECK IF HIT
+                   BCTR R2,0          REDUCE INDEX BY 1
+                   IC  R3,0(R2,R9)    R3=V3 CHAR TO STORE
+                   STC R3,0(R1)       STORE V3 CHAR AT V2 CHAR
+                   BR  R14            EXIT AFTER FIRST REP
+               ELSE
+                   LA  R4,1(R1,R4)    R4=A(NEXT CHAR TO TEST) 
+               ENDIF
+         ENDDO   
+         BR   R14
+*
+* SET_TEST_TRT - CLEAR TRT_TAB AND SET SEARCH CHARACTERS TO X'FF'
+*
+SET_TEST_TRT DS 0H
+         IF    (LTR,R12,Z,R12)  R11 ZERO IF NO TEST
+               LA  R11,0(R4,R5) SET R10 TO END OF FIELD+1 IF NOT TEST
+               BR  R14         
+         ENDIF
+         XC    TRT_TAB,TRT_TAB CLEAR TRT TABLE
+         SR    R1,R1                    CLEAR HIGH BITS FOR CHAR OFFSET
+         DO    WHILE=(LTR,R12,NZ,R12)
+               BCTR R12,0               DEC TEST CHAR COUNT
+               IC   R1,0(R11,R12)       R1 = TEST CHAR IN REV. ORDER
+               LA   R2,TRT_TAB(R1)       
+               MVI  0(R2),X'FF'         SET FLAG IN TRT FOR TEST CHAR
+         ENDDO
+         LR    R11,R4   R10 = START OF FIELD
+         LR    R12,R5   R11 - BYTES REMAINING IN FIELD
+         BR    R14
+*
+* FIND_TEST_CHAR - INCR R10 AND DEC R11 TO FIRST TEST CHAR MATCH
+*                  SET R4=START OF SELECTED CHAR, R5=LENGTH OR ZERO 
+*
+FIND_TEST_CHAR DS 0H
+         DO    WHILE=(LTR,R1,NZ,R12)  BYTES LEFT IN FIELD
+               IF  (CHI,R1,GT,256)
+                   LA  R1,255         R1=MAX LEN-1 FOR EX TRT
+               ELSE                   
+                   BCTR R1,0          R1=LAST LEN-1 FOR EX TRT
+               ENDIF
+               IF  (EX,R1,NZ,FIND_TRT) DO TRT AND CHECK IF HIT
+                   SR  R1,R11         
+                   AR  R11,R1         R10=A(TEST CHAR IN FIELD)
+                   SR  R12,R1         R11=REMAINING BYTES
+                   IF  (LTR,R8,NM,R8) IS TEST BEFORE
+                       LR   R5,R11   R5=A(HIT)
+                       SR   R5,R4    R5=CHARACTERS BEFORE TEST CHAR
+                   ELSE
+                       IF   (LTR,R12,NZ,R12) TEST CHAR FOUND
+                            AR   R5,R4   R5=A(END OF FIELD+1)
+                            LA   R4,1(R11) R4=A(TEST HIT+1)
+                            SR   R5,R4   R5=CHAR AFTER TEST CHAR+1
+                       ELSE
+                            SR   R5,R5
+                       ENDIF
+                   ENDIF
+                   BR  R14
+               ELSE
+                   LA  R11,1(R1,R11)  R10=START OF NEXT EX TRT 
+                   SR  R12,R1                                
+                   BCTR R12,0         R11=REMAINING BYTES IN FIELD
+               ENDIF
+         ENDDO   
+         IF    (LTR,R8,M,R8) IS TEST AFTER
+               SR  R5,R5         NO HIT SO NO CHAR FOUND
+         ENDIF
+         BR    R14
+FIND_TRT TRT   0(*-*,R11),TRT_TAB
+TRT_TAB DC XL256'00'
+*
+* CNT_ALL_BEFORE
+*
+CNT_ALL_CHAR   DS   0H
+         XC    TRT_TAB,TRT_TAB CLEAR TRT TABLE
+         SR    R1,R1                    CLEAR HIGH BITS FOR CHAR OFFSET
+         DO    WHILE=(LTR,R10,NZ,R10)
+               BCTR R10,0               DEC ALL CHAR COUNT
+               IC   R1,0(R9,R10)        R1 = ALL CHAR IN REV. ORDER
+               LA   R2,TRT_TAB(R1)       
+               MVI  0(R2),X'FF'         SET FLAG IN TRT FOR ALL CHAR
+         ENDDO
+         LA    R11,0(R4,R5)           R11=A(END+1)
+         DO    WHILE=(CLR,R4,LT,R11)  BYTES LEFT IN FIELD
+               LR  R1,R11
+               SR  R1,R4
+               IF  (CHI,R1,GT,256)
+                   LA  R1,255         R1=MAX LEN-1 FOR EX TRT
+               ELSE                   
+                   BCTR R1,0          R1=LAST LEN-1 FOR EX TRT
+               ENDIF
+               IF  (EX,R1,NZ,ALL_TRT) DO TRT AND CHECK IF HIT
+                   AHI R0,1           INCR ALL COUNTER
+                   LA  R4,1(R1)       R4=A(NEXT CHAR TO TEST)
+                   LR  R1,R11
+                   SR  R1,R4
+               ELSE
+                   LA  R4,1(R1,R4)    R4=A(NEXT CHAR TO TEST) 
+               ENDIF
+         ENDDO   
+         BR   R14
+*
+* CNT_ALL_AFTER
+*
+CNT_ALL_AFTER DS 0H
+         XC    TRT_TAB,TRT_TAB CLEAR TRT TABLE
+         SR    R1,R1                    CLEAR HIGH BITS FOR CHAR OFFSET
+         DO    WHILE=(LTR,R10,NZ,R10)
+               BCTR R10,0               DEC ALL CHAR COUNT
+               IC   R1,0(R9,R10)        R1 = ALL CHAR IN REV. ORDER
+               LA   R2,TRT_TAB(R1)       
+               MVI  0(R2),X'FF'         SET FLAG IN TRT FOR ALL CHAR
+         ENDDO
+         LA    R11,0(R4,R5)           SET R11 TO END+1
+         DO    WHILE=(CLR,R4,LT,R11)  BYTES LEFT IN FIELD
+               LR  R1,R11
+               SR  R1,R4
+               IF  (CHI,R1,GT,256)
+                   LA  R1,255         R1=MAX LEN-1 FOR EX TRT
+               ELSE                   
+                   BCTR R1,0          R1=LAST LEN-1 FOR EX TRT
+               ENDIF
+               IF  (EX,R1,NZ,ALL_TRT) DO TRT AND CHECK IF HIT
+                   AHI R0,1           INCR ALL COUNTER
+                   LA  R4,1(R1)       R4=A(NEXT CHAR TO TEST)
+                   LR  R1,R11
+                   SR  R1,R4
+               ELSE
+                   LA  R4,1(R1,R4)    R4=A(NEXT CHAR TO TEST) 
+               ENDIF
+         ENDDO   
+         BR   R14
+*
+* CNT_LEAD_BEFORE
+*
+CNT_LEAD_CHAR  DS   0H
+         MVC   TRT_TAB,=256X'FF'  SET TO ALL X'FF'
+         SR    R1,R1                    CLEAR HIGH BITS FOR CHAR OFFSET
+         DO    WHILE=(LTR,R10,NZ,R10)
+               BCTR R10,0               DEC ALL CHAR COUNT
+               IC   R1,0(R9,R10)        R1 = ALL CHAR IN REV. ORDER
+               LA   R2,TRT_TAB(R1)       
+               MVI  0(R2),X'00'         CLEAR LEADING CHAR BYTES         
+         ENDDO
+         LA    R11,0(R4,R5)           R11=A(END+1)
+         DO    WHILE=(CLR,R4,LT,R11)  BYTES LEFT IN FIELD
+               LR  R1,R11
+               SR  R1,R4
+               IF  (CHI,R1,GT,256)
+                   LA  R1,255         R1=MAX LEN-1 FOR EX TRT
+               ELSE                   
+                   BCTR R1,0          R1=LAST LEN-1 FOR EX TRT
+               ENDIF
+               IF  (EX,R1,NZ,ALL_TRT) DO TRT AND CHECK IF HIT
+                   SR  R1,R4
+                   AR  R0,R1
+                   BR  R14                                        
+               ELSE
+                   AR  R0,R1          ALL LEADING CHAR SO ADD LENGTH
+                   AHI R0,1
+                   LA  R4,1(R1,R4)    R4=A(NEXT CHAR TO TEST) 
+               ENDIF
+         ENDDO   
+         BR   R14
+*
+* SHARED DATA
+*
+STYPE    DC    C'?' C=CHARACTERS, A=ALL, L=LEADING, F=FIRST
+         EQUREGS 
+ZC390CVT DSECT
+         COPY  ZC390CVT
+         END

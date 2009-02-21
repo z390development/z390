@@ -1,0 +1,36 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/16/08                                                 *
+.*********************************************************************
+.* 04/16/08 initial coding for global ALTER    
+.* 09/29/08 ZSTRMAC
+.*********************************************************************
+.* WARNING: THIS CODE DOES NOT VERIFY THAT THE TARGET IS A GO TO.
+.* PLEASE REPLACE USE OF ALTER WITH EVALUATE WHEN STRUCTURE.
+.*********************************************************************
+         ALTER
+&OLD_GO_TO SETC  '&SYSLIST(1)'
+&NP      SETA  N'&SYSLIST
+         AIF   (&NP EQ 3)
+               AIF ('&SYSLIST(2)' EQ 'TO')
+                   :&NEW_GO_TO SETC  '&SYSLIST(3)'
+               AELSE
+                   MNOTE 8,'ALTER TO NOT FOUND'
+                   MEXIT
+               AEND
+         AELSEIF (&NP EQ 5)
+               AIF ('&SYSLIST(3)' EQ 'PROCEED'                         X
+                   AND '&SYSLIST(4)' EQ 'TO')
+                   :&NEW_GO_TO SETA  &SYSLIST(5)
+               AELSE
+                   MNOTE 8,'ALTER TO PROCED TO NOT FOUND'
+                   MEXIT
+               AEND
+         AEND
+         GEN_ALTER &OLD_GO_TO,&NEW_GO_TO
+         MEXIT
+         MEND

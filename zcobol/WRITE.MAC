@@ -1,0 +1,30 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/14/08                                                 *
+.*********************************************************************
+.* 04/14/08 initial coding for global ZCOBOL
+.* 04/30/08 change SYM_FILE_IX to SYM_REF    
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+         WRITE &RECORD
+         COPY  ZC_WS
+         :&NP  SETA  N'&SYSLIST
+         AIF   (&NP GT 1 AND '&SYSLIST(2)' EQ 'FROM')
+               MOVE  &SYSLIST(3),TO,&RECORD
+         AEND
+         ZC_SYM_FIND &RECORD
+         AIF   (&SYM_IX EQ 0)
+               MNOTE 8,'WRITE RECORD NOT FOUND - &RECORD'
+               MEXIT
+         AEND
+         :&FILE_IX SETA  &SYM_REF(&SYM_IX)
+         AIF   (&FILE_IX EQ 0)
+               MNOTE 8,'WRITE RECORD NOT A FILE RECORD - &RECORD'
+               MEXIT
+         AEND
+         GEN_WRITE &RECORD
+         MEND

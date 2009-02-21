@@ -1,0 +1,4 @@
+sysmac(zcobol+zcobol\vce+.)
+syscpy(zcobol+zcobol\vce)
+NOASM
+MAXGBL(1500000)

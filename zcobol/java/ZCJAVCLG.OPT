@@ -1,0 +1,4 @@
+sysmac(zcobol+zcobol\java+.)
+syscpy(zcobol+zcobol\java+mac+.)
+NOASM
+MAXGBL(1500000)

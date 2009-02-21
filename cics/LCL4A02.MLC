@@ -48,6 +48,8 @@ P4A02FN  DS    XL2                FUNCTION CODE
 P4A02EIB DS    AL4                EIB
 P4A02TCT DS    AL4                TCTTE
 P4A02ABT DS    AL4                ABSTIME ADDRESS
+         DS    X                  FF=NOHANDLE
+         DS    X
 P4A02RSP DS    AL4                RESP
 P4A02RS2 DS    AL4                RESP2
 P4A02END EQU   *                  END MARKER

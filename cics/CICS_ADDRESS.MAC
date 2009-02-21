@@ -1,0 +1,157 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_ADDRESS
+         GBLB  &PARMS_0202
+         GBLB  &ZC_CICS
+         LCLC  &COMM,&CWA,&EIB
+         LCLC  &COMMAREA,&CWA,&EIB,&RESP,&RESP2
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').PLOOP
+         AIF   ('&PARM'(1,9) EQ 'COMMAREA(').COMM
+         AIF   ('&PARM'(1,4) EQ 'CWA(').CWA
+         AIF   ('&PARM'(1,4) EQ 'EIB(').EIB
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.COMM    ANOP
+&COMM    SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.CWA     ANOP
+&CWA     SETC  '&PARM'(5,K'&PARM-5)
+         AGO   .PLOOP
+.*
+.EIB     ANOP
+&EIB     SETC  '&PARM'(5,K'&PARM-5)
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         GEN_XC P0202,P0202END-P0202,P0202
+         GEN_MVC P0202FN,,=X'0202' SET FUNCTION CODE
+         LARL  R15,P0202CAP       ADDRESS TARGET
+         MVC   0(4,R15),DFHEICAP  SET COMMAREA ADDRESS
+         AIF   ('&COMM' EQ '').DOCWA
+.* PROCESS COMMAREA
+         AIF   (&ZC_CICS)
+         AIF   ('&COMM'(1,11) EQ 'ADDRESS,OF,')
+.* COBOL LINKAGE-SECTION LABEL, EXTRACT AND TRANSFORM
+&COMMLSL SETC  '&COMM'(12,K'&COMM-11)
+         LA    R0,ZC_&COMMLSL._PTR ADDRESS OF L-S COMMAREA POINTER
+         GEN_ST R0,P0202ACM       SAVE IT
+         AELSE
+.* COBOL STANDARD POINTER
+         LA    R0,&COMM           ADDRESS OF COMMAREA POINTER
+         GEN_ST R0,P0202ACM       SAVE IT
+         AEND
+         AELSE
+.* ASM GENERAL REGISTER
+         LA    R0,&COMM           ADDRESS/REG OF COMMAREA POINTER
+         GEN_ST R0,P0202ACM       SAVE IT
+         AEND
+.DOCWA   ANOP
+         AIF   ('&CWA' EQ '').DOEIB
+.* PROCESS CWA
+         AIF   (&ZC_CICS)
+         AIF   ('&CWA'(1,11) EQ 'ADDRESS,OF,')
+.* COBOL LINKAGE-SECTION LABEL, EXTRACT AND TRANSFORM
+&CWALSL  SETC   '&CWA'(12,K'&CWA-11)
+         LA    R0,ZC_&CWALSL._PTR ADDRESS OF L-S COMMAREA POINTER
+         GEN_ST R0,P0202ACW       SAVE IT
+         AELSE
+.* COBOL STANDARD POINTER
+         LA    R0,&CWA            ADDRESS OF COMMAREA POINTER
+         GEN_ST R0,P0202ACW       SAVE IT
+         AEND
+         AELSE
+.* ASM GENERAL REGISTER
+         LA    R0,&CWA            ADDRESS/REG OF CWA POINTER
+         GEN_ST R0,P0202ACW       SAVE IT
+         AEND
+         AIF   ('&EIB' EQ '').ALLDONE
+.* PROCESS EIB
+         AIF   (&ZC_CICS)
+         AIF   ('&EIB'(1,11) EQ 'ADDRESS,OF,')
+.* COBOL LINKAGE-SECTION LABEL, EXTRACT AND TRANSFORM
+&EIBLSL  SETC   '&EIB'(12,K'&EIB-11)
+         LA    R0,ZC_&EIBLSL._PTR ADDRESS OF L-S COMMAREA POINTER
+         GEN_ST R0,P0202AEI       SAVE IT
+         AELSE
+.* COBOL STANDARD POINTER
+         LA    R0,&EIB            ADDRESS OF COMMAREA POINTER
+         GEN_ST R0,P0202AEI       SAVE IT
+         AEND
+         AELSE
+.* ASM GENERAL REGISTER
+         LA    R0,&EIB            ADDRESS/REG OF EIB POINTER
+         GEN_ST R0,P0202AEI       SAVE IT
+         AEND
+.ALLDONE ANOP
+         LA    R0,DFHEIHCN        ADDRESS OF DFHEIHCN
+         GEN_ST R0,P0202HCN       SAVE IT
+         GEN_ST DFHEIBR,P0202EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P0202TCT  SET TCTTE ADDRESS
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P0202RSP       SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P0202RS2       SAVE IT
+.NORESP2 ANOP
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P0202)       R1=LCL MODULE PARAMETER LIST
+         BAKR  0,R15              STACK REGS AND GO
+.*
+         AIF   (NOT &ZC_CICS)
+         AIF   ('&COMM' EQ '').TRYCWA
+         L     &COMM,DFHEICAP     LOAD COMMAREA ADDRESS
+.TRYCWA  ANOP
+         AIF   ('&CWA' EQ '').TRYEIB
+         L     &CWA,TCTTECWA      LOAD CWA ADDRESS
+.TRYEIB  ANOP
+         AIF   ('&EIB' EQ '').DUNREG
+         LR    &EIB,DFHEIBR       LOAD EIB ADDRESS
+.DUNREG  ANOP
+         AEND
+         AIF   (&PARMS_0202).BYP0202
+         J     P0202BYP_&SYSNDX   EXIT
+*
+&PARMS_0202 SETB 1
+P0202    DS    0H
+P0202FN  DS    XL2                FUNCTION CODE
+P0202EIB DS    AL4                EIB
+P0202TCT DS    AL4                TCTTE
+P0202HCN DS    AL4                A(DFHEIHCN)
+P0202CAP DS    AL4                DFHEICAP
+P0202ACM DS    AL4                LABEL ADDRESS FOR COMMAREA
+P0202ACW DS    AL4                LABEL ADDRESS FOR CWA
+P0202AEI DS    AL4                LABEL ADDRESS FOR EIB
+P0202RSP DS    AL4                RESP
+P0202RS2 DS    AL4                RESP2
+P0202END EQU   *                  END MARKER
+         DS    0H
+*
+P0202BYP_&SYSNDX DS 0H
+.BYP0202 ANOP
+         MEND
+

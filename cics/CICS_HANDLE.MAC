@@ -9,6 +9,7 @@
          MACRO
          CICS_HANDLE
          GBLB  &PARMS_0204,&PARMS_0206,&PARMS_0E0E
+         GBLB  &ZC_CICS
          LCLA  &CONDRNG,&PARMCNT
          LCLB  &CANCEL,&RESET
          LCLC  &TYPE,&LABEL,&PROGRAM,&RESP,&RESP2
@@ -26,14 +27,12 @@
 .* HANDLE AID
 .*
 .AID     ANOP
-         L     R15,=A(P0206)      LOAD PARM ADDRESS
-         USING (P0206,P0206END),R15
-         XC    P0206(P0206END-P0206),P0206 CLEAR PARMS
-         MVC   P0206FN,=X'0206'   SET FUNCTION CODE
-         ST    DFHEIBR,P0206EIB   SET EIB ADDRESS
-         ST    TCTTEAR,P0206TCT   SET TCTTE ADDRESS
-         LA    R1,P0206ADS        R1=ADDRESS AID NUMBERS
-         LA    R14,P0206ADR       R14=ADDRESSES OR FF IF CANCEL
+         GEN_XC P0206,P0206END-P0206,P0206
+         GEN_MVC P0206FN,,=X'0206' SET FUNCTION CODE
+         GEN_ST DFHEIBR,P0206EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P0206TCT  SET TCTTE ADDRESS
+         LARL  R1,P0206ADS        R1=ADDRESS AID NUMBERS
+         LARL  R14,P0206ADR       R14=ADDRESSES OR FF IF CANCEL
 .* SET KEY LIST WITH LABEL
 &KEYS(01) SETC 'ANYKEY('
 &KEYS(02) SETC 'ENTER('
@@ -147,9 +146,15 @@
 .* PARM HAS A LABEL...PROCESS BY TYPE
 &KEYLABL SETC  '&PARM'(K'&KEYS(&INNER)+1,K'&PARM-(K'&KEYS(&INNER)+1))
 &LABELTQ SETC  T'&KEYLABL
-         AIF   ('&KEYLABL'(1,1) EQ '=' OR '&LABELTQ' EQ 'A').LABADLIT
+         AIF   ('&KEYLABL'(1,1) EQ '='                                 X
+               OR '&LABELTQ' EQ 'A'                                    X
+               OR '&LABELTQ' EQ 'R').LABADLIT
          MVI   0(R1),&INNER       SET AID NUMBER
-         LA    R0,&KEYLABL        R0=LABEL
+         AIF   (&ZC_CICS)
+         LARL  R0,PG_&KEYLABL     R0=LABEL (COBOL)
+         AELSE
+         LA    R0,&KEYLABL        R0=LABEL (ASM)
+         AEND
          ST    R0,0(R14)          SAVE IT
          AHI   R1,1               BUMP AID NUMBER POINTER
          AHI   R14,4              BUMP AID ADDRESS POINTER
@@ -160,7 +165,11 @@
 .LABADLIT ANOP
 .* INDIRECT LABEL
          MVI   0(R1),&INNER       SET AID NUMBER
-         L     R0,&KEYLABL        R0=INDIRECT LABEL
+         AIF   (&ZC_CICS)
+         LRL   R0,PG_&KEYLABL     R0=INDIRECT LABEL (COBOL)
+         AELSE
+         L     R0,&KEYLABL        R0=INDIRECT LABEL (ASM)
+         AEND
          ST    R0,0(R14)          SAVE IT
          AHI   R1,1               BUMP AID NUMBER POINTER
          AHI   R14,4              BUMP AID ADDRESS POINTER
@@ -169,23 +178,25 @@
          AGO   .PLOOPA
 .*
 .ELOOPA  ANOP
-         LA    R1,DFHEIAID        ADDRESS OF DFHEIAID
-         ST    R1,P0206AID        SAVE IT
+         LA    R0,DFHEIAID        ADDRESS OF DFHEIAID
+         GEN_ST R0,P0206AID       SAVE IT
          AIF   ('&RESP' EQ '').NORESP
-         LA    R1,&RESP           ADDRESS OF RESP
-         ST    R1,P0206RSP        SAVE IT
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P0206RSP       SAVE IT
 .NORESP  ANOP
          AIF   ('&RESP2' EQ '').NORESP2
-         LA    R1,&RESP2          ADDRESS OF RESP2
-         ST    R1,P0206RS2        SAVE IT
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P0206RS2       SAVE IT
 .NORESP2 ANOP
-         ZCALL LCL0206,(P0206),MF=I CALL HANDLE AID PROCESSOR
-         DROP  R15
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P0206)       R1=LCL MODULE PARAMETER LIST
+         BAKR  0,R15              STACK REGS AND GO
+.*
          AIF   (&PARMS_0206).BYP0206
-         B     P0206BYP_&SYSNDX   EXIT
+         J     P0206BYP_&SYSNDX   EXIT
 *
 &PARMS_0206 SETB 1
-P0206    EQU   *
+P0206    DS    0H
 P0206FN  DS    XL2                FUNCTION CODE
 P0206EIB DS    AL4                EIB
 P0206TCT DS    AL4                TCTTE
@@ -209,14 +220,12 @@ P0206BYP_&SYSNDX DS 0H
 .* HANDLE CONDITION
 .*
 .COND    ANOP
-         L     R15,=A(P0204)      LOAD PARM ADDRESS
-         USING (P0204,P0204END),R15
-         XC    P0204(P0204END-P0204),P0204 CLEAR PARMS
-         MVC   P0204FN,=X'0204'   SET FUNCTION CODE
-         ST    DFHEIBR,P0204EIB   SET EIB ADDRESS
-         ST    TCTTEAR,P0204TCT   SET TCTTE ADDRESS
-         LA    R1,P0204CND        R1=ADDRESS CONDITION NUMBERS
-         LA    R14,P0204ADR       R14=ADDRESSES OR FF IF CANCEL
+         GEN_XC P0204,P0204END-P0204,P0204
+         GEN_MVC P0204FN,,=X'0204' SET FUNCTION CODE
+         GEN_ST DFHEIBR,P0204EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P0204TCT  SET TCTTE ADDRESS
+         LARL  R1,P0204CND        R1=ADDRESS CONDITION NUMBERS
+         LARL  R14,P0204ADR       R14=ADDRESSES OR FF IF CANCEL
 .* SET CONDITION LIST WITH LABEL
 &CONDS(01) SETC 'ERROR('
 &CONDS(11) SETC 'TERMIDERR('
@@ -317,8 +326,9 @@ P0206BYP_&SYSNDX DS 0H
 .* PARM HAS A LABEL...PROCESS BY TYPE
 &HCNLABL SETC '&PARM'(K'&CONDS(&INNER)+1,K'&PARM-(K'&CONDS(&INNER)+1))
 &LABELTQ SETC T'&HCNLABL
-.*
-         AIF   ('&HCNLABL'(1,1) EQ '=' OR '&LABELTQ' EQ 'A').LABHCLIT
+         AIF   ('&HCNLABL'(1,1) EQ '='                                 X
+               OR '&LABELTQ' EQ 'A'                                    X
+               OR '&LABELTQ' EQ 'R').LABHCLIT
 .* PROCESS SPECIAL DSIDERR
          AIF   (&INNER NE 99).NOTSPC2
          MVI   0(R1),12           SET SPECIAL CONDITION NUMBER
@@ -327,7 +337,11 @@ P0206BYP_&SYSNDX DS 0H
 .NOTSPC2 ANOP
          MVI   0(R1),&INNER       SET CONDITION NUMBER
 .SETLAB1 ANOP
-         LA    R0,&HCNLABL        R0=LABEL
+         AIF   (&ZC_CICS)
+         LARL  R0,PG_&HCNLABL     R0=LABEL (COBOL)
+         AELSE
+         LA    R0,&HCNLABL        R0=LABEL (ASM)
+         AEND
          ST    R0,0(R14)          SAVE IT
          AHI   R1,1               BUMP CONDITION NUMBER POINTER
          AHI   R14,4              BUMP CONDITION ADDRESS POINTER
@@ -345,7 +359,11 @@ P0206BYP_&SYSNDX DS 0H
 .NOTSPC3 ANOP
          MVI   0(R1),&INNER       SET CONDITION NUMBER
 .SETLAB2 ANOP
-         L     R0,&HCNLABL        R0=INDIRECT LABEL
+         AIF   (&ZC_CICS)
+         LRL   R0,PG_&HCNLABL     R0=INDIRECT LABEL (COBOL)
+         AELSE
+         L     R0,&HCNLABL        R0=INDIRECT LABEL (ASM)
+         AEND
          ST    R0,0(R14)          SAVE IT
          AHI   R1,1               BUMP CONDITION NUMBER POINTER
          AHI   R14,4              BUMP CONDITION ADDRESS POINTER
@@ -354,23 +372,25 @@ P0206BYP_&SYSNDX DS 0H
          AGO   .PLOOPC
 .*
 .ELOOPC  ANOP
-         LA    R1,DFHEIHCN        ADDRESS OF DFHEIHCN
-         ST    R1,P0204HCN        SAVE IT
+         LA    R0,DFHEIHCN        ADDRESS OF DFHEIHCN
+         GEN_ST R0,P0204HCN       SAVE IT
          AIF   ('&RESP' EQ '').NORESPC
-         LA    R1,&RESP           ADDRESS OF RESP
-         ST    R1,P0204RSP        SAVE IT
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P0204RSP       SAVE IT
 .NORESPC ANOP
          AIF   ('&RESP2' EQ '').NORSP2C
-         LA    R1,&RESP2          ADDRESS OF RESP2
-         ST    R1,P0204RS2        SAVE IT
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P0204RS2       SAVE IT
 .NORSP2C ANOP
-         ZCALL LCL0204,(P0204),MF=I CALL HANDLE CONDITION PROCESSOR
-         DROP  R15
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P0204)       R1=LCL MODULE PARAMETER LIST
+         BAKR  0,R15              STACK REGS AND GO
+.*
          AIF   (&PARMS_0204).BYP0204
-         B     P0204BYP_&SYSNDX   EXIT
+         J     P0204BYP_&SYSNDX   EXIT
 *
 &PARMS_0204 SETB 1
-P0204    EQU   *
+P0204    DS    0H
 P0204FN  DS    XL2                FUNCTION CODE
 P0204EIB DS    AL4                EIB
 P0204TCT DS    AL4                TCTTE
@@ -444,71 +464,87 @@ P0204BYP_&SYSNDX DS 0H
          AIF   ('&LABEL' NE '' AND '&PROGRAM' NE '').BADLAB
          AIF   (NOT &CANCEL AND NOT &RESET AND '&LABEL' EQ '' AND      -
                '&PROGRAM' EQ '').NOPARMS
-         L     R15,=A(P0E0E)      LOAD PARM ADDRESS
-         USING (P0E0E,P0E0EEND),R15
-         XC    P0E0E(P0E0EEND-P0E0E),P0E0E CLEAR PARMS
-         MVC   P0E0EFN,=X'0E0E'   SET FUNCTION CODE
-         ST    DFHEIBR,P0E0EEIB   SET EIB ADDRESS
-         ST    TCTTEAR,P0E0ETCT   SET TCTTE ADDRESS
+         GEN_XC P0E0E,P0E0EEND-P0E0E,P0E0E
+         GEN_MVC P0E0EFN,,=X'0E0E' SET FUNCTION CODE
+         GEN_ST DFHEIBR,P0E0EEIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P0E0ETCT  SET TCTTE ADDRESS
          AIF   (NOT &CANCEL).TRYRES
          MVI   P0E0ECAN,X'FF'     SET CANCEL
+         GEN_MVI P0E0ECAN,X'FF'   SET CANCEL
          AGO   .DORESP
 .*
 .TRYRES  ANOP
          AIF   (NOT &RESET).TRYLAB
-         MVI   P0E0ERES,X'FF'     SET RESET
+         GEN_MVI P0E0ERES,X'FF'   SET RESET
          AGO   .DORESP
 .*
 .TRYLAB  ANOP
          AIF   ('&LABEL' EQ '').TRYPROG
-&LABELTQ SETC T'&LABEL
-.*
-         AIF   ('&LABEL'(1,1) EQ '=' OR '&LABELTQ' EQ 'A').LABABLIT
-         LA    R1,&LABEL          R1=LABEL
-         ST    R1,P0E0ELAB        SAVE IT
-         STM   R2,R13,P0E0EREG    SAVE CALLERS REGS
+&LABELTQ SETC  T'&LABEL
+         AIF   ('&LABEL'(1,1) EQ '='                                   X
+               OR '&LABELTQ' EQ 'A'                                    X
+               OR '&LABELTQ' EQ 'R').LABABLIT
+         AIF   (&ZC_CICS)
+         LARL  R0,PG_&LABEL       R0=LABEL (COBOL)
+         AELSE
+         LA    R0,&LABEL          R0=LABEL (ASM)
+         AEND
+         GEN_ST R0,P0E0ELAB       SAVE IT
+         LARL  R15,P0E0EREG       ADDRESS TARGET
+         STM   R2,R13,0(R15)      SAVE CALLERS REGS
          AGO   .DORESP
 .*
 .LABABLIT ANOP
-         L     R1,&LABEL          R1=INDIRECT LABEL
-         ST    R1,P0E0ELAB        SAVE IT
-         STM   R2,R13,P0E0EREG    SAVE CALLERS REGS
+         AIF   (&ZC_CICS)
+         LRL   R0,PG_&LABEL       R0=LABEL (COBOL)
+         AELSE
+         L     R0,&LABEL          R0=LABEL (ASM)
+         AEND
+         GEN_ST R0,P0E0ELAB       SAVE IT
+         LARL  R15,P0E0EREG       ADDRESS TARGET
+         STM   R2,R13,0(R15)      SAVE CALLERS REGS
          AGO   .DORESP
 .*
 .TRYPROG ANOP
          AIF   ('&PROGRAM'(1,1) EQ '''').STRING
-         MVC   P0E0EPGM,&PROGRAM  MOVE PROGRAM FROM LABEL
+         LARL  R15,P0E0EPGM       ADDRESS TARGET
+         MVC   0(8,R15),&PROGRAM  MOVE PROGRAM FROM LABEL
          AGO   .NOSTRING
 .*
 .STRING  ANOP
 &PROGLEN SETA  K'&PROGRAM
          AIF   (&PROGLEN LT 3 OR &PROGLEN GT 10).BADPROG
-         MVC   P0E0EPGM,=CL8&PROGRAM MOVE PROGRAM
+         GEN_MVC P0E0EPGM,,=CL8&PROGRAM MOVE PROGRAM
 .NOSTRING ANOP
-         MVC   P0E0ECAP,DFHEICAP  SET ANY COMMAREA ADDRESS
-         STM   R2,R13,P0E0EREG    SAVE CALLERS REGS
+         LARL  R15,P0E0ECAP       ADDRESS TARGET
+         MVC   0(4,R15),DFHEICAP  SET ANY COMMAREA ADDRESS
+         LARL  R15,P0E0EREG       ADDRESS TARGET
+         STM   R2,R13,0(R15)      SAVE CALLERS REGS
 .DORESP  ANOP
          AIF   ('&RESP' EQ '').NORESPB
-         LA    R1,&RESP           ADDRESS OF RESP
-         ST    R1,P0E0ERSP        SAVE IT
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P0E0ERSP       SAVE IT
 .NORESPB ANOP
          AIF   ('&RESP2' EQ '').NORSP2B
-         LA    R1,&RESP2          ADDRESS OF RESP2
-         ST    R1,P0E0ERS2        SAVE IT
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P0E0ERS2       SAVE IT
 .NORSP2B ANOP
-         ZCALL LCL0E0E,(P0E0E),MF=I CALL HANDLE ABEND PROCESSOR
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P0E0E)       R1=LCL MODULE PARAMETER LIST
+         BAKR  0,R15              STACK REGS AND GO
 .*
-         DROP  R15
          AIF   (&PARMS_0E0E).BYP0E0E
-         B     P0E0EBYP_&SYSNDX   EXIT
+         J     P0E0EBYP_&SYSNDX   EXIT
 *
 &PARMS_0E0E SETB 1
-P0E0E    EQU   *
+P0E0E    DS    0H
 P0E0EFN  DS    XL2                FUNCTION CODE
 P0E0EEIB DS    AL4                EIB
 P0E0ETCT DS    AL4                TCTTE
 P0E0ECAN DS    X                  FF=CANCEL
+         DS    X
 P0E0ERES DS    X                  FF=RESET
+         DS    X
 P0E0ELAB DS    AL4                LABEL
 P0E0EPGM DS    CL8                PROGRAM
 P0E0ECAP DS    AL4                COMMAREA ADDRESS FROM DFHEICAP
@@ -546,3 +582,4 @@ P0E0EBYP_&SYSNDX DS 0H
          MEXIT
 .*
          MEND
+

@@ -18,6 +18,7 @@
                &GRPNAME=
 .*
          GBLA  &MTYPE             TYPE REQUEST
+         GBLA  &MLANG             0=COBOL 2=ASM
          GBLA  &SIZEROW           NO. OF ROWS
          GBLA  &SIZECOL           NO. OF COLUMNS
          GBLA  &MDFALL            LENGTH OF ALL MDF'S
@@ -27,6 +28,7 @@
          GBLA  &MDFNAMC           NO. OF NAMED MDF'S
          GBLA  &MDFWRAP           NO. OF WRAPPED FIELDS
          GBLA  &GFELEN            SUN OF GROUP FIELD ENTRY LENGTHS
+         GBLA  &MDFCOBS           LENGTH OF COBOL MAP STRUCTURE
 .*
          GBLB  &MDIMODE(2)        1=OUT 2=IN BOTH=INOUT
          GBLB  &IC                IC HAS OCCURRED IN MDF SET
@@ -354,7 +356,8 @@
 .*
 .* ANALYSE PICIN/PICOUT
          AIF   ('&PICIN' EQ '' AND '&PICOUT' EQ '').DUNPIC
-.* PICIN AND/OR PICOUT PRESENT
+         AIF   (&MLANG EQ 0).DUNPIC
+.* PICIN AND/OR PICOUT PRESENT FOR ASM
          AIF   ('&FLDNAME' EQ '').BADPCDS
          AIF   ('&PICIN' EQ '').PICOUT
 .* PROCESS PICIN
@@ -700,51 +703,114 @@
          AIF   (NOT &GFD).NOTGFD1
 .* GROUP FIELD DESCRIPTOR
 &SPACES  SETC  '        '(1,7-K'&GNAME)
+         AIF   (&MLANG NE 0)
          PUNCH '*'
          PUNCH '&GNAME.L&SPACES DS    AL2                INPUT GROUP FI-
                ELD LENGTH'
          PUNCH '&GNAME.F&SPACES DS    X                  INPUT GROUP FI-
                ELD FLAG'
+         AELSE
+.* FOR COBOL &GFE MUST BE SET
+&GFE     SETB  1
+         PUNCH '           02  &GNAME.L&SPACES PIC S9(4) COMP.'
+         PUNCH '           02  &GNAME.F&SPACES PIC X.'
+&MDFCOBS SETA  &MDFCOBS+3
+         AEND
+         AIF   (&MLANG NE 0)
 &SPACES  SETC  '        '(1,8-K'&GNAME)
          PUNCH '&GNAME&SPACES DS    0C                 INPUT GROUP FIEL-
                D ORIGIN'
+         AELSE
+         PUNCH '           02  &GNAME.I.'
+         AEND
 &SPACES  SETC  '        '(1,8-&KFLD)
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.I-
                NPUT GROUP FIELD'
+         AELSE
+         AIF   ('&PICIN' EQ '')
+         AIF   (&LENGTH GT 1)
+&RPICIN  SETC  'X(&LENGTH)'
+         AELSE
+&RPICIN  SETC  'X'
+         AEND
+         AELSE
+&RPICIN  SETC  '&PICIN'(2,K'&PICIN-2)
+         AEND
+         PUNCH '               03  &FLDNAME.I&SPACES PIC &RPICIN..'
+&MDFCOBS SETA  &MDFCOBS+&LENGTH
+         AEND
          MEXIT
 .*
 .NOTGFD1 ANOP
          AIF   (NOT &GFE).NOTGFE3
 .* GROUP FIELD ENTRY
+         AIF   (&MLANG NE 0)
 &SPACES  SETC  '        '(1,8-&KFLD)
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.I-
                NPUT GROUP FIELD'
+         AEND
          MEXIT
 .*
 .NOTGFE3 ANOP
 &SPACES  SETC  '        '(1,7-&KFLD)
          AIF   (&OCC EQ 1).NOOCI1
 .* FIRST OF MULTIPLE OCCURS
+         AIF   (&MLANG NE 0)
          PUNCH '*'
          PUNCH '&FLDNAME.D&SPACES DS    0C                 INPUT FIELD -
                FIRST OCCURRING'
+         AELSE
+         PUNCH '           02  &FLDNAME.D&SPACES OCCURS &OCC TIMES.'
+         AEND
          AGO   .NOSTAR
 .*
 .NOOCI1  ANOP
+         AIF   (&MLANG NE 0)
          PUNCH '*'
+         AEND
 .NOSTAR  ANOP
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.L&SPACES DS    AL2                INPUT FIELD -
                LENGTH'
          PUNCH '&FLDNAME.F&SPACES DS    X                  INPUT FIELD -
                FLAG'
+         AELSE
+         AIF   (&OCC EQ 1)
+         PUNCH '           02  &FLDNAME.L&SPACES PIC S9(4) COMP.'
+         PUNCH '           02  &FLDNAME.F&SPACES PIC X.'
+         AELSE
+         PUNCH '               03  &FLDNAME.L&SPACES PIC S9(4) COMP.'
+         PUNCH '               03  &FLDNAME.F&SPACES PIC X.'
+         AEND
+         AIF   ('&PICIN' EQ '')
+         AIF   (&LENGTH GT 1)
+&RPICIN  SETC  'X(&LENGTH)'
+         AELSE
+&RPICIN  SETC  'X'
+         AEND
+         AELSE
+&RPICIN  SETC  '&PICIN'(2,K'&PICIN-2)
+         AEND
+         AIF   (&OCC NE 1 OR &GFE)
+         PUNCH '               03  &FLDNAME.I&SPACES PIC &RPICIN..'
+         AELSE
+         PUNCH '           02  &FLDNAME.I&SPACES PIC &RPICIN..'
+         AEND
+&MDFCOBS SETA  &MDFCOBS+&OCC*(3+&LENGTH)
+         AEND
 &SPACES  SETC  '        '(1,8-&KFLD)
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.I-
                NPUT FIELD'
+         AEND
          AIF   (&OCC EQ 1).NOOCI2
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.N&SPACES DS    0C                 INPUT FIELD -
                NEXT OCCURRING'
          PUNCH '         ORG   &FLDNAME.D+&OCC*(&FLDNAME.N-&FLDNAME.D)'
+         AEND
 .NOOCI2  ANOP
          MEXIT
 .*
@@ -757,45 +823,101 @@
          AIF   (NOT &GFD).NOTGFD2
 .* GROUP FIELD DESCRIPTOR
 &SPACES  SETC  '        '(1,7-K'&GNAME)
+         AIF   (&MLANG NE 0)
          PUNCH '*'
          PUNCH '&GNAME.A&SPACES DS    X                  OUTPUT GROUP F-
                IELD ATTRIBUTE'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC XX.'
+         PUNCH '           02  &GNAME.A&SPACES PIC X.'
+&MDFCOBS SETA  &MDFCOBS+3
+         AEND
+         AIF   (&MLANG NE 0)
 &SPACES  SETC  '        '(1,8-K'&GNAME)
          PUNCH '&GNAME&SPACES DS    0C                 OUTPUT GROUP FIE-
                LD ORIGIN'
+         AELSE
+         PUNCH '           02  &GNAME.O.'
+         AEND
 &SPACES  SETC  '        '(1,8-&KFLD)
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.O-
                UTPUT GROUP FIELD'
+         AELSE
+         AIF   ('&PICOUT' EQ '')
+         AIF   (&LENGTH GT 1)
+&RPICOUT SETC  'X(&LENGTH)'
+         AELSE
+&RPICOUT SETC  'X'
+         AEND
+         AELSE
+&RPICOUT SETC  '&PICOUT'(2,K'&PICOUT-2)
+         MNOTE *,'&RPICOUT'
+         AEND
+         PUNCH '           02  &FLDNAME.O&SPACES PIC &RPICOUT.'
+&MDFCOBS SETA  &MDFCOBS+&LENGTH
+         AEND
          MEXIT
 .*
 .NOTGFD2 ANOP
          AIF   (NOT &GFE).NOTGFE4
 .* GROUP FIELD ENTRY
 &SPACES  SETC  '        '(1,8-&KFLD)
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.O-
                UTPUT GROUP FIELD'
+         AEND
          MEXIT
 .*
 .NOTGFE4 ANOP
 &SPACES  SETC  '        '(1,7-&KFLD)
          AIF   (&OCC EQ 1).NOOCO1
+.* FIRST OF MULTIPLE OCCURS
+         AIF   (&MLANG NE 0)
          PUNCH '*'
          PUNCH '&FLDNAME.D&SPACES DS    0C                 OUTPUT FIELD-
                 FIRST OCCURRING'
+         AELSE
+         PUNCH '           02  &FLDNAME.D&SPACES OCCURS &OCC TIMES.'
+         AEND
          AGO   .NOSTAR2
+.*
 .NOOCO1  ANOP
+         AIF   (&MLANG NE 0)
          PUNCH '*'
+         AEND
 .NOSTAR2 ANOP
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.A&SPACES DS    X                  OUTPUT ATTRI-
                BUTE'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC XX.'
+         PUNCH '           02  &FLDNAME.A&SPACES PIC X.'
+         AIF   ('&PICOUT' EQ '')
+         AIF   (&LENGTH GT 1)
+&RPICOUT SETC  'X(&LENGTH)'
+         AELSE
+&RPICOUT SETC  'X'
+         AEND
+         AELSE
+&RPICOUT SETC  '&PICOUT'(2,K'&PICOUT-2)
+         MNOTE *,'&RPICOUT'
+         AEND
+         PUNCH '           02  &FLDNAME.O&SPACES PIC &RPICOUT.'
+&MDFCOBS SETA  &MDFCOBS+&OCC*(3+&LENGTH)
+         AEND
+         AIF   (&MLANG NE 0)
 &SPACES  SETC  '        '(1,8-&KFLD)
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.O-
                UTPUT FIELD'
+         AEND
          AIF   (&OCC EQ 1).NOOCO2
+         AIF   (&MLANG NE 0)
 &SPACES  SETC  '        '(1,7-&KFLD)
          PUNCH '&FLDNAME.N&SPACES DS    0C                 OUTPUT FIELD-
                 NEXT OCCURRING'
          PUNCH '         ORG   &FLDNAME.D+&OCC*(&FLDNAME.N-&FLDNAME.D)'
+         AEND
 .NOOCO2  ANOP
          MEXIT
 .*
@@ -804,6 +926,7 @@
          AIF   (NOT &GFD).NOTGFD3
 .* GROUP FIELD DESCRIPTOR
 &SPACES  SETC  '        '(1,7-K'&GNAME)
+         AIF   (&MLANG NE 0)
          PUNCH '*'
          PUNCH '&GNAME.L&SPACES DS    AL2                INPUT GROUP FI-
                ELD LENGTH'
@@ -815,36 +938,110 @@
                ELD ORIGIN'
          PUNCH '&GNAME.O&SPACES DS    0C                 OUTPUT GROUP F-
                IELD ORIGIN'
+         AELSE
+.* FOR COBOL &GFE MUST BE SET
+&GFE     SETB  1
+         PUNCH '           02  &GNAME.L&SPACES PIC S9(4) COMP.'
+         PUNCH '           02  &GNAME.F&SPACES PIC X.'
+         PUNCH '           02  FILLER REDEFINES &GNAME.F.'
+         PUNCH '               03  &GNAME.A&SPACES PIC X.'
+         PUNCH '           02  &GNAME.I.'
+         PUNCH '           02  &GNAME.O REDEFINES &GNAME.I.'
+&MDFCOBS SETA  &MDFCOBS+3
+         AEND
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.I&SPACES DS    CL&LENGTH              &SPACES2-
                .INPUT GROUP FIELD'
          PUNCH '         ORG   &FLDNAME.I'
          PUNCH '&FLDNAME.O&SPACES DS    CL&LENGTH              &SPACES2-
                .OUTPUT GROUP FIELD'
+         AELSE
+         AIF   ('&PICIN' EQ '')
+         AIF   (&LENGTH GT 1)
+&RPICIN  SETC  'X(&LENGTH)'
+         AELSE
+&RPICIN  SETC  'X'
+         AEND
+         AELSE
+&RPICIN  SETC  '&PICIN'(2,K'&PICIN-2)
+         AEND
+         AIF   ('&PICOUT' EQ '')
+&RPICOUT SETC  'X(&LENGTH)'
+         AELSE
+&RPICOUT SETC  '&PICOUT'(2,K'&PICOUT-2)
+         MNOTE *,'&RPICOUT'
+         AEND
+         AIF   (&OCC NE 1 OR &GFE)
+         PUNCH '               03  &FLDNAME.I&SPACES PIC &RPICIN..'
+         PUNCH '               03  FILLER REDEFINES &FLDNAME.I.'
+         PUNCH '                   04  &FLDNAME.O&SPACES PIC &RPICOUT..-
+               '
+         AELSE
+         PUNCH '           02  &FLDNAME.I&SPACES PIC &RPICIN..'
+         PUNCH '           02  FILLER REDEFINES &FLDNAME.I.'
+         PUNCH '               03  &FLDNAME.O&SPACES PIC &RPICOUT..'
+         AEND
+&MDFCOBS SETA  &MDFCOBS+&LENGTH
+         AEND
          MEXIT
 .*
 .NOTGFD3 ANOP
          AIF   (NOT &GFE).NOTGFE5
 .* GROUP FIELD ENTRY
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.I&SPACES DS    CL&LENGTH              &SPACES2-
                .INPUT GROUP FIELD'
          PUNCH '         ORG   &FLDNAME.I'
          PUNCH '&FLDNAME.O&SPACES DS    CL&LENGTH              &SPACES2-
                .OUTPUT GROUP FIELD'
+         AELSE
+         AIF   ('&PICIN' EQ '')
+         AIF   (&LENGTH GT 1)
+&RPICIN  SETC  'X(&LENGTH)'
+         AELSE
+&RPICIN  SETC  'X'
+         AEND
+         AELSE
+&RPICIN  SETC  '&PICIN'(2,K'&PICIN-2)
+         AEND
+         AIF   ('&PICOUT' EQ '')
+         AIF   (&LENGTH GT 1)
+&RPICOUT SETC  'X(&LENGTH)'
+         AELSE
+&RPICOUT SETC  'X'
+         AEND
+         AELSE
+&RPICOUT SETC  '&PICOUT'(2,K'&PICOUT-2)
+         MNOTE *,'&RPICOUT'
+         AEND
+         PUNCH '               03  &FLDNAME.I&SPACES PIC &RPICIN..'
+         PUNCH '               03  FILLER REDEFINES &FLDNAME.I.'
+         PUNCH '                   04  &FLDNAME.O&SPACES PIC &RPICOUT..-
+               '
+&MDFCOBS SETA  &MDFCOBS+&LENGTH
+         AEND
          MEXIT
 .*
 .NOTGFE5 ANOP
 &SPACES  SETC  '        '(1,7-&KFLD)
          AIF   (&OCC EQ 1).NOOCIO1
+         AIF   (&MLANG NE 0)
          PUNCH '*'
          PUNCH '&FLDNAME.D&SPACES DS    0C                 I/O FIELD FI-
                RST OCCURRING'
+         AELSE
+         PUNCH '           02  &FLDNAME.D&SPACES OCCURS &OCC TIMES.'
+         AEND
          AGO   .NOSTAR3
 .*
 .NOOCIO1 ANOP
+         AIF   (&MLANG NE 0)
          PUNCH '*'
+         AEND
 .NOSTAR3 ANOP
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.L&SPACES DS    AL2                INPUT FIELD -
                LENGTH'
          PUNCH '&FLDNAME.F&SPACES DS    0X                 INPUT FIELD -
@@ -856,11 +1053,56 @@
          PUNCH '         ORG   &FLDNAME.I'
          PUNCH '&FLDNAME.O&SPACES DS    CL&LENGTH              &SPACES2-
                .OUTPUT FIELD'
+         AELSE
+         AIF   (&OCC EQ 1)
+         PUNCH '           02  &FLDNAME.L&SPACES PIC S9(4) COMP.'
+         PUNCH '           02  &FLDNAME.F&SPACES PIC X.'
+         PUNCH '           02  FILLER REDEFINES &FLDNAME.F.'
+         PUNCH '               03  &FLDNAME.A&SPACES PIC X.'
+         AELSE
+         PUNCH '               03  &FLDNAME.L&SPACES PIC S9(4) COMP.'
+         PUNCH '               03  &FLDNAME.F&SPACES PIC X.'
+         PUNCH '               03  FILLER REDEFINES &FLDNAME.F.'
+         PUNCH '                   04  &FLDNAME.A&SPACES PIC X.'
+         AEND
+         AIF   ('&PICIN' EQ '')
+         AIF   (&LENGTH GT 1)
+&RPICIN  SETC  'X(&LENGTH)'
+         AELSE
+&RPICIN  SETC  'X'
+         AEND
+         AELSE
+&RPICIN  SETC  '&PICIN'(2,K'&PICIN-2)
+         AEND
+         AIF   ('&PICOUT' EQ '')
+         AIF   (&LENGTH GT 1)
+&RPICOUT SETC  'X(&LENGTH)'
+         AELSE
+&RPICOUT SETC  'X'
+         AEND
+         AELSE
+&RPICOUT SETC  '&PICOUT'(2,K'&PICOUT-2)
+         MNOTE *,'&RPICOUT'
+         AEND
+         AIF   (&OCC NE 1 OR &GFE)
+         PUNCH '               03  &FLDNAME.I&SPACES PIC &RPICIN..'
+         PUNCH '               03  FILLER REDEFINES &FLDNAME.I.'
+         PUNCH '                   04  &FLDNAME.O&SPACES PIC &RPICOUT..-
+               '
+         AELSE
+         PUNCH '           02  &FLDNAME.I&SPACES PIC &RPICIN..'
+         PUNCH '           02  FILLER REDEFINES &FLDNAME.I.'
+         PUNCH '               03  &FLDNAME.O&SPACES PIC &RPICOUT..'
+         AEND
+&MDFCOBS SETA  &MDFCOBS+&OCC*(3+&LENGTH)
+         AEND
          AIF   (&OCC EQ 1).DUNMDF
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.N&SPACES DS    0C                 I/O FIELD NE-
                XT OCCURRING'
          PUNCH '         ORG   &FLDNAME.D+&OCC*(&FLDNAME.N-&FLDNAME.D)'
+         AEND
 .DUNMDF  ANOP
          MEXIT
 .*

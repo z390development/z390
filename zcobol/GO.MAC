@@ -1,0 +1,46 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/16/08                                                 *
+.*********************************************************************
+.* 04/16/08 initial coding for global GO TO    
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+         GO                                  
+         COPY  ZC_WS
+         :&NP  SETA  N'&SYSLIST
+         :&PARM_IX   SETA  1
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'TO')
+               :&PARM_IX SETA  &PARM_IX+1
+         AEND
+         AIF   (&NP EQ &PARM_IX)
+               GEN_B  &SYSLIST(&PARM_IX)
+         AELSE
+               :&GO_LIST SETC '&SYSLIST(&PARM_IX)'
+               :&PARM_IX SETA &PARM_IX+1
+               AWHILE (&PARM_IX LT &NP-2                               X
+                      AND '&SYSLIST(&PARM_IX)' NE 'DEPENDING')
+                   :&GO_LIST SETC '&GO_LIST,&SYSLIST(&PARM_IX)'
+                   :&PARM_IX SETA &PARM_IX+1
+               AEND
+               AIF  ('&SYSLIST(&PARM_IX)' EQ 'DEPENDING')              X
+                    AND '&SYSLIST(&PARM_IX+1)' EQ 'ON')
+                    :&PARM_IX SETA &PARM_IX+2
+                    :&FIELD_REG SETC 'R2'
+                    :&FIELD_SS1 SETB 0
+                    ACALL GET_PARM_FIELD
+                    AIF (&FIELD_IX GT 0)
+                        GEN_GO_DEPEND &GO_LIST
+                    AELSE
+                        MNOTE 8,'GO TO DEPENDING VAR NOT FOUND - &FIELDX
+               _NAME'
+                    AEND
+               AELSE
+                    MNOTE 8,'GO TO DEPENDING CLAUSE NOT FOUND'
+               AEND      
+         AEND
+         COPY ZCGETFLD
+         MEND

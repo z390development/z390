@@ -1,5 +1,5 @@
-Z390/CICS Supplied Transactions
-===============================
+zCICS Supplied Transactions
+===========================
 
 a) CEBR
    Browse Temporary Storage Queues.
@@ -126,6 +126,7 @@ b) CEMT
    CEMT I TER       Displays the state of all terminals.
 
    CEMT I TRA       Displays the PCT.
+                    Currently limited to 42 transactions.
                     Page forward/back not yet implemented.
 
    CEMT I SYS       Displays the Z390CICS.INI file.
@@ -137,7 +138,7 @@ b) CEMT
 
    CEMT P SHU       Shut down the server if no active tasks.
                     When all active tasks are closed the server is
-                    shut down and Z390/CICS ends.
+                    shut down and zCICS ends.
 
    CEMT P SHU IMM   Shut down the server immediately.
 
@@ -153,6 +154,9 @@ b) CEMT
 
 Change Summary
 --------------
+February 21, 2009
+   Extended CEMT I TRA
+
 June 27, 2008
    Added CEMT conversational mode.
    Added CEMT I ENQ
@@ -162,8 +166,8 @@ Trademarks
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
-Author: Melvyn Maltz
-Shipping Date: November 24, 2008
-Z390 version: V1.4.04
-Z390/CICS version: V6
+Author       : Melvyn Maltz
+Shipping Date: February 21, 2009
+Z390 version : V1.5.00
+zCICS version: V7
 

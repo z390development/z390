@@ -1,0 +1,33 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+MAPLOGO  DFHMSD TYPE=&SYSPARM,STORAGE=AUTO,MODE=INOUT,LANG=ASM,        X
+               CTRL=FREEKB,CURSLOC=YES,TIOAPFX=YES
+LOGO     DFHMDI SIZE=(24,80),LINE=1,COLUMN=1
+         DFHMDF POS=(7,29),LENGTH=27,ATTRB=(ASKIP,BRT,IC),             X
+               INITIAL='CCCCC  IIII   CCCCC   SSSSS'
+         DFHMDF POS=(8,28),LENGTH=29,ATTRB=(ASKIP,BRT),                X
+               INITIAL='C        II   C       S     S'
+         DFHMDF POS=(9,28),LENGTH=30,ATTRB=(ASKIP,BRT),                X
+               INITIAL='C        II   C      S       S'
+         DFHMDF POS=(10,28),LENGTH=23,ATTRB=(ASKIP,BRT),               X
+               INITIAL='C        II   C       S'
+         DFHMDF POS=(11,21),LENGTH=35,ATTRB=(ASKIP,BRT),               X
+               INITIAL='ZZZZZ  C        II   C        SSSSS'
+         DFHMDF POS=(12,24),LENGTH=33,ATTRB=(ASKIP,BRT),               X
+               INITIAL='Z   C        II   C             S'
+         DFHMDF POS=(13,23),LENGTH=35,ATTRB=(ASKIP,BRT),               X
+               INITIAL='Z    C        II   C      S       S'
+         DFHMDF POS=(14,22),LENGTH=35,ATTRB=(ASKIP,BRT),               X
+               INITIAL='Z     C        II   C       S     S'
+         DFHMDF POS=(15,21),LENGTH=35,ATTRB=(ASKIP,BRT),               X
+               INITIAL='ZZZZZ   CCCCC  IIII   CCCCC   SSSSS'
+         DFHMDF POS=(17,35),LENGTH=9,ATTRB=(ASKIP,BRT),                X
+               INITIAL='Version 7'
+*
+         DFHMSD TYPE=FINAL
+         END
+

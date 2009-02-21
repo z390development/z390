@@ -1,0 +1,51 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/08/08 initial coding to list all ws sym addr, len, pic, val
+.* 05/03/08 align fields and call GEN_COMMENT for report lines    
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+         ZC_DATA_LIST                                        
+         COPY  ZC_WS
+         AIF   (&SYM_TOT EQ 0)
+               MEXIT
+         AEND
+         AIF   (NOT &LK_MODE)
+               GEN_COMMENT 'ZCOBOL WORKING STORAGE SECTION DATA ITEMS'
+         AELSE
+               GEN_COMMENT 'ZCOBOL LINKAGE SECTION DATA ITEMS'
+         AEND
+         GEN_COMMENT 'LVL DATA NAME                      ADDR     LEN  X
+                   DUP TYP PIC        VALUE'
+         ACTR  100000
+         :&I       SETA  1
+         AWHILE (&I LE &SYM_TOT)
+                AIF   ((NOT &LK_MODE AND &SYM_LK(&I) EQ 0)             X
+                      OR (&LK_MODE AND &SYM_LK(&I) GT 0))
+                    :&LVL     SETC  '0&SYM_LVL(&I)'
+                    :&LVL     SETC  '&LVL'(K'&LVL-1,2).' '
+                    :&SYM     SETC  '&SYM_NAME(&I)'
+                    AIF  (K'&SYM LT 30)
+                         :&SYM  SETC  '&SYM                            X
+                 '(1,30)
+                    AEND
+                    :&ADDR    SETC  A2X(&SYM_LOC(&I))
+                    :&LEN     SETC  A2X(&SYM_LEN(&I))
+                    :&DUP     SETC  '&SYM_DUP(&I)  '
+                    :&PICTYPE SETC  '&SYM_PIC_TYPE(&I)  '
+                    :&PIC     SETC  '&SYM_PIC(&I)'
+                    AIF   (K'&PIC LE 15)
+                         :&PIC SETC  '&PIC               '(1,10)
+                    AEND
+                    :&VAL SETC  (DOUBLE '&SYM_VAL(&I)')
+                    GEN_COMMENT  '&LVL &SYM &ADDR &LEN &DUP &PICTYPE &PX
+               IC &VAL'
+               AEND
+               :&I SETA &I+1
+         AEND
+         MEND   

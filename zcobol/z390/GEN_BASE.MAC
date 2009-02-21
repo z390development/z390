@@ -1,0 +1,127 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/30/08                                                 *
+.*********************************************************************
+.* 11/30/08 initial coding for z390 GEN_BASE &IX to set base reg
+.*********************************************************************
+.*  GEN_BASEX &IX - verify or set base register for SYM_NAME(&IX)    
+.*    1.  If &IX not GT 0 error
+.*    2.  If &SYM_LOC(&IX) within current sytem base regs, exit now
+.*    3.  Reset least recently used dynambase with current base                
+.*        using LAY if < 1MB or IILF,AR           
+.*********************************************************************
+         GEN_BASE &IX
+         COPY  ZC_WS
+         AIF   (&IX GT 0)
+               AIF (&SYM_LK(&IX) GT 0)
+                   ACALL SET_LK_BASE
+               AELSE
+                   ACALL SET_WS_BASE
+               AEND
+         AELSE
+               MNOTE 8,'GEN_BASE SYMBOL INDEX INVALID - &IX'
+         AEND
+         MEXIT
+.*
+.* SET WS BASE
+,*
+         AENTRY SET_WS_BASE
+         AIF (&SYM_LOC(&IX) LT &BASE_WS_HIGH)
+             MEXIT
+         AELSEIF (&SYM_LOC(&IX) GE &BASE_B1_LOW                        X
+                  AND &SYM_LOC(&IX) LT &BASE_B1_HIGH)
+.*DSHX             :&BASE_LRU SETA 2
+             MEXIT
+         AELSEIF (&SYM_LOC(&IX) GE &BASE_B2_LOW                        X
+                  AND &SYM_LOC(&IX) LT &BASE_B2_HIGH)
+.*DSHX             :&BASE_LRU SETA 1
+             MEXIT
+         AEND
+.*
+.* NO WS BASE FOUND SO SWAP BASE REGS AND SET NEW BASE REG
+.*
+         AIF   (&BASE_LRU EQ 2)
+               :&BASE_LRU SETA 1
+               :&BASE_B2_LOW  SETA &SYM_LOC(&IX)
+               :&BASE_B2_HIGH SETA &BASE_B2_LOW+4096
+               AIF (&SYM_LOC(&IX) LT X'FFFFF')
+         LAY   &BASE_B2,&SYM_NAME(&IX)
+         USING &SYM_NAME(&IX),&BASE_B2
+               AELSE
+         IILF  &BASE_B2,&SYM_NAME(&IX)-WS
+         AR    &BASE_B2,&BASE_WS
+               AEND
+         AELSE
+               :&BASE_LRU SETA 2
+               :&BASE_B1_LOW  SETA &SYM_LOC(&IX)
+               :&BASE_B1_HIGH SETA &BASE_B1_LOW+4096
+               AIF (&SYM_LOC(&IX) LT X'FFFFF')
+         LAY   &BASE_B1,&SYM_NAME(&IX)
+         USING &SYM_NAME(&IX),&BASE_B1
+               AELSE
+         IILF  &BASE_B1,&SYM_NAME(&IX)-WS
+         AR    &BASE_B1,&BASE_WS
+               AEND
+         AEND
+         AEND
+.*
+.* SET LK BASE
+,*
+         AENTRY SET_LK_BASE
+         :&DSECT_IX SETA &SYM_LK(&IX)
+         :&VAR_IX   SETA &SYM_REF(&DSECT_IX)
+         AIF (&VAR_IX EQ 0)
+             MNOTE 8,'GEN_BASE LINKAGE PARM UNDEFINED - &SYM_NAME(&IX)'
+             MEXIT
+         AEND
+         AIF (&LBASE_B1_IX EQ &VAR_IX                                  X
+                  AND &SYM_LOC(&IX) GE &LBASE_B1_LOW                   X
+                  AND &SYM_LOC(&IX) LT &LBASE_B1_HIGH)
+.*DSHX             :&LBASE_LRU SETA 2
+             MEXIT
+         AELSEIF (&LBASE_B2_IX EQ &VAR_IX                              X
+                  AND &SYM_LOC(&IX) GE &LBASE_B2_LOW                   X
+                  AND &SYM_LOC(&IX) LT &LBASE_B2_HIGH)
+.*DSHX             :&LBASE_LRU SETA 1
+             MEXIT
+         AEND
+.*
+.* NO LK BASE FOUND SO SWAP BASE REGS AND SET NEW BASE REG
+.*
+       AIF   (&LBASE_LRU EQ 2)
+               :&LBASE_LRU SETA 1
+               :&LBASE_B2_IX   SETA &VAR_IX
+         GEN_BASE &VAR_IX  SET WS PTR BASE IN ORDER TO LOAD LK BASE
+         L     &LBASE_B2,&SYM_NAME(&VAR_IX)
+               AIF (&SYM_LOC(&IX) GT X'FFF')
+         AFI   &LBASE_B2,&SYM_NAME(&IX)-&SYM_NAME(&DSECT_IX)._DSECT
+         USING &SYM_NAME(&IX),&LBASE_B2
+               :&LBASE_B2_LOW  SETA &SYM_LOC(&IX)
+               :&LBASE_B2_HIGH SETA &LBASE_B2_LOW+4096
+               AELSE
+         USING &SYM_NAME(&DSECT_IX)._DSECT,&LBASE_B2
+               :&LBASE_B2_LOW  SETA 0
+               :&LBASE_B2_HIGH SETA 4096
+               AEND
+       AELSE
+               :&LBASE_LRU SETA 2
+               :&LBASE_B1_IX   SETA &VAR_IX
+         GEN_BASE &VAR_IX
+         L     &LBASE_B1,&SYM_NAME(&VAR_IX)
+               AIF (&SYM_LOC(&IX) GT X'FFF')
+         AFI   &LBASE_B1,&SYM_NAME(&IX)-&SYM_NAME(&DSECT_IX)._DSECT
+         USING &SYM_NAME(&IX),&LBASE_B1
+               :&LBASE_B1_LOW  SETA &SYM_LOC(&IX)
+               :&LBASE_B1_HIGH SETA &LBASE_B1_LOW+4096
+               AELSE
+         USING &SYM_NAME(&DSECT_IX)._DSECT,&LBASE_B1
+               :&LBASE_B1_LOW  SETA 0
+               :&LBASE_B1_HIGH SETA 4096
+               AEND
+       AEND
+         AEND
+         MEND

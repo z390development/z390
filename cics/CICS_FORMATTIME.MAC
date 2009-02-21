@@ -5,7 +5,6 @@
 .* Author - Don Higgins                                               *
 .**********************************************************************
 .* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
-.* 12/12/08 RPI 953 REPLACE CALL WITH ZCALL TO SUPPORT DUP NAMES      *
 .**********************************************************************
          MACRO
          CICS_FORMATTIME
@@ -175,137 +174,139 @@
 .ELOOP   ANOP
          AIF   ('&ABSTIME' EQ '').MISSABS
 .*
-         L     R15,=A(P4A04)      LOAD PARM ADDRESS
-         USING (P4A04,P4A04END),R15
-         XC    P4A04(P4A04END-P4A04),P4A04 CLEAR PARMS
-         MVC   P4A04FN,=X'4A04'   SET FUNCTION CODE
-         MVC   P4A04ABS,&ABSTIME  SET ABSTIME
+         GEN_XC P4A04,P4A04END-P4A04,P4A04
+         GEN_MVC P4A04FN,,=X'4A04' SET FUNCTION CODE
+         LARL  R15,P4A04ABS       ADDRESS TARGET
+         MVC   0(8,R15),&ABSTIME  SET ABSTIME
          AIF   (NOT &DATESP2).NODEFDS
-         MVI   P4A04DSP,C'/'      SET DEFAULT DATE SEPARATOR
+         GEN_MVI P4A04DSP,C'/'    SET DEFAULT DATE SEPARATOR
          AGO   .DOTSEP
 .*
 .NODEFDS ANOP
          AIF   ('&DATESP1' EQ '').DOTSEP
          AIF   ('&DATESP1'(1,1) NE '''').NOTDCHR
-         MVC   P4A04DSP,=C&DATESP1 MOVE DATE SEPARATOR AS CHAR
+         GEN_MVC P4A04DSP,,=CL2&DATESP1 MOVE DATE SEPARATOR AS CHAR
          AGO   .DOTSEP
 .*
 .NOTDCHR ANOP
-         MVC   P4A04DSP,&DATESP1 MOVE DATE SEPARATOR FROM LABEL
+         LARL  R15,P4A04DSP       ADDRESS TARGET
+         MVC   0(1,R15),&DATESP1  MOVE DATE SEPARATOR FROM LABEL
 .DOTSEP  ANOP
          AIF   (NOT &TIMESP2).NODEFTS
-         MVI   P4A04TSP,C':'      SET DEFAULT TIME SEPARATOR
+         GEN_MVI P4A04TSP,C':'    SET DEFAULT TIME SEPARATOR
          AGO   .DOPARMS
 .*
 .NODEFTS ANOP
          AIF   ('&TIMESP1' EQ '').DOPARMS
          AIF   ('&TIMESP1'(1,1) NE '''').NOTTCHR
-         MVC   P4A04TSP,=C&TIMESP1 MOVE TIME SEPARATOR AS CHAR
+         GEN_MVC P4A04TSP,,=CL2&TIMESP1 MOVE TIME SEPARATOR AS CHAR
          AGO   .DOPARMS
 .*
 .NOTTCHR ANOP
-         MVC   P4A04TSP,&TIMESP1 MOVE TIME SEPARATOR FROM LABEL
+         LARL  R15,P4A04TSP       ADDRESS TARGET
+         MVC   0(1,R15),&TIMESP1  MOVE TIME SEPARATOR FROM LABEL
 .DOPARMS ANOP
          AIF   ('&DATE' EQ '').NODATE
-         LA    R1,&DATE           DATE ADDRESS
-         ST    R1,P4A04DAT        SAVE IT
+         LA    R0,&DATE           DATE ADDRESS
+         GEN_ST R0,P4A04DAT       SAVE IT
 .NODATE  ANOP
          AIF   ('&DATEFRM' EQ '').NODTFRM
-         LA    R1,&DATEFRM        DATEFRM ADDRESS
-         ST    R1,P4A04DFM        SAVE IT
+         LA    R0,&DATEFRM        DATEFRM ADDRESS
+         GEN_ST R0,P4A04DFM       SAVE IT
 .NODTFRM ANOP
          AIF   ('&FULLDAT' EQ '').NOFULDT
-         LA    R1,&FULLDAT        FULLDAT ADDRESS
-         ST    R1,P4A04FDT        SAVE IT
+         LA    R0,&FULLDAT        FULLDAT ADDRESS
+         GEN_ST R0,P4A04FDT       SAVE IT
 .NOFULDT ANOP
          AIF   ('&DMY2' EQ '').NODMY2
-         LA    R1,&DMY2           DMY2 ADDRESS
-         ST    R1,P4A04DM2        SAVE IT
+         LA    R0,&DMY2           DMY2 ADDRESS
+         GEN_ST R0,P4A04DM2       SAVE IT
 .NODMY2  ANOP
          AIF   ('&MDY2' EQ '').NOMDY2
-         LA    R1,&MDY2           MDY2 ADDRESS
-         ST    R1,P4A04MD2        SAVE IT
+         LA    R0,&MDY2           MDY2 ADDRESS
+         GEN_ST R0,P4A04MD2       SAVE IT
 .NOMDY2  ANOP
          AIF   ('&YDM2' EQ '').NOYDM2
-         LA    R1,&YDM2           YDM2 ADDRESS
-         ST    R1,P4A04YD2        SAVE IT
+         LA    R0,&YDM2           YDM2 ADDRESS
+         GEN_ST R0,P4A04YD2       SAVE IT
 .NOYDM2  ANOP
          AIF   ('&YMD2' EQ '').NOYMD2
-         LA    R1,&YMD2           YMD2 ADDRESS
-         ST    R1,P4A04YM2        SAVE IT
+         LA    R0,&YMD2           YMD2 ADDRESS
+         GEN_ST R0,P4A04YM2       SAVE IT
 .NOYMD2  ANOP
          AIF   ('&DMY4' EQ '').NODMY4
-         LA    R1,&DMY4           DMY4 ADDRESS
-         ST    R1,P4A04DM4        SAVE IT
+         LA    R0,&DMY4           DMY4 ADDRESS
+         GEN_ST R0,P4A04DM4       SAVE IT
 .NODMY4  ANOP
          AIF   ('&MDY4' EQ '').NOMDY4
-         LA    R1,&MDY4           MDY4 ADDRESS
-         ST    R1,P4A04MD4        SAVE IT
+         LA    R0,&MDY4           MDY4 ADDRESS
+         GEN_ST R0,P4A04MD4       SAVE IT
 .NOMDY4  ANOP
          AIF   ('&YDM4' EQ '').NOYDM4
-         LA    R1,&YDM4           YDM4 ADDRESS
-         ST    R1,P4A04YD4        SAVE IT
+         LA    R0,&YDM4           YDM4 ADDRESS
+         GEN_ST R0,P4A04YD4       SAVE IT
 .NOYDM4  ANOP
          AIF   ('&YMD4' EQ '').NOYMD4
-         LA    R1,&YMD4           YMD4 ADDRESS
-         ST    R1,P4A04YM4        SAVE IT
+         LA    R0,&YMD4           YMD4 ADDRESS
+         GEN_ST R0,P4A04YM4       SAVE IT
 .NOYMD4  ANOP
          AIF   ('&YD2' EQ '').NOYD2
-         LA    R1,&YD2            YD2 ADDRESS
-         ST    R1,P4A04Y2D        SAVE IT
+         LA    R0,&YD2            YD2 ADDRESS
+         GEN_ST R0,P4A04Y2D       SAVE IT
 .NOYD2   ANOP
          AIF   ('&YD4' EQ '').NOYD4
-         LA    R1,&YD4            YD4 ADDRESS
-         ST    R1,P4A04Y4D        SAVE IT
+         LA    R0,&YD4            YD4 ADDRESS
+         GEN_ST R0,P4A04Y4D       SAVE IT
 .NOYD4   ANOP
          AIF   ('&DAYCNT' EQ '').NODYCNT
-         LA    R1,&DAYCNT         DAYCNT ADDRESS
-         ST    R1,P4A04DYC        SAVE IT
+         LA    R0,&DAYCNT         DAYCNT ADDRESS
+         GEN_ST R0,P4A04DYC       SAVE IT
 .NODYCNT ANOP
          AIF   ('&DAYOFWK' EQ '').NODYOFW
-         LA    R1,&DAYOFWK        DAYOFWK ADDRESS
-         ST    R1,P4A04DOW        SAVE IT
+         LA    R0,&DAYOFWK        DAYOFWK ADDRESS
+         GEN_ST R0,P4A04DOW       SAVE IT
 .NODYOFW ANOP
          AIF   ('&DAYOFMN' EQ '').NODYOFM
-         LA    R1,&DAYOFMN        DAYOFMN ADDRESS
-         ST    R1,P4A04DOM        SAVE IT
+         LA    R0,&DAYOFMN        DAYOFMN ADDRESS
+         GEN_ST R0,P4A04DOM       SAVE IT
 .NODYOFM ANOP
          AIF   ('&MNOFYR' EQ '').NOMNOFY
-         LA    R1,&MNOFYR         MNOFYR ADDRESS
-         ST    R1,P4A04MOY        SAVE IT
+         LA    R0,&MNOFYR         MNOFYR ADDRESS
+         GEN_ST R0,P4A04MOY       SAVE IT
 .NOMNOFY ANOP
          AIF   ('&YEAR' EQ '').NOYEAR
-         LA    R1,&YEAR           YEAR ADDRESS
-         ST    R1,P4A04YR         SAVE IT
+         LA    R0,&YEAR           YEAR ADDRESS
+         GEN_ST R0,P4A04YR        SAVE IT
 .NOYEAR  ANOP
          AIF   ('&DSTRING' EQ '').NODSTR
-         LA    R1,&DSTRING        DSTRING ADDRESS
-         ST    R1,P4A04DST        SAVE IT
+         LA    R0,&DSTRING        DSTRING ADDRESS
+         GEN_ST R0,P4A04DST       SAVE IT
 .NODSTR  ANOP
          AIF   ('&TIME' EQ '').NOTIME
-         LA    R1,&TIME           TIME ADDRESS
-         ST    R1,P4A04TIM        SAVE IT
+         LA    R0,&TIME           TIME ADDRESS
+         GEN_ST R0,P4A04TIM       SAVE IT
 .NOTIME  ANOP
-         ST    DFHEIBR,P4A04EIB   SET EIB ADDRESS
-         ST    TCTTEAR,P4A04TCT   SET TCTTE ADDRESS
+         GEN_ST DFHEIBR,P4A04EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P4A04TCT  SET TCTTE ADDRESS
          AIF   (NOT &NOHAND).DUNNOH
-         MVI   P4A04NOH,X'FF'     SET NOHANDLE
+         GEN_MVI P4A04NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
          AIF   ('&RESP' EQ '').NORESP
-         LA    R1,&RESP           ADDRESS OF RESP
-         ST    R1,P4A04RSP        SAVE IT
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P4A04RSP       SAVE IT
 .NORESP  ANOP
          AIF   ('&RESP2' EQ '').NORESP2
-         LA    R1,&RESP2          ADDRESS OF RESP2
-         ST    R1,P4A04RS2        SAVE IT
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P4A04RS2       SAVE IT
 .NORESP2 ANOP
-         ZCALL LCL4A04,(P4A04),MF=I CALL FORMATTIME PROCESSOR
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P4A04)       R1=LCL MODULE PARAMETER LIST
+         BAKR  0,R15              STACK REGS AND GO
 .*
-         L     R15,=A(P4A04)      LOAD PARM ADDRESS
-         CLI   P4A04NOH,X'FF'     NOHANDLE ?
-         BE    P4A04BYP_&SYSNDX   EXIT IF IT IS
+         GEN_CLI P4A04NOH,X'FF'   NOHANDLE ?
+         JE    P4A04BYP_&SYSNDX   EXIT IF IT IS
          OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
-         BZ    P4A04BYP_&SYSNDX   EXIT IF NONE
+         JZ    P4A04BYP_&SYSNDX   EXIT IF NONE
 * INVREQ
          DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
          DC    AL4(P4A04BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
@@ -313,13 +314,15 @@
          AIF   (&PARMS_4A04).BYP4A04
 *
 &PARMS_4A04 SETB 1
-P4A04    EQU   *
+P4A04    DS    0H
 P4A04FN  DS    XL2                FUNCTION CODE
 P4A04EIB DS    AL4                EIB
 P4A04TCT DS    AL4                TCTTE
 P4A04ABS DS    PL8                ABSTIME
 P4A04DSP DS    C                  DATE SEPARATOR
+         DS    X
 P4A04TSP DS    C                  TIME SEPARATOR
+         DS    X
 P4A04DAT DS    AL4                DATE
 P4A04DFM DS    AL4                DATEFORM
 P4A04FDT DS    AL4                FULLDATE
@@ -341,6 +344,7 @@ P4A04YR  DS    AL4                YEAR
 P4A04DST DS    AL4                DATESTRING
 P4A04TIM DS    AL4                TIME
 P4A04NOH DS    X                  FF=NOHANDLE
+         DS    X
 P4A04RSP DS    AL4                RESP
 P4A04RS2 DS    AL4                RESP2
 P4A04END EQU   *                  END MARKER
@@ -348,9 +352,9 @@ P4A04END EQU   *                  END MARKER
 *
 .BYP4A04 ANOP
 P4A04BYP_&SYSNDX DS 0H
-         DROP  R15
          MEXIT
 .*
 .MISSABS MNOTE 12,'ABSTIME IS MANDATORY'
          MEXIT
          MEND
+

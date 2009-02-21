@@ -46,6 +46,9 @@ P0E0CFN  DS    XL2                FUNCTION CODE
 P0E0CEIB DS    AL4                EIB
 P0E0CTCT DS    AL4                TCTTE
 P0E0CCAN DS    X                  FF=CANCEL
+         DS    X
+         DS    X                  FF=NOHANDLE
+         DS    X
 P0E0CRSP DS    AL4                RESP
 P0E0CRS2 DS    AL4                RESP2
 P0E0CEND EQU   *                  END MARKER

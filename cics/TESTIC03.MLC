@@ -5,7 +5,7 @@
 * Author - Don Higgins                                                *
 ***********************************************************************
 DFHEISTG DSECT
-NEWCOMM  DS    AL2                COMMAREA TO FOOL TESTBED1
+NEWCOMM  DS    XL2                COMMAREA TO FOOL TESTBED1
 TESTIC03 CSECT
 *
 * IC INITIATED TRANSACTION

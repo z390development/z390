@@ -24,4 +24,12 @@ call rt\RTCLEAN1 vse
 call rt\RTCLEAN1 vse\mac
 call rt\RTCLEAN1 vse\demo
 call rt\RTCLEAN1 vse\test
+call rt\RTCLEAN1 zcobol
+call rt\RTCLEAN1 zcobol\bat
+call rt\RTCLEAN1 zcobol\demo
+call rt\RTCLEAN1 zcobol\test
+call rt\RTCLEAN1 zcobol\z390
+call rt\RTCLEAN1 zcobol\java
+call rt\RTCLEAN1 zcobol\vce
+call rt\RTCLEAN1 zcobol\i586
 call rt\CLEANPGM linklib\test*

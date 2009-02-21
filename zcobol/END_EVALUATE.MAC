@@ -1,0 +1,27 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* All rights reserved                                               *      
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/09/08 initial coding for global END_EVALUATE
+.* 10/05/08 ZSTRMAC
+.*********************************************************************
+         END_EVALUATE    
+         COPY  ZC_WS
+         AIF   (&IE_LVL LT 1)      
+               MNOTE 8,'END-EVALUATE MISSING EVALUATE'
+               MEXIT
+         AEND
+         AIF   (&IE_TYPE(&IE_LVL) NE 2)    
+               MNOTE 8,'END-EVALUATE MISSING EVALUATE'
+               MNOTE 8,'END-EVALUATE MISSING EVALUATE'
+         AEND
+         :&NEXT_WHEN SETA  &IE_WHEN(&IE_LVL)+1
+         GEN_LABEL EVAL&IE_EVAL(&IE_LVL)._WHEN&NEXT_WHEN,END_WHEN
+         GEN_LABEL EVAL&IE_EVAL(&IE_LVL)._END,END_EVALUATE
+         :&IE_LVL  SETA &IE_LVL-1
+         MEND

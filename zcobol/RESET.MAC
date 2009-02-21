@@ -1,0 +1,21 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/16/08                                                 *
+.*********************************************************************
+.* 12/13/08 reset paragraph name trace (OS/VS COBOL)              
+.*********************************************************************
+         RESET
+         COPY ZC_WS
+         AIF   ('&SYSLIST(1)' NE 'TRACE')
+               MNOTE 8,'READY TRACE OPTION NOT FOUND'
+               MEXIT
+         AEND
+         AIF   (&ZC_TRACE) TURN OFF IF TRACE OPTION ACTIVE
+               MOVE  'F',TO,READY_RESET_TRACE
+         AEND
+         MEXIT
+         MEND

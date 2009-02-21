@@ -68,9 +68,12 @@ P0C02EIB DS    AL4                EIB
 P0C02TCT DS    AL4                TCTTE
 P0C02LEN DS    AL4                LENGTH/FLENGTH
 P0C02INM DS    X                  FF=INITIMG SPECIFIED
+         DS    X
 P0C02INT DS    X                  INITIMG
+         DS    X
 P0C02GMA DS    AL4                GETMAIN ADDRESS
          DS    X                  FF=NOHANDLE
+         DS    X
 P0C02RSP DS    AL4                RESP
 P0C02RS2 DS    AL4                RESP2
 P0C02END EQU   *                  END MARKER

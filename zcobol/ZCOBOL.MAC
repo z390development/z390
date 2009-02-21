@@ -1,0 +1,100 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/29/08                                                 *
+.*********************************************************************
+.* 04/29/08 initial coding for global CBL options call gen'd by zcobol  
+.*********************************************************************
+        ZCOBOL &VER=,      z390 version from tz390.version             X
+               &PGM=,      program name from args[0] overides PGM-ID.  X
+               &CDATE=,    current compile date or MM/DD/YY if notimingX
+               &CTIME=,    current compile start time if timing        X
+               &OPTIONS=   sublist of all options following program  
+         GBLC &ZC_VER       ZCOBOL VERSION FROM TZ390 WITHIN Z390.JAR
+         GBLC &ZC_PGM       PROGRAM NAME FROM FIRST COMMAND LINE PARM 
+         GBLC &ZC_CDATE     ZCOBOL COMPILE DATE OR MM/DD/YY IF NOTIMING
+         GBLC &ZC_CTIME     ZCOBOL COMPILE START TIME IF TIMING ELSE ''
+         GBLC &ZC_LIST      ZCOBOL LISTING OPTION FOR INTERNAL CODE GEN
+         GBLC &ZC_OPTIONS   ALL OPTIONS FOLLOWING PGM NAME        
+.*
+.* SAVE ALL ZCOBOL PARMS IN GLOBALS
+.*
+         :&ZC_VER   SETC '&VER'
+         :&ZC_PGM   SETC '&PGM'
+         :&ZC_CDATE SETC '&CDATE'
+         :&ZC_CTIME SETC '&CTIME'
+         :&ZC_LIST  SETC 'NOLIST,NOGEN,NOLISTUSE'
+         :&ZC_OPTIONS SETC '&OPTIONS'
+.*
+.* DEFINE ZCOBOL CLOBAL OPTIONS AND DEFAULTS
+.*
+         GBLB &ZC_CICS      GENERATE CICS PGM WITH WS AS DHFEISTG CSECT                    
+         GBLB &ZC_COMMENT   GEN CBL SOURCE COMMENTS ON BAL/PRN
+         :&ZC_COMMENT SETB 1 DEFAULT ON
+         GBLB &ZC_EXTEND    64 BIT COMP 9(19-39), 16 BYTE COMP-3 9(31)
+         :&ZC_EXTEND SETB 1  DEFAULT ON
+         GBLB &ZC_R64       ALLOW GENERATION OF 64 BIT REG INSTRUCTIONS
+         :&ZC_R64    SETB 1  ALLOW 64 BIT REGISTER INSTRUCTIONS
+         GBLB &ZC_TRACE     TRACE SOURCE EXECUTION ON LOG/TRE VIA WTO
+         GBLB &ZC_TRUNC     TRUNCATE NUMERIC VALUES TO PIC              
+         GBLB &ZC_WARN      ISSUE LEVEL 4 M NOTE WARMINGS
+&ZC_WARN SETB 1
+.*
+.* SET OVERRIDES FROM PARM OPTIONS
+.*
+         :&I   SETA 1
+         :&NP  SETA N'&OPTIONS
+         :&OPT_LIST SETC ''
+         AWHILE (&I LE &NP)
+               :&OPTION SETC (UPPER '&OPTIONS(&I)')
+               AIF ('&OPTION' EQ 'CICS')    GEN DFHEISTG CSECT
+                   :&ZC_CICS SETB 1
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'COMMENT') GEN CBL SOURCE COMMENTS
+                   :&ZC_COMMENT SETB 1
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'EXTEND')  ALLOW G64 AND P31 COMPS
+                   :&ZC_EXTEND  SETB 1
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'NOR64')  TURN OFF 64 BIT REG CODE
+                   :&ZC_R64  SETB 0
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'TRACE')   TRACE PARAGRAPHS ON LOG
+                   :&ZC_TRACE   SETB 1
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'TRUNC')   TRUNCATE NUM TO PIC(N)
+                   :&ZC_TRUNC   SETB 1
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'WARN')    ISSUE M NOTE LVL 4    
+                   :&ZC_WARN    SETB 1
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'NOCICS')  NO EXEC CICS
+                   :&ZC_CICS SETB 0
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'NOCOMMENT') NO SOURCE COMMENTS
+                   :&ZC_COMMENT SETB 0
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'NOEXTEND')  NO G64 AND P31 COMPS
+                   :&ZC_EXTEND  SETB 0
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'NOTRACE') NO TRACE PARAGRAPHS
+                   :&ZC_TRACE   SETB 0
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'NOTRUNC') NO TRUNCATE NUM TO PIC
+                   :&ZC_TRUNC   SETB 0
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION' EQ 'NOWARN') NO M NOTE LVL 4 WARNINGS
+                   :&ZC_WARN    SETB 0
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AEND
+               :&I SETA &I+1
+         AEND
+         AIF   (K'&OPT_LIST GT 0)
+               :&OPT_LIST SETC '&OPT_LIST'(2,*)
+         AEND
+     GEN_COMMENT 'ZCOBOL PGM=&ZC_PGM VER=&ZC_VER &ZC_CDATE &ZC_CTIME'
+     GEN_COMMENT 'ZCOBOL OPTIONS=(&OPT_LIST)'
+         MEND

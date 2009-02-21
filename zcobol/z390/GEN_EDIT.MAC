@@ -1,0 +1,92 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 01/21/09 initial coding for edit to X field with picture with z/9's
+.*********************************************************************
+         GEN_EDIT &T_NAME,&T_IX,&P_NAME,&P_LEN 
+         COPY  ZC_WS
+         :&PIC  SETC '&SYM_PIC(&T_IX)'
+         :&FIRST_9 SETB 1    TURN OFF AFTER FIRST 9
+         :&DIGITS  SETA 0    DIGITS IN MASK Z OR 9
+         :&MASK    SETC ''   C'?' OR X'??' WITH , SEPARATORS
+         :&LMASK   SETA 2    BYTES IN MASK INCLUDING 2 BYTE FILL+SEL
+         :&GEN_OI  SETB 0    SET IF OI REQUIRED FOR FIRST SIG. DIGIT
+         :&OFF_OI  SETA 0    OFFSET TO FIRST SIG. DIGIT
+         :&I    SETA 1
+         AWHILE (&I LE K'&PIC)
+                :&CHAR SETC '&PIC'(&I,1)
+                AIF ('&CHAR' EQ 'Z')
+                    :&DIGITS SETA &DIGITS+1
+                    :&LAST_MASK SETC ',X''20'''
+                AELSEIF ('&CHAR' EQ '9')
+                    :&DIGITS SETA &DIGITS+1
+                    AIF (&FIRST_9)
+                        :&FIRST_9 SETB 0
+                        :&GEN_OI SETB 1 REQUEST OI TARGET+OFF,C'F0'
+                        :&OFF_OI SETA &LMASK-2
+                        :&LAST_MASK SETC ',X''21'''
+                        AIF  (K'&MASK GE 6)  IS PREV MASK BYTE X'20'
+                             AIF ('&MASK'(K'&MASK-4,5) EQ 'X''20''') 
+                                 :&GEN_OI SETB 0         NO OI REQ'D
+                                 :&MASK SETC '&MASK'(1,K'&MASK-2).'1'''
+                                 :&LAST_MASK SETC ',X''20'''
+                             AEND
+                        AEND
+                    AELSE
+                        :&LAST_MASK SETC ',X''20'''
+                    AEND
+                AELSEIF ('&CHAR' EQ '(')
+                    :&DUP SETC '&PIC'(&I+1,1)  FIRST DIGIT
+                    :&I SETA &I+2
+                    :&CHAR SETC '&PIC'(&I,1)
+                    AWHILE (&I LE K'&PIC AND '&CHAR' NE ')')
+                        :&DUP SETA &DUP*10+&CHAR
+                        :&I SETA &I+1
+                        :&CHAR SETC '&PIC'(&I,1)
+                    AEND
+                    AIF (&DUP GT 1)
+                        :&DIGITS SETA &DIGITS+&DUP-1
+                        :&LMASK SETA &LMASK+&DUP-2
+                        :&MASK SETC '&MASK'.(&DUP-2)'&LAST_MASK'
+                    AEND
+                AELSE  
+                    :&LAST_MASK SETC ',C''&CHAR'''
+                AEND
+                :&MASK SETC '&MASK.&LAST_MASK'
+                :&LMASK SETA &LMASK+1
+                :&I SETA &I+1
+         AEND
+         AIF   (&DIGITS/2*2 EQ &DIGITS) ADD PREFIX SELECT IF EVEN       
+               AIF (&GEN_OI AND &OFF_OI EQ 1)
+                   :&GEN_OI SETB 0
+                   :&MASK SETC '=AL1(C'' '',X''21''&MASK' ADD FILL+SIGD
+               AELSE
+                   :&MASK SETC '=AL1(C'' '',X''20''&MASK' ADD FILL+SELD
+               AEND
+         AELSE
+               :&MASK SETC '=AL1(C'' '',C'' ''&MASK' ADD 2 FILL SPACES
+         AEND
+         AIF   (&LMASK/2*2 NE &LMASK) ADD MASK PAD BYTE IF ODD LEN
+               :&MASK SETC '&MASK,0)'  ADD PAD BYTE FOR EVEN LARL LEN
+         AELSE       
+               :&MASK SETC '&MASK)'
+         AEND
+         LARL  R1,&MASK
+         MVC   ZCVT_WORKAREA(&LMASK),0(R1) MOVE MASK FOR ED
+               :&P_SEL_BYTES SETA &DIGITS/2+1
+               AIF (&P_SEL_BYTES GT &P_LEN)
+         ZAP   ZCVT_PWORK1(&P_SEL_BYTES),&P_NAME
+         ED    ZCVT_WORKAREA(&LMASK),ZCVT_PWORK1
+               AELSE
+         ED    ZCVT_WORKAREA(&LMASK),&P_LEN-&P_SEL_BYTES+&P_NAME
+               AEND
+         MVC   &T_NAME,ZCVT_WORKAREA+2
+               AIF   (&GEN_OI)
+         OI    &OFF_OI+&T_NAME,C'0'
+               AEND
+         MEND

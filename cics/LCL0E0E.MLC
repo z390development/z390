@@ -74,6 +74,7 @@ TRYLAB   EQU   *
 *
          XC    ABDDEST,ABDDEST    CLEAR DESTINATION FIELD
          ST    R14,ABDDEST+4      SAVE LABEL
+         MVC   ABDLEVEL,TCTTELNK  SAVE LINK-LEVEL OF LABEL
          XC    ABDACTIV,ABDACTIV  SET ENTRY ACTIVE
          MVC   ABDREGS(48),P0E0EREG SAVE CALLERS REGS
          B     RETURN             EXIT
@@ -96,7 +97,9 @@ P0E0EFN  DS    XL2                FUNCTION CODE
 P0E0EEIB DS    AL4                EIB
 P0E0ETCT DS    AL4                TCTTE
 P0E0ECAN DS    X                  FF=CANCEL
+         DS    X
 P0E0ERES DS    X                  FF=RESET
+         DS    X
 P0E0ELAB DS    AL4                LABEL
 P0E0EPGM DS    CL8                PROGRAM
 P0E0ECAP DS    AL4                COMMAREA ADDRESS FROM DFHEICAP

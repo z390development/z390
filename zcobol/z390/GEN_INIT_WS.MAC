@@ -1,0 +1,33 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 12/20/08 initial coding to initialize CICS DFHEISTG WS values
+.*********************************************************************
+         GEN_INIT_WS      
+         COPY  ZC_WS   
+         AIF   (&SYM_TOT EQ 0)
+               MEXIT
+         AEND
+         :&I SETA  1
+         AWHILE (&I LE &SYM_TOT)
+            ACTR 1000
+.*
+.* GENERATE WORKING STORAGE OR LINKAGE SECTION ITEMS NOW
+.*
+            AIF (&SYM_LVL(&I) NE 88                                    X
+                AND  &SYM_LK(&I) EQ 0                                  X
+                AND  &SYM_VAL(&I) NE '')
+               AIF (&SYM_DUP(&I) EQ 1)
+                   GEN_MOVE &SYM_NAME(&I),&I,&SYM_VAL(&I),0
+               AELSE
+                   MNOTE 4,'GEN_INIT_WS DUP VAL NOT SUPPORTED YET'
+               AEND
+            AEND
+            :&I SETA &I+1
+         AEND
+         MEND

@@ -1,0 +1,47 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author.  Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/08/08 initial coding to set SYM_LEN(&SYM_TOT) from SYM_PIC 
+.* 05/02/08 just set SYM_LEN(&SYM_TOT) based on &SYM_PIC(&SYM_TOT) 
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+         ZC_PIC_LEN                                       
+         COPY  ZC_WS            
+         :&LEN     SETA  0
+         :&MASK    SETC  '&SYM_PIC(&SYM_TOT)'
+         :&MASK_LEN SETC K'&MASK
+         :&I       SETA  1
+         AWHILE (&I LE &MASK_LEN)
+               :&CHAR    SETC  '&MASK'(&I,1)
+               AIF   ('&CHAR' EQ '9'                                   X
+                      OR '&CHAR' EQ 'Z'                                X
+                      OR '&CHAR' EQ 'X')    
+                    :&LEN SETA  &LEN+1
+               AELSEIF ('&CHAR' EQ '(')
+                    :&LEN     SETA   0
+                    :&I       SETA   &I+1
+                    AWHILE (&I LE &MASK_LEN                            X
+                            AND '&MASK'(&I,1) NE ')')
+                        :&CHAR    SETC  '&MASK'(&I,1)
+                        AIF ('&CHAR' GE '0' AND '&CHAR' LE '9')     
+                            :&LEN SETA  &LEN*10+&CHAR
+                        AELSE
+                            MNOTE 4,'PIC MASK ERROR &LVL &SYM_NAME(&SYMX
+               _TOT)'
+                            MEXIT
+                        AEND
+                        :&I SETA &I+1
+                    AEND
+               AELSEIF ('&CHAR' NE 'S' AND '&CHAR' NE '.')      
+                    MNOTE 4,'PIC MASK ERROR &LVL &SYM_NAME(&SYMTOT)'
+                    MEXIT
+               AEND
+               :&I SETA &I+1
+         AEND
+&SYM_LEN(&SYM_TOT) SETA &LEN
+         MEND

@@ -1,0 +1,29 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 02/16/09 initial coding for GEN_ONSIZE_START shared by GEN ADD-MPY   
+.*********************************************************************
+         GEN_ONSIZE_START &TYPE   
+         COPY  ZC_WS
+         AIF   ('&TYPE' EQ 'ADD') 
+         J     PG_ADD_&ADD_LAB             SKIP ON SIZE ERROR
+               GEN_LABEL ADD_&ADD_LAB._ON_SIZE,ON_SIZE_ERROR_START
+         AELSEIF ('&TYPE' EQ 'SUB')
+         J     PG_SUB_&SUB_LAB             SKIP ON SIZE ERROR
+               GEN_LABEL SUB_&SUB_LAB._ON_SIZE,ON_SIZE_ERROR_START
+         AELSEIF ('&TYPE' EQ 'MPY')
+         J     PG_MPY_&MPY_LAB             SKIP ON SIZE ERROR
+               GEN_LABEL MPY_&MPY_LAB._ON_SIZE,ON_SIZE_ERROR_START
+         AELSEIF ('&TYPE' EQ 'DIV')
+         J     PG_DIV_&DIV_LAB             SKIP ON SIZE ERROR
+               GEN_LABEL DIV_&DIV_LAB._ON_SIZE,ON_SIZE_ERROR_START
+         AELSE
+               MNOTE 8,'GEN_ONSIZE_START UNKNOWN TYPE - &TYPE'
+               MEXIT
+         AEND
+         MEND

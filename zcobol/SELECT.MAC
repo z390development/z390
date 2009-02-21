@@ -1,0 +1,80 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/07/08 initial coding for global ZCOBOL
+.* 10/06/08 ZSTRMAC
+.* 01/02/09 add optional OPTIONAL, and default ORGANIZATION LINE SEQ.
+.*********************************************************************
+.* Add file name, ddname or dsname, and recfm to file table.
+.* See FD which generated DCB in WS and adds record name to file table.
+.* Notes:
+.*   1.  RECFM/BLKSIZE set at open after WS defines record name
+.*********************************************************************
+         SELECT 
+         COPY  ZC_WS
+         :&STATUS  SETC '' NO DEFAULT FILE STATUS FIELD
+         :&PARM_IX SETA 1
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'OPTIONAL')
+               :&PARM_IX SETA &PARM_IX+1            IGNORE OPTIONAL
+         AEND
+         :&FILE SETC '&SYSLIST(&PARM_IX)'
+         :&PARM_IX SETA &PARM_IX+1
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'ASSIGN')
+               MNOTE 8,'SELECT ASSIGN TO NOT FOUND'
+               MEXIT
+         AEND
+         :&PARM_IX SETA &PARM_IX+1
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'TO')
+               :&PARM_IX SETA &PARM_IX+1
+         AEND
+         :&DDNAME SETC '&SYSLIST(&PARM_IX)'
+         :&PARM_IX SETA &PARM_IX+1
+         :&FILE_TOT SETA &FILE_TOT+1
+         :&FILE_NAME(&FILE_TOT) SETC '&FILE'
+         :&FILE_DDNAME(&FILE_TOT) SETC '&DDNAME'
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'ORGANIZATION')
+               AIF ('&SYSLIST(&PARM_IX+1)' EQ 'IS') 
+                   :&PARM_IX SETA &PARM_IX+2
+               AELSE
+                   :&PARM_IX SETA &PARM_IX+1
+               AEND  
+               AIF   ('&SYSLIST(&PARM_IX)' EQ 'LINE'                   X
+                      AND '&SYSLIST(&PARM_IX+1)' EQ 'SEQUENTIAL')
+                     :&TYPE SETC 'LINE'
+                     :&PARM_IX SETA &PARM_IX+2
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'SEQUENTIAL')
+                     :&TYPE SETC 'LINE'         FORCE LINE SEQ FOR NOW
+                     :&PARM_IX SETA &PARM_IX+1
+               AELSE
+                     MNOTE 8,'SELECT UNKNOWN ORGANIZATION TYPE'
+                     MEXIT
+               AEND
+         AELSE
+               :&TYPE SETC 'LINE'
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'FILE')
+               :&PARM_IX SETA &PARM_IX+1
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'STATUS')
+                   :&STATUS SETC '&SYSLIST(&PARM_IX+1)'
+                   :&PARM_IX SETA &PARM_IX+2
+               AELSE
+                   MNOTE 8,'STATUS UNKNOWN FILE OPTION - &SYSLIST(&PARMX
+               _IX)'
+                   MEXIT
+               AEND
+         AEND 
+.*
+.*       LINE = ASCII TEXT FILE TO/FROM FIXED RECORD
+.*
+         :&FILE_TYPE(&FILE_TOT) SETC '&TYPE' 
+         :&FILE_STATUS(&FILE_TOT) SETC '&STATUS'
+         AIF   ('&SYSLIST(&PARM_IX)' NE '')
+               MNOTE 8,'SELECT UNKNOWN OPTION - &SYSLIST(&PARM_IX)'
+               MEXIT
+         AEND
+         MEND

@@ -45,8 +45,9 @@
 .*
 .FINAL   ANOP
 &MDINAME DFHMDI TYPE=LAST
-         AIF   (&MTYPE NE 1).DUNMSD
-         AIF   (&MSTG).NOAUTO
+         AIF   (&MLANG EQ 0).DUNMSD  LANG=COBOL
+         AIF   (&MTYPE NE 1).DUNMSD  TYPE=FINAL/MAP
+         AIF   (&MSTG).NOAUTO        STORAGE=AUTO
          PUNCH '         ORG'
 .NOAUTO  ANOP
          PUNCH '* * * END OF MAP SET DEFINITION * * *'
@@ -87,9 +88,11 @@
 .*
 .GOON01  ANOP
 .DUNTIOA ANOP
-&MLANG   SETA  2                  ALWAYS ASM
+         AIF   ('&LANG' EQ 'COBOL').LANGOK
+&MLANG   SETA  2                  SET ASM
          AIF   ('&LANG' NE 'ASM').BADLANG
 .GOON04  ANOP
+.LANGOK  ANOP
 .*
          AIF   ('&STORAGE' EQ '').STGDUN
 &MSTG    SETB  1                  STORAGE=AUTO

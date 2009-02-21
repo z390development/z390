@@ -1,0 +1,5 @@
+sysmac(zcobol+zcobol\z390+mac+cics)
+syscpy(zcobol+zcobol\z390+mac+cics)
+BAL
+NOLISTCALL
+MAXGBL(1500000) * INCR MAX GBLA/GBLB/GBLC 

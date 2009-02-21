@@ -1,5 +1,5 @@
-Z390/CICS VSAM Guide
-====================
+zCICS VSAM Guide
+================
 
 I recommend that the catalog and file structures are kept in a common
 directory. More flexibility will be added if time permits.
@@ -28,7 +28,7 @@ VSAM Extensions
 ---------------
 
 The following facilities are not supported in standard CICS/VSAM, but
-they are in Z390/CICS VSAM.
+they are in zCICS VSAM.
 
 a) Support of 4 gigabyte files and record sizes greater than 32K for all
    VSAM file types.
@@ -44,7 +44,7 @@ VSAM limits
 For KSDSs and AIXs, there is an internal limit on all keylengths of
 128 bytes. Please raise an RPI if this is not sufficient for you.
 
-There is an internal limit in Z390/CICS on record sizes of 32K bytes.
+There is an internal limit in zCICS on record sizes of 32K bytes.
 Please raise an RPI if this is not sufficient for you.
 
 Change Summary
@@ -57,8 +57,8 @@ Trademarks
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
-Author: Melvyn Maltz
+Author       : Melvyn Maltz
 Shipping Date: November 24, 2008
-Z390 version: V1.4.04
-Z390/CICS version: V6
+Z390 version : V1.4.04
+zCICS version: V6
 

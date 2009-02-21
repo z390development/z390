@@ -24,9 +24,6 @@ TESTBMS2 CSECT
 RMODE    EQU   *
          EXEC  CICS RECEIVE MAP('BMS2') MAPSET('MAP02')
          XI    FLIP,X'FF'         FLIP THE SWITCH
-         LA    R14,BMS2S          ###
-         LA    R15,BMS2E          ###
-         SNAP  STORAGE=((R14),(R15)),ID=1  ###
          EXEC  CICS RETURN
 *
 FLIP     DC    X'00'

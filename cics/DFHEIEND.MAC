@@ -4,10 +4,10 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
-.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS EPILOG
+.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS EPILOG          *
 .*********************************************************************
-.*  If options CICS and EPILOG are on, then
-.*  replace END statement with DFHEIEND
+.*  If options CICS and EPILOG are on, then                          *
+.*  replace END statement with DFHEIEND                              *
 .*********************************************************************
          MACRO
          DFHEIEND

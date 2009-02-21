@@ -70,6 +70,7 @@ P0C04EIB DS    AL4                EIB
 P0C04TCT DS    AL4                TCTTE
 P0C04FMA DS    AL4                FREEMAIN ADDRESS
          DS    X                  FF=NOHANDLE
+         DS    X
 P0C04RSP DS    AL4                RESP
 P0C04RS2 DS    AL4                RESP2
 P0C04END EQU   *                  END MARKER

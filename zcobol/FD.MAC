@@ -1,0 +1,32 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/07/08 initial coding for global FD definition
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+.* Generate file definition using file data from SELECT in ZC_FD.CPY
+.*********************************************************************
+         FD    &FILE
+         COPY  ZC_WS
+         ZC_FILE_FIND &FILE
+         AIF   (&FILE_IX EQ 0)      
+               MNOTE 8,'FD FILE NAME NOT FOUND - &FILE'
+               MEXIT
+         AEND
+         :&PARM_IX SETA 2
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'DATA'                         X
+                AND '&SYSLIST(&PARM_IX+1)' EQ 'RECORD')
+               AIF ('&SYSLIST(&PARM_IX+2)' EQ 'IS')   
+                   :&PARM_IX SETA &PARM_IX+3
+               AELSE
+                   :&PARM_IX SETA &PARM_IX+2
+               AEND   
+               :&FILE_RECORD(&FILE_IX) SETC '&SYSLIST(&PARM_IX)' 
+         AEND 
+         WS    91,&FILE                         ADD FILE TO WS 
+         MEND

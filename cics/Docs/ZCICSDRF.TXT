@@ -1,5 +1,5 @@
-Z390/CICS Diagnosis Reference
-=============================
+zCICS Diagnosis Reference
+=========================
 
 Index
 -----
@@ -15,6 +15,7 @@ Control Blocks...Client
    File Control request/reply block (DFHFCBLK)
    Interval Control request/reply block (DFHICBLK)
    Task Control request/reply block (DFHKCBLK)
+   CWA request/reply block (DFHCWBLK)
 
 Control Blocks...Server
    File Control Table (DFHFCT)
@@ -34,6 +35,8 @@ Management descriptions...
    File Control
    Interval Control
    ENQ/DEQ
+   CWA
+   Macros, LCLhhhh modules and Z390LCL...the linkage mechanisms.
    Sequential Terminal support
 
 LCL submodules for EXEC CICS functions
@@ -160,6 +163,15 @@ Task Control request/reply block (DFHKCBLK).
    Cleared    : Yes
    Length     : KCPREFIX
 
+CWA request/reply block (DFHCWBLK).
+   Eye catcher: None
+   Acquired   : Embedded in LCL0202
+   Released   : N/A
+   Anchor     : None
+   DSECT      : DFHCWBLK
+   Cleared    : No
+   Length     : CWPREFIX
+
 Control Blocks...Server
 -----------------------
 
@@ -275,6 +287,11 @@ Abend Management
          If the abending program has received a COMMAREA, then that will
          be passed to the abend handler.
 
+         If HANDLE ABEND LABEL is at a higher link-level than the
+         abending program, then a special EXEC CICS RETURN CLEANER is
+         issued (in Z390KCP) to simulate a RETURN, as all lower levels
+         are now considered abandoned.
+
          Note that PUSH, POP, HANDLE ABEND CANCEL/RESET only affect the
          current link-level.
 
@@ -374,7 +391,7 @@ HANDLE/IGNORE CONDITION Management
 
 Temporary Storage Management
    The queues are owned by Z390CICS, so all requests for TS services
-   are sent by Z390/CICS tasks to the server.
+   are sent by zCICS tasks to the server.
 
    There are two structures in the server:
       The queue name chain ...
@@ -403,12 +420,12 @@ Temporary Storage Management
 
 File Control Management
    The files are owned by Z390CICS, so all requests for FC services
-   are sent by Z390/CICS tasks to the server.
+   are sent by zCICS tasks to the server.
 
    The FCT (DSECT DFHFCTDS) defines the status of each file.
    Each FCTTE contains the ACB for that file.
-   See the Z390/CICS VSAM Guide to see how files are created and
-   defined to Z390/CICS.
+   See the zCICS VSAM Guide to see how files are created and defined
+   to zCICS.
 
    a) File opening
       When Z390CICS starts, all files defined as FILSTAT=OPENED are
@@ -422,7 +439,7 @@ File Control Management
    b) Request processing
 
       No error conditions are explained here, they are listed in the
-      Z390/CICS Application Programming Guide, and in the IBM Manuals.
+      zCICS Application Programming Guide, and in the IBM Manuals.
 
       Any VSAM feedback codes and errors are converted to RESP/RESP2
       values and sent back to the Client.
@@ -739,7 +756,7 @@ ENQ/DEQ Management
    a) ENQ
       The module LCL1204 validates the length.
       Although an omitted LENGTH is accepted, it may not work in
-      Z390/CICS. Please consult the author for advice.
+      zCICS. Please consult the author for advice.
 
       The ENQ command parameters are then shipped to the Server.
 
@@ -811,10 +828,79 @@ ENQ/DEQ Management
             Then the QEA is released and the chain repaired.
             Ok response is returned.
 
+CWA Management
+   The CWA is considered a Global Resource, and is therefore owned and
+   handled by the Global Manager, Z390CICS.
+
+   CWA size is determined by the Z390CICS.INI parameter CWASIZE=
+   and the original 3.5K limit has been extended to 9,999,999 bytes.
+
+   The only access to the CWA is via EXEC CICS ADDRESS CWA().
+   This obtains a copy of the CWA and ENQ is used to lock any further
+   CWA access for the duration of the task. See later for exceptions.
+
+   When the task ends or abends the CWA is sent back to the Global
+   Manager for a refresh, and the natural clean-up process will ensure
+   that the local copy is freed and DEQ takes place.
+   There is no programmable access to the refresh/unlock mechanism.
+
+   Exceptions...
+      EXEC CICS RECEIVE (conversational) and EXEC CICS DELAY are
+      considered to be long running and therefore each of those
+      processes have a refresh/unlock and re-acquire mechanism wrapped
+      around them.
+
+Macros, LCLhhhh modules and Z390LCL...the linkage mechanisms
+   This is the operation at the time of shipping.
+
+   Experimental work is being done on CEDF and this will require a
+   radical reworking of this mechanism.
+
+   Before the terminal is created, the module Z390LCL is loaded and the
+   address placed in TCTTELCL.
+
+   I am going to use EXEC CICS READ as an example.
+   When this macro is issued the parameter list is set up and these
+   instructions are issued:
+      L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+      LARL  R1,=A(P0602)       R1=LCL MODULE PARAMETER LIST
+      BAKR  0,R15              STACK REGS AND GO
+
+   Z390LCL has almost all (see later for exceptions) the macro
+   processors linked in. The processor is located and a direct branch,
+   BALR R14,R15 is used to invoke it.
+
+   Each LCLhhhh module has standard SUBENTRY/SUBEXIT linkage.
+   An LCLhhhh module can itself issue an EXEC CICS command, even though
+   it's not really a CICS program. This will just create another stack
+   entry.
+
+   When a processor completes, the SUBEXIT will return to Z390LCL which
+   issues a PR. This will unstack (only GR2-GR14) and return to the
+   invoking macro for error processing or return to the invoking
+   application.
+
+   Exceptions...
+      There are three processes that don't return immediately to the
+      invoking application after completion...LINK, XCTL and RETURN.
+
+      These LCL modules are not part of Z390LCL and are linked in to
+      each application that uses them.
+
+      When these macros are issued the parameter list is set up and
+      these instructions are issued:
+         LARL  R1,P0E08           R1=PARAMETER LIST
+         LARL  R14,P0E08RTN_&SYSNDX RETURN ADDRESS
+         LRL   R15,=V(LCL0E08)    R15=EXTERNAL RETURN MODULE ADDRESS
+         BR    R15                GO TO IT
+P0E08RTN_&SYSNDX EQU *
+
+      The processor decides where to go next.
+
 Sequential Terminal support
-   Please read the Doc for this feature in Z390/CICS Sequential
-   Terminal Support. This section does not cover the batch programs
-   Z390SEQ or Z390COMP.
+   Please read the Doc for this feature in zCICS Sequential Terminal
+   Support. This section does not cover the batch programs Z390SEQ or
+   Z390COMP.
 
    When the INI parameter SEQ_TERM=YES is specified then Z390CICS will
    start a special CMDPROC terminal with a terminal id. of SQ01.
@@ -836,7 +922,7 @@ Sequential Terminal support
 
    When all of the input streams are exhausted, the terminal is closed
    via an emulated CEMT S TER OUT unless the last input data stream was
-   CEMT P SHU (recommended), in which case Z390/CICS is shut down.
+   CEMT P SHU (recommended), in which case zCICS is shut down.
 
 -----------------------------------------------------------------------
 
@@ -852,33 +938,34 @@ Event Tracing
 
 Submodules for EXEC CICS processing
       -FN-  Process
+   LCL0202  ADDRESS            Embedded EXEC CICS
    LCL0204  HANDLE CONDITION
    LCL0206  HANDLE AID
    LCL020A  IGNORE CONDITION
    LCL020C  PUSH HANDLE
    LCL020E  POP HANDLE
 
-   LCL0402  RECEIVE
+   LCL0402  RECEIVE            Embedded EXEC CICS
    LCL0404  SEND
 
-   LCL0602  READ            Embedded EXEC CICS
-   LCL060C  STARTBR         Embedded EXEC CICS
-   LCL060E  READNEXT        Embedded EXEC CICS
-   LCL0610  READPREV        Embedded EXEC CICS
-   LCL0612  ENDBR           Embedded EXEC CICS
-   LCL0614  RESETBR         Embedded EXEC CICS
+   LCL0602  READ               Embedded EXEC CICS
+   LCL060C  STARTBR            Embedded EXEC CICS
+   LCL060E  READNEXT           Embedded EXEC CICS
+   LCL0610  READPREV           Embedded EXEC CICS
+   LCL0612  ENDBR              Embedded EXEC CICS
+   LCL0614  RESETBR            Embedded EXEC CICS
 
-   LCL0A02  WRITEQ TS       Embedded EXEC CICS
-   LCL0A04  READQ TS        Embedded EXEC CICS
-   LCL0A06  DELETEQ TS      Embedded EXEC CICS
+   LCL0A02  WRITEQ TS          Embedded EXEC CICS
+   LCL0A04  READQ TS           Embedded EXEC CICS
+   LCL0A06  DELETEQ TS         Embedded EXEC CICS
 
    LCL0C02  GETMAIN
    LCL0C04  FREEMAIN
 
-   LCL0E02  LINK            Direct linkage
-   LCL0E04  XCTL            Direct linkage
+   LCL0E02  LINK               Direct linkage
+   LCL0E04  XCTL               Direct linkage
    LCL0E06  LOAD
-   LCL0E08  RETURN          Direct linkage
+   LCL0E08  RETURN             Direct linkage
    LCL0E0A  RELEASE
    LCL0E0C  ABEND
    LCL0E0E  HANDLE ABEND
@@ -887,9 +974,9 @@ Submodules for EXEC CICS processing
    LCL1206  DEQ
 
    LCL1002  ASKTIME
-   LCL1004  DELAY
-   LCL1008  START           Embedded EXEC CICS
-   LCL100A  RETRIEVE        Embedded EXEC CICS
+   LCL1004  DELAY              Embedded EXEC CICS
+   LCL1008  START              Embedded EXEC CICS
+   LCL100A  RETRIEVE           Embedded EXEC CICS
    LCL100C  CANCEL
 
    LCL1802  RECEIVE MAP
@@ -974,6 +1061,7 @@ Z390CICS
       GBLFE01   CEMT I SYStem          Z390CEMT
       GBLFE05   CEMT I FILe            Z390CEMT
       GBLFE06   CEMT I ENQueue         Z390CEMT
+      GBLFE07   CWA GET/PUT            Any
 
    Copy Books
       FILEERTB  VSAM Error Code Table  Z390CICS
@@ -991,6 +1079,11 @@ Z390CICS
 
 Change Summary
 --------------
+February 21, 2009
+   Added LCL0202, GBLFE07
+   Added DFHCWBLK and CWA Management
+   Added Macro and LCL processor Management
+
 November 24, 2008
    Added section on LCL submodules
    Added control blocks:
@@ -1011,8 +1104,8 @@ Trademarks
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
-Author: Melvyn Maltz
-Shipping Date: November 24, 2008
-Z390 version: V1.4.04
-Z390/CICS version: V6
+Author       : Melvyn Maltz
+Shipping Date: February 21, 2009
+Z390 version : V1.5.00
+zCICS version: V7
 

@@ -1,0 +1,462 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 10/30/08 initial coding for Z390 GEN_MPY using GEN_SUB as model    
+.* 02/16/09 upgrade to use ZCGETFLD for subscripts and qual.
+.*********************************************************************
+         GEN_MPY &T_NAME,&T_IX,&S_NAME,&S_IX,&ROUNDED,&ONSIZE 
+         COPY  ZC_WS
+         :&TARGET_NAME SETC '&T_NAME'
+         :&SOURCE_NAME SETC '&S_NAME'
+         :&TARGET SETA &T_IX
+         :&SOURCE SETA &S_IX
+         AIF   (&TARGET EQ 0)
+               MNOTE 8,'GEN_MPY UNDEFINED TARGET - &TARGET'
+               MEXIT
+         AEND
+         AIF   (&ROUNDED EQ 1)
+               MNOTE 8,'GEN_MPY ROUNDED NOT SUPPORTED YET'
+               MEXIT
+         AEND
+         AIF   (&ONSIZE EQ 1)
+               MNOTE 8,'GEN_MPY ON SIZE NOT SUPPORTED YET'
+               MEXIT
+         AEND
+         :&L_TARGET SETA  &SYM_LEN(&TARGET)
+         :&T_TARGET SETC '&SYM_PIC_TYPE(&TARGET)'
+         AIF   (&SOURCE NE 0)
+               :&T_SOURCE SETC '&SYM_PIC_TYPE(&SOURCE)'
+               :&L_SOURCE SETA  &SYM_LEN(&SOURCE)
+               ACALL MPY_FLD
+         AELSE
+               :&LIT SETC '&SOURCE_NAME'
+               ACALL MPY_LIT
+         AEND
+         AIF   (&ONSIZE EQ 1)
+               GEN_ONSIZE_START MPY
+         AEND
+         MEXIT
+.*
+.* MPY LITERAL
+.* 
+         AENTRY MPY_LIT
+         AIF  ('&LIT'(1,1) GT '0'                                      X
+                OR '&LIT'(1,1) EQ '+'                                  X
+                OR '&LIT'(1,1) EQ '-')
+               :&NUM SETC '&LIT'
+               ACALL MPY_NUM_LIT
+         AELSEIF  ('&LIT' EQ 'ZERO'                                    X
+                   OR '&LIT' EQ 'ZEROES')                          
+               :&NUM SETC '0'
+               ACALL MPY_NUM_LIT
+         AELSE
+               MNOTE 8,'GEN_MPY UNKNOWN LITERAL &LIT'
+               MEXIT
+         AEND
+         AEND
+.*
+.* MPY NUMERIC LIT 
+.*
+      AENTRY MPY_NUM_LIT
+      ACASE (C2A('&SYM_PIC_TYPE(&TARGET)'))
+      AWHEN C'D'
+         LD    F0,&SYM_NAME(&TARGET)
+         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+         MD    F0,0(R1)
+         STD   F0,&SYM_NAME(&TARGET)
+      AWHEN C'E'
+         LE    F0,&SYM_NAME(&TARGET)
+         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+         ME    F0,0(R1)
+         STE   F0,&SYM_NAME(&TARGET)
+      AWHEN C'F'
+         L     R0,&SYM_NAME(&TARGET)
+         MSFI  R0,&NUM
+         ST    R0,&SYM_NAME(&TARGET)
+      AWHEN C'H'
+         LH    R0,&SYM_NAME(&TARGET)
+         MSFI  R0,&NUM
+         STH   R0,&SYM_NAME(&TARGET)
+      AWHEN C'G'
+         LG    R0,&SYM_NAME(&TARGET)
+         MSGFI R0,&NUM
+         STG   R0,&SYM_NAME(&TARGET)
+      AWHEN C'P'
+         :&LPNUM SETA (K'&NUM/2+3)/2*2 ROUNDED EVEN FOR LARL
+         LARL  R1,=&SYM_PIC_TYPE(&TARGET)L&LPNUM'&NUM'
+         MP    &SYM_NAME(&TARGET),0(&LPNUM,R1)
+      AWHEN C'Z'
+         PACK  ZCVT_PWORK(&L_TARGET/2+1),&SYM_NAME(&TARGET)
+         :&LPNUM SETA (K'&NUM/2+3)/2*2 ROUNDED EVEN FOR LARL
+         LARL  R1,=PL&LPNUM'&NUM'
+         MP    ZCVT_PWORK(&L_TARGET/2+1),0(&LPNUM,R1)
+         UNPK  &SYM_NAME(&TARGET),ZCVT_PWORK(&L_TARGET/2+1)
+       AIF   (NOT &SYM_PIC_SIGN(&TARGET))
+         OI  &SYM_NAME(&TARGET)+&L_TARGET-1,C'0'
+       AEND
+      AELSE
+         MNOTE 8,'GEN_MPY INVALID DATA TYPE FOR &SYM_NAME(&TARGET)'
+      AEND
+      AEND
+.*
+.* MPY_FLD
+.*
+         AENTRY MPY_FLD
+         ACASE (C2A('&T_TARGET'))
+         AWHEN C'D'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LD    0,&SYM_NAME(&TARGET)
+         MD    0,&SYM_NAME(&SOURCE)
+         STD   0,&SYM_NAME(&TARGET)
+               AWHEN C'E'
+         LD    0,&SYM_NAME(&TARGET)
+         LDE   1,&SYM_NAME(&SOURCE)
+         MDR   0,1
+         STD   0,&SYM_NAME(&TARGET)
+               AWHEN C'F'
+         LD    0,&SYM_NAME(&TARGET)
+         L     1,&SYM_NAME(&SOURCE)
+         CDFR  1,1
+         MDR   0,1
+         STD   0,&SYM_NAME(&TARGET)
+               AWHEN C'G'
+         LD    0,&SYM_NAME(&TARGET)
+         LG    1,&SYM_NAME(&SOURCE)
+         CDGR  1,1
+         MDR   0,1
+         STD   0,&SYM_NAME(&TARGET)
+               AWHEN C'H'
+         LD    0,&SYM_NAME(&TARGET)
+         LH    1,&SYM_NAME(&SOURCE)
+         CDFR  1,1
+         MDR   0,1
+         STD   0,&SYM_NAME(&TARGET)
+               AWHEN C'P'
+         LD    0,&SYM_NAME(&TARGET)
+         ZAP   ZCVT_PWORK,&SYM_NAME(&SOURCE)
+         CVB   1,ZCVT_PWORK
+         CDFR  1,1
+         MDR   0,1
+         STD   0,&SYM_NAME(&TARGET)
+               AWHEN C'Z'
+         LD    0,&SYM_NAME(&TARGET)
+         PACK  ZCVT_PWORK1(&L_SOURCE/2+1),&SYM_NAME(&SOURCE)
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&L_SOURCE/2+1)
+         CVB   1,ZCVT_PWORK
+         CDFR  1,1
+         MDR   0,1
+         STD   0,&SYM_NAME(&TARGET)
+               AELSE
+                    MNOTE 4,'GEN_MPY INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'E'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LE    0,&SYM_NAME(&TARGET)
+         LD    1,&SYM_NAME(&SOURCE)
+         LEDR  1,1
+         MER   0,1
+         STE   0,&SYM_NAME(&TARGET)
+               AWHEN C'E'
+         LE    0,&SYM_NAME(&TARGET)
+         LE    1,&SYM_NAME(&SOURCE)
+         MER   0,1
+         STE   0,&SYM_NAME(&TARGET)
+               AWHEN C'F'
+         LE    0,&SYM_NAME(&TARGET)
+         L     1,&SYM_NAME(&SOURCE)
+         CEFR  1,1
+         MER   0,1
+         STE   0,&SYM_NAME(&TARGET)
+               AWHEN C'G'
+         LE    0,&SYM_NAME(&TARGET)
+         LG    1,&SYM_NAME(&SOURCE)
+         CEGR  1,1
+         MER   0,1
+         STE   0,&SYM_NAME(&TARGET)
+               AWHEN C'H'
+         LE    0,&SYM_NAME(&TARGET)
+         LH    1,&SYM_NAME(&SOURCE)
+         CEFR  1,1
+         MER   0,1
+         STE   0,&SYM_NAME(&TARGET)
+               AWHEN C'P'
+         LE    0,&SYM_NAME(&TARGET)
+         ZAP   ZCVT_PWORK,&SYM_NAME(&SOURCE)
+         CVB   1,ZCVT_PWORK
+         CEFR  1,1
+         MER   0,1
+         STE   0,&SYM_NAME(&TARGET)
+               AWHEN C'Z'
+         LE    0,&SYM_NAME(&TARGET)
+         PACK  ZCVT_PWORK1(&L_SOURCE/2+1),&SYM_NAME(&SOURCE)
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&L_SOURCE/2+1)
+         CVB   1,ZCVT_PWORK
+         CEFR  1,1
+         MER   0,1
+         STE   0,&SYM_NAME(&TARGET)
+               AELSE
+                    MNOTE 4,'GEN_MPY INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'F'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         L     0,&SYM_NAME(&TARGET)
+         LD    1,&SYM_NAME(&SOURCE)
+         CFDR  1,0,1
+         MSR   0,1
+         ST    0,&SYM_NAME(&TARGET)
+               AWHEN C'E'
+         L     0,&SYM_NAME(&TARGET)
+         LE    1,&SYM_NAME(&SOURCE)
+         CFER  1,0,1
+         MSR   0,1
+         ST    0,&SYM_NAME(&TARGET)
+               AWHEN C'F'
+         L     0,&SYM_NAME(&TARGET)
+         MS    0,&SYM_NAME(&SOURCE)
+         ST    0,&SYM_NAME(&TARGET)
+               AWHEN C'G'
+         SG    0,0
+         L     0,&SYM_NAME(&TARGET)
+         MSG   0,&SYM_NAME(&SOURCE)
+         ST    0,&SYM_NAME(&TARGET)  ONLY LOW 32 BITS STORED
+               AWHEN C'H'
+         L     0,&SYM_NAME(&TARGET)
+         MH    0,&SYM_NAME(&SOURCE)
+         ST    0,&SYM_NAME(&TARGET)
+               AWHEN C'P'
+         L     0,&SYM_NAME(&TARGET)
+         ZAP   ZCVT_PWORK,&SYM_NAME(&SOURCE)
+         CVB   1,ZCVT_PWORK
+         MSR   0,1
+         ST    0,&SYM_NAME(&TARGET)
+               AWHEN C'Z'
+         L     0,&SYM_NAME(&TARGET)
+         PACK  ZCVT_PWORK1(&L_SOURCE/2+1),&SYM_NAME(&SOURCE)
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&L_SOURCE/2+1)
+         CVB   1,ZCVT_PWORK
+         MSR   0,1
+         ST    0,&SYM_NAME(&TARGET)
+               AELSE
+                    MNOTE 4,'GEN_MPY INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'G'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LG    0,&SYM_NAME(&TARGET)
+         LD    1,&SYM_NAME(&SOURCE)
+         CGDR  1,0,1
+         MSGR  0,1
+         STG   0,&SYM_NAME(&TARGET)
+               AWHEN C'E'
+         LG    0,&SYM_NAME(&TARGET)
+         LE    1,&SYM_NAME(&SOURCE)
+         CGER  1,0,1
+         MSGR  0,1
+         STG   0,&SYM_NAME(&TARGET)
+               AWHEN C'F'
+         LG    0,&SYM_NAME(&TARGET)
+         L     1,&SYM_NAME(&SOURCE)
+         MSGFR 0,1
+         STG   0,&SYM_NAME(&TARGET)
+               AWHEN C'G'
+         LG    0,&SYM_NAME(&TARGET)
+         MSG   0,&SYM_NAME(&SOURCE)
+         STG   0,&SYM_NAME(&TARGET)  ONLY LOW 32 BITS STORED
+               AWHEN C'H'
+         LG    0,&SYM_NAME(&TARGET)
+         LH    1,&SYM_NAME(&SOURCE)
+         MSGFR 0,1
+         STG   0,&SYM_NAME(&TARGET)
+               AWHEN C'P'
+         LG    0,&SYM_NAME(&TARGET)
+         ZAP   ZCVT_PWORK,&SYM_NAME(&SOURCE)
+         CVB   1,ZCVT_PWORK
+         MSGFR 0,1
+         STG   0,&SYM_NAME(&TARGET)
+               AWHEN C'Z'
+         LG    0,&SYM_NAME(&TARGET)
+         PACK  ZCVT_PWORK1(&L_SOURCE/2+1),&SYM_NAME(&SOURCE)
+         ZAP   ZCVT_PWORK2,ZCVT_PWORK1(&L_SOURCE/2+1)
+         CVBG  1,ZCVT_PWORK2
+         MSGR  0,1
+         STG   0,&SYM_NAME(&TARGET)
+               AELSE
+                    MNOTE 4,'GEN_MPY INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'H'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LH    0,&SYM_NAME(&TARGET)
+         LD    1,&SYM_NAME(&SOURCE)
+         CFDR  1,0,1
+         MSR   0,1
+         STH   0,&SYM_NAME(&TARGET)
+               AWHEN C'E'
+         LH    0,&SYM_NAME(&TARGET)
+         LE    1,&SYM_NAME(&SOURCE)
+         CFER  1,0,1
+         MSR   0,1
+         STH   0,&SYM_NAME(&TARGET)
+               AWHEN C'F'
+         LH    0,&SYM_NAME(&TARGET)
+         MS    0,&SYM_NAME(&SOURCE)
+         STH   0,&SYM_NAME(&TARGET)
+               AWHEN C'G'
+         LH    0,&SYM_NAME(&TARGET)
+         MS    0,&SYM_NAME(&SOURCE)+4 IGNORES HIGH 32
+         STH   0,&SYM_NAME(&TARGET)
+               AWHEN C'H'
+         LH    0,&SYM_NAME(&TARGET)
+         LH    1,&SYM_NAME(&SOURCE)
+         MSR   0,1
+         STH   0,&SYM_NAME(&TARGET)
+               AWHEN C'P'
+         LH    0,&SYM_NAME(&TARGET)
+         ZAP   ZCVT_PWORK,&SYM_NAME(&SOURCE)
+         CVB   1,ZCVT_PWORK
+         MSR   0,1
+         STH   0,&SYM_NAME(&TARGET)
+               AWHEN C'Z'
+         LH    0,&SYM_NAME(&TARGET)
+         PACK  ZCVT_PWORK1(&L_SOURCE/2+1),&SYM_NAME(&SOURCE)
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&L_SOURCE/2+1)
+         CVB   1,ZCVT_PWORK
+         MSR   0,1
+         STH   0,&SYM_NAME(&TARGET)
+               AELSE
+                    MNOTE 4,'GEN_MPY INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'P'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LD    0,&SYM_NAME(&SOURCE)
+         CFDR  0,0,0
+         CVD   0,ZCVT_PWORK
+         MP    &SYM_NAME(&TARGET),ZCVT_PWORK
+               AWHEN C'E'
+         LE    0,&SYM_NAME(&SOURCE)
+         CFER  0,0,0
+         CVD   0,ZCVT_PWORK
+         MP    &SYM_NAME(&TARGET),ZCVT_PWORK
+               AWHEN C'F'
+         L     0,&SYM_NAME(&SOURCE)
+         CVD   0,ZCVT_PWORK
+         MP    &SYM_NAME(&TARGET),ZCVT_PWORK
+               AWHEN C'G'
+         LG    0,&SYM_NAME(&SOURCE)
+         CVDG  0,ZCVT_PWORK1
+         MP    &SYM_NAME(&TARGET),ZCVT_PWORK1
+               AWHEN C'H'
+         LH    0,&SYM_NAME(&SOURCE)
+         CVD   0,ZCVT_PWORK
+         MP    &SYM_NAME(&TARGET),ZCVT_PWORK
+               AWHEN C'P'
+         MP    &SYM_NAME(&TARGET),&SYM_NAME(&SOURCE)
+               AWHEN C'Z'
+         PACK  ZCVT_PWORK,&SYM_NAME(&SOURCE)
+         MP    &SYM_NAME(&TARGET),ZCVT_PWORK
+               AELSE
+                    MNOTE 4,'GEN_MPY INVALID SOURCE TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'Z'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&SYM_NAME(&TARGET)
+         LD    0,&SYM_NAME(&SOURCE)
+         CFDR  0,0,0
+         CVD   0,ZCVT_PWORK
+         MP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK+&POFF.(&PLEN)
+         UNPK  &SYM_NAME(&TARGET),ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &SYM_NAME(&TARGET)+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'E'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&SYM_NAME(&TARGET)
+         LE    0,&SYM_NAME(&SOURCE)
+         CFER  0,0,0
+         CVD   0,ZCVT_PWORK
+         MP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK+&POFF.(&PLEN)
+         UNPK  &SYM_NAME(&TARGET),ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &SYM_NAME(&TARGET)+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'F'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&SYM_NAME(&TARGET)
+         L     0,&SYM_NAME(&SOURCE)
+         CVD   0,ZCVT_PWORK
+         MP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK+&POFF.(&PLEN)
+         UNPK  &SYM_NAME(&TARGET),ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &SYM_NAME(&TARGET)+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'G'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&SYM_NAME(&TARGET)
+         LG    0,&SYM_NAME(&SOURCE)
+         CVDG  0,ZCVT_PWORK2
+         MP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK2
+         UNPK  &SYM_NAME(&TARGET),ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &SYM_NAME(&TARGET)+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'H'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&SYM_NAME(&TARGET)
+         LH    0,&SYM_NAME(&SOURCE)
+         CVD   0,ZCVT_PWORK
+         MP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK+&POFF.(&PLEN)
+         UNPK  &SYM_NAME(&TARGET),ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &SYM_NAME(&TARGET)+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'P'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&SYM_NAME(&TARGET)
+         MP    ZCVT_PWORK1(&PLEN),&SYM_NAME(&SOURCE) 
+         UNPK  &SYM_NAME(&TARGET),ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &SYM_NAME(&TARGET)+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'Z'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&SYM_NAME(&TARGET)
+         PACK  ZCVT_PWORK2(&L_SOURCE/2+1),&SYM_NAME(&SOURCE)
+         MP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK2(&L_SOURCE/2+1)   
+         UNPK  &SYM_NAME(&TARGET),ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &SYM_NAME(&TARGET)+&L_TARGET-1,X'F0'
+                     AEND         
+               AELSE
+                    MNOTE 4,'GEN_MPY INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AELSE
+               MNOTE 4,'GEN_MPY INVALID TARGET DATA TYPE'           
+               MEXIT
+         AEND
+         AEND
+         MEND

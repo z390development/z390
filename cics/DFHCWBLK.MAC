@@ -1,0 +1,24 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         DFHCWBLK
+*
+* CWA PREFIX AREA
+*
+DFHCWBLK DSECT
+CWATCPIO DS    A
+CWAFN    DS    CL4                FUNCTION CODE
+CWATERM  DS    CL4                TERMINAL ID
+CWATRAN  DS    CL4                TRANSACTION ID
+         DS    C                  TRANSACTION TYPE (NOT USED)
+CWATASKN DS    PL4                TASK NUMBER
+CWARDWRT DS    X                  00=GET CWA  FF=PUT CWA
+CWALENG  DS    XL4                CWA LENGTH
+         DS    0D
+CWPREFIX EQU   *-DFHCWBLK
+         MEND
+

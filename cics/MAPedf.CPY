@@ -1,0 +1,577 @@
+EDF01S   DS    0H                 START OF MAP DEFINITION
+EDF01I   DS    0H                 START OF MAP INPUT DEFINITION
+EDF01O   DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
+*
+E01TRANL DS    AL2                INPUT FIELD LENGTH
+E01TRANF DS    0X                 INPUT FIELD FLAG
+E01TRANA DS    X                  OUTPUT ATTRIBUTE
+E01TRANI DS    CL4                INPUT FIELD
+         ORG   E01TRANI
+E01TRANO DS    CL4                OUTPUT FIELD
+*
+E01PROGL DS    AL2                INPUT FIELD LENGTH
+E01PROGF DS    0X                 INPUT FIELD FLAG
+E01PROGA DS    X                  OUTPUT ATTRIBUTE
+E01PROGI DS    CL8                INPUT FIELD
+         ORG   E01PROGI
+E01PROGO DS    CL8                OUTPUT FIELD
+*
+E01TSKNL DS    AL2                INPUT FIELD LENGTH
+E01TSKNF DS    0X                 INPUT FIELD FLAG
+E01TSKNA DS    X                  OUTPUT ATTRIBUTE
+E01TSKNI DS    CL7                INPUT FIELD
+         ORG   E01TSKNI
+E01TSKNO DS    CL7                OUTPUT FIELD
+*
+E01SCRNL DS    AL2                INPUT FIELD LENGTH
+E01SCRNF DS    0X                 INPUT FIELD FLAG
+E01SCRNA DS    X                  OUTPUT ATTRIBUTE
+E01SCRNI DS    CL3                INPUT FIELD
+         ORG   E01SCRNI
+E01SCRNO DS    CL3                OUTPUT FIELD
+*
+E01EBTML DS    AL2                INPUT FIELD LENGTH
+E01EBTMF DS    0X                 INPUT FIELD FLAG
+E01EBTMA DS    X                  OUTPUT ATTRIBUTE
+E01EBTMI DS    CL7                INPUT FIELD
+         ORG   E01EBTMI
+E01EBTMO DS    CL7                OUTPUT FIELD
+*
+E01EBDTL DS    AL2                INPUT FIELD LENGTH
+E01EBDTF DS    0X                 INPUT FIELD FLAG
+E01EBDTA DS    X                  OUTPUT ATTRIBUTE
+E01EBDTI DS    CL7                INPUT FIELD
+         ORG   E01EBDTI
+E01EBDTO DS    CL7                OUTPUT FIELD
+*
+E01EBTDL DS    AL2                INPUT FIELD LENGTH
+E01EBTDF DS    0X                 INPUT FIELD FLAG
+E01EBTDA DS    X                  OUTPUT ATTRIBUTE
+E01EBTDI DS    CL4                INPUT FIELD
+         ORG   E01EBTDI
+E01EBTDO DS    CL4                OUTPUT FIELD
+*
+E01EBCSL DS    AL2                INPUT FIELD LENGTH
+E01EBCSF DS    0X                 INPUT FIELD FLAG
+E01EBCSA DS    X                  OUTPUT ATTRIBUTE
+E01EBCSI DS    CL5                INPUT FIELD
+         ORG   E01EBCSI
+E01EBCSO DS    CL5                OUTPUT FIELD
+*
+E01EBCLL DS    AL2                INPUT FIELD LENGTH
+E01EBCLF DS    0X                 INPUT FIELD FLAG
+E01EBCLA DS    X                  OUTPUT ATTRIBUTE
+E01EBCLI DS    CL5                INPUT FIELD
+         ORG   E01EBCLI
+E01EBCLO DS    CL5                OUTPUT FIELD
+*
+E01EBADL DS    AL2                INPUT FIELD LENGTH
+E01EBADF DS    0X                 INPUT FIELD FLAG
+E01EBADA DS    X                  OUTPUT ATTRIBUTE
+E01EBADI DS    CL5                INPUT FIELD
+         ORG   E01EBADI
+E01EBADO DS    CL5                OUTPUT FIELD
+*
+E01EBFNL DS    AL2                INPUT FIELD LENGTH
+E01EBFNF DS    0X                 INPUT FIELD FLAG
+E01EBFNA DS    X                  OUTPUT ATTRIBUTE
+E01EBFNI DS    CL7                INPUT FIELD
+         ORG   E01EBFNI
+E01EBFNO DS    CL7                OUTPUT FIELD
+*
+E01EBRCL DS    AL2                INPUT FIELD LENGTH
+E01EBRCF DS    0X                 INPUT FIELD FLAG
+E01EBRCA DS    X                  OUTPUT ATTRIBUTE
+E01EBRCI DS    CL15               INPUT FIELD
+         ORG   E01EBRCI
+E01EBRCO DS    CL15               OUTPUT FIELD
+*
+E01EBRQL DS    AL2                INPUT FIELD LENGTH
+E01EBRQF DS    0X                 INPUT FIELD FLAG
+E01EBRQA DS    X                  OUTPUT ATTRIBUTE
+E01EBRQI DS    CL8                INPUT FIELD
+         ORG   E01EBRQI
+E01EBRQO DS    CL8                OUTPUT FIELD
+*
+E01EBDSL DS    AL2                INPUT FIELD LENGTH
+E01EBDSF DS    0X                 INPUT FIELD FLAG
+E01EBDSA DS    X                  OUTPUT ATTRIBUTE
+E01EBDSI DS    CL8                INPUT FIELD
+         ORG   E01EBDSI
+E01EBDSO DS    CL8                OUTPUT FIELD
+*
+E01EBRSL DS    AL2                INPUT FIELD LENGTH
+E01EBRSF DS    0X                 INPUT FIELD FLAG
+E01EBRSA DS    X                  OUTPUT ATTRIBUTE
+E01EBRSI DS    CL8                INPUT FIELD
+         ORG   E01EBRSI
+E01EBRSO DS    CL8                OUTPUT FIELD
+*
+E01EBRPL DS    AL2                INPUT FIELD LENGTH
+E01EBRPF DS    0X                 INPUT FIELD FLAG
+E01EBRPA DS    X                  OUTPUT ATTRIBUTE
+E01EBRPI DS    CL12               INPUT FIELD
+         ORG   E01EBRPI
+E01EBRPO DS    CL12               OUTPUT FIELD
+*
+E01EBR2L DS    AL2                INPUT FIELD LENGTH
+E01EBR2F DS    0X                 INPUT FIELD FLAG
+E01EBR2A DS    X                  OUTPUT ATTRIBUTE
+E01EBR2I DS    CL12               INPUT FIELD
+         ORG   E01EBR2I
+E01EBR2O DS    CL12               OUTPUT FIELD
+*
+E01EBPGL DS    AL2                INPUT FIELD LENGTH
+E01EBPGF DS    0X                 INPUT FIELD FLAG
+E01EBPGA DS    X                  OUTPUT ATTRIBUTE
+E01EBPGI DS    CL8                INPUT FIELD
+         ORG   E01EBPGI
+E01EBPGO DS    CL8                OUTPUT FIELD
+*
+E01EBDFL DS    AL2                INPUT FIELD LENGTH
+E01EBDFF DS    0X                 INPUT FIELD FLAG
+E01EBDFA DS    X                  OUTPUT ATTRIBUTE
+E01EBDFI DS    CL1                INPUT FIELD
+         ORG   E01EBDFI
+E01EBDFO DS    CL1                OUTPUT FIELD
+*
+E01ENTL  DS    AL2                INPUT FIELD LENGTH
+E01ENTF  DS    0X                 INPUT FIELD FLAG
+E01ENTA  DS    X                  OUTPUT ATTRIBUTE
+E01ENTI  DS    CL8                INPUT FIELD
+         ORG   E01ENTI
+E01ENTO  DS    CL8                OUTPUT FIELD
+*
+E01PF1L  DS    AL2                INPUT FIELD LENGTH
+E01PF1F  DS    0X                 INPUT FIELD FLAG
+E01PF1A  DS    X                  OUTPUT ATTRIBUTE
+E01PF1I  DS    CL18               INPUT FIELD
+         ORG   E01PF1I
+E01PF1O  DS    CL18               OUTPUT FIELD
+*
+E01PF2L  DS    AL2                INPUT FIELD LENGTH
+E01PF2F  DS    0X                 INPUT FIELD FLAG
+E01PF2A  DS    X                  OUTPUT ATTRIBUTE
+E01PF2I  DS    CL18               INPUT FIELD
+         ORG   E01PF2I
+E01PF2O  DS    CL18               OUTPUT FIELD
+*
+E01PF3L  DS    AL2                INPUT FIELD LENGTH
+E01PF3F  DS    0X                 INPUT FIELD FLAG
+E01PF3A  DS    X                  OUTPUT ATTRIBUTE
+E01PF3I  DS    CL18               INPUT FIELD
+         ORG   E01PF3I
+E01PF3O  DS    CL18               OUTPUT FIELD
+*
+E01PF4L  DS    AL2                INPUT FIELD LENGTH
+E01PF4F  DS    0X                 INPUT FIELD FLAG
+E01PF4A  DS    X                  OUTPUT ATTRIBUTE
+E01PF4I  DS    CL18               INPUT FIELD
+         ORG   E01PF4I
+E01PF4O  DS    CL18               OUTPUT FIELD
+*
+E01PF5L  DS    AL2                INPUT FIELD LENGTH
+E01PF5F  DS    0X                 INPUT FIELD FLAG
+E01PF5A  DS    X                  OUTPUT ATTRIBUTE
+E01PF5I  DS    CL18               INPUT FIELD
+         ORG   E01PF5I
+E01PF5O  DS    CL18               OUTPUT FIELD
+*
+E01PF6L  DS    AL2                INPUT FIELD LENGTH
+E01PF6F  DS    0X                 INPUT FIELD FLAG
+E01PF6A  DS    X                  OUTPUT ATTRIBUTE
+E01PF6I  DS    CL18               INPUT FIELD
+         ORG   E01PF6I
+E01PF6O  DS    CL18               OUTPUT FIELD
+*
+E01PF7L  DS    AL2                INPUT FIELD LENGTH
+E01PF7F  DS    0X                 INPUT FIELD FLAG
+E01PF7A  DS    X                  OUTPUT ATTRIBUTE
+E01PF7I  DS    CL18               INPUT FIELD
+         ORG   E01PF7I
+E01PF7O  DS    CL18               OUTPUT FIELD
+*
+E01PF8L  DS    AL2                INPUT FIELD LENGTH
+E01PF8F  DS    0X                 INPUT FIELD FLAG
+E01PF8A  DS    X                  OUTPUT ATTRIBUTE
+E01PF8I  DS    CL18               INPUT FIELD
+         ORG   E01PF8I
+E01PF8O  DS    CL18               OUTPUT FIELD
+*
+E01PF9L  DS    AL2                INPUT FIELD LENGTH
+E01PF9F  DS    0X                 INPUT FIELD FLAG
+E01PF9A  DS    X                  OUTPUT ATTRIBUTE
+E01PF9I  DS    CL18               INPUT FIELD
+         ORG   E01PF9I
+E01PF9O  DS    CL18               OUTPUT FIELD
+*
+E01PF10L DS    AL2                INPUT FIELD LENGTH
+E01PF10F DS    0X                 INPUT FIELD FLAG
+E01PF10A DS    X                  OUTPUT ATTRIBUTE
+E01PF10I DS    CL18               INPUT FIELD
+         ORG   E01PF10I
+E01PF10O DS    CL18               OUTPUT FIELD
+*
+E01PF11L DS    AL2                INPUT FIELD LENGTH
+E01PF11F DS    0X                 INPUT FIELD FLAG
+E01PF11A DS    X                  OUTPUT ATTRIBUTE
+E01PF11I DS    CL18               INPUT FIELD
+         ORG   E01PF11I
+E01PF11O DS    CL18               OUTPUT FIELD
+*
+E01PF12L DS    AL2                INPUT FIELD LENGTH
+E01PF12F DS    0X                 INPUT FIELD FLAG
+E01PF12A DS    X                  OUTPUT ATTRIBUTE
+E01PF12I DS    CL18               INPUT FIELD
+         ORG   E01PF12I
+E01PF12O DS    CL18               OUTPUT FIELD
+*
+EDF01E   EQU   *
+EDF01L   EQU   EDF01E-EDF01S
+*
+* * * END OF MAP DEFINITION     * * *
+*
+EDF0404S DS    0H                 START OF MAP DEFINITION
+EDF0404I DS    0H                 START OF MAP INPUT DEFINITION
+EDF0404O DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
+*
+E0404TSL DS    AL2                INPUT FIELD LENGTH
+E0404TSF DS    0X                 INPUT FIELD FLAG
+E0404TSA DS    X                  OUTPUT ATTRIBUTE
+E0404TSI DS    CL4                INPUT FIELD
+         ORG   E0404TSI
+E0404TSO DS    CL4                OUTPUT FIELD
+*
+E0404PGL DS    AL2                INPUT FIELD LENGTH
+E0404PGF DS    0X                 INPUT FIELD FLAG
+E0404PGA DS    X                  OUTPUT ATTRIBUTE
+E0404PGI DS    CL8                INPUT FIELD
+         ORG   E0404PGI
+E0404PGO DS    CL8                OUTPUT FIELD
+*
+E0404TNL DS    AL2                INPUT FIELD LENGTH
+E0404TNF DS    0X                 INPUT FIELD FLAG
+E0404TNA DS    X                  OUTPUT ATTRIBUTE
+E0404TNI DS    CL7                INPUT FIELD
+         ORG   E0404TNI
+E0404TNO DS    CL7                OUTPUT FIELD
+*
+E0404SCL DS    AL2                INPUT FIELD LENGTH
+E0404SCF DS    0X                 INPUT FIELD FLAG
+E0404SCA DS    X                  OUTPUT ATTRIBUTE
+E0404SCI DS    CL3                INPUT FIELD
+         ORG   E0404SCI
+E0404SCO DS    CL3                OUTPUT FIELD
+*
+E0404STL DS    AL2                INPUT FIELD LENGTH
+E0404STF DS    0X                 INPUT FIELD FLAG
+E0404STA DS    X                  OUTPUT ATTRIBUTE
+E0404STI DS    CL26               INPUT FIELD
+         ORG   E0404STI
+E0404STO DS    CL26               OUTPUT FIELD
+*
+E0404FML DS    AL2                INPUT FIELD LENGTH
+E0404FMF DS    0X                 INPUT FIELD FLAG
+E0404FMA DS    X                  OUTPUT ATTRIBUTE
+E0404FMI DS    CL62               INPUT FIELD
+         ORG   E0404FMI
+E0404FMO DS    CL62               OUTPUT FIELD
+*
+E0404LNL DS    AL2                INPUT FIELD LENGTH
+E0404LNF DS    0X                 INPUT FIELD FLAG
+E0404LNA DS    X                  OUTPUT ATTRIBUTE
+E0404LNI DS    CL7                INPUT FIELD
+         ORG   E0404LNI
+E0404LNO DS    CL7                OUTPUT FIELD
+*
+E0404NHL DS    AL2                INPUT FIELD LENGTH
+E0404NHF DS    0X                 INPUT FIELD FLAG
+E0404NHA DS    X                  OUTPUT ATTRIBUTE
+E0404NHI DS    CL8                INPUT FIELD
+         ORG   E0404NHI
+E0404NHO DS    CL8                OUTPUT FIELD
+*
+E0404PRL DS    AL2                INPUT FIELD LENGTH
+E0404PRF DS    0X                 INPUT FIELD FLAG
+E0404PRA DS    X                  OUTPUT ATTRIBUTE
+E0404PRI DS    CL8                INPUT FIELD
+         ORG   E0404PRI
+E0404PRO DS    CL8                OUTPUT FIELD
+*
+E0404OFL DS    AL2                INPUT FIELD LENGTH
+E0404OFF DS    0X                 INPUT FIELD FLAG
+E0404OFA DS    X                  OUTPUT ATTRIBUTE
+E0404OFI DS    CL9                INPUT FIELD
+         ORG   E0404OFI
+E0404OFO DS    CL9                OUTPUT FIELD
+*
+E0404RPL DS    AL2                INPUT FIELD LENGTH
+E0404RPF DS    0X                 INPUT FIELD FLAG
+E0404RPA DS    X                  OUTPUT ATTRIBUTE
+E0404RPI DS    CL12               INPUT FIELD
+         ORG   E0404RPI
+E0404RPO DS    CL12               OUTPUT FIELD
+*
+E0404R2L DS    AL2                INPUT FIELD LENGTH
+E0404R2F DS    0X                 INPUT FIELD FLAG
+E0404R2A DS    X                  OUTPUT ATTRIBUTE
+E0404R2I DS    CL3                INPUT FIELD
+         ORG   E0404R2I
+E0404R2O DS    CL3                OUTPUT FIELD
+*
+E0404ENL DS    AL2                INPUT FIELD LENGTH
+E0404ENF DS    0X                 INPUT FIELD FLAG
+E0404ENA DS    X                  OUTPUT ATTRIBUTE
+E0404ENI DS    CL8                INPUT FIELD
+         ORG   E0404ENI
+E0404ENO DS    CL8                OUTPUT FIELD
+*
+E0404P1L DS    AL2                INPUT FIELD LENGTH
+E0404P1F DS    0X                 INPUT FIELD FLAG
+E0404P1A DS    X                  OUTPUT ATTRIBUTE
+E0404P1I DS    CL18               INPUT FIELD
+         ORG   E0404P1I
+E0404P1O DS    CL18               OUTPUT FIELD
+*
+E0404P2L DS    AL2                INPUT FIELD LENGTH
+E0404P2F DS    0X                 INPUT FIELD FLAG
+E0404P2A DS    X                  OUTPUT ATTRIBUTE
+E0404P2I DS    CL18               INPUT FIELD
+         ORG   E0404P2I
+E0404P2O DS    CL18               OUTPUT FIELD
+*
+E0404P3L DS    AL2                INPUT FIELD LENGTH
+E0404P3F DS    0X                 INPUT FIELD FLAG
+E0404P3A DS    X                  OUTPUT ATTRIBUTE
+E0404P3I DS    CL18               INPUT FIELD
+         ORG   E0404P3I
+E0404P3O DS    CL18               OUTPUT FIELD
+*
+E0404P4L DS    AL2                INPUT FIELD LENGTH
+E0404P4F DS    0X                 INPUT FIELD FLAG
+E0404P4A DS    X                  OUTPUT ATTRIBUTE
+E0404P4I DS    CL18               INPUT FIELD
+         ORG   E0404P4I
+E0404P4O DS    CL18               OUTPUT FIELD
+*
+E0404P5L DS    AL2                INPUT FIELD LENGTH
+E0404P5F DS    0X                 INPUT FIELD FLAG
+E0404P5A DS    X                  OUTPUT ATTRIBUTE
+E0404P5I DS    CL18               INPUT FIELD
+         ORG   E0404P5I
+E0404P5O DS    CL18               OUTPUT FIELD
+*
+E0404P6L DS    AL2                INPUT FIELD LENGTH
+E0404P6F DS    0X                 INPUT FIELD FLAG
+E0404P6A DS    X                  OUTPUT ATTRIBUTE
+E0404P6I DS    CL18               INPUT FIELD
+         ORG   E0404P6I
+E0404P6O DS    CL18               OUTPUT FIELD
+*
+E0404P7L DS    AL2                INPUT FIELD LENGTH
+E0404P7F DS    0X                 INPUT FIELD FLAG
+E0404P7A DS    X                  OUTPUT ATTRIBUTE
+E0404P7I DS    CL18               INPUT FIELD
+         ORG   E0404P7I
+E0404P7O DS    CL18               OUTPUT FIELD
+*
+E0404P8L DS    AL2                INPUT FIELD LENGTH
+E0404P8F DS    0X                 INPUT FIELD FLAG
+E0404P8A DS    X                  OUTPUT ATTRIBUTE
+E0404P8I DS    CL18               INPUT FIELD
+         ORG   E0404P8I
+E0404P8O DS    CL18               OUTPUT FIELD
+*
+E0404P9L DS    AL2                INPUT FIELD LENGTH
+E0404P9F DS    0X                 INPUT FIELD FLAG
+E0404P9A DS    X                  OUTPUT ATTRIBUTE
+E0404P9I DS    CL18               INPUT FIELD
+         ORG   E0404P9I
+E0404P9O DS    CL18               OUTPUT FIELD
+*
+E0404PAL DS    AL2                INPUT FIELD LENGTH
+E0404PAF DS    0X                 INPUT FIELD FLAG
+E0404PAA DS    X                  OUTPUT ATTRIBUTE
+E0404PAI DS    CL18               INPUT FIELD
+         ORG   E0404PAI
+E0404PAO DS    CL18               OUTPUT FIELD
+*
+E0404PBL DS    AL2                INPUT FIELD LENGTH
+E0404PBF DS    0X                 INPUT FIELD FLAG
+E0404PBA DS    X                  OUTPUT ATTRIBUTE
+E0404PBI DS    CL18               INPUT FIELD
+         ORG   E0404PBI
+E0404PBO DS    CL18               OUTPUT FIELD
+*
+E0404PCL DS    AL2                INPUT FIELD LENGTH
+E0404PCF DS    0X                 INPUT FIELD FLAG
+E0404PCA DS    X                  OUTPUT ATTRIBUTE
+E0404PCI DS    CL18               INPUT FIELD
+         ORG   E0404PCI
+E0404PCO DS    CL18               OUTPUT FIELD
+*
+EDF0404E EQU   *
+EDF0404L EQU   EDF0404E-EDF0404S
+*
+* * * END OF MAP DEFINITION     * * *
+*
+EDF0E08S DS    0H                 START OF MAP DEFINITION
+EDF0E08I DS    0H                 START OF MAP INPUT DEFINITION
+EDF0E08O DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
+*
+E0E08TSL DS    AL2                INPUT FIELD LENGTH
+E0E08TSF DS    0X                 INPUT FIELD FLAG
+E0E08TSA DS    X                  OUTPUT ATTRIBUTE
+E0E08TSI DS    CL4                INPUT FIELD
+         ORG   E0E08TSI
+E0E08TSO DS    CL4                OUTPUT FIELD
+*
+E0E08PGL DS    AL2                INPUT FIELD LENGTH
+E0E08PGF DS    0X                 INPUT FIELD FLAG
+E0E08PGA DS    X                  OUTPUT ATTRIBUTE
+E0E08PGI DS    CL8                INPUT FIELD
+         ORG   E0E08PGI
+E0E08PGO DS    CL8                OUTPUT FIELD
+*
+E0E08TNL DS    AL2                INPUT FIELD LENGTH
+E0E08TNF DS    0X                 INPUT FIELD FLAG
+E0E08TNA DS    X                  OUTPUT ATTRIBUTE
+E0E08TNI DS    CL7                INPUT FIELD
+         ORG   E0E08TNI
+E0E08TNO DS    CL7                OUTPUT FIELD
+*
+E0E08SCL DS    AL2                INPUT FIELD LENGTH
+E0E08SCF DS    0X                 INPUT FIELD FLAG
+E0E08SCA DS    X                  OUTPUT ATTRIBUTE
+E0E08SCI DS    CL3                INPUT FIELD
+         ORG   E0E08SCI
+E0E08SCO DS    CL3                OUTPUT FIELD
+*
+E0E08PRL DS    AL2                INPUT FIELD LENGTH
+E0E08PRF DS    0X                 INPUT FIELD FLAG
+E0E08PRA DS    X                  OUTPUT ATTRIBUTE
+E0E08PRI DS    CL8                INPUT FIELD
+         ORG   E0E08PRI
+E0E08PRO DS    CL8                OUTPUT FIELD
+*
+E0E08OFL DS    AL2                INPUT FIELD LENGTH
+E0E08OFF DS    0X                 INPUT FIELD FLAG
+E0E08OFA DS    X                  OUTPUT ATTRIBUTE
+E0E08OFI DS    CL9                INPUT FIELD
+         ORG   E0E08OFI
+E0E08OFO DS    CL9                OUTPUT FIELD
+*
+E0E08RPL DS    AL2                INPUT FIELD LENGTH
+E0E08RPF DS    0X                 INPUT FIELD FLAG
+E0E08RPA DS    X                  OUTPUT ATTRIBUTE
+E0E08RPI DS    CL12               INPUT FIELD
+         ORG   E0E08RPI
+E0E08RPO DS    CL12               OUTPUT FIELD
+*
+E0E08R2L DS    AL2                INPUT FIELD LENGTH
+E0E08R2F DS    0X                 INPUT FIELD FLAG
+E0E08R2A DS    X                  OUTPUT ATTRIBUTE
+E0E08R2I DS    CL3                INPUT FIELD
+         ORG   E0E08R2I
+E0E08R2O DS    CL3                OUTPUT FIELD
+*
+E0E08ENL DS    AL2                INPUT FIELD LENGTH
+E0E08ENF DS    0X                 INPUT FIELD FLAG
+E0E08ENA DS    X                  OUTPUT ATTRIBUTE
+E0E08ENI DS    CL8                INPUT FIELD
+         ORG   E0E08ENI
+E0E08ENO DS    CL8                OUTPUT FIELD
+*
+E0E08P1L DS    AL2                INPUT FIELD LENGTH
+E0E08P1F DS    0X                 INPUT FIELD FLAG
+E0E08P1A DS    X                  OUTPUT ATTRIBUTE
+E0E08P1I DS    CL18               INPUT FIELD
+         ORG   E0E08P1I
+E0E08P1O DS    CL18               OUTPUT FIELD
+*
+E0E08P2L DS    AL2                INPUT FIELD LENGTH
+E0E08P2F DS    0X                 INPUT FIELD FLAG
+E0E08P2A DS    X                  OUTPUT ATTRIBUTE
+E0E08P2I DS    CL18               INPUT FIELD
+         ORG   E0E08P2I
+E0E08P2O DS    CL18               OUTPUT FIELD
+*
+E0E08P3L DS    AL2                INPUT FIELD LENGTH
+E0E08P3F DS    0X                 INPUT FIELD FLAG
+E0E08P3A DS    X                  OUTPUT ATTRIBUTE
+E0E08P3I DS    CL18               INPUT FIELD
+         ORG   E0E08P3I
+E0E08P3O DS    CL18               OUTPUT FIELD
+*
+E0E08P4L DS    AL2                INPUT FIELD LENGTH
+E0E08P4F DS    0X                 INPUT FIELD FLAG
+E0E08P4A DS    X                  OUTPUT ATTRIBUTE
+E0E08P4I DS    CL18               INPUT FIELD
+         ORG   E0E08P4I
+E0E08P4O DS    CL18               OUTPUT FIELD
+*
+E0E08P5L DS    AL2                INPUT FIELD LENGTH
+E0E08P5F DS    0X                 INPUT FIELD FLAG
+E0E08P5A DS    X                  OUTPUT ATTRIBUTE
+E0E08P5I DS    CL18               INPUT FIELD
+         ORG   E0E08P5I
+E0E08P5O DS    CL18               OUTPUT FIELD
+*
+E0E08P6L DS    AL2                INPUT FIELD LENGTH
+E0E08P6F DS    0X                 INPUT FIELD FLAG
+E0E08P6A DS    X                  OUTPUT ATTRIBUTE
+E0E08P6I DS    CL18               INPUT FIELD
+         ORG   E0E08P6I
+E0E08P6O DS    CL18               OUTPUT FIELD
+*
+E0E08P7L DS    AL2                INPUT FIELD LENGTH
+E0E08P7F DS    0X                 INPUT FIELD FLAG
+E0E08P7A DS    X                  OUTPUT ATTRIBUTE
+E0E08P7I DS    CL18               INPUT FIELD
+         ORG   E0E08P7I
+E0E08P7O DS    CL18               OUTPUT FIELD
+*
+E0E08P8L DS    AL2                INPUT FIELD LENGTH
+E0E08P8F DS    0X                 INPUT FIELD FLAG
+E0E08P8A DS    X                  OUTPUT ATTRIBUTE
+E0E08P8I DS    CL18               INPUT FIELD
+         ORG   E0E08P8I
+E0E08P8O DS    CL18               OUTPUT FIELD
+*
+E0E08P9L DS    AL2                INPUT FIELD LENGTH
+E0E08P9F DS    0X                 INPUT FIELD FLAG
+E0E08P9A DS    X                  OUTPUT ATTRIBUTE
+E0E08P9I DS    CL18               INPUT FIELD
+         ORG   E0E08P9I
+E0E08P9O DS    CL18               OUTPUT FIELD
+*
+E0E08PAL DS    AL2                INPUT FIELD LENGTH
+E0E08PAF DS    0X                 INPUT FIELD FLAG
+E0E08PAA DS    X                  OUTPUT ATTRIBUTE
+E0E08PAI DS    CL18               INPUT FIELD
+         ORG   E0E08PAI
+E0E08PAO DS    CL18               OUTPUT FIELD
+*
+E0E08PBL DS    AL2                INPUT FIELD LENGTH
+E0E08PBF DS    0X                 INPUT FIELD FLAG
+E0E08PBA DS    X                  OUTPUT ATTRIBUTE
+E0E08PBI DS    CL18               INPUT FIELD
+         ORG   E0E08PBI
+E0E08PBO DS    CL18               OUTPUT FIELD
+*
+E0E08PCL DS    AL2                INPUT FIELD LENGTH
+E0E08PCF DS    0X                 INPUT FIELD FLAG
+E0E08PCA DS    X                  OUTPUT ATTRIBUTE
+E0E08PCI DS    CL18               INPUT FIELD
+         ORG   E0E08PCI
+E0E08PCO DS    CL18               OUTPUT FIELD
+*
+EDF0E08E EQU   *
+EDF0E08L EQU   EDF0E08E-EDF0E08S
+*
+* * * END OF MAP DEFINITION     * * *
+*
+* * * END OF MAP SET DEFINITION * * *

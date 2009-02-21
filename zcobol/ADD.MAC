@@ -1,0 +1,168 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 10/28/08 initial coding for global ADD
+.* 12/22/08 use ZCGETFLD to get field with qual,base,subscript
+.* 02/15/09 support mult s1 added to s2 or mult s1+s2 added to s3
+.*********************************************************************
+         ADD   
+         COPY  ZC_WS
+         :&PARM_IX SETA 2
+         :&NP      SETA N'&SYSLIST
+         :&TO_IX     SETA 0
+         :&GIVING_IX SETA 0
+         :&ROUNDED   SETB 0
+         :&ONSIZE    SETB 0
+         :&LAST_PARM SETA 0
+         AWHILE (&PARM_IX LT &NP)
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'TO')
+                   :&TO_IX SETA &PARM_IX
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'GIVING')
+                   :&GIVING_IX SETA &PARM_IX
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'ROUNDED')
+                   :&ROUNDED SETB 1
+                   AIF (&LAST_PARM SETA EQ 0)
+                       :&LAST_PARM SETA &PARM_IX-1
+                   AEND
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'ON'                   X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
+                        AND '&SYSLIST(&PARM_IX+2)' EQ 'ERROR')
+                   :&ONSIZE SETB 1
+                   AIF (&LAST_PARM EQ 0)
+                       :&LAST_PARM SETA &PARM_IX-1
+                   AEND
+                   :&PARM_IX SETA &PARM_IX+2
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'SIZE'                 X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
+                   :&ONSIZE SETB 1
+                   AIF (&LAST_PARM EQ 0)
+                       :&LAST_PARM SETA &PARM_IX-1
+                   AEND
+                   :&PARM_IX SETA &PARM_IX+1
+               AEND
+               :&PARM_IX SETA &PARM_IX+1
+         AEND
+         AIF   (&LAST_PARM GT 0)
+               :&NP SETA &LAST_PARM
+         AEND
+         AIF   (&GIVING_IX GT 0)  ADD S1 [+S2] GIVING S3
+               ACALL ADD_GIVING
+         AELSE
+               ACALL ADD_TO
+         AEND
+         AIF   (&ONSIZE)
+               GEN_ONSIZE_START ADD
+         AEND
+         MEXIT
+.*
+.* ADD GIVING
+.*
+         AENTRY ADD_GIVING
+         :&S1_PARM_IX SETA 1
+         :&S3_PARM_IX SETA &GIVING_IX+1
+         :&S1_OK SETB 1
+         :&S3_OK SETB 1
+         ACALL GET_S1
+         ACALL GET_S3
+         AWHILE (&S1_OK AND &S3_OK)
+               GEN_MOVE &S3,&S3_IX,&S1,&S1_IX
+               ACALL GET_S1
+               AWHILE (&S1_OK)
+                   GEN_ADD  &S3,&S3_IX,&S1,&S1_IX,&ROUNDED,&ONSIZE
+                   ACALL GET_S1
+               AEND
+               ACALL GET_S3
+               AIF (&S3_OK)
+                   :&S1_PARM_IX SETA 1
+                   :&S1_OK SETB 1
+                   ACALL GET_S1
+               AEND
+         AEND
+         AEND
+.*
+.* ADD TO
+.*
+         AENTRY ADD_TO
+         :&S1_PARM_IX SETA 1
+         :&S2_PARM_IX SETA &TO_IX+1
+         :&S1_OK SETB 1
+         :&S2_OK SETB 1
+         ACALL GET_S1
+         ACALL GET_S2
+         AWHILE (&S1_OK AND &S2_OK)
+               GEN_ADD  &S2,&S2_IX,&S1,&S1_IX,&ROUNDED,&ONSIZE
+               ACALL GET_S1
+               AWHILE (&S1_OK)
+                   GEN_ADD  &S2,&S2_IX,&S1,&S1_IX,&ROUNDED,&ONSIZE
+                   ACALL GET_S1
+               AEND
+               ACALL GET_S2
+               AIF (&S2_OK)
+                   :&S1_PARM_IX SETA 1
+                   :&S1_OK SETB 1
+                   ACALL GET_S1
+               AEND
+         AEND
+         AEND
+.*
+.* GET S1
+.*
+         AENTRY GET_S1
+         :&PARM_IX SETA &S1_PARM_IX
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'TO')
+               AIF (&GIVING_IX GT 0)
+                   :&PARM_IX SETA &PARM_IX+1
+               AELSE
+                   :&S1_OK SETB 0
+                   AEXIT AENTRY
+               AEND
+         AELSEIF (&PARM_IX EQ &GIVING_IX)
+               :&S1_OK SETB 0
+               AEXIT AENTRY
+         AEND
+         :&FIELD_REG SETC 'R1'         S1 IN R1
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         :&S1_PARM_IX SETA &PARM_IX
+         :&S1    SETC  '&FIELD_NAME'
+         :&S1_IX SETA  &FIELD_IX
+         AEND
+.*
+.* GET S2
+.*
+         AENTRY GET_S2
+         :&PARM_IX SETA &S2_PARM_IX
+         AIF (&PARM_IX GT &NP)
+             :&S2_OK SETB 0
+             AEXIT AENTRY
+         AEND
+         :&FIELD_REG SETC 'R2'               S2 IN R2
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         :&S2_PARM_IX SETA &PARM_IX
+         :&S2 SETC '&FIELD_NAME'
+         :&S2_IX SETA  &FIELD_IX
+         AEND
+.*
+.* GET S3
+.*
+         AENTRY GET_S3
+         :&PARM_IX SETA &S3_PARM_IX
+         AIF (&PARM_IX GT &NP)
+             :&S3_OK SETB 0
+             AEXIT AENTRY
+         AEND
+         :&FIELD_REG SETC 'R3'            S3 IN R3
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         :&S3_PARM_IX SETA &PARM_IX
+         :&S3 SETC '&FIELD_NAME'
+         :&S3_IX SETA  &FIELD_IX
+         AEND
+         COPY ZCGETFLD
+         MEND

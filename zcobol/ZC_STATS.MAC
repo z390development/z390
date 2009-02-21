@@ -1,0 +1,19 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 10/14/08 INITIAL CODDING
+.*********************************************************************
+         ZC_STATS      
+         COPY  ZC_WS
+         MNOTE *.'ZCOBOL TOTAL SYMBOLS                 = &SYM_TOT'
+         MNOTE *.'ZCOBOL TOTAL SYMBOL DUPLICATES       = &SYM_DUP_TOT'
+         MNOTE *.'ZCOBOL TOTAL SYMBOL MAX DUP CHAIN    = &SYM_DUP_MAX'
+         MNOTE *.'ZCOBOL TOTAL SYMBOL LEVEL 88         = &V88_TOT'
+         MNOTE *.'ZCOBOL TOTAL SYMBOL SET INDEXES      = &SET_TOT'
+         MNOTE *.'ZCOBOL TOTAL SYMBOL LINKAGE SECTIONS = &LK_TOT'
+         MEND

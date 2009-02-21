@@ -1,0 +1,323 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/16/08                                                 *
+.*********************************************************************
+.* 11/17/08 stub for pending support              
+.* 01/14/09 initial coding
+.*********************************************************************
+.* R2=V1,R3=V2   THESE MAY BE PASSED MULTIPLE TIMES TO GEN/ZC390LIB
+.* R14=V3,R15=V4 THESE MUST BE RESET FOR EACH CALL TO GEN
+.* R1,R14,R15 USED IN STANDARD LINKAGE FROM GEN TO ZC390LIB INSPECT.MLC
+.*********************************************************************
+         INSPECT
+         COPY ZC_WS
+         :&TEST_OK   SETB 0
+         :&TEST_TYPE SETC ''
+         :&TEST_VAR  SETC ''
+         :&TEST_IX   SETA 0
+         :&PARM_IX   SETA 1
+         :&FIELD_REG SETC 'R2'  R2=V1 INSPECT FIELD IF SUBSCRIPTED
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0)
+               MNOTE 8,'INSPECT FIELD NOT FOUND &SYSLIST(1)'
+               MEXIT
+         AEND
+         :&V1    SETC '&FIELD_NAME'
+         :&V1_IX SETA &FIELD_IX
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'TALLYING')
+               :&PARM_IX SETA &PARM_IX+1
+               ACALL TALLYING                                      
+         AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'REPLACING')
+               :&PARM_IX SETA &PARM_IX+1
+               ACALL REPLACING                                      
+         AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'CONVERTING')
+               :&PARM_IX SETA &PARM_IX+1
+               ACALL CONVERTING                                     
+         AELSE
+               MNOTE 8,'INSPECT UNKNOWN PARM - &SYSLIST(&PARM_IX)'
+         AEND
+         MEXIT
+.*
+.* INSPECT V1 TALLYING V2 FOR [CHARACTERS TEST,ALL/LEADING V3 TEST]
+.*  TEST = BEFORE/AFTER [INITIAL] V4
+.* NOTES:
+.*  1.  TALLYING MAY ALSO BE FOLLOWED BY REPLACING USING THE SAME V1
+.*
+         AENTRY TALLYING
+      :&TALLYING_CNT SETA 0
+      AWHILE   ('&SYSLIST(&PARM_IX)' NE ''                             X
+                AND '&SYSLIST(&PARM_IX)' NE 'REPLACING')
+         :&TALLYING_CNT SETA &TALLYING_CNT+1
+         :&FIELD_REG SETC 'R3'  R3=V2 TALLY VAR IF SUBSCRIPTED 
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0)
+               MNOTE 8,'INSPECT TALLYING FIELD NOT FOUND &SYSLIST(&FIELX
+               D_IX)'
+               MEXIT
+         AEND
+         :&V2    SETC '&FIELD_NAME'
+         :&V2_IX SETA &FIELD_IX
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'FOR')
+               MNOTE 8,'INSPECT MISSING FOR AFTER TALLYING'
+               MEXIT
+         AEND
+         :&PARM_IX SETA &PARM_IX+1
+       :&STYPE_CNT SETA 0
+       AWHILE  ('&SYSLIST(&PARM_IX)' NE ''                             X
+                AND '&SYSLIST(&PARM_IX)' NE 'REPLACING')
+         :&STYPE_CNT SETA &STYPE_CNT+1
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'CHARACTERS')
+               :&STYPE SETC 'CHARACTERS'
+               :&PARM_IX SETA &PARM_IX+1
+               :&TEST_CNT SETA 0
+               AWHILE ('&SYSLIST(&PARM_IX)' NE ''                      X
+                      AND '&SYSLIST(&PARM_IX)' NE 'REPLACING')
+                   :&TEST_CNT SETA &TEST_CNT+1
+                   ACALL GET_TEST_PHRASE
+                   AIF (&TEST_OK) 
+                       GEN_INSPECT TALLYING,&STYPE,&V1,&V1_IX,&V2,&V2_IX
+               X,&TEST_TYPE,&TEST_VAR,&TEST_IX
+                   AEND
+               AEND
+               AIF (&TEST_CNT EQ 0)
+                   MNOTE 8,'INSPECT TALLYING CHARACTERS MISSING TEST'
+                   MEXIT
+               AEND
+         AELSEIF   ('&SYSLIST(&PARM_IX)' EQ 'ALL'                      X
+                    OR '&SYSLIST(&PARM_IX)' EQ 'LEADING')
+               :&STYPE SETC '&SYSLIST(&PARM_IX)'
+               :&PARM_IX SETA &PARM_IX+1
+               :&FIELD_REG SETC 'R3'
+               :&FIELD_SS1 SETB 0
+               ACALL GET_PARM_FIELD
+               AIF (&FIELD_IX GT 0                                     X
+                    OR '&FIELD_NAME'(1,1) EQ '''')
+                    :&V3 SETC '&FIELD_NAME'
+                    :&V3_IX SETA &FIELD_IX
+                    :&TEST_CNT SETA 0
+                    AWHILE ('&SYSLIST(&PARM_IX)' NE ''                 X
+                           AND '&SYSLIST(&PARM_IX)' NE 'REPLACING')
+                       :&TEST_CNT SETA &TEST_CNT+1
+                       ACALL GET_TEST_PHRASE
+                       AIF (&TEST_OK) 
+                           GEN_INSPECT TALLYING,&STYPE,&V1,&V1_IX,&V2,&X
+               V2_IX,&V3,&V3_IX,&TEST_TYPE,&TEST_VAR,&TEST_IX
+                       AEND
+                    AEND
+                    AIF (&TEST_CNT EQ 0)
+                        AIF ('&SYSLIST(&PARM_IX)' EQ '')
+                           GEN_INSPECT TALLYING,&STYPE,&V1,&V1_IX,&V2,&X
+               V2_IX,&V3,&V3_IX,0   NO TEST
+                        AELSE
+                            MNOTE 8,'INSPECT TALLYING UNKNOWN CLAUSE - X
+               &SYSLIST(&PARM_IX)'
+                            MEXIT
+                        AEND
+                    AEND
+               AELSE
+                    MNOTE 8,'INSPECT MISSING ALL IDENTIFIER'
+                    MEXIT
+               AEND
+         AELSE
+               MNOTE 8,'INSPECT MISSING CHARACTERS/ALL/LEADING'
+               MEXIT
+         AEND
+       AEND
+      AEND
+      AIF      (&TALLYING_CNT EQ 0)
+               MNOTE 8,'INSPECT TALLYING MISSING VAR'
+               MEXIT
+      AELSEIF  ('&SYSLIST(&PARM_IX)' EQ 'REPLACING')
+               :&PARM_IX SETA &PARM_IX+1
+               ACALL REPLACING
+      AEND
+         AEND
+.*
+.* INSPECT V1 REPLACING [CHARACTERS BY V3 TEST,
+.*                      ALL/LEADING/FIRST V2 BY V3 TEST]
+.*                      TEST = BEFORE/AFTER [INITIAL] V4
+.*
+         AENTRY REPLACING
+      :&REPLACING_CNT SETA 0
+      AWHILE ('&SYSLIST(&PARM_IX)' NE '')
+         :&REPLACING_CNT SETA &REPLACING_CNT+1
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'CHARACTERS'                   X
+                AND '&SYSLIST(&PARM_IX+1)' EQ 'BY')
+               :&STYPE SETC 'CHARACTERS'
+               :&PARM_IX SETA &PARM_IX+2
+               :&V2 SETC ''
+               :&V2_IX SETA 0
+               :&FIELD_REG SETC 'R3'
+               :&FIELD_SS1 SETB 0
+               ACALL GET_PARM_FIELD
+               AIF (&FIELD_IX GT 0                                     X
+                    OR '&FIELD_NAME'(1,1) EQ '''')
+                    :&V3 SETC '&FIELD_NAME'
+                    :&V3_IX SETA &FIELD_IX
+                    :&TEST_CNT SETA 0
+                    AWHILE ('&SYSLIST(&PARM_IX)' NE ''                 X
+                           AND '&SYSLIST(&PARM_IX)' NE 'REPLACING')
+                       :&TEST_CNT SETA &TEST_CNT+1
+                       ACALL GET_TEST_PHRASE
+                       AIF (&TEST_OK) 
+                           GEN_INSPECT REPLACING,&STYPE,&V1,&V1_IX,&V2,X
+               &V2_IX,&V3,&V3_IX,&TEST_TYPE,&TEST_VAR,&TEST_IX
+                       AEND
+                    AEND
+                    AIF (&TEST_CNT EQ 0)
+                        MNOTE 8,'INSPECT REPLACING CHARACTERS MISSING TX
+               EST'
+                        MEXIT
+                    AEND
+               AELSE
+                    MNOTE 8,'INSPECT REPLACING CHARACTERS MISSING IDENTX
+               IFIER'
+                    MEXIT
+               AEND
+         AELSEIF   ('&SYSLIST(&PARM_IX)' EQ 'ALL'                      X
+                    OR '&SYSLIST(&PARM_IX)' EQ 'LEADING'               X
+                    OR '&SYSLIST(&PARM_IX)' EQ 'FIRST')
+               :&STYPE SETC '&SYSLIST(&PARM_IX)'
+               :&PARM_IX SETA &PARM_IX+1
+             :&STYPE_CNT SETA 0
+             AWHILE ('&SYSLIST(&PARM_IX)' NE ''                        X
+                     AND '&SYSLIST(&PARM_IX)' NE 'REPLACING')
+               :&STYPE_CNT SETA &STYPE+1
+               :&FIELD_REG SETC 'R2'
+               :&FIELD_SS1 SETB 0
+               ACALL GET_PARM_FIELD
+               AIF (&FIELD_IX GT 0                                     X
+                    OR '&FIELD_NAME'(1,1) EQ '''')
+                :&V2 SETC '&FIELD_NAME'
+                :&V2_IX SETA &FIELD_IX
+                AIF ('&SYSLIST(&PARM_IX)' EQ 'BY')
+                  :&PARM_IX SETA &PARM_IX+1
+                AELSE
+                  MNOTE 8,'INSPECT REPLACING MISSING BY'
+                  MEXIT
+                AEND
+                :&FIELD_REG SETC 'R3'
+                :&FIELD_SS1 SETB 0
+                ACALL GET_PARM_FIELD
+                AIF (&FIELD_IX GT 0                                    X
+                       OR '&FIELD_NAME'(1,1) EQ '''')
+                    :&V3 SETC '&FIELD_NAME'
+                    :&V3_IX SETA &FIELD_IX
+                    :&TEST_CNT SETA 0
+                    AWHILE ('&SYSLIST(&PARM_IX)' NE ''                 X
+                           AND '&SYSLIST(&PARM_IX)' NE 'REPLACING')
+                       :&TEST_CNT SETA &TEST_CNT+1
+                        ACALL GET_TEST_PHRASE
+                        AIF (&TEST_OK) 
+                            GEN_INSPECT REPLACING,&STYPE,&V1,&V1_IX,&V2X
+               ,&V2_IX,&V3,&V3_IX,&TEST_TYPE,&TEST_VAR,&TEST_IX
+                        AEND
+                    AEND
+                    AIF (&TEST_CNT EQ 0)
+                        MNOTE 8,'INSPECT REPLACING ALL/LEADING/FIRST MIX
+               SSING TEST'
+                        MEXIT
+                    AEND
+                 AELSE
+                    MNOTE 8,'INSPECT REPLACING UNDEFINED ID3'
+                    MEXIT
+                 AEND
+               AELSE
+                    MNOTE 8,'INSPECT REPLACING MISSING ID2'
+                    MEXIT
+               AEND
+             AEND
+             AIF (&STYPE_CNT EQ 0)
+                 MNOTE 8,'INSPECT REPLACING &STYPE MISSING VAR'
+                 MEXIT
+             AEND
+         AELSE
+               MNOTE 8,'INSPECT MISSING CHARACTERS/ALL/LEADING/FIRST'
+               MEXIT
+         AEND
+       AEND
+       AIF     (&REPLACING_CNT EQ 0)
+               MNOTE 8,'INSPECT REPLACING MISSING VAR'
+               MEXIT
+       AEND
+         AEND
+.*
+.* INSPECT V1 CONVERTING V2 TO V3 TEST
+.*  TEST = BEFORE/AFTER [INITIAL] V4
+.*
+         AENTRY CONVERTING
+         :&FIELD_REG SETC 'R2'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0                                         X
+               AND '&FIELD_NAME' EQ '')
+               MNOTE 8,'INSPECT CONVERTING FROM FIELD NOT FOUND'
+               MEXIT
+         AEND
+         :&V2    SETC '&FIELD_NAME'
+         :&V2_IX SETA &FIELD_IX
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'TO')
+               MNOTE 8,'INSPECT CONVERTING MISSING TO'
+               MEXIT
+         AEND
+         :&PARM_IX SETA &PARM_IX+1
+         :&FIELD_REG SETC 'R3'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0                                         X
+               AND '&FIELD_NAME' EQ '')
+              MNOTE 8,'INSPECT MISSING ALL IDENTIFIER'
+              MEXIT
+         AEND
+         :&V3 SETC '&FIELD_NAME'
+         :&V3_IX SETA &FIELD_IX
+         
+         AIF   ('&SYSLIST(&PARM_IX)' NE '')
+               ACALL GET_TEST_PHRASE
+         AELSE
+               :&TEST_OK SETB 1
+         AEND
+         AIF (&TEST_OK) 
+               GEN_INSPECT CONVERTING,&V1,&V1_IX,&V2,&V2_IX,&V3,&V3_IX,X
+               &TEST_TYPE,&TEST_VAR,&TEST_IX
+         AEND
+         AEND
+.*
+.* GET TEST PHRASE - BEFORE/AFTER [INITIAL] VAR
+.*
+         AENTRY GET_TEST_PHRASE
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'BEFORE')
+               :&TEST_TYPE SETC 'BEFORE'
+         AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'AFTER')
+               :&TEST_TYPE SETC 'AFTER'
+         AELSE
+               MNOTE 8,'INSPECT TEST MISSING BEFORE/AFTER'
+               MEXIT
+         AEND
+         :&PARM_IX SETA &PARM_IX+1
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'INITIAL')
+               :&PARM_IX SETA &PARM_IX+1
+         AEND
+         :&FIELD_REG SETC 'R14'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX GT 0                                         X
+               OR '&FIELD_NAME'(1,1) EQ '''')
+               :&TEST_VAR SETC '&FIELD_NAME'
+               :&TEST_IX  SETA &FIELD_IX
+               :&TEST_OK  SETB 1
+         AELSE
+              :&TEST_OK SETB 0
+              MNOTE 8,'INSPECT MISSING TEST IDENTIFIER'
+              MEXIT
+         AEND
+         AEND
+         MEXIT
+         COPY ZCGETFLD
+         MEND

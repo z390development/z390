@@ -1,0 +1,207 @@
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/08/08 initial coding to define global WS variables 
+.* 04/30/08 add 88 definitions for use in literal compares/moves etc.
+.* 06/10/08 add LINKAGE SECTION support                                   
+.* 07/26/08 add zcob_sym_find hash table                                  
+.* 11/26/08 add IE_TYPE 4 FOR PERFORM n TIMES stmt, UNTIL stmt       
+.* 12/21/08 add SYM_FILLER_VAL_CNT for use by GEN_INIT_WS          
+.* 12/22/08 add SYM_SUB_CNT for use by ZCGETFLD.CPY subscript parser          
+.* 02/05/09 add TOT_SIX and SIX_NAME,SIX_OFF,SIX_OCCURS for subscripts
+.* 02/08/09 add FIELD_RMD to indicate (off:len) reference modification 
+.*********************************************************************
+.*
+.* PGM NAME AND ZCOBOL VERSION CHECKED BY ZC390NUC IN ZC390LIB.390
+.*
+         GBLC  &ZC_PGM       NAME FROM FIRST CMD PARM (IGNORE PGM-ID)
+         GBLC  &ZC_VER       CURRENT Z390 VERSION FROM TZ390.VER
+.*
+.* ZCOBOL OPTIONS
+.*
+         GBLB  &ZC_PROC_DIV  SET AT START OF PROCEDURE DIVISION
+         GBLB  &ZC_CICS      CICS COBOL PROGRAM WITH DFHEISTG WS CSECT
+         GBLB  &ZC_CICS_DSA_VALUE IGNORE VALUES AND ISSUE 1 WARNING
+         GBLB  &ZC_COMMENT   LIST SOURCE AS COMMENTS IN MLC FOR PRN
+         GBLC  &ZC_LIST      LIST OPTION FOR ZCOBOL INTERNAL CODE GEN
+         GBLB  &ZC_EXTEND    COMP S9(39) TYPE G, COMP-3 S9(31) TYPE P
+         GBLB  &ZC_R64       USE 64 BIT REGS FOR G TYPE S9(18) DSG ETC.  
+         GBLB  &ZC_TRACE     DISPLAY PARAGRAPH LABEL TRACE DURING EXEC
+         GBLB  &ZC_TRUNC     TRUNCATE NUM DATA TO PIC SIZE (NOT YET)
+         GBLB  &ZC_WARN      GENERATE WARNING LEVEL 4 M NOTES
+.*
+.* GLOBAL LIMITS
+.*
+&MAX_PM     SETA 20    MAXIMUM NESTED PERFORMS (CAN BE SET HIGHER)
+&MAX_IE     SETA 100   MAXIMUM NEXTED IF, EVALUATE, READ END-READ
+&MAX_WS_LVL SETA 50 MAXIMUM WS LEVELS          
+&MAX_SYM    SETA 20000 MAXIMUM WS SYMBOLS 
+&MAX_FILE   SETA  100
+.*
+.* FILE TABLE DEFINED FROM SELECT AND FD STATEMENTS
+.*
+         GBLA  &FILE_TOT               TOTAL FILES DEFINED
+         GBLA  &FILE_IX                FILE INDEX ELSE 0 FOR NOT FOUND
+         GBLC  &FILE_NAME(&MAX_FILE)   FILE NAME FROM SELECT
+         GBLC  &FILE_TYPE(&MAX_FILE)   FILE TYPE (LINE = FT,ETC)
+         GBLC  &FILE_DDNAME(&MAX_FILE) FILE DDNAME OR DSN IN QUOTES
+         GBLC  &FILE_RECORD(&MAX_FILE) FILE RECORD FOR READ
+         GBLC  &FILE_STATUS(&MAX_FILE) FILE STATUS FIELD NAME
+.*
+.* WS BASE REGISTERS (GEN_ID sys init, GEN_BASE dynamic,PERIOD reset)
+.*
+.*   1.  Cnrrent preset WS base regs  = R7
+.*   2.  Currnet dynamic WS base regs = R6 and R5
+.*
+         GBLC &BASE_WS
+&BASE_SYS SETC 'R13'               FIRST WS SYSTEM BASE
+         GBLA &BASE_WS_HIGH
+&BASE_WS_HIGH SETA 4096            MAX   WS SYSTEM BASE OFFSET
+         GBLC &BASE_B1,&BASE_B2
+&BASE_B1 SETC 'R6'                FIRST  DYNAMIC WS BASE REG
+&BASE_B2 SETC 'R7'                SECOND DYNAMIC WS BASE REG
+         GBLA &BASE_B1_LOW,&BASE_B1_HIGH          
+         GBLA &BASE_B2_LOW,&BASE_B2_HIGH          
+         GBLA &BASE_LRU           LEAST RECENTLY USED WS DYNAMIC BASE
+.*
+.* LK BASE REGISTERS (GEN_BASE for dynamic,PERIOD for reset)
+.*
+.*   1.  Currnet dynamic WS base regs = R4 and R5
+.*
+         GBLC &LBASE_B1,&LBASE_B2
+&lBASE_B1 SETC 'R4'               FIRST  DYNAMIC LK BASE REG
+&lBASE_B2 SETC 'R5'               SECOND DYNAMIC LK BASE REG
+         GBLA &LBASE_B1_LOW,&LBASE_B1_HIGH LOW HIGH BASE OFFSETS
+         GBLA &LBASE_B2_LOW,&LBASE_B2_HIGH LOW HIGH BASE OFFSETS
+         GBLA &LBASE_B1_IX        SYM IX OF BASE VAR IN WS
+         GBLA &LBASE_B2_IX        SYM IX OF BASE VAR IN WS
+         GBLA &LBASE_LRU          LEAST RECENTLY USED LK DYNAMIC BASE
+.*
+.* GET PARM FIELD (ZCGETFLD.CPY) TO GET QUAL. SUBSC. FIELD NAME/ADDR
+.*  
+         GBLA  &PARM_IX                INPUT/UPDATE PARM INDEX
+         GBLC  &FIELD_REG              INPUT REG FOR SUBSC/RMOD FLD ADR
+         GBLB  &FIELD_SS1              INPUT SS1 FIELD OFF(LEN,REG) 
+         GBLB  &FIELD_SIX              OUTPUT REG USED FOR SUB/IDX/RMOD 
+         GBLB  &FIELD_RMD              OUTPUT REF MODS (OFF:LEN)
+         GBLA  &FIELD_IX               OUTPUT SYM_IX OF FIELD
+         GBLC  &FIELD_NAME             OUTPUT SOURCE/TARGET NAME
+.*                                       SS1 AND     SIX > O(L,R)
+.*                                       SS1 AND NOT SIX > N+O(L)
+.*                                       NOT SS1 AND SIX > O(R)
+.*                                       NOT SS1 NOT SIX > N+O
+         GBLA  &FIELD_OFF              OUTPUT OFF IF RMOD ELSE 0
+         GBLA  &FIELD_LEN              OUTPUT LEN IF RMOD ELSE 0
+.*
+.*
+.* SYMBOL TABLE 
+.*
+         GBLA  &SYM_TOT                TOT FD AND WS SYMBOLS
+         GBLA  &SYM_IX                 SYM INDEX IF FOUND ELSE 0
+         GBLC  &SYM_RX                 SYM BDDD SET BY GEN_SYM_RX
+         GBLA  &SYM_IX_LST             SYM LAST WS TYPE 1 SYM INDEX
+         GBLA  &SYM_DUP_TOT            SYM TOTAL DUPLICATES 
+         GBLA  &SYM_DUP_MAX            SYM MAX DUPLICATE CHAIN LENGTH 
+         GBLA  &SYM_CUR_DUP            SYM CURRENT DUP CHAIN COUNT
+         GBLA  &SYM_FILLER_VAL_CNT     FILLER WITH VALUE CNT IF CICS
+         GBLA  &PIC_DIGITS             DIGITS IN PIC BY ZC_PIC_DIGITS
+         GBLC  &SYM_NAME(&MAX_SYM)     SYM NAME
+         GBLA  &SYM_NXT(&MAX_SYM)      SYM NAME DUPLICATE NEXT SYM_IX
+         GBLA  &SYM_LK(&MAX_SYM)       LINKAGE SECTION SYM_IX OF 01 LVL
+         GBLA  &SYM_QIX(&MAX_SYM)  SYM QUALIFIER INDEX TO NEXT LVL NAME
+         GBLA  &SYM_SIT(&MAX_SYM)  SYM SUBSCRIPT/INDEX TOTAL REQ'D
+         GBLA  &SYM_LVL(&MAX_SYM)  SYM LEVEL 
+         GBLA  &SYM_REF(&MAX_SYM)  SYM REF INDEX (88 SYM,RDEF,FILE,VAR)
+         GBLA  &SYM_LOC(&MAX_SYM)  SYM WS OFFSET OR 88 VAL INDEX
+         GBLA  &SYM_LEN(&MAX_SYM)  SYM LENGTH 
+         GBLA  &SYM_DUP(&MAX_SYM)  SYM OCCURS N TIMES (MAX FOR DEPEND)                 
+         GBLA  &SYM_DUP_MIN(&MAX_SYM)  SYM MIN OCCURS DEPENDING            
+         GBLA  &SYM_DUP_IX(&MAX_SYM)   SYM IX FOR DEPENDING ON             
+         GBLC  &SYM_VAL(&MAX_SYM)  SYM VALUE (0,SPACE,'...') T=1,2
+         GBLC  &SYM_PIC(&MAX_SYM)  SYM PIC (999,X(3) ETC.)
+         GBLC  &SYM_PIC_TYPE(&MAX_SYM)  SYM PIC TYPE A,D,E,F,H,P,X,Z
+         GBLB  &SYM_PIC_SIGN(&MAX_SYM)  SYM PIC (S9...)
+         GBLA  &SYM_PIC_DEC(&MAX_SYM)   SYM DECIMAL PLACES (999V99)
+.*
+.* SYM 88 VALUES - SYM_LOC POINTS TO STARTING VALUE IF MORE THAN 1
+.*
+         GBLA &V88_TOT            TOTAL 88 LEVEL VALUES
+         GBLC &V88_VAL(&MAX_SYM)  88 VALUE
+         GBLA &V88_NEXT(&MAX_SYM) INDEX OF NEXT VALUE OR 0
+         GBLC &V88(&MAX_SYM)
+.*
+.* SET POINTERS FOR ALL SYMBOLS WITH OCCURS
+.*
+         GBLA &CUR_SET_LVL    CURRENT SUBSCRIPT LEVEL RESET TO 1 AT 01
+         GBLA &SET_TOT  TOTAL OCCURS AND SET POINTERS TO GENERATED
+         GBLA &SET_SYM_IX(&MAX_SYM) INDEX TO SYM WITH OCCURS
+         GBLA &SET_SYM_LVL(&MAX_SYM) SUBSCRIPT LEVEL 1-N 
+         GBLC &SET_INDEX(&MAX_SYM)  INDEX BY ALIAS NAME IF ANY
+.*
+.* LK LINKAGE SECTION - SEE &SYM_LK AND SYM_REF FOR DSECT ALSO 
+.*
+         GBLB &LK_MODE            SET LK MODE ON AT LINKAGE SECTION
+         GBLA &LK_SAVE_WS_LOC     SAVE LAST WS_LOC RESTORED AT DATA END
+         GBLA &LAST_LK_DSECT_IX   SAVE IX OF LAST 01 DSECT IN LK SECT
+         GBLA &LK_TOT             TOTAL LK 01 LEVEL DSECTS
+.*
+.* IF/ELSE, EVALUATE, READ, AND PERFORM - NESTED COMPARE/BRANCH DATA
+.*
+         GBLA &IF_CNT               UNIQUE IF COUNTER
+         GBLA &MAX_IOP_TF           MAX IF_IOP_TF FIELDS REQUIRED
+         GBLB &PERIOD_NEXT          REQ LABEL FOR NEXT SENTENCE AT .
+         GBLA &PERIOD_NEXT_LAB      UNIQUE NEXT SENENCE LABEL COUNTER
+         GBLA &EVAL_LAB             UNIQUE EVALUTE LABEL COUNTER
+         GBLA &AT_END_LAB           UNIQUE READ AT END LABEL COUNTER
+         GBLA &PM_LAB               UNIQUE PERFORM LABEL COUNTER
+         GBLA &ADD_LAB               UNIQUE ADD      LABEL COUNTER
+         GBLA &SUB_LAB               UNIQUE SUBTRACT LABEL COUNTER
+         GBLA &MPY_LAB               UNIQUE MULTIPLY LABEL COUNTER
+         GBLA &DIV_LAB               UNIQUE DIVIDE   LABEL COUNTER
+         GBLC &LAST_PG_LAB          LAST PROC DIV PARAGRAPH LABEL  
+         GBLC &LAST_SECTION_LAB     LAST PROC DIV SECTION LABEL 
+         GBLA &IE_LVL               CURRENT LEVEL FOR IF OR EVALUATE
+         GBLA &IE_TYPE(&MAX_IE)     1=IF, 2=EVALUATE, 3=END_READ 4=PM
+.*                                  11=ADD,12=SUB,13=MPY,14=DIV
+         GBLA &IE_TCNT(&MAX_IE)     IE TYPE  COUNT                  
+         GBLA &IE_BCNT(&MAX_IE)     IE BLOCK COUNT WITHIN TYPE     
+         GBLB &IE_ELSE(&MAX_IE)     CURRENT IF OR ELSE BLOCK FLAG
+         GBLA &IE_EVAL(&MAX_IE)     CURRENT EVAL LABEL #
+         GBLA &IE_EVAL_IX(&MAX_IE)  CURRENT EVAL SYM INDEX       
+         GBLA &IE_WHEN(&MAX_IE)     CURRENT EVAL WHEN LABEL #
+         GBLC &IE_PM_LAB(&MAX_IE)   CURRENT PM STMT LOOP LABEL
+.*
+.* GO TO DEPENDING ON LABEL 
+.*
+         GBLA &ZC_GO_DEP            COUNT OF GO TO DEPENDING ON  TABLES
+.*
+.* CURRENT WS LOC, LEVEL, AND PENDING LENGTH SYMBOL PTRS
+.*
+         GBLA  &WS_LOC            CURRENT WS LOC OFFSET (SEE GEN_ID)
+         GBLA  &ZC_DCB_LEN        LENGTH OF DCB GEN'D BY GEN_FD IN WS
+&ZC_DCB_LEN SETA X'68'
+         GBLA  &WS_LVL            CURRENT WS INDENT LEVEL
+         GBLA  &WS_LVL_NO(&MAX_WS_LVL)       CUR LV # 01-49 (77=01)
+         GBLA  &WS_LVL_SYM_IX(&MAX_WS_LVL)   CUR WS ITEM SYMBOL INDEX
+         GBLC  &WS_LVL_USE(&MAX_WS_LVL)      CUR WS LEVEL USAGE 
+         GBLB  &WS_LVL_RDEF(&MAX_WS_LVL)     CUR WS ITEM IS  REDEFINE
+         GBLA  &WS_LVL_RDEF_END(&MAX_WS_LVL) CUR WS ITEM RDEF END LOC
+         GBLA  &WS_LVL_RDEF_IX(&MAX_WS_LVL)  CUR WS ITEM RDEF SYM IX
+.*
+.* VAR - GENERATED WS 77 ITEMS FOR USE BY GENERATED CODE
+.*
+         GBLA  &VAR_TOT     TOTAL VARS NAMED ZC_VAR_&VAR_TOT
+.*
+.* SIX SUBSCRIPT DATA PASSED BETWEEN ZCGETFLD AND GEN_SIX
+.*
+         GBLA &TOT_SIX       TOTAL SUBSCRIPTS
+         GBLC &SIX_NAME(10)  SUBSCRIPT/INDEX/LIT FROM FIELD(PARMS)
+         GBLC &SIX_OFF(10)   SUBSCRIPT OFFSETS +/-NUM ELSE ''
+         GBLA &SIX_OCCUR(10) OCCURS SYM_IX (TO GET LENGTH, ETC.)
+.*
+.* END OF CBL_WS.CPY
+.*

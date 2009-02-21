@@ -1,5 +1,5 @@
-Z390/CICS Sequential Terminal Support
-=====================================
+zCICS Sequential Terminal Support
+=================================
 
 Stage 1 -- Create a trace of your transactions
 ----------------------------------------------
@@ -16,7 +16,7 @@ a) In the Z390CICS.INI file, set SEQ_TERM=TRACE
 
 b) Start Z390\CICS
 c) Run a planned test of your transaction
-d) CEMT P SHU to end Z390/CICS
+d) CEMT P SHU to end zCICS
 e) Run Z390SEQG
    If you change the INI parm TERMID_PREFIX then change Z390SEQG.BAT
    as well.
@@ -94,8 +94,8 @@ Trademarks
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
-Author: Melvyn Maltz
+Author       : Melvyn Maltz
 Shipping Date: November 24, 2008
-Z390 version: V1.4.04
-Z390/CICS version: V6
+Z390 version : V1.4.04
+zCICS version: V6
 

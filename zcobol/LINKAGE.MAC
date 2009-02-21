@@ -1,0 +1,25 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/16/08                                                 *
+.*********************************************************************
+.* 04/16/08 initial coding for global LINKAGE SECTION
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+.* 1. LK_MODE SET FOR WS TO GEN DSECT FOR EACH 01 NAMED LK_NNNN 
+.* 2. &SYM_LK HAS INDEX TO 01 LVL WHICH HAS SYM_REF SET TO VAR_PTR IX
+.* 3. PROC AND ENTRY SET 01 SYM_REF TO VAR_PTR, WS SETS SYM_LK
+.* 4. GEN_BASE LOADS DSECT ADDR FROM VAR_PTR FOR SYM IN LINKAGE SECT
+.*********************************************************************
+         LINKAGE &SECT
+         COPY  ZC_WS
+         AIF   ('&SECT' NE 'SECTION')      
+               MNOTE 4,'LINKAGE MISSING "SECTION"'
+               MEXIT
+         AEND
+         :&LK_SAVE_WS_LOC SETA &WS_LOC SAVE WS LAST LOC FOR PD      
+         :&LK_MODE SETB  1             TURN LK MODE
+         MEND

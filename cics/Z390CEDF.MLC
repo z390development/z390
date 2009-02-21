@@ -1,0 +1,212 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+DFHEISTG DSECT
+PARSE1   DS    CL4                TERM
+PARSE2   DS    CL4                ON, OFF, SEND
+EDFRCVE  DS    CL2000             RECEIVE AREA
+*
+Z390CEDF CSECT
+*
+* INPUT FORMATS:
+*    CEDF         )
+*    CEDF ,ON     ) SINGLE TERMINAL NOT YET SUPPORTED
+*    CEDF ,OFF    )
+*
+*    CEDF term
+*    CEDF term,ON
+*    CEDF term,OFF
+*
+*    CEDX NOT YET SUPPORTED
+*
+*    CEDZ IS AN INTERNAL TRANSID:
+*       SET EDF ON/OFF AT INVOKED TERMINAL
+*       RECEIVE EDF IMAGES FROM THE INVOKED TERMINAL
+*
+         CLI   TCTTETYP,C'D'      CEDZ IS IC STARTED ?
+         BNE   NOTIC              EXIT IF NOT
+* CEDZ IS IC STARTED
+         EXEC  CICS IGNORE CONDITION LENGERR
+         EXEC  CICS RETRIEVE RTERMID(TCTTEEDT) RTRANSID(PARSE2)        X
+                    INTO(EDFRCVE)
+         CLC   PARSE2(2),=C'ON'   IS IT ON ?
+         BNE   CEDFOFF
+* TURN CEDF ON AT INVOKED TERMINAL
+         MVI   TCTTEEDF,X'FF'     TURN EDF ON
+         EXEC  CICS SEND FROM(EDFON) LENGTH(EDFONL)
+         B     RETURN             EXIT
+*
+CEDFOFF  EQU   *
+         CLC   PARSE2(3),=C'OFF'  IS IT OFF ?
+         BNE   CEDFSEND
+* TURN CEDF OFF AT INVOKED TERMINAL
+         MVI   TCTTEEDF,X'00'     TURN EDF OFF
+         XC    TCTTEEDT,TCTTEEDT  CLEAR INVOKING TERMID
+         EXEC  CICS SEND FROM(EDFOFF) LENGTH(EDFOFFL)
+         B     RETURN             EXIT
+*
+CEDFSEND EQU   *
+         CLC   PARSE2,=C'SEND'    IS IT SEND ?
+         BNE   ABORT              EXIT IF NOT
+* SEND EDF IMAGE FROM INVOKED TERMINAL
+         EXEC  CICS SEND FROM(EDFRCVE) LENGTH(TCTTEEDT+2)
+* HOLD THE CONTROLLING LOCK
+         EXEC  CICS ENQ RESOURCE(ENQNAME) LENGTH(9)
+* RECEIVE AND ANALYZE RESPONSE
+RECEIVE  EQU   *
+         EXEC  CICS RECEIVE INTO(INPUT) LENGTH(LENINPUT)
+         CLI   INPUT,DFHENTER     IS IT ENTER ?
+         BNE   RECEIVE            EXIT IF NOT
+         EXEC  CICS DEQ RESOURCE(ENQNAME) LENGTH(9)
+         B     RETURN             EXIT
+*
+ABORT    EQU   *
+         DC    H'0'               SHOULD NOT OCCUR
+*
+NOTIC    EQU   *
+         L     R6,TCTTEDA         INITIAL TIOA (NULL TERMINATED)
+         AHI   R6,3               MISS AID, CURSOR ADDRESS
+         CLI   0(R6),SBA          PRECEDING SBA ?
+         BNE   NOSBA              EXIT IF NOT
+         AHI   R6,3               MISS SBA
+NOSBA    EQU   *
+         AHI   R6,4               MISS CEDF
+         XC    PARSE1(8),PARSE1   CLEAR PARSE AREA
+*
+* FIND 1ST PARM
+*
+         BAL   R14,NEXTPARM       LOCATE START OF 1ST PARM
+         CLI   0(R6),X'00'        END OF TIOA ?
+         BE    PARSERR1           EXIT IF NO TERM FOUND
+         CLI   0(R6),C','         COMMA FOUND ?
+         BE    PARSERR1           EXIT IF NO TERM FOUND
+         LA    R7,PARSE1          PARM ADDRESS
+         BAL   R14,EXTRACT        EXTRACT PARM
+*
+* FIND 2ND PARM
+*
+         CLI   0(R6),X'00'        END OF TIOA ?
+         BE    PROCESS            EXIT IF 2ND PARM NOT FOUND
+         CLI   0(R6),C','         END OF 1ST PARM ?
+         BNE   PARSERR2           ERROR, 1ST PARM NOT FOLLOWED BY COMMA
+         AHI   R6,1               MISS COMMA
+         LA    R7,PARSE2          PARM ADDRESS
+         BAL   R14,EXTRACT        EXTRACT PARM
+*
+PROCESS  EQU   *
+         OC    PARSE1,=4C' '      CONVERT 1ST PARM TO UPPER CASE
+         OC    PARSE2,=4C' '      CONVERT 2ND PARM TO UPPER CASE
+* VALIDATE TERMID
+         CLC   PARSE1,TCTTETI     OUR TERMID ?
+         BE    PARSERR1           ERROR IF IT IS
+         CLC   PARSE1(3),TCTTETI  OUR TERMID PREFIX ?
+         BNE   PARSERR2           ERROR IF NOT
+         MVC   ENQTERM,PARSE1     SET TERMID FOR ENQ/DEQ
+* VALIDATE 2ND PARM
+         CLC   PARSE2,=4C' '      ANY 2ND PARM ?
+         BNE   CHKPARM2           EXIT IF OK
+         MVC   PARSE2(2),=C'ON'   DEFAULT TO ,ON
+         B     PARM2OK            EXIT
+*
+CHKPARM2 EQU   *
+         CLC   PARSE2(2),=C'ON'   IS IT ON ?
+         BE    PARM2OK            EXIT IF IT IS
+         CLC   PARSE2(3),=C'OFF'  IS IT OFF ?
+         BNE   PARSERR2           ERROR IF NOT
+PARM2OK  EQU   *
+* START CEDZ ON THE INVOKED TERMINAL
+*    RTERMID  HAS OUR TERMID
+*    RTRANSID HAS 'ON  ' OR 'OFF '
+         EXEC  CICS START TRANSID('CEDZ')                              X
+                    TERMID(PARSE1) RTERMID(TCTTETI) RTRANSID(PARSE2)
+         MVC   EDFREQTM,PARSE1    SET TERMID IN MESSAGE
+         EXEC  CICS SEND FROM(EDFREQ) LENGTH(EDFREQL)
+         B     RETURN             EXIT
+*
+* ERROR ROUTINES
+*
+PARSERR1 EQU   *
+         EXEC  CICS SEND FROM(ERRMSG1) LENGTH(ERR1LEN)
+         B     RETURN             EXIT
+*
+PARSERR2 EQU   *
+         EXEC  CICS SEND FROM(ERRMSG2) LENGTH(ERR2LEN)
+RETURN   EQU   *
+         EXEC  CICS RETURN
+*
+* SUBROUTINES
+*
+NEXTPARM EQU   *
+* FIND START OF NEXT PARM
+* R6=CURRENT LOCATION
+         CLI   0(R6),X'00'        TIOA DONE ?
+         BER   R14                EXIT IF IT IS
+         CLI   0(R6),C','         START OF NEXT PARM ?
+         BER   R14                EXIT IF IT IS
+         CLI   0(R6),C' '         FIND BLANK ?
+         BNER  R14                EXIT WHEN PARM FOUND
+         AHI   R6,1               BUMP TIOA POINTER
+         B     NEXTPARM           LOOP
+*
+EXTRACT  EQU   *
+* EXTRACT PARM
+* R6=1ST PARM CHAR
+* R7=PARM LOCATION
+         SR    R8,R8              ZERO PARM LENGTH
+EXTRLOOP EQU   *
+         CLI   0(R6),X'00'        END OF PARM ?
+         BER   R14                RETURN IF IT IS
+         CLI   0(R6),C','         END OF PARM ?
+         BER   R14                RETURN IF IT IS
+         CHI   R8,4               TOO MANY CHARS ?
+         BE    PARSERR2           YES, ERROR IF OVER 4 CHARS
+         MVC   0(1,R7),0(R6)      MOVE PARM CHAR
+         AHI   R6,1               BUMP TIOA POINTER
+         AHI   R7,1               BUMP PARM POINTER
+         AHI   R8,1               COUNT THEM
+         B     EXTRLOOP           LOOP
+*
+EDFREQ   EQU   *
+         TN3270 WCC_KD
+         TN3270 (SBA,2,1)
+         DC    C'EDF REQUEST SENT TO TERMINAL '
+EDFREQTM DS    CL4
+EDFREQL  DC    AL2(*-EDFREQ)
+*
+EDFON    EQU   *
+         TN3270 WCC_KD
+         TN3270 (SBA,2,1)
+         DC    C'THIS TERMINAL: EDF MODE ON'
+EDFONL   DC    AL2(*-EDFON)
+*
+EDFOFF   EQU   *
+         TN3270 WCC_KD
+         TN3270 (SBA,2,1)
+         DC    C'THIS TERMINAL: EDF MODE OFF'
+EDFOFFL  DC    AL2(*-EDFOFF)
+*
+ERRMSG1  EQU   *
+         TN3270 WCC_KD
+         TN3270 (SBA,2,1)
+         DC    C'SINGLE TERMINAL OPERATION NOT YET SUPPORTED'
+ERR1LEN  DC    AL2(*-ERRMSG1)
+*
+ERRMSG2  EQU   *
+         TN3270 WCC_KD
+         TN3270 (SBA,2,1)
+         DC    C'INVALID PARAMETER'
+ERR2LEN  DC    AL2(*-ERRMSG2)
+*
+ENQNAME  DC    C'CEDF-'
+ENQTERM  DS    CL4
+*
+INPUT    DS    XL4
+LENINPUT DS    XL2
+*
+         COPY  DFHAID
+         TN3270 SYMBOLS
+         END
+

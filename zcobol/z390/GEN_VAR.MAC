@@ -1,0 +1,39 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 11/26/08 initial coding for GEN_VAR to define ws var used by gen     
+.*********************************************************************
+         GEN_VAR &NAME,&TYPE,&LEN 
+         COPY  ZC_WS
+         :&VAR_TOT SETA &VAR_TOT+1
+         ACASE (C2A('&TYPE'))
+         AWHEN C'A'
+      WS 77,&NAME,POINTER
+         AWHEN C'D'
+      WS 77,&NAME,COMP-2
+         AWHEN C'E'
+      WS 77,&NAME,COMP-1
+         AWHEN C'F'
+      WS 77,&NAME,COMP,PIC,S9(9)
+         AWHEN C'G'
+      WS 77,&NAME,COMP,PIC,S9(18)
+         AWHEN C'H'
+      WS 77,&NAME,COMP,PIC,S9(4)
+         AWHEN C'P'
+      WS 77,&NAME,COMP-3,PIC,S9(&LEN)
+         AWHEN C'X'
+      WS 77,&NAME,PIC,X(&LEN)
+         AWHEN C'Z'
+      WS 77,&NAME,PIC,S9(&LEN)
+         ELSE
+               MNOTE 8,'GEN_VAR UNKNOWN TYPE - &TYPE'
+               :&SYM_IX SETA 0
+               MEXIT
+         AEND
+         :&SYM_IX SETA &SYM_TOT
+         MEND

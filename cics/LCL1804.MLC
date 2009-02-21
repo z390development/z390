@@ -487,6 +487,10 @@ SENDIT   EQU   *
          LR    R1,R14             RESTORE OUTPUT AREA
 *
 NOTSEQ   EQU   *
+* IF SET IS SPECIFIED, NO DATA IS SENT, IT IS RETURNED TO THE APP
+         STH   R6,P1804OAL        SET DATA STREAM LENGTH
+         CLI   P1804SET,X'FF'     IS SET SPECIFIED ?
+         BE    RETURN             EXIT IF IT IS
          TPUT  (R1),(R6),FULLSCR  SEND TN3270 DATA STREAM
 RETURN   EQU   *
          SUBEXIT
@@ -881,11 +885,13 @@ P1804EIB DS    AL4                EIB
 P1804TCT DS    AL4                TCTTE
 P1804MSA DS    AL4                MAPSET ADDRESS
 P1804MAP DS    CL7                MAP NAME
+         DS    X
 P1804MLN DS    XL2                MAPSET LENGTH
 P1804DSC DS    AL4                STRUCTURE ADDRESS
          DS    AL2                STRUCTURE LENGTH
 P1804OUT DS    AL4                OUTPUT AREA
-P1804CRS DS    AL2                CURSOR POSITION (X'FFFF'=NONE)
+P1804OAL DS    XL2                OUTPUT AREA LENGTH (FOR SET)
+P1804CRS DS    XL2                CURSOR POSITION (X'FFFF'=NONE)
 P1804OPT DS    X                  OPTION BITS...
 P1804ERS EQU   X'80'                 ERASE
 P1804EAU EQU   X'40'                 ERASEAUP
@@ -895,7 +901,11 @@ P1804DNY EQU   X'08'                 DATAONLY
 P1804ALM EQU   X'04'                 ALARM
 P1804FKB EQU   X'02'                 FREEKB
 P1804FRS EQU   X'01'                 FRSET
+         DS    X
+P1804SET DS    X                  FF=SET SPECIFIED.
+         DS    X
          DS    X                  FF=NOHANDLE
+         DS    X
 P1804RSP DS    AL4                RESP
 P1804RS2 DS    AL4                RESP2
 P1804END EQU   *                  END MARKER

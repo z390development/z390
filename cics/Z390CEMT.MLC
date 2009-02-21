@@ -24,7 +24,6 @@
 *
 *   P SHU IMM    CLOSE THE SERVER
 *
-         DFHEIGBL
          DFHEISTG
 PARSE    DS    0H
 PARSE1   DS    CL20               COMMAND
@@ -32,25 +31,34 @@ PARSE2   DS    CL20               OPERATION TYPE
 PARSE3   DS    CL20               OPERATION MODIFIER
 PARSELEN EQU   *-PARSE
 *
-DFHPCTAD DS    A                  PCT ADDRESS
+DFHPCTAD DS    A                  CURRENT PCT ADDRESS
 *
-* I SYS  MESSAGE AREA
+* I SYS MESSAGE AREA
 SNDISYST DS    CL(ISYSTITE)
 SNDISYSL DS    CL(ISYSLSTL)
-* I TER  MESSAGE AREA
+* I TER MESSAGE AREA
+         ORG   SNDISYST
 SNDITERT DS    CL(ITERTITE)
 SNDITERL DS    CL(ITERLSTL)
-* I TRA MESSAGE AREA
-SNDITRNT DS    CL(ITRNTITE)
-SNDITRNL DS    CL(ITRNLSTL)
+* I TRA MESSAGE AREA 1
+         ORG   SNDISYST
+SNDITRN1 DS    CL(ITRNTIT1)
+SNDITRL1 DS    CL(ITRNLSL1)
+* I TRA MESSAGE AREA 2
+         ORG   SNDISYST
+SNDITRN2 DS    CL(ITRNTIT2)
+SNDITRL2 DS    CL(ITRNLSL2)
 * I FIL MESSAGE AREA
+         ORG   SNDISYST
 SNDIFILT DS    CL(IFILTITE)
 SNDIFILL DS    CL(IFILLSTL)
 * I ENQ MESSAGE AREA
+         ORG   SNDISYST
 SNDIENQT DS    CL(IENQTITE)
 SNDIENQL DS    CL(IENQLEN*21)
+         ORG
 *
-Z390CEMT DFHEIENT CODEREG=(R12,R3)
+Z390CEMT DFHEIENT CODEREG=(R12,R3,R4)
 *
          EXEC  CICS HANDLE AID CLEAR(TERMINAT)
          L     R6,TCTTEDA         INITIAL TIOA (NULL TERMINATED)
@@ -181,6 +189,10 @@ ISYSHEX6 EQU   *
          MVC   ISYSLTRC,ISYSDTRL  MOVE TRACE_LOCALS
          MVC   ISYSZTRC,ISYSDTRZ  MOVE TRACE_Z390CICS
          MVC   ISYSINIT,ISYSDINT  MOVE INITIAL_TRANSID
+         L     R15,ISYSDCWA       R15=CWASIZE
+         CVD   R15,DEC            CONVERT TO DECIMAL
+         MVC   ISYSCWAS-1(8),=X'4020202020202120'
+         ED    ISYSCWAS-1(8),DEC+4 EDIT CWASIZE
          MVC   ISYSSEQT,ISYSDSEQ  MOVE SEQ_TERM
          EXEC  CICS SEND FROM(SNDISYST) LENGTH(ISYSLEN)
          B     RETURN             END OF PROGRAM
@@ -246,37 +258,74 @@ ITERNXT  EQU   *
 *
 ITRN     EQU   *
 * PROCESS CEMT I TRA, IGNORE OTHER PARMS
-* ### LIMIT OF 17
-* ### LATER, EXTEND AND CODE PAGE FORWARD (PF7) AND BACK (PF8)
+* LIMIT OF 42 IN TWO PHASES
          EXEC  CICS LOAD PROGRAM('DFHPCT') SET(R6)
          ST    R6,DFHPCTAD        SAVE LOAD POINT
-         MVC   SNDITRNT,ITRNTITL  SET UP TITLE
-         LA    R6,SNDITRNL        R6=DESTINATION
-         LA    R8,ITRNLIST        R8=SOURCE
-         LA    R7,ITRNLSTL        DESTINATION LENGTH
+*
+* 1ST COLUMN
+*
+         MVC   SNDITRN1,ITRNTTL1  SET UP TITLE
+         LA    R6,SNDITRL1        R6=DESTINATION
+         LA    R8,ITRNLST1        R8=SOURCE
+         LA    R7,ITRNLSL1        DESTINATION LENGTH
          LR    R9,R7              SOURCE LENGTH
          MVCL  R6,R8              INITIALIZE LIST
-         LA    R6,SNDITRNL        R6=LIST ADDRESS
-         USING ITRNDSCT,R6
+         LA    R6,SNDITRL1        R6=LIST ADDRESS
+         USING ITRNDSC1,R6
          L     R7,DFHPCTAD        R7=PCT ADDRESS
-         LA    R8,17              R8=MAX TRANSIDS
-ITRNLOOP EQU   *
-         MVC   ITRNTRAN,0(R7)     MOVE TRANSID
-         MVC   ITRNPROG,4(R7)     MOVE PROGRAM
+         LA    R8,21              R8=MAX TRANSIDS
+ITRNLP1  EQU   *
+         MVC   ITRNTRN1,0(R7)     MOVE TRANSID
+         MVC   ITRNPRG1,4(R7)     MOVE PROGRAM
          MVC   BLDLNAME,4(R7)     SAVE PROGRAM NAME
          BLDL  0,BLDLLIST         BLDL
          LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
-         BZ    ITRNINCR           EXIT IF FOUND
+         BZ    ITRNINC1           EXIT IF FOUND
 * PROGRAM NOT FOUND
-         MVC   ITRNMSG,=C'PROGRAM NOT FOUND' SET MESSAGE
-ITRNINCR EQU   *
-         AHI   R6,ITRNLEN         BUMP OUTPUT POINTER
+         MVC   ITRNMSG1,=C'PROGRAM NOT FOUND' SET MESSAGE
+ITRNINC1 EQU   *
+         AHI   R6,ITRNLEN1        BUMP OUTPUT POINTER
          AHI   R7,12              BUMP PCT POINTER
          CLI   0(R7),X'FF'        END OF PCT ?
-         BE    ITRNSEND           EXIT IF IT IS
-         BCT   R8,ITRNLOOP        LOOP
-ITRNSEND EQU   *
-         EXEC  CICS SEND FROM(SNDITRNT) LENGTH(ITRNMLEN)
+         BE    ITRNSND1           EXIT IF IT IS
+         BCT   R8,ITRNLP1         LOOP
+ITRNSND1 EQU   *
+         ST    R7,DFHPCTAD        SAVE CURRENT PCT POINTER
+         EXEC  CICS SEND FROM(SNDITRN1) LENGTH(ITRNMLN1)
+         CLI   0(R7),X'FF'        END OF PCT ?
+         BE    ITRNRLSE           EXIT IF IT IS
+*
+* 2ND COLUMN
+*
+         MVC   SNDITRN2,ITRNTTL2  SET UP TITLE
+         LA    R6,SNDITRL2        R6=DESTINATION
+         LA    R8,ITRNLST2        R8=SOURCE
+         LA    R7,ITRNLSL2        DESTINATION LENGTH
+         LR    R9,R7              SOURCE LENGTH
+         MVCL  R6,R8              INITIALIZE LIST
+         LA    R6,SNDITRL2        R6=LIST ADDRESS
+         USING ITRNDSC2,R6
+         L     R7,DFHPCTAD        R7=CURRENT PCT ADDRESS
+         LA    R8,21              R8=MAX TRANSIDS
+ITRNLP2  EQU   *
+         MVI   ITRNSEP2,C'|'      MOVE SEPARATOR
+         MVC   ITRNTRN2,0(R7)     MOVE TRANSID
+         MVC   ITRNPRG2,4(R7)     MOVE PROGRAM
+         MVC   BLDLNAME,4(R7)     SAVE PROGRAM NAME
+         BLDL  0,BLDLLIST         BLDL
+         LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
+         BZ    ITRNINC2           EXIT IF FOUND
+* PROGRAM NOT FOUND
+         MVC   ITRNMSG2,=C'PROGRAM NOT FOUND' SET MESSAGE
+ITRNINC2 EQU   *
+         AHI   R6,ITRNLEN2        BUMP OUTPUT POINTER
+         AHI   R7,12              BUMP PCT POINTER
+         CLI   0(R7),X'FF'        END OF PCT ?
+         BE    ITRNSND2           EXIT IF IT IS
+         BCT   R8,ITRNLP2         LOOP
+ITRNSND2 EQU   *
+         EXEC  CICS SEND FROM(SNDITRN2) LENGTH(ITRNMLN2)
+ITRNRLSE EQU   *
          EXEC  CICS RELEASE PROGRAM('DFHPCT')
          B     RETURN             END OF PROGRAM
 *
@@ -612,7 +661,7 @@ NEXTPARM EQU   *
 * FIND START OF NEXT PARM
 * R6=CURRENT LOCATION
          CLI   0(R6),X'00'        TIOA DONE ?
-         BER   R14                EXIT IT IS IT
+         BER   R14                EXIT IF IT IS
          CLI   0(R6),C' '         FIND BLANK ?
          BNER  R14                EXIT WHEN PARM FOUND
          AHI   R6,1               BUMP TIOA POINTER
@@ -706,12 +755,15 @@ ISYSLIST EQU   *
          DC    CL18'INITIAL_TRANSID'
          DC    CL4' '
          TN3270 (SBA,12,2)
+         DC    CL18'CWASIZE'
+         DC    CL7' '
+         TN3270 (SBA,13,2)
          DC    CL18'TRACE_LOCALS'
          DC    CL3' '
-         TN3270 (SBA,13,2)
+         TN3270 (SBA,14,2)
          DC    CL18'TRACE_Z390CICS'
          DC    CL3' '
-         TN3270 (SBA,14,2)
+         TN3270 (SBA,15,2)
          DC    CL18'SEQ_TERM'
          DC    CL5' '
 ISYSLSTL EQU   *-ISYSLIST
@@ -758,55 +810,114 @@ ITERLSTL EQU   *-ITERLIST
 ITERMLEN DC    AL2(*-ITERTITL)
 *
 * I TRAN -- STRUCTURES
+* 2                                35
+* TRAN  PROGRAM-  ----MESSAGES----- | TRAN  PROGRAM  ----MESSAGES-----
+* AAAA  MELPROG1  PROGRAM NOT FOUND |
+* CEMT  Z390CEMT                    |
 *
-* TRAN  PROGRAM-  ----MESSAGES-----
-* AAAA  MELPROG1  PROGRAM NOT FOUND
-* CEMT  Z390CEMT
-*
-ITRNTITL EQU   *
+ITRNTTL1 EQU   *
          TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA_MDT),IC
          DC    C'CEMT I TRA'
          TN3270 (SBA,3,1),(SF,ATT_PA)
          DC    C'TRAN  PROGRAM-  ----MESSAGES-----'
-ITRNTITE EQU   *-ITRNTITL
+ITRNTIT1 EQU   *-ITRNTTL1
 *
-ITRNLIST EQU   *
+ITRNLST1 EQU   *
          TN3270 (SBA,4,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,5,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,6,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,7,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,8,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,9,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,10,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,11,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,12,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,13,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,14,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,15,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,16,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,17,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,18,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,19,2)
-         DC    CL(ITRNLEN-3)' '
+         DC    CL(ITRNLEN1-3)' '
          TN3270 (SBA,20,2)
-         DC    CL(ITRNLEN-3)' '
-ITRNLSTL EQU   *-ITRNLIST
-ITRNMLEN DC    AL2(*-ITRNTITL)
+         DC    CL(ITRNLEN1-3)' '
+         TN3270 (SBA,21,2)
+         DC    CL(ITRNLEN1-3)' '
+         TN3270 (SBA,22,2)
+         DC    CL(ITRNLEN1-3)' '
+         TN3270 (SBA,23,2)
+         DC    CL(ITRNLEN1-3)' '
+         TN3270 (SBA,24,2)
+         DC    CL(ITRNLEN1-3)' '
+ITRNLSL1 EQU   *-ITRNLST1
+ITRNMLN1 DC    AL2(*-ITRNTTL1)
+*
+ITRNTTL2 EQU   *
+         TN3270 WCC_KD,(SBA,3,35)
+         DC    C' | TRAN  PROGRAM-  ----MESSAGES-----'
+ITRNTIT2 EQU   *-ITRNTTL2
+*
+ITRNLST2 EQU   *
+         TN3270 (SBA,4,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,5,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,6,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,7,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,8,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,9,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,10,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,11,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,12,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,13,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,14,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,15,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,16,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,17,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,18,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,19,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,20,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,21,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,22,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,23,35)
+         DC    CL(ITRNLEN2-3)' '
+         TN3270 (SBA,24,35)
+         DC    CL(ITRNLEN2-3)' '
+ITRNLSL2 EQU   *-ITRNLST2
+ITRNMLN2 DC    AL2(*-ITRNTTL2)
 *
 * I FIL -- STRUCTURES
 *
@@ -997,6 +1108,9 @@ ISYSREMT DS    CL2                REMOTE_TERMINALS
 ISYSINIT DS    CL4                INITIAL_TRANSID
          DS    CL3                SBA
          DS    CL18               HEADER
+ISYSCWAS DS    CL7                CWASIZE
+         DS    CL3                SBA
+         DS    CL18               HEADER
 ISYSLTRC DS    CL3                TRACE_LOCALS
          DS    CL3                SBA
          DS    CL18               HEADER
@@ -1019,6 +1133,7 @@ ISYSDLUS DS    X                  LOCAL TERMINALS IN USE
 ISYSDRMT DS    X                  REMOTE_TERMINALS
 ISYSDRUS DS    X                  REMOTE TERMINALS IN USE
 ISYSDINT DS    CL4                INITIAL_TRANSID
+ISYSDCWA DS    XL4                CWASIZE
 ISYSDTRL DS    CL3                TRACE_LOCALS
 ISYSDTRZ DS    CL3                TRACE_Z390CICS
 ISYSDSEQ DS    CL5                SEQ_TERM
@@ -1038,14 +1153,26 @@ ITERLEN  EQU   *-ITERDSCT
 *
 * I TRA -- DSECT OUTPUT
 *
-ITRNDSCT DSECT
+ITRNDSC1 DSECT
          DS    CL3                SBA
-ITRNTRAN DS    CL4                TRANSID
+ITRNTRN1 DS    CL4                TRANSID
          DS    CL2
-ITRNPROG DS    CL8                PROGRAM
+ITRNPRG1 DS    CL8                PROGRAM
          DS    CL2
-ITRNMSG  DS    CL17               MESSAGE
-ITRNLEN  EQU   *-ITRNDSCT
+ITRNMSG1 DS    CL17               MESSAGE
+ITRNLEN1 EQU   *-ITRNDSC1
+*
+ITRNDSC2 DSECT
+         DS    CL3                SBA
+         DS    C
+ITRNSEP2 DS    C                  SEPARATOR
+         DS    C
+ITRNTRN2 DS    CL4                TRANSID
+         DS    CL2
+ITRNPRG2 DS    CL8                PROGRAM
+         DS    CL2
+ITRNMSG2 DS    CL17               MESSAGE
+ITRNLEN2 EQU   *-ITRNDSC2
 *
 * I FIL -- DSECT OUTPUT
 *

@@ -1,5 +1,5 @@
-Z390/CICS History
-=================
+zCICS History
+=============
 
 This is only a brief summary, please refer to the Application
 Programming Guide and the System Programmers Guide for the details.
@@ -9,6 +9,57 @@ a delay before he can include it in a PTF or Release.
 
 Ver  Ship Date           Z390 version
 ---  -----------------   ------------
+V7   February 21, 2009   V1.5.00
+
+   Rebranding
+      Z390/CICS is now known as zCICS
+
+   Maintenance...
+      BMS...mods made to macros and EXEC CICS SEND/RECEIVE to support
+            COBOL maps.
+
+            Added PICIN/PICOUT support for COBOL maps.
+
+      Revised all EXEC CICS commands to make them base-free, a
+      requirement for COBOL support.
+
+      Changes to LINK, XCTL and DFHEIENT to enter all programs with
+      GR1 pointing to A(EIB,COMMAREA). A requirement for COBOL support.
+
+      DFHEIGBL has been withdrawn and the code placed in DFHEIENT.
+
+      HANDLE ABEND LABEL wasn't correctly restoring registers or
+      properly cleaning up if the LABEL was at a higher link-level
+      than the abending program.
+
+      FORMATTIME wasn't returning the correct date.
+
+      FREEMAIN DATA() corrected.
+
+      Improvement to all commands accepting indirect adcons.
+
+   Enhancements and changes...
+      BMS...
+         DFHMSD LANG=COBOL will generate a COBOL map structure as
+         mapset.CPZ
+
+         The BAT file for SYSPARM(MAP) generation needs the ALLOW
+         parameter to enable the IMG file to be created correctly.
+
+      EXEC CICS ADDRESS COMMAREA() CWA() EIB() added
+
+      New INI parm CWASIZE=nnnnnnn
+      Displayed in CEMT I SYS
+
+      CEMT I TRA extended from 17 to 42 transactions.
+
+      zCOBOL support
+         BMS LANG=COBOL already listed above
+         SET supports ADDRESS OF label
+         LENGTH and FLENGTH support LENGTH OF label
+
+      EXEC CICS SEND MAP supports SET()
+
 V6   November 24, 2008   V1.4.04
 
    Maintenance...
@@ -95,8 +146,8 @@ V6   November 24, 2008   V1.4.04
 
    Internal reconstruction...
       This was started in CICS V5, all EXEC CICS commands now invoke
-      an external LCLhhhh module. The list can be found in Z390/CICS
-      Diagnosis Reference (Z390DRF).
+      an external LCLhhhh module. The list can be found in zCICS
+      Diagnosis Reference.
 
       As a result some changes were made to the Application program
       structure:
@@ -105,8 +156,7 @@ V6   November 24, 2008   V1.4.04
          Coding reconstructed for LINK, XCTL and RETURN.
 
          DFHEIRET withdrawn, now incorporated into LCL0E08 (RETURN).
-         This means you must end a Z390/CICS program with EXEC CICS
-         RETURN.
+         This means you must end a zCICS program with EXEC CICS RETURN.
 
    Enhancements and changes...
       All EXEC CICS commands now support RESP, RESP2 and NOHANDLE.
@@ -167,7 +217,7 @@ V5   June 27, 2008       V1.4.02
         EXEC CICS SEND CONTROL
 
    New Doc...
-      Z390/CICS Basic Mapping Support (ZCICSBMS).
+      zCICS Basic Mapping Support.
 
 V4   January 18, 2008    V1.3.08h
 
@@ -199,7 +249,7 @@ V4   January 18, 2008    V1.3.08h
    Sequential Terminal support
       Enables regression testing of all transactions.
       See the documentation about this major new feature...
-         Z390/CICS Sequential Terminal Support
+         zCICS Sequential Terminal Support
 
    Bug fixes...
       Abends may occur if INI parm LOCAL_TERMINALS=0
@@ -266,9 +316,9 @@ V3   October 1st, 2007   V1.3.08
       CEMT I FIL
 
    Documentation
-      CEMT and CEBR are now moved to Z390/CICS Supplied Transactions.
+      CEMT and CEBR are now moved to zCICS Supplied Transactions.
 
-      New document - Z390/CICS VSAM Guide.
+      New document - zCICS VSAM Guide.
 
 -----------------------------------------------------------------------
 
@@ -334,8 +384,8 @@ Trademarks
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
-Author: Melvyn Maltz
-Shipping Date: November 24, 2008
-Z390 version: V1.4.04
-Z390/CICS version: V6
+Author       : Melvyn Maltz
+Shipping Date: February 21, 2009
+Z390 version : V1.5.00
+zCICS version: V7
 

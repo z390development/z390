@@ -18,6 +18,9 @@ LCL1802  SUBENTRY
 * THE AREA ONTO WHICH THE MAP IS PLACED IS ALWAYS 24x80
 * THE POSITION OF EACH FIELD IS RELATIVE TO THE MAP SIZE (SIZE=)
 *
+* TO DUMP THE STRUCTURE AFTER INPUT MAPPING
+* UNCOMMENT THE 4 INSTRUCTIONS AFTER LABEL RETURN
+*
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P1802,P1802END),R3
@@ -344,6 +347,10 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
+******** L     R14,P1802DSC       R14=MAP STRUCTURE ADDRESS
+******** LR    R15,R14            R15=MAP STRUCTURE ADDRESS
+******** AH    R15,P1802DSL                                +LENGTH
+******** SNAP  STORAGE=((R14),(R15)),ID=1
          SUBEXIT
 *
 * SUBROUTINES
@@ -506,10 +513,12 @@ P1802EIB DS    AL4                EIB
 P1802TCT DS    AL4                TCTTE
 P1802MSA DS    AL4                MAPSET ADDRESS
 P1802MAP DS    CL7                MAP NAME
+         DS    X
 P1802MLN DS    XL2                MAPSET LENGTH
 P1802DSC DS    AL4                STRUCTURE ADDRESS
 P1802DSL DS    AL2                STRUCTURE LENGTH
          DS    X                  FF=NOHANDLE
+         DS    X
 P1802RSP DS    AL4                RESP
 P1802RS2 DS    AL4                RESP2
 P1802END EQU   *                  END MARKER

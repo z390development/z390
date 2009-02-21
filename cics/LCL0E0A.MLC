@@ -73,6 +73,7 @@ P0E0ATCT DS    AL4                TCTTE
 P0E0APGM DS    CL8                PROGRAM
 P0E0ACST DS    CL8                OUR PROGRAM NAME
          DS    X                  FF=NOHANDLE
+         DS    X
 P0E0ARSP DS    AL4                RESP
 P0E0ARS2 DS    AL4                RESP2
 P0E0AEND EQU   *                  END MARKER

@@ -1,22 +1,21 @@
-Z390/CICS Application Programming Guide
-=======================================
+zCICS Application Programming Guide
+===================================
 
 The EXEC CICS commands and parameters listed here are the only ones
-currently supported in the Z390/CICS environment.
+currently supported in the zCICS environment.
 
-Differences between mainframe operation and Z390/CICS are explained.
+Differences between mainframe operation and zCICS are explained.
 
 For the operation of each command and parameter please refer to the
 Manuals listed in the Reference section at the end of this document.
 
-If you create your own Z390/CICS applications, it would be wise to
-create a .BAT file that re-assembles them all in one go. The internal
-interfaces are volatile at present and this will be a frequent
-instruction.
+If you create your own zCICS applications, it would be wise to create a
+.BAT file that re-assembles them all in one go. The internal interfaces
+are volatile at present and this will be a frequent instruction.
 
-The current Z390/CICS environment and all test programs can be
-re-assembled using DFHALL.BAT. The test VSAM catalog and files can be
-rebuilt using DFHALLV.BAT.
+The current zCICS environment and all test programs can be re-assembled
+using DFHALL.BAT. The test VSAM catalog and files can be rebuilt using
+DFHALLV.BAT.
 
 Assembly notes
 --------------
@@ -24,11 +23,10 @@ CICS must be added as an option to CALL MZ390.
 PROLOG and EPILOG are defaults.
 
 NOEPILOG is supported but not fully tested, testing and correct usage
-is scheduled for a future release of Z390/CICS.
+is scheduled for a future release of zCICS.
 
 PROLOG inserts the following:
 
-  DFHEIGBL -- Defines the basic set of control block DSECTs.
   DFHEISTG -- Define the prefix areas of the Dynamic Storage Area (DSA).
   DFHEIEND -- Replaces the END statement and defines the end of the DSA.
   DFHEIENT -- Replaces the first CSECT statement
@@ -63,8 +61,8 @@ R13  DSA address, must not be modified
 R14  Reserved for internal use
 R15  Reserved for internal use
 
-Multiple base registers
------------------------
+Multiple base registers (assembler only)
+----------------------------------------
 The standard entry for a CICS program is as follows:
 
 eg.
@@ -81,7 +79,6 @@ convert your code in line with the sample given, and include the
 NOPROLOG option in CALL MZ390.
 
 eg.
-         DFHEIGBL
          DFHEISTG
 MYFIELD  DS    CL100              demo user field
 ...
@@ -92,8 +89,8 @@ Notes: You cannot override the first DATAREG value, it will always be R13
 
        There is no cross-checking for register conflicts.
 
-EXEC CICS command syntax
-------------------------
+EXEC CICS command syntax (Assembler only)
+-----------------------------------------
 There is no formal definition of an EXEC CICS command in any IBM Manual.
 
 These assembler syntaxes are currently supported...
@@ -115,7 +112,7 @@ name EXEC CICS function
 
 d) Split, comma separated
 Non-blank in col 72 is assumed for all lines except the last.
-Comments are allowed on all lines that end with comma/space.
+Comments are allowed on all lines that end with comma+space.
 name EXEC CICS function,         some
                subfunction,           very
                parm,                       nice
@@ -130,15 +127,26 @@ parm() without spacing and parm  () with spacing are allowed.
 
 VSAM Notes
 ----------
-See the Z390/CICS VSAM Guide for guidance in the setup of a VSAM
-environment. This document also contains extensions to the VSAM
-facilities currently available.
+See the zCICS VSAM Guide for guidance in the setup of a VSAM environment.
+This document also contains extensions to the VSAM facilities currently
+available.
 
 Basic Mapping Support
 ---------------------
 The commands RECEIVE MAP, SEND MAP and SEND CONTROL are documented here.
 For general BMS documentation and the mapping macros DFHMSD, DFHMDI and
-DFHMDF see the Z390/CICS BMS Guide.
+DFHMDF see the zCICS BMS Guide.
+
+zCOBOL support
+--------------
+EXEC CICS command format follows the rules for COBOL.
+Each command must end END-EXEC (a following dot may affect the logic).
+
+Parameters like SET() which address imported structures may use the
+ADDRESS OF special register.
+
+LENGTH, FLENGTH and KEYLENGTH which would normally allow a numeric
+option may use the LENGTH OF special register.
 
 Supported EXEC CICS commands (summary by type)
 ----------------------------------------------
@@ -148,6 +156,7 @@ Supported EXEC CICS commands (summary by type)
     c) IGNORE CONDITION condition
     d) POP HANDLE
     e) PUSH HANDLE
+    f) ADDRESS
 
  2) Terminal Control (04)
     a) RECEIVE INTO() LENGTH() NOHANDLE
@@ -205,6 +214,7 @@ Supported EXEC CICS commands (summary by type)
     b) SEND MAP(name) MAPSET(name)
        CURSOR/CURSOR() DATAONLY/MAPONLY ERASE/ERASEAUP
        FROM() LENGTH() ALARM FREEKB FRSET
+       SET()
     c) SEND CONTROL CURSOR/CURSOR() ERASE/ERASEAUP
        ALARM FREEKB FRSET
 
@@ -315,6 +325,14 @@ Supported EXEC CICS commands (detail by type)
        Errors
           BAD PARM
           PUSH TYPE NOT RECOGNISED
+
+    f) ADDRESS COMMAREA(label) CWA(label) EIB(label)
+
+       CWA has a different implementation in zCICS.
+       See "CWA Management" in "zCICS Diagnosis Reference"
+
+       Errors
+          BAD PARM
 
  2) Terminal Control (04)
 
@@ -677,8 +695,8 @@ Supported EXEC CICS commands (detail by type)
           If omitted, zero is assumed.
 
        Note: In real CICS, ENDBR cannot cause a file to open, but it
-             will in Z390/CICS. The ENDBR command will be invalid, and
-             may result in a transaction abend.
+             will in zCICS. The ENDBR command will be invalid, and may
+             result in a transaction abend.
 
        Errors
           BAD PARM
@@ -729,8 +747,8 @@ Supported EXEC CICS commands (detail by type)
           The parameter is ignored for ESDS and RRDS.
 
        Note: In real CICS, RESETBR cannot cause a file to open, but it
-             will in Z390/CICS. The RESETBR command will be invalid, and
-             may result in a transaction abend.
+             will in zCICS. The RESETBR command will be invalid, and may
+             result in a transaction abend.
 
        Errors
           BAD PARM
@@ -794,6 +812,8 @@ Supported EXEC CICS commands (detail by type)
        INITIMG is optional
           If omitted, the storage contents are not predictable.
           Can be specified as a constant, literal or label.
+          zCOBOL supports all 3 data types, but for mainframe COBOL
+          programs only label is supported.
           Only the first byte generated by the parameter is used.
 
        Errors
@@ -1019,8 +1039,8 @@ Supported EXEC CICS commands (detail by type)
     d) LOAD PROGRAM() ENTRY()/SET() LENGTH(label) FLENGTH(label)
 
        Loads a module.
-       The intention in the Z390/CICS environment is to load a table
-       or some other data, not an executable program.
+       The intention in the zCICS environment is to load a table or some
+       other data, not an executable program.
 
        PROGRAM is mandatory
           Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
@@ -1031,7 +1051,7 @@ Supported EXEC CICS commands (detail by type)
 
        ENTRY and SET are optional
           Must be specified as a permitted general register value.
-          Both are equivalent in Z390/CICS.
+          Both are equivalent in zCICS.
 
        LENGTH is optional
           LENGTH(label) is the only format.
@@ -1312,7 +1332,7 @@ Supported EXEC CICS commands (detail by type)
           BAD PARM
           RESOURCE IS MANDATORY
 
-          *** ENQ ON ADDRESS MAY NOT WORK IN Z390\CICS
+          *** ENQ ON ADDRESS MAY NOT WORK IN zCICS
           *** BUT THE COMMAND WILL BE PROCESSED
           *** PLEASE CONTACT THE AUTHOR FOR ADVICE
 
@@ -1362,7 +1382,7 @@ Supported EXEC CICS commands (detail by type)
 
        Conditions (RESP/RESP2)
        Note: EIBRESP2 is an extension for MAPFAIL, please see the
-             Z390/CICS BMS Guide for more information.
+             zCICS BMS Guide for more information.
 
              Many of the conditions can arise through a mismatch of
              map and structure. Typically a map is re-assembled but
@@ -1391,6 +1411,7 @@ Supported EXEC CICS commands (detail by type)
        CURSOR/CURSOR() DATAONLY/MAPONLY ERASE/ERASEAUP
        FROM() LENGTH()
        ALARM FREEKB FRSET
+       SET()
 
        TERMINAL and WAIT are accepted and discarded.
        ACCUM is not supported.
@@ -1416,6 +1437,9 @@ Supported EXEC CICS commands (detail by type)
        7 characters.
        If MAPSET is omitted, then MAP is used.
 
+       SET() is currently intended to be an internal parameter.
+       It does not conform to the standard used for BMS PAGING.
+
        Errors
           BAD PARM
           CONTROL IS NOT COMPATABLE WITH SEND MAP
@@ -1430,7 +1454,7 @@ Supported EXEC CICS commands (detail by type)
 
        Conditions (RESP/RESP2)
        Note: EIBRESP2 is an extension for MAPFAIL, please see the
-             Z390/CICS BMS Guide for more information.
+             zCICS BMS Guide for more information.
 
           INVMPSZ/0
 
@@ -1522,6 +1546,12 @@ Keypress information
 
 Change Summary
 --------------
+February 21, 2009
+   DFHEIGBL has been removed.
+   zCOBOL support for GETMAIN INITIMG added.
+   zCOBOL section added for EXEC CICS commands.
+   EXEC CICS SEND MAP supports SET(), but incompatibly.
+
 November 24, 2008
    Logic of READ with SET has changed slightly.
    Extra reason for MAPFAIL/8.
@@ -1564,8 +1594,8 @@ Trademarks
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
-Author: Melvyn Maltz
-Shipping Date: November 24, 2008
-Z390 version: V1.4.04
-Z390/CICS version: V6
+Author       : Melvyn Maltz
+Shipping Date: February 21, 2009
+Z390 version : V1.5.00
+zCICS version: V7
 

@@ -1,0 +1,32 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 01/26/09                                                 *
+.*********************************************************************
+.* 01/26/09 initial coding to set &PIC_DIGITS from &SYM_PIC(&IX)
+.*********************************************************************
+         ZC_PIC_DIGITS &IX
+         COPY  ZC_WS
+         :&PIC SETC '&SYM_PIC(&IX)'
+         :&PIC_DIGITS SETA 0
+         :&I SETA 1
+         AWHILE (&I LE K'&PIC)
+               :&CHAR SETC '&PIC'(&I,1)
+               AIF ('&CHAR' EQ '9' OR '&CHAR' EQ 'Z')
+                   :&PIC_DIGITS SETA &PIC_DIGITS+1
+               AELSEIF ('&CHAR' EQ '(')
+                   :&DUP SETA '&PIC'(&I+1,1)
+                   :&I SETA &I+2
+                   AWHILE (&I LT K'&PIC AND '&PIC'(&I,1) NE ')')
+                       :&DIG SETA '&PIC'(&I,1)
+                       :&DUP SETA &DUP*10+&DIG
+                       :&I SETA &I+1
+                   AEND
+                   :&PIC_DIGITS SETA &PIC_DIGITS+&DUP-1
+               AEND
+               :&I SETA &I+1
+         AEND
+         MEND

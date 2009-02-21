@@ -1,0 +1,17 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         GEN_MVC &TARGET,&LENGTH,&SOURCE
+         LARL  R1,&SOURCE         ADDRESS SOURCE
+         LARL  R15,&TARGET        ADDRESS TARGET
+         AIF   ('&LENGTH' EQ '')
+         MVC   0(L'&TARGET,R15),0(R1) MVC IT
+         AELSE
+         MVC   0(&LENGTH,R15),0(R1) MVC IT
+         AEND
+         MEND
+

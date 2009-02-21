@@ -1,0 +1,15 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 05/03/08                                                 *
+.*********************************************************************
+.* 05/03/08 initial coding for java comment (see ZC_WS_LIST)
+.*********************************************************************
+         GEN_COMMENT &COMMENT
+         COPY ZC_WS
+         :&TEXT SETC '&COMMENT'(2,K'&COMMENT-2)
+         PUNCH '// &TEXT',DDNAME=JAVAOUT   
+         MEND

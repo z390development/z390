@@ -44,6 +44,8 @@ P1002    DSECT
 P1002FN  DS    XL2                FUNCTION CODE
 P1002EIB DS    AL4                EIB
 P1002TCT DS    AL4                TCTTE
+         DS    X                  FF=NOHANDLE
+         DS    X
 P1002RSP DS    AL4                RESP
 P1002RS2 DS    AL4                RESP2
 P1002END EQU   *                  END MARKER

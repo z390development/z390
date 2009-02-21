@@ -1,0 +1,12 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         GEN_ST &SOURCE,&TARGET
+         LARL  R1,&TARGET         ADDRESS TARGET
+         ST    &SOURCE,0(R1)      ST IT
+         MEND
+

@@ -54,7 +54,7 @@
 .*
          AENTRY STD_FORM
        AIF    (&NPARMS NE 0)
-         BAL    1,*+4+&NPARMS*4
+         BRAS   1,*+4+&NPARMS*4
          DC     A&PARMS
                 :&I SETA   1
                 AWHILE (&I LE &NPARMS)

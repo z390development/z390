@@ -1,0 +1,21 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         GEN_MVO &TARGET,&LENGTH1,&SOURCE,&LENGTH2
+         LARL  R1,&SOURCE         ADDRESS SOURCE
+         LARL  R15,&TARGET        ADDRESS TARGET
+         AIF   ('&LENGTH1' EQ '' AND '&LENGTH2' EQ '')
+         MVO   0(L'&TARGET,R15),0(L'&SOURCE,R1) MVO IT
+         AELSEIF ('&LENGTH1' EQ '' AND '&LENGTH2' NE '')
+         MVO   0(L'&TARGET,R15),0(&LENGTH2,R1) MVO IT
+         AELSEIF ('&LENGTH1' NE '' AND '&LENGTH2' EQ '')
+         MVO   0(&LENGTH1,R15),0(L'&SOURCE,R1) MVO IT
+         AELSEIF ('&LENGTH1' NE '' AND '&LENGTH2' NE '')
+         MVO   0(&LENGTH1,R15),0(&LENGTH2,R1) MVO IT
+         AEND
+         MEND
+

@@ -1,9 +1,9 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author + Don Higgins                                              *
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
 *
 * AID EQUATES
 *

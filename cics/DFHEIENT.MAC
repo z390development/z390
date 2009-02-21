@@ -1,11 +1,11 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS PROLOG
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS PROLOG           *
+.**********************************************************************
          MACRO
 &N       DFHEIENT &CODEREG=(R12),&DATAREG=(R13)
 .*
@@ -14,35 +14,44 @@
 .* THIS MACRO CALL REPLACES THE FIRST CSECT OF MLC SOURCE CODE IF
 .* CICS AND PROLOG OPTIONS ON
 .*
+         GBLB  &ZC_CICS
          GBLC  &DFHEIENT_CSECT
 &DFHEIENT_CSECT SETC '&N'         SAVE CSECT FOR DFHEIEND RESET
+         AIF   (NOT &ZC_CICS)
+.* ASM USAGE
+         DFHEIBLK                 EXEC INTERFACE BLOCK
+         USING DFHEIBLK,DFHEIBR
+         AELSE
+.* COBOL USAGE
+DFHEIBR  EQU   11
+         USING DFHEIBLK_DSECT,DFHEIBR
+         AEND
+         DFHTCTTE                 TERMINAL TABLE ENTRY
+         USING DFHTCTTE,TCTTEAR
+         EQUREGS ,                DEFINE GENERAL REGISTERS RPI 905
 &N       CSECT
-*            R1 >>> A(COMMAREA)
+*            R1 >>> A(EIB,COMMAREA)
 * TCTTEAR (R10) >>> TCTTE
 * DFHEIBR (R11) >>> EIB
 *         (R14) >>> RETURN ADDRESS (LINK ONLY)
 *
-* SET ADDRESSING TO EIB AND TCTTE
-*
-         USING DFHEIBLK,DFHEIBR
-         USING DFHTCTTE,TCTTEAR
-*
          LR    R2,R1              R2=SAVE USER PARM POINTER
 * ENTRY IS ONLY BY DIRECT BRANCH FROM MODULES LCL0E02 (LINK)
 * OR LCL0E04 (XCTL)
-* FIND LAST LINKER AND ESTABLISH LINKAGE
 *
+* DON'T SAVE THE REGS IF XCTL, THIS ISN'T A NEW LINK LEVEL
+         CHHSI EIBFN,X'0E04'      XCTL ?
+         JE    CICS_EIENT_&SYSNDX._NOSAVE EXIT IF IT IS
+* FIND LAST LINKER AND ESTABLISH LINKAGE
          LH    R15,TCTTELNK       R15=CURRENT LINK LEVEL
          AHI   R15,-1             -1
          SLL   R15,2              *4
          L     R1,TCTTELKA        R0=LKA ADDRESS
          AR    R1,R15             INDEX TO LAST LINK-LEVEL ENTRY
          L     R13,0(R1)          SAVE AREA OF LAST LINK-LEVEL
-* DON'T SAVE THE REGS IF XCTL, THIS ISN'T A NEW LINK LEVEL
-         CHHSI EIBFN,X'0E04'      XCTL ?
-         JE    CICS_EIENT_&SYSNDX._NOSAVE EXIT IF IT IS
          SAVE  (R14,R12)          SAVE REGS IN PREV SAVE AREA
 CICS_EIENT_&SYSNDX._NOSAVE EQU *
+         AIF   (NOT &ZC_CICS)
 *
 * SET 1ST CODE BASE
 *
@@ -50,6 +59,7 @@ CICS_EIENT_&SYSNDX._NOSAVE EQU *
          USING &N._BASE,&CODEREG(1)
 .*
 &N._BASE DS   0H
+         AEND
 *
 * GETMAIN THE DSA, AND SET UP THE CHAIN
 *
@@ -65,16 +75,19 @@ CICS_EIENT_&SYSNDX._NOSAVE EQU *
 *
          ST    R0,DFHEILEN        SAVE DSA LENGTH FOR FREEMAIN
 *
-* SET COMMAREA ADDRESS
+* SET EIB AND COMMAREA ADDRESSES
 *
-         MVC   DFHEICAP,0(R2)     SET COMMAREA ADDRESS IN DSA
+         MVC   DFHEIEIB,0(R2)     SET EIB ADDRESS IN DSA
+         MVC   DFHEICAP,4(R2)     SET COMMAREA ADDRESS IN DSA
 *
 * IF WE CAME FROM XCTL, WE MUST FREE THE PARM STORAGE AREA
 *
          CHHSI EIBFN,X'0E04'      XCTL ?
-         BNE   CICS_EIENT_&SYSNDX._01 EXIT IF NOT
-         FREEMAIN A=(R2),LV=8
-         B     CICS_EIENT_&SYSNDX._02 EXIT
+         JNE   CICS_EIENT_&SYSNDX._01 EXIT IF NOT
+         LA    R0,8               LENGTH OF 8
+         FREEMAIN A=(R2),LV=(R0)
+         LA    R2,DFHEIEIB        SET UP THE PARM AGAIN
+         J     CICS_EIENT_&SYSNDX._02 EXIT
          LTORG
 .*
 CICS_EIENT_&SYSNDX._01 DS 0H

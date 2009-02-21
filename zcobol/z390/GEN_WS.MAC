@@ -1,0 +1,228 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/09/08 initial coding to generate WS CSECT at ZC_PROC_END
+.* 05/02/08 add support for PIC_TYPE=ADFHPXZ                      
+.* 06/11/08 add support for TYPE=WS and TYPE=LK                   
+.* 10/07/08 ZSTRMAC
+.* 12/03/08 ADD FILE DCB DEFINITION ADDED BY FD
+.*********************************************************************
+         GEN_WS      
+         COPY  ZC_WS   
+.*
+.* SWITCH TO ZC_WSLOC LOCTR FOLLOWING PROCEDURE CODE IN ZC_PGM CSECT
+.*
+       AIF (&ZC_CICS)
+DFHEISTG DSECT
+       AELSE
+ZC_WSLOC LOCTR
+       AEND
+         AIF   (&SYM_TOT EQ 0)
+               MEXIT
+         AEND
+         LCLA  &IPAD_LVL(10),&IPAD_LEN(10)
+         :&IPAD SETA 0
+         :&LAST_LOC SETA -1      
+         :&WS_LOC_ERR SETB 0
+         :&I    SETA  1
+         AWHILE (&I LE &SYM_TOT)
+            ACTR 1000
+.*
+.* GENERATE WORKING STORAGE OR LINKAGE SECTION ITEMS NOW
+.*
+            :&RETRY SETB 1
+            AWHILE (&RETRY AND &IPAD GT 0)
+                AIF (&IPAD_LVL(&IPAD) GE &SYM_LVL(&I)                  X
+                     OR &SYM_LVL(&I) EQ 77)
+         DS    XL&IPAD_LEN(&IPAD) PAD FOR MULT OCCURS
+                :&IPAD SETA &IPAD-1
+                AELSE
+                    :&RETRY SETB 0
+                AEND
+            AEND 
+            AIF (&SYM_LVL(&I) EQ 91 AND NOT &LK_MODE)
+                ACALL GEN_FILE
+            AELSEIF (&SYM_LVL(&I) NE 88                                X
+                AND ((NOT &LK_MODE AND &SYM_LK(&I) EQ 0)               X                            X
+                     OR (&LK_MODE AND &SYM_LK(&I) GT 0)))
+               :&NAME    SETC  '&SYM_NAME(&I)'
+               AIF   (&LK_MODE AND &SYM_LVL(&I) EQ 1)
+                    :&K SETA (&NAME INDEX ' ')
+                    AIF (&K GT 0)
+                        :&DSECT SETC '&NAME'(1,&K-1).'_DSECT'
+                    AELSE 
+                        :&DSECT SETC '&NAME'.'_DSECT'
+                   AEND
+&DSECT   DSECT
+                    :&LAST_LOC SETA -1       
+               AEND
+               AIF  ('&NAME' EQ 'FILLER')          
+                    :&NAME SETC  ' '
+               AEND
+               :&CDUP    SETC  ''
+               AIF  (&SYM_DUP(&I) NE 1)               
+                    :&CDUP    SETC  '&SYM_DUP(&I)'
+               AEND
+               AIF  (&I LT &SYM_TOT                                    X
+                     AND &SYM_LOC(&I+1) EQ &SYM_LOC(&I)                X
+                     AND &SYM_VAL(&I) EQ '')      
+                    :&CDUP     SETC  '0' ZERO LENGTH FOR GROUP
+                    AIF (&SYM_DUP(&I) GT 1)
+                        :&IPAD SETA &IPAD+1
+                        :&IPAD_LVL(&IPAD) SETA &SYM_LVL(&I)
+                        :&IPAD_LEN(&IPAD) SETA (&SYM_DUP(&I)-1)*&SYM_LEX
+               N(&I)
+                    AEND
+               AEND
+               AIF   (K'&NAME LT 8)          
+                    :&NAME SETC  '&NAME'.(8-K'&NAME)' ' PAD NAME TO 8
+               AEND
+               AIF   (&SYM_LEN(&I) EQ 0)
+                     AIF (&ZC_CICS                                     X
+                          AND '&SYM_NAME(&I)' EQ 'DFHCOMMAREA')
+                         :&SYM_LEN(&I) SETA 1 FORCE 1 TO AVOID ERR
+                     AELSE
+                         MNOTE 8,'GEN WS 0 LENGTH FOR - &NAME'
+                     AEND
+               AEND
+               AIF   (&SYM_LOC(&I) LE &LAST_LOC                        X
+                      AND &SYM_REF(&I) GT 0)        
+         ORG   &SYM_NAME(&SYM_REF(&I))  START REDEFINE
+               AEND
+               AIF (NOT &WS_LOC_ERR)   TEST WS AND LK OFFSETS
+                   AIF (&LK_MODE)
+                       :&DSECT_NAME SETC '&SYM_NAME(&SYM_LK(&I))'
+ZC_LK_LOC_&I EQU *-&DSECT_NAME CHECK &SYM_NAME(&I) LK LOC
+                   :&ZC_SYM_LOC_I SETC 'ZC_LK_LOC_&I'
+                   AELSE
+ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+                   :&ZC_SYM_LOC_I SETC 'ZC_WS_LOC_&I'
+                   AEND
+                   AIF (&ZC_SYM_LOC_I NE &SYM_LOC(&I))
+                       :&WS_LOC_ERR SETB 1
+                       MNOTE 'GEN_WS WS LOC OFFSET ERROR AT &SYM_NAME(&X
+               I)'
+                   AEND
+               AEND
+               :&LAST_LOC SETA &SYM_LOC(&I)
+               AIF  ('&SYM_VAL(&I)' NE '' AND &SYM_LK(&I) EQ 0) 
+                    ACALL GEN_WS_DC
+               AELSE
+                    ACALL GEN_WS_DS
+               AEND
+            AEND
+            :&I SETA &I+1
+         AEND
+         MEXIT
+.*
+.* GEN WS DC
+.*
+     AENTRY GEN_WS_DC
+     ACASE (C2A('&SYM_PIC_TYPE(&I)'))
+     AWHEN C'A' POINTER (32 BIT)
+&NAME    DC &CDUP.AL4(&SYM_VAL(&I))
+     AWHEN C'D' DOUBLE HFP (64 BIT)
+&NAME    DC &CDUP.DL8'&SYM_VAL(&I)'
+     AWHEN C'E' SINGLE HFP (32 BIT)
+&NAME    DC &CDUP.EL4'&SYM_VAL(&I)'
+     AWHEN C'F' S9(9) NUMERIC (32 BIT BINARY)
+&NAME    DC &CDUP.AL4(&SYM_VAL(&I))
+     AWHEN C'G' S9(18) NUMERIC (64 BIT BINARY)
+&NAME    DC &CDUP.FL8'&SYM_VAL(&I)'
+     AWHEN C'H' S9(4) NUMERIC (16 BIT BINARY)
+&NAME    DC &CDUP.AL2(&SYM_VAL(&I))
+     AWHEN C'P' S9(N) NUMERIC (PACKED)
+&NAME    DC &CDUP.PL&SYM_LEN(&I)'&SYM_VAL(&I)'
+     AWHEN C'X' X(N)  ALPHANUMERIC
+       AIF  ('&SYM_VAL(&I)'(1,1) EQ '''')              
+&NAME    DC &CDUP.CL&SYM_LEN(&I)&SYM_VAL(&I)
+       AELSEIF ('&SYM_VAL(&I)'(1,1) EQ 'X')         
+         :&HEX SETC '&SYM_VAL(&I)'(2,*)     
+&NAME    DC &CDUP.XL&SYM_LEN(&I)&HEX
+       AELSEIF ('&SYM_VAL(&I)' EQ 'SPACE'                              X
+                OR '&SYM_VAL(&I)' EQ 'SPACES')
+&NAME    DC CL&SYM_LEN(&I)' '
+       AELSEIF ('&SYM_VAL(&I)' EQ 'LOW_VALUES'                         X
+                OR '&SYM_VAL(&I)' EQ 'LOW_VALUE')
+&NAME    DC XL&SYM_LEN(&I)'00'
+       AELSEIF ('&SYM_VAL(&I)' EQ 'HIGH_VALUES'                        X
+                OR '&SYM_VAL(&I)' EQ 'HIGH_VALUE')
+&NAME    DC XL&SYM_LEN(&I)'FF'
+       AELSE
+         MNOTE 8,'GEN_WS UNKNOWN VALUE &SYM_VAL(&I) FOR &SYM_NAME(&I)'
+       AEND
+     AWHEN C'Z' S9(N) NUMERIC (DISPLAY)
+       AIF (&SYM_PIC_SIGN(&I))
+&NAME    DC &CDUP.ZL&SYM_LEN(&I)'&SYM_VAL(&I)'
+       AELSE
+         :&ZVAL SETC (&SYM_LEN(&I))'0'.'&SYM_VAL(&I)'
+         :&ZVAL SETC '&ZVAL'(K'&ZVAL-&SYM_LEN(&I)+1,*) 
+&NAME    DC &CDUP.CL&SYM_LEN(&I)'&ZVAL'
+       AEND
+     AELSE
+         MNOTE 8,'GEN_WS UNKNOWN PIC &SYM_PIC(&I) FOR &SYM_NAME(&I)'
+     AEND
+     AEND
+.*
+.* GEN WS DS
+.*
+     AENTRY GEN_WS_DS
+     ACASE (C2A('&SYM_PIC_TYPE(&I)'))
+     AWHEN C'A' POINTER (32 BIT)
+&NAME    DS  &CDUP.AL4                   
+     AWHEN C'D' DOUBLE HFP (64 BIT)
+&NAME    DS  &CDUP.DL8
+     AWHEN C'E' SINGLE HFP (32 BIT)
+&NAME    DS  &CDUP.EL4
+     AWHEN C'F' S9(9) NUMERIC (32 BIT BINARY)
+&NAME    DS  &CDUP.FL4
+     AWHEN C'G' S9(39) NUMERIC (64 BIT BINARY)
+&NAME    DS  &CDUP.FL8
+     AWHEN C'H' S9(4) NUMERIC (16 BIT BINARY)
+&NAME    DS  &CDUP.HL2
+     AWHEN C'P' S9(N) NUMERIC (PACKED)
+&NAME    DS  &CDUP.PL&SYM_LEN(&I)
+     AWHEN C'X' X(N)  ALPHANUMERIC
+&NAME    DS  &CDUP.CL&SYM_LEN(&I)
+     AWHEN C'Z' S9(N) NUMERIC (DISPLAY)
+&NAME    DS  &CDUP.ZL&SYM_LEN(&I)
+     AELSE
+         MNOTE 8,'GEN_WS UNKNOWN PIC &SYM_PIC(&I) FOR &SYM_NAME(&I)'
+     AEND
+     AEND
+.*
+.* GEN FILE
+.*
+     AENTRY    GEN_FILE
+     AIF       (&ZC_CICS)
+               MNOTE 8,'EXEC CICS FILES MUST BE DEFINED IN DFHFCT'
+               MEXIT
+     AEND
+     :&FILE_IX SETA &SYM_REF(&I)
+.*
+.* SET DDNAME ELSE OMIT AND SET DSNAME AT OPEN USING LITERAL
+.*
+     :&DDNAME  SETC  ''    ASSUME DSNAME= WILL BE SET AT OPEN
+     AIF   ('&FILE_DDNAME(&FILE_IX)'(1,1) NE '''')
+               :&DDNAME  SETC  'DDNAME=&FILE_DDNAME(&FILE_IX)'
+     AEND
+.*
+.* SET RECFM BASED ON FILE_TYPE (LINE=FT)
+.*
+     AIF       ('&FILE_TYPE(&FILE_IX)' NE 'LINE')       
+               MNOTE 8,'GEN FD UNKNOWN FILE TYPE - &FILE_TYPE(&FILE_IX)X
+               '
+               MEXIT
+     AEND
+     :&RECFM   SETC  'FT'
+.*
+.* GEN DCB IN WS CSECT
+.*
+&FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,&DDNAME
+     AEND
+     MEND

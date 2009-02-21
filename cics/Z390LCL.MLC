@@ -1,0 +1,89 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+Z390LCL  SUBENTRY
+*
+* INDEXER TO ALL LCL.... MODULES
+* ENTRY IS BY BAKR
+*
+* R1  >>> LCL PARAMETER BLOCK POINTER
+* R14 = RETURN ADDRESS
+*
+* EACH PARM STARTS WITH EIBFN
+*
+         LR    R3,R1              POINT TO
+         L     R3,0(R3)                    PARAMETER BLOCK
+         LA    R4,LCLTABL         R4=ADDRESS OF LCL TABLE
+IXLOOP   EQU   *
+         CLC   0(2,R4),0(R3)      TABLE MATCH ?
+         BE    DOLCL              EXIT IF IT DOES
+         AHI   R4,6               BUMP TABLE ENTRY
+         CLC   0(2,R4),=X'FFFF'   STOPPER ?
+         BNE   IXLOOP             LOOP IF NOT
+         DC    H'0'               SHOULD NOT OCCUR
+*
+DOLCL    EQU   *
+         L     R15,2(R4)          R15=LCL MODULE ADDRESS
+         BALR  R14,R15            GO TO IT
+         PR    ,                  UNSTACK AND RETURN
+*
+LCLTABL  EQU   *
+         DC    X'0202',VL4(LCL0202) ADDRESS
+         DC    X'0204',VL4(LCL0204) HANDLE CONDITION
+         DC    X'0206',VL4(LCL0206) HANDLE AID
+         DC    X'020A',VL4(LCL020A) IGNORE CONDITION
+         DC    X'020C',VL4(LCL020C) PUSH HANDLE
+         DC    X'020E',VL4(LCL020E) POP HANDLE
+*
+         DC    X'0402',VL4(LCL0402) RECEIVE
+         DC    X'0404',VL4(LCL0404) SEND
+*
+         DC    X'0602',VL4(LCL0602) READ
+         DC    X'060C',VL4(LCL060C) STARTBR
+         DC    X'060E',VL4(LCL060E) READNEXT
+         DC    X'0610',VL4(LCL0610) READPREV
+         DC    X'0612',VL4(LCL0612) ENDBR
+         DC    X'0614',VL4(LCL0614) RESETBR
+*
+         DC    X'0A02',VL4(LCL0A02) WRITEQ TS
+         DC    X'0A04',VL4(LCL0A04) READQ TS
+         DC    X'0A06',VL4(LCL0A06) WRITEQ TS
+*
+         DC    X'0C02',VL4(LCL0C02) GETMAIN
+         DC    X'0C04',VL4(LCL0C04) FREEMAIN
+*
+******** DC    X'0E02',VL4(LCL0E02) LINK     DIRECT LINKAGE
+******** DC    X'0E04',VL4(LCL0E04) XCTL     DIRECT LINKAGE
+         DC    X'0E06',VL4(LCL0E06) LOAD
+******** DC    X'0E08',VL4(LCL0E08) RETURN   DIRECT LINKAGE
+         DC    X'0E0A',VL4(LCL0E0A) RELEASE
+         DC    X'0E0C',VL4(LCL0E0C) ABEND
+         DC    X'0E0E',VL4(LCL0E0E) HANDLE ABEND
+*
+         DC    X'1002',VL4(LCL1002) ASKTIME
+         DC    X'1004',VL4(LCL1004) DELAY
+         DC    X'1008',VL4(LCL1008) START
+         DC    X'100A',VL4(LCL100A) RETRIEVE
+         DC    X'100C',VL4(LCL100C) CANCEL
+*
+         DC    X'1204',VL4(LCL1204) ENQ
+         DC    X'1206',VL4(LCL1206) DEQ
+*
+         DC    X'1802',VL4(LCL1802) RECEIVE MAP
+         DC    X'1804',VL4(LCL1804) SEND MAP
+         DC    X'1812',VL4(LCL1812) SEND CONTROL
+*
+         DC    X'1C02',VL4(LCL1C02) DUMP
+*
+         DC    X'4A02',VL4(LCL4A02) ASKTIME ABSTIME
+         DC    X'4A04',VL4(LCL4A04) FORMATTIME
+*
+         DC    X'FFFF'            STOPPER
+*
+         EQUREGS
+*
+         END
+

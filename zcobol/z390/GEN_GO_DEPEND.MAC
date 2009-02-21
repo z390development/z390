@@ -1,0 +1,50 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 01/09/09 initial coding for GEN_GO_DEPEND     
+.*********************************************************************
+.* SYSLIST HAS LIST OF PARAGRAPH NAMES 
+.* &FIELD_IX SET TO INDEX
+.*********************************************************************
+         GEN_GO_DEPEND
+         COPY ZC_WS 
+         :&ZC_GO_DEP SETA &ZC_GO_DEP+1 COUNTER FOR GO TO DEPENDING TABS
+         :&NP SETA N'&SYSLIST
+            ACASE (C2A('&SYM_PIC_TYPE(&FIELD_IX)'))
+               AWHEN C'F'
+         L     R1,&FIELD_NAME 
+               AWHEN C'G'
+         LG    R1,&FIELD_NAME    IGNORE HIGH 32
+               AWHEN C'H'
+         LH    R1,&FIELD_NAME
+               AWHEN C'P'
+         ZAP   ZCVT_PWORK,&FIELD_NAME
+         CVB   R1,ZCVT_PWORK
+               AWHEN C'Z'
+         :&LPLEN SETA &SYM_LEN(&FIELD_IX)/2+1
+         PACK  ZCVT_PWORK1(&LPLEN),&FIELD_NAME
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
+         CVB   R1,ZCVT_PWORK
+            AELSE
+               MNOTE 8,'GEN_GO_DEPEND UNSUPPORTED INDEX TYPE'
+               MEXIT
+            AEND
+         CHI   R1,1
+         JL    PG_ZC_GO_TAB_&ZC_GO_DEP+4*&NP
+         CHI   R1,&NP
+         JH    PG_ZC_GO_TAB_&ZC_GO_DEP+4*&NP
+         SLL   R1,2
+         LARL  R2,PG_ZC_GO_TAB_&ZC_GO_DEP-4
+         B     0(R1,R2)
+         GEN_LABEL ZC_GO_TAB_&ZC_GO_DEP,GO_TO_DEPENDING
+         :&I SETA 1
+         AWHILE (&I LE &NP)
+         J     PG_&SYSLIST(&I)
+               :&I SETA &i+1
+         AEND
+         MEND

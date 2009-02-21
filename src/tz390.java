@@ -211,6 +211,7 @@ public  class  tz390 {
     * 12/11/08 RPI 957 chksrc(3) to chk seq field and > 80
     * 12/11/08 RPI 963 display final options 1 per line
     * 12/19/08 RPI 979 default SYSCPY to pgm dir prior to addition of paths
+    * 01/26/09 RPI 986 add zcobol options COMMENT, EXTEND, TRUNC, WARN, R64
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -219,7 +220,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.04a";  //dsh
+    String version    = "V1.5.00";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -242,11 +243,13 @@ public  class  tz390 {
     boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
     boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
     boolean opt_cics     = false; // exec cics program honoring prolog,epilog
+    boolean opt_comment  = true;  // generate source comments for zocobol RPI 986
     boolean opt_con      = true;  // log msgs to console
     boolean force_nocon  = false; // override option con RPI 755
     boolean opt_dump     = false; // only indicative dump on abend unless on
     boolean opt_epilog   = true;  // if cics, insert DFHEIRET
     boolean opt_errsum   = false; // just list critical errors and summary on ERR file and console 
+    boolean opt_extend   = true;  // allow up to 31 digits for P and Z in zocobl RPI 986
     boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
     boolean opt_init     = true;  // init regs to x'F4", mem to x'F5'
     String  opt_ipl      = "";    // program to execute at startup
@@ -265,6 +268,7 @@ public  class  tz390 {
     String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
     boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
     boolean opt_protect  = true;  // prevent PSA mods by user
+    boolean opt_r64      = true;  // allow 64 bit register instructions RPI 986
     boolean opt_reformat = false;  // reformat BAL statements
     boolean opt_regs     = false; // show registers on trace
     boolean opt_rmode24  = true;  // link to load below line
@@ -287,8 +291,10 @@ public  class  tz390 {
     boolean opt_tracet   = false; // trace TCPIO and TGET/TPUT data I/O
     boolean opt_tracev   = false; // trace VSAM file I/O
     boolean opt_trap     = true;  // trap exceptions as 0C5
+    boolean opt_trunc    = false; // zcobol TRUNC option default NOTRUNC RPI 986
     boolean opt_ts       = false; // time-stamp logs RPI 662
     boolean opt_vcb      = true;  // vsam cache operational
+    boolean opt_warn     = true;  // issue zcobol warnings RPI 986
     boolean opt_xref     = true;   // cross reference symbols
     boolean opt_zstrmac  = true;   // allow ZSTRMAC extensions
     boolean max_cmd_queue_exceeded = false;  // RPI 731
@@ -4652,6 +4658,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_cics = true;
 	} else if (token.toUpperCase().equals("NOCICS")){
        	opt_cics = false;
+	} else if (token.toUpperCase().equals("COMMENT")){
+       	opt_comment = true;
+	} else if (token.toUpperCase().equals("NOCOMMENT")){
+       	opt_comment = false;
 	} else if (token.toUpperCase().equals("CON")){
        	opt_con = true;
 	} else if (token.toUpperCase().equals("NOCON")){
@@ -4677,6 +4687,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_errsum = false;
 		max_errors = 100;
 		opt_obj    = true;
+    } else if (token.toUpperCase().equals("EXTEND")){
+       	opt_extend = true;
+    } else if (token.toUpperCase().equals("NOEXTEND")){
+       	opt_extend = false;
     } else if (token.toUpperCase().equals("GUAM")){
        	opt_guam = true;
     } else if (token.toUpperCase().equals("NOGUAM")){
@@ -4828,6 +4842,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
         opt_protect = true;
     } else if (token.toUpperCase().equals("NOPROTECT")){
         opt_protect = false;
+    } else if (token.toUpperCase().equals("R64")){ // RPI 986
+        opt_r64 = true;
+    } else if (token.toUpperCase().equals("NOR64")){
+        opt_r64 = false;
     } else if (token.toUpperCase().equals("REFORMAT")){
         opt_reformat = true; 
     } else if (token.toUpperCase().equals("NOREFORMAT")){
@@ -5052,6 +5070,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_trap = true;
     } else if (token.toUpperCase().equals("NOTRAP")){
        	opt_trap = false;
+    } else if (token.toUpperCase().equals("TRUNC")){
+       	opt_trunc = true;
+    } else if (token.toUpperCase().equals("NOTRUNC")){
+       	opt_trunc = false;
     } else if (token.toUpperCase().equals("TS")){
     	opt_ts = true; // timestamp traces
     } else if (token.toUpperCase().equals("NOTS")){
@@ -5060,6 +5082,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     	opt_vcb = true; // VSAM Cache Buffering to reduce I/O
     } else if (token.toUpperCase().equals("NOVCB")){
     	opt_vcb = false;
+    } else if (token.toUpperCase().equals("WARN")){
+    	opt_warn = true; // VSAM Cache Buffering to reduce I/O
+    } else if (token.toUpperCase().equals("NOWARN")){
+    	opt_warn = false;
     } else if (token.toUpperCase().equals("XREF")){
        	opt_xref = true;
        	opt_list = true;
@@ -6640,6 +6666,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOCICS");
 	     }
+	     if (opt_comment){ // zcobol source comments in MLC
+	    	 add_final_opt("COMMENT");
+		     } else {
+		        add_final_opt("NOCOMMENT");
+		     }
 	     if (opt_con     ){ // log msgs to console
 	        add_final_opt("CON");
 	     } else {
@@ -6660,6 +6691,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOERRSUM");
 	     }
+	     if (opt_extend){ // allow 31 digit P and Z in zcobol 
+		        add_final_opt("EXTEND");
+		     } else {
+		        add_final_opt("NOEXTEND");
+		     }
 	     if (opt_guam    ){ // use gz390 GUAM GUI access method interface
 	        add_final_opt("GUAM");
 	     } else {
@@ -6730,6 +6766,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOPROTECT");
 	     }
+	     if (opt_r64){ // RPI 986 allow 64 bit register usage
+		        add_final_opt("R64");
+		     } else {
+		        add_final_opt("NOR64");
+		     }
 	     if (opt_reformat){ // reformat BAL statements
 	        add_final_opt("REFORMAT");
 	     } else {
@@ -6835,6 +6876,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOTRAP");
 	     }
+	     if (opt_trunc    ){ // truncate COMP to PIC digits
+		        add_final_opt("TRUNC");
+		     } else {
+		        add_final_opt("NOTRUNC");
+		     }
 	     if (opt_ts      ){ // time-stamp logs RPI 662
 	        add_final_opt("TS");
 	     } else {
@@ -6845,6 +6891,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOVCB");
 	     }
+	     if (opt_warn     ){ // zcobol mnote level 4 warnings
+		        add_final_opt("WARN");
+		     } else {
+		        add_final_opt("NOWARN");
+		     }
 	     if (opt_xref    ){ // cross reference symbols
 	        add_final_opt("XREF");
 	     } else {

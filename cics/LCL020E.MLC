@@ -119,6 +119,7 @@ P020ETCT DS    AL4                TCTTE
 P020EAID DS    AL4                A(DFHEIAID)
 P020EHCN DS    AL4                A(DFHEIHCN)
          DS    X                  FF=NOHANDLE
+         DS    X
 P020ERSP DS    AL4                RESP
 P020ERS2 DS    AL4                RESP2
 P020EEND EQU   *                  END MARKER

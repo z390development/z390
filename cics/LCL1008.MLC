@@ -384,13 +384,17 @@ P1008RTM DS    CL4                RTERMID
 P1008QNM DS    CL8                QUEUE NAME
 P1008REQ DS    CL8                REQID
 P1008INT DS    X                  FF=INTERVAL/TIME
+         DS    X
 P1008TME DS    X                  00=INTERVAL/AFTER FF=TIME/AT
+         DS    X
 P1008HMS DS    PL4                0HHMMSS+
 P1008IND DS    X                  FF=MORE THAN 1 PARM IN NEXT 3
+         DS    X
 P1008HRS DS    PL8                HOURS
 P1008MIN DS    PL8                MINUTES
 P1008SEC DS    PL8                SECONDS
          DS    X                  FF=NOHANDLE
+         DS    X
 P1008RSP DS    AL4                RESP
 P1008RS2 DS    AL4                RESP2
 P1008END EQU   *                  END MARKER

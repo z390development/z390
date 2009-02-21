@@ -82,6 +82,7 @@ P100CEIB DS    AL4                EIB
 P100CTCT DS    AL4                TCTTE
 P100CREQ DS    CL8                REQID
          DS    X                  FF=NOHANDLE
+         DS    X
 P100CRSP DS    AL4                RESP
 P100CRS2 DS    AL4                RESP2
 P100CEND EQU   *                  END MARKER

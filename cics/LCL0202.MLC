@@ -1,0 +1,123 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL0202  SUBENTRY
+*
+* FN=0202  EXEC CICS ADDRESS
+*
+* R1  >>> P0202 BLOCK POINTER
+* R14 = RETURN ADDRESS
+*
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0202,P0202END),R3
+         L     DFHEIBR,P0202EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0202TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0202FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0202RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0202RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         ICM   R1,15,P0202ACM     ANY COMMAREA ADDRESS REQUEST ?
+         BZ    TRYCWA             EXIT IF NONE
+* FOR ASM THE VALUE IS A REG AND IS SET IN THE MACRO
+         CHSI  R1,15              IS IT A REG ?
+         BNH   TRYCWA             EXIT IF IT IS
+         MVC   0(4,R1),=X'FF000000' INITIALIZE TO NULL POINTER
+         OC    P0202CAP,P0202CAP  ANY COMMAREA ?
+         BZ    TRYCWA             EXIT IF NONE
+         MVC   0(4,R1),P0202CAP   SET COMMAREA ADDRESS
+TRYCWA   EQU   *
+         ICM   R1,15,P0202ACW     ANY CWA ADDRESS REQUEST ?
+         BZ    TRYEIB             EXIT IF NONE
+         OC    TCTTECWA,TCTTECWA  HAS CWA ALREADY BEEN ACQUIRED ?
+         BZ    NEWCWA             EXIT IF NOT
+         CHSI  R1,15              IS IT A REG ?
+         BNH   TRYEIB             EXIT IF IT IS
+         MVC   0(4,R1),TCTTECWA   SET EXISTING CWA ADDRESS
+         B     TRYEIB             EXIT
+*
+NEWCWA   EQU   *
+         EXEC  CICS ENQ RESOURCE(CWALOCK) LENGTH(7) INT0202
+         LA    R9,CWABLOCK        ADDRESS CWA BLOCK
+         USING DFHCWBLK,R9
+         LA    R5,CWPREFIX        SET
+         ST    R5,CWATCPIO            LENGTH
+         MVC   CWAFN,=C'FE07'     SET FUNCTION CODE
+         MVC   CWATERM,TCTTETI    SET TERMINAL ID
+         MVC   CWATRAN,EIBTRNID   SET TRANSID
+         MVC   CWATASKN,EIBTASKN  SET TASK NUMBER
+         MVI   CWARDWRT,X'00'     SET CWA GET
+         TCPIO SEND,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+* ONLY THE PREFIX IS RECEIVED, WE GET THE CWA LATER
+         TCPIO RECEIVE,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+         L     R5,P0202ACW        R5=CWA ADDRESS POINTER
+         CHSI  R5,15              IS IT A REG ?
+         BNH   CWAREG1            EXIT IF IT IS
+         MVC   0(4,R5),=X'FF000000' INITIALIZE TO NULL POINTER
+CWAREG1  EQU   *
+         ICM   R4,15,CWALENG      ANY CWA AVAILABLE ?
+         BNZ   GETCWA             EXIT IF THERE IS
+* NO CWA AVAILABLE
+         EXEC  CICS DEQ RESOURCE(CWALOCK) LENGTH(7)
+         B     TRYEIB             EXIT
+*
+GETCWA   EQU   *
+* GETMAIN AN AREA FOR THE LOCAL CWA
+         EXEC  CICS GETMAIN SET(R7) FLENGTH(CWALENG)
+         ST    R7,TCTTECWA        SAVE ADDRESS FOR PUT
+         MVC   TCTTECWL,CWALENG   SAVE LENGTH FOR PUT
+         DROP  R9
+         CHSI  R5,15              IS IT A REG ?
+         BNH   CWAREG2            EXIT IF IT IS
+         ST    R7,0(R5)           PASS ADDRESS BACK TO REQUESTOR
+CWAREG2  EQU   *
+         TCPIO RECEIVE,MSG=(R7),LMSG=(R4),PORT=3900 GET THE CWA
+TRYEIB   EQU   *
+         ICM   R1,15,P0202AEI     ANY EIB ADDRESS REQUEST ?
+         BZ    ALLDONE            EXIT IF NONE
+         CHSI  R1,15              IS IT A REG ?
+         BNH   ALLDONE            EXIT IF IT IS
+         ST    DFHEIBR,0(R1)      SET EIB ADDRESS
+ALLDONE  EQU   *
+         SUBEXIT
+*
+CWALOCK  DC    C'--CWA--'
+CWABLOCK DS    CL(CWPREFIX)       ACTUAL CWA PREFIX AREA
+*
+P0202    DSECT
+P0202FN  DS    XL2                FUNCTION CODE
+P0202EIB DS    AL4                EIB
+P0202TCT DS    AL4                TCTTE
+P0202HCN DS    AL4                A(DFHEIHCN)
+P0202CAP DS    AL4                DFHEICAP
+P0202ACM DS    AL4                LABEL ADDRESS FOR COMMAREA
+P0202ACW DS    AL4                LABEL ADDRESS FOR CWA
+P0202AEI DS    AL4                LABEL ADDRESS FOR EIB
+P0202RSP DS    AL4                RESP
+P0202RS2 DS    AL4                RESP2
+P0202END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHCWBLK                 CWA PREFIX AREA
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R11 EIB
+* R13 SAVE AREA AND BASE 1
+*
+         END
+

@@ -1,0 +1,584 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 10/30/08 initial coding for Z390 GEN_ADD using GEN_SUB as model    
+.* 01/26/09 add TRUNC support for F,G,H - see zcobol\test\TESTTRC1.CBL            
+.* 01/27/09 add ON SIZE and optimize TRUNC for pipeline and use LGFI                      
+.*********************************************************************
+.* Notes:
+.*  1.  ROUNDED not supported yet.
+.*********************************************************************
+         GEN_ADD &T_NAME,&T_IX,&S_NAME,&S_IX,&ROUNDED,&ONSIZE
+         COPY  ZC_WS
+         :&TARGET_NAME SETC '&T_NAME'
+         :&SOURCE_NAME SETC '&S_NAME'
+         :&TARGET SETA &T_IX
+         :&SOURCE SETA &S_IX
+         AIF   (&TARGET EQ 0)
+               MNOTE 8,'GEN_ADD UNDEFINED TARGET - &TARGET'
+               MEXIT
+         AEND
+         AIF   (&ROUNDED EQ 1)
+               MNOTE 8,'GEN_ADD ROUNDED NOT SUPPORTED YET'
+               MEXIT
+         AEND
+         :&L_TARGET SETA  &SYM_LEN(&TARGET)
+         :&T_TARGET SETC '&SYM_PIC_TYPE(&TARGET)'
+         AIF   (&SOURCE NE 0)
+               :&T_SOURCE SETC '&SYM_PIC_TYPE(&SOURCE)'
+               :&L_SOURCE SETA  &SYM_LEN(&SOURCE)
+               ACALL ADD_FLD
+         AELSE
+               :&LIT SETC '&SOURCE_NAME'
+               ACALL ADD_LIT
+         AEND
+         MEXIT
+.*
+.* ADD LITERAL
+.* 
+         AENTRY ADD_LIT
+         AIF  ('&LIT'(1,1) GT '0'                                      X
+                OR '&LIT'(1,1) EQ '+'                                  X
+                OR '&LIT'(1,1) EQ '-')
+               :&NUM SETC '&LIT'
+               ACALL ADD_NUM_LIT
+         AELSEIF  ('&LIT' EQ 'ZERO'                                    X
+                   OR '&LIT' EQ 'ZEROES')                          
+               :&NUM SETC '0'
+               ACALL ADD_NUM_LIT
+         AELSE
+               MNOTE 8,'GEN_ADD UNKNOWN LITERAL &LIT'
+               MEXIT
+         AEND
+         AEND
+.*
+.* ADD NUMERIC LIT 
+.*
+      AENTRY ADD_NUM_LIT
+      ACASE (C2A('&SYM_PIC_TYPE(&TARGET)'))
+      AWHEN C'D'
+         LD    F0,&TARGET_NAME
+         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+         AD    F0,0(R1)
+         STD   F0,&TARGET_NAME
+      AWHEN C'E'
+         LE    F0,&TARGET_NAME
+         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+         AE    F0,0(R1)
+         STE   F0,&TARGET_NAME
+      AWHEN C'F',C'A'
+       AIF (&ONSIZE EQ 1 OR (&ZC_TRUNC AND '&SYM_PIC(&TARGET)' NE ''))
+         SR    R0,R0
+         L     R1,&TARGET_NAME
+         ZC_PIC_DIGITS &TARGET
+         :&TRUNC_DIV SETA ('1'.(&PIC_DIGITS)'0')
+         LARL  R2,=F'&TRUNC_DIV'
+         AFI   R1,&NUM
+        AIF   (&ONSIZE EQ 1)
+              :&STX SETC 'ST'
+               ACALL SET_ON_SIZE_F32
+        AELSE  
+         D     R0,0(R2)
+         ST    R0,&TARGET_NAME
+        AEND 
+       AELSE
+        AIF (K'&NUM LE 2)
+         ASI   &TARGET_NAME,&NUM
+        AELSE
+         L     R0,&TARGET_NAME
+         AFI   R0,&NUM
+         ST    R0,&TARGET_NAME
+        AEND
+       AEND
+      AWHEN C'H'
+       AIF (&ONSIZE EQ 1 OR (&ZC_TRUNC AND '&SYM_PIC(&TARGET)' NE ''))
+         SR    R0,R0
+         LH    R1,&TARGET_NAME
+         ZC_PIC_DIGITS &TARGET
+         :&TRUNC_DIV SETA ('1'.(&PIC_DIGITS)'0')
+         LARL  R2,=F'&TRUNC_DIV'
+         AFI   R1,&NUM
+        AIF   (&ONSIZE EQ 1)
+              :&STX SETC 'STH'
+               ACALL SET_ON_SIZE_F32
+        AELSE  
+         D     R0,0(R2)
+         STH   R0,&TARGET_NAME
+        AEND 
+       AELSE
+         LH    R0,&TARGET_NAME
+         AHI   R0,&NUM
+         STH   R0,&TARGET_NAME
+       AEND
+      AWHEN C'G'
+       AIF (&ONSIZE EQ 1 OR (&ZC_TRUNC AND '&SYM_PIC(&TARGET)' NE ''))
+         ZC_PIC_DIGITS &TARGET
+         :&TRUNC_DIV SETC '1'.(&PIC_DIGITS)'0'
+        AIF (&ZC_R64)
+         LG    R1,&TARGET_NAME
+         LGRL  R0,=FL8'&TRUNC_DIV'
+         AGFI  R1,&NUM
+          AIF  (&ONSIZE EQ 1)
+               :&STX SETC 'STG'
+               ACALL SET_ON_SIZE_G64
+          AELSE  
+         DSGR  R0,R0
+         STG   R0,&TARGET_NAME
+          AEND
+        AELSE
+         LM    R0,R1,&TARGET_NAME
+         LARL  R2,=FL8'&NUM'
+         A     R1,4(R2)
+         ALC   R0,0(R2)
+         LARL  R3,=FL8'&TRUNC_DIV'
+         LM    R2,R3,0(R3)
+          AIF  (&ONSIZE EQ 1)
+         L     R15,ZCVT_OSE64R32
+         BASR  R14,R15
+               ACALL SET_ON_SIZE_G64_R32
+          AELSE
+         L     R15,ZCVT_DIV64R32
+         BASR  R14,R15
+         STM   R0,R1,&TARGET_NAME
+          AEND
+        AEND  
+       AELSE
+        AIF (K'&NUM LE 2)
+         AGSI  &TARGET_NAME,&NUM
+        AELSE
+          AIF  (&ZC_R64)
+         LG    R0,&TARGET_NAME
+         LARL  R1,=FL8'&NUM'
+         AG    R0,0(R1)
+         STG   R0,&TARGET_NAME
+          AELSE
+         LM    R0,R1,&TARGET_NAME
+         LARL  R2,=FL8'&NUM'
+         A     R1,4(R2)
+         ALC   R0,0(R2)
+         STM   R0,R1,&TARGET_NAME
+          AEND
+        AEND
+       AEND
+      AWHEN C'P'
+         :&LPNUM SETA (K'&NUM/2+3)/2*2 ROUNDED EVEN FOR LARL
+        AIF (&LPNUM EQ 2)
+         BRAS  R1,3 SET R1 TO A(INLINE LIT) AND SKIP OVER IT
+         DC    PL2'&NUM'
+        AELSE
+         LARL  R1,=&SYM_PIC_TYPE(&TARGET)L&LPNUM'&NUM'
+        AEND
+         AP    &TARGET_NAME,0(&LPNUM,R1)
+      AWHEN C'Z'
+         PACK  ZCVT_PWORK(&L_TARGET/2+1),&TARGET_NAME
+         :&LPNUM SETA (K'&NUM/2+3)/2*2 ROUNDED EVEN FOR LARL
+         LARL  R1,=PL&LPNUM'&NUM'
+         AP    ZCVT_PWORK(&L_TARGET/2+1),0(&LPNUM,R1)
+         UNPK  &TARGET_NAME,ZCVT_PWORK(&L_TARGET/2+1)
+       AIF   (NOT &SYM_PIC_SIGN(&TARGET))
+         OI  &TARGET_NAME+&L_TARGET-1,C'0'
+       AEND
+      AELSE
+         MNOTE 8,'GEN_ADD INVALID DATA TYPE FOR &TARGET_NAME'
+      AEND
+      AEND
+.*
+.* ADD_FLD
+.*
+         AENTRY ADD_FLD
+         ACASE (C2A('&T_TARGET'))
+         AWHEN C'D'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LD    F0,&TARGET_NAME
+         AD    F0,&SOURCE_NAME
+         STD   F0,&TARGET_NAME
+               AWHEN C'E'
+         LD    F0,&TARGET_NAME
+         LDE   F1,&SOURCE_NAME
+         ADR   F0,F1
+         STD   F0,&TARGET_NAME
+               AWHEN C'F',C'A'
+         LD    F0,&TARGET_NAME
+         L     R0,&SOURCE_NAME
+         CDFR  F1,R0
+         ADR   F0,F1
+         STD   F0,&TARGET_NAME
+               AWHEN C'G'
+         LD    F0,&TARGET_NAME
+         LG    R0,&SOURCE_NAME
+         CDGR  F1,R0
+         ADR   F0,F1
+         STD   F0,&TARGET_NAME
+               AWHEN C'H'
+         LD    F0,&TARGET_NAME
+         LH    R0,&SOURCE_NAME
+         CDFR  F1,R0
+         ADR   F0,F1
+         STD   F0,&TARGET_NAME
+               AWHEN C'P'
+         LD    F0,&TARGET_NAME
+         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         CVB   R0,ZCVT_PWORK
+         CDFR  F1,R0
+         ADR   F0,F1
+         STD   F0,&TARGET_NAME
+               AWHEN C'Z'
+         LD    0,&TARGET_NAME
+         PACK  ZCVT_PWORK1(&L_SOURCE/2+1),&SOURCE_NAME
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&L_SOURCE/2+1)
+         CVB   R0,ZCVT_PWORK
+         CDFR  F1,R0
+         ADR   F0,F1
+         STD   F0,&TARGET_NAME
+               AELSE
+                    MNOTE 4,'GEN_ADD INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'E'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LE    F0,&TARGET_NAME
+         LD    F1,&SOURCE_NAME
+         LEDR  F1,F1
+         AER   F0,F1
+         STE   F0,&TARGET_NAME
+               AWHEN C'E'
+         LE    F0,&TARGET_NAME
+         LE    F1,&SOURCE_NAME
+         AER   F0,F1
+         STE   F0,&TARGET_NAME
+               AWHEN C'F',C'A'
+         LE    F0,&TARGET_NAME
+         L     R0,&SOURCE_NAME
+         CEFR  F1,R0
+         AER   F0,R1
+         STE   F0,&TARGET_NAME
+               AWHEN C'G'
+         LE    F0,&TARGET_NAME
+         LG    R0,&SOURCE_NAME
+         CEGR  F1,R0
+         AER   F0,F1
+         STE   F0,&TARGET_NAME
+               AWHEN C'H'
+         LE    F0,&TARGET_NAME
+         LH    R0,&SOURCE_NAME
+         CEFR  F1,R0
+         AER   F0,F1
+         STE   F0,&TARGET_NAME
+               AWHEN C'P'
+         LE    F0,&TARGET_NAME
+         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         CVB   R0,ZCVT_PWORK
+         CEFR  F1,R0
+         AER   F0,F1
+         STE   F0,&TARGET_NAME
+               AWHEN C'Z'
+         LE    F0,&TARGET_NAME
+         PACK  ZCVT_PWORK1(&L_SOURCE/2+1),&SOURCE_NAME
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&L_SOURCE/2+1)
+         CVB   R0,ZCVT_PWORK
+         CEFR  F1,R0
+         AER   F0,F1
+         STE   F0,&TARGET_NAME
+               AELSE
+                    MNOTE 4,'GEN_ADD INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'F',C'A'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         L     R0,&TARGET_NAME
+         LD    F1,&SOURCE_NAME
+         CFDR  R3,0,F1
+         AR    R0,R3
+         ST    R0,&TARGET_NAME
+               AWHEN C'E'
+         L     R0,&TARGET_NAME
+         LE    F1,&SOURCE_NAME
+         CFER  R3,0,F1
+         AR    R0,R3
+         ST    R0,&TARGET_NAME
+               AWHEN C'F',C'A'
+         L     R0,&TARGET_NAME
+         A     R0,&SOURCE_NAME
+         ST    R0,&TARGET_NAME
+               AWHEN C'G'
+         SG    R0,R0
+         L     R0,&TARGET_NAME
+         AG    R0,&SOURCE_NAME
+         ST    R0,&TARGET_NAME  ONLY LOW 32 BITS STORED
+               AWHEN C'H'
+         L     R0,&TARGET_NAME
+         AH    R0,&SOURCE_NAME
+         ST    R0,&TARGET_NAME
+               AWHEN C'P'
+         L     R0,&TARGET_NAME
+         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         CVB   R3,ZCVT_PWORK
+         AR    R0,R3
+         ST    R0,&TARGET_NAME
+               AWHEN C'Z'
+         L     R0,&TARGET_NAME
+         PACK  ZCVT_PWORK1(&L_SOURCE/2+1),&SOURCE_NAME
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&L_SOURCE/2+1)
+         CVB   R3,ZCVT_PWORK
+         AR    R0,R3
+         ST    R0,&TARGET_NAME
+               AELSE
+                    MNOTE 4,'GEN_ADD INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'G'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LG    R0,&TARGET_NAME
+         LD    F1,&SOURCE_NAME
+         CGDR  R3,0,F1
+         AGR   R0,R3
+         STG   R0,&TARGET_NAME
+               AWHEN C'E'
+         LG    R0,&TARGET_NAME
+         LE    F1,&SOURCE_NAME
+         CGER  R3,0,F1
+         AGR   R0,R3
+         STG   R0,&TARGET_NAME
+               AWHEN C'F',C'A'
+         LG    R0,&TARGET_NAME
+         L     R3,&SOURCE_NAME
+         AGFR  R0,R3
+         STG   R0,&TARGET_NAME
+               AWHEN C'G'
+         LG    R0,&TARGET_NAME
+         AG    R0,&SOURCE_NAME
+         STG   R0,&TARGET_NAME  ONLY LOW 32 BITS STORED
+               AWHEN C'H'
+         LG    R0,&TARGET_NAME
+         LH    R3,&SOURCE_NAME
+         AGFR  R0,R3
+         STG   R0,&TARGET_NAME
+               AWHEN C'P'
+         LG    R0,&TARGET_NAME
+         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         CVB   R3,ZCVT_PWORK
+         AGFR  R0,R3
+         STG   R0,&TARGET_NAME
+               AWHEN C'Z'
+         LG    R0,&TARGET_NAME
+         PACK  ZCVT_PWORK1(&L_SOURCE/2+1),&SOURCE_NAME
+         ZAP   ZCVT_PWORK2,ZCVT_PWORK1(&L_SOURCE/2+1)
+         CVBG  R3,ZCVT_PWORK2
+         AGR   R0,R3
+         STG   R0,&TARGET_NAME
+               AELSE
+                    MNOTE 4,'GEN_ADD INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'H'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LH    R0,&TARGET_NAME
+         LD    F3,&SOURCE_NAME
+         CFDR  R1,0,F3
+         AR    R0,R1
+         STH   R0,&TARGET_NAME
+               AWHEN C'E'
+         LH    R0,&TARGET_NAME
+         LE    F1,&SOURCE_NAME
+         CFER  R3,0,F1
+         AR    R0,R3
+         STH   R0,&TARGET_NAME
+               AWHEN C'F',C'A'
+         LH    R0,&TARGET_NAME
+         A     R0,&SOURCE_NAME
+         STH   R0,&TARGET_NAME
+               AWHEN C'G'
+         LH    R0,&TARGET_NAME
+         A     R0,&SOURCE_NAME+4 IGNORES HIGH 32
+         STH   R0,&TARGET_NAME
+               AWHEN C'H'
+         LH    R0,&TARGET_NAME
+         AH    R0,&SOURCE_NAME
+         STH   R0,&TARGET_NAME
+               AWHEN C'P'
+         LH    R0,&TARGET_NAME
+         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         CVB   R3,ZCVT_PWORK
+         AR    R0,R3
+         STH   R0,&TARGET_NAME
+               AWHEN C'Z'
+         LH    R0,&TARGET_NAME
+         PACK  ZCVT_PWORK1(&L_SOURCE/2+1),&SOURCE_NAME
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&L_SOURCE/2+1)
+         CVB   R3,ZCVT_PWORK
+         AR    R0,R3
+         STH   R0,&TARGET_NAME
+               AELSE
+                    MNOTE 4,'GEN_ADD INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'P'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LD    F0,&SOURCE_NAME
+         CFDR  R0,0,F0
+         CVD   R0,ZCVT_PWORK
+         AP    &TARGET_NAME,ZCVT_PWORK
+               AWHEN C'E'
+         LE    F0,&SOURCE_NAME
+         CFER  R0,0,F0
+         CVD   R0,ZCVT_PWORK
+         AP    &TARGET_NAME,ZCVT_PWORK
+               AWHEN C'F',C'A'
+         L     R0,&SOURCE_NAME
+         CVD   R0,ZCVT_PWORK
+         AP    &TARGET_NAME,ZCVT_PWORK
+               AWHEN C'G'
+         LG    R0,&SOURCE_NAME
+         CVDG  R0,ZCVT_PWORK1
+         AP    &TARGET_NAME,ZCVT_PWORK1
+               AWHEN C'H'
+         LH    R0,&SOURCE_NAME
+         CVD   R0,ZCVT_PWORK
+         AP    &TARGET_NAME,ZCVT_PWORK
+               AWHEN C'P'
+         AP    &TARGET_NAME,&SOURCE_NAME
+               AWHEN C'Z'
+         PACK  ZCVT_PWORK,&SOURCE_NAME
+         AP    &TARGET_NAME,ZCVT_PWORK
+               AELSE
+                    MNOTE 4,'GEN_ADD INVALID SOURCE TYPE'           
+                    MEXIT
+               AEND 
+         AWHEN C'Z'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&TARGET_NAME
+         LD    F0,&SOURCE_NAME
+         CFDR  R0,0,F0
+         CVD   R0,ZCVT_PWORK
+         AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK+&POFF.(&PLEN)
+         UNPK  &TARGET_NAME,ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &TARGET_NAME+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'E'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&TARGET_NAME
+         LE    F0,&SOURCE_NAME
+         CFER  R0,0,F0
+         CVD   R0,ZCVT_PWORK
+         AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK+&POFF.(&PLEN)
+         UNPK  &TARGET_NAME,ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &TARGET_NAME+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'F',C'A'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&TARGET_NAME
+         L     R0,&SOURCE_NAME
+         CVD   R0,ZCVT_PWORK
+         AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK+&POFF.(&PLEN)
+         UNPK  &TARGET_NAME,ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &TARGET_NAME+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'G'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&TARGET_NAME
+         LG    R0,&SOURCE_NAME
+         CVDG  R0,ZCVT_PWORK2
+         AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK2
+         UNPK  &TARGET_NAME,ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &TARGET_NAME+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'H'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&TARGET_NAME
+         LH    R0,&SOURCE_NAME
+         CVD   R0,ZCVT_PWORK
+         AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK+&POFF.(&PLEN)
+         UNPK  &TARGET_NAME,ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &TARGET_NAME+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'P'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&TARGET_NAME
+         AP    ZCVT_PWORK1(&PLEN),&SOURCE_NAME 
+         UNPK  &TARGET_NAME,ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &TARGET_NAME+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'Z'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         PACK  ZCVT_PWORK1(&PLEN),&TARGET_NAME
+         PACK  ZCVT_PWORK2(&L_SOURCE/2+1),&SOURCE_NAME
+         AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK2(&L_SOURCE/2+1)   
+         UNPK  &TARGET_NAME,ZCVT_PWORK1(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &TARGET_NAME+&L_TARGET-1,X'F0'
+                     AEND         
+               AELSE
+                    MNOTE 4,'GEN_ADD INVALID SOURCE DATA TYPE'           
+                    MEXIT
+               AEND 
+         AELSE
+               MNOTE 4,'GEN_ADD INVALID TARGET DATA TYPE'           
+               MEXIT
+         AEND
+         AEND
+.*
+.* SET ON SIZE ERROR USING G64 WITH PENDING END_ADD OR PERIOD
+,*
+         AENTRY SET_ON_SIZE_G64
+               :&IE_LVL  SETA  &IE_LVL+1         ADD PENDING END_ADD
+               :&IE_TYPE(&IE_LVL) SETA 11        FOR END_ADD OR PERIOD
+               :&ADD_LAB SETA &ADD_LAB+1
+               :&IE_TCNT(&IE_LVL) SETA &ADD_LAB
+         JO    PG_ADD_&ADD_LAB._ON_SIZE    ERROR IF OVERFLOW
+         LPGR  R15,R1
+         CGR   R15,R0                      COMPARE ABS RESULT TO MAX
+         JNL   PG_ADD_&ADD_LAB._ON_SIZE          ERROR IF TOO BIG
+         &STX   R1,&TARGET_NAME            STORE RESULT
+         AEND
+.*
+.* SET ON SIZE ERROR USING F32 WITH PENDING END_ADD OR PERIOD
+,*
+         AENTRY SET_ON_SIZE_F32
+               :&IE_LVL  SETA  &IE_LVL+1         ADD PENDING END_ADD
+               :&IE_TYPE(&IE_LVL) SETA 11        FOR END_ADD OR PERIOD
+               :&ADD_LAB SETA &ADD_LAB+1
+               :&IE_TCNT(&IE_LVL) SETA &ADD_LAB
+         JO    PG_ADD_&ADD_LAB._ON_SIZE    ERROR IF OVERFLOW
+         LPR   R15,R1
+         C     R15,0(R2)                  COMPARE ABS RESULT TO MAX
+         JNL   PG_ADD_&ADD_LAB._ON_SIZE   ERROR IF TOO BIG
+         &STX  R1,&TARGET_NAME            STORE RESULT
+         AEND
+.*
+.* SET ON SIZE ERROR USING G64_R32 WITH PENDING END_ADD OR PERIOD
+,*
+         AENTRY SET_ON_SIZE_G64_R32
+               :&IE_LVL  SETA  &IE_LVL+1         ADD PENDING END_ADD
+               :&IE_TYPE(&IE_LVL) SETA 11        FOR END_ADD OR PERIOD
+               :&ADD_LAB SETA &ADD_LAB+1
+               :&IE_TCNT(&IE_LVL) SETA &ADD_LAB
+         JO    PG_ADD_&ADD_LAB._ON_SIZE    ERROR IF OVERFLOW SET 
+         STM   R0,R1,&TARGET_NAME
+         AEND
+         MEND

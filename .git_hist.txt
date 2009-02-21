@@ -5038,7 +5038,273 @@ set GIT_COMMITTER_DATE=2021-03-24 19:38:00 +0100
 git commit -m "Reconstructed version v1.4.04a of z390 committed on behalf of Don Higgins"
 git tag -a v1.4.04a -m "Reconstructed version v1.4.04a of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.00
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Add to .gitignore file:
+# Java compiler output stuff
+**/*.[mM][aA][pP]
+
+# Other output stuff
+rt/RTGENDIF.[dD][aA][tT]
+
+# Cobol related stuff
+zcobol/**/[zZ]390
+!zcobol/**/[zZ]390/
+
+==> Stage files for V1.5.00
+git add BLDJAR6.BAT
+git add MZ390.BAT
+git rm  README.TXT
+git add RT/DIRCLEAN.BAT
+git rm  RT/README.TXT
+git add RT/RT.BAT
+git add RT/RTGENCMP.BAT
+git add RT/RTGENCMP.DAT
+git rm  RT/RTGENDIF.DAT
+git add RT/RTLINK1.BAT
+git add RT/RTVSAM1.BAT
+git add RT/Z390.IVP
+git add Z390.IVP
+git add cics/CICS_ABEND.MAC
+git add cics/CICS_ASKTIME.MAC
+git add cics/CICS_CANCEL.MAC
+git add cics/CICS_DELAY.MAC
+git add cics/CICS_DELETEQ.MAC
+git add cics/CICS_DEQ.MAC
+git add cics/CICS_DUMP.MAC
+git add cics/CICS_ENDBR.MAC
+git add cics/CICS_ENQ.MAC
+git add cics/CICS_FORMATTIME.MAC
+git add cics/CICS_FREEMAIN.MAC
+git add cics/CICS_GETMAIN.MAC
+git add cics/CICS_HANDLE.MAC
+git add cics/CICS_IGNORE.MAC
+git add cics/CICS_LINK.MAC
+git add cics/CICS_LOAD.MAC
+git add cics/CICS_POP.MAC
+git add cics/CICS_PUSH.MAC
+git add cics/CICS_READ.MAC
+git add cics/CICS_READNEXT.MAC
+git add cics/CICS_READPREV.MAC
+git add cics/CICS_READQ.MAC
+git add cics/CICS_RECEIVE.MAC
+git add cics/CICS_RELEASE.MAC
+git add cics/CICS_RESETBR.MAC
+git add cics/CICS_RETRIEVE.MAC
+git add cics/CICS_RETURN.MAC
+git add cics/CICS_SEND.MAC
+git add cics/CICS_START.MAC
+git add cics/CICS_STARTBR.MAC
+git add cics/CICS_WRITEQ.MAC
+git add cics/CICS_XCTL.MAC
+git add cics/DFHABBLK.MAC
+git add cics/DFHAID.CPY
+git add cics/DFHALL.BAT
+git add cics/DFHBMSCA.CPY
+git add cics/DFHEIBLK.MAC
+git add cics/DFHEIEND.MAC
+git add cics/DFHEIENT.MAC
+git rm  cics/DFHEIGBL.MAC
+git add cics/DFHEISTG.MAC
+git add cics/DFHMDF.MAC
+git add cics/DFHMDI.MAC
+git add cics/DFHMSD.MAC
+git add cics/DFHPCT.MLC
+git add cics/DFHTCTTE.MAC
+git add cics/Docs/ZCICSAPP.TXT
+git add cics/Docs/ZCICSBMS.TXT
+git add cics/Docs/ZCICSDRF.TXT
+git add cics/Docs/ZCICSHST.TXT
+git add cics/Docs/ZCICSPRE.txt
+git add cics/Docs/ZCICSRME.TXT
+git add cics/Docs/ZCICSSEQ.TXT
+git add cics/Docs/ZCICSSTR.TXT
+git add cics/Docs/ZCICSSYS.TXT
+git add cics/Docs/ZCICSVSM.TXT
+git add cics/GBLFE01.MLC
+git add cics/LCL020E.MLC
+git add cics/LCL0402.MLC
+git add cics/LCL0404.MLC
+git add cics/LCL0602.MLC
+git add cics/LCL060C.MLC
+git add cics/LCL060E.MLC
+git add cics/LCL0610.MLC
+git add cics/LCL0612.MLC
+git add cics/LCL0614.MLC
+git add cics/LCL0A02.MLC
+git add cics/LCL0A04.MLC
+git add cics/LCL0A06.MLC
+git add cics/LCL0C02.MLC
+git add cics/LCL0C04.MLC
+git add cics/LCL0E02.MLC
+git add cics/LCL0E04.MLC
+git add cics/LCL0E06.MLC
+git add cics/LCL0E08.MLC
+git add cics/LCL0E0A.MLC
+git add cics/LCL0E0C.MLC
+git add cics/LCL0E0E.MLC
+git add cics/LCL1002.MLC
+git add cics/LCL1004.MLC
+git add cics/LCL1008.MLC
+git add cics/LCL100A.MLC
+git add cics/LCL100C.MLC
+git add cics/LCL1204.MLC
+git add cics/LCL1206.MLC
+git add cics/LCL1802.MLC
+git add cics/LCL1804.MLC
+git add cics/LCL1812.MLC
+git add cics/LCL4A02.MLC
+git add cics/LCL4A04.MLC
+git add cics/MMMMCIC2.MLC
+git add cics/TESTBED1.MLC
+git add cics/TESTBED3.MLC
+git add cics/TESTBED5.MLC
+git add cics/TESTBED6.MLC
+git add cics/TESTBED7.MLC
+git add cics/TESTBED8.MLC
+git add cics/TESTBED9.MLC
+git add cics/TESTBMS1.MLC
+git add cics/TESTBMS2.MLC
+git add cics/TESTCIC1.MLC
+git add cics/TESTENQ1.MLC
+git add cics/TESTGUI4.MLC
+git add cics/TESTIC01.MLC
+git add cics/TESTIC02.MLC
+git add cics/TESTIC03.MLC
+git add cics/TESTVSM1.MLC
+git add cics/TESTVSM2.MLC
+git add cics/TESTVSM3.MLC
+git rm  cics/VSAM/MYFILE1V.TF2
+git rm  cics/VSAM/MYFILE2F.TF2
+git rm  cics/VSAM/MYFILE6F.TF2
+git rm  cics/VSAM/MYFILE7V.TF2
+git rm  cics/VSAM/MYFILE8F.TF2
+git rm  cics/VSAM/MYFILE9V.TF2
+git add cics/Z390CEBR.MLC
+git add cics/Z390CEMT.MLC
+git add cics/Z390CICS.INI
+git add cics/Z390CICS.MLC
+git add cics/Z390KCP.MLC
+git add cics/Z390LOGO.MLC
+git add cics/seq/SEQCOMP.TXT
+git add cics/seq/SEQDOC.TXT
+git add cics/seq/SEQEXCL.TXT
+git add cics/seq/SEQI0018.TXT
+git rm  cics/seq/SEQO0001.TXT
+git add linklib/UNREF.MLC
+git add mac/DCBD.MAC
+git add mac/SAVE.MAC
+git add mac/WTOR.MAC
+git add mac/ZCALL.MAC
+git add mvs/Z390.IVP
+git add src/az390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/tz390.java
+git add RTCOMP.BAT
+git add RTLIST.BAT
+git add ZC390.BAT
+git add ZC390BLD.BAT
+git add ZC390C.BAT
+git add ZC390CL.BAT
+git add ZC390CLG.BAT
+git add ZC586CLG.BAT
+git add ZCCLEAN.BAT
+git add ZCCLEAN1.BAT
+git add ZCJAVCLG.BAT
+git add ZCRT390.BAT
+git add ZCRT586.BAT
+git add ZCRTJAV.BAT
+git add ZCRTSAVE.BAT
+git add ZCRTTEST.BAT
+git add ZCRTVCE.BAT
+git add ZCVCECLG.BAT
+git add cics/CICS_ADDRESS.MAC
+git add cics/DFHAID.CPZ
+git add cics/DFHBMSCA.CPZ
+git add cics/DFHCWBLK.MAC
+git add cics/DFHEIBLK.CPZ
+git add cics/GBLFE07.MLC
+git add cics/GEN_CLI.MAC
+git add cics/GEN_L.MAC
+git add cics/GEN_MVC.MAC
+git add cics/GEN_MVI.MAC
+git add cics/GEN_MVO.MAC
+git add cics/GEN_ST.MAC
+git add cics/GEN_STC.MAC
+git add cics/GEN_STH.MAC
+git add cics/GEN_XC.MAC
+git add cics/GEN_ZAP.MAC
+git add cics/LCL0202.MLC
+git add cics/LCLCEDF.MLC
+git add cics/MAP01C.CPZ
+git add cics/MAP01C.MLC
+git add cics/MAPEDF.MLC
+git add cics/MAPLOGO.MLC
+git add cics/MAPedf.CPY
+git add cics/TESTBEC1.CBL
+git add cics/TESTBEC2.CBL
+git add cics/TESTBEC4.CBL
+git add cics/TESTBEC5.CBL
+git add cics/TESTBEC6.CBL
+git add cics/TESTBEC7.CBL
+git add cics/TESTBEC8.CBL
+git add cics/TESTBEC9.CBL
+git add cics/TESTBMC1.CBL
+git add cics/TESTICC1.CBL
+git add cics/TESTVSC1.CBL
+git add cics/TESTVSC2.CBL
+git add cics/TESTVSC3.CBL
+git add cics/Z390CEDF.MLC
+git add cics/Z390LCL.MLC
+git add cics/seq/SEQC0018.TXT
+git add cics/seq/SEQC0019.TXT
+git add cics/seq/SEQC0020.TXT
+git add cics/seq/SEQC0021.TXT
+git add cics/seq/SEQC0022.TXT
+git add cics/seq/SEQC0023.TXT
+git add cics/seq/SEQC0024.TXT
+git add cics/seq/SEQC0025.TXT
+git add cics/seq/SEQC0026.TXT
+git add cics/seq/SEQC0027.TXT
+git add cics/seq/SEQC0028.TXT
+git add cics/seq/SEQI0019.TXT
+git add cics/seq/SEQI0020.TXT
+git add cics/seq/SEQI0021.TXT
+git add cics/seq/SEQI0022.TXT
+git add cics/seq/SEQI0023.TXT
+git add cics/seq/SEQI0024.TXT
+git add cics/seq/SEQI0025.TXT
+git add cics/seq/SEQI0026.TXT
+git add cics/seq/SEQI0027.TXT
+git add cics/seq/SEQI0028.TXT
+git add cics/seq/SEQI0029.TXT
+git add mac/CPOOL.MAC
+git add rt/ZCRT.BAT
+git add rt/ZCRT390.BAT
+git add rt/ZCRT586.BAT
+git add rt/ZCRTJAV.BAT
+git add rt/ZCRTSAVE.BAT
+git add rt/ZCRTTEST.BAT
+git add rt/ZCRTVCE.BAT
+git add src/zc390.java
+git add zcobol/
+
+==> Create commit for V1.5.00
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2009-02-21 13:04:00 -0500
+set GIT_COMMITTER_DATE=2021-03-24 21:33:00 +0100
+git commit -m "Reconstructed version v1.5.00 of z390 committed on behalf of Don Higgins"
+git tag -a v1.5.00 -m "Reconstructed version v1.5.00 of z390 committed on behalf of Don Higgins"
+git gc --aggressive
 
 
 

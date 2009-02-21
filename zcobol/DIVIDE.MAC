@@ -1,0 +1,257 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This DR code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 10/30/08 initial coding for global MULTIPLY using ADD as model
+.* 02/16/09 upgrade using ZCGETFLD to support subscripts and qual.
+.*********************************************************************
+         DIVIDE  
+         COPY  ZC_WS
+         :&PARM_IX      SETA 1
+         :&FIELD_REG SETC 'R1'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         :&NDR SETC '&FIELD_NAME'                NAME   DIVISOR
+         :&XDR SETA &FIELD_IX                    INDEX  DIVISOR
+         AIF   (&XDR GT 0)
+               :&TDR SETC '&SYM_PIC_TYPE(&XDR)'  TYPE   DIVISOR
+               :&LDR SETA &SYM_LEN(&XDR)         LENGTH DIVISOR
+               :&SDR SETB &SYM_PIC_SIGN(&XDR)    SIGN   DIVISOR
+               :&PDR SETA &SYM_PIC_DEC(&XDR)     DEC-PL DIVISOR
+         AELSE
+               :&TDR SETC ''  DON'T KNOW YET
+               :&LDR SETA 0   DON'T KNOW YET
+               :&SDR SETB 0   DON'T KNOW YET
+               :&PDR SETA 0   DON'T KNOW YET
+         AEND
+         :&INTO_BY SETC '&SYSLIST(&PARM_IX)'
+         AIF   ('&INTO_BY' NE 'INTO' AND '&INTO_BY' NE 'BY') 
+               MNOTE 8,'DIVIDE MISSING INTO OR BY'
+               MEXIT
+         AEND
+         :&PARM_IX SETA &PARM_IX+1
+         :&FIELD_REG SETC 'R2'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD                    NAME   DIVIDEND
+         :&NDD SETC '&FIELD_NAME'                INDEX  DIVIDEND
+         :&XDD SETA &FIELD_IX
+         AIF   (&XDD GT 0)                        
+               :&TDD SETC '&SYM_PIC_TYPE(&XDD)'  TYPE   DIVIDEND
+               :&LDD SETA &SYM_LEN(&XDD)         LENGTH DIVIDEND
+               :&SDD SETB &SYM_PIC_SIGN(&XDD)    SIGN   DIVIDEND
+               :&PDD SETA &SYM_PIC_DEC(&XDD)     DEC-PL DIVIDEND
+         AELSE
+               :&TDD SETC ''  DON'T KNOW YET
+               :&LDD SETA 0   DON'T KNOW YET
+               :&SDD SETB 0   DON'T KNOW YET
+               :&PDD SETA 0   DON'T KNOW YET
+         AEND
+         AIF   ('&TDD' EQ '' AND '&TDR' NE '') COPY DR TYPE FOR DD LIT
+               :&TDD SETC '&TDR'
+               :&LDD SETA &LDR
+               :&SDD SETB &SDR
+               ACALL SET_LIT_PDD
+         AEND
+         AIF   ('&TDR' EQ '' AND '&TDD' NE '') COPY DD TYPE FOR DR LIT
+               :&TDR SETC '&TDD'
+               :&LDR SETA &LDD
+               :&SDR SETB &SDD
+               ACALL SET_LIT_PDR
+         AEND
+         AIF   ('&INTO_BY' EQ 'BY')  SWAP DIVIDEND AND DIVIOR
+               :&TN  SETC '&NDD'
+               :&NDD SETC '&NDR'
+               :&NDR SETC '&TN'
+               :&TX  SETA &XDD
+               :&XDD SETA &XDR
+               :&XDR SETA &TX
+               :&TT  SETC '&TDD'
+               :&TDD SETC '&TDR'
+               :&TDR SETC '&TT'
+               :&TL  SETA &LDD
+               :&LDD SETA &LDR
+               :&LDR SETA &TL
+               :&TS  SETB &SDD
+               :&SDD SETB &SDR
+               :&SDR SETB &TS
+               :&TP  SETA &PDD
+               :&PDD SETA &PDR
+               :&PDR SETA &TP
+         AEND
+         :&NR SETC ''   ASSUME NO REMAINDER STORED
+         :&XR SETA 0
+         :&TR SETC ''
+         :&LR SETA 0
+         :&SR SETB 0
+         :&PR SETA 0
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'GIVING')
+               :&PARM_IX SETA &PARM_IX+1
+               ACALL DIVIDE_GIVING
+         AELSE                                        
+               ACALL DIVIDE_INTO_BY
+         AEND
+         MEXIT
+.*
+.* DIVIDE GIVING
+.*
+         AENTRY DIVIDE_GIVING
+         :&FIELD_REG SETC 'R3'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD                 
+         :&NQ SETC '&FIELD_NAME'                 NAME   QUOTIENT 
+         :&XQ SETA &FIELD_IX                     INDEX  QUOTIENT
+         AIF   (&XQ EQ 0)    
+                MNOTE 8,'DIVIDE UNDEFINED QUOTIENT - &NQ'
+                MEXIT
+         AEND
+         :&TQ SETC '&SYM_PIC_TYPE(&XQ)'          TYPE   QUOTIENT
+         :&LQ SETA &SYM_LEN(&XQ)                 LENGTH QUOTIENT
+         :&SQ SETB &SYM_PIC_SIGN(&XQ)            SIGN   QUOTIENT  
+         :&PQ SETA &SYM_PIC_DEC(&XQ)             DEC-PL QUOTIENT 
+         AIF ('&TDR' EQ '')   COPY QUOTIENT TYPE IF DIVISOR LIT
+             :&TDR SETC '&TQ'
+             :&LDR SETA &LQ
+             :&SDR SETB &SQ
+             ACALL SET_LIT_PDR
+         AEND
+         AIF ('&TDD' EQ '')   COPY QUOTIENT TYPE IF DIVIDEND LIT
+             :&TDD SETC '&TQ'
+             :&LDD SETA &LQ
+             :&SDD SETB &SQ
+             ACALL SET_LIT_PDD
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'REMAINDER')
+               AIF ('&TQ' EQ 'D' OR '&TQ' EQ 'E')
+                   MNOTE 8,'DIVIDE REMAINDER INVALID FOR COMP-1 OR 2'
+                   MEXIT
+               AEND
+               :&PARM_IX SETA &PARM_IX+1
+               :&FIELD_REG SETC 'R14'
+               :&FIELD_SS1 SETB 0
+               ACALL GET_PARM_FIELD                 
+               :&NR SETC '&FIELD_NAME'                 NAME   REMAINDER
+               :&XR SETA &FIELD_IX                     INDEX  REMAINDER
+               AIF   (&XR EQ 0)    
+                      MNOTE 8,'DIVIDE UNDEFINED REMAINDER - &NR'
+                      MEXIT
+               AEND
+               :&TR SETC '&SYM_PIC_TYPE(&XR)'          TYPE   REMAINDER
+               :&LR SETA &SYM_LEN(&XR)                 LENGTH REMAINDER
+               :&SR SETB &SYM_PIC_SIGN(&XR)            SIGN   REMAINDER
+               :&PR SETA &SYM_PIC_DEC(&XR)             DEC-PL REMAINDER
+         AEND
+         ACALL OPTIONS_GEN_DIV_MOVE
+         AEND
+.*
+.* DIVIDE INTO BY - REPLACE ONE OR MORE DIVIDENDS WITH QUOTIENT
+.*
+         AENTRY DIVIDE_INTO_BY
+         AIF   (&XDD EQ 0)
+               MNOTE 8,'LITERAL DIVIDEND REQUIRES GIVING'
+               MEXIT
+         AEND
+         :&NQ SETC '&NDD'  STORE QUOTIENT IN DIVIDEND
+         :&XQ SETA &XDD                    INDEX  QUOTIENT
+         :&TQ SETC '&TDD'                  TYPE   QUOTIENT
+         :&LQ SETA &LDD                    LENGTH QUOTIENT
+         :&SQ SETB &SDD                    SIGN   QUOTIENT
+         :&PQ SETA &PDD                    DEC-PL QUOTIENT
+         ACALL OPTIONS_GEN_DIV_MOVE
+         AEND
+.*
+.* OPTIONS GEN DIV MOVE - SET ON SIZE ERROR OPTIONS, GEN DIV, MOVE DUP
+.*
+         AENTRY OPTIONS_GEN_DIV_MOVE
+         :&MOVE_IX SETA &PARM_IX
+         ACALL SET_OPTIONS
+         ACALL CALL_GEN_DIV
+         :&PARM_IX SETA &MOVE_IX
+         AWHILE (&PARM_IX LE &LAST_PARM)
+               :&FIELD_REG SETC 'R1'
+               :&FIELD_SS1 SETB 1
+               ACALL GET_PARM_FIELD                 
+               GEN_MOVE &FIELD_NAME,&FIELD_IX,&NQ,&XQ
+         AEND
+         AEND
+.*
+.* SET OPTIONS - ROUND AND ON SIZE ERROR
+.*
+         AENTRY SET_OPTIONS
+         :&ROUNDED     SETB 0
+         :&ON_SIZE     SETB 0
+         :&NOT_ON_SIZE SETB 0
+         :&LAST_PARM   SETA 0
+         AWHILE (&PARM_IX LE N'&SYSLIST)
+               AIF     ('&SYSLIST(&PARM_IX)' EQ 'ON'                   X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
+                     :&ON_SIZE SETB 1      
+                     AIF (&LAST_PARM EQ 0)
+                         :&LAST_PARM SETA &PARM_IX-1
+                     AEND                              
+                     :&PARM_IX SETA N'&SYSLIST+2
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'NOT'                  X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ON'             X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
+                     :&NOT_ON_SIZE SETB 1                                
+                     AIF (&LAST_PARM EQ 0)
+                         :&LAST_PARM SETA &PARM_IX-1
+                     AEND                              
+                     :&PARM_IX SETA N'&SYSLIST+3
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'REMAINDER')
+                     MNOTE 8,'DIVIDE MULT GIVING WITH REMAINDER ERROR'
+                     MEXIT
+               AEND 
+               :&PARM_IX SETA &PARM_IX+1
+         AEND
+         AIF (&LAST_PARM EQ 0)
+             :&LAST_PARM SETA N'&SYSLIST
+         AEND                              
+         AEND
+.*
+.* CALL GEN DIV
+.*
+         AENTRY CALL_GEN_DIV
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'ROUNDED')
+               :&ROUNDED SETB 1
+               :&PARM_IX SETA &PARM_IX+1
+         AELSE
+               :&ROUNDED SETB 0
+         AEND
+       GEN_DIV &NDD,&TDD,&LDD,&PDD, DIVIDEND  NAME/LIT,TYPE,LEN,PLACES X                  
+               &NDR,&TDR,&LDR,&PDR, DIVISOR   NAME/LIT,TYPE,LEN,PLACES X                  
+               &NQ,&TQ,&LQ,&SQ,&PQ, QUOTIENT  NAME,TYPE,LEN,SIGN,PLCS  X                  
+               &NR,&TR,&LR,&SR,&PR, REMAINDER NAME,TYPE,LEN,SIGN,PLCS  X
+               &ROUNDED,       1 IF ROUNDED SPECIFIED                  X
+               &ON_SIZE,       1 IF ON SIZE SPECIFIED                  X
+               &NOT_ON_SIZE    1 IF NOT_ON_SIZE SPECIFIED                  
+         AEND
+.*
+.* SET LIT PDD
+.*
+         AENTRY SET_LIT_PDD
+         :&DP SETA ('&NDD' INDEX '.')
+         AIF  (&DP GT 0)
+              :&PDD SETA K'&NDD-&DP
+         AELSE
+              :&PDD SETA 0
+         AEND
+         AEND
+.*
+.* SET LIT PDR
+.*
+         AENTRY SET_LIT_PDR
+         :&DP SETA ('&NDR' INDEX '.')
+         AIF  (&DP GT 0)
+              :&PDR SETA K'&NDR-&DP
+         AELSE
+              :&PDR SETA 0
+         AEND
+         AEND
+         COPY ZCGETFLD
+         MEND

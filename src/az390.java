@@ -335,6 +335,12 @@ public  class  az390 implements Runnable {
         * 12/05/08 RPI 955 correct error message for over 256 on MVC
         * 12/05/08 RPI 959 suppress ERRSUM report if no erros
         * 12/17/08 RPI 978 prevent trap on DS/DC with no operands
+        * 01/14/09 RPI 982 use higher base reg for coinciding ranges
+        * 02/01/09 RPI 987 fix labelled USING and DROP to handle mixed case
+        * 02/03/09 RPI 988 allow relative addressing across CSECT's in same assembly
+        * 02/04/09 RPI 991 correct unary sign followed by pfx operator AHI 1,-L'var etc.
+        * 02/10/09 RPI 994 support neg base displacements for LA using depending USING offsets
+        * 02/10/09 RPI 995 set az390_private_sect for mz390 use 
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -420,6 +426,7 @@ public  class  az390 implements Runnable {
     int    xref_bal_index = 0;
     boolean pass_bal_eof = false;
     boolean az390_waiting = false;
+    boolean az390_private_sect = false; // RPI 995
     /*
      * static limits
      */
@@ -560,6 +567,7 @@ public  class  az390 implements Runnable {
     boolean cur_sym_sect = false; // RPI 553 indicate if sym is sect or not
     boolean sect_change = false;
     byte prev_sect_type = sym_cst;
+    String private_csect = "$PRIVATE"; // RPI 995
     String[] sym_type_desc = {
     	"ABS","CST","DST","ENT","EXT","REL","RLD","LCT","WXT","UND"}; //RPI182 RPI 694
     String[]  sym_name         = null;
@@ -750,7 +758,7 @@ public  class  az390 implements Runnable {
           2,2,3,2,3,2,   // 2 * / prev mpy/div
           3,3,3,4,3,0,   // 3 (   prev open
           0,0,0,0,3,0,   // 4 )   prev close
-		  5,5,3,5,5,5,   // 5 ?'  prev pfx oper L' U+/= RPI 313
+		  5,5,3,5,3,5,   // 5 ?'  prev pfx oper L' U+/= RPI 313 RPI 991 pfx/pfx=3
           3,3,7,6,3,6,   // 6 ~   prev terminator
 		  };
      /* action code routines:
@@ -3711,7 +3719,10 @@ private void process_sect(byte sect_type,String sect_name){
 	}
 	if (sect_name == null 
 		|| sect_name.length() == 0){
-		sect_name = "$PRIVATE";  // private code
+		sect_name = private_csect;  // private code
+		if (mz390_call && cur_pass == 1){
+			az390_private_sect = true; // RPI 995
+		}
 	}
 	cur_esd_sid = find_sym(sect_name);
 	if (cur_esd_sid < 1 
@@ -4362,7 +4373,7 @@ private void proc_loc_ctr(){
 private void proc_exp_sym(){
 	if (exp_token.length() > 1 && exp_token.charAt(exp_token.length()-1) == '.'){
 		if (gen_obj_code){
-		   exp_use_lab = exp_token.substring(0,exp_token.length()-1);
+		   exp_use_lab = exp_token.substring(0,exp_token.length()-1).toUpperCase(); //RPI 987 add uc
 		}
 	} else {
         exp_sym_last = true;
@@ -4712,10 +4723,6 @@ private void exp_term(){
         exp_esd = exp_stk_sym_esd[0];
         if (exp_esd == esd_cpx_rld){
         	reduce_exp_rld();
-        }
-        if (exp_use_lab != null && exp_esd < 1){
-        	log_error(120,"invalid use of user label");  // RPI 375
-        	exp_use_lab = null;
         }
         if (exp_esd == esd_sdt){
            	exp_type = sym_sdt;
@@ -5609,7 +5616,7 @@ private void drop_using(){
 	}
 	tz390.parm_match = tz390.parm_pattern.matcher(bal_parms);
 	while (tz390.parm_match.find()){
-		cur_use_lab = tz390.parm_match.group();  // RPI 431 was String creating loc var
+		cur_use_lab = tz390.parm_match.group().toUpperCase();  // RPI 431, RPI 987
 		if (cur_use_lab.charAt(0) != ','){
            if (cur_use_lab.charAt(0) > ' '){
    		      if (tz390.find_key_index('U',cur_use_lab) != -1){
@@ -5635,7 +5642,7 @@ private void drop_cur_use_label(){
 	 * remove labeled using if found
 	 */
 	int index = cur_use_start;
-	while (index < cur_use_end){
+	while (index < cur_use_end){  
 		if (use_lab[index] != null && use_lab[index].equals(cur_use_lab)){
 			cur_use_end--;
 			if (index < cur_use_end){ // RPI 431 was <
@@ -6003,7 +6010,7 @@ private String get_rel_exp_iiii(){
 	 *       or odd address.
 	 */
 	String hex_iiii = "iiii";
-	if (exp_esd == esd_base[cur_esd]){ // RPI 301
+	if (exp_esd == esd_base[cur_esd] || tz390.opt_allow){ // RPI 301 RPI 988
 		int hw_off = (exp_val - loc_start)/2;
 		if (hw_off >= -0x8000 && hw_off <= 0x7fff){
 			if ((exp_val & 0x1) == 0){
@@ -6029,7 +6036,7 @@ private String get_rel_exp_llllllll(){
 	 *   1.  Error if not same csect or odd address
 	 */
 	String hex_llllllll= "llllllll";
-	if (exp_esd == esd_base[cur_esd]){ // RPI 301
+	if (exp_esd == esd_base[cur_esd] || tz390.opt_allow){ // RPI 301 RPI 988
 		if ((exp_val & 0x1) == 0){
 			exp_val = (exp_val - loc_start)/2;
 			hex_llllllll = tz390.get_hex(exp_val,8);
@@ -6071,7 +6078,7 @@ private String get_exp_rel_bddd(){
 	int test_len = 0;
 	int index = cur_use_start;
 	cur_esd_base = exp_esd; // RPI 301
-	while (index < cur_use_end){
+	while (index < cur_use_end){ 
 		if (use_base_esd[index] == cur_esd_base // RPI 301
 			&& ((exp_use_lab != null 
 				 && use_lab[index].equals(exp_use_lab))  // RPI 274
@@ -6084,17 +6091,23 @@ private String get_exp_rel_bddd(){
 			} else {
 				test_len = use_base_len[index];
 			}
-			if (test_offset < cur_use_off
-					&& test_offset >= 0
+			if (test_offset <= cur_use_off  // RPI 982
+					&& test_offset + use_reg_loc[index] >= 0  // RPI 994
 					&& test_offset < test_len){
-				cur_use_reg = use_reg[index];
-				cur_use_off = test_offset + use_reg_loc[index];
+				if (test_offset < cur_use_off 
+					|| use_reg[index] > cur_use_reg){ // RPI 982
+					cur_use_reg = use_reg[index];
+					cur_use_off = test_offset + use_reg_loc[index];
+				}
 			} else if (get_bdddhh
-					&& test_offset > cur_use_neg_off
+					&& test_offset >= cur_use_neg_off  // RPI 982
 					&& test_offset < 0
 					){
-				cur_use_neg_reg = use_reg[index];
-				cur_use_neg_off = test_offset + use_reg_loc[index];
+				if (test_offset > cur_use_off 
+						|| use_reg[index] > cur_use_reg){ // RPI 982
+					cur_use_neg_reg = use_reg[index];
+					cur_use_neg_off = test_offset + use_reg_loc[index];
+				}
 			}
 		}
 		index++;
@@ -8076,7 +8089,7 @@ private int add_esd(int sid,byte sect_type){
 		   tot_esd++;
 		   esd_sid[tot_esd] = sid;
 		   esd_base[tot_esd] = tot_esd; // RPI 301
-		   if (sect_type != sym_ent){
+		   if (sect_type != sym_ent){ // may already be set to rel or cst
 			   sym_esd[sid] = tot_esd;
 			   sym_type[sid] = sect_type;
 		   }

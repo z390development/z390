@@ -144,6 +144,9 @@ P1812CSM EQU   X'20'                 SYMBOLIC CURSOR
 P1812ALM EQU   X'04'                 ALARM
 P1812FKB EQU   X'02'                 FREEKB
 P1812FRS EQU   X'01'                 FRSET
+         DS    X
+         DS    X                  FF=NOHANDLE
+         DS    X
 P1812RSP DS    AL4                RESP
 P1812RS2 DS    AL4                RESP2
 P1812END EQU   *                  END MARKER

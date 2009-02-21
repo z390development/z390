@@ -56,6 +56,18 @@ DORESP2  EQU   *
          B     RETURN             EXIT
 *
 LOADOK   EQU   *
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDF              EXIT IF NOT
+* R1 IS NOT RESTORED BY THE STACKING PROCESS
+         ST    R1,SAVER1          SAVE PARM POINTER
+* EIBPROG IS DESTROYED BY EDF
+         MVC   SAVEPROG,EIBPROG   SAVE THE PROGRAM NAME
+         MVI   TCTTEEDL,X'FF'     SET DIRECT LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+         L     R1,SAVER1          RESTORE PARM POINTER
+         MVC   EIBPROG,SAVEPROG   RESTORE PROGRAM NAME
+NOEDF    EQU   *
 * LINK LEVEL 0 HAS NO EISTG
          CLI   P0E02LV0,X'FF'     LINK LEVEL 0 ?
          BE    ALLDONE            EXIT IF IT IS
@@ -76,9 +88,9 @@ ALLDONE  EQU   *
          AHI   R0,1               +1
          STH   R0,TCTTELNK        STORE BACK
          ST    R1,SAVER1          SAVE PARM POINTER
-         LOAD  EPLOC=EIBRSRCE
+         LOAD  EPLOC=EIBPROG
          L     R1,SAVER1          RESTORE PARM POINTER
-         LA    R1,P0E02COM        R1=A(COMMAREA)
+         LA    R1,P0E02EIB        R1=A(EIB,COMMAREA)
          L     R12,SAVER12        RESTORE ORIGINAL R12
          BR    R0                 GO TO ENTRY POINT
 *
@@ -88,6 +100,7 @@ RETURN   EQU   *
 *
 SAVER1   DS    F                  SAVE R1
 SAVER12  DS    F                  SAVE R12
+SAVEPROG DS    CL8                SAVE EIBPROG
 *
 BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
          DC    H'12'              BLDL ENTRY LENGTH
@@ -97,10 +110,13 @@ BLDLNAME DS    CL8                BLDL ENTRY NAME TO FIND
 P0E02    DSECT
 P0E02FN  DS    XL2                FUNCTION CODE
 P0E02PGM DS    CL8                PROGRAM
+P0E02EIB DS    AL4                EIB
 P0E02COM DS    AL4                COMMAREA ADDRESS
 P0E02CLN DS    XL2                COMMAREA LENGTH
 P0E02LV0 DS    X                  FF=LINK LEVEL 0
+         DS    X
          DS    X                  FF=NOHANDLE
+         DS    X
 P0E02RSP DS    AL4                RESP
 P0E02RS2 DS    AL4                RESP2
 P0E02END EQU   *                  END MARKER

@@ -98,6 +98,7 @@ P1206TCT DS    AL4                TCTTE
 P1206RES DS    AL4                RESOURCE ADDRESS
 P1206LEN DS    XL2                LENGTH
          DS    X                  FF=NOHANDLE
+         DS    X
 P1206RSP DS    AL4                RESP
 P1206RS2 DS    AL4                RESP2
 P1206END EQU   *                  END MARKER

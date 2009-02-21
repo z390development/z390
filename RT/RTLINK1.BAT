@@ -16,6 +16,7 @@ call rt\RT4 linklib\DAT      %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 linklib\IEFBR14  sysobj(linklib) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 linklib\TESTFPC1 sysobj(linklib) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 linklib\TESTFPC2 sysobj(linklib) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call zc390bld                                %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem gen zstrmac translator using zstrmac.bat 
 call zstrmac linklib\zstrmac.zsm linklib\zstrmac.txt notiming stats
 rem verify zstrmac.txt matches linklib\zstrmac2.sav

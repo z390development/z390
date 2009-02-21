@@ -1,0 +1,18 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 11/26/08 initial coding GEN_PM_LVL                      
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+         GEN_PM_LVL &LAB 
+         COPY  ZC_WS
+         :&IE_LVL SETA &IE_LVL+1
+         :&IE_TCNT(&IE_LVL) SETA &PM_LAB
+         :&IE_TYPE(&IE_LVL) SETA 4 PM TYPE
+         :&IE_PM_LAB(&IE_LVL) SETC '&LAB'
+         MEND

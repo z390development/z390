@@ -10,6 +10,7 @@
 .* 04/27/07 RPI 601 - support R0-R15 register references     
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 01/15/09 RPI 984 correct to use R13 when ending reg > first reg
 .*********************************************************************
 &N       SAVE  &REGS,   (REGS TO SAVE)                                 X
                &T,      IGNORED                                        X
@@ -42,7 +43,7 @@
          AIF   (&R2 EQ 13).ERR
          AIF   (&R1 GE 14).R1_GE_14
          AIF   (&R1 GT &R2).ERR OVERLAPS 13        
-         STM   &R1,&R2,20+4*&R1(13)
+         STM   &R1,&R2,20+4*&R1.(13)   RPI 984
          AGO   .EXIT
 .R1_GE_14 ANOP
          AIF   (&R2 EQ 14 AND &R1 EQ 15).ERR OVERLAPS 13

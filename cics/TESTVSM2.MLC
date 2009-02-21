@@ -4,7 +4,6 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-         DFHEIGBL
          DFHEISTG
 MYDATA   DS    CL50               DATA AREA
 MYLEN    DS    XL2                RECEIVED LENGTH
@@ -13,7 +12,7 @@ MYRID1   DS    XL4                RIDFLD (RRN)
 MYRID2   DS    XL4                RIDFLD (RRN)
 FWTSBA   DS    XL4                WCC,SBA FOR FOP MSG
 FWTMSG   DS    CL(FOPLN)          FOP MESSAGE
-TESTVSM2 DFHEIENT CODEREG=(R12,R3)
+TESTVSM2 DFHEIENT CODEREG=(R12,R3,R4)
 *
 * TEST VSAM 2
 *
@@ -313,10 +312,10 @@ PLEXLOOP EQU   *
 *
 * MYFILE07, RRN 10 (RECS 3-5), RESETBR, RRN 99 (RECS 10-8)
          MVC   FWTSBA,FOP1C2      MOVE WCC,SBA
+         MVI   FOPSEP+1,C' '      RESET SEPARATOR
          LH    R7,FOPL            MESSAGE LENGTH
          AHI   R7,-1              SHORTEN BY 1
          STH   R7,FOPL            STORE BACK
-         MVI   FOPSEP+1,C' '      RESET SEPARATOR
          MVC   FOPNAME,=CL8'MYFILE07' SET FILENAME IN MESSAGE
          MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
          MVC   FOPFUNC,=CL8'RESETBR' SET FUNCTION IN MESSAGE
@@ -430,7 +429,7 @@ FOP20    TN3270 WCC_KD,(SBA,22,1)
 FOP21    TN3270 WCC_KD,(SBA,23,1)
 FOP1C2   TN3270 WCC_KD,(SBA,3,42)
 *
-* ESDS MYFILE01 READ   RBA REC  3
+* RRDS MYFILE06 READ   RBA REC  3
 FOPTYPE  DS    CL4
          DC    C'/'
 FOPFIXVR DS    CL3

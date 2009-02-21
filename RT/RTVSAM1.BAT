@@ -32,7 +32,7 @@ call vsam\test\KSF1TEST @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\KSF2TST1 @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\KSF2TST2 @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\KSF2TST3 @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
-call vsam\test\KSF2TST4 @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
+call vsam\test\KSF2TST4 @vsam\rtvsam notracev %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\ESF4RPO1 @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\ESV1RPO1 @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\ESV5RPO1 @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9

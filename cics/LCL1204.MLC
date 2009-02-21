@@ -134,7 +134,9 @@ P1204RES DS    AL4                RESOURCE ADDRESS
 P1204LEN DS    XL2                LENGTH
 P1204HCN DS    AL4                A(DFHEIHCN)
 P1204NOS DS    X                  FF=NOSUSPEND
+         DS    X
 P1204NOH DS    X                  FF=NOHANDLE
+         DS    X
 P1204RSP DS    AL4                RESP
 P1204RS2 DS    AL4                RESP2
 P1204END EQU   *                  END MARKER

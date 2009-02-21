@@ -1,0 +1,24 @@
+      *
+      * EXEC INTERFACE BLOCK
+      *
+       01  DFHEIBLK.
+           02  EIBHEAD  PIC X(8).
+           02  EIBTIME  PIC 9(7) COMP-3.
+           02  EIBDATE  PIC 9(7) COMP-3.
+           02  EIBTRNID PIC X(4).
+           02  EIBTASKN PIC 9(7) COMP-3.
+           02  EIBTRMID PIC X(4).
+           02  FILLER   PIC X(2).
+           02  EIBCPOSN PIC 9(4) COMP.
+           02  EIBCALEN PIC 9(4) COMP.
+           02  EIBAID   PIC X.
+           02  EIBFN    PIC 9(4) COMP.
+           02  EIBRCODE PIC X(6).
+           02  EIBREQID PIC X(8).
+           02  EIBDS    PIC X(8).
+           02  EIBRSRCE PIC X(8).
+           02  EIBRESP  PIC 9(9) COMP.
+           02  EIBRESP2 PIC 9(9) COMP.
+           02  EIBPROG  PIC X(8).
+           02  EIBDTFRM PIC X.
+

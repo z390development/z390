@@ -1,0 +1,44 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/15/08                                                 *
+.*********************************************************************
+.* 04/15/08 initial coding for Z390 READ    
+.* 10/07/08 ZSTRMAC
+.*********************************************************************
+         GEN_READ &MOVE,&AT                       
+         COPY  ZC_WS
+.*
+.* SET EODAD TO ZERO OR ADDRESS OR AT END ROUTINE FOLLOWING READ
+.*
+       AIF   ('&AT' NE '')   
+         :&AT_END_LAB SETA &AT_END_LAB+1
+         LARL  R0,PG_&FILE_NAME(&FILE_IX)._AT_END&AT_END_LAB
+       AELSE
+         SR    R0,R0 CLEAR ANY PREVIOUS EXIT
+       AEND
+         ST    R0,&FILE_NAME(&FILE_IX)+DCBEODAD-IHADCB SET EODAD EXIT
+.*
+.* READ RECORD
+.*
+         GET   &FILE_NAME(&FILE_IX),&FILE_RECORD(&FILE_IX)
+.*
+.* MOVE RECORD TO INTO FIELD IF ANY
+.*
+       AIF   ('&MOVE' NE '')    
+         MOVE  &FILE_RECORD(&FILE_IX),TO,&MOVE
+       AEND
+.*
+.* IF AT END ROUTINE, BRANCH TO END_READ AND GEN AT END LABEL
+.*
+       AIF   ('&AT' NE '')   
+         J    PG_&FILE_NAME(&FILE_IX)._END_READ&AT_END_LAB
+         GEN_LABEL &FILE_NAME(&FILE_IX)._AT_END&AT_END_LAB,AT_END
+         :&IE_LVL  SETA  &IE_LVL+1         ADD PENDING END_READ
+         :&IE_TYPE(&IE_LVL) SETA 3         FOR END_READ OR PERIOD
+         :&IE_TCNT(&IE_LVL) SETA &AT_END_LAB
+       AEND
+         MEND

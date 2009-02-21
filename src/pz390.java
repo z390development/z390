@@ -282,7 +282,8 @@ public class pz390 {
      * 09/12/08 RPI 764	change trace info for GL/PL svcs 
      * 11/06/08 rpi 947 add ascii printable text display of MVC data moved  
      * 12/13/08 RPI 975 prevent SFFF on dirty high addr bit for printable hex 
-     * 01/12/09 RPI 981 prevent PD target update after data exception           
+     * 01/12/09 RPI 981 prevent PD target update after data exception   
+     * 01/18/09 RPI 985 optimize XC instruction for S1=S2        
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -4093,6 +4094,10 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_ss();
 			psw_cc = psw_cc0;
+			if (bd1_loc == bd2_loc){
+				Arrays.fill(mem_byte,bd1_loc,bd1_loc+rflen,(byte)0); // RPI 985
+			    break;
+			}
 			while (rflen >= 8) {
 				rlv1 = mem.getLong(bd1_loc) ^ mem.getLong(bd2_loc);
 				mem.putLong(bd1_loc, rlv1);

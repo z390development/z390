@@ -1,0 +1,146 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+GBLFE07  SUBENTRY
+*
+* FN=FE07  CWA PROCESSOR
+*
+*         +0/DSCT +4/DSECT +8/IND   +12     +16/IND +20
+* R1  >>> WTOMSG, REQDSECT,CWAANCHR,CWALENG,CONNID, TRCEZ390
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SAVE PARM POINTER
+         L     R4,20(R3)          ADDRESS OF TRCEZ390
+         MVC   TRCEZ390,0(R4)     MOVE IT
+         L     R9,0(R3)           WTODSECT ADDRESS
+         USING WTODSECT,R9
+         L     R6,4(R3)           ADDRESS RECEIVED DATA
+         USING DFHCWBLK,R6
+         MVC   WTOFN,CWAFN        SET FN
+         MVC   WTOTERM,CWATERM    SET TERMID
+         MVC   WTOTRAN,CWATRAN    SET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         UNPK  WTOTASKN,CWATASKN  UNPACK TASK NUMBER
+         OI    WTOTASKN+6,X'F0'   CLEAR SIGN
+         CLI   CWARDWRT,X'00'     IS IT CWA GET ?
+         BNE   TRACEPUT           EXIT IF NOT
+         MVC   WTODESC,=CL45'<<<Z390KCP CWA GET    REQUEST'
+         B     TRACEIT            EXIT
+*
+TRACEPUT EQU   *
+         MVC   WTODESC,=CL45'<<<Z390KCP CWA PUT    REQUEST'
+TRACEIT  EQU   *
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+         BAL   R11,CICSTRCE       TRACE IT
+         CLI   CWARDWRT,X'00'     IS IT CWA GET ?
+         BNE   CWAPUT             EXIT IF NOT
+* GETMAIN THE PREFIX+CWALENG AND SEND THEM BACK
+         XC    CWALENG,CWALENG    ASSUME NO CWA
+         L     R5,12(R3)          R5=ADDRESS OF LENGTH
+         LA    R7,CWPREFIX        R7=PREFIX LENGTH
+         L     R8,16(R3)          R8=CONN ID ADDRESS
+         L     R8,0(R8)           R8=CONNID
+         ICM   R5,15,0(R5)        ANY CWA ?
+         BNZ   GOTCWA             EXIT IF SOME
+* SEND PREFIX ONLY, NO CWA
+         TCPIO SEND,MSG=DFHCWBLK,LMSG=(R7),CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         MVC   WTODESC,=CL45'>>>Z390KCP CWA GET    COMPLETED'
+         BAL   R11,CICSTRCE       TRACE IT
+         B     RETURN             EXIT
+*
+GOTCWA   EQU   *
+         ST    R5,CWALENG         SET CWA LENGTH
+         AR    R7,R5              R7=PREFIX+CWA LENGTH
+         GETMAIN R,LV=(R7)
+         ST    R1,GETSAVE         SAVE ADDRESS FOR FREEMAIN
+         ST    R0,GETLENG         SAVE LENGTH FOR FREEMAIN
+         MVC   0(CWPREFIX,R1),DFHCWBLK MOVE PREFIX
+         LA    R0,CWPREFIX(R1)    SET TARGET ADDRESS
+         LR    R1,R5              SET TARGET LENGTH
+         L     R14,8(R3)          R14=ADDRESS OF CWA ADDRESS
+         L     R14,0(R14)         R14=CWA ADDRESS
+         LR    R15,R1             R15=CWA LENGTH
+         MVCL  R0,R14             MOVE CWA
+         L     R1,GETSAVE         R1=ADDRESS FOR SEND
+* SEND PREFIX AND CWA
+         TCPIO SEND,MSG=(R1),LMSG=(R7),CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         FREEMAIN A=GETSAVE,LA=GETLENG
+         B     RETURN             EXIT
+*
+CWAPUT   EQU   *
+* MOVE RECEIVED CWA INTO THE REAL ONE
+         L     R6,8(R3)           SET TARGET
+         L     R6,0(R6)                      ADDRESS (CWA)
+         L     R7,12(R3)          R7=ADDRESS OF LENGTH
+         L     R7,0(R7)           R7=CWA LENGTH
+         L     R14,4(R3)          ADDRESS RECEIVED DATA
+         AHI   R14,CWPREFIX       R14=POINTER TO LOCAL CWA
+         LR    R15,R7             R15=CWA LENGTH
+         MVCL  R6,R14             MOVE CWA
+RETURN   EQU   *
+         SUBEXIT
+*
+* SUBROUTINES
+*
+* MODIFIED CICSTRCE
+CICSTRCE DS    0H
+         CLI   TRCEZ390,C'N'      NO TRACING ?
+         BER   R11                RETURN IF IT IS
+         CLI   TRCEZ390,C'Y'      ALL TRACING ?
+         BE    CICSTRGO           TRACE IF IT IS
+         CLC   TRCEZ390,CICSTIND  TRACE TYPE=TRACE REQUEST ?
+         BNER  R11                RETURN IF NOT
+CICSTRGO EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM GET TIME
+         MVO   TIMEPACK,TIME      MOVE TO PACKED FIELD
+         MVC   TIMEHERE(13),TIMEEDIT MOVE EDIT WORD
+         ED    TIMEHERE(13),TIMEPACK EDIT TIME
+         MVC   WTOTIME,TIMEHERE   SET TIME
+         WTO   MF=(E,WTOMSG)      TRACE IT
+         BR    R11                RETURN
+*
+ABEND780 ABEND 780                TCPIO SEND FAILED
+*
+CICSTIND DS    C                  TRACE TYPE INDICATOR
+TRCEZ390 DS    C                  Z390 TRACE OPTION
+GETSAVE  DS    AL4                SAVE GETMAIN ADDRESS FOR FREEMAIN
+GETLENG  DS    AL4                SAVE GETMAIN LENGTH FOR FREEMAIN
+*
+* TIME CONVERSION FIELDS
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402021207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+* WTO AREA DSECT
+*
+WTODSECT DSECT
+WTOMSG   DS    AL4
+WTOTIME  DS    CL13               TIME STAMP
+         DS    C
+WTOFN    DS    CL4                MODULE/FUNCTION REFERENCE (EIBFN)
+         DS    C
+WTOTERM  DS    CL4                TERMID
+         DS    C
+WTOTRAN  DS    CL4                TRANSID (OR BLANK)
+         DS    C
+WTOTYPE  DS    C                  TRANSID TYPE
+         DS    C
+WTOTASKN DS    CL7                TASK NUMBER
+         DS    C
+WTODESC  DS    CL45               DESCRIPTION
+*
+         DFHCWBLK                 CWA PREFIX AREA
+*
+         EQUREGS
+*
+         END
+

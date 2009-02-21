@@ -1,0 +1,60 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 07/27/08 initial coding 
+.* 10/06/08 ZSTRMAC
+.* 10/14/08 USE ZC_SYM_FIND TO ELIM DUP CODE
+.* 11/17/08  replace hash calc with GBLA &(ZC_IX_&SYM) to save/fetch ix
+.*********************************************************************
+         ZC_SYM_INDEX &SYM,&QIX  
+         COPY  ZC_WS    
+.*DSHX   :&SYM_QIX(&SYM_TOT) SETA &QIX SET QUALFIER IX OR 0
+         ZC_SYM_FIND &SYM
+         AIF   (&SYM_IX EQ 0)  NO MATCHING BASE FOUND
+               GBLA &(ZC_IX_&SYM)
+               :&(ZC_IX_&SYM) SETA &SYM_TOT
+         AELSE 
+               AIF  (&QIX EQ 0)
+                    MNOTE 8,'ZC_SYM_INDEX - DUPLICATE SYMBOL - &SYM'    
+               AELSE
+                    :&SYM_DUP_TOT SETA &SYM_DUP_TOT+1
+                    :&SYM_NXT(&SYM_TOT) SETA &SYM_NXT(&SYM_IX)
+                    :&SYM_NXT(&SYM_IX) SETA &SYM_TOT
+                    AIF (&SYM_NXT(&SYM_TOT) EQ 0) IS THIS FIRST DUP
+                         :&QSYM_IX SETA &SYM_IX   YES, FIX FIRST 
+                         ACALL FIX_DUP_QUAL_SYM
+                    AEND
+                    :&QSYM_IX SETA &SYM_TOT       FIX NEXT DUP
+                    ACALL FIX_DUP_QUAL_SYM 
+               AEND
+         AEND      
+         MEXIT
+.*
+.* FIX DUP QUALIFIED SYMBOL NAMES TO BE UNIQUE BY ADDING _OF_QUAL
+.*
+         AENTRY FIX_DUP_QUAL_SYM
+         :&CUR_QIX SETA &SYM_QIX(&QSYM_IX)  FIRST INDEX LEVEL
+         :&QNAME SETC '&SYM_NAME(&QSYM_IX)' BASE NAME
+         AWHILE (&CUR_QIX GT 0)
+              :&QNAME SETC '&QNAME._OF_&SYM_NAME(&CUR_QIX)'
+              AIF (K'&QNAME GT 63)
+                  MNOTE 8,'ZC_SYM_ADD QUAL NAME TOO LONG &QNAME'
+                  MEXIT
+              AEND
+              :&CUR_QIX SETA &SYM_QIX(&CUR_QIX)
+         AEND
+         ZC_SYM_FIND &QNAME
+         AIF (&SYM_IX GT 0)
+             MNOTE 8,'ZC_SYM_INDEX DUP SYM - &QNAME'
+             MEXIT
+         AEND
+         :&SYM_NAME(&QSYM_IX) SETC '&QNAME' REPLACE BASE WITH QUAL NAME
+         GBLA &(ZC_IX_&QNAME)               CREATE ALIAS FOR FIND
+         :&(ZC_IX_&QNAME) SETA &QSYM_IX
+         AEND
+         MEND       

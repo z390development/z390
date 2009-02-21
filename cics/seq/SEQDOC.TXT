@@ -10,6 +10,8 @@ Sequential Terminal Streams
 0006  TST1 executed once
 0007  BED1 executed twice
 0008  BED2 executed twice, different key sequences
+           1) PF12-PF1, PF13-PF18
+           2)
 0009  BED3 executed twice
 0010  BED4 executed twice
 0011  BED5 executed twice
@@ -30,17 +32,36 @@ Sequential Terminal Streams
               q x'01cb458f'
               PF2/PF2/PF2/PF11/PF2/PF2/PF2/PF11/c 36/PF7/PF12/PF2
               PURGE/CLEAR
-0013  IC01 executed once
-0014  VSM1 executed once
+0013  IC01 clear
+0014  VSM1 clear
       CEBR VSM1
       PF5/CLEAR
-0015  VSM2 executed once
+0015  VSM2 clear
       CEBR VSM2
       PF5/CLEAR
-0016  VSM3 executed once
+0016  VSM3 clear
       CEBR VSM3
       PF11/PF11/PF5
 0017  BMS1 executed once
       Test all functions of mapping support
-0018  shutdown
+0018  BEC1 executed once
+0019  BEC2 executed once
+           1) PF12-PF1, PF13-PF18
+0020  BEC3 executed twice
+0021  BEC4 executed once
+0022  BEC5 executed once
+0023  BEC9 executed once
+0024  ICC1 clear
+0025  VSC1 clear
+      CEBR VSC1
+      PF5/CLEAR
+0026  VSC2 clear
+      CEBR VSC2
+      PF5/CLEAR
+0027  VSC3 clear
+      CEBR VSC3
+      PF11/PF11/PF5
+0028  BMC1 executed once (a clone of BMS1)
+      Test all functions of mapping support
+0029  shutdown
 

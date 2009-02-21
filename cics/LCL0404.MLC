@@ -53,7 +53,26 @@ NORESP2  EQU   *
          LR    R1,R14             RESTORE FROM ADDRESS
 *
 NOTSEQ   EQU   *
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+* R0,R1 ARE NOT RESTORED BY THE STACKING PROCESS
+         LR    R4,R0              SAVE R0
+         LR    R5,R1              SAVE R1
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+         LR    R0,R4              RESTORE R0
+         LR    R1,R5              RESTORE R1
+NOEDFB   EQU   *
          TPUT  (R1),(R0),FULLSCR  SEND TN3270 DATA STREAM
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+NOEDFA   EQU   *
          SUBEXIT
 *
 SAVEDATA DS    H
@@ -66,6 +85,8 @@ P0404EIB DS    AL4                EIB
 P0404TCT DS    AL4                TCTTE
 P0404FRM DS    AL4                FROM
 P0404LEN DS    AL2                LENGTH
+         DS    X                  FF=NOHANDLE
+         DS    X
 P0404RSP DS    AL4                RESP
 P0404RS2 DS    AL4                RESP2
 P0404END EQU   *                  END MARKER

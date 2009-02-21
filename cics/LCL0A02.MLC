@@ -175,6 +175,7 @@ P0A02NUM DS    AL4                ADDRESS OF NUMITEMS
 P0A02ICM DS    CL4                ICTERM
 P0A02ICN DS    CL4                ICTRAN
          DS    X                  FF=NOHANDLE
+         DS    X
 P0A02RSP DS    AL4                RESP
 P0A02RS2 DS    AL4                RESP2
 P0A02END EQU   *                  END MARKER

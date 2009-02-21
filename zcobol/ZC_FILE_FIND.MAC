@@ -1,0 +1,22 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/14/08                                                 *
+.*********************************************************************
+.* 04/14/08 initial coding for global find symbol 
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+         ZC_FILE_FIND &FILE     
+         COPY  ZC_WS     
+&FILE_IX  SETA  1
+         AWHILE (&FILE_IX LE &FILE_TOT)
+                AIF   ('&FILE_NAME(&FILE_IX)' EQ '&FILE')
+                      MEXIT
+                AEND
+                :&FILE_IX SETA &FILE_IX+1
+         AEND
+&FILE_IX SETA 0
+        MEND       

@@ -1,0 +1,339 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/09/08 initial coding for Z390 GEN_COMP COMPARE 
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+         GEN_COMP  
+         :&FIELD1    SETC '&SYSLIST(1)'
+         :&FIELD1_IX SETA &SYSLIST(2)
+         :&FIELD2    SETC '&SYSLIST(3)'
+         :&FIELD2_IX SETA &SYSLIST(4)
+         COPY  ZC_WS
+      AIF   (&FIELD2_IX EQ 0)     
+.*
+.* COMPARE FIELD1 TO LITERAL
+.*
+       AIF   ('&FIELD2'(1,1) EQ '''')
+        AIF   (&SYM_LEN(&FIELD1_IX) NE K'&FIELD2-2 AND &ZC_WARN)
+               MNOTE 4,'GEN_COMP LIT LENGTH NOT EQUAL'
+        AEND
+        AIF    (&SYM_LEN(&FIELD1_IX) EQ 1)
+         ACALL RESET_SS1_FIELD1
+         CLI   &FIELD1,C&FIELD2
+        AELSE
+           :&LITSP SETA K'&FIELD2
+           AIF (&LITSP LT &SYM_LEN(&FIELD1_IX))
+               :&LITSP SETA &SYM_LEN(&FIELD1_IX)
+           AEND
+           AIF (&LITSP/2*2 NE &LITSP)
+               :&LITSP SETA &LITSP+1 SPACE FOR EVEN LEN
+           AEND
+         LARL  R1,=CL&LITSP&FIELD2 
+         CLC   &FIELD1,0(R1)
+        AEND
+       AELSEIF ('&FIELD2' EQ 'ZEROES'                                  X             
+               OR '&FIELD2' EQ 'ZEROS'                                 X             
+               OR '&FIELD2' EQ 'ZERO')          
+        ACASE  (C2A('&SYM_PIC_TYPE(&FIELD1_IX)'))
+        AWHEN  C'D'
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LTDR  0,0  
+        AWHEN  C'E'
+               ACALL RESET_SS1_FIELD1
+         LE    0,&FIELD1
+         LTER  0,0  
+        AWHEN  C'A',C'F'
+               ACALL RESET_SS1_FIELD1
+         LT    0,&FIELD1
+        AWHEN  C'G'
+               ACALL RESET_SS1_FIELD1
+         LTG   0,&FIELD1
+        AWHEN  C'H'            
+               ACALL RESET_SS1_FIELD1
+         CHI   &FIELD1,0
+        AWHEN  C'P'           
+         LARL  R1,=PL2'0'                     2 BYTE ZERO
+         CP    &FIELD1,1(1,R1)  USE 2ND BYTE
+        AWHEN  C'X' 
+          AIF    (&SYM_LEN(&FILED1_IX) EQ 1)
+         ACALL RESET_SS1_FIELD1
+         CLI   &FIELD1,C'0'
+          AELSE
+            AIF    (&SYM_LEN(&FIELD1_IX)/2*2 NE &SYM_LEN(&FIELD1_IX))
+         LARL  R1,=(&SYM_LEN(&FIELD1_IX)+1)C'0'
+            AELSE
+         LARL  R1,=(&SYM_LEN(&FIELD1_IX))C'0'
+            AEND
+         CLC   &FIELD1,0(R1)
+          AEND
+        AWHEN  C'Z' 
+          AIF    (&SYM_LEN(&FIELD1_IX) EQ 1)
+            AIF (NOT &SYM_PIC_SIGN(&FIELD1_IX))
+         ACALL RESET_SS1_FIELD1
+         CLI   &FIELD1,C'0'
+            AELSE
+         TM    &FIELD1,X'0F'
+            AEND
+          AELSE
+           AIF (NOT &SYM_PIC_SIGN(&FIELD1_IX))
+            AIF    (&SYM_LEN(&FIELD1_IX)/2*2 NE &SYM_LEN(&FIELD1_IX))
+         LARL  R1,=(&SYM_LEN(&FIELD1_IX)+1)C'0'
+            AELSE
+         LARL  R1,=(&SYM_LEN(&FIELD1_IX))C'0'
+            AEND
+         CLC   &FIELD1,0(R1)
+           AELSE
+         LARL  R1,=PL2'0'
+         PACK  ZCVT_PWORK1(&SYM_LEN(&FIELD1_IX)/2+1),&FIELD1
+         CP    ZCVT_PWORK1(&SYM_LEN(&FIELD1_IX)/2+1),0(2,R1)
+           AEND
+          AEND
+        AELSE
+               MNOTE 8,'GEN_COMP UNKNOWN PIC TYPE &SYM_PIC_TYPE(&FIELD1X
+               _IX)'
+        AEND
+       AELSEIF ('&FIELD2' EQ 'SPACES'                                  X
+                OR '&FIELD2' EQ 'SPACE')
+          AIF    (&SYM_LEN(&FIELD1_IX) EQ 1)
+         ACALL RESET_SS1_FIELD1
+         CLI   &FIELD1,C' '
+          AELSE
+            AIF    (&SYM_LEN(&FIELD1_IX)/2*2 NE &SYM_LEN(&FIELD1_IX))
+         LARL  R1,=(&SYM_LEN(&FIELD1_IX)+1)C' '
+            AELSE
+         LARL  R1,=(&SYM_LEN(&FIELD1_IX))C' '
+            AEND
+         CLC   &FIELD1,0(R1)
+          AEND
+       AELSEIF ('&FIELD2' EQ 'LOW_VALUES'                              X
+                OR '&FIELD2' EQ 'LOW_VALUE')
+          AIF    (&SYM_LEN(&FIELD1_IX) EQ 1)
+         ACALL RESET_SS1_FIELD1
+         CLI   &FIELD1,X'00'
+          AELSE
+            AIF    (&SYM_LEN(&FIELD1_IX)/2*2 NE &SYM_LEN(&FIELD1_IX))
+         LARL  R1,=(&SYM_LEN(&FIELD1_IX)+1)X'00'
+            AELSE
+         LARL  R1,=(&SYM_LEN(&FIELD1_IX))X'00'
+            AEND
+         CLC   &FIELD1,0(R1)
+          AEND
+       AELSEIF ('&FIELD2' EQ 'HIGH_VALUES'                             X
+                OR '&FIELD2' EQ 'HIGH_VALUE')
+          AIF    (&SYM_LEN(&FIELD1_IX) EQ 1)
+         ACALL RESET_SS1_FIELD1
+         CLI   &FIELD1,X'FF'
+          AELSE
+            AIF    (&SYM_LEN(&FIELD1_IX)/2*2 NE &SYM_LEN(&FIELD1_IX))
+         LARL  R1,=(&SYM_LEN(&FIELD1_IX)+1)X'FF'
+            AELSE
+         LARL  R1,=(&SYM_LEN(&FIELD1_IX))X'FF'
+            AEND
+         CLC   &FIELD1,0(R1)
+          AEND
+       AELSEIF ('&FIELD2'(1,2) EQ 'X'''                                X
+                OR '&FIELD2'(1,2) EQ 'B''')
+                AIF (&SYM_LEN(&FIELD1_IX) EQ 1)
+         ACALL RESET_SS1_FIELD1
+         CLI   &FIELD1,&FIELD2
+                AELSE
+                    :&TLIT SETC  '&FIELD2'(1,1)
+                    :&LLIT SETA  (&SYM_LEN(&FIELD1_IX)+1)/2*2
+                    :&LOFF SETA  &SYM_LEN(&FIELD1_IX)-&LLIT
+                    :&NUM  SETC '&FIELD2'(3,K'&FIELD2-3)
+         LARL  R1,=&TLIT.L&LLIT'&NUM'
+         CLC   &FIELD1,&LOFF.(R1)
+                AEND
+       AELSEIF ('&FIELD2'(1,1) GE '0'                                  X
+                OR '&FIELD2'(1,1) EQ '+'                               X
+                OR '&FIELD2'(1,1) EQ '-')
+        :&L_FIELD1 SETA &SYM_LEN(&FIELD1_IX)
+        ACASE  (C2A('&SYM_PIC_TYPE(&FIELD1_IX)'))
+        AWHEN  C'D'            
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LARL  R1,=D'&FIELD2'
+         LD    F1,0(R1)
+         CDR   0,1
+        AWHEN  C'E'            
+               ACALL RESET_SS1_FIELD1
+         LE    0,&FIELD1
+         LARL  R1,=E'&FIELD2'
+         LE    F1,0(R1)
+         CER   0,1
+        AWHEN  C'A',C'F'
+               ACALL RESET_SS1_FIELD1
+         L     0,&FIELD1
+         CFI   0,&FIELD2
+        AWHEN  C'G'
+               ACALL RESET_SS1_FIELD1
+               AIF (&ZC_R64)
+         LG     0,&FIELD1
+         LARL   R1,=FL8'&FIELD2'
+         CG     0,0(R1)
+               AELSE
+         LM     R0,R1,&FIELD1
+         LARL   R2,=FL8'&FIELD2'
+         LM     R2,R3,0(R2)
+         L      R15,ZCVT_CMP64R32
+         BASR   R14,R15
+               AEND
+        AWHEN  C'H'            
+               ACALL RESET_SS1_FIELD1
+         LH    0,&FIELD1
+         CHI   0,&FIELD2
+        AWHEN  C'P'           
+          AIF  (&L_FIELD1/2*2 NE &L_FIELD1)
+               :&LLIT SETA &L_FIELD1+1
+          AELSE
+               :&LLIT SETA &L_FIELD1
+          AEND
+         LARL  R1,=PL&LLIT'&FIELD2'
+         CP    &FIELD1,0(&LLIT,R1)
+        AWHEN  C'X' 
+               AIF ('&FIELD2' EQ 'SPACES'                              X             
+                    OR '&FIELD2' EQ 'SPACE')
+                   AIF  (&L_FIELD1 EQ 1)
+         ACALL RESET_SS1_FIELD1
+         CLI   &FIELD1,C' '
+                   AELSE
+          AIF  (&L_FIELD1/2*2 NE &L_FIELD1)
+               :&LLIT SETA &L_FIELD1+1
+          AELSE
+               :&LLIT SETA &L_FIELD1
+          AEND
+         LARL  R1,=CL(&LLIT)' '
+         CLC   &FIELD1,0(R1)
+                   AEND
+               AELSE
+                    MNOTE 8,'GEN_COMP X TYPE LIT MUST BE ''...'''
+               AEND
+        AWHEN  C'Z' 
+               AIF (&SYM_PIC_SIGN(&FIELD1_IX))
+         PACK  ZCVT_PWORK1(&L_FIELD1),&FIELD1
+          AIF  (&L_FIELD1/2*2 NE &L_FIELD1)
+               :&LLIT SETA &L_FIELD1+1
+          AELSE
+               :&LLIT SETA &L_FIELD1
+          AEND
+         LARL  R1,=PL&LLIT'&FIELD2'
+         CP    ZCVT_PWORK1(&L_FIELD1),0(&LLIT,R1)
+               AELSE
+                    AIF (&SYM_LEN(&FIELD1_IX) EQ 1)
+         ACALL RESET_SS1_FIELD1
+         CLI   &FIELD1,C'&FIELD2'
+                    AELSE
+                         :&NUM SETC (&L_FIELD1)'0'.'&FIELD2'
+                         :&NUM SETC '&NUM'(K'&NUM-&L_FIELD1+1,*)
+          AIF  (&L_FIELD1/2*2 NE &L_FIELD1)
+               :&LPAD SETC ' ' PAD TO EVEN AND IGNORE
+          AELSE
+               :&LPAD SETC ''
+          AEND
+         LARL  R1,=C'&NUM&LPAD'
+         CLC   &FIELD1,0(R1)
+                    AEND
+               AEND
+        AELSE
+               MNOTE 8,'GEN_COMP UNKNOWN PIC TYPE &SYM_PIC_TYPE(&FIELD1X
+               _IX)'
+        AEND
+       AELSEIF ('&FIELD2' EQ 'NUMERIC')
+               ACALL RESET_SS1_FIELD1
+         LA   R1,&FIELD1
+         LA   R2,&SYM_LEN(&FIELD1_IX)
+        ACASE  (C2A('&SYM_PIC_TYPE(&FIELD1_IX)'))
+        AWHEN  C'P' 
+         L    R15,ZCVT_TNUMP
+         BASR R14,R15          
+        AWHEN  C'X' 
+         L    R15,ZCVT_TNUMX
+         BASR R14,R15          
+        AWHEN  C'Z' 
+         L    R15,ZCVT_TNUMZ
+         BASR R14,R15          
+        AELSE
+               MNOTE 8,'GEN_COMP INVALID NUM TYPE &SYM_PIC_TYPE(&FIELD1X
+               _IX)'
+        AEND
+       AELSEIF ('&FIELD2' EQ 'ALPHABETIC')
+         AIF  ('&SYM_PIC_TYPE(&FIELD1_IX)' NE 'X')
+              MNOTE 8,'GEN_COMP APHABETIC FIELD NOT CHARACTER'
+              MEXIT
+         AEND
+               ACALL RESET_SS1_FIELD1
+         LA   R1,&FIELD1
+         LA   R2,&SYM_LEN(&FIELD1_IX)
+         L    R15,ZCVT_TALPHAX
+         BASR R14,R15          
+       AELSE 
+              MNOTE 8,'GEN_COMP UNKNOWN LITERAL &FIELD2'
+       AEND
+      AELSE
+.*
+.* COMPARE 2 FIELDS
+.*
+        ACASE  (C2A('&SYM_PIC_TYPE(&FIELD1_IX)'))
+        AWHEN  C'D'
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         CD    0,&FIELD2
+        AWHEN  C'E'
+               ACALL RESET_SS1_FIELD1
+         LE    0,&FIELD1
+         CE    0,&FIELD2
+        AWHEN  C'A',C'F'
+               ACALL RESET_SS1_FIELD1
+         L     0,&FIELD1
+         C     0,&FIELD2
+        AWHEN  C'G'
+               ACALL RESET_SS1_FIELD1
+               AIF (&ZC_R64)
+         LG    0,&FIELD1
+         CG    0,&FIELD2
+               AELSE
+         LM     R0,R1,&FIELD1
+         LM     R2,R3,&FIELD2
+         L      R15,ZCVT_CMP64R32
+         BASR   R14,R15
+               AEND
+        AWHEN  C'H'            
+               ACALL RESET_SS1_FIELD1
+         LH    0,&FIELD1
+         CH    0,&FIELD2
+        AWHEN  C'P'           
+         CP    &FIELD1,&FIELD2
+        AWHEN  C'X' 
+         CLC   &FIELD1,&FIELD2
+        AWHEN  C'Z'
+         PACK  ZCVT_PWORK1(&SYM_LEN(&FIELD1_IX)),&FIELD1
+         PACK  ZCVT_PWORK2(&SYM_LEN(&FIELD2_IX)),&FIELD2
+         CP    ZCVT_PWORK1(&SYM_LEN(&FIELD1_IX)),ZCVT_PWORK2(&SYM_LEN(&X
+               FIELD2_IX))
+        AELSE
+               MNOTE 8,'GEN_COMP UNKNOWN PIC TYPE &SYM_PIC_TYPE(&FIELD1X
+               _IX)'
+        AEND
+      AEND
+.*
+.* RESET SS1 FIELD1 - REMOVE LEN FROM OFF(LEN,REG) IF FOUND
+.*
+         AENTRY RESET_SS1_FIELD1
+         AIF   ('&FIELD1'(1,1) GE '0')  IS THIS O(L,R) 
+               :&I SETA ('&FIELD1' INDEX '(')
+               AIF (&I GT 0)
+                   :&J SETA ('&FIELD1' INDEX ',')
+                   AIF (&J GT &I+1)  REPLACE O(L,R) WITH O(R)
+                       :&FIELD1 SETC '&FIELD1'(1,&I).'&FIELD1'(&J+1,*)
+                   AEND
+               AEND
+         AEND
+         AEND
+         MEND

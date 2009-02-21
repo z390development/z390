@@ -209,18 +209,26 @@ P0614FN  DS    XL2                FUNCTION CODE
 P0614EIB DS    AL4                EIB
 P0614TCT DS    AL4                TCTTE
 P0614FIL DS    CL8                FILENAME
-P0614KIN DS    X                  FF=KEYLENGTH IS VALID
 P0614KLN DS    XL2                KEYLENGTH
 P0614RID DS    XL128              RIDFLD
 P0614ARD DS    AL4                A(RIDFLD)
+P0614KIN DS    X                  FF=KEYLENGTH IS VALID
+         DS    X
 P0614LRD DS    X                  L'RIDFLD
+         DS    X
 P0614GEN DS    X                  FF=GENERIC
+         DS    X
 P0614RBA DS    X                  FF=RBA
+         DS    X
 P0614XRB DS    X                  FF=XRBA
+         DS    X
 P0614RRN DS    X                  FF=RRN
+         DS    X
 P0614GTE DS    X                  00-EQUAL FF=GTEQ
+         DS    X
 P0614REQ DS    XL2                REQID
          DS    X                  FF=NOHANDLE
+         DS    X
 P0614RSP DS    AL4                RESP
 P0614RS2 DS    AL4                RESP2
 P0614END EQU   *                  END MARKER

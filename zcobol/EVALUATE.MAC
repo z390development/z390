@@ -1,0 +1,25 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/09/08 initial coding for global EVALUATE
+.* 10/05/08 ZSTRMAC
+.*********************************************************************
+         EVALUATE &SYM   
+         COPY  ZC_WS
+         ZC_SYM_FIND &SYM
+         AIF   (&SYM_IX GT 0)
+               :&IE_LVL  SETA  &IE_LVL+1
+               :&IE_TYPE(&IE_LVL) SETA 2
+               :&EVAL_LAB SETA  &EVAL_LAB+1 
+               :&IE_EVAL(&IE_LVL) SETA &EVAL_LAB
+               :&IE_WHEN(&IE_LVL) SETA 0
+               :&IE_EVAL_IX(&IE_LVL) SETA &SYM_IX
+         AELSE
+               MNOTE 8,'EVALUATE VARIABLE NOT FOUND - &SYM'
+         AEND
+         MEND

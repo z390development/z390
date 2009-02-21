@@ -167,10 +167,12 @@ P0A04ITM DS    XL2                ITEM
 P0A04LEN DS    XL2                LENGTH
 P0A04LAD DS    AL4                ADDRESS OF LENGTH IF LABEL
 P0A04SET DS    X                  FF=SET IS SPECIFIED
+         DS    X
 P0A04STA DS    AL4                ADDRESS FOR SET
 P0A04INT DS    AL4                ADDRESS OF INTO
 P0A04NUM DS    AL4                ADDRESS OF NUMITEMS
          DS    X                  FF=NOHANDLE
+         DS    X
 P0A04RSP DS    AL4                RESP
 P0A04RS2 DS    AL4                RESP2
 P0A04END EQU   *                  END MARKER

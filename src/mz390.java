@@ -357,6 +357,8 @@ public  class  mz390 {
      * 12/11/08 RPI 957 chksrc(3) for seq fld and > 80
      * 12/14/08 RPI 976 add &SYSCICS, &SYSCICS_EPILOG, &SYSCICS_PROLOG for CICS macro use 
      * 12/16/08 RPI 977 correct error 16 when dup ACALL names in separate macros
+     * 02/06/09 RPI 993 allow seta/setb only in substring
+     * 02/10/09 RPI 995 set $PRIVATE sysloc and type based on az390_private_sect flag
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -3286,6 +3288,11 @@ public  class  mz390 {
 				cur_mac_name = null;
 			}
 			az390.pass_bal_line(text_line,cur_mac_name,mac_file_type[mac_file_num[bal_xref_index]],mac_file_num[bal_xref_index],mac_file_line_num[bal_xref_index]); // RPI 549
+			if (az390.az390_private_sect){ // RPI 995
+				az390.az390_private_sect = false;
+				lcl_sysloc = az390.private_csect;
+				lcl_sysstyp = "CSECT";				
+			}
 			if (az390.pass_bal_eof){
 				bal_eof = true;
 			}
@@ -4515,9 +4522,6 @@ public  class  mz390 {
 			&& mac_call_return[mac_call_level-1] < mlc_line_end){
 			mac_call_return[mac_call_level-1]++;
 			String text = mac_file_line[mac_call_return[mac_call_level-1]-1];
-			if (text.length() > 71){ // RPI 968
-				create_mnote(4,"AREAD inline record exceeds 71 characters");
-			}
 			if (tz390.opt_asm && !tz390.opt_allow){  // RPI 968
 				text = set_length_80(text);
 			}
@@ -10422,8 +10426,16 @@ public  class  mz390 {
     	 * replace setc,arg1,arg2 on stack
     	 * with subsubstring setc
     	 */
-    	if (tot_exp_stk_var >= 3
-            && exp_stk_val_type[tot_exp_stk_var - 3] == val_setc_type){
+    	if (tot_exp_stk_var >= 3){
+            switch (exp_stk_val_type[tot_exp_stk_var - 3]){
+            case 1: // val_seta_type
+            	exp_stk_setc[tot_exp_stk_var-3] = "" + exp_stk_seta[tot_exp_stk_var-3]; // RPI 993
+            	exp_stk_val_type[tot_exp_stk_var-3]= val_seta_type;
+                break;
+            case 2: // val_setb_type
+            	exp_stk_setc[tot_exp_stk_var-3] = "" + exp_stk_setb[tot_exp_stk_var-3]; // RPI 993
+            	exp_stk_val_type[tot_exp_stk_var-3]= val_setb_type;
+            }
 			get_seta_stack_values();
 			if (tz390.opt_traceall){
 				tz390.put_trace("SUBSTRING " + exp_stk_setc[tot_exp_stk_var - 1] + "(" + seta_value1 + "," + seta_value2 + ")");
@@ -11865,5 +11877,5 @@ public  class  mz390 {
     			
     		} 
     	}
-    }
+    }	
 }

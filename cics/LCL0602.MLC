@@ -230,21 +230,29 @@ P0602FN  DS    XL2                FUNCTION CODE
 P0602EIB DS    AL4                EIB
 P0602TCT DS    AL4                TCTTE
 P0602FIL DS    CL8                FILENAME
-P0602SET DS    X                  FF=SET IS SPECIFIED
 P0602STA DS    AL4                ADDRESS FOR SET
 P0602INT DS    AL4                ADDRESS OF INTO
 P0602LEN DS    XL4                LENGTH
 P0602LAD DS    AL4                ADDRESS OF LENGTH IF LABEL
 P0602FAD DS    AL4                ADDRESS OF FLENGTH IF LABEL
+P0602SET DS    X                  FF=SET IS SPECIFIED
+         DS    X
 P0602KIN DS    X                  FF=KEYLENGTH IS VALID
+         DS    X
 P0602KLN DS    XL2                KEYLENGTH
 P0602RID DS    XL128              RIDFLD
 P0602GEN DS    X                  FF=GENERIC
+         DS    X
 P0602RBA DS    X                  FF=RBA
+         DS    X
 P0602XRB DS    X                  FF=XRBA
+         DS    X
 P0602RRN DS    X                  FF=RRN
+         DS    X
 P0602GTE DS    X                  00=EQUAL FF=GTEQ
+         DS    X
          DS    X                  FF=NOHANDLE
+         DS    X
 P0602RSP DS    AL4                RESP
 P0602RS2 DS    AL4                RESP2
 P0602END EQU   *                  END MARKER

@@ -1,0 +1,68 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/09/08 initial coding for z390 procedure label generation.
+.* 10/07/08 ZSTRMAC
+.*********************************************************************
+         GEN_LABEL &LAB,&TYPE
+         COPY  ZC_WS
+         GBLB  &ZC_TRACE
+       AIF   ('&TYPE' EQ 'PARAGRAPH' OR '&TYPE' EQ 'SECTION') 
+.*
+.* GEN END PG LABEL AND CHECK BEFORE NEXT PG OR SECTION
+.*
+         AIF   ('&LAST_PG_LAB' NE '')
+               AIF (&ZC_TRACE)
+                   IF READY_RESET_TRACE,=,'T'
+                      GEN_COMMENT 'PG_END_&LAST_PG_LAB'
+                   END_IF
+               AEND
+PG_END_&LAST_PG_LAB L    R15,ZCVT_PMCHECK
+                    BASR R14,R15 CHECK FOR END OF CURRENT PERFORM
+               :&LAST_PG_LAB SETC ''  
+         AEND
+.*
+.* GEN END SECTION PG LABEL AND CHECK BEFORE NEXT SECTION
+.*
+         AIF   ('&TYPE' EQ 'SECTION')
+               AIF   ('&LAST_SECTION_LAB' NE '')                    
+                   AIF (&ZC_TRACE)
+                       IF READY_RESET_TRACE,=,'T'
+                         GEN_COMMENT 'PG_END_&LAST_SECTION_LAB SECTION'
+                       END_IF
+                   AEND
+PG_END_&LAST_SECTION_LAB BRAS R14,END_PERFORM_CHECK FOR SECTION
+                   :&LAST_SECTION_LAB SETC ''
+               AEND
+         AEND          
+         AIF   ('&TYPE' EQ 'PARAGRAPH')
+               :&LAST_PG_LAB SETC '&LAB'
+PG_&LAB  DS    0H  &TYPE
+               AIF (&ZC_TRACE)
+                   IF READY_RESET_TRACE,=,'T'
+                      GEN_COMMENT 'PG_&LAB'
+                   END_IF
+               AEND
+         AELSEIF ('&TYPE' EQ 'SECTION')
+               :&LAST_SECTION_LAB SETC '&LAB'
+PG_&LAB  DS    0H  &TYPE
+               AIF (&ZC_TRACE)
+                   IF READY_RESET_TRACE,=,'T'
+                      GEN_COMMENT 'PG_&LAB &TYPE'
+                   END_IF
+               AEND
+         AELSE
+               AIF ('&TYPE' EQ '')       
+                   MNOTE 8,'GEN_LABEL TYPE NOT DEFINED - &TYPE'
+                   MEXIT
+               AEND
+         AEND
+       AELSE
+PG_&LAB  DS    0H  &TYPE
+       AEND
+         MEND

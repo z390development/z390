@@ -1,0 +1,58 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/16/08                                                 *
+.*********************************************************************
+.* 11/17/08 stub for pending support              
+.* 01/20/09 replace with call to INSPECT CONVERTING
+.*********************************************************************
+         TRANSFORM  
+         COPY  ZC_WS
+         :&PARM_IX SETA 1
+         :&FIELD_REG SETC 'R2'  R2=V1 INSPECT FIELD IF SUBSCRIPTED
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0)
+               MNOTE 8,'TRANSFORM FIELD NOT FOUND &SYSLIST(1)'
+               MEXIT
+         AEND
+         :&V1    SETC '&FIELD_NAME'
+         :&V1_IX SETA &FIELD_IX
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'CHARACTERS'                   X
+                AND '&SYSLIST(&PARM_IX+1)' EQ 'FROM')
+                :&PARM_IX SETA &PARM_IX+2
+         AELSE
+               MNOTE 8,'TRANSFORM CHARACTERS FROM '..' TO '..' ERROR'
+               MEXIT
+         AEND
+         :&FIELD_REG SETC 'R3'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0                                         X
+               AND '&FIELD_NAME'(1,1) NE '''')
+               MNOTE 8,'TRANSFORM FROM FIELD NOT FOUND'
+               MEXIT
+         AEND
+         :&V2    SETC '&FIELD_NAME'
+         :&V2_IX SETA &FIELD_IX
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'TO')
+               MNOTE 8,'TRANSFORM MISSING TO'
+               MEXIT
+         AEND
+         :&PARM_IX SETA &PARM_IX+1
+         :&FIELD_REG SETC 'R14'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0                                         X
+               AND '&FIELD_NAME'(1,1) NE '''')
+              MNOTE 8,'TRANSFORM MISSING TO FIELD'
+              MEXIT
+         AEND
+         :&V3 SETC '&FIELD_NAME'
+         :&V3_IX SETA &FIELD_IX
+         GEN_INSPECT CONVERTING,&V1,&V1_IX,&V2,&V2_IX,&V3,&V3_IX,,,0
+         COPY ZCGETFLD
+         MEND

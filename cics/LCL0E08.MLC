@@ -11,12 +11,15 @@ LCL0E08  CSECT
 * FN=0E08  EXEC CICS RETURN
 *
 * R1  >>> P0E08 BLOCK POINTER
+* R13 >>> CURRENT DSA
 * R14 = RETURN ADDRESS
          USING (P0E08,P0E08END),R1
          USING *,R12
          LR    R0,R12             R0=SAVED R12
          LR    R12,R15            SET BASE
+         ST    R1,SAVER1          SAVE PARM BASE
          ST    R0,SAVER12         SAVE ORIGINAL R12
+         ST    R14,SAVER14        SAVE RETURN ADDRESS
          USING DFHEIBLK,DFHEIBR
          USING DFHTCTTE,TCTTEAR
          USING DFHEISTG,R13
@@ -133,22 +136,17 @@ NOTDSACM EQU   *
 *
          FREEMAIN R,A=(R13),LA=DFHEILEN
 *
-* ADJUST LINK LEVEL
-*
-         LH    R0,TCTTELNK        LOAD LINK-LEVEL
-         AHI   R0,-1              -1
-         STH   R0,TCTTELNK        STORE BACK
-         LR    R14,R0             SAVE LINK LEVEL
-*
 * CLEAR HANDLE ABEND ENTRY IF ANY
 *
          ICM   R1,15,TCTTEABD     ANY ABEND BLOCK ?
          BZ    CLRLVL             EXIT IF NONE
-         USING ABDDEST,R1
+         LH    R14,TCTTELNK       LOAD LINK-LEVEL
+         AHI   R14,-1             -1 FOR INDEX
          MS    R14,=AL4(ABDLENG)  * ENTRY LENGTH
          AR    R14,R1             R14=CORRECT ABEND BLOCK ENTRY
+         USING ABDDEST,R14
          XC    ABDDEST(ABDLENG),ABDDEST CLEAR ABEND ENTRY
-         DROP  R1
+         DROP  R14
 CLRLVL   EQU   *
 *
 * CLEAR OUR LEVEL
@@ -156,14 +154,40 @@ CLRLVL   EQU   *
 * THIS RETURNS DIRECTLY TO THE CALLED PROGRAM, NOT TO THE LCL MODULE
 * AT ROOT LEVEL RETURN IS TO Z390KCP/TASKRETN
 *
+         LH    R0,TCTTELNK        LOAD LINK-LEVEL
          SLL   R0,2               R0=LINK-LEVEL * 4
          L     R1,TCTTELKA        R1=LKA ADDRESS
          AR    R1,R0              INDEX TO LINK-LEVEL ENTRY
+         XC    0(4,R1),0(R1)      CLEAR OUR LEVEL
+*
+* ADJUST LINK LEVEL
+*
+         LH    R0,TCTTELNK        LOAD LINK-LEVEL
+         AHI   R0,-1              -1
+         STH   R0,TCTTELNK        STORE BACK
+         AHI   R1,-4              POINT TO PREV LEVEL
          L     R13,0(R1)          R13=PREV DSA ADDRESS
-         XC    4(4,R1),4(R1)      CLEAR OUR LEVEL
+         L     R1,SAVER1          RESTORE PARM BASE ADDRESS
+         USING (P0E08,P0E08END),R1
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDF              EXIT IF NOT
+* EIBPROG IS DESTROYED BY EDF
+         MVC   SAVEPROG,EIBPROG   SAVE THE PROGRAM NAME
+         MVI   TCTTEEDL,X'FF'     SET DIRECT LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+         L     R1,SAVER1          RESTORE PARM POINTER
+         MVC   EIBPROG,SAVEPROG   RESTORE PROGRAM NAME
+NOEDF    EQU   *
+         L     R14,SAVER14        R14=ORIGINAL RETURN ADDRESS
+         CLI   P0E08CNR,X'FF'     IS IT CLEANER RETURN ?
+         BER   R14                DIRECT RETURN IF IT IS
          RETURN (R14,R12)
 *
+SAVER1   DS    F                  SAVE R1
 SAVER12  DS    F                  SAVE R12
+SAVER14  DS    F                  SAVE R14
+SAVEPROG DS    CL8                SAVE EIBPROG
 *
 P0E08    DSECT
 P0E08FN  DS    XL2                FUNCTION CODE
@@ -171,6 +195,9 @@ P0E08TRN DS    CL4                TRANSID
 P0E08COM DS    AL4                COMMAREA ADDRESS
 P0E08CLN DS    XL2                COMMAREA LENGTH
 P0E08IMM DS    X                  FF=IMMEDIATE
+         DS    X
+P0E08CNR DS    X                  FF=CLEANER
+         DS    X
 P0E08RSP DS    AL4                RESP
 P0E08RS2 DS    AL4                RESP2
 P0E08END EQU   *                  END MARKER

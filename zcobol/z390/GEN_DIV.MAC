@@ -1,0 +1,1062 @@
+        MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 10/31/08 initial coding for Z390 GEN_DIV using GEN_MPY as model    
+.*********************************************************************
+       GEN_DIV &NDD,&TDD,&LDD,&PDD, DIVIDEND  NAME/LIT,TYPE,LEN,PLACES X                  
+               &NDR,&TDR,&LDR,&PDR, DIVISOR   NAME/LIT,TYPE,LEN,PLACES X                  
+               &NQ,&TQ,&LQ,&SQ,&PQ, QUOTIENT  NAME, TYPE,LEN,SIGN,PLCS X                  
+               &NR,&TR,&LR,&SR,&PR, REMAINDER NAME, TYPE,LEN,SIGN,PLCS X
+               &ROUNDED,        1 IF ROUNDED SPECIFIED                 X
+               &ON_SIZE,        1 IF ON SIZE SPECIFIED                 X
+               &NOT_ON_SIZE     1 IF NOT_ON_SIZE SPECIFIED                  
+.*
+.* SET NDDX TO R3 FOR LIT AND SET LDDP IF P/Z 
+.*
+      AIF ('&NDD'(1,1) GE '0'                                          X
+               OR '&NDD'(1,1) EQ '-'                                   X
+               OR '&NDD'(1,1) EQ '+')
+       ACASE (C2A('&TDD'))
+       AWHEN C'D',C'E',C'F',C'H'
+         LARL  R3,=&TDD'&NDD'
+         :&NDDX SETC '0(R3)'
+       AWHEN C'G'
+         LARL  R3,=FL8'&NDD'
+         :&NDDX SETC '0(R3)'
+       AWHEN C'P',C'Z'
+         :&LDDP SETA (&LDD/2+1)/2*2 ROUNDED EVEN FOR LARL
+         LARL  R3,=&TDD.L&LDDP'&NDD'
+         :&NDDX SETC '0(&LDDP,R3)'
+       AELSE
+               MNOTE 8,'GEN_DIV INVALID DIVIDEND TYPE - &TDD' 
+       AEND
+      AELSE
+         :&NDDX SETC '&NDD'
+      AEND
+.*
+.* SET NDRX TO R14 FOR LIT AND SET LDRP IF P/Z 
+.*
+      AIF ('&NDR'(1,1) GE '0'                                          X
+               OR '&NDR'(1,1) EQ '-'                                   X
+               OR '&NDR'(1,1) EQ '+')
+       ACASE (C2A('&TDR'))
+       AWHEN C'D',C'E',C'F',C'H'
+         LARL  R14,=&TDR'&NDR'
+         :&NDRX SETC '0(R14)'
+       AWHEN C'G'
+         LARL  R14,=FL8'&NDR'
+         :&NDRX SETC '0(R14)'
+       AWHEN C'P',C'Z'
+         :&LDRP SETA (&LDR/2+1)/2*2 ROUNDED EVEN FOR LARL
+         LARL  R14,=&TDR.L&LDRP'&NDR'
+         :&NDRX SETC '0(&LDRP,R14)'
+       AEND
+      AELSE
+         :&NDRX SETC '&NDR'
+      AEND
+.*
+.* DIVIDE DIVIDEND TYPE D WITH QUOTIENT IN F0
+.*
+         ACASE (C2A('&TDD'))
+         AWHEN C'D'
+               ACASE (C2A('&TDR'))
+               AWHEN C'D'
+         LD    0,&NDDX
+         LD    1,&NDRX
+                    ACALL SFT_RND_D
+               AWHEN C'E'
+         LD    0,&NDDX
+         LE    1,&NDRX
+         LDER  1,1
+                    ACALL SFT_RND_D
+               AWHEN C'F'
+         LD    0,&NDDX
+         L     1,&NDRX
+         CDFR  1,1
+                    ACALL SFT_RND_D
+               AWHEN C'G'
+         LD    0,&NDDX
+         LG    1,&NDRX
+         CDGR  1,1
+                    ACALL SFT_RND_D
+               AWHEN C'H'
+         LD    0,&NDDX
+         LH    1,&NDRX
+         CDFR  1,1
+                    ACALL SFT_RND_D
+               AWHEN C'P'
+         LD    0,&NDDX
+         ZAP   ZCVT_PWORK,&NDRX
+         CVB   1,ZCVT_PWORK
+         CDFR  1,1
+                    ACALL SFT_RND_D
+               AWHEN C'Z'
+         LD    0,&NDDX
+         PACK  ZCVT_PWORK1(&LDR/2+1),&NDRX
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LDR/2+1)
+         CVB   1,ZCVT_PWORK
+         CDFR  1,1
+                    ACALL SFT_RND_D
+               AELSE
+                    MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
+                    MEXIT
+               AEND
+               AIF (&ROUNDED EQ 1)
+                   MNOTE 4,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-2'
+               AEND
+               AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
+                   MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
+                   MEXIT
+               AEND
+.*
+.* STORE TYPE D QUOTIENT FROM F0
+.*
+               ACASE (C2A('&TQ'))  
+               AWHEN C'D'
+         STD   0,&NQ
+               AWHEN C'E'
+         LEDR  0,0
+         STE   0,&NQ
+               AWHEN C'F'
+         CFDR  0,0,0
+         ST    0,&NQ
+               AWHEN C'G'
+         CGDR  0,0,0
+         STG   0,&NQ
+               AWHEN C'H'
+         CFDR  0,0,0
+         STH   0,&NQ
+               AWHEN C'P'
+         CFDR  0,0,0
+         CVD   0,ZCVT_PWORK
+         ZAP   &NQ,&ZCVT_PWORK
+                   AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'0F'
+                   AEND
+               AWHEN C'Z'
+         CFDR  0,0,0
+         CVD   0,ZCVT_PWORK
+         :&PLEN SETA &LQ/2+1
+         :&POFF SETA 8-&PLEN
+         UNPK  &NQ,ZCVT_PWORK+&POFF(&PLEN)
+                   AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'F0'
+                   AEND
+               AELSE
+                   MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
+                   MEXIT
+               AEND
+.*
+.* DIVIDE DIVIDEND TYPE E WITH QUOTIENT IN F0
+.*
+         AWHEN C'E'
+               ACASE (C2A('&TDR'))
+               AWHEN C'D'
+         LE    0,&NDDX
+         LD    1,&NDRX
+         LEDR  1,1
+                    ACALL SFT_RND_E
+               AWHEN C'E'
+         LE    0,&NDDX
+         LE    1,&NDRX
+                    ACALL SFT_RND_E
+               AWHEN C'F'
+         LE    0,&NDDX
+         L     1,&NDRX
+         CEFR  1,1
+                    ACALL SFT_RND_E
+               AWHEN C'G'
+         LE    0,&NDDX
+         LG    1,&NDRX
+         CEGR  1,1
+                    ACALL SFT_RND_E
+               AWHEN C'H'
+         LE    0,&NDDX
+         LH    1,&NDRX
+                    ACALL SFT_RND_E
+               AWHEN C'P'
+         LE    0,&NDDX
+         ZAP   ZCVT_PWORK,&NDRX
+         CVB   1,ZCVT_PWORK
+                    ACALL SFT_RND_E
+               AWHEN C'Z'
+         LE    0,&NDDX
+         PACK  ZCVT_PWORK1(&LDR/2+1),&NDRX
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LDR/2+1)
+         CVB   1,ZCVT_PWORK
+         CEFR  1,1
+                    ACALL SFT_RND_E
+               AELSE
+                    MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
+                    MEXIT
+               AEND
+               AIF (&ROUNDED EQ 1)
+                   MNOTE 4,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-1'
+               AEND
+               AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
+                   MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
+                   MEXIT
+               AEND
+.*
+.* STORE TYPE E QUOTIENT FROM F0
+.*
+               ACASE (C2A('&TQ'))  
+               AWHEN C'D'
+         LDER  0,0
+         STD   0,&NQ
+               AWHEN C'E'
+         STE   0,&NQ
+               AWHEN C'F'
+         CFER  0,0,0
+         ST    0,&NQ
+               AWHEN C'G'
+         CGER  0,0,0
+         STG   0,&NQ
+               AWHEN C'H'
+         CFER  0,0,0
+         STH   0,&NQ
+               AWHEN C'P'
+         CFER  0,0,0
+         CVD   0,ZCVT_PWORK
+         ZAP   &NQ,&ZCVT_PWORK
+                   AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'0F'
+                   AEND
+               AWHEN C'Z'
+         CFER  0,0,0
+         CVD   0,ZCVT_PWORK
+         :&PLEN SETA &LQ/2+1
+         :&POFF SETA 8-&PLEN
+         UNPK  &NQ,ZCVT_PWORK+&POFF(&PLEN)
+                   AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'F0'
+                   AEND
+               AELSE
+                   MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
+                   MEXIT
+               AEND
+.*
+.* DIVIDE DIVIDEND TYPE F WITH QUOTIENT IN R1 AND REMAINDER IN R0
+.*
+         AWHEN C'F'
+               ACASE (C2A('&TDR'))
+               AWHEN C'D'
+         L     1,&NDDX
+         LD    0,&NDRX
+         CFDR  2,0,0
+                    ACALL SFT_RND_F
+               AWHEN C'E'
+         L     1,&NDDX
+         LE    0,&NDRX
+         CFER  2,0,0
+                    ACALL SFT_RND_F
+               AWHEN C'F'
+         L     1,&NDDX
+         L     2,&NDRX
+                    ACALL SFT_RND_F
+               AWHEN C'G'
+         L     1,&NDDX
+         LG    2,&NDRX    HIGH 32 BITS IGNORED
+                    ACALL SFT_RND_F
+               AWHEN C'H'
+         L     1,&NDDX
+         LH    2,&NDRX
+                    ACALL SFT_RND_F
+               AWHEN C'P'
+         L     1,&NDDX
+         ZAP   ZCVT_PWORK,&NDRX
+         CVB   2,ZCVT_PWORK
+                    ACALL SFT_RND_F
+               AWHEN C'Z'
+         L     1,&NDDX
+         PACK  ZCVT_PWORK1(&LDR/2+1),&NDRX
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LDR/2+1)
+         CVB   2,ZCVT_PWORK
+                    ACALL SFT_RND_F
+               AELSE
+                    MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
+                    MEXIT
+               AEND
+               AIF (&ROUNDED EQ 1)
+                   MNOTE 4,'GEN_DIV ROUNDING NOT SUPPORTED YET'
+               AEND
+               AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
+                   MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
+                   MEXIT
+               AEND
+               ACALL STORE_FH_QR
+.*
+.* DIVIDE DIVIDEND TYPE G WITH QUOTIENT IN R1 AND REMAINDER IN R0
+.*
+         AWHEN C'G'
+               ACASE (C2A('&TDR'))
+               AWHEN C'D'
+         LG    1,&NDDX
+         LD    2,&NDRX
+         CGDR  2,2    
+                    ACALL SFT_RND_G
+               AWHEN C'E'
+         LG    1,&NDDX
+         LE    2,&NDRX
+         CGER  2,2    
+                    ACALL SFT_RND_G
+               AWHEN C'F'
+         LG    1,&NDDX
+         SGR   2,2
+         L     2,&NDRX
+                    ACALL SFT_RND_G
+               AWHEN C'G'
+         LG    1,&NDDX
+         LG    2,&NDRX
+                    ACALL SFT_RND_G
+               AWHEN C'H'
+         LG    1,&NDDX
+         SGR   2,2
+         LH    2,&NDRX
+                    ACALL SFT_RND_G
+               AWHEN C'P'
+         LG    1,&NDDX
+         ZAP   ZCVT_PWORK1,&NDRX
+         CVBG  2,ZCVT_PWORK1
+                    ACALL SFT_RND_G
+               AWHEN C'Z'
+         L     1,&NDDX
+         PACK  ZCVT_PWORK2(&LDR/2+1),&NDRX
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK2(&LDR/2+1)
+         CVBG  2,ZCVT_PWORK1
+                    ACALL SFT_RND_G
+               AELSE
+                    MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
+                    MEXIT
+               AEND
+               AIF (&ROUNDED EQ 1)
+                   MNOTE 4,'GEN_DIV ROUNDING NOT SUPPORTED YET'
+               AEND
+               AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
+                   MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
+                   MEXIT
+               AEND
+.*
+.* STORE TYPE G QUOTIENT FROM R1
+.*
+               ACASE (C2A('&TQ'))  
+               AWHEN C'D'
+         CGDR  1,1
+               AIF (&SQ EQ 0)
+         LPGR  1,1
+               AEND
+         STG   1,&NQ
+               AWHEN C'E'
+         CGER  1,1
+               AIF (&SQ EQ 0)
+         LPGR  1,1
+               AEND
+         STG   1,&NQ
+               AWHEN C'F'
+               AIF (&SQ EQ 0)
+         LPGR  1,1
+               AEND
+         ST    1,&NQ
+               AWHEN C'G'
+               AIF (&SQ EQ 0)
+         LPGR  1,1
+               AEND
+         STG   1,&NQ
+               AWHEN C'H'
+               AIF (&SQ EQ 0)
+         LPGR  1,1
+               AEND
+         STH   1,&NQ
+               AWHEN C'P'
+         CVDG  1,ZCVT_PWORK1
+         ZAP   &NQ,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'0F'
+               AEND
+               AWHEN C'Z'
+         CVDG  1,ZCVT_PWORK1
+         :&PLEN SETA &LQ/2+1
+         :&POFF SETA 8-&PLEN
+         UNPK  &NQ,ZCVT_PWORK1+&POFF(&PLEN)
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'F0'
+               AEND
+               AELSE
+                   MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
+                   MEXIT
+               AEND
+.*
+.* STORE TYPE G REMAINDER FROM R0
+.*
+             AIF ('&TR' NE '')
+               ACASE (C2A('&TR'))  
+               AWHEN C'F'
+               AIF (&SR EQ 0)
+         LPGR  0,0
+               AEND
+         ST    0,&NR      IGNORE HIGH 32 BITS
+               AWHEN C'G'
+               AIF (&SR EQ 0)
+         LPGR  0,0
+               AEND
+         STG   0,&NR
+               AWHEN C'H'
+               AIF (&SR EQ 0)
+         LPGR  0,0
+               AEND
+         STH   0,&NR      IGNORE HIGH 48 BITS
+               AWHEN C'P'
+         CVDG  0,ZCVT_PWORK1
+         ZAP   &NR,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'0F'
+               AEND
+               AWHEN C'Z'
+         CVDG  0,ZCVT_PWORK1
+         :&PLEN SETA &LR/2+1
+         :&POFF SETA 16-&PLEN
+         UNPK  &NR,ZCVT_PWORK+&POFF(&PLEN)
+               AIF (&SR EQ 0)
+         OI    &NR+&LR-1,X'F0'
+               AEND
+               AELSE
+                   MNOTE 8,'GEN_DIV INVALID REMAINDER TYPE &TR'
+                   MEXIT
+               AEND
+             AEND
+.*
+.* DIVIDE DIVIDEND TYPE H WITH QUOTIENT IN R1 AND REMAINDER IN R0
+.*
+         AWHEN C'H'
+               ACASE (C2A('&TDR'))
+               AWHEN C'D'
+         LH    1,&NDDX
+         LD    2,&NDRX
+         CFDR  2,2    
+                    ACALL SFT_RND_F
+               AWHEN C'E'
+         LH    1,&NDDX
+         LE    2,&NDRX
+         CFER  2,2    
+                    ACALL SFT_RND_F
+               AWHEN C'F'
+         LH    1,&NDDX
+         L     2,&NDRX
+                    ACALL SFT_RND_F
+               AWHEN C'G'
+         LH    1,&NDDX
+         LG    2,&NDRX  IGNORE HIGH 32 BITS
+                    ACALL SFT_RND_F
+               AWHEN C'H'
+         LH    1,&NDDX
+         LH    2,&NDRX
+                    ACALL SFT_RND_F
+               AWHEN C'P'
+         LH    1,&NDDX
+         ZAP   ZCVT_PWORK,&NDRX
+         CVB   2,ZCVT_PWORK
+                    ACALL SFT_RND_F
+               AWHEN C'Z'
+         LH    1,&NDDX
+         PACK  ZCVT_PWORK1(&LDR/2+1),&NDRX
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LDR/2+1)
+         CVB   2,ZCVT_PWORK
+                    ACALL SFT_RND_F
+               AELSE
+                    MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
+                    MEXIT
+               AEND
+               AIF (&ROUNDED EQ 1)
+                   MNOTE 4,'GEN_DIV ROUNDING NOT SUPPORTED YET'
+               AEND
+               AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
+                   MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
+                   MEXIT
+               AEND
+               ACALL STORE_FH_QR
+.*
+.* DIVIDE DIVIDEND TYPE P LEAVING 
+.*   Q=ZCVT_PWORK4(&LDD) R=ZCVT_PWORK4+&LDD.(&LDR)
+.*
+         AWHEN C'P'
+               ACASE (C2A('&TDR'))
+               AWHEN C'D'
+         :&LPW1 SETA &LDD
+         ZAP   ZCVT_PWORK1(&LPW1),&NDDX
+         LD    0,&NDRX
+         CFDR  0,0,0  
+         CVD   0,ZCVT_PWORK2
+         :&LPW2 SETA 8
+                    ACALL SFT_RND_P
+               AWHEN C'E'
+         :&LPW1 SETA &LDD
+         ZAP   ZCVT_PWORK1(&LPW1),&NDDX
+         LD    0,&NDRX
+         CFER  0,0,0  
+         CVD   0,ZCVT_PWORK2
+         :&LPW2 SETA 8
+                    ACALL SFT_RND_P
+               AWHEN C'F'
+         :&LPW1 SETA &LDD
+         ZAP   ZCVT_PWORK1(&LDD),&NDDX
+         L     0,&NDRX
+         CVD   0,ZCVT_PWORK2
+         :&LZCVT_PWORK2 SETA 8
+                    ACALL SFT_RND_P
+               AWHEN C'G'
+         :&LPW1 SETA &LDD
+         ZAP   ZCVT_PWORK1(&LPW1),&NDDX
+         LG    0,&NDRX
+         CVD   0,ZCVT_PWORK2    IGNORE HIGH 32
+         :&LPW2 SETA 8
+                    ACALL SFT_RND_P
+               AWHEN C'H'
+         :&LPW1 SETA &LDD
+         ZAP   ZCVT_PWORK1(&LPW1),&NDDX
+         LH    0,&NDRX
+         CVD   0,ZCVT_PWORK2
+         :&LPW2 SETA 8
+                    ACALL SFT_RND_P
+               AWHEN C'P'
+         :&LPW1 SETA &LDD
+         ZAP   ZCVT_PWORK1(&LPW1),&NDDX  
+         :&LPW2 SETA &LDR
+         ZAP   ZCVT_PWORK2(&LPW2),&NDRX
+                    ACALL SFT_RND_P
+               AWHEN C'Z'
+         :&LPW1 SETA &LDD
+         ZAP   ZCVT_PWORK1(&LPW1),&NDDX
+         :&LPW2 SETA &LDR/2+1
+         PACK  ZCVT_PWORK2(&LPW2),&NDRX
+                    ACALL SFT_RND_P
+               AELSE
+                    MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
+                    MEXIT
+               AEND
+               AIF (&ROUNDED EQ 1)
+                   MNOTE 4,'GEN_DIV ROUNDING NOT SUPPORTED YET'
+               AEND
+               AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
+                   MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
+                   MEXIT
+               AEND
+.*
+.* STORE TYPE P QUOTIENT FROM ZCVT_PWORK4(LDD)
+.*
+               ACASE (C2A('&TQ'))  
+               AWHEN C'D'
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK4(&LDR)
+         CVBG  0,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         LPR   0,0
+               AEND
+         CDFR  0,0
+         STD   0,&NQ
+               AWHEN C'E'
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK4(&LDR)
+         CVBG  0,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         LPR   0,0
+               AEND
+         CEFR  0,0
+         STE   0,&NQ
+               AWHEN C'F'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDR)
+         CVB   0,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         LPR   0,0
+               AEND
+         ST    0,&NQ
+               AWHEN C'G'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDR)
+         CVB   0,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         LPGR  0,0
+               AEND
+         STG   01,&NQ
+               AWHEN C'H'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDR)
+         CVB   0,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         LPR   0,0
+               AEND
+         STH   0,&NQ
+               AWHEN C'P'
+         ZAP   &NQ,ZCVT_PWORK4(&LDR)
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'0F'
+               AEND
+               AWHEN C'Z'
+         :&PLEN SETA &LQ/2+1
+         :&POFF SETA 8-&PLEN
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDD)
+         UNPK  &NQ,ZCVT_PWORK+&POFF(&PLEN)
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'F0'
+               AEND
+               AELSE
+                   MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
+                   MEXIT
+               AEND
+.*
+.* STORE TYPE P REMAINDER FROM ZCVT_PWORK4+LDD.(LDR)
+.*
+             AIF ('&TR' NE '')
+               ACASE (C2A('&TR'))  
+               AWHEN C'F'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4+&LDR.(&LDD)
+         CVB   0,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         LPR   0,0
+               AEND
+         ST    0,&NR
+               AWHEN C'G'
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK4+&LDR.(&LDD)
+         CVBG  0,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         LPGR  0,0
+               AEND
+         STG   0,&NR
+               AWHEN C'H'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4+&LDR.(&LDD)
+         CVB   0,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         LPR   0,0
+               AEND
+         STH   0,&NR
+               AWHEN C'P'
+         ZAP   &NR,ZCVT_PWORK4+&LDR.(&LDD)
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'0F'
+               AEND
+               AWHEN C'Z'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4+&LDR.(&LDD)
+         :&PLEN SETA &LQ/2+1
+         :&POFF SETA &8-&PLEN
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4+&LDR.(&LDD)
+         UNPK  &NR,ZCVT_PWORK+&POFF(&PLEN)
+               AIF (&SR EQ 0)
+         OI    &NR+&LR-1,X'F0'
+               AEND
+               AELSE
+                   MNOTE 8,'GEN_DIV INVALID REMAINDER TYPE &TR'
+                   MEXIT
+               AEND
+             AEND
+.*
+.* DIVIDE DIVIDEND TYPE Z WITH 
+.*  Q=ZCVT_PWORK4(&LDD) R=ZCVT_PWORK4+&LDD.(&LDR)
+.*
+         AWHEN C'Z'
+               ACASE (C2A('&TDR'))
+               AWHEN C'D'
+         PACK   ZCVT_PWORK1(&LDDP),&NDDX
+         LD    0,&NDRX
+         CFDR  0,0,0  
+         CVD   0,ZCVT_PWORK2
+         :&LDRP SETA 8
+                    ACALL SFT_RND_Z
+               AWHEN C'E'
+         :&LDDP SETA &LDD/2+1
+         PACK   ZCVT_PWORK1(&LDDP),&NDDX
+         LE    0,&NDRX
+         CFER  0,0,0  
+         CVD   0,ZCVT_PWORK2
+         :&LDRP SETA 8
+                    ACALL SFT_RND_Z
+               AWHEN C'F'
+         :&LDDP SETA &LDD/2+1
+         PACK   ZCVT_PWORK1(&LDDP),&NDDX
+         L     0,&NDRX
+         CVD   0,ZCVT_PWORK2
+         :&LDRP SETA 8
+                    ACALL SFT_RND_Z
+               AWHEN C'G'
+         :&LDDP SETA &LDD/2+1
+         PACK   ZCVT_PWORK1(&LDDP),&NDDX
+         LG    0,&NDRX
+         CVD   0,ZCVT_PWORK2 IGNORE HIGH 32 BITS
+         :&LDRP SETA 8
+                    ACALL SFT_RND_Z
+               AWHEN C'H'
+         :&LDDP SETA &LDD/2+1
+         PACK   ZCVT_PWORK1(&LDDP),&NDDX
+         LH    0,&NDRX
+         CVD   0,ZCVT_PWORK2                          
+         :&LDRP SETA 8
+                    ACALL SFT_RND_Z
+               AWHEN C'P'
+         :&LDDP SETA &LDD/2+1
+         PACK   ZCVT_PWORK1(&LDDP),&NDDX
+         :&LDRP SETA &LDR
+         ZAP    ZCVT_PWORK2(&LDRP),&NDRX
+                    ACALL SFT_RND_Z
+               AWHEN C'Z'
+         :&LDDP SETA &LDD/2+1
+         PACK   ZCVT_PWORK1(&LDDP),&NDDX
+         :&LDRP SETA &LDR/2+1
+         PACK   ZCVT_PWORK2(&LDRP),&NDRX
+                    ACALL SFT_RND_Z
+               AELSE
+                    MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
+                    MEXIT
+               AEND
+               AIF (&ROUNDED EQ 1)
+                   MNOTE 4,'GEN_DIV ROUNDING NOT SUPPORTED YET'
+               AEND
+               AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
+                   MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
+                   MEXIT
+               AEND
+.*
+.* STORE TYPE Z QUOTIENT FROM Q=ZCVT_PWORK4(LDDP)
+.*
+               ACASE (C2A('&TQ'))  
+               AWHEN C'D'
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK4(&LDDP)
+         CVBG  0,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         LPGR  0,0
+               AEND
+         CDGR  0,0
+         STD   0,&NQ
+               AWHEN C'E'
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK4(&LDDP)
+         CVBG  0,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         LPGR  0,0
+               AEND
+         CEGR  0,0
+         STE   0,&NQ
+               AWHEN C'F'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDDP)
+         CVB   0,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         LPR   0,0
+               AEND
+         ST    0,&NQ
+               AWHEN C'G'
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK4(&LDDP)
+         CVBG  0,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         LPGR  0,0
+               AEND
+         STG   0,&NQ
+               AWHEN C'H'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDDP)
+         CVB   0,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         LPR   0,0
+               AEND
+         STH   0,&NQ
+               AWHEN C'P'
+         ZAP   &NQ,ZCVT_PWORK4(&LDDP)
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'0F'
+               AEND
+               AWHEN C'Z'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDDP)
+         :&PLEN SETA &LQ/2+1
+         :&POFF SETA 8-&PLEN
+         UNPK  &NQ,ZCVT_PWORK+&POFF(&PLEN)
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'F0'
+               AEND
+               AELSE
+                   MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
+                   MEXIT
+               AEND
+.*
+.* STORE TYPE Z REMAINDER FROM ZCVT_PWORK4(LPW1)
+.*
+             AIF ('&TR' NE '')
+               ACASE (C2A('&TR'))  
+               AWHEN C'D'
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK4+&LDDP.(&LDRP)
+         CVBG  0,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         LPGR  0,0
+               AEND
+         CDGR  0,0
+         STD   0,&NR
+               AWHEN C'E'
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK4+&LDDP.(&LDRP)
+         CVBG  0,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         LPGR  0,0
+               AEND
+         CEGR  0,0
+         STD   0,&NR
+               AWHEN C'F'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4+&LDDP.(&LDRP)
+         CVB   0,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         LPR   0,0
+               AEND
+         STD   0,&NR
+               AWHEN C'G'
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK4+&LDDP.(&LDRP)
+         CVBG  0,ZCVT_PWORK1
+               AIF (&SQ EQ 0)
+         LPGR  0,0
+               AEND
+         STG   0,&NR
+               AWHEN C'H'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4+&LDDP.(&LDRP)
+         CVB   0,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         LPR   0,0
+               AEND
+         STH   0,&NR
+               AWHEN C'P'
+         ZAP   &NR,ZCVT_PWORK4+&LDDP.(&LDRP)
+               AIF (&SQ EQ 0)
+         OI    &NR+&LR-1,X'0F'
+               AEND
+               AWHEN C'Z'
+         ZAP   ZCVT_PWORK,ZCVT_PWORK4+&LDDP.(&LDRP)
+         :&PLEN SETA &LQ/2+1
+         :&POFF SETA 8-&PLEN
+         UNPK  &NR,ZCVT_PWORK+&POFF(&PLEN)
+               AIF (&SR EQ 0)
+         OI    &NR+&LR-1,X'F0'
+               AEND
+               AELSE
+                   MNOTE 8,'GEN_DIV INVALID REMAINDER TYPE &TR'
+                   MEXIT
+               AEND
+             AEND
+.*
+.* END OF DIVIDEND TYPE PROCESSING
+.*
+         AELSE
+               MNOTE 8,'GEN_DIV INVALID DIVIDEND TYPE &TDD'
+               MEXIT
+         AEND
+         MEXIT
+.*
+.* STORE TYPE F/H QUOTIENT FROM R1 AND REMAINDER FROM R0
+.*
+         AENTRY STORE_FH_QR
+               ACASE (C2A('&TQ'))  
+               AWHEN C'D'
+               AIF (&SQ EQ 0)
+         LPR   1,1
+               AEND
+         CDFR  1,1
+         STD   1,&NQ
+               AWHEN C'E'
+               AIF (&SQ EQ 0)
+         LPR   1,1
+               AEND
+         CEFR  1,1
+         STE   1,&NQ
+               AWHEN C'F'
+               AIF (&SQ EQ 0)
+         LPR   1,1
+               AEND
+         ST    1,&NQ
+               AWHEN C'G'
+               AIF (&SQ EQ 0)
+         LPR   1,1
+               AEND
+         LGFR  1,1
+         STG   1,&NQ
+               AWHEN C'H'
+               AIF (&SQ EQ 0)
+         LPR   1,1
+               AEND
+         STH   1,&NQ
+               AWHEN C'P'
+         CVD   1,ZCVT_PWORK
+         ZAP   &NQ,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'0F'
+               AEND
+               AWHEN C'Z'
+         CVD   1,ZCVT_PWORK
+         :&PLEN SETA &LQ/2+1
+         :&POFF SETA 8-&PLEN
+         UNPK  &NQ,ZCVT_PWORK+&POFF(&PLEN)
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'F0'
+               AEND
+               AELSE
+                   MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
+                   MEXIT
+               AEND
+.*
+.* STORE TYPE F/H REMAINDER FROM R0
+.*
+             AIF ('&TR' NE '')
+               ACASE (C2A('&TR'))  
+               AWHEN C'F'
+               AIF (&SR EQ 0)
+         LPR   0,0
+               AEND
+         ST    0,&NR
+               AWHEN C'G'
+               AIF (&SR EQ 0)
+         LGPR   0,0
+               AELSE
+         LGR    0,0
+               AEND
+         STG   0,&NR
+               AWHEN C'H'
+               AIF (&SR EQ 0)
+         LPR   0,0
+               AEND
+         STH   0,&NR
+               AWHEN C'P'
+         CVD   0,ZCVT_PWORK
+         ZAP   &NR,ZCVT_PWORK
+               AIF (&SQ EQ 0)
+         OI    &NQ+&LQ-1,X'0F'
+               AEND
+               AWHEN C'Z'
+         CVD   0,ZCVT_PWORK
+         :&PLEN SETA &LQ/2+1
+         :&POFF SETA 8-&PLEN
+         UNPK  &NR,ZCVT_PWORK+&POFF(&PLEN)
+               AIF (&SR EQ 0)
+         OI    &NR+&LR-1,X'F0'
+               AEND
+               AELSE
+                   MNOTE 8,'GEN_DIV INVALID REMAINDER TYPE &TR'
+                   MEXIT
+               AEND
+             AEND
+         AEND
+.*
+.* SHIFT,DIVIDE, AND ROUND TYPE D F0,F1 
+.*
+     AENTRY SFT_RND_D
+       :&SFT SETA &PQ-&PDR
+       AIF   (&SFT GT 0)
+         LARL  R1,=D'1E&SFT'
+         MD    0,0(R1)
+       AELSEIF (&SFT LT 0)
+         LARL  R1,=D'1E-&SFT'
+         MD    0,0(R1)
+       AEND
+         DDR   0,1
+         AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
+         LARL  R1,=D'0.5'
+         AD    0,0(R1)
+         AEND
+     AEND
+.*
+.* SHIFT, DIVIDE, AND ROUND TYPE E F0,F1 
+.*
+     AENTRY SFT_RND_E
+       :&SFT SETA &PQ-&PDR
+       AIF   (&SFT GT 0)
+         LARL  R1,=E'1E&SFT'
+         ME    0,0(R1)
+       AELSEIF (&SFT LT 0)
+         LARL  R1,=E'1E-&SFT'
+         ME    0,0(R1)
+       AEND
+         DER   0,1
+         AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
+         LARL  R1,=E'0.5'
+         AE    0,0(R1)
+         AEND
+     AEND
+.*
+.* SHIFT, DIVIDE, AND ROUND TYPE F R0,R2 (ALSO USED FOR H) 
+.*
+     AENTRY SFT_RND_F
+       :&SFT SETA &PQ-(&PDD-&PDR)
+       AIF   (&SFT GT 0)
+         LARL  R3,=F'1E&SFT'
+         MS    1,0(R3)
+       AELSEIF (&SFT LT 0)
+         LARL  R3,=F'1E&SFT'
+         MS    2,0(R3)
+       AEND
+         SR    0,0
+         DR    0,2
+         AIF   (&ROUNDED EQ 1)
+         BRAS  R14,ZC_RND_F
+         AEND
+     AEND
+.*
+.* SHIFT, DIVIDE, AND ROUND TYPE G R0,R2
+.*
+     AENTRY SFT_RND_G
+       :&SFT SETA &PQ-(&PDD-&PDR)
+       AIF   (&SFT GT 0)
+         LARL  R3,=FL8'1E&SFT'
+         MSG   1,0(R3)
+       AELSEIF (&SFT LT 0)
+         LARL  R3,=FL8'1E&SFT'
+         MSG   2,0(R3)
+       AEND
+         DSGR    0,2
+         AIF   (&ROUNDED EQ 1)
+         BRAS  R14,ZC_RND_G
+         AEND
+     AEND
+.*
+.* SHIFT, DIVIDE, AND ROUND TYPE P 
+.*   DIVIDEND  = ZCVT_PWORK1(LDD)
+.*   DIVISOR   = ZCVT_PWORK2(LDR)
+.*   QUOTIENT  = ZCVT_PWORK4(LDD)
+.*   REMAINDER = ZCVT_PWORK4+LDD(&LDR) IF ANY
+.*
+     AENTRY SFT_RND_P
+       :&SFT SETA &PQ-(&PDD-&PDR)
+       AIF   (&SFT GT 0)
+         SRP   ZCVT_PWORK1(&LDD),&SFT,0
+       AEND
+         ZAP   ZCVT_PWORK4(&LDD+&LDR),ZCVT_PWORK1(&LDD)
+         DP    ZCVT_PWORK4(&LDD+&LDR),ZCVT_PWORK2(&LDR)
+       AIF (&SFT LT 0)
+         AIF   (&ROUNDED EQ 1)
+         SRP   ZCVT_PWORK4(&LDD),-&SFT,5      
+               AIF   (&LR GT 0)
+         SRP   ZCVT_PWORK4+&LDD.(&LDR),-&SFT,5
+               AEND
+         AELSE
+         SRP   ZCVT_PWORK4(&LDD),-&SFT,0      
+               AIF   (&LR GT 0)
+         SRP   ZCVT_PWORK4+&LDD.(&LDR),-&SFT,0
+               AEND
+         AEND
+       AEND
+     AEND
+.*
+.* SHIFT, DIVIDE, AND ROUND TYPE Z USING LDDP AND LDRP PACKED LENGTHS 
+.*   DIVIDEND  = ZCVT_PWORK1(LDDP)
+.*   DIVISOR   = ZCVT_PWORK2(LDRP)
+.*   QUOTIENT  = ZCVT_PWORK4(LDDP)
+.*   REMAINDER = ZCVT_PWORK4+LDDP(&LDRP) IF ANY
+.*
+     AENTRY SFT_RND_Z
+       :&SFT SETA &PQ-(&PDD-&PDR)
+       AIF   (&SFT GT 0)
+         SRP   ZCVT_PWORK1(&LDDP),&SFT,0
+       AEND
+         ZAP   ZCVT_PWORK4(&LDDP+&LDRP),ZCVT_PWORK1(&LDDP)
+         DP    ZCVT_PWORK4(&LDDP+&LDRP),ZCVT_PWORK2(&LDRP)
+       AIF (&SFT LT 0)
+         AIF   (&ROUNDED EQ 1)
+         SRP   ZCVT_PWORK4(&LDDP),-&SFT,5      
+               AIF   (&LR GT 0)
+         SRP   ZCVT_PWORK4+&LDDP.(&LDRP),-&SFT,5
+               AEND
+         AELSE
+         SRP   ZCVT_PWORK4(&LDDP),-&SFT,0      
+               AIF   (&LR GT 0)
+         SRP   ZCVT_PWORK4+&LDDP.(&LDRP),-&SFT,0
+               AEND
+         AEND
+       AEND
+     AEND
+         MEND

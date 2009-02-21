@@ -17,6 +17,8 @@
 .* 05/17/07 RPI 625  correct to handle LOCTR as well as CSECT/DSECT               
 .* 09/10/08 RPI 764  add  DCBMACRF_GL and PL locate support labels          
 .* 09/10/08 RPI 906  move DCBOFLGS_OPEN to X'10', add DCBOFOPN X'10'           
+.* 02/04/09 RPI 989  add DCBEODA (note DCBEODAD is same 31 bit addr)      
+.* 02/06/09 RPI 989  add DCBRECF,DCBRECBR,DCBRECFU bits (RECU never on)
 .*********************************************************************
          DCBD  &DSORG=,     IGNORE                                     X
                &DEVD=       IGNORE
@@ -45,9 +47,11 @@ DCBDSORG_DA EQU X'20'           DIRECT ACCESS
          ORG   IHADCB+X'1C'
 DCBIOBAD DS    A              INPUT/OUTPUT BLOCK (TIOT TABLE INDEX)
          ORG   IHADCB+X'20'
-DCBEODAD DS    A ADDRESS OF END OF FILE EXIT
+DCBEODA  DS    0A ADDRESS OF END OF FILE EXIT 31 BIT VS 24 RPI 989
+DCBEODAD DS    A ADDRESS OF END OF FILE EXIT  31 BIT VS 24
          ORG   IHADCB+X'24'
 DCBRECFM DS    X              RECORD FORMAT
+DCBRECF      EQU X'80'           FIXED  RPI 989
 DCBRECFM_F   EQU X'80'           FIXED
 DCBRECFM_FA  EQU X'80'           FIXED
 DCBRECFM_FM  EQU X'80'           FIXED
@@ -55,6 +59,7 @@ DCBRECFM_V   EQU X'40'           VARIABLE
 DCBRECFM_VA  EQU X'40'           VARIABLE
 DCBRECFM_VM  EQU X'40'           VARIABLE
 DCBRECFM_FB  EQU X'90'           FIXED BLOCKED
+DCBRECBR     EQU X'10'           BLOCKED RECORDS RPI 989
 DCBRECFM_FBA EQU X'90'           FIXED BLOCKED
 DCBRECFM_FBM EQU X'90'           FIXED BLOCKED
 DCBRECFM_VB  EQU X'50'           VARIABLE BLOCKED
@@ -62,6 +67,7 @@ DCBRECFM_VBA EQU X'50'           VARIABLE BLOCKED
 DCBRECFM_VBM EQU X'50'           VARIABLE BLOCKED
 DCBRECFM_FT  EQU X'A0'           FIXED ASCII TEXT
 DCBRECFM_VT  EQU X'60'           VARIABLE ASCII TEXT
+DCBRECU      EQU X'C0'           UNDEFINED RCDS NOT SUPPORTED RPI 989
          ORG   IHADCB+X'28'
 DCBDDNAM DS    CL8            DDNAME > ENV VAR > FILE NAME
          ORG   IHADCB+X'30'

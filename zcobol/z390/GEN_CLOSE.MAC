@@ -1,0 +1,15 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/17/08                                                 *
+.*********************************************************************
+.* 04/17/08 initial coding for Z390 CLOSE
+.*********************************************************************
+         GEN_CLOSE &FILE
+         COPY  ZC_WS
+         ZCLOSE (&FILE_NAME(&FILE_IX))
+         MEXIT
+         MEND

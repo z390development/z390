@@ -315,12 +315,14 @@ P100AEIB DS    AL4                EIB
 P100ATCT DS    AL4                TCTTE
 P100AINT DS    AL4                ADDRESS OF INTO
 P100ASET DS    X                  FF=SET IS SPECIFIED
+         DS    X
 P100ASTA DS    AL4                ADDRESS FOR SET
 P100ALEN DS    AL4                ADDRESS OF LENGTH
 P100ARTN DS    AL4                ADDRESS OF RTRANSID
 P100ARTM DS    AL4                ADDRESS OF RTERMID
 P100AQNM DS    AL4                ADDRESS OF QUEUE NAME
          DS    X                  FF=NOHANDLE
+         DS    X
 P100ARSP DS    AL4                RESP
 P100ARS2 DS    AL4                RESP2
 P100AEND EQU   *                  END MARKER

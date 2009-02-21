@@ -1,0 +1,40 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/15/08                                                 *
+.*********************************************************************
+.* 04/15/08 initial coding for global flush pending IF,EVALUATE lvls    
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+         PERIOD    
+         COPY  ZC_WS
+         :&BASE_LRU     SETA 2   SET HIGH REG FIRST AND SKIP DROP DSHX1    
+         :&BASE_B1_HIGH SETA 0   RESET DYNAMIC WS BASE REGS
+         :&BASE_B2_HIGH SETA 0
+         :&LBASE_LRU     SETA 2  SET HIGH REG FIRST AND SKIP DROP DSHX1
+         :&LBASE_B1_HIGH SETA 0  RESET DYNAMIC LK BASE REGS
+         :&LBASE_B2_HIGH SETA 0
+         AWHILE (&IE_LVL GT 0)
+               AIF   (&IE_TYPE(&IE_LVL) EQ 1)        
+                     END_IF
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 2)             
+                     END_EVALUATE
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 3)               
+                     END_READ
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 4)               
+                     END_PERFORM
+               AELSE
+                     MNOTE 8,'PERIOD UNKNOWN LEVEL TYPE - &IE_TYPE(&IE_X
+               LVL)'
+                     MEXIT
+               AEND
+         AEND
+         AIF   (&PERIOD_NEXT)
+               :&PERIOD_NEXT SETB 0
+               GEN_LABEL PERIOD_NEXT_&PERIOD_NEXT_LAB,NEXT_SENTENCE
+         AEND
+         MEND
+

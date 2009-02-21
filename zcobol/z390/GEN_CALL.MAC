@@ -1,0 +1,130 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 10/14/08 initial coding for Z390 MOVE    
+.*********************************************************************
+         GEN_CALL &PGM,&USING       
+         COPY ZC_WS
+         :&NP SETA N'&SYSLIST
+       AIF   (&NP EQ 1)
+         SR    R1,R1
+               ACALL CALL_PGM
+               MEXIT   
+       AEND  
+.*
+.* COUNT PARMS AND ALLOCATE STATIC LIST
+.*
+         :&I  SETA 3
+         :&NA SETA 0
+         AWHILE (&I LE &NP)
+               AIF ('&SYSLIST(&I)' EQ 'BY')
+                   AIF ('&SYSLIST(&I+1)' EQ 'REFERENCE'                X
+                        OR '&SYSLIST(&I+1)' EQ 'VALUE')
+                        :&NA SETA &NA+1
+                        :&I  SETA &I+3
+                   AELSE
+                        MNOTE 8,'CALL UNKNOWN TYPE - &SYSLIST(&I+1)'
+                        MEXIT
+                   AEND
+               AELSE
+                  :&NA SETA &NA+1
+                  :&I  SETA &I+1
+               AEND
+         AEND               
+         :&LEN SETA 4*&NA
+         GEN_VAR ZC_CALL_LIST_&VAR_TOT,X,&LEN
+         :&LIST_IX SETA &SYM_IX
+         :&OFF SETA 0
+         :&I   SETA 3
+         AWHILE (&I LE &NP)
+               AIF ('&SYSLIST(&I)' EQ 'BY')
+                   AIF ('&SYSLIST(&I+1)' EQ 'REFERENCE')
+                        ZC_SYM_FIND &SYSLIST(&I+2)
+                        AIF (&SYM_IX GT 0)
+                            :&PARM_IX SETA &SYM_IX
+                            GEN_BASE &PARM_IX
+         GEN_BASE &LIST_IX
+         GEN_BASE &PARM_IX
+         LA    R0,&SYSLIST(&I+2)
+         ST    R0,&SYM_NAME(&LIST_IX)+&OFF
+                            :&OFF SETA &OFF+4               
+                            :&I   SETA &I+3
+                        AELSE
+                            MNOTE 8,'GEN_CALL PARM NOT FOUND - &SYSLISTX
+               (&I+2)'
+                            MEXIT
+                        AEND
+                   AELSEIF ('&SYSLIST(&I+1)' EQ 'VALUE')
+                        ZC_SYM_FIND &SYSLIST(&I+2)
+                        AIF (&SYM_IX GT 0)
+                            :&PARM_IX SETA &SYM_IX
+                            GEN_VAR ZC_CALL_VALUE_&VAR_TOT,&SYM_PIC_TYPX
+               E(&PARM_IX),&SYM_LEN(&PARM_IX)
+                            :&VAR_IX SETA &SYM_IX
+                            GEN_BASE &PARM_IX
+                            GEN_BASE &VAR_IX
+                            GEN_MOVE &SYM_NAME(&VAR_IX),&VAR_IX,&SYM_NAX
+               ME(&PARM_IX),&PARM_IX
+         GEN_BASE &LIST_IX
+         GEN_BASE &VAR_IX
+         LA    R0,&SYM_NAME(&VAR_IX)
+         ST    R0,&SYM_NAME(&LIST_IX)+&OFF
+                            :&OFF SETA &OFF+4               
+                            :&I  SETA &I+3
+                        AELSE
+                            MNOTE 8,'GEN_CALL PARM NOT FOUND - &SYSLISTX
+               (&I+2)'
+                            MEXIT
+                        AEND
+                   AELSE
+                        MNOTE 8,'CALL UNKNOWN TYPE - &SYSLIST(&I+1)'
+                        MEXIT
+                   AEND
+               AELSE
+                   ZC_SYM_FIND &SYSLIST(&I+2)
+                   AIF (&SYM_IX GT 0)
+                       :&PARM_IX SETA &SYM_IX
+                       GEN_BASE &LIST_IX
+                       GEN_BASE &PARM_IX
+         LA    R0,&SYSLIST(&I+2)
+         ST    R0,&SYM_NAME(&LIST_IX)+&OFF
+                       :&OFF SETA &OFF+4               
+                       :&I  SETA &I+1
+                   AELSE
+                       MNOTE 8,'GEN_CALL PARM NOT FOUND - &SYSLIST(&I+2X
+               )'
+                       MEXIT
+                   AEND
+               AEND
+         AEND
+         OI    &SYM_NAME(&LIST_IX)+&OFF-4,X'80'
+         LA    R1,&SYM_NAME(&LIST_IX)
+         ACALL CALL_PGM
+         MEXIT
+.*
+.* CALL PGM 
+.*
+         AENTRY CALL_PGM
+       AIF ('&PGM'(1,1) EQ '''')
+           :&NAME SETC '&PGM'(2,K'&PGM-2)
+         LRL   R15,=V(&NAME)  
+         BASR  R14,R15
+       AELSE
+         ZC_SYM_FIND &PGM
+         AIF  (&SYM_IX GT 0)
+              GEN_BASE &SYM_IX
+         AELSE
+              MNOTE 8,'CALL NAME NOT FOUND - &PGM'
+              MEXIT
+         AEND
+         LA    R0,&PGM
+         L     R15,ZCVT_CALL
+         BASR  R14,R15
+       AEND
+         AEND
+         MEND

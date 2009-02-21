@@ -1,0 +1,150 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 02/05/09                                                 *
+.*********************************************************************
+.* 02/05/09 move subscript gen form zcobol\ZCGETFLD.CPY
+.*********************************************************************
+         GEN_SIX                                    
+         COPY  ZC_WS
+         AIF   (&TOT_SIX EQ 1)
+               ACALL GEN_SUB1
+         AELSE
+               ACALL GEN_SUBN
+         AEND
+         MEXIT
+.*
+.* GEN 1 SUBSCRIPT AND NONE IF LITERAL 1
+.*
+      AENTRY GEN_SUB1
+       AIF   ('&SIX_NAME(1)'(1,1) GE '0')  SUBSCRIPT IS A LITERAL
+        AIF ('&SIX_NAME(1)' NE '1')        SKIP CALC AND USE NAME FOR 1
+         ACALL SET_FIELD_SIX
+         IILF  &FIELD_REG,(&SIX_NAME(1)-1)*&SYM_LEN(&SIX_OCCUR(1)) (LITX
+               -1)*LEN
+         LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)(&FIELD_REG)
+        AEND
+       AELSE
+        ACALL SET_FIELD_SIX
+        ZC_SYM_FIND &SIX_NAME(1)
+        AIF (&SYM_IX GT 0)             SUBSCRIPT/INDEX FOUND
+               :&SUB_IX SETA &SYM_IX
+               GEN_BASE &SUB_IX
+               ACASE (C2A('&SYM_PIC_TYPE(&SUB_IX)'))
+               AWHEN C'A' ASSUME INDEX AND JUST ADD VALUE
+         L     &FIELD_REG,&SYM_NAME(&SUB_IX) INDEX OFFSET
+         LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)(&FIELD_REG)
+               AEXIT AENTRY
+               AWHEN C'F'
+         L     &FIELD_REG,&SYM_NAME(&SUB_IX)
+               AWHEN C'G'
+         LG    &FIELD_REG,&SYM_NAME(&SUB_IX)
+               AWHEN C'H'
+         LH    &FIELD_REG,&SYM_NAME(&SUB_IX)
+               AWHEN C'P'
+         ZAP   ZCVT_PWORK,&SYM_NAME(&SUB_IX)
+         CVB   &FIELD_REG,ZCVT_PWORK
+               AWHEN C'Z'
+         :&LPLEN SETA &SYM_LEN(&SUB_IX)/2+1
+         PACK  ZCVT_PWORK1(&LPLEN),&SYM_NAME(&SUB_IX)
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
+         CVB   &FIELD_REG,ZCVT_PWORK
+               AELSE
+                  MNOTE 8,'ZCGETFLD INVALID SUBSCRIPT TYPE FOR &SYM_NAMX
+               E(&SUB_IX)'
+                  MEXIT
+               AEND
+               AIF  (&SIX_OFF(1) NE '')
+         AHI   &FIELD_REG,&SIX_OFF(1)-1
+               AELSE
+         BCTR  &FIELD_REG,0
+               AEND
+         MSFI  &FIELD_REG,&SYM_LEN(&SIX_OCCUR(1)) L'&SYM_NAME(&SIX_OCCUX
+               R(1))                                
+         LA    &FIELD_REG,&SYM_NAME(&FIELD_IX).(&FIELD_REG)  
+        AELSE
+               MNOTE 8,'ZCGETFLD SUBSCRIPT NOT FOUND - &SYSLIST(&PARM_IX
+               X)'
+               MEXIT
+        AEND
+       AEND
+      AEND
+.*
+.* GEN N SUBSCRIPTS
+.*
+         AENTRY GEN_SUBN
+         GEN_BASE &FIELD_IX
+         ACALL SET_FIELD_SIX
+         LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)
+         :&CUR_SIX SETA 1
+         AWHILE (&CUR_SIX LE &TOT_SIX)
+               ACALL GEN_CUR_SUB
+               :&CUR_SIX SETA &CUR_SIX+1
+         AEND
+         AEND
+.*
+.* GEN CUR SUB
+.*
+         AENTRY GEN_CUR_SUB
+         AIF   ('&SIX_NAME(&CUR_SIX)'(1,1) GE '0')  IS IT LIT
+            AIF ('&SIX_NAME(&CUR_SIX)' NE '1')      SKIP CALC FOR 1
+         AFI   &FIELD_REG,(&SIX_NAME(&CUR_SIX)-1)*&SYM_LEN(&SIX_OCCUR(&X
+               CUR_SIX)) (LIT-1)*LEN
+            AEND
+         AELSE
+            ZC_SYM_FIND &SIX_NAME(&CUR_SIX)
+            AIF (&SYM_IX GT 0)             SUBSCRIPT/INDEX VAR FOUND
+               :&SUB_IX SETA &SYM_IX
+               GEN_BASE &SUB_IX
+               ACASE (C2A('&SYM_PIC_TYPE(&SUB_IX)'))
+               AWHEN C'A'
+         A     &FIELD_REG,&SYM_NAME(&SUB_IX) ADD INDEX OFFSET
+               AEXIT AENTRY
+               AWHEN C'F'
+         L     R0,&SYM_NAME(&SUB_IX)
+               AWHEN C'G'
+         LG    R0,&SYM_NAME(&SUB_IX)        WILL IGNORE HIGH 32 BITS
+               AWHEN C'H'
+         LH    R0,&SYM_NAME(&SUB_IX)
+               AWHEN C'P'
+         ZAP   ZCVT_PWORK,&SYM_NAME(&SUB_IX)
+         CVB   R0,ZCVT_PWORK
+               AWHEN C'Z'
+         :&LPLEN SETA &SYM_LEN(&SUB_IX)/2+1
+         PACK  ZCVT_PWORK1(&LPLEN),&SYM_NAME(&SUB_IX)
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
+         CVB   R0,ZCVT_PWORK
+               AELSE
+                  MNOTE 8,'ZCGETFLD INVALID SUBSCRIPT TYPE FOR &SYM_NAMX
+               E(&SUB_IX)'
+                  MEXIT
+               AEND
+               AIF  (&SIX_OFF(&CUR_SIX) NE '')
+         AHI   R0,&SIX_OFF(&CUR_SIX)-1
+               AELSE
+         BCTR  R0,0
+               AEND
+         MSFI  R0,&SYM_LEN(&SIX_OCCUR(&CUR_SIX)) L'&SYM_NAME(&SIX_OCCURX
+               (&CUR_SIX))
+         AR    &FIELD_REG,R0
+            AELSE
+               MNOTE 8,'ZCGETFLD SUBS SUB FOUND - &SIX_NAME(&CUR_SUB)'
+               MEXIT
+            AEND
+         AEND
+         AEND
+.*
+.* SET FIELD SIX - SET FIELD_SIX AND FIELD_NAME
+.*
+         AENTRY SET_FIELD_SIX
+         :&FIELD_SIX SETB 1
+         AIF (&FIELD_SS1)
+             :&FIELD_NAME SETC '0(&SYM_LEN(&FIELD_IX),&FIELD_REG)'
+         AELSE
+             :&FIELD_NAME SETC '0(&FIELD_REG)'
+         AEND
+         AEND
+         MEND

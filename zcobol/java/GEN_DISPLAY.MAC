@@ -1,0 +1,27 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/11/08 initial coding for J2SE java DISPLAY 'text' or label
+.* (SUPPORT FOR MULTIPLE OPERAND DATA FIELDS AND LITERALS COMING)
+.*********************************************************************
+         GEN_DISPLAY &MSG
+         COPY  ZC_WS
+         AIF  ('&MSG'(1,1) EQ '''')
+              :&TEXT SETC '&MSG'(2,K'&MSG-2)
+               PUNCH '     System.out.println("&TEXT\r\n");',          X
+               DDNAME=JAVAOUT
+         AELSE
+               ZC_SYM_FIND &MSG
+               AIF  (&SYM_IX GT 0)
+                    PUNCH '     System.out.println(&MSG + "\r\n");',   X
+               DDNAME=JAVAOUT
+               AELSE
+                    MNOTE 8,'DISPLAY FIELD NOT FOUND - &MSG'
+               AEND
+         AEND
+         MEND

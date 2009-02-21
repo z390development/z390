@@ -1,0 +1,28 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/09/08 initial coding for z390 STOP RUN
+.* 05/03/08 set R15 to RETURN_CODE 
+.* 07/28/08 branch to ZC_GOBACKE if STOP RUN not specified             
+.* 10/07/08 ZSTRMAC
+.*********************************************************************
+         GEN_STOP  &RUN
+         COPY ZC_WS
+         ZC_SYM_FIND RETURN_CODE
+         GEN_BASE &SYM_IX
+       AIF   ('&RUN' NE 'RUN')   
+         LH    R1,RETURN_CODE
+         L     R15,ZCVT_STOPRUN
+         BR    R15
+       AELSE   
+         LH    R1,RETURN_CODE
+         L     R15,ZCVT_GOBACK
+         BR    R15
+       AEND
+         MEND
+

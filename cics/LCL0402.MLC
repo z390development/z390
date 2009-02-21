@@ -83,7 +83,51 @@ NOTSEQ   EQU   *
          LH    R7,P0402INL        R7=L'INTO
          CLI   P0402NOW,X'FF'     NOWAIT ?
          BE    DONOWAIT           EXIT IF IT IS
+* IF WE HAVE A CWA SEND IT BACK AND DEQ
+         OC    TCTTECWA,TCTTECWA  ANY CWA ?
+         BZ    DOCONVR            EXIT IF NONE
+         LA    R5,CWPREFIX        R5=PREFIX LENGTH
+         A     R5,TCTTECWL        + CWA LENGTH
+         GETMAIN R,LV=(R5)
+         LR    R9,R1              SAVE GETMAIN ADDRESS
+         USING DFHCWBLK,R9
+         ST    R5,CWATCPIO        SET LENGTH TO SEND
+         MVC   CWAFN,=C'FE07'     SET FN
+         MVC   CWATERM,TCTTETI    SET TERMINAL ID
+         MVC   CWATRAN,EIBTRNID   SET TRANSID
+         MVC   CWATASKN,EIBTASKN  SET TASK NUMBER
+         MVI   CWARDWRT,X'FF'     SET CWA PUT
+         LA    R0,CWPREFIX(R1)    SET TARGET ADDRESS
+         L     R1,TCTTECWL        SET TARGET LENGTH
+         L     R14,TCTTECWA       R14=CWA ADDRESS
+         LR    R15,R1             R15=CWA LENGTH
+         MVCL  R0,R14             MOVE CWA
+         L     R8,0(R9)           R8=MESSAGE LENGTH
+         TCPIO SEND,MSG=(R9),LMSG=(R8),PORT=3900
+         EXEC  CICS DEQ RESOURCE(CWALOCK) LENGTH(7)
+         MVI   CWAIND,X'FF'       SET RE-ACQUIRE CWA FLAG
+DOCONVR  EQU   *
+* CONVERSATIONAL RECEIVE
          TGET  (R6),(R7),ASIS
+         STH   R1,CWASAVR1        SAVE R1
+         CLI   CWAIND,X'00'       NEED TO RE-ACQUIRE CWA ?
+         MVI   CWAIND,X'00'       CLEAR RE-ACQUIRE CWA FLAG
+         BE    DUNGET             EXIT IF NOT
+* RE-ACQUIRE THE CWA
+         EXEC  CICS ENQ RESOURCE(CWALOCK) LENGTH(7) INT0402
+         MVC   CWAFN,=C'FE07'     SET FUNCTION CODE
+         MVC   CWATERM,TCTTETI    SET TERMINAL ID
+         MVC   CWATRAN,EIBTRNID   SET TRANSID
+         MVC   CWATASKN,EIBTASKN  SET TASK NUMBER
+         MVI   CWARDWRT,X'00'     SET CWA GET
+         DROP  R9
+         TCPIO SEND,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+* ONLY THE PREFIX IS RECEIVED, WE GET THE CWA LATER
+         TCPIO RECEIVE,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+         L     R8,TCTTECWA        R8=CWA ADDRESS
+         TCPIO RECEIVE,MSG=(R8),LMSG=TCTTECWL,PORT=3900 GET THE CWA
+         FREEMAIN A=(R9),LV=(R5)
+         LH    R1,CWASAVR1        RESTORE R1
          B     DUNGET             EXIT
 *
 DONOWAIT EQU   *
@@ -148,8 +192,7 @@ GOTAID   DS    0H
          LA    R8,12(R8,R4)       + 12 (HEADER+CHAIN) + ADBLK ADDRESS
          OC    0(4,R8),0(R8)      ANY LABEL HERE ?
          BZ    RETURN             RETURN IF NONE
-         L     R7,4(R13)          R7=CALLERS SAVEAREA
-         MVC   12(4,R7),0(R8)     SET ROUTINE ADDRESS AS RETURN ADDRESS
+         MVC   P0402AID,0(R8)     SET HANDLE AID ADDRESS
 RETURN   EQU   *
          SUBEXIT
 *
@@ -185,6 +228,10 @@ AIDINDEX EQU   *
          DC    X'4C',AL2(28)      PF24
          DC    X'FF'              STOPPER
 *
+CWALOCK  DC    C'--CWA--'
+CWAIND   DC    X'00'              FF=NEED TO RE-ACQUIRE CWA
+CWASAVR1 DS    AL2                SAVE R1
+*
          LTORG
 *
 P0402    DSECT
@@ -196,8 +243,12 @@ P0402INT DS    AL4                INTO
 P0402INL DS    AL2                L'INTO
 P0402LEN DS    AL4                LENGTH
 P0402TGR DS    XL4                TGET RESPONSE
-P0402NOH DS    X                  FF=NOHANDLE
+P0402HCN DS    AL4                A(DFHEIHCN)
+P0402AID DS    AL4                HANDLE AID ADDRESS
 P0402NOW DS    X                  FF=NOWAIT
+         DS    X
+P0402NOH DS    X                  FF=NOHANDLE
+         DS    X
 P0402RSP DS    AL4                RESP
 P0402RS2 DS    AL4                RESP2
 P0402END EQU   *                  END MARKER
@@ -205,6 +256,7 @@ P0402END EQU   *                  END MARKER
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE
          DFHADBLK                 AID BLOCK
+         DFHCWBLK                 CWA PREFIX
 *
          EQUREGS REGS=GPR
 *

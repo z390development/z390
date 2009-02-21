@@ -51,6 +51,10 @@ NORESP2  EQU   *
          ST    R1,YEAR            SAVE IT
          AHI   R1,-1900           YEARS SINCE 1900
          SRL   R1,2               /4=LEAP YEARS SINCE 1900
+         TM    YEAR+3,X'03'       LEAP YEAR ?
+         BNZ   NOTLEAP1           EXIT IF NOT
+         BCTR  R1,0               ONE LESS LEAP YEAR
+NOTLEAP1 EQU   *
          ST    R1,LEAPS           SAVE IT
          L     R1,YEAR            RELOAD YEAR
          AHI   R1,-1900           YEARS SINCE 1900
@@ -62,9 +66,9 @@ NORESP2  EQU   *
          ST    R1,THISYR          DAYS IN THIS YEAR
          MVC   MNTHTAB+2(2),=H'28' SET FEB
          TM    YEAR+3,X'03'       LEAP YEAR ?
-         BNZ   NOTLEAP            EXIT IF NOT
+         BNZ   NOTLEAP2           EXIT IF NOT
          MVC   MNTHTAB+2(2),=H'29' SET LEAP FEB
-NOTLEAP  EQU   *
+NOTLEAP2 EQU   *
          LA    R2,MNTHTAB         ADDRESS MONTH TABLE
          SR    R0,R0              CLEAR R0
 MONTHLP  EQU   *
@@ -77,19 +81,6 @@ MONTHLP  EQU   *
 *
 THISMTH  EQU   *
          AHI   R0,1               BUMP MONTH NUMBER
-         AHI   R1,1               BUMP DAY NUMBER
-         AHI   R2,-2              MOTHE TABLE ENTRY
-         CH    R1,0(R2)           PAST END OF MONTH ?
-         BNH   NEWMHYR            EXIT IF NOT
-         LA    R1,1               DAY NUMBER=1
-         AHI   R0,1               BUMP MONTH NUMBER
-         CHI   R0,13              PAST END OF YEAR ?
-         BNE   NEWMHYR            EXIT IF NOT
-         LA    R0,1               MONTH NUMBER=1
-         L     R2,YEAR            RELOAD YEAR
-         AHI   R2,1               BUMP YEAR NUMBER
-         ST    R2,YEAR            SAVE YEAR
-NEWMHYR  EQU   *
          ST    R0,MONTH           SAVE MONTH NUMBER
          ST    R1,DAYNO           SAVE DAY NUMBER
          LGF   R1,WHOLEYR         DAYS IN WHOLE YRS
@@ -137,7 +128,6 @@ NEWMHYR  EQU   *
          MVC   SS,=X'212020'      MOVE EDIT WORD
          ED    SS,CVDOUT+6        EDIT SECONDS
          L     R1,THISYR          LOAD DAY NUMBER
-         AHI   R1,1               ADD THE NEXT DAY
          CVD   R1,CVDOUT          CONVERT TO DECIMAL
          MVC   DDD,=X'F0202020'   MOVE EDIT WORD
          ED    DDD,CVDOUT+6       EDIT DAY NUMBER
@@ -204,7 +194,6 @@ NOSEPR1  EQU   *
 NOSEPR2  EQU   *
          MVC   0(2,R1),D+1        MOVE DAY
 DUNDATE  EQU   *
-*
          ICM   R1,15,P4A04DFM     ANY DATEFORM ?
          BZ    DUNDTFM            EXIT IF NOT
 * PROCESS DATEFORM
@@ -225,10 +214,9 @@ NOTSDF   EQU   *
 * DATEFORM=YMD
          MVC   0(6,R1),=C'YYMMDD' MOVE FORMAT
 DUNDTFM  EQU   *
-*
          ICM   R1,15,P4A04FDT     ANY FULLDATE ?
          BZ    DUNFDAT            EXIT IF NOT
-.* PROCESS FULLDATE
+* PROCESS FULLDATE
          CLI   EIBDTFRM,C'K'      DMY ?
          BNE   NOTFK              EXIT IF NOT
 * DMY
@@ -288,7 +276,6 @@ NOSPFR1  EQU   *
 NOSPFR2  EQU   *
          MVC   0(2,R1),D+1        MOVE DAY
 DUNFDAT  EQU   *
-*
          ICM   R1,15,P4A04DM2     ANY DDMMYY ?
          BZ    DUNDMY2            EXIT IF NOT
 * DDMMYY
@@ -308,7 +295,6 @@ NSPDMY21 EQU   *
 NSPDMY22 EQU   *
          MVC   0(2,R1),Y+3        MOVE YEAR
 DUNDMY2  EQU   *
-*
          ICM   R1,15,P4A04MD2     ANY MMDDYY ?
          BZ    DUNMDY2            EXIT IF NOT
 * MMDDYY
@@ -328,7 +314,6 @@ NSPMDY21 EQU   *
 NSPMDY22 EQU   *
          MVC   0(2,R1),Y+3        MOVE YEAR
 DUNMDY2  EQU   *
-*
          ICM   R1,15,P4A04YD2     ANY YYDDMM ?
          BZ    DUNYDM2            EXIT IF NOT
 * YYDDMM
@@ -348,7 +333,6 @@ NSPYDM21 EQU   *
 NSPYDM22 EQU   *
          MVC   0(2,R1),M+1        MOVE MONTH
 DUNYDM2  EQU   *
-*
          ICM   R1,15,P4A04YM2     ANY YYMMDD ?
          BZ    DUNYMD2            EXIT IF NOT
 * YYMMDD
@@ -368,7 +352,6 @@ NSPYMD21 EQU   *
 NSPYMD22 EQU   *
          MVC   0(2,R1),D+1        MOVE DAY
 DUNYMD2  EQU   *
-*
          ICM   R1,15,P4A04DM4     ANY DDMMYYYY ?
          BZ    DUNDMY4            EXIT IF NOT
 * DDMMYYYY
@@ -388,7 +371,6 @@ NSPDMY41 EQU   *
 NSPDMY42 EQU   *
          MVC   0(4,R1),Y+1        MOVE YEAR
 DUNDMY4  EQU   *
-*
          ICM   R1,15,P4A04MD4     ANY MMDDYYYY ?
          BZ    DUNMDY4            EXIT IF NOT
 * MMDDYYYY
@@ -408,7 +390,6 @@ NSPMDY41 EQU   *
 NSPMDY42 EQU   *
          MVC   0(4,R1),Y+1        MOVE YEAR
 DUNMDY4  EQU   *
-*
          ICM   R1,15,P4A04YD4     ANY YYYYDDMM ?
          BZ    DUNYDM4            EXIT IF NOT
 * YYYYDDMM
@@ -428,7 +409,6 @@ NSPYDM41 EQU   *
 NSPYDM42 EQU   *
          MVC   0(2,R1),M+1        MOVE MONTH
 DUNYDM4  EQU   *
-*
          ICM   R1,15,P4A04YM4     ANY YYYYMMDD ?
          BZ    DUNYMD4            EXIT IF NOT
 * YYYYMMDD
@@ -448,7 +428,6 @@ NSPYMD41 EQU   *
 NSPYMD42 EQU   *
          MVC   0(2,R1),D+1        MOVE DAY
 DUNYMD4  EQU   *
-*
          ICM   R1,15,P4A04Y2D     ANY YYDDD ?
          BZ    DUNYD2             EXIT IF NOT
 * YYDDD
@@ -461,7 +440,6 @@ DUNYMD4  EQU   *
 NSPYD21  EQU   *
          MVC   0(3,R1),DDD+1      MOVE DAY NUMBER
 DUNYD2   EQU   *
-*
          ICM   R1,15,P4A04Y4D     ANY YYYYDDD ?
          BZ    DUNYD4             EXIT IF NOT
 * YYYYDDD
@@ -474,37 +452,31 @@ DUNYD2   EQU   *
 NSPYD41  EQU   *
          MVC   0(3,R1),DDD+1      MOVE DAY NUMBER
 DUNYD4   EQU   *
-*
          ICM   R1,15,P4A04DYC     ANY DAYCOUNT ?
          BZ    DUNDYC             EXIT IF NOT
 * DAYCOUNT
          MVC   0(4,R1),DAYCOUNT   MOVE DAY COUNT
 DUNDYC   EQU   *
-*
          ICM   R1,15,P4A04DOW     ANY DAYOFWEEK ?
          BZ    DUNDOW             EXIT IF NOT
 * DAY OF WEEK
          MVC   0(4,R1),DAYNUMB    MOVE DAY OF WEEK
 DUNDOW   EQU   *
-*
          ICM   R1,15,P4A04DOM     ANY DAYOFMONTH ?
          BZ    DUNDOM             EXIT IF NOT
 * DAY OF MONTH
          MVC   0(4,R1),DAYNO      MOVE DAY OF MONTH
 DUNDOM   EQU   *
-*
          ICM   R1,15,P4A04MOY     ANY MONTHOFYEAR ?
          BZ    DUNMOY             EXIT IF NOT
 * MONTH OF YEAR
          MVC   0(4,R1),MONTH      MOVE MONTH
 DUNMOY   EQU   *
-*
          ICM   R1,15,P4A04YR      ANY YEAR ?
          BZ    DUNYR              EXIT IF NOT
 * YEAR
          MVC   0(4,R1),YEAR       MOVE YEAR
 DUNYR    EQU   *
-*
          ICM   R1,15,P4A04DST     ANY DATESTRING ?
          BZ    DUNDST             EXIT IF NOT
 * DATESTRING
@@ -529,7 +501,6 @@ DUNYR    EQU   *
          MVI   22(R1),C':'        COLON
          MVC   23(2,R1),SS+1      MOVE SECS
 DUNDST   EQU   *
-*
          ICM   R1,15,P4A04TIM     ANY TIME ?
          BZ    RETURN             EXIT IF NOT
 * TIME
@@ -601,7 +572,9 @@ P4A04EIB DS    AL4                EIB
 P4A04TCT DS    AL4                TCTTE
 P4A04ABS DS    PL8                ABSTIME
 P4A04DSP DS    C                  DATE SEPARATOR
+         DS    X
 P4A04TSP DS    C                  TIME SEPARATOR
+         DS    X
 P4A04DAT DS    AL4                DATE
 P4A04DFM DS    AL4                DATEFORM
 P4A04FDT DS    AL4                FULLDATE
@@ -623,6 +596,7 @@ P4A04YR  DS    AL4                YEAR
 P4A04DST DS    AL4                DATESTRING
 P4A04TIM DS    AL4                TIME
          DS    X                  FF=NOHANDLE
+         DS    X
 P4A04RSP DS    AL4                RESP
 P4A04RS2 DS    AL4                RESP2
 P4A04END EQU   *                  END MARKER

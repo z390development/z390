@@ -9,6 +9,7 @@
          MACRO
          CICS_GETMAIN
          GBLB  &PARMS_0C02
+         GBLB  &ZC_CICS
          LCLB  &NOHAND
          LCLC  &SET,&LENGTH,&FLENGTH,&INITIMG,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
@@ -21,9 +22,9 @@
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
          AIF   ('&PARM'(1,8) EQ 'FLENGTH(').FLENGTH
          AIF   ('&PARM'(1,8) EQ 'INITIMG(').INITIMG
-         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
-         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
-         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
 .*
@@ -57,10 +58,8 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         L     R15,=A(P0C02)      LOAD PARM ADDRESS
-         USING (P0C02,P0C02END),R15
-         XC    P0C02(P0C02END-P0C02),P0C02 CLEAR PARMS
-         MVC   P0C02FN,=X'0C02'   SET FUNCTION CODE
+         GEN_XC P0C02,P0C02END-P0C02,P0C02
+         GEN_MVC P0C02FN,,=X'0C02' SET FUNCTION CODE
          AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BADLEN
          AIF   ('&LENGTH' EQ '' AND '&FLENGTH' EQ '').NEEDLEN
          AIF   ('&SET' EQ '').BADSET
@@ -69,67 +68,114 @@
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
          AIF   (T'&LENGTH NE 'N').LENLABL
 .LENNUM  ANOP
-         LH    R1,=AL2(&LENGTH)   SET LENGTH
+         LARL  R1,=AL2(&LENGTH)   ADDRESS LITERAL
+         LH    R0,0(R1)           SET LENGTH
          AGO   .SAVLEN
 .*
 .LENLABL ANOP
-         LH    R1,&LENGTH         SET GETMAIN LENGTH FROM LABEL
+         AIF   (&ZC_CICS)
+         AIF   ('&LENGTH'(1,10) EQ 'LENGTH,OF,')
+.* COBOL LENGTH OF EXTRACT
+&LENLSL  SETC  '&LENGTH'(11,K'&LENGTH-10)
+         LA    R0,L'&LENLSL       SET LENGTH
+         AELSE
+.* COBOL LENGTH AS LABEL
+         LH    R0,&LENGTH         SET LENGTH FROM LABEL
+         AEND
+         AELSE
+.* ASM LENGTH AS LABEL
+         LH    R0,&LENGTH         SET LENGTH FROM LABEL
+         AEND
          AGO   .SAVLEN
 .*
 .FLEN    ANOP
          AIF   ('&FLENGTH'(2,1) EQ '''').FLENNUM
          AIF   (T'&FLENGTH NE 'N').FLENLAB
 .FLENNUM ANOP
-         L     R1,=AL4(&FLENGTH)  SET FLENGTH
+         LARL  R1,=A(&FLENGTH)    ADDRESS LITERAL
+         L     R0,0(R1)           SET FLENGTH
          AGO   .SAVLEN
 .*
 .FLENLAB ANOP
-         L     R1,&FLENGTH        SET FLENGTH FROM LABEL
+         AIF   (&ZC_CICS)
+         AIF   ('&FLENGTH'(1,10) EQ 'LENGTH,OF,')
+.* COBOL LENGTH OF EXTRACT
+&LENLSL  SETC  '&FLENGTH'(11,K'&FLENGTH-10)
+         LARL  R1,=AL4(L'&LENLSL) ADDRESS LITERAL
+         L     R0,0(R1)           SET FLENGTH
+         AELSE
+.* COBOL FLENGTH AS LABEL
+         L     R0,&FLENGTH        SET FLENGTH FROM LABEL
+         AEND
+         AELSE
+.* ASM FLENGTH AS LABEL
+         L     R0,&FLENGTH        SET FLENGTH FROM LABEL
+         AEND
 .SAVLEN  ANOP
-         ST    R1,P0C02LEN        SAVE LENGTH
+         GEN_ST R0,P0C02LEN       SAVE IT
 .*
          AIF   ('&INITIMG' EQ '').DOGETM
-         MVI   P0C02INM,X'FF'     SET INITIMG SPECIFIED
+         GEN_MVI P0C02INM,X'FF'   SET INITIMG SPECIFIED
          AIF   ('&INITIMG'(2,1) EQ '''').INITNUM
          AIF   (T'&INITIMG NE 'N').INITLAB
 .INITNUM ANOP
-         MVC   P0C02INT,=AL1(&INITIMG) SET PADDING BYTE
+         LARL  R1,=AL2(&INITIMG)  ADDRESS LITERAL
+         LARL  R15,P0C02INT       ADDRESS TARGET
+         MVC   0(1,R15),1(R1)     SET PADDING BYTE
          AGO   .DOGETM
 .*
 .INITLAB ANOP
-         MVC   P0C02INT,&INITIMG  SET PADDING BYTE FROM LABEL
+         LARL  R15,P0C02INT       ADDRESS TARGET
+         MVC   0(1,R15),&INITIMG  SET PADDING BYTE FROM LABEL
 .DOGETM  ANOP
-         ST    DFHEIBR,P0C02EIB   SET EIB ADDRESS
-         ST    TCTTEAR,P0C02TCT   SET TCTTE ADDRESS
+         GEN_ST DFHEIBR,P0C02EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P0C02TCT  SET TCTTE ADDRESS
          AIF   (NOT &NOHAND).DUNNOH
-         MVI   P0C02NOH,X'FF'     SET NOHANDLE
+         GEN_MVI P0C02NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
          AIF   ('&RESP' EQ '').NORESP
-         LA    R1,&RESP           ADDRESS OF RESP
-         ST    R1,P0C02RSP        SAVE IT
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P0C02RSP       SAVE IT
 .NORESP  ANOP
          AIF   ('&RESP2' EQ '').NORESP2
-         LA    R1,&RESP2          ADDRESS OF RESP2
-         ST    R1,P0C02RS2        SAVE IT
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P0C02RS2       SAVE IT
 .NORESP2 ANOP
-         ZCALL LCL0C02,(P0C02),MF=I CALL GETMAIN PROCESSOR
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P0C02)       R1=LCL MODULE PARAMETER LIST
+         BAKR  0,R15              STACK REGS AND GO
 .*
-         L     R15,=A(P0C02)      LOAD PARM ADDRESS
-         L     R1,P0C02GMA        R1=GETMAIN ADDRESS
+         LRL   R1,P0C02GMA        R1=GETMAIN ADDRESS
+         AIF   (&ZC_CICS)
+         AHI   R1,8               +8
+         AIF   ('&SET'(1,11) EQ 'ADDRESS,OF,')
+.* COBOL LINKAGE-SECTION LABEL, EXTRACT AND TRANSFORM
+&SETLSL  SETC  '&SET'(12,K'&SET-11)
+         ST    R1,ZC_&SETLSL._PTR SET GETMAIN ADDRESS FOR REQUESTOR
+         AELSE
+.* COBOL STANDARD POINTER
+         ST    R1,&SET            SET GETMAIN ADDRESS FOR REQUESTOR
+         AEND
+         AELSE
+.* ASM GENERAL REGISTER
          LA    &SET,8(R1)         SET GETMAIN ADDRESS FOR REQUESTOR
+         AEND
          AIF   (&PARMS_0C02).BYP0C02
-         B     P0C02BYP_&SYSNDX   EXIT
+         J     P0C02BYP_&SYSNDX   EXIT
 *
 &PARMS_0C02 SETB 1
-P0C02    EQU   *
+P0C02    DS    0H
 P0C02FN  DS    XL2                FUNCTION CODE
 P0C02EIB DS    AL4                EIB
 P0C02TCT DS    AL4                TCTTE
 P0C02LEN DS    AL4                LENGTH/FLENGTH
 P0C02INM DS    X                  FF=INITIMG SPECIFIED
+         DS    X
 P0C02INT DS    X                  INITIMG
+         DS    X
 P0C02GMA DS    AL4                GETMAIN ADDRESS
 P0C02NOH DS    X                  FF=NOHANDLE
+         DS    X
 P0C02RSP DS    AL4                RESP
 P0C02RS2 DS    AL4                RESP2
 P0C02END EQU   *                  END MARKER
@@ -137,7 +183,6 @@ P0C02END EQU   *                  END MARKER
 *
 P0C02BYP_&SYSNDX DS 0H
 .BYP0C02 ANOP
-         DROP  R15
          MEXIT
 .*
 .BADLEN  MNOTE 12,'BOTH LENGTH AND FLENGTH ARE SPECIFIED'
@@ -149,3 +194,4 @@ P0C02BYP_&SYSNDX DS 0H
 .NEEDLEN MNOTE 12,'LENGTH OR FLENGTH MUST BE SPECIFIED'
          MEXIT
          MEND
+

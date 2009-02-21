@@ -1,16 +1,17 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
-* 05/08/06 RPI 308 CONVERT DEMOGUI4 TO TESTGUI4 EXEC CICS TN3270
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+* 05/08/06 RPI 308 CONVERT DEMOGUI4 TO TESTGUI4 EXEC CICS TN3270      *
+***********************************************************************
 DFHEISTG DSECT
 MSG3     TN3270 WCC_KD,(SBA,6,10),(SF,ATT_PA)
 REPLY    DC    CL40' '
          TN3270 (SF,ATT_PA)
 REPLYL   EQU   *-REPLY
+*
 TESTGUI4 CSECT
          EXEC  CICS SEND FROM(MSG1) LENGTH(MSG1L)
 LOOP     EQU   *

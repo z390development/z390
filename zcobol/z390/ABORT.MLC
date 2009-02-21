@@ -1,0 +1,36 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 zCOBOL/assembler/emulator package*
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/07/08                                                 *
+*********************************************************************
+* 11/22/08 initial coding for ABORT zcobol runtime routines
+*********************************************************************
+ABORT    SUBENTRY
+         LR    R3,R1
+         COPY  ASMMSP
+         LR    R4,R3
+         CASENTRY (R4)                  
+         CASE  1    ABORT_ALTER
+               WTO  'ABORT DUE TO ALTER TARGET NO A GO TO'
+         CASE  2    ABORT_CALL
+               WTO  'ABORT DUE TO DYNAMIC CALL NOT FOUND SEE (R4)'
+         CASE  3    ABORT_DISPLAY
+               WTO  'ABORT DISPLAY DUE TO FIELD LARGER THAN BUFFER'
+         CASE  4    ABORT_OPEN
+               WTO  'ABORT OPEN FAILED'
+         CASE  6    ABORT_STACK
+               WTO  'ABORT DUE TO PERFORM STACK OVERFLOW'
+         CASE  7    ABORT_STACK
+               WTO  'ABORT VERSION ERROR BETWEEN ZCOBOL VS ZC390LIB'
+         ENDCASE
+         IF    (CHI,R3,GT,ZCVT_ABORT_MAXERR)
+               WTO  'ABORT WITH UNKNOW ERROR'
+         ENDIF
+         ABEND (3),DUMP
+         EQUREGS REGS=GPR
+         LTORG
+ZC390CVT DSECT
+         COPY  ZC390CVT
+         END

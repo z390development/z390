@@ -1,0 +1,20 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/15/08                                                 *
+.*********************************************************************
+.* 01/11/09 initial coding                              
+.*********************************************************************
+         END_SUBTRACT    
+         COPY  ZC_WS
+         AIF   (&IE_LVL LT 1)       
+               MEXIT
+         AEND
+         AIF   (&IE_TYPE(&IE_LVL) EQ 12) IS THERE ON SIZE/ERROR
+               GEN_LABEL SUBTRACT_&IE_TCNT(&IE_LVL),END_SUBTRACT
+               :&IE_LVL  SETA  &IE_LVL-1
+         AEND
+         MEND

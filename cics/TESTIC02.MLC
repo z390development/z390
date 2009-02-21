@@ -4,25 +4,24 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-         DFHEIGBL
          DFHEISTG
-TESTIC02 DFHEIENT CODEREG=(R12,R3,R4)
+TESTIC02 DFHEIENT CODEREG=(R12,R3,R4,R5)
 *
 * TEST INTERVAL CONTROL START/RETRIEVE/CANCEL
 *
          AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
          BAL   R9,SENDMSG         SEND MESSAGE 1 AND EVEN NUMBERS
 * DETERMINE WHERE TO GO NEXT
-         LA    R5,PHASETAB        ADDRESS PHASE TABLE
+         LA    R6,PHASETAB        ADDRESS PHASE TABLE
 PHASLOOP EQU   *
-         CLC   0(2,R5),TESTNO     OUR PHASE ?
+         CLC   0(2,R6),TESTNO     OUR PHASE ?
          BNE   PHASINCR           EXIT IF NOT
-         L     R14,2(R5)          LOAD ADDRESS OF NEXT PHASE
+         L     R14,2(R6)          LOAD ADDRESS OF NEXT PHASE
          BR    R14                GO TO IT
 *
 PHASINCR EQU   *
-         AHI   R5,6               BUMP PHASE TABLE POINTER
-         CLI   0(R5),X'FF'        END OF TABLE ?
+         AHI   R6,6               BUMP PHASE TABLE POINTER
+         CLI   0(R6),X'FF'        END OF TABLE ?
          BNE   PHASLOOP           LOOP IF NOT
          DC    H'0'               SHOULD NOT OCCUR
 *
@@ -431,17 +430,17 @@ ICER2SND EQU   *
 * SUBROUTINES
 *
 SENDMSG  EQU   *
-         LA    R5,MSGTAB          ADDRESS MESSAGE TABLE
+         LA    R6,MSGTAB          ADDRESS MESSAGE TABLE
 SENDLOOP EQU   *
-         CLC   0(2,R5),TESTNO     OUR MESSAGE ?
+         CLC   0(2,R6),TESTNO     OUR MESSAGE ?
          BE    SENDIT             EXIT IF IT IS
-         AHI   R5,MSGTABL         BUMP MESSAGE POINTER
-         CLI   0(R5),X'FF'        END OF TABLE ?
+         AHI   R6,MSGTABL         BUMP MESSAGE POINTER
+         CLI   0(R6),X'FF'        END OF TABLE ?
          BNE   SENDLOOP           LOOP
          DC    H'0'               SHOULD NOT OCCUR
 *
 SENDIT   EQU   *
-         EXEC  CICS SEND FROM(2(R5)) LENGTH(MSGTABS)
+         EXEC  CICS SEND FROM(2(R6)) LENGTH(MSGTABS)
          BR    R9
 *
 TESTNO   DC    PL2'0'             TEST NUMBER
@@ -456,6 +455,23 @@ MYRTRAN  DS    CL4
 MYQUEUE  DS    CL8
 MYLEN    DC    H'50'
 MYLEN2   DC    H'40'
+*
+         LTORG
+*
+HAND1    EQU   *
+         TN3270 WCC_KD
+HAND1SBA DS    XL3
+HAND1CON DC    CL12' '
+         DC    C' CONDITION RAISED'
+HAND1L   DC    AL2(*-HAND1)
+*
+HAND2    EQU   *
+         TN3270 WCC_KD
+HAND2SBA DS    XL3
+         DC    C'| '
+HAND2CON DC    CL12' '
+         DC    C' CONDITION RAISED'
+HAND2L   DC    AL2(*-HAND2)
 *
 * MESSAGE TABLE
 *
@@ -566,21 +582,6 @@ MSGTABL  EQU   *-MSGTAB
 *
          DC    X'FF'              STOPPER
 MSGTABS  DC    AL2(MSGTABL-2)     LENGTH FOR SEND
-*
-HAND1    EQU   *
-         TN3270 WCC_KD
-HAND1SBA DS    XL3
-HAND1CON DC    CL12' '
-         DC    C' CONDITION RAISED'
-HAND1L   DC    AL2(*-HAND1)
-*
-HAND2    EQU   *
-         TN3270 WCC_KD
-HAND2SBA DS    XL3
-         DC    C'| '
-HAND2CON DC    CL12' '
-         DC    C' CONDITION RAISED'
-HAND2L   DC    AL2(*-HAND2)
 *
 ENDMSG   TN3270 WCC_KD,(SBA,24,1)
          DC    C'TESTIC02 COMPLETED, PRESS CLEAR'

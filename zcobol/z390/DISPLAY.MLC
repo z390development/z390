@@ -1,0 +1,196 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/09/08                                                 *
+*********************************************************************
+* 11/19/08 initial coding of DISPLAY call function
+* 01/01/09 increate max buffer for single display to 256
+*********************************************************************
+*
+*  CALL DISPLAY,(FIELD1,LENGH1,TYPE1,FIELDN,LENGTHN,TYPEN),VL
+*
+*    FIELD     - ADDRESS OF WS FIELD OR LITERAL
+*    LENGTH    - IMMEDIATE LENGTH OF FIELD OR LIT <= MAXBUFF
+*    TYPE      - IMMEDIATE TYPE ADEFGHPXZ
+*
+* NOTES:
+*  1.  WIDTH OF NUMERIC FIELDS IS SPACE + MINUS IF REQ'D + MAX DIGITS
+*  2.  SAVES AND RESTORES R2-R12, RESERVE R9 TO ACCESS ABORT
+*********************************************************************
+DISPLAY  SUBENTRY
+         USING ZC390CVT,R9
+         COPY  ASMMSP
+         LR    R3,R1        R3=A(NEXT PARM LIST ENTRIES)
+         LM    R7,R8,=A(WTOMSG+4,LWTOMSG-4) R7=A(BUFF) R8=BYTES LEFT
+         DO    WHILE=(LTR,R3,NZ,R3)
+               LM   R4,R6,0(R3)             R4=ADDR,R5=LEN,56=TYPE
+               IF   (LTR,R6,P,R6)
+                    AHI  R3,12              R3=A(NEXT ENTRY)
+               ELSE
+                    NILH R6,X'7FFF'         TURN OFF VL BIT
+                    SR   R3,R3              R3=0 INDICATING LAST FIELD
+               ENDIF
+               IF   (CHI,R5,GT,MAXBUFF)
+                    LA   R1,ZCVT_ABORT_DISPLAY
+                    L    R15,ZCVT_ABORT
+                    BR   R15
+               ENDIF
+               BAL  R12,GET_FIELD    SET R4=A(DISP DATA),R5=DISP LEN
+               BAL  R12,ADD_FIELD    ADD DISP FIELD AND WTO AS REQ'D
+         ENDDO
+         BAL   R11,DISPLAY_FIELDS    DISPLAY FIELDS IN BUFFER
+         SUBEXIT
+*
+* GET_FIELD TO DISPLAY SETTING R4=A(DISP FIELD) R5=LENGTH
+*     
+GET_FIELD DS   0H
+       MVI  DWORK,C' '
+       CASENTRY (R6) 
+       CASE   C'A'
+         CALL CVTTOHEX,((R4),DWORK+1,4)
+         LA   R4,DWORK
+         LA   R5,9
+       CASE   C'D'
+         CTD  CTD_DH,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,45
+       CASE   C'E'
+         CTD  CTD_EH,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,45
+       CASE   C'F'
+         L    R0,0(R4)
+         CVD  R0,PWORK
+         LA   R4,PWORK+3
+         LA   R5,5
+         BAL  R11,CVTPD
+       CASE   C'G'
+         LG   R0,0(R4)
+         CVDG R0,PWORK
+         LA   R4,PWORK+6
+         LA   R5,10
+         BAL  R11,CVTPD
+         BCTR R5,0  ADJ FOR 18 EVEN DIGITS VERSUS MAX ODD DIGITS
+         AHI  R4,1
+       CASE   C'H'
+         LH   R0,0(R4)
+         CVD  R0,PWORK
+         LA   R4,PWORK+5
+         LA   R5,3
+         BAL  R11,CVTPD
+         BCTR R5,0  ADJ FOR 4 EVEN DIGITS VERSUS MAX ODD DIGITS
+         AHI  R4,1
+       CASE   C'P'
+         STC   R5,LOWBYTE
+         BAL   R11,CVTPD
+          IF    (TM,LOWBYTE,NZ,X'1')
+         BCTR R5,0  ADJ FOR EVEN DIGITS VERSUS MAX ODD DIGITS
+         AHI  R4,1
+          ENDIF
+       CASE   C'X' PIC X AND LITERALS 'XXX'
+         BCTR  R5,0
+         EX    R5,MVC_LIT    MOVE PIC X FIELD/LIT TO DWORK
+         LA    R4,DWORK
+         AHI   R5,2          R5=LENGTH WITH LEADING SPACE 
+       CASE   C'Z'
+        STC   R5,LOWBYTE
+        IF    (CHI,R5,LE,15)
+         LR    R1,R5
+         BCTR  R1,0        R1 ZLEN-1
+         EX    R1,PACK_LE15
+        ELSE
+         LR    R1,R5
+         AHI   R1,-15
+          IF (CHI,R1,GT,14)
+         AHI   R1,-14      R1=1-2 FOR 30-31 DIGITS
+         EX    R1,PACK_B1           PACK D0-D1 INTO BYTE 1 (BYTE 2 JNK)
+         AR    R4,R1
+         PACK  PWORK+1(8),0(15,R4)  PACK D03-D16 INTO BYTE 2-8 (B8 JNK)
+         PACK  PWORK+8(8),14(15,R4) PACK D17-D31 INTO BYTE 9-16
+          ELSE
+         MVI   PWORK,X'00' ZERO FIRST BYTE IF LESS THAN 30 DIGITS
+         BCTR  R1,0
+         EX    R1,PACK_HIGH         PACK HIGH DIGITS IN BYTES 1-8
+         LA    R4,1(R1,R4)
+         PACK  PWORK+8(8),0(15,R4)  PACK LOW  DIGITS IN BYTES 9-16
+          ENDIF
+        ENDIF
+         SRL   R5,1
+         AHI   R5,1        R5 PLEN = ZLEN/2+1        
+         LA    R4,PWORK+16
+         SR    R4,R5
+         BAL   R11,CVTPD
+          IF    (TM,LOWBYTE,Z,X'1')
+         BCTR R5,0  ADJ FOR EVEN DIGITS VERSUS MAX ODD DIGITS
+         AHI  R4,1
+          ENDIF
+       ENDCASE
+         BR    R12
+MVC_MASK MVC   DWORK(*-*),MASK    MOVE EDMK MASK TO DWORK
+EDMK     EDMK  DWORK(*-*),0(R4)   EDMK TO DWORK SETS R1=A(FIRST DIG)  
+MVC_LIT  MVC   DWORK+1(*-*),0(R4) MOVE FLD/LIT TO DWORK
+PACK_B1  PACK  PWORK(2),0(*-*,R4)    PACK D1-D2  INTO BYTE 1           
+PACK_HIGH PACK  PWORK(9),0(*-*,R4)   PACK D3-D16 INTO BYTE 1-7  
+PACK_LE15 PACK  PWORK+8(8),0(*-*,R4) PACK D1-D15 INTO BYTE 9-16  
+*
+* CVTPD CONVERT PACKED DEC AT (R4) FOR LENGTH (R5) TO DWORK
+*
+CVTPD    DS    0H
+         SLL   R5,1
+         AHI   R5,-1  R5=2*PLEN-1 = MAX DIGITS + SPACE -1
+         EX    R5,MVC_MASK          SET BLANK WHEN ZERO MASK
+         IF    (EX,R5,Z,EDMK) ZERO  IF ZERO
+               LA   R4,DWORK(R5)
+               MVI  0(R4),C'0'
+               AHI  R5,1
+               LA   R4,DWORK
+         ELSE                             
+               BNM  *+12
+                 AHI  R1,-1         BACKUP 1 FOR MINUS SIGN
+                 MVI  0(R1),C'-'    SET LEADING MINUS SIGN
+               AHI  R5,1
+               LA   R4,DWORK        R4 = ADDR DISPLAY FIELD
+         ENDIF  
+         BR    R11
+*
+* ADD_FIELD TO WTO BUFFER FROM R4=A(DISP) R5=LEN
+* AND WTO WHEN BUFFER FULL
+*
+ADD_FIELD DS   0H
+          IF   (CLR,R5,GT,R8)
+               BRAS R11,DISPLAY_FIELDS
+          ENDIF
+          BCTR R5,0
+          EX   R5,MVC_DISP
+          LA   R7,1(R5,R7)
+          SR   R8,R5
+          AHI  R8,-1
+          BR   R12
+MVC_DISP  MVC   0(*-*,R7),0(R4)    MOVE DISPLAY FIELD TO WTO BUFFER
+*
+* DISPLAY_FIELDS - WTO BUFFER AND RETURN VIA R11 (USED BY ADD_FIELDS)
+*
+DISPLAY_FIELDS DS  0H
+         S   R7,=A(WTOMSG)
+         STH R7,WTOMSG
+         WTO MF=(E,WTOMSG)
+         LM  R7,R8,=A(WTOMSG+4,LWTOMSG-4)
+         BR  R11 
+*
+* SHARED DATA
+*
+         LTORG
+         EQUREGS
+MAXBUFF  EQU   256
+WTOMSG   DC    AL2(*-*,0)
+WTOBUFF  DC    CL(MAXBUFF)' '
+LWTOMSG  EQU   *-WTOMSG
+PWORK    DC    PL16'0'
+DWORK    DC    CL(MAXBUFF)' ' SPACE PLUS LARGEST LITERAL IN BUFFER
+MASK     DC    C' ',31X'20'   SPACE AND 31 ZERO SUPRESS DIGITS
+LOWBYTE  DC    X'00'
+ZC390CVT DSECT
+         COPY  ZC390CVT
+         END

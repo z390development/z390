@@ -16,23 +16,23 @@ The EZ390 runtime emulation TCPIO macro and SVC support for SOA client
 server messaging is used to request CICS functions from the server and
 to pass data and status back to the Client on a TCP/IP network.
 
-Starting with V1.3.08h, the CICS compatible transaction manager supports
-all VSAM base datasets for read and browse functions.
-
-Starting with V1.4.02, Basic Mapping Support is included.
+Release highlights...
+   V1.3.08h...Support of VSAM base datasets for read/browse functions.
+   V1.4.02....Basic Mapping Support supported
+   V1.5.00....COBOL supported
 
 All the documentation included with each new release is in the cics\docs
 directory as follows:
 
-  Z390/CICS Readme for current version
-  Z390/CICS History
-  Z390/CICS Application Programming Guide
-  Z390/CICS Basic Mapping Support
-  Z390/CICS VSAM Guide
-  Z390/CICS Supplied Transactions
-  Z390/CICS Diagnosis Reference
-  Z390/CICS System Programmers Guide
-  Z390/CICS Sequential Terminal Guide
+  zCICS Readme for current version
+  zCICS Application Programming Guide
+  zCICS Basic Mapping Support
+  zCICS Diagnosis Reference
+  zCICS History
+  zCICS Sequential Terminal Guide
+  zCICS Supplied Transactions
+  zCICS System Programmers Guide
+  zCICS VSAM Guide
 
 Z390 macro assembler and emulator support features supporting the above
 CICS compatible transaction manager include the following:
@@ -54,5 +54,5 @@ Trademarks
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
-This page last updated June 27, 2008
+This page last updated February 21, 2009.
 

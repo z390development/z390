@@ -1,0 +1,584 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/10/08 initial coding for Z390 MOVE    
+.* 05/02/08 add moves for matching PIC_TYPE including literals
+.* 10/07/08 ZSTRMAC
+.* 01/21/09 add editing for numeric to X field with picture with z/9's
+.*********************************************************************
+         GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
+         COPY  ZC_WS
+         :&TARGET_NAME SETC '&T_NAME'
+         :&SOURCE_NAME SETC '&S_NAME'
+         :&TARGET SETA &T_IX
+         :&SOURCE SETA &S_IX
+         :&LIT    SETC '&SOURCE_NAME'
+         AIF   (&TARGET EQ 0)
+               MNOTE 8,'GEN_MOVE UNDEFINED TARGET - &TARGET'
+               MEXIT
+         AEND
+         :&PAD_OFF SETC ''
+         :&L_TARGET SETA  &SYM_LEN(&TARGET)
+         :&T_TARGET SETC '&SYM_PIC_TYPE(&TARGET)'
+         AIF   (&L_TARGET LE 256)     
+               ACALL MOVE_LE_256
+         AELSE
+               ACALL MOVE_GT_256
+         AEND
+         MEXIT
+.*
+.* MOVE LE 256
+.* 
+         AENTRY MOVE_LE_256
+         AIF   (&SOURCE NE 0)
+               :&T_SOURCE SETC '&SYM_PIC_TYPE(&SOURCE)'
+               :&L_SOURCE SETA  &SYM_LEN(&SOURCE)
+               AIF  ('&T_TARGET' EQ '&T_SOURCE')
+                    AIF   (&L_TARGET LE &L_SOURCE)   
+         MVC   &TARGET_NAME,&SOURCE_NAME
+                          AIF  (&L_TARGET LT &L_SOURCE AND &ZC_WARN)
+                               MNOTE 4,'GEN_MOVE SOURCE TRUNCATED TO TAX
+               RGET &L_SOURCE > &L_TARGET'
+                               MEXIT         
+                          AEND
+                    AELSE
+                          AIF  ('&T_TARGET' NE 'X'                     X
+                                AND '&T_TARGET' NE 'C')
+                               MNOTE 8,'GEN_MOVE WITH PADDING ONLY FOR X
+                X OR C'            
+                               MEXIT
+                          AEND
+         MVC   &TARGET_NAME.(&L_SOURCE),&SOURCE_NAME
+         :&LPAD    SETA  &L_TARGET-&L_SOURCE
+         :&LLIT    SETA  (&LPAD+1)/2*2 ROUND EVEN FOR LARL
+         LARL  R1,=CL&LLIT' '  ROUND EVEN FOR LARL
+         MVC   &TARGET_NAME+&L_SOURCE.(&LPAD),0(R1)
+                    AEND
+               AELSE
+                    ACALL MOVE_CONVERT
+               AEND
+         AELSE
+.*
+.* MOVE LIT LE 256
+.* 
+               AIF   ('&LIT'(1,1) EQ '''')                 
+                     AIF (&L_TARGET EQ 1)
+                         ACALL RESET_SS1_TARGET
+         MVI   &TARGET_NAME,C&LIT
+                     AELSE
+         :&LLIT    SETA  (&L_TARGET+1)/2*2
+         LARL  R1,=CL&LLIT&LIT
+         MVC   &TARGET_NAME,0(R1)
+                     AEND
+               AELSEIF ('&LIT'(1,2) EQ 'X''')
+                     AIF (&L_TARGET EQ 1)
+                         ACALL RESET_SS1_TARGET
+         MVI   &TARGET_NAME,&LIT
+                     AELSE
+                         :&LLIT SETA  (&L_TARGET+1)/2*2
+                         :&HEX  SETC '&LIT'(3,K'&LIT-3)
+         LARL  R1,=XL&LLIT'&HEX'
+                         AIF (&LLIT EQ &L_TARGET)
+         MVC   &TARGET_NAME,0(R1)
+                         AELSE
+         MVC   &TARGET_NAME,1(R1)
+                         AEND
+                     AEND
+               AELSE
+                    AIF  ('&LIT'(1,1) GE '0'                           X
+                         OR '&LIT'(1,1) EQ '+'                         X
+                         OR '&LIT'(1,1) EQ '-')
+                         :&NUM SETC '&LIT'
+                         ACALL MOVE_NUM_LIT
+                    AELSEIF  ('&LIT' EQ 'ZERO'                         X
+                         OR '&LIT' EQ 'ZEROS'                          X
+                         OR '&LIT' EQ 'ZEROES')                          
+                         :&NUM SETC '0'
+                         ACALL MOVE_NUM_LIT
+                    AELSEIF ('&LIT' EQ 'SPACES'                        X
+                         OR '&LIT' EQ 'SPACE')
+                         ACALL RESET_SS1_TARGET
+         MVI   &TARGET_NAME,C' '
+                         ACALL PAD_TARGET
+                    AELSEIF ('&LIT' EQ 'LOW_VALUES'                    X
+                         OR '&LIT' EQ 'LOW_VALUE')
+                         ACALL RESET_SS1_TARGET
+         MVI   &TARGET_NAME,X'00'
+                         ACALL PAD_TARGET
+                    AELSEIF ('&LIT' EQ 'HIGH_VALUES'                   X
+                         OR '&LIT' EQ 'HIGH_VALUE')
+                         ACALL RESET_SS1_TARGET
+         MVI   &TARGET_NAME,X'FF'
+                         ACALL PAD_TARGET
+                    AELSE
+                         MNOTE 8,'GEN_MOVE UNKNOWN LIT - &LIT'
+                    AEND
+               AEND
+         AEND
+         AEND
+.*
+.* MOVE NUMERIC LIT LT 256 (NUM SET TO LIT OR 0)
+.*
+      AENTRY MOVE_NUM_LIT
+      ACASE (C2A('&SYM_PIC_TYPE(&TARGET)'))
+      AWHEN C'A'
+         LARL  R1,=&SYM_PIC_TYPE(&TARGET)(&NUM)
+         MVC   &TARGET_NAME,0(R1)
+      AWHEN C'D',C'E'
+         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+         MVC   &TARGET_NAME,0(R1)
+      AWHEN C'F'
+        AIF   (K'&NUM LE 4)
+              ACALL RESET_SS1_TARGET
+         MVHI  &TARGET_NAME,&NUM
+        AELSE
+         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+         MVC   &TARGET_NAME,0(R1)
+        AEND
+      AWHEN C'G'
+        AIF   (K'&NUM LE 4)
+         MVGHI &TARGET_NAME,&NUM
+        AELSE
+         LARL  R1,=FL8'&NUM'
+         MVC   &TARGET_NAME,0(R1)
+        AEND
+      AWHEN C'H'
+              ACALL RESET_SS1_TARGET
+         MVHHI &TARGET_NAME,&NUM
+      AWHEN C'P'
+         :&LLIT SETA  (&SYM_LEN(&TARGET)+1)/2*2 ROUND EVEN FOR LARL
+         LARL  R1,=PL&LLIT'&NUM'
+       AIF   (&LLIT GT &SYM_LEN(&TARGET))
+         MVC   &TARGET_NAME,1(R1)
+       AELSE  
+         MVC   &TARGET_NAME,0(R1)
+       AEND
+      AWHEN C'Z'
+               AIF  (NOT &SYM_PIC_SIGN(&TARGET))
+                    AIF (&L_TARGET EQ 1)
+                         ACALL RESET_SS1_TARGET
+         MVI   &TARGET_NAME,C'&NUM'
+                    AELSE
+                        :&LLIT SETA  (&SYM_LEN(&TARGET)+1)/2*2
+                        :&ZPAD SETC (&SYM_LEN(&TARGET)-K'&NUM)'0'
+         LARL  R1,=CL&LLIT'&ZPAD&NUM'
+         MVC   &TARGET_NAME,0(R1)
+                    AEND
+               AELSE
+                    :&LLIT SETA  (&SYM_LEN(&TARGET)+1)/2*2
+         LARL  R1,=ZL&LLIT'&NUM'
+                    AIF (&LLIT NE &SYM_LEN(&TARGET))
+         MVC   &TARGET_NAME,1(R1)
+                    AELSE
+         MVC   &TARGET_NAME,0(R1)
+                    AEND
+               AEND
+      AELSE
+         MNOTE 8,'GEN_MOVE NUMERIC LITERAL FOR CHARACTER FIELD'
+      AEND
+      AEND
+.*
+.* MOVE GT 256
+.*
+       AENTRY MOVE_GT_256
+         LA    R0,&TARGET_NAME
+         LHI   R1,&L_TARGET
+       AIF   (&SOURCE NE 0)          
+         LA    R2,&SOURCE_NAME
+         LHI   R3,&L_SOURCE
+       AELSE     
+.*
+.* MOVE LIT GT 256
+.* 
+               AIF   ('&LIT'(1,1) NE '''')   
+                    AIF ('&LIT' EQ 'SPACES'                            X
+                         OR '&LIT' EQ 'SPACE')
+         IILL   R3,0 FILL WITH PAD SPACES
+         IILH   R3,X'4000'
+                    AELSEIF ('&LIT' EQ 'LOW-VALUES'                    X
+                         OR '&LIT' EQ 'LOW-VALUE')
+         LHI   R3,0 FILL WITH LOW VALUES
+                    AELSEIF ('&LIT' EQ 'HIGH-VALUES'                   X
+                         OR '&LIT' EQ 'HIGH-VALUE')
+         IILL  R3,0 FILL WITH HIGH VALUES
+         IILH  R3,X'FF00'
+                    AELSE
+                         MNOTE 8,'GEN_MOVE UNDEFINED SOURCE &LIT'
+                    AEND
+               AELSE
+                    :&LLIT SETA (K'&LIT-1)/2*2
+         LARL  R2,=CL&LLIT&LIT
+                   :&LLIT    SETA  K'&LIT-2
+         IILL  R3,&LLIT
+         IILH  R3,X'4000'
+               AEND
+       AEND
+         MVCL  R0,R2
+         AEND
+.*
+.* MOVE_CONVERT LE 256
+.*
+         AENTRY MOVE_CONVERT
+         ACASE (C2A('&T_TARGET'))
+         AWHEN C'A'
+         LA    R0,&SOURCE_NAME
+         ST    R0,&TARGET_NAME
+         AWHEN C'D'
+               ACALL CVT_TO_D
+         AWHEN C'E'
+               ACALL CVT_TO_E
+         AWHEN C'F'
+               ACALL CVT_TO_F
+         AWHEN C'G'
+               ACALL CVT_TO_G
+         AWHEN C'H'
+               ACALL CVT_TO_H
+         AWHEN C'P'
+               ACALL CVT_TO_P
+         AWHEN C'X'
+               ACALL CVT_TO_X
+         AWHEN C'Z'
+               ACALL CVT_TO_Z
+         AEND
+         AEND
+.*
+.* CVT TO D 
+.*
+         AENTRY CVT_TO_D
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         MVC   &TARGET_NAME,&SOURCE_NAME
+               AWHEN C'E'
+         LDE   0,&SOURCE_NAME
+         STD   0,&TARGET_NAME
+               AWHEN C'A',C'F'
+         L     0,&SOURCE_NAME
+         CDFR  0,0
+         STD   0,&TARGET_NAME
+               AWHEN C'H'
+         LH    0,&SOURCE_NAME
+         CDFR  0,0
+         STD   0,&TARGET_NAME
+               AWHEN C'P'
+         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         CVB   0,ZCVT_PWORK
+         CDFR  0,0
+         STD   0,&TARGET_NAME
+               AELSE
+                    MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
+                    MEXIT
+               AEND
+         AEND
+.*
+.* CVT TO E
+.* 
+         AENTRY CVT_TO_E
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LD    0,&SOURCE_NAME
+         LEDR  0,0
+         STE   0,&TARGET_NAME
+               AWHEN C'E'
+         MVC   &TARGET_NAME,&SOURCE_NAME
+               AWHEN C'A',C'F'
+         L     0,&SOURCE_NAME
+         CEFR  0,0
+         STE   0,&TARGET_NAME
+               AWHEN C'H'
+         LH    0,&SOURCE_NAME
+         CEFR  0,0
+         STE   0,&TARGET_NAME
+               AWHEN C'P'
+         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         CVB   0,ZCVT_PWORK
+         CEFR  0,0
+         STE   0,&TARGET_NAME
+               AELSE
+                    MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
+                    MEXIT
+               AEND 
+         AEND
+.*
+.* CVT TO F
+.*
+         AENTRY CVT_TO_F
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LD    0,&SOURCE_NAME
+         CFDR  0,0
+         ST    0,&TARGET_NAME
+               AWHEN C'E'
+         LE    0,&SOURCE_NAME
+         CFER  0,0
+         ST    0,&TARGET_NAME
+               AWHEN C'A',C'F'
+         MVC   &TARGET_NAME,&SOURCE_NAME
+               AWHEN C'H'
+         LH    0,&SOURCE_NAME
+         ST    0,&TARGET_NAME
+               AWHEN C'P'
+         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         CVB   0,ZCVT_PWORK
+         ST    0,&TARGET_NAME
+               AWHEN C'Z'
+         PACK  ZCVT_PWORK,&SOURCE_NAME
+         CVB   0,ZCVT_PWORK
+         ST    0,&TARGET_NAME
+               AELSE
+                    MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
+                    MEXIT
+               AEND 
+         AEND
+.*
+.* CVT TO G
+.*
+         AENTRY CVT_TO_G
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LD    0,&SOURCE_NAME
+         CGDR  0,0
+         STG   0,&TARGET_NAME
+               AWHEN C'E'
+         LE    0,&SOURCE_NAME
+         CGER  0,0
+         STG   0,&TARGET_NAME
+               AWHEN C'A',C'F'
+         LGF   0,&SOURCE_NAME
+         STG   0,&TARGET_NAME
+               AWHEN C'H'
+         LGH   0,&SOURCE_NAME
+         STG   0,&TARGET_NAME
+               AWHEN C'P'
+         ZAP   ZCVT_PWORK1,&SOURCE_NAME
+         CVBG  0,ZCVT_PWORK1
+         STG   0,&TARGET_NAME
+               AWHEN C'Z'
+         PACK  ZCVT_PWORK1,&SOURCE_NAME
+         CVBG  0,ZCVT_PWORK1
+         STG   0,&TARGET_NAME
+               AELSE
+                    MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
+                    MEXIT
+               AEND 
+         AEND
+.*
+.* GVT TO H
+.* 
+         AENTRY CVT_TO_H
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LD    0,&SOURCE_NAME
+         CFDR  0,0
+         STH   0,&TARGET_NAME
+               AWHEN C'E'
+         LE    0,&SOURCE_NAME
+         CFER  0,0
+         ST    0,&TARGET_NAME
+               AWHEN C'A',C'F'
+         L     0,&SOURCE_NAME
+         STH   0,&TARGET_NAME
+               AWHEN C'H'
+         MVC   &TARGET_NAME,&SOURCE_NAME
+               AWHEN C'P'
+         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         CVB   0,ZCVT_PWORK
+         STH   0,&TARGET_NAME
+               AWHEN C'Z'
+         PACK  ZCVT_PWORK,&SOURCE_NAME
+         CVB   0,ZCVT_PWORK
+         STH   0,&TARGET_NAME
+               AELSE
+                    MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
+                    MEXIT
+               AEND 
+         AEND
+.*
+.* CVT TO P
+.*
+         AENTRY CVT_TO_P
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'D'
+         LD    0,&SOURCE_NAME
+         CFDR  0,0
+         CVD   0,ZCVT_PWORK
+         ZAP   &TARGET_NAME,ZCVT_PWORK
+               AWHEN C'E'
+         LE    0,&SOURCE_NAME
+         CFER  0,0
+         CVD   0,ZCVT_PWORK
+         ZAP   &TARGET_NAME,ZCVT_PWORK
+               AWHEN C'A',C'F'
+         L     0,&SOURCE_NAME
+         CVD   0,ZCVT_PWORK
+         ZAP   &TARGET_NAME,ZCVT_PWORK
+               AWHEN C'H'
+         LH    0,&SOURCE_NAME
+         CVD   0,ZCVT_PWORK
+         ZAP   &TARGET_NAME,ZCVT_PWORK
+               AWHEN C'P'
+         MVC   &TARGET_NAME,&SOURCE_NAME
+               AWHEN C'X',C'Z'
+         PACK  ZCVT_PWORK,&SOURCE_NAME
+         ZAP   &TARGET_NAME,ZCVT_PWORK
+               AELSE
+                    MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
+                    MEXIT
+               AEND 
+         AEND
+.*
+.* CVT TO X
+.*
+         AENTRY CVT_TO_X
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'A',C'F'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         L     0,&SOURCE_NAME
+         CVD   0,ZCVT_PWORK
+                     GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK,8
+               AWHEN C'H'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         LH    0,&SOURCE_NAME
+         CVD   0,ZCVT_PWORK
+                     GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK,8
+               AWHEN C'P'
+                     GEN_EDIT &TARGET_NAME,&TARGET,&SOURCE_NAME,&L_SOURX
+               CE
+               AWHEN C'X'
+         MVC   &TARGET_NAME,&SOURCE_NAME
+                     AIF   (&L_TARGET GT &L_SOURCE)
+                           ACALL RESET_SS1_TARGET
+         MVI   &TARGET_NAME+&L_SOURCE,C' '
+                           AIF (&L_TARGET GT &L_SOURCE+1)
+                               AIF ('&TARGET_NAME'(1,1) LT '0')
+         MVC   &TARGET_NAME+&L_SOURCE+1(&L_TARGET-&L_SOURCE-1),&TARGET_X
+               NAME+&L_SOURCE
+                               AELSE
+         MVC   &FIELD_OFF+&L_SOURCE+1(&L_TARGET-&L_SOURCE-1,&FIELD_REG)X
+               ,&FIELD_OFF+&L_SOURCE.(&FIELD_REG)
+                               AEND
+                           AEND
+                     AEND
+               AWHEN C'Z'
+                     :&PLEN SETA &L_SOURCE/2+1
+                     AIF   (&PLEN LE 8)
+         PACK  ZCVT_PWORK1(&PLEN),&SOURCE_NAME
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&PLEN)
+                     GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK,8
+                     AELSE
+         PACK  ZCVT_PWORK2(&PLEN),&SOURCE_NAME
+         ZAP   ZCVT_PWORK1,ZCVT_PWORK2(&PLEN)
+                     GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK,16
+                     AEND
+               AELSE
+                    MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
+                    MEXIT
+               AEND
+         AEND
+.*
+.* CVT TO Z
+.*
+         AENTRY CVT_TO_Z
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'A',C'F'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         L     0,&SOURCE_NAME
+         CVD   0,ZCVT_PWORK
+         UNPK  &TARGET_NAME,ZCVT_PWORK+&POFF.(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &TARGET_NAME+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'H'
+                     :&PLEN SETA &L_TARGET/2+1
+                     :&POFF SETA 8-&PLEN
+         LH    0,&SOURCE_NAME
+         CVD   0,ZCVT_PWORK
+         UNPK  &TARGET_NAME,ZCVT_PWORK+&POFF.(&PLEN)
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &TARGET_NAME+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'P'
+                     :&PLEN SETA &L_TARGET/2+1
+                     AIF (&PLEN LE 8)
+                         :&POFF SETA 8-&PLEN
+         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         UNPK  &TARGET_NAME,ZCVT_PWORK+&POFF.(&PLEN)
+                     AELSE
+                         :&POFF SETA 16-&PLEN
+         ZAP   ZCVT_PWORK1,&SOURCE_NAME
+         UNPK  &TARGET_NAME,ZCVT_PWORK1+&POFF.(&PLEN)
+                     AEND
+                     AIF (NOT &SYM_PIC_SIGN(&TARGET))
+         OI    &TARGET_NAME+&L_TARGET-1,X'F0'
+                     AEND         
+               AWHEN C'X',C'Z'
+                     AIF   (&L_TARGET EQ &L_SOURCE)
+         MVC   &TARGET_NAME,&SOURCE_NAME
+                     AELSEIF (&L_TARGET LT &L_SOURCE)
+         MVC   &TARGET_NAME,&SOURCE_NAME+(&L_SOURCE-&L_TARGET) SKP HDIG
+                     AELSE
+                           ACALL RESET_SS1_TARGET SET TARGET_NAME AND I
+                           :&LPAD SETA &L_TARGET-&L_SOURCE
+         MVI   &TARGET_NAME,C'0' PAD WITH ZEROS ON LEFT
+                           AIF ('&TARGET_NAME'(1,1) LT '0')
+                               AIF (&LPAD_GT 1)
+         MVC   &TARGET_NAME+1(&LPAD-1),&TARGET_NAME
+                               AEND
+         MVC   &TARGET_NAME+&LPAD.(&L_SOURCE),&SOURCE_NAME 
+                           AELSE
+                               AIF  (&LPAD GT 1)
+         MVC   &FIELD_OFF+1(&LPAD-1,&FIELD_REG),&FIELD_OFF.(&FIELD_REG)
+                               AEND
+         MVC   &FIELD_OFF+&LPAD.(&L_SOURCE,&FIELD_REG),&SOURCE_NAME
+                           AEND
+                     AEND 
+               AELSE
+                    MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
+                    MEXIT
+               AEND
+         AEND 
+.*
+.* RESET SS1 TARGET - REMOVE LEN FROM OFF(LEN,REG) IF FOUND
+.*
+         AENTRY RESET_SS1_TARGET
+         AIF   ('&TARGET_NAME'(1,1) GE '0')  IS THIS O(L,R) 
+               :&I SETA ('&TARGET_NAME' INDEX '(')
+               AIF (&I GT 1)
+                   :&FIELD_OFF SETA '&TARGET_NAME'(1,&I-1)
+                   :&J SETA ('&TARGET_NAME' INDEX ',')
+                   AIF (&J GT &I+1)
+                       :&FIELD_LEN SETA '&TARGET_NAME'(&I+1,&J-1)
+                       :&FIELD_REG SETC '&TARGET_NAME'(&J+1,K'&TARGET_NX
+               AME-&J-1)
+                       :&TARGET_NAME SETC '&TARGET_NAME'(1,&I).'&TARGETX
+               _NAME'(&J+1,*)  O(R)
+                   AELSE
+                       MNOTE 8,'GEN_MOVE RESET_SS1_TARGET NOT FOUND'
+                       MEXIT
+                   AEND
+               AEND
+         AEND
+         AEND
+.*
+.* PAD TARGET - USE OVERLAPPED MVC TO PAD TARGET FROM MVI
+.*
+         AENTRY PAD_TARGET
+               AIF ('&TARGET_NAME'(1,1) LT '0')
+                   AIF (&SYM_LEN(&TARGET) GT 1)
+         MVC   &TARGET_NAME+1(L'&SYM_LEN(&TARGET)-1),&TARGET_NAME
+                   AEND
+               AELSE
+                   AIF (&SYM_LEN(&TARGET) GT 1)
+         MVC   &FIELD_OFF+1(&FIELD_LEN-1,&FIELD_REG),&FIELD_OFF.(&FIELDX
+               _REG)
+                   AEND
+               AEND
+         AEND
+         MEND

@@ -1,0 +1,65 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/09/08                                                 *
+*********************************************************************
+* 04/11/08 initial coding of ACCEPT call functions
+*********************************************************************
+*
+*  CALL ACCEPT,(TYPE,ADDR)
+*
+*    TYPE - TYPE OF ACCEPT REQUEST     
+*      1  - DATE YYMMDD   PIC 9(6)
+*      2  - TIME HHMMSSTH PIC 9(8)
+*      3  - DAY OF WEEK   PIC 9    (1=SUN, 2=MON, ETC.) 
+*********************************************************************
+ACCEPT   SUBENTRY
+         LM    R3,R4,0(R1)  R3=TYPE R4=TARGET ADDR
+         SLL   R3,2
+         B     *(R3)
+         B     ACCEPT_DATE
+         B     ACCEPT_TIME
+         B     ACCEPT_DOW
+EXIT     DS    0H
+         SUBEXIT
+ACCEPT_DATE DS 0H
+         TIME  DEC,TIMEDATE,LINKAGE=SYSTEM,DATETYPE=MMDDYYYY
+         UNPK  DWORK(9),MMDDYYYY(5)
+         MVC   0(2,R4),DWORK+6
+         MVC   2(4,R4),DWORK
+         B     EXIT
+ACCEPT_TIME DS 0H
+         TIME  DEC  R0=HHMMSSTH R1=0CYYDDDS
+         ST    R0,PWORK
+         UNPK  DWORK(9),PWORK(5)
+         MVC   0(8,R4),DWORK
+         B     EXIT
+*
+* RETURN DIGIT FIELD WITH 1-7 FOR SUN-SAT 
+* (THIS ROUTINE ONLY GOOD FOR 2008 - NEEDS SOME WORK!!!!!)
+*
+ACCEPT_DOW DS 0H
+         TIME  DEC  R0=HHMMSSTH R1=0CYYDDDS
+         N     R1,=X'0000FFFF'
+         SR    R0,R0
+         STM   R0,R1,PWORK
+         CVB   R1,PWORK
+         D     R0,=F'7'
+         LR    R1,R0
+         IC    R0,DOWTAB(R1)
+         STC   R0,0(R4)   STORE DOW DIGIT
+         B     EXIT
+         LTORG
+         EQUREGS
+PWORK    DC    D'0'
+DWORK    DC    XL16'00'
+DOWTAB   DC    C'1234567'
+         DC    0D,CL16'HHMMSSTH0CYYDDDSMMDDYYYY'
+TIMEDATE DS    0XL16
+HHMMSSTH DC    XL4'00000000' HHMMSSTH
+ZCYYDDDS DC    XL4'00000000' 0CYYDDDS
+MMDDYYYY DC    CL4'00000000' MMDDYYYY
+         DS    XL4
+         END

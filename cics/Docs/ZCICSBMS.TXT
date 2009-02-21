@@ -1,5 +1,5 @@
-Z390/CICS Basic Mapping Support
-===============================
+zCICS Basic Mapping Support
+===========================
 
 This document outlines the extensions and facilities implemented in
 Z390\CICS. Please refer to the IBM Manuals on BMS usage.
@@ -26,7 +26,7 @@ macro if missing.
 
 mapset  DFHMSD  TYPE=MAP/DSECT/FINAL
                 MODE=IN/OUT/INOUT
-                LANG=ASM
+                LANG=ASM/COBOL
                 CTRL=
                 CURSLOC=YES/NO
                 STORAGE=AUTO
@@ -34,7 +34,6 @@ mapset  DFHMSD  TYPE=MAP/DSECT/FINAL
                 TERM=
 
 Notes:
-   LANG=ASM is the only option supported.
    TERM= is supported but discarded
 
 Errors:
@@ -53,7 +52,7 @@ Errors:
 
 mapname DFHMDI  TYPE=MAP/DSECT
                 MODE=IN/OUT/INOUT
-                LANG=ASM
+                LANG=ASM/COBOL
                 CTRL=
                 CURSLOC=YES/NO
                 SIZE=(24,80)
@@ -65,8 +64,6 @@ mapname DFHMDI  TYPE=MAP/DSECT
 Notes:
    TYPE and STORAGE are required here only if the DFHMSD macro is
    omitted.
-
-   LANG=ASM is the only option supported.
 
    Parameters TYPE, MODE, LANG, CTRL, CURSLOC, STORAGE and TIOAPFX can
    all be omitted if the settings specified in DFHMSD are correct for
@@ -134,8 +131,9 @@ Extensions:
       Code XINIT=FF6D
 
    PICIN and PICOUT
-      Previously only available for COBOL and PL/I, they are now
-      available for assembler.
+      These are conventionally supported for zCOBOL.
+
+      A special form is available for assembler which is described below:
 
       The parameter is (almost) a standard edit word with some
       restraints.
@@ -249,11 +247,18 @@ Map generation
 See the sample generation for MAP01 embedded in DFHALL.BAT.
 This generates the TYPE=DSECT (MAP01.CPY) and the TYPE=MAP (MAP01.390).
 
+For LANG=COBOL, the structure will have a .CPZ suffix.
+This suffix is the default for the zCOBOL COPY statement.
+
 As the program name is the same, the TYPE=DSECT assembler output is
 renamed mapset.PR1.
 
 Change Summary
 --------------
+February 21, 2009
+   Added LANG=COBOL and mention of the .CPZ suffix
+   Added commentary separating PICIN/PICOUT by language
+
 November 24, 2008
    Added comment about POS
    TIOAPFX is fully supported
@@ -265,8 +270,8 @@ Trademarks
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
-Author: Melvyn Maltz
-Shipping Date: November 24, 2008
-Z390 version: V1.4.04
-Z390/CICS version: V6
+Author       : Melvyn Maltz
+Shipping Date: February 21, 2009
+Z390 version : V1.5.00
+zCICS version: V7
 

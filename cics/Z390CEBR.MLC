@@ -10,7 +10,6 @@
 * TO DO
 *    FIND, NEED GRAPHICS TO MAKE IT PRETTY
 *
-         DFHEIGBL
          DFHEISTG
 PARSE1   DS    CL19               TS Q NAME, ALLOW FOR X'  '
 PARSE2   DS    CL60               COMMAND

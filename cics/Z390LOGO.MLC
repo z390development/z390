@@ -1,48 +1,12 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 DFHEISTG DSECT                    DSA STORAGE
 Z390LOGO CSECT
-*
-         EXEC  CICS SEND FROM(LOGO) LENGTH(LOGOLEN)
+         EXEC  CICS SEND MAPSET('MAPLOGO') MAP('LOGO') MAPONLY ERASE
          EXEC  CICS RETURN
-*
-LOGO     TN3270 ESC,WRT_EW,WCC_KD
-         TN3270 (SBA,6,2)
-         DC    C'ZZZZZZZZZ  33333    999999    00000          //  CCCCC-
-                 IIII   CCCCC   SSSSS'
-         TN3270 (SBA,7,2)
-         DC    C'       Z  3     3  9      9  0     0        //  C     -
-                  II   C       S     S'
-         TN3270 (SBA,8,2)
-         DC    C'      Z         3  9      9  0     0       //   C     -
-                  II   C      S       S'
-         TN3270 (SBA,9,2)
-         DC    C'     Z         3   9      9  0     0      //    C     -
-                  II   C       S'
-         TN3270 (SBA,10,2)
-         DC    C'    Z       333     999999   0     0     //     C     -
-                  II   C        SSSSS'
-         TN3270 (SBA,11,2)
-         DC    C'   Z           3          9  0     0    //      C     -
-                  II   C             S'
-         TN3270 (SBA,12,2)
-         DC    C'  Z             3  9      9  0     0   //       C     -
-                  II   C      S       S'
-         TN3270 (SBA,13,2)
-         DC    C' Z        3     3   9    9   0     0  //        C     -
-                  II   C       S     S'
-         TN3270 (SBA,14,2)
-         DC    C'ZZZZZZZZZ  33333     9999     00000  //          CCCCC-
-                 IIII   CCCCC   SSSSS'
-         TN3270 (SBA,17,39)
-         DC    C'Version 6'
-LOGOLEN  DC    AL2(*-LOGO)
-*
-         TN3270 SYMBOLS
-         EQUREGS
          END
 

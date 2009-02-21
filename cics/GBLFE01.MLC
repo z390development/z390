@@ -13,8 +13,8 @@ GBLFE01  SUBENTRY
 * R1  >>> WTOMSG, REQDSECT, CONNID, TRCEZ390, CMD1LEN, CMD0+1
 *         +24    +28/IND  +32      +36     +40       +44/IND +48/IND
 *         CMD1+4,CICSADDR,TRMPREFX,INIDATE,THREADS+3,LOCALS, REMOTES
-*         +52       +56       +60     +64      +68
-*         MAXLOCS+3,MAXREMS+3,INITRAN,KCPTRPOS,INISEQT
+*         +52       +56       +60     +64     +68      +72
+*         MAXLOCS+3,MAXREMS+3,INITRAN,CWALENG,KCPTRPOS,INISEQT
 * R14 = RETURN ADDRESS
          LR    R3,R1              SAVE PARM POINTER
          L     R4,12(R3)          TRCEZ390 ADDRESS
@@ -53,7 +53,7 @@ CICSTRDN EQU   *
          L     R4,20(R3)          CMD0+1 ADDRESS
          CLI   0(R4),C' '         ANY DRIVE ID ?
          BE    CEMTISNV           EXIT IF NONE
-         MVC   ISYSJARP(2),0(R4)  MOVE DRIVE ID
+         MVC   ISYSDJRP(2),0(R4)  MOVE DRIVE ID
          L     R4,24(R3)          CMD1+4 ADDRESS
          EX    R6,ISYSMVCJ        MOVE JARPATH AFTER DRIVE ID
          B     CEMTISCP           EXIT
@@ -65,7 +65,7 @@ CEMTISCP EQU   *
          L     R4,28(R3)          ADDRESS OF CICSADDR ADDRESS
          ICM   R6,15,0(R4)        R6=ADDRESS OF CICSPATH
          BZ    CEMTNOCP           EXIT IF NONE
-         LA    R8,ISYSCICP        DESTINATION
+         LA    R8,ISYSDCSP        DESTINATION
 CEMTCPLP EQU   *
          MVC   0(1,R8),0(R6)      MOVE CICSPATH A BYTE AT A TIME
          AHI   R6,1               BUMP ORIGIN
@@ -74,52 +74,54 @@ CEMTCPLP EQU   *
          BNE   CEMTCPLP           LOOP IF NOT
 CEMTNOCP EQU   *
          L     R4,32(R3)          ADDRESS OF TRMPREFX
-         MVC   ISYSTPFX,0(R4)     MOVE TERMID_PREFIX
+         MVC   ISYSDPFX,0(R4)     MOVE TERMID_PREFIX
          L     R4,36(R3)          ADDRESS OF INIDATE
-         MVC   ISYSDATE,0(R4)     MOVE DATE FORMAT
+         MVC   ISYSDDTE,0(R4)     MOVE DATE FORMAT
          L     R4,40(R3)          ADDRESS OF THREADS+3
-         MVC   ISYSTHRD,0(R4)     MOVE MAXTHREADS
+         MVC   ISYSDTMX,0(R4)     MOVE MAXTHREADS
          L     R4,44(R3)          ADDRESS OF LOCALS
          L     R8,0(R4)           R8=LOCALS IN USE
          L     R6,48(R3)          ADDRESS OF REMOTES
          A     R8,0(R6)           +REMOTES IN USE=THREADS IN USE
-         STC   R8,ISYSTHDU        SAVE IT
-         MVC   ISYSLOCU,3(R4)     MOVE LOCAL TERMINALS IN USE
-         MVC   ISYSRMTU,3(R6)     MOVE REMOTE TERMINALS IN USE
+         STC   R8,ISYSDTUS        SAVE IT
+         MVC   ISYSDLUS,3(R4)     MOVE LOCAL TERMINALS IN USE
+         MVC   ISYSDRUS,3(R6)     MOVE REMOTE TERMINALS IN USE
          L     R4,52(R3)          ADDRESS OF MAXLOCS+3
-         MVC   ISYSLOCL,0(R4)     MOVE LOCAL_TERMINALS
+         MVC   ISYSDLCL,0(R4)     MOVE LOCAL_TERMINALS
          L     R4,56(R3)          ADDRESS OF MAXREMS+3
-         MVC   ISYSRMTE,0(R4)     MOVE REMOTE_TERMINALS
-         L     R4,60(R3)          ADDRESS OF MAXREMS+3
-         MVC   ISYSINIT,0(R4)     MOVE INITIAL_TRANSID
-         MVC   ISYSLTRC,=C'NO '   ASSUME TRACE_LOCALS=NO
-         L     R4,64(R3)          ADDRESS OF KCPTRPOS
+         MVC   ISYSDRMT,0(R4)     MOVE REMOTE_TERMINALS
+         L     R4,60(R3)          ADDRESS OF INITIAL_TRANSID
+         MVC   ISYSDINT,0(R4)     MOVE INITIAL_TRANSID
+         L     R4,64(R3)          ADDRESS OF CWASIZE
+         MVC   ISYSDCWA,0(R4)     MOVE CWASIZE
+         MVC   ISYSDTRL,=C'NO '   ASSUME TRACE_LOCALS=NO
+         L     R4,68(R3)          ADDRESS OF KCPTRPOS
          CLI   0(R4),C'L'         IS TRACE SET ?
          BNE   CEMTISTN           EXIT IF NOT
-         MVC   ISYSLTRC,=C'YES'   TRACE_LOCALS=YES
+         MVC   ISYSDTRL,=C'YES'   TRACE_LOCALS=YES
 CEMTISTN EQU   *
-         MVC   ISYSZTRC,=C'NO '   ASSUME TRACE_Z390CICS=NO
+         MVC   ISYSDTRZ,=C'NO '   ASSUME TRACE_Z390CICS=NO
          CLI   TRCEZ390,C'N'      IS IT NO ?
          BE    CEMTISOK           EXIT IF IT IS
-         MVC   ISYSZTRC,=C'INT'   ASSUME TRACE_Z390CICS=INT
+         MVC   ISYSDTRZ,=C'INT'   ASSUME TRACE_Z390CICS=INT
          CLI   TRCEZ390,C'I'      IS IT INT ?
          BE    CEMTISOK           EXIT IF IT IS
-         MVC   ISYSZTRC,=C'APP'   ASSUME TRACE_Z390CICS=APP
+         MVC   ISYSDTRZ,=C'APP'   ASSUME TRACE_Z390CICS=APP
          CLI   TRCEZ390,C'A'      IS IT APP ?
          BE    CEMTISOK           EXIT IF IT IS
-         MVC   ISYSZTRC,=C'YES'   MUST BE TRACE_Z390CICS=YES
+         MVC   ISYSDTRZ,=C'YES'   MUST BE TRACE_Z390CICS=YES
 CEMTISOK EQU   *
-         MVC   ISYSSEQT,=C'NO   ' ASSUME SEQ_TERM=NO
-         L     R4,68(R3)          ADDRESS OF INISEQT
+         MVC   ISYSDSEQ,=C'NO   ' ASSUME SEQ_TERM=NO
+         L     R4,72(R3)          ADDRESS OF INISEQT
          CLI   0(R4),C'Y'         IS IT YES ?
          BNE   CEMTISNY           EXIT IF NOT
-         MVC   ISYSSEQT,=C'YES  ' SEQ_TERM=YES
+         MVC   ISYSDSEQ,=C'YES  ' SEQ_TERM=YES
          B     CEMTISNQ           EXIT
 *
 CEMTISNY EQU   *
          CLI   0(R4),C'T'         IS IT TRACE ?
          BNE   CEMTISNQ           EXIT IF NOT
-         MVC   ISYSSEQT,=C'TRACE' SEQ_TERM=TRACE
+         MVC   ISYSDSEQ,=C'TRACE' SEQ_TERM=TRACE
 CEMTISNQ EQU   *
          L     R8,8(R3)           R8=CONN ID ADDRESS
          L     R8,0(R8)           R8=CONNID
@@ -129,8 +131,8 @@ CEMTISNQ EQU   *
          BNZ   ABEND780           EXIT IF BAD
          SUBEXIT
 *
-ISYSMVCJ MVC   ISYSJARP+2(0),0(R4) MOVE JARPATH AFTER DRIVE ID
-ISYSMVJ2 MVC   ISYSJARP(0),0(R4) MOVE JARPATH WITHOUT DRIVE ID
+ISYSMVCJ MVC   ISYSDJRP+2(0),0(R4) MOVE JARPATH AFTER DRIVE ID
+ISYSMVJ2 MVC   ISYSDJRP(0),0(R4) MOVE JARPATH WITHOUT DRIVE ID
 *
 ABEND780 ABEND 780                TCPIO SEND FAILED
 *
@@ -154,20 +156,21 @@ ISYSTERM DS    CL4                TERMID
          DS    CL4                TRANSID
          DS    C                  TRANSID TYPE
          DS    PL4                TASK NO.
-ISYSJARP DC    CL50' '            JARPATH
-ISYSCICP DC    CL50' '            CICSPATH
-ISYSTPFX DS    CL3                TERMID_PREFIX
-ISYSDATE DS    C                  DATE FORMAT
-ISYSTHRD DS    X                  MAXTHREADS
-ISYSTHDU DS    X                  THREADS IN USE
-ISYSLOCL DS    X                  LOCAL_TERMINALS
-ISYSLOCU DS    X                  LOCAL TERMINALS IN USE
-ISYSRMTE DS    X                  REMOTE_TERMINALS
-ISYSRMTU DS    X                  REMOTE TERMINALS IN USE
-ISYSINIT DS    CL4                INITIAL_TRANSID
-ISYSLTRC DS    CL3                TRACE_LOCALS
-ISYSZTRC DS    CL3                TRACE_Z390CICS
-ISYSSEQT DS    CL3                SEQ_TERM
+ISYSDJRP DC    CL50' '            JARPATH
+ISYSDCSP DC    CL50' '            CICSPATH
+ISYSDPFX DS    CL3                TERMID_PREFIX
+ISYSDDTE DS    C                  DATE FORMAT
+ISYSDTMX DS    X                  MAXTHREADS
+ISYSDTUS DS    X                  THREADS IN USE
+ISYSDLCL DS    X                  LOCAL_TERMINALS
+ISYSDLUS DS    X                  LOCAL TERMINALS IN USE
+ISYSDRMT DS    X                  REMOTE_TERMINALS
+ISYSDRUS DS    X                  REMOTE TERMINALS IN USE
+ISYSDINT DS    CL4                INITIAL_TRANSID
+ISYSDCWA DS    XL4                CWASIZE
+ISYSDTRL DS    CL3                TRACE_LOCALS
+ISYSDTRZ DS    CL3                TRACE_Z390CICS
+ISYSDSEQ DS    CL5                SEQ_TERM
 ISYSLEN  EQU   *-ISYSDATA
 *
 * RECEIVE MESSAGE AREA

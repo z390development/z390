@@ -1,14 +1,13 @@
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
 *
 * TEST HANDLE AID/PUSH/POP
 * TEST GETMAIN/FREEMAIN
 *
-         DFHEIGBL
          DFHEISTG
 GET1     DS    F
 GET2     DS    F
@@ -123,11 +122,16 @@ NEXT2    EQU   *
 * FREEMAIN IN RANDOM ORDER...42153
          L     R5,GET4            ADDRESS TO FREEMAIN
          EXEC  CICS FREEMAIN DATAPOINTER(R5)
-         EXEC  CICS FREEMAIN DATA(GET2)
+         L     R5,GET2            ADDRESS TO FREEMAIN
+         USING DUMDSECT,R5
+         EXEC  CICS FREEMAIN DATA(DUMDSECT)
          L     R5,GET1            ADDRESS TO FREEMAIN
          EXEC  CICS FREEMAIN DATAPOINTER(R5)
-         EXEC  CICS FREEMAIN DATA(GET5)
-         EXEC  CICS FREEMAIN DATA(GET3)
+         L     R5,GET5            ADDRESS TO FREEMAIN
+         EXEC  CICS FREEMAIN DATA(DUMDSECT)
+         L     R5,GET3            ADDRESS TO FREEMAIN
+         EXEC  CICS FREEMAIN DATA(DUMDSECT)
+         DROP  R5
          EXEC  CICS IGNORE CONDITION INVREQ
          L     R5,=4X'FF'         INVALID ADDRESS
          EXEC  CICS FREEMAIN DATAPOINTER(R5)
@@ -219,6 +223,8 @@ ABDMSG   TN3270 WCC_KD,(SBA,16,2)
 ABDMSGL  DC    AL2(*-ABDMSG)
 *
 INIT5    DC    X'05'
+*
+DUMDSECT DS    0X
 *
          COPY  DFHAID
          TN3270 SYMBOLS

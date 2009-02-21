@@ -256,21 +256,28 @@ P060EEIB DS    AL4                EIB
 P060ETCT DS    AL4                TCTTE
 P060EFIL DS    CL8                FILENAME
 P060ESET DS    X                  FF=SET IS SPECIFIED
+         DS    X
 P060ESTA DS    AL4                ADDRESS FOR SET
 P060EINT DS    AL4                ADDRESS OF INTO
 P060ELEN DS    XL4                LENGTH
 P060ELAD DS    AL4                ADDRESS OF LENGTH IF LABEL
 P060EFAD DS    AL4                ADDRESS OF FLENGTH IF LABEL
 P060EKIN DS    X                  FF=KEYLENGTH IS VALID
+         DS    X
 P060EKLN DS    XL2                KEYLENGTH
 P060ERID DS    XL128              RIDFLD
 P060EARD DS    AL4                A(RIDFLD)
 P060ELRD DS    X                  L'RIDFLD
+         DS    X
 P060ERBA DS    X                  FF=RBA
+         DS    X
 P060EXRB DS    X                  FF=XRBA
+         DS    X
 P060ERRN DS    X                  FF=RRN
+         DS    X
 P060EREQ DS    XL2                REQID
          DS    X                  FF=NOHANDLE
+         DS    X
 P060ERSP DS    AL4                RESP
 P060ERS2 DS    AL4                RESP2
 P060EEND EQU   *                  END MARKER

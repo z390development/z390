@@ -1,0 +1,38 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/07/08 initial coding for z390 target
+.* 04/11/08 generate ZC_PROC_START, ZC_PROC_END, ZC_WS_LIST
+.* 05/03/08 move ZC_WS_END to DATA END                          
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+         PROCEDURE &TYPE,&USING
+         COPY  ZC_WS
+         :&NP SETA N'&SYSLIST
+         AIF   ('&TYPE' EQ 'DIVISION')          
+               AIF   ('&ZC_PGM' EQ '')                                
+                     MNOTE 4,'PROGRAM-ID MISSING NAME MAIN ASSUMED'
+                     :&ZC_PGM SETC  'MAIN'
+               AEND
+               :&PARMS SETC ''
+               AIF ('&USING' EQ 'USING')
+                   :&PARMS SETC 'USING'
+                   :&I SETA 3
+                   AWHILE (&I LE &NP)
+                       :&PARMS SETC '&PARMS,&SYSLIST(&I)'
+                       :&I SETA &I+1
+                   AEND 
+               AEND
+               :&ZC_PGM GEN_PROC_START &PARMS
+         AELSEIF   ('&TYPE' EQ 'END')
+               GEN_PROC_END     GEN STOP RUN, LITERALS
+               ZC_STATS       GEN ZCOBOL COMPILE STATISTICS
+         AELSE
+               MNOTE 4,'PROCEDURE TYPE NOT RECOGNIZED - &TYPE'
+         AEND
+         MEND

@@ -1,0 +1,24 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/09/08                                                 *
+*********************************************************************
+* 04/21/08 initial coding of ZC390LIB dynamically loaded zcobol support
+*********************************************************************
+*
+*  ZC390LIB loaded on first call to GET_ZCLIB_RTN 
+*
+*    Vector table at 0 contains following routine addresses     
+*     00  - ACCEPTY - accept date/time or input from console
+*     04  - DISPLAY - display any number of fields or literals
+*********************************************************************
+ZC390LIB CSECT
+&ZC_VER  SETC  '&SYSVER'
+         COPY  ZC390CVT    
+         DC    0D,CL8'**STACK*'
+STACK_START DS 0D
+STACK_PTR   DS 20D
+STACK_END   EQU *
+         END

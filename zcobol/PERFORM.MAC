@@ -1,0 +1,260 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/15/08                                                 *
+.*********************************************************************
+.* 04/15/08 initial coding for global PERFORM  
+.* 11/28/08 add formats 1-4 see TESTPM1.CBL
+.*********************************************************************
+         PERFORM                          
+         COPY  ZC_WS
+         :&PM_LAB SETA &PM_LAB+1
+         :&NP    SETA  N'&SYSLIST
+         :&TEST_BEFORE SETB 1
+         :&I SETA 1
+         AIF   ('&SYSLIST(&I)' EQ 'WITH'                               X
+               AND '&SYSLIST(&I+1)' EQ 'TEST')
+               AIF  ('&SYSLIST(&I+2)' EQ 'BEFORE')
+                    :&TEST_BEFORE SETB 1
+               AELSEIF ('&SYSLIST(&I+2)' EQ 'AFTER')
+                    :&TEST_BEFORE SETB 0
+               AELSE
+                    MNOTE 8,'PERFORM WITH TEST MISSING BEFORE/AFTER'
+                    MEXIT
+               AEND
+               :&I SETA &I+3
+         AEND
+         AIF   ('&SYSLIST(&I)' EQ 'UNTIL')
+               ACALL FORMAT_3B  
+               MEXIT
+         AEND
+         AIF   ('&SYSLIST(&I)' EQ 'VARYING')
+               ACALL FORMAT_4B  
+               MEXIT
+         AEND
+         AIF   ('&SYSLIST(&I+1)' EQ 'TIMES')
+               ACALL FORMAT_2B
+         AELSE
+               AIF (&NP GT 0)
+                   ACALL FORMAT_1A_2A_3A_4A
+               AELSE
+                   ACALL FORMAT_1B
+               AEND
+         AEND
+         MEXIT
+.*
+.* FORMAT 1A PERFORM PG1 [THRU PG2] END-PERFORM/. 
+.* FORMAT 2A PERFORM PG1 [THRU PG2] n TIMES END-PERFORM/. 
+.* FORMAT 3A PERFORM PG1 [THRU PG2] [UNTIL cond] END-PERFORM/. 
+.* FORMAT 3A PERFORM PG1 [THRU PG2] [VARYING ..] END-PERFORM/. 
+.*
+         AENTRY FORMAT_1A_2A_3A_4A
+         :&I   SETA &I+1
+         AIF   ('&SYSLIST(&I)' EQ 'THRU'                               X
+                OR '&SYSLIST(&I)' EQ 'THROUGH')      
+               :&PG_EXIT SETC  'END_&SYSLIST(&I+1)'
+               :&I SETA  &I+2
+         AELSE
+               :&PG_EXIT SETC  'END_&SYSLIST(1)'
+         AEND
+         :&IF_PARM SETC  ''
+         AIF   (&I LT &NP)
+               AIF   ('&SYSLIST(&I)' EQ 'WITH'                         X
+               AND '&SYSLIST(&I+1)' EQ 'TEST')
+                    AIF  ('&SYSLIST(&I+2)' EQ 'BEFORE')
+                         :&TEST_BEFORE SETB 1
+                    AELSEIF ('&SYSLIST(&I+2)' EQ 'AFTER')
+                         :&TEST_BEFORE SETB 0
+                    AELSE
+                         MNOTE 8,'PERFORM WITH MISSING BEFORE/AFTER'
+                         MEXIT
+                    AEND
+                    :&I SETA &I+3
+               AEND
+               AIF   ('&SYSLIST(&I)' EQ 'UNTIL')
+                     ACALL FORMAT_3A
+               AELSEIF ('&SYSLIST(&I)' EQ 'VARYING')
+                     ACALL FORMAT_4A
+               AELSEIF ('&SYSLIST(&I+1)' EQ 'TIMES')
+                     ACALL FORMAT_2A
+               AELSE
+                     MNOTE 8,'PERFORM UNKNOWN -  &SYSLIST(&I)'
+                     MEXIT
+               AEND
+         AELSE
+               ACALL FORMAT_1A
+         AEND
+         AEND
+.*
+.* FORMAT 1A PERFORM PG1 [THRU PG2] END-PERFORM/. 
+.*
+         AENTRY FORMAT_1A
+         GEN_PERFORM &SYSLIST(1),&PG_EXIT  
+         AEND
+.*
+.* FORMAT 1B PERFORM statement END-PERFORM. 
+.*
+         AENTRY FORMAT_1B   ADD PM LEVEL TO MATCH END_PERFORM OR .
+         AEND
+.*
+.* FORMAT 2A PERFORM pg1 [THRU pg2] n TIMES END-PM
+.*
+         AENTRY FORMAT_2A
+         GEN_VAR ZC_PM_NTIME_&VAR_TOT,F
+         :&VAR_IX SETA &SYM_IX
+         MOVE &SYSLIST(&I),TO,&SYM_NAME(&VAR_IX)
+         GEN_B     PM_&PM_LAB._P
+         GEN_LABEL PM_&PM_LAB._T,PERFORM_TEST
+         IF &SYM_NAME(&VAR_IX),=,0
+               GEN_B PM_&PM_LAB._E
+         END_IF
+         GEN_LABEL   PM_&PM_LAB._P,PERFORM
+         GEN_PERFORM &SYSLIST(1),&PG_EXIT  
+         SUBTRACT 1,FROM,&SYM_NAME(&VAR_IX)
+         GEN_B PM_&PM_LAB._T
+         GEN_LABEL PM_&PM_LAB._E,PERFORM_END
+         AEND
+.*
+.* FORMAT 2B PERFORM N TIMES statement END-PERFORM
+.*
+         AENTRY FORMAT_2B
+         GEN_VAR ZC_PM_VARY_&VAR_TOT,F
+         :&VAR_IX SETA &SYM_IX
+         MOVE &SYSLIST(&I),TO,&SYM_NAME(&VAR_IX)
+         GEN_B     PM_&PM_LAB._T
+         GEN_LABEL PM_&PM_LAB._D,PERFORM_DEC_TIMES
+         SUBTRACT 1,FROM,&SYM_NAME(&VAR_IX)
+         GEN_LABEL PM_&PM_LAB._T,PERFORM_TEST
+         IF &SYM_NAME(&VAR_IX),=,0
+               GEN_B PM_&PM_LAB._E
+         END_IF
+         GEN_PM_LVL PM_&PM_LAB._D
+         AEND
+.*
+.* FORMAT 3A PERFORM pg1 [THRU pg2 [WITH TEST BEFORE/AFTER] UNTIL cond
+.*
+         AENTRY FORMAT_3A
+         ACALL  SET_IF_PARMS
+         GEN_LABEL PM_&PM_LAB._T,PERFORM_TEST
+         IF    &IF_PARM
+               GEN_B PM_&PM_LAB._E
+         END_IF
+         GEN_PERFORM &SYSLIST(1),&PG_EXIT  
+         AIF   ('&IF_PARM' NE '')      
+               GEN_B PM_&PM_LAB._T
+               GEN_LABEL PM_&PM_LAB._E,PERFORM_END
+         AEND
+         AEND
+.*
+.* FORMAT 3B PERFORM [WITH TEST BEFORE/AFTER] UNTIL cond stmt END-PM
+.*
+         AENTRY FORMAT_3B
+         ACALL  SET_IF_PARMS
+         GEN_LABEL PM_&PM_LAB._T,PERFORM_TEST
+         IF    &IF_PARM
+               GEN_B PM_&PM_LAB._E
+         END_IF
+         GEN_PM_LVL PM_&PM_LAB._T  
+         AEND
+.*
+.* FORMAT 4A PERFORM pg1 [THRU pg2 [WITH TEST BEFORE/AFTER] 
+.*   VARYING v1 FROM i1 BY i2 UNTIL cond
+.*
+         AENTRY FORMAT_4A
+         ACALL  SET_FROM_BY_UNTIL
+         ACALL  SET_IF_PARMS
+         MOVE  &FROM,TO,&VAR
+         AIF   (&TEST_BEFORE)
+               GEN_LABEL PM_&PM_LAB._T,PERFORM_TEST
+               IF  &IF_PARM
+                   GEN_B PM_&PM_LAB._E
+               END_IF
+               GEN_PERFORM &SYSLIST(1),&PG_EXIT  
+               ADD &BY,TO,&VAR
+               GEN_B PM_&PM_LAB._T
+         AELSE
+               GEN_LABEL PM_&PM_LAB._P,PERFORM_TEST
+               GEN_PERFORM &SYSLIST(1),&PG_EXIT  
+               IF  &IF_PARM
+                   GEN_B PM_&PM_LAB._E
+               END_IF
+               ADD &BY,TO,&VAR
+               GEN_B PM_&PM_LAB._P
+         AEND
+         GEN_LABEL PM_&PM_LAB._E,PERFORM_END
+         AEND
+.*
+.* FORMAT 4B PERFORM [WITH TEST BEFORE/AFTER] 
+.*  VARYING v1 FROM i1 BY i2 UNTIL cond stmt END-PM
+.*
+         AENTRY FORMAT_4B
+         ACALL  SET_FROM_BY_UNTIL
+         ACALL  SET_IF_PARMS
+         MOVE  &FROM,TO,&VAR
+         AIF   (&TEST_BEFORE)
+               GEN_B PM_&PM_LAB._T
+               GEN_LABEL PM_&PM_LAB._A,PERFORM_AUGMENT
+               ADD &BY,TO,&VAR
+               GEN_LABEL PM_&PM_LAB._T,PERFORM_TEST
+               IF  &IF_PARM
+                   GEN_B PM_&PM_LAB._E
+               END_IF
+               GEN_PM_LVL PM_&PM_LAB._A  
+         AELSE
+               GEN_B PM_&PM_LAB._P
+               GEN_LABEL PM_&PM_LAB._A,PERFORM_AUGMENT
+               ADD &BY,TO,&VAR
+               IF  &IF_PARM
+                   GEN_B PM_&PM_LAB._E
+               END_IF
+               GEN_LABEL PM_&PM_LAB._P,PERFORM_STATEMENT
+               GEN_PM_LVL PM_&PM_LAB._A  
+         AEND
+         AEND
+.*
+.* SET VARYING FROM BY UNTIL
+.*
+         AENTRY SET_FROM_BY_UNTIL
+         :&VAR  SETC '&SYSLIST(&I+1)'          SKIP VARYING
+         AIF  ('&SYSLIST(&I+2)' NE 'FROM')
+              MNOTE 8,'PERFORM VARYING MISSING FROM'
+              MEXIT
+         AEND
+         :&I    SETA &I+3
+         :&FROM SETC '&SYSLIST(&I)'
+         AIF   ('&FROM' EQ '+' OR '&FROM' EQ '-')
+               :&FROM SETC '&BY&SYSLIST(&I+1)
+               :&I SETA &I+1
+         AEND
+         :&I SETA &I+1
+         AIF   ('&SYSLIST(&I)' NE 'BY')
+               MNOTE 8,'PERFORM VARYING MISSING BY'
+               MEXIT
+         AEND
+         :&I   SETA &I+1
+         :&BY  SETC '&SYSLIST(&I)'
+         AIF   ('&BY' EQ '+' OR '&BY' EQ '-')
+               :&BY SETC '&BY&SYSLIST(&I+1)'
+               :&I SETA &I+1
+         AEND
+         :&I SETA &I+1
+         AIF   ('&SYSLIST(&I)' NE 'UNTIL')
+               MNOTE 8,'PERFORM VARYING MISSING UNTIL'
+               MEXIT
+         AEND
+         AEND
+.*
+.* SET_IF_PARMS
+.*
+         AENTRY SET_IF_PARMS
+         :&IF_PARM SETC  '&SYSLIST(&I+1)'
+         :&I       SETA  &I+2
+         AWHILE (&I LE &NP)
+              :&IF_PARM SETC  '&IF_PARM'.','.'&SYSLIST(&I)'
+              :&I SETA &I+1
+         AEND
+         AEND
+         MEND

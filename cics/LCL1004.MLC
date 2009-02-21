@@ -107,7 +107,48 @@ GOINT    EQU   *
          LTR   R1,R1              ZERO PERIOD ?
          BZ    EXPIRED            EXIT IF IT IS
 NOTEXP   EQU   *
+* IF WE HAVE A CWA SEND IT BACK AND DEQ
+         OC    TCTTECWA,TCTTECWA  ANY CWA ?
+         BZ    DOSTIMR            EXIT IF NONE
+         LA    R5,CWPREFIX        R5=PREFIX LENGTH
+         A     R5,TCTTECWL        + CWA LENGTH
+         GETMAIN R,LV=(R5)
+         LR    R9,R1              SAVE GETMAIN ADDRESS
+         USING DFHCWBLK,R9
+         ST    R5,CWATCPIO        SET LENGTH TO SEND
+         MVC   CWAFN,=C'FE07'     SET FN
+         MVC   CWATERM,TCTTETI    SET TERMINAL ID
+         MVC   CWATRAN,EIBTRNID   SET TRANSID
+         MVC   CWATASKN,EIBTASKN  SET TASK NUMBER
+         MVI   CWARDWRT,X'FF'     SET CWA PUT
+         LA    R0,CWPREFIX(R1)    SET TARGET ADDRESS
+         L     R1,TCTTECWL        SET TARGET LENGTH
+         L     R14,TCTTECWA       R14=CWA ADDRESS
+         LR    R15,R1             R15=CWA LENGTH
+         MVCL  R0,R14             MOVE CWA
+         L     R8,0(R9)           R8=MESSAGE LENGTH
+         TCPIO SEND,MSG=(R9),LMSG=(R8),PORT=3900
+         EXEC  CICS DEQ RESOURCE(CWALOCK) LENGTH(7)
+         MVI   CWAIND,X'FF'       SET RE-ACQUIRE CWA FLAG
+DOSTIMR  EQU   *
          STIMER WAIT,BINTVL=INTBIN WAIT A WHILE
+         CLI   CWAIND,X'00'       NEED TO RE-ACQUIRE CWA ?
+         MVI   CWAIND,X'00'       CLEAR RE-ACQUIRE CWA FLAG
+         BE    RETURN             EXIT IF NOT
+* RE-ACQUIRE THE CWA
+         EXEC  CICS ENQ RESOURCE(CWALOCK) LENGTH(7) INT1004
+         MVC   CWAFN,=C'FE07'     SET FUNCTION CODE
+         MVC   CWATERM,TCTTETI    SET TERMINAL ID
+         MVC   CWATRAN,EIBTRNID   SET TRANSID
+         MVC   CWATASKN,EIBTASKN  SET TASK NUMBER
+         MVI   CWARDWRT,X'00'     SET CWA GET
+         DROP  R9
+         TCPIO SEND,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+* ONLY THE PREFIX IS RECEIVED, WE GET THE CWA LATER
+         TCPIO RECEIVE,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+         L     R8,TCTTECWA        R8=CWA ADDRESS
+         TCPIO RECEIVE,MSG=(R8),LMSG=TCTTECWL,PORT=3900 GET THE CWA
+         FREEMAIN A=(R9),LV=(R5)
          B     RETURN             EXIT
 *
 UNTFOR   EQU   *
@@ -208,25 +249,33 @@ INTDEC   DC    PL8'0'             INTERVAL IN 0.01 SECS
 INTCPY   DS    PL4                INTERVAL COPY AREA    0HHMMSS+
 INTBIN   DS    FL4                INTERVAL IN 0.01 SECS BINARY
 LAPSE    DS    FL4                TIME LAPSE IN 0.01 SECS BINARY
+CWALOCK  DC    C'--CWA--'
+CWAIND   DC    X'00'              FF=NEED TO RE-ACQUIRE CWA
 *
 P1004    DSECT
 P1004FN  DS    XL2                FUNCTION CODE
 P1004EIB DS    AL4                EIB
 P1004TCT DS    AL4                TCTTE
 P1004INT DS    X                  FF=INTERVAL/TIME
+         DS    X
 P1004TME DS    X                  00=INTERVAL/FOR  FF=TIME/UNTIL
+         DS    X
 P1004HMS DS    PL4                0HHMMSS+
 P1004IND DS    X                  FF=MORE THAN 1 PARM IN NEXT 3
+         DS    X
 P1004HRS DS    PL8                HOURS
 P1004MIN DS    PL8                MINUTES
 P1004SEC DS    PL8                SECONDS
          DS    X                  FF=NOHANDLE
+         DS    X
+P1004HCN DS    AL4                A(DFHEIHCN)
 P1004RSP DS    AL4                RESP
 P1004RS2 DS    AL4                RESP2
 P1004END EQU   *                  END MARKER
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE
+         DFHCWBLK                 CWA PREFIX AREA
 *
          EQUREGS REGS=GPR
 *

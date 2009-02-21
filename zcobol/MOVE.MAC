@@ -1,0 +1,95 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/10/08 initial coding for global MOVE     
+.* 05/02/08 add support for literal values by PIC_TYPE
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+.* MOVE id1 TO id2 id3 idn
+.*********************************************************************
+         MOVE  
+         COPY  ZC_WS
+         :&SOURCE SETC '&SYSLIST(1)'
+         :&ADDR_OF SETB 0
+         :&PARM_IX SETA 2
+         :&SOURCE_IX SETA 0
+         AIF   ('&SOURCE' EQ 'LENGTH')
+               AIF ('&SYSLIST(2)' EQ 'OF')
+                   :&SOURCE SETC '&SYSLIST(3)'
+                   :&PARM_IX SETA 4
+               AELSE
+                   :&SOURCE SETC '&SYSLIST(2)'
+                   :&PARM_IX SETA 3
+               AEND
+               ZC_SYM_FIND &SOURCE
+               AIF  (&SYM_IX GT 0)
+                    :&SOURCE SETC '&SYM_LEN(&SYM_IX)'
+               AELSE
+                    MNOTE 8,'MOVE LENGTH OF &SOURCE NOT FOUND'
+                    MEXIT
+               AEND
+         AELSEIF ('&SOURCE' EQ 'ADDRESS')
+               AIF ('&SYSLIST(2)' EQ 'OF')
+                   :&SOURCE SETC '&SYSLIST(3)'
+                   :&PARM_IX SETA 3
+               AELSE
+                   :&SOURCE SETC '&SYSLIST(2)'
+                   :&PARM_IX SETA 2
+               AEND
+               :&FIELD_REG SETC 'R2'
+               :&FIELD_SS1 SETB 0
+               ACALL GET_PARM_FIELD
+               AIF (&FIELD_IX EQ 0)
+                   MNOTE 8,'MOVE SOURCE FIELD NOT FOUND &FIELD_NAME'
+                   MEXIT
+               AEND
+               :&SOURCE_IX SETA &FIELD_IX
+               :&SOURCE    SETC '&FIELD_NAME'
+               :&ADDR_OF SETB 1
+         AELSEIF   ('&SOURCE' EQ '+' OR '&SOURCE' EQ '-')
+               :&SOURCE SETC '&SOURCE&SYSLIST(2)'
+               :&PARM_IX SETA 3
+         AELSEIF   ('&SOURCE'(1,2) EQ 'X''') OR '&SOURCE'(1,2) EQ 'X"')
+               :&SOURCE SETC 'X'''.'&SOURCE'(3,K'&SOURCE-3).''''
+         AELSEIF   ('&SOURCE'(1,1) NE ''''                             X
+                  AND ('&SOURCE'(1,1) GT '9' OR '&SOURCE'(1,1) LT '0'))
+               :&PARM_IX SETA 1
+               :&FIELD_REG SETC 'R2'
+               :&FIELD_SS1 SETB 0
+               ACALL GET_PARM_FIELD
+               :&SOURCE_IX SETA &FIELD_IX
+               AIF (&FIELD_IX GT 0)
+                   :&SOURCE SETC '&FIELD_NAME'
+               AEND
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'TO')
+               MNOTE 8,'MOVE MISSING TO'
+               MEXIT
+         AEND
+         :&PARM_IX SETA &PARM_IX+1
+       AWHILE ('&SYSLIST(&PARM_IX)' NE '')
+         :&FIELD_REG SETC 'R2'
+         :&FIELD_SS1 SETB 1
+         ACALL GET_PARM_FIELD
+         AIF (&FIELD_IX EQ 0)
+             MNOTE 8,'MOVE TARGET FIELD NOT FOUND - &FIELD_NAME'
+             MEXIT
+         AEND
+         :&TARGET_IX SETA &FIELD_IX
+         :&TARGET SETC '&FIELD_NAME'
+         AIF (&SOURCE_IX GT 0)
+               AIF (&ADDR_OF AND '&SYM_PIC_TYPE(&TARGET_IX)' NE 'A')
+                   MNOTE 8,'MOVE TARGET OF ADDRESS OF MUST BE POINTER'
+                   MEXIT
+               AEND
+         AEND
+         GEN_MOVE &TARGET,&TARGET_IX,&SOURCE,&SOURCE_IX
+       AEND
+         MEXIT
+         COPY ZCGETFLD
+         MEND

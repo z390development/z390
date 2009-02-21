@@ -1,0 +1,37 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/14/08                                                 *
+.*********************************************************************
+.* 04/14/08 initial coding for global ZCOBOL
+.* 10/06/08 ZSTRMAC
+.*********************************************************************
+         READ  &FILE
+         COPY  ZC_WS
+         ZC_FILE_FIND &FILE
+         AIF   (&FILE_IX EQ 0)      
+               MNOTE 8,'READ FILE NOT FOUND - &FILE'
+               MEXIT
+         AEND
+         :&NP      SETA  N'&SYSLIST
+         :&I       SETA  2
+         :&MOVE    SETC  ''
+         :&AT      SETC  ''
+         AIF   (&I LE &NP)
+               AIF   ('&SYSLIST(&I)' EQ 'INTO')
+                     :&MOVE    SETC  '&SYSLIST(&I+1)'
+                     :&I       SETA  &I+2
+               AEND
+               AIF   ('&SYSLIST(&I)' EQ 'AT'                           X
+                      AND '&SYSLIST(&I+1)' EQ 'END')
+                     :&AT SETC  'AT' INDICATE AT END FOLLOWS READ
+               AELSE
+                     MNOTE 8,'READ UNKNOWN OPERAND - &SYSLIST(&I)'
+                     MEXIT
+               AEND
+         AEND
+         GEN_READ &MOVE,&AT
+         MEND

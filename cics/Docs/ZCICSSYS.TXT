@@ -1,18 +1,18 @@
-Z390/CICS System Programmer's Guide
-===================================
+zCICS System Programmer's Guide
+===============================
 
-This document describes the Z390/CICS environment, how it operates and
-the modifications that can be made to it.
+This document describes the zCICS environment, how it operates and the
+modifications that can be made to it.
 
 Experienced CICS people may notice a lack of authenticity in the
 background coding and formats, and some use of archaic methods.
-This is all intentional, and as Z390 matures, so will Z390/CICS.
+This is all intentional, and as Z390 matures, so will zCICS.
 
 Objectives
 ----------
 1) To take an existing Assembler CICS application, re-assemble it in
    the Z390 environment and run it unmodified and successfully under
-   Z390/CICS.
+   zCICS.
 
 2) To be able to develop an Assembler CICS application in the Z390
    environment and transfer the source to the mainframe for re-assembly
@@ -25,8 +25,8 @@ Version compatability
 Versions of Java and Z390 are tested by Don and there are mechanisms
 for checking compatability.
 
-In Z390/CICS History each Z390/CICS release has a Z390 version.
-This is the release/PTF that was used to test Z390/CICS.
+In zCICS History each zCICS release has a Z390 version.
+This is the release/PTF that was used to test zCICS.
 Previous releases of Z390 may not work.
 
 Future releases of Z390 will work unless there is a PTF that requires
@@ -35,12 +35,12 @@ to add an instruction to the README and provide fixes as needed.
 
 Current environment
 -------------------
-It is fair to say that the facilities available to Z390/CICS
-Application programmers are somewhat limited at present. These are
-early days, and functions will be added gradually.
+It is fair to say that the facilities available to zCICS Application
+programmers are somewhat limited at present. These are early days, and
+functions will be added gradually.
 
 The currently supported Application environment is described in the
-Z390/CICS Application Programming Guide.
+zCICS Application Programming Guide.
 
 Requests for commands and extra parameters are very welcome and will
 help to set a priority list.
@@ -56,7 +56,7 @@ checking yet for rule breaking.
 
 How it works
 ------------
-I have split the Z390/CICS environment into two sections.
+I have split the zCICS environment into two sections.
 
 The primary task is Z390CICS, which I have called the Global Manager.
 This will handle all shared resources like TS, FC, etc.
@@ -93,8 +93,7 @@ re-assemble the PCT.
 
 DFHFCT.MLC has a basic set of test files. Users should add their own
 files to DFHFCTUS.CPY and re-assemble the FCT.
-File creation and setup is more fully described in the Z390/CICS VSAM
-Guide.
+File creation and setup is more fully described in the zCICS VSAM Guide.
 
 Local and Remote terminals
 --------------------------
@@ -119,7 +118,7 @@ Starting it up
 From the Z390 GUI (recommended), or in your own Command Prompt...
 
 1) Z390CICG
-   This will start the Z390/CICS Global Manager and all Local terminals.
+   This will start the zCICS Global Manager and all Local terminals.
 
 2) A Remote terminal may be set up as follows...
 
@@ -131,8 +130,8 @@ From the Z390 GUI (recommended), or in your own Command Prompt...
 
       The remote terminal will be started in the Command Prompt.
 
-      If TEST is specified, then Z390/CICS progress cannot be made
-      unless you give commands to the Z390 GUI as well.
+      If TEST is specified, then zCICS progress cannot be made unless
+      you give commands to the Z390 GUI as well.
 
    b) Method 2 : The Launcher
       Create a Command Prompt window and use CD to navigate to, and
@@ -150,11 +149,13 @@ From the Z390 GUI (recommended), or in your own Command Prompt...
       The number of terminals actually started is subject to both the
       REMOTE_TERMINALS= and the MAXTHREADS= parameters.
 
-Ok, I've got a blank Z390/CICS screen or a logo...now what ?
-------------------------------------------------------------
+Ok, I've got a blank zCICS screen or a logo...now what ?
+--------------------------------------------------------
 When the terminal is opened, the termid is in the title.
 
-From the 'initial screen' you can perform the following tests...
+From the 'initial screen' you can perform the following tests.
+Where two transids are shown, eg. BED1/BEC1, the second is the
+identical process but written in zCOBOL.
 
    CTRL+C      Clear the screen.
                Within a transaction that has issued a RECEIVE,
@@ -165,31 +166,33 @@ From the 'initial screen' you can perform the following tests...
    GUI4        conversational test 1
    GUI6        conversational test 2
    TST1        conversational test 3 and LINK test
+               Added test for CWA.
 
-   BED1        Test bed for LINK, XCTL and RETURN with COMMAREA.
+   BED1/BEC1   Test bed for LINK, XCTL and RETURN with COMMAREA.
+               Added test for CWA.
                Keep pressing ENTER until the 'clear screen' message
                is displayed.
 
-   BED2        HANDLE AID testing
+   BED2/BEC2   HANDLE AID testing
                Follow the on-screen instructions.
                DUMP TRANSACTION testing.
 
-   BED3        HANDLE CONDITION/IGNORE CONDITION/PUSH/POP testing
+   BED3/BEC3   HANDLE CONDITION/IGNORE CONDITION/PUSH/POP testing
                GETMAIN/FREEMAIN testing
                Abend handling
                Follow the on-screen instructions.
 
-   BED4        HANDLE ABEND testing. Simple handling.
+   BED4/BEC4   HANDLE ABEND testing. Simple handling.
                Follow the on-screen instructions.
 
-   BED5        HANDLE ABEND testing. Complex handling.
+   BED5/BEC5   HANDLE ABEND testing. Complex handling.
                Follow the on-screen instructions.
 
-   BED9        Temporary Storage testing.
+   BED9/BEC9   Temporary Storage testing.
                Also builds an environment for testing CEBR.
                Can be run multiple times to extend the CEBR test queues.
 
-   IC01        Test Interval Control ASKTIME (ABSTIME) and DELAY.
+   IC01/ICC1   Test Interval Control ASKTIME (ABSTIME) and DELAY.
                This task may take up to 2 mins to complete.
 
    IC02        Test Interval Control START, RETRIEVE and CANCEL.
@@ -202,19 +205,19 @@ From the 'initial screen' you can perform the following tests...
                Press ENTER to complete the test, when you see
                TESTIC02 COMPLETED, PRESS CLEAR the test is completed.
 
-   VSM1        Read and browse of ESDS files.
+   VSM1/VSC1   Read and browse of ESDS files.
                Records successfully read are written to the TS queue
                VSM1.
 
-   VSM2        Read and browse of RRDS files.
+   VSM2/VSC2   Read and browse of RRDS files.
                Records successfully read are written to the TS queue
                VSM2.
 
-   VSM3        Read and browse of KSDS files.
+   VSM3/VSC3   Read and browse of KSDS files.
                Records successfully read are written to the TS queue
                VSM3.
 
-   BMS1        Test simple functions of mapping support.
+   BMS1/BMC1   Test simple functions of mapping support.
    BMS2        Test complex functions of mapping support.
                This is still experimental
 
@@ -229,26 +232,25 @@ From the 'initial screen' you can perform the following tests...
 
 Shutdown
 --------
-CEMT P SHU IMM may still leave a Z390/CICS window behind.
+CEMT P SHU IMM may still leave a zCICS window behind.
 I am working to resolve this, just click close (big X) on each
 stranded window.
 
    CEMT S TER OUT
       This closes the terminal.
       Local terminals may not be re-instated.
-      Even if all terminals are closed with this method, Z390/CICS
-      will not shut down. A remote terminal may still be started.
+      Even if all terminals are closed with this method, zCICS will not
+      shut down. A remote terminal may still be started.
 
     CEMT P SHU
        The terminal issuing this command will be closed.
        No new terminals or tasks may be started.
-       If there are no active tasks, then the server is closed and
-       Z390/CICS ends.
-       When all active tasks terminate, Z390/CICS will end.
+       If there are no active tasks, then the server is closed and zCICS
+       ends. When all active tasks terminate, zCICS will end.
 
     CEMT P SHU IMM
        The terminal issuing this command will be closed.
-       The server is then closed and Z390/CICS ends.
+       The server is then closed and zCICS ends.
        Terminals with active tasks may remain stranded.
 
 Abends
@@ -291,10 +293,14 @@ c) Search for java.exe
    Don't confuse this with javaw.exe
 d) Right click on java.exe
 e) Select End Process and Yes.
-   All the Z390/CICS environment and terminals should go away.
+   All the zCICS environment and terminals should go away.
 
 Change Summary
 --------------
+February 21, 2009
+   Comment about extra CWA tests for TST1 and BED1.
+   Added 'copy' transids for zCOBOL.
+
 November 24, 2008
    Added IC01, IC02, BMS2, ENQ1  to list of test transactions
 
@@ -306,8 +312,8 @@ Trademarks
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
-Author: Melvyn Maltz
-Shipping Date: November 24, 2008
-Z390 version: V1.4.04
-Z390/CICS version: V6
+Author       : Melvyn Maltz
+Shipping Date: February 21, 2009
+Z390 version : V1.5.00
+zCICS version: V7
 

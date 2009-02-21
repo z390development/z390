@@ -1,0 +1,77 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/08/08 initial coding for z390 target
+.* 10/07/08 ZSTRMAC
+.*********************************************************************
+         GEN_PROC_START &USING
+         COPY ZC_WS
+         ACALL GEN_LK_PTRS
+         :&NP SETA N'&SYSLIST
+         :&ZC_PROC_DIV SETB 1 INDICATE PROC DIV FOR USE BY TRACE
+         PRINT LIST,GEN,LISTUSE TURN PRINT LISTING ON FOR USER CODE GEN
+&ZC_PGM  CSECT                SWITCH TO PROCEDURE CODE AHEAD OF WS 
+         PERIOD ,             RESET DYNAMIC REG VARS
+         :&OFF SETA 0         OFFSET IN PARM LIST
+         AIF   (&ZC_CICS)
+               :&USING_PARM SETC 'DFHEIBLK'
+               ACALL ADD_USING_PARM
+               :&USING_PARM SETC 'DFHCOMMAREA'
+               ACALL ADD_USING_PARM
+         AEND
+         AIF   ('&USING' EQ 'USING')
+               :&I   SETA 2
+               AWHILE (&I LE &NP)
+                    :&USING_PARM SETC '&SYSLIST(&I)'
+                    AIF ('&USING_PARM' NE 'DFHEIBLK'                   X
+                        AND '&USING_PARM' NE 'DFHCOMMAREA')
+                        ACALL ADD_USING_PARM
+                    AEND
+                    :&I SETA &I+1
+               AEND
+         AEND
+         AIF   (&ZC_CICS)
+               GEN_INIT_WS
+         AEND
+.*
+.* GEN LK PTRS - GEN WS PTR FOR EACH 01 LVL IN LK 
+.*
+         AENTRY GEN_LK_PTRS
+         :&I SETA 1
+         AWHILE (&I LE &SYM_TOT)
+             AIF (&SYM_LK(&I) GT 0)
+                 AIF (&SYM_LVL(&I) EQ 1)
+                   GEN_VAR ZC_&SYM_NAME(&I)._PTR,A GEN NEW PTR
+                   :&SYM_REF(&I) SETA &SYM_IX  SET DSECT REF
+                 AEND
+             AEND
+             :&I SETA &I+1
+         AEND
+         AEND
+.*
+.* ADD USING PARM
+.*
+         AENTRY ADD_USING_PARM
+         ZC_SYM_FIND &USING_PARM
+         AIF   (&SYM_IX GT 0)              IS THERE SYM DEF
+               :&DSECT_IX SETA &SYM_IX
+               AIF (&SYM_LVL(&DSECT_IX) NE 1)
+                 MNOTE 8,'GEN_PROC PARM NOT 01 LEVEL - &USING_PARM'
+                 MEXIT
+               AEND
+               :&VAR_IX SETA &SYM_REF(&DSECT_IX) SYM_IX OF VAR PTR
+         L     R0,&OFF.(R2)          LOAD PARM ADDR FROM PARMLIST IN R2
+               GEN_BASE &VAR_IX      GEN R4/R5 WS BASE REG FOR PTR  
+         ST    R0,&SYM_NAME(&VAR_IX) STORE PARM POINTER            
+               :&OFF SETA &OFF+4
+         AELSE
+               MNOTE 8,'GEN_PROC PARM NOT FOUND - &USING_PARM'
+               MEXIT
+         AEND
+         AEND
+         MEND

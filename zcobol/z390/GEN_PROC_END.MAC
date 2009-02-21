@@ -1,0 +1,62 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/08/08 initial coding for z390 target
+.* 10/07/08 ZSTRMAC
+.*********************************************************************
+         GEN_PROC_END
+         COPY  ZC_WS
+         GEN_LABEL END_PROCEDURE,SECTION FLUSH ANY PG'S AND SECTIONS
+*        PROCEDURE END
+.*
+.* GEN GOBACK FOR FALL THRU END OF PROC CODE
+.*
+         LH    R1,RETURN_CODE
+         L     R15,ZCVT_GOBACK
+         BASR  R14,R15
+         :&ZC_PROC_DIV SETB 0 TURN OFF PROC DIV TO STOP TRACE CODE
+.*
+.* DEFINE LIT POOL AT END OF PROC CODE
+.* NOTE: ALL PROC DIV. LITS HERE MUST BE EVEN LENGTH FOR LARL
+.*
+         LTORG
+.********************************************************************
+.* GEN THE REST OF WORKING-STORAGE (SEE GEN_ID.MAC AND DATA.MAC)
+.********************************************************************
+.*
+.* LIST DATA DIVISION ITEMS AND ATTRIBUTES AS COMMENTS
+.*
+.*
+.* GENERATE WORKING STORAGE
+.*
+         :&LK_MODE SETB 0
+         ZC_DATA_LIST 
+         GEN_WS 
+.*
+.* GENERATE LINKAGE SECTION
+.*
+         :&LK_MODE SETB 1
+         ZC_DATA_LIST 
+         GEN_WS 
+         :&LK_MODE SETB 0
+
+.*
+.* GEN WORK AREAS AT END OF DATA DIVISION STARTED BY GEN_WS                                 
+.*
+       AIF (&ZC_CICS)
+DFHEISTG DSECT
+       AELSE
+ZC_WSLOC LOCTR
+       AEND
+ZC_WS_DIFF EQU  *-ZC_WS-&WS_LOC  DIFF BETWEEN ALLOC AND CALC WS
+         :&ZC_WS_DIFF SETA ZC_WS_DIFF
+         AIF   (&ZC_WS_DIFF NE 0)
+               MNOTE 8,'GEN_PROC_END WS LENGTH ERROR = &ZC_WS_DIFF'
+         AEND
+ZC_WS_END DS   0D
+         MEND

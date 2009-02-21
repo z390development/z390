@@ -1,0 +1,55 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/14/08                                                 *
+.*********************************************************************
+.* 04/15/08 initial coding for Z390 OPEN     
+.* 10/07/08 ZSTRMAC
+.*********************************************************************
+         GEN_OPEN  &TYPE               
+         COPY  ZC_WS
+.*
+.* SET LRECL/BLKSI RECORD LENGTH AND/OR BLOCK SIZE 
+.*
+         LA    R0,L'&FILE_RECORD(&FILE_IX)
+         STH   R0,&FILE_NAME(&FILE_IX)+DCBBLKSI-IHADCB
+.*
+.* OVERRIDE DDNAME WITH DSNAME IF FILE_DDNAME IS LITERAL FILE SPEC
+.*
+         AIF   ('&FILE_DDNAME(&FILE_IX)'(1,1) EQ '''')        
+               :&DSN     SETC  '"'.'&FILE_DDNAME(&FILE_IX)'(2,K'&FILE_DX
+               DNAME(&FILE_IX)-2).'"' LONG SPACEY FILE NAME IN DQ IN SQ
+               AIF   (K'&DSN/2*2 NE K'&DSN)
+         LARL  R0,=C'&DSN ' ADD SPACE TO FORCE EVEN LIT
+               AELSE
+         LARL  R0,=C'&DSN' 
+               AEND
+         ST    R0,&FILE_NAME(&FILE_IX)+DCBDSNAM-IHADCB
+         AEND
+.*
+.* SET MACRF ACCESS TYPE 
+.*
+       AIF   ('&TYPE' NE 'OUTPUT')     
+         LARL   R1,=AL2(DCBMACRF_GM)
+         MVC    DCBMACRF-IHADCB+&FILE_NAME(&FILE_IX),0(R1)
+       AELSE            
+         LARL   R1,=AL2(DCBMACRF_PM)
+         MVC    DCBMACRF-IHADCB+&FILE_NAME(&FILE_IX),0(R1)
+       AEND
+.*
+.* OPEN DCB USING Z390 ZOPEN WHICH Z390\MAC\OPEN ASLO USES
+.*
+         GBLB   &ZC_ABORT
+         :&ZC_ABORT SETB 1 REQUEST ABORT ROUTINES
+         ZOPEN  (&FILE_NAME(&FILE_IX),(&TYPE))
+         LTR    R15,R15
+         BRZ    ZC_OPEN_OK_&SYSNDX
+         LHI    R1,3   ABORT DUE TO OPEN FAILED
+         L      R15,ZCVT_ABORT
+         BASR   R14,R15
+ZC_OPEN_OK_&SYSNDX DS 0H
+         MEXIT
+         MEND

@@ -1,0 +1,141 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 10/30/08 initial coding for global MULTIPLY using ADD as model
+.*********************************************************************
+         MULTIPLY
+         COPY  ZC_WS
+         :&ROUNDED SETB 0
+         :&ONSIZE  SETB 0
+         :&PARM_IX   SETA 1
+         :&FIELD_REG SETC 'R1'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         :&S1    SETC '&FIELD_NAME'                
+         :&S1_IX SETA &FIELD_IX                    
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'BY')
+               MNOTE 8,'MULTIPLY MISSING BY'
+               MEXIT
+         AEND
+         :&PARM_IX SETA &PARM_IX+1
+         :&S2_OK SETB 1
+         ACALL SET_OPTIONS
+         ACALL GET_S2
+         AIF   (&S2_OK)
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'GIVING')
+                   :&PARM_IX SETA &PARM_IX+1
+                   ACALL MPY_GIVING
+               AELSE
+                   ACALL MPY_BY
+               AEND
+         AEND
+         AIF   (&ONSIZE)
+               GEN_ONSIZE_START MPY
+         AEND
+         MEXIT
+.*
+.* MPY GIVING
+.*
+         AENTRY MPY_GIVING
+         :&S3_OK SETB 1
+         ACALL GET_S3
+         AWHILE (&S3_OK)
+             GEN_MOVE &S3,&S3_IX,&S1,&S1_IX
+             GEN_MPY  &S3,&S3_IX,&S2,&S2_IX,&ROUNDED,&ONSIZE
+             ACALL GET_S3
+         AEND
+         AEND
+.*
+.* MPY BY (NO GIVING, MULT MULTIPLIERS)
+.*
+         AENTRY MPY_BY
+         AWHILE (&S2_OK)
+             GEN_MPY  &S2,&S2_IX,&S1,&S1_IX,&ROUNDED,&ONSIZE
+             ACALL GET_S2
+         AEND
+         AEND
+.*
+.* GET S2 AND OPTIONAL ROUNDING
+.*
+         AENTRY GET_S2
+         AIF (&PARM_IX GT &LAST_PARM)
+             :&S2_OK SETB 0
+             AEXIT AENTRY
+         AEND
+         :&FIELD_REG SETC 'R2'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         :&S2    SETC '&FIELD_NAME'                
+         :&S2_IX SETA &FIELD_IX                    
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'ROUNDED')
+               :&ROUNDED SETB 1
+               :&PARM_IX SETA &PARM_IX+1
+         AELSE 
+               :&ROUNDED SETB 0
+         AEND
+         AEND
+.*
+.* GET S3 AND OPTIONAL ROUNDING
+.*
+         AENTRY GET_S3
+         AIF (&PARM_IX GT &LAST_PARM)
+             :&S3_OK SETB 0
+             AEXIT AENTRY
+         AEND
+         :&FIELD_REG SETC 'R3'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         :&S3    SETC '&FIELD_NAME'                
+         :&S3_IX SETA &FIELD_IX                    
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'ROUNDED')
+               :&ROUNDED SETB 1
+               :&PARM_IX SETA &PARM_IX+1
+         AELSE 
+               :&ROUNDED SETB 0
+         AEND
+         AEND
+.*
+.* SET OPTIONS - ROUND AND ON SIZE ERROR
+.*
+         AENTRY SET_OPTIONS
+         :&SAVE_PARM_IX SETA &PARM_IX
+         :&ROUNDED     SETB 0
+         :&ON_SIZE     SETB 0
+         :&NOT_ON_SIZE SETB 0
+         :&LAST_PARM   SETA 0
+         AWHILE (&PARM_IX LE N'&SYSLIST)
+               AIF     ('&SYSLIST(&PARM_IX)' EQ 'ON'                   X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
+                     :&ON_SIZE SETB 1      
+                     AIF (&LAST_PARM EQ 0)
+                         :&LAST_PARM SETA &PARM_IX-1
+                     AEND                              
+                     :&PARM_IX SETA N'&SYSLIST+2
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'NOT'                  X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ON'             X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
+                     :&NOT_ON_SIZE SETB 1                                
+                     AIF (&LAST_PARM EQ 0)
+                         :&LAST_PARM SETA &PARM_IX-1
+                     AEND                              
+                     :&PARM_IX SETA N'&SYSLIST+3
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'REMAINDER')
+                     MNOTE 8,'DIVIDE MULT GIVING WITH REMAINDER ERROR'
+                     MEXIT
+               AEND 
+               :&PARM_IX SETA &PARM_IX+1
+         AEND
+         AIF (&LAST_PARM EQ 0)
+             :&LAST_PARM SETA N'&SYSLIST
+         AEND                        
+         :&PARM_IX SETA &SAVE_PARM_IX      
+         AEND
+         COPY ZCGETFLD
+         MEND

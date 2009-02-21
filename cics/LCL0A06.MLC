@@ -114,6 +114,7 @@ P0A06EIB DS    AL4                EIB
 P0A06TCT DS    AL4                TCTTE
 P0A06QNM DS    CL16               QUEUE NAME
          DS    X                  FF=NOHANDLE
+         DS    X
 P0A06RSP DS    AL4                RESP
 P0A06RS2 DS    AL4                RESP2
 P0A06END EQU   *                  END MARKER

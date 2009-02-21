@@ -1,0 +1,61 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 02/12/09                                                 *
+.*********************************************************************
+.* 02/12/09 RPI 996 ADD INITIAL CPOOL SUPPORT FOR BUILD AND GET
+.*********************************************************************
+&N       CPOOL &TYPE,        BUILD, GET, FREE, DELETE                  X
+               &COND,        U,UNCOND,C,COND                           X
+               &CPID=,       CPOOL ID ADDR OF FULL WORD                X
+               &PCELLCT=,    PRIMARY CELL COUNT                        X
+               &SCELLCT=,    SECONDARY CELL COUNT                      X
+               &CSIZE=,      CELL SIZE                                 X
+               &HDR=         DESCRIPTION 
+         AIF   ('&TYPE' EQ 'BUILD').BUILD
+         AIF   ('&TYPE' EQ 'GET').GET
+         MNOTE 8,'CPOOL UNKNOWN TYPE - &TYPE'
+         MEXIT
+.BUILD   ANOP
+         GBLA  &CPOOL_ID
+&CPOOL_ID SETA &CPOOL_ID+1 
+CPOOL_&CPOOL_ID_BUILD DS 0H 
+         L     R3,CPOOL_&CPOOL_ID._TL  TOTAL LENGTH
+         GETMAIN R,LV=(R3)
+         LR    R2,R1
+         SR    R14,R14         
+         SR    R15,R15
+         MVCL  R2,R14                   CLEAR POOL TO ZEROS
+         ST    R1,CPOOL_&CPOOL_ID._SA  STARTING ADDR
+         S     R1,CPOOL_&CPOOL_ID._EL  BACKUP ONE CELL
+         ST    R1,CPOOL_&CPOOL_ID._CA  CURRENT  ADDR
+         A     R1,CPOOL_&CPOOL_ID._EL  FORWARD ONE CELL
+         A     R1,CPOOL_&CPOOL_ID._TL  FORWARD TOTAL LENGTH
+         ST    R1,CPOOL_&CPOOL_ID._EA  ENDING   ADDR
+         LA    R0,CPOOL_&CPOOL_ID._GET GEN RETURN R0=A(GET ENTRY)
+         J     CPOOL_&CPOOL_ID._END    SKIP GET RTN AND DATA
+CPOOL_&CPOOL_ID._GET DS 0H
+         USING *,R15
+         L     R1,CPOOL_&CPOOL_ID._CA PREV CELL ADDR
+         A     R1,CPOOL_&CPOOL_ID._EL ADD  CELL LENGTH
+         ST    R1,CPOOL_&CPOOL_ID._CA CURR CELL ADDR
+         C     R1,CPOOL_&CPOOL_ID._EA ARE WE AT END
+         BLR   R14                     NO RETURN R1=A(CURR CELL)
+         SR    R1,R1                  ELSE
+         BR    R14                     RETURN R1=ZERO
+         DROP  R15
+         DC    C&HDR              CPOOL HEADER TEXT     
+CPOOL_&CPOOL_ID._EL DC  A(&CSIZE) CPOOL &CPOOL_ID CELL SIZE
+CPOOL_&CPOOL_ID._TL DC  A((&PCELLCT+&SCELLCT)*&CSIZE) TOT LENGTH
+CPOOL_&CPOOL_ID._SA DS  A  CPOOL &CPOOL_ID STARTING ADDRESS
+CPOOL_&CPOOL_ID._CA DS  A  CPOOL &CPOOL_ID CURRENT  ADDRESS
+CPOOL_&CPOOL_ID._EA DS  A  CPOOL &CPOOL_ID ENDING   ADDRESS
+CPOOL_&CPOOL_ID._END DS 0H
+         MEXIT
+.GET     ANOP
+         L     R15,&CPID    GALL THE GET ROUTINE CREATED BY BUILD
+         BASR  R14,R15      RETURNS CELL ADDR IN R1 ELSE 0
+         MEND

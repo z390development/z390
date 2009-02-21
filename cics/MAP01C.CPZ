@@ -1,0 +1,165 @@
+       01  GUI4I.
+           02  FILLER  PIC X(12).
+           02  INPUTL   PIC S9(4) COMP.
+           02  INPUTF   PIC X.
+           02  FILLER REDEFINES INPUTF.
+               03  INPUTA   PIC X.
+           02  INPUTI   PIC X(3).
+           02  FILLER REDEFINES INPUTI.
+               03  INPUTO   PIC X(3).
+           02  REPLYL   PIC S9(4) COMP.
+           02  REPLYF   PIC X.
+           02  FILLER REDEFINES REPLYF.
+               03  REPLYA   PIC X.
+           02  REPLYI   PIC X(3).
+           02  FILLER REDEFINES REPLYI.
+               03  REPLYO   PIC X(3).
+       01  GUI4O REDEFINES GUI4I.
+          02  FILLER PIC X(24).
+       01  GUI6I.
+           02  FILLER  PIC X(12).
+           02  NAMEL    PIC S9(4) COMP.
+           02  NAMEF    PIC X.
+           02  FILLER REDEFINES NAMEF.
+               03  NAMEA    PIC X.
+           02  NAMEI    PIC X(40).
+           02  FILLER REDEFINES NAMEI.
+               03  NAMEO    PIC X(40).
+           02  ADDRL    PIC S9(4) COMP.
+           02  ADDRF    PIC X.
+           02  FILLER REDEFINES ADDRF.
+               03  ADDRA    PIC X.
+           02  ADDRI    PIC X(40).
+           02  FILLER REDEFINES ADDRI.
+               03  ADDRO    PIC X(40).
+           02  ZIPL     PIC S9(4) COMP.
+           02  ZIPF     PIC X.
+           02  FILLER REDEFINES ZIPF.
+               03  ZIPA     PIC X.
+           02  ZIPI     PIC X(5).
+           02  FILLER REDEFINES ZIPI.
+               03  ZIPO     PIC X(5).
+           02  NAMEHDL  PIC S9(4) COMP.
+           02  NAMEHDF  PIC X.
+           02  FILLER REDEFINES NAMEHDF.
+               03  NAMEHDA  PIC X.
+           02  NAMEHDI  PIC X(4).
+           02  FILLER REDEFINES NAMEHDI.
+               03  NAMEHDO  PIC X(4).
+           02  NEWNAMEL PIC S9(4) COMP.
+           02  NEWNAMEF PIC X.
+           02  FILLER REDEFINES NEWNAMEF.
+               03  NEWNAMEA PIC X.
+           02  NEWNAMEI PIC X(40).
+           02  FILLER REDEFINES NEWNAMEI.
+               03  NEWNAMEO PIC X(40).
+           02  ADDRHDL  PIC S9(4) COMP.
+           02  ADDRHDF  PIC X.
+           02  FILLER REDEFINES ADDRHDF.
+               03  ADDRHDA  PIC X.
+           02  ADDRHDI  PIC X(4).
+           02  FILLER REDEFINES ADDRHDI.
+               03  ADDRHDO  PIC X(4).
+           02  NEWADDRL PIC S9(4) COMP.
+           02  NEWADDRF PIC X.
+           02  FILLER REDEFINES NEWADDRF.
+               03  NEWADDRA PIC X.
+           02  NEWADDRI PIC X(40).
+           02  FILLER REDEFINES NEWADDRI.
+               03  NEWADDRO PIC X(40).
+           02  ZIPHDL   PIC S9(4) COMP.
+           02  ZIPHDF   PIC X.
+           02  FILLER REDEFINES ZIPHDF.
+               03  ZIPHDA   PIC X.
+           02  ZIPHDI   PIC X(4).
+           02  FILLER REDEFINES ZIPHDI.
+               03  ZIPHDO   PIC X(4).
+           02  NEWZIPL  PIC S9(4) COMP.
+           02  NEWZIPF  PIC X.
+           02  FILLER REDEFINES NEWZIPF.
+               03  NEWZIPA  PIC X.
+           02  NEWZIPI  PIC X(5).
+           02  FILLER REDEFINES NEWZIPI.
+               03  NEWZIPO  PIC X(5).
+           02  ERRMSGL  PIC S9(4) COMP.
+           02  ERRMSGF  PIC X.
+           02  FILLER REDEFINES ERRMSGF.
+               03  ERRMSGA  PIC X.
+           02  ERRMSGI  PIC X(34).
+           02  FILLER REDEFINES ERRMSGI.
+               03  ERRMSGO  PIC X(34).
+           02  TESTOCCD OCCURS 5 TIMES.
+               03  TESTOCCL PIC S9(4) COMP.
+               03  TESTOCCF PIC X.
+               03  FILLER REDEFINES TESTOCCF.
+                   04  TESTOCCA PIC X.
+               03  TESTOCCI PIC 9(5).
+               03  FILLER REDEFINES TESTOCCI.
+                   04  TESTOCCO PIC X(5).
+           02  OCCSUML  PIC S9(4) COMP.
+           02  OCCSUMF  PIC X.
+           02  FILLER REDEFINES OCCSUMF.
+               03  OCCSUMA  PIC X.
+           02  OCCSUMI  PIC X(10).
+           02  FILLER REDEFINES OCCSUMI.
+               03  OCCSUMO  PIC ZZ,ZZZ,ZZ9.
+           02  DATEL    PIC S9(4) COMP.
+           02  DATEF    PIC X.
+           02  FILLER REDEFINES DATEF.
+               03  DATEA    PIC X.
+           02  DATEI.
+           02  DATEO REDEFINES DATEI.
+               03  MOI      PIC X(2).
+               03  FILLER REDEFINES MOI.
+                   04  MOO      PIC X(2).
+               03  SEP1I    PIC X.
+               03  FILLER REDEFINES SEP1I.
+                   04  SEP1O    PIC X.
+               03  DAYI     PIC X(2).
+               03  FILLER REDEFINES DAYI.
+                   04  DAYO     PIC X(2).
+               03  SEP2I    PIC X.
+               03  FILLER REDEFINES SEP2I.
+                   04  SEP2O    PIC X.
+               03  YRI      PIC X(2).
+               03  FILLER REDEFINES YRI.
+                   04  YRO      PIC X(2).
+           02  SHOWMDYL PIC S9(4) COMP.
+           02  SHOWMDYF PIC X.
+           02  FILLER REDEFINES SHOWMDYF.
+               03  SHOWMDYA PIC X.
+           02  SHOWMDYI PIC X(18).
+           02  FILLER REDEFINES SHOWMDYI.
+               03  SHOWMDYO PIC X(18).
+           02  TESTPCOL PIC S9(4) COMP.
+           02  TESTPCOF PIC X.
+           02  FILLER REDEFINES TESTPCOF.
+               03  TESTPCOA PIC X.
+           02  TESTPCOI PIC $$$$,$$$,$$9.
+           02  FILLER REDEFINES TESTPCOI.
+               03  TESTPCOO PIC X(12).
+           02  PAYMEL   PIC S9(4) COMP.
+           02  PAYMEF   PIC X.
+           02  FILLER REDEFINES PAYMEF.
+               03  PAYMEA   PIC X.
+           02  PAYMEI   PIC X(14).
+           02  FILLER REDEFINES PAYMEI.
+               03  PAYMEO   PIC X(14).
+           02  PAYME1L  PIC S9(4) COMP.
+           02  PAYME1F  PIC X.
+           02  FILLER REDEFINES PAYME1F.
+               03  PAYME1A  PIC X.
+           02  PAYME1I  PIC X(12).
+           02  FILLER REDEFINES PAYME1I.
+               03  PAYME1O  PIC X(12).
+           02  CURSL    PIC S9(4) COMP.
+           02  CURSF    PIC X.
+           02  FILLER REDEFINES CURSF.
+               03  CURSA    PIC X.
+           02  CURSI    PIC X(9).
+           02  FILLER REDEFINES CURSI.
+               03  CURSO    PIC X(9).
+       01  GUI6O REDEFINES GUI6I.
+          02  FILLER PIC X(402).
+       01  GUI6HI.
+           02  FILLER  PIC X(12).

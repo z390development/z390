@@ -1,0 +1,29 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 10/14/08 initial coding for global CALL     
+.*********************************************************************
+         CALL  &PGM,&USING      
+         COPY  ZC_WS
+         :&NP  SETA N'&SYSLIST
+         AIF   (&NP EQ 1)
+               GEN_CALL &PGM
+               MEXIT
+         AEND
+         AIF   ('&USING' NE 'USING')
+               MNOTE 8,'CALL MISSING USING'
+               MEXIT
+         AEND
+         :&I SETA 3
+         :&PARMS SETC 'USING'
+         AWHILE (&I LE &NP)
+               :&PARMS SETC '&PARMS,&SYSLIST(&I)'
+               :&I SETA &I+1
+         AEND
+         GEN_CALL &PGM,&PARMS
+         MEND
