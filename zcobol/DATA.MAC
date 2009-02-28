@@ -9,6 +9,8 @@
 .* 04/11/08 initial coding for global data division
 .* 05/03/08 add DATA END to generate WS list and data definitions
 .* 10/05/08 ZSTRMAC
+.* 02/25/09 RPI 1002 CREATE USAGE IS INDEX FOR INDEX DATA ITEMS
+.* 02/27/09 RPI 1012 GENERATED DEBUG-ITEM AT END OF WS
 .*********************************************************************
          DATA  &TYPE
          COPY  ZC_WS
@@ -22,6 +24,7 @@
 .* ADD PREDEFINED WS AND LK SECTIONS
 .*
         AENTRY ADD_PREDEFINED_DATA
+        :&FILE_IX SETA 0   END FILE RECORD DEFINITIONS
         AIF    (&LK_MODE)
          WS 01,ZC_LK_END,PIC,X
         AEND       
@@ -40,17 +43,32 @@
                :&NAME    SETC  '&SET_INDEX(&I)'
                AIF   ('&NAME' EQ '')
                      :&NAME SETC '&SYM_NAME(&SET_SYM_IX(&I))_PTR'
+                     WS 77,&NAME,USAGE,POINTER
+               AELSE 
+                     WS 77,&NAME,USAGE,INDEX                  RPI 1002
+                     :&SYM_REF(&SYM_TOT) SETA &SET_SYM_IX(&I) RPI 1002
                AEND
-               WS 77,&NAME,USAGE,POINTER
                :&I SETA &I+1
          AEND
 .*
 .* ADD PREDEFINED WS ITEMS
 .*
-         WS 77,RETURN_CODE,PIC,S9(4),COMP,VALUE,0
+   WS 01,DEBUG_ITEM
+   WS   02,DEBUG_LINE,PIC,X(6)
+   WS   02,FILLER,PIC,X,VALUE,SPACE
+   WS   02,DEBUG_NAME,PIC,X(30)
+   WS   02,FILLER,PIC,X,VALUE,SPACE
+   WS   02,DEBUG_SUB_1,PIC,S9999,SIGN,IS,LEADING,SEPARATE,CHARACTER
+   WS   02,FILLER,PIC,X,VALUE,SPACE
+   WS   02,DEBUG_SUB_2,PIC,S9999,SIGN,IS,LEADING,SEPARATE,CHARACTER
+   WS   02,FILLER,PIC,X,VALUE,SPACE
+   WS   02,DEBUG_SUB_3,PIC,S9999,SIGN,IS,LEADING,SEPARATE,CHARACTER
+   WS   02,FILLER,PIC,X,VALUE,SPACE
+   WS   02,DEBUG_CONTENTS,PIC,X(35)
+   WS 77,RETURN_CODE,PIC,S9(4),COMP,VALUE,0
            AIF  (&ZC_TRACE)
-         WS 77,READY_RESET_TRACE,PIC,X,VALUE,'T'
-         WS 77,FILLER,PIC,X(5)
+   WS 77,READY_RESET_TRACE,PIC,X,VALUE,'T'
+   WS 77,FILLER,PIC,X(5)
            AEND
 .*
 .* END OF PREDEFINED DATA (SEE GEN_PROC_END FOR WS/LK GEN)

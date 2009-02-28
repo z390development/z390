@@ -5,6 +5,8 @@
 .* Author - Don Higgins                                              *
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
+.* 02/23/08 RPI 1001 ADD SUPPORT FOR SIX ON CONDITION 88 LEVEL FIELD
+.*********************************************************************
 .* GET RX ADDRESSABLE QUALIFIED PARM FIELD FROM &SYSLIST(&PARM_IX)
 .* INPUT
 .*  1. &PARM_IX   SETA MUST BE SET TO CURRENT SYSLIST PARM
@@ -17,6 +19,7 @@
 .*  3. &FIELD_OFF  SETA = OFFSET DEFAULT 0 MAY BE CHANGED BY RMOD
 .*  4. &FIELD_LEN  SETA = LENGTH DEFAULT SYM_LEN(FIELD_IX) RMOD CHNG    
 .*  5. &FIELD_NAME SETC = FIELD NAME, OFF(REG), OR OFF(LEN,REG) IF SS1
+.*  6. &FIELD_88_IX SETA - 88 LVL INDEX ELSE 0
 .* WHERE USED:
 .*  1. ADD, DIVIDE, IF, GO, INSPECT, MULTIPLY, SUBTRACT, TRANSFORM
 .*     GEN_DISPLAY.
@@ -53,6 +56,12 @@
                ACALL FIND_QUAL_ALIAS  FIND ALIAS OF QUAL FIELD
          AEND
          AIF   (&FIELD_IX GT 0)
+               AIF (&SYM_LVL(&FIELD_IX) EQ 88)
+                   :&FIELD_88_IX SETA &FIELD_IX
+                   :&FIELD_IX   SETA &SYM_REF(&FIELD_88_IX)
+               AELSE
+                   :&FIELD_88_IX SETA 0
+               AEND
                :&FIELD_NAME SETC '&SYM_NAME(&FIELD_IX)' 
                GEN_BASE &FIELD_IX  GEN BASE IF REQ'D FOR RX ACCESS
                AIF   ('&SYSLIST(&PARM_IX)' EQ '''(''') SUBSC FOUND

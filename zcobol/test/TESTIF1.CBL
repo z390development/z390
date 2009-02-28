@@ -11,6 +11,10 @@
        77 C       PIC 9 VALUE 3.           
        77 D       PIC 9 VALUE 4.           
        77 ERRORS  PIC X VALUE 'F'.
+       01  H1 PIC S9(4) COMP OCCURS 2 TIMES.
+           88 H1-ZERO VALUE 10.
+       01  H2 PIC S9(4) COMP OCCURS 2 TIMES.
+           88 H2-ONE-TWO  VALUES 11 12.
        PROCEDURE DIVISION.
        MAINLINE.
            DISPLAY 'TESTIF1 STARTING'
@@ -69,6 +73,23 @@
     22     IF (B > A OR D > C) AND (B = B OR C = C) 
               NEXT SENTENCE ELSE
               DISPLAY 'A NOT < B' MOVE 'T' TO ERRORS.
+      * TEST CONDITIONAL 88'S
+           MOVE 10 TO H1(2)
+    23     IF H1-ZERO(2) 
+              NEXT SENTENCE ELSE
+              DISPLAY 'SINGLE 88 TEST FAILED'.
+           MOVE 13 TO H1(2)
+    24     IF NOT H1-ZERO(2) 
+              NEXT SENTENCE ELSE
+              DISPLAY 'SINGLE NOT 88 TEST FAILED'.
+           MOVE 12 TO H2(2)  
+    25     IF H2-ONE-TWO(2) 
+              NEXT SENTENCE ELSE
+              DISPLAY 'MULTIPLE 88 TEST VALUES FAILED'.
+           MOVE 13 TO H2(2)  
+    26     IF NOT H2-ONE-TWO(2) 
+              NEXT SENTENCE ELSE
+              DISPLAY 'MULTIPLE NOT 88 TEST VALUES FAILED'.
            IF ERRORS = 'T'
               MOVE 16 TO RETURN-CODE
               DISPLAY 'TESTIF1 ENDED WITH ERRORS'

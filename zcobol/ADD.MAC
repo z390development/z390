@@ -9,6 +9,7 @@
 .* 10/28/08 initial coding for global ADD
 .* 12/22/08 use ZCGETFLD to get field with qual,base,subscript
 .* 02/15/09 support mult s1 added to s2 or mult s1+s2 added to s3
+.* 02/26/09 RPI 1012 move onsize end-add pending to add                
 .*********************************************************************
          ADD   
          COPY  ZC_WS
@@ -46,6 +47,12 @@
                    :&PARM_IX SETA &PARM_IX+1
                AEND
                :&PARM_IX SETA &PARM_IX+1
+         AEND
+         AIF   (&ONSIZE)
+               :&IE_LVL  SETA  &IE_LVL+1         ADD PENDING END_ADD
+               :&IE_TYPE(&IE_LVL) SETA 11        FOR END_ADD OR PERIOD
+               :&ADD_LAB SETA &ADD_LAB+1
+               :&IE_TCNT(&IE_LVL) SETA &ADD_LAB
          AEND
          AIF   (&LAST_PARM GT 0)
                :&NP SETA &LAST_PARM

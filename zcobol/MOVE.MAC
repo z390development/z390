@@ -9,6 +9,7 @@
 .* 04/10/08 initial coding for global MOVE     
 .* 05/02/08 add support for literal values by PIC_TYPE
 .* 10/06/08 ZSTRMAC
+.* 02/27/09 RPI 1012 SUPPORT ALL '?' LIT
 .*********************************************************************
 .* MOVE id1 TO id2 id3 idn
 .*********************************************************************
@@ -18,7 +19,10 @@
          :&ADDR_OF SETB 0
          :&PARM_IX SETA 2
          :&SOURCE_IX SETA 0
-         AIF   ('&SOURCE' EQ 'LENGTH')
+         AIF   ('&SOURCE' EQ 'ALL')
+               :&SOURCE SETC '*&SYSLIST(2)' PREFIX *LIT FOR ALL LIT
+               :&PARM_IX SETA 3
+         AELSEIF   ('&SOURCE' EQ 'LENGTH')
                AIF ('&SYSLIST(2)' EQ 'OF')
                    :&SOURCE SETC '&SYSLIST(3)'
                    :&PARM_IX SETA 4

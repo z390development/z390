@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 10/28/08 initial coding for Z390 GEN_SUB using GEN_MOVE as model    
+.* 02/25/09 RPI 1004 add support for types 1,2,E,D,L &ZC_FLOAT type    
 .*********************************************************************
          GEN_SUB &T_NAME,&T_IX,&S_NAME,&S_IX,&ROUNDED,&ONSIZE 
          COPY  ZC_WS
@@ -41,9 +42,9 @@
 .* SUBTRACT LITERAL
 .* 
          AENTRY SUB_LIT
-         AIF  ('&LIT'(1,1) GT '0'                                      X
+         AIF  ('&LIT'(1,1) GE '0'                                      X
                 OR '&LIT'(1,1) EQ '+'                                  X
-                OR '&LIT'(1,1) EQ '-')
+                OR '&LIT'(1,1) EQ '-') RPI 1002 WAS GT '0'
                :&NUM SETC '&LIT'
                ACALL SUB_NUM_LIT
          AELSEIF  ('&LIT' EQ 'ZERO'                                    X
@@ -60,17 +61,17 @@
 .*
       AENTRY SUB_NUM_LIT
       ACASE (C2A('&SYM_PIC_TYPE(&TARGET)'))
-      AWHEN C'D'
+      AWHEN C'2'
          LD    F0,&TARGET_NAME
-         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+         LARL  R1,=D'&NUM'
          SD    F0,0(R1)
          STD   F0,&TARGET_NAME
-      AWHEN C'E'
+      AWHEN C'1'
          LE    F0,&TARGET_NAME
-         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+         LARL  R1,=E'&NUM'
          SE    F0,0(R1)
          STE   F0,&TARGET_NAME
-      AWHEN C'F',C'A'
+      AWHEN C'F',C'A',C'I'
          L     R0,&TARGET_NAME
          AFI   R0,-&NUM
          ST    R0,&TARGET_NAME
@@ -85,7 +86,7 @@
          STG   R0,&TARGET_NAME
       AWHEN C'P'
          :&LPNUM SETA (K'&NUM/2+3)/2*2 ROUNDED EVEN FOR LARL
-         LARL  R1,=&SYM_PIC_TYPE(&TARGET)L&LPNUM'&NUM'
+         LARL  R1,=PL&LPNUM'&NUM'
          SP    &TARGET_NAME,0(&LPNUM,R1)
       AWHEN C'Z'
          PACK  ZCVT_PWORK(&L_TARGET/2+1),&TARGET_NAME
@@ -105,18 +106,18 @@
 .*
          AENTRY SUB_FLD
          ACASE (C2A('&T_TARGET'))
-         AWHEN C'D'
+         AWHEN C'2'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LD    F0,&TARGET_NAME
          SD    F0,&SOURCE_NAME
          STD   F0,&TARGET_NAME
-               AWHEN C'E'
+               AWHEN C'1'
          LD    F0,&TARGET_NAME
          LDE   F1,&SOURCE_NAME
          SDR   F0,F1
          STD   F0,&TARGET_NAME
-               AWHEN C'F',C'A'
+               AWHEN C'F',C'A',C'I'
          LD    F0,&TARGET_NAME
          L     R1,&SOURCE_NAME
          CDFR  F1,R1
@@ -153,20 +154,20 @@
                     MNOTE 4,'GEN_SUB INVALID SOURCE DATA TYPE'           
                     MEXIT
                AEND 
-         AWHEN C'E'
+         AWHEN C'1'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LE    F0,&TARGET_NAME
          LD    F1,&SOURCE_NAME
          LEDR  F1,F1
          SER   F0,F1
          STE   F0,&TARGET_NAME
-               AWHEN C'E'
+               AWHEN C'1'
          LE    F0,&TARGET_NAME
          LE    F1,&SOURCE_NAME
          SER   F0,F1
          STE   F0,&TARGET_NAME
-               AWHEN C'F',C'A'
+               AWHEN C'F',C'A',C'I'
          LE    F0,&TARGET_NAME
          L     R1,&SOURCE_NAME
          CEFR  F1,R1
@@ -203,21 +204,21 @@
                     MNOTE 4,'GEN_SUB INVALID SOURCE DATA TYPE'           
                     MEXIT
                AEND 
-         AWHEN C'F',C'A'
+         AWHEN C'F',C'A',C'I'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          L     R0,&TARGET_NAME
          LD    R1,&SOURCE_NAME
          CFDR  R1,0,F1
          SR    R0,R1
          ST    R0,&TARGET_NAME
-               AWHEN C'E'
+               AWHEN C'1'
          L     R0,&TARGET_NAME
          LE    F1,&SOURCE_NAME
          CFER  R1,0,F1
          SR    R0,R1
          ST    R0,&TARGET_NAME
-               AWHEN C'F',C'A'
+               AWHEN C'F',C'A',C'I'
          L     R0,&TARGET_NAME
          S     R0,&SOURCE_NAME
          ST    R0,&TARGET_NAME
@@ -249,19 +250,19 @@
                AEND 
          AWHEN C'G'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LG    R0,&TARGET_NAME
          LD    F1,&SOURCE_NAME
          CGDR  R1,0,F1
          SGR   R0,R1
          STG   R0,&TARGET_NAME
-               AWHEN C'E'
+               AWHEN C'1'
          LG    R0,&TARGET_NAME
          LE    F1,&SOURCE_NAME
          CGER  R1,0,F1
          SGR   R0,R1
          STG   R0,&TARGET_NAME
-               AWHEN C'F',C'A'
+               AWHEN C'F',C'A',C'I'
          LG    R0,&TARGET_NAME
          L     R1,&SOURCE_NAME
          SGFR  R0,R1
@@ -294,19 +295,19 @@
                AEND 
          AWHEN C'H'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LH    R0,&TARGET_NAME
          LD    F1,&SOURCE_NAME
          CFDR  R1,0,F1
          SR    R0,R1
          STH   R0,&TARGET_NAME
-               AWHEN C'E'
+               AWHEN C'1'
          LH    R0,&TARGET_NAME
          LE    F1,&SOURCE_NAME
          CFER  R1,0,F1
          SR    R0,R1
          STH   R0,&TARGET_NAME
-               AWHEN C'F',C'A'
+               AWHEN C'F',C'A',C'I'
          LH    R0,&TARGET_NAME
          S     R0,&SOURCE_NAME
          STH   R0,&TARGET_NAME
@@ -337,17 +338,17 @@
                AEND 
          AWHEN C'P'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LD    F0,&SOURCE_NAME
          CFDR  R0,0,F0
          CVD   R0,ZCVT_PWORK
          SP    &TARGET_NAME,ZCVT_PWORK
-               AWHEN C'E'
+               AWHEN C'1'
          LE    F0,&SOURCE_NAME
          CFER  R0,0,F0
          CVD   R0,ZCVT_PWORK
          SP    &TARGET_NAME,ZCVT_PWORK
-               AWHEN C'F',C'A'
+               AWHEN C'F',C'A',C'I'
          L     R0,&SOURCE_NAME
          CVD   R0,ZCVT_PWORK
          SP    &TARGET_NAME,ZCVT_PWORK
@@ -370,7 +371,7 @@
                AEND 
          AWHEN C'Z'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
                      :&PLEN SETA &L_TARGET/2+1
                      :&POFF SETA 8-&PLEN
          PACK  ZCVT_PWORK1(&PLEN),&TARGET_NAME
@@ -382,7 +383,7 @@
                      AIF (NOT &SYM_PIC_SIGN(&TARGET))
          OI    &TARGET_NAME+&L_TARGET-1,X'F0'
                      AEND         
-               AWHEN C'E'
+               AWHEN C'1'
                      :&PLEN SETA &L_TARGET/2+1
                      :&POFF SETA 8-&PLEN
          PACK  ZCVT_PWORK1(&PLEN),&TARGET_NAME
@@ -394,7 +395,7 @@
                      AIF (NOT &SYM_PIC_SIGN(&TARGET))
          OI    &TARGET_NAME+&L_TARGET-1,X'F0'
                      AEND         
-               AWHEN C'F',C'A'
+               AWHEN C'F',C'A',C'I'
                      :&PLEN SETA &L_TARGET/2+1
                      :&POFF SETA 8-&PLEN
          PACK  ZCVT_PWORK1(&PLEN),&TARGET_NAME

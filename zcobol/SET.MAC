@@ -6,9 +6,64 @@
 .* Author - Don Higgins                                              *
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
-.* 04/16/08 initial coding for global SET         
+.* 02/23/09 initial coding for global SET         
 .*********************************************************************
-         SET
-         MNOTE 8,'SET NOT SUPPORTED YET'
+         SET      
+         COPY  ZC_WS                      
+         :&PARM_IX SETA 1
+         AWHILE (&PARM_IX LT N'&SYSLIST)
+                AIF   ('&SYSLIST(&PARM_IX)' EQ 'TO')
+                      :&LAST_PARM   SETA &PARM_IX-1
+                      :&SOURCE_PARM SETA &PARM_IX+1
+                      AIF ('&SYSLIST(&SOURCE_PARM)' EQ 'TRUE')
+                          :&TYPE SETA 2
+                      AELSE
+                          :&TYPE SETA 1
+                      AEND
+                      AEXIT AWHILE
+                AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'UP'                  X
+                         AND '&SYSLIST(&PARM_IX+1)' EQ 'BY')
+                      :&LAST_PARM SETA &PARM_IX-1
+                      :&SOURCE_PARM SETA &PARM_IX+2
+                      :&TYPE SETA 3
+                      AEXIT AWHILE
+                AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'DOWN'                X
+                        AND '&SYSLIST(&PARM_IX+1)' EQ 'BY')
+                      :&LAST_PARM SETA &PARM_IX-1
+                      :&SOURCE_PARM SETA &PARM_IX+2
+                      :&TYPE SETA 4
+                      AEXIT AWHILE
+                AELSE
+                      :&PARM_IX SETA &PARM_IX+1
+                AEND
+         AEND
+         AIF   (&TYPE EQ 0)
+               MNOTE 8,'SET MISSING TO, UP BY, OR DOWN BY'
+               MEXIT
+         AEND
+         :&PARM_IX SETA &SOURCE_PARM
+         :&FIELD_REG SETC 'R3'
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         :&SOURCE    SETC '&FIELD_NAME'
+         :&SOURCE_IX SETA &FIELD_IX
+         :&PARM_IX SETA 1
+         AWHILE (&PARM_IX LE &LAST_PARM)
+               AIF (&SOURCE_IX GT 0 AND &PARM_IX GT 1)
+                   GEN_BASE &SOURCE_IX
+               AEND
+               :&FIELD_REG SETC 'R2'
+               :&FIELD_SS1 SETB 1
+               ACALL GET_PARM_FIELD
+               AIF   (&FIELD_IX GT 0)
+                     :&TARGET SETC '&FIELD_NAME'
+                     :&TARGET_IX SETA &FIELD_IX
+               AELSE
+                     MNOTE 8,'SET MISSING TARGET FIELD - &SYSLIST(1)'
+                     MEXIT
+               AEND
+               GEN_SET &TYPE,&TARGET,&TARGET_IX,&SOURCE,&SOURCE_IX
+         AEND
          MEXIT
+         COPY  ZCGETFLD
          MEND

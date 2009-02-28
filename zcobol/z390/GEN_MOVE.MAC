@@ -10,6 +10,9 @@
 .* 05/02/08 add moves for matching PIC_TYPE including literals
 .* 10/07/08 ZSTRMAC
 .* 01/21/09 add editing for numeric to X field with picture with z/9's
+.* 02/25/09 RPI 1002 support PIC type I for INDEXED BY and USAGE INDEX                     
+.* 02/25/09 RPI 1004 support PIC type 1,2,E,D,L                       
+.* 02/27/09 RPI 1012 support ALL '?' literal using *'/' prefix        
 .*********************************************************************
          GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
          COPY  ZC_WS
@@ -89,10 +92,16 @@
          MVC   &TARGET_NAME,1(R1)
                          AEND
                      AEND
+               AELSEIF ('&LIT'(1,1) EQ '*')  ALL LIT RPI 1012
+                     :&LIT SETC '&LIT'(2,*)
+                     ACALL RESET_SS1_TARGET
+         MVI   &TARGET_NAME,C&LIT
+                     ACALL PAD_TARGET
                AELSE
                     AIF  ('&LIT'(1,1) GE '0'                           X
                          OR '&LIT'(1,1) EQ '+'                         X
-                         OR '&LIT'(1,1) EQ '-')
+                         OR '&LIT'(1,1) EQ '-'                         X
+                         OR '&LIT'(1,1) EQ '(')
                          :&NUM SETC '&LIT'
                          ACALL MOVE_NUM_LIT
                     AELSEIF  ('&LIT' EQ 'ZERO'                         X
@@ -126,11 +135,14 @@
 .*
       AENTRY MOVE_NUM_LIT
       ACASE (C2A('&SYM_PIC_TYPE(&TARGET)'))
-      AWHEN C'A'
-         LARL  R1,=&SYM_PIC_TYPE(&TARGET)(&NUM)
+      AWHEN C'A',C'I'               RPI 1002
+         LARL  R1,=A(&NUM)
          MVC   &TARGET_NAME,0(R1)
-      AWHEN C'D',C'E'
-         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+      AWHEN C'2'
+         LARL  R1,=D'&NUM'
+         MVC   &TARGET_NAME,0(R1)
+      AWHEN C'1'
+         LARL  R1,=E'&NUM'
          MVC   &TARGET_NAME,0(R1)
       AWHEN C'F'
         AIF   (K'&NUM LE 4)
@@ -228,9 +240,9 @@
          AWHEN C'A'
          LA    R0,&SOURCE_NAME
          ST    R0,&TARGET_NAME
-         AWHEN C'D'
+         AWHEN C'2'
                ACALL CVT_TO_D
-         AWHEN C'E'
+         AWHEN C'1'
                ACALL CVT_TO_E
          AWHEN C'F'
                ACALL CVT_TO_F
@@ -251,9 +263,9 @@
 .*
          AENTRY CVT_TO_D
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          MVC   &TARGET_NAME,&SOURCE_NAME
-               AWHEN C'E'
+               AWHEN C'1'
          LDE   0,&SOURCE_NAME
          STD   0,&TARGET_NAME
                AWHEN C'A',C'F'
@@ -279,11 +291,11 @@
 .* 
          AENTRY CVT_TO_E
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LD    0,&SOURCE_NAME
          LEDR  0,0
          STE   0,&TARGET_NAME
-               AWHEN C'E'
+               AWHEN C'1'
          MVC   &TARGET_NAME,&SOURCE_NAME
                AWHEN C'A',C'F'
          L     0,&SOURCE_NAME
@@ -308,11 +320,11 @@
 .*
          AENTRY CVT_TO_F
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LD    0,&SOURCE_NAME
          CFDR  0,0
          ST    0,&TARGET_NAME
-               AWHEN C'E'
+               AWHEN C'1'
          LE    0,&SOURCE_NAME
          CFER  0,0
          ST    0,&TARGET_NAME
@@ -339,11 +351,11 @@
 .*
          AENTRY CVT_TO_G
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LD    0,&SOURCE_NAME
          CGDR  0,0
          STG   0,&TARGET_NAME
-               AWHEN C'E'
+               AWHEN C'1'
          LE    0,&SOURCE_NAME
          CGER  0,0
          STG   0,&TARGET_NAME
@@ -371,11 +383,11 @@
 .* 
          AENTRY CVT_TO_H
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LD    0,&SOURCE_NAME
          CFDR  0,0
          STH   0,&TARGET_NAME
-               AWHEN C'E'
+               AWHEN C'1'
          LE    0,&SOURCE_NAME
          CFER  0,0
          ST    0,&TARGET_NAME
@@ -402,12 +414,12 @@
 .*
          AENTRY CVT_TO_P
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LD    0,&SOURCE_NAME
          CFDR  0,0
          CVD   0,ZCVT_PWORK
          ZAP   &TARGET_NAME,ZCVT_PWORK
-               AWHEN C'E'
+               AWHEN C'1'
          LE    0,&SOURCE_NAME
          CFER  0,0
          CVD   0,ZCVT_PWORK

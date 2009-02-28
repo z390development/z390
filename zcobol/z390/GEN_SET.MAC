@@ -1,0 +1,126 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 02/24/09 initial coding for GEN_SET to calc index or 88 field      
+.*********************************************************************
+         GEN_SET &TYPE,&TARGET,&TARGET_IX,&SOURCE,&SOURCE_IX
+         COPY  ZC_WS
+         ACASE (&TYPE)
+         AWHEN 1  SET INDEX      TO
+               AIF   ('&SYM_PIC_TYPE(&TARGET_IX)' EQ 'I')
+                     AIF  (&SYM_REF(&TARGET_IX) GT 0)
+                          ACALL SET_INDEX_NAME
+                     AELSE
+                          ACALL SET_INDEX_FIELD
+                     AEND
+               AELSE
+                     ACALL SET_INT_FIELD
+               AEND
+         AWHEN 2  SET 88 FIELD   TO TRUE
+               :&V88_IX SETA &SYM_LOC(&FIELD_88_IX)  GET 88 VALUE INDEX
+               AIF   (&V88_NEXT(&V88_IX) GT 0)
+                     MNOTE 8,'GEN_SET 88 LEVEL HAS MULTIPLE VALUES'
+                     MEXIT
+               AEND
+               GEN_MOVE &TARGET,&TARGET_IX,&V88_VAL(&V88_IX),0
+         AWHEN 3  SET INDEX UP   BY 
+               AIF   (&SOURCE_IX EQ 0)
+                     GEN_ADD &TARGET,&TARGET_IX,&SOURCE*&SYM_LEN(&SYM_RX
+               EF(&TARGET_IX)),0 LIT*LEN
+               AELSE
+                    AIF   (&SYM_REF(&SOURCE_IX) EQ 0                   X
+                           OR '&SYM_PIC_TYPE(&SOURCE_IX)' NE 'A')
+                          GEN_L R1,&SOURCE,&SOURCE_IX       
+                          MSFI  R1,&SYM_LEN(&SYM_REF(&TARGET_IX)
+                          A     R1,&TARGET (SUBSCRIPT-1)*LENGTH
+                          ST    R1,&TARGET (SUBSCRIPT-1)*LENGTH
+                    AELSE
+                          MNOTE 8,'GEN_SET SOURCE MUST BE INTEGER'
+                          MEXIT
+                    AEND     
+               AEND
+         AWHEN 4  SET INDEX DOWN BY
+               AIF   (&SOURCE_IX EQ 0)
+                     GEN_ADD &TARGET,&TARGET_IX,-&SOURCE*&SYM_LEN(&SYM_X
+               REF(&TARGET_IX)),0 -LIT*LEN
+               AELSE
+                    AIF   (&SYM_REF(&SOURCE_IX) EQ 0                   X
+                           OR '&SYM_PIC_TYPE(&SOURCE_IX)' NE 'A')
+                          GEN_L R1,&SOURCE,&SOURCE_IX       
+                          MSFI  R1,&SYM_LEN(&SYM_REF(&TARGET_IX)
+                          S     R1,&TARGET (SUBSCRIPT-1)*LENGTH
+                          ST    R1,&TARGET (SUBSCRIPT-1)*LENGTH
+                    AELSE
+                          MNOTE 8,'GEN_SET SOURCE MUST BE INTEGER'
+                          MEXIT
+                    AEND     
+               AEND
+         AELSE
+               MNOTE 8,'GEN_SET UNDEFINED SET TYPE - &TYPE'
+         AEND
+         MEXIT
+.*
+.* SET_INDEX_NAME
+.*
+         AENTRY SET_INDEX_NAME
+         AIF   (&SOURCE_IX EQ 0)
+               GEN_MOVE &TARGET,&TARGET_IX,(&SOURCE-1)*&SYM_LEN(&SYM_REX
+               F(&TARGET_IX)),0 INDEX=(LIT-1)*LEN
+         AELSE
+               AIF ('&SYM_PIC_TYPE(&SOURCE_IX)' EQ 'I') INDEX
+                   AIF   (&SYM_REF(&SOURCE_IX) GT 0)      INDEX NAME    
+         SGR   R0,R0
+         GEN_L R1,&SOURCE,&SOURCE_IX
+         LARL  R14,=F'&SYN_LEN(&SYM_REF(&SOURCE_IX)'
+         D     R0,0(R14)
+         MSFI  R1,&SYM_LEN(&SYM_REF(&TARGET_IX)
+         ST    R1,&TARGET
+                   AELSE
+         GEN_MOVE &TARGET,&TARGET_IX,&SOURCE,&SOURCE_IX
+                   AEND
+               AELSE
+         GEN_L R1,&SOURCE,&SOURCE_IX       
+         AHI   R1,-1                        
+         MSFI  R1,&SYM_LEN(&SYM_REF(&TARGET_IX)
+         ST    R1,&TARGET INDEX=(INT-1)*LEN
+               AEND
+         AEND
+         AEND
+.*
+.* SET_INDEX_FIELD
+.*
+         AENTRY SET_INDEX_FIELD
+         AIF   (&SOURCE_IX GT 0) 
+               AIF  ('&SYM_PIC_TYPE(&SOURCE_IX)' EQ 'I') INDEX
+                    GEN_MOVE &TARGET,&TARGET_IX,&SOURCE,&SOURCE_IX
+                    AEXIT AENTRY
+               AEND
+         AEND
+         MNOTE 8,'GEN_SET INDEX DATA FIELD SOURCE NOT INDEX'
+         MEXIT
+         AEND
+.*
+.* SET_INT_FIELD
+.*
+         AENTRY SET_INT_FIELD
+         AIF   (&SOURCE_IX GT 0) 
+               AIF  (&SYM_REF(&SOURCE_IX) GT 0                         X               X 
+                    AND '&SYM_PIC_TYPE(&SOURCE_IX)' EQ 'I') INDEX NAME
+         SGR   R0,R0
+         GEN_L R1,&SOURCE,&SOURCE_IX
+         LARL  R14,=F'&SYM_LEN(&SYM_REF(&SOURCE_IX))'
+         D     R0,0(R14)
+         AHI   R1,1
+         ST    R1,&TARGET
+                   AEXIT AENTRY
+               AEND
+         AEND
+         MNOTE 8,'GEN_SET INT FIELD SOURCE NOT INDEX NAME'
+         MEXIT
+         AEND
+         MEND

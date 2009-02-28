@@ -1,0 +1,33 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 02/25/09 RPI 1002 initial coding for use by GEN_SET
+.*********************************************************************
+         GEN_L    &REG,&SOURCE,&SOURCE_IX      
+         COPY  ZC_WS
+      AIF (&SOURCE_IX EQ 0)
+         LGFI  &REG,&SOURCE
+         MEXIT
+      AEND
+      ACASE (C2A('&SYM_PIC_TYPE(&SOURCE_IX)'))
+      AWHEN C'F',C'A',C'I'
+         L     &REG,&SOURCE
+      AWHEN C'G'
+         LG    &REG,&SOURCE
+      AWHEN C'H'
+         LH    &REG,&SOURCE
+      AWHEN C'P'
+         ZAP   ZCVT_PWORK,&SOURCE.(&SYM_LEN(&SOURCE_IX)
+         CVB   &REG,ZCVT_PWORK
+      AWHEN C'Z'
+         PACK  ZCVT_PWORK,&SOURCE_NAME
+         CVB   &REG,ZCVT_PWORK
+      AELSE
+               MNOTE 8,'GEN_L SOURCE NOT NUMERIC'
+      AEND
+         MEND

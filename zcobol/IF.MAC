@@ -8,7 +8,6 @@
 .*********************************************************************
 .* 04/09/08 initial coding for global IF
 .* 05/01/08 add support for IF A NOT = B
-.* 07/28/08 add support for IF condition (88 level)
 .* 10/06/08 ZSTRMAC
 .* 10/12/08 USE PUSH/POP CONDITION AND LOGICAL OPERATOR STACKS
 .*          TO PARSE COMPLEX IF WITH PRECEDENCE (NOT, AND, OR)
@@ -16,6 +15,8 @@
 .*          PRIOR TO CODE GENERATION MACROS GEN_COMP AND GEN_BC
 .* 01/05/09 add support for omitted subject+verb in condition test
 .*          used in NIST EXEC85.CBL.  Test added to TESTIF1.CBL.
+.* 02/22/09 RPI 1001 add support for conditional 88 value tests
+.* 02/26/09 RPI 1012 issue MNOTE if first field not found for compare
 .*********************************************************************
 .* Pending work includes support for field,lit,expression in either 
 .* first or second operand.  Coming after COMPUTE dubugs GEN_EXP.
@@ -38,8 +39,9 @@
          LCLA  &IOP_OP(10)     LOG. OPER. (1=NOT,2=AND,3=OR)
          LCLA  &IOP_CD1(10)     CONDITION1 +PARM IX OR -LOP IX
          LCLA  &IOP_CD2(10)     CONDITION2 +PARM IX OR -LOP IX
-         LCLB  &IOP_TF(10)     SAVE IOP TRUE/FALSE IN IOP_TF#
+         LCLB  &IOP_TF(10)     SAVE IOP TRUE/FALSE I**N IOP_TF#
          LCLA  &IOP_CD2A(10)   ALTERNATE CONDITION2 +PARM IX (= A OR B)
+         LCLB  &V88_MULT       FLAG FOR GENERATING LABEL FOR MUL 88'S
 .*
 .* SET IF/EVAL LVL AND EXIT_LAB #
 .*
@@ -51,13 +53,13 @@
          :&IE_NEXT(&IE_LVL) SETA 1          CUR EXIT BLOCK
          :&IE_ELSE(&IE_LVL) SETB 0          RESET ELSE FLAG
          ACALL IOP_BUILD
-.* DEBUG ACALL LIST_IOPS
+.*  ACALL LIST_IOPS   DSHX DEBUG
          ACALL IOP_GEN_CODE
          MEXIT
 .*
 .* BUILD IOP TABLE USING BNF CD AND LOP STAKS
-.*   1.  PUSH +CONDITION PARM PTRS AND -IOP PTRS ON CD_STK
-.*   2.  PUSH LOGICAL OPERATORS ('(',NOT, AND, OR) ON OP_STK 
+.*   1.  PUSH +CONDITION PARM PTRS AND -IOP PTRS      ON CD_STK
+.*   2.  PUSH LOGICAL OPERATORS '(',NOT, AND, OR,')'  ON OP_STK 
 .*   3.  POP  OP AND 1 OR 2 CD'S TO GEN NEXT IOP 
 .*       WHEN LOP PRECEDENCE OR AT END 
 .*
@@ -205,9 +207,14 @@
                AIF   (&IOP_TOT EQ 0)
                      :&CD_PARM_IX SETA &STK_CD(1)
                      :&CD_PREV_PARM SETC ''
+                     :&I SETA 1
                      ACALL IOP_GEN_CD
                      GEN_BC   15-&CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IEX
                _LVL)
+                     AIF   (&V88_MULT)
+                           :&V88_MULT SETB 0
+                           GEN_LABEL IF_&IE_TCNT(&IE_LVL)_IOP_&IOP_LAB
+                     AEND
                      MEXIT
                AEND
          AELSE
@@ -216,7 +223,7 @@
                MEXIT
          AEND
 .*
-.* GEN CODE FROM IOP TABLE
+.* GEN CODE FROM IOP TABLE WITH MULTIPLE ENTRIES
 .*
          :&I   SETA 1
          AWHILE (&I LE &IOP_TOT)
@@ -231,6 +238,10 @@
                    MNOTE 8,'IF IOP INVALID OPCODE &IOP_OP(&I)'
                AEND
                :&I SETA &I+1
+         AEND
+         AIF   (&V88_MULT)
+               :&V88_MULT SETB 0
+               GEN_LABEL IF_&IE_TCNT(&IE_LVL)_IOP_&IOP_LAB
          AEND
          AEND
 .*
@@ -482,9 +493,17 @@
                :&FIELD_SS1 SETB 1
                ACALL GET_CD_PARM       GET FIELD1 PARM FROM PRIOR CD
          AEND
+         AIF   (&FIELD_88_IX GT 0)
+               ACALL IOP_GEN_88
+               AEXIT AENTRY
+         AEND
          AWHILE ('&PARM' NE '')
                :&FIELD1    SETC  '&PARM'
                :&FIELD1_IX SETA &FIELD_IX
+               AIF (&FIELD_IX EQ 0)              RPI 1012
+                   MNOTE 8,'IF FIELD NOT FOUND - &FIELD1'
+                   MEXIT
+               AEND
                :&FIELD_SS1 SETB 0
                ACALL GET_CD_PARM
                AIF ('&PARM' EQ 'IS')
@@ -590,6 +609,33 @@
                    AEND
                AEND
                ACALL GET_CD_PARM
+         AEND
+         AEND
+.*
+.*
+.* IOP GEN 88 - GEN 1 OR MORE CONDITION 88 LEVEL COMPARES
+.*
+         AENTRY IOP_GEN_88
+         :&FIELD1    SETC '&FIELD_NAME'
+         :&FIELD1_IX SETA &FIELD_IX
+         :&V88_IX    SETA &SYM_LOC(&FIELD_88_IX)  FIRST VALUE INDEX
+         :&V88_MULT  SETB 0                       ASSUME NOT MULT
+         :&CCT SETC 'EQ'       NO  THEN EQ = OK
+         AWHILE (&V88_IX GT 0)
+               GEN_COMP &FIELD1,&FIELD1_IX,&V88_VAL(&V88_IX),0
+               :&V88_IX SETA &V88_NEXT(&V88_IX)
+               AIF (&V88_IX GT 0)
+                   AIF (&IOP_OP(&I) NE 1)
+                       AIF (NOT &V88_MULT)
+                           :&V88_MULT SETB 1
+                           :&IOP_LAB SETA &IOP_LAB+1   IOP T LABEL
+                       AEND
+                       GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_IOP_&IOP_LAB
+                   AELSE
+                       GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IE_LVX
+               L)
+                   AEND
+               AEND
          AEND
          AEND
 .*

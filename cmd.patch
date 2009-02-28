@@ -1,0 +1,18 @@
+--- cmd_orig.pl	2008-01-30 13:31:00.000000000 +0100
++++ cmd.pl	2009-02-25 23:34:26.000000000 +0100
+@@ -56,6 +56,7 @@
+ my $ECHO = 1;
+ my $HOME = $ENV{'HOME'} || $ENV{'LOGDIR'} ||
+ 		(getpwuid($<))[7] || die "You're homeless!\n";
++my $J2SEOPTIONS = $ENV{'J2SEOPTIONS'} || "";
+ my $dir; # Base directory for support files
+ my @dirs = ("$HOME/lib/z390", "/usr/local/lib/z390", "/usr/lib/z390");
+ unshift(@dirs, $ENV{Z390}) if $ENV{Z390};
+@@ -156,6 +157,7 @@
+     my $line = $lines[$i];
+     $line =~ s/\%\~dps0/$bat\//g;       # replace bat %dps0 with $bat path                         
+     $line =~ s/\%([1-9])/$args[$1]/g;   # substitute current bat parms 1-9
++    $line =~ s/\%J2SEOPTIONS\%/$J2SEOPTIONS/g;   # substitute current bat parms 1-9
+     $line =~ s/\s+$//;                  # Trim trailing spaces.
+     $line =~ s/\\/\//g;              # replace \ with /
+     if ($ECHO == 1){

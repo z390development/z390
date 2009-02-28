@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 04/09/08 initial coding for Z390 GEN_COMP COMPARE 
 .* 10/06/08 ZSTRMAC
+.* 02/25/09 RPI 1004 support PIC types 1,2,E,D,L
 .*********************************************************************
          GEN_COMP  
          :&FIELD1    SETC '&SYSLIST(1)'
@@ -41,15 +42,15 @@
                OR '&FIELD2' EQ 'ZEROS'                                 X             
                OR '&FIELD2' EQ 'ZERO')          
         ACASE  (C2A('&SYM_PIC_TYPE(&FIELD1_IX)'))
-        AWHEN  C'D'
+        AWHEN  C'2'
                ACALL RESET_SS1_FIELD1
          LD    0,&FIELD1
          LTDR  0,0  
-        AWHEN  C'E'
+        AWHEN  C'1'
                ACALL RESET_SS1_FIELD1
          LE    0,&FIELD1
          LTER  0,0  
-        AWHEN  C'A',C'F'
+        AWHEN  C'A',C'F',C'I'             RPI 1002
                ACALL RESET_SS1_FIELD1
          LT    0,&FIELD1
         AWHEN  C'G'
@@ -156,19 +157,19 @@
                 OR '&FIELD2'(1,1) EQ '-')
         :&L_FIELD1 SETA &SYM_LEN(&FIELD1_IX)
         ACASE  (C2A('&SYM_PIC_TYPE(&FIELD1_IX)'))
-        AWHEN  C'D'            
+        AWHEN  C'2'            
                ACALL RESET_SS1_FIELD1
          LD    0,&FIELD1
          LARL  R1,=D'&FIELD2'
          LD    F1,0(R1)
          CDR   0,1
-        AWHEN  C'E'            
+        AWHEN  C'1'            
                ACALL RESET_SS1_FIELD1
          LE    0,&FIELD1
          LARL  R1,=E'&FIELD2'
          LE    F1,0(R1)
          CER   0,1
-        AWHEN  C'A',C'F'
+        AWHEN  C'A',C'F',C'I'             RPI 1002
                ACALL RESET_SS1_FIELD1
          L     0,&FIELD1
          CFI   0,&FIELD2
@@ -281,15 +282,15 @@
 .* COMPARE 2 FIELDS
 .*
         ACASE  (C2A('&SYM_PIC_TYPE(&FIELD1_IX)'))
-        AWHEN  C'D'
+        AWHEN  C'2'
                ACALL RESET_SS1_FIELD1
          LD    0,&FIELD1
          CD    0,&FIELD2
-        AWHEN  C'E'
+        AWHEN  C'1'
                ACALL RESET_SS1_FIELD1
          LE    0,&FIELD1
          CE    0,&FIELD2
-        AWHEN  C'A',C'F'
+        AWHEN  C'A',C'F',C'I'             RPI 1002
                ACALL RESET_SS1_FIELD1
          L     0,&FIELD1
          C     0,&FIELD2

@@ -41,7 +41,7 @@
                         :&LAST_MASK SETC ',X''20'''
                     AEND
                 AELSEIF ('&CHAR' EQ '(')
-                    :&DUP SETC '&PIC'(&I+1,1)  FIRST DIGIT
+                    :&DUP SETA '&PIC'(&I+1,1)  FIRST DIGIT
                     :&I SETA &I+2
                     :&CHAR SETC '&PIC'(&I,1)
                     AWHILE (&I LE K'&PIC AND '&CHAR' NE ')')

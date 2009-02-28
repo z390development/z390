@@ -20,6 +20,7 @@
                MNOTE 4,'LINKAGE MISSING "SECTION"'
                MEXIT
          AEND
+         :&FILE_IX SETA 0 END ANY FILE RECORD DEFINITIONS
          :&LK_SAVE_WS_LOC SETA &WS_LOC SAVE WS LAST LOC FOR PD      
          :&LK_MODE SETB  1             TURN LK MODE
          MEND

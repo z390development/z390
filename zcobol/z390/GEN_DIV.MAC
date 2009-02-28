@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 10/31/08 initial coding for Z390 GEN_DIV using GEN_MPY as model    
+.* 02/25/09 RPI 1004 add support for types 1,2,E,D,L &ZC_FLOAT type    
 .*********************************************************************
        GEN_DIV &NDD,&TDD,&LDD,&PDD, DIVIDEND  NAME/LIT,TYPE,LEN,PLACES X                  
                &NDR,&TDR,&LDR,&PDR, DIVISOR   NAME/LIT,TYPE,LEN,PLACES X                  
@@ -22,7 +23,13 @@
                OR '&NDD'(1,1) EQ '-'                                   X
                OR '&NDD'(1,1) EQ '+')
        ACASE (C2A('&TDD'))
-       AWHEN C'D',C'E',C'F',C'H'
+       AWHEN C'2'
+         LARL  R3,=D'&NDD'
+         :&NDDX SETC '0(R3)'
+       AWHEN C'1'
+         LARL  R3,=E'&NDD'
+         :&NDDX SETC '0(R3)'
+       AWHEN C'F',C'H'
          LARL  R3,=&TDD'&NDD'
          :&NDDX SETC '0(R3)'
        AWHEN C'G'
@@ -45,7 +52,13 @@
                OR '&NDR'(1,1) EQ '-'                                   X
                OR '&NDR'(1,1) EQ '+')
        ACASE (C2A('&TDR'))
-       AWHEN C'D',C'E',C'F',C'H'
+       AWHEN C'2'
+         LARL  R14,=D'&NDR'
+         :&NDRX SETC '0(R14)'
+       AWHEN C'1'
+         LARL  R14,=E'&NDR'
+         :&NDRX SETC '0(R14)'
+       AWHEN C'F',C'H'
          LARL  R14,=&TDR'&NDR'
          :&NDRX SETC '0(R14)'
        AWHEN C'G'
@@ -63,13 +76,13 @@
 .* DIVIDE DIVIDEND TYPE D WITH QUOTIENT IN F0
 .*
          ACASE (C2A('&TDD'))
-         AWHEN C'D'
+         AWHEN C'2'
                ACASE (C2A('&TDR'))
-               AWHEN C'D'
+               AWHEN C'2'
          LD    0,&NDDX
          LD    1,&NDRX
                     ACALL SFT_RND_D
-               AWHEN C'E'
+               AWHEN C'1'
          LD    0,&NDDX
          LE    1,&NDRX
          LDER  1,1
@@ -117,9 +130,9 @@
 .* STORE TYPE D QUOTIENT FROM F0
 .*
                ACASE (C2A('&TQ'))  
-               AWHEN C'D'
+               AWHEN C'2'
          STD   0,&NQ
-               AWHEN C'E'
+               AWHEN C'1'
          LEDR  0,0
          STE   0,&NQ
                AWHEN C'F'
@@ -154,14 +167,14 @@
 .*
 .* DIVIDE DIVIDEND TYPE E WITH QUOTIENT IN F0
 .*
-         AWHEN C'E'
+         AWHEN C'1'
                ACASE (C2A('&TDR'))
-               AWHEN C'D'
+               AWHEN C'2'
          LE    0,&NDDX
          LD    1,&NDRX
          LEDR  1,1
                     ACALL SFT_RND_E
-               AWHEN C'E'
+               AWHEN C'1'
          LE    0,&NDDX
          LE    1,&NDRX
                     ACALL SFT_RND_E
@@ -206,10 +219,10 @@
 .* STORE TYPE E QUOTIENT FROM F0
 .*
                ACASE (C2A('&TQ'))  
-               AWHEN C'D'
+               AWHEN C'2'
          LDER  0,0
          STD   0,&NQ
-               AWHEN C'E'
+               AWHEN C'1'
          STE   0,&NQ
                AWHEN C'F'
          CFER  0,0,0
@@ -245,12 +258,12 @@
 .*
          AWHEN C'F'
                ACASE (C2A('&TDR'))
-               AWHEN C'D'
+               AWHEN C'2'
          L     1,&NDDX
          LD    0,&NDRX
          CFDR  2,0,0
                     ACALL SFT_RND_F
-               AWHEN C'E'
+               AWHEN C'1'
          L     1,&NDDX
          LE    0,&NDRX
          CFER  2,0,0
@@ -295,12 +308,12 @@
 .*
          AWHEN C'G'
                ACASE (C2A('&TDR'))
-               AWHEN C'D'
+               AWHEN C'2'
          LG    1,&NDDX
          LD    2,&NDRX
          CGDR  2,2    
                     ACALL SFT_RND_G
-               AWHEN C'E'
+               AWHEN C'1'
          LG    1,&NDDX
          LE    2,&NDRX
          CGER  2,2    
@@ -345,13 +358,13 @@
 .* STORE TYPE G QUOTIENT FROM R1
 .*
                ACASE (C2A('&TQ'))  
-               AWHEN C'D'
+               AWHEN C'2'
          CGDR  1,1
                AIF (&SQ EQ 0)
          LPGR  1,1
                AEND
          STG   1,&NQ
-               AWHEN C'E'
+               AWHEN C'1'
          CGER  1,1
                AIF (&SQ EQ 0)
          LPGR  1,1
@@ -434,12 +447,12 @@
 .*
          AWHEN C'H'
                ACASE (C2A('&TDR'))
-               AWHEN C'D'
+               AWHEN C'2'
          LH    1,&NDDX
          LD    2,&NDRX
          CFDR  2,2    
                     ACALL SFT_RND_F
-               AWHEN C'E'
+               AWHEN C'1'
          LH    1,&NDDX
          LE    2,&NDRX
          CFER  2,2    
@@ -485,7 +498,7 @@
 .*
          AWHEN C'P'
                ACASE (C2A('&TDR'))
-               AWHEN C'D'
+               AWHEN C'2'
          :&LPW1 SETA &LDD
          ZAP   ZCVT_PWORK1(&LPW1),&NDDX
          LD    0,&NDRX
@@ -493,7 +506,7 @@
          CVD   0,ZCVT_PWORK2
          :&LPW2 SETA 8
                     ACALL SFT_RND_P
-               AWHEN C'E'
+               AWHEN C'1'
          :&LPW1 SETA &LDD
          ZAP   ZCVT_PWORK1(&LPW1),&NDDX
          LD    0,&NDRX
@@ -549,7 +562,7 @@
 .* STORE TYPE P QUOTIENT FROM ZCVT_PWORK4(LDD)
 .*
                ACASE (C2A('&TQ'))  
-               AWHEN C'D'
+               AWHEN C'2'
          ZAP   ZCVT_PWORK1,ZCVT_PWORK4(&LDR)
          CVBG  0,ZCVT_PWORK1
                AIF (&SQ EQ 0)
@@ -557,7 +570,7 @@
                AEND
          CDFR  0,0
          STD   0,&NQ
-               AWHEN C'E'
+               AWHEN C'1'
          ZAP   ZCVT_PWORK1,ZCVT_PWORK4(&LDR)
          CVBG  0,ZCVT_PWORK1
                AIF (&SQ EQ 0)
@@ -654,14 +667,14 @@
 .*
          AWHEN C'Z'
                ACASE (C2A('&TDR'))
-               AWHEN C'D'
+               AWHEN C'2'
          PACK   ZCVT_PWORK1(&LDDP),&NDDX
          LD    0,&NDRX
          CFDR  0,0,0  
          CVD   0,ZCVT_PWORK2
          :&LDRP SETA 8
                     ACALL SFT_RND_Z
-               AWHEN C'E'
+               AWHEN C'1'
          :&LDDP SETA &LDD/2+1
          PACK   ZCVT_PWORK1(&LDDP),&NDDX
          LE    0,&NDRX
@@ -717,7 +730,7 @@
 .* STORE TYPE Z QUOTIENT FROM Q=ZCVT_PWORK4(LDDP)
 .*
                ACASE (C2A('&TQ'))  
-               AWHEN C'D'
+               AWHEN C'2'
          ZAP   ZCVT_PWORK1,ZCVT_PWORK4(&LDDP)
          CVBG  0,ZCVT_PWORK1
                AIF (&SQ EQ 0)
@@ -725,7 +738,7 @@
                AEND
          CDGR  0,0
          STD   0,&NQ
-               AWHEN C'E'
+               AWHEN C'1'
          ZAP   ZCVT_PWORK1,ZCVT_PWORK4(&LDDP)
          CVBG  0,ZCVT_PWORK1
                AIF (&SQ EQ 0)
@@ -776,7 +789,7 @@
 .*
              AIF ('&TR' NE '')
                ACASE (C2A('&TR'))  
-               AWHEN C'D'
+               AWHEN C'2'
          ZAP   ZCVT_PWORK1,ZCVT_PWORK4+&LDDP.(&LDRP)
          CVBG  0,ZCVT_PWORK1
                AIF (&SQ EQ 0)
@@ -784,7 +797,7 @@
                AEND
          CDGR  0,0
          STD   0,&NR
-               AWHEN C'E'
+               AWHEN C'1'
          ZAP   ZCVT_PWORK1,ZCVT_PWORK4+&LDDP.(&LDRP)
          CVBG  0,ZCVT_PWORK1
                AIF (&SQ EQ 0)
@@ -844,13 +857,13 @@
 .*
          AENTRY STORE_FH_QR
                ACASE (C2A('&TQ'))  
-               AWHEN C'D'
+               AWHEN C'2'
                AIF (&SQ EQ 0)
          LPR   1,1
                AEND
          CDFR  1,1
          STD   1,&NQ
-               AWHEN C'E'
+               AWHEN C'1'
                AIF (&SQ EQ 0)
          LPR   1,1
                AEND

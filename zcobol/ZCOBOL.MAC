@@ -7,18 +7,14 @@
 .* Date   - 04/29/08                                                 *
 .*********************************************************************
 .* 04/29/08 initial coding for global CBL options call gen'd by zcobol  
+.* 02/25/09 RPI 1004 SET ZC_FLOAT to HFP/BFP/DFP default is DFP         
 .*********************************************************************
         ZCOBOL &VER=,      z390 version from tz390.version             X
                &PGM=,      program name from args[0] overides PGM-ID.  X
                &CDATE=,    current compile date or MM/DD/YY if notimingX
                &CTIME=,    current compile start time if timing        X
                &OPTIONS=   sublist of all options following program  
-         GBLC &ZC_VER       ZCOBOL VERSION FROM TZ390 WITHIN Z390.JAR
-         GBLC &ZC_PGM       PROGRAM NAME FROM FIRST COMMAND LINE PARM 
-         GBLC &ZC_CDATE     ZCOBOL COMPILE DATE OR MM/DD/YY IF NOTIMING
-         GBLC &ZC_CTIME     ZCOBOL COMPILE START TIME IF TIMING ELSE ''
-         GBLC &ZC_LIST      ZCOBOL LISTING OPTION FOR INTERNAL CODE GEN
-         GBLC &ZC_OPTIONS   ALL OPTIONS FOLLOWING PGM NAME        
+         COPY ZC_WS
 .*
 .* SAVE ALL ZCOBOL PARMS IN GLOBALS
 .*
@@ -29,19 +25,12 @@
          :&ZC_LIST  SETC 'NOLIST,NOGEN,NOLISTUSE'
          :&ZC_OPTIONS SETC '&OPTIONS'
 .*
-.* DEFINE ZCOBOL CLOBAL OPTIONS AND DEFAULTS
+.* DEFINE ZCOBOL CLOBAL OPTION DEFAULTS
 .*
-         GBLB &ZC_CICS      GENERATE CICS PGM WITH WS AS DHFEISTG CSECT                    
-         GBLB &ZC_COMMENT   GEN CBL SOURCE COMMENTS ON BAL/PRN
-         :&ZC_COMMENT SETB 1 DEFAULT ON
-         GBLB &ZC_EXTEND    64 BIT COMP 9(19-39), 16 BYTE COMP-3 9(31)
-         :&ZC_EXTEND SETB 1  DEFAULT ON
-         GBLB &ZC_R64       ALLOW GENERATION OF 64 BIT REG INSTRUCTIONS
-         :&ZC_R64    SETB 1  ALLOW 64 BIT REGISTER INSTRUCTIONS
-         GBLB &ZC_TRACE     TRACE SOURCE EXECUTION ON LOG/TRE VIA WTO
-         GBLB &ZC_TRUNC     TRUNCATE NUMERIC VALUES TO PIC              
-         GBLB &ZC_WARN      ISSUE LEVEL 4 M NOTE WARMINGS
-&ZC_WARN SETB 1
+         :&ZC_COMMENT SETB 1   DEFAULT ON
+         :&ZC_EXTEND  SETB 1   DEFAULT ON
+         :&ZC_FLOAT   SETC 'D' DEFAULT DFP FOR FLOAT-? (COMP-1/2=HFP)
+         :&ZC_R64     SETB 1   ALLOW 64 BIT REGISTER INSTRUCTIONS
 .*
 .* SET OVERRIDES FROM PARM OPTIONS
 .*

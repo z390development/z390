@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 10/30/08 initial coding for global MULTIPLY using ADD as model
 .* 02/16/09 upgrade using ZCGETFLD to support subscripts and qual.
+.* 02/26/09 RPI 1012 move onsize end-add pending to DIVIDE             
 .*********************************************************************
          DIVIDE  
          COPY  ZC_WS
@@ -182,14 +183,14 @@
 .*
          AENTRY SET_OPTIONS
          :&ROUNDED     SETB 0
-         :&ON_SIZE     SETB 0
-         :&NOT_ON_SIZE SETB 0
+         :&ONSIZE     SETB 0
+         :&NOT_ONSIZE SETB 0
          :&LAST_PARM   SETA 0
          AWHILE (&PARM_IX LE N'&SYSLIST)
                AIF     ('&SYSLIST(&PARM_IX)' EQ 'ON'                   X
                         AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
                         AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
-                     :&ON_SIZE SETB 1      
+                     :&ONSIZE SETB 1      
                      AIF (&LAST_PARM EQ 0)
                          :&LAST_PARM SETA &PARM_IX-1
                      AEND                              
@@ -198,7 +199,7 @@
                         AND '&SYSLIST(&PARM_IX+1)' EQ 'ON'             X
                         AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
                         AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
-                     :&NOT_ON_SIZE SETB 1                                
+                     :&NOT_ONSIZE SETB 1                                
                      AIF (&LAST_PARM EQ 0)
                          :&LAST_PARM SETA &PARM_IX-1
                      AEND                              
@@ -212,6 +213,12 @@
          AIF (&LAST_PARM EQ 0)
              :&LAST_PARM SETA N'&SYSLIST
          AEND                              
+         AIF   (&ONSIZE)
+               :&IE_LVL  SETA  &IE_LVL+1         ADD PENDING END_DIV
+               :&IE_TYPE(&IE_LVL) SETA 14        FOR END_DIV OR PERIOD
+               :&DIV_LAB SETA &DIV_LAB+1
+               :&IE_TCNT(&IE_LVL) SETA &DIV_LAB
+         AEND
          AEND
 .*
 .* CALL GEN DIV
@@ -228,8 +235,8 @@
                &NQ,&TQ,&LQ,&SQ,&PQ, QUOTIENT  NAME,TYPE,LEN,SIGN,PLCS  X                  
                &NR,&TR,&LR,&SR,&PR, REMAINDER NAME,TYPE,LEN,SIGN,PLCS  X
                &ROUNDED,       1 IF ROUNDED SPECIFIED                  X
-               &ON_SIZE,       1 IF ON SIZE SPECIFIED                  X
-               &NOT_ON_SIZE    1 IF NOT_ON_SIZE SPECIFIED                  
+               &ONSIZE,       1 IF ON SIZE SPECIFIED                   X
+               &NOT_ONSIZE    1 IF NOT_ONSIZE SPECIFIED                  
          AEND
 .*
 .* SET LIT PDD

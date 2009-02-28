@@ -44,9 +44,8 @@
          ZC_DATA_LIST 
          GEN_WS 
          :&LK_MODE SETB 0
-
 .*
-.* GEN WORK AREAS AT END OF DATA DIVISION STARTED BY GEN_WS                                 
+.* VERIFY END OF WS
 .*
        AIF (&ZC_CICS)
 DFHEISTG DSECT

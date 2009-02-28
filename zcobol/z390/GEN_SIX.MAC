@@ -7,6 +7,7 @@
 .* Date   - 02/05/09                                                 *
 .*********************************************************************
 .* 02/05/09 move subscript gen form zcobol\ZCGETFLD.CPY
+.* 02/25/09 RPI 1002 support PIC type I for INDEX BY and USAGE INDEX
 .*********************************************************************
          GEN_SIX                                    
          COPY  ZC_WS
@@ -34,7 +35,7 @@
                :&SUB_IX SETA &SYM_IX
                GEN_BASE &SUB_IX
                ACASE (C2A('&SYM_PIC_TYPE(&SUB_IX)'))
-               AWHEN C'A' ASSUME INDEX AND JUST ADD VALUE
+               AWHEN C'I' ADD INDEX OFFSET  RPI 1002
          L     &FIELD_REG,&SYM_NAME(&SUB_IX) INDEX OFFSET
          LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)(&FIELD_REG)
                AEXIT AENTRY
@@ -100,7 +101,7 @@
                :&SUB_IX SETA &SYM_IX
                GEN_BASE &SUB_IX
                ACASE (C2A('&SYM_PIC_TYPE(&SUB_IX)'))
-               AWHEN C'A'
+               AWHEN C'I'  ADD INDEX OFFSET  RPI 1002
          A     &FIELD_REG,&SYM_NAME(&SUB_IX) ADD INDEX OFFSET
                AEXIT AENTRY
                AWHEN C'F'

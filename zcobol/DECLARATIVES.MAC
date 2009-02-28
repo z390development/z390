@@ -6,18 +6,8 @@
 .* Author - Don Higgins                                              *
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
-.* 04/16/08 initial coding for z390 ALTER   
-.* 02/26/09 rpi 1012 correct to use LARL and relative branches
+.* 02/26/09 stub for pending support              
 .*********************************************************************
-         GEN_ALTER  &OLD_GO_TO,&NEW_GO_TO
-         GBLB  &ZC_ABORT
-         :&ZC_ABORT SETB 1 REQUEST ABORT ROUTINES          
-         LARL  R1,PG_&OLD_GO_TO
-         LARL  R2,=X'A7F4'
-         CLC   0(2,R1),0(R2)  IS THE TARGET A JUMP
-         JNE   ZCVT_ABORT_ALTER  NO ABORT
-         LARL  R0,PG_&NEW_GO_TO  YES, REPLACE HALF WORKD OFFSET COUNT
-         SR    R0,R1
-         SRL   R0,1
-         STH   R0,2(R1)
+         DECLARATIVES
+         MNOTE 8,'DECLARATIVES NOT SUPPORTED YET'
          MEND

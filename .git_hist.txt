@@ -5306,7 +5306,67 @@ git commit -m "Reconstructed version v1.5.00 of z390 committed on behalf of Don 
 git tag -a v1.5.00 -m "Reconstructed version v1.5.00 of z390 committed on behalf of Don Higgins"
 git gc --aggressive
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.00a
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Add to .gitignore file:
+# Assembler/emulator and other input stuff
+# **/*.patch-> patch script
+
+==> Stage files for V1.5.00a
+git add src/tz390.java
+git add src/zc390.java
+git add zcobol/ADD.MAC
+git add zcobol/ALTER.MAC
+git add zcobol/COMMUNICATION.MAC
+git add zcobol/DATA.MAC
+git add zcobol/DIVIDE.MAC
+git add zcobol/IF.MAC
+git add zcobol/LINKAGE.MAC
+git add zcobol/MOVE.MAC
+git add zcobol/MULTIPLY.MAC
+git add zcobol/PERIOD.MAC
+git add zcobol/SET.MAC
+git add zcobol/SUBTRACT.MAC
+git add zcobol/WS.MAC
+git add zcobol/ZCGETFLD.CPY
+git add zcobol/ZCOBOL.MAC
+git add zcobol/ZC_WS.CPY
+git add zcobol/test/TESTIF1.CBL
+git add zcobol/z390/GEN_ADD.MAC
+git add zcobol/z390/GEN_ALTER.MAC
+git add zcobol/z390/GEN_COMP.MAC
+git add zcobol/z390/GEN_DIV.MAC
+git add zcobol/z390/GEN_EDIT.MAC
+git add zcobol/z390/GEN_MOVE.MAC
+git add zcobol/z390/GEN_MPY.MAC
+git add zcobol/z390/GEN_PROC_END.MAC
+git add zcobol/z390/GEN_SIX.MAC
+git add zcobol/z390/GEN_SUB.MAC
+git add zcobol/z390/GEN_WS.MAC
+git add README.TXT
+git add cmd.patch
+git add zcobol/CD.MAC
+git add zcobol/DECLARATIVES.MAC
+git add zcobol/END_DECLARATIVES.MAC
+git add zcobol/USE.MAC
+git add zcobol/test/TESTSIX2.CBL
+git add zcobol/z390/GEN_L.MAC
+git add zcobol/z390/GEN_SET.MAC
+
+==> Create commit for V1.5.00a
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2009-02-28 06:21:00 -0500
+set GIT_COMMITTER_DATE=2021-03-24 21:50:00 +0100
+git commit -m "Reconstructed version v1.5.00a of z390 committed on behalf of Don Higgins"
+git tag -a v1.5.00a -m "Reconstructed version v1.5.00a of z390 committed on behalf of Don Higgins"
 
 
 

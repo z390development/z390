@@ -9,4 +9,5 @@
 .* 02/20/09 initial coding for global COMMUNICATION SECTION
 .*********************************************************************
          COMMUNICATION       
+         COPY CD.MAC  REPLACE CD INSTRUCTION WITH CD MACRO
          MEND

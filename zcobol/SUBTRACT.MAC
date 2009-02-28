@@ -9,8 +9,9 @@
 .* 10/28/08 initial coding for global SUBTRACT
 .* 12/22/08 use ZCGETFLD to get field with qual,base,subscript
 .* 02/15/09 use ADD as model for mult source and target support       
+.* 02/26/09 RPI 1012 move onsize end-add pending to SUBTRACT           
 .*********************************************************************
-         ADD   
+         SUBTRACT
          COPY  ZC_WS
          :&PARM_IX SETA 2
          :&NP      SETA N'&SYSLIST
@@ -53,6 +54,12 @@
          AIF   (&FROM_IX EQ 0)
                MNOTE 8,'SUBTRACT MISSING FROM'
                MEXIT
+         AEND
+         AIF   (&ONSIZE)
+               :&IE_LVL  SETA  &IE_LVL+1         ADD PENDING END_SUB
+               :&IE_TYPE(&IE_LVL) SETA 12        FOR END_SUB OR PERIOD
+               :&SUB_LAB SETA &SUB_LAB+1
+               :&IE_TCNT(&IE_LVL) SETA &SUB_LAB
          AEND
          AIF   (&GIVING_IX GT 0)  SUBTRACT S1+ FROM S2 GIVING S3+
                ACALL SUB_GIVING

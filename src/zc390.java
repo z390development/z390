@@ -76,6 +76,7 @@ public class zc390{
     * 12/01/08 add COPY support using mz390 as model
     * 02/20/09 ignore AUTHOR, SECURITY, DATE-WRITTEN,
     *          and INSTALLATION pg.
+    * 02/26/09 RPI 1012 force END DECLARATIVES into END_DECLARATIVES.          
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -775,14 +776,11 @@ public class zc390{
 		if (zc_token_area == 'A'){
 			// non procedure division section operation
 			// or procedure division label
-			if (zc_proc_div){				
+			if (zc_proc_div 
+				&& (zc_next_token.equals(".")            // RPI 1012
+					|| zc_next_token.equals("SECTION"))){ // RPI 1012				
 				// gen procedure div label
-				if (zc_next_token.equals(".")
-					|| zc_next_token.equals("SECTION")){
-					new_mlc_line("         LABEL " + zc_token);
-				} else {
-					log_error("LABEL missing period - " + zc_token);
-				}
+				new_mlc_line("         LABEL " + zc_token);
 				skip_period = true;
 			} else {
 				if  (zc_token.charAt(0) >= '0' 
@@ -821,6 +819,10 @@ public class zc390{
 						} 
 						put_mlc_line("         DATA END");						
 						zc_proc_div = true;
+						skip_period = true;
+					} else if (zc_token.equals("END") && zc_next_token.equals("DECLARATIVES")){
+						zc_token = "END_DECLARATIVES";   // RPI 1012
+						zc_next_token = " "; 
 						skip_period = true;
 					}
 					new_mlc_line("         " + zc_token);

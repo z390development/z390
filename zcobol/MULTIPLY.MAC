@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 10/30/08 initial coding for global MULTIPLY using ADD as model
+.* 02/26/09 RPI 1012 move onsize end-add pending to MULTIPLY           
 .*********************************************************************
          MULTIPLY
          COPY  ZC_WS
@@ -136,6 +137,12 @@
              :&LAST_PARM SETA N'&SYSLIST
          AEND                        
          :&PARM_IX SETA &SAVE_PARM_IX      
+         AIF   (&ONSIZE)
+               :&IE_LVL  SETA  &IE_LVL+1         ADD PENDING END_MPY
+               :&IE_TYPE(&IE_LVL) SETA 13        FOR END_MPY OR PERIOD
+               :&MPY_LAB SETA &MPY_LAB+1
+               :&IE_TCNT(&IE_LVL) SETA &MPY_LAB
+         AEND
          AEND
          COPY ZCGETFLD
          MEND

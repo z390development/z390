@@ -14,12 +14,19 @@
 .* 12/22/08 add SYM_SUB_CNT for use by ZCGETFLD.CPY subscript parser          
 .* 02/05/09 add TOT_SIX and SIX_NAME,SIX_OFF,SIX_OCCURS for subscripts
 .* 02/08/09 add FIELD_RMD to indicate (off:len) reference modification 
+.* 02/23/09 RPI 1001 add &FIELD_88_IX set by ZCGETFLD.CPY
+.* 02/25/09 RPI 1004 add &ZC_FLOAT SET TO DEFUALT DFP           
+.* 02/26/09 RPI 1012 add &SYM_VAL_ALL FLAG           
 .*********************************************************************
 .*
 .* PGM NAME AND ZCOBOL VERSION CHECKED BY ZC390NUC IN ZC390LIB.390
 .*
          GBLC  &ZC_PGM       NAME FROM FIRST CMD PARM (IGNORE PGM-ID)
          GBLC  &ZC_VER       CURRENT Z390 VERSION FROM TZ390.VER
+         GBLC  &ZC_CDATE     COMPILE DATE OR MM/DD/YY IF NOTIMING
+         GBLC  &ZC_CTIME     COMPILE START TIME IF TIMING ELSE ''
+         GBLC  &ZC_LIST      LISTING OPTION FOR INTERNAL CODE GEN
+         GBLC  &ZC_OPTIONS   ALL OPTIONS FOLLOWING PGM NAME        
 .*
 .* ZCOBOL OPTIONS
 .*
@@ -33,6 +40,7 @@
          GBLB  &ZC_TRACE     DISPLAY PARAGRAPH LABEL TRACE DURING EXEC
          GBLB  &ZC_TRUNC     TRUNCATE NUM DATA TO PIC SIZE (NOT YET)
          GBLB  &ZC_WARN      GENERATE WARNING LEVEL 4 M NOTES
+         GBLC  &ZC_FLOAT     FLOATING POINT TYPE FOR USAGE FLOAT-?
 .*
 .* GLOBAL LIMITS
 .*
@@ -89,6 +97,7 @@
          GBLB  &FIELD_SIX              OUTPUT REG USED FOR SUB/IDX/RMOD 
          GBLB  &FIELD_RMD              OUTPUT REF MODS (OFF:LEN)
          GBLA  &FIELD_IX               OUTPUT SYM_IX OF FIELD
+         GBLA  &FIELD_88_IX            OUTPUT SYM_IX OF 88 FIELD           
          GBLC  &FIELD_NAME             OUTPUT SOURCE/TARGET NAME
 .*                                       SS1 AND     SIX > O(L,R)
 .*                                       SS1 AND NOT SIX > N+O(L)
@@ -122,6 +131,7 @@
          GBLA  &SYM_DUP_MIN(&MAX_SYM)  SYM MIN OCCURS DEPENDING            
          GBLA  &SYM_DUP_IX(&MAX_SYM)   SYM IX FOR DEPENDING ON             
          GBLC  &SYM_VAL(&MAX_SYM)  SYM VALUE (0,SPACE,'...') T=1,2
+         GBLB  &SYM_VAL_ALL(&MAX_SYM)  SYM VALUE ALL FLAG
          GBLC  &SYM_PIC(&MAX_SYM)  SYM PIC (999,X(3) ETC.)
          GBLC  &SYM_PIC_TYPE(&MAX_SYM)  SYM PIC TYPE A,D,E,F,H,P,X,Z
          GBLB  &SYM_PIC_SIGN(&MAX_SYM)  SYM PIC (S9...)

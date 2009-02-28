@@ -11,6 +11,8 @@
 .* 06/11/08 add support for TYPE=WS and TYPE=LK                   
 .* 10/07/08 ZSTRMAC
 .* 12/03/08 ADD FILE DCB DEFINITION ADDED BY FD
+.* 10/25/09 RPI 1002 and 1004 ADD PIC TYPES 1,2,D,E,L,I 
+.* 10/26/09 rpi 1012 support VAVLUE ALL clause
 .*********************************************************************
          GEN_WS      
          COPY  ZC_WS   
@@ -126,22 +128,35 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
      ACASE (C2A('&SYM_PIC_TYPE(&I)'))
      AWHEN C'A' POINTER (32 BIT)
 &NAME    DC &CDUP.AL4(&SYM_VAL(&I))
-     AWHEN C'D' DOUBLE HFP (64 BIT)
-&NAME    DC &CDUP.DL8'&SYM_VAL(&I)'
-     AWHEN C'E' SINGLE HFP (32 BIT)
-&NAME    DC &CDUP.EL4'&SYM_VAL(&I)'
+     AWHEN C'1' SINGLE HFP (32 BIT)             RPI 1004
+&NAME    DC &CDUP.EHL4'&SYM_VAL(&I)'
+     AWHEN C'2' DOUBLE HFP (64 BIT)             RPI 1004
+&NAME    DC &CDUP.DHL8'&SYM_VAL(&I)'
+     AWHEN C'D' DOUBLE FP (64 BIT HFP/BFP/DFP)  RPI 1004
+&NAME    DC &CDUP.D&ZC_FLOAT.L8'&SYM_VAL(&I)'
+     AWHEN C'E' SINGLE FP (32 BIT HFP/BFP/DFP)  RPI 1004
+&NAME    DC &CDUP.E&ZC_FLOAT.L4'&SYM_VAL(&I)'
      AWHEN C'F' S9(9) NUMERIC (32 BIT BINARY)
 &NAME    DC &CDUP.AL4(&SYM_VAL(&I))
      AWHEN C'G' S9(18) NUMERIC (64 BIT BINARY)
 &NAME    DC &CDUP.FL8'&SYM_VAL(&I)'
      AWHEN C'H' S9(4) NUMERIC (16 BIT BINARY)
 &NAME    DC &CDUP.AL2(&SYM_VAL(&I))
+     AWHEN C'I' INDEX OFFSET                      RPI 1002
+&NAME    DC &CDUP.AL4(&SYM_VAL(&I))
+     AWHEN C'L' EXTENDED FP (128 BIT HFP/BFP/DFP) RPI 1004
+&NAME    DC &CDUP.L&ZC_FLOAT.L16'&SYM_VAL(&I)'
      AWHEN C'P' S9(N) NUMERIC (PACKED)
 &NAME    DC &CDUP.PL&SYM_LEN(&I)'&SYM_VAL(&I)'
      AWHEN C'X' X(N)  ALPHANUMERIC
        AIF  ('&SYM_VAL(&I)'(1,1) EQ '''')              
+            AIF (&SYM_VAL_ALL(&I))             RPI 1012
+&NAME    DS 0CL&SYM_LEN(&I)
+         DC (&SYM_DUP(&I)*&SYM_LEN(&I))C&SYM_VAL(&I)
+            AELSE
 &NAME    DC &CDUP.CL&SYM_LEN(&I)&SYM_VAL(&I)
-       AELSEIF ('&SYM_VAL(&I)'(1,1) EQ 'X')         
+            AEND
+       AELSEIF ('&SYM_VAL(&I)'(1,2) EQ 'X''')         
          :&HEX SETC '&SYM_VAL(&I)'(2,*)     
 &NAME    DC &CDUP.XL&SYM_LEN(&I)&HEX
        AELSEIF ('&SYM_VAL(&I)' EQ 'SPACE'                              X
@@ -154,7 +169,13 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
                 OR '&SYM_VAL(&I)' EQ 'HIGH_VALUE')
 &NAME    DC XL&SYM_LEN(&I)'FF'
        AELSE
-         MNOTE 8,'GEN_WS UNKNOWN VALUE &SYM_VAL(&I) FOR &SYM_NAME(&I)'
+         :&PIC_VAL SETC '''&PIC_VAL'''  RPI 1012
+            AIF (&SYM_VAL_ALL(&I))             RPI 1012
+&NAME    DS 0CL&SYM_LEN(&I)
+         DC (&SYM_DUP(&I)*&SYM_LEN(&I))C&SYM_VAL(&I)
+            AELSE
+&NAME    DC &CDUP.CL&SYM_LEN(&I)&SYM_VAL(&I)
+            AEND
        AEND
      AWHEN C'Z' S9(N) NUMERIC (DISPLAY)
        AIF (&SYM_PIC_SIGN(&I))
@@ -185,6 +206,8 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
 &NAME    DS  &CDUP.FL8
      AWHEN C'H' S9(4) NUMERIC (16 BIT BINARY)
 &NAME    DS  &CDUP.HL2
+     AWHEN C'I' INDEX OFFSET                      RPI 1002
+&NAME    DS &CDUP.FL4
      AWHEN C'P' S9(N) NUMERIC (PACKED)
 &NAME    DS  &CDUP.PL&SYM_LEN(&I)
      AWHEN C'X' X(N)  ALPHANUMERIC

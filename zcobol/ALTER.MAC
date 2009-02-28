@@ -25,7 +25,7 @@
          AELSEIF (&NP EQ 5)
                AIF ('&SYSLIST(3)' EQ 'PROCEED'                         X
                    AND '&SYSLIST(4)' EQ 'TO')
-                   :&NEW_GO_TO SETA  &SYSLIST(5)
+                   :&NEW_GO_TO SETC  '&SYSLIST(5)'
                AELSE
                    MNOTE 8,'ALTER TO PROCED TO NOT FOUND'
                    MEXIT

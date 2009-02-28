@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 10/30/08 initial coding for Z390 GEN_MPY using GEN_SUB as model    
 .* 02/16/09 upgrade to use ZCGETFLD for subscripts and qual.
+.* 02/25/09 RPI 1004 add support for types 1,2,E,D,L &ZC_FLOAT type    
 .*********************************************************************
          GEN_MPY &T_NAME,&T_IX,&S_NAME,&S_IX,&ROUNDED,&ONSIZE 
          COPY  ZC_WS
@@ -64,14 +65,14 @@
 .*
       AENTRY MPY_NUM_LIT
       ACASE (C2A('&SYM_PIC_TYPE(&TARGET)'))
-      AWHEN C'D'
+      AWHEN C'2'
          LD    F0,&SYM_NAME(&TARGET)
-         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+         LARL  R1,=D'&NUM'
          MD    F0,0(R1)
          STD   F0,&SYM_NAME(&TARGET)
-      AWHEN C'E'
+      AWHEN C'1'
          LE    F0,&SYM_NAME(&TARGET)
-         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
+         LARL  R1,=E'&NUM'
          ME    F0,0(R1)
          STE   F0,&SYM_NAME(&TARGET)
       AWHEN C'F'
@@ -88,7 +89,7 @@
          STG   R0,&SYM_NAME(&TARGET)
       AWHEN C'P'
          :&LPNUM SETA (K'&NUM/2+3)/2*2 ROUNDED EVEN FOR LARL
-         LARL  R1,=&SYM_PIC_TYPE(&TARGET)L&LPNUM'&NUM'
+         LARL  R1,=PL&LPNUM'&NUM'
          MP    &SYM_NAME(&TARGET),0(&LPNUM,R1)
       AWHEN C'Z'
          PACK  ZCVT_PWORK(&L_TARGET/2+1),&SYM_NAME(&TARGET)
@@ -108,13 +109,13 @@
 .*
          AENTRY MPY_FLD
          ACASE (C2A('&T_TARGET'))
-         AWHEN C'D'
+         AWHEN C'2'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LD    0,&SYM_NAME(&TARGET)
          MD    0,&SYM_NAME(&SOURCE)
          STD   0,&SYM_NAME(&TARGET)
-               AWHEN C'E'
+               AWHEN C'1'
          LD    0,&SYM_NAME(&TARGET)
          LDE   1,&SYM_NAME(&SOURCE)
          MDR   0,1
@@ -156,15 +157,15 @@
                     MNOTE 4,'GEN_MPY INVALID SOURCE DATA TYPE'           
                     MEXIT
                AEND 
-         AWHEN C'E'
+         AWHEN C'1'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LE    0,&SYM_NAME(&TARGET)
          LD    1,&SYM_NAME(&SOURCE)
          LEDR  1,1
          MER   0,1
          STE   0,&SYM_NAME(&TARGET)
-               AWHEN C'E'
+               AWHEN C'1'
          LE    0,&SYM_NAME(&TARGET)
          LE    1,&SYM_NAME(&SOURCE)
          MER   0,1
@@ -208,13 +209,13 @@
                AEND 
          AWHEN C'F'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          L     0,&SYM_NAME(&TARGET)
          LD    1,&SYM_NAME(&SOURCE)
          CFDR  1,0,1
          MSR   0,1
          ST    0,&SYM_NAME(&TARGET)
-               AWHEN C'E'
+               AWHEN C'1'
          L     0,&SYM_NAME(&TARGET)
          LE    1,&SYM_NAME(&SOURCE)
          CFER  1,0,1
@@ -252,13 +253,13 @@
                AEND 
          AWHEN C'G'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LG    0,&SYM_NAME(&TARGET)
          LD    1,&SYM_NAME(&SOURCE)
          CGDR  1,0,1
          MSGR  0,1
          STG   0,&SYM_NAME(&TARGET)
-               AWHEN C'E'
+               AWHEN C'1'
          LG    0,&SYM_NAME(&TARGET)
          LE    1,&SYM_NAME(&SOURCE)
          CGER  1,0,1
@@ -297,13 +298,13 @@
                AEND 
          AWHEN C'H'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LH    0,&SYM_NAME(&TARGET)
          LD    1,&SYM_NAME(&SOURCE)
          CFDR  1,0,1
          MSR   0,1
          STH   0,&SYM_NAME(&TARGET)
-               AWHEN C'E'
+               AWHEN C'1'
          LH    0,&SYM_NAME(&TARGET)
          LE    1,&SYM_NAME(&SOURCE)
          CFER  1,0,1
@@ -341,12 +342,12 @@
                AEND 
          AWHEN C'P'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
          LD    0,&SYM_NAME(&SOURCE)
          CFDR  0,0,0
          CVD   0,ZCVT_PWORK
          MP    &SYM_NAME(&TARGET),ZCVT_PWORK
-               AWHEN C'E'
+               AWHEN C'1'
          LE    0,&SYM_NAME(&SOURCE)
          CFER  0,0,0
          CVD   0,ZCVT_PWORK
@@ -374,7 +375,7 @@
                AEND 
          AWHEN C'Z'
                ACASE (C2A('&T_SOURCE'))
-               AWHEN C'D'
+               AWHEN C'2'
                      :&PLEN SETA &L_TARGET/2+1
                      :&POFF SETA 8-&PLEN
          PACK  ZCVT_PWORK1(&PLEN),&SYM_NAME(&TARGET)
@@ -386,7 +387,7 @@
                      AIF (NOT &SYM_PIC_SIGN(&TARGET))
          OI    &SYM_NAME(&TARGET)+&L_TARGET-1,X'F0'
                      AEND         
-               AWHEN C'E'
+               AWHEN C'1'
                      :&PLEN SETA &L_TARGET/2+1
                      :&POFF SETA 8-&PLEN
          PACK  ZCVT_PWORK1(&PLEN),&SYM_NAME(&TARGET)
