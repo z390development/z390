@@ -7,7 +7,8 @@
 .* Date   - 04/29/08                                                 *
 .*********************************************************************
 .* 04/29/08 initial coding for global CBL options call gen'd by zcobol  
-.* 02/25/09 RPI 1004 SET ZC_FLOAT to HFP/BFP/DFP default is DFP         
+.* 02/25/09 RPI 1004 SET ZC_FLOAT to DECIMAL/BINARY/HEX def. DECIMAL         
+.* 03/06/09 RPI 1004 SET ZC_FLOAT from option FLOAT(?)  
 .*********************************************************************
         ZCOBOL &VER=,      z390 version from tz390.version             X
                &PGM=,      program name from args[0] overides PGM-ID.  X
@@ -27,10 +28,13 @@
 .*
 .* DEFINE ZCOBOL CLOBAL OPTION DEFAULTS
 .*
-         :&ZC_COMMENT SETB 1   DEFAULT ON
-         :&ZC_EXTEND  SETB 1   DEFAULT ON
-         :&ZC_FLOAT   SETC 'D' DEFAULT DFP FOR FLOAT-? (COMP-1/2=HFP)
-         :&ZC_R64     SETB 1   ALLOW 64 BIT REGISTER INSTRUCTIONS
+         :&ZC_COMMENT SETB 1     DEFAULT ON
+         :&ZC_EXTEND  SETB 1     DEFAULT ON
+         :&ZC_FLOAT   SETC 'DECIMAL' VS BINARY OR HEX FOR FLOAT-S/L/E
+         :&ZC_FLOAT_SHORT_TYPE    SETC '7'
+         :&ZC_FLOAT_LONG_TYPE     SETC '8'
+         :&ZC_FLOAT_EXTENDED_TYPE SETC '9'
+         :&ZC_R64     SETB 1     ALLOW 64 BIT REGISTER INSTRUCTIONS
 .*
 .* SET OVERRIDES FROM PARM OPTIONS
 .*
@@ -45,7 +49,25 @@
                AELSEIF ('&OPTION' EQ 'COMMENT') GEN CBL SOURCE COMMENTS
                    :&ZC_COMMENT SETB 1
                    :&OPT_LIST SETC '&OPT_LIST,&OPTION'
-               AELSEIF ('&OPTION' EQ 'EXTEND')  ALLOW G64 AND P31 COMPS
+               AELSEIF ('&OPTION'(1,6) EQ 'FLOAT(') FLOAT(DFP/BFP/HFP)           
+                   :&ZC_FLOAT SETC '&OPTION'(7,K'&OPTION-7)
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+                   AIF ('&ZC_FLOAT' EQ 'DECIMAL')
+                       :&ZC_FLOAT_SHORT_TYPE    SETC '7'
+                       :&ZC_FLOAT_LONG_TYPE     SETC '8'
+                       :&ZC_FLOAT_EXTENDED_TYPE SETC '9'
+                   AELSEIF ('&ZC_FLOAT' EQ 'HEX')
+                       :&ZC_FLOAT_SHORT_TYPE    SETC '1'
+                       :&ZC_FLOAT_LONG_TYPE     SETC '2'
+                       :&ZC_FLOAT_EXTENDED_TYPE SETC '3'
+                   AELSEIF ('&ZC_FLOAT' EQ 'BINARY')
+                       :&ZC_FLOAT_SHORT_TYPE    SETC '4'
+                       :&ZC_FLOAT_LONG_TYPE     SETC '5'
+                       :&ZC_FLOAT_EXTENDED_TYPE SETC '6'
+                   AELSE
+                       MNOTE 8,'ZCOBOL INVALID FLOAT TYPE - &ZC_FLOAT'
+                   AEND    
+               AELSEIF ('&OPTION' EQ 'EXTEND')  ALLOW Q34 AND P31/Z31
                    :&ZC_EXTEND  SETB 1
                    :&OPT_LIST SETC '&OPT_LIST,&OPTION'
                AELSEIF ('&OPTION' EQ 'NOR64')  TURN OFF 64 BIT REG CODE

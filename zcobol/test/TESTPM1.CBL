@@ -9,7 +9,7 @@
        77 I       COMP PIC S9(4).
        77 COUNT   COMP PIC 9(4) VALUE 0.
        77 ERRORS  COMP PIC 9(4) VALUE 0.
-       77 TESTS   COMP PIC 9(4) VALUE 0.
+       77 GOOD    COMP-3 PIC S9(4) VALUE 0.
        PROCEDURE DIVISION.
        MAINLINE.
            DISPLAY 'TESTPM1 STARTING'
@@ -17,68 +17,68 @@
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFIRN FORNATM 1A'
            PERFORM TEST1
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF COUNT NOT = 1 PERFORM ERROR END-IF
            MOVE 0 TO COUNT
            PERFORM TEST1 THRU TEST2
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF COUNT NOT = 3 PERFORM ERROR END-IF
       * FORMAT 1B
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFORM FORMAT 1B'
            PERFORM ADD 1 TO COUNT END-PERFORM
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF COUNT NOT = 1 PERFORM ERROR END-IF
       * FORMAT 2A
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFORM FORMAT 2A'
            PERFORM TEST1 3 TIMES
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF COUNT NOT = 3 PERFORM ERROR END-IF
       * FORMAT 2B
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFORM FORMAT 2B'
            PERFORM 3 TIMES ADD 1 TO COUNT END-PERFORM
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF COUNT NOT = 3 PERFORM ERROR END-IF
       * FORMAT 3A
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFORM FORMAT 3A WITH TEST BEFORE'
            MOVE 1 TO I
            PERFORM TEST1I UNTIL I>3 
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF COUNT NOT = 3 PERFORM ERROR END-IF
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFORM FORMAT 3A WITH TEST AFTER'
            MOVE 1 TO I
            PERFORM TEST1I WITH TEST AFTER UNTIL I>3 
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF COUNT NOT = 3 PERFORM ERROR END-IF
       * FORMAT 3B
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFORM FORMAT 3B WITH TEST BEFORE'
            MOVE 1 TO I.
            PERFORM UNTIL I>3 ADD 1 TO COUNT ADD 1 TO I END-PERFORM
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF COUNT NOT = 3 PERFORM ERROR END-IF
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFORM FORMAT 3B WITH TEST AFTER'
            MOVE 1 TO I.
            PERFORM WITH TEST AFTER UNTIL I>3 
              ADD 1 TO COUNT ADD 1 TO I END-PERFORM
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF COUNT NOT = 3 PERFORM ERROR END-IF
       * FORMAT 4A
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFORM FORMAT 4A WITH TEST BEFORE'
            PERFORM TEST1 VARYING I FROM 1 BY 1 UNTIL I > 3
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF I NOT = 4 OR COUNT NOT = 3 PERFORM ERROR END-IF
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFORM FORMAT 4A WITH TEST AFTER'
            PERFORM TEST1 WITH TEST AFTER VARYING I FROM 1 BY 1 
                UNTIL I > 3
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF I NOT = 4 OR COUNT NOT = 4 PERFORM ERROR END-IF
       * FORMAT 4B
            MOVE 0 TO COUNT.
@@ -87,7 +87,7 @@
                ADD 1 TO COUNT
                DISPLAY 'ADD 1 TO COUNT =' COUNT
            END-PERFORM
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF I NOT = 4 OR COUNT NOT = 3 PERFORM ERROR END-IF
            MOVE 0 TO COUNT.
            DISPLAY 'TEST PERFORM FORMAT 4B WITH TEST AFTER'
@@ -95,17 +95,10 @@
                ADD 1 TO COUNT 
                DISPLAY 'ADD 1 TO COUNT =' COUNT
            END-PERFORM
-           ADD 1 TO TESTS
+           ADD 1 TO GOOD
            IF I NOT = 4 OR COUNT NOT = 3 PERFORM ERROR END-IF
       * DISPLAY TOTALS
-           DISPLAY 'TOTAL TESTS  =' TESTS
-           DISPLAY 'TOTAL ERRORS =' ERRORS
-           IF ERRORS > 0
-              MOVE 16 TO RETURN-CODE
-              DISPLAY 'TESTPM1 ENDED WITH ERRORS'
-           ELSE
-              DISPLAY 'TESTPM1 ENDED OK'
-           END-IF
+           DISPLAY 'TESTPM1 GOOD TESTS =' GOOD
            STOP RUN.
        ERROR.
            ADD 1 TO ERRORS

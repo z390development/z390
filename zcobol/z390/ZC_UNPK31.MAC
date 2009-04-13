@@ -1,0 +1,88 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/12/09                                                 *
+.*********************************************************************
+.* 03/13/09 initial coding for use in GEN_MOVE to cvt P to Z fields   
+.*********************************************************************
+.* UNPACK 1-31 DIGIT ZD FIELD FROM PD FIELD 
+.* AND SET LOW ORDER ZONE SIGN TO F IF UNSIGNED
+.*********************************************************************
+         ZC_UNPK31 &Z,&LZ,&SZ,&P,&LP
+         COPY  ZC_WS
+       :&TARGET SETC '&Z'
+       :&ZLEN   SETA &LZ
+       :&SOURCE SETC '&P'
+       :&PLEN   SETA &LP                  
+       :&ZOFF   SETA 0
+       :&POFF   SETA 0
+       :&T_TEMP SETC '&TARGET'
+       AIF     (&PLEN*2-1 LT &ZLEN) PAD LEFT WITH C'0'
+         MVI   &TARGET,C'0'
+               :&TLEN SETA &ZLEN-&PLEN*2-1
+               :&ZOFF SETA &ZOFF+&TLEN+1
+               :&ZLEN SETA &ZLEN-&ZOFF
+               AIF (&ZLEN/2*2 EQ &ZLEN)
+                   :&TLEN SETA &TLEN+1
+                   :&ZLEN SETA &ZLEN-1
+                   :&ZOFF SETA &ZOFF+1
+               AEND
+               AIF (&TLEN GE 0) 
+                   ACALL SET_TARGET_LEN
+         MVC    1+&T_TEMP,&TARGET     
+               AEND
+       AEND      
+       AIF     (&ZLEN LE 15)
+               :&TLEN SETA &ZLEN
+               ACALL SET_TARGET_LEN       SET EXPLICIT TARGET LEN
+         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPK UP TO 15 DIGITS 
+               MEXIT
+       AEND
+       :&TLEN  SETA 15
+       ACALL   SET_TARGET_LEN       SET EXPLICIT TARGET LEN
+         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(8)     UNPACK FIRST 14            
+       :&ZOFF  SETA &ZOFF+14
+       :&ZLEN  SETA &ZLEN-14
+       :&POFF  SETA &POFF+7
+       :&PLEN  SETA &PLEN-7
+       AIF     (&ZLEN GT 15)
+               :&TLEN SETA 15
+               ACALL SET_TARGET_LEN       SET EXPLICIT TARGET LEN
+         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(8)     UNPACK NEXT 14            
+               :&ZOFF SETA &ZOFF+14
+               :&ZLEN SETA &ZLEN-14
+               :&POFF SETA &POFF+7
+               :&PLEN SETA &PLEN-7
+               :&TLEN SETA &ZLEN
+               ACALL SET_TARGET_LEN       SET EXPLICIT TARGET LEN
+         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPACK REMAINING            
+       AELSE
+               :&TLEN SETA &ZLEN
+               ACALL SET_TARGET_LEN       SET EXPLICIT TARGET LEN
+         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPACK REMAINING           
+               AIF (&SZ EQ 0)
+         OI    &LZ-1+&TARGET_NAME,X'F0'
+               AEND
+       AEND         
+       MEXIT
+.*
+.* SET TARGET LEN - INSERT TLEN FOR SIX OR LABEL IN t_TEMP
+.*
+         AENTRY SET_TARGET_LEN
+         AIF   ('&TARGET'(1,1) LE '0')  IS TARGET A LABEL
+               :&T_TEMP SETC '&TARGET.(&TLEN)'
+         AELSE
+               :&I   SETA ('&TARGET' INDEX '(')  FIND ( IN OFF(REG)
+               AIF   (&I GT 0)
+                     :&T_TEMP SETC '&TARGET'(1,&I).'&TLEN,'.'&TARGET'(&X
+               I+1,*)
+               AELSE
+                     MNOTE 8,'ZC_PACK31 N(REG) FORMAT ERROR &TARGET'
+                     MEXIT
+               AEND
+         AEND
+         AEND
+         MEND

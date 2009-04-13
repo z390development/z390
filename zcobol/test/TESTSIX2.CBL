@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID.    TESTSIX1.
+       PROGRAM-ID.    TESTSIX2.
        AUTHOR.        DON HIGGINS.
        DATE-WRITTEN.  01/08/09.
       ***************************************************************
@@ -23,7 +23,6 @@
        77  I    COMP   PIC S99    VALUE 1.
        77  J    COMP   PIC S99    VALUE 2.
        77  GOOD COMP-3 PIC S9(9) VALUE 0.
-       77  BAD  COMP-3 PIC S9(9) VALUE 0.
        01  H1 PIC S9(4) COMP OCCURS 3 TIMES INDEXED BY H1X.
            88 H1-ZERO VALUE 10.
        77  H1X-SAVE  INDEX.
@@ -31,7 +30,7 @@
        77  SUB PIC S9(9) COMP.
        PROCEDURE DIVISION.
        MAINLINE.
-           DISPLAY 'TESTSIX1 STARTING'
+           DISPLAY 'TESTSIX2 STARTING'
            MOVE '1ABC2DEF' TO T0
      1     IF T1-ID(1) = '1'   PERFORM GOOD ELSE PERFORM BAD.
      2     IF T1-ID(2) = '2'   PERFORM GOOD ELSE PERFORM BAD.  
@@ -80,16 +79,10 @@
            MOVE 11 TO H1(3)
     18     IF H1(H1X) = 11 
               PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'GOOD TESTS =' GOOD
-           DISPLAY 'BAD  TESTS =' BAD
-           IF BAD > 0 MOVE 16 TO RETURN-CODE.
-           DISPLAY 'TESTSIX1 ENDED'
+           DISPLAY 'TESTSIX2 GOOD TESTS =' GOOD
            STOP RUN.
        GOOD.
            ADD 1 TO GOOD.
-           DISPLAY 'GOOD TESTS = ' GOOD.
        BAD.
-           ADD 1 TO BAD.
-           DISPLAY 'ERROR'
            MOVE 16 TO RETURN-CODE
            STOP RUN.

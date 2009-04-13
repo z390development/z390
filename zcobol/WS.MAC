@@ -18,10 +18,13 @@
 .* 12/21/08 inc SYM_FILLER_VAL_CNT for label used by CICS GEN_INIT_WS 
 .* 01/08/09 set SYM_SIT used by ZCGETFLD.CPY subscript parser
 .* 02/23/09 RPI 1001 set SYM_LOC for 88 to first V88 value index
-.* 02/25/09 RPI 1002 chang index data items from type A to I     
+.* 02/25/09 RPI 1002 change index data items from type A to I     
 .* 02/26/09 RPI 1012 add support for VALUE ALL clause, 66 RENAMES,
 .* 02/27/09 RPI 1012 support SIGN LEADING/TRAILING SEPARATE CHARACTER
 .* 02/27/09 RPI 1012 support single & in text literal (double it)    
+.* 03/06/09 RPI 1004 add HFP/BFP/DFP/FLOAT-SHORT/LONG/EXTENDED        
+.* 03/11/09 RPI 1004 add COMP PIC S9(39) type Q 16 byte 128 bit int
+.* 03/20/09 RPI 1004 rename explicit 1-9 FLOAT-HEX/BINARY/DECIMAL-N
 .*********************************************************************
 .*
 .* WS level,name,clauses in any order (PIC,VALUE,USAGE supported)
@@ -34,6 +37,8 @@
 .*   6.  USAGE   on group propagated to lower level items
 .*   6.  OCCURS on group duplicates calculated length at end of group
 .*   7.  VALUE QUOTE(S) assumes APOST(') vs QUOTE(") for now  
+.*   8.  PIC_TYPE 123=HFP,456=BFP,789=DFP
+.*   9.  PIC_TYPE Q COMP PIC S9(3) QUADWORD 16 byte 128 bit integer
 .*********************************************************************
          WS    &LEVEL,&NAME
          COPY  ZC_WS            
@@ -198,7 +203,7 @@
          AIF   (&SYM_TOT GT 1)
                AIF (&SYM_LVL(&SYM_TOT-1) LT &SYM_LVL(&SYM_TOT)         X
                     AND '&SYM_PIC(&SYM_TOT-1)' NE '')
-                   MNOTE 4,'WS ITEM LEVEL > PREV ELEMENTARY ITEM LEVEL'
+                   MNOTE 8,'WS ITEM LEVEL > PREV ELEMENTARY ITEM LEVEL'
                AEND
          AEND
          AEND
@@ -546,7 +551,16 @@
                       OR '&SYSLIST(&I)' EQ 'COMP_4'                    X
                       OR '&SYSLIST(&I)' EQ 'COMP_5'                    X
                       OR '&SYSLIST(&I)' EQ 'BINARY'                    X
-                      OR '&SYSLIST(&I)' EQ 'FLOAT-SHORT'               X
+                      OR '&SYSLIST(&I)' EQ 'FLOAT_BINARY_7'            X
+                      OR '&SYSLIST(&I)' EQ 'FLOAT_BINARY_16'           X
+                      OR '&SYSLIST(&I)' EQ 'FLOAT_BINARY_34'           X
+                      OR '&SYSLIST(&I)' EQ 'FLOAT_DECIMAL_7'           X
+                      OR '&SYSLIST(&I)' EQ 'FLOAT_DECIMAL_16'          X
+                      OR '&SYSLIST(&I)' EQ 'FLOAT_DECIMAL_34'          X
+                      OR '&SYSLIST(&I)' EQ 'FLOAT_HEX_7'               X
+                      OR '&SYSLIST(&I)' EQ 'FLOAT_HEX_15'              X
+                      OR '&SYSLIST(&I)' EQ 'FLOAT_HEX_30'              X
+                      OR '&SYSLIST(&I)' EQ 'FLOAT_SHORT'               X
                       OR '&SYSLIST(&I)' EQ 'FLOAT_LONG'                X
                       OR '&SYSLIST(&I)' EQ 'FLOAT_EXTENDED'            X
                       OR '&SYSLIST(&I)' EQ 'INDEX'                     X
@@ -583,12 +597,12 @@
                     AELSEIF (&PIC_LEN LE 9)
                          :&PIC_LEN  SETA 4
                          :&PIC_TYPE SETC 'F'
-                    AELSEIF (&PIC_LEN LE 39)
+                    AELSEIF (&PIC_LEN LE 18)
                          :&PIC_LEN  SETA 8
                          :&PIC_TYPE SETC 'G'
-                         AIF (NOT &ZC_EXTEND AND &PIC_LEN GT 18)
-                             MNOTE 8,'WS PIC > 18 REQUIRES EXTEND'
-                         AEND
+                    AELSEIF (&ZC_EXTEND AND &PIC_LEN LE 39) RPI 1004
+                         :&PIC_LEN  SETA 16
+                         :&PIC_TYPE SETC 'Q'
                     AELSE
                          MNOTE 8,'WS INVALID COMP PIC LEN - &PIC_LEN'
                     AEND
@@ -606,15 +620,42 @@
                      AEND
                      :&PIC_TYPE SETC 'P'
                AEND
+         AELSEIF ('&USAGE' EQ 'FLOAT_HEX_7')     RPI 1004      
+              :&PIC_LEN SETA 4
+              :&PIC_TYPE SETC '1'
+         AELSEIF ('&USAGE' EQ 'FLOAT_HEX_15')      RPI 1004      
+              :&PIC_LEN SETA 8
+              :&PIC_TYPE SETC '2'
+         AELSEIF ('&USAGE' EQ 'FLOAT_HEX_30')  RPI 1004      
+              :&PIC_LEN SETA 16
+              :&PIC_TYPE SETC '3'
+         AELSEIF ('&USAGE' EQ 'FLOAT_BINARY_7')     RPI 1004      
+              :&PIC_LEN SETA 4
+              :&PIC_TYPE SETC '4'
+         AELSEIF ('&USAGE' EQ 'FLOAT_BINARY_16')      RPI 1004      
+              :&PIC_LEN SETA 8
+              :&PIC_TYPE SETC '5'
+         AELSEIF ('&USAGE' EQ 'FLOAT_BINARY_34')  RPI 1004      
+              :&PIC_LEN SETA 16
+              :&PIC_TYPE SETC '6'
+         AELSEIF ('&USAGE' EQ 'FLOAT_DECIMAL_7')     RPI 1004      
+              :&PIC_LEN SETA 4
+              :&PIC_TYPE SETC '7'
+         AELSEIF ('&USAGE' EQ 'FLOAT_DECIMAL_16')      RPI 1004      
+              :&PIC_LEN SETA 8
+              :&PIC_TYPE SETC '8'
+         AELSEIF ('&USAGE' EQ 'FLOAT_DECIMAL_34')  RPI 1004      
+              :&PIC_LEN SETA 16
+              :&PIC_TYPE SETC '9'
          AELSEIF ('&USAGE' EQ 'FLOAT_SHORT')     RPI 1004      
               :&PIC_LEN SETA 4
-              :&PIC_TYPE SETC 'E'
+              :&PIC_TYPE SETC '&ZC_FLOAT_SHORT_TYPE'
          AELSEIF ('&USAGE' EQ 'FLOAT_LONG')      RPI 1004      
               :&PIC_LEN SETA 8
-              :&PIC_TYPE SETC 'D'
+              :&PIC_TYPE SETC '&ZC_FLOAT_LONG_TYPE'
          AELSEIF ('&USAGE' EQ 'FLOAT_EXTENDED')  RPI 1004      
               :&PIC_LEN SETA 16
-              :&PIC_TYPE SETC 'L'
+              :&PIC_TYPE SETC '&ZC_FLOAT_EXTENDED_TYPE'
          AELSEIF ('&USAGE' EQ 'INDEX')           RPI 1002         
               :&PIC_LEN SETA 4
               :&PIC_TYPE SETC 'I'

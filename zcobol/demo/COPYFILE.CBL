@@ -20,6 +20,7 @@
        WORKING-STORAGE SECTION.
        01  WS-LINE PIC X(80).
        01  END-OF-FILE-FLAG PIC X.
+       77  COUNT COMP-3 PIC S9(4) VALUE 0.
        PROCEDURE DIVISION.
        MAINLINE.
            DISPLAY 'COPYFILE STARTED'
@@ -36,8 +37,11 @@
                 AT END MOVE 'Y' TO END-OF-FILE-FLAG.
        THE-LOOP.
            WRITE OUT-RECORD.
+           ADD 1 TO COUNT
            READ IN-FILE INTO OUT-RECORD
                 AT END MOVE 'Y' TO END-OF-FILE-FLAG.
        EOJ-ROUTINE.
            CLOSE IN-FILE.
            CLOSE OUT-FILE.
+           DISPLAY 'RECORDS COPIED = ' COUNT.
+           STOP RUN.

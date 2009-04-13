@@ -31,14 +31,14 @@
                         AIF ('&CHAR' GE '0' AND '&CHAR' LE '9')     
                             :&LEN SETA  &LEN*10+&CHAR
                         AELSE
-                            MNOTE 4,'PIC MASK ERROR &LVL &SYM_NAME(&SYMX
+                            MNOTE 8,'PIC MASK ERROR &LVL &SYM_NAME(&SYMX
                _TOT)'
                             MEXIT
                         AEND
                         :&I SETA &I+1
                     AEND
                AELSEIF ('&CHAR' NE 'S' AND '&CHAR' NE '.')      
-                    MNOTE 4,'PIC MASK ERROR &LVL &SYM_NAME(&SYMTOT)'
+                    MNOTE 8,'PIC MASK ERROR &LVL &SYM_NAME(&SYMTOT)'
                     MEXIT
                AEND
                :&I SETA &I+1

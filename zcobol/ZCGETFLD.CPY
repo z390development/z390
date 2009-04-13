@@ -6,6 +6,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 02/23/08 RPI 1001 ADD SUPPORT FOR SIX ON CONDITION 88 LEVEL FIELD
+.* 03/17/08 RPI 1004 COMBINE - WITH LITERAL VALUE                   
 .*********************************************************************
 .* GET RX ADDRESSABLE QUALIFIED PARM FIELD FROM &SYSLIST(&PARM_IX)
 .* INPUT
@@ -36,6 +37,11 @@
          :&FIELD_SIX SETB 0           ASSUME NO SUBSCRIPT/INDEX
          :&FIELD_RMD SETB 0           ASSUME NO REF. MOD. (OFF:LEN)
          :&PARM_IX SETA &PARM_IX+1
+         AIF ('&FIELD_NAME'(1,1) EQ '-' OR '&FIELD_NAME'(1,1) EQ '+')
+             :&FIELD_NAME SETC '&FIELD_NAME&SYSLIST(&PARM_IX)'
+             :&PARM_IX SETA &PARM_IX+1
+             AEXIT AENTRY
+         AEND
          AWHILE ('&SYSLIST(&PARM_IX)' EQ 'OF'                          X
                OR '&SYSLIST(&PARM_IX)' EQ 'IN')
                :&TQI SETA &TQI+1

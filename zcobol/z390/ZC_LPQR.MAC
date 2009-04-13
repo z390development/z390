@@ -1,0 +1,23 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/12/09                                                 *
+.*********************************************************************
+.* 04/07/09 initial coding for use in GEN_DIV for type Q      
+.*********************************************************************
+.* LOAD POSITIVE r1-r1+1 from r2-r2+1                                 
+.*********************************************************************
+         ZC_LPQR &R1,&R2           
+         GBLA  &ZC_LPQR_CNT
+&ZC_LPQR_CNT SETA &ZC_LPQR_CNT+1      
+         LTGR  &R1,&R1
+         JNM   ZC_LPQR_&ZC_LPQR_CNT
+         XG    &R1,ZCVT_HIGH_VALUES
+         XG    &R1+1,ZCVT_HIGH_VALUES
+         ALGFI &R1+1,1
+         ALCG  &R1,ZCVT_ZERO
+ZC_LPQR_&ZC_LPQR_CNT DS 0H   
+         MEND

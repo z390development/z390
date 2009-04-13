@@ -1,0 +1,62 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/12/09                                                 *
+.*********************************************************************
+.* 03/12/09 initial coding for use in GEN_ADD/SUB/MPY/DIV for 1-9,Q   
+.* 03/26/09 RPI 1004 use CVTQTLB,CVTLBTQ FOR Q And CVTLDTP for P   
+.*********************************************************************
+.* CONVERT NAME2 FROM TYPE2 TO TYPE1 VALUE IN F0-F2 FOR FP OR R0-R1 Q
+.*********************************************************************
+         ZC_CONV &TYPE1,&TYPE2,&NAME2
+         COPY  ZC_WS
+       :&PFPO_FROM SETC 'PFPO_TYPE_&TYPE2'  
+       AIF ('&TYPE2' EQ 'Q') CVT Q TO LB      
+           AIF ('&NAME2' NE '')  ALREADY LOADED IF NO NAME2
+         LG    R0,&NAME2
+         LG    R1,8+&NAME2
+           AEND
+         L     R15,ZCVT_CVTQTLB   CVT Q IN R0-R1 TO LB IN F4-F6
+         BASR  R14,R15
+         :&PFPO_FROM SETC 'PFPO_TYPE_LB'  
+       AELSEIF ('&TYPE2' EQ 'P')   CVT P TO LD
+         ZAP   ZCVT_PWORK2,&NAME2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+         :&PFPO_FROM SETC 'PFPO_TYPE_LD'  
+       AELSE
+           AIF ('&NAME2' NE '')  IS FP SOURCE LOADED
+               AIF ('&TYPE2'(1,1) EQ 'E')
+         LE    F4,&NAME2  
+               AELSEIF ('&TYPE2'(1,1) EQ 'D')
+         LD    F4,&NAME2  
+               AELSEIF ('&TYPE2'(1,1) EQ 'L')
+         LD    F4,&NAME2  
+         LD    F6,8+&NAME2  
+               AELSE
+                   MNOTE 8,'ZC_CONV UNSUPPORTED TYPE2 - &TYPE2'
+                   MEXIT
+               AEND
+          AEND
+       AEND
+       :&PFPO_TO SETC 'PFPO_TYPE_&TYPE1'
+       AIF ('&TYPE1' EQ 'Q') CVT FP ?? TO Q
+         :&PFPO_TO SETC 'PFPO_TYPE_LB'
+         LRL   R0,=AL1(PFPO_RADIX,&PFPO_TO,&PFPO_FROM,PFPO_RND)
+         PFPO
+         L     R15,ZCVT_CVTLBTQ   CVT LB IN F0-F2 TO Q IN R0-R1
+         BASR  R14,R15
+       AELSEIF ('&TYPE1' EQ 'P') CVT FP ?? TO PL31 IN R0-R1
+         :&PFPO_TO SETC 'PFPO_TYPE_LD'
+         LRL   R0,=AL1(PFPO_RADIX,&PFPO_TO,&PFPO_FROM,PFPO_RND)
+         PFPO
+         L     R15,ZCVT_CVTLDTP IN F0-F2 TO PL31 IN R0-R1
+         BASR  R14,R15
+       AELSE
+         LRL   R0,=AL1(PFPO_RADIX,&PFPO_TO,&PFPO_FROM,PFPO_RND)
+         PFPO
+       AEND
+       MEND

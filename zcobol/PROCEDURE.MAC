@@ -33,6 +33,6 @@
                GEN_PROC_END     GEN STOP RUN, LITERALS
                ZC_STATS       GEN ZCOBOL COMPILE STATISTICS
          AELSE
-               MNOTE 4,'PROCEDURE TYPE NOT RECOGNIZED - &TYPE'
+               MNOTE 8,'PROCEDURE TYPE NOT RECOGNIZED - &TYPE'
          AEND
          MEND

@@ -1,0 +1,783 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/04/09                                                 *
+.*********************************************************************
+.* 03/04/09 initial coding for ZC_EXP using IF as model
+.*********************************************************************
+.* ZC_EXP used by IF and COMPUTE to gen code to calculate expression 
+.* defined by positional parm list.  The result is described in the
+.* following global variables:
+.*  GBLC &EXP_PIC_TYPE - 12DELFGHPZ
+.*  GBLA &EXP_LEN      - length
+,*  GBKA &EXP_REG      - register number or -1 (may be Fn, Fn+2 pair)2321
+.*  GBLC &EXP_NAME     - field name 
+.*********************************************************************
+         ZC_EXP
+         COPY  ZC_WS
+.*
+.* PUSH/POP VAR/LIT lNDEX AND OPERATOR STACKS FOR PARSING
+.*
+         LCLA  &STK_IX_TOT  CUR TOTAL VAR/IOP IX'S ON STACK
+         LCLA  &STK_IX(10)  IX TO PARM # OR -IOP RESULT #
+         LCLA  &STK_OP_TOT  CUR TOTAL OP ON STACK
+         LCLA  &STK_OP(10)  OP (1=+,2=-,3=*,4=/,5=(,6=))
+.*
+.* GENERATED INTERMEDIATE OPCODE TABLE
+.*
+         LCLA  &IOP_TOT        TOTAL INTERMEDIATE LOG. OPS
+         LCLA  &IOP_OP(10)     LOG. OPER. (1=NOT,2=AND,3=OR)
+         LCLA  &IOP_IX1(10)    +PARM IX OR -IOP IX
+         LCLA  &IOP_IX2(10)    +PARM IX OR -IOP IX
+         LCLC  &IOP_RT(10)     RESULT TYPE 12DELFGHPZ            
+         LCLA  &IOP_RL(10)     RESULT LENGTH                           
+         LCLA  &IOP_RR(10)     RESULT REGISTER OR -1                   
+         LCLA  &IOP_RN(10)     RESULT FIELD NAME IF RR -1              
+         ACALL IOP_BUILD
+.*  ACALL LIST_IOPS   DSHX DEBUG
+         ACALL IOP_GEN_CODE
+         MEXIT
+.*
+.* BUILD IOP TABLE USING BNF PARM AND OPERATOR STACKS
+.*   1.  PUSH +PARM PTRS AND -IOP PTRS ON STK_IX
+.*   2.  PUSH OPERATORS ON STK_OP (+-*/() = 123456)
+.*   3.  POP  OP AND 2 VAR IX'S TO GEN IOP 
+.*       WHEN OP PRECEDENCE DICTATES  
+.*
+         AENTRY IOP_BUILD
+         :&NP   SETA  N'&SYSLIST  TOTAL EXP PARMS
+         AIF (&NP GT 0)
+         :&LVL  SETA  0           CUR (..) LEVEL WITHIN IF PARMS
+         :&IX_PARM_TOT SETA 0     CUR CONDITION PARM COUNT (A EQ B ETC)
+         :&STK_IX_TOT SETA 0      RESET CONDITION TEST/IOP RESULT STACK
+         :&STK_OP_TOT SETA 0      RESET LOGICAL IOP OPERATOR STACK
+         :&PARM_IX SETA  0        GET PARM INDEX
+         :&PREV_PARM SETC ''      PREV PARM
+         :&PARM SETC ''           CUR  PARM
+         :&SKIP_SUBSC SETB 0      SKIP SUBSCRIPTS IN CD'S
+         ACALL  GET_PARM          GET NEXT PARM OR ''
+         AWHILE ('&PARM' NE '')
+               AIF ('&PARM' EQ '''(''')
+                   AIF ('&PREV_PARM' EQ 'DFHRESP'                      X
+                        OR '&PREV_PARM' EQ 'DFHVALUE')  
+                        AIF ('&SYSLIST(&PARM_IX+2' EQ ''')''')
+                            :&PARM_IX SETA &PARM_IX+2 SKIP (,VALUE,)
+                        AELSE
+                            MNOTE 8,'IF INVALID DFHRESP/DFHVALUE'
+                            MEXIT
+                        AEND
+                   AELSE            
+                        :&LVL SETA &LVL+1
+                        :&IOP SETA 4
+                        ACALL PUSH_OP      PUSH OP 4=(
+                   AEND     
+               AELSEIF ('&PARM' EQ ''')''')
+                   :&LVL SETA &LVL-1
+                   AIF (&STK_OP_TOT GT 0) 
+                       AWHILE (&STK_OP(&STK_OP_TOT) NE 4) FLUSH (..)
+                           ACALL POP_OP
+                           ACASE (&IOP)
+                           AWHEN 1
+                               ACALL IOP_ADD_NOT
+                           AWHEN 2
+                               ACALL IOP_ADD_AND
+                           AWHEN 3
+                               ACALL IOP_ADD_OR
+                           AELSE
+                               MNOTE 8,'IF UNKNOWN OP STACK VALUE &OP'
+                               MEXIT
+                           AEND
+                       AEND
+                       ACALL POP_OP  REMOVE ( FOR MATCHING )
+                   AELSE
+                       MNOTE 8,'IF UNBALANCED (..)'
+                       MEXIT
+                   AEND     
+               AELSEIF ('&PARM' EQ 'NOT')
+                   AIF  (&IX_PARM_TOT EQ 0)
+                        :&IOP SETA 1
+                        ACALL PUSH_OP  PUSH LOC OPER NOT
+                   AEND
+               AELSEIF  ('&PARM' EQ 'AND') FLUSH PRIOR NOT/AND OPS
+                   :&LAST_STK_OP_TOT SETA &STK_OP_TOT+1
+                   AWHILE (&STK_OP_TOT LT &LAST_STK_OP_TOT             X
+                           AND &STK_OP_TOT GT 0) 
+                       :&LAST_STK_OP_TOT SETA &STK_OP_TOT
+                       AIF (&STK_OP(&STK_OP_TOT) EQ 1)
+                           ACALL POP_OP
+                           ACALL IOP_ADD_NOT
+                       AIF (&STK_OP(&STK_OP_TOT) EQ 2)
+                           ACALL POP_OP
+                           ACALL IOP_ADD_AND
+                       AEND
+                   AEND
+                   AEND
+                   :&IOP SETA 2
+                   ACALL PUSH_OP
+               AELSEIF  ('&PARM' EQ 'OR') FLUSH PRIOR NOT/AND/OR
+                   :&LAST_STK_OP_TOT SETA &STK_OP_TOT+1
+                   AWHILE (&STK_OP_TOT LT &LAST_STK_OP_TOT             X
+                           AND &STK_OP_TOT GT 0) 
+                       :&LAST_STK_OP_TOT SETA &STK_OP_TOT
+                       AIF (&STK_OP(&STK_OP_TOT) EQ 1)
+                           ACALL POP_OP
+                           ACALL IOP_ADD_NOT
+                       AELSEIF (&STK_OP(&STK_OP_TOT) EQ 2)
+                           ACALL POP_OP
+                           ACALL IOP_ADD_AND
+                       AELSEIF (&STK_OP(&STK_OP_TOT) EQ 3)
+                           ACALL POP_OP
+                           ACALL IOP_ADD_OR
+                       AEND
+                   AEND
+                   :&IOP SETA 3
+                   ACALL PUSH_OP
+               AELSE
+                   AIF  (&IX_PARM_TOT EQ 0) 
+                        :&CD_IOP_IX SETA &PARM_IX
+                        ACALL PUSH_CD    PUSH 1ST CD PARM PTR ON CD_STK
+                   AEND
+                   :&IX_PARM_TOT SETA &IX_PARM_TOT+1 SKIP CD NAME/QUAL
+                   :&SKIP_SUBSC SETB 1
+               AEND
+               ACALL GET_PARM
+               AIF  (&SKIP_SUBSC) SKIP SUBSCRIPTS IN CD'S
+                    :&SKIP_SUBSC SETB 0
+                    AWHILE ('&PARM' EQ '''(''') SKIP SIX AND RMOD 
+                        ACALL GET_PARM
+                        AWHILE ('&PARM' NE '' AND '&PARM' NE ''')''')
+                            ACALL GET_PARM
+                        AEND
+                        AIF ('&PARM' NE '')
+                            ACALL GET_PARM
+                        AEND
+                    AEND
+               AEND 
+         AEND
+.*
+.* FLUSH REMAINING OPS IF ANY AT END OR PARMS
+.*
+         AWHILE (&STK_OP_TOT GT 0)
+              ACALL POP_OP
+              ACASE (&IOP)
+              AWHEN 1
+                  ACALL IOP_ADD_NOT
+              AWHEN 2
+                  ACALL IOP_ADD_AND
+              AWHEN 3
+                  ACALL IOP_ADD_OR
+              AELSE
+                  MNOTE 8,'IF UNKNOWN OP ON STACK AT END &IOP'
+                  ACALL LIST_IOPS
+                  MEXIT
+              AEND
+         AEND
+         AEND
+.*
+.* GEN CODE FROM IOPS
+.*
+         AENTRY IOP_GEN_CODE
+.*
+.* GEN SINGLE CD FROM STACK IF NO IOPS
+.*
+         AIF   (&STK_IX_TOT EQ 1)
+               AIF   (&IOP_TOT EQ 0)
+                     :&CD_PARM_IX SETA &STK_IX(1)
+                     :&CD_PREV_PARM SETC ''
+                     :&I SETA 1
+                     ACALL IOP_GEN_CD
+                     GEN_BC   15-&CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IEX
+               _LVL)
+                     AIF   (&V88_MULT)
+                           :&V88_MULT SETB 0
+                           GEN_LABEL IF_&IE_TCNT(&IE_LVL)_IOP_&IOP_LAB
+                     AEND
+                     MEXIT
+               AEND
+         AELSE
+               MNOTE 8,'IF CONDITION STACK COUNT ERROR &STK_IX_TOT'
+               ACALL LIST_IOPS
+               MEXIT
+         AEND
+.*
+.* GEN CODE FROM IOP TABLE WITH MULTIPLE ENTRIES
+.*
+         :&I   SETA 1
+         AWHILE (&I LE &IOP_TOT)
+               ACASE (&IOP_OP(&I))
+               AWHEN 1  NOT
+                   ACALL IOP_GEN_NOT
+               AWHEN 2  AND
+                   ACALL IOP_GEN_AND
+               AWHEN 3  OR
+                   ACALL IOP_GEN_OR
+               AELSE
+                   MNOTE 8,'IF IOP INVALID OPCODE &IOP_OP(&I)'
+               AEND
+               :&I SETA &I+1
+         AEND
+         AIF   (&V88_MULT)
+               :&V88_MULT SETB 0
+               GEN_LABEL IF_&IE_TCNT(&IE_LVL)_IOP_&IOP_LAB
+         AEND
+         AEND
+.*
+.* IOP ADD NOT
+.*
+         AENTRY IOP_ADD_NOT
+         :&IOP_TOT SETA &IOP_TOT+1
+         :&IOP_OP(&IOP_TOT) SETA 1     NOT
+         ACALL POP_CD_IOP_IX
+         :&IOP_IX1(&IOP_TOT) SETA &CD_IOP_IX
+         :&CD_IOP_IX SETA -&IOP_TOT
+         ACALL PUSH_CD
+         AEND
+.*
+.* IOP ADD AND
+.*
+         AENTRY IOP_ADD_AND
+         :&IOP_TOT SETA &IOP_TOT+1
+         :&IOP_OP(&IOP_TOT) SETA 2     AND
+         ACALL POP_CD_IOP_IX
+         :&IOP_IX2(&IOP_TOT) SETA &CD_IOP_IX
+         ACALL POP_CD_IOP_IX
+         :&IOP_IX1(&IOP_TOT) SETA &CD_IOP_IX
+         :&CD_IOP_IX SETA -&IOP_TOT
+         ACALL PUSH_CD
+         AEND
+.*
+.* IOP ADD OR
+.*
+         AENTRY IOP_ADD_OR
+         :&IOP_TOT SETA &IOP_TOT+1
+         :&IOP_OP(&IOP_TOT) SETA 3     OR
+         ACALL POP_CD_IOP_IX
+         :&IOP_IX2(&IOP_TOT) SETA &CD_IOP_IX
+         ACALL POP_CD_IOP_IX
+         :&IOP_IX1(&IOP_TOT) SETA &CD_IOP_IX
+         :&CD_IOP_IX SETA -&IOP_TOT
+         ACALL PUSH_CD
+         AEND
+.*
+.* POP CD/IOP AND SET CD_IOP_IX TO CD/IOP IX FROM TOP OF STK_IX 
+.* AND SET IOP_TF REQUIRED FOR IOP REF'S
+.*
+         AENTRY POP_CD_IOP_IX
+         AIF  (&STK_IX_TOT GT 0)
+              :&CD_IOP_IX SETA &STK_IX(&STK_IX_TOT)  +CD OR -IOP IX
+              :&STK_IX_TOT SETA &STK_IX_TOT-1
+              AIF (&CD_IOP_IX LE 0)
+                  :&J SETA -&CD_IOP_IX
+                  AIF (&J GT 0)
+                      AIF (NOT &IOP_TF(&J))
+                          :&IOP_TF(&J) SETB 1 REQ T/F SAVE FOR IOP REF
+                      AELSE
+                          MNOTE 8,'IF IOP &J HAS DUP IOP T/F REF'
+                          CALL LIST_IOPS
+                          MEXIT
+                      AEND
+                  AELSE
+                      MNOTE 8,'IF CD/IOP STACK PTR 0'
+                      CALL LIST_IOPS
+                      MEXIT
+                  AEND
+              AEND
+         AELSE
+              MNOTE 8,'IF MISSING CD STACK PTR FOR NOT'
+              CALL LIST_IOPS
+              MEXIT
+         AEND
+         AEND
+.*
+.* IOP GEN NOT
+.*
+         AENTRY IOP_GEN_NOT
+         AIF   (&IOP_IX1(&I) GT 0)
+               :&CD_PARM_IX SETA &IOP_IX1(&I)
+               :&CD_PREV_PARM SETC ''
+               ACALL IOP_GEN_CD   GEN CONDITION CODE
+         AELSE
+               :&IOP SETA -&IOP_IX1(&I)
+               AIF  (&IOP GT 0)
+                    GEN_COMP_BYTE ZCVT_WORKAERA+&IOP,1  
+                    :&CCT SETC 'EQ'      IS IOP T/F CC TRUE
+               AELSE
+                    MNOTE 8,'IF IOP &I MISSING CD1'
+                    ACALL LIST_IOPS
+                    MEXIT
+               AEND
+         AEND
+         AIF   (&IOP_TF(&I))         SAVE NOT IOP T/F FOR IOP REF.
+               AIF (&I GT &MAX_IOP_TF)
+                   :&MAX_IOP_TF SETA &I
+               AEND
+               :&IOP_LAB SETA &IOP_LAB+1
+               GEN_MOVE_BYTE ZCVT_WORKAREA+&I,0  ASSUME NOT CCT FALSE
+               GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)._IOP&IOP_LAB CONT 
+               GEN_MOVE_BYTE ZCVT_WORKAREA+&I,1  SET (NOT CCT) TRUE
+               GEN_LABEL IF_&IE_TCNT(&IE_LVL)._IOP&IOP_LAB,IF_IOP_NOT
+         AELSE                         EXIT IF NOT CCT
+               GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IE_LVL)
+         AEND
+         AEND
+.*
+.* IOP GEN AND
+.*
+         AENTRY IOP_GEN_AND
+         AIF   (&IOP_IX1(&I) GT 0)
+               :&CD_PARM_IX SETA &IOP_IX1(&I)
+               :&CD_PREV_PARM SETC ''
+               ACALL IOP_GEN_CD   GEN CONDITION CODE
+         AELSE
+               :&IOP SETA -&IOP_IX1(&I)
+               AIF  (&IOP GT 0)
+                    GEN_COMP_BYTE ZCVT_WORKAREA+&IOP,1  
+                    :&CCT SETC 'EQ'      IS IOP T/F CC TRUE
+               AELSE
+                    MNOTE 8,'IF IOP &I MISSING CD1'
+                    ACALL LIST_IOPS
+                    MEXIT
+               AEND
+         AEND
+         AIF   (&IOP_TF(&I))         SAVE T/F FOR AND
+               GEN_MOVE_BYTE ZCVT_WORKAREA+&I,0   ASSUME FALSE
+               :&IOP_LAB SETA &IOP_LAB+1
+               GEN_BC 15-&CCT,IF_&IE_TCNT(&IE_LVL)_IOP&IOP_LAB CD1>F
+         AELSE                          EXIT IF FALSE
+               GEN_BC 15-&CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IE_LVL)
+         AEND
+         AIF   (&IOP_IX2(&I) GT 0)
+               :&CD_PARM_IX SETA &IOP_IX2(&I)
+               :&CD_PREV_PARM SETC ''
+               ACALL IOP_GEN_CD   GEN CONDITION CODE
+         AELSE
+               :&IOP SETA -&IOP_IX2(&I)
+               AIF  (&IOP GT 0)
+                    GEN_COMP_BYTE ZCVT_WORKAREA+&IOP,1  
+                    :&CCT SETC 'EQ'      IS IOP T/F CC TRUE
+               AELSE
+                    MNOTE 8,'IF IOP &I MISSING CD2'
+                    ACALL LIST_IOPS
+                    MEXIT
+               AEND
+         AEND
+         AIF   (&IOP_TF(&I))         SAVE T/F FOR IOP REF
+               AIF (&I GT &MAX_IOP_TF)
+                   :&MAX_IOP_TF SETA &I
+               AEND
+               GEN_BC 15-&CCT,IF_&IE_TCNT(&IE_LVL)_IOP&IOP_LAB CD2>F
+               GEN_MOVE_BYTE ZCVT_WORKAREA+&I,1     CD1 AND CD2 > T
+               GEN_LABEL IF_&IE_TCNT(&IE_LVL)_IOP&IOP_LAB,IF_IOP_AND
+         AELSE                               EXIT IF CD2 FALSE
+               GEN_BC 15-&CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IE_LVL)
+         AEND
+         AEND
+.*
+.* IOP GEN OR
+.*
+         AENTRY IOP_GEN_OR
+         :&IOP_LAB SETA &IOP_LAB+1       IOP T LABEL
+         AIF   (&IOP_IX1(&I) GT 0)
+               :&CD_PARM_IX SETA &IOP_IX1(&I)
+               :&CD_PREV_PARM SETC ''
+               ACALL IOP_GEN_CD   GEN CONDITION CODE
+         AELSE
+               :&IOP SETA -&IOP_IX1(&I)
+               AIF  (&IOP GT 0)
+                    GEN_COMP_BYTE ZCVT_WORKAREA+&IOP,1  
+                    :&CCT SETC 'EQ'      IS IOP COND TRUE
+               AELSE
+                    MNOTE 8,'IF IOP &I MISSING CD1'
+                    ACALL LIST_IOPS
+                    MEXIT
+               AEND
+         AEND
+         AIF   (&IOP_TF(&I))         SAVE T/F FOR OR 
+               AIF (&I GT &MAX_IOP_TF)
+                   :&MAX_IOP_TF SETA &I
+               AEND
+               GEN_MOVE_BYTE ZCVT_WORKAREA+&I,1   ASSUME TRUE 
+         AEND
+         GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_IOP&IOP_LAB CD1>T
+         AIF   (&IOP_IX2(&I) GT 0)
+               :&CD_PARM_IX SETA &IOP_IX2(&I)
+               :&CD_PREV_PARM SETC ''
+               ACALL IOP_GEN_CD   GEN CONDITION CODE
+         AELSE
+               :&IOP SETA -&IOP_IX2(&I)
+               AIF  (&IOP GT 0)
+                    GEN_COMP_BYTE ZCVT_WORKAREA+&IOP,1  
+                    :&CCT SETC 'EQ'      IS IOP COND TRUE
+               AELSE
+                    MNOTE 8,'IF IOP &I MISSING CD2'
+                    ACALL LIST_IOPS
+                    MEXIT
+               AEND
+         AEND
+         AIF   (&IOP_TF(&I))         SAVE T/F FOR AND
+               GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_IOP&IOP_LAB CD2>T
+               GEN_MOVE_BYTE ZCVT_WORKAREA+&I,0     CD1 OR CD2 > F
+         AELSE                       EXIT IF FALSE
+               GEN_BC 15-&CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IE_LVL)
+         AEND
+         GEN_LABEL IF_&IE_TCNT(&IE_LVL)_IOP&IOP_LAB,IF_IOP_OR
+         AEND
+.*
+.* PUSH COND - PUSH CD_IOP_IX (INDEX OF FIRST CD PARM OR -IOP INDEX)
+.*         
+         AENTRY PUSH_CD
+         :&STK_IX_TOT SETA &STK_IX_TOT+1
+         :&STK_IX(&STK_IX_TOT) SETA &CD_IOP_IX
+         :&LAST_CD_IOP_IX SETA &CD_IOP_IX SAVE FOR USE WHEN OMITTED S/V
+         AEND
+.*
+.* PUSH OP - PUSH LOGICAL OPERATOR 1=NOT, 2=AND, 3=OR, 4=(
+.*
+         AENTRY PUSH_OP
+         :&IX_PARM_TOT SETA 0             RESET CD PARM COUNTER AT LOP
+         :&STK_OP_TOT SETA &STK_OP_TOT+1
+         :&STK_OP(&STK_OP_TOT) SETA &IOP
+         AEND           
+.*
+.* POP OP - POP LOGICAL OPERATOR NOT, AND, OR, '''('''
+.*
+         AENTRY POP_OP
+         AIF   (&STK_OP_TOT GE 1)
+               :&IOP SETA   &STK_OP(&STK_OP_TOT)
+               :&STK_OP_TOT SETA &STK_OP_TOT-1
+         AELSE
+               MNOTE 8,'IF POP OP ERROR - EMPTY STACK'
+         AEND           
+         AEND
+.*
+.* IOP GEN CD - GEN CODE FOR CONDITION TEST STARTING AT CD_PARM_IX 
+.*
+.*  CD_PARM_IX - STARTING PARM INDEX
+.*  CCT        - SET CONDITION CODE TEST TRUE (EQ,NE,LT,GT,LE,GE)
+.*  Notes:
+.*   1.  If lit found, gen using LAST_CD_IOP_IX with override for lit
+.*
+         AENTRY IOP_GEN_CD
+         :&CD_PARM_IX SETA &CD_PARM_IX-1
+         :&TESTCLS SETB 0   ASSUME NOT A CLASS TEST
+         :&FIELD_SS1 SETB 1
+         ACALL  GET_CD_PARM
+         AIF   ('&PARM'(1,1) EQ '''')  ASSUME LIT WITH NO SUB/VERB 
+               :&ALT_FIELD2_IX SETA &CD_PARM_IX   
+               :&REP_CD SETB 1         REP PRIOR CD FIELD1 OP ALT-FLD2
+               :&CD_PARM_IX SETA &IOP_IX1(&I)-1 REP SUBJECT/VERB
+               :&CD_PREV_PARM SETC ''
+               :&FIELD_SS1 SETB 1
+               ACALL GET_CD_PARM       GET FIELD1 PARM FROM PRIOR CD
+         AEND
+         AIF   (&FIELD_88_IX GT 0)
+               ACALL IOP_GEN_88
+               AEXIT AENTRY
+         AEND
+         AWHILE ('&PARM' NE '')
+               :&FIELD1    SETC  '&PARM'
+               :&FIELD1_IX SETA &FIELD_IX
+               AIF (&FIELD_IX EQ 0)              RPI 1012
+                   MNOTE 8,'IF FIELD NOT FOUND - &FIELD1'
+                   MEXIT
+               AEND
+               :&FIELD_SS1 SETB 0
+               ACALL GET_CD_PARM
+               AIF ('&PARM' EQ 'IS')
+                   ACALL GET_CD_PARM
+               AEND
+               AIF   ('&PARM' EQ 'NOT')
+                     ACALL GET_CD_PARM
+                     AIF   ('&PARM' EQ '='                             X
+                            OR '&PARM' EQ 'EQUAL'                      X            
+                            OR '&PARM' EQ 'EQUALS')            
+                         :&CCT    SETC 'NE'
+                     AELSEIF ('&PARM' EQ '<'                           X
+                              OR '&PARM' EQ 'LESS')
+                         :&CCT    SETC 'GE'
+                     AELSEIF   ('&PARM' EQ '>'                         X
+                                OR '&PARM' EQ 'GREATER')
+                         :&CCT    SETC 'LE'
+                     AELSEIF   ('&PARM' EQ 'SPACES'                    X
+                                OR '&PARM' EQ 'SPACE'                  X
+                                OR '&PARM' EQ 'ZERO'                   X
+                                OR '&PARM' EQ 'ZEROS'                  X
+                                OR '&PARM' EQ 'ZEROES'                 X
+                                OR '&PARM' EQ 'LOW-VALUES'             X
+                                OR '&PARM' EQ 'LOW-VALUE'              X
+                                OR '&PARM' EQ 'HIGH-VALUES'            X
+                                OR '&PARM' EQ 'HIGH-VALUE'             X
+                                OR '&PARM' EQ 'NUMERIC'                X
+                                OR '&PARM' EQ 'ALPHABETIC'             X
+                                OR '&PARM' EQ 'ALPHANUMERIC')           
+                         :&TESTCLS SETB 1
+                         :&CCT    SETC 'NE'
+                     AELSE
+                         MNOTE 8,'IF OPERAND UNKNOWN - &PARM'
+                         MEXIT
+                     AEND
+               AELSE
+                     AIF   ('&PARM' EQ '='                             X
+                            OR '&PARM' EQ 'EQUAL'                      X            
+                            OR '&PARM' EQ 'EQUALS')       
+                           :&CCT    SETC 'EQ'
+                     AELSEIF   ('&PARM' EQ '<'                         X       
+                                OR '&PARM' EQ 'LESS')       
+                           :&CCT    SETC 'L'              
+                     AELSEIF   ('&PARM' EQ '>'                         X       
+                                OR '&PARM' EQ 'GREATER')        
+                           :&CCT    SETC 'H'
+                     AELSEIF   ('&PARM' EQ 'SPACES'                    X
+                                OR '&PARM' EQ 'SPACE'                  X
+                                OR '&PARM' EQ 'ZERO'                   X
+                                OR '&PARM' EQ 'ZEROS'                  X
+                                OR '&PARM' EQ 'ZEROES'                 X
+                                OR '&PARM' EQ 'LOW-VALUES'             X
+                                OR '&PARM' EQ 'LOW-VALUE'              X
+                                OR '&PARM' EQ 'HIGH-VALUES'            X
+                                OR '&PARM' EQ 'HIGH-VALUE'             X
+                                OR '&PARM' EQ 'NUMERIC'                X
+                                OR '&PARM' EQ 'ALPHABETIC'             X
+                                OR '&PARM' EQ 'ALPHANUMERIC')           
+                         :&TESTCLS SETB 1
+                         :&CCT    SETC 'EQ'
+                     AELSE
+                         MNOTE 8,'IF OPERAND UNKNOWN - &PARM'
+                         MEXIT
+                     AEND
+               AEND
+               :&FIELD_SS1 SETB 0
+               AIF  (&REP_CD)
+                    :&REP_CD SETB 0
+                    :&PARM_IX    SETA &ALT_FIELD2_IX-1
+                    :&CD_PARM_IX SETA &PARM_IX    
+                    AIF (&TESTCLS)
+                        MNOTE 8,'IF CANNOT REP CLASS CONDITION TEST'
+                        MEXIT
+                    AEND
+               AEND
+               AIF  (NOT &TESTCLS)
+                    ACALL GET_CD_PARM
+               AEND
+               AIF  ('&PARM' EQ 'THAN')
+                    ACALL GET_CD_PARM 
+               AEND        
+               AIF  ('&PARM' EQ 'TO')
+                    ACALL GET_CD_PARM
+               AEND
+               :&FIELD2  SETC '&PARM'
+               :&FIELD2_IX SETA &FIELD_IX
+               AIF  (&FIELD2_IX GT 0)
+                    AIF  (&SYM_LVL(&FIELD2_IX) EQ 88)
+                         GEN_COMP &SYM_NAME(&SYM_REF(&FIELD2_IX)),&FIELX
+               D2_IX,&SYM_VAL(&FIELD2_IX),0
+                    AELSE
+                         GEN_COMP &FIELD1,&FIELD1_IX,&FIELD2,&FIELD2_IX
+                    AEND
+               AELSE
+                   AIF ('&PARM' EQ 'DFHRESP')
+                       ACALL GET_DFHRESP_VALUE
+                       GEN_COMP &FIELD1,&FIELD1_IX,&PARM,0
+                   AELSEIF ('&PARM' EQ 'DFHVALUE')
+                       ACALL GET_DFHVALUE_VALUE
+                       GEN_COMP &FIELD1,&FIELD1_IX,&PARM,0
+                   AELSE
+                       GEN_COMP &FIELD1,&FIELD1_IX,&FIELD2,&FIELD2_IX
+                   AEND
+               AEND
+               ACALL GET_CD_PARM
+         AEND
+         AEND
+.*
+.*
+.* IOP GEN 88 - GEN 1 OR MORE CONDITION 88 LEVEL COMPARES
+.*
+         AENTRY IOP_GEN_88
+         :&FIELD1    SETC '&FIELD_NAME'
+         :&FIELD1_IX SETA &FIELD_IX
+         :&V88_IX    SETA &SYM_LOC(&FIELD_88_IX)  FIRST VALUE INDEX
+         :&V88_MULT  SETB 0                       ASSUME NOT MULT
+         :&CCT SETC 'EQ'       NO  THEN EQ = OK
+         AWHILE (&V88_IX GT 0)
+               GEN_COMP &FIELD1,&FIELD1_IX,&V88_VAL(&V88_IX),0
+               :&V88_IX SETA &V88_NEXT(&V88_IX)
+               AIF (&V88_IX GT 0)
+                   AIF (&IOP_OP(&I) NE 1)
+                       AIF (NOT &V88_MULT)
+                           :&V88_MULT SETB 1
+                           :&IOP_LAB SETA &IOP_LAB+1   IOP T LABEL
+                       AEND
+                       GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_IOP_&IOP_LAB
+                   AELSE
+                       GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IE_LVX
+               L)
+                   AEND
+               AEND
+         AEND
+         AEND
+.*
+.* GET DFHRESP VALUE
+.*
+         AENTRY GET_DFHRESP_VALUE
+         GBLA  &DFHRESP_TOT
+         GBLC  &DFHRESP_KEY(30),&DFHRESP_VALUE(30)
+         AIF   (&DFHRESP_TOT EQ 0)
+               :&DFHRESP_VALUE(01) SETC '0' DFHRESP(NORMAL) 
+               :&DFHRESP_VALUE(02) SETC '1' DFHRESP(ERROR)
+               :&DFHRESP_VALUE(03) SETC '12' DFHRESP(FILENOTFOUND) 
+               :&DFHRESP_VALUE(04) SETC '12' DFHRESP(DSIDERR)      
+               :&DFHRESP_VALUE(05) SETC '13' DFHRESP(NOTFND)       
+               :&DFHRESP_VALUE(06) SETC '14' DFHRESP(DUPREC)       
+               :&DFHRESP_VALUE(07) SETC '15' DFHRESP(DUPKEY)       
+               :&DFHRESP_VALUE(08) SETC '16' DFHRESP(INVREQ)
+               :&DFHRESP_VALUE(09) SETC '18' DFHRESP(NOSPACE)      
+               :&DFHRESP_VALUE(10) SETC '19' DFHRESP(NOTOPEN)      
+               :&DFHRESP_VALUE(11) SETC '20' DFHRESP(ENDFILE)      
+               :&DFHRESP_VALUE(13) SETC '21' DFHRESP(ILLOGIC)      
+               :&DFHRESP_VALUE(14) SETC '22' DFHRESP(LENGERR)
+               :&DFHRESP_VALUE(15) SETC '26' DFHRESP(ITEMERR)      
+               :&DFHRESP_VALUE(16) SETC '27' DFHRESP(PGMIDERR)
+               :&DFHRESP_VALUE(17) SETC '31' DFHRESP(EXPIRED)      
+               :&DFHRESP_VALUE(18) SETC '36' DFHRESP(MAPFAIL)      
+               :&DFHRESP_VALUE(19) SETC '38' DFHRESP(INVMPSZ)      
+               :&DFHRESP_VALUE(20) SETC '40' DFHRESP(OVERFLOW)     
+               :&DFHRESP_VALUE(21) SETC '44' DFHRESP(QIDERR)       
+               :&DFHRESP_VALUE(22) SETC '72' DFHRESP(SUPPRESSED)     
+               :&DFHRESP_VALUE(23) SETC '84' DFHRESP(DISABLED)     
+               :&DFHRESP_KEY(01) SETC 'NORMAL' 
+               :&DFHRESP_KEY(02) SETC 'ERROR'
+               :&DFHRESP_KEY(03) SETC 'FILENOTFOUND' 
+               :&DFHRESP_KEY(04) SETC 'DSIDERR'      
+               :&DFHRESP_KEY(05) SETC 'NOTFND'       
+               :&DFHRESP_KEY(06) SETC 'DUPREC'       
+               :&DFHRESP_KEY(07) SETC 'DUPKEY'       
+               :&DFHRESP_KEY(08) SETC 'INVREQ' 
+               :&DFHRESP_KEY(09) SETC 'NOSPACE'      
+               :&DFHRESP_KEY(10) SETC 'NOTOPEN'      
+               :&DFHRESP_KEY(11) SETC 'ENDFILE'      
+               :&DFHRESP_KEY(13) SETC 'ILLOGIC'      
+               :&DFHRESP_KEY(14) SETC 'LENGERR'
+               :&DFHRESP_KEY(15) SETC 'ITEMERR'      
+               :&DFHRESP_KEY(16) SETC 'PGMIDERR'
+               :&DFHRESP_KEY(17) SETC 'EXPIRED'      
+               :&DFHRESP_KEY(18) SETC 'MAPFAIL'      
+               :&DFHRESP_KEY(19) SETC 'INVMPSZ'      
+               :&DFHRESP_KEY(20) SETC 'OVERFLOW'     
+               :&DFHRESP_KEY(21) SETC 'QIDERR'       
+               :&DFHRESP_KEY(22) SETC 'SUPPRESSED'     
+               :&DFHRESP_KEY(23) SETC 'DISABLED'     
+               :&DFHRESP_TOT SETA 23
+         AEND
+         AIF   ('&SYSLIST(&CD_PARM_IX+1)' EQ '''('''                   X
+                OR '&SYSLIST(&CD_PARM_IX+3) EQ ''')''')
+               :&PARM SETC '&SYSLIST(&CD_PARM_IX+2)'
+               :&CD_PARM_IX SETA &CD_PARM_IX+3
+         AELSE
+               MNOTE 8,'IF INVALID DFHRESP PARM FORMAT AT &PARM'
+               MEXIT
+         AEND
+         :&J SETA 1
+         AWHILE (&J LE &DFHRESP_TOT)
+               AIF ('&PARM' EQ '&DFHRESP_KEY(&J)')
+                   :&PARM SETC '&DFHRESP_VALUE(&J)'
+                   AEXIT AENTRY
+               AEND
+               :&J SETA &J+1
+         AEND
+         MNOTE 8,'IF INVALID OR UNKNOWN DFHRESP VALUE - &PARM'
+         AEND
+.*
+.* GET DFHVALUE VALUE
+.*
+         AENTRY GET_DFHVALUE_VALUE
+         GBLA  &DFHVALUE_TOT
+         GBLC  &DFHVALUE_KEY(30),&DFHVALUE_VALUE(30)
+         AIF   (&DFHVALUE_TOT EQ 0)
+               :&DFHVALUE_VALUE(01) SETC '18' DFHVALUE(OPEN) 
+               :&DFHVALUE_VALUE(02) SETC '19' DFHVALUE(CLOSED)
+               :&DFHVALUE_KEY(01) SETC 'OPEN' 
+               :&DFHVALUE_KEY(02) SETC 'CLOSED'
+               :&DFHVALUE_TOT SETA 2
+         AEND
+         AIF   ('&SYSLIST(&CD_PARM_IX+1)' EQ '''('''                   X
+                OR '&SYSLIST(&CD_PARM_IX+3) EQ ''')''')
+               :&PARM SETC '&SYSLIST(&CD_PARM_IX+2)'
+               :&CD_PARM_IX SETA &CD_PARM_IX+3
+         AELSE
+               MNOTE 8,'IF INVALID DFHVALUE PARM FORMAT AT &PARM'
+               MEXIT
+         AEND
+         :&J SETA 1
+         AWHILE (&J LE &DFHVALUE_TOT)
+               AIF ('&PARM' EQ '&DFHVALUE_KEY(&J)')
+                   :&PARM SETC '&DFHVALUE_VALUE(&J)'
+                   AEXIT AENTRY
+               AEND
+               :&J SETA &J+1
+         AEND
+         MNOTE 8,'IF INVALID DFHVALUE VALUE - &PARM'
+         AEND
+.*
+.* GET NEXT IF PARM (SUBSTITUTE DFHRESP(CODE) WITH LITERAL VALUE)
+.*
+         AENTRY GET_PARM
+         :&PREV_PARM SETC '&PARM'
+         :&PARM_IX SETA &PARM_IX+1
+         AIF (&PARM_IX LE &NP)
+             :&PARM SETC '&SYSLIST(&PARM_IX)'     
+         AELSE
+             AIF (&LVL NE 0)
+                 MNOTE 8,'IF UNBALANCED (...)'
+             AEND
+             :&PARM SETC ''
+         AEND
+         AEND
+.*
+.* GET CD PARM USING CD_PARM_IX UNTIL NEXT LOG OP                                
+.*
+         AENTRY GET_CD_PARM
+         :&PREV_PARM SETC '&PARM'
+         :&CD_PARM_IX SETA &CD_PARM_IX+1
+         AIF   (&CD_PARM_IX LE &NP)
+               :&PARM SETC '&SYSLIST(&CD_PARM_IX)'
+               AIF ('&PARM'(1,1) NE '''')              
+                   :&SAVE_PARM_IX SETA &PARM_IX
+                   :&PARM_IX SETA &CD_PARM_IX
+                   :&FIELD_REG SETC 'R2'
+                   ACALL GET_PARM_FIELD
+                   :&PARM SETC '&FIELD_NAME'
+                   :&CD_PARM_IX SETA &PARM_IX-1
+                   :&PARM_IX SETA &SAVE_PARM_IX
+               AELSE
+                   :&FIELD_IX SETA 0
+               AEND
+               AIF ('&PARM' EQ '''('''                                 X
+                    OR '&PARM' EQ ''')'''                              X
+                    OR '&PARM' EQ 'AND'                                X
+                    OR '&PARM' EQ 'OR')
+                   :&PARM SETC ''
+               AELSEIF ('&PARM' EQ '+' OR '&PARM' EQ '-')
+                   :&PARM SETC '&PARM&SYSLIST(&CD_PARM_IX+1)'
+                   :&CD_PARM_IX SETA &CD_PARM_IX+1
+               AEND
+         AELSE
+               :&PARM SETC ''
+         AEND
+         AEND
+.*
+.* LIST IOPS FOR AID IN DEBUGGING
+.* 
+         AENTRY LIST_IOPS
+         :&J   SETA 1
+         MNOTE 'ZCOBOL IOP TABLE LISTING - TOTAL IOPS = &IOP_TOT'
+         AWHILE (&J LE &IOP_TOT)
+               MNOTE 'IOP=&J OP=&IOP_OP(&J) CD1=&IOP_IX1(&J) CD2=&IOP_CX
+               D2(&J) TF=&IOP_TF(&J)'
+               :&J SETA &J+1
+         AEND
+         AEND
+         COPY ZCGETFLD
+         MEND

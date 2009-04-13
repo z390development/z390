@@ -20,7 +20,6 @@
         77  DP2    PIC Z(3)9.
         77  DP3    PIC ZZ-99.
         77  GOOD   COMP PIC S9(9) VALUE 0.
-        77  BAD    COMP PIC S9(9) VALUE 0.
        PROCEDURE DIVISION.
        MAINLINE.
            MOVE 0 TO NF1
@@ -81,13 +80,9 @@
     20     MOVE ABC(1)(2:2) TO ABC(2)(2:2)
            IF ABC(2) NOT = 'DBC' PERFORM BAD ELSE PERFORM GOOD.
            DISPLAY 'TESTMOV1 GOOD TESTS =' GOOD 
-           DISPLAY 'TESTMOV1 BAD  TESTS =' BAD 
            STOP RUN.
        GOOD.
            ADD 1 TO GOOD
-           DISPLAY 'TESTMOV1 GOOD TESTS =' GOOD. 
        BAD.
-           DISPLAY 'TESTMOV1 GOOD TESTS =' GOOD 
-           DISPLAY 'ERROR OCCURED'
            MOVE 16 TO RETURN-CODE
            STOP RUN.

@@ -7,6 +7,8 @@
 *********************************************************************
 * 11/19/08 initial coding of DISPLAY call function
 * 01/01/09 increate max buffer for single display to 256
+* 03/06/09 RPI 1004 add DEL FLOAT type display support R0=ZC_FLOAT
+* 03/11/09 RPI 1004 replace DEL types with types 1-9,Q             
 *********************************************************************
 *
 *  CALL DISPLAY,(FIELD1,LENGH1,TYPE1,FIELDN,LENGTHN,TYPEN),VL
@@ -18,10 +20,12 @@
 * NOTES:
 *  1.  WIDTH OF NUMERIC FIELDS IS SPACE + MINUS IF REQ'D + MAX DIGITS
 *  2.  SAVES AND RESTORES R2-R12, RESERVE R9 TO ACCESS ABORT
+*  3.  &ZC_FIELD PASSED IN R0 FOR USE IN DEL TYPE DISPLAYS
 *********************************************************************
 DISPLAY  SUBENTRY
          USING ZC390CVT,R9
          COPY  ASMMSP
+         STC   R0,FLOAT
          LR    R3,R1        R3=A(NEXT PARM LIST ENTRIES)
          LM    R7,R8,=A(WTOMSG+4,LWTOMSG-4) R7=A(BUFF) R8=BYTES LEFT
          DO    WHILE=(LTR,R3,NZ,R3)
@@ -52,14 +56,6 @@ GET_FIELD DS   0H
          CALL CVTTOHEX,((R4),DWORK+1,4)
          LA   R4,DWORK
          LA   R5,9
-       CASE   C'D'
-         CTD  CTD_DH,IN=(R4),OUT=DWORK+1
-         LA   R4,DWORK
-         LA   R5,45
-       CASE   C'E'
-         CTD  CTD_EH,IN=(R4),OUT=DWORK+1
-         LA   R4,DWORK
-         LA   R5,45
        CASE   C'F'
          L    R0,0(R4)
          CVD  R0,PWORK
@@ -89,6 +85,10 @@ GET_FIELD DS   0H
          BCTR R5,0  ADJ FOR EVEN DIGITS VERSUS MAX ODD DIGITS
          AHI  R4,1
           ENDIF
+       CASE   C'Q'                            
+         CTD  CTD_INT128,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,45
        CASE   C'X' PIC X AND LITERALS 'XXX'
          BCTR  R5,0
          EX    R5,MVC_LIT    MOVE PIC X FIELD/LIT TO DWORK
@@ -126,6 +126,42 @@ GET_FIELD DS   0H
          BCTR R5,0  ADJ FOR EVEN DIGITS VERSUS MAX ODD DIGITS
          AHI  R4,1
           ENDIF
+       CASE   C'1'
+         CTD  CTD_EH,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,13
+       CASE   C'2'
+         CTD  CTD_DH,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,24
+       CASE   C'3'
+         CTD  CTD_LH,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,45
+       CASE   C'4'
+         CTD  CTD_EB,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,13
+       CASE   C'5'
+         CTD  CTD_DB,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,24
+       CASE   C'6'
+         CTD  CTD_LB,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,45
+       CASE   C'7'                          
+         CTD  CTD_ED,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,13
+       CASE   C'8'                          
+         CTD  CTD_DD,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,24
+       CASE   C'9'                            
+         CTD  CTD_LD,IN=(R4),OUT=DWORK+1
+         LA   R4,DWORK
+         LA   R5,45
        ENDCASE
          BR    R12
 MVC_MASK MVC   DWORK(*-*),MASK    MOVE EDMK MASK TO DWORK
@@ -183,6 +219,7 @@ DISPLAY_FIELDS DS  0H
 *
          LTORG
          EQUREGS
+FLOAT    DC    C'D' ZC_FLOAT OPTION D=DFP, B=BFP, H=HFP FOR PIC DEL
 MAXBUFF  EQU   256
 WTOMSG   DC    AL2(*-*,0)
 WTOBUFF  DC    CL(MAXBUFF)' '

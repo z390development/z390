@@ -6,13 +6,20 @@
 * Date   - 04/07/08                                                 *
 *********************************************************************
 * 11/22/08 initial coding for ZC390NUC zcobol runtime routines
+* 03/12/09 RPI 1004 add CVTLHTQ and CVTQTLH                      
+* 03/12/09 RPI 1004 use CVTQTOLB/CVTLBTQ for Q and CVTLDTP for P 
 *********************************************************************
 ZC390NUC CSECT                  
          USING ZC390CVT,R9
          ENTRY CALL          DYNAMIC CALL
          ENTRY CMP64R32      COMPARE G64 NOR64 R0-1=FD1, R2-3=FD2        
+         ENTRY CVTLBTQ       CVT LB IN F4-6 TO Q IN R0-1
+         ENTRY CVTLDTP       CVT LD IN F4-6 TO PL31 IN R0-1
+         ENTRY CVTQTLB       CVT Q IN R0-1 TO LB IN F4-6
          ENTRY DIV64R32      DIVIDE  G64 NOR64 R0-1=N64, R2-3=MAX64      
+         ENTRY DIVQ128       DIVIDE  Q128 IN R0-R1 BY Q128 IN R2-R3      
          ENTRY GOBACK        GOBACK
+         ENTRY MPYQ128       MULTIPLY Q128 IN R0-R1 BY Q128 IN R2-R3      
          ENTRY OSE64R32      ON SIZE ERR G64 NOR64 R0-1=N64, R2-3=MAX64      
          ENTRY PERFORM       PERFORM
          ENTRY PMCHECK       CHECK FOR PERFORM EXIT AT PG
@@ -78,12 +85,148 @@ CMP64R32_H DS  0H
          BR    R14
          DROP  R15
 *
+* CVTLBTQ - CONVERT LB IN F0-F2 TO Q IN R0-R1
+*
+CVTLBTQ  DS    0H
+         USING *,R15
+         STMG  R2,R3,ZCSAVE
+         STD   F0,ZCVT_WORKAREA
+         STD   F2,ZCVT_WORKAREA+8
+         LMG   R0,R1,ZCVT_WORKAREA
+         IF    (CLC,ZCVT_WORKAREA(16),EQ,ZCVT_ZERO) IS THIS ZERO
+               BR  14  YES RETURN WITH R0-R1 ZERO
+         ENDIF
+         LGR   R2,R0           
+         SRLG  R2,R2,48
+         NILL  R2,X'7FFF'            R3    = BIASED EXPONENT
+         IIHH  R0,1                  R0-R1 = MANTISSA WITH 1 BIT
+         IF    (AHI,R2,NM,-16383) REMOVE BIAS AND TEST IF ANY INT BITS
+               IF   (CHI,R2,GE,112)  IS THIS SHIFT LEFT
+*
+*                   SHIFT LEFT WITH POSSIBLE OVERFLOW
+*
+                    AHI  R2,-112
+                    SLAG R0,R0,0(R2) SHIFT HIGH HALF POSS OVF ERR
+                    RLLG R1,R1,0(R2) ROTATE LOW HALF LEFT
+                    LGFI R3,-1       R3=ALL 1'S
+                    SLLG R2,R3,0(R2) R2=1'S FOR REMAINING R1 BITS
+                    XGR  R3,R2       R3=1'S FOR BITS GOING TO R0
+                    NGR  R3,R1       R3=JUST BITS GOING TO R0
+                    OGR  R0,R3       OR BITS FROM LOWER HALF 
+                    NGR  R1,R2       CLEAR BITS SHIFTED OUT OF R1
+               ELSE
+*
+*                   SHIFT RIGHT 
+*
+                    LA   R3,112
+                    SR   R3,R2
+                    IF   (CHI,R3,GE,64) ARE ALL BITS IN HIGH HALF
+                         LGR R1,R0
+                         SGR R0,R0
+                         AHI R3,-64
+                         SRLG R1,R1,0(R3) SHIFT RIGHT                     
+                    ELSE
+                         SRLG R1,R1,0(R3) SHIFT LOW HALF BITS RIGHT   
+                         LA   R2,64
+                         SR   R2,R3 
+                         RLLG R0,R0,0(R2) ROTATE HIGH BITS HALF RIGHT 
+                         LGFI R2,-1       R2=ALL 1'S
+                         SRLG R3,R2,0(R3) R3=1'S FOR REMAINING R0 BITS
+                         XGR  R2,R3       R2=1'S FOR BITS GOING TO R1
+                         NGR  R2,R0       R2=JUST BITS GOING TO R1
+                         OGR  R1,R2       OR BITS FROM LOWER HALF 
+                         NGR  R0,R3       CLEAR BITS SHIFTED OUT OF R1
+                    ENDIF
+               ENDIF
+               IF   (TM,ZCVT_WORKAREA,O,X'80') IS RESULT NEG
+                    LGFI  R2,-1
+                    XGR   R0,R2
+                    XGR   R1,R2
+                    ALGFI R1,1
+                    ALCG  R0,ZCVT_ZERO
+               ENDIF
+         ELSE
+               SGR  R0,R0  RETURN ZERO FOR FRACTIONAL LH
+               SGR  R1,R1
+         ENDIF
+         LMG   R2,R3,ZCSAVE
+         BR    R14
+         DROP  R15
+*
+* CVTLDTP - CONVERT LD IN F0-F2 TO PL31 IN R0-R1
+*
+CVTLDTP  DS    0H
+         USING *,R15
+         STMG  R2,R3,ZCSAVE
+         EEXTR R2,F0      EXTRACT LD BIAS EXPONENT
+         IF    (AGFI,R2,NM,-6176)   REMOVE BIAS AND CHECK IF POS
+               SLXT  F0,F0,0(R2)      SHIFT SIG DIGITS LEFT
+         ELSE
+               LCR   R2,R2
+               SRXT  F0,F0,0(R2)      SHIFT SIG DIGITS RIGHT
+         ENDIF
+         CSXTR R0,F0,0
+         LMG   R2,R3,ZCSAVE
+         BR    R14
+         DROP  R15
+*
+* CVTQTLB - CONVERT Q IN R0-R1 TO LB IN F4-F6
+*
+CVTQTLB  DS    0H
+         USING *,R15
+         STMG  R2,R4,ZCSAVE
+         IF    (LTGR,R0,M,R0)      COMPLIMENT IF NEGATIVE
+               XG   R0,=FL8'-1'
+               XG   R1,=FL8'-1'
+               ALGFI  R1,1
+               ALCG   R0,ZCVT_ZERO
+               BAS  R2,CVTLB_NORM  MORMAIZE AND SET BIAS EXP
+               OIHH R0,X'8000'     SET SIGN BIT
+         ELSEIF 
+               BAS  R2,CVTLB_NORM  MORMAIZE AND SET BIAS EXP
+         ENDIF
+         STMG  R0,R1,ZCVT_WORKAREA
+         LD    F4,ZCVT_WORKAREA
+         LD    F6,ZCVT_WORKAREA+8
+         LMG   R2,R4,ZCSAVE
+         BR    R14
+CVTLB_NORM DS  0H
+         IF    (CLGFI,R0,EQ,0),AND,(CLGFI,R1,EQ,0)
+               BR    R2   EXIT WITH ZERO IF ZERO
+         ENDIF
+         LHI   R3,16383+112           INIT BIAS EXPONENT FOR INT128
+         DO    WHILE=(TMHH,R0,NZ,X'FFFE')  NEED TO SHIFT RIGHT? 
+               SRLG  R1,R1,1          SHIFT RIGHT LOW 64 BY 1
+               IF    (TMLL,R0,NZ,1)   IS LOW BIT ON IN HIGH 64
+                     OIHH R1,X'8000'  YES MOVE IT TO LOW 64
+               ENDIF
+               SRLG  R0,R0,1          SHIFT RIGHT HIGH 64
+               AHI   R3,1             DEC EXP
+         ENDDO
+         DO    WHILE=(TMHH,R0,Z,1)  NEED TO SHIFT LEFT   
+         DO    WHILE=(TMHL,R0,Z,X'FFFF')  SHITF 16 IF POSSIBLE
+               SLLG  R0,R0,16
+                     RISBG R0,R1,48,63,16
+                     SLLG  R1,R1,16     
+                     AHI  R3,-16    
+               ENDDO
+               SLLG  R0,R0,1
+               RISBG R0,R1,63,63,1
+               SLLG  R1,R1,1         
+               AHI   R3,-1                INCR EXP
+         ENDDO
+         SLLG  R3,R3,48  MOVE BIAS EXPONENT TO HH
+         NIHH  R0,0      CLEAR THE ASSUMED LEADING BIT
+         OGR   R0,R3     REPLACE WITH LD BIAS EXPONENT
+         BR    R2
+         DROP  R15
+*
 * DIV64N32 DIVIDE N64 IN R0-R1 BY MAX64 IN R2-R3 GIVING REMAINDER R0-R1
 * (USE DXR TO AVOID USE OF H32 GPRS)
 *
 DIV64R32 DS    0H
          USING *,R15
-         SAVE  (12,12)
+         STG   R12,ZCSAVE
          STCM  R0,8,SIGN         SAVE HIGH BYTE WITH N64 SIGN
          BAS   R12,DIV64R32_LCR  COMPLIMENT IF NEGATIVE
          STM   R0,R1,ZCVT_WORKAREA+1
@@ -114,17 +257,153 @@ DIV64R32 DS    0H
          N     R2,=X'00000FFF'
          OR    R1,R2                 OR 16 NIBLES TO FORM N64 RESULT
          BAS   R12,DIV64R32_LCR
-         RETURN (12,12)
+         LG    R12,ZCSAVE
+         BR    R14
 DIV64R32_LCR DS 0H             COMP R0-R1 IF SIGN NEG
          TM    SIGN,X'80'
          BZR   R12
          X     R0,=F'-1'
          X     R1,=F'-1'
-         AHI   R1,1
-         ALC   R0,=F'0'
+         ALFI  R1,1
+         ALC   R0,ZCVT_ZERO
          BR    R12
 SIGN     DS    X        HIGH BYTE OF R0 WITH SIGN BIT
          DROP  R15
+*
+* DIVQ128 DIVIDE Q128 IN R0-R1 BY Q128 IN R2-R3 > REM=R0-R1,QUO=R2-R3            
+*
+* NOTES:
+*  1.  CURRENT RESTRICTION DIVIOR 0 OR > 2**63 CAUSES 0C4
+*
+DIVQ128  DS 0H
+         USING *,R15
+         STMG  R4,R6,ZCSAVE
+         LGFI  R4,-1
+         IF    (TMHH,R0,O,X'8000')    IS DIVIDEND NEG
+               MVI DIVQ_REM_NEG,TRUE     YES, REMAINDER NEG
+               XGR  R0,R4                YES, COMPLIMENT DIVIDEND
+               XGR  R1,R4
+               ALGFI R1,1
+               ALCG  R0,ZCVT_ZERO
+               IF (TMHH,R2,O,X'8000')  IS DIVISOR NEG
+                  XGR  R2,R4              YES, COMPLIMENT DIVSOR
+                  XGR  R3,R4
+                  ALGFI R3,1
+                  ALCG  R2,ZCVT_ZERO
+                  MVI DIVQ_QUO_NEG,FALSE  BOTH  NEG   > +QUO
+               ELSE
+                  MVI DIVQ_QUO_NEG,TRUE   MIXED DD/DR > -QUO
+               ENDIF
+         ELSE
+               MVI DIVQ_REM_NEG,FALSE  ELSE +DD > +REM
+               IF (TMHH,R2,O,X'8000')  IS DIVISOR NEG AND DD POS
+                  MVI DIVQ_QUO_NEG,TRUE   THEN QUO MUST BE NEG
+                  XGR  R2,R4              COMPLIENT DIVISOR
+                  XGR  R3,R4
+                  ALGFI R3,1
+                  ALCG  R2,ZCVT_ZERO
+               ELSE
+                  MVI DIVQ_QUO_NEG,FALSE  BOTH POS > QUO POS
+               ENDIF
+         ENDIF  
+         IF    (LTGR,R2,Z,R2)
+               IF    (LTGR,R3,Z,R3)
+                     LA    R1,ZCVT_ABORT_DIVQ  DIVSOR 0 
+                     L     R15,ZCVT_ABORT
+                     BR    R15
+               ENDIF
+               IF    (CLGR,R3,GT,R0)
+*
+* USE SINGLE DLGR WHEN DIVISOR < 64 BITS AND > HIGH 64 DIVIDEND                              
+*
+                     DLGR  R0,R3  R0 = REM, R1 = QUOTIENT
+                     LGR   R3,R1
+                     SGR   R2,R2  R2-R3 = QUOTIENT
+                     LGR   R1,R0
+                     SGR   R0,R0  R0-R1 = REMAINDER
+               ELSE
+*
+* USE 2 DLGR FOR DIVISOR < HIGH 64 DIVIDEND
+*
+                     STMG R0,R3,ZCVT_WORKAREA  SAVE DIVIDEND & DIVISOR
+                     LGR   R1,R0
+                     SGR   R0,R0
+                     DLGR  R0,R3  R0 = REM, R1 = QUOTIENT
+                     LGR   R2,R1  R2 = HIGH QUOTIENT
+                     LG    R1,ZCVT_WORKAREA+8 RELOAD LOW DIVIDEND
+                     DLGR  R0,R3  R0 = REM, R1 = QUOTIENT
+                     LGR   R3,R0  R3 = LOW QUOTIENT
+                     LGR   R3,R1
+                     LGR   R1,R0
+                     SGR   R0,R0  R0-R1 = REMAINDER
+               ENDIF
+         ELSE
+*
+* CALC FIRST EST FOR DIVISOR > 64 AND CHECK IF HIGH BY 1
+*             
+               STMG R0,R3,ZCVT_WORKAREA  SAVE Q DIVIDEND AND DIVISOR
+               LGR  R1,R0
+               DSGR R0,R2  
+               LGR  R3,R1             
+               SGR  R2,R2                    R2-R3 = TRIAL QUOTIENT
+               BAS  R6,DIVQ_CALC_REM         R0-R1 = REM, R2-R3 = QUO
+               IF   (LTGR,R0,M,R0)  
+*
+* REDUCE QUOTIENT BY 1 IF REMAINDER NEG
+*
+                    SRLG  R1,R1,1          SHIFT RIGHT LOW 64 BY 1
+                    IF    (TMLL,R0,NZ,1)   IS LOW BIT ON IN HIGH 64
+                          OIHH R1,X'8000'  YES MOVE IT TO LOW 64
+                    ENDIF
+                    SRAG  R0,R0,1          SHIFT RIGHT HIGH 64
+                    ALGR  R3,R1
+                    ALCGR R2,R0
+                    BAS  R6,DIVQ_CALC_REM R0-R1 = REM, R2-R3 = QUO
+               ENDIF
+         ENDIF
+         IF    (CLI,DIVQ_REM_NEG,EQ,TRUE)  IS REMAINDER NEG
+               LGFI  R4,-1                    YES, COMPLIMENT
+               XGR  R0,R4
+               XGR  R1,R4
+               ALGFI R1,1
+               ALCG  R0,ZCVT_ZERO
+         ENDIF
+         IF    (CLI,DIVQ_QUO_NEG,EQ,TRUE) IS QUOTIENT NEG
+               LGFI  R4,-1                    YES, COMPLIMENT
+               XGR  R2,R4
+               XGR  R3,R4
+               ALGFI R3,1
+               ALCG  R2,ZCVT_ZERO
+         ENDIF
+         LMG   R4,R6,ZCSAVE
+         BR    R14
+*
+* CALC REMAINDER IN R0-R1 FOR TRIAL QUOTIENT IN R2-R3
+*   1.  USERS DIVIDEND AND DIVISOR IN WORKAREA
+*   2,  USES  R6 LINK
+*
+DIVQ_CALC_REM DS 0H
+         STMG R2,R3,DIVQ_TRIAL
+         LMG  R0,R1,ZCVT_WORKAREA+16  R2-R3 = DIVISOR
+         STM  R14,R15,DIVQ_SAVE
+         L    R15,ZCVT_MPYQ128
+         BASR R14,R15                 R0-R1 = QUO * DIVR
+         BASR R14,0
+         USING *,R14
+         LM   R14,R15,DIVQ_SAVE
+         DROP R14
+         LMG   R2,R3,ZCVT_WORKAREA    R2-R3 = DIVIDEND
+         SLGR  R3,R1
+         SLBGR R2,R0                  R2-R3 = REMAINDER
+         LGR   R0,R2
+         LGR   R1,R3
+         LMG   R2,R3,DIVQ_TRIAL
+         BR    R6
+         DROP  R15
+DIVQ_REM_NEG DC    AL1(FALSE) REMAINDER NEGATIVE
+DIVQ_QUO_NEG DC    AL1(FALSE) QUOTIENT  NEGATIVE
+DIVQ_SAVE    DC    2F'0'      SAVE R14-R15 ACROSS MPYQ128
+DIVQ_TRIAL   DC    XL16'00'   SAVE TRIAL DIVISOR 
 *
 * GEN GOBACK AND STOP RUN FOR FALL THROUGH LAST PARAGRAPH.
 *
@@ -138,13 +417,65 @@ STOPRUN  DS 0H
          BR    R14
          DROP  R15
 *
+* MPYQ128 MULTIPLY Q128 IN R0-R1 BY Q128 INR2-R3             
+*
+MPYQ128  DS 0H
+         USING *,R15
+         STMG  R4,R7,ZCSAVE
+         LGFI  R4,-1
+         IF    (TMHH,R0,O,X'8000')
+               XGR  R0,R4
+               XGR  R1,R4
+               ALGFI R1,1
+               ALCG  R0,ZCVT_ZERO
+               IF (TMHH,R2,O,X'8000')
+                  XGR  R2,R4
+                  XGR  R3,R4
+                  ALGFI R3,1
+                  ALCG  R2,ZCVT_ZERO
+                  MVI MPYQ_NEG,FALSE
+               ELSE
+                  MVI MPYQ_NEG,TRUE
+               ENDIF
+         ELSE
+               IF (TMHH,R2,O,X'8000')
+                  XGR  R2,R4
+                  XGR  R3,R4
+                  ALGFI R3,1
+                  ALCG  R2,ZCVT_ZERO
+                  MVI MPYQ_NEG,TRUE
+               ELSE
+                  MVI MPYQ_NEG,FALSE
+               ENDIF
+         ENDIF  
+         LGR   R4,R0         R4-R5 = R0-R1
+         LGR   R5,R1
+         MLGR  R0,R3         R0-R1 = R1 * R3
+         LGR   R7,R4
+         MLGR  R6,R3         R6-R7 = R0 * R3
+         ALGR  R0,R7         R0-R1 = Q128 = + R0 * R3 * 2**64
+         LGR   R7,R5
+         MLGR  R6,R2         R6-R7 = R1 * R2
+         ALGR  R0,R7         R0-R1 = Q128 = + R1 * R2 * 2**64
+         IF    (CLI,MPYQ_NEG,EQ,TRUE)
+               LGFI  R4,-1
+               XGR  R0,R4
+               XGR  R1,R4
+               ALGFI R1,1
+               ALCG  R0,ZCVT_ZERO
+         ENDIF
+         LMG   R4,R7,ZCSAVE
+         BR    R14
+         DROP  R15
+MPYQ_NEG DC    AL1(FALSE)
+*
 * ON SIZE ERROR 64 BIT USING ONLY 32 BIT REGS 
 *    R0-R1 = A(TARGET 64 BIT)
 *    R2-R3 = A(MAXDIG 64 BIT)
 *
 OSE64R32 DS    0H
          USING *,R15
-         SAVE  (R14,R12)
+         STMG  R14,R12,ZCSAVE
          BALR  R12,0
          USING *,R12
          DROP  R15
@@ -157,7 +488,7 @@ OSE64R32 DS    0H
          LHI   R7,-1           COMPLIMENT TARGET IF NEG.
          XR    R4,R6
          XR    R5,R7
-         AHI   R5,1
+         ALFI  R5,1
          ALC   R4,ZCVT_ZERO
 OSE64R32_CR DS    0H            COMPARE POS N64 WITH MAX64
          CR    R4,R2
@@ -168,7 +499,8 @@ OSE64R32_CR DS    0H            COMPARE POS N64 WITH MAX64
 OSE64R32_CC3 DS 0H
          TM    *,X'91'          SET CC3 ALL SEL BITS 1 FOR N64 >= MAX64
 OSE64R32_EXIT DS 0H
-         RETURN (R14,R12)
+         LMG   R14,R12,ZCSAVE
+         BR    R14
 *
 * GEN PERFORM
 *
@@ -371,6 +703,9 @@ TABNUMZ  DC    240X'FF',10X'00',6X'FF'        F0-F9 ONLY
 *     
 * SHARED DATA
 *
+ZCSAVE   DS      16XL8 SAVE 64 BIT REGS 
+TRUE     EQU     1
+FALSE    EQU     0
          EQUREGS REGS=GPR
          EQUREGS REGS=FPR
          ZSTREQU

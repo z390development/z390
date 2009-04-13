@@ -212,6 +212,8 @@ public  class  tz390 {
     * 12/11/08 RPI 963 display final options 1 per line
     * 12/19/08 RPI 979 default SYSCPY to pgm dir prior to addition of paths
     * 01/26/09 RPI 986 add zcobol options COMMENT, EXTEND, TRUNC, WARN, R64
+    * 03/06/09 RPI 1004 add FLOAT(DECIMAL/BINARY/HEX) for DFP,BFP, or HFP zcobol DEL type
+    * 03/09/09 RPI 1013 add PFPO, ECTG, and CSST instructions
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -220,7 +222,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.00a";  //dsh
+    String version    = "V1.5.00b";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -252,6 +254,8 @@ public  class  tz390 {
     boolean opt_extend   = true;  // allow up to 31 digits for P and Z in zocobl RPI 986
     boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
     boolean opt_init     = true;  // init regs to x'F4", mem to x'F5'
+    String  opt_float    = "DECIMAL"; // zcobol FLOAT-? type D=DFP,B=BFP,H=HFP
+    
     String  opt_ipl      = "";    // program to execute at startup
     String  opt_install_loc = ""; // optional install location for source debugging
     boolean opt_list     = true;  // generate LOG file
@@ -849,6 +853,7 @@ public  class  tz390 {
 		       "UPT",      // 20 "0102" "UPT" "E" 1
 		       "PTFF",     //    "0104" "PTFF" "E" 1 Z9-1
 		       "SCKPF",    // 30 "0107" "SCKPF" "E" 1
+		       "PFPO",     // 40 "010A" "PFPO" "E" 1   RPI 1013
 		       "TAM",      // 40 "010B" "TAM" "E" 1
 		       "SAM24",    // 50 "010C" "SAM24" "E" 1
 		       "SAM31",    // 60 "010D" "SAM31" "E" 1
@@ -1551,6 +1556,8 @@ public  class  tz390 {
 		       "CLGFRL",   // 280 "C6E" "CLGFRL" "RIL" 16 RPI 817
 		       "CLRL",     // 290 "C6F" "CLRL" "RIL" 16 RPI 817
 		       "MVCOS",    //      "C80" "MVCOS" "SSF" 32 Z9-41 // RPI 606
+		       "ECTG",     //      "C81" "ECTG" "SSF" 32  // RPI 1013
+		       "CSST",     //      "C82" "CSST" "SSF" 32  // RPI 1013
 		       "TRTR",     // 5230 "D0" "TRTR" "SS" 17
 		       "MVN",      // 5240 "D1" "MVN" "SS" 17
 		       "MVC",      // 5250 "D2" "MVC" "SS" 17
@@ -2082,6 +2089,7 @@ public  class  tz390 {
 		       1,  // 20 "0102" "UPT" "E" 1		       
 		       1,  //    "0104" "PTFF" "E" 1 Z9-1
 		       1,  // 30 "0107" "SCKPF" "E" 1
+		       1,  // 40 "010A" "PFPO" "E" 1   RPI 1013
 		       1,  // 40 "010B" "TAM" "E" 1
 		       1,  // 50 "010C" "SAM24" "E" 1
 		       1,  // 60 "010D" "SAM31" "E" 1
@@ -2784,7 +2792,9 @@ public  class  tz390 {
 		       16,  // 270 "C6D" "CRL" "RIL" 16  RPI 817
 		       16,  // 280 "C6E" "CLGFRL" "RIL" 16  RPI 817
 		       16,  // 290 "C6F" "CLRL" "RIL" 16  RPI 817
-		       32,  //      "C80" "MVCOS" "SSF" 32 Z9-41		       
+		       32,  //      "C80" "MVCOS" "SSF" 32 Z9-41	
+		       32,  //      "C81" "ECTG" "SSF" 32 RPI 1013
+		       32,  //      "C82" "CSST" "SSF" 32 RPI 1013		       
 		       17,  // 5230 "D0" "TRTR" "SS" 17
 		       17,  // 5240 "D1" "MVN" "SS" 17
 		       17,  // 5250 "D2" "MVC" "SS" 17
@@ -3250,6 +3260,7 @@ public  class  tz390 {
 		       "0102",  // 20 "0102" "UPT" "E" 1
 		       "0104",  //    "0104" "PTFF" "E" 1 Z9-1
 		       "0107",  // 30 "0107" "SCKPF" "E" 1
+		       "010A",  // 40 "010A" "PFPO" "E" 1    RPI 1013
 		       "010B",  // 40 "010B" "TAM" "E" 1
 		       "010C",  // 50 "010C" "SAM24" "E" 1
 		       "010D",  // 60 "010D" "SAM31" "E" 1
@@ -3952,6 +3963,8 @@ public  class  tz390 {
 		       "C6E",  // 280 "C6E" "CLGFRL" "RIL" 16 RPI 817
 		       "C6F",  // 290 "C6F" "CLRL" "RIL" 16 RPI 817
 		       "C80",  //      "C80" "MVCOS" "SSF" 32 Z9-41
+		       "C81",  //      "C81" "ECTG" "SSF" 32 RPI 1013
+		       "C82",  //      "C82" "CSST" "SSF" 32 RPI 1013
 		       "D0",  // 5230 "D0" "TRTR" "SS" 17
 		       "D1",  // 5240 "D1" "MVN" "SS" 17
 		       "D2",  // 5250 "D2" "MVC" "SS" 17
@@ -4691,6 +4704,14 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_extend = true;
     } else if (token.toUpperCase().equals("NOEXTEND")){
        	opt_extend = false;
+    } else if (token.length() > 6
+        	&& token.substring(0,6).toUpperCase().equals("FLOAT(")){
+       		opt_float = token.substring(6,token.length()-1).toUpperCase();
+            if (!opt_float.equals("DECIMAL") 
+            	&& !opt_float.equals("BINARY")
+            	&& !opt_float.equals("HEX")){
+            	abort_error(25,"option FLOAT must be DECIMAL, BINARY, or HEX");
+            }
     } else if (token.toUpperCase().equals("GUAM")){
        	opt_guam = true;
     } else if (token.toUpperCase().equals("NOGUAM")){
@@ -6409,7 +6430,7 @@ public void put_trace(String text){
     		dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[(dfp_exp & 0xc0) >>> 2 
     		             | (dfp_digits.charAt(0) & 0xf)];
     		fp_work_reg.putInt(0,
-    				       (int)(dfp_scf << 26 
+    				       (int)(dfp_scf << 26
                                  | ((dfp_exp & 0x3f) << 20
                                  | (int)get_dfp_ccf_digits(7,1,6)
                                 )));
@@ -6693,9 +6714,10 @@ public void put_trace(String text){
 	     }
 	     if (opt_extend){ // allow 31 digit P and Z in zcobol 
 		        add_final_opt("EXTEND");
-		     } else {
+		 } else {
 		        add_final_opt("NOEXTEND");
-		     }
+		 }
+	     add_final_opt("FLOAT(" + opt_float + ")");
 	     if (opt_guam    ){ // use gz390 GUAM GUI access method interface
 	        add_final_opt("GUAM");
 	     } else {

@@ -1,0 +1,72 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/12/09                                                 *
+.*********************************************************************
+.* 03/13/09 initial coding for use in GEN_MOVE/COMP/ADD/etc for Z to P   
+.*********************************************************************
+.* PACK 1 TO 31 ZD FIELD INTO PD FIELD 
+.*********************************************************************
+         ZC_PACK31 &P,&LP,&Z,&LZ
+         COPY  ZC_WS
+         :&SOURCE   SETC '&Z'            SOURCE ZD FIELD (MAY BE SIX)
+         :&ZLEN     SETA &LZ             SOURCE ZD LENGTH
+         :&TARGET   SETC '&P'            TARGET PD FIELD
+         :&PLEN     SETA &LP             TARGET PD LENGTH
+       AIF   (&ZLEN LE 15 OR &PLEN LE 8)  IS THIS SINGLE OPERATION
+         AIF (&ZLEN GT 15)
+             :&ZLEN SETA &PLEN*2-1 IGNORE HIGH DIGITS IN Z FIELD
+         AEND
+         :&SLEN SETA &ZLEN
+         ACALL SET_SOURCE_LEN           SET EXPLICIT SOURCE LEN 
+         PACK  &TARGET.(&PLEN),&S_TEMP  PACK SOURCE 
+         MEXIT
+       AEND
+       AIF     (&ZLEN/2*2 EQ &ZLEN)
+         :&SLEN SETA 14
+         ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN
+         PACK  &TARGET.(8),&S_TEMP    PACK FIRST 13 DIGITS OF EVEN TOT
+               :&ZLEN SETA &ZLEN-13
+               :&ZOFF SETA 13
+       AELSE
+         :&SLEN SETA 15
+         ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN
+         PACK  &TARGET.(8),&S_TEMP    PACK FIRST 14 DIGITS OF ODD TOT
+               :&ZLEN SETA &ZLEN-14
+               :&ZOFF SETA 14
+       AEND
+       :&PLEN SETA &PLEN-7            SKIP FIRST 7 PACKED BYTES
+       :&POFF SETA 7                  SET POFF TO OVERLAY LAST BYTE
+       AIF (&ZLEN GT 15)
+           :&SLEN SETA 15
+           ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN
+         PACK  &TARGET+&POFF.(8),&ZOFF+&S_TEMP    PACK NEXT 14
+           :&ZLEN SETA &ZLEN-14
+           :&ZOFF SETA &ZOFF+14
+           :&POFF SETA &POFF+7
+           :&PLEN SETA &PLEN-7
+       AEND
+       :&SLEN SETA &ZLEN
+       ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN
+         PACK  &TARGET+&POFF.(&PLEN),&ZOFF+&S_TEMP  PACK REMAINDER
+.*
+.* SET SOURCE LEN - INSERT SLEN FOR SIX OR LABEL IN S_TEMP
+.*
+         AENTRY SET_SOURCE_LEN
+         AIF   ('&SOURCE'(1,1) LT '0')   IS THIS LABEL
+               :&S_TEMP SETC '&SOURCE.(&SLEN)'
+         AELSE
+               :&I   SETA ('&SOURCE' INDEX '(')
+               AIF   (&I GT 0)
+                     :&S_TEMP SETC '&SOURCE'(1,&I).'&SLEN,'.'&SOURCE'(&X
+               I+1,*)
+               AELSE
+                     MNOTE 8,'ZC_PACK31 N(REG) FORMAT ERROR &SOURCE'
+                     MEXIT
+               AEND
+         AEND
+         AEND
+         MEND

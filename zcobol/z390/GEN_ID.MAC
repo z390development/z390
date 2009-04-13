@@ -9,6 +9,7 @@
 .* 04/14/08 initial coding for z390 PROGRAM_ID
 .* 06/10/08 reallocate global registers to not conflict with CICS
 .* 11/14/08 gen DFHEISTG DSA DSECT if CICS                          
+.* 03/12/09 RPI 1004 add ZC_PFPO copybook defining types
 .*********************************************************************
 .* GLOBAL REGISTER ALLOCATION:
 .*  R0-R3 WORK USED BY ZCOBOL\Z390\GEN_*.MAC CODE GEN
@@ -113,6 +114,7 @@ ZC_VER_ERR DS 0H
          EQUREGS REGS=GPR
          EQUREGS REGS=FPR
          ZSTREQU
+         COPY  ZC_PFPO
 ZC_VER_OK DS   0H
          AEND
          MEND

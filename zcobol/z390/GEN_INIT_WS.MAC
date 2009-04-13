@@ -25,7 +25,7 @@
                AIF (&SYM_DUP(&I) EQ 1)
                    GEN_MOVE &SYM_NAME(&I),&I,&SYM_VAL(&I),0
                AELSE
-                   MNOTE 4,'GEN_INIT_WS DUP VAL NOT SUPPORTED YET'
+                   MNOTE 8,'GEN_INIT_WS DUP VAL NOT SUPPORTED YET'
                AEND
             AEND
             :&I SETA &I+1

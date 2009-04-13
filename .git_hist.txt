@@ -5368,7 +5368,79 @@ set GIT_COMMITTER_DATE=2021-03-24 21:50:00 +0100
 git commit -m "Reconstructed version v1.5.00a of z390 committed on behalf of Don Higgins"
 git tag -a v1.5.00a -m "Reconstructed version v1.5.00a of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.00b
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.5.00b
+git add README.TXT
+git add src/pz390.java
+git add src/tz390.java
+git add src/vz390.java
+git add zcobol/COMPUTE.MAC
+git add zcobol/DIVIDE.MAC
+git add zcobol/ELSE.MAC
+git add zcobol/PERFORM.MAC
+git add zcobol/PROCEDURE.MAC
+git add zcobol/WS.MAC
+git add zcobol/ZCGETFLD.CPY
+git add zcobol/ZCOBOL.MAC
+git add zcobol/ZC_PIC_LEN.MAC
+git add zcobol/ZC_WS.CPY
+git add zcobol/demo/COPYFILE.CBL
+git add zcobol/demo/POWERS.CBL
+git add zcobol/test/TESTCMP1.CBL
+git add zcobol/test/TESTCPY1.CBL
+git add zcobol/test/TESTDSP1.CBL
+git add zcobol/test/TESTFUN1.CBL
+git add zcobol/test/TESTIF1.CBL
+git add zcobol/test/TESTISP1.CBL
+git add zcobol/test/TESTMOV1.CBL
+git add zcobol/test/TESTPM1.CBL
+git add zcobol/test/TESTSIX1.CBL
+git add zcobol/test/TESTSIX2.CBL
+git add zcobol/test/TESTTRC1.CBL
+git add zcobol/test/TESTTRC2.CBL
+git add zcobol/test/TESTTRC3.CBL
+git add zcobol/test/TESTWS1.CBL
+git add zcobol/z390/ABORT.MLC
+git add zcobol/z390/DISPLAY.MLC
+git add zcobol/z390/GEN_ADD.MAC
+git add zcobol/z390/GEN_COMP.MAC
+git add zcobol/z390/GEN_DISPLAY.MAC
+git add zcobol/z390/GEN_DIV.MAC
+git add zcobol/z390/GEN_ID.MAC
+git add zcobol/z390/GEN_INIT_WS.MAC
+git add zcobol/z390/GEN_MOVE.MAC
+git add zcobol/z390/GEN_MPY.MAC
+git add zcobol/z390/GEN_SUB.MAC
+git add zcobol/z390/GEN_WS.MAC
+git add zcobol/z390/ZC390CVT.CPY
+git add zcobol/z390/ZC390NUC.MLC
+git add rt/test/TESTFP2.MLC
+git add zcobol/ZC_EXP.MAC
+git add zcobol/test/TESTBFP1.CBL
+git add zcobol/test/TESTDFP1.CBL
+git add zcobol/test/TESTHFP1.CBL
+git add zcobol/test/TESTINT1.CBL
+git add zcobol/z390/ZC_CONV.MAC
+git add zcobol/z390/ZC_LPQR.MAC
+git add zcobol/z390/ZC_PACK31.MAC
+git add zcobol/z390/ZC_PFPO.CPY
+git add zcobol/z390/ZC_UNPK31.MAC
+
+==> Create commit for V1.5.00b
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2009-04-13 14:54:00 -0500
+set GIT_COMMITTER_DATE=2021-03-24 22:00:00 +0100
+git commit -m "Reconstructed version v1.5.00b of z390 committed on behalf of Don Higgins"
+git tag -a v1.5.00b -m "Reconstructed version v1.5.00b of z390 committed on behalf of Don Higgins"
 
 
 

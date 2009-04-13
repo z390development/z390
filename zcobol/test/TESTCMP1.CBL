@@ -27,12 +27,11 @@
        77 H3      COMP   PIC S9(4)  VALUE 3.           
        77 P3      COMP-3 PIC S9(4)  VALUE 3.           
        77 Z3             PIC S9(4)  VALUE 3.           
-       77 ERRORS  COMP-3 PIC 9(4)   VALUE 0.
-       77 TESTS   COMP-3 PIC 9(4)   VALUE 0.
+       77 GOOD   COMP-3 PIC 9(4)   VALUE 0.
        PROCEDURE DIVISION.
        MAINLINE.
            DISPLAY 'TESTCMP1 ADD, SUB, MPY, DIV, COMPUTE STARTING'
-           DISPLAY 'TESTCMP1 SUBTRACT 2 TESTS'
+           DISPLAY 'TESTCMP1 SUBTRACT 2 GOOD'
        1.  SUBTRACT 2 FROM D1 
             IF D1 = -1 PERFORM GOOD ELSE PERFORM BAD.
        2.  SUBTRACT 2 FROM E1 
@@ -47,7 +46,7 @@
             IF P1 = -1 PERFORM GOOD ELSE PERFORM BAD.
        7.  SUBTRACT 2 FROM Z1 
             IF Z1 = -1 PERFORM GOOD ELSE PERFORM BAD.
-       8.  DISPLAY 'TESTCMP1 SUBTRACT D2 TESTS'
+       8.  DISPLAY 'TESTCMP1 SUBTRACT D2 GOOD'
            MOVE 1 TO D1
            MOVE 1 TO E1
            MOVE 1 TO W1
@@ -69,7 +68,7 @@
             IF P1 = -1 PERFORM GOOD ELSE PERFORM BAD.
        14. SUBTRACT D2 FROM Z1 
             IF Z1 = -1 PERFORM GOOD ELSE PERFORM BAD.
-       15. DISPLAY 'TESTCMP1 SUBTRACT E2 TESTS'
+       15. DISPLAY 'TESTCMP1 SUBTRACT E2 GOOD'
            MOVE 1 TO D1
            MOVE 1 TO E1
            MOVE 1 TO W1
@@ -91,7 +90,7 @@
             IF P1 = -1 PERFORM GOOD ELSE PERFORM BAD.
        21. SUBTRACT E2 FROM Z1 
             IF Z1 = -1 PERFORM GOOD ELSE PERFORM BAD.
-       22. DISPLAY 'TESTCMP1 SUBTRACT W2 TESTS'
+       22. DISPLAY 'TESTCMP1 SUBTRACT W2 GOOD'
            MOVE 1 TO D1
            MOVE 1 TO E1
            MOVE 1 TO W1
@@ -113,7 +112,7 @@
             IF P1 = -1 PERFORM GOOD ELSE PERFORM BAD.
        28. SUBTRACT W2 FROM Z1 
             IF Z1 = -1 PERFORM GOOD ELSE PERFORM BAD.
-       29. DISPLAY 'TESTCMP1 SUBTRACT G2 TESTS'
+       29. DISPLAY 'TESTCMP1 SUBTRACT G2 GOOD'
            MOVE 1 TO D1
            MOVE 1 TO E1
            MOVE 1 TO W1
@@ -135,7 +134,7 @@
             IF P1 = -1 PERFORM GOOD ELSE PERFORM BAD.
        35. SUBTRACT G2 FROM Z1 
             IF Z1 = -1 PERFORM GOOD ELSE PERFORM BAD.
-       36. DISPLAY 'TESTCMP1 SUBTRACT H2 TESTS'
+       36. DISPLAY 'TESTCMP1 SUBTRACT H2 GOOD'
            MOVE 1 TO D1
            MOVE 1 TO E1
            MOVE 1 TO W1
@@ -157,7 +156,7 @@
             IF P1 = -1 PERFORM GOOD ELSE PERFORM BAD.
        42. SUBTRACT H2 FROM Z1 
             IF Z1 = -1 PERFORM GOOD ELSE PERFORM BAD.
-       43. DISPLAY 'TESTCMP1 SUBTRACT P2 TESTS'
+       43. DISPLAY 'TESTCMP1 SUBTRACT P2 GOOD'
            MOVE 1 TO D1
            MOVE 1 TO E1
            MOVE 1 TO W1
@@ -179,7 +178,7 @@
             IF P1 = -1 PERFORM GOOD ELSE PERFORM BAD.
        49. SUBTRACT P2 FROM Z1 
             IF Z1 = -1 PERFORM GOOD ELSE PERFORM BAD.
-       50. DISPLAY 'TESTCMP1 SUBTRACT Z2 TESTS'
+       50. DISPLAY 'TESTCMP1 SUBTRACT Z2 GOOD'
            MOVE 1 TO D1
            MOVE 1 TO E1
            MOVE 1 TO W1
@@ -201,7 +200,7 @@
             IF P1 = -1 PERFORM GOOD ELSE PERFORM BAD.
        56. SUBTRACT Z2 FROM Z1 
             IF Z1 = -1 PERFORM GOOD ELSE PERFORM BAD.
-       57. DISPLAY 'TESTCMP1 ADD 2 TESTS'
+       57. DISPLAY 'TESTCMP1 ADD 2 GOOD'
            MOVE -1 TO D1
            MOVE -1 TO E1
            MOVE -1 TO W1
@@ -223,7 +222,7 @@
             IF P1 = 1 PERFORM GOOD ELSE PERFORM BAD.
        63. ADD 2 TO Z1 
             IF Z1 = 1 PERFORM GOOD ELSE PERFORM BAD.
-       64. DISPLAY 'TESTCMP1 ADD D2 TESTS'
+       64. DISPLAY 'TESTCMP1 ADD D2 GOOD'
            MOVE -1 TO D1
            MOVE -1 TO E1
            MOVE -1 TO W1
@@ -233,7 +232,7 @@
            MOVE -1 TO Z1
            ADD D2 TO D1 
             IF D1 = 1 PERFORM GOOD ELSE PERFORM BAD.
-       65. ADD D2 TO E1 
+           ADD D2 TO E1 
             IF E1 = 1 PERFORM GOOD ELSE PERFORM BAD.
            ADD D2 TO W1 
             IF W1 = 1 PERFORM GOOD ELSE PERFORM BAD.
@@ -245,7 +244,7 @@
             IF P1 = 1 PERFORM GOOD ELSE PERFORM BAD.
            ADD D2 TO Z1 
             IF Z1 = 1 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 ADD E2 TESTS'
+           DISPLAY 'TESTCMP1 ADD E2 GOOD'
            MOVE -1 TO D1
            MOVE -1 TO E1
            MOVE -1 TO W1
@@ -267,7 +266,7 @@
             IF P1 = 1 PERFORM GOOD ELSE PERFORM BAD.
            ADD E2 TO Z1 
             IF Z1 = 1 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 ADD W2 TESTS'
+           DISPLAY 'TESTCMP1 ADD W2 GOOD'
            MOVE -1 TO D1
            MOVE -1 TO E1
            MOVE -1 TO W1
@@ -289,7 +288,7 @@
             IF P1 = 1 PERFORM GOOD ELSE PERFORM BAD.
            ADD W2 TO Z1 
             IF Z1 = 1 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 ADD G2 TESTS'
+           DISPLAY 'TESTCMP1 ADD G2 GOOD'
            MOVE -1 TO D1
            MOVE -1 TO E1
            MOVE -1 TO W1
@@ -311,7 +310,7 @@
             IF P1 = 1 PERFORM GOOD ELSE PERFORM BAD.
            ADD G2 TO Z1 
             IF Z1 = 1 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 ADD H2 TESTS'
+           DISPLAY 'TESTCMP1 ADD H2 GOOD'
            MOVE -1 TO D1
            MOVE -1 TO E1
            MOVE -1 TO W1
@@ -333,7 +332,7 @@
             IF P1 = 1 PERFORM GOOD ELSE PERFORM BAD.
            ADD H2 TO Z1 
             IF Z1 = 1 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 ADD P2 TESTS'
+           DISPLAY 'TESTCMP1 ADD P2 GOOD'
            MOVE -1 TO D1
            MOVE -1 TO E1
            MOVE -1 TO W1
@@ -355,7 +354,7 @@
             IF P1 = 1 PERFORM GOOD ELSE PERFORM BAD.
            ADD P2 TO Z1 
             IF Z1 = 1 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 ADD Z2 TESTS'
+           DISPLAY 'TESTCMP1 ADD Z2 GOOD'
            MOVE -1 TO D1
            MOVE -1 TO E1
            MOVE -1 TO W1
@@ -377,7 +376,7 @@
             IF P1 = 1 PERFORM GOOD ELSE PERFORM BAD.
            ADD Z2 TO Z1 
             IF Z1 = 1 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 MULTIPLY 2 TESTS'
+           DISPLAY 'TESTCMP1 MULTIPLY 2 GOOD'
            MOVE 3 TO D2
            MOVE 3 TO E2
            MOVE 3 TO W2
@@ -406,7 +405,7 @@
             IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY  3 BY Z1 
             IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 MULTIPLY D2 TESTS'
+           DISPLAY 'TESTCMP1 MULTIPLY D2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
            MOVE -2 TO W1
@@ -428,7 +427,7 @@
             IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY D2 BY Z1 
             IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 MULTIPLY E2 TESTS'
+           DISPLAY 'TESTCMP1 MULTIPLY E2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
            MOVE -2 TO W1
@@ -450,7 +449,7 @@
             IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY E2 BY Z1 
             IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 MULTIPLY W2 TESTS'
+           DISPLAY 'TESTCMP1 MULTIPLY W2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
            MOVE -2 TO W1
@@ -472,7 +471,7 @@
             IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY W2 BY Z1 
             IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 MULTIPLY G2 TESTS'
+           DISPLAY 'TESTCMP1 MULTIPLY G2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
            MOVE -2 TO W1
@@ -494,7 +493,7 @@
             IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY G2 BY Z1 
             IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 MULTIPLY H2 TESTS'
+           DISPLAY 'TESTCMP1 MULTIPLY H2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
            MOVE -2 TO W1
@@ -516,7 +515,7 @@
             IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY H2 BY Z1 
             IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 MULTIPLY P2 TESTS'
+           DISPLAY 'TESTCMP1 MULTIPLY P2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
            MOVE -2 TO W1
@@ -538,7 +537,7 @@
             IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY P2 BY Z1 
             IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 MULTIPLY Z2 TESTS'
+           DISPLAY 'TESTCMP1 MULTIPLY Z2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
            MOVE -2 TO W1
@@ -560,7 +559,7 @@
             IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY Z2 BY Z1 
             IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTCMP1 DIVIDE COMP-1/2 TESTS'
+           DISPLAY 'TESTCMP1 DIVIDE COMP-1/2 GOOD'
            DIVIDE 2 INTO 7 GIVING D2 
             IF D2 = 3.5 PERFORM GOOD ELSE PERFORM BAD.
            DIVIDE 2 INTO 7 GIVING E2 
@@ -630,18 +629,10 @@
            MULTIPLY 3 BY 2 GIVING H1 H2  
            IF H1 = 6 AND H2 = 6 
               PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TOTAL TESTS  =' TESTS
-           DISPLAY 'TOTAL ERRORS =' ERRORS
-           IF ERRORS > 0  
-              MOVE 16 TO RETURN-CODE
-           ELSE
-              DISPLAY 'TESTCMP1 ENDED OK'
-           END-IF
+           DISPLAY 'TESTCMP1 GOOD TESTS =' GOOD
            STOP RUN.
        GOOD.
-           ADD 1 TO TESTS.
+           ADD 1 TO GOOD.
        BAD.
-           ADD 1 TO ERRORS.
-           DISPLAY 'GOOD TESTS = ' TESTS
            MOVE 16 TO RETURN-CODE
            STOP RUN.

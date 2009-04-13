@@ -9,7 +9,6 @@
         77  FW1     COMP PIC S9(9).
         77  GW1     COMP PIC S9(18).
         77  GOOD   COMP PIC S9(9) VALUE 0.
-        77  BAD    COMP PIC S9(9) VALUE 0.
        PROCEDURE DIVISION.
        MAINLINE.
            MOVE 9998 TO HW1
@@ -28,12 +27,10 @@
                              PERFORM BAD ELSE PERFORM GOOD.
            ADD  1    TO GW1 ON SIZE ERROR MOVE 1 TO GW1 END-ADD
      6     IF GW1 NOT = 1    PERFORM BAD ELSE PERFORM GOOD.
-           DISPLAY 'TESTTRC2 BAD  TESTS =' BAD 
+           DISPLAY 'TESTTRC2 GOOD TESTS =' GOOD 
            STOP RUN.
        GOOD.
            ADD 1 TO GOOD
-           DISPLAY 'TESTTRC2 GOOD TESTS =' GOOD. 
        BAD.
-           DISPLAY 'ERROR OCCURED'
            MOVE 16 TO RETURN-CODE
            STOP RUN.

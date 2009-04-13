@@ -10,6 +10,8 @@
 .* 10/07/08 ZSTRMAC
 .*********************************************************************
 .* 11/19/08 add support for multiple field types using DISPLAY routine
+.* 03/06/09 RPI 1004 add DEL DFP/BFP/HFP support                      
+.* 03/10/09 RPI 1013 remove dependency on ZC_FLOAT using types 1-9        
 .*********************************************************************
          GEN_DISPLAY 
          COPY  ZC_WS

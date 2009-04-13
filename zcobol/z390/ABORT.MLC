@@ -6,6 +6,7 @@
 * Date   - 04/07/08                                                 *
 *********************************************************************
 * 11/22/08 initial coding for ABORT zcobol runtime routines
+* 03/21/09 RPI 1004 add ABORT_INT128, ABORT_DIVQ           
 *********************************************************************
 ABORT    SUBENTRY
          LR    R3,R1
@@ -24,6 +25,10 @@ ABORT    SUBENTRY
                WTO  'ABORT DUE TO PERFORM STACK OVERFLOW'
          CASE  7    ABORT_STACK
                WTO  'ABORT VERSION ERROR BETWEEN ZCOBOL VS ZC390LIB'
+         CASE  8    ABORT_INT128
+               WTO  'ABORT INTEGER 128 BIT CONVERSION OVERFLOW'
+         CASE  9    ABORT_DIVQ
+               WTO  'ABORT DIVIDE Q 128 BIT DIVISOR 0 OR > 2**63 LIMIT'
          ENDCASE
          IF    (CHI,R3,GT,ZCVT_ABORT_MAXERR)
                WTO  'ABORT WITH UNKNOW ERROR'

@@ -11,6 +11,9 @@
 .*********************************************************************
          ELSE    
          COPY  ZC_WS
+         AIF   (N'&SYSLIST GT 0)
+               MNOTE 8,'ELSE - UNDEFINED VERB - &SYSLIST(1)'
+         AEND
          AIF   (&IE_LVL LT 1)      
                MNOTE 8,'ELSE MISSING IF'
                MEXIT

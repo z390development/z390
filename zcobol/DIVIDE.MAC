@@ -239,9 +239,10 @@
                &NOT_ONSIZE    1 IF NOT_ONSIZE SPECIFIED                  
          AEND
 .*
-.* SET LIT PDD
+.* SET LIT LDD=0 AND PDD
 .*
          AENTRY SET_LIT_PDD
+         :&LDD SETA 0
          :&DP SETA ('&NDD' INDEX '.')
          AIF  (&DP GT 0)
               :&PDD SETA K'&NDD-&DP
@@ -250,9 +251,10 @@
          AEND
          AEND
 .*
-.* SET LIT PDR
+.* SET LIT LDR=0 AND PDR
 .*
          AENTRY SET_LIT_PDR
+         :&LDR SETA 0
          :&DP SETA ('&NDR' INDEX '.')
          AIF  (&DP GT 0)
               :&PDR SETA K'&NDR-&DP

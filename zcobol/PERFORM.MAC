@@ -61,7 +61,7 @@
                :&PG_EXIT SETC  'END_&SYSLIST(1)'
          AEND
          :&IF_PARM SETC  ''
-         AIF   (&I LT &NP)
+         AIF   (&I LE &NP)     DSHX WAS LT
                AIF   ('&SYSLIST(&I)' EQ 'WITH'                         X
                AND '&SYSLIST(&I+1)' EQ 'TEST')
                     AIF  ('&SYSLIST(&I+2)' EQ 'BEFORE')

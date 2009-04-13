@@ -64,6 +64,7 @@ public class vz390 {
 	 * 02/08/08 RPI 723 add insert and key/seq access
 	 * 02/10/08 RPI 806 add balance KSIT using AVT method and add statistics/tracev
 	 * 09/12/08 RPI 764 change oflgs_pm to oflgs_w
+	 * 04/06/09 RPI 1016 prevent error on generic POINT to 1 record KSDS file
 	 **************************************************************************
 	 *  Global variables                  (last RPI)
 	 **************************************************************************/
@@ -1779,6 +1780,9 @@ public class vz390 {
 		high_key_rec = sz390.tiot_eof_rba[cur_vx0_tiot_index] / vx0_lrec;
 		low_key_rec = 0;
 		next_key_rec = (high_key_rec + low_key_rec + 1) / 2;
+		if (next_key_rec == high_key_rec){
+			next_key_rec = 0; // RPI 1016
+		}
 		last_key_rec = -1;
 		prev_key_rec = -1;
 		if (tz390.opt_tracev) {

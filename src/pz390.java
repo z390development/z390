@@ -283,7 +283,9 @@ public class pz390 {
      * 11/06/08 rpi 947 add ascii printable text display of MVC data moved  
      * 12/13/08 RPI 975 prevent SFFF on dirty high addr bit for printable hex 
      * 01/12/09 RPI 981 prevent PD target update after data exception   
-     * 01/18/09 RPI 985 optimize XC instruction for S1=S2        
+     * 01/18/09 RPI 985 optimize XC instruction for S1=S2  
+     * 03/09/09 RPI 1013 add PFPO, CSTG, and CSST opcodes per POP V7      
+	 * 03/17/09 RPI 1015 prevent S0C5 on SRAG,SLAG,SRLG,SLLG,SRXT,SLXT
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1284,6 +1286,7 @@ public class pz390 {
 		       10,  // 20 "0102" "UPT" "E" 1		       
 		       10,  //    "0104" "PTFF" "E" 1 Z9-1
 		       10,  // 30 "0107" "SCKPF" "E" 1
+		       10,  // 40 "010A" "PFPO" "E" 1   RPI 1013
 		       10,  // 40 "010B" "TAM" "E" 1
 		       10,  // 50 "010C" "SAM24" "E" 1
 		       10,  // 60 "010D" "SAM31" "E" 1
@@ -1986,6 +1989,8 @@ public class pz390 {
 		       166,  // 280 "C6E" "CLGFRL" "RIL" 16  RPI 817
 		       167,  // 290 "C6F" "CLRL" "RIL" 16  RPI 817
 		       320,  // "C80" "MVCOS" "SSF" 32 Z9-41 RPI 817
+		       320,  // "C81" "ECTG" "SSF" 32 RPI 1013
+		       320,  // "C82" "CSST" "SSF" 32 RPI 1013
 		       170,  // 5230 "D0" "TRTR" "SS" 17
 		       170,  // 5240 "D1" "MVN" "SS" 17
 		       170,  // 5250 "D2" "MVC" "SS" 17
@@ -4527,6 +4532,11 @@ public class pz390 {
 		case 0x07: // 30 "0107" "SCKPF" "E"
 			ins_setup_e();
 			break;
+		case 0x0A: // 40 "010A" "PFPO" "E"   RPI 1013
+			psw_check = false;
+			ins_setup_e();
+			exec_pfpo();
+			break;	
 		case 0x0B: // 40 "010B" "TAM" "E"
 			ins_setup_e();
 			break;
@@ -5968,8 +5978,8 @@ public class pz390 {
 		case 0x96: // 4210 "B396" "CXFBR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			fp_put_bd(rf1, tz390.fp_eb_type, BigDecimal.valueOf(reg
-					.getInt(rf2 + 4)));
+			fp_put_bd(rf1, tz390.fp_lb_type, BigDecimal.valueOf(reg
+					.getInt(rf2 + 4))); // RPI 1013 was EB vs LB
 			break;
 		case 0x98: // 4220 "B398" "CFEBR" "RRF"
 			psw_check = false;
@@ -6527,7 +6537,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2));
-			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1); // RPI 1015 was DD vs LD
 			break;
 		case 0xFA: // "CXUTR" "B3FA" "RRE" DFP 39
 			psw_check = false;
@@ -7704,6 +7714,12 @@ public class pz390 {
 				set_psw_check(psw_pic_spec);
 			}
 		    break;
+		case 0x1: // "ECTG" RPI 1013
+			ins_setup_ssf();
+			break;
+		case 0x2: // "CSST" RPI 1013
+			ins_setup_ssf();
+			break;
 		}
 	}
 	private void ins_E0X(){
@@ -8628,24 +8644,24 @@ public class pz390 {
 			break;
 		case 0x0A: // 6210 "EB0A" "SRAG" "RSY"
 			psw_check = false;
-			ins_setup_rsy();
+			ins_setup_rsy_shift(); // RPI 1015
 			rlv1 = reg.getLong(rf3) >> (bd2_loc & 0x3f);
 			reg.putLong(rf1, rlv1); // RPI 398
 			psw_cc = get_long_comp_cc(rlv1, 0);
 			break;
 		case 0x0B: // 6220 "EB0B" "SLAG" "RSY"
 			psw_check = false;
-			ins_setup_rsy();
+			ins_setup_rsy_shift(); // RPI 1015
 			reg.putLong(rf1, get_sla64(reg.getLong(rf3), bd2_loc & 0x3f));
 			break;
 		case 0x0C: // 6230 "EB0C" "SRLG" "RSY"
 			psw_check = false;
-			ins_setup_rsy();
+			ins_setup_rsy_shift(); // RPI 1015
 			reg.putLong(rf1, reg.getLong(rf3) >>> (bd2_loc & 0x3f));
 			break;
 		case 0x0D: // 6240 "EB0D" "SLLG" "RSY"
 			psw_check = false;
-			ins_setup_rsy();
+			ins_setup_rsy_shift(); // RPI 1015
 			reg.putLong(rf1, reg.getLong(rf3) << (bd2_loc & 0x3f));
 			break;
 		case 0x0F: // 6250 "EB0F" "TRACG" "RSY"
@@ -9558,12 +9574,15 @@ public class pz390 {
 			ins_setup_rxe();
 			fp_load_reg(rf1, tz390.fp_lh_type, mem, xbd2_loc,
 					tz390.fp_lh_type);
+			fp_reg.putLong(rf1+16,0); // RPI 1015
 			break;
 		case 0x26: // 6900 "ED26" "LXE" "RXE"
 			psw_check = false;
 			ins_setup_rxe();
+			
 			fp_load_reg(rf1, tz390.fp_lh_type, mem, xbd2_loc,
 					tz390.fp_eh_type);
+			fp_reg.putLong(rf1+16,0); // RPI 1015
 			break;
 		case 0x2E: // 6910 "ED2E" "MAE" "RXF"
 			psw_check = false;
@@ -9713,11 +9732,13 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rxf();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf3);
-			work_fp_bi1 = fp_rbdv1
+			if ((xbd2_loc & 0x3f) != 0){  // RPI 1015 
+				work_fp_bi1 = fp_rbdv1
 			              .unscaledValue()
 			              .multiply(BigInteger.TEN.pow(xbd2_loc & 0x3f))
 			              .mod(fp_dd_mod_bi);
-			fp_rbdv1 = new BigDecimal(work_fp_bi1).scaleByPowerOfTen(-fp_rbdv1.scale()); // rpi 811
+				fp_rbdv1 = new BigDecimal(work_fp_bi1).scaleByPowerOfTen(-fp_rbdv1.scale()); // rpi 811
+			}
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
 			break;
@@ -9728,25 +9749,27 @@ public class pz390 {
 			work_fp_bi1 = fp_rbdv1
 			              .unscaledValue()
 			              .divide(BigInteger.TEN.pow((xbd2_loc & 0x3f)));
-			fp_rbdv1 = new BigDecimal(work_fp_bi1).scaleByPowerOfTen(-fp_rbdv1.scale()); // rpi 811
+				fp_rbdv1 = new BigDecimal(work_fp_bi1).scaleByPowerOfTen(-fp_rbdv1.scale()); // rpi 811
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x48: // "SLXT" "ED48" "RXF" DFP 47
 			psw_check = false;
-			ins_setup_rxf();
+			ins_setup_rxf_shift(); // RPI 1015
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
-			work_fp_bi1 = fp_rbdv1
+			if ((xbd2_loc & 0x3f) != 0){  // RPI 1015 
+				work_fp_bi1 = fp_rbdv1
 			              .unscaledValue()
 			              .multiply(BigInteger.TEN.pow(xbd2_loc & 0x3f))
 			              .mod(fp_ld_mod_bi);
-			fp_rbdv1 = new BigDecimal(work_fp_bi1).scaleByPowerOfTen(-fp_rbdv1.scale()); // rpi 811
+				fp_rbdv1 = new BigDecimal(work_fp_bi1).scaleByPowerOfTen(-fp_rbdv1.scale()); // rpi 811
+			}
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x49: // "SRXT" "ED49" "RXF" DFP 48
 			psw_check = false;
-			ins_setup_rxf();
+			ins_setup_rxf_shift(); // RPI 1015
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
 			work_fp_bi1 = fp_rbdv1
 			              .unscaledValue()
@@ -10701,7 +10724,7 @@ public class pz390 {
 			ex_restore();
 		}
 		psw_loc = psw_loc + 6;
-		if (bd2_loc >= tot_mem) {
+		if (bd2_loc >= tot_mem){
 			set_psw_check(psw_pic_addr);
 		}
 	}
@@ -10830,7 +10853,37 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
-
+	private void ins_setup_rxf_shift() { // "RXF" 8 MAE oorxbdddr0oo (note r3
+											// before // RPI 1015
+		// r1)
+		psw_ins_len = 6;
+		rf3 = mem_byte[psw_loc + 1] & 0xff;
+		xf2 = (rf3 & 0xf) << 3;
+		rf3 = (rf3 & 0xf0) >> 1;
+		mf3 = rf3 >> 3;
+		rf1 = mem_byte[psw_loc + 4] & 0xf0;
+		rf1 = rf1 >> 1;
+		mf1 = rf1 >> 3;
+		bf2 = mem.getShort(psw_loc + 2) & 0xffff;
+		df2 = bf2 & 0xfff;
+		bf2 = (bf2 & 0xf000) >> 9;
+		if (xf2 > 0) {
+			xbd2_loc = (reg.getInt(xf2 + 4) + df2) & psw_amode; // rpi 815
+		} else {
+			xbd2_loc = df2;
+		}
+		if (bf2 > 0) {
+			xbd2_loc = (xbd2_loc + reg.getInt(bf2 + 4)) & psw_amode; // rpi
+																		// 815
+		}
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+	}
 	private void ins_setup_rxe() { // "RXE" 28 ADB oorxbddd00oo
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -14401,9 +14454,11 @@ public class pz390 {
 		 * Load fp_ctl from fp_reg or fp_ctl Load fp_reg from memory with no
 		 * conversion
 		 * 
-		 * Notes: 1. bd1/bd2 co-reg pair being partially replaced is discarded
-		 * without conversion. 2. This function is called recursively when two
-		 * co-registers of different types are involved.
+		 * Notes: 
+		 * 1. bd1/bd2 co-reg pair being partially replaced is discarded
+		 *    without conversion. 
+		 * 2. This function is called recursively when two
+		 *    co-registers of different types are involved.
 		 */
 		int fp_ctl_index1 = reg_buff_index1 >>> 3;
 		int fp_ctl_index2 = -1;
@@ -14493,6 +14548,11 @@ public class pz390 {
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
 				return;
+			case 7: // tz390.fp_lH_type // RPI 1013 missing
+				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 						.valueOf(fp_reg_eb[fp_ctl_index2]);
@@ -14540,6 +14600,10 @@ public class pz390 {
 						.doubleValue();
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
 				return;
+			case 1: // tz390.fp_dd_type 
+				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
 			case 2: // tz390.fp_dh_type
 				fp_reg_db[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2]
 						.doubleValue();
@@ -14549,6 +14613,10 @@ public class pz390 {
 				fp_reg_eb[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2]
 						.floatValue();
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
+				return;
+			case 4: // tz390.fp_ed_type // RPI 1015 was missing 
+				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 5: // tz390.fp_eh_type
 				fp_reg_db[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2]
@@ -14560,6 +14628,11 @@ public class pz390 {
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
 				return;
+			case 7: // tz390.fp_ld_type // RPI 1013 missing 
+				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				return;	
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
@@ -14589,8 +14662,13 @@ public class pz390 {
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
 				return;
+			case 1: // DB to DD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_db(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
 			case 2: // tz390.fp_dh_type
-				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_db(reg_buff2,
 						reg_buff_index2); // RPI 821
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;  // RPI 821
 				return;
@@ -14598,6 +14676,11 @@ public class pz390 {
 				fp_reg_eb[fp_ctl_index1] = (float) fp_get_db_from_db(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
+				return;
+			case 4: // DB to ED  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_db(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 5: // tz390.fp_eh_type
 				fp_reg_db[fp_ctl_index1] = fp_get_db_from_db(reg_buff2,
@@ -14609,33 +14692,83 @@ public class pz390 {
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
+			case 7: // DB to LD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_db(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
+				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_db(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			}
 			break;
 		case 1: // tz390.fp_dd_type
 			switch (reg_type1) {
+			case 0: // DD to DB  RPI 1013				
+				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
+						reg_buff_index2).doubleValue();
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				return;
+			case 1: // DD to DD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
+			case 2: // DD to DH  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
+			case 3: // DD to EB  RPI 1013
+				fp_reg_eb[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
+						reg_buff_index2).floatValue();
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
+				return;	
 			case 4: // to tz390.fp_ed_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
-			case 7: // tz390.fp_ld_type
+			case 5: // DD to EH  RPI 1013
+				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
+						reg_buff_index2).doubleValue();
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				return;
+			case 6: // DD to LD  RPI 1013
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
+				return;
+			case 7: // tz390.fp_ld_type
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1013 was fp_ctl_db 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013 was missing 
+				return;
+			case 8: // DD to LH  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			}
 			break;
 		case 2: // tz390.fp_dh_type
 			switch (reg_type1) {
 			case 0: // tz390.fp_db_type
-				fp_reg_db[fp_ctl_index1] = fp_get_db_from_db(reg_buff2,
-						reg_buff_index2);
+				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,
+						reg_buff_index2).doubleValue();
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				return;
+			case 1: // DH to DD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 2: // tz390.fp_dh_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,
@@ -14647,6 +14780,11 @@ public class pz390 {
 						reg_buff_index2).floatValue(); // RPI 821
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
 				return;
+			case 4: // DH to ED  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
 			case 5: // tz390.fp_eh_type
 				fp_reg_db[fp_ctl_index1] = fp_get_db_from_eh(reg_buff2, // RPI 849
 						reg_buff_index2);  
@@ -14656,11 +14794,19 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // rpi 1013 
+				return;
+			case 7: // DH to LD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			}
 			break;
@@ -14670,6 +14816,11 @@ public class pz390 {
 				fp_reg_db[fp_ctl_index1] = fp_get_db_from_eb(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				return;
+			case 1: // EB to DD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eb(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 2: //
 				fp_reg_db[fp_ctl_index1] = fp_get_db_from_eb(reg_buff2,
@@ -14681,6 +14832,11 @@ public class pz390 {
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
 				return;
+			case 4: // EB to ED  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eb(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
 			case 5: // tz390.fp_eh_type
 				fp_reg_db[fp_ctl_index1] = fp_get_db_from_eb(reg_buff2,
 						reg_buff_index2);
@@ -14690,17 +14846,56 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eb(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
+				return;
+			case 7: // EB to LD  RPI 1013
+				
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eb(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eb(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			}
 			break;
 		case 4: // tz390.fp_ed_type
 			switch (reg_type1) {
+			case 0: // ED to DB  RPI 1013
+				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
+						reg_buff_index2).doubleValue();
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				return;
 			case 1: // to tz390.fp_dd_type
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
+			case 2: // ED to DH  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
+			case 3: // ED to EB  RPI 1013
+				fp_reg_eb[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
+						reg_buff_index2).floatValue();
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
+				return;
+			case 4: // ED to ED  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
+			case 5: // ED to EH  RPI 1013
+				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
+						reg_buff_index2).doubleValue();
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				return;
+			case 6: // ED to LB  RPI 1013
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
@@ -14709,6 +14904,13 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
+				return;
+			case 8: // ED to LH  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			}
             break;
@@ -14719,15 +14921,25 @@ public class pz390 {
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
 				return;
-			case 2: // tz390.fp_dh_type
-				fp_reg_db[fp_ctl_index1] = fp_get_db_from_eh(reg_buff2,
+			case 1: // EH to DD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eh(reg_buff2,
 						reg_buff_index2);
-				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
+			case 2: // tz390.fp_dh_type
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eh(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 3: // tz390.fp_eb_type
 				fp_reg_eb[fp_ctl_index1] = (float) fp_get_db_from_eh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
+				return;
+			case 4: // EH to ED  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eh(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 5: // tz390.fp_eh_type
 				fp_reg_db[fp_ctl_index1] = fp_get_db_from_eh(reg_buff2,
@@ -14738,11 +14950,19 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
+				return;
+			case 7: // ED to LD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eh(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			}
 			break;
@@ -14752,6 +14972,11 @@ public class pz390 {
 				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,
 						reg_buff_index2).doubleValue();
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				return;
+			case 1: // LB to DD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 2: // tz390.fp_dh_type
 				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,
@@ -14763,6 +14988,11 @@ public class pz390 {
 						reg_buff_index2).floatValue();
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
 				return;
+			case 4: // ED to ED  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
 			case 5: // tz390.fp_eh_type
 				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,
 						reg_buff_index2).doubleValue();
@@ -14772,25 +15002,71 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
-			case 8: // tz390.fp_lh_type
-				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
+			case 7: // tz390.fp_ld-type  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
+				return;
+			case 8: // tz390.fp_lh_type
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			}
 			break;
 		case 7: // tz390.fp_ld_type	
 			switch (reg_type1) {
+			case 0: // LD to DB  RPI 1013
+				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_ld(reg_buff2,
+						reg_buff_index2).doubleValue();
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				return;
 			case 1: // to tz390.fp_dd_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ld(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
+			case 2: // LD to DH  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ld(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
+			case 3: // LD to EB  RPI 1013
+				fp_reg_eb[fp_ctl_index1] = fp_get_bd_from_ld(reg_buff2,
+						reg_buff_index2).floatValue();
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
+				return;
 			case 4: // tz390.fp_ed_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ld(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
+			case 5: // LD to EH  RPI 1013
+				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_ld(reg_buff2,
+						reg_buff_index2).doubleValue();
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				return;
+			case 6: // LD to LB  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ld(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
+				return;
+			case 7: // LD to LD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ld(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
+				return;
+			case 8: // LD to LH  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ld(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			}
 			break;
@@ -14800,6 +15076,11 @@ public class pz390 {
 				fp_reg_db[fp_ctl_index1] = fp_get_db_from_lh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
+				return;
+			case 1: // LH to DD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 2: // tz390.fp_dh_type
 				fp_reg_db[fp_ctl_index1] = fp_get_db_from_lh(reg_buff2,
@@ -14811,6 +15092,11 @@ public class pz390 {
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
 				return;
+			case 4: // LH to ED  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
 			case 5: // tz390.fp_eh_type
 				fp_reg_db[fp_ctl_index1] = fp_get_db_from_lh(reg_buff2,
 						reg_buff_index2);
@@ -14821,6 +15107,12 @@ public class pz390 {
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				return;
+			case 7: // LH to LD  RPI 1013
+				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
+						reg_buff_index2);
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
 				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
@@ -17084,5 +17376,350 @@ break;
 		    * rotate int n bits left (0-31)
 		    */
 		   return (value << n) | (value >>> (32 - n));
+	}
+	private void exec_pfpo(){
+		/*
+		 * perform floating point operation
+		 *  1.  If r0 bit 32 is on, 
+		 *      check if function supported
+		 *      and set r1 rc = 0 else r1 = 3.
+		 *  2.  if r0 bit 32 zero, perform 
+		 *      floating point function:
+		 *      a. bits 33-39 = operation
+		 *         x'01' = convert radix (FP0+2 = FP4+6)
+		 *      b. bits 40-47 = first  operand type
+		 *      c. bits 48-55 = second operand type
+		 *      d. bit  56    = inexact suppression control
+		 *      e. bit  57    = alternate exception action control
+		 *      f. bits 58-59 = target radix dependent controls
+		 *      g. bits 60-63 = rounding method  
+		 *      
+		 *        
+		 */
+		int pfpo_op    = (int)reg.get(r0);
+		int pfpo_type1 = (int)reg.get(r0+1);
+		int pfpo_type2 = (int)reg.get(r0+2);
+		int pfpo_round = (int)reg.get(r0+3) & 0xf;
+		if (pfpo_op != 1
+			&& pfpo_round == 0){
+			// verify not test, radix,def rnd
+			set_psw_check(psw_pic_oper);
+			return;
+		}
+		rf1 = 0;
+		rf2 = 8*4;
+		reg.putInt(r0,0);
+		psw_cc = psw_cc0;
+		switch (pfpo_type1){
+		case 0: // 0 = HFP-SHORT
+			switch (pfpo_type2){
+			case 0: // 0 = HFP-SHORT
+				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_eh_type);
+			    break;
+			case 1:   // 1 = HFP-LONG
+				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_dh_type);
+			    break;
+			case 2:   // 2 = HFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_lh_type);
+			    break;
+			case 5:   // 5 = BFP-SHORT
+				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_eb_type);
+			    break;
+			case 6:   // 6 = BFP-LONG
+				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_db_type);
+			    break;
+			case 7:   // 7 = BFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_lb_type);
+			    break;
+			case 8:   // 8 = DFP-SHORT
+				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_ed_type);
+			    break;
+			case 9:   // 9 = DFP-LONG
+				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_dd_type);
+			    break;
+			case 0xA: // A = DFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_ld_type);
+		        break;
+			default:
+				set_psw_check(psw_pic_spec);
+		        return;
+			}
+			break;
+		case 1:   // 1 = HFP-LONG
+			switch (pfpo_type2){
+			case 0: // 0 = HFP-SHORT
+				fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2, tz390.fp_eh_type);
+			    break;
+			case 1:   // 1 = HFP-LONG
+				fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2, tz390.fp_dh_type);
+			    break;
+			case 2:   // 2 = HFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2, tz390.fp_lh_type);
+			    break;
+			case 5:   // 5 = BFP-SHORT
+				fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2, tz390.fp_eb_type);
+			    break;
+			case 6:   // 6 = BFP-LONG
+				fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2, tz390.fp_db_type);
+			    break;
+			case 7:   // 7 = BFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_lb_type);
+			    break;
+			case 8:   // 8 = DFP-SHORT
+				fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2, tz390.fp_ed_type);
+			    break;
+			case 9:   // 9 = DFP-LONG
+				fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2, tz390.fp_dd_type);
+			    break;
+			case 0xA: // A = DFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2, tz390.fp_ld_type);
+		        break;
+			default:
+				set_psw_check(psw_pic_spec);
+		        return;
+			}
+			break;
+		case 2:   // 2 = HFP-EXTENDED
+			switch (pfpo_type2){
+			case 0: // 0 = HFP-SHORT
+				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2, tz390.fp_eh_type);
+			    break;
+			case 1:   // 1 = HFP-LONG
+				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2, tz390.fp_dh_type);
+			    break;
+			case 2:   // 2 = HFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2, tz390.fp_lh_type);
+			    break;
+			case 5:   // 5 = BFP-SHORT
+				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2, tz390.fp_eb_type);
+			    break;
+			case 6:   // 6 = BFP-LONG
+				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2, tz390.fp_db_type);
+			    break;
+			case 7:   // 7 = BFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2, tz390.fp_lb_type);
+			    break;
+			case 8:   // 8 = DFP-SHORT
+				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2, tz390.fp_ed_type);
+			    break;
+			case 9:   // 9 = DFP-LONG
+				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2, tz390.fp_dd_type);
+			    break;
+			case 0xA: // A = DFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2, tz390.fp_ld_type);
+		        break;
+			default:
+				set_psw_check(psw_pic_spec);
+		        return;
+			}
+			break;
+		case 5:   // 5 = BFP-SHORT
+			switch (pfpo_type2){
+			case 0: // 0 = HFP-SHORT
+				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2, tz390.fp_eh_type);
+			    break;
+			case 1:   // 1 = HFP-LONG
+				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2, tz390.fp_dh_type);
+			    break;
+			case 2:   // 2 = HFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2, tz390.fp_lh_type);
+			    break;
+			case 5:   // 5 = BFP-SHORT
+				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2, tz390.fp_eb_type);
+			    break;
+			case 6:   // 6 = BFP-LONG
+				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2, tz390.fp_db_type);
+			    break;
+			case 7:   // 7 = BFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2, tz390.fp_lb_type);
+			    break;
+			case 8:   // 8 = DFP-SHORT
+				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2, tz390.fp_ed_type);
+			    break;
+			case 9:   // 9 = DFP-LONG
+				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2, tz390.fp_dd_type);
+			    break;
+			case 0xA: // A = DFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2, tz390.fp_ld_type);
+		        break;
+			default:
+				set_psw_check(psw_pic_spec);
+		        return;
+			}
+			break;
+		case 6:   // 6 = BFP-LONG
+			switch (pfpo_type2){
+			case 0: // 0 = HFP-SHORT
+				fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2, tz390.fp_eh_type);
+			    break;
+			case 1:   // 1 = HFP-LONG
+				fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2, tz390.fp_dh_type);
+			    break;
+			case 2:   // 2 = HFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2, tz390.fp_lh_type);
+			    break;
+			case 5:   // 5 = BFP-SHORT
+				fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2, tz390.fp_eb_type);
+			    break;
+			case 6:   // 6 = BFP-LONG
+				fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2, tz390.fp_db_type);
+			    break;
+			case 7:   // 7 = BFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2, tz390.fp_lb_type);
+			    break;
+			case 8:   // 8 = DFP-SHORT
+				fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2, tz390.fp_ed_type);
+			    break;
+			case 9:   // 9 = DFP-LONG
+				fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2, tz390.fp_dd_type);
+			    break;
+			case 0xA: // A = DFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2, tz390.fp_ld_type);
+		        break;
+			default:
+				set_psw_check(psw_pic_spec);
+		        return;
+			}
+			break;
+		case 7:   // 7 = BFP-EXTENDED
+			switch (pfpo_type2){
+			case 0: // 0 = HFP-SHORT
+				fp_load_reg(rf1, tz390.fp_lb_type, fp_reg, rf2, tz390.fp_eh_type);
+			    break;
+			case 1:   // 1 = HFP-LONG
+				fp_load_reg(rf1, tz390.fp_lb_type, fp_reg, rf2, tz390.fp_dh_type);
+			    break;
+			case 2:   // 2 = HFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_lb_type, fp_reg, rf2, tz390.fp_lh_type);
+			    break;
+			case 5:   // 5 = BFP-SHORT
+				fp_load_reg(rf1, tz390.fp_lb_type, fp_reg, rf2, tz390.fp_eb_type);
+			    break;
+			case 6:   // 6 = BFP-LONG
+				fp_load_reg(rf1, tz390.fp_lb_type, fp_reg, rf2, tz390.fp_db_type);
+			    break;
+			case 7:   // 7 = BFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_lb_type, fp_reg, rf2, tz390.fp_lb_type);
+			    break;
+			case 8:   // 8 = DFP-SHORT
+				fp_load_reg(rf1, tz390.fp_lb_type, fp_reg, rf2, tz390.fp_ed_type);
+			    break;
+			case 9:   // 9 = DFP-LONG
+				fp_load_reg(rf1, tz390.fp_lb_type, fp_reg, rf2, tz390.fp_dd_type);
+			    break;
+			case 0xA: // A = DFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_lb_type, fp_reg, rf2, tz390.fp_ld_type);
+		        break;
+			default:
+				set_psw_check(psw_pic_spec);
+		        return;
+			}
+			break;
+		case 8:   // 8 = DFP-SHORT
+			switch (pfpo_type2){
+			case 0: // 0 = HFP-SHORT
+				fp_load_reg(rf1, tz390.fp_ed_type, fp_reg, rf2, tz390.fp_eh_type);
+			    break;
+			case 1:   // 1 = HFP-LONG
+				fp_load_reg(rf1, tz390.fp_ed_type, fp_reg, rf2, tz390.fp_dh_type);
+			    break;
+			case 2:   // 2 = HFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_ed_type, fp_reg, rf2, tz390.fp_lh_type);
+			    break;
+			case 5:   // 5 = BFP-SHORT
+				fp_load_reg(rf1, tz390.fp_ed_type, fp_reg, rf2, tz390.fp_eb_type);
+			    break;
+			case 6:   // 6 = BFP-LONG
+				fp_load_reg(rf1, tz390.fp_ed_type, fp_reg, rf2, tz390.fp_db_type);
+			    break;
+			case 7:   // 7 = BFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_ed_type, fp_reg, rf2, tz390.fp_lb_type);
+			    break;
+			case 8:   // 8 = DFP-SHORT
+				fp_load_reg(rf1, tz390.fp_ed_type, fp_reg, rf2, tz390.fp_ed_type);
+			    break;
+			case 9:   // 9 = DFP-LONG
+				fp_load_reg(rf1, tz390.fp_ed_type, fp_reg, rf2, tz390.fp_dd_type);
+			    break;
+			case 0xA: // A = DFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_ed_type, fp_reg, rf2, tz390.fp_ld_type);
+		        break;
+			default:
+				set_psw_check(psw_pic_spec);
+		        return;
+			}
+			break;
+		case 9:   // 9 = DFP-LONG
+			switch (pfpo_type2){
+			case 0: // 0 = HFP-SHORT
+				fp_load_reg(rf1, tz390.fp_dd_type, fp_reg, rf2, tz390.fp_eh_type);
+			    break;
+			case 1:   // 1 = HFP-LONG
+				fp_load_reg(rf1, tz390.fp_dd_type, fp_reg, rf2, tz390.fp_dh_type);
+			    break;
+			case 2:   // 2 = HFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_dd_type, fp_reg, rf2, tz390.fp_lh_type);
+			    break;
+			case 5:   // 5 = BFP-SHORT
+				fp_load_reg(rf1, tz390.fp_dd_type, fp_reg, rf2, tz390.fp_eb_type);
+			    break;
+			case 6:   // 6 = BFP-LONG
+				fp_load_reg(rf1, tz390.fp_dd_type, fp_reg, rf2, tz390.fp_db_type);
+			    break;
+			case 7:   // 7 = BFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_dd_type, fp_reg, rf2, tz390.fp_lb_type);
+			    break;
+			case 8:   // 8 = DFP-SHORT
+				fp_load_reg(rf1, tz390.fp_dd_type, fp_reg, rf2, tz390.fp_ed_type);
+			    break;
+			case 9:   // 9 = DFP-LONG
+				fp_load_reg(rf1, tz390.fp_dd_type, fp_reg, rf2, tz390.fp_dd_type);
+			    break;
+			case 0xA: // A = DFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_dd_type, fp_reg, rf2, tz390.fp_ld_type);
+		        break;
+			default:
+				set_psw_check(psw_pic_spec);
+		        return;
+			}
+			break;
+		case 0xA: // A = DFP-EXTENDED
+			switch (pfpo_type2){
+			case 0: // 0 = HFP-SHORT
+				fp_load_reg(rf1, tz390.fp_ld_type, fp_reg, rf2, tz390.fp_eh_type);
+			    break;
+			case 1:   // 1 = HFP-LONG
+				fp_load_reg(rf1, tz390.fp_ld_type, fp_reg, rf2, tz390.fp_dh_type);
+			    break;
+			case 2:   // 2 = HFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_ld_type, fp_reg, rf2, tz390.fp_lh_type);
+			    break;
+			case 5:   // 5 = BFP-SHORT
+				fp_load_reg(rf1, tz390.fp_ld_type, fp_reg, rf2, tz390.fp_eb_type);
+			    break;
+			case 6:   // 6 = BFP-LONG
+				fp_load_reg(rf1, tz390.fp_ld_type, fp_reg, rf2, tz390.fp_db_type);
+			    break;
+			case 7:   // 7 = BFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_ld_type, fp_reg, rf2, tz390.fp_lb_type);
+			    break;
+			case 8:   // 8 = DFP-SHORT
+				fp_load_reg(rf1, tz390.fp_ld_type, fp_reg, rf2, tz390.fp_ed_type);
+			    break;
+			case 9:   // 9 = DFP-LONG
+				fp_load_reg(rf1, tz390.fp_ld_type, fp_reg, rf2, tz390.fp_dd_type);
+			    break;
+			case 0xA: // A = DFP-EXTENDED
+				fp_load_reg(rf1, tz390.fp_ld_type, fp_reg, rf2, tz390.fp_ld_type);
+		        break;
+			default:
+				set_psw_check(psw_pic_spec);
+		        return;
+			}
+			break;
+		default:
+			set_psw_check(psw_pic_spec);
+	        return;
+		}
 	}
 }

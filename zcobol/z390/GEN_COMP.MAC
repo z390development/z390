@@ -9,6 +9,7 @@
 .* 04/09/08 initial coding for Z390 GEN_COMP COMPARE 
 .* 10/06/08 ZSTRMAC
 .* 02/25/09 RPI 1004 support PIC types 1,2,E,D,L
+.* 03/11/09 RPI 1004 support PIC types 1-9,Q using ZC_PACK31   
 .*********************************************************************
          GEN_COMP  
          :&FIELD1    SETC '&SYSLIST(1)'
@@ -16,10 +17,16 @@
          :&FIELD2    SETC '&SYSLIST(3)'
          :&FIELD2_IX SETA &SYSLIST(4)
          COPY  ZC_WS
-      AIF   (&FIELD2_IX EQ 0)     
+         AIF   (&FIELD2_IX EQ 0)
+               ACALL COMP_FLD1_LIT
+         AELSE
+               ACALL COMP_FLD1_FLD2
+         AEND
+         MEXIT
 .*
 .* COMPARE FIELD1 TO LITERAL
 .*
+         AENTRY COMP_FLD1_LIT
        AIF   ('&FIELD2'(1,1) EQ '''')
         AIF   (&SYM_LEN(&FIELD1_IX) NE K'&FIELD2-2 AND &ZC_WARN)
                MNOTE 4,'GEN_COMP LIT LENGTH NOT EQUAL'
@@ -42,14 +49,46 @@
                OR '&FIELD2' EQ 'ZEROS'                                 X             
                OR '&FIELD2' EQ 'ZERO')          
         ACASE  (C2A('&SYM_PIC_TYPE(&FIELD1_IX)'))
-        AWHEN  C'2'
-               ACALL RESET_SS1_FIELD1
-         LD    0,&FIELD1
-         LTDR  0,0  
         AWHEN  C'1'
                ACALL RESET_SS1_FIELD1
          LE    0,&FIELD1
          LTER  0,0  
+        AWHEN  C'2'
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LTDR  0,0  
+        AWHEN  C'3'
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LD    2,8+&FIELD1
+         LTXR  0,0  
+        AWHEN  C'4'
+               ACALL RESET_SS1_FIELD1
+         LE    0,&FIELD1
+         LTEBR 0,0 
+        AWHEN  C'5'
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LTDBR 0,0  
+        AWHEN  C'6'
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LD    2,8+&FIELD1
+         LTXBR 0,0  
+        AWHEN  C'7'
+               ACALL RESET_SS1_FIELD1
+         LE    0,&FIELD1
+         LDETR 0,0,0
+         LTDTR 0,0 
+        AWHEN  C'8'
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LTDTR 0,0  
+        AWHEN  C'9'
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LD    2,8+&FIELD1
+         LTXTR 0,0  
         AWHEN  C'A',C'F',C'I'             RPI 1002
                ACALL RESET_SS1_FIELD1
          LT    0,&FIELD1
@@ -62,6 +101,11 @@
         AWHEN  C'P'           
          LARL  R1,=PL2'0'                     2 BYTE ZERO
          CP    &FIELD1,1(1,R1)  USE 2ND BYTE
+        AWHEN  C'Q'                        RPI 1004
+               ACALL RESET_SS1_FIELD1
+         LTG   0,&FIELD1
+         JNZ   *+4+6
+         CLG   0,8+&FIELD1
         AWHEN  C'X' 
           AIF    (&SYM_LEN(&FILED1_IX) EQ 1)
          ACALL RESET_SS1_FIELD1
@@ -92,8 +136,10 @@
          CLC   &FIELD1,0(R1)
            AELSE
          LARL  R1,=PL2'0'
-         PACK  ZCVT_PWORK1(&SYM_LEN(&FIELD1_IX)/2+1),&FIELD1
-         CP    ZCVT_PWORK1(&SYM_LEN(&FIELD1_IX)/2+1),0(2,R1)
+               :&ZLEN SETA &SYM_LEN(&FIELD1_IX)
+               :&PLEN SETA &ZLEN/2+1
+         ZC_PACK31  ZCVT_PWORK1,&PLEN,&FIELD1,&ZLEN   
+         CP    ZCVT_PWORK1(&PLEN),1(1,R1)
            AEND
           AEND
         AELSE
@@ -157,18 +203,64 @@
                 OR '&FIELD2'(1,1) EQ '-')
         :&L_FIELD1 SETA &SYM_LEN(&FIELD1_IX)
         ACASE  (C2A('&SYM_PIC_TYPE(&FIELD1_IX)'))
-        AWHEN  C'2'            
-               ACALL RESET_SS1_FIELD1
-         LD    0,&FIELD1
-         LARL  R1,=D'&FIELD2'
-         LD    F1,0(R1)
-         CDR   0,1
         AWHEN  C'1'            
                ACALL RESET_SS1_FIELD1
          LE    0,&FIELD1
          LARL  R1,=E'&FIELD2'
+         CE    0,0(R1)
+        AWHEN  C'2'            
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LARL  R1,=D'&FIELD2'
+         CD    0,0(R1)
+        AWHEN  C'3'            
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LD    2,8+&FIELD1
+         LARL  R1,=LH'&FIELD2'
+         LD    F1,0(R1)
+         LD    F3,8(R1)
+         CXR   0,1
+        AWHEN  C'4'            
+               ACALL RESET_SS1_FIELD1
+         LE    0,&FIELD1
+         LARL  R1,=EB'&FIELD2'
+         CEB   0,0(R1)
+        AWHEN  C'5'            
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LARL  R1,=DB'&FIELD2'
+         CDB   0,0(R1)
+        AWHEN  C'6'            
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LD    2,8+&FIELD1
+         LARL  R1,=LB'&FIELD2'
+         LD    F1,0(R1)
+         LD    F3,8(R1)
+         CXBR  0,1
+        AWHEN  C'7'            
+               ACALL RESET_SS1_FIELD1
+         LE    0,&FIELD1
+         LARL  R1,=ED'&FIELD2'
          LE    F1,0(R1)
-         CER   0,1
+         LDETR 0,0,0
+         LDETR 1,1,0
+         CDTR  0,1
+        AWHEN  C'8'            
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LARL  R1,=DD'&FIELD2'
+         LD    F1,0(R1)
+         CDTR  0,1
+        AWHEN  C'9'            
+               ACALL RESET_SS1_FIELD1
+         LD    0,&FIELD1
+         LD    2,8+&FIELD1
+         LARL  R1,=LD'&FIELD2'
+         LD    F1,0(R1)
+         LD    F3,8(R1)
+         CXTR  0,1
         AWHEN  C'A',C'F',C'I'             RPI 1002
                ACALL RESET_SS1_FIELD1
          L     0,&FIELD1
@@ -198,6 +290,13 @@
           AEND
          LARL  R1,=PL&LLIT'&FIELD2'
          CP    &FIELD1,0(&LLIT,R1)
+        AWHEN  C'Q'                   RPI 1004
+               ACALL RESET_SS1_FIELD1
+         LMG   R0,R1,&FIELD1
+         LARL  R2,=FL16'&FIELD2'
+         CG    0,0(R2)
+         JNE   *+4+6
+         CLG   1,8(R2)
         AWHEN  C'X' 
                AIF ('&FIELD2' EQ 'SPACES'                              X             
                     OR '&FIELD2' EQ 'SPACE')
@@ -218,14 +317,17 @@
                AEND
         AWHEN  C'Z' 
                AIF (&SYM_PIC_SIGN(&FIELD1_IX))
-         PACK  ZCVT_PWORK1(&L_FIELD1),&FIELD1
-          AIF  (&L_FIELD1/2*2 NE &L_FIELD1)
-               :&LLIT SETA &L_FIELD1+1
-          AELSE
-               :&LLIT SETA &L_FIELD1
+                   :&PLEN SETA &L_FIELD1/2+1
+          ZC_PACK31  ZCVT_PWORK1,&PLEN,&FIELD1,&L_FIELD1
+          :&LLIT SETA K'&FIELD2/2+1
+          AIF  (&LLIT/2*2 NE &LLIT)
+               :&LLIT SETA &LLIT+1
+          AEND
+          AIF  (&LLIT GT 16)    CHK FOR -31 DIGITS
+               :&LLIT SETA 16
           AEND
          LARL  R1,=PL&LLIT'&FIELD2'
-         CP    ZCVT_PWORK1(&L_FIELD1),0(&LLIT,R1)
+         CP    ZCVT_PWORK1(&PLEN),0(&LLIT,R1)
                AELSE
                     AIF (&SYM_LEN(&FIELD1_IX) EQ 1)
          ACALL RESET_SS1_FIELD1
@@ -277,47 +379,1400 @@
        AELSE 
               MNOTE 8,'GEN_COMP UNKNOWN LITERAL &FIELD2'
        AEND
-      AELSE
+      AEND
 .*
 .* COMPARE 2 FIELDS
 .*
+         AENTRY COMP_FLD1_FLD2
         ACASE  (C2A('&SYM_PIC_TYPE(&FIELD1_IX)'))
-        AWHEN  C'2'
+        AWHEN  C'1'                    EH ??
                ACALL RESET_SS1_FIELD1
-         LD    0,&FIELD1
-         CD    0,&FIELD2
-        AWHEN  C'1'
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              EH EH
+         LE    F0,&FIELD1
+         CE    F0,&FIELD2
+               AWHEN C'2'              EH DH
+         LDE   F0,&FIELD1
+         CD    F0,&FIELD2
+               AWHEN C'3'              EH LH
+         LE    F0,&FIELD1
+         LXER  F0,F0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              EH EB
+                 ZC_CONV EB,EH,&FIELD1
+         CEB   F0,&FIELD2
+               AWHEN C'5'              EH DB
+                 ZC_CONV DB,EH,&FIELD1
+         CDB   F0,&FIELD2
+               AWHEN C'6'              EH LB
+                 ZC_CONV LB,EH,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F0,F1
+               AWHEN C'7'              EH ED
+                 ZC_CONV DD,EH,&FIELD1
+         LE    F1,&FIELD2
+         LDETR F1,F1,0
+         CDTR  F0,F1
+               AWHEN C'8'              EH DD
+                 ZC_CONV DD,EH,&FIELD1
+         LD    F1,&FIELD2
+         CDTR  F0,F1
+               AWHEN C'9'              EH LD
+                 ZC_CONV LD,EH,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   EH F
                ACALL RESET_SS1_FIELD1
-         LE    0,&FIELD1
-         CE    0,&FIELD2
-        AWHEN  C'A',C'F',C'I'             RPI 1002
+         LE    F0,&FIELD1
+         L     R1,&FIELD2
+         CEFR  F1,R1
+         CER   F0,F1
+               AWHEN  C'G'             EH G 
                ACALL RESET_SS1_FIELD1
-         L     0,&FIELD1
-         C     0,&FIELD2
-        AWHEN  C'G'
+         LE    F0,&FIELD1
+         LG     R1,&FIELD2
+         CEGR  F1,R1
+         CER   F0,F1
+               AWHEN  C'H'             EH H 
                ACALL RESET_SS1_FIELD1
-               AIF (&ZC_R64)
-         LG    0,&FIELD1
-         CG    0,&FIELD2
+         LE    F0,&FIELD1
+         LH    R1,&FIELD2
+         CEFR  F1,R1
+         CER   F0,F1
+               AWHEN  C'P'             EH P 
+                 ZC_CONV EH,P,&FIELD2
+         LE    F1,&FIELD1
+         CER   F1,F0
+               AWHEN  C'Q'             EH Q
+               ACALL RESET_SS1_FIELD1
+               ZC_CONV EH,Q,&FIELD2
+         LE    F1,&FIELD1
+         CER   F1,F0
+               AWHEN  C'Z'             EH Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                ZC_CONV EH,LD
+         LE    F1,&FIELD1
+         CER   F1,F0
                AELSE
-         LM     R0,R1,&FIELD1
-         LM     R2,R3,&FIELD2
-         L      R15,ZCVT_CMP64R32
-         BASR   R14,R15
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
                AEND
-        AWHEN  C'H'            
+        AWHEN  C'2'                    DH ??
                ACALL RESET_SS1_FIELD1
-         LH    0,&FIELD1
-         CH    0,&FIELD2
-        AWHEN  C'P'           
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              DH EH
+         LD    F0,&FIELD1
+         LDE   F1,&FIELD2
+         CDR   F0,F1
+               AWHEN C'2'              DH DH
+         LD    F0,&FIELD1
+         CD    F0,&FIELD2
+               AWHEN C'3'              DH LH
+         LD    F0,&FIELD1
+         LXDR  F0,F0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              DH EB
+                 ZC_CONV DH,EB,&FIELD2
+         LD    F1,&FIELD1
+         CDR   F1,F0
+               AWHEN C'5'              DH DB
+                 ZC_CONV DB,DH,&FIELD1
+         CDB   F0,&FIELD2
+               AWHEN C'6'              DH LB
+                 ZC_CONV LB,DH,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F0,F1
+               AWHEN C'7'              DH ED
+                 ZC_CONV DH,ED,&FIELD2
+         LD    F1,&FIELD1
+         CDR   F1,F0
+               AWHEN C'8'              DH DD
+                 ZC_CONV DD,DH,&FIELD1
+         LD    F1,&FIELD2
+         CDTR  F0,F1
+               AWHEN C'9'              DH LD
+                 ZC_CONV LD,DH,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   DH F
+               ACALL RESET_SS1_FIELD1
+         LE    F0,&FIELD1
+         L     R1,&FIELD2
+         CDFR  F1,R1
+         CDR   F0,F1
+               AWHEN  C'G'             DH G 
+               ACALL RESET_SS1_FIELD1
+         LD    F0,&FIELD1
+         LG    R1,&FIELD2
+         CDGR  F1,R1
+         CDR   F0,F1
+               AWHEN  C'H'             DH H 
+               ACALL RESET_SS1_FIELD1
+         LD    F0,&FIELD1
+         LH    R1,&FIELD2
+         CDFR  F1,R1
+         CDR   F0,F1
+               AWHEN  C'P'             DH P 
+                 ZC_CONV DH,P,&FIELD2
+         LD    F1,&FIELD1
+         CDR   F1,F0
+               AWHEN  C'Q'             DH Q
+               ACALL RESET_SS1_FIELD1
+               ZC_CONV DH,Q,&FIELD2
+         LD    F1,&FIELD1
+         CDR   F1,F0
+               AWHEN  C'Z'             DH Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         lmg   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                ZC_CONV DH,LD
+         LD    F1,&FIELD1
+         CDR   F1,F0
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'3'                    LH ??
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              LH EH
+         LD    F0,&FIELD1
+         LD    F2,8+&FIELD1
+         LXE   F1,&FIELD2
+         CXR   F0,F1
+               AWHEN C'2'              LH DH
+         LD    F0,&FIELD1
+         LD    F2,8+&FIELD1
+         LXD   F1,&FIELD2
+         CXR   F0,F1
+               AWHEN C'3'              LH LH
+         LD    F0,&FIELD1
+         LD    F2,8+&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              LH EB
+                 ZC_CONV LH,EB,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXR   F1,F0
+               AWHEN C'5'              LH DB
+                 ZC_CONV LH,DB,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXR   F1,F0         
+               AWHEN C'6'              LH LB
+                 ZC_CONV LB,LH,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F0,F1
+               AWHEN C'7'              LH ED
+                 ZC_CONV LH,ED,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXR   F1,F0
+               AWHEN C'8'              LH DD
+                 ZC_CONV LH,DD,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXR   F1,F0
+               AWHEN C'9'              LH LD
+                 ZC_CONV LD,LH,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   LH F
+               ACALL RESET_SS1_FIELD1
+         LE    F0,&FIELD1
+         L     R1,&FIELD2
+         CXFR  F1,R1
+         CXR   F0,F1
+               AWHEN  C'G'             LH G 
+               ACALL RESET_SS1_FIELD1
+         LD    F0,&FIELD1
+         LG    R1,&FIELD2
+         CXGR  F1,R1
+         CXR   F0,F1
+               AWHEN  C'H'             LH H 
+               ACALL RESET_SS1_FIELD1
+         LD    F0,&FIELD1
+         LH    R1,&FIELD2
+         CXFR  F1,R1
+         CXR   F0,F1
+               AWHEN  C'P'             LH P 
+                 ZC_CONV LH,P,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXR   F1,F0
+               AWHEN  C'Q'             LH Q
+               ACALL RESET_SS1_FIELD1
+               ZC_CONV LH,Q,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXR   F1,F0
+               AWHEN  C'Z'             LH Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                ZC_CONV LH,LD
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXR   F1,F0
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'4'                    EB ??
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              EB EH
+                 ZC_CONV EB,EH,&FIELD2
+         LE    F1,&FIELD1
+         CEBR  F1,F0
+               AWHEN C'2'              EB DH
+                 ZC_CONV DH,EB,&FIELD1
+         CD    F0,&FIELD2
+               AWHEN C'3'              EB LH
+                 ZC_CONV LH,EB,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              EB EB
+                 ZC_CONV EB,EB,&FIELD1
+         CEB   F0,&FIELD2
+               AWHEN C'5'              EB DB
+                 ZC_CONV DB,EB,&FIELD1
+         CDB   F0,&FIELD2
+               AWHEN C'6'              EB LB
+                 ZC_CONV LB,EB,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F0,F1
+               AWHEN C'7'              EB ED
+                 ZC_CONV ED,EB,&FIELD1
+         LE    F1,&FIELD2
+         LDETR F1,F1,0
+         CDTR  F0,F1
+               AWHEN C'8'              EB DD
+                 ZC_CONV DD,EB,&FIELD1
+         LD    F1,&FIELD2
+         CDTR  F0,F1
+               AWHEN C'9'              EB LD
+                 ZC_CONV LD,EB,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   EB F
+               ACALL RESET_SS1_FIELD1
+         LE    F0,&FIELD1
+         L     R1,&FIELD2
+         CEFBR F1,R1
+         CEBR  F0,F1
+               AWHEN  C'G'             EB G 
+               ACALL RESET_SS1_FIELD1
+         LE    F0,&FIELD1
+         LG     R1,&FIELD2
+         CEGBR F1,R1
+         CEBR  F0,F1
+               AWHEN  C'H'             EB H 
+               ACALL RESET_SS1_FIELD1
+         LE    F0,&FIELD1
+         LH    R1,&FIELD2
+         CEFBR F1,R1
+         CEBR  F0,F1
+               AWHEN  C'P'             EB P 
+                 ZC_CONV EB,P,&FIELD2
+         LE    F1,&FIELD1
+         CEBR  F1,F0
+               AWHEN  C'Q'             EB Q
+               ACALL RESET_SS1_FIELD1
+               ZC_CONV EB,Q,&FIELD2
+         LE    F1,&FIELD1
+         CEBR  F1,F0
+               AWHEN  C'Z'             EB Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                ZC_CONV EB,LD
+         LE    F1,&FIELD1
+         CEBR  F1,F0
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'5'                    DB ??
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              DB EH
+                 ZC_CONV DB,EH,&FIELD2
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN C'2'              DB DH
+                 ZC_CONV DB,DH,&FIELD2
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN C'3'              DB LH
+                 ZC_CONV LB,DB,&FIELD1
+         LD    F1,&FIELD1
+         LXDBR F1,F1
+         CXBR  F1,F0
+               AWHEN C'4'              DB EB
+                 ZC_CONV DB,EB,&FIELD2
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN C'5'              DB DB
+                 ZC_CONV DB,DB,&FIELD2
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN C'6'              DB LB
+                 ZC_CONV LB,DB,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F1,F0
+               AWHEN C'7'              DB ED
+                 ZC_CONV DB,ED,&FIELD2
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN C'8'              DB DD
+                 ZC_CONV DB,DD,&FIELD2
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN C'9'              DB LD
+                 ZC_CONV LD,DB,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F1,F0
+               AWHEN  C'A',C'F',C'I'   DB F
+               ACALL RESET_SS1_FIELD1
+         LGF   R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV DB,Q
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN  C'G'             DB G 
+               ACALL RESET_SS1_FIELD1
+         LG    R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV DB,Q
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN  C'H'             DB H 
+               ACALL RESET_SS1_FIELD1
+         LGH   R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV DB,Q
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN  C'P'             DB P 
+                 ZC_CONV DB,P,&FIELD2
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN  C'Q'             DB Q
+               ACALL RESET_SS1_FIELD1
+               ZC_CONV DB,Q,&FIELD2
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AWHEN  C'Z'             DB Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                 ZC_CONV DB,LD
+         LD    F1,&FIELD1
+         CDBR  F1,F0
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'6'                    LB ??
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              LB EH
+                 ZC_CONV LB,EH,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN C'2'              LB DH
+                 ZC_CONV LB,DH,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN C'3'              LB LH
+                 ZC_CONV LB,LH,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN C'4'              LB EB
+                 ZC_CONV LB,EB,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN C'5'              LB DB
+                 ZC_CONV LB,DB,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN C'6'              LB LB
+                 ZC_CONV LB,LB,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN C'7'              LB ED
+                 ZC_CONV LB,ED,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN C'8'              LB DD
+                 ZC_CONV LB,DD,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN C'9'              LB LD
+                 ZC_CONV LB,LD,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN  C'A',C'F',C'I'   LB F
+               ACALL RESET_SS1_FIELD1
+         LGF   R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV LB,Q
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN  C'G'             LB G 
+               ACALL RESET_SS1_FIELD1
+         LG    R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV LB,Q
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN  C'H'             LB H 
+               ACALL RESET_SS1_FIELD1
+         LGH   R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV LB,Q
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN  C'P'             LB P 
+                 ZC_CONV LB,P,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN  C'Q'             LB Q
+               ACALL RESET_SS1_FIELD1
+               ZC_CONV LB,Q,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AWHEN  C'Z'             LB Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                 ZC_CONV LB,LD
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXBR  F1,F0
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'7'                    ED ??
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              ED EH
+                 ZC_CONV DD,EH,&FIELD2
+         LE    F1,&FIELD1
+         LDETR F1,F1,0
+         CDTR  F1,F0
+               AWHEN C'2'              ED DH
+                 ZC_CONV DH,ED,&FIELD1
+         CD    F0,&FIELD2
+               AWHEN C'3'              ED LH
+                 ZC_CONV LH,ED,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              ED EB
+                 ZC_CONV EB,ED,&FIELD1
+         CEB   F0,&FIELD2
+               AWHEN C'5'              ED DB
+                 ZC_CONV DB,ED,&FIELD1
+         CDB   F0,&FIELD2
+               AWHEN C'6'              ED LB
+                 ZC_CONV LB,ED,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F0,F1
+               AWHEN C'7'              ED ED
+         LE    F0,&FIELD1
+         LDETR F0,F0,0
+         LE    F1,&FIELD2
+         LDETR F1,F1,0
+         CDTR  F0,F1
+               AWHEN C'8'              ED DD
+                 ZC_CONV DD,ED,&FIELD1
+         LD    F1,&FIELD2
+         CDTR  F0,F1
+               AWHEN C'9'              ED LD
+                 ZC_CONV LD,ED,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   ED F
+               ACALL RESET_SS1_FIELD1
+         LE    F0,&FIELD1
+         LDETR F0,F0,0
+         LGF   R1,&FIELD2
+         CDGTR F1,R1
+         CDTR  F0,F1
+               AWHEN  C'G'             ED G 
+               ACALL RESET_SS1_FIELD1
+         LE    F0,&FIELD1
+         LDETR F0,F0,0
+         LG    R1,&FIELD2
+         CDGTR F1,R1
+         CDTR  F0,F1
+               AWHEN  C'H'             ED H 
+               ACALL RESET_SS1_FIELD1
+         LE    F0,&FIELD1
+         LDETR F0,F0,0
+         LGH   R1,&FIELD2
+         CDGTR F1,R1
+         CDTR  F0,F1
+               AWHEN  C'P'             ED P 
+                 ZC_CONV DD,P,&FIELD2
+         LE    F1,&FIELD1
+         LDETR F1,F1,0
+         CDTR  F1,F0
+               AWHEN  C'Q'             ED Q
+               ACALL RESET_SS1_FIELD1
+               ZC_CONV DD,Q,&FIELD2
+         LE    F1,&FIELD1
+         LDETR F1,F1,0
+         CDTR  F1,F0
+               AWHEN  C'Z'             ED Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                ZC_CONV EB,LD
+         LE    F1,&FIELD1
+         LDETR F1,F1,0
+         CDTR  F1,F0
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'8'                    DD ??
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              DD EH
+                 ZC_CONV DD,EH,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN C'2'              DD DH
+                 ZC_CONV DD,DH,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN C'3'              DD LH
+                 ZC_CONV DD,LH,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN C'4'              DD EB
+                 ZC_CONV DD,EB,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN C'5'              DD DB
+                 ZC_CONV DD,DB,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN C'6'              DD LB
+                 ZC_CONV DD,LB,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN C'7'              DD ED
+                 ZC_CONV DD,ED,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN C'8'              DD DD
+                 ZC_CONV DD,DD,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN C'9'              DD LD
+                 ZC_CONV DD,LD,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN  C'A',C'F',C'I'   DD F
+               ACALL RESET_SS1_FIELD1
+         LGF   R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV DD,Q
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN  C'G'             DD G 
+               ACALL RESET_SS1_FIELD1
+         LG    R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV DD,Q
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN  C'H'             DD H 
+               ACALL RESET_SS1_FIELD1
+         LGH   R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV DD,Q
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN  C'P'             DD P 
+                 ZC_CONV DD,P,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN  C'Q'             DD Q
+               ACALL RESET_SS1_FIELD1
+               ZC_CONV DD,Q,&FIELD2
+         LD    F1,&FIELD1
+         CDTR  F1,F0
+               AWHEN  C'Z'             DD Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F0,R0
+         LD    F1,&FIELD1
+         LXDTR F1,F1,0
+         CXTR  F1,F0
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'9'                    LD ??
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              LD EH
+                 ZC_CONV LD,EH,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN C'2'              LD DH
+                 ZC_CONV LD,DH,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN C'3'              LD LH
+                 ZC_CONV LD,LH,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN C'4'              LD EB
+                 ZC_CONV LD,EB,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN C'5'              LD DB
+                 ZC_CONV LD,DB,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN C'6'              LD LB
+                 ZC_CONV LD,LB,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN C'7'              LD ED
+                 ZC_CONV LD,ED,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN C'8'              LD DD
+                 ZC_CONV LD,DD,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN C'9'              LD LD
+                 ZC_CONV LD,LD,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN  C'A',C'F',C'I'   LD F
+               ACALL RESET_SS1_FIELD1
+         LGF   R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV LD,Q
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN  C'G'             LD G 
+               ACALL RESET_SS1_FIELD1
+         LG    R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV LD,Q
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN  C'H'             LD H 
+               ACALL RESET_SS1_FIELD1
+         LGH   R1,&FIELD2
+         LGR   R0,R1
+         SRAG  R0,R0,63
+                 ZC_CONV LD,Q
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN  C'P'             LD P 
+                 ZC_CONV LD,P,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN  C'Q'             LD Q
+               ACALL RESET_SS1_FIELD1
+               ZC_CONV LD,Q,&FIELD2
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AWHEN  C'Z'             LD Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F0,R0
+         LD    F1,&FIELD1
+         LD    F3,8+&FIELD1
+         CXTR  F1,F0
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'A',C'F',C'I'          F  ??        
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              F  EH
+         L     R0,&FIELD1
+         CEFR  F0,R0
+         CE    F0,&FIELD2
+               AWHEN C'2'              F  DH
+         L     R0,&FIELD1
+         CDFR  F0,R0
+         CD    F0,&FIELD2
+               AWHEN C'3'              F  LH
+         L     R0,&FIELD1
+         CXFR  F0,R0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              F  EB
+         L     R0,&FIELD1
+         CEFBR F0,R0
+         CEB   F0,&FIELD2
+               AWHEN C'5'              F  DB
+         L     R0,&FIELD1
+         CDFBR F0,R0
+         CDB   F0,&FIELD2
+               AWHEN C'6'              F  LB
+         L     R0,&FIELD1
+         CXFBR F0,R0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F1,F0
+               AWHEN C'7'              F  ED
+         LGF   R0,&FIELD1
+         CDGTR F0,R0
+         LE    F1,&FIELD2
+         LDETR F1,F1,0
+         CDTR  F0,F1
+               AWHEN C'8'              F  DD
+         LGF   R0,&FIELD1
+         CDGTR F0,R0
+         LD    F1,&FIELD2
+         CDTR  F0,F1
+               AWHEN C'9'              F  LD
+         LGF   R0,&FIELD1
+         CXGTR F0,R0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   F  F
+               ACALL RESET_SS1_FIELD1
+         L     R0,&FIELD1
+         C     R0,&FIELD2
+               AWHEN  C'G'             F  G 
+               ACALL RESET_SS1_FIELD1
+         LGF   R0,&FIELD1
+         CG    R0,&FIELD2
+               AWHEN  C'H'             F  H 
+               ACALL RESET_SS1_FIELD1
+         L     R0,&FIELD1
+         CH    R0,&FIELD2
+               AWHEN  C'P'             F  P 
+         LGF   R0,&FIELD1
+         ZAP   ZCVT_PWORK2,&FIELD2
+         CVBG  R1,ZCVT_PWORK2
+         CGR   R0,R1
+               AWHEN  C'Q'             F  Q
+               ACALL RESET_SS1_FIELD1
+         L     F1,&FIELD1
+         C     F1,12+&FIELD2  IGNORE HIGH 96
+               AWHEN  C'Z'             F  Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 AIF (&ZLEN2 LE 15)
+                     ZC_PACK31 ZCVT_PWORK,8,&FIELD2,&ZLEN2
+         CVBG  R0,ZCVT_PWORK 
+         LGF   R1,&FIELD1
+         CGR   R1,R0
+                 AELSE       
+                   ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                 ZC_CONV Q,LD
+         LGF   R3,&FIELD1
+         LGR   R2,R3
+         SRAG  R2,R2,63
+         CGR   R2,R0
+         JNE   *+4+6
+         CLGR  R3,R1
+                 AEND
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'G'                    G  ??
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              G  EH
+         LG    R0,&FIELD1
+         CEGR  F0,R0
+         CE    F0,&FIELD2
+               AWHEN C'2'              G  DH
+         LG    R0,&FIELD1
+         CDGR  F0,R0
+         CD    F0,&FIELD2
+               AWHEN C'3'              G  LH
+         LG    R0,&FIELD1
+         CXGR  F0,R0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              G  EB
+         LG    R0,&FIELD1
+         CEGBR F0,R0
+         CEB   F0,&FIELD2
+               AWHEN C'5'              G  DB
+         LG    R0,&FIELD1
+         CDGBR F0,R0
+         CDB   F0,&FIELD2
+               AWHEN C'6'              G  LB
+         LG    R0,&FIELD1
+         CXGBR F0,R0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F1,F0
+               AWHEN C'7'              G  ED
+         LG    R0,&FIELD1
+         CDGTR F0,R0
+         LE    F1,&FIELD2
+         LDETR F1,F1,0
+         CDTR  F0,F1
+               AWHEN C'8'              G  DD
+         LG    R0,&FIELD1
+         CDGTR F0,R0
+         LD    F1,&FIELD2
+         CDTR  F0,F1
+               AWHEN C'9'              G  LD
+         LG    R0,&FIELD1
+         CXGTR F0,R0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   G  F
+               ACALL RESET_SS1_FIELD1
+         LG    R0,&FIELD1
+         LGF   R1,&FIELD2
+         CGR   R0,R1
+               AWHEN  C'G'             G  G 
+               ACALL RESET_SS1_FIELD1
+         LG    R0,&FIELD1
+         CG    R0,&FIELD2
+               AWHEN  C'H'             G  H 
+               ACALL RESET_SS1_FIELD1
+         LG    R0,&FIELD1
+         LGH   R1,&FIELD2
+         CGR   R0,R1
+               AWHEN  C'P'             G  P 
+         LG    R0,&FIELD1
+         ZAP   ZCVT_PWORK2,&FIELD2
+         CVBG  R1,ZCVT_PWORK2
+         CGR   R0,R1
+               AWHEN  C'Q'             G  Q
+               ACALL RESET_SS1_FIELD1
+         LG    F1,&FIELD1
+         CG    F1,8+&FIELD2  IGNORE HIGH 64
+               AWHEN  C'Z'             G  Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 AIF (&ZLEN2 LE 15)
+                     ZC_PACK31 ZCVT_PWORK,8,&FIELD2,&ZLEN2
+         CVBG  R0,ZCVT_PWORK 
+         LG    R1,&FIELD1
+         CGR   R1,R0
+                 AELSE       
+                   ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                 ZC_CONV Q,LD
+         LG    R3,&FIELD1
+         LGR   R2,R3
+         SRAG  R2,R2,63
+         CGR   R2,R0
+         JNE   *+4+6
+         CLGR  R3,R1
+                 AEND
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'H'                    G  ??
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              H  EH
+         LH    R0,&FIELD1
+         CEFR  F0,R0
+         CE    F0,&FIELD2
+               AWHEN C'2'              H  DH
+         LH    R0,&FIELD1
+         CDFR  F0,R0
+         CD    F0,&FIELD2
+               AWHEN C'3'              H  LH
+         LH    R0,&FIELD1
+         CXFR  F0,R0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              H  EB
+         LH    R0,&FIELD1
+         CEFBR F0,R0
+         CEB   F0,&FIELD2
+               AWHEN C'5'              H  DB
+         LH    R0,&FIELD1
+         CDFBR F0,R0
+         CDB   F0,&FIELD2
+               AWHEN C'6'              H  LB
+         LH    R0,&FIELD1
+         CXFBR F0,R0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F1,F0
+               AWHEN C'7'              H  ED
+         LGH   R0,&FIELD1
+         CDGTR F0,R0
+         LE    F1,&FIELD2
+         LDETR F1,F1,0
+         CDTR  F0,F1
+               AWHEN C'8'              H  DD
+         LGH   R0,&FIELD1
+         CDGTR F0,R0
+         LD    F1,&FIELD2
+         CDTR  F0,F1
+               AWHEN C'9'              H  LD
+         LGH   R0,&FIELD1
+         CXGTR F0,R0
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   H  F
+               ACALL RESET_SS1_FIELD1
+         LH    R0,&FIELD1
+         C     R0,&FIELD2
+               AWHEN  C'G'             H  G 
+               ACALL RESET_SS1_FIELD1
+         LGH   R0,&FIELD1
+         CG    R0,&FIELD2
+               AWHEN  C'H'             H  H 
+               ACALL RESET_SS1_FIELD1
+         LH    R0,&FIELD1
+         CH    R0,&FIELD2
+               AWHEN  C'P'             H  P 
+         LGH   R0,&FIELD1
+         ZAP   ZCVT_PWORK2,&FIELD2
+         CVBG  R1,ZCVT_PWORK2
+         CGR   R0,R1
+               AWHEN  C'Q'             H  Q
+               ACALL RESET_SS1_FIELD1
+         LH    F1,&FIELD1
+         C     F1,12+&FIELD2  IGNORE HIGH 96
+               AWHEN  C'Z'             H  Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 AIF (&ZLEN2 LE 15)
+                     ZC_PACK31 ZCVT_PWORK,8,&FIELD2,&ZLEN2
+         CVBG  R0,ZCVT_PWORK 
+         LGH   R1,&FIELD1
+         CGR   R1,R0
+                 AELSE       
+                   ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                 ZC_CONV Q,LD
+         LGH   R3,&FIELD1
+         LGR   R2,R3
+         SRAG  R2,R2,63
+         CGR   R2,R0
+         JNE   *+4+6
+         CLGR  R3,R1
+                 AEND
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'P'                    P  ??
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              P  EH
+               ACALL RESET_SS1_FIELD1
+         ZAP   ZCVT_PWORK1,&FIELD1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0
+                 ZC_CONV EH,LD
+         CE    F0,&FIELD2
+               AWHEN C'2'              P  DH
+               ACALL RESET_SS1_FIELD1
+         ZAP   ZCVT_PWORK1,&FIELD1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0
+                 ZC_CONV DH,LD
+         CD    F0,&FIELD2
+               AWHEN C'3'              P  LH
+               ACALL RESET_SS1_FIELD1
+         ZAP   ZCVT_PWORK1,&FIELD1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0
+                 ZC_CONV LH,LD
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              P  EB
+               ACALL RESET_SS1_FIELD1
+         ZAP   ZCVT_PWORK1,&FIELD1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV EB,LD
+         CEB   F0,&FIELD2
+               AWHEN C'5'              P  DB
+               ACALL RESET_SS1_FIELD1
+         ZAP   ZCVT_PWORK1,&FIELD1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV DB,LD
+         CDB   F0,&FIELD2
+               AWHEN C'6'              P  LB
+               ACALL RESET_SS1_FIELD1
+         ZAP   ZCVT_PWORK1,&FIELD1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV LB,LD
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F1,F0
+               AWHEN C'7'              P  ED
+               ACALL RESET_SS1_FIELD1
+         ZAP   ZCVT_PWORK1,&FIELD1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV DD,LD
+         LE    F1,&FIELD2
+         LDETR F1,F1,0
+         CDTR  F0,F1
+               AWHEN C'8'              P  DD
+               ACALL RESET_SS1_FIELD1
+         ZAP   ZCVT_PWORK1,&FIELD1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV DD,LD
+         LD    F1,&FIELD2
+         CDTR  F0,F1
+               AWHEN C'9'              P  LD
+               ACALL RESET_SS1_FIELD1
+         ZAP   ZCVT_PWORK1,&FIELD1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV LD,LD
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   P  F
+         L     R1,&FIELD2
+         CVD   R1,ZCVT_PWORK
+         CP    &FIELD1,ZCVT_PWORK
+               AWHEN  C'G'             P  G 
+         LG    R1,&FIELD2
+         CVDG  R1,ZCVT_PWORK2
+         CP    &FIELD1,ZCVT_PWORK2
+               AWHEN  C'H'             P  H 
+         LH    R1,&FIELD2
+         CVD   R1,ZCVT_PWORK
+         CP    &FIELD1,ZCVT_PWORK
+               AWHEN  C'P'             P  P 
          CP    &FIELD1,&FIELD2
-        AWHEN  C'X' 
+               AWHEN  C'Q'             P  Q
+               ACALL RESET_SS1_FIELD1
+         ZAP   ZCVT_PWORK1,&FIELD1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0
+                 ZC_CONV Q,LD
+         CG    R0,&FIELD2                     
+         JNE   *+4+6
+         CLG   R1,8+&FIELD2
+               AWHEN  C'Z'             P  Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 AIF (&ZLEN2 LE 15)
+                     ZC_PACK31 ZCVT_PWORK,8,&FIELD2,&ZLEN2
+         CVBG  R0,ZCVT_PWORK 
+         CP    &FIELD1,ZCVT_PWORK
+                 AELSE       
+                   ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         CP    &FIELD1,ZCVT_PWORK2
+                 AEND
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'Q'                    Q  ??    
+               ACALL RESET_SS1_FIELD1
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              Q  EH
+                 ZC_CONV EH,Q,&FIELD1
+         CE    F0,&FIELD2
+               AWHEN C'2'              Q  DH
+                 ZC_CONV DH,Q,&FIELD1
+         CD    F0,&FIELD2
+               AWHEN C'3'              Q  LH
+                 ZC_CONV LH,Q,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              Q  EB
+                 ZC_CONV EB,Q,&FIELD1
+         CEB   F0,&FIELD2
+               AWHEN C'5'              Q  DB
+                 ZC_CONV DB,Q,&FIELD1
+         CDB   F0,&FIELD2
+               AWHEN C'6'              Q  LB
+                 ZC_CONV LB,Q,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F1,F0
+               AWHEN C'7'              Q  ED
+                 ZC_CONV DD,Q,&FIELD1
+         LE    F1,&FIELD2
+         LDETR F1,F1,0
+         CDTR  F0,F1
+               AWHEN C'8'              Q  DD
+                 ZC_CONV DD,Q,&FIELD1
+         LD    F1,&FIELD2
+         CDTR  F0,F1
+               AWHEN C'9'              Q  LD
+                 ZC_CONV LD,Q,&FIELD1
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   Q  F
+               ACALL RESET_SS1_FIELD1
+         L     R0,12+&FIELD1  IGNORE HIGH 96
+         C     R0,&FIELD2
+               AWHEN  C'G'             Q  G 
+               ACALL RESET_SS1_FIELD1
+         LG    R0,8+&FIELD1  IGNORE HIGH 64
+         CG    R0,&FIELD2       
+               AWHEN  C'H'             Q  H 
+               ACALL RESET_SS1_FIELD1
+         LG    R0,8+&FIELD1  IGNORE HIGH 64
+         LH    R1,&FIELD2       
+         CGR   R0,R1
+               AWHEN  C'P'             Q  P 
+         ZAP   ZCVT_PWORK2,&FIELD2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                 ZC_CONV Q,LD
+         LMG   R2,R3,&FIELD1
+         CGR   R2,R0
+         JNE   *+4+6
+         CLGR  R3,R1
+               AWHEN  C'Q'             Q  Q
+         LMG   R0,R1,&FIELD1
+         CG    R0,&FIELD2
+         JNE   *+4+6
+         CLG   R1,8+&FIELD2
+               AWHEN  C'Z'             Q  Z
+                 :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+                 ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         LMG   R0,R1,ZCVT_PWORK2
+         CXSTR F4,R0
+                 ZC_CONV Q,LD
+         LMG   R2,R3,&FIELD1
+         CG    R2,&FIELD1
+         JNE   *+4+6
+         CLG   R3,8+&FIELD1
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
+        AWHEN  C'X'                    X  ??
+         AIF   ('&SYM_PIC_TYPE(&FIELD2_IX)' NE 'X'                     X
+                OR &SYM_LEN(&FIELD1_IX) NE &SYM_LEN(&FIELD2_IX))
+               MNOTE 8,'GEN_COMP FIELDS NOT X OR NOT EQUAL LENGTH'
+               MEXIT
+         AEND
          CLC   &FIELD1,&FIELD2
-        AWHEN  C'Z'
-         PACK  ZCVT_PWORK1(&SYM_LEN(&FIELD1_IX)),&FIELD1
-         PACK  ZCVT_PWORK2(&SYM_LEN(&FIELD2_IX)),&FIELD2
-         CP    ZCVT_PWORK1(&SYM_LEN(&FIELD1_IX)),ZCVT_PWORK2(&SYM_LEN(&X
-               FIELD2_IX))
+        AWHEN  C'Z'                    Z  ??
+               ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
+               AWHEN C'1'              Z  EH
+               ACALL RESET_SS1_FIELD1
+                 :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+                 ZC_PACK31  ZCVT_PWORK1,16,&FIELD1,&ZLEN1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0
+                 ZC_CONV EH,LD
+         CE    F0,&FIELD2
+               AWHEN C'2'              Z  DH
+               ACALL RESET_SS1_FIELD1
+                 :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+                 ZC_PACK31  ZCVT_PWORK1,16,&FIELD1,&ZLEN1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0
+                 ZC_CONV DH,LD
+         CD    F0,&FIELD2
+               AWHEN C'3'              Z  LH
+               ACALL RESET_SS1_FIELD1
+                 :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+                 ZC_PACK31  ZCVT_PWORK1,16,&FIELD1,&ZLEN1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0
+                 ZC_CONV LH,LD
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXR   F0,F1
+               AWHEN C'4'              Z  EB
+               ACALL RESET_SS1_FIELD1
+                 :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+                 ZC_PACK31  ZCVT_PWORK1,16,&FIELD1,&ZLEN1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV EB,LD
+         CEB   F0,&FIELD2
+               AWHEN C'5'              Z  DB
+               ACALL RESET_SS1_FIELD1
+                 :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+                 ZC_PACK31  ZCVT_PWORK1,16,&FIELD1,&ZLEN1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV DB,LD
+         CDB   F0,&FIELD2
+               AWHEN C'6'              Z  LB
+               ACALL RESET_SS1_FIELD1
+                 :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+                 ZC_PACK31  ZCVT_PWORK1,16,&FIELD1,&ZLEN1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV LB,LD
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXBR  F1,F0
+               AWHEN C'7'              Z  ED
+               ACALL RESET_SS1_FIELD1
+                 :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+                 ZC_PACK31  ZCVT_PWORK1,16,&FIELD1,&ZLEN1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV DD,LD
+         LE    F1,&FIELD2
+         LDETR F1,F1,0
+         CDTR  F0,F1
+               AWHEN C'8'              Z  DD
+               ACALL RESET_SS1_FIELD1
+                 :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+                 ZC_PACK31  ZCVT_PWORK1,16,&FIELD1,&ZLEN1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F4,R0        
+                 ZC_CONV DD,LD
+         LD    F1,&FIELD2
+         CDTR  F0,F1
+               AWHEN C'9'              Z  LD
+               ACALL RESET_SS1_FIELD1
+                 :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+                 ZC_PACK31  ZCVT_PWORK1,16,&FIELD1,&ZLEN1
+         LMG   R0,R1,ZCVT_PWORK1
+         CXSTR F0,R0        
+         LD    F1,&FIELD2
+         LD    F3,8+&FIELD2
+         CXTR  F0,F1
+               AWHEN  C'A',C'F',C'I'   Z  F
+               :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+               :&PLEN1 SETA &ZLEN1/2+1
+               ZC_PACK31  ZCVT_PWORK1,&PLEN1,&FIELD1,&ZLEN1
+         L     R0,&FIELD2
+         CVD   R0,ZCVT_PWORK
+         CP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK
+               AWHEN  C'G'             Z  G 
+               :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+               :&PLEN1 SETA &ZLEN1/2+1
+               ZC_PACK31  ZCVT_PWORK1,&PLEN1,&FIELD1,&ZLEN1
+         LG    R0,&FIELD2
+         CVDG  R0,ZCVT_PWORK2
+         CP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2
+               AWHEN  C'H'             Z  H 
+               :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+               :&PLEN1 SETA &ZLEN1/2+1
+               ZC_PACK31  ZCVT_PWORK1,&PLEN1,&FIELD1,&ZLEN1
+         LH    R0,&FIELD2
+         CVD   R0,ZCVT_PWORK
+         CP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK
+               AWHEN  C'P'             Z  P 
+               :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+               :&PLEN1 SETA &ZLEN1/2+1
+               ZC_PACK31  ZCVT_PWORK1,&PLEN1,&FIELD1,&ZLEN1
+         CP    ZCVT_PWORK1(&PLEN1),&FIELD2
+               AWHEN  C'Q'             Z  Q
+               ACALL RESET_SS1_FIELD1
+               :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+               :&PLEN1 SETA &ZLEN1/2+1
+               ZC_PACK31  ZCVT_PWORK1,&PLEN1,&FIELD1,&ZLEN1
+               ZC_CONV    P,Q,&FIELD2
+         STMG  R0,R1,ZCVT_PWORK2 
+         CP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2
+               AWHEN  C'Z'             Z  Z
+               :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
+               :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
+               :&PLEN1 SETA &ZLEN1/2+1
+               :&PLEN2 SETA &ZLEN2/2+1
+         ZC_PACK31  ZCVT_PWORK1,&PLEN1,&FIELD1,&ZLEN1
+         ZC_PACK31  ZCVT_PWORK2,&PLEN2,&FIELD2,&ZLEN2
+         CP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2(&PLEN2)
+               AELSE
+                    MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
+               IELD2_IX)'
+               AEND
         AELSE
                MNOTE 8,'GEN_COMP UNKNOWN PIC TYPE &SYM_PIC_TYPE(&FIELD1X
                _IX)'

@@ -1,0 +1,163 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 03/09/09                                                 *
+*********************************************************************
+         TITLE 'TESTFP2 - TEST PFPO CONVERT RADIX INSTRUCTION'     
+*********************************************************************
+* 03/09/09 RPI 1013 TEST PFPO CONVERSION BETWEEN ANY TWO FP TYPES
+*********************************************************************
+         PRINT DATA
+TESTFP2  RT1   MAIN
+         EQUREGS
+         EQUREGS REGS=FPR
+PWORK    DS    D
+PWORK16  DS    XL16
+WORD     DS    F
+DWORD    DS    D
+DWORD2   DS    D
+BYTE     DS    X
+LWORK    DS    XL16
+EH       EQU   0   PFPO TYPE CODES
+DH       EQU   1
+LH       EQU   2
+EB       EQU   5
+DB       EQU   6
+LB       EQU   7
+ED       EQU   8
+DD       EQU   9
+LD       EQU   10 
+         RT1   START
+         MACRO
+         TESTPFPO &FP1_TYPE,&FP2_TYPE,&NUM
+       AIF   ('&FP2_TYPE'(1,1) EQ 'E')
+         LE    F4,=&FP2_TYPE'&NUM'
+       AELSEIF   ('&FP2_TYPE'(1,1) EQ 'D')
+         LD    F4,=&FP2_TYPE'&NUM'
+       AELSE
+         LX    F4,=&FP2_TYPE'&NUM'
+       AEND
+         L     R0,=AL1(1,&FP1_TYPE,&FP2_TYPE,0)
+         SER   F0,F0 FORCE REG AND CACHE TO ZERO                 
+         SER   F2,F2 FORCE REG AND CACHE TO ZERO
+         PFPO
+       AIF   ('&FP1_TYPE'(1,1) EQ 'E')
+        AIF   ('&FP1_TYPE'(2,1) EQ 'H')
+         CE    F0,=&FP1_TYPE'&NUM'
+        AELSEIF   ('&FP1_TYPE'(2,1) EQ 'B')
+         CEB   F0,=&FP1_TYPE'&NUM'
+        AELSE
+         STE   F0,WORD
+         LE    F1,WORD
+         LDETR F1,F1,0
+         LD    F4,=DD'&NUM'
+         CDTR  F1,F4
+        AEND
+       AELSEIF   ('&FP1_TYPE'(1,1) EQ 'D')
+        AIF   ('&FP1_TYPE'(2,1) EQ 'H')
+         CD    F0,=&FP1_TYPE'&NUM'
+        AELSEIF   ('&FP1_TYPE'(2,1) EQ 'B')
+         CDB   F0,=&FP1_TYPE'&NUM'
+        AELSE
+         STD   F0,DWORD
+         LD    F1,DWORD
+         LD    F4,=&FP1_TYPE'&NUM'
+         CDTR  F1,F4
+        AEND
+       AELSE
+         LX    F4,=&FP1_TYPE'&NUM'
+        AIF   ('&FP1_TYPE'(2,1) EQ 'H')
+         CXR   F0,F4
+        AELSEIF   ('&FP1_TYPE'(2,1) EQ 'B')
+         CXBR  F0,F4
+        AELSE
+         CXTR  F0,F4
+        AEND
+       AEND
+         RT1   CCE
+         MEND
+         TESTPFPO EH,EH,123
+         TESTPFPO EH,DH,123
+         TESTPFPO EH,LH,123
+         TESTPFPO EH,EB,123
+         TESTPFPO EH,DB,123
+         TESTPFPO EH,LB,123
+         TESTPFPO EH,ED,123
+         TESTPFPO EH,DD,123
+         TESTPFPO EH,LD,123
+         TESTPFPO DH,EH,123
+         TESTPFPO DH,DH,123
+         TESTPFPO DH,LH,123
+         TESTPFPO DH,EB,123
+         TESTPFPO DH,DB,123
+         TESTPFPO DH,LB,123
+         TESTPFPO DH,ED,123
+         TESTPFPO DH,DD,123
+         TESTPFPO DH,LD,123
+         TESTPFPO LH,EH,123
+         TESTPFPO LH,DH,123
+         TESTPFPO LH,LH,123
+         TESTPFPO LH,EB,123
+         TESTPFPO LH,DB,123
+         TESTPFPO LH,LB,123
+         TESTPFPO LH,ED,123
+         TESTPFPO LH,DD,123
+         TESTPFPO LH,LD,123
+         TESTPFPO EB,EH,123
+         TESTPFPO EB,DH,123
+         TESTPFPO EB,LH,123
+         TESTPFPO EB,EB,123
+         TESTPFPO EB,DB,123
+         TESTPFPO EB,LB,123
+         TESTPFPO EB,ED,123
+         TESTPFPO EB,DD,123
+         TESTPFPO EB,LD,123
+         TESTPFPO DB,EH,123
+         TESTPFPO DB,DH,123
+         TESTPFPO DB,LH,123
+         TESTPFPO DB,EB,123
+         TESTPFPO DB,DB,123
+         TESTPFPO DB,LB,123
+         TESTPFPO DB,ED,123
+         TESTPFPO DB,DD,123
+         TESTPFPO DB,LD,123
+         TESTPFPO LB,EH,123
+         TESTPFPO LB,DH,123
+         TESTPFPO LB,LH,123
+         TESTPFPO LB,EB,123
+         TESTPFPO LB,DB,123
+         TESTPFPO LB,LB,123
+         TESTPFPO LB,ED,123
+         TESTPFPO LB,DD,123
+         TESTPFPO LB,LD,123
+         TESTPFPO ED,EH,123
+         TESTPFPO ED,DH,123
+         TESTPFPO ED,LH,123
+         TESTPFPO ED,EB,123
+         TESTPFPO ED,DB,123
+         TESTPFPO ED,LB,123
+         TESTPFPO ED,ED,123
+         TESTPFPO ED,DD,123
+         TESTPFPO ED,LD,123
+         TESTPFPO DD,EH,123
+         TESTPFPO DD,DH,123
+         TESTPFPO DD,LH,123
+         TESTPFPO DD,EB,123
+         TESTPFPO DD,DB,123
+         TESTPFPO DD,LB,123
+         TESTPFPO DD,ED,123
+         TESTPFPO DD,DD,123
+         TESTPFPO DD,LD,123
+         TESTPFPO LD,EH,123
+         TESTPFPO LD,DH,123
+         TESTPFPO LD,LH,123
+         TESTPFPO LD,EB,123
+         TESTPFPO LD,DB,123
+         TESTPFPO LD,LB,123
+         TESTPFPO LD,ED,123
+         TESTPFPO LD,DD,123
+         TESTPFPO LD,LD,123
+         RT1   END
+         END         

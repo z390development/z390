@@ -4,11 +4,39 @@
 .* This source code is part of z390 zCOBOL/assembler/emulator package*
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
-.* Date   - 04/16/08                                                 *
+.* Date   - 04/07/08                                                 *
 .*********************************************************************
-.* 04/16/08 initial coding for global COMPUTE 
+.* 03/04/09 initial coding for COMPUTE using IF as model
+.*********************************************************************
+.* Pending work includes support for field,lit,expression in either 
+.* first or second operand.  Coming after COMPUTE dubugs GEN_EXP.
 .*********************************************************************
          COMPUTE
-         MNOTE 8,'COMPUTE NOT SUPPORTED YET'
+         COPY  ZC_WS
+         :&PARM_IX SETA 2
+         AWHILE (&PARM_IX LT N'&SYSLIST                                X
+                 AND '&SYSLIST(&PARM_IX)' NE '=')
+               :&PARM_IX SETA &PARM_IX+1
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' NE '=')
+               MNOTE 8,'COMPUTE = NOT FOUND'
+               MEXIT
+         AEND
+         :&EXP_PARMS SETC '&SYSLIST(&PARM_IX+1)'
+         :&PARM_IX SETA &PARM_IX+2
+         AWHILE (&PARM_IX LE N'&SYSLIST)     COLLECT EXP PARMS
+               :&EXP_PARMS SETC '&EXP_PARMS,&SYSLIST(&PARM_IX)'
+               :&PARM_IX SETA &PARM_IX+1
+         AEND
+         ZC_EXP &EXP_PARMS                   PARSE AND GEN EXPRESSION
+         AIF   (&EXP_RC NE 0)
+               MEXIT
+         AEND
+         :&PARM_IX SETA 1
+         :&FIELD_REG SETC 'R14'
+         :&FIELD_SS1 SETB 1
+         ACALL ZCGETFLD                      GET TARGET FIELD
+         GEN_STORE_EXP                       STORE EXP RESULT
          MEXIT
+         COPY ZCGETFLD
          MEND
