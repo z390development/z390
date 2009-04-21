@@ -5442,7 +5442,26 @@ set GIT_COMMITTER_DATE=2021-03-24 22:00:00 +0100
 git commit -m "Reconstructed version v1.5.00b of z390 committed on behalf of Don Higgins"
 git tag -a v1.5.00b -m "Reconstructed version v1.5.00b of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.00b2
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.5.00b2
+git add mac/SNAP.MAC
+git add rt/test/TEST1.MLC
+
+==> Create commit for V1.5.00b2
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2009-04-21 00:49:00 -0500
+set GIT_COMMITTER_DATE=2021-03-25 17:42:00 +0100
+git commit -m "Reconstructed version v1.5.00b2 of z390 committed on behalf of Don Higgins"
+git tag -a v1.5.00b2 -m "Reconstructed version v1.5.00b2 of z390 committed on behalf of Don Higgins"
 
 
 

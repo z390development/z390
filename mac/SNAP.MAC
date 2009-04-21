@@ -18,6 +18,7 @@
 .* 06/23/07 RPI 642 SUPPORT TEXT=(REG)
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 04/18/09 RPI 1017 add MF=L/E support                         
 .*********************************************************************
 .* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
 .*  1. PDATA= (DEFAULT IS ALL)
@@ -43,16 +44,13 @@
                &ID=0,        SHOW ID ON DUMP                           X
                &LIST=,       NOT SUPPORTED                             X
                &MF=I,        NOT SUPPORTED                             X
-               &PDATA=ALL,   ALL, REGS, GPR, FPR, CDE, DCB, PSW        X
+               &PDATA=,      ALL, REGS, GPR, FPR, CDE, DCB, PSW (ALL)  X
                &SDATA=,      IGNORED                                   X
                &STORAGE=,    STORAGE ADDRESS RANGE                     X
                &STRHDR=,     NOT SUPPORTED                             X
                &SUBPLST=,    NOT SUPPORTED                             X
                &TCB=,        IGNORED                                   X
                &TEXT=        EXTENSION TEXT TO DISPLAY                 
-         AIF   ('&N' EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
          AIF   (N'&SYSLIST EQ 0).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'                 
          MEXIT
@@ -60,7 +58,8 @@
          AIF   ('&LIST' NE '').ERR2
          AIF   ('&STRHDR' NE '').ERR3
          AIF   ('&SUBPLST' NE '').ERR4
-         AIF   ('&MF' NE 'I').ERR5
+&FLAGS   SETA  X'7C00' DEFAULT ALL
+         AIF   ('&PDATA' EQ '').NPOK2
 &FLAGS   SETA  0
 &NP      SETA  N'&PDATA+1
 .NPLOOP  ANOP
@@ -77,7 +76,7 @@
          AGO   .NPLOOP
 .ALL     ANOP                       8     4   2   1   8   4
 &FLAGS   SETA  &FLAGS+X'7C00' NO STORAGE,GPR,FPR,CDE,DCB,ALL  RPI 583
-         AGO   .CHKSTOR
+         AGO   .NPOK2
 .REGS    ANOP
 &FLAGS   SETA  &FLAGS+X'6000'
          AGO   .NPLOOP 
@@ -96,10 +95,15 @@
 .PSW     ANOP   PSW INCLUDED BY DEFAULT
          AGO   .NPLOOP
 .NPOK2   ANOP
+         AIF   ('&MF' EQ 'L').LISTFORM
+         AIF   ('&MF(1)' EQ 'E').EXECFORM
+         AIF   ('&MF' NE 'I').ERR2
 .*
-.* SNAP A MEMORY DUMP OF SPECIFIED AREA
+.* STD FORM SNAP A MEMORY DUMP OF SPECIFIED AREA
 .*
-.CHKSTOR ANOP
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
          AIF   ('&STORAGE' EQ '').SETUP
          AIF   (N'&STORAGE NE 2).ERR1
 &FLAGS   SETA  &FLAGS+X'8000'           RPI110 
@@ -123,7 +127,7 @@
 .IDREG   ANOP
          ZOPTLR 0,&ID(1)                      RPI 623
 .SETFLAGS ANOP
-         IILH  0,&FLAGS               RPI158
+         IILH 0,&FLAGS               RPI158
          AIF   ('&TEXT' EQ '').NOTEXT
          AIF   ('&TEXT'(1,1) EQ '(').REGTEXT  RPI 642
 &TEMP    SETC  '&TEXT'
@@ -138,11 +142,57 @@
 .NOTEXT  ANOP
          LA    1,0
 .SVC     ANOP
-         SVC   51
+         SVC   51  SNAP DUMP R0=FLAGS,ID,R1=A(TEXT),R14-15=A(LOW,HIGH)
          MEXIT
+.*
+.* LIST FORM
+.*
+.LISTFORM ANOP
+&N       DS    0F
+         AIF   ('&STORAGE(1)' EQ '').Nl_NOSTOR
+         DC    A(&STORAGE(1),&STORAGE(2)) R14-R15 STORAGE RANGE
+         AGO   .NL_FLAGS
+.NL_NOSTOR ANOP
+         DC    A(0,0) R14-R15 STORAGE RANGE
+.NL_FLAGS ANOP
+         DC    AL2(&FLAGS,&ID) R0 FLAGS AND ID
+&TEMP    SETC  ' '
+         AIF   ('&TEXT' EQ '').NL_NOTEXT
+&TEMP    SETC  '&TEXT'(2,K'&TEXT-2)
+.NL_NOTEXT ANOP
+         DC    A(*+4)          R1 A(TEXT)
+         DC    C'&TEMP',X'00'
+         MEXIT
+.*
+.* EXEC FORM
+.*
+.EXECFORM ANOP
+         AIF   ('&MF(2)'(1,1) EQ '(').EF_REG
+         LM    14,1,&MF(2)
+         AGO   .EF_OPTS
+.EF_REG  ANOP
+         LM    14,1,0(&MF(2,1))
+.EF_OPTS ANOP
+         AIF   ('&PDATA' EQ '').EF_NOPDATA
+         IILH  0,&FLAGS
+.EF_NOPDATA ANOP
+         AIF   (&ID EQ 0).EF_NOID    
+         IILL  0,&ID    
+.EF_NOID ANOP
+         AIF   ('&TEXT' EQ '').EF_NOTEXT    
+         LA    1,=C&TEXT    
+.EF_NOTEXT ANOP
+         AIF   ('&STORAGE' EQ '').SVC
+         AIF   ('&STORAGE(1)'(1,1) EQ '(').EF_STORREG
+         LM    14,15,=A(&STORAGE(1),&STORAGE(2))
+         AGO   .SVC
+.EF_STORREG ANOP
+         ZOPTLR 14,&STORAGE(1)
+         ZOPTLR 15,&STORAGE(2)
+         AGO   .SVC
 .ERR1    MNOTE 12,'SNAP INVALID STORAGE=(ADDR1,ADDR2) - &STORAGE'
          MEXIT
-.ERR2    MNOTE 12,'SNAP LIST= NOT SUPPORTED'
+.ERR2    MNOTE 12,'SNAP INVALID MF= OPTION'
          MEXIT
 .ERR3    MNOTE 12,'SNAP STRHDR= NOT SUPPORTED'
          MEXIT

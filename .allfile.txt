@@ -4551,6 +4551,7 @@ C:\z390\rt\test\dif
 C:\z390\rt\test\save
 C:\z390\rt\test\SUBENTRY.MCR
 C:\z390\rt\test\SUBEXIT.MCR
+C:\z390\rt\test\TEST1.MLC
 C:\z390\rt\test\TESTACT1.MLC
 C:\z390\rt\test\TESTAIN1.MLC
 C:\z390\rt\test\TESTASC1.MLC
