@@ -28,15 +28,16 @@
                :&EXP_PARMS SETC '&EXP_PARMS,&SYSLIST(&PARM_IX)'
                :&PARM_IX SETA &PARM_IX+1
          AEND
-         ZC_EXP &EXP_PARMS                   PARSE AND GEN EXPRESSION
-         AIF   (&EXP_RC NE 0)
-               MEXIT
-         AEND
          :&PARM_IX SETA 1
          :&FIELD_REG SETC 'R14'
          :&FIELD_SS1 SETB 1
-         ACALL ZCGETFLD                      GET TARGET FIELD
-         GEN_STORE_EXP                       STORE EXP RESULT
+         ACALL GET_PARM_FIELD                      GET TARGET FIELD
+       AIF   (&FIELD_IX GT 0)
+         ZC_CALC &FIELD_NAME,&SYM_PIC_TYPE(&FIELD_IX),&FIELD_LNG,&EXP_PX
+               ARMS  CALC EXPRESSION AND STORE RESTORE RESULT
+       AELSE
+               MNOTE 8,'COMPUTE TARGET FIELD NOT FOUND - &SYSLIST(1)'
+       AEND
          MEXIT
          COPY ZCGETFLD
          MEND

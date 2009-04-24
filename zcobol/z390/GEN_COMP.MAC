@@ -10,6 +10,7 @@
 .* 10/06/08 ZSTRMAC
 .* 02/25/09 RPI 1004 support PIC types 1,2,E,D,L
 .* 03/11/09 RPI 1004 support PIC types 1-9,Q using ZC_PACK31   
+.* 04/21/09 RPI 1020 correct length of character literal by -2 
 .*********************************************************************
          GEN_COMP  
          :&FIELD1    SETC '&SYSLIST(1)'
@@ -35,7 +36,7 @@
          ACALL RESET_SS1_FIELD1
          CLI   &FIELD1,C&FIELD2
         AELSE
-           :&LITSP SETA K'&FIELD2
+           :&LITSP SETA K'&FIELD2-2 DSHX
            AIF (&LITSP LT &SYM_LEN(&FIELD1_IX))
                :&LITSP SETA &SYM_LEN(&FIELD1_IX)
            AEND
@@ -309,6 +310,7 @@
           AELSE
                :&LLIT SETA &L_FIELD1
           AEND
+ MNOTE 'DSHX LLIT=&LLIT'
          LARL  R1,=CL(&LLIT)' '
          CLC   &FIELD1,0(R1)
                    AEND

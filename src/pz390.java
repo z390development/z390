@@ -286,6 +286,7 @@ public class pz390 {
      * 01/18/09 RPI 985 optimize XC instruction for S1=S2  
      * 03/09/09 RPI 1013 add PFPO, CSTG, and CSST opcodes per POP V7      
 	 * 03/17/09 RPI 1015 prevent S0C5 on SRAG,SLAG,SRLG,SLLG,SRXT,SLXT
+	 * 04/20/09 RPI 1026 add ESTA extract PC/BAKR PSW/CC
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1169,7 +1170,7 @@ public class pz390 {
 	int[] pc_stk_psw_loc = (int[]) Array.newInstance(int.class, max_pc_stk);
 
 	int[] pc_stk_psw_cc = (int[]) Array.newInstance(int.class, max_pc_stk);
-
+    boolean[] pc_stk_type_pc = (boolean[]) Array.newInstance(boolean.class,max_pc_stk); // RPI 1026 PC vs BAKR
 	/*
 	 * virtual memory with 24 bit and 31 bit fqes all initialized by init_mem()
 	 */
@@ -4864,7 +4865,7 @@ public class pz390 {
 		case 0x18: // 2700 "B218" "PC" "S"
 			psw_check = false;
 			ins_setup_s();
-			push_pc_stack(psw_loc);
+			push_pc_stack(true,psw_loc);
 			set_psw_loc(bd2_loc);
 			break;
 		case 0x19: // 2710 "B219" "SAC" "S"
@@ -4976,9 +4977,9 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			if (rf1 == 0) {
-				push_pc_stack(psw_loc);
+				push_pc_stack(false,psw_loc);
 			} else {
-				push_pc_stack(reg.getInt(rf1 + 4));
+				push_pc_stack(false,reg.getInt(rf1 + 4));
 			}
 			if (rf2 != 0) {
 				set_psw_loc(reg.getInt(rf2 + 4));
@@ -5032,7 +5033,25 @@ public class pz390 {
 			}
 			break;
 		case 0x4A: // 3090 "B24A" "ESTA" "RRE"
+			psw_check = false;
 			ins_setup_rre();
+			if ((rf1 & 1) != 0 || cur_pc_stk <= 0){
+				set_psw_check(psw_pic_spec); // r1 must be even
+				break;
+			}
+			if (pc_stk_type_pc[cur_pc_stk-1]){
+				psw_cc = psw_cc1; // PC entry
+			} else {
+				psw_cc = psw_cc0;  // BAKR entry
+			}
+			switch (reg.get(rf2+7)){ // RPI 1026
+		    case 2: // place PSW in R1+1
+		    	reg.putInt(rf1+4,0);
+		    	reg.putInt(rf1+12,pc_stk_psw_loc[cur_pc_stk-1]);
+		    	break;
+		    default:
+		    	set_psw_check(psw_pic_spec); // only 13/31 amode supported
+			}
 			break;
 		case 0x4B: // 3100 "B24B" "LURA" "RRE"
 			ins_setup_rre();
@@ -12478,11 +12497,12 @@ public class pz390 {
 			}
 		}
     }
-	private void push_pc_stack(int link_addr) {
+	private void push_pc_stack(boolean pc_type,int link_addr) {
 		/*
 		 * push psw and regs on PC stack
 		 */
 		if (cur_pc_stk < max_pc_stk) {
+			pc_stk_type_pc[cur_pc_stk] = pc_type;
 			pc_stk_psw_loc[cur_pc_stk] = link_addr;
 			pc_stk_psw_cc[cur_pc_stk] = psw_cc;
 			pc_stk_reg.position(cur_pc_stk_reg);

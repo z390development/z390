@@ -174,7 +174,8 @@ public  class  sz390 implements Runnable {
     * 09/16/08 RPI 908 catch trap on bad SYSLOG file override
     * 10/24/08 RPI 935 prevent recursive abort  
     * 11/08/08 RPI 947 move get_ascii_printable_string to tz390 for use by MNOTE/TRACEP  
-    * 12/05/08 RPI 966 check TIOT index limit (X'F6F6F6F6' bad DCB)                              
+    * 12/05/08 RPI 966 check TIOT index limit (X'F6F6F6F6' bad DCB)    
+    * 04/22/09 RPI 1021 prevent SFFF on DCB addr with high VL bit on                          
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -2626,7 +2627,7 @@ private void svc_open(){
 	/*
 	 * check for DCB or ACB and route accordingly
 	 */
-	cur_dcb_addr  = pz390.reg.getInt(pz390.r1);
+	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode; // RPI 1021
 	cur_open_opt  = pz390.reg.getInt(pz390.r0);
 	byte cur_acb_id = pz390.mem.get(cur_dcb_addr);
 	if (cur_acb_id == tz390.acb_id_ver){
@@ -2803,7 +2804,7 @@ private void svc_close(){
 	/*
 	 * check for DCB or ACB and route accordingly
 	 */
-	cur_dcb_addr  = pz390.reg.getInt(pz390.r1);
+	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode; // RPI 1021
 	byte cur_acb_id = pz390.mem.get(cur_dcb_addr);
 	if (cur_acb_id == tz390.acb_id_ver){
 		vz390.cur_vsam_op = vz390.vsam_op_close;

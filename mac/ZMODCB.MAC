@@ -6,30 +6,36 @@
 .* Author - Don Higgins                                              *
 .* Date   - 08/27/05                                                 *
 .*********************************************************************
-.* 08/27/07 INITIAL CODING TO SUPPORT MODCB ACB OR RPL FIELD MODS                         
-.* 09/03/07 RPI 690 ADD OPTCD LENGTH 2 SUPPORT                                            
-.* 09/15/07 RPI 696 CORRECT SUPPORT FOR 1 BYTE FIELD LENGHTS                              
-.* 09/15/07 RPI 682 ADD SUPPORT FOR 8 BYTE DDNAME,VCLRN TYPE MODS                         
-.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 08/27/07 INITIAL CODING TO SUPPORT MODCB ACB OR RPL FIELD MODS
+.* 09/03/07 RPI 690  ADD OPTCD LENGTH 2 SUPPORT
+.* 09/15/07 RPI 696  CORRECT SUPPORT FOR 1 BYTE FIELD LENGHTS
+.* 09/15/07 RPI 682  ADD SUPPORT FOR 8 BYTE DDNAME,VCLRN TYPE MODS
+.* 04/19/08 RPI 833  add SETC quotes for HLASM compatibility
+.* 04/23/09 RPI 1023 jm2 MODCB generates OI and NI instead of MVI
 .*********************************************************************
 &N       ZMODCB &CB,         ACB/RPL ADDRESS OR (REG)                  X
                &OFFSET,      OFFSET TO TARGET FIELD                    X
                &SOURCE,      ABS VAL, RX ADDR, (REG), (S,SCON),(*,SCON)X
-               &LENGTH       LENGTH FOR ABS VAL MODS LIKE MACRF/OPTCD
+               &LENGTH,      LENGTH FOR ABS VAL MODS LIKE MACRF/OPTCD  X
+               &CLEAN        MODCB CLEAN UP     jm2
          AIF   ('&CB'(1,1) EQ '(').REGCB
 &STADDR  SETC  '&CB+&OFFSET'
-         AGO   .SOURCE    
+         AGO   .SOURCE
 .REGCB   ANOP
 &STADDR  SETC  '&OFFSET.&CB'
 .SOURCE  ANOP
          AIF   ('&SOURCE'(1,1) EQ '(').CHK_SCON
          AIF   ('&LENGTH' EQ '4').MV4
-         AIF   ('&LENGTH' EQ '1').MV1  
+         AIF   ('&LENGTH' EQ '1').MV1
          AIF   ('&LENGTH' EQ '8').MV8
          MNOTE 12,'ZMODCB INVALID LENGTH - &LENGTH'
          MEXIT
 .MV1     ANOP
-         MVI   &STADDR,&SOURCE
+.*        MVI   &STADDR,&SOURCE         jm2
+         AIF   (T'&CLEAN EQ 'O').MV1OI
+         NI    &STADDR,X'FF'-(&CLEAN)   jm2
+.MV1OI   ANOP
+         OI    &STADDR,&SOURCE          jm2
          MEXIT
 .MV4     ANOP
          AIF   ('&SOURCE'(1,1) EQ '=').MV4LIT

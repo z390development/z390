@@ -214,6 +214,7 @@ public  class  tz390 {
     * 01/26/09 RPI 986 add zcobol options COMMENT, EXTEND, TRUNC, WARN, R64
     * 03/06/09 RPI 1004 add FLOAT(DECIMAL/BINARY/HEX) for DFP,BFP, or HFP zcobol DEL type
     * 03/09/09 RPI 1013 add PFPO, ECTG, and CSST instructions
+    * 04/20/09 RPI 1027 add option EDF and GBLC &SYSEDF for zCICS use
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -222,7 +223,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.00b";  //dsh
+    String version    = "V1.5.00c";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -244,6 +245,7 @@ public  class  tz390 {
     boolean opt_autolink = true;  // search SYSOBJ for missing externals
     boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
     boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
+    boolean opt_cdf      = false; // option for zCICS RPI 1027
     boolean opt_cics     = false; // exec cics program honoring prolog,epilog
     boolean opt_comment  = true;  // generate source comments for zocobol RPI 986
     boolean opt_con      = true;  // log msgs to console
@@ -4667,6 +4669,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
           	if (opt_chksrc < 0 || opt_chksrc > 3){ // RPI 957
           		add_invalid_option(opt_file_name,opt_file_line,token);
           	}
+	} else if (token.toUpperCase().equals("CDF")){
+       	opt_cdf = true;
+	} else if (token.toUpperCase().equals("NOCDF")){
+       	opt_cdf = false;
 	} else if (token.toUpperCase().equals("CICS")){
        	opt_cics = true;
 	} else if (token.toUpperCase().equals("NOCICS")){
@@ -6682,6 +6688,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOBS2000");
 	     }
+	     if (opt_cdf){ // exec cics program honoring prolog,epilog
+		        add_final_opt("CDF");
+		     } else {
+		        add_final_opt("NOCDF");
+		     }
 	     if (opt_cics    ){ // exec cics program honoring prolog,epilog
 	        add_final_opt("CICS");
 	     } else {

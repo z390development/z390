@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 03/12/07 RPI 558 convert z390 macros to VSE macros        
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 04/22/09 RPI 1022 add support for regs using ZOPEN
 .*********************************************************************
 &N       OPEN  &DTFLIST    (DTF1,DFT2,,,,DFTN)                          
          AIF   ('&N' EQ '').SKIPDS
@@ -20,15 +21,16 @@
 .* OPEN 1 OR MORE FILES DEFINED BY DTF?? MACROS                      
 .*
 &NP      SETA  N'&SYSLIST
-&I       SETA  0
+&I       SETA  1
+&DCBLIST SETC  '(&SYSLIST(1),UPDATE'
 .LOOP    ANOP
 &I       SETA   &I+1         
-         AIF   (&I GT &NP).EXIT
-         LA    1,&SYSLIST(&I)
-.SVC     ANOP
-         LA    0,X'60' ALLOW I/O FOR NOW
-         SVC   19 OPEN R0=TYPE,R1=DCB
+         AIF   (&I GT &NP).ZOPEN
+&DCBLIST SETC  '&DCBLIST,&SYSLIST(&I),UPDATE'
          AGO   .LOOP
+.ZOPEN   ANOP
+&DCBLIST SETC  '&DCBLIST)'
+         ZOPEN &DCBLIST
 .EXIT    ANOP
          MEXIT
          MEND

@@ -359,6 +359,8 @@ public  class  mz390 {
      * 12/16/08 RPI 977 correct error 16 when dup ACALL names in separate macros
      * 02/06/09 RPI 993 allow seta/setb only in substring
      * 02/10/09 RPI 995 set $PRIVATE sysloc and type based on az390_private_sect flag
+     * 04/18/09 RPI 1018 print actual text for PUNCH statement on PRN
+     * 04/20/09 RPI 1027 add SYSCDF for use by zCICS macros
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -7942,6 +7944,10 @@ public  class  mz390 {
 		gbl_setc[tot_gbl_setc-1] = sys_vol;
 		add_gbl_sys("&SYSASM",var_setc_type);
 		gbl_setc[tot_gbl_setc-1] = "z390";
+		add_gbl_sys("&SYSCDF",var_setb_type); // RPI 1027
+		if (tz390.opt_cdf){
+			gbl_setb[tot_gbl_setb-1] = 1;   // RPI 1027
+		}
 		add_gbl_sys("&SYSCICS",var_setb_type); // RPI 976
 		if (tz390.opt_cics){
 			gbl_setb[tot_gbl_setb-1] = 1;   // RPI 976
@@ -8728,7 +8734,6 @@ public  class  mz390 {
 		 * punch record on PCH and list on PRN.
 		 * If ASM and NOALLOW pad to 80 bytes.
 		 */	
-		put_bal_line("         PUNCH " + bal_parms);  // RPI 410 RPI 965
 		if (bal_parms.length() > 2
 			&& bal_parms.charAt(0) == '\''){
 			String text = bal_parms;
@@ -8744,10 +8749,12 @@ public  class  mz390 {
 					&& !tz390.opt_allow){ // RPI 968
 					rec = set_length_80(rec); 
 				}
+				put_bal_line("         PUNCH " + "'" + rec + "'" + bal_parms.substring(index));  // RPI 410 RPI 965 RPI 1018
 				put_pch_line("'" + rec + "'" + bal_parms.substring(index)); // RPI 965
 			    return;
 			}			
 		}
+		put_bal_line("         PUNCH " + bal_parms);  // RPI 410 RPI 965 RPI 1018
 		log_error(269,"PUNCH syntax error - " + bal_parms);
 	}
 	private String replace_quoted_text_vars(String text,boolean reduce){ // RPI 965

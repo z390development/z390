@@ -17,6 +17,7 @@
 .*          used in NIST EXEC85.CBL.  Test added to TESTIF1.CBL.
 .* 02/22/09 RPI 1001 add support for conditional 88 value tests
 .* 02/26/09 RPI 1012 issue MNOTE if first field not found for compare
+.* 04/21/09 RPI 1020 correct support for mult OR for same test field 
 .*********************************************************************
 .* Pending work includes support for field,lit,expression in either 
 .* first or second operand.  Coming after COMPUTE dubugs GEN_EXP.
@@ -31,7 +32,6 @@
          LCLA  &STK_OP_TOT  CUR TOTAL OP ON STACK
          LCLA  &STK_OP(10)  OP (1=NOT,2=AND,3=OR,4='(')
          LCLA  &LAST_CD_IOP_IX LAST CD PTR ON STK FOR OMITTED SUB/VERB
-         LCLB  &REP_CD      REPLICATE PRIOR CD FIELD1 AND OP 
 .*
 .* GENERATED INTERMEDIATE OPCODE TABLE
 .*
@@ -42,6 +42,8 @@
          LCLB  &IOP_TF(10)     SAVE IOP TRUE/FALSE I**N IOP_TF#
          LCLA  &IOP_CD2A(10)   ALTERNATE CONDITION2 +PARM IX (= A OR B)
          LCLB  &V88_MULT       FLAG FOR GENERATING LABEL FOR MUL 88'S
+         LCLB  &MULT_OR        ARE THERE MULT OR'S IN THIS CD
+         LCLA  &MULT_OR_LAB    COUNTER FOR MULT OR TARGET LABEL
 .*
 .* SET IF/EVAL LVL AND EXIT_LAB #
 .*
@@ -52,6 +54,9 @@
          :&IE_BCNT(&IE_LVL) SETA 1          CUR BLOCK COUNT WITHIN IF
          :&IE_NEXT(&IE_LVL) SETA 1          CUR EXIT BLOCK
          :&IE_ELSE(&IE_LVL) SETB 0          RESET ELSE FLAG
+.*
+.* BUILD IOP LIST WITH BACKWARD REF UPDATE AND THEN GEN CODE
+.*
          ACALL IOP_BUILD
 .*  ACALL LIST_IOPS   DSHX DEBUG
          ACALL IOP_GEN_CODE
@@ -77,8 +82,8 @@
          :&PARM_IX SETA  0        GET PARM INDEX
          :&PREV_PARM SETC ''      PREV PARM
          :&PARM SETC ''           CUR  PARM
-         :&SKIP_SUBSC SETB 0      SKIP SUBSCRIPTS IN CD'S
-         ACALL  GET_PARM          GET NEXT PARM OR ''
+         :&SKIP_SIX_OR_LIT SETB 0  SKIP SUBSCRIPTS IN CD'S
+         ACALL  GET_PARM           GET NEXT PARM OR ''
          AWHILE ('&PARM' NE '')
                AIF ('&PARM' EQ '''(''')
                    AIF ('&PREV_PARM' EQ 'DFHRESP'                      X
@@ -137,7 +142,9 @@
                    AEND
                    :&IOP SETA 2
                    ACALL PUSH_OP
-               AELSEIF  ('&PARM' EQ 'OR') FLUSH PRIOR NOT/AND/OR
+               AELSEIF  ('&PARM' EQ 'OR'                               X
+                         AND '&SYSLIST(&PARM_IX+1)'(1,1) NE ''''       X
+                         AND '&SYSLIST(&PARM_IX+1)'(1,1) LT '0')
                    :&LAST_STK_OP_TOT SETA &STK_OP_TOT+1
                    AWHILE (&STK_OP_TOT LT &LAST_STK_OP_TOT             X
                            AND &STK_OP_TOT GT 0) 
@@ -161,11 +168,11 @@
                         ACALL PUSH_CD    PUSH 1ST CD PARM PTR ON CD_STK
                    AEND
                    :&CD_PARM_TOT SETA &CD_PARM_TOT+1 SKIP CD NAME/QUAL
-                   :&SKIP_SUBSC SETB 1
+                   :&SKIP_SIX_OR_LIT SETB 1
                AEND
                ACALL GET_PARM
-               AIF  (&SKIP_SUBSC) SKIP SUBSCRIPTS IN CD'S
-                    :&SKIP_SUBSC SETB 0
+               AIF  (&SKIP_SIX_OR_LIT) SKIP SUBSCRIPTS IN CD'S
+                    :&SKIP_SIX_OR_LIT SETB 0
                     AWHILE ('&PARM' EQ '''(''') SKIP SIX AND RMOD 
                         ACALL GET_PARM
                         AWHILE ('&PARM' NE '' AND '&PARM' NE ''')''')
@@ -174,6 +181,15 @@
                         AIF ('&PARM' NE '')
                             ACALL GET_PARM
                         AEND
+                    AEND
+.*
+.*                  SKIP 'OR','LIT' CONTINUATION OF COND RPI 1020
+.*
+                    AWHILE ('&PARM' EQ 'OR'                            X
+                           AND ('&SYSLIST(&PARM_IX+1)'(1,1) EQ ''''    X
+                                OR '&SYSLIST(&PARM_IX+1)'(1,1) GE '0'))
+                           :&PARM_IX SETA &PARM_IX+1
+                           ACALL GET_PARM
                     AEND
                AEND 
          AEND
@@ -211,6 +227,10 @@
                      ACALL IOP_GEN_CD
                      GEN_BC   15-&CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IEX
                _LVL)
+                     AIF   (&MULT_OR)
+                         :&MULT_OR SETB 0
+                         GEN_LABEL IF_&IE_TCNT(&IE_LVL)_OR_&MULT_OR_LAB
+                     AEND
                      AIF   (&V88_MULT)
                            :&V88_MULT SETB 0
                            GEN_LABEL IF_&IE_TCNT(&IE_LVL)_IOP_&IOP_LAB
@@ -238,6 +258,10 @@
                    MNOTE 8,'IF IOP INVALID OPCODE &IOP_OP(&I)'
                AEND
                :&I SETA &I+1
+         AEND
+         AIF   (&MULT_OR)
+             :&MULT_OR SETB 0
+             GEN_LABEL IF_&IE_TCNT(&IE_LVL)_OR_&MULT_OR_LAB
          AEND
          AIF   (&V88_MULT)
                :&V88_MULT SETB 0
@@ -478,137 +502,142 @@
 .*  CD_PARM_IX - STARTING PARM INDEX
 .*  CCT        - SET CONDITION CODE TEST TRUE (EQ,NE,LT,GT,LE,GE)
 .*  Notes:
-.*   1.  If lit found, gen using LAST_CD_IOP_IX with override for lit
+.*   1.  IF OR LIT FOUND, GEN MULT CONT TESTS                        
 .*
          AENTRY IOP_GEN_CD
          :&CD_PARM_IX SETA &CD_PARM_IX-1
          :&TESTCLS SETB 0   ASSUME NOT A CLASS TEST
          :&FIELD_SS1 SETB 1
          ACALL  GET_CD_PARM
-         AIF   ('&PARM'(1,1) EQ '''')  ASSUME LIT WITH NO SUB/VERB 
-               :&ALT_FIELD2_IX SETA &CD_PARM_IX   
-               :&REP_CD SETB 1         REP PRIOR CD FIELD1 OP ALT-FLD2
-               :&CD_PARM_IX SETA &IOP_CD1(&I)-1 REP SUBJECT/VERB
-               :&CD_PREV_PARM SETC ''
-               :&FIELD_SS1 SETB 1
-               ACALL GET_CD_PARM       GET FIELD1 PARM FROM PRIOR CD
-         AEND
          AIF   (&FIELD_88_IX GT 0)
                ACALL IOP_GEN_88
                AEXIT AENTRY
          AEND
-         AWHILE ('&PARM' NE '')
-               :&FIELD1    SETC  '&PARM'
-               :&FIELD1_IX SETA &FIELD_IX
-               AIF (&FIELD_IX EQ 0)              RPI 1012
-                   MNOTE 8,'IF FIELD NOT FOUND - &FIELD1'
+         :&FIELD1    SETC  '&PARM'
+         :&FIELD1_IX SETA &FIELD_IX
+         AIF (&FIELD_IX EQ 0)              RPI 1012
+             MNOTE 8,'IF FIELD NOT FOUND - &FIELD1'
+             MEXIT
+         AEND
+         :&FIELD_SS1 SETB 0
+         ACALL GET_CD_PARM
+         AIF ('&PARM' EQ 'IS')
+             ACALL GET_CD_PARM
+         AEND
+         AIF   ('&PARM' EQ 'NOT')
+               ACALL GET_CD_PARM
+               AIF   ('&PARM' EQ '='                                   X
+                      OR '&PARM' EQ 'EQUAL'                            X            
+                      OR '&PARM' EQ 'EQUALS')            
+                   :&CCT    SETC 'NE'
+               AELSEIF ('&PARM' EQ '<'                                 X
+                        OR '&PARM' EQ 'LESS')
+                   :&CCT    SETC 'GE'
+               AELSEIF   ('&PARM' EQ '>'                               X
+                          OR '&PARM' EQ 'GREATER')
+                   :&CCT    SETC 'LE'
+               AELSEIF   ('&PARM' EQ 'SPACES'                          X
+                          OR '&PARM' EQ 'SPACE'                        X
+                          OR '&PARM' EQ 'ZERO'                         X
+                          OR '&PARM' EQ 'ZEROS'                        X
+                          OR '&PARM' EQ 'ZEROES'                       X
+                          OR '&PARM' EQ 'LOW-VALUES'                   X
+                          OR '&PARM' EQ 'LOW-VALUE'                    X
+                          OR '&PARM' EQ 'HIGH-VALUES'                  X
+                          OR '&PARM' EQ 'HIGH-VALUE'                   X
+                          OR '&PARM' EQ 'NUMERIC'                      X
+                          OR '&PARM' EQ 'ALPHABETIC'                   X
+                          OR '&PARM' EQ 'ALPHANUMERIC')           
+                   :&TESTCLS SETB 1
+                   :&CCT    SETC 'NE'
+               AELSE
+                   MNOTE 8,'IF OPERAND UNKNOWN - &PARM'
                    MEXIT
                AEND
-               :&FIELD_SS1 SETB 0
-               ACALL GET_CD_PARM
-               AIF ('&PARM' EQ 'IS')
-                   ACALL GET_CD_PARM
-               AEND
-               AIF   ('&PARM' EQ 'NOT')
-                     ACALL GET_CD_PARM
-                     AIF   ('&PARM' EQ '='                             X
-                            OR '&PARM' EQ 'EQUAL'                      X            
-                            OR '&PARM' EQ 'EQUALS')            
-                         :&CCT    SETC 'NE'
-                     AELSEIF ('&PARM' EQ '<'                           X
-                              OR '&PARM' EQ 'LESS')
-                         :&CCT    SETC 'GE'
-                     AELSEIF   ('&PARM' EQ '>'                         X
-                                OR '&PARM' EQ 'GREATER')
-                         :&CCT    SETC 'LE'
-                     AELSEIF   ('&PARM' EQ 'SPACES'                    X
-                                OR '&PARM' EQ 'SPACE'                  X
-                                OR '&PARM' EQ 'ZERO'                   X
-                                OR '&PARM' EQ 'ZEROS'                  X
-                                OR '&PARM' EQ 'ZEROES'                 X
-                                OR '&PARM' EQ 'LOW-VALUES'             X
-                                OR '&PARM' EQ 'LOW-VALUE'              X
-                                OR '&PARM' EQ 'HIGH-VALUES'            X
-                                OR '&PARM' EQ 'HIGH-VALUE'             X
-                                OR '&PARM' EQ 'NUMERIC'                X
-                                OR '&PARM' EQ 'ALPHABETIC'             X
-                                OR '&PARM' EQ 'ALPHANUMERIC')           
-                         :&TESTCLS SETB 1
-                         :&CCT    SETC 'NE'
-                     AELSE
-                         MNOTE 8,'IF OPERAND UNKNOWN - &PARM'
-                         MEXIT
-                     AEND
+         AELSE
+               AIF   ('&PARM' EQ '='                                   X
+                      OR '&PARM' EQ 'EQUAL'                            X            
+                      OR '&PARM' EQ 'EQUALS')       
+                     :&CCT    SETC 'EQ'
+               AELSEIF   ('&PARM' EQ '<'                               X       
+                          OR '&PARM' EQ 'LESS')       
+                     :&CCT    SETC 'L'              
+               AELSEIF   ('&PARM' EQ '>'                               X       
+                          OR '&PARM' EQ 'GREATER')        
+                     :&CCT    SETC 'H'
+               AELSEIF   ('&PARM' EQ 'SPACES'                          X
+                          OR '&PARM' EQ 'SPACE'                        X
+                          OR '&PARM' EQ 'ZERO'                         X
+                          OR '&PARM' EQ 'ZEROS'                        X
+                          OR '&PARM' EQ 'ZEROES'                       X
+                          OR '&PARM' EQ 'LOW-VALUES'                   X
+                          OR '&PARM' EQ 'LOW-VALUE'                    X
+                          OR '&PARM' EQ 'HIGH-VALUES'                  X
+                          OR '&PARM' EQ 'HIGH-VALUE'                   X
+                          OR '&PARM' EQ 'NUMERIC'                      X
+                          OR '&PARM' EQ 'ALPHABETIC'                   X
+                          OR '&PARM' EQ 'ALPHANUMERIC')           
+                   :&TESTCLS SETB 1
+                   :&CCT    SETC 'EQ'
                AELSE
-                     AIF   ('&PARM' EQ '='                             X
-                            OR '&PARM' EQ 'EQUAL'                      X            
-                            OR '&PARM' EQ 'EQUALS')       
-                           :&CCT    SETC 'EQ'
-                     AELSEIF   ('&PARM' EQ '<'                         X       
-                                OR '&PARM' EQ 'LESS')       
-                           :&CCT    SETC 'L'              
-                     AELSEIF   ('&PARM' EQ '>'                         X       
-                                OR '&PARM' EQ 'GREATER')        
-                           :&CCT    SETC 'H'
-                     AELSEIF   ('&PARM' EQ 'SPACES'                    X
-                                OR '&PARM' EQ 'SPACE'                  X
-                                OR '&PARM' EQ 'ZERO'                   X
-                                OR '&PARM' EQ 'ZEROS'                  X
-                                OR '&PARM' EQ 'ZEROES'                 X
-                                OR '&PARM' EQ 'LOW-VALUES'             X
-                                OR '&PARM' EQ 'LOW-VALUE'              X
-                                OR '&PARM' EQ 'HIGH-VALUES'            X
-                                OR '&PARM' EQ 'HIGH-VALUE'             X
-                                OR '&PARM' EQ 'NUMERIC'                X
-                                OR '&PARM' EQ 'ALPHABETIC'             X
-                                OR '&PARM' EQ 'ALPHANUMERIC')           
-                         :&TESTCLS SETB 1
-                         :&CCT    SETC 'EQ'
-                     AELSE
-                         MNOTE 8,'IF OPERAND UNKNOWN - &PARM'
-                         MEXIT
-                     AEND
+                   MNOTE 8,'IF OPERAND UNKNOWN - &PARM'
+                   MEXIT
                AEND
-               :&FIELD_SS1 SETB 0
-               AIF  (&REP_CD)
-                    :&REP_CD SETB 0
-                    :&PARM_IX    SETA &ALT_FIELD2_IX-1
-                    :&CD_PARM_IX SETA &PARM_IX    
-                    AIF (&TESTCLS)
-                        MNOTE 8,'IF CANNOT REP CLASS CONDITION TEST'
-                        MEXIT
-                    AEND
-               AEND
-               AIF  (NOT &TESTCLS)
-                    ACALL GET_CD_PARM
-               AEND
-               AIF  ('&PARM' EQ 'THAN')
-                    ACALL GET_CD_PARM 
-               AEND        
-               AIF  ('&PARM' EQ 'TO')
-                    ACALL GET_CD_PARM
-               AEND
-               :&FIELD2  SETC '&PARM'
-               :&FIELD2_IX SETA &FIELD_IX
-               AIF  (&FIELD2_IX GT 0)
-                    AIF  (&SYM_LVL(&FIELD2_IX) EQ 88)
-                         GEN_COMP &SYM_NAME(&SYM_REF(&FIELD2_IX)),&FIELX
-               D2_IX,&SYM_VAL(&FIELD2_IX),0
-                    AELSE
-                         GEN_COMP &FIELD1,&FIELD1_IX,&FIELD2,&FIELD2_IX
-                    AEND
-               AELSE
-                   AIF ('&PARM' EQ 'DFHRESP')
-                       ACALL GET_DFHRESP_VALUE
-                       GEN_COMP &FIELD1,&FIELD1_IX,&PARM,0
-                   AELSEIF ('&PARM' EQ 'DFHVALUE')
-                       ACALL GET_DFHVALUE_VALUE
-                       GEN_COMP &FIELD1,&FIELD1_IX,&PARM,0
-                   AELSE
-                       GEN_COMP &FIELD1,&FIELD1_IX,&FIELD2,&FIELD2_IX
-                   AEND
-               AEND
-               ACALL GET_CD_PARM
+         AEND
+         :&FIELD_SS1 SETB 0
+         AIF  (NOT &TESTCLS)
+              ACALL GET_CD_PARM
+         AEND
+         AIF  ('&PARM' EQ 'THAN')
+              ACALL GET_CD_PARM 
+         AEND        
+         AIF  ('&PARM' EQ 'TO')
+              ACALL GET_CD_PARM
+         AEND
+         :&FIELD2  SETC '&PARM'
+         :&FIELD2_IX SETA &FIELD_IX
+         AIF  (&FIELD2_IX GT 0)
+              AIF  (&SYM_LVL(&FIELD2_IX) EQ 88)
+                   GEN_COMP &SYM_NAME(&SYM_REF(&FIELD2_IX)),&FIELD2_IX,X
+               &SYM_VAL(&FIELD2_IX),0
+              AELSE
+                   GEN_COMP &FIELD1,&FIELD1_IX,&FIELD2,&FIELD2_IX
+              AEND
+         AELSE
+             ACALL GEN_CD_COMP_LIT
+         AEND
+         ACALL GET_CD_PARM
+.*
+.* GEN MULT OR LIT COND TESTS IF ANY
+.*
+         :&MULT_OR SETB 0        ASSUME NO MULT OR'S
+         AWHILE ('&PARM' EQ 'OR'                                       X
+                 AND ('&SYSLIST(&CD_PARM_IX+1)'(1,1) EQ ''''           X
+                     OR '&SYSLIST(&CD_PARM_IX+1)'(1,1) GE '0'))   
+             AIF (NOT &MULT_OR)
+                 :&MULT_OR SETB 1
+                 :&MULT_OR_LAB SETA &MULT_OR_LAB+1
+             AEND
+             GEN_BC  &CCT,IF_&IE_TCNT(&IE_LVL)_OR_&MULT_OR_LAB
+             ACALL GET_CD_PARM
+             :&FIELD2  SETC '&PARM'
+             :&FIELD2_IX SETA &FIELD_IX
+             ACALL GEN_CD_COMP_LIT
+             ACALL GET_CD_PARM
+         AEND
+         AEND
+.*
+.* GEN COMP LIT
+.*
+         AENTRY GEN_CD_COMP_LIT
+         AIF ('&PARM' EQ 'DFHRESP')
+             ACALL GET_DFHRESP_VALUE
+             GEN_COMP &FIELD1,&FIELD1_IX,&PARM,0
+         AELSEIF ('&PARM' EQ 'DFHVALUE')
+             ACALL GET_DFHVALUE_VALUE
+             GEN_COMP &FIELD1,&FIELD1_IX,&PARM,0
+         AELSE
+             GEN_COMP &FIELD1,&FIELD1_IX,&FIELD2,&FIELD2_IX
          AEND
          AEND
 .*
@@ -777,7 +806,9 @@
                AIF ('&PARM' EQ '''('''                                 X
                     OR '&PARM' EQ ''')'''                              X
                     OR '&PARM' EQ 'AND'                                X
-                    OR '&PARM' EQ 'OR')
+                    OR ('&PARM' EQ 'OR'                                X 
+                       AND '&SYSLIST(&CD_PARM_IX+1)'(1,1) NE ''''      X
+                       AND '&SYSLIST(&CD_PARM_IX+1)'(1,1) LT '0'))      
                    :&PARM SETC ''
                AELSEIF ('&PARM' EQ '+' OR '&PARM' EQ '-')
                    :&PARM SETC '&PARM&SYSLIST(&CD_PARM_IX+1)'

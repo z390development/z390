@@ -8,8 +8,9 @@
 .*********************************************************************
 .* 03/12/07 RPI 558 convert z390 macros to VSE macros        
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 04/22/09 RPI 1022 use ZCLOSE to support register notation 
 .*********************************************************************
-&N       CLOSE &DTFLIST    (DTF1,DFT2,,,,DFTN)                          
+&N       CLOSE ,   DTF1,DFT2,,,,DFTN                          
          AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
@@ -20,14 +21,15 @@
 .* OPEN 1 OR MORE FILES DEFINED BY DTF?? MACROS                      
 .*
 &NP      SETA  N'&SYSLIST
-&I       SETA  0
+&I       SETA  1
+&DCBLIST SETC  '(&SYSLIST(1)'
 .LOOP    ANOP
 &I       SETA   &I+1         
-         AIF   (&I GT &NP).EXIT
-         LA    1,&SYSLIST(&I)
-.SVC     ANOP
-         SVC   20 CLOSE R1=DCB
+         AIF   (&I GT &NP).ZCLOSE
+&DCBLIST SETC  '&DCBLIST,,&SYSLIST(&I)'
          AGO   .LOOP
-.EXIT    ANOP
+.ZCLOSE  ANOP
+&DCBLIST SETC  '&DCBLIST,)'
+         ZCLOSE &DCBLIST
          MEXIT
          MEND

@@ -5,6 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 03/11/07                                                 *
 *********************************************************************
+* 04/22/09 RPI 1022 ADD OPEN/CLOSE REGISTER FORM TEST
+*********************************************************************
 * YOU CAN ASSEMBLE, LINK, AND EXECUTE THIS DEMO
 * USING Z390 GUI INTERFACE BY ENTERING DEMO IN COMMAND BOX
 * OR BY EXECUTING DEMO FROM WINDOWS COMMAND LINE 
@@ -23,16 +25,17 @@
          TITLE 'DEMOVSE3 VSE COPY DISK FILE TO PRINT FILE'
 DEMOVSE2 SUBENTRY
          WTO   'DEMOVSE3 VSE COPY FILE SYSDSK TO SYSLST'
-         OPEN   SYSUT1,SYSUT2
+         LA     2,SYSUT2
+         OPEN   SYSUT1,(2)
          LTR    15,15
          BNZ    ABORT
 LOOP     EQU    *
          GET    SYSUT1,RECORD
          LTR    15,15
          BNZ    ABORT
-         PUT    SYSUT2,RECORD
+         PUT    (2),RECORD
          B      LOOP
-EOF      CLOSE  SYSUT1,SYSUT2
+EOF      CLOSE  SYSUT1,(2)
          WTO    'DEMOVSE3 ENDED OK'
          SUBEXIT
 RECORD   DC     CL80' '

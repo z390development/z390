@@ -72,6 +72,7 @@
 *          ASI, ALSI, AGSI, ALGSI
 * 07/23/08 RPI 879 test SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
 *          FOR CC3 NZ,NB WHEN BOTH SIGNS MEG AND S1 > S2 
+* 04/20/09 RPI 1026 ADD TEST FOR ESTA, EREG, EREGG
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -115,6 +116,10 @@ FPCREG   DS    F        BFP CONTROL REG WITH MASKS AND DXC CODE
 FPCDXC   EQU   FPCREG+2 REASON CODES FOR 0C7 DATA EXCEPTIONS
 SVC35    DC    AL2(SVC35END-*,0),C'TEST SVC 35 OK'
 SVC35END EQU   *
+ESTACC   DC    X'00'
+ESTAPSW  DC    2F'0'
+EREGSAVE DC    XL8'00'
+EREGGSAV DC    XL16'00'
 KEY      DC    C'EFE'
 PAD      DC    C' '
 STRING1  DC    C'CABCBFDEFEAB'
@@ -162,9 +167,11 @@ TRTTF2   DC    X'0100010101020103'  EOD IN 3RD ENTRY
 * 0101 PR
          LA    0,1
          LA    1,1
+         LMG   2,3,=A(111,222,333,444)
          LA    14,1
          LA    15,1
          PC    PR1
+PCRET1   EQU   *
          CHI   0,2
          RT1   CCE
          CHI   1,1
@@ -179,6 +186,20 @@ PR1      EQU   *
          BALR  2,0
          USING *,2
          WTO   'PR1 SUB CALLED'
+         LA    2,2  REQUEST PSW                    RPI 1026
+         ESTA  0,2  EXTRACT RETURN PSW INTO R0-R1  RPI 1026
+         MVI   ESTACC,0
+         JZ    *+8
+         MVI   ESTACC,1
+         STM   0,1,ESTAPSW
+         SGR   2,2
+         SGR   3,3
+         EREG  2,3
+         STM   2,3,EREGSAVE
+         SGR   2,2
+         SGR   3,3
+         EREGG 2,3
+         STMG  2,3,EREGGSAV
          LA    0,2
          LA    1,2
          LA    14,2
@@ -186,6 +207,14 @@ PR1      EQU   *
          PR
          DROP  2
 PR2      EQU   *
+         CLI   ESTACC,1 PC TYPE
+         RT1   CCE
+         CLC   ESTAPSW,=AL8(PCRET1)
+         RT1   CCE           RPI 1026
+         CLC   EREGSAVE,=A(222,444)
+         RT1   CCE
+         CLC   EREGGSAV,=A(111,222,333,444)
+         RT1   CCE
 * 010C SAM24
          SAM24
          L     1,=A(X'FFFFFF')
@@ -1907,14 +1936,32 @@ PC2      EQU   *
          CLM   0,8,=B'00101111' 00CCFPES CC=10 MASK=1111 FX,PD,EX,SG
          RT1   CCE
 * B240 BAKR
+         LA    R0,1
          LA    R1,BAKR2
          LA    R2,BAKR1
          BAKR  R1,R2
          RT1   ABORT
 BAKR1    WTO   'BAKR1 SUB CALLED'
+         LA    2,2  REQUEST PSW                    RPI 1026
+         ESTA  0,2  EXTRACT RETURN PSW INTO R0-R1  RPI 1026
+         MVI   ESTACC,0
+         JZ    *+8
+         MVI   ESTACC,1
+         STM   0,1,ESTAPSW
          PR
 BAKR2    EQU   *
+         CLI   ESTACC,0 BAKR TYPE
+         RT1   CCE
+         CLC   ESTAPSW,=AL8(BAKR2)
+         RT1   CCE           RPI 1026
          BAKR  0,R2
+BAKR3    EQU   *
+         CLI   ESTACC,0 BAKR TYPE
+         RT1   CCE
+         CLC   ESTAPSW,=AL8(BALR3)
+         RT1   CCE           RPI 1026
+* B249 EREG    R1,R2 RESTORE 32 BIT REGISTERS SEE PC/BAKR
+* B24A ESTA    R1,R1 (SEE PC AND BAKR TESTS WITH ESTA,EREG,EREGG
 * B252 MSR
          L     R0,=F'2'
          L     R2,=F'3'    
@@ -2228,6 +2275,7 @@ SGR2     ESTAE 0
          RT1   CCE
          CLG   R1,=FL8'3'
          RT1   CCE
+* B90E EREGG   R1,R2 RESTORE 64 BIT REGISTERS SEE PC/BAKR
 * B91F LRVGR
          LG    R1,=X'0123456789ABCDEF'
          LRVGR R0,R1

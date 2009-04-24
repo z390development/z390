@@ -65,6 +65,7 @@ public class vz390 {
 	 * 02/10/08 RPI 806 add balance KSIT using AVT method and add statistics/tracev
 	 * 09/12/08 RPI 764 change oflgs_pm to oflgs_w
 	 * 04/06/09 RPI 1016 prevent error on generic POINT to 1 record KSDS file
+	 * 04/23/09 RPI 1024 prevent null field trap by JM
 	 **************************************************************************
 	 *  Global variables                  (last RPI)
 	 **************************************************************************/
@@ -2137,16 +2138,18 @@ public class vz390 {
 		} else if ((cur_rpl_opt & rpl_opt_seq) != 0) {
 			cur_ves_xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
 			cur_vx0_xrba = sz390.tiot_eof_rba[cur_vx0_tiot_index];
-			if (cur_vx0_xrba > 0
+			if (last_key != null){ // RPI 1024 by JM
+				if (cur_vx0_xrba > 0
 					&& comp_key(cur_rpl_area + cur_vclr_koff, last_key) <= 0) {
-				if (comp_rc == 0) {
-					// ksds dup primary key
-					set_feedback(pdf_def, rc_log, cmp_ves, rn_dup_key);
-				} else {
-					// ksds out of seq primary key
-					set_feedback(pdf_def, rc_log, cmp_ves, rn_out_of_seq);
+					if (comp_rc == 0) {
+						// ksds dup primary key
+						set_feedback(pdf_def, rc_log, cmp_ves, rn_dup_key);
+					} else {
+						// ksds out of seq primary key
+						set_feedback(pdf_def, rc_log, cmp_ves, rn_out_of_seq);
+					}
+					return;
 				}
-				return;
 			}
 			if (last_key == null || last_key.length < cur_vclr_klen) {
 				last_key = new byte[cur_vclr_klen];

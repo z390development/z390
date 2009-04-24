@@ -6,6 +6,7 @@
 * Date   - 09/29/07                                                 *
 *********************************************************************
 * 09/29/07 RPI 706 TEST BAD RBA/XRBA FOR POINT ON FIXED ESDS          
+* 04/23/09 RPI 1025 CLEAR RPL OPTIONS FOR REUSE             
 *********************************************************************
 ESF1ERR1 RT1   MAIN 
 RBA      DC    XL4'00'
@@ -45,6 +46,7 @@ XRBA     DC    XL8'00'
 *
 * REPEAT TESTS WITH RBA VS XRBA            
 *
+         MVHHI RPLOPT1-IHARPL(R3),0 CLEAN OPT1+2   RPI 1025
          MODCB RPL=(R3),ARG=RBA,OPTCD=(ADR)
          LTR   R15,R15
          RT1   CC0
