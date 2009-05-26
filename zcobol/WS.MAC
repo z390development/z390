@@ -25,6 +25,7 @@
 .* 03/06/09 RPI 1004 add HFP/BFP/DFP/FLOAT-SHORT/LONG/EXTENDED        
 .* 03/11/09 RPI 1004 add COMP PIC S9(39) type Q 16 byte 128 bit int
 .* 03/20/09 RPI 1004 rename explicit 1-9 FLOAT-HEX/BINARY/DECIMAL-N
+.* 04/29/09 RPI 1032 issue error if PIC clause has quote or no 9ZX      
 .*********************************************************************
 .*
 .* WS level,name,clauses in any order (PIC,VALUE,USAGE supported)
@@ -184,11 +185,9 @@
                :&SYM_NAME(&SYM_TOT) SETC '&NEW_SYM'
                :&QIX SETA &SYM_QIX(&SYM_TOT)
          AEND
-         :&SYM_QIX(&SYM_TOT) SETA &QIX SET QUALFIER IX OR 0     DSHX
+         :&SYM_QIX(&SYM_TOT) SETA &QIX SET QUALFIER IX OR 0     
          AIF  ('&NEW_SYM' NE 'FILLER')
               ZC_SYM_INDEX &NEW_SYM,&QIX   ADD QUALIFIED NAME
-.*DSHX   AELSE
-.*DSHX        :&SYM_IX SETA 0   ASSUME UNIQUE QUAL FOR FILLER
          AEND
          AIF   (&SYM_DUP(&SYM_TOT) GT 1)
                :&SYM_SIT(&SYM_TOT) SETA 1
@@ -389,38 +388,8 @@
                     AIF   ('&SYSLIST(&I)' EQ 'IS')
                           :&I       SETA  &I+1
                     AEND
-                    :&PIC     SETC '&SYSLIST(&I)'
-                    AIF  ('&PIC'(1,1) EQ '''')
-                         :&PIC SETC '&PIC'(2,K'&PIC-2) 
-                    AEND
-                    :&PIC_LEN SETA 0
-                    :&J       SETA 1
-                    AWHILE (&J LE K'&PIC)
-                           AIF ('&PIC'(&J,1) EQ 'V')
-                               :&SYM_PIC_DEC(&J) SETA K'&PIC-&J
-                           AELSEIF ('&PIC'(&J,2) EQ 'X('               X
-                                    OR '&PIC'(&J,2) EQ '9('            X
-                                    OR '&PIC'(&J,2) EQ 'Z(')           
-                               :&PIC_DUP SETA '&PIC'(&J+2,1)
-                               :&J SETA &J+3
-                               AWHILE (&J LT K'&PIC                    X
-                                       AND '&PIC'(&J,1) NE ')')
-                                   :&DIGIT   SETA '&PIC'(&J,1)
-                                   :&PIC_DUP SETA &PIC_DUP*10+&DIGIT
-                                   :&J SETA &J+1
-                               AEND
-                               :&PIC_LEN SETA &PIC_LEN+&PIC_DUP
-                           AELSE
-                               :&PIC_LEN SETA &PIC_LEN+1
-                           AEND
-                           :&J SETA &J+1
-                    AEND
-                    AIF  ('&PIC'(1,1) EQ 'S')
-                         :&PIC_SIGN SETB 1
-                         :&PIC_LEN SETA &PIC_LEN-1
-                         :&PIC     SETC  '&PIC'(2,*)
-                    AEND
-                    :&I       SETA  &I+1
+                    ACALL SET_PIC_AND_LEN
+                    :&I  SETA  &I+1
                AELSEIF   ('&SYSLIST(&I)' EQ 'VALUE')          
                     AIF  (&I EQ 2)                
                          :&NEW_SYM SETC 'FILLER'            
@@ -577,6 +546,47 @@
          AEND
          AEND
 .*
+.* SET PIC AND DEFAULT PIC_LEN
+.*
+.*  1.  IF LEADING S SET PIC_SIGN AND REMOVE S
+.*  2.  DO NOT ALLOW QUOTE IN PIC CLAUSE
+.*
+         AENTRY  SET_PIC_AND_LEN
+         :&PIC     SETC '&SYSLIST(&I)'
+         :&PIC_LEN SETA 0
+         AIF  ('&PIC'(1,1) EQ '''')
+              :&PIC SETC '&PIC'(2,K'&PIC-2) 
+         AEND
+         AIF  ('&PIC'(1,1) EQ 'S')
+              :&PIC_SIGN SETB 1
+              :&PIC     SETC  '&PIC'(2,*)
+         AEND
+         :&J       SETA 1
+         AWHILE (&J LE K'&PIC)
+                AIF ('&PIC'(&J,1) EQ 'V')
+                    :&SYM_PIC_DEC(&J) SETA K'&PIC-&J
+                AELSEIF ('&PIC'(&J,2) EQ 'X('                          X
+                         OR '&PIC'(&J,2) EQ '9('                       X
+                         OR '&PIC'(&J,2) EQ 'Z(')           
+                    :&PIC_DUP SETA '&PIC'(&J+2,1)
+                    :&J SETA &J+3
+                    AWHILE (&J LT K'&PIC                               X
+                            AND '&PIC'(&J,1) NE ')')
+                        :&DIGIT   SETA '&PIC'(&J,1)
+                        :&PIC_DUP SETA &PIC_DUP*10+&DIGIT
+                        :&J SETA &J+1
+                    AEND
+                    :&PIC_LEN SETA &PIC_LEN+&PIC_DUP
+                AELSEIF ('&PIC'(&J,1) EQ '''')  RPI 1032
+                    MNOTE 8,'WS UNKNOWN PIC CLAUSE &PIC'
+                    AEXIT AWHILE
+                AELSE
+                    :&PIC_LEN SETA &PIC_LEN+1
+                AEND
+                :&J SETA &J+1
+         AEND
+         AEND
+.*
 .* PROCESS WS ITEM WITH ALL CLAUSE VALUES DEFINED
 .*
          AENTRY WS_PROC_CLAUSES
@@ -587,7 +597,7 @@
                   OR '&USAGE' EQ 'BINARY'                              X
                   OR '&USAGE' EQ 'COMP-4'                              X
                   OR '&USAGE' EQ 'COMP-5')                               
-               AIF  ('&PIC' NE '')          
+               AIF  ('&PIC' NE '')  
                     AIF  (&PIC_LEN LE 0) 
                          :&PIC_LEN SETA K'&PIC
                     AEND
@@ -626,34 +636,34 @@
          AELSEIF ('&USAGE' EQ 'FLOAT_HEX_15')      RPI 1004      
               :&PIC_LEN SETA 8
               :&PIC_TYPE SETC '2'
-         AELSEIF ('&USAGE' EQ 'FLOAT_HEX_30')  RPI 1004      
+         AELSEIF ('&USAGE' EQ 'FLOAT_HEX_30' AND &ZC_EXTEND) RPI 1004      
               :&PIC_LEN SETA 16
               :&PIC_TYPE SETC '3'
-         AELSEIF ('&USAGE' EQ 'FLOAT_BINARY_7')     RPI 1004      
+         AELSEIF ('&USAGE' EQ 'FLOAT_BINARY_7' AND &ZC_EXTEND) RPI 1004      
               :&PIC_LEN SETA 4
               :&PIC_TYPE SETC '4'
-         AELSEIF ('&USAGE' EQ 'FLOAT_BINARY_16')      RPI 1004      
+         AELSEIF ('&USAGE' EQ 'FLOAT_BINARY_16' AND &ZC_EXTEND) RPI1004      
               :&PIC_LEN SETA 8
               :&PIC_TYPE SETC '5'
-         AELSEIF ('&USAGE' EQ 'FLOAT_BINARY_34')  RPI 1004      
+         AELSEIF ('&USAGE' EQ 'FLOAT_BINARY_34' AND &ZC_EXTEND) RPI1004      
               :&PIC_LEN SETA 16
               :&PIC_TYPE SETC '6'
-         AELSEIF ('&USAGE' EQ 'FLOAT_DECIMAL_7')     RPI 1004      
+         AELSEIF ('&USAGE' EQ 'FLOAT_DECIMAL_7' AND &ZC_EXTEND) RPI1004      
               :&PIC_LEN SETA 4
               :&PIC_TYPE SETC '7'
-         AELSEIF ('&USAGE' EQ 'FLOAT_DECIMAL_16')      RPI 1004      
+         AELSEIF ('&USAGE' EQ 'FLOAT_DECIMAL_16' AND &ZC_EXTEND) RP1004      
               :&PIC_LEN SETA 8
               :&PIC_TYPE SETC '8'
-         AELSEIF ('&USAGE' EQ 'FLOAT_DECIMAL_34')  RPI 1004      
+         AELSEIF ('&USAGE' EQ 'FLOAT_DECIMAL_34' AND &ZC_EXTEND) RP1004      
               :&PIC_LEN SETA 16
               :&PIC_TYPE SETC '9'
-         AELSEIF ('&USAGE' EQ 'FLOAT_SHORT')     RPI 1004      
+         AELSEIF ('&USAGE' EQ 'FLOAT_SHORT' AND &ZC_EXTEND) RPI 1004      
               :&PIC_LEN SETA 4
               :&PIC_TYPE SETC '&ZC_FLOAT_SHORT_TYPE'
-         AELSEIF ('&USAGE' EQ 'FLOAT_LONG')      RPI 1004      
+         AELSEIF ('&USAGE' EQ 'FLOAT_LONG' AND &ZC_EXTEND)  RPI 1004      
               :&PIC_LEN SETA 8
               :&PIC_TYPE SETC '&ZC_FLOAT_LONG_TYPE'
-         AELSEIF ('&USAGE' EQ 'FLOAT_EXTENDED')  RPI 1004      
+         AELSEIF ('&USAGE' EQ 'FLOAT_EXTENDED' AND &ZC_EXTEND) RPI 1004      
               :&PIC_LEN SETA 16
               :&PIC_TYPE SETC '&ZC_FLOAT_EXTENDED_TYPE'
          AELSEIF ('&USAGE' EQ 'INDEX')           RPI 1002         

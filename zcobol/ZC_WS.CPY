@@ -18,6 +18,7 @@
 .* 02/25/09 RPI 1004 add &ZC_FLOAT SET TO DEFUALT DFP           
 .* 02/26/09 RPI 1012 add &SYM_VAL_ALL FLAG           
 .* 03/10/09 RPI 1013 add &ZC_FLOAT_SHORT/LONG/EXTENDED_TYPE
+.* 04/24/09 RPI 1003 add &TMP_NAME/TYPE/LEN/SIGN for ZC_CALC,GEN_???
 .*********************************************************************
 .*
 .* PGM NAME AND ZCOBOL VERSION CHECKED BY ZC390NUC IN ZC390LIB.390
@@ -216,6 +217,14 @@
          GBLC &SIX_NAME(10)  SUBSCRIPT/INDEX/LIT FROM FIELD(PARMS)
          GBLC &SIX_OFF(10)   SUBSCRIPT OFFSETS +/-NUM ELSE ''
          GBLA &SIX_OCCUR(10) OCCURS SYM_IX (TO GET LENGTH, ETC.)
+.*
+.* TMP variables for ZC_CALC, GEN_ADD, GEN_SUB, GEN_MPY, GEN_DIV
+.* wheb target index is negative (used to store and fetch temp values)
+.*
+         GBLC &TMP_NAME(100) - NAME -  ZCVT_WORKAREA+16*(IX-1)
+         GBLC &TMP_TYPE(100) - TYPE OF TEMP VALUE '1-9FGHPQ'
+         GBLA &TMP_LEN(100)  - LENGTH OF TEMP VALUE FOR P
+         GBLB &TMP_SIGN(100) - SIGNED OR UNSIGNED P OR Z FIELD
 .*
 .* END OF CBL_WS.CPY
 .*

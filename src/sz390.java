@@ -175,7 +175,8 @@ public  class  sz390 implements Runnable {
     * 10/24/08 RPI 935 prevent recursive abort  
     * 11/08/08 RPI 947 move get_ascii_printable_string to tz390 for use by MNOTE/TRACEP  
     * 12/05/08 RPI 966 check TIOT index limit (X'F6F6F6F6' bad DCB)    
-    * 04/22/09 RPI 1021 prevent SFFF on DCB addr with high VL bit on                          
+    * 04/22/09 RPI 1021 prevent SFFF on DCB addr with high VL bit on 
+    * 05/07/09 RPI 1036 backup PSW to instruction for trace and dump                         
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -2424,6 +2425,7 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 	if (pic == 0x0c1 || pz390.psw_loc < 0){
 		dump_loc = pz390.psw_loc;
 	}
+	pz390.psw_loc = dump_loc; // RPI 1036
 	String abend_code;
 	if (type){  // system or user requested abend
 		abend_code = "S" + tz390.get_hex(pic,3);

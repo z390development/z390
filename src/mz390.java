@@ -361,6 +361,8 @@ public  class  mz390 {
      * 02/10/09 RPI 995 set $PRIVATE sysloc and type based on az390_private_sect flag
      * 04/18/09 RPI 1018 print actual text for PUNCH statement on PRN
      * 04/20/09 RPI 1027 add SYSCDF for use by zCICS macros
+     * 05/19/09 RPI 1038 put error 11 continuation error on systerm during loading
+     * 05/25/09 RPI 1019 COPY &VAR and AINSERT ' COPY &VAR' support
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -468,6 +470,9 @@ public  class  mz390 {
 	int     next_time_check = next_time_ins;
 	String cur_mac_file_path = null;
 	int cur_mac_file = 0;
+	int dynamic_mac_file = -1;    // RPI 1019 
+	boolean ainsert_copy = false; // RPI 1019
+	boolean ainsert_back = true;  // RPI 1019
 	File[] mac_file                = null;
 	BufferedReader[] mac_file_buff = null;
 	int[]        mac_file_cur_file_num = null; 
@@ -1451,9 +1456,9 @@ public  class  mz390 {
 			 */
 			mac_abort = false;
 			tot_mac_ins++;
-			if  (cur_ainsert > 0 
-				&& mac_call_level == 0){
-				insert_source_line();
+			if  (mac_call_level == 0
+				&& cur_ainsert > 0){ 
+  				insert_source_line();
 			}
 			if  (mac_line_index == mac_name_line_end[mac_call_name_index[mac_call_level]]){ // RPI 956 
 				if  (tz390.opt_listcall){
@@ -1906,6 +1911,12 @@ public  class  mz390 {
 		if (tz390.opt_tracem){
 			tz390.put_trace("LOADING FILE " + load_file_name);
 		}
+		set_default_ictl();
+	}
+	private void set_default_ictl(){
+		/*
+		 * set default ICTL for macro/copy
+		 */
 		mac_ictl_start[cur_mac_file] =  1; // RPI 728
 		mac_ictl_end[cur_mac_file]   = 71; // RPI 728
 		mac_ictl_cont[cur_mac_file]  = 16; // RPI 728
@@ -2324,6 +2335,13 @@ public  class  mz390 {
 			}
 			return;
 		}
+		load_get_zstrmac_file_line();
+	}
+	private void load_get_zstrmac_file_line(){
+		/*
+		 * get next source line to load or insert
+		 * from nexted copy files
+		 */
 		if (tz390.opt_zstrmac){
 			if (zsm_line_index < zsm_line_tot){
 				mac_line = zsm_gen_line[zsm_line_index];
@@ -2366,7 +2384,7 @@ public  class  mz390 {
 						last_seq = cur_seq;
 					}
 				}
-				if (!mac_mend_eof){
+				if (!mac_mend_eof){ 
 					cur_mac_line_num++;
 					store_mac_line(); // RPI 273 update now for any cont. error
 				}
@@ -2380,7 +2398,9 @@ public  class  mz390 {
 							){
 							tz390.put_trace("COPY ENDING FID=" + cur_mac_file_num + " LVL=" + (cur_mac_file+2) + " " + mac_file[cur_mac_file+1].getName()); 
 						}
-						retry = true;
+						if (dynamic_mac_file == -1){ // RPI 1019 
+							retry = true;
+						}
 						cur_mac_file_num = mac_file_cur_file_num[cur_mac_file];
 						cur_mac_line_num = mac_file_cur_line_num[cur_mac_file];
 					}
@@ -2395,7 +2415,7 @@ public  class  mz390 {
 					}
 				}
 			}
-			if  (temp_line == null){
+			if  (temp_line == null){ 
 				mac_line = null;
 			} else if (temp_line.length() <= mac_ictl_end[cur_mac_file]   // RPI 437 RPI 728 no cont col
 					|| temp_line.charAt(mac_ictl_end[cur_mac_file]) <= asc_space_char // RPI 728 test cont col
@@ -2450,7 +2470,7 @@ public  class  mz390 {
 							       || temp_line.charAt(0) != '*')) { // RPI 740 allow comment char for continued comm
 						log_error(11,"continuation line < " + mac_ictl_cont[cur_mac_file] + " characters - " + temp_line);
 						mac_cont_line = false;
-						temp_line = tz390.trim_trailing_spaces(temp_line,72);
+						mac_line = mac_line + tz390.trim_trailing_spaces(temp_line,72); // RPI 1038
 					}
 				} 
 			}
@@ -2471,7 +2491,7 @@ public  class  mz390 {
 		 *     for use by log_error
 		 * 2.  update &SYSSTMT
 		 */  
-		if (skip_store){
+		if (skip_store || ainsert_copy){ // RPI 1019 
 			skip_store = false;
 			return;
 		}
@@ -3119,14 +3139,24 @@ public  class  mz390 {
 		 * open copy file specified in mac_parms
 		 * Notes:
 		 *   1.  Expand during MLC and macro loads
+		 *   2.  Insert using AINSERT during 
+		 *       execution after var substitution on name
 		 *   2.  Issue error on copy file not found
-		 *       if not loading MLC
+		 *       if not loading MLC/MAC
 		 */
 		String new_mac_name = null;
+		if (mac_parms.charAt(0) == '&'){
+			if (load_type > load_mac_file){
+				ainsert_copy = true;
+				mac_parms = replace_vars(mac_parms,true,false); // RPI 1019 
+			} else {
+				return; // ignore dynamic during loading
+			}
+		}
 		tz390.split_line(mac_parms); //RPI84
 		if (tz390.split_label == null)tz390.split_label = "";
-		if (load_type > load_mac_file){ // rpi 970 check if previously loaded ok
-			if (tz390.find_key_index('C',tz390.split_label) == -1){
+		if (load_type > load_mac_file && !ainsert_copy){ // rpi 970 check if previously loaded ok RPI 1019 
+			if (tz390.find_key_index('C',tz390.split_label) == -1){ // rpi ignore copy if loaded during exec
 				log_error(266,"missing copy = " + mac_parms);
 			}
 			return;
@@ -3137,16 +3167,14 @@ public  class  mz390 {
 			abort_error(100,"maximum nested copy files exceeded");
 			return;
 		}
-		mac_ictl_start[cur_mac_file] = 1;   // RPI 728
-		mac_ictl_end[cur_mac_file]   = 71;  // RPI 728
-		mac_ictl_cont[cur_mac_file]  = 16;  // RPI 728
+        set_default_ictl(); // RPI 1019 
 		new_mac_name = tz390.find_file_name(tz390.dir_cpy,tz390.split_label,tz390.cpy_type,tz390.dir_cur);
 		if (new_mac_name != null){ // RPI 970 add key if found
 			if (tz390.find_key_index('C',tz390.split_label) == -1){
 				if (!tz390.add_key_index(1)){ // RPI 970 indicate copy found
 					abort_error(267,"COPY caused hash table overflow");
 				}
-			}
+			}			
 		} else {
 			cur_mac_file--;
 			if (load_type != load_mlc_file){ // RPI 300 
@@ -3164,32 +3192,66 @@ public  class  mz390 {
 		case 1: // load_mac_file
 			store_mac_line();  // RPI 549
 			skip_store = true; // RPI 549
-			mac_file[cur_mac_file] = new File(new_mac_name);
-			try {
-				mac_file_buff[cur_mac_file] = new BufferedReader(new FileReader(mac_file[cur_mac_file]));
-				set_sys_dsn_mem_vol(mac_file[cur_mac_file].getCanonicalPath()); // RPI 259
-				gbl_setc[gbl_syslib_index] = sys_dsn;
-				gbl_setc[gbl_syslib_index+1] = sys_mem;
-				gbl_setc[gbl_syslib_index+2] = sys_vol;
-				mac_file_cur_file_num[cur_mac_file - 1] = cur_mac_file_num;  // RPI 549
-				set_mac_file_num();
-				mac_file_cur_line_num[cur_mac_file - 1] = cur_mac_line_num;
-				cur_mac_line_num = 0;
-				if (tz390.opt_tracem
-					&& tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace			
-				   ){
-					tz390.put_trace("LOADING COPY LVL=" + (cur_mac_file+1) + " " + new_mac_name);
-				}
-			} catch (Exception e){
-				cur_mac_file--;
-				abort_error(26,"I/O error opening file - " + e.toString());
-			}
+			open_load_file(new_mac_name);
 			break;
 		case 2: // load_mac_inline  RPI 970 was 3 in error
-		case 3: // load_mac_exec    RPI 970 was 4 in error
 			// already expanded during load so ignore and don't count twice
-			cur_mac_file--;
+			if (!ainsert_copy){ // RPI 1019
+				cur_mac_file--;
+			}
 			break;
+		case 3: // load_mac_exec    RPI 970 was 4 in error
+			if (!ainsert_copy){
+				// already expanded during load so ignore and don't count twice
+				cur_mac_file--;
+			} else {
+				// insert dynamic copy now
+				int save_mac_line_index = mac_line_index;
+				mac_line_index = mac_file_next_line[mac_line_index];
+				dynamic_mac_file = cur_mac_file;
+				cur_mac_file++; // rpi 1019 
+				open_load_file(new_mac_name);
+				set_default_ictl(); // RPI 1019 
+				load_get_zstrmac_file_line();
+				while (mac_line != null && cur_mac_file > dynamic_mac_file){
+                	set_insert_mac_line_index();
+                	mac_file_line[mac_line_index] = mac_line;
+                	ainsert_copy = false;
+                	store_mac_line();
+                	ainsert_copy = true;
+                	mac_line_index = mac_file_next_line[mac_line_index];
+                	load_get_zstrmac_file_line();
+		    	}				
+				mac_line_index = save_mac_line_index;
+		    	dynamic_mac_file = -1;
+		    	ainsert_copy = false;
+			}
+			break;	
+		}
+	}
+	private void open_load_file(String new_mac_name){
+		/*
+		 * open file for loading mac/copy file
+		 */
+		mac_file[cur_mac_file] = new File(new_mac_name);
+		try {
+			mac_file_buff[cur_mac_file] = new BufferedReader(new FileReader(mac_file[cur_mac_file]));
+			set_sys_dsn_mem_vol(mac_file[cur_mac_file].getCanonicalPath()); // RPI 259
+			gbl_setc[gbl_syslib_index] = sys_dsn;
+			gbl_setc[gbl_syslib_index+1] = sys_mem;
+			gbl_setc[gbl_syslib_index+2] = sys_vol;
+			mac_file_cur_file_num[cur_mac_file - 1] = cur_mac_file_num;  // RPI 549
+			set_mac_file_num();
+			mac_file_cur_line_num[cur_mac_file - 1] = cur_mac_line_num;
+			cur_mac_line_num = 0;
+			if (tz390.opt_tracem
+				&& tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace			
+			   ){
+				tz390.put_trace("LOADING COPY LVL=" + (cur_mac_file+1) + " " + new_mac_name);
+			}
+		} catch (Exception e){
+			cur_mac_file--;
+			abort_error(26,"I/O error opening file - " + e.toString());
 		}
 	}
 	private void put_bal_line(String text_line){
@@ -4071,7 +4133,6 @@ public  class  mz390 {
 			break;
 		case 224:  // COPY (copy to bal and issue error if not found) RPI 300
 			bal_op_ok = true;
-			bal_parms = replace_vars(bal_parms,true,false); // RPI 659
 			if (mac_call_level == 0){ // RPI 581
 				put_bal_line(bal_line);
 			}
@@ -8826,6 +8887,9 @@ public  class  mz390 {
                 }
 			}
 			put_bal_line("* " + error_msg); // RPI 945
+			if (error == 11){ // RPI 1038 continuation error during loading
+				tz390.put_systerm(error_msg); // RPI 1038
+			}
 		} else {
 			if (tz390.opt_traces){
 				System.out.println("MZ390E " + msg); // RPI 882
@@ -11811,44 +11875,66 @@ public  class  mz390 {
 				rec = rec.substring(1,rec.length()-1);
 				if (tz390.opt_asm && !tz390.opt_allow){ // RPI 968
 					rec = set_length_80(rec); 
-				}
+				}				
 				if (index >= text.length()
 					|| text.charAt(index) <= ' '){
 					// assume BACK and add to end of AINSERT queue
-					ainsert_queue.add(rec);
-				    cur_ainsert++;
-				    return;
+					ainsert_back = true;
+					add_ainsert_queue_rec(rec);
 				} else {					
 					if (text.substring(index,index+5).toUpperCase().equals(",BACK")){
-						ainsert_queue.add(rec);
-					    cur_ainsert++;
-					    return;
+						ainsert_back = true;
+						add_ainsert_queue_rec(rec);
 					} else if (text.substring(index,index+6).toUpperCase().equals(",FRONT")){
-						ainsert_queue.addFirst(rec);
-					    cur_ainsert++;
-					    return;
+						ainsert_back = false;
+						add_ainsert_queue_rec(rec);					    
 					}
 				}
+				check_ainsert_copy(rec); // RPI 1019
+				return;
 			}
 		}
 		log_error(268,"AINSERT syntax error - " + bal_parms);
 	}
+    private void check_ainsert_copy(String rec){ // RPI 1019
+    	/*
+    	 * Init COPY input stack if COPY found
+    	 * 1.  Find and open copy if found
+    	 * 2.  Turn on ainsert_copy to allow
+    	 *     copy to ainsert queue during mac exec.
+    	 *   
+    	 */
+    	ainsert_copy = true;
+    	mac_line = rec;
+    	dynamic_mac_file = cur_mac_file;
+    	parse_mac_line();
+    	while (cur_mac_file > dynamic_mac_file){
+			load_get_zstrmac_file_line();
+			if (mac_line != null){
+                add_ainsert_queue_rec(mac_line);
+			}
+    	}
+    	dynamic_mac_file = -1;
+    	ainsert_copy = false;
+    }
+    private void add_ainsert_queue_rec(String rec){
+    	/*
+    	 * add record to front or back of ainsert queue
+    	 */
+		if (ainsert_back){
+			ainsert_queue.add(rec);
+		} else {
+			ainsert_queue.addFirst(rec);
+		}
+		cur_ainsert++;
+    }
     private void insert_source_line(){
     	/*
     	 * insert AINSERT logical record 
     	 * in front of current source line
     	 * at mac_line index
     	 */
-    	last_ainsert--;
-    	if (tot_mac_line >= last_ainsert){
-    		abort_error(270,"maximum source lines MAXLINE exceeded");
-    		return;
-    	}
-    	mac_file_prev_line[last_ainsert] = mac_file_prev_line[mac_line_index];
-    	mac_file_next_line[mac_file_prev_line[mac_line_index]] = last_ainsert;
-    	mac_file_prev_line[mac_line_index] = last_ainsert;
-    	mac_file_next_line[last_ainsert] = mac_line_index;
-    	mac_line_index = last_ainsert;
+        set_insert_mac_line_index();  // RPI 1019 
     	String temp_line = ainsert_queue.pop();
     	cur_ainsert--;
     	tot_ainsert++;
@@ -11884,5 +11970,22 @@ public  class  mz390 {
     			
     		} 
     	}
-    }	
+    }
+    private void set_insert_mac_line_index(){
+    	/*
+    	 * set mac_line_index to next insert
+    	 * for AINSERT or dynamic COPY
+    	 * else abort
+    	 */
+    	last_ainsert--;
+    	if (tot_mac_line >= last_ainsert){
+    		abort_error(270,"maximum source lines MAXLINE exceeded");
+    		return;
+    	}
+    	mac_file_prev_line[last_ainsert] = mac_file_prev_line[mac_line_index];
+    	mac_file_next_line[mac_file_prev_line[mac_line_index]] = last_ainsert;
+    	mac_file_prev_line[mac_line_index] = last_ainsert;
+    	mac_file_next_line[last_ainsert] = mac_line_index;
+    	mac_line_index = last_ainsert;
+    }
 }

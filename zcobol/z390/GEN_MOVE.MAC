@@ -14,21 +14,37 @@
 .* 02/25/09 RPI 1004 support PIC type 1,2,E,D,L                       
 .* 02/27/09 RPI 1012 support ALL '?' literal using *'/' prefix        
 .* 03/12/09 RPI 1004 support types 1-9,Q using ZC_CONV/PACK31/UNPK31                               
+.* 04/28/09 RPI 1003 add support for &TMP_NAME/TYPE/LEN in ZCVT via -IX                            
 .*********************************************************************
          GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
          COPY  ZC_WS
-         :&TARGET_NAME SETC '&T_NAME'
-         :&SOURCE_NAME SETC '&S_NAME'
-         :&TARGET SETA &T_IX
-         :&SOURCE SETA &S_IX
-         :&LIT    SETC '&SOURCE_NAME'
-         AIF   (&TARGET EQ 0)
-               MNOTE 8,'GEN_MOVE UNDEFINED TARGET - &TARGET'
-               MEXIT
+         AIF (&T_IX GT 0)
+             :&N_TARGET SETC '&T_NAME'
+             :&L_TARGET SETA  &SYM_LEN(&T_IX)
+             :&S_TARGET SETB  &SYM_PIC_SIGN(&T_IX)
+             :&T_TARGET SETC '&SYM_PIC_TYPE(&T_IX)'
+         AELSEIF (&T_IX LT 0)
+             :&N_TARGET SETC '&TMP_NAME(-&T_IX)'
+             :&L_TARGET SETA  &TMP_LEN(-&T_IX)
+             :&S_TARGET SETB  &TMP_SIGN(-&T_IX)
+             :&T_TARGET SETC '&TMP_TYPE(-&T_IX)'
+         AELSE
+            MNOTE 8,'GEN_MOVE MISSING TARGET INDEX FOR &T_NAME'
+            MEXIT
          AEND
+         :&N_SOURCE SETC '&S_NAME'
+         AIF (&S_IX GT 0)
+             :&L_SOURCE SETA  &SYM_LEN(&S_IX)
+             :&S_SOURCE SETB  &SYM_PIC_SIGN(&S_IX)
+             :&T_SOURCE SETC '&SYM_PIC_TYPE(&S_IX)'
+         AELSEIF (&S_IX LT 0)
+             :&N_SOURCE SETC '&TMP_NAME(-&S_IX)'
+             :&L_SOURCE SETA  &TMP_LEN(-&S_IX)
+             :&S_SOURCE SETB  &TMP_SIGN(-&S_IX)
+             :&T_SOURCE SETC '&TMP_TYPE(-&S_IX)'
+         AEND
+         :&LIT   SETC '&N_SOURCE'
          :&PAD_OFF SETC ''
-         :&L_TARGET SETA  &SYM_LEN(&TARGET)
-         :&T_TARGET SETC '&SYM_PIC_TYPE(&TARGET)'
          AIF   (&L_TARGET LE 256)     
                ACALL MOVE_LE_256
          AELSE
@@ -39,12 +55,14 @@
 .* MOVE LE 256
 .* 
          AENTRY MOVE_LE_256
-         AIF   (&SOURCE NE 0)
-               :&T_SOURCE SETC '&SYM_PIC_TYPE(&SOURCE)'
-               :&L_SOURCE SETA  &SYM_LEN(&SOURCE)
+         AIF   (&S_IX NE 0)
                AIF  ('&T_TARGET' EQ '&T_SOURCE')
                     AIF   (&L_TARGET LE &L_SOURCE)   
-         MVC   &TARGET_NAME,&SOURCE_NAME
+                          AIF (&T_IX LT 0)
+         MVC   &N_TARGET.(&L_TARGET),&N_SOURCE
+                          AELSE
+         MVC   &N_TARGET,&N_SOURCE
+                          AEND
                           AIF  (&L_TARGET LT &L_SOURCE AND &ZC_WARN)
                                MNOTE 4,'GEN_MOVE SOURCE TRUNCATED TO TAX
                RGET &L_SOURCE > &L_TARGET'
@@ -57,11 +75,12 @@
                 X OR C'            
                                MEXIT
                           AEND
-         MVC   &TARGET_NAME.(&L_SOURCE),&SOURCE_NAME
-         :&LPAD    SETA  &L_TARGET-&L_SOURCE
-         :&LLIT    SETA  (&LPAD+1)/2*2 ROUND EVEN FOR LARL
-         LARL  R1,=CL&LLIT' '  ROUND EVEN FOR LARL
-         MVC   &TARGET_NAME+&L_SOURCE.(&LPAD),0(R1)
+         MVC   &N_TARGET.(&L_SOURCE),&N_SOURCE
+         MVI   &N_TARGET+&L_SOURCE,C' '
+                          :&LPAD SETA  &L_TARGET-&L_SOURCE-1
+                          AIF (&LPAD GT 0)
+         MVC   &N_TARGET+&L_SOURCE+1(&LPAD).(&LPAD),&N_TARGET+&L_SOURCE
+                          AEND
                     AEND
                AELSE
                     ACALL MOVE_CONVERT
@@ -73,30 +92,33 @@
                AIF   ('&LIT'(1,1) EQ '''')                 
                      AIF (&L_TARGET EQ 1)
                          ACALL RESET_SS1_TARGET
-         MVI   &TARGET_NAME,C&LIT
+         MVI   &N_TARGET,C&LIT
                      AELSE
-         :&LLIT    SETA  (&L_TARGET+1)/2*2
+                         :&LLIT SETA  (&L_TARGET+1)/2*2
          LARL  R1,=CL&LLIT&LIT
-         MVC   &TARGET_NAME,0(R1)
+                         :&LITREF SETC '0(R1)'
+                         ACALL MVC_LIT
                      AEND
                AELSEIF ('&LIT'(1,2) EQ 'X''')
                      AIF (&L_TARGET EQ 1)
                          ACALL RESET_SS1_TARGET
-         MVI   &TARGET_NAME,&LIT
+         MVI   &N_TARGET,&LIT
                      AELSE
                          :&LLIT SETA  (&L_TARGET+1)/2*2
                          :&HEX  SETC '&LIT'(3,K'&LIT-3)
          LARL  R1,=XL&LLIT'&HEX'
                          AIF (&LLIT EQ &L_TARGET)
-         MVC   &TARGET_NAME,0(R1)
+                              :&LITREF SETC '0(R1)'
+                              ACALL MVC_LIT
                          AELSE
-         MVC   &TARGET_NAME,1(R1)
+                              :&LITREF SETC '1(R1)'
+                              ACALL MVC_LIT
                          AEND
                      AEND
                AELSEIF ('&LIT'(1,1) EQ '*')  ALL LIT RPI 1012
                      :&LIT SETC '&LIT'(2,*)
                      ACALL RESET_SS1_TARGET
-         MVI   &TARGET_NAME,C&LIT
+         MVI   &N_TARGET,C&LIT
                      ACALL PAD_TARGET
                AELSE
                     AIF  ('&LIT'(1,1) GE '0'                           X
@@ -113,17 +135,17 @@
                     AELSEIF ('&LIT' EQ 'SPACES'                        X
                          OR '&LIT' EQ 'SPACE')
                          ACALL RESET_SS1_TARGET
-         MVI   &TARGET_NAME,C' '
+         MVI   &N_TARGET,C' '
                          ACALL PAD_TARGET
                     AELSEIF ('&LIT' EQ 'LOW_VALUES'                    X
                          OR '&LIT' EQ 'LOW_VALUE')
                          ACALL RESET_SS1_TARGET
-         MVI   &TARGET_NAME,X'00'
+         MVI   &N_TARGET,X'00'
                          ACALL PAD_TARGET
                     AELSEIF ('&LIT' EQ 'HIGH_VALUES'                   X
                          OR '&LIT' EQ 'HIGH_VALUE')
                          ACALL RESET_SS1_TARGET
-         MVI   &TARGET_NAME,X'FF'
+         MVI   &N_TARGET,X'FF'
                          ACALL PAD_TARGET
                     AELSE
                          MNOTE 8,'GEN_MOVE UNKNOWN LIT - &LIT'
@@ -132,87 +154,97 @@
          AEND
          AEND
 .*
+.* MVC LIT
+.*
+         AENTRY MVC_LIT
+               AIF (&T_IX LT 0)
+         MVC   &N_TARGET.(&L_SOURCE),&LITREF
+               AELSE
+         MVC   &N_TARGET,&LITREF
+               AEND
+         AEND
+.*
 .* MOVE NUMERIC LIT LT 256 (NUM SET TO LIT OR 0)
 .*
       AENTRY MOVE_NUM_LIT
-      ACASE (C2A('&SYM_PIC_TYPE(&TARGET)'))
+      ACASE (C2A('&T_TARGET'))
       AWHEN C'A',C'I'               RPI 1002
          LARL  R1,=A(&NUM)
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'1'
          LARL  R1,=EH'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'2'
          LARL  R1,=DH'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'3'
          LARL  R1,=LH'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'4'
          LARL  R1,=EB'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'5'
          LARL  R1,=DB'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'6'
          LARL  R1,=LB'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'7'
          LARL  R1,=ED'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'8'
          LARL  R1,=DD'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'9'
          LARL  R1,=LD'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'F'
         AIF   (K'&NUM LE 4)
               ACALL RESET_SS1_TARGET
-         MVHI  &TARGET_NAME,&NUM
+         MVHI  &N_TARGET,&NUM
         AELSE
-         LARL  R1,=&SYM_PIC_TYPE(&TARGET)'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         LARL  R1,=&T_TARGET'&NUM'
+         MVC   &N_TARGET,0(R1)
         AEND
       AWHEN C'G'
         AIF   (K'&NUM LE 4)
-         MVGHI &TARGET_NAME,&NUM
+         MVGHI &N_TARGET,&NUM
         AELSE
          LARL  R1,=FL8'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
         AEND
       AWHEN C'H'
               ACALL RESET_SS1_TARGET
-         MVHHI &TARGET_NAME,&NUM
+         MVHHI &N_TARGET,&NUM
       AWHEN C'P'
-         :&LLIT SETA  (&SYM_LEN(&TARGET)+1)/2*2 ROUND EVEN FOR LARL
+         :&LLIT SETA  (&L_TARGET+1)/2*2 ROUND EVEN FOR LARL
          LARL  R1,=PL&LLIT'&NUM'
-       AIF   (&LLIT GT &SYM_LEN(&TARGET))
-         MVC   &TARGET_NAME,1(R1)
+       AIF   (&LLIT GT &L_TARGET)
+         MVC   &N_TARGET,1(R1)
        AELSE  
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
        AEND
       AWHEN C'Q'
          LARL  R1,=FL16'&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
       AWHEN C'Z'
-               AIF  (NOT &SYM_PIC_SIGN(&TARGET))
+               AIF  (NOT &S_TARGET)
                     AIF (&L_TARGET EQ 1)
                          ACALL RESET_SS1_TARGET
-         MVI   &TARGET_NAME,C'&NUM'
+         MVI   &N_TARGET,C'&NUM'
                     AELSE
-                        :&LLIT SETA  (&SYM_LEN(&TARGET)+1)/2*2
-                        :&ZPAD SETC (&SYM_LEN(&TARGET)-K'&NUM)'0'
+                        :&LLIT SETA  (&L_TARGET+1)/2*2
+                        :&ZPAD SETC (&L_TARGET-K'&NUM)'0'
          LARL  R1,=CL&LLIT'&ZPAD&NUM'
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
                     AEND
                AELSE
-                    :&LLIT SETA  (&SYM_LEN(&TARGET)+1)/2*2
+                    :&LLIT SETA  (&L_TARGET+1)/2*2
          LARL  R1,=ZL&LLIT'&NUM'
-                    AIF (&LLIT NE &SYM_LEN(&TARGET))
-         MVC   &TARGET_NAME,1(R1)
+                    AIF (&LLIT NE &L_TARGET)
+         MVC   &N_TARGET,1(R1)
                     AELSE
-         MVC   &TARGET_NAME,0(R1)
+         MVC   &N_TARGET,0(R1)
                     AEND
                AEND
       AELSE
@@ -223,10 +255,10 @@
 .* MOVE GT 256
 .*
        AENTRY MOVE_GT_256
-         LA    R0,&TARGET_NAME
+         LA    R0,&N_TARGET
          LHI   R1,&L_TARGET
-       AIF   (&SOURCE NE 0)          
-         LA    R2,&SOURCE_NAME
+       AIF   (&S_IX NE 0)          
+         LA    R2,&N_SOURCE
          LHI   R3,&L_SOURCE
        AELSE     
 .*
@@ -263,8 +295,8 @@
          AENTRY MOVE_CONVERT
          ACASE (C2A('&T_TARGET'))
          AWHEN C'A'
-         LA    R0,&SOURCE_NAME
-         ST    R0,&TARGET_NAME
+         LA    R0,&N_SOURCE
+         ST    R0,&N_TARGET
          AWHEN C'1'
                ACALL CVT_TO_EH
          AWHEN C'2'
@@ -305,41 +337,41 @@
          AENTRY CVT_TO_EH
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LE    0,&SOURCE_NAME
+         LE    0,&N_SOURCE
                AWHEN C'2'
-         LD    0,&SOURCE_NAME
+         LD    0,&N_SOURCE
          LEDR  0,0
                AWHEN C'3'
-         ZC7_PFPO EH,LH,&SOURCE_NAME
+         ZC_CONV EH,LH,&N_SOURCE
                AWHEN C'4'
-         ZC_CONV EH,EB,&SOURCE_NAME
+         ZC_CONV EH,EB,&N_SOURCE
                AWHEN C'5'
-         ZC_CONV EH,DB,&SOURCE_NAME
+         ZC_CONV EH,DB,&N_SOURCE
                AWHEN C'6'
-         ZC_CONV EH,LB,&SOURCE_NAME
+         ZC_CONV EH,LB,&N_SOURCE
                AWHEN C'7'
-         ZC_CONV EH,ED,&SOURCE_NAME
+         ZC_CONV EH,ED,&N_SOURCE
                AWHEN C'8'
-         ZC_CONV EH,DD,&SOURCE_NAME
+         ZC_CONV EH,DD,&N_SOURCE
                AWHEN C'9'
-         ZC_CONV EH,LD,&SOURCE_NAME
+         ZC_CONV EH,LD,&N_SOURCE
                AWHEN C'A',C'F'
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
          CEFR  0,0
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CEGR  0,0
                AWHEN C'H'
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
          CEFR  0,0
                AWHEN C'P'
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   0,ZCVT_PWORK
          CEFR  0,0
                AWHEN C'Q'
-         ZC_CONV EH,Q,&SOURCE_NAME
+         ZC_CONV EH,Q,&N_SOURCE
                AWHEN C'Z'
-                    ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                    ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                     ZC_CONV EH,LD
@@ -347,7 +379,7 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STE   0,&TARGET_NAME
+         STE   0,&N_TARGET
          AEND
 .*
 .* CVT TO DH
@@ -355,47 +387,47 @@
          AENTRY CVT_TO_DH
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LDE   0,&SOURCE_NAME
+         LDE   0,&N_SOURCE
                AWHEN C'2'
-         LD    0,&SOURCE_NAME
+         LD    0,&N_SOURCE
                AWHEN C'3'
-         ZC_CONV DH,LH,&SOURCE_NAME
+         ZC_CONV DH,LH,&N_SOURCE
                AWHEN C'4'
-         ZC_CONV DH,EB,&SOURCE_NAME
+         ZC_CONV DH,EB,&N_SOURCE
                AWHEN C'5'
-         ZC_CONV DH,DB,&SOURCE_NAME
+         ZC_CONV DH,DB,&N_SOURCE
                AWHEN C'6'
-         ZC_CONV DH,LB,&SOURCE_NAME
+         ZC_CONV DH,LB,&N_SOURCE
                AWHEN C'7'
-         ZC_CONV DH,ED,&SOURCE_NAME
+         ZC_CONV DH,ED,&N_SOURCE
                AWHEN C'8'
-         ZC_CONV DH,DD,&SOURCE_NAME
+         ZC_CONV DH,DD,&N_SOURCE
                AWHEN C'9'
-         ZC_CONV DH,LD,&SOURCE_NAME
+         ZC_CONV DH,LD,&N_SOURCE
                AWHEN C'A',C'F',C'I'
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
          CDFR  0,0
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CDGR  0,0
                AWHEN C'H'
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
          CDFR  0,0
                AWHEN C'P'
                     AIF (&L_SOURCE LE 8)
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   0,ZCVT_PWORK
          CDFR  F0,R0
                     AELSE
-         ZAP   ZCVT_PWORK1,&SOURCE_NAME
+         ZAP   ZCVT_PWORK1,&N_SOURCE
          LMG   R0,R1,ZCVT_PWORK1
          CXSTR F4,R0      CVT PL16 TO LD
          ZC_CONV DH,LD    VBY LD   TO DH
                     AEND
                AWHEN C'Q'
-         ZC_CONV DH,Q,&SOURCE_NAME
+         ZC_CONV DH,Q,&N_SOURCE
                AWHEN C'Z'
-                    ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                    ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                     ZC_CONV DH,LD
@@ -403,7 +435,7 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND
-         STD   0,&TARGET_NAME
+         STD   0,&N_TARGET
          AEND
 .*
 .* CVT TO LH
@@ -411,50 +443,50 @@
          AENTRY CVT_TO_LH
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LE    0,&SOURCE_NAME
+         LE    0,&N_SOURCE
          LXER  0,0
                AWHEN C'2'
-         LD    0,&SOURCE_NAME
+         LD    0,&N_SOURCE
          LXDR  0,0
                AWHEN C'3'
-         LD    0,&SOURCE_NAME
-         LD    2,8+&SOURCE_NAME
+         LD    0,&N_SOURCE
+         LD    2,8+&N_SOURCE
                AWHEN C'4'
-         ZC_CONV LH,EB,&SOURCE_NAME
+         ZC_CONV LH,EB,&N_SOURCE
                AWHEN C'5'
-         ZC_CONV LH,DB,&SOURCE_NAME
+         ZC_CONV LH,DB,&N_SOURCE
                AWHEN C'6'
-         ZC_CONV LH,LB,&SOURCE_NAME
+         ZC_CONV LH,LB,&N_SOURCE
                AWHEN C'7'
-         ZC_CONV LH,ED,&SOURCE_NAME
+         ZC_CONV LH,ED,&N_SOURCE
                AWHEN C'8'
-         ZC_CONV LH,DD,&SOURCE_NAME
+         ZC_CONV LH,DD,&N_SOURCE
                AWHEN C'9'
-         ZC_CONV LH,LD,&SOURCE_NAME
+         ZC_CONV LH,LD,&N_SOURCE
                AWHEN C'A',C'F'
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
          CXFR  0,0
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CXGR  0,0
                AWHEN C'H'
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
          CXFR  0,0
                AWHEN C'P'
                     AIF (&L_SOURCE LE 8)
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   0,ZCVT_PWORK
          CXFR  F0,R0
                     AELSE
-         ZAP   ZCVT_PWORK1,&SOURCE_NAME
+         ZAP   ZCVT_PWORK1,&N_SOURCE
          LMG   R0,R1,ZCVT_PWORK1
          CXSTR F4,R0      CVT PL16 TO LD
          ZC_CONV LH,LD    VBY LD   TO DH
                     AEND
                AWHEN C'Q'
-         ZC_CONV LH,Q,&SOURCE_NAME
+         ZC_CONV LH,Q,&N_SOURCE
                AWHEN C'Z'
-                    ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                    ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                     ZC_CONV LH,LD
@@ -462,8 +494,8 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STD   0,&TARGET_NAME
-         STD   2,8+&TARGET_NAME
+         STD   0,&N_TARGET
+         STD   2,8+&N_TARGET
          AEND
 .*
 .* CVT TO EB
@@ -471,48 +503,47 @@
          AENTRY CVT_TO_EB
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-                 ZC_CONV EB,EH,&SOURCE_NAME
+                 ZC_CONV EB,EH,&N_SOURCE
                AWHEN C'2'
-                 ZC_CONV EB,DH,&SOURCE_NAME
-         LEDR  0,0
+                 ZC_CONV EB,DH,&N_SOURCE
                AWHEN C'3'
-                 ZC_CONV EB,LH,&SOURCE_NAME
+                 ZC_CONV EB,LH,&N_SOURCE
                AWHEN C'4'
-                 ZC_CONV EB,EB,&SOURCE_NAME
+                 ZC_CONV EB,EB,&N_SOURCE
                AWHEN C'5'
-                 ZC_CONV EB,DB,&SOURCE_NAME
+                 ZC_CONV EB,DB,&N_SOURCE
                AWHEN C'6'
-                 ZC_CONV EB,LB,&SOURCE_NAME
+                 ZC_CONV EB,LB,&N_SOURCE
                AWHEN C'7'
-                 ZC_CONV EB,ED,&SOURCE_NAME
+                 ZC_CONV EB,ED,&N_SOURCE
                AWHEN C'8'
-                 ZC_CONV EB,DD,&SOURCE_NAME
+                 ZC_CONV EB,DD,&N_SOURCE
                AWHEN C'9'
-                 ZC_CONV EB,LD,&SOURCE_NAME
+                 ZC_CONV EB,LD,&N_SOURCE
                AWHEN C'A',C'F'
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
          CEFBR 0,0
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CEGBR 0,0
                AWHEN C'H'
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
          CEFBR 0,0
                AWHEN C'P'
                     AIF (&L_SOURCE LE 8)
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   0,ZCVT_PWORK
+         CEFBR 0,0
                     AELSE
-         ZAP   ZCVT_PWORK1,&SOURCE_NAME
+         ZAP   ZCVT_PWORK1,&N_SOURCE
          LMG   R0,R1,ZCVT_PWORK1
          CXSTR F4,R0
-         ZC_CONV Q,LD
+                 ZC_CONV EB,LD
                     AEND
-         CEFBR 0,0
                AWHEN C'Q'
-                 ZC_CONV EB,Q,&SOURCE_NAME
+                 ZC_CONV EB,Q,&N_SOURCE
                AWHEN C'Z'
-                    ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                    ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                     ZC_CONV EB,LD
@@ -520,7 +551,7 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STE   0,&TARGET_NAME
+         STE   0,&N_TARGET
          AEND
 .*
 .* CVT TO DB               
@@ -528,41 +559,41 @@
          AENTRY CVT_TO_DB
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-                 ZC_CONV DB,EH,&SOURCE_NAME
+                 ZC_CONV DB,EH,&N_SOURCE
                AWHEN C'2'
-                 ZC_CONV DB,DH,&SOURCE_NAME
+                 ZC_CONV DB,DH,&N_SOURCE
                AWHEN C'3'
-                 ZC_CONV DB,LH,&SOURCE_NAME
+                 ZC_CONV DB,LH,&N_SOURCE
                AWHEN C'4'
-                 ZC_CONV DB,EB,&SOURCE_NAME
+                 ZC_CONV DB,EB,&N_SOURCE
                AWHEN C'5'
-                 ZC_CONV DB,DB,&SOURCE_NAME
+                 ZC_CONV DB,DB,&N_SOURCE
                AWHEN C'6'
-                 ZC_CONV DB,LB,&SOURCE_NAME
+                 ZC_CONV DB,LB,&N_SOURCE
                AWHEN C'7'
-                 ZC_CONV DB,ED,&SOURCE_NAME
+                 ZC_CONV DB,ED,&N_SOURCE
                AWHEN C'8'
-                 ZC_CONV DB,DD,&SOURCE_NAME
+                 ZC_CONV DB,DD,&N_SOURCE
                AWHEN C'9'
-                 ZC_CONV DB,LD,&SOURCE_NAME
+                 ZC_CONV DB,LD,&N_SOURCE
                AWHEN C'A',C'F',C'I'
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
          CDFBR 0,0
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CDGBR 0,0
                AWHEN C'H'
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
          CDFBR 0,0
                AWHEN C'P'
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
+         ZAP   ZCVT_PWORK2,&N_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
          ZC_CONV DB,LD                       
                AWHEN C'Q'
-         ZC_CONV DB,Q,&SOURCE_NAME
+         ZC_CONV DB,Q,&N_SOURCE
                AWHEN C'Z'
-                    ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                    ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                     ZC_CONV DB,LD
@@ -570,7 +601,7 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND
-         STD   0,&TARGET_NAME
+         STD   0,&N_TARGET
          AEND
 .*
 .* CVT TO LB
@@ -578,41 +609,41 @@
          AENTRY CVT_TO_LB
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-                 ZC_CONV LB,EH,&SOURCE_NAME
+                 ZC_CONV LB,EH,&N_SOURCE
                AWHEN C'2'
-                 ZC_CONV LB,DH,&SOURCE_NAME
+                 ZC_CONV LB,DH,&N_SOURCE
                AWHEN C'3'
-                 ZC_CONV LB,LH,&SOURCE_NAME
+                 ZC_CONV LB,LH,&N_SOURCE
                AWHEN C'4'
-                 ZC_CONV LB,EB,&SOURCE_NAME
+                 ZC_CONV LB,EB,&N_SOURCE
                AWHEN C'5'
-                 ZC_CONV LB,DB,&SOURCE_NAME
+                 ZC_CONV LB,DB,&N_SOURCE
                AWHEN C'6'
-                 ZC_CONV LB,LB,&SOURCE_NAME
+                 ZC_CONV LB,LB,&N_SOURCE
                AWHEN C'7'
-                 ZC_CONV LB,ED,&SOURCE_NAME
+                 ZC_CONV LB,ED,&N_SOURCE
                AWHEN C'8'
-                 ZC_CONV LB,DD,&SOURCE_NAME
+                 ZC_CONV LB,DD,&N_SOURCE
                AWHEN C'9'
-                 ZC_CONV LB,LD,&SOURCE_NAME
+                 ZC_CONV LB,LD,&N_SOURCE
                AWHEN C'A',C'F'
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
          CXFBR F0,R0
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CXGBR F0,R0
                AWHEN C'H'
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
          CXFBR F0,0
                AWHEN C'P'
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
+         ZAP   ZCVT_PWORK2,&N_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV LB,LD
                AWHEN C'Q'
-                 ZC_CONV LB,Q,&SOURCE_NAME
+                 ZC_CONV LB,Q,&N_SOURCE
                AWHEN C'Z'
-                    ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                    ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                     ZC_CONV LB,LD
@@ -620,8 +651,8 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
          AEND
 .*
 .* CVT TO ED
@@ -629,44 +660,44 @@
          AENTRY CVT_TO_ED
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-                 ZC_CONV ED,EH,&SOURCE_NAME
+                 ZC_CONV ED,EH,&N_SOURCE
                AWHEN C'2'
-                 ZC_CONV ED,DH,&SOURCE_NAME
+                 ZC_CONV ED,DH,&N_SOURCE
                AWHEN C'3'
-                 ZC_CONV ED,LH,&SOURCE_NAME
+                 ZC_CONV ED,LH,&N_SOURCE
                AWHEN C'4'
-                 ZC_CONV ED,EB,&SOURCE_NAME
+                 ZC_CONV ED,EB,&N_SOURCE
                AWHEN C'5'
-                 ZC_CONV ED,DB,&SOURCE_NAME
+                 ZC_CONV ED,DB,&N_SOURCE
                AWHEN C'6'
-                 ZC_CONV ED,LB,&SOURCE_NAME
+                 ZC_CONV ED,LB,&N_SOURCE
                AWHEN C'7'
-                 ZC_CONV ED,ED,&SOURCE_NAME
+                 ZC_CONV ED,ED,&N_SOURCE
                AWHEN C'8'
-                 ZC_CONV ED,DD,&SOURCE_NAME
+                 ZC_CONV ED,DD,&N_SOURCE
                AWHEN C'9'
-                 ZC_CONV ED,LD,&SOURCE_NAME
+                 ZC_CONV ED,LD,&N_SOURCE
                AWHEN C'A',C'F'
-         LGF   R0,&SOURCE_NAME
+         LGF   R0,&N_SOURCE
          CDGTR F0,R0
          LEDTR F0,0,F0,0 
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CDGTR F0,R0
          LEDTR F0,0,F0,0 
                AWHEN C'H'
-         LGH   R0,&SOURCE_NAME
+         LGH   R0,&N_SOURCE
          CDGTR F0,R0
          LEDTR F0,0,F0,0 
                AWHEN C'P'
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
+         ZAP   ZCVT_PWORK2,&N_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV ED,LD
                AWHEN C'Q'
-                 ZC_CONV ED,Q,&SOURCE_NAME
+                 ZC_CONV ED,Q,&N_SOURCE
                AWHEN C'Z'
-                 ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                 ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV ED,LD
@@ -674,7 +705,7 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STE   0,&TARGET_NAME
+         STE   0,&N_TARGET
          AEND
 .*
 .* CVT TO DD
@@ -682,41 +713,41 @@
          AENTRY CVT_TO_DD
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-                 ZC_CONV DD,EH,&SOURCE_NAME
+                 ZC_CONV DD,EH,&N_SOURCE
                AWHEN C'2'
-                 ZC_CONV DD,DH,&SOURCE_NAME
+                 ZC_CONV DD,DH,&N_SOURCE
                AWHEN C'3'
-                 ZC_CONV DD,LH,&SOURCE_NAME
+                 ZC_CONV DD,LH,&N_SOURCE
                AWHEN C'4'
-                 ZC_CONV DD,EB,&SOURCE_NAME
+                 ZC_CONV DD,EB,&N_SOURCE
                AWHEN C'5'
-                 ZC_CONV DD,DB,&SOURCE_NAME
+                 ZC_CONV DD,DB,&N_SOURCE
                AWHEN C'6'
-                 ZC_CONV DD,LB,&SOURCE_NAME
+                 ZC_CONV DD,LB,&N_SOURCE
                AWHEN C'7'
-                 ZC_CONV DD,ED,&SOURCE_NAME
+                 ZC_CONV DD,ED,&N_SOURCE
                AWHEN C'8'
-                 ZC_CONV DD,DD,&SOURCE_NAME
+                 ZC_CONV DD,DD,&N_SOURCE
                AWHEN C'9'
-                 ZC_CONV DD,LD,&SOURCE_NAME
+                 ZC_CONV DD,LD,&N_SOURCE
                AWHEN C'A',C'F',C'I'
-         LGF   0,&SOURCE_NAME
+         LGF   0,&N_SOURCE
          CDGTR F0,R0
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CDGTR F0,R0
                AWHEN C'H'
-         LGH   R0,&SOURCE_NAME
+         LGH   R0,&N_SOURCE
          CDGTR F0,R0
                AWHEN C'P'
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
-         LMG   R0,R1,ZCVT_PWORK1
+         ZAP   ZCVT_PWORK2,&N_SOURCE
+         LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0                       
                  ZC_CONV DD,LD                      
                AWHEN C'Q'
-                 ZC_CONV DD,Q,&SOURCE_NAME
+                 ZC_CONV DD,Q,&N_SOURCE
                AWHEN C'Z'
-                 ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                 ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV DD,LD
@@ -724,7 +755,7 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND
-         STD   0,&TARGET_NAME
+         STD   0,&N_TARGET
          AEND
 .*
 .* CVT TO LD
@@ -732,48 +763,48 @@
          AENTRY CVT_TO_LD
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-                 ZC_CONV LD,EH,&SOURCE_NAME
+                 ZC_CONV LD,EH,&N_SOURCE
                AWHEN C'2'
-                 ZC_CONV LD,DH,&SOURCE_NAME
+                 ZC_CONV LD,DH,&N_SOURCE
                AWHEN C'3'
-                 ZC_CONV LD,LH,&SOURCE_NAME
+                 ZC_CONV LD,LH,&N_SOURCE
                AWHEN C'4'
-                 ZC_CONV LD,EB,&SOURCE_NAME
+                 ZC_CONV LD,EB,&N_SOURCE
                AWHEN C'5'
-                 ZC_CONV LD,DB,&SOURCE_NAME
+                 ZC_CONV LD,DB,&N_SOURCE
                AWHEN C'6'
-                 ZC_CONV LD,LB,&SOURCE_NAME
+                 ZC_CONV LD,LB,&N_SOURCE
                AWHEN C'7'
-                 ZC_CONV LD,ED,&SOURCE_NAME
+                 ZC_CONV LD,ED,&N_SOURCE
                AWHEN C'8'
-                 ZC_CONV LD,DD,&SOURCE_NAME
+                 ZC_CONV LD,DD,&N_SOURCE
                AWHEN C'9'
-                 ZC_CONV LD,LD,&SOURCE_NAME
+                 ZC_CONV LD,LD,&N_SOURCE
                AWHEN C'A',C'F'
-         LGF   0,&SOURCE_NAME
+         LGF   0,&N_SOURCE
          CXGTR F0,R0
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CXGTR F0,R0
                AWHEN C'H'
-         LGH   0,&SOURCE_NAME
+         LGH   0,&N_SOURCE
          CXGTR F0,R0
                AWHEN C'P'
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
+         ZAP   ZCVT_PWORK2,&N_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F0,R0                         
                AWHEN C'Q'
-                 ZC_CONV LD,Q,&SOURCE_NAME
+                 ZC_CONV LD,Q,&N_SOURCE
                AWHEN C'Z'
-                 ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                 ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F0,R0
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STD   0,&TARGET_NAME
-         STD   2,8+&TARGET_NAME
+         STD   0,&N_TARGET
+         STD   2,8+&N_TARGET
          AEND
 .*
 .* CVT TO F
@@ -781,51 +812,51 @@
          AENTRY CVT_TO_F
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LE    0,&SOURCE_NAME
+         LE    0,&N_SOURCE
          CFER  0,0
                AWHEN C'2'
-         LD    0,&SOURCE_NAME
+         LD    0,&N_SOURCE
          CFDR  0,0
                AWHEN C'3'
-         ZC_CONV Q,LH,&SOURCE_NAME
+         ZC_CONV Q,LH,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'4'
-         ZC_CONV Q,EB,&SOURCE_NAME
+         ZC_CONV Q,EB,&N_SOURCE
          LR    0,1  IGNORE HIGH BITS
                AWHEN C'5'
-         ZC_CONV Q,DB,&SOURCE_NAME
+         ZC_CONV Q,DB,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'6'
-         ZC_CONV Q,LB,&SOURCE_NAME
+         ZC_CONV Q,LB,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'7'
-         ZC_CONV Q,ED,&SOURCE_NAME
+         ZC_CONV Q,ED,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'8'
-         ZC_CONV Q,DD,&SOURCE_NAME
+         ZC_CONV Q,DD,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'9'
-         ZC_CONV Q,LD,&SOURCE_NAME
+         ZC_CONV Q,LD,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'A',C'F',C'I'
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
                AWHEN C'H'
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
                AWHEN C'P'
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   0,ZCVT_PWORK
                AWHEN C'Q'
-         L     0,12+&SOURCE_NAME+12 IGNORE HIGH 96 BITS
+         L     0,12+&N_SOURCE+12 IGNORE HIGH 96 BITS
                AWHEN C'Z'
-         ZC_PACK31 ZCVT_PWORK,8,&SOURCE_NAME,&L_SOURCE   
+         ZC_PACK31 ZCVT_PWORK,8,&N_SOURCE,&L_SOURCE   
          CVB   0,ZCVT_PWORK                          
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         ST    0,&TARGET_NAME     IGNORE HIGH BITS
+         ST    0,&N_TARGET     IGNORE HIGH BITS
          AEND
 .*
 .* CVT TO G
@@ -833,49 +864,49 @@
          AENTRY CVT_TO_G
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LE    0,&SOURCE_NAME
+         LE    0,&N_SOURCE
          CGER  0,0
                AWHEN C'2'
-         LD    0,&SOURCE_NAME
+         LD    0,&N_SOURCE
          CGDR  0,0
                AWHEN C'3'
-         ZC_CONV Q,LH,&SOURCE_NAME
+         ZC_CONV Q,LH,&N_SOURCE
          LGR   0,1  IGNORE HIGH 64 BITS
                AWHEN C'4'
-         ZC_CONV Q,EB,&SOURCE_NAME
+         ZC_CONV Q,EB,&N_SOURCE
          LGR   0,1  IGNORE HIGH 64 BITS
                AWHEN C'5'
-         ZC_CONV Q,DB,&SOURCE_NAME
+         ZC_CONV Q,DB,&N_SOURCE
          LGR   0,1  IGNORE HIGH 64 BITS
                AWHEN C'6'
-         ZC_CONV Q,LB,&SOURCE_NAME
+         ZC_CONV Q,LB,&N_SOURCE
          LGR   0,1  IGNORE HIGH 64 BITS
                AWHEN C'7'
-         ZC_CONV Q,ED,&SOURCE_NAME
+         ZC_CONV Q,ED,&N_SOURCE
          LGR   0,1  IGNORE HIGH 64 BITS
                AWHEN C'8'
-         ZC_CONV Q,DD,&SOURCE_NAME
+         ZC_CONV Q,DD,&N_SOURCE
          LGR   0,1  IGNORE HIGH 64 BITS
                AWHEN C'9'
-         ZC_CONV Q,LD,&SOURCE_NAME
+         ZC_CONV Q,LD,&N_SOURCE
          LGR   0,1  IGNORE HIGH 64 BITS
                AWHEN C'A',C'F'
-         LGF   0,&SOURCE_NAME
+         LGF   0,&N_SOURCE
                AWHEN C'H'
-         LGH   0,&SOURCE_NAME
+         LGH   0,&N_SOURCE
                AWHEN C'P'
-         ZAP   ZCVT_PWORK1,&SOURCE_NAME
+         ZAP   ZCVT_PWORK1,&N_SOURCE
          CVBG  0,ZCVT_PWORK1
                AWHEN C'Q'
-         LG    0,8+&SOURCE_NAME    IGNORE HIGH 64 BITS
+         LG    0,8+&N_SOURCE    IGNORE HIGH 64 BITS
                AWHEN C'Z'
-         ZC_PACK31  ZCVT_PWORK1,16,&SOURCE_NAME,&L_SOURCE
+         ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
          CVBG  0,ZCVT_PWORK1
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STG   0,&TARGET_NAME
+         STG   0,&N_TARGET
          AEND
 .*
 .* GVT TO H
@@ -883,51 +914,51 @@
          AENTRY CVT_TO_H
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LE    0,&SOURCE_NAME
+         LE    0,&N_SOURCE
          CFER  0,0
                AWHEN C'2'
-         LD    0,&SOURCE_NAME
+         LD    0,&N_SOURCE
          CFDR  0,0
                AWHEN C'3'
-         ZC_CONV Q,LH,&SOURCE_NAME
+         ZC_CONV Q,LH,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'4'
-         ZC_CONV Q,EB,&SOURCE_NAME
+         ZC_CONV Q,EB,&N_SOURCE
          LR    0,1  IGNORE HIGH BITS
                AWHEN C'5'
-         ZC_CONV Q,DB,&SOURCE_NAME
+         ZC_CONV Q,DB,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'6'
-         ZC_CONV Q,LB,&SOURCE_NAME
+         ZC_CONV Q,LB,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'7'
-         ZC_CONV Q,ED,&SOURCE_NAME
+         ZC_CONV Q,ED,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'8'
-         ZC_CONV Q,DD,&SOURCE_NAME
+         ZC_CONV Q,DD,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'9'
-         ZC_CONV Q,LD,&SOURCE_NAME
+         ZC_CONV Q,LD,&N_SOURCE
          LR    0,1  IGNORE HIGH 96 BITS
                AWHEN C'A',C'F'
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
                AWHEN C'H'
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
                AWHEN C'P'
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   0,ZCVT_PWORK
                AWHEN C'Q'
-         LH    0,14+&SOURCE_NAME IGNORE 112 BITS
+         LH    0,14+&N_SOURCE IGNORE 112 BITS
                AWHEN C'Z'
-         ZC_PACK31  ZCVT_PWORK,8,&SOURCE_NAME,&L_SOURCE IGNORE HIGH DIG
+         ZC_PACK31  ZCVT_PWORK,8,&N_SOURCE,&L_SOURCE IGNORE HIGH DIG
          CVB   0,ZCVT_PWORK  
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STH   0,&TARGET_NAME
+         STH   0,&N_TARGET
          AEND
 .*
 .* CVT TO P
@@ -935,65 +966,65 @@
          AENTRY CVT_TO_P
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LE    0,&SOURCE_NAME
+         LE    0,&N_SOURCE
          CFER  0,0
          CVD   0,ZCVT_PWORK
-         ZAP   &TARGET_NAME,ZCVT_PWORK
+         ZAP   &N_TARGET,ZCVT_PWORK
                AWHEN C'2'
-         LD    0,&SOURCE_NAME
+         LD    0,&N_SOURCE
          CGDR  0,0
          CVDG  0,ZCVT_PWORK2
-         ZAP   &TARGET_NAME,ZCVT_PWORK2
+         ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'3'
-                 ZC_CONV P,LH,&SOURCE_NAME
+                 ZC_CONV P,LH,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         ZAP   &TARGET_NAME,ZCVT_PWORK2
+         ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'4'
-                 ZC_CONV P,EB,&SOURCE_NAME
+                 ZC_CONV P,EB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         ZAP   &TARGET_NAME,ZCVT_PWORK2
+         ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'5'
-                 ZC_CONV P,DB,&SOURCE_NAME
+                 ZC_CONV P,DB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         ZAP   &TARGET_NAME,ZCVT_PWORK2
+         ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'6'
-                 ZC_CONV P,LB,&SOURCE_NAME
+                 ZC_CONV P,LB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         ZAP   &TARGET_NAME,ZCVT_PWORK2
+         ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'7'
-                 ZC_CONV P,ED,&SOURCE_NAME
+                 ZC_CONV P,ED,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         ZAP   &TARGET_NAME,ZCVT_PWORK2
+         ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'8'
-                 ZC_CONV P,DD,&SOURCE_NAME
+                 ZC_CONV P,DD,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         ZAP   &TARGET_NAME,ZCVT_PWORK2
+         ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'9'
-                 ZC_CONV P,LD,&SOURCE_NAME
+                 ZC_CONV P,LD,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         ZAP   &TARGET_NAME,ZCVT_PWORK2
+         ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'A',C'F',C'I'
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
          CVD   0,ZCVT_PWORK
-         ZAP   &TARGET_NAME,ZCVT_PWORK
+         ZAP   &N_TARGET,ZCVT_PWORK
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CVDG  0,ZCVT_PWORK2
-         ZAP   &TARGET_NAME,ZCVT_PWORK2
+         ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'H'
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
          CVD   0,ZCVT_PWORK
-         ZAP   &TARGET_NAME,ZCVT_PWORK
+         ZAP   &N_TARGET,ZCVT_PWORK
                AWHEN C'P'
-         ZAP   &TARGET_NAME,&SOURCE_NAME
+         ZAP   &N_TARGET,&N_SOURCE
                AWHEN C'Q'
-                ZC_CONV P,Q,&SOURCE_NAME
+                ZC_CONV P,Q,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         ZAP   &TARGET_NAME,ZCVT_PWORK2
+         ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'Z'
                   :&PLEN2 SETA &L_SOURCE/2+1
-                  ZC_PACK31  ZCVT_PWORK2,&PLEN2,&SOURCE_NAME,&L_SOURCE
-         ZAP   &TARGET_NAME,ZCVT_PWORK2(&PLEN2)
+                  ZC_PACK31  ZCVT_PWORK2,&PLEN2,&N_SOURCE,&L_SOURCE
+         ZAP   &N_TARGET,ZCVT_PWORK2(&PLEN2)
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
@@ -1005,38 +1036,41 @@
          AENTRY CVT_TO_Q
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-                 ZC_CONV Q,EH,&SOURCE_NAME
+                 ZC_CONV Q,EH,&N_SOURCE
                AWHEN C'2'
-                 ZC_CONV Q,DH,&SOURCE_NAME
+                 ZC_CONV Q,DH,&N_SOURCE
                AWHEN C'3'
-                 ZC_CONV Q,LH,&SOURCE_NAME
+                 ZC_CONV Q,LH,&N_SOURCE
                AWHEN C'4'
-                 ZC_CONV Q,EB,&SOURCE_NAME
+                 ZC_CONV Q,EB,&N_SOURCE
                AWHEN C'5'
-                 ZC_CONV Q,DB,&SOURCE_NAME
+                 ZC_CONV Q,DB,&N_SOURCE
                AWHEN C'6'
-                 ZC_CONV Q,LB,&SOURCE_NAME
+                 ZC_CONV Q,LB,&N_SOURCE
                AWHEN C'7'
-                 ZC_CONV Q,ED,&SOURCE_NAME
+                 ZC_CONV Q,ED,&N_SOURCE
                AWHEN C'8'
-                 ZC_CONV Q,DD,&SOURCE_NAME
+                 ZC_CONV Q,DD,&N_SOURCE
                AWHEN C'9'
-                 ZC_CONV Q,LD,&SOURCE_NAME
-               AWHEN C'A',C'F'
-         SGR   R0,R0
-         LGF   R1,&SOURCE_NAME
+                 ZC_CONV Q,LD,&N_SOURCE
+               AWHEN C'F',C'A',C'I'
+         LGF   R1,&N_SOURCE
+         LGR   R0,R1
+         SRAG  R0,R0,63
+               AWHEN C'G'
+         LG    R1,&N_SOURCE
+         LGR   R0,R1
+         SRAG  R0,R0,63
                AWHEN C'H'
-         SGR   R0,R0
-         LGH   R1,&SOURCE_NAME
+         LGH   R1,&N_SOURCE
+         LGR   R0,R1
+         SRAG  R0,R0,63
                AWHEN C'P'
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
-                 ZC_CONV Q,LD
+                 ZC_CONV Q,P,&N_SOURCE
                AWHEN C'Q'
-         LMG   R0,R1,&SOURCE_NAME    IGNORE HIGH 64 BITS
+         LMG   R0,R1,&N_SOURCE    IGNORE HIGH 64 BITS
                AWHEN C'Z'
-                 ZC_PACK31  ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                 ZC_PACK31  ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV Q,LD
@@ -1044,7 +1078,7 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STMG  R0,R1,&TARGET_NAME
+         STMG  R0,R1,&N_TARGET
          AEND
 .*
 .* CVT TO X
@@ -1052,67 +1086,66 @@
          AENTRY CVT_TO_X
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LE    0,&SOURCE_NAME
+         LE    0,&N_SOURCE
          CFER  0,0
          CVD   0,ZCVT_PWORK
-                 GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK,8
+                 GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
                AWHEN C'2'
-         LD    0,&SOURCE_NAME
+         LD    0,&N_SOURCE
          CFDR  0,0
          CVD   0,ZCVT_PWORK
-                 GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK,8
+                 GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
                AWHEN C'3'
-                 ZC_CONV P,LH,&SOURCE_NAME
+                 ZC_CONV P,LH,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK2,16
+                 GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'4'
-                 ZC_CONV P,EB,&SOURCE_NAME
+                 ZC_CONV P,EB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK2,16
+                 GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'5'
-                 ZC_CONV P,DB,&SOURCE_NAME
+                 ZC_CONV P,DB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK2,16
+                 GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'6'
-                 ZC_CONV P,LB,&SOURCE_NAME
+                 ZC_CONV P,LB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK2,16
+                 GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'7'
-                 ZC_CONV P,ED,&SOURCE_NAME
+                 ZC_CONV P,ED,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK2,16
+                 GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'8'
-                 ZC_CONV P,DD,&SOURCE_NAME
+                 ZC_CONV P,DD,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK2,16
+                 GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'9'
-                 ZC_CONV P,LD,&SOURCE_NAME
+                 ZC_CONV P,LD,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK2,16
+                 GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'A',C'F'
                      :&PLEN SETA &L_TARGET/2+1
                      :&POFF SETA 8-&PLEN
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
          CVD   0,ZCVT_PWORK
-                     GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK,8
+                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
                AWHEN C'H'
                      :&PLEN SETA &L_TARGET/2+1
                      :&POFF SETA 8-&PLEN
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
          CVD   0,ZCVT_PWORK
-                     GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK,8
+                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
                AWHEN C'P'
-                     GEN_EDIT &TARGET_NAME,&TARGET,&SOURCE_NAME,&L_SOURX
-               CE
+                     GEN_EDIT &N_TARGET,&T_IX,&N_SOURCE,&L_SOURCE
                AWHEN C'X'
-         MVC   &TARGET_NAME,&SOURCE_NAME
+         MVC   &N_TARGET,&N_SOURCE
                      AIF   (&L_TARGET GT &L_SOURCE)
                            ACALL RESET_SS1_TARGET
-         MVI   &TARGET_NAME+&L_SOURCE,C' '
+         MVI   &N_TARGET+&L_SOURCE,C' '
                            AIF (&L_TARGET GT &L_SOURCE+1)
-                               AIF ('&TARGET_NAME'(1,1) LT '0')
-         MVC   &TARGET_NAME+&L_SOURCE+1(&L_TARGET-&L_SOURCE-1),&TARGET_X
-               NAME+&L_SOURCE
+                               AIF ('&N_TARGET'(1,1) LT '0')
+         MVC   &N_TARGET+&L_SOURCE+1(&L_TARGET-&L_SOURCE-1),&N_TARGET+&X
+               L_SOURCE
                                AELSE
          MVC   &FIELD_OFF+&L_SOURCE+1(&L_TARGET-&L_SOURCE-1,&FIELD_REG)X
                ,&FIELD_OFF+&L_SOURCE.(&FIELD_REG)
@@ -1122,11 +1155,11 @@
                AWHEN C'Z'
                      :&PLEN SETA &L_SOURCE/2+1
                      AIF   (&PLEN LE 8)
-                        ZC_PACK31 ZCVT_PWORK,8,&SOURCE_NAME,&L_SOURCE
-                        GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK,8
+                        ZC_PACK31 ZCVT_PWORK,8,&N_SOURCE,&L_SOURCE
+                        GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
                      AELSE
-                     ZC_PACK31 ZCVT_PWORK1,&PLEN,&SOURCE_NAME,&L_SOURCE
-                     GEN_EDIT &TARGET_NAME,&TARGET,ZCVT_PWORK1,&PLEN
+                     ZC_PACK31 ZCVT_PWORK1,&PLEN,&N_SOURCE,&L_SOURCE
+                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK1,&PLEN
                      AEND
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
@@ -1137,79 +1170,79 @@
 .* CVT TO Z
 .*
          AENTRY CVT_TO_Z
-               :&ST SETB &SYM_PIC_SIGN(&TARGET)
+               :&ST SETB &S_TARGET
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LE    0,&SOURCE_NAME
+         LE    0,&N_SOURCE
          CFER  0,0
          CVD   0,ZCVT_PWORK
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK,8
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK,8
                AWHEN C'2'
-         LD    0,&SOURCE_NAME
+         LD    0,&N_SOURCE
          CGDR  0,0
          CVDG  0,ZCVT_PWORK2
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK2,16
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'3'
-                 ZC_CONV P,LH,&SOURCE_NAME
+                 ZC_CONV P,LH,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK2,16
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'4'
-                 ZC_CONV P,EB,&SOURCE_NAME
+                 ZC_CONV P,EB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK2,16
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'5'
-                 ZC_CONV P,DB,&SOURCE_NAME
+                 ZC_CONV P,DB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK2,16
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'6'
-                 ZC_CONV P,LB,&SOURCE_NAME
+                 ZC_CONV P,LB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK2,16
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'7'
-                 ZC_CONV P,ED,&SOURCE_NAME
+                 ZC_CONV P,ED,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK2,16
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'8'
-                 ZC_CONV P,DD,&SOURCE_NAME
+                 ZC_CONV P,DD,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK2,16
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'9'
-                 ZC_CONV P,LD,&SOURCE_NAME
+                 ZC_CONV P,LD,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK2,16
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'A',C'F',C'I'
-         L     0,&SOURCE_NAME
+         L     0,&N_SOURCE
          CVD   0,ZCVT_PWORK  
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK,8
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK,8
                AWHEN C'G'
-         LG    0,&SOURCE_NAME
+         LG    0,&N_SOURCE
          CVDG  0,ZCVT_PWORK2 
-                 ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK2,16
+                 ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'H'
-         LH    0,&SOURCE_NAME
+         LH    0,&N_SOURCE
          CVD   0,ZCVT_PWORK
-                 ZC_UNPK31  &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK,8
+                 ZC_UNPK31  &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK,8
                AWHEN C'P'
-         ZC_UNPK31  &TARGET_NAME,&L_TARGET,&ST,&SOURCE_NAME,&L_SOURCE
+         ZC_UNPK31  &N_TARGET,&L_TARGET,&ST,&N_SOURCE,&L_SOURCE
                AWHEN C'X',C'Z'
                      AIF   (&L_TARGET EQ &L_SOURCE)
-         MVC   &TARGET_NAME,&SOURCE_NAME
+         MVC   &N_TARGET,&N_SOURCE
                      AELSEIF (&L_TARGET LT &L_SOURCE)
-         MVC   &TARGET_NAME,&SOURCE_NAME+(&L_SOURCE-&L_TARGET) SKP HDIG
+         MVC   &N_TARGET,&N_SOURCE+(&L_SOURCE-&L_TARGET) SKP HDIG
                      AELSE
                            ACALL RESET_SS1_TARGET SET TARGET_NAME AND I
                            :&LPAD SETA &L_TARGET-&L_SOURCE
-         MVI   &TARGET_NAME,C'0' PAD WITH ZEROS ON LEFT
-                           AIF ('&TARGET_NAME'(1,1) LT '0')
+         MVI   &N_TARGET,C'0' PAD WITH ZEROS ON LEFT
+                           AIF ('&N_TARGET'(1,1) LT '0')
                                AIF (&LPAD_GT 1)
-         MVC   &TARGET_NAME+1(&LPAD-1),&TARGET_NAME
+         MVC   &N_TARGET+1(&LPAD-1),&N_TARGET
                                AEND
-         MVC   &TARGET_NAME+&LPAD.(&L_SOURCE),&SOURCE_NAME 
+         MVC   &N_TARGET+&LPAD.(&L_SOURCE),&N_SOURCE 
                            AELSE
                                AIF  (&LPAD GT 1)
          MVC   &FIELD_OFF+1(&LPAD-1,&FIELD_REG),&FIELD_OFF.(&FIELD_REG)
                                AEND
-         MVC   &FIELD_OFF+&LPAD.(&L_SOURCE,&FIELD_REG),&SOURCE_NAME
+         MVC   &FIELD_OFF+&LPAD.(&L_SOURCE,&FIELD_REG),&N_SOURCE
                            AEND
                      AEND 
                AELSE
@@ -1221,17 +1254,17 @@
 .* RESET SS1 TARGET - REMOVE LEN FROM OFF(LEN,REG) IF FOUND
 .*
          AENTRY RESET_SS1_TARGET
-         AIF   ('&TARGET_NAME'(1,1) GE '0')  IS THIS O(L,R) 
-               :&I SETA ('&TARGET_NAME' INDEX '(')
+         AIF   ('&N_TARGET'(1,1) GE '0')  IS THIS O(L,R) 
+               :&I SETA ('&N_TARGET' INDEX '(')
                AIF (&I GT 1)
-                   :&FIELD_OFF SETA '&TARGET_NAME'(1,&I-1)
-                   :&J SETA ('&TARGET_NAME' INDEX ',')
+                   :&FIELD_OFF SETA '&N_TARGET'(1,&I-1)
+                   :&J SETA ('&N_TARGET' INDEX ',')
                    AIF (&J GT &I+1)
-                       :&FIELD_LEN SETA '&TARGET_NAME'(&I+1,&J-1)
-                       :&FIELD_REG SETC '&TARGET_NAME'(&J+1,K'&TARGET_NX
-               AME-&J-1)
-                       :&TARGET_NAME SETC '&TARGET_NAME'(1,&I).'&TARGETX
-               _NAME'(&J+1,*)  O(R)
+                       :&FIELD_LEN SETA '&N_TARGET'(&I+1,&J-1)
+                       :&FIELD_REG SETC '&N_TARGET'(&J+1,K'&N_TARGET-&JX
+               -1)
+                       :&N_TARGET SETC '&N_TARGET'(1,&I).'&N_TARGET'(&JX
+               +1,*)  O(R)
                    AELSE
                        MNOTE 8,'GEN_MOVE RESET_SS1_TARGET NOT FOUND'
                        MEXIT
@@ -1243,12 +1276,12 @@
 .* PAD TARGET - USE OVERLAPPED MVC TO PAD TARGET FROM MVI
 .*
          AENTRY PAD_TARGET
-               AIF ('&TARGET_NAME'(1,1) LT '0')
-                   AIF (&SYM_LEN(&TARGET) GT 1)
-         MVC   &TARGET_NAME+1(L'&SYM_LEN(&TARGET)-1),&TARGET_NAME
+               AIF ('&N_TARGET'(1,1) LT '0')
+                   AIF (&L_TARGET GT 1)
+         MVC   &N_TARGET+1(L'&L_TARGET-1),&N_TARGET
                    AEND
                AELSE
-                   AIF (&SYM_LEN(&TARGET) GT 1)
+                   AIF (&L_TARGET GT 1)
          MVC   &FIELD_OFF+1(&FIELD_LEN-1,&FIELD_REG),&FIELD_OFF.(&FIELDX
                _REG)
                    AEND

@@ -19,6 +19,7 @@
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .* 09/12/08 RPI 764 upgrade to ZSTRMAC and allow CLOSE (reg)
 .* 04/22/09 RPI 1021 add MF=L/E and cleanup reg support        
+.* 05/19/09 RPI 1029 remove SPM macro code for compatibility   
 .*********************************************************************
 &N       ZCLOSE &DCBLIST, (DCB1,OPT1,DCB2,OPT2..) OR (DCB), DCB, ((r)) X
                &MODE=,   IGNORED AS IT WORKS IN EITHER MODE            X
@@ -69,11 +70,18 @@
                AELSE
                     LA     14,&MF(2)
                AEND
-               DO   UNTIL=((LTR,1,M,1),OR,(LTR,15,NZ,15))
+               B    ZCLOSE_DO_LOOP&SYSNDX
+ZCLOSE_DO_UNTIL&SYSNDX DS 0H
+               LTR  1,1
+               BM   ZCLOSE_DO_EXIT&SYSNDX
+               LTR  15,15
+               BNZ  ZCLOSE_DO_EXIT&SYSNDX
+ZCLOSE_DO_LOOP&SYSNDX DS 0H
                     L   1,0(14)
                     SVC 20
                     AHI 14,4
-               ENDDO
+               B    ZCLOSE_DO_UNTIL&SYSNDX
+ZCLOSE_DO_EXIT&SYSNDX DS 0H
          AELSEIF ('&MF(1)' EQ 'I') 
 .*
 .* STD FORM  

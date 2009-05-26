@@ -131,7 +131,8 @@ public  class  z390 extends JApplet
      * 07/30/08 RPI 888 add leading space which may be eaten by PAUSE before EXIT for batch command
      *          also switch cmd_input_writer to do auto flush to prevent sporatic chopped commands  
      * 09/08/08 RPI 872 help menu "Guide" link to www.z390.org or webdoc\index.html 
-     * 09/10/08 RPI 904 correct help menu "Guide" to support LSN path         
+     * 09/10/08 RPI 904 correct help menu "Guide" to support LSN path 
+     * 05/23/09 RPI 1041 replace EDIT SELECTALL with SELECT LOG and SELECT CMD        
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -302,7 +303,8 @@ public  class  z390 extends JApplet
         JMenuItem edit_menu_cut = null;        
         JMenuItem edit_menu_copy = null;       
         JMenuItem edit_menu_paste = null;      
-        JMenuItem edit_menu_select_all = null; 
+        JMenuItem edit_menu_select_log = null; // RPI 1041
+        JMenuItem edit_menu_select_cmd = null; // RPI 1041
         JMenuItem edit_menu_copy_log = null;   
         JMenuItem edit_menu_editor = null; 
         JCheckBoxMenuItem option_menu_ascii = null;
@@ -1320,7 +1322,8 @@ public  class  z390 extends JApplet
    	          edit_menu_cut.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));    
    	          edit_menu_copy.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
    	          edit_menu_paste.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));  
-   	          edit_menu_select_all.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); 
+   	          edit_menu_select_log.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));
+   	          edit_menu_select_cmd.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); 
    	          edit_menu_copy_log.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
    	          edit_menu_editor.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));    
    	          option_menu_ascii.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); 
@@ -1868,7 +1871,8 @@ public  class  z390 extends JApplet
      edit_menu_cut    = new JMenuItem("Cut");
      edit_menu_copy   = new JMenuItem("Copy");
      edit_menu_paste  = new JMenuItem("Paste");
-     edit_menu_select_all = new JMenuItem("Select All");
+     edit_menu_select_log = new JMenuItem("Select Log"); // RPI 1041
+     edit_menu_select_cmd = new JMenuItem("Select Cmd"); // RPI 1041
      edit_menu_copy_log   = new JMenuItem("Copy Log");
      edit_menu_editor = new JMenuItem("Editor");
      option_menu_ascii = new JCheckBoxMenuItem("ASCII");
@@ -1917,7 +1921,8 @@ public  class  z390 extends JApplet
      edit_menu_cut.setMnemonic(KeyEvent.VK_T);
      edit_menu_copy.setMnemonic(KeyEvent.VK_C);
      edit_menu_paste.setMnemonic(KeyEvent.VK_P);
-     edit_menu_select_all.setMnemonic(KeyEvent.VK_S);
+     edit_menu_select_log.setMnemonic(KeyEvent.VK_S);
+     edit_menu_select_cmd.setMnemonic(KeyEvent.VK_M);
      edit_menu_copy_log.setMnemonic(KeyEvent.VK_L);
      edit_menu_editor.setMnemonic(KeyEvent.VK_N);
      option_menu_ascii.setMnemonic(KeyEvent.VK_I);
@@ -1982,7 +1987,8 @@ public  class  z390 extends JApplet
      edit_menu_cut.addActionListener(this);
      edit_menu_copy.addActionListener(this);
      edit_menu_paste.addActionListener(this);
-     edit_menu_select_all.addActionListener(this);
+     edit_menu_select_log.addActionListener(this);
+     edit_menu_select_cmd.addActionListener(this);
      edit_menu_copy_log.addActionListener(this);
      edit_menu_editor.addActionListener(this);
      option_menu_ascii.addActionListener(this);
@@ -2018,7 +2024,8 @@ public  class  z390 extends JApplet
      edit_menu.add(edit_menu_cut);
      edit_menu.add(edit_menu_copy);
      edit_menu.add(edit_menu_paste);
-     edit_menu.add(edit_menu_select_all);
+     edit_menu.add(edit_menu_select_log);
+     edit_menu.add(edit_menu_select_cmd);
      edit_menu.add(edit_menu_copy_log);
      edit_menu.add(edit_menu_editor);
      option_menu.add(option_menu_ascii);
@@ -2061,7 +2068,8 @@ public  class  z390 extends JApplet
 	     edit_menu_cut.setToolTipText(text_font_pfx + "Cut selected text" + text_font_sfx);
 	     edit_menu_copy.setToolTipText(text_font_pfx + "Copy selected text to clipboard" + text_font_sfx);
 	     edit_menu_paste.setToolTipText(text_font_pfx + "Paste clipboard text (append if log has focus" + text_font_sfx);
-	     edit_menu_select_all.setToolTipText(text_font_pfx + "Select all text" + text_font_sfx);
+	     edit_menu_select_log.setToolTipText(text_font_pfx + "Select all log text" + text_font_sfx);
+	     edit_menu_select_cmd.setToolTipText(text_font_pfx + "Select all cmd text" + text_font_sfx);
 	     edit_menu_copy_log.setToolTipText(text_font_pfx + "Copy current log file to clipboard" + text_font_sfx);
 	     edit_menu_editor.setToolTipText(text_font_pfx + "Launch editor to edit selected data on clipboard" + text_font_sfx);
 	     option_menu_ascii.setToolTipText(text_font_pfx + "ASCII use ASCII versus EBCDIC for character set" + text_font_sfx);
@@ -2196,7 +2204,8 @@ public  class  z390 extends JApplet
 		   	   }
 		}
 	  	if (event_name.equals("COPY LOG")){
-	           z390_cmd_line.setText("COPYLOG");
+	  			event_ok = true;
+	            z390_cmd_line.setText("COPYLOG");
 		}
  	  	if (event_name.equals("CUT")){
 		   	   event_ok = true;
@@ -2320,14 +2329,15 @@ public  class  z390 extends JApplet
 		  }
 	  	 break;
 	  case 'S':
-	  	 if (event_name.equals("SELECT ALL")){
+	  	 if (event_name.equals("SELECT LOG")){
 		   	   event_ok = true;
-	   	       if  (log_text == focus_comp){
-	   	       	   log_text.selectAll(); 
-	   	       }
-		   	   if  (z390_cmd_line ==  focus_comp){
-	               z390_cmd_line.selectAll();
-		   	   }
+		   	   log_text.requestFocus();
+   	       	   log_text.selectAll(); 
+	  	 }
+	  	 if (event_name.equals("SELECT CMD")){
+		   	   event_ok = true; 
+		   	   z390_cmd_line.requestFocus();
+		   	   z390_cmd_line.selectAll();
 		 }
 		 if (event_name.equals("STATS")){
 		   	   if (tz390.opt_stats){
@@ -2681,14 +2691,11 @@ public  class  z390 extends JApplet
      * Save last component to get focus
      */	
      	   Component temp_comp = e.getComponent();
-
-    	   if (temp_comp == log_text
-    	   		|| focus_comp == log_view){
-    	   	  focus_comp = log_text;
-    	   }
     	   if  (temp_comp == z390_cmd_line){
     	   	   focus_comp = temp_comp;
-    	   }    	   
+    	   } else {
+    		   focus_comp = log_text; // RPI 1041 
+    	   }
     }
 	    private void exit_command(){
 	    /*

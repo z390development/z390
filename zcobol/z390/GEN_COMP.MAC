@@ -36,7 +36,7 @@
          ACALL RESET_SS1_FIELD1
          CLI   &FIELD1,C&FIELD2
         AELSE
-           :&LITSP SETA K'&FIELD2-2 DSHX
+           :&LITSP SETA K'&FIELD2-2 
            AIF (&LITSP LT &SYM_LEN(&FIELD1_IX))
                :&LITSP SETA &SYM_LEN(&FIELD1_IX)
            AEND
@@ -310,7 +310,6 @@
           AELSE
                :&LLIT SETA &L_FIELD1
           AEND
- MNOTE 'DSHX LLIT=&LLIT'
          LARL  R1,=CL(&LLIT)' '
          CLC   &FIELD1,0(R1)
                    AEND

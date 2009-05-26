@@ -90,10 +90,10 @@ CMP64R32_H DS  0H
 CVTLBTQ  DS    0H
          USING *,R15
          STMG  R2,R3,ZCSAVE
-         STD   F0,ZCVT_WORKAREA
-         STD   F2,ZCVT_WORKAREA+8
-         LMG   R0,R1,ZCVT_WORKAREA
-         IF    (CLC,ZCVT_WORKAREA(16),EQ,ZCVT_ZERO) IS THIS ZERO
+         STD   F0,ZCWORK
+         STD   F2,ZCWORK+8
+         LMG   R0,R1,ZCWORK
+         IF    (CLC,ZCWORK(16),EQ,ZCVT_ZERO) IS THIS ZERO
                BR  14  YES RETURN WITH R0-R1 ZERO
          ENDIF
          LGR   R2,R0           
@@ -138,7 +138,7 @@ CVTLBTQ  DS    0H
                          NGR  R0,R3       CLEAR BITS SHIFTED OUT OF R1
                     ENDIF
                ENDIF
-               IF   (TM,ZCVT_WORKAREA,O,X'80') IS RESULT NEG
+               IF   (TM,ZCWORK,O,X'80') IS RESULT NEG
                     LGFI  R2,-1
                     XGR   R0,R2
                     XGR   R1,R2
@@ -185,9 +185,9 @@ CVTQTLB  DS    0H
          ELSEIF 
                BAS  R2,CVTLB_NORM  MORMAIZE AND SET BIAS EXP
          ENDIF
-         STMG  R0,R1,ZCVT_WORKAREA
-         LD    F4,ZCVT_WORKAREA
-         LD    F6,ZCVT_WORKAREA+8
+         STMG  R0,R1,ZCWORK
+         LD    F4,ZCWORK
+         LD    F6,ZCWORK+8
          LMG   R2,R4,ZCSAVE
          BR    R14
 CVTLB_NORM DS  0H
@@ -229,19 +229,19 @@ DIV64R32 DS    0H
          STG   R12,ZCSAVE
          STCM  R0,8,SIGN         SAVE HIGH BYTE WITH N64 SIGN
          BAS   R12,DIV64R32_LCR  COMPLIMENT IF NEGATIVE
-         STM   R0,R1,ZCVT_WORKAREA+1
-         MVI   ZCVT_WORKAREA,X'50'   EXP = X'40' + 16 NIBBLES
-         MVI   ZCVT_WORKAREA+8,X'42' EXP = X'40' + 16 - 14 NIBBLES
-         STC   R1,ZCVT_WORKAREA+9    LOW BYTE IN 2ND HALF
-         XC    ZCVT_WORKAREA+10(6),ZCVT_WORKAREA+10 CLEAR LAST 6
-         LD    F0,ZCVT_WORKAREA
-         LD    F2,ZCVT_WORKAREA+8
-         STM   R2,R3,ZCVT_WORKAREA+1
-         MVI   ZCVT_WORKAREA,X'50'   EXCESS X'40' + 16 NIBBLES FOR FL8
-         MVI   ZCVT_WORKAREA+8,X'42' + 14 NIBBLES FOR 2ND HALF
-         STC   R3,ZCVT_WORKAREA+9    LOW BYTE IN 2ND HALF
-         LD    F1,ZCVT_WORKAREA
-         LD    F3,ZCVT_WORKAREA+8
+         STM   R0,R1,ZCWORK+1
+         MVI   ZCWORK,X'50'   EXP = X'40' + 16 NIBBLES
+         MVI   ZCWORK+8,X'42' EXP = X'40' + 16 - 14 NIBBLES
+         STC   R1,ZCWORK+9    LOW BYTE IN 2ND HALF
+         XC    ZCWORK+10(6),ZCWORK+10 CLEAR LAST 6
+         LD    F0,ZCWORK
+         LD    F2,ZCWORK+8
+         STM   R2,R3,ZCWORK+1
+         MVI   ZCWORK,X'50'   EXCESS X'40' + 16 NIBBLES FOR FL8
+         MVI   ZCWORK+8,X'42' + 14 NIBBLES FOR 2ND HALF
+         STC   R3,ZCWORK+9    LOW BYTE IN 2ND HALF
+         LD    F1,ZCWORK
+         LD    F3,ZCWORK+8
          DXR   F0,F1                 F0-2 = N64/MAX64
          FIXR  F4,R0                 F4-6 = INTEGER
          SXR   F0,F4                 F0-2 = FRACTION OF MAX64
@@ -249,9 +249,9 @@ DIV64R32 DS    0H
          LD    F4,=X'5110000000000000'  FORCE EXP 51 AND ROUND TO INT
          LD    F6,=X'4300080000000000'
          AXR   F0,F4                 F0-2 = MOD(MAX64,N64) SET EXP+RND     
-         STD   F0,ZCVT_WORKAREA      STORE HFP RESULT LT WITH EXP X'51'
-         STD   F2,ZCVT_WORKAREA+8
-         LM    R0,R2,ZCVT_WORKAREA   LOAD R0-R2 WITH 12 BYTES OF RESULT
+         STD   F0,ZCWORK      STORE HFP RESULT LT WITH EXP X'51'
+         STD   F2,ZCWORK+8
+         LM    R0,R2,ZCWORK   LOAD R0-R2 WITH 12 BYTES OF RESULT
          SLDL  R0,12                 ALIGN FIRST 13 NIBBLES N64 FROM F0
          SRL   R2,12                 ALIGN LAST 3 NIBBLES FROM F2
          N     R2,=X'00000FFF'
@@ -325,12 +325,12 @@ DIVQ128  DS 0H
 *
 * USE 2 DLGR FOR DIVISOR < HIGH 64 DIVIDEND
 *
-                     STMG R0,R3,ZCVT_WORKAREA  SAVE DIVIDEND & DIVISOR
+                     STMG R0,R3,ZCWORK  SAVE DIVIDEND & DIVISOR
                      LGR   R1,R0
                      SGR   R0,R0
                      DLGR  R0,R3  R0 = REM, R1 = QUOTIENT
                      LGR   R2,R1  R2 = HIGH QUOTIENT
-                     LG    R1,ZCVT_WORKAREA+8 RELOAD LOW DIVIDEND
+                     LG    R1,ZCWORK+8 RELOAD LOW DIVIDEND
                      DLGR  R0,R3  R0 = REM, R1 = QUOTIENT
                      LGR   R3,R0  R3 = LOW QUOTIENT
                      LGR   R3,R1
@@ -341,7 +341,7 @@ DIVQ128  DS 0H
 *
 * CALC FIRST EST FOR DIVISOR > 64 AND CHECK IF HIGH BY 1
 *             
-               STMG R0,R3,ZCVT_WORKAREA  SAVE Q DIVIDEND AND DIVISOR
+               STMG R0,R3,ZCWORK  SAVE Q DIVIDEND AND DIVISOR
                LGR  R1,R0
                DSGR R0,R2  
                LGR  R3,R1             
@@ -384,7 +384,7 @@ DIVQ128  DS 0H
 *
 DIVQ_CALC_REM DS 0H
          STMG R2,R3,DIVQ_TRIAL
-         LMG  R0,R1,ZCVT_WORKAREA+16  R2-R3 = DIVISOR
+         LMG  R0,R1,ZCWORK+16  R2-R3 = DIVISOR
          STM  R14,R15,DIVQ_SAVE
          L    R15,ZCVT_MPYQ128
          BASR R14,R15                 R0-R1 = QUO * DIVR
@@ -392,7 +392,7 @@ DIVQ_CALC_REM DS 0H
          USING *,R14
          LM   R14,R15,DIVQ_SAVE
          DROP R14
-         LMG   R2,R3,ZCVT_WORKAREA    R2-R3 = DIVIDEND
+         LMG   R2,R3,ZCWORK    R2-R3 = DIVIDEND
          SLGR  R3,R1
          SLBGR R2,R0                  R2-R3 = REMAINDER
          LGR   R0,R2
@@ -704,6 +704,7 @@ TABNUMZ  DC    240X'FF',10X'00',6X'FF'        F0-F9 ONLY
 * SHARED DATA
 *
 ZCSAVE   DS      16XL8 SAVE 64 BIT REGS 
+ZCWORK   DS      2XL16 SAVE WORK FOR 2 QW
 TRUE     EQU     1
 FALSE    EQU     0
          EQUREGS REGS=GPR

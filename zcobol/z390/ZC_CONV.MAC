@@ -13,6 +13,38 @@
 .*********************************************************************
          ZC_CONV &TYPE1,&TYPE2,&NAME2
          COPY  ZC_WS
+         AIF   (K'&TYPE1 LT 1 OR K'&TYPE1 GT 2                         X
+               OR K'&TYPE2 LT 1 OR K'&TYPE2 GT 2)
+               MNOTE 8,'ZC_CONV INVALID TYPE LENGTH'
+               MEXIT
+         AEND
+         AIF   ('&TYPE1' EQ '&TYPE2')
+               AIF  ('&TYPE1'(1,1) EQ 'E')
+                    AIF (T'&NAME2 EQ 'O')
+         LER   R0,R4
+                    AELSE
+         LE    R0,&NAME2
+                    AEND
+               AELSEIF ('&TYPE1'(1,1) EQ 'D')
+                    AIF (T'&NAME2 EQ 'O')
+         LDR   R0,R4
+                    AELSE
+         LD    R0,&NAME2
+                    AEND
+               AELSEIF ('&TYPE1'(1,1) EQ 'L')
+                    AIF (T'&NAME2 EQ 'O')
+         LDR   R0,R4
+         LDR   R2,R6
+                    AELSE
+         LD    R0,&NAME2
+         LD    R2,8+&NAME2
+                    AEND
+               AELSE
+                    MNOTE 8,'ZC_CONV INVALID TYPE - &TYPE1'
+                    MEXIT
+               AEND
+               MEXIT
+         AEND
        :&PFPO_FROM SETC 'PFPO_TYPE_&TYPE2'  
        AIF ('&TYPE2' EQ 'Q') CVT Q TO LB      
            AIF ('&NAME2' NE '')  ALREADY LOADED IF NO NAME2

@@ -9,6 +9,7 @@
 .* 10/31/08 initial coding for Z390 GEN_DIV using GEN_MPY as model    
 .* 02/25/09 RPI 1004 add support for types 1,2,E,D,L &ZC_FLOAT type    
 .* 03/17/09 RPI 1004 add support for types 1-9,Q                       
+.* 04/28/09 RPI 1003 add support for ne
 .*********************************************************************
        GEN_DIV &NDD,&TDD,&LDD,&PDD, DIVIDEND  NAME/LIT,TYPE,LEN,PLACES X                  
                &NDR,&TDR,&LDR,&PDR, DIVISOR   NAME/LIT,TYPE,LEN,PLACES X                  
@@ -94,7 +95,7 @@
 .*
 .* SET NDRX TO R1 FOR LIT AND SET LDRP IF P, LDRZ IF Z 
 .*
-      AIF (&LDR EQ 0)                                                   
+      AIF (&LDR EQ 0)                                     
        ACASE (C2A('&TDR'))
        AWHEN C'1'
          LARL  R1,=EH'&NDR'
@@ -192,7 +193,7 @@
                AWHEN C'9'
                  ZC_CONV EH,LD,&NDRX
                AWHEN C'F'
-         L     R1,&NDRX
+         L     R0,&NDRX
          CEFR  F0,R0
                AWHEN C'G'
          LG    R0,&NDRX
@@ -369,7 +370,7 @@
          STE   F0,&NQ
                AWHEN C'2'
 .*       LDR   F4,F0
-.*               ZC_CONV DH.DH
+.*               ZC_CONV DH,DH
          STD   F0,&NQ
                AWHEN C'3'
          LDR   F4,F0
@@ -508,7 +509,7 @@
                AWHEN C'2'
          LDR   F4,F0
          LDR   F6,F2
-                 ZC_CONV DH.LH
+                 ZC_CONV DH,LH
          STD   F0,&NQ
                AWHEN C'3'
          STD   F0,&NQ
@@ -782,7 +783,7 @@
          STE   F0,&NQ
                AWHEN C'2'
          LDR   F4,F0
-                 ZC_CONV DH.DB
+                 ZC_CONV DH,DB
          STD   F0,&NQ
                AWHEN C'3'
          LDR   F4,F0
@@ -919,10 +920,12 @@
                AWHEN C'2'
          LDR   F4,F0
          LDR   F6,F2
-                 ZC_CONV DH.LB
+                 ZC_CONV DH,LB
          STD   F0,&NQ
                AWHEN C'3'
-,*               ZC_CONV LH,LB
+         LDR   F4,F0
+         LDR   F6,F2
+                 ZC_CONV LH,LB
          STD   F0,&NQ
          STD   F2,8+&NQ
                AWHEN C'4'
@@ -1197,7 +1200,7 @@
          STE   F0,&NQ
                AWHEN C'2'
          LDR   F4,F0
-                 ZC_CONV DH.DD
+                 ZC_CONV DH,DD
          STD   F0,&NQ
                AWHEN C'3'
          LDR   F4,F0
@@ -1288,8 +1291,8 @@
                AWHEN C'9'
                  ZC_CONV LD,LD,&NDRX
                AWHEN C'F'
-         L     R0,&NDRX
-         CXFTR F0,R0
+         LGF   R0,&NDRX
+         CXGTR F0,R0
                AWHEN C'G'
          LG    R0,&NDRX
          CXGTR F0,R0
@@ -1334,7 +1337,7 @@
                AWHEN C'2'
          LDR   F4,F0
          LDR   F6,F2
-                 ZC_CONV DH.LD
+                 ZC_CONV DH,LD
          STD   F0,&NQ
                AWHEN C'3'
          LDR   F4,F0
@@ -1416,22 +1419,31 @@
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV Q,EH,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96 BITS
                AWHEN C'2'
                  ZC_CONV Q,DH,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96 BITS
                AWHEN C'3'          
                  ZC_CONV Q,LH,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96 BITS
                AWHEN C'4'
                  ZC_CONV Q,EB,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96 BITS
                AWHEN C'5'
                  ZC_CONV Q,DB,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96 BITS
                AWHEN C'6'
                  ZC_CONV Q,LB,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96 BITS
                AWHEN C'7'
                  ZC_CONV Q,ED,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96 BITS
                AWHEN C'8'
                  ZC_CONV Q,DD,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96 BITS
                AWHEN C'9'
                  ZC_CONV Q,LD,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96 BITS
                AWHEN C'F'
          L     2,&NDRX
                AWHEN C'G'
@@ -1468,22 +1480,31 @@
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV Q,EH,&NDRX
+                 LGR R2,R1 IGNORE HIGH 64 BITS
                AWHEN C'2'
                  ZC_CONV Q,DH,&NDRX
+                 LGR R2,R1 IGNORE HIGH 64 BITS
                AWHEN C'3'          
                  ZC_CONV Q,LH,&NDRX
+                 LGR R2,R1 IGNORE HIGH 64 BITS
                AWHEN C'4'
                  ZC_CONV Q,EB,&NDRX
+                 LGR R2,R1 IGNORE HIGH 64 BITS
                AWHEN C'5'
                  ZC_CONV Q,DB,&NDRX
+                 LGR R2,R1 IGNORE HIGH 64 BITS
                AWHEN C'6'
                  ZC_CONV Q,LB,&NDRX
+                 LGR R2,R1 IGNORE HIGH 64 BITS
                AWHEN C'7'
                  ZC_CONV Q,ED,&NDRX
+                 LGR R2,R1 IGNORE HIGH 64 BITS
                AWHEN C'8'
                  ZC_CONV Q,DD,&NDRX
+                 LGR R2,R1 IGNORE HIGH 64 BITS
                AWHEN C'9'
                  ZC_CONV Q,LD,&NDRX
+                 LGR R2,R1 IGNORE HIGH 64 BITS
                AWHEN C'F'
          LGF   2,&NDRX
                AWHEN C'G'
@@ -1496,7 +1517,7 @@
                AWHEN C'Q'
          LG    2,8+&NDRX  IGNORE HIGH 64 BITS
                AWHEN C'Z'
-               C_PACK31 ZCVT_PWORK1,16,&NDRX,&LDR
+                 ZC_PACK31 ZCVT_PWORK1,16,&NDRX,&LDR
          CVBG  2,ZCVT_PWORK1
                AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
@@ -1520,49 +1541,49 @@
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV EH,Q
          STE   F0,&NQ
                AWHEN C'2'
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV DH,Q
          STD   F0,&NQ
                AWHEN C'3'
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV LH,Q
          STD   F0,&NQ
          STD   F2,8+&NQ
                AWHEN C'4'
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV EB,Q
          STE   F0,&NQ
                AWHEN C'5'
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV DB,Q
          STD   F0,&NQ
                AWHEN C'6'
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV LB,Q
          STD   F0,&NQ
          STD   F2,8+&NQ
                AWHEN C'7'
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV ED,Q
          STE   F0,&NQ
                AWHEN C'8'
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV DD,Q
          STD   F0,&NQ
                AWHEN C'9'
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV LD,Q
          STD   F0,&NQ
          STD   F2,8+&NQ
@@ -1576,9 +1597,9 @@
          CVDG  1,ZCVT_PWORK1
          ZAP   &NQ,ZCVT_PWORK1
                AWHEN C'Q'
-         STG   1,8+&NQ
-         SRAG  1,63
-         STG   1,&NQ
+         LGR   R0,R1
+         SRAG  R0,R0,63
+         STMG  R0,R1,&NQ
                AWHEN C'Z'
          CVDG  1,ZCVT_PWORK1
                ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK1,16
@@ -1616,9 +1637,9 @@
                AIF (&SQ EQ 0)
          LPGR  1,1
                AEND
-         STG   1,8+&NR
-         SRAG  1,63
-         STG   1,&NR
+         LGR   R0,R1
+         SRAG  R0,R0,63
+         STMG  R0,R1,&NR
                AWHEN C'Z'
          CVDG  0,ZCVT_PWORK1
          :&PLEN SETA &LR/2+1
@@ -1637,22 +1658,31 @@
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV Q,EH,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96
                AWHEN C'2'
                  ZC_CONV Q,DH,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96
                AWHEN C'3'          
                  ZC_CONV Q,LH,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96
                AWHEN C'4'
                  ZC_CONV Q,EB,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96
                AWHEN C'5'
                  ZC_CONV Q,DB,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96
                AWHEN C'6'
                  ZC_CONV Q,LB,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96
                AWHEN C'7'
                  ZC_CONV Q,ED,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96
                AWHEN C'8'
                  ZC_CONV Q,DD,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96
                AWHEN C'9'
                  ZC_CONV Q,LD,&NDRX
+                 LR  R2,R1 IGNORE HIGH 96
                AWHEN C'F'
          L     2,&NDRX
                AWHEN C'G'
@@ -1663,7 +1693,7 @@
          ZAP   ZCVT_PWORK,&NDRX
          CVB   2,ZCVT_PWORK
                AWHEN C'Q'
-         LH    2,12+&NDRX  IGNORE HIGH 12 BITS
+         LH    2,14+&NDRX  IGNORE HIGH 112 BITS
                AWHEN C'Z'
                 ZC_PACK31 ZCVT_PWORK1,16,&NDRX,&LDR
          CVB   2,ZCVT_PWORK1+8
@@ -1828,7 +1858,7 @@
          ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDR)
          LMG   R0,R1,ZCVT_PWORK1
          CXSTR F4,R0
-               ZC_CONV Q.LD
+               ZC_CONV Q,LD
                AIF (&SQ EQ 0)
          LPGR  0,1
                AEND
@@ -1852,7 +1882,6 @@
                AEND
          LMG   R0,R1,ZCVT_PWORK1
          CXSTR F4,R0
-               ZC_CONV Q.LD
                  ZC_CONV Q,LD
          STMG  R0,R1,&NQ
                AWHEN C'Z'
@@ -1980,7 +2009,7 @@
                AIF (&SQ EQ 0)
          OI    ZCVT_PWORK2+15,X'F'
                AEND
-         LM    R0,R1,ZCVT_PWORK2
+         LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV Q,LD
          STMG  0,1,&NR
@@ -2003,22 +2032,40 @@
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV Q,EH,&NDRX
+         LGR   R2,R0
+         LGR   R3,R1
                AWHEN C'2'
                  ZC_CONV Q,DH,&NDRX
+         LGR   R2,R0
+         LGR   R3,R1
                AWHEN C'3'          
                  ZC_CONV Q,LH,&NDRX
+         LGR   R2,R0
+         LGR   R3,R1
                AWHEN C'4'
                  ZC_CONV Q,EB,&NDRX
+         LGR   R2,R0
+         LGR   R3,R1
                AWHEN C'5'
                  ZC_CONV Q,DB,&NDRX
+         LGR   R2,R0
+         LGR   R3,R1
                AWHEN C'6'
                  ZC_CONV Q,LB,&NDRX
+         LGR   R2,R0
+         LGR   R3,R1
                AWHEN C'7'
                  ZC_CONV Q,ED,&NDRX
+         LGR   R2,R0
+         LGR   R3,R1
                AWHEN C'8'
                  ZC_CONV Q,DD,&NDRX
+         LGR   R2,R0
+         LGR   R3,R1
                AWHEN C'9'
                  ZC_CONV Q,LD,&NDRX
+         LGR   R2,R0
+         LGR   R3,R1
                AWHEN C'F'
          LGF   R3,&NDRX
          SGR   R2,R2
@@ -2026,11 +2073,11 @@
          LG    R3,&NDRX
          SGR   R2,R2
                AWHEN C'H'
-         LMG   R0,R1,&NDDX
          LGH   R3,&NDRX
+         SGR   R2,R2
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LM    R0,R1,ZCVT_PWORK2
+         LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                ZC_CONV Q,LD
          LGR   R2,R0
@@ -2364,7 +2411,7 @@
                AIF (&SQ EQ 0)
          OI    ZCVT_PWORK1+15,X'F'
                AEND
-         LM    R0,R1,ZCVT_PWORK1
+         LMG   R0,R1,ZCVT_PWORK1
          CXSTR F4,R0
                   ZC_CONV Q,LD
          STMG  R0,R1,&NQ
@@ -2530,57 +2577,57 @@
                AWHEN C'1'
          LGFR  R1,R1
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV EH,Q
          STE   F0,&NQ
                AWHEN C'2'
          LGFR  R1,R1
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV DH,Q
          STD   F0,&NQ
                AWHEN C'3'
          LGFR  R1,R1
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV LH,Q
          STD   F0,&NQ
          STD   F2,8+&NQ
                AWHEN C'4'
          LGFR  R1,R1
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV EB,Q
          STE   F0,&NQ
                AWHEN C'5'
          LGFR  R1,R1
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV DB,Q
          STD   F0,&NQ
                AWHEN C'6'
          LGFR  R1,R1
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV LB,Q
          STD   F0,&NQ
          STD   F2,8+&NQ
                AWHEN C'7'
          LGFR  R1,R1
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV ED,Q
          STE   F0,&NQ
                AWHEN C'8'
          LGFR  R1,R1
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV DD,Q
          STD   F0,&NQ
                AWHEN C'9'
          LGFR  R1,R1
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV LD,Q
          STD   F0,&NQ
          STD   F2,8+&NQ
@@ -2596,9 +2643,9 @@
          ZAP   &NQ,ZCVT_PWORK
                AWHEN C'Q'
          LGFR  1,1
-         STG   1,8+&NQ
-         SRAG  1,63
-         STG   1,&NQ
+         LGR   R0,R1
+         SRAG  R0,R0,63
+         STMG  R0,R1,&NQ
                AWHEN C'Z'
          CVD   1,ZCVT_PWORK
                ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK,8
@@ -2618,57 +2665,57 @@
                AWHEN C'1'
          LGFR  R1,R0
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV EH,Q
          STE   F0,&NQ
                AWHEN C'2'
          LGFR  R1,R0
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV DH,Q
          STD   F0,&NQ
                AWHEN C'3'
          LGFR  R1,R0
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV LH,Q
          STD   F0,&NQ
          STD   F2,8+&NQ
                AWHEN C'4'
          LGFR  R1,R0
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV EB,Q
          STE   F0,&NQ
                AWHEN C'5'
          LGFR  R1,R0
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV DB,Q
          STD   F0,&NQ
                AWHEN C'6'
          LGFR  R1,R0
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV LB,Q
          STD   F0,&NQ
          STD   F2,8+&NQ
                AWHEN C'7'
          LGFR  R1,R0
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV ED,Q
          STE   F0,&NQ
                AWHEN C'8'
          LGFR  R1,R0
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV DD,Q
          STD   F0,&NQ
                AWHEN C'9'
          LGFR  R1,R0
          LGR   R0,R1
-         SRAG  R0,63
+         SRAG  R0,R0,63
                  ZC_CONV LD,Q
          STD   F0,&NQ
          STD   F2,8+&NQ
@@ -2683,10 +2730,10 @@
          CVD   0,ZCVT_PWORK
          ZAP   &NR,ZCVT_PWORK
                AWHEN C'Q'
-         LGFR  0,0
-         STG   0,8+&NR
-         SRAG  0,63
-         STG   0,&NR
+         LGFR  R1,R0
+         LGR   R0,R1
+         SRAG  R0,R0,63
+         STMG  R0,R1,&NR
                AWHEN C'Z'
          CVD   0,ZCVT_PWORK
                ZC_UNPK31 &NR,&LR,&SR,ZCVT_PWORK,8

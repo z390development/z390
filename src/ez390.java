@@ -166,6 +166,7 @@ import javax.swing.Timer;
     * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, con
     * 01/08/08 RPI 782 stop interval timer before exit
     * 03/21/08 RPI 819 zero R15 at startup to get rid of x'F4's
+    * 05/23/09 RPI 1040 wait for pz390 to end before abend/dump S422/S222
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -418,6 +419,9 @@ private void monitor_update(){
     		&& !pz390.psw_check
             && monitor_next_time > sz390.tod_time_limit){ // RPI 837
     		pz390.set_psw_check(pz390.psw_pic_timeout);  // timeout
+    	    while (pz390_running){
+    	    	Thread.yield(); // RPI 1040 wait to end exec before dump
+    	    }
     	}
 	}
     int cmd_id = 0;

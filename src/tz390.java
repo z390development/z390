@@ -223,7 +223,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.00c";  //dsh
+    String version    = "V1.5.00d";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -569,7 +569,7 @@ public  class  tz390 {
          */
         byte fp_type    = 0;
         byte fp_db_type = 0; // BFP long - double
-        byte fp_dd_type = 1; // DPF long - big dec
+        byte fp_dd_type = 1; // DFP long - big dec
         byte fp_dh_type = 2; // HFP long - big dec
         byte fp_eb_type = 3; // BFP short - float
         byte fp_ed_type = 4; // DFP short - big dec

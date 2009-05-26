@@ -9,16 +9,42 @@
 .* 10/28/08 initial coding for Z390 GEN_SUB using GEN_MOVE as model    
 .* 02/25/09 RPI 1004 add support for types 1,2,E,D,L &ZC_FLOAT type    
 .* 03/17/09 RPI 1004 add support for types 1-9,Q                       
+.* 04/28/09 RPI 1003 add support for temp vars with neg IX
 .*********************************************************************
          GEN_SUB &T_NAME,&T_IX,&S_NAME,&S_IX,&ROUNDED,&ONSIZE 
          COPY  ZC_WS
-         :&TARGET_NAME SETC '&T_NAME'
-         :&SOURCE_NAME SETC '&S_NAME'
-         :&TARGET SETA &T_IX
-         :&SOURCE SETA &S_IX
-         AIF   (&TARGET EQ 0)
-               MNOTE 8,'GEN_SUB UNDEFINED TARGET - &TARGET'
-               MEXIT
+         AIF (&T_IX GT 0)
+             :&N_TARGET SETC '&T_NAME'
+             :&L_TARGET SETA  &SYM_LEN(&T_IX)
+             :&S_TARGET SETB  &SYM_PIC_SIGN(&T_IX)
+             :&T_TARGET SETC '&SYM_PIC_TYPE(&T_IX)'
+             :&P_TARGET SETC '&SYM_PIC(&T_IX)'
+         AELSEIF (&T_IX LT 0)
+             :&N_TARGET SETC '&TMP_NAME(-&T_IX)'
+             :&L_TARGET SETA  &TMP_LEN(-&T_IX)
+             :&S_TARGET SETB  &TMP_SIGN(-&T_IX)
+             :&T_TARGET SETC '&TMP_TYPE(-&T_IX)'
+             :&P_TARGET SETC ''
+             AIF ('&T_TARGET' EQ 'P')
+                 :&N_TARGET SETC '&N_TARGET.(&L_TARGET)'
+             AEND
+         AELSE
+            MNOTE 8,'GEN_SUB MISSING TARGET INDEX FOR &T_NAME'
+            MEXIT
+         AEND
+         :&N_SOURCE SETC '&S_NAME'
+         AIF (&S_IX GT 0)
+             :&L_SOURCE SETA  &SYM_LEN(&S_IX)
+             :&S_SOURCE SETB  &SYM_PIC_SIGN(&S_IX)
+             :&T_SOURCE SETC '&SYM_PIC_TYPE(&S_IX)'
+         AELSEIF (&S_IX LT 0)
+             :&N_SOURCE SETC '&TMP_NAME(-&S_IX)'
+             :&L_SOURCE SETA  &TMP_LEN(-&S_IX)
+             :&S_SOURCE SETB  &TMP_SIGN(-&S_IX)
+             :&T_SOURCE SETC '&TMP_TYPE(-&S_IX)'
+             AIF ('&T_SOURCE' EQ 'P')
+                 :&N_SOURCE SETC '&N_SOURCE.(&L_SOURCE)'
+             AEND
          AEND
          AIF   (&ROUNDED EQ 1)
                MNOTE 8,'GEN_SUB ROUNDED NOT SUPPORTED YET'
@@ -28,14 +54,10 @@
                MNOTE 8,'GEN_SUB ON SIZE ERROR NOT SUPPORTED YET'
                MEXIT
          AEND
-         :&L_TARGET SETA  &SYM_LEN(&TARGET)
-         :&T_TARGET SETC '&SYM_PIC_TYPE(&TARGET)'
-         AIF   (&SOURCE NE 0)
-               :&T_SOURCE SETC '&SYM_PIC_TYPE(&SOURCE)'
-               :&L_SOURCE SETA  &SYM_LEN(&SOURCE)
+         AIF   (&S_IX NE 0)
                ACALL SUB_FLD
          AELSE
-               :&LIT SETC '&SOURCE_NAME'
+               :&LIT SETC '&N_SOURCE'
                ACALL SUB_LIT
          AEND
          MEXIT
@@ -61,105 +83,107 @@
 .* SUB NUMERIC LIT 
 .*
       AENTRY SUB_NUM_LIT
-      ACASE (C2A('&SYM_PIC_TYPE(&TARGET)'))
+      ACASE (C2A('&T_TARGET'))
       AWHEN C'1'
-         LE    F0,&TARGET_NAME
+         LE    F0,&N_TARGET
          LARL  R14,=EH'&NUM'
          SE    F0,0(R14)
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
       AWHEN C'2'
-         LD    F0,&TARGET_NAME
+         LD    F0,&N_TARGET
          LARL  R14,=DH'&NUM'
          SD    F0,0(R14)
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
       AWHEN C'3'
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
          LARL  R14,=LH'&NUM'
          LD    F1,0(R14)
          LD    F3,8(R14)
          SXR   F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
       AWHEN C'4'
-         LE    F0,&TARGET_NAME
+         LE    F0,&N_TARGET
          LARL  R14,=EB'&NUM'
          SEB   F0,0(R14)
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
       AWHEN C'5'
-         LD    F0,&TARGET_NAME
+         LD    F0,&N_TARGET
          LARL  R14,=DB'&NUM'
          SDB   F0,0(R14)
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
       AWHEN C'6'
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
          LARL  R14,=LB'&NUM'
          LD    F1,0(R14)
          LD    F3,8(R14)
          SXBR  F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
       AWHEN C'7'
-         LE    F0,&TARGET_NAME
+         LE    F0,&N_TARGET
          LDETR F0,F0,0
-         LRL   R1,=DD'&NUM'
+         LARL  R14,=DD'&NUM'
+         LD    F1,0(R14)
          SDTR  F0,F0,F1
          LEDTR F0,0,F0,0
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
       AWHEN C'8'
-         LD    F0,&TARGET_NAME
-         LRL   R1,=DD'&NUM'
+         LD    F0,&N_TARGET
+         LARL  R14,=DD'&NUM'
+         LD    F1,0(R14)
          SDTR  F0,F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
       AWHEN C'9'
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
          LARL  R14,=LD'&NUM'
          LD    F1,0(R14)
          LD    F3,8(R14)
-         SXTR  F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         SXTR  F0,F0,F1
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
       AWHEN C'F',C'A',C'I'
-         L     R0,&TARGET_NAME
+         L     R0,&N_TARGET
          AFI   R0,-&NUM
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
       AWHEN C'H'
-         LH    R0,&TARGET_NAME
+         LH    R0,&N_TARGET
          AHI   R0,-&NUM
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
       AWHEN C'G'
-         LG    R0,&TARGET_NAME
+         LG    R0,&N_TARGET
          LARL  R14,=FL8'&NUM'
          SG    R0,0(R14)
-         STG   R0,&TARGET_NAME
+         STG   R0,&N_TARGET
       AWHEN C'P'
          :&LPNUM SETA (K'&NUM/2+3)/2*2 ROUNDED EVEN FOR LARL
          AIF (&LPNUM GT 16)
              :&LPNUM SETA 16
          AEND
          LARL  R14,=PL&LPNUM'&NUM'
-         SP    &TARGET_NAME,0(&LPNUM,R14)
+         SP    &N_TARGET,0(&LPNUM,R14)
       AWHEN C'Q'
-         LMG   R0,R1,&TARGET_NAME
+         LMG   R0,R1,&N_TARGET
          LARL  R14,=FL16'&NUM'
          SLG   R1,8(R14)    
          SLBG  R0,0(R14)                      
-         STMG  R0,R1,&TARGET_NAME
+         STMG  R0,R1,&N_TARGET
       AWHEN C'Z'
          :&PLEN1 SETA &L_TARGET/2+1
-         ZC_PACK31 ZCVT_PWORK1,&PLEN1,&TARGET_NAME,&L_TARGET
+         ZC_PACK31 ZCVT_PWORK1,&PLEN1,&N_TARGET,&L_TARGET
          :&LPNUM SETA (K'&NUM/2+3)/2*2 ROUNDED EVEN FOR LARL
          AIF (&LPNUM GT 16)
              :&LPNUM SETA 16
          AEND
          LARL  R14,=PL&LPNUM'&NUM'
          SP    ZCVT_PWORK1(&PLEN1),0(&LPNUM,R14)
-         :&ST SETB &SYM_PIC_SIGN(&TARGET)
-         ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK1,&PLEN1
+         :&ST SETB &S_TARGET
+         ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK1,&PLEN1
       AELSE
-         MNOTE 8,'GEN_SUB INVALID DATA TYPE FOR &TARGET_NAME'
+         MNOTE 8,'GEN_SUB INVALID DATA TYPE FOR &N_TARGET'
       AEND
       AEND
 .*
@@ -170,1349 +194,1455 @@
          AWHEN C'1'                      SUBTRACT ?? FROM EH
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'                SUBTRACT EH FROM EH
-         LE    F0,&TARGET_NAME           
-         LE    F1,&SOURCE_NAME
+         LE    F0,&N_TARGET           
+         LE    F1,&N_SOURCE
          SER   F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'2'                SUBTRACT DH FROM EH
-         LE    F0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
+         LE    F0,&N_TARGET
+         LD    F1,&N_SOURCE
          LEDR  F1,F1
          SER   F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'3'                SUBTRACT LH FROM EH
-         LE    F0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
-         LD    F3,&SOURCE_NAME
+         LE    F0,&N_TARGET
+         LD    F1,&N_SOURCE
+         LD    F3,&N_SOURCE
          LEXR  F1,F1
          SER   F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'4'                SUBTRACT EB FROM EH
-                 ZC_CONV EH,EB,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+                 ZC_CONV EH,EB,&N_SOURCE
+         LE    F1,&N_TARGET
          SER   F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'5'                SUBTRACT DB FROM EH
-                 ZC_CONV EH,DB,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+                 ZC_CONV EH,DB,&N_SOURCE
+         LE    F1,&N_TARGET
          SER   F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'6'                SUBTRACT LB FROM EH
-                 ZC_CONV EH,LB,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+                 ZC_CONV EH,LB,&N_SOURCE
+         LE    F1,&N_TARGET
          SER   F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'7'                SUBTRACT ED FROM EH
-                 ZC_CONV EH,ED,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+                 ZC_CONV EH,ED,&N_SOURCE
+         LE    F1,&N_TARGET
          SER   F1,F0
-         STE   F1,&TARGET_NAME
-               AWHEN C'5'                SUBTRACT DD FROM EH
-                 ZC_CONV EH,DD,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+         STE   F1,&N_TARGET
+               AWHEN C'8'                SUBTRACT DD FROM EH
+                 ZC_CONV EH,DD,&N_SOURCE
+         LE    F1,&N_TARGET
          SER   F1,F0
-         STE   F1,&TARGET_NAME
-               AWHEN C'6'                SUBTRACT LD FROM EH
-                 ZC_CONV EH,LD,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+         STE   F1,&N_TARGET
+               AWHEN C'9'                SUBTRACT LD FROM EH
+                 ZC_CONV EH,LD,&N_SOURCE
+         LE    F1,&N_TARGET
          SER   F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'F',C'A',C'I'
-         LE    F0,&TARGET_NAME
-         L     R1,&SOURCE_NAME
+         LE    F0,&N_TARGET
+         L     R1,&N_SOURCE
          CEFR  F1,R1
          SER   F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'G'
-         LE    F0,&TARGET_NAME
-         LG    R1,&SOURCE_NAME
+         LE    F0,&N_TARGET
+         LG    R1,&N_SOURCE
          CEGR  F1,R1
          SER   F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'H'
-         LE    F0,&TARGET_NAME
-         LH    R1,&SOURCE_NAME
+         LE    F0,&N_TARGET
+         LH    R1,&N_SOURCE
          CEFR  F1,R1
          SER   F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'P'
-         LE    F0,&TARGET_NAME
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         LE    F0,&N_TARGET
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   R1,ZCVT_PWORK
          CEFR  F1,R1
          SER   F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'Q'
-         LMG   R0,R1,&SOURCE_NAME
-         ZC_CONV DE,Q         
-         SE    F0,&TARGET_NAME
-         STE   F0,&TARGET_NAME
+                 ZC_CONV EH,Q,&N_SOURCE         
+         LE    F1,&N_TARGET
+         SER   F1,F0
+         STE   F1,&N_TARGET
                AWHEN C'Z'
-         LE    F0,&TARGET_NAME
-               ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         LE    F0,&N_TARGET
+               ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          CVBG  R1,ZCVT_PWORK2
          CEFR  F1,R1
          SER   F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'2'                      SUBTRACT ?? FROM DH
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'                SUBTRACT EH FROM DH  
-         LD    F0,&TARGET_NAME                                  
-         LDE   F1,&SOURCE_NAME
+         LD    F0,&N_TARGET                                  
+         LDE   F1,&N_SOURCE
          SDR   F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'2'                SUBTRACT DH FROM DH
-         LD    F0,&TARGET_NAME
-         SD    F0,&SOURCE_NAME
-         STD   F0,&TARGET_NAME
+         LD    F0,&N_TARGET
+         SD    F0,&N_SOURCE
+         STD   F0,&N_TARGET
                AWHEN C'3'                SUBTRACT LH FROM DH
-         LD    F0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
-         LD    F3,8+&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F1,&N_SOURCE
+         LD    F3,8+&N_SOURCE
          LDXR  F1,F1
          SDR   F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'4'                SUBTRACT EB FROM DH  
-                 ZC_CONV DH,EB,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DH,EB,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDR   F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'5'                SUBTRACT DB FROM DH
-                 ZC_CONV DH,DB,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DH,DB,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDR   F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
+               AWHEN C'6'                SUBTRACT LB FROM DH
+                 ZC_CONV DH,LB,&N_SOURCE
+         LD    F1,&N_TARGET           
+         SDR   F1,F0
+         STD   F1,&N_TARGET
                AWHEN C'7'                SUBTRACT ED FROM DH  
-                 ZC_CONV DH,ED,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DH,ED,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDR   F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'8'                SUBTRACT DD FROM DH
-                 ZC_CONV DH,DD,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DH,DD,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDR   F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'9'                SUBTRACT LD FROM DH
-                 ZC_CONV DH,LD,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DH,LD,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDR   F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'F',C'A',C'I'
-         LD    F0,&TARGET_NAME
-         L     R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         L     R1,&N_SOURCE
          CDFR  F1,R1
          SDR   F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'G'
-         LD    F0,&TARGET_NAME
-         LG    R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LG    R1,&N_SOURCE
          CDGR  F1,R1
          SDR   F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'H'
-         LD    F0,&TARGET_NAME
-         LH    R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LH    R1,&N_SOURCE
          CDFR  F1,R1
          SDR   F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'P'
-         LD    F0,&TARGET_NAME
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   R1,ZCVT_PWORK
          CDFR  F1,R1
          SDR   F0,R1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'Q'
-         LMG   R0,R1,&SOURCE_NAME
+         LMG   R0,R1,&N_SOURCE
          ZC_CONV DH,Q         
-         SD    F0,&TARGET_NAME
-         STD   F0,&TARGET_NAME
+         SD    F0,&N_TARGET
+         STD   F0,&N_TARGET
                AWHEN C'Z'
-         LD    R0,&TARGET_NAME
-         ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         LD    R0,&N_TARGET
+         ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          CVBG  R1,ZCVT_PWORK2
          CDFR  F1,R1
          SDR   R0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'3'                      SUBTRACT ?? FROM LH
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'                SUBTRACT EH FROM LH     
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         LE    F1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         LE    F1,&N_SOURCE
          LXER  F1,F1
          SXR   F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'2'                SUBTRACT DH FROM LH     
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         LD    F1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         LD    F1,&N_SOURCE
          LXDR  F1,F1
          SXR   F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'3'                SUBTRACT LH FROM LH     
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         LD    F1,&SOURCE_NAME
-         LD    F3,8+&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         LD    F1,&N_SOURCE
+         LD    F3,8+&N_SOURCE
          SXR   F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'4'                SUBTRACT EB FROM LH   
-                 ZC_CONV LH,EB,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LH,EB,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXR   F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'5'                SUBTRACT DB FROM LH     
-                 ZC_CONV LH,DB,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LH,DB,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXR   F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'6'                SUBTRACT LB FROM LH     
-                 ZC_CONV LH,LB,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LH,LB,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXR   F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'7'                SUBTRACT ED FROM LH   
-                 ZC_CONV LH,ED,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LH,ED,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXR   F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'8'                SUBTRACT DD FROM LH     
-                 ZC_CONV LH,DD,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LH,DD,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXR   F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'9'                SUBTRACT LD FROM LH     
-                 ZC_CONV LH,LD,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LH,LD,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXR   F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'F',C'A',C'I'      SUBTRACT F  FROM LH
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         L     R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         L     R1,&N_SOURCE
          CXFR  F1,R1
          SXR   F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'G'               SUBTRACT G  FROM LH
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         LG    R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         LG    R1,&N_SOURCE
          CXGR  F1,R1
          SXR   F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'H'              SUBTRACT H  FROM LH
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         LH    R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         LH    R1,&N_SOURCE
          CXFR  F1,R1
          SXR   F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'P'              SUBTRACT P  FROM LH
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
+         ZAP   ZCVT_PWORK2,&N_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV LH,LD
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXR   F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'Q'              SUBTRACT Q  FROM LH
-         LMG   R0,R1,&SOURCE_NAME
+         LMG   R0,R1,&N_SOURCE
          ZC_CONV LH,Q         
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXR   F1,F0               
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'Z'              SUBTRACT Z  FROM LH
-         ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV LH,LD
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXR   F1,F0               
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'4'                      SUBTRACT ?? FROM EB
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'                SUBTRACT EH FROM EB
-                 ZC_CONV EB,EH,&SOURCE_NAME
-         LE    F1,&TARGET_NAME           
+                 ZC_CONV EB,EH,&N_SOURCE
+         LE    F1,&N_TARGET           
          SEBR  F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'2'                SUBTRACT DH FROM EB
-                 ZC_CONV EB,DH,&SOURCE_NAME
-         LE    F1,&TARGET_NAME           
+                 ZC_CONV EB,DH,&N_SOURCE
+         LE    F1,&N_TARGET           
          SEBR  F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'3'                SUBTRACT LH FROM EB
-                 ZC_CONV EB,LH,&SOURCE_NAME
-         LE    F1,&TARGET_NAME           
+                 ZC_CONV EB,LH,&N_SOURCE
+         LE    F1,&N_TARGET           
          SEBR  F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'4'                SUBTRACT EB FROM EB
-                 ZC_CONV EB,EB,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+                 ZC_CONV EB,EB,&N_SOURCE
+         LE    F1,&N_TARGET
          SEBR  F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'5'                SUBTRACT DB FROM EB
-                 ZC_CONV EB,DB,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+                 ZC_CONV EB,DB,&N_SOURCE
+         LE    F1,&N_TARGET
          SEBR  F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'6'                SUBTRACT LB FROM EB
-                 ZC_CONV EB,LB,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+                 ZC_CONV EB,LB,&N_SOURCE
+         LE    F1,&N_TARGET
          SEBR  F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'7'                SUBTRACT ED FROM EB
-                 ZC_CONV EB,ED,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+                 ZC_CONV EB,ED,&N_SOURCE
+         LE    F1,&N_TARGET
          SEBR  F1,F0
-         STE   F1,&TARGET_NAME
-               AWHEN C'5'                SUBTRACT DD FROM EB
-                 ZC_CONV EB,DD,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+         STE   F1,&N_TARGET
+               AWHEN C'8'                SUBTRACT DD FROM EB
+                 ZC_CONV EB,DD,&N_SOURCE
+         LE    F1,&N_TARGET
          SEBR  F1,F0
-         STE   F1,&TARGET_NAME
-               AWHEN C'6'                SUBTRACT LD FROM EB
-                 ZC_CONV EB,LD,&SOURCE_NAME
-         LE    F1,&TARGET_NAME
+         STE   F1,&N_TARGET
+               AWHEN C'9'                SUBTRACT LD FROM EB
+                 ZC_CONV EB,LD,&N_SOURCE
+         LE    F1,&N_TARGET
          SEBR  F1,F0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'F',C'A',C'I'      SUBTRACT F  FROM EB
-         LE    F0,&TARGET_NAME
-         L     R1,&SOURCE_NAME
+         LE    F0,&N_TARGET
+         L     R1,&N_SOURCE
          CEFBR F1,R1
          SEBR  F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'G'                SUBTRACT G  FROM EB
-         LE    F0,&TARGET_NAME
-         LG    R1,&SOURCE_NAME
+         LE    F0,&N_TARGET
+         LG    R1,&N_SOURCE
          CEGBR F1,R1
          SEBR  F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'H'                SUBTRACT H  FROM EB
-         LE    F0,&TARGET_NAME
-         LH    R1,&SOURCE_NAME
+         LE    F0,&N_TARGET
+         LH    R1,&N_SOURCE
          CEFBR F1,R1
          SEBR  F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'P'                SUBTRACT P  FROM EB
-         LE    F0,&TARGET_NAME
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         LE    F0,&N_TARGET
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   R1,ZCVT_PWORK
          CEFBR F1,R1
          SEBR  F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F0,&N_TARGET
                AWHEN C'Q'               SUBTRACT Q  FROM EB
-         LMG   R0,R1,&SOURCE_NAME
+         LMG   R0,R1,&N_SOURCE
          ZC_CONV EB,Q         
-         LE    F1,&TARGET_NAME
+         LE    F1,&N_TARGET
          SEBR  F1,F0                   
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'Z'               SUBTRACT Z  FROM EB
-         LE    F0,&TARGET_NAME
-               ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         LE    F0,&N_TARGET
+               ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                ZC_CONV EB,LH
-         LE    F1,&TARGET_NAME
+         LE    F1,&N_TARGET
          SEBR  F1,F0                   
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'5'                      SUBTRACT ?? FROM DB
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'                SUBTRACT EH FROM DB  
-                 ZC_CONV DB,EH,&SOURCE_NAME
-         LD    F1,&TARGET_NAME                                  
+                 ZC_CONV DB,EH,&N_SOURCE
+         LD    F1,&N_TARGET                                  
          SDBR  F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'2'                SUBTRACT DH FROM DB
-                 ZC_CONV DB,DH,&SOURCE_NAME
-         LD    F1,&TARGET_NAME                                  
+                 ZC_CONV DB,DH,&N_SOURCE
+         LD    F1,&N_TARGET                                  
          SDBR  F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'3'                SUBTRACT LH FROM DB
-                 ZC_CONV DB,LH,&SOURCE_NAME
-         LD    F1,&TARGET_NAME                                  
+                 ZC_CONV DB,LH,&N_SOURCE
+         LD    F1,&N_TARGET                                  
          SDBR  F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'4'                SUBTRACT EB FROM DB  
-                 ZC_CONV DB,EB,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DB,EB,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDBR  F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'5'                SUBTRACT DB FROM DB
-                 ZC_CONV DB,DB,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DB,DB,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDBR  F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'6'                SUBTRACT LB FROM DB
-                 ZC_CONV DB,LB,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DB,LB,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDBR  F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'7'                SUBTRACT ED FROM DB  
-                 ZC_CONV DB,ED,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DB,ED,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDBR  F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'8'                SUBTRACT DD FROM DB
-                 ZC_CONV DB,DD,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DB,DD,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDBR  F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'9'                SUBTRACT LD FROM DB
-                 ZC_CONV DB,LD,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DB,LD,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDBR  F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'F',C'A',C'I'      SUBTRACT F  FROM DB
-         LD    F0,&TARGET_NAME
-         L     R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         L     R1,&N_SOURCE
          CDFBR F1,R1
          SDBR  F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'G'                SUBTRACT G  FROM DB
-         LD    F0,&TARGET_NAME
-         LG    R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LG    R1,&N_SOURCE
          CDGBR F1,R1
          SDBR  F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'H'                SUBTRACT H  FROM DB
-         LD    F0,&TARGET_NAME
-         LH    R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LH    R1,&N_SOURCE
          CDFBR F1,R1
          SDBR  F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'P'                SUBTRACT P  FROM DB
-         LD    F0,&TARGET_NAME
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   R1,ZCVT_PWORK
          CDFBR F1,R1
          SDBR  F0,R1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'Q'                SUBTRACT Q  FROM DB
-         LMG   R0,R1,&SOURCE_NAME
+         LMG   R0,R1,&N_SOURCE
          ZC_CONV DB,Q         
-         LD    F1,&TARGET_NAME
+         LD    F1,&N_TARGET
          SDBR  F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'Z'                SUBTRACT Z  FROM DB
-         LD    R0,&TARGET_NAME
-         ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         LD    R0,&N_TARGET
+         ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          CVBG  R1,ZCVT_PWORK2
          CDGBR F1,R1
          SDBR  R0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'6'                      SUBTRACT ?? FROM LB
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'                SUBTRACT EH FROM LB     
-                 ZC_CONV LB,EH,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LB,EH,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'2'                SUBTRACT DH FROM LB     
-                 ZC_CONV LB,DH,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LB,DH,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'3'                SUBTRACT LH FROM LB     
-                 ZC_CONV LB,LH,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LB,LH,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'4'                SUBTRACT EB FROM LB   
-                 ZC_CONV LB,EB,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LB,EB,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'5'                SUBTRACT DB FROM LB     
-                 ZC_CONV LB,DB,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LB,DB,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'6'                SUBTRACT LB FROM LB     
-                 ZC_CONV LB,LB,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LB,LB,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'7'                SUBTRACT ED FROM LB   
-                 ZC_CONV LB,ED,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LB,ED,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'8'                SUBTRACT DD FROM LB     
-                 ZC_CONV LB,DD,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LB,DD,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'9'                SUBTRACT LD FROM LB     
-                 ZC_CONV LB,LD,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LB,LD,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'F',C'A',C'I'      SUBTRACT F  FROM LB
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         L     R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         L     R1,&N_SOURCE
          CXFBR F1,R1
          SXBR  F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'G'               SUBTRACT G  FROM LB
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         LG    R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         LG    R1,&N_SOURCE
          CXGBR F1,R1
          SXBR  F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'H'              SUBTRACT H  FROM LB
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         LH    R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         LH    R1,&N_SOURCE
          CXFBR F1,R1
          SXBR  F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'P'              SUBTRACT P  FROM LB
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
+         ZAP   ZCVT_PWORK2,&N_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV LB,LD
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'Q'              SUBTRACT Q  FROM LB
-         LMG   R0,R1,&SOURCE_NAME
+         LMG   R0,R1,&N_SOURCE
          ZC_CONV LB,Q         
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0               
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'Z'              SUBTRACT Z  FROM LB
-         ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV LB,LD
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXBR  F1,F0               
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'7'                      SUBTRACT ?? FROM ED
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'                SUBTRACT EH FROM ED
-                 ZC_CONV DD,EH,&SOURCE_NAME
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,EH,&N_SOURCE
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'2'                SUBTRACT DH FROM ED
-                 ZC_CONV DD,DH,&SOURCE_NAME
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,DH,&N_SOURCE
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'3'                SUBTRACT LH FROM ED
-                 ZC_CONV DD,LH,&SOURCE_NAME
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,LH,&N_SOURCE
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'4'                SUBTRACT EB FROM ED
-                 ZC_CONV DD,EB,&SOURCE_NAME
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,EB,&N_SOURCE
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'5'                SUBTRACT DB FROM ED
-                 ZC_CONV DD,DB,&SOURCE_NAME
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,DB,&N_SOURCE
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'6'                SUBTRACT LB FROM ED
-                 ZC_CONV DD,LB,&SOURCE_NAME
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,LB,&N_SOURCE
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'7'                SUBTRACT ED FROM ED
-                 ZC_CONV DD,ED,&SOURCE_NAME
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,ED,&N_SOURCE
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'8'                SUBTRACT DD FROM ED
-                 ZC_CONV DD,DD,&SOURCE_NAME
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,DD,&N_SOURCE
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'9'                SUBTRACT LD FROM ED
-                 ZC_CONV DD,LD,&SOURCE_NAME
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,LD,&N_SOURCE
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'F',C'A',C'I'      SUBTRACT F  FROM ED
-         LGF   R0,&SOURCE_NAME
+         LGF   R0,&N_SOURCE
          CDGTR F0,R0
-         LE    F1,&TARGET_NAME     
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         SEBR  F0,F1
-         STE   F0,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'G'                SUBTRACT G  FROM ED
-         LG    R0,&SOURCE_NAME
-         CDGBR F0,R0
-         LE    F1,&TARGET_NAME     
+         LG    R0,&N_SOURCE
+         CDGTR F0,R0
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'H'                SUBTRACT H  FROM ED
-         LGH   R0,&SOURCE_NAME
-         CDGBR F0,R0
-         LE    F1,&TARGET_NAME     
+         LGH   R0,&N_SOURCE
+         CDGTR F0,R0
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'P'                SUBTRACT P  FROM ED
-         LE    F0,&TARGET_NAME
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
-         CVB   R1,ZCVT_PWORK
-         CDGBR F0,R0
-         LE    F1,&TARGET_NAME     
+         ZAP   ZCVT_PWORK2,&N_SOURCE
+         CVBG  R0,ZCVT_PWORK2
+         CDGTR F0,R0
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'Q'               SUBTRACT Q  FROM ED
-                 ZC_CONV DD,Q,&SOURCE_NAME
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,Q,&N_SOURCE
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AWHEN C'Z'               SUBTRACT Z  FROM ED
-                 ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+                 ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
-                 ZC_CONV DD,LH
-         LE    F1,&TARGET_NAME     
+                 ZC_CONV DD,LD
+         LE    F1,&N_TARGET     
          LDETR F1,F1,0      
          SDTR  F1,F1,F0
          LEDTR F1,0,F1,0
-         STE   F1,&TARGET_NAME
+         STE   F1,&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'8'                      SUBTRACT ?? FROM DD
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'                SUBTRACT EH FROM DD  
-                 ZC_CONV DD,EH,&SOURCE_NAME
-         LD    F1,&TARGET_NAME                                  
+                 ZC_CONV DD,EH,&N_SOURCE
+         LD    F1,&N_TARGET                                  
          SDTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'2'                SUBTRACT DH FROM DD
-                 ZC_CONV DD,DH,&SOURCE_NAME
-         LD    F1,&TARGET_NAME                                  
+                 ZC_CONV DD,DH,&N_SOURCE
+         LD    F1,&N_TARGET                                  
          SDTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'3'                SUBTRACT LH FROM DD
-                 ZC_CONV DD,LH,&SOURCE_NAME
-         LD    F1,&TARGET_NAME                                  
+                 ZC_CONV DD,LH,&N_SOURCE
+         LD    F1,&N_TARGET                                  
          SDTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'4'                SUBTRACT EB FROM DD  
-                 ZC_CONV DD,EB,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DD,EB,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'5'                SUBTRACT DB FROM DD
-                 ZC_CONV DD,DB,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DD,DB,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'6'                SUBTRACT LB FROM DD
-                 ZC_CONV DD,LB,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DD,LB,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'7'                SUBTRACT ED FROM DD  
-                 ZC_CONV DD,ED,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DD,ED,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'8'                SUBTRACT DD FROM DD
-                 ZC_CONV DD,DD,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DD,DD,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'9'                SUBTRACT LD FROM DD
-                 ZC_CONV DD,LD,&SOURCE_NAME
-         LD    F1,&TARGET_NAME           
+                 ZC_CONV DD,LD,&N_SOURCE
+         LD    F1,&N_TARGET           
          SDTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'F',C'A',C'I'      SUBTRACT F  FROM DD
-         LD    F0,&TARGET_NAME
-         LGF   R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LGF   R1,&N_SOURCE
          CDGTR F1,R1
          SDTR  F0,F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'G'                SUBTRACT G  FROM DD
-         LD    F0,&TARGET_NAME
-         LG    R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LG    R1,&N_SOURCE
          CDGTR F1,R1
          SDTR  F0,F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'H'                SUBTRACT H  FROM DD
-         LD    F0,&TARGET_NAME
-         LGH   R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LGH   R1,&N_SOURCE
          CDGTR F1,R1
          SDTR  F0,F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'P'                SUBTRACT P  FROM DD
-         LD    F0,&TARGET_NAME
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         ZAP   ZCVT_PWORK2,&N_SOURCE
          CVBG  R1,ZCVT_PWORK2
          CDGTR F1,R1
          SDTR  F0,F0,R1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AWHEN C'Q'                SUBTRACT Q  FROM DD
-         LMG   R0,R1,&SOURCE_NAME
+         LMG   R0,R1,&N_SOURCE
          ZC_CONV DD,Q         
-         LD    F1,&TARGET_NAME
+         LD    F1,&N_TARGET
          SDTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
+         STD   F1,&N_TARGET
                AWHEN C'Z'                SUBTRACT Z  FROM DD
-         LD    F0,&TARGET_NAME
-                ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         LD    F0,&N_TARGET
+                ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          CVBG  R1,ZCVT_PWORK2
          CDGTR F1,R1
          SDTR  F0,F0,F1
-         STD   F0,&TARGET_NAME
+         STD   F0,&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'9'                      SUBTRACT ?? FROM LD
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'                SUBTRACT EH FROM LD     
-                 ZC_CONV LD,EH,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LD,EH,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'2'                SUBTRACT DH FROM LD     
-                 ZC_CONV LD,DH,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LD,DH,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'3'                SUBTRACT LH FROM LD     
-                 ZC_CONV LD,LH,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LD,LH,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'4'                SUBTRACT EB FROM LD   
-                 ZC_CONV LD,EB,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LD,EB,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'5'                SUBTRACT DB FROM LD     
-                 ZC_CONV LD,DB,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LD,DB,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'6'                SUBTRACT LB FROM LD     
-                 ZC_CONV LD,LB,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LD,LB,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'7'                SUBTRACT ED FROM LD   
-                 ZC_CONV LD,ED,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LD,ED,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'8'                SUBTRACT DD FROM LD     
-                 ZC_CONV LD,DD,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LD,DD,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'9'                SUBTRACT LD FROM LD     
-                 ZC_CONV LD,LD,&SOURCE_NAME  
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+                 ZC_CONV LD,LD,&N_SOURCE  
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'F',C'A',C'I'      SUBTRACT F  FROM LD
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         LGF   R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         LGF   R1,&N_SOURCE
          CXGTR F1,R1
          SXTR  F0,F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'G'               SUBTRACT G  FROM LD
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         LG    R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         LG    R1,&N_SOURCE
          CXGTR F1,R1
          SXTR  F0,F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'H'              SUBTRACT H  FROM LD
-         LD    F0,&TARGET_NAME
-         LD    F2,8+&TARGET_NAME
-         LGH   R1,&SOURCE_NAME
+         LD    F0,&N_TARGET
+         LD    F2,8+&N_TARGET
+         LGH   R1,&N_SOURCE
          CXGTR F1,R1
          SXTR  F0,F0,F1
-         STD   F0,&TARGET_NAME
-         STD   F2,8+&TARGET_NAME
+         STD   F0,&N_TARGET
+         STD   F2,8+&N_TARGET
                AWHEN C'P'              SUBTRACT P  FROM LD
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
+         ZAP   ZCVT_PWORK2,&N_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV LD,LD
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'Q'              SUBTRACT Q  FROM LD
-         LMG   R0,R1,&SOURCE_NAME
+         LMG   R0,R1,&N_SOURCE
          ZC_CONV LD,Q         
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AWHEN C'Z'              SUBTRACT Z  FROM LD
-         ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   R0,R1,ZCVT_PWORK2
          CXSTR F4,R0
                  ZC_CONV LD,LD
-         LD    F1,&TARGET_NAME
-         LD    F3,8+&TARGET_NAME
+         LD    F1,&N_TARGET
+         LD    F3,8+&N_TARGET
          SXTR  F1,F1,F0
-         STD   F1,&TARGET_NAME
-         STD   F3,8+&TARGET_NAME
+         STD   F1,&N_TARGET
+         STD   F3,8+&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'F',C'A',C'I'
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'              SUBTRACT EH FROM F   
-         L     R0,&TARGET_NAME
-         LE    F1,&SOURCE_NAME
+         L     R0,&N_TARGET
+         LE    F1,&N_SOURCE
          CFER  R1,0,F1
          SR    R0,R1
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AWHEN C'2'              SUBTRACT DH FROM F   
-         L     R0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
+         L     R0,&N_TARGET
+         LD    F1,&N_SOURCE
          CFDR  R1,0,F1
          SR    R0,R1
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AWHEN C'3'              SUBTRACT LH FROM F   
-         L     R0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
-         LD    F3,8+&SOURCE_NAME
+         L     R0,&N_TARGET
+         LD    F1,&N_SOURCE
+         LD    F3,8+&N_SOURCE
          CFXR  R1,0,F1
          SR    R0,R1
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AWHEN C'4'              SUBTRACT EB FROM F   
-         L     R0,&TARGET_NAME
-         LE    F1,&SOURCE_NAME
+         L     R0,&N_TARGET
+         LE    F1,&N_SOURCE
          CFEBR R1,0,F1
          SR    R0,R1
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AWHEN C'5'              SUBTRACT DB FROM F   
-         L     R0,&TARGET_NAME
-         LD    R1,&SOURCE_NAME
+         L     R0,&N_TARGET
+         LD    R1,&N_SOURCE
          CFDBR R1,0,F1
          SR    R0,R1
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AWHEN C'6'              SUBTRACT LB FROM F   
-         L     R0,&TARGET_NAME
-         LD    R1,&SOURCE_NAME
-         LD    R3,8+&SOURCE_NAME
+         L     R0,&N_TARGET
+         LD    R1,&N_SOURCE
+         LD    R3,8+&N_SOURCE
          CFXBR R1,0,F1
          SR    R0,R1
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AWHEN C'7'              SUBTRACT ED FROM F   
-         L     R0,&TARGET_NAME
-         LE    F1,&SOURCE_NAME
+         L     R0,&N_TARGET
+         LE    F1,&N_SOURCE
          LDETR F1,F1,0 
          CGDTR R1,0,F1
          SR    R0,R1  IGNORE HIGH 32
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AWHEN C'8'              SUBTRACT DD FROM F   
-         L     R0,&TARGET_NAME
-         LD    R1,&SOURCE_NAME
+         L     R0,&N_TARGET
+         LD    R1,&N_SOURCE
          CGDTR R1,0,F1
          SR    R0,R1  IGNORE HIGH 32
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AWHEN C'9'              SUBTRACT LD FROM F   
-         L     R0,&TARGET_NAME
-         LD    R1,&SOURCE_NAME
-         LD    R3,8+&SOURCE_NAME
+         L     R0,&N_TARGET
+         LD    R1,&N_SOURCE
+         LD    R3,8+&N_SOURCE
          CGXTR R1,0,F1
          SR    R0,R1    IGNORE HIGH 32
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AWHEN C'F',C'A',C'I'    SUBTRACT F  FROM F   
-         L     R0,&TARGET_NAME
-         S     R0,&SOURCE_NAME
-         ST    R0,&TARGET_NAME
+         L     R0,&N_TARGET
+         S     R0,&N_SOURCE
+         ST    R0,&N_TARGET
                AWHEN C'G'              SUBTRACT G  FROM F   
          SG    R0,0
-         L     R0,&TARGET_NAME
-         SG    R0,&SOURCE_NAME
-         ST    R0,&TARGET_NAME  ONLY LOW 32 BITS STORED
+         L     R0,&N_TARGET
+         SG    R0,&N_SOURCE
+         ST    R0,&N_TARGET  ONLY LOW 32 BITS STORED
                AWHEN C'H'              SUBTRACT H  FROM F   
-         L     R0,&TARGET_NAME
-         SH    R0,&SOURCE_NAME
-         ST    R0,&TARGET_NAME
+         L     R0,&N_TARGET
+         SH    R0,&N_SOURCE
+         ST    R0,&N_TARGET
                AWHEN C'P'              SUBTRACT P  FROM F   
-         L     R0,&TARGET_NAME
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         L     R0,&N_TARGET
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   R1,ZCVT_PWORK
          SR    R0,R1
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AWHEN C'Q'              SUBTRACT Q  FROM F   
-         L     R0,&TARGET_NAME
-         S     R0,12+&SOURCE_NAME IGNORE HIGH 96 BITS
-         ST    R0,&TARGET_NAME
+         L     R0,&N_TARGET
+         S     R0,12+&N_SOURCE IGNORE HIGH 96 BITS
+         ST    R0,&N_TARGET
                AWHEN C'Z'              SUBTRACT Z  FROM F   
-         L     R0,&TARGET_NAME
-               ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         L     R0,&N_TARGET
+               ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          CVBG  R1,ZCVT_PWORK2
          SR    R0,R1
-         ST    R0,&TARGET_NAME
+         ST    R0,&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'G'
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'              SUBTRACT EH FROM G  
-         LG    R0,&TARGET_NAME
-         LE    F1,&SOURCE_NAME
+         LG    R0,&N_TARGET
+         LE    F1,&N_SOURCE
          CGER  R1,0,F1
          SGR   R0,R1
-         STG   R0,&TARGET_NAME
+         STG   R0,&N_TARGET
                AWHEN C'2'              SUBTRACT DH FROM G  
-         LG    R0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
+         LG    R0,&N_TARGET
+         LD    F1,&N_SOURCE
          CGDR  R1,0,F1
          SGR   R0,R1
-         STG   R0,&TARGET_NAME
+         STG   R0,&N_TARGET
                AWHEN C'3'              SUBTRACT LH FROM G  
-         LG    R0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
-         LD    F3,&SOURCE_NAME
+         LG    R0,&N_TARGET
+         LD    F1,&N_SOURCE
+         LD    F3,&N_SOURCE
          CGXR  R1,0,F1
          SGR   R0,R1
-         STG   R0,&TARGET_NAME
+         STG   R0,&N_TARGET
                AWHEN C'4'              SUBTRACT EB FROM G  
-                 ZC_CONV Q,EB,&SOURCE_NAME
-         LG    R2,&TARGET_NAME
+                 ZC_CONV Q,EB,&N_SOURCE
+         LG    R2,&N_TARGET
          SGR   R2,R1 IGNORE HIGH 64
-         STG   R2,&TARGET_NAME
+         STG   R2,&N_TARGET
                AWHEN C'5'              SUBTRACT DB FROM G  
-                 ZC_CONV Q,DB,&SOURCE_NAME
-         LG    R2,&TARGET_NAME
+                 ZC_CONV Q,DB,&N_SOURCE
+         LG    R2,&N_TARGET
          SGR   R2,R1 IGNORE HIGH 64
-         STG   R2,&TARGET_NAME
+         STG   R2,&N_TARGET
                AWHEN C'6'              SUBTRACT LB FROM G  
-                 ZC_CONV Q,LB,&SOURCE_NAME
-         LG    R2,&TARGET_NAME
+                 ZC_CONV Q,LB,&N_SOURCE
+         LG    R2,&N_TARGET
          SGR   R2,R1 IGNORE HIGH 64
-         STG   R2,&TARGET_NAME
+         STG   R2,&N_TARGET
                AWHEN C'7'              SUBTRACT ED FROM G  
-                 ZC_CONV Q,ED,&SOURCE_NAME
-         LG    R2,&TARGET_NAME
+                 ZC_CONV Q,ED,&N_SOURCE
+         LG    R2,&N_TARGET
          SGR   R2,R1 IGNORE HIGH 64
-         STG   R2,&TARGET_NAME
+         STG   R2,&N_TARGET
                AWHEN C'8'              SUBTRACT DD FROM G  
-                 ZC_CONV Q,DD,&SOURCE_NAME
-         LG    R2,&TARGET_NAME
+                 ZC_CONV Q,DD,&N_SOURCE
+         LG    R2,&N_TARGET
          SGR   R2,R1 IGNORE HIGH 64
-         STG   R2,&TARGET_NAME
+         STG   R2,&N_TARGET
                AWHEN C'9'              SUBTRACT LD FROM G  
-                 ZC_CONV Q,LD,&SOURCE_NAME
-         LG    R2,&TARGET_NAME
+                 ZC_CONV Q,LD,&N_SOURCE
+         LG    R2,&N_TARGET
          SGR   R2,R1 IGNORE HIGH 64
-         STG   R2,&TARGET_NAME
+         STG   R2,&N_TARGET
                AWHEN C'F',C'A',C'I'    SUBTRACT F  FROM G  
-         LG    R0,&TARGET_NAME
-         L     R1,&SOURCE_NAME
+         LG    R0,&N_TARGET
+         L     R1,&N_SOURCE
          SGFR  R0,R1
-         STG   R0,&TARGET_NAME
+         STG   R0,&N_TARGET
                AWHEN C'G'              SUBTRACT G  FROM G  
-         LG    R0,&TARGET_NAME
-         SG    R0,&SOURCE_NAME
-         STG   R0,&TARGET_NAME  ONLY LOW 32 BITS STORED
+         LG    R0,&N_TARGET
+         SG    R0,&N_SOURCE
+         STG   R0,&N_TARGET  ONLY LOW 32 BITS STORED
                AWHEN C'H'              SUBTRACT H  FROM G  
-         LG    R0,&TARGET_NAME
-         LH    R1,&SOURCE_NAME
+         LG    R0,&N_TARGET
+         LH    R1,&N_SOURCE
          SGFR  R0,R1
-         STG   R0,&TARGET_NAME
+         STG   R0,&N_TARGET
                AWHEN C'P'              SUBTRACT P  FROM G  
-         LG    R0,&TARGET_NAME
-         ZAP   ZCVT_PWORK2,&SOURCE_NAME
+         LG    R0,&N_TARGET
+         ZAP   ZCVT_PWORK2,&N_SOURCE
          CVBG  R1,ZCVT_PWORK2
          SGR   R0,R1
-         STG   R0,&TARGET_NAME
+         STG   R0,&N_TARGET
                AWHEN C'Q'              SUBTRACT Q  FROM G  
-         LG    R0,&TARGET_NAME
-         SG    R0,8+&SOURCE_NAME IGNORE HIGH 64 BITS
-         STG   R0,&TARGET_NAME
+         LG    R0,&N_TARGET
+         SG    R0,8+&N_SOURCE IGNORE HIGH 64 BITS
+         STG   R0,&N_TARGET
                AWHEN C'Z'              SUBTRACT Z  FROM G  
-         LG    R0,&TARGET_NAME
-               ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         LG    R0,&N_TARGET
+               ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          CVBG  R1,ZCVT_PWORK2
          SGR   R0,R1
-         STG   R0,&TARGET_NAME
+         STG   R0,&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'H'
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'              SUBTRACT EH FROM H
-         LH    R0,&TARGET_NAME
-         LE    F1,&SOURCE_NAME
+         LH    R0,&N_TARGET
+         LE    F1,&N_SOURCE
          CFER  R1,0,F1
          SR    R0,R1
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AWHEN C'2'              SUBTRACT DH FROM H
-         LH    R0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
+         LH    R0,&N_TARGET
+         LD    F1,&N_SOURCE
          CFDR  R1,0,F1
          SR    R0,R1
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AWHEN C'3'              SUBTRACT LH FROM H
-         LH    R0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
-         LD    F3,8+&SOURCE_NAME
+         LH    R0,&N_TARGET
+         LD    F1,&N_SOURCE
+         LD    F3,8+&N_SOURCE
          CFXR  R1,0,F1
          SR    R0,R1
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AWHEN C'4'              SUBTRACT EB FROM H
-         LH    R0,&TARGET_NAME
-         LE    F1,&SOURCE_NAME
+         LH    R0,&N_TARGET
+         LE    F1,&N_SOURCE
          CFEBR R1,0,F1
          SR    R0,R1
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AWHEN C'5'              SUBTRACT DB FROM H
-         LH    R0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
+         LH    R0,&N_TARGET
+         LD    F1,&N_SOURCE
          CFDBR R1,0,F1
          SR    R0,R1
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AWHEN C'6'              SUBTRACT LB FROM H
-         LH    R0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
-         LD    F3,8+&SOURCE_NAME
+         LH    R0,&N_TARGET
+         LD    F1,&N_SOURCE
+         LD    F3,8+&N_SOURCE
          CFXBR R1,0,F1
          SR    R0,R1
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AWHEN C'7'              SUBTRACT ED FROM H
-         LH    R0,&TARGET_NAME
-         LE    F1,&SOURCE_NAME
+         LH    R0,&N_TARGET
+         LE    F1,&N_SOURCE
          LDETR F1,F1,0
          CGDTR R1,0,F1
          SR    R0,R1   IGNORE HIGH 32
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AWHEN C'8'              SUBTRACT DD FROM H
-         LH    R0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
+         LH    R0,&N_TARGET
+         LD    F1,&N_SOURCE
          CGDTR R1,0,F1
          SR    R0,R1  IGNORE HIGHT 32
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AWHEN C'9'              SUBTRACT LD FROM H
-         LH    R0,&TARGET_NAME
-         LD    F1,&SOURCE_NAME
-         LD    F3,8+&SOURCE_NAME
+         LH    R0,&N_TARGET
+         LD    F1,&N_SOURCE
+         LD    F3,8+&N_SOURCE
          CGXTR R1,0,F1
          SR    R0,R1  IGNORE HIGH 32
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AWHEN C'F',C'A',C'I'    SUBTRACT F  FROM H
-         LH    R0,&TARGET_NAME
-         S     R0,&SOURCE_NAME
-         STH   R0,&TARGET_NAME
+         LH    R0,&N_TARGET
+         S     R0,&N_SOURCE
+         STH   R0,&N_TARGET
                AWHEN C'G'              SUBTRACT G  FROM H
-         LH    R0,&TARGET_NAME
-         S     R0,&SOURCE_NAME+4 IGNORES HIGH 32
-         STH   R0,&TARGET_NAME
+         LH    R0,&N_TARGET
+         S     R0,&N_SOURCE+4 IGNORES HIGH 32
+         STH   R0,&N_TARGET
                AWHEN C'H'              SUBTRACT H  FROM H
-         LH    R0,&TARGET_NAME
-         SH    R0,&SOURCE_NAME
-         STH   R0,&TARGET_NAME
+         LH    R0,&N_TARGET
+         SH    R0,&N_SOURCE
+         STH   R0,&N_TARGET
                AWHEN C'P'              SUBTRACT P  FROM H
-         LH    R0,&TARGET_NAME
-         ZAP   ZCVT_PWORK,&SOURCE_NAME
+         LH    R0,&N_TARGET
+         ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   R1,ZCVT_PWORK
          SR    R0,R1
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AWHEN C'Q'              SUBTRACT Q  FROM H
-         LH    R0,&TARGET_NAME
-         S     R0,12+&SOURCE_NAME IGNORE HIGH 96 BITS
-         STH   R0,&TARGET_NAME
+         LH    R0,&N_TARGET
+         S     R0,12+&N_SOURCE IGNORE HIGH 96 BITS
+         STH   R0,&N_TARGET
                AWHEN C'Z'              SUBTRACT Z  FROM H
-         LH    R0,&TARGET_NAME
-               ZC_PACK31 ZCVT_PWORK2,16,&SOURCE_NAME,&L_SOURCE
+         LH    R0,&N_TARGET
+               ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          CVBG  R1,ZCVT_PWORK2
          SR    R0,R1  IGNORE HIGH 32
-         STH   R0,&TARGET_NAME
+         STH   R0,&N_TARGET
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'P'
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'              SUBTRACT EH FROM P
-         LE    F0,&SOURCE_NAME
+         LE    F0,&N_SOURCE
          CFER  R0,0,F0
          CVD   R0,ZCVT_PWORK
-         SP    &TARGET_NAME,ZCVT_PWORK
+         SP    &N_TARGET,ZCVT_PWORK
                AWHEN C'2'              SUBTRACT DH FROM P
-         LD    F0,&SOURCE_NAME
+         LD    F0,&N_SOURCE
          CFDR  R0,0,F0
          CVD   R0,ZCVT_PWORK
-         SP    &TARGET_NAME,ZCVT_PWORK
+         SP    &N_TARGET,ZCVT_PWORK
                AWHEN C'3'              SUBTRACT LH FROM P
-                 ZC_CONV P,LH,&SOURCE_NAME
+                 ZC_CONV P,LH,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         SP    &TARGET_NAME,ZCVT_PWORK2
+         SP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'4'              SUBTRACT EB FROM P
-         LE    F0,&SOURCE_NAME
+         LE    F0,&N_SOURCE
          CFEBR R0,0,F0
          CVD   R0,ZCVT_PWORK
-         SP    &TARGET_NAME,ZCVT_PWORK
+         SP    &N_TARGET,ZCVT_PWORK
                AWHEN C'5'              SUBTRACT DB FROM P
-         LD    F0,&SOURCE_NAME
+         LD    F0,&N_SOURCE
          CFDBR R0,0,F0
          CVD   R0,ZCVT_PWORK
-         SP    &TARGET_NAME,ZCVT_PWORK
+         SP    &N_TARGET,ZCVT_PWORK
                AWHEN C'6'              SUBTRACT LB FROM P
-                 ZC_CONV P,LB,&SOURCE_NAME
+                 ZC_CONV P,LB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         SP    &TARGET_NAME,ZCVT_PWORK2
+         SP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'7'              SUBTRACT ED FROM P
-                 ZC_CONV P,ED,&SOURCE_NAME
+                 ZC_CONV P,ED,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         SP    &TARGET_NAME,ZCVT_PWORK2
+         SP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'8'              SUBTRACT DD FROM P
-                 ZC_CONV P,DD,&SOURCE_NAME
+                 ZC_CONV P,DD,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         SP    &TARGET_NAME,ZCVT_PWORK2
+         SP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'9'              SUBTRACT LD FROM P
-                 ZC_CONV P,LD,&SOURCE_NAME
+                 ZC_CONV P,LD,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         SP    &TARGET_NAME,ZCVT_PWORK2
+         SP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'F',C'A',C'I'    SUBTRACT F  FROM P
-         L     R0,&SOURCE_NAME
+         L     R0,&N_SOURCE
          CVD   R0,ZCVT_PWORK
-         SP    &TARGET_NAME,ZCVT_PWORK
+         SP    &N_TARGET,ZCVT_PWORK
                AWHEN C'G'              SUBTRACT G  FROM P
-         LG    R0,&SOURCE_NAME
+         LG    R0,&N_SOURCE
          CVDG  R0,ZCVT_PWORK1
-         SP    &TARGET_NAME,ZCVT_PWORK1
+         SP    &N_TARGET,ZCVT_PWORK1
                AWHEN C'H'              SUBTRACT H  FROM P
-         LH    R0,&SOURCE_NAME
+         LH    R0,&N_SOURCE
          CVD   R0,ZCVT_PWORK
-         SP    &TARGET_NAME,ZCVT_PWORK
+         SP    &N_TARGET,ZCVT_PWORK
                AWHEN C'P'              SUBTRACT P  FROM P
-         SP    &TARGET_NAME,&SOURCE_NAME
+         SP    &N_TARGET,&N_SOURCE
                AWHEN C'Q'              SUBTRACT Q  FROM P
-                 ZC_CONV P,Q,&SOURCE_NAME
+                 ZC_CONV P,Q,&N_SOURCE
          STM   R0,R1,ZCVT_PWORK1
-         SP    &TARGET_NAME,ZCVT_PWORK1
+         SP    &N_TARGET,ZCVT_PWORK1
                AWHEN C'Z'              SUBTRACT Z  FROM P
                  :&PLEN2 SETA &L_SOURCE/2+1
-                 ZC_PACK31 ZCVT_PWORK2,&PLEN2,&SOURCE_NAME,&L_SOURCE
-         SP    &TARGET_NAME,ZCVT_PWORK2(&PLEN2)
+                 ZC_PACK31 ZCVT_PWORK2,&PLEN2,&N_SOURCE,&L_SOURCE
+         SP    &N_TARGET,ZCVT_PWORK2(&PLEN2)
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
+                    MEXIT
+               AEND 
+         AWHEN C'Q'
+               ACASE (C2A('&T_SOURCE'))
+               AWHEN C'1'              SUBTRACT EH FROM Q  
+                 ZC_CONV Q,EH,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'2'              SUBTRACT DH FROM Q  
+                 ZC_CONV Q,DH,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'3'              SUBTRACT LH FROM Q  
+                 ZC_CONV Q,LH,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'4'              SUBTRACT EB FROM Q  
+                 ZC_CONV Q,EB,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'5'              SUBTRACT DB FROM Q  
+                 ZC_CONV Q,DB,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'6'              SUBTRACT LB FROM Q  
+                 ZC_CONV Q,LB,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'7'              SUBTRACT ED FROM Q  
+                 ZC_CONV Q,ED,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'8'              SUBTRACT DD FROM Q  
+                 ZC_CONV Q,DD,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'9'              SUBTRACT LD FROM Q  
+                 ZC_CONV Q,LD,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'F',C'A',C'I'    SUBTRACT F  FROM Q  
+         LGF   R1,&N_SOURCE
+         LGR   R0,R1
+         SRAG  R0,R0,63
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'G'              SUBTRACT G  FROM Q  
+         LG    R1,&N_SOURCE
+         LGR   R0,R1
+         SRAG  R0,R0,63
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'H'              SUBTRACT H  FROM Q  
+         LGH   R1,&N_SOURCE
+         LGR   R0,R1
+         SRAG  R0,R0,63
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'P'              SUBTRACT P  FROM Q  
+                 ZC_CONV Q,P,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'Q'              SUBTRACT Q  FROM Q  
+         LMG   R0,R1,&N_SOURCE
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AWHEN C'Z'              SUBTRACT Z  FROM Q  
+                 ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
+                 ZC_CONV   Q,P,ZCVT_PWORK2
+         LMG   R2,R3,&N_TARGET
+         SLGR  R3,R1
+         SLBGR R2,R0
+         STMG  R2,R3,&N_TARGET
+               AELSE
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
          AWHEN C'Z'
                :&PLEN1 SETA &L_TARGET/2+1
-               ZC_PACK31 ZCVT_PWORK1,&PLEN1,&TARGET_NAME,&L_TARGET
+               ZC_PACK31 ZCVT_PWORK1,&PLEN1,&N_TARGET,&L_TARGET
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'              SUBTRACT EH FROM Z
-         LE    F0,&SOURCE_NAME
+         LE    F0,&N_SOURCE
          CFER  R0,0,F0
          CVD   R0,ZCVT_PWORK
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK
                AWHEN C'2'              SUBTRACT DH FROM Z
-         LD    F0,&SOURCE_NAME
+         LD    F0,&N_SOURCE
          CGDR  R0,0,F0
          CVDG  R0,ZCVT_PWORK2
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2
                AWHEN C'3'              SUBTRACT LH FROM Z
-                 ZC_CONV P,LH,&SOURCE_NAME
+                 ZC_CONV P,LH,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         SP    &TARGET_NAME,ZCVT_PWORK2
+         SP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'4'              SUBTRACT EB FROM Z
-         LE    F0,&SOURCE_NAME
+         LE    F0,&N_SOURCE
          CFEBR R0,0,F0
          CVD   R0,ZCVT_PWORK
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK
                AWHEN C'5'              SUBTRACT DB FROM Z
-         LD    F0,&SOURCE_NAME
+         LD    F0,&N_SOURCE
          CGDBR R0,0,F0
          CVDG  R0,ZCVT_PWORK2
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2
                AWHEN C'6'              SUBTRACT LB FROM Z
-                 ZC_CONV P,LB,&SOURCE_NAME
+                 ZC_CONV P,LB,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         SP    &TARGET_NAME,ZCVT_PWORK2
+         SP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'7'              SUBTRACT ED FROM Z
-         LE    F0,&SOURCE_NAME
+         LE    F0,&N_SOURCE
          LDETR F0,F0,0
          CGDTR R0,0,F0
          CVDG  R0,ZCVT_PWORK2
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2
                AWHEN C'8'              SUBTRACT DD FROM Z
-         LD    F0,&SOURCE_NAME
+         LD    F0,&N_SOURCE
          CGDTR R0,0,F0
          CVDG  R0,ZCVT_PWORK2
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2
                AWHEN C'9'              SUBTRACT LD FROM Z
-                 ZC_CONV P,LD,&SOURCE_NAME
+                 ZC_CONV P,LD,&N_SOURCE
          STMG  R0,R1,ZCVT_PWORK2
-         SP    &TARGET_NAME,ZCVT_PWORK2
+         SP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'F',C'A',C'I'    SUBTRACT F  FROM Z
-         L     R0,&SOURCE_NAME
+         L     R0,&N_SOURCE
          CVD   R0,ZCVT_PWORK
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK
                AWHEN C'G'              SUBTRACT G  FROM Z
-         LG    R0,&SOURCE_NAME
+         LG    R0,&N_SOURCE
          CVDG  R0,ZCVT_PWORK2
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2
                AWHEN C'H'              SUBTRACT H  FROM Z
-         LH    R0,&SOURCE_NAME
+         LH    R0,&N_SOURCE
          CVD   R0,ZCVT_PWORK
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK
                AWHEN C'P'              SUBTRACT P  FROM Z
-         SP    ZCVT_PWORK1(&PLEN1),&SOURCE_NAME 
+         SP    ZCVT_PWORK1(&PLEN1),&N_SOURCE 
                AWHEN C'Q'              SUBTRACT Q  FROM Z
-                 ZC_CONV P,Q,&SOURCE_NAME
+                 ZC_CONV P,Q,&N_SOURCE
          STM   R0,R1,ZCVT_PWORK2
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2
                AWHEN C'Z'              SUBTRACT Z  FROM Z
                  :&PLEN2 SETA &L_SOURCE/2+1
-                 ZC_PACK31 ZCVT_PWORK2,&PLEN2,&SOURCE_NAME,&L_SOURCE
+                 ZC_PACK31 ZCVT_PWORK2,&PLEN2,&N_SOURCE,&L_SOURCE
          SP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2(&PLEN2)   
                AELSE
-                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &SOURCE_NAME'           
+                    MNOTE 8,'GEN_SUB INVALID SOURCE TYPE &N_SOURCE'           
                     MEXIT
                AEND 
-               :&ST SETB &SYM_PIC_SIGN(&TARGET)
-               ZC_UNPK31 &TARGET_NAME,&L_TARGET,&ST,ZCVT_PWORK1,&PLEN1
+               :&ST SETB &S_TARGET
+               ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK1,&PLEN1
          AELSE
-               MNOTE 8,'GEN_SUB INVALID TARGET DATA TYPE &TARGET_NAME'           
+               MNOTE 8,'GEN_SUB INVALID TARGET DATA TYPE &N_TARGET'           
                MEXIT
          AEND
          AEND

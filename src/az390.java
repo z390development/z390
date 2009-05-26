@@ -341,6 +341,9 @@ public  class  az390 implements Runnable {
         * 02/04/09 RPI 991 correct unary sign followed by pfx operator AHI 1,-L'var etc.
         * 02/10/09 RPI 994 support neg base displacements for LA using depending USING offsets
         * 02/10/09 RPI 995 set az390_private_sect for mz390 use 
+        * 06/06/09 RPI 1033 error if SS length too long
+        * 05/19/09 RPI 1034 improve error msg 61, 71, 193
+        * 05/20/09 RPI 1031 show literals with errors and fix length
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -3584,7 +3587,7 @@ private int find_bal_op(){
 	if (bal_line.length() == 0 || bal_line.charAt(0) == '*'){
 		return 0;
 	} else {
-		log_error(71,"missing opcode - " + bal_line);
+		log_error(71,"missing opcode - " + bal_line); // RPI 1034
 		return - 1;
 	}
 }
@@ -4732,7 +4735,7 @@ private void exp_term(){
                     gen_exp_rld();
         		}    
             } else {
-            	log_error(61,"invalid complex rld expression" + exp_text.substring(0,exp_index));
+            	log_error(61,"invalid complex rld expression: " + exp_text.substring(0,exp_index)); // RPI 1034
             }
         } else {  
         	if (gen_obj_code){
@@ -5016,7 +5019,13 @@ private void log_error(int error,String msg){
 	             }
 		     }
 	     } // RPI 895
-	     String error_msg = "AZ390E error " + tz390.right_justify("" + error,3) + tz390.right_justify(xref_file_line + bal_line_num[bal_line_index],15) + "   " + bal_line_text[bal_line_index];
+    	 String error_msg = "AZ390E error " + tz390.right_justify("" + error,3); // RPI 1031
+	     if (dc_lit_gen){ // RPI 1031
+	    	 xref_file_line = " (" + (bal_line_xref_file_num[lit_line[cur_lit]]+1) + "/" + bal_line_xref_file_line[lit_line[cur_lit]] + ")";
+	    	 error_msg = error_msg + tz390.right_justify(xref_file_line + bal_line_num[lit_line[cur_lit]],15) + "   " + bal_line_text[lit_line[cur_lit]];
+	     } else {
+	    	 error_msg = error_msg + tz390.right_justify(xref_file_line + bal_line_num[bal_line_index],15) + "   " + bal_line_text[bal_line_index];
+	     }
 	     put_log(error_msg);
 	     tz390.put_systerm(error_msg);
 	     error_msg = msg_id + msg;
@@ -5854,7 +5863,9 @@ private void get_hex_llbddd(){
 				 ll--;
 			 }
 		     hex_ll = tz390.get_hex(ll,2);
-		 } 
+		 } else {
+			 log_error(206,"invalid length - " + ll); // RPI 1033
+		 }
 	}
 }
 private int get_exp_ll(){
@@ -6144,7 +6155,7 @@ private String get_exp_abs_bddd(){
 		if (exp_next_char(')')){
 			exp_index++;
 		} else {
-			log_error(193,"missing close ) ");  // RPI 637
+			log_error(193,"unexpected character before close )");  // RPI 637 RPI 1034
 		}
 	}
 	return get_exp_abs_bddd(b,ddd);
@@ -8062,7 +8073,12 @@ private void gen_lit_size(int size){
 				} 
 				list_obj_loc = lit_loc[cur_lit];
 				String lit_line = tz390.get_hex(list_obj_loc,6) + " " + list_obj_code.substring(0,16) + " =" + lit_name[cur_lit]; 
+				if (bal_abort){
+					force_list_bal = true; // RPI 1031
+					loc_ctr = loc_ctr + lit_len[cur_lit]; // RPI 1031
+				}
 				put_prn_line(lit_line);
+				bal_abort = false;         // RPI 1031
 			}			
 		}
 		cur_lit++;
