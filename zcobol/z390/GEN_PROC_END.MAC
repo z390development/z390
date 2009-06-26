@@ -8,9 +8,11 @@
 .*********************************************************************
 .* 04/08/08 initial coding for z390 target
 .* 10/07/08 ZSTRMAC
+.* 06/14/09 RPI 1042 add PERIOD macro call at end of procedure div.
 .*********************************************************************
          GEN_PROC_END
          COPY  ZC_WS
+         PERIOD
          GEN_LABEL END_PROCEDURE,SECTION FLUSH ANY PG'S AND SECTIONS
 *        PROCEDURE END
 .*

@@ -363,6 +363,14 @@ public  class  mz390 {
      * 04/20/09 RPI 1027 add SYSCDF for use by zCICS macros
      * 05/19/09 RPI 1038 put error 11 continuation error on systerm during loading
      * 05/25/09 RPI 1019 COPY &VAR and AINSERT ' COPY &VAR' support
+     * 06/09/09 RPI 1051 put missing COPY error 266 on ERRSUM
+     * 06/13/09 RPI 1053 prevent trap on neq mac_file_index using AINSERT
+     * 06/25/09 RPI 1050 remove dup START/ENDED for TRACEM CON
+     * 06/20/09 RPI 1058 move MLC loading under trap handler
+     * 06/21/09 RPI 1053 prevent trap on undefined forward referenced macro label
+     *          and trap on file/line ref for AEND missing macro
+     *          and trap on undefined AIF label branch with NOZSTRMAC
+     * 06/22/09 RPI 1059 put all ERRSUM errors on ERR file         
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -472,6 +480,7 @@ public  class  mz390 {
 	int cur_mac_file = 0;
 	int dynamic_mac_file = -1;    // RPI 1019 
 	boolean ainsert_copy = false; // RPI 1019
+	int     ainsert_copy_index = 0; // RPI 1053 
 	boolean ainsert_back = true;  // RPI 1019
 	File[] mac_file                = null;
 	BufferedReader[] mac_file_buff = null;
@@ -1195,13 +1204,7 @@ public  class  mz390 {
 		 */
 		z390_log_text = log_text;
 		init_mz390(args,log_text);
-		load_type = load_mlc_file;
-		load_file_name = tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type;
-		load_mac();
-		mac_line_index = 0; // RPI 746
-		mlc_line_end = tot_mac_line;
-		init_lcl_sys();
-		if (tz390.opt_trap){
+		if (tz390.opt_trap){ // RPI 1058 move mlc loading under trap handler
 			try {
 				process_mac();
 			} catch (Exception e){
@@ -1239,7 +1242,9 @@ public  class  mz390 {
 			az390.start_az390_thread(args,z390_log_text,tz390.systerm_file,tz390.stats_file); // RPI 737
 		}
 		if (tz390.opt_tracem){
+			tz390.force_nocon = true; // RPI 1050
 			tz390.put_trace(tz390.started_msg); // RPI 755
+			tz390.force_nocon = false; // RPI 1050
 		}
 		compile_patterns();
 		tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
@@ -1449,6 +1454,12 @@ public  class  mz390 {
 		 * of any parms and macro variables.
 		 *  
 		 */
+		load_type = load_mlc_file;
+		load_file_name = tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type;
+		load_mac();
+		mac_line_index = 0; // RPI 746
+		mlc_line_end = tot_mac_line;
+		init_lcl_sys();
 		while (!mlc_eof && !tz390.z390_abort){
 			/*
 			 * repeat executing nested macro code previously
@@ -1566,8 +1577,8 @@ public  class  mz390 {
 					} else if (bal_line != null && bal_line.length() == 0){
 						bal_line = null; // RPI 498 ignore blank lines
 					}
-				}		   
-				mac_line_index = mac_file_next_line[mac_line_index]; // RPI 956
+				}
+		    	mac_line_index = mac_file_next_line[mac_line_index]; // RPI 956
 			}
 			if   (bal_line != null){
 				if (tz390.opt_asm){
@@ -1766,7 +1777,7 @@ public  class  mz390 {
 					if (load_macro_mend_level == 0
 						&& load_type != load_mlc_file){
 						if (tz390.opt_chkmac == 2 
-							&& load_type == load_mac_file){ // RPI 747
+							&& load_type == load_mac_file){  // RPI 747
 							check_past_mend();  // RPI 740
 						}
 						mac_line = null; // eof at level 0 for macro
@@ -2390,7 +2401,7 @@ public  class  mz390 {
 				}
 				if (temp_line == null){
 					mac_file_buff[cur_mac_file].close();
-					cur_mac_file--;
+				    cur_mac_file--;
 					if (cur_mac_file >= 0){
 						if (tz390.opt_tracem
 							&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
@@ -3157,9 +3168,14 @@ public  class  mz390 {
 		if (tz390.split_label == null)tz390.split_label = "";
 		if (load_type > load_mac_file && !ainsert_copy){ // rpi 970 check if previously loaded ok RPI 1019 
 			if (tz390.find_key_index('C',tz390.split_label) == -1){ // rpi ignore copy if loaded during exec
+				if (tz390.opt_asm 
+					&& !az390.tz390.opt_errsum){
+					tz390.init_errsum();
+					az390.tz390.init_errsum();  // RPI 694 RPI 1051
+				}
 				log_error(266,"missing copy = " + mac_parms);
 			}
-			return;
+			return; // ignore std copy during exec 
 		}
 		cur_mac_file++;
 		if (cur_mac_file >= tz390.opt_maxfile){
@@ -3176,15 +3192,15 @@ public  class  mz390 {
 				}
 			}			
 		} else {
-			cur_mac_file--;
+		    cur_mac_file--; 
 			if (load_type != load_mlc_file){ // RPI 300 
 				if (tz390.opt_asm 
 					&& !az390.tz390.opt_errsum){
 				    tz390.init_errsum();
 					az390.tz390.init_errsum();  // RPI 694
 				}
-				log_error(101,"missing copy  = " + mac_parms);
 			}
+			log_error(101,"missing copy  = " + mac_parms);
 			return;
 		}
 		switch (load_type){ // RPI 300
@@ -3196,12 +3212,12 @@ public  class  mz390 {
 			break;
 		case 2: // load_mac_inline  RPI 970 was 3 in error
 			// already expanded during load so ignore and don't count twice
-			if (!ainsert_copy){ // RPI 1019
+			if (!ainsert_copy){ // RPI 1019 
 				cur_mac_file--;
 			}
 			break;
 		case 3: // load_mac_exec    RPI 970 was 4 in error
-			if (!ainsert_copy){
+			if (!ainsert_copy){ 
 				// already expanded during load so ignore and don't count twice
 				cur_mac_file--;
 			} else {
@@ -3240,9 +3256,11 @@ public  class  mz390 {
 			gbl_setc[gbl_syslib_index] = sys_dsn;
 			gbl_setc[gbl_syslib_index+1] = sys_mem;
 			gbl_setc[gbl_syslib_index+2] = sys_vol;
-			mac_file_cur_file_num[cur_mac_file - 1] = cur_mac_file_num;  // RPI 549
+			if (cur_mac_file > 0){ // RPI 1053 only update prior if mac/cpy
+			    mac_file_cur_file_num[cur_mac_file - 1] = cur_mac_file_num;  // RPI 549
+				mac_file_cur_line_num[cur_mac_file - 1] = cur_mac_line_num;
+			}
 			set_mac_file_num();
-			mac_file_cur_line_num[cur_mac_file - 1] = cur_mac_line_num;
 			cur_mac_line_num = 0;
 			if (tz390.opt_tracem
 				&& tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace			
@@ -3839,7 +3857,7 @@ public  class  mz390 {
 		actr_count--;
 		int index = get_label_index(bal_parms.substring(lab_index));
 		if (index < mac_name_line_start[mac_name_index]){ // RPI 956 
-			log_error(16,mac_name[mac_name_index] + " undefined " + bal_parms.substring(lab_index)); 
+			abort_error(16,mac_name[mac_name_index] + " undefined " + bal_parms.substring(lab_index)); // was log_error 
 		}
 		return index;
 	}
@@ -3864,7 +3882,7 @@ public  class  mz390 {
 					trace_break();
 				}
 				actr_count--;
-				if (new_mac_line_index + 1 < 0){ // rpi 899 add +1 RPI 956 
+				if (new_mac_line_index < 0){ // rpi 899 add +1 RPI 956 RPI 1059 remove +1 
 				   	log_error(142,mac_name[mac_name_index] + " AIF macro label not found - " + bal_parms.substring(aif_test_index+exp_next_index));
 				} else {
 					if (tz390.opt_pc){
@@ -7680,7 +7698,11 @@ public  class  mz390 {
 			label_name = label_match.group().toUpperCase();
 			int    label_name_index = find_lcl_key_index("B:" + label_name);
 			if (label_name_index != -1){
-				return mac_file_prev_line[mac_lab_index[label_name_index]]; // -1 req'd for following ++ cycle RPI 956 
+				if (mac_lab_index[label_name_index] >= 0){
+				    return mac_file_prev_line[mac_lab_index[label_name_index]]; // -1 req'd for following ++ cycle RPI 956 
+				} else {
+					return -2; // RPI 1053
+				}
 			}
 			label_name_index = mac_name_lab_start[mac_name_index];
 			while (label_name_index < mac_name_lab_end[mac_name_index]){
@@ -8721,7 +8743,9 @@ public  class  mz390 {
 		}
 		tz390.close_systerm(mz390_rc);
 		if (tz390.opt_tracem){
+			tz390.force_nocon = true; // RPI 1050
 			tz390.put_trace(tz390.ended_msg);
+			tz390.force_nocon = false; // RPI 1050
 		}
 		tz390.close_trace_file();
 	}
@@ -8881,22 +8905,17 @@ public  class  mz390 {
 		+ " " + msg;
 		if (tz390.opt_asm 
 			&& az390.tz390.opt_errsum){  // RPI 694 (see az390 log_error also)
-			if (error == 101){  // RPI 694 only log copy not found
+			if (error == 101 || error == 266){  // RPI 694 RPI 1051
                 if (!az390.add_missing_copy(mac_parms)){
                 	abort_error(219,"max missing copy exceeded");
                 }
 			}
-			put_bal_line("* " + error_msg); // RPI 945
-			if (error == 11){ // RPI 1038 continuation error during loading
-				tz390.put_systerm(error_msg); // RPI 1038
-			}
-		} else {
-			if (tz390.opt_traces){
-				System.out.println("MZ390E " + msg); // RPI 882
-			}
-			put_log(error_msg);
-			tz390.put_systerm(error_msg);
 		}
+		if (tz390.opt_traces){
+			System.out.println("MZ390E " + msg); // RPI 882
+		}
+		put_log(error_msg);
+		tz390.put_systerm(error_msg);
 		mz390_errors++;
 		if (tz390.max_errors != 0 && mz390_errors > tz390.max_errors){
 			abort_error(83,"maximum errors exceeded");
@@ -8928,7 +8947,7 @@ public  class  mz390 {
 		tz390.opt_con = true; // RPI 453
 		log_to_bal = true;
 		String err_line_and_num = "";
-		if (mac_file_num != null){ // RPI 812
+		if (mac_file_num != null && mac_line_index >= 0){ // RPI 812 RPI 1052
 			int file_index = mac_file_num[mac_line_index];
 			mac_file_errors[file_index]++;  // RPI 432
 			if (mac_line_index < tz390.opt_maxline){
@@ -11864,6 +11883,9 @@ public  class  mz390 {
 		/*
 		 * insert record in in queue
 		 */		
+    	if (tz390.opt_chkmac >0){
+    		tz390.opt_chkmac = 0; // RPI 1053 suppress chkmac(2) for AINSERT
+    	}
 		if (bal_parms.length() > 2
 			&& bal_parms.charAt(0) == '\''){
 			String text = bal_parms;
@@ -11878,9 +11900,7 @@ public  class  mz390 {
 				}				
 				if (index >= text.length()
 					|| text.charAt(index) <= ' '){
-					// assume BACK and add to end of AINSERT queue
-					ainsert_back = true;
-					add_ainsert_queue_rec(rec);
+				    log_error(277,"AINSERT missing FRONT/BACK" + bal_parms); // RPI 1053
 				} else {					
 					if (text.substring(index,index+5).toUpperCase().equals(",BACK")){
 						ainsert_back = true;
@@ -11888,6 +11908,8 @@ public  class  mz390 {
 					} else if (text.substring(index,index+6).toUpperCase().equals(",FRONT")){
 						ainsert_back = false;
 						add_ainsert_queue_rec(rec);					    
+					} else {
+						log_error(278,"AINSERT missing FRONT/BACK" + bal_parms); // RPI 1053
 					}
 				}
 				check_ainsert_copy(rec); // RPI 1019
@@ -11905,6 +11927,7 @@ public  class  mz390 {
     	 *   
     	 */
     	ainsert_copy = true;
+    	ainsert_copy_index = 0; // RPI 1053 
     	mac_line = rec;
     	dynamic_mac_file = cur_mac_file;
     	parse_mac_line();
@@ -11920,11 +11943,17 @@ public  class  mz390 {
     private void add_ainsert_queue_rec(String rec){
     	/*
     	 * add record to front or back of ainsert queue
+    	 * for copy insert at front in seq.
     	 */
-		if (ainsert_back){
+    	if (ainsert_back){
 			ainsert_queue.add(rec);
 		} else {
-			ainsert_queue.addFirst(rec);
+	    	if (ainsert_copy){ // RPI 1053 
+	    		ainsert_queue.add(ainsert_copy_index,rec);
+	    		ainsert_copy_index++;
+	    	} else {
+	    		ainsert_queue.addFirst(rec);
+	    	}
 		}
 		cur_ainsert++;
     }
@@ -11936,8 +11965,14 @@ public  class  mz390 {
     	 */
         set_insert_mac_line_index();  // RPI 1019 
     	String temp_line = ainsert_queue.pop();
+    	if (tz390.opt_tracem){ // RPI 1053
+    	     tz390.put_trace("AINSERT="+temp_line);
+    	}
     	cur_ainsert--;
     	tot_ainsert++;
+    	if (cur_mac_file < 0){
+    		cur_mac_file = 0; // RPI 1053 
+    	}
     	if (temp_line.length() <= mac_ictl_end[cur_mac_file]   // RPI 437 RPI 728 no cont col
     	    || temp_line.charAt(mac_ictl_end[cur_mac_file]) <= asc_space_char // RPI 728 test cont col
     	    ){ //RPI181

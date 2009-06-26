@@ -132,7 +132,8 @@ public  class  z390 extends JApplet
      *          also switch cmd_input_writer to do auto flush to prevent sporatic chopped commands  
      * 09/08/08 RPI 872 help menu "Guide" link to www.z390.org or webdoc\index.html 
      * 09/10/08 RPI 904 correct help menu "Guide" to support LSN path 
-     * 05/23/09 RPI 1041 replace EDIT SELECTALL with SELECT LOG and SELECT CMD        
+     * 05/23/09 RPI 1041 replace EDIT SELECTALL with SELECT LOG and SELECT CMD
+     * 06/04/09 RPI 1050 suppress blank lines on GUI log        
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -771,6 +772,9 @@ public  class  z390 extends JApplet
 	   	 * if console mode or console option on.
 	   	 * 
 	   	 */
+            if (msg.trim().length() == 0){
+            	return;  // RPI 1050
+            }
 	   	    io_count++;
 	        if  (main_gui){      
 	        	tz390.log_text_append(log_text,msg); // RPI 731

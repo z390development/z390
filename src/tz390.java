@@ -215,6 +215,8 @@ public  class  tz390 {
     * 03/06/09 RPI 1004 add FLOAT(DECIMAL/BINARY/HEX) for DFP,BFP, or HFP zcobol DEL type
     * 03/09/09 RPI 1013 add PFPO, ECTG, and CSST instructions
     * 04/20/09 RPI 1027 add option EDF and GBLC &SYSEDF for zCICS use
+    * 06/13/09 RPI 1053 add check_options for NOASM-CHKMAC-CHKSRC
+    * 06/22/09 RPI 1059 require ASM for ERRSUM or abort, remove PRN msg
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -223,7 +225,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.00d";  //dsh
+    String version    = "V1.5.00e";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -4524,6 +4526,8 @@ public void init_options(String[] args,String pgm_type){
 	 *        systerm(filename)
 	 *        test(ddname)
 	 *        time(seconds)
+	 *   2.  Add options check for consistency
+	 *       a.  NOASM - requires chkmac(0)   - RPI 1053   
 	 */
     if  (args.length >= 1){
     	if (!set_pgm_dir_name_type(args[0],pgm_type)){
@@ -4571,6 +4575,20 @@ public void init_options(String[] args,String pgm_type){
     if (dir_cpy == null){
     	dir_cpy = dir_mac; // RPI 742
     }
+    check_options();
+}
+private void check_options(){
+	/*
+	 * check options for consistency
+	 */
+	if (!opt_asm){
+		if(opt_chkmac != 0){
+			abort_error(26,"NOASM requires CHKMAC(0)"); // RPI 1053
+		}
+		if (opt_chksrc == 3){
+			abort_error(27,"NOASM requires CHKSRC(0-2)"); // RPI 1053
+		}
+	}
 }
 private void process_option(String opt_file_name,int opt_file_line,String token){
 	/*
@@ -4705,7 +4723,6 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     } else if (token.toUpperCase().equals("NOERRSUM")){
        	opt_errsum = false;
 		max_errors = 100;
-		opt_obj    = true;
     } else if (token.toUpperCase().equals("EXTEND")){
        	opt_extend = true;
     } else if (token.toUpperCase().equals("NOEXTEND")){
@@ -6523,7 +6540,9 @@ public void put_trace(String text){
     	 */
     	if (opt_asm){
     		opt_errsum = true;
-    		max_errors = 0;
+  			max_errors = 0;
+    	} else {
+    		abort_error(30,"ERRSUM requires option ASM");
     	}
     }
     public char ascii_printable_char(int mem_byte){

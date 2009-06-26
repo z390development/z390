@@ -18,6 +18,7 @@
 * 07/31/08 RPI 886 - TEST DEQUOTE ERROR IF QUOTES UNBALANCED         
 * 08/18/08 RPI 901 - MOVE TEST OF OPEN CODE UNDEF AGO TESTS TO ERR8/9
 * 11/07/08 RPI 938 - TEST MNOTE SYNTAX AND ALL BUT 8,'?' ON SYSTERM  
+* 06/15/09 RPI 108 - TEST MNOTE SYNTAX AND ALL BUT 8,'?' ON SYSTERM  
 *********************************************************************
          TITLE 'TESTERR1 TEST MZ390 ERRORS'
 TESTERR1 CSECT
@@ -113,8 +114,8 @@ A        TEST2 B,K1=C
 &SETB    SETB   '0'
 * ADD TEST INVALID SUBSTRING SUBSCRIPT 0
 &SETC    SETC   'X'(0,0)
-* RPI 744 test non-ascii character string error
-         DC   C'e…'  MULTI-KEY VALUES 101 AND 201
+* RPI 744 test non-ascii character string error    (not reported)           
+         DC   C'e…'  MULTI-KEY VALUES 101 AND 201  (see TESTERRA)
 * RPI 836 REPORT UNDEFINE SYMBOL AND SET ARRAY WITHOUT SUBSC.
          LCLA  &A836(10)
 &A836(2) SETA  2
@@ -141,7 +142,8 @@ A        TEST2 B,K1=C
 * ADD DUPLICATE AND MISSING MACRO ERRORS IN OPEN CODE
 *
 * THIS MUST BE LAST TEST WITH FAILING AGO IN OPEN CODE
-*
+* (The warning no issued for CHKMAC(0) required with NOASM)
+* (See TESTERRA using ASM and CHKMAC(2) for warnings)
 **********************************************************
          MACRO
          TESTLAB

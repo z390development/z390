@@ -91,7 +91,9 @@ public  class  lz390 {
     * 08/12/08 RPI 894 support RLD 2 byte fields in 390's upt to 64k 
     * 09/16/08 RPI 908 trap error on SYSLST file output override
     * 10/24/08 RPI 935 prevent recursive abort  
-    * 11/09/08 RPI 946 init 390 load module to x'F6' if option INIT (NOINIT sets x'00')      
+    * 11/09/08 RPI 946 init 390 load module to x'F6' if option INIT (NOINIT sets x'00') 
+    * 05/28/09 RPI 1046 correct trace display of AL3 and reset rld_cnt for each NAME cmd
+    * 06/10/09 RPI 1051 add LZ390I include = file spec for use by ZPARTRS  
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -447,13 +449,16 @@ private void put_copyright(){
 		if (tz390.opt_stats){
 			put_stat_line("Copyright 2008 Automated Software Tools Corporation");
 			put_stat_line("z390 is licensed under GNU General Public License");
-			put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			put_stat_line("options = " + tz390.cmd_parms);
+			put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 		}
 	   	// RPI 378
-	   	put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 	   	put_log(msg_id + "options = " + tz390.cmd_parms);
-	    tz390.force_nocon = false; // RPI 755
+	   	put_log(msg_id + "program = " 
+	   			+ tz390.dir_mlc 
+	   			+ tz390.pgm_name 
+	   			+ tz390.pgm_type); // RPI 1051
+	   	tz390.force_nocon = false; // RPI 755
        }
 	   private synchronized void put_log(String msg) {
 	   	/*
@@ -668,6 +673,12 @@ private boolean load_obj_file(boolean esds_only){
 	 * return true if successful
 	 */
     open_obj_file(obj_file_name);
+    if (!esds_only){
+    	tz390.force_nocon = true;
+   	    put_log(msg_id + "INCLUDE = " 
+            + obj_file_name); // RPI 1051
+        tz390.force_nocon = false;
+    }
     if (tz390.opt_tracel){
   	  	 tz390.put_trace("LOADING OBJ FILE - " + obj_file_name);
     }
@@ -752,8 +763,12 @@ private boolean load_obj_file(boolean esds_only){
 			    	rld_off = gbl_esd_loc[obj_gbl_esd[obj_rld_esd]] + obj_rld_loc;
 			    	rld_fld = z390_code_buff.getInt(rld_off);
 					if (tz390.opt_list){
+						int rld_fld_temp = rld_fld; // RPI 1046
+						if (obj_rld_len == 3){
+							rld_fld_temp = rld_fld_temp >>> 8; // RPI 1046
+						}
 						put_lst_line(msg_id + "RLD LOC=" + tz390.get_hex(rld_off,8)
-								        + " FLD=" + tz390.get_hex(rld_fld,obj_rld_len*2)
+								        + " FLD=" + tz390.get_hex(rld_fld_temp,obj_rld_len*2) // RPI 1046
 								        + " EXT=" + tz390.get_hex(gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]],8));
 					}
 					int rld_save;
@@ -1229,6 +1244,7 @@ private void reset_esds(){
     cur_gbl_esd = 0;
     cur_gbl_ext = 0;
     loc_ctr = 0;
+    tot_rld = 0; // RPI 1046
 }
 /*
  *  end of lz390code 

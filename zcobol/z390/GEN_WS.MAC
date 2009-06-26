@@ -14,9 +14,13 @@
 .* 02/21/09 RPI 1002 and 1004 ADD PIC TYPES 1,2,D,E,L,I 
 .* 02/28/09 RPI 1012 support VAVLUE ALL clause
 .* 03/10/09 RPI 1004 add HFP/BFP/DFP PIC TYPES 1-9 and Q 128 bit int
+.* 06/05/09 RPI 1048 define DCBD once before first DCB to correct 
+.*                   WS_LOC verification during first pass of az390
+.*                   see zcobol\test\TESTFIL2.CBL regression test
 .*********************************************************************
          GEN_WS      
          COPY  ZC_WS   
+         LCLB  &DCBD ONLY GEN DCBD ONCE BEFORE FIRST DCB RPI 1048
 .*
 .* SWITCH TO ZC_WSLOC LOCTR FOLLOWING PROCEDURE CODE IN ZC_PGM CSECT
 .*
@@ -94,7 +98,7 @@ ZC_WSLOC LOCTR
                      AEND
                AEND
                AIF   (&SYM_LOC(&I) LE &LAST_LOC                        X
-                      AND &SYM_REF(&I) GT 0)        
+                      AND &SYM_REF(&I) GT 0)                           
          ORG   &SYM_NAME(&SYM_REF(&I))  START REDEFINE
                AEND
                AIF (NOT &WS_LOC_ERR)   TEST WS AND LK OFFSETS
@@ -273,6 +277,10 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
 .*
 .* GEN DCB IN WS CSECT
 .*
+     AIF       (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
+               :&DCBD SETB 1  RPI 1048
+               DCBD ,         RPI 1048
+     AEND                     RPI 1048
 &FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,&DDNAME
      AEND
      MEND

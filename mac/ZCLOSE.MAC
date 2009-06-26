@@ -20,6 +20,7 @@
 .* 09/12/08 RPI 764 upgrade to ZSTRMAC and allow CLOSE (reg)
 .* 04/22/09 RPI 1021 add MF=L/E and cleanup reg support        
 .* 05/19/09 RPI 1029 remove SPM macro code for compatibility   
+.* 05/28/09 RPI 1045 change to only assume reg form if (...)
 .*********************************************************************
 &N       ZCLOSE &DCBLIST, (DCB1,OPT1,DCB2,OPT2..) OR (DCB), DCB, ((r)) X
                &MODE=,   IGNORED AS IT WORKS IN EITHER MODE            X
@@ -41,7 +42,7 @@
                AWHILE (&I LE &NP)
                    :&DCB     SETC  '&DCBLIST(&I)'
                    :&OPTION  SETC  '&DCBLIST(&I+1)'
-                   AIF ('&DCB'(1,1) EQ '(' OR T'&DCB EQ 'N')  RPI 764
+                   AIF ('&DCB'(1,1) EQ '(')  RPI 764 RPI 1045
                        MNOTE 8,'ZCLOSE REG FORM NOT ALLOWED'
                        MEXIT
                    AEND
@@ -93,10 +94,10 @@ ZCLOSE_DO_EXIT&SYSNDX DS 0H
                AWHILE (&I LE &NP)
                    :&DCB     SETC  '&DCBLIST(&I)'
                    :&OPTION  SETC  '&DCBLIST(&I+1)'
-                   AIF ('&DCB'(1,1) EQ '(' OR T'&DCB EQ 'N')  RPI 764
+                   AIF ('&DCB'(1,1) EQ '(')  RPI 764 TPI 1045
                        ZOPTLR 1,&DCB(1)
                    AELSE
-                       LA  1,&DCB
+                       LA     1,&DCB
                    AEND
                    AIF   ('&OPTION' NE '')
                          MNOTE 12,'CLOSE OPTION NOT SUPPORTED - &OPTION'

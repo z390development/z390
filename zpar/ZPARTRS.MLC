@@ -1,0 +1,213 @@
+         TITLE 'ZPARTRS.MLC - TRACE EXECUTION SOURCE'      
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 06/05/09                                                 *
+.*********************************************************************
+.* 06/05/09 RPI 1049 INITIAL CODING                                                       
+.* 06/10/09 RPI 1049 ADD REL INSTR LABEL CAPTURE FROM DS 0H AND EQU'S
+.*********************************************************************
+.* FILES:
+.*  INPUT  %SYSPARM.TRE  - INSTRUCTION TRACE WITH OPERAND INFO
+.*  INPUT  LOAD_NAME.LST - FOR EACH 390 LINK, LOAD, XCTL
+.*  INPUT  MOD_NAME.PRN  - FOR EACH INCLUDE FOUND IN LST
+.*  OUTPUT %SYSPARM,TRS  - SOURCE LINE EXECUTION TRACE 
+.* STEPS:
+.*  1.  READ %1.TRE AND SIMULATE LOAD OF %1.390 AT FIRST INSTR. ADDR.      
+.*  2.  FOR EACH LOAD SVC PERFORM THE FOLLOWING:
+.*      A.  READ LOAD_NAME.LST TO GET INCLUDED MODULE NAMES
+.*      B.  READ EACH INCLUDE MODULE.PRN AND STORE SOURCE LINES 
+.*          BY RESOLVED PSW_ADDR.  INCLUDE INSTRUCTION LABEL FROM 
+.*          PRIOR DS 0H OR EQU * IF FOUND.  
+.*  3.  WRITE TRS LINE IF SOURCE INDEX FOUND ELSE WRITE TRE LINE AS IS
+.*  4.  REPEAT TO END OF TRE
+.*********************************************************************
+         ACALL INIT
+         ACALL GET_TRE
+         AWHILE ('&REC' NE '')
+               ACTR 4096
+               AIF  (K'&REC GT 25)
+                    AIF  ('&REC'(2,9) EQ 'CDE LOAD=')
+                        :&LOAD_ADDR SETC '&REC'(12,7) IGNORE AMODE
+                        :&LOAD_LEN  SETC '&REC'(24,8)
+                        :&LOAD_NAME SETC '&REC'(38,*)
+                        :&LOAD_NAME SETC '&LOAD_NAME'(1,K'&LOAD_NAME-4)
+                        ACALL LOAD_390_LST
+                    AEND
+                    :&PSW_ADDR SETC 'P'.'&REC'(3,7)
+                    LCLC &(&PSW_ADDR)
+.* MNOTE 'DSHX FIND PSW_ADDR=&PSW_ADDR'
+                    :&PSW_LINE SETC (DOUBLE &(&PSW_ADDR))
+                    AIF  ('&PSW_LINE' NE '')
+                        :&REC SETC '&REC'(1,25).'&PSW_LINE'
+                    AEND
+               AEND
+               ACALL PUT_TRS
+               ACALL GET_TRE
+         AEND
+         :&REC SETC 'ZPARTRS TOTAL SOURCE LINES = &TOT_TRE'
+         ACALL PUT_TRS
+         MEXIT
+.*
+.* LOAD 390 LST - READ LST AND FOR EACH INCLUDE READ PRN
+.*            AND STORE EACH SOURCE INSTRUCTION LINE
+.*            AT RESOLVED PSW_ADDR = LOAD_ADDR + REL ADDR 
+.*
+         AENTRY LOAD_390_LST
+         :&LOAD_LOC SETA X2A('&LOAD_ADDR')
+         :&LOAD_END SETA &LOAD_LOC+X2A('&LOAD_LEN')
+         :&LST_DSN  SETC '&LOAD_NAME..LST'
+         :&LST_REC AREAD ID=3,DSNAME=&LST_DSN
+         MNOTE 'ZPARTRS LOADING &LST_DSN AT &LOAD_ADDR'
+         AWHILE ('&LST_REC' NE '')
+               ACTR 4096
+               AIF ('&LST_REC'(1,17) EQ 'LZ390I INCLUDE = ')
+                   :&MOD_NAME SETC '&LST_REC'(18,*) INCLUDE ?.OBJ
+                   :&MOD_NAME SETC '&MOD_NAME'(1,K'&MOD_NAME-4) 
+                   ACALL LOAD_MOD
+                   :&LOAD_LOC SETA &LOAD_LOC+&MOD_LEN
+               AEND
+               :&LST_REC AREAD ID=3,DSNAME=&LST_DSN
+         AEND
+         AIF   (&LOAD_LOC NE &LOAD_END)
+               :&DIFF SETA &LOAD_END-&LOAD_LOC
+               MNOTE 8,'ZPARTRS 390 VS PRN LENGTH ERROR = &DIFF'
+         AEND
+         AEND
+.*
+.* LOAD MOD - READ MOD_NAME.PRN AND LOAD SOURCE INSTRUCTION LINES
+.*            AT PSW_ADDR = LOAD_ADDR + MOD_ADDR
+.*
+         AENTRY LOAD_MOD
+         :&MOD_LEN   SETA 0   TOTAL LEN OF ALL CSECTS IN MODULE
+         :&LAB_HEX   SETC ''
+         :&LAB_NAME  SETC ''
+         :&BASE_NAME SETC '&MOD_NAME'
+         ACALL GET_BASE_NAME
+         :&PRN_DSN SETC '&MOD_NAME..PRN'
+         :&PRN_REC AREAD ID=4,DSNAME=&PRN_DSN
+         :&PSW_HEX  SETC A2X(&LOAD_LOC)
+         :&PSW_ADDR SETC '000000&PSW_HEX'(K'&PSW_HEX,7)
+         MNOTE 'ZPARTRS LOADING &PRN_DSN AT &PSW_ADDR'
+         AWHILE ('&PRN_REC' NE '')
+               ACTR 4096
+               AIF (K'&PRN_REC GT 54                                   X
+                    AND '&PRN_REC'(1,1)  EQ '0'                        X
+                    AND '&PRN_REC'(7,1)  EQ ' '                        X
+                    AND '&PRN_REC'(8,1)  NE ' '                        X
+                    AND '&PRN_REC'(20,1) EQ ' ')
+                   :&REL_HEX  SETC '&PRN_REC'(1,6)
+                   :&REL_LOC  SETA X2A(&REL_HEX)
+                   :&PSW_LOC  SETA &LOAD_LOC+&REL_LOC
+                   :&PSW_HEX  SETC A2X(&PSW_LOC)
+                   :&PSW_ADDR SETC 'P'.'000000&PSW_HEX'(K'&PSW_HEX,7)
+                   :&SOURCE   SETC '&PRN_REC'(54,*)
+                   AIF ('&REL_HEX' EQ '&LAB_HEX')
+                       AIF ('&SOURCE'(1,1) EQ ' ')
+                           :&OP_IX SETA 2
+                           AWHILE (&OP_IX LE K'&SOURCE)
+                              AIF ('&SOURCE'(&OP_IX,1) NE ' ')
+                                  :&SOURCE SETC '&LAB_NAME '.'&SOURCE'(X
+               &OP_IX,*)    
+                                  AEXIT AWHILE 
+                              AEND
+                              :&OP_IX SETA &OP_IX+1    
+                           AEND
+                      AEND
+                   AEND
+.* MNOTE 'DSHX ADD  PSW_ADDR=&PSW_ADDR MOD_NAME=&BASE_NAME REL=&REL_HEXX
+                LAB=&LAB_NAME'
+                   :&BASE_NAME SETC '&BASE_NAME        '(1,8)
+                   :&PSW_LINE SETC '&BASE_NAME &REL_HEX '.'&SOURCE'
+                   :&(&PSW_ADDR) SETC '&PSW_LINE'
+               AELSEIF (K'&PRN_REC GT 54                               X
+                    AND '&PRN_REC'(1,1)  EQ '0'                        X
+                    AND '&PRN_REC'(7,18) EQ (18)' '                    X
+                    AND '&PRN_REC'(54,1) NE ' '                        X
+                    AND '&PRN_REC'(54,1) NE '*') COULD BE REL LABEL
+                    AIF  ('&PRN_REC'(1,6) EQ '&PRN_REC'(19,6)          X
+                         OR '&PRN_REC'(19,6) EQ (6)' ') REL EQU,DS/CST
+                        :&SOURCE   SETC '&PRN_REC'(54,*)
+                        :&SPACE_IX SETA ('&SOURCE' FIND ' ')
+                        AIF (&SPACE_IX GT 1)
+                            :&LAB_NAME SETC '&SOURCE'(1,&SPACE_IX-1)
+                            AIF (&SPACE_IX LE 8)
+                              :&LAB_NAME SETC '&LAB_NAME        '(1,8)
+                            AEND
+                            :&LAB_HEX  SETC '&PRN_REC'(1,6)
+.* MNOTE 'DSHX LAB_NEX=&LAB_HEX LAB_NAME=&LAB_NAME'
+                        AEND
+                    AEND
+               AELSEIF (K'&PRN_REC GT 44                               X
+                    AND '&PRN_REC'(2,4)  EQ 'ESD='                     X
+                    AND '&PRN_REC'(37,8) EQ 'TYPE=CST')      
+                    :&CST_LEN  SETA X2A('&PRN_REC'(28,8))           
+                    :&MOD_LEN  SETA &MOD_LEN+&CST_LEN
+               AEND    
+               :&PRN_REC AREAD ID=4,DSNAME=&PRN_DSN
+         AEND
+         AEND
+.*
+.* INIT 
+.*
+         AENTRY INIT
+         :&EZ390_FOUND SETB 0
+         :&BASE_NAME SETC '&SYSPARM'
+         ACALL GET_BASE_NAME
+         :&PGM_NAME SETC '&BASE_NAME'
+         :&TRE_DSN SETC '&SYSPARM..TRE'
+         :&TRS_DSN SETC '&SYSPARM..TRS'
+         :&TOT_TRE SETA 0
+         :&REC SETC 'ZPARTRS PROGRAM = &SYSPARM'
+         ACALL PUT_TRS     
+         :&REC SETC 'ZPARTRS CURRENT DATE=&SYSDATE TIME=&SYSTIME'
+         ACALL PUT_TRS
+         AEND
+.*
+.* GET TRE REC AND SAVE TRE NAME IF FIRST RECORD
+.*
+         AENTRY GET_TRE
+         :&REC AREAD ID=1,DSNAME=&TRE_DSN
+         AWHILE ('&REC' NE '')
+               :&TOT_TRE SETA &TOT_TRE+1
+               AIF  (K'&REC GT 25)
+                    AIF ('&REC'(3,1) EQ ':')
+                        :&REC SETC '&REC'(10,*) REMOVE TIME STAMP
+                    AEND
+                    AIF ('&REC'(11,5) EQ 'EZ390')
+                        :&EZ390_FOUND SETB 1
+                    AELSEIF (&EZ390_FOUND)
+                        AEXIT AWHILE
+                    AELSE
+                        MNOTE 12,'ZPARTRS EZ390 START RECORD NOT FOUND'
+                        MEXIT
+                    AEND
+               AEND
+               ACALL PUT_TRS DISPLAY START/STOP/BLANK RCDS
+               :&REC AREAD ID=1,DSNAME=&TRE_DSN
+         AEND
+         AEND
+.*
+.* PUT TRS
+.*
+         AENTRY PUT_TRS
+         PUNCH '&REC',ID=2,DSNAME=&TRS_DSN
+         :&TOT_TRS SETA &TOT_TRS+1
+         AEND
+.*
+.* GET BASE NAME FROM BASE_NAME
+.*
+         AENTRY GET_BASE_NAME
+         :&SLASH_IX SETA K'&BASE_NAME-1
+         AWHILE (&SLASH_IX GT 0)
+             AIF ('&BASE_NAME'(&SLASH_IX,1) EQ '\')
+                 :&BASE_NAME SETC '&BASE_NAME'(&SLASH_IX+1,*)
+                 AEXIT AENTRY
+             AEND
+             :&SLASH_IX SETA &SLASH_IX-1
+         AEND
+         AEND
+         END                         
+ 

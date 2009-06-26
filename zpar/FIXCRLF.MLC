@@ -1,0 +1,9 @@
+         TITLE 'FIXCRLF'
+         :&REC AREAD DDNAME=SYSUT1
+         AWHILE ('&REC' NE '')
+               ACTR 4096
+               :&PREC SETC (DOUBLE '&REC')
+               PUNCH '&PREC',DDNAME=SYSUT2
+               :&REC AREAD DDNAME=SYSUT1
+         AEND      
+         END

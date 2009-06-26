@@ -176,7 +176,11 @@ public  class  sz390 implements Runnable {
     * 11/08/08 RPI 947 move get_ascii_printable_string to tz390 for use by MNOTE/TRACEP  
     * 12/05/08 RPI 966 check TIOT index limit (X'F6F6F6F6' bad DCB)    
     * 04/22/09 RPI 1021 prevent SFFF on DCB addr with high VL bit on 
-    * 05/07/09 RPI 1036 backup PSW to instruction for trace and dump                         
+    * 05/07/09 RPI 1036 backup PSW to instruction for trace and dump  
+    * 06/10/09 RPI 1051 add CDE LOAD line on TRE for use by ZPARTRS 
+    * 06/13/09 RPI 1054 backup PSW for ABEND except for S0C1/S422
+    *          add ascii/ebcdic text on last duplicat line of dump  
+    * 06/15/09 RPI 1050 suppress dup ENDED for TRACE CON                    
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -881,8 +885,10 @@ private void put_con(String msg){
 	 * put msg to console or cmd process output
 	 * and yield to let parent process m
 	 */
-	System.out.println(msg);
-	Thread.yield();
+	if (!tz390.force_nocon){ // RPI 1050 for future use
+		System.out.println(msg);
+		Thread.yield();
+	}
 }
 public void log_error(int error,String msg){
 	/*
@@ -1076,6 +1082,9 @@ private synchronized void close_files(){  // RPI 661
 	  tz390.force_nocon = true;
 	  tz390.set_ended_msg(ez390_rc); // RPI 837
 	  put_log(tz390.ended_msg);
+	  if (tz390.opt_trace){  // RPI 1050 move within force_nocon
+		  tz390.put_trace(tz390.ended_msg);
+	  }
 	  tz390.force_nocon = false;
 	  if (log_file != null && log_file.isFile()){
 	  	  try {
@@ -1083,9 +1092,6 @@ private synchronized void close_files(){  // RPI 661
 	  	  } catch (Exception e){
 	  	  	  tz390.abort_error(3,"I/O error on log file close - " + e.toString()); // RPI 646
 	  	  }
-	  }
-	  if (tz390.opt_trace){
-		  tz390.put_trace(tz390.ended_msg);
 	  }
 	  ast_close_file(pz390.ast_xread_tiot);
 	  ast_close_file(pz390.ast_xprnt_tiot);
@@ -1814,6 +1820,12 @@ private void add_cde(){
 	cde_len[cur_cde]  = load_code_len;
     cde_loc[cur_cde] = load_code_load;
     cde_ent[cur_cde] = load_code_ent;
+    if (tz390.opt_trace){
+    	tz390.put_trace(" CDE " 
+   			+ "LOAD="  + tz390.get_hex(load_code_load,8)
+   			+ " LEN="  + tz390.get_hex(load_code_len,8)
+   			+ " NAME=" + load_file_name); // RPI 1051
+    }
 }
 public void svc_link(){
 	/*
@@ -2418,14 +2430,22 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 	 *        dump all storage
 	 * 3.  Abort if not in test mode
 	 */
+	if (pz390.psw_abend){
+		return; // ignore mult on same cycle RPI 1054
+	}
+	pz390.psw_abend = true; // RPI 1054
 	if (!tz390.opt_trace){
 		list_trace_table(); // RPI 819 list last 10 instr
 	}
+	int save_psw_loc = pz390.psw_loc; // RPI 1054
 	int dump_loc = pz390.psw_loc - pz390.psw_ins_len;
-	if (pic == 0x0c1 || pz390.psw_loc < 0){
+	if (   pic == 0x0c1 // invalid opcode
+		|| pic == 0x422 // timeout // RPI 1054
+		|| pz390.psw_loc < 0){
 		dump_loc = pz390.psw_loc;
-	}
-	pz390.psw_loc = dump_loc; // RPI 1036
+	} else {
+		pz390.psw_loc = dump_loc; // RPI 1036
+	}	
 	String abend_code;
 	if (type){  // system or user requested abend
 		abend_code = "S" + tz390.get_hex(pic,3);
@@ -2434,7 +2454,7 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 		abend_code = "U" + abend_code.substring(abend_code.length()-4);
 	}
 	log_error(11,
-	         "PSW=" + dump_psw()
+	         "ABEND PSW=" + dump_psw()  // rpi 1051
 		   + " " + pz390.get_ins_hex(dump_loc)
 		   + " " + pz390.get_ins_name(dump_loc)
 		   + " ABEND " + abend_code);
@@ -2447,6 +2467,7 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 		pz390.test_trace_count = 1; // stop test G/Z/T
 		pz390.psw_check = false; // reset default
 	}
+	pz390.psw_loc = save_psw_loc; // RPI 1054
     svc_abend_type = system_abend;
 }
 private void list_trace_table(){
@@ -2560,6 +2581,7 @@ public void dump_mem(ByteBuffer memory,int mem_addr,int mem_len){
 	boolean last_dup_line = false;
 	String  dump_hex      = null;
 	String  last_hex      = null;
+	String  dump_text = ""; // RPI 1054
 	int     last_addr     = 0;
 	while (mem_len > 0 && mem_addr + mem_len <= pz390.tot_mem){
 		if (mem_len > 16){
@@ -2567,7 +2589,7 @@ public void dump_mem(ByteBuffer memory,int mem_addr,int mem_len){
 		} else {
 			dump_len = mem_len;
 		}
-		String dump_text = tz390.get_ascii_printable_string(memory.array(),mem_addr,dump_len); // RPI 947
+		dump_text = tz390.get_ascii_printable_string(memory.array(),mem_addr,dump_len); // RPI 947
 		
 		dump_text = tz390.left_justify(dump_text,16); // RPI 411
 	    dump_hex = pz390.bytes_to_hex(memory,mem_addr,dump_len,4); 
@@ -2602,7 +2624,7 @@ public void dump_mem(ByteBuffer memory,int mem_addr,int mem_len){
 			put_dump(" ........");
 		}
 		dump_hex = tz390.left_justify(dump_hex,35); // RPI 411
-		put_dump(" " +tz390.get_hex(mem_addr-16,8) + " *"  + dump_hex + "*");
+		put_dump(" " +tz390.get_hex(mem_addr-16,8) + " *"  + dump_hex + "* *" + dump_text + "*"); // RPI 1054 
 	}
 }
 private void put_dump(String text){

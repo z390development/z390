@@ -77,7 +77,7 @@ public  class  az390 implements Runnable {
     * 08/19/05 add dcv_data Vcon and ENTRY support
     * 08/22/05 add SYSBAL, SYSOBJ, SYSPRN dir options
     * 08/28/05 add DS/DC S type support
-    * 08/28/05 add dependant and labeled USING support
+    * 08/28/05 add dependent and labeled USING support
     * 09/01/05 ADD ORG support and comma delimited continue
     * 09/08/05 fix address errors for mult sect pgms by
     *          forcing pass for any sect change
@@ -339,11 +339,19 @@ public  class  az390 implements Runnable {
         * 02/01/09 RPI 987 fix labelled USING and DROP to handle mixed case
         * 02/03/09 RPI 988 allow relative addressing across CSECT's in same assembly
         * 02/04/09 RPI 991 correct unary sign followed by pfx operator AHI 1,-L'var etc.
-        * 02/10/09 RPI 994 support neg base displacements for LA using depending USING offsets
+        * 02/10/09 RPI 994 support neg base displacements for LA using dependenting USING offsets
         * 02/10/09 RPI 995 set az390_private_sect for mz390 use 
         * 06/06/09 RPI 1033 error if SS length too long
         * 05/19/09 RPI 1034 improve error msg 61, 71, 193
         * 05/20/09 RPI 1031 show literals with errors and fix length
+        * 05/27/09 RPI 1044 do not resolve V(con) to relative symbol
+        * 06/08/09 RPI 1051 prefix all ERRSUM msgs with ERRSUM
+        * 06/14/09 RPI 1057 add DFHRESP(END)=F'83' and add DFHVALUE support
+        * 06/15/09 RPI 1047 fix AZ390 ENDED if run standalone
+        * 06/15/09 RPI 1050 remove dup START/ENDED for TRACEA CON
+        * 06/15/09 RPI 1052 issue error for DROP of explict reg with no USING
+        * 06/16/09 RPI 1056 issue warning for dup ordinary USING range
+        *          and remove dup dep unlabeled USING range
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -369,6 +377,7 @@ public  class  az390 implements Runnable {
     File prn_file = null;
     BufferedWriter prn_file_buff = null;
     String bal_line = null;
+    String mnote_warning_msg = ""; // RPI 1056
     int mcall_bal_index = 22;
     int mcall_lv_index  = 16;
     String bal_xref_file_name = null;
@@ -508,6 +517,7 @@ public  class  az390 implements Runnable {
      */
     int cur_use_start = 0;
     int cur_use_end   = 0;
+    boolean explicit_drop_reg = false; // RPI 1052
     int[] push_cur_use_start = null;
     int[] push_cur_use_end   = null;
     int cur_use = 0;
@@ -910,63 +920,124 @@ public  class  az390 implements Runnable {
    * EXEC CICS DFHRESP(type) literal data substitution per RPI 626
    */
       String[] dfhresp_type = {
-    		  "NORMAL)",          // 0 - =F'0'
-    		  "ERROR)",           // 1 - =F'1'
-    		  "TERMIDERR)",       // 2 - =F'11' RPI 928
-    		  "FILENOTFOUND)",    // 3 - =F'12' RPI 687
-    		  "DSIDERR)",         // 4 - =F'12' RPI 905
-    		  "NOTFND)",          // 5 - =F'13' RPI 687, RPI 690
-    		  "DUPREC)",          // 6 - =F'14' RPI 687
-    		  "DUPKEY)",          // 7 - =F'15' RPI 687
-    		  "INVREQ)",          // 8 - =F'16'
-    		  "IOERR)",           // 9 - =F'17' RPI 928
-    		  "NOSPACE)",         //10 - =F'18' RPI 687
-    		  "NOTOPEN)",         //11 - =F'19' RPI 687
-    		  "ENDFILE)",         //12 - =F'20' RPI 687
-    		  "ILLOGIC)",         //13 - =F'21' RPI 729
-    		  "LENGERR)",         //14 - =F'22'   		  
-    		  "ITEMERR)",         //15 - =F'26' RPI 662
-    		  "PGMIDERR)",        //16 - =F'27'
-    		  "TRANSIDERR)",      //17 - =F'28' RPI 928
-    		  "ENDDATA)",         //18 - =F'29' RPI 928
-    		  "EXPIRED)",         //19 - =F'31' RPI 751
-    		  "MAPFAIL)",         //20 - =F'36' RPI 841
-    		  "INVMPSZ)",         //21 - =F'38' RPI 841
-    		  "OVERFLOW)",        //22 - =F'40' RPI 841
-    		  "QIDERR)",          //23 - =F'44' RPI 662
-    		  "ENQBUSY)",         //24 - =F'55' RPI 951
-    		  "ENVDEFERR)",       //25 - =F'56' RPI 928
-    		  "DISABLED)",        //26 - =F'84' RPI 687
+    		  "NORMAL)",          // 1 - =F'0'
+    		  "ERROR)",           // 2 - =F'1'
+    		  "TERMIDERR)",       // 3 - =F'11' RPI 928
+    		  "FILENOTFOUND)",    // 4 - =F'12' RPI 687
+    		  "DSIDERR)",         // 5 - =F'12' RPI 905
+    		  "NOTFND)",          // 6 - =F'13' RPI 687, RPI 690
+    		  "DUPREC)",          // 7 - =F'14' RPI 687
+    		  "DUPKEY)",          // 8 - =F'15' RPI 687
+    		  "INVREQ)",          // 9 - =F'16'
+    		  "IOERR)",           //10 - =F'17' RPI 928
+    		  "NOSPACE)",         //11 - =F'18' RPI 687
+    		  "NOTOPEN)",         //12 - =F'19' RPI 687
+    		  "ENDFILE)",         //13 - =F'20' RPI 687
+    		  "ILLOGIC)",         //14 - =F'21' RPI 729
+    		  "LENGERR)",         //15 - =F'22'   		  
+    		  "ITEMERR)",         //16 - =F'26' RPI 662
+    		  "PGMIDERR)",        //17 - =F'27'
+    		  "TRANSIDERR)",      //18 - =F'28' RPI 928
+    		  "ENDDATA)",         //19 - =F'29' RPI 928
+    		  "EXPIRED)",         //20 - =F'31' RPI 751
+    		  "MAPFAIL)",         //21 - =F'36' RPI 841
+    		  "INVMPSZ)",         //22 - =F'38' RPI 841
+    		  "OVERFLOW)",        //23 - =F'40' RPI 841
+    		  "QIDERR)",          //24 - =F'44' RPI 662
+    		  "ENQBUSY)",         //25 - =F'55' RPI 951
+    		  "ENVDEFERR)",       //26 - =F'56' RPI 928
+    		  "SUPPRESSED",       //27 - =F'72' RPI 1057
+    		  "END)",             //28 - =F'83' RPI 1057
+    		  "DISABLED)",        //29 - =F'84' RPI 687
     		  };
       String[] dfhresp_lit = {
-    		  "=F'0'",           // 0 "NORMAL)" 
-    		  "=F'1'",           // 1 "ERROR)" 
-    		  "=F'11'",          // 2 "TERMIDERR"     RPI 928
-    		  "=F'12'",          // 3 "FILENOTFOUND)" RPI 687
-    		  "=F'12'",          // 4 "DSIDERR"       RPI 905
-    		  "=F'13'",          // 5 "NOTFND)" RPI 687, RPI 690 
-    		  "=F'14'",          // 6 "DUPREC)" RPI 687
-    		  "=F'15'",          // 7 "DUPKEY)" RPI 687 
-    		  "=F'16'",          // 8 "INVREQ)" 
-    		  "=F'17'",          // 9 "IOERR"    RPI 928
-    		  "=F'18'",          //10 "NOSPACE)" RPI 687 
-    		  "=F'19'",          //11 "NOTOPEN)" RPI 687 
-    		  "=F'20'",          //12 "ENDFILE)" RPI 687 
-    		  "=F'21'",          //13 "ILLOGIC)" RPI 729
-    		  "=F'22'",          //14 "LENGERR)" 
-    		  "=F'26'",          //15 "ITEMERR)" RPI 662
-    		  "=F'27'",          //16 "PGMIDERR)"
-    		  "=F'28'",          //17 "TRANSIDERR"  RPI 928
-    		  "=F'29'",          //18 "ENDDATA"     RPI 928
-    		  "=F'31'",          //19 "EXPIRED)"  RPI 751
-    		  "=F'36'",          //20 "MAPFAIL)"  RPI 841
-    		  "=F'38'",          //21 "INVMPSZ)"  RPI 841
-    		  "=F'40'",          //22 "OVERFLOW)" RPI 841
-    		  "=F'44'",          //23 "QIDERR)"   RPI 662
-    		  "=F'55'",          //24 "ENQBUSY)"  RPI 951
-    		  "=F'56'",          //25 "ENVDEFERR" RPI 928
-    		  "=F'84'",          //26 "DISABLED)" RPI 687
+    		  "=F'0'",           // 1 "NORMAL)" 
+    		  "=F'1'",           // 2 "ERROR)" 
+    		  "=F'11'",          // 3 "TERMIDERR"     RPI 928
+    		  "=F'12'",          // 4 "FILENOTFOUND)" RPI 687
+    		  "=F'12'",          // 5 "DSIDERR"       RPI 905
+    		  "=F'13'",          // 6 "NOTFND)" RPI 687, RPI 690 
+    		  "=F'14'",          // 7 "DUPREC)" RPI 687
+    		  "=F'15'",          // 8 "DUPKEY)" RPI 687 
+    		  "=F'16'",          // 9 "INVREQ)" 
+    		  "=F'17'",          //10 "IOERR"    RPI 928
+    		  "=F'18'",          //11 "NOSPACE)" RPI 687 
+    		  "=F'19'",          //12 "NOTOPEN)" RPI 687 
+    		  "=F'20'",          //13 "ENDFILE)" RPI 687 
+    		  "=F'21'",          //14 "ILLOGIC)" RPI 729
+    		  "=F'22'",          //15 "LENGERR)" 
+    		  "=F'26'",          //16 "ITEMERR)" RPI 662
+    		  "=F'27'",          //17 "PGMIDERR)"
+    		  "=F'28'",          //18 "TRANSIDERR"  RPI 928
+    		  "=F'29'",          //19 "ENDDATA"     RPI 928
+    		  "=F'31'",          //20 "EXPIRED)"  RPI 751
+    		  "=F'36'",          //21 "MAPFAIL)"  RPI 841
+    		  "=F'38'",          //22 "INVMPSZ)"  RPI 841
+    		  "=F'40'",          //23 "OVERFLOW)" RPI 841
+    		  "=F'44'",          //24 "QIDERR)"   RPI 662
+    		  "=F'55'",          //25 "ENQBUSY)"  RPI 951
+    		  "=F'56'",          //26 "ENVDEFERR" RPI 928
+    		  "=F'72'",          //27 "SUPPRESSED" RPI 1057
+    		  "=F'83'",          //28 "END)"      RPI 1057
+    		  "=F'84'",          //29 "DISABLED)" RPI 687
     		  };
+  /*
+   * EXEC CICS DFHVALUE(type) literal substitution
+   */
+      String[] dfhvalue_type = {
+              "NOTAPPLIC)",       // 1 - =F'1'
+              "VSAM)",            // 2 - =F'3'
+              "ESDS)",            // 3 - =F'5'
+              "KSDS)",            // 4 - =F'6'
+              "RRDS)",            // 5 - =F'7'
+              "BASE)",            // 6 - =F'10'
+              "PATH)",            // 7 - =F'11'
+              "FIXED)",           // 8 - =F'12'
+              "VARIABLE)",        // 9 - =F'13'
+              "OPEN)",            //10 - =F'18'
+              "CLOSED)",          //11 - =F'19'
+              "ENABLED)",         //12 - =F'23'
+              "DISABLED)",        //13 - =F'24'
+              "UNENABLED)",       //14 - =F'33'
+              "READABLE)",        //15 - =F'35'
+              "NOTREADABLE)",     //16 - =F'36'
+              "UPDATABLE)",       //17 - =F'37'
+              "NOTUPDATABLE)",    //18 - =F'38'
+              "BROWSABLE)",       //19 - =F'39'
+              "NOTBROWSABLE)",    //20 - =F'40'
+              "ADDABLE)",         //21 - =F'41'
+              "NOTADDABLE)",      //22 - =F'42'
+              "DELETABLE)",       //23 - =F'43'
+              "NOTDELETABLE)",    //24 - =F'44'
+              "VRRDS)",           //25 - =F'732'
+              };
+  String[] dfhvalue_lit = {
+              "=F'1'",            // 1 "NOTAPPLIC)"
+              "=F'3'",            // 2 "VSAM)"
+              "=F'5'",            // 3 "ESDS)"
+              "=F'6'",            // 4 "KSDS)"
+              "=F'7'",            // 5 "RRDS)"
+              "=F'10'",           // 6 "BASE)"
+              "=F'11'",           // 7 "PATH)"
+              "=F'12'",           // 8 "FIXED)"
+              "=F'13'",           // 9 "VARIABLE)"
+              "=F'18'",           //10 "OPEN)"
+              "=F'19'",           //11 "CLOSED)"
+              "=F'23'",           //12 "ENABLED)"
+              "=F'24'",           //13 "DISABLED)"
+              "=F'33'",           //14 "UNENABLED)"
+              "=F'35'",           //15 "READABLE)"
+              "=F'36'",           //16 "NOTREADABLE)"
+              "=F'37'",           //17 "UPDATABLE)"
+              "=F'38'",           //18 "NOTUPDATABLE)"
+              "=F'39'",           //19 "BROWSABLE)"
+              "=F'40'",           //20 "NOTBROWSABLE)"
+              "=F'41'",           //21 "ADDABLE)"
+              "=F'42'",           //22 "NOTADDABLE)"
+              "=F'43'",           //23 "DELETABLE)"
+              "=F'44'",           //24 "NOTDELETABLE)"
+              "=F'732'",          //25 "VRRDS)"
+              };
   /* 
    * end of global az390 class data and start of procs
    */
@@ -1093,10 +1164,10 @@ private void init_az390(String[] args, JTextArea log_text){
 		open_files();
 		tz390.force_nocon = true;   // RPI 755
 		put_log(tz390.started_msg); // RPI 755
-		tz390.force_nocon = false;  // RPI 755
-		if (!mz390_call && tz390.opt_tracea){ // RPI 935
+		if (!mz390_call && tz390.opt_tracea){ // RPI 935 RPI 1050 move within NOCON
 			tz390.put_trace(tz390.started_msg); // RPI 755
 		}
+		tz390.force_nocon = false;  // RPI 755
 		put_copyright();
         compile_patterns();
         tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
@@ -3580,7 +3651,7 @@ private int find_bal_op(){
 			if (!tz390.opt_errsum){
 				tz390.init_errsum(); // RPI 694
 			}
-			log_error(29,"missing macro = " + bal_op); // RPI 694
+			log_error(29,"ERRSUM missing macro = " + bal_op); // RPI 694 rpi 1051
 		}
 	    return -1;
 	} 
@@ -3625,7 +3696,8 @@ private void process_esd(byte esd_type){
     	    	   cur_sid = find_sym(token);
     	    	   if (!lookahead_mode
     	    		   && (cur_sid == -1
-    	    		       || sym_def[cur_sid] == sym_def_lookahead)){ // RPI 415 
+    	    		       || sym_def[cur_sid] == sym_def_lookahead) // RPI 415 
+    	    		       || sym_def[cur_sid] != sym_cst){ // RPI 1044
     	    		   add_extrn(cur_sid,token);
     	    	   }
     	    	   break;
@@ -3831,7 +3903,7 @@ public int find_sym(String name){ // RPI 415 public
 			if (sym_type[index] == sym_und){  // RPI 694
 			  	log_error(198,"symbol not defined " + sym_name[index]);
 			} else if (exp_equ && bal_line_index == sym_def[index]){
-				log_error(200,"circular EQL expression error for " + sym_name[index]); // RPI 749
+				log_error(200,"circular EQU expression error for " + sym_name[index]); // RPI 749
 			} else if (exp_lit_mod && bal_line_index < sym_def[index]){
 				log_error(201,"literal modifier forward reference for " + sym_name[index]); // RPI 749
 			}
@@ -4759,7 +4831,7 @@ private void push_exp_sym(){
 	if (inc_tot_exp_stk_sym()){
 	   cur_sid = find_sym(exp_token);
 	   if (cur_sid > 0 
-		   && (sym_def[cur_sid] >= sym_def_ref || lookahead_mode)){  //RPI 488
+		   && (sym_def[cur_sid] >= sym_def_ref || lookahead_mode)){  // RPI 488
 	   	  if (exp_first_sym_len){
 	   	  	 exp_first_sym_len = false;
 	   	  	 exp_len = sym_len[cur_sid];
@@ -4945,7 +5017,9 @@ public void put_stats(){
 		put_log(msg_id + "total mz390 errors   = " + mz390_errors); // RPI 659
 	}
 	put_log(msg_id + "total az390 errors   = " + az390_errors); // RPI 659
-	tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " " + "MZ390 "; // RPI 755
+	if (mz390_call){
+		tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " " + "MZ390 "; // RPI 755 RPI 1047
+	}
 	tz390.force_nocon = false; // RPI 755
 }
 private void put_stat_line(String msg){
@@ -4979,6 +5053,9 @@ public void close_files(){
 	  }
       tz390.force_nocon = true;
 	  put_log(tz390.ended_msg);
+	  if (!mz390_call && tz390.opt_tracea){ // RPI 935 RPI 1050 moved within NOCON
+		  tz390.put_trace(tz390.ended_msg);
+	  }
 	  tz390.force_nocon = false;
 	  if  (tz390.opt_list){
 		  if (prn_file != null && prn_file.isFile()){
@@ -4989,9 +5066,6 @@ public void close_files(){
 		  	  }
 		  }
 	    }
-		if (!mz390_call && tz390.opt_tracea){ // RPI 935
-			tz390.put_trace(tz390.ended_msg);
-		}
 	  tz390.close_trace_file();
 }
 private void log_error(int error,String msg){
@@ -5161,6 +5235,19 @@ private void put_copyright(){
 		   	          }
 	   	        	  index = index + 16;
 	   	          }
+	   	       if (mnote_warning_msg.length() > 0){ // RPI 1056
+                   mnote_warning_msg = "AZ390E " + mnote_warning_msg;
+                   prn_file_buff.write(mnote_warning_msg + tz390.newline); 
+                   tot_mnote_warning++;
+                   if (az390_rc < 4){
+                           az390_rc = 4;
+                   }
+                   if (max_mnote_level < 4){
+                           max_mnote_level = 4;
+                   }
+                   tz390.put_systerm(mnote_warning_msg); // RPI 1056
+                   mnote_warning_msg = "";
+           }
 	   	      } catch (Exception e){
 	              az390_errors++;
 	   	      }
@@ -5587,7 +5674,7 @@ private void get_use_domain(){
 	 * set cur_use_reg and cur_use_off
 	 * from exp_text at exp_index set by get_use_range
 	 * Notes:
-	 *   1.  get_rel_exp_bddd is called for dependant
+	 *   1.  get_rel_exp_bddd is called for dependent
 	 *       using expressions to find reg and loc
 	 */
 	cur_use_depend = false;
@@ -5603,16 +5690,38 @@ private void get_use_domain(){
 					   || exp_type == sym_cst
 					   || exp_type == sym_dst){ // RPI 274
 				cur_use_depend =true;
+				if (cur_use_lab == ""){
+					drop_dependent_using(); // RPI 1056
+				}
 				hex_bddd = get_exp_rel_bddd();
 			}
 		}
 	} else {
 		use_eof =true;
+	}	
+}
+private void drop_dependent_using(){ // RPI 1056
+	/*
+	 * drop duplicate unlabeled dependent
+	 * USING for same section and offset
+	 */
+	int index = cur_use_start;
+	while (index < cur_use_end){  
+		if (use_lab[index] == ""
+			&& cur_use_base_esd == use_base_esd[index]
+			&& cur_use_base_loc == use_base_loc[index]){
+			cur_use_end--;
+			if (index < cur_use_end){ // RPI 431 was <
+				move_use_entry(cur_use_end,index);
+			}
+		}
+		index++;
 	}
 }
 private void drop_using(){
 	/*
-	 * drop one or more using registers or labeled using
+	 * drop one or more using 
+	 * registers or labeled using
 	 */
 	if (tz390.opt_listuse){
 		list_use = true;
@@ -5635,7 +5744,15 @@ private void drop_using(){
    		    	  exp_index = 0;
    		    	  if (calc_abs_exp()){ 
    		    		  cur_use_reg = exp_val;
+   		    		  explicit_drop_reg = true; // RPI 1052
    		    		  drop_cur_use_reg();
+   		    		  explicit_drop_reg = false; // RPI 1052
+   		    		  if (tz390.parm_match.start() + exp_index < bal_parms.length()){  // RPI 1052
+   		    			  bal_parms = bal_parms.substring(tz390.parm_match.start() + exp_index);
+   		    			  tz390.parm_match = tz390.parm_pattern.matcher(bal_parms);
+   		    		  } else {
+   		    			  return;
+   		    		  }
    		    	  } else {
    		    		  log_error(101,"invalid register expression - " + exp_text);
    		    	  }
@@ -5675,8 +5792,12 @@ private void drop_cur_use_reg(){
 			if (index < cur_use_end){
 				move_use_entry(cur_use_end,index);
 			}
+			return; // RPI 1052 exit after removing one
 		}
 		index++;
+	}
+	if (explicit_drop_reg == true){
+		log_error(207,"Active USING not found for DROP register - " + cur_use_reg); // RPI 1052
 	}
 }
 private void move_use_entry(int index1,int index2){
@@ -6068,7 +6189,7 @@ private String get_exp_rel_bddd(){
 	 *     returned as bdddhh. RPI 387
 	 * 
 	 * 2.  Set cur_reg and cur_reg_loc for use
-	 *     when called from dependant using with
+	 *     when called from dependent using with
 	 *     domain expression.
 	 * 3.  If exp_use_lab is not null restrict
 	 *     using entries to labelled using.  
@@ -6105,6 +6226,12 @@ private String get_exp_rel_bddd(){
 			if (test_offset <= cur_use_off  // RPI 982
 					&& test_offset + use_reg_loc[index] >= 0  // RPI 994
 					&& test_offset < test_len){
+				if (cur_use_lab == ""
+					&& test_offset == cur_use_off){
+					 mnote_warning_msg = "MNOTE 4,'Duplicate USING ranges found for - " 
+						 + use_reg[index] + " and " + cur_use_reg 
+						 + " using highest'"; // RPI 1056
+				}
 				if (test_offset < cur_use_off 
 					|| use_reg[index] > cur_use_reg){ // RPI 982
 					cur_use_reg = use_reg[index];
@@ -7933,6 +8060,19 @@ private void calc_lit_or_exp(){
 		} else {
 			calc_exp();
 		}
+	} else if (exp_text != null && exp_text.substring(exp_index).length() > 9  // RPI 1057
+			   && exp_text.substring(exp_index,exp_index+9).toUpperCase().equals("DFHVALUE(")){
+		String dfhvalue_type_key = exp_text.substring(exp_index + 9).toUpperCase() + "         ";
+		int index = 0;
+		while (index < dfhvalue_type.length && !dfhvalue_type_key.substring(0,dfhvalue_type[index].length()).equals(dfhvalue_type[index])){
+			index++;
+		}
+		if (index < dfhvalue_type.length){
+			exp_text = exp_text.substring(0,exp_index) + dfhvalue_lit[index] + exp_text.substring(exp_index + 9 + dfhvalue_type[index].length()); // RPI 635
+		    calc_lit();
+		} else {
+			calc_exp();
+		}	
 	} else {
 		calc_exp();
 	}
@@ -8837,34 +8977,33 @@ public void report_critical_errors(){
 	tz390.opt_errsum = false; // allow printing on PRN again
 	tz390.opt_list   = true;
 	put_errsum("ERRSUM Critical Error Summary Option");
-    put_errsum("Fix and repeat until all nested errors resolved");
+    put_errsum("ERRSUM Fix and repeat until all nested errors resolved");
 	int index = 0;
 	while (index < tot_missing_copy){
-		put_errsum("missing copy  =" + missing_copy[index]);
+		put_errsum("ERRSUM missing copy  =" + missing_copy[index]); // RPI 1051
 		index++;
 	}
 	index = 0;
 	while (index < tot_missing_macro){
-		put_errsum("missing macro =" + missing_macro[index]);
+		put_errsum("ERRSUM missing macro =" + missing_macro[index]);
 		index++;
 	}
 	if (tot_missing_macro + tot_missing_copy == 0){
 		index = 1;
 		while (index <= tot_sym){
 			if (sym_type[index] == sym_und){
-				put_errsum("undefined symbol = " + sym_name[index]);
+				put_errsum("ERRSUM undefined symbol = " + sym_name[index]);
 			}
 			index++;
 		}
 	}
-	put_errsum("total missing   copy   files =" + tot_missing_copy);
-	put_errsum("total missing   macro  files =" + tot_missing_macro);
-	put_errsum("total undefined symbols      =" + tot_missing_sym);
+	put_errsum("ERRSUM total missing   copy   files =" + tot_missing_copy);
+	put_errsum("ERRSUM total missing   macro  files =" + tot_missing_macro);
+	put_errsum("ERRSUM total undefined symbols      =" + tot_missing_sym);
 	if (mz390_call){
-		put_errsum("total mz390 errors    = " + mz390_errors); // RPI 659 RPI 945
+		put_errsum("ERRSUM total mz390 errors    = " + mz390_errors); // RPI 659 RPI 945
 	}
-	put_errsum("total az390 errors    = " + az390_errors); // RPI 659 RPI 945
-	put_errsum("See PRN for detail listing of errors possibly affecting exec path"); // RPI 945
+	put_errsum("ERRSUM total az390 errors    = " + az390_errors); // RPI 659 RPI 945
 }
 private void put_errsum(String msg){
 	/*

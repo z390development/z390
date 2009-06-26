@@ -4,7 +4,8 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS PROLOG           *
+.* 05/06/06 RPI  308 - ADD EXEC CICS SUPPORT FOR CICS PROLOG          *
+.* 06/18/09 RPI 1042 - ISSUE SF02 IF R11 DFHEIBLK PTR NOT SET         *
 .**********************************************************************
          MACRO
 &N       DFHEIENT &CODEREG=(R12),&DATAREG=(R13)
@@ -36,6 +37,20 @@ DFHEIBR  EQU   11
 *         (R14) >>> RETURN ADDRESS (LINK ONLY)
 *
          LR    R2,R1              R2=SAVE USER PARM POINTER
+*********************************************************************
+* VERIFY R11 SET ELSE ABEND S402  RPI 1042
+*
+         LTR   R11,R11         IS R11 ZERO (NOINIT)
+         JZ    BAD_EIBLKPTR
+         CLFI  R11,X'F4F4F4F4' IS R11 F4'S (INIT)
+         JNE   OK_EIBLKPTR
+BAD_EIBLKPTR DS    0H
+         WTO 'EZ390E EXEC CCIS NOT RUNNING'
+         LA  R15,16
+         SVC 3
+OK_EIBLKPTR  DS    0H        
+*********************************************************************
+*
 * ENTRY IS ONLY BY DIRECT BRANCH FROM MODULES LCL0E02 (LINK)
 * OR LCL0E04 (XCTL)
 *
@@ -129,4 +144,3 @@ CICS_EIENT_&SYSNDX._02 DS 0H
 .*
 .DEXIT   ANOP
          MEND
-

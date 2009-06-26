@@ -1,0 +1,42 @@
+*********************************************************************
+* Copyright 2009 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 06/15/09                                                 *
+*********************************************************************
+* 06/15/09 RPI 1053 - move invalid ASCII test and missing macro warn
+*          from TESTERR1 and specify ASM and CHKMAC(2).  
+*********************************************************************
+         TITLE 'TESTERRA TEST INVALID ASCII,missing labels CHKMAC(2)'
+TESTERR1 CSECT
+         USING *,15
+* RPI 744 test non-ascii character string error
+         DC   C'e…'  MULTI-KEY VALUES 101 AND 201
+**********************************************************
+* ADD DUPLICATE AND MISSING MACRO ERRORS IN OPEN CODE
+*
+* THIS MUST BE LAST TEST WITH FAILING AGO IN OPEN CODE
+*
+**********************************************************
+         MACRO
+         TESTLAB
+.LAB1    ANOP
+.LAB2    ANOP
+.LAB1    ANOP
+         AGO    .UNDEFINED1
+         AIF    (1 EQ 1).UNDEFINED2
+         MEND
+.LAB1    ANOP
+.LAB2    ANOP
+.LAB1    ANOP
+         AGO    .UNDEFINED1
+         AIF    (1 EQ 1).UNDEFINED2
+* ADD COMPOND AIF AND COMPUTED AGO MISSING LABELS
+&I       SETA  2
+         AIF   (1 EQ 2).T11,(2 EQ 2).X11
+         AGO   (&I).T11,.X12,.T13
+.T11     MNOTE '.T11'
+.T12     MNOTE '.T12'
+.T13     MNOTE '.T13'
+         END 

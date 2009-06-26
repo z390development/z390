@@ -1,0 +1,230 @@
+         TITLE 'ZPARERR.MLC - GENERATE ERR FILE REPORT ANALYSIS'
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 06/05/09                                                 *
+.*********************************************************************
+.* 06/05/09 RPI 1049 INITIAL CODING                                                       
+.*********************************************************************
+.* FILES:
+.*  SYSUT1 = INPUT  ZPAR\ZPARERR.DAT
+.*  SYSUT2 = OUTPUT ZPAR\ZPARERR.RPT
+.*
+.* NOTES:
+.*  1.  SET GROUP DESCRIPTION REQUIRED FOR EACH GROUP IN INIT.
+.*********************************************************************
+         LCLC  &KEY              KEY TO STORE AND COUNT OCCURRANCES
+         LCLA  &KEY_IX           INDEX TO KEY ARRAY ENTRY
+         LCLA  &TOT_KEY          TOTAL UNIQUE KEYS
+         LCLA  &TOT_DUP          TOTAL DUPLICATE KEY HASH
+         LCLA  &KEY_HASH         KEY HASHED TO RANDOM INT                   
+         LCLC  &KEY_HEX          KEY HEX VALUE OF KEY_HASH 
+         LCLA  &GROUP_FIRST(20)       FIRST KEY INDEX FOR GROUP
+         LCLA  &GROUP_LAST(20)        LAST  KEY INDEX FOR GROUP
+         LCLC  &GROUP_DESC(20)        DESCRIPTION
+         LCLC  &KEY_TXT(20000)  STORED KEY
+         LCLA  &KEY_CNT(20000)  KEY COUNTER
+         LCLA  &KEY_DUP(20000)  NEXT DUP   KEY INDEX
+         LCLA  &KEY_LNK(20000)  NEXT GROUP KEY INDEX
+         ACALL INIT
+         ACALL GET_REC
+         :&TOT_REC SETA 0
+         AWHILE ('&REC' NE '')
+               ACTR 4096
+               ACALL PROCESS_REC
+               :&TOT_REC SETA &TOT_REC+1
+               ACALL GET_REC
+         AEND
+         ACALL GEN_REPORT
+         MEXIT
+.*
+.* INIT
+.*
+         AENTRY INIT
+         :&TS_START SETC '99:99:99'
+         :&TS_END   SETC '00:00:00'
+         :&TS_DATE  SETC 'MM/DD/YY'
+         :&GROUP_DESC(1) SETC 'STEP START/STOP'
+         :&GROUP_DESC(2) SETC 'MISSING FILES'
+         :&GROUP_DESC(3) SETC 'FILE ERROR COUNTS'
+         :&GROUP_DESC(4) SETC 'ERROR MESSAGES'
+         :&GROUP_DESC(5) SETC 'MNOTES'
+         :&GROUP_DESC(6) SETC 'OTHER'
+         AEND
+.*
+.* PROCESS REC
+.*      
+         AENTRY PROCESS_REC
+         AIF ('&REC'(17,5) EQ 'START')
+             :&GROUP_IX SETA 1
+             :&START_DATE SETC '&REC'(60,8) 
+             AIF (K'&START_DATE EQ 8)
+                 :&TS_DATE SETC '&REC'(60,8)
+             AEND
+             :&KEY SETC '&REC'(11,48)
+             ACALL ADD_KEY             
+         AELSEIF ('&REC'(17,11) EQ 'ENDED   RC=')
+             :&GROUP_IX SETA 1 TASK START/STOP
+             :&KEY SETC '&REC'(11,19)
+             ACALL ADD_KEY             
+         AELSEIF ('&REC'(19,11) EQ '390E ERRSUM')
+             AIF ('&REC'(31,7) NE 'missing')
+                 AEXIT AENTRY
+             AEND
+             :&GROUP_IX SETA 2 MISSING FILES  
+             :&KEY SETC '&REC'(17,*)
+             ACALL ADD_KEY             
+         AELSEIF ('&REC'(19,9) EQ '390I FID=')
+             :&GROUP_IX SETA 3 FILE ERRORS
+             :&KEY SETC '&REC'(41,*)
+             ACALL ADD_KEY             
+         AELSEIF ('&REC'(19,10) EQ '390E error')
+             :&GROUP_IX SETA 4 ERRORS     
+             :&KEY SETC '&REC'(17,16)
+             AIF ('&REC'(17,2) EQ 'AZ')  2 LINE AZ ERROR MSG 
+                  ACALL GET_REC
+                  :&EOR_IX SETA ('&REC' FIND '-=')
+                  AIF (&EOR_IX GT 23)
+                      :&KEY SETC '&KEY'.'&REC'(23,&EOR_IX-23)
+                  AELSE 
+                      :&KEY SETC '&KEY'.'&REC'(23,20)
+                  AEND
+             AELSEIF ('&REC'(17,2) EQ 'MZ') 1 LINE MZ ERROR MSG
+                  :&EOR_IX SETA ('&REC' FIND '-=')
+                  AIF (&EOR_IX GT 49)
+                      :&KEY SETC '&KEY '.'&REC'(49,&EOR_IX-49)
+                  AELSE 
+                      :&KEY SETC '&KEY '.'&REC'(49,20)
+                  AEND
+             AELSE                         1 LINE LZ/EZ ERROR MSG
+                  :&EOR_IX SETA ('&REC' FIND '-=')
+                  AIF (&EOR_IX GT 34)
+                      :&KEY SETC '&KEY '.'&REC'(34,&EOR_IX-34)
+                  AELSE 
+                      :&KEY SETC '&KEY '.'&REC'(34,20)
+                  AEND
+             AEND
+             ACALL ADD_KEY             
+         AELSEIF ('&REC'(19,4) EQ '390I')
+             :&GROUP_IX SETA 4 ERRORS     
+             :&KEY SETC '&REC'(17,25)
+             ACALL ADD_KEY             
+         AELSEIF ('&REC'(13,9) EQ '390 MNOTE')
+             :&GROUP_IX SETA 5 MNOTES    
+             :&KEY SETC (DOUBLE '&REC'(17,*))
+             ACALL ADD_KEY             
+         AELSE
+             :&GROUP_IX SETA 6 OTHER     
+             :&KEY SETC (DOUBLE '&REC')
+             ACALL ADD_KEY             
+         AEND
+         AEND
+.*
+.* GET REC
+.*
+         AENTRY GET_REC
+         :&REC AREAD DDNAME=SYSUT1
+         AIF ('&REC' EQ '')
+             AEXIT AENTRY
+         AEND
+         AIF ('&REC'(3,1) EQ ':')
+             AIF ('&REC'(1,8) LT &TS_START)
+                 :&TS_START SETC '&REC'(1,8) UPDATE START TIME
+             AEND
+             AIF ('&REC'(1,8) GT &TS_END)
+                 :&TS_END SETC '&REC'(1,8)   UPDATE END TIME
+             AEND
+             :&REC SETC '&REC'(10,*)  REMOVE TIME STAMP
+         AEND
+         AEND
+.*
+.* ADD KEY
+.*
+         AENTRY ADD_KEY
+         :&KEY_OFF  SETA 1
+         :&KEY_LEN  SETA K'&KEY
+         :&KEY_HASH SETA &KEY_LEN
+         AWHILE (&KEY_LEN GE 4)
+             :&KEY_HASH SETA &KEY_HASH+C2A('&KEY'(&KEY_OFF,4))
+             :&KEY_OFF  SETA &KEY_OFF+4
+             :&KEY_LEN  SETA &KEY_LEN-4
+         AEND
+         AIF (&KEY_LEN GT 0)
+             :&KEY_HASH SETA &KEY_HASH+C2A('&KEY'(&KEY_OFF,&KEY_LEN))
+         AEND
+         :&KEY_HEX SETC 'H_'.A2X(&KEY_HASH)
+         LCLA &(&KEY_HEX)
+         :&KEY_IX SETA &(&KEY_HEX)
+         AIF  (&KEY_IX EQ 0)
+              :&TOT_KEY SETA &TOT_KEY+1
+              :&KEY_IX SETA &TOT_KEY
+              :&KEY_TXT(&KEY_IX) SETC '&KEY'
+              :&(&KEY_HEX) SETA &KEY_IX
+              ACALL ADD_GROUP_KEY
+         AELSE
+              AWHILE (&KEY_TXT(&KEY_IX) NE '&KEY')
+                  AIF (&KEY_DUP(&KEY_IX) GT 0)
+                      :&KEY_IX SETA &KEY_DUP(&KEY_IX)
+                  AELSE
+                     :&TOT_KEY SETA &TOT_KEY+1
+                     :&KEY_DUP(&KEY_IX) SETA &TOT_KEY
+                     :&TOT_DUP SETA &TOT_DUP+1
+                     :&KEY_IX SETA &TOT_KEY
+                     :&KEY_TXT(&KEY_IX) SETC '&KEY'
+                     :&(&KEY_HEX) SETA &KEY_IX
+                     ACALL ADD_GROUP_KEY
+                  AEND
+              AEND
+         AEND      
+         :&KEY_CNT(&KEY_IX) SETA &KEY_CNT(&KEY_IX)+1
+         AEND
+.*
+.* ADD GROUP KEY
+.*
+         AENTRY ADD_GROUP_KEY
+         AIF   (&GROUP_FIRST(&GROUP_IX) EQ 0)
+               :&GROUP_FIRST(&GROUP_IX) SETA &KEY_IX
+               :&GROUP_LAST(&GROUP_IX)  SETA &KEY_IX
+         AELSE
+               :&KEY_LNK(&GROUP_LAST(&GROUP_IX)) SETA &KEY_IX
+               :&GROUP_LAST(&GROUP_IX)  SETA &KEY_IX
+         AEND
+.* DSGX  PUNCH 'DSHX GROUP=&GROUP_IX FIRST=&GROUP_FIRST(&GROUP_IX) LASTX
+               =&GROUP_LAST(&GROUP_IX)',DDNAME=SYSUT2
+         AEND
+.*
+.* GEN REPORT
+.*
+         AENTRY GEN_REPORT
+         PUNCH 'G0 ZPARERR CURRENT  DATE=&SYSDATE TIME=&SYSTIME ERR FILX
+               ES=&SYSPARM',DDNAME=SYSUT2
+         PUNCH 'G0 ZPARERR ERR FILE DATE=&TS_DATE START=&TS_START END=&X
+               TS_END',DDNAME=SYSUT2
+         PUNCH 'G0 ZPARERR TOTAL ERR REC = &TOT_REC',DDNAME=SYSUT2
+         PUNCH 'G0 ZPARERR TOTAL KEYS=&TOT_KEY DUP=&TOT_DUP',DDNAME=SYSX
+               UT2
+         :&GROUP_IX SETA 1
+         AWHILE (&GROUP_DESC(&GROUP_IX) NE '')
+               ACALL LIST_GROUP
+               :&GROUP_IX SETA &GROUP_IX+1
+         AEND
+         PUNCH 'G9 ZPARERR END OF REPORT',DDNAME=SYSUT2
+         AEND
+.*
+.* LIST GROUP
+.*
+         AENTRY LIST_GROUP
+         PUNCH 'G&GROUP_IX        &GROUP_DESC(&GROUP_IX)',DDNAME=SYSUT2
+         :&KEY_IX SETA &GROUP_FIRST(&GROUP_IX)
+         ACTR 10000
+         AWHILE (&KEY_IX GT 0)
+            :&CNT SETC '&KEY_CNT(&KEY_IX)'
+            :&CNT SETC '    &CNT'(K'&CNT,5)
+            :&LINE SETC (DOUBLE '&CNT &KEY_TXT(&KEY_IX)')
+            PUNCH 'G&GROUP_IX &LINE',DDNAME=SYSUT2
+            :&KEY_IX SETA &KEY_LNK(&KEY_IX)
+         AEND
+         AEND
+         END                          

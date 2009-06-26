@@ -10,6 +10,7 @@
 .* 05/02/08 add support for literal values by PIC_TYPE
 .* 10/06/08 ZSTRMAC
 .* 02/27/09 RPI 1012 SUPPORT ALL '?' LIT
+.* 06/18/09 RPI 1042 add ZCDFHLIT shared by IF and MOVE                 
 .*********************************************************************
 .* MOVE id1 TO id2 id3 idn
 .*********************************************************************
@@ -60,6 +61,16 @@
                :&PARM_IX SETA 3
          AELSEIF   ('&SOURCE'(1,2) EQ 'X''') OR '&SOURCE'(1,2) EQ 'X"')
                :&SOURCE SETC 'X'''.'&SOURCE'(3,K'&SOURCE-3).''''
+         AELSEIF  ('&SOURCE' EQ 'DFHRESP')
+               :&DFHRESP SETC '&SYSLIST(3)'
+               ACALL GET_DFHRESP
+               :&SOURCE  SETC '&DFHLIT'
+               :&PARM_IX SETA 5
+         AELSEIF  ('&SOURCE' EQ 'DFHVALUE')
+               :&DFHVALUE SETC '&SYSLIST(3)'
+               ACALL GET_DFHVALUE
+               :&SOURCE   SETC '&DFHLIT'
+               :&PARM_IX  SETA 5
          AELSEIF   ('&SOURCE'(1,1) NE ''''                             X
                   AND ('&SOURCE'(1,1) GT '9' OR '&SOURCE'(1,1) LT '0'))
                :&PARM_IX SETA 1
@@ -96,4 +107,5 @@
        AEND
          MEXIT
          COPY ZCGETFLD
+         COPY ZCDFHLIT
          MEND

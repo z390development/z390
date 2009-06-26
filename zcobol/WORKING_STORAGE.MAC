@@ -7,6 +7,10 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 04/07/08 initial coding for z390 target
+.* 06/02/09 reset global &FILE_IX at start of working-storage
+.*          see zcobol\test\TESTFIL1.CBL regression test
 .*********************************************************************
          WORKING_STORAGE &SECT
+         COPY ZC_WS
+               :&FILE_IX SETA 0
          MEND

@@ -166,7 +166,9 @@ import javax.swing.Timer;
     * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, con
     * 01/08/08 RPI 782 stop interval timer before exit
     * 03/21/08 RPI 819 zero R15 at startup to get rid of x'F4's
-    * 05/23/09 RPI 1040 wait for pz390 to end before abend/dump S422/S222
+    * 05/23/09 RPI 1040 wait for pz390 to process S422 ABEND
+    * 06/13/09 RPI 1054 request S422 ABEND by PZ390 thread
+    * 06/15/09 RPI 1050 suppress dup START on CON when TRACE CON
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -357,10 +359,10 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 	    pz390.init_pz390(tz390,sz390);
 		tz390.force_nocon = true;
 		sz390.put_log(tz390.started_msg); // RPI 755
-		tz390.force_nocon = false;
 		if (tz390.opt_trace){
 			tz390.put_trace(tz390.started_msg); // RPI 755
 		}
+		tz390.force_nocon = false; // RPI 1050 moved after trace
 		sz390.init_time();
         sz390.init_test();
         put_copyright();
@@ -418,8 +420,9 @@ private void monitor_update(){
     	if (tz390.opt_time 
     		&& !pz390.psw_check
             && monitor_next_time > sz390.tod_time_limit){ // RPI 837
-    		pz390.set_psw_check(pz390.psw_pic_timeout);  // timeout
     	    while (pz390_running){
+    	    	pz390.timeout   = true; // RPI 1054 request pz390 to abend
+    	    	pz390.psw_check = true; // RPI 1054
     	    	Thread.yield(); // RPI 1040 wait to end exec before dump
     	    }
     	}
@@ -500,9 +503,7 @@ public void run() {
 			try {
 				pz390.exec_pz390();
 			} catch (Exception e){
-				sz390.log_error(204,"pz390 internal system exception " + e.toString()); // RPI 861 
-				sz390.svc_abend(pz390.psw_pic_error,sz390.system_abend,true); // RPI 536
-				
+				sz390.svc_abend(pz390.psw_pic_addr,sz390.system_abend,tz390.opt_dump); // RPI 536 // RPI 1054			
 			}
 		} else {
 			pz390.exec_pz390();

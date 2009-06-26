@@ -10,6 +10,7 @@
 .* 06/10/08 reallocate global registers to not conflict with CICS
 .* 11/14/08 gen DFHEISTG DSA DSECT if CICS                          
 .* 03/12/09 RPI 1004 add ZC_PFPO copybook defining types
+.* 06/18/09 RPI 1042 move DROP R15 to non-cics section   
 .*********************************************************************
 .* GLOBAL REGISTER ALLOCATION:
 .*  R0-R3 WORK USED BY ZCOBOL\Z390\GEN_*.MAC CODE GEN
@@ -43,6 +44,8 @@
          ACALL GEN_INIT_ZCVT  LOAD ZC390LIB AND SET R9=ZC390CVT
 ZC390CVT DSECT                ZCOBOL CVT AT ENTRY TO ZC390LIB.390
          COPY  ZC390CVT
+ZC390PVT DSECT
+         COPY  ZC390PVT
 DFHEISTG DSECT                CICS DYNAMIC STORAGE AREA (TRIGGERS MAC)
 ZC_WS    EQU   DFHEISTG
 &WS_LOC  SETA  DFHEIUSR-DFHEISTG
@@ -65,6 +68,7 @@ ZC_WS    EQU   DFHEISTG
          LARL  R0,ZC_WS_END
          SR    R0,R13
          ST    R0,ZC_WS_LEN     SAVE LENGTH OF WS IN WS PREFIX
+         DROP  R15              RPI 1042
 ZC_WSLOC LOCTR
 ZC_WS    DS    0D           START WORKING STORAGE                  
          WS    77,ZC_SAVEAREA,PIC,X(72)              SAVE AREA
@@ -73,6 +77,8 @@ ZC_WS    DS    0D           START WORKING STORAGE
          WS    77,ZC_WS_LEN,COMP,PIC,S9(9)           WS LENGTH
 ZC390CVT DSECT
          COPY  ZC390CVT
+ZC390PVT DSECT
+         COPY  ZC390PVT
 ZC_WSLOC LOCTR              CONTINUE WS FOR FD AND DATA                   
          AEND
 .*
@@ -81,13 +87,20 @@ ZC_WSLOC LOCTR              CONTINUE WS FOR FD AND DATA
 .*   1.  RUN ZC390BLD.BAT TO REASSEMBLE AND LINK LINKLIB\Z390LIB.390
 .*
          AENTRY GEN_INIT_ZCVT
+         CNOP  4,8             FORCE ZC390PVT TO DOUBLEWORD BOUNDARY
          BRAS  R8,ZC_LOAD
-         DROP  R15
          USING *,R8            BASE FOR LOAD AND CICS V5 USE
-         DC    CL8'&ZC_PGM'                                                
-         DC    CL8'&SYSDATE'                                             
-         DC    CL8'&SYSTIME'                                             
-ZC_VER   DC    CL8'&ZC_VER'    ZCOBOL VERSION FOR VERIFY WITH ZC390CVT
+*
+*  THESE FIELDS MUST BE KEPT IN SYNC WITH zcobol\ZC390PVT.CPY
+*
+         DC    CL8'&ZC_PGM'    PVTPGM   ZCOBOL PGM NAME                    
+         DC    CL8'&SYSDATE'   PVTDATE  ZCOBOL COMPILE DATE              
+         DC    CL8'&SYSTIME'   PVTTIME  ZCOBOL COMPILE TIME              
+         DC    CL8'&ZC_VER'    PVTVER   ZCOBOL COMPILER VERSION       
+         DC    C'&ZC_CICS'     PVTCICS  ZCOBOL EXEC CICS PGM
+         DC    C'&ZC_EXTEND'   PVTEXTND ZCOBOL EXTENDED PRECISION
+         DC    C'&ZC_TRUNC'    PVTTRUNC ZCOBOL TRUNCATE TO PICTURE
+         DC    C'&ZC_R64'      PVTR64   ZCOBOL USE 64 BIT REGISTERS
 ZC_LOAD  DS    0H
          LOAD  EP=ZC390LIB
          LTR   R15,R15
@@ -98,13 +111,12 @@ ZC_LOAD  DS    0H
 ZC_LOAD_OK DS  0H
          LR    R9,R0
          USING ZC390CVT,R9    R9=CVT 
-         CLC   ZCVT_ID,=C'ZCVT'
-         JNE   ZC_VER_ERR
-         CLC   ZCVT_LEN,=A(ZCVT_END-ZCVT_ID)
+         CLC   ZCVT_ID,=C'ZCVT'              CHECK ZCVT ID AND LENGTH
+         JNE   ZC_VER_ERR                    IN ZC390LIB.390 MATCH
+         CLC   ZCVT_LEN,=A(ZCVT_END-ZCVT_ID) ZCOBOL PGM COMPILED ID/LEN
          BNE   ZC_VER_ERR
-         LA    R1,ZC_VER
          L     R15,ZCVT_ZC390NUC
-         BASR  R14,R15 CALL ZC390NUC TO VERIFY VERSION COMPAT.
+         BASR  R14,R15 CALL ZC390NUC TO VERIFY VER AND OPTIONS COMPAT.
          J     ZC_VER_OK
 ZC_VER_ERR DS 0H
          WTO 'ZC390LIB ZCVT VERIFY ERROR'

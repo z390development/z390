@@ -1,4 +1,4 @@
-         MACRO
+         MACRO                                                       
 .*********************************************************************
 .* Copyright 2008 Automated Software Tools Corporation               *
 .* This source code is part of z390 zCOBOL/assembler/emulator package*
@@ -18,6 +18,9 @@
 .* 02/22/09 RPI 1001 add support for conditional 88 value tests
 .* 02/26/09 RPI 1012 issue MNOTE if first field not found for compare
 .* 04/21/09 RPI 1020 correct support for mult OR for same test field 
+.* 06/14/09 RPI 1057 use ZC_DFHRESP.CPY and ZC_DFHVALUE.CPY sync AZ390
+.*          and correct missing SQ in GET_DFH routines 
+.* 06/184/09 RPI 1042 add ZCDFHLIT shared by IF and MOVE               
 .*********************************************************************
 .* Pending work includes support for field,lit,expression in either 
 .* first or second operand.  Coming after COMPUTE dubugs GEN_EXP.
@@ -631,11 +634,13 @@
 .*
          AENTRY GEN_CD_COMP_LIT
          AIF ('&PARM' EQ 'DFHRESP')
-             ACALL GET_DFHRESP_VALUE
-             GEN_COMP &FIELD1,&FIELD1_IX,&PARM,0
+             :&DFHRESP SETC '&SYSLIST(&CD_PARM_IX+2)'
+             ACALL GET_DFHRESP
+             GEN_COMP &FIELD1,&FIELD1_IX,&DFHLIT,0
          AELSEIF ('&PARM' EQ 'DFHVALUE')
-             ACALL GET_DFHVALUE_VALUE
-             GEN_COMP &FIELD1,&FIELD1_IX,&PARM,0
+             :&DFHVALUE SETC '&SYSLIST(&CD_PARM_IX+2)'
+             ACALL GET_DFHVALUE
+             GEN_COMP &FIELD1,&FIELD1_IX,&DFHLIT,0
          AELSE
              GEN_COMP &FIELD1,&FIELD1_IX,&FIELD2,&FIELD2_IX
          AEND
@@ -666,108 +671,6 @@
                    AEND
                AEND
          AEND
-         AEND
-.*
-.* GET DFHRESP VALUE
-.*
-         AENTRY GET_DFHRESP_VALUE
-         GBLA  &DFHRESP_TOT
-         GBLC  &DFHRESP_KEY(30),&DFHRESP_VALUE(30)
-         AIF   (&DFHRESP_TOT EQ 0)
-               :&DFHRESP_VALUE(01) SETC '0' DFHRESP(NORMAL) 
-               :&DFHRESP_VALUE(02) SETC '1' DFHRESP(ERROR)
-               :&DFHRESP_VALUE(03) SETC '12' DFHRESP(FILENOTFOUND) 
-               :&DFHRESP_VALUE(04) SETC '12' DFHRESP(DSIDERR)      
-               :&DFHRESP_VALUE(05) SETC '13' DFHRESP(NOTFND)       
-               :&DFHRESP_VALUE(06) SETC '14' DFHRESP(DUPREC)       
-               :&DFHRESP_VALUE(07) SETC '15' DFHRESP(DUPKEY)       
-               :&DFHRESP_VALUE(08) SETC '16' DFHRESP(INVREQ)
-               :&DFHRESP_VALUE(09) SETC '18' DFHRESP(NOSPACE)      
-               :&DFHRESP_VALUE(10) SETC '19' DFHRESP(NOTOPEN)      
-               :&DFHRESP_VALUE(11) SETC '20' DFHRESP(ENDFILE)      
-               :&DFHRESP_VALUE(13) SETC '21' DFHRESP(ILLOGIC)      
-               :&DFHRESP_VALUE(14) SETC '22' DFHRESP(LENGERR)
-               :&DFHRESP_VALUE(15) SETC '26' DFHRESP(ITEMERR)      
-               :&DFHRESP_VALUE(16) SETC '27' DFHRESP(PGMIDERR)
-               :&DFHRESP_VALUE(17) SETC '31' DFHRESP(EXPIRED)      
-               :&DFHRESP_VALUE(18) SETC '36' DFHRESP(MAPFAIL)      
-               :&DFHRESP_VALUE(19) SETC '38' DFHRESP(INVMPSZ)      
-               :&DFHRESP_VALUE(20) SETC '40' DFHRESP(OVERFLOW)     
-               :&DFHRESP_VALUE(21) SETC '44' DFHRESP(QIDERR)       
-               :&DFHRESP_VALUE(22) SETC '72' DFHRESP(SUPPRESSED)     
-               :&DFHRESP_VALUE(23) SETC '84' DFHRESP(DISABLED)     
-               :&DFHRESP_KEY(01) SETC 'NORMAL' 
-               :&DFHRESP_KEY(02) SETC 'ERROR'
-               :&DFHRESP_KEY(03) SETC 'FILENOTFOUND' 
-               :&DFHRESP_KEY(04) SETC 'DSIDERR'      
-               :&DFHRESP_KEY(05) SETC 'NOTFND'       
-               :&DFHRESP_KEY(06) SETC 'DUPREC'       
-               :&DFHRESP_KEY(07) SETC 'DUPKEY'       
-               :&DFHRESP_KEY(08) SETC 'INVREQ' 
-               :&DFHRESP_KEY(09) SETC 'NOSPACE'      
-               :&DFHRESP_KEY(10) SETC 'NOTOPEN'      
-               :&DFHRESP_KEY(11) SETC 'ENDFILE'      
-               :&DFHRESP_KEY(13) SETC 'ILLOGIC'      
-               :&DFHRESP_KEY(14) SETC 'LENGERR'
-               :&DFHRESP_KEY(15) SETC 'ITEMERR'      
-               :&DFHRESP_KEY(16) SETC 'PGMIDERR'
-               :&DFHRESP_KEY(17) SETC 'EXPIRED'      
-               :&DFHRESP_KEY(18) SETC 'MAPFAIL'      
-               :&DFHRESP_KEY(19) SETC 'INVMPSZ'      
-               :&DFHRESP_KEY(20) SETC 'OVERFLOW'     
-               :&DFHRESP_KEY(21) SETC 'QIDERR'       
-               :&DFHRESP_KEY(22) SETC 'SUPPRESSED'     
-               :&DFHRESP_KEY(23) SETC 'DISABLED'     
-               :&DFHRESP_TOT SETA 23
-         AEND
-         AIF   ('&SYSLIST(&CD_PARM_IX+1)' EQ '''('''                   X
-                OR '&SYSLIST(&CD_PARM_IX+3) EQ ''')''')
-               :&PARM SETC '&SYSLIST(&CD_PARM_IX+2)'
-               :&CD_PARM_IX SETA &CD_PARM_IX+3
-         AELSE
-               MNOTE 8,'IF INVALID DFHRESP PARM FORMAT AT &PARM'
-               MEXIT
-         AEND
-         :&J SETA 1
-         AWHILE (&J LE &DFHRESP_TOT)
-               AIF ('&PARM' EQ '&DFHRESP_KEY(&J)')
-                   :&PARM SETC '&DFHRESP_VALUE(&J)'
-                   AEXIT AENTRY
-               AEND
-               :&J SETA &J+1
-         AEND
-         MNOTE 8,'IF INVALID OR UNKNOWN DFHRESP VALUE - &PARM'
-         AEND
-.*
-.* GET DFHVALUE VALUE
-.*
-         AENTRY GET_DFHVALUE_VALUE
-         GBLA  &DFHVALUE_TOT
-         GBLC  &DFHVALUE_KEY(30),&DFHVALUE_VALUE(30)
-         AIF   (&DFHVALUE_TOT EQ 0)
-               :&DFHVALUE_VALUE(01) SETC '18' DFHVALUE(OPEN) 
-               :&DFHVALUE_VALUE(02) SETC '19' DFHVALUE(CLOSED)
-               :&DFHVALUE_KEY(01) SETC 'OPEN' 
-               :&DFHVALUE_KEY(02) SETC 'CLOSED'
-               :&DFHVALUE_TOT SETA 2
-         AEND
-         AIF   ('&SYSLIST(&CD_PARM_IX+1)' EQ '''('''                   X
-                OR '&SYSLIST(&CD_PARM_IX+3) EQ ''')''')
-               :&PARM SETC '&SYSLIST(&CD_PARM_IX+2)'
-               :&CD_PARM_IX SETA &CD_PARM_IX+3
-         AELSE
-               MNOTE 8,'IF INVALID DFHVALUE PARM FORMAT AT &PARM'
-               MEXIT
-         AEND
-         :&J SETA 1
-         AWHILE (&J LE &DFHVALUE_TOT)
-               AIF ('&PARM' EQ '&DFHVALUE_KEY(&J)')
-                   :&PARM SETC '&DFHVALUE_VALUE(&J)'
-                   AEXIT AENTRY
-               AEND
-               :&J SETA &J+1
-         AEND
-         MNOTE 8,'IF INVALID DFHVALUE VALUE - &PARM'
          AEND
 .*
 .* GET NEXT IF PARM (SUBSTITUTE DFHRESP(CODE) WITH LITERAL VALUE)
@@ -831,4 +734,5 @@
          AEND
          AEND
          COPY ZCGETFLD
+         COPY ZCDFHLIT
          MEND

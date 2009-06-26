@@ -26,6 +26,7 @@
 .* 03/11/09 RPI 1004 add COMP PIC S9(39) type Q 16 byte 128 bit int
 .* 03/20/09 RPI 1004 rename explicit 1-9 FLOAT-HEX/BINARY/DECIMAL-N
 .* 04/29/09 RPI 1032 issue error if PIC clause has quote or no 9ZX      
+.* 06/20/09 RPI 1042 add computational                                  
 .*********************************************************************
 .*
 .* WS level,name,clauses in any order (PIC,VALUE,USAGE supported)
@@ -514,6 +515,7 @@
                           AEND
                     AEND
                AELSEIF ('&SYSLIST(&I)'  EQ 'COMP'                      X
+                      OR '&SYSLIST(&I)' EQ 'COMPUTATIONAL'             X
                       OR '&SYSLIST(&I)' EQ 'COMP_1'                    X
                       OR '&SYSLIST(&I)' EQ 'COMP_2'                    X
                       OR '&SYSLIST(&I)' EQ 'COMP_3'                    X
@@ -533,7 +535,7 @@
                       OR '&SYSLIST(&I)' EQ 'FLOAT_LONG'                X
                       OR '&SYSLIST(&I)' EQ 'FLOAT_EXTENDED'            X
                       OR '&SYSLIST(&I)' EQ 'INDEX'                     X
-                      OR '&SYSLIST(&I)' EQ 'POINTER') RPI 1002 1004   
+                      OR '&SYSLIST(&I)' EQ 'POINTER') 1002 1004 1042
                     :&USAGE   SETC  '&SYSLIST(&I)'
                     :&I       SETA  &I+1
                AELSEIF (&I GT 2)
@@ -594,9 +596,10 @@
                :&NEW_SYM SETC 'FILLER'            
                :&SYM_NAME(&SYM_TOT) SETC 'FILLER'
          AELSEIF ('&USAGE' EQ 'COMP'                                   X
+                  OR '&USAGE' EQ 'COMPUTATIONAL'                       X
                   OR '&USAGE' EQ 'BINARY'                              X
                   OR '&USAGE' EQ 'COMP-4'                              X
-                  OR '&USAGE' EQ 'COMP-5')                               
+                  OR '&USAGE' EQ 'COMP-5')  RPI 1042                     
                AIF  ('&PIC' NE '')  
                     AIF  (&PIC_LEN LE 0) 
                          :&PIC_LEN SETA K'&PIC

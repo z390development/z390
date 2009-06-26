@@ -23,6 +23,7 @@
 .* 04/19/09 RPI 1021 support MF=L/E                             
 .* 04/19/09 RPI 1023 support lower case options                 
 .* 05/19/09 RPI 1029 remove SPM macros for compatibility      
+.* 05/28/09 RPI 1045 change to only assume register form if (..)
 .*********************************************************************
 &N       ZOPEN &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
                &MF=I,      STD, LIST, OR EXEC                          X
@@ -49,7 +50,7 @@
                AWHILE (&I LE &NP)
                    :&DCB    SETC '&DCBLIST(&I)'
                    :&OPTION SETC (UPPER '&DCBLIST(&I+1,1)')  RPI 1023
-                   AIF ('&DCB'(1,1) EQ '(' OR T'&DCB EQ 'N') RPI 764
+                   AIF ('&DCB'(1,1) EQ '(') RPI 764 RPI 1045
                        MNOTE 8,'ZOPEN REGISTER FORM NOT ALLOWED'        
                        MEXIT
                    AEND
@@ -100,10 +101,10 @@ ZOPEN_DO_EXIT&SYSNDX DS 0H
                AWHILE (&I LE &NP)
                    :&DCB    SETC '&DCBLIST(&I)'
                    :&OPTION SETC (UPPER '&DCBLIST(&I+1,1)')  RPI 1023
-                   AIF ('&DCB'(1,1) EQ '(' OR T'&DCB EQ 'N') RPI 764
+                   AIF ('&DCB'(1,1) EQ '(') RPI 764 RPI 1045
                        ZOPTLR 1,&DCB(1)
                    AELSE
-                       LA  1,&DCB
+                       LA     1,&DCB
                    AEND
                    AIF ('&OPTION' EQ '' OR '&OPTION' EQ 'INPUT')
                        LA  0,DCBOFLGS_GM   READ ONLY

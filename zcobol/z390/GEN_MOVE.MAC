@@ -15,14 +15,19 @@
 .* 02/27/09 RPI 1012 support ALL '?' literal using *'/' prefix        
 .* 03/12/09 RPI 1004 support types 1-9,Q using ZC_CONV/PACK31/UNPK31                               
 .* 04/28/09 RPI 1003 add support for &TMP_NAME/TYPE/LEN in ZCVT via -IX                            
+.* 06/19/09 RPI 1042 fix to move chararacters if target type X                                     
 .*********************************************************************
          GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
          COPY  ZC_WS
+         :&PIC_TARGET SETB 1  ASSUME TARGET HAS PICTURE
          AIF (&T_IX GT 0)
              :&N_TARGET SETC '&T_NAME'
              :&L_TARGET SETA  &SYM_LEN(&T_IX)
              :&S_TARGET SETB  &SYM_PIC_SIGN(&T_IX)
              :&T_TARGET SETC '&SYM_PIC_TYPE(&T_IX)'
+             AIF ('&T_TARGET' EQ 'X' AND '&SYM_PIC(&T_IX)' EQ '')
+                 :&PIC_TARGET SETB 0 NO PIC FOR X GROUP
+             AEND
          AELSEIF (&T_IX LT 0)
              :&N_TARGET SETC '&TMP_NAME(-&T_IX)'
              :&L_TARGET SETA  &TMP_LEN(-&T_IX)
@@ -56,7 +61,8 @@
 .* 
          AENTRY MOVE_LE_256
          AIF   (&S_IX NE 0)
-               AIF  ('&T_TARGET' EQ '&T_SOURCE')
+               AIF  ('&T_TARGET' EQ '&T_SOURCE'                        X 
+                     OR NOT &PIC_TARGET)   RPI 1042 MVC TO GROUP
                     AIF   (&L_TARGET LE &L_SOURCE)   
                           AIF (&T_IX LT 0)
          MVC   &N_TARGET.(&L_TARGET),&N_SOURCE
@@ -79,7 +85,7 @@
          MVI   &N_TARGET+&L_SOURCE,C' '
                           :&LPAD SETA  &L_TARGET-&L_SOURCE-1
                           AIF (&LPAD GT 0)
-         MVC   &N_TARGET+&L_SOURCE+1(&LPAD).(&LPAD),&N_TARGET+&L_SOURCE
+         MVC   &N_TARGET+&L_SOURCE+1(&LPAD),&N_TARGET+&L_SOURCE
                           AEND
                     AEND
                AELSE

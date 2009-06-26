@@ -130,7 +130,8 @@ public  class  gz390
 	 * 06/16/08 RPI 861 don't send nulls, support fields with no data 
 	 * 06/23/08 RPI 850 support attr fld_attr_nd non-display
 	 * 10/27/08 RPI 927 display '@' for x'ff' and wrap screen address for data  
-	 * 11/08/08 RPI 940 correct input sba for field at (24,80)                                 
+	 * 11/08/08 RPI 940 correct input sba for field at (24,80) 
+	 * 06/22/09 RPI 1061 include PA_MDT in returned TGET fields with SBA's                                
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -329,8 +330,8 @@ public  class  gz390
     int fld_tot;            // protected and unprotected
     int[]  fld_addr       = new int[max_addr];
     // Array of all input fields ascending
-    int fld_input_tot = 0;  // unprotected fields
-    int[]  fld_input_addr = new int[max_addr];
+    int fld_mdt_tot = 0;  // fields with mdt bit on RPI 1061 include PA_MDT
+    int[]  fld_mdt_addr = new int[max_addr];  // RPI 1061 all fields with mdt on
     // TN3270 screen
     boolean[] scn_fld     = new boolean[max_addr];
     int[]  scn_attr       = new int[max_addr];
@@ -2367,12 +2368,14 @@ private void tn_erase_all_unprotected(){
 	 */
 	int first_input_sba = -1;
 	int index = 0;
-	while (index < fld_input_tot){
-		scn_addr = fld_input_addr[index]+1;
-		if (first_input_sba == -1){
-			first_input_sba = scn_addr;
+	while (index < fld_mdt_tot){
+		if ((scn_char[fld_mdt_addr[index]] & tn_protect_mask) == 0){
+			scn_addr = fld_mdt_addr[index]+1;
+			if (first_input_sba == -1){
+				first_input_sba = scn_addr;
+			}
+			tn_erase_to_end();
 		}
-		tn_erase_to_end();	           	
 		index++;
 	}
 	tn_reset_mdt();
@@ -2509,8 +2512,8 @@ private void tn_next_input_field(){
     int sba_first = scn_addr;
     int sba_next = max_addr;
     int index = 0;
-    while (index < fld_input_tot){
-    	cur_fld_addr = fld_input_addr[index];
+    while (index < fld_mdt_tot){
+    	cur_fld_addr = fld_mdt_addr[index];
     	if (cur_fld_addr > scn_addr
     		&& cur_fld_addr < sba_next){
     		sba_next = cur_fld_addr; 
@@ -2545,7 +2548,7 @@ private boolean tn_input_field(){
 	if (fld_tot == 0){
 		return true;
 	}
-	if (fld_input_tot == 0 
+	if (fld_mdt_tot == 0 
 		|| scn_fld[scn_addr]){
 		return false;
 	}
@@ -2569,7 +2572,7 @@ private void tn_modify_field(){
 	 * Note:
 	 *   1.  fld_addr must be set by tn_input
 	 */
-	if (fld_input_tot > 0){
+	if (fld_mdt_tot > 0){
 		scn_attr[cur_fld_addr] = scn_attr[cur_fld_addr] 
 		                     | tn_mdt_mask;
 	} else {
@@ -2642,9 +2645,9 @@ private void tn_get_screen_input(){
 	 *   1, action key  = enter, PF, PA, or clear key)
 	 *   2, sba of cursor (if enter or PF only) RPI 856
 	 *   3. sba code x'11', sba addr, modified data bytes
-	 *      for each unprotected field else
+	 *      for each mdt field else
 	 *   4. Modified data bytes for unformated
-	 *      screen with no input fields 
+	 *      screen with no mdt fields 
 	 */
 	tget_byte[0] = (byte) tn_aid;
 	if (tget_len == 1 
@@ -2658,7 +2661,7 @@ private void tn_get_screen_input(){
 	}
 	tget_byte[1] = (byte)sba_to_ebc[scn_addr >> 6];
 	tget_byte[2] = (byte)sba_to_ebc[scn_addr & 0x3f];
-	if (fld_input_tot == 0){
+	if (fld_mdt_tot == 0){
 		tn_unformatted_input();
 	} else {
 		tn_formatted_input();
@@ -2698,8 +2701,8 @@ private void tn_formatted_input(){
 	 */
 	tget_index = 3;             
 	int index = 0;
-	while (index < fld_input_tot){
-		cur_fld_addr = fld_input_addr[index];
+	while (index < fld_mdt_tot){
+		cur_fld_addr = fld_mdt_addr[index];
 	    if ((scn_attr[cur_fld_addr] & tn_mdt_mask)
 		     == tn_mdt_mask){
 	    	int input_sba = cur_fld_addr+1; // RPI 940
@@ -2799,7 +2802,7 @@ private synchronized void tn_clear_screen(){
 		Arrays.fill(scn_fld,0,max_addr,false);  // RPI 861
 		Arrays.fill(scn_attr,0,max_addr,0);
 		fld_tot = 0;
-		fld_input_tot = 0;
+		fld_mdt_tot = 0;
 	    scn_addr = 0;           
 	    tn_cursor_scn_addr = 0; 
 	    tn_cursor = true;        
@@ -2811,10 +2814,10 @@ private void tn_reset_mdt(){
 	 * reset all mdt bits so only changes will 
 	 * be input.
 	 */
-	if (fld_input_tot > 0){
+	if (fld_mdt_tot > 0){
 		int index = 0;
-		while (index < fld_input_tot){
-			scn_attr[fld_input_addr[index]] = scn_attr[fld_input_addr[index]] & tn_mdt_off;
+		while (index < fld_mdt_tot){
+			scn_attr[fld_mdt_addr[index]] = scn_attr[fld_mdt_addr[index]] & tn_mdt_off;
 			index++;
 		}
 	} else {
@@ -2869,7 +2872,8 @@ private void tn_start_field(){
 	 scn_attr[scn_addr] = cur_fld_attr;
 	 tput_index++;
 	 tn_add_field_addr(); 
-	 if ((cur_fld_attr & tn_protect_mask) == 0){
+	 if ((cur_fld_attr & tn_protect_mask) == 0
+	     || (cur_fld_attr & tn_mdt_mask) == 1){ // RPI 1061 add PA-MDT fields
 		 tn_add_input_field_addr();
 	 }
 	 scn_char[scn_addr] = scn_null; // RPI 628
@@ -2899,21 +2903,21 @@ private void tn_add_field_addr(){
 }
 private void tn_add_input_field_addr(){
 	/*
-	 * add scn_addr to fld_input_addr array
+	 * add scn_addr to fld_mdt_addr array
 	 * if new and sort after new add.
 	 */
 	 int index = 0;
-	 while (index < fld_input_tot){
-		 if (scn_addr == fld_input_addr[index]){
+	 while (index < fld_mdt_tot){
+		 if (scn_addr == fld_mdt_addr[index]){
 			 return;
 		 }
 		 index++;
 	 }
-	 fld_input_addr[fld_input_tot] = scn_addr;
-	 fld_input_tot++;
-	 if (fld_input_tot > 1){
+	 fld_mdt_addr[fld_mdt_tot] = scn_addr;
+	 fld_mdt_tot++;
+	 if (fld_mdt_tot > 1){
 		// sort input field addresses for use in search
-	    Arrays.sort(fld_input_addr,0,fld_input_tot);
+	    Arrays.sort(fld_mdt_addr,0,fld_mdt_tot);
 	 }
 }
 private void tn_drop_field(int sba){
@@ -2943,14 +2947,14 @@ private void tn_drop_input_field(int sba){
 	 * remove input field
 	 */
 	int index = 0;
-	while (index < fld_input_tot){
-		if (fld_input_addr[index] == sba){
+	while (index < fld_mdt_tot){
+		if (fld_mdt_addr[index] == sba){
 			index++;
-			while (index < fld_input_tot){
-				fld_input_addr[index-1] = fld_input_addr[index];
+			while (index < fld_mdt_tot){
+				fld_mdt_addr[index-1] = fld_mdt_addr[index];
 				index++;
 			}
-			fld_input_tot--;
+			fld_mdt_tot--;
 			return;
 		}
 		index++;

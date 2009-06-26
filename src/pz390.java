@@ -290,6 +290,8 @@ public class pz390 {
 	 * 04/26/09 RPI 1030 verify zeros in R0 for SRST
 	 * 05/03/09 RPI 1003 fix PFPO for LD to ED and ED to LB, EH to LD, fix MDE ovf chk
 	 * 05/06/09 RPI 1035 trace EX 2,4,6 byte instr.
+	 * 06/13/09 RPI 1054 correct ABEND PSW addr when S0C5 occurs during trace
+	 * 06/14/09 RPI 1055 add CPYA, EAR, and SAR instruction support
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -522,6 +524,7 @@ public class pz390 {
 	 * program check and program interruption fields
 	 */
 	boolean psw_check = false;
+	boolean psw_abend = false; // RPI 1054 once per cycle
 
 	boolean fp_signal = false;
 
@@ -582,7 +585,7 @@ public class pz390 {
 	int psw_pic_error = 0xfff; // internal error
 
 	int psw_pic = 0;
-
+    boolean timeout = false; // RPI 1054
 	// psw_cc? code = 3 2 1 0
 	// psw_cc value = 1 2 4 8 //RPI174
 	int[] psw_carry = { -1, 1, 1, -1, 0, -1, -1, -1, 0 }; // index by psw_cc
@@ -927,7 +930,9 @@ public class pz390 {
 			true, true, false, false, // 4 - 7 (4,6) (5,7)
 			true, true, false, false, // 8 - 11 (8,10) (9,11)
 			true, true, false, false }; // 12 - 15 (12,14) (13,15)
+	byte[] ar_reg_byte = (byte[]) Array.newInstance(byte.class, 16 * 4); // RPI 1055
 
+	ByteBuffer ar_reg = ByteBuffer.wrap(ar_reg_byte, 0, 16 * 4); // RPI 1055
 	/*
 	 * fp work variables
 	 */
@@ -1603,9 +1608,9 @@ public class pz390 {
 		       140,  // 3090 "B24A" "ESTA" "RRE" 14
 		       140,  // 3100 "B24B" "LURA" "RRE" 14
 		       140,  // 3110 "B24C" "TAR" "RRE" 14
-		       140,  // 3120 "B24D" "CPYA" "RRE" 14
-		       140,  // 3130 "B24E" "SAR" "RRE" 14
-		       140,  // 3140 "B24F" "EAR" "RRE" 14
+		       149,  // 3120 "B24D" "CPYA" "RRE" 14 // RPI 1055
+		       149,  // 3130 "B24E" "SAR" "RRE" 14 // RPI 1055
+		       149,  // 3140 "B24F" "EAR" "RRE" 14 // RPI 1055
 		       140,  // 3150 "B250" "CSP" "RRE" 14
 		       140,  // 3160 "B252" "MSR" "RRE" 14
 		       140,  // 3170 "B254" "MVPG" "RRE" 14
@@ -2410,6 +2415,7 @@ public class pz390 {
 			opcode1 = mem_byte[psw_loc] & 0xff;
 			opcode2 = -1;
 			psw_check = true;
+			psw_abend = false; // rpi 1054
 			psw_pic = psw_pic_oper;
 			if (opcode1 < 0x80) {
 				if (opcode1 < 0x40) {
@@ -2424,11 +2430,15 @@ public class pz390 {
 					ins_lt_ff();
 				}
 			}
-			if (psw_check && psw_pic != 0) { // RPI 301
-				if (psw_pic == psw_pic_oper && tz390.opt_trace) { // RPI 474
-					trace_psw();
+			if (psw_check){
+				if (timeout){
+					set_psw_check(psw_pic_timeout); // RPI 1054
+				} else if (psw_pic != 0) { // RPI 301
+					if (psw_pic == psw_pic_oper && tz390.opt_trace) { // RPI 474
+						trace_psw();
+					}
+					set_psw_check(psw_pic_oper);
 				}
-				set_psw_check(psw_pic_oper);
 			}
 			if (ex_mode 
 				&& !(opcode1 == ex_opcode1)
@@ -5063,13 +5073,19 @@ public class pz390 {
 			ins_setup_rre();
 			break;
 		case 0x4D: // 3120 "B24D" "CPYA" "RRE"
+			psw_check = false; // RPI 1055
 			ins_setup_rre();
+			ar_reg.putInt(rf1 >> 1,ar_reg.getInt(rf2 >> 1)); // RPI 1055
 			break;
 		case 0x4E: // 3130 "B24E" "SAR" "RRE"
+			psw_check = false; // RPI 1055
 			ins_setup_rre();
+			ar_reg.putInt(rf1 >> 1,reg.getInt(rf2 + 4)); // RPI 1055
 			break;
 		case 0x4F: // 3140 "B24F" "EAR" "RRE"
+			psw_check = false; // RPI 1055
 			ins_setup_rre();
+			reg.putInt(rf1 + 4,ar_reg.getInt(rf2 >> 1)); // RPI 1055
 			break;
 		case 0x50: // 3150 "B250" "CSP" "RRE"
 			ins_setup_rre();
@@ -16309,6 +16325,7 @@ public class pz390 {
 			fill_mem_char = 0;
 		}
 		init_gpr();
+		init_ar();
 		init_fpr();
 		init_opcode_keys();
 		init_mem();
@@ -16321,6 +16338,12 @@ public class pz390 {
     	 * init gpr regs to x'F4'  RPI 819
     	 */
     	Arrays.fill(reg_byte, 0, reg_byte.length, fill_reg_char);
+    }
+    private void init_ar(){ // RPI 1055
+    	/*
+    	 * init ar regs to x'F4'  RPI 819
+    	 */
+    	Arrays.fill(ar_reg_byte, 0, ar_reg_byte.length, fill_reg_char);
     }
 	private void init_fpr() {
 		/*
@@ -16602,6 +16625,7 @@ public class pz390 {
 			&& tz390.op_code_index < op_trace_type.length){
 			trace_type = op_trace_type[tz390.op_code_index];
 		}
+	try {
 		switch (trace_type){
 		case 10: // "E" 8 PR oooo
 			break;
@@ -16863,6 +16887,24 @@ public class pz390 {
 			            + " R" + tz390.get_hex(mf2, 1) 
 			            + "="  + tz390.get_hex(reg.getInt(rf2+4),8);
 			break;
+		case 149: // b9??  CPYA,EAR,SAR
+			if (opcode2 == 0x4d){ // CPYA RPI 1055
+				trace_parms = " AR" + tz390.get_hex(mf1, 1) 
+			      + "="  + tz390.get_hex(ar_reg.getInt(rf1 >> 1),8) 
+			      + " AR" + tz390.get_hex(mf2, 1) 
+			      + "="  + tz390.get_hex(ar_reg.getInt(rf2 >> 1),8);
+			} else if (opcode2 == 0x4e){ // SAR RPI 1055
+				trace_parms = " AR" + tz390.get_hex(mf1, 1) 
+                  + "="  + tz390.get_hex(ar_reg.getInt(rf1 >> 1),8) 
+                  + " R" + tz390.get_hex(mf2, 1) 
+                  + "="  + tz390.get_hex(reg.getInt(rf2+4),8);
+			} else if (opcode2 == 0x4f){ // EAR RPI 1055
+				trace_parms = " R" + tz390.get_hex(mf1, 1) 
+                  + "="  + tz390.get_hex(reg.getInt(rf1 + 4),8) 
+                  + " AR" + tz390.get_hex(mf2, 1) 
+                  + "="  + tz390.get_hex(ar_reg.getInt(rf2 >> 1),8);
+			}
+		    break;
 		case 150:// "RRF1" 28 MAER oooor0rr
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 					+ get_fp_long_hex(rf1) + " F" + tz390.get_hex(mf3, 1) + "="
@@ -17362,6 +17404,13 @@ break;
 			+ " I4=" + tz390.get_hex(if4,2)
 			+ " I5=" + tz390.get_hex(if5,2);
 		}
+	} catch (Exception e){ // RPI 1054 
+        if (tz390.opt_trace){
+        	tz390.put_trace(" " + tz390.get_hex(psw_loc | psw_amode_bit, 8) + " "
+		               + psw_cc_code[psw_cc] + " TRACE EXCEPTION"); // RPI 1054
+        }
+        return;
+	}
 		ins_trace_line = " " + tz390.get_hex(psw_loc | psw_amode_bit, 8) + " "
 		               + psw_cc_code[psw_cc] + " " + get_ins_hex(psw_loc) + " "
 		               + trace_name 
