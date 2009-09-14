@@ -251,6 +251,7 @@ P0206BYP_&SYSNDX DS 0H
 &CONDS(44) SETC 'QIDERR('
 &CONDS(55) SETC 'ENQBUSY('
 &CONDS(56) SETC 'ENVDEFERR('
+&CONDS(83) SETC 'END('
 &CONDS(84) SETC 'DISABLED('
 .* SPECIALS
 &CONDS(99) SETC 'DSIDERR('       CONVERTED TO 12
@@ -340,7 +341,7 @@ P0206BYP_&SYSNDX DS 0H
          AIF   (&ZC_CICS)
          LARL  R0,PG_&HCNLABL     R0=LABEL (COBOL)
          AELSE
-         LA    R0,&HCNLABL        R0=LABEL (ASM)
+         LARL  R0,&HCNLABL        R0=LABEL (ASM)
          AEND
          ST    R0,0(R14)          SAVE IT
          AHI   R1,1               BUMP CONDITION NUMBER POINTER
@@ -487,7 +488,7 @@ P0204BYP_&SYSNDX DS 0H
          AIF   (&ZC_CICS)
          LARL  R0,PG_&LABEL       R0=LABEL (COBOL)
          AELSE
-         LA    R0,&LABEL          R0=LABEL (ASM)
+         LARL  R0,&LABEL          R0=LABEL (ASM)
          AEND
          GEN_ST R0,P0E0ELAB       SAVE IT
          LARL  R15,P0E0EREG       ADDRESS TARGET

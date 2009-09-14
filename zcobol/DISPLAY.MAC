@@ -8,14 +8,23 @@
 .*********************************************************************
 .* 04/11/08 initial coding for global DISPLAY 'text' or label
 .* 11/19/08 add support for multiple field types using DISPLAY routine
+.* 07/25/08 RPI 1065 check for missing parms                             
 .*********************************************************************
          DISPLAY 
          :&PARMS SETC '&SYSLIST(1)'
          :&NP    SETA N'&SYSLIST
+         AIF   (&NP EQ 0)
+               MNOTE 8,'DISPLAY MISSING OPERAND'
+               MEXIT
+         AEND
          :&I     SETA 2
          AWHILE (&I LE &NP)
-               :&PARMS SETC '&PARMS,&SYSLIST(&I)'
-               :&I SETA &I+1
+               AIF ('&SYSLIST(&I)' NE 'UPON')
+                   :&PARMS SETC '&PARMS,&SYSLIST(&I)'
+                   :&I SETA &I+1
+               AELSE
+                   :&I SETA &NP+1
+               AEND
          AEND
          GEN_DISPLAY &PARMS 
          MEND

@@ -1,0 +1,53 @@
+         MACRO                                                          00010000
+         $MSGDRV                                                        00020000
+RMG001   DS    0CL133                                                   00030000
+         DC    C' s4bcdrva: SELF_TEST processing started.'              00040000
+         DC    (133-(*-RMG001))C' '                                     00050000
+RMG002   DS    0CL133                                                   00060000
+         DC    C' s4bcdrva: VARIABLE processing started.'               00070000
+         DC    (133-(*-RMG002))C' '                                     00080000
+RMG003   DS    0CL133                                                   00090000
+         DC    C' s4bcdrva: SELF_TEST processing completed; max rc('    00100000
+R003DATA DC    CL4' '                                                   00110000
+         DC    C').'                                                    00120000
+         DC    (133-(*-RMG003))C' '                                     00130000
+RMG004   DS    0CL133                                                   00140000
+         DC    C' s4bcdrva: VARIABLE processing completed; max rc('     00150000
+R004DATA DC    CL4' '                                                   00160000
+         DC    C').'                                                    00170000
+         DC    (133-(*-RMG004))C' '                                     00180000
+RMG005   DS    0CL133                                                   00190000
+         DC    C' s4bcdrva: Encoding track('                            00200000
+R005DT1  DC    CL20' '                                                  00210000
+         DC    C'), zip('                                               00220000
+R005DT2  DC    CL12' '                                                  00230000
+         DC    C').'                                                    00240000
+         DC    (133-(*-RMG005))C' '                                     00250000
+RMG006   DS    0CL133                                                   00260000
+         DC    C' s4bcdrva: ReturnCode('                                00270000
+R006DATA DC    CL4' '                                                   00280000
+         DC    C');'                                                    00290000
+         DC    (133-(*-RMG006))C' '                                     00300000
+RMG007   DS    0CL133                                                   00310000
+         DC    C' . Expected barcode ---> '                             00320000
+R007DATA DC    CL65' '                                                  00330000
+         DC    (133-(*-RMG007))C' '                                     00340000
+RMG008   DS    0CL133                                                   00350000
+         DC    C' . Generated barcode --> '                             00360000
+R008DATA DC    CL65' '                                                  00370000
+         DC    (133-(*-RMG008))C' '                                     00380000
+RMG009   DS    0CL133                                                   00390000
+         DC    C' s4bcdrva: Barcode generation successful for track('   00400000
+R009DT1  DC    CL20' '                                                  00410000
+         DC    C'), zip('                                               00420000
+R009DT2  DC    CL12' '                                                  00430000
+         DC    C').'                                                    00440000
+         DC    (133-(*-RMG009))C' '                                     00450000
+RMG010   DS    0CL133                                                   00460000
+         DC    C' s4bcdrva: Barcode generation failed for track('       00470000
+R010DT1  DC    CL20' '                                                  00480000
+         DC    C'), zip('                                               00490000
+R010DT2  DC    CL12' '                                                  00500000
+         DC    C').'                                                    00510000
+         DC    (133-(*-RMG010))C' '                                     00520000
+         MEND                                                           00530000

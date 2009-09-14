@@ -1,0 +1,560 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_ASSIGN
+         GBLB  &PARMS_0208
+         LCLB  &NOHAND
+         LCLC  &ABCODE,&ABDUMP,&ABPROG,&APLKYBD,&APLTEXT
+         LCLC  &ASRAPSW,&ASRARGS,&BTRANS,&CMDSEC,&COLOR,&CWALENG
+         LCLC  &DEFSH,&DEFSW,&DSSCS,&DS3270,&EWASUPP,&EXTDS,&FACTY
+         LCLC  &FCI,&GMMI,&HILIGHT,&INVPROG,&KATA,&LANGUSE
+         LCLC  &MAPCOL,&MAPHITE,&MAPLINE,&MAPWDTH,&MSR
+         LCLC  &NATLANG,&NEXTTRN,&OUTLINE,&PARTNS,&PROGRAM,&PS,&RESSEC
+         LCLC  &RESTART,&RETPROG,&SCRNHT,&SCRNWD,&SOSI,&STCODE
+         LCLC  &TASKPRI,&TCTUALN,&TMCODE,&TERMPRI,&TXTKYBD,&TXTPRNT
+         LCLC  &TRANPRI,&TWALENG,&UNATTND,&USERPRI,&VALID
+         LCLC  &RESP,&RESP2
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,7)  EQ 'ABCODE(').ABCODE
+         AIF   ('&PARM'(1,7)  EQ 'ABDUMP(').ABDUMP
+         AIF   ('&PARM'(1,10) EQ 'ABPROGRAM(').ABPROG
+         AIF   ('&PARM'(1,8)  EQ 'APLKYBD(').APLKYBD
+         AIF   ('&PARM'(1,8)  EQ 'APLTEXT(').APLTEXT
+         AIF   ('&PARM'(1,8)  EQ 'ASRAPSW(').ASRAPSW
+         AIF   ('&PARM'(1,9)  EQ 'ASRAREGS(').ASRARGS
+         AIF   ('&PARM'(1,7)  EQ 'BTRANS(').BTRANS
+         AIF   ('&PARM'(1,7)  EQ 'CMDSEC(').CMDSEC
+         AIF   ('&PARM'(1,6)  EQ 'COLOR(').COLOR
+         AIF   ('&PARM'(1,8)  EQ 'CWALENG(').CWALENG
+         AIF   ('&PARM'(1,10) EQ 'DEFSCRNHT(').DEFSH
+         AIF   ('&PARM'(1,10) EQ 'DEFSCRNWD(').DEFSW
+         AIF   ('&PARM'(1,6)  EQ 'DSSCS(').DSSCS
+         AIF   ('&PARM'(1,7)  EQ 'DS3270(').DS3270
+         AIF   ('&PARM'(1,8)  EQ 'EWASUPP(').EWASUPP
+         AIF   ('&PARM'(1,6)  EQ 'EXTDS(').EXTDS
+         AIF   ('&PARM'(1,9)  EQ 'FACILITY(').FACTY
+         AIF   ('&PARM'(1,4)  EQ 'FCI(').FCI
+         AIF   ('&PARM'(1,5)  EQ 'GMMI(').GMMI
+         AIF   ('&PARM'(1,8)  EQ 'HILIGHT(').HILITE
+         AIF   ('&PARM'(1,13) EQ 'INVOKINGPROG(').INVPROG
+         AIF   ('&PARM'(1,9)  EQ 'KATAKANA(').KATA
+         AIF   ('&PARM'(1,10) EQ 'LANGINUSE(').LANGUSE
+         AIF   ('&PARM'(1,10) EQ 'MAPCOLUMN(').MAPCOL
+         AIF   ('&PARM'(1,10) EQ 'MAPHEIGHT(').MAPHITE
+         AIF   ('&PARM'(1,8)  EQ 'MAPLINE(').MAPLINE
+         AIF   ('&PARM'(1,9)  EQ 'MAPWIDTH(').MAPWDTH
+         AIF   ('&PARM'(1,11) EQ 'MSRCONTROL(').MSR
+         AIF   ('&PARM'(1,13) EQ 'NATLANGINUSE(').NATLANG
+         AIF   ('&PARM'(1,12) EQ 'NEXTTRANSID(').NEXTTRN
+         AIF   ('&PARM'(1,8)  EQ 'OUTLINE(').OUTLINE
+         AIF   ('&PARM'(1,7)  EQ 'PARTNS(').PARTNS
+         AIF   ('&PARM'(1,8)  EQ 'PROGRAM(').PROGRAM
+         AIF   ('&PARM'(1,3)  EQ 'PS(').PS
+         AIF   ('&PARM'(1,7)  EQ 'RESSEC(').RESSEC
+         AIF   ('&PARM'(1,8)  EQ 'RESTART(').RESTART
+         AIF   ('&PARM'(1,11) EQ 'RETURNPROG(').RETPROG
+         AIF   ('&PARM'(1,7)  EQ 'SCRNHT(').SCRNHT
+         AIF   ('&PARM'(1,7)  EQ 'SCRNWD(').SCRNWD
+         AIF   ('&PARM'(1,5)  EQ 'SOSI(').SOSI
+         AIF   ('&PARM'(1,10) EQ 'STARTCODE(').STCODE
+         AIF   ('&PARM'(1,13) EQ 'TASKPRIORITY(').TASKPRI
+         AIF   ('&PARM'(1,10) EQ 'TCTUALENG(').TCTUALN
+         AIF   ('&PARM'(1,9)  EQ 'TERMCODE(').TMCODE
+         AIF   ('&PARM'(1,13) EQ 'TERMPRIORITY(').TERMPRI
+         AIF   ('&PARM'(1,9)  EQ 'TEXTKYBD(').TXTKYBD
+         AIF   ('&PARM'(1,10) EQ 'TEXTPRINT(').TXTPRNT
+         AIF   ('&PARM'(1,13) EQ 'TRANPRIORITY(').TRANPRI
+         AIF   ('&PARM'(1,8)  EQ 'TWALENG(').TWALENG
+         AIF   ('&PARM'(1,9)  EQ 'UNATTEND(').UNATTND
+         AIF   ('&PARM'(1,13) EQ 'USERPRIORITY(').USERPRI
+         AIF   ('&PARM'(1,11) EQ 'VALIDATION(').VALID
+         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.ABCODE  ANOP
+&ABCODE  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.ABDUMP  ANOP
+&ABDUMP  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.ABPROG  ANOP
+&ABPROG  SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.APLKYBD ANOP
+&APLKYBD SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.APLTEXT ANOP
+&APLTEXT SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.ASRAPSW ANOP
+&ASRAPSW SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.ASRARGS ANOP
+&ASRARGS SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.BTRANS  ANOP
+&BTRANS  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.CMDSEC  ANOP
+&CMDSEC  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.COLOR   ANOP
+&COLOR   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.CWALENG ANOP
+&CWALENG SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.DEFSH   ANOP
+&DEFSH   SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.DEFSW   ANOP
+&DEFSW   SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.DSSCS   ANOP
+&DSSCS   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.DS3270  ANOP
+&DS3270  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.EWASUPP ANOP
+&EWASUPP SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.EXTDS   ANOP
+&EXTDS   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.FACTY   ANOP
+&FACTY   SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.FCI     ANOP
+&FCI     SETC  '&PARM'(5,K'&PARM-5)
+         AGO   .PLOOP
+.*
+.GMMI    ANOP
+&GMMI    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.HILITE  ANOP
+&HILIGHT SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.INVPROG ANOP
+&INVPROG SETC  '&PARM'(14,K'&PARM-14)
+         AGO   .PLOOP
+.*
+.KATA    ANOP
+&KATA    SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.LANGUSE ANOP
+&LANGUSE SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.MAPCOL  ANOP
+&MAPCOL  SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.MAPHITE ANOP
+&MAPHITE SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.MAPLINE ANOP
+&MAPLINE SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.MAPWDTH ANOP
+&MAPWDTH SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.MSR     ANOP
+&MSR     SETC  '&PARM'(12,K'&PARM-12)
+         AGO   .PLOOP
+.*
+.NATLANG ANOP
+&NATLANG SETC  '&PARM'(14,K'&PARM-14)
+         AGO   .PLOOP
+.*
+.NEXTTRN ANOP
+&NEXTTRN SETC  '&PARM'(13,K'&PARM-13)
+         AGO   .PLOOP
+.*
+.OUTLINE ANOP
+&OUTLINE SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.PARTNS  ANOP
+&PARTNS  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.PROGRAM ANOP
+&PROGRAM SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.PS      ANOP
+&PS      SETC  '&PARM'(4,K'&PARM-4)
+         AGO   .PLOOP
+.*
+.RESSEC  ANOP
+&RESSEC  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.RESTART ANOP
+&RESTART SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.RETPROG ANOP
+&RETPROG SETC  '&PARM'(12,K'&PARM-12)
+         AGO   .PLOOP
+.*
+.SCRNHT  ANOP
+&SCRNHT  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.SCRNWD  ANOP
+&SCRNWD  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.SOSI    ANOP
+&SOSI    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.STCODE  ANOP
+&STCODE  SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.TASKPRI ANOP
+&TASKPRI SETC  '&PARM'(14,K'&PARM-14)
+         AGO   .PLOOP
+.*
+.TCTUALN ANOP
+&TCTUALN SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.TMCODE  ANOP
+&TMCODE  SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.TERMPRI ANOP
+&TERMPRI SETC  '&PARM'(14,K'&PARM-14)
+         AGO   .PLOOP
+.*
+.TXTKYBD ANOP
+&TXTKYBD SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.TXTPRNT ANOP
+&TXTPRNT SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.TRANPRI ANOP
+&TRANPRI SETC  '&PARM'(14,K'&PARM-14)
+         AGO   .PLOOP
+.*
+.TWALENG ANOP
+&TWALENG SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.UNATTND ANOP
+&UNATTND SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.USERPRI ANOP
+&USERPRI SETC  '&PARM'(14,K'&PARM-14)
+         AGO   .PLOOP
+.*
+.VALID   ANOP
+&VALID   SETC  '&PARM'(12,K'&PARM-12)
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         GEN_XC P0208,P0208END-P0208,P0208
+         GEN_MVC P0208FN,,=X'0208' SET FUNCTION CODE
+         AIF   ('&ABCODE' EQ '').DOABD
+         LA    R0,&ABCODE         ABCODE ADDRESS
+         GEN_ST R0,P0208ABC       SAVE IT
+.DOABD   ANOP
+         AIF   ('&ABDUMP' EQ '').DOABP
+         LA    R0,&ABDUMP         ABDUMP ADDRESS
+         GEN_ST R0,P0208ABP       SAVE IT
+.DOABP   ANOP
+         AIF   ('&ABPROG' EQ '').DOAPK
+         LA    R0,&ABPROG         ABPROG ADDRESS
+         GEN_ST R0,P0208ABG       SAVE IT
+.DOAPK   ANOP
+         AIF   ('&APLKYBD' EQ '').DOAPT
+         LA    R0,&APLKYBD        APLKYBD ADDRESS
+         GEN_ST R0,P0208APK       SAVE IT
+.DOAPT   ANOP
+         AIF   ('&APLTEXT' EQ '').DOASP
+         LA    R0,&APLTEXT        APLTEXT ADDRESS
+         GEN_ST R0,P0208APT       SAVE IT
+.DOASP   ANOP
+         AIF   ('&ASRAPSW' EQ '').DOASR
+         LA    R0,&ASRAPSW        ASRAPSW ADDRESS
+         GEN_ST R0,P0208ASP       SAVE IT
+.DOASR   ANOP
+         AIF   ('&ASRARGS' EQ '').DOBTR
+         LA    R0,&ASRARGS        ASRAREGS ADDRESS
+         GEN_ST R0,P0208ASR       SAVE IT
+.DOBTR   ANOP
+         AIF   ('&BTRANS' EQ '').DOCMD
+         LA    R0,&BTRANS         BTRANS ADDRESS
+         GEN_ST R0,P0208BTR       SAVE IT
+.DOCMD   ANOP
+         AIF   ('&CMDSEC' EQ '').DOCOL
+         LA    R0,&CMDSEC         CMDSEC ADDRESS
+         GEN_ST R0,P0208CMD       SAVE IT
+.DOCOL   ANOP
+         AIF   ('&COLOR' EQ '').DOCWA
+         LA    R0,&COLOR          COLOR ADDRESS
+         GEN_ST R0,P0208COL       SAVE IT
+.DOCWA   ANOP
+         AIF   ('&CWALENG' EQ '').DODSH
+         LA    R0,&CWALENG        CWALENG ADDRESS
+         GEN_ST R0,P0208CWA       SAVE IT
+.DODSH   ANOP
+         AIF   ('&DEFSH' EQ '').DODSW
+         LA    R0,&DEFSH          DEFSCRNHT ADDRESS
+         GEN_ST R0,P0208DSH       SAVE IT
+.DODSW   ANOP
+         AIF   ('&DEFSW' EQ '').DODSC
+         LA    R0,&DEFSW          DEFSCRNWD ADDRESS
+         GEN_ST R0,P0208DSW       SAVE IT
+.DODSC   ANOP
+         AIF   ('&DSSCS' EQ '').DOD32
+         LA    R0,&DSSCS          DSSCS ADDRESS
+         GEN_ST R0,P0208DSC       SAVE IT
+.DOD32   ANOP
+         AIF   ('&DS3270' EQ '').DOEWA
+         LA    R0,&DS3270         DS3270 ADDRESS
+         GEN_ST R0,P0208D32       SAVE IT
+.DOEWA   ANOP
+         AIF   ('&EWASUPP' EQ '').DOEXT
+         LA    R0,&EWASUPP        EWASUPP ADDRESS
+         GEN_ST R0,P0208EWA       SAVE IT
+.DOEXT   ANOP
+         AIF   ('&EXTDS' EQ '').DOFAC
+         LA    R0,&EXTDS          EXTDS ADDRESS
+         GEN_ST R0,P0208EXT       SAVE IT
+.DOFAC   ANOP
+         AIF   ('&FACTY' EQ '').DOFCI
+         LA    R0,&FACTY          FACILITY ADDRESS
+         GEN_ST R0,P0208FAC       SAVE IT
+.DOFCI   ANOP
+         AIF   ('&FCI' EQ '').DOGMM
+         LA    R0,&FCI            FCI ADDRESS
+         GEN_ST R0,P0208FCI       SAVE IT
+.DOGMM   ANOP
+         AIF   ('&GMMI' EQ '').DOHIL
+         LA    R0,&GMMI           GMMI ADDRESS
+         GEN_ST R0,P0208GMM       SAVE IT
+.DOHIL   ANOP
+         AIF   ('&HILIGHT' EQ '').DOINV
+         LA    R0,&HILIGHT        HILIGHT ADDRESS
+         GEN_ST R0,P0208HIL       SAVE IT
+.DOINV   ANOP
+         AIF   ('&INVPROG' EQ '').DOKAT
+         LA    R0,&INVPROG        INVOKINGPROG ADDRESS
+         GEN_ST R0,P0208INV       SAVE IT
+.DOKAT   ANOP
+         AIF   ('&KATA' EQ '').DOLIU
+         LA    R0,&KATA           KATAKANA ADDRESS
+         GEN_ST R0,P0208KAT       SAVE IT
+.DOLIU   ANOP
+         AIF   ('&LANGUSE' EQ '').DOMCL
+         LA    R0,&LANGUSE        LANGINUSE ADDRESS
+         GEN_ST R0,P0208LIU       SAVE IT
+.DOMCL   ANOP
+         AIF   ('&MAPCOL' EQ '').DOMHT
+         LA    R0,&MAPCOL         MAPCOLUMN ADDRESS
+         GEN_ST R0,P0208MCL       SAVE IT
+.DOMHT   ANOP
+         AIF   ('&MAPHITE' EQ '').DOMLN
+         LA    R0,&MAPHITE        MAPHEIGHT ADDRESS
+         GEN_ST R0,P0208MHT       SAVE IT
+.DOMLN   ANOP
+         AIF   ('&MAPLINE' EQ '').DOMWH
+         LA    R0,&MAPLINE        MAPLINE ADDRESS
+         GEN_ST R0,P0208MLN       SAVE IT
+.DOMWH   ANOP
+         AIF   ('&MAPWDTH' EQ '').DOMSR
+         LA    R0,&MAPWDTH        MAPWIDTH ADDRESS
+         GEN_ST R0,P0208MWH       SAVE IT
+.DOMSR   ANOP
+         AIF   ('&MSR' EQ '').DONIU
+         LA    R0,&MSR            MSRCONTROL ADDRESS
+         GEN_ST R0,P0208MSR       SAVE IT
+.DONIU   ANOP
+         AIF   ('&NATLANG' EQ '').DONXT
+         LA    R0,&NATLANG        NATLANGINUSE ADDRESS
+         GEN_ST R0,P0208NIU       SAVE IT
+.DONXT   ANOP
+         AIF   ('&NEXTTRN' EQ '').DOOUT
+         LA    R0,&NEXTTRN        NEXTTRANSID ADDRESS
+         GEN_ST R0,P0208NXT       SAVE IT
+.DOOUT   ANOP
+         AIF   ('&OUTLINE' EQ '').DOPRT
+         LA    R0,&OUTLINE        OUTLINE ADDRESS
+         GEN_ST R0,P0208OUT       SAVE IT
+.DOPRT   ANOP
+         AIF   ('&PARTNS' EQ '').DOPGM
+         LA    R0,&PARTNS         PARTNS ADDRESS
+         GEN_ST R0,P0208PRT       SAVE IT
+.DOPGM   ANOP
+         AIF   ('&PROGRAM' EQ '').DOPS
+         LA    R0,&PROGRAM        PROGRAM ADDRESS
+         GEN_ST R0,P0208PGM       SAVE IT
+.DOPS    ANOP
+         AIF   ('&PS' EQ '').DORSC
+         LA    R0,&PS             PS ADDRESS
+         GEN_ST R0,P0208PS        SAVE IT
+.DORSC   ANOP
+         AIF   ('&RESSEC' EQ '').DORES
+         LA    R0,&RESSEC         RESSEC ADDRESS
+         GEN_ST R0,P0208RSC       SAVE IT
+.DORES   ANOP
+         AIF   ('&RESTART' EQ '').DORET
+         LA    R0,&RESTART        RESTART ADDRESS
+         GEN_ST R0,P0208RES       SAVE IT
+.DORET   ANOP
+         AIF   ('&RETPROG' EQ '').DOSCH
+         LA    R0,&RETPROG        RETURNPROG ADDRESS
+         GEN_ST R0,P0208RET       SAVE IT
+.DOSCH   ANOP
+         AIF   ('&SCRNHT' EQ '').DOSCW
+         LA    R0,&SCRNHT         SCRNHT ADDRESS
+         GEN_ST R0,P0208SCH       SAVE IT
+.DOSCW   ANOP
+         AIF   ('&SCRNWD' EQ '').DOSOS
+         LA    R0,&SCRNWD         SCRNWD ADDRESS
+         GEN_ST R0,P0208SCW       SAVE IT
+.DOSOS   ANOP
+         AIF   ('&SOSI' EQ '').DOSTC
+         LA    R0,&SOSI           SOSI ADDRESS
+         GEN_ST R0,P0208SOS       SAVE IT
+.DOSTC   ANOP
+         AIF   ('&STCODE' EQ '').DOTKP
+         LA    R0,&STCODE         STARTCODE ADDRESS
+         GEN_ST R0,P0208STC       SAVE IT
+.DOTKP   ANOP
+         AIF   ('&TASKPRI' EQ '').DOTUL
+         LA    R0,&TASKPRI        TASKPRIORITY ADDRESS
+         GEN_ST R0,P0208TKP       SAVE IT
+.DOTUL   ANOP
+         AIF   ('&TCTUALN' EQ '').DOTMC
+         LA    R0,&TCTUALN        TCTUALENG ADDRESS
+         GEN_ST R0,P0208TUL       SAVE IT
+.DOTMC   ANOP
+         AIF   ('&TMCODE' EQ '').DOTMP
+         LA    R0,&TMCODE         TERMCODE ADDRESS
+         GEN_ST R0,P0208TMC       SAVE IT
+.DOTMP   ANOP
+         AIF   ('&TERMPRI' EQ '').DOTXK
+         LA    R0,&TERMPRI        TERMPRIORITY ADDRESS
+         GEN_ST R0,P0208TMP       SAVE IT
+.DOTXK   ANOP
+         AIF   ('&TXTKYBD' EQ '').DOTXP
+         LA    R0,&TXTKYBD        TEXTKYBD ADDRESS
+         GEN_ST R0,P0208TXK       SAVE IT
+.DOTXP   ANOP
+         AIF   ('&TXTPRNT' EQ '').DOTNP
+         LA    R0,&TXTPRNT        TEXTPRINT ADDRESS
+         GEN_ST R0,P0208TXP       SAVE IT
+.DOTNP   ANOP
+         AIF   ('&TRANPRI' EQ '').DOTWA
+         LA    R0,&TRANPRI        TRANPRIORITY ADDRESS
+         GEN_ST R0,P0208TNP       SAVE IT
+.DOTWA   ANOP
+         AIF   ('&TWALENG' EQ '').DOUNA
+         LA    R0,&TWALENG        TWALENG ADDRESS
+         GEN_ST R0,P0208TWA       SAVE IT
+.DOUNA   ANOP
+         AIF   ('&UNATTND' EQ '').DOUSP
+         LA    R0,&UNATTND        UNATTEND ADDRESS
+         GEN_ST R0,P0208UNA       SAVE IT
+.DOUSP   ANOP
+         AIF   ('&USERPRI' EQ '').DOVAL
+         LA    R0,&USERPRI        USERPRIORITY ADDRESS
+         GEN_ST R0,P0208USP       SAVE IT
+.DOVAL   ANOP
+         AIF   ('&VALID' EQ '').DONE
+         LA    R0,&VALID          VALIDATION ADDRESS
+         GEN_ST R0,P0208VAL       SAVE IT
+.DONE    ANOP
+         GEN_ST DFHEIBR,P0208EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P0208TCT  SET TCTTE ADDRESS
+         AIF   (NOT &NOHAND).DUNNOH
+         GEN_MVI P0208NOH,X'FF'   SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P0208RSP       SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P0208RS2       SAVE IT
+.NORESP2 ANOP
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P0208)       R1=LCL MODULE PARAMETER LIST
+         BAKR  0,R15              STACK REGS AND GO
+.*
+         GEN_CLI P0208NOH,X'FF'   NOHANDLE ?
+         JE    P0208BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         JZ    P0208BYP_&SYSNDX   EXIT IF NONE
+* INVREQ
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P0208BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+.*
+         AIF   (&PARMS_0208).BYP0208
+*
+&PARMS_0208 SETB 1
+         P0208
+*
+.BYP0208 ANOP
+P0208BYP_&SYSNDX DS 0H
+         MEXIT
+         MEND
+

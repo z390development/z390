@@ -42,7 +42,7 @@ call rt\RT1 rt\test\TESTCPY1  bal %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTCPY2  bal %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSQL1 sysmac(rt\test+mac) syscpy(rt\test)  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTEQU1  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RT3 rt\test\TESTERR1  chkmac(2) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT3 rt\test\TESTERR1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTERR3  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTERR8  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTERR9  %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -62,6 +62,7 @@ call MAC    rt\test\TESTMCR1.ASM stats sysmac(rt\test\*.mcr) notiming  %1 %2 %3 
 call rt\RT3 rt\test\TESTTXT1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTPC1  tracep  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTAIN1 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTAIN2 syscpy(+rt\test) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem az390 assembler
 rem
@@ -87,6 +88,7 @@ call rt\RT1 rt\test\TESTASM1  mcall SYSMAC(RT\TEST+MAC) %1 %2 %3 %4 %5 %6 %7 %8 
 call rt\RT1 rt\test\TESTASM2  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTENV1 TRACE  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT4 rt\test\TESTERR2  ERR(0) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT4 rt\test\TESTERRA  chkmac(2) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT4 rt\test\TESTLAB1  ERR(0) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem lz390 linker
@@ -114,6 +116,7 @@ call rt\RT1 rt\test\TESTINS3 trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy rt\test\TESTINS2.MLC rt\test\TESTASC3.MLC
 call rt\RT1 rt\test\TESTASC3 ascii trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTFP1  trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTFP2  trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTDFP1 trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTDFP2 trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
 set DDTODEMO=demo\DEMO.390

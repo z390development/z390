@@ -1,0 +1,13 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/09                                                 *
+.*********************************************************************
+.* 07/14/09 called by PERIOD to drop B2's if in use at PERIOD
+.*********************************************************************
+         GEN_DROP &REG
+         DROP     &REG
+         MEND

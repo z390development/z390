@@ -337,13 +337,13 @@
          PUNCH '       01  &MAPNAME.I.',DSNAME=&SYSIN_MEMBER..CPZ
 &MDFCOBS SETA  0
          AEND
-         AIF   (&MDIMODE(1) AND &MDIMODE(2)).DOMAPIO
-         AGO   .TRYPFX
-.*
-.DOMAPIO ANOP
-         AIF   (&MLANG NE 0)
+         AIF   (&MLANG EQ 0).TRYPFX
+.* ASM ONLY
+         AIF   (&MDIMODE(2))
          PUNCH '&MAPNAME.I&SPACES DS    0H                 START OF MAP-
                 INPUT DEFINITION'
+         AEND
+         AIF   (&MDIMODE(1))
          PUNCH '&MAPNAME.O&SPACES DS    0H                 START OF MAP-
                 OUTPUT DEFINITION'
          AEND

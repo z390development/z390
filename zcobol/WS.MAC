@@ -27,8 +27,20 @@
 .* 03/20/09 RPI 1004 rename explicit 1-9 FLOAT-HEX/BINARY/DECIMAL-N
 .* 04/29/09 RPI 1032 issue error if PIC clause has quote or no 9ZX      
 .* 06/20/09 RPI 1042 add computational                                  
+.* 07/09/09 RPI 1065 move FILE_IX from SYM_REF to SYM_FD to supp groups 
+.* 07/19/09 RPI 1065 add SYNC clause                                        
+.* 07/23/09 RPI 1065 add support for P assumed decimal point in PIC         
+.* 07/25/09 RPI 1065 gen 2 quotes in value for WS_GEN to gen 1 quote        
+.* 08/02/09 RPI 1065 check for duplicates and allow 01/nn level dups        
+.* 08/08/09 RPI 1065 make BY in INDEXED BY optional                         
+.* 08/08/09 RPI 1065 support DISPLAY clause (its the default)               
+.* 08/08/09 RPI 1065 use SCALE_NUM_LIT to scale PIC_VAL for FGHPQZ               
+.* 08/12/09 RPI 1065 set SYM_FXT to head of duplicate symbol list                
+.* 08/17/09 RPI 1065 support 88 level VALUES ARE n1 THRU n2                      
+.* 08/18/09 RPI 1065 add clauses JUSTIFIED, LEADING, TRAILING,                   
+.*          ASCENDING, DESCENDING, BLANK WHEN ZERO
 .*********************************************************************
-.*
+.* 
 .* WS level,name,clauses in any order (PIC,VALUE,USAGE supported)
 .* Notes:
 .*   1.  If name omitted FILLER is assumed.
@@ -47,15 +59,22 @@
          :&NEW_LVL_NO SETA  '&LEVEL'   MAY CHANGE FROM 77 TO 01
          :&NEW_SYM    SETC  '&NAME'    MAY CHANGE FROM ?  TO FILLER
          :&ERR_ID     SETC  '&NEW_LVL_NO &NEW_SYM'
-         :&REF_IX     SETA  &FILE_IX   ASSUME FILE REF IX FOR FD
+         :&REF_IX     SETA  0
+         :&PIC_SEP    SETB  0 SEPARATE SIGN
+         :&PIC_LEAD   SETB  0 LEADING
+         :&PIC_TRAIL  SETB  0 TRAILING
          AIF   (&NEW_LVL_NO EQ 88)     CONDITION VALUES
-               ACALL WS_88             SAVE CONDITION VALUES FOR ITEM
+               ACALL WS_88             
                MEXIT
          AELSEIF (&NEW_LVL_NO EQ 66)   RENAMES
                ACALL WS_66
                MEXIT
          AEND
          AIF   (&NEW_LVL_NO EQ 91)
+               :&NEW_LVL_NO  SETA 1 
+               :&CUR_SET_LVL SETA 0
+               ACALL WS_END_PRIOR
+               :&NEW_LVL_NO  SETA 91
                ACALL WS_91_FILE  ADD FILE DCB 
                MEXIT
          AEND
@@ -65,20 +84,7 @@
          AIF   (&NEW_LVL_NO EQ 1)
                :&CUR_SET_LVL SETA 0  RESET CURRENT SUBSCRIPT LVL
          AEND
-         :&WS_LOC_SAVE SETA &WS_LOC
-         AIF  (&WS_LVL GT 0)
-.*
-.*            END HIGHER LEVEL # GROUPS/REDEF ITEMS
-.*
-              ACALL WS_END_NN  
-.*
-.*            END REDEFINE AT SAME LEVEL # IF ANY
-.*
-              AIF   (&WS_LVL_RDEF(&WS_LVL)                             X  
-                    AND &WS_LOC GE &WS_LVL_RDEF_END(&WS_LVL))
-                    :&WS_LVL_RDEF(&WS_LVL) SETB 0                 
-              AEND
-         AEND
+         ACALL WS_END_PRIOR
 .*
 .*       ADD NEW LEVEL # AT SAME OR HIGHER LEVEL
 .*
@@ -102,6 +108,25 @@
          AEND
          :&WS_LVL_SYM_IX(&WS_LVL) SETA &SYM_TOT   WS_LVL SYM INDEX
          MEXIT
+.*
+.* END PRIOR
+.*
+         AENTRY WS_END_PRIOR
+         :&WS_LOC_SAVE SETA &WS_LOC
+         AIF  (&WS_LVL GT 0)
+.*
+.*            END HIGHER LEVEL # GROUPS/REDEF ITEMS
+.*
+              ACALL WS_END_NN  
+.*
+.*            END REDEFINE AT SAME LEVEL # IF ANY
+.*
+              AIF   (&WS_LVL_RDEF(&WS_LVL)                             X  
+                    AND &WS_LOC GE &WS_LVL_RDEF_END(&WS_LVL))
+                    :&WS_LVL_RDEF(&WS_LVL) SETB 0                 
+              AEND
+         AEND
+         AEND
 .*
 .* END ALL HIGHER LEVEL WS GROUP AND REDEFINE ITEMS
 .*
@@ -166,7 +191,8 @@
               :&SYM_LK(&SYM_TOT) SETA &LAST_LK_DSECT_IX
          AEND
          :&SYM_LVL(&SYM_TOT)  SETA &NEW_LVL_NO     SYMBOL LEVEL
-         :&SYM_REF(&SYM_TOT)  SETA &REF_IX SYM FILE,88,RED, LK VAR IX
+         :&SYM_REF(&SYM_TOT)  SETA &REF_IX SYM 88,RDEF, OR LK VAR IX
+         :&SYM_FD(&SYM_TOT)   SETA &FILE_IX SYM FD INDEX 
          :&SYM_LOC(&SYM_TOT)  SETA &WS_LOC  SYM FIELD WS OFFSET
          :&SYM_LEN(&SYM_TOT)  SETA 0        SYM FIELD LENGTH DEFAULT
          :&SYM_DUP(&SYM_TOT)  SETA 1        SYM FIELD OCCURANCES     
@@ -230,6 +256,7 @@
          :&SYM_NAME(&SYM_TOT) SETC 'FILLER' PAD REDEFINE                   
          :&SYM_LVL(&SYM_TOT)  SETA &NEW_LVL_NO     SYMBOL LVL
          :&SYM_REF(&SYM_TOT)  SETA &REF_IX  SYM FILE,88,REDF,LK-V
+         :&SYM_FD(&SYM_TOT)   SETA &FILE_IX SYM FD INDEX
          :&SYM_LOC(&SYM_TOT)  SETA &WS_LOC  SYM FIELD WS OFFSET
          :&SYM_LEN(&SYM_TOT)  SETA &WS_PAD 
          :&SYM_DUP(&SYM_TOT)  SETA 1        SYM FIELD OCCURANCES     
@@ -241,11 +268,17 @@
          AENTRY WS_88
          :&SYM_TOT SETA  &SYM_TOT+1
          :&SYM_NAME(&SYM_TOT) SETC '&NEW_SYM'
+         :&SYM_QIX(&SYM_TOT)  SETA &SYM_IX_LST  SET LEVEL RPI 1065
          ZC_SYM_INDEX &NEW_SYM
          :&SYM_LVL(&SYM_TOT) SETA &NEW_LVL_NO SYMBOL LVL
          AIF   (&SYM_IX_LST EQ 0)
                MNOTE 8,'WS &ERR_ID  MISSING PREVIOUS ITEM'
                MEXIT
+         AEND
+         AIF   ('&SYM_NAME(&SYM_IX_LST)' EQ 'FILLER') MAKE UNIQUE NAME
+               :&SYM_FILLER_VAL_CNT SETA &SYM_FILLER_VAL_CNT+1 RPI 1065
+               :&SYM_NAME(&SYM_IX_LST) SETC 'ZC_FILLER_V&SYM_FILLER_VALX
+               _CNT'
          AEND
          :&SYM_REF(&SYM_TOT)  SETA &SYM_IX_LST  POINT TO LAST WS ITEM
          :&SYM_LOC(&SYM_TOT) SETA &V88_TOT+1 PTR TO FIRST 88 VALUE
@@ -269,7 +302,7 @@
                     :&I SETA &I+1
                AELSEIF  ('&V88_VAL(&V88_TOT)' EQ 'QUOTE'               X
                          OR '&V88_VAL(&V88_TOT)' EQ 'QUOTES')
-                    :&V88_VAL(&V88_TOT) SETC ''''  ASSUME APOST OPTION
+                    :&V88_VAL(&V88_TOT) SETC ''''''''''  RPI 1065 'QQ'
                AEND
          AELSEIF ('&SYSLIST(3)' EQ 'VALUES')  
                :&NP      SETA  N'&SYSLIST
@@ -278,17 +311,34 @@
                      :&I       SETA  5
                AEND
                AWHILE (&I LE &NP)
+                 AIF  ('&SYSLIST(&I+1)' EQ 'THRU'                      X
+                     OR '&SYSLIST(&I+1)' EQ 'THROUGH')
+                    :&V1 SETA &SYSLIST(&I)
+                    :&V2 SETA &SYSLIST(&I+2)
+                    AIF (&V1 GT &V2)
+                        MNOTE 8,'WS 88 VALUE RANGE ERROR'
+                        MEXIT
+                    AEND
+                    AWHILE (&V1 LE &V2)
+                       :&V88_TOT SETA &V88_TOT+1
+                       :&V88_VAL(&V88_TOT) SETC '&V1'
+                       :&V88_NEXT(&V88_TOT) SETA &V88_TOT+1
+                       :&V1 SETA &V1+1
+                    AEND
+                    :&I SETA &I+3
+                 AELSE
                     :&V88_TOT SETA &V88_TOT+1
                     :&V88_VAL(&V88_TOT) SETC '&SYSLIST(&I)'
-                    :&V88_NEXT(&V88_TOT) SETA &V88_TOT+1
-                    :&I SETA   &I+1
                     AIF  ('&V88_VAL(&V88_TOT)' EQ 'X')
                         :&V88_VAL(&V88_TOT) SETC 'X&SYSLIST(&I)'
                         :&I SETA &I+1
                     AELSEIF  ('&V88_VAL(&V88_TOT)' EQ 'QUOTE'          X
                               OR '&V88_VAL(&V88_TOT)' EQ 'QUOTES')
-                        :&V88_VAL(&V88_TOT) SETC ''''  ASSUME APOST
+                        :&V88_VAL(&V88_TOT) SETC ''''''''''  1065 'QQ' 
                     AEND
+                    :&V88_NEXT(&V88_TOT) SETA &V88_TOT+1
+                    :&I SETA   &I+1
+                 AEND
                AEND
                :&V88_NEXT(&V88_TOT) SETA 0
          AELSE
@@ -301,35 +351,39 @@
          AENTRY WS_66
          :&SYM_TOT SETA  &SYM_TOT+1
          :&SYM_NAME(&SYM_TOT) SETC '&NEW_SYM'
+         :&SYM_QIX(&SYM_TOT) SETA &WS_LVL_SYM_IX(1)
+         :&SYM_LVL(&SYM_TOT) SETA 2 REDEFINE 66 AS 02
          ZC_SYM_INDEX &NEW_SYM
-         :&SYM_LVL(&SYM_TOT) SETA &NEW_LVL_NO SYMBOL LVL
          AIF   ('&SYSLIST(3)' NE 'RENAMES')
                MNOTE 8,'WS 66 MISSING RENAMES'
                MEXIT
-         AEND                              
-         ZC_SYM_FIND &SYSLIST(4)
-         AIF   (&SYM_IX EQ 0)
+         AEND                    
+         :&PARM_IX SETA 4
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0)
                MNOTE 'WS RENAMED FIELD NOT FOUND - &SYSLIST(4)'
                MEXIT 
          AEND
-         :&NAME2_IX SETA &SYM_IX
+         :&NAME2_IX SETA &FIELD_IX
          :&SYM_LOC(&SYM_TOT) SETA &SYM_LOC(&NAME2_IX)
-         AIF   (N'&SYSLIST EQ 4)  REDEFINE SINGLE ITEM
+         AIF   (N'&SYSLIST LT &PARM_IX)  REDEFINE SINGLE ITEM
                :&SYM_LEN(&SYM_TOT) SETA &SYM_LEN(&NAME2_IX)
                :&SYM_PIC_TYPE(&SYM_TOT) SETC 'X'
                AEXIT AENTRY
          AEND
-         AIF   ('&SYSLIST(5)' NE 'THRU'                                X                              
-                AND '&SYSLIST(5)' NE 'THROUGH')          
-                MNOTE 8,'WS RENAME UNRECOGNIZED CLAUSE - &SYSLIST(5)'
-                MEXIT
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'THRU'                         X                              
+               AND '&SYSLIST(&PARM_IX)' NE 'THROUGH')          
+               MNOTE 8,'WS RENAME UNRECOGNIZED CLAUSE - &SYSLIST(&PARM_X
+               IX)'
+               MEXIT
          AEND
-         ZC_SYM_FIND &SYSLIST(6)
-         AIF   (&SYM_IX EQ 0)
-               MNOTE 'WS RENAMED FIELD NOT FOUND - &SYSLIST(6)'
+         :&PARM_IX SETA &PARM_IX+1
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0)
+               MNOTE 'WS RENAMED FIELD NOT FOUND - &SYSLIST(&PARM_IX)'
                MEXIT 
          AEND
-         :&NAME3_IX SETA &SYM_IX
+         :&NAME3_IX SETA &FIELD_IX
          :&SYM_LEN(&SYM_TOT) SETA &SYM_LOC(&NAME3_IX)+&SYM_LEN(&NAME3_IX
                X)-&SYM_LOC(&NAME2_IX)
          :&SYM_PIC_TYPE(&SYM_TOT) SETC 'X'
@@ -342,7 +396,7 @@
          :&SYM_NAME(&SYM_TOT) SETC '&NEW_SYM'
          ZC_SYM_INDEX &NEW_SYM
          :&SYM_LVL(&SYM_TOT) SETA &NEW_LVL_NO SYMBOL LVL
-         :&SYM_REF(&SYM_TOT)  SETA &FILE_IX  POINT TO FILE FOUND IN FD
+         :&SYM_FD(&SYM_TOT)  SETA &FILE_IX  POINT TO FILE FOUND IN FD
          :&WS_LOC SETA &WS_LOC+(&WS_LOC+7)/8*8-&WS_LOC 
          :&SYM_LOC(&SYM_TOT)  SETA &WS_LOC
          :&SYM_LEN(&SYM_TOT)  SETA &ZC_DCB_LEN
@@ -428,7 +482,7 @@
                          :&PIC_VAL SETC '''&&&&''' REQ'D FOR DC
                     AELSEIF  ('&PIC_VAL' EQ 'QUOTE'                    X
                               OR '&PIC_VAL' EQ 'QUOTES')
-                         :&PIC_VAL SETC ''''                           
+                         :&PIC_VAL SETC ''''''''''  RPI 1065 'QQ'
                     AEND
                AELSEIF   ('&SYSLIST(&I)' EQ 'OCCURS')    
                     :&CUR_SET_LVL SETA &CUR_SET_LVL+1  INC SUB LVL CTR
@@ -445,13 +499,7 @@
                           AEND
                           AIF   ('&SYSLIST(&I)' EQ 'DEPENDING'         X
                                  AND '&SYSLIST(&I+1)' EQ 'ON')
-                                ZC_SYM_FIND &SYSLIST(&I+2)
-                                AIF (&SYM_IX GT 0)
-                                    :&DUP_IX SETA &SYM_IX
-                                AELSE
-                                    MNOTE 8,'WS &ERR_ID DEPENDING NOT FX
-               OUND &SYSLIST(&I+2)'
-                                AEND
+                                :&SYM_DEPEND(&I) SETC '&SYSLIST(&I+2)'
                                 :&I SETA &I+3
                           AELSE
                                 MNOTE 8,'WS &ERR_ID MISSING DEPENDING OX
@@ -461,19 +509,33 @@
                     :&SYM_DUP(&SYM_TOT) SETA &DUP  
                AELSEIF   ('&SYSLIST(&I)' EQ 'INDEXED')                 
                     :&I       SETA  &I+1
-                    AIF  ('&SYSLIST(&I)' NE 'BY')
-                         MNOTE 8,'WS &ERR_ID UNRECOGNIZED PIC &SYSLIST(X
-               &I)'
-                         MEXIT
+                    AIF  ('&SYSLIST(&I)' EQ 'BY')  RPI 1062
+                         :&I SETA &I+1
                     AEND
-                    :&INDEX   SETC '&SYSLIST(&I+1)'
-                    :&I       SETA &I+2
+                    :&INDEX   SETC '&SYSLIST(&I)'
+                    :&I       SETA &I+1
                AELSEIF   ('&SYSLIST(&I)' EQ 'REDEFINES')              
                     ZC_SYM_FIND &SYSLIST(&I+1)
                     AIF   (&SYM_IX EQ 0)
                           MNOTE 8,'WS &ERR_ID REDEFINE ITEM NOT FOUND -X
                 &SYSLIST(&I+1)'
                           MEXIT
+                    AELSE
+                      AIF (&SYM_FXT(&SYM_IX) GT 0)  RPI 1065
+                          :&SYM_IX SETA &SYM_FXT(&SYM_IX)
+                          AWHILE (&SYM_IX GT 0) 
+                              AIF (&WS_LVL_SYM_IX(&WS_LVL-1) EQ &SYM_QIX
+               X(&SYM_IX))            
+                                  AEXIT AWHILE
+                              AELSE
+                                  :&SYM_IX SETA &SYM_NXT(&SYM_IX)
+                                  AIF (&SYM_IX EQ 0)
+         MNOTE 8,'WS QUAL REDEFINE NOT FOUND FOR - &SYM_NAME(&SYM_TOT)'
+                          MEXIT
+                                  AEND
+                              AEND
+                          AEND
+                      AEND
                     AEND
                     :&SYM_REF(&SYM_TOT) SETA &SYM_IX  SET REDEFINE IX 
                     AIF (&SYM_LEN(&SYM_IX) EQ 0)
@@ -487,6 +549,14 @@
                     :&SYM_LOC(&SYM_TOT) SETA &WS_LOC
                     :&WS_LVL_RDEF(&WS_LVL) SETB 1     TURN ON REDEFINE
                     :&I       SETA  &I+2
+               AELSEIF   ('&SYSLIST(&I)' EQ 'SYNC'                     X
+                       OR '&SYSLIST(&I)' EQ 'SYNCHRONIZED') RPI 1062
+                    :&SYM_OPT(&SYM_TOT) SETC '&SYM_OPT(&SYM_TOT).S'
+                    :&I       SETA  &I+1
+                    AIF   ('&SYSLIST(&I)' EQ 'RIGHT'                   X 
+                        OR '&SYSLIST(&I)' EQ 'LEFT') RPI 1062
+                          :&I       SETA  &I+1
+                    AEND
                AELSEIF   ('&SYSLIST(&I)' EQ 'USAGE')            
                     :&I       SETA  &I+1
                     AIF   ('&SYSLIST(&I)' EQ 'IS') 
@@ -500,15 +570,37 @@
                           :&I       SETA  &I+1
                     AEND
                     AIF   ('&SYSLIST(&I)' EQ 'LEADING') 
-                          :&PIC_LEAD SETB 1      LEADING SIGN RPI 1012
+                          :&PIC_LEAD SETB 1      LEADING SIGN 
                           :&I       SETA  &I+1
                     AELSEIF ('&SYSLIST(&I)' EQ 'TRAILING')
+                          :&PIC_TRAIL SETB 1      TRAILING SIGN 
                           :&I       SETA  &I+1
                     AELSE
                           MNOTE 8,'WS SIGN UNKNOWN OPTION &SYLIST(&I)'
                           MEXIT
                     AEND
                     AIF   ('&SYSLIST(&I)' EQ 'SEPARATE')
+                          :&PIC_SEP SETB 1
+                          :&I  SETA  &I+1
+                          AIF  ('&SYSLIST(&I)' EQ 'CHARACTER')
+                               :&I SETA  &I+1
+                          AEND
+                    AEND
+               AELSEIF  ('&SYSLIST(&I)' EQ 'LEADING') 
+                    :&PIC_LEAD SETB 1      LEADING SIGN RPI 1012
+                    :&I       SETA  &I+1
+                    AIF   ('&SYSLIST(&I)' EQ 'SEPARATE')
+                          :&PIC_SEP SETB 1
+                          :&I  SETA  &I+1
+                          AIF  ('&SYSLIST(&I)' EQ 'CHARACTER')
+                               :&I SETA  &I+1
+                          AEND
+                    AEND
+               AELSEIF ('&SYSLIST(&I)' EQ 'TRAILING')
+                    :&PIC_TRAIL SETB 1      TRAILING SIGN RPI 1012
+                    :&I       SETA  &I+1
+                    AIF   ('&SYSLIST(&I)' EQ 'SEPARATE')
+                          :&PIC_SEP SETB 1
                           :&I  SETA  &I+1
                           AIF  ('&SYSLIST(&I)' EQ 'CHARACTER')
                                :&I SETA  &I+1
@@ -538,6 +630,71 @@
                       OR '&SYSLIST(&I)' EQ 'POINTER') 1002 1004 1042
                     :&USAGE   SETC  '&SYSLIST(&I)'
                     :&I       SETA  &I+1
+               AELSEIF ('&SYSLIST(&I)' EQ 'DISPLAY')
+                    :&I SETA &I+1  RPI 1065 IGNORE (ITS THE DEFAULT)
+               AELSEIF ('&SYSLIST(&I)' EQ 'LINE')
+                    AIF ('&SYSLIST(&I+1)' EQ 'NUMBER'                  X
+                         AND '&SYSLIST(&I+2)' EQ 'IS'                  X
+                         AND '&SYSLIST(&I+3)' EQ 'PLUS')
+                        :&I SETA &I+5
+                    AELSE
+                        :&I SETA &I+2  
+                    AEND
+                    MNOTE 8,'WS REPORT WRITER LINE CLAUSE IGNORED'
+               AELSEIF ('&SYSLIST(&I)' EQ 'COLUMN')
+                    AIF  (&I EQ 2)                
+                        :&NEW_SYM SETC 'FILLER'            
+                        :&SYM_NAME(&SYM_TOT) SETC 'FILLER'
+                    AEND
+                    AIF ('&SYSLIST(&I+1)' EQ 'NUMBER'                  X
+                        AND '&SYSLIST(&I+2)' EQ 'IS')
+                        :&I SETA &I+4
+                    AELSE
+                        :&I SETA &I+2  RPI 1065 IGNORE RW LINE NUM
+                    AEND
+                    MNOTE 8,'WS REPORT WRITER COLUMN CLAUSE IGNORED'
+               AELSEIF ('&SYSLIST(&I)' EQ 'SOURCE')
+                    AIF ('&SYSLIST(&I+1)' EQ 'IS')
+                        :&I SETA &I+3
+                    AELSE
+                        :&I SETA &I+2  RPI 1065 IGNORE RW LINE NUM
+                    AEND
+                    MNOTE 8,'WS REPORT WRITER SOURCE CLAUSE IGNORED'
+               AELSEIF ('&SYSLIST(&I)' EQ 'TYPE'                       X
+                        AND '&SYSLIST(&I+1)' EQ 'IS')
+                    :&I SETA &I+2  RPI 1065 IGNORE RW TYPE
+                    MNOTE 8,'WS REPORT WRITER TYPE CLAUSE IGNORED'
+                    AIF ('&SYSLIST(&I+2)' EQ 'PAGE')
+                        :&I SETA &I+4
+                    AELSE
+                        :&I SETA &I+3
+                    AEND
+               AELSEIF ('&SYSLIST(&I)' EQ 'JUSTIFIED'                  X
+                        OR '&SYSLIST(&I)' EQ 'JUST') RPI 1065
+                        :&SYM_OPT(&SYM_TOT) SETC '&SYM_OPT(&SYM_TOT).R'
+                    AIF ('&SYSLIST(&I+1)' EQ 'RIGHT')
+                        :&I SETA &I+2
+                    AELSE
+                        :&I SETA &I+2   
+                    AEND 
+               AELSEIF ('&SYSLIST(&I)' EQ 'LEADING')
+                    :&SYM_OPT(&SYM_TOT) SETC '&SYM_OPT(&SYM_TOT).L'
+                    :&I SETA &I+1    
+               AELSEIF ('&SYSLIST(&I)' EQ 'BLANK')
+                    :&SYM_OPT(&SYM_TOT) SETC '&SYM_OPT(&SYM_TOT).B'
+                    :&I SETA &I+1
+                    AIF ('&SYSLIST(&I)' EQ 'WHEN')
+                        :&I SETA &I+1
+                    AEND
+                    AIF ('&SYSLIST(&I)' EQ 'ZERO')
+                        :&I SETA &I+1
+                    AEND
+               AELSEIF ('&SYSLIST(&I)' EQ 'GLOBAL')
+                    :&SYM_OPT(&SYM_TOT) SETC '&SYM_OPT(&SYM_TOT).G'
+                    :&I SETA &I+1
+               AELSEIF ('&SYSLIST(&I)' EQ 'EXTERNAL')
+                    :&SYM_OPT(&SYM_TOT) SETC '&SYM_OPT(&SYM_TOT).E'
+                    :&I SETA &I+1
                AELSEIF (&I GT 2)
                     MNOTE 8,'WS &ERR_ID UNRECOGNIZED CLAUSE &SYSLIST(&IX
                )'
@@ -555,7 +712,6 @@
 .*
          AENTRY  SET_PIC_AND_LEN
          :&PIC     SETC '&SYSLIST(&I)'
-         :&PIC_LEN SETA 0
          AIF  ('&PIC'(1,1) EQ '''')
               :&PIC SETC '&PIC'(2,K'&PIC-2) 
          AEND
@@ -564,12 +720,18 @@
               :&PIC     SETC  '&PIC'(2,*)
          AEND
          :&J       SETA 1
+         :&DEC_MODE SETB 0
          AWHILE (&J LE K'&PIC)
                 AIF ('&PIC'(&J,1) EQ 'V')
-                    :&SYM_PIC_DEC(&J) SETA K'&PIC-&J
+                    :&DEC_MODE SETB 1
                 AELSEIF ('&PIC'(&J,2) EQ 'X('                          X
                          OR '&PIC'(&J,2) EQ '9('                       X
-                         OR '&PIC'(&J,2) EQ 'Z(')           
+                         OR '&PIC'(&J,2) EQ 'A('                       X
+                         OR '&PIC'(&J,2) EQ 'P('                       X
+                         OR '&PIC'(&J,2) EQ 'Z(')  RPI 1065 ADD P,A
+                    AIF ('&PIC'(&J,1) EQ 'P')
+                       :&DEC_MODE SETB 1 
+                    AEND
                     :&PIC_DUP SETA '&PIC'(&J+2,1)
                     :&J SETA &J+3
                     AWHILE (&J LT K'&PIC                               X
@@ -579,11 +741,22 @@
                         :&J SETA &J+1
                     AEND
                     :&PIC_LEN SETA &PIC_LEN+&PIC_DUP
+                    AIF (&DEC_MODE)
+                        :&SYM_PIC_DEC(&SYM_TOT) SETA &SYM_PIC_DEC(&SYM_X
+               TOT)+&PIC_DUP
+                    AEND
                 AELSEIF ('&PIC'(&J,1) EQ '''')  RPI 1032
                     MNOTE 8,'WS UNKNOWN PIC CLAUSE &PIC'
                     AEXIT AWHILE
                 AELSE
+                    AIF ('&PIC'(&J,1) EQ 'P')
+                       :&DEC_MODE SETB 1
+                    AEND
                     :&PIC_LEN SETA &PIC_LEN+1
+                    AIF (&DEC_MODE)
+                        :&SYM_PIC_DEC(&SYM_TOT) SETA &SYM_PIC_DEC(&SYM_X
+               TOT)+1
+                    AEND
                 AEND
                 :&J SETA &J+1
          AEND
@@ -620,6 +793,10 @@
                          MNOTE 8,'WS INVALID COMP PIC LEN - &PIC_LEN'
                     AEND
                AEND
+               :&NUM     SETC '&PIC_VAL'
+               :&DEC_SYM SETA &SYM_PIC_DEC(&SYM_TOT)
+               ACALL SCALE_NUM_LIT
+               :&PIC_VAL SETC '&NUM'
          AELSEIF ('&USAGE' EQ 'COMP_1')                 
                :&PIC_LEN SETA 4
                :&PIC_TYPE SETC '1'       RPI 1004 WAS E NOW 1=EH
@@ -631,8 +808,12 @@
                      AIF  (&PIC_LEN EQ 0)                 
                           :&PIC_LEN SETA K'&PIC
                      AEND
-                     :&PIC_TYPE SETC 'P'
                AEND
+               :&PIC_TYPE SETC 'P'
+               :&NUM     SETC '&PIC_VAL'
+               :&DEC_SYM SETA &SYM_PIC_DEC(&SYM_TOT)
+               ACALL SCALE_NUM_LIT
+               :&PIC_VAL SETC '&NUM'
          AELSEIF ('&USAGE' EQ 'FLOAT_HEX_7')     RPI 1004      
               :&PIC_LEN SETA 4
               :&PIC_TYPE SETC '1'
@@ -679,8 +860,12 @@
               :&PIC_LEN SETA 4
               :&PIC_TYPE SETC 'A'
          AELSEIF (K'&PIC GT 0)
-               AIF   ('&PIC'(1,1) EQ '9')              
+               AIF   (('&PIC'(1,1) FIND '9PV') GT 0) RPI 1062 ADD PV             
                      :&PIC_TYPE SETC 'Z'
+                     :&NUM     SETC '&PIC_VAL'
+                     :&DEC_SYM SETA &SYM_PIC_DEC(&SYM_TOT)
+                     ACALL SCALE_NUM_LIT
+                     :&PIC_VAL SETC '&NUM'
                AEND
                AIF   (&PIC_LEN EQ 0)               
                      :&PIC_LEN SETA K'&PIC
@@ -706,6 +891,10 @@
                   AELSE
                       :&AMP SETA 0
                   AEND
+               AEND
+         AELSEIF (K'&PIC_VAL GT 2)  REMOVE '..' FROM NUMERIC VALUES               
+               AIF ('&PIC_VAL'(1,1) EQ '''')   RPI 1065
+                   :&PIC_VAL SETC '&PIC_VAL'(2,K'&PIC_VAL-2)
                AEND
          AEND
          :&SYM_VAL(&SYM_TOT) SETC '&PIC_VAL' SYM FIELD VALUE (0,SPACE)
@@ -735,4 +924,6 @@
          :&WS_LVL_NO(&WS_LVL) SETA &NEW_LVL_NO
          :&WS_LVL_SYM_IX(&WS_LVL) SETA 0
          AEND
+         COPY  ZCGETFLD
+         COPY  ZCNUMLIT
          MEND

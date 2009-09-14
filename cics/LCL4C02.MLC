@@ -1,0 +1,322 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL4C02  CSECT
+*
+* FN=4C02  EXEC CICS INQUIRE FILE
+*
+* R1  >>> P4C02 BLOCK POINTER
+*
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P4C02,P4C02END),R3
+         L     DFHEIBR,P4C02EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P4C02TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P4C02FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P4C02RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P4C02RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         L     R8,INQFI           R8=MESSAGE LENGTH
+         MVC   INQFIREQ,=C'FE05'  SET REQUEST CODE
+         MVC   INQFITRM,TCTTETI   SET TERMID
+         MVC   INQFITKN,EIBTASKN  SET TASK NO.
+         MVC   INQFITRN,EIBTRNID  SET TRANID
+         TCPIO SEND,MSG=INQFI,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             EXIT IF BAD
+* RECEIVE THE PREFIX ONLY
+* THIS COULD BE A LARGE AREA, SO WE NEED TO GETMAIN A RECEIVE AREA
+         TCPIO RECEIVE,MSG=INQFRCVE,LMSG=12,PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             EXIT IF BAD
+         L     R8,INQFRCVE        R8=ACTUAL LENGTH TO RECEIVE
+         AHI   R8,-12             -12 FOR DATA RECEIVED
+         GETMAIN R,LV=(R8),A=INQFGETM
+         ST    R0,INQFGETL        SAVE LENGTH FOR FREEMAIN
+         TCPIO RECEIVE,MSG=0(R1),LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             EXIT IF BAD
+         L     R7,INQFGETM        R7=RECEIVED DATA
+         USING IFILDATA,R7
+         CLI   P4C02STR,X'FF'     START BROWSE ?
+         BNE   NOTSTART           EXIT IF NOT
+* START BROWSE
+         CLI   TCTTEIQF,X'FF'     IS BROWSE ALREADY IN PROGRESS ?
+         BE    ILLOGIC            ERROR IF IT IS
+         MVI   TCTTEIQF,X'FF'     SET BROWSE IN PROGRESS
+         CLI   P4C02AT,X'00'      ANY AT() ?
+         BE    SAVFILE            EXIT IF NONE
+LOOPAT   EQU   *
+* START AT()...SEARCH FOR START
+         CLC   P4C02AT,IFILDFLE   CORRECT PLACE ?
+         BH    SAVFILE            EXIT IF IT IS
+         AHI   R7,IFILDLEN        BUMP DATA POINTER
+         CLI   IFILDFLE,X'FF'     END OF FILES ?
+         BNE   LOOPAT             LOOP IF NOT
+SAVFILE  EQU   *
+         MVC   TCTTEIFN,IFILDFLE  SAVE CURRENT POSITION
+         B     ALLDONE            EXIT
+*
+NOTSTART EQU   *
+         CLI   P4C02ND,X'FF'      END BROWSE ?
+         BNE   NOTEND             EXIT IF NOT
+* END BROWSE
+         CLI   TCTTEIQF,X'FF'     IS BROWSE IN PROGRESS ?
+         BNE   ILLOGIC            ERROR IF NOT
+         MVI   TCTTEIQF,X'00'     RESET BROWSE IN PROGRESS
+         B     ALLDONE            EXIT
+*
+NOTEND   EQU   *
+         CLI   P4C02NXT,X'FF'     NEXT BROWSE ?
+         BNE   NOTNEXT            EXIT IF NOT
+* NEXT BROWSE
+         CLI   TCTTEIQF,X'FF'     IS BROWSE IN PROGRESS ?
+         BNE   ILLOGIC            ERROR IF NOT
+         CLI   TCTTEIFN,X'FF'     POSITIONED AT END ?
+         BE    RAISEND            EXIT IF IT IS
+LOOPNXT  EQU   *
+* FIND THE FILE
+         CLC   TCTTEIFN,IFILDFLE  FOUND IT ?
+         BE    GOTNEXT            EXIT IF WE HAVE
+         AHI   R7,IFILDLEN        BUMP DATA POINTER
+         CLI   IFILDFLE,X'FF'     END OF FILES ?
+         BNE   LOOPNXT            LOOP IF NOT
+* CANNOT OCCUR
+         DC    H'0'
+*
+NOTNEXT  EQU   *
+* SINGLE FILE REQUEST, FIND IT
+         CLC   P4C02FIL,IFILDFLE  FOUND IT ?
+         BE    GOTONE             EXIT IF WE HAVE
+         AHI   R7,IFILDLEN        BUMP DATA POINTER
+         CLI   IFILDFLE,X'FF'     END OF FILES ?
+         BNE   NOTNEXT            LOOP IF NOT
+         B     FILENTFD           EXIT IF NOT FOUND
+*
+GOTNEXT  EQU   *
+         L     R9,P4C02FIL        R9=ADDRESS OF FILE()
+         MVC   0(8,R9),IFILDFLE   MOVE NEXT FILENAME
+GOTONE   EQU   *
+* FILL THE FIELDS AS REQUESTED
+         ICM   R9,15,P4C02ACC     ANY ACCESSMETHOD ?
+         BZ    TRYADD             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(VSAM) ALWAYS VSAM
+TRYADD   EQU   *
+         ICM   R9,15,P4C02ADD     ANY ADD ?
+         BZ    TRYBSN             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(NOTADDABLE) SET NOTADDABLE
+         TM    IFILDSRV,FCTADD    ADD ALLOWED ?
+         BNO   TRYBSN             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(ADDABLE) SET ADDABLE
+TRYBSN   EQU   *
+         ICM   R9,15,P4C02BSN     ANY BASEDSNAME ?
+         BZ    TRYBRW             EXIT IF NOT
+         LH    R15,P4C02BLN       R15=IMPLIED LENGTH
+         CH    R15,=H'128'        OVER MAXIMUM ?
+         BNH   BSNOK              EXIT IF NOT
+         LH    R15,=H'128'        SET MAXIMUM
+BSNOK    EQU   *
+         AHI   R15,-1             -1 FOR MVC
+         STC   R15,BSNMVC+1       SAVE IN MVC
+BSNMVC   MVC   0(0,R9),IFILDBSN   SET BASEDSNAME
+TRYBRW   EQU   *
+         ICM   R9,15,P4C02BRW     ANY BROWSE ?
+         BZ    TRYDEL             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(NOTBROWSABLE) SET NOTBROWSABLE
+         TM    IFILDSRV,FCTBRWSE  BROWSE ALLOWED ?
+         BNO   TRYDEL             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(BROWSABLE) SET BROWSABLE
+TRYDEL   EQU   *
+         ICM   R9,15,P4C02DEL     ANY DELETE ?
+         BZ    TRYDSN             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(NOTDELETABLE) SET NOTDELETABLE
+         TM    IFILDSRV,FCTDELT   DELETE ALLOWED ?
+         BNO   TRYDSN             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(DELETABLE) SET DELETABLE
+TRYDSN   EQU   *
+         ICM   R9,15,P4C02DSN     ANY DSNAME ?
+         BZ    TRYENA             EXIT IF NOT
+         LH    R15,P4C02DLN       R15=IMPLIED LENGTH
+         CH    R15,=H'128'        OVER MAXIMUM ?
+         BNH   DSNOK              EXIT IF NOT
+         LH    R15,=H'128'        SET MAXIMUM
+DSNOK    EQU   *
+         AHI   R15,-1             -1 FOR MVC
+         STC   R15,DSNMVC+1       SAVE IN MVC
+DSNMVC   MVC   0(0,R9),IFILDDSN   SET DSNAME
+TRYENA   EQU   *
+         ICM   R9,15,P4C02ENA     ANY ENABLESTATUS ?
+         BZ    TRYKL              EXIT IF NOT
+         TM    IFILDSTA,FCTUNENA  UNENABLED ?
+         BNO   TRYENDIS           EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(UNENABLED) SET UNENABLED
+         B     TRYKL              EXIT
+*
+TRYENDIS EQU   *
+         MVC   0(4,R9),DFHVALUE(DISABLED) SET DISABLED
+         TM    IFILDSTA,FCTENDIS  ENABLED ?
+         BNO   TRYKL              EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(ENABLED) SET ENABLED
+TRYKL    EQU   *
+         ICM   R9,15,P4C02KL      ANY KEYLENGTH ?
+         BZ    TRYKP              EXIT IF NOT
+         MVC   0(4,R9),IFILDKL    SET KEYLENGTH
+TRYKP    EQU   *
+         ICM   R9,15,P4C02KP      ANY KEYPOSITION ?
+         BZ    TRYOBJ             EXIT IF NOT
+         MVC   0(4,R9),IFILDKP    SET KEYPOSITION
+TRYOBJ   EQU   *
+         ICM   R9,15,P4C02OBJ     ANY OBJECT ?
+         BZ    TRYOPE             EXIT IF NOT
+* ### AIX SUPPORT WILL ADD PATH
+         MVC   0(4,R9),DFHVALUE(BASE) SET BASE
+TRYOPE   EQU   *
+         ICM   R9,15,P4C02OPE     ANY OPENSTATUS ?
+         BZ    TRYRD              EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(CLOSED) SET CLOSED
+         TM    IFILDSTA,FCTOPCLO  OPEN ?
+         BNO   TRYRD              EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(OPEN) SET OPEN
+TRYRD    EQU   *
+         ICM   R9,15,P4C02RD      ANY READ ?
+         BZ    TRYRCF             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(NOTREADABLE) SET NOTREADABLE
+         TM    IFILDSRV,FCTREAD   READ ALLOWED ?
+         BNO   TRYRCF             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(READABLE) SET READABLE
+TRYRCF   EQU   *
+         ICM   R9,15,P4C02RCF     ANY RECORDFORMAT ?
+         BZ    TRYRCS             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(VARIABLE) SET VARIABLE
+         TM    IFILDFXV,FCTFXVIM  FIXED ?
+         BNO   TRYRCS             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(FIXED) SET FIXED
+TRYRCS   EQU   *
+         ICM   R9,15,P4C02RCS     ANY RECORDSIZE ?
+         BZ    TRYTYPE            EXIT IF NOT
+         MVC   0(4,R9),IFILDRCS   SET RECORDSIZE
+TRYTYPE  EQU   *
+         ICM   R9,15,P4C02TYP     ANY TYPE ?
+         BZ    TRYUPD             EXIT IF NOT
+         TM    IFILDTYP,VCLRKSDS  KSDS ?
+         BNO   TRYESDS            EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(KSDS) SET KSDS
+         B     TRYUPD             EXIT
+*
+TRYESDS  EQU   *
+         TM    IFILDTYP,VCLRESDS  ESDS ?
+         BNO   TRYRRDS            EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(ESDS) SET ESDS
+         B     TRYUPD             EXIT
+*
+TRYRRDS  EQU   *
+         MVC   0(4,R9),DFHVALUE(RRDS) SET RRDS
+         TM    IFILDTYP,VCLRVREC  VARIABLE ?
+         BNO   TRYUPD             EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(VRRDS) SET VRRDS
+TRYUPD   EQU   *
+         ICM   R9,15,P4C02UPD     ANY UPDATE ?
+         BZ    ALLDONE            EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(NOTUPDATABLE) SET NOTUPDATABLE
+         TM    IFILDSRV,FCTUPDT   UPDATE ALLOWED ?
+         BNO   ALLDONE            EXIT IF NOT
+         MVC   0(4,R9),DFHVALUE(UPDATABLE) SET UPDATABLE
+ALLDONE  EQU   *
+         CLI   P4C02NXT,X'FF'     NEXT BROWSE ?
+         BNE   RETURN             EXIT IF NOT
+         AHI   R7,IFILDLEN        BUMP DATA POINTER
+         MVC   TCTTEIFN,IFILDFLE  SAVE NEXT POSITION
+         B     RETURN             EXIT
+*
+RAISEND  EQU   *
+* INVOKE END
+         MVI   EIBRCODE,X'53'     SET EIBRCODE
+         MVC   EIBRESP,=F'83'
+         MVC   EIBRESP,DFHRESP(END) SET EIBRESP=END
+         B     DORESP             EXIT
+*
+FILENTFD EQU   *
+* INVOKE FILENOTFOUND
+         MVI   EIBRCODE,X'0C'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(FILENOTFOUND) SET EIBRESP=FILENOTFOUND
+         MVC   EIBRESP2,=F'1'     SET EIBRESP2
+         B     DORESP             EXIT
+*
+INVREQ   EQU   *
+* INVOKE INVREQ
+* THIS IS NOT A VALID CONDITION, IT IS USED ONLY FOR TCPIO ERRORS
+         MVI   EIBRCODE,X'10'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         B     DORESP             EXIT
+*
+ILLOGIC  EQU   *
+* INVOKE ILLOGIC
+         MVI   EIBRCODE,X'15'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(ILLOGIC) SET EIBRESP=ILLOGIC
+         MVC   EIBRESP2,=F'1'     SET EIBRESP2
+DORESP   EQU   *
+         ICM   R14,15,P4C02RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P4C02RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         FREEMAIN LA=INQFGETL,A=INQFGETM
+         PR    ,                  UNSTACK AND RETURN TO MACRO
+*
+INQFI    DS    0F
+         DC    A(INQFIEND-*)
+INQFIREQ DS    CL4                REQUEST ID
+INQFITRM DS    CL4                TERMID
+INQFITRN DS    CL4                TRANSID
+         DC    C' '               TRANSID TYPE
+INQFITKN DS    PL4                TASK NO.
+INQFIEND EQU   *
+*
+INQFRCVE DS    0F
+* RECEIVE AREA
+* MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
+         DC    A(200)             MAX LENGTH
+         DS    CL4                REQUEST CODE
+         DS    CL4                TERMINAL ID
+         DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+         DS    PL4                TASK NO.
+         DS    CL188              RETURNED DATA
+*
+INQFGETM DS    A                  GETMAIN ADDRESS
+INQFGETL DS    F                  GETMAIN LENGTH
+*
+         P4C02 DSECT
+         COPY  CEMTIFIL           INQUIRE FILE DATA AREA
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         ACBD  ,                  VSAM ACB
+         VCDTD ,                  VSAM CLUSTER DEFINITION TABLE
+         DFHFCTDS                 FILE CONTROL TABLE
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R11 EIB
+* R13 BASE 1
+*
+         END
+

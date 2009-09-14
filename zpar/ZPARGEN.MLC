@@ -7,6 +7,7 @@
 .* Date   - 06/05/09                                                 *
 .*********************************************************************
 .* 06/05/09 RPI 1049 INITIAL CODING                                                       
+.* 07/07/09 RPI 1064 IGNORE ENDING PERIOD ON DIR 1ST LINE FOR XP ONLY                     
 .*********************************************************************
 .* FILES:
 .*  SYSUT1 = INPUT  ZPAR\ZPARGEN.DAT
@@ -39,7 +40,7 @@
                ACTR 4096
                :&REC SETC (UPPER '&REC')
                :&PERIOD_IX SETA ('&REC' FIND '.')
-               AIF  (&PERIOD_IX GT 0)
+               AIF  (&PERIOD_IX GT 0 AND K'&REC GT &PERIOD_IX) RPI 1064
                     AIF (&NAME_IX EQ 0)
                         :&NAME_IX SETA &PERIOD_IX-1
                         AWHILE ('&REC'(&NAME_IX,1) NE ' ')

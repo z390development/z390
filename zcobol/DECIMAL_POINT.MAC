@@ -1,0 +1,18 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 08/02/09                                                 *
+.*********************************************************************
+.* 08/03/09 support DECIMAL-POINT IS COMMA              
+.*********************************************************************
+         DECIMAL_POINT &IS,&COMMA
+         COPY ZC_WS
+         AIF   ('&IS' EQ 'IS' AND '&COMMA' EQ 'COMMA')
+               :&ZC_DEC_IS_COMMA SETB 1
+         AELSE
+               MNOTE 8,'DECIMAL-POINT UNKNOWN OPTION - &IS &COMMA'
+         AEND
+         MEND

@@ -11,7 +11,7 @@
 ********************************************************************* 
          MACRO
          TEST1  
-         AINSERT 'RECORD 2 &SYSTIME'
+         AINSERT 'RECORD 2 &SYSTIME',FRONT
          AINSERT 'RECORD 3 &SYSTIME',BACK
          AINSERT 'RECORD 1 &SYSTIME',FRONT
 &REC     AREAD
@@ -23,26 +23,26 @@
          MEND
          MACRO
          TEST2
-         AINSERT ' MNOTE ''SOURCE AINSERT 1'''
-         AINSERT ' MNOTE ''SOURCE AINSERT 2'''
-         AINSERT ' MNOTE ''SOURCE AINSERT 3'''
-         AINSERT ' MACRO'
-         AINSERT ' TEST3'
-         AINSERT ' MNOTE ''HELLO FROM TEST3 INSERTED MACRO'''
-         AINSERT ' MEND'
-         AINSERT ' MACRO'
+         AINSERT ' MNOTE ''SOURCE AINSERT 1''',BACK
+         AINSERT ' MNOTE ''SOURCE AINSERT 2''',BACK
+         AINSERT ' MNOTE ''SOURCE AINSERT 3''',BACK
+         AINSERT ' MACRO',BACK
+         AINSERT ' TEST3',BACK
+         AINSERT ' MNOTE ''HELLO FROM TEST3 INSERTED MACRO''',BACK
+         AINSERT ' MEND',BACK
+         AINSERT ' MACRO',BACK
          AINSERT ' TEST4 &&P1, 3456789012345678901234567890123456789012X                                        X
-               3456789012345678901X'  NOTE ADD 1 MORE FOR &&
+               3456789012345678901X',BACK  NOTE ADD 1 MORE FOR &&
          AINSERT '               &&K1=''K1V'', 789012345678901234567890X                                        X
-               123456789012345678901X' NOTE ADD 3 MORE FOR &&,'',''
-         AINSERT '               &&K2=''K2V'''
-         AINSERT ' MNOTE ''TEST4 K1=&&K1 K2=&&K2'''
-         AINSERT '&&I SETA 5'
-         AINSERT '.LOOP ANOP'
-         AINSERT ' MNOTE ''TEST4 I=&&I'''
-         AINSERT '&&I SETA &&I-1'
-         AINSERT ' AIF (&&I GT 0).LOOP'
-         AINSERT ' MEND'
+               123456789012345678901X',BACK NOTE ADD 3 FOR &&,'',''
+         AINSERT '               &&K2=''K2V''',BACK
+         AINSERT ' MNOTE ''TEST4 K1=&&K1 K2=&&K2''',BACK
+         AINSERT '&&I SETA 5',BACK
+         AINSERT '.LOOP ANOP',BACK
+         AINSERT ' MNOTE ''TEST4 I=&&I''',BACK
+         AINSERT '&&I SETA &&I-1',BACK
+         AINSERT ' AIF (&&I GT 0).LOOP',BACK
+         AINSERT ' MEND',BACK
          MEND
 TESTAIN1 SUBENTRY
          WTO   'TEST1 STARTED'

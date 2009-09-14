@@ -169,6 +169,7 @@ import javax.swing.Timer;
     * 05/23/09 RPI 1040 wait for pz390 to process S422 ABEND
     * 06/13/09 RPI 1054 request S422 ABEND by PZ390 thread
     * 06/15/09 RPI 1050 suppress dup START on CON when TRACE CON
+    * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -353,6 +354,7 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 	    tz390.init_tables();
         tz390.init_options(args,tz390.z390_type);
 	    tz390.open_systerm("EZ390");
+	    tz390.init_codepage(tz390.codepage); // RPI 1069
 	    vz390.init_vz390(tz390,pz390,sz390);
 	    sz390.init_sz390(tz390,pz390,vz390);
 		sz390.open_files(); // RPI 357 RPI 812 moved before init_pz390

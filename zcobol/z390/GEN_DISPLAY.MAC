@@ -12,24 +12,51 @@
 .* 11/19/08 add support for multiple field types using DISPLAY routine
 .* 03/06/09 RPI 1004 add DEL DFP/BFP/HFP support                      
 .* 03/10/09 RPI 1013 remove dependency on ZC_FLOAT using types 1-9        
+.* 07/25/09 RPI 1065 support numeric literals                             
+.* 07/30/09 RPI 1065 support ALL lit, zero, space, quote                  
 .*********************************************************************
          GEN_DISPLAY 
          COPY  ZC_WS
-         LA    R3,ZCVT_WORKAREA  R3=CVT LIST WORK AREA
+         LA    ZC_R3,ZCVT_WORKAREA  ZC_R3=CVT LIST WORK AREA
          :&NP  SETA N'&SYSLIST
          :&PARM_IX SETA 1
          :&OFF     SETA 0
          AWHILE (&PARM_IX LE &NP)
-               :&FIELD SETC '&SYSLIST(&PARM_IX)'
+               :&FIELD SETC '&SYSLIST(&PARM_IX)' RPI 1065
+               AIF ('&FIELD' EQ 'ALL')
+                   :&PARM_IX SETA &PARM_IX+1
+                   :&FIELD SETC '&SYSLIST(&PARM_IX)'
+                   AIF ('&FIELD'(1,1) NE '''')
+                       MNOTE 8,'GEN_DISPLAY ALL REQUIRES LIT - &FIELD'
+                       MEXIT
+                   AEND
+                   :&TEXT SETC '&FIELD'(2,K'&FIELD-2)
+                   :&DUP  SETA 78/K'&TEXT+1
+                   :&TEXT SETC (&DUP)'&TEXT'
+                   :&FIELD SETC ''''.'&TEXT'(1,78).''''
+               AELSEIF ('&FIELD' EQ 'ZERO'                             X
+                     OR '&FIELD' EQ 'ZEROS'                            X
+                     OR '&FIELD' EQ 'ZEROES')
+                   :&FIELD SETC '''0'''
+               AELSEIF ('&FIELD' EQ 'SPACE'                            X
+                     OR '&FIELD' EQ 'SPACES')
+                   :&FIELD SETC ''' ''' SINGLE SPACE IN  QUOTES C?
+               AELSEIF ('&FIELD' EQ 'QUOTE'                            X
+                     OR '&FIELD' EQ 'QUOTES')
+                   :&FIELD SETC '''''''''' SINGLE QUOTE IN QUOTES C?
+               AEND    
+               AIF ('&FIELD'(1,1) GE '0' OR '&FIELD'(1,1) EQ '.')
+                   :&FIELD SETC '''&FIELD''' DISP NUMERIC AS LIT
+               AEND
                AIF ('&FIELD'(1,1) EQ '''')  LITERAL TEXT
                    :&LEN   SETA K'&FIELD-2
                    :&LITL  SETA (&LEN+1)/2*2
-         LARL  R0,=CL&LITL&FIELD PAD TO EVEN LEN LIT
-         LA    R1,&LEN
-         LA    R2,C'X'
-         STM   R0,R2,&OFF.(R3)  SET DISPLAY LIST ENTRY              
+         LARL  ZC_R0,=CL&LITL&FIELD PAD TO EVEN LEN LIT
+         LA    ZC_R1,&LEN
+         LA    ZC_R2,C'X'
+         STM   ZC_R0,ZC_R2,&OFF.(ZC_R3)  SET DISPLAY LIST ENTRY              
                AELSE
-                    :&FIELD_REG SETC 'R2'
+                    :&FIELD_REG SETC 'ZC_R2'
                     :&FIELD_SS1 SETB 0
                     ACALL GET_PARM_FIELD
                     AIF (&FIELD_IX EQ 0)
@@ -37,18 +64,18 @@
                E'
                         MEXIT
                     AEND
-         LA    R0,&FIELD_NAME
-         LA    R1,&SYM_LEN(&FIELD_IX)
-         LA    R2,C'&SYM_PIC_TYPE(&FIELD_IX)'
-         STM   R0,R2,&OFF.(R3)  SET DISPLAY LIST ENTRY              
+         LA    ZC_R0,&FIELD_NAME
+         LA    ZC_R1,&SYM_LEN(&FIELD_IX)
+         LA    ZC_R2,C'&SYM_PIC_TYPE(&FIELD_IX)'
+         STM   ZC_R0,ZC_R2,&OFF.(ZC_R3)  SET DISPLAY LIST ENTRY              
                AEND
                :&PARM_IX SETA &PARM_IX+1
                :&OFF SETA &OFF+12
          AEND       
-         OI    &OFF-4(R3),X'80' SET VL BIT IN LAST WORD OF PARM LIST
-         LR    R1,R3
-         L     R15,ZCVT_DISPLAY
-         BASR  R14,R15
+         OI    &OFF-4(ZC_R3),X'80' SET VL BIT IN LAST WORD OF PARM LIST
+         LR    ZC_R1,ZC_R3
+         L     ZC_R15,ZCVT_DISPLAY
+         BASR  ZC_R14,ZC_R15
          MEXIT
          COPY  ZCGETFLD
          MEND

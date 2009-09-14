@@ -1,17 +1,47 @@
          MACRO
 .*********************************************************************
-.* Copyright 2008 Automated Software Tools Corporation               *
+.* Copyright 2009 Automated Software Tools Corporation               *
 .* This source code is part of z390 zCOBOL/assembler/emulator package*
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
-.* Date   - 04/16/08                                                 *
+.* Date   - 08/04/09                                                 *
 .*********************************************************************
 .* 04/16/08 initial coding for Z390 PERFORM 
+.* 08/04/09 RPI support qualified paragraph names within sections
 .*********************************************************************
-         GEN_PERFORM &PG,&PG_EXIT                 
+         GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME2,&SN_NAME2                 
          COPY  ZC_WS
-         LARL  R14,PG_&PG
-         LARL  R0,PG_&PG_EXIT+6
-         L     R15,ZCVT_PERFORM
-         BASR  R1,R15
+         :&NP  SETA N'&SYSLIST
+         AIF   (&NP LT 3)
+               MNOTE 12,'GEN_PERFORM REQUIRES 3 OR 4 PARMS - FOUND &NP'
+               MEXIT
+         AEND
+         GBLA  &(ZC_PG_&PG_NAME1)
+         AIF   (&(ZC_PG_&PG_NAME1) GT 1 AND '&SN_NAME1' NE '')
+               :&LAB1 SETC 'SN_&SN_NAME1._PG_&PG_NAME1'
+         AELSEIF (&(ZC_PG_&PG_NAME1) EQ -1)  IS THIS SECTION
+               :&LAB1 SETC 'SN_&PG_NAME1'
+         AELSE
+               AIF (&(ZC_PG_&PG_NAME1) GT 1 AND '&LAST_SN_NAME' NE '')
+                   :&LAB1 SETC 'SN_&LAST_SN_NAME._PG_&PG_NAME1'
+               AELSE
+                   :&LAB1 SETC 'PG_&PG_NAME1'
+               AEND
+         AEND
+         GBLA  &(ZC_PG_&PG_NAME2)
+         AIF   (&(ZC_PG_&PG_NAME2) GT 1 AND '&SN_NAME2' NE '')
+               :&LAB2 SETC 'SN_&SN_NAME2._PG_&PG_NAME2'
+         AELSEIF (&(ZC_PG_&PG_NAME2) EQ -1) IS THIS SECTION
+               :&LAB2 SETC 'SN_&PG_NAME2'
+         AELSE
+               AIF (&(ZC_PG_&PG_NAME2) GT 1 AND '&LAST_SN_NAME' NE '')
+                   :&LAB2 SETC 'SN_&LAST_SN_NAME._PG_&PG_NAME2'
+               AELSE
+                   :&LAB2 SETC 'PG_&PG_NAME2'
+               AEND
+         AEND
+         LARL  ZC_R14,&LAB1
+         LARL  ZC_R0,&LAB2+6
+         L     ZC_R15,ZCVT_PERFORM
+         BASR  ZC_R1,ZC_R15
          MEND

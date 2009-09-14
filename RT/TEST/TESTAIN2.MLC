@@ -1,0 +1,23 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 12/10/08                                                 *
+*********************************************************************
+* MAINTENANCE
+********************************************************************* 
+* 09/02/09 RPI 1019 TEST AINSERT COPY FRONT AND BACK        
+********************************************************************* 
+         MACRO
+         TEST1  
+         AINSERT ' COPY TESTAI2B',FRONT
+         AINSERT ' COPY TESTAI2C',BACK
+         AINSERT ' COPY TESTAI2A',FRONT
+         MEND
+TESTAIN2 SUBENTRY
+         WTO   'TESTAIN2 STARTED'
+         TEST1
+         WTO   'TESTAIN2 ENDED'
+         SUBEXIT
+         END  

@@ -7,6 +7,9 @@
 .* Date   - 03/12/09                                                 *
 .*********************************************************************
 .* 03/13/09 initial coding for use in GEN_MOVE to cvt P to Z fields   
+.* 07/03/09 RPI 1065 OI unsigned for length < 15                       
+.* 07/19/09 RPI 1065 CORRECT SET TARGET LEN test from LE to LT         
+.* 08/08/09 RPI 1065 correct SET TARGET LEN to replace existing length 
 .*********************************************************************
 .* UNPACK 1-31 DIGIT ZD FIELD FROM PD FIELD 
 .* AND SET LOW ORDER ZONE SIGN TO F IF UNSIGNED
@@ -39,6 +42,10 @@
                :&TLEN SETA &ZLEN
                ACALL SET_TARGET_LEN       SET EXPLICIT TARGET LEN
          UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPK UP TO 15 DIGITS 
+               AIF (&SZ EQ 0)  RPI 1065
+                   ACALL REMOVE_TARGET_LEN
+         OI    &LZ-1+&T_TEMP,X'F0'  RPI 1065
+               AEND            RPI 1065 
                MEXIT
        AEND
        :&TLEN  SETA 15
@@ -64,7 +71,8 @@
                ACALL SET_TARGET_LEN       SET EXPLICIT TARGET LEN
          UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPACK REMAINING           
                AIF (&SZ EQ 0)
-         OI    &LZ-1+&TARGET_NAME,X'F0'
+                   ACALL REMOVE_TARGET_LEN
+         OI    &LZ-1+&T_TEMP,X'F0'  RPI 1065
                AEND
        AEND         
        MEXIT
@@ -72,13 +80,45 @@
 .* SET TARGET LEN - INSERT TLEN FOR SIX OR LABEL IN t_TEMP
 .*
          AENTRY SET_TARGET_LEN
-         AIF   ('&TARGET'(1,1) LE '0')  IS TARGET A LABEL
+         AIF   ('&TARGET'(1,1) LT '0')  IS TARGET A LABEL   RPI 1065
                :&T_TEMP SETC '&TARGET.(&TLEN)'
          AELSE
                :&I   SETA ('&TARGET' INDEX '(')  FIND ( IN OFF(REG)
                AIF   (&I GT 0)
+                     :&J SETA ('&TARGET' INDEX ',')
+                     AIF (&J GT 0)
+                     :&T_TEMP SETC '&TARGET'(1,&I).'&TLEN,'.'&TARGET'(&X
+               J+1,*)
+                     AELSE
                      :&T_TEMP SETC '&TARGET'(1,&I).'&TLEN,'.'&TARGET'(&X
                I+1,*)
+                     AEND
+               AELSE
+                     MNOTE 8,'ZC_PACK31 N(REG) FORMAT ERROR &TARGET'
+                     MEXIT
+               AEND
+         AEND
+         AEND
+.*
+.* REMOVE TARGET LENGTH
+.*
+         AENTRY REMOVE_TARGET_LEN
+         AIF   ('&TARGET'(1,1) LT '0')  IS TARGET A LABEL   RPI 1065
+               :&I SETA ('&TARGET' INDEX '(')
+               AIF (&I GT 0)
+                   :&T_TEMP SETC '&TARGET'(1,&I-1)
+               AELSE
+                   :&T_TEMP SETC '&TARGET'
+               AEND
+         AELSE
+               :&I   SETA ('&TARGET' INDEX '(')  FIND ( IN OFF(REG)
+               AIF   (&I GT 0)
+                     :&J SETA ('&TARGET' INDEX ',')
+                     AIF (&J GT 0)
+                     :&T_TEMP SETC '&TARGET'(1,&I).'&TARGET'(&J+1,*)
+                     AELSE
+                     :&T_TEMP SETC '&TARGET'
+                     AEND
                AELSE
                      MNOTE 8,'ZC_PACK31 N(REG) FORMAT ERROR &TARGET'
                      MEXIT

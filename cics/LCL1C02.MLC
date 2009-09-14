@@ -4,13 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL1C02  SUBENTRY
+LCL1C02  CSECT
 *
 * FN=1C02  EXEC CICS DUMP
 *
 * R1  >>> P1C02 BLOCK POINTER
-* R14 = RETURN ADDRESS
 *
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P1C02,P1C02END),R3
@@ -69,7 +70,7 @@ SEGLOOP  EQU   *
          BCT   R6,SEGLOOP         LOOP
 *
 NOSEGS   EQU   *
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
          LTORG
 *

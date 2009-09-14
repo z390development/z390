@@ -16,5 +16,10 @@
                      :&LAB SETC '&LAB'(1,&ILAB).'&LAB'(&JLAB+1,*) O(R)
                    AEND
                AEND
+         AELSEIF ('&LAB'(1,5) EQ 'ZCVT_') STRIP ZCVT_WORKAREA+N(LEN)
+               :&ILAB SETA ('&LAB' INDEX '(')
+               AIF (&ILAB GT 1)
+                   :&LAB SETC '&LAB'(1,&ILAB-1)
+               AEND
          AEND
          AEND

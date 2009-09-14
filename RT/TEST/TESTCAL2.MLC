@@ -6,6 +6,7 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 * 06/16/06 DSH RPI 322 ADD TEST FOR CALL MF=L
+* 06/30/09 DSH RPI 1044 MAKE MYENT AN ENTRY REPLACING V(MYENT)
 *********************************************************************
 TESTCAL2 SUBENTRY
          WTO 'TESTCAL2 TEST STATIC LINK CALLS WITH EXTRN AND ENTRY'
@@ -19,7 +20,8 @@ MYLIST   CALL ,(PARM1,PARM2),VL,MF=L
 PARM1    DC   CL20'PARM1 MSG'
 PARM2    DC   CL20'PARM2 MSG'
 MYSUB    SUBENTRY
-MYENT    EQU  MYSUB   
+MYENT    EQU  MYSUB
+         ENTRY MYENT  RPI 1044   
          LR   R2,R1
 LOOP     EQU  *
          L    R3,0(R2)

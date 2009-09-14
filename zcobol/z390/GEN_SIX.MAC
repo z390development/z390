@@ -26,6 +26,7 @@
          ACALL SET_FIELD_SIX
          IILF  &FIELD_REG,(&SIX_NAME(1)-1)*&SYM_LEN(&SIX_OCCUR(1)) (LITX
                -1)*LEN
+         GEN_BASE &FIELD_IX  RPI 1065
          LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)(&FIELD_REG)
         AEND
        AELSE
@@ -37,6 +38,7 @@
                ACASE (C2A('&SYM_PIC_TYPE(&SUB_IX)'))
                AWHEN C'I' ADD INDEX OFFSET  RPI 1002
          L     &FIELD_REG,&SYM_NAME(&SUB_IX) INDEX OFFSET
+               GEN_BASE &FIELD_IX  RPI 1065
          LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)(&FIELD_REG)
                AEXIT AENTRY
                AWHEN C'F'
@@ -65,6 +67,7 @@
                AEND
          MSFI  &FIELD_REG,&SYM_LEN(&SIX_OCCUR(1)) L'&SYM_NAME(&SIX_OCCUX
                R(1))                                
+               GEN_BASE &FIELD_IX  RPI 1065
          LA    &FIELD_REG,&SYM_NAME(&FIELD_IX).(&FIELD_REG)  
         AELSE
                MNOTE 8,'ZCGETFLD SUBSCRIPT NOT FOUND - &SYSLIST(&PARM_IX
@@ -79,6 +82,7 @@
          AENTRY GEN_SUBN
          GEN_BASE &FIELD_IX
          ACALL SET_FIELD_SIX
+               GEN_BASE &FIELD_IX  RPI 1065
          LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)
          :&CUR_SIX SETA 1
          AWHILE (&CUR_SIX LE &TOT_SIX)
@@ -105,32 +109,32 @@
          A     &FIELD_REG,&SYM_NAME(&SUB_IX) ADD INDEX OFFSET
                AEXIT AENTRY
                AWHEN C'F'
-         L     R0,&SYM_NAME(&SUB_IX)
+         L     ZC_R0,&SYM_NAME(&SUB_IX)
                AWHEN C'G'
-         LG    R0,&SYM_NAME(&SUB_IX)        WILL IGNORE HIGH 32 BITS
+         LG    ZC_R0,&SYM_NAME(&SUB_IX)        WILL IGNORE HIGH 32 BITS
                AWHEN C'H'
-         LH    R0,&SYM_NAME(&SUB_IX)
+         LH    ZC_R0,&SYM_NAME(&SUB_IX)
                AWHEN C'P'
          ZAP   ZCVT_PWORK,&SYM_NAME(&SUB_IX)
-         CVB   R0,ZCVT_PWORK
+         CVB   ZC_R0,ZCVT_PWORK
                AWHEN C'Z'
          :&LPLEN SETA &SYM_LEN(&SUB_IX)/2+1
          PACK  ZCVT_PWORK1(&LPLEN),&SYM_NAME(&SUB_IX)
          ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
-         CVB   R0,ZCVT_PWORK
+         CVB   ZC_R0,ZCVT_PWORK
                AELSE
                   MNOTE 8,'ZCGETFLD INVALID SUBSCRIPT TYPE FOR &SYM_NAMX
                E(&SUB_IX)'
                   MEXIT
                AEND
                AIF  (&SIX_OFF(&CUR_SIX) NE '')
-         AHI   R0,&SIX_OFF(&CUR_SIX)-1
+         AHI   ZC_R0,&SIX_OFF(&CUR_SIX)-1
                AELSE
-         BCTR  R0,0
+         BCTR  ZC_R0,0
                AEND
-         MSFI  R0,&SYM_LEN(&SIX_OCCUR(&CUR_SIX)) L'&SYM_NAME(&SIX_OCCURX
+         MSFI  ZC_R0,&SYM_LEN(&SIX_OCCUR(&CUR_SIX)) L'&SYM_NAME(&SIX_OCCURX
                (&CUR_SIX))
-         AR    &FIELD_REG,R0
+         AR    &FIELD_REG,ZC_R0
             AELSE
                MNOTE 8,'ZCGETFLD SUBS SUB FOUND - &SIX_NAME(&CUR_SUB)'
                MEXIT

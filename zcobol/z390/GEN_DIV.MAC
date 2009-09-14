@@ -10,6 +10,8 @@
 .* 02/25/09 RPI 1004 add support for types 1,2,E,D,L &ZC_FLOAT type    
 .* 03/17/09 RPI 1004 add support for types 1-9,Q                       
 .* 04/28/09 RPI 1003 add support for ne
+.* 08/08/09 RPI 1065 correct negative SRP shift to 5 bit disp.
+.* 09/03/09 RPI 1065 reset ss1 length if any on &NQ and &NR for stores
 .*********************************************************************
        GEN_DIV &NDD,&TDD,&LDD,&PDD, DIVIDEND  NAME/LIT,TYPE,LEN,PLACES X                  
                &NDR,&TDR,&LDR,&PDR, DIVISOR   NAME/LIT,TYPE,LEN,PLACES X                  
@@ -17,45 +19,51 @@
                &NR,&TR,&LR,&SR,&PR, REMAINDER NAME, TYPE,LEN,SIGN,PLCS X
                &ROUNDED,        1 IF ROUNDED SPECIFIED                 X
                &ON_SIZE,        1 IF ON SIZE SPECIFIED                 X
-               &NOT_ON_SIZE     1 IF NOT_ON_SIZE SPECIFIED                  
+               &NOT_ON_SIZE     1 IF NOT_ON_SIZE SPECIFIED            
+       :&LAB SETC '&NQ'
+       ACALL RESET_LAB_LEN   RPI 1065
+       :&NQ_ST SETC '&LAB'
+       :&LAB SETC '&NR'
+       ACALL RESET_LAB_LEN
+       :&NR_ST SETC '&LAB'
 .*
-.* SET NDDX TO R2 FOR LIT AND SET LDDP IF P, LDDZ IF Z 
+.* SET NDDX TO ZC_R2 FOR LIT AND SET LDDP IF P, LDDZ IF Z 
 .*
       AIF (&LDD EQ 0)                                                  
        ACASE (C2A('&TDD'))
        AWHEN C'1'
-         LARL  R2,=EH'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=EH'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'2'
-         LARL  R2,=DH'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=DH'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'3'
-         LARL  R2,=LH'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=LH'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'4'
-         LARL  R2,=EB'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=EB'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'5'
-         LARL  R2,=DB'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=DB'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'6'
-         LARL  R2,=LB'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=LB'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'7'
-         LARL  R2,=ED'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=ED'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'8'
-         LARL  R2,=DD'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=DD'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'9'
-         LARL  R2,=LD'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=LD'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'F',C'H'
-         LARL  R2,=&TDD'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=&TDD'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'G'
-         LARL  R2,=FL8'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=FL8'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'P'
          :&LDDP SETA K'&NDD
          AIF ('&NDD'(1,1) LT '0')
@@ -66,23 +74,23 @@
          AIF (&LDDP GT 16)
              :&LDDP SETA 16
          AEND
-         LARL  R2,=&TDD.L&LDDP'&NDD'
-         :&NDDX SETC '0(&LDDP,R2)'
+         LARL  ZC_R2,=&TDD.L&LDDP'&NDD'
+         :&NDDX SETC '0(&LDDP,ZC_R2)'
        AWHEN C'Q'
-         LARL  R2,=FL16'&NDD'
-         :&NDDX SETC '0(R2)'
+         LARL  ZC_R2,=FL16'&NDD'
+         :&NDDX SETC '0(ZC_R2)'
        AWHEN C'Z'
          :&LDDZ SETA K'&NDD
          AIF ('&NDD'(1,1) LT '0')
              :&LDDZ SETA &LDDZ-1
          AEND
          :&LDDZ SETA (&LDDZ+1)/2*2 ROUNDED EVEN FOR LARL
-         LARL  R2,=&TDD.L&LDDZ'&NDD'
+         LARL  ZC_R2,=&TDD.L&LDDZ'&NDD'
          AIF (&LDDZ EQ 32)
            :&LDDZ SETA 31
-           :&NDDX SETC '1(R2)'
+           :&NDDX SETC '1(ZC_R2)'
          AELSE
-           :&NDDX SETC '0(R2)'
+           :&NDDX SETC '0(ZC_R2)'
          AEND
        AELSE
                MNOTE 8,'GEN_DIV INVALID DIVIDEND TYPE - &TDD' 
@@ -93,43 +101,43 @@
          :&LDDZ SETA &LDD
       AEND
 .*
-.* SET NDRX TO R1 FOR LIT AND SET LDRP IF P, LDRZ IF Z 
+.* SET NDRX TO ZC_R1 FOR LIT AND SET LDRP IF P, LDRZ IF Z 
 .*
       AIF (&LDR EQ 0)                                     
        ACASE (C2A('&TDR'))
        AWHEN C'1'
-         LARL  R1,=EH'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=EH'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'2'
-         LARL  R1,=DH'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=DH'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'3'
-         LARL  R1,=LH'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=LH'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'4'
-         LARL  R1,=EB'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=EB'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'5'
-         LARL  R1,=DB'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=DB'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'6'
-         LARL  R1,=LB'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=LB'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'7'
-         LARL  R1,=ED'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=ED'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'8'
-         LARL  R1,=DD'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=DD'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'9'
-         LARL  R1,=LD'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=LD'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'F',C'H'
-         LARL  R1,=&TDR'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=&TDR'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'G'
-         LARL  R1,=FL8'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=FL8'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'P'
          :&LDRP SETA K'&NDR
          AIF ('&NDR'(1,1) LT '0')
@@ -140,25 +148,25 @@
          AIF (&LDRP GT 16)
              :&LDRP SETA 16
          AEND
-         LARL  R1,=&TDR.L&LDRP'&NDR'
-         :&NDRX SETC '0(&LDRP,R1)'
+         LARL  ZC_R1,=&TDR.L&LDRP'&NDR'
+         :&NDRX SETC '0(&LDRP,ZC_R1)'
        AWHEN C'Q'
-         LARL  R1,=FL16'&NDR'
-         :&NDRX SETC '0(R1)'
+         LARL  ZC_R1,=FL16'&NDR'
+         :&NDRX SETC '0(ZC_R1)'
        AWHEN C'Z'
          :&LDRZ SETA K'&NDR
          AIF ('&NDR'(1,1) LT '0')
              :&LDRZ SETA &LDRZ-1
          AEND
          :&LDRZ SETA (&LDRZ+1)/2*2 ROUNDED EVEN FOR LARL
-         LARL  R1,=&TDR.L&LDRZ'&NDR'
+         LARL  ZC_R1,=&TDR.L&LDRZ'&NDR'
          AIF (&LDRZ EQ 32)
            :&LDRZ SETA 31
-           :&NDRX SETC '1(R1)'
+           :&NDRX SETC '1(ZC_R1)'
          AELSE
-           :&NDRX SETC '0(R1)'
+           :&NDRX SETC '0(ZC_R1)'
          AEND
-         :&NDRX SETC '0(R1)'
+         :&NDRX SETC '0(ZC_R1)'
        AEND
       AELSE
          :&NDRX SETC '&NDR'
@@ -170,7 +178,7 @@
 .*
          ACASE (C2A('&TDD'))
 .*
-.* DIVIDE DIVIDEND TYPE EH QUOTIENT IN F0 NO REMAINDER
+.* DIVIDE DIVIDEND TYPE EH QUOTIENT IN ZC_F0 NO REMAINDER
 .*
          AWHEN C'1'                 DIVIDE EH BY ??
                ACASE (C2A('&TDR'))
@@ -193,26 +201,26 @@
                AWHEN C'9'
                  ZC_CONV EH,LD,&NDRX
                AWHEN C'F'
-         L     R0,&NDRX
-         CEFR  F0,R0
+         L     ZC_R0,&NDRX
+         CEFR  ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&NDRX
-         CEGR  F0,R0
+         LG    ZC_R0,&NDRX
+         CEGR  ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&NDRX
-         CEFR  F0,R0
+         LH    ZC_R0,&NDRX
+         CEFR  ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EH,LD        
                AWHEN C'Q'
-         LMG   R0,R1,&NDRX
+         LMG   ZC_R0,ZC_R1,&NDRX
                   ZC_CONV EH,Q
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&NDRX,&LDR
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                ZC_CONV EH,LD
                   AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
@@ -221,63 +229,63 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-1'
                AEND
-         LER   F1,F0
-         LE    F0,&NDDX
+         LER   ZC_F1,ZC_F0
+         LE    ZC_F0,&NDDX
                     ACALL SFT_RND_EH
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
                AEND
 .*
-.* STORE TYPE EH QUOTIENT FROM F0 NO REMAINDER
+.* STORE TYPE EH QUOTIENT FROM ZC_F0 NO REMAINDER
 .*
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV DH,EH
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV LH,EH
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV EB,EH
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV DB,EH
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV LB,EH
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV ED,EH
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV DD,EH
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV LD,EH
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
          CFER  0,0,0
-         ST    0,&NQ
+         ST    0,&NQ_ST
                AWHEN C'G'
          CGER  0,0,0
-         STG   0,&NQ
+         STG   0,&NQ_ST
                AWHEN C'H'
          CFER  0,0,0
-         STH   0,&NQ
+         STH   0,&NQ_ST
                AWHEN C'P'
          CFER  0,0,0
          CVD   0,ZCVT_PWORK
@@ -287,12 +295,12 @@
                    AEND
                AWHEN C'Q'
                    AIF (&SQ EQ 0)
-         LPER   F4,F0
+         LPER   ZC_F4,ZC_F0
                    AELSE
-         LER    F4,F0
+         LER    ZC_F4,ZC_F0
                    AEND
                    ZC_CONV Q,EH
-         STMG  R0,R1,&NQ
+         STMG  ZC_R0,ZC_R1,&NQ_ST
                AWHEN C'Z'
          CFER  0,0,0
          CVD   0,ZCVT_PWORK
@@ -302,7 +310,7 @@
                    MEXIT
                AEND
 .*
-.* DIVIDE DIVIDEND TYPE DH WITH QUOTIENT IN F0 NO REMAINDER
+.* DIVIDE DIVIDEND TYPE DH WITH QUOTIENT IN ZC_F0 NO REMAINDER
 .*
          AWHEN C'2'                    DIV DH BY ??
                ACASE (C2A('&TDR'))
@@ -310,7 +318,7 @@
                  ZC_CONV DH,EH,&NDRX
                AWHEN C'2'
 .*                 ZC_CONV DH,DH,&NDRX
-         LD    F0,&NDRX
+         LD    ZC_F0,&NDRX
                AWHEN C'3'          
                  ZC_CONV DH,LH,&NDRX
                AWHEN C'4'
@@ -326,25 +334,25 @@
                AWHEN C'9'
                  ZC_CONV DH,LD,&NDRX
                AWHEN C'F'
-         L     R0,&NDRX
-         CDFR  F0,R0
+         L     ZC_R0,&NDRX
+         CDFR  ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&NDRX
-         CDGR  F0,R0
+         LG    ZC_R0,&NDRX
+         CDGR  ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&NDRX
-         CDFR  F0,R0
+         LH    ZC_R0,&NDRX
+         CDFR  ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DH,LD
                AWHEN C'Q'
                  ZC_CONV DH,Q,&NDRX
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&NDRX,&LDR
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DH,LD
                AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
@@ -353,91 +361,91 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-2'
                AEND
-         LDR   F1,F0
-         LD    F0,&NDDX
+         LDR   ZC_F1,ZC_F0
+         LD    ZC_F0,&NDDX
                     ACALL SFT_RND_DH
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
                AEND
 .*
-.* STORE TYPE DH QUOTIENT FROM F0 NO REMAINDER
+.* STORE TYPE DH QUOTIENT FROM ZC_F0 NO REMAINDER
 .*
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV EH,DH
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-.*       LDR   F4,F0
+.*       LDR   ZC_F4,ZC_F0
 .*               ZC_CONV DH,DH
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LH,DH
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV EB,DH
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV DB,DH
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LB,DH
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV ED,DH
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV DD,DH
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LD,DH
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
-         CFDR  R0,F0,0
-         ST    R0,&NQ
+         CFDR  ZC_R0,ZC_F0,0
+         ST    ZC_R0,&NQ_ST
                AWHEN C'G'
-         CGDR  R0,F0,0
-         STG   R0,&NQ
+         CGDR  ZC_R0,ZC_F0,0
+         STG   ZC_R0,&NQ_ST
                AWHEN C'H'
-         CFDR  R0,F0,0
-         STH   R0,&NQ
+         CFDR  ZC_R0,ZC_F0,0
+         STH   ZC_R0,&NQ_ST
                AWHEN C'P'
-         CGDR  R0,F0,0
-         CVDG  R0,ZCVT_PWORK2
+         CGDR  ZC_R0,ZC_F0,0
+         CVDG  ZC_R0,ZCVT_PWORK2
          ZAP   &NQ,&ZCVT_PWORK2
                    AIF (&SQ EQ 0)
          OI    &NQ+&LQ-1,X'0F'
                    AEND
                AWHEN C'Q'
                    AIF (&SQ EQ 0)
-         LPDR  F4,R0
+         LPDR  ZC_F4,ZC_R0
                    AELSE
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                    AEND
                    ZC_CONV Q,DH
-         STMG  0,1,&NQ                             
+         STMG  0,1,&NQ_ST                             
                AWHEN C'Z'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV P,DH
-         STMG   R0,R1,ZCVT_PWORK2
+         STMG   ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK2,16
                AELSE
                    MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
                    MEXIT
                AEND
 .*
-.* DIVIDE DIVIDEND TYPE LH WITH QUOTIENT IN F0-F2 NO REMAINDER
+.* DIVIDE DIVIDEND TYPE LH WITH QUOTIENT IN ZC_F0-ZC_F2 NO REMAINDER
 .*
          AWHEN C'3'                    DIV LH BY ??
                ACASE (C2A('&TDR'))
@@ -460,26 +468,26 @@
                AWHEN C'9'
                  ZC_CONV LH,LD,&NDRX
                AWHEN C'F'
-         L     R0,&NDRX
-         CXFR  F0,R0
+         L     ZC_R0,&NDRX
+         CXFR  ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&NDRX
-         CXGR  F0,R0
+         LG    ZC_R0,&NDRX
+         CXGR  ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&NDRX
-         CXFR  F0,R0
+         LH    ZC_R0,&NDRX
+         CXFR  ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LH,LD
                AWHEN C'Q'
-         LMG   R0,R1,&NDRX
+         LMG   ZC_R0,ZC_R1,&NDRX
                  ZC_CONV LH,Q
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&NDRX,&LDR
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LH,LD
                AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
@@ -488,101 +496,101 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-2'
                AEND
-         LDR   F1,F0
-         LDR   F3,F2
-         LD    F0,&NDDX
-         LD    F2,8+&NDDX
+         LDR   ZC_F1,ZC_F0
+         LDR   ZC_F3,ZC_F2
+         LD    ZC_F0,&NDDX
+         LD    ZC_F2,8+&NDDX
                     ACALL SFT_RND_LH
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
                AEND
 .*
-.* STORE TYPE LH QUOTIENT FROM F0-F2 REMAINDER
+.* STORE TYPE LH QUOTIENT FROM ZC_F0-ZC_F2 REMAINDER
 .*
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV EH,LH
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV DH,LH
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV EB,LH
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV DB,LH
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV LB,LH
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV ED,LH
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV DD,LH
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV LD,LH
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
-         CFXR  R0,F0,0
-         ST    R0,&NQ
+         CFXR  ZC_R0,ZC_F0,0
+         ST    ZC_R0,&NQ_ST
                AWHEN C'G'
-         CGXR  R0,F0,0
-         STG   R0,&NQ
+         CGXR  ZC_R0,ZC_F0,0
+         STG   ZC_R0,&NQ_ST
                AWHEN C'H'
-         CFXR  R0,F0,0
-         STH   R0,&NQ
+         CFXR  ZC_R0,ZC_F0,0
+         STH   ZC_R0,&NQ_ST
                AWHEN C'P'
-         CGXR  R0,F0,0
-         CVDG  R0,ZCVT_PWORK2
+         CGXR  ZC_R0,ZC_F0,0
+         CVDG  ZC_R0,ZCVT_PWORK2
          ZAP   &NQ,&ZCVT_PWORK2
                    AIF (&SQ EQ 0)
          OI    &NQ+&LQ-1,X'0F'
                    AEND
                AWHEN C'Q'
                    AIF (&SQ EQ 0)
-         LPXR  F4,R0
+         LPXR  ZC_F4,ZC_R0
                    AELSE
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                    AEND
-         LDR   F6,F2
+         LDR   ZC_F6,ZC_F2
                    ZC_CONV Q,LH
-         STMG  0,1,&NQ                             
+         STMG  0,1,&NQ_ST                             
                AWHEN C'Z'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV P,LH
-         STMG   R0,R1,ZCVT_PWORK2
+         STMG   ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK2,16
                AELSE
                    MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
                    MEXIT
                AEND
 .*
-.* DIVIDE DIVIDEND TYPE EB QUOTIENT IN F0 NO REMAINDER
+.* DIVIDE DIVIDEND TYPE EB QUOTIENT IN ZC_F0 NO REMAINDER
 .*
          AWHEN C'4'                 DIVIDE EB BY ??
                ACASE (C2A('&TDR'))
@@ -605,26 +613,26 @@
                AWHEN C'9'
                  ZC_CONV EB,LD,&NDRX
                AWHEN C'F'
-         L     R0,&NDRX
-         CEFBR F0,R0
+         L     ZC_R0,&NDRX
+         CEFBR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&NDRX
-         CEGBR F0,R0
+         LG    ZC_R0,&NDRX
+         CEGBR ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&NDRX
-         CEFBR F0,R0
+         LH    ZC_R0,&NDRX
+         CEFBR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EB,LD        
                AWHEN C'Q'
-         LMG   R0,R1,&NDRX
+         LMG   ZC_R0,ZC_R1,&NDRX
                   ZC_CONV EB,Q
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&NDRX,&LDR
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                ZC_CONV EB,LD
                   AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
@@ -633,63 +641,63 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-1'
                AEND
-         LER   F1,F0
-         LE    F0,&NDDX
+         LER   ZC_F1,ZC_F0
+         LE    ZC_F0,&NDDX
                     ACALL SFT_RND_EB
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
                AEND
 .*
-.* STORE TYPE EB QUOTIENT FROM F0 NO REMAINDER
+.* STORE TYPE EB QUOTIENT FROM ZC_F0 NO REMAINDER
 .*
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV EH,EB
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV DH,EB
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV LH,EB
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV DB,EB
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV LB,EB
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV ED,EB
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV DD,EB
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LER   F4,F0
+         LER   ZC_F4,ZC_F0
                  ZC_CONV LD,EB
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
          CFEBR 0,0,0
-         ST    0,&NQ
+         ST    0,&NQ_ST
                AWHEN C'G'
          CGEBR 0,0,0
-         STG   0,&NQ
+         STG   0,&NQ_ST
                AWHEN C'H'
          CFEBR 0,0,0
-         STH   0,&NQ
+         STH   0,&NQ_ST
                AWHEN C'P'
          CFEBR 0,0,0
          CVD   0,ZCVT_PWORK
@@ -699,13 +707,13 @@
                    AEND
                AWHEN C'Q'
                    AIF (&SQ EQ 0)
-         LPER   F4,F0
+         LPER   ZC_F4,ZC_F0
                    AELSE
-         LER    F4,F0
+         LER    ZC_F4,ZC_F0
                    AEND
-                   LE F4,F0
+                   LE ZC_F4,ZC_F0
                    ZC_CONV Q,EB
-         STMG  R0,R1,&NQ
+         STMG  ZC_R0,ZC_R1,&NQ_ST
                AWHEN C'Z'
          CFEBR 0,0,0
          CVD   0,ZCVT_PWORK
@@ -715,7 +723,7 @@
                    MEXIT
                AEND
 .*
-.* DIVIDE DIVIDEND TYPE DB WITH QUOTIENT IN F0 NO REMAINDER
+.* DIVIDE DIVIDEND TYPE DB WITH QUOTIENT IN ZC_F0 NO REMAINDER
 .*
          AWHEN C'5'                    DIV DB BY ??
                ACASE (C2A('&TDR'))
@@ -738,26 +746,26 @@
                AWHEN C'9'
                  ZC_CONV DB,LD,&NDRX
                AWHEN C'F'
-         L     R0,&NDRX
-         CDFBR F0,R0
+         L     ZC_R0,&NDRX
+         CDFBR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&NDRX
-         CDGBR F0,R0
+         LG    ZC_R0,&NDRX
+         CDGBR ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&NDRX
-         CDFBR F0,R0
+         LH    ZC_R0,&NDRX
+         CDFBR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DB,LD
                AWHEN C'Q'
-         LMG   R0,R1,&NDRX
+         LMG   ZC_R0,ZC_R1,&NDRX
                  ZC_CONV DB,Q
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&NDRX,&LDR
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DB,LD
                AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
@@ -766,89 +774,89 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-2'
                AEND
-         LDR   F1,F0
-         LD    F0,&NDDX
+         LDR   ZC_F1,ZC_F0
+         LD    ZC_F0,&NDDX
                     ACALL SFT_RND_DB
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
                AEND
 .*
-.* STORE TYPE DB QUOTIENT FROM F0 NO REMAINDER
+.* STORE TYPE DB QUOTIENT FROM ZC_F0 NO REMAINDER
 .*
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV EH,DB
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV DH,DB
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LH,DB
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV EB,DB
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LB,DB
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV ED,DB
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV DD,DB
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LD,DB
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
-         CFDBR R0,F0,0
-         ST    R0,&NQ
+         CFDBR ZC_R0,ZC_F0,0
+         ST    ZC_R0,&NQ_ST
                AWHEN C'G'
-         CGDBR R0,F0,0
-         STG   R0,&NQ
+         CGDBR ZC_R0,ZC_F0,0
+         STG   ZC_R0,&NQ_ST
                AWHEN C'H'
-         CFDBR R0,F0,0
-         STH   R0,&NQ
+         CFDBR ZC_R0,ZC_F0,0
+         STH   ZC_R0,&NQ_ST
                AWHEN C'P'
-         CGDBR R0,F0,0
-         CVDG  R0,ZCVT_PWORK2
+         CGDBR ZC_R0,ZC_F0,0
+         CVDG  ZC_R0,ZCVT_PWORK2
          ZAP   &NQ,&ZCVT_PWORK2
                    AIF (&SQ EQ 0)
          OI    &NQ+&LQ-1,X'0F'
                    AEND
                AWHEN C'Q'
                    AIF (&SQ EQ 0)
-         LPDR  F4,R0
+         LPDR  ZC_F4,ZC_R0
                    AELSE
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                    AEND
                    ZC_CONV Q,DB
-         STMG  0,1,&NQ                             
+         STMG  0,1,&NQ_ST                             
                AWHEN C'Z'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV P,DB
-         STMG   R0,R1,ZCVT_PWORK2
+         STMG   ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK2,16
                AELSE
                    MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
                    MEXIT
                AEND
 .*
-.* DIVIDE DIVIDEND TYPE LB WITH QUOTIENT IN F0-F2 NO REMAINDER
+.* DIVIDE DIVIDEND TYPE LB WITH QUOTIENT IN ZC_F0-ZC_F2 NO REMAINDER
 .*
          AWHEN C'6'                    DIV LB BY ??
                ACASE (C2A('&TDR'))
@@ -871,26 +879,26 @@
                AWHEN C'9'
                  ZC_CONV LB,LD,&NDRX
                AWHEN C'F'
-         L     R0,&NDRX
-         CXFBR F0,R0
+         L     ZC_R0,&NDRX
+         CXFBR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&NDRX
-         CXGBR F0,R0
+         LG    ZC_R0,&NDRX
+         CXGBR ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&NDRX
-         CXFBR F0,R0
+         LH    ZC_R0,&NDRX
+         CXFBR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LB,LD
                AWHEN C'Q'
-         LMG   R0,R1,&NDRX
+         LMG   ZC_R0,ZC_R1,&NDRX
                  ZC_CONV LB,Q
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&NDRX,&LDR
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LB,LD
                AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
@@ -899,106 +907,106 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-2'
                AEND
-         LDR   F1,F0
-         LDR   F3,F2
-         LD    F0,&NDDX
-         LD    F2,8+&NDDX
+         LDR   ZC_F1,ZC_F0
+         LDR   ZC_F3,ZC_F2
+         LD    ZC_F0,&NDDX
+         LD    ZC_F2,8+&NDDX
                     ACALL SFT_RND_LB
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
                AEND
 .*
-.* STORE TYPE LB QUOTIENT FROM F0-F2 REMAINDER
+.* STORE TYPE LB QUOTIENT FROM ZC_F0-ZC_F2 REMAINDER
 .*
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV EH,LB
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV DH,LB
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV LH,LB
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV EB,LB
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV DB,LB
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV LB,LB
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV ED,LB
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV DD,LB
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV LD,LB
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
-         CFXBR R0,F0,0
-         ST    R0,&NQ
+         CFXBR ZC_R0,ZC_F0,0
+         ST    ZC_R0,&NQ_ST
                AWHEN C'G'
-         CGXBR R0,F0,0
-         STG   R0,&NQ
+         CGXBR ZC_R0,ZC_F0,0
+         STG   ZC_R0,&NQ_ST
                AWHEN C'H'
-         CFXBR R0,F0,0
-         STH   R0,&NQ
+         CFXBR ZC_R0,ZC_F0,0
+         STH   ZC_R0,&NQ_ST
                AWHEN C'P'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV P,LB
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &NQ,&ZCVT_PWORK2
                    AIF (&SQ EQ 0)
          OI    &NQ+&LQ-1,X'0F'
                    AEND
                AWHEN C'Q'
                    AIF (&SQ EQ 0)
-         LPXR  F4,R0
+         LPXR  ZC_F4,ZC_R0
                    AELSE
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                    AEND
-         LDR   F6,F2
+         LDR   ZC_F6,ZC_F2
                    ZC_CONV Q,LB
-         STMG  0,1,&NQ                             
+         STMG  0,1,&NQ_ST                             
                AWHEN C'Z'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV P,LB
-         STMG   R0,R1,ZCVT_PWORK2
+         STMG   ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK2,16
                AELSE
                    MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
                    MEXIT
                AEND
 .*
-.* DIVIDE DIVIDEND TYPE ED QUOTIENT IN F0 NO REMAINDER
+.* DIVIDE DIVIDEND TYPE ED QUOTIENT IN ZC_F0 NO REMAINDER
 .*
          AWHEN C'7'                 DIVIDE ED BY ?? (USE DD)
                ACASE (C2A('&TDR'))
@@ -1021,26 +1029,26 @@
                AWHEN C'9'
                  ZC_CONV DD,LD,&NDRX
                AWHEN C'F'
-         LGF   R0,&NDRX
-         CDGTR F0,R0
+         LGF   ZC_R0,&NDRX
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&NDRX
-         CDGTR F0,R0
+         LG    ZC_R0,&NDRX
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'H'
-         LGH   R0,&NDRX
-         CDGTR F0,R0
+         LGH   ZC_R0,&NDRX
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DD,LD        
                AWHEN C'Q'
-         LMG   R0,R1,&NDRX
+         LMG   ZC_R0,ZC_R1,&NDRX
                   ZC_CONV DD,Q
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&NDRX,&LDR
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                ZC_CONV DD,LD
                   AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
@@ -1049,64 +1057,64 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-1'
                AEND
-         LDR   F1,F0
-         LE    F0,&NDDX
-         LDETR F0,F0,0
+         LDR   ZC_F1,ZC_F0
+         LE    ZC_F0,&NDDX
+         LDETR ZC_F0,ZC_F0,0
                     ACALL SFT_RND_DD
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
                AEND
 .*
-.* STORE TYPE ED QUOTIENT FROM F0 NO REMAINDER
+.* STORE TYPE ED QUOTIENT FROM ZC_F0 NO REMAINDER
 .*
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV EH,DD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV DH,DD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LH,DD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV EB,DD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV DB,DD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LB,DD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV ED,DD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LD,DD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
          CFDTR 0,0,0
-         ST    0,&NQ
+         ST    0,&NQ_ST
                AWHEN C'G'
          CGDTR 0,0,0
-         STG   0,&NQ
+         STG   0,&NQ_ST
                AWHEN C'H'
          CGDTR 0,0,0
-         STH   0,&NQ
+         STH   0,&NQ_ST
                AWHEN C'P'
          CFDTR 0,0,0
          CVD   0,ZCVT_PWORK
@@ -1116,13 +1124,13 @@
                    AEND
                AWHEN C'Q'
                    AIF (&SQ EQ 0)
-         LPDR   F4,F0
+         LPDR   ZC_F4,ZC_F0
                    AELSE
-         LDR    F4,F0
+         LDR    ZC_F4,ZC_F0
                    AEND
-                   LE F4,F0
+                   LE ZC_F4,ZC_F0
                    ZC_CONV Q,DD
-         STMG  R0,R1,&NQ
+         STMG  ZC_R0,ZC_R1,&NQ_ST
                AWHEN C'Z'
          CFDTR 0,0,0
          CVD   0,ZCVT_PWORK
@@ -1132,7 +1140,7 @@
                    MEXIT
                AEND
 .*
-.* DIVIDE DIVIDEND TYPE DD WITH QUOTIENT IN F0 NO REMAINDER
+.* DIVIDE DIVIDEND TYPE DD WITH QUOTIENT IN ZC_F0 NO REMAINDER
 .*
          AWHEN C'8'                    DIV DD BY ??
                ACASE (C2A('&TDR'))
@@ -1155,26 +1163,26 @@
                AWHEN C'9'
                  ZC_CONV DD,LD,&NDRX
                AWHEN C'F'
-         LGF   R0,&NDRX
-         CDGTR F0,R0
+         LGF   ZC_R0,&NDRX
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&NDRX
-         CDGTR F0,R0
+         LG    ZC_R0,&NDRX
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'H'
-         LGH   R0,&NDRX
-         CDGTR F0,R0
+         LGH   ZC_R0,&NDRX
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DD,LD
                AWHEN C'Q'
-         LMG   R0,R1,&NDRX
+         LMG   ZC_R0,ZC_R1,&NDRX
                  ZC_CONV DD,Q
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&NDRX,&LDR
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DD,LD
                AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
@@ -1183,92 +1191,92 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-2'
                AEND
-         LDR   F1,F0
-         LD    F0,&NDDX
+         LDR   ZC_F1,ZC_F0
+         LD    ZC_F0,&NDDX
                     ACALL SFT_RND_DD
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
                AEND
 .*
-.* STORE TYPE DD QUOTIENT FROM F0 NO REMAINDER
+.* STORE TYPE DD QUOTIENT FROM ZC_F0 NO REMAINDER
 .*
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV EH,DD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV DH,DD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LH,DD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV EB,DD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV DB,DD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LB,DD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV ED,DD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV DD,DD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV LD,DD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
-         CFDTR R0,F0,0
-         ST    R0,&NQ
+         CFDTR ZC_R0,ZC_F0,0
+         ST    ZC_R0,&NQ_ST
                AWHEN C'G'
-         CGDTR R0,F0,0
-         STG   R0,&NQ
+         CGDTR ZC_R0,ZC_F0,0
+         STG   ZC_R0,&NQ_ST
                AWHEN C'H'
-         CGDTR R0,F0,0
-         STH   R0,&NQ
+         CGDTR ZC_R0,ZC_F0,0
+         STH   ZC_R0,&NQ_ST
                AWHEN C'P'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV P,DD
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &NQ,&ZCVT_PWORK2
                    AIF (&SQ EQ 0)
          OI    &NQ+&LQ-1,X'0F'
                    AEND
                AWHEN C'Q'
                    AIF (&SQ EQ 0)
-         LPDR  F4,R0
+         LPDR  ZC_F4,ZC_R0
                    AELSE
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                    AEND
                    ZC_CONV Q,DD
-         STMG  0,1,&NQ                             
+         STMG  0,1,&NQ_ST                             
                AWHEN C'Z'
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                  ZC_CONV P,DD
-         STMG   R0,R1,ZCVT_PWORK2
+         STMG   ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK2,16
                AELSE
                    MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
                    MEXIT
                AEND
 .*
-.* DIVIDE DIVIDEND TYPE LD WITH QUOTIENT IN F0-F2 NO REMAINDER
+.* DIVIDE DIVIDEND TYPE LD WITH QUOTIENT IN ZC_F0-ZC_F2 NO REMAINDER
 .*
          AWHEN C'9'                    DIV LD BY ??
                ACASE (C2A('&TDR'))
@@ -1291,24 +1299,24 @@
                AWHEN C'9'
                  ZC_CONV LD,LD,&NDRX
                AWHEN C'F'
-         LGF   R0,&NDRX
-         CXGTR F0,R0
+         LGF   ZC_R0,&NDRX
+         CXGTR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&NDRX
-         CXGTR F0,R0
+         LG    ZC_R0,&NDRX
+         CXGTR ZC_F0,ZC_R0
                AWHEN C'H'
-         LGH   R0,&NDRX
-         CXGTR F0,R0
+         LGH   ZC_R0,&NDRX
+         CXGTR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F0,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F0,ZC_R0
                AWHEN C'Q'
                  ZC_CONV LD,Q,&NDRX
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&NDRX,&LDR
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F0,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F0,ZC_R0
                AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
                     MEXIT
@@ -1316,134 +1324,134 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDED NOT ALLOWED FOR COMP-2'
                AEND
-         LDR   F1,F0
-         LDR   F3,F2
-         LD    F0,&NDDX
-         LD    F2,8+&NDDX
+         LDR   ZC_F1,ZC_F0
+         LDR   ZC_F3,ZC_F2
+         LD    ZC_F0,&NDDX
+         LD    ZC_F2,8+&NDDX
                     ACALL SFT_RND_LD
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
                AEND
 .*
-.* STORE TYPE LD QUOTIENT FROM F0-F2 REMAINDER
+.* STORE TYPE LD QUOTIENT FROM ZC_F0-ZC_F2 REMAINDER
 .*
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV EH,LD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV DH,LD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV LH,LD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV EB,LD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV DB,LD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV LB,LD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV ED,LD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV DD,LD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
-         CFXTR R0,F0,0
-         ST    R0,&NQ
+         CFXTR ZC_R0,ZC_F0,0
+         ST    ZC_R0,&NQ_ST
                AWHEN C'G'
-         CGXTR R0,F0,0
-         STG   R0,&NQ
+         CGXTR ZC_R0,ZC_F0,0
+         STG   ZC_R0,&NQ_ST
                AWHEN C'H'
-         CGXTR R0,F0,0
-         STH   R0,&NQ
+         CGXTR ZC_R0,ZC_F0,0
+         STH   ZC_R0,&NQ_ST
                AWHEN C'P'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV P,LD
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &NQ,&ZCVT_PWORK2
                    AIF (&SQ EQ 0)
          OI    &NQ+&LQ-1,X'0F'
                    AEND
                AWHEN C'Q'
                    AIF (&SQ EQ 0)
-         LPXR  F4,R0
+         LPXR  ZC_F4,ZC_R0
                    AELSE
-         LDR   F4,F0
+         LDR   ZC_F4,ZC_F0
                    AEND
-         LDR   F6,F2
+         LDR   ZC_F6,ZC_F2
                    ZC_CONV Q,LD
-         STMG  0,1,&NQ                             
+         STMG  0,1,&NQ_ST                             
                AWHEN C'Z'
-         LDR   F4,F0
-         LDR   F6,F2
+         LDR   ZC_F4,ZC_F0
+         LDR   ZC_F6,ZC_F2
                  ZC_CONV P,LD
-         STMG   R0,R1,ZCVT_PWORK2
+         STMG   ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK2,16
                AELSE
                    MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
                    MEXIT
                AEND
 .*
-.* DIVIDE DIVIDEND TYPE F WITH QUOTIENT IN R1 AND REMAINDER IN R0
+.* DIVIDE DIVIDEND TYPE F WITH QUOTIENT IN ZC_R1 AND REMAINDER IN ZC_R0
 .*
          AWHEN C'F'
          MVC   ZCVT_NDDX(4),&NDDX
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV Q,EH,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'2'
                  ZC_CONV Q,DH,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'3'          
                  ZC_CONV Q,LH,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'4'
                  ZC_CONV Q,EB,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'5'
                  ZC_CONV Q,DB,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'6'
                  ZC_CONV Q,LB,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'7'
                  ZC_CONV Q,ED,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'8'
                  ZC_CONV Q,DD,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'9'
                  ZC_CONV Q,LD,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'F'
          L     2,&NDRX
                AWHEN C'G'
@@ -1473,38 +1481,38 @@
                AEND
                ACALL STORE_FH_QR
 .*
-.* DIVIDE DIVIDEND TYPE G WITH QUOTIENT IN R1 AND REMAINDER IN R0
+.* DIVIDE DIVIDEND TYPE G WITH QUOTIENT IN ZC_R1 AND REMAINDER IN ZC_R0
 .*
          AWHEN C'G'
          MVC   ZCVT_NDDX(8),&NDDX
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV Q,EH,&NDRX
-                 LGR R2,R1 IGNORE HIGH 64 BITS
+                 LGR ZC_R2,ZC_R1 IGNORE HIGH 64 BITS
                AWHEN C'2'
                  ZC_CONV Q,DH,&NDRX
-                 LGR R2,R1 IGNORE HIGH 64 BITS
+                 LGR ZC_R2,ZC_R1 IGNORE HIGH 64 BITS
                AWHEN C'3'          
                  ZC_CONV Q,LH,&NDRX
-                 LGR R2,R1 IGNORE HIGH 64 BITS
+                 LGR ZC_R2,ZC_R1 IGNORE HIGH 64 BITS
                AWHEN C'4'
                  ZC_CONV Q,EB,&NDRX
-                 LGR R2,R1 IGNORE HIGH 64 BITS
+                 LGR ZC_R2,ZC_R1 IGNORE HIGH 64 BITS
                AWHEN C'5'
                  ZC_CONV Q,DB,&NDRX
-                 LGR R2,R1 IGNORE HIGH 64 BITS
+                 LGR ZC_R2,ZC_R1 IGNORE HIGH 64 BITS
                AWHEN C'6'
                  ZC_CONV Q,LB,&NDRX
-                 LGR R2,R1 IGNORE HIGH 64 BITS
+                 LGR ZC_R2,ZC_R1 IGNORE HIGH 64 BITS
                AWHEN C'7'
                  ZC_CONV Q,ED,&NDRX
-                 LGR R2,R1 IGNORE HIGH 64 BITS
+                 LGR ZC_R2,ZC_R1 IGNORE HIGH 64 BITS
                AWHEN C'8'
                  ZC_CONV Q,DD,&NDRX
-                 LGR R2,R1 IGNORE HIGH 64 BITS
+                 LGR ZC_R2,ZC_R1 IGNORE HIGH 64 BITS
                AWHEN C'9'
                  ZC_CONV Q,LD,&NDRX
-                 LGR R2,R1 IGNORE HIGH 64 BITS
+                 LGR ZC_R2,ZC_R1 IGNORE HIGH 64 BITS
                AWHEN C'F'
          LGF   2,&NDRX
                AWHEN C'G'
@@ -1533,73 +1541,73 @@
                    MEXIT
                AEND
 .*
-.* STORE TYPE G QUOTIENT FROM R1
+.* STORE TYPE G QUOTIENT FROM ZC_R1
 .*
                AIF (&SQ EQ 0)
          LPGR  1,1
                AEND
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV EH,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV DH,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV LH,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV EB,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV DB,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV LB,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV ED,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV DD,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV LD,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
-         ST    1,&NQ
+         ST    1,&NQ_ST
                AWHEN C'G'
-         STG   1,&NQ
+         STG   1,&NQ_ST
                AWHEN C'H'
-         STH   1,&NQ
+         STH   1,&NQ_ST
                AWHEN C'P'
          CVDG  1,ZCVT_PWORK1
          ZAP   &NQ,ZCVT_PWORK1
                AWHEN C'Q'
-         LGR   R0,R1
-         SRAG  R0,R0,63
-         STMG  R0,R1,&NQ
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
+         STMG  ZC_R0,ZC_R1,&NQ_ST
                AWHEN C'Z'
          CVDG  1,ZCVT_PWORK1
                ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK1,16
@@ -1608,7 +1616,7 @@
                    MEXIT
                AEND
 .*
-.* STORE TYPE G REMAINDER FROM R0  (NO REMAINDERS FOR FP)
+.* STORE TYPE G REMAINDER FROM ZC_R0  (NO REMAINDERS FOR FP)
 .*
              AIF ('&TR' NE '')
                ACASE (C2A('&TR'))  
@@ -1616,17 +1624,17 @@
                AIF (&SR EQ 0)
          LPGR  0,0
                AEND
-         ST    0,&NR      IGNORE HIGH 32 BITS
+         ST    0,&NR_ST      IGNORE HIGH 32 BITS
                AWHEN C'G'
                AIF (&SR EQ 0)
          LPGR  0,0
                AEND
-         STG   0,&NR
+         STG   0,&NR_ST
                AWHEN C'H'
                AIF (&SR EQ 0)
          LPGR  0,0
                AEND
-         STH   0,&NR      IGNORE HIGH 48 BITS
+         STH   0,&NR_ST      IGNORE HIGH 48 BITS
                AWHEN C'P'
          CVDG  0,ZCVT_PWORK1
          ZAP   &NR,ZCVT_PWORK1
@@ -1637,9 +1645,9 @@
                AIF (&SQ EQ 0)
          LPGR  1,1
                AEND
-         LGR   R0,R1
-         SRAG  R0,R0,63
-         STMG  R0,R1,&NR
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
+         STMG  ZC_R0,ZC_R1,&NR_ST
                AWHEN C'Z'
          CVDG  0,ZCVT_PWORK1
          :&PLEN SETA &LR/2+1
@@ -1651,38 +1659,38 @@
                AEND
              AEND
 .*
-.* DIVIDE DIVIDEND TYPE H WITH QUOTIENT IN R1 AND REMAINDER IN R0
+.* DIVIDE DIVIDEND TYPE H WITH QUOTIENT IN ZC_R1 AND REMAINDER IN ZC_R0
 .*
          AWHEN C'H'
          MVC   ZCVT_NDDX(2),&NDDX
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV Q,EH,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'2'
                  ZC_CONV Q,DH,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'3'          
                  ZC_CONV Q,LH,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'4'
                  ZC_CONV Q,EB,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'5'
                  ZC_CONV Q,DB,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'6'
                  ZC_CONV Q,LB,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'7'
                  ZC_CONV Q,ED,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'8'
                  ZC_CONV Q,DD,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'9'
                  ZC_CONV Q,LD,&NDRX
-                 LR  R2,R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'F'
          L     2,&NDRX
                AWHEN C'G'
@@ -1720,39 +1728,39 @@
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV P,EH,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'2'
                  ZC_CONV P,DH,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'3'          
                  ZC_CONV P,LH,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'4'
                  ZC_CONV P,EB,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'5'
                  ZC_CONV P,DB,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'6'
                  ZC_CONV P,LB,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'7'
                  ZC_CONV P,ED,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'8'
                  ZC_CONV P,DD,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'9'
                  ZC_CONV P,LD,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'F'
          L     0,&NDRX
@@ -1767,10 +1775,10 @@
          CVD   0,ZCVT_PWORK2
          :&LDRP SETA 8
                AWHEN C'P'
-         ZAP   ZCVT_PWORK2(&LDRP),&NDRX    DSHX
+         ZAP   ZCVT_PWORK2(&LDRP),&NDRX    
                AWHEN C'Q'
                    ZC_CONV P,Q,&NDRX
-         STMG  R0,R1,ZCVT_PWORK2    
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2    
          :&LDRP SETA 16
                AWHEN C'Z'
                     :&LDRP SETA &LDR/2+1
@@ -1793,83 +1801,83 @@
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EH,LD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DH,LD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LH,LD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EB,LD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DB,LD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LB,LD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV ED,LD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DD,LD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F0,R0
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F0,ZC_R0
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
          ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDR)
          CVB   0,ZCVT_PWORK
                AIF (&SQ EQ 0)
          LPR   0,0
                AEND
-         ST    0,&NQ
+         ST    0,&NQ_ST
                AWHEN C'G'
          ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDR)
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                ZC_CONV Q,LD
                AIF (&SQ EQ 0)
          LPGR  0,1
                AEND
-         STG   0,&NQ
+         STG   0,&NQ_ST
                AWHEN C'H'
          ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDR)
          CVB   0,ZCVT_PWORK
                AIF (&SQ EQ 0)
          LPR   0,0
                AEND
-         STH   0,&NQ
+         STH   0,&NQ_ST
                AWHEN C'P'
          ZAP   &NQ,ZCVT_PWORK4(&LDDP)
                AIF (&SQ EQ 0)
@@ -1880,10 +1888,10 @@
                AIF (&SQ EQ 0)
          OI    ZCVT_PWORK1+15,X'F'
                AEND
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV Q,LD
-         STMG  R0,R1,&NQ
+         STMG  ZC_R0,ZC_R1,&NQ_ST
                AWHEN C'Z'
                ZC_UNPK31 &NQ,&LNQ,&SQ,ZCVT_PWORK4,&LDDP
                AELSE
@@ -1904,83 +1912,83 @@
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EH,LD
-         STE   F0,&NR
+         STE   ZC_F0,&NR_ST
                AWHEN C'2'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DH,LD
-         STD   F0,&NR
+         STD   ZC_F0,&NR_ST
                AWHEN C'3'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LH,LD
-         STD   F0,&NR
-         STD   F2,8+&NR
+         STD   ZC_F0,&NR_ST
+         STD   ZC_F2,8+&NR_ST
                AWHEN C'4'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EB,LD
-         STE   F0,&NR
+         STE   ZC_F0,&NR_ST
                AWHEN C'5'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DB,LD
-         STD   F0,&NR
+         STD   ZC_F0,&NR_ST
                AWHEN C'6'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LB,LD
-         STD   F0,&NR
-         STD   F2,8+&NR
+         STD   ZC_F0,&NR_ST
+         STD   ZC_F2,8+&NR_ST
                AWHEN C'7'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV ED,LD
-         STE   F0,&NR
+         STE   ZC_F0,&NR_ST
                AWHEN C'8'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DD,LD
-         STD   F0,&NR
+         STD   ZC_F0,&NR_ST
                AWHEN C'9'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F0,R0
-         STD   F0,&NR
-         STD   F2,8+&NR
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F0,ZC_R0
+         STD   ZC_F0,&NR_ST
+         STD   ZC_F2,8+&NR_ST
                AWHEN C'F'
          ZAP   ZCVT_PWORK,&RX                         
          CVB   0,ZCVT_PWORK
                AIF (&SQ EQ 0)
          LPR   0,0
                AEND
-         ST    0,&NR
+         ST    0,&NR_ST
                AWHEN C'G'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
@@ -1989,14 +1997,14 @@
                AIF (&SQ EQ 0)
          LPGR  0,0
                AEND
-         STG   0,&NR
+         STG   0,&NR_ST
                AWHEN C'H'
          ZAP   ZCVT_PWORK,&RX                         
          CVB   0,ZCVT_PWORK
                AIF (&SQ EQ 0)
          LPR   0,0
                AEND
-         STH   0,&NR
+         STH   0,&NR_ST
                AWHEN C'P'
          ZAP   &NR,&RX                         
                AIF (&SQ EQ 0)
@@ -2009,10 +2017,10 @@
                AIF (&SQ EQ 0)
          OI    ZCVT_PWORK2+15,X'F'
                AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV Q,LD
-         STMG  0,1,&NR
+         STMG  0,1,&NR_ST
                AWHEN C'Z'
                  AIF (&LDRP EQ 16)
                    ZC_UNPK31 &NR,&LNR,&SR,ZCVT_PWORK2,16
@@ -2025,72 +2033,73 @@
                AEND
              AEND
 .*
-.* DIVIDE DIVIDEND TYPE Q WITH QUOTIENT IN R2-R3 AND REMAINDER IN R0-R1
+.* DIVIDE DIVIDEND TYPE Q WITH QUOTIENT IN ZC_R2-ZC_R3 
+.* AND REMAINDER IN ZC_R0-ZC_R1
 .*
          AWHEN C'Q'
          MVC   ZCVT_NDDX,&NDDX
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV Q,EH,&NDRX
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AWHEN C'2'
                  ZC_CONV Q,DH,&NDRX
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AWHEN C'3'          
                  ZC_CONV Q,LH,&NDRX
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AWHEN C'4'
                  ZC_CONV Q,EB,&NDRX
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AWHEN C'5'
                  ZC_CONV Q,DB,&NDRX
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AWHEN C'6'
                  ZC_CONV Q,LB,&NDRX
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AWHEN C'7'
                  ZC_CONV Q,ED,&NDRX
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AWHEN C'8'
                  ZC_CONV Q,DD,&NDRX
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AWHEN C'9'
                  ZC_CONV Q,LD,&NDRX
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AWHEN C'F'
-         LGF   R3,&NDRX
-         SGR   R2,R2
+         LGF   ZC_R3,&NDRX
+         SGR   ZC_R2,ZC_R2
                AWHEN C'G'
-         LG    R3,&NDRX
-         SGR   R2,R2
+         LG    ZC_R3,&NDRX
+         SGR   ZC_R2,ZC_R2
                AWHEN C'H'
-         LGH   R3,&NDRX
-         SGR   R2,R2
+         LGH   ZC_R3,&NDRX
+         SGR   ZC_R2,ZC_R2
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&NDRX
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                ZC_CONV Q,LD
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AWHEN C'Q'
-         LMG   R2,R3,&NDRX
+         LMG   ZC_R2,ZC_R3,&NDRX
                AWHEN C'Z'
                ZC_PACK31 ZCVT_PWORK2,16,&NDRX,&LDR
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                ZC_CONV Q,LD
-         LGR   R2,R0
-         LGR   R3,R1
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
                AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
                     MEXIT
@@ -2098,65 +2107,65 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDING NOT SUPPORTED YET'
                AEND
-         LMG   R0,R1,ZCVT_NDDX
+         LMG   ZC_R0,ZC_R1,ZCVT_NDDX
                     ACALL SFT_RND_Q
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
                AEND
 .*
-.* STORE TYPE Q REMAINDER FROM R0-R1                            
+.* STORE TYPE Q REMAINDER FROM ZC_R0-ZC_R1                            
 .*
              AIF (&SR EQ 0)
-               ZC_LPQR R0,R0
+               ZC_LPQR ZC_R0,ZC_R0
              AEND
              AIF ('&TR' NE '')
                ACASE (C2A('&TR'))  
                AWHEN C'1'
                  ZC_CONV EH,Q
-         STE   F0,&NR
+         STE   ZC_F0,&NR_ST
                AWHEN C'2'
                  ZC_CONV DH,Q
-         STD   F0,&NR
+         STD   ZC_F0,&NR_ST
                AWHEN C'3'
                  ZC_CONV LH,Q
-         STD   F0,&NR
-         STD   F2,8+&NR
+         STD   ZC_F0,&NR_ST
+         STD   ZC_F2,8+&NR_ST
                AWHEN C'4'
                  ZC_CONV EB,Q
-         STE   F0,&NR
+         STE   ZC_F0,&NR_ST
                AWHEN C'5'
                  ZC_CONV DB,Q
-         STD   F0,&NR
+         STD   ZC_F0,&NR_ST
                AWHEN C'6'
                  ZC_CONV LB,Q
-         STD   F0,&NR
-         STD   F2,8+&NR
+         STD   ZC_F0,&NR_ST
+         STD   ZC_F2,8+&NR_ST
                AWHEN C'7'
                  ZC_CONV ED,Q
-         STE   F0,&NR
+         STE   ZC_F0,&NR_ST
                AWHEN C'8'
                  ZC_CONV DD,Q
-         STD   F0,&NR
+         STD   ZC_F0,&NR_ST
                AWHEN C'9'
                  ZC_CONV LD,Q
-         STD   F0,&NR
-         STD   F2,8+&NR
+         STD   ZC_F0,&NR_ST
+         STD   ZC_F2,8+&NR_ST
                AWHEN C'F'
-         ST    R1,&NR         IGNORE HIGH 96
+         ST    ZC_R1,&NR_ST         IGNORE HIGH 96
                AWHEN C'G'
-         STG   R1,&NR         IGNORE HIGH 64
+         STG   ZC_R1,&NR_ST         IGNORE HIGH 64
                AWHEN C'H'
-         STH   R1,&NR      IGNORE HIGH 112 BITS
+         STH   ZC_R1,&NR_ST      IGNORE HIGH 112 BITS
                AWHEN C'P'
                  ZC_CONV P,Q
-         STMG  R0,R1,ZCVT_PWORK1
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK1
          ZAP   &NR,ZCVT_PWORK1
                AWHEN C'Q'
-         STMG  R0,R1,&NR
+         STMG  ZC_R0,ZC_R1,&NR_ST
                AWHEN C'Z'
                  ZC_CONV P,Q
-         STMG  R0,R1,ZCVT_PWORK1
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK1
                  ZC_UNPK31 &NR,&LR,&SR,ZCVT_PWORK1,16
                AELSE
                    MNOTE 8,'GEN_DIV INVALID REMAINDER TYPE &TR'
@@ -2164,79 +2173,79 @@
                AEND
              AEND
 .*
-.* STORE TYPE Q QUOTIENT FROM R2-R3
+.* STORE TYPE Q QUOTIENT FROM ZC_R2-ZC_R3
 .*
                AIF (&SQ EQ 0)
-                ZC_LPQR  R2,R2
+                ZC_LPQR  ZC_R2,ZC_R2
                AEND
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                  ZC_CONV EH,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                  ZC_CONV DH,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                  ZC_CONV LH,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                  ZC_CONV EB,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                  ZC_CONV DB,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                  ZC_CONV LB,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                  ZC_CONV ED,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                  ZC_CONV DD,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                  ZC_CONV LD,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
-         ST    R3,&NQ
+         ST    ZC_R3,&NQ_ST
                AWHEN C'G'
-         STG   R3,&NQ
+         STG   ZC_R3,&NQ_ST
                AWHEN C'H'
-         STH   R3,&NQ
+         STH   ZC_R3,&NQ_ST
                AWHEN C'P'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                ZC_CONV P,Q
-         STMG  R0,R1,ZCVT_PWORK1
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK1
          ZAP   &NQ,ZCVT_PWORK1
                AWHEN C'Q'
-         STMG  R2,R3,&NQ
+         STMG  ZC_R2,ZC_R3,&NQ_ST
                AWHEN C'Z'
-         LGR   R0,R2
-         LGR   R1,R3
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
                ZC_CONV P,Q      
-         STMG  R0,R1,ZCVT_PWORK1
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK1
                ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK1,16
                AELSE
                    MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
@@ -2252,39 +2261,39 @@
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV P,EH,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16
                AWHEN C'2'
                  ZC_CONV P,DH,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'3'          
                  ZC_CONV P,LH,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'4'
                  ZC_CONV P,EB,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'5'
                  ZC_CONV P,DB,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'6'
                  ZC_CONV P,LB,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'7'
                  ZC_CONV P,ED,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'8'
                  ZC_CONV P,DD,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'9'
                  ZC_CONV P,LD,&NDRX
-         STMG    R0,R2,ZCVT_PWORK2
+         STMG    ZC_R0,ZC_R2,ZCVT_PWORK2
          :&LDRP SETA 16                 
                AWHEN C'F'
          L     0,&NDRX
@@ -2303,7 +2312,7 @@
          ZAP    ZCVT_PWORK2(&LDRP),&NDRX
                AWHEN C'Q'
                  ZC_CONV P,Q,&NDRX
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          :&LDRP SETA 16        
                AWHEN C'Z'
                     :&LDRP SETA &LDRZ/2+1
@@ -2326,81 +2335,81 @@
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EH,LD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DH,LD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LH,LD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EB,LD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DB,LD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LB,LD
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV ED,LD
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DD,LD
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
          ZAP   ZCVT_PWORK2,ZCVT_PWORK4(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F0,R0
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F0,ZC_R0
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
          ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDDP)
          CVB   0,ZCVT_PWORK
                AIF (&SQ EQ 0)
          LPR   0,0
                AEND
-         ST    0,&NQ
+         ST    0,&NQ_ST
                AWHEN C'G'
          ZAP   ZCVT_PWORK1,ZCVT_PWORK4(&LDDP)
          CVBG  0,ZCVT_PWORK1
                AIF (&SQ EQ 0)
          LPGR  0,0
                AEND
-         STG   0,&NQ
+         STG   0,&NQ_ST
                AWHEN C'H'
          ZAP   ZCVT_PWORK,ZCVT_PWORK4(&LDDP)
          CVB   0,ZCVT_PWORK
                AIF (&SQ EQ 0)
          LPR   0,0
                AEND
-         STH   0,&NQ
+         STH   0,&NQ_ST
                AWHEN C'P'
          ZAP   &NQ,ZCVT_PWORK4(&LDDP)
                AIF (&SQ EQ 0)
@@ -2411,10 +2420,10 @@
                AIF (&SQ EQ 0)
          OI    ZCVT_PWORK1+15,X'F'
                AEND
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                   ZC_CONV Q,LD
-         STMG  R0,R1,&NQ
+         STMG  ZC_R0,ZC_R1,&NQ_ST
                AWHEN C'Z'
                ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK4,&LDDP
                AELSE
@@ -2435,83 +2444,83 @@
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EH,LD
-         STE   F0,&NR
+         STE   ZC_F0,&NR_ST
                AWHEN C'2'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DH,LD
-         STD   F0,&NR
+         STD   ZC_F0,&NR_ST
                AWHEN C'3'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LH,LD
-         STD   F0,&NR
-         STD   F2,8+&NR
+         STD   ZC_F0,&NR_ST
+         STD   ZC_F2,8+&NR_ST
                AWHEN C'4'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EB,LD
-         STE   F0,&NR
+         STE   ZC_F0,&NR_ST
                AWHEN C'5'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DB,LD
-         STD   F0,&NR
+         STD   ZC_F0,&NR_ST
                AWHEN C'6'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LB,LD
-         STD   F0,&NR
-         STD   F2,8+&NR
+         STD   ZC_F0,&NR_ST
+         STD   ZC_F2,8+&NR_ST
                AWHEN C'7'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV ED,LD
-         STE   F0,&NR
+         STE   ZC_F0,&NR_ST
                AWHEN C'8'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DD,LD
-         STD   F0,&NR
+         STD   ZC_F0,&NR_ST
                AWHEN C'9'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
        AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F0,R0
-         STD   F0,&NR
-         STD   F2,8+&NR
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F0,ZC_R0
+         STD   ZC_F0,&NR_ST
+         STD   ZC_F2,8+&NR_ST
                AWHEN C'F'
          ZAP   ZCVT_PWORK,&RX                                  
          CVB   0,ZCVT_PWORK
                AIF (&SQ EQ 0)
          LPR   0,0
                AEND
-         STD   0,&NR
+         STD   0,&NR_ST
                AWHEN C'G'
        AIF   (&LDRP NE 16)
          ZAP   ZCVT_PWORK2,&RX                       
@@ -2520,14 +2529,14 @@
                AIF (&SQ EQ 0)
          LPGR  0,0
                AEND
-         STG   0,&NR
+         STG   0,&NR_ST
                AWHEN C'H'
          ZAP   ZCVT_PWORK,&RX                                  
          CVB   0,ZCVT_PWORK
                AIF (&SQ EQ 0)
          LPR   0,0
                AEND
-         STH   0,&NR
+         STH   0,&NR_ST
                AWHEN C'P'
          ZAP   &NR,&RX                                  
                AIF (&SQ EQ 0)
@@ -2540,10 +2549,10 @@
                AIF (&SQ EQ 0)
          OI    ZCVT_PWORK2+15,X'F'
                AEND
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV Q,LD
-         STMG  R0,R1,&NR
+         STMG  ZC_R0,ZC_R1,&NR_ST
                AWHEN C'Z'
                  AIF (&LDRP EQ 16)
                    ZC_UNPK31 &NR,&LR,&SR,ZCVT_PWORK2,16
@@ -2564,88 +2573,88 @@
          AEND
          MEXIT
 .*
-.* STORE TYPE F/H QUOTIENT FROM R1 AND REMAINDER FROM R0
+.* STORE TYPE F/H QUOTIENT FROM ZC_R1 AND REMAINDER FROM ZC_R0
 .*
          AENTRY STORE_FH_QR
                AIF   ('&TR' NE '')
-         ST    R0,ZCVT_WORKAREA  SAVE REMAINDER
+         ST    ZC_R0,ZCVT_WORKAREA  SAVE REMAINDER
                AEND
                AIF (&SQ EQ 0)
          LPR   1,1
                AEND
                ACASE (C2A('&TQ'))  
                AWHEN C'1'
-         LGFR  R1,R1
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R1
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV EH,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LGFR  R1,R1
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R1
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV DH,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LGFR  R1,R1
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R1
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV LH,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LGFR  R1,R1
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R1
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV EB,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LGFR  R1,R1
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R1
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV DB,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LGFR  R1,R1
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R1
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV LB,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LGFR  R1,R1
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R1
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV ED,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LGFR  R1,R1
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R1
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV DD,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LGFR  R1,R1
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R1
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV LD,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
-         ST    1,&NQ
+         ST    1,&NQ_ST
                AWHEN C'G'
          LGFR  1,1
-         STG   1,&NQ
+         STG   1,&NQ_ST
                AWHEN C'H'
-         STH   1,&NQ
+         STH   1,&NQ_ST
                AWHEN C'P'
          CVD   1,ZCVT_PWORK
          ZAP   &NQ,ZCVT_PWORK
                AWHEN C'Q'
          LGFR  1,1
-         LGR   R0,R1
-         SRAG  R0,R0,63
-         STMG  R0,R1,&NQ
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
+         STMG  ZC_R0,ZC_R1,&NQ_ST
                AWHEN C'Z'
          CVD   1,ZCVT_PWORK
                ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK,8
@@ -2654,86 +2663,86 @@
                    MEXIT
                AEND
 .*
-.* STORE TYPE F/H REMAINDER FROM R0
+.* STORE TYPE F/H REMAINDER FROM ZC_R0
 .*
              AIF ('&TR' NE '')
-         L     R0,ZCVT_WORKAREA RESTORE REMAINDER
+         L     ZC_R0,ZCVT_WORKAREA RESTORE REMAINDER
                AIF (&SR EQ 0)
          LPR   0,0
                AEND
                ACASE (C2A('&TR'))  
                AWHEN C'1'
-         LGFR  R1,R0
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R0
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV EH,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'2'
-         LGFR  R1,R0
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R0
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV DH,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'3'
-         LGFR  R1,R0
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R0
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV LH,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'4'
-         LGFR  R1,R0
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R0
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV EB,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'5'
-         LGFR  R1,R0
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R0
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV DB,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'6'
-         LGFR  R1,R0
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R0
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV LB,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'7'
-         LGFR  R1,R0
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R0
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV ED,Q
-         STE   F0,&NQ
+         STE   ZC_F0,&NQ_ST
                AWHEN C'8'
-         LGFR  R1,R0
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R0
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV DD,Q
-         STD   F0,&NQ
+         STD   ZC_F0,&NQ_ST
                AWHEN C'9'
-         LGFR  R1,R0
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGFR  ZC_R1,ZC_R0
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                  ZC_CONV LD,Q
-         STD   F0,&NQ
-         STD   F2,8+&NQ
+         STD   ZC_F0,&NQ_ST
+         STD   ZC_F2,8+&NQ_ST
                AWHEN C'F'
-         ST    0,&NR
+         ST    0,&NR_ST
                AWHEN C'G'
          LGFR  0,0
-         STG   0,&NR
+         STG   0,&NR_ST
                AWHEN C'H'
-         STH   0,&NR
+         STH   0,&NR_ST
                AWHEN C'P'
          CVD   0,ZCVT_PWORK
          ZAP   &NR,ZCVT_PWORK
                AWHEN C'Q'
-         LGFR  R1,R0
-         LGR   R0,R1
-         SRAG  R0,R0,63
-         STMG  R0,R1,&NR
+         LGFR  ZC_R1,ZC_R0
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
+         STMG  ZC_R0,ZC_R1,&NR_ST
                AWHEN C'Z'
          CVD   0,ZCVT_PWORK
                ZC_UNPK31 &NR,&LR,&SR,ZCVT_PWORK,8
@@ -2744,222 +2753,222 @@
              AEND
          AEND
 .*
-.* SHIFT, DIVIDE, AND ROUND TYPE EH F0,F1 
+.* SHIFT, DIVIDE, AND ROUND TYPE EH ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_EH
        :&SFT SETA &PQ-&PDR
        AIF   (&SFT GT 0)
-         LARL  R15,=EH'1E&SFT'
-         ME    0,0(R15)
+         LARL  ZC_R15,=EH'1E&SFT'
+         ME    0,0(ZC_R15)
        AELSEIF (&SFT LT 0)
-         LARL  R15,=EH'1E-&SFT'
-         ME    0,0(R15)
+         LARL  ZC_R15,=EH'1E-&SFT'
+         ME    0,0(ZC_R15)
        AEND
          DER   0,1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LARL  R15,=E'0.5'
-         AE    0,0(R15)
+         LARL  ZC_R15,=E'0.5'
+         AE    0,0(ZC_R15)
          AEND
      AEND
 .*
-.* SHIFT,DIVIDE, AND ROUND TYPE DH F0,F1 
+.* SHIFT,DIVIDE, AND ROUND TYPE DH ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_DH
        :&SFT SETA &PQ-&PDR
        AIF   (&SFT GT 0)
-         LARL  R15,=DH'1E&SFT'
-         MD    0,0(R15)
+         LARL  ZC_R15,=DH'1E&SFT'
+         MD    0,0(ZC_R15)
        AELSEIF (&SFT LT 0)
-         LARL  R15,=DH'1E-&SFT'
-         MD    0,0(R15)
+         LARL  ZC_R15,=DH'1E-&SFT'
+         MD    0,0(ZC_R15)
        AEND
          DDR   0,1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LARL  R15,=D'0.5'
-         AD    0,0(R15)
+         LARL  ZC_R15,=D'0.5'
+         AD    0,0(ZC_R15)
          AEND
      AEND
 .*
-.* SHIFT,DIVIDE, AND ROUND TYPE LH F0-F2 BY F1=F3
+.* SHIFT,DIVIDE, AND ROUND TYPE LH ZC_F0-ZC_F2 BY ZC_F1=ZC_F3
 .*
      AENTRY SFT_RND_LH
        :&SFT SETA &PQ-&PDR
        AIF   (&SFT GT 0)
-         LARL  R15,=LH'1E&SFT'
-         LD    F4,0(R15)
-         LD    F6,8(R15)
-         MXR   F0,F6
+         LARL  ZC_R15,=LH'1E&SFT'
+         LD    ZC_F4,0(ZC_R15)
+         LD    ZC_F6,8(ZC_R15)
+         MXR   ZC_F0,ZC_F6
        AELSEIF (&SFT LT 0)
-         LARL  R15,=LH'1E-&SFT'
-         LD    F4,0(R15)
-         LD    F6,8(R15)
-         MXR   F0,F6
+         LARL  ZC_R15,=LH'1E-&SFT'
+         LD    ZC_F4,0(ZC_R15)
+         LD    ZC_F6,8(ZC_R15)
+         MXR   ZC_F0,ZC_F6
        AEND
-         DXR   F0,F1
+         DXR   ZC_F0,ZC_F1
         AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LARL  R15,=LH'0.5'
-         LD    F4,0(R15)
-         LD    F6,8(R15)
-         AXR   F0,F6
+         LARL  ZC_R15,=LH'0.5'
+         LD    ZC_F4,0(ZC_R15)
+         LD    ZC_F6,8(ZC_R15)
+         AXR   ZC_F0,ZC_F6
         AEND
      AEND
 .*
-.* SHIFT, DIVIDE, AND ROUND TYPE EB F0,F1 
+.* SHIFT, DIVIDE, AND ROUND TYPE EB ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_EB
        :&SFT SETA &PQ-&PDR
        AIF   (&SFT GT 0)
-         LARL  R15,=EB'1E&SFT'
-         MEB   0,0(R15)
+         LARL  ZC_R15,=EB'1E&SFT'
+         MEB   0,0(ZC_R15)
        AELSEIF (&SFT LT 0)
-         LARL  R15,=EB'1E-&SFT'
-         MEB   0,0(R15)
+         LARL  ZC_R15,=EB'1E-&SFT'
+         MEB   0,0(ZC_R15)
        AEND
          DEBR  0,1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LARL  R15,=EB'0.5'
-         AEB   0,0(R15)
+         LARL  ZC_R15,=EB'0.5'
+         AEB   0,0(ZC_R15)
          AEND
      AEND
 .*
-.* SHIFT,DIVIDE, AND ROUND TYPE DB F0,F1 
+.* SHIFT,DIVIDE, AND ROUND TYPE DB ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_DB 
        :&SFT SETA &PQ-&PDR
        AIF   (&SFT GT 0)
-         LARL  R15,=DB'1E&SFT'
-         MDB   0,0(R15)
+         LARL  ZC_R15,=DB'1E&SFT'
+         MDB   0,0(ZC_R15)
        AELSEIF (&SFT LT 0)
-         LARL  R15,=DB'1E-&SFT'
-         MDB   0,0(R15)
+         LARL  ZC_R15,=DB'1E-&SFT'
+         MDB   0,0(ZC_R15)
        AEND
          DDBR  0,1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LARL  R15,=D'0.5'
-         ADB   0,0(R15)
+         LARL  ZC_R15,=D'0.5'
+         ADB   0,0(ZC_R15)
          AEND
      AEND
 .*
-.* SHIFT,DIVIDE, AND ROUND TYPE LB F0-F2 BY F1=F3
+.* SHIFT,DIVIDE, AND ROUND TYPE LB ZC_F0-ZC_F2 BY ZC_F1=ZC_F3
 .*
      AENTRY SFT_RND_LB
        :&SFT SETA &PQ-&PDR
        AIF   (&SFT GT 0)
-         LARL  R15,=LH'1E&SFT'
-         LD    F4,0(R15)
-         LD    F6,8(R15)
-         MXBR  F0,F6
+         LARL  ZC_R15,=LH'1E&SFT'
+         LD    ZC_F4,0(ZC_R15)
+         LD    ZC_F6,8(ZC_R15)
+         MXBR  ZC_F0,ZC_F6
        AELSEIF (&SFT LT 0)
-         LARL  R15,=LH'1E-&SFT'
-         LD    F4,0(R15)
-         LD    F6,8(R15)
-         MXBR  F0,F6
+         LARL  ZC_R15,=LH'1E-&SFT'
+         LD    ZC_F4,0(ZC_R15)
+         LD    ZC_F6,8(ZC_R15)
+         MXBR  ZC_F0,ZC_F6
        AEND
-         DXBR  F0,F1
+         DXBR  ZC_F0,ZC_F1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LARL  R15,=LH'0.5'
-         LD    F4,0(R15)
-         LD    F6,8(R15)
-         AXBR  F0,F6
+         LARL  ZC_R15,=LH'0.5'
+         LD    ZC_F4,0(ZC_R15)
+         LD    ZC_F6,8(ZC_R15)
+         AXBR  ZC_F0,ZC_F6
          AEND
      AEND
 .*
-.* SHIFT, DIVIDE, AND ROUND TYPE ED F0,F1 
+.* SHIFT, DIVIDE, AND ROUND TYPE ED ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_ED
        :&SFT SETA &PQ-&PDR
        AIF   (&SFT GT 0)
-         LARL  R15,=DD'1E&SFT'
-         LD    F4,0(R15)
-         MDTR  F0,F4
+         LARL  ZC_R15,=DD'1E&SFT'
+         LD    ZC_F4,0(ZC_R15)
+         MDTR  ZC_F0,ZC_F4
        AELSEIF (&SFT LT 0)
-         LARL  R15,=DD'1E-&SFT'
-         LD    F4,0(R15)
-         MDTR  F0,F4
+         LARL  ZC_R15,=DD'1E-&SFT'
+         LD    ZC_F4,0(ZC_R15)
+         MDTR  ZC_F0,ZC_F4
        AEND
-         DDTR  F0,F0,F1
+         DDTR  ZC_F0,ZC_F0,ZC_F1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LARL  R15,=DD'0.5'
-         LD    F4,0(R15)
-         ADTR  F0,F4
-         LEDTR F0,F0,0
+         LARL  ZC_R15,=DD'0.5'
+         LD    ZC_F4,0(ZC_R15)
+         ADTR  ZC_F0,ZC_F4
+         LEDTR ZC_F0,ZC_F0,0
          AEND
      AEND
 .*
-.* SHIFT,DIVIDE, AND ROUND TYPE DD F0,F1 
+.* SHIFT,DIVIDE, AND ROUND TYPE DD ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_DD 
        :&SFT SETA &PQ-&PDR
        AIF   (&SFT GT 0)
-         LRL   F4,=DD'1E&SFT'
-         MDTR  F0,F0,F4
+         LRL   ZC_F4,=DD'1E&SFT'
+         MDTR  ZC_F0,ZC_F0,ZC_F4
        AELSEIF (&SFT LT 0)
-         LRL   F4,=DD'1E-&SFT'
-         MDTR  F0,F0,F4
+         LRL   ZC_F4,=DD'1E-&SFT'
+         MDTR  ZC_F0,ZC_F0,ZC_F4
        AEND
-         DDTR  F0,F0,F1
+         DDTR  ZC_F0,ZC_F0,ZC_F1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LRL   F4,=DD'0.5'
-         ADTR  F0,F0,F4
+         LRL   ZC_F4,=DD'0.5'
+         ADTR  ZC_F0,ZC_F0,ZC_F4
          AEND
      AEND
 .*
-.* SHIFT,DIVIDE, AND ROUND TYPE LD F0-F2 BY F1=F3
+.* SHIFT,DIVIDE, AND ROUND TYPE LD ZC_F0-ZC_F2 BY ZC_F1=ZC_F3
 .*
      AENTRY SFT_RND_LD
        :&SFT SETA &PQ-&PDR
        AIF   (&SFT GT 0)
-         LARL  R15,=LD'1E&SFT'
-         LD    F4,0(R15)
-         LD    F6,8(R15)
-         MXTR  F0,F0,F6
+         LARL  ZC_R15,=LD'1E&SFT'
+         LD    ZC_F4,0(ZC_R15)
+         LD    ZC_F6,8(ZC_R15)
+         MXTR  ZC_F0,ZC_F0,ZC_F6
        AELSEIF (&SFT LT 0)
-         LARL  R15,=LD'1E-&SFT'
-         LD    F4,0(R15)
-         LD    F6,8(R15)
-         MXTR  F0,F0,F6
+         LARL  ZC_R15,=LD'1E-&SFT'
+         LD    ZC_F4,0(ZC_R15)
+         LD    ZC_F6,8(ZC_R15)
+         MXTR  ZC_F0,ZC_F0,ZC_F6
        AEND
-         DXTR  F0,F0,F1
+         DXTR  ZC_F0,ZC_F0,ZC_F1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LARL  R15,=LD'0.5'
-         LD    F4,0(R15)
-         LD    F6,8(R15)
-         AXTR  F0,F6
+         LARL  ZC_R15,=LD'0.5'
+         LD    ZC_F4,0(ZC_R15)
+         LD    ZC_F6,8(ZC_R15)
+         AXTR  ZC_F0,ZC_F6
          AEND
      AEND
 .*
-.* SHIFT, DIVIDE, AND ROUND TYPE F R0,R2 (ALSO USED FOR H) 
+.* SHIFT, DIVIDE, AND ROUND TYPE F ZC_R0,ZC_R2 (ALSO USED FOR H) 
 .*
      AENTRY SFT_RND_F
        :&SFT SETA &PQ-(&PDD-&PDR)
        AIF   (&SFT GT 0)
-         LARL  R15,=F'1E&SFT'
-         MS    1,0(R15)
+         LARL  ZC_R15,=F'1E&SFT'
+         MS    1,0(ZC_R15)
        AELSEIF (&SFT LT 0)
-         LARL  R15,=F'1E&SFT'
-         MS    2,0(R15)
+         LARL  ZC_R15,=F'1E&SFT'
+         MS    2,0(ZC_R15)
        AEND
          SR    0,0
          DR    0,2
          AIF   (&ROUNDED EQ 1)
-         BRAS  R14,ZC_RND_F
+         BRAS  ZC_R14,ZC_RND_F
          AEND
      AEND
 .*
-.* SHIFT, DIVIDE, AND ROUND TYPE G R0,R2
+.* SHIFT, DIVIDE, AND ROUND TYPE G ZC_R0,ZC_R2
 .*
      AENTRY SFT_RND_G
        :&SFT SETA &PQ-(&PDD-&PDR)
        AIF   (&SFT GT 0)
-         LARL  R15,=FL8'1E&SFT'
-         MSG   1,0(R15)
+         LARL  ZC_R15,=FL8'1E&SFT'
+         MSG   1,0(ZC_R15)
        AELSEIF (&SFT LT 0)
-         LARL  R15,=FL8'1E&SFT'
-         MSG   2,0(R15)
+         LARL  ZC_R15,=FL8'1E&SFT'
+         MSG   2,0(ZC_R15)
        AEND
          DSGR    0,2
          AIF   (&ROUNDED EQ 1)
-         BRAS  R14,ZC_RND_G
+         BRAS  ZC_R14,ZC_RND_G
          AEND
      AEND
 .*
@@ -2981,14 +2990,14 @@
          DP    ZCVT_PWORK4(&LDDP+&LDRP),ZCVT_PWORK2(&LDRP)
           AIF (&SFT LT 0)
            AIF   (&ROUNDED EQ 1)
-         SRP   ZCVT_PWORK4(&LDDP),-&SFT,5      
+         SRP   ZCVT_PWORK4(&LDDP),32-&SFT,5 RPI 1065     
                  AIF   (&LR GT 0)
-         SRP   ZCVT_PWORK4+&LDDP.(&LDRP),-&SFT,5
+         SRP   ZCVT_PWORK4+&LDDP.(&LDRP),32-&SFT,5 RPI 1065
                  AEND
            AELSE
-         SRP   ZCVT_PWORK4(&LDDP),-&SFT,0      
+         SRP   ZCVT_PWORK4(&LDDP),32-&SFT,0 RPI 1065     
                AIF   (&LR GT 0)
-         SRP   ZCVT_PWORK4+&LDDP.(&LDRP),-&SFT,0
+         SRP   ZCVT_PWORK4+&LDDP.(&LDRP),32-&SFT,0 RPI 1065
                AEND
            AEND
           AEND
@@ -2999,25 +3008,25 @@
 .*
          AENTRY DFP_DIVP
        AIF   (&LDDP EQ 16)
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F0,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F0,ZC_R0
        AELSE
          ZAP   ZCVT_PWORK4,ZCVT_PWORK1(&LDDP)
-         LMG   R0,R1,ZCVT_PWORK4
-         CXSTR F0,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK4
+         CXSTR ZC_F0,ZC_R0
        AEND
        AIF   (&LDRP EQ 16)
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F1,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F1,ZC_R0
        AELSE
          ZAP   ZCVT_PWORK4,ZCVT_PWORK2(&LDRP)
-         LMG   R0,R1,ZCVT_PWORK4
-         CXSTR F1,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK4
+         CXSTR ZC_F1,ZC_R0
        AEND
-         DXTR  F0,F0,F1
-         L     R15,ZCVT_CVTLDTP
-         BASR  R14,R15
-         STMG  R0,R1,ZCVT_PWORK4                   PW4=QUOTIENT
+         DXTR  ZC_F0,ZC_F0,ZC_F1
+         L     ZC_R15,ZCVT_CVTLDTP
+         BASR  ZC_R14,ZC_R15
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK4                   PW4=QUOTIENT
        AIF ('&TR' NE '')
          ZAP   ZCVT_PWORK3,ZCVT_PWORK4        
          MP    ZCVT_PWORK3,ZAP,ZCVT_PWORK2(&LDRP)  PW3=QUOTIENT*DIVISOR
@@ -3028,33 +3037,35 @@
        AEND
        AEND
 .*
-.* SHIFT, DIVIDE, AND ROUND TYPE Q R0-R1 BY R2-R3 > RM=R0-R1 Q=R2-R3
+.* SHIFT, DIVIDE, AND ROUND TYPE Q ZC_R0-ZC_R1 
+.* BY ZC_R2-ZC_R3 > RM=ZC_R0-ZC_R1 Q=ZC_R2-ZC_R3
 .*
      AENTRY SFT_RND_Q
        :&SFT SETA &PQ-(&PDD-&PDR)    SAVE DIVISOR
        AIF   (&SFT GT 0)
-         STMG  R2,R3,ZCVT_WORKAREA
-         LARL  R15,=FL16'1E&SFT'                           
-         LMG   R2,R3,0(R15)
-         L     R15,ZCVT_MPYQ128      MPY DIVIDEND 
-         BASR  R14,R15
-         LMG   R2,R3,ZCVT_WORKAREA   REST0RE DIVISOR
+         STMG  ZC_R2,ZC_R3,ZCVT_WORKAREA
+         LARL  ZC_R15,=FL16'1E&SFT'                           
+         LMG   ZC_R2,ZC_R3,0(ZC_R15)
+         L     ZC_R15,ZCVT_MPYQ128      MPY DIVIDEND 
+         BASR  ZC_R14,ZC_R15
+         LMG   ZC_R2,ZC_R3,ZCVT_WORKAREA   REST0RE DIVISOR
        AELSEIF (&SFT LT 0)
-         STMG  R0,R1,ZCVT_WORKAREA   SAVE DIVIDEND
-         LGR   R0,R2
-         LGR   R1,R3
-         LARL  R15,=FL16'1E&SFT'                           
-         LMG   R2,R3,0(R15)
-         L     R15,ZCVT_MPYQ128      MPY DIVISOR
-         BASR  R14,R15
-         LGR   R2,R0
-         LGR   R3,R1
-         LMG   R0,R1,ZCVT_WORKAREA   RESTORE DIVIDEND
+         STMG  ZC_R0,ZC_R1,ZCVT_WORKAREA   SAVE DIVIDEND
+         LGR   ZC_R0,ZC_R2
+         LGR   ZC_R1,ZC_R3
+         LARL  ZC_R15,=FL16'1E&SFT'                           
+         LMG   ZC_R2,ZC_R3,0(ZC_R15)
+         L     ZC_R15,ZCVT_MPYQ128      MPY DIVISOR
+         BASR  ZC_R14,ZC_R15
+         LGR   ZC_R2,ZC_R0
+         LGR   ZC_R3,ZC_R1
+         LMG   ZC_R0,ZC_R1,ZCVT_WORKAREA   RESTORE DIVIDEND
        AEND
-         L     R15,ZCVT_DIVQ128      DIVIDE SCALED DIVIDEND BY QUOTEINT
-         BASR  R14,R15
+         L     ZC_R15,ZCVT_DIVQ128 DIVIDE SCALED DIVIDEND BY QUOTIENT
+         BASR  ZC_R14,ZC_R15
          AIF   (&ROUNDED EQ 1)
-         BRAS  R14,ZC_RND_G                             
+         BRAS  ZC_R14,ZC_RND_G                             
          AEND
      AEND
+         COPY ZCRSTLAB
          MEND

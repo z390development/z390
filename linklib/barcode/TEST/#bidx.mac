@@ -1,0 +1,11 @@
+         MACRO
+&NAME    #BIDX &MASKID
+         LCLC  &MASK
+&MASK    SETC  'MASK'.'&MASKID'
+&NAME    DS    0H -                     #BIDX
+         LR    R0,R5                    XFER COUNT
+         N     R0,&MASK                 ISOLATE DESIRED BIT
+         LTR   R0,R0                    BIT ON?
+         BZ    *+8                       NO - LEAVE BITCOUNT ASIS
+         LA    R6,1(,R6)                 YES - INCR BITCOUNT
+         MEND

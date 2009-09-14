@@ -65,9 +65,9 @@
                  MEXIT
                AEND
                :&VAR_IX SETA &SYM_REF(&DSECT_IX) SYM_IX OF VAR PTR
-         L     R0,&OFF.(R2)          LOAD PARM ADDR FROM PARMLIST IN R2
+         L     ZC_R0,&OFF.(ZC_R2)          LOAD PARM ADDR FROM PARMLIST IN ZC_R2
                GEN_BASE &VAR_IX      GEN R4/R5 WS BASE REG FOR PTR  
-         ST    R0,&SYM_NAME(&VAR_IX) STORE PARM POINTER            
+         ST    ZC_R0,&SYM_NAME(&VAR_IX) STORE PARM POINTER            
                :&OFF SETA &OFF+4
          AELSE
                MNOTE 8,'GEN_PROC PARM NOT FOUND - &USING_PARM'

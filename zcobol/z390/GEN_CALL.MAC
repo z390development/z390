@@ -7,12 +7,13 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 10/14/08 initial coding for Z390 MOVE    
+.* 09/10/09 support literal numbers assuming F type for temp store
 .*********************************************************************
          GEN_CALL &PGM,&USING       
          COPY ZC_WS
          :&NP SETA N'&SYSLIST
        AIF   (&NP EQ 1)
-         SR    R1,R1
+         SR    ZC_R1,ZC_R1
                ACALL CALL_PGM
                MEXIT   
        AEND  
@@ -50,8 +51,8 @@
                             GEN_BASE &PARM_IX
          GEN_BASE &LIST_IX
          GEN_BASE &PARM_IX
-         LA    R0,&SYSLIST(&I+2)
-         ST    R0,&SYM_NAME(&LIST_IX)+&OFF
+         LA    ZC_R0,&SYSLIST(&I+2)
+         ST    ZC_R0,&SYM_NAME(&LIST_IX)+&OFF
                             :&OFF SETA &OFF+4               
                             :&I   SETA &I+3
                         AELSE
@@ -72,38 +73,45 @@
                ME(&PARM_IX),&PARM_IX
          GEN_BASE &LIST_IX
          GEN_BASE &VAR_IX
-         LA    R0,&SYM_NAME(&VAR_IX)
-         ST    R0,&SYM_NAME(&LIST_IX)+&OFF
+         LA    ZC_R0,&SYM_NAME(&VAR_IX)
+         ST    ZC_R0,&SYM_NAME(&LIST_IX)+&OFF
                             :&OFF SETA &OFF+4               
                             :&I  SETA &I+3
                         AELSE
-                            MNOTE 8,'GEN_CALL PARM NOT FOUND - &SYSLISTX
-               (&I+2)'
-                            MEXIT
+                            GEN_VAR ZC_CALL_VALUE_&VAR_TOT,F,4
+               E(&PARM_IX),&SYM_LEN(&PARM_IX)
+                            :&VAR_IX SETA &SYM_IX
+                            GEN_BASE &VAR_IX
+                            GEN_MOVE &SYM_NAME(&VAR_IX),&VAR_IX,&SYSLISX
+               T(&I+3),0
+         GEN_BASE &LIST_IX
+         LA    ZC_R0,&SYM_NAME(&VAR_IX)
+         ST    ZC_R0,&SYM_NAME(&LIST_IX)+&OFF
+                            :&OFF SETA &OFF+4               
+                            :&I  SETA &I+3
                         AEND
                    AELSE
                         MNOTE 8,'CALL UNKNOWN TYPE - &SYSLIST(&I+1)'
                         MEXIT
                    AEND
                AELSE
-                   ZC_SYM_FIND &SYSLIST(&I+2)
+                   ZC_SYM_FIND &SYSLIST(&I)
                    AIF (&SYM_IX GT 0)
                        :&PARM_IX SETA &SYM_IX
                        GEN_BASE &LIST_IX
                        GEN_BASE &PARM_IX
-         LA    R0,&SYSLIST(&I+2)
-         ST    R0,&SYM_NAME(&LIST_IX)+&OFF
+         LA    ZC_R0,&SYM_NAME(&PARM_IX)
+         ST    ZC_R0,&SYM_NAME(&LIST_IX)+&OFF
                        :&OFF SETA &OFF+4               
                        :&I  SETA &I+1
                    AELSE
-                       MNOTE 8,'GEN_CALL PARM NOT FOUND - &SYSLIST(&I+2X
-               )'
+                       MNOTE 8,'GEN_CALL PARM NOT FOUND - &SYSLIST(&I)'
                        MEXIT
                    AEND
                AEND
          AEND
          OI    &SYM_NAME(&LIST_IX)+&OFF-4,X'80'
-         LA    R1,&SYM_NAME(&LIST_IX)
+         LA    ZC_R1,&SYM_NAME(&LIST_IX)
          ACALL CALL_PGM
          MEXIT
 .*
@@ -112,8 +120,8 @@
          AENTRY CALL_PGM
        AIF ('&PGM'(1,1) EQ '''')
            :&NAME SETC '&PGM'(2,K'&PGM-2)
-         LRL   R15,=V(&NAME)  
-         BASR  R14,R15
+         LRL   ZC_R15,=V(&NAME)  
+         BASR  ZC_R14,ZC_R15
        AELSE
          ZC_SYM_FIND &PGM
          AIF  (&SYM_IX GT 0)
@@ -122,9 +130,12 @@
               MNOTE 8,'CALL NAME NOT FOUND - &PGM'
               MEXIT
          AEND
-         LA    R0,&PGM
-         L     R15,ZCVT_CALL
-         BASR  R14,R15
+         LA    ZC_R0,&PGM
+         L     ZC_R15,ZCVT_CALL
+         BASR  ZC_R14,ZC_R15
+         ZC_SYM_FIND RETURN_CODE
+         GEN_BASE &SYM_IX
+         STH  ZC_R15,RETURN_CODE
        AEND
          AEND
          MEND

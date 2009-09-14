@@ -14,8 +14,13 @@
 .*
 .* SET LRECL/BLKSI RECORD LENGTH AND/OR BLOCK SIZE 
 .*
-         LA    R0,L'&FILE_RECORD(&FILE_IX)
-         STH   R0,&FILE_NAME(&FILE_IX)+DCBBLKSI-IHADCB
+         AIF   ('&FILE_RECORD(&FILE_IX)' EQ '')
+               MNOTE 8,'GEN_OPEN MISSING RECORD FOR - &FILE_NAME(&FILE_X
+               IX)' 
+               MEXIT
+         AEND
+         LGFI  ZC_R0,L'&FILE_RECORD(&FILE_IX)
+         STH   ZC_R0,&FILE_NAME(&FILE_IX)+DCBBLKSI-IHADCB
 .*
 .* OVERRIDE DDNAME WITH DSNAME IF FILE_DDNAME IS LITERAL FILE SPEC
 .*
@@ -23,21 +28,21 @@
                :&DSN     SETC  '"'.'&FILE_DDNAME(&FILE_IX)'(2,K'&FILE_DX
                DNAME(&FILE_IX)-2).'"' LONG SPACEY FILE NAME IN DQ IN SQ
                AIF   (K'&DSN/2*2 NE K'&DSN)
-         LARL  R0,=C'&DSN ' ADD SPACE TO FORCE EVEN LIT
+         LARL  ZC_R0,=C'&DSN ' ADD SPACE TO FORCE EVEN LIT
                AELSE
-         LARL  R0,=C'&DSN' 
+         LARL  ZC_R0,=C'&DSN' 
                AEND
-         ST    R0,&FILE_NAME(&FILE_IX)+DCBDSNAM-IHADCB
+         ST    ZC_R0,&FILE_NAME(&FILE_IX)+DCBDSNAM-IHADCB
          AEND
 .*
 .* SET MACRF ACCESS TYPE 
 .*
        AIF   ('&TYPE' NE 'OUTPUT')     
-         LARL   R1,=AL2(DCBMACRF_GM)
-         MVC    DCBMACRF-IHADCB+&FILE_NAME(&FILE_IX),0(R1)
+         LARL   ZC_R1,=AL2(DCBMACRF_GM)
+         MVC    DCBMACRF-IHADCB+&FILE_NAME(&FILE_IX),0(ZC_R1)
        AELSE            
-         LARL   R1,=AL2(DCBMACRF_PM)
-         MVC    DCBMACRF-IHADCB+&FILE_NAME(&FILE_IX),0(R1)
+         LARL   ZC_R1,=AL2(DCBMACRF_PM)
+         MVC    DCBMACRF-IHADCB+&FILE_NAME(&FILE_IX),0(ZC_R1)
        AEND
 .*
 .* OPEN DCB USING Z390 ZOPEN WHICH Z390\MAC\OPEN ASLO USES
@@ -45,11 +50,11 @@
          GBLB   &ZC_ABORT
          :&ZC_ABORT SETB 1 REQUEST ABORT ROUTINES
          ZOPEN  (&FILE_NAME(&FILE_IX),(&TYPE))
-         LTR    R15,R15
+         LTR    ZC_R15,ZC_R15
          BRZ    ZC_OPEN_OK_&SYSNDX
-         LHI    R1,3   ABORT DUE TO OPEN FAILED
-         L      R15,ZCVT_ABORT
-         BASR   R14,R15
+         LHI    ZC_R1,3   ABORT DUE TO OPEN FAILED
+         L      ZC_R15,ZCVT_ABORT
+         BASR   ZC_R14,ZC_R15
 ZC_OPEN_OK_&SYSNDX DS 0H
          MEXIT
          MEND

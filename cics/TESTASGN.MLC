@@ -1,0 +1,705 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+         DFHEISTG
+*
+TESTASGN DFHEIENT CODEREG=(R12,R3)
+*
+* TEST ASSIGN
+* INVOKINGPROG AND RETURNPROG TESTED IN TESTBED1/2/3
+*
+* IN ORDER TO GET REPEATABLE SIMULATION RUN, MUST CLEAR THE ASSIGN
+* FIELDS IN THE TCTTE
+         XC    TCTTEABP(TCTTELNA),TCTTEABP CLEAR ASSIGN FIELDS
+         MVC   TCTTEABC,=4C' '    BLANK ANY LAST ABCODE
+         BAL   R9,GETASGN         GET ASSIGN VALUES
+         MVC   ABCODE1,ABCODE     SET ABEND CODE
+         MVC   ABPROG1,ABPROG     SET ABEND PROGRAM
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R5,ASRAPSW         SOURCE ADDRESS
+         LA    R14,ASRAPSW1       DESTINATION ADDRESS
+         LA    R15,8              SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+         MVC   ABDUMP1,=C'00'     DEFAULT ABDUMP
+         CLI   ABDUMP,X'FF'       ABEND WITH DUMP ?
+         BNE   ABD1               EXIT IF NOT
+         MVC   ABDUMP1,=C'FF'     SET ABDUMP
+ABD1     EQU   *
+         EXEC  CICS SEND FROM(ABC1) LENGTH(ABC1L)
+*
+         EXEC  CICS HANDLE ABEND LABEL(ASGNASRA)
+*
+* CAUSE ASRA
+* THIS IS 'REPLACED' BY B AB2
+         DC    H'0'
+*
+AB2      EQU   *
+* ASRA HANDLED OK
+         BAL   R9,GETASGN         GET ASSIGN VALUES
+         MVC   ABCODE2,ABCODE     SET ABEND CODE
+         MVC   ABPROG2,ABPROG     SET ABEND PROGRAM
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R5,ASRAPSW         SOURCE ADDRESS
+         LA    R14,ASRAPSW2       DESTINATION ADDRESS
+         LA    R15,8              SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R5,ASRAREGS        SOURCE ADDRESS
+         LA    R14,SHOWREGS       DESTINATION ADDRESS
+         LA    R15,64             SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+         MVC   REG00,SHOWREGS     MOVE R0
+         MVC   REG01,SHOWREGS+8   MOVE R1
+         MVC   REG02,SHOWREGS+16  MOVE R2
+         MVC   REG03,SHOWREGS+24  MOVE R3
+         MVC   REG04,SHOWREGS+32  MOVE R4
+         MVC   REG05,SHOWREGS+40  MOVE R5
+         MVC   REG06,SHOWREGS+48  MOVE R6
+         MVC   REG07,SHOWREGS+56  MOVE R7
+         MVC   REG08,SHOWREGS+64  MOVE R8
+         MVC   REG09,SHOWREGS+72  MOVE R9
+         MVC   REG10,SHOWREGS+80  MOVE R10
+         MVC   REG11,SHOWREGS+88  MOVE R11
+         MVC   REG12,SHOWREGS+96  MOVE R12
+         MVC   REG13,SHOWREGS+104 MOVE R13
+         MVC   REG14,SHOWREGS+112 MOVE R14
+         MVC   REG15,SHOWREGS+120 MOVE R15
+         MVC   ABDUMP2,=C'00'     DEFAULT ABDUMP
+         CLI   ABDUMP,X'FF'       ABEND WITH DUMP ?
+         BNE   ABD2               EXIT IF NOT
+         MVC   ABDUMP2,=C'FF'     SET ABDUMP
+ABD2     EQU   *
+         EXEC  CICS SEND FROM(ABC2) LENGTH(ABC2L)
+         EXEC  CICS SEND FROM(REGS1) LENGTH(REGS1L)
+         EXEC  CICS SEND FROM(REGS2) LENGTH(REGS2L)
+         EXEC  CICS SEND FROM(REGS3) LENGTH(REGS3L)
+         EXEC  CICS SEND FROM(REGS4) LENGTH(REGS4L)
+*
+         EXEC  CICS HANDLE ABEND LABEL(ASGNAEI0)
+* CAUSE AEI0
+* THIS IS 'REPLACED' BY B AB3
+         EXEC  CICS LOAD PROGRAM('BADPROG')
+*
+AB3      EQU   *
+* AEI0 HANDLED OK
+         BAL   R9,GETASGN         GET ASSIGN VALUES
+         MVC   ABCODE3,ABCODE     SET ABEND CODE
+         MVC   ABPROG3,ABPROG     SET ABEND PROGRAM
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R5,ASRAPSW         SOURCE ADDRESS
+         LA    R14,ASRAPSW3       DESTINATION ADDRESS
+         LA    R15,8              SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+         MVC   ABDUMP3,=C'00'     DEFAULT ABDUMP
+         CLI   ABDUMP,X'FF'       ABEND WITH DUMP ?
+         BNE   ABD3               EXIT IF NOT
+         MVC   ABDUMP3,=C'FF'     SET ABDUMP
+ABD3     EQU   *
+         EXEC  CICS SEND FROM(ABC3) LENGTH(ABC3L)
+*
+         EXEC  CICS HANDLE ABEND LABEL(ASGNNONE)
+* CAUSE ABEND NODUMP
+* THIS IS 'REPLACED' BY B AB4
+         EXEC  CICS ABEND NODUMP
+*
+AB4      EQU   *
+* ABEND HANDLED OK
+         BAL   R9,GETASGN         GET ASSIGN VALUES
+         MVC   ABCODE4,ABCODE     SET ABEND CODE
+         MVC   ABPROG4,ABPROG     SET ABEND PROGRAM
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R5,ASRAPSW         SOURCE ADDRESS
+         LA    R14,ASRAPSW4       DESTINATION ADDRESS
+         LA    R15,8              SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+         MVC   ABDUMP4,=C'00'     DEFAULT ABDUMP
+         CLI   ABDUMP,X'FF'       ABEND WITH DUMP ?
+         BNE   ABD4               EXIT IF NOT
+         MVC   ABDUMP4,=C'FF'     SET ABDUMP
+ABD4     EQU   *
+         EXEC  CICS SEND FROM(ABC4) LENGTH(ABC4L)
+*
+         EXEC  CICS HANDLE ABEND LABEL(ASGNWITH)
+* CAUSE ABEND WITH DUMP
+* THIS IS 'REPLACED' BY B AB5
+         EXEC  CICS ABEND ABCODE('WXYZ')
+*
+AB5      EQU   *
+* ABEND HANDLED OK
+         BAL   R9,GETASGN         GET ASSIGN VALUES
+         MVC   ABCODE5,ABCODE     SET ABEND CODE
+         MVC   ABPROG5,ABPROG     SET ABEND PROGRAM
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R5,ASRAPSW         SOURCE ADDRESS
+         LA    R14,ASRAPSW5       DESTINATION ADDRESS
+         LA    R15,8              SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+         MVC   ABDUMP5,=C'00'     DEFAULT ABDUMP
+         CLI   ABDUMP,X'FF'       ABEND WITH DUMP ?
+         BNE   ABD5               EXIT IF NOT
+         MVC   ABDUMP5,=C'FF'     SET ABDUMP
+ABD5     EQU   *
+         EXEC  CICS SEND FROM(ABC5) LENGTH(ABC5L)
+*
+         EXEC  CICS HANDLE ABEND CANCEL
+         MVC   COL,=C'00'         SET COLOR OFF
+         CLI   COLOR,X'FF'        COLOR ON ?
+         BNE   DOCWA              EXIT IF NOT
+         MVC   COL,=C'FF'         SET COLOR ON
+DOCWA    EQU   *
+         LH    R5,CWALENG         R5=CWALENG
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK,=X'402020202120' MOVE EDIT WORD
+         ED    WORK,DEC+5         EDIT CWALENG
+         MVC   CWA,WORK+1         SET CWA
+         MVC   DSH,=C'00'         DEFAULT SCREEN HEIGHT
+         CLC   DEFSH,=H'24'       IS IT 24 ?
+         BNE   DODSW              EXIT IF NOT
+         MVC   DSH,=C'24'         DEFAULT SCREEN HEIGHT
+DODSW    EQU   *
+         MVC   DSW,=C'00'         DEFAULT SCREEN WIDTH
+         CLC   DEFSW,=H'80'       IS IT 80 ?
+         BNE   DOD32              EXIT IF NOT
+         MVC   DSW,=C'80'         DEFAULT SCREEN WIDTH
+DOD32    EQU   *
+         MVC   D32,=C'00'         SET DS3270 OFF
+         CLI   DS3270,X'FF'       DS3270 ?
+         BNE   DOEWA              EXIT IF NOT
+         MVC   D32,=C'FF'         SET DS3270
+DOEWA    EQU   *
+         MVC   EWA,=C'00'         SET EWA OFF
+         CLI   EWASUPP,X'FF'      EWASUPP ?
+         BNE   DOEXT              EXIT IF NOT
+         MVC   EWA,=C'FF'         SET EWASUPP
+DOEXT    EQU   *
+         MVC   EXT,=C'00'         SET EXTDS OFF
+         CLI   EXTDS,X'FF'        EXTDS ?
+         BNE   DOFAC              EXIT IF NOT
+         MVC   EXT,=C'FF'         SET EXTDS
+DOFAC    EQU   *
+         MVC   FAC,FACTY          SET FACILITY
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R5,FCI             SOURCE ADDRESS
+         LA    R14,FACI           DESTINATION ADDRESS
+         LA    R15,1              SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+         EXEC  CICS SEND FROM(DATA1) LENGTH(DATA1L)
+*
+         MVC   HIL,=C'00'         SET HILIGHT OFF
+         CLI   HILITE,X'FF'       HILIGHT ?
+         BNE   DOMAP              EXIT IF NOT
+         MVC   HIL,=C'FF'         SET HILIGHT
+DOMAP    EQU   *
+         LH    R5,MAPHITE         R5=MAP HEIGHT
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202120' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT IT
+         MVC   MHT,WORK+2         MOVE IT TO OUTPUT
+         LH    R5,MAPWDTH         R5=MAP WIDTH
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202120' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT IT
+         MVC   MWD,WORK+2         MOVE IT TO OUTPUT
+         LH    R5,MAPLINE         R5=MAP LINE
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202120' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT IT
+         MVC   MLN,WORK+2         MOVE IT TO OUTPUT
+         LH    R5,MAPCOL          R5=MAP COLUMN
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202120' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT IT
+         MVC   MCL,WORK+2         MOVE IT TO OUTPUT
+         MVC   KAT,=C'00'         SET KATAKANA OFF
+         CLI   KATA,X'FF'         KATAKANA ?
+         BNE   DOMSR              EXIT IF NOT
+         MVC   KAT,=C'FF'         SET KATAKANA
+DOMSR    EQU   *
+         MVC   MSR,=C'00'         SET MSRCONTROL OFF
+         CLI   MSR,X'FF'          MSRCONTROL ?
+         BNE   DOGMM              EXIT IF NOT
+         MVC   MSR,=C'FF'         SET KATAKANA
+DOGMM    EQU   *
+         MVC   GMM,=C'00'         SET GMMI OFF
+         CLI   GMM,X'FF'          GMMI ?
+         BNE   DOSEND2            EXIT IF NOT
+         MVC   GMM,=C'FF'         SET GMMI
+DOSEND2  EQU   *
+         EXEC  CICS SEND FROM(DATA2) LENGTH(DATA2L)
+*
+         MVC   OUT,=C'00'         SET OUTLINE OFF
+         CLI   OUTLINE,X'FF'      OUTLINE ?
+         BNE   DOPRT              EXIT IF NOT
+         MVC   OUT,=C'FF'         SET OUTLINE
+DOPRT    EQU   *
+         MVC   PRT,=C'00'         SET PARTNS OFF
+         CLI   PARTNS,X'FF'       PARTNS ?
+         BNE   DORES              EXIT IF NOT
+         MVC   PRT,=C'FF'         SET PARTNS
+DORES    EQU   *
+         MVC   RES,=C'00'         SET RESTART OFF
+         CLI   RESTART,X'FF'      RESTART ?
+         BNE   DOSCH              EXIT IF NOT
+         MVC   RES,=C'FF'         SET PARTNS
+DOSCH    EQU   *
+         LH    R5,SCRNHT          R5=SCREEN HEIGHT
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202120' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT IT
+         MVC   SCH,WORK+2         MOVE IT TO OUTPUT
+         LH    R5,SCRNWD          R5=SCREEN WIDTH
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202120' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT IT
+         MVC   SCW,WORK+2         MOVE IT TO OUTPUT
+         MVC   SOS,=C'00'         SET SOSI OFF
+         CLI   SOS,X'FF'          SOSI ?
+         BNE   DOSEND3            EXIT IF NOT
+         MVC   SOS,=C'FF'         SET SOSI
+DOSEND3  EQU   *
+         EXEC  CICS SEND FROM(DATA3) LENGTH(DATA3L)
+*
+         LH    R5,TASKPRI         R5=TASK PRIORITY
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202120' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT IT
+         MVC   TKP,WORK+1         MOVE IT TO OUTPUT
+         LH    R5,TCTUALN         R5=TCTUALENG
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK,=X'402020202120' MOVE EDIT WORD
+         ED    WORK,DEC+5         EDIT IT
+         MVC   TUL,WORK+1         MOVE IT TO OUTPUT
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R5,TMCODE          SOURCE ADDRESS
+         LA    R14,TMC            DESTINATION ADDRESS
+         LA    R15,2              SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+         LH    R5,TERMPRI         R5=TERM PRIORITY
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202120' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT IT
+         MVC   TMP,WORK+1         MOVE IT TO OUTPUT
+         MVC   TXK,=C'00'         SET TEXTKYBD OFF
+         CLI   TXTKYBD,X'FF'      TEXTKYBD ?
+         BNE   DOTXP              EXIT IF NOT
+         MVC   TXK,=C'FF'         SET TEXTKYBD
+DOTXP    EQU   *
+         MVC   TXP,=C'00'         SET TEXTPRINT OFF
+         CLI   TXTPRNT,X'FF'      TEXTPRINT  ?
+         BNE   DOTNP              EXIT IF NOT
+         MVC   TXP,=C'FF'         SET TEXTPRINT
+DOTNP    EQU   *
+         LH    R5,TRANPRI         R5=TRAN PRIORITY
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202120' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT IT
+         MVC   TNP,WORK+1         MOVE IT TO OUTPUT
+         LH    R5,TWALENG         R5=TWALENG
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK,=X'402020202120' MOVE EDIT WORD
+         ED    WORK,DEC+5         EDIT IT
+         MVC   TWA,WORK+1         MOVE IT TO OUTPUT
+         MVC   UNA,=C'00'         SET UNATTEND OFF
+         CLI   UNATTND,X'FF'      UNATTEND  ?
+         BNE   DOSEND4            EXIT IF NOT
+         MVC   UNA,=C'FF'         SET UNATTEND
+DOSEND4  EQU   *
+         EXEC  CICS SEND FROM(DATA4) LENGTH(DATA4L)
+*
+         LH    R5,USERPRI         R5=USER PRIORITY
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202120' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT IT
+         MVC   USP,WORK+1         MOVE IT TO OUTPUT
+         MVC   VAL,=C'00'         SET VALIDATION OFF
+         CLI   VALID,X'FF'        VALIDATION ?
+         BNE   DOAPK              EXIT IF NOT
+         MVC   VAL,=C'FF'         SET VALIDATION
+DOAPK    EQU   *
+         MVC   APK,=C'00'         SET APLKYBD OFF
+         CLI   APLKYBD,X'FF'      APLKYBD ?
+         BNE   DOAPT              EXIT IF NOT
+         MVC   APK,=C'FF'         SET APLKYBD
+DOAPT    EQU   *
+         MVC   APT,=C'00'         SET APLTEXT OFF
+         CLI   APLTEXT,X'FF'      APLTEXT ?
+         BNE   DOBTR              EXIT IF NOT
+         MVC   APT,=C'FF'         SET VALIDATION
+DOBTR    EQU   *
+         MVC   BTR,=C'00'         SET BTRANS OFF
+         CLI   BTRANS,X'FF'       BTRANS ?
+         BNE   DODSC              EXIT IF NOT
+         MVC   BTR,=C'FF'         SET BTRANS
+DODSC    EQU   *
+         MVC   DSC,=C'00'         SET DSSCS OFF
+         CLI   DSSCS,X'FF'        DSSCS ?
+         BNE   DOPS               EXIT IF NOT
+         MVC   DSC,=C'FF'         SET DSSCS
+DOPS     EQU   *
+         MVC   PS,=C'00'          SET PS OFF
+         CLI   PSYM,X'FF'         PS ?
+         BNE   DOSEND5            EXIT IF NOT
+         MVC   PS,=C'FF'          SET PS
+DOSEND5  EQU   *
+         EXEC  CICS SEND FROM(DATA5) LENGTH(DATA5L)
+*
+         EXEC  CICS SEND FROM(FINAL) LENGTH(FINALL)
+         EXEC  CICS RETURN
+*
+ASGNASRA EQU   *
+         B     AB2                CONTINUE TESTS
+*
+ASGNAEI0 EQU   *
+         B     AB3                CONTINUE TESTS
+*
+ASGNNONE EQU   *
+         B     AB4                CONTINUE TESTS
+*
+ASGNWITH EQU   *
+         B     AB5                CONTINUE TESTS
+*
+* SUBROUTINES
+*
+GETASGN  EQU   *
+         EXEC  CICS ASSIGN                                             X
+               ABCODE(ABCODE)                                          X
+               ABDUMP(ABDUMP)                                          X
+               ABPROGRAM(ABPROG)                                       X
+               APLKYBD(APLKYBD)                                        X
+               APLTEXT(APLTEXT)                                        X
+               ASRAPSW(ASRAPSW)                                        X
+               ASRAREGS(ASRAREGS)                                      X
+               BTRANS(BTRANS)                                          X
+               CMDSEC(CMD)                                             X
+               COLOR(COLOR)                                            X
+               CWALENG(CWALENG)                                        X
+               DEFSCRNHT(DEFSH)                                        X
+               DEFSCRNWD(DEFSW)                                        X
+               DSSCS(DSSCS)                                            X
+               DS3270(DS3270)                                          X
+               EWASUPP(EWASUPP)                                        X
+               EXTDS(EXTDS)                                            X
+               FACILITY(FACTY)                                         X
+               FCI(FCI)                                                X
+               GMMI(GMMI)                                              X
+               HILIGHT(HILITE)                                         X
+               KATAKANA(KATA)                                          X
+               LANGINUSE(LIU)                                          X
+               MAPCOLUMN(MAPCOL)                                       X
+               MAPHEIGHT(MAPHITE)                                      X
+               MAPLINE(MAPLINE)                                        X
+               MAPWIDTH(MAPWDTH)                                       X
+               MSRCONTROL(MSRCNTL)                                     X
+               NATLANGINUSE(NIU)                                       X
+               NEXTTRANSID(NXT)                                        X
+               OUTLINE(OUTLINE)                                        X
+               PARTNS(PARTNS)                                          X
+               PROGRAM(PGM)                                            X
+               PS(PSYM)                                                X
+               RESSEC(RSC)                                             X
+               RESTART(RESTART)                                        X
+               SCRNHT(SCRNHT)                                          X
+               SCRNWD(SCRNWD)                                          X
+               SOSI(SOSI)                                              X
+               STARTCODE(STC)                                          X
+               TASKPRIORITY(TASKPRI)                                   X
+               TCTUALENG(TCTUALN)                                      X
+               TERMCODE(TMCODE)                                        X
+               TERMPRIORITY(TERMPRI)                                   X
+               TEXTKYBD(TXTKYBD)                                       X
+               TEXTPRINT(TXTPRNT)                                      X
+               TRANPRIORITY(TRANPRI)                                   X
+               TWALENG(TWALENG)                                        X
+               UNATTEND(UNATTND)                                       X
+               USERPRIORITY(USERPRI)                                   X
+               VALIDATION(VALID)
+         BR    R9
+*
+ABCODE   DS    CL4
+ABDUMP   DS    X
+ABPROG   DS    CL8
+APLKYBD  DS    X
+APLTEXT  DS    X
+ASRAPSW  DS    XL8
+ASRAREGS DS    XL64
+SHOWREGS DS    CL128
+BTRANS   DS    X
+COLOR    DS    X
+CWALENG  DS    AL2
+DEFSH    DS    AL2
+DEFSW    DS    AL2
+DSSCS    DS    X
+DS3270   DS    X
+EWASUPP  DS    X
+EXTDS    DS    X
+FACTY    DS    CL4
+FCI      DS    X
+GMMI     DS    X
+HILITE   DS    X
+MAPCOL   DS    XL2
+MAPHITE  DS    XL2
+MAPLINE  DS    XL2
+MAPWDTH  DS    XL2
+KATA     DS    X
+MSRCNTL  DS    X
+OUTLINE  DS    X
+PARTNS   DS    X
+PSYM     DS    X
+RESTART  DS    X
+SCRNHT   DS    XL2
+SCRNWD   DS    XL2
+SOSI     DS    X
+TASKPRI  DS    XL2
+TCTUALN  DS    XL2
+TMCODE   DS    XL2
+TERMPRI  DS    XL2
+TXTKYBD  DS    X
+TXTPRNT  DS    X
+TRANPRI  DS    XL2
+TWALENG  DS    XL2
+UNATTND  DS    X
+USERPRI  DS    XL2
+VALID    DS    X
+*
+DEC      DS    PL8
+WORK     DS    CL6
+*
+         DS    0D
+TRANHEX  DC    C'000102030405060708090A0B0C0D0E0F'  00-0F
+         DC    C'101112131415161718191A1B1C1D1E1F'  10-1F
+         DC    C'202122232425262728292A2B2C2D2E2F'  20-2F
+         DC    C'303132333435363738393A3B3C3D3E3F'  30-3F
+         DC    C'404142434445464748494A4B4C4D4E4F'  40-4F
+         DC    C'505152535455565758595A5B5C5D5E5F'  50-5F
+         DC    C'606162636465666768696A6B6C6D6E6F'  60-6F
+         DC    C'707172737475767778797A7B7C7D7E7F'  70-7F
+         DC    C'808182838485868788898A8B8C8D8E8F'  80-8F
+         DC    C'909192939495969798999A9B9C9D9E9F'  90-9F
+         DC    C'A0A1A2A3A4A5A6A7A8A9AAABACADAEAF'  A0-AF
+         DC    C'B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF'  B0-BF
+         DC    C'C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF'  C0-CF
+         DC    C'D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF'  D0-DF
+         DC    C'E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF'  E0-EF
+         DC    C'F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF'  F0-FF
+*
+ABC1     TN3270 ESC,WRT_EW,WCC_KD,(SBA,2,2)
+         DC    C'ABCODE/DUMP/PROG - NO ABEND   '''
+ABCODE1  DS    CL4
+         DC    C''' X'''
+ABDUMP1  DS    CL2
+         DC    C''' '
+ABPROG1  DS    CL8
+         DC    C' X'''
+ASRAPSW1 DS    CL16
+         DC    C''''
+ABC1L    DC    AL2(*-ABC1)
+*
+ABC2     TN3270 WCC_KD,(SBA,3,2)
+         DC    C'ABCODE/DUMP/PROG - AFTER ASRA '''
+ABCODE2  DS    CL4
+         DC    C''' X'''
+ABDUMP2  DS    CL2
+         DC    C''' '
+ABPROG2  DS    CL8
+         DC    C' X'''
+ASRAPSW2 DS    CL16
+         DC    C''''
+ABC2L    DC    AL2(*-ABC2)
+*
+REGS1    TN3270 WCC_KD,(SBA,4,2)
+         DC    C'R0 :'
+REG00    DS    CL8
+         DC    C' R1 :'
+REG01    DS    CL8
+         DC    C' R2 :'
+REG02    DS    CL8
+         DC    C' R3 :'
+REG03    DS    CL8
+REGS1L   DC    AL2(*-REGS1)
+*
+REGS2    TN3270 WCC_KD,(SBA,5,2)
+         DC    C'R4 :'
+REG04    DS    CL8
+         DC    C' R5 :'
+REG05    DS    CL8
+         DC    C' R6 :'
+REG06    DS    CL8
+         DC    C' R7 :'
+REG07    DS    CL8
+REGS2L   DC    AL2(*-REGS2)
+*
+REGS3    TN3270 WCC_KD,(SBA,6,2)
+         DC    C'R8 :'
+REG08    DS    CL8
+         DC    C' R9 :'
+REG09    DS    CL8
+         DC    C' R10:'
+REG10    DS    CL8
+         DC    C' R11:'
+REG11    DS    CL8
+REGS3L   DC    AL2(*-REGS3)
+*
+REGS4    TN3270 WCC_KD,(SBA,7,2)
+         DC    C'R12:'
+REG12    DS    CL8
+         DC    C' R13:'
+REG13    DS    CL8
+         DC    C' R14:'
+REG14    DS    CL8
+         DC    C' R15:'
+REG15    DS    CL8
+REGS4L   DC    AL2(*-REGS4)
+*
+ABC3     TN3270 WCC_KD,(SBA,8,2)
+         DC    C'ABCODE/DUMP/PROG - AFTER AEI0 '''
+ABCODE3  DS    CL4
+         DC    C''' X'''
+ABDUMP3  DS    CL2
+         DC    C''' '
+ABPROG3  DS    CL8
+         DC    C' X'''
+ASRAPSW3 DS    CL16
+         DC    C''''
+ABC3L    DC    AL2(*-ABC3)
+*
+ABC4     TN3270 WCC_KD,(SBA,9,2)
+         DC    C'ABCODE/DUMP/PROG - ABEND NONE '''
+ABCODE4  DS    CL4
+         DC    C''' X'''
+ABDUMP4  DS    CL2
+         DC    C''' '
+ABPROG4  DS    CL8
+         DC    C' X'''
+ASRAPSW4 DS    CL16
+         DC    C''''
+ABC4L    DC    AL2(*-ABC4)
+*
+ABC5     TN3270 WCC_KD,(SBA,10,2)
+         DC    C'ABCODE/DUMP/PROG - ABEND WITH '''
+ABCODE5  DS    CL4
+         DC    C''' X'''
+ABDUMP5  DS    CL2
+         DC    C''' '
+ABPROG5  DS    CL8
+         DC    C' X'''
+ASRAPSW5 DS    CL16
+         DC    C''''
+ABC5L    DC    AL2(*-ABC5)
+*
+DATA1    TN3270 WCC_KD,(SBA,11,2)
+         DC    C'COL:'
+COL      DS    CL2
+         DC    C' CWA:'
+CWA      DS    CL5
+         DC    C' DEFSH:'
+DSH      DS    CL2
+         DC    C' DEFSW:'
+DSW      DS    CL2
+         DC    C' D32:'
+D32      DS    CL2
+         DC    C' EWA:'
+EWA      DS    CL2
+         DC    C' EXT:'
+EXT      DS    CL2
+         DC    C' FAC:'
+FAC      DS    CL4
+         DC    C' FCI:'
+FACI     DS    CL2
+DATA1L   DC    AL2(*-DATA1)
+*
+DATA2    TN3270 WCC_KD,(SBA,12,2)
+         DC    C'HIL:'
+HIL      DS    CL2
+         DC    C' MHT:'
+MHT      DS    CL2
+         DC    C' MWD:'
+MWD      DS    CL2
+         DC    C' MLN:'
+MLN      DS    CL2
+         DC    C' MCL:'
+MCL      DS    CL2
+         DC    C' KAT:'
+KAT      DS    CL2
+         DC    C' LIU:'
+LIU      DS    CL3
+         DC    C' NIU:'
+NIU      DS    C
+         DC    C' MSR:'
+MSR      DS    CL2
+         DC    C' GMM:'
+GMM      DS    CL2
+         DC    C' NXT:'
+NXT      DS    CL4
+DATA2L   DC    AL2(*-DATA2)
+*
+DATA3    TN3270 WCC_KD,(SBA,13,2)
+         DC    C'OUT:'
+OUT      DS    CL2
+         DC    C' PRT:'
+PRT      DS    CL2
+         DC    C' PGM:'
+PGM      DS    CL8
+         DC    C' RSC:'
+RSC      DS    C
+         DC    C' RES:'
+RES      DS    CL2
+         DC    C' SCH:'
+SCH      DS    CL2
+         DC    C' SCW:'
+SCW      DS    CL2
+         DC    C' SOS:'
+SOS      DS    CL2
+         DC    C' STC:'
+STC      DS    CL2
+DATA3L   DC    AL2(*-DATA3)
+*
+DATA4    TN3270 WCC_KD,(SBA,14,2)
+         DC    C'TKP:'
+TKP      DS    CL3
+         DC    C' TUL:'
+TUL      DS    CL5
+         DC    C' TMC:'
+TMC      DS    CL4
+         DC    C' TMP:'
+TMP      DS    CL3
+         DC    C' TXK:'
+TXK      DS    CL2
+         DC    C' TXP:'
+TXP      DS    CL2
+         DC    C' TNP:'
+TNP      DS    CL3
+         DC    C' TWA:'
+TWA      DS    CL5
+         DC    C' UNA:'
+UNA      DS    CL2
+DATA4L   DC    AL2(*-DATA4)
+*
+DATA5    TN3270 WCC_KD,(SBA,15,2)
+         DC    C'USP:'
+USP      DS    CL3
+         DC    C' VAL:'
+VAL      DS    CL2
+         DC    C' APK:'
+APK      DS    CL2
+         DC    C' APT:'
+APT      DS    CL2
+         DC    C' BTR:'
+BTR      DS    CL2
+         DC    C' CMD:'
+CMD      DS    C
+         DC    C' DSC:'
+DSC      DS    CL2
+         DC    C' PS:'
+PS       DS    CL2
+DATA5L   DC    AL2(*-DATA5)
+*
+FINAL    TN3270 WCC_KD,(SBA,24,2)
+         DC    C'TRANSACTION END'
+FINALL   DC    AL2(*-FINAL)
+*
+         TN3270 SYMBOLS
+         END
+

@@ -8,61 +8,107 @@
 .*********************************************************************
 .* 04/09/08 initial coding for z390 procedure label generation.
 .* 10/07/08 ZSTRMAC
+.* 08/04/09 RPI 1065 support section qualifiers for PG labels when req.
 .*********************************************************************
-         GEN_LABEL &LAB,&TYPE
+         GEN_LABEL &PG_NAME,&TYPE
          COPY  ZC_WS
-         GBLB  &ZC_TRACE
-       AIF   ('&TYPE' EQ 'PARAGRAPH' OR '&TYPE' EQ 'SECTION') 
-.*
-.* GEN END PG LABEL AND CHECK BEFORE NEXT PG OR SECTION
-.*
-         AIF   ('&LAST_PG_LAB' NE '')
-               AIF (&ZC_TRACE)
-                   IF READY_RESET_TRACE,=,'T'
-                      GEN_COMMENT 'PG_END_&LAST_PG_LAB'
-                   END_IF
+         AIF   (NOT &ZC_PROC_DIV)  COUNT CREATED SN/PG LABEL TOTALS
+               AIF ('&TYPE' EQ 'SECTION')
+                   GBLA &(ZC_PG_&PG_NAME)
+                   :&(ZC_PG_&PG_NAME) SETA -1 
+                   GBLA &(ZC_PG_&PG_NAME._END)
+                   :&(ZC_PG_&PG_NAME._END) SETA -1 
+                   :&SN_TOT SETA &SN_TOT+1
+               AELSEIF ('&TYPE' EQ 'PARAGRAPH')
+                   GBLA &(ZC_PG_&PG_NAME)
+                   :&(ZC_PG_&PG_NAME) SETA &(ZC_PG_&PG_NAME)+1
+                   :&PG_TOT SETA &PG_TOT+1
+                   AIF (&(ZC_PG_&PG_NAME) GT 1)
+                       :&PG_DUP_TOT SETA &PG_DUP_TOT+1
+                   AEND
+                   GBLA &(ZC_PG_&PG_NAME._END)
+                   :&(ZC_PG_&PG_NAME._END) SETA &(ZC_PG_&PG_NAME)
                AEND
-PG_END_&LAST_PG_LAB L    R15,ZCVT_PMCHECK
-                    BASR R14,R15 CHECK FOR END OF CURRENT PERFORM
-               :&LAST_PG_LAB SETC ''  
+               MEXIT
+         AEND
+         AIF   ('&TYPE' NE 'PARAGRAPH'                                 X
+                AND '&TYPE' NE 'SECTION')  IS THIS ZCOBOL GEN'D TYPE
+               GBLA &(ZC_PG_&PG_NAME)
+               AIF (&(ZC_PG_&PG_NAME) GT 1 AND '&LAST_SN_NAME' NE '')
+SN_&LAST_SN_NAME._PG_&PG_NAME  DS    0H  &TYPE
+               AELSE
+PG_&PG_NAME  DS    0H  &TYPE
+               AEND
+               MEXIT
+         AEND
+.*
+.* GEN END PG NAME AND CHECK BEFORE NEXT PG OR SECTION
+.*
+         AIF   ('&LAST_PG_NAME' NE '')
+               GBLA &(ZC_PG_&LAST_PG_NAME)
+               AIF (&(ZC_PG_&LAST_PG_NAME) GT 1                        X
+                    AND '&LAST_SN_NAME' NE '')
+                   :&TARGET SETC 'SN_&LAST_SN_NAME._PG_&LAST_PG_NAME._EX
+               ND'
+               AELSE
+                   :&TARGET SETC 'PG_&LAST_PG_NAME._END'
+               AEND
+               AIF (&ZC_TRACE)
+                   ZC_SYM_FIND READY_RESET_TRACE
+                   GEN_COMP READY_RESET_TRACE,&SYM_IX,'T',0
+                   GEN_BC   ZC_NE,&LAST_PG_NAME._END,&LAST_SN_NAME
+                   GEN_COMMENT '&TARGET'
+               AEND
+&TARGET  L     ZC_R15,ZCVT_PMCHECK
+         BASR  ZC_R14,ZC_R15 CHECK FOR END OF CURRENT PERFORM
+               :&LAST_PG_NAME SETC ''  
          AEND
 .*
 .* GEN END SECTION PG LABEL AND CHECK BEFORE NEXT SECTION
 .*
          AIF   ('&TYPE' EQ 'SECTION')
-               AIF   ('&LAST_SECTION_LAB' NE '')                    
+               AIF   ('&LAST_SN_NAME' NE '')                    
+                   :&TARGET SETC 'SN_&LAST_SN_NAME._END'
                    AIF (&ZC_TRACE)
-                       IF READY_RESET_TRACE,=,'T'
-                         GEN_COMMENT 'PG_END_&LAST_SECTION_LAB SECTION'
-                       END_IF
+                       ZC_SYM_FIND READY_RESET_TRACE
+                       GEN_COMP READY_RESET_TRACE,&SYM_IX,'T',0
+                       GEN_BC   ZC_NE,,&LAST_SN_NAME._END
+                       GEN_COMMENT '&TARGET'
                    AEND
-PG_END_&LAST_SECTION_LAB BRAS R14,END_PERFORM_CHECK FOR SECTION
-                   :&LAST_SECTION_LAB SETC ''
+&TARGET  L     ZC_R15,ZCVT_PMCHECK 
+         BASR  ZC_R14,ZC_R15 CHECK FOR END OF CURRENT PERFORM
+                   :&LAST_SN_NAME SETC ''
                AEND
          AEND          
+.*
+.* GEN PG OR SN LABEL
+.*
          AIF   ('&TYPE' EQ 'PARAGRAPH')
-               :&LAST_PG_LAB SETC '&LAB'
-PG_&LAB  DS    0H  &TYPE
+               :&LAST_PG_NAME SETC '&PG_NAME'
+               GBLA &(ZC_PG_&PG_NAME)
+               AIF (&(ZC_PG_&PG_NAME) GT 1 AND '&LAST_SN_NAME' NE '')
+                   :&TARGET SETC 'SN_&LAST_SN_NAME._PG_&PG_NAME'
+               AELSE
+                   :&TARGET SETC 'PG_&PG_NAME'
+               AEND
+&TARGET  DS    0H
                AIF (&ZC_TRACE)
-                   IF READY_RESET_TRACE,=,'T'
-                      GEN_COMMENT 'PG_&LAB'
-                   END_IF
+                   ZC_SYM_FIND READY_RESET_TRACE
+                   GEN_COMP READY_RESET_TRACE,&SYM_IX,'T',0
+                   GEN_BC   ZC_NE,&PG_NAME._TRACE,&LAST_SN_NAME
+                   GEN_COMMENT '&TARGET'
+&TARGET._TRACE DS 0H
                AEND
          AELSEIF ('&TYPE' EQ 'SECTION')
-               :&LAST_SECTION_LAB SETC '&LAB'
-PG_&LAB  DS    0H  &TYPE
+               :&LAST_SN_NAME SETC '&PG_NAME'
+               :&TARGET SETC 'SN_&LAST_SN_NAME'
+&TARGET  DS 0H SECTION
                AIF (&ZC_TRACE)
-                   IF READY_RESET_TRACE,=,'T'
-                      GEN_COMMENT 'PG_&LAB &TYPE'
-                   END_IF
-               AEND
-         AELSE
-               AIF ('&TYPE' EQ '')       
-                   MNOTE 8,'GEN_LABEL TYPE NOT DEFINED - &TYPE'
-                   MEXIT
+                   ZC_SYM_FIND READY_RESET_TRACE
+                   GEN_COMP READY_RESET_TRACE,&SYM_IX,'T',0
+                   GEN_BC   ZC_NE,,&LAST_SN_NAME._TRACE
+                   GEN_COMMENT '&TARGET'
+&TARGET._TRACE DS  0H
                AEND
          AEND
-       AELSE
-PG_&LAB  DS    0H  &TYPE
-       AEND
          MEND

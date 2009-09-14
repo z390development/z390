@@ -4,12 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL0614  SUBENTRY
+LCL0614  CSECT
 *
 * FN=0614  EXEC CICS RESETBR
 *
 * R1  >>> P0614 BLOCK POINTER
-* R14 = RETURN ADDRESS
+*
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P0614,P0614END),R3
@@ -197,7 +199,7 @@ RETURN   EQU   *
          MVC   EIBRCODE,RCODE     RESTORE RCODE
          MVC   EIBRESP,RESP       RESTORE RESP
          MVC   EIBRESP2,RESP2     RESTORE RESP2
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 FCBLKSV  DS    AL4                SAVE FC BLOCK ADDRESS
 RCODE    DS    XL4                SAVE RCODE

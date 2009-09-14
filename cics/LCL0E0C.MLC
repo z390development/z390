@@ -4,12 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL0E0C  SUBENTRY
+LCL0E0C  CSECT
 *
 * FN=0E0C  EXEC CICS ABEND
 *
 * R1  >>> P0E0C BLOCK POINTER
-* R14 = RETURN ADDRESS
+*
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P0E0C,P0E0CEND),R3
@@ -39,7 +41,7 @@ NORESP2  EQU   *
          FREEMAIN R,A=(R1),LV=(R0)
          XC    TCTTEABD,TCTTEABD  CLEAR ABEND BLOCK ANCHOR
 NOCANCEL EQU   *
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 P0E0C    DSECT
 P0E0CFN  DS    XL2                FUNCTION CODE

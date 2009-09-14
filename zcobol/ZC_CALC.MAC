@@ -7,6 +7,7 @@
 .* Date   - 03/04/09                                                 *
 .*********************************************************************
 .* 04/24/09 RPI 1003 initial coding for ZC_CALC using IF as model
+.* 07/30/09 RPI 1065 FUNCTION not supported yet (see IF101A)      
 .*********************************************************************
 .* ZC_CALC used by COMPUTE to gen code to calculate expression 
 .* defined by positional parm list.  The result is stored in data 
@@ -47,7 +48,7 @@
 .*  BUILD IOP'S AND THEN GEN CODE
 .*
          ACALL IOP_BUILD
-.*  ACALL LIST_IOPS   DSHX DEBUG
+.*  ACALL LIST_IOPS   DEBUG
          ACALL IOP_GEN_CODE
          MEXIT
 .*
@@ -110,6 +111,9 @@
                        :&OP# SETA 4 OP_DIV
                    AEND
                    ACALL PUSH_OP      PUSH OP 5=(
+               AELSEIF ('&PARM' EQ 'FUNCTION')
+                   MNOTE 8,'ZC_CALC FUNCTION NOT SUPPORTED YET'
+                   MEXIT
                AELSE
                    :&VAR_IOP_IX SETA &PARM_IX
                    ACALL PUSH_VAR   PUSH 1ST PARM PTR FOR VAR  
@@ -252,7 +256,7 @@
                :&VAR_PARM_IX SETA &IOP_F1_X(&I)-1
                :&VAR_PREV_PARM SETC ''
                :&FIELD_SS1 SETB 1
-               :&FIELD_REG SETC 'R2'
+               :&FIELD_REG SETC 'ZC_R2'
                ACALL  GET_VAR_PARM   GEN SIX CODE FOR VAR IF ANY
                :&F1_N SETC '&FIELD_NAME'
                :&F1_X SETA &FIELD_IX
@@ -279,7 +283,7 @@
                :&VAR_PARM_IX SETA &IOP_F2_X(&I)-1
                :&VAR_PREV_PARM SETC ''
                :&FIELD_SS1 SETB 1
-               :&FIELD_REG SETC 'R3'
+               :&FIELD_REG SETC 'ZC_R3'
                ACALL  GET_VAR_PARM   GEN SIX CODE FOR VAR IF ANY
                :&F2_N SETC '&FIELD_NAME'
                :&F2_X SETA &FIELD_IX
@@ -304,10 +308,10 @@
          AEND
          AIF   (&I LT &IOP_TOT)
                :&TMP_IX SETA &IOP_F3_X(&I)
-               :&F3_N SETC '&TMP_NAME(&TMP_IX)'
                :&F3_X SETA -&TMP_IX
                :&F3_XC SETC '-&TMP_IX'
                ACALL CALC_F3_TYPE
+               :&F3_N SETC '&TMP_NAME(&TMP_IX)(&F3_L)'  
                :&TMP_TYPE(&TMP_IX) SETC '&F3_T'
                :&TMP_LEN(&TMP_IX)  SETA '&F3_L'
                :&F3_S SETB 1

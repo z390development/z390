@@ -1,0 +1,11 @@
+         #WPARMS DSECT=YES           PARAMETER SAVE AREA
+         EJECT
+         #REGEQU                     REGISTER EQUATES
+         EJECT
+         COPY  INCLCB1               ENCODETR
+         EJECT
+         COPY  INCLCB2               ENCODE
+         EJECT
+         COPY  INCLCB3               ENCLXLOG
+         EJECT
+         END

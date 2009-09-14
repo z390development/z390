@@ -8,6 +8,9 @@
 .*********************************************************************
 .* 04/16/08 initial coding for global GO TO    
 .* 10/06/08 ZSTRMAC
+.* 08/05/09 RPI 1065 add support for SN-PG paragraph names
+.* 08/16/09 RPI 1065 support GO TO without target as model for ALTER
+.*          see OBNC1M NIST test.
 .*********************************************************************
          GO                                  
          COPY  ZC_WS
@@ -16,11 +19,26 @@
          AIF   ('&SYSLIST(&PARM_IX)' EQ 'TO')
                :&PARM_IX SETA  &PARM_IX+1
          AEND
-         AIF   (&NP EQ &PARM_IX)
-               GEN_B  &SYSLIST(&PARM_IX)
+         AIF   (&NP EQ 1)                          RPI 1065
+               GEN_B  &LAST_PG_NAME,&LAST_SN_NAME  MODEL FOR ALTER
+               MEXIT
+         AEND
+         :&FIRST SETA &PARM_IX                      RPI 1065
+         AIF   ('&SYSLIST(&PARM_IX+1)' EQ 'OF'                         X
+               OR '&SYSLIST(&PARM_IX+1)' EQ 'IN')
+               :&SN_NAME SETC '&SYSLIST(&PARM_IX+2)'
+               :&PG_NAME SETC '&SYSLIST(&PARM_IX)'
+               :&PARM_IX SETA &PARM_IX+3
          AELSE
-               :&GO_LIST SETC '&SYSLIST(&PARM_IX)'
+               :&SN_NAME SETC ''
+               :&PG_NAME SETC '&SYSLIST(&PARM_IX)'
                :&PARM_IX SETA &PARM_IX+1
+         AEND  
+         AIF   (&NP LT &PARM_IX)
+               GEN_B  &PG_NAME,&SN_NAME
+         AELSE
+               :&GO_LIST SETC '&SYSLIST(&FIRST)'     RPI 1065
+               :&PARM_IX SETA &FIRST+1               RPI 1065
                AWHILE (&PARM_IX LT &NP-2                               X
                       AND '&SYSLIST(&PARM_IX)' NE 'DEPENDING')
                    :&GO_LIST SETC '&GO_LIST,&SYSLIST(&PARM_IX)'
@@ -29,7 +47,7 @@
                AIF  ('&SYSLIST(&PARM_IX)' EQ 'DEPENDING')              X
                     AND '&SYSLIST(&PARM_IX+1)' EQ 'ON')
                     :&PARM_IX SETA &PARM_IX+2
-                    :&FIELD_REG SETC 'R2'
+                    :&FIELD_REG SETC 'ZC_R2'
                     :&FIELD_SS1 SETB 0
                     ACALL GET_PARM_FIELD
                     AIF (&FIELD_IX GT 0)

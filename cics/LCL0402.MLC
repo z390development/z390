@@ -4,12 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL0402  SUBENTRY
+LCL0402  CSECT
 *
 * FN=0402  EXEC CICS RECEIVE
 *
 * R1  >>> P0402 BLOCK POINTER
-* R14 = RETURN ADDRESS
+*
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P0402,P0402END),R3
@@ -194,7 +196,7 @@ GOTAID   DS    0H
          BZ    RETURN             RETURN IF NONE
          MVC   P0402AID,0(R8)     SET HANDLE AID ADDRESS
 RETURN   EQU   *
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 AIDINDEX EQU   *
          DC    X'7D',AL2(0)       ENTER

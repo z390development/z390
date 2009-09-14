@@ -63,5 +63,7 @@ Sequential Terminal Streams
       PF11/PF11/PF5
 0028  BMC1 executed once (a clone of BMS1)
       Test all functions of mapping support
-0029  shutdown
+0029  LOGO to ensure map values are consistant/CLEAR
+      ASGN/CLEAR
+0030  shutdown
 

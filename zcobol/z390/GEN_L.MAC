@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 02/25/09 RPI 1002 initial coding for use by GEN_SET
+.* 07/30/09 RPI 1065 correct PACK source                    
 .*********************************************************************
          GEN_L    &REG,&SOURCE,&SOURCE_IX      
          COPY  ZC_WS
@@ -25,7 +26,7 @@
          ZAP   ZCVT_PWORK,&SOURCE.(&SYM_LEN(&SOURCE_IX)
          CVB   &REG,ZCVT_PWORK
       AWHEN C'Z'
-         PACK  ZCVT_PWORK,&SOURCE_NAME
+         ZC_PACK31 ZCVT_PWORK,8,&SOURCE,&SYM_LEN(&SOURCE_IX) RPI 1065
          CVB   &REG,ZCVT_PWORK
       AELSE
                MNOTE 8,'GEN_L SOURCE NOT NUMERIC'

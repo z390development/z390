@@ -4,12 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL1008  SUBENTRY
+LCL1008  CSECT
 *
 * FN=1008  EXEC CICS START
 *
 * R1  >>> P1008 BLOCK POINTER
-* R14 = RETURN ADDRESS
+*
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P1008,P1008END),R3
@@ -232,6 +234,7 @@ NOTEXP   EQU   *
          MVC   EIBREQID(2),=C'DF' OVERLAY THE TS Q PREFIX
 GOTREQ   EQU   *
 * IF FROM, RTRANSID, RTERMID OR QUEUE ARE SPECIFIED WE HAVE A TS Q
+         MVI   RETVE,X'00'        RESET THE RETRIEVE INDICATOR
          OC    P1008FRM(22),P1008FRM ANY FROM/RTRANSID/RTERMID/QUEUE ?
          BZ    SENDIC             EXIT IF NOT
 * BUILD TS Q
@@ -259,6 +262,8 @@ DOWQTS   EQU   *
          BE    IOERR              EXIT IF IT IS
          OC    EIBRESP,EIBRESP    ANY OTHER WRITEQ TS ERROR ?
          BNZ   DORESP             EXIT IF THERE IS
+* SUCCESSFUL TS Q WRITE
+         MVI   RETVE,X'FF'        SET THE RETRIEVE INDICATOR
          MVC   EIBFN,P1008FN      SET EIBFN
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
@@ -277,6 +282,7 @@ SENDIC   EQU   *
          MVC   ICPITRAN,P1008TRN  SET INITIATED TRANSID
          MVC   ICPITERM,P1008TRM  SET INITIATED TERMID
          MVC   ICPREQID,EIBREQID  SET REQID
+         MVC   ICPRETVE,RETVE     SET RETRIEVE INDICATOR
          TCPIO SEND,MSG=(R5),LMSG==A(ICPREFIX),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   INVREQ             ERROR IF BAD
@@ -356,7 +362,7 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 WORK     DC    PL8'0'             WOTK AREA
 INTDEC   DC    PL8'0'             INTERVAL IN 0.01 SECS
@@ -367,6 +373,7 @@ STCKTIME DS    XL8                STCK TIME
 RCODE    DS    XL4                SAVE RCODE
 RESP     DS    XL4                SAVE RESP
 RESP2    DS    XL4                SAVE RESP2
+RETVE    DS    X                  FF=TS Q DATA WRITTEN
 *
 TSACLEN  DS    XL2                ACTUAL TS LENGTH
 TSNUMIT  DS    XL2                NUMITEMS

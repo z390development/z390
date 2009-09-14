@@ -32,7 +32,7 @@ IXLOOP   EQU   *
          LTORG
 *
 EDFTABL  EQU   *
-*        DC    X'0202',AL4(EDF0E02) ADDRESS
+*        DC    X'0202',AL4(EDF0202) ADDRESS
 *        DC    X'0204',AL4(EDF0204) HANDLE CONDITION
 *        DC    X'0206',AL4(EDF0206) HANDLE AID
 *        DC    X'020A',AL4(EDF020A) IGNORE CONDITION
@@ -423,17 +423,7 @@ P0E08RSP DS    AL4                RESP
 P0E08RS2 DS    AL4                RESP2
 P0E08END EQU   *                  END MARKER
 *
-P0404    DSECT
-P0404FN  DS    XL2                FUNCTION CODE
-P0404EIB DS    AL4                EIB
-P0404TCT DS    AL4                TCTTE
-P0404FRM DS    AL4                FROM
-P0404LEN DS    AL2                LENGTH
-P0404NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0404RSP DS    AL4                RESP
-P0404RS2 DS    AL4                RESP2
-P0404END EQU   *                  END MARKER
+         P0404 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

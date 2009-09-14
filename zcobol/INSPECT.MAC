@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 11/17/08 stub for pending support              
 .* 01/14/09 initial coding
+.* 07/19/09 RPI fix FIELD_REC ZC_R3
 .*********************************************************************
 .* R2=V1,R3=V2   THESE MAY BE PASSED MULTIPLE TIMES TO GEN/ZC390LIB
 .* R14=V3,R15=V4 THESE MUST BE RESET FOR EACH CALL TO GEN
@@ -20,7 +21,7 @@
          :&TEST_VAR  SETC ''
          :&TEST_IX   SETA 0
          :&PARM_IX   SETA 1
-         :&FIELD_REG SETC 'R2'  R2=V1 INSPECT FIELD IF SUBSCRIPTED
+         :&FIELD_REG SETC 'ZC_R2'  R2=V1 INSPECT FIELD IF SUBSCRIPTED
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          AIF   (&FIELD_IX EQ 0)
@@ -53,7 +54,7 @@
       AWHILE   ('&SYSLIST(&PARM_IX)' NE ''                             X
                 AND '&SYSLIST(&PARM_IX)' NE 'REPLACING')
          :&TALLYING_CNT SETA &TALLYING_CNT+1
-         :&FIELD_REG SETC 'R3'  R3=V2 TALLY VAR IF SUBSCRIPTED 
+         :&FIELD_REG SETC 'ZC_R3'  R3=V2 TALLY VAR IF SUBSC  RPI 1065
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          AIF   (&FIELD_IX EQ 0)
@@ -93,7 +94,7 @@
                     OR '&SYSLIST(&PARM_IX)' EQ 'LEADING')
                :&STYPE SETC '&SYSLIST(&PARM_IX)'
                :&PARM_IX SETA &PARM_IX+1
-               :&FIELD_REG SETC 'R3'
+               :&FIELD_REG SETC 'ZC_R3'
                :&FIELD_SS1 SETB 0
                ACALL GET_PARM_FIELD
                AIF (&FIELD_IX GT 0                                     X
@@ -153,7 +154,7 @@
                :&PARM_IX SETA &PARM_IX+2
                :&V2 SETC ''
                :&V2_IX SETA 0
-               :&FIELD_REG SETC 'R3'
+               :&FIELD_REG SETC 'ZC_R3'
                :&FIELD_SS1 SETB 0
                ACALL GET_PARM_FIELD
                AIF (&FIELD_IX GT 0                                     X
@@ -189,7 +190,7 @@
              AWHILE ('&SYSLIST(&PARM_IX)' NE ''                        X
                      AND '&SYSLIST(&PARM_IX)' NE 'REPLACING')
                :&STYPE_CNT SETA &STYPE+1
-               :&FIELD_REG SETC 'R2'
+               :&FIELD_REG SETC 'ZC_R2'
                :&FIELD_SS1 SETB 0
                ACALL GET_PARM_FIELD
                AIF (&FIELD_IX GT 0                                     X
@@ -202,7 +203,7 @@
                   MNOTE 8,'INSPECT REPLACING MISSING BY'
                   MEXIT
                 AEND
-                :&FIELD_REG SETC 'R3'
+                :&FIELD_REG SETC 'ZC_R3'
                 :&FIELD_SS1 SETB 0
                 ACALL GET_PARM_FIELD
                 AIF (&FIELD_IX GT 0                                    X
@@ -252,7 +253,7 @@
 .*  TEST = BEFORE/AFTER [INITIAL] V4
 .*
          AENTRY CONVERTING
-         :&FIELD_REG SETC 'R2'
+         :&FIELD_REG SETC 'ZC_R2'
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          AIF   (&FIELD_IX EQ 0                                         X
@@ -267,7 +268,7 @@
                MEXIT
          AEND
          :&PARM_IX SETA &PARM_IX+1
-         :&FIELD_REG SETC 'R3'
+         :&FIELD_REG SETC 'ZC_R3'
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          AIF   (&FIELD_IX EQ 0                                         X
@@ -304,7 +305,7 @@
          AIF   ('&SYSLIST(&PARM_IX)' EQ 'INITIAL')
                :&PARM_IX SETA &PARM_IX+1
          AEND
-         :&FIELD_REG SETC 'R14'
+         :&FIELD_REG SETC 'ZC_R14'
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          AIF   (&FIELD_IX GT 0                                         X

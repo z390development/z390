@@ -32,7 +32,7 @@
         77  SUMLEN   PIC 9(2)  COMP.
 
         01  OCCZONE  PIC 99.
-        01  OCCZONE1 REDEFINES OCCZONE.
+        01  FILLER REDEFINES OCCZONE.
             02  FILLER   PIC X.
             02  OCCZONE2 PIC X.
 
@@ -50,7 +50,7 @@
             02  SHOWYR  PIC XX.
 
         01  BADKEY.
-            02  FILLER  PIC X(25) VALUE 'NO ACTION FOR AID KEY HEX '.
+            02  FILLER  PIC X(26) VALUE 'NO ACTION FOR AID KEY HEX '.
             02  HEXKEY  PIC X(2).
             02  FILLER  PIC X(6)  VALUE SPACES.
 
@@ -67,6 +67,10 @@
         01  WORK1.
             02  FILLER PIC X(3).
             02  RESP2  PIC X.
+
+        LINKAGE SECTION.
+        01  DFHCOMMAREA.
+            02  FILLER PIC X(86).
 
         PROCEDURE DIVISION USING DFHEIBLK DFHCOMMAREA.
 
@@ -168,7 +172,6 @@
             IF EIBAID = DFHPF7  THEN MOVE 'F7' TO HEXKEY.
             IF EIBAID = DFHPF8  THEN MOVE 'F8' TO HEXKEY.
             IF EIBAID = DFHPF9  THEN MOVE 'F9' TO HEXKEY.
-            IF EIBAID = DFHPF4  THEN MOVE 'F4' TO HEXKEY.
             IF EIBAID = DFHPF10 THEN MOVE '7A' TO HEXKEY.
             IF EIBAID = DFHPF11 THEN MOVE '7B' TO HEXKEY.
             IF EIBAID = DFHPF12 THEN MOVE '7C' TO HEXKEY.
@@ -465,7 +468,7 @@
 
       * RETURN   EQU   *
         ECRETURN.
-            EXEC CICS RETURN TRANSID('BMS1') COMMAREA(MYCOMM)
+            EXEC CICS RETURN TRANSID('BMC1') COMMAREA(MYCOMM)
                       LENGTH(86) END-EXEC.
 
       * GUI6HRNT EQU   *
@@ -478,7 +481,7 @@
             IF EIBAID = DFHCLEAR THEN GO TO GUI6.
       *  CLI   EIBAID,DFHPF3      PF3 ?
       *  BNE   REDISP             EXIT IF NOT
-            IF EIBAID = DFHPF3   THEN GO TO REDISP.
+            IF EIBAID NOT = DFHPF3 THEN GO TO REDISP.
 
       * ALLDONE  EQU   *
         ALLDONE.

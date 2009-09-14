@@ -9,11 +9,13 @@
 .* 10/30/08 initial coding for global MULTIPLY using ADD as model
 .* 02/16/09 upgrade using ZCGETFLD to support subscripts and qual.
 .* 02/26/09 RPI 1012 move onsize end-add pending to DIVIDE             
+.* 07/19/09 RPI 1065 parse both ROUNDED and REMAINING after GIVING     
+.* 07/19/09 RPI 1062 correct ON SIZE parsing                           
 .*********************************************************************
          DIVIDE  
          COPY  ZC_WS
          :&PARM_IX      SETA 1
-         :&FIELD_REG SETC 'R1'
+         :&FIELD_REG SETC 'ZC_R1'
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          :&NDR SETC '&FIELD_NAME'                NAME   DIVISOR
@@ -23,6 +25,12 @@
                :&LDR SETA &SYM_LEN(&XDR)         LENGTH DIVISOR
                :&SDR SETB &SYM_PIC_SIGN(&XDR)    SIGN   DIVISOR
                :&PDR SETA &SYM_PIC_DEC(&XDR)     DEC-PL DIVISOR
+         AELSEIF ('&FIELD_NAME'(1,1) LT '0'                            X
+               AND '&FIELD_NAME'(1,1) NE '+'                           X
+               AND '&FIELD_NAME'(1,1) NE '-'                           X
+               AND '&FIELD_NAME'(1,1) NE '.')
+               MNOTE 8,'DIVIDE FIELD NOT DEFINED - &FIELD_NAME'
+               MEXIT
          AELSE
                :&TDR SETC ''  DON'T KNOW YET
                :&LDR SETA 0   DON'T KNOW YET
@@ -35,7 +43,7 @@
                MEXIT
          AEND
          :&PARM_IX SETA &PARM_IX+1
-         :&FIELD_REG SETC 'R2'
+         :&FIELD_REG SETC 'ZC_R2'
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD                    NAME   DIVIDEND
          :&NDD SETC '&FIELD_NAME'                INDEX  DIVIDEND
@@ -45,6 +53,12 @@
                :&LDD SETA &SYM_LEN(&XDD)         LENGTH DIVIDEND
                :&SDD SETB &SYM_PIC_SIGN(&XDD)    SIGN   DIVIDEND
                :&PDD SETA &SYM_PIC_DEC(&XDD)     DEC-PL DIVIDEND
+         AELSEIF ('&FIELD_NAME'(1,1) LT '0'                            X
+               AND '&FIELD_NAME'(1,1) NE '+'                           X
+               AND '&FIELD_NAME'(1,1) NE '-'                           X
+               AND '&FIELD_NAME'(1,1) NE '.')
+               MNOTE 8,'DIVIDE FIELD NOT DEFINED - &FIELD_NAME'
+               MEXIT
          AELSE
                :&TDD SETC ''  DON'T KNOW YET
                :&LDD SETA 0   DON'T KNOW YET
@@ -100,7 +114,7 @@
 .* DIVIDE GIVING
 .*
          AENTRY DIVIDE_GIVING
-         :&FIELD_REG SETC 'R3'
+         :&FIELD_REG SETC 'ZC_R3'
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD                 
          :&NQ SETC '&FIELD_NAME'                 NAME   QUOTIENT 
@@ -125,13 +139,19 @@
              :&SDD SETB &SQ
              ACALL SET_LIT_PDD
          AEND
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'ROUNDED')  RPI 1062 RND+REM
+               :&ROUNDED SETB 1
+               :&PARM_IX SETA &PARM_IX+1
+         AELSE
+               :&ROUNDED SETB 0
+         AEND
          AIF   ('&SYSLIST(&PARM_IX)' EQ 'REMAINDER')
-               AIF ('&TQ' EQ 'D' OR '&TQ' EQ 'E')
-                   MNOTE 8,'DIVIDE REMAINDER INVALID FOR COMP-1 OR 2'
+               AIF ('&TQ' GE '1' AND '&TQ' LE '9')
+                   MNOTE 8,'DIVIDE REMAINDER INVALID FOR HFP, BFP, DFP'
                    MEXIT
                AEND
                :&PARM_IX SETA &PARM_IX+1
-               :&FIELD_REG SETC 'R14'
+               :&FIELD_REG SETC 'ZC_R14'
                :&FIELD_SS1 SETB 0
                ACALL GET_PARM_FIELD                 
                :&NR SETC '&FIELD_NAME'                 NAME   REMAINDER
@@ -172,7 +192,8 @@
          ACALL CALL_GEN_DIV
          :&PARM_IX SETA &MOVE_IX
          AWHILE (&PARM_IX LE &LAST_PARM)
-               :&FIELD_REG SETC 'R1'
+               ACTR 4096
+               :&FIELD_REG SETC 'ZC_R1'
                :&FIELD_SS1 SETB 1
                ACALL GET_PARM_FIELD                 
                GEN_MOVE &FIELD_NAME,&FIELD_IX,&NQ,&XQ
@@ -187,9 +208,10 @@
          :&NOT_ONSIZE SETB 0
          :&LAST_PARM   SETA 0
          AWHILE (&PARM_IX LE N'&SYSLIST)
+               ACTR 4096
                AIF     ('&SYSLIST(&PARM_IX)' EQ 'ON'                   X
                         AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
-                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
+                        AND '&SYSLIST(&PARM_IX+2)' EQ 'ERROR') RPI 1065
                      :&ONSIZE SETB 1      
                      AIF (&LAST_PARM EQ 0)
                          :&LAST_PARM SETA &PARM_IX-1
@@ -197,8 +219,8 @@
                      :&PARM_IX SETA N'&SYSLIST+2
                AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'NOT'                  X
                         AND '&SYSLIST(&PARM_IX+1)' EQ 'ON'             X
-                        AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
-                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
+                        AND '&SYSLIST(&PARM_IX+2)' EQ 'SIZE'           X
+                        AND '&SYSLIST(&PARM_IX+3)' EQ 'ERROR') RPI 1065
                      :&NOT_ONSIZE SETB 1                                
                      AIF (&LAST_PARM EQ 0)
                          :&LAST_PARM SETA &PARM_IX-1

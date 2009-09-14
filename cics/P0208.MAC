@@ -1,0 +1,76 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P0208 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P0208    DSECT
+         AELSE
+P0208    DS    0H
+         AEND
+P0208FN  DS    XL2                FUNCTION CODE
+P0208EIB DS    AL4                EIB
+P0208TCT DS    AL4                TCTTE
+P0208ABC DS    AL4                ABCODE
+P0208ABP DS    AL4                ABDUMP INDICATOR
+P0208ABG DS    AL4                ABENDING PROGRAM
+P0208APK DS    AL4                APLKYBD
+P0208APT DS    AL4                APLTEXT
+P0208ASP DS    AL4                ASRAPSW
+P0208ASR DS    AL4                ASRAREGS
+P0208BTR DS    AL4                BTRANS
+P0208CMD DS    AL4                CMDSEC
+P0208COL DS    AL4                COLOR
+P0208CWA DS    AL4                CWALENG
+P0208DSH DS    AL4                DEFSCRNHT
+P0208DSW DS    AL4                DEFSCRNWD
+P0208DSC DS    AL4                DSSCS
+P0208D32 DS    AL4                DEF3270
+P0208EWA DS    AL4                EWASUPP
+P0208EXT DS    AL4                EXTDS
+P0208FAC DS    AL4                FACILITY
+P0208FCI DS    AL4                FCI
+P0208GMM DS    AL4                GMMI
+P0208HIL DS    AL4                HILIGHT
+P0208INV DS    AL4                INVOKING PROGRAM
+P0208KAT DS    AL4                KATAKANA
+P0208LIU DS    AL4                LANGINUSE
+P0208MCL DS    AL4                MAP COLUMN
+P0208MHT DS    AL4                MAP HEIGHT
+P0208MLN DS    AL4                MAP LINE
+P0208MWH DS    AL4                MAP WIDTH
+P0208MSR DS    AL4                MSR CONTROL
+P0208NIU DS    AL4                NATLANGINUSE
+P0208NXT DS    AL4                NEXTTRANSID
+P0208OUT DS    AL4                OUTLINE
+P0208PRT DS    AL4                PARTNS
+P0208PGM DS    AL4                PROGRAM
+P0208PS  DS    AL4                PS
+P0208RSC DS    AL4                RESSEC
+P0208RES DS    AL4                RESTART
+P0208RET DS    AL4                RETURN PROGRAM
+P0208SCH DS    AL4                SCRNHT
+P0208SCW DS    AL4                SCRNWD
+P0208SOS DS    AL4                SOSI
+P0208STC DS    AL4                STARTCODE
+P0208TKP DS    AL4                TASK PRIORITY
+P0208TUL DS    AL4                TCTUALENG
+P0208TMC DS    AL4                TERMCODE
+P0208TMP DS    AL4                TERMPRIORITY
+P0208TXK DS    AL4                TEXTKYBD
+P0208TXP DS    AL4                TEXTPRINT
+P0208TNP DS    AL4                TRANPRIORITY
+P0208TWA DS    AL4                TWALENG
+P0208UNA DS    AL4                UNATTEND
+P0208USP DS    AL4                USERPRIORITY
+P0208VAL DS    AL4                VALIDATION
+P0208NOH DS    X                  FF=NOHANDLE
+         DS    X
+P0208RSP DS    AL4                RESP
+P0208RS2 DS    AL4                RESP2
+P0208END EQU   *                  END MARKER
+         MEND
+

@@ -570,7 +570,6 @@
                       REQID(1) END-EXEC.
       *  LA    R8,3               R8=LOOP LIMIT
             MOVE 1 TO LOOPCTRL.
-RSBRLP1  EQU   *
       * RSBRLP1  EQU   *
         RSBRLP1.
       *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
@@ -708,4 +707,3 @@ RSBRLP1  EQU   *
             IF FDBK2 = X'10' THEN MOVE '10' TO FHFDBK2.
             IF FDBK2 = X'68' THEN MOVE '68' TO FHFDBK2.
       *  BR    R9                 RETURN
-

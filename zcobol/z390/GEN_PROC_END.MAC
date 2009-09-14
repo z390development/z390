@@ -9,6 +9,7 @@
 .* 04/08/08 initial coding for z390 target
 .* 10/07/08 ZSTRMAC
 .* 06/14/09 RPI 1042 add PERIOD macro call at end of procedure div.
+.* 07/14/09 RPI 1065 set base for RETURN_CODE                       
 .*********************************************************************
          GEN_PROC_END
          COPY  ZC_WS
@@ -18,9 +19,11 @@
 .*
 .* GEN GOBACK FOR FALL THRU END OF PROC CODE
 .*
-         LH    R1,RETURN_CODE
-         L     R15,ZCVT_GOBACK
-         BASR  R14,R15
+         ZC_SYM_FIND RETURN_CODE
+         GEN_BASE &SYM_IX
+         LH    ZC_R1,RETURN_CODE
+         L     ZC_R15,ZCVT_GOBACK
+         BASR  ZC_R14,ZC_R15
          :&ZC_PROC_DIV SETB 0 TURN OFF PROC DIV TO STOP TRACE CODE
 .*
 .* DEFINE LIT POOL AT END OF PROC CODE

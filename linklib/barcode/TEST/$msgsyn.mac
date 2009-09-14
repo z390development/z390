@@ -1,0 +1,42 @@
+         MACRO                                                          00010000
+         $MSGSYN                                                        00020000
+SYNTABLE DS    0A -                     SYNTAX MESSAGE TABLE            00021000
+         DC    A(SYNT001)               FIRST MSG                       00021100
+         DC    A(133)                   MSG LENGTH                      00021200
+         DC    A(SYNT999-133)           LAST MSG                        00021300
+SYNT001  EQU   *                        START OF MESSAGES               00021400
+ DC Cl133' s4bcdrva: Usage is as follows:                             ' 00021500
+ DC Cl133'           s4bcdrva <flags> <trackString> <routeString>     ' 00021600
+ DC Cl133'           Where <flags>        is one of the following     ' 00021700
+ DC Cl133'                                processing flags:           ' 00021800
+ DC Cl133'                                --> -h|--h                  ' 00021900
+ DC Cl133'                                    Print this text,        ' 00022000
+ DC Cl133'                                    then exit               ' 00023000
+ DC Cl133'                                --> -m                      ' 00024000
+ DC Cl133'                                    Display                 ' 00025000
+ DC Cl133'                                    intermediate results    ' 00026000
+ DC Cl133'                                    while generating        ' 00027000
+ DC Cl133'                                    the barcode             ' 00028000
+ DC Cl133'                                    (debugging only)        ' 00029000
+ DC Cl133'                                --> -t                      ' 00030000
+ DC Cl133'                                    Display                 ' 00040000
+ DC Cl133'                                    table data              ' 00050000
+ DC Cl133'                                    while generating        ' 00060000
+ DC Cl133'                                    internal tables         ' 00061000
+ DC Cl133'                                    (debugging only)        ' 00062000
+ DC Cl133'                 <trackString>  is a 20-digit               ' 00063000
+ DC Cl133'                                tracking code.              ' 00064000
+ DC Cl133'                                If this string is           ' 00064100
+ DC Cl133'                                one of the following:       ' 00064200
+ DC Cl133'                                . self                      ' 00064300
+ DC Cl133'                                . test                      ' 00064400
+ DC Cl133'                                . selftest                  ' 00064500
+ DC Cl133'                                then, the Self-Test         ' 00064600
+ DC Cl133'                                routines are executed,      ' 00064700
+ DC Cl133'                                and the <routeString>       ' 00064800
+ DC Cl133'                                parameter is ignored.       ' 00064900
+ DC Cl133'                 <routeString>  is the 0-, 5-, 9-,          ' 00065000
+ DC Cl133'                                or 11-digit route           ' 00066000
+ DC Cl133'                                (aka ZIP) code.             ' 00066100
+SYNT999  EQU   *                        END OF MESSAGES                 00066200
+         MEND                                                           00066300

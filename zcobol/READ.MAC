@@ -8,30 +8,33 @@
 .*********************************************************************
 .* 04/14/08 initial coding for global ZCOBOL
 .* 10/06/08 ZSTRMAC
+.* 09/04/09 RPI 1065 use ZC_FILE_FIND to set FILE_IX
 .*********************************************************************
          READ  &FILE
          COPY  ZC_WS
-         ZC_FILE_FIND &FILE
+         ZC_FILE_FIND &FILE        RPI 1065
          AIF   (&FILE_IX EQ 0)      
                MNOTE 8,'READ FILE NOT FOUND - &FILE'
                MEXIT
          AEND
          :&NP      SETA  N'&SYSLIST
-         :&I       SETA  2
          :&MOVE    SETC  ''
          :&AT      SETC  ''
-         AIF   (&I LE &NP)
-               AIF   ('&SYSLIST(&I)' EQ 'INTO')
-                     :&MOVE    SETC  '&SYSLIST(&I+1)'
-                     :&I       SETA  &I+2
+         :&PARM_IX SETA 2
+         AIF   (&PARM_IX LT &NP)
+               AIF   ('&SYSLIST(&PARM_IX)' EQ 'INTO')
+                     :&MOVE    SETC  '&SYSLIST(&PARM_IX+1)'
+                     :&PARM_IX SETA  &PARM_IX+2
                AEND
-               AIF   ('&SYSLIST(&I)' EQ 'AT'                           X
-                      AND '&SYSLIST(&I+1)' EQ 'END')
+               AIF   ('&SYSLIST(&PARM_IX)' EQ 'AT'                     X
+                      AND '&SYSLIST(&PARM_IX+1)' EQ 'END')
                      :&AT SETC  'AT' INDICATE AT END FOLLOWS READ
                AELSE
-                     MNOTE 8,'READ UNKNOWN OPERAND - &SYSLIST(&I)'
+                     MNOTE 8,'READ UNKNOWN OPERAND - &SYSLIST(&PARM_IX)X
+               '
                      MEXIT
                AEND
          AEND
          GEN_READ &MOVE,&AT
+         MEXIT
          MEND

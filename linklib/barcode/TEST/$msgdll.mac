@@ -1,0 +1,75 @@
+         MACRO                                                          00010000
+         $MSGDLL                                                        00020000
+*---------------------------------------------------------------*       00030000
+* DLL trace messages                                            *       00040000
+*---------------------------------------------------------------*       00050000
+MSG401   DS  0CL133                                                     00060000
+         DC  C' Tracking Data as digit string          '                00070000
+M401DATA DC  CL80' '                                                    00080000
+         DC  (133-(*-MSG401))C' '                                       00090000
+MSG402   DS  0CL133                                                     00100000
+         DC  C' Routing Data as digit string           '                00110000
+M402DATA DC  CL80' '                                                    00120000
+         DC  (133-(*-MSG402))C' '                                       00130000
+MSG403   DS  0CL133                                                     00140000
+         DC  C' Routing Data as 37 bit Value           '                00150000
+M403DATA DC  CL80' '                                                    00160000
+         DC  (133-(*-MSG403))C' '                                       00170000
+MSG404   DS  0CL133                                                     00180000
+         DC  C' Routing data with embedded length      '                00190000
+M404DATA DC  CL80' '                                                    00200000
+         DC  (133-(*-MSG404))C' '                                       00210000
+MSG405   DS  0CL133                                                     00220000
+         DC  C' Bytes with Routing Data                '                00230000
+M405DATA DC  CL80' '                                                    00240000
+         DC  (133-(*-MSG405))C' '                                       00250000
+MSG406   DS  0CL133                                                     00260000
+         DC  C' Bytes with Routing and Tracking Data   '                00270000
+M406DATA DC  CL80' '                                                    00280000
+         DC  (133-(*-MSG406))C' '                                       00290000
+MSG407   DS  0CL133                                                     00300000
+         DC  C' FCS (11 bits)                          '                00310000
+M407DATA DC  CL80' '                                                    00320000
+         DC  (133-(*-MSG407))C' '                                       00330000
+MSG408   DS  0CL133                                                     00340000
+         DC  C' Codewords.                             '                00350000
+M408DATA DC  CL80' '                                                    00360000
+         DC  (133-(*-MSG408))C' '                                       00370000
+MSG409   DS  0CL133                                                     00380000
+         DC  C' Codewords with orientation in Char J   '                00390000
+M409DATA DC  CL80' '                                                    00400000
+         DC  (133-(*-MSG409))C' '                                       00410000
+MSG410   DS  0CL133                                                     00420000
+         DC  C' Characters.                            '                00430000
+M410DATA DC  CL80' '                                                    00440000
+         DC  (133-(*-MSG410))C' '                                       00450000
+MSG411   DS  0CL133                                                     00460000
+         DC  C' Characters with FCS bits 0-9           '                00470000
+M411DATA DC  CL80' '                                                    00480000
+         DC  (133-(*-MSG411))C' '                                       00490000
+MSG412   DS  0CL133                                                     00500000
+         DC  C' Barcode.                               '                00510000
+M412DATA DC  CL80' '                                                    00520000
+         DC  (133-(*-MSG412))C' '                                       00530000
+MSG501   DS  0CL133                                                     00540000
+         DC  C' Count '                                                 00550000
+M501D1   DC  C'    '                                                    00560000
+         DC  C' Value '                                                 00570000
+M501D2   DC  C'    '                                                    00580000
+         DC  C' Reverse '                                               00590000
+M501D3   DC  C'    '                                                    00600000
+         DC  C' '                                                       00610000
+M501D4   DC  C'            '                                            00620000
+         DC  (133-(*-MSG501))C' '                                       00630000
+MSG502   DS  0CL133                                                     00640000
+         DC  C' Index '                                                 00650000
+M502D1   DC  C'    '                                                    00660000
+         DC  C' Value '                                                 00670000
+M502D2   DC  C'    '                                                    00680000
+         DC  (133-(*-MSG502))C' '                                       00690000
+*---------------------------------------------------------------*       00691000
+* Camel-cased constants (CCC, better than KKK)                  *       00692000
+*---------------------------------------------------------------*       00693000
+ISYM     DC  CL12'Symmetric'                                            00694000
+IAUS     DC  Cl12'Already Used'                                         00695000
+         MEND                                                           00696000

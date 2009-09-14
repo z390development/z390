@@ -9,6 +9,7 @@
 .* 04/14/08 initial coding for global ZCOBOL
 .* 04/30/08 change SYM_FILE_IX to SYM_REF    
 .* 10/06/08 ZSTRMAC
+.* 07/09/09 RPI 1065 move FILE_IX from SYM_REF to SYM_FD for groups
 .*********************************************************************
          WRITE &RECORD
          COPY  ZC_WS
@@ -21,10 +22,11 @@
                MNOTE 8,'WRITE RECORD NOT FOUND - &RECORD'
                MEXIT
          AEND
-         :&FILE_IX SETA  &SYM_REF(&SYM_IX)
+         :&FILE_IX SETA  &SYM_FD(&SYM_IX)  RPI 1065
          AIF   (&FILE_IX EQ 0)
                MNOTE 8,'WRITE RECORD NOT A FILE RECORD - &RECORD'
                MEXIT
          AEND
          GEN_WRITE &RECORD
+         MEXIT
          MEND

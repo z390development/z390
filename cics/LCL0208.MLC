@@ -1,0 +1,390 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL0208  CSECT
+*
+* FN=0208  EXEC CICS ASSIGN
+*
+* R1  >>> P0208 BLOCK POINTER
+*
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0208,P0208END),R3
+         L     DFHEIBR,P0208EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0208TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0208FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P0208RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P0208RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+* GET THE ISYS DATA WHETHER WE NEED IT OR NOT
+         L     R8,ASGNI           R8=MESSAGE LENGTH
+         MVC   ASGNIREQ,=C'FE01'  SET ISYS REQUEST
+         MVC   ASGNITRM,TCTTETI   SET TERMID
+         MVC   ASGNITRN,EIBTRNID  SET TRANSID
+         MVC   ASGNITKN,EIBTASKN  SET TASK NO.
+         TCPIO SEND,MSG=ASGNI,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOESN           EXIT IF BAD
+         L     R8,ASGNRCVE        R8=MESSAGE LENGTH
+         TCPIO RECEIVE,MSG=ASGNRCVE,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERC           EXIT IF BAD
+         LA    R7,ASGNDATA        R7=RECEIVED DATA
+         USING ISYSDATA,R7
+* GET THE ITER DATA WHETHER WE NEED IT OR NOT
+         L     R8,ASGNI           R8=MESSAGE LENGTH
+         MVC   ASGNIREQ,=C'FE00'  SET ITER REQUEST
+         TCPIO SEND,MSG=ASGNI,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOESN           EXIT IF BAD
+         L     R8,ASGNRCV2        R8=MESSAGE LENGTH
+         TCPIO RECEIVE,MSG=ASGNRCV2,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERC           EXIT IF BAD
+         LA    R8,ASGNDAT2        R8=RECEIVED DATA
+         USING THRDDSCT,R8
+         ICM   R9,15,P0208ABC     ANY ABCODE ?
+         BZ    DOABD              EXIT IF NONE
+         MVC   0(4,R9),TCTTEABC   MOVE ABCODE
+DOABD    EQU   *
+         ICM   R9,15,P0208ABP     ANY ABDUMP ?
+         BZ    DOABP              EXIT IF NONE
+         MVC   0(1,R9),TCTTEABP   MOVE ABDUMP
+DOABP    EQU   *
+         ICM   R9,15,P0208ABG     ANY ABPROGRAM ?
+         BZ    DOAPK              EXIT IF NONE
+         MVC   0(8,R9),TCTTEABG   MOVE ABPROGRAM
+DOAPK    EQU   *
+         ICM   R9,15,P0208APK     ANY APLKYBD ?
+         BZ    DOAPT              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO APLKYBD
+DOAPT    EQU   *
+         ICM   R9,15,P0208APT     ANY APLTEXT ?
+         BZ    DOASP              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO APLTEXT
+DOASP    EQU   *
+         ICM   R9,15,P0208ASP     ANY ASRAPSW ?
+         BZ    DOASR              EXIT IF NONE
+         MVC   0(8,R9),TCTTEPSW   MOVE ASRAPSW
+DOASR    EQU   *
+         ICM   R9,15,P0208ASR     ANY ASRAREGS ?
+         BZ    DOBTR              EXIT IF NONE
+         MVC   0(64,R9),TCTTEASR  MOVE ASRAREGS
+DOBTR    EQU   *
+         ICM   R9,15,P0208BTR     ANY BTRANS ?
+         BZ    DOCMD              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO BTRANS
+DOCMD    EQU   *
+         ICM   R9,15,P0208CMD     ANY CMDSEC ?
+         BZ    DOCOL              EXIT IF NONE
+         MVI   0(R9),C' '         SET NO CMDSEC
+DOCOL    EQU   *
+         ICM   R9,15,P0208COL     ANY COLOR ?
+         BZ    DOCWA              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO COLOUR
+DOCWA    EQU   *
+         ICM   R9,15,P0208CWA     ANY CWALENG
+         BZ    DODSH              EXIT IF NONE
+         MVC   0(2,R9),ISYSDCWA+2 MOVE CWALENG
+DODSH    EQU   *
+         ICM   R9,15,P0208DSH     ANY DEFSCRNHT ?
+         BZ    DODFW              EXIT IF NONE
+         MVC   0(2,R9),=H'24'     SET DEFAULT SCREEN HEIGHT
+DODFW    EQU   *
+         ICM   R9,15,P0208DSW     ANY DEFSCRNWD ?
+         BZ    DODSC              EXIT IF NONE
+         MVC   0(2,R9),=H'80'     SET DEFAULT SCREEN WIDTH
+DODSC    EQU   *
+         ICM   R9,15,P0208DSC     ANY DSSCS ?
+         BZ    DOD32              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO DSSCS
+DOD32    EQU   *
+         ICM   R9,15,P0208D32     ANY DS3270 ?
+         BZ    DOEWA              EXIT IF NONE
+         MVI   0(R9),X'FF'        SET 3270
+DOEWA    EQU   *
+         ICM   R9,15,P0208EWA     ANY EWASUPP ?
+         BZ    DOEXT              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO ERASE WRITE ALTERNATE
+DOEXT    EQU   *
+         ICM   R9,15,P0208EXT     ANY EXTDS ?
+         BZ    DOFAC              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO EXTENDED DATA STREAM
+DOFAC    EQU   *
+         ICM   R9,15,P0208FAC     ANY FACILITY ?
+         BZ    DOFCI              EXIT IF NONE
+         MVC   0(4,R9),TCTTETI    SET TERMID
+DOFCI    EQU   *
+         ICM   R9,15,P0208FCI     ANY FCI ?
+         BZ    DOGMM              EXIT IF NONE
+         MVI   0(R9),X'01'        SET TERMINAL
+DOGMM    EQU   *
+         ICM   R9,15,P0208GMM     ANY GMMI ?
+         BZ    DOHIL              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO GMMI
+DOHIL    EQU   *
+         ICM   R9,15,P0208HIL     ANY HILIGHT ?
+         BZ    DOINV              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO HILIGHT
+DOINV    EQU   *
+         ICM   R9,15,P0208INV     ANY INVOKINGPROG ?
+         BZ    DOKAT              EXIT IF NONE
+         MVC   0(8,R9),TCTTEINV   SET INVOKING PROGRAM
+DOKAT    EQU   *
+         ICM   R9,15,P0208KAT     ANY KATAKANA ?
+         BZ    DOLIU              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO KATAKANA
+DOLIU    EQU   *
+         ICM   R9,15,P0208LIU     ANY LANGINUSE ?
+         BZ    DOMCL              EXIT IF NONE
+         MVC   0(3,R9),=C'ENG'    DEFAULT TO ENGLISH
+         CLI   ISYSDDTE,C'K'      IS IT ENGLISH ?
+         BE    DOMCL              EXIT IF IT IS
+         MVC   0(3,R9),=C'ENU'    SET TO US ENGLISH
+DOMCL    EQU   *
+         ICM   R9,15,P0208MCL     ANY MAPCOLUMN ?
+         BZ    DOMHT              EXIT IF NONE
+         OC    TCTTEMCL,TCTTEMCL  ANY MAP COLUMN ?
+         BZ    INVREQ2            ERROR IF NOT
+         MVC   0(2,R9),TCTTEMCL   SET MAP COLUMN
+DOMHT    EQU   *
+         ICM   R9,15,P0208MHT     ANY MAPHEIGHT ?
+         BZ    DOMLN              EXIT IF NONE
+         OC    TCTTEMHT,TCTTEMHT  ANY MAP HEIGHT ?
+         BZ    INVREQ2            ERROR IF NOT
+         MVC   0(2,R9),TCTTEMHT   SET MAP HEIGHT
+DOMLN    EQU   *
+         ICM   R9,15,P0208MLN     ANY MAPLINE ?
+         BZ    DOMWH              EXIT IF NONE
+         OC    TCTTEMLN,TCTTEMLN  ANY MAP LINE ?
+         BZ    INVREQ2            ERROR IF NOT
+         MVC   0(2,R9),TCTTEMLN   SET MAP LINE
+DOMWH    EQU   *
+         ICM   R9,15,P0208MWH     ANY MAPWIDTH ?
+         BZ    DOMSR              EXIT IF NONE
+         OC    TCTTEMWH,TCTTEMWH  ANY MAP WIDTH ?
+         BZ    INVREQ2            ERROR IF NOT
+         MVC   0(2,R9),TCTTEMWH   SET MAP WIDTH
+DOMSR    EQU   *
+         ICM   R9,15,P0208MSR     ANY MSRCONTROL ?
+         BZ    DONIU              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO MSRCONTROL
+DONIU    EQU   *
+         ICM   R9,15,P0208NIU     ANY NATLANGINUSE ?
+         BZ    DONXT              EXIT IF NONE
+         MVI   0(R9),C'A'         DEFAULT TO ENGLISH
+         CLI   ISYSDDTE,C'K'      IS IT ENGLISH ?
+         BE    DONXT              EXIT IF IT IS
+         MVI   0(R9),C'E'         SET TO US ENGLISH
+DONXT    EQU   *
+         ICM   R9,15,P0208NXT     ANY NEXT TRANSID ?
+         BZ    DOOUT              EXIT IF NONE
+         MVC   0(4,R9),TCTTENXT   SET NEXT TRANSID
+DOOUT    EQU   *
+         ICM   R9,15,P0208OUT     ANY OUTLINE ?
+         BZ    DOPRT              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO OUTLINE
+DOPRT    EQU   *
+         ICM   R9,15,P0208PRT     ANY PARTNS ?
+         BZ    DOPGM              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO PARTNS
+DOPGM    EQU   *
+         ICM   R9,15,P0208PGM     ANY PROGRAM ?
+         BZ    DOPS               EXIT IF NONE
+         MVC   0(8,R9),EIBPROG    SET PROGRAM
+DOPS     EQU   *
+         ICM   R9,15,P0208PS      ANY PS ?
+         BZ    DORSC              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO PS
+DORSC    EQU   *
+         ICM   R9,15,P0208RSC     ANY RESSEC ?
+         BZ    DORES              EXIT IF NONE
+         MVI   0(R9),C' '         SET NO RESSEC (X=YES)
+DORES    EQU   *
+         ICM   R9,15,P0208RES     ANY RESTART ?
+         BZ    DORET              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO RESTART
+DORET    EQU   *
+         ICM   R9,15,P0208RET     ANY RETURNPROG ?
+         BZ    DOSCH              EXIT IF NONE
+         MVC   0(8,R9),TCTTERET   SET RETURN PROGRAM
+DOSCH    EQU   *
+         ICM   R9,15,P0208SCH     ANY SCRNHT ?
+         BZ    DOSCW              EXIT IF NONE
+         MVC   0(2,R9),=H'24'     SET SCRNHT
+DOSCW    EQU   *
+         ICM   R9,15,P0208SCW     ANY SCRNWD ?
+         BZ    DOSOS              EXIT IF NONE
+         MVC   0(2,R9),=H'80'     SET SCRNWD
+DOSOS    EQU   *
+         ICM   R9,15,P0208SOS     ANY SOSI ?
+         BZ    DOSTC              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO SOSI
+DOSTC    EQU   *
+         ICM   R9,15,P0208STC     ANY STARTCODE ?
+         BZ    DOTKP              EXIT IF NONE
+         MVC   0(2,R9),=C'TD'     SET TERMINAL INPUT
+         CLI   TCTTETYP,C'A'      IS IT INITIAL TRANSID ?
+         BE    DOTKP              EXIT IF IT IS
+         CLI   TCTTETYP,C'B'      IS IT SCREEN INPUT ?
+         BE    DOTKP              EXIT IF IT IS
+         CLI   TCTTETYP,C'C'      IS IT RETURN TRANSID ?
+         BE    DOTKP              EXIT IF IT IS
+         MVC   0(2,R9),=C'S '     SET START-NO-DATA
+         CLI   TCTTETYP,C'D'      IS IT START-NO-DATA ?
+         BE    DOTKP              EXIT IF IT IS
+* THE MANUAL SAYS FROM, BUT I'M INCLUDING RTERMID/RTRANSID/QUEUE
+         MVC   0(2,R9),=C'SD'     SET START-DATA
+DOTKP    EQU   *
+         ICM   R9,15,P0208TKP     ANY TASKPRIORITY ?
+         BZ    DOTUL              EXIT IF NONE
+         MVC   0(2,R9),=H'0'      SET ZERO
+DOTUL    EQU   *
+         ICM   R9,15,P0208TUL     ANY TCTUALENG ?
+         BZ    DOTMC              EXIT IF NONE
+         MVC   0(2,R9),=H'0'      SET ZERO
+DOTMC    EQU   *
+         ICM   R9,15,P0208TMC     ANY TERMCODE ?
+         BZ    DOTMP              EXIT IF NONE
+         MVI   1(R9),X'02'        ALWAYS MODEL 2 (C'2'?)
+         SR    R4,R4              R4=0
+         IC    R4,TCTTETI+3       TERMINAL SUFFIX
+         AHI   R4,-240            CONVERT TO HEX
+         MS    R4,=AL4(THRDLEN)   INDEX TO
+         AR    R8,R4                       OUR TERMINAL
+         MVI   0(R9),X'99'        DEFAULT LOCAL TERMINAL
+         CLI   THRDTYPE,LOCAL     IS IT LOCAL ?
+         BE    DOTMP              EXIT IF IT IS
+         MVI   0(R9),X'91'        SET REMOTE TERMINAL
+DOTMP    EQU   *
+         ICM   R9,15,P0208TMP     ANY TERMPRIORITY ?
+         BZ    DOTXK              EXIT IF NONE
+         MVC   0(2,R9),=H'0'      SET ZERO
+DOTXK    EQU   *
+         ICM   R9,15,P0208TXK     ANY TEXTKYBD ?
+         BZ    DOTXP              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO TEXTKYBD
+DOTXP    EQU   *
+         ICM   R9,15,P0208TXP     ANY TEXTPRINT ?
+         BZ    DOTNP              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO TEXTPRINT
+DOTNP    EQU   *
+         ICM   R9,15,P0208TNP     ANY TRANPRIORITY ?
+         BZ    DOTWA              EXIT IF NONE
+         MVC   0(2,R9),=H'0'      SET ZERO
+DOTWA    EQU   *
+         ICM   R9,15,P0208TWA     ANY TWASIZE ?
+         BZ    DOUNA              EXIT IF NONE
+         MVC   0(2,R9),=H'0'      SET ZERO
+DOUNA    EQU   *
+         ICM   R9,15,P0208UNA     ANY UNATTEND ?
+         BZ    DOUSP              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NO UNATTEND
+DOUSP    EQU   *
+         ICM   R9,15,P0208USP     ANY USERPRIORITY ?
+         BZ    DOVAL              EXIT IF NONE
+         MVC   0(2,R9),=H'0'      SET ZERO
+DOVAL    EQU   *
+         ICM   R9,15,P0208VAL     ANY VALIDATION ?
+         BZ    RETURN             RETURN IF NONE
+         MVI   0(R9),X'00'        SET NO VALIDATION
+         B     RETURN             EXIT
+*
+INVREQ2  EQU   *
+* INVOKE INVREQ/2
+         MVC   EIBRESP2,=F'2'     SET EIBRESP2=NO MAP EVER SENT
+         MVI   EIBRCODE,X'E0'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         ICM   R14,15,P0208RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P0208RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         PR    ,                  UNSTACK AND RETURN TO MACRO
+*
+TCPIOERC ABEND 778,DUMP
+TCPIOESN ABEND 780,DUMP
+*
+ASGNI    DS    0F
+* REQUEST INFO
+* FE01  REQUEST I SYS DATA
+         DC    A(ASGNIEND-*)
+ASGNIREQ DC    C'FE01'            REQUEST ID
+ASGNITRM DS    CL4                TERMID
+ASGNITRN DS    CL4                TRANSID
+         DC    C' '               TRANSID TYPE
+ASGNITKN DS    PL4                TASK NO.
+ASGNIEND EQU   *
+*
+ASGNRCVE DS    0F
+* RECEIVE AREA
+* MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
+         DC    A(200)             MAX LENGTH
+         DS    CL4                REQUEST CODE
+         DS    CL4                TERMINAL ID
+         DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+         DS    PL4                TASK NO.
+ASGNDATA DS    CL188              RETURNED DATA
+*
+ASGNRCV2 DS    0F
+* RECEIVE AREA
+* MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
+         DC    A(200)             MAX LENGTH
+         DS    CL4                REQUEST CODE
+         DS    CL4                TERMINAL ID
+         DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+         DS    PL4                TASK NO.
+ASGNDAT2 DS    CL188              RETURNED DATA
+*
+* I SYS -- REQUESTED DATA FORMAT
+*
+ISYSDATA DSECT
+         DS    CL50               JARPATH
+         DS    CL50               CICSPATH
+         DS    CL3                TERMID_PREFIX
+ISYSDDTE DS    C                  DATE FORMAT
+         DS    X                  MAXTHREADS
+         DS    X                  THREADS IN USE
+         DS    X                  LOCAL_TERMINALS
+         DS    X                  LOCAL TERMINALS IN USE
+         DS    X                  REMOTE_TERMINALS
+         DS    X                  REMOTE TERMINALS IN USE
+         DS    CL4                INITIAL_TRANSID
+ISYSDCWA DS    XL4                CWASIZE
+         DS    CL3                TRACE_LOCALS
+         DS    CL3                TRACE_Z390CICS
+         DS    CL5                SEQ_TERM
+*
+         P0208 DSECT
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         THRDDSCT                 TERMINAL THREAD CONTROL AREA
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R11 EIB
+* R13 BASE 1
+*
+         END
+

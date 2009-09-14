@@ -1,4 +1,4 @@
-         MACRO
+        MACRO
 .*********************************************************************
 .* Copyright 2008 Automated Software Tools Corporation               *
 .* This source code is part of z390 zCOBOL/assembler/emulator package*
@@ -16,6 +16,16 @@
 .* 03/12/09 RPI 1004 support types 1-9,Q using ZC_CONV/PACK31/UNPK31                               
 .* 04/28/09 RPI 1003 add support for &TMP_NAME/TYPE/LEN in ZCVT via -IX                            
 .* 06/19/09 RPI 1042 fix to move chararacters if target type X                                     
+.* 07/08/09 RPI 1065 support +- sign in display picture                                            
+.* 07/22/09 RPI 1065 correct padding Z and P with 0's on left/right                                          
+.* 07/22/09 RPI 1065 correct to accept leading period in literal                                          
+.* 07/30/09 RPI 1065 add literal QUOTE/QUOTES                                                             
+.* 08/03/09 RPI 1065 correct MVC length if six, ignore leading 0 for Z                                                            
+.* 08/06/09 RPI 1065 allow for sign in max lit digit check                                                                            
+.* 08/07/09 RPI 1065 scale int lit based on dec point                                                                                 
+.* 08/08/09 RPI 1065 correct SRP negative shift to use 5 bit disp.                                                                    
+.* 08/08/09 RPI 1065 for CVT_Z_TO_X use move and pad if pic x or > 256                                 
+.* 08/09/09 RPI 1065 use SCALE_NUM_LIT for WS,MOVE,IF etc.                                             
 .*********************************************************************
          GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
          COPY  ZC_WS
@@ -25,14 +35,16 @@
              :&L_TARGET SETA  &SYM_LEN(&T_IX)
              :&S_TARGET SETB  &SYM_PIC_SIGN(&T_IX)
              :&T_TARGET SETC '&SYM_PIC_TYPE(&T_IX)'
+             :&D_TARGET SETA  &SYM_PIC_DEC(&T_IX) RPI 1062
              AIF ('&T_TARGET' EQ 'X' AND '&SYM_PIC(&T_IX)' EQ '')
                  :&PIC_TARGET SETB 0 NO PIC FOR X GROUP
              AEND
          AELSEIF (&T_IX LT 0)
-             :&N_TARGET SETC '&TMP_NAME(-&T_IX)'
              :&L_TARGET SETA  &TMP_LEN(-&T_IX)
+             :&N_TARGET SETC '&TMP_NAME(-&T_IX)(&L_TARGET)'
              :&S_TARGET SETB  &TMP_SIGN(-&T_IX)
              :&T_TARGET SETC '&TMP_TYPE(-&T_IX)'
+             :&D_TARGET SETA 0                    RPI 1062 
          AELSE
             MNOTE 8,'GEN_MOVE MISSING TARGET INDEX FOR &T_NAME'
             MEXIT
@@ -42,11 +54,13 @@
              :&L_SOURCE SETA  &SYM_LEN(&S_IX)
              :&S_SOURCE SETB  &SYM_PIC_SIGN(&S_IX)
              :&T_SOURCE SETC '&SYM_PIC_TYPE(&S_IX)'
+             :&D_SOURCE SETA  &SYM_PIC_DEC(&S_IX)  RPI 1062
          AELSEIF (&S_IX LT 0)
              :&N_SOURCE SETC '&TMP_NAME(-&S_IX)'
              :&L_SOURCE SETA  &TMP_LEN(-&S_IX)
              :&S_SOURCE SETB  &TMP_SIGN(-&S_IX)
              :&T_SOURCE SETC '&TMP_TYPE(-&S_IX)'
+             :&D_SOURCE SETA  0                    RPI 1052 
          AEND
          :&LIT   SETC '&N_SOURCE'
          :&PAD_OFF SETC ''
@@ -64,28 +78,34 @@
                AIF  ('&T_TARGET' EQ '&T_SOURCE'                        X 
                      OR NOT &PIC_TARGET)   RPI 1042 MVC TO GROUP
                     AIF   (&L_TARGET LE &L_SOURCE)   
-                          AIF (&T_IX LT 0)
-         MVC   &N_TARGET.(&L_TARGET),&N_SOURCE
-                          AELSE
          MVC   &N_TARGET,&N_SOURCE
-                          AEND
                           AIF  (&L_TARGET LT &L_SOURCE AND &ZC_WARN)
                                MNOTE 4,'GEN_MOVE SOURCE TRUNCATED TO TAX
                RGET &L_SOURCE > &L_TARGET'
                                MEXIT         
                           AEND
                     AELSE
-                          AIF  ('&T_TARGET' NE 'X'                     X
-                                AND '&T_TARGET' NE 'C')
-                               MNOTE 8,'GEN_MOVE WITH PADDING ONLY FOR X
-                X OR C'            
-                               MEXIT
-                          AEND
+                          AIF  ('&T_TARGET' EQ 'X') RPI 1062 PAD X                    
+                               :&LPAD SETA  &L_TARGET-&L_SOURCE-1
+                               AIF ('&N_TARGET'(1,1) LT '0')
          MVC   &N_TARGET.(&L_SOURCE),&N_SOURCE
-         MVI   &N_TARGET+&L_SOURCE,C' '
-                          :&LPAD SETA  &L_TARGET-&L_SOURCE-1
-                          AIF (&LPAD GT 0)
-         MVC   &N_TARGET+&L_SOURCE+1(&LPAD),&N_TARGET+&L_SOURCE
+         MVI   &L_SOURCE+&N_TARGET,C' '
+                                   AIF (&LPAD GT 0)
+         MVC   &N_TARGET+&L_SOURCE+1(&LPAD),&L_SOURCE+&N_TARGET
+                                   AEND
+                               AELSE
+                                   ACALL RESET_SS1_TARGET
+         MVC   &FIELD_OFF.(&L_SOURCE,&FIELD_REG),&N_SOURCE
+         MVI   &FIELD_OFF+&L_SOURCE.(&FIELD_REG),C' '
+                                   AIF (&LPAD GT 0)
+         MVC   &FIELD_OFF+&L_SOURCE+1(&LPAD,&FIELD_REG),&L_SOURCE+&N_TAX
+               RGET
+                                   AEND
+                               AEND
+                          AELSEIF ('&T_TARGET' EQ 'P') RPI 1062 PAD Z
+                               ACALL PAD_P
+                          AELSEIF ('&T_TARGET' EQ 'Z') RPI 1062 PAD Z
+                               ACALL PAD_Z 
                           AEND
                     AEND
                AELSE
@@ -98,11 +118,14 @@
                AIF   ('&LIT'(1,1) EQ '''')                 
                      AIF (&L_TARGET EQ 1)
                          ACALL RESET_SS1_TARGET
+                         AIF (K'&LIT GT 3)
+                             :&LIT SETC '&LIT'(1,2).''''
+                         AEND
          MVI   &N_TARGET,C&LIT
                      AELSE
                          :&LLIT SETA  (&L_TARGET+1)/2*2
-         LARL  R1,=CL&LLIT&LIT
-                         :&LITREF SETC '0(R1)'
+         LARL  ZC_R1,=CL&LLIT&LIT
+                         :&LITREF SETC '0(ZC_R1)'
                          ACALL MVC_LIT
                      AEND
                AELSEIF ('&LIT'(1,2) EQ 'X''')
@@ -112,12 +135,12 @@
                      AELSE
                          :&LLIT SETA  (&L_TARGET+1)/2*2
                          :&HEX  SETC '&LIT'(3,K'&LIT-3)
-         LARL  R1,=XL&LLIT'&HEX'
+         LARL  ZC_R1,=XL&LLIT'&HEX'
                          AIF (&LLIT EQ &L_TARGET)
-                              :&LITREF SETC '0(R1)'
+                              :&LITREF SETC '0(ZC_R1)'
                               ACALL MVC_LIT
                          AELSE
-                              :&LITREF SETC '1(R1)'
+                              :&LITREF SETC '1(ZC_R1)'
                               ACALL MVC_LIT
                          AEND
                      AEND
@@ -125,12 +148,13 @@
                      :&LIT SETC '&LIT'(2,*)
                      ACALL RESET_SS1_TARGET
          MVI   &N_TARGET,C&LIT
-                     ACALL PAD_TARGET
+                     ACALL PAD_X
                AELSE
                     AIF  ('&LIT'(1,1) GE '0'                           X
                          OR '&LIT'(1,1) EQ '+'                         X
                          OR '&LIT'(1,1) EQ '-'                         X
-                         OR '&LIT'(1,1) EQ '(')
+                         OR '&LIT'(1,1) EQ '.'                         X
+                         OR '&LIT'(1,1) EQ '(') RPI 1065 ADD PERIOD
                          :&NUM SETC '&LIT'
                          ACALL MOVE_NUM_LIT
                     AELSEIF  ('&LIT' EQ 'ZERO'                         X
@@ -142,17 +166,22 @@
                          OR '&LIT' EQ 'SPACE')
                          ACALL RESET_SS1_TARGET
          MVI   &N_TARGET,C' '
-                         ACALL PAD_TARGET
+                         ACALL PAD_X
+                    AELSEIF ('&LIT' EQ 'QUOTE'                         X
+                         OR '&LIT' EQ 'QUOTES')
+                         ACALL RESET_SS1_TARGET
+         MVI   &N_TARGET,C'''' RPI 1O65
+                         ACALL PAD_X
                     AELSEIF ('&LIT' EQ 'LOW_VALUES'                    X
                          OR '&LIT' EQ 'LOW_VALUE')
                          ACALL RESET_SS1_TARGET
          MVI   &N_TARGET,X'00'
-                         ACALL PAD_TARGET
+                         ACALL PAD_X
                     AELSEIF ('&LIT' EQ 'HIGH_VALUES'                   X
                          OR '&LIT' EQ 'HIGH_VALUE')
                          ACALL RESET_SS1_TARGET
          MVI   &N_TARGET,X'FF'
-                         ACALL PAD_TARGET
+                         ACALL PAD_X
                     AELSE
                          MNOTE 8,'GEN_MOVE UNKNOWN LIT - &LIT'
                     AEND
@@ -175,65 +204,98 @@
       AENTRY MOVE_NUM_LIT
       ACASE (C2A('&T_TARGET'))
       AWHEN C'A',C'I'               RPI 1002
-         LARL  R1,=A(&NUM)
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=A(&NUM)
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'1'
-         LARL  R1,=EH'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=EH'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'2'
-         LARL  R1,=DH'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=DH'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'3'
-         LARL  R1,=LH'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=LH'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'4'
-         LARL  R1,=EB'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=EB'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'5'
-         LARL  R1,=DB'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=DB'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'6'
-         LARL  R1,=LB'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=LB'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'7'
-         LARL  R1,=ED'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=ED'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'8'
-         LARL  R1,=DD'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=DD'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'9'
-         LARL  R1,=LD'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=LD'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'F'
+        :&DEC_SYM SETA &D_TARGET
+        ACALL SCALE_NUM_LIT
         AIF   (K'&NUM LE 4)
               ACALL RESET_SS1_TARGET
          MVHI  &N_TARGET,&NUM
         AELSE
-         LARL  R1,=&T_TARGET'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=&T_TARGET'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
         AEND
       AWHEN C'G'
+        :&DEC_SYM SETA &D_TARGET
+        ACALL SCALE_NUM_LIT
         AIF   (K'&NUM LE 4)
+              ACALL RESET_SS1_TARGET
          MVGHI &N_TARGET,&NUM
         AELSE
-         LARL  R1,=FL8'&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=FL8'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
         AEND
       AWHEN C'H'
               ACALL RESET_SS1_TARGET
+              :&DEC_SYM SETA &D_TARGET
+              ACALL SCALE_NUM_LIT
          MVHHI &N_TARGET,&NUM
       AWHEN C'P'
+         :&DEC_SYM SETA &D_TARGET
+         ACALL  SCALE_NUM_LIT
          :&LLIT SETA  (&L_TARGET+1)/2*2 ROUND EVEN FOR LARL
-         LARL  R1,=PL&LLIT'&NUM'
+         LARL  ZC_R1,=PL&LLIT'&NUM'
        AIF   (&LLIT GT &L_TARGET)
-         MVC   &N_TARGET,1(R1)
+         MVC   &N_TARGET,1(ZC_R1)
        AELSE  
-         MVC   &N_TARGET,0(R1)
+         MVC   &N_TARGET,0(ZC_R1)
        AEND
       AWHEN C'Q'
-         LARL  R1,=FL16'&NUM'
-         MVC   &N_TARGET,0(R1)
+         :&DEC_SYM SETA &D_TARGET
+         ACALL SCALE_NUM_LIT
+         LARL  ZC_R1,=FL16'&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
       AWHEN C'Z'
+               :&DEC_SYM SETA &D_TARGET
+               ACALL SCALE_NUM_LIT
+               :&ZNEG SETB 0
+               AIF  ('&NUM'(1,1) EQ '+')
+                    :&NUM SETC '&NUM'(2,*)
+               AELSEIF ('&NUM'(1,1) EQ '-')
+                    :&ZNEG SETB 1
+                    :&NUM SETC '&NUM'(2,*)
+               AEND
+               AIF  (K'&NUM GT &L_TARGET)  RPI 1065 IGNORE LEADING 0'S
+                    :&LZERO SETA K'&NUM-&L_TARGET
+                    AIF ('&NUM'(1,&LZERO) NE (&LZERO)'0')
+                        :&NUM SETC '&NUM'(K'&NUM-&L_TARGET+1,*)
+                        MNOTE 4,'GEN_MOVE TRUNCATE LITERAL - &NUM'
+                        MEXIT
+                    AELSE
+                        :&NUM SETC '&NUM'(&LZERO+1,*)
+                    AEND
+               AEND
+               AIF  (&ZNEG)
+                    :&NUM SETC '-&NUM'
+               AEND
                AIF  (NOT &S_TARGET)
                     AIF (&L_TARGET EQ 1)
                          ACALL RESET_SS1_TARGET
@@ -241,31 +303,45 @@
                     AELSE
                         :&LLIT SETA  (&L_TARGET+1)/2*2
                         :&ZPAD SETC (&L_TARGET-K'&NUM)'0'
-         LARL  R1,=CL&LLIT'&ZPAD&NUM'
-         MVC   &N_TARGET,0(R1)
+         LARL  ZC_R1,=CL&LLIT'&ZPAD&NUM'
+         MVC   &N_TARGET,0(ZC_R1)
                     AEND
                AELSE
+                    AIF  (&ZNEG)
+                         :&NUM SETC '-&NUM'
+                    AEND
                     :&LLIT SETA  (&L_TARGET+1)/2*2
-         LARL  R1,=ZL&LLIT'&NUM'
+         LARL  ZC_R1,=ZL&LLIT'&NUM'
                     AIF (&LLIT NE &L_TARGET)
-         MVC   &N_TARGET,1(R1)
+         MVC   &N_TARGET,1(ZC_R1)
                     AELSE
-         MVC   &N_TARGET,0(R1)
+         MVC   &N_TARGET,0(ZC_R1)
                     AEND
                AEND
+      AWHEN C'X'                        RPI 1065
+         AIF (K'&NUM LE 15)
+             LARL ZC_R1,=PL8'&NUM'
+             MVC ZCVT_PWORK,0(ZC_R1)
+             GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
+         AELSE
+             LARL ZC_R1,=PL16'&NUM'
+             MVC  ZCVT_PWORK2,0(ZC_R1)
+             GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
+         AEND
       AELSE
-         MNOTE 8,'GEN_MOVE NUMERIC LITERAL FOR CHARACTER FIELD'
+         MNOTE 8,'GEN_MOVE UNKNOWN TARGET TYPE FOR NUMERIC LITERAL'
       AEND
       AEND
 .*
 .* MOVE GT 256
 .*
        AENTRY MOVE_GT_256
-         LA    R0,&N_TARGET
-         LHI   R1,&L_TARGET
+               ACALL RESET_SS1_TARGET  RPI 1065
+         LA    ZC_R0,&N_TARGET
+         LHI   ZC_R1,&L_TARGET
        AIF   (&S_IX NE 0)          
-         LA    R2,&N_SOURCE
-         LHI   R3,&L_SOURCE
+         LA    ZC_R2,&N_SOURCE
+         LHI   ZC_R3,&L_SOURCE
        AELSE     
 .*
 .* MOVE LIT GT 256
@@ -273,36 +349,36 @@
                AIF   ('&LIT'(1,1) NE '''')   
                     AIF ('&LIT' EQ 'SPACES'                            X
                          OR '&LIT' EQ 'SPACE')
-         IILL   R3,0 FILL WITH PAD SPACES
-         IILH   R3,X'4000'
+         IILL   ZC_R3,0 FILL WITH PAD SPACES
+         IILH   ZC_R3,X'4000'
                     AELSEIF ('&LIT' EQ 'LOW-VALUES'                    X
                          OR '&LIT' EQ 'LOW-VALUE')
-         LHI   R3,0 FILL WITH LOW VALUES
+         LHI   ZC_R3,0 FILL WITH LOW VALUES
                     AELSEIF ('&LIT' EQ 'HIGH-VALUES'                   X
                          OR '&LIT' EQ 'HIGH-VALUE')
-         IILL  R3,0 FILL WITH HIGH VALUES
-         IILH  R3,X'FF00'
+         IILL  ZC_R3,0 FILL WITH HIGH VALUES
+         IILH  ZC_R3,X'FZC_F00'
                     AELSE
                          MNOTE 8,'GEN_MOVE UNDEFINED SOURCE &LIT'
                     AEND
                AELSE
                     :&LLIT SETA (K'&LIT-1)/2*2
-         LARL  R2,=CL&LLIT&LIT
+         LARL  ZC_R2,=CL&LLIT&LIT
                    :&LLIT    SETA  K'&LIT-2
-         IILL  R3,&LLIT
-         IILH  R3,X'4000'
+         IILL  ZC_R3,&LLIT
+         IILH  ZC_R3,X'4000'
                AEND
        AEND
-         MVCL  R0,R2
-         AEND
+         MVCL  ZC_R0,ZC_R2
+       AEND
 .*
 .* MOVE_CONVERT LE 256
 .*
          AENTRY MOVE_CONVERT
          ACASE (C2A('&T_TARGET'))
          AWHEN C'A'
-         LA    R0,&N_SOURCE
-         ST    R0,&N_TARGET
+         LA    ZC_R0,&N_SOURCE
+         ST    ZC_R0,&N_TARGET
          AWHEN C'1'
                ACALL CVT_TO_EH
          AWHEN C'2'
@@ -378,13 +454,14 @@
          ZC_CONV EH,Q,&N_SOURCE
                AWHEN C'Z'
                     ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                     ZC_CONV EH,LD
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
+               ACALL RESET_SS1_TARGET
          STE   0,&N_TARGET
          AEND
 .*
@@ -423,24 +500,25 @@
                     AIF (&L_SOURCE LE 8)
          ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   0,ZCVT_PWORK
-         CDFR  F0,R0
+         CDFR  ZC_F0,ZC_R0
                     AELSE
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0      CVT PL16 TO LD
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0      CVT PL16 TO LD
          ZC_CONV DH,LD    VBY LD   TO DH
                     AEND
                AWHEN C'Q'
          ZC_CONV DH,Q,&N_SOURCE
                AWHEN C'Z'
                     ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                     ZC_CONV DH,LD
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND
+               ACALL RESET_SS1_TARGET
          STD   0,&N_TARGET
          AEND
 .*
@@ -482,24 +560,25 @@
                     AIF (&L_SOURCE LE 8)
          ZAP   ZCVT_PWORK,&N_SOURCE
          CVB   0,ZCVT_PWORK
-         CXFR  F0,R0
+         CXFR  ZC_F0,ZC_R0
                     AELSE
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0      CVT PL16 TO LD
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0      CVT PL16 TO LD
          ZC_CONV LH,LD    VBY LD   TO DH
                     AEND
                AWHEN C'Q'
          ZC_CONV LH,Q,&N_SOURCE
                AWHEN C'Z'
                     ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                     ZC_CONV LH,LD
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
+               ACALL RESET_SS1_TARGET
          STD   0,&N_TARGET
          STD   2,8+&N_TARGET
          AEND
@@ -542,21 +621,22 @@
          CEFBR 0,0
                     AELSE
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV EB,LD
                     AEND
                AWHEN C'Q'
                  ZC_CONV EB,Q,&N_SOURCE
                AWHEN C'Z'
                     ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                     ZC_CONV EB,LD
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
+               ACALL RESET_SS1_TARGET
          STE   0,&N_TARGET
          AEND
 .*
@@ -593,20 +673,21 @@
          CDFBR 0,0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV DB,LD                       
                AWHEN C'Q'
          ZC_CONV DB,Q,&N_SOURCE
                AWHEN C'Z'
                     ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                     ZC_CONV DB,LD
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND
+               ACALL RESET_SS1_TARGET
          STD   0,&N_TARGET
          AEND
 .*
@@ -634,31 +715,32 @@
                  ZC_CONV LB,LD,&N_SOURCE
                AWHEN C'A',C'F'
          L     0,&N_SOURCE
-         CXFBR F0,R0
+         CXFBR ZC_F0,ZC_R0
                AWHEN C'G'
          LG    0,&N_SOURCE
-         CXGBR F0,R0
+         CXGBR ZC_F0,ZC_R0
                AWHEN C'H'
          LH    0,&N_SOURCE
-         CXFBR F0,0
+         CXFBR ZC_F0,0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV LB,LD
                AWHEN C'Q'
                  ZC_CONV LB,Q,&N_SOURCE
                AWHEN C'Z'
                     ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                     ZC_CONV LB,LD
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STD   F0,&N_TARGET
-         STD   F2,8+&N_TARGET
+               ACALL RESET_SS1_TARGET
+         STD   ZC_F0,&N_TARGET
+         STD   ZC_F2,8+&N_TARGET
          AEND
 .*
 .* CVT TO ED
@@ -684,33 +766,34 @@
                AWHEN C'9'
                  ZC_CONV ED,LD,&N_SOURCE
                AWHEN C'A',C'F'
-         LGF   R0,&N_SOURCE
-         CDGTR F0,R0
-         LEDTR F0,0,F0,0 
+         LGF   ZC_R0,&N_SOURCE
+         CDGTR ZC_F0,ZC_R0
+         LEDTR ZC_F0,0,ZC_F0,0 
                AWHEN C'G'
          LG    0,&N_SOURCE
-         CDGTR F0,R0
-         LEDTR F0,0,F0,0 
+         CDGTR ZC_F0,ZC_R0
+         LEDTR ZC_F0,0,ZC_F0,0 
                AWHEN C'H'
-         LGH   R0,&N_SOURCE
-         CDGTR F0,R0
-         LEDTR F0,0,F0,0 
+         LGH   ZC_R0,&N_SOURCE
+         CDGTR ZC_F0,ZC_R0
+         LEDTR ZC_F0,0,ZC_F0,0 
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV ED,LD
                AWHEN C'Q'
                  ZC_CONV ED,Q,&N_SOURCE
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV ED,LD
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
+               ACALL RESET_SS1_TARGET
          STE   0,&N_TARGET
          AEND
 .*
@@ -738,29 +821,30 @@
                  ZC_CONV DD,LD,&N_SOURCE
                AWHEN C'A',C'F',C'I'
          LGF   0,&N_SOURCE
-         CDGTR F0,R0
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'G'
          LG    0,&N_SOURCE
-         CDGTR F0,R0
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'H'
-         LGH   R0,&N_SOURCE
-         CDGTR F0,R0
+         LGH   ZC_R0,&N_SOURCE
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0                       
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0                       
                  ZC_CONV DD,LD                      
                AWHEN C'Q'
                  ZC_CONV DD,Q,&N_SOURCE
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV DD,LD
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND
+               ACALL RESET_SS1_TARGET
          STD   0,&N_TARGET
          AEND
 .*
@@ -788,27 +872,28 @@
                  ZC_CONV LD,LD,&N_SOURCE
                AWHEN C'A',C'F'
          LGF   0,&N_SOURCE
-         CXGTR F0,R0
+         CXGTR ZC_F0,ZC_R0
                AWHEN C'G'
          LG    0,&N_SOURCE
-         CXGTR F0,R0
+         CXGTR ZC_F0,ZC_R0
                AWHEN C'H'
          LGH   0,&N_SOURCE
-         CXGTR F0,R0
+         CXGTR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK2,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F0,R0                         
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F0,ZC_R0                         
                AWHEN C'Q'
                  ZC_CONV LD,Q,&N_SOURCE
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F0,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F0,ZC_R0
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
+               ACALL RESET_SS1_TARGET
          STD   0,&N_TARGET
          STD   2,8+&N_TARGET
          AEND
@@ -862,6 +947,7 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
+               ACALL RESET_SS1_TARGET
          ST    0,&N_TARGET     IGNORE HIGH BITS
          AEND
 .*
@@ -912,6 +998,7 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
+               ACALL RESET_SS1_TARGET
          STG   0,&N_TARGET
          AEND
 .*
@@ -964,6 +1051,7 @@
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
+               ACALL RESET_SS1_TARGET
          STH   0,&N_TARGET
          AEND
 .*
@@ -983,31 +1071,31 @@
          ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'3'
                  ZC_CONV P,LH,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'4'
                  ZC_CONV P,EB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'5'
                  ZC_CONV P,DB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'6'
                  ZC_CONV P,LB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'7'
                  ZC_CONV P,ED,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'8'
                  ZC_CONV P,DD,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'9'
                  ZC_CONV P,LD,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'A',C'F',C'I'
          L     0,&N_SOURCE
@@ -1025,7 +1113,7 @@
          ZAP   &N_TARGET,&N_SOURCE
                AWHEN C'Q'
                 ZC_CONV P,Q,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          ZAP   &N_TARGET,ZCVT_PWORK2
                AWHEN C'Z'
                   :&PLEN2 SETA &L_SOURCE/2+1
@@ -1060,31 +1148,32 @@
                AWHEN C'9'
                  ZC_CONV Q,LD,&N_SOURCE
                AWHEN C'F',C'A',C'I'
-         LGF   R1,&N_SOURCE
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGF   ZC_R1,&N_SOURCE
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                AWHEN C'G'
-         LG    R1,&N_SOURCE
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LG    ZC_R1,&N_SOURCE
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                AWHEN C'H'
-         LGH   R1,&N_SOURCE
-         LGR   R0,R1
-         SRAG  R0,R0,63
+         LGH   ZC_R1,&N_SOURCE
+         LGR   ZC_R0,ZC_R1
+         SRAG  ZC_R0,ZC_R0,63
                AWHEN C'P'
                  ZC_CONV Q,P,&N_SOURCE
                AWHEN C'Q'
-         LMG   R0,R1,&N_SOURCE    IGNORE HIGH 64 BITS
+         LMG   ZC_R0,ZC_R1,&N_SOURCE    IGNORE HIGH 64 BITS
                AWHEN C'Z'
                  ZC_PACK31  ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
                  ZC_CONV Q,LD
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
                AEND 
-         STMG  R0,R1,&N_TARGET
+               ACALL RESET_SS1_TARGET
+         STMG  ZC_R0,ZC_R1,&N_TARGET
          AEND
 .*
 .* CVT TO X
@@ -1103,73 +1192,94 @@
                  GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
                AWHEN C'3'
                  ZC_CONV P,LH,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'4'
                  ZC_CONV P,EB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'5'
                  ZC_CONV P,DB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'6'
                  ZC_CONV P,LB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'7'
                  ZC_CONV P,ED,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'8'
                  ZC_CONV P,DD,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'9'
                  ZC_CONV P,LD,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'A',C'F'
-                     :&PLEN SETA &L_TARGET/2+1
-                     :&POFF SETA 8-&PLEN
          L     0,&N_SOURCE
          CVD   0,ZCVT_PWORK
                      GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
+               AWHEN C'G'
+         LG    0,&N_SOURCE
+         CVDG  0,ZCVT_PWORK2
+                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'H'
-                     :&PLEN SETA &L_TARGET/2+1
-                     :&POFF SETA 8-&PLEN
          LH    0,&N_SOURCE
          CVD   0,ZCVT_PWORK
                      GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
                AWHEN C'P'
                      GEN_EDIT &N_TARGET,&T_IX,&N_SOURCE,&L_SOURCE
+               AWHEN C'Q'
+                     ZC_CONV P,Q,&N_SOURCE
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
+                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
                AWHEN C'X'
-         MVC   &N_TARGET,&N_SOURCE
-                     AIF   (&L_TARGET GT &L_SOURCE)
-                           ACALL RESET_SS1_TARGET
-         MVI   &N_TARGET+&L_SOURCE,C' '
-                           AIF (&L_TARGET GT &L_SOURCE+1)
-                               AIF ('&N_TARGET'(1,1) LT '0')
-         MVC   &N_TARGET+&L_SOURCE+1(&L_TARGET-&L_SOURCE-1),&N_TARGET+&X
-               L_SOURCE
-                               AELSE
-         MVC   &FIELD_OFF+&L_SOURCE+1(&L_TARGET-&L_SOURCE-1,&FIELD_REG)X
-               ,&FIELD_OFF+&L_SOURCE.(&FIELD_REG)
-                               AEND
-                           AEND
-                     AEND
+                     ACALL MOVE_X_TO_X
                AWHEN C'Z'
+                 AIF (&L_TARGET GT 256                                 X
+                     OR '&SYM_PIC(&T_IX)'(1,1) EQ 'X')
+                     ACALL MOVE_X_TO_X
+                 AELSE
                      :&PLEN SETA &L_SOURCE/2+1
                      AIF   (&PLEN LE 8)
                         ZC_PACK31 ZCVT_PWORK,8,&N_SOURCE,&L_SOURCE
                         GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
                      AELSE
-                     ZC_PACK31 ZCVT_PWORK1,&PLEN,&N_SOURCE,&L_SOURCE
-                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK1,&PLEN
+                        ZC_PACK31 ZCVT_PWORK1,&PLEN,&N_SOURCE,&L_SOURCE
+                        GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK1,&PLEN
                      AEND
+                 AEND
                AELSE
                     MNOTE 8,'GEN_MOVE CONVERSION NOT SUPPORTED YET'           
                     MEXIT
+               AEND
+         AEND
+.*
+.* MOVE X TO X (USED BY CVT_X AND CVT_Z IF NO PIC OR LEN > 256)
+.*
+         AENTRY MOVE_X_TO_X
+               AIF   (&L_TARGET GT &L_SOURCE)
+                     AIF ('&N_TARGET'(1,1) LT '0')
+         MVC   &N_TARGET.(&L_SOURCE),&N_SOURCE
+                     AELSE
+         MVC   &FIELD_OFF.(&L_SOURCE,&FIELD_REG),&N_SOURCE
+                     AEND
+                     ACALL RESET_SS1_TARGET
+         MVI   &L_SOURCE+&N_TARGET,C' '   RPI 1065
+                     AIF (&L_TARGET GT &L_SOURCE+1)
+                         AIF ('&N_TARGET'(1,1) LT '0')
+         MVC   &N_TARGET+&L_SOURCE+1(&L_TARGET-&L_SOURCE-1),&N_TARGET+&X
+               L_SOURCE
+                         AELSE
+         MVC   &FIELD_OFF+&L_SOURCE+1(&L_TARGET-&L_SOURCE-1,&FIELD_REG)X
+               ,&FIELD_OFF+&L_SOURCE.(&FIELD_REG)
+                         AEND
+                     AEND
+               AELSE
+         MVC   &N_TARGET,&N_SOURCE
                AEND
          AEND
 .*
@@ -1190,31 +1300,31 @@
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'3'
                  ZC_CONV P,LH,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'4'
                  ZC_CONV P,EB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'5'
                  ZC_CONV P,DB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'6'
                  ZC_CONV P,LB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'7'
                  ZC_CONV P,ED,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'8'
                  ZC_CONV P,DD,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'9'
                  ZC_CONV P,LD,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK2,16
                AWHEN C'A',C'F',C'I'
          L     0,&N_SOURCE
@@ -1240,7 +1350,7 @@
                            :&LPAD SETA &L_TARGET-&L_SOURCE
          MVI   &N_TARGET,C'0' PAD WITH ZEROS ON LEFT
                            AIF ('&N_TARGET'(1,1) LT '0')
-                               AIF (&LPAD_GT 1)
+                               AIF (&LPAD GT 1)            RPI 1065
          MVC   &N_TARGET+1(&LPAD-1),&N_TARGET
                                AEND
          MVC   &N_TARGET+&LPAD.(&L_SOURCE),&N_SOURCE 
@@ -1257,11 +1367,11 @@
                AEND
          AEND 
 .*
-.* RESET SS1 TARGET - REMOVE LEN FROM OFF(LEN,REG) IF FOUND
+.* RESET SS1 TARGET - REMOVE LEN FROM OFF(LEN,REG) OR NAME(LEN)
 .*
          AENTRY RESET_SS1_TARGET
+         :&I SETA ('&N_TARGET' INDEX '(')
          AIF   ('&N_TARGET'(1,1) GE '0')  IS THIS O(L,R) 
-               :&I SETA ('&N_TARGET' INDEX '(')
                AIF (&I GT 1)
                    :&FIELD_OFF SETA '&N_TARGET'(1,&I-1)
                    :&J SETA ('&N_TARGET' INDEX ',')
@@ -1276,21 +1386,92 @@
                        MEXIT
                    AEND
                AEND
+         AELSEIF (&I GT 1)                        RPI 1065
+               :&N_TARGET SETC '&N_TARGET'(1,&I-1)
          AEND
          AEND
 .*
-.* PAD TARGET - USE OVERLAPPED MVC TO PAD TARGET FROM MVI
+.* PAD P - ALIGN DECIMAL PLACES AND PAD ON LEFT IF SHORT
 .*
-         AENTRY PAD_TARGET
-               AIF ('&N_TARGET'(1,1) LT '0')
-                   AIF (&L_TARGET GT 1)
-         MVC   &N_TARGET+1(L'&L_TARGET-1),&N_TARGET
-                   AEND
+         AENTRY PAD_P
+         ZAP   &N_TARGET,&N_SOURCE
+           AIF   (&D_TARGET NE &D_SOURCE)
+                 :&SHIFT SETA &D_TARGET-&D_SOURCE
+                 AIF (&SHIFT GT 0)
+         SRP   &N_TARGET,&SHIFT,0
+                 AELSE
+         SRP   &N_TARGET,32-&SHIFT,0  RPI 1065
+                 AEND
+           AEND
+         AEND
+.*
+.* PAD X - PAD X TARGET USING MVI VALUE (C' ', X'00', OR X'FF')
+.*
+         AENTRY PAD_X
+       AIF (&L_TARGET GT 1)
+           AIF ('&N_TARGET'(1,1) LT '0')  IS TARGET LABEL OR N(REG)
+         MVC   &N_TARGET+1(&L_TARGET-1),&N_TARGET
+           AELSE
+         MVC   &FIELD_OFF+1(&L_TARGET-1,&FIELD_REG),&FIELD_OFF.(&FIELD_X
+               REG)
+           AEND
+       AEND
+         AEND
+.*
+.* PAD Z - PAD Z TARGET ON LEFT AFTER ALIGNING DECIMAL PLACES   
+.*
+         AENTRY PAD_Z
+         :&LEFT_PAD SETA &L_TARGET-&L_SOURCE
+         :&RIGHT_PAD SETA 0
+         :&MVCLEN    SETA &L_SOURCE
+         AIF (&D_TARGET GT &D_SOURCE)
+             :&RIGHT_PAD SETA &D_TARGET-&D_SOURCE
+             :&LEFT_PAD SETA &LEFT_PAD-&RIGHT_PAD
+         AELSEIF (&D_TARGET LT &D_SOURCE)
+             :&MVCLEN SETA &L_SOURCE-(&D_SOURCE-&D_TARGET)
+             :&LEFT_PAD SETA &L_TARGET-&MVCLEN
+         AEND
+.* LEFT PAD
+       AIF   (&LEFT_PAD GT 0)
+         MVI   &N_TARGET,C'0'
+       AEND
+       AIF (&LEFT_PAD GT 1)
+               AIF ('&N_TARGET'(1,1) LT '0')  IS TARGET LABEL OR N(REG)
+         MVC   &N_TARGET+1(&LEFT_PAD-1),&N_TARGET
                AELSE
-                   AIF (&L_TARGET GT 1)
-         MVC   &FIELD_OFF+1(&FIELD_LEN-1,&FIELD_REG),&FIELD_OFF.(&FIELDX
-               _REG)
-                   AEND
+         MVC   &FIELD_OFF+1(&LEFT_PAD-1,&FIELD_REG),&FIELD_OFF.(&FIELD_X
+               REG)
                AEND
-         AEND
-         MEND
+       AEND
+.* MOVE SOURCE DIGITS
+       AIF ('&N_TARGET'(1,1) LT '0')  IS TARGET LABEL OR N(REG)
+         MVC   &N_TARGET+&LEFT_PAD.(&MVCLEN),&N_SOURCE
+       AELSE
+         MVC   &FIELD_OFF+&LEFT_PAD.(&MVCLEN,&FIELD_REG),&N_SOURCE
+       AEND
+.* RIGHT PAD FOR DECIMAL ALIGNMENT
+       AIF   (&RIGHT_PAD GT 0)
+         MVI   &LEFT_PAD+&MVCLEN+&N_TARGET,C'0'
+       AEND
+       AIF (&RIGHT_PAD GT 1)
+               AIF ('&N_TARGET'(1,1) LT '0')  IS TARGET LABEL OR N(REG)
+         MVC   &N_TARGET+&LEFT_PAD+&MVCLEN+1(&RIGHT_PAD-1),&N_TARGET+&LX
+               EFT_PAD+&MVCLEN
+               AELSE
+         MVC   &FIELD_OFF+&LEFT_PAD+&MVCLEN+1(&RIGHT_PAD-1,&FIELD_REG),X
+               &FIELD_OFF+&LEFT_PAD+&MVCLEN.(&FIELD_REG)
+               AEND
+       AEND
+.* TURN OFF ORIG SIGNED ZONE AND SET NEW ONE IF REQUIRED
+       AIF (&RIGHT_PAD GT 0 AND &S_TARGET)  IS SIGNED ZONE REQUIRED
+         OI    &LEFT_PAD+&MVCLEN-1+&N_TARGET,C'0' TURN OFF ORIG SIGN
+           AIF ('&N_TARGET'(1,1) LT '0')  IS TARGET LABEL OR N(REG)
+         MVZ   &N_TARGET+&L_TARGET-1(1),&L_SOURCE-1+&N_SOURCE COPY SIGN
+           AELSE
+         MVZ   &FIELD_OFF+&L_TARGET-1(1,&FIELD_REG),&L_SOURCE-1+&N_SOURX
+               CE  COPY SIGN
+           AEND
+       AEND
+       AEND
+        COPY ZCNUMLIT 
+        MEND

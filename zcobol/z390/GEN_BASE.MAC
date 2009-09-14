@@ -7,6 +7,8 @@
 .* Date   - 11/30/08                                                 *
 .*********************************************************************
 .* 11/30/08 initial coding for z390 GEN_BASE &IX to set base reg
+.* 07/01/09 RPI 1065 avoid duplicate base warning for DFHEIBLK   
+.* 08/03/09 RPI 1065 correct to provide base for end of field OI etc.
 .*********************************************************************
 .*  GEN_BASEX &IX - verify or set base register for SYM_NAME(&IX)    
 .*    1.  If &IX not GT 0 error
@@ -17,6 +19,8 @@
          GEN_BASE &IX
          COPY  ZC_WS
          AIF   (&IX GT 0)
+               :&ADDR1 SETA &SYM_LOC(&IX)           START OF FIELD
+               :&ADDR2 SETA &ADDR1+&SYM_LEN(&IX)-1  END OF FIELD
                AIF (&SYM_LK(&IX) GT 0)
                    ACALL SET_LK_BASE
                AELSE
@@ -30,15 +34,13 @@
 .* SET WS BASE
 ,*
          AENTRY SET_WS_BASE
-         AIF (&SYM_LOC(&IX) LT &BASE_WS_HIGH)
+         AIF (&ADDR2 LT &BASE_WS_HIGH)
              MEXIT
-         AELSEIF (&SYM_LOC(&IX) GE &BASE_B1_LOW                        X
-                  AND &SYM_LOC(&IX) LT &BASE_B1_HIGH)
-.*DSHX             :&BASE_LRU SETA 2
+         AELSEIF (&ADDR1 GE &BASE_B1_LOW                               X
+                  AND &ADDR2 LT &BASE_B1_HIGH)
              MEXIT
-         AELSEIF (&SYM_LOC(&IX) GE &BASE_B2_LOW                        X
-                  AND &SYM_LOC(&IX) LT &BASE_B2_HIGH)
-.*DSHX             :&BASE_LRU SETA 1
+         AELSEIF (&ADDR1 GE &BASE_B2_LOW                               X
+                  AND &ADDR2 LT &BASE_B2_HIGH)
              MEXIT
          AEND
 .*
@@ -48,9 +50,10 @@
                :&BASE_LRU SETA 1
                :&BASE_B2_LOW  SETA &SYM_LOC(&IX)
                :&BASE_B2_HIGH SETA &BASE_B2_LOW+4096
-               AIF (&SYM_LOC(&IX) LT X'FFFFF')
+               AIF (&BASE_B2_LOW LT X'FFFFF')
          LAY   &BASE_B2,&SYM_NAME(&IX)
          USING &SYM_NAME(&IX),&BASE_B2
+                   :&BASE_B2_USED SETB 1  RPI 1065
                AELSE
          IILF  &BASE_B2,&SYM_NAME(&IX)-WS
          AR    &BASE_B2,&BASE_WS
@@ -59,9 +62,10 @@
                :&BASE_LRU SETA 2
                :&BASE_B1_LOW  SETA &SYM_LOC(&IX)
                :&BASE_B1_HIGH SETA &BASE_B1_LOW+4096
-               AIF (&SYM_LOC(&IX) LT X'FFFFF')
+               AIF (&BASE_B1_LOW LT X'FFFFF')
          LAY   &BASE_B1,&SYM_NAME(&IX)
          USING &SYM_NAME(&IX),&BASE_B1
+                   :&BASE_B1_USED SETB 1  RPI 1065
                AELSE
          IILF  &BASE_B1,&SYM_NAME(&IX)-WS
          AR    &BASE_B1,&BASE_WS
@@ -78,15 +82,16 @@
              MNOTE 8,'GEN_BASE LINKAGE PARM UNDEFINED - &SYM_NAME(&IX)'
              MEXIT
          AEND
+         AIF (&ZC_CICS AND '&SYM_NAME(&DSECT_IX)' EQ 'DFHEIBLK') 
+             MEXIT
+         AEND
          AIF (&LBASE_B1_IX EQ &VAR_IX                                  X
-                  AND &SYM_LOC(&IX) GE &LBASE_B1_LOW                   X
-                  AND &SYM_LOC(&IX) LT &LBASE_B1_HIGH)
-.*DSHX             :&LBASE_LRU SETA 2
+                  AND &ADDR1 GE &LBASE_B1_LOW                          X
+                  AND &ADDR2 LT &LBASE_B1_HIGH)
              MEXIT
          AELSEIF (&LBASE_B2_IX EQ &VAR_IX                              X
-                  AND &SYM_LOC(&IX) GE &LBASE_B2_LOW                   X
-                  AND &SYM_LOC(&IX) LT &LBASE_B2_HIGH)
-.*DSHX             :&LBASE_LRU SETA 1
+                  AND &ADDR1 GE &LBASE_B2_LOW                          X
+                  AND &ADDR2 LT &LBASE_B2_HIGH)
              MEXIT
          AEND
 .*
@@ -100,10 +105,12 @@
                AIF (&SYM_LOC(&IX) GT X'FFF')
          AFI   &LBASE_B2,&SYM_NAME(&IX)-&SYM_NAME(&DSECT_IX)._DSECT
          USING &SYM_NAME(&IX),&LBASE_B2
+               :&LBASE_B2_USED SETB 1                RPI 1065
                :&LBASE_B2_LOW  SETA &SYM_LOC(&IX)
                :&LBASE_B2_HIGH SETA &LBASE_B2_LOW+4096
                AELSE
          USING &SYM_NAME(&DSECT_IX)._DSECT,&LBASE_B2
+               :&LBASE_B2_USED SETB 1                RPI 1065
                :&LBASE_B2_LOW  SETA 0
                :&LBASE_B2_HIGH SETA 4096
                AEND
@@ -115,10 +122,12 @@
                AIF (&SYM_LOC(&IX) GT X'FFF')
          AFI   &LBASE_B1,&SYM_NAME(&IX)-&SYM_NAME(&DSECT_IX)._DSECT
          USING &SYM_NAME(&IX),&LBASE_B1
+               :&LBASE_B1_USED SETB 1                RPI 1065
                :&LBASE_B1_LOW  SETA &SYM_LOC(&IX)
                :&LBASE_B1_HIGH SETA &LBASE_B1_LOW+4096
                AELSE
          USING &SYM_NAME(&DSECT_IX)._DSECT,&LBASE_B1
+               :&LBASE_B1_USED SETB 1                RPI 1065
                :&LBASE_B1_LOW  SETA 0
                :&LBASE_B1_HIGH SETA 4096
                AEND

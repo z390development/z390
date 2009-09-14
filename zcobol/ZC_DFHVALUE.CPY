@@ -5,7 +5,7 @@
 .* Author - Don Higgins                                              *
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
-.* 06/14/08 RPI 1057 sync with AZ390 DFHVALUE support
+.* 06/14/09 RPI 1057 sync with AZ390 DFHVALUE support
 .*********************************************************************
                GBLC &(DFHVALUE_NOTAPPLIC) 
                GBLC &(DFHVALUE_VSAM) 

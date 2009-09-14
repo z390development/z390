@@ -10,24 +10,31 @@
 .* 10/06/08 ZSTRMAC
 .* 10/14/08 USE ZC_SYM_FIND TO ELIM DUP CODE
 .* 11/17/08  replace hash calc with GBLA &(ZC_IX_&SYM) to save/fetch ix
+.* 07/08/09 RPI 1065 truncate to 63 via ..FIRST 25.._T#N_..REMAINING..
+.* 08/10/09 RPI 1065 only replace base name if not proc div alias name
 .*********************************************************************
          ZC_SYM_INDEX &SYM,&QIX  
          COPY  ZC_WS    
-.*DSHX   :&SYM_QIX(&SYM_TOT) SETA &QIX SET QUALFIER IX OR 0
          ZC_SYM_FIND &SYM
          AIF   (&SYM_IX EQ 0)  NO MATCHING BASE FOUND
                GBLA &(ZC_IX_&SYM)
                :&(ZC_IX_&SYM) SETA &SYM_TOT
          AELSE 
-               AIF  (&QIX EQ 0)
-                    MNOTE 8,'ZC_SYM_INDEX - DUPLICATE SYMBOL - &SYM'    
+               AIF  (&SYM_LVL(&SYM_TOT) EQ 1                           X
+                     AND &SYM_LVL(&SYM_IX) EQ 1)  RPI 1065 01'S UNIQUE
+                   MNOTE 8,'ZC_SYM_INDEX - DUPLICATE 01 SYMBOLS - &SYM'    
                AELSE
                     :&SYM_DUP_TOT SETA &SYM_DUP_TOT+1
-                    :&SYM_NXT(&SYM_TOT) SETA &SYM_NXT(&SYM_IX)
-                    :&SYM_NXT(&SYM_IX) SETA &SYM_TOT
-                    AIF (&SYM_NXT(&SYM_TOT) EQ 0) IS THIS FIRST DUP
+                    AIF (&SYM_FXT(&SYM_IX) EQ 0) IS THIS FIRST DUP
+                         :&SYM_FXT(&SYM_IX)  SETA &SYM_IX
+                         :&SYM_FXT(&SYM_TOT) SETA &SYM_IX
+                         :&SYM_NXT(&SYM_IX) SETA &SYM_TOT
                          :&QSYM_IX SETA &SYM_IX   YES, FIX FIRST 
                          ACALL FIX_DUP_QUAL_SYM
+                    AELSE
+                         :&SYM_FXT(&SYM_TOT) SETA &SYM_IX
+                         :&SYM_NXT(&SYM_TOT) SETA &SYM_NXT(&SYM_IX)
+                         :&SYM_NXT(&SYM_IX) SETA &SYM_TOT
                     AEND
                     :&QSYM_IX SETA &SYM_TOT       FIX NEXT DUP
                     ACALL FIX_DUP_QUAL_SYM 
@@ -38,23 +45,36 @@
 .* FIX DUP QUALIFIED SYMBOL NAMES TO BE UNIQUE BY ADDING _OF_QUAL
 .*
          AENTRY FIX_DUP_QUAL_SYM
+         AIF (&SYM_LVL(&QSYM_IX) EQ 1)  RPI 1065 DON'T CHANGE 01
+              AEXIT AENTRY
+         AEND
          :&CUR_QIX SETA &SYM_QIX(&QSYM_IX)  FIRST INDEX LEVEL
-         :&QNAME SETC '&SYM_NAME(&QSYM_IX)' BASE NAME
-         AWHILE (&CUR_QIX GT 0)
-              :&QNAME SETC '&QNAME._OF_&SYM_NAME(&CUR_QIX)'
-              AIF (K'&QNAME GT 63)
-                  MNOTE 8,'ZC_SYM_ADD QUAL NAME TOO LONG &QNAME'
+         :&QNAME(1)  SETC '&SYM_NAME(&QSYM_IX)' BASE NAME
+         :&QNAME_LEN SETA K'&QNAME(1)
+         :&QNAME_TOT SETA 1
+         AWHILE (&CUR_QIX GT 0)        RPI 1065 USE ZC_GET_QNAME
+              AIF (&QNAME_TOT LT 50)
+                  :&QNAME_TOT SETA &QNAME_TOT+1
+                  :&QNAME(&QNAME_TOT) SETC '&SYM_NAME(&CUR_QIX)'
+                  :&QNAME_LEN SETA &QNAME_LEN+4+K'&QNAME(&QNAME_TOT)
+              AELSE
+                  MNOTE 8,'ZC_SYM_INDEX MAX LEVELS EXCEEDED'
                   MEXIT
               AEND
               :&CUR_QIX SETA &SYM_QIX(&CUR_QIX)
          AEND
-         ZC_SYM_FIND &QNAME
+         ZC_GET_QNAME
+         ZC_SYM_FIND &FIELD_NAME
          AIF (&SYM_IX GT 0)
-             MNOTE 8,'ZC_SYM_INDEX DUP SYM - &QNAME'
+             MNOTE 8,'ZC_SYM_INDEX DUP SYM - &FIELD_NAME'
              MEXIT
          AEND
-         :&SYM_NAME(&QSYM_IX) SETC '&QNAME' REPLACE BASE WITH QUAL NAME
-         GBLA &(ZC_IX_&QNAME)               CREATE ALIAS FOR FIND
-         :&(ZC_IX_&QNAME) SETA &QSYM_IX
+         GBLA &(ZC_IX_&FIELD_NAME)               CREATE ALIAS FOR FIND
+         :&(ZC_IX_&FIELD_NAME) SETA &QSYM_IX
+         AIF (NOT &ZC_PROC_DIV) RPI 1065 IS THIS PROC DIV REF
+             :&SYM_NAME(&QSYM_IX) SETC '&FIELD_NAME' NO, REPLACE NAME
+         AELSE
+             :&FIELD_NAME SETC '&SYM_NAME(&QSYM_IX)' USE PRIOR NAME
+         AEND
          AEND
          MEND       

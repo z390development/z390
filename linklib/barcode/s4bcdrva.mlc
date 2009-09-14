@@ -1,0 +1,658 @@
+*---------------------------------------------------------------------*
+* MODULE: S4BCDRVA                                                    *
+*  USAGE: USPS 4-STATE BARCODE CONVERTER - TEST HARNESS               *
+*   DESC: THIS MODULE RUNS THE BARCODE SELF-TEST SUITE.               *
+*                                                                     *
+*   JCL:                                                              *
+*     //BARCODE  JOB (4444),'BARCODE',CLASS=A,MSGCLASS=X              *
+*     //BARCODE      EXEC PGM=S4BCDRVA,                               *
+*     //             PARM='SEE BELOW'                                 *
+*     //STEPLIB  DD  DISP=SHR,DSN=ABA.BARCODE.LOAD                    *
+*     //SYSPRINT DD  SYSOUT=*                                         *
+*                                                                     *
+*   EXEC PARMS:                                                       *
+*     PARM       MEANING                                              *
+*     SELFTEST   RUN THE SELF-TEST SUITE                              *
+*                (TRACKING AND ROUTE CODES IGNORED)                   *
+*     NNN XXX    GENERATE A BARCODE FROM "NNN" AND "XXX", WHERE:      *
+*                NNN IS A 20-DIGIT TRACK CODE                         *
+*                XXX IS A 0-, 5-, 9-, OR 11-DIGIT ROUTE CODE          *
+*                    (I.E., A ZIP CODE)                               *
+*                                                                     *
+*   RETURN CODE:                                                      *
+*               RC   MEANING                                          *
+*                0   BARCODE GENERATED.                               *
+*                1   SELF-TEST FAILED.                                *
+*                2   BAR STRING IS NULL.                              *
+*                3   BYTE CONVERSION FAILED.                          *
+*                4   RETRIEVE TABLE FAILED.                           *
+*                5   CODEWORD CONVERSION FAILED.                      *
+*                6   CHARACTER RANGE ERROR DETECTED.                  *
+*                7   TRACK STRING IS NULL.                            *
+*                8   ROUTE STRING IS NULL.                            *
+*                9   TRACK STRING HAS BAD LENGTH.                     *
+*               10   TRACK STRING HAS INVALID DATA.                   *
+*               11   TRACK STRING HAS INVALID DIGIT2.                 *
+*               12   ROUTE STRING HAS BAD LENGTH.                     *
+*               13   ROUTE STRING HAS INVALID DATA.                   *
+*              100   INVALID ARGUMENT(S) DETECTED.                    *
+*---------------------------------------------------------------------*
+         EJECT
+         #REGEQU
+S4BCDRVA CSECT
+S4BCDRVA AMODE 31
+S4BCDRVA RMODE ANY
+         USING S4BCDRVA,R12,R11      MAP THIS MODULE
+         USING IOA,R9                MAP I/O BUILD AREA
+         STM   R14,12,12(R13)        SAVE REGISTERS
+         LA    R12,0(,R15)           MAP...
+         LA    R11,4095(,R12)        ... THIS...
+         LA    R11,1(,R11)           ... CSECT
+         L     R0,=A(WLEN)           LOAD WORK AREA LENGTH
+         LA    R1,WORKA              LOAD WORK AREA ADDRESS
+         #CLRSTOR ADDR=(R1),LV=(R0)  CLEAR WORK AREA
+         ST    R13,ISAVA+4           SAVEAREA PTR
+         LA    R13,ISAVA             NEW SAVEAREA
+         SR    R9,R9                 SHOW NO LOG RESOURCES
+         B     AMAIN                 PROCEED
+         SPACE 2
+EXIT     DS    0H -                  RETURN TO THE CALLER
+         BAS   R14,CLEANUP           RELEASE LOG RESOURCES
+         L     R13,ISAVA+4           CALLER'S SAVE AREA
+         L     R14,12(,R13)          RETURN ADDRESS
+         L     R15,MCODE             RETURN CODE
+         LM    R0,R12,20(R13)        REMAINING REGISTERS
+         BR    R14                   RETURN TO CALLER
+         EJECT
+AMAIN    DS    0H -
+         SPACE 2
+PRLP000  DS    0H -                  INITIALIZE THE LOG
+         L     R0,=A(IOL)            I/O AREA LENGTH
+         STORAGE OBTAIN,LENGTH=(0),LOC=BELOW,COND=YES
+         LTR   R15,R15               STORAGE GOTTEN?
+         BZ    PRLP001                YES - CONTINUE
+         WTO   'S4BCDRVA: INSUFFICIENT STORAGE DETECTED; EXITING.'
+         MVC   MCODE,=A(100)         SET CRITICAL ERROR
+         B     EXIT                  EXIT
+         EJECT
+PRLP001  DS    0H -                  INITIALIZE THE LOG
+         LR    R9,R1                 I/O AREA ADDRESS
+         #CLRSTOR ADDR=IOA,LV=IOL    CLEAR THE STORAGE
+         MVC   DEBUGLOG(MDCBL),MDCB  INIT MODEL DCB
+         LA    R1,DEBUGLOG           DCB ADDRESS
+         ST    R1,OPENPL             SAVE IN PLIST
+         MVI   OPENPL,X'8F'          MARK AS ONE AND ONLY OUTPUT DCB
+         OPEN  MF=(E,OPENPL)         OPEN THE FILE
+         LTR   R15,R15               SUCCESSFUL?
+         BZ    PRLP001Z               NO  - QUIT
+         WTO   'S4BCDRVA: OPEN FAILED FOR DDNAME(SYSOUT); EXITING.'
+         MVC   MCODE,=A(100)         SET CRITICAL ERROR
+         B     EXIT                  EXIT
+PRLP001Z DS    0H -
+         EJECT
+PRCP000  DS    0H -                  CHECK IF ANY PARMS
+         MVC   TRCODE,SPACES         CLEAR TRACK CODE
+         MVC   RTCODE,SPACES         CLEAR ROUTE CODE
+         LA    R7,0                  RESET WORD NUMBER
+         LA    R8,0                  DITTO
+         L     R1,ISAVA+4            OLD SAVEAREA
+         L     R1,24(,R1)            R1 AT ENTRY
+         LA    R1,0(,R1)             CLEAR HI-ORDER BIT(S)
+         LTR   R1,R1                 VALID ADDRESS?
+         BNP   PRCP999                NO  - BYPASS PARAMETERS
+         L     R1,0(,R1)             PTR TO COMMANDLINE
+         LA    R1,0(,R1)             CLEAR HI-ORDER BIT(S)
+         LTR   R1,R1                 VALID ADDRESS?
+         BNP   PRCP999                NO  - BYPASS PARAMETERS
+         SR    R3,R3                 CLEAR
+         ICM   R3,B'0011',0(R1)      COMMAND LINE LENGTH
+         LA    R4,2(,R1)             COMMAND LINE ADDRESS
+         C     R3,=A(0)              ANY WORDS IN COMMAND LINE?
+         BNH   PRCP999                NO  - QUIT
+         ST    R4,CMDSTART           SAVE PTR TO 1ST CMDLINE BYTE
+         LA    R1,0(R3,R4)           PTR TO 1ST BYTE PAST COMMAND LINE
+         ST    R1,CMDEND             SAVE THIS TOO
+         SPACE 2
+PRCP001  DS    0H -                  PROCESS WORDS
+         LA    R7,1(,R7)             INCR WORD NUMBER
+         LR    R0,R7                 XFER
+         BAS   R14,GETWORD           GET THIS WORD
+         C     R0,=A(0)              VALID LENGTH?
+         BNH   PRCP999                NO - WE ARE DONE
+         C     R0,=A(L'CMDWORD)      VALID LENGTH?
+         BH    PRCP001                NO - SKIP THIS ONE
+         SPACE 2
+PRCP002  DS    0H -                  STOW AND MODIFY THE WORD
+         MVC   CMDWORD,SPACES        RESET WORK FIELD
+         LR    R4,R1                 XFER ADDRESS
+         LR    R3,R0                 XFER LENGTH
+         BCTR  R3,R0                 EXECUTE LENGTH
+         B     *+10                  PROCEED
+         MVC   CMDWORD(0),0(R4)
+         EX    R3,*-6                COPY THE STRING
+         LA    R3,1(,R3)             ACTUAL LENGTH
+         BAS   R14,TXUPPER           MAKE UPPERCASE
+         EJECT
+PRCP003  DS    0H -                  CHECK IF FLAG SPECIFIED
+         CLI   CMDWORD,C'-'          COMMANDLINE FLAG?
+         BNE   PRCP004                 NO - CONTINUE
+         LR    R0,R3                 WORD LENGTH
+         LA    R1,CMDWORD            WORD ADDRESS
+         SPACE 2
+PF001    DS    0H -                  SET FLAGS
+PFHELP   DS    0H -
+         CLI   0(R1),C'H'            MATCHING FLAG?
+         BNE   PZHELP                  NO
+         LA    R15,0                 SET EXIT CODE
+         B     PSYNTAX               PRINT SYNTAX, THEN EXIT
+PZHELP   DS    0H -
+         SPACE 2
+PFSHM    DS    0H -
+         CLI   0(R1),C'M'            MATCHING FLAG?
+         BNE   PZSHM                   NO
+         MVC   FLGSHM,=A(1)          SET SHOW_INTERMEDIATES
+PZSHM    DS    0H -
+         SPACE 2
+PFSTG    DS    0H -
+         CLI   0(R1),C'T'            MATCHING FLAG?
+         BNE   PZSTG                   NO
+         MVC   FLGSTG,=A(1)          SET SHOW_TABLE_GENERATION
+PZSTG    DS    0H -
+         SPACE 2
+         LA    R1,1(,R1)             NEXT CHAR
+         BCT   R0,PF001              LOOP TILL ALL DONE
+         B     PRCP001               GET NEXT WORD
+         EJECT
+PRCP004  DS    0H -                  NON-FLAG WORD (RESERVED OR NOT)
+         CLC   CMDWORD(20),=CL20'SELF'     SELF-TEST?
+         BE    PST001                       YES
+         CLC   CMDWORD(20),=CL20'TEST'     SELF-TEST?
+         BE    PST001                       YES
+         CLC   CMDWORD(20),=CL20'SELFTEST' SELF-TEST?
+         BNE   PRCP005                      NO  - CONTINUE
+PST001   DS    0H -                  SET SELF-TEST
+         MVC   SELFTEST,=A(1)        SET FLAG
+         B     PRCP999               QUIT
+         SPACE 2
+PRCP005  DS    0H -                  NON-FLAG WORD (NOT RESERVED)
+         LA    R8,1(R8)              INCR WORD COUNT
+         C     R8,=A(2)              ROUTING CODE?
+         BE    PRR001                 YES - PROCEED
+         C     R8,=A(1)              TRACKING CODE?
+         BNE   PRCP001                NO  - BYPASS
+         SPACE 2
+PTT001   DS    0H -                  TRACKING CODE
+         MVC   TRCODE,CMDWORD        SAVE
+         B     PRCP001               CONTINUE
+PRR001   DS    0H -                  ROUTING CODE
+         MVC   RTCODE,CMDWORD        SAVE
+         B     PRCP001               CONTINUE
+PRCP999  DS    0H -
+         EJECT
+CXX100   DS    0H -
+         LOAD  EP=ENCODETR,ERRET=BADLOAD LOAD ENCODER DLL
+         ST    R0,ENCEPA             SAVE ENTRY POINT ADDRESS
+         LTR   R8,R8                 ANY PARAMETERS SPECIFIED?
+         BP    *+10                   YES
+         MVC   SELFTEST,=A(1)        ASSUME SELF-TEST
+         OC    SELFTEST,SELFTEST     SELF-TEST?
+         BZ    CXX200                 NO - USE PASSED PARAMETERS
+CXX101   DS    0H -
+         L     R0,=A(RMG001)         POINT TO MESSAGE TEXT
+         BAS   R14,IPRINT            PRINT MESSAGE
+         LA    R6,ST1P1              SELF-TEST 1 - PARM 1
+         LA    R7,ST1P2              SELF-TEST 1 - PARM 2
+         LA    R5,ST1RPLY            SELF-TEST 1 - EXPECTED REPLY
+         BAS   R14,IENCODE           RUN THE TEST
+CXX102   DS    0H -
+         LA    R6,ST2P1              SELF-TEST 2 - PARM 1
+         LA    R7,ST2P2              SELF-TEST 2 - PARM 2
+         LA    R5,ST2RPLY            SELF-TEST 2 - EXPECTED REPLY
+         BAS   R14,IENCODE           RUN THE TEST
+CXX103   DS    0H -
+         LA    R6,ST3P1              SELF-TEST 3 - PARM 1
+         LA    R7,ST3P2              SELF-TEST 3 - PARM 2
+         LA    R5,ST3RPLY            SELF-TEST 3 - EXPECTED REPLY
+         BAS   R14,IENCODE           RUN THE TEST
+CXX104   DS    0H -
+         LA    R6,ST4P1              SELF-TEST 4 - PARM 1
+         LA    R7,ST4P2              SELF-TEST 4 - PARM 2
+         LA    R5,ST4RPLY            SELF-TEST 4 - EXPECTED REPLY
+         BAS   R14,IENCODE           RUN THE TEST
+         L     R6,=A(RMG003)         POINT TO MESSAGE TEXT
+         LA    R5,R003DATA-RMG003(,R6) POINT TO DATA AREA
+         B     CXX900                PROCEED
+         EJECT
+CXX200   DS    0H -
+         L     R0,=A(RMG002)         POINT TO MESSAGE TEXT
+         BAS   R14,IPRINT            PRINT MESSAGE
+         LA    R6,TRCODE             VARIABLE 1
+         LA    R7,RTCODE             VARIABLE 2
+         SR    R5,R5                 UNKNOWN REPLY
+         BAS   R14,IENCODE           RUN THE TEST
+         L     R6,=A(RMG004)         POINT TO MESSAGE TEXT
+         LA    R5,R004DATA-RMG004(,R6) POINT TO DATA AREA
+*        B     CXX900                PROCEED
+CXX900   DS    0H -
+         DELETE EP=ENCODETR          UNLOAD THE DLL
+         L     R1,MCODE              LOAD MAX RETURN CODE
+         BAS   R14,DEC2              MAKE PRINTABLE
+         MVC   0(4,R5),DPATT+12      STOW IN PRINT LINE
+         LR    R0,R6                 XFER MSG ADDRESS
+         BAS   R14,IPRINT            PRINT MESSAGE
+         B     EXIT                  RETURN TO CALLER
+         EJECT
+*---------------------------------------------------------------------*
+* GENERATE THE BARCODE FOR THIS TRACK/ROUTE CODE PAIR                 *
+*---------------------------------------------------------------------*
+         SPACE 2
+IENCODE  DS    0H -
+         STM   R14,R4,PRET           SAVE RETURN REGISTERS
+         L     R2,=A(RMG005)           POINT TO MESSAGE TEXT
+         LA    R1,R005DT1-RMG005(,R2)  POINT TO DATA AREA
+         MVC   0(20,R1),0(R6)          STOW TRACK CODE
+         LA    R1,R005DT2-RMG005(,R2)  POINT TO DATA AREA
+         MVC   0(12,R1),0(R7)          STOW ROUTE CODE
+         LR    R0,R2                   XFER MSG ADDRESS
+         BAS   R14,IPRINT              PRINT THE MESSAGE
+         MVC   BARCODE,SPACES        CLEAR BARCODE
+         LA    R5,0(,R5)             CLEAR HI-ORDER BIT(S)
+         LTR   R5,R5                 EXPECTED BARCODE GIVEN?
+         BP    *+8                    YES - PROCEED
+         LA    R5,BARCODE            MAKE EXPECTED = ACTUAL
+         LA    R14,0(,R6)            TRACK CODE PTR
+         LA    R15,0(,R7)            ROUTE CODE PTR
+         LA    R0,BARCODE            REPLY AREA
+         L     R1,FLGSHM             SHOW_INTERMEDIATES FLAG
+         L     R2,FLGSTG             SHOW_TABLE_GENERATION FLAG
+         STM   R14,R2,CPARMS         SAVE PARAMETER LIST VALUES
+         OI    CPARMS+16,X'80'       MARK AS LAST ENTRY IN PLIST
+         LA    R1,CPARMS             POINT TO PARAMETER LIST
+         L     R15,ENCEPA            ENCODER ENTRY POINT
+         BASR  R14,R15               CALL THE ENCODER
+         ST    R15,CCODE             SAVE CURRENT RETURN CODE
+         L     R1,CCODE              LOAD CURRENT RETURN CODE
+         BAS   R14,DEC2              MAKE PRINTABLE
+         L     R2,=A(RMG006)           POINT TO MESSAGE TEXT
+         LA    R1,R006DATA-RMG006(,R2) POINT TO DATA AREA
+         MVC   0(04,R1),DPATT+12       STOW RETURN CODE
+         LR    R0,R2                  XFER MSG ADDRESS
+         BAS   R14,IPRINT             PRINT THE MESSAGE
+         EJECT
+ITN100   DS    0H -
+         OC    SELFTEST,SELFTEST     SELF-TEST MODE?
+         BZ    ITN100Z                NO  - PROCEED
+         LTR   R5,R5                 SELF-TEST MODE?
+         BNP   ITN100Z                 NO - PROCEED
+         L     R2,=A(RMG007)           POINT TO MESSAGE TEXT
+         LA    R1,R007DATA-RMG007(,R2) POINT TO DATA AREA
+         MVC   0(65,R1),0(R5)          STOW EXPECTED BARCODE
+         LR    R0,R2                  XFER MSG ADDRESS
+         BAS   R14,IPRINT             PRINT THE MESSAGE
+ITN100Z  DS    0H -
+         SPACE 2
+ITN200   DS    0H -
+         L     R2,=A(RMG008)           POINT TO MESSAGE TEXT
+         LA    R1,R008DATA-RMG008(,R2) POINT TO DATA AREA
+         MVC   0(65,R1),BARCODE        STOW GENERATED BARCODE
+         LR    R0,R2                  XFER MSG ADDRESS
+         BAS   R14,IPRINT             PRINT THE MESSAGE
+ITN200Z  DS    0H -
+         EJECT
+ITN300   DS    0H -                   COMPARE EXPECTED VS ACTUAL
+         OC    CCODE,CCODE            API ERROR?
+         BNZ   ITNBAD                  YES - HOUSTON, WE HAVE A PROBLEM
+         CLC   BARCODE,0(R5)          EXPECTED == ACTUAL?
+         BNE   ITNBAD                  NO  - HOUSTON, WE HAVE A PROBLEM
+ITNGOOD  DS    0H -                   EXPECTED == ACTUAL
+         L     R2,=A(RMG009)           POINT TO MESSAGE TEXT
+         LA    R1,R009DT1-RMG009(,R2)  POINT TO DATA AREA
+         MVC   0(20,R1),0(R6)          STOW TRACK CODE
+         LA    R1,R009DT2-RMG009(,R2)  POINT TO DATA AREA
+         MVC   0(12,R1),0(R7)          STOW ROUTE CODE
+         B     ITN300Y                PROCEED
+ITNBAD   DS    0H -                   EXPECTED != ACTUAL
+         OC    CCODE,CCODE             RETURN CODE SET?
+         BNZ   *+10                     YES - LEAVE AS IS
+         MVC   CCODE,=A(USPS_FSB_ENCODER_API_SELFTEST_FAILED)
+         L     R2,=A(RMG010)           POINT TO MESSAGE TEXT
+         LA    R1,R010DT1-RMG010(,R2)  POINT TO DATA AREA
+         MVC   0(20,R1),0(R6)          STOW TRACK CODE
+         LA    R1,R010DT2-RMG010(,R2)  POINT TO DATA AREA
+         MVC   0(12,R1),0(R7)          STOW ROUTE CODE
+*        B     ITN300Y                PROCEED
+ITN300Y  DS    0H -
+         LR    R0,R2                   XFER MSG ADDRESS
+         BAS   R14,IPRINT              PRINT THE MESSAGE
+ITN300Z  DS    0H -
+         SPACE 2
+ITNSMAX  DS    0H -
+         CLC   CCODE,MCODE           RC > MAX?
+         BNH   *+10                   NO
+         MVC   MCODE,CCODE           STOW MAX
+         LM    R14,R4,PRET           LOAD RETURN REGISTERS
+         BR    R14                   RETURN TO CALLER
+         EJECT
+*---------------------------------------------------------------------*
+* SUBROUTINES                                                         *
+*---------------------------------------------------------------------*
+         SPACE 2
+GETWORD  DS    0H -                  GET COMMANDLINE WORD
+*
+* INPUTS  -
+*     R0  - NUMBER OF THE DESIRED WORD (1-N)
+* OUTPUTS -
+*     R0  - REQUESTED WORD LENGTH
+*     R1  - REQUESTED WORD ADDRESS
+
+         STM   R14,R8,PRET           SAVE RETURN REGISTERS
+         XC    PRET+08(8),PRET+08    CLEAR RETURN REGISTERS 0-1
+         C     R0,=A(0)              VALID WORD NUMBER?
+         BNH   GPM999                  NO - EXIT
+         L     R4,CMDSTART           LOAD COMMANDLINE ADDRESS
+         LR    R8,R0                 DESIRED WORD NUMBER
+         LA    R7,0                  CURRENT WORD COUNT
+GPM001   DS    0H -
+         C     R4,CMDEND             COMMANDLINE EXHAUSTED?
+         BNL   GPM999                 YES - QUIT
+         L     R3,CMDEND             1ST CHAR PAR CMDLINE
+         SR    R3,R4                 REMAINING LENGTH
+         BAS   R14,GETFIRST          GET FIRST NON-SPACE CHAR
+         LTR   R15,R15               GOTTEN?
+         BNZ   GPM999                 NO  - QUIT
+         LR    R6,R1                 SAVE PTR
+         LA    R7,1(,R7)             INCR WORD COUNT
+         L     R3,CMDEND             1ST CHAR PAST CMDLINE
+         LA    R4,0(,R1)             1ST NON-SPACE CHAR IN THIS WORD
+         SR    R3,R4                 ADJUST SCAN LENGTH
+         BAS   R14,GETSPACE          GET FIRST SPACE PAST THE WORD
+         LR    R5,R1                 SAVE PTR
+         SR    R5,R6                 SET WORD LENGTH
+         CR    R7,R8                 DESIRED WORD NUMBER?
+         BL    GPM996                 NO  - CONTINUE
+         STM   R5,R6,PRET+08         STOW RETURN VALUES
+         B     GPM999                WE ARE THROUGH
+GPM996   LA    R4,1(R5,R6)           POINT TO NEXT WORD
+         B     GPM001                LOOP TILL ALL DONE
+GPM999   LM    R14,R8,PRET           LOAD RETURN REGISTERS
+         BR    R14                   RETURN TO THE CALLER
+         EJECT
+         EJECT
+TXUPPER  DS    0H -                  MAKE UPPERCASE
+*
+* INPUTS  -
+*     R3  - FIELD LENGTH
+*     R4  - FIELD ADDRESS
+         STM   R14,R4,PRET           SAVE RETURN REGISTERS
+         C     R3,=A(1)              VALID WORD NUMBER?
+         BNH   TUW999                  NO - EXIT
+         LA    R4,0(,R4)             CLEAR HI-ORDER BIT(S)
+         LTR   R4,R4                 VALID FIELD ADDRESS?
+         BNP   TUW999                  NO - EXIT
+         LR    R0,R3                 XFER LENGTH
+         LR    R1,R4                 XFER ADDRESS
+TUW001   DS    0H -
+         SR    R2,R2                 CLEAR
+         IC    R2,0(,R1)             LOAD CHAR
+TUWA2I   C     R2,=A(X'81')          LOWERCASE 'A'?
+         BL    TUW996                OUT OF RANGE
+         C     R2,=A(X'89')          LOWERCASE 'I'?
+         BNH   TUW002                WITHIN RANGE
+TUWJ2R   C     R2,=A(X'91')          LOWERCASE 'J'?
+         BL    TUW996                OUT OF RANGE
+         C     R2,=A(X'99')          LOWERCASE 'R'?
+         BNH   TUW002                WITHIN RANGE
+TUWS2Z   C     R2,=A(X'A2')          LOWERCASE 'S'?
+         BL    TUW996                OUT OF RANGE
+         C     R2,=A(X'A9')          LOWERCASE 'Z'?
+         BH    TUW996                OUT OF RANGE
+TUW002   DS    0H -
+         OI    0(R1),X'40'           MAKE UPPERCASE
+TUW996   LA    R1,1(,R1)             POINT TO NEXT CHAR
+         BCT   R0,TUW001             LOOP TILL ALL DONE
+TUW999   LM    R14,R4,PRET           LOAD RETURN REGISTERS
+         BR    R14                   RETURN TO THE CALLER
+         EJECT
+GETFIRST DS    0H -                  GET FIRST NON-SPACE CHAR
+*
+* INPUTS  -
+*     R3  - FIELD LENGTH
+*     R4  - FIELD ADDRESS
+*
+* OUTPUTS -
+*     R15 - A RETURN CODE, AS FOLLOWS:
+*           RC    MEANING
+*            0    CHARACTER LOCATED; R1 HAS ADDRESS
+*            8    CHARACTER NOT LOCATED
+*
+         LA    R15,8                  ASSUME CHAR NOT FOUND
+         LR    R0,R3                  FIELD LENGTH
+         LR    R1,R4                  FIELD ADDRESS
+         LTR   R0,R0                  VALID LENGTH?
+         BNPR  R14                     NO  - EXIT
+         LTR   R1,R1                  VALID ADDRESS?
+         BNPR  R14                     NO  - EXIT
+         BCTR  R1,R0                  DECR PTR
+GF001    LA    R1,1(,R1)              INCR PTR
+         CLI   0(R1),C' '             SPACE CHAR?
+         BE    GF002                   YES - PROCEED
+         SR    R15,R15                INDICATE CHAR FOUND
+         BR    R14                    RETURN TO CALLER
+GF002    BCT   R0,GF001               LOOP TILL ALL CHARS CHECKED
+         BR    R14                    CHAR NOT FOUND
+         EJECT
+GETSPACE DS    0H -                   GET FIRST SPACE CHAR
+*
+* INPUTS  -
+*     R3  - FIELD LENGTH
+*     R4  - FIELD ADDRESS
+*
+* OUTPUTS -
+*     R15 - A RETURN CODE, AS FOLLOWS:
+*           RC    MEANING
+*            0    CHARACTER LOCATED; R1 HAS ADDRESS
+*            8    CHARACTER NOT LOCATED
+*
+         LA    R15,8                  ASSUME CHAR NOT FOUND
+         LR    R0,R3                  FIELD LENGTH
+         LR    R1,R4                  FIELD ADDRESS
+         LTR   R0,R0                  VALID LENGTH?
+         BNPR  R14                     NO  - EXIT
+         LTR   R1,R1                  VALID ADDRESS?
+         BNPR  R14                     NO  - EXIT
+GS001    CLI   0(R1),C' '             SPACE CHAR?
+         BNE   GS002                   NO  - PROCEED
+         SR    R15,R15                INDICATE CHAR FOUND
+         BR    R14                    RETURN TO CALLER
+GS002    LA    R1,1(,R1)              INCR PTR
+         BCT   R0,GS001               LOOP TILL ALL CHARS CHECKED
+         BR    R14                    CHAR NOT FOUND
+         SPACE 2
+MSTRLEN  DS    0H -                   GET STRING LENGTH
+*
+* INPUTS  -
+*     R3  - FIELD LENGTH
+*     R4  - FIELD ADDRESS
+*
+* OUTPUTS -
+*     R3  - FIELD LENGTH
+*     R4  - FIELD ADDRESS
+*
+         LR    R0,R3                  XFER LENGTH
+         LR    R1,R4                  XFER ADDRESS
+         AR    R1,R0                  FIRST BYTE PAST FIELD
+MSTR01   BCTR  R1,R0                  PREV FIELD ADDRESS
+         CLI   0(R1),X'00'            NUL TERMINATOR?
+         BE    MSTR02                  YES - CONTINUE
+         CLI   0(R1),C' '             SPACE?
+         BE    MSTR02                  YES - CONTINUE
+         LA    R0,1(,R1)              1ST CHAR PAST FIELD
+         SR    R0,R4                  STRING LENGTH
+         BR    R14                    RETURN TO CALLER
+MSTR02   BCT   R0,MSTR01              LOOP TILL DONE
+         BR    R14                    RETURN TO CALLER
+         EJECT
+IPRINT   DS    0H -                   PRINT TEXT LINE
+*
+* INPUTS  -
+*     R0  - PTR TO MSG TEXT
+*
+         STM   R14,R1,WRET            SAVE RETURN REGISTERS
+         LR    R14,R0                 XFER MESSAGE TEXT PTR
+         MVC   DMSG,0(R14)            STOW MESSAGE BELOW THE LINE
+         LA    R0,DMSG                MSG ADDRESS
+         LA    R1,DEBUGLOG            DCB ADDRESS
+         PUT   (1),(0)                WRITE THE LINE
+         LM    R14,R1,WRET            LOAD RETURN REGISTERS
+         BR    R14                    RETURN TO CALLER
+         SPACE 2
+DEC2     DS    0H -                   CONVERT BINARY TO DECIMAL
+*
+* INPUTS  -
+*     R1  - CONTAINS BINARY VALUE TO BE CONVERTED
+*
+         CVD   R1,DPAKK               CONVERT TO PACKED DECIMAL
+         MVC   DPATT,=XL16'40212020202020202020202020202020'
+         ED    DPATT,DPAKK            CONVERT NUMERIC
+         BR    R14                    RETURN TO CALLER
+         EJECT
+*---------------------------------------------------------------------*
+* LOAD FAILED FOR ENCODER DLL                                         *
+*---------------------------------------------------------------------*
+         SPACE 2
+BADLOAD  DS    0H -                   CLEANUP RESOURCES
+         ST    R14,PRET               SAVE RETUEN REGISTERS
+         WTO   'S4BCDRVA: LOAD FAILED FOR ENCODER DLL; EXITING.'
+         LA    R15,100                SET RETURN CODE
+         ST    R15,MCODE              SAVE RETURN CODE
+         L     R14,PRET               SAVE RETUEN REGISTERS
+         BR    R14                    RETURN TO CALLER
+         EJECT
+*---------------------------------------------------------------------*
+* CLEANUP LOG RESOURCES                                               *
+*---------------------------------------------------------------------*
+         SPACE 2
+CLEANUP  DS    0H -                   CLEANUP RESOURCES
+         ST    R14,PRET               SAVE RETUEN REGISTERS
+         LTR   R9,R9                  VALREA ADDRESS PTR?
+         BNP   CLN999                   NO  - BYPASS
+CLN001   TM    DEBUGLOG+48,X'10'      DCB OPEN?
+         BNO   CLN002                   NO  - BYPASS
+         CLOSE MF=(E,OPENPL)         CLOSE THE DCB
+CLN002   L     R0,=A(IOL)             AREA LENGTH
+         LA    R1,IOA                 AREA ADDRESS
+         STORAGE RELEASE,LENGTH=(0),ADDR=(1)
+CLN999   DS    0H -
+         L     R14,PRET               SAVE RETUEN REGISTERS
+         BR    R14                    RETURN TO CALLER
+         EJECT
+*---------------------------------------------------------------------*
+* PRINT USAGE SYNTAX                                                  *
+*---------------------------------------------------------------------*
+         SPACE 2
+PSYNTAX  DS    0H -                   ERROR DETECTED
+         ST    R15,MCODE              SAVE RETURN CODE
+         L     R3,=A(SYNTABLE)        LOAD TABLE ADDRESS
+         LM    R3,R5,0(R3)            LOAD TABLE PTRS
+PSN001   DS    0H -
+         LR    R0,R3                  POINT TO MESSAGE
+         BAS   R14,IPRINT             PRINT IT
+         BXLE  R3,R4,PSN001           LOOP TILL ALL DONE
+PSN999   DS    0H -
+         B     EXIT
+         EJECT
+*---------------------------------------------------------------------*
+* CONSTANTS                                                           *
+*---------------------------------------------------------------------*
+         SPACE 2
+         DS    0H -
+VMOVE    MVC   0(0,R5),0(R4)
+         SPACE 2
+SPACES   DC    256C' '
+ZEROS    DC    256X'00'
+         PRINT NOGEN
+MDCB     DCB   DSORG=PS,MACRF=(PM),DDNAME=SYSOUT,                      *
+               RECFM=FBA,LRECL=133
+         PRINT GEN
+MDCBL    EQU   *-MDCB
+*-------------------------------------------------------*
+* . SELF-TEST 1                                         *
+*-------------------------------------------------------*
+ST1P1    DC    CL20'01234567094987654321'
+ST1P2    DC    CL12' '
+ST1RPLY  DS    0CL65
+         DC    C'ATTFATTDTTADTAATTDTDTATTDAFDDF'
+         DC    C'ADFDFTFFFFFTATFAAAATDFFTDAADFTFDTDT'
+         DC    (65-(*-ST1RPLY))C' '
+*-------------------------------------------------------*
+* . SELF-TEST 2                                         *
+*-------------------------------------------------------*
+ST2P1    DC    CL20'01234567094987654321'
+ST2P2    DC    CL12'01234'
+ST2RPLY  DS    0CL65
+         DC    C'DTTAFADDTTFTDTFTFDTDDADADAFADF'
+         DC    C'ATDDFTAAAFDTTADFAAATDFDTDFADDDTDFFT'
+         DC    (65-(*-ST2RPLY))C' '
+*-------------------------------------------------------*
+* . SELF-TEST 3                                         *
+*-------------------------------------------------------*
+ST3P1    DC    CL20'01234567094987654321'
+ST3P2    DC    CL12'012345678'
+ST3RPLY  DS    0CL65
+         DC    C'ADFTTAFDTTTTFATTADTAAATFTFTATD'
+         DC    C'AAAFDDADATATDTDTTDFDTDATADADTDFFTFA'
+         DC    (65-(*-ST3RPLY))C' '
+*-------------------------------------------------------*
+* . SELF-TEST 4                                         *
+*-------------------------------------------------------*
+ST4P1    DC    CL20'01234567094987654321'
+ST4P2    DC    CL12'01234567891'
+ST4RPLY  DS    0CL65
+         DC    C'AADTFFDFTDADTAADAATFDTDDAAADDT'
+         DC    C'DTTDAFADADDDTFFFDDTTTADFAAADFTDAADA'
+         DC    (65-(*-ST4RPLY))C' '
+         EJECT
+*---------------------------------------------------------------------*
+* LITERALS                                                            *
+*---------------------------------------------------------------------*
+         LTORG
+         EJECT
+*---------------------------------------------------------------------*
+* WORK AREAS                                                          *
+*---------------------------------------------------------------------*
+WORKA    DS    0D -                  WORK AREA
+ISAVA    DS    18F                   REGISTER SAVE AREA
+BARCODE  DS    CL65                  GENERATED BARCODE REPLY AREA
+CMDWORD  DS    CL80                  COMMANDLINE WORD BUFFER
+TRCODE   DS    CL80                  TRACK CODE
+RTCODE   DS    CL80                  ROUTE CODE
+CCODE    DS    A                     API RETURN CODE (CURRENT)
+MCODE    DS    A                     API RETURN CODE (MAXIMUM)
+CMDSTART DS    A                     1ST CHAR IN CMDLINE
+CMDEND   DS    A                     1ST CHAR PAST CMDLINE
+ENCEPA   DS    A                     ENCODER ENTRY POINT
+PRET     DS    12A                   ROUTINE RETURN ADDRESS
+TRET     DS    4A                    ROUTINE RETURN ADDRESS
+WRET     DS    4A                    ROUTINE RETURN ADDRESS
+CPARMS   DS    5A                    API PARAMETER LIST
+SELFTEST DS    A                     NON-ZERO = SELFTEST
+FLGSHM   DS    A                     NON-ZERO = SHOW_INTERMEDIATES
+FLGSTG   DS    A                     NON-ZERO = SHOW_TABLE_GENERATION
+DPAKK    DS    D                     CONVERT BIN -> DEC
+DPATT    DS    CL16                  CONVERT BIN -> DEC
+WLEN     EQU   *-WORKA               WORK AREA LENGTH
+         EJECT
+*---------------------------------------------------------------------*
+* DRIVER PROGRAM MESSAGES                                             *
+*---------------------------------------------------------------------*
+         $MSGDRV
+         EJECT
+*---------------------------------------------------------------------*
+* DRIVER SYNTAX MESSAGES                                              *
+*---------------------------------------------------------------------*
+         $MSGSYN
+*---------------------------------------------------------------------*
+* PARAMETER AREA DSECT                                                *
+*---------------------------------------------------------------------*
+         #WPARMS DSECT=YES
+         END

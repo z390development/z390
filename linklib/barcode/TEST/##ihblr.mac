@@ -1,0 +1,55 @@
+         MACRO                                                          00000100
+&NAME    ##IHBLR &REG,&ADDR                                             00000200
+.********************************************************************** 00000300
+.*               MACRO ID: ##IHBLR                                    * 00000400
+.*           DATE WRITTEN: 09/09/85                                   * 00000500
+.*       MACRO ATTRIBUTES: RENT, REUS, REFR                           * 00000600
+.*     AUTHORIZATION CODE: 0                                          * 00000700
+.*      PASSES CONTROL TO: NONE                                       * 00000800
+.*                                                                    * 00000900
+.*                                                                    * 00001000
+.*     DESCRIPTION:                                                   * 00002000
+.*                                                                    * 00002100
+.*         THIS MACRO GENERATES A "LA" OR "LR" INSTRUCTION            * 00002200
+.*       BASED ON THE SECOND OPERAND PASSED. IT IS AN INNER           * 00002300
+.*       MACRO CALLED BY MISCELLANEOUS MACROS.                        * 00002400
+.*                                                                    * 00002500
+.*                                                                    * 00002600
+.*     METHOD OF INVOCATION:                                          * 00002700
+.*                                                                    * 00002800
+.*        ##IHBLR REG,OPERAND                                         * 00002900
+.*                                                                    * 00003000
+.*                                                                    * 00003100
+.*           PARAMETER    |   MEANING/USAGE                           * 00003200
+.*          --------------|-------------------------------------      * 00003300
+.*            REG         |  THE REGISTER TO BE LOADED.               * 00003400
+.*                        |  THIS PARAMETER IS REQUIRED.              * 00003500
+.*                        |                                           * 00003600
+.*            OPERAND     |  THE OPERAND TO BE LOADED INTO "REG".     * 00003700
+.*                        |  IF THE OPERAND IS SURROUNDED BY          * 00003800
+.*                        |  PARENTHESES, IT IS ASSUMED TO BE A       * 00003900
+.*                        |  REGISTER, AND A "LR" INSTRUCTION IS      * 00004000
+.*                        |  GENERATED; OTHERWISE; A "LA"             * 00004100
+.*                        |  INSTRUCTION IS GENERATED.                * 00004200
+.*                        |  THIS PARAMETER IS REQUIRED.              * 00004300
+.*                                                                    * 00004400
+.*                                                                    * 00004500
+.*      REGISTERS AT EXIT                                             * 00004600
+.*                                                                    * 00004700
+.*        REG - CONTAINS THE DESIRED ADDRESS OR VALUE.                * 00004800
+.*                                                                    * 00004900
+.********************************************************************** 00005000
+         LCLC  &R                                                       00005100
+.XRR1    AIF   ('&REG' EQ '' OR ('&REG' NE '' AND  T'&REG NE 'N')).BREG 00005200
+         AIF   ('&REG'(1,1) EQ '(').BREG                                00005300
+.XRR2    AIF   ('&ADDR' EQ '').BADDR                                    00005400
+&R       SETC  'R'                    ASSUME REGISTER ADDRESS FORMAT    00005500
+         AIF   ('&ADDR'(1,1) EQ '(').RR                                 00005600
+&R       SETC  'A'                    NUMERIC OR FULLWORD FORMAT        00005700
+.RR      ANOP                                                           00005800
+&NAME    L&R   &REG,&ADDR(1)          LOAD PARAMETER INTO REGISTER      00005900
+         MEXIT                                                          00006000
+.BREG    MNOTE 8,'** ##IHBLR ERROR - INVALID REGISTER SPECIFIED   **'   00006100
+         MEXIT                                                          00006200
+.BADDR   MNOTE 8,'** ##IHBLR ERROR - INVALID ADDRESS SPECIFIED    **'   00006300
+         MEND                                                           00006400

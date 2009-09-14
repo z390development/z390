@@ -60,7 +60,7 @@
             02  FILLER   PIC X(45) VALUE 'The paragon of animals'.
             02  FILLER   PIC X(45) VALUE 'END'.
          01 FILLER REDEFINES LINES.
-            02  LINE     OCCURS 9 TIMES PIC X(45).
+            02  LINE_N   OCCURS 9 TIMES PIC X(45).
 
         LINKAGE SECTION.
         01  DFHCOMMAREA.
@@ -78,7 +78,7 @@
       *  MVC   SENDSBA,SBA1       1ST SBA
                MOVE SBA (1) TO SENDSBA
       *  MVC   SENDLINE,LINE1     1ST LINE
-               MOVE LINE (1) TO SENDLINE
+               MOVE LINE_N (1) TO SENDLINE
                EXEC CICS SEND FROM(SENDWCC) LENGTH(49) END-EXEC
                EXEC CICS RETURN TRANSID('BEC1')
                                 COMMAREA(MYCOMM) END-EXEC
@@ -97,7 +97,7 @@
       *  MS    R6,=F'45'          INDEX TO NEXT LINE
       *  LA    R7,LINE1(R6)       R7=ADDRESS OF NEXT LINE
       *  MVC   SENDLINE,0(R7)     MOVE NEXT LINE TO OUTPUT
-               MOVE LINE (INCOMM) TO SENDLINE
+               MOVE LINE_N (INCOMM) TO SENDLINE
                EXEC CICS SEND FROM(SENDWCC) LENGTH(49) END-EXEC
       *  CLC   0(2,R5),=H'8'      DISPLAYED LAST ?
       *  BE    NEXT1              EXIT IF WE HAVE
@@ -116,4 +116,3 @@
       * TEST XCTL WITH COMMAREA 3
                   EXEC CICS XCTL PROGRAM('TESTBED3') COMMAREA(COMM3)
                                  END-EXEC.
-

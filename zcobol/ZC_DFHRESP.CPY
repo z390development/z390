@@ -5,7 +5,8 @@
 .* Author - Don Higgins                                              *
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
-.* 06/14/08 RPI 1057 sync with AZ390 DFHRESP and DFHVALUE support
+.* 06/14/09 RPI 1057 sync with AZ390 DFHRESP and DFHVALUE support
+.* 09/02/09 RPI 1079 add DFHRESP(NOTALLOC)=F'61'     
 .*********************************************************************
                GBLC &(DFHRESP_NORMAL) 
                GBLC &(DFHRESP_ERROR)
@@ -33,6 +34,7 @@
                GBLC &(DFHRESP_QIDERR)       
                GBLC &(DFHRESP_ENQBUSY)      
                GBLC &(DFHRESP_ENVDEFERR)    
+               GBLC &(DFHRESP_NOTALLOC)     RPI 1079 
                GBLC &(DFHRESP_SUPPRESSED)     
                GBLC &(DFHRESP_END)          
                GBLC &(DFHRESP_DISABLED)     
@@ -62,6 +64,7 @@
                :&(DFHRESP_QIDERR)       SETC   '44' 
                :&(DFHRESP_ENQBUSY)      SETC   '55' 
                :&(DFHRESP_ENVDEFERR)    SETC   '56' 
+               :&(DFHRESP_NOTALLOC)     SETC   '61'   RPI 1079
                :&(DFHRESP_SUPPRESSED)   SETC   '72' 
                :&(DFHRESP_END)          SETC   '83' 
                :&(DFHRESP_DISABLED)     SETC   '84' 

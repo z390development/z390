@@ -12,6 +12,7 @@
 .* 02/25/09 RPI 1004 add support for types 1,2,E,D,L &ZC_FLOAT type    
 .* 02/26/09 RPI 1012 move onsize end-add pending to add                
 .* 04/28/09 RPI 1003 add support for temp vars with neg IX
+.* 08409/28/09 RPI 1065 support literals starting with .      
 .*********************************************************************
 .* Notes:
 .*  1.  ROUNDED not supported yet.
@@ -73,7 +74,8 @@
          AENTRY ADD_LIT
          AIF  ('&LIT'(1,1) GE '0'                                      X
                 OR '&LIT'(1,1) EQ '+'                                  X
-                OR '&LIT'(1,1) EQ '-')  RPI 1002 WAS GT '0' IN ERROR
+                OR '&LIT'(1,1) EQ '-'                                  X
+                OR '&LIT'(1,1) EQ '.')  RPI 1002, RPI 1065           
                :&NUM SETC '&LIT'
                ACALL ADD_NUM_LIT
          AELSEIF  ('&LIT' EQ 'ZERO'                                    X
@@ -91,91 +93,91 @@
       AENTRY ADD_NUM_LIT
       ACASE (C2A('&T_TARGET'))
       AWHEN C'1' EH
-         LE    F0,&N_TARGET
-         LARL  R14,=E'&NUM'
-         AE    F0,0(R14)
-         STE   F0,&N_TARGET
+         LE    ZC_F0,&N_TARGET
+         LARL  ZC_R14,=E'&NUM'
+         AE    ZC_F0,0(ZC_R14)
+         STE   ZC_F0,&N_TARGET
       AWHEN C'2' DH
-         LD    F0,&N_TARGET
-         LARL  R14,=D'&NUM'
-         AD    F0,0(R14)
-         STD   F0,&N_TARGET
+         LD    ZC_F0,&N_TARGET
+         LARL  ZC_R14,=D'&NUM'
+         AD    ZC_F0,0(ZC_R14)
+         STD   ZC_F0,&N_TARGET
       AWHEN C'3' LH
-         LD    F0,&N_TARGET
-         LD    F2,8+&N_TARGET
-         LARL  R14,=LH'&NUM'
-         LD    F1,0(R14)        
-         LD    F3,8(R14)          
-         AXR   F0,F1     
-         STD   F0,&N_TARGET
-         STD   F2,8+&N_TARGET
+         LD    ZC_F0,&N_TARGET
+         LD    ZC_F2,8+&N_TARGET
+         LARL  ZC_R14,=LH'&NUM'
+         LD    ZC_F1,0(ZC_R14)        
+         LD    ZC_F3,8(ZC_R14)          
+         AXR   ZC_F0,ZC_F1     
+         STD   ZC_F0,&N_TARGET
+         STD   ZC_F2,8+&N_TARGET
       AWHEN C'4' EB
-         LE    F0,&N_TARGET
-         LARL  R14,=EB'&NUM'
-         AEB   F0,0(R14)
-         STE   F0,&N_TARGET
+         LE    ZC_F0,&N_TARGET
+         LARL  ZC_R14,=EB'&NUM'
+         AEB   ZC_F0,0(ZC_R14)
+         STE   ZC_F0,&N_TARGET
       AWHEN C'5' DB
-         LD    F0,&N_TARGET
-         LARL  R14,=DB'&NUM'
-         ADB   F0,0(R14)
-         STD   F0,&N_TARGET
+         LD    ZC_F0,&N_TARGET
+         LARL  ZC_R14,=DB'&NUM'
+         ADB   ZC_F0,0(ZC_R14)
+         STD   ZC_F0,&N_TARGET
       AWHEN C'6' LB
-         LD    F0,&N_TARGET
-         LD    F2,8+&N_TARGET
-         LARL  R14,=LB'&NUM'
-         LD    F1,0(R14)        
-         LD    F3,8(R14)          
-         AXBR  F0,F1     
-         STD   F0,&N_TARGET
-         STD   F2,8+&N_TARGET
+         LD    ZC_F0,&N_TARGET
+         LD    ZC_F2,8+&N_TARGET
+         LARL  ZC_R14,=LB'&NUM'
+         LD    ZC_F1,0(ZC_R14)        
+         LD    ZC_F3,8(ZC_R14)          
+         AXBR  ZC_F0,ZC_F1     
+         STD   ZC_F0,&N_TARGET
+         STD   ZC_F2,8+&N_TARGET
       AWHEN C'7' ED
-         LE    F0,&N_TARGET
-         LDETR F0,F0,0
-         LARL  R14,=DD'&NUM'
-         LD    F1,0(R14)
-         ADTR  F0,F0,F1
-         LEDTR F0,0,F0,0
-         STE   F0,&N_TARGET
+         LE    ZC_F0,&N_TARGET
+         LDETR ZC_F0,ZC_F0,0
+         LARL  ZC_R14,=DD'&NUM'
+         LD    ZC_F1,0(ZC_R14)
+         ADTR  ZC_F0,ZC_F0,ZC_F1
+         LEDTR ZC_F0,0,ZC_F0,0
+         STE   ZC_F0,&N_TARGET
       AWHEN C'8' DD
-         LD    F0,&N_TARGET
-         LARL  R14,=DD'&NUM'
-         LD    F1,0(R14)
-         ADTR  F0,F0,F1
-         STD   F0,&N_TARGET
+         LD    ZC_F0,&N_TARGET
+         LARL  ZC_R14,=DD'&NUM'
+         LD    ZC_F1,0(ZC_R14)
+         ADTR  ZC_F0,ZC_F0,ZC_F1
+         STD   ZC_F0,&N_TARGET
       AWHEN C'9' LD
-         LD    F0,&N_TARGET
-         LD    F2,8+&N_TARGET
-         LARL  R14,=LD'&NUM'
-         LD    F1,0(R14)        
-         LD    F3,8(R14)          
-         AXTR  F0,F0,F1     
-         STD   F0,&N_TARGET
-         STD   F2,8+&N_TARGET
+         LD    ZC_F0,&N_TARGET
+         LD    ZC_F2,8+&N_TARGET
+         LARL  ZC_R14,=LD'&NUM'
+         LD    ZC_F1,0(ZC_R14)        
+         LD    ZC_F3,8(ZC_R14)          
+         AXTR  ZC_F0,ZC_F0,ZC_F1     
+         STD   ZC_F0,&N_TARGET
+         STD   ZC_F2,8+&N_TARGET
 .*
 .* ADD_NUM_LIT F A I
 .*
       AWHEN C'F',C'A',C'I'
        AIF (&ONSIZE EQ 1 OR (&ZC_TRUNC AND '&P_TARGET' NE ''))
-         SR    R0,R0
-         L     R1,&N_TARGET
+         SR    ZC_R0,ZC_R0
+         L     ZC_R1,&N_TARGET
          ZC_PIC_DIGITS &T_IX
          :&TRUNC_DIV SETA ('1'.(&PIC_DIGITS)'0')
-         LARL  R14,=F'&TRUNC_DIV'
-         AFI   R1,&NUM
+         LARL  ZC_R14,=F'&TRUNC_DIV'
+         AFI   ZC_R1,&NUM
         AIF   (&ONSIZE EQ 1)
               :&STX SETC 'ST'
                ACALL SET_ON_SIZE_F32
         AELSE  
-         D     R0,0(R14)
-         ST    R0,&N_TARGET
+         D     ZC_R0,0(ZC_R14)
+         ST    ZC_R0,&N_TARGET
         AEND 
        AELSE
         AIF (K'&NUM LE 2)
          ASI   &N_TARGET,&NUM
         AELSE
-         L     R0,&N_TARGET
-         AFI   R0,&NUM
-         ST    R0,&N_TARGET
+         L     ZC_R0,&N_TARGET
+         AFI   ZC_R0,&NUM
+         ST    ZC_R0,&N_TARGET
         AEND
        AEND
 .*
@@ -186,31 +188,31 @@
          ZC_PIC_DIGITS &T_IX
          :&TRUNC_DIV SETC '1'.(&PIC_DIGITS)'0'
         AIF (&ZC_R64)
-         LG    R1,&N_TARGET
-         LGRL  R0,=FL8'&TRUNC_DIV'
-         AGFI  R1,&NUM
+         LG    ZC_R1,&N_TARGET
+         LGRL  ZC_R0,=FL8'&TRUNC_DIV'
+         AGFI  ZC_R1,&NUM
           AIF  (&ONSIZE EQ 1)
                :&STX SETC 'STG'
                ACALL SET_ON_SIZE_G64
           AELSE  
-         DSGR  R0,R0
-         STG   R0,&N_TARGET
+         DSGR  ZC_R0,ZC_R0
+         STG   ZC_R0,&N_TARGET
           AEND
         AELSE
-         LM    R0,R1,&N_TARGET
-         LARL  R14,=FL8'&NUM'
-         A     R1,4(R14)
-         ALC   R0,0(R14)
-         LARL  R14,=FL8'&TRUNC_DIV'
-         LM    R2,R3,0(R14)
+         LM    ZC_R0,ZC_R1,&N_TARGET
+         LARL  ZC_R14,=FL8'&NUM'
+         A     ZC_R1,4(ZC_R14)
+         ALC   ZC_R0,0(ZC_R14)
+         LARL  ZC_R14,=FL8'&TRUNC_DIV'
+         LM    ZC_R2,ZC_R3,0(ZC_R14)
           AIF  (&ONSIZE EQ 1)
-         L     R15,ZCVT_OSE64R32
-         BASR  R14,R15
+         L     ZC_R15,ZCVT_OSE64R32
+         BASR  ZC_R14,ZC_R15
                ACALL SET_ON_SIZE_G64_R32
           AELSE
-         L     R15,ZCVT_DIV64R32
-         BASR  R14,R15
-         STM   R0,R1,&N_TARGET
+         L     ZC_R15,ZCVT_DIV64R32
+         BASR  ZC_R14,ZC_R15
+         STM   ZC_R0,ZC_R1,&N_TARGET
           AEND
         AEND  
        AELSE
@@ -218,16 +220,16 @@
          AGSI  &N_TARGET,&NUM
         AELSE
           AIF  (&ZC_R64)
-         LG    R0,&N_TARGET
-         LARL  R14,=FL8'&NUM'
-         AG    R0,0(R14)
-         STG   R0,&N_TARGET
+         LG    ZC_R0,&N_TARGET
+         LARL  ZC_R14,=FL8'&NUM'
+         AG    ZC_R0,0(ZC_R14)
+         STG   ZC_R0,&N_TARGET
           AELSE
-         LM    R0,R1,&N_TARGET
-         LARL  R14,=FL8'&NUM'
-         A     R1,4(R14)
-         ALC   R0,0(R14)
-         STM   R0,R1,&N_TARGET
+         LM    ZC_R0,ZC_R1,&N_TARGET
+         LARL  ZC_R14,=FL8'&NUM'
+         A     ZC_R1,4(ZC_R14)
+         ALC   ZC_R0,0(ZC_R14)
+         STM   ZC_R0,ZC_R1,&N_TARGET
           AEND
         AEND
        AEND
@@ -236,23 +238,23 @@
 .*
       AWHEN C'H'
        AIF (&ONSIZE EQ 1 OR (&ZC_TRUNC AND '&P_TARGET' NE ''))
-         SR    R0,R0
-         LH    R1,&N_TARGET
+         SR    ZC_R0,ZC_R0
+         LH    ZC_R1,&N_TARGET
          ZC_PIC_DIGITS &T_IX
          :&TRUNC_DIV SETA ('1'.(&PIC_DIGITS)'0')
-         LARL  R14,=F'&TRUNC_DIV'
-         AFI   R1,&NUM
+         LARL  ZC_R14,=F'&TRUNC_DIV'
+         AFI   ZC_R1,&NUM
         AIF   (&ONSIZE EQ 1)
               :&STX SETC 'STH'
                ACALL SET_ON_SIZE_F32
         AELSE  
-         D     R0,0(R14)
-         STH   R0,&N_TARGET
+         D     ZC_R0,0(ZC_R14)
+         STH   ZC_R0,&N_TARGET
         AEND 
        AELSE
-         LH    R0,&N_TARGET
-         AHI   R0,&NUM
-         STH   R0,&N_TARGET
+         LH    ZC_R0,&N_TARGET
+         AHI   ZC_R0,&NUM
+         STH   ZC_R0,&N_TARGET
        AEND
 .*
 .* ADD_NUM_LIT P
@@ -260,24 +262,24 @@
       AWHEN C'P'
          :&LPNUM SETA (K'&NUM/2+3)/2*2 ROUNDED EVEN FOR LARL
         AIF (&LPNUM EQ 2)
-         BRAS  R14,3 SET R1 TO A(INLINE LIT) AND SKIP OVER IT
+         BRAS  ZC_R14,3 SET ZC_R1 TO A(INLINE LIT) AND SKIP OVER IT
          DC    PL2'&NUM'
         AELSE
          AIF (&LPNUM GT 16)
              :&LPNUM SETA 16
          AEND
-         LARL  R14,=PL&LPNUM'&NUM'
+         LARL  ZC_R14,=PL&LPNUM'&NUM'
         AEND
-         AP    &N_TARGET,0(&LPNUM,R14)
+         AP    &N_TARGET,0(&LPNUM,ZC_R14)
 .*
 .* ADD_NUM_LIT Q
 .*
       AWHEN C'Q'
-         LMG  R0,R1,&N_TARGET
-         LARL R14,=FL16'&NUM'
-         ALG  R1,8(R14)
-         ALCG R0,0(R14)
-         STMG R0,R1,&N_TARGET
+         LMG  ZC_R0,ZC_R1,&N_TARGET
+         LARL ZC_R14,=FL16'&NUM'
+         ALG  ZC_R1,8(ZC_R14)
+         ALCG ZC_R0,0(ZC_R14)
+         STMG ZC_R0,ZC_R1,&N_TARGET
 .*
 .* ADD_NUM_LIT Z
 .*
@@ -288,8 +290,8 @@
          AIF (&LPNUM GT 16)
              :&LPNUM SETA 16
          AEND
-         LARL  R14,=PL&LPNUM'&NUM'
-         AP    ZCVT_PWORK1(&PLEN),0(&LPNUM,R14)
+         LARL  ZC_R14,=PL&LPNUM'&NUM'
+         AP    ZCVT_PWORK1(&PLEN),0(&LPNUM,ZC_R14)
          :&ST SETB &S_TARGET
          ZC_UNPK31  &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK1,&PLEN
       AELSE
@@ -307,7 +309,7 @@
          AWHEN C'1'                     ADD ?? TO EH
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'               ADD EH TO EH
-         LE    F0,&N_SOURCE
+         LE    ZC_F0,&N_SOURCE
                AWHEN C'2'               ADD DH TO EH
          ZC_CONV EH,DH,&N_SOURCE
                AWHEN C'3'               ADD LH TO EH
@@ -325,48 +327,48 @@
                AWHEN C'9'               ADD LB TO EH
          ZC_CONV EH,LD,&N_SOURCE
                AWHEN C'F',C'A',C'I'
-         L     R0,&N_SOURCE
-         CEFR  F0,R0
+         L     ZC_R0,&N_SOURCE
+         CEFR  ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&N_SOURCE
-         CEGR  F0,R0
+         LG    ZC_R0,&N_SOURCE
+         CEGR  ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&N_SOURCE
-         CEFR  F0,R0
+         LH    ZC_R0,&N_SOURCE
+         CEFR  ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV EH,LD
                AWHEN C'Q'  RPI 1004
          ZC_CONV EH,Q,&N_SOURCE
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV EH,LD
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '         
                     MEXIT
                AEND 
-         AE    F0,&N_TARGET
-         STE   F0,&N_TARGET
+         AE    ZC_F0,&N_TARGET
+         STE   ZC_F0,&N_TARGET
 .*
 .*  ADD_FLD ?? TO DH
 .*
          AWHEN C'2'
-         LD    F1,&N_TARGET
+         LD    ZC_F1,&N_TARGET
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'               ADD EH TO DH
-         LE    F0,&N_SOURCE
-         LDER  F0,F0
+         LE    ZC_F0,&N_SOURCE
+         LDER  ZC_F0,ZC_F0
                AWHEN C'2'               ADD DH TO DH
-         LD    F0,&N_SOURCE
+         LD    ZC_F0,&N_SOURCE
                AWHEN C'3'               ADD LH TO DH
-         LD    F0,&N_TARGET
-         LD    F2,8+&N_TARGET
-         LDXR  F0,F0
+         LD    ZC_F0,&N_TARGET
+         LD    ZC_F2,8+&N_TARGET
+         LDXR  ZC_F0,ZC_F0
                AWHEN C'4'               ADD EB TO DH
          ZC_CONV DH,EB,&N_SOURCE
                AWHEN C'5'               ADD DB TO DH
@@ -380,49 +382,49 @@
                AWHEN C'9'               ADD LB TO DH
          ZC_CONV DH,LD,&N_SOURCE
                AWHEN C'F',C'A',C'I'
-         L     R0,&N_SOURCE
-         CDFR  F0,R0
+         L     ZC_R0,&N_SOURCE
+         CDFR  ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&N_SOURCE
-         CDGR  F0,R0
+         LG    ZC_R0,&N_SOURCE
+         CDGR  ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&N_SOURCE
-         CDFR  F0,R0
+         LH    ZC_R0,&N_SOURCE
+         CDFR  ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV DH,LD
                AWHEN C'Q'  RPI 1004
          ZC_CONV DH,Q,&N_SOURCE
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV DH,LD
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
                     MEXIT
                AEND 
-         ADR   F0,F1
-         STD   F0,&N_TARGET
+         ADR   ZC_F0,ZC_F1
+         STD   ZC_F0,&N_TARGET
 .*
 .*  ADD_FLD ?? TO LH
 .*
          AWHEN C'3'
-         LD    F1,&N_TARGET
-         LD    F3,8+&N_TARGET
+         LD    ZC_F1,&N_TARGET
+         LD    ZC_F3,8+&N_TARGET
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'               ADD EH TO LH
-         LE    F0,&N_SOURCE
-         LXER  F0,F0
+         LE    ZC_F0,&N_SOURCE
+         LXER  ZC_F0,ZC_F0
                AWHEN C'2'               ADD DH TO LH
-         LD    F0,&N_SOURCE
-         LXDR  F0,F0
+         LD    ZC_F0,&N_SOURCE
+         LXDR  ZC_F0,ZC_F0
                AWHEN C'3'               ADD LH TO LH
-         LD    F0,&N_SOURCE
-         LD    F2,8+&N_SOURCE
+         LD    ZC_F0,&N_SOURCE
+         LD    ZC_F2,8+&N_SOURCE
                AWHEN C'4'               ADD EB TO LH
          ZC_CONV LH,EB,&N_SOURCE
                AWHEN C'5'               ADD DB TO LH
@@ -436,34 +438,34 @@
                AWHEN C'9'               ADD LB TO LH
          ZC_CONV LH,LD,&N_SOURCE
                AWHEN C'F',C'A',C'I'
-         L     R0,&N_SOURCE
-         CXFR  F0,R0
+         L     ZC_R0,&N_SOURCE
+         CXFR  ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&N_SOURCE
-         CXGR  F0,R0
+         LG    ZC_R0,&N_SOURCE
+         CXGR  ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&N_SOURCE
-         CXFR  F0,R0
+         LH    ZC_R0,&N_SOURCE
+         CXFR  ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV LH,LD
                AWHEN C'Q'  RPI 1004
          ZC_CONV LH,Q,&N_SOURCE
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV LH,LD
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
                     MEXIT
                AEND 
-         AXR   F0,F1
-         STD   F0,&N_TARGET
-         STD   F2,8+&N_TARGET
+         AXR   ZC_F0,ZC_F1
+         STD   ZC_F0,&N_TARGET
+         STD   ZC_F2,8+&N_TARGET
 .*
 .*  ADD_FLD ?? TO EB 
 .*
@@ -488,33 +490,33 @@
                AWHEN C'9'               ADD LB TO EB
          ZC_CONV EB,LD,&N_SOURCE
                AWHEN C'F',C'A',C'I'
-         L     R0,&N_SOURCE
-         CEFBR F0,R0
+         L     ZC_R0,&N_SOURCE
+         CEFBR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&N_SOURCE
-         CEGBR F0,R0
+         LG    ZC_R0,&N_SOURCE
+         CEGBR ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&N_SOURCE
-         CEFBR F0,R0
+         LH    ZC_R0,&N_SOURCE
+         CEFBR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV EB,LD
                AWHEN C'Q'  RPI 1004
          ZC_CONV EB,Q,&N_SOURCE
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV EB,LD
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
                     MEXIT
                AEND 
-         AEB   F0,&N_TARGET
-         STE   F0,&N_TARGET
+         AEB   ZC_F0,&N_TARGET
+         STE   ZC_F0,&N_TARGET
 .*
 .*  ADD_FLD ?? TO DB
 .*
@@ -539,39 +541,39 @@
                AWHEN C'9'               ADD LB TO DB
          ZC_CONV DB,LD,&N_SOURCE
                AWHEN C'F',C'A',C'I'
-         L     R0,&N_SOURCE
-         CDFBR F0,R0
+         L     ZC_R0,&N_SOURCE
+         CDFBR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&N_SOURCE
-         CDGBR F0,R0
+         LG    ZC_R0,&N_SOURCE
+         CDGBR ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&N_SOURCE
-         CDFBR F0,R0
+         LH    ZC_R0,&N_SOURCE
+         CDFBR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV DB,LD
                AWHEN C'Q'  RPI 1004
          ZC_CONV DB,Q,&N_SOURCE
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV DB,LD
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
                     MEXIT
                AEND 
-         ADB   F0,&N_TARGET
-         STD   F0,&N_TARGET
+         ADB   ZC_F0,&N_TARGET
+         STD   ZC_F0,&N_TARGET
 .*
 .*  ADD_FLD ?? TO LB
 .*
          AWHEN C'6'
-         LD    F1,&N_TARGET
-         LD    F3,8+&N_TARGET
+         LD    ZC_F1,&N_TARGET
+         LD    ZC_F3,8+&N_TARGET
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'               ADD EH TO LB
          ZC_CONV LB,EH,&N_SOURCE
@@ -592,34 +594,34 @@
                AWHEN C'9'               ADD LB TO LB
          ZC_CONV LB,LD,&N_SOURCE
                AWHEN C'F',C'A',C'I'
-         L     R0,&N_SOURCE
-         CXFBR F0,R0
+         L     ZC_R0,&N_SOURCE
+         CXFBR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&N_SOURCE
-         CXGBR F0,R0
+         LG    ZC_R0,&N_SOURCE
+         CXGBR ZC_F0,ZC_R0
                AWHEN C'H'
-         LH    R0,&N_SOURCE
-         CXFBR F0,R0
+         LH    ZC_R0,&N_SOURCE
+         CXFBR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV LB,LD
                AWHEN C'Q'  RPI 1004
          ZC_CONV LH,Q,&N_SOURCE
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV LB,LD
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
                     MEXIT
                AEND 
-         AXBR  F0,F1
-         STD   F0,&N_TARGET
-         STD   F2,8+&N_TARGET
+         AXBR  ZC_F0,ZC_F1
+         STD   ZC_F0,&N_TARGET
+         STD   ZC_F2,8+&N_TARGET
 .*
 .*  ADD_FLD ?? TO ED (FIRST TO DD, THEN ADD DD, THEN CVT TO ED)
 .*
@@ -644,36 +646,36 @@
                AWHEN C'9'               ADD LB TO DD
          ZC_CONV DD,LD,&N_SOURCE
                AWHEN C'F',C'A',C'I'
-         LGF   R0,&N_SOURCE
-         CDGTR F0,R0
+         LGF   ZC_R0,&N_SOURCE
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&N_SOURCE
-         CDGTR F0,R0
+         LG    ZC_R0,&N_SOURCE
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'H'
-         LGH   R0,&N_SOURCE
-         CDGTR F0,R0
+         LGH   ZC_R0,&N_SOURCE
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV DD,LD
                AWHEN C'Q'  RPI 1004
          ZC_CONV DD,Q,&N_SOURCE
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV DD,LD
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
                     MEXIT
                AEND 
-         LE    F1,&N_TARGET
-         LDETR F1,F1,0
-         ADTR  f0,F0,F1
-         LEDTR F0,0,F0,0
-         STE   F0,&N_TARGET
+         LE    ZC_F1,&N_TARGET
+         LDETR ZC_F1,ZC_F1,0
+         ADTR  ZC_F0,ZC_F0,ZC_F1
+         LEDTR ZC_F0,0,ZC_F0,0
+         STE   ZC_F0,&N_TARGET
 .*
 .*  ADD_FLD ?? TO DD
 .*
@@ -698,34 +700,34 @@
                AWHEN C'9'               ADD LB TO DD
          ZC_CONV DD,LD,&N_SOURCE
                AWHEN C'F',C'A',C'I'
-         LGF   R0,&N_SOURCE
-         CDGTR F0,R0
+         LGF   ZC_R0,&N_SOURCE
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&N_SOURCE
-         CDGTR F0,R0
+         LG    ZC_R0,&N_SOURCE
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'H'
-         LGH   R0,&N_SOURCE
-         CDGTR F0,R0
+         LGH   ZC_R0,&N_SOURCE
+         CDGTR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV DD,LD
                AWHEN C'Q'  RPI 1004
          ZC_CONV DD,Q,&N_SOURCE
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV DD,LD
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
                     MEXIT
                AEND 
-         LD    F1,&N_TARGET
-         ADTR  f0,F0,F1                
-         STD   F0,&N_TARGET
+         LD    ZC_F1,&N_TARGET
+         ADTR  ZC_F0,ZC_F0,ZC_F1                
+         STD   ZC_F0,&N_TARGET
 .*
 .*  ADD_FLD ?? TO LD
 .*
@@ -750,118 +752,118 @@
                AWHEN C'9'               ADD LB TO LD
          ZC_CONV LD,LD,&N_SOURCE
                AWHEN C'F',C'A',C'I'
-         LGF   R0,&N_SOURCE
-         CXGTR F0,R0
+         LGF   ZC_R0,&N_SOURCE
+         CXGTR ZC_F0,ZC_R0
                AWHEN C'G'
-         LG    R0,&N_SOURCE
-         CXGTR F0,R0
+         LG    ZC_R0,&N_SOURCE
+         CXGTR ZC_F0,ZC_R0
                AWHEN C'H'
-         LGH   R0,&N_SOURCE
-         CXGTR F0,R0
+         LGH   ZC_R0,&N_SOURCE
+         CXGTR ZC_F0,ZC_R0
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F0,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F0,ZC_R0
                AWHEN C'Q'  RPI 1004
          ZC_CONV LD,Q,&N_SOURCE
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F0,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F0,ZC_R0
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
                     MEXIT
                AEND 
-         LD    F1,&N_TARGET
-         LD    F3,8+&N_TARGET
-         AXTR  F0,F0,F1
-         STD   F0,&N_TARGET
-         STD   F2,8+&N_TARGET
+         LD    ZC_F1,&N_TARGET
+         LD    ZC_F3,8+&N_TARGET
+         AXTR  ZC_F0,ZC_F0,ZC_F1
+         STD   ZC_F0,&N_TARGET
+         STD   ZC_F2,8+&N_TARGET
 .*
 .*  ADD_FLD ?? TO F/A/I
 .*
          AWHEN C'F',C'A',C'I'
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'               ADD EH TO DH
-         LD    F0,&N_TARGET
-         LE    F1,&N_SOURCE
-         LDER  F1,F1
-         ADR   F0,F1
+         LD    ZC_F0,&N_TARGET
+         LE    ZC_F1,&N_SOURCE
+         LDER  ZC_F1,ZC_F1
+         ADR   ZC_F0,ZC_F1
                AWHEN C'2'               ADD DH TO DH
-         LD    F0,&N_TARGET
-         AD    F0,&N_SOURCE
+         LD    ZC_F0,&N_TARGET
+         AD    ZC_F0,&N_SOURCE
                AWHEN C'3'               ADD LH TO DH
-         LD    F1,&N_TARGET
-         LD    F3,8+&N_TARGET
-         LDXR  F1,F1
-         ADR   F0,F1
+         LD    ZC_F1,&N_TARGET
+         LD    ZC_F3,8+&N_TARGET
+         LDXR  ZC_F1,ZC_F1
+         ADR   ZC_F0,ZC_F1
                AWHEN C'4'               ADD EB TO DH
-         LD    F1,&N_TARGET
+         LD    ZC_F1,&N_TARGET
          ZC_CONV DH,EB,&N_SOURCE
-         ADR   F0,F1
+         ADR   ZC_F0,ZC_F1
                AWHEN C'5'               ADD DB TO DH
-         LD    F1,&N_TARGET
+         LD    ZC_F1,&N_TARGET
          ZC_CONV DH,DB,&N_SOURCE
-         ADR   F0,F1
+         ADR   ZC_F0,ZC_F1
                AWHEN C'6'               ADD LB TO DH
-         LD    F1,&N_TARGET
+         LD    ZC_F1,&N_TARGET
          ZC_CONV DH,LB,&N_SOURCE
-         ADR   F0,F1
+         ADR   ZC_F0,ZC_F1
                AWHEN C'7'               ADD ED TO DH
-         LD    F1,&N_TARGET
+         LD    ZC_F1,&N_TARGET
          ZC_CONV DH,ED,&N_SOURCE
-         ADR   F0,F1
+         ADR   ZC_F0,ZC_F1
                AWHEN C'8'               ADD DD TO DH
-         LD    F1,&N_TARGET
+         LD    ZC_F1,&N_TARGET
          ZC_CONV DH,DD,&N_SOURCE
-         ADR   F0,F1
+         ADR   ZC_F0,ZC_F1
                AWHEN C'9'               ADD LB TO DH
-         LD    F1,&N_TARGET
+         LD    ZC_F1,&N_TARGET
          ZC_CONV DH,LD,&N_SOURCE
-         ADR   F0,F1
+         ADR   ZC_F0,ZC_F1
                AWHEN C'2'
-         L     R0,&N_TARGET
-         LD    F1,&N_SOURCE
-         CFDR  R3,0,F1
-         AR    R0,R3
-         ST    R0,&N_TARGET
+         L     ZC_R0,&N_TARGET
+         LD    ZC_F1,&N_SOURCE
+         CFDR  ZC_R3,0,ZC_F1
+         AR    ZC_R0,ZC_R3
+         ST    ZC_R0,&N_TARGET
                AWHEN C'1'
-         L     R0,&N_TARGET
-         LE    F1,&N_SOURCE
-         CFER  R3,0,F1
-         AR    R0,R3
-         ST    R0,&N_TARGET
+         L     ZC_R0,&N_TARGET
+         LE    ZC_F1,&N_SOURCE
+         CFER  ZC_R3,0,ZC_F1
+         AR    ZC_R0,ZC_R3
+         ST    ZC_R0,&N_TARGET
                AWHEN C'F',C'A',C'I'
-         L     R0,&N_TARGET
-         A     R0,&N_SOURCE
-         ST    R0,&N_TARGET
+         L     ZC_R0,&N_TARGET
+         A     ZC_R0,&N_SOURCE
+         ST    ZC_R0,&N_TARGET
                AWHEN C'G'
-         L     R0,&N_TARGET
-         A     R0,4+&N_SOURCE IGNORE HIGH 32 BITS
-         ST    R0,&N_TARGET  
+         L     ZC_R0,&N_TARGET
+         A     ZC_R0,4+&N_SOURCE IGNORE HIGH 32 BITS
+         ST    ZC_R0,&N_TARGET  
                AWHEN C'H'
-         L     R0,&N_TARGET
-         AH    R0,&N_SOURCE
-         ST    R0,&N_TARGET
+         L     ZC_R0,&N_TARGET
+         AH    ZC_R0,&N_SOURCE
+         ST    ZC_R0,&N_TARGET
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV Q,LD
-         A     R1,&N_TARGET IGNORE HIGH 96 BITS
-         ST    R1,&N_TARGET
+         A     ZC_R1,&N_TARGET IGNORE HIGH 96 BITS
+         ST    ZC_R1,&N_TARGET
                AWHEN C'Q'
-         L     R0,&N_TARGET
-         A     R0,12+&N_SOURCE IGNORE HIGH 48 BITS
-         ST    R0,&N_TARGET  
+         L     ZC_R0,&N_TARGET
+         A     ZC_R0,12+&N_SOURCE IGNORE HIGH 48 BITS
+         ST    ZC_R0,&N_TARGET  
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV Q,LD
-         A     R1,&N_TARGET IGNORE HIGH 96 BITS
-         ST    R1,&N_TARGET 
+         A     ZC_R1,&N_TARGET IGNORE HIGH 96 BITS
+         ST    ZC_R1,&N_TARGET 
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
@@ -873,48 +875,48 @@
          AWHEN C'G'
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'2'
-         LG    R0,&N_TARGET
-         LD    F1,&N_SOURCE
-         CGDR  R3,0,F1
-         AGR   R0,R3
-         STG   R0,&N_TARGET
+         LG    ZC_R0,&N_TARGET
+         LD    ZC_F1,&N_SOURCE
+         CGDR  ZC_R3,0,ZC_F1
+         AGR   ZC_R0,ZC_R3
+         STG   ZC_R0,&N_TARGET
                AWHEN C'1'
-         LG    R0,&N_TARGET
-         LE    F1,&N_SOURCE
-         CGER  R3,0,F1
-         AGR   R0,R3
-         STG   R0,&N_TARGET
+         LG    ZC_R0,&N_TARGET
+         LE    ZC_F1,&N_SOURCE
+         CGER  ZC_R3,0,ZC_F1
+         AGR   ZC_R0,ZC_R3
+         STG   ZC_R0,&N_TARGET
                AWHEN C'F',C'A',C'I'
-         LG    R0,&N_TARGET
-         AGF   R0,&N_SOURCE
-         STG   R0,&N_TARGET
+         LG    ZC_R0,&N_TARGET
+         AGF   ZC_R0,&N_SOURCE
+         STG   ZC_R0,&N_TARGET
                AWHEN C'G'
-         LG    R0,&N_TARGET
-         AG    R0,&N_SOURCE
-         STG   R0,&N_TARGET                          
+         LG    ZC_R0,&N_TARGET
+         AG    ZC_R0,&N_SOURCE
+         STG   ZC_R0,&N_TARGET                          
                AWHEN C'H'
-         LG    R0,&N_TARGET
-         LH    R3,&N_SOURCE
-         AGFR  R0,R3
-         STG   R0,&N_TARGET
+         LG    ZC_R0,&N_TARGET
+         LH    ZC_R3,&N_SOURCE
+         AGFR  ZC_R0,ZC_R3
+         STG   ZC_R0,&N_TARGET
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV Q,LD
-         AG    R1,&N_TARGET
-         STG   R1,&N_TARGET
+         AG    ZC_R1,&N_TARGET
+         STG   ZC_R1,&N_TARGET
                AWHEN C'Q'
-         LG    R0,&N_TARGET
-         AG    R0,8+&N_SOURCE IGNORE HIGH 64 BITS
-         STG   R0,&N_TARGET  
+         LG    ZC_R0,&N_TARGET
+         AG    ZC_R0,8+&N_SOURCE IGNORE HIGH 64 BITS
+         STG   ZC_R0,&N_TARGET  
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV Q,LD
-         AG    R1,&N_TARGET  IGNORE HIGH 64
-         STG   R1,&N_TARGET
+         AG    ZC_R1,&N_TARGET  IGNORE HIGH 64
+         STG   ZC_R1,&N_TARGET
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
@@ -926,43 +928,43 @@
          AWHEN C'H'
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'2'
-         LH    R0,&N_TARGET
-         LD    F3,&N_SOURCE
-         CFDR  R1,0,F3
-         AR    R0,R1
-         STH   R0,&N_TARGET
+         LH    ZC_R0,&N_TARGET
+         LD    ZC_F3,&N_SOURCE
+         CFDR  ZC_R1,0,ZC_F3
+         AR    ZC_R0,ZC_R1
+         STH   ZC_R0,&N_TARGET
                AWHEN C'1'
-         LH    R0,&N_TARGET
-         LE    F1,&N_SOURCE
-         CFER  R3,0,F1
-         AR    R0,R3
-         STH   R0,&N_TARGET
+         LH    ZC_R0,&N_TARGET
+         LE    ZC_F1,&N_SOURCE
+         CFER  ZC_R3,0,ZC_F1
+         AR    ZC_R0,ZC_R3
+         STH   ZC_R0,&N_TARGET
                AWHEN C'F',C'A',C'I'
-         LH    R0,&N_TARGET
-         A     R0,&N_SOURCE
-         STH   R0,&N_TARGET
+         LH    ZC_R0,&N_TARGET
+         A     ZC_R0,&N_SOURCE
+         STH   ZC_R0,&N_TARGET
                AWHEN C'G'
-         LH    R0,&N_TARGET
-         A     R0,&N_SOURCE+4 IGNORES HIGH 32
-         STH   R0,&N_TARGET
+         LH    ZC_R0,&N_TARGET
+         A     ZC_R0,&N_SOURCE+4 IGNORES HIGH 32
+         STH   ZC_R0,&N_TARGET
                AWHEN C'H'
-         LH    R0,&N_TARGET
-         AH    R0,&N_SOURCE
-         STH   R0,&N_TARGET
+         LH    ZC_R0,&N_TARGET
+         AH    ZC_R0,&N_SOURCE
+         STH   ZC_R0,&N_TARGET
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
          ZC_CONV Q,LD
-         AH    R1,&N_TARGET  IGNORE HIGH 96 BITS
-         STH   R1,&N_TARGET
+         AH    ZC_R1,&N_TARGET  IGNORE HIGH 96 BITS
+         STH   ZC_R1,&N_TARGET
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                    ZC_CONV Q,LD
-         AH    R1,&N_TARGET  IGNORE HIGH 96
-         STH   R1,&N_TARGET  IGNORE HIGH 112
+         AH    ZC_R1,&N_TARGET  IGNORE HIGH 96
+         STH   ZC_R1,&N_TARGET  IGNORE HIGH 112
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
@@ -974,60 +976,60 @@
          AWHEN C'P'
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LE    F0,&N_SOURCE
-         CFER  R0,0,F0
-         CVD   R0,ZCVT_PWORK
+         LE    ZC_F0,&N_SOURCE
+         CFER  ZC_R0,0,ZC_F0
+         CVD   ZC_R0,ZCVT_PWORK
          AP    &N_TARGET,ZCVT_PWORK
                AWHEN C'2'
-         LD    F0,&N_SOURCE
-         CFDR  R0,0,F0
-         CVD   R0,ZCVT_PWORK
+         LD    ZC_F0,&N_SOURCE
+         CFDR  ZC_R0,0,ZC_F0
+         CVD   ZC_R0,ZCVT_PWORK
          AP    &N_TARGET,ZCVT_PWORK
                AWHEN C'3'               ADD LH TO DH
          ZC_CONV P,LH,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          AP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'4'               ADD EB TO DH
          ZC_CONV P,EB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          AP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'5'               ADD DB TO DH
          ZC_CONV P,DB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          AP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'6'               ADD LB TO DH
          ZC_CONV P,LB,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          AP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'7'               ADD ED TO DH
          ZC_CONV P,ED,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          AP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'8'               ADD DD TO DH
          ZC_CONV P,DD,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          AP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'9'               ADD LB TO DH
          ZC_CONV P,LD,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          AP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'F',C'A',C'I'
-         L     R0,&N_SOURCE
-         CVD   R0,ZCVT_PWORK
+         L     ZC_R0,&N_SOURCE
+         CVD   ZC_R0,ZCVT_PWORK
          AP    &N_TARGET,ZCVT_PWORK
                AWHEN C'G'
-         LG    R0,&N_SOURCE
-         CVDG  R0,ZCVT_PWORK1
+         LG    ZC_R0,&N_SOURCE
+         CVDG  ZC_R0,ZCVT_PWORK1
          AP    &N_TARGET,ZCVT_PWORK1
                AWHEN C'H'
-         LH    R0,&N_SOURCE
-         CVD   R0,ZCVT_PWORK
+         LH    ZC_R0,&N_SOURCE
+         CVD   ZC_R0,ZCVT_PWORK
          AP    &N_TARGET,ZCVT_PWORK
                AWHEN C'P'
          AP    &N_TARGET,&N_SOURCE
                AWHEN C'Q'
          ZC_CONV P,Q,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK1
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK1
          AP    &N_TARGET,ZCVT_PWORK1         
                AWHEN C'Z'
                    :&PLEN SETA &L_SOURCE/2+1
@@ -1044,57 +1046,57 @@
          AWHEN C'Q'
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
-         LMG   R0,R1,&N_TARGET
-         LE    F1,&N_SOURCE
-         CGER  R3,0,F1
-         AGR   R1,R3
+         LMG   ZC_R0,ZC_R1,&N_TARGET
+         LE    ZC_F1,&N_SOURCE
+         CGER  ZC_R3,0,ZC_F1
+         AGR   ZC_R1,ZC_R3
          JNO   *+4+6
-         AGI   R0,1
+         AGI   ZC_R0,1
                AWHEN C'2'
-         LMG   R0,R1,&N_TARGET
-         LD    F1,&N_SOURCE
-         CGDR  R3,0,F1
-         AGR   R0,R3
+         LMG   ZC_R0,ZC_R1,&N_TARGET
+         LD    ZC_F1,&N_SOURCE
+         CGDR  ZC_R3,0,ZC_F1
+         AGR   ZC_R0,ZC_R3
                AWHEN C'F',C'A',C'I'
-         LMG   R0,R1,&N_TARGET
-         AGF   R1,&N_SOURCE
+         LMG   ZC_R0,ZC_R1,&N_TARGET
+         AGF   ZC_R1,&N_SOURCE
          JNO   *+4+6
-         AGFI  R0,1
+         AGFI  ZC_R0,1
                AWHEN C'G'
-         LMG   R0,R1,&N_TARGET
-         AG    R1,&N_SOURCE
+         LMG   ZC_R0,ZC_R1,&N_TARGET
+         AG    ZC_R1,&N_SOURCE
          JNO   *+4+6
-         AGFI  R0,1
+         AGFI  ZC_R0,1
                AWHEN C'H'
-         LMG   R0,R1,&N_TARGET
-         LH    R3,&N_SOURCE
-         AGFR  R1,R3
+         LMG   ZC_R0,ZC_R1,&N_TARGET
+         LH    ZC_R3,&N_SOURCE
+         AGFR  ZC_R1,ZC_R3
          JNO   *+4+6
-         AGFI  R0,1
+         AGFI  ZC_R0,1
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                ZC_CONV Q,LD
-         ALG   R1,8+&N_TARGET
-         ALCG  R0,&N_TARGET
+         ALG   ZC_R1,8+&N_TARGET
+         ALCG  ZC_R0,&N_TARGET
                AWHEN C'Q'
-         LMG   R0,R1,&N_TARGET
-         ALG   R1,8+&N_SOURCE                    
-         ALCG  R0,&N_SOURCE                     
+         LMG   ZC_R0,ZC_R1,&N_TARGET
+         ALG   ZC_R1,8+&N_SOURCE                    
+         ALCG  ZC_R0,&N_SOURCE                     
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
-         LMG   R0,R1,ZCVT_PWORK1
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+         CXSTR ZC_F4,ZC_R0
                ZC_CONV Q,LD
-         ALG   R1,8+&N_TARGET
-         ALCG  R0,&N_TARGET
+         ALG   ZC_R1,8+&N_TARGET
+         ALCG  ZC_R0,&N_TARGET
                AELSE
                     MNOTE 8,'GEN_ADD INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
                     MEXIT
                AEND 
-         STMG  R0,R1,&N_TARGET
+         STMG  ZC_R0,ZC_R1,&N_TARGET
 .*
 .*  ADD_FLD Z    
 .*
@@ -1103,42 +1105,42 @@
                AWHEN C'2'
                      :&PLEN SETA &L_TARGET/2+1
                      ZC_PACK31 ZCVT_PWORK1,&PLEN,&N_TARGET,&L_TARGET
-         LD    F0,&N_SOURCE
-         CFDR  R0,0,F0
-         CVD   R0,ZCVT_PWORK
+         LD    ZC_F0,&N_SOURCE
+         CFDR  ZC_R0,0,ZC_F0
+         CVD   ZC_R0,ZCVT_PWORK
          AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK
                      :&ST SETB &S_TARGET
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK1,&PLEN
                AWHEN C'1'
                      :&PLEN SETA &L_TARGET/2+1
                      ZC_PACK31 ZCVT_PWORK1,&PLEN,&N_TARGET,&L_TARGET
-         LE    F0,&N_SOURCE
-         CFER  R0,0,F0
-         CVD   R0,ZCVT_PWORK
+         LE    ZC_F0,&N_SOURCE
+         CFER  ZC_R0,0,ZC_F0
+         CVD   ZC_R0,ZCVT_PWORK
          AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK
                      :&ST SETB &S_TARGET
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK1,&PLEN
                AWHEN C'F',C'A',C'I'
                      :&PLEN SETA &L_TARGET/2+1
                      ZC_PACK31 ZCVT_PWORK1,&PLEN,&N_TARGET,&L_TARGET
-         L     R0,&N_SOURCE
-         CVD   R0,ZCVT_PWORK
+         L     ZC_R0,&N_SOURCE
+         CVD   ZC_R0,ZCVT_PWORK
          AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK
                      :&ST SETB &S_TARGET
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK1,&PLEN
                AWHEN C'G'
                      :&PLEN SETA &L_TARGET/2+1
                      ZC_PACK31 ZCVT_PWORK1,&PLEN,&N_TARGET,&L_TARGET
-         LG    R0,&N_SOURCE
-         CVDG  R0,ZCVT_PWORK2
+         LG    ZC_R0,&N_SOURCE
+         CVDG  ZC_R0,ZCVT_PWORK2
          AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK
                      :&ST SETB &S_TARGET
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK1,&PLEN
                AWHEN C'H'
                      :&PLEN SETA &L_TARGET/2+1
                      ZC_PACK31 ZCVT_PWORK1,&PLEN,&N_TARGET,&L_TARGET
-         LH    R0,&N_SOURCE
-         CVD   R0,ZCVT_PWORK
+         LH    ZC_R0,&N_SOURCE
+         CVD   ZC_R0,ZCVT_PWORK
          AP    ZCVT_PWORK1(&PLEN),ZCVT_PWORK
                      :&ST SETB &S_TARGET
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK1,&PLEN
@@ -1151,7 +1153,7 @@
                AWHEN C'Q'
                      ZC_PACK31 ZCVT_PWORK1,16,&N_TARGET,&L_TARGET
          ZC_CONV P,Q,&N_SOURCE
-         STMG  R0,R1,ZCVT_PWORK2
+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
          AP    ZCVT_PWORK1,ZCVT_PWORK2
                      :&ST SETB &S_TARGET
                  ZC_UNPK31 &N_TARGET,&L_TARGET,&ST,ZCVT_PWORK1,16
@@ -1179,27 +1181,27 @@
 ,*
          AENTRY SET_ON_SIZE_G64
          JO    PG_ADD_&ADD_LAB._ON_SIZE    ERROR IF OVERFLOW
-         LPGR  R15,R1
-         CGR   R15,R0                      COMPARE ABS RESULT TO MAX
-         JNL   PG_ADD_&ADD_LAB._ON_SIZE          ERROR IF TOO BIG
-         &STX   R1,&N_TARGET            STORE RESULT
+         LPGR  ZC_R15,ZC_R1
+         CGR   ZC_R15,ZC_R0                COMPARE ABS RESULT TO MAX
+         JNL   PG_ADD_&ADD_LAB._ON_SIZE    ERROR IF TOO BIG
+         &STX   ZC_R1,&N_TARGET            STORE RESULT
          AEND
 .*
-.* SET ON SIZE ERROR USING F32 WITH PENDING END_ADD OR PERIOD
+.* SET ON SIZE ERROR USING ZC_F32 WITH PENDING END_ADD OR PERIOD
 ,*
          AENTRY SET_ON_SIZE_F32
          JO    PG_ADD_&ADD_LAB._ON_SIZE    ERROR IF OVERFLOW
-         LPR   R15,R1
-         C     R15,0(R14)                 COMPARE ABS RESULT TO MAX
+         LPR   ZC_R15,ZC_R1
+         C     ZC_R15,0(ZC_R14)           COMPARE ABS RESULT TO MAX
          JNL   PG_ADD_&ADD_LAB._ON_SIZE   ERROR IF TOO BIG
-         &STX  R1,&N_TARGET            STORE RESULT
+         &STX  ZC_R1,&N_TARGET            STORE RESULT
          AEND
 .*
 .* SET ON SIZE ERROR USING G64_R32 WITH PENDING END_ADD OR PERIOD
 ,*
          AENTRY SET_ON_SIZE_G64_R32
          JO    PG_ADD_&ADD_LAB._ON_SIZE    ERROR IF OVERFLOW SET 
-         STM   R0,R1,&N_TARGET
+         STM   ZC_R0,ZC_R1,&N_TARGET
          AEND
          COPY ZCRSTLAB
          MEND

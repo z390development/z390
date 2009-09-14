@@ -6,17 +6,19 @@
 * Author - Don Higgins                                              *
 * Date   - 05/31/07                                                 *
 *********************************************************************
-* 05/31/07 RPI 501 TEST LITERAL-ABS EXPRESSION                             
-* 07/20/07 RPI 662 TEST ADDITIONAL ITEMERR AND QIDERR FOR DFHRESP          
-* 08/25/07 RPI 687 TEST ADDITIONAL CICS VSAM DFHRESP CODES    
-* 08/25/07 RPI 690 CORRECT NOTEND TO NOTFND                   
-* 10/30/07 RPI 729 ADD DFHRESP ILLOGIC=F'21'                  
-* 12/06/07 RPI 751 ADD DFHRESP EXPIRED=F'31'                  
-* 04/28/08 RPI 841 ADD DFHRESP MAPFAIL,INVMPSZ,OVERFLOW       
-* 09/19/08 RPI 905 ADD DFHRESP DSIDERR=F'12'                  
-* 10/27/08 RPI 928 ADD DFHRESP TERMIDER,TRANSIDERR,IOERR,ENDDATA,
+* 05/31/07 RPI 501  TEST LITERAL-ABS EXPRESSION                             
+* 07/20/07 RPI 662  TEST ADDITIONAL ITEMERR AND QIDERR FOR DFHRESP          
+* 08/25/07 RPI 687  TEST ADDITIONAL CICS VSAM DFHRESP CODES    
+* 08/25/07 RPI 690  CORRECT NOTEND TO NOTFND                   
+* 10/30/07 RPI 729  ADD DFHRESP ILLOGIC=F'21'                  
+* 12/06/07 RPI 751  ADD DFHRESP EXPIRED=F'31'                  
+* 04/28/08 RPI 841  ADD DFHRESP MAPFAIL,INVMPSZ,OVERFLOW       
+* 09/19/08 RPI 905  ADD DFHRESP DSIDERR=F'12'                  
+* 10/27/08 RPI 928  ADD DFHRESP TERMIDER,TRANSIDERR,IOERR,ENDDATA,
 *                      ENVDEFERR
-* 11/18/08 RPI 951 ADD DFHRESP ENQBUSY=F'55'                        
+* 11/18/08 RPI 951  ADD DFHRESP ENQBUSY=F'55'                        
+* 06/14/09 RPI 1057 ADD DFHRESP(SUPPRESSED)=F'72' AND END=F'83'        
+* 09/02/09 RPI 1079 ADD DFHRESP(NOTALLOC)=F'61'                        
 *********************************************************************
 TESTCIC1 RT1   MAIN
          EQUREGS
@@ -50,6 +52,9 @@ X        DS    F
          MVC   X,DFHRESP(ENQBUSY)       RPI 951
          MVC   X,DFHRESP(DISABLED)      RPI 687
          MVC   X,DFHRESP(ILLOGIC)       RPI 729
+         MVC   X,DFHRESP(NOTALLOC)      RPI 1079
+         MVC   X,DFHRESP(SUPPRESSED)    RPI 1057
+         MVC   X,DFHRESP(END)           RPI 1057
          CLC   =F'0',DFHRESP(NORMAL)      
          RT1   CCE
          CLC   =F'1',DFHRESP(ERROR)       
@@ -102,6 +107,7 @@ X        DS    F
          RT1   CCE
          CLC   =F'56',DFHRESP(ENVDEFERR) RPI 928      
          RT1   CCE
+         CLC   =F'61',DFHRESP(NOTALLOC)  RPI 1079
          CLC   =F'84',DFHRESP(DISABLED)  RPI 687      
          RT1   CCE
          RT1   CCE,=F'0',DFHRESP(NORMAL) 
@@ -130,6 +136,9 @@ X        DS    F
          RT1   CCE,=F'44',DFHRESP(QIDERR)       RPI 662
          RT1   CCE,=F'55',DFHRESP(ENQBUSY)      RPI 951      
          RT1   CCE,=F'56',DFHRESP(ENVDEFERR)    RPI 928      
+         RT1   CCE,=F'61',DFHRESP(NOTALLOC)     RPI 1079     
+         RT1   CCE,=F'72',DFHRESP(SUPPRESSED)   RPI 1057     
+         RT1   CCE,=F'83',DFHRESP(END)          RPI 1057     
          RT1   CCE,=F'84',DFHRESP(DISABLED)     RPI 687
          RT1   END
          END         

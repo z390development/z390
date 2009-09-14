@@ -352,6 +352,12 @@ public  class  az390 implements Runnable {
         * 06/15/09 RPI 1052 issue error for DROP of explict reg with no USING
         * 06/16/09 RPI 1056 issue warning for dup ordinary USING range
         *          and remove dup dep unlabeled USING range
+        * 06/29/09 RPI 1044 do not resolve Vcon to relative symbol 
+        * 07/10/09 RPI 1062 use z390_abort exit for recursive abort
+        * 07/11/09 RPI 1062 set RC=12 for errors and RC=16 for abort  
+        * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option  
+        * 09/01/09 RPI 1073 support option NOALIGN  
+        * 09/02/09 RPI 1079 add DFHRESP(NOTALLOC)=F'61'
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -946,9 +952,10 @@ public  class  az390 implements Runnable {
     		  "QIDERR)",          //24 - =F'44' RPI 662
     		  "ENQBUSY)",         //25 - =F'55' RPI 951
     		  "ENVDEFERR)",       //26 - =F'56' RPI 928
-    		  "SUPPRESSED",       //27 - =F'72' RPI 1057
-    		  "END)",             //28 - =F'83' RPI 1057
-    		  "DISABLED)",        //29 - =F'84' RPI 687
+    		  "NOTALLOC)",        //27 - =F'61' RPI 1079
+    		  "SUPPRESSED)",      //28 - =F'72' RPI 1057
+    		  "END)",             //29 - =F'83' RPI 1057
+    		  "DISABLED)",        //30 - =F'84' RPI 687
     		  };
       String[] dfhresp_lit = {
     		  "=F'0'",           // 1 "NORMAL)" 
@@ -976,10 +983,11 @@ public  class  az390 implements Runnable {
     		  "=F'40'",          //23 "OVERFLOW)" RPI 841
     		  "=F'44'",          //24 "QIDERR)"   RPI 662
     		  "=F'55'",          //25 "ENQBUSY)"  RPI 951
-    		  "=F'56'",          //26 "ENVDEFERR" RPI 928
-    		  "=F'72'",          //27 "SUPPRESSED" RPI 1057
-    		  "=F'83'",          //28 "END)"      RPI 1057
-    		  "=F'84'",          //29 "DISABLED)" RPI 687
+    		  "=F'56'",          //26 "ENVDEFERR)" RPI 928
+    		  "=F'61'",          //27 "NOTALLOC)"  RPI 1079
+    		  "=F'72'",          //28 "SUPPRESSED)" RPI 1057
+    		  "=F'83'",          //29 "END)"      RPI 1057
+    		  "=F'84'",          //30 "DISABLED)" RPI 687
     		  };
   /*
    * EXEC CICS DFHVALUE(type) literal substitution
@@ -1062,7 +1070,8 @@ public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFil
 	tz390.systerm_file = mz390_systerm_file; // share the ERR file
     tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " AZ390 ";
 	tz390.stats_file = mz390_stats_file; // RPI 737
-    az390_thread = new Thread(this);
+    tz390.init_codepage(tz390.codepage);  // RPI 1069
+	az390_thread = new Thread(this);
     az390_running = true;
     az390_thread.start();
     set_sym_lock("az390 startup");    // proceed to waiting for bal and lock sym table
@@ -1152,6 +1161,7 @@ private void init_az390(String[] args, JTextArea log_text){
     	tz390.init_options(args,tz390.bal_type);
     	if (!mz390_call){
    			tz390.open_systerm("AZ390");
+   			tz390.init_codepage(tz390.codepage);  // RPI 1069
    		} else {
    			tz390.systerm_start = System.currentTimeMillis();
    			tz390.started_msg = mz390_started_msg;
@@ -1440,6 +1450,7 @@ private void resolve_symbols(){
     		 report_equ_changes   = true; // RPI 632
     	 	 prev_az390_errors = az390_errors;
     	 	 az390_errors = 0;
+    	 	 az390_rc = 0; // RPI 1062
     	 	 cur_pass++;
     	     update_symbols();
     	     if (tz390.opt_tracea){
@@ -1452,6 +1463,7 @@ private void resolve_symbols(){
          }
     }
     az390_errors = 0;  // RPI 920 restore from prev.
+    az390_rc = 0; // RPI 1062
     bal_abort = false; // RPI 920 prevent obj ESD error
 	cur_pass++;  // incr to last pass
 }
@@ -3698,61 +3710,61 @@ private void process_esd(byte esd_type){
     	    		   && (cur_sid == -1
     	    		       || sym_def[cur_sid] == sym_def_lookahead) // RPI 415 
     	    		       || sym_def[cur_sid] != sym_cst){ // RPI 1044
-    	    		   add_extrn(cur_sid,token);
+    	    		   cur_sid = add_extrn(token);
     	    	   }
     	    	   break;
     	       case 8: // sym_wxt
     	    	   cur_sid = find_sym(token);
-    	    	   if (cur_sid == -1
-    	    		   || sym_def[cur_sid] <= sym_def_ref){
-    	    		   add_wxtrn(cur_sid,token);
-    	    	   } else if (sym_type[cur_sid] == sym_ext){
-        	    		sym_type[cur_sid] = sym_wxt;
+    	    	   if (!lookahead_mode
+    	    		   && (cur_sid == -1
+    	    		       || sym_def[cur_sid] == sym_def_lookahead) // RPI 415 
+    	    		       || sym_def[cur_sid] != sym_cst){ // RPI 1044
+    	    		   cur_sid = add_wxtrn(token);
     	    	   }
     	    	   break;
 	    	   }
 	       }
 	}
 }
-private void add_extrn(int sym_index,String token){
+private int add_extrn(String token){
 	/*
-	 * add EXTRN 
+	 * add EXTRN using V vs S key index
 	 */
-	   if (sym_index == -1){
-		   sym_index = add_sym(token);
-	   } else if (sym_def[sym_index] == sym_def_lookahead){ // RPI 415
-		   sym_def[sym_index] = sym_def_ref;
+	   int index  = tz390.find_key_index('V',token.toUpperCase());
+	   if (index == -1){
+		   index = add_sym(token);
 	   }
-	   if (sym_index >= 1){
-		   if (sym_def[sym_index] == sym_def_ref
-			   && sym_attr[sym_index] == tz390.ascii_to_ebcdic['U']){ 			   
-			   sym_type[sym_index] = sym_ext;
-			   sym_attr[sym_index] = tz390.ascii_to_ebcdic['T']; // RPI 415
-			   sym_esd[sym_index] = add_esd(sym_index,sym_ext);
+	   if (index >= 1){
+		   if (sym_def[index] == sym_def_ref
+			   && sym_attr[index] == tz390.ascii_to_ebcdic['U']){ 			   
+			   sym_type[index] = sym_ext;
+			   sym_attr[index] = tz390.ascii_to_ebcdic['T']; // RPI 415
+			   sym_esd[index] = add_esd(index,sym_ext);
 		   }
 	   } else {
 		   abort_error(153,"symbol table error on add extrn " + token);
 	   }
+	   return index; // RPI 1044
 }
-private void add_wxtrn(int sym_index,String token){
+private int add_wxtrn(String token){
 	/*
-	 * add WXTRN 
+	 * add WXTRN using V vs S key index
 	 */
-	   if (sym_index == -1){
-		   sym_index = add_sym(token);
-	   } else {
-		   sym_def[sym_index] = sym_def_ref;
+	   int index  = tz390.find_key_index('V',token.toUpperCase());
+	   if (index == -1){
+		   index = add_sym(token);
 	   }
-	   if (sym_index >= 1){
-		   if (sym_def[sym_index] <= sym_def_ref
-			   && sym_esd[sym_index] == 0){ 
-			   sym_type[sym_index] = sym_wxt;
-			   sym_attr[sym_index] = tz390.ascii_to_ebcdic['S']; // RPI 415 
-			   sym_esd[sym_index] = add_esd(sym_index,sym_wxt);
+	   if (index >= 1){
+		   if (sym_def[index] == sym_def_ref
+			   && sym_attr[index] == tz390.ascii_to_ebcdic['U']){ 			   
+			   sym_type[index] = sym_wxt;
+			   sym_attr[index] = tz390.ascii_to_ebcdic['S']; // RPI 415
+			   sym_esd[index] = add_esd(index,sym_wxt);
 		   }
 	   } else {
 		   abort_error(154,"symbol table error on add wxtrn " + token);
 	   }
+	   return index; // RPI 1044
 }
 private void add_entry(String token){
 	/*
@@ -3895,7 +3907,16 @@ public int find_sym(String name){ // RPI 415 public
 	 *        else if vcon mode, add extrn
 	 * 
 	 */
-	int index  = tz390.find_key_index('S',name.toUpperCase());
+	int index = 0;
+	if (dcv_type){
+		index  = tz390.find_key_index('V',name.toUpperCase());
+		if (index == -1){
+			index = add_extrn(name);
+		}
+		add_sym_xref(index);
+		return index;
+	}
+	index  = tz390.find_key_index('S',name.toUpperCase());
 	if (!lookahead_mode){
 		if (index != -1
 			&& sym_def[index] != sym_def_lookahead){ // RPI 415 
@@ -3907,8 +3928,8 @@ public int find_sym(String name){ // RPI 415 public
 			} else if (exp_lit_mod && bal_line_index < sym_def[index]){
 				log_error(201,"literal modifier forward reference for " + sym_name[index]); // RPI 749
 			}
-		} else if (dcv_type){
-			add_extrn(index,name);
+		} else if (exp_rld_len > 0){
+			index  = tz390.find_key_index('V',name.toUpperCase());
 		}
 	}
 	return index;
@@ -4947,9 +4968,6 @@ public void exit_az390(){
       if (!mz390_call){ // RPI 935 let mz390 do it if running
     	  put_stats(); // rpi 846
       }
-	  if (az390_errors > 0 || tz390.z390_abort){
-		  az390_rc = 16;
-      }
 	  if (tz390.opt_errsum){
 		report_critical_errors();
 	  }
@@ -5079,6 +5097,10 @@ private void log_error(int error,String msg){
 	 */
 	  if (bal_abort)return; // only 1 error per line
 	  bal_abort = true;
+	  az390_errors++;
+	  if (gen_obj_code && az390_rc < 12){ // RPI 1062
+		  az390_rc = 12;
+	  }
 	  if (gen_obj_code){ // RPI 484
 		 if (!mz390_abort){ // RPI 433 don't duplicate mz error line
 			 force_list_bal = true;  // RPI 285
@@ -5110,7 +5132,6 @@ private void log_error(int error,String msg){
 	     force_list_bal = false;  // RPI 285
 	     list_bal_line = false; // RPI 891 suppress defail bal line 
 	  }
-	  az390_errors++;
 	  if (gen_obj_code && tz390.max_errors != 0 && az390_errors > tz390.max_errors){
 	  	 abort_error(49,"max errors exceeded");	 
 	  }
@@ -5134,31 +5155,30 @@ private synchronized void abort_error(int error,String msg){ // RPI 646
 	 * issue error msg to log with prefix and
 	 * inc error total
 	 */
-	if (az390_recursive_abort){ // RPI 935
-		System.out.println("AZ390E recurive abort exit");
-		System.exit(16);
-	}
-	az390_recursive_abort = true;
 	  az390_errors++;
-	  if (tz390.z390_abort){
+	  az390_rc = 16; // RPI 1062
+	  if (az390_recursive_abort || tz390.z390_abort){
 		 msg = msg_id + "aborting due to recursive abort error " + error + " - " + msg;
 		 System.out.println(msg);
 		 tz390.put_systerm(msg);
 		 if (tz390.opt_errsum){
 			report_critical_errors();
 		 }
-		 tz390.close_systerm(16);
+		 if (mz390_call){  // RPI 1062
+			 tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " MZ390 ";
+		 }
+		 tz390.close_systerm(az390_rc);
 		 bal_line_full = false;
-	  	 System.exit(16);
+	  	 System.exit(az390_rc);
 	  }
-
+	  az390_recursive_abort = true; // RPI 1062
 	  bal_abort = true;        // RPI 415
 	  tz390.z390_abort = true;
 	  tz390.opt_con = true;    // RPI 453
 	  force_list_bal = true;      // RPI 285
 	  list_bal_line();
 	  force_list_bal = true; // RPI 285
-	  String error_msg = "AZ390E error " + error + " on line " + bal_line_num[bal_line_index] + " " + bal_line_text[bal_line_index];
+	  String error_msg = "AZ390E abort " + error + " on line " + bal_line_num[bal_line_index] + " " + bal_line_text[bal_line_index];
 	  put_log(error_msg);
 	  tz390.put_systerm(error_msg);
 	  error_msg = msg_id + msg;
@@ -6549,8 +6569,11 @@ private void get_dc_field_modifiers(){
 	 /*
 	  * align and save first field attr.
 	  */
-	 if (!dc_lit_ref && !dc_len_explicit){ // RPI 265 align within DS/DC
-         dc_align(dc_len);
+	 if (!dc_lit_ref 
+		&& !dc_len_explicit){ // RPI 265 align within DS/DC
+        if (tz390.opt_align || dc_dup == 0){ // RPI 1073
+        	dc_align(dc_len);
+        }
 	 }
 	 if (dc_first_field){
 		dc_first_type  = dc_type;
@@ -7641,7 +7664,10 @@ private int get_dc_mod_int(){
 	 * return integer expression in (...)
 	 * or decimal number for modifier
 	 */
- 	if (dc_field.charAt(dc_index+1) == '('){
+ 	if (dc_field.length() <= dc_index+1){  // RPI 1077 
+ 		log_error(208,"DS/DC missing modifier - " + dc_field);
+ 	    return 1;
+ 	} else if (dc_field.charAt(dc_index+1) == '('){
     	exp_text = dc_field;
  	    exp_index = dc_index+2;
  	    if (!bal_abort && calc_abs_exp() // RPI 416

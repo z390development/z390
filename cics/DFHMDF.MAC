@@ -825,6 +825,7 @@
 &SPACES  SETC  '        '(1,7-K'&GNAME)
          AIF   (&MLANG NE 0)
          PUNCH '*'
+         PUNCH '         DS    AL2                DUMMY LENGTH'
          PUNCH '&GNAME.A&SPACES DS    X                  OUTPUT GROUP F-
                IELD ATTRIBUTE'
          AELSE
@@ -877,6 +878,7 @@
          PUNCH '*'
          PUNCH '&FLDNAME.D&SPACES DS    0C                 OUTPUT FIELD-
                 FIRST OCCURRING'
+         PUNCH '         DS    AL2                DUMMY LENGTH'
          AELSE
          PUNCH '           02  &FLDNAME.D&SPACES OCCURS &OCC TIMES.'
          AEND
@@ -888,6 +890,7 @@
          AEND
 .NOSTAR2 ANOP
          AIF   (&MLANG NE 0)
+         PUNCH '         DS    AL2                DUMMY LENGTH'
          PUNCH '&FLDNAME.A&SPACES DS    X                  OUTPUT ATTRI-
                BUTE'
          AELSE

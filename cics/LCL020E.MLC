@@ -4,12 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL020E  SUBENTRY
+LCL020E  CSECT
 *
 * FN=020E  EXEC CICS POP HANDLE
 *
 * R1  >>> P020E BLOCK POINTER
-* R14 = RETURN ADDRESS
+*
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P020E,P020EEND),R3
@@ -110,7 +112,7 @@ NOCOND   EQU   *
          XC    ABDACTIV,ABDACTIV  SET ENTRY ACTIVE
          DROP  R14
 RETURN   EQU   *
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 P020E    DSECT
 P020EFN  DS    XL2                FUNCTION CODE
@@ -134,7 +136,7 @@ P020EEND EQU   *                  END MARKER
 * R3  PARM POINTER
 * R10 TCTTE
 * R11 EIB
-* R13 SAVE AREA AND BASE 1
+* R13 BASE 1
 *
          END
 

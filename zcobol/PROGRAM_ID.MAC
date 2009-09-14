@@ -11,6 +11,12 @@
 .*********************************************************************
          PROGRAM_ID &PGM
          COPY  ZC_WS
+         GBLA  &ZC_PGM_CNT
+         :&ZC_PGM_CNT SETA &ZC_PGM_CNT+1
+         AIF   (&ZC_PGM_CNT GT 1)
+               MNOTE 8,'MULTIPLE PGM BATCH COMPILE NOT SUPPORTED YET'
+               MEXIT
+         AEND
          AIF   ('&PGM' EQ '')        
                MNOTE 4,'PROGRAM-ID MISSING PROGRAM NAME - MAIN ASSUMED'
                :&ZC_PGM SETC  'MAIN'

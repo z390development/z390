@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 06/05/09 RPI 1049 INITIAL CODING                                                       
 .* 06/10/09 RPI 1049 ADD REL INSTR LABEL CAPTURE FROM DS 0H AND EQU'S
+.* 09/14/09 RPI 1064 DETECT AND SKIP TIMESTAMP IF FOUND              
 .*********************************************************************
 .* FILES:
 .*  INPUT  %SYSPARM.TRE  - INSTRUCTION TRACE WITH OPERAND INFO
@@ -173,8 +174,14 @@
          AWHILE ('&REC' NE '')
                :&TOT_TRE SETA &TOT_TRE+1
                AIF  (K'&REC GT 25)
+                    AIF ('&REC'(5,1) EQ '-')  RPI 1064
+                        :&REC SETC '&REC'(31,*) REMOVE TIMESTAMP
+                        AIF ('&REC' EQ '')
+                            :&REC SETC ' '   ALLOW BLANK TIMESTAMP
+                        AEND
+                    AEND
                     AIF ('&REC'(3,1) EQ ':')
-                        :&REC SETC '&REC'(10,*) REMOVE TIME STAMP
+                        :&REC SETC '&REC'(10,*) REMOVE TIME FROM START
                     AEND
                     AIF ('&REC'(11,5) EQ 'EZ390')
                         :&EZ390_FOUND SETB 1

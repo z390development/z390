@@ -4,13 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL020A  SUBENTRY
+LCL020A  CSECT
 *
 * FN=020A  EXEC CICS IGNORE CONDITION
 *
 * R1  >>> P020A BLOCK POINTER
-* R14 = RETURN ADDRESS
 *
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P020A,P020AEND),R3
@@ -69,7 +70,7 @@ SETHCN   EQU   *
          AHI   R4,1               BUMP CONDITION POINTER
          BCT   R5,SETHCN          LOOP
 ENDCOND  EQU   *
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 P020A    DSECT
 P020AFN  DS    XL2                FUNCTION CODE
@@ -90,7 +91,7 @@ P020AEND EQU   *                  END MARKER
 * R3  PARM POINTER
 * R10 TCTTE
 * R11 EIB
-* R13 SAVE AREA AND BASE 1
+* R13 BASE 1
 *
          END
 

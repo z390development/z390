@@ -19,7 +19,7 @@
        01  OUT-RECORD PIC X(80).
        WORKING-STORAGE SECTION.
        01  WS-LINE PIC X(80).
-       01  END-OF-FILE-FLAG PIC X.
+       01  END-OF-FILE-FLAG PIC X VALUE 'F'.
        77  COUNT COMP-3 PIC S9(4) VALUE 0.
        PROCEDURE DIVISION.
        MAINLINE.
@@ -28,6 +28,12 @@
            PERFORM THE-LOOP
                    UNTIL END-OF-FILE-FLAG = 'Y'.
            PERFORM EOJ-ROUTINE.
+           DISPLAY 'COPYFILE RECORDS COPIED = ' COUNT.
+           IF COUNT NOT = 17 
+              DISPLAY 'COPYFILE RECORD COUNT ERROR'
+              MOVE 16 TO RETURN-CODE
+              STOP RUN
+           END-IF 
            DISPLAY 'COPYFILE ENDED OK'
            STOP RUN.
        INITIALIZATION-ROUTINE.
@@ -43,5 +49,3 @@
        EOJ-ROUTINE.
            CLOSE IN-FILE.
            CLOSE OUT-FILE.
-           DISPLAY 'RECORDS COPIED = ' COUNT.
-           STOP RUN.

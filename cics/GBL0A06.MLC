@@ -113,7 +113,7 @@ CICSTRGO EQU   *
          WTO   MF=(E,WTOMSG)      TRACE IT
          BR    R11                RETURN
 *
-ABEND780 ABEND 780                TCPIO SEND FAILED
+ABEND780 ABEND 780,DUMP           TCPIO SEND FAILED
 *
 CICSTIND DS    C                  TRACE TYPE INDICATOR
 TRCEZ390 DS    C                  Z390 TRACE OPTION

@@ -4,13 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL020C  SUBENTRY
+LCL020C  CSECT
 *
 * FN=020C  EXEC CICS PUSH HANDLE
 *
 * R1  >>> P020C BLOCK POINTER
-* R14 = RETURN ADDRESS
 *
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P020C,P020CEND),R3
@@ -89,7 +90,7 @@ NOHCN    EQU   *
          MVC   ABDACTIV,=X'FFFF'  SET ENTRY INACTIVE
 NOABD    EQU   *
          DROP  R14
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 P020C    DSECT
 P020CFN  DS    XL2                FUNCTION CODE
@@ -111,7 +112,7 @@ P020CEND EQU   *                  END MARKER
 * R3  PARM POINTER
 * R10 TCTTE
 * R11 EIB
-* R13 SAVE AREA AND BASE 1
+* R13 BASE 1
 *
          END
 

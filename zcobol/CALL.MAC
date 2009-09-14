@@ -19,11 +19,37 @@
                MNOTE 8,'CALL MISSING USING'
                MEXIT
          AEND
+         :&RETURN_IX SETA 0
          :&I SETA 3
          :&PARMS SETC 'USING'
          AWHILE (&I LE &NP)
+               AIF ('&SYSLIST(&I)' EQ 'ON'                             X
+                 OR '&SYSLIST(&I)' EQ 'NOT'                            X
+                 OR '&SYSLIST(&I)' EQ 'OVERFLOW'                       X
+                 OR '&SYSLIST(&I)' EQ 'EXCEPTION')
+                   MNOTE 8,'CALL ON EXCEPTION/OVERFLOW NOT SUPPORTED'
+                   MEXIT
+               AELSEIF ('&SYSLIST(&I)' EQ 'RETURNING')
+                   :&RETURN_IX SETA &I+1
+                   AEXIT AWHILE
+               AEND
                :&PARMS SETC '&PARMS,&SYSLIST(&I)'
                :&I SETA &I+1
          AEND
          GEN_CALL &PGM,&PARMS
+         AIF (&RETURN_IX GT 0)
+               :&PARM_IX SETA &RETURN_IX
+               :&FIELD_REG SETC 'ZC_R2'
+               :&FIELD_SS1 SETB 1
+               ACALL GET_PARM_FIELD
+               AIF (&FIELD_IX GT 0)
+                   ZC_SYM_FIND RETURN_CODE
+                   GEN_MOVE &FIELD_NAME,&FIELD_IX,RETURN_CODE,&SYM_IX
+               AELSE
+                   MNOTE 8,'CALL RETURNING FIELD NOT FOUND - &FIELD_NAMX
+               E'
+               AEND
+         AEND
+         MEXIT
+         COPY  ZCGETFLD
          MEND

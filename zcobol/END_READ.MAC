@@ -13,9 +13,11 @@
          COPY  ZC_WS
          AIF   (&IE_LVL LT 1)       
                MNOTE 8,'END_READ MISSING READ'
+               MEXIT
          AEND
          AIF   (&IE_TYPE(&IE_LVL) NE 3)     
                MNOTE 8,'END-READ INVALID TYPE - &IE_TYPE(&IE_LVL)'
+               MEXIT
          AEND
          GEN_LABEL &FILE_NAME(&FILE_IX)._END_READ&IE_TCNT(&IE_LVL),END_X
                READ

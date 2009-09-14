@@ -1,0 +1,15 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/12/09                                                 *
+.*********************************************************************
+.* 09/12/09 zc390 gens ZCEND for END ???? to avoid END conflict              
+.*********************************************************************
+         ZCEND &TYPE
+         AIF   ('&TYPE' NE 'PROGRAM')
+               MNOTE 8,'ZCEND END_&TYPE NOT SUPPORTED YET'
+         AEND
+         MEND

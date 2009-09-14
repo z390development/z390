@@ -7,7 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 04/09/08 initial coding for z390 STOP RUN
-.* 05/03/08 set R15 to RETURN_CODE 
+.* 05/03/08 set ZC_R15 to RETURN_CODE 
 .* 07/28/08 branch to ZC_GOBACKE if STOP RUN not specified             
 .* 10/07/08 ZSTRMAC
 .*********************************************************************
@@ -15,14 +15,13 @@
          COPY ZC_WS
          ZC_SYM_FIND RETURN_CODE
          GEN_BASE &SYM_IX
+         LH    ZC_R1,RETURN_CODE      PASS RETURN CODE IN R1
        AIF   ('&RUN' NE 'RUN')   
-         LH    R1,RETURN_CODE
-         L     R15,ZCVT_STOPRUN
-         BR    R15
+         L     ZC_R15,ZCVT_STOPRUN
+         BR    ZC_R15
        AELSE   
-         LH    R1,RETURN_CODE
-         L     R15,ZCVT_GOBACK
-         BR    R15
+         L     ZC_R15,ZCVT_GOBACK
+         BR    ZC_R15
        AEND
          MEND
 

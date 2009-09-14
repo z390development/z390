@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 02/24/09 initial coding for GEN_SET to calc index or 88 field      
+.* 07/30/09 RPI 1065 correct subscript                                
 .*********************************************************************
          GEN_SET &TYPE,&TARGET,&TARGET_IX,&SOURCE,&SOURCE_IX
          COPY  ZC_WS
@@ -35,10 +36,10 @@
                AELSE
                     AIF   (&SYM_REF(&SOURCE_IX) EQ 0                   X
                            OR '&SYM_PIC_TYPE(&SOURCE_IX)' NE 'A')
-                          GEN_L R1,&SOURCE,&SOURCE_IX       
-                          MSFI  R1,&SYM_LEN(&SYM_REF(&TARGET_IX)
-                          A     R1,&TARGET (SUBSCRIPT-1)*LENGTH
-                          ST    R1,&TARGET (SUBSCRIPT-1)*LENGTH
+                          GEN_L ZC_R1,&SOURCE,&SOURCE_IX       
+                          MSFI  ZC_R1,&SYM_LEN(&SYM_REF(&TARGET_IX))
+                          A     ZC_R1,&TARGET (SUBSCRIPT-1)*LENGTH
+                          ST    ZC_R1,&TARGET (SUBSCRIPT-1)*LENGTH
                     AELSE
                           MNOTE 8,'GEN_SET SOURCE MUST BE INTEGER'
                           MEXIT
@@ -51,10 +52,10 @@
                AELSE
                     AIF   (&SYM_REF(&SOURCE_IX) EQ 0                   X
                            OR '&SYM_PIC_TYPE(&SOURCE_IX)' NE 'A')
-                          GEN_L R1,&SOURCE,&SOURCE_IX       
-                          MSFI  R1,&SYM_LEN(&SYM_REF(&TARGET_IX)
-                          S     R1,&TARGET (SUBSCRIPT-1)*LENGTH
-                          ST    R1,&TARGET (SUBSCRIPT-1)*LENGTH
+                          GEN_L ZC_R1,&SOURCE,&SOURCE_IX       
+                          MSFI  ZC_R1,&SYM_LEN(&SYM_REF(&TARGET_IX))
+                          S     ZC_R1,&TARGET (SUBSCRIPT-1)*LENGTH
+                          ST    ZC_R1,&TARGET (SUBSCRIPT-1)*LENGTH
                     AELSE
                           MNOTE 8,'GEN_SET SOURCE MUST BE INTEGER'
                           MEXIT
@@ -74,20 +75,20 @@
          AELSE
                AIF ('&SYM_PIC_TYPE(&SOURCE_IX)' EQ 'I') INDEX
                    AIF   (&SYM_REF(&SOURCE_IX) GT 0)      INDEX NAME    
-         SGR   R0,R0
-         GEN_L R1,&SOURCE,&SOURCE_IX
-         LARL  R14,=F'&SYN_LEN(&SYM_REF(&SOURCE_IX)'
-         D     R0,0(R14)
-         MSFI  R1,&SYM_LEN(&SYM_REF(&TARGET_IX)
-         ST    R1,&TARGET
+         SGR   ZC_R0,ZC_R0
+         GEN_L ZC_R1,&SOURCE,&SOURCE_IX
+         LARL  ZC_R14,=F'&SYM_LEN(&SYM_REF(&SOURCE_IX))' RPI 1065
+         D     ZC_R0,0(ZC_R14)
+         MSFI  ZC_R1,&SYM_LEN(&SYM_REF(&TARGET_IX))      RPI 1065
+         ST    ZC_R1,&TARGET
                    AELSE
          GEN_MOVE &TARGET,&TARGET_IX,&SOURCE,&SOURCE_IX
                    AEND
                AELSE
-         GEN_L R1,&SOURCE,&SOURCE_IX       
-         AHI   R1,-1                        
-         MSFI  R1,&SYM_LEN(&SYM_REF(&TARGET_IX)
-         ST    R1,&TARGET INDEX=(INT-1)*LEN
+         GEN_L ZC_R1,&SOURCE,&SOURCE_IX       
+         AHI   ZC_R1,-1                        
+         MSFI  ZC_R1,&SYM_LEN(&SYM_REF(&TARGET_IX))      RPI 1065
+         ST    ZC_R1,&TARGET INDEX=(INT-1)*LEN
                AEND
          AEND
          AEND
@@ -111,12 +112,12 @@
          AIF   (&SOURCE_IX GT 0) 
                AIF  (&SYM_REF(&SOURCE_IX) GT 0                         X               X 
                     AND '&SYM_PIC_TYPE(&SOURCE_IX)' EQ 'I') INDEX NAME
-         SGR   R0,R0
-         GEN_L R1,&SOURCE,&SOURCE_IX
-         LARL  R14,=F'&SYM_LEN(&SYM_REF(&SOURCE_IX))'
-         D     R0,0(R14)
-         AHI   R1,1
-         ST    R1,&TARGET
+         SGR   ZC_R0,ZC_R0
+         GEN_L ZC_R1,&SOURCE,&SOURCE_IX
+         LARL  ZC_R14,=F'&SYM_LEN(&SYM_REF(&SOURCE_IX))'
+         D     ZC_R0,0(ZC_R14)
+         AHI   ZC_R1,1
+         ST    ZC_R1,&TARGET
                    AEXIT AENTRY
                AEND
          AEND

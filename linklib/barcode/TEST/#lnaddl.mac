@@ -1,0 +1,60 @@
+         MACRO
+&NAME    #LNADDL  &OP1,&OP2
+.**********************************************************************
+.*               MACRO ID: #LNADDL                                    *
+.*           DATE WRITTEN: 05/01/2009                                 *
+.*       MACRO ATTRIBUTES: RENT, REUS, REFR                           *
+.*     AUTHORIZATION CODE: 0                                          *
+.*      PASSES CONTROL TO: NONE                                       *
+.*                                                                    *
+.*                                                                    *
+.*     DESCRIPTION:                                                   *
+.*                                                                    *
+.*       THIS MACRO PERFORMS LONG ADDITION ON TWO OPERANDS,           *
+.*       AND STORES THE RESULT IN OPERAND 1.                          *
+.*                                                                    *
+.*                                                                    *
+.*     METHOD OF INVOCATION:                                          *
+.*                                                                    *
+.*        #LNADDL OP1,OP2                                             *
+.*                                                                    *
+.*                                                                    *
+.*           PARAMETER    |   MEANING/USAGE                           *
+.*          --------------|-------------------------------------      *
+.*            OP1         |  A REGISTER PAIR, SPECIFIED AS (RA,RB),   *
+.*                        |  CONTAINING THE 64-BIT VALUE              *
+.*                        |  TO BE PROCESSED.                         *
+.*                        |                                           *
+.*            OP2         |  A REGISTER PAIR, SPECIFIED AS (RC,RD),   *
+.*                        |  CONTAINING THE 64-BIT VALUE              *
+.*                        |  TO BE ADDED.                             *
+.*                                                                    *
+.*                                                                    *
+.*      REGISTERS AT EXIT                                             *
+.*                                                                    *
+.*      R14-R1 - USED AS WORK REGISTERS; CONTENTS UNPREDICTABLE       *
+.*                                                                    *
+.**********************************************************************
+.CK0     ANOP
+         AIF   ('&OP1'(1,1) NE '('        OR                           *
+               '&OP2'(1,1)  NE '('        OR                           *
+               '&OP1(1)'    EQ ''         OR                           *
+               '&OP1(2)'    EQ ''         OR                           *
+               '&OP2(1)'    EQ ''         OR                           *
+               '&OP2(2)'    EQ ''       ).MACER1
+.CK99    ANOP
+&NAME    DS    0H -                     #LNADDL
+         LR    14,&OP1(1)               HI-ORDER PART, OPERAND 1
+         LR    15,&OP1(2)               LO-ORDER PART, OPERAND 1
+         LR    0,&OP2(1)                HI-ORDER PART, OPERAND 2
+         LR    1,&OP2(2)                LO-ORDER PART, OPERAND 2
+         ALR   15,1                     ADD LO-ORDER PART
+         BC    12,*+8                   NO CARRY
+         LA    14,1(,14)                CARRY
+         ALR   14,0                     ADD HI-ORDER PART
+         LR    &OP1(1),14               STOW HI-ORDER PART
+         LR    &OP1(2),15               STOW LO-ORDER PART
+         MEXIT
+.MACER1  MNOTE 8,'*** ERROR - INVALID/MISSING OPERANDS 1 AND/OR 2.   *'
+         MNOTE 8,'*** USAGE - #LNADDL (RA,RB),(RC,RD)                *'
+         MEND

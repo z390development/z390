@@ -8,31 +8,58 @@
 .*********************************************************************
 .* 04/11/08 initial coding for z390 ACCEPT
 .* 10/06/08 ZSTRMAC
+.* 07/25/09 RPI 1065 SUPPORT DEFAULT DDNAME=PGMID OR SYSIN        
+.*          AND FROM CONSOLE OR FROM DDNAME
 .*********************************************************************
-         GEN_ACCEPT &TARGET,&FROM,&SOURCE
+         GEN_ACCEPT 
          COPY   ZC_WS
          GBLB   &ZC_ACCEPT
          :&ZC_ACCEPT SETB 1 REQUEST ACCEPT OPTION FLAGS IN GEN_PROC_END
-         AIF    ('&FROM' NE 'FROM')
-                MNOTE 8,'ACCEPT FROM TOKEN NOT FOUND'
-                MEXIT
-         AEND
-         :&WS_FIELD SETC '&TARGET'
-         ZC_SYM_FIND &TARGET
-         AIF   (&SYM_IX EQ 0)
-               MNOTE 8,'ACCEPT TARGET FIELD NOT FOUND - &TARGET'
+         :&PARM_IX SETA 1
+         :&FIELD_SS1 SETB 0
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0)
+               MNOTE 8,'ACCEPT TARGET FIELD NOT FOUND - &FIELD_NAME'
                MEXIT
          AEND
-       AIF   ('&SOURCE' EQ 'DATE')               
-         LARL  R1,=A(ZCVT_ACCEPT_DATE,&TARGET) MMDDYYYY TO PIC 9(8)
-       AELSEIF ('&SOURCE' EQ 'TIME')          
-         LARL  R1,=A(ZCVT_ACCEPT_TIME,&TARGET) HHMMSSTH TO PIC 9(8)
-       AELSEIF ('&SOURCE' EQ 'DAY_OF_WEEK')  
-         LARL  R1,=A(ZCVT_ACCEPT_DOW,&TARGET) DOW (1-7) TO PIC 9
-       AELSE
-         MNOTE 8,'ACCEPT SOURCE FIELD NOT FOUND - &SOURCE'
+         LA    ZC_R2,&FIELD_NAME
+         :&LTARGET  SETA &SYM_LEN(&FIELD_IX)
+         :&FROM     SETC '&SYSLIST(&PARM_IX)'
+       AIF    ('&FROM' EQ '') DEFAULT DDNAME=SYSIN
+         LARL  ZC_R1,=A(ZCVT_ACCEPT_DEFAULT,&LTARGET)
+         L     ZC_R15,ZCVT_ACCEPT
+         BASR  ZC_R14,ZC_R15
          MEXIT
+       AELSEIF ('&FROM' NE 'FROM')
+         MNOTE 8,'ACCEPT UNKNOWN OPERAND - &FROM'
+         MEXIT
+       AEND
+       :&SOURCE SETC '&SYSLIST(&PARM_IX+1)'
+       AIF     ('&SOURCE' EQ 'CONSOLE')            
+.* FROM CONSOLE
+         :&LNAME SETA K'&SYM_NAME(&FIELD_IX)+1/2*2
+         LARL  ZC_R1,=A(ZCVT_ACCEPT_CONSOLE,&LTARGET,&LNAME)
+         LARL  ZC_R3,=CL&LNAME'&SYM_NAME(&FIELD_IX)'
+       AELSEIF ('&SOURCE' EQ 'DATE')               
+.* FROM DATE - MMDDYYYY TO PIC 9(8)
+         LARL  ZC_R1,=A(ZCVT_ACCEPT_DATE,&LTARGET)
+       AELSEIF ('&SOURCE' EQ 'TIME')          
+.* FROM TIME - HHMMSSTH TO PIC 9(8)
+         LARL  ZC_R1,=A(ZCVT_ACCEPT_TIME,&LTARGET)
+       AELSEIF ('&SOURCE' EQ 'DAY_OF_WEEK')  
+.* FROM DAY-OF-WEEK -  DOW (1-7) TO PIC 9
+         LARL  ZC_R1,=A(ZCVT_ACCEPT_DOW,&LTARGET)
+       AELSE
+.* FROM DDNAME
+         AIF (K'&SOURCE EQ 0 OR K'&SOURCE GT 8)
+             MNOTE 8,'ACCEPT FROM DDNAME INVALID LENGTH - &SOURCE'
+             MEXIT
+         AEND
+         LARL  ZC_R1,=A(ZCVT_ACCEPT_DDNAME,&LTARGET)
+         LARL  ZC_R3,=CL8'&SOURCE'
        AEND    
-         L     R15,ZCVT_ACCEPT
-         BASR  R14,R15
+         L     ZC_R15,ZCVT_ACCEPT
+         BASR  ZC_R14,ZC_R15
+         MEXIT
+         COPY  ZCGETFLD
          MEND

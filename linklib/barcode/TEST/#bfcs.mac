@@ -1,0 +1,14 @@
+         MACRO
+&NAME    #BFCS
+&NAME    DS    0H -                  #BFCS
+         LR    R0,R6                 LOAD FCS
+         XR    R0,R4                 XOR W/DATA
+         N     R0,=A(X'0400')        DETERMINE BIT STATUS
+         SLL   R6,1                  DOUBLE FCS
+         LTR   R0,R0                 BIT ON?
+         BZ    *+8                    NO
+         X     R6,RPOLY              XOR W/POLYNOMIAL
+         N     R6,RFCS               CLEAR BITS
+         SLL   R4,1                  SHIFT THE DATA
+         N     R4,=A(X'0000FFFF')    ENSURE HALFWORD
+         MEND

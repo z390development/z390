@@ -5,12 +5,13 @@
 * Author - Don Higgins                                              *
 * Date   - 09/11/08                                                 *
 *********************************************************************
-* 09/11/08 RPI 764 test GL/PL mode support and OPEN/CLOSE (reg)
+* 09/11/08 RPI  764 test GL/PL mode support and OPEN/CLOSE (reg)
+* 06/05/09 rpi 1045 change OPEN (3) to ((3)) per macros for dsns
 *********************************************************************
 TESTDCBF SUBENTRY
          WTO   'TESTDCBF COPY SYSUT1 FB FILE TO SYSUT2 FB USING GL/PL'
          LA    3,SYSUT1
-         OPEN  (3)
+         OPEN  ((3))            RPI 1045
          OPEN  (SYSUT2,(OUTPUT),SYSOUT,(OUTPUT))
          PUT   SYSUT2           PUT LOCATE NEXT RCD AT R1
          LR    R4,R1            R4 = SYSUT2 PUT LOCATE NEXT RCD AREA
@@ -27,11 +28,11 @@ LOOP     EQU   *
          B     LOOP
 EOF      DS    0H
          LA    3,SYSUT1
-         CLOSE (3)
+         CLOSE ((3))            RPI 1045
          LA    3,SYSUT2
-         CLOSE (3)
+         CLOSE ((3))            RPI 1045
          LA    3,SYSOUT
-         CLOSE (3)
+         CLOSE ((3))            RPI 1045
          WTO   'TESTDCBF ENDED OK'
          SUBEXIT
 ABORT    EQU   *

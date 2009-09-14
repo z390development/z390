@@ -9,7 +9,8 @@
 .* 03/12/09 initial coding for use in GEN_ADD/SUB/MPY/DIV for 1-9,Q   
 .* 03/26/09 RPI 1004 use CVTQTLB,CVTLBTQ FOR Q And CVTLDTP for P   
 .*********************************************************************
-.* CONVERT NAME2 FROM TYPE2 TO TYPE1 VALUE IN F0-F2 FOR FP OR R0-R1 Q
+.* CONVERT NAME2 FROM TYPE2 TO TYPE1 VALUE IN F0-F2 
+.* FOR FP OR ZC_R0-ZC_R1 Q
 .*********************************************************************
          ZC_CONV &TYPE1,&TYPE2,&NAME2
          COPY  ZC_WS
@@ -21,23 +22,23 @@
          AIF   ('&TYPE1' EQ '&TYPE2')
                AIF  ('&TYPE1'(1,1) EQ 'E')
                     AIF (T'&NAME2 EQ 'O')
-         LER   R0,R4
+         LER   ZC_F0,ZC_F4
                     AELSE
-         LE    R0,&NAME2
+         LE    ZC_F0,&NAME2
                     AEND
                AELSEIF ('&TYPE1'(1,1) EQ 'D')
                     AIF (T'&NAME2 EQ 'O')
-         LDR   R0,R4
+         LDR   ZC_F0,ZC_F4
                     AELSE
-         LD    R0,&NAME2
+         LD    ZC_F0,&NAME2
                     AEND
                AELSEIF ('&TYPE1'(1,1) EQ 'L')
                     AIF (T'&NAME2 EQ 'O')
-         LDR   R0,R4
-         LDR   R2,R6
+         LDR   ZC_F0,ZC_F4
+         LDR   ZC_F2,ZC_F6
                     AELSE
-         LD    R0,&NAME2
-         LD    R2,8+&NAME2
+         LD    ZC_F0,&NAME2
+         LD    ZC_F2,8+&NAME2
                     AEND
                AELSE
                     MNOTE 8,'ZC_CONV INVALID TYPE - &TYPE1'
@@ -48,26 +49,27 @@
        :&PFPO_FROM SETC 'PFPO_TYPE_&TYPE2'  
        AIF ('&TYPE2' EQ 'Q') CVT Q TO LB      
            AIF ('&NAME2' NE '')  ALREADY LOADED IF NO NAME2
-         LG    R0,&NAME2
-         LG    R1,8+&NAME2
+         LG    ZC_R0,&NAME2
+         LG    ZC_R1,8+&NAME2
            AEND
-         L     R15,ZCVT_CVTQTLB   CVT Q IN R0-R1 TO LB IN F4-F6
-         BASR  R14,R15
+         L     ZC_R15,ZCVT_CVTQTLB   CVT Q IN ZC_R0-ZC_R1              X
+                                     TO LB IN ZC_F4-ZC_F6
+         BASR  ZC_R14,ZC_R15
          :&PFPO_FROM SETC 'PFPO_TYPE_LB'  
        AELSEIF ('&TYPE2' EQ 'P')   CVT P TO LD
          ZAP   ZCVT_PWORK2,&NAME2
-         LMG   R0,R1,ZCVT_PWORK2
-         CXSTR F4,R0
+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
+         CXSTR ZC_F4,ZC_R0
          :&PFPO_FROM SETC 'PFPO_TYPE_LD'  
        AELSE
            AIF ('&NAME2' NE '')  IS FP SOURCE LOADED
                AIF ('&TYPE2'(1,1) EQ 'E')
-         LE    F4,&NAME2  
+         LE    ZC_F4,&NAME2  
                AELSEIF ('&TYPE2'(1,1) EQ 'D')
-         LD    F4,&NAME2  
+         LD    ZC_F4,&NAME2  
                AELSEIF ('&TYPE2'(1,1) EQ 'L')
-         LD    F4,&NAME2  
-         LD    F6,8+&NAME2  
+         LD    ZC_F4,&NAME2  
+         LD    ZC_F6,8+&NAME2  
                AELSE
                    MNOTE 8,'ZC_CONV UNSUPPORTED TYPE2 - &TYPE2'
                    MEXIT
@@ -77,18 +79,18 @@
        :&PFPO_TO SETC 'PFPO_TYPE_&TYPE1'
        AIF ('&TYPE1' EQ 'Q') CVT FP ?? TO Q
          :&PFPO_TO SETC 'PFPO_TYPE_LB'
-         LRL   R0,=AL1(PFPO_RADIX,&PFPO_TO,&PFPO_FROM,PFPO_RND)
+         LRL   ZC_R0,=AL1(PFPO_RADIX,&PFPO_TO,&PFPO_FROM,PFPO_RND)
          PFPO
-         L     R15,ZCVT_CVTLBTQ   CVT LB IN F0-F2 TO Q IN R0-R1
-         BASR  R14,R15
-       AELSEIF ('&TYPE1' EQ 'P') CVT FP ?? TO PL31 IN R0-R1
+         L     ZC_R15,ZCVT_CVTLBTQ CVT LB IN F0-F2 TO Q IN ZC_R0-ZC_R1
+         BASR  ZC_R14,ZC_R15
+       AELSEIF ('&TYPE1' EQ 'P') CVT FP ?? TO PL31 IN ZC_R0-ZC_R1
          :&PFPO_TO SETC 'PFPO_TYPE_LD'
-         LRL   R0,=AL1(PFPO_RADIX,&PFPO_TO,&PFPO_FROM,PFPO_RND)
+         LRL   ZC_R0,=AL1(PFPO_RADIX,&PFPO_TO,&PFPO_FROM,PFPO_RND)
          PFPO
-         L     R15,ZCVT_CVTLDTP IN F0-F2 TO PL31 IN R0-R1
-         BASR  R14,R15
+         L     ZC_R15,ZCVT_CVTLDTP IN F0-F2 TO PL31 IN ZC_R0-ZC_R1
+         BASR  ZC_R14,ZC_R15
        AELSE
-         LRL   R0,=AL1(PFPO_RADIX,&PFPO_TO,&PFPO_FROM,PFPO_RND)
+         LRL   ZC_R0,=AL1(PFPO_RADIX,&PFPO_TO,&PFPO_FROM,PFPO_RND)
          PFPO
        AEND
        MEND

@@ -1,4 +1,6 @@
 rem remove gnerated files from directories except cics, linklib
+erase cics\*.tr*
+erase linklib\*.tr*
 call rt\RTCLEAN1 assist
 call rt\RTCLEAN1 bmk
 call rt\RTCLEAN1 demo
@@ -28,8 +30,16 @@ call rt\RTCLEAN1 zcobol
 call rt\RTCLEAN1 zcobol\bat
 call rt\RTCLEAN1 zcobol\demo
 call rt\RTCLEAN1 zcobol\test
+call rt\RTCLEAN1 zcobol\test\z390
+call rt\RTCLEAN1 zcobol\test\java
+call rt\RTCLEAN1 zcobol\test\vce
+call rt\RTCLEAN1 zcobol\test\i586
 call rt\RTCLEAN1 zcobol\z390
 call rt\RTCLEAN1 zcobol\java
 call rt\RTCLEAN1 zcobol\vce
 call rt\RTCLEAN1 zcobol\i586
-call rt\CLEANPGM linklib\test*
+call rt\RTCLEAN1 linklib\barcode
+call rt\RTCLEAN1 zpar
+erase zpar\*.dat
+erase zpar\*.rp*
+erase zpar\*.tm*

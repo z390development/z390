@@ -10,6 +10,7 @@
 .* 12/22/08 use ZCGETFLD to get field with qual,base,subscript
 .* 02/15/09 use ADD as model for mult source and target support       
 .* 02/26/09 RPI 1012 move onsize end-add pending to SUBTRACT           
+.* 08/09/09 RPI 1065 add ACTR for mult operands                        
 .*********************************************************************
          SUBTRACT
          COPY  ZC_WS
@@ -21,13 +22,14 @@
          :&ONSIZE    SETB 0
          :&LAST_PARM SETA 0
          AWHILE (&PARM_IX LT &NP)
+               ACTR 10000      
                AIF ('&SYSLIST(&PARM_IX)' EQ 'FROM')
                    :&FROM_IX SETA &PARM_IX
                AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'GIVING')
                    :&GIVING_IX SETA &PARM_IX
                AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'ROUNDED')
                    :&ROUNDED SETB 1
-                   AIF (&LAST_PARM SETA EQ 0)
+                   AIF (&LAST_PARM EQ 0)
                        :&LAST_PARM SETA &PARM_IX-1
                    AEND
                AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'ON'                   X
@@ -133,7 +135,7 @@
                :&S1_OK SETB 0
                AEXIT AENTRY
          AEND
-         :&FIELD_REG SETC 'R1'         S1 IN R1
+         :&FIELD_REG SETC 'ZC_R1'         S1 IN R1
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          :&S1_PARM_IX SETA &PARM_IX
@@ -149,7 +151,7 @@
              :&S2_OK SETB 0
              AEXIT AENTRY
          AEND
-         :&FIELD_REG SETC 'R2'               S2 IN R2
+         :&FIELD_REG SETC 'ZC_R2'               S2 IN R2
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          :&S2_PARM_IX SETA &PARM_IX
@@ -165,7 +167,7 @@
              :&S3_OK SETB 0
              AEXIT AENTRY
          AEND
-         :&FIELD_REG SETC 'R3'            S3 IN R3
+         :&FIELD_REG SETC 'ZC_R3'            S3 IN R3
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          :&S3_PARM_IX SETA &PARM_IX

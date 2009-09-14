@@ -30,7 +30,7 @@
 *
          DEFINE CLUSTER,NAME=MYFILE09,RECORDSIZE=(27,35),INDEX=INDEXED,X
                KEYS=(15,0)
-
+*
          DEFINE END
          END
 

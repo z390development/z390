@@ -1,4 +1,4 @@
-         MACRO
+        MACRO
 .*********************************************************************
 .* Copyright 2008 Automated Software Tools Corporation               *
 .* This source code is part of z390 zCOBOL/assembler/emulator package*
@@ -19,14 +19,117 @@
                MEXIT
          AEND
          :&PARM_IX SETA 2
-         AIF   ('&SYSLIST(&PARM_IX)' EQ 'DATA'                         X
-                AND '&SYSLIST(&PARM_IX+1)' EQ 'RECORD')
-               AIF ('&SYSLIST(&PARM_IX+2)' EQ 'IS')   
-                   :&PARM_IX SETA &PARM_IX+3
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'IS')
+               :&PARM_IX SETA &PARM_IX+1
+         AEND
+         AIF ('&SYSPARM(&PARM_IX)' EQ 'EXTERNAL')
+             :&EXTERNAL SETB 1
+             :&PARM_IX SETA &PARM_IX+1
+         AELSEIF ('&SYSPARM(&PARM_IX)' EQ 'GLOBAL')
+             :&GLOBAL SETB 1
+             :&PARM_IX SETA &PARM_IX+1
+         AEND
+.*
+.* PROCESS FD OPTIONS IN ANY ORDER
+.*
+       AWHILE  ('&SYSLIST(&PARM_IX)' NE '')
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'DATA')
+               :&PARM_IX SETA &PARM_IX+1
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'RECORD'                   X
+                 OR '&SYSLIST(&PARM_IX)' EQ 'RECORDS')
+                   :&PARM_IX SETA &PARM_IX+1
+                   AIF ('&SYSLIST(&PARM_IX)' EQ 'IS'                   X
+                     OR '&SYSLIST(&PARM_IX)' EQ 'ARE')   
+                       :&PARM_IX SETA &PARM_IX+1
+                   AEND
                AELSE
-                   :&PARM_IX SETA &PARM_IX+2
+                   MNOTE 8,'FD UNKNOWN DATA PARM - &SYSLIST(&PARM_IX)'
+                   :&PARM_IX SETA N'&SYSLIST+1
                AEND   
-               :&FILE_RECORD(&FILE_IX) SETC '&SYSLIST(&PARM_IX)' 
+               :&FILE_RECORD(&FILE_IX) SETC '&SYSLIST(&PARM_IX)'
+               :&PARM_IX SETA &PARM_IX+1 
+         AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'BLOCK')
+              :&PARM_IX SETA &PARM_IX+1
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'CONTAINS')
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+              :&FILE_BLKSI2(&PARM_IX) SETC '&SYSLIST(&PARM_IX)'
+              :&PARM_IX SETA &PARM_IX+1
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'TO')
+                  :&FILE_BLKSI1(&PARM_IX) SETC '&FILE_BLKSI2(&PARM_IX)'
+                  :&FILE_BLKSI2(&PARM_IX) SETC '&SYSLIST(&PARM_IX+1)'
+                  :&PARM_IX SETA &PARM_IX+2
+              AEND
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'CHARACTERS')
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'RECORDS')
+                  :&FILE_BLOCK_RECS(&PARM_IX) SETB 1
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+         AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'RECORD')
+              :&PARM_IX SETA &PARM_IX+1
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'CONTAINS')
+                  :&PARM_IX SETA &PARM_IX+1
+              AELSE
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'IS')
+                      :&PARM_IX SETA &PARM_IX+1
+                  AEND
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'VARYING')
+                      :&PARM_IX SETA &PARM_IX+1
+                      AIF ('&SYSLIST(&PARM_IX)' EQ 'IN')
+                          :&PARM_IX SETA &PARM_IX+1
+                      AEND
+                      AIF ('&SYSLIST(&PARM_IX)' EQ 'SIZE')
+                          :&PARM_IX SETA &PARM_IX+1
+                      AEND
+                      AIF ('&SYSLIST(&PARM_IX)' EQ 'FROM')
+                          :&PARM_IX SETA &PARM_IX+1
+                      AEND
+                  AEND
+              AEND
+              :&FILE_LRECL2(&PARM_IX) SETC '&SYSLIST(&PARM_IX)'
+              :&PARM_IX SETA &PARM_IX+1
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'TO')
+                  :&FILE_LRECL1(&PARM_IX) SETC '&FILE_LRECL2(&PARM_IX)'
+                  :&FILE_LRECL2(&PARM_IX) SETC '&SYSLIST(&PARM_IX+1)'
+                  :&PARM_IX SETA &PARM_IX+2
+              AEND
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'CHARACTERS')
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'DEPENDING')
+                  :&PARM_IX SETA &PARM_IX+1
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'ON')
+                      :&PARM_IX SETA &PARM_IX+1
+                  AEND
+                  :&FILE_DEPENDING(&PARM_IX) SETC '&SYSLIST(&PARM_IX)'
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+         AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'LABEL')
+              :&PARM_IX SETA &PARM_IX+1
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'RECORD')
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'RECORDS')
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'IS')
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'ARE')
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'STANDARD')
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'OMITTED')
+                  :&PARM_IX SETA &PARM_IX+1
+              AEND
+         AELSE
+              MNOTE 8,'FD OPTION NOT SUPPORTED - &SYSLIST(&PARM_IX)'
+              :&PARM_IX SETA N'&SYSLIST+1
          AEND 
+       AEND
          WS    91,&FILE                         ADD FILE TO WS 
          MEND

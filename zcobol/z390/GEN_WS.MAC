@@ -17,6 +17,11 @@
 .* 06/05/09 RPI 1048 define DCBD once before first DCB to correct 
 .*                   WS_LOC verification during first pass of az390
 .*                   see zcobol\test\TESTFIL2.CBL regression test
+.* 07/09/09 RPI 1065 move FILE_IX from SYM_REF to SYM_FD to supp groups
+.* 07/19/09 RPI 1065 fix value of alpa-numeric string for type X       
+.* 07/20/09 RPI 1065 remove MEXIT following MNOTE FD error to gen WS   
+.* 07/21/09 RPI 1065 scale decimal values for COMP                     
+.* 07/21/09 RPI 1065 support ZC_DEC_IS_COMMA special names option      
 .*********************************************************************
          GEN_WS      
          COPY  ZC_WS   
@@ -36,7 +41,9 @@ ZC_WSLOC LOCTR
          :&IPAD SETA 0
          :&LAST_LOC SETA -1      
          :&WS_LOC_ERR SETB 0
-         :&I    SETA  1
+         :&GRP_VAL SETC ''
+         :&GRP_LVL SETA 0   
+         :&I       SETA  1
          AWHILE (&I LE &SYM_TOT)
             ACTR 1000
 .*
@@ -44,6 +51,7 @@ ZC_WSLOC LOCTR
 .*
             :&RETRY SETB 1
             AWHILE (&RETRY AND &IPAD GT 0)
+                :&PIC_VAL SETC ''
                 AIF (&IPAD_LVL(&IPAD) GE &SYM_LVL(&I)                  X
                      OR &SYM_LVL(&I) EQ 77)
          DS    XL&IPAD_LEN(&IPAD) PAD FOR MULT OCCURS
@@ -75,10 +83,18 @@ ZC_WSLOC LOCTR
                AIF  (&SYM_DUP(&I) NE 1)               
                     :&CDUP    SETC  '&SYM_DUP(&I)'
                AEND
-               AIF  (&I LT &SYM_TOT                                    X
-                     AND &SYM_LOC(&I+1) EQ &SYM_LOC(&I)                X
-                     AND &SYM_VAL(&I) EQ '')      
+.*DSH          AIF  (&I LT &SYM_TOT                             X
+.*DSH               AND &SYM_LOC(&I+1) EQ &SYM_LOC(&I)          X
+.*DSH               AND &SYM_LVL(&I) LT &SYM_LVL(&I+1))
+               AIF  (&SYM_PIC(&I) EQ '' AND '&SYM_PIC_TYPE(&I)' EQ 'X')
                     :&CDUP     SETC  '0' ZERO LENGTH FOR GROUP
+                    AIF ('&SYM_VAL(&I)' NE '')
+                         :&GRP_VAL SETC '&SYM_VAL(&I)' RPI 1065
+                         :&GRP_LVL SETA &SYM_LVL(&I)
+                    AELSEIF (&GRP_LVL GE &SYM_LVL(&I))
+                         :&GRP_VAL SETC ''            
+                         :&GRP_LVL SETA &SYM_LVL(&I)  
+                    AEND
                     AIF (&SYM_DUP(&I) GT 1)
                         :&IPAD SETA &IPAD+1
                         :&IPAD_LVL(&IPAD) SETA &SYM_LVL(&I)
@@ -94,7 +110,7 @@ ZC_WSLOC LOCTR
                           AND '&SYM_NAME(&I)' EQ 'DFHCOMMAREA')
                          :&SYM_LEN(&I) SETA 1 FORCE 1 TO AVOID ERR
                      AELSE
-                         MNOTE 8,'GEN WS 0 LENGTH FOR - &NAME'
+                         MNOTE 8,'GEN_WS 0 LENGTH FOR - &SYM_NAME(&I)'
                      AEND
                AEND
                AIF   (&SYM_LOC(&I) LE &LAST_LOC                        X
@@ -117,7 +133,11 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
                    AEND
                AEND
                :&LAST_LOC SETA &SYM_LOC(&I)
-               AIF  ('&SYM_VAL(&I)' NE '' AND &SYM_LK(&I) EQ 0) 
+               :&PIC_VAL SETC '&SYM_VAL(&I)'
+               AIF  ('&PIC_VAL' EQ '')
+                    :&PIC_VAL SETC '&GRP_VAL'
+               AEND
+               AIF  ('&PIC_VAL' NE '' AND &SYM_LK(&I) EQ 0) 
                     ACALL GEN_WS_DC
                AELSE
                     ACALL GEN_WS_DS
@@ -130,73 +150,88 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
 .* GEN WS DC
 .*
      AENTRY GEN_WS_DC
+     AIF (&ZC_DEC_IS_COMMA)
+         :&DEC_IX SETA ('&PIC_VAL' INDEX ',')
+         AIF   (&DEC_IX GT 0)
+               :&PIC_VAL SETC '&PIC_VAL'(1,&DEC_IX-1).'.'.'&PIC_VAL'(&DX
+               EC_IX+1,K'&PIC_VAL-&DEC_IX)
+         AEND
+     AEND 
      ACASE (C2A('&SYM_PIC_TYPE(&I)'))
      AWHEN C'A' POINTER (32 BIT)
-&NAME    DC &CDUP.AL4(&SYM_VAL(&I))
+&NAME    DC &CDUP.AL4(&PIC_VAL)
      AWHEN C'1' HFP-SHORT    (32 BIT)  S9(7)      RPI 1004
-&NAME    DC &CDUP.EHL4'&SYM_VAL(&I)'
+&NAME    DC &CDUP.EHL4'&PIC_VAL'
      AWHEN C'2' HFP-LONG     (64 BIT)  S9(15)     RPI 1004
-&NAME    DC &CDUP.DHL8'&SYM_VAL(&I)'
+&NAME    DC &CDUP.DHL8'&PIC_VAL'
      AWHEN C'3' HFP-EXTENDED (128 BIT) S9(30)     RPI 1004
-&NAME    DC &CDUP.LHL16'&SYM_VAL(&I)'
+&NAME    DC &CDUP.LHL16'&PIC_VAL'
      AWHEN C'4' BFP-SHORT    (32 BIT)  S9(7)      RPI 1004
-&NAME    DC &CDUP.EBL4'&SYM_VAL(&I)'
+&NAME    DC &CDUP.EBL4'&PIC_VAL'
      AWHEN C'5' BFP-LONG     (64 BIT)  S9(15)     RPI 1004
-&NAME    DC &CDUP.DBL8'&SYM_VAL(&I)'
+&NAME    DC &CDUP.DBL8'&PIC_VAL'
      AWHEN C'6' BFP-EXTENDED (128 BIT) S9(34)     RPI 1004
-&NAME    DC &CDUP.LBL16'&SYM_VAL(&I)'
+&NAME    DC &CDUP.LBL16'&PIC_VAL'
      AWHEN C'7' DFP-SHORT    (32 BIT)  S9(7)      RPI 1004
-&NAME    DC &CDUP.EDL4'&SYM_VAL(&I)'
+&NAME    DC &CDUP.EDL4'&PIC_VAL'
      AWHEN C'8' DFP-LONG     (64 BIT)  S9(16)     RPI 1004
-&NAME    DC &CDUP.DDL8'&SYM_VAL(&I)'
+&NAME    DC &CDUP.DDL8'&PIC_VAL'
      AWHEN C'9' DFP-EXTENDED (128 BIT) S9(34)     RPI 1004
-&NAME    DC &CDUP.LDL16'&SYM_VAL(&I)'
+&NAME    DC &CDUP.LDL16'&PIC_VAL'
      AWHEN C'F' S9(9) NUMERIC (32 BIT BINARY)
-&NAME    DC &CDUP.AL4(&SYM_VAL(&I))
+         ACALL SCALE_COMP_VAL                     RPI 1065     
+&NAME    DC &CDUP.AL4(&COMP_VAL)                  RPI 1065
      AWHEN C'G' S9(18) NUMERIC (64 BIT BINARY)
-&NAME    DC &CDUP.FL8'&SYM_VAL(&I)'
-     AWHEN C'H' S9(4) NUMERIC (16 BIT BINARY)
-&NAME    DC &CDUP.AL2(&SYM_VAL(&I))
+         ACALL SCALE_COMP_VAL                     RPI 1065     
+&NAME    DC &CDUP.FL8'&COMP_VAL'                  RPI 1065
+     AWHEN C'H' S9(4) NUMERIC (16 BIT BINARY)     RPI 1065
+         ACALL SCALE_COMP_VAL                     RPI 1065     
+&NAME    DC &CDUP.AL2(&COMP_VAL)                  RPI 1065
      AWHEN C'I' INDEX OFFSET                      RPI 1002
-&NAME    DC &CDUP.AL4(&SYM_VAL(&I))
+         ACALL SCALE_COMP_VAL                     RPI 1065     
+&NAME    DC &CDUP.AL4(&COMP_VAL)                  RPI 1065
      AWHEN C'P' S9(31) NUMERIC (PACKED)
-&NAME    DC &CDUP.PL&SYM_LEN(&I)'&SYM_VAL(&I)'
+&NAME    DC &CDUP.PL&SYM_LEN(&I)'&PIC_VAL'
      AWHEN C'Q' S9(39) NUMERIC (PACKED)
-&NAME    DC &CDUP.FL&SYM_LEN(&I)'&SYM_VAL(&I)'
+         ACALL SCALE_COMP_VAL                     RPI 1065     
+&NAME    DC &CDUP.FL16'&COMP_VAL'                 RPI 1065
      AWHEN C'X' X(N)  ALPHANUMERIC
-       AIF  ('&SYM_VAL(&I)'(1,1) EQ '''')              
+       AIF  ('&PIC_VAL'(1,1) EQ '''')              
             AIF (&SYM_VAL_ALL(&I))             RPI 1012
 &NAME    DS 0CL&SYM_LEN(&I)
-         DC (&SYM_DUP(&I)*&SYM_LEN(&I))C&SYM_VAL(&I)
+         :&PIC_ALL SETC (&SYM_LEN(&I))'&PIC_VAL'(2,K'&PIC_VAL-2)
+         DC &CDUP.CL&SYM_LEN(&I)'&PIC_ALL'
             AELSE
-&NAME    DC &CDUP.CL&SYM_LEN(&I)&SYM_VAL(&I)
+&NAME    DC &CDUP.CL&SYM_LEN(&I)&PIC_VAL
             AEND
-       AELSEIF ('&SYM_VAL(&I)'(1,2) EQ 'X''')         
-         :&HEX SETC '&SYM_VAL(&I)'(2,*)     
+       AELSEIF ('&PIC_VAL'(1,2) EQ 'X''')         
+         :&HEX SETC '&PIC_VAL'(2,*)     
 &NAME    DC &CDUP.XL&SYM_LEN(&I)&HEX
-       AELSEIF ('&SYM_VAL(&I)' EQ 'SPACE'                              X
-                OR '&SYM_VAL(&I)' EQ 'SPACES')
+       AELSEIF ('&PIC_VAL' EQ 'SPACE'                                  X
+                OR '&PIC_VAL' EQ 'SPACES')
 &NAME    DC CL&SYM_LEN(&I)' '
-       AELSEIF ('&SYM_VAL(&I)' EQ 'LOW_VALUES'                         X
-                OR '&SYM_VAL(&I)' EQ 'LOW_VALUE')
+       AELSEIF ('&PIC_VAL' EQ 'LOW_VALUES'                             X
+                OR '&PIC_VAL' EQ 'LOW_VALUE')
 &NAME    DC XL&SYM_LEN(&I)'00'
-       AELSEIF ('&SYM_VAL(&I)' EQ 'HIGH_VALUES'                        X
-                OR '&SYM_VAL(&I)' EQ 'HIGH_VALUE')
+       AELSEIF ('&PIC_VAL' EQ 'HIGH_VALUES'                            X
+                OR '&PIC_VAL' EQ 'HIGH_VALUE')
 &NAME    DC XL&SYM_LEN(&I)'FF'
        AELSE
          :&PIC_VAL SETC '''&PIC_VAL'''  RPI 1012
             AIF (&SYM_VAL_ALL(&I))             RPI 1012
 &NAME    DS 0CL&SYM_LEN(&I)
-         DC (&SYM_DUP(&I)*&SYM_LEN(&I))C&SYM_VAL(&I)
+         DC (&SYM_DUP(&I)*&SYM_LEN(&I))C&PIC_VAL  RPI 1065
             AELSE
-&NAME    DC &CDUP.CL&SYM_LEN(&I)&SYM_VAL(&I)
+&NAME    DC &CDUP.CL&SYM_LEN(&I)&PIC_VAL          RPI 1065
             AEND
        AEND
      AWHEN C'Z' S9(N) NUMERIC (DISPLAY)
-       AIF (&SYM_PIC_SIGN(&I))
-&NAME    DC &CDUP.ZL&SYM_LEN(&I)'&SYM_VAL(&I)'
+       AIF     ('&PIC_VAL'(1,1) EQ '''')   
+&NAME    DC &CDUP.CL&SYM_LEN(&I)&PIC_VAL   
+       AELSEIF (&SYM_PIC_SIGN(&I))         
+&NAME    DC &CDUP.ZL&SYM_LEN(&I)'&PIC_VAL' 
        AELSE
-         :&ZVAL SETC (&SYM_LEN(&I))'0'.'&SYM_VAL(&I)'
+         :&ZVAL SETC (&SYM_LEN(&I))'0'.'&PIC_VAL'
          :&ZVAL SETC '&ZVAL'(K'&ZVAL-&SYM_LEN(&I)+1,*) 
 &NAME    DC &CDUP.CL&SYM_LEN(&I)'&ZVAL'
        AEND
@@ -204,6 +239,47 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
          MNOTE 8,'GEN_WS UNKNOWN PIC &SYM_PIC(&I) FOR &SYM_NAME(&I)'
      AEND
      AEND
+.*
+.* SCALE COMP VAL
+.*
+         AENTRY SCALE_COMP_VAL
+         :&COMP_VAL SETC '&PIC_VAL'
+         AIF   ('&PIC_VAL'(1,1) EQ '''')
+               :&COMP_VAL SETC '&PIC_VAL'(2,K'&PIC_VAL-2)  
+         AEND
+         AIF   ('&COMP_VAL'(1,2) EQ 'X''')
+               AEXIT AENTRY
+         AEND
+         AIF   ('&COMP_VAL'(1,1) LT '0'                                X
+               AND '&COMP_VAL'(1,1) NE '+'                             X
+               AND '&COMP_VAL'(1,1) NE '-'                             X
+               AND '&COMP_VAL'(1,1) NE '.')
+               MNOTE 8,'GEN_WS NON-NUMERIC VALUE - &COMP_VAL'
+               :&COMP_VAL SETC '-1'
+         AEND
+         :&DEC_IX SETA ('&COMP_VAL' FIND '.')
+         AIF   (&DEC_IX GT 0)
+               :&D_LIT SETA K'&COMP_VAL-&DEC_IX
+               :&D_VAL SETA &SYM_PIC_DEC(&I)
+               AIF (&DEC_IX EQ 1)
+                   :&COMP_VAL SETC '&COMP_VAL'(2,*)
+               AELSEIF (&DEC_IX LT K'&COMP_VAL)
+                   :&COMP_VAL SETC '&COMP_VAL'(1,&DEC_IX-1).'&COMP_VAL'X
+               (&DEC_IX+1,*)
+               AELSE 
+                   :&COMP_VAL SETC '&COMP_VAL'(1,K'&COMP_VAL-1)
+               AEND
+               AIF (&D_LIT GT &D_VAL)
+                   :&COMP_VAL SETC '&COMP_VAL'(1,K'&COMP_VAL-(&D_LIT-&DX
+               _VAL))
+               AELSEIF (&D_LIT LT &D_VAL)
+                   :&COMP_VAL SETC '&COMP_VAL'.(&D_VAL-&D_LIT)'0'
+               AEND
+               AIF (K'&COMP_VAL EQ 0)
+                   :&COMP_VAL SETC '0'
+               AEND
+         AEND
+         AEND
 .*
 .* GEN WS DS
 .*
@@ -255,32 +331,93 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
      AENTRY    GEN_FILE
      AIF       (&ZC_CICS)
                MNOTE 8,'EXEC CICS FILES MUST BE DEFINED IN DFHFCT'
-               MEXIT
      AEND
-     :&FILE_IX SETA &SYM_REF(&I)
+     :&FILE_IX SETA &SYM_FD(&I)  RPI 1065
 .*
 .* SET DDNAME ELSE OMIT AND SET DSNAME AT OPEN USING LITERAL
 .*
-     :&DDNAME  SETC  ''    ASSUME DSNAME= WILL BE SET AT OPEN
+     :&DDNAME  SETC  ''    ASSUME DSNAME= WILL BE SET BEFORE OPEN
      AIF   ('&FILE_DDNAME(&FILE_IX)'(1,1) NE '''')
                :&DDNAME  SETC  'DDNAME=&FILE_DDNAME(&FILE_IX)'
      AEND
+     AIF       ('&FILE_ORG(&FILE_IX)' EQ 'LSEQ')       
 .*
-.* SET RECFM BASED ON FILE_TYPE (LINE=FT)
+.* GEN DCB FOR LINE SEQUENTIAL (FT/VT)
 .*
-     AIF       ('&FILE_TYPE(&FILE_IX)' NE 'LINE')       
-               MNOTE 8,'GEN FD UNKNOWN FILE TYPE - &FILE_TYPE(&FILE_IX)X
-               '
-               MEXIT
+               AIF ('&FILE_DEPENDING(&FILE_IX)' NE '')
+                   :&RECFM SETC 'VT'
+                   :&LRECL SETA &FILE_LRECL2(&FILE_IX)+4
+               AELSE
+                   :&RECFM SETC 'FT'
+                   :&LRECL SETA &FILE_LRECL2(&FILE_IX)
+               AEND
+               AIF  (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
+                    :&DCBD SETB 1  RPI 1048
+         DCBD ,         RPI 1048
+               AEND                     RPI 1048
+&FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
+     AELSEIF ('&FILE_ORG(&FILE_IX)' EQ 'QSAM')
+.*
+.* GEN DCB FOR SEQUENTIAL (F/V)
+.*
+               AIF ('&FILE_DEPENDING(&FILE_IX)' NE '')
+                   :&RECFM SETC 'V'
+                   :&LRECL SETA &FILE_LRECL2(&FILE_IX)+4
+               AELSE
+                   :&RECFM SETC 'F'
+                   :&LRECL SETA &FILE_LRECL2(&FILE_IX)
+               AEND
+               AIF  (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
+                    :&DCBD SETB 1  RPI 1048
+         DCBD ,         RPI 1048
+               AEND                     RPI 1048
+&FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
+     AELSEIF ('&FILE_ORG(&FILE_IX)' EQ 'KSDS')
+.*
+.* GEN ACB FOR INDEXED 
+.*
+               AIF ('&FILE_DEPENDING(&FILE_IX)' NE '')
+                   :&RECFM SETC 'V'
+                   :&LRECL SETA &FILE_LRECL2(&FILE_IX)+4
+               AELSE
+                   :&RECFM SETC 'F'
+                   :&LRECL SETA &FILE_LRECL2(&FILE_IX)
+                   AIF (&LRECL EQ 0)
+                       ZC_SYM_FIND &FILE_RECORD(&FILE_IX)
+                       AIF (&SYM_IX GT 0)
+                           :&LRECL SETA &SYM_LEN(&SYM_IX)
+                       AEND
+                   AEND
+               AEND
+               AIF  (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
+                    :&DCBD SETB 1  RPI 1048
+         DCBD ,         RPI 1048
+               AEND                     RPI 1048
+&FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
+     AELSEIF ('&FILE_ORG(&FILE_IX)' EQ 'RRDS')
+.*
+.* GEN ACB FOR RELATIVE
+.*
+               AIF ('&FILE_DEPENDING(&FILE_IX)' NE '')
+                   :&RECFM SETC 'V'
+                   :&LRECA SETA '&LRECL+4'
+               AELSE
+                   :&RECFM SETC 'F'
+                   :&LRECL SETA &FILE_LRECL2(&FILE_IX)
+                   AIF (&LRECL EQ 0)
+                       ZC_SYM_FIND &FILE_RECORD(&FILE_IX)
+                       AIF (&SYM_IX GT 0)
+                           :&LRECL SETA &SYM_LEN(&SYM_IX)
+                       AEND
+                   AEND
+               AEND
+               AIF  (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
+                    :&DCBD SETB 1  RPI 1048
+         DCBD ,         RPI 1048
+               AEND                     RPI 1048
+&FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
+     AELSE
+               MNOTE 8,'GEN_WS UNKNOWN FILE ORG - &FILE_ORG(&FILE_IX)'
      AEND
-     :&RECFM   SETC  'FT'
-.*
-.* GEN DCB IN WS CSECT
-.*
-     AIF       (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
-               :&DCBD SETB 1  RPI 1048
-               DCBD ,         RPI 1048
-     AEND                     RPI 1048
-&FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,&DDNAME
      AEND
      MEND

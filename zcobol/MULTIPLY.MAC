@@ -8,13 +8,14 @@
 .*********************************************************************
 .* 10/30/08 initial coding for global MULTIPLY using ADD as model
 .* 02/26/09 RPI 1012 move onsize end-add pending to MULTIPLY           
+.* 07/19/09 RPI 1062 correct ON SIZE parsing                           
 .*********************************************************************
          MULTIPLY
          COPY  ZC_WS
          :&ROUNDED SETB 0
          :&ONSIZE  SETB 0
          :&PARM_IX   SETA 1
-         :&FIELD_REG SETC 'R1'
+         :&FIELD_REG SETC 'ZC_R1'
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          :&S1    SETC '&FIELD_NAME'                
@@ -68,7 +69,7 @@
              :&S2_OK SETB 0
              AEXIT AENTRY
          AEND
-         :&FIELD_REG SETC 'R2'
+         :&FIELD_REG SETC 'ZC_R2'
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          :&S2    SETC '&FIELD_NAME'                
@@ -88,7 +89,7 @@
              :&S3_OK SETB 0
              AEXIT AENTRY
          AEND
-         :&FIELD_REG SETC 'R3'
+         :&FIELD_REG SETC 'ZC_R3'
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          :&S3    SETC '&FIELD_NAME'                
@@ -110,9 +111,10 @@
          :&NOT_ON_SIZE SETB 0
          :&LAST_PARM   SETA 0
          AWHILE (&PARM_IX LE N'&SYSLIST)
+               ACTR 4096
                AIF     ('&SYSLIST(&PARM_IX)' EQ 'ON'                   X
                         AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
-                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
+                        AND '&SYSLIST(&PARM_IX+2)' EQ 'ERROR') RPI 1065
                      :&ON_SIZE SETB 1      
                      AIF (&LAST_PARM EQ 0)
                          :&LAST_PARM SETA &PARM_IX-1
@@ -120,8 +122,8 @@
                      :&PARM_IX SETA N'&SYSLIST+2
                AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'NOT'                  X
                         AND '&SYSLIST(&PARM_IX+1)' EQ 'ON'             X
-                        AND '&SYSLIST(&PARM_IX+1)' EQ 'SIZE'           X
-                        AND '&SYSLIST(&PARM_IX+1)' EQ 'ERROR')
+                        AND '&SYSLIST(&PARM_IX+2)' EQ 'SIZE'           X
+                        AND '&SYSLIST(&PARM_IX+3)' EQ 'ERROR') RPI 1065
                      :&NOT_ON_SIZE SETB 1                                
                      AIF (&LAST_PARM EQ 0)
                          :&LAST_PARM SETA &PARM_IX-1

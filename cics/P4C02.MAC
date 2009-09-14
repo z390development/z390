@@ -1,0 +1,52 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P4C02 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P4C02    DSECT
+         AELSE
+P4C02    DS    0H
+         AEND
+P4C02FN  DS    XL2                FUNCTION CODE
+P4C02EIB DS    AL4                EIB
+P4C02TCT DS    AL4                TCTTE
+* BROWSE PARMS
+P4C02STR DS    X                  FF=START
+         DS    X
+P4C02NXT DS    X                  FF=NEXT
+         DS    X
+P4C02ND  DS    X                  FF=END
+         DS    X
+P4C02AT  DS    CL8                AT FILENAME
+* DATA PARMS
+P4C02FIL DS    CL8                FILENAME           (FCTFILNM)
+*                                 ADDRESS OF OUTPUT AREA FOR NEXT
+P4C02ACC DS    AL4                CVDA ACCESSMETHOD  ALWAYS VSAM
+P4C02ADD DS    AL4                CVDA ADD           (FCTSERV)
+P4C02BSN DS    AL4                BASEDSNAME         GETENV
+P4C02BLN DS    AL2                BASEDSNAME LENGTH
+P4C02BRW DS    AL4                CVDA BROWSE        (FCTSERV)
+P4C02DEL DS    AL4                CVDA DELETE        (FCTSERV)
+P4C02DSN DS    AL4                DSNAME             GETENV
+P4C02DLN DS    AL2                DSNAME LENGTH
+P4C02ENA DS    AL4                CVDA ENABLESTATUS  (FCTFILST)
+P4C02KL  DS    AL4                KEYLENGTH          (VCLRKLEN)
+P4C02KP  DS    AL4                KEYPOSITION        (VCLRKPOS)
+P4C02OBJ DS    AL4                CVDA OBJECT        BASE UNTIL AIX
+P4C02OPE DS    AL4                CVDA OPENSTATUS    (FCTFILST)
+P4C02RD  DS    AL4                CVDA READ          (FCTSERV)
+P4C02RCF DS    AL4                CVDA RECORDFORMAT  (FCTRECFM)
+P4C02RCS DS    AL4                RECORDSIZE         (VCLRLREC)
+P4C02TYP DS    AL4                CVDA TYPE          (VCLRFLG1)
+P4C02UPD DS    AL4                CVDA UPDATE        (FCTSERV)
+P4C02NOH DS    X                  FF=NOHANDLE
+         DS    X
+P4C02RSP DS    AL4                RESP
+P4C02RS2 DS    AL4                RESP2
+P4C02END EQU   *                  END MARKER
+         MEND
+

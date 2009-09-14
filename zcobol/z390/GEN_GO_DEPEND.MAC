@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 01/09/09 initial coding for GEN_GO_DEPEND     
+.* 08/07/09 RPI 1065 support PG OF/IN SN         
 .*********************************************************************
 .* SYSLIST HAS LIST OF PARAGRAPH NAMES 
 .* &FIELD_IX SET TO INDEX
@@ -15,36 +16,51 @@
          COPY ZC_WS 
          :&ZC_GO_DEP SETA &ZC_GO_DEP+1 COUNTER FOR GO TO DEPENDING TABS
          :&NP SETA N'&SYSLIST
+         :&I      SETA 1
+         :&OF_CNT SETA 0
+         AWHILE (&I LT &NP)
+            AIF ('&SYSLIST(&I)' EQ 'OF' OR '&SYSLIST(&I)' EQ 'IN')
+                :&OF_CNT SETA &OF_CNT+1
+            AEND
+            :&I SETA &I+1
+         AEND
+         :&MAX_INDEX SETA &NP-2*&OF_CNT
             ACASE (C2A('&SYM_PIC_TYPE(&FIELD_IX)'))
                AWHEN C'F'
-         L     R1,&FIELD_NAME 
+         L     ZC_R1,&FIELD_NAME 
                AWHEN C'G'
-         LG    R1,&FIELD_NAME    IGNORE HIGH 32
+         LG    ZC_R1,&FIELD_NAME    IGNORE HIGH 32
                AWHEN C'H'
-         LH    R1,&FIELD_NAME
+         LH    ZC_R1,&FIELD_NAME
                AWHEN C'P'
          ZAP   ZCVT_PWORK,&FIELD_NAME
-         CVB   R1,ZCVT_PWORK
+         CVB   ZC_R1,ZCVT_PWORK
                AWHEN C'Z'
          :&LPLEN SETA &SYM_LEN(&FIELD_IX)/2+1
          PACK  ZCVT_PWORK1(&LPLEN),&FIELD_NAME
          ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
-         CVB   R1,ZCVT_PWORK
+         CVB   ZC_R1,ZCVT_PWORK
             AELSE
                MNOTE 8,'GEN_GO_DEPEND UNSUPPORTED INDEX TYPE'
                MEXIT
             AEND
-         CHI   R1,1
+         CHI   ZC_R1,1
          JL    PG_ZC_GO_TAB_&ZC_GO_DEP+4*&NP
-         CHI   R1,&NP
-         JH    PG_ZC_GO_TAB_&ZC_GO_DEP+4*&NP
-         SLL   R1,2
-         LARL  R2,PG_ZC_GO_TAB_&ZC_GO_DEP-4
-         B     0(R1,R2)
+         CHI   ZC_R1,&MAX_INDEX
+         JH    PG_ZC_GO_TAB_&ZC_GO_DEP+4*&MAX_INDEX
+         SLL   ZC_R1,2
+         LARL  ZC_R2,PG_ZC_GO_TAB_&ZC_GO_DEP-4
+         B     0(ZC_R1,ZC_R2)
          GEN_LABEL ZC_GO_TAB_&ZC_GO_DEP,GO_TO_DEPENDING
          :&I SETA 1
          AWHILE (&I LE &NP)
-         J     PG_&SYSLIST(&I)
-               :&I SETA &i+1
+               AIF ('&SYSLIST(&I+1)' EQ 'OF'                           X
+                    OR '&SYSLIST(&I+1)' EQ 'IN')
+                    GEN_B &SYSLIST(&I),&SYSLIST(&I+2)
+                    :&I SETA &I+3
+               AELSE
+                    GEN_B &SYSLIST(&I)
+                    :&I SETA &I+1
+               AEND
          AEND
          MEND

@@ -1,0 +1,18 @@
+*
+* CEMT I FIL DATA AREA
+* INQUIRE FILE DATA AREA
+*
+IFILDATA DSECT
+IFILDFLE DS    CL8                FILENAME       (FCTFILNM)
+IFILDSTA DS    X                  STATUS         (FCTFILST)
+IFILDSRV DS    X                  SERVREQ        (FCTSERV)
+IFILDFXV DS    X                  FIXED/VARIABLE (FCTRECFM)
+IFILDDSN DS    CL128              DSNAME         GETENV
+*
+IFILDBSN DS    CL128              BASEDSNAME     GETENV
+IFILDKL  DS    AL4                KEYLENGTH      (VCLRKLEN)
+IFILDKP  DS    AL4                KEYPOSITION    (VCLRKPOS)
+IFILDRCS DS    AL4                RECORDSIZE     (VCLRLREC)
+IFILDTYP DS    X                  TYPE           (VCLRFLG1)
+IFILDLEN EQU   *-IFILDATA
+

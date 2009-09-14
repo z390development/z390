@@ -94,6 +94,9 @@ public  class  lz390 {
     * 11/09/08 RPI 946 init 390 load module to x'F6' if option INIT (NOINIT sets x'00') 
     * 05/28/09 RPI 1046 correct trace display of AL3 and reset rld_cnt for each NAME cmd
     * 06/10/09 RPI 1051 add LZ390I include = file spec for use by ZPARTRS  
+    * 07/11/09 RPI 1062 set RC=12 for errors RC=16 for abort
+    * 07/18/09 RPI 1062 change abort msg from error to abort
+    * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -285,6 +288,7 @@ private void init_lz390(String[] args, JTextArea log_text){
 	    tz390.init_tables();
         tz390.init_options(args,".OBJ");
 		tz390.open_systerm("LZ390");
+		tz390.init_codepage(tz390.codepage); // RPI 1069
         open_files();
 		tz390.force_nocon = true;   // RPI 755
 		put_log(tz390.started_msg); // RPI 755
@@ -324,9 +328,6 @@ private void exit_lz390(){
 	 * display total errors
 	 * close files and exit
 	 */
-	  if  (lz390_errors > 0 || tz390.z390_abort){
-    	  lz390_rc = 16;
-      }
       close_files();
    	  System.exit(lz390_rc);
 }
@@ -403,10 +404,13 @@ private void log_error(int error,String msg){
 	 * inc error total
 	 * 1.  supress if not gen_obj and not trace
 	 */
+      lz390_errors++;
+      if (lz390_rc < 12){
+    	  lz390_rc = 12; // RPI 1062
+      }
 	  String error_msg = "LZ390E error " + tz390.right_justify("" + error,3) + " " + msg;
       put_log(error_msg);
 	  tz390.put_systerm(error_msg);
-      lz390_errors++;
 	  if (tz390.max_errors != 0 && lz390_errors > tz390.max_errors){
 	  	 abort_error(5,"max errors exceeded");	 
 	  }
@@ -416,22 +420,18 @@ private synchronized void abort_error(int error,String msg){ // RPI 646
 	 * issue error msg to log with prefix and
 	 * inc error total
 	 */
-	if (lz390_recursive_abort){ // RPI 935
-		System.out.println("LZ390E recurive abort exit");
-		System.exit(16);
-	}
-	lz390_recursive_abort = true;
 	  String error_msg = null;
 	  lz390_errors++;
+	  lz390_rc = 16; // RPI 1062
 	  if (tz390.z390_abort){
-		 error_msg = "lz390 aborting due to recursive abort for " + msg;
+		 error_msg = "LZ390E abort due to recursive abort for " + msg;
 		 System.out.println(error_msg);
-	  	 tz390.close_systerm(16);
-		 System.exit(16);
+	  	 tz390.close_systerm(lz390_rc);
+		 System.exit(lz390_rc);
 	  }
 	  tz390.z390_abort = true;
 	  tz390.opt_con = true; // RPI 453
-	  error_msg = "LZ390E error " + error + " " + msg;
+	  error_msg = "LZ390E abort " + error + " " + msg;
 	  put_log(error_msg);
 	  tz390.put_systerm(error_msg);
       exit_lz390();
@@ -881,9 +881,9 @@ private String cvt_obj_bin_to_hex(){
 	 * convert binary obj file record in obj_bin
 	 * to ascii string text format
 	 */
-	String text     = "." + (char)tz390.ebcdic_to_ascii[bin_byte[1] & 0xff]
-	                      + (char)tz390.ebcdic_to_ascii[bin_byte[2] & 0xff] 
-	                      + (char)tz390.ebcdic_to_ascii[bin_byte[3] & 0xff]
+	String text     = "." + tz390.ascii_table.charAt(tz390.ebcdic_to_ascii[bin_byte[1] & 0xff] & 0xff) // RPI 1069
+	                      + tz390.ascii_table.charAt(tz390.ebcdic_to_ascii[bin_byte[2] & 0xff] & 0xff) // RPI 1069
+	                      + tz390.ascii_table.charAt(tz390.ebcdic_to_ascii[bin_byte[3] & 0xff] & 0xff) // RPI 1069
 	                      ; // ascii hex obj record
 	String esd_id   = tz390.get_hex(bin_byte_buff.getShort(14),4);  // ESD ID number
 	String esd_loc  = "";  // ESD address
@@ -895,7 +895,7 @@ private String cvt_obj_bin_to_hex(){
 		int esd_align = 0; // currently ignored
 		index = 16;
 		while (index < 24){
-			esd_name = esd_name + (char) tz390.ebcdic_to_ascii[bin_byte[index] & 0xff];
+			esd_name = esd_name + tz390.ascii_table.charAt(tz390.ebcdic_to_ascii[bin_byte[index] & 0xff] & 0xff); // RPI 1069
 			index++;
 		}
 		switch (bin_byte[24]){

@@ -174,7 +174,7 @@ WQTSIOER EQU   *
          MVC   TSPRETCD,DFHRESP(IOERR) SET IOERR
          L     R9,0(R3)           WTODSECT ADDRESS
          MVC   WTODESC,=CL45'>>>Z390KCP WRITEQ  TS FAILED'
-         MVC   WTODESC+29(6),=C'IOERR'
+         MVC   WTODESC+29(6),=C'IOERR '
 WQTSSEND EQU   *
          L     R8,12(R3)          R8=CONN ID ADDRESS
          L     R8,0(R8)           R8=CONNID
@@ -207,7 +207,7 @@ CICSTRGO EQU   *
          WTO   MF=(E,WTOMSG)      TRACE IT
          BR    R11                RETURN
 *
-ABEND780 ABEND 780                TCPIO SEND FAILED
+ABEND780 ABEND 780,DUMP           TCPIO SEND FAILED
 *
 CICSTIND DS    C                  TRACE TYPE INDICATOR
 TRCEZ390 DS    C                  Z390 TRACE OPTION

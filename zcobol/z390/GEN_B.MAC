@@ -7,7 +7,12 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 04/09/08 initial coding for Z390 GEN_B BRANCH 
+.* 08/05/09 RPI 1065 add support for PG OF SN    
 .*********************************************************************
-         GEN_B  &TARGET 
-         J     PG_&TARGET
+         GEN_B  &PG_NAME,&SN_NAME
+         COPY  ZC_WS
+         ACALL GET_PG_LAB
+         J     &ZC_PG_LAB
+         MEXIT
+         COPY ZCGETLAB
          MEND

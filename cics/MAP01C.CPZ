@@ -135,7 +135,7 @@
            02  TESTPCOF PIC X.
            02  FILLER REDEFINES TESTPCOF.
                03  TESTPCOA PIC X.
-           02  TESTPCOI PIC $$$$,$$$,$$9.
+           02  TESTPCOI PIC 9(12).
            02  FILLER REDEFINES TESTPCOI.
                03  TESTPCOO PIC X(12).
            02  PAYMEL   PIC S9(4) COMP.
@@ -151,7 +151,7 @@
                03  PAYME1A  PIC X.
            02  PAYME1I  PIC X(12).
            02  FILLER REDEFINES PAYME1I.
-               03  PAYME1O  PIC X(12).
+               03  PAYME1O  PIC $$$$,$$$,$$9.
            02  CURSL    PIC S9(4) COMP.
            02  CURSF    PIC X.
            02  FILLER REDEFINES CURSF.

@@ -9,7 +9,7 @@ erase zcobol\demo\z390\*.* /q
 call ZC390CLG zcobol\demo\hello    notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\demo\datetime notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 erase zcobol\demo\copyfile.out
-call ZC390CLG zcobol\demo\copyfile notiming stats trace %1 %2 %3 %4 %5 %6 %7 %8 %9
+call ZC390CLG zcobol\demo\copyfile notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\demo\POWERS   notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy zcobol\demo\*.* zcobol\demo\z390
 rem

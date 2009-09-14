@@ -4,12 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL1002  SUBENTRY
+LCL1002  CSECT
 *
 * FN=1002  EXEC CICS ASKTIME
 *
 * R1  >>> P1002 BLOCK POINTER
-* R14 = RETURN ADDRESS
+*
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P1002,P1002END),R3
@@ -34,7 +36,7 @@ NORESP2  EQU   *
          MVO   EIBTIME,SAVETIME(3) MOVE AS PACKED
          OI    EIBTIME+3,X'0C'    SET +VE SIGN
          ST    R1,EIBDATE         SET DATE AS CCYYDDD+
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 SAVETIME DS    XL4                TIME AS HHMMSSTT
 *

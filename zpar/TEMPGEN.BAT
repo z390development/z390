@@ -1,5 +1,5 @@
 REM ZPARGEN FILE SPEC = \work\nist\src\*.CBL
-REM ZPARGEN DATE=06/25/09 TIME=18.11
+REM ZPARGEN DATE=09/14/09 TIME=08.58
 CALL %1 \work\nist\src\CM101M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\CM102M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\CM103M %3 %4 %5 %6 %7 %8 %9
@@ -7,8 +7,6 @@ CALL %1 \work\nist\src\CM104M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\CM105M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\CM201M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\CM202M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\CM303M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\CM401M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\DB101A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\DB102A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\DB103M %3 %4 %5 %6 %7 %8 %9
@@ -19,11 +17,6 @@ CALL %1 \work\nist\src\DB202A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\DB203A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\DB204A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\DB205A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\DB301M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\DB302M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\DB303M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\DB304M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\DB305M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\EXEC85 %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IC101A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IC102A %3 %4 %5 %6 %7 %8 %9
@@ -60,18 +53,6 @@ CALL %1 \work\nist\src\IC214A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IC215A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IC216A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IC217A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC222A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC223A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC224A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC225A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC226A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC227A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC228A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC233A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC234A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC235A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC237A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IC401M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IF101A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IF102A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IF103A %3 %4 %5 %6 %7 %8 %9
@@ -114,9 +95,6 @@ CALL %1 \work\nist\src\IF139A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IF140A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IF141A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IF142A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IF401M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IF402M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IF403M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX101A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX102A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX103A %3 %4 %5 %6 %7 %8 %9
@@ -143,7 +121,6 @@ CALL %1 \work\nist\src\IX202A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX203A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX204A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX205A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IX206A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX207A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX208A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX209A %3 %4 %5 %6 %7 %8 %9
@@ -156,9 +133,6 @@ CALL %1 \work\nist\src\IX215A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX216A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX217A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\IX218A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IX301M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IX302M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\IX401M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\NC101A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\NC102A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\NC103A %3 %4 %5 %6 %7 %8 %9
@@ -251,9 +225,6 @@ CALL %1 \work\nist\src\NC251A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\NC252A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\NC253A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\NC254A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\NC302M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\NC303M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\NC401M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\OBIC1A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\OBIC2A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\OBIC3A %3 %4 %5 %6 %7 %8 %9
@@ -295,15 +266,10 @@ CALL %1 \work\nist\src\RL210A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\RL211A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\RL212A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\RL213A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\RL301M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\RL302M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\RL401M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\RW101A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\RW102A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\RW103A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\RW104A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\RW301M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\RW302M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SG101A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SG102A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SG103A %3 %4 %5 %6 %7 %8 %9
@@ -314,9 +280,6 @@ CALL %1 \work\nist\src\SG201A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SG202A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SG203A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SG204A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SG302M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SG303M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SG401M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SM101A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SM102A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SM103A %3 %4 %5 %6 %7 %8 %9
@@ -324,16 +287,6 @@ CALL %1 \work\nist\src\SM104A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SM105A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SM106A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SM107A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SM201A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SM202A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SM203A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SM204A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SM205A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SM206A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SM207A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SM208A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SM301M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SM401M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SQ101M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SQ102A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SQ103A %3 %4 %5 %6 %7 %8 %9
@@ -416,9 +369,6 @@ CALL %1 \work\nist\src\SQ227A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SQ228A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SQ229A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\SQ230A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SQ302M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SQ303M %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\SQ401M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\ST101A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\ST102A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\ST103A %3 %4 %5 %6 %7 %8 %9
@@ -458,5 +408,4 @@ CALL %1 \work\nist\src\ST140A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\ST144A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\ST146A %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\ST147A %3 %4 %5 %6 %7 %8 %9
-CALL %1 \work\nist\src\ST301M %3 %4 %5 %6 %7 %8 %9
-REM ZPARGEN TOTAL CMDS = 459
+REM ZPARGEN TOTAL CMDS = 408

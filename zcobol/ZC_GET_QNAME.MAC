@@ -1,0 +1,45 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/17/09                                                 *
+.*********************************************************************
+.* 07/17/09 RPI 1065 get qualified name for ZCGETFLD and_SYM_INDEX
+.* 07/17/09 RPI 1065 set heading to 30 for max base name +#n#+ tail
+.*********************************************************************
+.*  1.   Build qualified FIELD_NAME FROM GBL QNAME vars   
+.*  2.   If qualified name > 63, truncate to leading 30 + #n# +
+.*       trailing up to 63.  
+.*  3.   n is unique trunc counter
+.*********************************************************************
+         ZC_GET_QNAME
+         COPY  ZC_WS
+         AIF   (&QNAME_LEN GT 63)  RPI 1065 BUILD TRUN NAME ALIAS
+               :&HEAD SETC '&QNAME(1)'
+               :&QI SETA 2
+               AWHILE (K'&HEAD LT 30)
+                   :&HEAD SETC '&HEAD._OF_&QNAME(&QI)'
+                   :&QI SETA &QI+1
+               AEND
+               :&QI SETA &QNAME_TOT-1
+               :&TAIL SETC '&QNAME(&QNAME_TOT)'
+               AWHILE (K'&TAIL LT 30)
+                     :&TAIL SETC '&QNAME(&QI)._OF_&TAIL'
+                     :&QI SETA &QI-1
+               AEND
+               GBLA &ZC_TRNC_LAB
+               :&ZC_TRNC_LAB SETA &ZC_TRNC_LAB+1
+               :&HEAD SETC '&HEAD'(1,30).'#&ZC_TRNC_LAB.#'
+               :&LTAIL SETA 63-K'&HEAD
+               :&FIELD_NAME SETC '&HEAD'.'&TAIL'(K'&TAIL-&LTAIL+1,*)
+         AELSE
+               :&QI SETA 2  
+               :&FIELD_NAME SETC '&QNAME(1)'             
+               AWHILE (&QI LE &QNAME_TOT)
+                   :&FIELD_NAME SETC '&FIELD_NAME._OF_&QNAME(&QI)'
+                   :&QI SETA &QI+1
+               AEND
+         AEND
+         MEND

@@ -4,12 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL4A02  SUBENTRY
+LCL4A02  CSECT
 *
 * FN=4A02  EXEC CICS ASKTIME ABSTIME
 *
 * R1  >>> P4A02 BLOCK POINTER
-* R14 = RETURN ADDRESS
+*
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P4A02,P4A02END),R3
@@ -37,7 +39,7 @@ NORESP2  EQU   *
          SRP   ABSTIME,64-3,5     SHIFT AND ROUND
          MVC   0(8,R1),ABSTIME+8  MOVE TO OUTPUT
          NI    7(R1),X'0F'        mS WITH NO mS
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 ABSTIME  DS    PL16               ABSTIME HOLDING AREA
 *

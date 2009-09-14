@@ -31,6 +31,7 @@
 * 04/24/08 RPI 840 TEST SPACES IGNORED IN P AND Z DATA FIELDS 
 * 08/09/08 RPI 893 TEST SY LONG DISP, F'Unn', H'Unn'                          
 * 11/10/08 RPI 946 CHANGE DS TO DC FOR INIT TO ZEROS                          
+* 06/30/09 RPI 1044 CHANGE VDX DC VD(VDX) TO USE TESTSUB1                     
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -56,6 +57,7 @@ TL       DC    2L'0'
 TFD      DC    2FD'0'
 TF       DC    2F'0'
 TFE      EQU   *
+         DS    0D              RPI 1073 REQUIRED IF USING NOALIGN
 TES      DC    0E,2F'0'    2E  RPI 946         
 TDS      DC    0D,2FL8'0'  2D  RPI 946         
 TLS      DC    0L,2FL16'0' 2L  RPI 946         
@@ -319,7 +321,7 @@ LEN      EQU   X'5678'
          RT1   CCE,=ce'1',=X'F1'
          RT1   CCE,=AD(123),=FL8'123'
          RT1   CCE,=FD'123',=FL8'123'
-VDX      RT1   CCE,=VD(VDX),=AL8(VDX)
+TESTSUB1 RT1   CCH,=VD(TESTSUB1),=AL8(TESTSUB1) RPI 1044 DIFF ADDR
          RT1   CCE,=2C'1',=2X'F1',2
          RT1   CCE,=2Z'1',=2X'C1',2    RPI 777
          AGO   .TEST5_END
@@ -351,7 +353,7 @@ VDX      RT1   CCE,=VD(VDX),=AL8(VDX)
          RT1   CCE,=ce'1',=X'F1'
          RT1   CCE,=AD(123),=FL8'123'
          RT1   CCE,=FD'123',=FL8'123'
-VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
+CVTTOHEX RT1   CCH,=VD(CVTTOHEX),=AL8(CVTTOHEX) RPI 1044 DIFF ADDR
          RT1   CCE,=2C'1',=2X'31',2
          RT1   CCE,=2Z'1',=2X'C1',2  RPI 777
 .TEST5_END ANOP

@@ -10,11 +10,14 @@ import java.lang.management.MemoryPoolMXBean;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -217,6 +220,10 @@ public  class  tz390 {
     * 04/20/09 RPI 1027 add option EDF and GBLC &SYSEDF for zCICS use
     * 06/13/09 RPI 1053 add check_options for NOASM-CHKMAC-CHKSRC
     * 06/22/09 RPI 1059 require ASM for ERRSUM or abort, remove PRN msg
+    * 06/30/09 RPI 1044 add key_inde "V:" for EXTRN
+    * 07/14/09 RPI 1062 split out init_pat() for use by options in zc390
+    * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option
+    * 08/28/09 RPI 1073 add option ALIGN/NOALIGN
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -225,7 +232,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.00e";  //dsh
+    String version    = "V1.5.01";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -238,6 +245,7 @@ public  class  tz390 {
 	boolean z390_abort   = false;  // global abort request
 	boolean tz390_recursive_abort = false; // RPI 935
 	String  invalid_options = "";  // RPI 742
+	boolean opt_align    = true;   // align data fields by type if not explicit RPI 1073
 	boolean opt_allow    = false;  // allow extensions such as no quotes for SETC var
     boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
@@ -249,6 +257,7 @@ public  class  tz390 {
     boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
     boolean opt_cdf      = false; // option for zCICS RPI 1027
     boolean opt_cics     = false; // exec cics program honoring prolog,epilog
+    boolean opt_codepage = false; // use ascii and ebcdic codepages specified CODEPAG(ascii,ebcdic,LIST)
     boolean opt_comment  = true;  // generate source comments for zocobol RPI 986
     boolean opt_con      = true;  // log msgs to console
     boolean force_nocon  = false; // override option con RPI 755
@@ -258,6 +267,7 @@ public  class  tz390 {
     boolean opt_extend   = true;  // allow up to 31 digits for P and Z in zocobl RPI 986
     boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
     boolean opt_init     = true;  // init regs to x'F4", mem to x'F5'
+    String  codepage     = "CODEPAGE(ISO-8859-1+IBM1047)";  // default z/OS compatible
     String  opt_float    = "DECIMAL"; // zcobol FLOAT-? type D=DFP,B=BFP,H=HFP
     
     String  opt_ipl      = "";    // program to execute at startup
@@ -485,6 +495,12 @@ public  class  tz390 {
     /*
      * ASCII and EBCDIC printable character tables
      */
+	    String ascii_min_char =  // RPI 1069
+	      " 01234567890" // blank and didgits
+	    + "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // uppercase
+	    + "abcdefghijklmnopqrstuvwxyz" // lower case
+	    + "@#$" // additional leading symbol characters
+	    + "&’()*+-./:=_"; // mimimum zscii special char
         String newline = System.getProperty("line.separator"); // RPI 500
         char   alarm_bell = 0x07;          // ascii bell char for system.out alarm
         int    sdt_char_int = 0; // RPI 192 shared character sdt
@@ -559,6 +575,17 @@ public  class  tz390 {
                         "004A4B4C4D4E4F505152000000000000" + //D0 .JKLMNOPQR...... 
                         "5C00535455565758595A000000000000" + //E0 \.STUVWXYZ...... 
                         "30313233343536373839000000000000";  //F0 0123456789......  
+  /*
+   * CODEPAGE(ascii,ebcdic,LIST) option data 
+   */
+        String default_charset_name = Charset.defaultCharset().name();
+        String ascii_charset_name = "";
+        String ebcdic_charset_name = "";
+        boolean list_charset_map = false;
+		String test_ascii;
+		String test_ebcdic;
+		char   test_char;
+		byte[] init_charset_bytes = new byte[256];
   /*
    * Floating Point shared types and attributes
    * for use by az390 for constants and pz390 instructions
@@ -4395,8 +4422,8 @@ public void init_tables(){
 		System.setProperty("user.dir",opt_install_loc); // RPI 532
 	}
 	set_dir_cur();  //RPI168
+	init_pat(); // RPI 1062
 	init_os();
-	init_ascii_ebcdic();
 	init_opcodes();
 }
 private void init_opcodes(){
@@ -4424,6 +4451,11 @@ private void init_opcodes(){
 	if (ins_count != op_code.length){
 		abort_error(3,"opcode total out of sync - aborting");
 	}
+}
+public void init_pat(){
+	/*
+	 * init patterns for use by opcode and options routines
+	 */
     /*
      * find_non_space_pattern tokens:
      * skip while space and return next non-white space token
@@ -4619,6 +4651,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     }
 	if (token.charAt(0) == '@'){
 		process_options_file(token.substring(1));  // RPI 742
+	} else if (token.toUpperCase().equals("ALIGN")){
+		opt_align = true; // RPI 1073
+	} else if (token.toUpperCase().equals("NOALIGN")){
+       	opt_align = false;  // RPI 1073
 	} else if (token.toUpperCase().equals("ALLOW")){
 		opt_allow = true; // RPI 833
 	} else if (token.toUpperCase().equals("NOALLOW")){
@@ -4695,6 +4731,11 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_cics = true;
 	} else if (token.toUpperCase().equals("NOCICS")){
        	opt_cics = false;
+	} else if (token.length() > 9 
+			   && token.substring(0,9).toUpperCase().equals("CODEPAGE(")){
+       	codepage = token;
+	} else if (token.toUpperCase().equals("NOCODEPAGE")){
+       	codepage = "";
 	} else if (token.toUpperCase().equals("COMMENT")){
        	opt_comment = true;
 	} else if (token.toUpperCase().equals("NOCOMMENT")){
@@ -5327,6 +5368,8 @@ public synchronized void put_systerm(String msg){ // RPI 397
 		} catch (Exception e){
 	        abort_error(12,"I/O error on systerm file " + e.toString());
 		}
+	} else {
+		System.out.println(systerm_prefix + msg); //RPI 1069 codepage prior to setting systerm
 	}
 }
 public synchronized void put_stat_line(String msg){ // RPI 397
@@ -5504,6 +5547,7 @@ public int find_key_index(char user_key_type,String user_key){
 	 *       c.  "R:" - opcode opsyn
 	 *       d.  "S:" - ordinary symbols
 	 *       e.  "U:" - USING labels
+	 *       f.  "V:" - extrn symbol
 	 *   3.  Usage by lz390
 	 *       a.  "G:" - global ESD's
 	 *   4.  Usage by ez390
@@ -6597,9 +6641,9 @@ public void put_trace(String text){
     		byte data_byte = byte_array[mem_addr+index];
     		char data_char;
     		if (opt_ascii){
-    			data_char = (char) data_byte;
+    			data_char = ascii_table.charAt(data_byte & 0xff); // RPI 1069
     		} else {
-    			data_char = (char) ebcdic_to_ascii[data_byte & 0xff]; //RPI42
+    			data_char = ascii_table.charAt(ebcdic_to_ascii[data_byte & 0xff] & 0xff); //RPI42 RPI 1069
     		}
     		if (data_byte == 0){
     			break;
@@ -6661,7 +6705,12 @@ public void put_trace(String text){
 		/*
 		 * option flags
 		 */
-		cmd_parms_len = 21 + systerm_prefix.length();  
+		cmd_parms_len = 21 + systerm_prefix.length();
+	    if (opt_align){ // rpi 1073
+	        add_final_opt("ALIGN");
+	     } else {
+	        add_final_opt("NOALIGN");
+	     }
 	    if (opt_allow){ // rpi 833 allow HLASM extensions
 	        add_final_opt("ALLOW");
 	     } else {
@@ -6717,6 +6766,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOCICS");
 	     }
+	     if (codepage.length() > 0){ // codepage(ascii,ebcdic,list)
+		        add_final_opt(codepage);
+		     } else {
+		        add_final_opt("NOCODEPAGE");
+		     }
 	     if (opt_comment){ // zcobol source comments in MLC
 	    	 add_final_opt("COMMENT");
 		     } else {
@@ -7066,5 +7120,412 @@ public void put_trace(String text){
 		} else {
 			return "";
 		}
+	}
+	public void init_codepage(String codepage_parm){
+		/*
+		 * initialize ascii and ebcdic translate tables 
+		 * using specified Unicode codepages.  If list is on display
+		 * mapping between ascii Unicode table and the corresponding
+		 * ascii and ebcdic byte values in hex and list available  ascii
+		 * and ebcdic charset codepages.  If either of the names are
+		 * not valid, a list of the current ascii default and all 
+		 * available Charset codepages will be listed.  The two
+		 * codepages will be verified to have the required minimum
+		 * ebcdic code mapping for z390 assembler A-Z,a-z,0-9,@#$,
+		 * blank, and &’()*+-./:=_.  Any characters that have mapping
+		 * will attempt to print otherwise they will appear as periods.
+		 */
+		// init hardcoded ascii/ebcdic tables if no codepage
+	    if (codepage_parm.length() == 0){   // RPI 1069
+    		init_ascii_ebcdic();
+    		if (opt_traceall){
+    			put_systerm("TRACEALL default ascii ebcdic codepage");
+    			list_hex_ascii_ebcdic();
+    		}
+    		opt_codepage = false;
+	    	return;
+	    }
+		// initialize 256 byte values
+		int index = 0;
+		while (index < 256){
+			init_charset_bytes[index]=(byte)index;
+			index++;
+		}
+		// extract 3 operands from codepage(ascii+ebcdic+list)
+		index = codepage_parm.indexOf('+');
+		if (index > 0){
+			ascii_charset_name = codepage_parm.substring(9,index);
+			codepage_parm = codepage_parm.substring(index+1);
+			index = codepage_parm.indexOf('+');
+			if (index > 0){
+				ebcdic_charset_name = codepage_parm.substring(0,index);
+			    if (codepage_parm.substring(index+1,codepage_parm.length()-1).toUpperCase().equals("LIST")){
+			    	list_charset_map = true;
+			    }
+			} else {
+				ebcdic_charset_name = codepage_parm.substring(0,codepage_parm.length()-1);
+			}
+		} else {
+			report_codepage_error("invalid CODEPAGE(ascii+ebcdic+list) = " + codepage);
+			return;			
+		}
+		try {			 
+		     test_ascii = new String(init_charset_bytes,ascii_charset_name);
+		     if (!check_test_ascii()){
+		    	 report_codepage_error("ascii codepage validation error");
+		    	 return;		    	 
+		     }
+		} catch (Exception e){
+            report_codepage_error("codepage charset load error on " + ascii_charset_name);
+            return;
+		}
+		try {
+		     test_ebcdic = new String(init_charset_bytes,ebcdic_charset_name);
+		     if (!check_test_ebcdic()){
+		    	 report_codepage_error("ebcdic codepage validation error on " + ebcdic_charset_name);
+		    	 return;		    	 
+		     }
+		} catch (Exception e){
+			if (!load_ebcdic_charset_hex_file()){
+				report_codepage_error("codepage charset load error on " + ebcdic_charset_name);
+            	return;
+			}
+		}
+		try {
+		     if (list_charset_map){
+		    	 put_systerm("CODEPAGE listing for " + codepage);
+		    	 put_systerm("Default  ascii  Charset codepage is - " + default_charset_name.trim());
+		    	 put_systerm("Selected ascii  Charset codepage is - " + ascii_charset_name);
+		    	 put_systerm("Selected ebcdic Charset codepage is - " + ebcdic_charset_name);
+		     }
+		     init_charset_tables();
+		     if (list_charset_map){
+		    	 list_ebcdic_ascii_unicode();
+		    	 list_available_charsets();
+		     }		     
+		     opt_codepage = true;
+		} catch (Exception e){
+             report_codepage_error("codepage charset table initialization error");
+             return;
+		}
+	}
+	private void init_charset_tables(){
+		/*
+		 * 1.  copy test tables to live tables
+		 * 2.  initialize translate tables
+		 * 3.  initialize printable character table
+		 */
+		// copy charsets
+		ascii_table = test_ascii;
+		ebcdic_table = test_ebcdic;
+		// init translate tables from Charsets
+		int i = 0;
+		while (i < 256){
+			ascii_to_ebcdic[i]=0;
+			ebcdic_to_ascii[i]=0;
+			i++;
+		}
+		i = 0;
+		int j;
+		while (i < 256){
+			j = ebcdic_table.charAt(i) & 0xff;
+			if (ascii_to_ebcdic[j] == 0
+				&& ebcdic_to_ascii[i] == 0){
+			   ascii_to_ebcdic[j]=(byte)i;
+			   ebcdic_to_ascii[i]=(byte)j;
+			}
+			i++;
+		}
+		// abort if any duplicates in minimum ascii to ebcdic
+		i = 0;
+		int k;
+		int l;
+		while (i < 256){
+			j = ebcdic_table.charAt(i) & 0xff;
+            if ((ascii_to_ebcdic[j] & 0xff) != i
+            	|| (ebcdic_to_ascii[i] & 0xff) != j){
+            		k = ascii_min_char.indexOf(ebcdic_table.charAt(i));
+            		l = ascii_min_char.indexOf((char)i);
+            		if (k >= 0 && l >= 0){
+            			String msg = "duplicate ascii/ebcdic conversion at - " + Integer.toHexString(i) + "/" + Integer.toHexString(j);
+            			report_codepage_error(msg);
+            			abort_error(31,msg);
+            		}
+            	}
+			i++;
+		}
+		if (list_charset_map){
+           	list_hex_ascii_ebcdic();
+		}
+		// replace control characters with period for printing
+		int index = 0;
+		while (index < 256){
+			if ((ascii_table.charAt(index) & 0xff) < 0x20){
+				if (index == 0){
+					ascii_table = "." + ascii_table.substring(index+1);
+				} else if (index == 255){
+					ascii_table = ascii_table.substring(0,255)+".";
+				} else {
+					ascii_table = ascii_table.substring(0,index)+"."+ascii_table.substring(index+1);
+				}
+			}
+			if ((ebcdic_table.charAt(index) & 0xff) < 0x20){
+				if (index == 0){
+					ebcdic_table = "." + ebcdic_table.substring(index+1);
+				} else if (index == 255){
+					ebcdic_table = ebcdic_table.substring(0,255)+".";
+				} else {
+					ebcdic_table = ebcdic_table.substring(0,index)+"."+ebcdic_table.substring(index+1);
+				}
+			}
+			index++;
+		}
+	}
+	private void report_codepage_error(String msg){
+		/*
+		 * report codepage parm error
+		 */		
+		put_systerm("CODEPAGE option error - " + msg);
+		put_systerm("z390 default ascii/ebcdic tables used");
+		put_systerm("Default ascii Charset codepage is - " + default_charset_name);
+		list_available_charsets();
+		opt_codepage = false;
+		init_ascii_ebcdic();
+	}
+	private void list_ebcdic_ascii_unicode(){
+		/* 
+		 * list unicode, char, ascii hex, ebcdic hex
+		 */
+		put_systerm("hex-ebcdic/hex-ascii/print-char/unicode listing");
+   	 int index = 0;
+   	 while (index < 64){
+   		put_systerm(
+   				 map_text(index) 
+   			   + map_text(index+64)
+   			   + map_text(index+128)
+   			   + map_text(index+192));
+   		 index++;
+   	 }
+	}
+   	 private String map_text(int index){
+   		 /*
+   		  * return text index,hex-ebcdic,hex-ascii,char,U+hex
+   		  */
+   		 String codepoint = "000"+Integer.toHexString(test_ascii.codePointAt(index));
+   		 codepoint = codepoint.substring(codepoint.length()-4);
+   		 char test_char;
+   		 if (index >= 32){
+   			 test_char = test_ascii.charAt(index);
+   	     } else {
+   		     test_char = '.';
+   	     }
+   		 String test_ascii_hex = "0" + Integer.toHexString((byte)test_ascii.charAt(index));
+   		 test_ascii_hex = test_ascii_hex.substring(test_ascii_hex.length()-2);
+   		 String test_ebcdic_hex = "0" + Integer.toHexString((byte)test_ebcdic.charAt(index));
+   		 test_ebcdic_hex = test_ebcdic_hex.substring(test_ebcdic_hex.length()-2);
+   		 String text =  
+   			                  test_ebcdic_hex
+   				     + "/"  + test_ascii_hex
+   				     + "/"  + test_char
+   				     + "/U" + codepoint + "  ";
+   	     return text;
+	}
+	@SuppressWarnings("unchecked")
+	private void list_available_charsets(){
+		put_systerm("available ascii and ebcdic charset codepages");
+		int tot_charset = 0;
+		int tot_ebcdic  = 0;
+		int tot_ascii   = 0;
+		Map map = Charset.availableCharsets();
+		Iterator it = map.keySet().iterator();
+		while (it.hasNext()) {
+			tot_charset++;
+	        // Get charset name
+			String charset_name = (String)it.next();
+            try {
+   		        test_ascii = new String(init_charset_bytes,charset_name);
+		        if (check_test_ascii()){
+		        	tot_ascii++;
+		        	put_systerm("valid ascii  charset - " + charset_name);
+		        } else {
+	   		        test_ebcdic = new String(init_charset_bytes,charset_name);
+			        if (check_test_ebcdic()){
+			        	tot_ebcdic++;
+			        	put_systerm("valid ebcdic charset - " + charset_name);
+			        }
+		        }		        
+            } catch (Exception e){            	
+            }
+		}
+		put_systerm("total charsets=" + tot_charset + "  total ebcdic=" + tot_ebcdic + "  total ascii=" + tot_ascii);
+	}
+	private boolean check_test_ascii(){
+		/*
+		 * return true if test_ascii charset
+		 * meets the following  tests:
+		 *   1.  Length 256
+		 *   2.  hex char
+		 *       20  space
+		 *       30  zero
+		 *       39  nine
+		 *       41  A
+		 *       5A  Z
+		 *       61  a
+		 *       7A  z
+		 */
+		if (test_ascii.length() != 256
+				|| test_ascii.charAt(0x30) != '0'
+				|| test_ascii.charAt(0x39) != '9'
+				|| test_ascii.charAt(0x41) != 'A'
+				|| test_ascii.charAt(0x5A) != 'Z'
+				|| test_ascii.charAt(0x61) != 'a'
+				|| test_ascii.charAt(0x7A) != 'z'
+				|| test_ascii.charAt(0x24) != '$'	
+				|| test_ascii.charAt(0x23) != '#'
+				|| test_ascii.charAt(0x40) != '@'
+				|| test_ascii.charAt(0x20) != ' '
+				|| test_ascii.charAt(0x26) != '&'
+				|| test_ascii.charAt(0x27) != '\''
+				|| test_ascii.charAt(0x28) != '('
+				|| test_ascii.charAt(0x29) != ')'	
+				|| test_ascii.charAt(0x2A) != '*'
+				|| test_ascii.charAt(0x2B) != '+'
+				|| test_ascii.charAt(0x2C) != ','
+				|| test_ascii.charAt(0x2D) != '-'
+				|| test_ascii.charAt(0x2E) != '.'	
+				|| test_ascii.charAt(0x2F) != '/'
+				|| test_ascii.charAt(0x3A) != ':'	
+				|| test_ascii.charAt(0x3D) != '='
+				|| test_ascii.charAt(0x5F) != '_'
+			){
+			return false;
+		}
+		return true;
+	}
+	private boolean check_test_ebcdic(){
+		/*
+		 * return true if test_ebcdic charset
+		 * meets minimum character requirements
+		 */
+		if (test_ebcdic.length() != 256
+			|| test_ebcdic.charAt(0xF0) != '0'
+			|| test_ebcdic.charAt(0xF9) != '9'
+			|| test_ebcdic.charAt(0xC1) != 'A'
+			|| test_ebcdic.charAt(0xE9) != 'Z'
+			|| test_ebcdic.charAt(0x81) != 'a'
+			|| test_ebcdic.charAt(0xA9) != 'z'
+			|| test_ebcdic.charAt(0x5B) != '$'	
+			|| test_ebcdic.charAt(0x7B) != '#'
+			|| test_ebcdic.charAt(0x7C) != '@'
+			|| test_ebcdic.charAt(0x40) != ' '
+			|| test_ebcdic.charAt(0x50) != '&'
+			|| test_ebcdic.charAt(0x7D) != '\''
+			|| test_ebcdic.charAt(0x4D) != '('
+			|| test_ebcdic.charAt(0x5D) != ')'	
+			|| test_ebcdic.charAt(0x5C) != '*'
+			|| test_ebcdic.charAt(0x4E) != '+'
+			|| test_ebcdic.charAt(0x6B) != ','
+			|| test_ebcdic.charAt(0x60) != '-'
+			|| test_ebcdic.charAt(0x4B) != '.'	
+			|| test_ebcdic.charAt(0x61) != '/'
+			|| test_ebcdic.charAt(0x7A) != ':'	
+			|| test_ebcdic.charAt(0x7E) != '='
+			|| test_ebcdic.charAt(0x6D) != '_'	
+			){
+			return false;
+		}
+		return true;
+	}
+	public void list_hex_ascii_ebcdic(){
+		/*
+		 * list ascii to ebcdic and ebcdic to aascii
+		 * conversion tables in hex for debugging
+		 * 
+		 */
+		put_systerm("hex ascii Charset - " + ascii_charset_name);
+		int i = 0;
+		String hexline = "";
+		String hex;
+		while (i < 256){
+			hex = "0" + Integer.toHexString(ascii_table.charAt(i) & 0xff);
+			hexline = hexline + hex.substring(hex.length()-2);
+			if (hexline.length() >= 32){
+				put_systerm(Integer.toHexString(i/16)+"0 " + hexline);
+				hexline = "";
+			}
+			i++;
+		}
+		put_systerm("hex ebcdic charset - " + ebcdic_charset_name);
+		i = 0;
+		hexline = "";
+		while (i < 256){
+			hex = "0" + Integer.toHexString(ebcdic_table.charAt(i) & 0xff);
+			hexline = hexline + hex.substring(hex.length()-2);
+			if (hexline.length() >= 32){
+				put_systerm(Integer.toHexString(i/16)+"0 " + hexline);
+				hexline = "";
+			}
+			i++;
+		}	
+		put_systerm("hex ebcdic_to_ascii table");
+		i = 0;
+		while (i < 256){
+			hex = "0" + Integer.toHexString(ebcdic_to_ascii[i] & 0xff);
+			hexline = hexline + hex.substring(hex.length()-2);
+			if (hexline.length() >= 32){
+				put_systerm(Integer.toHexString(i/16)+"0 " + hexline);
+				hexline = "";
+			}
+			i++;
+		}
+		put_systerm("hex ascii_to_ebcdic table");
+		i = 0;
+		while (i < 256){
+			hex = "0" + Integer.toHexString(ascii_to_ebcdic[i] & 0xff);
+			hexline = hexline + hex.substring(hex.length()-2);
+			if (hexline.length() >= 32){
+				put_systerm(Integer.toHexString(i/16)+"0 " + hexline);
+				hexline = "";
+			}
+			i++;
+		}
+	}
+	private boolean load_ebcdic_charset_hex_file(){
+		/*
+		 * load ebcdic_charset_name as alternate
+		 * source for system defiend ebcdic_charset_name
+		 */
+		try {
+			BufferedReader ebcdic_hex_buff = new BufferedReader(new FileReader(new File(ebcdic_charset_name)));
+		    String hex_rec = ebcdic_hex_buff.readLine();
+		    int hex_offset = 0;
+		    char[]  ebcdic_charset = new char[256];
+		    while (hex_rec != null && hex_offset < 256){
+		    	if (hex_rec.charAt(0) != '*'){
+		    		int ver_offset = Integer.valueOf(hex_rec.substring(0,2),16);
+		    		if (hex_offset != ver_offset){
+		    			return false;
+		    		}
+		    		if (hex_offset < 256){
+		    			int index = 0;
+		    			while (index < 32){
+		    				int hex_byte = Integer.valueOf(hex_rec.substring(3+index,5+index),16);
+		    				ebcdic_charset[hex_offset] =(char)hex_byte;
+		    				hex_offset++;
+		    				index = index+2;
+		    			}
+		    		}
+		    	}
+		    	hex_rec = ebcdic_hex_buff.readLine();
+		    }
+		    if (hex_offset == 256){
+                test_ebcdic = String.valueOf(ebcdic_charset);
+		    } else {
+		    	return false;
+		    }
+		} catch (Exception e){
+			return false;
+		}
+		return true;
 	}
 }

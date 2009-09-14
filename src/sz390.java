@@ -180,7 +180,8 @@ public  class  sz390 implements Runnable {
     * 06/10/09 RPI 1051 add CDE LOAD line on TRE for use by ZPARTRS 
     * 06/13/09 RPI 1054 backup PSW for ABEND except for S0C1/S422
     *          add ascii/ebcdic text on last duplicat line of dump  
-    * 06/15/09 RPI 1050 suppress dup ENDED for TRACE CON                    
+    * 06/15/09 RPI 1050 suppress dup ENDED for TRACE CON   
+    * 07/18/09 RPI 1062 change abort msg from recursive/shutdown to abort                 
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -910,12 +911,12 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 	 * inc error total
 	 */
 	if (ez390_recursive_abort){ // RPI 935
-		System.out.println("EZ390E recurive abort exit");
+		System.out.println("EZ390E abort recersive exit");
 		System.exit(16);
 	}
 	ez390_recursive_abort = true;
  	  if (tz390.z390_abort){
-		msg = "EZ390E shutdown for " + msg;
+		msg = "EZ390E abort for " + msg;
 		tz390.put_systerm(msg);
 		try { // rpi 560
 			if (!put_stats_running){  // RPI 646
@@ -924,7 +925,7 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 			}
 			close_files();
 		} catch (Exception e){
-			put_con("EZ390E CLOSE FILES FAILED");
+			put_con("EZ390E close files failed");
 		}
 		System.exit(16);
 	  }
@@ -1441,14 +1442,14 @@ private void svc_load_390(){
     	z390_file = new RandomAccessFile(load_file_name,"r");
     }
     z390_file.seek(0);
-    load_code_ver[0] = (char)z390_file.read();
-    load_code_ver[1] = (char)z390_file.read();
-    load_code_ver[2] = (char)z390_file.read();
-    load_code_ver[3] = (char)z390_file.read();
-    z390_flags[0]    = (char)z390_file.read();
-    z390_flags[1]    = (char)z390_file.read();
-    z390_flags[2]    = (char)z390_file.read(); 
-    z390_flags[3]    = (char)z390_file.read();
+    load_code_ver[0] = tz390.ascii_table.charAt(z390_file.read());
+    load_code_ver[1] = tz390.ascii_table.charAt(z390_file.read());
+    load_code_ver[2] = tz390.ascii_table.charAt(z390_file.read());
+    load_code_ver[3] = tz390.ascii_table.charAt(z390_file.read());
+    z390_flags[0]    = tz390.ascii_table.charAt(z390_file.read());
+    z390_flags[1]    = tz390.ascii_table.charAt(z390_file.read());
+    z390_flags[2]    = tz390.ascii_table.charAt(z390_file.read()); 
+    z390_flags[3]    = tz390.ascii_table.charAt(z390_file.read());
     load_code_len    = z390_file.readInt();
     load_code_ent    = z390_file.readInt();
     load_code_rlds   = z390_file.readInt();
@@ -3541,9 +3542,9 @@ public String get_ascii_string(int mem_addr,int mem_len,boolean null_term){
 				|| pz390.mem_byte[mem_addr + index] != 0
 				)){  // RPI 642
 		if (tz390.opt_ascii){
-			text = text + (char) pz390.mem_byte[mem_addr + index];
+			text = text + tz390.ascii_table.charAt( pz390.mem_byte[mem_addr + index] & 0xff); // RPI 1069
 		} else {
-			text = text + (char) tz390.ebcdic_to_ascii[pz390.mem_byte[mem_addr + index] & 0xff]; //RPI42
+			text = text + tz390.ascii_table.charAt( tz390.ebcdic_to_ascii[pz390.mem_byte[mem_addr + index] & 0xff] & 0xff); //RPI42 RPI 1069
 		}
 		index++;
 	}

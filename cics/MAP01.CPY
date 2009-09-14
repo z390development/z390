@@ -176,6 +176,7 @@ GUI6L    EQU   GUI6E-GUI6S
 * * * END OF MAP DEFINITION     * * *
 *
 GUI6HS   DS    0H                 START OF MAP DEFINITION
+GUI6HO   DS    0H                 START OF MAP OUTPUT DEFINITION
          DS    12C                TIOA PREFIX
 *
 GUI6HE   EQU   *

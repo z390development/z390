@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 10/14/08 INITIAL CODDING
+.* 08/06/09 RPI 1062 ADD PROCEDURE SECTION AND PARAGRAPH STATISTICS
 .*********************************************************************
          ZC_STATS      
          COPY  ZC_WS
@@ -16,4 +17,7 @@
          MNOTE *.'ZCOBOL TOTAL SYMBOL LEVEL 88         = &V88_TOT'
          MNOTE *.'ZCOBOL TOTAL SYMBOL SET INDEXES      = &SET_TOT'
          MNOTE *.'ZCOBOL TOTAL SYMBOL LINKAGE SECTIONS = &LK_TOT'
+         MNOTE *.'ZCOBOL TOTAL PROCEDURE SECTIONS      = &SN_TOT'
+         MNOTE *.'ZCOBOL TOTAL PROCEDURE PARAGRAPHS    = &PG_TOT'
+         MNOTE *.'ZCOBOL TOTAL PROCEDURE PARAGRAPH DUP = &PG_DUP_TOT'
          MEND

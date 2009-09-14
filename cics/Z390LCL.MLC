@@ -4,16 +4,17 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-Z390LCL  SUBENTRY
+Z390LCL  CSECT
 *
 * INDEXER TO ALL LCL.... MODULES
-* ENTRY IS BY BAKR
+* ENTRY IS BY BAKR 0,R15
 *
 * R1  >>> LCL PARAMETER BLOCK POINTER
-* R14 = RETURN ADDRESS
 *
 * EACH PARM STARTS WITH EIBFN
 *
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              POINT TO
          L     R3,0(R3)                    PARAMETER BLOCK
          LA    R4,LCLTABL         R4=ADDRESS OF LCL TABLE
@@ -27,13 +28,13 @@ IXLOOP   EQU   *
 *
 DOLCL    EQU   *
          L     R15,2(R4)          R15=LCL MODULE ADDRESS
-         BALR  R14,R15            GO TO IT
-         PR    ,                  UNSTACK AND RETURN
+         BR    R15                GO TO IT
 *
 LCLTABL  EQU   *
          DC    X'0202',VL4(LCL0202) ADDRESS
          DC    X'0204',VL4(LCL0204) HANDLE CONDITION
          DC    X'0206',VL4(LCL0206) HANDLE AID
+         DC    X'0208',VL4(LCL0208) ASSIGN
          DC    X'020A',VL4(LCL020A) IGNORE CONDITION
          DC    X'020C',VL4(LCL020C) PUSH HANDLE
          DC    X'020E',VL4(LCL020E) POP HANDLE
@@ -80,6 +81,8 @@ LCLTABL  EQU   *
 *
          DC    X'4A02',VL4(LCL4A02) ASKTIME ABSTIME
          DC    X'4A04',VL4(LCL4A04) FORMATTIME
+*
+         DC    X'4C02',VL4(LCL4C02) INQUIRE FILE
 *
          DC    X'FFFF'            STOPPER
 *

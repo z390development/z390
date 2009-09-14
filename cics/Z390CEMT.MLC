@@ -5,8 +5,6 @@
 * Author - Don Higgins                                                *
 ***********************************************************************
 *
-* NOTE TO ME: CHANGE IFIL TO BE MORE LIKE IENQ AND SAVE STORAGE
-*
 * CEMT FUNCTIONS
 *   THE FULL SYSTAX IS SUPPORTED, EG. CEMT PERFORM SHUTDOWN IMMEDIATE
 *   THE FOLLOWING MINIMUMS ARE TESTED
@@ -48,18 +46,29 @@ SNDITRL1 DS    CL(ITRNLSL1)
          ORG   SNDISYST
 SNDITRN2 DS    CL(ITRNTIT2)
 SNDITRL2 DS    CL(ITRNLSL2)
-* I FIL MESSAGE AREA
-         ORG   SNDISYST
-SNDIFILT DS    CL(IFILTITE)
-SNDIFILL DS    CL(IFILLSTL)
 * I ENQ MESSAGE AREA
          ORG   SNDISYST
 SNDIENQT DS    CL(IENQTITE)
 SNDIENQL DS    CL(IENQLEN*21)
          ORG
 *
-Z390CEMT DFHEIENT CODEREG=(R12,R3,R4)
+         COPY  MAPCEMT
 *
+MYCOMM   DS    X
+*
+Z390CEMT DFHEIENT CODEREG=(R12,R3,R4,R5)
+*
+         MVI   MYCOMM,X'00'       CLEAR COMMAREA
+         ICM   R6,15,TCTTECA      ANY COMMAREA ?
+         BZ    NOCOMM             EXIT IF NONE
+* WE HAVE A COMMAREA
+         CLI   0(R6),C'1'         RETURN FROM CEMT I FIL ?
+         BE    IFILRET            EXIT IF IT IS
+         CLI   0(R6),C'2'         RETURN FROM FILE DISPLAY ?
+         BE    IFILDIS            EXIT IF IT IS
+         DC    H'0'               CANNOT OCCUR
+*
+NOCOMM   EQU   *
          EXEC  CICS HANDLE AID CLEAR(TERMINAT)
          L     R6,TCTTEDA         INITIAL TIOA (NULL TERMINATED)
          AHI   R6,3               MISS AID, CURSOR ADDRESS
@@ -117,11 +126,10 @@ PROCESS  EQU   *
 ISYS     EQU   *
 * PROCESS CEMT I SYS, IGNORE OTHER PARMS
          L     R8,CEMTI           R8=MESSAGE LENGTH
-         LA    R5,CEMTI           R5=MESSAGE
          MVC   CEMTIREQ,=C'FE01'  SET REQUEST CODE
          MVC   CEMTITRM,TCTTETI   SET TERMID
          MVC   CEMTITKN,EIBTASKN  SET TASK NO.
-         TCPIO SEND,MSG=(R5),LMSG=(R8),PORT=3900
+         TCPIO SEND,MSG=CEMTI,LMSG=(R8),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   TCPIOERR           EXIT IF BAD
          L     R8,CEMTRCVE        R8=MESSAGE LENGTH
@@ -200,11 +208,10 @@ ISYSHEX6 EQU   *
 ITER     EQU   *
 * PROCESS CEMT I TER, IGNORE OTHER PARMS
          L     R8,CEMTI           R8=MESSAGE LENGTH
-         LA    R5,CEMTI           R5=MESSAGE
          MVC   CEMTIREQ,=C'FE00'  SET REQUEST CODE
          MVC   CEMTITRM,TCTTETI   SET TERMID
          MVC   CEMTITKN,EIBTASKN  SET TASK NO.
-         TCPIO SEND,MSG=(R5),LMSG=(R8),PORT=3900
+         TCPIO SEND,MSG=CEMTI,LMSG=(R8),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   TCPIOERR           EXIT IF BAD
          LA    R8,200             R8=MESSAGE LENGTH
@@ -330,105 +337,273 @@ ITRNRLSE EQU   *
          B     RETURN             END OF PROGRAM
 *
 IFIL     EQU   *
+         LA    R6,IFIL1S          AREA TO CLEAR
+         LA    R7,IFIL1L          LENGTH TO CLEAR
+         LR    R8,R6              AREA TO CLEAR
+         SR    R9,R9              CLEAR SECOND LENGTH
+         MVCLE R6,R8,X'00'        CLEAR IFIL1 MAP
 * PROCESS CEMT I FIL, IGNORE OTHER PARMS
-         L     R8,CEMTI           R8=MESSAGE LENGTH
-         LA    R5,CEMTI           R5=MESSAGE
-         MVC   CEMTIREQ,=C'FE05'  SET REQUEST CODE
-         MVC   CEMTITRM,TCTTETI   SET TERMID
-         MVC   CEMTITKN,EIBTASKN  SET TASK NO.
-         TCPIO SEND,MSG=(R5),LMSG=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   TCPIOERR           EXIT IF BAD
-* RECEIVE THE PREFIX ONLY
-* THIS COULD BE A LARGE AREA, SO WE NEED TO GETMAIN A RECEIVE AREA
-         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=12,PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   TCPIOERR           EXIT IF BAD
-         L     R8,CEMTRCVE        R8=ACTUAL LENGTH TO RECEIVE
-         MVC   CEMTRCVE,=F'200'   RESTORE THE STANDARD RECEIVE LENGTH
-         AHI   R8,-12             -12 FOR DATA RECEIVED
-         GETMAIN R,LV=(R8),A=IFILGETM
-         ST    R0,IFILGETL        SAVE LENGTH FOR FREEMAIN
-         TCPIO RECEIVE,MSG=0(R1),LMSG=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   TCPIOERR           EXIT IF BAD
-         MVC   SNDIFILT,IFILTITL  SET UP TITLE
-         LA    R6,SNDIFILL        R6=DESTINATION
-         LA    R8,IFILLIST        R8=SOURCE
-         LA    R7,IFILLSTL        DESTINATION LENGTH
-         LR    R9,R7              SOURCE LENGTH
-         MVCL  R6,R8              INITIALIZE LIST
-         LA    R6,SNDIFILL        R6=LIST ADDRESS
+         LA    R6,IFILF04F        R6=LIST ADDRESS
          USING IFILDSCT,R6
-         L     R7,IFILGETM        R7=RECEIVED DATA
-         USING IFILDATA,R7
+         EXEC  CICS HANDLE CONDITION END(IFILEND)
+         EXEC  CICS INQUIRE FILE START
 IFILLOOP EQU   *
-         MVC   IFILFILE,IFILDFLE  MOVE FILENAME
-         MVC   IFILOPE,=C'OPE'    PRESET OPEN
-         TM    IFILDSTA,FCTOPCLO  IS IT OPEN ?
-         BO    IFILOPEN           EXIT IF IT IS
-         MVC   IFILOPE,=C'CLO'    SET CLOSED
+         EXEC  CICS INQUIRE FILE(IFILQFLE) NEXT                        X
+                        ADD(IFILQADD)                                  X
+                     BROWSE(IFILQBRW)                                  X
+                     DELETE(IFILQDEL)                                  X
+                     DSNAME(IFILQDSN)                                  X
+               ENABLESTATUS(IFILQENA)                                  X
+                 OPENSTATUS(IFILQOPE)                                  X
+                       READ(IFILQRD)                                   X
+               RECORDFORMAT(IFILQRCF)                                  X
+                     UPDATE(IFILQUPD)
+         MVC   IFILFILE,IFILQFLE  MOVE FILENAME
+         MVC   IFILOPE,=C'OPE '   PRESET OPEN
+         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
+         BE    IFILOPEN           EXIT IF IT IS
+         MVC   IFILOPE,=C'CLO '   SET CLOSED
 IFILOPEN EQU   *
-         MVC   IFILENA,=C'ENA'    PRESET ENABLED
-         TM    IFILDSTA,FCTENDIS  IS IT ENABLED ?
-         BO    IFILENAB           EXIT IF IT IS
-         MVC   IFILOPE,=C'DIS'    SET DISABLED
-IFILENAB EQU   *
-         TM    IFILDSTA,FCTUNENA  IS IT UNENABLED ?
-         BNO   IFILNTUN           EXIT IF NOT
-         MVC   IFILOPE,=C'UNE'    SET UNENABLED
+         MVC   IFILENA,=C'UNE '   SET UNENABLED
+         CLC   IFILQENA,DFHVALUE(UNENABLED) UNENABLED ?
+         BE    IFILNTUN           EXIT IF IT IS
+         MVC   IFILENA,=C'ENA '   PRESET ENABLED
+         CLC   IFILQENA,DFHVALUE(ENABLED) ENABLED ?
+         BE    IFILNTUN           EXIT IF IT IS
+         MVC   IFILENA,=C'DIS '   SET DISABLED
 IFILNTUN EQU   *
-         MVC   IFILREA,=C'REA'    SET READ
-         TM    IFILDSRV,FCTREAD   IS IT READ ?
-         BO    IFILREAD           EXIT IF IT IS
-         MVC   IFILREA,=C'   '    SET NO READ
+         MVC   IFILREA,=C'REA '    SET READ
+         CLC   IFILQRD,DFHVALUE(READABLE) READABLE ?
+         BE    IFILREAD           EXIT IF IT IS
+         MVC   IFILREA,=CL4' '    SET NO READ
 IFILREAD EQU   *
-         MVC   IFILUPD,=C'UPD'    SET UPDATE
-         TM    IFILDSRV,FCTUPDT   IS IT UPDATE ?
-         BO    IFILUPDT           EXIT IF IT IS
-         MVC   IFILUPD,=C'   '    SET NO UPDATE
+         MVC   IFILUPD,=C'UPD '   SET UPDATE
+         CLC   IFILQUPD,DFHVALUE(UPDATABLE) UPDATABLE ?
+         BE    IFILUPDT           EXIT IF IT IS
+         MVC   IFILUPD,=CL4' '    SET NO UPDATE
 IFILUPDT EQU   *
-         MVC   IFILADD,=C'ADD'    SET ADD
-         TM    IFILDSRV,FCTADD    IS IT ADD ?
-         BO    IFILADD1           EXIT IF IT IS
-         MVC   IFILADD,=C'   '    SET NO ADD
+         MVC   IFILADD,=C'ADD '   SET ADD
+         CLC   IFILQADD,DFHVALUE(ADDABLE) ADDABLE ?
+         BE    IFILADD1           EXIT IF IT IS
+         MVC   IFILADD,=CL4' '    SET NO ADD
 IFILADD1 EQU   *
-         MVC   IFILBRO,=C'BRO'    SET BROWSE
-         TM    IFILDSRV,FCTBRWSE  IS IT BROWSE ?
-         BO    IFILBRWS           EXIT IF IT IS
-         MVC   IFILBRO,=C'   '    SET NO READ
+         MVC   IFILBRW,=C'BRO '   SET BROWSE
+         CLC   IFILQBRW,DFHVALUE(BROWSABLE) BROWSABLE ?
+         BE    IFILBRWS           EXIT IF IT IS
+         MVC   IFILBRW,=CL4' '    SET NO BROWSE
 IFILBRWS EQU   *
-         MVC   IFILDEL,=C'DEL'    SET DELETE
-         TM    IFILDSRV,FCTDELT   IS IT DELETE ?
-         BO    IFILGOFV           EXIT IF IT IS
-         MVC   IFILDEL,=C'   '    SET NO DELETE
+         MVC   IFILDEL,=C'DEL '   SET DELETE
+         CLC   IFILQDEL,DFHVALUE(DELETABLE) DELETABLE ?
+         BE    IFILGOFV           EXIT IF IT IS
+         MVC   IFILDEL,=CL4' '    SET NO DELETE
 IFILGOFV EQU   *
-         MVC   IFILFXVR,=C'FIX'   SET FIXED
-         TM    IFILDFXV,FCTFXVIM  IS IT FIXED ?
-         BO    IFILINCR           EXIT IF IT IS
-         MVC   IFILFXVR,=C'VAR'   SET VARIABLE
+         MVC   IFILFXVR,=C'FIX '  SET FIXED
+         CLC   IFILQRCF,DFHVALUE(FIXED) FIXED ?
+         BE    IFILINCR           EXIT IF IT IS
+         MVC   IFILFXVR,=C'VAR '  SET VARIABLE
 IFILINCR EQU   *
-         MVC   IFILDSN,IFILDDSN   MOVE DSNAME
+         MVC   IFILDSN,IFILQDSN   MOVE DSNAME
          AHI   R6,IFILLEN         BUMP OUTPUT POINTER
-         AHI   R7,IFILDLEN        BUMP INPUT POINTER
-         CLI   IFILDFLE,X'FF'     END OF FILES ?
-         BNE   IFILLOOP           LOOP IF NOT
-         EXEC  CICS SEND FROM(SNDIFILT) LENGTH(IFILMLEN)
-         FREEMAIN LA=IFILGETL,A=IFILGETM
-         B     RETURN             END OF PROGRAM
+         B     IFILLOOP           LOOP
 *
-IFILGETM DS    A                  GETMAIN ADDRESS
-IFILGETL DS    F                  GETMAIN LENGTH
-         DROP  R6,R7
+IFILEND  EQU   *
+         EXEC  CICS SEND MAP('IFIL1') MAPSET('MAPCEMT') ERASE
+         EXEC  CICS INQUIRE FILE END
+IFILNOWT EQU   *
+         MVI   MYCOMM,C'1'        SET CURSOR SELECT
+RETCOMM  EQU   *
+         EXEC  CICS RETURN TRANSID('CEMT') COMMAREA(MYCOMM)
+*
+IFILRET  EQU   *
+* RETURN FROM CURSOR SELECT
+         CLI   EIBAID,DFHCLEAR    WAS CLEAR PRESSED ?
+         BE    RETURN             EXIT IF IT WAS
+         EXEC  CICS RECEIVE MAP('IFIL1') MAPSET('MAPCEMT')
+         LA    R6,IFILF04F        R6=LIST ADDRESS
+IFILOOP2 EQU   *
+         CLI   IFILFILE,X'00'     VALID FILE ?
+         BE    IFILNOWT           EXIT IF CURSOR NOT FOUND
+         TM    IFILFLAG,DFHBMCUR  CURSOR HERE ?
+         BO    IFILGOT            EXIT IF NOT
+         AHI   R6,IFILLEN         BUMP OUTPUT POINTER
+         B     IFILOOP2           LOOP
+*
+IFILGOT  EQU   *
+         MVC   IFILQFLE,IFILFILE  SET SELECTED FILENAME
+* FILE SELECTED, GET ALL DATA
+         EXEC  CICS INQUIRE FILE(IFILQFLE)                             X
+                        ADD(IFILQADD)                                  X
+                 BASEDSNAME(IFILQBSN)                                  X
+                     BROWSE(IFILQBRW)                                  X
+                     DELETE(IFILQDEL)                                  X
+                     DSNAME(IFILQDSN)                                  X
+               ENABLESTATUS(IFILQENA)                                  X
+                  KEYLENGTH(IFILQKL)                                   X
+                KEYPOSITION(IFILQKP)                                   X
+                     OBJECT(IFILQOBJ)                                  X
+                 OPENSTATUS(IFILQOPE)                                  X
+                       READ(IFILQRD)                                   X
+               RECORDFORMAT(IFILQRCF)                                  X
+                 RECORDSIZE(IFILQRCS)                                  X
+                       TYPE(IFILQTYP)                                  X
+                     UPDATE(IFILQUPD)
+*
+         LA    R6,IFIL2S          AREA TO CLEAR
+         LA    R7,IFIL2L          LENGTH TO CLEAR
+         LR    R8,R6              AREA TO CLEAR
+         SR    R9,R9              CLEAR SECOND LENGTH
+         MVCLE R6,R8,X'00'        CLEAR IFIL2 MAP
+         LA    R6,IFILF04F        R6=LIST ADDRESS
+         MVC   IFIL2FL(8),IFILQFLE MOVE FILENAME
+         MVI   IFIL2FL+8,C')'     END BRACKET
+         MVC   IFIL2AD,=C'Addable)   ' SET ADDABLE
+         CLC   IFILQADD,DFHVALUE(ADDABLE) ADDABLE ?
+         BE    IFILADD2           EXIT IF IT IS
+         MVC   IFIL2AD,=C'Notaddable)' SET NOTADDABLE
+IFILADD2 EQU   *
+         MVC   IFIL2BS,IFILQBSN   MOVE BASEDSNAME
+         LA    R7,IFIL2BS         SCAN START
+IFILBSLP EQU   *
+         CLI   0(R7),C' '         END OF STRING ?
+         BE    IFILBSEB           EXIT IF IT IS
+         AHI   R7,1               BUMP POINTER
+         B     IFILBSLP           LOOP
+*
+IFILBSEB EQU   *
+         MVI   0(R7),C')'         END BRACKET
+         MVC   IFIL2BR,=C'Browsable)   ' SET BROWSABLE
+         CLC   IFILQBRW,DFHVALUE(BROWSABLE) BROWSABLE ?
+         BE    IFILBRW2           EXIT IF IT IS
+         MVC   IFIL2BR,=C'Notbrowsable)' SET NOTBROWSABLE
+IFILBRW2 EQU   *
+         MVC   IFIL2DL,=C'Deletable)   ' SET DELETABLE
+         CLC   IFILQDEL,DFHVALUE(DELETABLE) DELETABLE ?
+         BE    IFILDEL2           EXIT IF IT IS
+         MVC   IFIL2DL,=C'Notdeletable)' SET NOTDELETABLE
+IFILDEL2 EQU   *
+         MVC   IFIL2DS,IFILQDSN   MOVE DSNAME
+         LA    R7,IFIL2DS         SCAN START
+IFILDSLP EQU   *
+         CLI   0(R7),C' '         END OF STRING ?
+         BE    IFILDSEB           EXIT IF IT IS
+         AHI   R7,1               BUMP POINTER
+         B     IFILDSLP           LOOP
+*
+IFILDSEB EQU   *
+         MVI   0(R7),C')'         END BRACKET
+         MVC   IFIL2EN,=C'Unenabled)' SET UNENABLED
+         CLC   IFILQENA,DFHVALUE(UNENABLED) UNENABLED ?
+         BE    IFILENA2           EXIT IF IT IS
+         MVC   IFIL2EN,=C'Disabled) ' SET DISABLED
+         CLC   IFILQENA,DFHVALUE(DISABLED) DISABLED ?
+         BE    IFILENA2           EXIT IF IT IS
+         MVC   IFIL2EN,=C'Enabled)  ' SET ENABLED
+IFILENA2 EQU   *
+         MVC   IFIL2KL,=C'   n/a    )' INITIALISE KEYLENGTH
+         MVC   IFIL2KP,=C'   n/a    )' INITIALISE KEYPOSITION
+* KEYLENGTH AND KEYPOSITION ONLY AVAILABLE FOR OPEN KSDS FILES
+         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
+         BNE   IFILNOK            EXIT IF NOT
+         CLC   IFILQTYP,DFHVALUE(KSDS) KSDS ?
+         BNE   IFILNOK            EXIT IF NOT
+         L     R7,IFILQKL         R7=KEYLENGTH
+         CVD   R7,DEC             CONVERT TO DECIMAL
+         MVC   CHAR,=X'402020202020202020202120' MOVE EDIT WORD
+         ED    CHAR,DEC+2         EDIT KEYLENGTH
+         MVC   IFIL2KL(10),CHAR+2 MOVE KEYLENGTH
+         L     R7,IFILQKP         R7=KEYPOSITION
+         CVD   R7,DEC             CONVERT TO DECIMAL
+         MVC   CHAR,=X'402020202020202020202120' MOVE EDIT WORD
+         ED    CHAR,DEC+2         EDIT KEYPOSITION
+         MVC   IFIL2KP(10),CHAR+2 MOVE KEYPOSITION
+IFILNOK  EQU   *
+* ### AIX SUPPORT WILL ADD PATH
+         MVC   IFIL2OB,=C'Base)'  MOVE OBJECT
+         MVC   IFIL2OP,=C'Open)  ' SET OPEN
+         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
+         BE    IFILOPE2           EXIT IF IT IS
+         MVC   IFIL2OP,=C'Closed)' SET CLOSED
+IFILOPE2 EQU   *
+         MVC   IFIL2RD,=C'Readable)   ' SET READABLE
+         CLC   IFILQRD,DFHVALUE(READABLE) READABLE ?
+         BE    IFILRD2            EXIT IF IT IS
+         MVC   IFIL2RD,=C'Notreadable)' SET NOTREADABLE
+IFILRD2  EQU   *
+         MVC   IFIL2RF,=C'Variable)' SET VARIABLE
+         CLC   IFILQRCF,DFHVALUE(VARIABLE) VARIABLE ?
+         BE    IFILRCF2           EXIT IF IT IS
+         MVC   IFIL2RF,=C'Fixed)   ' SET FIXED
+IFILRCF2 EQU   *
+* RECORDSIZE AND TYPE ONLY AVAILABLE FOR OPEN FILES
+         MVC   IFIL2RS,=C'   n/a    )' INITIALISE RECORDSIZE
+         MVC   IFIL2TP,=C'n/a ) ' INITIALISE TYPE
+         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
+         BNE   IFILTP2            EXIT IF NOT
+         L     R7,IFILQRCS        R7=RECORDSIZE
+         CVD   R7,DEC             CONVERT TO DECIMAL
+         MVC   CHAR,=X'402020202020202020202120' MOVE EDIT WORD
+         ED    CHAR,DEC+2         EDIT RECORDSIZE
+         MVC   IFIL2RS,CHAR+2     MOVE RECORDSIZE
+         MVI   IFIL2RS+10,C')'    MOVE END BRACKET
+         MVC   IFIL2TP,=C'Esds) ' SET ESDS
+         CLC   IFILQTYP,DFHVALUE(ESDS) ESDS ?
+         BE    IFILTP2            EXIT IF IT IS
+         MVC   IFIL2TP,=C'Ksds) ' SET KSDS
+         CLC   IFILQTYP,DFHVALUE(KSDS) KSDS ?
+         BE    IFILTP2            EXIT IF IT IS
+         MVC   IFIL2TP,=C'Rrds) ' SET RRDS
+         CLC   IFILQTYP,DFHVALUE(RRDS) RRDS ?
+         BE    IFILTP2            EXIT IF IT IS
+         MVC   IFIL2TP,=C'Vrrds)' SET VRRDS
+IFILTP2  EQU    *
+         MVC   IFIL2UP,=C'Updatable)   ' SET UPDATABLE
+         CLC   IFILQUPD,DFHVALUE(UPDATABLE) UPDATABLE ?
+         BE    IFILUPD2           EXIT IF IT IS
+         MVC   IFIL2UP,=C'Notupdatable)' SET NOTUPDATABLE
+IFILUPD2 EQU   *
+         EXEC  CICS SEND MAP('IFIL2') MAPSET('MAPCEMT') ERASE
+IFILNKEY EQU   *
+         MVI   MYCOMM,C'2'        SET FILE DISPLAY
+         B     RETCOMM            EXIT
+*
+IFILDIS  EQU   *
+* RETURN FROM FILE DISPLAY
+         CLI   EIBAID,DFHCLEAR    WAS CLEAR PRESSED ?
+         BE    RETURN             EXIT IF IT WAS
+         CLI   EIBAID,DFHPF3      WAS PF3 PRESSED ?
+         BE    IFIL               EXIT IF IT WAS
+         CLI   EIBAID,DFHENTER    WAS ENTER PRESSED ?
+         BNE   IFILNKEY           EXIT IF IT WAS
+* PROCESS CHANGES WHEN WE DO SET FILE
+         B     IFILNKEY           EXIT
+*
+IFILQFLE DS    CL8
+IFILQADD DS    XL4
+IFILQBSN DS    XL128
+IFILQBRW DS    XL4
+IFILQDEL DS    XL4
+IFILQDSN DS    XL128
+IFILQENA DS    XL4
+IFILQKL  DS    XL4
+IFILQKP  DS    XL4
+IFILQOBJ DS    XL4
+IFILQOPE DS    XL4
+IFILQRD  DS    XL4
+IFILQRCF DS    XL4
+IFILQRCS DS    XL4
+IFILQTYP DS    XL4
+IFILQUPD DS    XL4
+*
+CHAR     DS    CL12
+         DROP  R6
 *
 IENQ     EQU   *
 * PROCESS CEMT I ENQ, IGNORE OTHER PARMS
          L     R8,CEMTI           R8=MESSAGE LENGTH
-         LA    R5,CEMTI           R5=MESSAGE
          MVC   CEMTIREQ,=C'FE06'  SET REQUEST CODE
          MVC   CEMTITRM,TCTTETI   SET TERMID
          MVC   CEMTITKN,EIBTASKN  SET TASK NO.
-         TCPIO SEND,MSG=(R5),LMSG=(R8),PORT=3900
+         TCPIO SEND,MSG=CEMTI,LMSG=(R8),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   TCPIOERR           EXIT IF BAD
 * RECEIVE THE PREFIX ONLY
@@ -537,7 +712,6 @@ TRYP     EQU   *
          BNE   PARSERR1           EXIT IF BAD 1ST PARM
 PSHU     EQU   *
          L     R8,CEMTI           R8=MESSAGE LENGTH
-         LA    R5,CEMTI           R5=MESSAGE
          CLC   PARSE2(3),=C'SHU'  P SHU ?
          BNE   PARSERRP           EXIT IF BAD PERFORM
          MVC   CEMTIREQ,=C'FE02'  SET REQUEST CODE
@@ -546,7 +720,7 @@ PSHU     EQU   *
          BNE   PSEND              EXIT IF NOT
          MVC   CEMTIREQ,=C'FE03'  SET REQUEST CODE
 PSEND    EQU   *
-         TCPIO SEND,MSG=(R5),LMSG=(R8),PORT=3900
+         TCPIO SEND,MSG=CEMTI,LMSG=(R8),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   TCPIOERR           EXIT IF BAD
          B     RETURN             EXIT
@@ -706,7 +880,7 @@ CEMTIEND EQU   *
 *
 CEMTRCVE DS    0F
 * RECEIVE AREA
-* MUST KEEP THIS CONSISTANT WITH ALL Z390CICS SENDS
+* MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
          DC    A(200)             MAX LENGTH
          DS    CL4                REQUEST CODE
          DS    CL4                TERMINAL ID
@@ -919,53 +1093,6 @@ ITRNLST2 EQU   *
 ITRNLSL2 EQU   *-ITRNLST2
 ITRNMLN2 DC    AL2(*-ITRNTTL2)
 *
-* I FIL -- STRUCTURES
-*
-* FILENAME  ----------- STATUS ------------  DSNAME--------------------
-* MYFILE01  OPE ENA REA UPD ADD BRO DEL FIX  E:\MYFILE01
-*
-IFILTITL EQU   *
-         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA_MDT),IC
-         DC    C'CEMT I FIL'
-         TN3270 (SBA,3,1),(SF,ATT_PA)
-         DC    C'FILENAME  ----------- STATUS ------------  DSNAME-----X
-               -------------------------'
-IFILTITE EQU   *-IFILTITL
-*
-IFILLIST EQU   *
-         TN3270 (SBA,4,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,5,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,6,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,7,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,8,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,9,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,10,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,11,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,12,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,13,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,14,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,15,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,16,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,17,2)
-         DC    CL(IFILLEN-3)' '
-         TN3270 (SBA,18,2)
-         DC    CL(IFILLEN-3)' '
-IFILLSTL EQU   *-IFILLIST
-IFILMLEN DC    AL2(*-IFILTITL)
-*
 * I ENQ -- STRUCTURES
 *
 * RESOURCE----//---  LENGTH  USE COUNT  OWNER   -------WAITING-------
@@ -1174,40 +1301,23 @@ ITRNPRG2 DS    CL8                PROGRAM
 ITRNMSG2 DS    CL17               MESSAGE
 ITRNLEN2 EQU   *-ITRNDSC2
 *
-* I FIL -- DSECT OUTPUT
+* I FIL -- DSECT ON MAP STRUCTURE
 *
 IFILDSCT DSECT
-         DS    CL3                SBA
+IFILFLAG DS    X
 IFILFILE DS    CL8                FILENAME
+         DS    CL3
+IFILOPE  DS    CL4                OPE/CLO
+IFILENA  DS    CL4                ENA/DIS/UNE
+IFILREA  DS    CL4
+IFILUPD  DS    CL4
+IFILADD  DS    CL4
+IFILBRW  DS    CL4
+IFILDEL  DS    CL4
+IFILFXVR DS    CL4                FIX/VAR
+IFILDSN  DS    CL38               DSNAME
          DS    CL2
-IFILOPE  DS    CL3                OPE/CLO
-         DS    C
-IFILENA  DS    CL3                ENA/DIS/UNE
-         DS    C
-IFILREA  DS    CL3
-         DS    C
-IFILUPD  DS    CL3
-         DS    C
-IFILADD  DS    CL3
-         DS    C
-IFILBRO  DS    CL3
-         DS    C
-IFILDEL  DS    CL3
-         DS    C
-IFILFXVR DS    CL3                FIX/VAR
-         DS    CL2
-IFILDSN  DS    CL40               DSNAME
 IFILLEN  EQU   *-IFILDSCT
-*
-* I FIL -- REQUESTED DATA FORMAT
-*
-IFILDATA DSECT
-IFILDFLE DS    CL8                FILENAME
-IFILDSTA DS    X                  STATUS
-IFILDSRV DS    X                  SERVREQ
-IFILDFXV DS    X                  FIXED/VARIABLE
-IFILDDSN DS    CL40               DSNAME
-IFILDLEN EQU   *-IFILDATA
 *
 IENQDSCT DSECT
 IENQSBA  DS    CL3                SBA
@@ -1236,6 +1346,8 @@ IENQDLEN EQU   *-IENQDATA
          DFHFCTDS                 FILE CONTROL TABLE
          ACBD
 *
+         COPY  DFHAID
+         COPY  DFHBMSCA
          TN3270 SYMBOLS
          END
 

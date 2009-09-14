@@ -15,6 +15,7 @@ ICEXTOD  DS    XL8                EXPIRY TIME
 ICETRNID DS    CL4                TRANSACTION ID
 ICETRMID DS    CL4                TERMINAL ID
 ICEREQID DS    CL8                REQUEST ID
+ICERETVE DS    X                  FF=TS Q DATA WRITTEN
          DS    0D
 ICELEN   EQU   *-DFHICEDS
          MEND

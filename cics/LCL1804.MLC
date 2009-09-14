@@ -4,13 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL1804  SUBENTRY
+LCL1804  CSECT
 *
 * FN=1804  EXEC CICS SEND MAP
 *
 * R1  >>> P1804 BLOCK POINTER
-* R14 = RETURN ADDRESS
 *
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P1804,P1804END),R3
@@ -51,6 +52,10 @@ GOTMAP   EQU   *
          BH    INVMPSZ            ERROR IF NOT
          CLI   BMSML,24           MAP HEIGHT VALID ?
          BH    INVMPSZ            ERROR IF NOT
+         MVC   TCTTEMWH+1(1),BMSMW SET MAP WIDTH FOR ASSIGN
+         MVC   TCTTEMHT+1(1),BMSML SET MAP HEIGHT FOR ASSIGN
+         MVC   TCTTEMLN+1(1),BMSMSL SET MAP LINE FOR ASSIGN
+         MVC   TCTTEMCL+1(1),BMSMSC SET MAP COLUMN FOR ASSIGN
          L     R6,P1804OUT        R6=OUTPUT AREA
 * SET UP ESC,WRT
          MVI   0(R6),ESC          ESCAPE
@@ -493,7 +498,7 @@ NOTSEQ   EQU   *
          BE    RETURN             EXIT IF IT IS
          TPUT  (R1),(R6),FULLSCR  SEND TN3270 DATA STREAM
 RETURN   EQU   *
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 SAVEDATA DS    H
 *

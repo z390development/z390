@@ -7,6 +7,7 @@
 .* Date   - 03/12/09                                                 *
 .*********************************************************************
 .* 03/13/09 initial coding for use in GEN_MOVE/COMP/ADD/etc for Z to P   
+.* 08/03/09 RPI 1065 replace existing explicit length for source   
 .*********************************************************************
 .* PACK 1 TO 31 ZD FIELD INTO PD FIELD 
 .*********************************************************************
@@ -61,8 +62,14 @@
          AELSE
                :&I   SETA ('&SOURCE' INDEX '(')
                AIF   (&I GT 0)
-                     :&S_TEMP SETC '&SOURCE'(1,&I).'&SLEN,'.'&SOURCE'(&X
-               I+1,*)
+                     :&J SETA ('&SOURCE' INDEX ',')
+                     AIF (&J GT 0)     REPLACE EXPLICIT OFF(LEN,REG)
+                         :&S_TEMP SETC '&SOURCE'(1,&I).'&SLEN'.'&SOURCEX
+               '(&J,*)
+                     AELSE
+                         :&S_TEMP SETC '&SOURCE'(1,&I).'&SLEN,'.'&SOURCX
+               E'(&I+1,*)
+                     AEND
                AELSE
                      MNOTE 8,'ZC_PACK31 N(REG) FORMAT ERROR &SOURCE'
                      MEXIT

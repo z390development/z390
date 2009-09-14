@@ -8,9 +8,10 @@
 .*********************************************************************
 .* 01/14/09 initial code                                                 
 .*********************************************************************
-.* R2=V1,R3=V2   THESE MAY BE PASSED MULTIPLE TIMES TO GEN/ZC390LIB
-.* R14=V3,R15=V4 THESE MUST BE RESET FOR EACH CALL TO GEN
-.* R1,R14,R15 USED IN STANDARD LINKAGE FROM GEN TO ZC390LIB INSPECT.MLC
+.* ZC_R2=V1,ZC_R3=V2 THESE MAY BE PASSED MULTIPLE TIMES TO GEN/ZC390LIB
+.* ZC_R14=V3,ZC_R15=V4 THESE MUST BE RESET FOR EACH CALL TO GEN
+.* ZC_R1,ZC_R14,ZC_R15 USED IN STANDARD LINKAGE FROM GEN TO ZC390LIB
+.* INSPECT.MLC
 .*********************************************************************
          GEN_INSPECT &MTYPE           
          COPY  ZC_WS
@@ -42,16 +43,16 @@
          :&V1_IX SETA '&SYSLIST(4)'
          :&V2    SETC '&SYSLIST(5)'
          :&V2_IX SETA '&SYSLIST(6)'
-         LA    R1,ZCVT_WORKAREA
-         LA    R0,&V1
-         ST    R0,0(R1)                 P1=A(V1) INSPECT FIELD
-         MVHI  4(R1),&SYM_LEN(&V1_IX)   P2=L'V1  INSPECT FIELD LENGTH
-         LA    R0,&V2
-         ST    R0,8(R1)                 P3=A(V2) INSPECT V2            
-         MVHI  12(R1),&SYM_LEN(&V2_IX)  P4=L'V2  INSPECT L'V2
+         LA    ZC_R1,ZCVT_WORKAREA
+         LA    ZC_R0,&V1
+         ST    ZC_R0,0(ZC_R1)             P1=A(V1) INSPECT FIELD
+         MVHI  4(ZC_R1),&SYM_LEN(&V1_IX)  P2=L'V1  INSPECT FIELD LENGTH
+         LA    ZC_R0,&V2
+         ST    ZC_R0,8(ZC_R1)                 P3=A(V2) INSPECT V2            
+         MVHI  12(ZC_R1),&SYM_LEN(&V2_IX)  P4=L'V2  INSPECT L'V2
          :&STYPE_SDT SETC 'C'''.'&STYPE'(1,1).''''
-         LA    R0,&STYPE_SDT
-         ST    R0,16(R1)                P5= TALLYING SUBTYPE C'C/A/L'
+         LA    ZC_R0,&STYPE_SDT
+         ST    ZC_R0,16(ZC_R1)        P5= TALLYING SUBTYPE C'C/A/L'
          AIF   ('&STYPE' EQ 'CHARACTERS') ADD CHAR CNT MEETING TEST
                :&TEST_TYPE SETC '&SYSLIST(7)'
                :&TEST_VAR  SETC '&SYSLIST(8)'
@@ -60,26 +61,26 @@
          AELSE
                :&VAR_OFF SETA 20  P6/P7=V3/V3L
                :&VAR     SETC '&SYSLIST(7)'
-               :&VVAR_IX SETA &SYSLIST(8)
+               :&VAR_IX SETA &SYSLIST(8)
                ACALL GEN_VAR_PARM
                :&TEST_TYPE SETC '&SYSLIST(9)'
                :&TEST_VAR  SETC '&SYSLIST(10)'
                :&TEST_IX   SETA '&SYSLIST(11)'
                ACALL SET_TEST_PARMS
          AEND
-         LA    R0,ZCVT_TALLYING
-         L     R15,ZCVT_INSPECT
-         BASR  R14,R15
+         LA    ZC_R0,ZCVT_TALLYING
+         L     ZC_R15,ZCVT_INSPECT
+         BASR  ZC_R14,ZC_R15
          ACASE (C2A('&SYM_PIC_TYPE(&V2_IX)'))
          AWHEN C'F'
-         A     R0,&V2
-         ST    R0,&V2
+         A     ZC_R0,&V2
+         ST    ZC_R0,&V2
          AWHEN C'G'
-         AG    R0,&V2
-         STG   R0,&V2
+         AG    ZC_R0,&V2
+         STG   ZC_R0,&V2
          AWHEN C'H'
-         AH    R0,&V2
-         STH   R0,&V2
+         AH    ZC_R0,&V2
+         STH   ZC_R0,&V2
          AELSE
                MNOTE 8,'GEN_INSPECT INVALID TALLY VAR TYPE &SYM_PIC_TYPX
                E(&V2_IX)'
@@ -102,20 +103,20 @@
                :&V1_IX SETA '&SYSLIST(4)'
                :&V2    SETC '&SYSLIST(5)'
                :&V2_IX SETA '&SYSLIST(6)'
-         LA    R1,ZCVT_WORKAREA
-         LA    R0,&V1
-         ST    R0,0(R1)                 P1=A(V1) INSPECT FIELD
-         MVHI  4(R1),&SYM_LEN(&V1_IX)   P2=L'V1  INSPECT FIELD LENGTH
+         LA    ZC_R1,ZCVT_WORKAREA
+         LA    ZC_R0,&V1
+         ST    ZC_R0,0(ZC_R1)                 P1=A(V1) INSPECT FIELD
+         MVHI  4(ZC_R1),&SYM_LEN(&V1_IX) P2=L'V1 INSPECT FIELD LENGTH
                :&VAR_OFF SETA 8      P3/P4=V2/V2L
                :&VAR     SETC '&V2'
                :&VAR_IX  SETA &V2_IX
                ACALL GEN_VAR_PARM
                :&STYPE_SDT SETC 'C'''.'&STYPE'(1,1).''''
-         LA    R0,&STYPE_SDT
-         ST    R0,16(R1)                P5= REPLACING STYPE C'C/A/L/F'
+         LA    ZC_R0,&STYPE_SDT
+         ST    ZC_R0,16(ZC_R1)       P5= REPLACING STYPE C'C/A/L/F'
                :&VAR_OFF SETA 20  P6/P7=V3/V3L
                :&VAR     SETC '&SYSLIST(7)'
-               :&VVAR_IX SETA &SYSLIST(8)
+               :&VAR_IX SETA &SYSLIST(8)
                ACALL GEN_VAR_PARM
                AIF   ('&STYPE'(1,1) EQ 'C') REP CHARACTERS 
                     :&TEST_TYPE SETC '&SYSLIST(9)'
@@ -128,9 +129,9 @@
                     :&TEST_IX   SETA '&SYSLIST(11)'
                     ACALL SET_TEST_PARMS
                AEND
-         LA    R0,ZCVT_REPLACING
-         L     R15,ZCVT_INSPECT
-         BASR  R14,R15
+         LA    ZC_R0,ZCVT_REPLACING
+         L     ZC_R15,ZCVT_INSPECT
+         BASR  ZC_R14,ZC_R15
          AEND
 .*
 .* GEN CONVERTING
@@ -141,71 +142,71 @@
                :&V1_IX SETA '&SYSLIST(3)'
                :&V2    SETC '&SYSLIST(4)'
                :&V2_IX SETA '&SYSLIST(5)'
-         LA    R1,ZCVT_WORKAREA
-         LA    R0,&V1
-         ST    R0,0(R1)                 P1=A(V1) INSPECT FIELD
-         MVHI  4(R1),&SYM_LEN(&V1_IX)   P2=L'V1  INSPECT FIELD LENGTH
+         LA    ZC_R1,ZCVT_WORKAREA
+         LA    ZC_R0,&V1
+         ST    ZC_R0,0(ZC_R1)                 P1=A(V1) INSPECT FIELD
+         MVHI  4(ZC_R1),&SYM_LEN(&V1_IX) P2=L'V1  INSPECT FIELD LENGTH
                :&VAR_OFF SETA 8      P3/P4=V2/V2L
                :&VAR     SETC '&V2'
                :&VAR_IX  SETA &V2_IX
                ACALL GEN_VAR_PARM
                :&STYPE_SDT SETC 'C'''.'&STYPE'(1,1).''''
-         LA    R0,&STYPE_SDT
-         ST    R0,16(R1)                P5= REPLACING STYPE C'C/A/L/F'
+         LA    ZC_R0,&STYPE_SDT
+         ST    ZC_R0,16(ZC_R1)           P5= REPLACING STYPE C'C/A/L/F'
                :&VAR_OFF SETA 20  P6/P7=V3/V3L
                :&VAR     SETC '&SYSLIST(6)'
-               :&VVAR_IX SETA &SYSLIST(7)
+               :&VAR_IX SETA &SYSLIST(7)
                ACALL GEN_VAR_PARM
                :&TEST_TYPE SETC '&SYSLIST(8)'
                :&TEST_VAR  SETC '&SYSLIST(9)'
                :&TEST_IX   SETA '&SYSLIST(10)'
                ACALL SET_TEST_PARMS
-         LA    R0,ZCVT_CONVERTING
-         L     R15,ZCVT_INSPECT
-         BASR  R14,R15
+         LA    ZC_R0,ZCVT_CONVERTING
+         L     ZC_R15,ZCVT_INSPECT
+         BASR  ZC_R14,ZC_R15
          AEND
 .*
 .* SET TEST PARMS
 .*         
          AENTRY SET_TEST_PARMS
                AIF ('&TEST_TYPE' EQ 'AFTER')
-         MVI   16(R1),X'80'           P5=AFTER = NEG SIGN+STYPE
+         MVI   16(ZC_R1),X'80'           P5=AFTER = NEG SIGN+STYPE
                AEND
                AIF   (&TEST_IX GT 0) TESTVAR HAS CHARS
-         LA    R0,&TEST_VAR
-         ST    R0,28(R1)                  P8=A(TEST_VAR)
-         MVHI  32(R1),&SYM_LEN(&TEST_IX)  P9=LENGTH OF TEST_VAR
+         LA    ZC_R0,&TEST_VAR
+         ST    ZC_R0,28(ZC_R1)                  P8=A(TEST_VAR)
+         MVHI  32(ZC_R1),&SYM_LEN(&TEST_IX)  P9=LENGTH OF TEST_VAR
                AELSEIF ('&TEST_VAR' EQ '')
-         SR    R0,R0
-         ST    R0,28(R1)                  P8=A(TEST_VAR)
-         ST    R0,32(R1)                  P9=L'TEST_VAR   NO TEST
+         SR    ZC_R0,ZC_R0
+         ST    ZC_R0,28(ZC_R1)                  P8=A(TEST_VAR)
+         ST    ZC_R0,32(ZC_R1)                  P9=L'TEST_VAR   NO TEST
                AELSEIF ('&TEST_VAR'(1,1) EQ '''')
          :&LLIT SETA K'&TEST_VAR-2
          :&LLITE SETA (&LLIT+1)/2*2
-         LARL  R0,=CL&LLITE&TEST_VAR
-         ST    R0,28(R1)                  P8=A(TEST_VAR)
-         MVHI  32(R1),&LLIT               P9=LENGTH OF TEST_VAR
+         LARL  ZC_R0,=CL&LLITE&TEST_VAR
+         ST    ZC_R0,28(ZC_R1)                  P8=A(TEST_VAR)
+         MVHI  32(ZC_R1),&LLIT               P9=LENGTH OF TEST_VAR
                AELSEIF  ('&TEST_VAR' EQ 'ZERO'                         X
                          OR '&TEST_VAR' EQ 'ZEROS'                     X
                          OR '&TEST_VAR' EQ 'ZEROES')                          
-         LARL  R0,=CL2'0 '
-         ST    R0,28(R1)                  P8=A(TEST_VAR)
-         MVHI  32(R1),1                   P9=LENGTH OF TEST_VAR
+         LARL  ZC_R0,=CL2'0 '
+         ST    ZC_R0,28(ZC_R1)                  P8=A(TEST_VAR)
+         MVHI  32(ZC_R1),1                   P9=LENGTH OF TEST_VAR
                AELSEIF ('&TEST_VAR' EQ 'SPACES'                        X
                          OR '&TEST_VAR' EQ 'SPACE')
-         LARL  R0,=CL2'  '
-         ST    R0,28(R1)                  P8=A(TEST_VAR)
-         MVHI  32(R1),1                   P9=LENGTH OF TEST_VAR
+         LARL  ZC_R0,=CL2'  '
+         ST    ZC_R0,28(ZC_R1)                  P8=A(TEST_VAR)
+         MVHI  32(ZC_R1),1                   P9=LENGTH OF TEST_VAR
                AELSEIF ('&TEST_VAR' EQ 'HIGH_VALUES'                   X
                          OR '&TEST_VAR' EQ 'HIGH_VALUE')
-         LARL  R0,=XL2'FFFF'
-         ST    R0,28(R1)                  P8=A(TEST_VAR)
-         MVHI  32(R1),1                   P9=LENGTH OF TEST_VAR
+         LARL  ZC_R0,=XL2'FFFF'
+         ST    ZC_R0,28(ZC_R1)                  P8=A(TEST_VAR)
+         MVHI  32(ZC_R1),1                   P9=LENGTH OF TEST_VAR
                AELSEIF ('&TEST_VAR' EQ 'LOW_VALUES'                    X
                          OR '&TEST_VAR' EQ 'LOW_VALUE')
-         LARL  R0,=XL2'0000'
-         ST    R0,28(R1)                  P8=A(TEST_VAR)
-         MVHI  32(R1),1                   P9=LENGTH OF TEST_VAR
+         LARL  ZC_R0,=XL2'0000'
+         ST    ZC_R0,28(ZC_R1)                  P8=A(TEST_VAR)
+         MVHI  32(ZC_R1),1                   P9=LENGTH OF TEST_VAR
                AELSE
                     MNOTE 8,'GEN_INSPECT UNKNOWN LIT - &LIT'
                AEND
@@ -215,39 +216,39 @@
 .*
          AENTRY GEN_VAR_PARM
                AIF       ('&VAR' EQ '')
-         MVHI  &VAR_OFF.(R1),0   NO PARM
-         MVHI  &VAR_OFF+4(R1),0
+         MVHI  &VAR_OFF.(ZC_R1),0   NO PARM
+         MVHI  &VAR_OFF+4(ZC_R1),0
                AELSEIF   (&VAR_IX GT 0) VAR HAS CHARS
-         LA    R0,&VAR
-         ST    R0,&VAR_OFF.(R1)           
-         MVHI  &VAR_OFF+4(R1),&SYM_LEN(&VAR_IX)             
+         LA    ZC_R0,&VAR
+         ST    ZC_R0,&VAR_OFF.(ZC_R1)           
+         MVHI  &VAR_OFF+4(ZC_R1),&SYM_LEN(&VAR_IX)             
                AELSEIF ('&VAR'(1,1) EQ '''')
                  :&LLIT SETA K'&VAR-2
                  :&LLITE SETA (&LLIT+1)/2*2
-         LARL  R0,=CL&LLITE&VAR
-         ST    R0,&VAR_OFF.(R1)                  
-         MVHI  &VAR_OFF+4(R1),&LLIT              
+         LARL  ZC_R0,=CL&LLITE&VAR
+         ST    ZC_R0,&VAR_OFF.(ZC_R1)                  
+         MVHI  &VAR_OFF+4(ZC_R1),&LLIT              
                AELSEIF  ('&VAR' EQ 'ZERO'                              X
                          OR '&VAR' EQ 'ZEROS'                          X
                          OR '&VAR' EQ 'ZEROES')                          
-         LARL  R0,=CL2'0 '
-         ST    R0,&VAR_OFF.(R1)                  
-         MVHI  &VAR_OFF+4(R1),1                  
+         LARL  ZC_R0,=CL2'0 '
+         ST    ZC_R0,&VAR_OFF.(ZC_R1)                  
+         MVHI  &VAR_OFF+4(ZC_R1),1                  
                AELSEIF ('&VAR' EQ 'SPACES'                             X
                          OR '&VAR' EQ 'SPACE')
-         LARL  R0,=CL2'  '
-         ST    R0,&VAR_OFF.(R1)               
-         MVHI  &VAR_OFF+4(R1),1               
+         LARL  ZC_R0,=CL2'  '
+         ST    ZC_R0,&VAR_OFF.(ZC_R1)               
+         MVHI  &VAR_OFF+4(ZC_R1),1               
                AELSEIF ('&VAR' EQ 'HIGH_VALUES'                        X
                          OR '&VAR' EQ 'HIGH_VALUE')
-         LARL  R0,=XL2'FFFF'
-         ST    R0,&VAR_OFF.(R1)               
-         MVHI  &VAR_OFF+4(R1),1               
+         LARL  ZC_R0,=XL2'FFFF'
+         ST    ZC_R0,&VAR_OFF.(ZC_R1)               
+         MVHI  &VAR_OFF+4(ZC_R1),1               
                AELSEIF ('&VAR' EQ 'LOW_VALUES'                         X
                          OR '&VAR' EQ 'LOW_VALUE')
-         LARL  R0,=XL2'0000'
-         ST    R0,&VAR_OFF.(R1)               
-         MVHI  &VAR_OFF+4(R1),1               
+         LARL  ZC_R0,=XL2'0000'
+         ST    ZC_R0,&VAR_OFF.(ZC_R1)               
+         MVHI  &VAR_OFF+4(ZC_R1),1               
                AELSEIF ('&VAR'(1,2) EQ 'X''')
                     :&LHEX SETA K'&VAR-3
                     :&HEX  SETC '&VAR'(3,&LHEX)
@@ -259,9 +260,9 @@
                     AIF (&LHEX/2*2 NE &LHEX)
                         :&HEX SETC '&HEX.00' PAD WITH X'00'
                     AEND
-         LARL  R0,=X'&HEX'
-         ST    R0,&VAR_OFF.(R1)               
-         MVHI  &VAR_OFF+4(R1),&LHEX               
+         LARL  ZC_R0,=X'&HEX'
+         ST    ZC_R0,&VAR_OFF.(ZC_R1)               
+         MVHI  &VAR_OFF+4(ZC_R1),&LHEX               
                AELSE
                     MNOTE 8,'GEN_INSPECT UNKNOWN LIT - &VAR'
                AEND

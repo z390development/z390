@@ -1,5 +1,7 @@
-rem exec execute 390 load module
 echo off
+if %1 == tron ECHO ON
+if %1 == tron shift
+rem exec execute 390 load module
 if exist %1.log erase %1.log
 if exist %1.err erase %1.err
 if exist %1.sta erase %1.sta

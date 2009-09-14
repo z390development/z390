@@ -22,5 +22,7 @@
                MNOTE 8,'GEN WRITE RECORD NOT A FILE RECORD - &RECORD'
                MEXIT
          AEND
-         PUT   &FILE_NAME(&FILE_IX),&RECORD
+         LAY   ZC_R2,&FILE_NAME(&FILE_IX)
+         LAY   ZC_R3,&RECORD
+         PUT   (ZC_R2),(ZC_R3)
          MEND

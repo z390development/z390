@@ -4,12 +4,14 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL1206  SUBENTRY
+LCL1206  CSECT
 *
 * FN=1206  EXEC CICS DEQ
 *
 * R1  >>> P1206 BLOCK POINTER
-* R14 = RETURN ADDRESS
+*
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P1206,P1206END),R3
@@ -89,7 +91,7 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 P1206    DSECT
 P1206FN  DS    XL2                FUNCTION CODE

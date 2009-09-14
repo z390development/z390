@@ -4,12 +4,11 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-LCL1802  SUBENTRY
+LCL1802  CSECT
 *
 * FN=1802  EXEC CICS RECEIVE MAP
 *
 * R1  >>> P1802 BLOCK POINTER
-* R14 = RETURN ADDRESS
 *
 * THE DATA STREAM IS ALWAYS INITBUFF (CL2000) FROM TCTTEDA
 * FROM()/LENGTH() ARE NOT IMPLEMENTED
@@ -21,6 +20,8 @@ LCL1802  SUBENTRY
 * TO DUMP THE STRUCTURE AFTER INPUT MAPPING
 * UNCOMMENT THE 4 INSTRUCTIONS AFTER LABEL RETURN
 *
+         USING *,R13
+         LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
          USING (P1802,P1802END),R3
@@ -68,6 +69,10 @@ NOCLEAR  EQU   *
          BH    INVMPSZ            ERROR IF NOT
          CLI   BMSML,24           MAP HEIGHT VALID ?
          BH    INVMPSZ            ERROR IF NOT
+         MVC   TCTTEMWH+1(1),BMSMW SET MAP WIDTH FOR ASSIGN
+         MVC   TCTTEMHT+1(1),BMSML SET MAP HEIGHT FOR ASSIGN
+         MVC   TCTTEMLN+1(1),BMSMSL SET MAP LINE FOR ASSIGN
+         MVC   TCTTEMCL+1(1),BMSMSC SET MAP COLUMN FOR ASSIGN
 * TEST FOR SHORT READ, CANNOT MAP
          CLI   EIBAID,DFHCLEAR    CLEAR ?
          BE    MAPFAIL2           EXIT IF IT IS
@@ -351,7 +356,7 @@ RETURN   EQU   *
 ******** LR    R15,R14            R15=MAP STRUCTURE ADDRESS
 ******** AH    R15,P1802DSL                                +LENGTH
 ******** SNAP  STORAGE=((R14),(R15)),ID=1
-         SUBEXIT
+         PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 * SUBROUTINES
 *

@@ -8,6 +8,8 @@
 .*********************************************************************
 .* 04/15/08 initial coding for global PERFORM  
 .* 11/28/08 add formats 1-4 see TESTPM1.CBL
+.* 07/09/09 RPI correct BY for negative increments
+.* 08/04/09 RPI RPI support qualified PG names within section
 .*********************************************************************
          PERFORM                          
          COPY  ZC_WS
@@ -52,16 +54,30 @@
 .* FORMAT 3A PERFORM PG1 [THRU PG2] [VARYING ..] END-PERFORM/. 
 .*
          AENTRY FORMAT_1A_2A_3A_4A
-         :&I   SETA &I+1
+         :&PG_NAME1 SETC '&SYSLIST(&I)' RPI 1065 SN/PG SUPPORT
+         :&I        SETA &I+1
+         AIF   ('&SYSLIST(&I)' EQ 'OF' OR '&SYSLIST(&I)' EQ 'IN')
+               :&SN_NAME1 SETC '&SYSLIST(&I+1)'
+               :&I SETA &I+2
+         AELSE
+               :&SN_NAME1 SETC '' 
+         AEND
          AIF   ('&SYSLIST(&I)' EQ 'THRU'                               X
                 OR '&SYSLIST(&I)' EQ 'THROUGH')      
-               :&PG_EXIT SETC  'END_&SYSLIST(&I+1)'
+               :&PG_NAME2 SETC  '&SYSLIST(&I+1)'
                :&I SETA  &I+2
+               AIF  ('&SYSLIST(&I)' EQ 'OF' OR '&SYSLIST(&I)' EQ 'IN')
+                    :&SN_NAME2 SETC '&SYSLIST(&I+1)'
+                    :&I SETA &I+2
+               AELSE
+                    :&SN_NAME2 SETC '&SN_NAME1' 
+               AEND
          AELSE
-               :&PG_EXIT SETC  'END_&SYSLIST(1)'
+               :&PG_NAME2 SETC '&PG_NAME1._END'
+               :&SN_NAME2 SETC '&SN_NAME1' 
          AEND
          :&IF_PARM SETC  ''
-         AIF   (&I LE &NP)     DSHX WAS LT
+         AIF   (&I LE &NP)     
                AIF   ('&SYSLIST(&I)' EQ 'WITH'                         X
                AND '&SYSLIST(&I+1)' EQ 'TEST')
                     AIF  ('&SYSLIST(&I+2)' EQ 'BEFORE')
@@ -92,7 +108,7 @@
 .* FORMAT 1A PERFORM PG1 [THRU PG2] END-PERFORM/. 
 .*
          AENTRY FORMAT_1A
-         GEN_PERFORM &SYSLIST(1),&PG_EXIT  
+         GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME2,&SN_NAME2  
          AEND
 .*
 .* FORMAT 1B PERFORM statement END-PERFORM. 
@@ -112,7 +128,7 @@
                GEN_B PM_&PM_LAB._E
          END_IF
          GEN_LABEL   PM_&PM_LAB._P,PERFORM
-         GEN_PERFORM &SYSLIST(1),&PG_EXIT  
+         GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME1,&SN_NAME2  
          SUBTRACT 1,FROM,&SYM_NAME(&VAR_IX)
          GEN_B PM_&PM_LAB._T
          GEN_LABEL PM_&PM_LAB._E,PERFORM_END
@@ -142,7 +158,7 @@
          IF    &IF_PARM
                GEN_B PM_&PM_LAB._E
          END_IF
-         GEN_PERFORM &SYSLIST(1),&PG_EXIT  
+         GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME2,&SN_NAME2  
          AIF   ('&IF_PARM' NE '')      
                GEN_B PM_&PM_LAB._T
                GEN_LABEL PM_&PM_LAB._E,PERFORM_END
@@ -172,12 +188,12 @@
                IF  &IF_PARM
                    GEN_B PM_&PM_LAB._E
                END_IF
-               GEN_PERFORM &SYSLIST(1),&PG_EXIT  
+               GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME1,&SN_NAME2  
                ADD &BY,TO,&VAR
                GEN_B PM_&PM_LAB._T
          AELSE
                GEN_LABEL PM_&PM_LAB._P,PERFORM_TEST
-               GEN_PERFORM &SYSLIST(1),&PG_EXIT  
+               GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME2,&SN_NAME2  
                IF  &IF_PARM
                    GEN_B PM_&PM_LAB._E
                END_IF
@@ -226,7 +242,7 @@
          :&I    SETA &I+3
          :&FROM SETC '&SYSLIST(&I)'
          AIF   ('&FROM' EQ '+' OR '&FROM' EQ '-')
-               :&FROM SETC '&BY&SYSLIST(&I+1)
+               :&FROM SETC '&SYSLIST(&I)&SYSLIST(&I+1)' RPI 1065
                :&I SETA &I+1
          AEND
          :&I SETA &I+1
@@ -237,8 +253,8 @@
          :&I   SETA &I+1
          :&BY  SETC '&SYSLIST(&I)'
          AIF   ('&BY' EQ '+' OR '&BY' EQ '-')
-               :&BY SETC '&BY&SYSLIST(&I+1)'
-               :&I SETA &I+1
+               :&BY SETC '&BY&SYSLIST(&I+1)'   
+               :&I SETA &I+1                   
          AEND
          :&I SETA &I+1
          AIF   ('&SYSLIST(&I)' NE 'UNTIL')

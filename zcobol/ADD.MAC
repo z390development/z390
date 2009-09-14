@@ -10,6 +10,7 @@
 .* 12/22/08 use ZCGETFLD to get field with qual,base,subscript
 .* 02/15/09 support mult s1 added to s2 or mult s1+s2 added to s3
 .* 02/26/09 RPI 1012 move onsize end-add pending to add                
+.* 08/09/09 RPI 1065 add ACTR for mult operands                        
 .*********************************************************************
          ADD   
          COPY  ZC_WS
@@ -21,13 +22,14 @@
          :&ONSIZE    SETB 0
          :&LAST_PARM SETA 0
          AWHILE (&PARM_IX LT &NP)
+               ACTR 10000
                AIF ('&SYSLIST(&PARM_IX)' EQ 'TO')
                    :&TO_IX SETA &PARM_IX
                AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'GIVING')
                    :&GIVING_IX SETA &PARM_IX
                AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'ROUNDED')
                    :&ROUNDED SETB 1
-                   AIF (&LAST_PARM SETA EQ 0)
+                   AIF (&LAST_PARM EQ 0)
                        :&LAST_PARM SETA &PARM_IX-1
                    AEND
                AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'ON'                   X
@@ -132,12 +134,16 @@
                :&S1_OK SETB 0
                AEXIT AENTRY
          AEND
-         :&FIELD_REG SETC 'R1'         S1 IN R1
+         :&FIELD_REG SETC 'ZC_R1'         S1 IN ZC_R1
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          :&S1_PARM_IX SETA &PARM_IX
          :&S1    SETC  '&FIELD_NAME'
          :&S1_IX SETA  &FIELD_IX
+         AIF   ('&S1' EQ '')
+               MNOTE 8,'ADD FIELD1 NOT FOUND'
+               MEXIT
+         AEND
          AEND
 .*
 .* GET S2
@@ -148,12 +154,16 @@
              :&S2_OK SETB 0
              AEXIT AENTRY
          AEND
-         :&FIELD_REG SETC 'R2'               S2 IN R2
+         :&FIELD_REG SETC 'ZC_R2'               S2 IN ZC_R2
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          :&S2_PARM_IX SETA &PARM_IX
          :&S2 SETC '&FIELD_NAME'
          :&S2_IX SETA  &FIELD_IX
+         AIF   ('&S2' EQ '')
+               MNOTE 8,'ADD FIELD2 NOT FOUND'
+               MEXIT
+         AEND
          AEND
 .*
 .* GET S3
@@ -164,12 +174,16 @@
              :&S3_OK SETB 0
              AEXIT AENTRY
          AEND
-         :&FIELD_REG SETC 'R3'            S3 IN R3
+         :&FIELD_REG SETC 'ZC_R3'            S3 IN ZC_R3
          :&FIELD_SS1 SETB 0
          ACALL GET_PARM_FIELD
          :&S3_PARM_IX SETA &PARM_IX
          :&S3 SETC '&FIELD_NAME'
          :&S3_IX SETA  &FIELD_IX
+         AIF   ('&S3' EQ '')
+               MNOTE 8,'ADD FIELD3 NOT FOUND'
+               MEXIT
+         AEND
          AEND
          COPY ZCGETFLD
          MEND

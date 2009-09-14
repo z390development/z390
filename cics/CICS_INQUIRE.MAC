@@ -1,0 +1,344 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_INQUIRE
+.* LOGGING/JOURNALLING NOT INCLUDED
+.* FORMATS
+.*   INQUIRE FILE START
+.*   INQUIRE FILE START AT()
+.*   INQUIRE FILE() NEXT ...
+.*   INQUIRE FILE END
+.*   INQUIRE FILE() ...
+         GBLB  &PARMS_4C02
+         LCLB  &START,&NEXT,&END,&FILETYP,&NOHAND
+         LCLC  &TYPE,&ACCMETH,&ADD,&AT,&BSNAME,&BROWSE,&DELETE,&DSNAME
+         LCLC  &ENASTAT,&FILE,&KLENGTH,&KEYPOS,&OBJECT,&OPESTAT
+         LCLC  &READ,&RECFORM,&RECSIZE,&TYPE,&UPDATE
+         LCLC  &RESP,&RESP2
+&INQTYPE SETC  '&SYSLIST(1)'
+         AIF   ('&INQTYPE'(1,4) EQ 'FILE').INQFILE
+         MNOTE 12,'INQUIRE TYPE NOT RECOGNIZED'
+         MEXIT
+.*
+.INQFILE ANOP
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,5)  EQ 'START').START
+         AIF   ('&PARM'(1,4)  EQ 'NEXT').NEXT
+         AIF   ('&PARM'(1,3)  EQ 'END').END
+         AIF   ('&PARM'(1,13) EQ 'ACCESSMETHOD(').ACCMETH
+         AIF   ('&PARM'(1,4)  EQ 'ADD(').ADD
+         AIF   ('&PARM'(1,3)  EQ 'AT(').AT
+         AIF   ('&PARM'(1,11) EQ 'BASEDSNAME(').BSNAME
+         AIF   ('&PARM'(1,7)  EQ 'BROWSE(').BROWSE
+         AIF   ('&PARM'(1,7)  EQ 'DELETE(').DELETE
+         AIF   ('&PARM'(1,7)  EQ 'DSNAME(').DSNAME
+         AIF   ('&PARM'(1,13) EQ 'ENABLESTATUS(').ENASTAT
+         AIF   ('&PARM'(1,5)  EQ 'FILE(').FILE
+         AIF   ('&PARM'(1,4)  EQ 'FILE').FILETYP
+         AIF   ('&PARM'(1,10) EQ 'KEYLENGTH(').KLENGTH
+         AIF   ('&PARM'(1,12) EQ 'KEYPOSITION(').KEYPOS
+         AIF   ('&PARM'(1,7)  EQ 'OBJECT(').OBJECT
+         AIF   ('&PARM'(1,11) EQ 'OPENSTATUS(').OPESTAT
+         AIF   ('&PARM'(1,5)  EQ 'READ(').READ
+         AIF   ('&PARM'(1,13) EQ 'RECORDFORMAT(').RECFORM
+         AIF   ('&PARM'(1,11) EQ 'RECORDSIZE(').RECSIZE
+         AIF   ('&PARM'(1,5)  EQ 'TYPE(').TYPE
+         AIF   ('&PARM'(1,7)  EQ 'UPDATE(').UPDATE
+         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.START   ANOP
+&START   SETB  1
+         AGO   .PLOOP
+.*
+.NEXT    ANOP
+&NEXT    SETB  1
+         AGO   .PLOOP
+.*
+.END     ANOP
+&END     SETB  1
+         AGO   .PLOOP
+.*
+.ACCMETH ANOP
+&ACCMETH SETC  '&PARM'(14,K'&PARM-14)
+         AGO   .PLOOP
+.*
+.ADD     ANOP
+&ADD     SETC  '&PARM'(5,K'&PARM-5)
+         AGO   .PLOOP
+.*
+.AT      ANOP
+&AT      SETC  '&PARM'(4,K'&PARM-4)
+         AGO   .PLOOP
+.*
+.BSNAME  ANOP
+&BSNAME  SETC  '&PARM'(12,K'&PARM-12)
+         AGO   .PLOOP
+.*
+.BROWSE  ANOP
+&BROWSE  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.DELETE  ANOP
+&DELETE  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.DSNAME  ANOP
+&DSNAME  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.ENASTAT ANOP
+&ENASTAT SETC  '&PARM'(14,K'&PARM-14)
+         AGO   .PLOOP
+.*
+.FILE    ANOP
+&FILE    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.FILETYP ANOP
+&FILETYP SETB  1
+         AGO   .PLOOP
+.*
+.KLENGTH ANOP
+&KLENGTH SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.KEYPOS  ANOP
+&KEYPOS  SETC  '&PARM'(13,K'&PARM-13)
+         AGO   .PLOOP
+.*
+.OBJECT  ANOP
+&OBJECT  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.OPESTAT ANOP
+&OPESTAT SETC  '&PARM'(12,K'&PARM-12)
+         AGO   .PLOOP
+.*
+.READ    ANOP
+&READ    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.RECFORM ANOP
+&RECFORM SETC  '&PARM'(14,K'&PARM-14)
+         AGO   .PLOOP
+.*
+.RECSIZE ANOP
+&RECSIZE SETC  '&PARM'(12,K'&PARM-12)
+         AGO   .PLOOP
+.*
+.TYPE    ANOP
+&TYPE    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.UPDATE  ANOP
+&UPDATE  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   (&START AND &NEXT).STRTNXT
+         AIF   (&START AND &END).STRTEND
+         AIF   (&NEXT AND &END).NEXTEND
+         AIF   (&START AND (NOT &FILETYP)).BADSFTP
+         AIF   (&END AND (NOT &FILETYP)).BADEFTP
+         AIF   ('&AT' NE '' AND (NOT &START)).ATNOSTR
+         AIF   (NOT (&START OR &END) AND '&FILE' EQ '').MISSFLE
+         AIF   (&NEXT AND '&FILE' EQ '').MISSFLE
+         AIF   (&NEXT AND '&FILE'(1,1) EQ '''').FILLABL
+.*
+         GEN_XC P4C02,P4C02END-P4C02,P4C02 CLEAR PARMS
+         GEN_MVC P4C02FN,,=X'4C02' SET FUNCTION CODE
+         AIF   (NOT &START).NOSTART
+         GEN_MVI P4C02STR,X'FF'   SET START
+.NOSTART ANOP
+         AIF   (NOT &NEXT).NONEXT
+         GEN_MVI P4C02NXT,X'FF'   SET NEXT
+.NONEXT  ANOP
+         AIF   (NOT &END).NOEND
+         GEN_MVI P4C02ND,X'FF'    SET END
+.NOEND   ANOP
+         AIF   ('&FILE' EQ '').DOACC
+         AIF   ('&FILE'(1,1) EQ '''').FLSTRING
+.* WHEN NEXT IS SPECIFIED FILE() IS AN OUTPUT AREA
+         AIF   (NOT &NEXT)
+         LARL  R15,P4C02FIL       ADDRESS TARGET
+         MVC   0(8,R15),&FILE     SET FILE NAME FROM LABEL
+         AELSE
+         LA    R15,&FILE          ADDRESS OF FILE LABEL
+         ST    R15,P4C02FIL       SET ADDRESS OF FILE
+         AEND
+         AGO   .DOACC
+.*
+.FLSTRING ANOP
+&FLLEN   SETA  K'&FILE
+         AIF   (&FLLEN GT 10).BADFILE
+         GEN_MVC P4C02FIL,,=CL8&FILE SET FILE NAME AS STRING
+.DOACC   ANOP
+         AIF   ('&ACCMETH' EQ '').DOADD
+         LARL  R0,&ACCMETH        CVDA ADDRESS
+         GEN_ST R0,P4C02ACC       SAVE IT
+.DOADD   ANOP
+         AIF   ('&ADD' EQ '').DOAT
+         LARL  R0,&ADD            CVDA ADDRESS
+         GEN_ST R0,P4C02ADD       SAVE IT
+.DOAT    ANOP
+         AIF   ('&AT' EQ '').DOBSN
+         AIF   ('&AT'(1,1) EQ '''').ATSTRING
+         LARL  R15,P4C02AT        ADDRESS TARGET
+         MVC   0(8,R15),&AT       SET AT NAME FROM LABEL
+         AGO   .DOBSN
+.*
+.ATSTRING ANOP
+&ATLEN   SETA  K'&AT
+         AIF   (&ATLEN GT 10).BADAT
+         GEN_MVC P4C02AT,,=CL8&AT SET AT NAME AS STRING
+.DOBSN   ANOP
+         AIF   ('&BSNAME' EQ '').DOBRWSE
+         LA    R0,&BSNAME         BASEDSNAME ADDRESS
+         GEN_ST R0,P4C02BSN       SAVE IT
+         LA    R0,L'&BSNAME       BASEDSNAME LENGTH
+         GEN_ST R0,P4C02BLN       SAVE IT
+.DOBRWSE ANOP
+         AIF   ('&BROWSE' EQ '').DODEL
+         LARL  R0,&BROWSE         CVDA ADDRESS
+         GEN_ST R0,P4C02BRW       SAVE IT
+.DODEL   ANOP
+         AIF   ('&DELETE' EQ '').DODSN
+         LARL  R0,&DELETE         CVDA ADDRESS
+         GEN_ST R0,P4C02DEL       SAVE IT
+.DODSN   ANOP
+         AIF   ('&DSNAME' EQ '').DOENA
+         LA    R0,&DSNAME         DSNAME ADDRESS
+         GEN_ST R0,P4C02DSN       SAVE IT
+         LA    R0,L'&DSNAME       DSNAME LENGTH
+         GEN_ST R0,P4C02DLN       SAVE IT
+.DOENA   ANOP
+         AIF   ('&ENASTAT' EQ '').DOKL
+         LARL  R0,&ENASTAT        CVDA ADDRESS
+         GEN_ST R0,P4C02ENA       SAVE IT
+.DOKL    ANOP
+         AIF   ('&KLENGTH' EQ '').DOKP
+         LARL  R0,&KLENGTH        KEYLENGTH ADDRESS
+         GEN_ST R0,P4C02KL        SAVE IT
+.DOKP    ANOP
+         AIF   ('&KEYPOS' EQ '').DOOBJ
+         LARL  R0,&KEYPOS         KEYPOSITION ADDRESS
+         GEN_ST R0,P4C02KP        SAVE IT
+.DOOBJ   ANOP
+         AIF   ('&OBJECT' EQ '').DOOPE
+         LARL  R0,&OBJECT         CVDA OBJECT
+         GEN_ST R0,P4C02OBJ       SAVE IT
+.DOOPE   ANOP
+         AIF   ('&OPESTAT' EQ '').DOREAD
+         LARL  R0,&OPESTAT        CVDA OBJECT
+         GEN_ST R0,P4C02OPE       SAVE IT
+.DOREAD  ANOP
+         AIF   ('&READ' EQ '').DORECFM
+         LARL  R0,&READ           CVDA OBJECT
+         GEN_ST R0,P4C02RD        SAVE IT
+.DORECFM ANOP
+         AIF   ('&RECFORM' EQ '').DORECSZ
+         LARL  R0,&RECFORM        CVDA OBJECT
+         GEN_ST R0,P4C02RCF       SAVE IT
+.DORECSZ ANOP
+         AIF   ('&RECSIZE' EQ '').DOTYPE
+         LARL  R0,&RECSIZE        CVDA OBJECT
+         GEN_ST R0,P4C02RCS       SAVE IT
+.DOTYPE  ANOP
+         AIF   ('&TYPE' EQ '').DOUPD
+         LARL  R0,&TYPE           CVDA OBJECT
+         GEN_ST R0,P4C02TYP       SAVE IT
+.DOUPD   ANOP
+         AIF   ('&UPDATE' EQ '').ALLDUN
+         LARL  R0,&UPDATE         CVDA OBJECT
+         GEN_ST R0,P4C02UPD       SAVE IT
+.ALLDUN  ANOP
+         GEN_ST DFHEIBR,P4C02EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P4C02TCT  SET TCTTE ADDRESS
+         AIF   (NOT &NOHAND).DUNNOH
+         GEN_MVI P4C02NOH,X'FF'   SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P4C02RSP       SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P4C02RS2       SAVE IT
+.NORESP2 ANOP
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P4C02)       R1=LCL MODULE PARAMETER LIST
+         BAKR  0,R15              STACK REGS AND GO
+.*
+         GEN_CLI P4C02NOH,X'FF'   NOHANDLE ?
+         JE    P4C02BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         JZ    P4C02BYP_&SYSNDX   EXIT IF NONE
+* END, FILENOTFOUND, ILLOGIC
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P4C02BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_4C02).BYP4C02
+&PARMS_4C02 SETB 1
+         P4C02
+*
+.BYP4C02 ANOP
+P4C02BYP_&SYSNDX DS 0H
+         MEXIT
+.*
+.STRTNXT MNOTE 12,'START AND NEXT ARE SPECIFIED'
+         MEXIT
+.*
+.STRTEND MNOTE 12,'START AND END ARE SPECIFIED'
+         MEXIT
+.*
+.NEXTEND MNOTE 12,'NEXT AND END ARE SPECIFIED'
+         MEXIT
+.*
+.BADSFTP MNOTE 12,'FILE DOES NOT PRECEDE START'
+         MEXIT
+.*
+.BADEFTP MNOTE 12,'FILE DOES NOT PRECEDE END'
+         MEXIT
+.*
+.BADFILE MNOTE 12,'INVALID FILE()'
+         MEXIT
+.*
+.BADAT   MNOTE 12,'INVALID AT()'
+         MEXIT
+.*
+.ATNOSTR MNOTE 12,'AT() IS SPECIFIED WITHOUT START'
+         MEXIT
+.*
+.MISSFLE MNOTE 12,'FILE() IS MISSING'
+         MEXIT
+.*
+.FILELBL MNOTE 12,'FILE() CANNOT BE A STRING WHEN NEXT IS SPECIFIED'
+         MEXIT
+         MEND
+

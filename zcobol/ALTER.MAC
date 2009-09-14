@@ -13,24 +13,40 @@
 .* PLEASE REPLACE USE OF ALTER WITH EVALUATE WHEN STRUCTURE.
 .*********************************************************************
          ALTER
-&OLD_GO_TO SETC  '&SYSLIST(1)'
-&NP      SETA  N'&SYSLIST
-         AIF   (&NP EQ 3)
-               AIF ('&SYSLIST(2)' EQ 'TO')
-                   :&NEW_GO_TO SETC  '&SYSLIST(3)'
+         :&NP      SETA  N'&SYSLIST
+         :&PARM_IX SETA 1
+         AWHILE (&PARM_IX LE &NP-2)
+               :&PG_OLD SETC  '&SYSLIST(&PARM_IX)'
+               AIF ('&SYSLIST(&PARM_IX+1)' EQ 'OF'                     X
+                    OR '&SYSLIST(&PARM_IX+1)' EQ 'IN')
+                   :&SN_OLD SETC '&SYSLIST(&PARM_IX+2)'
+                   :&PARM_IX SETA &PARM_IX+2
+               AELSE 
+                   :&SN_OLD SETC ''
+               AEND
+               AIF ('&SYSLIST(&PARM_IX+1)' EQ 'TO')
+                   AIF ('&SYSLIST(&PARM_IX+2)' EQ 'PROCEED'            X         
+                        AND '&SYSLIST(&PARM_IX+3)' EQ 'TO')
+                        :&PARM_IX SETA &PARM_IX+5
+                   AELSE
+                        :&PARM_IX SETA &PARM_IX+3
+                   AEND
+                   :&PG_NEW SETC  '&SYSLIST(&PARM_IX-1)'
+                   AIF ('&SYSLIST(&PARM_IX+1)' EQ 'OF'                 X
+                        OR '&SYSLIST(&PARM_IX+1)' EQ 'IN')
+                       :&SN_NEW SETC '&SYSLIST(&PARM_IX+2)'
+                       :&PARM_IX SETA &PARM_IX+2
+                   AELSE 
+                       :&SN_NEW SETC ''
+                   AEND
                AELSE
                    MNOTE 8,'ALTER TO NOT FOUND'
                    MEXIT
                AEND
-         AELSEIF (&NP EQ 5)
-               AIF ('&SYSLIST(3)' EQ 'PROCEED'                         X
-                   AND '&SYSLIST(4)' EQ 'TO')
-                   :&NEW_GO_TO SETC  '&SYSLIST(5)'
-               AELSE
-                   MNOTE 8,'ALTER TO PROCED TO NOT FOUND'
-                   MEXIT
-               AEND
+               GEN_ALTER &PG_OLD,&SN_OLD,&PG_NEW,&SN_NEW
+         AEND   
+         AIF   (&PARM_IX NE &NP+1)
+               MNOTE 8,'ALTER TO OR TO PROCEED TO PARAMETER ERROR'
+               MEXIT
          AEND
-         GEN_ALTER &OLD_GO_TO,&NEW_GO_TO
-         MEXIT
          MEND

@@ -1,0 +1,68 @@
+         MACRO
+         #WPARMS &DSECT=YES
+*---------------------------------------------------------------------*
+* WORK AREAS                                                          *
+*---------------------------------------------------------------------*
+.DG0     AIF   ('&DSECT' NE 'YES').DEND
+GWA      DSECT -                     PARAMETER WORK AREA
+.DEND    ANOP
+GWA0     DS    0D -                  START VARIABLES
+TRACKL   DS    A                     TRACKER STRING LENGTH
+TRACKP   DS    A                     TRACKER STRING ADDRESS
+ROUTEL   DS    A                     ROUTER STRING LENGTH
+ROUTEP   DS    A                     ROUTER STRING ADDRESS
+REPLYL   DS    A                     REPLY STRING LENGTH
+REPLYP   DS    A                     REPLY STRING ADDRESS
+RCODE    DS    A                     API RETURN CODE
+IFLAGS1  DS    0A                    INTERNAL PROCESSING FLAGS
+IF1SHM   DS    C                     '1' = SHOW INTERMEDIATES
+IF1STG   DS    C                     '1' = SHOW TABLE GENERATION
+LROUTE   DS    D                     64-BIT ZIPCODE VALUE
+LFCS     DS    A                     FRAME CHECK SEQUENCE VALUE
+LCOUNT   DS    2A                    COUNT/REVERSE_COUNT FIELDS
+BYTARRAY DS    XL13                  ZIPCODE BYTE ARRAY
+CWARRAY  DS    0D,(10*RCL)X          CODE WORD ARRAY
+CHARRAY  DS    0D,(10*RCL)X          CHARACTER ARRAY
+         DS    0D -                  ALIGN ON DOUBLEWORD BOUNDARY
+GWL      EQU   *-GWA0                WORK AREA SIZE
+         EJECT
+*---------------------------------------------------------------------*
+* DSECTS                                                              *
+*---------------------------------------------------------------------*
+         SPACE 2
+IOA      DSECT -                     I/O WORK AREA
+DEBUGLOG DS    0D,128X               ROOM FOR PRINT DCB
+DMSG     DS    CL133                 MESSAGE TEXT AREA
+OPENPL   DS    A                     ROOM FOR PRINT DCB
+         DS    0D -                  ALIGN ON DOUBLEWORD BOUNDARY
+IOL      EQU   *-IOA                 STRUCTURE LENGTH
+         SPACE 2
+RECTYPE  DSECT -                     BASE/NUMERIC STRUCTURE
+RTBASE   DS    A                     BASE VALUE
+RTNUMBER DS    A                     ASSIGNED NUMERIC VALUE
+         DS    0D -                  ALIGN ON DOUBLEWORD BOUNDARY
+RCL      EQU   *-RECTYPE             STRUCTURE LENGTH
+         EJECT
+*---------------------------------------------------------------------*
+* API RETURN CODES                                                    *
+*---------------------------------------------------------------------*
+USPS_FSB_ENCODER_API_SUCCESS                         EQU  0
+USPS_FSB_ENCODER_API_SELFTEST_FAILED                 EQU  1
+USPS_FSB_ENCODER_API_BAR_STRING_IS_NULL              EQU  2
+USPS_FSB_ENCODER_API_BYTE_CONVERSION_FAILED          EQU  3
+USPS_FSB_ENCODER_API_RETRIEVE_TABLE_FAILED           EQU  4
+USPS_FSB_ENCODER_API_CODEWORD_CONVERSION_FAILED      EQU  5
+USPS_FSB_ENCODER_API_CHARACTER_RANGE_ERROR           EQU  6
+USPS_FSB_ENCODER_API_TRACK_STRING_IS_NULL            EQU  7
+USPS_FSB_ENCODER_API_ROUTE_STRING_IS_NULL            EQU  8
+USPS_FSB_ENCODER_API_TRACK_STRING_BAD_LENGTH         EQU  9
+USPS_FSB_ENCODER_API_TRACK_STRING_HAS_INVALID_DATA   EQU 10
+USPS_FSB_ENCODER_API_TRACK_STRING_HAS_INVALID_DIGIT2 EQU 11
+USPS_FSB_ENCODER_API_ROUTE_STRING_BAD_LENGTH         EQU 12
+USPS_FSB_ENCODER_API_ROUTE_STRING_HAS_INVALID_DATA   EQU 13
+*---------------------------------------------------------------------*
+* CONSTANTS                                                           *
+*---------------------------------------------------------------------*
+TABLE_2_OF_13_SIZE                                   EQU 78
+TABLE_5_OF_13_SIZE                                   EQU 1287
+         MEND

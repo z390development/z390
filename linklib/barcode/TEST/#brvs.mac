@@ -1,0 +1,11 @@
+         MACRO
+&NAME    #BRVS &MASKID
+         LCLC  &MASK,&RMASK
+&MASK    SETC  'MASK'.'&MASKID'
+&RMASK   SETC  'REVR'.'&MASKID'
+&NAME    LR    R0,R5                    XFER COUNT
+         N     R0,&MASK                 ISOLATE DESIRED BIT
+         LTR   R0,R0                    BIT ON?
+         BZ    *+8                       NO - BYPASS
+         O     R6,&RMASK                REVERSE BIT POSITION
+         MEND

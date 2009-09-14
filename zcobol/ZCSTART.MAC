@@ -1,0 +1,14 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/16/09                                                 *
+.*********************************************************************
+.* 07/16/09 RPI 1065 stub for START verb mapped to ZCSTART by ZC390
+.*********************************************************************
+         SORT
+         MNOTE 8,'START NOT SUPPORTED YET'
+         MEXIT
+         MEND

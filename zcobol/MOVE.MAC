@@ -46,7 +46,7 @@
                    :&SOURCE SETC '&SYSLIST(2)'
                    :&PARM_IX SETA 2
                AEND
-               :&FIELD_REG SETC 'R2'
+               :&FIELD_REG SETC 'ZC_R2'
                :&FIELD_SS1 SETB 0
                ACALL GET_PARM_FIELD
                AIF (&FIELD_IX EQ 0)
@@ -72,9 +72,14 @@
                :&SOURCE   SETC '&DFHLIT'
                :&PARM_IX  SETA 5
          AELSEIF   ('&SOURCE'(1,1) NE ''''                             X
-                  AND ('&SOURCE'(1,1) GT '9' OR '&SOURCE'(1,1) LT '0'))
+                  AND ('&SOURCE'(1,1) GT '9' OR '&SOURCE'(1,1) LT '0') X
+                  AND '&SOURCE'(1,1) NE '.')  RPI 1065 
+               AIF ('&SOURCE' EQ 'FUNCTION')
+                   MNOTE 8,'MOVE FUNCTION NOT SUPPORTED YET'
+                   MEXIT
+               AEND
                :&PARM_IX SETA 1
-               :&FIELD_REG SETC 'R2'
+               :&FIELD_REG SETC 'ZC_R2'
                :&FIELD_SS1 SETB 0
                ACALL GET_PARM_FIELD
                :&SOURCE_IX SETA &FIELD_IX
@@ -88,7 +93,8 @@
          AEND
          :&PARM_IX SETA &PARM_IX+1
        AWHILE ('&SYSLIST(&PARM_IX)' NE '')
-         :&FIELD_REG SETC 'R2'
+         ACTR 4096
+         :&FIELD_REG SETC 'ZC_R2'
          :&FIELD_SS1 SETB 1
          ACALL GET_PARM_FIELD
          AIF (&FIELD_IX EQ 0)

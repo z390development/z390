@@ -106,6 +106,7 @@
          AIF   (K'&OPT_LIST GT 0)
                :&OPT_LIST SETC '&OPT_LIST'(2,*)
          AEND
+         COPY  ZC_KEYS
      GEN_COMMENT 'ZCOBOL PGM=&ZC_PGM VER=&ZC_VER &ZC_CDATE &ZC_CTIME'
      GEN_COMMENT 'ZCOBOL OPTIONS=(&OPT_LIST)'
          MEND

@@ -24,8 +24,10 @@
                GEN_B EVAL&IE_EVAL(&IE_LVL)._END
          AEND
          GEN_LABEL EVAL&IE_EVAL(&IE_LVL)._WHEN&IE_WHEN(&IE_lVL),WHEN
-         GEN_COMP &SYM_NAME(&IE_EVAL_IX(&IE_LVL)),&IE_EVAL_IX(&IE_LVL),X
-               &VAL,0
-         :&NEXT_WHEN SETA  &IE_WHEN(&IE_LVL)+1
-         GEN_BC   NE,EVAL&IE_EVAL(&IE_LVL)._WHEN&NEXT_WHEN
+         AIF   ('&VAL' NE 'OTHER')
+               GEN_COMP &SYM_NAME(&IE_EVAL_IX(&IE_LVL)),&IE_EVAL_IX(&IEX
+               _LVL),&VAL,0
+               :&NEXT_WHEN SETA  &IE_WHEN(&IE_LVL)+1
+               GEN_BC   ZC_NE,EVAL&IE_EVAL(&IE_LVL)._WHEN&NEXT_WHEN
+         AEND
          MEND

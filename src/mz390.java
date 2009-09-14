@@ -370,7 +370,14 @@ public  class  mz390 {
      * 06/21/09 RPI 1053 prevent trap on undefined forward referenced macro label
      *          and trap on file/line ref for AEND missing macro
      *          and trap on undefined AIF label branch with NOZSTRMAC
-     * 06/22/09 RPI 1059 put all ERRSUM errors on ERR file         
+     * 06/22/09 RPI 1059 put all ERRSUM errors on ERR file 
+     * 07/11/09 RPI 1062 set RC=12 for errors and RC=16 for abort 
+     * 07/18/09 RPI 1062 abort if BAL source found after END  
+     * 08/15/09 RPI 1078 sue lcl vs gbl hash key for AENTRY,
+     *          issue error for undefined AENTRY,
+     *          issue error for ACALL after AENTRY, add ZSM stats  
+     * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option 
+     * 09/02/09 RPI 1082 correct sequencing of AINSERT COPY at FRONT        
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -478,8 +485,9 @@ public  class  mz390 {
 	int     next_time_check = next_time_ins;
 	String cur_mac_file_path = null;
 	int cur_mac_file = 0;
-	int dynamic_mac_file = -1;    // RPI 1019 
-	boolean ainsert_copy = false; // RPI 1019
+	int dynamic_mac_file  = -1;    // RPI 1019
+	int dynamic_copy_file = -1;    // RPI 1019 
+	boolean ainsert_copy = false;  // RPI 1019
 	int     ainsert_copy_index = 0; // RPI 1053 
 	boolean ainsert_back = true;  // RPI 1019
 	File[] mac_file                = null;
@@ -557,11 +565,11 @@ public  class  mz390 {
 	short   zsm_lvl_ase_blk[]   = new short[256*max_zsm_lvl];
 	String  zsm_aif_exp         = null;
     int     zsm_acall_index       = 0;
-	int     zsm_acall_name_tot    = 1; // total acall blocks defined + 1 
-	int     max_zsm_acall_name    =1000; // maximum acall blocks
-	String  zsm_acall_name[]      = new String[max_zsm_acall_name];
-    int     zsm_acall_cnt[]       = new int[max_zsm_acall_name]; // unizue acall return counter
-    boolean zsm_acall_def[]       = new boolean[max_zsm_acall_name]; // acall block defined 
+	int     zsm_aentry_name_tot    = 1; // total acall blocks defined + 1 
+	int     max_zsm_aentry_name    =1000; // maximum acall blocks
+	String  zsm_acall_name[]      = new String[max_zsm_aentry_name];
+    int     zsm_acall_cnt[]       = new int[max_zsm_aentry_name]; // unizue acall return counter
+    boolean zsm_aentry_def[]       = new boolean[max_zsm_aentry_name]; // aentry block defined  RPI 1078
 	/*
 	 * macro name table
 	 */
@@ -1225,6 +1233,7 @@ public  class  mz390 {
 		tz390.init_tables();
 		tz390.init_options(args,tz390.mlc_type);  
 		tz390.open_systerm("MZ390");
+		tz390.init_codepage(tz390.codepage); // RPI 1069
 		if (tz390.opt_timing){
 			cur_date = new Date();
 		} else {
@@ -1585,11 +1594,9 @@ public  class  mz390 {
 					if (bal_op != null && bal_op.equals("END")){
 						end_found = true;
 					} else if (end_found 
-							   && !batch_asm_error
 							   && bal_line.length() > 0
 							   && bal_line.charAt(0) != '*'){
-						batch_asm_error = true;
-						log_error(223,"batch assemblies not supported");
+						abort_error(223,"batch assemblies not supported"); // RPI 1062
 					}
 				}
 				put_bal_line(bal_line);
@@ -1618,7 +1625,9 @@ public  class  mz390 {
 		if (tz390.opt_asm){ // RPI 415
 			az390.tz390.systerm_prefix = tz390.systerm_prefix;  // RPI 755
 			az390.tz390.systerm_io = az390.tz390.systerm_io + tz390.systerm_io; // RPI 755
-			az390.mz390_rc = mz390_rc;
+			if (az390.mz390_rc < mz390_rc){
+				az390.mz390_rc = mz390_rc;
+			}
             call_az390_pass_bal_line(bal_line);    
 		}
 	}
@@ -1683,13 +1692,7 @@ public  class  mz390 {
 		loading_mac = true;
 		tot_mac_load++;
 		zsm_lvl = 0;  // RPI 930 reset
-		zsm_aif_tot         = 0;
-		zsm_acall_tot       = 0;
-		zsm_aentry_tot      = 0;
-		zsm_acase_tot       = 0;
-		zsm_awhile_tot      = 0;
-		zsm_auntil_tot      = 0;
-		zsm_acall_name_tot  = 1; // aentry names + 1
+		zsm_aentry_name_tot  = 1; // aentry names + 1
 		cur_mac_file = 0;
 		load_macro_mend_level = 0;
 		load_proto_index = 0;
@@ -1836,9 +1839,23 @@ public  class  mz390 {
 		}
 		mac_name_lab_end[mac_name_index] = tot_mac_lab;
 		check_undefined_labs(mac_name_index);
+		check_undefined_aentry(); // RPI 1078
 		load_mac_name_index = mac_name_index;
 		mac_name_index = save_mac_name_index;
 		loading_mac = false;
+	}
+	private void check_undefined_aentry(){
+		/*
+		 * issue error for any ACALL to undefined
+		 * AENTRY routine.
+		 */
+		int index = 1;
+		while (index < zsm_aentry_name_tot){
+			if (!zsm_aentry_def[index]){
+				log_error(279,"undefined AENTRY for ACALL - " + zsm_acall_name[index]);
+			}
+			index++;
+		}
 	}
 	private void check_past_mend(){
 		/* 
@@ -2401,7 +2418,7 @@ public  class  mz390 {
 				}
 				if (temp_line == null){
 					mac_file_buff[cur_mac_file].close();
-				    cur_mac_file--;
+					cur_mac_file--;
 					if (cur_mac_file >= 0){
 						if (tz390.opt_tracem
 							&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
@@ -2409,8 +2426,9 @@ public  class  mz390 {
 							){
 							tz390.put_trace("COPY ENDING FID=" + cur_mac_file_num + " LVL=" + (cur_mac_file+2) + " " + mac_file[cur_mac_file+1].getName()); 
 						}
-						if (dynamic_mac_file == -1){ // RPI 1019 
-							retry = true;
+						if (dynamic_copy_file < cur_mac_file
+							&& dynamic_mac_file < cur_mac_file){ // RPI 1019 
+							retry = true;  // exit ainsert mac/copy loops
 						}
 						cur_mac_file_num = mac_file_cur_file_num[cur_mac_file];
 						cur_mac_line_num = mac_file_cur_line_num[cur_mac_file];
@@ -2741,6 +2759,7 @@ public  class  mz390 {
 			}
 			break;
 		case 4: // AENTRY
+			zsm_aentry_tot++;   // RPI 1078
 			if (zsm_lvl != 0){
 				log_error(245,"ZSM AENTRY cannot be nested within another structure");
 				return;
@@ -2748,13 +2767,13 @@ public  class  mz390 {
 			zsm_lvl++;
 			zsm_lvl_type[zsm_lvl] = zsm_type_aentry;
 			if (!zsm_find_name()){
-				log_error(246,"ZSM AENTRY name error");
+				log_error(246,"ZSM AENTRY name error - " + tz390.split_parms);
+			    return;
+			} else if (zsm_aentry_def[zsm_acall_index]){ // RPI 1078
+				log_error(247,"ZSM AENTRY duplicate name error - " + zsm_acall_name[zsm_acall_index]);
 			    return;
 			}
-			if (zsm_acall_def[zsm_acall_index]){
-				log_error(247,"ZSM AENTRY duplicate name error");
-			    return;
-			}
+			zsm_aentry_def[zsm_acall_index] = true; // RPI 1078 
 			zsm_lvl_tcnt[zsm_lvl] = zsm_acall_index;
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
@@ -2820,8 +2839,11 @@ public  class  mz390 {
 		case 7: // ACALL
 			zsm_acall_tot++;
 			if (!zsm_find_name()){
-				log_error(249,"ZSM ACALL name not found");
+				log_error(249,"ZSM ACALL name error - " + tz390.split_parms);
 				return;
+			}
+			if (zsm_aentry_def[zsm_acall_index]){
+				log_error(282,"ACALL issused after AENTRY for " + zsm_acall_name[zsm_acall_index]); // RPI 1078
 			}
 			zsm_acall_cnt[zsm_acall_index]++;
 			zsm_line_tot++;
@@ -3054,6 +3076,7 @@ public  class  mz390 {
 		 * find ACALL name or add new name
 		 * and set zsm_acall_index else false
 		 */
+		zsm_acall_index = -1;
 		if (tz390.split_parms == null){
 			return false;
 		}
@@ -3062,19 +3085,25 @@ public  class  mz390 {
 		if (index > 0){
 			name = name.substring(0,index);
 		}
-		zsm_acall_index = tz390.find_key_index('Z',"N" + lcl_sysndx + name);  // RPI 977
+		String zsm_hash_key = "N" + lcl_sysndx + name;
+		zsm_acall_index = tz390.find_key_index('Z',zsm_hash_key);  // RPI 977
 		if (zsm_acall_index >= 0){
-			return true;
+			if (zsm_acall_name[zsm_acall_index].equals(name)){
+				return true;
+			}
+			log_error(280,"zsm_find_name hash index duplicate for - '" + zsm_acall_name[zsm_acall_index] + "' and '" + name + "'");
+			return false;
 		}
-		if (zsm_acall_name_tot < max_zsm_acall_name){
-			zsm_acall_index = zsm_acall_name_tot;
+		if (zsm_aentry_name_tot < max_zsm_aentry_name){
+			zsm_acall_index = zsm_aentry_name_tot;
 			if (!tz390.add_key_index(zsm_acall_index)){
+				abort_error(281,"zsm_find_name hash table error");
 				return false;
 			}
-			zsm_acall_name_tot++;
+			zsm_aentry_name_tot++;
 			zsm_acall_name[zsm_acall_index] = name;
-			zsm_acall_cnt[zsm_acall_index] = 0;
-			
+			zsm_acall_cnt[zsm_acall_index] = 0;	
+			zsm_aentry_def[zsm_acall_index] = false; // 1078
 			return true;
 		} else {
 			return false;
@@ -3224,12 +3253,12 @@ public  class  mz390 {
 				// insert dynamic copy now
 				int save_mac_line_index = mac_line_index;
 				mac_line_index = mac_file_next_line[mac_line_index];
-				dynamic_mac_file = cur_mac_file;
-				cur_mac_file++; // rpi 1019 
+				int save_dynamic_copy_file = dynamic_copy_file;
+				dynamic_copy_file = cur_mac_file;
 				open_load_file(new_mac_name);
 				set_default_ictl(); // RPI 1019 
 				load_get_zstrmac_file_line();
-				while (mac_line != null && cur_mac_file > dynamic_mac_file){
+				while (mac_line != null){  // RPI 1019 
                 	set_insert_mac_line_index();
                 	mac_file_line[mac_line_index] = mac_line;
                 	ainsert_copy = false;
@@ -3239,7 +3268,7 @@ public  class  mz390 {
                 	load_get_zstrmac_file_line();
 		    	}				
 				mac_line_index = save_mac_line_index;
-		    	dynamic_mac_file = -1;
+		    	dynamic_copy_file = save_dynamic_copy_file;
 		    	ainsert_copy = false;
 			}
 			break;	
@@ -4598,11 +4627,11 @@ public  class  mz390 {
 		if (cur_ainsert > 0){
 			cur_ainsert--;
 			return ainsert_queue.pop();
-		}
-		if (mac_call_level > 0
-			&& mac_call_return[mac_call_level-1] < mlc_line_end){
-			mac_call_return[mac_call_level-1]++;
-			String text = mac_file_line[mac_call_return[mac_call_level-1]-1];
+		}		
+		if  (mac_call_level > 0
+			&& mac_call_return[mac_call_level-1] != mlc_line_end){
+			String text = mac_file_line[mac_call_return[mac_call_level-1]];
+			mac_call_return[mac_call_level-1] = mac_file_next_line[mac_call_return[mac_call_level-1]];
 			if (tz390.opt_asm && !tz390.opt_allow){  // RPI 968
 				text = set_length_80(text);
 			}
@@ -8588,11 +8617,6 @@ public  class  mz390 {
 				mz390_rc = az390.az390_rc;
 			}
 		}
-		if  (mz390_errors > 0
-	        || hwm_mnote_level >= 16 // RPI 410
-			|| tz390.z390_abort){
-			mz390_rc = 16;
-		}
 		put_stats();
         if (tz390.opt_asm){ // RPI 935
         	az390.put_stats();
@@ -8632,6 +8656,12 @@ public  class  mz390 {
 			put_stat_line("total macros          = " + tot_mac_name);
 			put_stat_line("total macro loads     = " + tot_mac_load);
 			put_stat_line("total macro calls     = " + tot_mac_call);	
+			put_stat_line("total AENTRY blocks   = " + zsm_aentry_tot); // RPI 1078
+			put_stat_line("total ACALL  calls    = " + zsm_acall_tot); // RPI 1078
+			put_stat_line("total AIF    blocks   = " + zsm_aif_tot); // RPI 1078
+			put_stat_line("total ACASE  blocks   = " + zsm_acase_tot); // RPI 1078
+			put_stat_line("total AWHILE calls    = " + zsm_awhile_tot); // RPI 1078
+			put_stat_line("total AUNTIL blocks   = " + zsm_auntil_tot); // RPI 1078
 			put_stat_line("total global set names= " + tot_gbl_name);
 			put_stat_line("tot global seta cells = " + tot_gbl_seta);
 			put_stat_line("tot global setb cells = " + tot_gbl_setb);
@@ -8895,6 +8925,10 @@ public  class  mz390 {
 			exp_setc = null;
 			return;
 		}
+		mz390_errors++;
+		if (mz390_rc < 12){ // RPI 1062
+			mz390_rc = 12;
+		}
 		log_to_bal = true;
 		int file_index = mac_file_num[mac_line_index];
 		mac_file_errors[file_index]++;
@@ -8916,7 +8950,6 @@ public  class  mz390 {
 		}
 		put_log(error_msg);
 		tz390.put_systerm(error_msg);
-		mz390_errors++;
 		if (tz390.max_errors != 0 && mz390_errors > tz390.max_errors){
 			abort_error(83,"maximum errors exceeded");
 		}
@@ -8926,11 +8959,8 @@ public  class  mz390 {
 		 * issue error msg to log with prefix and
 		 * inc error total
 		 */
-		if (mz390_recursive_abort){ // RPI 935
-			System.out.println("MZ390E recurive abort exit");
-			System.exit(16);
-		}
-		mz390_recursive_abort = true;
+		mz390_errors++;
+		mz390_rc = 16;  // RPI 1062
 		if (tz390.z390_abort){
 			msg = msg_id + "aborting due to recursive abort for " + msg;
 			System.out.println(msg);
@@ -8939,10 +8969,9 @@ public  class  mz390 {
 				&& az390.tz390.opt_errsum){
 				az390.report_critical_errors();
 			}
-			tz390.close_systerm(16);
-			System.exit(16);
+			tz390.close_systerm(mz390_rc);
+			System.exit(mz390_rc);
 		}
-		mz390_errors++;
 		tz390.z390_abort = true;
 		tz390.opt_con = true; // RPI 453
 		log_to_bal = true;
@@ -8956,7 +8985,7 @@ public  class  mz390 {
 				 + " line=" + mac_file_line_num[mac_line_index];
 		    }
 		}
-		msg = "MZ390E error " + error 
+		msg = "MZ390E abort " + error 
 		+ err_line_and_num
 		+ " " + msg;
 		put_log(msg);
@@ -11927,8 +11956,9 @@ public  class  mz390 {
     	 *   
     	 */
     	ainsert_copy = true;
-    	ainsert_copy_index = 0; // RPI 1053 
+    	ainsert_copy_index = 1; // RPI 1053 RPI 1082
     	mac_line = rec;
+    	int save_dynamic_mac_file = dynamic_mac_file;
     	dynamic_mac_file = cur_mac_file;
     	parse_mac_line();
     	while (cur_mac_file > dynamic_mac_file){
@@ -11937,7 +11967,7 @@ public  class  mz390 {
                 add_ainsert_queue_rec(mac_line);
 			}
     	}
-    	dynamic_mac_file = -1;
+    	dynamic_mac_file = save_dynamic_mac_file;
     	ainsert_copy = false;
     }
     private void add_ainsert_queue_rec(String rec){

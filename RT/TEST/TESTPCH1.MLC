@@ -36,6 +36,8 @@ TEST2 END OF DATA
          WTO   'START PUNCH TEST'
          PUNCH 'TEST3 RECORD 1'
          PUNCH 'TEST3 RECORD 2'
+&TEXT    SETC  'TEST4 RECORD 1'
+         PUNCH '&TEXT'
          WTO   'END TESTPCH1 OK'
          SUBEXIT
          END    

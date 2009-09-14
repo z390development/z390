@@ -1,0 +1,61 @@
+         MACRO
+&NAME    #CLRSTOR &ADDR=,&LV=,&PAD=0
+.**********************************************************************
+.*               MACRO ID: #CLRSTOR                                   *
+.*           DATE WRITTEN: 05/01/2009                                 *
+.*       MACRO ATTRIBUTES: RENT, REUS, REFR                           *
+.*     AUTHORIZATION CODE: 0                                          *
+.*      PASSES CONTROL TO: NONE                                       *
+.*                                                                    *
+.*                                                                    *
+.*     DESCRIPTION:                                                   *
+.*                                                                    *
+.*         THIS MACRO PADS A SPECIFIED STORAGE FIELD WITH             *
+.*       A USER-SPECIFIED PAD CHARACTER.                              *
+.*                                                                    *
+.*                                                                    *
+.*     METHOD OF INVOCATION:                                          *
+.*                                                                    *
+.*        #CLRSTOR ADDR=,LV=,PAD=                                     *
+.*                                                                    *
+.*                                                                    *
+.*           PARAMETER    |   MEANING/USAGE                           *
+.*          --------------|-------------------------------------      *
+.*            ADDR        |  THE ADDRESS OF THE FIELD TO BE PADDED.   *
+.*                        |  THIS OPERAND IS REQUIRED.                *
+.*                        |                                           *
+.*            LV          |  THE LENGTH OF THE FIELD TO BE PADDED.    *
+.*                        |  THIS OPERAND IS REQUIRED.                *
+.*                        |                                           *
+.*            PAD         |  THE PAD CHARACTER. IF A REGISTER IS      *
+.*                        |  SPECIFIED, THE LOW-ORDER BYTE MUST       *
+.*                        |  CONTAIN THE CHARACTER.                   *
+.*                        |  THIS OPERAND IS OPTIONAL; IF OMITTED,    *
+.*                        |  THE FIELD WILL BE PADDED WITH BINARY     *
+.*                        |  ZEROS (X'00').                           *
+.*                                                                    *
+.*                                                                    *
+.*      REGISTERS AT EXIT                                             *
+.*                                                                    *
+.*     R14-R1 - UNPREDICTABLE                                         *
+.*     R2-R12 - SAME CONTENTS AS AT ENTRY                             *
+.*                                                                    *
+.**********************************************************************
+.CK1     AIF   ('&ADDR' EQ '' OR (T'&ADDR EQ 'N'AND '&ADDR'(1,1) NE '('@
+               )).ERR1
+.CK2     AIF   ('&LV' EQ '').ERR2
+.CK3     AIF   ('&PAD' EQ '').ERR3
+&NAME    DS    0H -               *** CLEAR STORAGE MACRO  ***
+         ##IHBLR 14,&ADDR               ADDRESS OF AREA TO BE PADDED
+         ##IHBLR 15,&LV                 LENGTH OF AREA TO BE PADDED
+         SR    0,0                      CLEAR
+         SR    1,1                      CLEAR
+         MVCLE 14,0,&PAD                PAD THE STORAGE
+         BO    *-4                      LOOP TILL DONE
+         MEXIT
+.ERR1    MNOTE 8,'*** ERROR - ADDR OPERAND NOT GIVEN OR INVALID  **'
+         MEXIT
+.ERR2    MNOTE 8,'*** ERROR - LV OPERAND NOT SPECIFIED           **'
+         MEXIT
+.ERR3    MNOTE 8,'*** ERROR - INVALID PAD OPERAND                **'
+         MEND
