@@ -1,5 +1,5 @@
 REM ZPARGEN FILE SPEC = \work\nist\src\*.CBL
-REM ZPARGEN DATE=09/14/09 TIME=08.58
+REM ZPARGEN DATE=10/05/09 TIME=12.34
 CALL %1 \work\nist\src\CM101M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\CM102M %3 %4 %5 %6 %7 %8 %9
 CALL %1 \work\nist\src\CM103M %3 %4 %5 %6 %7 %8 %9

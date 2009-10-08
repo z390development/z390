@@ -1,5 +1,11 @@
 rem assemble, link, and exec ASSIST prgram %1.MLC
 echo off
+if exist /usr/local/lib/z390/z390.jar goto linux
+if %1 == tron ECHO ON
+if %1 == tron shift
+if %1 == TRON ECHO ON
+if %1 == TRON shift
+:linux
 set XREAD=%1.XRD
 set XPRNT=%1.XPR
 set XPNCH=%1.XPH

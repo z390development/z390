@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 04/08/08 initial coding for z390 target
 .* 10/07/08 ZSTRMAC
+.* 10/04/09 RPI 1086 save SYM_TOT locally for scan for pointers
 .*********************************************************************
          GEN_PROC_START &USING
          COPY ZC_WS
@@ -43,7 +44,8 @@
 .*
          AENTRY GEN_LK_PTRS
          :&I SETA 1
-         AWHILE (&I LE &SYM_TOT)
+         :&TEMP_SYM_TOT SETA &SYM_TOT  RPI 1086
+         AWHILE (&I LE &TEMP_SYM_TOT)  RPI 1086
              AIF (&SYM_LK(&I) GT 0)
                  AIF (&SYM_LVL(&I) EQ 1)
                    GEN_VAR ZC_&SYM_NAME(&I)._PTR,A GEN NEW PTR

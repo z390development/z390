@@ -1,0 +1,38 @@
+*********************************************************************
+* Copyright 2009 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/16/09                                                 *
+*********************************************************************
+* MAINTENANCE
+********************************************************************* 
+* 09/16/09 RPI 1083 TEST AINSERT COMPLEX MACRO AND COPY SEQUENCE        
+********************************************************************* 
+         MACRO
+         STACK  
+         AINSERT 'L1 GEN',BACK  
+         AINSERT 'L2 GEN',BACK
+         AINSERT 'L3 GEN',BACK
+         MEND
+         MACRO
+&LAB     GEN  &TYPE
+         MNOTE '&LAB GEN &TYPE STARTED'
+         GBLB &(COPY_&LAB)
+         AIF  (NOT &(COPY_&LAB))
+              MNOTE 'GEN INSERTING &LAB GEN'
+              AINSERT '&LAB GEN',FRONT
+              MNOTE 'GEN INSERTING COPY &LAB'
+              AINSERT ' COPY &LAB',FRONT
+              :&(COPY_&LAB) SETB 1
+         AELSE
+              MNOTE 'GEN PUNCH &LAB'
+         AEND
+         MNOTE '&LAB GEN &TYPE ENDED'
+         MEND
+TESTAIN3 SUBENTRY
+         WTO  'TESTAIN3 STARTED'
+         STACK
+         WTO   'TESTAIN3 ENDED'
+         SUBEXIT
+         END  

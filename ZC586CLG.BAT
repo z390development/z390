@@ -1,5 +1,11 @@
 rem ZC586CLG translate CBL to HLA, assemble/link to EXE via HLA, and exec 
 echo off
+if exist /usr/local/lib/z390/z390.jar goto linux
+if %1 == tron ECHO ON
+if %1 == tron shift
+if %1 == TRON ECHO ON
+if %1 == TRON shift
+:linux
 if exist %1.MLC erase %1.MLC
 if exist %1.390 erase %1.390
 if exist %1.BAL erase %1.BAL

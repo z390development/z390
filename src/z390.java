@@ -133,7 +133,8 @@ public  class  z390 extends JApplet
      * 09/08/08 RPI 872 help menu "Guide" link to www.z390.org or webdoc\index.html 
      * 09/10/08 RPI 904 correct help menu "Guide" to support LSN path 
      * 05/23/09 RPI 1041 replace EDIT SELECTALL with SELECT LOG and SELECT CMD
-     * 06/04/09 RPI 1050 suppress blank lines on GUI log        
+     * 06/04/09 RPI 1050 suppress blank lines on GUI log  
+     * 09/26/09 RPI 1080 replace init_tables with init_tz390      
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -1719,7 +1720,7 @@ public  class  z390 extends JApplet
 	    * load shared tables and file routines
 	    */	 	  
 	   tz390 = new tz390();
-	   tz390.init_tables();
+	   tz390.init_tz390();    // RPI 1080
 	   dir_cur_file = new File(tz390.dir_cur); // RPI 309
        main_title = "Z390 " + tz390.version;
        /*

@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 11/26/08 initial coding for GEN_VAR to define ws var used by gen     
+.* 10/04/09 RPI 1086 correct ELSE to AELSE     
 .*********************************************************************
          GEN_VAR &NAME,&TYPE,&LEN 
          COPY  ZC_WS
@@ -30,7 +31,7 @@
       WS 77,&NAME,PIC,X(&LEN)
          AWHEN C'Z'
       WS 77,&NAME,PIC,S9(&LEN)
-         ELSE
+         AELSE
                MNOTE 8,'GEN_VAR UNKNOWN TYPE - &TYPE'
                :&SYM_IX SETA 0
                MEXIT

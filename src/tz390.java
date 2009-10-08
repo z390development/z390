@@ -224,6 +224,12 @@ public  class  tz390 {
     * 07/14/09 RPI 1062 split out init_pat() for use by options in zc390
     * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option
     * 08/28/09 RPI 1073 add option ALIGN/NOALIGN
+    * 09/21/09 RPI 1080 fix \ to / and vice versa for all paths
+    *          and compile all replaceall patterns for speed -'Z"?\/
+    * 09/25/09 RPI 1080 use init_os_type and init_os_util for linux compat.
+    *          fix file_name separators for systerm, fix / to \ and \ to /
+    *          set install_loc in options, repackage init_tz390
+    *          to run init_pat, os, util, time
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -232,12 +238,13 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.01";  //dsh
+    String version    = "V1.5.01a";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
 	 * global options 
 	 */ 
+	String  os_name = ""; // RPI 1080
 	byte    z390_os_type  = 0;      // 1=win,2=Linux  RPI 499
 	byte    z390_os_win   = 1;
 	byte    z390_os_linux = 2;
@@ -464,7 +471,25 @@ public  class  tz390 {
      * both mz390 and az390.
      */
     Pattern find_non_space_pattern = null;
-    Matcher find_parm_match = null;
+    Pattern find_bslash  = null; // RPI 1080
+    Matcher match_bslash = null; // RPI 1080
+    Pattern find_slash   = null; // RPI 1080
+    Matcher match_slash  = null; // RPI 1080
+    Pattern find_dash    = null; // RPI 1080
+    Matcher match_dash   = null; // RPI 1080
+    Pattern find_squote  = null; // RPI 1080
+    Matcher match_squote = null; // RPI 1080
+    Pattern find_dsquote  = null; // RPI 1080
+    Matcher match_dsquote = null; // RPI 1080
+    Pattern find_dquote  = null; // RPI 1080
+    Matcher match_dquote = null; // RPI 1080
+    Pattern find_ddquote  = null; // RPI 1080
+    Matcher match_ddquote = null; // RPI 1080
+    Pattern find_amp     = null; // RPI 1080
+    Matcher match_amp    = null; // RPI 1080
+    Pattern find_damp     = null; // RPI 1080
+    Matcher match_damp    = null; // RPI 1080
+    Matcher find_parm_match = null; // RPI 1080
     Pattern parm_pattern = null;
     Matcher parm_match = null;
     boolean split_first = true; // first line of statement
@@ -4409,22 +4434,17 @@ public  class  tz390 {
       int[]     key_tab_index = (int[])Array.newInstance(int.class,max_key_tab);
       int[]     key_tab_low   = (int[])Array.newInstance(int.class,max_key_tab);
       int[]     key_tab_high  = (int[])Array.newInstance(int.class,max_key_tab);
-public void init_tables(){
+public void init_tz390(){
 	/*
-	 * initialize stared data and tables
+	 * initialize shared data and tables
 	 */
-	/*
-	 * init starting nanotime for use in timestamps
-	 */
+	dir_cur = System.getProperty("user.dir") + File.separator; // RPI 499 drop upper case
 	ts_nano_start = System.nanoTime();          // RPI 662
 	ts_mic_start  = System.currentTimeMillis(); // RPI 662
-	if (opt_install_loc.length() > 0){
-		System.setProperty("user.dir",opt_install_loc); // RPI 532
-	}
-	set_dir_cur();  //RPI168
-	init_pat(); // RPI 1062
-	init_os();
-	init_opcodes();
+	init_pat();      // init patterns for matcher
+	init_os_type();  // set os type
+	init_os_util();  // set os utilities (overides from env var)
+    init_opcodes();  // verify opcode tables
 }
 private void init_opcodes(){
 	/*
@@ -4452,7 +4472,7 @@ private void init_opcodes(){
 		abort_error(3,"opcode total out of sync - aborting");
 	}
 }
-public void init_pat(){
+private void init_pat(){
 	/*
 	 * init patterns for use by opcode and options routines
 	 */
@@ -4467,6 +4487,96 @@ public void init_pat(){
 				  );
 	} catch (Exception e){
 		  abort_error(13,"find parm pattern errror - " + e.toString());
+	}
+	/*
+     * replace \ with / for Linux
+     * */
+	try {
+	    find_bslash = Pattern.compile(
+	    		"[\\\\]"  //RPI 1080
+				  );
+	} catch (Exception e){
+		  abort_error(13,"replace \\ parm pattern errror - " + e.toString());
+	}
+	/*
+     * replace / with \ for Windows
+     * */
+	try {
+	    find_slash = Pattern.compile(
+	    		"[/]"  //RPI 1080
+				  );
+	} catch (Exception e){
+		  abort_error(13,"replace / parm pattern errror - " + e.toString());
+	}
+	/*
+     * replace - with _ for Linux
+     * */
+	try {
+	    find_dash = Pattern.compile(
+	    		"[-]"  //RPI 1080
+				  );
+	} catch (Exception e){
+		  abort_error(13,"replace - parm pattern errror - " + e.toString());
+	}
+	/*
+     * replace ' with ''
+     * */
+	try {
+	    find_squote = Pattern.compile(
+	    		"[']"  //RPI 1080
+				  );
+	} catch (Exception e){
+		  abort_error(13,"replace ' parm pattern errror - " + e.toString());
+	}
+	/*
+     * replace '' with '
+     * */
+	try {
+	    find_dsquote = Pattern.compile(
+	    		"['][']"  //RPI 1080
+				  );
+	} catch (Exception e){
+		  abort_error(13,"replace '' parm pattern errror - " + e.toString());
+	}
+	/*
+     * replace " with '
+     * */
+	try {
+	    find_dquote = Pattern.compile(
+	    		"[\"]"  //RPI 1080
+				  );
+	} catch (Exception e){
+		  abort_error(13,"replace \" parm pattern errror - " + e.toString());
+	}
+	/*
+     * replace "" with "
+     * */
+	try {
+	    find_ddquote = Pattern.compile(
+	    		"[\"][\"]"  //RPI 1080
+				  );
+	} catch (Exception e){
+		  abort_error(13,"replace \"\" parm pattern errror - " + e.toString());
+	}
+	/*
+     * replace & with && for Linux
+     * */
+	try {
+	    find_amp = Pattern.compile(
+	    		"[\\&]"  //RPI 1080
+				  );
+	} catch (Exception e){
+		  abort_error(13,"replace & parm pattern errror - " + e.toString());
+	}
+	/*
+     * replace ?& with & for Linux
+     * */
+	try {
+	    find_damp = Pattern.compile(
+	    		"[\\&][\\&]"  //RPI 1080
+				  );
+	} catch (Exception e){
+		  abort_error(13,"replace && parm pattern errror - " + e.toString());
 	}
     /*
      * parm_pattern tokens:
@@ -4496,17 +4606,27 @@ public void init_pat(){
 		  abort_error(14,"parm pattern errror - " + e.toString());
 	}
 }
-public void init_os(){
+private void init_os_type(){
 	/*
-	 * init os dependant variables
+	 * init os type RPI 1080
 	 */
 	String os_name = System.getProperty("os.name"); 
+	if  (os_name.substring(0,3).equals("Win")){
+		z390_os_type = z390_os_win;        // RPI 499
+
+    } else {
+    	z390_os_type = z390_os_linux; 
+    }
+}
+private void init_os_util(){
+	/*
+	 * init os dependant utilities RPI 1080
+	 */
 	z390_acrobat = System.getenv("Z390ACROBAT");;   // RPI 510
 	z390_browser = System.getenv("Z390BROWSER");;   // RPI 510
 	z390_command = System.getenv("Z390COMMAND");    // RPI 510
 	z390_editor  = System.getenv("Z390EDIT");       // RPI 510
-	if  (os_name.substring(0,3).equals("Win")){
-		z390_os_type = z390_os_win;        // RPI 499
+	if  (z390_os_type == z390_os_win){
 		if (z390_browser == null
 			|| z390_browser.length() == 0){
 			z390_browser = "cmd.exe /c Start"; // RPI 500
@@ -4528,8 +4648,7 @@ public void init_os(){
 		    || z390_editor.length() == 0){
 		    z390_editor  = "notepad.exe"; // RPI 500
 		}
-    } else if (os_name.substring(0,3).equals("Lin")){
-    	z390_os_type = z390_os_linux; // RPI 499
+    } else {
 		if (z390_browser == null
 			|| z390_browser.length() == 0){
 			z390_browser = "firefox"; // RPI 500
@@ -4789,7 +4908,8 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     	opt_ipl = token.substring(4,token.length()-1); 
     } else if (token.length() > 8
      		&& token.substring(0,8).toUpperCase().equals("INSTALL(")){
-    	opt_install_loc = token.substring(8,token.length()-1); 	
+    	opt_install_loc = token.substring(8,token.length()-1); 
+   		System.setProperty("user.dir",opt_install_loc); // RPI 532 RPI 1080
     } else if (token.toUpperCase().equals("LIST")){
        	opt_list = true;
     } else if (token.toUpperCase().equals("NOLIST")){
@@ -5656,10 +5776,8 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	        	|| file_name.length() == 0){ // RPI 903 allow 0 length type
 	        	return null; // RPI 880
 	        }
-	        if (z390_os_type == z390_os_linux){ // RPI 532 file separator fix
-	        	file_dir = file_dir.replace('\\','/');
-	        	file_name     = file_name.replace('\\','/');
-	        }
+	        file_dir = fix_file_separators(file_dir);  // RPI 1080
+	        file_name = fix_file_separators(file_name); // RPI 1080
 	    	if (file_name.charAt(0) == '\"' 
 	    		|| file_name.charAt(0) == '\''){
 	    		file_name = file_name.substring(1,file_name.length() - 1);
@@ -5716,6 +5834,16 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	    	}
 	    	return file_name;
 }
+public String fix_file_separators(String name){
+	/*
+	 * replace \ with / if Linux else / with |
+	 */
+    if (z390_os_type == z390_os_linux){ // RPI 532 file separator fix
+    	return find_bslash.matcher(name).replaceAll("/");  // RPI 1080
+    } else {
+    	return find_slash.matcher(name).replaceAll("\\\\");  // RPI 1080
+    }
+}
 public String find_file_name(String parm_dir_list, String file_name, String file_type_def, String dir_cur){
 	/*
 	 * search for existing file in one or more dirs
@@ -5730,9 +5858,10 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 	 */
 	boolean explicit_type = false;
 	if (file_name == null)return null; // RPI 459
-	if (z390_os_type == z390_os_linux){ 
-		file_name = file_name.replace('\\','/'); // RPI 713
+	if (file_name.charAt(0) == '"'){
+		file_name = file_name.substring(1,file_name.length()-1); // RPI 1074 
 	}
+	file_name = fix_file_separators(file_name);
 	String temp_file_name;
 	File   temp_file;
 	int index = file_name.indexOf('.');
@@ -5755,6 +5884,7 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 		}
 	} else {
 		// search directory list for file
+		parm_dir_list = fix_file_separators(parm_dir_list); // RPI 1080
 		index = 0;
 		int path_len = 0;  
 		while (index <= parm_dir_list.length()){
@@ -5834,11 +5964,11 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
 	 *   2.  Set lkd_ignore true if explicit .OBJ found RPI 735
 	 */
 	lkd_ignore = false;
-	set_dir_cur(); //RPI168
 	if (file_name.charAt(0) == '\"'   // strip lsn quotes
 		|| file_name.charAt(0) == '\''){
 		file_name = file_name.substring(1,file_name.length() - 1);
 	}
+	file_name = fix_file_separators(file_name); // RPI 1080
     int index = file_name.lastIndexOf(File.separator);
     if (index != -1){  // get dir path if any
     	dir_pgm = file_name.substring(0,index+1);
@@ -5871,12 +6001,6 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
      	pgm_type = file_type;
     }
     return true;
-}
-private void set_dir_cur(){  //RPI168
-	/*
-	 * set current directory dir_cur
-	 */
-	dir_cur = System.getProperty("user.dir") + File.separator; // RPI 499 drop upper case
 }
 public void reset_opsyn(){
 	/*

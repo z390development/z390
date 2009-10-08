@@ -181,7 +181,10 @@ public  class  sz390 implements Runnable {
     * 06/13/09 RPI 1054 backup PSW for ABEND except for S0C1/S422
     *          add ascii/ebcdic text on last duplicat line of dump  
     * 06/15/09 RPI 1050 suppress dup ENDED for TRACE CON   
-    * 07/18/09 RPI 1062 change abort msg from recursive/shutdown to abort                 
+    * 07/18/09 RPI 1062 change abort msg from recursive/shutdown to abort 
+    * 09/19/09 RPI 1063 add CDE support with pointer from CVTCDE  
+    * 09/20/09 RPI 1063 update pgm old psw for abends including S0C1 and S422  
+    * 09/22/09 RPI 1080 use shared fix file separators for Linux            
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -482,10 +485,12 @@ public  class  sz390 implements Runnable {
     int cur_cde = 0;
     String[] cde_name  = new String[max_cde_pgms];
     String[] cde_file  = new String[max_cde_pgms];
-    int[]    cde_use   = (int[])Array.newInstance(int.class,max_cde_pgms);
+    byte[]    cde_use   = (byte[])Array.newInstance(byte.class,max_cde_pgms);
     int[]    cde_loc   = (int[])Array.newInstance(int.class,max_cde_pgms);
     int[]    cde_len   = (int[])Array.newInstance(int.class,max_cde_pgms);
     int[]    cde_ent   = (int[])Array.newInstance(int.class,max_cde_pgms);
+    int[]    cde_addr  = (int[])Array.newInstance(int.class,max_cde_pgms); // RPI 1063 addr CDE in mem
+    int      cded_len   = 40; // RPI 1063 see mac\CDED.MAC
     /*
      * nested link variables
      */
@@ -915,6 +920,7 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 		System.exit(16);
 	}
 	ez390_recursive_abort = true;
+	pz390.update_psa(); // RPI 1063
  	  if (tz390.z390_abort){
 		msg = "EZ390E abort for " + msg;
 		tz390.put_systerm(msg);
@@ -1205,9 +1211,7 @@ public void init_test(){
    	}
 	if (tz390.test_ddname != null && tz390.test_ddname.length() > 0){ // RPI 755
 		 test_file_name = get_ascii_env_var_string(tz390.test_ddname);
-         if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
-        	test_file_name = test_file_name.replace('\\','/');
-         }
+         tz390.fix_file_separators(test_file_name); // RPI 1080
          try {
         	 test_cmd_file = new BufferedReader(new FileReader(test_file_name));
          } catch (Exception e){
@@ -1377,6 +1381,8 @@ public void svc_load(){
 	 *      count for OS compatiblity.  
 	 *      Length in bytes if not 390 file.
 	 *   3. r15 = return code 0 ok or 4 if notfound
+	 *   4. Add CDE to chian from CVTCDE else inc CVTUSE
+	 *      for access by user pgms RPI 1063
      *
 	 * Notes:
 	 *   1.  Add CDE entry for new entry else if already
@@ -1398,6 +1404,10 @@ public void svc_load(){
 	cur_cde = tz390.find_key_index('P',load_pgm_name.toUpperCase() + load_pgm_type); // RPI 499
 	if (cur_cde != -1 && cde_loc[cur_cde] != 0){
 		cde_use[cur_cde]++;
+		if (cde_use[cur_cde] == 0){
+			cde_use[cur_cde] = (byte)0xff; // RPI 1063 no overflow
+		}
+		pz390.mem_byte[cde_addr[cur_cde]+pz390.cde_cduse] = cde_use[cur_cde]; // RPI 1063 update count
         svc_load_set_regs();
 		return;
 	}
@@ -1656,9 +1666,7 @@ public boolean get_load_dsn(int dd_dsn_addr){
  			return false;
  		}
  	}
-    if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
-    	load_dsn = load_dsn.replace('\\','/');
-    }
+ 	load_dsn = tz390.fix_file_separators(load_dsn); // RPI 1080
  	int index = load_dsn.indexOf(";");
  	if (index != -1){ // dsn is dir list vs file spec
         load_pgm_dir = load_dsn;
@@ -1785,6 +1793,7 @@ private boolean delete_cur_cde(){
 	 */
 	if (cur_cde != -1 && cde_loc[cur_cde] != 0){
 		cde_use[cur_cde]--;
+		pz390.mem_byte[cde_addr[cur_cde]+pz390.cde_cduse] = cde_use[cur_cde]; // RPI 1063 update CDE use count in mem
         if  (cde_use[cur_cde] < 1){
         	pz390.reg.putInt(pz390.r1,cde_loc[cur_cde]); // RPI 244
         	pz390.reg.putInt(pz390.r0,cde_len[cur_cde]); // RPI 244
@@ -1827,6 +1836,22 @@ private void add_cde(){
    			+ " LEN="  + tz390.get_hex(load_code_len,8)
    			+ " NAME=" + load_file_name); // RPI 1051
     }
+	if (cde_addr[cur_cde] == 0){
+	    pz390.reg.putInt(pz390.r1,cded_len); // RPI 1063
+	    svc_getmain();
+	    if (pz390.reg.getInt(pz390.r15) == 0){
+	    	cde_addr[cur_cde] = pz390.reg.getInt(pz390.r1);
+	    } else {
+	    	abort_error(123,"error allocating CDE for LOAD");
+	    }
+	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdchain,pz390.mem.getInt(pz390.cvt_cde));
+	    pz390.mem.putInt(pz390.cvt_cde,cde_addr[cur_cde]);
+	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdentpt,load_code_ent);
+	    put_ascii_string(cde_name[cur_cde],cde_addr[cur_cde]+pz390.cde_cdname,8,' ');
+	    pz390.mem.put(cde_addr[cur_cde]+pz390.cde_cduse,cde_use[cur_cde]);
+	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdloadpt,load_code_load);
+	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdmodlen,load_code_len);
+	}
 }
 public void svc_link(){
 	/*
@@ -2444,9 +2469,19 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 		|| pic == 0x422 // timeout // RPI 1054
 		|| pz390.psw_loc < 0){
 		dump_loc = pz390.psw_loc;
+		if (pz390.opcode1 < 0xc0){  // RPI 1063
+			if (pz390.opcode1 < 0x40){
+				pz390.psw_ins_len = 2;
+			} else {
+				pz390.psw_ins_len = 4;
+			}
+		} else {
+			pz390.psw_ins_len = 6;
+		}
 	} else {
 		pz390.psw_loc = dump_loc; // RPI 1036
 	}	
+	pz390.update_psa();  // RPI 1063
 	String abend_code;
 	if (type){  // system or user requested abend
 		abend_code = "S" + tz390.get_hex(pic,3);
@@ -2794,9 +2829,7 @@ private String get_dcb_file_name(String dsnam_path){
 	int dcb_dsn = pz390.mem.getInt(cur_dcb_addr + dcb_dsnam);
 	if (dcb_dsn > 0){
         file_name = dsnam_path + tz390.get_ascii_var_string(pz390.mem_byte,dcb_dsn,max_lsn_spec).trim(); // RPI 668  
-        if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
-        	file_name = file_name.replace('\\','/');
-        }
+     	file_name = tz390.fix_file_separators(file_name); // RPI 1080
         if (!file_name.substring(0,1).equals(File.separator)
         	&& (file_name.length() == 1 
         		||file_name.charAt(1) != ':')){
@@ -2804,7 +2837,7 @@ private String get_dcb_file_name(String dsnam_path){
         }
         return file_name;
 	} else {
-        file_name = get_file_name(cur_tiot_index);
+        file_name = get_tiot_file_name(cur_tiot_index);
 		if (file_name == null){
 			dcb_synad_error(62,"ddname=" + tiot_ddnam[cur_tiot_index] + " not found");
 		} else {
@@ -2813,15 +2846,13 @@ private String get_dcb_file_name(String dsnam_path){
 	}
 	return "";
 }
-private String get_file_name(int tiot_index){
+private String get_tiot_file_name(int tiot_index){
 	/*
 	 * return file name for tiot using ddname for tiot
 	 */
 	String file_name = get_ascii_env_var_string(tiot_ddnam[tiot_index]);
 	if (file_name != null && file_name.length() > 0){
-        if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
-        	file_name = file_name.replace('\\','/');
-        }
+        file_name = tz390.fix_file_separators(file_name); // RPI 1080
 	}
 	return file_name;
 }
@@ -4347,13 +4378,13 @@ private void dump_cde_pgms(){
 				      + " ENT=" + tz390.get_hex(cde_ent[index],8)
 				      + " LOC=" + tz390.get_hex(cde_loc[index],8)
 		              + " LEN=" + tz390.get_hex(cde_len[index],8)
-		              + " USE=" + tz390.get_hex(cde_use[index],8)
+		              + " USE=" + tz390.get_hex(cde_use[index],2) // RPI 1063 1 byte use count
 		              + tz390.newline); // RPI 500
 			} else {
 				put_dump(" CDE  DSN=" + cde_name[index] 
 				      + " LOC=" + tz390.get_hex(cde_loc[index],8)
 				      + " LEN=" + tz390.get_hex(cde_len[index],8)
-				      + " USE=" + tz390.get_hex(cde_use[index],8)
+				      + " USE=" + tz390.get_hex(cde_use[index],2) // RPI 1063 1 bute use count
 				      + tz390.newline); // RPI 500
 			}
 		}
@@ -4372,13 +4403,13 @@ private void dump_cde(){
 				      + " ENT=" + tz390.get_hex(cde_ent[index],8)
 		              + " LOC=" + tz390.get_hex(cde_loc[index],8)
 		              + " LEN=" + tz390.get_hex(cde_len[index],8)
-		              + " USE=" + tz390.get_hex(cde_use[index],8)
+		              + " USE=" + tz390.get_hex(cde_use[index],2) // RPI 1063
 		              );
 			} else {
 				put_dump(" CDE  DSN=" + cde_name[index]
             		  + " LOC=" + tz390.get_hex(cde_loc[index],8)
 				      + " LEN=" + tz390.get_hex(cde_len[index],8)
-				      + " USE=" + tz390.get_hex(cde_use[index],8)
+				      + " USE=" + tz390.get_hex(cde_use[index],2)  // RPI 1063
 				     );
 			}
 		}
@@ -6751,7 +6782,7 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
  		tot_dcb_oper++;
  		cur_tiot_index = get_new_tiot_index(ddname,dcb_addr)-1;
  		if (cur_tiot_index != -1){
- 		    cur_dcb_file_name = get_file_name(cur_tiot_index);
+ 		    cur_dcb_file_name = get_tiot_file_name(cur_tiot_index);
  		    tiot_dsn[cur_tiot_index] = cur_dcb_file_name;
  	        cur_dcb_addr = dcb_addr;
  		    tiot_dcb_addr[cur_tiot_index] = dcb_addr;

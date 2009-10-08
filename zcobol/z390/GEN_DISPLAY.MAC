@@ -14,9 +14,13 @@
 .* 03/10/09 RPI 1013 remove dependency on ZC_FLOAT using types 1-9        
 .* 07/25/09 RPI 1065 support numeric literals                             
 .* 07/30/09 RPI 1065 support ALL lit, zero, space, quote                  
+.* 10/01/09 RPI 1089 generate inline WTO for sinlge character literal     
 .*********************************************************************
          GEN_DISPLAY 
          COPY  ZC_WS
+       AIF (N'&SYSLIST EQ 1 AND '&SYSLIST(1)'(1,1) EQ '''')
+         WTO   &SYSLIST(1)
+       AELSE
          LA    ZC_R3,ZCVT_WORKAREA  ZC_R3=CVT LIST WORK AREA
          :&NP  SETA N'&SYSLIST
          :&PARM_IX SETA 1
@@ -76,6 +80,7 @@
          LR    ZC_R1,ZC_R3
          L     ZC_R15,ZCVT_DISPLAY
          BASR  ZC_R14,ZC_R15
+       AEND
          MEXIT
          COPY  ZCGETFLD
          MEND

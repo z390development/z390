@@ -1,4 +1,3 @@
-         TITLE 'ZPARTRS.MLC - TRACE EXECUTION SOURCE'      
 .*********************************************************************
 .* Copyright 2009 Automated Software Tools Corporation               *
 .* This source code is part of z390 assembler/emulator package       *
@@ -6,29 +5,99 @@
 .* Author - Don Higgins                                              *
 .* Date   - 06/05/09                                                 *
 .*********************************************************************
-.* 06/05/09 RPI 1049 INITIAL CODING                                                       
-.* 06/10/09 RPI 1049 ADD REL INSTR LABEL CAPTURE FROM DS 0H AND EQU'S
-.* 09/14/09 RPI 1064 DETECT AND SKIP TIMESTAMP IF FOUND              
+.* 09/29/09 RPI 1086 UPDATE TO SUPPORT CBL AND EXEC CICS SOURCES                           
 .*********************************************************************
-.* FILES:
-.*  INPUT  %SYSPARM.TRE  - INSTRUCTION TRACE WITH OPERAND INFO
-.*  INPUT  LOAD_NAME.LST - FOR EACH 390 LINK, LOAD, XCTL
-.*  INPUT  MOD_NAME.PRN  - FOR EACH INCLUDE FOUND IN LST
-.*  OUTPUT %SYSPARM,TRS  - SOURCE LINE EXECUTION TRACE 
+.* OPTIONS SYSPARM(%1+%?+%9)
+.*   1 - TRACE TRE FILE WITH OPTIONAL PATH MUST BE FIRST PARM
+.*   2 - ALL/NOALL       - INCLUDE ALL MLC AND CBL SOURCE          OFF
+.*   3 - ASM/NOASM       - INCLUDE MLC ASSEMBLER SOURCE LINES      ON
+.*   4 - CBL/NOCBL       - INCLUDE COBOL SOURCE AND EXEC CICS      ON
+.*   5 - DETAIL/NODETAIL - INCLUDE BOTH TRE AND MLC SOURCE ALINES  OFF
+.*   6 - EXCLUDE(NAME1+NAME2+NAMEN) - MODULES TO EXCLUDE (DEF NONE)
+.*   7 - INCLUDE(NAME1+NAME2+NAMEN) - MODULES TO INCLUDE (DEF MAIN)
+.*   8 - MAIN(NAME) - MAIN PROGRAM WITH OPTIONAL PATH (DEFAULT %1) 
+.*   9 - MSG/NOMSG       - INCLUDE TRACE, WTO, AND DUMP TYPE LINES ON
+.*  10 - TIME/NOTIME     - INCLUDE TIME-STAMP IF FOUND             OFF
+.*  OUTPUT %1.TRS  - SOURCE MLC EXECUTION TRACE 
 .* STEPS:
-.*  1.  READ %1.TRE AND SIMULATE LOAD OF %1.390 AT FIRST INSTR. ADDR.      
+.*  1.  READ %1.TRE AND SIMULATE LOAD OF MAIN.390 AT FIRST INSTR. ADDR.      
 .*  2.  FOR EACH LOAD SVC PERFORM THE FOLLOWING:
-.*      A.  READ LOAD_NAME.LST TO GET INCLUDED MODULE NAMES
-.*      B.  READ EACH INCLUDE MODULE.PRN AND STORE SOURCE LINES 
-.*          BY RESOLVED PSW_ADDR.  INCLUDE INSTRUCTION LABEL FROM 
+.*      A.  SKIP LOADING IF NOT ON INCLUDE LIST OR ON EXCLUDE LIST
+.*      B.  READ LOAD_NAME.LST TO GET INCLUDED MODULE NAMES
+.*      C.  READ EACH INCLUDE MODULE.PRN AND STORE SOURCE LINES 
+.*          BY RESOLVED PSW_ADDR KEY.  INCLUDE INSTRUCTION LABEL FROM 
 .*          PRIOR DS 0H OR EQU * IF FOUND.  
-.*  3.  WRITE TRS LINE IF SOURCE INDEX FOUND ELSE WRITE TRE LINE AS IS
+.*  3.  IF INDEX FOUND
+.*         IF NEW COBOL MLC REF LINE
+.*            WRITE COBOL MLC LINE WITH COBOL LINE ID
+.*         ENDIF
+.*         IF DETAIL
+.*            WRITE DETAIL TRE LINE WITH INSTRUCTION OPERAND DATA
+.*         ENDIF      
+.*         IF ASM
+.*            WRITE GENERATED ASM SOURCE LINE WITH OPERAND LABELS
+.*         END                    
+.*      ELSE IF NOT INSTR AND (MSG)
+.*         WRITE MSG LINE SUCH AS WTO, TRACE, OR ERROR
+.*      ENDIF
 .*  4.  REPEAT TO END OF TRE
+.* NOTES:
+.*   1.  ZPARTRA.BAT SETS NOCBL (OMITS CBL_KEY FROM ASM LINES)
+.*   2.  ZPARTRC.BAT SETS NOASM (OMITS ASM LINE FOLLOWING CBL_KEY)
+.*   3.  ZPARTRS.BAT DEFAULT CBL AND ASM FOR MIXED TRACING
+.*   4.  IF INC/EXC OMITTED DEFAULT IS INCLUDE(MAIN/TRE)
+.*   5.  INC OVERRIDES EXC
+.*   6.  INC/EXC CAN HAVE ENDING * FOR WILDCARD NAMES 
+.*   7.  ALL OVERRIDES NOASM/NOCBL
+.*   8.  DETAIL WILL FORCE COBOL INIT ASM TO DISPLAY FOR CBL MODULES
 .*********************************************************************
+.*
+.* INIT VAR
+.*
+         :&TOT_TRE SETA 0      INPUT  TRE RECORDS
+         :&TOT_LST SETA 0      INPUT  LST RECORDS FOR EACH 390 MODULE
+         :&TOT_PRN SETA 0      INPUT  PRN RECORDS FOR EACH OBJ MODULE
+         :&TOT_CBL_KEY SETA 0  INPUT  CBL LINE KEYS (C + PSW FIRST INS)
+         :&TOT_ASM_KEY SETA 0  INPUT  ASM LINE KEYS (A + PSW EACH  INS)
+         :&TOT_TRS SETA 0      OUTPUT TRS RECORDS
+         :&TOT_CBL SETA 0      OUTPUT CBL SOURCE LINES
+         :&TOT_ASM SETA 0      OUTPUT ASM SOURCE LINES
+         :&TOT_MSG SETA 0      OUTPUT MSG LINES (WTO,TRACE,ERRORS,ETC)
+         :&NP SETA 0
+         GBLC &PARM(9)         PARMS FROM SYSPARM
+         :&NINC SETA 0
+         LCLC &INC(10)         INCLUDE LISTED MODULES
+         :&NEXC SETA 0         
+         LCLC &EXC(10)         EXCLUDE LISTED MODULES
+         :&TIME SETC ''        ASSUME NO TIME-STAMP
+         :&OPT_ALL    SETB 0   ASSUME TRACE ALL TRE CODE VS INC/EXC
+         :&OPT_ASM    SETB 1   ASSUME ASSEMBLER SOURCE LISTING INCLUDED
+         :&OPT_CBL    SETB 1   ASSUME INCLUDE COBOL SOURCE
+         :&OPT_DETAIL SETB 0   ASSUME NO 2ND LINE WITH OPERAND DETAILS
+         :&OPT_INC    SETB 0   ASSUME INCLUDE CURRENT MODULE CODE
+         :&OPT_MSG    SETB 1   ASSUME INCLUDE ALL TRACE, WTO, DUMP MSGS
+         :&OPT_TIME   SETB 1   ASSUME INCLUDE TIME-STAMP IF FOUND
+         LCLC &INC_MOD(10)
+         :&INC_TOT    SETA 0
+         LCLC &EXC_MOD(10)
+         :&EXC_TOT    SETA 0
+         :&SKIP_INS_CNT   SETA 0
+         :&SKIP_MSG_CNT   SETA 0
+         :&SKIP_BRK_CNT   SETA 0
+         :&CBL_KEY        SETC ''  KEY ASSIGNED AT NEXT ASM DURING LOAD 
+         :&CBL_LINE       SETC ''
+         :&LAST_CBL_KEY   SETC ''  KEY FOR PREV ASM STMT IN TRACE
+         :&LAST_CBL_LINE  SETC ''
+         :&LAST_BRK       SETB 0
+         :&EZ390_FOUND    SETB 0
+.*
+.* MAIN 
+.*
          ACALL INIT
          ACALL GET_TRE
          AWHILE ('&REC' NE '')
                ACTR 4096
+               :&MSG SETB 1              ASSUME REC IS MSG VS INSTR
                AIF  (K'&REC GT 25)
                     AIF  ('&REC'(2,9) EQ 'CDE LOAD=')
                         :&LOAD_ADDR SETC '&REC'(12,7) IGNORE AMODE
@@ -36,21 +105,101 @@
                         :&LOAD_NAME SETC '&REC'(38,*)
                         :&LOAD_NAME SETC '&LOAD_NAME'(1,K'&LOAD_NAME-4)
                         ACALL LOAD_390_LST
-                    AEND
-                    :&PSW_ADDR SETC 'P'.'&REC'(3,7)
-                    LCLC &(&PSW_ADDR)
-.* MNOTE 'DSHX FIND PSW_ADDR=&PSW_ADDR'
-                    :&PSW_LINE SETC (DOUBLE &(&PSW_ADDR))
-                    AIF  ('&PSW_LINE' NE '')
-                        :&REC SETC '&REC'(1,25).'&PSW_LINE'
+                    AELSEIF ('&REC'(2,1) EQ '0' OR '&REC'(2,1) EQ '8')
+                      AIF ('&REC'(11,1) NE '*')  EXCLUDE DUMP LINES
+                          :&MSG SETB 0           REC IS INSTRUCTION
+                          ACALL PROCESS_ASM_TRE
+                      AEND
                     AEND
                AEND
-               ACALL PUT_TRS
+               AIF  (&MSG)
+                    AIF ('&REC' EQ ' ')
+                       :&SKIP_BRK_CNT SETA &SKIP_BRK_CNT+1
+                    AELSEIF (&OPT_MSG)
+                        :&REC SETC ' MSG=&REC'
+                        ACALL PUT_TRS
+                        :&TOT_MSG SETA &TOT_MSG+1
+                    AELSE 
+                       :&SKIP_MSG_CNT SETA &SKIP_MSG_CNT+1
+                    AEND
+               AEND
                ACALL GET_TRE
          AEND
-         :&REC SETC 'ZPARTRS TOTAL SOURCE LINES = &TOT_TRE'
+         :&TIME SETC ''
+         :&REC SETC 'ZPARTRS INPUT  RECORDS TRE=&TOT_TRE LST=&TOT_LST PX
+               RN=&TOT_PRN'
+         ACALL PUT_TRS
+         :&REC SETC 'ZPARTRS STORED KEYS    CBL/ECA=&TOT_CBL_KEY ASM=&TX
+               OT_ASM_KEY'
+         ACALL PUT_TRS
+         :&TOT_TRS SETA &TOT_TRS+1  ADD LAST LINE TO DISPLAY COUNT
+         :&REC SETC 'ZPARTRS OUTPUT RECORDS TRS=&TOT_TRS CBL=&TOT_CBL AX
+               SM=&TOT_ASM MSG=&TOT_MSG'
          ACALL PUT_TRS
          MEXIT
+.*
+.* PROCESS ASM TRACE LINE
+.*
+         AENTRY PROCESS_ASM_TRE
+         :&ASM_KEY SETC 'A'.'&REC'(3,7)
+         LCLC &(&ASM_KEY)
+         :&ASM_LINE SETC '&(&ASM_KEY)'
+         AIF ('&ASM_LINE' NE '')
+            AIF (&OPT_CBL)
+              AIF (NOT &OPT_DETAIL AND NOT &OPT_ALL                    X
+                 AND '&ASM_LINE'(1,1) EQ 'C'                           X
+                 AND '&ASM_LINE'(2,1) EQ '?') SKIP CBL INIT ASM CODE
+                :&SKIP_INS_CNT SETA &SKIP_INS_CNT+1
+                AEXIT AENTRY    
+              AEND
+            AEND
+            :&CBL_KEY  SETC '&ASM_LINE'(1,8)
+            AIF (&OPT_CBL AND '&LAST_CBL_KEY' NE '&CBL_KEY')
+                :&LAST_CBL_KEY SETC '&CBL_KEY'
+                AIF ('&CBL_KEY'(2,1) NE '?')  IS THIS VALID CBL KEY
+                    :&SAVE_REC SETC '&REC'
+                    AIF (&OPT_ASM)
+                        :&REC SETC ' '
+                        ACALL PUT_TRS
+                    AEND
+                    LCLC &(&CBL_KEY)
+                    AIF ('&CBL_KEY'(1,1) EQ 'C')
+                        :&REC SETC ' CBL=&(&CBL_KEY)'  CBL / EXEC CICS
+                    AELSE
+                        :&REC SETC ' ECA=&(&CBL_KEY)'  ASM EXEC CICS
+                    AEND
+                    :&TOT_CBL SETA &TOT_CBL+1
+                    ACALL PUT_TRS     OUTPUT CBL LINE
+                    AIF (&OPT_ASM)
+                        :&REC SETC ' '
+                        ACALL PUT_TRS
+                    AEND
+                    :&REC SETC '&SAVE_REC'
+                AEND
+            AEND
+            AIF (&OPT_DETAIL)
+                :&REC SETC '&REC'(1,24).' '.'&REC'(25,*)
+                ACALL PUT_TRS     OUTPUT TRE LINE
+                AIF (NOT &OPT_CBL)
+                    :&REC SETC ' '.'&ASM_LINE'               NO CBLKEY
+                AELSE
+                    :&REC SETC ' '.'&ASM_LINE'(9,*)          SKP CBLKEY
+                AEND
+                ACALL PUT_TRS     OUTPUT ASM LINE
+                :&TOT_ASM SETA &TOT_ASM+1
+            AELSEIF (&OPT_ASM)
+                AIF (NOT &OPT_CBL)
+                    :&REC SETC '&REC'(1,25).'&ASM_LINE'      NO CBLKEY
+                AELSE
+                    :&REC SETC '&REC'(1,25).'&ASM_LINE'(9,*) SKP CBLKEY
+                AEND
+                ACALL PUT_TRS
+                :&TOT_ASM SETA &TOT_ASM+1
+            AEND
+         AELSE
+            :&SKIP_INS_CNT SETA &SKIP_INS_CNT+1
+         AEND
+         AEND 
 .*
 .* LOAD 390 LST - READ LST AND FOR EACH INCLUDE READ PRN
 .*            AND STORE EACH SOURCE INSTRUCTION LINE
@@ -61,8 +210,9 @@
          :&LOAD_END SETA &LOAD_LOC+X2A('&LOAD_LEN')
          :&LST_DSN  SETC '&LOAD_NAME..LST'
          :&LST_REC AREAD ID=3,DSNAME=&LST_DSN
-         MNOTE 'ZPARTRS LOADING &LST_DSN AT &LOAD_ADDR'
+         MNOTE 'ZPARTRS LOADING LST &LOAD_ADDR &LST_DSN'
          AWHILE ('&LST_REC' NE '')
+               :&TOT_LST SETA &TOT_LST+1
                ACTR 4096
                AIF ('&LST_REC'(1,17) EQ 'LZ390I INCLUDE = ')
                    :&MOD_NAME SETC '&LST_REC'(18,*) INCLUDE ?.OBJ
@@ -82,28 +232,73 @@
 .*            AT PSW_ADDR = LOAD_ADDR + MOD_ADDR
 .*
          AENTRY LOAD_MOD
+         :&PGM_TYPE  SETC 'A' ASSUME A=ASM VS C=CBL OR E=EXEC CICS ASM
          :&MOD_LEN   SETA 0   TOTAL LEN OF ALL CSECTS IN MODULE
          :&LAB_HEX   SETC ''
          :&LAB_NAME  SETC ''
-         :&BASE_NAME SETC '&MOD_NAME'
-         ACALL GET_BASE_NAME
          :&PRN_DSN SETC '&MOD_NAME..PRN'
          :&PRN_REC AREAD ID=4,DSNAME=&PRN_DSN
          :&PSW_HEX  SETC A2X(&LOAD_LOC)
          :&PSW_ADDR SETC '000000&PSW_HEX'(K'&PSW_HEX,7)
-         MNOTE 'ZPARTRS LOADING &PRN_DSN AT &PSW_ADDR'
+         :&CBL_LINE SETC ''
+         :&CBL_KEY  SETC ''
+         :&PATH_NAME SETC '&MOD_NAME'
+         ACALL GET_PATH_NAME
+         :&NAME SETC '&NAME       '(1,8) 
+         ACALL CHECK_NAME
+         AIF (&OPT_INC)
+             MNOTE 'ZPARTRS LOADING PRN &PSW_ADDR &PRN_DSN'
+         AELSE
+             MNOTE 'ZPARTRS EXCLUDE PRN &PSW_ADDR &PRN_DSN'
+         AEND
          AWHILE ('&PRN_REC' NE '')
+               :&TOT_PRN SETA &TOT_PRN+1
                ACTR 4096
                AIF (K'&PRN_REC GT 54                                   X
+                    AND '&PRN_REC'(54,1) EQ '*')     COMMENT            
+                    AIF ('&PRN_REC'(55,2) EQ 'ZC')     ZCOBOL CALL 
+                        AIF ('&CBL_KEY' EQ '' AND '&CBL_LINE' NE '')
+                            :&CBL_LINE SETC '&CBL_LINE ; '.'&PRN_REC'(7X
+               3,*)
+                        AELSE 
+                            :&CBL_LINE SETC '&NAME'.'&PRN_REC'(57,*)
+                        AEND 
+                        :&CBL_KEY  SETC ''  WILL BE SET AT NEXT ASM
+                    AELSEIF ('&PRN_REC'(55,7) EQ ' ZCOBOL')
+                        :&PGM_TYPE SETC 'C'  ZCOBOL
+                    AEND
+               AELSEIF (K'&PRN_REC GT 65                               X
+                        AND '&PRN_REC'(54,11) EQ ' EXEC CICS,')  
+                    :&PGM_TYPE SETC 'E'   EXEC CICS ASSEMBLER       
+                    AIF ('&CBL_KEY' EQ '' AND '&CBL_LINE' NE '')
+                        :&CBL_LINE SETC '&CBL_LINE ; '.'&PRN_REC'(54,*)
+                    AELSE 
+                        :&CBL_LINE SETC '&NAME'.'&PRN_REC'(54,*)
+                    AEND 
+                    :&CBL_KEY  SETC ''  WILL BE SET AT NEXT ASM
+               AELSEIF (K'&PRN_REC GT 54                               X
                     AND '&PRN_REC'(1,1)  EQ '0'                        X
                     AND '&PRN_REC'(7,1)  EQ ' '                        X
                     AND '&PRN_REC'(8,1)  NE ' '                        X
-                    AND '&PRN_REC'(20,1) EQ ' ')
+                    AND '&PRN_REC'(20,1) EQ ' ')      ASM INSTR LINE
+                   AIF (NOT &OPT_INC)
+                       AEXIT AENTRY        EXCLUDING MODULE
+                   AEND
                    :&REL_HEX  SETC '&PRN_REC'(1,6)
                    :&REL_LOC  SETA X2A(&REL_HEX)
                    :&PSW_LOC  SETA &LOAD_LOC+&REL_LOC
                    :&PSW_HEX  SETC A2X(&PSW_LOC)
-                   :&PSW_ADDR SETC 'P'.'000000&PSW_HEX'(K'&PSW_HEX,7)
+                   :&PSW_ADDR SETC '000000&PSW_HEX'(K'&PSW_HEX,7)
+                   :&ASM_KEY  SETC 'A&PSW_ADDR'
+                   AIF (&OPT_CBL AND '&CBL_KEY' EQ '')
+                       AIF ('&CBL_LINE' NE '')
+                           :&CBL_KEY    SETC '&PGM_TYPE&PSW_ADDR'
+                           :&(&CBL_KEY) SETC '&CBL_LINE'
+                           :&TOT_CBL_KEY SETA &TOT_CBL_KEY+1
+                       AELSE
+                           :&CBL_KEY SETC '&PGM_TYPE'.(7)'?' UNDEF KEY
+                       AEND
+                   AEND
                    :&SOURCE   SETC '&PRN_REC'(54,*)
                    AIF ('&REL_HEX' EQ '&LAB_HEX')
                        AIF ('&SOURCE'(1,1) EQ ' ')
@@ -118,16 +313,17 @@
                            AEND
                       AEND
                    AEND
-.* MNOTE 'DSHX ADD  PSW_ADDR=&PSW_ADDR MOD_NAME=&BASE_NAME REL=&REL_HEXX
-                LAB=&LAB_NAME'
-                   :&BASE_NAME SETC '&BASE_NAME        '(1,8)
-                   :&PSW_LINE SETC '&BASE_NAME &REL_HEX '.'&SOURCE'
-                   :&(&PSW_ADDR) SETC '&PSW_LINE'
+                   :&ASM_LINE SETC '&NAME &REL_HEX '.'&SOURCE'
+                   AIF (&OPT_CBL)
+                       :&(&ASM_KEY) SETC '&CBL_KEY&ASM_LINE'
+                   AELSE
+                       :&(&ASM_KEY) SETC '&ASM_LINE'
+                   AEND
+                   :&TOT_ASM_KEY SETA &TOT_ASM_KEY+1
                AELSEIF (K'&PRN_REC GT 54                               X
                     AND '&PRN_REC'(1,1)  EQ '0'                        X
                     AND '&PRN_REC'(7,18) EQ (18)' '                    X
-                    AND '&PRN_REC'(54,1) NE ' '                        X
-                    AND '&PRN_REC'(54,1) NE '*') COULD BE REL LABEL
+                    AND '&PRN_REC'(54,1) NE ' ')
                     AIF  ('&PRN_REC'(1,6) EQ '&PRN_REC'(19,6)          X
                          OR '&PRN_REC'(19,6) EQ (6)' ') REL EQU,DS/CST
                         :&SOURCE   SETC '&PRN_REC'(54,*)
@@ -138,12 +334,11 @@
                               :&LAB_NAME SETC '&LAB_NAME        '(1,8)
                             AEND
                             :&LAB_HEX  SETC '&PRN_REC'(1,6)
-.* MNOTE 'DSHX LAB_NEX=&LAB_HEX LAB_NAME=&LAB_NAME'
                         AEND
                     AEND
                AELSEIF (K'&PRN_REC GT 44                               X
                     AND '&PRN_REC'(2,4)  EQ 'ESD='                     X
-                    AND '&PRN_REC'(37,8) EQ 'TYPE=CST')      
+                    AND '&PRN_REC'(37,8) EQ 'TYPE=CST')    ESD CSECT  
                     :&CST_LEN  SETA X2A('&PRN_REC'(28,8))           
                     :&MOD_LEN  SETA &MOD_LEN+&CST_LEN
                AEND    
@@ -151,70 +346,298 @@
          AEND
          AEND
 .*
+.* CHECK IF MODULE NAME TO BE INCLUDED
+.*
+         AENTRY CHECK_NAME
+         :&OPT_INC SETB 1
+         AIF   (&OPT_ALL)
+               AEXIT AENTRY
+         AEND
+         :&I SETA 1
+         AWHILE (&I LE &NINC)
+               AIF ('&INC(&I)' EQ '&NAME'(1,K'&INC(&I)))
+                   AEXIT AENTRY
+               AEND
+               :&I SETA &I+1
+         AEND 
+         :&OPT_INC SETB 0            
+         AIF (&NINC GT 0)
+             AEXIT AENTRY
+         AEND
+         :&I SETA 1
+         AWHILE (&I LE &NEXC)
+               AIF ('&EXC(&I)' EQ '&NAME'(1,K'&EXC(&I)))
+                   AEXIT AENTRY
+               AEND
+               :&I SETA &I+1
+         AEND 
+         :&OPT_INC SETB 1
+         AEND            
+.*
 .* INIT 
 .*
          AENTRY INIT
-         :&EZ390_FOUND SETB 0
-         :&BASE_NAME SETC '&SYSPARM'
-         ACALL GET_BASE_NAME
-         :&PGM_NAME SETC '&BASE_NAME'
-         :&TRE_DSN SETC '&SYSPARM..TRE'
-         :&TRS_DSN SETC '&SYSPARM..TRS'
-         :&TOT_TRE SETA 0
-         :&REC SETC 'ZPARTRS PROGRAM = &SYSPARM'
+         ACALL INIT_PARMS
+         :&REC SETC 'ZPARTRS SYSPARM=&PARMS'
          ACALL PUT_TRS     
          :&REC SETC 'ZPARTRS CURRENT DATE=&SYSDATE TIME=&SYSTIME'
          ACALL PUT_TRS
+         AEND
+.*
+.*
+.* INIT PARMS
+.*
+         AENTRY INIT_PARMS
+         ACALL GET_PARMS
+         AIF  ('&PARM(1)' EQ '')
+              MNOTE 8,'ZPARTRS FILE PARM MISSING'
+              MEXIT
+         AEND
+         :&PATH_NAME SETC '&PARM(1)'
+         ACALL GET_PATH_NAME
+         :&TRE_PATH SETC '&PATH'
+         :&TRE_NAME SETC '&NAME'
+         :&I SETA ('&TRE_NAME' FIND '.')
+         AIF (&I GT 0)
+             :&TRE_NAME SETC '&TRE_NAME'(1,&I-1)
+         AEND
+         :&TRE_DSN SETC '&TRE_PATH&TRE_NAME..TRE'
+         :&TRS_DSN SETC '&TRE_PATH&TRE_NAME..TRS'
+         :&PGM_PATH SETC '&TRE_PATH'
+         :&PGM_NAME SETC '&TRE_NAME'
+         :&I SETA 2
+         AWHILE (&I LE &NP)
+             AIF (UPPER '&PARM(&I)' EQ 'ALL')              ALL CBL+ASM
+                 :&OPT_ALL SETB 1
+                 :&OPT_INC SETB 1
+                 :&OPT_CBL SETB 1
+                 :&OPT_ASM SETB 1
+             AELSEIF (UPPER '&PARM(&I)' EQ 'NOALL')              NOALL
+                 :&OPT_ALL SETB 0
+                 :&OPT_INC SETB 0
+                 :&OPT_CBL SETB 1
+                 :&OPT_ASM SETB 1
+             AELSEIF (UPPER '&PARM(&I)' EQ 'ASM')                ASM 
+                 :&OPT_ASM  SETB 1
+             AELSEIF (UPPER '&PARM(&I)' EQ 'NOASM')              NOASM 
+                 :&OPT_ASM  SETB 0
+             AELSEIF (UPPER '&PARM(&I)' EQ 'CBL')                CBL 
+                 :&OPT_CBL  SETB 1
+             AELSEIF (UPPER '&PARM(&I)' EQ 'NOCBL')              NOCBL 
+                 :&OPT_CBL  SETB 0
+             AELSEIF (UPPER '&PARM(&I)' EQ 'DETAIL')             DETAIL
+                 :&OPT_DETAIL SETB 1
+                 :&OPT_ASM    SETB 1
+             AELSEIF (UPPER '&PARM(&I)' EQ 'NODETAIL')         NODETAIL
+                 :&OPT_DETAIL SETB 0
+             AELSEIF (UPPER '&PARM(&I)'(1,8) EQ 'EXCLUDE(')    EXCLUDE
+                 :&PARMS SETC '&PARM(&I)'(9,*)
+                 :&NEXC SETA 1
+                 AWHILE ('&PARMS' NE '')
+                     :&J SETA ('&PARMS' FIND '+)')
+                     AIF (&J GT 0)
+                         AIF ('&PARMS'(&J-1,1) EQ '*')
+                             :&EXC(&NEXC) SETC '&PARMS'(1,&J-2)
+                         AELSE    
+                             :&NAME SETC '&PARMS'(1,&J-1).(7)' '
+                             :&EXC(&NEXC) SETC '&NAME'(1,8)
+                         AEND
+                         :&PARMS SETC '&PARMS'(&J+1,*)
+                         AIF ('&PARMS' NE '')
+                             :&NEXC SETA &NEXC+1
+                         AEND
+                     AELSE
+                         MNOTE 8,'ZPARTRS EXCLUDE MISSING )'
+                         MEXIT
+                     AEND
+                 AEND
+             AELSEIF (UPPER '&PARM(&I)'(1,8) EQ 'INCLUDE(')    INCLUDE
+                 :&PARMS SETC '&PARM(&I)'(9,*)
+                 :&NINC SETA 1
+                 AWHILE ('&PARMS' NE '')
+                     :&J SETA ('&PARMS' FIND '+)')
+                     AIF (&J GT 0)
+                         AIF ('&PARMS'(&J-1,1) EQ '*')
+                             :&INC(&NINC) SETC '&PARMS'(1,&J-2)
+                         AELSE    
+                             :&NAME SETC '&PARMS'(1,&J-1).(7)' '
+                             :&INC(&NINC) SETC '&NAME'(1,8)
+                         AEND
+                         :&PARMS SETC '&PARMS'(&J+1,*)
+                         AIF ('&PARMS' NE '')
+                             :&NINC SETA &NINC+1
+                         AEND
+                     AELSE
+                         MNOTE 8,'ZPARTRS INCLUDE MISSING )'
+                         MEXIT
+                     AEND
+                 AEND
+             AELSEIF (UPPER '&PARM(&I)'(1,5) EQ 'MAIN(')    MAIN(PGM)
+                 :&PATH_NAME SETC '&PARM(&I)'(6,K'&PARM(&I)-7)
+                 ACALL GET_PATH_NAME
+                 :&PGM_PATH SETC '&PATH'
+                 :&PGM_NAME SETC '&NAME'
+             AELSEIF (UPPER '&PARM(&I)' EQ 'MSG')                MSG 
+                 :&OPT_MSG  SETB 1
+             AELSEIF (UPPER '&PARM(&I)' EQ 'NOMSG')              NOMSG 
+                 :&OPT_MSG  SETB 0
+             AELSEIF (UPPER '&PARM(&I)' EQ 'TIME')               TIME
+                 :&OPT_TIME SETB 1
+             AELSEIF (UPPER '&PARM(&I)' EQ 'NOTIME')             NOTIME
+                 :&OPT_TIME SETB 0
+             AELSE
+                 MNOTE 8,'ZPARTRS UNKNOWN OPTION &PARM(&I)'
+                 MEXIT
+             AEND
+             :&I SETA &I+1
+         AEND    
+         :&PARMS SETC '&SYSPARM'
+         AWHILE (K'&PARMS GT 1 AND '&PARMS'(K'&PARMS,1) EQ '+')
+               :&PARMS SETC '&PARMS'(1,K'&PARMS-1)
+         AEND
+         AIF   (&NINC+&NEXC GT 0)
+               AIF (&OPT_ALL)
+                   MNOTE 4,'ZPARTRS ALL OVERRIDES INCLUDE/EXCLUDE'
+                   :&NINC SETA 0
+                   :&NEXC SETA 0
+               AELSEIF (&NINC GT 0 AND &NEXC GT 0)
+                   MNOTE 4,'ZPARTRS INCLUDE OVERRIDES EXCLUDE'
+                   :&NEXC SETA 0
+               AEND
+         AELSEIF (NOT &OPT_ALL)
+               :&INC(1) SETC '&PGM_NAME'
+               :&NINC SETA 1
+         AEND
+         AEND
+.*
+.* GET PARMS(N) FROM SYSPARM(PARM1+PARMN)
+.*
+         AENTRY GET_PARMS
+         AIF (K'&SYSPARM EQ 0)
+             AEXIT AENTRY
+         AEND
+         :&PARMS SETC '&SYSPARM'
+         :&NP SETA 1
+         AWHILE ('&PARMS' NE '')
+            :&J SETA ('&PARMS' FIND '+(')
+            AIF (&J GT 0)
+                :&CHAR SETC '&PARMS'(&J,1)
+                AIF ('&CHAR' EQ '+')
+                    :&PARM(&NP) SETC '&PARMS'(1,&J-1)
+                    AIF ('&PARM(&NP)' EQ '')
+                        :&NP SETA &NP-1
+                        AEXIT AWHILE
+                    AEND 
+                    MNOTE 'ZPARTRS PARM(&NP)=&PARM(&NP)'
+                    :&PARMS    SETC '&PARMS'(&J+1,*)
+                    :&NP       SETA &NP+1
+                AELSE
+                    :&K SETA ('&PARMS' FIND ')')
+                    AIF (&K GT 0)
+                        :&PARM(&NP) SETC '&PARMS'(1,&K)
+                        AIF ('&PARM(&NP)' EQ '')
+                            :&NP SETA &NP-1
+                            AEXIT AWHILE
+                        AEND 
+                        MNOTE 'ZPARTRS PARM(&NP)=&PARM(&NP)'
+                        AIF (K'&PARMS GT &K)
+                           :&PARMS    SETC '&PARMS'(&K+2,*)
+                           :&NP       SETA &NP+1
+                        AELSE
+                           :&PARMS    SETC ''
+                        AEND
+                    AELSE
+                        MNOTE 8,'ZPARTRS OPEN MISSING )'
+                        MEXIT
+                    AEND
+                AEND
+            AELSE
+                :&PARM(&NP) SETC '&PARMS'
+                MNOTE 'ZPARTRS PARM(&NP)=&PARM(&NP)'
+                :&PARMS    SETC ''
+            AEND
+         AEND  
          AEND
 .*
 .* GET TRE REC AND SAVE TRE NAME IF FIRST RECORD
 .*
          AENTRY GET_TRE
          :&REC AREAD ID=1,DSNAME=&TRE_DSN
-         AWHILE ('&REC' NE '')
+         AIF   ('&REC' NE '')
                :&TOT_TRE SETA &TOT_TRE+1
                AIF  (K'&REC GT 25)
                     AIF ('&REC'(5,1) EQ '-')  RPI 1064
+                        :&TIME SETC '&REC'(1,30)
                         :&REC SETC '&REC'(31,*) REMOVE TIMESTAMP
                         AIF ('&REC' EQ '')
                             :&REC SETC ' '   ALLOW BLANK TIMESTAMP
                         AEND
                     AEND
                     AIF ('&REC'(3,1) EQ ':')
+                        :&TIME SETC '&REC'(1,9)
                         :&REC SETC '&REC'(10,*) REMOVE TIME FROM START
                     AEND
                     AIF ('&REC'(11,5) EQ 'EZ390')
                         :&EZ390_FOUND SETB 1
-                    AELSEIF (&EZ390_FOUND)
-                        AEXIT AWHILE
-                    AELSE
+                    AELSEIF (NOT &EZ390_FOUND)
                         MNOTE 12,'ZPARTRS EZ390 START RECORD NOT FOUND'
                         MEXIT
                     AEND
                AEND
-               ACALL PUT_TRS DISPLAY START/STOP/BLANK RCDS
-               :&REC AREAD ID=1,DSNAME=&TRE_DSN
          AEND
          AEND
 .*
-.* PUT TRS
+.* PUT TRS SOURCE TRACE 
 .*
          AENTRY PUT_TRS
+         AIF   (&OPT_ASM)
+               :&SKIP_TOT SETA &SKIP_INS_CNT+&SKIP_MSG_CNT+&SKIP_BRK_CNX
+               T
+               AIF (&SKIP_TOT GT 0)
+                     AIF (&SKIP_BRK_CNT EQ &SKIP_TOT)
+                          AIF (NOT &LAST_BRK)
+                             :&LAST_BRK SETB 1
+                             :&TOT_TRS SETA &TOT_TRS+1
+                             PUNCH ' ',ID=2,DSNAME=&TRS_DSN
+                          AEND
+                     AELSE
+                          :&TOT_TRS SETA &TOT_TRS+1
+                          PUNCH '.... SKIP INS=&SKIP_INS_CNT MSG=&SKIP_X
+               MSG_CNT BRK=&SKIP_BRK_CNT ....',ID=2,DSNAME=&TRS_DSN
+                     AEND
+                     :&SKIP_INS_CNT SETA 0
+                     :&SKIP_MSG_CNT SETA 0
+                     :&SKIP_BRK_CNT SETA 0
+               AEND
+         AEND
+         AIF   ('&REC' EQ ' ')
+               AIF (&LAST_BRK)
+                    AEXIT AENTRY
+               AEND
+         AEND
+         :&LAST_BRK SETB 0
+         AIF   (&OPT_TIME)
+               :&REC SETC '&TIME&REC'
+         AEND
+         :&REC SETC (DOUBLE '&REC')
          PUNCH '&REC',ID=2,DSNAME=&TRS_DSN
          :&TOT_TRS SETA &TOT_TRS+1
          AEND
 .*
-.* GET BASE NAME FROM BASE_NAME
+.* GET PATH AND NAME FROM PATH_NAME
 .*
-         AENTRY GET_BASE_NAME
-         :&SLASH_IX SETA K'&BASE_NAME-1
+         AENTRY GET_PATH_NAME
+         :&SLASH_IX SETA K'&PATH_NAME-1
          AWHILE (&SLASH_IX GT 0)
-             AIF ('&BASE_NAME'(&SLASH_IX,1) EQ '\')
-                 :&BASE_NAME SETC '&BASE_NAME'(&SLASH_IX+1,*)
+             :&CHAR SETC '&PATH_NAME'(&SLASH_IX,1)
+             AIF ('&CHAR' EQ '\' OR '&CHAR' EQ '/')
+                 :&PATH SETC '&PATH_NAME'(1,&SLASH_IX)
+                 :&NAME SETC '&PATH_NAME'(&SLASH_IX+1,*)
                  AEXIT AENTRY
              AEND
              :&SLASH_IX SETA &SLASH_IX-1
          AEND
+         :&PATH SETC ''
+         :&NAME SETC '&PATH_NAME'
          AEND
-         END                         
- 
+         END                  

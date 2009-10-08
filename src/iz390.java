@@ -36,8 +36,9 @@ public class iz390{
 	    * Maintenance
 	    ****************************************************
 	    * 05/06/07 initial coding for v1303b 
-	    * 07/12/07 RPI 656 change RT to MVS if MVS not installed
-	    * 10/20/07 RPI 713 change file name case for Linux
+	    * 07/12/07 RPI  656 change RT to MVS if MVS not installed
+	    * 10/20/07 RPI  713 change file name case for Linux
+	    * 09/25/09 RPI 1080 replace init_tables with init_tz390
 	    ****************************************************
 	    *                                       last RPI
 	    *                                        
@@ -57,7 +58,7 @@ public class iz390{
 		 * init iz390
 		 */
     	tz390 = new tz390();
-    	tz390.init_tables();
+    	tz390.init_tz390();   // RPI 1080 
         z390_ver = tz390.version;
         z390_base_ver = z390_ver.substring(0,7);
         System.out.println("IVP OS   version = " + os_ver);

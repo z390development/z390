@@ -1,6 +1,12 @@
 rem regression test zcobol z390 COBOL demos
 rem run demo pgms and gen dif report for z390
 echo off
+if exist /usr/local/lib/z390/z390.jar goto linux
+if %1 == tron ECHO ON
+if %1 == tron shift
+if %1 == TRON ECHO ON
+if %1 == TRON shift
+:linux
 rem
 rem cbl to 390 demos using z390 portable mainframe assembler language
 rem

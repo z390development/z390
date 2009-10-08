@@ -1,5 +1,11 @@
 rem ZC390C translate CBL to MLC and assemble using z390 
 echo off
+if exist /usr/local/lib/z390/z390.jar goto linux
+if %1 == tron ECHO ON
+if %1 == tron shift
+if %1 == TRON ECHO ON
+if %1 == TRON shift
+:linux
 if exist %1.CBL goto erase
 echo on
 pause no zcobol program found %1.CBL

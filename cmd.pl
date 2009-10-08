@@ -40,6 +40,7 @@
 
 #                  pause on unknown BAT command file
 # 01/29/08 RPI 792 Support Windows compatible ECHO ON/OFF, IF EXIST file cmd
+# 10/07/09 RPI 1080 add support for J2SEOPTIONS 
 ##################################################################
 # Notes:
 #   1. Paths must be correct case with \ separators
@@ -53,12 +54,13 @@ sub set_meta($);
 sub split_args($);
 
 $| = 1;
-my $ECHO = 1;
-my $HOME = $ENV{'HOME'} || $ENV{'LOGDIR'} ||
-		(getpwuid($<))[7] || die "You're homeless!\n";
-my $dir; # Base directory for support files
-my @dirs = ("$HOME/lib/z390", "/usr/local/lib/z390", "/usr/lib/z390");
-unshift(@dirs, $ENV{Z390}) if $ENV{Z390};
+ my $ECHO = 1;
+ my $HOME = $ENV{'HOME'} || $ENV{'LOGDIR'} ||
+ 		(getpwuid($<))[7] || die "You're homeless!\n";
++my $J2SEOPTIONS = $ENV{'J2SEOPTIONS'} || "";
+ my $dir; # Base directory for support files
+ my @dirs = ("$HOME/lib/z390", "/usr/local/lib/z390", "/usr/lib/z390");
+ unshift(@dirs, $ENV{Z390}) if $ENV{Z390};
 
 foreach my $d (@dirs) {
   if (-f "$d/z390.jar") {
@@ -153,12 +155,13 @@ sub batch_file($$) {
   $i = 0; # Current line
   while (1) {
 # exec next line within bat file line array
-    my $line = $lines[$i];
-    $line =~ s/\%\~dps0/$bat\//g;       # replace bat %dps0 with $bat path                         
-    $line =~ s/\%([1-9])/$args[$1]/g;   # substitute current bat parms 1-9
-    $line =~ s/\s+$//;                  # Trim trailing spaces.
-    $line =~ s/\\/\//g;              # replace \ with /
-    if ($ECHO == 1){
+     my $line = $lines[$i];
+     $line =~ s/\%\~dps0/$bat\//g;       # replace bat %dps0 with $bat path                         
+     $line =~ s/\%([1-9])/$args[$1]/g;   # substitute current bat parms 1-9
++    $line =~ s/\%J2SEOPTIONS\%/$J2SEOPTIONS/g;   # substitute current bat parms 1-9
+     $line =~ s/\s+$//;                  # Trim trailing spaces.
+     $line =~ s/\\/\//g;              # replace \ with /
+     if ($ECHO == 1){
       print "$line\n";
     }
 

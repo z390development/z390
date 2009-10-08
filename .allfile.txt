@@ -7,10 +7,12 @@ C:\z390\ASMLG.BAT
 C:\z390\assist
 C:\z390\ASSIST.BAT
 C:\z390\AZ390.BAT
+C:\z390\BLDJAR5.BAT
 C:\z390\BLDJAR6.BAT
 C:\z390\bmk
 C:\z390\cics
 C:\z390\cmd.pl
+C:\z390\COMP1.BAT
 C:\z390\Database
 C:\z390\demo
 C:\z390\DEMO.BAT
@@ -27,6 +29,7 @@ C:\z390\MAC.BAT
 C:\z390\mfacc
 C:\z390\mvs
 C:\z390\MZ390.BAT
+C:\z390\README.TXT
 C:\z390\REPRO.BAT
 C:\z390\rt
 C:\z390\RTCOMP.BAT
@@ -1196,6 +1199,7 @@ C:\z390\mac\BLDL.MAC
 C:\z390\mac\CALL.MAC
 C:\z390\mac\CASE.MAC
 C:\z390\mac\CASENTRY.MAC
+C:\z390\mac\CDED.MAC
 C:\z390\mac\CFD.MAC
 C:\z390\mac\CHECK.MAC
 C:\z390\mac\CLOSE.MAC
@@ -4580,6 +4584,7 @@ C:\z390\rt\test\TESTAI2B.CPY
 C:\z390\rt\test\TESTAI2C.CPY
 C:\z390\rt\test\TESTAIN1.MLC
 C:\z390\rt\test\TESTAIN2.MLC
+C:\z390\rt\test\TESTAIN3.MLC
 C:\z390\rt\test\TESTASC1.MLC
 C:\z390\rt\test\TESTASC2.MLC
 C:\z390\rt\test\TESTASC3.MLC
@@ -4593,6 +4598,7 @@ C:\z390\rt\test\TESTASM2.MLC
 C:\z390\rt\test\TESTBLD1.MLC
 C:\z390\rt\test\TESTCAL1.MLC
 C:\z390\rt\test\TESTCAL2.MLC
+C:\z390\rt\test\TESTCDE1.MLC
 C:\z390\rt\test\TESTCFD1.MLC
 C:\z390\rt\test\TESTCIC1.MLC
 C:\z390\rt\test\TESTCIC2.MLC
@@ -9751,6 +9757,7 @@ C:\z390\zcobol\all\POWERS.PRN_dz390
 C:\z390\zcobol\all\POWERS.STA_dz390
 C:\z390\zcobol\all\RT_DIF_TOT_FILES_48.TXT
 C:\z390\zcobol\all\RT_DIF_TOT_MATCH_35.TXT
+C:\z390\zcobol\all\RT_DIF_TOT_MATCH_47.TXT
 C:\z390\zcobol\demo\COPYFILE.CBL
 C:\z390\zcobol\demo\COPYFILE.IN
 C:\z390\zcobol\demo\copyfile.MLC
@@ -9759,9 +9766,18 @@ C:\z390\zcobol\demo\copyfile_ZC_LABELS.CPY
 C:\z390\zcobol\demo\DATETIME.CBL
 C:\z390\zcobol\demo\datetime.MLC
 C:\z390\zcobol\demo\datetime_ZC_LABELS.CPY
+C:\z390\zcobol\demo\HELLO.390
+C:\z390\zcobol\demo\HELLO.BAL
 C:\z390\zcobol\demo\HELLO.CBL
+C:\z390\zcobol\demo\HELLO.ERR
 C:\z390\zcobol\demo\hello.HLA
+C:\z390\zcobol\demo\HELLO.LOG
+C:\z390\zcobol\demo\HELLO.LST
 C:\z390\zcobol\demo\hello.MLC
+C:\z390\zcobol\demo\HELLO.OBJ
+C:\z390\zcobol\demo\HELLO.PRN
+C:\z390\zcobol\demo\HELLO.TRE
+C:\z390\zcobol\demo\HELLO.TRS
 C:\z390\zcobol\demo\hello_ZC_LABELS.CPY
 C:\z390\zcobol\demo\i586
 C:\z390\zcobol\demo\java
@@ -10052,7 +10068,7 @@ C:\z390\zcobol\test\TESTCPY2_ZC_LABELS.CPY
 C:\z390\zcobol\test\TESTCPYA.CPZ
 C:\z390\zcobol\test\TESTCPYB.CPZ
 C:\z390\zcobol\test\TESTDFP1.CBL
-C:\z390\zcobol\test\TESTDFP1.MLC
+C:\z390\zcobol\test\testdfp1.MLC
 C:\z390\zcobol\test\TESTDFP1_ZC_LABELS.CPY
 C:\z390\zcobol\test\TESTDSP1.CBL
 C:\z390\zcobol\test\TESTDSP1.MLC
@@ -10219,6 +10235,7 @@ C:\z390\zcobol\test\z390\TESTWS1.MLC
 C:\z390\zcobol\test\z390\TESTWS1_ZC_LABELS.CPY
 C:\z390\zcobol\test\z390\dif\RT_DIF_TOT_FILES_310.TXT
 C:\z390\zcobol\test\z390\dif\RT_DIF_TOT_MATCH_218.TXT
+C:\z390\zcobol\test\z390\dif\RT_DIF_TOT_MATCH_309.TXT
 C:\z390\zcobol\test\z390\dif\TESTBFP1.BAL
 C:\z390\zcobol\test\z390\dif\TESTBFP1.ERR
 C:\z390\zcobol\test\z390\dif\TESTBFP1.PRN
@@ -10630,9 +10647,15 @@ C:\z390\zcobol\vce\GEN_WS.MAC
 C:\z390\zcobol\vce\README.TXT
 C:\z390\zcobol\vce\ZCVCECLG.OPT
 C:\z390\zcobol\z390\ABORT.MLC
+C:\z390\zcobol\z390\ABORT.OBJ
+C:\z390\zcobol\z390\ABORT.PRN
 C:\z390\zcobol\z390\ACCEPT.MLC
+C:\z390\zcobol\z390\ACCEPT.OBJ
+C:\z390\zcobol\z390\ACCEPT.PRN
 C:\z390\zcobol\z390\AMCACKDC
 C:\z390\zcobol\z390\DISPLAY.MLC
+C:\z390\zcobol\z390\DISPLAY.OBJ
+C:\z390\zcobol\z390\DISPLAY.PRN
 C:\z390\zcobol\z390\GEN_ACCEPT.MAC
 C:\z390\zcobol\z390\GEN_ADD.MAC
 C:\z390\zcobol\z390\GEN_ALTER.MAC
@@ -10674,6 +10697,8 @@ C:\z390\zcobol\z390\GEN_VAR.MAC
 C:\z390\zcobol\z390\GEN_WRITE.MAC
 C:\z390\zcobol\z390\GEN_WS.MAC
 C:\z390\zcobol\z390\INSPECT.MLC
+C:\z390\zcobol\z390\INSPECT.OBJ
+C:\z390\zcobol\z390\INSPECT.PRN
 C:\z390\zcobol\z390\README.TXT
 C:\z390\zcobol\z390\TEMP.DIF
 C:\z390\zcobol\z390\ZC_CONV.MAC
@@ -10684,8 +10709,13 @@ C:\z390\zcobol\z390\ZC_PFPO.CPY
 C:\z390\zcobol\z390\ZC_UNPK31.MAC
 C:\z390\zcobol\z390\ZC390CLG.OPT
 C:\z390\zcobol\z390\ZC390CVT.CPY
+C:\z390\zcobol\z390\ZC390LIB.LST
 C:\z390\zcobol\z390\ZC390LIB.MLC
+C:\z390\zcobol\z390\ZC390LIB.OBJ
+C:\z390\zcobol\z390\ZC390LIB.PRN
 C:\z390\zcobol\z390\ZC390NUC.MLC
+C:\z390\zcobol\z390\ZC390NUC.OBJ
+C:\z390\zcobol\z390\ZC390NUC.PRN
 C:\z390\zcobol\z390\ZC390PVT.CPY
 C:\z390\zpar\FIXCRLF.BAT
 C:\z390\zpar\FIXCRLF.MLC
@@ -10703,5 +10733,9 @@ C:\z390\zpar\ZPARSUM1.BAT
 C:\z390\zpar\ZPARSUM1.MLC
 C:\z390\zpar\ZPARSUM2.BAT
 C:\z390\zpar\ZPARSUM2.MLC
+C:\z390\zpar\ZPARTRA.BAT
+C:\z390\zpar\ZPARTRC.BAT
+C:\z390\zpar\ZPARTRS.BAL
 C:\z390\zpar\ZPARTRS.BAT
+C:\z390\zpar\ZPARTRS.ERR
 C:\z390\zpar\ZPARTRS.MLC

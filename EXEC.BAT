@@ -1,6 +1,10 @@
 echo off
+if exist /usr/local/lib/z390/z390.jar goto linux
 if %1 == tron ECHO ON
 if %1 == tron shift
+if %1 == TRON ECHO ON
+if %1 == TRON shift
+:linux
 rem exec execute 390 load module
 if exist %1.log erase %1.log
 if exist %1.err erase %1.err

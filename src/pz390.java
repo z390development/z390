@@ -292,6 +292,8 @@ public class pz390 {
 	 * 05/06/09 RPI 1035 trace EX 2,4,6 byte instr.
 	 * 06/13/09 RPI 1054 correct ABEND PSW addr when S0C5 occurs during trace
 	 * 06/14/09 RPI 1055 add CPYA, EAR, and SAR instruction support
+	 * 09/19/09 RPI 1063 add CDE support with pointer from CVTCDE
+	 * 09/20/09 RPI 1063 update pgm old psw for pgm checks (duplicate of ESPIE psw0
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1202,17 +1204,17 @@ public class pz390 {
 
 	int tot_mem_alloc = 0;
 
-	int svc_old_psw = 0x20;
-
-	int svc_new_psw = 0x60;
-
 	/*
 	 * psa low memory supported fields
 	 */
 	int psa_cvt = 0x10;    // pointer to os cvt
-
+	int psa_svc_old_psw = 0x20;
+	int psa_svc_new_psw = 0x60;
+	int psa_pgm_old_psw = 0x28; // RPI 1063 see update_psa
+	int psa_pgm_nwq_paq = 0x68; // RPI `063
 	int psa_cvt2 = 0x4c;   // pointer to os cvt
-    int psa_len  = 0x2000; // length of PSA (see PSAD macro) RPI 538
+    int psa_psw_ins_len = 0x8d; // RPI 1063 see update_psa
+	int psa_len  = 0x2000; // length of PSA (see PSAD macro) RPI 538
 	/*
 	 * z390 communication vector table at x'2000';
 	 */
@@ -1249,7 +1251,18 @@ public class pz390 {
 	int cvt_date = cvt_start + 0x38; // IPL date
 
 	int cvt_dcb = cvt_start + 0x74; // os flags (x'80' 31 bit, x'13' MVS+) RPI
-									// 228
+	int cvt_cde = cvt_start + 208;  // RPI 1063
+	/*
+	 * cde offsets (see mac\CDED.MAC)
+	 */
+	int cde_cdchain   =  0;    // next CDE (first pointed to by cvtcde)
+	int cde_cdname    =  8;    // load module name in EBCDIC
+	int cde_cdentpt   = 16;  // entry point
+	int cde_cduse     = 24;  // use count 0 = deleted cde
+	int cde_cdloadpt  = 32;  // load address
+	int cde_cdmodlen  = 36;  // module length
+	int cde_len       = 40;  // length of CDE entry block
+	
     /*
      * VSE COMRG data fields
      */
@@ -2496,12 +2509,12 @@ public class pz390 {
 		case 0x0A: // 290 "0A" "SVC" "I"
 			psw_check = false;
 			ins_setup_i();
-			if (mem.get(svc_new_psw) == 0) { // native svc call
+			if (mem.get(psa_svc_new_psw) == 0) { // native svc call
 				sz390.svc(if1);
 			} else { // user svc exit
-				mem.putShort(svc_old_psw + 2, (short) if1);
-				mem.putInt(svc_old_psw + 4, psw_loc);
-				set_psw_loc(mem.getInt(svc_new_psw + 4));
+				mem.putShort(psa_svc_old_psw + 2, (short) if1);
+				mem.putInt(psa_svc_old_psw + 4, psw_loc);
+				set_psw_loc(mem.getInt(psa_svc_new_psw + 4));
 			}
 			break;
 		case 0x0B: // 300 "0B" "BSM" "RR"
@@ -11452,6 +11465,7 @@ public class pz390 {
 		mem.putInt(epie_parm, espie_parm[tot_espie - 1]);
 		mem.putShort(epie_psw,(short) 0x07ED); // EC PSW 7=dat,I/O,ext E=key D=EMWP 
 		mem_byte[epie_psw+2] = (byte)(psw_cc_code[psw_cc] << 4 | psw_pgm_mask); // PRI 845 00ccmmmm
+		update_psa();  // RPI 1063
 		mem.putInt(epie_psw + 4, psw_loc); // EC PSW amode bit and 24/31 bit addr 
 		mem_byte[epie_ilc] = last_psw_ins_len; // RPI 845 last instruction length 2,4, 6
 		mem.putShort(epie_inc,(short)psw_pic); // RPI 845 interrupt code
@@ -11472,7 +11486,20 @@ public class pz390 {
 			tz390.put_trace("ESPIE EXIT STARTING");
 		}
 	}
-
+    public void update_psa(){
+    	/*
+    	 * called for ESPIE and ABEND  RPI 1063
+    	 * to update PSA pgm old psw and instr. len
+    	 * store FLCPOPSW+2=00CCMMMM
+    	 * store FLCPOPSW+3=interrupt code
+    	 * store FLCPOPSW+4=addr with amode high bit
+    	 * store FLCPIILC+0=instruction length
+    	 */
+    	mem_byte[psa_pgm_old_psw+2]= (byte)(psw_cc_code[psw_cc] << 4 | psw_pgm_mask); // PRI 845 00ccmmmm
+		mem_byte[psa_pgm_old_psw+3]= (byte)psw_pic;
+    	mem.putInt(psa_pgm_old_psw + 4, psw_loc); // EC PSW amode bit and 24/31 bit addr 
+        mem_byte[psa_psw_ins_len] = (byte) psw_ins_len;
+    }
 	public void setup_estae_exit() { // RPI 636 used by sz390 percolate
 		/*
 		 * initialize zcvt_sdwa and pass addr to estae exit via r1

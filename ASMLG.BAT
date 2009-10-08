@@ -1,5 +1,11 @@
 rem asmlg assemble, link, and go from mlc to 390 execution
 echo off
+if exist /usr/local/lib/z390/z390.jar goto linux
+if %1 == tron ECHO ON
+if %1 == tron shift
+if %1 == TRON ECHO ON
+if %1 == TRON shift
+:linux
 if exist %1.BAL erase %1.BAL
 if exist %1.PRN erase %1.PRN
 if exist %1.OBJ erase %1.OBJ

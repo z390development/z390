@@ -358,6 +358,7 @@ public  class  az390 implements Runnable {
         * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option  
         * 09/01/09 RPI 1073 support option NOALIGN  
         * 09/02/09 RPI 1079 add DFHRESP(NOTALLOC)=F'61'
+        * 09/26/09 RPI 1080 replace init tables with init_tz390
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -1157,7 +1158,7 @@ private void init_az390(String[] args, JTextArea log_text){
 	    	z390_log_text = log_text;
 	    }
     	tz390 = new tz390();
-    	tz390.init_tables();
+    	tz390.init_tz390();  // RPI 1080
     	tz390.init_options(args,tz390.bal_type);
     	if (!mz390_call){
    			tz390.open_systerm("AZ390");

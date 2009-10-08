@@ -97,6 +97,7 @@ public  class  lz390 {
     * 07/11/09 RPI 1062 set RC=12 for errors RC=16 for abort
     * 07/18/09 RPI 1062 change abort msg from error to abort
     * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option
+    * 09/26/09 RPI 1080 replace init_tables with init_tz390
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -285,7 +286,7 @@ private void init_lz390(String[] args, JTextArea log_text){
 	    	z390_log_text = log_text;
 	    }
 	    tz390 = new tz390();
-	    tz390.init_tables();
+	    tz390.init_tz390();  // RPI 1080
         tz390.init_options(args,".OBJ");
 		tz390.open_systerm("LZ390");
 		tz390.init_codepage(tz390.codepage); // RPI 1069
