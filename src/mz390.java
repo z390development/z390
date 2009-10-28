@@ -381,7 +381,8 @@ public  class  mz390 {
      * 09/17/09 RPI 1083 correct support for AINSERT COPY (expand when removed from queue) 
      * 09/21/09 RPI 1080 use compiled macthcer for replace all
      *          replacing init_tables with init_tz390  
-     * 10/07/09 RPI 1085 return 0 if invalid or null input string        
+     * 10/07/09 RPI 1085 return 0 if invalid or null input string  
+     * 10/28/09 RPI 1089 set rc to max hwm_mnote _level if NOASM and no errs      
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -8626,11 +8627,13 @@ public  class  mz390 {
         	az390.put_stats();
         	az390.close_files();
         }
-		close_files();
 		if (tz390.opt_asm && az390 != null
 			&& az390.az390_rc > mz390_rc){
 			mz390_rc = az390.az390_rc;  // RPI 425
+		} else if (mz390_rc == 0){
+			mz390_rc = hwm_mnote_level; // RPI 1089
 		}
+		close_files(); // RPI 1089 move after rc setting
 		System.exit(mz390_rc);
 	}
 	private void put_stats(){

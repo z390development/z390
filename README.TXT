@@ -1,4 +1,4 @@
-z390 v1.5.01a PTF 10/07/09
+z390 v1.5.01b PTF 10/28/09
 Copyright 2009 Automated Software Tools Corporation
 
 To install this cumulative PTF, perform the following steps:
@@ -16,5 +16,6 @@ To see RPI fixes included in this PTF visit:
 http://www.z390.org/z390_Download_Archive.htm
 
 Visit www.z390.org for more information on latest z390 updates.
+Visit www.zpar.org for more information on ZPAR utilities including source z390/zcobol tracing
 Visit www.zcobol.org for more information on zcobol which is included in z390 releases and PTF's.
 

@@ -131,7 +131,8 @@ public  class  gz390
 	 * 06/23/08 RPI 850 support attr fld_attr_nd non-display
 	 * 10/27/08 RPI 927 display '@' for x'ff' and wrap screen address for data  
 	 * 11/08/08 RPI 940 correct input sba for field at (24,80) 
-	 * 06/22/09 RPI 1061 include PA_MDT in returned TGET fields with SBA's                                
+	 * 06/22/09 RPI 1061 include PA_MDT in returned TGET fields with SBA's   
+	 * 10/24/09 RPI 1091 remove extra field advance for SFE                             
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -2485,6 +2486,9 @@ private void tn_ra(){
 		if (scn_fld[sba]){  // RPI 861
 			tn_drop_field(sba);
 		}
+	    scn_attr[sba]  = cur_fld_attr;  // RPI 1091
+	    scn_hl[sba]    = cur_fld_hl;    // RPI 1091
+	    scn_color[sba] = cur_fld_color; // RPI 1091
 		scn_char[sba] = (char)tz390.ebcdic_to_ascii[ra_byte & 0xff]; // RPI 628
 		if ((ra_byte & 0xff) == 255){
 			scn_char[sba] = ff_char;  // RPi 927
@@ -2495,6 +2499,7 @@ private void tn_ra(){
 			sba = 0;
 		}
 		if (sba == sba_end)ra_done = true;
+		scn_addr = sba; // RPI 1091
 	}
 }
 private void tn_tab(){
@@ -2977,7 +2982,7 @@ private void tn_eds_start_field(){
 	 *       in ascending order until next wcc
 	 *       clears them all.
 	 * 
-	 * basic field attribute byte
+	 * basic field attribute byte following x'C0'
 	 * bit  0-1 - set based on remaining bits
 	 * bit  2   - protected output
 	 * bit  3   - numeric (protected & numeric = skip)
@@ -2989,13 +2994,13 @@ private void tn_eds_start_field(){
 	 * bit  6   - reserved
 	 * bit  7   - modified data tag
 	 * 
-	 * highlight attribute byte
+	 * highlight attribute byte following x'41'
 	 * 00 - normal
 	 * F1 - blink
 	 * F2 - reverse video
 	 * F4 - underscore
 	 * 
-	 * color attribute byte
+	 * color attribute byte following x'42' color attr byte
 	 * 00 Default 
      * F1 Blue 
      * F2 Red 
@@ -3018,7 +3023,6 @@ private void tn_eds_start_field(){
 		 count--;
 	 }	
 	 tn_update_scn(scn_addr);
-	 tn_next_field_addr();
 }
 private void tn_eds_set_field_attribute(){
 	/*

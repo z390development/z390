@@ -39,6 +39,7 @@
 .* 08/17/09 RPI 1065 support 88 level VALUES ARE n1 THRU n2                      
 .* 08/18/09 RPI 1065 add clauses JUSTIFIED, LEADING, TRAILING,                   
 .*          ASCENDING, DESCENDING, BLANK WHEN ZERO
+.* 10/12/09 RPI 1090 CORRECT COMP-4/COMP-5 TO COMP_4/COMP_5 FOR COMP
 .*********************************************************************
 .* 
 .* WS level,name,clauses in any order (PIC,VALUE,USAGE supported)
@@ -771,8 +772,8 @@
          AELSEIF ('&USAGE' EQ 'COMP'                                   X
                   OR '&USAGE' EQ 'COMPUTATIONAL'                       X
                   OR '&USAGE' EQ 'BINARY'                              X
-                  OR '&USAGE' EQ 'COMP-4'                              X
-                  OR '&USAGE' EQ 'COMP-5')  RPI 1042                     
+                  OR '&USAGE' EQ 'COMP_4'                              X
+                  OR '&USAGE' EQ 'COMP_5')  RPI 1042 RPI 1090            
                AIF  ('&PIC' NE '')  
                     AIF  (&PIC_LEN LE 0) 
                          :&PIC_LEN SETA K'&PIC
