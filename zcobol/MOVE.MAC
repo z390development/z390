@@ -11,6 +11,7 @@
 .* 10/06/08 ZSTRMAC
 .* 02/27/09 RPI 1012 SUPPORT ALL '?' LIT
 .* 06/18/09 RPI 1042 add ZCDFHLIT shared by IF and MOVE                 
+.* 01/01/10 RPI 1106 change target index reg to R3 from R2              
 .*********************************************************************
 .* MOVE id1 TO id2 id3 idn
 .*********************************************************************
@@ -94,7 +95,7 @@
          :&PARM_IX SETA &PARM_IX+1
        AWHILE ('&SYSLIST(&PARM_IX)' NE '')
          ACTR 4096
-         :&FIELD_REG SETC 'ZC_R2'
+         :&FIELD_REG SETC 'ZC_R3' RPI 1106 WAS ZC_R2
          :&FIELD_SS1 SETB 1
          ACALL GET_PARM_FIELD
          AIF (&FIELD_IX EQ 0)

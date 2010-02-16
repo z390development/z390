@@ -16,6 +16,7 @@
 * 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 * 04/24/08 RPI 839 TEST SKIPPING ELEMENTS IN MULT SET STORE       
 * 11/08/08 RPI 938 REMOVE SINGLE QUOTE FROM MNOTE TEXT            
+* 01/14/10 RPI 1105 SETB RETURNS 0 OR 1 VERSUS 0-255
 *********************************************************************
 TESTSET1 SUBENTRY
          WTO   'TESTSET1 - TEST SUBSCRIPTED VARIABLES'
@@ -88,13 +89,13 @@ ok3      equ   *
 &LA(2)   SETA  2,3
          AIF   (&LA(2) NE 2 OR &LA(3) NE 3).ERR
 &LB(2)   SETB  2,3
-         AIF   (&LB(2) NE 2 OR &LB(3) NE 3).ERR
+         AIF   (&LB(2) NE 1 OR &LB(3) NE 1).ERR          RPI 1105
 &LC(2)   SETC  '2','3'
-         AIF   ('&LC(2)' NE '2' OR '&LC(3)' NE '3').ERR
+         AIF   ('&LC(2)' NE '2' OR '&LC(3)' NE '3').ERR           
 &GA(2)   SETA  2,3
          AIF   (&GA(2) NE 2 OR &GA(3) NE 3).ERR
 &GB(2)   SETB  2,3
-         AIF   (&GB(2) NE 2 OR &GB(3) NE 3).ERR
+         AIF   (&GB(2) NE 1 OR &GB(3) NE 1).ERR          RPI 1105
 &GC(2)   SETC  '2','3'
          AIF   ('&GC(2)' NE '2' OR '&GC(3)' NE '3').ERR
 * TEST UNARY +- IN PARENS
@@ -127,13 +128,13 @@ ok3      equ   *
 &EA(1)   SETA  1,2,3
          AIF   (&EA(3) NE 3).ERR
 &EB(1)   SETB  1,2,3
-         AIF   (&EB(3) NE 3).ERR
+         AIF   (&EB(3) NE 1).ERR          RPI 1105
 &EC(1)   SETC  '1','2','3'
          AIF   ('&EC(3)' NE '3').ERR
 &EGA(1)   SETA  1,2,3
          AIF   (&EGA(3) NE 3).ERR
 &EGB(1)   SETB  1,2,3
-         AIF   (&EGB(3) NE 3).ERR
+         AIF   (&EGB(3) NE 1).ERR         RPI 1105
 &EGC(1)   SETC  '1','2','3'
          AIF   ('&EGC(3)' NE '3').ERR
 * TEST ALLOC OF SUBSCRIPTED ARRAY WITHOUT DECLARATION

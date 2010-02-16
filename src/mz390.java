@@ -382,7 +382,11 @@ public  class  mz390 {
      * 09/21/09 RPI 1080 use compiled macthcer for replace all
      *          replacing init_tables with init_tz390  
      * 10/07/09 RPI 1085 return 0 if invalid or null input string  
-     * 10/28/09 RPI 1089 set rc to max hwm_mnote _level if NOASM and no errs      
+     * 10/28/09 RPI 1089 set rc to max hwm_mnote _level if NOASM and no errs   
+     * 01/09/10 RPI 1101 truncate SETA value with no error, correct A2X, B2X, C2X, D2X for neg. values
+     * 01/14/10 rpi 1105 correct B2A to support 32 bits and
+     *          correct SETB to set to 0 or 1.
+     * 01/22/10 RPI 1107 DEQUOTE removes SQ at front and/or back
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -4298,9 +4302,17 @@ public  class  mz390 {
 		calc_exp(text,text_index);
 		switch (exp_type){
 		case 1:
-			return (byte) exp_seta;
+			if (exp_seta == 0){  // RPI 1105 0/1 vs 0/val
+				return 0;
+			} else {
+				return 1;
+			}
 		case 2:
-			return exp_setb;
+			if (exp_setb == 0){ // RPI 1105 0/1 vs 0/val
+				return 0;
+			} else {
+				return 1;
+			}
 		case 3:
             log_error(212,"invalid string in SETB expression"); // RPI 609
 		default: 
@@ -6751,7 +6763,7 @@ public  class  mz390 {
 		 *  
 		 */
 		try {
-			return Integer.valueOf(setc_text,base).intValue();
+			return (int)Long.valueOf(setc_text,base).longValue(); // RPI 1101. RPI 1105
 		} catch (Exception e) {
 			if (setc_text == null){  // RPI 565
 				setc_value = "";
@@ -11343,12 +11355,8 @@ public  class  mz390 {
     	 */
 		seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
-    	setc_value = Integer.toString(seta_value1,2);
-		seta_value = setc_value.length();
-		seta_value = seta_value - seta_value/8*8;
-		if (seta_value != 0){
-			setc_value = "00000000".substring(seta_value) + setc_value;
-		}
+    	setc_value = Long.toString(((long)(seta_value1) << 32) >>> 32,2);  // RPI 1105 
+		setc_value = "00000000000000000000000000000000".substring(setc_value.length()) + setc_value;
 		put_setc_stack_var();
     }
     private void exec_pc_a2c(){
@@ -11384,7 +11392,7 @@ public  class  mz390 {
     	 */
     	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
-		setc_value = Integer.toString(seta_value1,16).toUpperCase();
+		setc_value = Integer.toHexString(seta_value1).toUpperCase(); // RPI 1101 
 		setc_value = ("00000000" + setc_value).substring(setc_value.length());
 		put_setc_stack_var();
     }
@@ -11427,7 +11435,7 @@ public  class  mz390 {
     	 */
     	setc_value1 = get_setc_stack_value();
     	seta_value = Integer.valueOf(setc_value1,2);
-		setc_value = Integer.toString(seta_value,16).toUpperCase();
+		setc_value = Integer.toHexString(seta_value).toUpperCase(); // RPI 1101
 		setc_value = ("00000000" + setc_value).substring(setc_value.length());
 		put_setc_stack_var();
     }
@@ -11476,15 +11484,32 @@ public  class  mz390 {
     	/*
     	 * convert char string to hex string
     	 */
-    	setc_value = "C'" + get_setc_stack_value() + "'";
+    	String hex = ""; // RPI 1101
+    	String text = get_setc_stack_value();
+    	int index = 0;
+    	while (index < text.length()){
+    		if (index + 4 >= text.length()){
+    			get_text_hex(text.substring(index));
+    		} else {
+    			get_text_hex(text.substring(index,index+4));
+    		}
+    		hex = hex + setc_value;
+    		index = index + 4;
+    	}
+    	setc_value = hex;
+    	put_setc_stack_var();
+    }
+    private void get_text_hex(String text){
+    	/*
+    	 * return up to 2-8 hex chars for 1-4 char
+    	 */
+    	setc_value = "C'" + text + "'";
 		setc_value1 = setc_value;
     	if (!tz390.get_sdt_char_int(setc_value)){
 			log_error(180,"invalid character sdt " + setc_value);
 		}
 		seta_value = tz390.sdt_char_int; 
-		setc_value = Integer.toString(seta_value,16).toUpperCase();
-		setc_value = ("00000000" + setc_value).substring(setc_value.length());
-		put_setc_stack_var();
+		setc_value = tz390.get_hex(seta_value,2*text.length()); // RPI 1101
     }
     private void exec_pc_d2a(){
     	/*
@@ -11528,7 +11553,7 @@ public  class  mz390 {
     	 */
 		seta_value = get_seta_stack_value(-1);
 		setc_value1 = get_setc_stack_value();;
-		setc_value = Integer.toString(seta_value,16).toUpperCase();
+		setc_value = Integer.toHexString(seta_value).toUpperCase(); // RPI 1101
 		setc_value = ("00000000" + setc_value).substring(setc_value.length());
 		put_setc_stack_var();
     }
@@ -11562,16 +11587,14 @@ public  class  mz390 {
     		&& setc_value1.charAt(0) == '\'' 
 			&& setc_value1.charAt(setc_value1.length()-1) == '\''){
 			setc_value = setc_value1.substring(1,setc_value1.length()-1);
-    	} else if (setc_value1.length() > 1
-        		   && ((setc_value1.charAt(0) == '\'' 
-        		        && setc_value1.charAt(setc_value1.length()-1) != '\''
-        		       )
-        		       || (setc_value1.charAt(0) != '\'' 
-           		           && setc_value1.charAt(setc_value1.length()-1) == '\''
-           		          )
-           		      )    
-        		  ){
-    		log_error(232,"unbalanced quotes in string"); // RPI 886
+    	} else if (setc_value1.length() > 0){ // RPI 1107
+        		   if (setc_value1.charAt(0) == '\''){
+        			   setc_value = setc_value1.substring(1); // RPI 1107
+        		   } else if (setc_value1.charAt(setc_value1.length()-1) == '\''){
+        			   setc_value = setc_value1.substring(0,setc_value1.length()-1); // RPI 1107
+        		   } else {
+        			   setc_value = setc_value1;
+        		   }
     	} else { // return value if no first/last quotes
     		setc_value = setc_value1;
 		}

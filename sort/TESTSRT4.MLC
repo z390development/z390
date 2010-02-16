@@ -1,0 +1,29 @@
+         TITLE 'TESTSRT3 - VERIFY TEST FILE FOR SORT WITH RECS=PARM'
+         PRINT DATA
+TESTSRT3 SUBENTRY
+         L     R1,0(R1)
+         LH    R2,0(R1)
+         BCTR  R2,0
+         EX    R2,PACK
+         CVB   R2,PWORK             TOTAL RECS FROM PARM
+         LA    R4,1
+         OPEN  (SYSUT1,(INPUT))
+         DO    WHILE=(CLR,R2,GE,R4)
+               GET SYSUT1,REC
+               IF (CL,R4,NE,REC)
+                  WTO 'TESTSRT4 REC OUT OF SEQ'
+                  SNAP ID=(R4),STORAGE=(REC,REC+4)
+                  ABEND 111
+               ENDIF
+               AHI  R4,1
+         ENDDO
+         CLOSE SYSUT1
+         SUBEXIT
+PACK     PACK  PWORK,2(0,R1)
+PWORK    DC    D'0'
+         EQUREGS
+         LTORG
+SYSUT1   DCB   DSORG=PS,RECFM=F,LRECL=4,MACRF=GM,DDNAME=SYSUT1
+         DS    0F
+REC      DS    XL4096 OVERRIDE SORTIN TO SET LRECL FROM 4 TO 4096
+         END

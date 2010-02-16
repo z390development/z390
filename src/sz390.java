@@ -184,7 +184,9 @@ public  class  sz390 implements Runnable {
     * 07/18/09 RPI 1062 change abort msg from recursive/shutdown to abort 
     * 09/19/09 RPI 1063 add CDE support with pointer from CVTCDE  
     * 09/20/09 RPI 1063 update pgm old psw for abends including S0C1 and S422  
-    * 09/22/09 RPI 1080 use shared fix file separators for Linux            
+    * 09/22/09 RPI 1080 use shared fix file separators for Linux 
+    * 01/26/10 rpi 1092 add svc x'a1' zsort called by ZSORT.MAC, 
+    *          invoked by linklib\SORT.MLC, and zcobol\z390\GEN_SORT.MAC         
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -693,6 +695,7 @@ public  class  sz390 implements Runnable {
   int prev_fqe = 0;
   int next_fqe = 0;
   int next_fqe_len = 0;
+  int max_mem_blk = 0; // largest contiguous memory blk for sort RPI 1092
   int opt_getmain_amode31 = 0x02;
   int opt_getmain_cond    = 0x01;
   /*
@@ -701,6 +704,85 @@ public  class  sz390 implements Runnable {
   int cur_vsam_op   = 0;
   int vsam_op_open  = 19;
   int vsam_op_clsoe = 20;
+  /*
+   * zsort global variables
+   */
+        /*
+         * zsort statistics
+         */
+  		String zsort_pfx;
+  		String zsort_start = "";;
+  		String zsort_ended = "";
+  		String zsort_elapsed = "";
+  		int    zsort_id = 0;
+		/*
+		 * mode mode flags - ISORT/FSORT resets them all
+		 */
+        boolean zsort_abort     = false;
+        boolean zsort_put       = false; // zsort put ok
+		boolean zsort_get       = false; // zsort get ok
+		/*
+		 * ISORT/FSORT input parms
+		 */
+        int zsort_parm_addr = 0; // zsort parm addr in r1 > lrecl,mem,key info
+        int zsort_lrecl = 0;     // +0 4 = fixed record length or max var record
+		int zsort_mem = 0;       // +4 4 = max memory used by sort or max avail from MEM option if 0
+		int zsort_min_blk_rec = 2; // min records in a sort block
+		int zsort_max_keys = 10; // max keys allowed
+		int zsort_tot_keys = 0;  // up to zsort_max_keys loaded from parm list with VL bit in last word
+		int[]  zsort_key_off    = new int[zsort_max_keys];         // +08 4 key offset in record
+		int[]  zsort_key_len    = new int[zsort_max_keys];         // +12 4 key length
+		byte[] zsort_key_type  = new byte[zsort_max_keys];       // +16 2 key type (also vl bit if last
+		byte[] zsort_key_order = new byte[zsort_max_keys];       // +18 2 key ascending 1 or 0 for descending 
+		int zsort_psw_cc = 0;
+		int zsort_tot_sorts  = 0;
+		int zsort_tot_passes = 0;
+		/*
+		 * zsort work file variables
+		 */
+		String zsort_sortwk01_dsn = null;
+		String zsort_sortwk02_dsn = null;
+		RandomAccessFile zsort_sortwk01_file = null;
+		RandomAccessFile zsort_sortwk02_file = null;
+		long zsort_sortwk_len = 0;
+		int  zsort_tot_read  = 0; // block reads from work files
+		int  zsort_tot_write = 0; // block write to work files
+		int  zsort_tot_svc_put = 0;   // total records to sort
+		int  zsort_tot_svc_get = 0;   // total sorted records returnsd
+		int  zsort_tot_comp = 0;
+		int  zsort_tot_move = 0; // swaps, merges, isort get/put
+		/*
+		 * zsort memory blk variables
+		 */
+		int zsort_fm_len   = 0; // mem alloc before rounding
+		int zsort_blk_len  = 0; // length of memory blk rounded down to even mult of lrecl
+		int zsort_blk_addr = 0; // addr of memory block in pz390.mem
+		int zsort_blk_end  = 0;
+		int zsort_blk_ptr = 0;
+		int zsort_blk1_addr = 0;  // merge input blk 1
+		int zsort_blk1_ptr = 0;
+		int zsort_blk1_ptr_end = 0;
+		int zsort_blk2_addr = 0; // merge input blk 2
+		int zsort_blk2_ptr = 0;
+		int zsort_blk2_ptr_end = 0;
+		int zsort_blk3_addr = 0; // merge output blk 3
+		int zsort_blk3_ptr = 0;
+		int zsort_blk3_ptr_end = 0;
+		long zsort_blk1_xrba = 0;
+		long zsort_blk2_xrba = 0;
+		long zsort_blk1_xrba_end = 0;
+		long zsort_blk2_xrba_end = 0;
+		int  zsort_read_len;
+		int  zsort_write_len;
+		
+		/*
+		 * zsort merge variables used if records exceed memory
+		 */
+		boolean zsort_merge_wk01 = true; // merge from wk01 to wk02 or wk02 to wk01 on alternating passes
+        String zsort_wk_name;
+		int  zsort_merge_mem_blk_len = 0; // fixed blk size for 2 input and 1 output blk
+		long zsort_merge_wk_blk_len = 0;  // double zsort_blk_len on each merge pass
+		int  zsort_merge_pass    = 0;     // count merge passes for stats
   /*
    * end of global ez390 class data and start of procs
    */
@@ -826,6 +908,9 @@ public void svc(int svc_id){
 		break;
 	case 0xa0: // wtor 
 		svc_wtor();
+		break;
+	case 0xa1: //zsort
+		svc_zsort();
 		break;
 	case 0xaa: // ctd - convert to display format r1=a(type,in,out)
 		svc_ctd(); // RPI 360
@@ -1918,12 +2003,15 @@ public void svc_getmain(){
 	 *   1.  Set r0 to length of allocated area rounded to *8 // RPI 542 (was address)
 	 *   2.  set r1 to address of area                        // RPI 542 not set previously                      
 	 *   3.  set r15 to 0 of ok, else nz
+	 *   4.  set max_mem_blk to largest contig blk for
+	 *       use by sort etc. RPI 1092
 	 * Notes:
 	 *   1.  Use TRACEMEM option to trace FQE's 
 	 *   2.  If no 31 bit memory then allocate from
 	 *       24 bit memory else abort if requested
 	 *       memory type no available.
 	 */
+	max_mem_blk = 0; // RPI 1092
 	req_len = pz390.reg.getInt(pz390.r1);	   
 	req_len = (req_len + 7)/8*8; // round to 8
 	if (req_len <= 0){
@@ -1990,6 +2078,9 @@ public void svc_getmain(){
 			pz390.reg.putInt(pz390.r15,0);
 			return;
 		} else {
+			if (cur_fqe_len > max_mem_blk){
+				max_mem_blk = cur_fqe_len; // RPI 1092
+			}
 			prev_fqe = cur_fqe;
 			cur_fqe = pz390.mem.getInt(cur_fqe);
 		}
@@ -6826,7 +6917,856 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
         	pz390.set_psw_check(pz390.psw_pic_io);
         }
  	}
+ 	private void svc_zsort(){
+ 		/*
+ 		 * z390 internal sort
+ 		 *              r0  = operation type:
+ 		 *                    1 - intenal sort
+ 		 *                    2 - file sort
+ 		 *                    3 - put record to internal sort
+ 		 *                    4 - get record from internal sort
+ 		 *              r1  = address parm list for op 1 and 2 a(rec) for get/put
+ 		 *                       0 4 - LRECL
+ 		 *                       4 4 - max memory or 0 for max avail from MEM option
+ 		 *                       8 4 - key field N offset from 0
+ 		 *                      12 4 - key field N length
+ 		 *                      16 2 - key type code and VL bit for last key
+ 		 *                      18 2 - ascending = 0, descending 1 (also VL bit for last key)
+ 		 *              r15 = return code
+ 		 *                    0  ok
+ 		 *                    4  eof for get
+ 		 *                    16 abort due to error
+ 		 *   
+ 		 */
+		zsort_parm_addr   = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+ 		switch (pz390.reg.get(pz390.r0+3)){
+ 		case 1: // 	internal sort init
+ 			zsort_id++;
+ 			zsort_start = tz390.cur_time(true);
+ 			if (tz390.opt_traceall){
+				tz390.put_trace("ZSORT ISORT INIT");
+				dump_mem(pz390.mem,zsort_parm_addr,8+10*12);
+ 			}
+ 			zsort_init_isort();
+ 			break;
+ 		case 2: // zsort put unsorted record
+ 			zsort_put();
+ 		    break;
+ 		case 3: // zsort get sorted record
+ 			zsort_get();
+ 			break;
+ 		default:
+			zsort_error("zsort undefined operation"); 				
+ 			return;
+ 		}
+ 	}
+ 	private void zsort_move_rec(int from_ptr, int to_ptr){
+ 		/*
+ 		 * move record of length zsort_lrecl in memory
+ 		 */
+ 		System.arraycopy(pz390.mem_byte, from_ptr, pz390.mem_byte, to_ptr, zsort_lrecl);
+		if (tz390.opt_traceall){
+			tz390.put_trace("ZSORT MOVE BLK FROM=" + tz390.get_hex(from_ptr,8) + " TO=" + tz390.get_hex(to_ptr,8));
+			dump_mem(pz390.mem,from_ptr,zsort_lrecl);
+		}
+ 		zsort_tot_move++;
+ 	}
+ 	private void zsort_open_sortwk(){
+ 		/*
+ 		 * open sort work files and reset rbas to 0
+ 		 */
+		zsort_sortwk01_dsn = get_ascii_env_var_string("SORTWK01");
+		if (zsort_sortwk01_dsn.length() == 0){
+			zsort_sortwk01_dsn = "SORTWK01.TMP";
+		}
+		zsort_sortwk02_dsn = get_ascii_env_var_string("SORTWK02");
+		if (zsort_sortwk02_dsn.length()  == 0){
+			zsort_sortwk02_dsn = "SORTWK02.TMP";
+		}
+ 		if (zsort_sortwk01_file == null){
+ 			try {
+ 				zsort_sortwk01_file = new RandomAccessFile(zsort_sortwk01_dsn,"rw");
+ 				zsort_sortwk01_file.setLength(0);
+ 			} catch(Exception e){
+ 				zsort_error("zsort open sortwk01 failed - " + e);
+ 			}
+ 		} else {
+ 			try {
+ 				zsort_sortwk01_file.seek(0);
+ 				zsort_sortwk01_file.setLength(0);
+ 			} catch(Exception e){
+ 				zsort_error("zsort sortwk01 seek failed " +e);
+ 			}
+ 		}
+ 		if (zsort_sortwk02_file == null){
+ 			try {
+ 				zsort_sortwk02_file = new RandomAccessFile(zsort_sortwk02_dsn,"rw");
+ 				zsort_sortwk02_file.setLength(0);
+ 			} catch(Exception e){
+ 				zsort_error("zsort open sortwk02 failed - " + e);
+ 			}
+ 		} else {
+ 			try {
+ 				zsort_sortwk02_file.seek(0);
+ 				zsort_sortwk02_file.setLength(0);
+ 			} catch(Exception e){
+ 				zsort_error("zsort sortwk02 seek failed " +e);
+ 			}
+ 		}
+ 	}
+ 	private void zsort_write_blk(RandomAccessFile file,int rec_ptr,int end_ptr){
+ 		/*
+ 		 * write blk from zsort_blk_addr to zsort_blk_ptr
+ 		 * at current addr on file
+ 		 */
+ 		zsort_write_len = end_ptr - rec_ptr;
+ 		try {
+ 			file.write(pz390.mem_byte,rec_ptr,zsort_write_len);
+ 		} catch(Exception e){
+ 			zsort_error("zsort IO write blk error " + e);
+ 			return;
+ 		}
+		if (tz390.opt_traceq || tz390.opt_traceall) {
+			if (file == zsort_sortwk01_file){
+				zsort_wk_name = "SORTWK01";
+			} else {
+				zsort_wk_name = "SORTWK02";
+			}
+			try {
+			tz390.put_trace("ZSORT IO WRITE BLK ON " + zsort_wk_name
+					+ " XRBA=" + tz390.get_long_hex(file.getFilePointer()-zsort_write_len,8)
+					+ " LEN="  + tz390.get_hex(zsort_write_len,8));
+			} catch (Exception e){
+				zsort_error("ZSORT IO WRITE BLK ERROR " + e);
+			}
+			dump_mem(pz390.mem, rec_ptr,zsort_write_len);
+		}
+ 		zsort_tot_write++;
+ 	}
+ 	private void zsort_write_merge_blk(int rec_ptr,int end_ptr){
+ 		/*
+ 		 * write merged blk to output merge file
+ 		 */
+			if (zsort_merge_wk01){
+				zsort_write_blk(zsort_sortwk02_file,rec_ptr,end_ptr);
+			} else {
+				zsort_write_blk(zsort_sortwk01_file,rec_ptr,end_ptr);
+			}
+ 	}
+ 	private void zsort_read_merge_blk(long file_xrba,long file_xrba_end,int blk_ptr,int blk_end_ptr){
+ 		/*
+ 		 * read blk into blk_ptr to blk_end_ptr
+ 		 * at current merge file_xrba.  Return bytes read
+ 		 * up to blk size or end of file, or 0 if at end 
+ 		 	*/
+ 		zsort_read_len = blk_end_ptr - blk_ptr;
+		if (file_xrba + zsort_read_len > file_xrba_end){
+			zsort_read_len = (int)(file_xrba_end - file_xrba);
+		}
+ 		if (zsort_read_len == 0){
+ 			return;
+ 		}
+ 		try {
+ 			if (zsort_merge_wk01){
+ 				zsort_sortwk01_file.seek(file_xrba);
+ 				zsort_sortwk01_file.read(pz390.mem_byte,blk_ptr,zsort_read_len);
+ 			} else {
+ 				zsort_sortwk02_file.seek(file_xrba);
+ 				zsort_sortwk02_file.read(pz390.mem_byte,blk_ptr,zsort_read_len);
+ 			}
+ 		} catch(Exception e){
+ 			zsort_error("zsort IO read blk error " + e);
+ 			return;
+ 		}
+		if (tz390.opt_traceq || tz390.opt_traceall) {
+			if (zsort_merge_wk01){
+				zsort_wk_name = "SORTWK01";
+			} else {
+				zsort_wk_name = "SORTWK02";
+			}
+			tz390.put_trace("ZSORT IO READ MERGE BLK FROM " +zsort_wk_name
+					+ " XRBA=" + tz390.get_long_hex(file_xrba,8)
+					+ " LEN="  + tz390.get_hex(zsort_read_len,8));
+			dump_mem(pz390.mem, blk_ptr, zsort_read_len);
+		}
+ 		zsort_tot_read++;
+ 	}
+ 	private void zsort_init_parms(){
+ 		/*
+ 		 * init isort or fsort parms
+ 		 */
+ 		    zsort_put = false;
+			zsort_get = false;
+			zsort_tot_svc_put = 0;
+			zsort_tot_svc_get = 0;
+			zsort_sortwk_len = 0;
+			zsort_lrecl  = pz390.mem.getInt(zsort_parm_addr);
+			zsort_mem = pz390.mem.getInt(zsort_parm_addr + 4);
+			zsort_tot_keys = 0;
+	 		zsort_tot_sorts = 0;
+	 		zsort_tot_passes = 0;
+	 		zsort_tot_move = 0;
+	 		zsort_tot_comp= 0;
+	 		zsort_tot_write = 0;
+	 		zsort_tot_read = 0;
+			int index = 0;
+			zsort_parm_addr = zsort_parm_addr + 8;
+            while (index < zsort_max_keys && zsort_tot_keys == 0){
+            	zsort_key_off[index]   = pz390.mem.getInt(zsort_parm_addr);
+            	zsort_key_len[index]   = pz390.mem.getInt(zsort_parm_addr + 4);
+            	zsort_key_type[index]  = pz390.mem.get(zsort_parm_addr + 9);
+            	zsort_key_order[index] = pz390.mem.get(zsort_parm_addr +11);
+            	if (pz390.mem.get(zsort_parm_addr + 8) != 0){ // check for VL bit on last key full word parm
+            		zsort_tot_keys = index + 1;
+            	} else {
+            		zsort_parm_addr = zsort_parm_addr + 12;
+            	}
+            	index++;
+            }	
+            if (zsort_tot_keys == 0){
+            	zsort_error("zsort maximum keys exceeded");
+            }
+
+ 	}
+ 	private void zsort_init_isort(){
+ 		/*
+ 		 * initialize for internal sort
+ 		 */
+ 		zsort_init_parms();
+ 		zsort_put = true;
+ 		zsort_alloc_blk();
+ 		zsort_blk_ptr = zsort_blk_addr;
+ 		zsort_blk_end = zsort_blk_addr + zsort_blk_len;
+ 		zsort_tot_read = 0;
+ 		zsort_tot_write = 0;
+ 		zsort_tot_svc_put   = 0;
+ 		zsort_tot_svc_get   = 0;
+ 	}
+ 	private void zsort_put(){
+ 		/*
+ 		 * pass unsorted record to zsort
+ 		 */
+		if (!zsort_put) {
+			zsort_error("zsort not open for put");
+			return;
+		}
+		if (zsort_blk_ptr >= zsort_blk_end) {
+			zsort_sort_blk();
+	 		if (zsort_sortwk01_file == null){
+				zsort_open_sortwk();
+	 		}
+			zsort_write_blk(zsort_sortwk01_file, zsort_blk_addr, zsort_blk_end);
+			zsort_blk_ptr = zsort_blk_addr;
+		}
+		zsort_move_rec(pz390.reg.getInt(pz390.r1), zsort_blk_ptr); // move rec
+																	// to blk
+		if (tz390.opt_traceall) {
+			tz390.put_trace("ZSORT PUT REC");
+			dump_mem(pz390.mem, zsort_blk_ptr, zsort_lrecl);
+		}
+		zsort_blk_ptr = zsort_blk_ptr + zsort_lrecl;
+		zsort_tot_svc_put++;
+ 	}
+ 	private void zsort_get(){
+ 		/*
+ 		 * get sorted record from zsort
+ 		 */
+ 		if (!zsort_get){
+				if (!zsort_put){
+					zsort_error("zsort not ready for get"); 				
+					return;
+				}
+				if (zsort_tot_svc_put == 0){
+					// return rc 4 end of file
+					pz390.reg.putInt(pz390.r15,4);
+					zsort_get = false;
+					zsort_put = false;
+					return;
+				}
+				zsort_sort_blk();      // may be short blk
+				if (zsort_tot_write > 0){
+					zsort_write_blk(zsort_sortwk01_file,zsort_blk_addr,zsort_blk_ptr); // may be short blk
+					zsort_merge();
+					zsort_merge_wk_blk_len = zsort_sortwk_len;
+					zsort_blk1_xrba = 0;
+					zsort_blk1_xrba_end = zsort_sortwk_len;
+					zsort_blk1_ptr = zsort_blk1_addr;
+					zsort_blk1_ptr_end = zsort_blk1_addr + zsort_blk_len;
+					zsort_get_merge_blk1();
+				} else {
+					zsort_blk_end = zsort_blk_ptr;
+					zsort_blk_ptr = zsort_blk_addr;
+				}
+				zsort_put = false;
+				zsort_get = true;
+			}
+			if (zsort_sortwk_len > 0){
+				if (zsort_blk1_ptr < zsort_blk1_ptr_end){
+					zsort_move_rec(zsort_blk1_ptr,pz390.reg.getInt(pz390.r1)); // move from singel blk
+					zsort_blk1_ptr = zsort_blk1_ptr + zsort_lrecl;
+					if (zsort_blk1_ptr >= zsort_blk1_ptr_end){
+						zsort_get_merge_blk1();
+					}
+				} else {
+					// return rc 4 end of file
+					zsort_term();
+					pz390.reg.putInt(pz390.r15,4);
+					zsort_get = false;
+					return;
+				}
+			} else {
+				if (zsort_blk_ptr < zsort_blk_end){
+					zsort_move_rec(zsort_blk_ptr,pz390.reg.getInt(pz390.r1)); // move from singel blk
+					zsort_blk_ptr = zsort_blk_ptr + zsort_lrecl;
+				} else {
+					// return rc 4 end of file
+					zsort_term();
+					pz390.reg.putInt(pz390.r15,4);
+					zsort_get = false;
+					return;
+				}
+			}
+			if (tz390.opt_traceall){
+			tz390.put_trace("ZSORT GET REC");
+			dump_mem(pz390.mem,pz390.reg.getInt(pz390.r1),zsort_lrecl);
+			}
+			zsort_tot_svc_get++;
+ 	}
+ 	private void zsort_alloc_blk(){
+ 		/*
+ 		 * allocate block using zsort_mem or max avail.
+ 		 * 
+ 		 */
+		if (zsort_mem == 0){
+			pz390.reg.putInt(pz390.r0,0x80000001); // set RMODE31 and conditional
+			pz390.reg.putInt(pz390.r1,0x7ffffff0); // set max mem
+			svc_getmain(); // force setting max_mem_blk
+			zsort_mem = max_mem_blk; 
+		}
+        zsort_blk_len = (zsort_mem / zsort_lrecl)*zsort_lrecl - zsort_lrecl;
+        // round to multiple of lrecl and leave 1 rec at end for swap
+		if (zsort_blk_len < zsort_min_blk_rec * zsort_lrecl){
+			zsort_error("zsort memory block too small"); // buffer too small
+			return;
+		}
+		pz390.reg.putInt(pz390.r0,0x80000000); // set RMODE31
+		pz390.reg.putInt(pz390.r1,zsort_blk_len); // set mem blk req len
+		req_opt = 0; // request unconditional to avoid S80A
+		svc_getmain(); // force setting max_mem_blk
+		zsort_blk_addr = pz390.reg.getInt(pz390.r1);
+		zsort_fm_len = zsort_blk_len; // save before rounding
+ 	}
+ 	private void zsort_term(){
+ 		/*
+ 		 * terminate zsort
+ 		 *   1.  freemain allocated memory
+ 		 *   2.  close/delete sortwk1 and sortwk2
+ 		 *   3.  put statistics on sta file if req.
+ 		 */
+ 		zsort_ended = tz390.cur_time(true);
+ 		if (zsort_fm_len > 0){
+ 			zsort_freemain();
+ 		}
+ 		if (zsort_sortwk01_file != null){
+ 			zsort_close_wk();
+ 		}
+ 		if (tz390.opt_stats){
+ 			zsort_put_stats();
+ 		}
+ 	}
+ 	private void zsort_freemain(){
+ 		/*
+ 		 * release storage if allocted
+ 		 */
+ 		if (zsort_fm_len == 0){
+ 			return; 			
+ 		}
+ 		pz390.reg.putInt(pz390.r0,zsort_fm_len);
+ 		pz390.reg.putInt(pz390.r1,zsort_blk_addr);
+ 		svc_freemain();
+ 		zsort_fm_len = 0;
+ 	}
+ 	private void zsort_close_wk(){
+ 		/* 
+ 		 * close and delete sortwk01 and sortwk02
+ 		 */
+ 		try {
+ 			zsort_sortwk01_file.setLength(0);
+ 			zsort_sortwk01_file.close();
+ 			zsort_sortwk02_file.setLength(0);
+ 			zsort_sortwk02_file.close();
+ 		} catch (Exception e){
+ 			abort_error(125,"ZSORT CLOSE FAILED " + e);
+ 		}
+ 	}
+ 	private void zsort_put_stats(){
+ 		/*
+ 		 * write zsort statistics to sta file
+ 		 */
+ 		zsort_pfx = "ZSORT ID=" + zsort_id + " ";
+ 		tz390.put_stat_line(zsort_pfx
+ 			+ "started=" + zsort_start 
+ 			+ " ended=" + zsort_ended); 
+ 		tz390.put_stat_line(zsort_pfx
+ 			+ "lrecl=" +zsort_lrecl
+ 			+ " keys=" + zsort_tot_keys);
+		tz390.put_stat_line(zsort_pfx
+	 		+ "records=" + zsort_tot_svc_put
+ 			+ " memory= " + zsort_blk_len);
+ 		tz390.put_stat_line(zsort_pfx
+ 			+ "record compares=" + zsort_tot_comp
+ 			+ " moves=" + zsort_tot_move);
+ 		tz390.put_stat_line(zsort_pfx
+ 	 			+ "sorted blocks=" + zsort_tot_sorts
+ 	 			+ " merge passes=" + zsort_tot_passes);
+ 		tz390.put_stat_line(zsort_pfx
+ 			+ "block writes=" + zsort_tot_write
+ 			+ " reads" + zsort_tot_read);
+ 	}
+ 	private void zsort_error(String msg){
+ 		/*
+ 		 * issue error and set return code 16
+ 		 */
+ 		pz390.reg.putInt(pz390.r15,16);
+ 		abort_error(124,msg);
+ 		zsort_abort = true;
+ 	} 	
+ 	private void zsort_sort_blk(){
+ 		/*
+ 		 * sort fixed length records in zsort_blk
+ 		 up to zsort_blk_ptr
+ 		 */
+ 		zsort_tot_sorts++;
+ 		int rec_diff = (zsort_blk_ptr - zsort_blk_addr + zsort_lrecl)/zsort_lrecl;
+ 		rec_diff = rec_diff / 2 * zsort_lrecl;
+ 		int rec_ptr1;
+ 		int rec_ptr2;
+ 		int last_move_ptr;
+ 		while (rec_diff > 0){
+ 	 		rec_ptr1 = zsort_blk_addr + rec_diff;
+ 	 		while (rec_ptr1 < zsort_blk_ptr){
+ 	 			zsort_move_rec(rec_ptr1,zsort_blk_end);
+ 				rec_ptr2  = rec_ptr1 - rec_diff;
+ 				last_move_ptr = 0;
+ 				while (rec_ptr2 >= zsort_blk_addr
+ 					   && zsort_comp(rec_ptr2,zsort_blk_end)){
+ 					zsort_move_rec(rec_ptr2,rec_ptr2 + rec_diff);
+ 					last_move_ptr = rec_ptr2;
+					rec_ptr2 = rec_ptr2 - rec_diff;
+ 				}
+ 				if (last_move_ptr != 0){
+ 					zsort_move_rec(zsort_blk_end,last_move_ptr);
+ 				} 	
+ 				rec_ptr1 = rec_ptr1 + zsort_lrecl;
+ 	    	}
+ 	 		rec_diff = rec_diff/zsort_lrecl/2*zsort_lrecl;
+ 		}
+ 	}
+ 	private boolean zsort_comp(int rec1,int rec2){
+ 		/*
+ 		 * compare record key fields at mem(rec1) to mem(rec2)
+ 		 * and return true if swap required
+ 		 */
+ 		zsort_tot_comp++;
+ 		int key_index = 0;
+ 		while (key_index < zsort_tot_keys){
+			int index1 = rec1 + zsort_key_off[key_index];
+ 			int index2 = rec2 + zsort_key_off[key_index];
+ 			int key_len = zsort_key_len[key_index];
+ 			if (tz390.opt_traceall){
+ 				tz390.put_trace(
+ 					"ZSORT COMPARE KEYS  OFF=" + zsort_key_off[key_index]
+ 				  + " LEN=" + key_len 
+ 				  + " TYPE=" + zsort_key_type[key_index]
+ 				  + " REC1=" + tz390.get_hex(index1,8)
+ 				  + " REC2=" + tz390.get_hex(index2,8));
+				dump_mem(pz390.mem,index1,key_len);
+				dump_mem(pz390.mem,index2,key_len);
+ 			} 			
+ 			int int1;
+ 			int int2;
+ 			switch(zsort_key_type[key_index]){
+ 			case 1: // AC - ascii characters 				
+ 				while (key_len > 0){
+ 					int1 = tz390.ebcdic_to_ascii[pz390.mem_byte[index1] & 0xff] & 0xff;
+ 					int2 = tz390.ebcdic_to_ascii[pz390.mem_byte[index2] & 0xff] & 0xff;
+ 					if (zsort_key_order[key_index] > 0){
+ 						if (int1 > int2){
+ 							return true;
+ 						} else if (int1 < int2){
+ 							return false;
+ 						}
+ 					} else {
+ 						if (int1 > int2){
+ 							return false;
+ 						} else if (int1 < int2){
+ 							return true;
+ 						}
+ 					}
+ 					index1++;
+ 					index2++;
+ 					key_len--;
+ 				}
+ 				break;
+ 			case 2: // BI - unsigned binary
+ 			case 3: // CH - ebcdic characters
+ 				while (key_len > 0){
+ 					int1 = pz390.mem_byte[index1] & 0xff;
+ 					int2 = pz390.mem_byte[index2] & 0xff;
+ 					if (zsort_key_order[key_index] > 0){
+ 						if (int1 > int2){
+ 							return true;
+ 						} else if (int1 < int2){
+ 							return false;
+ 						}
+ 					} else {
+ 						if (int1 > int2){
+ 							return false;
+ 						} else if (int1 < int2){
+ 							return true;
+ 						}
+ 					}
+ 					index1++;
+ 					index2++;
+ 					key_len--;
+ 				}
+ 				break;
+ 			case 4: // FI - signed binary
+ 			case 5: // FL - floating point	
+				int1 = pz390.mem_byte[index1];
+ 				int2 = pz390.mem_byte[index2];
+				if (zsort_key_order[key_index] > 0) {
+					if (int1 > int2) {
+						return true;
+					} else if (int1 < int2) {
+						return false;
+					}
+				} else {
+					if (int1 > int2) {
+						return false;
+					} else if (int1 < int2) {
+						return true;
+					}
+				}
+				index1++;
+				index2++;
+				key_len--;
+ 				while (key_len > 0){
+ 					int1 = pz390.mem_byte[index1] & 0xff;
+ 					int2 = pz390.mem_byte[index2] & 0xff;
+ 					if (zsort_key_order[key_index] > 0){
+ 						if (int1 > int2){
+ 							return true;
+ 						} else if (int1 < int2){
+ 							return false;
+ 						}
+ 					} else {
+ 						if (int1 > int2){
+ 							return false;
+ 						} else if (int1 < int2){
+ 							return true;
+ 						}
+ 					}
+ 					index1++;
+ 					index2++;
+ 					key_len--;
+ 				}
+ 				break;
+ 			case 6: // PD - packed decimal
+ 				int1 = pz390.mem_byte[index1 + key_len - 1] & 0xf; // sign key1
+ 				if (int1 == 0xd){
+ 					int1 = -1;
+ 				}
+ 				int2 = pz390.mem_byte[index2 + key_len - 1] & 0xf; // sign key2
+				if (int2 == 0xd){
+					int2 = -1;
+				}
+ 				if (zsort_key_order[key_index] > 0) {
+					if (int1 > int2) {
+						return true;
+					} else if (int1 < int2) {
+						return false;
+					}
+				} else {
+					if (int1 > int2) {
+						return false;
+					} else if (int1 < int2) {
+						return true;
+					}
+				}
+ 				while (key_len > 0){
+ 					int1 = pz390.mem_byte[index1] & 0xff;
+ 					int2 = pz390.mem_byte[index2] & 0xff;
+ 					if (zsort_key_order[key_index] > 0){
+ 						if (int1 > int2){
+ 							return true;
+ 						} else if (int1 < int2){
+ 							return false;
+ 						}
+ 					} else {
+ 						if (int1 > int2){
+ 							return false;
+ 						} else if (int1 < int2){
+ 							return true;
+ 						}
+ 					}
+ 					index1++;
+ 					index2++;
+ 					key_len--;
+ 				}
+ 				break;
+ 			case 7: // ZD - zoned decimal
+ 				int1 = pz390.mem_byte[index1 + key_len - 1] & 0xf0; // sign key1
+ 				if (int1 == 0xd0){
+ 					int1 = -1;
+ 				}
+ 				int2 = pz390.mem_byte[index2 + key_len - 1] & 0xf0; // sign key2
+				if (int2 == 0xd0){
+					int2 = -1;
+				}
+ 				if (zsort_key_order[key_index] > 0) {
+					if (int1 > int2) {
+						return true;
+					} else if (int1 < int2) {
+						return false;
+					}
+				} else {
+					if (int1 > int2) {
+						return false;
+					} else if (int1 < int2) {
+						return true;
+					}
+				}
+ 				byte save_sign1 = pz390.mem_byte[index1 + key_len - 1];
+ 				byte save_sign2 = pz390.mem_byte[index2 + key_len - 1];
+ 				pz390.mem_byte[index1 + key_len - 1] = (byte)(pz390.mem_byte[index1 + key_len - 1] & 0x0f); // remove sign
+ 				pz390.mem_byte[index2 + key_len - 1] = (byte)(pz390.mem_byte[index2 + key_len - 1] & 0x0f); // remove sign
+ 				while (key_len > 0){
+ 					int1 = pz390.mem_byte[index1] & 0xff;
+ 					int2 = pz390.mem_byte[index2] & 0xff;
+ 					if (zsort_key_order[key_index] > 0){ 
+ 						if (int1 > int2){
+ 	 		 				pz390.mem_byte[index1 + key_len - 1] = save_sign1;
+ 	 		 				pz390.mem_byte[index2 + key_len - 1] = save_sign2;
+ 							return true;
+ 						} else if (int1 < int2){
+ 	 		 				pz390.mem_byte[index1 + key_len - 1] = save_sign1;
+ 	 		 				pz390.mem_byte[index2 + key_len - 1] = save_sign2;
+ 							return false;
+ 						}
+ 					} else {
+ 						if (int1 > int2){
+ 	 		 				pz390.mem_byte[index1 + key_len - 1] = save_sign1;
+ 	 		 				pz390.mem_byte[index2 + key_len - 1] = save_sign2;
+ 							return false;
+ 						} else if (int1 < int2){
+ 	 		 				pz390.mem_byte[index1 + key_len - 1] = save_sign1;
+ 	 		 				pz390.mem_byte[index2 + key_len - 1] = save_sign2;
+ 							return true;
+ 						}
+ 					}
+ 					index1++;
+ 					index2++;
+ 					key_len--;
+ 				}
+ 				pz390.mem_byte[index1 + key_len - 1] = save_sign1;
+ 				pz390.mem_byte[index2 + key_len - 1] = save_sign2;
+ 				break;
+ 			default:
+ 				zsort_error("zsort invalid key type " + zsort_key_type[key_index]);
+ 				return false;
+ 			}
+ 			key_index++;
+ 		}
+ 		return false;
+ 	}
+ 	private void zsort_merge(){
+ 		/*
+ 		 * merge sorted blocks from sortwk01 to sortwk02
+ 		 * and back again doubling sorted block size
+ 		 * each time until there is 1 sorted block
+ 		 */
+ 		zsort_merge_mem_blk_len = zsort_blk_len/zsort_lrecl/3*zsort_lrecl; 
+ 		// 3 memory blks (2 in,1 out)
+ 		zsort_merge_wk_blk_len = zsort_blk_len;                 
+ 		// start with sorted blk size on wk01 for first merge pass
+ 		zsort_merge_wk01 = true; // read wk01 first pass
+ 		try {
+ 			zsort_sortwk_len = zsort_sortwk01_file.length();
+ 		} catch (Exception e){
+ 			zsort_error("ZSORT SORTKW01 LENGTH ERROR - " + e);
+ 			return;
+ 		}
+ 		while (zsort_merge_wk_blk_len < zsort_sortwk_len){ 
+ 			//perform merge pass until 1 merged blk
+ 			zsort_init_merge_pass();
+ 			while (zsort_blk1_xrba < zsort_sortwk_len){
+ 				zsort_get_merge_blk1();
+ 				zsort_get_merge_blk2();
+ 				while (zsort_blk1_ptr < zsort_blk1_ptr_end
+ 						|| zsort_blk2_ptr < zsort_blk2_ptr_end){
+ 					// merge blk1 and blk2 into blk3 until none
+ 					zsort_merge_blk_rec();
+ 				}
+ 				zsort_next_merge_blks();
+ 			}
+ 			if (zsort_merge_wk01){
+ 				zsort_merge_wk01 = false;
+ 				try {
+ 					zsort_sortwk01_file.setLength(0);
+ 				} catch (Exception e){
+ 					zsort_error("ZSORT ERROR RESETING SORTWK01 " + e);
+ 				}
+ 			} else {
+ 				zsort_merge_wk01 = true;
+ 				try {
+ 					zsort_sortwk02_file.setLength(0);
+ 				} catch (Exception e){
+ 					zsort_error("ZSORT ERROR RESETING SORTWK02 " + e);
+ 				}
+ 			}
+ 			zsort_merge_wk_blk_len = zsort_merge_wk_blk_len * 2; // double blk size for next pass
+ 		}
+ 	}
+ 	private void zsort_init_merge_pass(){
+ 		/*
+ 		 * init for merge of wk01/wk02
+ 		 */
+ 		zsort_tot_passes++;
+ 		zsort_blk1_addr = zsort_blk_addr;
+ 		zsort_blk1_ptr_end = zsort_blk1_addr + zsort_merge_mem_blk_len;
+ 		zsort_blk2_addr  = zsort_blk1_ptr_end; 		
+ 		zsort_blk2_ptr_end = zsort_blk2_addr + zsort_merge_mem_blk_len;
+ 		zsort_blk3_addr  = zsort_blk2_ptr_end; 
+ 		zsort_blk3_ptr   = zsort_blk3_addr;
+ 		zsort_blk3_ptr_end = zsort_blk3_addr + zsort_merge_mem_blk_len;
+ 		zsort_blk1_xrba = 0;
+ 		zsort_blk1_xrba_end = zsort_blk1_xrba + zsort_merge_wk_blk_len;
+ 		zsort_blk2_xrba = zsort_merge_wk_blk_len;
+ 		zsort_blk2_xrba_end = zsort_blk2_xrba + zsort_merge_wk_blk_len;
+		if (zsort_blk1_xrba_end > zsort_sortwk_len){
+			zsort_blk1_xrba_end = zsort_sortwk_len;
+		}
+		if (zsort_blk2_xrba > zsort_sortwk_len){
+			zsort_blk2_xrba_end = zsort_blk2_xrba;
+		} else if (zsort_blk2_xrba_end > zsort_sortwk_len){
+			zsort_blk2_xrba_end = zsort_sortwk_len;
+		}
+ 	}
+    private void zsort_get_merge_blk1(){
+    	/*
+    	 * read next full or partial blk1 from
+    	 * current merge blk1_xrba to blk1_xrba_end
+    	 */
+    	int mem_blk_len = zsort_blk1_ptr_end - zsort_blk1_addr;
+    	int wk_blk_len = (int)(zsort_blk1_xrba_end - zsort_blk1_xrba);
+    	if (mem_blk_len > wk_blk_len){
+    		mem_blk_len = wk_blk_len;
+    		if (mem_blk_len == 0){
+    			zsort_blk1_ptr = zsort_blk1_addr;
+    			zsort_blk1_ptr_end = zsort_blk1_ptr;
+    			return;
+    		}
+    	}
+		zsort_read_merge_blk(zsort_blk1_xrba,zsort_blk1_xrba_end,zsort_blk1_addr,zsort_blk1_addr + mem_blk_len);
+		zsort_blk1_ptr_end = zsort_blk1_addr + mem_blk_len;
+		zsort_blk1_ptr = zsort_blk1_addr;
+		zsort_blk1_xrba = zsort_blk1_xrba + mem_blk_len;
+    }
+    private void zsort_get_merge_blk2(){
+    	/*
+    	 * read next full or partial blk2 from
+    	 * current merge blk2_xrba to blk2_xrba_end
+    	 */
+    	int mem_blk_len = zsort_blk2_ptr_end - zsort_blk2_addr;
+    	int wk_blk_len = (int)(zsort_blk2_xrba_end - zsort_blk2_xrba);
+    	if (mem_blk_len > wk_blk_len){
+    		mem_blk_len = wk_blk_len;
+    		if (mem_blk_len == 0){
+    			zsort_blk2_ptr = zsort_blk2_addr;
+    			zsort_blk2_ptr_end = zsort_blk2_ptr;
+    			return;
+    		}
+    	}
+		zsort_read_merge_blk(zsort_blk2_xrba,zsort_blk2_xrba_end,zsort_blk2_addr,zsort_blk2_addr + mem_blk_len);
+		zsort_blk2_ptr_end = zsort_blk2_addr + mem_blk_len;
+		zsort_blk2_ptr = zsort_blk2_addr;
+		zsort_blk2_xrba = zsort_blk2_xrba + mem_blk_len;
+    }
+	private void zsort_merge_blk_rec() {
+		/*
+		 * merge records from 2 blks into 1 output blk
+		 */
+		if (zsort_blk1_ptr < zsort_blk1_ptr_end) {
+			if (zsort_blk2_ptr < zsort_blk2_ptr_end) {
+				if (zsort_comp(zsort_blk1_ptr, zsort_blk2_ptr)) {
+					zsort_move_rec(zsort_blk2_ptr, zsort_blk3_ptr);
+					zsort_blk2_ptr = zsort_blk2_ptr + zsort_lrecl;
+					if (zsort_blk2_ptr >= zsort_blk2_ptr_end){
+						zsort_get_merge_blk2();
+					}
+				} else {
+					zsort_move_rec(zsort_blk1_ptr, zsort_blk3_ptr);
+					zsort_blk1_ptr = zsort_blk1_ptr + zsort_lrecl;
+					if (zsort_blk1_ptr >= zsort_blk1_ptr_end){
+						zsort_get_merge_blk1();
+					}
+				}
+				zsort_blk3_ptr = zsort_blk3_ptr + zsort_lrecl;
+				if (zsort_blk3_ptr >= zsort_blk3_ptr_end) {
+					zsort_write_merge_blk(zsort_blk3_addr, zsort_blk3_ptr_end);
+					zsort_blk3_ptr = zsort_blk3_addr;
+				}
+			} else {
+				// no more blk2 so flush blk3 and blk1
+				if (zsort_blk3_ptr > zsort_blk3_addr) {
+					zsort_write_merge_blk(zsort_blk3_addr, zsort_blk3_ptr);
+					zsort_blk3_ptr = zsort_blk3_addr;
+				}
+				zsort_write_merge_blk(zsort_blk1_ptr, zsort_blk1_ptr_end);
+				zsort_get_merge_blk1();
+				while (zsort_read_len > 0) {
+					zsort_write_merge_blk(zsort_blk1_addr, zsort_blk1_ptr_end);
+					zsort_get_merge_blk1();
+				}
+			}
+		} else {
+			// no more blk1 so flush blk3 and blk2
+			if (zsort_blk3_ptr > zsort_blk3_addr) {
+				zsort_write_merge_blk(zsort_blk3_addr, zsort_blk3_ptr);
+				zsort_blk3_ptr = zsort_blk3_addr;
+			}
+			zsort_write_merge_blk(zsort_blk2_ptr, zsort_blk2_ptr_end);
+			zsort_get_merge_blk2();
+			while (zsort_read_len > 0) {
+				zsort_write_merge_blk(zsort_blk2_addr, zsort_blk2_ptr_end);
+				zsort_get_merge_blk2();
+			}
+		}
+ 	}
+	private void zsort_next_merge_blks(){
+		/*
+		 * position to next merge blks in curr pass
+		 */
+		if (zsort_blk1_xrba >= zsort_sortwk_len){
+			return;
+		}
+		zsort_blk1_ptr_end = zsort_blk1_addr + zsort_merge_mem_blk_len;
+		zsort_blk2_ptr_end = zsort_blk2_addr + zsort_merge_mem_blk_len;
+		zsort_blk1_xrba = zsort_blk1_xrba + zsort_merge_wk_blk_len; 
+		zsort_blk2_xrba = zsort_blk2_xrba + zsort_merge_wk_blk_len;
+		zsort_blk1_xrba_end = zsort_blk1_xrba + zsort_merge_wk_blk_len;
+		zsort_blk2_xrba_end = zsort_blk2_xrba + zsort_merge_wk_blk_len;
+		if (zsort_blk1_xrba_end > zsort_sortwk_len) {
+			zsort_blk1_xrba_end = zsort_sortwk_len;
+		}
+		if (zsort_blk2_xrba > zsort_sortwk_len) {
+			zsort_blk2_xrba_end = zsort_blk2_xrba;
+		} else if (zsort_blk2_xrba_end > zsort_sortwk_len) {
+			zsort_blk2_xrba_end = zsort_sortwk_len;
+		}
+	}
 /*
- *  end of ez390 code 
+ *  end of sz390 code 
  */
 }

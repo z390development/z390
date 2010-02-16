@@ -15,6 +15,9 @@
 * 07/30/08 RPI 886 CORRECT FUNCTION NAME DCEQUO TO DEQUOTE   
 * 11/07/08 RPI 938 CORRECT MISSING ENDING QUOTE ON MNOTE     
 * 11/09/08 RPI 943 USE SIGNED FUNCTION TO DISPLAY NEGATIVE VALUES
+* 09/21/09 RPI 1080 CORRECT TEST FOR DCLEN AND DCVAL
+* 01/10/10 RPI 1101 CORRECT C2X LENGTH = 2 * CHAR
+* 01/14/10 RPI 1105 A2B > 32 CHAR 0/1'S
 *********************************************************************
 TESTOPR1 SUBENTRY
          WTO   'TESTOPR1 TEST OPERATORS UPPER, LOWER, ETC.'
@@ -35,8 +38,8 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          AIF   ('&LC' NE 'abc').LCERR
          MNOTE 'TESTING ?2? PREFIX OPERATORS'
 &A2B     SETC  (A2B(4))
-         MNOTE 'A2B(4)=&A2B'
-         AIF   ('&A2B' NE '00000100').A2ERR
+         MNOTE 'A2B(4)=&A2B'                           RPI 1105
+         AIF   ('&A2B' NE '00000000000000000000000000000100').A2ERR
 &A2C     SETC  (A2C(241))
          MNOTE 'A2C(241)=&A2C'
          AIF   ('&A2C'(4,1) NE '1').A2ERR
@@ -72,7 +75,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          AIF   ('&C2D' NE '241').C2ERR
 &C2X     SETC  (C2X('1'))
          MNOTE 'C2X(''1'')=&C2X'
-         AIF   ('&C2X' NE '000000F1').C2ERR
+         AIF   ('&C2X' NE 'F1').C2ERR         RPI 1101 FIX LEN = 2 * N
 &SIGNED  SETC  (SIGNED (D2A('-1')))
          MNOTE 'D2A(''-1'')=&SIGNED'
          AIF   ('&SIGNED' NE '-1').D2ERR
@@ -98,14 +101,14 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          MNOTE 'X2D(''F1'')=&X2D'
          AIF   ('&X2D' NE '241').X2ERR
          MNOTE 'TESTING DCLEN, DCVAL, DEQUOTE'
-&DCLSTR  SETC  'C''''&&&&1'''''
+&DCLSTR  SETC  '''''''''&&&&&&&&1'''''''''  ''&&1'' = 7  RPI 1080
 &DCLEN   SETA  (DCLEN(&DCLSTR))
          MNOTE 'DCLEN(&DCLSTR)=&DCLEN'
-         AIF   (&DCLEN NE 5).DCLERR
-&DCVSTR  SETC  'C''''&&&&1'''''
+         AIF   (&DCLEN NE 7).DCLERR                      RPI 1080
+&DCVSTR  SETC  '''''&&&&1'''''
 &DCVAL   SETC  (DCVAL(&DCVSTR))
          MNOTE 'DCVAL(&DCVSTR)=&DCVAL'
-         AIF   ('&DCVAL' NE 'C''&&1''').DCVERR
+         AIF   ('&DCVAL' NE '''&&1''').DCVERR  RPI 1080
 &DCESTR  SETC  '''ABC'''
 &DEQUOTE SETC  (DEQUOTE(&DCESTR))
          MNOTE 'DEQUOTE(&DCESTR)=&DEQUOTE'

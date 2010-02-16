@@ -10,6 +10,7 @@
 .* 11/28/08 add formats 1-4 see TESTPM1.CBL
 .* 07/09/09 RPI correct BY for negative increments
 .* 08/04/09 RPI RPI support qualified PG names within section
+.* 12/18/09 RPI 1093 correct exit pg label+6 for use by PMCHECK
 .*********************************************************************
          PERFORM                          
          COPY  ZC_WS
@@ -64,7 +65,7 @@
          AEND
          AIF   ('&SYSLIST(&I)' EQ 'THRU'                               X
                 OR '&SYSLIST(&I)' EQ 'THROUGH')      
-               :&PG_NAME2 SETC  '&SYSLIST(&I+1)'
+               :&PG_NAME2 SETC  '&SYSLIST(&I+1)._END' RPI 1093 DSHX
                :&I SETA  &I+2
                AIF  ('&SYSLIST(&I)' EQ 'OF' OR '&SYSLIST(&I)' EQ 'IN')
                     :&SN_NAME2 SETC '&SYSLIST(&I+1)'
@@ -128,8 +129,8 @@
                GEN_B PM_&PM_LAB._E
          END_IF
          GEN_LABEL   PM_&PM_LAB._P,PERFORM
-         GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME1,&SN_NAME2  
-         SUBTRACT 1,FROM,&SYM_NAME(&VAR_IX)
+         GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME2,&SN_NAME2 RPI 1093
+         SUBTRACT 1,FROM,&SYM_NAME(&VAR_IX)                  N2 WAS N1
          GEN_B PM_&PM_LAB._T
          GEN_LABEL PM_&PM_LAB._E,PERFORM_END
          AEND
@@ -188,8 +189,8 @@
                IF  &IF_PARM
                    GEN_B PM_&PM_LAB._E
                END_IF
-               GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME1,&SN_NAME2  
-               ADD &BY,TO,&VAR
+               GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME2,&SN_NAME2 RPI 
+               ADD &BY,TO,&VAR                      RPI 1093 N2 WAS N1
                GEN_B PM_&PM_LAB._T
          AELSE
                GEN_LABEL PM_&PM_LAB._P,PERFORM_TEST

@@ -1,0 +1,40 @@
+         TITLE 'TESTSRT1 - CREATE TEST FILE FOR SORT'
+         PRINT DATA
+TESTSRT1 SUBENTRY
+         OPEN  (SYSUT2,(OUTPUT))
+         LA    R2,RECORDS
+         LA    R3,RECORDS_END
+         DO    WHILE=(CR,R2,LT,R3)
+               PUT SYSUT2,(R2)
+               AHI R2,REC_LEN
+         ENDDO
+         CLOSE SYSUT2
+         SUBEXIT
+         EQUREGS
+SYSUT2   DCB   DSORG=PS,RECFM=F,LRECL=20,MACRF=PM,DDNAME=SYSUT2
+REC_LEN  EQU   20
+RECORDS  DS    0F
+*     AC    CH    BI      FI      FL      PD     ZD
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'-001',PL4'01'       
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'02'       
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'0001',PL4'03'       
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'-01',ZL2'-001',PL4'04'       
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'05'        
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'001',ZL2'0001',PL4'06'        
+ DC C'AC',C'CH',X'0000',H'-001',E'00.0',PL2'-01',ZL2'-001',PL4'07'        
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'08'        
+ DC C'AC',C'CH',X'0000',H'0001',E'00.0',PL2'001',ZL2'0001',PL4'09'        
+ DC C'AC',C'CH',X'0000',H'-001',E'-1.0',PL2'-01',ZL2'-001',PL4'10'        
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'11'        
+ DC C'AC',C'CH',X'0000',H'0001',E'01.0',PL2'001',ZL2'0001',PL4'12'        
+ DC C'AC',C'CH',X'0000',H'-001',E'-1.0',PL2'-01',ZL2'-001',PL4'13'        
+ DC C'AC',C'CH',X'0001',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'14'        
+ DC C'AC',C'CH',X'0002',H'0001',E'01.0',PL2'001',ZL2'0001',PL4'15'        
+ DC C'AC',C'AA',X'0000',H'-001',E'-1.0',PL2'-01',ZL2'-001',PL4'16'        
+ DC C'AC',C'11',X'0001',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'17'        
+ DC C'AC',C'22',X'0002',H'0001',E'01.0',PL2'001',ZL2'0001',PL4'18'        
+ DC C'AA',C'AA',X'0000',H'-001',E'-1.0',PL2'-01',ZL2'-001',PL4'19'        
+ DC C'11',C'11',X'0001',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'20'        
+ DC C'22',C'22',X'0002',H'0001',E'01.0',PL2'001',ZL2'0001',PL4'21'        
+RECORDS_END EQU *                                             
+         END

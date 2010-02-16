@@ -1,0 +1,49 @@
+         TITLE 'TESTSRT2 - VERIFY SORTED FILE FROM TESTSRT1'
+         PRINT DATA
+TESTSRT2 SUBENTRY
+         OPEN  (SYSUT1,(INPUT))
+         LA    R2,RECORDS
+         LA    R3,RECORDS_END
+         LA    R4,1
+         DO    WHILE=(CR,R2,LT,R3)
+               GET SYSUT1,RECORD
+               IF  (CLC,RECORD,NE,0(R2))
+                   SNAP ID=(R4),STORAGE=(RECORD,RECORD+20)
+                   WTO 'RECORD OUT OF SEQUENCE'
+                   ABEND 111,DUMP
+               ENDIF
+               AHI R2,REC_LEN
+               AHI  R4,1
+         ENDDO
+         CLOSE SYSUT1
+         WTO   'TESTSRT2 RECORDS IN SEQUENCE OK'
+         SUBEXIT
+         EQUREGS
+SYSUT1   DCB   DSORG=PS,RECFM=F,LRECL=20,MACRF=PM,DDNAME=SYSUT1
+RECORD   DC    XL20'00'
+REC_LEN  EQU   20
+RECORDS  DS    0F
+*     AC    CH    BI      FI      FL      PD     ZD
+ DC C'11',C'11',X'0001',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'20'        
+ DC C'22',C'22',X'0002',H'0001',E'01.0',PL2'001',ZL2'0001',PL4'21'        
+ DC C'AA',C'AA',X'0000',H'-001',E'-1.0',PL2'-01',ZL2'-001',PL4'19'        
+ DC C'AC',C'AA',X'0000',H'-001',E'-1.0',PL2'-01',ZL2'-001',PL4'16'        
+ DC C'AC',C'CH',X'0000',H'-001',E'-1.0',PL2'-01',ZL2'-001',PL4'10'        
+ DC C'AC',C'CH',X'0000',H'-001',E'-1.0',PL2'-01',ZL2'-001',PL4'13'        
+ DC C'AC',C'CH',X'0000',H'-001',E'00.0',PL2'-01',ZL2'-001',PL4'07'        
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'-01',ZL2'-001',PL4'04'       
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'-001',PL4'01'       
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'02'       
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'05'        
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'08'        
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'11'        
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'000',ZL2'0001',PL4'03'       
+ DC C'AC',C'CH',X'0000',H'0000',E'00.0',PL2'001',ZL2'0001',PL4'06'        
+ DC C'AC',C'CH',X'0000',H'0001',E'00.0',PL2'001',ZL2'0001',PL4'09'        
+ DC C'AC',C'CH',X'0000',H'0001',E'01.0',PL2'001',ZL2'0001',PL4'12'        
+ DC C'AC',C'CH',X'0001',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'14'        
+ DC C'AC',C'CH',X'0002',H'0001',E'01.0',PL2'001',ZL2'0001',PL4'15'        
+ DC C'AC',C'11',X'0001',H'0000',E'00.0',PL2'000',ZL2'0000',PL4'17'        
+ DC C'AC',C'22',X'0002',H'0001',E'01.0',PL2'001',ZL2'0001',PL4'18'        
+RECORDS_END EQU *                                             
+         END

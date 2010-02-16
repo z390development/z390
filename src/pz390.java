@@ -294,6 +294,9 @@ public class pz390 {
 	 * 06/14/09 RPI 1055 add CPYA, EAR, and SAR instruction support
 	 * 09/19/09 RPI 1063 add CDE support with pointer from CVTCDE
 	 * 09/20/09 RPI 1063 update pgm old psw for pgm checks (duplicate of ESPIE psw0
+	 * 01/04/10 RPI 1094 move timeout to tz390 for use by gz390
+	 * 01/10/10 RPI 1103 correct trace for EX to show R vs F.
+	 * 02/04/10 RPI 1092 make PD compare routines public for zsort keys
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -587,7 +590,6 @@ public class pz390 {
 	int psw_pic_error = 0xfff; // internal error
 
 	int psw_pic = 0;
-    boolean timeout = false; // RPI 1054
 	// psw_cc? code = 3 2 1 0
 	// psw_cc value = 1 2 4 8 //RPI174
 	int[] psw_carry = { -1, 1, 1, -1, 0, -1, -1, -1, 0 }; // index by psw_cc
@@ -2444,7 +2446,7 @@ public class pz390 {
 				}
 			}
 			if (psw_check){
-				if (timeout){
+				if (tz390.timeout){ // RPI 1094
 					set_psw_check(psw_pic_timeout); // RPI 1054
 				} else if (psw_pic != 0) { // RPI 301
 					if (psw_pic == psw_pic_oper && tz390.opt_trace) { // RPI 474
@@ -12922,6 +12924,8 @@ public class pz390 {
 			return "POINT R1=DCB";
 		case 160: // wtor
 			return "WTOR R0=REPLY, R1=MSG, R14=LEN, R15=ECB";
+		case 161: // zsort
+			return "ZSORT R0=OP(1-IS,2-PUT,3-GET),R1=A(OPT,LREC,KO,KL,MEM)";
 		case 170: // CTD
 			return "CTD R1=A(TYPE,IN,OUT)";
 		case 171: // CFD
@@ -12931,7 +12935,7 @@ public class pz390 {
 		}
 	}
 
-	private int get_big_int_comp_cc(BigInteger big_int1, BigInteger big_int2) {
+	public int get_big_int_comp_cc(BigInteger big_int1, BigInteger big_int2) { // RPI 1092
 		/*
 		 * return psw cc for big int comp
 		 */
@@ -13002,7 +13006,7 @@ public class pz390 {
 		}
 	}
 
-	private int get_long_comp_cc(long long1, long long2) {
+	public int get_long_comp_cc(long long1, long long2) {  // RPI 1092
 		/*
 		 * return psw_cc for long compare
 		 */
@@ -16062,7 +16066,7 @@ public class pz390 {
 			set_psw_check(psw_pic_exec);
 		}
     }
-	private boolean get_pdf_ints() {  // RPI 981
+	public boolean get_pdf_ints() {  // RPI 981, RPI 1092
 		/*
 		 * 1.  Return true if ok else false.  RPI 981
 		 * 2.  Set pdf_is_big to true or false and set pdf_big_int1 and pdf_big_int2
@@ -16760,8 +16764,8 @@ public class pz390 {
 			} else {
 				hex_ins = bytes_to_hex(mem, xbd2_loc, 6, 0);
 			}
-			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
-						+ bytes_to_hex(fp_reg, rf1, 4, 0) + " S2("
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="     // RPI 1103
+						+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " S2("  // RPI 1103
 						+ tz390.get_hex(xbd2_loc, 8) + ")="
 						+ hex_ins; // RPI 1035
 			break;

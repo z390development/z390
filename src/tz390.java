@@ -230,6 +230,9 @@ public  class  tz390 {
     *          fix file_name separators for systerm, fix / to \ and \ to /
     *          set install_loc in options, repackage init_tz390
     *          to run init_pat, os, util, time
+    * 01/04/10 RPI 1094 move timeout from pz390 to tz390 for use by gz390
+    * 01/07/10 RPI 1097 add support for ..\ and .\ in paths
+    * 02/16/10 RPI 1108 add fp_lq_type for LQ quad word
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -238,7 +241,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.01b";  //dsh
+    String version    = "V1.5.01c";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -249,6 +252,7 @@ public  class  tz390 {
 	byte    z390_os_win   = 1;
 	byte    z390_os_linux = 2;
 	String  z390_font    = "Monospaced";  // RPI 509 was Courier
+	boolean timeout = false; // RPI 1094
 	boolean z390_abort   = false;  // global abort request
 	boolean tz390_recursive_abort = false; // RPI 935
 	String  invalid_options = "";  // RPI 742
@@ -631,6 +635,7 @@ public  class  tz390 {
         byte fp_lb_type = 6; // BFP extended - big dec
         byte fp_ld_type = 7; // DFP extended - big dec
         byte fp_lh_type = 8; // HFP extended - big dec
+        byte fp_lq_type = 9; // LQ quad word
         byte fp_db_digits = 15;
         byte fp_dd_digits = 16;
         byte fp_dh_digits = 15;   
@@ -662,14 +667,15 @@ public  class  tz390 {
         		fp_eh_digits+fp_guard_digits,
         		fp_lb_digits+fp_guard_digits,
         		fp_ld_digits,  // RPI 790 
-        		fp_lh_digits+fp_guard_digits
+        		fp_lh_digits+fp_guard_digits,
+        		fp_lh_digits+fp_guard_digits  // rpi 1108 lq 
         		}; 
-        int[]  fp_digits_max  = {0,16,0,0,7,0,0,34,0};
-        int[]  fp_sign_bit    = {0x800,0x20,0x80,0x100,0x20,0x80,0x8000,0x20,0x80}; // RPI 407
-        int[]  fp_one_bit_adj = {2,-1,2,2,-1,1,2,-1,1}; // RPI 407 RPI 821 from 1 to 2 
-        int[]  fp_exp_bias    = {0x3ff,398,0x40,0x7f,101,0x40,0x3fff,6176,0x40}; // RPI 407
-        int[]  fp_exp_max     = {0x7ff,0x3ff,0x7f,0xff,0xff,0x7f,0x7fff,0x3fff,0x7f}; // RPI 407
-        int[]  fp_man_bits = {52,-1,56,23,-1,24,112,-1,112}; 
+        int[]  fp_digits_max  = {0,16,0,0,7,0,0,34,0,0};
+        int[]  fp_sign_bit    = {0x800,0x20,0x80,0x100,0x20,0x80,0x8000,0x20,0x80,0X80}; // RPI 407
+        int[]  fp_one_bit_adj = {2,-1,2,2,-1,1,2,-1,1,1}; // RPI 407 RPI 821 from 1 to 2 
+        int[]  fp_exp_bias    = {0x3ff,398,0x40,0x7f,101,0x40,0x3fff,6176,0x40,0X40}; // RPI 407
+        int[]  fp_exp_max     = {0x7ff,0x3ff,0x7f,0xff,0xff,0x7f,0x7fff,0x3fff,0x7f,0X7F}; // RPI 407
+        int[]  fp_man_bits = {52,-1,56,23,-1,24,112,-1,112,112}; 
   /*
    * DFP Decimal Floating Point shared tables
    */
@@ -4569,7 +4575,7 @@ private void init_pat(){
 		  abort_error(13,"replace & parm pattern errror - " + e.toString());
 	}
 	/*
-     * replace ?& with & for Linux
+     * replace && with & for Linux
      * */
 	try {
 	    find_damp = Pattern.compile(
@@ -5836,13 +5842,49 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 }
 public String fix_file_separators(String name){
 	/*
-	 * replace \ with / if Linux else / with |
+	 * 1.  Replace \ with / if Linux else / with |
+	 * 2.  Replace ..\ or ../ with parent path
+	 * 3.  Remove embedded ./ or .\
 	 */
     if (z390_os_type == z390_os_linux){ // RPI 532 file separator fix
-    	return find_bslash.matcher(name).replaceAll("/");  // RPI 1080
+    	name = find_bslash.matcher(name).replaceAll("/");  // RPI 1080
     } else {
-    	return find_slash.matcher(name).replaceAll("\\\\");  // RPI 1080
+    	name = find_slash.matcher(name).replaceAll("\\\\");  // RPI 1080
     }
+	// proces any ..\..\ relative paths RPI 1097
+	File temp_file = new File(System.getProperty("user.dir"));
+	boolean parent_path = false;
+	while (name.length() >= 3 && name.substring(0,3).equals(".." + File.separator)){
+		parent_path = true;
+		temp_file = new File(temp_file.getParent());
+		name = name.substring(3);
+	}
+	// remove leading .\ for rel file RPI 1097
+	if (name.length() >= 2 && name.substring(0,2).equals("." + File.separator)){
+		name = name.substring(2);
+	}
+	// replace embeeded .\ with \  RPI 1097
+	int index = 0;
+	while (index < name.length() - 1){
+		if (name.charAt(index) == '.'){
+			if (name.charAt(index+1) == File.separatorChar){
+				name = name.substring(0,index) + name.substring(index+2);
+				index--;
+			}
+		}
+		index++;
+	}
+	// remove trailing \ RPI 1097
+	index = name.length()-1;
+	while (index >= 0 && name.charAt(index) == File.separatorChar){
+		name = name.substring(0,index);
+		index--;
+	}
+	// prefix parent path if any  RPI 1097
+	if (parent_path){
+		name = temp_file.getPath() + File.separator + name;
+	}
+	return name;
 }
 public String find_file_name(String parm_dir_list, String file_name, String file_type_def, String dir_cur){
 	/*
@@ -5857,14 +5899,13 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 	 *       the type instead of default file_type. 
 	 */
 	boolean explicit_type = false;
+	File    temp_file;
 	if (file_name == null)return null; // RPI 459
 	if (file_name.charAt(0) == '"'){
 		file_name = file_name.substring(1,file_name.length()-1); // RPI 1074 
 	}
 	file_name = fix_file_separators(file_name);
-	String temp_file_name;
-	File   temp_file;
-	int index = file_name.indexOf('.');
+	int index = file_name.lastIndexOf('.');
 	if (index != -1){
 		file_type_def = file_name.substring(index); // RPI 756
 		explicit_type = true;
@@ -5875,7 +5916,7 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 		&& (file_name.length() > 2 
 			&& file_name.charAt(1) == ':')){
 		index = 2;
-	}
+	}	
 	if (index >= 0){
 		// file_name has explicit path so use it
 		temp_file = new File(file_name + file_type_def);
@@ -5916,8 +5957,7 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 						file_dir = file_dir + File.separator;
 					}
 				}
-				temp_file_name = file_dir + file_name + file_type;
-				temp_file = new File(temp_file_name);
+				temp_file = new File(file_dir + file_name + file_type);
 			} else {
 				temp_file = new File(file_name + file_type);
 			}

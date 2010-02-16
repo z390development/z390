@@ -359,6 +359,9 @@ public  class  az390 implements Runnable {
         * 09/01/09 RPI 1073 support option NOALIGN  
         * 09/02/09 RPI 1079 add DFHRESP(NOTALLOC)=F'61'
         * 09/26/09 RPI 1080 replace init tables with init_tz390
+        * 01/08/10 RPI 1099 correct error on 32 digit B type SDT and display 4 byte hex value
+        * 01/09/10 RPI 1101 trunc vs error for out of range or x/0 on DC AFHY
+        * 92/16/10 RPI 1108 align LQ to 16 bytes (see RPI 594 pending)
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -4667,11 +4670,11 @@ private void exp_div(){
 		log_error(59,"invalid rld division - " + exp_text.substring(0,exp_index));
 		return;
 	}
-	if (sym_val2 == 0){
+	if (sym_val2 == 0 && tz390.opt_allow){ 
 		log_error(60,"invalid rld division - " + exp_text.substring(0,exp_index));
 		return;
 	}
-	if (sym_val2 != 0){
+	if (sym_val2 != 0){ 
 	    sym_val1 = sym_val1 / sym_val2;
 	} else {
 		sym_val1 = 0;  // by definition for HLASM
@@ -4936,7 +4939,7 @@ private void push_exp_sdt(String sdt){
            try {
         	   switch (sdt.toUpperCase().charAt(0)){
         	   case 'B': // B'11000001' binary
-        		   exp_stk_sym_val[tot_exp_stk_sym-1] = Integer.valueOf(sdt.substring(2,sdt.length()-1),2).intValue();
+        		   exp_stk_sym_val[tot_exp_stk_sym-1] = Long.valueOf(sdt.substring(2,sdt.length()-1),2).intValue(); // RPI 1099 
         		   break;
         	   case 'C': //RPI192
         		   if (!tz390.get_sdt_char_int(sdt)){
@@ -4948,7 +4951,7 @@ private void push_exp_sdt(String sdt){
         		   exp_stk_sym_val[tot_exp_stk_sym-1] = Long.valueOf(sdt.substring(2,sdt.length()-1),16).intValue();
         		   break;
         	   default:
-        		   exp_stk_sym_val[tot_exp_stk_sym-1] = Double.valueOf(sdt).intValue();  // RPI 232
+        		   exp_stk_sym_val[tot_exp_stk_sym-1] = (int) Double.valueOf(sdt).longValue();  // RPI 232 RPI 1101 
                	   break;
         	   }
            } catch (Exception e){
@@ -6502,6 +6505,7 @@ private void get_dc_field_modifiers(){
       	 			tz390.fp_type = tz390.fp_ld_type; // RPI 407
       	 			dc_index++;	
       	 		} else if (dc_type_sfx == 'Q'){ // RPI 555
+      	 			tz390.fp_type =tz390.fp_lq_type; // RPI 1108 LQ
       	 			dc_index++;	
       	 		} else {
       	 			tz390.fp_type = tz390.fp_lh_type;
@@ -6573,7 +6577,15 @@ private void get_dc_field_modifiers(){
 	 if (!dc_lit_ref 
 		&& !dc_len_explicit){ // RPI 265 align within DS/DC
         if (tz390.opt_align || dc_dup == 0){ // RPI 1073
-        	dc_align(dc_len);
+        	if (dc_len == 16){
+        		if (tz390.fp_type == tz390.fp_lq_type){ // RPI 1108
+        			dc_align(16);
+        		} else {
+        			dc_align(8);
+        		}
+        	} else {
+        		dc_align(dc_len);
+        	}
         }
 	 }
 	 if (dc_first_field){
@@ -6597,7 +6609,7 @@ private void dc_align(int align_len){
 	 * If align_len > 8 use 8  RPI 373
 	 */
 	 if (align_len > 8){
-		 align_len = 8; 
+	//dshx	 align_len = 8; 
 	 }
 	 dc_fill((loc_ctr + align_len -1)/align_len*align_len - loc_ctr);
 }
@@ -7111,15 +7123,6 @@ private String get_dc_fh_hex_val(){
 	 * get 1-16 byte hex value for F or H
 	 * constant from dc_bd_val
 	 */
-    if (dc_len <= 8){
-    	long temp_val = dc_bd_val.longValue();
-        if (!dc_unsigned // RPI 893
-        	&& (temp_val > max_fh[dc_len-1] 
-                || temp_val < min_fh[dc_len-1])){
-            log_error(113,"signed value out of range - x'" + tz390.get_long_hex(temp_val,16) + "'");
-            return "";        	
-        }
-    }
 	try {
     	if (dc_len <= 8){  // RPI 893
 	        return tz390.get_long_hex(dc_bd_val.longValueExact(),2*dc_len); 
@@ -7834,7 +7837,8 @@ public void process_equ(){ // RPI 415
 			}
 			sym_loc[store_sid] = exp_val;
 			sym_len[store_sid] = 1;
-			hex_bddd1_loc = tz390.get_hex(exp_val,6);
+			hex_bddd1_loc = tz390.get_hex(exp_val,8); // RPI 1099 was 6 vs 8
+			hex_bddd2_loc = "    ";                   // RPI 1099
 			if (exp_next_char(',')){
 				// equ explicit length
 				exp_text = exp_text.substring(exp_index+1);
@@ -8487,6 +8491,9 @@ private void fp_get_hex(){
 			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
 				dc_hex = "7FFFFFFFFFFFFFFF71FFFFFFFFFFFFFF";
 				break;
+			case 9: // tz390.fp_lq_type quad word RPI 1108
+				dc_hex = "00000000000000000000000000000000";
+				break;
 			}
 			if (fp_sign == '-'){
 				dc_hex = "F" + dc_hex.substring(1);
@@ -8521,6 +8528,9 @@ private void fp_get_hex(){
 			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
 				dc_hex = "01100000000000007200000000000000";
 				break;
+			case 9: // tz390.fp_lq_type quad word RPI 1108
+				dc_hex = "00000000000000000000000000000000";
+				break;	
 			}
 			if (fp_sign == '-'){
 				dc_hex = "8" + dc_hex.substring(1);
@@ -8577,6 +8587,9 @@ private void fp_get_hex(){
 		case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
 			dc_hex = "00000000000000000000000000000000";  // RPI 384
 			return;
+		case 9: // tz390.fp_lq_type quad word RPI 1108
+			dc_hex = "00000000000000000000000000000000";
+			break;	
 		}
 	} else { // RPI 834 negative zero values
 		switch (tz390.fp_type){  // gen zero hex for tz390.fp_type
@@ -8607,6 +8620,9 @@ private void fp_get_hex(){
 		case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
 			dc_hex = "80000000000000000000000000000000";  // RPI 384
 			return;
+		case 9: // tz390.fp_lq_type quad word RPI 1108
+			dc_hex = "00000000000000000000000000000000";
+			break;	
 		}
 	}
 	/*
@@ -8651,6 +8667,8 @@ private void fp_get_hex(){
 	    cvt_fp_exp_to_base_2();
 	    fp_cvt_bd_to_hex();
 	    break;
+	case 9: // tz390.fp_lq_type quad word RPI 1108
+		break;
 	}
 }
 	private void cvt_fp_exp_to_base_2(){
@@ -8928,6 +8946,8 @@ private void fp_get_hex(){
 			dc_hex = "FF00000000000000FF00000000000000";
 		}
 	    break;
+	case 9: // tz390.fp_lq_type quad word RPI 1108
+		break;
 	}	
 }
 	private void set_dfp_preferred_exp(){

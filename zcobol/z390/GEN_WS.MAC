@@ -22,6 +22,7 @@
 .* 07/20/09 RPI 1065 remove MEXIT following MNOTE FD error to gen WS   
 .* 07/21/09 RPI 1065 scale decimal values for COMP                     
 .* 07/21/09 RPI 1065 support ZC_DEC_IS_COMMA special names option      
+.* 01/07/09 RPI 1098 support x'...' values for G and Q type fields
 .*********************************************************************
          GEN_WS      
          COPY  ZC_WS   
@@ -182,8 +183,13 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
          ACALL SCALE_COMP_VAL                     RPI 1065     
 &NAME    DC &CDUP.AL4(&COMP_VAL)                  RPI 1065
      AWHEN C'G' S9(18) NUMERIC (64 BIT BINARY)
-         ACALL SCALE_COMP_VAL                     RPI 1065     
+         ACALL SCALE_COMP_VAL                     RPI 1065   
+       AIF ('&COMP_VAL'(1,2) EQ 'X''')                  RPI 1098
+           :&COMP_VAL SETC '&COMP_VAL'(3,K'&COMP_VAL-3) RPI 1098
+&NAME    DC &CDUP.XL8'&COMP_VAL'                        RPI 1065
+       AELSE                                            RPI 1098
 &NAME    DC &CDUP.FL8'&COMP_VAL'                  RPI 1065
+       AEND                                             RPI 1098
      AWHEN C'H' S9(4) NUMERIC (16 BIT BINARY)     RPI 1065
          ACALL SCALE_COMP_VAL                     RPI 1065     
 &NAME    DC &CDUP.AL2(&COMP_VAL)                  RPI 1065
@@ -194,7 +200,12 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
 &NAME    DC &CDUP.PL&SYM_LEN(&I)'&PIC_VAL'
      AWHEN C'Q' S9(39) NUMERIC (PACKED)
          ACALL SCALE_COMP_VAL                     RPI 1065     
+       AIF ('&COMP_VAL'(1,2) EQ 'X''')                  RPI 1098
+           :&COMP_VAL SETC '&COMP_VAL'(3,K'&COMP_VAL-3) RPI 1098
+&NAME    DC &CDUP.XL16'&COMP_VAL'                       RPI 1065
+       AELSE                                            RPI 1098
 &NAME    DC &CDUP.FL16'&COMP_VAL'                 RPI 1065
+       AEND                                             RPI 1098
      AWHEN C'X' X(N)  ALPHANUMERIC
        AIF  ('&PIC_VAL'(1,1) EQ '''')              
             AIF (&SYM_VAL_ALL(&I))             RPI 1012

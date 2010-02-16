@@ -133,6 +133,7 @@ public  class  gz390
 	 * 11/08/08 RPI 940 correct input sba for field at (24,80) 
 	 * 06/22/09 RPI 1061 include PA_MDT in returned TGET fields with SBA's   
 	 * 10/24/09 RPI 1091 remove extra field advance for SFE                             
+	 * 01/01/10 RPI 1094 skip unprotected fields on tab, abort if timeout
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -666,7 +667,7 @@ public  class  gz390
  		    	tz390.z390_abort = true; // abort all processes
  		    }
 		}
-		private void shut_down(int return_code){
+		private void shut_down(int return_code){ 
 		/*
 		 * cancel threads and exit with rc
 		 * (turn off runtime shutdown exit
@@ -2424,7 +2425,7 @@ private void tn_next_field_addr(){
 	 */
 	tn_scn_addr_inc();
 }
-private void tn_next_input_addr(){
+private void tn_next_input_addr(){ 
 	/*
 	 * incr scn_addr to next input field addr
 	 */
@@ -2502,14 +2503,14 @@ private void tn_ra(){
 		scn_addr = sba; // RPI 1091
 	}
 }
-private void tn_tab(){
+private void tn_tab(){ 
 	/*
 	 * tab to next input field from current field
 	 */
      tn_next_input_field();
      tn_update_cursor();
 }
-private void tn_next_input_field(){
+private void tn_next_input_field(){ 
 	/*
 	 * find next input field starting at scn_addr
 	 * with wrap and set scn_addr and cursor if on.
@@ -2517,12 +2518,17 @@ private void tn_next_input_field(){
     int sba_first = scn_addr;
     int sba_next = max_addr;
     int index = 0;
+    int save_cur_fld_addr = cur_fld_addr;;
     while (index < fld_mdt_tot){
-    	cur_fld_addr = fld_mdt_addr[index];
+    	cur_fld_addr = fld_mdt_addr[index]; 
     	if (cur_fld_addr > scn_addr
-    		&& cur_fld_addr < sba_next){
+    		&& cur_fld_addr < sba_next
+    		&& (scn_attr[cur_fld_addr] & tn_protect_mask) == 0  // RPI 1094 skip prot fields
+    		){
     		sba_next = cur_fld_addr; 
-    	} else if (cur_fld_addr < sba_first){
+    	} else if (cur_fld_addr < sba_first
+    			   && (scn_attr[cur_fld_addr] & tn_protect_mask) == 0  // RPI 1094 skip prot fields
+    		     ){
     		sba_first = cur_fld_addr;
     	}
     	index++;
@@ -2539,6 +2545,8 @@ private void tn_next_input_field(){
     		scn_addr = 0;
     	}
     	tn_update_cursor();
+    } else {
+    	cur_fld_addr = save_cur_fld_addr; // RPI 1094 store if no input found
     }
 }
 private boolean tn_input_field(){
@@ -2585,7 +2593,7 @@ private void tn_modify_field(){
 		     		                     | tn_mdt_mask; // RPI 671
 	}
 }
-private void tn_update_cursor(){
+private void tn_update_cursor(){ 
 	/*
 	 * update cursor for IC command or change
 	 * in focus due to screen input or tab.
@@ -2594,6 +2602,10 @@ private void tn_update_cursor(){
 	 *     found.
 	 * 2.  Turn on blinking cursor at position found
 	 */
+	if (tz390.timeout){
+		abort_error(144,"GUAM abort due to timeout");
+	    return;
+	}
 	if (!tn_cursor){
 		return;
 	}

@@ -1,0 +1,23 @@
+         TITLE 'TESTSRT3 - CREATE TEST FILE FOR SORT WITH RECS=PARM'
+         PRINT DATA
+TESTSRT3 SUBENTRY
+         L     R1,0(R1)
+         LH    R2,0(R1)
+         BCTR  R2,0
+         EX    R2,PACK
+         CVB   R2,PWORK             TOTAL RECS FROM PARM
+         OPEN  (SYSUT2,(OUTPUT))
+         DO    WHILE=(LTR,R2,NZ,R2)
+               ST  R2,REC
+               PUT SYSUT2,REC
+               BCTR R2,0
+         ENDDO
+         CLOSE SYSUT2
+         SUBEXIT
+PACK     PACK  PWORK,2(0,R1)
+PWORK    DC    D'0'
+         EQUREGS
+SYSUT2   DCB   DSORG=PS,RECFM=F,LRECL=4,MACRF=PM,DDNAME=SYSUT2
+         DS    0F
+REC      DS    XL4096 OVERRIDE SORTIN TO SET LRECL FROM 4 TO 4096
+         END

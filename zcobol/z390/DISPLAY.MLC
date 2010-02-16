@@ -9,12 +9,15 @@
 * 01/01/09 increate max buffer for single display to 256
 * 03/06/09 RPI 1004 add DEL FLOAT type display support R0=ZC_FLOAT
 * 03/11/09 RPI 1004 replace DEL types with types 1-9,Q             
+* 01/11/10 RPI 1104 support %HEX option (type C'%') to display data
+*          fields in hex, support X and literal fields of any length,
+*          and shorten display lines to 80
 *********************************************************************
 *
 *  CALL DISPLAY,(FIELD1,LENGH1,TYPE1,FIELDN,LENGTHN,TYPEN),VL
 *
 *    FIELD     - ADDRESS OF WS FIELD OR LITERAL
-*    LENGTH    - IMMEDIATE LENGTH OF FIELD OR LIT <= MAXBUFF
+*    LENGTH    - IMMEDIATE LENGTH OF FIELD OR LIT 
 *    TYPE      - IMMEDIATE TYPE ADEFGHPXZ
 *
 * NOTES:
@@ -28,29 +31,64 @@ DISPLAY  SUBENTRY
          LR    R3,R1        R3=A(NEXT PARM LIST ENTRIES)
          LM    R7,R8,=A(WTOMSG+4,LWTOMSG-4) R7=A(BUFF) R8=BYTES LEFT
          DO    WHILE=(LTR,R3,NZ,R3)
-               LM   R4,R6,0(R3)             R4=ADDR,R5=LEN,56=TYPE
+               LM   R4,R6,0(R3)             R4=ADDR,R5=LEN,R6=TYPE
                IF   (LTR,R6,P,R6)
                     AHI  R3,12              R3=A(NEXT ENTRY)
                ELSE
                     NILH R6,X'7FFF'         TURN OFF VL BIT
                     SR   R3,R3              R3=0 INDICATING LAST FIELD
                ENDIF
-               IF   (CHI,R5,GT,MAXBUFF)
-                    LA   R1,ZCVT_ABORT_DISPLAY
-                    L    R15,ZCVT_ABORT
-                    BR   R15
-               ENDIF
-               BAL  R12,GET_FIELD    SET R4=A(DISP DATA),R5=DISP LEN
-               BAL  R12,ADD_FIELD    ADD DISP FIELD AND WTO AS REQ'D
+               ST   R4,AFIELD
+               ST   R5,TOTLEN
+               STC  R6,FTYPE
+               MVI  FIRSTHEX,TRUE
+               DO WHILE=(CLC,TOTLEN,NZ,=F'0') RPI 1104
+                  L    R5,TOTLEN
+                  IF   (CHI,R5,GT,MAXBUFF-1),AND,(CLI,FTYPE,NE,C'%')
+                       LA  R5,MAXBUFF-1
+                  ELSEIF (CHI,R5,GT,MAXBUFF/2-3),AND,(CLI,FTYPE,EQ,C'%'X
+               )
+                       LA  R5,MAXBUFF/2-3
+                  ENDIF
+                  ST   R5,CURLEN
+                  L    R1,TOTLEN
+                  SR   R1,R5
+                  ST   R1,TOTLEN
+                  BAL  R12,GET_FIELD SET R4=A(DISP DATA),R5=DISP LEN
+                  BAL  R12,ADD_FIELD ADD DISP FIELD AND WTO AS REQ'D
+                  L    R4,AFIELD
+                  L    R5,CURLEN
+                  AR   R4,R5
+                  ST   R4,AFIELD
+               ENDDO
          ENDDO
          BAL   R11,DISPLAY_FIELDS    DISPLAY FIELDS IN BUFFER
          SUBEXIT
 *
-* GET_FIELD TO DISPLAY SETTING R4=A(DISP FIELD) R5=LENGTH
+* GET_FIELD TO DISPLAY SETTING R4=A(FIELD) R5=LENGTH
 *     
 GET_FIELD DS   0H
        MVI  DWORK,C' '
+       SR   R6,R6
+       IC   R6,FTYPE
        CASENTRY (R6) 
+       CASE   C'%'    DISPLAY FIELD IN HEX   RPI 1104
+         IF   (CLI,FIRSTHEX,EQ,TRUE)
+              MVC DWORK(3),=C' X'''
+              MVI FIRSTHEX,FALSE
+              CALL CVTTOHEX,((R4),DWORK+3,(R5))
+              LA   R4,DWORK
+              LA   R5,3(R5,R5) 2*LEN+3 PREFIX
+         ELSE
+              CALL CVTTOHEX,((R4),DWORK+1,(R5))
+              LA   R4,DWORK
+              LA   R5,1(R5,R5) 2*LEN PREFIX
+         ENDIF
+         IF   (CLC,TOTLEN,EQ,=F'0')
+              LA  R1,0(R4,R5)
+              MVI 0(R1),C''''
+              AHI R5,1
+         ENDIF
        CASE   C'A'
          CALL CVTTOHEX,((R4),DWORK+1,4)
          LA   R4,DWORK
@@ -163,8 +201,8 @@ GET_FIELD DS   0H
          LA   R5,45
        ENDCASE
          BR    R12
-MVC_MASK MVC   DWORK(*-*),MASK    MOVE EDMK MASK TO DWORK
-EDMK     EDMK  DWORK(*-*),0(R4)   EDMK TO DWORK SETS R1=A(FIRST DIG)  
+MVC_MASK MVC   DWORK+1(*-*),MASK    MOVE EDMK MASK TO DWORK
+EDMK     EDMK  DWORK+1(*-*),0(R4)   EDMK TO DWORK SETS R1=A(FIRST DIG)  
 MVC_LIT  MVC   DWORK+1(*-*),0(R4) MOVE FLD/LIT TO DWORK
 PACK_B1  PACK  PWORK(2),0(*-*,R4)    PACK D1-D2  INTO BYTE 1           
 PACK_HIGH PACK  PWORK(9),0(*-*,R4)   PACK D3-D16 INTO BYTE 1-7  
@@ -174,18 +212,18 @@ PACK_LE15 PACK  PWORK+8(8),0(*-*,R4) PACK D1-D15 INTO BYTE 9-16
 *
 CVTPD    DS    0H
          SLL   R5,1
-         AHI   R5,-1  R5=2*PLEN-1 = MAX DIGITS + SPACE -1
+         AHI   R5,-1  R5=2*PLEN-1 = FILLER + MAX DIGITS - 1
          EX    R5,MVC_MASK          SET BLANK WHEN ZERO MASK
          IF    (EX,R5,Z,EDMK) ZERO  IF ZERO
                LA   R4,DWORK(R5)
                MVI  0(R4),C'0'
-               AHI  R5,1
+               AHI  R5,2
                LA   R4,DWORK
          ELSE                             
                BNM  *+12
                  AHI  R1,-1         BACKUP 1 FOR MINUS SIGN
                  MVI  0(R1),C'-'    SET LEADING MINUS SIGN
-               AHI  R5,1
+               AHI  R5,2
                LA   R4,DWORK        R4 = ADDR DISPLAY FIELD
          ENDIF  
          BR    R11
@@ -199,6 +237,7 @@ ADD_FIELD DS   0H
           ENDIF
           BCTR R5,0
           EX   R5,MVC_DISP
+          LA   R1,2(R5,R4)
           LA   R7,1(R5,R7)
           SR   R8,R5
           AHI  R8,-1
@@ -218,7 +257,14 @@ DISPLAY_FIELDS DS  0H
 *
          LTORG
          EQUREGS
-MAXBUFF  EQU   256
+FIRSTHEX DC    AL1(FALSE)
+TRUE     EQU   1
+FALSE    EQU   0
+AFIELD   DC    A(0)
+TOTLEN   DC    F'0'
+CURLEN   DC    F'0'
+FTYPE    DC    C'?'
+MAXBUFF  EQU   78
 WTOMSG   DC    AL2(*-*,0)
 WTOBUFF  DC    CL(MAXBUFF)' '
 LWTOMSG  EQU   *-WTOMSG

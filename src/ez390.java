@@ -171,6 +171,7 @@ import javax.swing.Timer;
     * 06/15/09 RPI 1050 suppress dup START on CON when TRACE CON
     * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option
     * 09/24/09 RPI 1080 set z390_os_type before init tables 
+    * 01/04/10 RPI 1094 move timeout to tz390 to share with gz390
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -424,8 +425,12 @@ private void monitor_update(){
     		&& !pz390.psw_check
             && monitor_next_time > sz390.tod_time_limit){ // RPI 837
     	    while (pz390_running){
-    	    	pz390.timeout   = true; // RPI 1054 request pz390 to abend
+    	    	tz390.timeout   = true; // RPI 1054 request pz390 to abend, RPI 1094 moved
     	    	pz390.psw_check = true; // RPI 1054
+    	    	if (tz390.opt_guam){ // RPI 1094
+    				System.out.println("GUAM GUI window closed due to timeout");
+    				System.exit(16);
+    	    	}
     	    	Thread.yield(); // RPI 1040 wait to end exec before dump
     	    }
     	}
