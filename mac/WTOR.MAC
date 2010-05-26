@@ -16,6 +16,7 @@
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .* 02/06/09 RPI 992 add WTOR list and execute forms 
+.* 05/22/10 RPI 1120 clear high bits in replay address (was NIHH)
 .*********************************************************************
 .*
 .*  WTOR - write to operator with reply (routed to GUAM window if 
@@ -120,7 +121,7 @@ WTOR#&SYSNDX._EOT EQU *
          ZOPTLR 1,&MF(2,1) R1=WTOR LIST ADDR
 .WTOREXEC_COM ANOP
          L     0,0(1)      R0 =REPLY FIELD ADDR (24B REQUIRES RMODE24)
-         NIHH  0,X'00FF'   TURN OFF HIGH BITS IN 24 BIT ADDR
+         NILH  0,X'00FF'   TURN OFF HIGH BITS IN 24 BIT ADDR RPI 1120
          SR    14,14
          IC    14,0(1)     R14=REPLY LENGTH    
          L     15,4(1)     R15=ECB ADDR

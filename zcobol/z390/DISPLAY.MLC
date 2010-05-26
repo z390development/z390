@@ -12,6 +12,7 @@
 * 01/11/10 RPI 1104 support %HEX option (type C'%') to display data
 *          fields in hex, support X and literal fields of any length,
 *          and shorten display lines to 80
+* 05/25/10 RPI 1118 use ZCVT_PVTMAXDL max display line length       
 *********************************************************************
 *
 *  CALL DISPLAY,(FIELD1,LENGH1,TYPE1,FIELDN,LENGTHN,TYPEN),VL
@@ -28,8 +29,15 @@
 DISPLAY  SUBENTRY
          USING ZC390CVT,R9
          COPY  ASMMSP
-         LR    R3,R1        R3=A(NEXT PARM LIST ENTRIES)
-         LM    R7,R8,=A(WTOMSG+4,LWTOMSG-4) R7=A(BUFF) R8=BYTES LEFT
+         LR    R3,R1                        R3=A(NEXT PARM OR ZERO)
+         LA    R7,WTOMSG+4                  R7=A(NEXT BUFF OUT)
+         LH    R8,ZCVT_PVTMAXDL             R8= REMAINING BUFF LEN
+         IF    (CH,R8,GT,=AL2(MAXBUFF))
+               LH   R8,=AL2(MAXBUFF)
+         ENDIF
+*
+* DISPLAY PARMS 
+*
          DO    WHILE=(LTR,R3,NZ,R3)
                LM   R4,R6,0(R3)             R4=ADDR,R5=LEN,R6=TYPE
                IF   (LTR,R6,P,R6)
@@ -39,30 +47,27 @@ DISPLAY  SUBENTRY
                     SR   R3,R3              R3=0 INDICATING LAST FIELD
                ENDIF
                ST   R4,AFIELD
-               ST   R5,TOTLEN
+               ST   R5,FLDLEN       REMAINING LENGTH TO DISPLAY
+               ST   R5,CURLEN       CUR FLD LEN  (HEX/GRP > PVTMAXDL)
                STC  R6,FTYPE
                MVI  FIRSTHEX,TRUE
-               DO WHILE=(CLC,TOTLEN,NZ,=F'0') RPI 1104
-                  L    R5,TOTLEN
-                  IF   (CHI,R5,GT,MAXBUFF-1),AND,(CLI,FTYPE,NE,C'%')
-                       LA  R5,MAXBUFF-1
-                  ELSEIF (CHI,R5,GT,MAXBUFF/2-3),AND,(CLI,FTYPE,EQ,C'%'X
-               )
-                       LA  R5,MAXBUFF/2-3
+               DO WHILE=(CLC,FLDLEN,NE,=F'0') RPI 1104
+                  BAS  R12,GET_FIELD SET R4=A(DISP DATA),R5=DISP LEN
+                  BAS  R12,ADD_FIELD ADD DISP FIELD AND WTO AS REQ'D
+                  L    R1,CURLEN
+                  L    R0,AFIELD
+                  AR   R0,R1
+                  ST   R0,AFIELD
+                  L    R0,FLDLEN
+                  IF   (SR,R0,M,R1)
+                       SR R0,R0
                   ENDIF
-                  ST   R5,CURLEN
-                  L    R1,TOTLEN
-                  SR   R1,R5
-                  ST   R1,TOTLEN
-                  BAL  R12,GET_FIELD SET R4=A(DISP DATA),R5=DISP LEN
-                  BAL  R12,ADD_FIELD ADD DISP FIELD AND WTO AS REQ'D
+                  ST   R0,FLDLEN
                   L    R4,AFIELD
-                  L    R5,CURLEN
-                  AR   R4,R5
-                  ST   R4,AFIELD
+                  L    R5,FLDLEN
                ENDDO
          ENDDO
-         BAL   R11,DISPLAY_FIELDS    DISPLAY FIELDS IN BUFFER
+         BAL   R11,DISPLAY_FIELDS    DISPLAY FIELDS IN BUFFER IF ANY
          SUBEXIT
 *
 * GET_FIELD TO DISPLAY SETTING R4=A(FIELD) R5=LENGTH
@@ -73,6 +78,13 @@ GET_FIELD DS   0H
        IC   R6,FTYPE
        CASENTRY (R6) 
        CASE   C'%'    DISPLAY FIELD IN HEX   RPI 1104
+         LA   R0,3(R5,R5)
+         IF   (CH,R0,GT,ZCVT_PVTMAXDL)
+              LH  R5,ZCVT_PVTMAXDL
+              SRL R5,1
+              AHI R5,-3
+              ST  R5,CURLEN
+         ENDIF
          IF   (CLI,FIRSTHEX,EQ,TRUE)
               MVC DWORK(3),=C' X'''
               MVI FIRSTHEX,FALSE
@@ -84,7 +96,7 @@ GET_FIELD DS   0H
               LA   R4,DWORK
               LA   R5,1(R5,R5) 2*LEN PREFIX
          ENDIF
-         IF   (CLC,TOTLEN,EQ,=F'0')
+         IF   (CLC,FLDLEN,EQ,=F'0')
               LA  R1,0(R4,R5)
               MVI 0(R1),C''''
               AHI R5,1
@@ -127,6 +139,11 @@ GET_FIELD DS   0H
          LA   R4,DWORK
          LA   R5,45
        CASE   C'X' PIC X AND LITERALS 'XXX'
+         IF   (CH,R5,GT,ZCVT_PVTMAXDL)
+              LH  R5,ZCVT_PVTMAXDL
+              AHI R5,-3
+              ST  R5,CURLEN
+         ENDIF
          BCTR  R5,0
          EX    R5,MVC_LIT    MOVE PIC X FIELD/LIT TO DWORK
          LA    R4,DWORK
@@ -250,7 +267,11 @@ DISPLAY_FIELDS DS  0H
          S   R7,=A(WTOMSG)
          STH R7,WTOMSG
          WTO MF=(E,WTOMSG)
-         LM  R7,R8,=A(WTOMSG+4,LWTOMSG-4)
+         LA  R7,WTOMSG+4
+         LH  R8,ZCVT_PVTMAXDL
+         IF    (CH,R8,GT,=AL2(MAXBUFF))
+               LH   R8,=AL2(MAXBUFF)
+         ENDIF
          BR  R11 
 *
 * SHARED DATA
@@ -261,10 +282,10 @@ FIRSTHEX DC    AL1(FALSE)
 TRUE     EQU   1
 FALSE    EQU   0
 AFIELD   DC    A(0)
-TOTLEN   DC    F'0'
-CURLEN   DC    F'0'
+FLDLEN   DC    F'0'   FIELD LENGTH REMAINING
+CURLEN   DC    F'0'   CURR FIELD LENGTH TO DISPLAY
 FTYPE    DC    C'?'
-MAXBUFF  EQU   78
+MAXBUFF  EQU   255
 WTOMSG   DC    AL2(*-*,0)
 WTOBUFF  DC    CL(MAXBUFF)' '
 LWTOMSG  EQU   *-WTOMSG

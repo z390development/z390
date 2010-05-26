@@ -233,6 +233,7 @@ public  class  tz390 {
     * 01/04/10 RPI 1094 move timeout from pz390 to tz390 for use by gz390
     * 01/07/10 RPI 1097 add support for ..\ and .\ in paths
     * 02/16/10 RPI 1108 add fp_lq_type for LQ quad word
+    * 05/25/10 RPI 1118 add MAXDISPLAY(80) max zcobol display line length
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -241,7 +242,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.01c";  //dsh
+    String version    = "V1.5.01d";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -336,6 +337,7 @@ public  class  tz390 {
     int opt_chkmac   = 0; // RPI 747 0-none,1-labels, 2-labels and src after MEND
     int opt_chksrc   = 1; // RPI 747 0-none,1-MLC only,2-all
     int opt_maxcall  = 50;
+    int opt_maxdisplay = 80; // RPI 1118 max display line length for zcobol
     int opt_maxesd   = 1000;
     int opt_maxfile = 1000;     // RPI 707 max concourrent files open
     int opt_maxgbl  = 100000;   // RPI 284
@@ -4938,6 +4940,9 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     } else if (token.length() > 8
       		&& token.substring(0,8).toUpperCase().equals("MAXCALL(")){
        	opt_maxcall = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
+    } else if (token.length() > 11  // RPI 1118 max zcobol display line
+      		&& token.substring(0,11).toUpperCase().equals("MAXDISPLAY(")){
+       	opt_maxdisplay = Integer.valueOf(token.substring(11,token.length()-1)).intValue(); 
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("MAXESD(")){
        	opt_maxesd = Integer.valueOf(token.substring(7,token.length()-1)).intValue();   	

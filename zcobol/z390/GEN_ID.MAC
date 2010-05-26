@@ -11,6 +11,7 @@
 .* 11/14/08 gen DFHEISTG DSA DSECT if CICS                          
 .* 03/12/09 RPI 1004 add ZC_PFPO copybook defining types
 .* 06/18/09 RPI 1042 move DROP ZC_R15 to non-cics section   
+.* 05/25/10 RPI 1118 add PVTMAXDL max display line length option
 .*********************************************************************
 .* GLOBAL REGISTER ALLOCATION:
 .*  ZC_R0-ZC_R3 WORK USED BY ZCOBOL\Z390\GEN_*.MAC CODE GEN
@@ -101,6 +102,8 @@ ZC_WSLOC LOCTR              CONTINUE WS FOR FD AND DATA
          DC    C'&ZC_EXTEND'   PVTEXTND ZCOBOL EXTENDED PRECISION
          DC    C'&ZC_TRUNC'    PVTTRUNC ZCOBOL TRUNCATE TO PICTURE
          DC    C'&ZC_R64'      PVTR64   ZCOBOL USE 64 BIT REGISTERS
+         DC    H'&ZC_MAXDISPLAY' MAX DISPLAY LINE LEN  RPI 1118
+         DS    XL10            RESERVED
 ZC_LOAD  DS    0H
          LOAD  EP=ZC390LIB
          LTR   ZC_R15,ZC_R15

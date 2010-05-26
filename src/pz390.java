@@ -297,6 +297,7 @@ public class pz390 {
 	 * 01/04/10 RPI 1094 move timeout to tz390 for use by gz390
 	 * 01/10/10 RPI 1103 correct trace for EX to show R vs F.
 	 * 02/04/10 RPI 1092 make PD compare routines public for zsort keys
+	 * 02/25/10 RPI 1111 correct PR to only restore 2-14 vs 1-14
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1561,8 +1562,8 @@ public class pz390 {
 		       123,  // 2470 "A7D" "MGHI" "RI" 12
 		       122,  // 2480 "A7E" "CHI" "RI" 12
 		       123,  // 2490 "A7F" "CGHI" "RI" 12
-		       100,  // 2500 "A8" "MVCLE" "RS" 10
-		       100,  // 2510 "A9" "CLCLE" "RS" 10
+		       104,  // 2500 "A8" "MVCLE" "RS" 10  RPI 1112
+		       104,  // 2510 "A9" "CLCLE" "RS" 10  RPI 1112
 		       110,  // 2520 "AC" "STNSM" "SI" 11
 		       110,  // 2530 "AD" "STOSM" "SI" 11
 		       100,  // 2540 "AE" "SIGP" "RS" 10
@@ -12576,8 +12577,8 @@ public class pz390 {
 			cur_pc_stk_reg = cur_pc_stk_reg - reg_len;
 			set_psw_loc(pc_stk_psw_loc[cur_pc_stk]);
 			psw_cc = pc_stk_psw_cc[cur_pc_stk];
-			reg.position(8);
-			reg.put(pc_stk_reg_byte, cur_pc_stk_reg + 8, reg_len - 16);
+			reg.position(16);  // RPI 1111 was 8 vs 16
+			reg.put(pc_stk_reg_byte, cur_pc_stk_reg + 16, reg_len - 24); // RPI 1111 was +8 and - 16
 		} else {
 			set_psw_check(psw_pic_stkerr);
 		}
@@ -16829,6 +16830,17 @@ public class pz390 {
 			+ tz390.get_hex(reg.getInt(rf3 + 4), 8) + " S2("
 			+ tz390.get_hex(bd2_loc, 8) + ")="
 			+ get_ins_target(bd2_loc);
+			break;
+		case 104: // MVCLE, CLCLE  RPI 1112
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+			+ tz390.get_hex(reg.getInt(rf1 + 4), 8)
+			+ " R" + tz390.get_hex(mf1+1, 1) + "="
+			+ tz390.get_hex(reg.getInt(rf1 + 12), 8)
+			+ " R" + tz390.get_hex(mf3, 1) + "="
+			+ tz390.get_hex(reg.getInt(rf3 + 4), 8)
+			+ " R" + tz390.get_hex(mf3+1, 1) + "="
+			+ tz390.get_hex(reg.getInt(rf3 + 12), 8)
+			+ " PAD=" + tz390.get_hex(bd2_loc, 2);
 			break;
 		case 110:// "SI" 9 CLI ooiibddd
 			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="

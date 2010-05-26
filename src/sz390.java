@@ -187,6 +187,9 @@ public  class  sz390 implements Runnable {
     * 09/22/09 RPI 1080 use shared fix file separators for Linux 
     * 01/26/10 rpi 1092 add svc x'a1' zsort called by ZSORT.MAC, 
     *          invoked by linklib\SORT.MLC, and zcobol\z390\GEN_SORT.MAC         
+    * 04/25/10 RPI 1113 prevent trap waiting for CMDPROC return I/O
+    * 05/20/10 RPI 1113 if cmd_wait_time = 4095 wait forever
+    * 05/22/10 RPI 1120 add debug info to EZ114E error message
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -3684,7 +3687,8 @@ public void put_ascii_string(String text,int mem_addr,int mem_len,char pad_char)
 	int index = 0;
 	mem_addr = mem_addr & pz390.psw_amode;  // RPI 712
 	if (mem_addr + mem_len > pz390.tot_mem){
-		log_error(114,"invalid put ascii text address for msg = " + text);
+		log_error(114,"invalid put ascii text address for msg = " + text + " LEN=" + mem_len + "ADDR=" + tz390.get_hex(mem_addr,8)); // RPI 1120
+
 		return;
 	}
 	while (index < mem_len){
@@ -3753,14 +3757,23 @@ private void svc_cmd(){
 		}
 		try {
 			int cmd_read_wait = pz390.reg.getInt(pz390.r3);
-			cmd_read_line[cmd_id] = cmd_get_queue(cmd_id);
-		    cmd_proc_start_time[cmd_id] = System.currentTimeMillis(); // RPI 545
+			try { // RPI 1113
+			    cmd_read_line[cmd_id] = cmd_get_queue(cmd_id);
+			} catch (Exception e){
+				cmd_read_line[cmd_id] = null;
+			}
+			cmd_proc_start_time[cmd_id] = System.currentTimeMillis(); // RPI 545
 		    while (cmd_read_line[cmd_id] == null
 					&& cmd_proc_running[cmd_id]
 					&& cmd_proc_rc(cmd_id) == -1
-					&& System.currentTimeMillis() - cmd_proc_start_time[cmd_id] < cmd_read_wait){
+					&& (cmd_read_wait == 4095  // RPI 1113 wait forever
+						|| System.currentTimeMillis() - cmd_proc_start_time[cmd_id] < cmd_read_wait)){
 				tz390.sleep_now(tz390.monitor_wait);
-				cmd_read_line[cmd_id] = cmd_get_queue(cmd_id);
+				try { // trap and set null RPI 1113
+				    cmd_read_line[cmd_id] = cmd_get_queue(cmd_id);
+				} catch (Exception e){
+					cmd_read_line[cmd_id] = null;
+				}
 			}
 			if  (cmd_read_line != null){
 				put_ascii_string(cmd_read_line[cmd_id],pz390.reg.getInt(pz390.r1),pz390.reg.getInt(pz390.r2),' ');
@@ -7197,6 +7210,9 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
 					zsort_blk_end = zsort_blk_ptr;
 					zsort_blk_ptr = zsort_blk_addr;
 				}
+		 		if (tz390.opt_stats){
+		 			zsort_put_stats();
+		 		}
 				zsort_put = false;
 				zsort_get = true;
 			}
@@ -7227,8 +7243,8 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
 				}
 			}
 			if (tz390.opt_traceall){
-			tz390.put_trace("ZSORT GET REC");
-			dump_mem(pz390.mem,pz390.reg.getInt(pz390.r1),zsort_lrecl);
+			   tz390.put_trace("ZSORT GET REC");
+			   dump_mem(pz390.mem,pz390.reg.getInt(pz390.r1),zsort_lrecl);
 			}
 			zsort_tot_svc_get++;
  	}
@@ -7261,17 +7277,12 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
  		 * terminate zsort
  		 *   1.  freemain allocated memory
  		 *   2.  close/delete sortwk1 and sortwk2
- 		 *   3.  put statistics on sta file if req.
  		 */
- 		zsort_ended = tz390.cur_time(true);
  		if (zsort_fm_len > 0){
  			zsort_freemain();
  		}
  		if (zsort_sortwk01_file != null){
  			zsort_close_wk();
- 		}
- 		if (tz390.opt_stats){
- 			zsort_put_stats();
  		}
  	}
  	private void zsort_freemain(){
@@ -7303,6 +7314,7 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
  		/*
  		 * write zsort statistics to sta file
  		 */
+ 		zsort_ended = tz390.cur_time(true);
  		zsort_pfx = "ZSORT ID=" + zsort_id + " ";
  		tz390.put_stat_line(zsort_pfx
  			+ "started=" + zsort_start 

@@ -7,6 +7,8 @@
 .* Date   - 11/07/09                                                *
 .*********************************************************************
 .* 11/07/09 RPI 865 ADD INTERNAL SORT CALLED ZSORT USING SVC X'A1'
+.* 03/14/10 RPI 1110 CHANGE MEMORY=0 TO ALLOC LARGEST BLOCK AVAIL.
+.* 05/24/10 RPI 1116 CORRECT TYPE AND ORDER FIELDS TO 2 BYTES      
 .*********************************************************************
 .* ISORT - INITIALIZE FOR INTERNAL SORT
 .* PUT   - PUT UNOSRTED RECORD TO INTERNAL SORT
@@ -39,8 +41,8 @@
 .*        4    4   MAXIMUM MEMORY TO BE USED BY SORT
 .*        8    4   OFFSET TO KEY FIELD N
 .*       12    4   LENGTH OF KEY FIELD N
-.*       16    2   TYPE OF KEY FIELD (1-7 SEE ABOVE) VL BIT IF LAST KEY
-.*       18    2   ASCENDING=1 OR DESCENDING=0
+.*       16    2   TYPE OF KEY FIELD N (1-7 SEE ABOVE) VL BIT IF LAST 
+.*       18    2   ASCENDING=1 OR DESCENDING=0 FIELD N
 .*
 .* PUT AND GET REQUIRE FOLLOWING KEYWORD PARAMETER:
 .*   REC= - ADDRESS OF RECORD AREA FOR INPUT OR OUTPUT
@@ -58,7 +60,7 @@
 &NAME    ZSORT &OP,               ISORT, PUT, GET            ALL       X
                &FIELDS=,          (OFFSET,LENGTH,TYPE,A/D,,) IS/FS     X
                &LRECL=,           FIXED RECORD LENGTH        IS/FS     X
-               &MEMORY=10000000,  MEMORY AVAILABLE TO ZSORT  IS/FS     X
+               &MEMORY=0,         MEMORY AVAILABLE TO ZSORT  IS/FS     X
                &REC=,             RECORD ADDRESS             PUT, GET  X
                &MF=               OPTIONAL LIST FOR EXEC ISORT/FSORT
 &NAME    DS    0H
@@ -127,8 +129,8 @@
                AEND
                AEXIT AENTRY
          AEND
-&NF      SETA  N'&FIELDS
-         BAS   1,*+4+4*(2+&NF)
+&NF      SETA  N'&FIELDS/4
+         BAS   1,*+4+8+(8+4)*&NF
          AIF   ('&LRECL' EQ '')
                MNOTE 8,'ZSORT - LRECL NOT DEFINED'
                MEXIT
@@ -150,23 +152,23 @@
                AIF ('&FIELDS(&I+2)' EQ 'CH'                            X
                    OR '&FIELDS(&I+2)' EQ 'BI'                          X
                    OR '&FIELDS(&I+2)' EQ 'AC')
-         DC    A(1) ZSORT KEY TYPE CH,BI,AC UNSIGNED BINARY
+         DC    AL2(1) ZSORT KEY TYPE CH,BI,AC UNSIGNED BINARY
                AELSEIF ('&FIELDS(&I+2)' EQ 'FI')
-         DC    A(2) ZSORT KEY TYPE FI SIGNED BINARY (FHQ)
+         DC    AL2(2) ZSORT KEY TYPE FI SIGNED BINARY (FHQ)
                AELSEIF ('&FIELDS(&I+2)' EQ 'FL')
-         DC    A(3) ZSORT KEY TYPE FL FLOATING POINT
+         DC    AL2(3) ZSORT KEY TYPE FL FLOATING POINT
                AELSEIF ('&FIELDS(&I+2)' EQ 'PD')
-         DC    A(4) ZSORT KEY TYPE PD PACKED DECIMAL     
+         DC    AL2(4) ZSORT KEY TYPE PD PACKED DECIMAL     
                AELSEIF ('&FIELDS(&I+2)' EQ 'ZD')
-         DC    A(5) ZSORT KEY TYPE ZD ZONDED DECIMAL      
+         DC    AL2(5) ZSORT KEY TYPE ZD ZONDED DECIMAL      
                AELSE                                     
                    MNOTE 8,'ZSORT KEY TYPE UNKNOWN - &FIELD(&I+2)'
                    MEXIT
                AEND
                AIF ('&FIELDS(&I+3)' EQ 'A')
-         DC    A(1) ZSORT KEY ASCENDING     
+         DC    AL2(1) ZSORT KEY ASCENDING     
                AELSEIF ('&FIELDS(&I+3)'(1,1) EQ 'D')
-         DC    A(0) ZSORT KEY DESCENDING      
+         DC    AL2(0) ZSORT KEY DESCENDING      
                AELSE                                     
                    MNOTE 8,'ZSORT KEY ORDER NOT A/D - &FIELD(&I+3)'
                    MEXIT

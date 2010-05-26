@@ -14,6 +14,14 @@
 .* 06/18/09 RPI 1042 add ABORT_CICS raised by ZC390NUC at init               
 .* 07/11/09 RPI 1065 change ZCVT_VER to use &SYSVER to get z390 version      
 .* 07/25/09 RPI 1065 add ACCEPT default, FROM CONSOLE, FROM ddname         
+.* 05/25/10 RPI 1118 add PVTMAXDL max display line length            
+.*   1.  Added MAXDISPLAY(80) to tz390.java   
+.*   2,  Added global &ZC_MAXDISPLAY to zcobol\ZCOBOL.MAC options
+.*   3.  Added global &ZC_MAXDISPLAY to zcobol\ZC_WS.CPY   
+.*   4,  Added &ZC_PVTMAXDL fld value to PVT in zcobol\z390\GEN_ID.MAC   
+.*   5.  Add PVTMAXDL to both ZC390CVT.CPY and ZC390PVT.CPY   
+.*   6.  Added MVC to ZC390NUC.MLC init routine to set ZCVT_PVTMAXDL   
+.*   7.  Updated DISPLAY.MLC to use ZCVT_PVTMAXDL vs MAXBUFF EQU.   
 .*********************************************************************
 .* ZC390LIB loaded during init of zcobol program and R8 set to entry
 .*  DSECT AND COPY IN ZCOBOL\Z390\GEN_ID.MAC
@@ -74,16 +82,17 @@ ZCVT_CONVERTING    EQU   8 INSPECT CONVERTING
 *
 * SHARED DATA AREAS
 *
+ZCVT_PVTMAXDL  DS H          MAXIMUM DISPLAY LINE LENGTH  RPI 1118
                DS 0D
 ZCVT_ZERO      DC XL16'00'   BINARY ZEROS
 ZCVT_HIGH_VALUES DC XL16'00' BINARY FF'S
-ZCVT_PWORK     DS PL8     CVD/CVB WORK
-ZCVT_PWORK1    DS PL16    DIV DIVIDEND, CVDG/CVBG WORK
-ZCVT_PWORK2    DS PL16    DIV DIVISOR
-ZCVT_PWORK3    DS PL16    DIV QUOTIENT
-ZCVT_PWORK4    DS PL16    DIV REMAINDER
-ZCVT_NDDX      DS XL16    DIV DIVIDEND HOLD AREA
-ZCVT_WORKAREA  DS XL256   GEN_INSPECT PARMS, GEN_EDIT WORK, ETC.
+ZCVT_PWORK     DS PL8        CVD/CVB WORK
+ZCVT_PWORK1    DS PL16       DIV DIVIDEND, CVDG/CVBG WORK
+ZCVT_PWORK2    DS PL16       DIV DIVISOR
+ZCVT_PWORK3    DS PL16       DIV QUOTIENT
+ZCVT_PWORK4    DS PL16       DIV REMAINDER
+ZCVT_NDDX      DS XL16       DIV DIVIDEND HOLD AREA
+ZCVT_WORKAREA  DS XL256      GEN_INSPECT PARMS, GEN_EDIT WORK, ETC.
 *
 * END OF ZC390CVT
 *

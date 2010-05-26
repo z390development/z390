@@ -28,12 +28,12 @@
          :&PARM_IX SETA 1
          :&OFF     SETA 0
          AWHILE (&PARM_IX LE &NP)
- MNOTE 'DSHX1 PARM_IX=&PARM_IX PARM=&SYSLIST(&PARM_IX)'
+.* MNOTE 'DSHX1 PARM_IX=&PARM_IX PARM=&SYSLIST(&PARM_IX)'
                AIF ('&SYSLIST(&PARM_IX)' EQ '%HEX')  RPI 1104
                    :&HEX SETB 1
                    :&PARM_IX SETA &PARM_IX+1
                AEND
- MNOTE 'DSHX2 PARM_IX=&PARM_IX PARM=&SYSLIST(&PARM_IX)'
+.* MNOTE 'DSHX2 PARM_IX=&PARM_IX PARM=&SYSLIST(&PARM_IX)'
                :&FIELD SETC '&SYSLIST(&PARM_IX)' RPI 1065
                AIF ('&FIELD' EQ 'ALL')
                    :&PARM_IX SETA &PARM_IX+1

@@ -9,6 +9,7 @@
 .* 04/29/08 initial coding for global CBL options call gen'd by zcobol  
 .* 02/25/09 RPI 1004 SET ZC_FLOAT to DECIMAL/BINARY/HEX def. DECIMAL         
 .* 03/06/09 RPI 1004 SET ZC_FLOAT from option FLOAT(?)  
+.* 05/25/10 RPI 1118 SET MAXDISPLAY(80) max display line length
 .*********************************************************************
         ZCOBOL &VER=,      z390 version from tz390.version             X
                &PGM=,      program name from args[0] overides PGM-ID.  X
@@ -35,6 +36,7 @@
          :&ZC_FLOAT_LONG_TYPE     SETC '8'
          :&ZC_FLOAT_EXTENDED_TYPE SETC '9'
          :&ZC_R64     SETB 1     ALLOW 64 BIT REGISTER INSTRUCTIONS
+         :&ZC_MAXDISPLAY SETA 80 MAX DISPLAY LINE LENGTH   RPI 1118
 .*
 .* SET OVERRIDES FROM PARM OPTIONS
 .*
@@ -69,6 +71,9 @@
                    AEND    
                AELSEIF ('&OPTION' EQ 'EXTEND')  ALLOW Q34 AND P31/Z31
                    :&ZC_EXTEND  SETB 1
+                   :&OPT_LIST SETC '&OPT_LIST,&OPTION'
+               AELSEIF ('&OPTION'(1,11) EQ 'MAXDISPLAY(')  RPI 1118
+                   :&ZC_MAXDISPLAY SETA ('&OPTION'(12,K'&OPTION-1))
                    :&OPT_LIST SETC '&OPT_LIST,&OPTION'
                AELSEIF ('&OPTION' EQ 'NOR64')  TURN OFF 64 BIT REG CODE
                    :&ZC_R64  SETB 0

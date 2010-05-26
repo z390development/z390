@@ -29,6 +29,7 @@
 .* 08/18/09 RPI 1065 add SYM_OPT for options R=JUST,                    
 .* 09/08/09 RPI 1065 replace SYM_DEP_IX with SYM_DEPEND name                    
 .* 09/09/09 RPI 1065 replace FILE_TYPE with FILE_ORG,FILE_MODE,FILE_KEY                    
+.* 05/25/10 RPI 1118 ZC_MAXDISPLAY with default 80                                   
 .*********************************************************************
 .*
 .* PGM NAME AND ZCOBOL VERSION CHECKED BY ZC390NUC IN ZC390LIB.390
@@ -58,6 +59,7 @@
          GBLC  &ZC_FLOAT_EXTENDED_TYPE 3/7/9 SET FROM FLOAT(???)
          GBLB  &ZC_DEC_IS_COMMA        SPEC NAMES OPTION
          GBLB  &ZC_ERROR               FLAG TO INDICATE STMT ERROR
+         GBLA  &ZC_MAXDISPLAY          MAXIMUM DISPLAY LINE LENGTH
 .*
 .* GLOBAL LIMITS
 .*
