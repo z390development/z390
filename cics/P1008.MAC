@@ -1,0 +1,47 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P1008 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P1008    DSECT
+         AELSE
+P1008    DS    0H
+         AEND
+P1008FN  DS    XL2                FUNCTION CODE
+P1008EIB DS    AL4                EIB
+P1008TCT DS    AL4                TCTTE
+P1008TRN DS    CL4                INITIATED TRANSID
+P1008TRM DS    CL4                INITIATED TERMID (!!!! IF NON-TERM)
+P1008FRM DS    AL4                ADDRESS OF FROM
+P1008LEN DS    XL2                LENGTH
+P1008RTN DS    CL4                RTRANSID
+P1008RTM DS    CL4                RTERMID
+P1008QNM DS    CL8                QUEUE NAME
+P1008REQ DS    CL8                REQID
+P1008INT DS    X                  FF=INTERVAL/TIME
+         DS    X
+P1008TME DS    X                  00=INTERVAL/AFTER FF=TIME/AT
+         DS    X
+P1008HMS DS    PL4                0HHMMSS+
+P1008IND DS    X                  FF=MORE THAN 1 PARM IN NEXT 3
+         DS    X
+P1008HRS DS    PL8                HOURS
+P1008MIN DS    PL8                MINUTES
+P1008SEC DS    PL8                SECONDS
+P1008EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P1008EDS DS    AL4                DSA ADDRESS FOR EDF
+P1008EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P1008EDL DS    XL2                DSA LENGTH FOR EDF
+P1008NED DS    X                  FF=NOEDF
+         DS    X
+P1008NOH DS    X                  FF=NOHANDLE
+         DS    X
+P1008RSP DS    AL4                RESP
+P1008RS2 DS    AL4                RESP2
+P1008END EQU   *                  END MARKER
+         MEND
+

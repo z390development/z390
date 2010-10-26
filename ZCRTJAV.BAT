@@ -2,12 +2,6 @@ rem regression test zcobol java COBOL demos
 rem run demo pgms and gen dif report for java
 rem note zcjavclg uses explicit path to j2se jdk for javac compiler
 echo off
-if exist /usr/local/lib/z390/z390.jar goto linux
-if %1 == tron ECHO ON
-if %1 == tron shift
-if %1 == TRON ECHO ON
-if %1 == TRON shift
-:linux
 rem
 rem cbl to java class demos using J2SE Portable Java language           
 rem

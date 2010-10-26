@@ -16,7 +16,7 @@ LCL0E04  CSECT
 * R14 = RETURN ADDRESS
          USING (P0E04,P0E04END),R1
          USING *,R12
-         B     12(R15)            BYPASS HEADER
+         B     12(R15)            BYPASS EYECATCHER
          DC    CL8'LCL0E04'
          LR    R0,R12             R0=SAVED R12
          LR    R12,R15            SET BASE
@@ -40,9 +40,20 @@ NORESP2  EQU   *
          MVC   BLDLNAME,P0E04PGM  MOVE PROGRAM FOR BLDL
          MVC   EIBRSRCE,P0E04PGM  SET EIBRSRCE
          MVC   EIBPROG,P0E04PGM   SET EIBPROG
-         LR    R0,R1              SAVE PARM POINTER
+* R1 IS NOT RESTORED BY THE STACKING PROCESS
+         ST    R1,P0E04PTR        SAVE P0E04 PARM POINTER
+         CLI   P0E04NED,X'FF'     NOEDF ?
+         BE    NOEDF              EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDF              EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'FF'     SET DIRECT LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDF    EQU   *
          BLDL  0,BLDLLIST         BLDL
-         LR    R1,R0              RESTORE PARM POINTER
+         L     R1,P0E04PTR        RESTORE P0E04 PARM POINTER
          LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
          BZ    LOADOK             EXIT IF OK
 * INVOKE PGMIDERR
@@ -56,7 +67,20 @@ DORESP2  EQU   *
          ICM   R15,15,P0E04RS2    R15=RESP2 ADDRESS
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R15),EIBRESP2  SET RESP2
-         B     RETURN             EXIT
+RETURN   EQU   *
+         CLI   P0E04NED,X'FF'     NOEDF ?
+         BE    NOEDF2             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDF2             EXIT IF NOT
+         ST    R1,P0E04PTR        SAVE P0E04 PARM POINTER
+         MVI   TCTTEEBA,X'FE'     SET 'AFTER' INTERCEPT (XCTL FAIL)
+         MVI   TCTTEEDL,X'FF'     SET DIRECT LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDF2   EQU   *
+         L     R12,SAVER12        RESTORE ORIGINAL R12
+         BR    R14                RETURN
 *
 LOADOK   EQU   *
          ICM   R14,15,P0E04COM    ANY COMMAREA ADDRESS ?
@@ -69,6 +93,7 @@ LOADOK   EQU   *
 GOTCOMM  EQU   *
 * WE HAVE A COMMAREA
          LH    R15,P0E04CLN       R15=COMMAREA LENGTH
+         DROP  R1
          C     R14,DFHEICAP       SAME COMMAREA ADDRESS ?
          BNE   DIFFCOMM           EXIT IF NOT
          CH    R15,EIBCALEN       SAME COMMAREA LENGTH ?
@@ -135,19 +160,17 @@ TRYABD   EQU   *
          XC    ABDDEST(ABDLENG),ABDDEST CLEAR ABEND ENTRY
          DROP  R1
 FREEDSA  EQU   *
-         L     R14,PARMADDR       R14=PARM ADDRESS
 *
 * FREE THE DSA
 *
          FREEMAIN R,A=(R13),LA=DFHEILEN
-         LR    R1,R14             R1=PARM ADDRESS
+         LOAD  EPLOC=EIBPROG
+         L     R1,PARMADDR        R1=PARM ADDRESS
+         LA    R2,P0E04PTR        R2=POINTER TO P0E04 PARMS
          L     R12,SAVER12        RESTORE ORIGINAL R12
-         XCTL  EPLOC=EIBRSRCE     XCTL
+         BR    R0                 GO TO ENTRYPOINT
 *
-RETURN   EQU   *
-         L     R12,SAVER12        RESTORE ORIGINAL R12
-         BR    R14                RETURN
-*
+P0E04PTR DS    F                  P0E04 PARM POINTER
 SAVER12  DS    F                  SAVE R12
 PARMADDR DS    F                  SAVE GETMAINED PARM ADDRESS
 *
@@ -156,16 +179,7 @@ BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
 BLDLNAME DS    CL8                BLDL ENTRY NAME TO FIND
          DS    XL4
 *
-P0E04    DSECT
-P0E04FN  DS    XL2                FUNCTION CODE
-P0E04PGM DS    CL8                PROGRAM
-P0E04COM DS    AL4                COMMAREA ADDRESS
-P0E04CLN DS    XL2                COMMAREA LENGTH
-         DS    X                  FF=NOHANDLE
-         DS    X
-P0E04RSP DS    AL4                RESP
-P0E04RS2 DS    AL4                RESP2
-P0E04END EQU   *                  END MARKER
+         P0E04 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

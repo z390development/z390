@@ -7,7 +7,7 @@
          MACRO
          CICS_DEQ
          GBLB  &PARMS_1206
-         LCLB  &NOHAND
+         LCLB  &NOEDF,&NOHAND
          LCLC  &RES,&LENGTH,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
@@ -17,6 +17,7 @@
 &PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,9) EQ 'RESOURCE(').RES
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
@@ -29,6 +30,10 @@
 .*
 .LENGTH  ANOP
 &LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -49,7 +54,10 @@
          GEN_XC P1206,P1206END-P1206,P1206
          GEN_MVC P1206FN,,=X'1206' SET FUNCTION CODE
          AIF   ('&LENGTH' EQ '').DUNLEN
+.* LENGTH MAY BE L' OR CONSTANT LIKE X'..'
+         AIF   ('&LENGTH'(2,1) EQ '''').LENNUM2
          AIF   (T'&LENGTH NE 'N').LENLABL
+.LENNUM2 ANOP
          LA    R0,&LENGTH         R0=LENGTH
          GEN_STH R0,P1206LEN      SAVE IT
          AGO   .DUNLEN
@@ -78,6 +86,16 @@
          GEN_ST R0,P1206RES       SAVE IT
          GEN_ST DFHEIBR,P1206EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P1206TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P1206EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P1206EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P1206EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P1206NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P1206NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -89,8 +107,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P1206RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P1206EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P1206EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P1206)       R1=LCL MODULE PARAMETER LIST
+P1206EDF_&SYSNDX EQU *
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P1206NOH,X'FF'   NOHANDLE ?
@@ -103,18 +124,7 @@
 *
          AIF   (&PARMS_1206).BYP1206
 &PARMS_1206 SETB 1
-P1206    DS    0H
-P1206FN  DS    XL2                FUNCTION CODE
-P1206EIB DS    AL4                EIB
-P1206TCT DS    AL4                TCTTE
-P1206RES DS    AL4                RESOURCE ADDRESS
-P1206LEN DS    XL2                LENGTH
-P1206NOH DS    X                  FF=NOHANDLE
-         DS    X
-P1206RSP DS    AL4                RESP
-P1206RS2 DS    AL4                RESP2
-P1206END EQU   *                  END MARKER
-         DS    0H
+         P1206
 *
 .BYP1206 ANOP
 P1206BYP_&SYSNDX DS 0H

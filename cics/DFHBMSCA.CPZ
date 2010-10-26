@@ -26,4 +26,14 @@
          02  DFHBMEOF PIC X VALUE X'80'.
          02  DFHBMCUR PIC X VALUE X'02'.
          02  DFHBMEF  PIC X VALUE X'82'.
+      *
+      * Extended Attributes
+         02  DFHDFCOL PIC X VALUE X'00'.
+         02  DFHBLUE  PIC X VALUE X'F1'.
+         02  DFHRED   PIC X VALUE X'F2'.
+         02  DFHPINK  PIC X VALUE X'F3'.
+         02  DFHGREEN PIC X VALUE X'F4'.
+         02  DFHTURQ  PIC X VALUE X'F5'.
+         02  DFHYELLO PIC X VALUE X'F6'.
+         02  DFHNEUTR PIC X VALUE X'F7'.
 

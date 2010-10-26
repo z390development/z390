@@ -11,6 +11,8 @@ LCL0E0E  CSECT
 * R1  >>> P0E0E BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0E0E'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,20 +33,30 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0E0ENED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          ICM   R1,15,TCTTEABD     ANY ABEND BLOCK ADDRESS ?
          BNZ   GOTABD             EXIT IF WE HAVE ONE
 * GET THE ABEND BLOCK
          LA    R1,(ABDLENG*25)+8  R1=ABEND BLOCK TOTAL LENGTH
          GETMAIN R,LV=(R1)
-         MVC   0(8,R1),=C'DFHABBLK' SET HEADER
-         AHI   R1,8               BYPASS EYECATCHER
-         ST    R1,TCTTEABD        SAVE ABEND BLOCK ADDRESS
-         USING ABDDEST,R1
          LR    R14,R1             R14=AREA TO CLEAR
          SR    R15,R15            CLEAR SECOND LENGTH
          LR    R5,R0              R5=LENGTH TO CLEAR
          LR    R4,R14             R4=AREA TO CLEAR
          MVCLE R4,R14,X'00'       CLEAR ABEND BLOCK
+         MVC   0(8,R1),=C'DFHABBLK' SET HEADER
+         AHI   R1,8               BYPASS EYECATCHER
+         ST    R1,TCTTEABD        SAVE ABEND BLOCK ADDRESS
+         USING ABDDEST,R1
 GOTABD   EQU   *
          LH    R14,TCTTELNK       R14=CURRENT LINK LEVEL
          AHI   R14,-1             -1 FOR INDEX
@@ -91,23 +103,19 @@ TRYPROG  EQU   *
          MVC   ABDREGS(48),P0E0EREG SAVE CALLERS REGS
          DROP  R1
 RETURN   EQU   *
+         CLI   P0E0ENED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
-P0E0E    DSECT
-P0E0EFN  DS    XL2                FUNCTION CODE
-P0E0EEIB DS    AL4                EIB
-P0E0ETCT DS    AL4                TCTTE
-P0E0ECAN DS    X                  FF=CANCEL
-         DS    X
-P0E0ERES DS    X                  FF=RESET
-         DS    X
-P0E0ELAB DS    AL4                LABEL
-P0E0EPGM DS    CL8                PROGRAM
-P0E0ECAP DS    AL4                COMMAREA ADDRESS FROM DFHEICAP
-P0E0EREG DS    12AL4              CALLERS REGS R2-R13
-P0E0ERSP DS    AL4                RESP
-P0E0ERS2 DS    AL4                RESP2
-P0E0EEND EQU   *                  END MARKER
+         P0E0E DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

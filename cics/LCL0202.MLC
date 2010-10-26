@@ -11,6 +11,8 @@ LCL0202  CSECT
 * R1  >>> P0202 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0202'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,21 +33,34 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0202NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          ICM   R1,15,P0202ACM     ANY COMMAREA ADDRESS REQUEST ?
          BZ    TRYCWA             EXIT IF NONE
 * FOR ASM THE VALUE IS A REG AND IS SET IN THE MACRO
-         CHSI  R1,15              IS IT A REG ?
-         BNH   TRYCWA             EXIT IF IT IS
+         CHI   R1,15              IS IT A REG ?
+         BNH   SAVCOMM            EXIT IF IT IS
          MVC   0(4,R1),=X'FF000000' INITIALIZE TO NULL POINTER
          OC    P0202CAP,P0202CAP  ANY COMMAREA ?
-         BZ    TRYCWA             EXIT IF NONE
+         BZ    SAVCOMM            EXIT IF NONE
          MVC   0(4,R1),P0202CAP   SET COMMAREA ADDRESS
+SAVCOMM  EQU   *
+         MVC   P0202ACM,P0202CAP  MOVE COMMAREA POINTER FOR EDF
 TRYCWA   EQU   *
          ICM   R1,15,P0202ACW     ANY CWA ADDRESS REQUEST ?
          BZ    TRYEIB             EXIT IF NONE
          OC    TCTTECWA,TCTTECWA  HAS CWA ALREADY BEEN ACQUIRED ?
          BZ    NEWCWA             EXIT IF NOT
-         CHSI  R1,15              IS IT A REG ?
+         MVC   P0202ACW,TCTTECWA  SET CWA ADDRESS FOR EDF
+         CHI   R1,15              IS IT A REG ?
          BNH   TRYEIB             EXIT IF IT IS
          MVC   0(4,R1),TCTTECWA   SET EXISTING CWA ADDRESS
          B     TRYEIB             EXIT
@@ -62,13 +77,21 @@ NEWCWA   EQU   *
          MVC   CWATASKN,EIBTASKN  SET TASK NUMBER
          MVI   CWARDWRT,X'00'     SET CWA GET
          TCPIO SEND,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+CWARCV   EQU   *
 * ONLY THE PREFIX IS RECEIVED, WE GET THE CWA LATER
          TCPIO RECEIVE,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+         CLC   CWAFN,=C'10FF'     UNSOL IC SCAN ?
+         BE    CWARCV             EXIT IF IT IS
+         CLC   CWAFN,=C'FE07'     WHAT WE ARE EXPECTING ?
+         BE    CWARCK             EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+CWARCK   EQU   *
          L     R5,P0202ACW        R5=CWA ADDRESS POINTER
-         CHSI  R5,15              IS IT A REG ?
+         CHI   R5,15              IS IT A REG ?
          BNH   CWAREG1            EXIT IF IT IS
          MVC   0(4,R5),=X'FF000000' INITIALIZE TO NULL POINTER
 CWAREG1  EQU   *
+         XC    P0202ACW,P0202ACW  CLEAR CWA ADDRESS FOR EDF
          ICM   R4,15,CWALENG      ANY CWA AVAILABLE ?
          BNZ   GETCWA             EXIT IF THERE IS
 * NO CWA AVAILABLE
@@ -79,37 +102,39 @@ GETCWA   EQU   *
 * GETMAIN AN AREA FOR THE LOCAL CWA
          EXEC  CICS GETMAIN SET(R7) FLENGTH(CWALENG)
          ST    R7,TCTTECWA        SAVE ADDRESS FOR PUT
+         ST    R7,P0202ACW        SET CWA ADDRESS FOR EDF
          MVC   TCTTECWL,CWALENG   SAVE LENGTH FOR PUT
          DROP  R9
-         CHSI  R5,15              IS IT A REG ?
+         CHI   R5,15              IS IT A REG ?
          BNH   CWAREG2            EXIT IF IT IS
          ST    R7,0(R5)           PASS ADDRESS BACK TO REQUESTOR
 CWAREG2  EQU   *
          TCPIO RECEIVE,MSG=(R7),LMSG=(R4),PORT=3900 GET THE CWA
 TRYEIB   EQU   *
          ICM   R1,15,P0202AEI     ANY EIB ADDRESS REQUEST ?
-         BZ    ALLDONE            EXIT IF NONE
-         CHSI  R1,15              IS IT A REG ?
+         BZ    NOEIBRQ            EXIT IF NONE
+         CHI   R1,15              IS IT A REG ?
          BNH   ALLDONE            EXIT IF IT IS
          ST    DFHEIBR,0(R1)      SET EIB ADDRESS
 ALLDONE  EQU   *
+         ST    DFHEIBR,P0202AEI   SET EIB ADDRESS FOR EDF
+NOEIBRQ  EQU   *
+         CLI   P0202NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 CWALOCK  DC    C'--CWA--'
 CWABLOCK DS    CL(CWPREFIX)       ACTUAL CWA PREFIX AREA
 *
-P0202    DSECT
-P0202FN  DS    XL2                FUNCTION CODE
-P0202EIB DS    AL4                EIB
-P0202TCT DS    AL4                TCTTE
-P0202HCN DS    AL4                A(DFHEIHCN)
-P0202CAP DS    AL4                DFHEICAP
-P0202ACM DS    AL4                LABEL ADDRESS FOR COMMAREA
-P0202ACW DS    AL4                LABEL ADDRESS FOR CWA
-P0202AEI DS    AL4                LABEL ADDRESS FOR EIB
-P0202RSP DS    AL4                RESP
-P0202RS2 DS    AL4                RESP2
-P0202END EQU   *                  END MARKER
+         P0202 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

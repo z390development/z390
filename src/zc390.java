@@ -18,7 +18,7 @@ public class zc390{
     z390 mainframe assembler, i586 Intel assembler,
     MS VCE++, or J2SE Java using macro libraries.
 	
-    Copyright 2008 Automated Software Tools Corporation
+    Copyright 2010 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -100,6 +100,7 @@ public class zc390{
     * 09/26/09 RPI 1080 use compiled patterns for replace all
     *          allow any cbl suffix to mlc, use init_tzz390
     * 09/29/09 RPI 1086 add *ZC NNNNNN IIIIII MLC SOURCE comment
+    * 07/25/10 RPI 1126 prevent replacing - with _ in floating point exp constant
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -140,6 +141,7 @@ public class zc390{
 	int zc_comment_cnt = 0;
 	int pic_token_cnt = 0; // tokens since pic mode turned on
 	boolean pic_mode = false;
+	boolean value_mode = false; // RPI 1126
 	boolean exec_mode = false;
 	String[] exec_parm = new String[256];
 	int exec_parm_index = 0;
@@ -415,7 +417,7 @@ public class zc390{
 		    * and copyright on statstics file
 		    */
 		   	if  (tz390.opt_stats){
-		   	    tz390.put_stat_line("Copyright 2008 Automated Software Tools Corporation");
+		   	    tz390.put_stat_line("Copyright 2010 Automated Software Tools Corporation");
 		   	    tz390.put_stat_line("z390 is licensed under GNU General Public License");
 		   	    tz390.put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name);
 		   	    tz390.put_stat_line("options = " + tz390.cmd_parms);
@@ -624,6 +626,12 @@ public class zc390{
 				}
 			} else if (pic_token_cnt > 1){
 				pic_mode = false; // turn off after processing token after pic
+			}
+			if (!value_mode){
+				if  (zc_prev_token != null 
+				     && (zc_prev_token.toUpperCase().equals("VALUE"))){
+				     value_mode = true;
+				}
 			}
 			set_next_token();
 		}
@@ -915,6 +923,7 @@ public class zc390{
 			zc_token_count++;
 			if (zc_token_count == 1){
 				zc_next_first = true;
+				value_mode = false; // RPI 1126
 			} else {
 			    zc_next_first = false;
 			}
@@ -982,11 +991,11 @@ public class zc390{
 				if (zc_token.indexOf(',') >= 0){// ALLOW . IN OPEN PARMS zc_token.indexOf('.') >= 0 
 					// wrap strings with ., in quotes to make single parm
 					zc_token = "'" + zc_token + "'";				
-				} else if (!pic_mode && zc_token.indexOf('-') >= 0){
+				} else if (!pic_mode && !value_mode && zc_token.indexOf('-') >= 0){ // RPI 1126 allow nE-n value
 			    	// replace token "-" with "_"
 			    	// for z390 meta macro assembler compatiblity
 		    		zc_token = tz390.find_dash.matcher(zc_token).replaceAll("_");  // RPI 1080
-				}			    
+				} 			    
 			}
 		} else if (zc_token.length() == 1){
 			// single char token . or ,

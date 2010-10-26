@@ -1,0 +1,41 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P1004 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P1004    DSECT
+         AELSE
+P1004    DS    0H
+         AEND
+P1004FN  DS    XL2                FUNCTION CODE
+P1004EIB DS    AL4                EIB
+P1004TCT DS    AL4                TCTTE
+P1004INT DS    X                  FF=INTERVAL/TIME
+         DS    X
+P1004TME DS    X                  00=INTERVAL/FOR  FF=TIME/UNTIL
+         DS    X
+P1004HMS DS    PL4                0HHMMSS+
+P1004IND DS    X                  FF=MORE THAN 1 PARM IN NEXT 3
+         DS    X
+P1004HRS DS    PL8                HOURS
+P1004MIN DS    PL8                MINUTES
+P1004SEC DS    PL8                SECONDS
+P1004HCN DS    AL4                A(DFHEIHCN)
+P1004REQ DS    CL8                REQID
+P1004EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P1004EDS DS    AL4                DSA ADDRESS FOR EDF
+P1004EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P1004EDL DS    XL2                DSA LENGTH FOR EDF
+P1004NED DS    X                  FF=NOEDF
+         DS    X
+P1004NOH DS    X                  FF=NOHANDLE
+         DS    X
+P1004RSP DS    AL4                RESP
+P1004RS2 DS    AL4                RESP2
+P1004END EQU   *                  END MARKER
+         MEND
+

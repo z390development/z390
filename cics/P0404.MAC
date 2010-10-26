@@ -15,7 +15,13 @@ P0404FN  DS    XL2                FUNCTION CODE
 P0404EIB DS    AL4                EIB
 P0404TCT DS    AL4                TCTTE
 P0404FRM DS    AL4                FROM
-P0404LEN DS    AL2                LENGTH
+P0404LEN DS    XL2                LENGTH
+P0404EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P0404EDS DS    AL4                DSA ADDRESS FOR EDF
+P0404EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P0404EDL DS    XL2                DSA LENGTH FOR EDF
+P0404NED DS    X                  FF=NOEDF
+         DS    X
 P0404NOH DS    X                  FF=NOHANDLE
          DS    X
 P0404RSP DS    AL4                RESP

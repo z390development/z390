@@ -11,7 +11,7 @@
          CICS_RETURN
          GBLB  &PARMS_0E08
          GBLB  &ZC_CICS
-         LCLB  &IMMED,&CLEANER
+         LCLB  &IMMED,&CLEANER,&NOEDF
          LCLC  &TRANSID,&COMMAREA,&LENGTH,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
@@ -24,6 +24,7 @@
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
          AIF   ('&PARM'(1,9) EQ 'IMMEDIATE').IMMED
          AIF   ('&PARM'(1,7) EQ 'CLEANER').CLEANER
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').PLOOP
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
@@ -48,6 +49,10 @@
 .*
 .CLEANER ANOP
 &CLEANER SETB  1
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .RESP    ANOP
@@ -156,6 +161,16 @@
          GEN_STH R0,P0E08CLN      SAVE IT
          AEND
 .ALLDONE ANOP
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0E08EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0E08EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0E08EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0E08NED,X'FF'   SET NOEDF
+         AEND
          AIF   ('&RESP' EQ '').NORESP
          LA    R0,&RESP           ADDRESS OF RESP
          GEN_ST R0,P0E08RSP       SAVE IT
@@ -165,9 +180,12 @@
          GEN_ST R0,P0E08RS2       SAVE IT
 .NORESP2 ANOP
 * SPECIAL LINKAGE
+         LARL  R0,P0E08EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0E08EDF       SAVE IT
          LARL  R1,P0E08           R1=PARAMETER LIST
          LARL  R14,P0E08RTN_&SYSNDX RETURN ADDRESS
          LRL   R15,=V(LCL0E08)    R15=EXTERNAL RETURN MODULE ADDRESS
+P0E08EDF_&SYSNDX EQU *
          BR    R15                GO TO IT
 *
 P0E08RTN_&SYSNDX EQU *
@@ -179,19 +197,7 @@ P0E08RTN_&SYSNDX EQU *
 *
          AIF   (&PARMS_0E08).BYP0E08
 &PARMS_0E08 SETB 1
-P0E08    DS    0H
-P0E08FN  DS    XL2                FUNCTION CODE
-P0E08TRN DS    CL4                TRANSID
-P0E08COM DS    AL4                COMMAREA ADDRESS
-P0E08CLN DS    XL2                COMMAREA LENGTH
-P0E08IMM DS    X                  FF=IMMEDIATE
-         DS    X
-P0E08CNR DS    X                  FF=CLEANER
-         DS    X
-P0E08RSP DS    AL4                RESP
-P0E08RS2 DS    AL4                RESP2
-P0E08END EQU   *                  END MARKER
-         DS    0H
+         P0E08
 *
 .BYP0E08 ANOP
 P0E08BYP_&SYSNDX DS 0H

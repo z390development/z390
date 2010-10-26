@@ -11,6 +11,9 @@
                &LANG=ASM,                                              X
                &CTRL=,                                                 X
                &CURSLOC=NO,                                            X
+               &DSATTS=,                                               X
+               &EXTATT=NO,                                             X
+               &MAPATTS=,                                              X
                &STORAGE=,                                              X
                &TIOAPFX=NO,                                            X
                &TERM=
@@ -18,6 +21,7 @@
          GBLA  &MTYPE             TYPE REQUEST
          GBLA  &MLANG             PROGRAM LANGUAGE
          GBLA  &NCTRL             NO. OF OPERANDS IN CTRL
+         GBLA  &MEXTATT           EXTATT: 1=NO 2=MAPONLY 3=YES
 .*
          GBLB  &MSD               MSD SPECIFIED
          GBLB  &DEFMODE(2)        1=OUT 2=IN BOTH=INOUT
@@ -121,7 +125,43 @@
 .*
 .GOON06  ANOP
 .DUNMODE ANOP
+.* PROCESS EXTATT, DSATTS, MAPATTS
+         AIF   ('&EXTATT' EQ 'NO').EXTNO
+         AIF   ('&EXTATT' EQ 'MAPONLY').EXTMAP
+         AIF   ('&EXTATT' EQ 'YES').EXTYES
+         AGO   .BADEXT
 .*
+.EXTNO   ANOP
+.* EXTATT=NO IS DEFAULT
+         AIF   ('&MAPATTS' EQ '' AND '&DSATTS' EQ '')
+&MEXTATT SETA  1
+         AGO   .DUNEXT
+         AEND
+         AIF   ('&MAPATTS' NE '' AND '&DSATTS' NE '')
+         AIF   ('&MAPATTS(1)' NE 'COLOR' AND                           X
+               '&DSATTS(1)' NE 'COLOR').BADATPM
+&MEXTATT SETA  3
+         AGO   .DUNEXT
+         AEND
+         AIF   ('&MAPATTS' NE '' AND '&DSATTS' EQ '')
+         AIF   ('&MAPATTS(1)' NE 'COLOR').BADATPM
+&MEXTATT SETA  2
+         AGO   .DUNEXT
+         AEND
+         AGO   .BADATTS
+.*
+.EXTYES  ANOP
+         AIF   ('&MAPATTS' NE '' OR '&DSATTS' NE '').BADEXAT
+&MEXTATT SETA  3
+         AGO   .DUNEXT
+.*
+.EXTMAP  ANOP
+         AIF   ('&MAPATTS' NE '' OR '&DSATTS' NE '').BADEXAT
+&MEXTATT SETA  2
+         AGO   .DUNEXT
+.*
+.GOON09  ANOP
+.DUNEXT  ANOP
          AIF   (&MTYPE EQ 1).DUNALL
 &KMAP    SETA  K'&MAPSET
 &BLANKS  SETC  '        '(1,8-&KMAP)
@@ -169,6 +209,22 @@
 .BADPOSI ANOP
          MNOTE 12,'POSITIONAL OPERAND &SYSLIST(1) INVALID'
          AGO   .GOON08
+.*
+.BADEXT  ANOP
+         MNOTE 12,'EXTATT NOT NO, MAPONLY OR YES'
+         AGO   .GOON09
+.*
+.BADATTS ANOP
+         MNOTE 12,'DSATTS IS SPECIFIED WITHOUT MAPATTS'
+         AGO   .GOON09
+.*
+.BADEXAT ANOP
+         MNOTE 12,'EXTATT CONFLICTS WITH MAPATTS/DSATTS'
+         AGO   .GOON09
+.*
+.BADATPM ANOP
+         MNOTE 12,'INVALID MAPATTS OR DSATTS PARAMETER'
+         AGO   .GOON09
 .*
          MEND
 

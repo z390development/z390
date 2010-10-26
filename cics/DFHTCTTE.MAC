@@ -1,13 +1,12 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
          MACRO
          DFHTCTTE
 .* A HYBRID OF TCTTE AND TCA CONTROL BLOCKS
-.* NO ATTEMPT HAS BEEN MADE TO MAKE IT LOOK AUTHENTIC
 *
 * TERMINAL CONTROL TABLE - TERMINAL ENTRY
 *
@@ -24,6 +23,7 @@ TCTTELKA DS    AL4         LINK LEVEL AREA POINTER
 *                          EACH 4-BYTE ENTRY HAS THE DSA ADDRESS
 TCTTEABD DS    AL4         HANDLE ABEND BLOCK
 TCTTESCC DS    AL4         STORAGE CONTROL CHAIN
+TCTTEPCT DS    AL4         ADDRESS OF DFHPCT
 TCTTEIMM DS    X           FF=RETURN IMMEDIATE
 TCTTETS  DS    X           FF=SHUTDOWN REQUEST
 TCTTETYP DS    C           TRANSID START TYPE (FROM Z390KCP/KCPGOTYP)
@@ -34,8 +34,14 @@ TCTTETYP DS    C           TRANSID START TYPE (FROM Z390KCP/KCPGOTYP)
 *                             E = IC START-DATA
 TCTTECND DS    X           FF=XCTL COMMAREA MUST BE FREED ON RETURN
 TCTTEEDF DS    X           FF=EDF IS ACTIVE
-TCTTEEBA DS    X           00='BEFORE'  FF='AFTER' CEDF INTERCEPT
-TCTTEEDL DS    X           00=NORMAL LINKAGE  FF=DIRECT LINKAGE
+TCTTEEBA DS    X           CEDF INTERCEPT INDICATOR
+*                             00='BEFORE'
+*                             FE='AFTER' LINK/XCTL FAIL
+*                             FF='AFTER'
+TCTTEEDL DS    X           CEDF LINKAGE INDICATOR
+*                             00=NORMAL LINKAGE
+*                             FE=SPECIAL LINKAGE
+*                             FF=DIRECT LINKAGE
 TCTTEEDT DS    CL4         TERMID FOR EDF OUTPUT
 TCTTEEDA DS    AL4         ADDRESS OF EDF PROCESSOR LCLCEDF
 TCTTEQFN DS    PL3         SEQUENTIAL TERMINAL FILE NUMBER

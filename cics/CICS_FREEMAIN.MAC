@@ -10,7 +10,7 @@
          CICS_FREEMAIN
          GBLB  &PARMS_0C04
          GBLB  &ZC_CICS
-         LCLB  &NOHAND
+         LCLB  &NOEDF,&NOHAND
          LCLC  &DATA,&DATAPTR,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
@@ -20,6 +20,7 @@
 &PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,5)  EQ 'DATA(').DATA
          AIF   ('&PARM'(1,12) EQ 'DATAPOINTER(').DATAPTR
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
@@ -34,12 +35,12 @@
 &DATAPTR SETC  '&PARM'(13,K'&PARM-13)
          AGO   .PLOOP
 .*
-.NOHAND  ANOP
-&NOHAND  SETB  1
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
-.NOWAIT  ANOP
-&NOWAIT  SETB  1
+.NOHAND  ANOP
+&NOHAND  SETB  1
          AGO   .PLOOP
 .*
 .RESP    ANOP
@@ -58,6 +59,16 @@
          GEN_MVC P0C04FN,,=X'0C04' SET FUNCTION CODE
          GEN_ST DFHEIBR,P0C04EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P0C04TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0C04EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0C04EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0C04EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0C04NED,X'FF'   SET NOEDF
+         AEND
          AIF   ('&DATAPTR' NE '').DOPTR
 .* PROCESS DATA()
          AIF   (T'&DATA EQ 'A'                                         X
@@ -74,9 +85,9 @@
 .* COBOL  USAGE POINTER
 .* ASM    REGISTER
          AIF   (&ZC_CICS)
-         L     R0,&DATAPTR        POINTER TO FREEMAIN ADDRESS
+         L     R0,&DATAPTR        POINTER TO FREEMAIN ADDRESS (COB)
          AELSE
-         LR    R0,&DATAPTR        POINTER TO FREEMAIN ADDRESS
+         LR    R0,&DATAPTR        POINTER TO FREEMAIN ADDRESS (ASM)
          AEND
 .SAVADDR ANOP
          GEN_ST R0,P0C04FMA       SAVE IT
@@ -91,8 +102,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P0C04RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P0C04EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0C04EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P0C04)       R1=LCL MODULE PARAMETER LIST
+P0C04EDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P0C04NOH,X'FF'   NOHANDLE ?
@@ -105,17 +119,7 @@
 *
          AIF   (&PARMS_0C04).BYP0C04
 &PARMS_0C04 SETB 1
-P0C04    DS    0H
-P0C04FN  DS    XL2                FUNCTION CODE
-P0C04EIB DS    AL4                EIB
-P0C04TCT DS    AL4                TCTTE
-P0C04FMA DS    AL4                FREEMAIN ADDRESS
-P0C04NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0C04RSP DS    AL4                RESP
-P0C04RS2 DS    AL4                RESP2
-P0C04END EQU   *                  END MARKER
-         DS    0H
+         P0C04
 *
 .BYP0C04 ANOP
 P0C04BYP_&SYSNDX DS 0H

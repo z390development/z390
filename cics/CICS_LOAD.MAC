@@ -11,7 +11,7 @@
          CICS_LOAD
          GBLB  &PARMS_0E06
          GBLB  &ZC_CICS
-         LCLB  &NOHAND
+         LCLB  &NOEDF,&NOHAND
          LCLC  &PROGRAM,&ENTRY,&SET,&LENGTH,&FLENGTH,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
@@ -24,6 +24,7 @@
          AIF   ('&PARM'(1,4) EQ 'SET(').SET
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
          AIF   ('&PARM'(1,8) EQ 'FLENGTH(').FLENGTH
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
@@ -48,6 +49,10 @@
 .*
 .FLENGTH ANOP
 &FLENGTH SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -81,16 +86,34 @@
          GEN_MVC P0E06PGM,,=CL8&PROGRAM MOVE PROGRAM NAME AS STRING
 .NOSTRING ANOP
          AIF   ('&LENGTH' EQ '').NOSVLEN
-         GEN_MVC P0E06LEN,,=AL4(&LENGTH) SAVE ADDRESS OF LENGTH
+.* MAPPING LOAD MUST USE LARL
+         AIF   ('&LENGTH' EQ 'P1804MLN' OR                             X
+                '&LENGTH'(1,8) EQ 'P1802LEN')
+         LARL  R0,&LENGTH         R0=ADDRESS OF LENGTH
+         AELSE
+         LA    R0,&LENGTH         R0=ADDRESS OF LENGTH
+         AEND
+         GEN_ST R0,P0E06LEN       SAVE IT
          AGO   .NOSVFLN
 .*
 .NOSVLEN ANOP
          AIF   ('&FLENGTH' EQ '').NOSVFLN
-         GEN_MVC P0E06LEN,,=AL4(&FLENGTH) SAVE ADDRESS OF FLENGTH
+         LA    R0,&FLENGTH        R0=ADDRESS OF FLENGTH
+         GEN_ST R0,P0E06LEN       SAVE IT
 .NOSVFLN ANOP
-         AIF   (NOT &NOHAND).TRYRESP
+         AIF   (NOT &NOHAND).DOEDF
          GEN_MVI P0E06NOH,X'FF'   SET NOHANDLE
-.TRYRESP ANOP
+.DOEDF   ANOP
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0E06EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0E06EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0E06EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0E06NED,X'FF'   SET NOEDF
+         AEND
          AIF   ('&RESP' EQ '').NORESP
          LA    R0,&RESP           ADDRESS OF RESP
          GEN_ST R0,P0E06RSP       SAVE IT
@@ -99,8 +122,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P0E06RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P0E06EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0E06EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P0E06)       R1=LCL MODULE PARAMETER LIST
+P0E06EDF_&SYSNDX EQU *
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P0E06NOH,X'FF'   NOHANDLE ?
@@ -134,20 +160,7 @@ P0E06IGN_&SYSNDX EQU *
          J     P0E06BYP_&SYSNDX   EXIT
 *
 &PARMS_0E06 SETB 1
-P0E06    DS    0H
-P0E06FN  DS    XL2                FUNCTION CODE
-P0E06EIB DS    AL4                EIB
-P0E06TCT DS    AL4                TCTTE
-P0E06PGM DS    CL8                PROGRAM
-P0E06LEN DS    AL4                ADDRESS OF LENGTH
-P0E06FLN DS    AL4                ADDRESS OF FLENGTH
-P0E06ENT DS    AL4                ENTRY POINT
-P0E06NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0E06RSP DS    AL4                RESP
-P0E06RS2 DS    AL4                RESP2
-P0E06END EQU   *                  END MARKER
-         DS    0H
+         P0E06
 *
 P0E06BYP_&SYSNDX DS 0H
 .BYP0E06 ANOP

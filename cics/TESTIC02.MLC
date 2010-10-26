@@ -9,10 +9,15 @@ TESTIC02 DFHEIENT CODEREG=(R12,R3,R4,R5)
 *
 * TEST INTERVAL CONTROL START/RETRIEVE/CANCEL
 *
+* THIS SHOULD BE RUN ON DON1, THEN THE CODE AT ICRETN4 WILL WORK
+* EVEN IF DON0 IS THE CEDF MONITOR
+*
+* AT SUBVERSION...PRESS ENTER
+* THE SCREEN IS A MESS AT THE END...DON'T CARE
          AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
          BAL   R9,SENDMSG         SEND MESSAGE 1 AND EVEN NUMBERS
 * DETERMINE WHERE TO GO NEXT
-         LA    R6,PHASETAB        ADDRESS PHASE TABLE
+         LARL  R6,PHASETAB        ADDRESS PHASE TABLE
 PHASLOOP EQU   *
          CLC   0(2,R6),TESTNO     OUR PHASE ?
          BNE   PHASINCR           EXIT IF NOT
@@ -40,7 +45,7 @@ TEST02   EQU   *
          B     RETURN             EXIT
 *
 * TEST 3 - SIMPLE START-WITH-PREFIX DATA ONLY, NO REQID, 2 SECS
-*    QUEUE IS C'DF',X'8FFFE1773CE0'
+*    REQID IS C'DF',X'8FFFE1773CE0'
 TEST03   EQU   *
          AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
          BAL   R9,SENDMSG         SEND MESSAGE 5
@@ -103,7 +108,7 @@ TEST08   EQU   *
 *
 * ERROR TESTING
 ERRTEST  EQU   *
-         LA    R9,SBATAB          ADDRESS SBA TABLE
+         LARL  R9,SBATAB          ADDRESS SBA TABLE
          EXEC  CICS HANDLE CONDITION                                   X
                INVREQ(ICINVREQ)                                        X
                IOERR(ICIOERR)                                          X
@@ -141,7 +146,7 @@ ICRETN4  EQU   *
                QUEUE('MYQUEUE4')                                       X
                REQID('MYREQID5')                                       X
                AFTER HOURS(1)
-         EXEC  CICS START TRANSID('IC02') TERMID('DON1')               X
+         EXEC  CICS START TRANSID('IC02') TERMID('DON0')               X
                QUEUE('MYQUEUE4')                                       X
                REQID('MYREQID5')                                       X
                AFTER HOURS(1)
@@ -331,15 +336,15 @@ ICRETN12 EQU   *
                REQID('MYREQIDI')                                       X
                INTERVAL(0)
          EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
-               AFTER SECONDS(05)
+               AFTER SECONDS(05) REQID('IC03_05')
          EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
-               AFTER SECONDS(10)
+               AFTER SECONDS(10) REQID('IC03_10')
          EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
-               AFTER SECONDS(15)
+               AFTER SECONDS(15) REQID('IC03_15')
          EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
-               AFTER SECONDS(20)
+               AFTER SECONDS(20) REQID('IC03_20')
          EXEC  CICS START TRANSID('IC03') TERMID(EIBTRMID)             X
-               AFTER SECONDS(25)
+               AFTER SECONDS(25) REQID('IC03_25')
 * FIRE TRANSACTION BED1 AGAIN FOR MANUAL USAGE
 * THIS TIME WE END WITH RETURN TRANSID COMMAREA WITH THE PURPOSE
 * OF FOOLING BED1 INTO THINKING IT HAS ENDED
@@ -387,25 +392,25 @@ ICLENERR EQU   *
          B     ICER2SND           EXIT
 *
 ICENDDTA EQU   *
-         LA    R9,SBAENDTA
+         LARL  R9,SBAENDTA
          XC    HAND2CON,HAND2CON  CLEAR CONDITION
          MVC   HAND2CON(7),=C'ENDDATA' MOVE CONDITION
          B     ICER2SND           EXIT
 *
 ICENVDEF EQU   *
-         LA    R9,SBAENVDF
+         LARL  R9,SBAENVDF
          XC    HAND2CON,HAND2CON  CLEAR CONDITION
          MVC   HAND2CON(9),=C'ENVDEFERR' MOVE CONDITION
          B     ICER2SND           EXIT
 *
 ICLENER2 EQU   *
-         LA    R9,SBALENER
+         LARL  R9,SBALENER
          XC    HAND2CON,HAND2CON  CLEAR CONDITION
          MVC   HAND2CON(7),=C'LENGERR' MOVE CONDITION
          B     ICER2SND           EXIT
 *
 ICNOTFND EQU   *
-         LA    R9,SBANTFND
+         LARL  R9,SBANTFND
          XC    HAND2CON,HAND2CON  CLEAR CONDITION
          MVC   HAND2CON(6),=C'NOTFND' MOVE CONDITION
          B     ICER2SND           EXIT
@@ -448,6 +453,7 @@ MYRTRAN  DS    CL4
 MYQUEUE  DS    CL8
 MYLEN    DC    H'50'
 MYLEN2   DC    H'40'
+MSGTABS  DC    AL2(MSGTABL-2)     LENGTH FOR SEND
 *
          LTORG
 *
@@ -574,9 +580,8 @@ MSGTABL  EQU   *-MSGTAB
          DC    CL34'| IC CANCEL                     OK'
 *
          DC    X'FF'              STOPPER
-MSGTABS  DC    AL2(MSGTABL-2)     LENGTH FOR SEND
 *
-PHASETAB EQU   *
+PHASETAB DS    0H
          DC    PL2'01',AL4(TEST01)
          DC    PL2'02',AL4(TEST02)
          DC    PL2'04',AL4(TEST03)
@@ -594,19 +599,25 @@ PHASETAB EQU   *
          DC    PL2'28',AL4(TEST14)
          DC    X'FF'
 *
-SBATAB   EQU   *
-         TN3270 (SBA,19,1)
-         TN3270 (SBA,20,1)
-         TN3270 (SBA,21,1)
-         TN3270 (SBA,22,1)
-         TN3270 (SBA,3,42)
-         TN3270 (SBA,4,42)
-         TN3270 (SBA,5,42)
-         TN3270 (SBA,6,42)
-SBAENDTA TN3270 (SBA,11,42)
-SBAENVDF TN3270 (SBA,12,42)
-SBALENER TN3270 (SBA,13,42)
-SBANTFND TN3270 (SBA,16,42)
+SBATAB   DS    0H
+* SBA TABLE FOR ERROR CONDITIONS
+         TN3270 (SBA,19,1)        INVREQ/0
+         TN3270 (SBA,20,1)        INVREQ/4
+         TN3270 (SBA,21,1)        INVREQ/5
+         TN3270 (SBA,22,1)        INVREQ/6
+         TN3270 (SBA,3,42)        IOERR
+         TN3270 (SBA,4,42)        TRANSIDERR
+         TN3270 (SBA,5,42)        TERMIDERR
+         TN3270 (SBA,6,42)        LENGERR
+*
+SBAENDTA DS    0H
+         TN3270 (SBA,11,42)
+SBAENVDF DS    0H
+         TN3270 (SBA,12,42)
+SBALENER DS    0H
+         TN3270 (SBA,13,42)
+SBANTFND DS    0H
+         TN3270 (SBA,16,42)
 *
          TN3270 SYMBOLS
          END

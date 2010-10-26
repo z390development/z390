@@ -11,6 +11,8 @@ LCL0A06  CSECT
 * R1  >>> P0A06 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0A06'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0A06NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
 * GETMAIN AND MOVE THE DATA TO SEND
          EXEC  CICS GETMAIN FLENGTH(=A(TSPREFIX)) SET(R5) INITIMG(0)   X
                NOHANDLE
@@ -63,10 +75,17 @@ NORESP2  EQU   *
          TCPIO SEND,MSG=(R5),LMSG==A(TSPREFIX),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   INVREQ             ERROR IF BAD
+DELTQRCV EQU   *
 * ONLY THE PREFIX IS RECEIVED
          TCPIO RECEIVE,MSG=(R5),LMSG==A(TSPREFIX),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   INVREQ             ERROR IF BAD
+         CLC   TSPFN,=C'10FF'     UNSOL IC SCAN ?
+         BE    DELTQRCV           EXIT IF IT IS
+         CLC   TSPFN,=C'0A06'     WHAT WE ARE EXPECTING ?
+         BE    DELTQRCK           EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+DELTQRCK EQU   *
          OC    TSPRETCD,TSPRETCD  BAD RETURN CODE ?
          BZ    RETURN             RETURN IF NONE
          CLC   TSPRETCD,DFHRESP(QIDERR) QIDERR ?
@@ -103,6 +122,16 @@ RETURN   EQU   *
          MVC   EIBRCODE,RCODE     RESTORE RCODE
          MVC   EIBRESP,RESP       RESTORE RESP
          MVC   EIBRESP2,RESP2     RESTORE RESP2
+         CLI   P0A06NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 TSBLKSV  DS    AL4                SAVE TS BLOCK ADDRESS
@@ -110,16 +139,7 @@ RCODE    DS    XL4                SAVE RCODE
 RESP     DS    XL4                SAVE RESP
 RESP2    DS    XL4                SAVE RESP2
 *
-P0A06    DSECT
-P0A06FN  DS    XL2                FUNCTION CODE
-P0A06EIB DS    AL4                EIB
-P0A06TCT DS    AL4                TCTTE
-P0A06QNM DS    CL16               QUEUE NAME
-         DS    X                  FF=NOHANDLE
-         DS    X
-P0A06RSP DS    AL4                RESP
-P0A06RS2 DS    AL4                RESP2
-P0A06END EQU   *                  END MARKER
+         P0A06 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

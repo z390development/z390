@@ -74,6 +74,7 @@
 *          FOR CC3 NZ,NB WHEN BOTH SIGNS MEG AND S1 > S2 
 * 04/20/09 RPI 1026 ADD TEST FOR ESTA, EREG, EREGG
 * 06/15/09 RPI 1055 ADD CPYA, SAR, and EAR support for AR registers
+* 02/25/10 RPI 1111 CORRECT PR TO ONLY RESTORE 2-14 (WAS 1-14)
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -175,7 +176,7 @@ TRTTF2   DC    X'0100010101020103'  EOD IN 3RD ENTRY
 PCRET1   EQU   *
          CHI   0,2
          RT1   CCE
-         CHI   1,1
+         CHI   1,2  RPI 1111 WAS 1 VS 2
          RT1   CCE
          CHI   14,1
          RT1   CCE

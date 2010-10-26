@@ -11,6 +11,8 @@
 .* 09/02/07 RPI 681 EXPAND DEFINE TO DEFINE ENTIRE VSAM CATALOG      
 .* 09/23/07 RPI 704 ADD CLUSTER SUPPORT FOR CONTROLINTERVALSIZE=     
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 10/14/10 RPI 1130 change keyword parms and check for errors:
+.*             REUSE=NO,UNIQUEKEY=YES,UPGRADE=YES,UPDATE=YES
 .*********************************************************************
 .*
 .* DEFINE - define z390 VSAM catalog loadable table entries:
@@ -22,7 +24,7 @@
 .*                     INDEX=INDEXED/NONINDEXED/NUMBERED/LINEAR, TYPE
 .*                     RECORDSIZE=(average,max) or fixed length, V/F
 .*                     KEYS=(64,0),    KSDS PRIMARY KEY LENGTH, OFFSET
-.*                     REUSE=NOREUSE,  ERASE ALL DATA AT OPEN
+.*                     REUSE=YES,      ERASE ALL DATA AT OPEN RPI 1130
 .*                     VESDSN=,        OPTIONAL DSNAME FOR VES FILE 
 .*                     VX0DSN=         OPTIONAL DSNAME FOR VX0 INDEX
 .*                     CONTROLINTERVALSIZE= OPTIONAL CI BLOCK PADDING      
@@ -30,13 +32,13 @@
 .*                     NAME=,          NAME OF KSDS ALT IDX
 .*                     RELATE=,        NAME OF BASE CLUSTER
 .*                     KEYS=(64,0),    ALT KEY IN BASE CLUSTER 
-.*                     UNIQUEKEY=UNIQUEKEY,  DO NOT ALLOW DUPLICATES
-.*                     UPGRADE=UPGRADE,      UPDATE AIX FOR BASE CHANGE
+.*                     UNIQUEKEY=YES,  DO NOT ALLOW DUPLICATES RPI 1130
+.*                     UPGRADE=YES,    UPDATE AIX FOR BASE CHANGE  1130
 .*                     VXNDSN=         OPTIONAL DSNAME FOR AIX
 .*           4. DEFINE PATH,           DEFINE PATH FOR KSDS ACCESS
 .*                     NAME=,          NAME OF PATH
-.*                     PATHENTRY=,     NAME OF AIX OR BASE
-.*                     UPDATE=UPDATE   UPDATE AIX FOR BASE CHANGE
+.*                     ENTRY=,         NAME OF AIX OR BASE     RPI 1130
+.*                     UPDATE=YES      UPDATE AIX FOR BASE CHANGE  1130
 .*           5. DEFINE END             GENERATE CATALOG TABLE
 .*
 .*   See example in vsam\demo and vsam\test directories:
@@ -80,14 +82,19 @@
                &KEYS=(64,0),   (LENGTH,OFFSET) FOR KSDS PRI/ALT KEY    X
                &RECORDSIZE=,   FIXED LENGTH OR VAR (AVG,MAX) CLUSTER   X
                &RELATE=,       BASE CLUSTER NAME FOR ALTERNATEINDEX    X
-               &REUSE=NOREUSE, RESET HIGH XRBA AT OPEN FOR AIX/CLUSTER X
-               &UNIQUEKEY=UNIQUEKEY, REQUIRE UNIQUE AIX KEYS           X
-               &UPDATE=UPDATE,   REQUIRE AIX UPDATES FOR THIS PATH     X
-               &UPGRADE=UPGRADE, REQUIRE AIX UPDATE FOR THIS AIX       X
+               &REUSE=NO,      RESET HIGH XRBA AT OPEN FOR AIX/CLUSTER X
+               &UNIQUEKEY=YES, REQUIRE UNIQUE AIX KEYS        RPI 1130 X
+               &UPDATE=YES,    REQUIRE AIX UPDATES FOR THIS PATH  1130 X
+               &UPGRADE=YES,   REQUIRE AIX UPDATE FOR THIS AIX    1130 X
                &VESDSN=, OPTIONAL CLUSTER DSNAME FOR VES (DEF NAME.VES)X
-               &VX0DSH=, OPTIONAL CLUSTER DSNAME FOR VX0 (DEF NAME.VX0)X
+               &VX0DSN=, OPTIONAL CLUSTER DSNAME FOR VX0 (DEF NAME.VX0)X
                &VXNDSN=  OPTIONAL AIX     DSNAME FOR VXN (DEF NAME.VXN)
          COPY  ZDEFINE.CPY   INCLUDE GLOBALS SHARED WITH ZDEFINE.MAC
+         AIF   (N'&SYSLIST LE 1).CHKTYPE
+&ERROR   SETB  1
+         MNOTE 12,'UNDEFINED PARAMETER - &SYSLIST(2)' RPI 1130        
+         MEXIT
+.CHKTYPE ANOP
          AIF   ('&TYPE' EQ 'CATALOG').DEFINE_CATALOG
          AIF   ('&TYPE' EQ 'CLUSTER').DEFINE_CLUSTER
          AIF   ('&TYPE' EQ 'ALTERNATEINDEX').DEFINE_AIX
@@ -184,7 +191,11 @@
 .* SET BASE CLUSTER REUSE
 .*
 .SET_CLR_REUSE ANOP
-         AIF   ('&REUSE' EQ 'NOREUSE').SET_CLR_VESDSN
+         AIF   ('&REUSE' EQ 'NO').SET_CLR_VESDSN
+         AIF   ('&REUSE' EQ 'YES').SET_REUSE
+         MNOTE 12,'REUSE MUST BE YES/NO - &REUSE'
+         MEXIT
+.SET_REUSE ANOP
 &CLR_REUSE(&CLR_TOT) SETB 1
 .*
 .* SET BASE CLUSTER VESDSN
@@ -247,13 +258,21 @@
 .* SET AIX UNIQUEKEY      
 .*
 .SET_AIX_UNIQUEKEY ANOP
-         AIF   ('&UNIQUEKEY' EQ 'NOUNIQUEKEYE').SET_AIX_UPGRADE
+         AIF   ('&UNIQUEKEY' EQ 'NO').SET_AIX_UPGRADE RPI 1130
+         AIF   ('&UNIQUEKEY' EQ 'YES').SET_UNIQUEKEY
+         MNOTE 12,'UNIQUEKEY MUST BE YES/NO - &UNIQUEKEY'
+         MEXIT
+.SET_UNIQUEKEY ANOP
 &AIX_UNIQUEKEY(&AIX_TOT) SETB 1
 .*
 .* SET AIX UPGRADE      
 .*
 .SET_AIX_UPGRADE ANOP
-         AIF   ('&UPGRADE' EQ 'NOUPGRADE').SET_AIX_VXNDSN
+         AIF   ('&UPGRADE' EQ 'NO').SET_AIX_VXNDSN
+         AIF   ('&UPGRADE' EQ 'YES').SET_UPGRADE
+         MNOTE 12,'UPGRADE MUST BE YES/NO - &UPGRADE'
+         MEXIT
+.SET_UPGRADE ANOP
 &AIX_UPGRADE(&AIX_TOT) SETB 1
 .*
 .* SET AIX VXNDSN
@@ -293,7 +312,11 @@
 .* SET PATH UPDATE
 .*
 .SET_PTH_UPDATE ANOP
-         AIF   ('&UPDATE' EQ 'NOUPDATE').SET_PTH_UPDATE2   
+         AIF   ('&UPDATE' EQ 'NO').SET_PTH_UPDATE2   
+         AIF   ('&UPDATE' EQ 'YES').SET_UPDATE
+         MNOTE 12,'UPDATE MUST BE YES/NO - &UPDATE'
+         MEXIT
+.SET_UPDATE ANOP
 &PTH_UPDATE(&PTH_TOT) SETB 1
 .SET_PTH_UPDATE2 ANOP
          MEXIT
@@ -362,4 +385,4 @@
          DCBD     , GENERATE DCB  DSECT
 .EXIT    ANOP
          MEXIT
-         MEND
+         MEND  

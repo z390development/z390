@@ -13,6 +13,7 @@ MYKL1    DS    XL2                KEYLENGTH
 MYKL2    DS    XL2                KEYLENGTH
 FWTSBA   DS    XL4                WCC,SBA FOR FOP MSG
 FWTMSG   DS    CL(FOPLN)          FOP MESSAGE
+*
 TESTVSM3 DFHEIENT CODEREG=(R12,R3,R4,R5)
 *
 * TEST VSAM 3

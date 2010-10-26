@@ -1,0 +1,132 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+GBL1004  SUBENTRY
+*
+* FN=1004  DELAY
+*
+*         +0/DSCT +4/DSECT +8/IND   +12      +16
+* R1  >>> WTOMSG, REQDSECT,ICEANCHR,TRCEZ390,THRDCNTL
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SAVE PARM POINTER
+         L     R4,12(R3)          ADDRESS OF TRCEZ390
+         MVC   TRCEZ390,0(R4)     MOVE IT
+         L     R9,0(R3)           WTODSECT ADDRESS
+         USING WTODSECT,R9
+         L     R6,4(R3)           ADDRESS RECEIVED DATA
+         USING DFHICBLK,R6
+         MVC   WTOFN,ICPFN        SET FN
+         MVC   WTOTERM,ICPTERM    SET TERMID
+         MVC   WTOTRAN,ICPTRAN    SET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         UNPK  WTOTASKN,ICPTASKN  UNPACK TASK NUMBER
+         OI    WTOTASKN+6,X'F0'   CLEAR SIGN
+         MVC   WTODESC,=CL45'>>>Z390KCP DELAY      TASK SUSPENDED'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+* MODIFIED CICSTRCE
+         CLI   TRCEZ390,C'N'      NO TRACING ?
+         BE    CICSTRDN           EXIT IF IT IS
+         CLI   TRCEZ390,C'Y'      ALL TRACING ?
+         BE    CICSTRGO           TRACE IF IT IS
+         CLC   TRCEZ390,CICSTIND  TRACE TYPE=TRACE REQUEST ?
+         BNE   CICSTRDN           EXIT IF NOT
+CICSTRGO EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM GET TIME
+         MVO   TIMEPACK,TIME      MOVE TO PACKED FIELD
+         MVC   TIMEHERE(13),TIMEEDIT MOVE EDIT WORD
+         ED    TIMEHERE(13),TIMEPACK EDIT TIME
+         MVC   WTOTIME,TIMEHERE   SET TIME
+         WTO   MF=(E,WTOMSG)      TRACE IT
+CICSTRDN EQU   *
+* GETMAIN A NEW ICE
+         LA    R1,ICELEN          ICE LENGTH
+         GETMAIN R,LV=(R1)
+         XC    0(ICELEN,R1),0(R1) CLEAR IT
+         L     R4,8(R3)           ADDRESS OF ICEANCHR ADDRESS
+         LR    R8,R4              R8=CHAIN FROM ANCHOR
+         ICM   R7,15,0(R4)        R7=ICE CHAIN
+         BNZ   ICDLLOOP           EXIT IF SOME ICES
+         USING DFHICEDS,R7
+* NO ICES, SET 1ST
+         ST    R1,0(R8)           SET 1ST AT ICEANCHR
+         B     ICDLFILL           EXIT
+*
+ICDLLOOP EQU   *
+* ICE CHAIN EXISTS, FIND THE INSERT POINT
+         CLC   ICEXTOD,ICPSTCK    FOUND INSERT POINT ?
+         BH    ICDLGOT            EXIT IF WE HAVE
+         LR    R8,R7              R8=CHAINED FROM ADDRESS
+         ICM   R7,15,ICECHNF      NEXT ICE
+         BNZ   ICDLLOOP           LOOP THRU MORE ICES
+* END OF ICE CHAIN, PUT OURS AT END
+         ST    R1,0(R8)           CHAIN AT END
+         B     ICDLFILL           EXIT
+*
+ICDLGOT  EQU   *
+* FOUND AN INSERT POINT
+         ST    R1,0(R8)           STORE OUR ADDRESS INTO PREVIOUS
+         ST    R7,0(R1)           STORE NEXT CHAIN INTO OURS
+ICDLFILL EQU   *
+* BUILD THE ICE
+         LR    R7,R1              R7=ADDRESS OF NEW ICE
+         MVI   ICETYPE,IC_DELAY   SET TYPE
+         MVC   ICEXTOD,ICPSTCK    SET TIME
+         MVC   ICETRMID,ICPTERM   SET REQUESTING TERMID
+         MVC   ICEREQID,ICPREQID  SET REQID
+* SET TERMINAL SUSPEND STATUS
+         L     R5,16(R3)          THRDCNTL ADDRESS
+         USING THRDDSCT,R5
+         CLC   ICPTERM,=C'SQ01'   SEQUENTIAL TERMINAL ?
+         BNE   ICNOTSQ            EXIT IF NOT
+         LA    R5,(THRDLEN*THRDSEQ)(R5) POINT TO SEQ TERM ENTRY
+         B     ICDLSUS            EXIT
+*
+ICNOTSQ  EQU   *
+         NI    ICPTERM+3,X'0F'    TERMID SUFFIX TO HEX
+         LB    R1,ICPTERM+3       R1=TERMID SUFFIX
+         MS    R1,=AL4(THRDLEN)   INDEX TO THREAD STATE
+         AR    R5,R1              POINT TO THREAD STATE
+ICDLSUS  EQU   *
+         MVI   THRDIND,ST_SUSDL   SET SUSPENDED-DELAY STATUS
+         SUBEXIT
+*
+CICSTIND DS    C                  TRACE TYPE INDICATOR
+TRCEZ390 DS    C                  Z390 TRACE OPTION
+*
+* TIME CONVERSION FIELDS
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402021207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+* WTO AREA DSECT
+*
+WTODSECT DSECT
+WTOMSG   DS    AL4
+WTOTIME  DS    CL13               TIME STAMP
+         DS    C
+WTOFN    DS    CL4                MODULE/FUNCTION REFERENCE (EIBFN)
+         DS    C
+WTOTERM  DS    CL4                TERMID
+         DS    C
+WTOTRAN  DS    CL4                TRANSID (OR BLANK)
+         DS    C
+WTOTYPE  DS    C                  TRANSID TYPE
+         DS    C
+WTOTASKN DS    CL7                TASK NUMBER
+         DS    C
+WTODESC  DS    CL45               DESCRIPTION
+*
+         DFHICBLK                 INTERVAL CONTROL PREFIX AREA
+         DFHICEDS                 INTERVAL CONTROL ELEMENT
+         THRDDSCT                 TERMINAL THREAD CONTROL AREA
+*
+         EQUREGS
+*
+         END
+

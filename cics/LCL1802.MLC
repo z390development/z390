@@ -21,6 +21,8 @@ LCL1802  CSECT
 * UNCOMMENT THE 4 INSTRUCTIONS AFTER LABEL RETURN
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL1802'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -41,6 +43,18 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NOME
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P1802NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ             ERROR IF IT IS
          L     R4,P1802MSA        ADDRESS MAPSET STRUCTURE
          AHI   R4,8               BYPASS MAPSET NAME
          USING BMSMHLL,R4
@@ -120,7 +134,12 @@ CURSLOOP EQU   *
 CURSNXMP EQU   *
 * THIS FIELD NOT GOT CURSOR
 * BYPASS THIS STRUCTURE
-         AHI   R8,3               BUMP TO FIELD LENGTH
+         AHI   R8,3               BUMP TO FIELD
+         TM    BMSMI,BMSMIXD      ANY EXTENDED ATTRIBUTE ?
+         BNO   CURSNTEX           EXIT IF NOT
+         AHI   R8,1               +1 FOR COLOUR ATTRIBUTE
+         AHI   R7,-1              -1 FOR STRUCTURE LENGTH
+CURSNTEX EQU   *
          AH    R8,BMSFL           BUMP OVER FIELD LENGTH
          AHI   R7,-3              ADJUST MAP
          SH    R7,BMSFL                      STRUCTURE LENGTH
@@ -196,7 +215,12 @@ FLDLOOP  EQU   *
          TM    BMSFDFB,BMSFDGFE   GROUP FIELD ENTRY ?
          BO    NOSTRUC            EXIT IF IT IS
 * BYPASS THIS STRUCTURE
-         AHI   R8,3               BUMP TO FIELD LENGTH
+         AHI   R8,3               BUMP TO FIELD
+         TM    BMSMI,BMSMIXD      ANY EXTENDED ATTRIBUTE ?
+         BNO   NOEXTATT           EXIT IF NOT
+         AHI   R8,1               +1 FOR COLOUR ATTRIBUTE
+         AHI   R7,-1              -1 FOR STRUCTURE LENGTH
+NOEXTATT EQU   *
          AH    R8,BMSFL           BUMP OVER FIELD LENGTH
          AHI   R7,-3              ADJUST MAP
          SH    R7,BMSFL                      STRUCTURE LENGTH
@@ -223,6 +247,9 @@ GOTFIELD EQU   *
 * WE HAVE DATA
          LH    R0,BMSFL           R0=MAXIMUM FIELD LENGTH
          LA    R15,BMSINP         R15=INPUT DATA
+         TM    BMSMI,BMSMIXD      ANY EXTENDED ATTRIBUTE ?
+         BNO   DATLOOP            EXIT IF NOT
+         LA    R15,BMSINP2        R15=INPUT DATA
 DATLOOP  EQU   *
          MVC   0(1,R15),0(R6)     MOVE BYTE OF DATA
          AHI   R6,1               BUMP BUFFER POINTER
@@ -254,6 +281,10 @@ DUNDATA  EQU   *
 * F50000 ==> 0000F5
          LH    R0,BMSLEN          R0=ACTUAL DATA LENGTH     1
          LA    R7,BMSINP          R7=INPUT DATA             F50000
+         TM    BMSMI,BMSMIXD      ANY EXTENDED ATTRIBUTE ?
+         BNO   SHFTGO             EXIT IF NOT
+         LA    R7,BMSINP2         R7=INPUT DATA             F50000
+SHFTGO   EQU   *
          LR    R15,R7             R15=INPUT DATA            F50000
          AH    R7,BMSFL           + MAXIMUM LENGTH                ??
          BCTR  R7,0               POINT TO LAST POSITION        00
@@ -269,8 +300,11 @@ SHFTLOOP EQU   *
 DUNSHIFT EQU   *
 * FIELD SHIFT (IF ANY) IS COMPLETE
 * NOW REPLACE NULLS WITH ZERO/BLANK
-         LA    R7,BMSINP          R7=INPUT DATA
          LH    R0,BMSFL           R0=MAXIMUM FIELD LENGTH
+         LA    R7,BMSINP          R7=INPUT DATA
+         TM    BMSMI,BMSMIXD      ANY EXTENDED ATTRIBUTE ?
+         BNO   JSLOOP             EXIT IF NOT
+         LA    R7,BMSINP2         R7=INPUT DATA
 JSLOOP   EQU   *
          CLI   0(R7),X'00'        IS IT NULL ?
          BNE   JSINCR             EXIT IF NOT
@@ -283,6 +317,10 @@ JSINCR   EQU   *
          BCT   R0,JSLOOP          LOOP
 DOPICIN  EQU   *
          LA    R1,BMSINP          R1=INPUT DATA
+         TM    BMSMI,BMSMIXD      ANY EXTENDED ATTRIBUTE ?
+         BNO   DOPICIN2           EXIT IF NOT
+         LA    R1,BMSINP2         R1=INPUT DATA
+DOPICIN2 EQU   *
          BAL   R14,PIC            PROCESS PICIN IF ANY
 *
 ANYMORE  EQU   *
@@ -343,6 +381,14 @@ INVMPSZ  EQU   *
          MVI   EIBRCODE,X'08'     SET EIBRCODE
          MVI   EIBRCODE+3,C' '    SET EIBRCODE+3 TO GENERIC 3270
          MVC   EIBRESP,DFHRESP(INVMPSZ) SET EIBRESP=INVMPSZ
+         B     DORESP             EXIT
+*
+INVREQ   EQU   *
+* NON-TERMINAL
+         MVI   EIBRCODE,X'01'     SET EIBRCODE
+         MVI   EIBRCODE+3,C' '    SET EIBRCODE+3 TO GENERIC 3270
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+*
 DORESP   EQU   *
          ICM   R14,15,P1802RSP    R14=RESP ADDRESS
          BZ    DORESP2            EXIT IF NONE
@@ -356,6 +402,16 @@ RETURN   EQU   *
 ******** LR    R15,R14            R15=MAP STRUCTURE ADDRESS
 ******** AH    R15,P1802DSL                                +LENGTH
 ******** SNAP  STORAGE=((R14),(R15)),ID=1
+         CLI   P1802NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 * SUBROUTINES
@@ -497,13 +553,21 @@ PICDOED  EQU   *
 PICNOFLT EQU   *
          LH    R14,BMSFL          R14=INPUT LENGTH
          BCTR  R14,0              -1 FOR EXECUTE
+         TM    BMSMI,BMSMIXD      ANY EXTENDED ATTRIBUTE ?
+         BO    PICEXT             EXIT IF THERE IS
          EX    R14,PICMVDAT       MOVE EDITTED INPUT DATA
+         B     PICRET             EXIT
+*
+PICEXT   EQU   *
+         EX    R14,PICMVDT2       MOVE EDITTED INPUT DATA
+PICRET   EQU   *
          L     R14,PICR14         RESTORE RETURN ADDRESS
          BR    R14                RETURN
 PICMVC   MVC   PICIN(0),2(R15)    MOVE THE EDIT WORD
 PICPACK  PACK  PICDEC,0(0,R1)     PACK INPUT
 PICEDMK  EDMK  PICIN(0),0(R15)    EDIT INPUT
 PICMVDAT MVC   BMSINP(0),PICIN    MOVE EDITTED INPUT DATA
+PICMVDT2 MVC   BMSINP2(0),PICIN   MOVE EDITTED INPUT DATA
 PICIN    DC    XL50'00'           SAVE PICIN
 PICDATA0 DC    C'0'               PREFIX ZERO
 PICDATA  DC    CL50' '            DATA AREA
@@ -512,21 +576,7 @@ PICR14   DS    F                  R14 SAVE AREA
 *
          LTORG
 *
-P1802    DSECT
-P1802FN  DS    XL2                FUNCTION CODE
-P1802EIB DS    AL4                EIB
-P1802TCT DS    AL4                TCTTE
-P1802MSA DS    AL4                MAPSET ADDRESS
-P1802MAP DS    CL7                MAP NAME
-         DS    X
-P1802MLN DS    XL2                MAPSET LENGTH
-P1802DSC DS    AL4                STRUCTURE ADDRESS
-P1802DSL DS    AL2                STRUCTURE LENGTH
-         DS    X                  FF=NOHANDLE
-         DS    X
-P1802RSP DS    AL4                RESP
-P1802RS2 DS    AL4                RESP2
-P1802END EQU   *                  END MARKER
+         P1802 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

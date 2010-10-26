@@ -40,6 +40,7 @@
 .* 08/18/09 RPI 1065 add clauses JUSTIFIED, LEADING, TRAILING,                   
 .*          ASCENDING, DESCENDING, BLANK WHEN ZERO
 .* 10/12/09 RPI 1090 CORRECT COMP-4/COMP-5 TO COMP_4/COMP_5 FOR COMP
+.* 07/25/10 RIP 1126 SUPPORT NE+N VALUE
 .*********************************************************************
 .* 
 .* WS level,name,clauses in any order (PIC,VALUE,USAGE supported)
@@ -484,6 +485,10 @@
                     AELSEIF  ('&PIC_VAL' EQ 'QUOTE'                    X
                               OR '&PIC_VAL' EQ 'QUOTES')
                          :&PIC_VAL SETC ''''''''''  RPI 1065 'QQ'
+                    AEND
+                    AIF  ('&SYSLIST(&I)' EQ '+')  RPI 1126
+                         :&PIC_VAL SETC '&PIC_VAL+&SYSLIST(&I+1)'
+                         :&I SETA &I+2
                     AEND
                AELSEIF   ('&SYSLIST(&I)' EQ 'OCCURS')    
                     :&CUR_SET_LVL SETA &CUR_SET_LVL+1  INC SUB LVL CTR

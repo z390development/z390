@@ -4,6 +4,7 @@ call rt\savedemo
 call rt\savelink
 call rt\savemvs
 call rt\savemfa
+call rt\savesort      
 call rt\savetest      
 call rt\savevsam
 call rt\savevse

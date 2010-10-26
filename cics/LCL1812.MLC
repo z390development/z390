@@ -11,6 +11,8 @@ LCL1812  CSECT
 * R1  >>> P1812 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL1812'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,18 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P1812NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ             ERROR IF IT IS
          L     R6,P1812OUT        R6=OUTPUT AREA
 * SET UP ESC,WRT
          MVI   0(R6),ESC          ESCAPE
@@ -49,7 +63,9 @@ DUNWRTE  EQU   *
          MVI   2(R6),X'40'        SET DEFAULT WCC
          TM    P1812OPT,P1812ALM+P1812FKB+P1812FRS TEST WCC BITS
          BZ    NOWCC              EXIT IF NO OVERRIDES
-         MVI   2(R6),X'C0'+P1812ALM+P1812FKB+P1812FRS SET WCC BITS
+         MVC   2(1,R6),P1812OPT   MOVE THE OPTIONS
+         NI    2(R6),B'00000111'  KILL THE NON-WCC BITS
+         OI    2(R6),X'C0'        VALIDATE THE WCC
 NOWCC    EQU   *
          AHI   R6,3               BUMP OUTPUT POINTER
 * CONSTRUCT CURSOR POSITION...ALWAYS AS SBA,IC
@@ -100,12 +116,35 @@ SENDIT   EQU   *
          AHI   R0,-2              LENGTH-2
          DROP  R1
          LR    R1,R14             RESTORE OUTPUT AREA
-*
-SAVEDATA DS    H
-*
 NOTSEQ   EQU   *
          TPUT  (R1),(R6),FULLSCR  SEND TN3270 DATA STREAM
+RETURN   EQU   *
+         L     R6,P1812OUT        R6=A(OUTPUT AREA)
+         EXEC  CICS FREEMAIN DATAPOINTER(R6) NOEDF
+         CLI   P1812NED,X'FF'     NOEDF ?
+         BE    NOEDFA             RETURN IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             RETURN IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
+*
+INVREQ   EQU   *
+* INVOKE INVREQ
+         MVI   EIBRCODE,X'01'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         ICM   R14,15,P1812RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P1812RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+         B     RETURN             EXIT
 *
 * SUBROUTINES
 *
@@ -130,27 +169,11 @@ SBATAB   DC    X'40C1C2C3C4C5C6C7C8C94A4B4C4D4E4F'
          DC    X'6061E2E3E4E5E6E7E8E96A6B6C6D6E6F'
          DC    X'F0F1F2F3F4F5F6F7F8F97A7B7C7D7E7F'
 *
+SAVEDATA DS    H
+*
          LTORG
 *
-P1812    DSECT
-P1812FN  DS    XL2                FUNCTION CODE
-P1812EIB DS    AL4                EIB
-P1812TCT DS    AL4                TCTTE
-P1812OUT DS    AL4                OUTPUT AREA
-P1812CRS DS    AL2                CURSOR POSITION (X'FFFF'=NONE)
-P1812OPT DS    X                  OPTION BITS...
-P1812ERS EQU   X'80'                 ERASE
-P1812EAU EQU   X'40'                 ERASEAUP
-P1812CSM EQU   X'20'                 SYMBOLIC CURSOR
-P1812ALM EQU   X'04'                 ALARM
-P1812FKB EQU   X'02'                 FREEKB
-P1812FRS EQU   X'01'                 FRSET
-         DS    X
-         DS    X                  FF=NOHANDLE
-         DS    X
-P1812RSP DS    AL4                RESP
-P1812RS2 DS    AL4                RESP2
-P1812END EQU   *                  END MARKER
+         P1812 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

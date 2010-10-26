@@ -1,11 +1,9 @@
 rem ZCJAVCLG translate CBL to JAVA, compile to CLASS via J2SE, and exec 
 echo off
-if exist /usr/local/lib/z390/z390.jar goto linux
 if %1 == tron ECHO ON
 if %1 == tron shift
 if %1 == TRON ECHO ON
 if %1 == TRON shift
-:linux
 if exist %1.MLC erase %1.MLC
 if exist %1.BAL erase %1.BAL
 if exist %1.ERR erase %1.ERR
@@ -22,7 +20,7 @@ if errorlevel 5 goto mzerr
 set JAVAOUT=%1.JAVA
 call %~dps0MZ390 %1 @zcobol\java\ZCJAVCLG %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto mzerr
-"c:\program files\Java\jdk1.6.0_12\bin\javac.exe" -g:none %1.java
+"c:\program files\Java\jdk1.6.0_20\bin\javac.exe" -g:none %1.java
 if errorlevel 1 goto jcerr
 rem java -classpath %~p1 -Xrs %~n1 %2 %3 %4 %5 %6 %7 %8 %9
 set classpath=%~p1

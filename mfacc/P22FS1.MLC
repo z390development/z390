@@ -1,0 +1,89 @@
+*********************************************************************
+*                                                                   *
+*  PROBLEM 22: COUNT THE BITS                                       *
+*                                                   FRITZ SCHNEIDER *
+*********************************************************************
+         TITLE 'PROBLEM #22 - COUNT THE BITS'
+PROB22   ZMFACC CODE,START,NAME='FRITZ SCHNEIDER'
+         LA    R3,INPUT                LOCATION OF BITS
+         LA    R4,INPLEN               NUMBER OF BYTES
+         LA    R9,0(R3,R4)             END OF BITS
+         SR    R10,R10                 ACCUMULATOR
+         LA    R6,4                    LENGTH OF A WORD
+         LA    R8,BLOCKSZ              NUMBER OF BYTES TO DO
+LOOP2    DS    0H
+         LR    R7,R9                   END OF DATA
+         SR    R7,R3                   REMAINING BYTES
+         JNP   DONE                    NONE LEFT?
+         CR    R7,R8                   MORE THAN ONE BLOCK?
+         JL    SHORT                   NO, LAST BLOCK
+         LR    R7,R8                   PROCESS ONE BLOCK
+SHORT    BCTR  R7,0                    REDUCE FOR EX
+         XC    WORK,WORK               CLEAR WORK AREA
+         EX    R7,MVC                  GET THE NEXT BLOCK
+         EX    R7,TR                   GET BITS IN EACH BYTE
+         SR    R1,R1                   ACCUMULATOR
+         LA    R5,WORK                 BEGINNING OF BLOCK
+         AR    R7,R5                   END OF BLOCK-1
+LOOP1    AL    R1,0(R5)                ADD IN NEXT FOUR BYTES
+         BXLE  R5,R6,LOOP1             PROCESS WHOLE BLOCK
+         ST    R1,WORK                 STORE THE COUNTS
+         N     R1,=X'000000FF'         ISOLATE THE FOURTH BYTE
+         ALR   R10,R1                  ADD IT IN TO GRAND TOTAL
+         IC    R1,WORK                 GET FIRST BYTE
+         ALR   R10,R1
+         IC    R1,WORK+1               SECOND BYTE
+         ALR   R10,R1
+         IC    R1,WORK+2               THIRD BYTE
+         ALR   R10,R1
+         AR    R3,R8                   MOVE TO NEXT CHUNK
+         J     LOOP2                   GO DO IT
+DONE     DS    0H
+         ST    R10,TOTAL               SAVE THE GRAND TOTAL
+         ZMFACC CODE,END               WE'RE DONE
+         SPACE 2
+MVC      MVC   WORK(*-*),0(R3)         GRAB A CHUNK OF INPUT
+TR       TR    WORK(*-*),BITS          FIND THE NUMBER OF BITS
+         DS    0D
+         ZMFACC OUTPUT,START
+TOTAL    DC    F'0'
+         ZMFACC OUTPUT,END
+         DS    0D
+         ZMFACC INPUT,START
+INPUT    DS    0D
+         DC    C'Code fastest instruction sequence to count bits '
+         DC    C'in an arbitrary string of bytes using currently '
+         DC    C'available z/Architecture instructions prior to '
+         DC    C'new instruction coming with z196 which is '
+         DC    C'estimated to be 5 times faster.'
+INPLEN   EQU   *-INPUT
+         ZMFACC INPUT,END
+BLOCKSZ  EQU   120          MUST BE A MULTIPLE OF 4 LESS THAN 128
+WORK     DS    XL(BLOCKSZ)             WORK AREA
+         SPACE 2
+*
+*   EACH BYTE HAS THE NUMBER OF ONE BITS IN THE CORRESPONDING
+*   SOURCE BYTE. IT CAN BE BETWEEN 0 FOR X'00' AND 8 FOR X'FF'.
+*   WE ACCUMULATE THE COUNTS IN ONE BYTE COUNTERS, SO IF ALL
+*   WERE X'FF', 32 OF THEM WOULD OVERFLOW. SO OUR MAXIMUM
+*   BLOCK SIZE IS 4 X 31 = 124.
+*
+BITS     DC    X'00010102010202030102020302030304' 00-0F
+         DC    X'01020203020303040203030403040405' 10-1F
+         DC    X'01020203020303040203030403040405' 20-2F
+         DC    X'02030304030404050304040504050506' 30-3F
+         DC    X'01020203020303040203030403040405' 40-4F
+         DC    X'02030304030404050304040504050506' 50=5F
+         DC    X'02030304030404050304040504050506' 60-6F
+         DC    X'03040405040505060405050605060607' 70-7F
+         DC    X'01020203020303040203030403040405' 80-8F
+         DC    X'02030304030404050304040504050506' 90=9F
+         DC    X'02030304030404050304040504050506' A0-AF
+         DC    X'03040405040505060405050605060607' B0-BF
+         DC    X'02030304030404050304040504050506' C0-AF
+         DC    X'03040405040505060405050605060607' D0-BF
+         DC    X'03040405040505060405050605060607' E0-EF
+         DC    X'04050506050606070506060706070708' F0-FF
+         SPACE 2
+         LTORG
+         END   PROB22

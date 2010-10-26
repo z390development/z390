@@ -1,0 +1,234 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+         DFHEISTG
+STCK1    DS    XL8                START TIME
+STCK2    DS    XL8                END TIME AND ELAPSED TIME
+REC      DS    CL15               RECORD AREA
+MYRID    DS    XL4
+TSSTCK   DS    XL8                ELAPSED TIME AS STCK
+*
+TESTNT02 DFHEIENT CODEREG=(R12,R3,R6)
+*
+* NON-TERMINAL INITIATOR AND TESTER
+*
+* SET TRACE_Z390CICS=INT
+*
+* STAGE 1
+*    READ FILES MYWORD01 AND MYWORD02 INTO STORAGE
+*       20,000 RECORDS
+*    ZSORT IT AND TIME IT
+*    WRITEQ TS WITH TIME Q(NT02)
+*
+* STAGE 2
+*    FIRE NTS3 AND NTS4 NON-TERM
+*    NTS3 WILL ZSORT MYWORD01
+*       10,000 RECORDS
+*       ZSORT IT AND TIME IT
+*       WRITEQ TS WITH TIME Q(NT02)
+*    NTS4 WILL ZSORT MYWORD02
+*       10,000 RECORDS, 150,000 BYTES
+*       ZSORT IT AND TIME IT
+*       WRITEQ TS WITH TIME Q(NT02)
+*
+*    NT02 WILL SLEEP UNTIL BOTH RECORDS HAVE ARRIVED
+*    THEN DISPLAY THE 3 TIMES
+*
+*    RECENT RESULTS
+*             SORTTIME
+*       NT02  0:00.063
+*
+*       NTS3  0:00.078
+*       NTS4  0:00.047
+*             --------
+*             0:00.125
+*
+*       NT02 STARTED   15:46:27.42
+*       MYWORD01 OPEN  15:46:27.42
+*       MYWORD02 OPEN  16:01:57.17  READ 10000      15:29.75
+*       NTS3 START     16:18:06.48
+*       NTS3 ENDED     16:21:29.53  ELAPSED          3:23.05
+*                                   -SORT            0:00.078
+*                                   =BROWSE 10000    3:22.97
+*       NTS4 START     16:18:06.37
+*       NTS4 ENDED     16:20:29.68  ELAPSED    2:23.31
+*
+*       NT02 ENDED     16:21:34.82  ELAPSED   35:07.4
+*
+         XC    MYRID,MYRID        SET START OF FILE
+         CLC   EIBTRNID,=C'NTS3'  1ST NON-TERM TRANSID ?
+         BE    NTS3               EXIT IF IT IS
+         CLC   EIBTRNID,=C'NTS4'  2ND NON-TERM TRANSID ?
+         BE    NTS4               EXIT IF IT IS
+         ZSORT ISORT,LRECL=15,FIELDS=(1,15,CH,A),MEMORY=500000
+* STAGE 1 -- NT02 SORTS 20,000 RECORDS
+         EXEC  CICS HANDLE CONDITION ENDFILE(WORD01)
+* READ MYWORD01
+         EXEC  CICS STARTBR FILE('MYWORD01') RIDFLD(MYRID) RBA
+LOOP1    EQU   *
+         EXEC  CICS READNEXT FILE('MYWORD01') INTO(REC) LENGTH(15)     X
+               RIDFLD(MYRID) RBA
+         ZSORT PUT,REC=REC
+         B     LOOP1              LOOP
+*
+WORD01   EQU   *
+         EXEC  CICS ENDBR FILE('MYWORD01')
+*
+         XC    MYRID,MYRID        SET START OF FILE
+         EXEC  CICS HANDLE CONDITION ENDFILE(WORD02)
+         EXEC  CICS STARTBR FILE('MYWORD02') RIDFLD(MYRID) RBA
+LOOP2    EQU   *
+         EXEC  CICS READNEXT FILE('MYWORD02') INTO(REC) LENGTH(15)     X
+               RIDFLD(MYRID) RBA
+         ZSORT PUT,REC=REC
+         B     LOOP2              LOOP
+*
+WORD02   EQU   *
+         EXEC  CICS ENDBR FILE('MYWORD02')
+         STCK  STCK1              START TIME
+         ZSORT GET,REC=REC        INVOKE SORT
+         STCK  STCK2              SAVE END TIME
+         LG    R4,STCK1           R4=START TIME
+         LG    R5,STCK2           R5=END TIME
+         SGR   R5,R4              R5=ELAPSED TIME
+         STG   R5,STCK2           SAVE IT
+         EXEC  CICS WRITEQ TS QUEUE('NT02') FROM(STCK2) LENGTH(8)
+* START TRANSIDS TO SORT 10,000 RECORDS EACH
+         EXEC  CICS START TRANSID('NTS3')
+         EXEC  CICS START TRANSID('NTS4')
+* 10 SEC CYCLE UNTIL ALL 3 TS RECS HAVE ARRIVED
+         EXEC  CICS HANDLE CONDITION ITEMERR(ITEMERR)
+WAITHERE EQU   *
+         EXEC  CICS READQ TS QUEUE('NT02') ITEM(3) INTO(TSSTCK)
+         B     SORTDONE           EXIT
+*
+ITEMERR  EQU   *
+         EXEC  CICS DELAY FOR SECONDS(10)
+         B     WAITHERE           EXIT
+*
+SORTDONE EQU   *
+         EXEC  CICS READQ TS QUEUE('NT02') ITEM(1) INTO(TSSTCK)
+         LA    R1,MSG1TIME        TIME LOCATION
+         BAL   R9,TIMEOUT         ELAPSED TIME
+         EXEC  CICS SEND FROM(MSG1) LENGTH(20)
+*
+         EXEC  CICS READQ TS QUEUE('NT02') ITEM(2) INTO(TSSTCK)
+         LA    R1,MSG2TIME        TIME LOCATION
+         BAL   R9,TIMEOUT         ELAPSED TIME
+         EXEC  CICS SEND FROM(MSG2) LENGTH(20)
+*
+         EXEC  CICS READQ TS QUEUE('NT02') ITEM(3) INTO(TSSTCK)
+         LA    R1,MSG3TIME        TIME LOCATION
+         BAL   R9,TIMEOUT         ELAPSED TIME
+         EXEC  CICS SEND FROM(MSG3) LENGTH(20)
+         EXEC  CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL)
+         EXEC  CICS RETURN
+*
+NTS3     EQU   *
+* STAGE 2 -- NTS3 SORTS 10,000 RECORDS
+         ZSORT ISORT,LRECL=15,FIELDS=(1,15,CH,A),MEMORY=500000
+         EXEC  CICS HANDLE CONDITION ENDFILE(WORDS1)
+* READ MYWORD01
+         EXEC  CICS STARTBR FILE('MYWORD01') RIDFLD(MYRID) RBA
+LOOPS1   EQU   *
+         EXEC  CICS READNEXT FILE('MYWORD01') INTO(REC) LENGTH(15)     X
+               RIDFLD(MYRID) RBA
+         ZSORT PUT,REC=REC
+         B     LOOPS1             LOOP
+*
+WORDS1   EQU   *
+         EXEC  CICS ENDBR FILE('MYWORD01')
+         STCK  STCK1              START TIME
+         ZSORT GET,REC=REC        INVOKE SORT
+         STCK  STCK2              SAVE END TIME
+         LG    R4,STCK1           R4=START TIME
+         LG    R5,STCK2           R5=END TIME
+         SGR   R5,R4              R5=ELAPSED TIME
+         STG   R5,STCK2           SAVE IT
+         EXEC  CICS WRITEQ TS QUEUE('NT02') FROM(STCK2) LENGTH(8)
+         EXEC  CICS RETURN
+*
+NTS4     EQU   *
+* STAGE 3 -- NTS4 SORTS 10,000 RECORDS
+         ZSORT ISORT,LRECL=15,FIELDS=(1,15,CH,A),MEMORY=500000
+         EXEC  CICS HANDLE CONDITION ENDFILE(WORDS2)
+* READ MYWORD02
+         EXEC  CICS STARTBR FILE('MYWORD02') RIDFLD(MYRID) RBA
+LOOPS2   EQU   *
+         EXEC  CICS READNEXT FILE('MYWORD02') INTO(REC) LENGTH(15)     X
+               RIDFLD(MYRID) RBA
+         ZSORT PUT,REC=REC
+         B     LOOPS2             LOOP
+*
+WORDS2   EQU   *
+         EXEC  CICS ENDBR FILE('MYWORD02')
+         STCK  STCK1              START TIME
+         ZSORT GET,REC=REC        INVOKE SORT
+         STCK  STCK2              SAVE END TIME
+         LG    R4,STCK1           R4=START TIME
+         LG    R5,STCK2           R5=END TIME
+         SGR   R5,R4              R5=ELAPSED TIME
+         STG   R5,STCK2           SAVE IT
+         EXEC  CICS WRITEQ TS QUEUE('NT02') FROM(STCK2) LENGTH(8)
+         EXEC  CICS RETURN
+*
+* SUBROUTINES
+*
+TIMEOUT  EQU   *
+* R1 = OUTPUT FIELD
+         SGR   R4,R4              CLEAR R4
+         LG    R5,TSSTCK          R5=STCK ELAPSED TIME
+         SRLG  R5,R5,12           SHIFT TO MICROSECS
+         DSG   R4,=FL8'3600000000' EXTRACT HOURS
+         CVD   R5,DEC             CONVERT HOURS TO DECIMAL
+         MVHHI HRS,X'F020'        MOVE EDIT WORD
+         ED    HRS,DEC+7          EDIT HOURS
+         MVC   0(1,R1),HRS+1      MOVE HOURS TO OUTPUT
+         MVI   1(R1),C':'         MOVE SEPARATOR
+         LGR   R5,R4              R5=REMAINDER
+         SGR   R4,R4              CLEAR R4
+         DSG   R4,=FL8'60000000'  EXTRACT MINS
+         CVD   R5,DEC             CONVERT MINUTES TO DECIMAL
+         MVC   MINS,=X'F0202020'  MOVE EDIT WORD
+         ED    MINS,DEC+6         EDIT MINUTES
+         MVC   2(2,R1),MINS+2     MOVE MINUTES TO OUTPUT
+         MVI   4(R1),C':'         MOVE SEPARATOR
+         CVD   R4,DEC             CONVERT SECONDS TO DECIMAL
+         MVC   SECS,=X'F02020204B202020202020' MOVE EDIT WORD
+         ED    SECS,DEC+3         EDIT SECONDS
+         MVC   5(9,R1),SECS+2     MOVE SECONDS TO OUTPUT
+         MVI   7(R1),C'.'         ENSURE DEC POINT
+         BR    R9                 RETURN
+*
+HRS      DS    XL2
+MINS     DS    XL4
+SECS     DS    XL11
+*
+MSG1     TN3270 WCC_KD,(SBA,2,2),(SF,ATT_PA)
+MSG1TIME DS    CL14               H:MM:SS.SSSSSS
+*
+MSG2     TN3270 WCC_KD,(SBA,3,2),(SF,ATT_PA)
+MSG2TIME DS    CL14               H:MM:SS.SSSSSS
+*
+MSG3     TN3270 WCC_KD,(SBA,4,2),(SF,ATT_PA)
+MSG3TIME DS    CL14               H:MM:SS.SSSSSS
+*
+ENDMSG   TN3270 WCC_KD,(SBA,24,2),(SF,ATT_PA)
+         DC    C'TRANSACTION END - NOW PRESS CLEAR'
+ENDMSGL  DC    AL2(*-ENDMSG)
+*
+DEC      DC    PL8'0'
+*
+         TN3270 SYMBOLS
+*
+* REGISTERS
+*    R3 -- BASE 2
+*    R6 -- BASE 3
+*    R9 -- LINK REGISTER
+*    R12 - BASE 1
+*    R13 - DSA BASE
+         END
+

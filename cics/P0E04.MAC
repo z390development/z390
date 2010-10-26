@@ -1,0 +1,31 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P0E04 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P0E04    DSECT
+         AELSE
+P0E04    DS    0H
+         AEND
+P0E04FN  DS    XL2                FUNCTION CODE
+P0E04PGM DS    CL8                PROGRAM
+P0E04EIB DS    AL4                EIB
+P0E04COM DS    AL4                COMMAREA ADDRESS
+P0E04CLN DS    XL2                COMMAREA LENGTH
+P0E04EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P0E04EDS DS    AL4                DSA ADDRESS FOR EDF
+P0E04EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P0E04EDL DS    XL2                DSA LENGTH FOR EDF
+P0E04NED DS    X                  FF=NOEDF
+         DS    X
+P0E04NOH DS    X                  FF=NOHANDLE
+         DS    X
+P0E04RSP DS    AL4                RESP
+P0E04RS2 DS    AL4                RESP2
+P0E04END EQU   *                  END MARKER
+         MEND
+

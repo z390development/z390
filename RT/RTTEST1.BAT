@@ -63,6 +63,8 @@ call rt\RT3 rt\test\TESTTXT1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTPC1  tracep  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTAIN1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTAIN2 syscpy(+rt\test) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTAIN3 syscpy(+rt\test) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTCDE1 syscpy(+rt\test) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem az390 assembler
 rem

@@ -22,6 +22,11 @@
 *          SUPPORT STD F, FB, FT, V, VB, VT FORMAT OVERRIDES.
 *          RRDS KEY,KGE WILL GET NEXT
 *          BUFFER TO REDUCE I/O'S AND IMPROVE PERFORMANCE.
+* 11/03/09 RPI 865 ADD SUPPORT TO CREATE AIX BY SETTING INFILE TO 
+*          BASE CLUSTER AND OUTFILE TO AIX NAME IN CATALOG.
+* 10/13/10 RPI 1130 REMOVE SNAP ID=123
+* 10/16/10 RPI 1130 USE BASE CLUSTER PATH FOR AIX
+* 10/18/10 RPI 1130 CORRECT AIX BUFFER TO PREVENT OVERLAY, FIX LRECL
 *********************************************************************
 *
 *  REPRO WILL LOAD OR UNLOAD VSAM FILE FROM/TO QSAM FILE 
@@ -55,13 +60,24 @@
 *********************************************************************
 REPRO    SUBENTRY BASES=(R13,R12)
          COPY  ASMMSP                                                  
-         WTO   'REPRO z390 VSAM UTILITY V1.1'
+         WTO   'REPRO z390 VSAM UTILITY V1.2'
          PM    INIT    SET FILE AND RECORD TYPE INFO             
 LOOP     EQU   *
          PM    GET
-         PM    PUT
+         IF    (CLI,BUILDAIX,EQ,TRUE)
+               PM    PUT_AIX_SORT_REC
+         ELSE
+               PM    PUT
+         ENDIF
          B     LOOP
 EOF      EQU   *
+         IF    (CLI,BUILDAIX,EQ,TRUE)
+               PM GET_AIX_SORT_REC
+               DO WHILE=(CLI,AIX_EOF,NE,TRUE)
+                  PM PUT
+                  PM GET_AIX_SORT_REC
+               ENDDO
+         ENDIF  
          MVC   DTOTREC,=X'4020202020202020'
          ED    DTOTREC,PTOTREC
          WTO   MF=(E,WTO_TOTREC)
@@ -103,12 +119,12 @@ INIT     PENTRY
                      SUBEXIT RC=16
                ENDIF
          ELSE
-               IF    (LTR,R15,EQ,R15)
-                     WTO 'REPRO VSAM TO VSAM NOT SUPPORTED'
-                     SUBEXIT RC=16
-               ENDIF
                MVI   OUTFILET,C'Q'
-               PM    INIT_UNLOAD
+               IF    (LTR,R15,EQ,R15)
+                     PM    INIT_BUILD_AIX
+               ELSE
+                     PM    INIT_UNLOAD
+               ENDIF
          ENDIF
          SNAP  ID=1,TEXT='REPRO FILES OPENED',PDATA=DCB
          PEXIT
@@ -118,6 +134,7 @@ INIT     PENTRY
 *
 LOAD_CATALOG PENTRY
          LR    R8,R1   R8=A(FILE SPEC)
+         ST    R8,VCATFSA
          IF    (TRT,0(256,R8),NE,FIND_PER_BRK_NULL) FIND .|[|NULL
                STC  R2,PER_BRK_CHAR
                ST   R1,PER_BRK_ADDR
@@ -130,6 +147,7 @@ LOAD_CATALOG PENTRY
                LOAD DSNAME=VCATDSN      TRY LOADING CATALOG
                IF   (LTR,R15,EQ,R15)
                     LR   R1,R0
+                    ST   R1,VCDT_ADDR
                     USING IHAVCDT,R1
                     IF   (CLC,VCDTID,EQ,=C'VCDT')  RPI 696
                          SR   R15,R15 ASSUME VSAM IF CAT LOADED
@@ -244,6 +262,62 @@ INIT_UNLOAD PENTRY
          MVC  OUTFILEQ+DCBSYNAD-IHADCB(4),=A(ERR13)
          PEXIT
 *
+* BUILD_AIX - OPEN INFILE VSAM AND OUTFILE QSAM
+*
+INIT_BUILD_AIX PENTRY
+         L     R1,PER_BRK_ADDR
+         AHI   R1,1
+         LA    R2,VAIX_NAME
+         DO    WHILE=(CLI,0(R1),GT,C' ')
+               MVC  0(1,R2),0(R1)
+               AHI  R1,1
+               AHI  R2,1
+         ENDDO
+         L     R1,VCDT_ADDR
+         USING IHAVCDT,R1
+         L     R2,VCDTAIXA
+         USING IHAVAIX,R2
+         L     R3,VCDTAIXT
+         SR    R4,R4
+         DO    WHILE=(LTR,R3,NZ,R3)
+               IF (CLC,VAIX_NAME,EQ,VAIXNAME)
+                  LR  R4,R2        SET R4 TO AIX ENTRY IF FOUND
+               ENDIF
+               AHI R2,VAIXLEN
+               BCTR R3,0
+         ENDDO
+         IF    (LTR,R4,Z,R4)
+               WTO 'VSAM ALTERNATE INDEX NOT FOUND IN CATALOG'
+               SUBEXIT RC=16
+         ENDIF
+         DROP  R2
+         ST    R4,VAIX_ADDR  SAVE VAIX FOR USE IN BUILDING RECORDS
+         USING IHAVAIX,R4
+         LA    R1,OUTFILEQ
+         USING IHADCB,R1
+         L     R0,VAIXKLEN   RPI 865 WAS LH
+         ST    R0,VAIX_KLEN
+         AHI   R0,8
+         STH   R0,DCBLRECL
+         MVI   BUILDAIX,TRUE
+         WTO   'REPRO BUILD AIX FROM VSAM INFILE TO QSAM OUTFILE'
+         DROP  R4,R1
+         OPEN  (INFILEV,(INPUT))
+         IF    (LTR,R15,NE,R15)
+               WTO 'REPRO OPEN FOR INFILE VSAM CATALOG ENTRY FAILED'
+               SUBEXIT RC=16
+         ENDIF
+         LA  R5,OUTFILEQ
+         LA  R6,INFILEV  
+         PM  INIT_QSAM_AIX
+         OPEN (OUTFILEQ,(OUTPUT))
+         IF   (LTR,R15,NE,R15)
+              WTO 'REPRO OPEN FOR OUTFILE QSAM FILE FAILED'
+              SUBEXIT RC=16
+         ENDIF
+         MVC  OUTFILEQ+DCBSYNAD-IHADCB(4),=A(ERR13)
+         PEXIT
+*
 * CHECK_VSAM_OVERRIDE - CHECK FOR [DISP=MOD] FOLLOWING CATALOG.ENTRY
 * ON OUTFILE AND USE OPEN (OUTFILE,(UPDATE)) VS (OUTFILE,(OUTPUT)) 
 *
@@ -316,6 +390,70 @@ INIT_QSAM PENTRY
          MODCB RPL=OUTFILER,AREA=(R4)   RPI 688
          PEXIT
 *
+* INIT_QSAM_AIX - SET QSAM RECFM=F,LRECL=KEY+8,DSNAME FROM VAIXVXNA                 
+*
+INIT_QSAM_AIX PENTRY
+         USING IHADCB,R5  QSAM DCB IN/OUT FILE
+         USING IHAACB,R6  VSAM ACB IN/OUT FILE
+         L     R7,ACBVCLRA R15= VCLR BASE CLUSTER    RPI 681
+         USING IHAVCLR,R7                            RPI 681
+         L     R2,VCLRLREC                RPI 681
+         MODCB RPL=INFILER,RECLEN=(R2)    RPI 688
+         ST    R2,VSAM_LRECL
+         L     R1,VAIX_ADDR
+         USING IHAVAIX,R1
+         L     R2,VCATFSA
+         ST    R2,DCBDSNAM SET DSNAME FOR AIX
+         L     R3,PER_BRK_ADDR
+         DO    WHILE=(CLR,R2,LT,R3)
+               IF (CLI,0(R3),EQ,C'/'),OR,(CLI,0(R3),EQ,C'\'),OR,(CLI,0(X
+               R3),EQ,C':')     
+                  AHI R3,1
+                  LR R2,R3
+               ELSE
+                  AHI R3,-1
+               ENDIF
+         ENDDO
+         L     R2,VAIXVXNA
+         DO    WHILE=(CLI,0(R2),GT,C' ')
+               MVC  0(1,R3),0(R2)
+               AHI  R3,1
+               AHI  R2,1
+         ENDDO
+         MVI   0(R3),X'00'
+         L     R2,VAIXKLEN                RPI 865 AIX KEY LENGTH
+         AHI   R2,8                       RPI 865 XRBA LENGTH
+         DROP  R1
+         PM    SET_FIXED_RECFM
+         ST    R2,VAIX_LRECL              RPI 865 XRBA+KEY
+         ST    R2,DCBBLKSIF
+         ST    R2,DCBLRECLF
+         A     R2,VSAM_LRECL
+         GETMAIN RU,LV=(R2)
+         ST    R1,VSAM_AREA
+         LR    R0,R1
+         A     R0,VSAM_LRECL
+         ST    R0,VAIX_AREA
+         LR    R3,R1         R3=A(VSAM RECORD PFX IF ANY)
+         IF    (CLC,RECFM_OVF,EQ,=C'RF')
+               LA    R4,4(R3)   R4=A(VSAM LOCICAL REC)              
+         ELSE
+               LR    R4,R1      R4=A(VSAM LOGICAL REC)
+         ENDIF
+         L     R2,VAIX_LRECL
+         CVD   R2,PWORK
+         MVC   DLRECL,=X'4020202020202020'
+         ED    DLRECL,PWORK+4
+         WTO   MF=(E,WTO_RECFM)
+         MODCB RPL=INFILER,AREA=(R4)    RPI 688
+         L     R1,VAIX_AREA
+         MODCB RPL=OUTFILER,AREA=(R1)   RPI 865
+         L     R14,VAIX_LRECL
+         L     R15,VAIX_KLEN
+*          RPI 865 FIELDS REQ OFFSET+1, ADD XRBA TO MAINT ORIG SEQ
+         ZSORT ISORT,LRECL=(R14),FIELDS=(9,(R15),BI,A,1,8,BI,A)
+         PEXIT
+*
 * SET FIXED QSAM RECORD FORMAT AND DISPLAY IT
 *
 SET_FIXED_RECFM PENTRY
@@ -369,7 +507,12 @@ SET_VREC_RECFM PENTRY
 INIT_BUFF PENTRY
          MVI   BUFF,TRUE
          MVI   DCBRECFM,DCBRECFM_F  USE FIXED 32 BIT QSAM I/O
-         L     R9,VCLRLREC
+         IF    (CLI,BUILDAIX,EQ,TRUE)   RPI 1130 
+               L     R9,VAIX_LRECL
+               MVC   RECFM_OVF,=C'AI'
+         ELSE
+               L     R9,VCLRLREC
+         ENDIF
          AHI   R9,8
          IF    (C,R9,LT,LBUFF) 
                L  R9,LBUFF     SET LBUFF
@@ -435,7 +578,52 @@ GET      PENTRY
                IF  (LTR,R15,NE,R15)
                    B  ERR22
                ENDIF
+*              RPI 865 MOVE FROM IN FRONT OF GET
+               SHOWCB RPL=INFILER,AREA=VAIX_XRBA,LENGTH=8,FIELDS=(XRBA)
                AP   PTOTREC,=P'1'
+         ENDIF
+         PEXIT
+*
+* PUT_AIX_SORT_REC
+*
+PUT_AIX_SORT_REC PENTRY
+         IF   (CLI,VAR,EQ,TRUE) 
+              IF   (CLI,RR,EQ,TRUE)
+                   IF   (CLC,RECFM_OVF,EQ,=C'RV')
+                        LA   R0,8(R3)    START OF REC
+                   ELSE
+                        LA   R0,4(R3)    START OF REC
+                   ENDIF
+              ELSE
+                   LA   R0,4(R3)    START OF REC
+              ENDIF
+         ELSE
+              IF  (CLC,RECFM_OVF,EQ,=C'RF')
+                  LA   R0,4(R3)    R0=START OF REC
+              ELSE
+                  LA   R0,0(R3)    R0=START OF REC
+              ENDIF
+         ENDIF
+         L     R2,VAIX_ADDR
+         USING IHAVAIX,R2
+         A    R0,VAIXKOFF          R0=START OF  AIX KEY
+         L    R1,VAIXKLEN          R1=LENGTH OF AIX KEY
+         L    R14,VAIX_AREA
+         MVC  0(8,R14),VAIX_XRBA   MOVE AIX XRBA TO AIX REC
+         AHI  R14,8
+         LR   R15,R1
+         MVCL R14,R0               MOVE AIX KEY  TO AIX REC
+         L    R14,VAIX_AREA        RPI 1130
+         ZSORT PUT,REC=(R14)       SENT AIX REC TO ZSORT
+         DROP  R2
+         PEXIT
+*
+* GET_AIX_SORT_REC
+*
+GET_AIX_SORT_REC PENTRY
+         ZSORT GET,REC=(R3)        GET SORTED AIX REC FROM ZSORT
+         IF    (CHI,R15,NE,0)
+               MVI AIX_EOF,TRUE
          ENDIF
          PEXIT
 *
@@ -664,6 +852,8 @@ VAR      DC    AL1(FALSE) VARIABLE LENGTH RECORDS
 RR       DC    AL1(FALSE) RELATIVE RECORD FILE
 VL32     DC    AL1(TRUE)  VARIABLE LENGTH RECRODS WITH 32 BIT LENGTHS
 BUFF     DC    AL1(FALSE) USE BUFFER FOR EF, EV, RF, RV SEQ FORMATS
+BUILDAIX DC    AL1(FALSE) CREATE ALATERNATE INDEX FROM BASE CLUSER
+AIX_EOF  DC    AL1(FALSE) END OF AIX SORT INPUT RPI 865
 TRUE     EQU   1
 FALSE    EQU   0
 *
@@ -691,6 +881,7 @@ INFILEDD DC    C'INFILE',X'00'
 OUTFILEDD DC   C'OUTFILE',X'00'
 FDBK     DS    X  RPL REASON CODE
 VLEN     DC    F'0'
+VCATFSA  DC    A(0)
 VCATDSN  DC    CL256' '
 VCAT390  DC    C'.390',X'00'
 PER_BRK_CHAR DC C'X'  PERIOD, BRACKET, OR NULL TERM CHAR
@@ -703,6 +894,15 @@ FIND_PER DC    C'.' STOP ON SOURCE PERIOD
          ORG   FIND_PER_BRK_NULL+C'['
          DC    C'[' STOP ON SOURCE BRACKET 
          ORG
+VCDT_ADDR DC   A(0) ADDR OF VCAM CATALOG TABEL (IHAVCDT)
+VAIX_ADDR DC   A(0) AIX ENTRY IN VSAM CATALOG  (IHAVAIX)
+VAIX_NAME DC   CL8' ' NAME OF AIX TO FIND IN CATALOG RPI 865
+VAIX_LRECL DC  F'0'   XRBA + AIX KEY LENGTH
+VAIX_KLEN  DC  F'0'   AIX KEY LENGTH
+VAIX_XRBA  DC  XL8'0' AIX  XRBA OF PRIMARY RECORD
+VAIX_AREA  DC  A(0)   AIX  RECORD AREA
+VSAM_LRECL DC  F'0'   VSAM LRECL
+VSAM_AREA  DC  A(0)   VSAM RECORD AREA
          LTORG
          EQUREGS
          VCDTD

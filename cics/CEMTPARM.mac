@@ -1,0 +1,27 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CEMTPARM &DSECT
+*
+* CEMT PARAMETER AREA
+*
+         AIF   ('&DSECT' EQ 'DSECT')
+CEMTPARM DSECT
+         AELSE
+CEMTPARM DS    0H
+         AEND
+PARSE1   DS    CL(CEMTPLEN)       COMMAND
+PARSE2   DS    CL(CEMTPLEN)       OPERATION TYPE
+PARSE3   DS    CL(CEMTPLEN)       OPERATION MODIFIER
+         DS    (CEMTPNUM-3)CL(CEMTPLEN) OPERANDS
+EIBADDR  DS    AL4                EIB ADDRESS
+TCTADDR  DS    AL4                TCTTE ADDRESS
+COMM     DS    X                  COMMAREA
+CEMTPLEN EQU   20                 LENGTH OF EACH PARSE AREA
+CEMTPNUM EQU   20                 NO. OF PARSE AREAS
+         MEND
+

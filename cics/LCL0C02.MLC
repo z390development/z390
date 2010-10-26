@@ -11,6 +11,8 @@ LCL0C02  CSECT
 * R1  >>> P0C02 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0C02'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0C02NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          L     R1,P0C02LEN        R1=GETMAIN LENGTH
          AHI   R1,8               +8 FOR PREFIX
          GETMAIN R,LV=(R1)
@@ -60,25 +72,21 @@ INIT     EQU   *
          ICM   R1,8,P0C02INT      SET PADDING BYTE
          MVCL  R14,R0             CLEAR GETMAINED AREA WITH INITIMG
 NOINIT   EQU   *
+         CLI   P0C02NED,X'FF'     NOEDF ?
+         BE    NOEDFA             RETURN IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             RETURN IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
          LTORG
 *
-P0C02    DSECT
-P0C02FN  DS    XL2                FUNCTION CODE
-P0C02EIB DS    AL4                EIB
-P0C02TCT DS    AL4                TCTTE
-P0C02LEN DS    AL4                LENGTH/FLENGTH
-P0C02INM DS    X                  FF=INITIMG SPECIFIED
-         DS    X
-P0C02INT DS    X                  INITIMG
-         DS    X
-P0C02GMA DS    AL4                GETMAIN ADDRESS
-         DS    X                  FF=NOHANDLE
-         DS    X
-P0C02RSP DS    AL4                RESP
-P0C02RS2 DS    AL4                RESP2
-P0C02END EQU   *                  END MARKER
+         P0C02 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

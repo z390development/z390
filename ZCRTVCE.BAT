@@ -1,12 +1,6 @@
 rem regression test zcobol vce COBOL demos
 rem run demo pgms and gen dif report for vce
 echo off
-if exist /usr/local/lib/z390/z390.jar goto linux
-if %1 == tron ECHO ON
-if %1 == tron shift
-if %1 == TRON ECHO ON
-if %1 == TRON shift
-:linux
 rem
 rem cbl to C exe demos using MS Visual C++ Express language
 rem

@@ -1,0 +1,97 @@
+         TITLE 'BUILDAIX - BUILD VSAM AIX FROM BASE CLUSTER FILE'
+* AUTHOR. DON HIGGINS.
+* DATE.   11/02/09.
+* REMARKS.
+*    INPUT:
+*      INFILE  DDNAME = BASE CLUSTER DEFINED AS CATALOG.BASENAME
+*      OUTFILE DDNAME = AIX  DEFINED AS CATALOG.AIXNAME
+*
+BUILDAIX SUBENTRY
+         PM    INIT
+         SUBEXIT
+*
+* INIT INPUT AND OUT FILES USING VSAM CATALOG TO RETREIVE KEYOFF,KEYLEN
+*         
+INIT     PENTRY
+         GETENV INFILEDD
+         IF    (LTR,R15,NE,R15)
+               WTO 'BUILDAIX INFILE DDNAME NOT FOUND'
+               SUBEXIT RC=15
+         ENDIF
+         PM    LOAD_CATALOG
+         IF    (LTR,R15,NE,R15)
+               WTO 'BUILDAIX INFILE CATALOG NOT FOUND'
+               SUBEXIT RC=15
+         ENDIF
+         L    R1,PER_BRK_ADDR
+         PM   SET_NAME
+         MVC  BASE_NAME,NAME
+         GETENV OUTFILEDD
+         IF    (LTR,R15,NE,R15)
+               WTO 'BUILDAIX OUTFILE DDNAME NOT FOUND'
+               SUBEXIT RC=15
+         ENDIF
+         L    R1,PER_BRK_ADDR
+         PM   SET_NAME
+         MVC  AIX_NAME,NAME
+         SNAP  ID=1,TEXT='REPRO FILES OPENED',PDATA=DCB
+         PEXIT
+*
+* ATTEMPT TO LOAD VSAM CATALOG FROM FILE SPEC AT R1 
+* AND SET R15 0 IF SUCCESSFUL
+*
+LOAD_CATALOG PENTRY
+         LR    R8,R1   R8=A(FILE SPEC)
+         IF    (TRT,0(256,R8),NE,FIND_PER_BRK_NULL) FIND .|[|NULL
+               STC  R2,PER_BRK_CHAR
+               ST   R1,PER_BRK_ADDR
+               LR   R15,R1
+               SR   R15,R8
+               BCTR R15,0
+               EX   R15,VCATMVC         MOVE FILE SPEC WO PER/BRK
+               LA   R15,VCATDSN+1(R15)
+               MVC  0(5,R15),VCAT390    APPEND .390
+               LOAD DSNAME=VCATDSN      TRY LOADING CATALOG
+               IF   (LTR,R15,EQ,R15)
+                    LR   R1,R0
+                    USING IHAVCDT,R1
+                    IF   (CLC,VCDTID,EQ,=C'VCDT')  RPI 696
+                         SR   R15,R15 ASSUME VSAM IF CAT LOADED
+                    ELSE
+                         LA   R15,4   CATALOG VCDT ID NOT FOUND
+                    ENDIF
+               ELSE
+                    LA   R15,4        CATALOG NOT FOUND
+               ENDIF             
+         ELSE
+               MVI  R15,4   CATALOG.QUALIFIER NOT FOUND
+         ENDIF
+         PEXIT
+         DROP  R1
+*
+* SET CLUSTER OR AIX NAME FROM DDNAME QUALIFIER AT 1(R1)
+*
+SET_NAME PENTRY
+         MVC  NAME,1(R1)          MOVE CLUSTER/AIX NAME
+         LA   R2,9(R1)
+         LR   R3,R2           ASSUME NO PADDING
+         DO   WHILE=(CR,R1,LT,R2)
+              IF (CLI,0(R1),LE,C' ')
+                 LR  R3,R1    SET START OF PADDING
+                 LR  R1,R2    FORCE END
+              ENDIF
+              AHI  R1,1
+         ENDDO
+         DO   WHILE=(CR,R3,LT,R2)
+              MVI  0(R3),C' ' PAD TO END
+              AHI  R3,1
+         ENDDO
+         PEXIT
+*
+* SHARED DATA
+*
+NAME     DC    CL8' '
+VCATMVC  MVC   VCATDSN(0),0(R8)  MOVE VSAM CATALOG DSN 
+INFILEDD  DC   C'INFILE',X'00'
+OUTFILEDD DC   C'OUTFILE',X'00'
+         END

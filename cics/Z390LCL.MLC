@@ -83,6 +83,7 @@ LCLTABL  EQU   *
          DC    X'4A04',VL4(LCL4A04) FORMATTIME
 *
          DC    X'4C02',VL4(LCL4C02) INQUIRE FILE
+         DC    X'4C04',VL4(LCL4C04) SET FILE
 *
          DC    X'FFFF'            STOPPER
 *

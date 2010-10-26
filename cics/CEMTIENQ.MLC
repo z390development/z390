@@ -1,0 +1,233 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+CEMTIENQ CSECT
+*
+* CEMT I ENQ PROCESSOR
+*
+* R1  >>> PARMS
+*
+         USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    C'CEMTIENQ'
+         STRL  R13,IENQDSA        SAVE Z390CEMT DSA ADDRESS
+         LR    R13,R15            R13 AS BASE
+         LR    R3,R1              SET PARAMETER BASE
+         USING CEMTPARM,R3
+         L     DFHEIBR,EIBADDR    LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,TCTADDR    LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         L     R8,CEMTI           R8=MESSAGE LENGTH
+         MVC   CEMTIREQ,=C'FE06'  SET REQUEST CODE
+         MVC   CEMTITRM,TCTTETI   SET TERMID
+         MVC   CEMTITKN,EIBTASKN  SET TASK NO.
+         TCPIO SEND,MSG=CEMTI,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+* RECEIVE THE PREFIX ONLY
+* THIS COULD BE A LARGE AREA, SO WE NEED TO GETMAIN A RECEIVE AREA
+         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=12,PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         L     R8,CEMTRCVE        R8=ACTUAL LENGTH TO RECEIVE
+         MVC   CEMTRCVE,=F'200'   RESTORE THE STANDARD RECEIVE LENGTH
+         AHI   R8,-12             -12 FOR DATA RECEIVED
+         GETMAIN R,LV=(R8),A=IENQGETM
+         ST    R0,IENQGETL        SAVE LENGTH FOR FREEMAIN
+         TCPIO RECEIVE,MSG=0(R1),LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         MVC   SNDIENQT,IENQTITL  SET UP TITLE
+         LA    R6,SNDIENQL        R6=DESTINATION
+         LA    R7,L'SNDIENQL      DESTINATION LENGTH
+         LR    R8,R6              AREA TO CLEAR
+         SR    R9,R9              CLEAR SECOND LENGTH
+         MVCLE R6,R8,C' '         CLEAR DESTINATION TO BLANKS
+         LA    R6,SNDIENQL        R6=LIST ADDRESS
+         USING IENQDSCT,R6
+         L     R7,IENQGETM        R7=RECEIVED DATA
+         USING IENQDATA,R7
+         LA    R8,SBATAB          R8=SBA TABLE
+IENQLOOP EQU   *
+         CLI   IENQDRES,X'FF'     END OF ENQ'S ?
+         BE    IENQSEND           EXIT IF IT IS
+         MVC   IENQSBA,0(R8)      MOVE SBA
+* IF LENGTH IS ZERO DISPLAY 4 BYTES IN HEX
+         OC    IENQDLTH,IENQDLTH  ANY LENGTH ?
+         BNZ   IENQGTRS           EXIT IF SOME
+         UNPK  IENQRES(9),IENQDRES(5) UNPACK ENQ ADDRESS
+         TR    IENQRES(8),IENQHEX-240 TRANSLATE TO PRINTABLE HEX
+         MVI   IENQRES+8,C' '     CLEAR EXTRA BYTE
+         B     IENQDOLN           EXIT
+*
+IENQGTRS EQU   *
+* MOVE RESOURCE TO A MAX OF 30 (TRANSLATE OUT ANY HEX CHARS)
+         LA    R15,30             SET MAXIMUM LENGTH
+         CHHSI IENQDLTH,30        LENGTH > 30 ?
+         BH    IENQDOEX           EXIT IF IT IS
+         LH    R15,IENQDLTH       R15=LENGTH
+IENQDOEX EQU   *
+         BCTR  R15,0              -1 FOR EXECUTE
+         EX    R15,IENQEXMV       MOVE RESOURCE
+IENQDOLN EQU   *
+         LH    R15,IENQDLTH       R15=LENGTH
+         CVD   R15,DEC            CONVERT TO DECIMAL
+         MVC   IENQLNTH-1(4),=X'40202120' MOVE EDIT WORD
+         ED    IENQLNTH-1(4),DEC+6 EDIT LENGTH
+         L     R15,IENQDUCT       R15=USE COUNT
+         AHI   R15,1              CONVERT TO OFFSET 1
+         CVD   R15,DEC            CONVERT TO DECIMAL
+         MVC   IENQUCT-1(10),=X'40202020202020202120' MOVE EDIT WORD
+         ED    IENQUCT-1(10),DEC+3 EDIT USE COUNT
+         MVC   IENQOWN(3),EIBTRMID SET TERMID PREFIX
+         MVC   IENQOWN+3(1),IENQDOWN SET TERMID SUFFIX
+* ALTHOUGH WE WILL STORE X'FA' FOR THE 11TH TERMINAL
+* WE WILL NEVER SEE IT AS CEMT CANNOT BE SIMULATED
+         LA    R1,IENQDWT         R1=ADDRESS OF WAIT LIST INPUT
+         LA    R15,IENQWAIT       R15=ADDRESS OF WAIT LIST OUTPUT
+         LA    R14,THRDNUM        R14=NO. OF TERMINALS
+         LA    R9,X'F0'           R9=TERMINAL SUFFIX
+IENQWLP  EQU   *
+         CLI   0(R1),X'FF'        TERMINAL WAITING ?
+         BNE   IENQINC            EXIT IF NOT
+         STC   R9,0(R15)          MARK IT
+IENQINC  EQU   *
+         AHI   R15,2              BUMP WAIT LIST OUTPUT POINTER
+         AHI   R1,1               BUMP WAIT LIST INPUT POINTER
+         AHI   R9,1               BUMP TERMINAL SUFFIX
+         BCT   R14,IENQWLP        LOOP
+         AHI   R6,IENQLEN         BUMP OUTPUT POINTER
+         AHI   R7,IENQDLEN        BUMP INPUT POINTER
+         AHI   R8,3               BUMP SBA TABLE POINTER
+         B     IENQLOOP           LOOP
+*
+IENQSEND EQU   *
+         L     R8,IENQDSA         ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R8
+         EXEC  CICS SEND FROM(SNDIENQT) LENGTH(IENQMLEN)
+         FREEMAIN LA=IENQGETL,A=IENQGETM
+         PR    ,                  UNSTACK AND RETURN
+*
+TCPIOERR EQU   *
+         L     R8,IENQDSA         ADDRESS Z390CEMT DSA
+         EXEC  CICS SEND FROM(TCPERR) LENGTH(TCPERRL)
+         PR    ,                  UNSTACK AND RETURN
+*
+IENQEXMV MVC   IENQRES(0),IENQDRES MOVE RESOURCE
+*
+IENQGETM DS    AL4                GETMAIN ADDRESS
+IENQGETL DS    FL4                GETMAIN LENGTH
+IENQDSA  DS    AL4                Z390CEMT DSA ADDRESS
+IENQHEX  DC    C'0123456789ABCDEF'
+*
+* MESSAGE AREA
+SNDIENQT DS    CL(IENQTITE)
+SNDIENQL DS    CL(IENQLEN*21)
+*
+* STRUCTURES
+*
+* RESOURCE----//---  LENGTH  USE COUNT  OWNER   -------WAITING-------
+* 12345678901234567   00000  123456789   DON0   0 1 2 3 4 5 6 7 8 9 S
+*
+IENQTITL EQU   *
+         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA_MDT),IC
+         DC    C'CEMT I ENQ'
+         TN3270 (SBA,3,1),(SF,ATT_PA)
+         DC    C'RESOURCE----------------------  LENGTH  USE COUNT  OWN-
+               ER  -------WAITING-------'
+IENQTITE EQU   *-IENQTITL
+*
+IENQMLEN DC    AL2(IENQLEN*21)
+*
+SBATAB   EQU   *
+         TN3270 (SBA,4,2)
+         TN3270 (SBA,5,2)
+         TN3270 (SBA,6,2)
+         TN3270 (SBA,7,2)
+         TN3270 (SBA,8,2)
+         TN3270 (SBA,9,2)
+         TN3270 (SBA,10,2)
+         TN3270 (SBA,11,2)
+         TN3270 (SBA,12,2)
+         TN3270 (SBA,13,2)
+         TN3270 (SBA,14,2)
+         TN3270 (SBA,15,2)
+         TN3270 (SBA,16,2)
+         TN3270 (SBA,17,2)
+         TN3270 (SBA,18,2)
+         TN3270 (SBA,19,2)
+         TN3270 (SBA,20,2)
+         TN3270 (SBA,21,2)
+         TN3270 (SBA,22,2)
+         TN3270 (SBA,23,2)
+         TN3270 (SBA,24,2)
+*
+CEMTI    DS    0F
+* REQUEST INFO
+         DC    A(CEMTIEND-*)
+CEMTIREQ DS    CL4                REQUEST ID
+CEMTITRM DS    CL4                TERMID
+         DC    C'CEMT'            TRANSID
+         DC    C' '               TRANSID TYPE
+CEMTITKN DS    PL4                TASK NO.
+CEMTIEND EQU   *
+*
+CEMTRCVE DS    0F
+* RECEIVE AREA
+* MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
+         DC    A(200)             MAX LENGTH
+         DS    CL4                REQUEST CODE
+         DS    CL4                TERMINAL ID
+         DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+         DS    PL4                TASK NO.
+         DS    CL188              RETURNED DATA
+*
+DEC      DC    PL8'0'
+*
+TCPERR   EQU   *
+         TN3270 WCC_KD,(SBA,3,2)
+         DC    C'CEMT TCPIO ERROR'
+TCPERRL  DC    AL2(*-TCPERR)
+*
+         CEMTPARM DSECT
+*
+* DSECT OUTPUT
+*
+IENQDSCT DSECT
+IENQSBA  DS    CL3                SBA
+IENQRES  DS    CL30               RESOURCE
+         DS    CL5
+IENQLNTH DS    CL3                LENGTH
+         DS    CL2
+IENQUCT  DS    CL9                USE COUNT
+         DS    CL3
+IENQOWN  DS    CL4                OWNER
+         DS    CL2
+IENQWAIT DS    CL21               WAIT LIST
+IENQLEN  EQU   *-IENQDSCT
+*
+* REQUESTED DATA FORMAT
+*
+IENQDATA DSECT
+IENQDRES DS    CL30               RESOURCE
+IENQDLTH DS    XL2                LENGTH
+IENQDUCT DS    XL4                USE COUNT
+IENQDOWN DS    C                  OWNER
+IENQDWT  DS    CL(THRDNUM)        WAIT LIST
+IENQDLEN EQU   *-IENQDATA
+*
+         THRDDSCT                 TERMINAL THREAD CONTROL AREA
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHEISTG                 DSA
+         TN3270 SYMBOLS
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+         END
+

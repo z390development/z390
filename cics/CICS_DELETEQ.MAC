@@ -9,7 +9,7 @@
          MACRO
          CICS_DELETEQ
          GBLB  &PARMS_0A06
-         LCLB  &NOHAND
+         LCLB  &NOEDF,&NOHAND
          LCLC  &TYPE,&QUEUE,&QNAME,&RESP,&RESP2
 &TYPE    SETC  '&SYSLIST(1)'
          AIF   ('&TYPE' EQ 'TS').TS
@@ -24,14 +24,15 @@
          AIF   (&IP GT &NP).ELOOP
 &PARM    SETC  '&SYSLIST(&IP)'
 .* DISCARDED PARMS
-         AIF   ('&PARM'(1,4)  EQ 'MAIN').PLOOP
-         AIF   ('&PARM'(1,9)  EQ 'AUXILIARY').PLOOP
+         AIF   ('&PARM'(1,4) EQ 'MAIN').PLOOP
+         AIF   ('&PARM'(1,9) EQ 'AUXILIARY').PLOOP
 .*
-         AIF   ('&PARM'(1,6)  EQ 'QUEUE(').QUEUE
-         AIF   ('&PARM'(1,6)  EQ 'QNAME(').QNAME
-         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
-         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
-         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         AIF   ('&PARM'(1,6) EQ 'QUEUE(').QUEUE
+         AIF   ('&PARM'(1,6) EQ 'QNAME(').QNAME
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
 .*
@@ -41,6 +42,10 @@
 .*
 .QNAME   ANOP
 &QNAME   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -91,6 +96,16 @@
 .CHKNAME ANOP
          GEN_ST DFHEIBR,P0A06EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P0A06TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0A06EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0A06EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0A06EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0A06NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P0A06NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -102,8 +117,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P0A06RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P0A06EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0A06EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P0A06)       R1=LCL MODULE PARAMETER LIST
+P0A06EDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P0A06NOH,X'FF'   NOHANDLE ?
@@ -116,17 +134,7 @@
 *
          AIF   (&PARMS_0A06).BYP0A06
 &PARMS_0A06 SETB 1
-P0A06    DS    0H
-P0A06FN  DS    XL2                FUNCTION CODE
-P0A06EIB DS    AL4                EIB
-P0A06TCT DS    AL4                TCTTE
-P0A06QNM DS    CL16               QUEUE NAME
-P0A06NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0A06RSP DS    AL4                RESP
-P0A06RS2 DS    AL4                RESP2
-P0A06END EQU   *                  END MARKER
-         DS    0H
+         P0A06
 *
 .BYP0A06 ANOP
 P0A06BYP_&SYSNDX DS 0H

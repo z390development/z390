@@ -11,6 +11,8 @@ LCL0206  CSECT
 * R1  >>> P0206 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0206'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0206NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
 * ONLY THE FIRST AID BLOCK IS ACQUIRED HERE
 * PUSH ACQUIRES MORE
          L     R1,P0206AID        R1=A(DFHEIAID)
@@ -103,18 +115,19 @@ AIDINCR  EQU   *                  EXIT
          AHI   R5,4               BUMP AID ADDRESS POINTER
          BCT   R6,SETAID          LOOP
 ENDAID   EQU   *
+         CLI   P0206NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
-P0206    DSECT
-P0206FN  DS    XL2                FUNCTION CODE
-P0206EIB DS    AL4                EIB
-P0206TCT DS    AL4                TCTTE
-P0206AID DS    AL4                A(DFHEIAID)
-P0206ADS DS    XL30               ROOM FOR 30 AIDS
-P0206ADR DS    30AL4              ROOM FOR 30 ADDRESSES, FF......=CLEAR
-P0206RSP DS    AL4                RESP
-P0206RS2 DS    AL4                RESP2
-P0206END EQU   *                  END MARKER
+         P0206 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE
@@ -126,6 +139,5 @@ P0206END EQU   *                  END MARKER
 * R10 TCTTE
 * R11 EIB
 * R13 BASE 1
-*
          END
 

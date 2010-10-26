@@ -1,9 +1,9 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
          MACRO
          DFHMAPST
 *
@@ -17,5 +17,11 @@ BMSFLAG  DS    X                  FIELD FLAG         name.F
 BMSATTR  DS    X                  FIELD ATTRIBUTE    name.A
 BMSINP   DS    0C                 FIELD INPUT        name.I
 BMSOUT   DS    0C                 FIELD OUTPUT       name.O
+* OPTIONAL EXTENDED ATTRIBUTE IF BMSMIXD IS ON
+         ORG   BMSATTR
+         DS    X                  FIELD ATTRIBUTE    name.A
+BMSCOLOR DS    X                  COLOUR ATTRIBUTE   name.C
+BMSINP2  DS    0C                 FIELD INPUT        name.I
+BMSOUT2  DS    0C                 FIELD OUTPUT       name.O
          MEND
 

@@ -28,7 +28,7 @@ public  class  az390 implements Runnable {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2008 Automated Software Tools Corporation
+    Copyright 2010 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -361,7 +361,11 @@ public  class  az390 implements Runnable {
         * 09/26/09 RPI 1080 replace init tables with init_tz390
         * 01/08/10 RPI 1099 correct error on 32 digit B type SDT and display 4 byte hex value
         * 01/09/10 RPI 1101 trunc vs error for out of range or x/0 on DC AFHY
-        * 92/16/10 RPI 1108 align LQ to 16 bytes (see RPI 594 pending)
+        * 02/16/10 RPI 1108 align LQ to 16 bytes (see RPI 594 pending)
+        * 07/28/10 RPI 1127 add option PRINTALL to suppress PRINT OFF/NOGEN
+        * 10/08/10 RPI 1125 add LEDBR?, LDXBR?, LEXBR?
+        * 10/10/10 RPI 1125 ADD SRNMB
+        * 10/20/10 RPI 1125 add FIEBR?, FIDBR?, FIXBR?
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -2019,7 +2023,7 @@ private void process_bal_op(){
         			|| bal_op.equals("TROT")
         			|| bal_op.equals("TRTO")
         			|| bal_op.equals("TRTT")
-    	           )){
+    	       )){
         		    if (!bal_abort && exp_next_char(',')){ //RPI 577
         		    	skip_comma();
         		    	get_hex_reg(); // RPI 454
@@ -2754,6 +2758,71 @@ private void process_bal_op(){
        	}
        	get_hex_op(3,2);  // OP2
     	check_end_parms();
+    	put_obj_text();
+    	break;
+    case 53:   // LEDBR?, LDXBR?, LEXBR? RPI 1125 oo0012/oo3412 r1,r2/r1,m3,r2,m4
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 4;
+    	get_hex_op(1,4);
+      	if (bal_op.charAt(bal_op.length()-1) == 'A'){ // RPI 277
+      		get_hex_reg();  // r1
+   			skip_comma();
+   			get_hex_reg();  // m3
+   			skip_comma();
+   			get_hex_reg();  // r2
+   			skip_comma();
+   			get_hex_reg();  // m4
+   	    	obj_code = obj_code.substring(0,4)  // op1
+   	    	+ obj_code.substring(5,6)           // m3    
+   	        + obj_code.substring(7,8)           // m4
+   	        + obj_code.substring(4,5)           // r1
+   	    	+ obj_code.substring(6,7);          // r2
+    		check_end_parms(); 
+    	} else {
+        	get_hex_zero(2);
+    		get_hex_reg();
+   			skip_comma();
+   			get_hex_reg();        	
+    		check_end_parms();
+    	}
+    	put_obj_text();
+    	break;
+    case 54:   // FIEBR?, FIDBR?, FIXBR? RPI 1125
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 4;
+    	get_hex_op(1,4);
+      	if (bal_op.charAt(bal_op.length()-1) == 'A'){ // RPI 277
+      		get_hex_reg();  // r1
+   			skip_comma();
+   			get_hex_reg();  // m3
+   			skip_comma();
+   			get_hex_reg();  // r2
+   			skip_comma();
+   			get_hex_reg();  // m4
+   	    	obj_code = obj_code.substring(0,4)  // op1
+   	    	+ obj_code.substring(5,6)           // m3    
+   	        + obj_code.substring(7,8)           // m4
+   	        + obj_code.substring(4,5)           // r1
+   	    	+ obj_code.substring(6,7);          // r2
+    		check_end_parms(); 
+    	} else {
+         	get_hex_reg();
+         	get_hex_zero(1);
+         	skip_comma();
+         	get_hex_reg();
+         	skip_comma();
+         	get_hex_reg();
+        	obj_code = obj_code.substring(0,4)  // oooo
+         	    + obj_code.substring(6,7)   // m3
+    	    	+ "0"
+    	    	+ obj_code.substring(4,5)  // r1
+    	    	+ obj_code.substring(7,8); // r2        	
+    		check_end_parms();
+    	}
     	put_obj_text();
     	break;
     case 101:  // CCW  0 
@@ -5197,7 +5266,7 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true; // RPI 755
 	   	if  (z390_log_text == null){
-	   	    put_log(msg_id + "Copyright 2008 Automated Software Tools Corporation");
+	   	    put_log(msg_id + "Copyright 2010 Automated Software Tools Corporation");
 	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
 	   	}
 	   	put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name);
@@ -6606,11 +6675,8 @@ private void get_dc_field_modifiers(){
 private void dc_align(int align_len){
 	/*
 	 * align to mult of align_len from loc_ctr
-	 * If align_len > 8 use 8  RPI 373
+	 * If align_len > 8 use 8  RPI 373 removed by RPI 1108
 	 */
-	 if (align_len > 8){
-	//dshx	 align_len = 8; 
-	 }
 	 dc_fill((loc_ctr + align_len -1)/align_len*align_len - loc_ctr);
 }
 private void flush_dc_bits(){
@@ -8020,11 +8086,11 @@ private void process_print(){
     		list_bal_line = false;
     	} else if (parm.equals("ON")){
             print_on[print_level] = true;
-		} else if (parm.equals("OFF")){
+		} else if (parm.equals("OFF") && !tz390.opt_printall){ // RPI 1127
 			print_on[print_level] = false;
 		} else if (parm.equals("GEN")){
 			print_gen[print_level] = true;
-		} else if (parm.equals("NOGEN")){
+		} else if (parm.equals("NOGEN") && !tz390.opt_printall){ // RPI 1127
 			print_gen[print_level] = false;
 		} else if (parm.equals("DATA")){ // RPI 588
 			print_data[print_level] = true;
@@ -8443,7 +8509,7 @@ private void fp_get_hex(){
 	 *       range of DB and EB will be correctly
 	 *       handled without error.
 	 *   3.  The fp_context is set to significant
-	 *       decimal digits plus 3 to insure 
+	 *       decimal digits plus fp_guard_digts to insure 
 	 *       sufficient significant bits for proper
 	 *       rounding occurs.
 	 *   4.  The preferred DFP exponent  

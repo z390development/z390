@@ -10,7 +10,7 @@
          CICS_WRITEQ
          GBLB  &PARMS_0A02
          GBLB  &ZC_CICS
-         LCLB  &REWRITE,&NOHAND
+         LCLB  &REWRITE,&NOEDF,&NOHAND
          LCLC  &TYPE,&QUEUE,&QNAME,&FROM,&LENGTH,&NUMITEMS,&ITEM
 .* ICTERM AND ICTRAN ARE FOR INTERNAL USE ONLY
          LCLC  &ICTERM,&ICTRAN
@@ -28,21 +28,22 @@
          AIF   (&IP GT &NP).ELOOP
 &PARM    SETC  '&SYSLIST(&IP)'
 .* DISCARDED PARMS
-         AIF   ('&PARM'(1,4)  EQ 'MAIN').PLOOP
-         AIF   ('&PARM'(1,9)  EQ 'AUXILIARY').PLOOP
+         AIF   ('&PARM'(1,4) EQ 'MAIN').PLOOP
+         AIF   ('&PARM'(1,9) EQ 'AUXILIARY').PLOOP
 .*
-         AIF   ('&PARM'(1,6)  EQ 'QUEUE(').QUEUE
-         AIF   ('&PARM'(1,6)  EQ 'QNAME(').QNAME
-         AIF   ('&PARM'(1,5)  EQ 'FROM(').FROM
-         AIF   ('&PARM'(1,7)  EQ 'LENGTH(').LENGTH
-         AIF   ('&PARM'(1,9)  EQ 'NUMITEMS(').NUMITEMS
-         AIF   ('&PARM'(1,5)  EQ 'ITEM(').ITEM
-         AIF   ('&PARM'(1,7)  EQ 'REWRITE').REWRITE
-         AIF   ('&PARM'(1,7)  EQ 'ICTERM(').ICTERM
-         AIF   ('&PARM'(1,7)  EQ 'ICTRAN(').ICTRAN
-         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
-         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
-         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         AIF   ('&PARM'(1,6) EQ 'QUEUE(').QUEUE
+         AIF   ('&PARM'(1,6) EQ 'QNAME(').QNAME
+         AIF   ('&PARM'(1,5) EQ 'FROM(').FROM
+         AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,9) EQ 'NUMITEMS(').NUMITEMS
+         AIF   ('&PARM'(1,5) EQ 'ITEM(').ITEM
+         AIF   ('&PARM'(1,7) EQ 'REWRITE').REWRITE
+         AIF   ('&PARM'(1,7) EQ 'ICTERM(').ICTERM
+         AIF   ('&PARM'(1,7) EQ 'ICTRAN(').ICTRAN
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
 .*
@@ -80,6 +81,10 @@
 .*
 .ICTRAN  ANOP
 &ICTRAN  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -218,6 +223,16 @@
 .ALLDUN  ANOP
          GEN_ST DFHEIBR,P0A02EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P0A02TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0A02EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0A02EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0A02EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0A02NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P0A02NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -229,8 +244,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P0A02RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P0A02EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0A02EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P0A02)       R1=LCL MODULE PARAMETER LIST
+P0A02EDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P0A02NOH,X'FF'   NOHANDLE ?
@@ -243,23 +261,7 @@
 *
          AIF   (&PARMS_0A02).BYP0A02
 &PARMS_0A02 SETB 1
-P0A02    DS    0H
-P0A02FN  DS    XL2                FUNCTION CODE
-P0A02EIB DS    AL4                EIB
-P0A02TCT DS    AL4                TCTTE
-P0A02QNM DS    CL16               QUEUE NAME
-P0A02ITM DS    XL2                ITEM
-P0A02LEN DS    XL2                LENGTH
-P0A02FRM DS    AL4                ADDRESS OF FROM
-P0A02NUM DS    AL4                ADDRESS OF NUMITEMS
-P0A02ICM DS    CL4                ICTERM
-P0A02ICN DS    CL4                ICTRAN
-P0A02NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0A02RSP DS    AL4                RESP
-P0A02RS2 DS    AL4                RESP2
-P0A02END EQU   *                  END MARKER
-         DS    0H
+         P0A02
 *
 .BYP0A02 ANOP
 P0A02BYP_&SYSNDX DS 0H

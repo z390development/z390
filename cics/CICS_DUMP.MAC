@@ -9,7 +9,7 @@
          MACRO
          CICS_DUMP
          GBLB  &PARMS_1C02
-         LCLB  &TRANS,&COMP
+         LCLB  &TRANS,&COMP,&NOEDF
          LCLC  &DCODE,&FROM,&LENGTH,&FLENGTH,&RESP,&RESP2
          LCLC  &SLIST,&LLIST,&NUMSEG
 &NP      SETA  N'&SYSLIST
@@ -27,6 +27,7 @@
          AIF   ('&PARM'(1,12) EQ 'SEGMENTLIST(').SLIST
          AIF   ('&PARM'(1,11) EQ 'LENGTHLIST(').LLIST
          AIF   ('&PARM'(1,12) EQ 'NUMSEGMENTS(').NUMSEG
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').PLOOP
          AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
@@ -67,6 +68,10 @@
 .*
 .NUMSEG  ANOP
 &NUMSEG  SETC  '&PARM'(13,K'&PARM-13)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .RESP    ANOP
@@ -184,6 +189,16 @@
 .ALLDONE ANOP
          GEN_ST DFHEIBR,P1C02EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P1C02TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P1C02EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P1C02EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P1C02EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P1C02NED,X'FF'   SET NOEDF
+         AEND
          AIF   ('&RESP' EQ '').NORESP
          LA    R0,&RESP           ADDRESS OF RESP
          GEN_ST R0,P1C02RSP       SAVE IT
@@ -192,29 +207,18 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P1C02RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P1C02EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P1C02EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P1C02)       R1=LCL MODULE PARAMETER LIST
+P1C02EDF_&SYSNDX EQU *
          BAKR  0,R15              STACK REGS AND GO
 .*
          AIF   (&PARMS_1C02).BYP1C02
          J     P1C02BYP_&SYSNDX   EXIT
 *
 &PARMS_1C02 SETB 1
-P1C02    EQU   *
-P1C02FN  DS    XL2                FUNCTION CODE
-P1C02EIB DS    AL4                EIB
-P1C02TCT DS    AL4                TCTTE
-P1C02DCD DS    CL4                DUMPCODE
-P1C02FRM DS    AL4                FROM
-P1C02LEN DS    AL4                LENGTH/FLENGTH
-P1C02SEG DS    AL4                SEGMENTLIST
-P1C02LST DS    AL4                LENGTHLIST
-P1C02NSG DS    AL4                NUMSEGMENTS
-P1C02CMP DS    X                  X'FF'=COMPLETE
-P1C02RSP DS    AL4                RESP
-P1C02RS2 DS    AL4                RESP2
-P1C02END EQU   *                  END MARKER
-         DS    0H
+         P1C02
 *
 P1C02BYP_&SYSNDX DS 0H
 .BYP1C02 ANOP

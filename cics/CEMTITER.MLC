@@ -1,0 +1,203 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+CEMTITER CSECT
+*
+* CEMT I TER PROCESSOR
+*
+* R1  >>> PARMS
+*
+         USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    C'CEMTITER'
+         STRL  R13,ITERDSA        SAVE Z390CEMT DSA ADDRESS
+         LR    R13,R15            R13 AS BASE
+         LR    R3,R1              SET PARAMETER BASE
+         USING CEMTPARM,R3
+         L     DFHEIBR,EIBADDR    LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,TCTADDR    LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         L     R8,CEMTI           R8=MESSAGE LENGTH
+         MVC   CEMTIREQ,=C'FE00'  SET REQUEST CODE
+         MVC   CEMTITRM,TCTTETI   SET TERMID
+         MVC   CEMTITKN,EIBTASKN  SET TASK NO.
+         TCPIO SEND,MSG=CEMTI,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=300,PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         MVC   SNDITERT,ITERTITL  SET UP TITLE
+         LA    R6,SNDITERL        R6=DESTINATION
+         LA    R8,ITERLIST        R8=SOURCE
+         LA    R7,ITERLSTL        DESTINATION LENGTH
+         LR    R9,R7              SOURCE LENGTH
+         MVCL  R6,R8              INITIALIZE LIST
+         LA    R6,SNDITERL+3      R6=LIST ADDRESS
+         USING ITERDSCT,R6
+         LA    R7,CEMTDATA        R7=RECEIVED DATA
+         USING THRDDSCT,R7
+         LA    R8,11              R8=MAX THREADS + 1 FOR SEQ TERM
+         LA    R9,C'0'            R9=TERMID SUFFIX
+ITERLOOP EQU   *
+         MVC   ITERTERM(3),TCTTETI MOVE TERMID PREFIX
+         STC   R9,ITERTERM+3      MOVE TERMID SUFFIX
+         CHI   R8,1               LAST TERMINAL ?
+         BNE   ITERNTSQ           EXIT IF NOT
+         MVC   ITERTERM,=C'SQ01'  SET SEQ TERM
+ITERNTSQ EQU   *
+         MVC   ITERTYPE,=CL8'UNALLOC' SET UNALLOCATED
+         CLI   THRDTYPE,UNALLOC   IS IT UNALLOCATED ?
+         BE    ITERDNTP           EXIT IF IT IS
+         MVC   ITERCONN,THRDCONN+3 MOVE BINARY CONNID
+         OI    ITERCONN,X'F0'     CONVERT TO CHAR
+         MVC   ITERTYPE,=CL8'LOCAL' SET LOCAL
+         CLI   THRDTYPE,LOCAL     IS IT LOCAL ?
+         BE    ITERDNTP           EXIT IF IT IS
+         MVC   ITERTYPE,=CL8'REMOTE' SET REMOTE
+         CLI   THRDTYPE,REMOTE    IS IT REMOTE ?
+         BE    ITERDNTP           EXIT IF IT IS
+* NON-TERMINAL
+         MVC   ITERTYPE,=C'NON-TERM' SET NON-TERM
+         MVC   ITERTERM(3),=C'!!0' SET NON-TERM PREFIX
+ITERDNTP EQU   *
+         MVC   ITERTRAN,THRDTRAN  MOVE TRANSID
+         LA    R5,INDTAB          R5=STATUS TABLE
+ITERINLP EQU   *
+         CLC   THRDIND,0(R5)      MATCH ?
+         BNE   ITERINC            EXIT IF NOT
+         MVC   ITERIND,1(R5)      SET STATUS
+         B     ITERNXT            EXIT
+*
+ITERINC  EQU   *
+         AHI   R5,12              BUMP TABLE POINTER
+         CLI   0(R5),X'FF'        END OF TABLE ?
+         BNE   ITERINLP           LOOP IF NOT
+         DC    H'0'               BAD TABLE
+*
+ITERNXT  EQU   *
+         AHI   R6,ITERLEN+3       BUMP OUTPUT POINTER
+         AHI   R7,THRDLEN         BUMP INPUT POINTER
+         AHI   R9,1               BUMP TERMID SUFFIX
+         BCT   R8,ITERLOOP        LOOP
+         L     R8,ITERDSA         ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R8
+         EXEC  CICS SEND FROM(SNDITERT) LENGTH(ITERMLEN)
+         PR    ,                  UNSTACK AND RETURN
+*
+TCPIOERR EQU   *
+         L     R8,ITERDSA         ADDRESS Z390CEMT DSA
+         EXEC  CICS SEND FROM(TCPERR) LENGTH(TCPERRL)
+         PR    ,                  UNSTACK AND RETURN
+*
+ITERDSA  DS    AL4                Z390CEMT DSA ADDRESS
+*
+INDTAB   EQU   *
+         DC    X'00',CL11'AVAILABLE'
+         DC    X'01',CL11'OPERATIONAL'
+         DC    X'02',CL11'RUNNING'
+         DC    X'03',CL11'SUS-ENQ'
+         DC    X'04',CL11'SUS-DELAY'
+         DC    X'FE',CL11'SHUT DOWN'
+         DC    X'FF'              STOPPER
+*
+* MESSAGE AREA
+*
+SNDITERT DS    CL(ITERTITE)
+SNDITERL DS    CL(ITERLSTL)
+*
+* STRUCTURES
+*
+* TERM  CONNID  -TYPE-  TRAN  -STATUS--
+* DON0     0    REMOTE  GUI6  RUNNING
+* DON1     1    LOCAL         AVAILABLE
+* DON2     2    LOCAL         SHUT DOWN
+*
+ITERTITL EQU   *
+         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA_MDT),IC
+         DC    C'CEMT I TER'
+         TN3270 (SBA,3,1),(SF,ATT_PA)
+         DC    C'TERM  CONNID  --TYPE--  TRAN  --STATUS---'
+ITERTITE EQU   *-ITERTITL
+*
+ITERLIST EQU   *
+         TN3270 (SBA,4,2)
+         DC    CL(ITERLEN)' '
+         TN3270 (SBA,5,2)
+         DC    CL(ITERLEN)' '
+         TN3270 (SBA,6,2)
+         DC    CL(ITERLEN)' '
+         TN3270 (SBA,7,2)
+         DC    CL(ITERLEN)' '
+         TN3270 (SBA,8,2)
+         DC    CL(ITERLEN)' '
+         TN3270 (SBA,9,2)
+         DC    CL(ITERLEN)' '
+         TN3270 (SBA,10,2)
+         DC    CL(ITERLEN)' '
+         TN3270 (SBA,11,2)
+         DC    CL(ITERLEN)' '
+         TN3270 (SBA,12,2)
+         DC    CL(ITERLEN)' '
+         TN3270 (SBA,13,2)
+         DC    CL(ITERLEN)' '
+         TN3270 (SBA,14,2)
+         DC    CL(ITERLEN)' '
+ITERLSTL EQU   *-ITERLIST
+ITERMLEN DC    AL2(*-ITERTITL)
+*
+CEMTI    DS    0F
+* REQUEST INFO
+         DC    A(CEMTIEND-*)
+CEMTIREQ DS    CL4                REQUEST ID
+CEMTITRM DS    CL4                TERMID
+         DC    C'CEMT'            TRANSID
+         DC    C' '               TRANSID TYPE
+CEMTITKN DS    PL4                TASK NO.
+CEMTIEND EQU   *
+*
+CEMTRCVE DS    0F
+* RECEIVE AREA
+         DC    A(300)             MAX LENGTH
+         DS    CL4                REQUEST CODE
+         DS    CL4                TERMINAL ID
+         DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+         DS    PL4                TASK NO.
+CEMTDATA DS    CL288              RETURNED DATA
+*
+TCPERR   EQU   *
+         TN3270 WCC_KD,(SBA,3,2)
+         DC    C'CEMT TCPIO ERROR'
+TCPERRL  DC    AL2(*-TCPERR)
+*
+         CEMTPARM DSECT
+*
+* DSECT OUTPUT
+*
+ITERDSCT DSECT
+ITERTERM DS    CL4                TERMID
+         DS    CL5
+ITERCONN DS    C                  CONNID
+         DS    CL4
+ITERTYPE DS    CL8                LOCAL/REMOTE/NON-TERM
+         DS    CL2
+ITERTRAN DS    CL4                TRANSID
+         DS    CL2
+ITERIND  DS    CL11               STATUS
+ITERLEN  EQU   *-ITERDSCT
+*
+         THRDDSCT                 TERMINAL THREAD CONTROL AREA
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHEISTG                 DSA
+         TN3270 SYMBOLS
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+         END
+

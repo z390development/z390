@@ -11,6 +11,8 @@ LCL0404  CSECT
 * R1  >>> P0404 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0404'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,8 +33,22 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0404NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ             ERROR IF IT IS
          L     R1,P0404FRM        R1=FROM ADDRESS
          LH    R0,P0404LEN        R0=LENGTH
+         LTR   R0,R0              VALID LENGTH ?
+         BNP   LENGERR            EXIT IF NOT
          CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
          BNE   NOTSEQ             EXIT IF NOT
          L     R14,P0404FRM       R14=FROM ADDRESS
@@ -55,25 +71,37 @@ NORESP2  EQU   *
          LR    R1,R14             RESTORE FROM ADDRESS
 *
 NOTSEQ   EQU   *
-         CLI   TCTTEEDF,X'FF'     EDF ON ?
-         BNE   NOEDFB             EXIT IF NOT
-         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
-         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
-* R0,R1 ARE NOT RESTORED BY THE STACKING PROCESS
-         LR    R4,R0              SAVE R0
-         LR    R5,R1              SAVE R1
-         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
-         BAKR  0,R15              STACK REGS AND GO
-         LR    R0,R4              RESTORE R0
-         LR    R1,R5              RESTORE R1
-NOEDFB   EQU   *
          TPUT  (R1),(R0),FULLSCR  SEND TN3270 DATA STREAM
+         B     RETURN             EXIT
+*
+INVREQ   EQU   *
+* INVOKE INVREQ
+         MVI   EIBRCODE,X'E0'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         B     DORESP             EXIT
+*
+LENGERR  EQU   *
+* INVOKE LENGERR
+         MVHHI EIBRCODE,X'E104'   SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
+DORESP   EQU   *
+         ICM   R14,15,P0404RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P0404RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         CLI   P0404NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
          CLI   TCTTEEDF,X'FF'     EDF ON ?
          BNE   NOEDFA             EXIT IF NOT
          MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
          MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
          L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
          BAKR  0,R15              STACK REGS AND GO
+*
 NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *

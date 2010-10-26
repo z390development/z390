@@ -12,7 +12,7 @@ public class pz390 {
 	 * 
 	 * z390 portable mainframe assembler and emulator.
 	 * 
-	 * Copyright 2008 Automated Software Tools Corporation
+	 * Copyright 2010 Automated Software Tools Corporation
 	 * 
 	 * z390 is free software; you can redistribute it and/or modify it under the
 	 * terms of the GNU General Public License as published by the Free Software
@@ -298,6 +298,10 @@ public class pz390 {
 	 * 01/10/10 RPI 1103 correct trace for EX to show R vs F.
 	 * 02/04/10 RPI 1092 make PD compare routines public for zsort keys
 	 * 02/25/10 RPI 1111 correct PR to only restore 2-14 vs 1-14
+	 * 08/06/10 RPI 1125 add POPCNT per SHARE Pres. 08/04/10
+	 * 10/11/10 RPI 1125 add SRNMB
+	 * 10/21/10 RPI 1125 add B390-B392
+	 * 10/22/10 RPI 1124 add alt_rnd_mode for "?" instr, LEDBR etc.
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -463,6 +467,7 @@ public class pz390 {
     BigInteger fp_dd_mod_bi = new BigInteger("10000000000000000");
 	// fp_ld_mod_bi to truncate digits         1234567890123456789012345678901234    
     BigInteger fp_ld_mod_bi = new BigInteger("10000000000000000000000000000000000");
+    boolean alt_rnd_mode = false; // RPI 1125 set alternate round mode if ?=A
     int fp_bfp_rnd_mask = 0x00000003; // bfp rounding mode
 	int fp_bfp_rnd_not = 0xfffffffc; // not round mode bits
 	int fp_bfp_rnd_even = 0x0; // round to nearest (default)
@@ -1296,6 +1301,27 @@ public class pz390 {
     int sdwa_rc4  = zcvt_sdwa + 0x300; // SDWA RC4 registers extension RPI 834
     int sdwa_g64  = sdwa_rc4  + 0x00;  // SDWA RC4 extension 16 - 64 bit regs at error RPI 845
 	/*
+	 * byte bit count lookup table
+	 */
+    byte[] bit_cnt = {  // RPI 1125 for use by POPCNT instr
+            00,01,01,02,01,02,02,03,01,02,02,03,02,03,03,04, //  0
+            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  1
+            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  2
+            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  3
+            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  4
+            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  5
+            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  6
+            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  7
+            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  8
+            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  9
+            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  A
+            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  B
+            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  C
+            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  D
+            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  E
+            04,05,05,06,05,06,06,07,05,06,06,07,06,07,07,8  //  F
+    };
+    /*
 	 * opcode lookup tables unique to ez390
 	 */
 	int[] op_type_offset = new int[256];
@@ -1654,6 +1680,7 @@ public class pz390 {
 		       70,  //      "B2B0" "STFLE" "S" 7 Z9-3
 		       70,  // 3380 "B2B1" "STFL" "S" 7
 		       70,  // 3390 "B2B2" "LPSWE" "S" 7
+		       70,  // 3392 "B2B8" "SRNMB" "S" 7 RPI 1125
 		       71,  // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
 		       72,  // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
 		       70,  // 3400 "B2FF" "TRAP4" "S" 7
@@ -1708,10 +1735,10 @@ public class pz390 {
 		       142,  // 3830 "B341" "LNXBR" "RRE" 14
 		       142,  // 3840 "B342" "LTXBR" "RRE" 14
 		       142,  // 3850 "B343" "LCXBR" "RRE" 14
-		       142,  // 3860 "B344" "LEDBR" "RRE" 14
-		       142,  // 3870 "B345" "LDXBR" "RRE" 14
-		       142,  // 3880 "B346" "LEXBR" "RRE" 14
-		       340,  // 3890 "B347" "FIXBR" "RRF2" 34
+		       142,  // 3860 "B344" "LEDBR?" "RRE" 53 RPI 1125
+		       142,  // 3870 "B345" "LDXBR?" "RRE" 53 RPI 1125
+		       142,  // 3880 "B346" "LEXBR?" "RRE" 53 RPI 1125
+		       340,  // 3890 "B347" "FIXBR?" "RRF2" 54 RPI 1125
 		       142,  // 3900 "B348" "KXBR" "RRE" 14
 		       142,  // 3910 "B349" "CXBR" "RRE" 14
 		       142,  // 3920 "B34A" "AXBR" "RRE" 14
@@ -1721,11 +1748,11 @@ public class pz390 {
 		       340,  // 3960 "B350" "TBEDR" "RRF2" 34
 		       340,  // 3970 "B351" "TBDR" "RRF2" 34
 		       300,  // 3980 "B353" "DIEBR" "RRF3" 30
-		       340,  // 3990 "B357" "FIEBR" "RRF2" 34
+		       340,  // 3990 "B357" "FIEBR?" "RRF2" 54 RPI 1125
 		       142,  // 4000 "B358" "THDER" "RRE" 14
 		       142,  // 4010 "B359" "THDR" "RRE" 14
 		       300,  // 4020 "B35B" "DIDBR" "RRF3" 30
-		       340,  // 4030 "B35F" "FIDBR" "RRF2" 34
+		       340,  // 4030 "B35F" "FIDBR?" "RRF2" 54 RPI 1125
 		       142,  // 4040 "B360" "LPXR" "RRE" 14
 		       142,  // 4050 "B361" "LNXR" "RRE" 14
 		       142,  // 4060 "B362" "LTXR" "RRE" 14
@@ -1746,6 +1773,9 @@ public class pz390 {
 		       142,  // 4170 "B384" "SFPC" "RRE" 14
 		       142,  // 4175 "B385" "SFASR" "RRE" 14 DFP 57
 		       142,  // 4180 "B38C" "EFPC" "RRE" 14
+		       301,  //      "B390" "CELFBR" "RRF3" 30 RPI 1125 Z196
+               301,  //      "B391" "CDLFBR" "RRF3" 30 RPI 1125 Z196
+               301,  //      "B392" "CXLFBR" "RRF3" 30 RPI 1125 Z196
 		       146,  // 4190 "B394" "CEFBR" "RRE" 14 // RPI 643
 		       146,  // 4200 "B395" "CDFBR" "RRE" 14 // RPI 643
 		       146,  // 4210 "B396" "CXFBR" "RRE" 14 // RPI 643
@@ -1927,6 +1957,7 @@ public class pz390 {
 		       144,  // 30 "B9BD" "TRTRE" "RRF5" 39  RPI 817
 		       144,  // 5110 "B9BE" "SRSTU" "RRE" 14
 		       144,  // 40 "B9BF" "TRTE" "RRF5" 39  RPI 817
+		       144,  // 5115 "b9E1" "POPCNT" "RRE" 14 RPI 1125
 		       100,  // 5120 "BA" "CS" "RS" 10
 		       100,  // 5130 "BB" "CDS" "RS" 10
 		       101,  // 5140 "BD" "CLM" "RS" 10
@@ -7434,7 +7465,24 @@ public class pz390 {
 	         psw_check = false;
 	    	 ins_setup_rrf5();
 	    	 exec_trt_ext(false);;
-	         break;	
+	         break;
+	     case 0xE1:  // 5115 "B9E1" "POPCNT" "RRE" 14 RPI 1125
+		     psw_check = false;
+			 ins_setup_rre();
+			 reg.put(rf1++,bit_cnt[reg.get(rf2++) & 0xff]);
+			 reg.put(rf1++,bit_cnt[reg.get(rf2++) & 0xff]);
+			 reg.put(rf1++,bit_cnt[reg.get(rf2++) & 0xff]);
+			 reg.put(rf1++,bit_cnt[reg.get(rf2++) & 0xff]);
+			 reg.put(rf1++,bit_cnt[reg.get(rf2++) & 0xff]);
+			 reg.put(rf1++,bit_cnt[reg.get(rf2++) & 0xff]);
+			 reg.put(rf1++,bit_cnt[reg.get(rf2++) & 0xff]);
+			 reg.put(rf1++,bit_cnt[reg.get(rf2++) & 0xff]);
+			 if (reg.getLong(rf1) == 0){
+				 psw_cc = psw_cc0;
+			 } else {
+				 psw_cc = psw_cc2;
+			 }
+			 break;
 		}
 	}
 	private void ins_C0XX(){
@@ -11304,6 +11352,16 @@ public class pz390 {
 		tz390.op_code_index = tz390.find_key_index('H', hex_key);
 		if (tz390.op_code_index != -1) {
 			ins_name = tz390.op_name[tz390.op_code_index];
+			alt_rnd_mode = false; // RPI 1125
+			if (ins_name.charAt(ins_name.length()-1) == '?'){ // RPI 1125
+				// replace ? with A if bytes 2-3 not zero else remove ?
+				if (mem_byte[ins_loc+2] == 0){
+					ins_name = ins_name.substring(0,ins_name.length()-1);
+				} else {
+					alt_rnd_mode = true;
+					ins_name = ins_name.substring(0,ins_name.length()-1).concat("A");
+				}
+			}	
 			if (ins_name.length() < 5) {
 				ins_name = (ins_name + "     ").substring(0, 5);
 			}
@@ -17343,10 +17401,17 @@ break;
 			            + get_ins_target(bd2_loc);
 			break;
 		case 340: // RPI 206 "RRF2" FIEBR (r1,m3,r2 maps to oooo3012)
-			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
+			if (alt_rnd_mode){ // RPI 1125
+				trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
+				    + get_fp_long_hex(rf1) + " M3=" + tz390.get_hex(mf3, 1)
+				    + " F" + tz390.get_hex(mf2, 1) + "="
+				    + get_fp_long_hex(rf2) + " M4=" + tz390.get_hex(mf4, 1);
+			} else {
+			    trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 					+ get_fp_long_hex(rf1) + " M3=" + tz390.get_hex(mf3, 1)
 					+ " F" + tz390.get_hex(mf2, 1) + "="
 					+ get_fp_long_hex(rf2);
+			}
 			break;
 		case 341: // b398-b39a,b3b8-b3ba  32 bit reg
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="

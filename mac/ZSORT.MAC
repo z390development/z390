@@ -9,6 +9,8 @@
 .* 11/07/09 RPI 865 ADD INTERNAL SORT CALLED ZSORT USING SVC X'A1'
 .* 03/14/10 RPI 1110 CHANGE MEMORY=0 TO ALLOC LARGEST BLOCK AVAIL.
 .* 05/24/10 RPI 1116 CORRECT TYPE AND ORDER FIELDS TO 2 BYTES      
+.* 07/26/10 RPI 865  CORRECT OFFSET TO KEY PARMS
+.* 07/26/10 RPI 865  CORRECT EXPANDED KEY TYPES 1-7
 .*********************************************************************
 .* ISORT - INITIALIZE FOR INTERNAL SORT
 .* PUT   - PUT UNOSRTED RECORD TO INTERNAL SORT
@@ -149,18 +151,20 @@
          AWHILE (&I LE N'&FIELDS)
          DC    A(&FIELDS(&I)-1) ZSORT KEY OFFSET
          DC    A(&FIELDS(&I+1)) ZSORT KEY LENGTH
-               AIF ('&FIELDS(&I+2)' EQ 'CH'                            X
-                   OR '&FIELDS(&I+2)' EQ 'BI'                          X
-                   OR '&FIELDS(&I+2)' EQ 'AC')
-         DC    AL2(1) ZSORT KEY TYPE CH,BI,AC UNSIGNED BINARY
+               AIF ('&FIELDS(&I+2)' EQ 'AC')                            X
+         DC    AL2(1) ZSORT KEY TYPE AC ASCII CHARACTER
+               AELSEIF ('&FIELDS(&I+2)' EQ 'BI')                         X
+         DC    AL2(2) ZSORT KEY TYPE BI UNSIGNED BINARY
+               AELSEIF ('&FIELDS(&I+2)' EQ 'CH')
+         DC    AL2(3) ZSORT KEY TYPE CH EBCDIC CHARACTER
                AELSEIF ('&FIELDS(&I+2)' EQ 'FI')
-         DC    AL2(2) ZSORT KEY TYPE FI SIGNED BINARY (FHQ)
+         DC    AL2(4) ZSORT KEY TYPE FI SIGNED BINARY (FHQ)
                AELSEIF ('&FIELDS(&I+2)' EQ 'FL')
-         DC    AL2(3) ZSORT KEY TYPE FL FLOATING POINT
+         DC    AL2(5) ZSORT KEY TYPE FL FLOATING POINT
                AELSEIF ('&FIELDS(&I+2)' EQ 'PD')
-         DC    AL2(4) ZSORT KEY TYPE PD PACKED DECIMAL     
+         DC    AL2(6) ZSORT KEY TYPE PD PACKED DECIMAL     
                AELSEIF ('&FIELDS(&I+2)' EQ 'ZD')
-         DC    AL2(5) ZSORT KEY TYPE ZD ZONDED DECIMAL      
+         DC    AL2(7) ZSORT KEY TYPE ZD ZONED DECIMAL      
                AELSE                                     
                    MNOTE 8,'ZSORT KEY TYPE UNKNOWN - &FIELD(&I+2)'
                    MEXIT
@@ -179,20 +183,22 @@
          DC    X'80' OVERLAY VL BIT FOR END OF LIST
          ORG
        AIF   ('&LRECL'(1,1) EQ '(')
-         ST    &LRECL(1),4(1)
+         ST    &LRECL(1),0(1)
        AEND
        AIF   ('&MEMORY'(1,1) EQ '(')      
-         ST    &MEMORY(1),16(1)
+         ST    &MEMORY(1),4(1)
        AEND
          :&I SETA 1
+         :&OFFSET SETA 8         RPI 865
          AWHILE (&I LE N'&FIELDS)
                AIF ('&FIELDS(&I)'(1,1) EQ '(') 
-         ST    &FIELDS(&I,1),&I-1(1)       STORE AIX OFFSET REG
+         ST    &FIELDS(&I,1),&OFFSET.(1)       STORE AIX OFFSET REG
                AEND
                AIF ('&FIELDS(&I+1)'(1,1) EQ '(') 
-         ST    &FIELDS(&I+1,1),&I+4-1(1)   STORE AIX KEY LEN REG
+         ST    &FIELDS(&I+1,1),&OFFSET+4(1)   STORE AIX KEY LEN REG
                AEND
-               :&I SETA &I+4
+               :&OFFSET SETA &OFFSET+12
+               :&I      SETA &I+4
          AEND
          AEND  
 *

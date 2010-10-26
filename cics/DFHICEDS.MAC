@@ -11,6 +11,9 @@
 *
 DFHICEDS DSECT
 ICECHNF  DS    AL4                FORWARD CHAIN
+ICETYPE  DS    X                  ICE TYPE
+IC_START EQU   X'01'
+IC_DELAY EQU   X'02'
 ICEXTOD  DS    XL8                EXPIRY TIME
 ICETRNID DS    CL4                TRANSACTION ID
 ICETRMID DS    CL4                TERMINAL ID

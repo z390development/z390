@@ -11,6 +11,8 @@ LCL020C  CSECT
 * R1  >>> P020C BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL020C'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P020CNED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          USING DFHADBLK,R14
          ICM   R14,15,P020CAID    ANY AID BLOCKS ?
          BZ    NOAID              EXIT IF NONE
@@ -90,17 +102,19 @@ NOHCN    EQU   *
          MVC   ABDACTIV,=X'FFFF'  SET ENTRY INACTIVE
 NOABD    EQU   *
          DROP  R14
+         CLI   P020CNED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
-P020C    DSECT
-P020CFN  DS    XL2                FUNCTION CODE
-P020CEIB DS    AL4                EIB
-P020CTCT DS    AL4                TCTTE
-P020CAID DS    AL4                AID BLOCK ADDRESS
-P020CHCN DS    AL4                HANDLE CONDITION BLOCK ADDRESS
-P020CRSP DS    AL4                RESP
-P020CRS2 DS    AL4                RESP2
-P020CEND EQU   *                  END MARKER
+         P020C DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE
@@ -113,6 +127,5 @@ P020CEND EQU   *                  END MARKER
 * R10 TCTTE
 * R11 EIB
 * R13 BASE 1
-*
          END
 

@@ -13,8 +13,10 @@ GBLFE01  SUBENTRY
 * R1  >>> WTOMSG, REQDSECT, CONNID, TRCEZ390, CMD1LEN, CMD0+1
 *         +24    +28/IND  +32      +36     +40       +44/IND +48/IND
 *         CMD1+4,CICSADDR,TRMPREFX,INIDATE,THREADS+3,LOCALS, REMOTES
-*         +52       +56       +60     +64     +68      +72
-*         MAXLOCS+3,MAXREMS+3,INITRAN,CWALENG,KCPTRPOS,INISEQT
+*         +52      +56       +60       +64       +68     +72
+*         NONTERMS,MAXLOCS+3,MAXREMS+3,MAXNONT+3,INITRAN,CWALENG
+*         +76      +80
+*         KCPTRPOS,INISEQT
 * R14 = RETURN ADDRESS
          LR    R3,R1              SAVE PARM POINTER
          L     R4,12(R3)          TRCEZ390 ADDRESS
@@ -50,6 +52,8 @@ CICSTRDN EQU   *
          MVC   ISYSTERM,REQTERM   PASS BACK TERMID
          L     R4,16(R3)          CMD1LEN ADDRESS
          LH    R6,0(R4)           LENGTH OF ENV VARIABLE
+         LTR   R6,R6              ANY JARPATH ?
+         BZ    CEMTISCP           EXIT IF NONE
          L     R4,20(R3)          CMD0+1 ADDRESS
          CLI   0(R4),C' '         ANY DRIVE ID ?
          BE    CEMTISNV           EXIT IF NONE
@@ -80,22 +84,27 @@ CEMTNOCP EQU   *
          L     R4,40(R3)          ADDRESS OF THREADS+3
          MVC   ISYSDTMX,0(R4)     MOVE MAXTHREADS
          L     R4,44(R3)          ADDRESS OF LOCALS
+         MVC   ISYSDLUS,3(R4)     MOVE LOCAL TERMINALS IN USE
          L     R8,0(R4)           R8=LOCALS IN USE
          L     R6,48(R3)          ADDRESS OF REMOTES
-         A     R8,0(R6)           +REMOTES IN USE=THREADS IN USE
-         STC   R8,ISYSDTUS        SAVE IT
-         MVC   ISYSDLUS,3(R4)     MOVE LOCAL TERMINALS IN USE
          MVC   ISYSDRUS,3(R6)     MOVE REMOTE TERMINALS IN USE
-         L     R4,52(R3)          ADDRESS OF MAXLOCS+3
+         A     R8,0(R6)           +REMOTES IN USE
+         L     R6,52(R3)          ADDRESS OF NON-TERMS
+         MVC   ISYSDNUS,3(R6)     MOVE NON-TERMINALS IN USE
+         A     R8,0(R6)           +NON-TERMS IN USE=THREADS IN USE
+         STC   R8,ISYSDTUS        SAVE IT
+         L     R4,56(R3)          ADDRESS OF MAXLOCS+3
          MVC   ISYSDLCL,0(R4)     MOVE LOCAL_TERMINALS
-         L     R4,56(R3)          ADDRESS OF MAXREMS+3
+         L     R4,60(R3)          ADDRESS OF MAXREMS+3
          MVC   ISYSDRMT,0(R4)     MOVE REMOTE_TERMINALS
-         L     R4,60(R3)          ADDRESS OF INITIAL_TRANSID
+         L     R4,64(R3)          ADDRESS OF MAXNONT+3
+         MVC   ISYSDNON,0(R4)     MOVE NON-TERMINALS
+         L     R4,68(R3)          ADDRESS OF INITIAL_TRANSID
          MVC   ISYSDINT,0(R4)     MOVE INITIAL_TRANSID
-         L     R4,64(R3)          ADDRESS OF CWASIZE
+         L     R4,72(R3)          ADDRESS OF CWASIZE
          MVC   ISYSDCWA,0(R4)     MOVE CWASIZE
          MVC   ISYSDTRL,=C'NO '   ASSUME TRACE_LOCALS=NO
-         L     R4,68(R3)          ADDRESS OF KCPTRPOS
+         L     R4,76(R3)          ADDRESS OF KCPTRPOS
          CLI   0(R4),C'L'         IS TRACE SET ?
          BNE   CEMTISTN           EXIT IF NOT
          MVC   ISYSDTRL,=C'YES'   TRACE_LOCALS=YES
@@ -112,7 +121,7 @@ CEMTISTN EQU   *
          MVC   ISYSDTRZ,=C'YES'   MUST BE TRACE_Z390CICS=YES
 CEMTISOK EQU   *
          MVC   ISYSDSEQ,=C'NO   ' ASSUME SEQ_TERM=NO
-         L     R4,72(R3)          ADDRESS OF INISEQT
+         L     R4,80(R3)          ADDRESS OF INISEQT
          CLI   0(R4),C'Y'         IS IT YES ?
          BNE   CEMTISNY           EXIT IF NOT
          MVC   ISYSDSEQ,=C'YES  ' SEQ_TERM=YES
@@ -166,6 +175,8 @@ ISYSDLCL DS    X                  LOCAL_TERMINALS
 ISYSDLUS DS    X                  LOCAL TERMINALS IN USE
 ISYSDRMT DS    X                  REMOTE_TERMINALS
 ISYSDRUS DS    X                  REMOTE TERMINALS IN USE
+ISYSDNON DS    X                  NON-TERMINALS
+ISYSDNUS DS    X                  NON-TERMINALS IN USE
 ISYSDINT DS    CL4                INITIAL_TRANSID
 ISYSDCWA DS    XL4                CWASIZE
 ISYSDTRL DS    CL3                TRACE_LOCALS

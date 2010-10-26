@@ -8,7 +8,7 @@
          CICS_RETRIEVE
          GBLB  &PARMS_100A
          GBLB  &ZC_CICS
-         LCLB  &NOHAND
+         LCLB  &NOEDF,&NOHAND
          LCLC  &INTO,&SET,&LENGTH,&RTRANID,&RTERMID,&QUEUE
          LCLC  &RESP,&RESP2
 &NP      SETA  N'&SYSLIST
@@ -23,6 +23,7 @@
          AIF   ('&PARM'(1,9) EQ 'RTRANSID(').RTRANID
          AIF   ('&PARM'(1,8) EQ 'RTERMID(').RTERMID
          AIF   ('&PARM'(1,6) EQ 'QUEUE(').QUEUE
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
@@ -51,6 +52,10 @@
 .*
 .QUEUE   ANOP
 &QUEUE   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -107,6 +112,16 @@
 .DOCALL  ANOP
          GEN_ST DFHEIBR,P100AEIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P100ATCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P100AEDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P100AEDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P100AEDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P100ANED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P100ANOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -118,8 +133,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P100ARS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P100AEDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P100AEDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P100A)       R1=LCL MODULE PARAMETER LIST
+P100AEDF_&SYSNDX EQU *
          BAKR  0,R15              STACK REGS AND GO
 .*
          AIF   ('&SET' EQ '').NOSET2
@@ -148,24 +166,7 @@
 *
          AIF   (&PARMS_100A).BYP100A
 &PARMS_100A SETB 1
-P100A    DS    0H
-P100AFN  DS    XL2                FUNCTION CODE
-P100AEIB DS    AL4                EIB
-P100ATCT DS    AL4                TCTTE
-P100AINT DS    AL4                ADDRESS OF INTO
-P100ASET DS    X                  FF=SET IS SPECIFIED
-         DS    X
-P100ASTA DS    AL4                ADDRESS FOR SET
-P100ALEN DS    AL4                ADDRESS OF LENGTH
-P100ARTN DS    AL4                ADDRESS OF RTRANSID
-P100ARTM DS    AL4                ADDRESS OF RTERMID
-P100AQNM DS    AL4                ADDRESS OF QUEUE NAME
-P100ANOH DS    X                  FF=NOHANDLE
-         DS    X
-P100ARSP DS    AL4                RESP
-P100ARS2 DS    AL4                RESP2
-P100AEND EQU   *                  END MARKER
-         DS    0H
+         P100A
 *
 .BYP100A ANOP
 P100ABYP_&SYSNDX DS 0H

@@ -22,6 +22,7 @@ ICPITRAN DS    CL4                INITIATED TRANSACTION ID
 ICPITERM DS    CL4                INITIATED TERMINAL ID
 ICPREQID DS    XL8                REQID
 ICPRETVE DS    X                  FF=TS Q DATA WRITTEN
+ICPEDFOF DS    X                  FF=TURN EDF OFF
          DS    0D
 ICPREFIX EQU   *-DFHICBLK
          MEND

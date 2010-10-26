@@ -66,6 +66,40 @@
                RECFORM=FIXED,                                          X
                SERVREQ=(READ,BROWSE,UPDATE,DELETE,ADD)
 *
+* TEST NON-TERM
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYWORD01,                                       X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=FIXED,                                          X
+               SERVREQ=BROWSE
+*
+* TEST NON-TERM
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYWORD02,                                       X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=FIXED,                                          X
+               SERVREQ=BROWSE
+*
+* TEST KSDS WITH AIXS
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYKSDS01,                                       X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=FIXED,                                          X
+               SERVREQ=BROWSE
+* AIX ON SURNAME - UNIQUEKEY
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=AIXSURN,                                        X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=FIXED,                                          X
+               SERVREQ=BROWSE
+*
+* AIX ON NAME - NOUNIQUEKEY
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=AIXNAME,                                        X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=FIXED,                                          X
+               SERVREQ=BROWSE
+*
          COPY   DFHFCTUS
 *
          DFHFCT TYPE=FINAL

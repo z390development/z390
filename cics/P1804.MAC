@@ -1,0 +1,50 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P1804 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P1804    DSECT
+         AELSE
+P1804    DS    0H
+         AEND
+P1804FN  DS    XL2                FUNCTION CODE
+P1804EIB DS    AL4                EIB
+P1804TCT DS    AL4                TCTTE
+P1804MSA DS    AL4                MAPSET ADDRESS
+P1804MAP DS    CL7                MAP NAME
+         DS    X
+P1804MLN DS    XL2                MAPSET LENGTH
+P1804DSC DS    AL4                STRUCTURE ADDRESS
+P1804DSL DS    XL2                STRUCTURE LENGTH
+P1804OUT DS    AL4                OUTPUT AREA
+P1804OAL DS    XL2                OUTPUT AREA LENGTH (FOR SET)
+P1804CRS DS    XL2                CURSOR POSITION (X'FFFF'=NONE)
+P1804OPT DS    X                  OPTION BITS...
+P1804ERS EQU   X'80'                 ERASE
+P1804EAU EQU   X'40'                 ERASEAUP
+P1804CSM EQU   X'20'                 SYMBOLIC CURSOR
+P1804MNY EQU   X'10'                 MAPONLY
+P1804DNY EQU   X'08'                 DATAONLY
+P1804ALM EQU   X'04'                 ALARM
+P1804FKB EQU   X'02'                 FREEKB
+P1804FRS EQU   X'01'                 FRSET
+         DS    X
+P1804SET DS    X                  FF=SET SPECIFIED
+         DS    X
+P1804EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P1804EDS DS    AL4                DSA ADDRESS FOR EDF
+P1804EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P1804EDL DS    XL2                DSA LENGTH FOR EDF
+P1804NED DS    X                  FF=NOEDF
+         DS    X
+P1804NOH DS    X                  FF=NOHANDLE
+         DS    X
+P1804RSP DS    AL4                RESP
+P1804RS2 DS    AL4                RESP2
+P1804END EQU   *                  END MARKER
+         MEND
+

@@ -11,6 +11,8 @@ LCL020A  CSECT
 * R1  >>> P020A BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL020A'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P020ANED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
 * ONLY THE FIRST CONDITION BLOCK IS ACQUIRED HERE
 * PUSH ACQUIRES MORE
          L     R1,P020AHCN        R1=A(DFHEIHCN)
@@ -70,17 +82,19 @@ SETHCN   EQU   *
          AHI   R4,1               BUMP CONDITION POINTER
          BCT   R5,SETHCN          LOOP
 ENDCOND  EQU   *
+         CLI   P020ANED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
-P020A    DSECT
-P020AFN  DS    XL2                FUNCTION CODE
-P020AEIB DS    AL4                EIB
-P020ATCT DS    AL4                TCTTE
-P020AHCN DS    AL4                A(DFHEIHCN)
-P020ACND DS    XL30               ROOM FOR 30 CONDITIONS
-P020ARSP DS    AL4                RESP
-P020ARS2 DS    AL4                RESP2
-P020AEND EQU   *                  END MARKER
+         P020A DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

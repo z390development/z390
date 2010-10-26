@@ -11,6 +11,8 @@ LCL1008  CSECT
 * R1  >>> P1008 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL1008'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,12 +33,20 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P1008NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
 * SCAN THE PCT TO VERIFY THE TRANSID
          CLC   P1008TRN,=C'CEDF'  IS IT CEDF ?
          BE    TRANERR            ERROR IF IT IS
-         EXEC  CICS LOAD PROGRAM('DFHPCT') SET(R4) NOHANDLE
-         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
-         BNZ   DORESP             EXIT IF THERE IS
+         L     R4,TCTTEPCT        R4=PCT ADDRESS
          MVC   EIBFN,P1008FN      SET EIBFN
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
@@ -50,9 +60,6 @@ PCTLOOP  EQU   *
          B     PCTLOOP            LOOP
 *
 PCTFOUND EQU   *
-         EXEC  CICS RELEASE PROGRAM('DFHPCT') NOHANDLE
-         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
-         BNZ   DORESP             EXIT IF THERE IS
          MVC   EIBFN,P1008FN      SET EIBFN
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
@@ -241,7 +248,8 @@ GOTREQ   EQU   *
          LH    R4,P1008LEN        LENGTH OF DATA (IF ANY)
          AHI   R4,16              + LENGTH OF RTRANSID/RTERMID/QUEUE
          STH   R4,TSACLEN         SAVE TS LENGTH
-         EXEC  CICS GETMAIN LENGTH(TSACLEN) SET(R4) INITIMG(0) NOHANDLE
+         EXEC  CICS GETMAIN LENGTH(TSACLEN) SET(R4) INITIMG(0)         X
+               NOHANDLE
          MVC   0(4,R4),P1008RTN   MOVE RTRANSID
          MVC   4(4,R4),P1008RTM   MOVE RTERMID
          MVC   8(8,R4),P1008QNM   MOVE QUEUE
@@ -256,8 +264,7 @@ DOWQTS   EQU   *
 * IF IOERR OCCURS IT BELONGS TO IC START, NOT TO THE WRITEQ TS
          EXEC  CICS WRITEQ TS QUEUE(EIBREQID)                          X
                FROM(0(R4)) LENGTH(TSACLEN) NUMITEMS(TSNUMIT)           X
-               ICTRAN(P1008TRN) ICTERM(P1008TRM)                       X
-               NOHANDLE
+               ICTRAN(P1008TRN) ICTERM(P1008TRM) NOHANDLE
          CLC   EIBRESP,DFHRESP(IOERR) IS IT IOERR ?
          BE    IOERR              EXIT IF IT IS
          OC    EIBRESP,EIBRESP    ANY OTHER WRITEQ TS ERROR ?
@@ -286,16 +293,32 @@ SENDIC   EQU   *
          TCPIO SEND,MSG=(R5),LMSG==A(ICPREFIX),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   INVREQ             ERROR IF BAD
+ICPRCV   EQU   *
 * GET THE RESPONSE
          TCPIO RECEIVE,MSG=(R5),LMSG==A(ICPREFIX),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   INVREQ             ERROR IF BAD
+         CLC   ICPFN,=C'10FF'     UNSOL IC SCAN ?
+         BE    ICPRCV             EXIT IF IT IS
+         CLC   ICPFN,=C'1008'     WHAT WE ARE EXPECTING ?
+         BE    ICPRCK             EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+ICPRCK   EQU   *
          OC    ICPRETCD,ICPRETCD  BAD RETURN CODE ?
-         BZ    RETURN             EXIT IF NONE
+         BZ    DOICSCAN           EXIT IF NONE
          CLC   ICPRETCD,DFHRESP(TERMIDERR) TERMIDERR ?
          BE    TERMERR            EXIT IF IT IS
 * SERVER HAS SENT UNKNOWN VALUE IN ICPRETCD
          B     INVREQ             SHOULD NOT OCCUR
+*
+DOICSCAN EQU   *
+* AFTER SUCCESSFUL START, DO AN IC SCAN
+* NON-TERM TASKS MAY NOT FIRE IF ALL TERMINALS ARE IN A WAIT STATE
+         MVC   KCPICTRM,EIBTRMID  SET TERMID
+         TCPIO SEND,MSG=KCPICEQ,LMSG=12,PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+         B     RETURN             RETURN
 *
 INVREQ4  EQU   *
          MVC   EIBRESP2,=F'4'     SET EIBRESP2=BAD HOURS
@@ -327,9 +350,6 @@ IOERR    EQU   *
          B     DORESP             EXIT
 *
 TRANERR  EQU   *
-         EXEC  CICS RELEASE PROGRAM('DFHPCT') NOHANDLE
-         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
-         BNZ   DORESP             EXIT IF THERE IS
          MVC   EIBFN,P1008FN      SET EIBFN
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
          MVI   EIBRCODE,X'11'     SET EIBRCODE
@@ -362,9 +382,19 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
+         CLI   P1008NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
-WORK     DC    PL8'0'             WOTK AREA
+WORK     DC    PL8'0'             WORK AREA
 INTDEC   DC    PL8'0'             INTERVAL IN 0.01 SECS
 INTCPY   DS    PL4                INTERVAL COPY AREA    0HHMMSS+
 INTBIN   DS    FL4                INTERVAL IN 0.01 SECS BINARY
@@ -378,33 +408,14 @@ RETVE    DS    X                  FF=TS Q DATA WRITTEN
 TSACLEN  DS    XL2                ACTUAL TS LENGTH
 TSNUMIT  DS    XL2                NUMITEMS
 *
-P1008    DSECT
-P1008FN  DS    XL2                FUNCTION CODE
-P1008EIB DS    AL4                EIB
-P1008TCT DS    AL4                TCTTE
-P1008TRN DS    CL4                INITIATED TRANSID
-P1008TRM DS    CL4                INITIATED TERMID (BLANK IF NON-TERM)
-P1008FRM DS    AL4                ADDRESS OF FROM
-P1008LEN DS    XL2                LENGTH
-P1008RTN DS    CL4                RTRANSID
-P1008RTM DS    CL4                RTERMID
-P1008QNM DS    CL8                QUEUE NAME
-P1008REQ DS    CL8                REQID
-P1008INT DS    X                  FF=INTERVAL/TIME
-         DS    X
-P1008TME DS    X                  00=INTERVAL/AFTER FF=TIME/AT
-         DS    X
-P1008HMS DS    PL4                0HHMMSS+
-P1008IND DS    X                  FF=MORE THAN 1 PARM IN NEXT 3
-         DS    X
-P1008HRS DS    PL8                HOURS
-P1008MIN DS    PL8                MINUTES
-P1008SEC DS    PL8                SECONDS
-         DS    X                  FF=NOHANDLE
-         DS    X
-P1008RSP DS    AL4                RESP
-P1008RS2 DS    AL4                RESP2
-P1008END EQU   *                  END MARKER
+KCPICEQ  DS    0F
+* EXPIRED ICE REQUEST
+         DC    A(KCPICEND-*)
+         DC    C'10FF'
+KCPICTRM DS    CL4                TERMID
+KCPICEND EQU   *
+*
+         P1008 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

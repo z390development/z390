@@ -1,0 +1,277 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+GBLFE08  SUBENTRY
+*
+* FN=FE08  SET FILE REQUESTED
+*          RESPONSE SENT BACK
+*
+*         +0/DSCT +4/DSECT  +8/IND   +12/IND +16
+* R1  >>> WTOMSG, REQDSECT ,DFHFCTAD,CONNID, TRCEZ390
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SAVE PARM POINTER
+         L     R4,16(R3)          TRCEZ390 ADDRESS
+         MVC   TRCEZ390,0(R4)     MOVE IT
+         L     R5,4(R3)           REQDSECT ADDRESS
+         USING REQDSECT,R5
+         L     R9,0(R3)           WTODSECT ADDRESS
+         USING WTODSECT,R9
+         MVC   WTOFN,=C'4C04'     SET EIBFN
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTOTRAN,REQTRAN    SET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         UNPK  WTOTASKN,REQTASKN  UNPACK TASK NUMBER
+         OI    WTOTASKN+6,X'F0'   CLEAR SIGN
+         MVC   WTODESC,=CL45'<<<Z390KCP SET FILE REQUEST'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+         BAL   R11,CICSTRCE       TRACE IT
+         L     R6,8(R3)           ADDRESS FCT ADDRESS
+         L     R6,0(R6)           ADDRESS FCT
+         USING DFHFCTDS,R6
+* FIND THE FILE
+FILLOOP  EQU   *
+         CLC   P4C04FIL,FCTFILNM  FOUND IT ?
+         BE    GOTFILE            EXIT IF WE HAVE
+         AHI   R6,FCTABLEN        BUMP DATA POINTER
+         CLI   0(R6),X'FF'        END OF FILES ?
+         BNE   FILLOOP            LOOP IF NOT
+         DC    H'0'               IMPOSSIBLE, WE CHECKED IN LCL4C04
+*
+GOTFILE  EQU   *
+         LA    R8,FCTTELEN(R6)    ADDRESS ACB
+         USING IHAACB,R8
+* STATUS CHANGES FIRST
+         OC    P4C04ENA,P4C04ENA  ANY ENABLESTATUS CVDA ?
+         BZ    TRYADD             EXIT IF NONE
+         NI    FCTFILST,X'FF'-FCTUNENA TURN UNENABLED OFF
+         CLC   P4C04ENA,DFHVALUE(ENABLED) ENABLED REQUESTED ?
+         BNE   DODIS              EXIT IF NOT
+         OI    FCTFILST,FCTENDIS  SET ENABLED
+         B     TRYADD
+*
+DODIS    EQU   *
+         NI    FCTFILST,X'FF'-FCTENDIS SET DISABLED
+TRYADD   EQU   *
+         OC    P4C04ADD,P4C04ADD  ANY ADD CVDA ?
+         BZ    TRYBRW             EXIT IF NONE
+         CLC   P4C04ADD,DFHVALUE(ADDABLE) ADD REQUESTED ?
+         BNE   DONOTADD           EXIT IF NOT
+         OI    FCTSERV,FCTADD     SET ADD
+         B     TRYBRW
+*
+DONOTADD EQU   *
+         NI    FCTSERV,X'FF'-FCTADD SET NO ADD
+TRYBRW   EQU   *
+         OC    P4C04BRW,P4C04BRW  ANY BROWSE CVDA ?
+         BZ    TRYDEL             EXIT IF NONE
+         CLC   P4C04BRW,DFHVALUE(BROWSABLE) BROWSE REQUESTED ?
+         BNE   DONOTBRW           EXIT IF NOT
+         OI    FCTSERV,FCTBRWSE   SET BROWSE
+         B     TRYDEL             EXIT
+*
+DONOTBRW EQU   *
+         NI    FCTSERV,X'FF'-FCTBRWSE SET NO BROWSE
+TRYDEL   EQU   *
+         OC    P4C04DEL,P4C04DEL  ANY DELETE CVDA ?
+         BZ    TRYREAD            EXIT IF NONE
+         CLC   P4C04DEL,DFHVALUE(DELETABLE) DELETE REQUESTED ?
+         BNE   DONOTDEL           EXIT IF NOT
+         OI    FCTSERV,FCTDELT    SET DELETE
+         B     TRYREAD            EXIT
+*
+DONOTDEL EQU   *
+         NI    FCTSERV,X'FF'-FCTDELT SET NO DELETE
+TRYREAD  EQU   *
+         OC    P4C04RD,P4C04RD    ANY READ CVDA ?
+         BZ    TRYUPD             EXIT IF NONE
+         CLC   P4C04RD,DFHVALUE(READABLE) READ REQUESTED ?
+         BNE   DONOTRD            EXIT IF NOT
+         OI    FCTSERV,FCTREAD    SET READ
+         B     TRYUPD             EXIT
+*
+DONOTRD  EQU   *
+         NI    FCTSERV,X'FF'-FCTREAD SET NO READ
+TRYUPD   EQU   *
+         OC    P4C04UPD,P4C04UPD  ANY UPDATE CVDA ?
+         BZ    STATDONE           EXIT IF NONE
+         CLC   P4C04UPD,DFHVALUE(UPDATABLE) UPDATE REQUESTED ?
+         BNE   DONOTUPD           EXIT IF NOT
+         OI    FCTSERV,FCTUPDT    SET UPDATE
+         B     STATDONE           EXIT
+*
+DONOTUPD EQU   *
+         NI    FCTSERV,X'FF'-FCTUPDT SET NO UPDATE
+STATDONE EQU   *
+* OPEN/CLOSE
+         OC    P4C04OPE,P4C04OPE  ANY OPENSTATUS CVDA ?
+         BZ    SETSEND            EXIT IF NONE
+         CLC   P4C04OPE,DFHVALUE(OPEN) VALID ?
+         BNE   DOCLOSE            EXIT IF NOT
+         TM    FCTFILST,FCTOPEN   IS THE FILE ALREADY OPEN ?
+         BO    SETSEND            EXIT IF IT IS
+* OPEN REQUESTED AND FILE IS CLOSED
+         MVC   WTOFN,=C'06FE'     FILE OPEN REQUESTED
+         MVC   WTOTERM,=4C' '     NO TERMID
+         MVC   WTOTRAN,=4C' '     NO PRESET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         MVC   WTOTASKN,=7C' '    NO TASK NUMBER
+         MVC   WTODESC,=CL45'FILE ........ OPEN  FAILED'
+         MVC   WTODESC+5(8),FCTFILNM MOVE FILENAME TO MSG
+         TM    FCTSERV,FCTDELT+FCTUPDT+FCTADD REASON TO OPEN OUTPUT ?
+         BZ    OPENIN             EXIT IF NONE
+* SET ALL BITS WE ARE LIKELY TO USE
+*    ADR = ACCESS BY RBA
+*    DIR = DIRECT ACCESS
+*    KEY = ACCESS BY KEY
+*    SEQ = SEQUENTIAL ACCESS
+*    IN  = READ ONLY
+*    OUT = READ OR WRITE
+* OPEN FOR OUTPUT
+         MODCB ACB=IHAACB,MACRF=(ADR,DIR,KEY,SEQ,OUT)
+         OPEN  (IHAACB,OUTPUT)    OPEN FOR OUTPUT
+         LTR   R15,R15            OK ?
+         BNZ   OPCLOERR           EXIT IF NOT
+         B     OPENOK             EXIT
+*
+OPENIN   EQU   *
+* OPEN FOR INPUT
+         MODCB ACB=IHAACB,MACRF=(ADR,DIR,KEY,SEQ,IN)
+         OPEN  (IHAACB,INPUT)     OPEN FOR INPUT
+         LTR   R15,R15            OK ?
+         BNZ   OPCLOERR           EXIT IF NOT
+OPENOK EQU     *
+* OPEN SUCCESSFUL, SAY SO
+         MVC   WTODESC+20(6),=C'OK    ' SET OK
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R11,CICSTRCE       TRACE IT
+         OI    FCTFILST,FCTOPEN   SET FILE OPEN
+         OI    FCTFILST,FCTOPCLO  SET FILSTAT=OPENED
+* IF NO ENABLESTATUS REQUESTED, OPEN WILL CONVERT UNENABLED TO ENABLED
+         OC    P4C04ENA,P4C04ENA  ANY ENABLESTATUS REQUEST ?
+         BNZ   SETSEND            EXIT IF NOT
+         TM    FCTFILST,FCTUNENA  IS IT UNENABLED ?
+         BNO   SETSEND            EXIT IF NOT
+         NI    FCTFILST,X'FF'-FCTUNENA TURN UNENABLED OFF
+         OI    FCTFILST,FCTENDIS  SET ENABLED
+         B     SETSEND            EXIT
+*
+DOCLOSE  EQU   *
+         TM    FCTFILST,FCTOPEN   IS THE FILE ALREADY CLOSED ?
+         BZ    SETSEND            EXIT IF IT IS
+* CLOSE REQUESTED AND FILE IS OPEN
+         MVC   WTOFN,=C'06FD'     FILE CLOSES
+         MVC   WTOTERM,=4C' '     NO TERMID
+         MVC   WTOTRAN,=4C' '     NO PRESET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         MVC   WTOTASKN,=7C' '    NO TASK NUMBER
+         MVC   WTODESC,=CL45'FILE ........ CLOSE FAILED'
+         MVC   WTODESC+5(8),FCTFILNM MOVE FILENAME TO MSG
+         CLOSE IHAACB             CLOSE FILE
+         LTR   R15,R15            OK ?
+         BNZ   OPCLOERR           EXIT IF NOT
+* CLOSE SUCCESSFUL, SAY SO
+         MVC   WTODESC+20(6),=C'OK    ' SET OK
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R11,CICSTRCE       TRACE IT
+         NI    FCTFILST,X'FF'-FCTOPEN SET FILE CLOSED
+         NI    FCTFILST,X'FF'-FCTOPCLO SET FILSTAT=CLOSED
+* IF NO ENABLESTATUS REQUESTED, THE RESULT OF A CLOSE IS UNENABLED
+         OC    P4C04ENA,P4C04ENA  ANY ENABLESTATUS REQUEST ?
+         BNZ   SETSEND            EXIT IF NOT
+         OI    FCTFILST,FCTUNENA  SET UNENABLED
+         B     SETSEND            EXIT
+*
+OPCLOERR EQU   *
+* OPEN/CLOSE UNSUCCESSFUL, SAY SO
+         MVC   WTODESC+20(6),=C'FAILED' SET FAILED
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R11,CICSTRCE       TRACE IT
+         MVI   FCTFILST,X'00'     SET FILE CLOSED,DISABLED
+         MVC   SETRESP,DFHRESP(IOERR) SET IOERR
+SETSEND  EQU   *
+         L     R8,12(R3)          R8=CONN ID ADDRESS
+         L     R8,0(R8)           R8=CONNID
+         TCPIO SEND,MSG=REQDSECT,LMSG=REQDSECT,CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         SUBEXIT
+*
+ABEND780 ABEND 780,DUMP           TCPIO SEND FAILED
+*
+* SUBROUTINES
+*
+* MODIFIED CICSTRCE
+CICSTRCE DS    0H
+         CLI   TRCEZ390,C'N'      NO TRACING ?
+         BER   R11                RETURN IF IT IS
+         CLI   TRCEZ390,C'Y'      ALL TRACING ?
+         BE    CICSTRGO           TRACE IF IT IS
+         CLC   TRCEZ390,CICSTIND  TRACE TYPE=TRACE REQUEST ?
+         BNER  R11                RETURN IF NOT
+CICSTRGO EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM GET TIME
+         MVO   TIMEPACK,TIME      MOVE TO PACKED FIELD
+         MVC   TIMEHERE(13),TIMEEDIT MOVE EDIT WORD
+         ED    TIMEHERE(13),TIMEPACK EDIT TIME
+         MVC   WTOTIME,TIMEHERE   SET TIME
+         WTO   MF=(E,WTOMSG)      TRACE IT
+         BR    R11                RETURN
+*
+CICSTIND DS    C                  TRACE TYPE INDICATOR
+TRCEZ390 DS    C                  Z390 TRACE OPTION
+*
+* TIME CONVERSION FIELDS
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402021207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+* RECEIVE MESSAGE AREA
+*
+REQDSECT DSECT
+         DS    AL4                REQUEST LENGTH
+         DS    CL4                REQUEST CODE
+REQTERM  DS    CL4                TERMINAL ID
+REQTRAN  DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+REQTASKN DS    PL4                TASK NO
+P4C04FIL DS    CL8                FILENAME
+P4C04OPE DS    AL4                CVDA OPENSTATUS
+P4C04ENA DS    AL4                CVDA ENABLESTATUS
+P4C04ADD DS    AL4                CVDA ADD
+P4C04BRW DS    AL4                CVDA BROWSE
+P4C04DEL DS    AL4                CVDA DELETE
+P4C04RD  DS    AL4                CVDA READ
+P4C04UPD DS    AL4                CVDA UPDATE
+SETRESP  DS    AL4                RESPONSE CODE
+*
+* WTO AREA DSECT
+*
+WTODSECT DSECT
+WTOMSG   DS    AL4
+WTOTIME  DS    CL13               TIME STAMP
+         DS    C
+WTOFN    DS    CL4                MODULE/FUNCTION REFERENCE (EIBFN)
+         DS    C
+WTOTERM  DS    CL4                TERMID
+         DS    C
+WTOTRAN  DS    CL4                TRANSID (OR BLANK)
+         DS    C
+WTOTYPE  DS    C                  TRANSID TYPE
+         DS    C
+WTOTASKN DS    CL7                TASK NUMBER
+         DS    C
+WTODESC  DS    CL45               DESCRIPTION
+*
+         ACBD  ,                  VSAM ACB
+         DFHFCTDS                 FILE CONTROL TABLE
+*
+         EQUREGS
+*
+         END
+

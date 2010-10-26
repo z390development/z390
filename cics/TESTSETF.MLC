@@ -1,0 +1,342 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+         DFHEISTG                 DSA STORAGE
+OPE      DS    F                  OPENSTATUS CVDA
+ENA      DS    F                  ENABLESTATUS CVDA
+RED      DS    F                  READ CVDA
+UPD      DS    F                  UPDATE CVDA
+ADD      DS    F                  ADD CVDA
+BRW      DS    F                  BROWSE CVDA
+DEL      DS    F                  DELETE CVDA
+*
+TESTSETF DFHEIENT CODEREG=(R12,R3)
+*
+* TEST SET FILE
+*
+* JUST MANIPULATING MYFILE01
+*    CODES ARE O/C E/D/U R/- U/- A/- B/- D/-
+* INITIAL   OER--B-
+* CLOSE     CUR--B-               USE CVDA
+* SET NONE  CU-----               USE CVDA'S
+* SET ALL   CURUABD               USE CVDA'S
+* OPEN      OERUABD               USE CVDA
+* CLOSE     CURUABD               USE PARAMETER
+* SET NONE  CU-----               USE PARAMETERS
+* ENA+ALL   CERUABD               USE PARAMETERS
+* DISABLED  CDRUABD               USE PARAMETER
+* OPEN      ODRUABD               USE PARAMETER
+* ERR/FNF   FILENOTFOUND/18       DONE WITH 'FRED'
+* ERR/IQ02  INVREQ/02
+* ERR/IQ03  INVREQ/03
+* ERR/IQ04  INVREQ/04
+* ERR/IQ05  INVREQ/05
+* ERR/IQ07  INVREQ/07
+* ERR/IQ12  INVREQ/12
+* ERR/IQ14  INVREQ/14
+* ERR/IQ16  INVREQ/16
+* ERR/IQ17  INVREQ/17
+* ERR/IO    IOERR/0               DONE WITH MYFILE04
+* RESTORE   OER--B-
+*
+         XC    STSTAT,STSTAT      CLEAR STATUS
+* INITIAL STATUS
+         MVC   STSBA,FOP1         SET SBA
+         MVC   STDESC,=CL8'INITIAL' SET DESCRIPTION
+         BAL   R9,INQFILE         DISPLAY STATUS
+* CLOSE (CVDA)
+         EXEC  CICS SET FILE('MYFILE01') OPENSTATUS(CLOSED)
+         MVC   STSBA,FOP2         SET SBA
+         MVC   STDESC,=CL8'CLOSE' SET DESCRIPTION
+         BAL   R9,INQFILE         DISPLAY STATUS
+* SET ALL OPTIONS (CVDA'S)
+         EXEC  CICS SET FILE('MYFILE01')                               X
+               READ(READABLE)                                          X
+               UPDATE(UPDATABLE)                                       X
+               ADD(ADDABLE)                                            X
+               BROWSE(BROWSABLE)                                       X
+               DELETE(DELETABLE)
+         MVC   STSBA,FOP3         SET SBA
+         MVC   STDESC,=CL8'SET ALL' SET DESCRIPTION
+         BAL   R9,INQFILE         DISPLAY STATUS
+* SET NO OPTIONS (CVDA'S)
+         EXEC  CICS SET FILE('MYFILE01')                               X
+               READ(NOTREADABLE)                                       X
+               UPDATE(NOTUPDATABLE)                                    X
+               ADD(NOTADDABLE)                                         X
+               BROWSE(NOTBROWSABLE)                                    X
+               DELETE(NOTDELETABLE)
+         MVC   STSBA,FOP4         SET SBA
+         MVC   STDESC,=CL8'SET NONE' SET DESCRIPTION
+         BAL   R9,INQFILE         DISPLAY STATUS
+* OPEN (CVDA)
+         EXEC  CICS SET FILE('MYFILE01') OPENSTATUS(OPEN)
+         MVC   STSBA,FOP5         SET SBA
+         MVC   STDESC,=CL8'OPEN'  SET DESCRIPTION
+         BAL   R9,INQFILE         DISPLAY STATUS
+* CLOSE (PARAMETER)
+         EXEC  CICS SET FILE('MYFILE01') CLOSED
+         MVC   STSBA,FOP6         SET SBA
+         MVC   STDESC,=CL8'CLOSE' SET DESCRIPTION
+         BAL   R9,INQFILE         DISPLAY STATUS
+* SET NO OPTIONS (PARAMETERS)
+         EXEC  CICS SET FILE('MYFILE01')                               X
+               NOTREADABLE                                             X
+               NOTUPDATABLE                                            X
+               NOTADDABLE                                              X
+               NOTBROWSABLE                                            X
+               NOTDELETABLE
+         MVC   STSBA,FOP7         SET SBA
+         MVC   STDESC,=CL8'SET NONE' SET DESCRIPTION
+         BAL   R9,INQFILE         DISPLAY STATUS
+* ENABLED AND ALL OPTIONS (PARAMETERS)
+         EXEC  CICS SET FILE('MYFILE01')                               X
+               ENABLED                                                 X
+               READABLE                                                X
+               UPDATABLE                                               X
+               ADDABLE                                                 X
+               BROWSABLE                                               X
+               DELETABLE
+         MVC   STSBA,FOP8         SET SBA
+         MVC   STDESC,=CL8'ENA+ALL' SET DESCRIPTION
+         BAL   R9,INQFILE         DISPLAY STATUS
+* DISABLED (PARAMETER)
+         EXEC  CICS SET FILE('MYFILE01') DISABLED
+         MVC   STSBA,FOP9         SET SBA
+         MVC   STDESC,=CL8'DISABLED' SET DESCRIPTION
+         BAL   R9,INQFILE         DISPLAY STATUS
+* OPEN (PARAMETER)
+         EXEC  CICS SET FILE('MYFILE01') OPEN
+         MVC   STSBA,FOP10        SET SBA
+         MVC   STDESC,=CL8'OPEN'  SET DESCRIPTION
+         BAL   R9,INQFILE         DISPLAY STATUS
+*
+* ERROR CONDITIONS
+*
+         EXEC  CICS HANDLE CONDITION                                   X
+               FILENOTFOUND(FNF)                                       X
+               INVREQ(INVREQ)                                          X
+               IOERR(IOERR)
+* FILENOTFOUND
+         LA    R7,NEXTERR1        R7=HANDLE RETURN
+         EXEC  CICS SET FILE(MYFILE) OPEN
+*
+NEXTERR1 EQU   *
+* INVREQ/02   FILE IS NOT CLOSED
+         LA    R7,NEXTERR2        R7=HANDLE RETURN
+         MVC   STSBA,FOP12        SET SBA
+         MVC   STDESC,=CL8'ERR/IQ02' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE01') READABLE
+*
+NEXTERR2 EQU   *
+* INVREQ/03   FILE CLOSED,ENABLED
+         LA    R7,NEXTERR3        R7=HANDLE RETURN
+         MVC   STSBA,FOP13        SET SBA
+         MVC   STDESC,=CL8'ERR/IQ03' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE01') CLOSED
+         EXEC  CICS SET FILE('MYFILE01') ENABLED
+         EXEC  CICS SET FILE('MYFILE01') READABLE
+*
+NEXTERR3 EQU   *
+* INVREQ/04   ADD HAS INVALID CVDA
+         LA    R7,NEXTERR4        R7=HANDLE RETURN
+         MVC   STSBA,FOP14        SET SBA
+         MVC   STDESC,=CL8'ERR/IQ04' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE01') DISABLED
+         EXEC  CICS SET FILE('MYFILE01') ADD(READABLE)
+*
+NEXTERR4 EQU   *
+* INVREQ/05   BROWSE HAS INVALID CVDA
+         LA    R7,NEXTERR5        R7=HANDLE RETURN
+         MVC   STSBA,FOP15        SET SBA
+         MVC   STDESC,=CL8'ERR/IQ05' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE01') BROWSE(READABLE)
+*
+NEXTERR5 EQU   *
+* INVREQ/07   DELETE HAS INVALID CVDA
+         LA    R7,NEXTERR6        R7=HANDLE RETURN
+         MVC   STSBA,FOP16        SET SBA
+         MVC   STDESC,=CL8'ERR/IQ07' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE01') DELETE(READABLE)
+*
+NEXTERR6 EQU   *
+* INVREQ/12   READ HAS INVALID CVDA
+         LA    R7,NEXTERR7        R7=HANDLE RETURN
+         MVC   STSBA,FOP17        SET SBA
+         MVC   STDESC,=CL8'ERR/IQ12' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE01') READ(UPDATABLE)
+*
+NEXTERR7 EQU   *
+* INVREQ/14   UPDATE HAS INVALID CVDA
+         LA    R7,NEXTERR8        R7=HANDLE RETURN
+         MVC   STSBA,FOP18        SET SBA
+         MVC   STDESC,=CL8'ERR/IQ14' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE01') UPDATE(READABLE)
+*
+NEXTERR8 EQU   *
+* INVREQ/16   OPENSTATUS HAS INVALID CVDA
+         LA    R7,NEXTERR9        R7=HANDLE RETURN
+         MVC   STSBA,FOP19        SET SBA
+         MVC   STDESC,=CL8'ERR/IQ16' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE01') OPENSTATUS(READABLE)
+*
+NEXTERR9 EQU   *
+* INVREQ/17   ENABLESTATUS HAS INVALID CVDA
+         LA    R7,NEXTERRA        R7=HANDLE RETURN
+         MVC   STSBA,FOP20        SET SBA
+         MVC   STDESC,=CL8'ERR/IQ17' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE01') ENABLESTATUS(READABLE)
+*
+NEXTERRA EQU   *
+* IOERR/0     I/O ERROR
+         LA    R7,RESET           R7=HANDLE RETURN
+         MVC   STSBA,FOP21        SET SBA
+         MVC   STDESC,=CL8'ERR/IO' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE04') OPEN
+*
+RESET    EQU   *
+* RESET TO ALMOST ORIGINAL STATUS FROM CDRUABD TO CER--B-
+         SR    R7,R7              NO ERROR SHOULD OCCUR
+         MVC   STSBA,FOP22        SET SBA
+         MVC   STDESC,=CL8'RESET' MOVE CONDITION
+         EXEC  CICS SET FILE('MYFILE01')                               X
+               ENABLED                                                 X
+               READABLE                                                X
+               NOTUPDATABLE                                            X
+               NOTADDABLE                                              X
+               BROWSABLE                                               X
+               NOTDELETABLE
+         XC    STSTAT(15),STSTAT  CLEAR STATUS AND RESP2 CODE
+         BAL   R9,INQFILE         DISPLAY STATUS
+*
+* RESET TO ORIGINAL STATUS SO TRANSACTION CAN BE RERUN
+         EXEC  CICS SET FILE('MYFILE01') DISABLED
+         EXEC  CICS SET FILE('MYFILE01') OPEN
+         EXEC  CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL)
+         EXEC  CICS RETURN
+*
+FNF      DS    0H
+         MVC   STSBA,FOP11        SET SBA
+         MVC   STDESC,=CL8'ERR/FNF' MOVE DESCRIPTION
+         MVC   STSTAT,=CL15'FILENOTFOUND/' SET ERROR
+         BAL   R9,HEXRESP2        DISPLAY RESP2
+         BAL   R9,STSEND          DISPLAY ERROR
+         BR    R7                 RETURN TO MAIN LINE
+*
+INVREQ   DS    0H
+         MVC   STSTAT,=CL15'INVREQ/' MOVE DESCRIPTION
+         BAL   R9,HEXRESP2        DISPLAY RESP2
+         BAL   R9,STSEND          DISPLAY ERROR
+         BR    R7                 RETURN TO MAIN LINE
+*
+IOERR    DS    0H
+         MVC   STSTAT,=CL15'IOERROR/' MOVE DESCRIPTION
+         BAL   R9,HEXRESP2        DISPLAY RESP2
+         BAL   R9,STSEND          DISPLAY ERROR
+         BR    R7                 RETURN TO MAIN LINE
+*
+* SUBROUTINES
+*
+INQFILE  EQU   *
+         EXEC  CICS INQUIRE FILE('MYFILE01')                           X
+               OPENSTATUS(OPE)                                         X
+               ENABLESTATUS(ENA)                                       X
+               READ(RED)                                               X
+               UPDATE(UPD)                                             X
+               ADD(ADD)                                                X
+               BROWSE(BRW)                                             X
+               DELETE(DEL)
+         MVI   STSTAT,C'O'        ASSUME OPEN
+         CLC   OPE,DFHVALUE(CLOSED) IS IT CLOSED ?
+         BNE   TRYENA             EXIT IF NOT
+         MVI   STSTAT,C'C'        SET CLOSED
+TRYENA   EQU   *
+         MVI   STSTAT+1,C'E'      ASSUME ENABLED
+         CLC   ENA,DFHVALUE(ENABLED) IS IT ENABLED ?
+         BE    TRYRED             EXIT IF IT IS
+         MVI   STSTAT+1,C'D'      ASSUME DISABLED
+         CLC   ENA,DFHVALUE(DISABLED) IS IT DISABLED ?
+         BE    TRYRED             EXIT IF IT IS
+         MVI   STSTAT+1,C'U'      SET UNENABLED
+TRYRED   EQU   *
+         MVI   STSTAT+2,C'R'      SET READABLE
+         CLC   RED,DFHVALUE(READABLE) IS IT READABLE ?
+         BE    TRYUPD             EXIT IF IT IS
+         MVI   STSTAT+2,C'-'      SET NOTREADABLE
+TRYUPD   EQU   *
+         MVI   STSTAT+3,C'U'      SET UPDATABLE
+         CLC   UPD,DFHVALUE(UPDATABLE) IS IT UPDATABLE ?
+         BE    TRYADD             EXIT IF IT IS
+         MVI   STSTAT+3,C'-'      SET NOTUPDATABLE
+TRYADD   EQU   *
+         MVI   STSTAT+4,C'A'      SET ADDABLE
+         CLC   ADD,DFHVALUE(ADDABLE) IS IT ADDABLE ?
+         BE    TRYBRW             EXIT IF IT IS
+         MVI   STSTAT+4,C'-'      SET NOTADDABLE
+TRYBRW   EQU   *
+         MVI   STSTAT+5,C'B'      SET BROWSABLE
+         CLC   BRW,DFHVALUE(BROWSABLE) IS IT BROWSABLE ?
+         BE    TRYDEL             EXIT IF IT IS
+         MVI   STSTAT+5,C'-'      SET NOTBROWSABLE
+TRYDEL   EQU   *
+         MVI   STSTAT+6,C'D'      SET DELETABLE
+         CLC   DEL,DFHVALUE(DELETABLE) IS IT DELETABLE ?
+         BE    STSEND             EXIT IF IT IS
+         MVI   STSTAT+6,C'-'      SET NOTDELETABLE
+STSEND   EQU   *
+         EXEC  CICS SEND FROM(STLINE) LENGTH(STLINEL)
+         BR    R9                 RETURN
+*
+HEXRESP2 EQU   *
+         L     R8,EIBRESP2        R8=RESP2
+         CVD   R8,DEC             CONVERT TO DECIMAL
+         MVC   WORK1,=X'40202120' MOVE EDIT WORD
+         ED    WORK1,DEC+6        EDIT RESP2
+         MVC   STRESP2,WORK1+2    MOVE RESP2
+         BR    R9                 RETURN
+*
+MYFILE   DC    CL8'FRED'
+DEC      DC    PL8'0'
+WORK1    DS    XL4
+*
+FOP1     TN3270 WCC_KD,(SBA,2,1)
+FOP2     TN3270 WCC_KD,(SBA,3,1)
+FOP3     TN3270 WCC_KD,(SBA,4,1)
+FOP4     TN3270 WCC_KD,(SBA,5,1)
+FOP5     TN3270 WCC_KD,(SBA,6,1)
+FOP6     TN3270 WCC_KD,(SBA,7,1)
+FOP7     TN3270 WCC_KD,(SBA,8,1)
+FOP8     TN3270 WCC_KD,(SBA,9,1)
+FOP9     TN3270 WCC_KD,(SBA,10,1)
+FOP10    TN3270 WCC_KD,(SBA,11,1)
+FOP11    TN3270 WCC_KD,(SBA,12,1)
+FOP12    TN3270 WCC_KD,(SBA,13,1)
+FOP13    TN3270 WCC_KD,(SBA,14,1)
+FOP14    TN3270 WCC_KD,(SBA,15,1)
+FOP15    TN3270 WCC_KD,(SBA,16,1)
+FOP16    TN3270 WCC_KD,(SBA,17,1)
+FOP17    TN3270 WCC_KD,(SBA,18,1)
+FOP18    TN3270 WCC_KD,(SBA,19,1)
+FOP19    TN3270 WCC_KD,(SBA,20,1)
+FOP20    TN3270 WCC_KD,(SBA,21,1)
+FOP21    TN3270 WCC_KD,(SBA,22,1)
+FOP22    TN3270 WCC_KD,(SBA,23,1)
+*
+STLINE   EQU   *
+STSBA    DS    XL4                WCC,SBA
+STDESC   DS    CL8                DESCRIPTION
+         DC    C'  '
+STSTAT   DS    CL13               STATUS CODES OR RESP/
+STRESP2  DC    C'  '                                   RESP2
+STLINEL  DC    AL2(*-STLINE)
+*
+ENDMSG   TN3270 WCC_KD,(SBA,24,1)
+         DC    C'TESTSETF COMPLETED, PRESS CLEAR'
+ENDMSGL  DC    AL2(*-ENDMSG)
+*
+         TN3270 SYMBOLS
+         END
+

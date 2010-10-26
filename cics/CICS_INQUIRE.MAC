@@ -200,11 +200,11 @@
          GEN_MVC P4C02FIL,,=CL8&FILE SET FILE NAME AS STRING
 .DOACC   ANOP
          AIF   ('&ACCMETH' EQ '').DOADD
-         LARL  R0,&ACCMETH        CVDA ADDRESS
+         LA    R0,&ACCMETH        CVDA ADDRESS
          GEN_ST R0,P4C02ACC       SAVE IT
 .DOADD   ANOP
          AIF   ('&ADD' EQ '').DOAT
-         LARL  R0,&ADD            CVDA ADDRESS
+         LA    R0,&ADD            CVDA ADDRESS
          GEN_ST R0,P4C02ADD       SAVE IT
 .DOAT    ANOP
          AIF   ('&AT' EQ '').DOBSN
@@ -222,60 +222,60 @@
          LA    R0,&BSNAME         BASEDSNAME ADDRESS
          GEN_ST R0,P4C02BSN       SAVE IT
          LA    R0,L'&BSNAME       BASEDSNAME LENGTH
-         GEN_ST R0,P4C02BLN       SAVE IT
+         GEN_STH R0,P4C02BLN      SAVE IT
 .DOBRWSE ANOP
          AIF   ('&BROWSE' EQ '').DODEL
-         LARL  R0,&BROWSE         CVDA ADDRESS
+         LA    R0,&BROWSE         CVDA ADDRESS
          GEN_ST R0,P4C02BRW       SAVE IT
 .DODEL   ANOP
          AIF   ('&DELETE' EQ '').DODSN
-         LARL  R0,&DELETE         CVDA ADDRESS
+         LA    R0,&DELETE         CVDA ADDRESS
          GEN_ST R0,P4C02DEL       SAVE IT
 .DODSN   ANOP
          AIF   ('&DSNAME' EQ '').DOENA
          LA    R0,&DSNAME         DSNAME ADDRESS
          GEN_ST R0,P4C02DSN       SAVE IT
          LA    R0,L'&DSNAME       DSNAME LENGTH
-         GEN_ST R0,P4C02DLN       SAVE IT
+         GEN_STH R0,P4C02DLN      SAVE IT
 .DOENA   ANOP
          AIF   ('&ENASTAT' EQ '').DOKL
-         LARL  R0,&ENASTAT        CVDA ADDRESS
+         LA    R0,&ENASTAT        CVDA ADDRESS
          GEN_ST R0,P4C02ENA       SAVE IT
 .DOKL    ANOP
          AIF   ('&KLENGTH' EQ '').DOKP
-         LARL  R0,&KLENGTH        KEYLENGTH ADDRESS
+         LA    R0,&KLENGTH        KEYLENGTH ADDRESS
          GEN_ST R0,P4C02KL        SAVE IT
 .DOKP    ANOP
          AIF   ('&KEYPOS' EQ '').DOOBJ
-         LARL  R0,&KEYPOS         KEYPOSITION ADDRESS
+         LA    R0,&KEYPOS         KEYPOSITION ADDRESS
          GEN_ST R0,P4C02KP        SAVE IT
 .DOOBJ   ANOP
          AIF   ('&OBJECT' EQ '').DOOPE
-         LARL  R0,&OBJECT         CVDA OBJECT
+         LA    R0,&OBJECT         CVDA OBJECT
          GEN_ST R0,P4C02OBJ       SAVE IT
 .DOOPE   ANOP
          AIF   ('&OPESTAT' EQ '').DOREAD
-         LARL  R0,&OPESTAT        CVDA OBJECT
+         LA    R0,&OPESTAT        CVDA OBJECT
          GEN_ST R0,P4C02OPE       SAVE IT
 .DOREAD  ANOP
          AIF   ('&READ' EQ '').DORECFM
-         LARL  R0,&READ           CVDA OBJECT
+         LA    R0,&READ           CVDA OBJECT
          GEN_ST R0,P4C02RD        SAVE IT
 .DORECFM ANOP
          AIF   ('&RECFORM' EQ '').DORECSZ
-         LARL  R0,&RECFORM        CVDA OBJECT
+         LA    R0,&RECFORM        CVDA OBJECT
          GEN_ST R0,P4C02RCF       SAVE IT
 .DORECSZ ANOP
          AIF   ('&RECSIZE' EQ '').DOTYPE
-         LARL  R0,&RECSIZE        CVDA OBJECT
+         LA    R0,&RECSIZE        CVDA OBJECT
          GEN_ST R0,P4C02RCS       SAVE IT
 .DOTYPE  ANOP
          AIF   ('&TYPE' EQ '').DOUPD
-         LARL  R0,&TYPE           CVDA OBJECT
+         LA    R0,&TYPE           CVDA OBJECT
          GEN_ST R0,P4C02TYP       SAVE IT
 .DOUPD   ANOP
          AIF   ('&UPDATE' EQ '').ALLDUN
-         LARL  R0,&UPDATE         CVDA OBJECT
+         LA    R0,&UPDATE         CVDA OBJECT
          GEN_ST R0,P4C02UPD       SAVE IT
 .ALLDUN  ANOP
          GEN_ST DFHEIBR,P4C02EIB  SET EIB ADDRESS

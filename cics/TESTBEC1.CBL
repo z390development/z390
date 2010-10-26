@@ -66,6 +66,9 @@
         01  DFHCOMMAREA.
             02  INCOMM   PIC 9(4)  COMP.
 
+        01  DFHCWA.
+            02  FILLER   PIC X.
+
         PROCEDURE DIVISION USING DFHEIBLK DFHCOMMAREA.
       * XC    MYCOMM,MYCOMM      INITIALISE COMMAREA
             MOVE 1 TO MYCOMM.
@@ -75,6 +78,7 @@
       *  BNZ   NOT1ST             EXIT IF NOT FIRST
             IF EIBCALEN = 0 THEN
       * FIRST LINE
+               EXEC CICS ADDRESS CWA(ADDRESS OF DFHCWA) END-EXEC
       *  MVC   SENDSBA,SBA1       1ST SBA
                MOVE SBA (1) TO SENDSBA
       *  MVC   SENDLINE,LINE1     1ST LINE
@@ -116,3 +120,4 @@
       * TEST XCTL WITH COMMAREA 3
                   EXEC CICS XCTL PROGRAM('TESTBED3') COMMAREA(COMM3)
                                  END-EXEC.
+

@@ -1,0 +1,38 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P0A04 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P0A04    DSECT
+         AELSE
+P0A04    DS    0H
+         AEND
+P0A04FN  DS    XL2                FUNCTION CODE
+P0A04EIB DS    AL4                EIB
+P0A04TCT DS    AL4                TCTTE
+P0A04QNM DS    CL16               QUEUE NAME
+P0A04ITM DS    XL2                ITEM
+P0A04LEN DS    XL2                LENGTH
+P0A04LAD DS    AL4                ADDRESS OF LENGTH IF LABEL
+P0A04SET DS    X                  FF=SET IS SPECIFIED
+         DS    X
+P0A04STA DS    AL4                ADDRESS FOR SET
+P0A04INT DS    AL4                ADDRESS OF INTO
+P0A04NUM DS    AL4                ADDRESS OF NUMITEMS
+P0A04EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P0A04EDS DS    AL4                DSA ADDRESS FOR EDF
+P0A04EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P0A04EDL DS    XL2                DSA LENGTH FOR EDF
+P0A04NED DS    X                  FF=NOEDF
+         DS    X
+P0A04NOH DS    X                  FF=NOHANDLE
+         DS    X
+P0A04RSP DS    AL4                RESP
+P0A04RS2 DS    AL4                RESP2
+P0A04END EQU   *                  END MARKER
+         MEND
+

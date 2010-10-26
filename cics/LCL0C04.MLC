@@ -11,6 +11,8 @@ LCL0C04  CSECT
 * R1  >>> P0C04 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0C04'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0C04NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          L     R1,P0C04FMA        R1=FREEMAIN ADDRESS
          AHI   R1,-8              -8 TO STORAGE START
          LA    R14,TCTTESCC       R14=ANCHOR OF GETMAIN CHAIN
@@ -62,20 +74,21 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
+         CLI   P0C04NED,X'FF'     NOEDF ?
+         BE    NOEDFA             RETURN IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             RETURN IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
          LTORG
 *
-P0C04    DSECT
-P0C04FN  DS    XL2                FUNCTION CODE
-P0C04EIB DS    AL4                EIB
-P0C04TCT DS    AL4                TCTTE
-P0C04FMA DS    AL4                FREEMAIN ADDRESS
-         DS    X                  FF=NOHANDLE
-         DS    X
-P0C04RSP DS    AL4                RESP
-P0C04RS2 DS    AL4                RESP2
-P0C04END EQU   *                  END MARKER
+         P0C04 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

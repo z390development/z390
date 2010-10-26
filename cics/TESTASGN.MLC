@@ -6,7 +6,7 @@
 ***********************************************************************
          DFHEISTG
 *
-TESTASGN DFHEIENT CODEREG=(R12,R3)
+TESTASGN DFHEIENT CODEREG=(R12,R3,R4)
 *
 * TEST ASSIGN
 * INVOKINGPROG AND RETURNPROG TESTED IN TESTBED1/2/3

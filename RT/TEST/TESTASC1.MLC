@@ -32,6 +32,7 @@
 * 08/09/08 RPI 893 TEST SY LONG DISP, F'Unn', H'Unn'                          
 * 11/10/08 RPI 946 CHANGE DS TO DC FOR INIT TO ZEROS                          
 * 06/30/09 RPI 1044 CHANGE VDX DC VD(VDX) TO USE TESTSUB1                     
+* 01/09/10 RPI 1101 AFHY OVERFLOW WITH NO ERRORS
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -404,5 +405,41 @@ CVTTOHEX RT1   CCH,=VD(CVTTOHEX),=AL8(CVTTOHEX) RPI 1044 DIFF ADDR
          RT1   CCE,=SY(TESTDC1+8+4096),=SY(X'1000'(13))
          RT1   CCE,=F'U4294967295',=X'FFFFFFFF'
          RT1   CCE,=H'U65535',=X'FFFF'
+* TEST AFHY OVERFLOW RPI 1101 OVERFLOW WITH NO ERRORS
+         RT1   CCE,=H'32767',=X'7FFF'          
+         RT1   CCE,=H'32768',=X'8000'
+         RT1   CCE,=H'32769',=X'8001'
+         RT1   CCE,=F'2147483647',=X'7FFFFFFF'
+         RT1   CCE,=F'2147483648',=X'80000000'
+         RT1   CCE,=F'2147483649',=X'80000001'
+         RT1   CCE,=Y(32767),=X'7FFF'
+         RT1   CCE,=Y(32768),=X'8000'
+         RT1   CCE,=Y(32769),=X'8001'
+         RT1   CCE,=A(2147483647),=X'7FFFFFFF'
+         RT1   CCE,=A(2147483648),=X'80000000'
+         RT1   CCE,=A(2147483649),=X'80000001'
+         RT1   CCE,=A(2147483647),=X'7FFFFFFF'
+&AVAL    SETA  2147483647
+&CHEX    SETC  A2X(&AVAL)
+         RT1   CCE,=C'&CHEX',=C'7FFFFFFF'
+         RT1   CCE,=A(2147483648),=X'80000000'      TEST SETA OVERFLOW
+&AVAL    SETA  2147483648
+&CHEX    SETC  A2X(&AVAL)                     TEST NEG A2X
+         RT1   CCE,=C'&CHEX',=C'80000000'
+         RT1   CCE,=A(2147483649),=X'80000001'      
+&AVAL    SETA  2147483649
+&CHEX    SETC  A2X(&AVAL)
+         RT1   CCE,=C'&CHEX',=C'80000001'
+&AVAL    SETA  1/0
+         RT1   CCE,=A(&AVAL),=A(0)              TEST SETA DIVIDE BY 0 
+&CVAL    SETC  '12345'                                       
+&CHEX    SETC  C2X(&CVAL) 
+         AIF   (C'A' NE C!A!).TEST6_ASCII
+.TEST6_EBCDIC ANOP
+         RT1   CCE,=C'&CHEX',=C'F1F2F3F4F5'
+         AGO   .TEST6_END
+.TEST6_ASCII ANOP
+         RT1   CCE,=C'&CHEX',=C'3132333435'
+.TEST6_END   ANOP
          RT1   END
          END         

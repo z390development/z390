@@ -1,0 +1,1566 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+CEMTFILE CSECT
+*
+* CEMT I FIL AND S FIL PROCESSOR
+*    FILE() WILL ALLOW + AS WILD CARD AND * AS GENERIC
+*    WE WON'T ALLOW FLOATING GENERIC EG *AB*
+*    ALSO FILE(AAA,BBB,CCC)
+*    ALl or ()
+*    OPen CLosed / ENabled DIsabled / REad NORead
+*    UNenabled (FOR I FI ONLY)
+*    UPdate NOUpdate / ADd NOAdd / BRowse NOBrowse
+*    DElete NODelete
+*    FiXed  VAriable (FOR I FI ONLY)
+*
+* R1  >>> PARMS
+*
+         USING *,R13,R4,R5,R6
+         B     12(R15)            BYPASS EYECATCHER
+         DC    C'CEMTFILE'
+         STRL  R13,IFILDSA        SAVE Z390CEMT DSA ADDRESS
+         LR    R13,R15            R13 AS BASE
+         LAY   R4,4096(R13)       SET BASE 2
+         LAY   R5,4096(R4)        SET BASE 3
+         LAY   R6,4096(R5)        SET BASE 4
+         LR    R3,R1              SET PARAMETER BASE
+         USING CEMTPARM,R3
+         L     DFHEIBR,EIBADDR    LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,TCTADDR    LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         LA    R12,IFILF04L       R12=LIST ADDRESS
+         USING IFILDSCT,R12
+         CLI   PARSE1,C'S'        IS IT SET FILE ?
+         BE    SFIL               EXIT IF IT IS
+         CLI   COMM,X'00'         ANY COMMAREA ?
+         BE    IFIL               EXIT IF NONE
+* COMMAREA
+* 1=CHANGE OF COMMAND/AMENDMENTS TO FILE/CURSOR SELECT
+* 2=AID KEY FROM FILE DISPLAY
+         CLI   COMM,C'1'          FILE SELECTED ?
+         BE    IFILRET            EXIT IF IT IS
+         CLI   COMM,C'2'          RETURN FROM FILE DISPLAY ?
+         BE    IFILDIS            EXIT IF IT IS
+         DC    H'0'               CANNOT OCCUR
+*
+IFIL     EQU   *
+* CLEAR IFIL1 MAP
+         LA    R0,IFIL1S          AREA TO CLEAR
+         LA    R1,IFIL1L          LENGTH TO CLEAR
+         LR    R8,R0              AREA TO CLEAR
+         SR    R9,R9              CLEAR SECOND LENGTH
+         MVCLE R0,R8,X'00'        CLEAR IFIL1 MAP
+         CLI   PARSE1,C'S'        COMING FROM S FI ?
+         BNE   IFILINPT           EXIT IF NOT
+IFILFRMS EQU   *
+         LA    R12,IFILF04L       R12=LIST ADDRESS
+         MVI   PARSE1,C'I'        WE ARE NOW IN I FI MODE
+         MVI   COMM,X'00'         RESET COMMAREA INDICATOR
+IFILINPT EQU   *
+         BAL   R9,SELECT          CODE PARMS, SELECT FILE TO USE
+         B     0                  + 0  CANNOT OCCUR (NO PARMS)
+         B     SLCTSYNX           + 4  MISSING/BAD FILENAME SELECTION
+         B     IFILEND            + 8  FILENAME SELECTION COMPLETE
+*                                 +12  FILENAME SELECTED
+         CLI   IFILHEDO,X'00'     DONE HEADER ?
+         BNE   IFILDOIF           EXIT IF WE HAVE
+* SET UP THE MAP HEADER FOR I FI
+         MVC   IFILHEDO(5),=C'I FI ' SET HEADER
+         LA    R1,IFILHEDO+5      R1=HEADER AFTER I FI
+         CLI   SLCTLIST,X'FF'     ALL ?
+         BNE   IFILNTAL           EXIT IF NOT
+         MVC   0(2,R1),=C'AL'     MOVE ALL
+         AHI   R1,2               BUMP HEADER POINTER
+         B     IFILNXPM           EXIT TO NEXT PARM
+*
+IFILNTAL EQU   *
+         L     R7,SLCTLIST        R7=FILELIST
+IFILSLLP EQU   *
+         MVC   0(1,R1),0(R7)      MOVE FILE SELECTION BYTE AT A TIME
+         AHI   R1,1               BUMP DATA POINTER
+         AHI   R7,1               BUMP SELECTION POINTER
+         CLI   0(R7),C' '         END OF SELECTION ?
+         BE    IFILNXPM           EXIT IF IT IS
+         C     R7,SLCTLSEN        END OF PARM ?
+         BNE   IFILSLLP           LOOP IF NOT
+IFILNXPM EQU   *
+         MVI   0(R1),C' '         ADD BLANK
+         AHI   R1,1               BUMP HEADER POINTER
+         LA    R7,PARSE3          R7=REMAINING PARMS
+         LA    R8,CEMTPNUM-2      R8=NO. OF REMAINING PARMS
+IFILPMLP EQU   *
+         CLI   0(R7),C' '         ALL DONE ?
+         BE    IFILDOIF           EXIT IF WE ARE
+         CLI   0(R7),C'('         FILE SELECTION LIST ?
+         BE    IFILBPRM           EXIT IF IT IS
+         CLC   0(2,R7),=C'AL'     ALL ?
+         BE    IFILBPRM           EXIT IF IT IS
+* GOT PARAMETER, DISPLAY 3 BYTES IF BEGINS N, ELSE 2 BYTES
+         CLI   0(R7),C'N'         IS IT NO. ?
+         BNE   IFILNOTN           EXIT IF NOT
+         MVC   0(3,R1),0(R7)      MOVE 3 BYTES
+         MVI   3(R1),C' '         AND FOLLOWING BLANK
+         AHI   R1,4               BUMP HEADER POINTER
+         B     IFILBPRM           EXIT
+*
+IFILNOTN EQU   *
+         MVC   0(2,R1),0(R7)      MOVE 2 BYTES
+         MVI   2(R1),C' '         AND FOLLOWING BLANK
+         AHI   R1,3               BUMP HEADER POINTER
+IFILBPRM EQU   *
+         AHI   R7,CEMTPLEN        BUMP TO NEXT PARM
+         BCT   R8,IFILPMLP        LOOP
+*
+IFILDOIF EQU   *
+* PROCESS I FI
+* FILE HAS PASSED SELECTION CRITERIA
+* SELECT ACCORDING TO PARAMETERS PASSED
+         CLI   SLCTOPCL,X'00'     ANY OPE/CLO SELECTION ?
+         BE    SLCT02             EXIT IF NONE
+         CLI   SLCTOPCL,X'FF'     IS IT OPEN ?
+         BNE   SLCTCL             EXIT IF NOT
+         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
+         BNE   IFILINPT           EXIT IF NOT
+         B     SLCT02             EXIT
+*
+SLCTCL   EQU   *
+         CLC   IFILQOPE,DFHVALUE(CLOSED) CLOSED ?
+         BNE   IFILINPT           EXIT IF NOT
+SLCT02   EQU   *
+         CLI   SLCTUNEN,X'00'     ANY UNENABLED SELECTION ?
+         BE    SLCT03             EXIT IF NONE
+         CLC   IFILQENA,DFHVALUE(UNENABLED) UNENABLED ?
+         BNE   IFILINPT           EXIT IF NOT
+         B     SLCT04             EXIT
+*
+SLCT03   EQU   *
+* ONLY IF NO SELECTION FOR UNENABLED
+         CLI   SLCTENDS,X'00'     ANY ENA/DIS SELECTION ?
+         BE    SLCT04             EXIT IF NONE
+         CLI   SLCTENDS,X'FF'     IS IT ENABLE ?
+         BNE   SLCTDS             EXIT IF NOT
+         CLC   IFILQENA,DFHVALUE(ENABLED) ENABLED ?
+         BNE   IFILINPT           EXIT IF NOT
+         B     SLCT04             EXIT
+*
+SLCTDS   EQU   *
+         CLC   IFILQENA,DFHVALUE(DISABLED) DISABLED ?
+         BNE   IFILINPT           EXIT IF NOT
+SLCT04   EQU   *
+         CLI   SLCTREAD,X'00'     ANY READ/NOREAD SELECTION ?
+         BE    SLCT05             EXIT IF NONE
+         CLI   SLCTREAD,X'FF'     IS IT READ ?
+         BNE   SLCTNR             EXIT IF NOT
+         CLC   IFILQRD,DFHVALUE(READABLE) READ ?
+         BNE   IFILINPT           EXIT IF NOT
+         B     SLCT05             EXIT
+*
+SLCTNR   EQU   *
+         CLC   IFILQRD,DFHVALUE(NOTREADABLE) NOTREADABLE ?
+         BNE   IFILINPT           EXIT IF NOT
+SLCT05   EQU   *
+         CLI   SLCTUPDT,X'00'     ANY UPDATE/NOUPDATE SELECTION ?
+         BE    SLCT06             EXIT IF NONE
+         CLI   SLCTUPDT,X'FF'     IS IT UPDATE ?
+         BNE   SLCTNU             EXIT IF NOT
+         CLC   IFILQUPD,DFHVALUE(UPDATABLE) UPDATE ?
+         BNE   IFILINPT           EXIT IF NOT
+         B     SLCT06             EXIT
+*
+SLCTNU   EQU   *
+         CLC   IFILQUPD,DFHVALUE(NOTUPDATABLE) NOTUPDATABLE ?
+         BNE   IFILINPT           EXIT IF NOT
+SLCT06   EQU   *
+         CLI   SLCTADD,X'00'      ANY ADD/NOADD SELECTION ?
+         BE    SLCT07             EXIT IF NONE
+         CLI   SLCTADD,X'FF'      IS IT ADD ?
+         BNE   SLCTNA             EXIT IF NOT
+         CLC   IFILQADD,DFHVALUE(ADDABLE) ADD ?
+         BNE   IFILINPT           EXIT IF NOT
+         B     SLCT07             EXIT
+*
+SLCTNA   EQU   *
+         CLC   IFILQADD,DFHVALUE(NOTADDABLE) NOTADDABLE ?
+         BNE   IFILINPT           EXIT IF NOT
+SLCT07   EQU   *
+         CLI   SLCTBRWS,X'00'     ANY BROWSE/NOBROWSE SELECTION ?
+         BE    SLCT08             EXIT IF NONE
+         CLI   SLCTBRWS,X'FF'     IS IT BROWSE ?
+         BNE   SLCTNB             EXIT IF NOT
+         CLC   IFILQBRW,DFHVALUE(BROWSABLE) BROWSE ?
+         BNE   IFILINPT           EXIT IF NOT
+         B     SLCT08             EXIT
+*
+SLCTNB   EQU   *
+         CLC   IFILQBRW,DFHVALUE(NOTBROWSABLE) NOTBROWSABLE ?
+         BNE   IFILINPT           EXIT IF NOT
+SLCT08   EQU   *
+         CLI   SLCTDELT,X'00'     ANY DELETE/NODELETE SELECTION ?
+         BE    SLCT09             EXIT IF NONE
+         CLI   SLCTDELT,X'FF'     IS IT DELETE ?
+         BNE   SLCTND             EXIT IF NOT
+         CLC   IFILQDEL,DFHVALUE(DELETABLE) DELETE ?
+         BNE   IFILINPT           EXIT IF NOT
+         B     SLCT09             EXIT
+*
+SLCTND   EQU   *
+         CLC   IFILQDEL,DFHVALUE(NOTDELETABLE) NOTDELETABLE ?
+         BNE   IFILINPT           EXIT IF NOT
+SLCT09   EQU   *
+         CLI   SLCTFXVA,X'00'     ANY FIXED/VARIABLE SELECTION ?
+         BE    SLCTDUN            EXIT IF NONE
+         CLI   SLCTFXVA,X'FF'     IS IT FIXED ?
+         BNE   SLCTVR             EXIT IF NOT
+         CLC   IFILQRCF,DFHVALUE(FIXED) FIXED ?
+         BNE   IFILINPT           EXIT IF NOT
+         B     SLCTDUN            EXIT
+*
+SLCTVR   EQU   *
+         CLC   IFILQRCF,DFHVALUE(VARIABLE) VARIABLE ?
+         BNE   IFILINPT           EXIT IF NOT
+SLCTDUN  EQU   *
+* SET UP MAP ENTRY
+         MVC   IFILFILE,IFILQFLE  MOVE FILENAME
+         MVC   IFILOPE,=C'OPE'    PRESET OPEN
+         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
+         BE    IFILOPEN           EXIT IF IT IS
+         MVC   IFILOPE,=C'CLO'    SET CLOSED
+IFILOPEN EQU   *
+         MVC   IFILENA,=C'UNE'    SET UNENABLED
+         CLC   IFILQENA,DFHVALUE(UNENABLED) UNENABLED ?
+         BE    IFILNTUN           EXIT IF IT IS
+         MVC   IFILENA,=C'ENA'    PRESET ENABLED
+         CLC   IFILQENA,DFHVALUE(ENABLED) ENABLED ?
+         BE    IFILNTUN           EXIT IF IT IS
+         MVC   IFILENA,=C'DIS'    SET DISABLED
+IFILNTUN EQU   *
+         MVC   IFILREA,=C'REA'     SET READ
+         CLC   IFILQRD,DFHVALUE(READABLE) READABLE ?
+         BE    IFILREAD           EXIT IF IT IS
+         MVC   IFILREA,=C'...'    SET NO READ
+IFILREAD EQU   *
+         MVC   IFILUPD,=C'UPD'    SET UPDATE
+         CLC   IFILQUPD,DFHVALUE(UPDATABLE) UPDATABLE ?
+         BE    IFILUPDT           EXIT IF IT IS
+         MVC   IFILUPD,=C'...'    SET NO UPDATE
+IFILUPDT EQU   *
+         MVC   IFILADD,=C'ADD'    SET ADD
+         CLC   IFILQADD,DFHVALUE(ADDABLE) ADDABLE ?
+         BE    IFILADD1           EXIT IF IT IS
+         MVC   IFILADD,=C'...'    SET NO ADD
+IFILADD1 EQU   *
+         MVC   IFILBRW,=C'BRO'    SET BROWSE
+         CLC   IFILQBRW,DFHVALUE(BROWSABLE) BROWSABLE ?
+         BE    IFILBRWS           EXIT IF IT IS
+         MVC   IFILBRW,=C'...'    SET NO BROWSE
+IFILBRWS EQU   *
+         MVC   IFILDEL,=C'DEL'    SET DELETE
+         CLC   IFILQDEL,DFHVALUE(DELETABLE) DELETABLE ?
+         BE    IFILGOFV           EXIT IF IT IS
+         MVC   IFILDEL,=C'...'    SET NO DELETE
+IFILGOFV EQU   *
+         MVC   IFILFXVA,=C'FIX '  SET FIXED
+         CLC   IFILQRCF,DFHVALUE(FIXED) FIXED ?
+         BE    IFILINCR           EXIT IF IT IS
+         MVC   IFILFXVA,=C'VAR '  SET VARIABLE
+IFILINCR EQU   *
+         MVC   IFILDSN,IFILQDSN   MOVE DSNAME
+         AHI   R12,IFILLEN        BUMP OUTPUT POINTER
+         B     IFILINPT           LOOP
+*
+IFILEND  EQU   *
+* CLEAR REMAINING MAP FIELDS
+*   19 LINES IN TOTAL
+*   R12 POINTS TO NEXT AVAILABLE LINE
+         LR    R0,R12             AREA TO CLEAR
+         LA    R1,IFILF04L        R1=LIST ADDRESS
+         SR    R12,R1             R12=LENGTH ALREADY FILLED
+         LA    R1,IFILLEN*19      R1=WHOLE AREA LENGTH
+         SR    R1,R12             R1=LENGTH REMAINING TO BE CLEARED
+         LR    R8,R0              AREA TO CLEAR
+         SR    R9,R9              CLEAR SECOND LENGTH
+         MVCLE R0,R8,X'00'        CLEAR REMAINING MAP AREA
+         LR    R8,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         EXEC  CICS SEND MAP('IFIL1') MAPSET('MAPCEMT') ERASE NOHANDLE
+         LR    R13,R8             RESTORE BASE 1
+         USING CEMTFILE,R13
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZ   ABEND              ABEND IF THERE IS
+IFILNOWT EQU   *
+         MVI   COMM,C'1'          SET CURSOR SELECT
+         B     RETURN             EXIT
+*
+IFILRET  EQU   *
+* RETURN FROM SUMMARY MAP
+* PROCESSING PRIORITY
+*   IF THE HEADER IS MODIFIED, ALL OTHER MODS ARE DISCARDED
+*   IF NO FIELDS HAVE MODS, THEN CURSOR SELECT AND DISPLAY IFIL2
+*   IF FIELDS HAVE MODS, PROCESS THEM AND REDISPLAY IFIL1
+         MVI   COMM,X'00'         END OF TASK BY DEFAULT
+         CLI   EIBAID,DFHCLEAR    WAS CLEAR PRESSED ?
+         BE    RETURN             EXIT IF IT WAS
+         LR    R8,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         EXEC  CICS RECEIVE MAP('IFIL1') MAPSET('MAPCEMT') NOHANDLE
+         LR    R13,R8             RESTORE BASE 1
+         USING CEMTFILE,R13
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZ   ABEND              ABEND IF THERE IS
+* INPUT OVERRIDE PROCESSING
+         SR    R7,R7              CLEAR R7
+         ICM   R7,3,IFILHEDL      ANY INPUT OVERRIDE ?
+         BZ    IFILCFND           EXIT IF NONE
+         L     R1,TCTTEDA         R1=ORIGINAL INPUT DATA (INITBUFF)
+         BCTR  R7,0               -1 FOR MVC
+         EX    R7,IFILMVC         MOVE OVERRIDE DATA
+         AR    R1,R7              POINT TO LAST BYTE MOVED
+         MVI   1(R1),X'00'        NULL TERMINATOR
+         MVI   EIBRESP,X'FF'      SET SPECIAL EIBRESP
+         B     RETURN             RETURN
+IFILMVC  MVC   0(0,R1),IFILHEDI   MOVE OVERRIDE DATA
+*
+IFILCFND EQU   *
+* NO HEADER MODS
+* ANY FIELD MODS ?
+         LA    R12,IFILF04L       R12=LIST ADDRESS
+         LA    R8,19              R8=LINES TO SCAN
+IFILMDLP EQU   *
+         CLI   IFILFILE,X'00'     VALID FILE ?
+         BE    IFILCURS           EXIT TO CURSOR LOCATE
+         OC    IFILLENO,IFILLENO  ANY OPE/CLO MODS ?
+         BNZ   IFILMODS           EXIT IF THERE ARE
+         OC    IFILLENE,IFILLENE  ANY ENA/DIS MODS ?
+         BNZ   IFILMODS           EXIT IF THERE ARE
+         OC    IFILLENR,IFILLENR  ANY READ MODS ?
+         BNZ   IFILMODS           EXIT IF THERE ARE
+         OC    IFILLENU,IFILLENU  ANY UPDATE MODS ?
+         BNZ   IFILMODS           EXIT IF THERE ARE
+         OC    IFILLENA,IFILLENA  ANY ADD MODS ?
+         BNZ   IFILMODS           EXIT IF THERE ARE
+         OC    IFILLENB,IFILLENB  ANY BROWSE MODS ?
+         BNZ   IFILMODS           EXIT IF THERE ARE
+         OC    IFILLEND,IFILLEND  ANY DELETE MODS ?
+         BNZ   IFILMODS           EXIT IF THERE ARE
+         AHI   R12,IFILLEN        BUMP OUTPUT POINTER
+         BCT   R8,IFILMDLP        LOOP
+         B     IFILCURS           EXIT TO CURSOR SELECT
+*
+IFILMODS EQU   *
+* MODS DETECTED, PROCESS THEM
+         LA    R12,IFILF04L       R12=LIST ADDRESS
+         LA    R8,19              R8=LINES TO SCAN
+IFILMOLP EQU   *
+* WHEN CHANGES FOR EACH FILE ARE COMPLETE SET THE COLOUR TO WHITE
+         CLI   IFILFILE,X'00'     VALID FILE ?
+         BE    IFILMODN           EXIT IF ALL DONE
+         MVC   IFILQFLE,IFILFILE  SET FILE NAME FOR INQUIRE
+         BAL   R9,INQFILE         GET FILE DETAILS
+         XC    SLCTPARM,SLCTPARM  CLEAR PARM INDICATORS
+         OC    IFILLENO,IFILLENO  ANY OPE/CLO CHANGE ?
+         BZ    IFILMI02           EXIT IF NOT
+* OPE/CLO CHANGED
+         OI    IFILOPE,X'40'      UPPER CASE
+         CLI   IFILOPE,C'O'       OPEN ?
+         BNE   IFILMICL           EXIT IF NOT
+* OPEN REQUESTED
+         CLC   IFILQOPE,DFHVALUE(OPEN) ALREADY OPEN ?
+         BE    IFILMI02           EXIT IF IT IS
+         MVI   SLCTOPCL,X'FF'     SET OPEN REQUESTED
+         B     IFILMI02           EXIT
+*
+IFILMICL EQU   *
+         CLI   IFILOPE,C'C'       CLOSE ?
+         BNE   IFILMI02           EXIT IF NOT
+* CLOSE REQUESTED
+         CLC   IFILQOPE,DFHVALUE(CLOSED) ALREADY CLOSED ?
+         BE    IFILMI02           EXIT IF IT IS
+         MVI   SLCTOPCL,X'FE'     SET CLOSE REQUESTED
+IFILMI02 EQU   *
+         OC    IFILLENE,IFILLENE  ANY ENA/DIS CHANGE ?
+         BZ    IFILMI03           EXIT IF NOT
+* ENA/DIS CHANGED
+         OI    IFILENA,X'40'      UPPER CASE
+         CLI   IFILENA,C'E'       ENABLE ?
+         BNE   IFILMIDS           EXIT IF NOT
+* ENABLE REQUESTED
+         CLC   IFILQENA,DFHVALUE(ENABLED) ALREADY ENABLED ?
+         BE    IFILMI03           EXIT IF IT IS
+         MVI   SLCTENDS,X'FF'     SET ENABLE REQUESTED
+         B     IFILMI03           EXIT
+*
+IFILMIDS EQU   *
+         CLI   IFILENA,C'D'       DISABLE ?
+         BNE   IFILMI03           EXIT IF NOT
+* DISABLE REQUESTED
+         CLC   IFILQENA,DFHVALUE(DISABLED) ALREADY DISABLED ?
+         BE    IFILMI03           EXIT IF IT IS
+         MVI   SLCTENDS,X'FE'     SET DISABLE REQUESTED
+IFILMI03 EQU   *
+         OC    IFILLENR,IFILLENR  ANY READ CHANGE ?
+         BZ    IFILMI04           EXIT IF NOT
+* READ CHANGED
+         OI    IFILREA,X'40'      UPPER CASE
+         CLI   IFILREA,C'R'       READ ?
+         BNE   IFILMINR           EXIT IF NOT
+* READ REQUESTED
+         CLC   IFILQRD,DFHVALUE(READABLE) ALREADY READ ?
+         BE    IFILMI04           EXIT IF IT IS
+         MVI   SLCTREAD,X'FF'     SET READ REQUESTED
+         B     IFILMI04           EXIT
+*
+IFILMINR EQU   *
+         CLI   IFILREA,C'N'       NOREAD ?
+         BNE   IFILMI04           EXIT IF NOT
+* NOREAD REQUESTED
+         CLC   IFILQRD,DFHVALUE(NOTREADABLE) ALREADY NOREAD ?
+         BE    IFILMI04           EXIT IF IT IS
+         MVI   SLCTREAD,X'FE'     SET NOREAD REQUESTED
+IFILMI04 EQU   *
+         OC    IFILLENU,IFILLENU  ANY UPDATE CHANGE ?
+         BZ    IFILMI05           EXIT IF NOT
+* UPDATE CHANGED
+         OI    IFILUPD,X'40'      UPPER CASE
+         CLI   IFILUPD,C'U'       UPDATE ?
+         BNE   IFILMINU           EXIT IF NOT
+* UPDATE REQUESTED
+         CLC   IFILQUPD,DFHVALUE(UPDATABLE) ALREADY UPDATE ?
+         BE    IFILMI05           EXIT IF IT IS
+         MVI   SLCTUPDT,X'FF'     SET UPDATE REQUESTED
+         B     IFILMI05           EXIT
+*
+IFILMINU EQU   *
+         CLI   IFILUPD,C'N'       NOUPDATE ?
+         BNE   IFILMI05           EXIT IF NOT
+* NOUPDATE REQUESTED
+         CLC   IFILQUPD,DFHVALUE(NOTUPDATABLE) ALREADY NOUPDATE ?
+         BE    IFILMI05           EXIT IF IT IS
+         MVI   SLCTUPDT,X'FE'     SET NOUPDATE REQUESTED
+IFILMI05 EQU   *
+         OC    IFILLENA,IFILLENA  ANY ADD CHANGE ?
+         BZ    IFILMI06           EXIT IF NOT
+* ADD CHANGED
+         OI    IFILADD,X'40'      UPPER CASE
+         CLI   IFILADD,C'A'       ADD ?
+         BNE   IFILMINA           EXIT IF NOT
+* ADD REQUESTED
+         CLC   IFILQADD,DFHVALUE(ADDABLE) ALREADY ADD ?
+         BE    IFILMI06           EXIT IF IT IS
+         MVI   SLCTADD,X'FF'      SET ADD REQUESTED
+         B     IFILMI06           EXIT
+*
+IFILMINA EQU   *
+         CLI   IFILADD,C'N'       NOADD ?
+         BNE   IFILMI06           EXIT IF NOT
+* NOADD REQUESTED
+         CLC   IFILQADD,DFHVALUE(NOTADDABLE) ALREADY NOADD ?
+         BE    IFILMI06           EXIT IF IT IS
+         MVI   SLCTADD,X'FE'      SET NOADD REQUESTED
+IFILMI06 EQU   *
+         OC    IFILLENB,IFILLENB  ANY BROWSE CHANGE ?
+         BZ    IFILMI07           EXIT IF NOT
+* BROWSE CHANGED
+         OI    IFILBRW,X'40'      UPPER CASE
+         CLI   IFILBRW,C'B'       BROWSE ?
+         BNE   IFILMINB           EXIT IF NOT
+* BROWSE REQUESTED
+         CLC   IFILQBRW,DFHVALUE(BROWSABLE) ALREADY BROWSE ?
+         BE    IFILMI07           EXIT IF IT IS
+         MVI   SLCTBRWS,X'FF'     SET BROWSE REQUESTED
+         B     IFILMI07           EXIT
+*
+IFILMINB EQU   *
+         CLI   IFILBRW,C'N'       NOBROWSE ?
+         BNE   IFILMI07           EXIT IF NOT
+* NOBROWSE REQUESTED
+         CLC   IFILQBRW,DFHVALUE(NOTBROWSABLE) ALREADY NOBROWSE ?
+         BE    IFILMI07           EXIT IF IT IS
+         MVI   SLCTBRWS,X'FE'     SET NOBROWSE REQUESTED
+IFILMI07 EQU   *
+         OC    IFILLEND,IFILLEND  ANY DELETE CHANGE ?
+         BZ    IFILMODN           EXIT IF NOT
+* DELETE CHANGED
+         OI    IFILDEL,X'40'      UPPER CASE
+         CLI   IFILDEL,C'D'       DELETE ?
+         BNE   IFILMIND           EXIT IF NOT
+* DELETE REQUESTED
+         CLC   IFILQDEL,DFHVALUE(DELETABLE) ALREADY DELETE ?
+         BE    IFILMODN           EXIT IF IT IS
+         MVI   SLCTDELT,X'FF'     SET DELETE REQUESTED
+         B     IFILMODN           EXIT
+*
+IFILMIND EQU   *
+         CLI   IFILDEL,C'N'       NODELETE ?
+         BNE   IFILMODN           EXIT IF NOT
+* NODELETE REQUESTED
+         CLC   IFILQDEL,DFHVALUE(NOTDELETABLE) ALREADY NODELETE ?
+         BE    IFILMODN           EXIT IF IT IS
+         MVI   SLCTDELT,X'FE'     SET NODELETE REQUESTED
+IFILMODN EQU   *
+         BAL   R9,DOFUNCS         DO REQUESTED FUNCTIONS
+         B     ERMCOND            +0  ERROR CONDITION RAISED
+*                                 +4  SUCCESSFUL
+* SUCCESSFUL, SET CHANGES TO WHITE
+         BAL   R9,INQFILE         REFRESH FILE DETAILS
+         BAL   R9,WHITEFL1        TURN CHANGED OPTIONS TO WHITE
+         AHI   R12,IFILLEN        BUMP OUTPUT POINTER
+         BCT   R8,IFILMOLP        LOOP
+*
+IFILMDUN EQU   *
+         LA    R12,IFILF04L       R12=LIST ADDRESS
+         B     IFILINPT           EXIT TO REFRESH IFIL1
+*
+ERMCOND  EQU   *
+* ERROR DURING FILE LIST MODS PROCESSING (SET OR INQUIRE)
+         MVC   IFILERRO,=C'ERROR RAISED ON' MOVE ERROR MESSAGE
+         MVC   IFILERFO,IFILQFLE  MOVE FILENAME
+* INVREQ /.. : MESSAGE
+         MVC   IFILERCO(8),=C'INVREQ /' ASSUME INVREQ
+         LA    R7,ERRINVRQ        ASSUME INVREQ TABLE
+         CLC   EIBRESP,DFHRESP(INVREQ) IS IT INVREQ ?
+         BE    ERMINVQ            EXIT IF IT IS
+         MVC   IFILERCO(8),=C'IOERR   ' ASSUME IOERR
+         CLC   EIBRESP,DFHRESP(IOERR) IS IT IOERR ?
+         BE    ERMDONE            EXIT IF IT IS
+         DC    H'0'               ADD OTHER CONDITIONS WHEN ENCOUNTERED
+ERMINVQ  EQU   *
+         L     R1,EIBRESP2        R1=RESP2
+         CVD   R1,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202020' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT RESP2
+         MVC   IFILERCO+8(2),WORK+2 MOVE RESP2
+         MVC   IFILERCO+10(3),=C' : ' MOVE SEPARATOR
+ERMIVQLP EQU   *
+         C     R1,0(R7)           MATCH ON RESP2 ?
+         BE    ERMIVQMG           EXIT IF IT IS
+         AHI   R7,45              BUMP POINTER
+         CLI   0(R7),X'FF'        END OF DATA ?
+         BNE   ERMIVQLP           LOOP IF NOT
+         DC    H'0'               CANNOT OCCUR
+*
+ERMIVQMG EQU   *
+         MVC   IFILERCO+13(41),4(R7) MOVE DESCRIPTION
+ERMDONE  EQU   *
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         EXEC  CICS INQUIRE FILE END NOHANDLE
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
+         MVI   RESUME,X'00'       RESET RESUME MODE
+         MVI   PARSE1,C'I'        WE ARE NOW IN I FI MODE
+         B     IFILMDUN           EXIT
+*
+IFILCURS EQU   *
+         LGH   R1,EIBCPOSN        R8=CURSOR POSITION
+         CHI   R1,240             CURSOR BEFORE DATA ?
+         BL    IFILNOWT           EXIT IF IT IS
+         CHI   R1,1760            CURSOR AFTER DATA ?
+         BNL   IFILNOWT           EXIT IF IT IS
+         SGR   R0,R0              PREPARE FOR DIVIDE
+         DSGF  R0,=F'80'          DIVIDE BY 80 = ROW-1 IN R1
+         AHI   R1,-3              DSECT OVERLAYS ROW 4+
+         MSFI  R1,IFILLEN         INDEX INTO MAP
+         LA    R12,IFILF04L       R12=LIST ADDRESS
+         AR    R12,R1             + INDEX
+         CLI   IFILFILE,X'00'     CURSOR ON A FILE ?
+         BE    IFILNOWT           EXIT IF NOT
+         MVC   IFILQFLE,IFILFILE  SET SELECTED FILENAME
+* FILE SELECTED, GET ALL DATA
+         BAL   R9,INQFILE         GET FILE DETAILS
+         LA    R0,IFIL2S          AREA TO CLEAR
+         LA    R1,IFIL2L          LENGTH TO CLEAR
+         LR    R8,R0              AREA TO CLEAR
+         SR    R9,R9              CLEAR SECOND LENGTH
+         MVCLE R0,R8,X'00'        CLEAR IFIL2 MAP
+IFIL2DSP EQU   *
+         MVC   IFIL2FLO(8),IFILQFLE MOVE FILENAME
+         MVI   IFIL2FLO+8,C')'    END BRACKET
+         MVC   IFIL2ADO,=C'Addable)   ' SET ADDABLE
+         CLC   IFILQADD,DFHVALUE(ADDABLE) ADDABLE ?
+         BE    IFILADD2           EXIT IF IT IS
+         MVC   IFIL2ADO,=C'Notaddable)' SET NOTADDABLE
+IFILADD2 EQU   *
+         MVC   IFIL2BSO,IFILQBSN  MOVE BASEDSNAME
+         LA    R7,IFIL2BSO        SCAN START
+IFILBSLP EQU   *
+         CLI   0(R7),C' '         END OF STRING ?
+         BE    IFILBSEB           EXIT IF IT IS
+         AHI   R7,1               BUMP POINTER
+         B     IFILBSLP           LOOP
+*
+IFILBSEB EQU   *
+         MVI   0(R7),C')'         END BRACKET
+         MVC   IFIL2BRO,=C'Browsable)   ' SET BROWSABLE
+         CLC   IFILQBRW,DFHVALUE(BROWSABLE) BROWSABLE ?
+         BE    IFILBRW2           EXIT IF IT IS
+         MVC   IFIL2BRO,=C'Notbrowsable)' SET NOTBROWSABLE
+IFILBRW2 EQU   *
+         MVC   IFIL2DLO,=C'Deletable)   ' SET DELETABLE
+         CLC   IFILQDEL,DFHVALUE(DELETABLE) DELETABLE ?
+         BE    IFILDEL2           EXIT IF IT IS
+         MVC   IFIL2DLO,=C'Notdeletable)' SET NOTDELETABLE
+IFILDEL2 EQU   *
+         MVC   IFIL2DSO,IFILQDSN  MOVE DSNAME
+         LA    R7,IFIL2DSO        SCAN START
+IFILDSLP EQU   *
+         CLI   0(R7),C' '         END OF STRING ?
+         BE    IFILDSEB           EXIT IF IT IS
+         AHI   R7,1               BUMP POINTER
+         B     IFILDSLP           LOOP
+*
+IFILDSEB EQU   *
+         MVI   0(R7),C')'         END BRACKET
+         MVC   IFIL2ENO,=C'Unenabled)' SET UNENABLED
+         CLC   IFILQENA,DFHVALUE(UNENABLED) UNENABLED ?
+         BE    IFILENA2           EXIT IF IT IS
+         MVC   IFIL2ENO,=C'Disabled) ' SET DISABLED
+         CLC   IFILQENA,DFHVALUE(DISABLED) DISABLED ?
+         BE    IFILENA2           EXIT IF IT IS
+         MVC   IFIL2ENO,=C'Enabled)  ' SET ENABLED
+IFILENA2 EQU   *
+         MVC   IFIL2KLO,=C'   n/a    )' INITIALISE KEYLENGTH
+         MVC   IFIL2KPO,=C'   n/a    )' INITIALISE KEYPOSITION
+* KEYLENGTH AND KEYPOSITION ONLY AVAILABLE FOR OPEN KSDS FILES
+         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
+         BNE   IFILNOK            EXIT IF NOT
+         CLC   IFILQTYP,DFHVALUE(KSDS) KSDS ?
+         BNE   IFILNOK            EXIT IF NOT
+         L     R7,IFILQKL         R7=KEYLENGTH
+         CVD   R7,DEC             CONVERT TO DECIMAL
+         MVC   WORK,=X'402020202020202020202120' MOVE EDIT WORD
+         ED    WORK,DEC+2         EDIT KEYLENGTH
+         MVC   IFIL2KLO(10),WORK+2 MOVE KEYLENGTH
+         L     R7,IFILQKP         R7=KEYPOSITION
+         CVD   R7,DEC             CONVERT TO DECIMAL
+         MVC   WORK,=X'402020202020202020202120' MOVE EDIT WORD
+         ED    WORK,DEC+2         EDIT KEYPOSITION
+         MVC   IFIL2KPO(10),WORK+2 MOVE KEYPOSITION
+IFILNOK  EQU   *
+* ### AIX SUPPORT WILL ADD PATH
+         MVC   IFIL2OBO,=C'Base)' MOVE OBJECT
+         MVC   IFIL2OPO,=C'Open)  ' SET OPEN
+         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
+         BE    IFILOPE2           EXIT IF IT IS
+         MVC   IFIL2OPO,=C'Closed)' SET CLOSED
+IFILOPE2 EQU   *
+         MVC   IFIL2RDO,=C'Readable)   ' SET READABLE
+         CLC   IFILQRD,DFHVALUE(READABLE) READABLE ?
+         BE    IFILRD2            EXIT IF IT IS
+         MVC   IFIL2RDO,=C'Notreadable)' SET NOTREADABLE
+IFILRD2  EQU   *
+         MVC   IFIL2RFO,=C'Variable)' SET VARIABLE
+         CLC   IFILQRCF,DFHVALUE(VARIABLE) VARIABLE ?
+         BE    IFILRCF2           EXIT IF IT IS
+         MVC   IFIL2RFO,=C'Fixed)   ' SET FIXED
+IFILRCF2 EQU   *
+* RECORDSIZE AND TYPE ONLY AVAILABLE FOR OPEN FILES
+         MVC   IFIL2RSO,=C'   n/a    )' INITIALISE RECORDSIZE
+         MVC   IFIL2TPO,=C'n/a ) ' INITIALISE TYPE
+         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
+         BNE   IFILTP2            EXIT IF NOT
+         L     R7,IFILQRCS        R7=RECORDSIZE
+         CVD   R7,DEC             CONVERT TO DECIMAL
+         MVC   WORK,=X'402020202020202020202120' MOVE EDIT WORD
+         ED    WORK,DEC+2         EDIT RECORDSIZE
+         MVC   IFIL2RSO,WORK+2    MOVE RECORDSIZE
+         MVI   IFIL2RSO+10,C')'    MOVE END BRACKET
+         MVC   IFIL2TPO,=C'Esds) ' SET ESDS
+         CLC   IFILQTYP,DFHVALUE(ESDS) ESDS ?
+         BE    IFILTP2            EXIT IF IT IS
+         MVC   IFIL2TPO,=C'Ksds) ' SET KSDS
+         CLC   IFILQTYP,DFHVALUE(KSDS) KSDS ?
+         BE    IFILTP2            EXIT IF IT IS
+         MVC   IFIL2TPO,=C'Rrds) ' SET RRDS
+         CLC   IFILQTYP,DFHVALUE(RRDS) RRDS ?
+         BE    IFILTP2            EXIT IF IT IS
+         MVC   IFIL2TPO,=C'Vrrds)' SET VRRDS
+IFILTP2  EQU    *
+         MVC   IFIL2UPO,=C'Updatable)   ' SET UPDATABLE
+         CLC   IFILQUPD,DFHVALUE(UPDATABLE) UPDATABLE ?
+         BE    IFILUPD2           EXIT IF IT IS
+         MVC   IFIL2UPO,=C'Notupdatable)' SET NOTUPDATABLE
+IFILUPD2 EQU   *
+         LR    R8,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         EXEC  CICS SEND MAP('IFIL2') MAPSET('MAPCEMT') ERASE NOHANDLE
+         LR    R13,R8             RESTORE BASE 1
+         USING CEMTFILE,R13
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZ   ABEND              ABEND IF THERE IS
+IFILNKEY EQU   *
+         MVI   COMM,C'2'          SET FILE DISPLAY
+         B     RETURN             EXIT
+*
+IFILDIS  EQU   *
+* RETURN FROM FILE DISPLAY
+         MVI   COMM,X'00'         END OF TASK BY DEFAULT
+         CLI   EIBAID,DFHCLEAR    WAS CLEAR PRESSED ?
+         BE    RETURN             EXIT IF IT WAS
+         CLI   EIBAID,DFHPF3      WAS PF3 PRESSED ?
+         BE    IFIL               EXIT IF IT WAS
+         CLI   EIBAID,DFHENTER    WAS ENTER PRESSED ?
+         BNE   IFILNKEY           EXIT IF IT WAS
+         LR    R8,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         EXEC  CICS RECEIVE MAP('IFIL2') MAPSET('MAPCEMT')
+         LR    R13,R8             RESTORE BASE 1
+         USING CEMTFILE,R13
+* PROCESS MAP CHANGES
+* THE FILENAME IS STORED ON THE SCREEN (MDT ON)
+* IF ERASE INPUT IS PRESSED IT WON'T COME BACK, TREAT AS PF3
+*
+* ONLY THE FIRST CHAR IS CHECKED, IF NOT CORRECT IGNORE IT
+* IF IT'S THE SAME AS THE CURRENT SETTING IGNORE IT
+* O/C E/D R/N U/N A/N B/N D/N
+*
+* WHEN ALL CHANGES ARE COMPLETE SET THE COLOUR TO WHITE
+         OC    IFIL2FLL,IFIL2FLL  DID THE FILENAME COME BACK ?
+         BZ    IFIL               EXIT IF IT DIDN'T
+         MVC   IFILQFLE,IFIL2FLI  SET FILE NAME FOR INQUIRE
+         BAL   R9,INQFILE         GET FILE DETAILS
+         XC    SLCTPARM,SLCTPARM  CLEAR PARM INDICATORS
+         OC    IFIL2OPL,IFIL2OPL  ANY OPE/CLO CHANGE ?
+         BZ    IFIL2I02           EXIT IF NOT
+* OPE/CLO CHANGED
+         OI    IFIL2OPI,X'40'     UPPER CASE
+         CLI   IFIL2OPI,C'O'      OPEN ?
+         BNE   IFIL2ICL           EXIT IF NOT
+* OPEN REQUESTED
+         CLC   IFILQOPE,DFHVALUE(OPEN) ALREADY OPEN ?
+         BE    IFIL2I02           EXIT IF IT IS
+         MVI   SLCTOPCL,X'FF'     SET OPEN REQUESTED
+         B     IFIL2I02           EXIT
+*
+IFIL2ICL EQU   *
+         CLI   IFIL2OPI,C'C'      CLOSE ?
+         BNE   IFIL2I02           EXIT IF NOT
+* CLOSE REQUESTED
+         CLC   IFILQOPE,DFHVALUE(CLOSED) ALREADY CLOSED ?
+         BE    IFIL2I02           EXIT IF IT IS
+         MVI   SLCTOPCL,X'FE'     SET CLOSE REQUESTED
+IFIL2I02 EQU   *
+         OC    IFIL2ENL,IFIL2ENL  ANY ENA/DIS CHANGE ?
+         BZ    IFIL2I03           EXIT IF NOT
+* ENA/DIS CHANGED
+         OI    IFIL2ENI,X'40'     UPPER CASE
+         CLI   IFIL2ENI,C'E'      ENABLE ?
+         BNE   IFIL2IDS           EXIT IF NOT
+* ENABLE REQUESTED
+         CLC   IFILQENA,DFHVALUE(ENABLED) ALREADY ENABLED ?
+         BE    IFIL2I03           EXIT IF IT IS
+         MVI   SLCTENDS,X'FF'     SET ENABLE REQUESTED
+         B     IFIL2I03           EXIT
+*
+IFIL2IDS EQU   *
+         CLI   IFIL2ENI,C'D'      DISABLE ?
+         BNE   IFIL2I03           EXIT IF NOT
+* DISABLE REQUESTED
+         CLC   IFILQENA,DFHVALUE(DISABLED) ALREADY DISABLED ?
+         BE    IFIL2I03           EXIT IF IT IS
+         MVI   SLCTENDS,X'FE'     SET DISABLE REQUESTED
+IFIL2I03 EQU   *
+         OC    IFIL2RDL,IFIL2RDL  ANY READ CHANGE ?
+         BZ    IFIL2I04           EXIT IF NOT
+* READ CHANGED
+         OI    IFIL2RDI,X'40'     UPPER CASE
+         CLI   IFIL2RDI,C'R'      READ ?
+         BNE   IFIL2INR           EXIT IF NOT
+* READ REQUESTED
+         CLC   IFILQRD,DFHVALUE(READABLE) ALREADY READ ?
+         BE    IFIL2I04           EXIT IF IT IS
+         MVI   SLCTREAD,X'FF'     SET READ REQUESTED
+         B     IFIL2I04           EXIT
+*
+IFIL2INR EQU   *
+         CLI   IFIL2RDI,C'N'      NOREAD ?
+         BNE   IFIL2I04           EXIT IF NOT
+* NOREAD REQUESTED
+         CLC   IFILQRD,DFHVALUE(NOTREADABLE) ALREADY NOREAD ?
+         BE    IFIL2I04           EXIT IF IT IS
+         MVI   SLCTREAD,X'FE'     SET NOREAD REQUESTED
+IFIL2I04 EQU   *
+         OC    IFIL2UPL,IFIL2UPL  ANY UPDATE CHANGE ?
+         BZ    IFIL2I05           EXIT IF NOT
+* UPDATE CHANGED
+         OI    IFIL2UPI,X'40'     UPPER CASE
+         CLI   IFIL2UPI,C'U'      UPDATE ?
+         BNE   IFIL2INU           EXIT IF NOT
+* UPDATE REQUESTED
+         CLC   IFILQUPD,DFHVALUE(UPDATABLE) ALREADY UPDATE ?
+         BE    IFIL2I05           EXIT IF IT IS
+         MVI   SLCTUPDT,X'FF'     SET UPDATE REQUESTED
+         B     IFIL2I05           EXIT
+*
+IFIL2INU EQU   *
+         CLI   IFIL2UPI,C'N'      NOUPDATE ?
+         BNE   IFIL2I05           EXIT IF NOT
+* NOUPDATE REQUESTED
+         CLC   IFILQUPD,DFHVALUE(NOTUPDATABLE) ALREADY NOUPDATE ?
+         BE    IFIL2I05           EXIT IF IT IS
+         MVI   SLCTUPDT,X'FE'     SET NOUPDATE REQUESTED
+IFIL2I05 EQU   *
+         OC    IFIL2ADL,IFIL2ADL  ANY ADD CHANGE ?
+         BZ    IFIL2I06           EXIT IF NOT
+* ADD CHANGED
+         OI    IFIL2ADI,X'40'     UPPER CASE
+         CLI   IFIL2ADI,C'A'      ADD ?
+         BNE   IFIL2INA           EXIT IF NOT
+* ADD REQUESTED
+         CLC   IFILQADD,DFHVALUE(ADDABLE) ALREADY ADD ?
+         BE    IFIL2I06           EXIT IF IT IS
+         MVI   SLCTADD,X'FF'      SET ADD REQUESTED
+         B     IFIL2I06           EXIT
+*
+IFIL2INA EQU   *
+         CLI   IFIL2ADI,C'N'      NOADD ?
+         BNE   IFIL2I06           EXIT IF NOT
+* NOADD REQUESTED
+         CLC   IFILQADD,DFHVALUE(NOTADDABLE) ALREADY NOADD ?
+         BE    IFIL2I06           EXIT IF IT IS
+         MVI   SLCTADD,X'FE'      SET NOADD REQUESTED
+IFIL2I06 EQU   *
+         OC    IFIL2BRL,IFIL2BRL  ANY BROWSE CHANGE ?
+         BZ    IFIL2I07           EXIT IF NOT
+* BROWSE CHANGED
+         OI    IFIL2BRI,X'40'     UPPER CASE
+         CLI   IFIL2BRI,C'B'      BROWSE ?
+         BNE   IFIL2INB           EXIT IF NOT
+* BROWSE REQUESTED
+         CLC   IFILQBRW,DFHVALUE(BROWSABLE) ALREADY BROWSE ?
+         BE    IFIL2I07           EXIT IF IT IS
+         MVI   SLCTBRWS,X'FF'     SET BROWSE REQUESTED
+         B     IFIL2I07           EXIT
+*
+IFIL2INB EQU   *
+         CLI   IFIL2BRI,C'N'      NOBROWSE ?
+         BNE   IFIL2I07           EXIT IF NOT
+* NOBROWSE REQUESTED
+         CLC   IFILQBRW,DFHVALUE(NOTBROWSABLE) ALREADY NOBROWSE ?
+         BE    IFIL2I07           EXIT IF IT IS
+         MVI   SLCTBRWS,X'FE'     SET NOBROWSE REQUESTED
+IFIL2I07 EQU   *
+         OC    IFIL2DLL,IFIL2DLL  ANY DELETE CHANGE ?
+         BZ    IFIL2DUN           EXIT IF NOT
+* DELETE CHANGED
+         OI    IFIL2DLI,X'40'     UPPER CASE
+         CLI   IFIL2DLI,C'D'      DELETE ?
+         BNE   IFIL2IND           EXIT IF NOT
+* DELETE REQUESTED
+         CLC   IFILQDEL,DFHVALUE(DELETABLE) ALREADY DELETE ?
+         BE    IFIL2DUN           EXIT IF IT IS
+         MVI   SLCTDELT,X'FF'     SET DELETE REQUESTED
+         B     IFIL2DUN           EXIT
+*
+IFIL2IND EQU   *
+         CLI   IFIL2DLI,C'N'      NODELETE ?
+         BNE   IFIL2DUN           EXIT IF NOT
+* NODELETE REQUESTED
+         CLC   IFILQDEL,DFHVALUE(NOTDELETABLE) ALREADY NODELETE ?
+         BE    IFIL2DUN           EXIT IF IT IS
+         MVI   SLCTDELT,X'FE'     SET NODELETE REQUESTED
+IFIL2DUN EQU   *
+         BAL   R9,DOFUNCS         DO REQUESTED FUNCTIONS
+         B     ERRCOND            +0  ERROR CONDITION RAISED
+*                                 +4  SUCCESSFUL
+* SUCCESSFUL, SET CHANGES TO WHITE
+         BAL   R9,INQFILE         REFRESH FILE DETAILS
+         CLI   SLCTOPCL,X'00'     OPE/CLO CHANGED ?
+         BE    IFIL2WH2           EXIT IF NOT
+         MVI   IFIL2OPC,SFE_WHITE SET COLOUR
+IFIL2WH2 EQU   *
+         CLI   SLCTENDS,X'00'     ENA/DIS CHANGED ?
+         BE    IFIL2WH3           EXIT IF NOT
+         MVI   IFIL2ENC,SFE_WHITE SET COLOUR
+IFIL2WH3 EQU   *
+         CLI   SLCTREAD,X'00'     READ CHANGED ?
+         BE    IFIL2WH4           EXIT IF NOT
+         MVI   IFIL2RDC,SFE_WHITE SET COLOUR
+IFIL2WH4 EQU   *
+         CLI   SLCTUPDT,X'00'     UPDATE CHANGED ?
+         BE    IFIL2WH5           EXIT IF NOT
+         MVI   IFIL2UPC,SFE_WHITE SET COLOUR
+IFIL2WH5 EQU   *
+         CLI   SLCTADD,X'00'      ADD CHANGED ?
+         BE    IFIL2WH6           EXIT IF NOT
+         MVI   IFIL2ADC,SFE_WHITE SET COLOUR
+IFIL2WH6 EQU   *
+         CLI   SLCTBRWS,X'00'     BROWSE CHANGED ?
+         BE    IFIL2WH7           EXIT IF NOT
+         MVI   IFIL2BRC,SFE_WHITE SET COLOUR
+IFIL2WH7 EQU   *
+         CLI   SLCTDELT,X'00'     DELETE CHANGED ?
+         BE    IFIL2DSP           EXIT IF NOT
+         MVI   IFIL2DLC,SFE_WHITE SET COLOUR
+         B     IFIL2DSP           EXIT TO REDISPLAY FILE DETAILS
+*
+ERRCOND  EQU   *
+         MVC   IFIL2ERO,=C'ERROR RAISED ON' MOVE ERROR MESSAGE
+         MVC   IFIL2EFO,IFILQFLE  MOVE FILENAME
+* INVREQ /.. : MESSAGE
+         MVC   IFIL2ECO(8),=C'INVREQ /' ASSUME INVREQ
+         LA    R7,ERRINVRQ        ASSUME INVREQ TABLE
+         CLC   EIBRESP,DFHRESP(INVREQ) IS IT INVREQ ?
+         BE    ERRINVQ            EXIT IF IT IS
+         DC    H'0'               ADD OTHER CONDITIONS WHEN ENCOUNTERED
+ERRINVQ  EQU   *
+         L     R1,EIBRESP2        R1=RESP2
+         CVD   R1,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202020' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT RESP2
+         MVC   IFIL2ECO+8(2),WORK+2 MOVE RESP2
+         MVC   IFIL2ECO+10(3),=C' : ' MOVE SEPARATOR
+ERRIVQLP EQU   *
+         C     R1,0(R7)           MATCH ON RESP2 ?
+         BE    ERRIVQMG           EXIT IF IT IS
+         AHI   R7,45              BUMP POINTER
+         CLI   0(R7),X'FF'        END OF DATA ?
+         BNE   ERRIVQLP           LOOP IF NOT
+         DC    H'0'               CANNOT OCCUR
+*
+ERRIVQMG EQU   *
+         MVC   IFIL2ECO+13(41),4(R7) MOVE DESCRIPTION
+         B     IFIL2DSP           EXIT
+*
+SFIL     EQU   *
+* CLEAR IFIL1 MAP
+         LA    R0,IFIL1S          AREA TO CLEAR
+         LA    R1,IFIL1L          LENGTH TO CLEAR
+         LR    R8,R0              AREA TO CLEAR
+         SR    R9,R9              CLEAR SECOND LENGTH
+         MVCLE R0,R8,X'00'        CLEAR IFIL1 MAP
+         LA    R12,IFILF04L       R12=LIST ADDRESS
+SFILNEXT EQU   *
+* SET FILE PROCESSING
+         MVC   IFILQFLE,=CL10' '  BLANK OUT FILENAME
+         BAL   R9,SELECT          CODE PARMS, SELECT FILE TO USE
+         B     SLCTSYNX           + 0  EXIT IF NO PARMS
+         B     SLCTSYNX           + 4  MISSING/BAD FILENAME SELECTION
+         B     IFILFRMS           + 8  FILENAME SELECTION COMPLETE
+*                                 +12  FILENAME SELECTED
+*
+* FILENAME SELECTED, NOW DO REQUESTED FUNCTIONS
+         BAL   R9,DOFUNCS         DO REQUESTED FUNCTIONS
+         B     ERMCOND            +0  ERROR CONDITION RAISED
+         BAL   R9,WHITEFL1        +4  SUCCESSFUL, CHANGED OPS TO WHITE
+         AHI   R12,IFILLEN        BUMP OUTPUT POINTER
+         B     SFILNEXT           EXIT
+*
+SLCTSYNX EQU   *
+         MVC   IFILERRO,=C'SYNTAX ERROR   ' MOVE ERROR MESSAGE
+         MVC   IFILERFO,IFILQFLE  MOVE FILENAME
+         MVC   IFILERCO(10),=CL10' ' NO CONDITION
+         MVC   IFILERCO+10(3),=C' : ' MOVE SEPARATOR
+         CLI   SLCTERR,X'FF'      IS IT 'NO FILENAME SELECTION' ?
+         BE    SLCTSYNF           EXIT IF IT IS
+         CLI   SLCTERR,X'FE'      IS IT 'FILENAME SYNTAX ERROR' ?
+         BE    SLCTSYNE           EXIT IF IT IS
+         DC    H'0'               CANNOT OCCUR
+SLCTSYNE EQU   *
+         MVC   IFILERCO+13(22),=C'FILENAME SYNTAX ERROR:'
+         L     R8,SLCTLIST        R8=SELECTION OF FILENAMES
+         LA    R1,IFILERCO+35     R1=START POSITION FOR PARM
+SLCTSYLP EQU   *
+         MVC   0(1,R1),0(R8)      MOVE A PARM BYTE
+         AHI   R8,1               BUMP PARM POINTER
+         C     R8,SLCTLSEN        END OF PARM ?
+         BE    SLCTSYNG           EXIT IF IT IS
+         AHI   R1,1               BUMP DEST POINTER
+         B     SLCTSYLP           LOOP
+*
+SLCTSYNF EQU   *
+* MISSING FILENAME SELECTION
+         MVC   IFILERCO+13(30),=C'NO FILENAME SELECTION DETECTED'
+SLCTSYNG EQU   *
+         MVI   SLCTERR,X'00'      RESET SELECT ERROR
+         B     IFILFRMS           EXIT
+*
+RETURN   DS    0H
+         PR    ,                  UNSTACK AND RETURN
+*
+* SUBROUTINES
+*
+SELECT   EQU   *
+         CLI   RESUME,X'FF'       RESUME MODE ?
+         BE    SLCTLOOP           EXIT IF IT IS
+         XC    SLCTPARM,SLCTPARM  CLEAR PARM INDICATORS
+         CLI   PARSE3,C' '        ANY PARMS ?
+         BNE   SLCTGTPM           EXIT IF THERE ARE
+* NO PARMS
+*    DEFAULT TO ALL IF I FI
+*    ERROR IF S FI
+         CLI   PARSE1,C'S'        S FI ?
+         BER   R9                 RETURN IF IT IS
+         MVI   SLCTLIST,X'FF'     SET ALL FILES
+         B     SLCTSCAN           EXIT
+*
+SLCTGTPM EQU   *
+* THE FILENAME(S) COULD FOLLOW FI IN PARSE2 OR BE IN ANOTHER
+* PARSE FIELD
+         XC    SLCTLIST,SLCTLIST  CLEAR FILE LIST LOCATION
+         LA    R1,PARSE2          R1=PARSE2 ADDRESS
+         LA    R7,CEMTPLEN        R7=LOOP LIMIT
+SLCTBKLP EQU   *
+         CLI   0(R1),C' '         SPACE ?
+         BE    SLCTNOBK           EXIT IF IT IS
+         CLI   0(R1),C'('         OPEN BRACKET ?
+         BE    SLCTGOTB           EXIT IF IT IS
+         AHI   R1,1               BUMP POINTER
+         BCT   R7,SLCTBKLP        LOOP
+         B     SLCTNOBK           EXIT
+*
+SLCTGOTB EQU   *
+         ST    R1,SLCTLIST        SAVE SELECTION LIST LOCATION
+         LA    R1,PARSE2+CEMTPLEN R1=PARSE2 END ADDRESS+1
+         ST    R1,SLCTLSEN        SAVE END
+SLCTNOBK EQU   *
+* ANALYSE ALL PARMS, LATER PARMS TAKE PRECEDENCE
+         LA    R1,PARSE3          R1=REST OF PARSE AREAS
+         LA    R7,CEMTPNUM-2      R7=NO. OF AREAS TO SCAN
+SLCTPMLP EQU   *
+         CLI   0(R1),C' '         DONE ALL PARMS ?
+         BE    SLCTDONE           EXIT IF WE HAVE
+         CLI   0(R1),C'('         FILE LIST ?
+         BNE   SLCTP02            EXIT IF NOT
+         ST    R1,SLCTLIST        SAVE SELECTION LIST LOCATION
+         ST    R1,SLCTLSEN        SAVE END
+         ASI   SLCTLSEN,CEMTPLEN           SELECTION
+         B     SLCTPNXT           EXIT
+*
+SLCTP02  EQU   *
+         CLC   0(2,R1),=C'AL'     ALL ?
+         BNE   SLCTP03            EXIT IF NOT
+         MVI   SLCTLIST,X'FF'     SET ALL FILES
+         B     SLCTPNXT           EXIT
+*
+SLCTP03  EQU   *
+         CLC   0(2,R1),=C'OP'     OPEN ?
+         BNE   SLCTP04            EXIT IF NOT
+         MVI   SLCTOPCL,X'FF'     SET OPEN
+         B     SLCTPNXT           EXIT
+*
+SLCTP04  EQU   *
+         CLC   0(2,R1),=C'CL'     CLOSE ?
+         BNE   SLCTP05            EXIT IF NOT
+         MVI   SLCTOPCL,X'FE'     SET CLOSE
+         B     SLCTPNXT           EXIT
+*
+SLCTP05  EQU   *
+         CLC   0(2,R1),=C'EN'     ENABLED ?
+         BNE   SLCTP06            EXIT IF NOT
+         MVI   SLCTENDS,X'FF'     SET ENABLED
+         B     SLCTPNXT           EXIT
+*
+SLCTP06  EQU   *
+         CLC   0(2,R1),=C'DI'     DISABLED ?
+         BNE   SLCTP06A           EXIT IF NOT
+         MVI   SLCTENDS,X'FE'     SET DISABLED
+         B     SLCTPNXT           EXIT
+*
+SLCTP06A EQU   *
+         CLC   0(2,R1),=C'UN'     UNENABLED ?
+         BNE   SLCTP07            EXIT IF NOT
+         MVI   SLCTUNEN,X'FF'     SET UNENABLED
+         B     SLCTPNXT           EXIT
+*
+SLCTP07  EQU   *
+         CLC   0(2,R1),=C'RE'     READ ?
+         BNE   SLCTP08            EXIT IF NOT
+         MVI   SLCTREAD,X'FF'     SET READ
+         B     SLCTPNXT           EXIT
+*
+SLCTP08  EQU   *
+         CLC   0(3,R1),=C'NOR'    NOREAD ?
+         BNE   SLCTP09            EXIT IF NOT
+         MVI   SLCTREAD,X'FE'     SET NOREAD
+         B     SLCTPNXT           EXIT
+*
+SLCTP09  EQU   *
+         CLC   0(2,R1),=C'UP'     UPDATE ?
+         BNE   SLCTP10            EXIT IF NOT
+         MVI   SLCTUPDT,X'FF'     SET UPDATE
+         B     SLCTPNXT           EXIT
+*
+SLCTP10  EQU   *
+         CLC   0(3,R1),=C'NOU'    NOUPDATE ?
+         BNE   SLCTP11            EXIT IF NOT
+         MVI   SLCTUPDT,X'FE'     SET NOUPDATE
+         B     SLCTPNXT           EXIT
+*
+SLCTP11  EQU   *
+         CLC   0(2,R1),=C'AD'     ADD ?
+         BNE   SLCTP12            EXIT IF NOT
+         MVI   SLCTADD,X'FF'      SET ADD
+         B     SLCTPNXT           EXIT
+*
+SLCTP12  EQU   *
+         CLC   0(3,R1),=C'NOA'    NOADD ?
+         BNE   SLCTP13            EXIT IF NOT
+         MVI   SLCTADD,X'FE'      SET NOADD
+         B     SLCTPNXT           EXIT
+*
+SLCTP13  EQU   *
+         CLC   0(2,R1),=C'BR'     BROWSE ?
+         BNE   SLCTP14            EXIT IF NOT
+         MVI   SLCTBRWS,X'FF'     SET BROWSE
+         B     SLCTPNXT           EXIT
+*
+SLCTP14  EQU   *
+         CLC   0(3,R1),=C'NOB'    NOBROWSE ?
+         BNE   SLCTP15            EXIT IF NOT
+         MVI   SLCTBRWS,X'FE'     SET NOBROWSE
+         B     SLCTPNXT           EXIT
+*
+SLCTP15  EQU   *
+         CLC   0(2,R1),=C'DE'     DELETE ?
+         BNE   SLCTP16            EXIT IF NOT
+         MVI   SLCTDELT,X'FF'     SET DELETE
+         B     SLCTPNXT           EXIT
+*
+SLCTP16  EQU   *
+         CLC   0(3,R1),=C'NOD'    NODELETE ?
+         BNE   SLCTP17            EXIT IF NOT
+         MVI   SLCTDELT,X'FE'     SET NODELETE
+         B     SLCTPNXT           EXIT
+*
+SLCTP17  EQU   *
+         CLC   0(2,R1),=C'FX'     FIXED ?
+         BNE   SLCTP18            EXIT IF NOT
+         MVI   SLCTFXVA,X'FF'     SET FIXED
+         B     SLCTPNXT           EXIT
+*
+SLCTP18  EQU   *
+         CLC   0(2,R1),=C'VA'     VARIABLE ?
+         BNE   SLCTPNXT           EXIT IF NOT
+         MVI   SLCTFXVA,X'FE'     SET VARIABLE
+SLCTPNXT EQU   *
+         AHI   R1,CEMTPLEN        BUMP TO NEXT PARM
+         BCT   R7,SLCTPMLP        LOOP
+SLCTDONE EQU   *
+         OC    SLCTLIST,SLCTLIST  ANY FILE LIST ?
+         BNZ   SLCTSCAN           EXIT IF THERE IS
+* NO FILE LIST OR ALL
+*    DEFAULT TO ALL IF I FI
+*    ERROR IF S FI
+         MVI   SLCTERR,X'FF'      ASSUME 'NO FILELIST' ERROR
+         CLI   PARSE1,C'S'        S FI ?
+         BE    4(R9)              RETURN IF IT IS (SYNTAX ERROR)
+         MVI   SLCTERR,X'00'      RESET SELECT ERROR
+         MVI   SLCTLIST,X'FF'     SET ALL FILES
+SLCTSCAN EQU   *
+* CHECK ALL FILES FOR A MATCH TO OUR SELECTION
+         ST    R9,IFILRTRN        SAVE RETURN ADDRESS
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         EXEC  CICS INQUIRE FILE START
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
+         MVI   RESUME,X'FF'       SET RESUME MODE
+SLCTLOOP EQU   *
+         EXEC  CICS INQUIRE FILE(IFILQFLE) NEXT                        X
+                        ADD(IFILQADD)                                  X
+                     BROWSE(IFILQBRW)                                  X
+                     DELETE(IFILQDEL)                                  X
+                     DSNAME(IFILQDSN)                                  X
+               ENABLESTATUS(IFILQENA)                                  X
+                 OPENSTATUS(IFILQOPE)                                  X
+                       READ(IFILQRD)                                   X
+               RECORDFORMAT(IFILQRCF)                                  X
+                     UPDATE(IFILQUPD)                                  X
+                     NOHANDLE
+         CLC   EIBRESP,DFHRESP(END) END OF BROWSE ?
+         BNE   SLCTNOTE           EXIT IF NOT
+         EXEC  CICS INQUIRE FILE END
+         MVI   RESUME,X'00'       RESET RESUME MODE
+         L     R9,IFILRTRN        RESTORE RETURN ADDRESS
+         B     8(R9)              RETURN
+*
+SLCTNOTE EQU   *
+         L     R9,IFILRTRN        RESTORE RETURN ADDRESS
+         CLI   SLCTLIST,X'FF'     'ALL' SPECIFIED ?
+         BE    12(R9)             RETURN IF IT WAS
+* FILENAME IN THE FOLLOWING FORMS:
+*    FLOATING GENERIC NOT CODED    EG. (*ABC*)
+*    FILENAMES  (MYFILE1,MYFILE2)
+*    WILD CARD  (++++++)           EG. ALL SIX CHARACTER FILENAMES
+*    GENERIC    (M*)               EG. ALL FILENAMES BEGINNING M
+*    COMPLEX    (+M*)              EG. ALL FILENAMES 2ND CHAR M
+         L     R1,SLCTLIST        R1=SELECTED FILENAMES
+SLCTSELC EQU   *
+         AHI   R1,1               BUMP OVER ( OR ,
+         MVI   SLCTERR,X'FE'      ASSUME 'FILELIST PARSE' ERROR
+         C     R1,SLCTLSEN        BUSTED PARSE AREA ?
+         BE    4(R9)              RETURN IF WE DID (SYNTAX ERROR)
+         MVI   SLCTERR,X'00'      RESET SELECT ERROR
+         LA    R7,IFILQFLE        R7=ADDRESS OF FILENAME
+         SR    R8,R8              R8=POSITION WITHIN FILENAME
+SLCTFLLP EQU   *
+         CLI   0(R1),C'*'         GENERIC ?
+         BE    12(R9)             RETURN IF IT IS
+         CLI   0(R1),C'+'         WILD CARD ?
+         BNE   SLCTCHAR           EXIT IF NOT
+* WILD CARD
+         CLI   0(R7),C' '         FILENAME ENDED ?
+         BE    SLCTNXTS           NEXT SELECTION IF NO MATCH
+         B     SLCTNXTC           EXIT
+*
+SLCTCHAR EQU   *
+* CHARACTER
+         CLC   0(1,R1),0(R7)      CHARACTERS MATCH ?
+         BNE   SLCTNXTS           NEXT SELECTION IF NO MATCH
+SLCTNXTC EQU   *
+         AHI   R1,1               BUMP SELECTION POINTER
+         MVI   SLCTERR,X'FE'      ASSUME 'FILELIST PARSE' ERROR
+         C     R1,SLCTLSEN        BUSTED PARSE AREA ?
+         BE    4(R9)              RETURN IF WE DID (SYNTAX ERROR)
+         MVI   SLCTERR,X'00'      RESET SELECT ERROR
+         CLI   0(R1),C')'         END OF FILENAME SELECTION ?
+         BNE   SLCTCOMA           EXIT IF NOT
+* END OF SELECTIONS
+         CHI   R8,7               ALL POSITIONS MATCHED ?
+         BE    12(R9)             RETURN IF THEY WERE
+         CLI   1(R7),C' '         NEXT POSITION BLANK ?
+         BE    12(R9)             RETURN IF IT IS
+         B     SLCTLOOP           EXIT FOR NEXT FILENAME
+*
+SLCTCOMA EQU   *
+         CLI   0(R1),C','         END OF SELECTION...MORE TO COME
+         BE    SLCTSELC           DO NEXT SELECTION IF IT IS
+         AHI   R7,1               BUMP FILENAME POINTER
+         AHI   R8,1               BUMP FILENAME POSITION
+         CHI   R8,8               ALL DONE ?
+         BNE   SLCTFLLP           LOOP IF NOT
+         B     12(R9)             RETURN
+*
+SLCTNXTS EQU   *
+* MATCH ON FILENAME FAILED, HUNT FOR NEXT SELECTION
+         AHI   R1,1               BUMP SELECTION POINTER
+         MVI   SLCTERR,X'FE'      ASSUME 'FILELIST PARSE' ERROR
+         C     R1,SLCTLSEN        BUSTED PARSE AREA ?
+         BE    4(R9)              RETURN IF WE DID (SYNTAX ERROR)
+         MVI   SLCTERR,X'00'      RESET SELECT ERROR
+         CLI   0(R1),C')'         END OF FILENAME SELECTION ?
+         BE    SLCTLOOP           NEXT FILENAME IF IT IS
+         CLI   0(R1),C','         MORE SELECTIONS ?
+         BNE   SLCTNXTS           LOOP IF NOT
+         B     SLCTSELC           EXIT TO DO NEXT SELECTION
+*
+INQFILE  EQU   *
+         ST    R9,IFILRTRN        SAVE RETURN ADDRESS
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         EXEC  CICS INQUIRE FILE(IFILQFLE)                             X
+                        ADD(IFILQADD)                                  X
+                 BASEDSNAME(IFILQBSN)                                  X
+                     BROWSE(IFILQBRW)                                  X
+                     DELETE(IFILQDEL)                                  X
+                     DSNAME(IFILQDSN)                                  X
+               ENABLESTATUS(IFILQENA)                                  X
+                  KEYLENGTH(IFILQKL)                                   X
+                KEYPOSITION(IFILQKP)                                   X
+                     OBJECT(IFILQOBJ)                                  X
+                 OPENSTATUS(IFILQOPE)                                  X
+                       READ(IFILQRD)                                   X
+               RECORDFORMAT(IFILQRCF)                                  X
+                 RECORDSIZE(IFILQRCS)                                  X
+                       TYPE(IFILQTYP)                                  X
+                     UPDATE(IFILQUPD)
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
+         L     R9,IFILRTRN        RESTORE RETURN ADDRESS
+         BR    R9                 RETURN
+*
+DOFUNCS  EQU   *
+* DO REQUESTED FUNCTIONS
+         ST    R9,IFILRTRN        SAVE RETURN ADDRESS
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         CLI   SLCTOPCL,X'00'     ANY OPEN/CLOSE ?
+         BE    SFILG02            EXIT IF NONE
+         CLI   SLCTOPCL,X'FF'     OPEN ?
+         BNE   SFILCLOS           EXIT IF NOT
+         EXEC  CICS SET FILE(IFILQFLE) OPEN NOHANDLE
+         B     SFILG02            EXIT
+*
+SFILCLOS EQU   *
+         EXEC  CICS SET FILE(IFILQFLE) CLOSED NOHANDLE
+SFILG02  EQU   *
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
+         L     R9,IFILRTRN        RESTORE RETURN ADDRESS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZR  R9                 RETURN IF THERE IS
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         CLI   SLCTENDS,X'00'     ANY ENABLE/DISABLE ?
+         BE    SFILG03            EXIT IF NONE
+         CLI   SLCTENDS,X'FF'     ENABLE ?
+         BNE   SFILDISB           EXIT IF NOT
+         EXEC  CICS SET FILE(IFILQFLE) ENABLED NOHANDLE
+         B     SFILG03            EXIT
+*
+SFILDISB EQU   *
+         EXEC  CICS SET FILE(IFILQFLE) DISABLED NOHANDLE
+SFILG03  EQU   *
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
+         L     R9,IFILRTRN        RESTORE RETURN ADDRESS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZR  R9                 RETURN IF THERE IS
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         CLI   SLCTREAD,X'00'     ANY READ/NOREAD ?
+         BE    SFILG04            EXIT IF NONE
+         CLI   SLCTREAD,X'FF'     READ ?
+         BNE   SFILNOTR           EXIT IF NOT
+         EXEC  CICS SET FILE(IFILQFLE) READABLE NOHANDLE
+         B     SFILG04            EXIT
+*
+SFILNOTR EQU   *
+         EXEC  CICS SET FILE(IFILQFLE) NOTREADABLE NOHANDLE
+SFILG04  EQU   *
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
+         L     R9,IFILRTRN        RESTORE RETURN ADDRESS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZR  R9                 RETURN IF THERE IS
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         CLI   SLCTUPDT,X'00'     ANY UPDATE/NOUPDATE ?
+         BE    SFILG05            EXIT IF NONE
+         CLI   SLCTUPDT,X'FF'     UPDATE ?
+         BNE   SFILNOTU           EXIT IF NOT
+         EXEC  CICS SET FILE(IFILQFLE) UPDATABLE NOHANDLE
+         B     SFILG05            EXIT
+*
+SFILNOTU EQU   *
+         EXEC  CICS SET FILE(IFILQFLE) NOTUPDATABLE NOHANDLE
+SFILG05  EQU   *
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
+         L     R9,IFILRTRN        RESTORE RETURN ADDRESS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZR  R9                 RETURN IF THERE IS
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         CLI   SLCTADD,X'00'      ANY ADD/NOADD ?
+         BE    SFILG06            EXIT IF NONE
+         CLI   SLCTADD,X'FF'      ADD ?
+         BNE   SFILNOTA           EXIT IF NOT
+         EXEC  CICS SET FILE(IFILQFLE) ADDABLE NOHANDLE
+         B     SFILG06            EXIT
+*
+SFILNOTA EQU   *
+         EXEC  CICS SET FILE(IFILQFLE) NOTADDABLE NOHANDLE
+SFILG06  EQU   *
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
+         L     R9,IFILRTRN        RESTORE RETURN ADDRESS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZR  R9                 RETURN IF THERE IS
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         CLI   SLCTBRWS,X'00'     ANY BROWSE/NOBROWSE ?
+         BE    SFILG07            EXIT IF NONE
+         CLI   SLCTBRWS,X'FF'     BROWSE ?
+         BNE   SFILNOTB           EXIT IF NOT
+         EXEC  CICS SET FILE(IFILQFLE) BROWSABLE NOHANDLE
+         B     SFILG07            EXIT
+*
+SFILNOTB EQU   *
+         EXEC  CICS SET FILE(IFILQFLE) NOTBROWSABLE NOHANDLE
+SFILG07  EQU   *
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
+         L     R9,IFILRTRN        RESTORE RETURN ADDRESS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZR  R9                 RETURN IF THERE IS
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
+         CLI   SLCTDELT,X'00'     ANY DELETE/NODELETE ?
+         BE    SFILGEND           EXIT IF NONE
+         CLI   SLCTDELT,X'FF'     DELETE ?
+         BNE   SFILNOTD           EXIT IF NOT
+         EXEC  CICS SET FILE(IFILQFLE) DELETABLE NOHANDLE
+         B     SFILGEND           EXIT IF NONE
+*
+SFILNOTD EQU   *
+         EXEC  CICS SET FILE(IFILQFLE) NOTDELETABLE NOHANDLE
+SFILGEND EQU   *
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
+         L     R9,IFILRTRN        RESTORE RETURN ADDRESS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZR  R9                 RETURN IF THERE IS
+         B     4(R9)              RETURN IF ALL OK
+*
+WHITEFL1 EQU   *
+         CLI   SLCTOPCL,X'00'     OPE/CLO CHANGED ?
+         BE    IFILMWH2           EXIT IF NOT
+         MVI   IFILCOLO,SFE_WHITE SET COLOUR
+IFILMWH2 EQU   *
+         CLI   SLCTENDS,X'00'     ENA/DIS CHANGED ?
+         BE    IFILMWH3           EXIT IF NOT
+         MVI   IFILCOLE,SFE_WHITE SET COLOUR
+IFILMWH3 EQU   *
+         CLI   SLCTREAD,X'00'     READ CHANGED ?
+         BE    IFILMWH4           EXIT IF NOT
+         MVI   IFILCOLR,SFE_WHITE SET COLOUR
+IFILMWH4 EQU   *
+         CLI   SLCTUPDT,X'00'     UPDATE CHANGED ?
+         BE    IFILMWH5           EXIT IF NOT
+         MVI   IFILCOLU,SFE_WHITE SET COLOUR
+IFILMWH5 EQU   *
+         CLI   SLCTADD,X'00'      ADD CHANGED ?
+         BE    IFILMWH6           EXIT IF NOT
+         MVI   IFILCOLA,SFE_WHITE SET COLOUR
+IFILMWH6 EQU   *
+         CLI   SLCTBRWS,X'00'     BROWSE CHANGED ?
+         BE    IFILMWH7           EXIT IF NOT
+         MVI   IFILCOLB,SFE_WHITE SET COLOUR
+IFILMWH7 EQU   *
+         CLI   SLCTDELT,X'00'     DELETE CHANGED ?
+         BER   R9                 RETURN IF NOT
+         MVI   IFILCOLD,SFE_WHITE SET COLOUR
+         BR    R9                 RETURN
+*
+IFILDSA  DS    AL4                Z390CEMT DSA ADDRESS
+IFILRTRN DS    AL4                SAVE RETURN ADDRESS
+*
+SLCTLIST DS    A                  FILE SELECTION LIST LOCATION
+*                                 FF000000=ALL FILES
+SLCTLSEN DS    A                  END OF SELECTION LIST
+*
+SLCTPARM DS    0XL9               PARM INDICATORS
+SLCTOPCL DS    X                  00=NONE  FF=OPEN      FE=CLOSE
+SLCTUNEN DS    X                  00=NONE  FF=UNENABLED
+SLCTENDS DS    X                  00=NONE  FF=ENABLED   FE=DISABLED
+SLCTREAD DS    X                  00=NONE  FF=READ      FE=NOREAD
+SLCTUPDT DS    X                  00=NONE  FF=UPDATE    FE=NOUPDATE
+SLCTADD  DS    X                  00=NONE  FF=ADD       FE=NOADD
+SLCTBRWS DS    X                  00=NONE  FF=BROWSE    FE=NOBROWSE
+SLCTDELT DS    X                  00=NONE  FF=DELETE    FE=NODELETE
+SLCTFXVA DS    X                  00=NONE  FF=FIXED     FE=VARIABLE
+*
+RESUME   DC    X'00'              FF=RESUME SCAN
+SLCTERR  DC    X'00'              FF=NO FILE SELECTION
+*                                 FE=FILE SELECTION SYNTAX ERROR
+*
+ABEND    DC    H'0'               THIS IS ALWAYS A PROGRAMMING ERROR
+*
+IFILQFLE DS    CL8
+IFILQADD DS    XL4
+IFILQBSN DS    XL128
+IFILQBRW DS    XL4
+IFILQDEL DS    XL4
+IFILQDSN DS    XL128
+IFILQENA DS    XL4
+IFILQKL  DS    XL4
+IFILQKP  DS    XL4
+IFILQOBJ DS    XL4
+IFILQOPE DS    XL4
+IFILQRD  DS    XL4
+IFILQRCF DS    XL4
+IFILQRCS DS    XL4
+IFILQTYP DS    XL4
+IFILQUPD DS    XL4
+*
+WORK     DS    CL12
+DEC      DC    PL8'0'
+*
+ERRINVRQ EQU   *
+         DC    AL4(2),CL41'FILE NOT CLOSED'
+         DC    AL4(3),CL41'FILE NOT DISABLED OR UNENABLED'
+         DC    X'FF'              STOPPER
+*
+         COPY  MAPCEMT
+*
+         LTORG
+*
+* DSECT ON IFIL1 MAP STRUCTURE
+*
+IFILDSCT DSECT
+         DS    XL2                LENGTH
+         DS    X                  FLAG
+         DS    X
+IFILFILE DS    CL8                FILENAME
+*
+IFILLENO DS    XL2                LENGTH
+         DS    X                  FLAG
+IFILCOLO DS    X                  COLOUR
+IFILOPE  DS    CL3                OPE/CLO
+*
+IFILLENE DS    XL2                LENGTH
+         DS    X                  FLAG
+IFILCOLE DS    X                  COLOUR
+IFILENA  DS    CL3                ENA/DIS/UNE
+*
+IFILLENR DS    XL2                LENGTH
+         DS    X                  FLAG
+IFILCOLR DS    X                  COLOUR
+IFILREA  DS    CL3                REA/NOR
+*
+IFILLENU DS    XL2                LENGTH
+         DS    X                  FLAG
+IFILCOLU DS    X                  COLOUR
+IFILUPD  DS    CL3                UPD/NOU
+*
+IFILLENA DS    XL2                LENGTH
+         DS    X                  FLAG
+IFILCOLA DS    X                  COLOUR
+IFILADD  DS    CL3                ADD/NOA
+*
+IFILLENB DS    XL2                LENGTH
+         DS    X                  FLAG
+IFILCOLB DS    X                  COLOUR
+IFILBRW  DS    CL3                BRW/NOB
+*
+IFILLEND DS    XL2                LENGTH
+         DS    X                  FLAG
+IFILCOLD DS    X                  COLOUR
+IFILDEL  DS    CL3                DEL/NOD
+*
+         DS    XL2                LENGTH
+         DS    X                  FLAG
+         DS    X                  COLOUR
+IFILFXVA DS    CL4                FIX/VAR
+IFILDSN  DS    CL38               DSNAME
+IFILLEN  EQU   *-IFILDSCT
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHEISTG                 DSA
+         CEMTPARM DSECT
+         COPY  DFHAID
+         COPY  DFHBMSCA
+         TN3270 SYMBOLS
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R4  BASE 2
+* R5  BASE 3
+* R6  BASE 4
+* R10 TCTTE BASE
+* R11 EIB BASE
+* R12 MAP OVERLAY DSECT
+* R13 BASE 1
+         END
+

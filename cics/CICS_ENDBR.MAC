@@ -9,7 +9,7 @@
          MACRO
          CICS_ENDBR
          GBLB  &PARMS_0612
-         LCLB  &NOHAND
+         LCLB  &NOEDF,&NOHAND
          LCLC  &FILE,&DATASET,&REQID,&RESP,&RESP2
 .*
 &NP      SETA  N'&SYSLIST
@@ -19,12 +19,13 @@
          AIF   (&IP GT &NP).ELOOP
 &PARM    SETC  '&SYSLIST(&IP)'
 .*
-         AIF   ('&PARM'(1,5)  EQ 'FILE(').FILE
-         AIF   ('&PARM'(1,8)  EQ 'DATASET(').DATASET
-         AIF   ('&PARM'(1,6)  EQ 'REQID(').REQID
-         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
-         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
-         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         AIF   ('&PARM'(1,5) EQ 'FILE(').FILE
+         AIF   ('&PARM'(1,8) EQ 'DATASET(').DATASET
+         AIF   ('&PARM'(1,6) EQ 'REQID(').REQID
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
 .*
@@ -38,6 +39,10 @@
 .*
 .REQID   ANOP
 &REQID   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -96,6 +101,16 @@
 .DUNREQ  ANOP
          GEN_ST DFHEIBR,P0612EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P0612TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0612EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0612EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0612EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0612NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P0612NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -107,8 +122,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P0612RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P0612EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0612EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P0612)       R1=LCL MODULE PARAMETER LIST
+P0612EDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P0612NOH,X'FF'   NOHANDLE ?
@@ -121,18 +139,7 @@
 *
          AIF   (&PARMS_0612).BYP0612
 &PARMS_0612 SETB 1
-P0612    DS    0H
-P0612FN  DS    XL2                FUNCTION CODE
-P0612EIB DS    AL4                EIB
-P0612TCT DS    AL4                TCTTE
-P0612FIL DS    CL8                FILENAME
-P0612REQ DS    XL2                REQID
-P0612NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0612RSP DS    AL4                RESP
-P0612RS2 DS    AL4                RESP2
-P0612END EQU   *                  END MARKER
-         DS    0H
+         P0612
 *
 .BYP0612 ANOP
 P0612BYP_&SYSNDX DS 0H

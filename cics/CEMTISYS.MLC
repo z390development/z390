@@ -1,0 +1,301 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+CEMTISYS CSECT
+*
+* CEMT I SYS PROCESSOR
+*
+* R1  >>> PARMS
+*
+         USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    C'CEMTISYS'
+         STRL  R13,ISYSDSA        SAVE Z390CEMT DSA ADDRESS
+         LR    R13,R15            R13 AS BASE
+         LR    R3,R1              SET PARAMETER BASE
+         USING CEMTPARM,R3
+         L     DFHEIBR,EIBADDR    LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,TCTADDR    LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         L     R8,CEMTI           R8=MESSAGE LENGTH
+         MVC   CEMTIREQ,=C'FE01'  SET REQUEST CODE
+         MVC   CEMTITRM,TCTTETI   SET TERMID
+         MVC   CEMTITKN,EIBTASKN  SET TASK NO.
+         TCPIO SEND,MSG=CEMTI,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         L     R8,CEMTRCVE        R8=MESSAGE LENGTH
+         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         MVC   SNDISYST,ISYSTITL  SET UP TITLE
+         LA    R6,SNDISYSL        R6=DESTINATION
+         LA    R8,ISYSLIST        R8=SOURCE
+         LA    R7,ISYSLSTL        DESTINATION LENGTH
+         LR    R9,R7              SOURCE LENGTH
+         MVCL  R6,R8              INITIALIZE DISPLAY
+         LA    R6,SNDISYSL        R6=DISPLAY ADDRESS
+         USING ISYSDSCT,R6
+         LA    R7,CEMTDATA        R7=RECEIVED DATA
+         USING ISYSDATA,R7
+* MOVE THE DATA
+         MVC   ISYSJPTH,ISYSDJRP  MOVE JARPATH
+         MVC   ISYSCPTH,ISYSDCSP  MOVE CICSPATH
+         MVC   ISYSTPFX,ISYSDPFX  MOVE TERMID_PREFIX
+         MVC   ISYSTDAT,=C'DMY'   SET DATE FORMAT DMY
+         CLI   ISYSDDTE,C'K'      IS DATE=K ?
+         BE    ISYSDTDN           EXIT IF IT IS
+         MVC   ISYSTDAT,=C'MDY'   SET DATE FORMAT MDY
+         CLI   ISYSDDTE,C'U'      IS DATE=U ?
+         BE    ISYSDTDN           EXIT IF IT IS
+         MVC   ISYSTDAT,=C'YMD'   SET DATE FORMAT YMD
+ISYSDTDN EQU   *
+         MVC   ISYSMAXU+1(1),ISYSDTUS MOVE MAXTHREADS IN USE
+         OI    ISYSMAXU+1,C'0'    CONVERT TO CHAR
+         CLI   ISYSDTUS,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX1           EXIT IF NOT
+         MVC   ISYSMAXU,=C'10'    SET 10
+ISYSHEX1 EQU   *
+         MVC   ISYSMAXT+1(1),ISYSDTMX MOVE MAXTHREADS
+         OI    ISYSMAXT+1,C'0'    CONVERT TO CHAR
+         CLI   ISYSDTMX,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX2           EXIT IF NOT
+         MVC   ISYSMAXT,=C'10'    SET 10
+ISYSHEX2 EQU   *
+         MVC   ISYSLCLU+1(1),ISYSDLUS MOVE LOCAL TERMINALS IN USE
+         OI    ISYSLCLU+1,C'0'    CONVERT TO CHAR
+         CLI   ISYSDLUS,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX3           EXIT IF NOT
+         MVC   ISYSLCLU,=C'10'    SET 10
+ISYSHEX3 EQU   *
+         MVC   ISYSLOCL+1(1),ISYSDLCL MOVE LOCAL_TERMINALS
+         OI    ISYSLOCL+1,C'0'    CONVERT TO CHAR
+         CLI   ISYSDLCL,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX4           EXIT IF NOT
+         MVC   ISYSLOCL,=C'10'    SET 10
+ISYSHEX4 EQU   *
+         MVC   ISYSRMTU+1(1),ISYSDRUS MOVE REMOTE TERMINALS IN USE
+         OI    ISYSRMTU+1,C'0'    CONVERT TO CHAR
+         CLI   ISYSDRUS,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX5           EXIT IF NOT
+         MVC   ISYSRMTU,=C'10'    SET 10
+ISYSHEX5 EQU   *
+         MVC   ISYSREMT+1(1),ISYSDRMT MOVE REMOTE_TERMINALS
+         OI    ISYSREMT+1,C'0'    CONVERT TO CHAR
+         CLI   ISYSDRMT,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX6           EXIT IF NOT
+         MVC   ISYSREMT,=C'10'    SET 10
+ISYSHEX6 EQU   *
+         MVC   ISYSNONU+1(1),ISYSDNUS MOVE NON-TERMINALS IN USE
+         OI    ISYSNONU+1,C'0'    CONVERT TO CHAR
+         CLI   ISYSDNUS,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX7           EXIT IF NOT
+         MVC   ISYSNONU,=C'10'    SET 10
+ISYSHEX7 EQU   *
+         MVC   ISYSNONT+1(1),ISYSDNON MOVE NON-TERMINALS
+         OI    ISYSNONT+1,C'0'    CONVERT TO CHAR
+         CLI   ISYSDNON,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX8           EXIT IF NOT
+         MVC   ISYSNONT,=C'10'    SET 10
+ISYSHEX8 EQU   *
+         MVC   ISYSLTRC,ISYSDTRL  MOVE TRACE_LOCALS
+         MVC   ISYSZTRC,ISYSDTRZ  MOVE TRACE_Z390CICS
+         MVC   ISYSINIT,ISYSDINT  MOVE INITIAL_TRANSID
+         L     R15,ISYSDCWA       R15=CWASIZE
+         CVD   R15,DEC            CONVERT TO DECIMAL
+         MVC   ISYSCWAS-1(8),=X'4020202020202120'
+         ED    ISYSCWAS-1(8),DEC+4 EDIT CWASIZE
+         MVC   ISYSSEQT,ISYSDSEQ  MOVE SEQ_TERM
+         L     R8,ISYSDSA         ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R8
+         EXEC  CICS SEND FROM(SNDISYST) LENGTH(ISYSLEN)
+         PR    ,                  UNSTACK AND RETURN
+*
+TCPIOERR EQU   *
+         L     R8,ISYSDSA         ADDRESS Z390CEMT DSA
+         EXEC  CICS SEND FROM(TCPERR) LENGTH(TCPERRL)
+         PR    ,                  UNSTACK AND RETURN
+*
+ISYSDSA  DS    AL4                Z390CEMT DSA ADDRESS
+*
+* MESSAGE AREA
+SNDISYST DS    CL(ISYSTITE)
+SNDISYSL DS    CL(ISYSLSTL)
+*
+* STRUCTURES
+*
+* -----KEYWORD----  VALUE---------------
+* JARPATH           E:\SOFTWARE\Z390
+* TERMID_PREFIX     DON
+* THREADS            4 OF 10 ALLOCATED
+*
+ISYSTITL EQU   *
+         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA_MDT),IC
+         DC    C'CEMT I SYS'
+         TN3270 (SBA,3,1),(SF,ATT_PA)
+         DC    C'-----KEYWORD----  VALUE---------------'
+ISYSTITE EQU   *-ISYSTITL
+*
+ISYSLIST EQU   *
+         TN3270 (SBA,4,2)
+         DC    CL18'JARPATH'
+         DC    CL50' '
+         TN3270 (SBA,5,2)
+         DC    CL18'CICSPATH'
+         DC    CL50' '
+         TN3270 (SBA,6,2)
+         DC    CL18'TERMID_PREFIX'
+         DC    CL3' '
+         TN3270 (SBA,7,2)
+         DC    CL18'DATE_FORMAT'
+         DC    CL3' '
+         TN3270 (SBA,8,2)
+         DC    CL18'THREADS'
+         DC    C' N OF  N ALLOCATED'
+         TN3270 (SBA,9,2)
+         DC    CL18'LOCAL_TERMINALS'
+         DC    C' N OF  N ALLOCATED'
+         TN3270 (SBA,10,2)
+         DC    CL18'REMOTE_TERMINALS'
+         DC    C' N OF  N ALLOCATED'
+         TN3270 (SBA,11,2)
+         DC    CL18'NON-TERMINALS'
+         DC    C' N OF  N IN USE'
+         TN3270 (SBA,12,2)
+         DC    CL18'INITIAL_TRANSID'
+         DC    CL4' '
+         TN3270 (SBA,13,2)
+         DC    CL18'CWASIZE'
+         DC    CL7' '
+         TN3270 (SBA,14,2)
+         DC    CL18'TRACE_LOCALS'
+         DC    CL3' '
+         TN3270 (SBA,15,2)
+         DC    CL18'TRACE_Z390CICS'
+         DC    CL3' '
+         TN3270 (SBA,16,2)
+         DC    CL18'SEQ_TERM'
+         DC    CL5' '
+ISYSLSTL EQU   *-ISYSLIST
+ISYSLEN  DC    AL2(*-ISYSTITL)
+*
+CEMTI    DS    0F
+* REQUEST INFO
+         DC    A(CEMTIEND-*)
+CEMTIREQ DS    CL4                REQUEST ID
+CEMTITRM DS    CL4                TERMID
+         DC    C'CEMT'            TRANSID
+         DC    C' '               TRANSID TYPE
+CEMTITKN DS    PL4                TASK NO.
+CEMTIEND EQU   *
+*
+CEMTRCVE DS    0F
+* RECEIVE AREA
+* MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
+         DC    A(200)             MAX LENGTH
+         DS    CL4                REQUEST CODE
+         DS    CL4                TERMINAL ID
+         DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+         DS    PL4                TASK NO.
+CEMTDATA DS    CL188              RETURNED DATA
+*
+TCPERR   EQU   *
+         TN3270 WCC_KD,(SBA,3,2)
+         DC    C'CEMT TCPIO ERROR'
+TCPERRL  DC    AL2(*-TCPERR)
+*
+DEC      DC    PL8'0'
+*
+         CEMTPARM DSECT
+*
+* DSECT OUTPUT
+*
+ISYSDSCT DSECT
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSJPTH DS    CL50               JARPATH
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSCPTH DS    CL50               CICSPATH
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSTPFX DS    CL3                TERMID_PREFIX
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSTDAT DS    CL3                DATE FORMAT
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSMAXU DS    CL2                MAXTHREADS IN USE
+         DS    CL4                ' OF '
+ISYSMAXT DS    CL2                MAXTHREADS
+         DS    CL10               ' ALLOCATED'
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSLCLU DS    CL2                LOCAL TERMINALS IN USE
+         DS    CL4                ' OF '
+ISYSLOCL DS    CL2                LOCAL_TERMINALS
+         DS    CL10               ' ALLOCATED'
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSRMTU DS    CL2                REMOTE TERMINALS IN USE
+         DS    CL4                ' OF '
+ISYSREMT DS    CL2                REMOTE_TERMINALS
+         DS    CL10               ' ALLOCATED'
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSNONU DS    CL2                NON-TERMINALS IN USE
+         DS    CL4                ' OF '
+ISYSNONT DS    CL2                NON-TERMINALS
+         DS    CL7                ' IN USE'
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSINIT DS    CL4                INITIAL_TRANSID
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSCWAS DS    CL7                CWASIZE
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSLTRC DS    CL3                TRACE_LOCALS
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSZTRC DS    CL3                TRACE_Z390CICS
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSSEQT DS    CL5                SEQ_TERM
+*
+* REQUESTED DATA FORMAT
+*
+* REFLECT ANY CHANGES IN LCL0208
+ISYSDATA DSECT
+ISYSDJRP DS    CL50               JARPATH
+ISYSDCSP DS    CL50               CICSPATH
+ISYSDPFX DS    CL3                TERMID_PREFIX
+ISYSDDTE DS    C                  DATE FORMAT
+ISYSDTMX DS    X                  MAXTHREADS
+ISYSDTUS DS    X                  THREADS IN USE
+ISYSDLCL DS    X                  LOCAL_TERMINALS
+ISYSDLUS DS    X                  LOCAL TERMINALS IN USE
+ISYSDRMT DS    X                  REMOTE_TERMINALS
+ISYSDRUS DS    X                  REMOTE TERMINALS IN USE
+ISYSDNON DS    X                  NON-TERMINALS
+ISYSDNUS DS    X                  NON-TERMINALS IN USE
+ISYSDINT DS    CL4                INITIAL_TRANSID
+ISYSDCWA DS    XL4                CWASIZE
+ISYSDTRL DS    CL3                TRACE_LOCALS
+ISYSDTRZ DS    CL3                TRACE_Z390CICS
+ISYSDSEQ DS    CL5                SEQ_TERM
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHEISTG                 DSA
+         TN3270 SYMBOLS
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+         END
+

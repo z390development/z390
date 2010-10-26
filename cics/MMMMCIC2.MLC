@@ -4,12 +4,20 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-DFHEISTG DSECT       DSA STORAGE
-MSGSBA   DS   CL4
-SENDMSG  DS   CL100  MESSAGE BUFFER
+DFHEISTG DSECT        DSA STORAGE
+MSGSBA   DS    CL4
+SENDMSG  DS    CL100  MESSAGE BUFFER
+*
 MMMMCIC2 CSECT
 *
 * SEND MSG1 TO GUAM TN3270 TERMINAL
+*
+         EXEC  CICS HANDLE AID                                         X
+               PF2(MYPF2)                                              X
+               PF3                                                     X
+               PF4(MYPF4)
+MYPF2    DS    0H
+MYPF4    DS    0H
 *
          MVC   MSGSBA,SBA11
          MVC   SENDMSG(L'MSG1),MSG1

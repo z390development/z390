@@ -10,7 +10,7 @@
          CICS_LINK
          GBLB  &PARMS_0E02
          GBLB  &ZC_CICS
-         LCLB  &NOHAND,&LEVEL0
+         LCLB  &NOHAND,&LEVEL0,&NOEDF
          LCLC  &PROGRAM,&COMMAREA,&LENGTH,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
@@ -21,6 +21,7 @@
          AIF   ('&PARM'(1,8) EQ 'PROGRAM(').PROGRAM
          AIF   ('&PARM'(1,9) EQ 'COMMAREA(').COMMAREA
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
@@ -38,6 +39,10 @@
 .*
 .LENGTH  ANOP
 &LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -148,6 +153,16 @@
          AEND
 .ALLDONE ANOP
          GEN_ST DFHEIBR,P0E02EIB  SET EIB ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0E02EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0E02EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0E02EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0E02NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).TRYRESP
          GEN_MVI P0E02NOH,X'FF'   SET NOHANDLE
 .TRYRESP ANOP
@@ -160,12 +175,12 @@
          GEN_ST R0,P0E02RS2       SAVE IT
 .NORESP2 ANOP
 * SPECIAL LINKAGE
+         LARL  R0,P0E02EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0E02EDF       SAVE IT
          LARL  R1,P0E02           R1=PARAMETER LIST
-         LARL  R14,P0E02RTN_&SYSNDX RETURN ADDRESS
          LRL   R15,=V(LCL0E02)    R15=EXTERNAL LINK MODULE ADDRESS
-         BR    R15                GO TO IT
-*
-P0E02RTN_&SYSNDX EQU *
+P0E02EDF_&SYSNDX EQU *
+         BALR  R14,R15            GO TO IT
          GEN_CLI P0E02NOH,X'FF'   NOHANDLE ?
          JE    P0E02BYP_&SYSNDX   EXIT IF IT IS
          OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
@@ -176,20 +191,7 @@ P0E02RTN_&SYSNDX EQU *
 *
          AIF   (&PARMS_0E02).BYP0E02
 &PARMS_0E02 SETB 1
-P0E02    DS    0H
-P0E02FN  DS    XL2                FUNCTION CODE
-P0E02PGM DS    CL8                PROGRAM
-P0E02EIB DS    AL4                EIB
-P0E02COM DS    AL4                COMMAREA ADDRESS
-P0E02CLN DS    XL2                COMMAREA LENGTH
-P0E02LV0 DS    X                  FF=LINK LEVEL 0
-         DS    X
-P0E02NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0E02RSP DS    AL4                RESP
-P0E02RS2 DS    AL4                RESP2
-P0E02END EQU   *                  END MARKER
-         DS    0H
+         P0E02
 *
 .BYP0E02 ANOP
 P0E02BYP_&SYSNDX DS 0H

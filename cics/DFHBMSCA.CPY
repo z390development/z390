@@ -30,11 +30,21 @@ DFHBMASK EQU   X'F0'              PROT    NUM
 DFHBMASF EQU   X'F1'              PROT    NUM              MDT
 DFHBMASB EQU   X'F8'              PROT    NUM    BRT
 *        EQU   X'F9'              PROT    NUM    BRT       MDT
-*        EQU   X'7C'              PROT    NUM         DRK
+* ADDED LABEL
+DFHBMASD EQU   X'7C'              PROT    NUM         DRK
 *        EQU   X'7D'              PROT    NUM         DRK  MDT
 *
 * Mapping
 DFHBMEOF EQU   X'80'              FIELD ERASED
 DFHBMCUR EQU   X'02'              FIELD CONTAINING CURSOR
 DFHBMEF  EQU   X'82'              FIELD ERASED AND CONTAINING CURSOR
+* Extended Attributes
+DFHDFCOL EQU   X'00'              DEFAULT COLOUR
+DFHBLUE  EQU   X'F1'              BLUE
+DFHRED   EQU   X'F2'              RED
+DFHPINK  EQU   X'F3'              PINK
+DFHGREEN EQU   X'F4'              GREEN
+DFHTURQ  EQU   X'F5'              TURQUOISE
+DFHYELLO EQU   X'F6'              YELLOW
+DFHNEUTR EQU   X'F7'              NEUTRAL (WHITE)
 

@@ -1,0 +1,51 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P060E &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P060E    DSECT
+         AELSE
+P060E    DS    0H
+         AEND
+P060EFN  DS    XL2                FUNCTION CODE
+P060EEIB DS    AL4                EIB
+P060ETCT DS    AL4                TCTTE
+P060EFIL DS    CL8                FILENAME
+P060ESET DS    X                  FF=SET IS SPECIFIED
+         DS    X
+P060ESTA DS    AL4                ADDRESS FOR SET
+P060EINT DS    AL4                ADDRESS OF INTO
+P060ELEN DS    XL4                LENGTH
+P060ELAD DS    AL4                ADDRESS OF LENGTH IF LABEL
+P060EFAD DS    AL4                ADDRESS OF FLENGTH IF LABEL
+P060EKIN DS    X                  FF=KEYLENGTH IS VALID
+         DS    X
+P060EKLN DS    XL2                KEYLENGTH
+P060ERID DS    XL128              RIDFLD
+P060EARD DS    AL4                A(RIDFLD)
+P060ELRD DS    X                  L'RIDFLD
+         DS    X
+P060ERBA DS    X                  FF=RBA
+         DS    X
+P060EXRB DS    X                  FF=XRBA
+         DS    X
+P060ERRN DS    X                  FF=RRN
+         DS    X
+P060EREQ DS    XL2                REQID
+P060EEDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P060EEDS DS    AL4                DSA ADDRESS FOR EDF
+P060EEDC DS    XL2                CICS DSA LENGTH FOR EDF
+P060EEDL DS    XL2                DSA LENGTH FOR EDF
+P060ENED DS    X                  FF=NOEDF
+         DS    X
+P060ENOH DS    X                  FF=NOHANDLE
+         DS    X
+P060ERSP DS    AL4                RESP
+P060ERS2 DS    AL4                RESP2
+P060EEND EQU   *                  END MARKER
+         MEND
+

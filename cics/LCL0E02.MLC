@@ -16,7 +16,7 @@ LCL0E02  CSECT
 * R14 = RETURN ADDRESS
          USING (P0E02,P0E02END),R1
          USING *,R12
-         B     12(R15)            BYPASS HEADER
+         B     12(R15)            BYPASS EYECATCHER
          DC    CL8'LCL0E02'
          LR    R0,R12             R0=SAVED R12
          LR    R12,R15            SET BASE
@@ -41,9 +41,20 @@ NORESP2  EQU   *
          MVC   BLDLNAME,P0E02PGM  MOVE PROGRAM FOR BLDL
          MVC   EIBRSRCE,P0E02PGM  SET EIBRSRCE
          MVC   EIBPROG,P0E02PGM   SET EIBPROG
-         LR    R0,R1              SAVE PARM POINTER
+* R1 IS NOT RESTORED BY THE STACKING PROCESS
+         ST    R1,P0E02PTR        SAVE P0E02 PARM POINTER
+         CLI   P0E02NED,X'FF'     NOEDF ?
+         BE    NOEDF              EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDF              EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'FF'     SET DIRECT LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDF    EQU   *
          BLDL  0,BLDLLIST         BLDL
-         LR    R1,R0              RESTORE PARM POINTER
+         L     R1,P0E02PTR        RESTORE P0E02 PARM POINTER
          LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
          BZ    LOADOK             EXIT IF OK
 * INVOKE PGMIDERR
@@ -57,21 +68,21 @@ DORESP2  EQU   *
          ICM   R15,15,P0E02RS2    R15=RESP2 ADDRESS
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R15),EIBRESP2  SET RESP2
-         B     RETURN             EXIT
-*
-LOADOK   EQU   *
+RETURN   EQU   *
+         CLI   P0E02NED,X'FF'     NOEDF ?
+         BE    NOEDF2             EXIT IF IT IS
          CLI   TCTTEEDF,X'FF'     EDF ON ?
-         BNE   NOEDF              EXIT IF NOT
-* R1 IS NOT RESTORED BY THE STACKING PROCESS
-         ST    R1,SAVER1          SAVE PARM POINTER
-* EIBPROG IS DESTROYED BY EDF
-         MVC   SAVEPROG,EIBPROG   SAVE THE PROGRAM NAME
+         BNE   NOEDF2             EXIT IF NOT
+         MVI   TCTTEEBA,X'FE'     SET 'AFTER' INTERCEPT (LINK FAIL)
          MVI   TCTTEEDL,X'FF'     SET DIRECT LINKAGE
          L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
          BAKR  0,R15              STACK REGS AND GO
-         L     R1,SAVER1          RESTORE PARM POINTER
-         MVC   EIBPROG,SAVEPROG   RESTORE PROGRAM NAME
-NOEDF    EQU   *
+*
+NOEDF2   EQU   *
+         L     R12,SAVER12        RESTORE ORIGINAL R12
+         BR    R14                RETURN
+*
+LOADOK   EQU   *
 * LINK LEVEL 0 HAS NO EISTG
          CLI   P0E02LV0,X'FF'     LINK LEVEL 0 ?
          BE    ALLDONE            EXIT IF IT IS
@@ -91,39 +102,23 @@ ALLDONE  EQU   *
          LH    R0,TCTTELNK        R0=CURRENT LINK LEVEL
          AHI   R0,1               +1
          STH   R0,TCTTELNK        STORE BACK
-         ST    R1,SAVER1          SAVE PARM POINTER
          LOAD  EPLOC=EIBPROG
-         L     R1,SAVER1          RESTORE PARM POINTER
-         LA    R1,P0E02EIB        R1=A(EIB,COMMAREA)
+* R1 IS DESTROYED BY LOAD
+         L     R1,P0E02PTR        RESTORE PARM POINTER
+         LA    R1,P0E02EIB        R1=POINTER TO A(EIB,COMMAREA)
+         LA    R2,P0E02PTR        R2=POINTER TO P0E02 PARMS
          L     R12,SAVER12        RESTORE ORIGINAL R12
-         BR    R0                 GO TO ENTRY POINT
+         BR    R0                 GO TO ENTRYPOINT
 *
-RETURN   EQU   *
-         L     R12,SAVER12        RESTORE ORIGINAL R12
-         BR    R14                RETURN
-*
-SAVER1   DS    F                  SAVE R1
+P0E02PTR DS    F                  P0E02 PARM POINTER
 SAVER12  DS    F                  SAVE R12
-SAVEPROG DS    CL8                SAVE EIBPROG
 *
 BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
          DC    H'12'              BLDL ENTRY LENGTH
 BLDLNAME DS    CL8                BLDL ENTRY NAME TO FIND
          DS    XL4
 *
-P0E02    DSECT
-P0E02FN  DS    XL2                FUNCTION CODE
-P0E02PGM DS    CL8                PROGRAM
-P0E02EIB DS    AL4                EIB
-P0E02COM DS    AL4                COMMAREA ADDRESS
-P0E02CLN DS    XL2                COMMAREA LENGTH
-P0E02LV0 DS    X                  FF=LINK LEVEL 0
-         DS    X
-         DS    X                  FF=NOHANDLE
-         DS    X
-P0E02RSP DS    AL4                RESP
-P0E02RS2 DS    AL4                RESP2
-P0E02END EQU   *                  END MARKER
+         P0E02 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

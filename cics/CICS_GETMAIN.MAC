@@ -10,7 +10,7 @@
          CICS_GETMAIN
          GBLB  &PARMS_0C02
          GBLB  &ZC_CICS
-         LCLB  &NOHAND
+         LCLB  &NOEDF,&NOHAND
          LCLC  &SET,&LENGTH,&FLENGTH,&INITIMG,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
@@ -22,6 +22,7 @@
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
          AIF   ('&PARM'(1,8) EQ 'FLENGTH(').FLENGTH
          AIF   ('&PARM'(1,8) EQ 'INITIMG(').INITIMG
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
@@ -42,6 +43,10 @@
 .*
 .INITIMG ANOP
 &INITIMG SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -130,6 +135,16 @@
 .DOGETM  ANOP
          GEN_ST DFHEIBR,P0C02EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P0C02TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0C02EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0C02EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0C02EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0C02NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P0C02NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -141,8 +156,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P0C02RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P0C02EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0C02EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P0C02)       R1=LCL MODULE PARAMETER LIST
+P0C02EDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          LRL   R1,P0C02GMA        R1=GETMAIN ADDRESS
@@ -164,22 +182,7 @@
          J     P0C02BYP_&SYSNDX   EXIT
 *
 &PARMS_0C02 SETB 1
-P0C02    DS    0H
-P0C02FN  DS    XL2                FUNCTION CODE
-P0C02EIB DS    AL4                EIB
-P0C02TCT DS    AL4                TCTTE
-P0C02LEN DS    AL4                LENGTH/FLENGTH
-P0C02INM DS    X                  FF=INITIMG SPECIFIED
-         DS    X
-P0C02INT DS    X                  INITIMG
-         DS    X
-P0C02GMA DS    AL4                GETMAIN ADDRESS
-P0C02NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0C02RSP DS    AL4                RESP
-P0C02RS2 DS    AL4                RESP2
-P0C02END EQU   *                  END MARKER
-         DS    0H
+         P0C02
 *
 P0C02BYP_&SYSNDX DS 0H
 .BYP0C02 ANOP

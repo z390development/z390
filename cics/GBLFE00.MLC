@@ -56,7 +56,7 @@ CICSTRDN DS    0H
          L     R8,24(R3)          R8=CONN ID ADDRESS
          L     R8,0(R8)           R8=CONNID
          L     R7,8(R3)           ADDRESS MSGLEN
-         TCPIO SEND,MSG=(R7),LMSG=200,CONN=(R8),PORT=3900
+         TCPIO SEND,MSG=(R7),LMSG=300,CONN=(R8),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   ABEND780           EXIT IF BAD
          SUBEXIT

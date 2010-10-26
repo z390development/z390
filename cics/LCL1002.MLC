@@ -11,6 +11,8 @@ LCL1002  CSECT
 * R1  >>> P1002 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL1002'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,26 +33,42 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+* 'BEFORE' CALL FOR ASKTIME (1002) AND ASKTIME ABSTIME (4A02)
+         CLI   P1002NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          TIME  DEC                GET TIME/DATE
          ST    R0,SAVETIME        SAVE TIME AS HHMMSSTT
          MVO   EIBTIME,SAVETIME(3) MOVE AS PACKED
          OI    EIBTIME+3,X'0C'    SET +VE SIGN
          ST    R1,EIBDATE         SET DATE AS CCYYDDD+
+* NO 'AFTER' CALL FOR ASKTIME ABSTIME, DONE IN LCL4A02
+         CLI   P1002ABS,X'FF'     ABSTIME ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   P1002NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 SAVETIME DS    XL4                TIME AS HHMMSSTT
 *
          LTORG
 *
-P1002    DSECT
-P1002FN  DS    XL2                FUNCTION CODE
-P1002EIB DS    AL4                EIB
-P1002TCT DS    AL4                TCTTE
-         DS    X                  FF=NOHANDLE
-         DS    X
-P1002RSP DS    AL4                RESP
-P1002RS2 DS    AL4                RESP2
-P1002END EQU   *                  END MARKER
+         P1002 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

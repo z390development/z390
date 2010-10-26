@@ -41,6 +41,8 @@ BMSMW    DS    X                  NO. OF COLUMNS
 BMSMSL   DS    X                  STARTING ROW NUMBER
 BMSMSC   DS    X                  STARTING COLUMN NUMBER
 BMSMI    DS    X                  MAP INDICATORS
+BMSMIXM  EQU   X'80'                 EXTENDED ATTS IN MAP
+BMSMIXD  EQU   X'40'                 EXTENDED ATTS IN DSECT
 *        EQU   X'10'                 MAP AT V1.6 OR GREATER
 BMSMICL  EQU   X'08'                 CURSOR IN FIELD IND REQUIRED
 *MSMIH   EQU   X'04'                 HEADER MAP
@@ -55,10 +57,12 @@ BMSFDGFE EQU   X'40'                 GROUP FIELD ENTRY
 BMSFDGFD EQU   X'20'                 GROUP FIELD DESCRIPTOR
 BMSFDJZ  EQU   X'08'                 JUSTIFY=ZERO
 BMSFDJR  EQU   X'04'                 JUSTIFY=RIGHT
-BMSFDDD  EQU   X'02'                 INITIAL= PRESENT
+BMSFDDD  EQU   X'02'                 INITIAL=/XINIT= PRESENT
 BMSFDNF  EQU   X'01'                 DSECT ENTRY EXISTS
 BMSFA    DS    X                  ATTRIBUTE
 BMSFP    DS    XL2                POSITION
+*MSXATTR DS    0CL4               EXTENDED ATTRIBUTES
+BMSFXC   DS    X                     COLOUR ATTRIBUTE
 * DYNAMIC FIELDS: PICIN/PICOUT LENGTHS WILL ALWAYS BE GENERATED
 BMSDATA  DS    0X                 VARIABLE FIELDS ANCHOR
 *        DS    XL2                LENGTH OF FOLLOWING PICIN

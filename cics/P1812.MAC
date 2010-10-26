@@ -1,0 +1,39 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P1812 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P1812    DSECT
+         AELSE
+P1812    DS    0H
+         AEND
+P1812FN  DS    XL2                FUNCTION CODE
+P1812EIB DS    AL4                EIB
+P1812TCT DS    AL4                TCTTE
+P1812OUT DS    AL4                OUTPUT AREA
+P1812CRS DS    XL2                CURSOR POSITION (X'FFFF'=NONE)
+P1812OPT DS    X                  OPTION BITS...
+P1812ERS EQU   X'80'                 ERASE
+P1812EAU EQU   X'40'                 ERASEAUP
+P1812CSM EQU   X'20'                 SYMBOLIC CURSOR
+P1812ALM EQU   X'04'                 ALARM
+P1812FKB EQU   X'02'                 FREEKB
+P1812FRS EQU   X'01'                 FRSET
+         DS    X
+P1812EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P1812EDS DS    AL4                DSA ADDRESS FOR EDF
+P1812EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P1812EDL DS    XL2                DSA LENGTH FOR EDF
+P1812NED DS    X                  FF=NOEDF
+         DS    X
+P1812NOH DS    X                  FF=NOHANDLE
+         DS    X
+P1812RSP DS    AL4                RESP
+P1812RS2 DS    AL4                RESP2
+P1812END EQU   *                  END MARKER
+         MEND
+

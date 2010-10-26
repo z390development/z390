@@ -66,6 +66,7 @@ public class vz390 {
 	 * 09/12/08 RPI 764 change oflgs_pm to oflgs_w
 	 * 04/06/09 RPI 1016 prevent error on generic POINT to 1 record KSDS file
 	 * 04/23/09 RPI 1024 prevent null field trap by JM
+	 * 07/17/10 RPI 865 fix open for path to correctly set path/dsn
 	 **************************************************************************
 	 *  Global variables                  (last RPI)
 	 **************************************************************************/
@@ -94,8 +95,6 @@ public class vz390 {
 	int cur_vcdt_clrt = 0; // VCDTCLRT total base clusters
 
 	int cur_vcdt_aixt = 0; // VCDTAIXT tot aix indexes
-
-	int cur_vcdt_aixa = 0; // VCDTAIXA addr aix upgrade table of vaix entries
 
 	int cur_vcdt_ptht = 0; // VCDTPTHT total paths
 
@@ -227,7 +226,7 @@ public class vz390 {
 
 	int vaix_reln = 12; // VAIXRELN name of related VCLR base cluster
 
-	int vaix_flag = 16; // VAIXFLAG 4 bytes of option flags
+	int vaix_flag = 20; // VAIXFLAG 4 bytes of option flags RPI 865
 
 	int vaix_flag_ruse = 0x80000000; // VAIXRUSE reset aix eof at open
 
@@ -236,22 +235,20 @@ public class vz390 {
 	int vaix_flag_uaix = 0x20000000; // VAIXUAIX upgrade AIX for base cluster
 										// updates
 
-	int vaix_klen = 20; // VAIXKLEN aix key length in VES
+	int vaix_klen = 24; // VAIXKLEN aix key length in VES  RPI 865
 
-	int vaix_koff = 24; // VAIXKOFF aix key offset in VES
+	int vaix_koff = 28; // VAIXKOFF aix key offset in VES  RPI 865
 
-	int vaix_vxna = 28; // VAIXVXNA addr optional VXN DSNAME (def. NAME.VXN)
+	int vaix_vxna = 32; // VAIXVXNA addr optional VXN DSNAME (def. NAME.VXN)  RPI 865
 
-	int vaix_rela = 32; // VAIXRELA addr of related VCLR base cluster catalog
-						// entry
+	int vaix_rela = 36; // VAIXRELA addr of related VCLR base cluster catalog
+						// entry RPI 865
 
-	int vaix_len = 36; // VAIXLEN length of VAIX catalog entry
+	int vaix_len = 40; // VAIXLEN length of VAIX catalog entry RPI 865
 
 	/*
 	 * VPTH path VCDT catalog entry
 	 */
-	int cur_vpth_addr = 0; // addr current VPTH path entry in VCDT
-
 	String cur_vpth_id; // VPTHID C'VPTH'
 
 	String cur_vpth_name; // VPTHNAME name of path
@@ -1031,18 +1028,19 @@ public class vz390 {
 			if (sz390.load_vcdt_entry.equals(cur_vclr_name)) {
 				pz390.mem.putInt(cur_acb_addr + acb_vclra, cur_acb_vclra);
 				fetch_vclr_fields();
-				cur_vpth_addr = 0; // no path
+				cur_vcdt_ptha = 0; // no path RPI 865 
 				return true;
 			}
 			cur_acb_vclra = cur_acb_vclra + vclr_len;
 			cur_vcdt_clrt--;
 		}
-		int cur_vcdt_ptht = pz390.mem.getInt(cur_vcdt_addr + vcdt_ptht);
-		int cur_vcdt_ptha = pz390.mem.getInt(cur_vcdt_addr + vcdt_ptha);
+		cur_vcdt_ptht = pz390.mem.getInt(cur_vcdt_addr + vcdt_ptht);  // RPI 965 
+		cur_vcdt_ptha = pz390.mem.getInt(cur_vcdt_addr + vcdt_ptha);  // RPI 865 
 		while (cur_vcdt_ptht > 0) {
 			if (sz390.load_vcdt_entry.equals(sz390.get_ascii_string(
 					cur_vcdt_ptha + vpth_name, 8, false))) {
-				cur_vpth_flag = pz390.mem.getInt(cur_vpth_addr + vpth_flag);
+				cur_vpth_flag = pz390.mem.getInt(cur_vcdt_ptha + vpth_flag); // RPI 865 
+				cur_vaix_addr = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta); // RPI 865 
 				if ((cur_vpth_flag & vpth_flag_aixp) != 0) {
 					cur_acb_vaixa = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta);
 					cur_acb_oflgs = (byte) (cur_acb_oflgs | acb_oflgs_aixp); // use
@@ -1053,7 +1051,7 @@ public class vz390 {
 																				// primary
 					cur_acb_vclra = pz390.mem.getInt(cur_acb_vaixa + vaix_rela);
 				} else {
-					cur_acb_vclra = pz390.mem.getInt(cur_vpth_addr + vpth_enta);
+					cur_acb_vclra = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta); // RPI 865 
 					cur_acb_vaixa = 0;
 				}
 				pz390.mem.putInt(cur_acb_addr + acb_vclra, cur_acb_vclra);
@@ -1111,7 +1109,11 @@ public class vz390 {
 		 */
 		cur_vclr_flag = pz390.mem.getInt(cur_acb_vclra + vclr_flag);
 		cur_vclr_lrec = pz390.mem.getInt(cur_acb_vclra + vclr_lrec);
-		cur_vclr_klen = pz390.mem.getInt(cur_acb_vclra + vclr_klen);
+		if (cur_vcdt_ptha != 0){  // RPI 865 
+			cur_vclr_klen = pz390.mem.getInt(cur_vaix_addr + vaix_klen);
+		} else {
+			cur_vclr_klen = pz390.mem.getInt(cur_acb_vclra + vclr_klen);
+		}
 	}
 
 	private void fetch_rpl_fields() {
@@ -1210,9 +1212,17 @@ public class vz390 {
 			return false;
 		}
 		if (cur_acb_dcbt > 1) {
-			cur_vclr_vx0a = pz390.mem.getInt(cur_acb_vclra + vclr_vx0a);
-			init_acb_dcb(cur_acb_dcba + sz390.dcb_len, 8 + cur_vclr_klen,
+			if (cur_vcdt_ptha != 0 && cur_vaix_addr != 0){  // RPI 865  
+				// open aix if pat
+				init_acb_dcb(cur_acb_dcba + sz390.dcb_len, 8 + pz390.mem.getInt(cur_vaix_addr + vaix_klen),
+					pz390.mem.getInt(cur_vaix_addr + vaix_vxna), "VXN#");
+				
+			
+			} else {
+				cur_vclr_vx0a = pz390.mem.getInt(cur_acb_vclra + vclr_vx0a);
+				init_acb_dcb(cur_acb_dcba + sz390.dcb_len, 8 + cur_vclr_klen,
 					cur_vclr_vx0a, "VX0#");
+			}
 			if (!open_acb_dcb(cur_acb_dcba + sz390.dcb_len)) {
 				return false;
 			}
@@ -2512,6 +2522,7 @@ public class vz390 {
 			}
 			return false;
 		}
+		set_rpl_lxrba(cur_ves_xrba); // RPI 865 
 		if ((cur_vclr_flag & vclr_flag_vrec) != 0) {
 			// read variable length record putting
 			// 4 length prefix into RPLLREC and the remainer in RPLAREA

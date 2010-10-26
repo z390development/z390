@@ -11,7 +11,7 @@
 .* XRBA AND FLENGTH ARE EXTENSIONS
          GBLB  &PARMS_0610
          GBLB  &ZC_CICS
-         LCLB  &RBA,&XRBA,&RRN,&NOHAND
+         LCLB  &RBA,&XRBA,&RRN,&NOEDF,&NOHAND
          LCLC  &FILE,&DATASET,&INTO,&SET,&LENGTH,&FLENGTH,&RIDFLD
          LCLC  &REQID,&KLENGTH,&RESP,&RESP2
 .*
@@ -34,6 +34,7 @@
          AIF   ('&PARM'(1,3)  EQ 'RBA').RBA
          AIF   ('&PARM'(1,4)  EQ 'XRBA').XRBA
          AIF   ('&PARM'(1,3)  EQ 'RRN').RRN
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
@@ -88,6 +89,10 @@
 &RRN     SETB  1
          AGO   .PLOOP
 .*
+.NOEDF   ANOP
+&NOEDF   SETB  1
+         AGO   .PLOOP
+.*
 .NOHAND  ANOP
 &NOHAND  SETB  1
          AGO   .PLOOP
@@ -106,6 +111,8 @@
          AIF   ('&FILE' NE '' AND '&DATASET' NE '').BOTHF
          AIF   ('&INTO' EQ '' AND '&SET' EQ '').NOINTST
          AIF   ('&INTO' NE '' AND '&SET' NE '').BOTHINST
+         AIF   (T'&INTO EQ 'U' AND '&LENGTH' EQ '' AND                 -
+               '&FLENGTH' EQ '').LNTHREQ
          AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BOTHLEN
          AIF   ('&RIDFLD' EQ '').NEEDRID
          AIF   (&RBA AND &XRBA).BADRBA
@@ -147,11 +154,12 @@
 .CHKLEN  ANOP
          AIF   ('&SET' EQ '').NOSET
          GEN_MVI P0610SET,X'FF'    SET SET INDICATOR
-         AGO   .DUNLEN
+         AGO   .DOLEN
 .*
 .NOSET   ANOP
          LA    R0,&INTO           INTO ADDRESS
          GEN_ST R0,P0610INT       SAVE IT
+.DOLEN   ANOP
          AIF   ('&LENGTH' EQ '').NOLENG
          AIF   (T'&LENGTH NE 'N').LENLABL
          LA    R0,&LENGTH         R0=LENGTH
@@ -280,7 +288,13 @@ CICS_READPREV_&SYSNDX._NOKEY EQU *
 .NORRN   ANOP
 .* DEFAULT IS FULL RIDFLD
          LARL  R15,P0610RID       ADDRESS TARGET
-         MVC   0(128,R15),&RIDFLD MOVE FULL RIDFLD
+         LA    R0,L'&RIDFLD       R0=LENGTH OF RIDFLD
+         BCTR  R0,0               -1 FOR DYNAMIC LENGTH
+         LARL  R1,CICS_READPREV_&SYSNDX._MVCKEY ADDRESS TARGET
+         STC   R0,1(R1)           STORE LENGTH
+         LARL  R15,P0610RID       ADDRESS TARGET
+CICS_READPREV_&SYSNDX._MVCKEY EQU *
+         MVC   0(0,R15),&RIDFLD   MOVE RIDFLD
 .DUNOPT  ANOP
          AIF   ('&REQID' EQ '').DUNREQ
          AIF   (T'&REQID NE 'N').REQLABL
@@ -293,6 +307,16 @@ CICS_READPREV_&SYSNDX._NOKEY EQU *
 .DUNREQ  ANOP
          GEN_ST DFHEIBR,P0610EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P0610TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0610EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0610EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0610EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0610NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P0610NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -304,8 +328,11 @@ CICS_READPREV_&SYSNDX._NOKEY EQU *
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P0610RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P0610EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0610EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P0610)       R1=LCL MODULE PARAMETER LIST
+P0610EDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          AIF   ('&SET' EQ '').NOSET2
@@ -335,38 +362,7 @@ CICS_READPREV_&SYSNDX._NOKEY EQU *
 *
          AIF   (&PARMS_0610).BYP0610
 &PARMS_0610 SETB 1
-P0610    DS    0H
-P0610FN  DS    XL2                FUNCTION CODE
-P0610EIB DS    AL4                EIB
-P0610TCT DS    AL4                TCTTE
-P0610FIL DS    CL8                FILENAME
-P0610STA DS    AL4                ADDRESS FOR SET
-P0610INT DS    AL4                ADDRESS OF INTO
-P0610LEN DS    XL4                LENGTH
-P0610LAD DS    AL4                ADDRESS OF LENGTH IF LABEL
-P0610FAD DS    AL4                ADDRESS OF FLENGTH IF LABEL
-P0610SET DS    X                  FF=SET IS SPECIFIED
-         DS    X
-P0610KIN DS    X                  FF=KEYLENGTH IS VALID
-         DS    X
-P0610KLN DS    XL2                KEYLENGTH
-P0610RID DS    XL128              RIDFLD
-P0610ARD DS    AL4                A(RIDFLD)
-P0610LRD DS    X                  L'RIDFLD
-         DS    X
-P0610RBA DS    X                  FF=RBA
-         DS    X
-P0610XRB DS    X                  FF=XRBA
-         DS    X
-P0610RRN DS    X                  FF=RRN
-         DS    X
-P0610REQ DS    XL2                REQID
-P0610NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0610RSP DS    AL4                RESP
-P0610RS2 DS    AL4                RESP2
-P0610END EQU   *                  END MARKER
-         DS    0H
+         P0610
 *
 .BYP0610 ANOP
 P0610BYP_&SYSNDX DS 0H
@@ -385,6 +381,9 @@ P0610BYP_&SYSNDX DS 0H
          MEXIT
 .*
 .BOTHINST MNOTE 12,'BOTH INTO AND SET ARE SPECIFIED'
+         MEXIT
+.*
+.LNTHREQ MNOTE 12,'THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH'
          MEXIT
 .*
 .BOTHLEN MNOTE 12,'BOTH LENGTH AND FLENGTH ARE SPECIFIED'

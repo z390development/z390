@@ -1,0 +1,32 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P100C &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P100C    DSECT
+         AELSE
+P100C    DS    0H
+         AEND
+P100CFN  DS    XL2                FUNCTION CODE
+P100CEIB DS    AL4                EIB
+P100CTCT DS    AL4                TCTTE
+P100CREQ DS    CL8                REQID
+P100CEOF DS    X                  FF=TURN EDF OFF
+         DS    X
+P100CEDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P100CEDS DS    AL4                DSA ADDRESS FOR EDF
+P100CEDC DS    XL2                CICS DSA LENGTH FOR EDF
+P100CEDL DS    XL2                DSA LENGTH FOR EDF
+P100CNED DS    X                  FF=NOEDF
+         DS    X
+P100CNOH DS    X                  FF=NOHANDLE
+         DS    X
+P100CRSP DS    AL4                RESP
+P100CRS2 DS    AL4                RESP2
+P100CEND EQU   *                  END MARKER
+         MEND
+

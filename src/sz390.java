@@ -35,7 +35,7 @@ public  class  sz390 implements Runnable {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2008 Automated Software Tools Corporation
+    Copyright 2010 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -190,6 +190,7 @@ public  class  sz390 implements Runnable {
     * 04/25/10 RPI 1113 prevent trap waiting for CMDPROC return I/O
     * 05/20/10 RPI 1113 if cmd_wait_time = 4095 wait forever
     * 05/22/10 RPI 1120 add debug info to EZ114E error message
+    * 07/28/10 RPI 865 issue error if FT text too long
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -3202,6 +3203,8 @@ private void svc_get(){
     					tz390.put_trace("QSAM EXCP READ  FREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index]-cur_dcb_lrecl_f,16) + " LEN=" + tz390.get_hex(cur_dcb_lrecl_f,8));
     					dump_mem(pz390.mem,cur_dcb_area,cur_dcb_lrecl_f);
     				}
+                } else {
+                	dcb_synad_error(44,"text too long for RECFM=FT - " + cur_rec_text); // RPI 865
                 }
 	        } catch (Exception e){
 		        dcb_synad_error(44,"i/o error on get move fixed from ascii - " + e.toString());
@@ -7333,7 +7336,7 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
  	 			+ " merge passes=" + zsort_tot_passes);
  		tz390.put_stat_line(zsort_pfx
  			+ "block writes=" + zsort_tot_write
- 			+ " reads" + zsort_tot_read);
+ 			+ " reads=" + zsort_tot_read);
  	}
  	private void zsort_error(String msg){
  		/*

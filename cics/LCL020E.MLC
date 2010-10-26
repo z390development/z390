@@ -11,6 +11,8 @@ LCL020E  CSECT
 * R1  >>> P020E BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL020E'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P020ENED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
 * RAISE CONDITION ONLY IF NOTHING STACKED BY PUSH
          L     R1,P020EAID        R1=ADDRESS OF DFHEIAID
          ICM   R1,15,0(R1)        ANY AID BLOCKS ?
@@ -112,19 +124,19 @@ NOCOND   EQU   *
          XC    ABDACTIV,ABDACTIV  SET ENTRY ACTIVE
          DROP  R14
 RETURN   EQU   *
+         CLI   P020ENED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
-P020E    DSECT
-P020EFN  DS    XL2                FUNCTION CODE
-P020EEIB DS    AL4                EIB
-P020ETCT DS    AL4                TCTTE
-P020EAID DS    AL4                A(DFHEIAID)
-P020EHCN DS    AL4                A(DFHEIHCN)
-         DS    X                  FF=NOHANDLE
-         DS    X
-P020ERSP DS    AL4                RESP
-P020ERS2 DS    AL4                RESP2
-P020EEND EQU   *                  END MARKER
+         P020E DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE
@@ -137,6 +149,5 @@ P020EEND EQU   *                  END MARKER
 * R10 TCTTE
 * R11 EIB
 * R13 BASE 1
-*
          END
 

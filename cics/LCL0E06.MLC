@@ -11,6 +11,8 @@ LCL0E06  CSECT
 * R1  >>> P0E06 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0E06'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0E06NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          MVC   BLDLNAME,P0E06PGM  MOVE PROGRAM FOR BLDL
          MVC   EIBRSRCE,P0E06PGM  SET EIBRSRCE
          BLDL  0,BLDLLIST         BLDL
@@ -68,6 +80,16 @@ DUNLEN   EQU   *
          BNE   RETURN             EXIT IF NOT
          MVC   EIBPROG,EIBRSRCE   SET PROGRAM LOAD
 RETURN   EQU   *
+         CLI   P0E06NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
@@ -75,19 +97,7 @@ BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
 BLDLNAME DS    CL8                BLDL ENTRY NAME TO FIND
          DS    XL4
 *
-P0E06    DSECT
-P0E06FN  DS    XL2                FUNCTION CODE
-P0E06EIB DS    AL4                EIB
-P0E06TCT DS    AL4                TCTTE
-P0E06PGM DS    CL8                PROGRAM
-P0E06LEN DS    AL4                ADDRESS OF LENGTH
-P0E06FLN DS    AL4                ADDRESS OF FLENGTH
-P0E06ENT DS    AL4                ENTRY POINT
-         DS    X                  FF=NOHANDLE
-         DS    X
-P0E06RSP DS    AL4                RESP
-P0E06RS2 DS    AL4                RESP2
-P0E06END EQU   *                  END MARKER
+         P0E06 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

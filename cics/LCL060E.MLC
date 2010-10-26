@@ -11,6 +11,8 @@ LCL060E  CSECT
 * R1  >>> P060E BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL060E'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -32,6 +34,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P060ENED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
 * GETMAIN AND MOVE THE DATA TO SEND
          EXEC  CICS GETMAIN FLENGTH(=A(FCPREFIX)) SET(R5) INITIMG(0)   X
                NOHANDLE
@@ -82,9 +94,16 @@ GOTLEN   EQU   *
          TCPIO SEND,MSG=(R5),LMSG==A(FCPREFIX),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   INVREQ             ERROR IF BAD
+FCPRCV   EQU   *
 * ONLY THE PREFIX IS RECEIVED, WE GET THE DATA LATER
          TCPIO RECEIVE,MSG=(R5),LMSG==A(FCPREFIX),PORT=3900
          LTR   R15,R15            CHECK RC ?
+         CLC   FCPFN,=C'10FF'     UNSOL IC SCAN ?
+         BE    FCPRCV             EXIT IF IT IS
+         CLC   FCPFN,=C'060E'     WHAT WE ARE EXPECTING ?
+         BE    FCPRCK             EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+FCPRCK   EQU   *
          BNZ   INVREQ             ERROR IF BAD
          OC    FCPRETCD,FCPRETCD  BAD RETURN CODE ?
          BZ    READOK             EXIT IF NONE
@@ -245,6 +264,16 @@ RETURN   EQU   *
          MVC   EIBRCODE,RCODE     RESTORE RCODE
          MVC   EIBRESP,RESP       RESTORE RESP
          MVC   EIBRESP2,RESP2     RESTORE RESP2
+         CLI   P060ENED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 FCBLKSV  DS    AL4                SAVE FC BLOCK ADDRESS
@@ -252,37 +281,7 @@ RCODE    DS    XL4                SAVE RCODE
 RESP     DS    XL4                SAVE RESP
 RESP2    DS    XL4                SAVE RESP2
 *
-P060E    DSECT
-P060EFN  DS    XL2                FUNCTION CODE
-P060EEIB DS    AL4                EIB
-P060ETCT DS    AL4                TCTTE
-P060EFIL DS    CL8                FILENAME
-P060ESET DS    X                  FF=SET IS SPECIFIED
-         DS    X
-P060ESTA DS    AL4                ADDRESS FOR SET
-P060EINT DS    AL4                ADDRESS OF INTO
-P060ELEN DS    XL4                LENGTH
-P060ELAD DS    AL4                ADDRESS OF LENGTH IF LABEL
-P060EFAD DS    AL4                ADDRESS OF FLENGTH IF LABEL
-P060EKIN DS    X                  FF=KEYLENGTH IS VALID
-         DS    X
-P060EKLN DS    XL2                KEYLENGTH
-P060ERID DS    XL128              RIDFLD
-P060EARD DS    AL4                A(RIDFLD)
-P060ELRD DS    X                  L'RIDFLD
-         DS    X
-P060ERBA DS    X                  FF=RBA
-         DS    X
-P060EXRB DS    X                  FF=XRBA
-         DS    X
-P060ERRN DS    X                  FF=RRN
-         DS    X
-P060EREQ DS    XL2                REQID
-         DS    X                  FF=NOHANDLE
-         DS    X
-P060ERSP DS    AL4                RESP
-P060ERS2 DS    AL4                RESP2
-P060EEND EQU   *                  END MARKER
+         P060E DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

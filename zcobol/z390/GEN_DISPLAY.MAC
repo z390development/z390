@@ -16,6 +16,7 @@
 .* 07/30/09 RPI 1065 support ALL lit, zero, space, quote                  
 .* 10/01/09 RPI 1089 generate inline WTO for sinlge character literal     
 .* 01/11/10 RPI 1104 support %HEX parm to diplay non-llit flds in hex
+.* 05/31/10 RPI 1122 change %HEX to only apply to next field in DISPLAY
 .*********************************************************************
          GEN_DISPLAY 
          COPY  ZC_WS
@@ -81,6 +82,7 @@
          LA    ZC_R1,&SYM_LEN(&FIELD_IX)
       AIF (&HEX)                                    RPI 1104
          LA    ZC_R2,C'%' HEX 
+         :&HEX SETB 0                               RPI 1122 ONE PARM
       AELSE
          LA    ZC_R2,C'&SYM_PIC_TYPE(&FIELD_IX)'
       AEND

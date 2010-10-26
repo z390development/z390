@@ -1,0 +1,35 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P1802 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P1802    DSECT
+         AELSE
+P1802    DS    0H
+         AEND
+P1802FN  DS    XL2                FUNCTION CODE
+P1802EIB DS    AL4                EIB
+P1802TCT DS    AL4                TCTTE
+P1802MSA DS    AL4                MAPSET ADDRESS
+P1802MAP DS    CL7                MAP NAME
+         DS    X
+P1802MLN DS    XL2                MAPSET LENGTH
+P1802DSC DS    AL4                STRUCTURE ADDRESS
+P1802DSL DS    AL2                STRUCTURE LENGTH
+P1802EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P1802EDS DS    AL4                DSA ADDRESS FOR EDF
+P1802EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P1802EDL DS    XL2                DSA LENGTH FOR EDF
+P1802NED DS    X                  FF=NOEDF
+         DS    X
+P1802NOH DS    X                  FF=NOHANDLE
+         DS    X
+P1802RSP DS    AL4                RESP
+P1802RS2 DS    AL4                RESP2
+P1802END EQU   *                  END MARKER
+         MEND
+

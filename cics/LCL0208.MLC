@@ -11,6 +11,8 @@ LCL0208  CSECT
 * R1  >>> P0208 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0208'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -41,9 +43,16 @@ NORESP2  EQU   *
          LTR   R15,R15            CHECK RC ?
          BNZ   TCPIOESN           EXIT IF BAD
          L     R8,ASGNRCVE        R8=MESSAGE LENGTH
+ASGNRCV  EQU   *
          TCPIO RECEIVE,MSG=ASGNRCVE,LMSG=(R8),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   TCPIOERC           EXIT IF BAD
+         CLC   ASGNREQ,=C'10FF'   UNSOL IC SCAN ?
+         BE    ASGNRCV            EXIT IF IT IS
+         CLC   ASGNREQ,=C'FE01'   WHAT WE ARE EXPECTING ?
+         BE    ASGNRCK            EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+ASGNRCK  EQU   *
          LA    R7,ASGNDATA        R7=RECEIVED DATA
          USING ISYSDATA,R7
 * GET THE ITER DATA WHETHER WE NEED IT OR NOT
@@ -52,11 +61,18 @@ NORESP2  EQU   *
          TCPIO SEND,MSG=ASGNI,LMSG=(R8),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   TCPIOESN           EXIT IF BAD
-         L     R8,ASGNRCV2        R8=MESSAGE LENGTH
-         TCPIO RECEIVE,MSG=ASGNRCV2,LMSG=(R8),PORT=3900
+         L     R8,CEMTRCVE        R8=MESSAGE LENGTH
+ASGNRCV2 EQU   *
+         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=(R8),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   TCPIOERC           EXIT IF BAD
-         LA    R8,ASGNDAT2        R8=RECEIVED DATA
+         CLC   CEMTREQ,=C'10FF'   UNSOL IC SCAN ?
+         BE    ASGNRCV2           EXIT IF IT IS
+         CLC   CEMTREQ,=C'FE00'   WHAT WE ARE EXPECTING ?
+         BE    ASGNRCK2           EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+ASGNRCK2 EQU   *
+         LA    R8,CEMTDATA        R8=RECEIVED DATA
          USING THRDDSCT,R8
          ICM   R9,15,P0208ABC     ANY ABCODE ?
          BZ    DOABD              EXIT IF NONE
@@ -72,10 +88,14 @@ DOABP    EQU   *
 DOAPK    EQU   *
          ICM   R9,15,P0208APK     ANY APLKYBD ?
          BZ    DOAPT              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO APLKYBD
 DOAPT    EQU   *
          ICM   R9,15,P0208APT     ANY APLTEXT ?
          BZ    DOASP              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO APLTEXT
 DOASP    EQU   *
          ICM   R9,15,P0208ASP     ANY ASRAPSW ?
@@ -88,6 +108,8 @@ DOASR    EQU   *
 DOBTR    EQU   *
          ICM   R9,15,P0208BTR     ANY BTRANS ?
          BZ    DOCMD              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO BTRANS
 DOCMD    EQU   *
          ICM   R9,15,P0208CMD     ANY CMDSEC ?
@@ -96,7 +118,9 @@ DOCMD    EQU   *
 DOCOL    EQU   *
          ICM   R9,15,P0208COL     ANY COLOR ?
          BZ    DOCWA              EXIT IF NONE
-         MVI   0(R9),X'00'        SET NO COLOUR
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
+         MVI   0(R9),X'FF'        SET COLOR
 DOCWA    EQU   *
          ICM   R9,15,P0208CWA     ANY CWALENG
          BZ    DODSH              EXIT IF NONE
@@ -104,42 +128,63 @@ DOCWA    EQU   *
 DODSH    EQU   *
          ICM   R9,15,P0208DSH     ANY DEFSCRNHT ?
          BZ    DODFW              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVC   0(2,R9),=H'24'     SET DEFAULT SCREEN HEIGHT
 DODFW    EQU   *
          ICM   R9,15,P0208DSW     ANY DEFSCRNWD ?
          BZ    DODSC              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVC   0(2,R9),=H'80'     SET DEFAULT SCREEN WIDTH
 DODSC    EQU   *
          ICM   R9,15,P0208DSC     ANY DSSCS ?
          BZ    DOD32              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO DSSCS
 DOD32    EQU   *
          ICM   R9,15,P0208D32     ANY DS3270 ?
          BZ    DOEWA              EXIT IF NONE
-         MVI   0(R9),X'FF'        SET 3270
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
+         MVI   0(R9),X'FF'        SET DS3270
 DOEWA    EQU   *
          ICM   R9,15,P0208EWA     ANY EWASUPP ?
          BZ    DOEXT              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO ERASE WRITE ALTERNATE
 DOEXT    EQU   *
          ICM   R9,15,P0208EXT     ANY EXTDS ?
          BZ    DOFAC              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO EXTENDED DATA STREAM
 DOFAC    EQU   *
          ICM   R9,15,P0208FAC     ANY FACILITY ?
          BZ    DOFCI              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVC   0(4,R9),TCTTETI    SET TERMID
 DOFCI    EQU   *
          ICM   R9,15,P0208FCI     ANY FCI ?
          BZ    DOGMM              EXIT IF NONE
+         MVI   0(R9),X'00'        SET NON-TERMINAL
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    DOGMM              EXIT IF IT IS
          MVI   0(R9),X'01'        SET TERMINAL
 DOGMM    EQU   *
          ICM   R9,15,P0208GMM     ANY GMMI ?
          BZ    DOHIL              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO GMMI
 DOHIL    EQU   *
          ICM   R9,15,P0208HIL     ANY HILIGHT ?
          BZ    DOINV              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO HILIGHT
 DOINV    EQU   *
          ICM   R9,15,P0208INV     ANY INVOKINGPROG ?
@@ -148,6 +193,8 @@ DOINV    EQU   *
 DOKAT    EQU   *
          ICM   R9,15,P0208KAT     ANY KATAKANA ?
          BZ    DOLIU              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO KATAKANA
 DOLIU    EQU   *
          ICM   R9,15,P0208LIU     ANY LANGINUSE ?
@@ -159,30 +206,40 @@ DOLIU    EQU   *
 DOMCL    EQU   *
          ICM   R9,15,P0208MCL     ANY MAPCOLUMN ?
          BZ    DOMHT              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          OC    TCTTEMCL,TCTTEMCL  ANY MAP COLUMN ?
          BZ    INVREQ2            ERROR IF NOT
          MVC   0(2,R9),TCTTEMCL   SET MAP COLUMN
 DOMHT    EQU   *
          ICM   R9,15,P0208MHT     ANY MAPHEIGHT ?
          BZ    DOMLN              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          OC    TCTTEMHT,TCTTEMHT  ANY MAP HEIGHT ?
          BZ    INVREQ2            ERROR IF NOT
          MVC   0(2,R9),TCTTEMHT   SET MAP HEIGHT
 DOMLN    EQU   *
          ICM   R9,15,P0208MLN     ANY MAPLINE ?
          BZ    DOMWH              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          OC    TCTTEMLN,TCTTEMLN  ANY MAP LINE ?
          BZ    INVREQ2            ERROR IF NOT
          MVC   0(2,R9),TCTTEMLN   SET MAP LINE
 DOMWH    EQU   *
          ICM   R9,15,P0208MWH     ANY MAPWIDTH ?
          BZ    DOMSR              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          OC    TCTTEMWH,TCTTEMWH  ANY MAP WIDTH ?
          BZ    INVREQ2            ERROR IF NOT
          MVC   0(2,R9),TCTTEMWH   SET MAP WIDTH
 DOMSR    EQU   *
          ICM   R9,15,P0208MSR     ANY MSRCONTROL ?
          BZ    DONIU              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO MSRCONTROL
 DONIU    EQU   *
          ICM   R9,15,P0208NIU     ANY NATLANGINUSE ?
@@ -198,10 +255,14 @@ DONXT    EQU   *
 DOOUT    EQU   *
          ICM   R9,15,P0208OUT     ANY OUTLINE ?
          BZ    DOPRT              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO OUTLINE
 DOPRT    EQU   *
          ICM   R9,15,P0208PRT     ANY PARTNS ?
          BZ    DOPGM              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO PARTNS
 DOPGM    EQU   *
          ICM   R9,15,P0208PGM     ANY PROGRAM ?
@@ -210,6 +271,8 @@ DOPGM    EQU   *
 DOPS     EQU   *
          ICM   R9,15,P0208PS      ANY PS ?
          BZ    DORSC              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO PS
 DORSC    EQU   *
          ICM   R9,15,P0208RSC     ANY RESSEC ?
@@ -226,14 +289,20 @@ DORET    EQU   *
 DOSCH    EQU   *
          ICM   R9,15,P0208SCH     ANY SCRNHT ?
          BZ    DOSCW              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVC   0(2,R9),=H'24'     SET SCRNHT
 DOSCW    EQU   *
          ICM   R9,15,P0208SCW     ANY SCRNWD ?
          BZ    DOSOS              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVC   0(2,R9),=H'80'     SET SCRNWD
 DOSOS    EQU   *
          ICM   R9,15,P0208SOS     ANY SOSI ?
          BZ    DOSTC              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO SOSI
 DOSTC    EQU   *
          ICM   R9,15,P0208STC     ANY STARTCODE ?
@@ -261,6 +330,9 @@ DOTUL    EQU   *
 DOTMC    EQU   *
          ICM   R9,15,P0208TMC     ANY TERMCODE ?
          BZ    DOTMP              EXIT IF NONE
+         XC    0(2,R9),0(R9)      CLEAR TERMCODE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    DOTMP              EXIT IF IT IS
          MVI   1(R9),X'02'        ALWAYS MODEL 2 (C'2'?)
          SR    R4,R4              R4=0
          IC    R4,TCTTETI+3       TERMINAL SUFFIX
@@ -278,10 +350,14 @@ DOTMP    EQU   *
 DOTXK    EQU   *
          ICM   R9,15,P0208TXK     ANY TEXTKYBD ?
          BZ    DOTXP              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO TEXTKYBD
 DOTXP    EQU   *
          ICM   R9,15,P0208TXP     ANY TEXTPRINT ?
          BZ    DOTNP              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO TEXTPRINT
 DOTNP    EQU   *
          ICM   R9,15,P0208TNP     ANY TRANPRIORITY ?
@@ -294,6 +370,8 @@ DOTWA    EQU   *
 DOUNA    EQU   *
          ICM   R9,15,P0208UNA     ANY UNATTEND ?
          BZ    DOUSP              EXIT IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO UNATTEND
 DOUSP    EQU   *
          ICM   R9,15,P0208USP     ANY USERPRIORITY ?
@@ -302,12 +380,20 @@ DOUSP    EQU   *
 DOVAL    EQU   *
          ICM   R9,15,P0208VAL     ANY VALIDATION ?
          BZ    RETURN             RETURN IF NONE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO VALIDATION
          B     RETURN             EXIT
 *
 INVREQ2  EQU   *
-* INVOKE INVREQ/2
-         MVC   EIBRESP2,=F'2'     SET EIBRESP2=NO MAP EVER SENT
+* INVOKE INVREQ/2  NO MAP EVER SENT
+         MVC   EIBRESP2,=F'2'     SET EIBRESP2
+         B     INVREQ             EXIT
+*
+INVREQ5  EQU   *
+* INVOKE INVREQ/5  FUNCTION INVALID FOR NON-TERM
+         MVC   EIBRESP2,=F'5'     SET EIBRESP2
+INVREQ   EQU   *
          MVI   EIBRCODE,X'E0'     SET EIBRCODE
          MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
          ICM   R14,15,P0208RSP    R14=RESP ADDRESS
@@ -338,23 +424,22 @@ ASGNRCVE DS    0F
 * RECEIVE AREA
 * MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
          DC    A(200)             MAX LENGTH
-         DS    CL4                REQUEST CODE
+ASGNREQ  DS    CL4                REQUEST CODE
          DS    CL4                TERMINAL ID
          DS    CL4                TRANSID
          DS    C                  TRANSID TYPE
          DS    PL4                TASK NO.
 ASGNDATA DS    CL188              RETURNED DATA
 *
-ASGNRCV2 DS    0F
-* RECEIVE AREA
-* MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
-         DC    A(200)             MAX LENGTH
-         DS    CL4                REQUEST CODE
+CEMTRCVE DS    0F
+* RECEIVE AREA FOR ITER DATA
+         DC    A(300)             MAX LENGTH
+CEMTREQ  DS    CL4                REQUEST CODE
          DS    CL4                TERMINAL ID
          DS    CL4                TRANSID
          DS    C                  TRANSID TYPE
          DS    PL4                TASK NO.
-ASGNDAT2 DS    CL188              RETURNED DATA
+CEMTDATA DS    CL288              RETURNED DATA
 *
 * I SYS -- REQUESTED DATA FORMAT
 *
@@ -369,6 +454,8 @@ ISYSDDTE DS    C                  DATE FORMAT
          DS    X                  LOCAL TERMINALS IN USE
          DS    X                  REMOTE_TERMINALS
          DS    X                  REMOTE TERMINALS IN USE
+         DS    X                  NON-TERMINALS
+         DS    X                  NON-TERMINALS IN USE
          DS    CL4                INITIAL_TRANSID
 ISYSDCWA DS    XL4                CWASIZE
          DS    CL3                TRACE_LOCALS

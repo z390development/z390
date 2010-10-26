@@ -19,7 +19,7 @@ public  class  mz390 {
 	 
 	 z390 portable mainframe assembler and emulator.
 	 
-	 Copyright 2008 Automated Software Tools Corporation
+	 Copyright 2010 Automated Software Tools Corporation
 	 
 	 z390 is free software; you can redistribute it and/or modify
 	 it under the terms of the GNU General Public License as published by
@@ -387,6 +387,11 @@ public  class  mz390 {
      * 01/14/10 rpi 1105 correct B2A to support 32 bits and
      *          correct SETB to set to 0 or 1.
      * 01/22/10 RPI 1107 DEQUOTE removes SQ at front and/or back
+     * 05/31/10 RPI 1123 change SYSCDF to SYSEDF based on option EDF
+     * 09/26/10 RPI 1129 correct error 191 due to not setting
+     *          prior lcl_key_index_last in some cases
+     * 10/19/10 RPI 1131 fix instr/sec ovf, omit ainsert .*,
+     *          fix PUNCH missing quote causing abort, trace ACTR value
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -3946,6 +3951,9 @@ public  class  mz390 {
 		case 201:  // ACTR  
 			bal_op_ok = true;
 			actr_count = calc_seta_exp(bal_parms,0);
+			if (tz390.opt_tracem){ // RPI 1131
+				tz390.put_trace("ACTR reset to " + actr_count);
+			}
 			break;
 		case 202:  // AGO 
 		case 226:  // AGOB
@@ -4245,7 +4253,11 @@ public  class  mz390 {
 							&& exp_parse_set_loc == var_gbl_loc)){  //RPI178
 				if (exp_parse_set_name != null){
 					if (alloc_set_loc == var_lcl_loc){
-						add_lcl_set(exp_parse_set_name,alloc_set_type,exp_parse_set_sub);
+						// add find before add for LCL?  // RPI 1129
+						if (find_lcl_key_index("L:" + exp_parse_set_name) == -1){
+							add_lcl_set(exp_parse_set_name,alloc_set_type,exp_parse_set_sub);
+						}
+						
 					} else if (find_lcl_key_index("G:" + exp_parse_set_name) == -1){
 						add_lcl_key_index(0); // RPI 600 create gbl lcl declaration first time
 						if (tz390.find_key_index('G',exp_parse_set_name) == -1){
@@ -8073,8 +8085,8 @@ public  class  mz390 {
 		gbl_setc[tot_gbl_setc-1] = sys_vol;
 		add_gbl_sys("&SYSASM",var_setc_type);
 		gbl_setc[tot_gbl_setc-1] = "z390";
-		add_gbl_sys("&SYSCDF",var_setb_type); // RPI 1027
-		if (tz390.opt_cdf){
+		add_gbl_sys("&SYSEDF",var_setb_type); // RPI 1027 RPI 1123
+		if (tz390.opt_edf){ // RPI 1123
 			gbl_setb[tot_gbl_setb-1] = 1;   // RPI 1027
 		}
 		add_gbl_sys("&SYSCICS",var_setb_type); // RPI 976
@@ -8712,8 +8724,10 @@ public  class  mz390 {
 				tod_end = cur_date.getTime();
 				tot_msec = tod_end-tod_start+1;
 				put_stat_line("total milliseconds    = " + tot_msec);
-				ins_rate = tot_mac_ins*1000/tot_msec;
-				put_stat_line("instructions/second   = " + ins_rate);
+				if (tot_msec > 0){  // RPI 1131 prevent overflow
+				   ins_rate = (long)tot_mac_ins*1000/(long)tot_msec;
+				   put_stat_line("instructions/second   = " + ins_rate);
+				}
 			}
 		}
 		int index = 0;
@@ -8876,6 +8890,10 @@ public  class  mz390 {
 				&& tz390.parm_match.start(0) == 0){
 				int index = tz390.parm_match.end();
 				String rec = replace_quoted_text_vars(tz390.parm_match.group(),false);
+				if (rec.length() < 2){ // RPI 1131
+					log_error(269,"PUNCH syntax error - " + bal_parms);
+					return;
+				}
 				rec = rec.substring(1,rec.length()-1);
 				if ((index >= bal_parms.length()
 					 || bal_parms.charAt(index) <= ' ')
@@ -9021,13 +9039,13 @@ public  class  mz390 {
 			cur_date = new Date();
 		}
 		if (tz390.opt_stats){
-			put_stat_line("Copyright 2008 Automated Software Tools Corporation");
+			put_stat_line("Copyright 2010 Automated Software Tools Corporation");
 			put_stat_line("z390 is licensed under GNU General Public License");
 			put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			put_stat_line("options = " + tz390.cmd_parms);
 		}
 		if (tz390.opt_tracem){
-			tz390.put_trace(msg_id + "Copyright 2008 Automated Software Tools Corporation");
+			tz390.put_trace(msg_id + "Copyright 2010 Automated Software Tools Corporation");
 			tz390.put_trace(msg_id + "z390 is licensed under GNU General Public License");
 			tz390.put_trace(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			tz390.put_trace(msg_id + "options = " + tz390.cmd_parms);
@@ -11988,6 +12006,9 @@ public  class  mz390 {
     	 * add record to front or back of ainsert queue
     	 * for copy insert at front in seq.
     	 */
+    	if (rec.length() > 1 && rec.substring(0,2).equals(".*")){
+    		return; // RPI 1131 omit AINSERT '.*'
+    	}
     	if (ainsert_back){
 			ainsert_queue.add(rec);
 		} else {

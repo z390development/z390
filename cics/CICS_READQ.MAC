@@ -10,7 +10,7 @@
          CICS_READQ
          GBLB  &PARMS_0A04
          GBLB  &ZC_CICS
-         LCLB  &NEXT,&NOHAND
+         LCLB  &NEXT,&NOEDF,&NOHAND
          LCLC  &TYPE,&QUEUE,&QNAME,&INTO,&SET,&LENGTH,&NUMITEMS,&ITEM
          LCLC  &RESP,&RESP2
 &TYPE    SETC  '&SYSLIST(1)'
@@ -37,6 +37,7 @@
          AIF   ('&PARM'(1,9) EQ 'NUMITEMS(').NUMITEMS
          AIF   ('&PARM'(1,5) EQ 'ITEM(').ITEM
          AIF   ('&PARM'(1,4) EQ 'NEXT').NEXT
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
@@ -73,6 +74,10 @@
 .*
 .NEXT    ANOP
 &NEXT    SETB  1
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -140,12 +145,12 @@
 .DUNITEM ANOP
          AIF   ('&SET' EQ '').NOSET
          GEN_MVI P0A04SET,X'FF'   SET SET INDICATOR
-         AGO   .DOLENG
+         AGO   .DOLEN
 .*
 .NOSET   ANOP
          LA    R0,&INTO           INTO ADDRESS
          GEN_ST R0,P0A04INT       SAVE IT
-.DOLENG  ANOP
+.DOLEN   ANOP
          AIF   ('&LENGTH' EQ '').NOLENG
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
          AIF   (T'&LENGTH NE 'N').LENLABL
@@ -189,6 +194,16 @@
 .NONUMIT ANOP
          GEN_ST DFHEIBR,P0A04EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P0A04TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0A04EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0A04EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0A04EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0A04NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P0A04NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -200,8 +215,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P0A04RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P0A04EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0A04EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P0A04)       R1=LCL MODULE PARAMETER LIST
+P0A04EDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          AIF   ('&SET' EQ '').NOSET3
@@ -230,25 +248,7 @@
 *
          AIF   (&PARMS_0A04).BYP0A04
 &PARMS_0A04 SETB 1
-P0A04    DS    0H
-P0A04FN  DS    XL2                FUNCTION CODE
-P0A04EIB DS    AL4                EIB
-P0A04TCT DS    AL4                TCTTE
-P0A04QNM DS    CL16               QUEUE NAME
-P0A04ITM DS    XL2                ITEM
-P0A04LEN DS    XL2                LENGTH
-P0A04LAD DS    AL4                ADDRESS OF LENGTH IF LABEL
-P0A04SET DS    X                  FF=SET IS SPECIFIED
-         DS    X
-P0A04STA DS    AL4                ADDRESS FOR SET
-P0A04INT DS    AL4                ADDRESS OF INTO
-P0A04NUM DS    AL4                ADDRESS OF NUMITEMS
-P0A04NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0A04RSP DS    AL4                RESP
-P0A04RS2 DS    AL4                RESP2
-P0A04END EQU   *                  END MARKER
-         DS    0H
+         P0A04
 *
 .BYP0A04 ANOP
 P0A04BYP_&SYSNDX DS 0H

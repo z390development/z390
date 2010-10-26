@@ -48,7 +48,9 @@ HCNERROR DS    A                   1=ERROR
          DS    10A                45-54 UNUSED
          DS    A                  55=ENQBUSY
          DS    A                  56=ENVDEFERR
-         DS    26A                57-82 UNUSED
+         DS    4A                 57-60 UNUSED
+         DS    A                  61=NOTALLOC
+         DS    21A                62-82 UNUSED
          DS    A                  83=END
          DS    A                  84=DISABLED
 HCNLENG  EQU   *-DFHHCBLK

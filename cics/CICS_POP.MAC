@@ -9,7 +9,7 @@
          MACRO
          CICS_POP
          GBLB  &PARMS_020E
-         LCLB  &NOHAND
+         LCLB  &NOEDF,&NOHAND
          LCLC  &TYPE,&RESP,&RESP2
 &TYPE    SETC  '&SYSLIST(1)'
          AIF   ('&TYPE' EQ 'HANDLE').GOTHAND
@@ -23,10 +23,15 @@
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
 &PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').PLOOP
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -47,6 +52,16 @@
          GEN_MVC P020EFN,,=X'020E' SET FUNCTION CODE
          GEN_ST DFHEIBR,P020EEIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P020ETCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P020EEDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P020EEDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P020EEDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P020ENED,X'FF'   SET NOEDF
+         AEND
          LA    R0,DFHEIAID        R0=ADDRESS OF DFHEIAID
          GEN_ST R0,P020EAID       SAVE IT
          LA    R0,DFHEIHCN        R1=ADDRESS OF DFHEIHCN
@@ -62,8 +77,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P020ERS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P020EEDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P020EEDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P020E)       R1=LCL MODULE PARAMETER LIST
+P020EEDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P020ENOH,X'FF'   NOHANDLE ?
@@ -76,18 +94,7 @@
 *
          AIF   (&PARMS_020E).BYP020E
 &PARMS_020E SETB 1
-P020E    DS    0H
-P020EFN  DS    XL2                FUNCTION CODE
-P020EEIB DS    AL4                EIB
-P020ETCT DS    AL4                TCTTE
-P020EAID DS    AL4                A(DFHEIAID)
-P020EHCN DS    AL4                A(DFHEIHCN)
-P020ENOH DS    X                  FF=NOHANDLE
-         DS    X
-P020ERSP DS    AL4                RESP
-P020ERS2 DS    AL4                RESP2
-P020EEND EQU   *                  END MARKER
-         DS    0H
+         P020E
 *
 .BYP020E ANOP
 P020EBYP_&SYSNDX DS 0H

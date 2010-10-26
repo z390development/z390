@@ -1,11 +1,11 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR DSA DSECT MAP
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR DSA DSECT MAP         *
+.**********************************************************************
          MACRO
          DFHEISTG
 .*
@@ -19,6 +19,8 @@
 .* NOTE: EPILOG OPTION INSERTS DFHEIEND AT END WHICH DEFINES THE
 .* END OF THE DSA
 .*
+.* THERE IS A CUT-DOWN COPY OF THIS IN LCLCEDF
+.*
 DFHEISTG DSECT
          DS    18F  SAVE AREA
 DFHEIEIB DS    A    EIB POINTER
@@ -29,6 +31,7 @@ DFHEIAID DS    A    ADDRESS OF HANDLE AID BLOCK (DSECT=DFHADBLK)
 DFHEIHCN DS    A    ADDRESS OF HANDLE CONDITION BLOCK (DSECT=DFHHCBLK)
 DFHEIINV DS    CL8  INVOKING PROGRAM FOR ASSIGN
 DFHEIRET DS    CL8  RETURN PROGRAM FOR ASSIGN
+.* CHECK THAT DFHEIUSR IS QUADWORD ALIGNED FOR EDF
 DFHEIUSR DS    0D   USER PROGRAM STORAGE (SEE DFHEIEND FOR END)
          MEND
 

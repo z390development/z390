@@ -11,6 +11,8 @@ LCL100A  CSECT
 * R1  >>> P100A BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL100A'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,7 +33,17 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
-         EXEC  CICS READQ TS QUEUE(EIBREQID) SET(R4) LENGTH(READQLEN)  X
+         CLI   P100ANED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
+         EXEC  CICS READQ TS QUEUE(EIBREQID) SET(R4) LENGTH(P100ADLN)  X
                NUMITEMS(READQNUM) NEXT NOHANDLE
          OC    EIBRESP,EIBRESP    BAD RETURN CODE ?
          BZ    READQOK            EXIT IF NONE
@@ -129,7 +141,7 @@ PFXDUN   EQU   *
          ICM   R6,3,0(R5)         R6=LENGTH
          BP    SETLENOK           EXIT IF POSITIVE
 * SET, AND LENGTH IS ZERO OR NEGATIVE
-         OC    READQLEN,READQLEN  ANY DATA ?
+         OC    P100ADLN,P100ADLN  ANY DATA ?
          BNZ   SETNODTA           EXIT IF THERE IS
 * SET, AND LENGTH IS ZERO OR NEGATIVE, AND NO DATA
          MVC   P100ASTA,=4X'FF'   SET REG TO FOXES
@@ -144,7 +156,7 @@ SETNODTA EQU   *
 *
 SETLENOK EQU   *
 * SET, AND LENGTH IS POSITIVE
-         LH    R0,READQLEN        R0=ACTUAL LENGTH OF DATA
+         LH    R0,P100ADLN        R0=ACTUAL LENGTH OF DATA
          AHI   R0,-16             REDUCE BY PREFIX
          CH    R0,0(R5)           DATALENGTH-16 LTEQ LENGTH ?
          BH    SETLENHI           EXIT IF NOT
@@ -158,7 +170,7 @@ SETLENHI EQU   *
 * SET, AND LENGTH IS POSITIVE, AND DATALENGTH GT LENGTH
          BAL   R9,GETLEN          GETMAIN FOR SET
          BAL   R9,MVELEN          MOVE THE DATA
-         LH    R0,READQLEN        R0=ACTUAL LENGTH OF DATA
+         LH    R0,P100ADLN        R0=ACTUAL LENGTH OF DATA
          AHI   R0,-16             REDUCE BY PREFIX
          STH   R0,0(R5)           RETURN ACTUAL LENGTH OF DATA
          B     LENGERR            EXIT
@@ -168,7 +180,7 @@ DOINTO   EQU   *
          CLC   P100ALEN,=F'-1'    ANY LENGTH ADDRESS ?
          BNE   GOTLEN             EXIT IF THERE IS
 * INTO, NO LENGTH
-         LH    R0,READQLEN        R0=ACTUAL LENGTH OF DATA
+         LH    R0,P100ADLN        R0=ACTUAL LENGTH OF DATA
          AHI   R0,-16             REDUCE BY PREFIX
          STH   R0,SAVLEN          RETURN ACTUAL LENGTH OF DATA
          LA    R5,SAVLEN          R5=ADDRESS OF LENGTH TO MOVE
@@ -183,7 +195,7 @@ GOTLEN   EQU   *
          ICM   R6,3,0(R5)         R6=LENGTH
          BP    INTLENOK           EXIT IF POSITIVE
 * INTO, AND LENGTH IS ZERO OR NEGATIVE
-         OC    READQLEN,READQLEN  ANY DATA ?
+         OC    P100ADLN,P100ADLN  ANY DATA ?
          BNZ   INTNODTA           EXIT IF THERE IS
 * INTO, AND LENGTH IS ZERO OR NEGATIVE, AND NO DATA
          XC    0(2,R5),0(R5)      SET LENGTH=0
@@ -196,7 +208,7 @@ INTNODTA EQU   *
 *
 INTLENOK EQU   *
 * INTO, AND LENGTH IS POSITIVE
-         LH    R0,READQLEN        R0=ACTUAL LENGTH OF DATA
+         LH    R0,P100ADLN        R0=ACTUAL LENGTH OF DATA
          AHI   R0,-16             REDUCE BY PREFIX
          CH    R0,0(R5)           DATALENGTH-16 LTEQ LENGTH ?
          BH    INTLENHI           EXIT IF NOT
@@ -210,7 +222,7 @@ INTLENHI EQU   *
 * INTO, AND LENGTH IS POSITIVE, AND DATALENGTH-16 GT LENGTH
          L     R6,P100AINT        R6=ADDRESS OF INTO
          BAL   R9,MVELEN          MOVE THE DATA
-         LH    R0,READQLEN        R0=ACTUAL LENGTH OF DATA
+         LH    R0,P100ADLN        R0=ACTUAL LENGTH OF DATA
          AHI   R0,-16             REDUCE BY PREFIX
          STH   R0,0(R5)           RETURN ACTUAL LENGTH OF DATA
          B     LENGERR            EXIT
@@ -275,14 +287,25 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
-         MVC   RCODE,EIBRCODE     SAVE RCODE
-         MVC   RESP,EIBRESP       SAVE RESP
-         MVC   RESP2,EIBRESP2     SAVE RESP2
+* EIBRCODE,EIBRESP,EIBRESP2 DESTROYED BY FREEMAIN
+         MVC   SAVRCODE,EIBRCODE  SAVE EIBRCODE
+         MVC   SAVRESP,EIBRESP    SAVE EIBRESP
+         MVC   SAVRESP2,EIBRESP2  SAVE EIBRESP2
          EXEC  CICS FREEMAIN DATA(TSBLKSV) NOHANDLE
-         MVC   EIBFN,P100AFN      SET EIBFN
-         MVC   EIBRCODE,RCODE     RESTORE RCODE
-         MVC   EIBRESP,RESP       RESTORE RESP
-         MVC   EIBRESP2,RESP2     RESTORE RESP2
+         MVHHI EIBFN,X'100A'      RESTORE EIBFN
+         MVC   EIBRCODE,SAVRCODE  RESTORE EIBRCODE
+         MVC   EIBRESP,SAVRESP    RESTORE EIBRESP
+         MVC   EIBRESP2,SAVRESP2  RESTORE EIBRESP2
+         CLI   P100ANED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 * SUBROUTINES
@@ -305,29 +328,12 @@ MVELEN   EQU   *
 *
 TSBLKSV  DS    AL4                SAVE TS BLOCK ADDRESS
 SAVLEN   DS    XL2                SAVE LENGTH FOR INTO
-READQLEN DS    XL2                READQ TS LENGTH
 READQNUM DS    XL2                READQ TS NUMITEMS
-RCODE    DS    XL4                SAVE RCODE
-RESP     DS    XL4                SAVE RESP
-RESP2    DS    XL4                SAVE RESP2
+SAVRCODE DS    XL6
+SAVRESP  DS    XL4
+SAVRESP2 DS    XL4
 *
-P100A    DSECT
-P100AFN  DS    XL2                FUNCTION CODE
-P100AEIB DS    AL4                EIB
-P100ATCT DS    AL4                TCTTE
-P100AINT DS    AL4                ADDRESS OF INTO
-P100ASET DS    X                  FF=SET IS SPECIFIED
-         DS    X
-P100ASTA DS    AL4                ADDRESS FOR SET
-P100ALEN DS    AL4                ADDRESS OF LENGTH
-P100ARTN DS    AL4                ADDRESS OF RTRANSID
-P100ARTM DS    AL4                ADDRESS OF RTERMID
-P100AQNM DS    AL4                ADDRESS OF QUEUE NAME
-         DS    X                  FF=NOHANDLE
-         DS    X
-P100ARSP DS    AL4                RESP
-P100ARS2 DS    AL4                RESP2
-P100AEND EQU   *                  END MARKER
+         P100A DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

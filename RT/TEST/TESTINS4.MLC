@@ -1,0 +1,112 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 03/03/08                                                 *
+*********************************************************************
+* 08/06/10 RPI 1125 COPY FROM TESTINS3 AND ADD Z196 INSTRUCTION TESTS 
+* 10/22/10 RPI 1125 ADD RC TEST FOR POPCNT, FIEBRA (SEE FIEBR TESTFB1)
+*********************************************************************
+         PRINT DATA
+         TITLE 'TESTINS3 - UNIT TEST Z196 EZ390 PROBLEM STATE INSTR.'
+*
+* RT1 MACRO USED TO AUTOMATE CODE GENERATED FOR MAINLINE
+* AND TEST PSW CC ROUTINES. THE MACROS DEFINE NEW BASE REG
+* FOR EACH TEST SO THEY CAN EXTEND FOR ANY LENGTH.
+*
+* SEE TESTINS1 FOR ASSEMBLY TEST OF ALL POP INSTRUCTIONS
+* SEE TESTINS2 FOR UNIT TEST OF PROB. STATE INSTR. UP TO Z9
+* SEE TESTINS3 FOR UNIT TEST OF PROB. STATE Z10 INSTR. 
+* SEE TESTFP1  FOR HFP AND BFP FLOATING POINT INSTR TESTS
+* SEE TESTDFP1 FOR DFP FLOATING POINT INSTR TESTS
+*********************************************************************
+TESTINS3 RT1   MAIN
+         EQUREGS
+PWORK    DS    D
+WORD     DS    F
+DWORD    DS    D
+BYTE     DS    X
+NIBCNT   DC    AL1(00,01,01,02,01,02,02,03,01,02,02,03,02,03,03,04)  
+*********************************************************************
+* START z196 INSTRUCTION TESTS
+*********************************************************************
+         RT1   START
+* B357 FIEBRA  R1,M3,R2,M4 (SEE TESTFP1 SRNM FOR FIEBR TEST)
+         SRNM  0  DEFAULT ROUND TO NEAREST WITH HALF EVEN
+            LE    R1,=EB'2.5'
+            FIEBRA R0,0,R1,0
+            CEB   R0,=EB'2'
+            RT1   CCE
+            LE    R1,=EB'3.5'
+            FIEBRA R0,0,R1,0
+            CEB   R0,=EB'4'
+            RT1   CCE
+            SRNM  1  ROUND TOWARD ZERO
+            LE    R1,=EB'2.5'
+            FIEBRA R0,0,R1,0
+            CEB   R0,=EB'2'
+            RT1   CCE
+            LE    R1,=EB'3.5'
+            FIEBRA R0,0,R1,0
+            CEB   R0,=EB'3'
+            RT1   CCE
+            SRNM  2  ROUND TOWARD PLUS INFINITY
+            LE    R1,=EB'2.5'
+            FIEBRA R0,0,R1,0
+            CEB   R0,=EB'3'
+            RT1   CCE
+            LE    R1,=EB'3.5'
+            FIEBRA R0,0,R1,0
+            CEB   R0,=EB'4'
+            RT1   CCE
+            SRNM  3  ROUND TOWARD NEG  INFINITY
+            LE    R1,=EB'2.5'
+            FIEBRA R0,0,R1,0
+            CEB   R0,=EB'2'
+            RT1   CCE
+            LE    R1,=EB'3.5'
+            FIEBRA R0,0,R1,0
+            CEB   R0,=EB'3'
+            RT1   CCE
+            SRNM  0  DEFAULT ROUND TO NEAREST WITH HALF EVEN RESET
+            LE    R1,=EB'2.5'
+            FIEBRA R0,0,R1,0
+            CEB   R0,=EB'2'
+            RT1   CCE
+            LE    R1,=EB'3.5'
+            FIEBRA R0,0,R1,0
+            CEB   R0,=EB'4'
+         RT1   CCE
+* B9E1 POPCNT R1,R2 SET 8 BYTE BIT COUNTS FROM R2 IN R1
+         LG    R2,=XL8'0000000000000100'
+         LG    R3,=XL8'0101010101010101'
+         DROP  R11            RT1 RESETS R11 IN LOOP
+POPCNT_LOOP EQU *
+         LGR   R5,R2
+         BCTR  R5,0           R5 = 0-255 IN LOW BYTE
+         LGR   R1,R5
+         MSGR  R1,R3          R1 = 0-255 IN ALL 8 BYTES
+         POPCNT R0,R1         R0 = TOTAL BITS FOR EACH BYTE
+         MSGR  R0,R3          R0 = TOTAL BITS FOR ALL 8 IN HIGH BYTE
+         SRLG  R1,R0,56+3     R1 = TOTAL BITS / 8 IN LOW BYTE
+         LR    R6,R5
+         SRL   R6,4
+         SR    R4,R4
+         IC    R4,NIBCNT(R6)
+         N     R5,=X'0000000F'
+         IC    R5,NIBCNT(R5)
+         AR    R4,R5
+         CLR   R1,R4
+         RT1   CCE            COMPARE CALC WITH TABLE
+         BCT   R2,POPCNT_LOOP    
+         LG    R2,=FL8'0'
+         POPCNT R1,R2
+         RT1   CCE
+         LG    R2,=FL8'-1'
+         POPCNT R1,R2
+         RT1   CCH
+* END
+         RT1   END
+         END         
+

@@ -1,0 +1,37 @@
+P22RL1   ZMFACC CODE,START,NAME='Richard Lawrence'
+* From presentation by Dan Greiner at SHARE page 87
+         LA    R1,INPUT          R1 = A(STRING)
+         LA    R2,1              R2 = INCREMENT FOR BXLE
+         LA    R3,INPLEN-1(R1)   R3 = A(STRING+LENGTH-1) END FOR BXLE
+         SGR   R4,R4             R4 = 1 BIT COUNTER
+         LG    R6,=X'0101010101010101' R6 CONSTANT FOR MSG
+LOOP  EQU  *
+         LGR   R5,R6
+         SGR   R7,R7
+         IC    R7,0(R1) 
+         MSGR  R5,R7       
+         SRLG  R5,R5,56
+         AR    R4,R5
+      BXLE R1,R2,LOOP
+         ST    R4,COUNT
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         DC     C'STRING='
+INPUT    DS    0D
+         DC    C'Code fastest instruction sequence to count bits '
+         DC    C'in an arbitrary string of bytes using currently '
+         DC    C'available z/Architecture instructions prior to '
+         DC    C'new instruction coming with z196 which is '
+         DC    C'estimated to be 5 times faster.'
+INPLEN   EQU   *-INPUT
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC    C'TOTAL BIT COUNT ='
+COUNT    DC    F'0'
+         ZMFACC OUTPUT,END
+         LTORG
+         END
+
+                       
+
+

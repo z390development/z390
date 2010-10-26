@@ -12,10 +12,12 @@
 *   I SYS        REQUEST Z390CICS.INI INFO AND DISPLAY
 *   I TER        REQUEST TERMINAL INFO AND DISPLAY
 *   I TRA        PCT DISPLAY
-*   I FIL        FCT DISPLAY
+*   I FI         FILE DISPLAY
 *   I ENQ        ENQ DISPLAY
 *
 *   S TER OUT    CLOSES THE Z390KCP THREAD (CLIENT)
+*
+*   S FI         FILE MODIFY
 *
 *   P SHU        CLOSES THE Z390KCP THREAD (CLIENT)
 *                WHEN ALL ACTIVE TASKS HAVE ENDED, CLOSE SERVER
@@ -23,50 +25,18 @@
 *   P SHU IMM    CLOSE THE SERVER
 *
          DFHEISTG
-PARSE    DS    0H
-PARSE1   DS    CL20               COMMAND
-PARSE2   DS    CL20               OPERATION TYPE
-PARSE3   DS    CL20               OPERATION MODIFIER
-PARSELEN EQU   *-PARSE
+EICOMM   DS    X
 *
-DFHPCTAD DS    A                  CURRENT PCT ADDRESS
+Z390CEMT DFHEIENT CODEREG=(R12,R3)
 *
-* I SYS MESSAGE AREA
-SNDISYST DS    CL(ISYSTITE)
-SNDISYSL DS    CL(ISYSLSTL)
-* I TER MESSAGE AREA
-         ORG   SNDISYST
-SNDITERT DS    CL(ITERTITE)
-SNDITERL DS    CL(ITERLSTL)
-* I TRA MESSAGE AREA 1
-         ORG   SNDISYST
-SNDITRN1 DS    CL(ITRNTIT1)
-SNDITRL1 DS    CL(ITRNLSL1)
-* I TRA MESSAGE AREA 2
-         ORG   SNDISYST
-SNDITRN2 DS    CL(ITRNTIT2)
-SNDITRL2 DS    CL(ITRNLSL2)
-* I ENQ MESSAGE AREA
-         ORG   SNDISYST
-SNDIENQT DS    CL(IENQTITE)
-SNDIENQL DS    CL(IENQLEN*21)
-         ORG
-*
-         COPY  MAPCEMT
-*
-MYCOMM   DS    X
-*
-Z390CEMT DFHEIENT CODEREG=(R12,R3,R4,R5)
-*
-         MVI   MYCOMM,X'00'       CLEAR COMMAREA
+         ST    DFHEIBR,EIBADDR    SAVE EIB ADDRESS
+         ST    TCTTEAR,TCTADDR    SAVE TCTTE ADDRESS
+         MVI   COMM,X'00'         CLEAR PARM COMMAREA
          ICM   R6,15,TCTTECA      ANY COMMAREA ?
          BZ    NOCOMM             EXIT IF NONE
 * WE HAVE A COMMAREA
-         CLI   0(R6),C'1'         RETURN FROM CEMT I FIL ?
-         BE    IFILRET            EXIT IF IT IS
-         CLI   0(R6),C'2'         RETURN FROM FILE DISPLAY ?
-         BE    IFILDIS            EXIT IF IT IS
-         DC    H'0'               CANNOT OCCUR
+         MVC   COMM,0(R6)         SET IN PARM
+         B     IFIL               EXIT
 *
 NOCOMM   EQU   *
          EXEC  CICS HANDLE AID CLEAR(TERMINAT)
@@ -77,38 +47,60 @@ NOCOMM   EQU   *
          AHI   R6,3               MISS SBA
 NOSBA    EQU   *
          AHI   R6,4               MISS CEMT
-         XC    PARSE(PARSELEN),PARSE CLEAR PARSE AREA
+PARSGO   EQU   *
+* CLEAR PARSE AREAS
+         LA    R8,CEMTPARM        AREA TO CLEAR
+         LA    R9,CEMTPLEN*CEMTPNUM LENGTH TO CLEAR
+         LR    R14,R8             AREA TO CLEAR
+         SR    R15,R15            CLEAR SECOND LENGTH
+         MVCLE R8,R14,X'00'       CLEAR PARSE AREAS
 *
-* FIND 1ST PARM
+* FIND PARMS
 *
-         BAL   R14,NEXTPARM       LOCATE START OF 1ST PARM
-         CLI   0(R6),X'00'        END OF TIOA ?
-         BE    PARSERR1           EXIT IF 1ST PARM NOT FOUND
-         LA    R7,PARSE1          PARM ADDRESS
-         BAL   R14,EXTRACT        EXTRACT PARM
+         LA    R7,CEMTPARM        PARSE AREAS
+         LA    R14,CEMTPNUM       MAXIMUM AREAS
+PARMLOOP EQU   *
+         LR    R1,R7              SAVE PARSE AREA ADDRESS
+* FIND START OF NEXT PARM
+* R6=CURRENT LOCATION
+NEXTPARM EQU   *
+         CLI   0(R6),X'00'        TIOA DONE ?
+         BE    PROCESS            EXIT IF IT IS
+         CLI   0(R6),C' '         FIND BLANK ?
+         BNE   FOUND              EXIT WHEN PARM FOUND
+         AHI   R6,1               BUMP TIOA POINTER
+         B     NEXTPARM           LOOP
 *
-* FIND 2ND PARM
+FOUND    EQU   *
+* EXTRACT PARM
+* R6=1ST PARM CHAR
+* R7=PARM LOCATION
+         SR    R8,R8              ZERO PARM LENGTH
+EXTRLOOP EQU   *
+         TM    0(R6),X'BF'        END OF PARM (BLANK OR X'00') ?
+         BE    DUNPARM            RETURN IF IT IS
+         CHI   R8,CEMTPLEN+1      TOO MANY CHARS ?
+         BE    PARSERR1           YES, ERROR IF TOO MANY
+         MVC   0(1,R7),0(R6)      MOVE PARM CHAR
+         AHI   R6,1               BUMP TIOA POINTER
+         AHI   R7,1               BUMP PARM POINTER
+         AHI   R8,1               COUNT THEM
+         B     EXTRLOOP           LOOP
 *
-         BAL   R14,NEXTPARM       LOCATE START OF 2ND PARM
-         CLI   0(R6),X'00'        END OF TIOA ?
-         BE    PROCESS            EXIT IF 2ND PARM NOT FOUND
-         LA    R7,PARSE2          PARM ADDRESS
-         BAL   R14,EXTRACT        EXTRACT PARM
-*
-* FIND OPTIONAL 3RD PARM
-*
-         BAL   R14,NEXTPARM       LOCATE START OF 2ND PARM
-         CLI   0(R6),X'00'        END OF TIOA ?
-         BE    PROCESS            EXIT IF NO 3RD PARM
-         LA    R7,PARSE3          PARM ADDRESS
-         BAL   R14,EXTRACT        EXTRACT PARM
+DUNPARM  EQU   *
+         LA    R7,CEMTPLEN(R1)    NEXT PARSE AREA
+         BCT   R14,PARMLOOP       LOOP
 *
 PROCESS  EQU   *
-         OI    PARSE1,C' '        CONVERT 1ST PARM TO UPPER CASE
-         OC    PARSE2(3),=4C' '   CONVERT 2ND PARM TO UPPER CASE
-         OC    PARSE3(4),=4C' '   CONVERT 3RD PARM TO UPPER CASE
+* ALL PARMS TO UPPER CASE AND BLANK FILL
+         LA    R7,CEMTPARM        PARSE AREAS
+         LA    R14,CEMTPNUM       MAXIMUM AREAS
+UPPLOOP  EQU   *
+         OC    0(CEMTPLEN,R7),BLANKS CONVERT TO UPPER CASE
+         AHI   R7,CEMTPLEN        BUMP POINTER
+         BCT   R14,UPPLOOP        LOOP
 * SYNTAX CHECKS
-         CLI   PARSE1,C'I'        I ?
+         CLI   PARSE1,C'I'        INQUIRE ?
          BNE   TRYS               EXIT IF NOT
 * CEMT I
          CLC   PARSE2(3),=C'SYS'  I SYS ?
@@ -117,587 +109,97 @@ PROCESS  EQU   *
          BE    ITER               EXIT IF IT IS
          CLC   PARSE2(3),=C'TRA'  I TRA ?
          BE    ITRN               EXIT IF IT IS
-         CLC   PARSE2(3),=C'FIL'  I FIL ?
+         CLC   PARSE2(2),=C'FI'   I FI ?
          BE    IFIL               EXIT IF IT IS
          CLC   PARSE2(3),=C'ENQ'  I ENQ ?
          BE    IENQ               EXIT IF IT IS
          B     PARSERRI           EXIT IF BAD INQUIRE
+BLANKS   DC    (CEMTPLEN)C' '
+*
+IENQ     DS    0H
+* PROCESS CEMT I ENQ, IGNORE OTHER PARMS
+         L     R15,=V(CEMTIENQ)   R15=CEMT I ENQ PROCESSOR
+         LA    R1,CEMTPARM        R1=PARSED PARAMETERS
+         BAKR  0,R15              STACK REGS AND GO
+         B     RETURN             EXIT
 *
 ISYS     EQU   *
 * PROCESS CEMT I SYS, IGNORE OTHER PARMS
-         L     R8,CEMTI           R8=MESSAGE LENGTH
-         MVC   CEMTIREQ,=C'FE01'  SET REQUEST CODE
-         MVC   CEMTITRM,TCTTETI   SET TERMID
-         MVC   CEMTITKN,EIBTASKN  SET TASK NO.
-         TCPIO SEND,MSG=CEMTI,LMSG=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   TCPIOERR           EXIT IF BAD
-         L     R8,CEMTRCVE        R8=MESSAGE LENGTH
-         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   TCPIOERR           EXIT IF BAD
-         MVC   SNDISYST,ISYSTITL  SET UP TITLE
-         LA    R6,SNDISYSL        R6=DESTINATION
-         LA    R8,ISYSLIST        R8=SOURCE
-         LA    R7,ISYSLSTL        DESTINATION LENGTH
-         LR    R9,R7              SOURCE LENGTH
-         MVCL  R6,R8              INITIALIZE DISPLAY
-         LA    R6,SNDISYSL        R6=DISPLAY ADDRESS
-         USING ISYSDSCT,R6
-         LA    R7,CEMTDATA        R7=RECEIVED DATA
-         USING ISYSDATA,R7
-* MOVE THE DATA
-         MVC   ISYSJPTH,ISYSDJRP  MOVE JARPATH
-         MVC   ISYSCPTH,ISYSDCSP  MOVE CICSPATH
-         MVC   ISYSTPFX,ISYSDPFX  MOVE TERMID_PREFIX
-         MVC   ISYSTDAT,=C'DMY'   SET DATE FORMAT DMY
-         CLI   ISYSDDTE,C'K'      IS DATE=K ?
-         BE    ISYSDTDN           EXIT IF IT IS
-         MVC   ISYSTDAT,=C'MDY'   SET DATE FORMAT MDY
-         CLI   ISYSDDTE,C'U'      IS DATE=U ?
-         BE    ISYSDTDN           EXIT IF IT IS
-         MVC   ISYSTDAT,=C'YMD'   SET DATE FORMAT YMD
-ISYSDTDN EQU   *
-         MVC   ISYSMAXU+1(1),ISYSDTUS MOVE MAXTHREADS IN USE
-         OI    ISYSMAXU+1,C'0'    CONVERT TO CHAR
-         CLI   ISYSDTUS,X'0A'     IS IT 10 ?
-         BNE   ISYSHEX1           EXIT IF NOT
-         MVC   ISYSMAXU,=C'10'    SET 10
-ISYSHEX1 EQU   *
-         MVC   ISYSMAXT+1(1),ISYSDTMX MOVE MAXTHREADS
-         OI    ISYSMAXT+1,C'0'    CONVERT TO CHAR
-         CLI   ISYSDTMX,X'0A'     IS IT 10 ?
-         BNE   ISYSHEX2           EXIT IF NOT
-         MVC   ISYSMAXT,=C'10'    SET 10
-ISYSHEX2 EQU   *
-         MVC   ISYSLCLU+1(1),ISYSDLUS MOVE LOCAL TERMINALS IN USE
-         OI    ISYSLCLU+1,C'0'    CONVERT TO CHAR
-         CLI   ISYSDLUS,X'0A'     IS IT 10 ?
-         BNE   ISYSHEX3           EXIT IF NOT
-         MVC   ISYSLCLU,=C'10'    SET 10
-ISYSHEX3 EQU   *
-         MVC   ISYSLOCL+1(1),ISYSDLCL MOVE LOCAL_TERMINALS
-         OI    ISYSLOCL+1,C'0'    CONVERT TO CHAR
-         CLI   ISYSDLCL,X'0A'     IS IT 10 ?
-         BNE   ISYSHEX4           EXIT IF NOT
-         MVC   ISYSLOCL,=C'10'    SET 10
-ISYSHEX4 EQU   *
-         MVC   ISYSRMTU+1(1),ISYSDRUS MOVE REMOTE TERMINALS IN USE
-         OI    ISYSRMTU+1,C'0'    CONVERT TO CHAR
-         CLI   ISYSDRUS,X'0A'     IS IT 10 ?
-         BNE   ISYSHEX5           EXIT IF NOT
-         MVC   ISYSRMTU,=C'10'    SET 10
-ISYSHEX5 EQU   *
-         MVC   ISYSREMT+1(1),ISYSDRMT MOVE REMOTE_TERMINALS
-         OI    ISYSREMT+1,C'0'    CONVERT TO CHAR
-         CLI   ISYSDRMT,X'0A'     IS IT 10 ?
-         BNE   ISYSHEX6           EXIT IF NOT
-         MVC   ISYSREMT,=C'10'    SET 10
-ISYSHEX6 EQU   *
-         MVC   ISYSLTRC,ISYSDTRL  MOVE TRACE_LOCALS
-         MVC   ISYSZTRC,ISYSDTRZ  MOVE TRACE_Z390CICS
-         MVC   ISYSINIT,ISYSDINT  MOVE INITIAL_TRANSID
-         L     R15,ISYSDCWA       R15=CWASIZE
-         CVD   R15,DEC            CONVERT TO DECIMAL
-         MVC   ISYSCWAS-1(8),=X'4020202020202120'
-         ED    ISYSCWAS-1(8),DEC+4 EDIT CWASIZE
-         MVC   ISYSSEQT,ISYSDSEQ  MOVE SEQ_TERM
-         EXEC  CICS SEND FROM(SNDISYST) LENGTH(ISYSLEN)
-         B     RETURN             END OF PROGRAM
+         L     R15,=V(CEMTISYS)   R15=CEMT I SYS PROCESSOR
+         LA    R1,CEMTPARM        R1=PARSED PARAMETERS
+         BAKR  0,R15              STACK REGS AND GO
+         B     RETURN             EXIT
 *
 ITER     EQU   *
 * PROCESS CEMT I TER, IGNORE OTHER PARMS
-         L     R8,CEMTI           R8=MESSAGE LENGTH
-         MVC   CEMTIREQ,=C'FE00'  SET REQUEST CODE
-         MVC   CEMTITRM,TCTTETI   SET TERMID
-         MVC   CEMTITKN,EIBTASKN  SET TASK NO.
-         TCPIO SEND,MSG=CEMTI,LMSG=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   TCPIOERR           EXIT IF BAD
-         LA    R8,200             R8=MESSAGE LENGTH
-         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   TCPIOERR           EXIT IF BAD
-         MVC   SNDITERT,ITERTITL  SET UP TITLE
-         LA    R6,SNDITERL        R6=DESTINATION
-         LA    R8,ITERLIST        R8=SOURCE
-         LA    R7,ITERLSTL        DESTINATION LENGTH
-         LR    R9,R7              SOURCE LENGTH
-         MVCL  R6,R8              INITIALIZE LIST
-         LA    R6,SNDITERL        R6=LIST ADDRESS
-         USING ITERDSCT,R6
-         LA    R7,CEMTDATA        R7=RECEIVED DATA
-         USING THRDDSCT,R7
-         LA    R8,11              R8=MAX THREADS + 1 FOR SEQ TERM
-         LA    R9,C'0'            R9=TERMID SUFFIX
-ITERLOOP EQU   *
-         MVC   ITERTERM(3),CEMTDATA+THRDLEN*THRDNUM MOVE TERMID PREFIX
-         STC   R9,ITERTERM+3      MOVE TERMID SUFFIX
-         C     R8,=F'1'           LAST TERMINAL ?
-         BNE   ITERNTSQ           EXIT IF NOT
-         MVC   ITERTERM,=C'SQ01'  SET SEQ TERM
-ITERNTSQ EQU   *
-         CLI   THRDTYPE,UNALLOC   IS IT UNALLOCATED ?
-         BE    ITERLOC            EXIT IF IT IS
-         MVC   ITERTYPE,=CL6'LOCAL' PRESUME LOCAL
-         CLI   THRDTYPE,LOCAL     IS IT LOCAL ?
-         BE    ITERLOC            EXIT IF IT IS
-         MVC   ITERTYPE,=C'REMOTE' SET REMOTE
-ITERLOC  EQU   *
-         MVC   ITERTRAN,THRDTRAN  MOVE TRANSID
-         MVC   ITERIND,=CL9'RUNNING' PRESUME RUNNING
-         CLI   THRDIND,ST_RUN     RUNNING STATUS ?
-         BE    ITERNXT            EXIT IF IT IS
-         MVC   ITERIND,=C'AVAILABLE' SET AVAILABLE
-         CLI   THRDIND,ST_AVAIL   AVAILABLE STATUS ?
-         BE    ITERNXT            EXIT IF IT IS
-         MVC   ITERIND,=CL9'SUS-ENQ' SET SUSPENDED-ENQ
-         CLI   THRDIND,ST_SUSEQ   SUSPENDED-ENQ STATUS ?
-         BE    ITERNXT            EXIT IF IT IS
-         MVC   ITERIND,=C'SHUT DOWN' SET SHUT DOWN
-ITERNXT  EQU   *
-         AHI   R6,ITERLEN         BUMP OUTPUT POINTER
-         AHI   R7,THRDLEN         BUMP INPUT POINTER
-         AHI   R9,1               BUMP TERMID SUFFIX
-         BCT   R8,ITERLOOP        LOOP
-         EXEC  CICS SEND FROM(SNDITERT) LENGTH(ITERMLEN)
+         L     R15,=V(CEMTITER)   R15=CEMT I TER PROCESSOR
+         LA    R1,CEMTPARM        R1=PARSED PARAMETERS
+         BAKR  0,R15              STACK REGS AND GO
          B     RETURN             END OF PROGRAM
 *
 ITRN     EQU   *
-* PROCESS CEMT I TRA, IGNORE OTHER PARMS
-* LIMIT OF 42 IN TWO PHASES
-         EXEC  CICS LOAD PROGRAM('DFHPCT') SET(R6)
-         ST    R6,DFHPCTAD        SAVE LOAD POINT
-*
-* 1ST COLUMN
-*
-         MVC   SNDITRN1,ITRNTTL1  SET UP TITLE
-         LA    R6,SNDITRL1        R6=DESTINATION
-         LA    R8,ITRNLST1        R8=SOURCE
-         LA    R7,ITRNLSL1        DESTINATION LENGTH
-         LR    R9,R7              SOURCE LENGTH
-         MVCL  R6,R8              INITIALIZE LIST
-         LA    R6,SNDITRL1        R6=LIST ADDRESS
-         USING ITRNDSC1,R6
-         L     R7,DFHPCTAD        R7=PCT ADDRESS
-         LA    R8,21              R8=MAX TRANSIDS
-ITRNLP1  EQU   *
-         MVC   ITRNTRN1,0(R7)     MOVE TRANSID
-         MVC   ITRNPRG1,4(R7)     MOVE PROGRAM
-         MVC   BLDLNAME,4(R7)     SAVE PROGRAM NAME
-         BLDL  0,BLDLLIST         BLDL
-         LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
-         BZ    ITRNINC1           EXIT IF FOUND
-* PROGRAM NOT FOUND
-         MVC   ITRNMSG1,=C'PROGRAM NOT FOUND' SET MESSAGE
-ITRNINC1 EQU   *
-         AHI   R6,ITRNLEN1        BUMP OUTPUT POINTER
-         AHI   R7,12              BUMP PCT POINTER
-         CLI   0(R7),X'FF'        END OF PCT ?
-         BE    ITRNSND1           EXIT IF IT IS
-         BCT   R8,ITRNLP1         LOOP
-ITRNSND1 EQU   *
-         ST    R7,DFHPCTAD        SAVE CURRENT PCT POINTER
-         EXEC  CICS SEND FROM(SNDITRN1) LENGTH(ITRNMLN1)
-         CLI   0(R7),X'FF'        END OF PCT ?
-         BE    ITRNRLSE           EXIT IF IT IS
-*
-* 2ND COLUMN
-*
-         MVC   SNDITRN2,ITRNTTL2  SET UP TITLE
-         LA    R6,SNDITRL2        R6=DESTINATION
-         LA    R8,ITRNLST2        R8=SOURCE
-         LA    R7,ITRNLSL2        DESTINATION LENGTH
-         LR    R9,R7              SOURCE LENGTH
-         MVCL  R6,R8              INITIALIZE LIST
-         LA    R6,SNDITRL2        R6=LIST ADDRESS
-         USING ITRNDSC2,R6
-         L     R7,DFHPCTAD        R7=CURRENT PCT ADDRESS
-         LA    R8,21              R8=MAX TRANSIDS
-ITRNLP2  EQU   *
-         MVI   ITRNSEP2,C'|'      MOVE SEPARATOR
-         MVC   ITRNTRN2,0(R7)     MOVE TRANSID
-         MVC   ITRNPRG2,4(R7)     MOVE PROGRAM
-         MVC   BLDLNAME,4(R7)     SAVE PROGRAM NAME
-         BLDL  0,BLDLLIST         BLDL
-         LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
-         BZ    ITRNINC2           EXIT IF FOUND
-* PROGRAM NOT FOUND
-         MVC   ITRNMSG2,=C'PROGRAM NOT FOUND' SET MESSAGE
-ITRNINC2 EQU   *
-         AHI   R6,ITRNLEN2        BUMP OUTPUT POINTER
-         AHI   R7,12              BUMP PCT POINTER
-         CLI   0(R7),X'FF'        END OF PCT ?
-         BE    ITRNSND2           EXIT IF IT IS
-         BCT   R8,ITRNLP2         LOOP
-ITRNSND2 EQU   *
-         EXEC  CICS SEND FROM(SNDITRN2) LENGTH(ITRNMLN2)
-ITRNRLSE EQU   *
-         EXEC  CICS RELEASE PROGRAM('DFHPCT')
+* PROCESS CEMT I TRN, IGNORE OTHER PARMS
+         L     R15,=V(CEMTITRN)   R15=CEMT I TRN PROCESSOR
+         LA    R1,CEMTPARM        R1=PARSED PARAMETERS
+         BAKR  0,R15              STACK REGS AND GO
          B     RETURN             END OF PROGRAM
 *
 IFIL     EQU   *
-         LA    R6,IFIL1S          AREA TO CLEAR
-         LA    R7,IFIL1L          LENGTH TO CLEAR
-         LR    R8,R6              AREA TO CLEAR
-         SR    R9,R9              CLEAR SECOND LENGTH
-         MVCLE R6,R8,X'00'        CLEAR IFIL1 MAP
-* PROCESS CEMT I FIL, IGNORE OTHER PARMS
-         LA    R6,IFILF04F        R6=LIST ADDRESS
-         USING IFILDSCT,R6
-         EXEC  CICS HANDLE CONDITION END(IFILEND)
-         EXEC  CICS INQUIRE FILE START
-IFILLOOP EQU   *
-         EXEC  CICS INQUIRE FILE(IFILQFLE) NEXT                        X
-                        ADD(IFILQADD)                                  X
-                     BROWSE(IFILQBRW)                                  X
-                     DELETE(IFILQDEL)                                  X
-                     DSNAME(IFILQDSN)                                  X
-               ENABLESTATUS(IFILQENA)                                  X
-                 OPENSTATUS(IFILQOPE)                                  X
-                       READ(IFILQRD)                                   X
-               RECORDFORMAT(IFILQRCF)                                  X
-                     UPDATE(IFILQUPD)
-         MVC   IFILFILE,IFILQFLE  MOVE FILENAME
-         MVC   IFILOPE,=C'OPE '   PRESET OPEN
-         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
-         BE    IFILOPEN           EXIT IF IT IS
-         MVC   IFILOPE,=C'CLO '   SET CLOSED
-IFILOPEN EQU   *
-         MVC   IFILENA,=C'UNE '   SET UNENABLED
-         CLC   IFILQENA,DFHVALUE(UNENABLED) UNENABLED ?
-         BE    IFILNTUN           EXIT IF IT IS
-         MVC   IFILENA,=C'ENA '   PRESET ENABLED
-         CLC   IFILQENA,DFHVALUE(ENABLED) ENABLED ?
-         BE    IFILNTUN           EXIT IF IT IS
-         MVC   IFILENA,=C'DIS '   SET DISABLED
-IFILNTUN EQU   *
-         MVC   IFILREA,=C'REA '    SET READ
-         CLC   IFILQRD,DFHVALUE(READABLE) READABLE ?
-         BE    IFILREAD           EXIT IF IT IS
-         MVC   IFILREA,=CL4' '    SET NO READ
-IFILREAD EQU   *
-         MVC   IFILUPD,=C'UPD '   SET UPDATE
-         CLC   IFILQUPD,DFHVALUE(UPDATABLE) UPDATABLE ?
-         BE    IFILUPDT           EXIT IF IT IS
-         MVC   IFILUPD,=CL4' '    SET NO UPDATE
-IFILUPDT EQU   *
-         MVC   IFILADD,=C'ADD '   SET ADD
-         CLC   IFILQADD,DFHVALUE(ADDABLE) ADDABLE ?
-         BE    IFILADD1           EXIT IF IT IS
-         MVC   IFILADD,=CL4' '    SET NO ADD
-IFILADD1 EQU   *
-         MVC   IFILBRW,=C'BRO '   SET BROWSE
-         CLC   IFILQBRW,DFHVALUE(BROWSABLE) BROWSABLE ?
-         BE    IFILBRWS           EXIT IF IT IS
-         MVC   IFILBRW,=CL4' '    SET NO BROWSE
-IFILBRWS EQU   *
-         MVC   IFILDEL,=C'DEL '   SET DELETE
-         CLC   IFILQDEL,DFHVALUE(DELETABLE) DELETABLE ?
-         BE    IFILGOFV           EXIT IF IT IS
-         MVC   IFILDEL,=CL4' '    SET NO DELETE
-IFILGOFV EQU   *
-         MVC   IFILFXVR,=C'FIX '  SET FIXED
-         CLC   IFILQRCF,DFHVALUE(FIXED) FIXED ?
-         BE    IFILINCR           EXIT IF IT IS
-         MVC   IFILFXVR,=C'VAR '  SET VARIABLE
-IFILINCR EQU   *
-         MVC   IFILDSN,IFILQDSN   MOVE DSNAME
-         AHI   R6,IFILLEN         BUMP OUTPUT POINTER
-         B     IFILLOOP           LOOP
+* PROCESS CEMT I/S FI
+         L     R15,=V(CEMTFILE)   R15=CEMT I/S FI PROCESSOR
+         LA    R1,CEMTPARM        R1=PARSED PARAMETERS
+         BAKR  0,R15              STACK REGS AND GO
 *
-IFILEND  EQU   *
-         EXEC  CICS SEND MAP('IFIL1') MAPSET('MAPCEMT') ERASE
-         EXEC  CICS INQUIRE FILE END
-IFILNOWT EQU   *
-         MVI   MYCOMM,C'1'        SET CURSOR SELECT
-RETCOMM  EQU   *
-         EXEC  CICS RETURN TRANSID('CEMT') COMMAREA(MYCOMM)
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BZ    IFILOK             EXIT IF NONE
+         CLI   EIBRESP,X'FF'      SPECIAL RESPONSE ?
+         MVI   EIBRESP,X'00'      RESET SPECIAL CODE
+         BNE   PARSBAD            EXIT IF NOT
+* OVERRIDE CEMT COMMAND
+         L     R6,TCTTEDA         POINT TO NEW INPUT
+         B     PARSGO             EXIT
 *
-IFILRET  EQU   *
-* RETURN FROM CURSOR SELECT
-         CLI   EIBAID,DFHCLEAR    WAS CLEAR PRESSED ?
-         BE    RETURN             EXIT IF IT WAS
-         EXEC  CICS RECEIVE MAP('IFIL1') MAPSET('MAPCEMT')
-         LA    R6,IFILF04F        R6=LIST ADDRESS
-IFILOOP2 EQU   *
-         CLI   IFILFILE,X'00'     VALID FILE ?
-         BE    IFILNOWT           EXIT IF CURSOR NOT FOUND
-         TM    IFILFLAG,DFHBMCUR  CURSOR HERE ?
-         BO    IFILGOT            EXIT IF NOT
-         AHI   R6,IFILLEN         BUMP OUTPUT POINTER
-         B     IFILOOP2           LOOP
+PARSBAD  EQU   *
+* ANY CONDITION FROM SEND/RECEIVE MAP
+* ANY CONDITION FROM SET FILE
+         LA    R6,SBATAB          R6=SBA TABLE
+         LA    R7,PARSDATA        OUTPUT DATA
+         LA    R8,PARSE1          INPUT DATA
+         LA    R9,20              DISPLAY LIMIT
+PARSDSLP EQU   *
+         MVC   0(3,R7),0(R6)      MOVE SBA
+         MVC   3(CEMTPLEN,R7),0(R8) MOVE PARM
+         AHI   R6,3               BUMP SBA TABLE POINTER
+         AHI   R7,CEMTPLEN+3      BUMP OUTPUT DATA POINTER
+         AHI   R8,CEMTPLEN        BUMP INPUT DATA POINTER
+         BCT   R9,PARSDSLP        LOOP
 *
-IFILGOT  EQU   *
-         MVC   IFILQFLE,IFILFILE  SET SELECTED FILENAME
-* FILE SELECTED, GET ALL DATA
-         EXEC  CICS INQUIRE FILE(IFILQFLE)                             X
-                        ADD(IFILQADD)                                  X
-                 BASEDSNAME(IFILQBSN)                                  X
-                     BROWSE(IFILQBRW)                                  X
-                     DELETE(IFILQDEL)                                  X
-                     DSNAME(IFILQDSN)                                  X
-               ENABLESTATUS(IFILQENA)                                  X
-                  KEYLENGTH(IFILQKL)                                   X
-                KEYPOSITION(IFILQKP)                                   X
-                     OBJECT(IFILQOBJ)                                  X
-                 OPENSTATUS(IFILQOPE)                                  X
-                       READ(IFILQRD)                                   X
-               RECORDFORMAT(IFILQRCF)                                  X
-                 RECORDSIZE(IFILQRCS)                                  X
-                       TYPE(IFILQTYP)                                  X
-                     UPDATE(IFILQUPD)
+         MVC   PARSERR,=C'INVREQ ' SET ERROR
+         CLC   EIBRESP,DFHRESP(INVREQ) IS IT INVREQ ?
+         BE    PARSINVQ           EXIT IF IT IS
+         DC    H'0'               ADD OTHER CONDITIONS WHEN ENCOUNTERED
+PARSINVQ EQU   *
+         L     R6,EIBRESP2        R8=RESP2
+         CVD   R6,DEC             CONVERT TO DECIMAL
+         MVC   WORK(4),=X'40202020' MOVE EDIT WORD
+         ED    WORK(4),DEC+6      EDIT RESP2
+         MVC   PARSRSP2+1(2),WORK+2 MOVE RESP2
+         MVC   PARSFILE,EIBRSRCE  MOVE FILENAME
+         EXEC  CICS SEND FROM(PARSSYNX) LENGTH(PARSDATL)
+         B     RETURN             EXIT
 *
-         LA    R6,IFIL2S          AREA TO CLEAR
-         LA    R7,IFIL2L          LENGTH TO CLEAR
-         LR    R8,R6              AREA TO CLEAR
-         SR    R9,R9              CLEAR SECOND LENGTH
-         MVCLE R6,R8,X'00'        CLEAR IFIL2 MAP
-         LA    R6,IFILF04F        R6=LIST ADDRESS
-         MVC   IFIL2FL(8),IFILQFLE MOVE FILENAME
-         MVI   IFIL2FL+8,C')'     END BRACKET
-         MVC   IFIL2AD,=C'Addable)   ' SET ADDABLE
-         CLC   IFILQADD,DFHVALUE(ADDABLE) ADDABLE ?
-         BE    IFILADD2           EXIT IF IT IS
-         MVC   IFIL2AD,=C'Notaddable)' SET NOTADDABLE
-IFILADD2 EQU   *
-         MVC   IFIL2BS,IFILQBSN   MOVE BASEDSNAME
-         LA    R7,IFIL2BS         SCAN START
-IFILBSLP EQU   *
-         CLI   0(R7),C' '         END OF STRING ?
-         BE    IFILBSEB           EXIT IF IT IS
-         AHI   R7,1               BUMP POINTER
-         B     IFILBSLP           LOOP
-*
-IFILBSEB EQU   *
-         MVI   0(R7),C')'         END BRACKET
-         MVC   IFIL2BR,=C'Browsable)   ' SET BROWSABLE
-         CLC   IFILQBRW,DFHVALUE(BROWSABLE) BROWSABLE ?
-         BE    IFILBRW2           EXIT IF IT IS
-         MVC   IFIL2BR,=C'Notbrowsable)' SET NOTBROWSABLE
-IFILBRW2 EQU   *
-         MVC   IFIL2DL,=C'Deletable)   ' SET DELETABLE
-         CLC   IFILQDEL,DFHVALUE(DELETABLE) DELETABLE ?
-         BE    IFILDEL2           EXIT IF IT IS
-         MVC   IFIL2DL,=C'Notdeletable)' SET NOTDELETABLE
-IFILDEL2 EQU   *
-         MVC   IFIL2DS,IFILQDSN   MOVE DSNAME
-         LA    R7,IFIL2DS         SCAN START
-IFILDSLP EQU   *
-         CLI   0(R7),C' '         END OF STRING ?
-         BE    IFILDSEB           EXIT IF IT IS
-         AHI   R7,1               BUMP POINTER
-         B     IFILDSLP           LOOP
-*
-IFILDSEB EQU   *
-         MVI   0(R7),C')'         END BRACKET
-         MVC   IFIL2EN,=C'Unenabled)' SET UNENABLED
-         CLC   IFILQENA,DFHVALUE(UNENABLED) UNENABLED ?
-         BE    IFILENA2           EXIT IF IT IS
-         MVC   IFIL2EN,=C'Disabled) ' SET DISABLED
-         CLC   IFILQENA,DFHVALUE(DISABLED) DISABLED ?
-         BE    IFILENA2           EXIT IF IT IS
-         MVC   IFIL2EN,=C'Enabled)  ' SET ENABLED
-IFILENA2 EQU   *
-         MVC   IFIL2KL,=C'   n/a    )' INITIALISE KEYLENGTH
-         MVC   IFIL2KP,=C'   n/a    )' INITIALISE KEYPOSITION
-* KEYLENGTH AND KEYPOSITION ONLY AVAILABLE FOR OPEN KSDS FILES
-         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
-         BNE   IFILNOK            EXIT IF NOT
-         CLC   IFILQTYP,DFHVALUE(KSDS) KSDS ?
-         BNE   IFILNOK            EXIT IF NOT
-         L     R7,IFILQKL         R7=KEYLENGTH
-         CVD   R7,DEC             CONVERT TO DECIMAL
-         MVC   CHAR,=X'402020202020202020202120' MOVE EDIT WORD
-         ED    CHAR,DEC+2         EDIT KEYLENGTH
-         MVC   IFIL2KL(10),CHAR+2 MOVE KEYLENGTH
-         L     R7,IFILQKP         R7=KEYPOSITION
-         CVD   R7,DEC             CONVERT TO DECIMAL
-         MVC   CHAR,=X'402020202020202020202120' MOVE EDIT WORD
-         ED    CHAR,DEC+2         EDIT KEYPOSITION
-         MVC   IFIL2KP(10),CHAR+2 MOVE KEYPOSITION
-IFILNOK  EQU   *
-* ### AIX SUPPORT WILL ADD PATH
-         MVC   IFIL2OB,=C'Base)'  MOVE OBJECT
-         MVC   IFIL2OP,=C'Open)  ' SET OPEN
-         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
-         BE    IFILOPE2           EXIT IF IT IS
-         MVC   IFIL2OP,=C'Closed)' SET CLOSED
-IFILOPE2 EQU   *
-         MVC   IFIL2RD,=C'Readable)   ' SET READABLE
-         CLC   IFILQRD,DFHVALUE(READABLE) READABLE ?
-         BE    IFILRD2            EXIT IF IT IS
-         MVC   IFIL2RD,=C'Notreadable)' SET NOTREADABLE
-IFILRD2  EQU   *
-         MVC   IFIL2RF,=C'Variable)' SET VARIABLE
-         CLC   IFILQRCF,DFHVALUE(VARIABLE) VARIABLE ?
-         BE    IFILRCF2           EXIT IF IT IS
-         MVC   IFIL2RF,=C'Fixed)   ' SET FIXED
-IFILRCF2 EQU   *
-* RECORDSIZE AND TYPE ONLY AVAILABLE FOR OPEN FILES
-         MVC   IFIL2RS,=C'   n/a    )' INITIALISE RECORDSIZE
-         MVC   IFIL2TP,=C'n/a ) ' INITIALISE TYPE
-         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
-         BNE   IFILTP2            EXIT IF NOT
-         L     R7,IFILQRCS        R7=RECORDSIZE
-         CVD   R7,DEC             CONVERT TO DECIMAL
-         MVC   CHAR,=X'402020202020202020202120' MOVE EDIT WORD
-         ED    CHAR,DEC+2         EDIT RECORDSIZE
-         MVC   IFIL2RS,CHAR+2     MOVE RECORDSIZE
-         MVI   IFIL2RS+10,C')'    MOVE END BRACKET
-         MVC   IFIL2TP,=C'Esds) ' SET ESDS
-         CLC   IFILQTYP,DFHVALUE(ESDS) ESDS ?
-         BE    IFILTP2            EXIT IF IT IS
-         MVC   IFIL2TP,=C'Ksds) ' SET KSDS
-         CLC   IFILQTYP,DFHVALUE(KSDS) KSDS ?
-         BE    IFILTP2            EXIT IF IT IS
-         MVC   IFIL2TP,=C'Rrds) ' SET RRDS
-         CLC   IFILQTYP,DFHVALUE(RRDS) RRDS ?
-         BE    IFILTP2            EXIT IF IT IS
-         MVC   IFIL2TP,=C'Vrrds)' SET VRRDS
-IFILTP2  EQU    *
-         MVC   IFIL2UP,=C'Updatable)   ' SET UPDATABLE
-         CLC   IFILQUPD,DFHVALUE(UPDATABLE) UPDATABLE ?
-         BE    IFILUPD2           EXIT IF IT IS
-         MVC   IFIL2UP,=C'Notupdatable)' SET NOTUPDATABLE
-IFILUPD2 EQU   *
-         EXEC  CICS SEND MAP('IFIL2') MAPSET('MAPCEMT') ERASE
-IFILNKEY EQU   *
-         MVI   MYCOMM,C'2'        SET FILE DISPLAY
-         B     RETCOMM            EXIT
-*
-IFILDIS  EQU   *
-* RETURN FROM FILE DISPLAY
-         CLI   EIBAID,DFHCLEAR    WAS CLEAR PRESSED ?
-         BE    RETURN             EXIT IF IT WAS
-         CLI   EIBAID,DFHPF3      WAS PF3 PRESSED ?
-         BE    IFIL               EXIT IF IT WAS
-         CLI   EIBAID,DFHENTER    WAS ENTER PRESSED ?
-         BNE   IFILNKEY           EXIT IF IT WAS
-* PROCESS CHANGES WHEN WE DO SET FILE
-         B     IFILNKEY           EXIT
-*
-IFILQFLE DS    CL8
-IFILQADD DS    XL4
-IFILQBSN DS    XL128
-IFILQBRW DS    XL4
-IFILQDEL DS    XL4
-IFILQDSN DS    XL128
-IFILQENA DS    XL4
-IFILQKL  DS    XL4
-IFILQKP  DS    XL4
-IFILQOBJ DS    XL4
-IFILQOPE DS    XL4
-IFILQRD  DS    XL4
-IFILQRCF DS    XL4
-IFILQRCS DS    XL4
-IFILQTYP DS    XL4
-IFILQUPD DS    XL4
-*
-CHAR     DS    CL12
-         DROP  R6
-*
-IENQ     EQU   *
-* PROCESS CEMT I ENQ, IGNORE OTHER PARMS
-         L     R8,CEMTI           R8=MESSAGE LENGTH
-         MVC   CEMTIREQ,=C'FE06'  SET REQUEST CODE
-         MVC   CEMTITRM,TCTTETI   SET TERMID
-         MVC   CEMTITKN,EIBTASKN  SET TASK NO.
-         TCPIO SEND,MSG=CEMTI,LMSG=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   TCPIOERR           EXIT IF BAD
-* RECEIVE THE PREFIX ONLY
-* THIS COULD BE A LARGE AREA, SO WE NEED TO GETMAIN A RECEIVE AREA
-         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=12,PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   TCPIOERR           EXIT IF BAD
-         L     R8,CEMTRCVE        R8=ACTUAL LENGTH TO RECEIVE
-         MVC   CEMTRCVE,=F'200'   RESTORE THE STANDARD RECEIVE LENGTH
-         AHI   R8,-12             -12 FOR DATA RECEIVED
-         GETMAIN R,LV=(R8),A=IENQGETM
-         ST    R0,IENQGETL        SAVE LENGTH FOR FREEMAIN
-         TCPIO RECEIVE,MSG=0(R1),LMSG=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   TCPIOERR           EXIT IF BAD
-         MVC   SNDIENQT,IENQTITL  SET UP TITLE
-         LA    R6,SNDIENQL        R6=DESTINATION
-         LA    R7,L'SNDIENQL      DESTINATION LENGTH
-         LR    R8,R6              AREA TO CLEAR
-         SR    R9,R9              CLEAR SECOND LENGTH
-         MVCLE R6,R8,C' '         CLEAR DESTINATION TO BLANKS
-         LA    R6,SNDIENQL        R6=LIST ADDRESS
-         USING IENQDSCT,R6
-         L     R7,IENQGETM        R7=RECEIVED DATA
-         USING IENQDATA,R7
-         LA    R8,SBATAB          R8=SBA TABLE
-IENQLOOP EQU   *
-         CLI   IENQDRES,X'FF'     END OF ENQ'S ?
-         BE    IENQSEND           EXIT IF IT IS
-         MVC   IENQSBA,0(R8)      MOVE SBA
-* IF LENGTH IS ZERO DISPLAY 4 BYTES IN HEX
-         OC    IENQDLTH,IENQDLTH  ANY LENGTH ?
-         BNZ   IENQGTRS           EXIT IF SOME
-         UNPK  IENQRES(9),IENQDRES(5) UNPACK ENQ ADDRESS
-         TR    IENQRES(8),IENQHEX-240 TRANSLATE TO PRINTABLE HEX
-         MVI   IENQRES+8,C' '     CLEAR EXTRA BYTE
-         B     IENQDOLN           EXIT
-*
-IENQGTRS EQU   *
-* MOVE RESOURCE TO A MAX OF 30 (TRANSLATE OUT ANY HEX CHARS)
-         LA    R15,30             SET MAXIMUM LENGTH
-         CHHSI IENQDLTH,30        LENGTH > 30 ?
-         BH    IENQDOEX           EXIT IF IT IS
-         LH    R15,IENQDLTH       R15=LENGTH
-IENQDOEX EQU   *
-         BCTR  R15,0              -1 FOR EXECUTE
-         EX    R15,IENQEXMV       MOVE RESOURCE
-IENQDOLN EQU   *
-         LH    R15,IENQDLTH       R15=LENGTH
-         CVD   R15,DEC            CONVERT TO DECIMAL
-         MVC   IENQLNTH-1(4),=X'40202120' MOVE EDIT WORD
-         ED    IENQLNTH-1(4),DEC+6 EDIT LENGTH
-         L     R15,IENQDUCT       R15=USE COUNT
-         AHI   R15,1              CONVERT TO OFFSET 1
-         CVD   R15,DEC            CONVERT TO DECIMAL
-         MVC   IENQUCT-1(10),=X'40202020202020202120' MOVE EDIT WORD
-         ED    IENQUCT-1(10),DEC+3 EDIT USE COUNT
-         MVC   IENQOWN(3),EIBTRMID SET TERMID PREFIX
-         MVC   IENQOWN+3(1),IENQDOWN SET TERMID SUFFIX
-* ALTHOUGH WE WILL STORE X'FA' FOR THE 11TH TERMINAL
-* WE WILL NEVER SEE IT AS CEMT CANNOT BE SIMULATED
-         LA    R1,IENQDWT         R1=ADDRESS OF WAIT LIST INPUT
-         LA    R15,IENQWAIT       R15=ADDRESS OF WAIT LIST OUTPUT
-         LA    R14,THRDNUM        R14=NO. OF TERMINALS
-         LA    R9,X'F0'           R9=TERMINAL SUFFIX
-IENQWLP  EQU   *
-         CLI   0(R1),X'FF'        TERMINAL WAITING ?
-         BNE   IENQINC            EXIT IF NOT
-         STC   R9,0(R15)          MARK IT
-IENQINC  EQU   *
-         AHI   R15,2              BUMP WAIT LIST OUTPUT POINTER
-         AHI   R1,1               BUMP WAIT LIST INPUT POINTER
-         AHI   R9,1               BUMP TERMINAL SUFFIX
-         BCT   R14,IENQWLP        LOOP
-         AHI   R6,IENQLEN         BUMP OUTPUT POINTER
-         AHI   R7,IENQDLEN        BUMP INPUT POINTER
-         AHI   R8,3               BUMP SBA TABLE POINTER
-         B     IENQLOOP           LOOP
-*
-IENQSEND EQU   *
-         EXEC  CICS SEND FROM(SNDIENQT) LENGTH(IENQMLEN)
-         FREEMAIN LA=IENQGETL,A=IENQGETM
-         B     RETURN             END OF PROGRAM
-*
-IENQEXMV MVC   IENQRES(0),IENQDRES MOVE RESOURCE
-IENQGETM DS    A                  GETMAIN ADDRESS
-IENQGETL DS    F                  GETMAIN LENGTH
-IENQHEX  DC    C'0123456789ABCDEF'
-         DROP  R6,R7
+IFILOK   EQU   *
+         CLI   COMM,X'00'         ANY COMMAREA SET ?
+         BE    RETURN             EXIT IF NOT
+         MVC   EICOMM,COMM        SET UP COMMAREA
+         EXEC  CICS RETURN TRANSID('CEMT') COMMAREA(EICOMM)
 *
 TRYS     EQU   *
 * SYNTAX CHECK
-         CLI   PARSE1,C'S'        S ?
+         CLI   PARSE1,C'S'        SET ?
          BNE   TRYP               EXIT IF NOT
+         CLC   PARSE2(2),=C'FI'   S FI ?
+         BE    IFIL               EXIT IF IT IS
          CLC   PARSE2(3),=C'TER'  S TER ?
          BNE   PARSERRS           EXIT IF BAD SET
          CLC   PARSE3(3),=C'OUT'  S TER OUT ?
@@ -708,7 +210,7 @@ STER     EQU   *
          B     RETURN             END OF PROGRAM
 *
 TRYP     EQU   *
-         CLI   PARSE1,C'P'        P ?
+         CLI   PARSE1,C'P'        PERFORM ?
          BNE   PARSERR1           EXIT IF BAD 1ST PARM
 PSHU     EQU   *
          L     R8,CEMTI           R8=MESSAGE LENGTH
@@ -727,11 +229,18 @@ PSEND    EQU   *
 *
 PARSERR1 EQU   *
 * MISSING OR BAD 1ST PARAMETER
+* PARAMETER TOO LONG
 * ROW 1 0-79     HEAD
 * ROW 2 80-159
 * ROW 3 160-239  INQUIRE
 * ROW 4 240-319  SET
 * ROW 5 320-399  PERFORM
+* CLEAR PARSE AREAS
+         LA    R8,CEMTPARM        AREA TO CLEAR
+         LA    R9,CEMTPLEN*CEMTPNUM LENGTH TO CLEAR
+         LR    R14,R8             AREA TO CLEAR
+         SR    R15,R15            CLEAR SECOND LENGTH
+         MVCLE R8,R14,X'00'       CLEAR PARSE AREAS
          EXEC  CICS SEND FROM(CONVP1) LENGTH(CONVP1L)
          BAL   R9,RECEIVE         RECEIVE
          CLC   EIBCPOSN,=H'160'   CURSOR BEFORE SELECTIONS ?
@@ -780,6 +289,7 @@ PARSERRI EQU   *
          B     PARSERRI           EXIT
 *
 PARSERRS EQU   *
+* ### UPDATE FOR SET FILE
 * MISSING OR BAD CEMT S
 * ROW 1 0-79     HEAD
 * ROW 2 80-159
@@ -831,305 +341,24 @@ RETURN   EQU   *
 *
 * SUBROUTINES
 *
-NEXTPARM EQU   *
-* FIND START OF NEXT PARM
-* R6=CURRENT LOCATION
-         CLI   0(R6),X'00'        TIOA DONE ?
-         BER   R14                EXIT IF IT IS
-         CLI   0(R6),C' '         FIND BLANK ?
-         BNER  R14                EXIT WHEN PARM FOUND
-         AHI   R6,1               BUMP TIOA POINTER
-         B     NEXTPARM           LOOP
-*
-EXTRACT  EQU   *
-* EXTRACT PARM
-* R6=1ST PARM CHAR
-* R7=PARM LOCATION
-         SR    R8,R8              ZERO PARM LENGTH
-EXTRLOOP EQU   *
-         TM    0(R6),X'BF'        END OF PARM (BLANK OR X'00') ?
-         BER   R14                RETURN IF IT IS
-         CH    R8,=H'21'          TOO MANY CHARS ?
-         BE    PARSERR1           YES, ERROR IF OVER 20 CHARS
-         MVC   0(1,R7),0(R6)      MOVE PARM CHAR
-         AHI   R6,1               BUMP TIOA POINTER
-         AHI   R7,1               BUMP PARM POINTER
-         AHI   R8,1               COUNT THEM
-         B     EXTRLOOP           LOOP
-*
 RECEIVE  EQU   *
          XC    RCVEAREA,RCVEAREA  CLEAR RECEIVE AREA
          EXEC  CICS RECEIVE INTO(RCVEAREA) LENGTH(RCVELEN)
          BR    R9                 RETURN
 *
+         CEMTPARM
+*
 CEMTI    DS    0F
 * REQUEST INFO
-* FE00  REQUEST I TER DATA
-* FE01  REQUEST I SYS DATA
 * FE02  REQUEST P SHU
 * FE03  REQUEST P SHU IMM
-* FE05  REQUEST I FIL DATA
-* FE06  REQUEST I ENQ DATA
          DC    A(CEMTIEND-*)
 CEMTIREQ DS    CL4                REQUEST ID
 CEMTITRM DS    CL4                TERMID
          DC    C'CEMT'            TRANSID
          DC    C' '               TRANSID TYPE
-CEMTITKN DS    PL4                TASK NO.
-CEMTIEND EQU   *
-*
-CEMTRCVE DS    0F
-* RECEIVE AREA
-* MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
-         DC    A(200)             MAX LENGTH
-         DS    CL4                REQUEST CODE
-         DS    CL4                TERMINAL ID
-         DS    CL4                TRANSID
-         DS    C                  TRANSID TYPE
          DS    PL4                TASK NO.
-CEMTDATA DS    CL188              RETURNED DATA
-*
-* I SYS -- STRUCTURES
-*
-* -----KEYWORD----  VALUE---------------
-* JARPATH           E:\SOFTWARE\Z390
-* TERMID_PREFIX     DON
-* THREADS            4 OF 10 ALLOCATED
-*
-ISYSTITL EQU   *
-         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA_MDT),IC
-         DC    C'CEMT I SYS'
-         TN3270 (SBA,3,1),(SF,ATT_PA)
-         DC    C'-----KEYWORD----  VALUE---------------'
-ISYSTITE EQU   *-ISYSTITL
-*
-ISYSLIST EQU   *
-         TN3270 (SBA,4,2)
-         DC    CL18'JARPATH'
-         DC    CL50' '
-         TN3270 (SBA,5,2)
-         DC    CL18'CICSPATH'
-         DC    CL50' '
-         TN3270 (SBA,6,2)
-         DC    CL18'TERMID_PREFIX'
-         DC    CL3' '
-         TN3270 (SBA,7,2)
-         DC    CL18'DATE_FORMAT'
-         DC    CL3' '
-         TN3270 (SBA,8,2)
-         DC    CL18'THREADS'
-         DC    C' N OF  N ALLOCATED'
-         TN3270 (SBA,9,2)
-         DC    CL18'LOCAL_TERMINALS'
-         DC    C' N OF  N ALLOCATED'
-         TN3270 (SBA,10,2)
-         DC    CL18'REMOTE_TERMINALS'
-         DC    C' N OF  N ALLOCATED'
-         TN3270 (SBA,11,2)
-         DC    CL18'INITIAL_TRANSID'
-         DC    CL4' '
-         TN3270 (SBA,12,2)
-         DC    CL18'CWASIZE'
-         DC    CL7' '
-         TN3270 (SBA,13,2)
-         DC    CL18'TRACE_LOCALS'
-         DC    CL3' '
-         TN3270 (SBA,14,2)
-         DC    CL18'TRACE_Z390CICS'
-         DC    CL3' '
-         TN3270 (SBA,15,2)
-         DC    CL18'SEQ_TERM'
-         DC    CL5' '
-ISYSLSTL EQU   *-ISYSLIST
-ISYSLEN  DC    AL2(*-ISYSTITL)
-*
-* I TER -- STRUCTURES
-*
-* TERM  -TYPE-  TRAN  -STATUS--
-* DON0  REMOTE  GUI6  RUNNING
-* DON1  LOCAL         AVAILABLE
-* DON2  LOCAL         SHUT DOWN
-*
-ITERTITL EQU   *
-         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA_MDT),IC
-         DC    C'CEMT I TER'
-         TN3270 (SBA,3,1),(SF,ATT_PA)
-         DC    C'TERM  -TYPE-  TRAN  -STATUS--'
-ITERTITE EQU   *-ITERTITL
-*
-ITERLIST EQU   *
-         TN3270 (SBA,4,2)
-         DC    CL(ITERLEN-3)' '
-         TN3270 (SBA,5,2)
-         DC    CL(ITERLEN-3)' '
-         TN3270 (SBA,6,2)
-         DC    CL(ITERLEN-3)' '
-         TN3270 (SBA,7,2)
-         DC    CL(ITERLEN-3)' '
-         TN3270 (SBA,8,2)
-         DC    CL(ITERLEN-3)' '
-         TN3270 (SBA,9,2)
-         DC    CL(ITERLEN-3)' '
-         TN3270 (SBA,10,2)
-         DC    CL(ITERLEN-3)' '
-         TN3270 (SBA,11,2)
-         DC    CL(ITERLEN-3)' '
-         TN3270 (SBA,12,2)
-         DC    CL(ITERLEN-3)' '
-         TN3270 (SBA,13,2)
-         DC    CL(ITERLEN-3)' '
-         TN3270 (SBA,14,2)
-         DC    CL(ITERLEN-3)' '
-ITERLSTL EQU   *-ITERLIST
-ITERMLEN DC    AL2(*-ITERTITL)
-*
-* I TRAN -- STRUCTURES
-* 2                                35
-* TRAN  PROGRAM-  ----MESSAGES----- | TRAN  PROGRAM  ----MESSAGES-----
-* AAAA  MELPROG1  PROGRAM NOT FOUND |
-* CEMT  Z390CEMT                    |
-*
-ITRNTTL1 EQU   *
-         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA_MDT),IC
-         DC    C'CEMT I TRA'
-         TN3270 (SBA,3,1),(SF,ATT_PA)
-         DC    C'TRAN  PROGRAM-  ----MESSAGES-----'
-ITRNTIT1 EQU   *-ITRNTTL1
-*
-ITRNLST1 EQU   *
-         TN3270 (SBA,4,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,5,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,6,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,7,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,8,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,9,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,10,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,11,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,12,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,13,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,14,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,15,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,16,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,17,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,18,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,19,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,20,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,21,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,22,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,23,2)
-         DC    CL(ITRNLEN1-3)' '
-         TN3270 (SBA,24,2)
-         DC    CL(ITRNLEN1-3)' '
-ITRNLSL1 EQU   *-ITRNLST1
-ITRNMLN1 DC    AL2(*-ITRNTTL1)
-*
-ITRNTTL2 EQU   *
-         TN3270 WCC_KD,(SBA,3,35)
-         DC    C' | TRAN  PROGRAM-  ----MESSAGES-----'
-ITRNTIT2 EQU   *-ITRNTTL2
-*
-ITRNLST2 EQU   *
-         TN3270 (SBA,4,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,5,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,6,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,7,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,8,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,9,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,10,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,11,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,12,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,13,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,14,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,15,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,16,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,17,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,18,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,19,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,20,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,21,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,22,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,23,35)
-         DC    CL(ITRNLEN2-3)' '
-         TN3270 (SBA,24,35)
-         DC    CL(ITRNLEN2-3)' '
-ITRNLSL2 EQU   *-ITRNLST2
-ITRNMLN2 DC    AL2(*-ITRNTTL2)
-*
-* I ENQ -- STRUCTURES
-*
-* RESOURCE----//---  LENGTH  USE COUNT  OWNER   -------WAITING-------
-* 12345678901234567   00000  123456789   DON0   0 1 2 3 4 5 6 7 8 9 S
-*
-IENQTITL EQU   *
-         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA_MDT),IC
-         DC    C'CEMT I ENQ'
-         TN3270 (SBA,3,1),(SF,ATT_PA)
-         DC    C'RESOURCE----------------------  LENGTH  USE COUNT  OWN-
-               ER  -------WAITING-------'
-IENQTITE EQU   *-IENQTITL
-*
-IENQMLEN DC    AL2(IENQLEN*21)
-*
-SBATAB   EQU   *
-         TN3270 (SBA,4,2)
-         TN3270 (SBA,5,2)
-         TN3270 (SBA,6,2)
-         TN3270 (SBA,7,2)
-         TN3270 (SBA,8,2)
-         TN3270 (SBA,9,2)
-         TN3270 (SBA,10,2)
-         TN3270 (SBA,11,2)
-         TN3270 (SBA,12,2)
-         TN3270 (SBA,13,2)
-         TN3270 (SBA,14,2)
-         TN3270 (SBA,15,2)
-         TN3270 (SBA,16,2)
-         TN3270 (SBA,17,2)
-         TN3270 (SBA,18,2)
-         TN3270 (SBA,19,2)
-         TN3270 (SBA,20,2)
-         TN3270 (SBA,21,2)
-         TN3270 (SBA,22,2)
-         TN3270 (SBA,23,2)
-         TN3270 (SBA,24,2)
+CEMTIEND EQU   *
 *
 CONVP1   EQU   *
          TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA_MDT),IC
@@ -1186,168 +415,47 @@ TCPERR   EQU   *
          DC    C'CEMT TCPIO ERROR'
 TCPERRL  DC    AL2(*-TCPERR)
 *
-BLDLLIST DC    H'1'       BLDL LIST WITH 1 ENTRY
-         DC    H'12'      BLDL ENTRY WITH LENGTH EXCLUDING LENGTH FIELD
-BLDLNAME DC    CL8' '     BLDL ENTRY NAME TO FIND IN SYS390 DIR OR CDE
-         DC    XL4'00'    TTRK R=1 IF FOUND K=1 IF CDE OR 0 IF SYS390
+PARSSYNX EQU   *
+* ERROR RETURN FROM SET FILE
+* ONLY 1ST 20 PARMS ARE DISPLAYED
+         TN3270 WCC_KD
+PARSDATA EQU   *
+         DS    20XL(CEMTPLEN+3)   SBA+PARM
+         TN3270 (SBA,24,2)
+         DC    C'ERROR RAISED: '
+PARSERR  DC    C'INVREQ '
+PARSRSP2 DC    C'/.. '
+PARSFILE DS    CL8
+PARSDATL DC    AL2(*-PARSSYNX)
 *
 RCVELEN  DS    AL2                RECEIVED LENGTH
 RCVEAREA DC    XL80'00'           RECEIVE AREA
 *
+SBATAB   EQU   *
+         TN3270 (SBA,2,2)
+         TN3270 (SBA,3,2)
+         TN3270 (SBA,4,2)
+         TN3270 (SBA,5,2)
+         TN3270 (SBA,6,2)
+         TN3270 (SBA,7,2)
+         TN3270 (SBA,8,2)
+         TN3270 (SBA,9,2)
+         TN3270 (SBA,10,2)
+         TN3270 (SBA,11,2)
+         TN3270 (SBA,12,2)
+         TN3270 (SBA,13,2)
+         TN3270 (SBA,14,2)
+         TN3270 (SBA,15,2)
+         TN3270 (SBA,16,2)
+         TN3270 (SBA,17,2)
+         TN3270 (SBA,18,2)
+         TN3270 (SBA,19,2)
+         TN3270 (SBA,20,2)
+         TN3270 (SBA,21,2)
+*
 DEC      DC    PL8'0'
+WORK     DS    XL4
 *
-* I SYS -- DSECT OUTPUT
-*
-ISYSDSCT DSECT
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSJPTH DS    CL50               JARPATH
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSCPTH DS    CL50               CICSPATH
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSTPFX DS    CL3                TERMID_PREFIX
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSTDAT DS    CL3                DATE FORMAT
-         DS    CL3                SBA
-         DS    CL18               HEADER
-* NN OF NN ALLOCATED
-ISYSMAXU DS    CL2                MAXTHREADS IN USE
-         DS    CL4                ' OF '
-ISYSMAXT DS    CL2                MAXTHREADS
-         DS    CL10               ' ALLOCATED'
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSLCLU DS    CL2                LOCAL TERMINALS IN USE
-         DS    CL4                ' OF '
-ISYSLOCL DS    CL2                LOCAL_TERMINALS
-         DS    CL10               ' ALLOCATED'
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSRMTU DS    CL2                REMOTE TERMINALS IN USE
-         DS    CL4                ' OF '
-ISYSREMT DS    CL2                REMOTE_TERMINALS
-         DS    CL10               ' ALLOCATED'
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSINIT DS    CL4                INITIAL_TRANSID
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSCWAS DS    CL7                CWASIZE
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSLTRC DS    CL3                TRACE_LOCALS
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSZTRC DS    CL3                TRACE_Z390CICS
-         DS    CL3                SBA
-         DS    CL18               HEADER
-ISYSSEQT DS    CL5                SEQ_TERM
-*
-* I SYS -- REQUESTED DATA FORMAT
-*
-ISYSDATA DSECT
-ISYSDJRP DS    CL50               JARPATH
-ISYSDCSP DS    CL50               CICSPATH
-ISYSDPFX DS    CL3                TERMID_PREFIX
-ISYSDDTE DS    C                  DATE FORMAT
-ISYSDTMX DS    X                  MAXTHREADS
-ISYSDTUS DS    X                  THREADS IN USE
-ISYSDLCL DS    X                  LOCAL_TERMINALS
-ISYSDLUS DS    X                  LOCAL TERMINALS IN USE
-ISYSDRMT DS    X                  REMOTE_TERMINALS
-ISYSDRUS DS    X                  REMOTE TERMINALS IN USE
-ISYSDINT DS    CL4                INITIAL_TRANSID
-ISYSDCWA DS    XL4                CWASIZE
-ISYSDTRL DS    CL3                TRACE_LOCALS
-ISYSDTRZ DS    CL3                TRACE_Z390CICS
-ISYSDSEQ DS    CL5                SEQ_TERM
-*
-* I TER -- DSECT OUTPUT
-*
-ITERDSCT DSECT
-         DS    CL3                SBA
-ITERTERM DS    CL4                TERMID
-         DS    CL2
-ITERTYPE DS    CL6                LOCAL OR REMOTE
-         DS    CL2
-ITERTRAN DS    CL4                TRANSID
-         DS    CL2
-ITERIND  DS    CL9                RUNNING/AVAILABLE/SHUT DOWN
-ITERLEN  EQU   *-ITERDSCT
-*
-* I TRA -- DSECT OUTPUT
-*
-ITRNDSC1 DSECT
-         DS    CL3                SBA
-ITRNTRN1 DS    CL4                TRANSID
-         DS    CL2
-ITRNPRG1 DS    CL8                PROGRAM
-         DS    CL2
-ITRNMSG1 DS    CL17               MESSAGE
-ITRNLEN1 EQU   *-ITRNDSC1
-*
-ITRNDSC2 DSECT
-         DS    CL3                SBA
-         DS    C
-ITRNSEP2 DS    C                  SEPARATOR
-         DS    C
-ITRNTRN2 DS    CL4                TRANSID
-         DS    CL2
-ITRNPRG2 DS    CL8                PROGRAM
-         DS    CL2
-ITRNMSG2 DS    CL17               MESSAGE
-ITRNLEN2 EQU   *-ITRNDSC2
-*
-* I FIL -- DSECT ON MAP STRUCTURE
-*
-IFILDSCT DSECT
-IFILFLAG DS    X
-IFILFILE DS    CL8                FILENAME
-         DS    CL3
-IFILOPE  DS    CL4                OPE/CLO
-IFILENA  DS    CL4                ENA/DIS/UNE
-IFILREA  DS    CL4
-IFILUPD  DS    CL4
-IFILADD  DS    CL4
-IFILBRW  DS    CL4
-IFILDEL  DS    CL4
-IFILFXVR DS    CL4                FIX/VAR
-IFILDSN  DS    CL38               DSNAME
-         DS    CL2
-IFILLEN  EQU   *-IFILDSCT
-*
-IENQDSCT DSECT
-IENQSBA  DS    CL3                SBA
-IENQRES  DS    CL30               RESOURCE
-         DS    CL5
-IENQLNTH DS    CL3                LENGTH
-         DS    CL2
-IENQUCT  DS    CL9                USE COUNT
-         DS    CL3
-IENQOWN  DS    CL4                OWNER
-         DS    CL2
-IENQWAIT DS    CL21               WAIT LIST
-IENQLEN  EQU   *-IENQDSCT
-*
-* I ENQ -- REQUESTED DATA FORMAT
-*
-IENQDATA DSECT
-IENQDRES DS    CL30               RESOURCE
-IENQDLTH DS    XL2                LENGTH
-IENQDUCT DS    XL4                USE COUNT
-IENQDOWN DS    C                  OWNER
-IENQDWT  DS    CL(THRDNUM)        WAIT LIST
-IENQDLEN EQU   *-IENQDATA
-*
-         THRDDSCT                 TERMINAL THREAD CONTROL AREA
-         DFHFCTDS                 FILE CONTROL TABLE
-         ACBD
-*
-         COPY  DFHAID
-         COPY  DFHBMSCA
          TN3270 SYMBOLS
          END
 

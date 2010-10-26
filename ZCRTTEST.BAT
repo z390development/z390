@@ -1,12 +1,6 @@
 rem regression test zcobol to z390 assenbker programs
 rem run pgms and gen dif reports
 echo off
-if exist /usr/local/lib/z390/z390.jar goto linux
-if %1 == tron ECHO ON
-if %1 == tron shift
-if %1 == TRON ECHO ON
-if %1 == TRON shift
-:linux
 rem
 rem cbl to z390 regression tests
 rem
@@ -36,8 +30,10 @@ call ZC390CLG zcobol\test\TESTIF2  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTINT1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTISP1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTMOV1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
+call ZC390CLG zcobol\test\TESTPIC1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTPM1  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTPM2  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
+call ZC390CLG zcobol\test\TESTPM3  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTSIX1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTSIX2 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTTRC1 notiming stats TRUNC %1 %2 %3 %4 %5 %6 %7 %8 %9

@@ -7,7 +7,8 @@
          MACRO
          CICS_ENQ
          GBLB  &PARMS_1204
-         LCLB  &NOSUS,&INT,&NOHAND
+         GBLB  &ZC_CICS
+         LCLB  &NOSUS,&INT,&NOEDF,&NOHAND
          LCLC  &RES,&LENGTH,&INT0202,&INT0402,&INT1004,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
@@ -21,7 +22,7 @@
          AIF   ('&PARM'(1,7) EQ 'INT0202').INT
          AIF   ('&PARM'(1,7) EQ 'INT0402').INT
          AIF   ('&PARM'(1,7) EQ 'INT1004').INT
-         AIF   ('&PARM'(1,7) EQ 'INTCEDF').INT
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
@@ -46,6 +47,10 @@
 &INT     SETB  1
 &INTPARM SETC  '&PARM'(4,4)
 &INTLABL SETC  'P&INTPARM.HCN'
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -80,7 +85,10 @@
          AGO   .DUNLEN
 .*
 .GOTLEN  ANOP
+.* LENGTH MAY BE L' OR CONSTANT LIKE X'..'
+         AIF   ('&LENGTH'(2,1) EQ '''').LENNUM2
          AIF   (T'&LENGTH NE 'N').LENLABL
+.LENNUM2 ANOP
          LA    R0,&LENGTH         R0=LENGTH
          GEN_STH R0,P1204LEN      SAVE IT
          AGO   .DUNLEN
@@ -112,6 +120,16 @@
 .DOCALL  ANOP
          GEN_ST DFHEIBR,P1204EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P1204TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P1204EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P1204EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P1204EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P1204NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P1204NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -123,8 +141,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P1204RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P1204EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P1204EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P1204)       R1=LCL MODULE PARAMETER LIST
+P1204EDF_&SYSNDX EQU *
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P1204NOH,X'FF'   NOHANDLE ?
@@ -137,21 +158,7 @@
 *
          AIF   (&PARMS_1204).BYP1204
 &PARMS_1204 SETB 1
-P1204    DS    0H
-P1204FN  DS    XL2                FUNCTION CODE
-P1204EIB DS    AL4                EIB
-P1204TCT DS    AL4                TCTTE
-P1204RES DS    AL4                RESOURCE ADDRESS
-P1204LEN DS    XL2                LENGTH
-P1204HCN DS    AL4                A(DFHEIHCN)
-P1204NOS DS    X                  FF=NOSUSPEND
-         DS    X
-P1204NOH DS    X                  FF=NOHANDLE
-         DS    X
-P1204RSP DS    AL4                RESP
-P1204RS2 DS    AL4                RESP2
-P1204END EQU   *                  END MARKER
-         DS    0H
+         P1204
 *
 .BYP1204 ANOP
 P1204BYP_&SYSNDX DS 0H

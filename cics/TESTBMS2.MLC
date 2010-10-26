@@ -13,6 +13,7 @@
 *
 DFHEISTG DSECT       DSA STORAGE
          COPY  MAP02
+*
 TESTBMS2 CSECT
 *
          CLI   FLIP,X'FF'         RECEIVE MODE ?

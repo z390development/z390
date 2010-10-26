@@ -29,7 +29,7 @@ public  class  tz390 {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2008 Automated Software Tools Corporation
+    Copyright 2010 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -234,6 +234,17 @@ public  class  tz390 {
     * 01/07/10 RPI 1097 add support for ..\ and .\ in paths
     * 02/16/10 RPI 1108 add fp_lq_type for LQ quad word
     * 05/25/10 RPI 1118 add MAXDISPLAY(80) max zcobol display line length
+    * 05/31/10 RPI 1123 change CDF to EDF and SYSCDF to SYSEDF
+    * 06/14/10 RPI 1124 change fp_guard_digits from 3 to 4 to fix lsd error in D'1.23456789'
+    * 07/28/10 RPI 1127 add option PRINTALL to suppress PRINT OFF/NOGEN
+    * 07/28/10 RPI 865 correct setting of dir_cur for INSTALL(path) option
+    * 08/06/10 RPI 1125 add POPCNT per SHARE Pres. 08/04/10
+    * 10/08/10 RPI 1125 add LEDBR?, LDXBR?, LEXBR?
+    * 10/10/10 RPI 1125 ADD SRNMB
+    * 10/14/10 RPI 1131 correct option EDF versus CDF, and MAXDISPLAY stat
+    * 10/18/10 RPI 1131 allow * within option but not leading
+    * 10/20/10 RPI 1125 add FIEBR?, FIDBR?, FIXBR?, SRNMB
+    * 10/21/10 RPI 1125 add B390-B392, B394-B395
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -242,7 +253,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.01d";  //dsh
+    String version    = "V1.5.02";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -267,13 +278,13 @@ public  class  tz390 {
     boolean opt_autolink = true;  // search SYSOBJ for missing externals
     boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
     boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
-    boolean opt_cdf      = false; // option for zCICS RPI 1027
     boolean opt_cics     = false; // exec cics program honoring prolog,epilog
     boolean opt_codepage = false; // use ascii and ebcdic codepages specified CODEPAG(ascii,ebcdic,LIST)
     boolean opt_comment  = true;  // generate source comments for zocobol RPI 986
     boolean opt_con      = true;  // log msgs to console
     boolean force_nocon  = false; // override option con RPI 755
     boolean opt_dump     = false; // only indicative dump on abend unless on
+    boolean opt_edf      = true; // option for zCICS RPI 1027 renamed EDF RPI 1123
     boolean opt_epilog   = true;  // if cics, insert DFHEIRET
     boolean opt_errsum   = false; // just list critical errors and summary on ERR file and console 
     boolean opt_extend   = true;  // allow up to 31 digits for P and Z in zocobl RPI 986
@@ -295,6 +306,7 @@ public  class  tz390 {
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
     boolean opt_pcopt    = true;  // optimize pc code for speed
+    boolean opt_printall = false; // force default PRINT GEN and ignore PRINT options RPI 1127
     String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
     boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
     boolean opt_protect  = true;  // prevent PSA mods by user
@@ -647,7 +659,8 @@ public  class  tz390 {
         byte fp_lb_digits = 34;
         byte fp_ld_digits = 34;
         byte fp_lh_digits = 32; // RPI 821  
-        byte fp_guard_digits = 3;         /*
+        byte fp_guard_digits = 4; // RPI 1124        
+        /*
          * follow fp_work_reg used to format
          * edl types to binary storage formats
          */
@@ -1260,6 +1273,7 @@ public  class  tz390 {
 		       "STFLE",    //      "B2B0" "STFLE" "S" 7 Z9-3
 		       "STFL",     // 3380 "B2B1" "STFL" "S" 7
 		       "LPSWE",    // 3390 "B2B2" "LPSWE" "S" 7
+		       "SRNMB",    // 3392 "B2B8" "SRNMB" "S" 7 RPI 1125
 		       "SRNMT",    // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
 		       "LFAS",     // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
 		       "TRAP4",    // 3400 "B2FF" "TRAP4" "S" 7
@@ -1314,10 +1328,10 @@ public  class  tz390 {
 		       "LNXBR",    // 3830 "B341" "LNXBR" "RRE" 14
 		       "LTXBR",    // 3840 "B342" "LTXBR" "RRE" 14
 		       "LCXBR",    // 3850 "B343" "LCXBR" "RRE" 14
-		       "LEDBR",    // 3860 "B344" "LEDBR" "RRE" 14
-		       "LDXBR",    // 3870 "B345" "LDXBR" "RRE" 14
-		       "LEXBR",    // 3880 "B346" "LEXBR" "RRE" 14
-		       "FIXBR",    // 3890 "B347" "FIXBR" "RRF2" 34
+		       "LEDBR?",    // 3860 "B344" "LEDBR" "RRE" 53 RPI 1125
+		       "LDXBR?",    // 3870 "B345" "LDXBR" "RRE" 53 RPI 1125
+		       "LEXBR?",    // 3880 "B346" "LEXBR" "RRE" 53 RPI 1125
+		       "FIXBR?",    // 3890 "B347" "FIXBR?" "RRF2" 54 RPI 1125
 		       "KXBR",     // 3900 "B348" "KXBR" "RRE" 14
 		       "CXBR",     // 3910 "B349" "CXBR" "RRE" 14
 		       "AXBR",     // 3920 "B34A" "AXBR" "RRE" 14
@@ -1327,11 +1341,11 @@ public  class  tz390 {
 		       "TBEDR",    // 3960 "B350" "TBEDR" "RRF2" 34
 		       "TBDR",     // 3970 "B351" "TBDR" "RRF2" 34
 		       "DIEBR",    // 3980 "B353" "DIEBR" "RRF3" 30
-		       "FIEBR",    // 3990 "B357" "FIEBR" "RRF2" 34
+		       "FIEBR?",   // 3990 "B357" "FIEBR?" "RRF2" 54 RPI 1125
 		       "THDER",    // 4000 "B358" "THDER" "RRE" 14
 		       "THDR",     // 4010 "B359" "THDR" "RRE" 14
 		       "DIDBR",    // 4020 "B35B" "DIDBR" "RRF3" 30
-		       "FIDBR",    // 4030 "B35F" "FIDBR" "RRF2" 34
+		       "FIDBR?",    // 4030 "B35F" "FIDBR?" "RRF2" 54 RPI 1125
 		       "LPXR",     // 4040 "B360" "LPXR" "RRE" 14
 		       "LNXR",     // 4050 "B361" "LNXR" "RRE" 14
 		       "LTXR",     // 4060 "B362" "LTXR" "RRE" 14
@@ -1352,9 +1366,12 @@ public  class  tz390 {
 		       "SFPC",     // 4170 "B384" "SFPC" "RRE" 14
 		       "SFASR",    // 4175 "B385" "SFASR" "RRE" 14 DFP 57
 		       "EFPC",     // 4180 "B38C" "EFPC" "RRE" 14
-		       "CEFBR",    // 4190 "B394" "CEFBR" "RRE" 14
-		       "CDFBR",    // 4200 "B395" "CDFBR" "RRE" 14
-		       "CXFBR",    // 4210 "B396" "CXFBR" "RRE" 14
+		       "CELFBR",   //      "B390" "CELFBR" "RRF3" 30 RPI 1125 Z196
+               "CDLFBR",   //      "B391" "CDLFBR" "RRF3" 30 RPI 1125 Z196
+               "CXLFBR",   //      "B392" "CXLFBR" "RRF3" 30 RPI 5 Z112196
+		       "CEFBR?",    // 4190 "B394" "CEFBR?" "RRE" 53 RPI 1125 Z196
+		       "CDFBR?",    // 4200 "B395" "CDFBR?" "RRE" 53 RPI 1125 Z196
+		       "CXFBR?",    // 4210 "B396" "CXFBR?" "RRE" 53 RPI 1125 Z196
 		       "CFEBR",    // 4220 "B398" "CFEBR" "RRF2" 34
 		       "CFDBR",    // 4230 "B399" "CFDBR" "RRF2" 34
 		       "CFXBR",    // 4240 "B39A" "CFXBR" "RRF2" 34
@@ -1533,6 +1550,7 @@ public  class  tz390 {
 		       "TRTRE",    // 30 "B9BD" "TRTRE" "RRF5" 39 RPI 817
 		       "SRSTU",    // 5110 "B9BE" "SRSTU" "RRE" 14     
 		       "TRTE",     // 40 "B9BF" "TRTE" "RRF5" 39 RPI 817
+		       "POPCNT",   // 5115 "B9E1" "POPCNT" "RRE" 14 RPI 1125
 		       "CS",       // 5120 "BA" "CS" "RS" 10
 		       "CDS",      // 5130 "BB" "CDS" "RS" 10
 		       "CLM",      // 5140 "BD" "CLM" "RS" 10
@@ -2137,7 +2155,7 @@ public  class  tz390 {
          6,   //51 "SIL"  MVHHI RPI 817
          6,   //52 "RIE2"
     };
-	int    max_op_type_offset = 52; // see changes required RPI 812, RPI 817
+	int    max_op_type_offset = 54; // see changes required RPI 812, RPI 817, RPI 1125
     int    max_ins_type = 100;    // RPI 315 
     int    max_asm_type = 200;
     int    max_mac_type = 300;
@@ -2496,6 +2514,7 @@ public  class  tz390 {
 		       7,  //      "B2B0" "STFLE" "S" 7 Z9-3
 		       7,  // 3380 "B2B1" "STFL" "S" 7
 		       7,  // 3390 "B2B2" "LPSWE" "S" 7
+		       7,  // 3392 "B2B8" "SRNMB" "S" 7 RPI 1125
 		       7,  // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
 		       7,  // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
 		       7,  // 3400 "B2FF" "TRAP4" "S" 7
@@ -2550,10 +2569,10 @@ public  class  tz390 {
 		       14,  // 3830 "B341" "LNXBR" "RRE" 14
 		       14,  // 3840 "B342" "LTXBR" "RRE" 14
 		       14,  // 3850 "B343" "LCXBR" "RRE" 14
-		       14,  // 3860 "B344" "LEDBR" "RRE" 14
-		       14,  // 3870 "B345" "LDXBR" "RRE" 14
-		       14,  // 3880 "B346" "LEXBR" "RRE" 14
-		       34,  // 3890 "B347" "FIXBR" "RRF2" 34
+		       53,  // 3860 "B344" "LEDBR?" "RRE" 53 RPI 1125
+		       53,  // 3870 "B345" "LDXBR?" "RRE" 53 RPI 1125
+		       53,  // 3880 "B346" "LEXBR?" "RRE" 53 RPI 1125
+		       54,  // 3890 "B347" "FIXBR?" "RRF2" 54 RPI 1125
 		       14,  // 3900 "B348" "KXBR" "RRE" 14
 		       14,  // 3910 "B349" "CXBR" "RRE" 14
 		       14,  // 3920 "B34A" "AXBR" "RRE" 14
@@ -2563,11 +2582,11 @@ public  class  tz390 {
 		       34,  // 3960 "B350" "TBEDR" "RRF2" 34
 		       34,  // 3970 "B351" "TBDR" "RRF2" 34
 		       30,  // 3980 "B353" "DIEBR" "RRF3" 30
-		       34,  // 3990 "B357" "FIEBR" "RRF2" 34
+		       54,  // 3990 "B357" "FIEBR?" "RRF2" 54 RPI 1125
 		       14,  // 4000 "B358" "THDER" "RRE" 14
 		       14,  // 4010 "B359" "THDR" "RRE" 14
 		       30,  // 4020 "B35B" "DIDBR" "RRF3" 30
-		       34,  // 4030 "B35F" "FIDBR" "RRF2" 34
+		       54,  // 4030 "B35F" "FIDBR?" "RRF2" 54 RPI 1125
 		       14,  // 4040 "B360" "LPXR" "RRE" 14
 		       14,  // 4050 "B361" "LNXR" "RRE" 14
 		       14,  // 4060 "B362" "LTXR" "RRE" 14
@@ -2588,9 +2607,12 @@ public  class  tz390 {
 		       14,  // 4170 "B384" "SFPC" "RRE" 14
 		       14,  // 4175 "B385" "SFASR" "RRE" 14 DFP 57
 		       14,  // 4180 "B38C" "EFPC" "RRE" 14
-		       14,  // 4190 "B394" "CEFBR" "RRE" 14
-		       14,  // 4200 "B395" "CDFBR" "RRE" 14
-		       14,  // 4210 "B396" "CXFBR" "RRE" 14
+		       30,  //      "B390" "CELFBR" "RRF3" 30 RPI 1125 Z196
+               30,  //      "B391" "CDLFBR" "RRF3" 30 RPI 1125 Z196
+               30,  //      "B392" "CXLFBR" "RRF3" 30 RPI 1125 Z196
+		       53,  // 4190 "B394" "CEFBR?" "RRE" 53 RPI 1125 Z196
+		       53,  // 4200 "B395" "CDFBR?" "RRE" 53 RPI 1125 Z196
+		       53,  // 4210 "B396" "CXFBR?" "RRE" 53 RPI 1125 Z196
 		       34,  // 4220 "B398" "CFEBR" "RRF2" 34
 		       34,  // 4230 "B399" "CFDBR" "RRF2" 34
 		       34,  // 4240 "B39A" "CFXBR" "RRF2" 34
@@ -2770,6 +2792,7 @@ public  class  tz390 {
 		       39,  // 30 "B9BD" "TRTRE" "RRF5" 39  RPI 817
 		       14,  // 5110 "B9BE" "SRSTU" "RRE" 14
 		       39,  // 40 "B9BF" "TRTE" "RRF5" 39  RPI 817
+		       14,  // 5115 "B9E1" "POPCNT" "RRE" 14 RPI 1125
 		       10,  // 5120 "BA" "CS" "RS" 10
 		       10,  // 5130 "BB" "CDS" "RS" 10
 		       10,  // 5140 "BD" "CLM" "RS" 10
@@ -3667,6 +3690,7 @@ public  class  tz390 {
 		       "B2B0",  //      "B2B0" "STFLE" "S" 7 Z9-3
 		       "B2B1",  // 3380 "B2B1" "STFL" "S" 7
 		       "B2B2",  // 3390 "B2B2" "LPSWE" "S" 7
+		       "B2B8",    // 3392 "B2B8" "SRNMB" "S" 7 RPI 1125
 		       "B2B9",  // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
 		       "B2BD",  // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
 		       "B2FF",  // 3400 "B2FF" "TRAP4" "S" 7
@@ -3721,10 +3745,10 @@ public  class  tz390 {
 		       "B341",  // 3830 "B341" "LNXBR" "RRE" 14
 		       "B342",  // 3840 "B342" "LTXBR" "RRE" 14
 		       "B343",  // 3850 "B343" "LCXBR" "RRE" 14
-		       "B344",  // 3860 "B344" "LEDBR" "RRE" 14
-		       "B345",  // 3870 "B345" "LDXBR" "RRE" 14
-		       "B346",  // 3880 "B346" "LEXBR" "RRE" 14
-		       "B347",  // 3890 "B347" "FIXBR" "RRF2" 34
+		       "B344",  // 3860 "B344" "LEDBR?" "RRE" 53 RPI 1125
+		       "B345",  // 3870 "B345" "LDXBR?" "RRE" 53 RPI 1125
+		       "B346",  // 3880 "B346" "LEXBR?" "RRE" 53 RPI 1125
+		       "B347",  // 3890 "B347" "FIXBR?" "RRF2" 54 RPI 1125
 		       "B348",  // 3900 "B348" "KXBR" "RRE" 14
 		       "B349",  // 3910 "B349" "CXBR" "RRE" 14
 		       "B34A",  // 3920 "B34A" "AXBR" "RRE" 14
@@ -3734,11 +3758,11 @@ public  class  tz390 {
 		       "B350",  // 3960 "B350" "TBEDR" "RRF2" 34
 		       "B351",  // 3970 "B351" "TBDR" "RRF2" 34
 		       "B353",  // 3980 "B353" "DIEBR" "RRF2" 34
-		       "B357",  // 3990 "B357" "FIEBR" "RRF2" 34
+		       "B357",  // 3990 "B357" "FIEBR?" "RRF2" 54 RPI 1125
 		       "B358",  // 4000 "B358" "THDER" "RRE" 14
 		       "B359",  // 4010 "B359" "THDR" "RRE" 14
 		       "B35B",  // 4020 "B35B" "DIDBR" "RRF2" 34
-		       "B35F",  // 4030 "B35F" "FIDBR" "RRF2" 34
+		       "B35F",  // 4030 "B35F" "FIDBR?" "RRF2" 54 RPI 1125
 		       "B360",  // 4040 "B360" "LPXR" "RRE" 14
 		       "B361",  // 4050 "B361" "LNXR" "RRE" 14
 		       "B362",  // 4060 "B362" "LTXR" "RRE" 14
@@ -3759,9 +3783,12 @@ public  class  tz390 {
 		       "B384",  // 4170 "B384" "SFPC" "RRE" 14
 		       "B385",  // 4175 "B385" "SFASR" "RRE" 14 DFP 57
 		       "B38C",  // 4180 "B38C" "EFPC" "RRE" 14
-		       "B394",  // 4190 "B394" "CEFBR" "RRE" 14
-		       "B395",  // 4200 "B395" "CDFBR" "RRE" 14
-		       "B396",  // 4210 "B396" "CXFBR" "RRE" 14
+		       "B390",  //      "B390" "CELFBR" "RRF3" 30 RPI 1125 Z196
+               "B391",  //      "B391" "CDLFBR" "RRF3" 30 RPI 1125 Z196
+               "B392",  //      "B392" "CXLFBR" "RRF3" 30 RPI 1125 Z196
+		       "B394",  // 4190 "B394?" "CEFBR" "RRE" 53 RPI 1125 Z196
+		       "B395",  // 4200 "B395?" "CDFBR" "RRE" 53 RPI 1125 Z196
+		       "B396",  // 4210 "B396?" "CXFBR" "RRE" 53 RPI 1125 Z196
 		       "B398",  // 4220 "B398" "CFEBR" "RRF2" 34
 		       "B399",  // 4230 "B399" "CFDBR" "RRF2" 34
 		       "B39A",  // 4240 "B39A" "CFXBR" "RRF2" 34
@@ -3940,6 +3967,7 @@ public  class  tz390 {
 		       "B9BD",  // 30 "B9BD" "TRTRE" "RRF5" 39 RPI 817
 		       "B9BE",  // 5110 "B9BE" "SRSTU" "RRE" 14
 		       "B9BF",  // 40 "B9BF" "TRTE" "RRF5" 39 RPI 817
+		       "B9E1",  // 5115 "B9E1" "POPCNT" "RRE" 14 RPI 1125
 		       "BA",  // 5120 "BA" "CS" "RS" 10
 		       "BB",  // 5130 "BB" "CDS" "RS" 10
 		       "BD",  // 5140 "BD" "CLM" "RS" 10
@@ -4850,10 +4878,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
           	if (opt_chksrc < 0 || opt_chksrc > 3){ // RPI 957
           		add_invalid_option(opt_file_name,opt_file_line,token);
           	}
-	} else if (token.toUpperCase().equals("CDF")){
-       	opt_cdf = true;
-	} else if (token.toUpperCase().equals("NOCDF")){
-       	opt_cdf = false;
+	} else if (token.toUpperCase().equals("EDF")){ // RPI 1131
+       	opt_edf = true;
+	} else if (token.toUpperCase().equals("NOEDF")){
+       	opt_edf = false;
 	} else if (token.toUpperCase().equals("CICS")){
        	opt_cics = true;
 	} else if (token.toUpperCase().equals("NOCICS")){
@@ -4918,6 +4946,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
      		&& token.substring(0,8).toUpperCase().equals("INSTALL(")){
     	opt_install_loc = token.substring(8,token.length()-1); 
    		System.setProperty("user.dir",opt_install_loc); // RPI 532 RPI 1080
+   		dir_cur = System.getProperty("user.dir") + File.separator; // RPI 499 drop upper case RPI 865 
     } else if (token.toUpperCase().equals("LIST")){
        	opt_list = true;
     } else if (token.toUpperCase().equals("NOLIST")){
@@ -5047,6 +5076,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
         opt_pcopt = true;
     } else if (token.toUpperCase().equals("NOPCOPT")){
         opt_pcopt = false;
+    } else if (token.toUpperCase().equals("PRINTALL")){ // RPI 1127
+        opt_printall = true;
+    } else if (token.toUpperCase().equals("NOPRINTALL")){
+        opt_printall = false;
     } else if (token.length() > 8
       		&& token.substring(0,8).toUpperCase().equals("PROFILE(")){
      	opt_profile = token.substring(8,token.length()-1);
@@ -5410,10 +5443,11 @@ private void process_options_file(String file_name){
 						&& find_option_match.group().charAt(0) != '*'
 						&& !comment_found){  // RPI 880
 						String option = find_option_match.group();
-						if (option.charAt(option.length()-1) == '*'){
-							comment_found = true;
-							option = option.substring(0,option.length()-1);
-						}
+						//dshx allow * within option but not leading
+						//dshx if (option.charAt(option.length()-1) == '*'){
+						//dshx  	comment_found = true;
+						//dshx	option = option.substring(0,option.length()-1);
+						//dshx }
 						process_option(opt_file_name,opt_file_line,option);
 				}
 				option_line = opt_file_buff.readLine();
@@ -5990,13 +6024,31 @@ public boolean init_opcode_name_keys(){
 	 */
 	int index = 0;
 	while (index < op_name.length){
-		if (find_key_index('O',op_name[index]) == -1){
+	  if (op_name[index].length() > 5 && op_name[index].substring(op_name[index].length()-1).equals("?")){	
+		// add alternate opcodes for ? = blank and A  RPI 1125
+		if (find_key_index('O',op_name[index].substring(0,op_name[index].length()-1)) == -1){
 			if(!add_key_index(index)){ 
 				return false;
 			}
 		} else {
 			return false;
 		}
+		if (find_key_index('O',op_name[index].substring(0,op_name[index].length()-1).concat("A")) == -1){
+			if(!add_key_index(index)){ 
+				return false;
+			}
+		} else {
+			return false;
+		}
+	  } else {
+			if (find_key_index('O',op_name[index]) == -1){
+				if(!add_key_index(index)){ 
+					return false;
+				}
+			} else {
+				return false;
+			}
+	  }
 		index++;
 	}
 	return true;
@@ -6925,10 +6977,10 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOBS2000");
 	     }
-	     if (opt_cdf){ // exec cics program honoring prolog,epilog
-		        add_final_opt("CDF");
+	     if (opt_edf){ // exec cics program honoring prolog,epilog
+		        add_final_opt("EDF");
 		     } else {
-		        add_final_opt("NOCDF");
+		        add_final_opt("NOEDF");
 		     }
 	     if (opt_cics    ){ // exec cics program honoring prolog,epilog
 	        add_final_opt("CICS");
@@ -7031,6 +7083,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOPCOPT");
 	     }
+	     if (opt_printall){ // force printing all source on PRN RPI 1127
+		        add_final_opt("PRINTALL");
+		     } else {
+		        add_final_opt("NOPRINTALL");
+		     }
 	     if (opt_prolog  ){ // if cics, insert DFHEIBLK and DFHEIENT
 	        add_final_opt("PROLOG");
 	     } else {
@@ -7188,6 +7245,7 @@ public void put_trace(String text){
 	     add_final_opt("CHKSRC=" + opt_chksrc); // RPI 747 0-none,1-MLC only,2-all
 	     add_final_opt("ERR=" + max_errors);
 	     add_final_opt("MAXCALL=" + opt_maxcall);
+	     add_final_opt("MAXDISPLAY=" + opt_maxdisplay); // RPI 1131
 	     add_final_opt("MAXESD=" + opt_maxesd);
 	     add_final_opt("MAXFILE=" + opt_maxfile);
 	     add_final_opt("MAXGBL=" + opt_maxgbl);

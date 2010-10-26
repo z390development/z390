@@ -8,6 +8,7 @@
          CICS_ADDRESS
          GBLB  &PARMS_0202
          GBLB  &ZC_CICS
+         LCLB  &NOEDF
          LCLC  &COMM,&CWA,&EIB
          LCLC  &COMMAREA,&CWA,&EIB,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
@@ -20,6 +21,7 @@
          AIF   ('&PARM'(1,9) EQ 'COMMAREA(').COMM
          AIF   ('&PARM'(1,4) EQ 'CWA(').CWA
          AIF   ('&PARM'(1,4) EQ 'EIB(').EIB
+         AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6) EQ 'RESP2(').RESP2
          MNOTE 12,'BAD PARM &PARM'
@@ -35,6 +37,10 @@
 .*
 .EIB     ANOP
 &EIB     SETC  '&PARM'(5,K'&PARM-5)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .RESP    ANOP
@@ -110,6 +116,16 @@
          GEN_ST R0,P0202HCN       SAVE IT
          GEN_ST DFHEIBR,P0202EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P0202TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0202EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0202EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0202EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0202NED,X'FF'   SET NOEDF
+         AEND
          AIF   ('&RESP' EQ '').NORESP
          LA    R0,&RESP           ADDRESS OF RESP
          GEN_ST R0,P0202RSP       SAVE IT
@@ -118,8 +134,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P0202RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P0202EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0202EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P0202)       R1=LCL MODULE PARAMETER LIST
+P0202EDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          AIF   (NOT &ZC_CICS)
@@ -137,19 +156,7 @@
          J     P0202BYP_&SYSNDX   EXIT
 *
 &PARMS_0202 SETB 1
-P0202    DS    0H
-P0202FN  DS    XL2                FUNCTION CODE
-P0202EIB DS    AL4                EIB
-P0202TCT DS    AL4                TCTTE
-P0202HCN DS    AL4                A(DFHEIHCN)
-P0202CAP DS    AL4                DFHEICAP
-P0202ACM DS    AL4                LABEL ADDRESS FOR COMMAREA
-P0202ACW DS    AL4                LABEL ADDRESS FOR CWA
-P0202AEI DS    AL4                LABEL ADDRESS FOR EIB
-P0202RSP DS    AL4                RESP
-P0202RS2 DS    AL4                RESP2
-P0202END EQU   *                  END MARKER
-         DS    0H
+         P0202
 *
 P0202BYP_&SYSNDX DS 0H
 .BYP0202 ANOP

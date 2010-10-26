@@ -11,6 +11,8 @@ LCL4C02  CSECT
 * R1  >>> P4C02 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL4C02'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -32,18 +34,24 @@ NORESP   EQU   *
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
          L     R8,INQFI           R8=MESSAGE LENGTH
-         MVC   INQFIREQ,=C'FE05'  SET REQUEST CODE
          MVC   INQFITRM,TCTTETI   SET TERMID
          MVC   INQFITKN,EIBTASKN  SET TASK NO.
          MVC   INQFITRN,EIBTRNID  SET TRANID
          TCPIO SEND,MSG=INQFI,LMSG=(R8),PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   INVREQ             EXIT IF BAD
+INQFRCV  EQU   *
 * RECEIVE THE PREFIX ONLY
 * THIS COULD BE A LARGE AREA, SO WE NEED TO GETMAIN A RECEIVE AREA
          TCPIO RECEIVE,MSG=INQFRCVE,LMSG=12,PORT=3900
          LTR   R15,R15            CHECK RC ?
          BNZ   INVREQ             EXIT IF BAD
+         CLC   INQFREQ,=C'10FF'   UNSOL IC SCAN ?
+         BE    INQFRCV            EXIT IF IT IS
+         CLC   INQFREQ,=C'FE05'   WHAT WE ARE EXPECTING ?
+         BE    INQFRCK            EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+INQFRCK  EQU   *
          L     R8,INQFRCVE        R8=ACTUAL LENGTH TO RECEIVE
          AHI   R8,-12             -12 FOR DATA RECEIVED
          GETMAIN R,LV=(R8),A=INQFGETM
@@ -112,6 +120,7 @@ GOTNEXT  EQU   *
          L     R9,P4C02FIL        R9=ADDRESS OF FILE()
          MVC   0(8,R9),IFILDFLE   MOVE NEXT FILENAME
 GOTONE   EQU   *
+         MVC   EIBRSRCE,IFILDFLE  FILENAME INTO EIB
 * FILL THE FIELDS AS REQUESTED
          ICM   R9,15,P4C02ACC     ANY ACCESSMETHOD ?
          BZ    TRYADD             EXIT IF NOT
@@ -126,10 +135,10 @@ TRYADD   EQU   *
 TRYBSN   EQU   *
          ICM   R9,15,P4C02BSN     ANY BASEDSNAME ?
          BZ    TRYBRW             EXIT IF NOT
-         LH    R15,P4C02BLN       R15=IMPLIED LENGTH
-         CH    R15,=H'128'        OVER MAXIMUM ?
+         LH    R15,P4C02BLN       R15=IMPLIED LENGTH OF DESTINATION
+         CHI   R15,128            OVER MAXIMUM ?
          BNH   BSNOK              EXIT IF NOT
-         LH    R15,=H'128'        SET MAXIMUM
+         LA    R15,128            SET MAXIMUM
 BSNOK    EQU   *
          AHI   R15,-1             -1 FOR MVC
          STC   R15,BSNMVC+1       SAVE IN MVC
@@ -151,10 +160,10 @@ TRYDEL   EQU   *
 TRYDSN   EQU   *
          ICM   R9,15,P4C02DSN     ANY DSNAME ?
          BZ    TRYENA             EXIT IF NOT
-         LH    R15,P4C02DLN       R15=IMPLIED LENGTH
-         CH    R15,=H'128'        OVER MAXIMUM ?
+         LH    R15,P4C02DLN       R15=IMPLIED LENGTH OF DESTINATION
+         CHI   R15,128            OVER MAXIMUM ?
          BNH   DSNOK              EXIT IF NOT
-         LH    R15,=H'128'        SET MAXIMUM
+         LA    R15,128            SET MAXIMUM
 DSNOK    EQU   *
          AHI   R15,-1             -1 FOR MVC
          STC   R15,DSNMVC+1       SAVE IN MVC
@@ -283,7 +292,7 @@ RETURN   EQU   *
 *
 INQFI    DS    0F
          DC    A(INQFIEND-*)
-INQFIREQ DS    CL4                REQUEST ID
+         DC    C'FE05'            REQUEST ID
 INQFITRM DS    CL4                TERMID
 INQFITRN DS    CL4                TRANSID
          DC    C' '               TRANSID TYPE
@@ -294,7 +303,7 @@ INQFRCVE DS    0F
 * RECEIVE AREA
 * MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
          DC    A(200)             MAX LENGTH
-         DS    CL4                REQUEST CODE
+INQFREQ  DS    CL4                REQUEST CODE
          DS    CL4                TERMINAL ID
          DS    CL4                TRANSID
          DS    C                  TRANSID TYPE

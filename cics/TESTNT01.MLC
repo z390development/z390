@@ -1,0 +1,360 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+         DFHEISTG
+* SORT DATA
+SORTDATA EQU   *
+STCK1    DS    XL8                START TIME
+STCK2    DS    XL8                END TIME AND ELAPSED TIME
+CYCLES   DS    F
+SWAPS    DS    F
+MYRID    DS    XL4
+CYCLEIND DS    X                  FF=SWAP OCCURRED IN THIS CYCLE
+SWAPIND  DS    X                  FF=LOWSWAP DETERMINED IN THIS CYCLE
+LOWDATA  DS    A                  DATA START
+HIDATA   DS    A                  DATA END
+LOWSWAP  DS    A
+HISWAP   DS    A
+HILIMIT  DS    A
+SORTDEND EQU   *
+TSREC    DS    0XL16
+TSSTCK   DS    XL8                ELAPSED TIME AS STCK
+TSCYC    DS    FL4                CYCLES
+TSSWAPS  DS    FL4                SWAPS
+*
+TESTNT01 DFHEIENT CODEREG=(R12,R3,R6)
+*
+* NON-TERMINAL INITIATOR AND TESTER
+*
+* SET TRACE_Z390CICS=INT
+*
+* STAGE 1
+*    READ FILES MYWORD01 AND MYWORD02 INTO STORAGE
+*       20,000 RECORDS, 300,000 BYTES
+*    BUBBLE SORT IT AND TIME IT
+*    WRITEQ TS WITH TIME Q(NT01)
+*
+* STAGE 2
+*    FIRE NTS1 AND NTS2 NON-TERM
+*    NTS1 WILL BUBBLE SORT MYWORD01
+*       10,000 RECORDS, 150,000 BYTES
+*       WRITEQ TS WITH TIME Q(NT01)
+*    NTS2 WILL BUBBLE SORT MYWORD02
+*       10,000 RECORDS, 150,000 BYTES
+*       WRITEQ TS WITH TIME Q(NT01)
+*
+*    NT01 WILL SLEEP UNTIL BOTH RECORDS HAVE ARRIVED
+*    THEN DISPLAY THE 3 TIMES
+*
+*    RECENT RESULTS
+*             SORTTIME  CYCS  --SWAPS-
+*       NT01  3:25.203  5671  20944476
+*
+*       NTS1  1:23.437  4786   4973332
+*       NTS2  1:54.843  5672  15981143
+*             --------        --------
+*             3:18.28         20954475
+*
+*       NT01 STARTED   21:09:19.53
+*       MYWORD01 OPEN  21:09:19.62
+*       MYWORD02 OPEN  21:25:42.15  READ 10000      16:22.53
+*       NTS1 START     21:43:02.67
+*       NTS1 ENDED     21:47:36.25  ELAPSED          4:33.58
+*                                   -SORT            1:23.437
+*                                   =BROWSE 10000    3:10.143
+*       NTS2 START     21:43:03.28
+*       NTS2 ENDED     21:45:45.23  ELAPSED    2:41.95
+*
+*       NT01 ENDED     21:47:43.46  ELAPSED   38:23.93
+*
+         XC    SORTDATA(SORTDEND-SORTDATA),SORTDATA CLEAR SORTDATA
+         CLC   EIBTRNID,=C'NTS1'  1ST NON-TERM TRANSID ?
+         BE    NTS1               EXIT IF IT IS
+         CLC   EIBTRNID,=C'NTS2'  2ND NON-TERM TRANSID ?
+         BE    NTS2               EXIT IF IT IS
+* STAGE 1 -- NT01 SORTS 20,000 RECORDS
+         EXEC  CICS GETMAIN SET(R4) FLENGTH(300000)
+         ST    R4,LOWDATA         SAVE DATA START ADDRESS
+         ST    R4,LOWSWAP         START SWAP SCAN ADDRESS
+         EXEC  CICS HANDLE CONDITION ENDFILE(WORD01)
+* READ MYWORD01 INTO GETMAINED AREA
+         EXEC  CICS STARTBR FILE('MYWORD01') RIDFLD(MYRID) RBA
+LOOP1    EQU   *
+         EXEC  CICS READNEXT FILE('MYWORD01') INTO(0(R4)) LENGTH(15)   X
+               RIDFLD(MYRID) RBA
+         AHI   R4,15              BUMP POINTER
+         B     LOOP1              LOOP
+*
+WORD01   EQU   *
+         EXEC  CICS ENDBR FILE('MYWORD01')
+*
+         XC    MYRID,MYRID        SET START OF FILE
+         EXEC  CICS HANDLE CONDITION ENDFILE(WORD02)
+* APPEND MYWORD02 TO GETMAINED AREA
+         EXEC  CICS STARTBR FILE('MYWORD02') RIDFLD(MYRID) RBA
+LOOP2    EQU   *
+         EXEC  CICS READNEXT FILE('MYWORD02') INTO(0(R4)) LENGTH(15)   X
+               RIDFLD(MYRID) RBA
+         AHI   R4,15              BUMP POINTER
+         B     LOOP2              LOOP
+*
+WORD02   EQU   *
+         EXEC  CICS ENDBR FILE('MYWORD02')
+         ST    R4,HIDATA          END DATA ADDRESS
+         ST    R4,HISWAP          END SWAP SCAN ADDRESS
+* SORT THE DATA - OPTIMISED BUBBLE
+         BAL   R9,SORT            SORT DATA
+         EXEC  CICS WRITEQ TS QUEUE('NT01') FROM(STCK2) LENGTH(16)
+* VERIFICATION
+         L     R4,LOWDATA         SORTED DATA START
+LOOP3    EQU   *
+         CLC   0(15,R4),15(R4)    IN SEQUENCE ?
+         BNL   VERBAD             ERROR IF NOT
+         AHI   R4,15              BUMP POINTER
+         C     R4,HIDATA          END OF DATA ?
+         BNE   LOOP3              LOOP IF NOT
+* START TRANSIDS TO SORT 10,000 RECORDS EACH
+         EXEC  CICS START TRANSID('NTS1')
+         EXEC  CICS START TRANSID('NTS2')
+*
+         EXEC  CICS HANDLE CONDITION ITEMERR(ITEMERR)
+WAITHERE EQU   *
+         EXEC  CICS READQ TS QUEUE('NT01') ITEM(3) INTO(TSREC)
+         B     SORTDONE           EXIT
+*
+ITEMERR  EQU   *
+         EXEC  CICS DELAY FOR SECONDS(10)
+         B     WAITHERE           EXIT
+*
+SORTDONE EQU   *
+         EXEC  CICS READQ TS QUEUE('NT01') ITEM(1) INTO(TSREC)
+         LA    R1,MSG1TIME        TIME LOCATION
+         BAL   R9,TIMEOUT         ELAPSED TIME
+         L     R4,TSCYC           CYCLES
+         CVD   R4,DEC             CONVERT TO DECIMAL
+         UNPK  MSG1CYC,DEC+4(4)   UNPACK
+         OI    MSG1CYC+6,X'F0'    SET SIGN
+         L     R4,TSSWAPS         SWAPS
+         CVD   R4,DEC             CONVERT TO DECIMAL
+         UNPK  MSG1SWAP,DEC+3(5)  UNPACK
+         OI    MSG1SWAP+8,X'F0'   SET SIGN
+         EXEC  CICS SEND FROM(MSG1) LENGTH(MSGL)
+*
+         EXEC  CICS READQ TS QUEUE('NT01') ITEM(2) INTO(TSREC)
+         LA    R1,MSG2TIME        TIME LOCATION
+         BAL   R9,TIMEOUT         ELAPSED TIME
+         L     R4,TSCYC           CYCLES
+         CVD   R4,DEC             CONVERT TO DECIMAL
+         UNPK  MSG2CYC,DEC+4(4)   UNPACK
+         OI    MSG2CYC+6,X'F0'    SET SIGN
+         L     R4,TSSWAPS         SWAPS
+         CVD   R4,DEC             CONVERT TO DECIMAL
+         UNPK  MSG2SWAP,DEC+3(5)  UNPACK
+         OI    MSG2SWAP+8,X'F0'   SET SIGN
+         EXEC  CICS SEND FROM(MSG2) LENGTH(MSGL)
+*
+         EXEC  CICS READQ TS QUEUE('NT01') ITEM(3) INTO(TSREC)
+         LA    R1,MSG3TIME        TIME LOCATION
+         BAL   R9,TIMEOUT         ELAPSED TIME
+         L     R4,TSCYC           CYCLES
+         CVD   R4,DEC             CONVERT TO DECIMAL
+         UNPK  MSG3CYC,DEC+4(4)   UNPACK
+         OI    MSG3CYC+6,X'F0'    SET SIGN
+         L     R4,TSSWAPS         SWAPS
+         CVD   R4,DEC             CONVERT TO DECIMAL
+         UNPK  MSG3SWAP,DEC+3(5)  UNPACK
+         OI    MSG3SWAP+8,X'F0'   SET SIGN
+         EXEC  CICS SEND FROM(MSG3) LENGTH(MSGL)
+         EXEC  CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL)
+         EXEC  CICS RETURN
+*
+NTS1     EQU   *
+* STAGE 2 -- NTS1 SORTS 10,000 RECORDS
+         EXEC  CICS GETMAIN SET(R4) FLENGTH(150000)
+         ST    R4,LOWDATA         SAVE DATA START ADDRESS
+         ST    R4,LOWSWAP         START SWAP SCAN ADDRESS
+         EXEC  CICS HANDLE CONDITION ENDFILE(WORDS1)
+* READ MYWORD01 INTO GETMAINED AREA
+         EXEC  CICS STARTBR FILE('MYWORD01') RIDFLD(MYRID) RBA
+LOOPS1   EQU   *
+         EXEC  CICS READNEXT FILE('MYWORD01') INTO(0(R4)) LENGTH(15)   X
+               RIDFLD(MYRID) RBA
+         AHI   R4,15              BUMP POINTER
+         B     LOOPS1             LOOP
+*
+WORDS1   EQU   *
+         EXEC  CICS ENDBR FILE('MYWORD01')
+*
+         ST    R4,HIDATA          END DATA ADDRESS
+         ST    R4,HISWAP          END SWAP SCAN ADDRESS
+* SORT THE DATA - OPTIMISED BUBBLE
+         BAL   R9,SORT            SORT DATA
+         EXEC  CICS WRITEQ TS QUEUE('NT01') FROM(STCK2) LENGTH(16)
+* VERIFICATION
+         L     R4,LOWDATA         SORTED DATA START
+LOOPS3   EQU   *
+         CLC   0(15,R4),15(R4)    IN SEQUENCE ?
+         BNL   VERBAD             ERROR IF NOT
+         AHI   R4,15              BUMP POINTER
+         C     R4,HIDATA          END OF DATA ?
+         BNE   LOOPS3             LOOP IF NOT
+         EXEC  CICS RETURN
+*
+NTS2     EQU   *
+* STAGE 3 -- NTS2 SORTS 10,000 RECORDS
+         EXEC  CICS GETMAIN SET(R4) FLENGTH(150000)
+         ST    R4,LOWDATA         SAVE DATA START ADDRESS
+         ST    R4,LOWSWAP         START SWAP SCAN ADDRESS
+         EXEC  CICS HANDLE CONDITION ENDFILE(WORDS2)
+* READ MYWORD02 INTO GETMAINED AREA
+         EXEC  CICS STARTBR FILE('MYWORD02') RIDFLD(MYRID) RBA
+LOOPS2   EQU   *
+         EXEC  CICS READNEXT FILE('MYWORD02') INTO(0(R4)) LENGTH(15)   X
+               RIDFLD(MYRID) RBA
+         AHI   R4,15              BUMP POINTER
+         B     LOOPS2             LOOP
+*
+WORDS2   EQU   *
+         EXEC  CICS ENDBR FILE('MYWORD02')
+*
+         ST    R4,HIDATA          END DATA ADDRESS
+         ST    R4,HISWAP          END SWAP SCAN ADDRESS
+* SORT THE DATA - OPTIMISED BUBBLE
+         BAL   R9,SORT            SORT DATA
+         EXEC  CICS WRITEQ TS QUEUE('NT01') FROM(STCK2) LENGTH(16)
+* VERIFICATION
+         L     R4,LOWDATA         SORTED DATA START
+LOOPS4   EQU   *
+         CLC   0(15,R4),15(R4)    IN SEQUENCE ?
+         BNL   VERBAD             ERROR IF NOT
+         AHI   R4,15              BUMP POINTER
+         C     R4,HIDATA          END OF DATA ?
+         BNE   LOOPS4             LOOP IF NOT
+         EXEC  CICS RETURN
+*
+VERBAD   DC    H'0'               ABEND IF VERIFY FAILS
+*
+* SUBROUTINES
+*
+SORT     EQU   *
+         STCK  STCK1              START TIME
+SORTCYCL EQU   *
+         ASI   CYCLES,1           COUNT CYCLES
+         L     R7,LOWSWAP         RESET DATA START ADDRESS
+         MVI   CYCLEIND,X'00'     RESET CYCLE INDICATOR
+         MVI   SWAPIND,X'00'      RESET SWAP INDICATOR
+SORTSCAN EQU   *
+         LA    R8,15(R7)          R8=NEXT ENTRY
+         C     R8,HISWAP          UPPER LIMIT REACHED ?
+         BE    SORTCEND           EXIT IF IT IS
+         CLC   0(15,R7),0(R8)     IN SEQUENCE ?
+         BNH   SORTBUMP           EXIT IF THEY ARE
+* ADJACENT ITEMS NOT IN SEQUENCE
+         XC    0(15,R7),0(R8)     SWAP
+         XC    0(15,R8),0(R7)          THEM
+         XC    0(15,R7),0(R8)               AROUND
+         CLI   SWAPIND,X'00'      RECORDING DATA START ?
+         BNE   SWAPDONE           EXIT IF NOT
+* SAVE THE LOW LIMIT ONCE
+         ST    R7,LOWSWAP         SAVE NEW DATA START
+         C     R7,LOWDATA         START DATA ADDRESS ?
+         BE    NOTSTART           EXIT IF NOT
+         ASI   LOWSWAP,-15        POINT TO PREVIOUS ITEM
+NOTSTART EQU   *
+         MVI   SWAPIND,X'FF'      SET SWAP INDICATOR TO HIGH
+SWAPDONE EQU   *
+         ST    R8,HILIMIT         SAVE NEW DATA END
+         ASI   SWAPS,1            COUNT SWAPS
+         MVI   CYCLEIND,X'FF'     MARK SWAP HAS OCCURRED
+SORTBUMP EQU   *
+         AHI   R7,15              BUMP DATA POINTER
+         B     SORTSCAN           LOOP
+*
+SORTCEND EQU   *
+* END OF SWAP SCAN
+         MVC   HISWAP,HILIMIT     SET NEW HIGH SPAN
+         CLI   CYCLEIND,X'FF'     DID WE SWAP ?
+         BE    SORTCYCL           RESCAN IF WE DID
+* END OF SORT
+         STCK  STCK2              SAVE END TIME
+         LG    R4,STCK1           R4=START TIME
+         LG    R5,STCK2           R5=END TIME
+         SGR   R5,R4              R5=ELAPSED TIME
+         STG   R5,STCK2           SAVE IT
+         L     R4,LOWDATA         ADDRESS TO FREEMAIN
+         EXEC  CICS FREEMAIN DATAPOINTER(R4)
+         BR    R9                 RETURN
+*
+TIMEOUT  EQU   *
+* R1 = OUTPUT FIELD
+         SGR   R4,R4              CLEAR R4
+         LG    R5,TSSTCK          R5=STCK ELAPSED TIME
+         SRLG  R5,R5,12           SHIFT TO MICROSECS
+         DSG   R4,=FL8'3600000000' EXTRACT HOURS
+         CVD   R5,DEC             CONVERT HOURS TO DECIMAL
+         MVHHI HRS,X'F020'        MOVE EDIT WORD
+         ED    HRS,DEC+7          EDIT HOURS
+         MVC   0(1,R1),HRS+1      MOVE HOURS TO OUTPUT
+         MVI   1(R1),C':'         MOVE SEPARATOR
+         LGR   R5,R4              R5=REMAINDER
+         SGR   R4,R4              CLEAR R4
+         DSG   R4,=FL8'60000000'  EXTRACT MINS
+         CVD   R5,DEC             CONVERT MINUTES TO DECIMAL
+         MVC   MINS,=X'F0202020'  MOVE EDIT WORD
+         ED    MINS,DEC+6         EDIT MINUTES
+         MVC   2(2,R1),MINS+2     MOVE MINUTES TO OUTPUT
+         MVI   4(R1),C':'         MOVE SEPARATOR
+         CVD   R4,DEC             CONVERT SECONDS TO DECIMAL
+         MVC   SECS,=X'F02020204B202020202020' MOVE EDIT WORD
+         ED    SECS,DEC+3         EDIT SECONDS
+         MVC   5(9,R1),SECS+2     MOVE SECONDS TO OUTPUT
+         MVI   7(R1),C'.'         ENSURE DEC POINT
+         BR    R9                 RETURN
+*
+HRS      DS    XL2
+MINS     DS    XL4
+SECS     DS    XL11
+*
+MSG1     TN3270 WCC_KD,(SBA,2,2),(SF,ATT_PA)
+MSG1TIME DS    CL14               H:MM:SS.SSSSSS
+         DC    C' '
+MSG1CYC  DS    CL7
+         DC    C' '
+MSG1SWAP DS    CL9
+MSGL     DC    AL2(*-MSG1)
+*
+MSG2     TN3270 WCC_KD,(SBA,3,2),(SF,ATT_PA)
+MSG2TIME DS    CL14               H:MM:SS.SSSSSS
+         DC    C' '
+MSG2CYC  DS    CL7
+         DC    C' '
+MSG2SWAP DS    CL9
+*
+MSG3     TN3270 WCC_KD,(SBA,4,2),(SF,ATT_PA)
+MSG3TIME DS    CL14               H:MM:SS.SSSSSS
+         DC    C' '
+MSG3CYC  DS    CL7
+         DC    C' '
+MSG3SWAP DS    CL9
+*
+ENDMSG   TN3270 WCC_KD,(SBA,24,2),(SF,ATT_PA)
+         DC    C'TRANSACTION END - NOW PRESS CLEAR'
+ENDMSGL  DC    AL2(*-ENDMSG)
+*
+DEC      DC    PL8'0'
+*
+         TN3270 SYMBOLS
+*
+* REGISTERS
+*    R3 -- BASE 2
+*    R4 -- BASE FOR DATA
+*    R7 -- WORK FOR SORT
+*    R8 -- WORK FOR SORT
+*    R9 -- LINK REGISTER
+*    R12 - BASE 1
+*    R13 - DSA BASE
+         END
+

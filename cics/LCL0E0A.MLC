@@ -11,6 +11,8 @@ LCL0E0A  CSECT
 * R1  >>> P0E0A BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0E0A'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,12 +33,57 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0E0ANED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          MVC   BLDLNAME,P0E0APGM  MOVE PROGRAM FOR BLDL
          MVC   EIBRSRCE,P0E0APGM  SET EIBRSRCE
+* USE CDE CHAIN TO ENSURE EIBPROG HAS A PROGRAM NAME, NOT A MAP
+         L     R6,X'10'           R6=CVT ADDRESS (X'2000')
+         USING IHACVT,R6
+         L     R6,CVTCDE          R6=CDE CHAIN ADDRESS
+         DROP  R6
+         USING IHACDE,R6
+CDELOOP  EQU   *
+         LA    R8,CDNAME          R8=CDE ENTRY PROGRAM NAME
+         LA    R9,P0E0APGM        R9=OUR PROGRAM NAME
+         LA    R5,8               R5=PROGRAM NAME LENGTH
+CDEMATCH EQU   *
+         CLC   0(1,R9),0(R8)      POSSIBLY OURS ?
+         BNE   CDECHAIN           EXIT IF NOT
+         AHI   R8,1               BUMP CDE NAME POINTER
+         AHI   R9,1               BUMP PROGRAM NAME POINTER
+         CLI   0(R8),C'.'         CDE NAME TERMINATOR ?
+         BNE   CDEBCT             LOOP IF NOT
+* END OF CDE NAME MUST COINCIDE WITH END OF PROGRAM NAME
+         CLI   0(R9),C' '         PROGRAM NAME TERMINATOR ?
+         BE    CDEGOT             EXIT IF IT IS
+CDEBCT   EQU   *
+         BCT   R5,CDEMATCH        LOOP
+         B     CDEGOT             EXIT
+*
+CDECHAIN EQU   *
+         ICM   R6,15,CDCHAIN      NEXT CDE ?
+         BNZ   CDELOOP            LOOP IF WE HAVE ONE
+         B     INVREQ6            ERROR IF NOT FOUND
+*
+CDEGOT   EQU   *
+         L     R5,CDENTPT         R5=ENTRY POINT
+         CLC   0(2,R5),=X'1821'   PROGRAM START ?
+         BNE   NOTPROG            EXIT IF NOT
          MVC   EIBPROG,P0E0APGM   SET EIBPROG
+NOTPROG  EQU   *
          BLDL  0,BLDLLIST         BLDL
          LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
          BZ    RLSEOK             EXIT IF OK
+INVREQ6  EQU   *
 * INVOKE INVREQ/6
          MVC   EIBRESP2,=F'6'     SET EIBRESP2=PROGRAM NOT LOADED
          B     INVREQ
@@ -61,6 +108,16 @@ DORESP2  EQU   *
 NOTUS    EQU   *
          DELETE EPLOC=EIBRSRCE
 RETURN   EQU   *
+         CLI   P0E0ANED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
@@ -68,20 +125,13 @@ BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
 BLDLNAME DS    CL8                BLDL ENTRY NAME TO FIND
          DS    XL4
 *
-P0E0A    DSECT
-P0E0AFN  DS    XL2                FUNCTION CODE
-P0E0AEIB DS    AL4                EIB
-P0E0ATCT DS    AL4                TCTTE
-P0E0APGM DS    CL8                PROGRAM
-P0E0ACST DS    CL8                OUR PROGRAM NAME
-         DS    X                  FF=NOHANDLE
-         DS    X
-P0E0ARSP DS    AL4                RESP
-P0E0ARS2 DS    AL4                RESP2
-P0E0AEND EQU   *                  END MARKER
+         P0E0A DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE
+*
+         CVTD  ,                  CVT
+         CDED  ,                  CDE
 *
          EQUREGS REGS=GPR
 *

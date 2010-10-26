@@ -1,0 +1,283 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL4C04  CSECT
+*
+* FN=4C04  EXEC CICS SET FILE
+*
+* R1  >>> P4C04 BLOCK POINTER
+*
+         USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL4C04'
+         LR    R13,R15            R13 AS BASE
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P4C04,P4C04END),R3
+         L     DFHEIBR,P4C04EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P4C04TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P4C04FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P4C04RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P4C04RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         XC    INQFGETM,INQFGETM  CLEAR GETMAIN ADDRESS
+* VALIDATE THE PARMS
+         OC    P4C04ADD,P4C04ADD  ANY ADD CVDA ?
+         BZ    TRYBRW             EXIT IF NONE
+         CLC   P4C04ADD,DFHVALUE(ADDABLE) VALID ?
+         BE    TRYBRW             EXIT IF IT IS
+         CLC   P4C04ADD,DFHVALUE(NOTADDABLE) VALID ?
+         BNE   INVREQ4            ERROR IF NOT
+TRYBRW   EQU   *
+         OC    P4C04BRW,P4C04BRW  ANY BROWSE CVDA ?
+         BZ    TRYDEL             EXIT IF NONE
+         CLC   P4C04BRW,DFHVALUE(BROWSABLE) VALID ?
+         BE    TRYDEL             EXIT IF IT IS
+         CLC   P4C04BRW,DFHVALUE(NOTBROWSABLE) VALID ?
+         BNE   INVREQ5            ERROR IF NOT
+TRYDEL   EQU   *
+         OC    P4C04DEL,P4C04DEL  ANY DELETE CVDA ?
+         BZ    TRYENA             EXIT IF NONE
+         CLC   P4C04DEL,DFHVALUE(DELETABLE) VALID ?
+         BE    TRYENA             EXIT IF IT IS
+         CLC   P4C04DEL,DFHVALUE(NOTDELETABLE) VALID ?
+         BNE   INVREQ7            ERROR IF NOT
+TRYENA   EQU   *
+         OC    P4C04ENA,P4C04ENA  ANY ENABLESTATUS CVDA ?
+         BZ    TRYOPE             EXIT IF NONE
+         CLC   P4C04ENA,DFHVALUE(ENABLED) VALID ?
+         BE    TRYOPE             EXIT IF IT IS
+         CLC   P4C04ENA,DFHVALUE(DISABLED) VALID ?
+         BNE   INVREQ17           ERROR IF NOT
+TRYOPE   EQU   *
+         OC    P4C04OPE,P4C04OPE  ANY OPENSTATUS CVDA ?
+         BZ    TRYREAD            EXIT IF NONE
+         CLC   P4C04OPE,DFHVALUE(OPEN) VALID ?
+         BE    TRYREAD            EXIT IF IT IS
+         CLC   P4C04OPE,DFHVALUE(CLOSED) VALID ?
+         BNE   INVREQ16           ERROR IF NOT
+TRYREAD  EQU   *
+         OC    P4C04RD,P4C04RD    ANY READ CVDA ?
+         BZ    TRYUPD             EXIT IF NONE
+         CLC   P4C04RD,DFHVALUE(READABLE) VALID ?
+         BE    TRYUPD             EXIT IF IT IS
+         CLC   P4C04RD,DFHVALUE(NOTREADABLE) VALID ?
+         BNE   INVREQ12           ERROR IF NOT
+TRYUPD   EQU   *
+         OC    P4C04UPD,P4C04UPD  ANY UPDATE CVDA ?
+         BZ    VALDONE            EXIT IF NONE
+         CLC   P4C04UPD,DFHVALUE(UPDATABLE) VALID ?
+         BE    VALDONE            EXIT IF IT IS
+         CLC   P4C04UPD,DFHVALUE(NOTUPDATABLE) VALID ?
+         BNE   INVREQ14           ERROR IF NOT
+VALDONE  EQU   *
+         L     R8,INQFI           R8=MESSAGE LENGTH
+         MVC   INQFITRM,TCTTETI   SET TERMID
+         MVC   INQFITKN,EIBTASKN  SET TASK NO.
+         MVC   INQFITRN,EIBTRNID  SET TRANID
+         TCPIO SEND,MSG=INQFI,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             EXIT IF BAD
+INQFRCV  EQU   *
+* RECEIVE THE PREFIX ONLY
+* THIS COULD BE A LARGE AREA, SO WE NEED TO GETMAIN A RECEIVE AREA
+         TCPIO RECEIVE,MSG=INQFRCVE,LMSG=12,PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             EXIT IF BAD
+         CLC   INQFREQ,=C'10FF'   UNSOL IC SCAN ?
+         BE    INQFRCV            EXIT IF IT IS
+         CLC   INQFREQ,=C'FE05'   WHAT WE ARE EXPECTING ?
+         BE    INQFRCK            EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+INQFRCK  EQU   *
+         L     R8,INQFRCVE        R8=ACTUAL LENGTH TO RECEIVE
+         AHI   R8,-12             -12 FOR DATA RECEIVED
+         GETMAIN R,LV=(R8),A=INQFGETM
+         ST    R0,INQFGETL        SAVE LENGTH FOR FREEMAIN
+         TCPIO RECEIVE,MSG=0(R1),LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             EXIT IF BAD
+         L     R7,INQFGETM        R7=RECEIVED DATA
+         USING IFILDATA,R7
+FILLOOP  EQU   *
+* FIND THE FILE
+         CLC   P4C04FIL,IFILDFLE  FOUND IT ?
+         BE    GOTFILE            EXIT IF WE HAVE
+         AHI   R7,IFILDLEN        BUMP DATA POINTER
+         CLI   IFILDFLE,X'FF'     END OF FILES ?
+         BNE   FILLOOP            LOOP IF NOT
+         B     FILENTFD           EXIT IF NOT FOUND
+*
+GOTFILE  EQU   *
+* VALIDATE REQUEST
+*   CLOSE AND/OR DISABLED ARE ALLOWED AT ANY TIME
+*   FOR ALL OTHER REQUESTS THE FILE MUST BE CLOSED AND (DISABLED OR
+*   UNENABLED)
+         CLC   P4C04OPE,DFHVALUE(OPEN) OPEN REQUEST ?
+         BE    CHKSTAT            EXIT IF IT IS
+         CLC   P4C04ENA,DFHVALUE(ENABLED) ENABLED REQUEST ?
+         BE    CHKSTAT            EXIT IF IT IS
+         OC    P4C04ADD(5*4),P4C04ADD ADD,BROWSE,DELETE,READ,UPDATE ?
+         BZ    SENDREQ            EXIT IF NOT
+CHKSTAT  EQU   *
+* OPEN,ENABLED,ADD,BROWSE,DELETE,READ,UPDATE
+* CHECK FILE IS CLOSED AND (DISABLED OR UNENABLED)
+         TM    IFILDSTA,FCTOPCLO  FILE CLOSED ?
+         BO    INVREQ2            ERROR IF OPEN
+         TM    IFILDSTA,FCTUNENA  FILE UNENABLED ?
+         BO    SENDREQ            EXIT IF IT IS
+         TM    IFILDSTA,FCTENDIS  FILE DISABLED ?
+         BO    INVREQ3            ERROR IF ENABLED
+SENDREQ  EQU   *
+         L     R8,SETFI           R8=MESSAGE LENGTH
+         MVC   SETFITRM,TCTTETI   SET TERMID
+         MVC   SETFITKN,EIBTASKN  SET TASK NO.
+         MVC   SETFITRN,EIBTRNID  SET TRANID
+         MVC   SETDATA,P4C04FIL   SET DATA
+         MVC   EIBRSRCE,P4C04FIL  SET FILENAME IN EIB
+         XC    SETRESP,SETRESP    CLEAR RESPONSE CODE
+         TCPIO SEND,MSG=SETFI,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             EXIT IF BAD
+SETFRCV  EQU   *
+         TCPIO RECEIVE,MSG=SETFI,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+         CLC   SETFREQ,=C'10FF'   UNSOL IC SCAN ?
+         BE    SETFRCV            EXIT IF IT IS
+         CLC   SETFREQ,=C'FE08'   WHAT WE ARE EXPECTING ?
+         BE    SETFRCK            EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+SETFRCK  EQU   *
+         OC    SETRESP,SETRESP    ANY ERROR ?
+         BNZ   IOERR              EXIT IF THERE IS
+         B     RETURN             EXIT
+*
+FILENTFD EQU   *
+* INVOKE FILENOTFOUND
+         MVI   EIBRCODE,X'0C'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(FILENOTFOUND) SET EIBRESP=FILENOTFOUND
+         MVC   EIBRESP2,=F'18'    SET EIBRESP2
+         B     DORESP             EXIT
+*
+INVREQ2  EQU   *
+         MVC   EIBRESP2,=F'2'     SET EIBRESP2
+         B     INVREQ             EXIT
+*
+INVREQ3  EQU   *
+         MVC   EIBRESP2,=F'3'     SET EIBRESP2
+         B     INVREQ             EXIT
+*
+INVREQ4  EQU   *
+         MVC   EIBRESP2,=F'4'     SET EIBRESP2
+         B     INVREQ             EXIT
+*
+INVREQ5  EQU   *
+         MVC   EIBRESP2,=F'5'     SET EIBRESP2
+         B     INVREQ             EXIT
+*
+INVREQ7  EQU   *
+         MVC   EIBRESP2,=F'7'     SET EIBRESP2
+         B     INVREQ             EXIT
+*
+INVREQ12 EQU   *
+         MVC   EIBRESP2,=F'12'    SET EIBRESP2
+         B     INVREQ             EXIT
+*
+INVREQ14 EQU   *
+         MVC   EIBRESP2,=F'14'    SET EIBRESP2
+         B     INVREQ             EXIT
+*
+INVREQ16 EQU   *
+         MVC   EIBRESP2,=F'16'    SET EIBRESP2
+         B     INVREQ             EXIT
+*
+INVREQ17 EQU   *
+         MVC   EIBRESP2,=F'17'    SET EIBRESP2
+INVREQ   EQU   *
+* INVOKE INVREQ
+         MVI   EIBRCODE,X'10'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         B     DORESP             EXIT
+*
+IOERR    EQU   *
+* INVOKE IOERR
+         MVI   EIBRCODE,X'11'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(IOERR) SET EIBRESP=IOERR
+DORESP   EQU   *
+         ICM   R14,15,P4C04RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P4C04RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         OC    INQFGETM,INQFGETM  DID WE GETMAIN ?
+         BZ    UNSTACK            EXIT IF NOT
+         FREEMAIN LA=INQFGETL,A=INQFGETM
+UNSTACK  EQU   *
+         PR    ,                  UNSTACK AND RETURN TO MACRO
+*
+INQFI    DS    0F
+         DC    A(INQFIEND-*)
+         DC    C'FE05'            REQUEST ID
+INQFITRM DS    CL4                TERMID
+INQFITRN DS    CL4                TRANSID
+         DC    C' '               TRANSID TYPE
+INQFITKN DS    PL4                TASK NO.
+INQFIEND EQU   *
+*
+SETFI    DS    0F
+         DC    A(SETFIEND-*)
+SETFREQ  DC    C'FE08'            REQUEST ID
+SETFITRM DS    CL4                TERMID
+SETFITRN DS    CL4                TRANSID
+         DC    C' '               TRANSID TYPE
+SETFITKN DS    PL4                TASK NO.
+SETDATA  DS    XL36               P4C04FIL TO P4C04UPD
+SETRESP  DS    AL4                RESPONSE CODE
+SETFIEND EQU   *
+*
+INQFRCVE DS    0F
+* RECEIVE AREA
+* MUST KEEP THIS CONSISTENT WITH ALL Z390CICS SENDS
+         DC    A(200)             MAX LENGTH
+INQFREQ  DS    CL4                REQUEST CODE
+         DS    CL4                TERMINAL ID
+         DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+         DS    PL4                TASK NO.
+         DS    CL188              RETURNED DATA
+*
+INQFGETM DS    A                  GETMAIN ADDRESS
+INQFGETL DS    F                  GETMAIN LENGTH
+*
+         P4C04 DSECT
+         COPY  CEMTIFIL           INQUIRE FILE DATA AREA
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         ACBD  ,                  VSAM ACB
+         DFHFCTDS                 FILE CONTROL TABLE
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R11 EIB
+* R13 BASE 1
+*
+         END
+

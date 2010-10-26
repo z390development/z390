@@ -15,11 +15,11 @@ LCL0E08  CSECT
 * R14 = RETURN ADDRESS
          USING (P0E08,P0E08END),R1
          USING *,R12
-         B     12(R15)            BYPASS HEADER
+         B     12(R15)            BYPASS EYECATCHER
          DC    CL8'LCL0E08'
          LR    R0,R12             R0=SAVED R12
          LR    R12,R15            SET BASE
-         ST    R1,SAVER1          SAVE PARM BASE
+         ST    R1,P0E08PTR        SAVE P0E08 PARM POINTER
          ST    R0,SAVER12         SAVE ORIGINAL R12
          ST    R14,SAVER14        SAVE RETURN ADDRESS
          USING DFHEIBLK,DFHEIBR
@@ -37,6 +37,17 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R15),0(R15)    CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0E08NED,X'FF'     NOEDF REQUESTED ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'FF'     SET DIRECT LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+         L     R1,P0E08PTR        RESTORE P0E08 PARM POINTER
+NOEDFB   EQU   *
 * IF JUST RETURN, WE ARE FINISHED
          OC    P0E08TRN(11),P0E08TRN ANY TRANSID/COMMAREA/LENGTH/IMM ?
          BZ    RETDONE            EXIT IF NONE
@@ -44,10 +55,18 @@ NORESP2  EQU   *
 * IF LINK-LEVEL NOT ONE, AND OTHER PARMS, THEN IT'S AN ERROR
          CLC   TCTTELNK,=H'1'     ARE WE AT ROOT LEVEL ?
          BE    TISROOT            EXIT IF WE ARE
-* INVOKE INVREQ
+         B     INVREQ2            EXIT
+*
+INVREQ1  EQU   *
+         MVC   EIBRESP2,=F'1'     SET EIBRESP2=TRANSID AND NON-TERMINAL
+         B     INVREQ             EXIT
+*
+INVREQ2  EQU   *
+* INVOKE INVREQ/2
+         MVC   EIBRESP2,=F'2'     SET EIBRESP2=NOT AT HIGHEST LEVEL
+INVREQ   EQU   *
          MVI   EIBRCODE,X'E0'     SET EIBRCODE
          MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
-         MVC   EIBRESP2,=F'2'     SET EIBRESP2=NOT AT HIGHEST LEVEL
          ICM   R15,15,P0E08RSP    R15=RESP ADDRESS
          BZ    DORESP2            EXIT IF NONE
          MVC   0(4,R15),EIBRESP   SET RESP
@@ -56,11 +75,14 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R15),EIBRESP2  SET RESP2
 RETURN   EQU   *
+* ### WE NEED AN 'AFTER' EDF HERE
          L     R12,SAVER12        RESTORE ORIGINAL R12
          BR    R14                RETURN
 *
 TISROOT  EQU   *
 * EXEC CICS RETURN TRANSID/COMMAREA/IMMEDIATE
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    INVREQ1            ERROR IF IT IS
          MVC   TCTTEIMM,P0E08IMM  SET IMMEDIATE FLAG (IF ANY)
          MVC   TCTTETC,P0E08TRN   SET TRANSID
          MVC   TCTTENXT,P0E08TRN  SET NEXT TRANSID FOR ASSIGN
@@ -132,7 +154,6 @@ TRYRTNCM EQU   *
          L     R14,TCTTECA        R14=COMMAREA ADDRESS FOR MOVE
          GETMAIN R,LV=(R1),A=TCTTECA
          LH    R15,TCTTECAL       R15=COMMAREA LENGTH FOR MOVE
-         STH   R0,TCTTECAL        SAVE ACTUAL LENGTH ACQUIRED
          LR    R1,R0              R1=DESTINATION LENGTH
          L     R0,TCTTECA         R0=DESTINATION ADDRESS
          MVCL  R0,R14             COPY DATA
@@ -173,40 +194,32 @@ CLRLVL   EQU   *
          STH   R0,TCTTELNK        STORE BACK
          AHI   R1,-4              POINT TO PREV LEVEL
          L     R13,0(R1)          R13=PREV DSA ADDRESS
-         L     R1,SAVER1          RESTORE PARM BASE ADDRESS
+* PROGRAM/TASK TERMINATION EDF
+         L     R1,P0E08PTR        RESTORE P0E08 PARM POINTER
          USING (P0E08,P0E08END),R1
+         CLI   P0E08NED,X'FF'     NOEDF REQUESTED ?
+         BE    NOEDFA             EXIT IF IT IS
          CLI   TCTTEEDF,X'FF'     EDF ON ?
-         BNE   NOEDF              EXIT IF NOT
-* EIBPROG IS DESTROYED BY EDF
-         MVC   SAVEPROG,EIBPROG   SAVE PROGRAM NAME
+         BNE   NOEDFA             EXIT IF NOT
+         CLC   EIBPROG,=C'Z390CEDF' IS IT Z390CEDF ?
+         BE    NOEDFA             NO EDF IF IT IS
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
          MVI   TCTTEEDL,X'FF'     SET DIRECT LINKAGE
          L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
          BAKR  0,R15              STACK REGS AND GO
-         L     R1,SAVER1          RESTORE PARM POINTER
-         MVC   EIBPROG,SAVEPROG   RESTORE PROGRAM NAME
-NOEDF    EQU   *
+*
+         L     R1,P0E08PTR        RESTORE P0E08 PARM POINTER
+NOEDFA   EQU   *
          L     R14,SAVER14        R14=ORIGINAL RETURN ADDRESS
          CLI   P0E08CNR,X'FF'     IS IT CLEANER RETURN ?
          BER   R14                DIRECT RETURN IF IT IS
          RETURN (R14,R12)
 *
-SAVER1   DS    F                  SAVE R1
+P0E08PTR DS    F                  SAVE P0E08 PARM POINTER
 SAVER12  DS    F                  SAVE R12
 SAVER14  DS    F                  SAVE R14
-SAVEPROG DS    CL8                SAVE EIBPROG
 *
-P0E08    DSECT
-P0E08FN  DS    XL2                FUNCTION CODE
-P0E08TRN DS    CL4                TRANSID
-P0E08COM DS    AL4                COMMAREA ADDRESS
-P0E08CLN DS    XL2                COMMAREA LENGTH
-P0E08IMM DS    X                  FF=IMMEDIATE
-         DS    X
-P0E08CNR DS    X                  FF=CLEANER
-         DS    X
-P0E08RSP DS    AL4                RESP
-P0E08RS2 DS    AL4                RESP2
-P0E08END EQU   *                  END MARKER
+         P0E08 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

@@ -11,12 +11,16 @@
                &LANG=,                                                 X
                &CTRL=,                                                 X
                &CURSLOC=,                                              X
+               &DSATTS=,                                               X
+               &EXTATT=,                                               X
+               &MAPATTS=,                                              X
                &SIZE=(24,80),                                          X
                &LINE=1,                                                X
                &COLUMN=1,                                              X
                &STORAGE=,                                              X
                &JUSTIFY=,                                              X
-               &TIOAPFX=
+               &TIOAPFX=,                                              X
+               &NOLABEL=
 .*
          GBLA  &MTYPE             TYPE REQUEST
          GBLA  &MLANG             0=COBOL 2=ASM
@@ -29,7 +33,13 @@
          GBLA  &MDFNAMD           LENGTH OF ALL NAMED MDF FIELDS
          GBLA  &MDFNAMC           NO. OF NAMED MDF'S
          GBLA  &MDFWRAP           NO. OF WRAPPED FIELDS
+         GBLA  &MDFCOLR           NO. OF FIELDS WITH COLOUR
          GBLA  &MDFCOBS           LENGTH OF COBOL MAP STRUCTURE
+         GBLA  &MEXTATT           EXTATT: 1=NO 2=MAPONLY 3=YES
+         GBLA  &WEXTATT           ACTUAL EXTATT
+.*
+.* NOLABEL OPTIONS -- ACFILO
+         GBLA  &NOLABA,&NOLABC,&NOLABF,&NOLABI,&NOLABL,&NOLABO
 .*
          GBLB  &MSD               MSD SPECIFIED
          GBLB  &DEFMODE(2)        1=OUT 2=IN BOTH=INOUT (DEFAULT)
@@ -48,6 +58,8 @@
          LCLA  &I
          LCLB  &ALRM,&FRKB,&FRST  CTRL OPTIONS FOR WCC
          LCLC  &WCTRL(3)          ACTUAL CTRL OPERANDS
+         LCLC  &WCURSLC           ACTUAL CURSLOC
+         LCLC  &WTIOAPX           ACTUAL TIOAPFX
          LCLC  &ROW               SCREEN DISPLAY
 .*
 .* ENSURE NO BAD PARMS
@@ -104,6 +116,7 @@
 &MDFNAMD SETA  0                  RESET LENGTH OF ALL NAMED MDF FIELDS
 &MDFNAMC SETA  0                  RESET NO. OF NAMED MDF'S
 &MDFWRAP SETA  0                  RESET NO. OF WRAPPED FIELDS
+&MDFCOLR SETA  0                  RESET NO. OF FIELDS WITH COLOUR
 &MDIMODE(1) SETB 0                RESET MODE=OUT
 &MDIMODE(2) SETB 0                RESET MODE=IN
          AIF   ('&MDINAME' EQ '').NODISP 1ST MAP
@@ -235,29 +248,74 @@
 .DUNCTRL ANOP
 .*
 .* CURSLOC OVERRIDE IS ALLOWED
+&WCURSLC SETC  '&MCURSLC'
          AIF   ('&CURSLOC' EQ '').DUNCSLC
-&MCURSLC SETC  '&CURSLOC'
+&WCURSLC SETC  '&CURSLOC'
 .DUNCSLC ANOP
 &CURS    SETB  0
-         AIF   ('&MCURSLC' EQ 'NO').DUNCURS
+         AIF   ('&WCURSLC' EQ 'NO').DUNCURS
 &CURS    SETB  1
-         AIF   ('&MCURSLC' EQ 'YES').DUNCURS
+         AIF   ('&WCURSLC' EQ 'YES').DUNCURS
          AGO   .BADCURS
 .*
 .GOON02  ANOP
 .DUNCURS ANOP
 .* TIOAPFX OVERRIDE IS ALLOWED
+&WTIOAPX SETC  '&MTIOAPX'
          AIF   ('&TIOAPFX' EQ '').DUNTPFX
-&MTIOAPX SETC  '&TIOAPFX'
+&WTIOAPX SETC  '&TIOAPFX'
 .DUNTPFX ANOP
 &TPFX    SETB  0
-         AIF   ('&MTIOAPX' EQ 'NO').DUNTIOA
+         AIF   ('&WTIOAPX' EQ 'NO').DUNTIOA
 &TPFX    SETB  1
-         AIF   ('&MTIOAPX' EQ 'YES').DUNTIOA
+         AIF   ('&WTIOAPX' EQ 'YES').DUNTIOA
          AGO   .BADTIOA
 .*
 .GOON01  ANOP
 .DUNTIOA ANOP
+.* EXTATT/MAPATTS/DSATTS OVERRIDE IS ALLOWED
+.* PROCESS EXTATT, DSATTS, MAPATTS
+&WEXTATT SETA  0
+         AIF   ('&EXTATT' EQ '' AND '&MAPATTS' EQ '' AND               X
+               '&DSATTS' EQ '').DUNEXT
+         AIF   ('&EXTATT' EQ '' OR '&EXTATT' EQ 'NO').EXTNO
+         AIF   ('&EXTATT' EQ 'MAPONLY').EXTMAP
+         AIF   ('&EXTATT' EQ 'YES').EXTYES
+         AGO   .BADEXT
+.*
+.EXTNO   ANOP
+         AIF   ('&MAPATTS' EQ '' AND '&DSATTS' EQ '')
+&WEXTATT SETA  1
+         AGO   .DUNEXT
+         AEND
+         AIF   ('&MAPATTS' NE '' AND '&DSATTS' NE '')
+         AIF   ('&MAPATTS(1)' NE 'COLOR' OR                            X
+               '&DSATTS(1)' NE 'COLOR').BADATPM
+&WEXTATT SETA  3
+         AGO   .DUNEXT
+         AEND
+         AIF   ('&MAPATTS' NE '' AND '&DSATTS' EQ '')
+         AIF   ('&MAPATTS(1)' NE 'COLOR').BADATPM
+&WEXTATT SETA  2
+         AGO   .DUNEXT
+         AEND
+         AGO   .BADATTS
+.*
+.EXTYES  ANOP
+         AIF   ('&MAPATTS' NE '' OR '&DSATTS' NE '').BADEXAT
+&WEXTATT SETA  3
+         AGO   .DUNEXT
+.*
+.EXTMAP  ANOP
+         AIF   ('&MAPATTS' NE '' OR '&DSATTS' NE '').BADEXAT
+&WEXTATT SETA  2
+         AGO   .DUNEXT
+.*
+.GOON07  ANOP
+.DUNEXT  ANOP
+         AIF   (&WEXTATT EQ 0)
+&WEXTATT SETA  &MEXTATT
+         AEND
          AIF   (T'&SIZE(1) NE 'N').BADSIZE
          AIF   (T'&SIZE(2) NE 'N').BADSIZE
 &SIZEROW SETA  &SIZE(1)
@@ -319,13 +377,28 @@
 .COLOK   ANOP
          DC    AL1(&COLUMN)            &SPACES.BMSMSC   -- STARTING COL-
                UMN NUMBER
+         ACASE (&WEXTATT)
+         AWHEN 1
          DC    B'0001&CURS.000'        BMSMI    -- MAP INDICATORS
+         AWHEN 2
+         DC    B'1001&CURS.000'        BMSMI    -- MAP INDICATORS
+         AWHEN 3
+         DC    B'1101&CURS.000'        BMSMI    -- MAP INDICATORS
+         AEND
 *
          MEXIT
 .*
 .DSECT   ANOP
 .*
 .* GENERATE DSECT
+.*
+.* SET THE GBLA FOR NOLABEL
+&NOLABA  SETA  ('&NOLABEL' FIND 'A')
+&NOLABC  SETA  ('&NOLABEL' FIND 'C')
+&NOLABF  SETA  ('&NOLABEL' FIND 'F')
+&NOLABI  SETA  ('&NOLABEL' FIND 'I')
+&NOLABL  SETA  ('&NOLABEL' FIND 'L')
+&NOLABO  SETA  ('&NOLABEL' FIND 'O')
 .*
          AIF   ('&TYPE' EQ 'LAST').NOTOUT
 &KMAP    SETA  K'&MAPNAME
@@ -399,6 +472,22 @@
 &BADLC   SETA 80-(&SIZECOL-1)
          MNOTE 12,'COLUMN CANNOT EXCEED &BADLC'
          AGO   .GOON04
+.*
+.BADEXT  ANOP
+         MNOTE 12,'EXTATT NOT OMITTED, NO, MAPONLY OR YES'
+         AGO   .GOON07
+.*
+.BADATTS ANOP
+         MNOTE 12,'DSATTS IS SPECIFIED WITHOUT MAPATTS'
+         AGO   .GOON07
+.*
+.BADEXAT ANOP
+         MNOTE 12,'EXTATT CONFLICTS WITH MAPATTS/DSATTS'
+         AGO   .GOON07
+.*
+.BADATPM ANOP
+         MNOTE 12,'INVALID MAPATTS OR DSATTS PARAMETER'
+         AGO   .GOON07
 .*
          MEND
 

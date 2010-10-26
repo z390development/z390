@@ -26,7 +26,7 @@ LOGO     DFHMDI SIZE=(24,80),LINE=1,COLUMN=1
          DFHMDF POS=(15,21),LENGTH=35,ATTRB=(ASKIP,BRT),               X
                INITIAL='ZZZZZ   CCCCC  IIII   CCCCC   SSSSS'
          DFHMDF POS=(17,35),LENGTH=10,ATTRB=(ASKIP,BRT),               X
-               INITIAL='Version 8 '
+               INITIAL='Version 9 '
 *
          DFHMSD TYPE=FINAL
          END

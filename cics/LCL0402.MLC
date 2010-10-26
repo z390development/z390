@@ -11,6 +11,8 @@ LCL0402  CSECT
 * R1  >>> P0402 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL0402'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -33,6 +35,18 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0402NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
+         CLI   TCTTETI,C'!'       NON-TERMINAL ?
+         BE    NOTALLOC           ERROR IF IT IS
          CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
          BNE   NOTSEQ             EXIT IF NOT
 * SEQUENTIAL TERMINAL PROCESSING
@@ -106,7 +120,9 @@ NOTSEQ   EQU   *
          MVCL  R0,R14             MOVE CWA
          L     R8,0(R9)           R8=MESSAGE LENGTH
          TCPIO SEND,MSG=(R9),LMSG=(R8),PORT=3900
-         EXEC  CICS DEQ RESOURCE(CWALOCK) LENGTH(7)
+         EXEC  CICS DEQ RESOURCE(CWALOCK) LENGTH(7) NOHANDLE NOEDF
+         OC    EIBRESP,EIBRESP    ANY CONDITION RAISED ?
+         BNZ   EDFA               EXIT IF THERE IS
          MVI   CWAIND,X'FF'       SET RE-ACQUIRE CWA FLAG
 DOCONVR  EQU   *
 * CONVERSATIONAL RECEIVE
@@ -116,16 +132,23 @@ DOCONVR  EQU   *
          MVI   CWAIND,X'00'       CLEAR RE-ACQUIRE CWA FLAG
          BE    DUNGET             EXIT IF NOT
 * RE-ACQUIRE THE CWA
-         EXEC  CICS ENQ RESOURCE(CWALOCK) LENGTH(7) INT0402
+         EXEC  CICS ENQ RESOURCE(CWALOCK) LENGTH(7) INT0402 NOEDF
          MVC   CWAFN,=C'FE07'     SET FUNCTION CODE
          MVC   CWATERM,TCTTETI    SET TERMINAL ID
          MVC   CWATRAN,EIBTRNID   SET TRANSID
          MVC   CWATASKN,EIBTASKN  SET TASK NUMBER
          MVI   CWARDWRT,X'00'     SET CWA GET
-         DROP  R9
          TCPIO SEND,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+CWARCV   EQU   *
 * ONLY THE PREFIX IS RECEIVED, WE GET THE CWA LATER
          TCPIO RECEIVE,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+         CLC   CWAFN,=C'10FF'     UNSOL IC SCAN ?
+         BE    CWARCV             EXIT IF IT IS
+         CLC   CWAFN,=C'FE07'     WHAT WE ARE EXPECTING ?
+         BE    CWARCK             EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+CWARCK   EQU   *
+         DROP  R9
          L     R8,TCTTECWA        R8=CWA ADDRESS
          TCPIO RECEIVE,MSG=(R8),LMSG=TCTTECWL,PORT=3900 GET THE CWA
          FREEMAIN A=(R9),LV=(R5)
@@ -136,13 +159,24 @@ DONOWAIT EQU   *
          TGET  (R6),(R7),ASIS,NOWAIT
          ST    R15,P0402TGR       SAVE TGET RESPONSE
          CFI   R15,4              ANY INPUT ?
-         BE    RETURN             RETURN IF NO INPUT
+         BE    EDFA               EXIT IF NONE
 DUNGET   EQU   *
          L     R8,P0402LEN        R8=A(LENGTH)
          STH   R1,0(R8)           SET RECEIVED LENGTH
          LH    R14,P0402INL       R14=REQUESTED LENGTH
          CR    R14,R1             ACTUAL LENGTH EXCEEDS REQUESTED ?
          BNL   PROCDATA           EXIT IF NOT
+         B     LENGERR            EXIT
+*
+NOTALLOC EQU   *
+         MVI   EIBRCODE,X'D5'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(NOTALLOC) SET EIBRESP=NOTALLOC
+         ICM   R14,15,P0402RSP    R14=RESP ADDRESS
+         BZ    EDFA               EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP=NOTALLOC
+         B     EDFA               EXIT
+*
+LENGERR  EQU   *
 * INVOKE LENGERR
          MVI   EIBRCODE,X'E1'     SET EIBRCODE
          MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
@@ -168,9 +202,9 @@ LOINPUT  EQU   *
 * PROCESS ANY HANDLE AID
 * NOHANDLE AVOIDS HANDLE AID CHECKS
          CLI   P0402NOH,X'FF'     NOHANDLE ?
-         BE    RETURN             RETURN IF IT IS
+         BE    EDFA               EXIT IF IT IS
          LTR   R4,R4              ANY AID BLOCKS ?
-         BZ    RETURN             RETURN IF NONE
+         BZ    EDFA               EXIT IF NONE
 ADBLKLP  EQU   *
          OC    AIDCHAIN,AIDCHAIN  ANY AID CHAIN ?
          BZ    LASTAID            EXIT IF LAST AID BLOCK
@@ -193,8 +227,18 @@ GOTAID   DS    0H
          SLL   R8,2               * 4
          LA    R8,12(R8,R4)       + 12 (HEADER+CHAIN) + ADBLK ADDRESS
          OC    0(4,R8),0(R8)      ANY LABEL HERE ?
-         BZ    RETURN             RETURN IF NONE
+         BZ    EDFA               EXIT IF NONE
          MVC   P0402AID,0(R8)     SET HANDLE AID ADDRESS
+EDFA     EQU   *
+         CLI   P0402NED,X'FF'     NOEDF ?
+         BE    RETURN             RETURN IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   RETURN             RETURN IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
 RETURN   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
@@ -236,24 +280,7 @@ CWASAVR1 DS    AL2                SAVE R1
 *
          LTORG
 *
-P0402    DSECT
-P0402FN  DS    XL2                FUNCTION CODE
-P0402EIB DS    AL4                EIB
-P0402TCT DS    AL4                TCTTE
-P0402ADB DS    AL4                ADBLK
-P0402INT DS    AL4                INTO
-P0402INL DS    AL2                L'INTO
-P0402LEN DS    AL4                LENGTH
-P0402TGR DS    XL4                TGET RESPONSE
-P0402HCN DS    AL4                A(DFHEIHCN)
-P0402AID DS    AL4                HANDLE AID ADDRESS
-P0402NOW DS    X                  FF=NOWAIT
-         DS    X
-P0402NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0402RSP DS    AL4                RESP
-P0402RS2 DS    AL4                RESP2
-P0402END EQU   *                  END MARKER
+         P0402 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

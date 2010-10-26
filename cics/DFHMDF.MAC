@@ -9,13 +9,15 @@
                &POS=,                                                  X
                &LENGTH=,                                               X
                &ATTRB=,                                                X
+               &COLOR=DEFAULT,                                         X
                &JUSTIFY=,                                              X
                &INITIAL=,                                              X
                &XINIT=,                                                X
                &PICIN=,                                                X
                &PICOUT=,                                               X
                &OCCURS=,                                               X
-               &GRPNAME=
+               &GRPNAME=,                                              X
+               &NOLABEL=
 .*
          GBLA  &MTYPE             TYPE REQUEST
          GBLA  &MLANG             0=COBOL 2=ASM
@@ -27,8 +29,13 @@
          GBLA  &MDFNAMD           LENGTH OF ALL NAMED MDF FIELDS
          GBLA  &MDFNAMC           NO. OF NAMED MDF'S
          GBLA  &MDFWRAP           NO. OF WRAPPED FIELDS
+         GBLA  &MDFCOLR           NO. OF FIELDS WITH COLOUR
          GBLA  &GFELEN            SUN OF GROUP FIELD ENTRY LENGTHS
          GBLA  &MDFCOBS           LENGTH OF COBOL MAP STRUCTURE
+         GBLA  &WEXTATT           ACTUAL EXTATT: 1=NO 2=MAPONLY 3=YES
+.*
+.* NOLABEL OPTIONS -- ACFILO
+         GBLA  &NOLABA,&NOLABC,&NOLABF,&NOLABI,&NOLABL,&NOLABO
 .*
          GBLB  &MDIMODE(2)        1=OUT 2=IN BOTH=INOUT
          GBLB  &IC                IC HAS OCCURRED IN MDF SET
@@ -40,8 +47,11 @@
          GBLC  &MDFORG            GROUP LENGTH LABEL
 .*
          LCLA  &ATTRIB(62)
-         LCLA  &OCC
+         LCLA  &COL
          LCLA  &KPICIN,&KPICOUT
+         LCLA  &OCC
+.* NOLABEL OPTIONS -- ACFILO
+         LCLA  &NOMLABA,&NOMLABC,&NOMLABF,&NOMLABI,&NOMLABL,&NOMLABO
 .*
          LCLB  &ATTYPE(8)
          LCLB  &JSTYPE(4)
@@ -195,6 +205,23 @@
 .NOINIT  ANOP
 .GOON02  ANOP
 .*
+.* ANALYZE COLOR
+         AIF   ('&COLOR' EQ '' OR '&COLOR' EQ 'DEFAULT').NOCOL
+         AIF   ('&COLOR' EQ 'BLUE'      OR                             X
+               '&COLOR'  EQ 'RED'       OR                             X
+               '&COLOR'  EQ 'PINK'      OR                             X
+               '&COLOR'  EQ 'GREEN'     OR                             X
+               '&COLOR'  EQ 'TURQUOISE' OR                             X
+               '&COLOR'  EQ 'YELLOW'    OR                             X
+               '&COLOR'  EQ 'WHITE').GOODCOL
+         AGO   .BADCOL
+.*
+.GOON14  ANOP
+.GOODCOL ANOP
+         AIF   (&WEXTATT LT 2).BADEXT
+.*
+.GOON15  ANOP
+.NOCOL   ANOP
 .* ANALYZE ATTRIBUTE AND SET DEFAULTS
 &NATTR   SETA  N'&ATTRB           SET NO. OF OPERANDS IN ATTRB
          AIF   (&NATTR GT 0).DOATTR
@@ -448,7 +475,7 @@
 .*
 .OCCLOOP ANOP
 .* CALCULATE MDF SIZE
-&MDFLEN  SETA  8                  PREFIX
+&MDFLEN  SETA  9                  PREFIX
          AIF   (NOT &INIT).NOINIT3
 .* ADD INITIAL/XINIT
 &MDFLEN  SETA  &MDFLEN+&LENGTH    ADD INITIAL/XINIT
@@ -518,6 +545,45 @@
          ORG
 .NOTIC   ANOP
          DC    AL2(&FPOS)          &SPACES.BMSFP    -- POSITION
+.* GENERATE COLOR ATTRIBUTE
+         AIF   ('&COLOR' EQ '' OR '&COLOR' EQ 'DEFAULT')
+&COL     SETA  0
+         AGO   .DUNCOL
+         AEND
+         AIF   ('&COLOR' EQ 'BLUE')
+&COL     SETA  241
+         AGO   .DUNCOL
+         AEND
+         AIF   ('&COLOR' EQ 'RED')
+&COL     SETA  242
+         AGO   .DUNCOL
+         AEND
+         AIF   ('&COLOR' EQ 'PINK')
+&COL     SETA  243
+         AGO   .DUNCOL
+         AEND
+         AIF   ('&COLOR' EQ 'GREEN')
+&COL     SETA  244
+         AGO   .DUNCOL
+         AEND
+         AIF   ('&COLOR' EQ 'TURQUOISE')
+&COL     SETA  245
+         AGO   .DUNCOL
+         AEND
+         AIF   ('&COLOR' EQ 'YELLOW')
+&COL     SETA  246
+         AGO   .DUNCOL
+         AEND
+         AIF   ('&COLOR' EQ 'WHITE')
+&COL     SETA  247
+         AEND
+.DUNCOL  ANOP
+         AIF   (&COL EQ 0)
+         DC    AL1(&COL)             BMSFXC   -- COLOUR ATTRIBUTE
+         AELSE
+         DC    AL1(&COL)           BMSFXC   -- COLOUR ATTRIBUTE
+         AEND
+&MDFCOLR SETA  &MDFCOLR+1
 .* GENERATE PICIN/PICOUT/INITIAL/XINIT
 &SPACES  SETC  '     '
          AIF   (&KPICIN LT 10).PICIOK
@@ -637,11 +703,13 @@
 .*              + LENGTH OF ALL NAMED FIELDS
          ORG   &MDINAME._&MDIORG._INPLEN
          DC    AL2(3+(3*&MDFNAMC)+&MDFNAMD)
-.* OUTPUT SIZE = 3 (ESC, WRT, WCC) + 5*NO. OF FIELDS (SBA, SF)
+.* OUTPUT SIZE = 3 (ESC,WRT,WCC) + 5*NO. OF FIELDS (SBA,SF)
 .*               + LENGTH OF ALL FIELDS + 4 (FOR ANY CURSOR)
 .*               + 3*NO. OF WRAPPED FIELDS (SBA)
-&OUTSIZE SETA  3+(5*&MDFALLC)+&MDFALLN+4+(3*&MDFWRAP)
-         AIF   (&OUTSIZE GT 2000).BIGMAP
+.*               + 4*NO. OF FIELDS WITH COLOR (SBA,SFE,2,FA,X,COL,X)
+.*                 -- 4 BYTES MORE THAN (SBA,SF)
+&OUTSIZE SETA  3+(5*&MDFALLC)+&MDFALLN+4+(3*&MDFWRAP)+(4*&MDFCOLR)
+         AIF   (&OUTSIZE GT 4000).BIGMAP
          ORG   &MDINAME._&MDIORG._OUTLEN
          DC    AL2(&OUTSIZE)
          ORG
@@ -687,6 +755,21 @@
 .*
 .* GENERATE DSECT
 .*
+.* OVERRIDE NOLABEL OPTIONS
+&NOMLABA SETA  &NOLABA
+&NOMLABC SETA  &NOLABC
+&NOMLABF SETA  &NOLABF
+&NOMLABI SETA  &NOLABI
+&NOMLABL SETA  &NOLABL
+&NOMLABO SETA  &NOLABO
+         AIF   ('&NOLABEL' NE '')
+&NOMLABA SETA  ('&NOLABEL' FIND 'A')
+&NOMLABC SETA  ('&NOLABEL' FIND 'C')
+&NOMLABF SETA  ('&NOLABEL' FIND 'F')
+&NOMLABI SETA  ('&NOLABEL' FIND 'I')
+&NOMLABL SETA  ('&NOLABEL' FIND 'L')
+&NOMLABO SETA  ('&NOLABEL' FIND 'O')
+         AEND
          AIF   ('&FLDNAME' EQ '').DUNMDF
 &KFLD    SETA  K'&FLDNAME
 &SPACES2 SETC  '  '
@@ -705,15 +788,33 @@
 &SPACES  SETC  '        '(1,7-K'&GNAME)
          AIF   (&MLANG NE 0)
          PUNCH '*'
+         AIF   (&NOMLABL EQ 0)
          PUNCH '&GNAME.L&SPACES DS    AL2                INPUT GROUP FI-
                ELD LENGTH'
+         AELSE
+         PUNCH '              DS    AL2                INPUT GROUP FIEL-
+               D LENGTH'
+         AEND
+         AIF   (&NOMLABF EQ 0)
          PUNCH '&GNAME.F&SPACES DS    X                  INPUT GROUP FI-
                ELD FLAG'
          AELSE
+         PUNCH '              DS    X                  INPUT GROUP FIEL-
+               D FLAG'
+         AEND
+         AELSE
 .* FOR COBOL &GFE MUST BE SET
 &GFE     SETB  1
+         AIF   (&NOMLABL EQ 0)
          PUNCH '           02  &GNAME.L&SPACES PIC S9(4) COMP.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC S9(4) COMP.'
+         AEND
+         AIF   (&NOMLABF EQ 0)
          PUNCH '           02  &GNAME.F&SPACES PIC X.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC X.'
+         AEND
 &MDFCOBS SETA  &MDFCOBS+3
          AEND
          AIF   (&MLANG NE 0)
@@ -771,17 +872,41 @@
          AEND
 .NOSTAR  ANOP
          AIF   (&MLANG NE 0)
+         AIF   (&NOMLABL EQ 0)
          PUNCH '&FLDNAME.L&SPACES DS    AL2                INPUT FIELD -
                LENGTH'
+         AELSE
+         PUNCH '         DS    AL2                INPUT FIELD LENGTH'
+         AEND
+         AIF   (&NOMLABF EQ 0)
          PUNCH '&FLDNAME.F&SPACES DS    X                  INPUT FIELD -
                FLAG'
          AELSE
+         PUNCH '         DS    X                  INPUT FIELD FLAG'
+         AEND
+         AELSE
          AIF   (&OCC EQ 1)
+         AIF   (&NOMLABL EQ 0)
          PUNCH '           02  &FLDNAME.L&SPACES PIC S9(4) COMP.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC S9(4) COMP.'
+         AEND
+         AIF   (&NOMLABF EQ 0)
          PUNCH '           02  &FLDNAME.F&SPACES PIC X.'
          AELSE
+         PUNCH '           02  FILLER&SPACES PIC X.'
+         AEND
+         AELSE
+         AIF   (&NOMLABL EQ 0)
          PUNCH '               03  &FLDNAME.L&SPACES PIC S9(4) COMP.'
+         AELSE
+         PUNCH '               03  FILLER&SPACES PIC S9(4) COMP.'
+         AEND
+         AIF   (&NOMLABF EQ 0)
          PUNCH '               03  &FLDNAME.F&SPACES PIC X.'
+         AELSE
+         PUNCH '               03  FILLER&SPACES PIC X.'
+         AEND
          AEND
          AIF   ('&PICIN' EQ '')
          AIF   (&LENGTH GT 1)
@@ -826,11 +951,38 @@
          AIF   (&MLANG NE 0)
          PUNCH '*'
          PUNCH '         DS    AL2                DUMMY LENGTH'
+         AIF   (&NOMLABA EQ 0)
          PUNCH '&GNAME.A&SPACES DS    X                  OUTPUT GROUP F-
                IELD ATTRIBUTE'
          AELSE
+         PUNCH '         DS    X                  OUTPUT GROUP FIELD AT-
+               TRIBUTE'
+         AEND
+         ACASE (&WEXTATT)
+         AWHEN 3
+         AIF   (&NOMLABC EQ 0)
+         PUNCH '&GNAME.C&SPACES DS    X                  OUTPUT GROUP C-
+               OLOUR ATTRIBUTE'
+         AELSE
+         PUNCH '         DS    X                  OUTPUT GROUP COLOUR A-
+               TTRIBUTE'
+         AEND
+         AEND
+         AELSE
          PUNCH '           02  FILLER&SPACES PIC XX.'
+         AIF   (&NOMLABA EQ 0)
          PUNCH '           02  &GNAME.A&SPACES PIC X.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC X.'
+         AEND
+         ACASE (&WEXTATT)
+         AWHEN 3
+         AIF   (&NOMLABC EQ 0)
+         PUNCH '           02  &GNAME.C&SPACES PIC X.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC X.'
+         AEND
+         AEND
 &MDFCOBS SETA  &MDFCOBS+3
          AEND
          AIF   (&MLANG NE 0)
@@ -838,7 +990,11 @@
          PUNCH '&GNAME&SPACES DS    0C                 OUTPUT GROUP FIE-
                LD ORIGIN'
          AELSE
+         AIF   (&NOMLABO EQ 0)
          PUNCH '           02  &GNAME.O.'
+         AELSE
+         PUNCH '           02  FILLER.'
+         AEND
          AEND
 &SPACES  SETC  '        '(1,8-&KFLD)
          AIF   (&MLANG NE 0)
@@ -853,9 +1009,12 @@
          AEND
          AELSE
 &RPICOUT SETC  '&PICOUT'(2,K'&PICOUT-2)
-         MNOTE *,'&RPICOUT'
          AEND
+         AIF   (&NOMLABO EQ 0)
          PUNCH '           02  &FLDNAME.O&SPACES PIC &RPICOUT.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC &RPICOUT.'
+         AEND
 &MDFCOBS SETA  &MDFCOBS+&LENGTH
          AEND
          MEXIT
@@ -891,11 +1050,37 @@
 .NOSTAR2 ANOP
          AIF   (&MLANG NE 0)
          PUNCH '         DS    AL2                DUMMY LENGTH'
+         AIF   (&NOMLABA EQ 0)
          PUNCH '&FLDNAME.A&SPACES DS    X                  OUTPUT ATTRI-
                BUTE'
          AELSE
+         PUNCH '         DS    X                  OUTPUT ATTRIBUTE'
+         AEND
+         ACASE (&WEXTATT)
+         AWHEN 3
+         AIF   (&NOMLABC EQ 0)
+         PUNCH '&FLDNAME.C&SPACES DS    X                  OUTPUT COLOU-
+               R ATTRIBUTE'
+         AELSE
+         PUNCH '         DS    X                  OUTPUT COLOUR ATTRIBU-
+               TE'
+         AEND
+         AEND
+         AELSE
          PUNCH '           02  FILLER&SPACES PIC XX.'
+         AIF   (&NOMLABA EQ 0)
          PUNCH '           02  &FLDNAME.A&SPACES PIC X.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC X.'
+         AEND
+         ACASE (&WEXTATT)
+         AWHEN 3
+         AIF   (&NOMLABC EQ 0)
+         PUNCH '           02  &FLDNAME.C&SPACES PIC X.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC X.'
+         AEND
+         AEND
          AIF   ('&PICOUT' EQ '')
          AIF   (&LENGTH GT 1)
 &RPICOUT SETC  'X(&LENGTH)'
@@ -904,9 +1089,12 @@
          AEND
          AELSE
 &RPICOUT SETC  '&PICOUT'(2,K'&PICOUT-2)
-         MNOTE *,'&RPICOUT'
          AEND
+         AIF   (&NOMLABO EQ 0)
          PUNCH '           02  &FLDNAME.O&SPACES PIC &RPICOUT.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC &RPICOUT.'
+         AEND
 &MDFCOBS SETA  &MDFCOBS+&OCC*(3+&LENGTH)
          AEND
          AIF   (&MLANG NE 0)
@@ -931,25 +1119,80 @@
 &SPACES  SETC  '        '(1,7-K'&GNAME)
          AIF   (&MLANG NE 0)
          PUNCH '*'
+         AIF   (&NOMLABL EQ 0)
          PUNCH '&GNAME.L&SPACES DS    AL2                INPUT GROUP FI-
                ELD LENGTH'
+         AELSE
+         PUNCH '         DS    AL2                INPUT GROUP FIELD LEN-
+               GTH'
+         AEND
+         AIF   (&NOMLABF EQ 0)
          PUNCH '&GNAME.F&SPACES DS    0X                 INPUT GROUP FI-
                ELD FLAG'
+         AELSE
+         PUNCH '         DS    0X                 INPUT GROUP FIELD FLA-
+               G'
+         AEND
+         AIF   (&NOMLABA EQ 0)
          PUNCH '&GNAME.A&SPACES DS    X                  OUTPUT GROUP F-
                IELD ATTRIBUTE'
+         AELSE
+         PUNCH '         DS    X                  OUTPUT GROUP FIELD AT-
+               TRIBUTE'
+         AEND
+         ACASE (&WEXTATT)
+         AWHEN 3
+         AIF   (&NOMLABC EQ 0)
+         PUNCH '&GNAME.C&SPACES DS    X                  OUTPUT GROUP C-
+               OLOUR ATTRIBUTE'
+         AELSE
+         PUNCH '         DS    X                  OUTPUT GROUP COLOUR A-
+               TTRIBUTE'
+         AEND
+         AEND
          PUNCH '&GNAME.I&SPACES DS    0C                 INPUT GROUP FI-
                ELD ORIGIN'
+         AIF   (&NOMLABO EQ 0)
          PUNCH '&GNAME.O&SPACES DS    0C                 OUTPUT GROUP F-
                IELD ORIGIN'
          AELSE
+         PUNCH '         DS    0C                 OUTPUT GROUP FIELD OR-
+               IGIN'
+         AEND
+         AELSE
 .* FOR COBOL &GFE MUST BE SET
 &GFE     SETB  1
+         AIF   (&NOMLABL EQ 0)
          PUNCH '           02  &GNAME.L&SPACES PIC S9(4) COMP.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC S9(4) COMP.'
+         AEND
+         AIF   (&NOMLABA EQ 0 AND &NOMLABF EQ 0)
          PUNCH '           02  &GNAME.F&SPACES PIC X.'
          PUNCH '           02  FILLER REDEFINES &GNAME.F.'
          PUNCH '               03  &GNAME.A&SPACES PIC X.'
+         AEND
+         AIF   (&NOMLABA EQ 0 AND &NOMLABF NE 0)
+         PUNCH '           02  &GNAME.A&SPACES PIC X.'
+         AEND
+         AIF   (&NOMLABA NE 0 AND &NOMLABF EQ 0)
+         PUNCH '           02  &GNAME.F&SPACES PIC X.'
+         AEND
+         AIF   (&NOMLABA NE 0 AND &NOMLABF NE 0)
+         PUNCH '           02  FILLER&SPACES PIC X.'
+         AEND
+         ACASE (&WEXTATT)
+         AWHEN 3
+         AIF   (&NOMLABC EQ 0)
+         PUNCH '           02  &GNAME.C&SPACES PIC X.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC X.'
+         AEND
+         AEND
          PUNCH '           02  &GNAME.I.'
+         AIF   (&NOMLABO EQ 0)
          PUNCH '           02  &GNAME.O REDEFINES &GNAME.I.'
+         AEND
 &MDFCOBS SETA  &MDFCOBS+3
          AEND
 &SPACES  SETC  '        '(1,7-&KFLD)
@@ -957,8 +1200,13 @@
          PUNCH '&FLDNAME.I&SPACES DS    CL&LENGTH              &SPACES2-
                .INPUT GROUP FIELD'
          PUNCH '         ORG   &FLDNAME.I'
+         AIF   (&NOMLABO EQ 0)
          PUNCH '&FLDNAME.O&SPACES DS    CL&LENGTH              &SPACES2-
                .OUTPUT GROUP FIELD'
+         AELSE
+         PUNCH '         DS    CL&LENGTH              &SPACES2.OUTPUT G-
+               ROUP FIELD'
+         AEND
          AELSE
          AIF   ('&PICIN' EQ '')
          AIF   (&LENGTH GT 1)
@@ -973,17 +1221,20 @@
 &RPICOUT SETC  'X(&LENGTH)'
          AELSE
 &RPICOUT SETC  '&PICOUT'(2,K'&PICOUT-2)
-         MNOTE *,'&RPICOUT'
          AEND
          AIF   (&OCC NE 1 OR &GFE)
          PUNCH '               03  &FLDNAME.I&SPACES PIC &RPICIN..'
+         AIF   (&NOMLABO EQ 0)
          PUNCH '               03  FILLER REDEFINES &FLDNAME.I.'
          PUNCH '                   04  &FLDNAME.O&SPACES PIC &RPICOUT..-
                '
+         AEND
          AELSE
          PUNCH '           02  &FLDNAME.I&SPACES PIC &RPICIN..'
+         AIF   (&NOMLABO EQ 0)
          PUNCH '           02  FILLER REDEFINES &FLDNAME.I.'
          PUNCH '               03  &FLDNAME.O&SPACES PIC &RPICOUT..'
+         AEND
          AEND
 &MDFCOBS SETA  &MDFCOBS+&LENGTH
          AEND
@@ -997,8 +1248,13 @@
          PUNCH '&FLDNAME.I&SPACES DS    CL&LENGTH              &SPACES2-
                .INPUT GROUP FIELD'
          PUNCH '         ORG   &FLDNAME.I'
+         AIF   (&NOMLABO EQ 0)
          PUNCH '&FLDNAME.O&SPACES DS    CL&LENGTH              &SPACES2-
                .OUTPUT GROUP FIELD'
+         AELSE
+         PUNCH '         DS    CL&LENGTH              &SPACES2.OUTPUT G-
+               ROUP FIELD'
+         AEND
          AELSE
          AIF   ('&PICIN' EQ '')
          AIF   (&LENGTH GT 1)
@@ -1017,12 +1273,13 @@
          AEND
          AELSE
 &RPICOUT SETC  '&PICOUT'(2,K'&PICOUT-2)
-         MNOTE *,'&RPICOUT'
          AEND
          PUNCH '               03  &FLDNAME.I&SPACES PIC &RPICIN..'
+         AIF   (&NOMLABO EQ 0)
          PUNCH '               03  FILLER REDEFINES &FLDNAME.I.'
          PUNCH '                   04  &FLDNAME.O&SPACES PIC &RPICOUT..-
                '
+         AEND
 &MDFCOBS SETA  &MDFCOBS+&LENGTH
          AEND
          MEXIT
@@ -1045,28 +1302,101 @@
          AEND
 .NOSTAR3 ANOP
          AIF   (&MLANG NE 0)
+         AIF   (&NOMLABL EQ 0)
          PUNCH '&FLDNAME.L&SPACES DS    AL2                INPUT FIELD -
                LENGTH'
+         AELSE
+         PUNCH '         DS    AL2                INPUT FIELD LENGTH'
+         AEND
+         AIF   (&NOMLABF EQ 0)
          PUNCH '&FLDNAME.F&SPACES DS    0X                 INPUT FIELD -
                FLAG'
+         AELSE
+         PUNCH '         DS    0X                 INPUT FIELD FLAG'
+         AEND
+         AIF   (&NOMLABA EQ 0)
          PUNCH '&FLDNAME.A&SPACES DS    X                  OUTPUT ATTRI-
                BUTE'
+         AELSE
+         PUNCH '         DS    X                  OUTPUT ATTRIBUTE'
+         AEND
+         ACASE (&WEXTATT)
+         AWHEN 3
+         AIF   (&NOMLABC EQ 0)
+         PUNCH '&FLDNAME.C&SPACES DS    X                  OUTPUT COLOU-
+               R ATTRIBUTE'
+         AELSE
+         PUNCH '         DS    X                  OUTPUT COLOUR ATTRIBU-
+               TE'
+         AEND
+         AEND
          PUNCH '&FLDNAME.I&SPACES DS    CL&LENGTH              &SPACES2-
                .INPUT FIELD'
          PUNCH '         ORG   &FLDNAME.I'
+         AIF   (&NOMLABO EQ 0)
          PUNCH '&FLDNAME.O&SPACES DS    CL&LENGTH              &SPACES2-
                .OUTPUT FIELD'
          AELSE
+         PUNCH '         DS    CL&LENGTH              &SPACES2.OUTPUT F-
+               IELD'
+         AEND
+         AELSE
          AIF   (&OCC EQ 1)
+         AIF   (&NOMLABL EQ 0)
          PUNCH '           02  &FLDNAME.L&SPACES PIC S9(4) COMP.'
+         AELSE
+         PUNCH '           02  FILLER&SPACES PIC S9(4) COMP.'
+         AEND
+         AIF   (&NOMLABA EQ 0 AND &NOMLABF EQ 0)
          PUNCH '           02  &FLDNAME.F&SPACES PIC X.'
          PUNCH '           02  FILLER REDEFINES &FLDNAME.F.'
          PUNCH '               03  &FLDNAME.A&SPACES PIC X.'
+         AEND
+         AIF   (&NOMLABA EQ 0 AND &NOMLABF NE 0)
+         PUNCH '           02  &FLDNAME.A&SPACES PIC X.'
+         AEND
+         AIF   (&NOMLABA NE 0 AND &NOMLABF EQ 0)
+         PUNCH '           02  &FLDNAME.F&SPACES PIC X.'
+         AEND
+         AIF   (&NOMLABA NE 0 AND &NOMLABF NE 0)
+         PUNCH '           02  FILLER&SPACES PIC X.'
+         AEND
+         ACASE (&WEXTATT)
+         AWHEN 3
+         AIF   (&NOMLABC EQ 0)
+         PUNCH '           02  &FLDNAME.C&SPACES PIC X.'
          AELSE
+         PUNCH '           02  FILLER&SPACES PIC X.'
+         AEND
+         AEND
+         AELSE
+         AIF   (&NOMLABL EQ 0)
          PUNCH '               03  &FLDNAME.L&SPACES PIC S9(4) COMP.'
+         AELSE
+         PUNCH '               03  FILLER&SPACES PIC S9(4) COMP.'
+         AEND
+         AIF   (&NOMLABA EQ 0 AND &NOMLABF EQ 0)
          PUNCH '               03  &FLDNAME.F&SPACES PIC X.'
          PUNCH '               03  FILLER REDEFINES &FLDNAME.F.'
          PUNCH '                   04  &FLDNAME.A&SPACES PIC X.'
+         AEND
+         AIF   (&NOMLABA EQ 0 AND &NOMLABF NE 0)
+         PUNCH '               03  &FLDNAME.A&SPACES PIC X.'
+         AEND
+         AIF   (&NOMLABA NE 0 AND &NOMLABF EQ 0)
+         PUNCH '               03  &FLDNAME.F&SPACES PIC X.'
+         AEND
+         AIF   (&NOMLABA NE 0 AND &NOMLABF NE 0)
+         PUNCH '               03  FILLER&SPACES PIC X.'
+         AEND
+         ACASE (&WEXTATT)
+         AWHEN 3
+         AIF   (&NOMLABC EQ 0)
+         PUNCH '               03  &FLDNAME.C&SPACES PIC X.'
+         AELSE
+         PUNCH '               03  FILLER&SPACES PIC X.'
+         AEND
+         AEND
          AEND
          AIF   ('&PICIN' EQ '')
          AIF   (&LENGTH GT 1)
@@ -1085,17 +1415,20 @@
          AEND
          AELSE
 &RPICOUT SETC  '&PICOUT'(2,K'&PICOUT-2)
-         MNOTE *,'&RPICOUT'
          AEND
          AIF   (&OCC NE 1 OR &GFE)
          PUNCH '               03  &FLDNAME.I&SPACES PIC &RPICIN..'
+         AIF   (&NOMLABO EQ 0)
          PUNCH '               03  FILLER REDEFINES &FLDNAME.I.'
          PUNCH '                   04  &FLDNAME.O&SPACES PIC &RPICOUT..-
                '
+         AEND
          AELSE
          PUNCH '           02  &FLDNAME.I&SPACES PIC &RPICIN..'
+         AIF   (&NOMLABO EQ 0)
          PUNCH '           02  FILLER REDEFINES &FLDNAME.I.'
          PUNCH '               03  &FLDNAME.O&SPACES PIC &RPICOUT..'
+         AEND
          AEND
 &MDFCOBS SETA  &MDFCOBS+&OCC*(3+&LENGTH)
          AEND
@@ -1213,6 +1546,7 @@
          MEXIT
 .*
 .BIGMAP  ANOP
+.* 3+(5*&MDFALLC)+&MDFALLN+4+(3*&MDFWRAP)+(4*&MDFCOLR)
          MNOTE *,'AN INTERNAL ERROR HAS OCCURRED'
          MNOTE 12,'MAPSIZE TOO LARGE - &OUTSIZE'
          MEXIT
@@ -1279,6 +1613,15 @@
          MNOTE 12,'SPECIAL FORMAT XINIT CANNOT BE SPECIFIED IF LENGTH I-
                S LESS THAN 8'
          AGO   .GOON02
+.*
+.BADCOL  ANOP
+         MNOTE 12,'INVALID COLOR'
+         AGO   .GOON14
+.*
+.BADEXT  ANOP
+         MNOTE 12,'COLOR IS SPECIFIED, BUT EXTENDED ATTRIBUTES NOT SUPP-
+               ORTED'
+         AGO   .GOON15
 .*
          MEND
 

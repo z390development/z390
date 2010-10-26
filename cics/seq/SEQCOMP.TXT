@@ -1,0 +1,53 @@
+FILE 0013  STREAM    13
+           +00              08              10              18            1F
+   C+0000   C311D160C6D6D9D4C1E3E3C9D4C540F2F1F1F2F0F70000000000F1F2F2F1F0F7
+                    F O R M A T T I M E   2 1 1 2 0 7           1 2 2 1 0 7
+   N+0000   C311D160C6D6D9D4C1E3E3C9D4C540F2F3F1F0F1F00000000000F1F0F2F3F1F0
+                    F O R M A T T I M E   2 3 1 0 1 0           1 0 2 3 1 0
+   DIFFS                                    ?   ? ? ?             ?   ? ? ?
+
+           +00              08              10              18            1F
+   C+0020   0000000000F0F7F2F1F1F20000000000F0F7F1F2F2F10000000000C4C4D4D4E8
+                      0 7 2 1 1 2           0 7 1 2 2 1           D D M M Y
+   N+0020   0000000000F1F0F2F3F1F00000000000F1F0F1F0F2F30000000000D4D4C4C4E8
+                      1 0 2 3 1 0           1 0 1 0 2 3           M M D D Y
+   DIFFS              ? ?   ?   ?           ? ?   ?   ?           ? ? ? ?
+
+           +00              08              10              18            1F
+   C+0040   E8000000000000000000000000000000
+            Y
+
+FILE 0024  STREAM    13
+           +00              08              10              18            1F
+   C+0000   C311D160C6D6D9D4C1E3E3C9D4C540F2F5F0F1F0F94040404040F0F1F2F5F0F9
+                    F O R M A T T I M E   2 5 0 1 0 9           0 1 2 5 0 9
+   N+0000   C311D160C6D6D9D4C1E3E3C9D4C540F2F3F1F0F1F04040404040F1F0F2F3F1F0
+                    F O R M A T T I M E   2 3 1 0 1 0           1 0 2 3 1 0
+   DIFFS                                    ? ? ? ? ?           ? ?   ? ? ?
+
+           +00              08              10              18            1F
+   C+0020   4040404040F0F9F2F5F0F14040404040F0F9F0F1F2F54040404040C4C4D4D4E8
+                      0 9 2 5 0 1           0 9 0 1 2 5           D D M M Y
+   N+0020   4040404040F1F0F2F3F1F04040404040F1F0F1F0F2F34040404040D4D4C4C4E8
+                      1 0 2 3 1 0           1 0 1 0 2 3           M M D D Y
+   DIFFS              ? ?   ? ? ?           ? ? ? ?   ?           ? ? ? ?
+
+           +00              08              10              18            1F
+   C+0040   E8404040404040404040404040404040
+            Y
+
+FILE 0029  STREAM    13
+           +00              08              10              18            1F
+   C+0000   C3114DF1C8C9D37AF0F040D4C8E37AF2F440D4E6C47AF8F040D4D3D57A40F140
+                    H I L : 0 0   M H T : 2 4   M W D : 8 0   M L N :   1
+           +00              08              10              18            1F
+   C+0020   D4C3D37A40F140D2C1E37AF0F040D3C9E47AC5D5C740D5C9E47AC140D4E2D97A
+            M C L :   1   K A T : 0 0   L I U : E N G   N I U : A   M S R :
+   N+0020   D4C3D37A40F140D2C1E37AF0F040D3C9E47AC5D5E440D5C9E47AC540D4E2D97A
+            M C L :   1   K A T : 0 0   L I U : E N U   N I U : E   M S R :
+   DIFFS                                            ?           ?
+
+           +00              08              10              18            1F
+   C+0040   F0F040C7D4D47AF0F040D5E7E37A40404040
+            0 0   G M M : 0 0   N X T :
+

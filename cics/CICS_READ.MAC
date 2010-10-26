@@ -11,7 +11,7 @@
 .* XRBA AND FLENGTH ARE EXTENSIONS
          GBLB  &PARMS_0602
          GBLB  &ZC_CICS
-         LCLB  &RBA,&XRBA,&RRN,&GTEQ,&EQUAL,&GENERIC,&NOHAND
+         LCLB  &RBA,&XRBA,&RRN,&GTEQ,&EQUAL,&GENERIC,&NOEDF,&NOHAND
          LCLC  &FILE,&DATASET,&INTO,&SET,&LENGTH,&FLENGTH,&RIDFLD
          LCLC  &KLENGTH,&RESP,&RESP2
 .*
@@ -36,6 +36,7 @@
          AIF   ('&PARM'(1,7)  EQ 'GENERIC').GENERIC
          AIF   ('&PARM'(1,4)  EQ 'GTEQ').GTEQ
          AIF   ('&PARM'(1,5)  EQ 'EQUAL').EQUAL
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
@@ -98,6 +99,10 @@
 &EQUAL   SETB  1
          AGO   .PLOOP
 .*
+.NOEDF   ANOP
+&NOEDF   SETB  1
+         AGO   .PLOOP
+.*
 .NOHAND  ANOP
 &NOHAND  SETB  1
          AGO   .PLOOP
@@ -158,11 +163,12 @@
 .CHKLEN  ANOP
          AIF   ('&SET' EQ '').NOSET
          GEN_MVI P0602SET,X'FF'   SET SET INDICATOR
-         AGO   .DUNLEN
+         AGO   .DOLEN
 .*
 .NOSET   ANOP
          LA    R0,&INTO           R0=INTO ADDRESS
          GEN_ST R0,P0602INT       SAVE IT
+.DOLEN   ANOP
          AIF   ('&LENGTH' EQ '').NOLENG
          AIF   (T'&LENGTH NE 'N').LENLABL
          LA    R0,&LENGTH         R0=LENGTH
@@ -268,6 +274,8 @@
          LARL  R15,P0602RID       ADDRESS TARGET
 CICS_READ_&SYSNDX._MVCKEY EQU *
          MVC   0(0,R15),&RIDFLD   MOVE RIDFLD
+         LA    R0,L'&RIDFLD       R0=LENGTH OF RIDFLD
+         GEN_STC R0,P0602LRD      SAVE IT
 CICS_READ_&SYSNDX._NOKEY EQU *
          AGO   .DUNOPT
 .*
@@ -295,13 +303,30 @@ CICS_READ_&SYSNDX._NOKEY EQU *
 .NORRN   ANOP
 .* DEFAULT IS FULL KEY
          LARL  R15,P0602RID       ADDRESS TARGET
-         MVC   0(128,R15),&RIDFLD MOVE FULL RIDFLD
+         LA    R0,L'&RIDFLD       R0=LENGTH OF RIDFLD
+         GEN_STC R0,P0602LRD      SAVE IT
+         BCTR  R0,0               -1 FOR DYNAMIC LENGTH
+         LARL  R1,CICS_READ_&SYSNDX._MVCKEY2 ADDRESS TARGET
+         STC   R0,1(R1)           STORE LENGTH
+         LARL  R15,P0602RID       ADDRESS TARGET
+CICS_READ_&SYSNDX._MVCKEY2 EQU *
+         MVC   0(0,R15),&RIDFLD   MOVE RIDFLD
 .DUNOPT  ANOP
          AIF   (NOT &GTEQ).DUNBRWS
          GEN_MVI P0602GTE,X'FF'   SET GTEQ
 .DUNBRWS ANOP
          GEN_ST DFHEIBR,P0602EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P0602TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P0602EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P0602EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P0602EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P0602NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P0602NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -313,8 +338,11 @@ CICS_READ_&SYSNDX._NOKEY EQU *
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P0602RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P0602EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P0602EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P0602)       R1=LCL MODULE PARAMETER LIST
+P0602EDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          AIF   ('&SET' EQ '').NOSET2
@@ -343,38 +371,7 @@ CICS_READ_&SYSNDX._NOKEY EQU *
 *
          AIF   (&PARMS_0602).BYP0602
 &PARMS_0602 SETB 1
-P0602    DS    0H
-P0602FN  DS    XL2                FUNCTION CODE
-P0602EIB DS    AL4                EIB
-P0602TCT DS    AL4                TCTTE
-P0602FIL DS    CL8                FILENAME
-P0602STA DS    AL4                ADDRESS FOR SET
-P0602INT DS    AL4                ADDRESS OF INTO
-P0602LEN DS    XL4                LENGTH
-P0602LAD DS    AL4                ADDRESS OF LENGTH IF LABEL
-P0602FAD DS    AL4                ADDRESS OF FLENGTH IF LABEL
-P0602SET DS    X                  FF=SET IS SPECIFIED
-         DS    X
-P0602KIN DS    X                  FF=KEYLENGTH IS VALID
-         DS    X
-P0602KLN DS    XL2                KEYLENGTH
-P0602RID DS    XL128              RIDFLD
-P0602GEN DS    X                  FF=GENERIC
-         DS    X
-P0602RBA DS    X                  FF=RBA
-         DS    X
-P0602XRB DS    X                  FF=XRBA
-         DS    X
-P0602RRN DS    X                  FF=RRN
-         DS    X
-P0602GTE DS    X                  00=EQUAL FF=GTEQ
-         DS    X
-P0602NOH DS    X                  FF=NOHANDLE
-         DS    X
-P0602RSP DS    AL4                RESP
-P0602RS2 DS    AL4                RESP2
-P0602END EQU   *                  END MARKER
-         DS    0H
+         P0602
 *
 .BYP0602 ANOP
 P0602BYP_&SYSNDX DS 0H

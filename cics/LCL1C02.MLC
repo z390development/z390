@@ -11,6 +11,8 @@ LCL1C02  CSECT
 * R1  >>> P1C02 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL1C02'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P1C02NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          MVC   DCODE,P1C02DCD     MOVE DUMP CODE
          CLI   P1C02CMP,X'FF'     COMPLETE DUMP REQUEST
          BNE   NOCOMP             EXIT IF NOT
@@ -70,6 +82,16 @@ SEGLOOP  EQU   *
          BCT   R6,SEGLOOP         LOOP
 *
 NOSEGS   EQU   *
+         CLI   P1C02NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
          LTORG
@@ -79,22 +101,10 @@ DCODE    DC    CL4' '              DUMP CODE
          DC    C' '
 DUMPID   DC    CL11' '             COMPLETE/AREA/SEGMENT NNN
          DC    X'00'
+*
 DEC      DC    PL8'0'
 *
-P1C02    DSECT
-P1C02FN  DS    XL2                FUNCTION CODE
-P1C02EIB DS    AL4                EIB
-P1C02TCT DS    AL4                TCTTE
-P1C02DCD DS    CL4                DUMPCODE
-P1C02FRM DS    AL4                FROM
-P1C02LEN DS    AL4                LENGTH/FLENGTH
-P1C02SEG DS    AL4                SEGMENTLIST
-P1C02LST DS    AL4                LENGTHLIST
-P1C02NSG DS    AL4                NUMSEGMENTS
-P1C02CMP DS    X                  X'FF'=COMPLETE
-P1C02RSP DS    AL4                RESP
-P1C02RS2 DS    AL4                RESP2
-P1C02END EQU   *                  END MARKER
+         P1C02 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

@@ -11,7 +11,7 @@
 .* XRBA IS AN EXTENSION
          GBLB  &PARMS_060C
          GBLB  &ZC_CICS
-         LCLB  &RBA,&XRBA,&RRN,&GTEQ,&EQUAL,&GENERIC,&NOHAND
+         LCLB  &RBA,&XRBA,&RRN,&GTEQ,&EQUAL,&GENERIC,&NOEDF,&NOHAND
          LCLC  &FILE,&DATASET,&RIDFLD,&REQID,&KLENGTH,&RESP,&RESP2
 .*
 &NP      SETA  N'&SYSLIST
@@ -32,6 +32,7 @@
          AIF   ('&PARM'(1,4)  EQ 'GTEQ').GTEQ
          AIF   ('&PARM'(1,5)  EQ 'EQUAL').EQUAL
          AIF   ('&PARM'(1,7)  EQ 'GENERIC').GENERIC
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
@@ -80,6 +81,10 @@
 .*
 .GENERIC ANOP
 &GENERIC SETB  1
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -227,6 +232,16 @@ CICS_STARTBR_&SYSNDX._NOKEY EQU *
 .DUNGTEQ ANOP
          GEN_ST DFHEIBR,P060CEIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P060CTCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P060CEDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P060CEDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P060CEDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P060CNED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P060CNOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -238,8 +253,11 @@ CICS_STARTBR_&SYSNDX._NOKEY EQU *
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P060CRS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P060CEDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P060CEDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P060C)       R1=LCL MODULE PARAMETER LIST
+P060CEDF_&SYSNDX DS 0H
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P060CNOH,X'FF'   NOHANDLE ?
@@ -252,35 +270,7 @@ CICS_STARTBR_&SYSNDX._NOKEY EQU *
 *
          AIF   (&PARMS_060C).BYP060C
 &PARMS_060C SETB 1
-P060C    DS    0H
-P060CFN  DS    XL2                FUNCTION CODE
-P060CEIB DS    AL4                EIB
-P060CTCT DS    AL4                TCTTE
-P060CFIL DS    CL8                FILENAME
-P060CKIN DS    X                  FF=KEYLENGTH IS VALID
-         DS    X
-P060CKLN DS    XL2                KEYLENGTH
-P060CRID DS    XL128              RIDFLD
-P060CARD DS    AL4                A(RIDFLD)
-P060CLRD DS    X                  L'RIDFLD
-         DS    X
-P060CGEN DS    X                  FF=GENERIC
-         DS    X
-P060CRBA DS    X                  FF=RBA
-         DS    X
-P060CXRB DS    X                  FF=XRBA
-         DS    X
-P060CRRN DS    X                  FF=RRN
-         DS    X
-P060CGTE DS    X                  00-EQUAL FF=GTEQ
-         DS    X
-P060CREQ DS    XL2                REQID
-P060CNOH DS    X                  FF=NOHANDLE
-         DS    X
-P060CRSP DS    AL4                RESP
-P060CRS2 DS    AL4                RESP2
-P060CEND EQU   *                  END MARKER
-         DS    0H
+         P060C
 *
 .BYP060C ANOP
 P060CBYP_&SYSNDX DS 0H

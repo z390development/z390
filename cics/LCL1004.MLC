@@ -11,6 +11,8 @@ LCL1004  CSECT
 * R1  >>> P1004 BLOCK POINTER
 *
          USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL1004'
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              SET BASE
          L     R3,0(R3)                    FOR PARMS
@@ -31,6 +33,17 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         MVC   EIBREQID,P1004REQ  MOVE REQID
+         CLI   P1004NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          CLI   P1004INT,X'FF'     IS IT INTERVAL/TIME ?
          BNE   UNTFOR             NO, EXIT TO UNTIL/FOR PROCESSING
 * INTERVAL/TIME
@@ -111,7 +124,7 @@ GOINT    EQU   *
 NOTEXP   EQU   *
 * IF WE HAVE A CWA SEND IT BACK AND DEQ
          OC    TCTTECWA,TCTTECWA  ANY CWA ?
-         BZ    DOSTIMR            EXIT IF NONE
+         BZ    DODELAY            EXIT IF NONE
          LA    R5,CWPREFIX        R5=PREFIX LENGTH
          A     R5,TCTTECWL        + CWA LENGTH
          GETMAIN R,LV=(R5)
@@ -130,26 +143,73 @@ NOTEXP   EQU   *
          MVCL  R0,R14             MOVE CWA
          L     R8,0(R9)           R8=MESSAGE LENGTH
          TCPIO SEND,MSG=(R9),LMSG=(R8),PORT=3900
-         EXEC  CICS DEQ RESOURCE(CWALOCK) LENGTH(7)
+         EXEC  CICS DEQ RESOURCE(CWALOCK) LENGTH(7) NOEDF
          MVI   CWAIND,X'FF'       SET RE-ACQUIRE CWA FLAG
-DOSTIMR  EQU   *
-         STIMER WAIT,BINTVL=INTBIN WAIT A WHILE
+DODELAY  EQU   *
+         TIME  CLOCK,STCKTIME,CLOCKTYPE=STCK
+         SGR   R0,R0              CLEAR R0
+         LG    R1,STCKTIME        R1=STCK TIME
+         SRLG  R1,R1,12           SHIFT TO uS
+         DSGF  R0,=F'10000'       REDUCE TO 0.01 SEC
+         AGF   R1,INTBIN          ADD OUR INTERVAL
+         STG   R1,STCKTIME        SAVE IT
+* GET AND CLEAR THE IC BLOCK
+         EXEC  CICS GETMAIN FLENGTH(=A(ICPREFIX)) SET(R6) INITIMG(0)   X
+               NOHANDLE NOEDF
+         USING DFHICBLK,R6
+         MVC   ICPTCPIO,=AL4(ICPREFIX) SET PREFIX LENGTH
+         MVC   ICPFN,=C'1004'     SET FUNCTION CODE
+         MVC   ICPTERM,TCTTETI    SET TERMINAL ID
+         MVC   ICPTRAN,EIBTRNID   SET TRANSID
+         MVC   ICPTASKN,EIBTASKN  SET TASK NUMBER
+         MVC   ICPSTCK,STCKTIME   SET EXPIRY TIME
+         MVC   ICPREQID,EIBREQID  SET REQID
+         TCPIO SEND,MSG=(R6),LMSG==A(ICPREFIX),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+ICPRCV   EQU   *
+         TCPIO RECEIVE,MSG=(R6),LMSG==A(ICPREFIX),PORT=3900
+* WE SUSPEND HERE UNTIL THE DELAY EXPIRES OR A CANCEL IS ISSUED
+* WE RECEIVE LENGTH/FN/EDF OFF ONLY
+         LTR   R15,R15            CHECK RC ?
+         BNZ   INVREQ             ERROR IF BAD
+         CLC   ICPFN,=C'10FF'     UNSOL IC SCAN ?
+         BE    ICPRCV             EXIT IF IT IS
+         CLC   ICPFN,=C'1004'     WHAT WE ARE EXPECTING ?
+         BE    ICPRCK             EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+ICPRCK   EQU   *
+         CLI   ICPTERM,X'FF'      EDF OFF REQUESTED ?
+         BNE   NOEOFF             EXIT IF NOT
+         MVI   TCTTEEDF,X'00'     TURN EDF OFF
+NOEOFF   EQU   *
+* FREE THE IC BLOCK
+         EXEC  CICS FREEMAIN DATAPOINTER(R6) NOEDF
          CLI   CWAIND,X'00'       NEED TO RE-ACQUIRE CWA ?
-         MVI   CWAIND,X'00'       CLEAR RE-ACQUIRE CWA FLAG
          BE    RETURN             EXIT IF NOT
+         MVI   CWAIND,X'00'       CLEAR RE-ACQUIRE CWA FLAG
 * RE-ACQUIRE THE CWA
-         EXEC  CICS ENQ RESOURCE(CWALOCK) LENGTH(7) INT1004
+         EXEC  CICS ENQ RESOURCE(CWALOCK) LENGTH(7) INT1004 NOEDF
          MVC   CWAFN,=C'FE07'     SET FUNCTION CODE
          MVC   CWATERM,TCTTETI    SET TERMINAL ID
          MVC   CWATRAN,EIBTRNID   SET TRANSID
          MVC   CWATASKN,EIBTASKN  SET TASK NUMBER
          MVI   CWARDWRT,X'00'     SET CWA GET
-         DROP  R9
          TCPIO SEND,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+CWARCV   EQU   *
 * ONLY THE PREFIX IS RECEIVED, WE GET THE CWA LATER
          TCPIO RECEIVE,MSG=(R9),LMSG==A(CWPREFIX),PORT=3900
+         CLC   CWAFN,=C'10FF'     UNSOL IC SCAN ?
+         BE    CWARCV             EXIT IF IT IS
+         CLC   CWAFN,=C'FE07'     WHAT WE ARE EXPECTING ?
+         BE    CWARCK             EXIT IF IT IS
+         DC    H'0'               TCPIO BAD RECEIVE
+CWARCK   EQU   *
+         DROP  R9
          L     R8,TCTTECWA        R8=CWA ADDRESS
          TCPIO RECEIVE,MSG=(R8),LMSG=TCTTECWL,PORT=3900 GET THE CWA
+         LA    R5,CWPREFIX        R5=PREFIX LENGTH
+         A     R5,TCTTECWL        + CWA LENGTH
          FREEMAIN A=(R9),LV=(R5)
          B     RETURN             EXIT
 *
@@ -244,40 +304,33 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
+         CLI   P1004NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
-WORK     DC    PL8'0'             WOTK AREA
+WORK     DC    PL8'0'             WORK AREA
 INTDEC   DC    PL8'0'             INTERVAL IN 0.01 SECS
 INTCPY   DS    PL4                INTERVAL COPY AREA    0HHMMSS+
 INTBIN   DS    FL4                INTERVAL IN 0.01 SECS BINARY
 LAPSE    DS    FL4                TIME LAPSE IN 0.01 SECS BINARY
+STCKTIME DS    XL8                STCK TIME
 CWALOCK  DC    C'--CWA--'
 CWAIND   DC    X'00'              FF=NEED TO RE-ACQUIRE CWA
 *
-P1004    DSECT
-P1004FN  DS    XL2                FUNCTION CODE
-P1004EIB DS    AL4                EIB
-P1004TCT DS    AL4                TCTTE
-P1004INT DS    X                  FF=INTERVAL/TIME
-         DS    X
-P1004TME DS    X                  00=INTERVAL/FOR  FF=TIME/UNTIL
-         DS    X
-P1004HMS DS    PL4                0HHMMSS+
-P1004IND DS    X                  FF=MORE THAN 1 PARM IN NEXT 3
-         DS    X
-P1004HRS DS    PL8                HOURS
-P1004MIN DS    PL8                MINUTES
-P1004SEC DS    PL8                SECONDS
-         DS    X                  FF=NOHANDLE
-         DS    X
-P1004HCN DS    AL4                A(DFHEIHCN)
-P1004RSP DS    AL4                RESP
-P1004RS2 DS    AL4                RESP2
-P1004END EQU   *                  END MARKER
+         P1004 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE
          DFHCWBLK                 CWA PREFIX AREA
+         DFHICBLK                 INTERVAL CONTROL PREFIX AREA
 *
          EQUREGS REGS=GPR
 *
