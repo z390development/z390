@@ -366,6 +366,14 @@ public  class  az390 implements Runnable {
         * 10/08/10 RPI 1125 add LEDBR?, LDXBR?, LEXBR?
         * 10/10/10 RPI 1125 ADD SRNMB
         * 10/20/10 RPI 1125 add FIEBR?, FIDBR?, FIXBR?
+        * 11/23/10 RPI 1125 add B394-B39A
+        * 12/01/10 RPI 1125 ADD B3D0-B3DB MDTRA-SXTRA
+        * 12/03/10 RPI 1125 ADD B928-B92D PCKMO KMOTR 
+        * 12/04/10 RPI 1125 ADD B941-B95B CFDTR - CXLFTR, FIX MDTRA DFP/BFP RND 
+        * 12/09/10 RPI 1125 ADD B9E2-B9FB LOCGR-SLRK 
+        * 12/09/10 RPI 1125 ADD C84-C85 LPD-LPDG 
+        * 12/19/10 RPI 1125 ADD EBDC-EBFA SRAK - LAAL
+        * 12/21/10 RPI 1125 ADD EC51-ECDB RISBLG - ALGSIK
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -2006,7 +2014,9 @@ private void process_bal_op(){
     	loc_len = 4;
     	get_hex_op(1,4);
     	get_hex_zero(2);
-    	if (bal_op.equals("PALB")){ // RPI 277
+    	if (bal_op.equals("PALB") // RPI 277
+    		|| bal_op.equals("PCKMO") // RPI 1125
+	        || bal_op.equals("PCC")){ // RPI 1125
     		get_hex_zero(2);
     	} else {
     		get_hex_reg();
@@ -2102,7 +2112,7 @@ private void process_bal_op(){
     	check_end_parms();
     	put_obj_text();
     	break;
-    case 20:  // "RSY" 31  LMG  oorrbdddhhoo
+    case 20:  // "RSY" 31  LMG r1,r3,s2 oorrbdddhhoo
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
     	loc_start = loc_ctr;
@@ -2397,17 +2407,32 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 4;
     	get_hex_op(1,4);
-     	get_hex_reg();
-     	get_hex_zero(1);
-     	skip_comma();
-     	get_hex_reg();
-     	skip_comma();
-     	get_hex_reg();
-    	obj_code = obj_code.substring(0,4)  // oooo
-     	    + obj_code.substring(7,8)  // r3
-	    	+ "0"
-	    	+ obj_code.substring(4,5)  // r1
-    	    + obj_code.substring(6,7); // r2
+      	if (bal_op.charAt(bal_op.length()-1) == 'A'){ // RPI 1125    	
+      		get_hex_reg();
+      		skip_comma();
+      	   	get_hex_reg();
+      	   	skip_comma();
+      	   	get_hex_reg();
+      	   	skip_comma();
+      	   	get_hex_reg();
+      	   	obj_code = obj_code.substring(0,4)  // oooo
+      	   	  + obj_code.substring(6,7)  // r3
+	    	  + obj_code.substring(7,8)  // m4
+	    	  + obj_code.substring(4,5)  // r1
+    	      + obj_code.substring(5,6); // r2
+      	} else {
+      		get_hex_reg();
+      	   	get_hex_zero(1);
+      	   	skip_comma();
+      	   	get_hex_reg();
+      	   	skip_comma();
+      	   	get_hex_reg();
+      	   	obj_code = obj_code.substring(0,4)  // oooo
+      	   	  + obj_code.substring(7,8)  // r3
+	    	  + "0"
+	    	  + obj_code.substring(4,5)  // r1
+    	      + obj_code.substring(6,7); // r2
+      	}
 	    check_end_parms();
     	put_obj_text();
     	break;
@@ -2789,13 +2814,13 @@ private void process_bal_op(){
     	}
     	put_obj_text();
     	break;
-    case 54:   // FIEBR?, FIDBR?, FIXBR? RPI 1125
+    case 54:   // FIEBR?, FIDBR?, FIXBR? RPI 1125 	r1,m3,r2 or r1,m3,r2,m4
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
     	loc_start = loc_ctr;
     	loc_len = 4;
     	get_hex_op(1,4);
-      	if (bal_op.charAt(bal_op.length()-1) == 'A'){ // RPI 277
+      	if (bal_op.charAt(bal_op.length()-1) == 'A'){ // RPI 1125
       		get_hex_reg();  // r1
    			skip_comma();
    			get_hex_reg();  // m3
@@ -2825,6 +2850,58 @@ private void process_bal_op(){
     	}
     	put_obj_text();
     	break;
+    case 55:   // SSF LPD/LPDG oor0bdddbddd (r3,s1,s2) RPI 1125
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2); 
+    	get_hex_reg();
+    	get_hex_op(3,1);
+    	skip_comma();        
+    	get_hex_bddd2(false);          // RPI 606
+       	hex_bddd1     = hex_bddd2;     // RPI 606
+       	hex_bddd1_loc = hex_bddd2_loc; // RPI 606
+       	skip_comma();
+    	get_hex_bddd2(false);  
+    	obj_code = obj_code + hex_bddd1 + hex_bddd2; 
+    	check_end_parms();
+    	put_obj_text();
+    	break;
+    case 56:  // "RSY" 207/209 LOCG r1,s2,m3 oormbdddhhoo RPI 1125
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2); 
+       	get_hex_reg();       	
+       	skip_comma();
+    	get_hex_bdddhh2();    	
+    	get_hex_op(3,2);
+    	skip_comma();
+       	get_hex_reg();
+    	obj_code = obj_code.substring(0,2)  // oooo
+ 	    + obj_code.substring(2,3)  // r1
+    	+ obj_code.substring(11,12)  // m3
+    	+ obj_code.substring(3,11); // r2 
+    	check_end_parms();
+    	put_obj_text();
+    	break;
+    case 57: // "RIE9" "AHIK" oo13IIII00Oo RPI 1125
+        // r1,r3,i2
+    	bal_op_ok = true;
+    	loc_len = 6;
+    	get_hex_op(1,2);  // OP1
+    	get_hex_reg();    // R1
+       	skip_comma();
+       	get_hex_reg();    // R3
+       	skip_comma();
+       	get_hex_rel();    // I2
+   		get_hex_zero(2);  
+       	get_hex_op(3,2);  // OP2
+    	check_end_parms();
+    	put_obj_text();
+    	break;	
     case 101:  // CCW  0 
     case 102:  // CCW0 0
     	bal_op_ok = true;

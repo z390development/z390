@@ -392,6 +392,11 @@ public  class  mz390 {
      *          prior lcl_key_index_last in some cases
      * 10/19/10 RPI 1131 fix instr/sec ovf, omit ainsert .*,
      *          fix PUNCH missing quote causing abort, trace ACTR value
+     * 11/22/10 RPI 1135 expand AINSERT COPY at source insert time, tracem AINSERT's
+     * 11/24/10 RPI 1136 allow AINSERT '.*' for AREAD  
+     * 12/22/10 RPI 1132 add option MNOTE(0) 
+     * 12/24/10 RPI 1140 add trace of AREAD variable  
+     * 12/23/10 RPI 1142 add option MNOTE(0)  
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -501,8 +506,9 @@ public  class  mz390 {
 	int cur_mac_file = 0;
 	int dynamic_mac_file  = -1;    // RPI 1019
 	int dynamic_copy_file = -1;    // RPI 1019 
-	boolean ainsert_copy = false;  // RPI 1019 RPI 1083 currently expanding AINSERT copy
+	boolean ainsert_copy = false;  // RPI 1019 RPI 1083 currently expanding AINSERT copy to front of queue
 	boolean ainsert_source = false; // RPI 1083 cur mac_line is from AINSERT queue
+	int     ainsert_copy_level = 0; // RPI 1135
 	int     ainsert_copy_index = 0; // RPI 1053 
 	boolean ainsert_back = true;  // RPI 1019
 	File[] mac_file                = null;
@@ -3161,8 +3167,7 @@ public  class  mz390 {
 		} else {
 			mac_parms = "";
 		}
-		if (mac_op.equals("COPY")
-			&& !ainsert_copy){ // RPI 300  RPI 1083
+		if (mac_op.equals("COPY")){ // RPI 300  RPI 1083 RPI 1135 was && !ainsert_copy
 			open_mac_copy_file();
 			return;
 		}
@@ -3263,19 +3268,28 @@ public  class  mz390 {
 				cur_mac_file--;
 			} else {
                 // expand dynamic COPY to ainsert queue now
-		    	ainsert_copy = true;
-		    	ainsert_copy_index = 0; // RPI 1053 RPI 1082
+		    	if (!ainsert_copy){ // RPI 1135
+		    		ainsert_copy = true;
+		    		ainsert_back = false;   // RPI 1135
+		    		ainsert_copy_level = 1; // RPI 1135
+		    		ainsert_copy_index = 0; // RPI 1053 RPI 1082
+		    	} else {
+		    		ainsert_copy_level++;
+		    	}
 		    	int save_dynamic_mac_file = dynamic_mac_file;
 		    	dynamic_mac_file = cur_mac_file-1; // RPI 1083
 				open_load_file(new_mac_name);
 				load_get_zstrmac_file_line();
 		    	while (cur_mac_file >= dynamic_mac_file && mac_line != null){  
-	                add_ainsert_queue_rec(mac_line);
+	                add_ainsert_queue_rec(mac_line);	                
 	                load_get_zstrmac_file_line();
 		    	}
 		    	dynamic_mac_file = save_dynamic_mac_file;
-		    	ainsert_copy = false;
-		    	ainsert_source = false;
+		    	ainsert_copy_level--; // RPI 1135
+		    	if (ainsert_copy_level == 0){ // RPI 1135
+		    		ainsert_copy = false;
+		    		ainsert_source = false;
+		    	}
 			}
 			break;	
 		}
@@ -4573,6 +4587,7 @@ public  class  mz390 {
 		 *   3.  end of file returns 0 length string "".
 		 *   4.  Options NOPRINT and NOSTMT ignored
 		 */
+		String aread_text = ""; // RPI 1140
 		dat_file_index = 0;
         set_aread_punch_options(bal_parms,tz390.dir_dat,tz390.dat_type);
 		if (ap_file_io){
@@ -4600,14 +4615,22 @@ public  class  mz390 {
 					dat_file_buff[dat_file_index] = new BufferedReader(new FileReader(dat_file[dat_file_index]));
 				} catch (Exception e){
 					dat_file[dat_file_index] = null;	
-					return ""; // RPI 443 return eof if no file
+					aread_text = ""; // RPI 443 return eof if no file
+				    if (tz390.opt_tracem){
+				    	tz390.put_trace(" AREAD TEXT ='" + aread_text + "'");
+				    }
+					return aread_text;
 				}
 			}
 			try {
 				String text = dat_file_buff[dat_file_index].readLine();
 				if (text == null){
 		            close_dat_file(dat_file_index);
-					return "";
+					aread_text = "";
+					if (tz390.opt_tracem){ // RPI 1140
+				    	tz390.put_trace(" AREAD TEXT ='" + aread_text + "'");
+				    }
+					return aread_text;
 				} else {
 					tz390.systerm_io++;
 					tot_aread_io++;
@@ -4615,11 +4638,19 @@ public  class  mz390 {
 					if (text.length() == 0){ // RPI 410
 						text = " "; // return 1 space if all spaces or cr, lf
 					}
-					return text;
+					aread_text = text;
+					if (tz390.opt_tracem){ // RPI 1140
+				    	tz390.put_trace(" AREAD TEXT ='" + aread_text + "'");
+				    }
+					return aread_text;
 				}
 			} catch (Exception e){
 				abort_error(71,"I/O error on AREAD file read - " + e.toString());
-				return "";
+				aread_text = "";
+				if (tz390.opt_tracem){ // RPI 1140
+			    	tz390.put_trace(" AREAD TEXT ='" + aread_text + "'");
+			    }
+				return aread_text;
 			}		
 		} else if (ap_clockb){  // rpi 745
 			if (tz390.opt_timing){
@@ -4632,14 +4663,26 @@ public  class  mz390 {
 			int th  = new Integer(hhmmssmmm.substring(6,9))/10;
 			int tod = th + 100*(ss + 60*(mm + 60*hh));
 	        String tod_str = "" + tod;
-			return ("00000000" + tod_str).substring(tod_str.length());
+			aread_text = ("00000000" + tod_str).substring(tod_str.length());
+			if (tz390.opt_tracem){ // RPI 1140
+		    	tz390.put_trace(" AREAD TEXT ='" + aread_text + "'");
+		    }
+			return aread_text;
 		} else if (ap_clockd){ // RPI 745
 			if (tz390.opt_timing){
 				cur_date = new Date();
 			}
-            return sdf_systime_clockd.format(cur_date).substring(0,8);
+            aread_text = sdf_systime_clockd.format(cur_date).substring(0,8);
+            if (tz390.opt_tracem){ // RPI 1140
+		    	tz390.put_trace(" AREAD TEXT ='" + aread_text + "'");
+		    }
+			return aread_text;
 		} else {
-			return get_next_source_line();
+			aread_text = get_next_source_line();
+			if (tz390.opt_tracem){ // RPI 1140
+		    	tz390.put_trace(" AREAD TEXT ='" + aread_text + "'");
+		    }
+			return aread_text;
 		}
 	}
 	private String get_next_source_line(){
@@ -8845,10 +8888,12 @@ public  class  mz390 {
 		 * put mnote message on BAL and ERR files
 		 */
 		msg = tz390.ascii_printable_string(msg); // RPI 938
-		if (!tz390.opt_asm && level >= 0){ // RPI 415 let az390 report mnote in seq on ERR
+		if (level >= 0 // RPI 415 let az390 report mnote in seq on ERR
+			&& (!tz390.opt_asm || tz390.opt_mnote == 2)){ // RPI 1142 put on ERR if no ASM	
 			tz390.put_systerm("MNOTE " + level + "," + msg); // RPI 330, RPI 440, RPI 444
 		}
-		if (level > tz390.max_mnote_warning){ 
+		if (level > tz390.max_mnote_warning 
+			&& tz390.opt_mnote != 1){ // RPI 1142 
 			if (tz390.opt_traces || tz390.opt_con){  // RPI 935
 				System.out.println("MZ390E MNOTE " + level + "," + msg); // RPI 882
 			}
@@ -8869,12 +8914,14 @@ public  class  mz390 {
 		if (level > mac_call_sysm_sev[mac_call_level]){  // RPI 898
 			mac_call_sysm_sev[mac_call_level] = level;   // RPI 898
 		}
-		if (level > 0){
-			put_bal_line("         MNOTE " + level + "," + msg);
-		} else if (level == 0){
-			put_bal_line("         MNOTE " + msg); // RPI 938
-		} else {
-			put_bal_line("         MNOTE *," + msg); // RPI 938
+		if (tz390.opt_mnote != 2){ // RPI 1132
+			if (level > 0){
+				put_bal_line("         MNOTE " + level + "," + msg);
+			} else if (level == 0){
+				put_bal_line("         MNOTE " + msg); // RPI 938
+			} else {
+				put_bal_line("         MNOTE *," + msg); // RPI 938
+			}
 		}
 	}
 	private void process_punch(){
@@ -12006,8 +12053,8 @@ public  class  mz390 {
     	 * add record to front or back of ainsert queue
     	 * for copy insert at front in seq.
     	 */
-    	if (rec.length() > 1 && rec.substring(0,2).equals(".*")){
-    		return; // RPI 1131 omit AINSERT '.*'
+    	if (tz390.opt_tracem){ // RPI 1135
+    		tz390.put_trace("AINSERT PUSH=" + rec);
     	}
     	if (ainsert_back){
 			ainsert_queue.add(rec);
@@ -12027,11 +12074,31 @@ public  class  mz390 {
     	 * in front of current source line
     	 * at mac_line index
     	 */
-        set_insert_mac_line_index();  // RPI 1019 
-    	String temp_line = ainsert_queue.pop();
+    	get_ainsert_source_line(); // RPI 1136
     	if (tz390.opt_tracem){ // RPI 1053
-    	     tz390.put_trace("AINSERT="+temp_line);
+   	       tz390.put_trace("AINSERT POP =" + mac_line); // RPI 1135
+   	    }
+    	while (cur_ainsert > 0
+    	    && mac_line.length() > 1 
+    		&& mac_line.substring(0,2).equals(".*")){
+        	get_ainsert_source_line(); // RPI 1136
+        	if (tz390.opt_tracem){ // RPI 1053
+       	       tz390.put_trace("AINSERT POP =" + mac_line); // RPI 1135
+       	    }
     	}
+    	if (mac_line.length() > 1
+    		&& mac_line.substring(0,2).equals(".*")){
+    		return;
+    	}
+        set_insert_mac_line_index();  // RPI 1019
+	    mac_file_line[mac_line_index] = mac_line;
+    }
+    private void get_ainsert_source_line(){
+    	/*
+    	 * return mac_line with source line from AINSERT queue
+    	 * which may have continuations
+    	 */
+    	String temp_line = ainsert_queue.pop();
     	cur_ainsert--;
     	tot_ainsert++;
     	if (cur_mac_file < 0){
@@ -12041,19 +12108,17 @@ public  class  mz390 {
     	    || temp_line.charAt(mac_ictl_end[cur_mac_file]) <= asc_space_char // RPI 728 test cont col
     	    ){ //RPI181
     		mac_line = tz390.trim_trailing_spaces(temp_line,mac_ictl_end[cur_mac_file]);  //RPI 124  RPI 728 exclude cont col
-    	    mac_file_line[mac_line_index] = mac_line;
     	} else {
     		mac_line = tz390.trim_continue(temp_line.substring(0,mac_ictl_end[cur_mac_file]),tz390.split_first,mac_ictl_end[cur_mac_file],mac_ictl_cont[cur_mac_file]); // first line RPI 728 remove cont char 
     		boolean mac_cont_line = true;
     		while (mac_cont_line && cur_ainsert > 0){ //RPI181 //RPI 215
     			temp_line = ainsert_queue.pop();
     			cur_ainsert--;
-    			store_mac_line(); // RPI 273 update now for any cont. error
     			temp_line = tz390.trim_trailing_spaces(temp_line,72);
        			if (temp_line.length() < 72 
     				|| temp_line.charAt(71) <= asc_space_char){ //RPI181
     				mac_cont_line = false;
-    				mac_file_line[mac_line_index] = mac_line + tz390.trim_trailing_spaces(temp_line.substring(15),72); //RPI124
+    				mac_line = mac_line + tz390.trim_trailing_spaces(temp_line.substring(15),72); //RPI124
     			    return;
        			}
     			if  (temp_line.length() >= mac_ictl_start[cur_mac_file] + mac_ictl_cont[cur_mac_file] - 1 // RPI 728
@@ -12065,8 +12130,7 @@ public  class  mz390 {
     						|| temp_line.charAt(0) != '*')) { // RPI 740 allow comment char for continued comm
     				log_error(271,"AINSERT continuation line < " + mac_ictl_cont[cur_mac_file] + " characters - " + temp_line);
     				mac_cont_line = false;
-    			}
-    			
+    			}    			
     		} 
     	}
     }

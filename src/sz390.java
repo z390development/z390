@@ -191,6 +191,8 @@ public  class  sz390 implements Runnable {
     * 05/20/10 RPI 1113 if cmd_wait_time = 4095 wait forever
     * 05/22/10 RPI 1120 add debug info to EZ114E error message
     * 07/28/10 RPI 865 issue error if FT text too long
+    * 11/10/10 RPI 1125 use fp_bfp_rnd and fp_dfp_rnd for context
+    * 11/25/10 RPI 1137 trap test command errors
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -4918,7 +4920,7 @@ private void svc_ctd(){
 			}
 			ctd_bd = pz390.fp_get_bd_from_lb(pz390.fp_reg,addr_in * 8);
 		}
-        ctd_text = ctd_bd.round(pz390.fp_x_context).toString(); // RPI 821 
+        ctd_text = ctd_bd.round(pz390.fp_lb_rnd_context[pz390.fp_bfp_rnd]).toString(); // RPI 821 
         ctd_trunc(tz390.fp_lb_digits); 
         break;	
 	case 8: // dd 
@@ -5198,7 +5200,7 @@ private void svc_cfd(){
 		break;	
 	case 28: // dd   RPI 514
 		try {
-			cfd_bd = new BigDecimal(cfd_text,pz390.fp_dd_context);   // RPI 526
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_dd_rnd_context[pz390.fp_dfp_rnd]);   // RPI 526
 		} catch (Exception e){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
@@ -5215,7 +5217,7 @@ private void svc_cfd(){
 		break;
 	case 29: // ed  RPI 514
 		try {
-			cfd_bd = new BigDecimal(cfd_text,pz390.fp_ed_context);   // RPI 526
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_ed_rnd_context[pz390.fp_dfp_rnd]);   // RPI 526
 		} catch (Exception e){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
@@ -5232,7 +5234,7 @@ private void svc_cfd(){
 		break;	
 	case 30: // ld   RPI 514
 		try {
-			cfd_bd = new BigDecimal(cfd_text,pz390.fp_ld_context);   // RPI 526
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_ld_rnd_context[pz390.fp_dfp_rnd]);   // RPI 526
 		} catch (Exception e){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
@@ -5493,6 +5495,7 @@ private void exec_test_cmd(){
 	/*
 	 * parse and execute current test command
 	 */
+  try { // RPI 1137	
 	if (test_cmd != null && test_cmd.length() > 0){
 		tz390.put_trace("test cmd: " + test_cmd);
 	    test_match = test_pattern.matcher(test_cmd);
@@ -5747,6 +5750,9 @@ private void exec_test_cmd(){
 	default:
 		test_error("undefined test command - " + test_opcode);
 	}
+  } catch(Exception e){
+	  test_error("invalid test command - " + test_opcode);
+  }
 }
 private int get_test_int(String token){// RPI 490
 	/*

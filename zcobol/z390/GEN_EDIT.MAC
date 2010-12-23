@@ -8,9 +8,19 @@
 .*********************************************************************
 .* 01/21/09 initial coding for edit to X field with picture with z/9's
 .* 07/15/09 RPI 1065 support fixed/floating insert 'B+-z$*' and CR/DB
+.* 11/26/10 RPI 1138 align decimal via SRP if specified
 .*********************************************************************
-         GEN_EDIT &T_NAME,&T_IX,&P_NAME,&P_LEN 
+         GEN_EDIT &T_NAME,&T_IX,&P_NAME,&P_LEN,&D_TARGET,&D_SOURCE
          COPY  ZC_WS
+         AIF   (K'&D_TARGET GT 0)  RPI 1138
+               :&DEC_OFF SETA &D_TARGET-&D_SOURCE
+               AIF (&DEC_OFF GT 0)
+         SRP   &P_NAME.(&P_LEN),&DEC_OFF,0
+               AELSEIF (&DEC_OFF LT 0)
+                  :&DEC_OFF SETA &DEC_OFF+64
+         SRP   &P_NAME.(&P_LEN),&DEC_OFF,0
+               AEND
+         AEND
          :&PIC  SETC '&SYM_PIC(&T_IX)'
          :&FIRST_9 SETB 1    TURN OFF AFTER FIRST 9
          :&DIGITS  SETA 0    DIGITS IN MASK Z OR 9

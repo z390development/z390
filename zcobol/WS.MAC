@@ -40,7 +40,8 @@
 .* 08/18/09 RPI 1065 add clauses JUSTIFIED, LEADING, TRAILING,                   
 .*          ASCENDING, DESCENDING, BLANK WHEN ZERO
 .* 10/12/09 RPI 1090 CORRECT COMP-4/COMP-5 TO COMP_4/COMP_5 FOR COMP
-.* 07/25/10 RIP 1126 SUPPORT NE+N VALUE
+.* 07/25/10 RPI 1126 SUPPORT NE+N VALUE
+.* 11/26/10 RPI 1138 CORRECT SYM_PIC_DEC FOR DISPLAY PICTURE Z.99 ETC.
 .*********************************************************************
 .* 
 .* WS level,name,clauses in any order (PIC,VALUE,USAGE supported)
@@ -715,7 +716,8 @@
 .*
 .*  1.  IF LEADING S SET PIC_SIGN AND REMOVE S
 .*  2.  DO NOT ALLOW QUOTE IN PIC CLAUSE
-.*
+.*  3.  Set SYM_PIC_DEC for V or '.' RPI 1138
+.*                               
          AENTRY  SET_PIC_AND_LEN
          :&PIC     SETC '&SYSLIST(&I)'
          AIF  ('&PIC'(1,1) EQ '''')
@@ -735,9 +737,9 @@
                          OR '&PIC'(&J,2) EQ 'A('                       X
                          OR '&PIC'(&J,2) EQ 'P('                       X
                          OR '&PIC'(&J,2) EQ 'Z(')  RPI 1065 ADD P,A
-                    AIF ('&PIC'(&J,1) EQ 'P')
-                       :&DEC_MODE SETB 1 
-                    AEND
+.*DSHX                    AIF ('&PIC'(&J,1) EQ 'P')
+.*DSHX                       :&DEC_MODE SETB 1 
+.*DSHX                    AEND
                     :&PIC_DUP SETA '&PIC'(&J+2,1)
                     :&J SETA &J+3
                     AWHILE (&J LT K'&PIC                               X
@@ -755,13 +757,12 @@
                     MNOTE 8,'WS UNKNOWN PIC CLAUSE &PIC'
                     AEXIT AWHILE
                 AELSE
-                    AIF ('&PIC'(&J,1) EQ 'P')
-                       :&DEC_MODE SETB 1
-                    AEND
                     :&PIC_LEN SETA &PIC_LEN+1
-                    AIF (&DEC_MODE)
+                    AIF ('&PIC'(&J,1) EQ '.') RPI 1138
+                        :&DEC_MODE SETB 1
+                    AELSEIF (&DEC_MODE)
                         :&SYM_PIC_DEC(&SYM_TOT) SETA &SYM_PIC_DEC(&SYM_X
-               TOT)+1
+               TOT)+1                            
                     AEND
                 AEND
                 :&J SETA &J+1

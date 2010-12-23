@@ -730,17 +730,17 @@ MVC3     MVC   PWORK(0),=C'1234'
          RT1   CCE
          MVC   WORD,=F'3'  RPI 859 CORRECT AND ADD TESTS FOR NEG I2
          ALSI  WORD,-1
-         RT1   CC3
+         RT1   CC1 NZ,NC
          CLC   WORD,=F'2'
          RT1   CCE
          MVC   WORD,=F'1'
          ALSI  WORD,-1
-         RT1   CC2
+         RT1   CC0  Z,NC
          CLC   WORD,=F'0'
          RT1   CCE
          MVC   WORD,=F'1'
          ALSI  WORD,-2
-         RT1   CC1
+         RT1   CC3 NZ,B
          CLC   WORD,=F'-1'
          RT1   CCE
 * EB7A   AGSI   
@@ -762,17 +762,17 @@ MVC3     MVC   PWORK(0),=C'1234'
          RT1   CCE
          MVC   DWORD,=FL8'3'  RPI 859 CORRECT AND ADD TESTS FOR NEG I2
          ALGSI DWORD,-1
-         RT1   CC3
+         RT1   CC1  NZ,NB
          CLC   DWORD,=FL8'2'
          RT1   CCE
          MVC   DWORD,=FL8'1'
          ALGSI DWORD,-1
-         RT1   CC2
+         RT1   CC0 Z,NB
          CLC   DWORD,=FL8'0'
          RT1   CCE
          MVC   DWORD,=FL8'1'
          ALGSI DWORD,-2
-         RT1   CC1
+         RT1   CC3  NZ,B
          CLC   DWORD,=FL8'-1'
          RT1   CCE
 * EC54   RNSBG

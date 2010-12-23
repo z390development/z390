@@ -301,8 +301,24 @@ public class pz390 {
 	 * 08/06/10 RPI 1125 add POPCNT per SHARE Pres. 08/04/10
 	 * 10/11/10 RPI 1125 add SRNMB
 	 * 10/21/10 RPI 1125 add B390-B392
-	 * 10/22/10 RPI 1124 add alt_rnd_mode for "?" instr, LEDBR etc.
-	 ******************************************************** 
+	 * 10/22/10 RPI 1125 add alt_rnd_mode for "?" instr, LEDBR etc.
+	 * 11/10/10 RPI 1125 add FIXBRA,FIEBRA,FIDBRA,CELFBR,CDLFBR,CXLFBR
+	 * 11/23/10 RPI 1125 add CEFBRA,CDFBRA,CSFBRA, CFEBRA,CFDBRA,CFXBRA
+	 * 11/24/10 RPI 1125 ADD B39C-B3A2 CLFEBR-CXLGBR
+	 * 11/29/10 RPI 1125 ADD B3A4-B3AE CEGBRA, CGEBRA, CLGEBR
+	 * 12/01/10 RPI 1125 ADD B3D0-B3DB MDTRA-SXTRA
+	 * 12/02/10 RPI 1125 ADD B3E1-BEF9 CGDTRA-CXGTRA 
+	 * 12/03/10 RPI 1125 ADD B928-B92D PCKMO KMOTR
+	 * 12/04/10 RPI 1125 ADD B941-B95B CFDTR - CXLFTR, FIX MDTRA DFP/BFP RND 
+	 * 12/06/10 RPI 1125 ADD B9AE-B9CB RRBM-SLHHHR  
+	 * 12/08/10 RPI 1125 ADD B9CD-B9DF CHHR-CLHHLR 
+	 * 12/09/10 RPI 1125 ADD B9E2-B9FB LOCGR-SLRK 
+	 * 12/09/10 RPI 1125 ADD C84-C85 LPD-LPDG 
+	 * 12/11/10 RPI 1125 ADD CC6-CCF BRCTH - CLIH 
+	 * 12/18/10 RPI 1125 ADD E3C0-E3CF LBH - CLHF
+	 * 12/19/10 RPI 1125 ADD EBDC-EBFA SRAK - LAAL
+	 * 12/21/10 RPI 1125 ADD EC51-ECDB RISBLG - ALGSIK
+	 ********************************************************* 
 	 * Global variables              (last RPI)
 	 ********************************************************/
 	/*
@@ -368,7 +384,9 @@ public class pz390 {
 	BigInteger bi_max_pos_long = BigInteger.valueOf(max_pos_long);
     BigDecimal bd_max_pos_long = BigDecimal.valueOf(max_pos_long); // RPI 791
     BigDecimal bd_min_neg_long = BigDecimal.valueOf(min_neg_long); // RPI 791
-	BigInteger bi_min_neg_long = BigInteger.valueOf(min_neg_long);
+	BigDecimal bd_max_log_long = bd_max_pos_long.add(BigDecimal.ONE).multiply(BigDecimal.valueOf(2)); // rpi 1125
+    
+    BigInteger bi_min_neg_long = BigInteger.valueOf(min_neg_long);
 	BigInteger bi_max_pos_int = BigInteger.valueOf(max_pos_int); // rpi 781
 
 	BigInteger bi_min_neg_int = BigInteger.valueOf(min_neg_int); // rpi 781
@@ -467,14 +485,16 @@ public class pz390 {
     BigInteger fp_dd_mod_bi = new BigInteger("10000000000000000");
 	// fp_ld_mod_bi to truncate digits         1234567890123456789012345678901234    
     BigInteger fp_ld_mod_bi = new BigInteger("10000000000000000000000000000000000");
-    boolean alt_rnd_mode = false; // RPI 1125 set alternate round mode if ?=A
-    int fp_bfp_rnd_mask = 0x00000003; // bfp rounding mode
-	int fp_bfp_rnd_not = 0xfffffffc; // not round mode bits
+    int alt_rnd_mode = 0; // RPI 1125 set alternate round mode if ?=A
+    int alt_fpe_mode = 0; // RPI 1125 set alt FP extension if bits 20-23 set
+    int fp_bfp_rnd_mask = 0x00000007; // bfp rounding mode  RPI 1125 was 3
+	int fp_bfp_rnd_not = 0xfffffff8; // not round mode bits RPI 1125 was c
 	int fp_bfp_rnd_even = 0x0; // round to nearest (default)
 	int fp_bfp_rnd_zero = 0x1; // round toward zero (discard bits to right)
 	int fp_bfp_rnd_pi = 0x2; // round toward plus infinity
 	int fp_bfp_rnd_ni = 0x3; // round toward negative infinity
 	int fp_bfp_rnd = fp_bfp_rnd_even; // default rounding mode
+	int fp_bfp_rnd_default = fp_bfp_rnd;
 	int fp_dfp_rnd_mask = 0x00000070; // bfp rounding mode
 	int fp_dfp_rnd_not = 0xffffff8f; // not round mode bits
 	int fp_rnd_near_even  = 0x0; // round to nearest with ties to even (default)
@@ -488,6 +508,7 @@ public class pz390 {
 	int fp_sig_req = 0; // dfp significant digits requested
 	int fp_sig_dig = 0; // dfp significant digits found
 	int fp_dfp_rnd = fp_rnd_near_even; // default rounding mode
+	int fp_dfp_rnd_default = fp_dfp_rnd; // RPI 1125
 	int fp_fpc_reg = 0x70000000; // div+ovf+unf
 
 	int fp_dxc_dec = 0x00; // packed decimal data exception
@@ -839,7 +860,10 @@ public class pz390 {
 	boolean rsbg_test = false;
 	boolean rsbg_zero = false;
 	long rsbg_mask_zeros = 0;
-	long rsbg_mask_ones = 0;	
+	long rsbg_mask_ones = 0;
+	boolean risb_zero = false; // RPI 1125
+	int  risb_mask_zeros = 0; // RPI 1125
+	int  risb_mask_ones = 0;  // RPI 1125	
 	/*
 	 * 16 gpr registers
 	 */
@@ -1023,13 +1047,54 @@ public class pz390 {
 	MathContext fp_ebg_context = null; //         for EB
 	MathContext fp_dh_context = null; // RPI 821
 	MathContext fp_lh_context = null; // RPI 821
-	MathContext fp_e_context = MathContext.DECIMAL32; // fp_fpc_rnd default
+	// RPI 1125 use array for BFP context
+	RoundingMode[] fp_bfp_rnd_mode = {
+			RoundingMode.HALF_EVEN, // 0
+			RoundingMode.DOWN,      // 1
+			RoundingMode.CEILING,   // 2
+			RoundingMode.FLOOR,     // 3
+			RoundingMode.HALF_EVEN, // 4 not valid
+			RoundingMode.HALF_EVEN, // 5 not valid
+			RoundingMode.HALF_EVEN, // 6 not valid
+			RoundingMode.HALF_UP,   // 7 (prepare for shorter)
+	};
+	MathContext[] fp_db_rnd_context = {
+			new MathContext(16,RoundingMode.HALF_EVEN), // 0
+			new MathContext(16,RoundingMode.DOWN),      // 1
+			new MathContext(16,RoundingMode.CEILING),   // 2
+			new MathContext(16,RoundingMode.FLOOR),     // 3
+			new MathContext(16,RoundingMode.HALF_EVEN), // 4 not used
+			new MathContext(16,RoundingMode.HALF_EVEN), // 5 not used
+			new MathContext(16,RoundingMode.HALF_EVEN), // 6 not used
+			new MathContext(16,RoundingMode.HALF_UP),   // 7 (prevare for shorter)
+	};
+	MathContext[] fp_eb_rnd_context = {
+			new MathContext(7,RoundingMode.HALF_EVEN), // 0
+			new MathContext(7,RoundingMode.DOWN),      // 1
+			new MathContext(7,RoundingMode.CEILING),   // 2
+			new MathContext(7,RoundingMode.FLOOR),     // 3
+			new MathContext(7,RoundingMode.HALF_EVEN),   // 4 not used
+			new MathContext(7,RoundingMode.HALF_EVEN),   // 5 not used
+			new MathContext(7,RoundingMode.HALF_EVEN),   // 6 not used
+			new MathContext(7,RoundingMode.HALF_UP),   // 7
+	};
+	MathContext[] fp_lb_rnd_context = {
+			new MathContext(34,RoundingMode.HALF_EVEN), // 0
+			new MathContext(34,RoundingMode.DOWN),      // 1
+			new MathContext(34,RoundingMode.CEILING),   // 2
+			new MathContext(34,RoundingMode.FLOOR),     // 3
+			new MathContext(34,RoundingMode.HALF_EVEN), // 4 not used
+			new MathContext(34,RoundingMode.HALF_EVEN), // 5 not used
+			new MathContext(34,RoundingMode.HALF_EVEN), // 6 not used
+			new MathContext(34,RoundingMode.HALF_UP),   // 7
+	};
+	//dshx MathContext fp_e_context = MathContext.DECIMAL32; // fp_fpc_rnd default
 														// half even
 
-	MathContext fp_d_context = MathContext.DECIMAL64; // fp_fpc_rnd default
+	//dshx MathContext fp_d_context = MathContext.DECIMAL64; // fp_fpc_rnd default
 														// half even
 
-	MathContext fp_x_context = MathContext.DECIMAL128; // fp_fpc_rnd default
+	//dshx MathContext fp_x_context = MathContext.DECIMAL128; // fp_fpc_rnd default
 	byte fp_hfp_class = 0;
 	byte fp_bfp_class = 1;
 	byte fp_dfp_class = 3;
@@ -1073,9 +1138,9 @@ public class pz390 {
 			new MathContext(34,RoundingMode.UP),        // 6
 			new MathContext(34,RoundingMode.HALF_UP),   // 7
 	};
-	MathContext fp_ed_context = new MathContext(7,fp_dfp_rnd_mode[fp_rnd_near_even]);  // fp_ed default
-	MathContext fp_dd_context = new MathContext(16,fp_dfp_rnd_mode[fp_rnd_near_even]); // fp_dd default 
-	MathContext fp_ld_context = new MathContext(34,fp_dfp_rnd_mode[fp_rnd_near_even]); // fp_ld default
+	//dshx MathContext fp_ed_context = new MathContext(7,fp_dfp_rnd_mode[fp_rnd_near_even]);  // fp_ed default
+	//dshx MathContext fp_dd_context = new MathContext(16,fp_dfp_rnd_mode[fp_rnd_near_even]); // fp_dd default 
+	//dshx MathContext fp_ld_context = new MathContext(34,fp_dfp_rnd_mode[fp_rnd_near_even]); // fp_ld default
 	
 	double fp_log2 = Math.log(2);
 
@@ -1681,7 +1746,7 @@ public class pz390 {
 		       70,  // 3380 "B2B1" "STFL" "S" 7
 		       70,  // 3390 "B2B2" "LPSWE" "S" 7
 		       70,  // 3392 "B2B8" "SRNMB" "S" 7 RPI 1125
-		       71,  // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
+		       71,  // 3395 "B2B9" "T" "S" 7 DFP 56
 		       72,  // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
 		       70,  // 3400 "B2FF" "TRAP4" "S" 7
 		       142,  // 3410 "B300" "LPEBR" "RRE" 14
@@ -1776,18 +1841,27 @@ public class pz390 {
 		       301,  //      "B390" "CELFBR" "RRF3" 30 RPI 1125 Z196
                301,  //      "B391" "CDLFBR" "RRF3" 30 RPI 1125 Z196
                301,  //      "B392" "CXLFBR" "RRF3" 30 RPI 1125 Z196
-		       146,  // 4190 "B394" "CEFBR" "RRE" 14 // RPI 643
-		       146,  // 4200 "B395" "CDFBR" "RRE" 14 // RPI 643
-		       146,  // 4210 "B396" "CXFBR" "RRE" 14 // RPI 643
-		       341,  // 4220 "B398" "CFEBR" "RRF2" 34
-		       341,  // 4230 "B399" "CFDBR" "RRF2" 34
-		       341,  // 4240 "B39A" "CFXBR" "RRF2" 34
-		       141,  // 4250 "B3A4" "CEGBR" "RRE" 14 // RPI 643
-		       141,  // 4260 "B3A5" "CDGBR" "RRE" 14 // RPI 643
-		       141,  // 4270 "B3A6" "CXGBR" "RRE" 14 // RPI 643
-		       342,  // 4280 "B3A8" "CGEBR" "RRF2" 34
-		       342,  // 4290 "B3A9" "CGDBR" "RRF2" 34
-		       342,  // 4300 "B3AA" "CGXBR" "RRF2" 34
+		       146,  // 4190 "B394" "CEFBR?" "RRE" 14  RPI 643 RPI 1125
+		       146,  // 4200 "B395" "CDFBR?" "RRE" 14  RPI 643 RPI 1125
+		       146,  // 4210 "B396" "CXFBR?" "RRE" 14  RPI 643 RPI 1125
+		       341,  // 4220 "B398" "CFEBR?" "RRF2" 34 RPI 1125 Z196
+		       341,  // 4230 "B399" "CFDBR?" "RRF2" 34 RPI 1125 Z196
+		       341,  // 4240 "B39A" "CFXBR?" "RRF2" 34 RPI 1125 Z196
+		       303,    // 'B39C' 'CLFEBR' 'RRF3' 30 RPI 1125 Z196
+               303,    // 'B39D' 'CLFDBR' 'RRF3' 30 RPI 1125 Z196
+               303,    // 'B39E' 'CLFXBR' 'RRF3' 30 RPI 1125 Z196
+               304,    // 'B3A0' 'CELGBR' 'RRF3' 30 RPI 1125 Z196
+               304,    // 'B3A1' 'CDLGBR' 'RRF3' 30 RPI 1125 Z196
+               304,    // 'B3A2' 'CXLGBR' 'RRF3' 30 RPI 1125 Z196		       
+               141,  // 4250 "B3A4" "CEGBR?" "RRE"  53  RPI 1125 Z196
+		       141,  // 4260 "B3A5" "CDGBR?" "RRE"  53  RPI 1125 Z196
+		       141,  // 4270 "B3A6" "CXGBR?" "RRE"  53  RPI 1125 Z196
+		       342,  // 4280 "B3A8" "CGEBR?" "RRF2" 54  RPI 1125 Z196 
+		       342,  // 4290 "B3A9" "CGDBR?" "RRF2" 54  RPI 1125 Z196
+		       342,  // 4300 "B3AA" "CGXBR?" "RRF2" 54  RPI 1125 Z196
+		       342,    //      "B3AC" "CLGEBR" "RRF2" 30  RPI 1125 Z196
+               342,    //      "B3AD" "CLGDBR" "RRF2" 30  RPI 1125 Z196
+               342,    //      "B3AE" "CLGXBR" "RRF2" 30  RPI 1125 Z196		       
 		       146,  // 4310 "B3B4" "CEFR" "RRE" 14
 		       146,  // 4320 "B3B5" "CDFR" "RRE" 14
 		       146,  // 4330 "B3B6" "CXFR" "RRE" 14
@@ -1802,44 +1876,44 @@ public class pz390 {
 		       342,  // 4410 "B3C9" "CGDR" "RRF2" 34
 		       342,  // 4420 "B3CA" "CGXR" "RRF2" 34
 		       145,  // 4425 "B3CD" "LGDR" "RRE" 14 DFP
-		       360, // "MDTR" "B3D0" "RRR" DFP 1
-		       360, // "DDTR" "B3D1" "RRR" DFP 2
-		       360, // "ADTR" "B3D2" "RRR" DFP 3
-		       360, // "SDTR" "B3D3" "RRR" DFP 4
+		       360, // "MDTR?" "B3D0" "RRR" DFP 1 RPI 1125
+		       360, // "DDTR?" "B3D1" "RRR" DFP 2 RPI 1125
+		       360, // "ADTR?" "B3D2" "RRR" DFP 3 RPI 1125
+		       360, // "SDTR?" "B3D3" "RRR" DFP 4 RPI 1125
 		       350, // "LDETR" "B3D4" "RRF4" DFP 5
 		       301, // "LEDTR" "B3D5" "RRF3" DFP 6
 		       142, // "LTDTR" "B3D6" "RRE" DFP 7
 		       301, // "FIDTR" "B3D7" "RRF3" DFP 8
-		       360, // "MXTR" "B3D8" "RRR" DFP 9
-		       360, // "DXTR" "B3D9" "RRR" DFP 10
-		       360, // "AXTR" "B3DA" "RRR" DFP 11
-		       360, // "SXTR" "B3DB" "RRR" DFP 12
+		       360, // "MXTR?" "B3D8" "RRR" DFP 9  RPI 1125
+		       360, // "DXTR?" "B3D9" "RRR" DFP 10 RPI 1125
+		       360, // "AXTR?" "B3DA" "RRR" DFP 11 RPI 1125
+		       360, // "SXTR?" "B3DB" "RRR" DFP 12 RPI 1125
 		       350, // "LXDTR" "B3DC" "RRF4" DFP 13
 		       301, // "LDXTR" "B3DD" "RRF3" DFP 14
 		       142, // "LTXTR" "B3DE" "RRE" DFP 15
 		       301, // "FIXTR" "B3DF" "RRF3" DFP 16
 		       142, // "KDTR" "B3E0" "RRE" DFP 17
-		       342, // "CGDTR" "B3E1" "RRF4" DFP 18
+		       342, // "CGDTR?" "B3E1" "RRF7" DFP 18 RPI 1125
 		       145, // "CUDTR" "B3E2" "RRE" DFP 19
 		       351, // "CSDTR" "B3E3" "RRF4" DFP 20  // RPI 798
 		       142, // "CDTR" "B3E4" "RRE" DFP 21
 		       145, // "EEDTR" "B3E5" "RRE" DFP 22
 		       145, // "ESDTR" "B3E7" "RRE" DFP 23
 		       142, // "KXTR" "B3E8" "RRE" DFP 24
-		       342, // "CGXTR" "B3E9" "RRF4" DFP 25
+		       342, // "CGXTR?" "B3E9" "RRF7" DFP 25 RPI 1125
 		       145, // "CUXTR" "B3EA" "RRE" DFP 26
 		       351, // "CSXTR" "B3EB" "RRF4" DFP 27  // RPI 798
 		       142, // "CXTR" "B3EC" "RRE" DFP 28
 		       145, // "EEXTR" "B3ED" "RRE" DFP 29
 		       145, // "ESXTR" "B3EF" "RRE" DFP 30
-		       141, // "CDGTR" "B3F1" "RRE" DFP 31
+		       141, // "CDGTR?" "B3F1" "RRF7" DFP 31 RPI 1125
 		       141, // "CDUTR" "B3F2" "RRE" DFP 32
 		       141, // "CDSTR" "B3F3" "RRE" DFP 33
 		       142, // "CEDTR" "B3F4" "RRE" DFP 34
 		       300, // "QADTR" "B3F5" "RRF3" DFP 35
 		       343, // "IEDTR" "B3F6" "RRF2" DFP 36
 		       302, // "RRDTR" "B3F7" "RRF3" DFP 37 RPI 798
-		       141, // "CXGTR" "B3F9" "RRE" DFP 38
+		       141, // "CXGTR?" "B3F9" "RRF7" DFP 38 RPI 1125
 		       141, // "CXUTR" "B3FA" "RRE" DFP 39
 		       141, // "CXSTR" "B3FB" "RRE" DFP 40
 		       142, // "CEXTR" "B3FC" "RRE" DFP 41
@@ -1884,13 +1958,30 @@ public class pz390 {
 		       144,  // 4760 "B925" "STURG" "RRE" 14
 		       144,  //      "B926" "LBR" "RRE" 14 Z9-12
 		       144,  //      "B927" "LHR" "RRE" 14 Z9-13
+		       144,  // "B928","PCKMO","RE4"  14 RPI 1125 Z196
+               144,  // "B92A","KMF","RRE"    14 RPI 1125 Z196
+               144,  // "B92B","KMO","RRE"    14 RPI 1125 Z196
+               144,  // "B92C","PCC","RE4"    14 RPI 1125 Z196
+               343,  // "B92D","KMCTR","RRF2" 34 RPI 1125 Z196
 		       144,  // 4770 "B92E" "KM" "RRE" 14
 		       144,  // 4780 "B92F" "KMC" "RRE" 14
 		       144,  // 4790 "B930" "CGFR" "RRE" 14
 		       144,  // 4800 "B931" "CLGFR" "RRE" 14
 		       144,  // 4810 "B93E" "KIMD" "RRE" 14
 		       144,  // 4820 "B93F" "KLMD" "RRE" 14
+		       303,    // "B941","CFDTR","RRF"  30 RPI 1125 Z196
+               305,   // "B942","CLGDTR","RRF" 30 RPI 1125 Z196
+               303,   // "B943","CLFDTR","RRF" 30 RPI 1125 Z196
 		       144,  // 4830 "B946" "BCTGR" "RRE" 14
+		       303,    // "B949","CFXTR","RRF3"   30 RPI 1125 Z196
+               305,   // "B94A","CLGXTR","RRF3"  30 RPI 1125 Z196
+               303,   // "B94B","CLFXTR","RRF3"  30 RPI 1125 Z196
+               301,    // "B951","CDFTR","RRF3"   30 RPI 1125 Z196
+               304,   // "B952","CDLGTR","RRF3"  30 RPI 1125 Z196
+               306,   // "B953","CDLFTR","RRF3"  30 RPI 1125 Z196
+               306,    // "B959","CXFTR","RRF3"   30 RPI 1125 Z196" 
+               304,   // "B95A","CXLGTR","RRF3"  30 RPI 1125 Z196
+               306,   // "B95B","CXLFTR","RRF3"  30 RPI 1125 Z196
 		       151,  // 10 "B960" "CGRT" "RRF5" 39 RPI 817
 		       151,  // 20 "B9608" "CGRTE" "RRF6" 40 RPI 817
 		       151,  // 30 "B9602" "CGRTH" "RRF6" 40 RPI 817
@@ -1950,6 +2041,7 @@ public class pz390 {
 		       147,  // 10 "B9A2" "PTF" "RRE" 14  RPI 817
 		       144,  // 20 "B9AF" "PFMF" "RRF5" 39  RPI 817
 		       144,  //      "B9AA" "LPTEA" "RRE" 14 Z9-19
+		       140,  // "B9AE","RRBM","RRE"  14 RPI 1125 Z196
 		       144,  // 5070 "B9B0" "CU14" "RRE" 14
 		       144,  // 5080 "B9B1" "CU24" "RRE" 14
 		       144,  // 5090 "B9B2" "CU41" "RRE" 14
@@ -1957,7 +2049,35 @@ public class pz390 {
 		       144,  // 30 "B9BD" "TRTRE" "RRF5" 39  RPI 817
 		       144,  // 5110 "B9BE" "SRSTU" "RRE" 14
 		       144,  // 40 "B9BF" "TRTE" "RRF5" 39  RPI 817
+		       410,    // "B9C8","AHHHR","RRF5"  39 RPI 1125 Z196
+		       410,    // "B9C9","SHHHR","RRF5"  39 RPI 1125 Z196
+		       410,   // "B9CA","ALHHHR","RRF5" 39 RPI 1125 Z196
+		       410,   // "B9CB","SLHHHR","RRF5" 39 RPI 1125 Z196
+		       144,   // "B9CD","CHHR","RRE"     14 RPI 1125 Z196
+		       144,   // "B9CF","CLHHR","RRE"    14 RPI 1125 Z196
+		       410,   // "B9D8","AHHLR","RRF5 "  39 RPI 1125 Z196
+		       410,   // "B9D9","SHHLR","RRF5 "  39 RPI 1125 Z196
+		       410,   // "B9DA","ALHHLR","RRF5 " 39 RPI 1125 Z196
+		       410,   // "B9DB","SLHHLR","RRF5 " 39 RPI 1125 Z196
+		       144,   // "B9DD","CHLR","RRE"     14 RPI 1125 Z196
+		       144,    // "B9DF","CLHLR","RRE"    14 RPI 1125 Z196 		       
 		       144,  // 5115 "b9E1" "POPCNT" "RRE" 14 RPI 1125
+		       141,     // "B9E2","LOCGR","RRF5"   39 RPI 1125 Z196
+		       153,     // "B9E4","NGRK","RRF5"    39 RPI 1125 Z196
+		       153,     // "B9E6","OGRK","RRF5"    39 RPI 1125 Z196
+		       153,     // "B9E7","XGRK","RRF5"    39 RPI 1125 Z196
+		       153,     // "B9E8","AGRK","RRF5"    39 RPI 1125 Z196
+		       153,     // "B9E9","SGRK","RRF5"    39 RPI 1125 Z196
+		       153,     // "B9EA","ALGRK","RRF5"   39 RPI 1125 Z196
+		       153,     // "B9EB","SLGRK","RRF5"   39 RPI 1125 Z196
+		       142,     // "B9F2","LOCR","RRF5"    39 RPI 1125 Z196
+		       154,     // "B9F4","NRK","RRF5"     39 RPI 1125 Z196
+		       154,     // "B9F6","ORK","RRF5"     39 RPI 1125 Z196
+		       154,     // "B9F7","XRK","RRF5"     39 RPI 1125 Z196
+		       154,     // "B9F8","ARK","RRF5"     39 RPI 1125 Z196
+		       154,     // "B9F9","SRK","RRF5"     39 RPI 1125 Z196
+		       154,     // "B9FA","ALRK","RRF5"    39 RPI 1125 Z196
+		       154,     // "B9FB","SLRK","RRF5"    39 RPI 1125 Z196 		       
 		       100,  // 5120 "BA" "CS" "RS" 10
 		       100,  // 5130 "BB" "CDS" "RS" 10
 		       101,  // 5140 "BD" "CLM" "RS" 10
@@ -2047,6 +2167,14 @@ public class pz390 {
 		       320,  // "C80" "MVCOS" "SSF" 32 Z9-41 RPI 817
 		       320,  // "C81" "ECTG" "SSF" 32 RPI 1013
 		       320,  // "C82" "CSST" "SSF" 32 RPI 1013
+		       321,  // "C84","LPD","SSF2"  55 RPI 1125 Z196
+		       321,  // "C85","LPDG","SSF2" 55 RPI 1125 Z196
+               163, // "CC6","BRCTH","RIL"  16 RPI 1125 Z196
+               160, // "CC8","AIH","RIL"    16  RPI 1125 Z196
+               160, // "CCA","ALSIH","RIL"  16  RPI 1125 Z196
+               160, // "CCB","ALSIHN","RIL" 16  RPI 1125 Z196
+               160, // "CCD","CIH","RIL"    16  RPI 1125 Z196
+               160, // "CCF","CLIH","RIL"   16  RPI 1125 Z196
 		       170,  // 5230 "D0" "TRTR" "SS" 17
 		       170,  // 5240 "D1" "MVN" "SS" 17
 		       170,  // 5250 "D2" "MVC" "SS" 17
@@ -2153,6 +2281,16 @@ public class pz390 {
 		       180,  // 6090 "E397" "DL" "RXY" 18
 		       187,  // 6100 "E398" "ALC" "RXY" 18
 		       187,  // 6110 "E399" "SLB" "RXY" 18
+		       185,  // "E3C0","LBH","RXY"   18  RPI 1125 Z196
+		       185,  // "E3C2","LLCH","RXY"  18  RPI 1125 Z196
+		       185,  // "E3C3","STCH","RXY"  18  RPI 1125 Z196
+		       182,  // "E3C4","LHH","RXY"   18  RPI 1125 Z196
+		       182,  // "E3C6","LLHH","RXY"  18  RPI 1125 Z196
+		       182,  // "E3C7","STHH","RXY"  18  RPI 1125 Z196
+		       184,  // "E3CA","LFH","RXY"   18  RPI 1125 Z196
+		       184,  // "E3CB","STFH","RXY"  18  RPI 1125 Z196
+		       184,  // "E3CD","CHF","RXY"   18  RPI 1125 Z196
+		       184,  // "E3CF","CLHF","RXY"  18  RPI 1125 Z19
 		       190,  // 6120 "E500" "LASP" "SSE" 19
 		       190,  // 6130 "E501" "TPROT" "SSE" 19
 		       190,  // 6140 "E502" "STRAG" "SSE" 19
@@ -2213,10 +2351,29 @@ public class pz390 {
 		       200,  // 6550 "EB9A" "LAMY" "RSY" 20
 		       200,  // 6560 "EB9B" "STAMY" "RSY" 20
 		       220,  // 6570 "EBC0" "TP" "RSL" 22
+		       200,  //  "EBDC","SRAK","RSY  "  20 RPI 1125 Z196
+		       200,  //  "EBDD","SLAK","RSY  "  20 RPI 1125 Z196
+		       200,  //  "EBDE","SRLK","RSY  "  20 RPI 1125 Z196
+		       200,  //  "EBDF","SLLK","RSY  "  20 RPI 1125 Z196
+		       207,  //  "EBE2","LOCG","RSY2 "  20 RPI 1125 Z196
+		       207,  //  "EBE3","STOCG","RSY2 " 20 RPI 1125 Z196
+		       208,  //  "EBE4","LANG","RSY  "  20 RPI 1125 Z196
+		       208,  //  "EBE6","LAOG","RSY  "  20 RPI 1125 Z196
+		       208,  //  "EBE7","LAXG","RSY  "  20 RPI 1125 Z196
+		       208,  //  "EBE8","LAAG","RSY  "  20 RPI 1125 Z196
+		       208,  //  "EBEA","LAALG","RSY  " 20 RPI 1125 Z196
+		       209,  //  "EBF2","LOC","RSY2 "   20 RPI 1125 Z196
+		       209,  //  "EBF3","STOC","RSY2 "  20 RPI 1125 Z196
+		       200,  //  "EBF4","LAN","RSY  "   20 RPI 1125 Z196
+		       200,  //  "EBF6","LAO","RSY  "   20 RPI 1125 Z196
+		       200,  //  "EBF7","LAX","RSY  "   20 RPI 1125 Z196
+		       200,  //  "EBF8","LAA","RSY  "   20 RPI 1125 Z196
+		       200,  //  "EBFA","LAAL","RSY  "  20 RPI 1125 Z196
 		       230,  // 6580 "EC44" "BRXHG" "RIE" 23
 		       230,  // 6590 "EC44" "JXHG" "RIE" 23
 		       230,  // 6600 "EC45" "BRXLG" "RIE" 23
 		       230,  // 6610 "EC45" "JXLEG" "RIE" 23
+		       400,  // "EC51","RISBLG","RIE8"  52 RPI 1125 Z196
 		       400,  // 510 "EC54" "RNSBG" "RIE8" 52  RPI 817
 		       400,  // 520 "EC54T" "RNSBGT" "RIE8" 52  RPI 817
 		       400,  // 530 "EC55" "RISBG" "RIE8" 52  RPI 817
@@ -2225,6 +2382,7 @@ public class pz390 {
 		       400,  // 560 "EC56T" "ROSBGT" "RIE8" 52  RPI 817
 		       400,  // 570 "EC57" "RXSBG" "RIE8" 52  RPI 817
 		       400,  // 580 "EC57T" "RXSBGT" "RIE8" 52  RPI 817
+		       400,  // "EC5D","RISBHG","RIE8"  52 RPI 1125 Z196
 		       234,  // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
 		       234,  // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
 		       234,  // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
@@ -2309,6 +2467,10 @@ public class pz390 {
 		       236,  // 540 "EC7F6" "CLIJNE" "RIE5" 44 RPI 817
 		       236,  // 550 "EC7FC" "CLIJNH" "RIE5" 44 RPI 817
 		       236,  // 560 "EC7FA" "CLIJNL" "RIE5" 44 RPI 817
+		       420,  // "ECD8","AHIK","RIE9"    57 RPI 1125 Z196
+		       430,  // "ECD9","AGHIK","RIE9"   57 RPI 1125 Z196
+		       420,  // "ECDA","ALHSIK","RIE9"  57 RPI 1125 Z196
+		       430,  // "ECDB","ALGHSIK","RIE9"
 		       370,  // 570 "ECE4" "CGRB" "RRS1" 45 RPI 817
 		       370,  // 580 "ECE48" "CGRBE" "RRS2" 4370, RPI 817
 		       370,  // 590 "ECE42" "CGRBH" "RRS2" 46 RPI 817
@@ -3953,6 +4115,9 @@ public class pz390 {
 		case 0xC8: // 5630 "C80" "MVCOS" "SSF" Z9-41
 			ins_C8XX();
 			break; // RPI 606
+		case 0xCC: // "CC6" "BRCTH" "RIL" RPI 1125 Z196
+			ins_CCXX();
+			break; 	
 		case 0xD0: // 5230 "D0" "TRTR" "SS"
 			psw_check = false;
 			ins_setup_ss();
@@ -5240,32 +5405,8 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_s();
 			fp_bfp_rnd = (bd2_loc & 0x3); // set bfp rounding mode
+			fp_bfp_rnd_default = fp_bfp_rnd; // RPI 1125
 			fp_fpc_reg = (fp_fpc_reg & fp_bfp_rnd_not) | fp_bfp_rnd;
-			switch (fp_bfp_rnd) {
-			case 0: // round half even
-				fp_e_context = MathContext.DECIMAL32; // fp_fpc_rnd
-														// default half even
-				fp_d_context = MathContext.DECIMAL64; // fp_fpc_rnd
-														// default half even
-				fp_x_context = MathContext.DECIMAL128; // fp_fpc_rnd
-														// default half even
-				break;
-			case 1: // round toward 0
-				fp_e_context = new MathContext(7, RoundingMode.DOWN);  // RPI 821 
-				fp_d_context = new MathContext(15, RoundingMode.DOWN); // RPI 821 
-				fp_x_context = new MathContext(34, RoundingMode.DOWN); // RPI 821 
-				break;
-			case 2: // round toward +infinity
-				fp_e_context = new MathContext(7, RoundingMode.CEILING);  // RPI 821 
-				fp_d_context = new MathContext(15, RoundingMode.CEILING); // RPI 821 
-				fp_x_context = new MathContext(34, RoundingMode.CEILING); // RPI 821 
-				break;
-			case 3: // round toward -infinity;
-				fp_e_context = new MathContext(7, RoundingMode.FLOOR);  // RPI 821 
-				fp_d_context = new MathContext(15, RoundingMode.FLOOR); // RPI 821 
-				fp_x_context = new MathContext(34, RoundingMode.FLOOR); // RPI 821 
-				break;
-			}
 			break;
 		case 0x9C: // 3310 "B29C" "STFPC" "S"
 			psw_check = false;
@@ -5322,12 +5463,22 @@ public class pz390 {
 		case 0xB2: // 3390 "B2B2" "LPSWE" "S"
 			ins_setup_s();
 			break;
+		case 0xB8: // 3300 "B2B8" "SRNMB" "S" RPI 1125
+			psw_check = false;
+			ins_setup_s();
+			fp_bfp_rnd = (bd2_loc & 0x7); // set bfp rounding mode
+			fp_bfp_rnd_default = fp_bfp_rnd; // RPI 1125
+			fp_fpc_reg = (fp_fpc_reg & fp_bfp_rnd_not) | fp_bfp_rnd;
+			if (fp_bfp_rnd > 3 && fp_bfp_rnd < 7){
+				set_psw_check(psw_pic_spec);
+			}
+			break;	
 		case 0xB9: // 3395 "B2B9" "SRNMT" "S" DFP 56
 			psw_check = false;
 			ins_setup_s();
 			fp_dfp_rnd = (bd2_loc & 0x7); // set dfp rounding mode
+			fp_dfp_rnd_default = fp_dfp_rnd; // RPI 1125
 			fp_fpc_reg = (fp_fpc_reg & fp_dfp_rnd_not) | (fp_dfp_rnd << 4);
-            fp_set_dfp_rnd();
 			break;
 		case 0xBD: // 3395 "B2BD" "LFAS" "S" DFP 55
 			psw_check = false;
@@ -5769,11 +5920,13 @@ public class pz390 {
 			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
 			psw_cc = fp_get_lb_comp_cc(fp_rbdv1, BigDecimal.ZERO);
 			break;
-		case 0x44: // 3860 "B344" "LEDBR" "RRE"
+		case 0x44: // 3860 "B344" "" "RRE"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rre();
 			fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2,
 					tz390.fp_db_type);
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0x45: // 3870 "B345" "LDXBR" "RRE"
 			psw_check = false;
@@ -5789,10 +5942,12 @@ public class pz390 {
 			break;
 		case 0x47: // 3890 "B347" "FIXBR" "RRF"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
 					.divideAndRemainder(BigDecimal.ONE);
 			fp_put_bd(rf1, tz390.fp_lb_type, fp_get_bd_rnd_int(fp_bfp_class,mf3));
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0x48: // 3900 "B348" "KXBR" "RRE"
 			psw_check = false;
@@ -5830,8 +5985,8 @@ public class pz390 {
 		case 0x4C: // 3940 "B34C" "MXBR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1).round(fp_x_context)
-			         .multiply(fp_get_bd_from_lb(fp_reg, rf2).round(fp_x_context), fp_lxg_context); // RPI 821 
+			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1).round(fp_lb_rnd_context[fp_bfp_rnd])
+			         .multiply(fp_get_bd_from_lb(fp_reg, rf2).round(fp_lb_rnd_context[fp_bfp_rnd]), fp_lxg_context); // RPI 821 
 			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
 			check_lb_mpy();
 			break;
@@ -5882,11 +6037,13 @@ public class pz390 {
 			break;
 		case 0x57: // 3990 "B357" "FIEBR" "RRF"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
 					.divideAndRemainder(BigDecimal.ONE);
 			fp_put_eb(rf1, tz390.fp_eb_type, fp_get_bd_rnd_int(fp_bfp_class,mf3)
 					.floatValue());
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0x58: // 4000 "B358" "THDER" "RRE"
 			psw_check = false;
@@ -5918,11 +6075,13 @@ public class pz390 {
 			break;
 		case 0x5F: // 4030 "B35F" "FIDBR" "RRF"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
 					.divideAndRemainder(BigDecimal.ONE);
 			fp_put_db(rf1, tz390.fp_db_type, fp_get_bd_rnd_int(fp_bfp_class,mf3)
 					.doubleValue());
+			reset_bfp_alt_mode(); // rpi 1125
 			break;
 		case 0x60: // 4040 "B360" "LPXR" "RRE"
 			psw_check = false;
@@ -6050,92 +6209,254 @@ public class pz390 {
 			ins_setup_rre();
 			reg.putInt(rf1 + 4, fp_fpc_reg | (fp_dxc << 8));
 			break;
+		case 0x90: // RPI 1125 "B390" "CELFBR" "RRF3"
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = new BigDecimal(reg.getLong(rf2) & 0xffffffff)
+			           .round(fp_eb_rnd_context[fp_get_rnd_mode(fp_bfp_class,mf3)]);
+			fp_put_bd(rf1, tz390.fp_eb_type, fp_rbdv1);
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_bfp_alt_mode(); // RPI 1125
+			break;
+		case 0x91: // RPI 1125 "B391" "CDLFBR" "RRF3"
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = new BigDecimal(reg.getLong(rf2) & 0xffffffff)
+			           .round(fp_db_rnd_context[fp_get_rnd_mode(fp_bfp_class,mf3)]);
+			fp_put_bd(rf1, tz390.fp_db_type, fp_rbdv1);
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_bfp_alt_mode(); // RPI 1125
+			break;
+		case 0x92: // RPI 1125 "B392" "CXLFBR" "RRF3"
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = new BigDecimal(reg.getLong(rf2) & 0xffffffff)
+			           .round(fp_lb_rnd_context[fp_get_rnd_mode(fp_bfp_class,mf3)]);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_bfp_alt_mode(); // RPI 1125
+			break;			
 		case 0x94: // 4190 "B394" "CEFBR" "RRE"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rre();
 			fp_put_eb(rf1, tz390.fp_eb_type, (float) reg.getInt(rf2 + 4));
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0x95: // 4200 "B395" "CDFBR" "RRE"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rre();
 			fp_put_db(rf1, tz390.fp_db_type, (double) reg.getInt(rf2 + 4));
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0x96: // 4210 "B396" "CXFBR" "RRE"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rre();
 			fp_put_bd(rf1, tz390.fp_lb_type, BigDecimal.valueOf(reg
 					.getInt(rf2 + 4))); // RPI 1013 was EB vs LB
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0x98: // 4220 "B398" "CFEBR" "RRF"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
 					.divideAndRemainder(BigDecimal.ONE);
 			rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
 			reg.putInt(rf1 + 4, rv1);
 			psw_cc = get_int_comp_cc(rv1, 0);
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0x99: // 4230 "B399" "CFDBR" "RRF"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
 					.divideAndRemainder(BigDecimal.ONE);
 			rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
 			reg.putInt(rf1 + 4, rv1);
 			psw_cc = get_int_comp_cc(rv1, 0);
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
+		case 0xA0: // RPI 1125 "B3A0" "CELGBR" "RRF3"
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2));
+			if (fp_rbdv1.signum() < 0){
+				fp_rbdv1 = fp_rbdv1.add(bd_max_log_long);
+			}
+			fp_rbdv1 = fp_rbdv1
+			           .round(fp_eb_rnd_context[fp_get_rnd_mode(fp_bfp_class,mf3)]);
+			fp_put_bd(rf1, tz390.fp_eb_type, fp_rbdv1);
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_bfp_alt_mode(); // RPI 1125
+			break;
+		case 0xA1: // RPI 1125 "B3A1" "CDLGBR" "RRF3"
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2));
+			if (fp_rbdv1.signum() < 0){
+				fp_rbdv1 = fp_rbdv1.add(bd_max_log_long);
+			}
+			fp_rbdv1 = fp_rbdv1
+			         .round(fp_db_rnd_context[fp_get_rnd_mode(fp_bfp_class,mf3)]);
+			fp_put_bd(rf1, tz390.fp_db_type, fp_rbdv1);
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_bfp_alt_mode(); // RPI 1125
+			break;
+		case 0xA2: // RPI 1125 "B3A2" "CXLGBR" "RRF3"
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2));
+			if (fp_rbdv1.signum() < 0){
+				fp_rbdv1 = fp_rbdv1.add(bd_max_log_long);
+			}
+			fp_rbdv1 = fp_rbdv1
+			           .round(fp_lb_rnd_context[fp_get_rnd_mode(fp_bfp_class,mf3)]);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_bfp_alt_mode(); // RPI 1125
+			break;				
 		case 0x9A: // 4240 "B39A" "CFXBR" "RRF"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
 					.divideAndRemainder(BigDecimal.ONE);
 			rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
 			reg.putInt(rf1 + 4, rv1);
 			psw_cc = get_int_comp_cc(rv1, 0);
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
+		case 0x9C: // "B39C" "CLFEBR" "RRF" RPI 1125
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_rbdv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3); // RPI 1125
+			reg.putInt(rf1 + 4, fp_rbdv1.abs().intValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_bfp_alt_mode(); // RPI 1125
+			break;
+		case 0x9D: // "B39D" "CLFDBR" "RRF" RPI 1125
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_rbdv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3); // RPI 1125
+			reg.putInt(rf1 + 4, fp_rbdv1.abs().intValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_bfp_alt_mode(); // RPI 1125
+			break;
+		case 0x9E: // "B39E" "CLFXBR" "RRF" RPI 1125
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_rbdv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3); // RPI 1125
+			reg.putInt(rf1 + 4, fp_rbdv1.abs().intValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_bfp_alt_mode(); // RPI 1125
+			break;	
 		case 0xA4: // 4250 "B3A4" "CEGBR" "RRE"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rre();
 			fp_put_eb(rf1, tz390.fp_eb_type, (float) reg.getLong(rf2));
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0xA5: // 4260 "B3A5" "CDGBR" "RRE"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rre();
 			fp_put_db(rf1, tz390.fp_db_type, (double) reg.getLong(rf2));
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0xA6: // 4270 "B3A6" "CXGBR" "RRE"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rre();
 			fp_put_bd(rf1, tz390.fp_lb_type, BigDecimal
 					.valueOf((double) reg.getLong(rf2)));
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0xA8: // 4280 "B3A8" "CGEBR" "RRF"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
 					.divideAndRemainder(BigDecimal.ONE);
 			rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
 			reg.putLong(rf1, rlv1);
 			psw_cc = get_long_comp_cc(rlv1, 0);
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0xA9: // 4290 "B3A9" "CGDBR" "RRF"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
 					.divideAndRemainder(BigDecimal.ONE);
 			rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
 			reg.putLong(rf1, rlv1);
 			psw_cc = get_long_comp_cc(rlv1, 0);
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0xAA: // 4300 "B3AA" "CGXBR" "RRF"
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
 					.divideAndRemainder(BigDecimal.ONE);
 			rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
 			reg.putLong(rf1, rlv1);
 			psw_cc = get_long_comp_cc(rlv1, 0);
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
+		case 0xAC: // "B3AC" "CLGEBR" "RRF" RPI 1125
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_rbdv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3); // RPI 1125
+			reg.putLong(rf1, fp_rbdv1.abs().longValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_bfp_alt_mode(); // RPI 1125
+			break;
+		case 0xAD: // "B3AD" "CLGDBR" "RRF" RPI 1125
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_rbdv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3); // RPI 1125
+			reg.putLong(rf1, fp_rbdv1.abs().longValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_bfp_alt_mode(); // RPI 1125
+			break;
+		case 0xAE: // "B3AE" "CLGXBR" "RRF" RPI 1125
+			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_rbdv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3); // RPI 1125
+			reg.putLong(rf1, fp_rbdv1.abs().longValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_bfp_alt_mode(); // RPI 1125
+			break;		
 		case 0xB4: // 4310 "B3B4" "CEFR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -6236,40 +6557,48 @@ public class pz390 {
 			break;
 		case 0xD0: // "MDTR" "B3D0" "RRR" DFP 1
 			psw_check = false;
+			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-                     .multiply(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_context); // RPI 517
+                     .multiply(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_rnd_context[fp_dfp_rnd]); // RPI 517
             fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
             check_dd_mpy(); // RPI 820
+            reset_dfp_alt_mode(); // RPI 1125
 			break;
 		case 0xD1: // "DDTR" "B3D1" "RRR" DFP 2
 			psw_check = false;
+			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv3 = fp_get_bd_from_dd(fp_reg, rf3);
 			if (fp_rbdv3.signum() != 0){  // RPI 820
 				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-				.divide(fp_rbdv3,fp_dd_context); // RPI 517
+				.divide(fp_rbdv3,fp_dd_rnd_context[fp_dfp_rnd]); // RPI 517
 			} else {
 				fp_rbdv1 = BigDecimal.ZERO; // RPI 824
 			}
             fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			check_dd_div(); // RPI 820
+			reset_dfp_alt_mode(); // RPI 1125
             break;
 		case 0xD2: // "ADTR" "B3D2" "RRR" DFP 3
 			psw_check = false;
+			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-                       .add(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_context); // RPI 517
+                       .add(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_rnd_context[fp_dfp_rnd]); // RPI 517
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			psw_cc = fp_get_dfp_add_sub_cc();
+			reset_dfp_alt_mode(); // RPI 1125
 			break;
 		case 0xD3: // "SDTR" "B3D3" "RRR" DFP 4
 			psw_check = false;
+			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-                     .subtract(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_context); // RPI 517
+                     .subtract(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_rnd_context[fp_dfp_rnd]); // RPI 517
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			psw_cc = fp_get_dfp_add_sub_cc();
+			reset_dfp_alt_mode(); // RPI 1125
 			break;
 		case 0xD4: // "LDETR" "B3D4" "RRF4" DFP 5
 			psw_check = false;
@@ -6311,40 +6640,48 @@ public class pz390 {
 			break;
 		case 0xD8: // "MXTR" "B3D8" "RRR" DFP 9
 			psw_check = false;
+			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-                     .multiply(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_context);  // RPI 517
+                     .multiply(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_rnd_context[fp_dfp_rnd]);  // RPI 517
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			check_ld_mpy(); // RPI 820
+			reset_dfp_alt_mode(); // RPI 1125
 			break;
 		case 0xD9: // "DXTR" "B3D9" "RRR" DFP 10
 			psw_check = false;
+			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv3 = fp_get_bd_from_ld(fp_reg, rf3);
 			if (fp_rbdv3.signum() != 0){
 				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-				.divide(fp_rbdv3,fp_ld_context);  // RPI 517
+				.divide(fp_rbdv3,fp_ld_rnd_context[fp_dfp_rnd]);  // RPI 517
 			} else {
 				fp_rbdv1 = BigDecimal.ZERO; // RPI 824
 			}
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			check_ld_div(); // RPI 820
+			reset_dfp_alt_mode(); // RPI 1125
 			break;
 		case 0xDA: // "AXTR" "B3DA" "RRR" DFP 11
 			psw_check = false;
+			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-            .add(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_context); // RPI 517
+            .add(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_rnd_context[fp_dfp_rnd]); // RPI 517
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			psw_cc = fp_get_dfp_add_sub_cc();
+			reset_dfp_alt_mode(); // RPI 1125
 			break;
 		case 0xDB: // "SXTR" "B3DB" "RRR" DFP 12
 			psw_check = false;
+			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-            .subtract(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_context); // RPI 517
+            .subtract(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_rnd_context[fp_dfp_rnd]); // RPI 517
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			psw_cc = fp_get_dfp_add_sub_cc();
+			reset_dfp_alt_mode(); // RPI 1125
 			break;
 		case 0xDC: // "LXDTR" "B3DC" "RRF4" DFP 13
 			psw_check = false;
@@ -6396,6 +6733,7 @@ public class pz390 {
 			break;
 		case 0xE1: // "CGDTR" "B3E1" "RRF2" DFP 18
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_dd(fp_reg, rf2)
 			                .divideAndRemainder(BigDecimal.ONE);
@@ -6409,6 +6747,7 @@ public class pz390 {
 			} else {
 				psw_cc = psw_cc3;
 			}
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0xE2: // "CUDTR" "B3E2" "RRE" DFP 19
 			psw_check = false;
@@ -6470,6 +6809,7 @@ public class pz390 {
 			break;
 		case 0xE9: // "CGXTR" "B3E9" "RRF4" DFP 25
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_ld(fp_reg, rf2)
             .divideAndRemainder(BigDecimal.ONE);
@@ -6483,7 +6823,7 @@ public class pz390 {
 			} else {
 				psw_cc = psw_cc3;
 			}
-			
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0xEA: // "CUXTR" "B3EA" "RRE" DFP 26
 			psw_check = false;
@@ -6537,14 +6877,16 @@ public class pz390 {
 			break;
 		case 0xF1: // "CDGTR" "B3F1" "RRE" DFP 31
 			psw_check = false;
+			set_bfp_alt_mode_rr(); // RPI 1125
 			ins_setup_rre();
 			fp_rbdv2 = BigDecimal.valueOf(reg.getLong(rf2));
-			fp_rbdv1 = fp_rbdv2.round(fp_dd_context);
+			fp_rbdv1 = fp_rbdv2.round(fp_dd_rnd_context[fp_dfp_rnd]);
 			if (fp_rbdv1.compareTo(fp_rbdv2) != 0){
 				fp_dxc = fp_dxc_it;
 				set_psw_check(psw_pic_data);	
 			}
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0xF2: // "CDUTR" "B3F2" "RRE" DFP 32
 			psw_check = false;
@@ -6593,7 +6935,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rrf2();
 			fp_rbdv1 = new BigDecimal(fp_get_bd_from_dd(fp_reg, rf3)
-					  .round(fp_dd_context)  // RPI 527
+					  .round(fp_dd_rnd_context[fp_dfp_rnd])  // RPI 527
 		              .unscaledValue())
 			          .scaleByPowerOfTen((int)(reg.getLong(rf2)
 			        		  - tz390.fp_exp_bias[tz390.fp_dd_type]
@@ -6621,8 +6963,10 @@ public class pz390 {
 		case 0xF9: // "CXGTR" "B3F9" "RRE" DFP 38
 			psw_check = false;
 			ins_setup_rre();
+			set_bfp_alt_mode_rr(); // RPI 1125
 			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2));
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1); // RPI 1015 was DD vs LD
+			reset_bfp_alt_mode(); // RPI 1125
 			break;
 		case 0xFA: // "CXUTR" "B3FA" "RRE" DFP 39
 			psw_check = false;
@@ -6681,7 +7025,7 @@ public class pz390 {
 				set_psw_check(psw_pic_spec);
 			}
 			fp_rbdv1 = new BigDecimal(fp_get_bd_from_ld(fp_reg, rf3)
-					  .round(fp_ld_context)  // RPI 527
+					  .round(fp_ld_rnd_context[fp_dfp_rnd])  // RPI 527
 	                  .unscaledValue())
 	          .scaleByPowerOfTen((int)(reg.getLong(rf2)
 	        		  - tz390.fp_exp_bias[tz390.fp_ld_type]
@@ -7009,6 +7353,21 @@ public class pz390 {
 			ins_setup_rre();
 			reg.putInt(rf1 + 4, reg.getShort(rf2 + 6));
 			break;
+		case 0x28: // "B928" "PCKMO" "RRE" RPI 1125
+			ins_setup_rre();
+			break;
+		case 0x2A: // "B92A" "KMF" "RRE" RPI 1125
+			ins_setup_rre();
+			break;
+		case 0x2B: // "B92B" "KMO" "RRE" RPI 1125
+			ins_setup_rre();
+			break;
+		case 0x2C: // "B92C" "PCC" "RRE" RPI 1125
+			ins_setup_rre();
+			break;
+		case 0x2D: // "B92D" "KMCTR" "RRF" RPI 1125
+			ins_setup_rrf1();
+			break;	
 		case 0x2E: // 4770 "B92E" "KM" "RRE"
 			ins_setup_rre();
 			break;
@@ -7033,6 +7392,39 @@ public class pz390 {
 		case 0x3F: // 4820 "B93F" "KLMD" "RRE"
 			ins_setup_rre();
 			break;
+		case 0x41: // "B941" "CFDTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2);
+			fp_bd_int_rem = fp_rbdv1
+			.divideAndRemainder(BigDecimal.ONE);
+			reg.putInt(rf1 + 4, fp_get_bd_rnd_int(fp_dfp_class,mf3).intValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_dfp_alt_mode(); // RPI 1125
+			break;	
+		case 0x42: // "B942" "CLGDTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_bd_int_rem = fp_get_bd_from_dd(fp_reg, rf2)
+			.divideAndRemainder(BigDecimal.ONE);
+			fp_rbdv1 = fp_get_bd_rnd_int(fp_dfp_class,mf3); // RPI 1125
+			reg.putLong(rf1, fp_rbdv1.abs().longValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_dfp_alt_mode(); // RPI 1125
+			break;
+		case 0x43: // "B943" "CLFDTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_bd_int_rem = fp_get_bd_from_dd(fp_reg, rf2)
+			.divideAndRemainder(BigDecimal.ONE);
+			fp_rbdv1 = fp_get_bd_rnd_int(fp_dfp_class,mf3); // RPI 1125
+			reg.putInt(rf1+4, fp_rbdv1.abs().intValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_dfp_alt_mode(); // RPI 1125
+			break;
 		case 0x46: // 4830 "B946" "BCTGR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -7042,6 +7434,98 @@ public class pz390 {
 				set_psw_loc(reg.getInt(rf2 + 4));
 			}
 			break;
+		case 0x49: // "B949" "CFXTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2);
+			reg.putInt(rf1+4,fp_rbdv1.intValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(),0);
+			reset_dfp_alt_mode(); // RPI 1125
+			break;
+		case 0x4A: // "B94A" "CLGXTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_bd_int_rem = fp_get_bd_from_ld(fp_reg, rf2)
+			.divideAndRemainder(BigDecimal.ONE);
+			fp_rbdv1 = fp_get_bd_rnd_int(fp_dfp_class,mf3); // RPI 1125
+			reg.putLong(rf1, fp_rbdv1.abs().longValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_dfp_alt_mode(); // RPI 1125
+			break;
+		case 0x4B: // "B94B" "CLFXTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_bd_int_rem = fp_get_bd_from_ld(fp_reg, rf2)
+			.divideAndRemainder(BigDecimal.ONE);
+			fp_rbdv1 = fp_get_bd_rnd_int(fp_dfp_class,mf3); // RPI 1125
+			reg.putInt(rf1+4, fp_rbdv1.abs().intValue());
+			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
+			reset_dfp_alt_mode(); // RPI 1125
+			break;
+		case 0x51: // "B951" "CDFTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_put_bd(rf1, tz390.fp_dd_type,BigDecimal.valueOf((long)reg.getInt(rf2+4)));
+			reset_dfp_alt_mode(); // RPI 1125
+			break;
+		case 0x52: // "B952" "CDLGTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2));
+			if (fp_rbdv1.signum() < 0){
+				fp_rbdv1 = fp_rbdv1.add(bd_max_log_long);
+			}
+			fp_rbdv1 = fp_rbdv1
+			         .round(fp_dd_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf3)]);
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_dfp_alt_mode(); // RPI 1125
+			break;
+		case 0x53: // "B953" "CDLFTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2) & 0xffffffff);
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_dfp_alt_mode(); // RPI 1125
+			break;	
+		case 0x59: // "B959" "CXFTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_put_bd(rf1, tz390.fp_ld_type,BigDecimal.valueOf((long)reg.getInt(rf2+4)));
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_dfp_alt_mode(); // RPI 1125
+			break;
+		case 0x5A: // "B95A" "CXLGTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2));
+			if (fp_rbdv1.signum() < 0){
+				fp_rbdv1 = fp_rbdv1.add(bd_max_log_long);
+			}
+			fp_rbdv1 = fp_rbdv1
+			         .round(fp_ld_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf3)]);
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_dfp_alt_mode(); // RPI 1125
+			break;
+		case 0x5B: // "B95B3" "CXFTR" "RRF3" r1,m4,r2,m4 RPI 1125
+			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125
+			ins_setup_rrf3();
+			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2) & 0xffffffff);
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			fp_store_reg(fp_reg, rf1); // RPI 787
+			reset_dfp_alt_mode(); // RPI 1125
+			break;		
 		case 0x60:  // 10 "B960" "CGRT" "RRF5" RPI 817
 			psw_check = false; 
 			ins_setup_rrf5();
@@ -7438,6 +7922,9 @@ public class pz390 {
 		case 0xAA: // 5250 "B9AA" "LPTEA" "RRE" Z9-19
 			ins_setup_rre();
 			break;
+		case 0xAE: // "B9AE" "RRBM" "RRE" RPI 1125 Z196
+			ins_setup_rre();
+			break;
 		case 0xAF:  // 20 "B9AF" "PFMF" "RRF5" 39 RPI 817
 	         ins_setup_rrf5();
 	         break;
@@ -7466,6 +7953,100 @@ public class pz390 {
 	    	 ins_setup_rrf5();
 	    	 exec_trt_ext(false);;
 	         break;
+	     case 0xC8:  // "B9C8" "AHHHR" R1,R2,R3 RPI 1125 z196
+				psw_check = false;
+				ins_setup_rrf5();
+				rv1 = reg.getInt(rf2);
+				rv2 = reg.getInt(rf3);
+				rv3 = rv1 + rv2;
+				reg.putInt(rf1, rv3);
+				psw_cc = get_int_add_cc();
+				break;
+	     case 0xC9:  // "B9C9" "SHHHR" R1,R2,R3 RPI 1125 z196
+				psw_check = false;
+				ins_setup_rrf5();
+				rv1 = reg.getInt(rf2);
+				rv2 = reg.getInt(rf3);
+				rv3 = rv1 - rv2;
+				reg.putInt(rf1, rv3);
+				psw_cc = get_int_sub_cc();
+				break;		
+	     case 0xCA:  // "B9CA" "ALHHHR" R1,R2,R3 RPI 1125 z196
+				psw_check = false;
+				ins_setup_rrf5();
+				rvw = reg.getInt(rf2);
+				rv2 = reg.getInt(rf3);
+				rv1 = rvw + rv2;
+				reg.putInt(rf1, rv1);
+				psw_cc = get_int_log_add_cc();
+				break;
+	     case 0xCB:  // "B9CB" "SLHHHR" R1,R2,R3 RPI 1125 z196
+				psw_check = false;
+				ins_setup_rrf5();
+				rvw = reg.getInt(rf2);
+				rv2 = reg.getInt(rf3);
+				rv1 = rvw - rv2;
+				reg.putInt(rf1, rv1);
+				psw_cc = get_int_log_sub_cc();
+				break;
+		case 0xCD: // "B9CD" "CHHR" "RRE" RPI 1125
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = get_int_comp_cc(reg.getInt(rf1), reg.getInt(rf2));
+			break;	
+		case 0xCF: // "B9CF" "CLHHR" "RRE" RPI 1125
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = get_int_log_comp_cc(reg.getInt(rf1), reg
+					.getInt(rf2));
+			break;
+		case 0xD8:  // "B9D8" "AHHLR" R1,R2,R3 RPI 1125 z196
+			psw_check = false;
+			ins_setup_rrf5();
+			rv1 = reg.getInt(rf2);
+			rv2 = reg.getInt(rf3+4);
+			rv3 = rv1 + rv2;
+			reg.putInt(rf1, rv3);
+			psw_cc = get_int_add_cc();
+			break;
+     case 0xD9:  // "B9D9" "SHHLR" R1,R2,R3 RPI 1125 z196
+			psw_check = false;
+			ins_setup_rrf5();
+			rv1 = reg.getInt(rf2);
+			rv2 = reg.getInt(rf3+4);
+			rv3 = rv1 - rv2;
+			reg.putInt(rf1, rv3);
+			psw_cc = get_int_sub_cc();
+			break;		
+     case 0xDA:  // "B9DA" "ALHHLR" R1,R2,R3 RPI 1125 z196
+			psw_check = false;
+			ins_setup_rrf5();
+			rvw = reg.getInt(rf2);
+			rv2 = reg.getInt(rf3+4);
+			rv1 = rvw + rv2;
+			reg.putInt(rf1, rv1);
+			psw_cc = get_int_log_add_cc();
+			break;
+     case 0xDB:  // "B9DB" "SLHHLR" R1,R2,R3 RPI 1125 z196
+			psw_check = false;
+			ins_setup_rrf5();
+			rvw = reg.getInt(rf2);
+			rv2 = reg.getInt(rf3+4);
+			rv1 = rvw - rv2;
+			reg.putInt(rf1, rv1);
+			psw_cc = get_int_log_sub_cc();
+			break;	
+		case 0xDD: // "B9DD" "CHLR" "RRE" RPI 1125
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = get_int_comp_cc(reg.getInt(rf1), reg.getInt(rf2+4));
+			break;	
+		case 0xDF: // "B9DF" "CLHLR" "RRE" RPI 1125
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = get_int_log_comp_cc(reg.getInt(rf1), reg
+					.getInt(rf2+4));
+			break;	
 	     case 0xE1:  // 5115 "B9E1" "POPCNT" "RRE" 14 RPI 1125
 		     psw_check = false;
 			 ins_setup_rre();
@@ -7483,6 +8064,158 @@ public class pz390 {
 				 psw_cc = psw_cc2;
 			 }
 			 break;
+	     case 0xE2: // "B9E2" "LOCGR" R1,R2,M3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				if ((psw_cc & mf3) > 0) {
+					reg.putLong(rf1, reg.getLong(rf2));
+				}
+				break; 
+	     case 0xE4: // "B9E4" "NGRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rlv1 = reg.getLong(rf2) & reg.getLong(rf3);
+				reg.putLong(rf1, rlv1);
+				if (rlv1 == 0) {
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+	     case 0xE6: // "B9E6" "OGRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rlv1 = reg.getLong(rf2) | reg.getLong(rf3);
+				reg.putLong(rf1, rlv1);
+				if (rlv1 == 0) {
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+	     case 0xE7: // "B9E7" "XGRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rlv1 = reg.getLong(rf2) ^ reg.getLong(rf3);
+				reg.putLong(rf1, rlv1);
+				if (rlv1 == 0) {
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+	     case 0xE8: // "B9E8" "AGRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rlv1 = reg.getLong(rf2);
+				rlv2 = reg.getLong(rf3);
+				rlv3 = rlv1 + rlv2;
+				reg.putLong(rf1, rlv3);
+				psw_cc = get_long_add_cc();
+				break;
+	     case 0xE9: // "B9E9" "SGRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rlv1 = reg.getLong(rf2);
+				rlv2 = reg.getLong(rf3);
+				rlv3 = rlv1 - rlv2;
+				reg.putLong(rf1, rlv3);
+				psw_cc = get_long_sub_cc();
+				break;
+	     case 0xEA: // "B9EA" "ALGRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rlv1 = reg.getLong(rf2);
+				rlv2 = reg.getLong(rf3);
+				rlv3 = rlv1 + rlv2;
+				reg.putLong(rf1, rlv3);
+				psw_cc = get_long_log_add_cc();
+				break;
+	     case 0xEB: // "B9EB" "SLGRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rlv1 = reg.getLong(rf2);
+				rlv2 = reg.getLong(rf3);
+				rlv3 = rlv1 - rlv2;
+				reg.putLong(rf1, rlv3);
+				psw_cc = get_long_log_sub_cc();
+				break;
+	     case 0xF2: // "B9F2" "LOCR" R1,R2,M3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				if ((psw_cc & mf3) > 0) {
+					reg.putInt(rf1+4, reg.getInt(rf2+4));
+				}
+				break;
+	     case 0xF4: // "B9F4" "NRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rv1 = reg.getInt(rf2+4) & reg.getInt(rf3+4);
+				reg.putInt(rf1+4, rv1);
+				if (rv1 == 0) {
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+	     case 0xF6: // "B9F6" "ORK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rv1 = reg.getInt(rf2+4) | reg.getInt(rf3+4);
+				reg.putInt(rf1+4, rv1);
+				if (rv1 == 0) {
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+	     case 0xF7: // "B9F7" "XRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rv1 = reg.getInt(rf2+4) ^ reg.getInt(rf3+4);
+				reg.putInt(rf1+4, rv1);
+				if (rv1 == 0) {
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+	     case 0xF8: // "B9F8" "ARK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rv1 = reg.getInt(rf2+4);
+				rv2 = reg.getInt(rf3+4);
+				rv3 = rv1 + rv2;
+				reg.putInt(rf1+4, rv3);
+				psw_cc = get_int_add_cc();
+				break;
+	     case 0xF9: // "B9F9" "SRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rv1 = reg.getInt(rf2+4);
+				rv2 = reg.getInt(rf3+4);
+				rv3 = rv1 - rv2;
+				reg.putInt(rf1+4, rv3);
+				psw_cc = get_int_sub_cc();
+				break;
+	     case 0xFA: // "B9FA" "ALRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rv1 = reg.getInt(rf2+4);
+				rv2 = reg.getInt(rf3+4);
+				rv3 = rv1 + rv2;
+				reg.putInt(rf1+4, rv3);
+				psw_cc = get_int_log_add_cc();
+				break;
+	     case 0xFB: // "B9FB" "SLRK" R1,R2,R3 RPI 1125
+				psw_check = false;
+				ins_setup_rrf5();
+				rv1 = reg.getInt(rf2+4);
+				rv2 = reg.getInt(rf3+4);
+				rv3 = rv1 - rv2;
+				reg.putInt(rf1+4, rv3);
+				psw_cc = get_int_log_sub_cc();
+				break;		
 		}
 	}
 	private void ins_C0XX(){
@@ -7791,6 +8524,56 @@ public class pz390 {
 	         break;
 	     }
 	}
+	private void ins_CCXX(){ // RPI 1125
+		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f; 
+		switch (opcode2) {
+		case 0x6: // "CC6" "BRCTH" "RIL" R1,S2
+			psw_check = false; 
+			ins_setup_ril();
+			rv1 = reg.getInt(rf1) - 1;
+			reg.putInt(rf1, rv1);
+			if (rv1 != 0) {
+				set_psw_loc(psw_loc - 4 + if2 + if2); // RPI 357
+			}
+			break;
+		case 0x8: // "CC8" "AIH" "RIL" R1,S2
+			psw_check = false; 
+			ins_setup_ril();
+			rv1 = reg.getInt(rf1);
+			rv2 = if2;
+			rv3 = rv1 + rv2;
+			reg.putInt(rf1, rv3);
+			psw_cc = get_int_add_cc();
+			break;
+		case 0xA: // "CC6" "ALSIH" "RIL" R1,S2
+			psw_check = false; 
+			ins_setup_ril();
+			rvw = reg.getInt(rf1);
+			rv2 = if2;
+			rv1 = rvw + rv2;
+			reg.putInt(rf1, rv1);
+			psw_cc = get_int_lsi_add_cc();
+			break;
+		case 0xB: // "CC6" "ALSIHN" "RIL" R1,S2
+			psw_check = false; 
+			ins_setup_ril();
+			rvw = reg.getInt(rf1);
+			rv2 = if2;
+			rv1 = rvw + rv2;
+			reg.putInt(rf1, rv1); get_int_add_cc();
+			break;
+		case 0xD: // "CC6" "CIH" "RIL" R1,S2
+			psw_check = false; 
+			ins_setup_ril();
+			psw_cc = get_int_comp_cc(reg.getInt(rf1), if2);
+			break;
+		case 0xF: // "CC6" "CLIH" "RIL" R1,S2
+			psw_check = false; 
+			ins_setup_ril();
+			psw_cc = get_int_log_comp_cc(reg.getInt(rf1), if2);
+			break;
+		}
+	}
 	private void ins_C8XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ssf] & 0x0f; // RPI202 RPI 606
 		switch (opcode2) {
@@ -7822,6 +8605,24 @@ public class pz390 {
 		case 0x2: // "CSST" RPI 1013
 			ins_setup_ssf();
 			break;
+		case 0x4: // "C84" "LPD" "SSF2" RPI 1125
+			psw_check = false; // RPI 606
+			ins_setup_ssf2();   // RPI 606
+			if ((mf3 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
+            reg.putInt(rf3+4,mem.getInt(bd1_loc));
+            reg.putInt(rf3+4+8,mem.getInt(bd2_loc));
+		    break;	
+		case 0x5: // "C85" "LPDG" "SSF2" RPI 1125
+			psw_check = false; // RPI 606
+			ins_setup_ssf2();   // RPI 606
+			if ((mf3 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
+            reg.putLong(rf3,mem.getLong(bd1_loc));
+            reg.putLong(rf3+8,mem.getLong(bd2_loc));
+		    break;    
 		}
 	}
 	private void ins_E0X(){
@@ -8657,6 +9458,57 @@ public class pz390 {
 			reg.putInt(rf1 + 4, rv1);
 			psw_cc = get_int_log_sub_cc();
 			break;
+		case 0xC0: // "E3C0" "LBH" "RXY" 18 RPI 1125
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1, mem.get(xbd2_loc));
+			break;
+		case 0xC2: // "E3C2" "LLCH" "RXY" 18 RPI 1125
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1, mem.get(xbd2_loc) & 0xff);
+			break;	
+		case 0xC3: // "E3C3" "STCH" "RXY" 18 RPI 1125
+			psw_check = false;
+			ins_setup_rxy();
+			mem.put(xbd2_loc, reg.get(rf1+3));
+			break;
+		case 0xC4: // "E3C4" "LHH" "RXY" 18 RPI 1125
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1, mem.getShort(xbd2_loc));
+			break;	
+		case 0xC6: // "E3C6" "LLHH" "RXY" 18 RPI 1125
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1, mem.getShort(xbd2_loc) & 0xffff);
+			break;
+		case 0xC7: // "E3C3" "STHH" "RXY" 18 RPI 1125
+			psw_check = false;
+			ins_setup_rxy();
+			mem.putShort(xbd2_loc, reg.getShort(rf1+2));
+			break;	
+		case 0xCA: // "E3CA" "LFH" "RXY" 18 RPI 1125
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1, mem.getInt(xbd2_loc));
+			break;
+		case 0xCB: // "E3CB" "STFH" "RXY" 18 RPI 1125
+			psw_check = false;
+			ins_setup_rxy();
+			mem.putInt(xbd2_loc, reg.getInt(rf1));
+			break;	
+		case 0xCD: // "E3CD" "CHF" "RXY" 18 RPI 1125
+			psw_check = false;
+			ins_setup_rxy();
+			psw_cc = get_int_comp_cc(reg.getInt(rf1), mem.getInt(xbd2_loc));
+			break;	
+		case 0xCF: // "E3CF" "CLHF" "RXY" 18 RPI 1125
+			psw_check = false;
+			ins_setup_rxy();
+			psw_cc = get_int_log_comp_cc(reg.getInt(rf1), mem
+					.getInt(xbd2_loc));
+			break;		
 		}
     }
     private void ins_E5XX(){
@@ -8748,7 +9600,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rsy_shift(); // RPI 1015
 			rlv1 = reg.getLong(rf3) >> (bd2_loc & 0x3f);
-			reg.putLong(rf1, rlv1); // RPI 398
+			reg.putLong(rf1, rlv1); 
 			psw_cc = get_long_comp_cc(rlv1, 0);
 			break;
 		case 0x0B: // 6220 "EB0B" "SLAG" "RSY"
@@ -8992,7 +9844,7 @@ public class pz390 {
 			rv2 = if2; // RPI 859
 			rv1 = rvw + rv2;
 			mem.putInt(bd1_loc, rv1);
-			psw_cc = get_int_log_add_cc();
+			psw_cc = get_int_lsi_add_cc(); // RPI 1125
 		    break;
 	     case 0x7A:  // 490 "EB7A" "AGSI" "SIY" 21 RPI 817
 		    psw_check = false; 
@@ -9010,7 +9862,7 @@ public class pz390 {
 			rlv2 = if2; // RPI 859
 			rlv1 = rlvw + rlv2;
 			mem.putLong(bd1_loc, rlv1);
-			psw_cc = get_long_log_add_cc();
+			psw_cc = get_long_lsi_add_cc(); // RPI 1125
 		    break;
 		case 0x80: // 6480 "EB80" "ICMH" "RSY"
 			psw_check = false;
@@ -9095,6 +9947,210 @@ public class pz390 {
 			get_pd(mem,bd1_loc, rflen1);
 			psw_cc = pd_cc;
 			break;
+		case 0xDC: //  "EBDC","SRAK","RSY  "  20 RPI 1125 Z196
+			psw_check = false;
+			ins_setup_rsy_shift(); // RPI 1015
+			rv1 = reg.getInt(rf3+4) >> (bd2_loc & 0x3f);
+			reg.putInt(rf1+4, rv1); 
+			psw_cc = get_int_comp_cc(rv1, 0);
+			break;
+			case 0xDD: //  "EBDD","SLAK","RSY  "  20 RPI 1125 Z196
+				psw_check = false;
+				ins_setup_rsy_shift(); // RPI 1015
+				reg.putInt(rf1 + 4, get_sla32(reg.getInt(rf3 + 4), bd2_loc & 0x3f));
+				break;
+			case 0xDE: //  "EBDE","SRLK","RSY  "  20 RPI 1125 Z196
+				psw_check = false;
+				ins_setup_rsy_shift(); // RPI 1015
+				reg.putInt(rf1+4, reg.getInt(rf3+4) >>> (bd2_loc & 0x3f));
+				break;
+			case 0xDF: //  //  "EBDF","SLLK","RSY  "  20 RPI 1125 Z196
+				psw_check = false;
+				ins_setup_rsy_shift(); // RPI 1015
+				reg.putInt(rf1+4, reg.getInt(rf3+4) << (bd2_loc & 0x3f));
+				break;	
+			case 0xE2: //  "EBE2","LOCG","RSY2 "  20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((psw_cc & mf3) > 0) {
+					reg.putLong(rf1, mem.getLong(bd2_loc));
+				}
+				break;
+			case 0xE3: //  "EBE3","STOCG","RSY2 " 20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((psw_cc & mf3) > 0) {
+					mem.putLong(bd2_loc, reg.getLong(rf1));
+				}
+				break;
+			case 0xE4: //  "EBE4","LANG","RSY  "  20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((bd2_loc & 0x7) != 0){
+					set_psw_check(psw_pic_spec);
+				}
+				rlv1 = reg.getLong(rf3);
+				rlv2 = mem.getLong(bd2_loc);
+				rlv3 = rlv1 & rlv2;
+				mem.putLong(bd2_loc,rlv3);
+				reg.putLong(rf1,rlv2);
+				if (rlv3 == 0){
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+			case 0xE6: //  "EBE6","LAOG","RSY  "  20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((bd2_loc & 0x7) != 0){
+					set_psw_check(psw_pic_spec);
+				}
+				rlv1 = reg.getLong(rf3);
+				rlv2 = mem.getLong(bd2_loc);
+				rlv3 = rlv1 | rlv2;
+				mem.putLong(bd2_loc,rlv3);
+				reg.putLong(rf1,rlv2);
+				if (rlv3 == 0){
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+			case 0xE7: //  "EBE7","LAXG","RSY  "  20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((bd2_loc & 0x7) != 0){
+					set_psw_check(psw_pic_spec);
+				}
+				rlv1 = reg.getLong(rf3);
+				rlv2 = mem.getLong(bd2_loc);
+				rlv3 = rlv1 ^ rlv2;
+				mem.putLong(bd2_loc,rlv3);
+				reg.putLong(rf1,rlv2);
+				if (rlv3 == 0){
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+			case 0xE8: //  "EBE8","LAAG","RSY  "  20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((bd2_loc & 0x7) != 0){
+					set_psw_check(psw_pic_spec);
+				}
+				rlv1 = reg.getLong(rf3);
+				rlv2 = mem.getLong(bd2_loc);
+				rlv3 = rlv1 + rlv2;
+				mem.putLong(bd2_loc,rlv3);
+				reg.putLong(rf1,rlv2);
+				psw_cc = get_long_add_cc();
+				break;
+			case 0xEA: //  "EBEA","LAALG","RSY  " 20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((bd2_loc & 0x7) != 0){
+					set_psw_check(psw_pic_spec);
+				}
+				rlv1 = reg.getLong(rf3);
+				rlv2 = mem.getLong(bd2_loc);
+				rlv3 = rlv1 + rlv2;
+				mem.putLong(bd2_loc,rlv3);
+				reg.putLong(rf1,rlv2);
+				psw_cc = get_long_log_add_cc();
+				break;
+			case 0xF2: //  "EBF2","LOC","RSY2 "   20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((psw_cc & mf3) > 0) {
+					reg.putInt(rf1+4, mem.getInt(bd2_loc));
+				}
+				break;
+			case 0xF3: //  "EBF3","STOC","RSY2 "  20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((psw_cc & mf3) > 0) {
+					mem.putInt(bd2_loc, reg.getInt(rf1+4));
+				}
+				break;
+			case 0xF4: //  "EBF4","LAN","RSY  "   20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((bd2_loc & 0x3) != 0){
+					set_psw_check(psw_pic_spec);
+				}
+				rv1 = reg.getInt(rf3 + 4);
+				rv2 = mem.getInt(bd2_loc);
+				rv3 = rv1 & rv2;
+				mem.putInt(bd2_loc,rv3);
+				reg.putInt(rf1+4,rv2);
+				if (rv3 == 0){
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+			case 0xF6: //  "EBF6","LAO","RSY  "   20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((bd2_loc & 0x3) != 0){
+					set_psw_check(psw_pic_spec);
+				}
+				rv1 = reg.getInt(rf3 + 4);
+				rv2 = mem.getInt(bd2_loc);
+				rv3 = rv1 | rv2;
+				mem.putInt(bd2_loc,rv3);
+				reg.putInt(rf1+4,rv2);
+				if (rv3 == 0){
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+			case 0xF7: //  "EBF7","LAX","RSY  "   20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((bd2_loc & 0x3) != 0){
+					set_psw_check(psw_pic_spec);
+				}
+				rv1 = reg.getInt(rf3 + 4);
+				rv2 = mem.getInt(bd2_loc);
+				rv3 = rv1 ^ rv2;
+				mem.putInt(bd2_loc,rv3);
+				reg.putInt(rf1+4,rv2);
+				if (rv3 == 0){
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc1;
+				}
+				break;
+			case 0xF8: //  "EBF8","LAA","RSY  "   20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((bd2_loc & 0x3) != 0){
+					set_psw_check(psw_pic_spec);
+				}
+				rv1 = reg.getInt(rf3 + 4);
+				rv2 = mem.getInt(bd2_loc);
+				rv3 = rv1 + rv2;
+				mem.putInt(bd2_loc,rv3);
+				reg.putInt(rf1+4,rv2);
+				psw_cc = get_int_add_cc();
+				break;
+			case 0xFA: //  "EBFA","LAAL","RSY  "  20 RPI 1125 Z196
+				psw_check = false; 
+				ins_setup_rsy();
+				if ((bd2_loc & 0x3) != 0){
+					set_psw_check(psw_pic_spec);
+				}
+				rv1 = reg.getInt(rf3 + 4);
+				rv2 = mem.getInt(bd2_loc);
+				rv3 = rv1 + rv2;
+				mem.putInt(bd2_loc,rv3);
+				reg.putInt(rf1+4,rv2);
+				psw_cc = get_int_log_add_cc();
+				break;	
 		}
     }
     private void ins_ECXX(){
@@ -9126,7 +10182,12 @@ public class pz390 {
 				set_psw_loc(psw_loc - 6 + 2 * if2);
 			}
 			break;
-	     case 0x54:  // 510 "EC54" "RNSBG" "RIE2" 52 RPI 817
+		 case 0x51:  // "EC51","RISBLG","RIE8"  52 RPI 1125 Z196
+		    psw_check = false;
+		    ins_setup_rie8();
+		    risb_rotate_insert_high(false); // not high = store low 32 bits
+		    break;
+		 case 0x54:  // 510 "EC54" "RNSBG" "RIE2" 52 RPI 817
 	        psw_check = false;
 	    	ins_setup_rie8();
 	    	rsbg_setup_and_rotate();
@@ -9186,7 +10247,12 @@ public class pz390 {
 	    	} else {
 	    		psw_cc = psw_cc1;
 	    	}
-	        break;	
+	        break;
+	     case 0x5D:  // "EC5D","RISBHG","RIE8"  52 RPI 1125 Z196
+			    psw_check = false;
+			    ins_setup_rie8();
+			    risb_rotate_insert_high(true); // not high = store low 32 bits
+			    break;   
 	     case 0x64:  // 10 "EC64" "CGRJ" "RIE6"
 	         psw_check = false;
 	    	 ins_setup_rie6();
@@ -9286,7 +10352,43 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break; 
+	     case 0xD8: // "ECD8","AHIK","RIE9"    57 RPI 1125 Z196
+	    	 psw_check = false;
+	    	 ins_setup_rie9();
+	    	 rv1 = reg.getInt(rf3 + 4);
+			 rv2 = if2;
+			 rv3 = rv1 + rv2;
+			 reg.putInt(rf1 + 4, rv3);
+			 psw_cc = get_int_add_cc();
+	    	 break;
+	     case 0xD9: // "ECD9","AGHIK","RIE9"   57 RPI 1125 Z196
+	    	 psw_check = false;
+	    	 ins_setup_rie9();
+	    	 rlv1 = reg.getLong(rf3);
+			 rlv2 = if2;
+			 rlv3 = rlv1 + rlv2;
+			 reg.putLong(rf1, rlv3);
+			 psw_cc = get_long_add_cc();
+	    	 break;
+	     case 0xDA: // "ECDA","ALHSIK","RIE9"  57 RPI 1125 Z196
+	    	 psw_check = false;
+	    	 ins_setup_rie9();
+	    	 rvw = reg.getInt(rf3+4);
+			 rv2 = if2; 
+			 rv1 = rvw + rv2;
+			 reg.putInt(rf1+4, rv1);
+			 psw_cc = get_int_lsi_add_cc(); // RPI 1125
+	    	 break;
+	     case 0xDB: // "ECDB","ALGHSIK","RIE9" 57 RPI 1125 Z196    
+	    	 psw_check = false;
+	    	 ins_setup_rie9();
+	    	 rlvw = reg.getLong(rf3);
+			 rlv2 = if2; 
+			 rlv1 = rlvw + rlv2;
+			 reg.putLong(rf1, rlv1);
+			 psw_cc = get_long_lsi_add_cc(); // RPI 1125
+	    	 break;
 	     case 0xE4:  // 570 "ECE4" "CGRB" "RRS1"
 	         psw_check = false;
 	    	 ins_setup_rrs1();
@@ -10499,6 +11601,19 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+	private void ins_setup_rie9() { // "RIE9" AHIK r1,r3,i2 oo13iiii00oo RPI 1125
+		psw_ins_len = 6;
+		rf1 = mem_byte[psw_loc + 1] & 0xff;
+		mf3 = rf1 & 0xf;
+		rf3 = mf3 << 3;
+		rf1 = (rf1 & 0xf0) >> 1;
+		mf1 = rf1 >> 3;
+		if2 = mem.getShort(psw_loc + 2);
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+	}
 	private void ins_setup_rrs1() { // "RRS1" CGRB oo12dbbbm0oo r1,r2,m3,s4
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -10678,7 +11793,8 @@ public class pz390 {
 	private void ins_setup_rrf5() { // RPI 817 "RRF2" 28 FIEBR oooo3012
 		// maps r1,r2,m3 to 3012
 		psw_ins_len = 4;
-		mf3 = (mem_byte[psw_loc + 2] & 0xf0) >> 4; 
+		mf3 = (mem_byte[psw_loc + 2] & 0xf0) >> 4;
+		rf3 = mf3 << 3; // RPI 1125
 		rf1 = mem_byte[psw_loc + 3];
 		mf2 = rf1 & 0x0f;
 		rf2 = mf2 << 3;
@@ -11294,6 +12410,40 @@ public class pz390 {
 				set_psw_check(psw_pic_addr);
 		}
 	}
+	private void ins_setup_ssf2() { // "SSF2" 55 LPD/LPDG oorobdddbddd
+		/*
+		 * fetch rf3,bd1_loc, bd2_loc, and update psw
+		 */
+		rf3 = (mem_byte[psw_loc + 1] & 0xf0) >>> 1;
+		mf3 = rf3 >>> 3;
+		bf1 = mem.getShort(psw_loc + 2) & 0xffff;
+		df1 = bf1 & 0xfff;
+		bf1 = (bf1 & 0xf000) >> 9;
+		if (bf1 > 0) {
+			bd1_loc = (reg.getInt(bf1 + 4) + df1) & psw_amode; // rpi 815
+		} else {
+			bd1_loc = df1;
+		}
+		bf2 = mem.getShort(psw_loc + 4) & 0xffff;
+		df2 = bf2 & 0xfff;
+		bf2 = (bf2 & 0xf000) >> 9;
+		if (bf2 > 0) {
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode; // rpi 815
+		} else {
+			bd2_loc = df2;
+		}
+		psw_ins_len = 6;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+		if (bd2_loc > tot_mem || bd1_loc > tot_mem) { // RPI 299 RPI 528
+			set_psw_check(psw_pic_addr);
+		}
+	}
 	public String get_ins_name(int ins_loc) {
 		/*
 		 * return opcode or ????? for given op1 and op2
@@ -11352,13 +12502,11 @@ public class pz390 {
 		tz390.op_code_index = tz390.find_key_index('H', hex_key);
 		if (tz390.op_code_index != -1) {
 			ins_name = tz390.op_name[tz390.op_code_index];
-			alt_rnd_mode = false; // RPI 1125
 			if (ins_name.charAt(ins_name.length()-1) == '?'){ // RPI 1125
 				// replace ? with A if bytes 2-3 not zero else remove ?
-				if (mem_byte[ins_loc+2] == 0){
+				if (alt_rnd_mode == 0 && alt_fpe_mode == 0){
 					ins_name = ins_name.substring(0,ins_name.length()-1);
 				} else {
-					alt_rnd_mode = true;
 					ins_name = ins_name.substring(0,ins_name.length()-1).concat("A");
 				}
 			}	
@@ -11728,7 +12876,19 @@ public class pz390 {
 		 * Notes: 
 		 *   1. rvw = r1 input 
 		 *   2. rv2 = r2 input 
-		 *   3. rv1 = result r1+r2
+		 *   3. rv1 = result r1
+		 * 
+		 *   R1 = RW + R2
+		 *   
+         *R1      RW        R2       RPI 1125 DOC
+         * +       +         +   NC
+         * +       +         -   C
+         * +       -         +   C
+         * +       -         -   C
+         * -       +         +   NC
+         * -       +         -   NC
+         * -       -         +   NC
+         * -       -         -   C
 		 */
 		boolean rv1_carry = false;
 		if (rv1 >= 0) { // RPI 376
@@ -11751,7 +12911,108 @@ public class pz390 {
 				return psw_cc3;
 			}
 		}
-	}
+	}	
+    private int get_int_lsi_add_cc() { // RPI 1125 ALSIH and ALSI
+		/*
+		 * set psw_carry and return cc for logical add
+		 * with signed value in rv2.  For negative rv2,
+		 * the carry bit may indicate borrow.
+		 *  
+		 *   rv1 carry/borrow
+		 *    0  0 - cc0
+		 *   !0  0 cc1
+		 *    0  1 cc2
+		 *   !0  1 cc3
+		 * Notes: 
+		 *   1. rvw = r1 input 
+		 *   2. rv2 = r2 input 
+		 *   3. rv1 = result r1
+		 * 
+		 *   R1 = RW + R2
+		 *   
+         *R1      RW        R2       RPI 1125 DOC
+         * +       +         +   NC
+         * +       +         -   NB
+         * +       -         +   C
+         * +       -         -   NB
+         * -       +         +   NC
+         * -       +         -   B
+         * -       -         +   NC
+         * -       -         -   NB
+		 */
+		boolean rv1_carry = false;
+		if (rv1 >= 0) { // RPI 376
+			if (rvw < 0 && rv2 > 0) {
+				rv1_carry = true; 
+			}
+		} else if (rvw >= 0 && rv2 < 0) {
+			rv1_carry = true; // borrow
+		}
+		if (rv1 == 0) {
+			if (!rv1_carry) {
+				return psw_cc0;
+			} else {
+				return psw_cc2;
+			}
+		} else {
+			if (!rv1_carry) {
+				return psw_cc1;
+			} else {
+				return psw_cc3;
+			}
+		}
+    }
+    private int get_long_lsi_add_cc() { // RPI 1125 ALGSI
+		/*
+		 * set psw_carry and return cc for logical add
+		 * with signed value in rv2.  For negative rv2,
+		 * the carry bit may indicate borrow.
+		 *  
+		 *   rlv1 carry/borrow
+		 *    0  0 - cc0
+		 *   !0  0 cc1
+		 *    0  1 cc2
+		 *   !0  1 cc3
+		 * Notes: 
+		 *   1. rlvw = r1 input 
+		 *   2. rlv2 = r2 input 
+		 *   3. rlv1 = result r1
+		 * 
+		 *   R1 = RW + R2
+		 *   
+         *R1      RW        R2       RPI 1125 DOC
+         * +       +         +   NC
+         * +       +         -   NB
+         * +       -         +   C
+         * +       -         -   NB
+         * -       +         +   NC
+         * -       +         -   B
+         * -       -         +   NC
+         * -       -         -   NB
+		 */
+		boolean rlv1_carry = false;
+		if (rlv1 >= 0) { // RPI 376
+			if (rlvw < 0 && rlv2 > 0) {
+				rlv1_carry = true; 
+			}
+		} else if (rlvw >= 0 && rlv2 < 0) {
+			rlv1_carry = true; // borrow
+		}
+		if (rlv1 == 0) {
+			if (!rlv1_carry) {
+				return psw_cc0;
+			} else {
+				return psw_cc2;
+			}
+		} else {
+			if (!rlv1_carry) {
+				return psw_cc1;
+			} else {
+				return psw_cc3;
+			}
+		}
+    }
+	
 
 	private int get_long_log_add_cc() {
 		/*
@@ -12848,6 +14109,28 @@ public class pz390 {
 		case 50: // RPI 817 "CGRJE"
 			ins_setup_rie6();
 			break;
+		case 51: // RPI 1125 "MVHHI" RPI 1125
+			ins_setup_sil();
+			break;
+		case 52: // RPI 1125 "RNSBG" RPI 1125
+			ins_setup_rie8();
+			break;
+		case 53: // RPI 1125 "LEDBR?" RPI 1125 
+			ins_setup_rre();
+			break;
+		case 54: // RPI 1125 "FIXBR?" RPI 1125 
+			ins_setup_rrf2();
+			break;	
+		case 55: // RPI 1125 "LPD" RPI 1125 
+			ins_setup_ssf2();
+			break;
+		case 56: // RPI 1125 "LOC"  
+			ins_setup_rsy();
+			break;
+		case 57: // RPI 1125 "AHIK"  
+			ins_setup_rie9();
+			break;	
+	    // update max_op_type_setup and add cases to match
 		default: 
 			trace_ins(); // unknown op RPI 527
 		}
@@ -13703,8 +14986,8 @@ public class pz390 {
 		/*
 		 * return psw_cc for big decimal compare
 		 */
-		bd1 = bd1.round(fp_x_context); // RPI 821 
-		bd2 = bd2.round(fp_x_context); // RPI 821 
+		bd1 = bd1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
+		bd2 = bd2.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
 		if (fp_signal) {
 			fp_signal = false;
 			if (bd1.abs().compareTo(fp_lb_max) >= 0
@@ -13751,8 +15034,8 @@ public class pz390 {
 		/*
 		 * return psw_cc for LH big decimal compare
 		 */
-		bd1 = bd1.round(fp_x_context); // RPI 821 
-		bd2 = bd2.round(fp_x_context); // RPI 821 
+		bd1 = bd1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
+		bd2 = bd2.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
 		int_work = bd1.compareTo(bd2);
 		if (int_work == 0) {
 			return psw_cc_equal;
@@ -13798,7 +15081,7 @@ public class pz390 {
 		 * and raise BFP sig, ovf,
 		 * or unf exceptions
 		 */
-		fp_rbdv1 = fp_rbdv1.round(fp_x_context); // RPI 821 
+		fp_rbdv1 = fp_rbdv1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
 		int int_work = fp_rbdv1.signum();
 		if (int_work == 0) {
 			fp_dxc = fp_dxc_it;
@@ -14205,7 +15488,7 @@ public class pz390 {
 					fp_lxg_context).multiply(fp_bd_half, fp_lxg_context);
 		}
 		fp_rbdv1 = fp_rbdv1.scaleByPowerOfTen(-fp_bd_sqrt_scale / 2).round(
-				fp_x_context);
+				fp_lb_rnd_context[fp_bfp_rnd]);
 	}
 
 	public BigDecimal fp_get_bd_from_lh(ByteBuffer fp_buff, int fp_index) {
@@ -14362,7 +15645,7 @@ public class pz390 {
 		 * check for big dec co-reg to avoid conversion
 		 */
 		return new BigDecimal(fp_get_db_from_db(fp_buff, fp_index),
-				fp_d_context);
+				fp_db_rnd_context[fp_bfp_rnd]);
 	}
 	private void fp_copy_reg(int index1,int index2){
 		/*
@@ -14396,9 +15679,9 @@ public class pz390 {
 		fp_fpc_reg = fpc_reg;
 		fp_dxc = (fp_fpc_reg & 0xff00) >>> 8;
 		fp_dfp_rnd = (fp_fpc_reg & fp_dfp_rnd_mask) >> 4;
-		fp_set_dfp_rnd();  // RPI 406
-		fp_bfp_rnd = fp_fpc_reg & fp_bfp_rnd_mask;
-		fp_set_bfp_rnd();
+		fp_dfp_rnd_default = fp_dfp_rnd; // RPI 1125
+			fp_bfp_rnd = fp_fpc_reg & fp_bfp_rnd_mask;
+		fp_bfp_rnd_default = fp_bfp_rnd; // RPI 1125
 		fp_fpc_reg = fp_fpc_reg & 0xffff00ff;
     }
 	private BigDecimal fp_get_bd_rnd_int(byte fp_class,int rnd_mode) {
@@ -14506,31 +15789,14 @@ public class pz390 {
 		}
 		return rnd_mode;
 	}
-    private void fp_set_bfp_rnd(){
-    	/*
-    	 * set db, eb, and lb context for
-    	 * specified rounding mode fp_bfp_rnd
-    	 */
-		fp_ed_context = new MathContext(7,fp_dfp_rnd_mode[fp_dfp_rnd]);
-		fp_dd_context = new MathContext(16,fp_dfp_rnd_mode[fp_dfp_rnd]); 
-		fp_ld_context = new MathContext(34,fp_dfp_rnd_mode[fp_dfp_rnd]); 
-    }
-    private void fp_set_dfp_rnd(){
-    	/*
-    	 * set dd, ed, and ld context for
-    	 * specified rounding mode fp_dfp_rnd
-    	 */
-		fp_ed_context = new MathContext(7,fp_dfp_rnd_mode[fp_dfp_rnd]);
-		fp_dd_context = new MathContext(16,fp_dfp_rnd_mode[fp_dfp_rnd]); 
-		fp_ld_context = new MathContext(34,fp_dfp_rnd_mode[fp_dfp_rnd]); 
-    }
+    
 	private BigDecimal fp_get_bd_from_eb(ByteBuffer fp_buff, int fp_index) {
 		/*
 		 * get big decimal from DB long bin in fp_reg or mem 1. If fp_reg, then
 		 * check for big dec co-reg to avoid conversion
 		 */
 		return new BigDecimal(fp_get_eb_from_eb(fp_buff, fp_index),
-				fp_e_context);
+				fp_eb_rnd_context[fp_bfp_rnd]);
 	}
 
 	private BigDecimal fp_get_bd_from_eh(ByteBuffer fp_buff, int fp_index) {
@@ -15647,7 +16913,7 @@ public class pz390 {
 		 * 
 		 */
 		return new BigDecimal(fp_eh_reg_to_db(eh1_buff.getInt(eh1_index)),
-				fp_e_context);
+				fp_eb_rnd_context[fp_bfp_rnd]);
 	}
 	private BigDecimal fp_lh_to_bd(ByteBuffer lh1_buff, int lh1_index) {
 		/*
@@ -15801,7 +17067,7 @@ public class pz390 {
 			}
 			break;
 		case 6: // fp_lb_type
-			fp_bd_to_lx_wreg(fp_type,fp_bd.round(fp_x_context)); // RPI 821
+			fp_bd_to_lx_wreg(fp_type,fp_bd.round(fp_lb_rnd_context[fp_bfp_rnd])); // RPI 821
 			break;
 		case 7: // fp_ld_type
 			fp_bd = fp_bd.round(fp_ld_rnd_context[fp_dfp_rnd]); 
@@ -16451,20 +17717,20 @@ public class pz390 {
 		fp_lh_max = new BigDecimal("7.2e+75", fp_lxg_context);
 		fp_lb_min = new BigDecimal("3.3e-4932", fp_lxg_context); // RPI 367 allow
 																// (MIN)
-	    fp_lb_neg_zero = new BigDecimal("-1e-6177",fp_ld_context); // RPI 834 work-around for no BigDecimal -0.
+	    fp_lb_neg_zero = new BigDecimal("-1e-6177",fp_ld_rnd_context[fp_dfp_rnd]); // RPI 834 work-around for no BigDecimal -0.
 		fp_lb_max = new BigDecimal("1.2e+4932", fp_lxg_context);
-		fp_dd_pos_max = new BigDecimal("9999999999999999e+369",fp_dd_context);
-		fp_dd_neg_max = new BigDecimal("-9999999999999999e+369",fp_dd_context);
-	    fp_dd_pos_min = new BigDecimal("1e-398",fp_dd_context);
-	    fp_dd_neg_min = new BigDecimal("-1e-398",fp_dd_context);
-	    fp_ed_pos_max = new BigDecimal("9999999e+90",fp_ed_context);
-		fp_ed_neg_max = new BigDecimal("-9999999e+101",fp_ed_context);
-	    fp_ed_pos_min = new BigDecimal("1e-101",fp_ed_context);
-	    fp_ed_neg_min = new BigDecimal("-1e-101",fp_ed_context);
-	    fp_ld_pos_max = new BigDecimal("9999999999999999999999999999999999e+6111",fp_ld_context);
-		fp_ld_neg_max = new BigDecimal("-999999999999999999999999999999999e+6176",fp_ld_context);
-	    fp_ld_pos_min = new BigDecimal("1e-6176",fp_ld_context);
-	    fp_ld_neg_min = new BigDecimal("-1e-6176",fp_ld_context);
+		fp_dd_pos_max = new BigDecimal("9999999999999999e+369",fp_dd_rnd_context[fp_dfp_rnd]);
+		fp_dd_neg_max = new BigDecimal("-9999999999999999e+369",fp_dd_rnd_context[fp_dfp_rnd]);
+	    fp_dd_pos_min = new BigDecimal("1e-398",fp_dd_rnd_context[fp_dfp_rnd]);
+	    fp_dd_neg_min = new BigDecimal("-1e-398",fp_dd_rnd_context[fp_dfp_rnd]);
+	    fp_ed_pos_max = new BigDecimal("9999999e+90",fp_ed_rnd_context[fp_dfp_rnd]);
+		fp_ed_neg_max = new BigDecimal("-9999999e+101",fp_ed_rnd_context[fp_dfp_rnd]);
+	    fp_ed_pos_min = new BigDecimal("1e-101",fp_ed_rnd_context[fp_dfp_rnd]);
+	    fp_ed_neg_min = new BigDecimal("-1e-101",fp_ed_rnd_context[fp_dfp_rnd]);
+	    fp_ld_pos_max = new BigDecimal("9999999999999999999999999999999999e+6111",fp_ld_rnd_context[fp_dfp_rnd]);
+		fp_ld_neg_max = new BigDecimal("-999999999999999999999999999999999e+6176",fp_ld_rnd_context[fp_dfp_rnd]);
+	    fp_ld_pos_min = new BigDecimal("1e-6176",fp_ld_rnd_context[fp_dfp_rnd]);
+	    fp_ld_neg_min = new BigDecimal("-1e-6176",fp_ld_rnd_context[fp_dfp_rnd]);
 	}
 
 	private void init_opcode_keys() {
@@ -16547,7 +17813,13 @@ public class pz390 {
 		op_type_offset[49] = 5; // RIE6 CGRJ  RPI 817
 		op_type_offset[50] = 5; // RIE7 CGRJE RPI 817
 		op_type_offset[51] = 1; // SIL  MVHHI RPI 817
-		op_type_offset[52] = 5; // RIE8 RNSBG RPI 817
+		op_type_offset[52] = 5; // RIE8 RNSBG RPI 81
+		op_type_offset[53] = 1; // RFE CDFBR?   RPI 1125
+		op_type_offset[54] = 1; // RRF CFEBR?   RPI 1125
+		op_type_offset[55] = 1; // SSF LDP/LDPR RPI 1125
+		op_type_offset[56] = 5; // RSY LOC/LOCG RPI 1125
+		op_type_offset[57] = 5; // RIE AHIK RPI 1125
+		int max_op_type_offset = 57; // RPI 1125
 		op_type_mask[1] = 0xff; // E PR oooo
 		op_type_mask[7] = 0xff; // S SSM oooobddd
 		op_type_mask[12] = 0x0f; // RI IIHH ooroiiii
@@ -16584,7 +17856,27 @@ public class pz390 {
 		op_type_mask[50] = 0xff; // RIE7 CGRJE RPI 817
 		op_type_mask[51] = 0xff; // SIL  MVHHI RPI 817
 		op_type_mask[52] = 0xff; // RIE8 RNSBG RPI 817
+		op_type_mask[53] = 0xff; // RRE  CEFBR? RPI 1125
+		op_type_mask[54] = 0x0f; // RRF2 FIEBR? RPI 1125
+		op_type_mask[55] = 0xff; // SSF2 LDP/LDPR RPI 1125
+		op_type_mask[56] = 0xff; // RSY2 LOC/LOCG RPI 1125
+		op_type_mask[57] = 0xff; // RIE9 AHIK RPI 1125
+		int max_op_type_mask = 57; // RPI 1125
 		// init op2 offset and mask arrays indexed by op1
+		int max_op_type_setup = 57; // RPI 1125
+		// add setup case for each new op type - see case 55 etc.
+		if (max_op_type_setup != tz390.max_op_type_offset){
+			tz390.abort_error(22,"max op type setup cases out of sync "
+					+ tz390.max_op_type_offset + " vs " + max_op_type_setup);
+		}
+		if (max_op_type_offset != tz390.max_op_type_offset){
+			tz390.abort_error(22,"max op type offset tables out of sync "
+				+ tz390.max_op_type_offset + " vs " + max_op_type_offset);			
+		}
+		if (max_op_type_mask != tz390.max_op_type_offset){
+			tz390.abort_error(22,"max op type offset and max op type mask tables out of sync "
+				+ tz390.max_op_type_offset + " vs " + max_op_type_mask);			
+		}
 		index = 1; // skip 0 comment code entry
 		while (index < tz390.op_code.length) {
 			int op1 = Integer.valueOf(tz390.op_code[index].substring(0, 2), 16)
@@ -16940,16 +18232,30 @@ public class pz390 {
 					+ tz390.get_hex(reg.getInt(rf2 + 4), 8);
 			break;
 		case 141: // b3c4-b3c6  CEGR etc.F64,R64
-			trace_parms = " F" + tz390.get_hex(mf1, 1) 
+			if (alt_rnd_mode != 0 || alt_fpe_mode != 0){ // RPI 1125 CEGBRA
+				trace_parms = " F" + tz390.get_hex(mf1, 1) 
+	            + "="  + get_fp_long_hex(rf1) + " M3=" + tz390.get_hex(mf3, 1)
+	            + " F" + tz390.get_hex(mf2, 1)
+				+ "="  + get_long_hex(reg.getLong(rf2)) + " M4=" + tz390.get_hex(mf4, 1);
+			} else {
+				trace_parms = " F" + tz390.get_hex(mf1, 1) 
 			            + "="  + get_fp_long_hex(rf1) 
 					    + " R" + tz390.get_hex(mf2, 1)
 					    + "="  + get_long_hex(reg.getLong(rf2));
+			}
 			break;
-		case 142: // b3??,b22d,b244,b245 DXR, SQDR F64,F64
-			trace_parms = " F" + tz390.get_hex(mf1, 1) 
+		case 142: // b3??,b22d,b244,b245 DXR, SQDR F64,F64			
+			if (alt_rnd_mode != 0 || alt_fpe_mode != 0){ // RPI 1125
+				trace_parms = " F" + tz390.get_hex(mf1, 1) 
+	            + "="  + get_fp_long_hex(rf1) + " M3=" + tz390.get_hex(mf3, 1)
+	            + " F" + tz390.get_hex(mf2, 1)
+				+ "="  + get_fp_long_hex(rf2) + " M4=" + tz390.get_hex(mf4, 1);
+			} else {
+				trace_parms = " F" + tz390.get_hex(mf1, 1) 
 			            + "="  + get_fp_long_hex(rf1) 
 			            + " F" + tz390.get_hex(mf2, 1)
 						+ "="  + get_fp_long_hex(rf2);
+			}
 			break;
 		case 143: // b990-b993  R1,R1+1,R2,M
 			trace_parms = " R" + tz390.get_hex(mf1, 1) 
@@ -16973,10 +18279,17 @@ public class pz390 {
 			            + "="  + get_fp_long_hex(rf2);
 			break;
 		case 146: // b3b4-b3b6,CEFR etc.F64,R64
-			trace_parms = " F" + tz390.get_hex(mf1, 1) 
+			if (alt_rnd_mode != 0 || alt_fpe_mode != 0){ // RPI 1125
+				trace_parms = " F" + tz390.get_hex(mf1, 1) 
+	            + "="  + get_fp_long_hex(rf1) + " M3=" + tz390.get_hex(mf3, 1)
+	            + " F" + tz390.get_hex(mf2, 1)
+				+ "="  + tz390.get_hex(reg.getInt(rf2+4),8) + " M4=" + tz390.get_hex(mf4, 1);
+			} else {
+				trace_parms = " F" + tz390.get_hex(mf1, 1) 
 			            + "="  + get_fp_long_hex(rf1) 
 					    + " R" + tz390.get_hex(mf2, 1)
 					    + "="  + tz390.get_hex(reg.getInt(rf2+4),8);
+			}
 			break;	
 		case 147: // b9A2 ptf R64 rpi 817
 			trace_parms = " R" + tz390.get_hex(mf1, 1) 
@@ -17021,6 +18334,18 @@ public class pz390 {
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 					+ tz390.get_hex(reg.getInt(rf1+4),8) + " F" + tz390.get_hex(mf2, 1) + "="
 					+ tz390.get_hex(reg.getInt(rf2+4),8) + " M3=" + tz390.get_hex(mf3, 1);
+			break;
+		case 153:// "RRF5" 39 NGRK R1,R2,R3 oooor0rr
+			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
+					+ get_long_hex(rf1) + " F" + tz390.get_hex(mf2, 1) + "="
+					+ get_long_hex(rf2) + " F" + tz390.get_hex(mf3, 1) + "="
+					+ get_long_hex(rf3);
+			break;
+		case 154:// "RRF5" 39 NRK R1,R2,R3 oooor0rr
+			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
+					+ tz390.get_hex(rf1+4,8) + " F" + tz390.get_hex(mf2, 1) + "="
+					+ tz390.get_hex(rf2+4,8) + " F" + tz390.get_hex(mf3, 1) + "="
+					+ tz390.get_hex(rf3+4,8);
 			break;
 		case 160: // c2?? AGFI etc., C01 LGFI, C06 LXHI  RPI 200
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
@@ -17198,7 +18523,7 @@ break;
 						+ tz390.get_hex(reg.getInt(rf1+4),8) + " R"
 						+ tz390.get_hex(mf3, 1) + "="
 						+ tz390.get_hex(reg.getInt(rf3+4),8) + " S2("
-						+ tz390.get_hex(bd2_loc, 8) + ")";
+						+ tz390.get_hex(bd2_loc, 4) + ")"; // RPI 1125 WAS 8 VS 4
 			break;
 		case 205:// BXHG, BXLEG
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
@@ -17216,6 +18541,29 @@ break;
 					    + " S2(" + tz390.get_hex(bd2_loc, 8) 
 					    + ")=" + bytes_to_hex(mem, bd2_loc, 8, 0);
 			break;	
+		case 207: // EBE2 LOCG R1,S2,M3
+			trace_parms = " R"   + tz390.get_hex(mf1, 1) 
+			            + "="    + get_long_hex(reg.getLong(rf1))  
+						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+						+ ")="   + bytes_to_hex(mem, bd2_loc, 8, 0)
+						+ " M3=" + tz390.get_hex(mf3, 1);
+			break;	
+		case 208://  "EBE4","LANG","RSY  "  20 RPI 1125 Z196
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+					+ get_long_hex(reg.getLong(rf1)) + " R"
+					+ tz390.get_hex(mf3, 1) + "="
+					+ get_long_hex(reg.getLong(rf3))
+					+ " S2("
+					+ tz390.get_hex(bd2_loc, 8) + ")="
+					+ bytes_to_hex(mem, bd2_loc, 8, 0);
+			break;
+		case 209: //  "EBF2","LOC","RSY2 "   20 RPI 1125 Z196
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+						+ tz390.get_hex(reg.getInt(rf1 + 4), 8) 
+						+ " S2("
+						+ tz390.get_hex(bd2_loc, 8) + ")="
+						+ bytes_to_hex(mem, bd2_loc, 4, 0)
+						+ " M3=" + tz390.get_hex(mf3, 1);	
 		case 210:// "SIY" 6 TMY ooiibdddhhoo
 			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, 1, 0) + " I2="
@@ -17366,23 +18714,55 @@ break;
 					    + " M4=" + tz390.get_hex(mf4, 1);
 			break;
 		case 301:// FIDTR, DIXTR (r1,m3,r2,m4 - oooo3412)
-		trace_parms = " F" + tz390.get_hex(mf1, 1) 
+			trace_parms = " F" + tz390.get_hex(mf1, 1) 
 		            + "="  + get_fp_long_hex(rf1) 
 		            + " M3=" + tz390.get_hex(mf3, 1) 
 		            + " F" + tz390.get_hex(mf2, 1) 
 				    + "="  + get_fp_long_hex(rf2) 
 				    + " M4=" + tz390.get_hex(mf4, 1);
-		break;
+			break;
 		case 302:// RRF3" RRDTR/RRXTR oooormrr (r1,r3,r2,m4 maps to
 			// oooo3412)  RPI 798
-		trace_parms = " F" + tz390.get_hex(mf1, 1) 
+			trace_parms = " F" + tz390.get_hex(mf1, 1) 
 		            + "="  + get_fp_long_hex(rf1) 
 		            + " F" + tz390.get_hex(mf3, 1) 
 		            + "="  + get_fp_long_hex(rf3) 
 				    + " R" + tz390.get_hex(mf2, 1) 
 				    + "="  + get_long_hex(reg.getLong(rf2)) // RPI 798
 				    + " M4=" + tz390.get_hex(mf4, 1);
-		break;
+			break;
+		case 303:// CLFEBR (r1,m3,r2,m4 - oooo3412)
+			trace_parms = " R" + tz390.get_hex(mf1, 1) 
+			            + "="  + tz390.get_hex(reg.getInt(rf1+4),8) 
+			            + " M3=" + tz390.get_hex(mf3, 1) 
+			            + " F" + tz390.get_hex(mf2, 1) 
+					    + "="  + get_fp_long_hex(rf2) 
+					    + " M4=" + tz390.get_hex(mf4, 1);
+			break;
+		case 304:// CELGBR (r1,m3,r2,m4 - oooo3412)
+			trace_parms = " F" + tz390.get_hex(mf1, 1) 
+			            + "="  + get_fp_long_hex(rf1) 
+			            + " M3=" + tz390.get_hex(mf3, 1) 
+			            + " R" + tz390.get_hex(mf2, 1) 
+					    + "="  + get_long_hex(reg.getLong(rf2)) 
+					    + " M4=" + tz390.get_hex(mf4, 1);	
+			 break;
+		case 305:// CLGDTR (r1,m3,r2,m4 - oooo3412) RPI 1125
+			trace_parms = " R" + tz390.get_hex(mf1, 1) 
+			            + "="  + get_long_hex(reg.getLong(rf1)) 
+			            + " M3=" + tz390.get_hex(mf3, 1) 
+			            + " F" + tz390.get_hex(mf2, 1) 
+					    + "="  + get_fp_long_hex(rf2) 
+					    + " M4=" + tz390.get_hex(mf4, 1);
+			break;
+		case 306:// CDFTR (r1,m3,r2,m4 - oooo3412) RPI 1125
+			trace_parms = " F" + tz390.get_hex(mf1, 1) 
+			            + "="  + get_fp_long_hex(rf1) 
+			            + " M3=" + tz390.get_hex(mf3, 1) 
+			            + " R" + tz390.get_hex(mf2, 1) 
+					    + "="  + tz390.get_hex(reg.getInt(rf2+4),8) 
+					    + " M4=" + tz390.get_hex(mf4, 1);
+			break;	
 		case 310:// "SS" PKA oollbdddbddd ll from S2
 		case 320: // "SSF" MVCOS oor0bdddbddd (s1,s2,r3) z9-41
 			maxlen = rflen;
@@ -17396,12 +18776,24 @@ break;
                     + " R" + tz390.get_hex(mf3,1)  // RPI 606
                     + "=" + tz390.get_hex(reg.getInt(rf3 + 4),8);
 			break;
+		case 321: // "SSF" LDP/LDPG oor0bdddbddd (r3,s1,s2) RPI 1125
+			maxlen = rflen;
+			if (maxlen > 16){
+				maxlen = 16; // RPI 395
+			}
+			trace_parms = " R" + tz390.get_hex(mf3,1)  
+            		+ "=" + tz390.get_hex(reg.getInt(rf3 + 4),8)
+				    + " S1(" + tz390.get_hex(bd1_loc, 8) + ")="
+					+ bytes_to_hex(mem, bd1_loc, maxlen, 0) + " S2("
+					+ tz390.get_hex(bd2_loc, 8) + ")="
+					+ bytes_to_hex(mem, bd2_loc, maxlen, 0); // RPI 1125                  
+			break;	
 		case 330: // "BLX" BRCL extended mnemonics
 			trace_parms = " S2(" + tz390.get_hex(bd2_loc, 8) + ")="
 			            + get_ins_target(bd2_loc);
 			break;
-		case 340: // RPI 206 "RRF2" FIEBR (r1,m3,r2 maps to oooo3012)
-			if (alt_rnd_mode){ // RPI 1125
+		case 340: // RPI 206 "RRF2" FIEBRA (r1,m3,r2 maps to oooo3012)
+			if (alt_fpe_mode != 0){ // RPI 1125
 				trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 				    + get_fp_long_hex(rf1) + " M3=" + tz390.get_hex(mf3, 1)
 				    + " F" + tz390.get_hex(mf2, 1) + "="
@@ -17414,18 +18806,34 @@ break;
 			}
 			break;
 		case 341: // b398-b39a,b3b8-b3ba  32 bit reg
-			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+			if (alt_fpe_mode != 0){ // RPI 1125
+				trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+				+ tz390.get_hex(reg.getInt(rf1 + 4), 8) 
+				+ " M3=" + tz390.get_hex(mf3, 1)
+				+ " F" + tz390.get_hex(mf2, 1)
+				+ "=" + get_fp_long_hex(rf2) + " M4=" + tz390.get_hex(mf4, 1);
+			} else {
+				trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 						+ tz390.get_hex(reg.getInt(rf1 + 4), 8) 
 						+ " M3=" + tz390.get_hex(mf3, 1)
 						+ " F" + tz390.get_hex(mf2, 1)
 						+ "=" + get_fp_long_hex(rf2);
+			}
 			break;
 		case 342: // b3a8-aa, b3c8-b3ca  64 bit reg
-			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+			if (alt_fpe_mode != 0){ // RPI 1125 CGEBRA
+				trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+				+ get_long_hex(reg.getLong(rf1)) 
+				+ " M3=" + tz390.get_hex(mf3, 1)
+				+ " F" + tz390.get_hex(mf2, 1)
+				+ "=" + get_fp_long_hex(rf2) + " M4=" + tz390.get_hex(mf4, 1);
+			} else {
+				trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 						+ get_long_hex(reg.getLong(rf1)) 
 						+ " M3=" + tz390.get_hex(mf3, 1) 
 						+ " F" + tz390.get_hex(mf2, 1)
 						+ "=" + get_fp_long_hex(rf2);
+			}
 			break;
 		case 343: // b3f1-beff
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
@@ -17449,10 +18857,17 @@ break;
 						+ " M4=" + tz390.get_hex(mf4, 1);
 			break;
 		case 360: // "RRR" "MDTR"
-			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
+			if (alt_fpe_mode != 0){ // RPI 1125 MDTRA
+				trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
+				+ get_fp_long_hex(rf1) + " F" + tz390.get_hex(mf2, 1) + "="
+				+ get_fp_long_hex(rf2) + " F" + tz390.get_hex(mf3, 1) + "="
+				+ get_fp_long_hex(rf3) + " M4=" + tz390.get_hex(mf4, 1);
+			} else {
+				trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 					+ get_fp_long_hex(rf1) + " F" + tz390.get_hex(mf2, 1) + "="
 					+ get_fp_long_hex(rf2) + " F" + tz390.get_hex(mf3, 1) + "="
 					+ get_fp_long_hex(rf3);
+			}
 			break;
 		case 370: // "RRS1" "CGRB" r1,r2,m3,s4 oorrbdddm0oo RPI 817
 			trace_parms = " R" + tz390.get_hex(mf1, 1)
@@ -17511,6 +18926,26 @@ break;
 			+ " I3=" + tz390.get_hex(if3,2)
 			+ " I4=" + tz390.get_hex(if4,2)
 			+ " I5=" + tz390.get_hex(if5,2);
+		    break;
+		case 410: // "AHHHR" R1,R2,R3
+			trace_parms = " R" + tz390.get_hex(mf1, 1) 
+            + "="  + tz390.get_long_hex(reg.getLong(rf1),16) 
+            + " R" + tz390.get_hex(mf2, 1) 
+            + "="  + tz390.get_long_hex(reg.getLong(rf2),16) 
+			+ " R" + tz390.get_hex(mf3, 1) 
+			+ "="  + tz390.get_long_hex(reg.getLong(rf3),16);
+		case 420: // "AHIK" R1,R3,I2
+			trace_parms = " R" + tz390.get_hex(mf1, 1) 
+            + "="  + tz390.get_hex(reg.getInt(rf1+4),8) 
+            + " R" + tz390.get_hex(mf3, 1) 
+            + "="  + tz390.get_hex(reg.getInt(rf3+4),8) 
+			+ " I2="  + tz390.get_hex(if2,4);
+		case 430: // "AGHIK" R1,R3,I2
+			trace_parms = " R" + tz390.get_hex(mf1, 1) 
+            + "="  + tz390.get_long_hex(reg.getLong(rf1),16) 
+            + " R" + tz390.get_hex(mf3, 1) 
+            + "="  + tz390.get_long_hex(reg.getLong(rf3),16) 
+			+ " I2="  + tz390.get_hex(if2,4);	
 		}
 	} catch (Exception e){ // RPI 1054 
         if (tz390.opt_trace){
@@ -17580,6 +19015,69 @@ break;
     			rlv2 = long_rotate_right(rlv2,64 - if5);
     		}
     	}
+	}
+	private void risb_rotate_insert_high(boolean high){
+		/*
+		 * rotate and insert in high or low 32 bits
+		 * with optional zeros for non select bits
+		 */
+		/*
+		 * rotate rlv1 left or right 
+		 */
+    	if (if5 != 0){
+    		if (if5 < 32){
+    			rlv2 = long_rotate_left(rlv2,if5);
+    		} else {
+    			rlv2 = long_rotate_right(rlv2,64 - if5);
+    		}
+    	}
+    	/*
+    	 * set rv1 and rv2 to high or low 
+    	 */
+    	if (high){
+    		rv1 = (int)(rlv1 >>> 32);
+    		rv2 = (int)(rlv2 >>> 32);
+    	} else {
+    		rv1 = (int) rlv1;
+    		rv2 = (int) rlv2;
+    	}
+    	/*
+    	 * set optional zero bit
+    	 */
+		if (if4 < 0){
+			risb_zero = true;
+		} else {
+			risb_zero = false;
+		}
+		if4 = if4 & 0x3f;
+		/*
+		 * 1.  Set rsbg_mask_ones to all 0's
+		 *     except the selected bits.
+		 * 2.  Set rsbg_mask_zeros to all 1's
+		 *     except the selected bits
+		 */
+		if (if3 <= if4){
+			if (if3 > 0){
+				risb_mask_ones = (int)(-1) >>> if3;
+			} else {
+				risb_mask_ones = -1;
+			}
+		    risb_mask_ones = (risb_mask_ones >>> (31-if4)) << (31-if4);	    	
+		    risb_mask_zeros = risb_mask_ones ^ -1;
+		} else { // selected field wraps 63-0
+			risb_mask_zeros = (((int)(-1) >>> (if4+1)) >>> (32-if3)) << (32-if3);	
+			risb_mask_ones = risb_mask_zeros ^ -1;
+		}
+		if (risb_zero){
+			rv1 = rv1 & risb_mask_ones;
+		} else {
+			rv1 = (rv1 & risb_mask_zeros) | (rv2 & risb_mask_ones);
+		}
+		if (high){
+			reg.putInt(rf1,rv1);
+		} else {
+			reg.putInt(rf1+4,rv1);
+		}
 	}
 	private long long_rotate_left(long value,int n ){
 	   /*
@@ -17943,5 +19441,52 @@ break;
 			set_psw_check(psw_pic_spec);
 	        return;
 		}
+	}
+	private void set_bfp_alt_mode_rr(){
+		// rpi 1125 route for rre/rrf op type A instr
+		// set alt fp_bfp_rnd if not 0 and
+		// issue S0c4 if alt_fpe_mode for now
+		int ins_loc = psw_loc & psw_amode;
+		alt_rnd_mode = mem_byte[ins_loc+2] >>> 4;
+		alt_fpe_mode = mem_byte[ins_loc+2] & 0xf;		
+		if (alt_rnd_mode != 0){ // RPI 1125
+		   fp_bfp_rnd = alt_rnd_mode;
+		}
+		if (alt_fpe_mode != 0){
+			   set_psw_check(psw_pic_spec);
+		}
+	}
+	private void reset_bfp_alt_mode(){
+		// rpi 1125 rtn for rre/rrf op type A instr.
+		fp_bfp_rnd = fp_bfp_rnd_default; // RPI 1125
+	}
+	private void set_dfp_alt_mode_rr(){
+		// rpi 1125 route for rre/rrf op type A instr
+		// set alt fp_dfp_rnd if not 0 and
+		// issue S0c4 if alt_fpe_mode for now
+		int ins_loc = psw_loc & psw_amode;
+		alt_rnd_mode = mem_byte[ins_loc+2] >>> 4;
+		alt_fpe_mode = mem_byte[ins_loc+2] & 0xf;		
+		if (alt_rnd_mode != 0){ // RPI 1125
+		   fp_dfp_rnd = alt_rnd_mode;
+		}
+		if (alt_fpe_mode != 0){
+			   set_psw_check(psw_pic_spec);
+		}
+	}
+	private void set_dfp_alt_mode_rrr(){
+		// rpi 1125 route for rrr op type A instr
+		// set alt fp_dfp_rnd if not 0 and
+		// issue S0c4 if alt_fpe_mode for now
+		int ins_loc = psw_loc & psw_amode;
+		mf4 = mem_byte[ins_loc+2] & 0xf;
+		alt_rnd_mode = mf4;
+		if (alt_rnd_mode != 0){ // RPI 1125
+		   fp_dfp_rnd = alt_rnd_mode;
+		}
+	}	
+	private void reset_dfp_alt_mode(){
+		// rpi 1125 rtn for rrr op type A instr.
+		fp_dfp_rnd = fp_dfp_rnd_default; // RPI 1125
 	}
 }

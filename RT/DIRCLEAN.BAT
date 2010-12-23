@@ -1,6 +1,8 @@
 rem remove gnerated files from directories except cics, linklib
 erase cics\*.tr*
+erase cics\*.prn
 erase linklib\*.tr*
+erase linklib\*.prn
 call rt\RTCLEAN1 assist
 call rt\RTCLEAN1 bmk
 call rt\RTCLEAN1 demo
@@ -19,6 +21,7 @@ call rt\RTCLEAN1 soa
 call rt\RTCLEAN1 soa\demo
 call rt\RTCLEAN1 soa\test
 call rt\RTCLEAN1 soa\maclib
+call rt\RTCLEAN1 sort
 call rt\RTCLEAN1 vsam
 call rt\RTCLEAN1 vsam\demo
 call rt\RTCLEAN1 vsam\test

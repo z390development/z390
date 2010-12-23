@@ -75,6 +75,7 @@
 * 04/20/09 RPI 1026 ADD TEST FOR ESTA, EREG, EREGG
 * 06/15/09 RPI 1055 ADD CPYA, SAR, and EAR support for AR registers
 * 02/25/10 RPI 1111 CORRECT PR TO ONLY RESTORE 2-14 (WAS 1-14)
+* 12/18/10 RPI 1125 FIX ALSI AND ALGSI TO SET BORROW ON NEG ADD
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -4776,13 +4777,23 @@ BXLEG3   EQU   *
          RT1   CCE
          MVC   WORD,=X'FFFFFFFF'             
          ALSI  WORD,-1
-         RT1   CC3        NZ,C
+         RT1   CC1       NZ,NC    RPI 1125 FIX ALSI, ALGSI
          CLC   WORD,=X'FFFFFFFE'
          RT1   CCE
          MVC   WORD,=X'00000000'
          ALSI  WORD,0
          RT1   CC0        Z,NC
          CLC   WORD,=X'00000000'
+         RT1   CCE
+         MVC   WORD,=X'80000000'
+         ALSI  WORD,-1
+         RT1   CC1       NZ,NB    RPI 1125 FIX ALSI, ALGSI
+         CLC   WORD,=X'7FFFFFFF'
+         RT1   CCE
+         MVC   WORD,=F'0'                
+         ALSI  WORD,-1
+         RT1   CC3        NZ,B RPI 1125 FIX ALSI, ALGSI
+         CLC   WORD,=F'-1'
          RT1   CCE
 * EB7A AGSI                RPI 875                      
          MVC   DWORD,=FL8'2'
@@ -4818,13 +4829,23 @@ BXLEG3   EQU   *
          RT1   CCE
          MVC   DWORD,=FL8'-1'                
          ALGSI DWORD,-1
-         RT1   CC3        NZ,C
+         RT1   CC1        NZ,NC RPI 1125 FIX ALSI, ALGSI
          CLC   DWORD,=FL8'-2'
          RT1   CCE
          MVC   DWORD,=FL8'0'      
          ALGSI DWORD,0
          RT1   CC0        Z,NC
          CLC   DWORD,=FL8'0'
+         RT1   CCE
+         MVC   DWORD,=X'8000000000000000'
+         ALGSI DWORD,-1
+         RT1   CC1       NZ,NB     RPI 1125 FIX ALSI,ALGSI
+         CLC   DWORD,=X'7FFFFFFFFFFFFFFF'
+         RT1   CCE
+         MVC   DWORD,=FL8'0'                
+         ALGSI DWORD,-1
+         RT1   CC3        NZ,B RPI 1125 FIX ALSI, ALGSI
+         CLC   DWORD,=FL8'-1'
          RT1   CCE
 * EB80 ICMH
          SGR   R0,R0                       

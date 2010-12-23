@@ -134,7 +134,8 @@ public  class  z390 extends JApplet
      * 09/10/08 RPI 904 correct help menu "Guide" to support LSN path 
      * 05/23/09 RPI 1041 replace EDIT SELECTALL with SELECT LOG and SELECT CMD
      * 06/04/09 RPI 1050 suppress blank lines on GUI log  
-     * 09/26/09 RPI 1080 replace init_tables with init_tz390      
+     * 09/26/09 RPI 1080 replace init_tables with init_tz390
+     * 12/08/10 RPI 1141 correct spelling on menu descriptions       
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -2079,8 +2080,8 @@ public  class  z390 extends JApplet
 	     edit_menu_editor.setToolTipText(text_font_pfx + "Launch editor to edit selected data on clipboard" + text_font_sfx);
 	     option_menu_ascii.setToolTipText(text_font_pfx + "ASCII use ASCII versus EBCDIC for character set" + text_font_sfx);
 	     option_menu_con.setToolTipText(text_font_pfx + "CON List statistics and log output on console" + text_font_sfx);
-	     option_menu_dump.setToolTipText(text_font_pfx + "DUMP generate full dump on abnoral termination" + text_font_sfx);
-	     option_menu_guam.setToolTipText(text_font_pfx + "Open GUAM Graphcial User Access Method dialog for MCS, TN3270, and GKS graphics");
+	     option_menu_dump.setToolTipText(text_font_pfx + "DUMP generate full dump on abnormal termination" + text_font_sfx);
+	     option_menu_guam.setToolTipText(text_font_pfx + "Open GUAM Graphical User Access Method dialog for MCS, TN3270, and GKS graphics");
 	     option_menu_list.setToolTipText(text_font_pfx + "LIST generate PRN, LST, and/or LOG output files" + text_font_sfx);
 	     option_menu_listcall.setToolTipText(text_font_pfx + "LISTCALL trace each macro call and exit on BAL" + text_font_sfx);
 	     option_menu_stats.setToolTipText(text_font_pfx + "STATS generate statistics comments" + text_font_sfx);

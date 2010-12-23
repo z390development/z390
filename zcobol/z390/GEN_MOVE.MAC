@@ -25,7 +25,8 @@
 .* 08/07/09 RPI 1065 scale int lit based on dec point                                                                                 
 .* 08/08/09 RPI 1065 correct SRP negative shift to use 5 bit disp.                                                                    
 .* 08/08/09 RPI 1065 for CVT_Z_TO_X use move and pad if pic x or > 256                                 
-.* 08/09/09 RPI 1065 use SCALE_NUM_LIT for WS,MOVE,IF etc.                                             
+.* 08/09/09 RPI 1065 use SCALE_NUM_LIT for WS,MOVE,IF etc.
+.* 11/26/10 RPI 1138 align dec for non-fp
 .*********************************************************************
          GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
          COPY  ZC_WS
@@ -1221,21 +1222,35 @@
                AWHEN C'A',C'F'
          L     0,&N_SOURCE
          CVD   0,ZCVT_PWORK
-                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
+                        GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8,         X
+               &D_TARGET,&D_SOURCE RPI 1138 ALIGN DECIMALS VIA SRP 
                AWHEN C'G'
          LG    0,&N_SOURCE
          CVDG  0,ZCVT_PWORK2
-                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
+                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16,          X
+               &D_TARGET,&D_SOURCE RPI 1138 ALIGN DECIMALS VIA SRP 
                AWHEN C'H'
          LH    0,&N_SOURCE
          CVD   0,ZCVT_PWORK
-                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
+                        GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8,         X
+               &D_TARGET,&D_SOURCE RPI 1138 ALIGN DECIMALS VIA SRP 
                AWHEN C'P'
+                 AIF (&D_SOURCE EQ &D_TARGET)
                      GEN_EDIT &N_TARGET,&T_IX,&N_SOURCE,&L_SOURCE
+                 AELSEIF (&L_SOURCE GT 8)
+         ZAP   ZCVT_PWORK(16),&N_SOURCE.(&L_SOURCE) 
+                     GEN_EDIT &N_TARGET,&T_IX,&ZC_PWORK,16,            X
+               &D_TARGET,&D_SOURCE RPI 1138 ALIGN DECIMALS VIA SRP
+                 AELSE
+         ZAP   ZCVT_PWORK(8),&N_SOURCE.(&L_SOURCE)                      
+                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8,            X
+               &D_TARGET,&D_SOURCE RPI 1138 ALIGN DECIMALS VIA SRP 
+                 AEND
                AWHEN C'Q'
                      ZC_CONV P,Q,&N_SOURCE
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16
+                     GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK2,16,          X
+               &D_TARGET,&D_SOURCE RPI 1138 ALIGN DECIMALS VIA SRP 
                AWHEN C'X'
                      ACALL MOVE_X_TO_X
                AWHEN C'Z'
@@ -1245,11 +1260,13 @@
                  AELSE
                      :&PLEN SETA &L_SOURCE/2+1
                      AIF   (&PLEN LE 8)
-                        ZC_PACK31 ZCVT_PWORK,8,&N_SOURCE,&L_SOURCE
-                        GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8
+                        ZC_PACK31 ZCVT_PWORK,8,&N_SOURCE,&L_SOURCE                      
+                        GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK,8,         X
+               &D_TARGET,&D_SOURCE RPI 1138 ALIGN DECIMALS VIA SRP 
                      AELSE
                         ZC_PACK31 ZCVT_PWORK1,&PLEN,&N_SOURCE,&L_SOURCE
-                        GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK1,&PLEN
+                        GEN_EDIT &N_TARGET,&T_IX,ZCVT_PWORK1,&PLEN,    X
+               &D_TARGET,&D_SOURCE RPI 1138 ALIGN DECIMALS VIA SRP
                      AEND
                  AEND
                AELSE
@@ -1473,5 +1490,5 @@
            AEND
        AEND
        AEND
-        COPY ZCNUMLIT 
-        MEND
+         COPY ZCNUMLIT 
+         MEND

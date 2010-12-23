@@ -30,6 +30,7 @@ call ZC390CLG zcobol\test\TESTIF2  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTINT1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTISP1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTMOV1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
+call ZC390CLG zcobol\test\TESTMOV2 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTPIC1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTPM1  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTPM2  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9

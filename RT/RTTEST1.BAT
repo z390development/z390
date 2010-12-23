@@ -114,9 +114,10 @@ call rt\RT1 rt\test\TESTERR5  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT7 rt\test\TESTERR6  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT7 rt\test\TESTERR7  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTINS2 trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RT1 rt\test\TESTINS3 trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy rt\test\TESTINS2.MLC rt\test\TESTASC3.MLC
 call rt\RT1 rt\test\TESTASC3 ascii trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTINS3 trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTINS4 trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTFP1  trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTFP2  trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTDFP1 trace  %1 %2 %3 %4 %5 %6 %7 %8 %9
