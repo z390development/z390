@@ -8,10 +8,12 @@
 * 09/29/06 RPI 467 test pseudo code for set and aif          
 * 12/22/06 RPI 521 test aif undefined label ok if not taken       
 * 04/20/08 RPI 833 setc quotes for HLASM compatibility
+* 04/07/11 RPI 1139 MOVE GBLA OUT OF LOOP
 *********************************************************************
 TESTPC1  SUBENTRY
          WTO   'TESTPC1 - TEST PSEUOD CODE FOR SET AND AIF'
 &COUNT   SETA  0
+         GBLA  &FLAG(3) RPI 1139
 .LOOP    ANOP
 &COUNT   SETA  &COUNT+1
          AIF   (&COUNT GT 2).ENDTEST
@@ -78,7 +80,6 @@ TESTPC1  SUBENTRY
 &_LABEL   SETC  'LABEL'
 &_HDRTXT  SETC  'HDRTXT'
 &TITLE   SETC  '&_LABEL - company name a.b.c. - &_HDRTXT'
-         GBLA  &FLAG(3)
 &FLAGS   SETC  '&FLAG(1)&FLAG(2)&FLAG(3)'
 &A       SETC  'A'
 &B(2)    SETC 'B2'

@@ -7,6 +7,7 @@
 .* 05/05/06 RPI 308 CICS RETURN CALLED FROM EXEC                      *
 .* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
 .**********************************************************************
+.* 03/28/11 RPI 1139 FIX SUBSTR TEST FOR HLASM COMP.
          MACRO
          CICS_RETURN
          GBLB  &PARMS_0E08
@@ -136,7 +137,9 @@
          AGO   .ALLDONE
 .*
 .LENVAL  ANOP
+         AIF   (K'&LENGTH LT 2).LENVAL1  RPI 1139 DSH
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
+.LENVAL1 ANOP                           RPI 1139 DSH
          AIF   (T'&LENGTH NE 'N').LENLABL
 .LENNUM  ANOP
          LA    R0,&LENGTH         R0=COMMAREA LENGTH

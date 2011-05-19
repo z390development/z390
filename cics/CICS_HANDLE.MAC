@@ -4,7 +4,8 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 04/30/11 RPI 1143 FIX MISSING LABEL PLOOP > PLOOPB
 .**********************************************************************
          MACRO
          CICS_HANDLE
@@ -471,7 +472,7 @@ P0204BYP_&SYSNDX DS 0H
 .*
 .NOEDF   ANOP
 &NOEDF   SETB  1
-         AGO   .PLOOP
+         AGO   .PLOOPB RPI 1143 DSH WAS PLOOP
 .*
 .RESPB   ANOP
 &RESP    SETC  '&PARM'(6,K'&PARM-6)

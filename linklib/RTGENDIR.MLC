@@ -11,6 +11,7 @@
 * 09/05/08 RPI 797 upgrade to use ZSTRMAC structured programming
 * 09/18/08 RPI 911 replace ASELECT>ACASE, ACALL>ACALL               
 * 10/28/08 RPI 936 support mult Win ver with diff DIR column settings
+* 03/24/11 RPI 1139 fix strings in SETA for NOALLOW
 *********************************************************************
 *
 *  RTGENDIR READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
@@ -54,16 +55,17 @@
                  AEND
                AEND
              AELSE                              NO SEARCH FOR FIRST DIR
-               :&DIR_OFF SETA ('&TEXT' INDEX '<DIR>')    SET DIR OFFSET
+               :&DIR_OFF SETA ('&TEXT' INDEX '<DIR>') 
                AIF  (&DIR_OFF GT 0)
-                    :&FILE_OFF SETA ('&TEXT' INDEX '.')  SET FILE OFFSET
+                    :&FILE_OFF SETA ('&TEXT' INDEX '.')
                     AIF  (&FILE_OFF GT &DIR_OFF)
                          :&MIN_OFF SETA &FILE_OFF        UPDATE MINIMUM
                     AELSE
                          MNOTE 8,'RTGENDIR DIR FORMAT UNKNOWN - &TEXT'
                          MEXIT
                     AEND
-               AEND
+               AEND 
+             AEND
            AEND
          AEND
          AEND

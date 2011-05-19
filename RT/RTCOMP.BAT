@@ -12,7 +12,7 @@ copy %~dps0RTGENDR1.pch+%~dps0RTGENDR2.PCH %~dps0RTGENDR3.DAT
 if errorlevel 1 pause error on copy for %~dps0RTGENDR1+%~dps0RTGENDR2 to %~dps0RTGENDR3.DAT
 sort < %~dps0RTGENDR3.DAT > %~dps0RTGENCMP.DAT
 if errorlevel 1 pause error on sort of %~dps0RTGENDR3.DAT to %~dps0RTGENCMP.DAT
-call mac linklib\RTGENCMP sysparm(%~dps0RTGENCMP)
+call mac linklib\RTGENCMP sysparm(%~dps0RTGENCMP) 
 if errorlevel 1 pause error in rtgencmp processing %~dps0RTGENCMP.DAT
 erase  %~dps0RTGENCMP.BAT
 rename %~dps0RTGENCMP.PCH RTGENCMP.BAT 

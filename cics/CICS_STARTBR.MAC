@@ -5,6 +5,7 @@
 .* Author - Don Higgins                                               *
 .**********************************************************************
 .* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.* 04/05/11 RPI 1139 FIX SUBSTRING FOR HLASM COMP.
 .**********************************************************************
          MACRO
          CICS_STARTBR
@@ -147,7 +148,9 @@
          GEN_MVC P060CFIL,,=CL8&DATASET SET DATASET NAME AS STRING
 .DOKL    ANOP
          AIF   ('&KLENGTH' EQ '').CHKOPT
+         AIF   (K'&KLENGTH LT 2).KLEN1  RPI 1139 DSH
          AIF   ('&KLENGTH'(2,1) EQ '''').KLENNUM
+.KLEN1   ANOP                           RPI 1139 DSH
          AIF   (T'&KLENGTH NE 'N').KLENLAB
 .KLENNUM ANOP
          LA    R0,&KLENGTH        R0=KEYLENGTH

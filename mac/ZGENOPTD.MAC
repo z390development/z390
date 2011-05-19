@@ -9,6 +9,7 @@
 .* 09/16/07 RPI 687  INITIAL CODING TO GEN RPL OPTCD BITS
 .* 04/19/08 RPI 833  add SETC quotes for HLASM compatibility
 .* 04/23/09 RPI 1024 jm2 MODCB generates OI and NI instead of MVI
+.* 04/07/11 RPI 1158 REMOVE DUPLICATE LCLB ASY,XASY
 .*********************************************************************
          ZGENOPTD &OPTCD=
 .*
@@ -18,14 +19,14 @@
          LCLB  &SYN,&ASY,&NUP,&UPD,&NSP,&KEQ     6
          LCLB  &KGE,&FKS,&GEN,&MVE,&LOC,&LRD     5
          LCLB  &WAITX,&NWAITX                    2
-         LCLB  &ARD,&ASY,&BWD,&CR,&CRE           5
+         LCLB  &ARD,&BWD,&CR,&CRE RPI 1158 ASY   5
          LCLB  &FWD,&NRI,&RBA,&XRBA              4
          LCLB  &XKEY,&XADR,&XCNV,&XSEQ,&XDIR,&XSKP     6    jm2
          LCLB  &XSYN,&XASY,&XNUP,&XUPD,&XNSP,&XKEQ     6    jm2
          LCLB  &XKGE,&XFKS,&XGEN,&XMVE,&XLOC,&XLRD     5    jm2
          LCLB  &XWAITX,&XNWAITX                        2    jm2
-         LCLB  &XARD,&XASY,&XBWD,&XCR,&XCRE            5    jm2
-         LCLB  &XFWD,&XNRI,&XRBA,&XXRBA                4    jm2
+         LCLB  &XARD,&XBWD,&XCR,&XCRE RPI 1158 XASY    5    jm2
+         LCLB  &XFWD,&XNRI,&XXRBA     RPI 1158 XRBA    4    jm2
 &OPTS(1) SETC  'ADR',   1                                              X
                'ARD',   2                                              X
                'ASY',   3                                              X

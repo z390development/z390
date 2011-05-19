@@ -5,7 +5,7 @@
 * Author - Don Higgins                                              *
 * Date   - 08/13/08                                                 *
 *********************************************************************
-* 08/13/22 RPI 896 TRANSLATE Z390 ZSTRMAC EXTENSIONS TO STD HLASM
+* 08/13/08 RPI 896 TRANSLATE Z390 ZSTRMAC EXTENSIONS TO STD HLASM
 *          1.  Z390 BOOTSTRAP VER - RT\TEST\ZSTRMAC1.MLC
 *          1.  STRUCTURED VERSION - LINKLIB\ZSTRMAC.ZSM
 *          2.  GEN HLASM COMP VER - LINKLIB\ZSTRMAC.MLC VIA ZSTRMAC1

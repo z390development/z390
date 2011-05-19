@@ -110,7 +110,7 @@
 .*
          AENTRY SET_INT_FIELD
          AIF   (&SOURCE_IX GT 0) 
-               AIF  (&SYM_REF(&SOURCE_IX) GT 0                         X               X 
+               AIF  (&SYM_REF(&SOURCE_IX) GT 0                         X 
                     AND '&SYM_PIC_TYPE(&SOURCE_IX)' EQ 'I') INDEX NAME
          SGR   ZC_R0,ZC_R0
          GEN_L ZC_R1,&SOURCE,&SOURCE_IX

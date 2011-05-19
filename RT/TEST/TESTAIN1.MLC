@@ -31,9 +31,9 @@
          AINSERT ' MNOTE ''HELLO FROM TEST3 INSERTED MACRO''',BACK
          AINSERT ' MEND',BACK
          AINSERT ' MACRO',BACK
-         AINSERT ' TEST4 &&P1, 3456789012345678901234567890123456789012X                                        X
+         AINSERT ' TEST4 &&P1, 3456789012345678901234567890123456789012X
                3456789012345678901X',BACK  NOTE ADD 1 MORE FOR &&
-         AINSERT '               &&K1=''K1V'', 789012345678901234567890X                                        X
+         AINSERT '               &&K1=''K1V'', 789012345678901234567890X
                123456789012345678901X',BACK NOTE ADD 3 FOR &&,'',''
          AINSERT '               &&K2=''K2V''',BACK
          AINSERT ' MNOTE ''TEST4 K1=&&K1 K2=&&K2''',BACK

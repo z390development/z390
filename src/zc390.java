@@ -18,7 +18,7 @@ public class zc390{
     z390 mainframe assembler, i586 Intel assembler,
     MS VCE++, or J2SE Java using macro libraries.
 	
-    Copyright 2010 Automated Software Tools Corporation
+    Copyright 2011 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -417,7 +417,7 @@ public class zc390{
 		    * and copyright on statstics file
 		    */
 		   	if  (tz390.opt_stats){
-		   	    tz390.put_stat_line("Copyright 2010 Automated Software Tools Corporation");
+		   	    tz390.put_stat_line("Copyright 2011 Automated Software Tools Corporation");
 		   	    tz390.put_stat_line("z390 is licensed under GNU General Public License");
 		   	    tz390.put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name);
 		   	    tz390.put_stat_line("options = " + tz390.cmd_parms);

@@ -5,6 +5,7 @@
 .* Author - Don Higgins                                               *
 .**********************************************************************
 .* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.* 03/28/11 RPI 1139 FIX SUBSTR FOR HLASM COMP.
 .**********************************************************************
          MACRO
          CICS_LINK
@@ -127,7 +128,9 @@
          AGO   .ALLDONE
 .*
 .LENVAL  ANOP
+         AIF   (K'&LENGTH LT 2).LENVAL1  RPI 1139
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
+.LENVAL1 ANOP                            RPI 1139
          AIF   (T'&LENGTH NE 'N').LENLABL
 .LENNUM  ANOP
          LA    R0,&LENGTH         R0=COMMAREA LENGTH

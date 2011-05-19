@@ -18,6 +18,7 @@
 * 09/21/09 RPI 1080 CORRECT TEST FOR DCLEN AND DCVAL
 * 01/10/10 RPI 1101 CORRECT C2X LENGTH = 2 * CHAR
 * 01/14/10 RPI 1105 A2B > 32 CHAR 0/1'S
+* 01/25/11 RPI 1139 ADD QUOTES FOR UPPER/LOWER FOR NOALLOW
 *********************************************************************
 TESTOPR1 SUBENTRY
          WTO   'TESTOPR1 TEST OPERATORS UPPER, LOWER, ETC.'
@@ -30,11 +31,11 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          MNOTE 'TESTING UPPER AND LOWER'
 &LC      SETC  'abc'
          AIF   ('&LC' NE 'abc').LCERR 
-&UC      SETC  (UPPER &LC)
+&UC      SETC  (UPPER '&LC')
          AIF   ('&UC' NE 'ABC').UCERR
 &UC      SETC  'ABC'
          AIF   ('&UC' NE 'ABC').UCERR
-&LC      SETC  (LOWER &UC)
+&LC      SETC  (LOWER '&UC')
          AIF   ('&LC' NE 'abc').LCERR
          MNOTE 'TESTING ?2? PREFIX OPERATORS'
 &A2B     SETC  (A2B(4))
@@ -102,15 +103,15 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          AIF   ('&X2D' NE '241').X2ERR
          MNOTE 'TESTING DCLEN, DCVAL, DEQUOTE'
 &DCLSTR  SETC  '''''''''&&&&&&&&1'''''''''  ''&&1'' = 7  RPI 1080
-&DCLEN   SETA  (DCLEN(&DCLSTR))
+&DCLEN   SETA  (DCLEN('&DCLSTR'))
          MNOTE 'DCLEN(&DCLSTR)=&DCLEN'
          AIF   (&DCLEN NE 7).DCLERR                      RPI 1080
 &DCVSTR  SETC  '''''&&&&1'''''
-&DCVAL   SETC  (DCVAL(&DCVSTR))
+&DCVAL   SETC  (DCVAL('&DCVSTR'))
          MNOTE 'DCVAL(&DCVSTR)=&DCVAL'
          AIF   ('&DCVAL' NE '''&&1''').DCVERR  RPI 1080
 &DCESTR  SETC  '''ABC'''
-&DEQUOTE SETC  (DEQUOTE(&DCESTR))
+&DEQUOTE SETC  (DEQUOTE('&DCESTR'))
          MNOTE 'DEQUOTE(&DCESTR)=&DEQUOTE'
          AIF   ('&DEQUOTE' NE 'ABC').DCEERR
          MNOTE 'TESTING ISBIN, ISDEC, ISHEX, ISSYM'
@@ -142,10 +143,10 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &SIGNED  SETC  (SIGNED(-241))
          MNOTE 'SIGNED(-241)=&SIGNED'
          AIF   ('&SIGNED' NE '-241').SIGNERR
-&SYSATTRP SETC  (SYSATTRP(SYM))
+&SYSATTRP SETC  (SYSATTRP('SYM'))
          MNOTE 'SYSATTRP(SYM)=&SYSATTRP'
          AIF   ('&SYSATTRP' NE 'PGMA').SYERR
-&SYSATTRA SETC  (SYSATTRA(SYM))
+&SYSATTRA SETC  (SYSATTRA('SYM'))
          MNOTE 'SYSATTRA(SYM)=&SYSATTRA'
          AIF   ('&SYSATTRA' NE 'GR32').SYERR
          MNOTE 'TESTING SLA, SLL, SRA, SRL'
@@ -191,9 +192,8 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          AIF   (O'SAVE      NE 'S').OTERR  LIBRARY MACRO FOUND
          AIF   (O'XXXXX     NE 'U').OTERR  UNDEFINED RPI 406 WAS SRNMT
          MNOTE 'TESTING STRING DUPLICATION IN EXPRESSION'
-         AIF   ('A'.2'B' NE 'ABB').DUPERR
+         AIF   ('A'.(2)'B' NE 'ABB').DUPERR
 &A       SETC  'A'
-         AIF   ('&A'.2'B' NE 'ABB').DUPERR
          AIF   ('&A'.(2)'B' NE 'ABB').DUPERR
          AIF   ('A'.(2)'B' NE 'ABB').DUPERR
          MNOTE 'TEST FIND'

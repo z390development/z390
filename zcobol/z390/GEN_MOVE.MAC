@@ -27,6 +27,7 @@
 .* 08/08/09 RPI 1065 for CVT_Z_TO_X use move and pad if pic x or > 256                                 
 .* 08/09/09 RPI 1065 use SCALE_NUM_LIT for WS,MOVE,IF etc.
 .* 11/26/10 RPI 1138 align dec for non-fp
+.* 04/05/11 RPI 1139 FIX SETA STRINGS FOR HLASM COMP.
 .*********************************************************************
          GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
          COPY  ZC_WS
@@ -1390,10 +1391,10 @@
          :&I SETA ('&N_TARGET' INDEX '(')
          AIF   ('&N_TARGET'(1,1) GE '0')  IS THIS O(L,R) 
                AIF (&I GT 1)
-                   :&FIELD_OFF SETA '&N_TARGET'(1,&I-1)
+                   :&FIELD_OFF SETA D2A('&N_TARGET'(1,&I-1)) RPI 1139
                    :&J SETA ('&N_TARGET' INDEX ',')
                    AIF (&J GT &I+1)
-                       :&FIELD_LEN SETA '&N_TARGET'(&I+1,&J-1)
+                       :&FIELD_LEN SETA D2A('&N_TARGET'(&I+1,&J-1)) 
                        :&FIELD_REG SETC '&N_TARGET'(&J+1,K'&N_TARGET-&JX
                -1)
                        :&N_TARGET SETC '&N_TARGET'(1,&I).'&N_TARGET'(&JX

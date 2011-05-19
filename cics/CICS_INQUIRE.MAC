@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
+.* 04/07/11 RPI 1139 REMOVE DUP &TYPE
+.* 04/30/11 RPI 1143 FIX FILLABL TO FILELBL ON 172
          MACRO
          CICS_INQUIRE
 .* LOGGING/JOURNALLING NOT INCLUDED
@@ -17,7 +19,7 @@
          LCLB  &START,&NEXT,&END,&FILETYP,&NOHAND
          LCLC  &TYPE,&ACCMETH,&ADD,&AT,&BSNAME,&BROWSE,&DELETE,&DSNAME
          LCLC  &ENASTAT,&FILE,&KLENGTH,&KEYPOS,&OBJECT,&OPESTAT
-         LCLC  &READ,&RECFORM,&RECSIZE,&TYPE,&UPDATE
+         LCLC  &READ,&RECFORM,&RECSIZE,&UPDATE    RPI 1139 DUP TYPE
          LCLC  &RESP,&RESP2
 &INQTYPE SETC  '&SYSLIST(1)'
          AIF   ('&INQTYPE'(1,4) EQ 'FILE').INQFILE
@@ -169,7 +171,7 @@
          AIF   ('&AT' NE '' AND (NOT &START)).ATNOSTR
          AIF   (NOT (&START OR &END) AND '&FILE' EQ '').MISSFLE
          AIF   (&NEXT AND '&FILE' EQ '').MISSFLE
-         AIF   (&NEXT AND '&FILE'(1,1) EQ '''').FILLABL
+         AIF   (&NEXT AND '&FILE'(1,1) EQ '''').FILELBL DSH .FILLABL
 .*
          GEN_XC P4C02,P4C02END-P4C02,P4C02 CLEAR PARMS
          GEN_MVC P4C02FN,,=X'4C02' SET FUNCTION CODE

@@ -33,6 +33,7 @@
 * 11/10/08 RPI 946 CHANGE DS TO DC FOR INIT TO ZEROS                          
 * 06/30/09 RPI 1044 CHANGE VDX DC VD(VDX) TO USE TESTSUB1                     
 * 01/09/10 RPI 1101 AFHY OVERFLOW WITH NO ERRORS
+* 01/25/11 RPI 1139 C2X ARG IN QUOTES FOR NOALLOW
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -433,7 +434,7 @@ CVTTOHEX RT1   CCH,=VD(CVTTOHEX),=AL8(CVTTOHEX) RPI 1044 DIFF ADDR
 &AVAL    SETA  1/0
          RT1   CCE,=A(&AVAL),=A(0)              TEST SETA DIVIDE BY 0 
 &CVAL    SETC  '12345'                                       
-&CHEX    SETC  C2X(&CVAL) 
+&CHEX    SETC  C2X('&CVAL') 
          AIF   (C'A' NE C!A!).TEST6_ASCII
 .TEST6_EBCDIC ANOP
          RT1   CCE,=C'&CHEX',=C'F1F2F3F4F5'

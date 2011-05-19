@@ -28,7 +28,7 @@ public  class  az390 implements Runnable {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2010 Automated Software Tools Corporation
+    Copyright 2011 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -374,6 +374,11 @@ public  class  az390 implements Runnable {
         * 12/09/10 RPI 1125 ADD C84-C85 LPD-LPDG 
         * 12/19/10 RPI 1125 ADD EBDC-EBFA SRAK - LAAL
         * 12/21/10 RPI 1125 ADD EC51-ECDB RISBLG - ALGSIK
+        * 01/30/11 RPI 1152 CORRECT ECTG AND CSST C81/C82 OPCODE
+        * 04/18/11 RPI 1159 force align for each LTORG in csect
+        * 05/03/11 RPI 1146 limit check signed I2 byte for RIE4/RIE5
+        * 05/17/11 RPI 1164 1) correct RISBHGZ/RISBLGZ support
+        *                   2) correct optional length field
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -1190,9 +1195,6 @@ private void init_az390(String[] args, JTextArea log_text){
 		open_files();
 		tz390.force_nocon = true;   // RPI 755
 		put_log(tz390.started_msg); // RPI 755
-		if (!mz390_call && tz390.opt_tracea){ // RPI 935 RPI 1050 move within NOCON
-			tz390.put_trace(tz390.started_msg); // RPI 755
-		}
 		tz390.force_nocon = false;  // RPI 755
 		put_copyright();
         compile_patterns();
@@ -2334,7 +2336,7 @@ private void process_bal_op(){
     	check_end_parms();
     	put_obj_text();
     	break;
-    case 32:   // SSF MVCOS oor0bdddbddd (s1,s2,r3) "C80" 32 Z9-41
+    case 32:   //  MVCOS oor0bdddbddd (s1,s2,r3) "C80" 32 Z9-41
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
     	loc_start = loc_ctr;
@@ -2346,8 +2348,9 @@ private void process_bal_op(){
        	skip_comma();
     	get_hex_bddd2(false); 
         skip_comma();
-        hex_len2 = get_hex_nib();
-    	obj_code = obj_code + hex_len2 + "0" + hex_bddd1 + hex_bddd2; 
+        get_hex_reg(); // RPI 1152
+    	get_hex_op(3,1);
+    	obj_code = obj_code + hex_bddd1 + hex_bddd2; 
     	check_end_parms();
     	put_obj_text();
     	break;
@@ -2566,7 +2569,7 @@ private void process_bal_op(){
     	check_end_parms();
     	put_obj_text();
     	break;	
-    case 43:  // "RIE4" CITE oo13444422oo
+    case 43:  // "RIE4" CIJ/CGIJ/CLIJ/CLGIJ oo13444422oo
     	// r1,i2,m3,i4
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
@@ -2575,7 +2578,11 @@ private void process_bal_op(){
     	get_hex_op(1,2);  // op1
     	get_hex_reg();    // r1 
        	skip_comma();
-       	get_hex_byte();   // i2
+       	if (tz390.op_name[bal_op_index].charAt(1) == 'L'){ // RPI 1146
+       		get_hex_byte();   // i2
+       	} else {
+       		get_hex_byte_signed(); // i2
+       	}
         skip_comma();
         get_hex_reg();    // m3
        	skip_comma();
@@ -2599,7 +2606,11 @@ private void process_bal_op(){
     	get_hex_reg();   // r1 
     	get_hex_op(5,1); // m3
     	skip_comma();
-       	get_hex_byte();  // i2
+       	if (tz390.op_name[bal_op_index].charAt(1) == 'L'){ // RPI 1146
+       		get_hex_byte();   // i2
+       	} else {
+       		get_hex_byte_signed(); // i2
+       	}
        	skip_comma();
        	get_hex_rel(); // i4 rel 
        	get_hex_op(3,2);
@@ -2749,7 +2760,7 @@ private void process_bal_op(){
     	put_obj_text();
     	break;
     case 52: // "RIE8" "RNSBG" oo12334455oo RPI 817
-        // r1,r2,i3,i4[,i5]
+        // r1,r2,i3,i4[,i5] or extended op r1,r2 RPI 1164
     	// i3 high bit for test RNSBGT
     	// i4 high bit for zero RISBGZ
     	bal_op_ok = true;
@@ -2760,30 +2771,43 @@ private void process_bal_op(){
     	get_hex_reg();    // R1
        	skip_comma();
        	get_hex_reg();    // R2
-       	skip_comma();
-       	get_hex_byte();   // I3
-       	if (!bal_abort 
-       		&& bal_op.length() == 6 
-       		&& bal_op.charAt(5) == 'T'){ // turn on test bit if OP=?????T
-    		obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(exp_val + 0x80,2);
-       	}
-       	skip_comma();
-       	get_hex_byte();   // I4
-       	if (!bal_abort 
-       		&& bal_op.length() == 6 
-       		&& bal_op.charAt(5) == 'Z'){ // turn on XZERO bit if OP=?????Z
-    		obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(exp_val + 0x80,2);
-       	}
-       	if (exp_text.length() > exp_index 
-       		&& exp_text.charAt(exp_index) == ','){
-       		skip_comma();
-       		get_hex_byte();   // I5
+       	if (tz390.op_code[bal_op_index].length() == 11){
+       		// extended op (get i3,i4,i5 from op_code "oooo$i3i4i5" RPI 1164
+       		int i3 = Integer.valueOf(tz390.op_code[bal_op_index].substring(5,7));
+       		int i4 = Integer.valueOf(tz390.op_code[bal_op_index].substring(7,9));
+       		int i5 = Integer.valueOf(tz390.op_code[bal_op_index].substring(9,11));
+       		obj_code = obj_code + tz390.get_hex(i3,2);
+       		if (tz390.op_name[bal_op_index].charAt(0) == 'L'){
+       			obj_code = obj_code + tz390.get_hex(i4 + 0x80,2);
+       		} else {
+       			obj_code = obj_code + tz390.get_hex(i4,2);
+       		}
+       		obj_code = obj_code + tz390.get_hex(i5,2);
        	} else {
-       		get_hex_zero(1);  // I5 default 0 rotate
+       		skip_comma();
+       		get_hex_byte();   // I3
+       		if (!bal_abort 
+       			&& bal_op.length() == 6 
+       			&& bal_op.charAt(5) == 'T'){ // turn on test bit if OP=?????T
+       			obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(exp_val + 0x80,2);
+       		}
+       		skip_comma();
+       		get_hex_byte();   // I4
+       		if (!bal_abort                                          // RPI 1164 WAS 6
+       			&& bal_op.charAt(bal_op.length()-1) == 'Z'){ // turn on XZERO bit if OP=??????Z  // RPI 1164 RISBG/RISBHG
+       			obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(exp_val + 0x80,2);
+       		}
+       		if (exp_text.length() > exp_index 
+       			&& exp_text.charAt(exp_index) == ','){
+       			skip_comma();
+       			get_hex_byte();   // I5
+       		} else {
+       			get_hex_zero(2);  // I5 default 0 rotate RPI 1164 was 1
+       		}
        	}
        	get_hex_op(3,2);  // OP2
-    	check_end_parms();
-    	put_obj_text();
+       	check_end_parms();
+       	put_obj_text();
     	break;
     case 53:   // LEDBR?, LDXBR?, LEXBR? RPI 1125 oo0012/oo3412 r1,r2/r1,m3,r2,m4
     	bal_op_ok = true;
@@ -3071,8 +3095,8 @@ private void process_bal_op(){
     case 140:  // LTORG 0
     	bal_op_ok = true;
    		list_bal_line();
-    	if (tot_lit > 0
-    		&& cur_esd > 0
+    	if ( // RPI 1159 was tot_lit > 0
+    		cur_esd > 0
     		&& sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst){ // RPI 564
      	   gen_ltorg();
      	}
@@ -5343,7 +5367,7 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true; // RPI 755
 	   	if  (z390_log_text == null){
-	   	    put_log(msg_id + "Copyright 2010 Automated Software Tools Corporation");
+	   	    put_log(msg_id + "Copyright 2011 Automated Software Tools Corporation");
 	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
 	   	}
 	   	put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name);
@@ -5807,7 +5831,7 @@ private void get_use_range(){
 	if (exp_text.length() > 1){  // RPI 776
 		if (exp_text.charAt(0) == '('){
 			exp_index = 1;
-			if (calc_rel_exp()){
+			if (calc_exp()){ // RPI 1148 allow abs base
 				cur_use_base_esd = exp_esd;
 				cur_use_base_loc = exp_val;
 			}
@@ -5831,7 +5855,7 @@ private void get_use_range(){
 				return;
 			}
 		} else {
-			if (calc_rel_exp()){
+			if (calc_exp()){ // RPI 1148 allow abs base
 				cur_use_base_esd = exp_esd;
 				cur_use_base_loc = exp_val;
 			}
@@ -5863,7 +5887,7 @@ private void get_use_domain(){
 				if (cur_use_lab == ""){
 					drop_dependent_using(); // RPI 1056
 				}
-				hex_bddd = get_exp_rel_bddd();
+				hex_bddd = get_exp_bddd();
 			}
 		}
 	} else {
@@ -6095,11 +6119,23 @@ private void get_hex_byte(){
 	 * append hex byte from next parm
 	 */
 	if (calc_abs_exp() 
-		&& exp_val <= 255
-		&& exp_val >= -256){  // RPI 817 allow -256 to 255
+		&& exp_val < 256){
 		obj_code = obj_code + tz390.get_hex(exp_val,2);
 	} else {
 		log_error(42,"invalid byte value");
+		obj_code = obj_code + "ii";
+	}
+}
+private void get_hex_byte_signed(){
+	/*
+	 * append signed byte from next parm RPI 1146
+	 */
+	if (calc_exp() 
+		&& exp_val < 128
+		&& exp_val >= -128){  
+		obj_code = obj_code + tz390.get_hex(exp_val,2);
+	} else {
+		log_error(209,"invalid signed byte value");
 		obj_code = obj_code + "ii";
 	}
 }
@@ -6118,7 +6154,7 @@ private void get_hex_llbddd(){
 	if (!bal_abort){
 		if (exp_type == sym_rel){
 			hex_bddd_loc = tz390.get_hex(exp_val,6);
-			hex_bddd = get_exp_rel_bddd();
+			hex_bddd = get_exp_bddd();
 			ll  = get_exp_ll();
 		} else {
 			ddd = exp_val;
@@ -6187,12 +6223,12 @@ private void get_hex_xbddd(){
 	String hex_xbddd = "llbddd";
     calc_lit_or_exp();
 	if (!bal_abort){
-		if  (exp_type == sym_rel){
+		if  (exp_type == sym_rel){ // 
 			hex_bddd2_loc = tz390.get_hex(exp_val,6);
-			hex_bddd2 = get_exp_rel_bddd();
+			hex_bddd2 = get_exp_bddd(); // RPI 1148
 			hex_xbddd = get_exp_x() +hex_bddd2;
 		} else {
-			hex_xbddd = get_exp_abs_xbddd();
+		 	hex_xbddd = get_exp_abs_xbddd();
 		}
 	}
 	obj_code = obj_code + hex_xbddd;
@@ -6235,7 +6271,7 @@ private void get_hex_bddd2(boolean add_code){
 	if  (!bal_abort){
 		if  (exp_type == sym_rel){
 			hex_bddd2_loc = tz390.get_hex(exp_val,6);
-			hex_bddd2 = get_exp_rel_bddd();
+			hex_bddd2 = get_exp_bddd(); // RPI 1148
 		} else {
 			hex_bddd2 = get_exp_abs_bddd();
 		}
@@ -6350,7 +6386,7 @@ private String get_rel_exp_llllllll(){
 	}
 	return hex_llllllll;
 }
-private String get_exp_rel_bddd(){
+private String get_exp_bddd(){ // RPI 1148 supp 31 bit abs
 	/*
 	 * 1.  Return hex bddd based on exp_esd 
 	 *     and exp_val set by calc_exp or calc_lit.
@@ -6370,10 +6406,14 @@ private String get_exp_rel_bddd(){
 	if (exp_esd == 0 && exp_val >= 0 && exp_val <= 0xfff){
 		cur_use_reg = 0;
 		cur_use_off = 0;
-		return "0" + tz390.get_hex(exp_val,3);
+		if (get_bdddhh){ // RPI 1148
+			return "0" + tz390.get_hex(exp_val,3) + "00"; 
+		} else {
+			return "0" + tz390.get_hex(exp_val,3);
+		}
 	}
 	cur_use_reg = -1;  // assume not found
-	cur_use_off = 0x80000;
+	cur_use_off = 0x80000; 
 	cur_use_neg_reg = -1;
 	cur_use_neg_off = 0xfff00000;
 	int test_offset = 0;
@@ -6454,6 +6494,8 @@ private String get_exp_abs_bddd(){
 		} else {
 			log_error(193,"unexpected character before close )");  // RPI 637 RPI 1034
 		}
+	} else {
+		return get_exp_bddd(); // RPI 1148
 	}
 	return get_exp_abs_bddd(b,ddd);
 }
@@ -6488,6 +6530,8 @@ private String get_exp_abs_xbddd(){
 		} else {
 			log_error(194,"missing close ) ");  // RPI 637
 		}
+	} else {		
+		return "0" + get_exp_bddd(); // RPI 1148
 	}
 	return tz390.get_hex(x,1) + get_exp_abs_bddd(b,ddd);
 }
@@ -7645,7 +7689,7 @@ private void process_dcs_data(){
 			    if  (dc_len == 2){
 			    	if  (exp_type == sym_rel){ // RPI 458
 			    		if (dc_op && dc_dup > 0){ //RPI 578
-			    			obj_code = obj_code + get_exp_rel_bddd();
+			    			obj_code = obj_code + get_exp_bddd();
 			    		}
 			    	} else {
 			    		dc_hex = get_exp_abs_bddd();
@@ -7659,7 +7703,7 @@ private void process_dcs_data(){
 			    	get_bdddhh = true;
 			    	if  (exp_type == sym_rel){ // RPI 458
 			    		if (dc_op && dc_dup > 0){ //RPI 578
-			    			obj_code = obj_code + get_exp_rel_bddd();
+			    			obj_code = obj_code + get_exp_bddd();
 			    		}
 			    	} else {
 			    		dc_hex = get_exp_abs_bddd();

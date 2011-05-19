@@ -60,7 +60,7 @@ public  class  gz390
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2008 Automated Software Tools Corporation
+    Copyright 2011 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -134,6 +134,7 @@ public  class  gz390
 	 * 06/22/09 RPI 1061 include PA_MDT in returned TGET fields with SBA's   
 	 * 10/24/09 RPI 1091 remove extra field advance for SFE                             
 	 * 01/01/10 RPI 1094 skip unprotected fields on tab, abort if timeout
+	 * 05/10/11 RPI 1151 correct set field attribute higlight & color
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -901,7 +902,7 @@ public  class  gz390
 	   private void about_command(){
 		    guam_put_log("\nz390 GUAM GUI gz390 Graphical User Access Method "
 				  + tz390.version); 
- 	   	    guam_put_log("Copyright 2008 Automated Software Tools Corporation");
+ 	   	    guam_put_log("Copyright 2011 Automated Software Tools Corporation");
 			guam_put_log("z390 is licensed under GNU General Public License");
 	   	    guam_put_log("gz390 supports MCS, TN3270, and Graphic panel views");
 	   	    guam_put_log("gz390 J2SE Java source is distributed as part of z390");
@@ -3049,10 +3050,12 @@ private void tn_eds_set_field_attribute(){
  	     break;
 	 case 0x41: // highlighting
 		 cur_fld_hl = tput_byte[tput_index] & 0xff;
+		 scn_hl[scn_addr]    = cur_fld_hl; // RPI 1151 
 		 tput_index++;
 		 break;
 	 case 0x42:  // color
 		 cur_fld_color = tput_byte[tput_index] & 0xff;
+		 scn_color[scn_addr] = cur_fld_color; // RPI 1151 
        	 tput_index++;
        	 break;
      default:

@@ -29,7 +29,7 @@ public  class  tz390 {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2010 Automated Software Tools Corporation
+    Copyright 2011 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -261,6 +261,10 @@ public  class  tz390 {
     * 12/19/10 RPI 1125 ADD EBDC-EBFA SRAK - LAAL
     * 12/21/10 RPI 1125 ADD EC51-ECDB RISBLG - ALGSIK 
     * 12/23/10 RPI 1142 add option MNOTE(0)
+    * 03/23/11 RPI 1156 add options z390\z390.opt options file
+    * 03/29/11 RPI 1157 add TRACEI to trace AINSERT
+    * 05/08/11 RPI 1149 open TRE trace if put_trace called, add start/end
+    * 05/17/11 RPI 1164 add RISBHGZ and RISBLGZ support
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -269,7 +273,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.03";  //dsh
+    String version    = "V1.5.04";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -322,6 +326,7 @@ public  class  tz390 {
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
     boolean opt_pcopt    = true;  // optimize pc code for speed
+    boolean opt_pdsmem8  = false; // check for copy/mac names > 8 // RPI 11
     boolean opt_printall = false; // force default PRINT GEN and ignore PRINT options RPI 1127
     String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
     boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
@@ -341,6 +346,7 @@ public  class  tz390 {
     boolean opt_traceall = false; // trace all details
     boolean opt_tracec   = false; // trace copybooks for tracep // RPI 862
     boolean opt_traceg   = false; // trace memory FQE updates to LOG
+    boolean opt_tracei   = false; // trace AINSERT RPI 1157
     boolean opt_tracel   = false; // trace lz390
     boolean opt_tracem   = false; // trace mz390
     boolean opt_tracep   = false; // trace pseudo code
@@ -363,7 +369,7 @@ public  class  tz390 {
     char    z390_amode31 = 'T';
     char    z390_rmode31 = 'F';
     int opt_chkmac   = 0; // RPI 747 0-none,1-labels, 2-labels and src after MEND
-    int opt_chksrc   = 1; // RPI 747 0-none,1-MLC only,2-all
+    int opt_chksrc   = 1; // RPI 747 0-none,1-MLC only,2-all, 3-seq 73-80 and char past 80
     int opt_maxcall  = 50;
     int opt_maxdisplay = 80; // RPI 1118 max display line length for zcobol
     int opt_maxesd   = 1000;
@@ -1919,15 +1925,35 @@ public  class  tz390 {
 		       "BRXLG",    // 6600 "EC45" "BRXLG" "RIE" 23
 		       "JXLEG",    // 6610 "EC45" "JXLEG" "RIE" 23    
 		       "RISBLG",  // "EC51","RISBLG","RIE8"  52 RPI 1125 Z196
+		       "LLHFR",  // 'EC51$003132','LOAD (lOW  && HIGH) RISBLGZ','LLHFR','RIE8',52  RPI 1164
+		       "LLHLHR",  // 'EC51$163132','LOAD LOG HW (lOW  && HIGH) RISBLGZ','LLHLHR','RIE8',52  RPI 1164
+		       "LLCLHR",  // 'EC51$243132','LOAD LOG CH (lOW  && HIGH) RISBLGZ','LLCLHR','RIE8',52  RPI 1164
+		       "RISBLGZ",  // "EC51Z","RISBLGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
 		       "RNSBG",    // 510 "EC54" "RNSBG" "RIE8" 52 RPI 817
+		       "NHHR",     // 'EC54$003100','AND HIGH (HIGH && HIGH) RNSBG','NHHR','RIE8',52  RPI 1164
+		       "NHLR",     // 'EC54$003132','AND HIGH (HIGH && LOW ) RNSBG','NHLR','RIE8',52  RPI 1164
+		       "NLHR",     // 'EC54$326332','AND HIGH (lOW  && HIGH) RNSBG','NLHR','RIE8',52  RPI 1164
 		       "RNSBGT",   // 520 "EC54T" "RNSBGT" "RIE8" 52 RPI 817
 		       "RISBG",    // 530 "EC55" "RISBG" "RIE8" 52 RPI 817
 		       "RISBGZ",   // 540 "EC55Z" "RISBGZ" "RIE8" 52 RPI 817
 		       "ROSBG",    // 550 "EC56" "ROSBG" "RIE8" 52 RPI 817
+		       "OHHR",     // 'EC56$003100','OR  HIGH (HIGH && HIGH) ROSBG','OHHR','RIE8',52  RPI 1164
+		       "OHLR",     // 'EC56$003132','OR  HIGH (HIGH && LOW ) ROSBG','OHLR','RIE8',52  RPI 1164
+		       "OLHR",     // 'EC56$326332','OR  HIGH (lOW  && HIGH) ROSBG','OLHR','RIE8',52  RPI 1164
 		       "ROSBGT",   // 560 "EC56T" "ROSBGT" "RIE8" 52 RPI 817
 		       "RXSBG",    // 570 "EC57" "RXSBG" "RIE8" 52 RPI 817
+		       "XHHR",     // 'EC57$003100','XOR HIGH (HIGH && HIGH) RXSBG','XHHR','RIE8',52  RPI 1164
+		       "XHLR",     // 'EC57$003132','XOR HIGH (HIGH && LOW ) RXSBG','XHLR','RIE8',52  RPI 1164
+		       "XLHR",     // 'EC57$326332','AOR HIGH (lOW  && HIGH) RXSBG','XLHR','RIE8',52  RPI 1164	
 		       "RXSBGT",   // 580 "EC57T" "RXSBGT" "RIE8" 52 RPI 817
 		       "RISBHG",  // "EC5D","RISBHG","RIE8"  52 RPI 1125 Z196
+		       "LHHR",    // 'EC5D$003100','LOAD (HIGH && HIGH) RISBHGZ','LHHR','RIE8',52  RPI 1164
+		       "LHLR",    // 'EC5D$003132','LOAD (HIGH && LOW ) RISBHGZ','LHLR','RIE8',52  RPI 1164
+		       "LLHHHR",  // 'EC5D$163100','LOAD LOG HW (HIGH && HIGH) RISBHGZ','LLHHHR','RIE8',52  RPI 1164
+		       "LLHHLR",  // 'EC5D$163132','LOAD LOG HW (HIGH && LOW ) RISBHGZ','LLHHLR','RIE8',52  RPI 1164
+		       "LLCHHR",  // 'EC5D$243100','LOAD LOG CH (HIGH && HIGH) RISBHGZ','LLCHHR','RIE8',52  RPI 1164
+		       "LLCHLR",  // 'EC5D$243132','LOAD LOG CH (HIGH && LOW ) RISBHGZ','LLCHLR','RIE8',52  RPI 1164
+		       "RISBHGZ",  // "EC5DZ","RISBHGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
 		       "CGRJ",     // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
 		       "CGRJE",    // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
 		       "CGRJH",    // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
@@ -3262,16 +3288,36 @@ public  class  tz390 {
 		       23,  // 6590 "EC44" "JXHG" "RIE" 23
 		       23,  // 6600 "EC45" "BRXLG" "RIE" 23
 		       23,  // 6610 "EC45" "JXLEG" "RIE" 23
-		       52,  // "EC51","RISBLG","RIE8"  52 RPI 1125 Z196
+		       52,  // "EC51","RISBLG#","RIE8"  52 RPI 1125 Z196 RPI 1164
+		       52,  // 'EC51$003132','LOAD (lOW  && HIGH) RISBLGZ','LLHFR','RIE8',52  RPI 1164
+		       52,  // 'EC51$163132','LOAD LOG HW (lOW  && HIGH) RISBLGZ','LLHLHR','RIE8',52  RPI 1164
+		       52,  // 'EC51$243132','LOAD LOG CH (lOW  && HIGH) RISBLGZ','LLCLHR','RIE8',52  RPI 1164
+		       52,  // "EC51Z","RISBLGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
 		       52,  // 510 "EC54" "RNSBG" "RIE8" 52  RPI 817
+		       52,     // 'EC54$003100','AND HIGH (HIGH && HIGH) RNSBG','NHHR','RIE8',52  RPI 1164
+		       52,     // 'EC54$003132','AND HIGH (HIGH && LOW ) RNSBG','NHLR','RIE8',52  RPI 1164
+		       52,     // 'EC54$326332','AND HIGH (lOW  && HIGH) RNSBG','NLHR','RIE8',52  RPI 1164
 		       52,  // 520 "EC54T" "RNSBGT" "RIE8" 52  RPI 817
 		       52,  // 530 "EC55" "RISBG" "RIE2" 52  RPI 817
 		       52,  // 540 "EC55Z" "RISBGZ" "RIE8" 52  RPI 817
 		       52,  // 550 "EC56" "ROSBG" "RIE8" 52  RPI 817
+		       52,  // 'EC56$003100','OR  HIGH (HIGH && HIGH) ROSBG','OHHR','RIE8',52  RPI 1164
+		       52,  // 'EC56$003132','OR  HIGH (HIGH && LOW ) ROSBG','OHLR','RIE8',52  RPI 1164
+		       52,  // 'EC56$326332','OR  HIGH (lOW  && HIGH) ROSBG','OLHR','RIE8',52  RPI 1164
 		       52,  // 560 "EC56T" "ROSBGT" "RIE8" 52  RPI 817
 		       52,  // 570 "EC57" "RXSBG" "RIE8" 52  RPI 817
+		       52,     // 'EC57$003100','XOR HIGH (HIGH && HIGH) RXSBG','XHHR','RIE8',52  RPI 1164
+		       52,     // 'EC57$003132','XOR HIGH (HIGH && LOW ) RXSBG','XHLR','RIE8',52  RPI 1164
+		       52,     // 'EC57$326332','AOR HIGH (lOW  && HIGH) RXSBG','XLHR','RIE8',52  RPI 1164
 		       52,  // 580 "EC57T" "RXSBGT" "RIE8" 52  RPI 817
-		       52,  // "EC5D","RISBHG","RIE8"  52 RPI 1125 Z196
+		       52,  // "EC5D","RISBHG#","RIE8"  52 RPI 1125 Z196 RPI 1164
+		       52,  // 'EC5D$003100','LOAD (HIGH && HIGH) RISBHGZ','LHHR','RIE8',52  RPI 1164
+		       52,  // 'EC5D$003132','LOAD (HIGH && LOW ) RISBHGZ','LHLR','RIE8',52  RPI 1164
+		       52,  // 'EC5D$163100','LOAD LOG HW (HIGH && HIGH) RISBHGZ','LLHHHR','RIE8',52  RPI 1164
+		       52,  // 'EC5D$163132','LOAD LOG HW (HIGH && LOW ) RISBHGZ','LLHHLR','RIE8',52  RPI 1164
+		       52,  // 'EC5D$243100','LOAD LOG CH (HIGH && HIGH) RISBHGZ','LLCHHR','RIE8',52  RPI 1164
+		       52,  // 'EC5D$243132','LOAD LOG CH (HIGH && LOW ) RISBHGZ','LLCHLR','RIE8',52  RPI 1164
+		       52,  // "EC5DZ","RISBHGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
 		       49,  // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
 		       50,  // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
 		       50,  // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
@@ -4534,16 +4580,36 @@ public  class  tz390 {
 		       "EC44",  // 6590 "EC44" "JXHG" "RIE" 23
 		       "EC45",  // 6600 "EC45" "BRXLG" "RIE" 23
 		       "EC45",  // 6610 "EC45" "JXLEG" "RIE" 23
-		       "EC51",  // "EC51","RISBLG","RIE8"  52 RPI 1125 Z196
+		       "EC51",  // "EC51","RISBLG#","RIE8"  52 RPI 1125 Z196  RPI 1164
+		       "EC51$003132",  // 'EC51$003132','LOAD (lOW  && HIGH) RISBLGZ','LLHFR','RIE8',52  RPI 1164
+		       "EC51$163132",  // 'EC51$163132','LOAD LOG HW (lOW  && HIGH) RISBLGZ','LLHLHR','RIE8',52  RPI 1164
+		       "EC51$243132",  // 'EC51$243132','LOAD LOG CH (lOW  && HIGH) RISBLGZ','LLCLHR','RIE8',52  RPI 1164
+		       "EC51Z", // "EC51Z","RISBLGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
 		       "EC54",  // 510 "EC54" "RNSBG" "RIE8" 52 RPI 817
+		       "EC54$003100",     // 'EC54$003100','AND HIGH (HIGH && HIGH) RNSBG','NHHR','RIE8',52  RPI 1164
+		       "EC54$003132",     // 'EC54$003132','AND HIGH (HIGH && LOW ) RNSBG','NHLR','RIE8',52  RPI 1164
+		       "EC54$326332",     // 'EC54$326332','AND HIGH (lOW  && HIGH) RNSBG','NLHR','RIE8',52  RPI 1164
 		       "EC54T",  // 520 "EC54T" "RNSBGT" "RIE8" 52 RPI 817
 		       "EC55",  // 530 "EC55" "RISBG" "RIE8" 52 RPI 817
 		       "EC55Z",  // 540 "EC55Z" "RISBGZ" "RIE8" 52 RPI 817
 		       "EC56",  // 550 "EC56" "ROSBG" "RIE8" 52 RPI 817
+		       "EC56$003100",  // 'EC56$003100','OR  HIGH (HIGH && HIGH) ROSBG','OHHR','RIE8',52  RPI 1164
+		       "EC56$003132",  // 'EC56$003132','OR  HIGH (HIGH && LOW ) ROSBG','OHLR','RIE8',52  RPI 1164
+		       "EC56$326332",  // 'EC56$326332','OR  HIGH (lOW  && HIGH) ROSBG','OLHR','RIE8',52  RPI 1164
 		       "EC56T",  // 560 "EC56T" "ROSBGT" "RIE8" 52 RPI 817
 		       "EC57",  // 570 "EC57" "RXSBG" "RIE8" 52 RPI 817
+		       "EC57$003100",     // 'EC57$003100','XOR HIGH (HIGH && HIGH) RXSBG','XHHR','RIE8',52  RPI 1164
+		       "EC57$003132",     // 'EC57$003132','XOR HIGH (HIGH && LOW ) RXSBG','XHLR','RIE8',52  RPI 1164
+		       "EC57$326332",     // 'EC57$326332','AOR HIGH (lOW  && HIGH) RXSBG','XLHR','RIE8',52  RPI 1164
 		       "EC57T",  // 580 "EC57T" "RXSBGT" "RIE8" 52 RPI 817
-		       "EC5D",  // "EC5D","RISBHG","RIE8"  52 RPI 1125 Z196
+		       "EC5D",  // "EC5D","RISBHG#","RIE8"  52 RPI 1125 Z196 RPI 1164
+		       "EC5D$003100",  // 'EC5D$003100','LOAD (HIGH && HIGH) RISBHGZ','LHHR','RIE8',52  RPI 1164
+		       "EC5D$003132",  // 'EC5D$003132','LOAD (HIGH && LOW ) RISBHGZ','LHLR','RIE8',52  RPI 1164
+		       "EC5D$163100",  // 'EC5D$163100','LOAD LOG HW (HIGH && HIGH) RISBHGZ','LLHHHR','RIE8',52  RPI 1164
+		       "EC5D$163132",  // 'EC5D$163132','LOAD LOG HW (HIGH && LOW ) RISBHGZ','LLHHLR','RIE8',52  RPI 1164
+		       "EC5D$243100",  // 'EC5D$243100','LOAD LOG CH (HIGH && HIGH) RISBHGZ','LLCHHR','RIE8',52  RPI 1164
+		       "EC5D$243132",  // 'EC5D$243132','LOAD LOG CH (HIGH && LOW ) RISBHGZ','LLCHLR','RIE8',52  RPI 1164
+		       "EC5DZ", // "EC5DZ","RISBHGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
 		       "EC64",  // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
 		       "EC648",  // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
 		       "EC642",  // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
@@ -5050,6 +5116,7 @@ public void init_options(String[] args,String pgm_type){
     } else {
 	    abort_error(5,"missing file option");
     }
+    process_options_file(dir_cur + "z390.OPT",false); // RPI 1156 optional opt init
     String token = null;
     int index1 = 1;
     while (index1 < args.length){
@@ -5118,7 +5185,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     		token = token.substring(1,token.length()-1);
     }
 	if (token.charAt(0) == '@'){
-		process_options_file(token.substring(1));  // RPI 742
+		process_options_file(token.substring(1),true);  // RPI 742 RPI 1156
 	} else if (token.toUpperCase().equals("ALIGN")){
 		opt_align = true; // RPI 1073
 	} else if (token.toUpperCase().equals("NOALIGN")){
@@ -5392,6 +5459,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
         opt_pcopt = true;
     } else if (token.toUpperCase().equals("NOPCOPT")){
         opt_pcopt = false;
+    } else if (token.toUpperCase().equals("PDSMEM8")){
+        opt_pdsmem8 = true;
+    } else if (token.toUpperCase().equals("NOPDSMEM8")){
+        opt_pdsmem8 = false;
     } else if (token.toUpperCase().equals("PRINTALL")){ // RPI 1127
         opt_printall = true;
     } else if (token.toUpperCase().equals("NOPRINTALL")){
@@ -5557,6 +5628,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
       	opt_tracea   = true;
       	opt_tracec   = true; // RPI 862
        	opt_traceg   = true;
+       	opt_tracei   = true; // RPI 1157
        	opt_tracel   = true;
        	opt_tracem   = true;
        	opt_tracep   = true;
@@ -5573,6 +5645,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
       	opt_tracea   = false;
       	opt_tracec   = false;
        	opt_traceg   = false;
+       	opt_tracei   = false;  // RPI 1157
        	opt_tracel   = false;
       	opt_tracem   = false;
        	opt_tracep   = false;
@@ -5585,6 +5658,11 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_con   = false;
     } else if (token.toUpperCase().equals("NOTRACEG")){
        	opt_traceg = false;
+    } else if (token.toUpperCase().equals("TRACEI")){
+       	opt_tracei = true;
+       	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACEI")){
+       	opt_tracei = false;
     } else if (token.toUpperCase().equals("TRACEL")){
        	opt_tracel = true;
        	opt_list = true;
@@ -5676,7 +5754,8 @@ public  void set_trace_options(String trace_options){
    	opt_trace    = false;
   	opt_tracea   = false;
   	opt_tracec   = false; 
-   	opt_traceg = false;
+   	opt_traceg   = false;
+   	opt_tracei   = false; // RPI 1157
    	opt_tracel   = false;
    	opt_tracem   = false;
    	opt_tracep   = false;
@@ -5692,6 +5771,7 @@ public  void set_trace_options(String trace_options){
    	      	opt_tracea   = true;
    	      	opt_tracec   = true; 
    	       	opt_traceg   = true;
+   	       	opt_tracei   = true; // RPI 1157
    	       	opt_tracel   = true;
    	       	opt_tracem   = true;
    	       	opt_tracep   = true;
@@ -5707,6 +5787,8 @@ public  void set_trace_options(String trace_options){
    			opt_trace = true;
    		} else if (trace_options.charAt(index) == 'G'){
    			opt_traceg = true;
+   		} else if (trace_options.charAt(index) == 'I'){
+   			opt_tracei = true;  // RPI 1157
    		} else if (trace_options.charAt(index) == 'L'){
    			opt_tracel = true;
    		} else if (trace_options.charAt(index) == 'M'){
@@ -5735,7 +5817,7 @@ private void add_invalid_option(String opt_file_name,int opt_file_line,String op
 	invalid_options = invalid_options + " " + option; // RPI 880
 	System.out.println("TZ390E invalid option=" + option + "  (" + opt_file_name + "/" + opt_file_line + ")");
 }
-private void process_options_file(String file_name){
+private void process_options_file(String file_name,boolean required){ // RPI 1156
 	/*
 	 * process option file as follows:
 	 * 1.  Default suffix .OPT
@@ -5747,10 +5829,13 @@ private void process_options_file(String file_name){
 	int    opt_file_line = 0; // rpi 880
     if (opt_file_name != null){
 		try {
-			cmd_parms = cmd_parms.trim() + "=(";
 			File opt_file = new File(opt_file_name);
 			BufferedReader opt_file_buff = new BufferedReader(new FileReader(opt_file));       
 			String option_line = opt_file_buff.readLine();
+			if (!required){
+				cmd_parms = cmd_parms.trim() + opt_file_name;
+			}
+			cmd_parms = cmd_parms.trim() + "=(";
 			while (option_line != null){
 				opt_file_line++; // rpi 880
 				Matcher find_option_match = find_non_space_pattern.matcher(option_line);
@@ -5768,7 +5853,7 @@ private void process_options_file(String file_name){
 		} catch (Exception e){
 			add_invalid_option(opt_file_name,opt_file_line,"@" + file_name); // RPI 880
 		}
-	} else {
+	} else if (required){
 		add_invalid_option(opt_file_name,opt_file_line,"@" + file_name); // RPI 880
 	}
 }
@@ -6861,7 +6946,7 @@ public String get_first_dir(String dirs){
 }
 public void put_trace(String text){
 	/*
-	 * open trace file if trace options on
+	 * open trace file if trace options on for M, A, L, E
 	 */
 	if (text != null 
 		&& text.length() > 13
@@ -6875,6 +6960,7 @@ public void put_trace(String text){
 		try {
 			trace_file = new File(trace_file_name);
 			trace_file_buff = new BufferedWriter(new FileWriter(trace_file));
+			put_trace(started_msg); // RPI 755 RPI 1149 
 		} catch (Exception e){
 			abort_error(16,"trace file open failed - " + e.toString());
 		}
@@ -7394,6 +7480,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOPCOPT");
 	     }
+	     if (opt_pdsmem8){ // optimize pc code for speed
+		        add_final_opt("PDSMEM8");
+		     } else {
+		        add_final_opt("NOPDSMEM8");
+		     }
 	     if (opt_printall){ // force printing all source on PRN RPI 1127
 		        add_final_opt("PRINTALL");
 		     } else {
@@ -7479,6 +7570,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOTRACEG");
 	     }
+	     if (opt_tracei  ){ // RPI 1157
+		        add_final_opt("TRACEI");
+		 } else {
+		        add_final_opt("NOTRACEI");
+		 }
 	     if (opt_tracel  ){ // trace(L) lz390 to TRL
 	        add_final_opt("TRACEL");
 	     } else {

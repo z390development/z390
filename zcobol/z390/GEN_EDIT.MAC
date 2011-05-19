@@ -9,6 +9,7 @@
 .* 01/21/09 initial coding for edit to X field with picture with z/9's
 .* 07/15/09 RPI 1065 support fixed/floating insert 'B+-z$*' and CR/DB
 .* 11/26/10 RPI 1138 align decimal via SRP if specified
+.* 04/06/11 RPI FIX SETA STRING USAGE FOR HLASM COMP.
 .*********************************************************************
          GEN_EDIT &T_NAME,&T_IX,&P_NAME,&P_LEN,&D_TARGET,&D_SOURCE
          COPY  ZC_WS
@@ -74,8 +75,8 @@
                     AELSE
                         :&LAST_MASK SETC ',X''20'''
                     AEND
-                AELSEIF ('&CHAR' EQ '(')
-                    :&DUP SETA '&PIC'(&I+1,1)  FIRST DIGIT
+                AELSEIF ('&CHAR' EQ '(')    RPI 1139 DSH SETA
+                    :&DUP SETA D2A('&PIC'(&I+1,1))  FIRST DIGIT
                     :&I SETA &I+2
                     :&CHAR SETC '&PIC'(&I,1)
                     AWHILE (&I LE K'&PIC AND '&CHAR' NE ')')

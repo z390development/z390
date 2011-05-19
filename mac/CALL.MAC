@@ -10,7 +10,7 @@
 .*********************************************************************
 &N      CALL   &NAME,                                                  X
                &PARMS,                                                 X
-               &VL,            SET END OF LIST HIGH BIT                X                 X
+               &VL,            SET END OF LIST HIGH BIT                X
                &ID=,           IGNORE                                  X
                &LINKINST=BALR,                                         X
                &MF=I           I/L/E FORMS SUPPORTED

@@ -4,7 +4,8 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 03/27/11 RPI 1139 ADD STRING LENGTH CHK FOR HLASM COMP.
 .**********************************************************************
          MACRO
          CICS_GETMAIN
@@ -70,7 +71,9 @@
          AIF   ('&SET' EQ '').BADSET
 .* LENGTH MAY BE L' OR CONSTANT LIKE X'..'
          AIF   ('&FLENGTH' NE '').FLEN
+         AIF   (K'&LENGTH LT 2).LEN1   RPI 1139 DSH
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
+.LEN1    ANOP                          RPI 1139 DSH
          AIF   (T'&LENGTH NE 'N').LENLABL
 .LENNUM  ANOP
          LARL  R1,=AL2(&LENGTH)   ADDRESS LITERAL
@@ -121,6 +124,7 @@
 .*
          AIF   ('&INITIMG' EQ '').DOGETM
          GEN_MVI P0C02INM,X'FF'   SET INITIMG SPECIFIED
+         AIF   (K'&INITIMG LT 2).INITNUM  RPI 1139 DSH
          AIF   ('&INITIMG'(2,1) EQ '''').INITNUM
          AIF   (T'&INITIMG NE 'N').INITLAB
 .INITNUM ANOP

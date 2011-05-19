@@ -5,40 +5,20 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-         MACRO
-&N       LX    &R1,&S2   LOAD  LH/LB
-         LA    15,&S2
-         LD    &R1,0(15)
-         LD    &R1+1,8(15)
-         MEND
-         MACRO
-&N       STX   &R1,&S2   STORE LH/LB
-         LA    15,&S2
-         STD   &R1,0(15)
-         STD   &R1+1,8(15)
-         MEND
+* 02/05/11 DSH CORRECT REGISTER PAIR TO AVOID 0C6 AND REMOVE JUNK
+*********************************************************************
 TESTBMK2 SUBENTRY
          WTO   'TESTBMK2 BENCHMARK HFP AXR'
          LX    R0,=LH'0'
-         LX    R2,=LH'1'
+         LX    R1,=LH'1'      FIX R2>R1
          L     R1,=A(100000)
 LOOP     EQU   *
-         AXR   R0,R2
+         AXR   R0,R1          FIX R2>R1
          BCT   R1,LOOP
          LX    R4,=LH'100000'
-         STD   R0,DWORD
-         STD   R1,DWORD
-         STD   R4,DWORD
-         STD   R5,DWORD
          CXR   R0,R4
          BNE   1
          WTO   'TESTBMK2 ENDED OK'
          SUBEXIT
          EQUREGS
-PWORK    DS    D
-PWORK16  DS    XL16
-WORD     DS    F
-DWORD    DS    D
-BYTE     DS    X
-LWORK    DS    XL16
          END         

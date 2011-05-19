@@ -24,11 +24,12 @@
 * 12/11/06 RPI 514 - add DD, ED, and LD DFP conversion support  
 * 04/27/07 RPI 600 - add GBLA &ARCHLVL to FPCON_CALL  
 * 12/07/07 RPI 749 - move LBUFF to front of pgm to avoid lit errors
-* 03/27/08 RPI 829 - clearn high bits of 64 bit register parm       
+* 03/27/08 RPI 829 - clearn high bits of 64 bit register parm 
+* 04/25/11 RPI 1161 - remove & from ARCHLVL macro comments      
 *********************************************************************
          PRINT DATA
          COPY  ASMMSP       STRUCTURED PROGRAM MACROS AND EQUS
-         ARCHLVL            GET SHARED &ARCHLVL=1-5 (SEE FPCONVRT.MAC)
+         ARCHLVL            GET SHARED ARCHLVL=1-5 (SEE FPCONVRT.MAC)
          GBLA  &ARCHLVL     LEVEL 1-5 FROM ARCHLVL
          GBLC  &ARCHSFX     SUFFIX NULL FOR 32 OR G FOR 64 BIT LINKAGE
          MACRO

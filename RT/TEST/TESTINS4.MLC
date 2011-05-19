@@ -3,7 +3,8 @@
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
-* Date   - 03/03/08                                                 *
+* Date   - 03/03/08 
+* Remarks. Tests for z196 mainframe problem state instructions
 *********************************************************************
 * 08/06/10 RPI 1125 COPY FROM TESTINS3 AND ADD Z196 INSTRUCTION TESTS 
 * 10/22/10 RPI 1125 ADD RC TEST FOR POPCNT, FIEBRA (SEE FIEBR TESTFB1)
@@ -23,6 +24,7 @@
 * 12/11/10 RPI 1125 ADD CC6-CCF BRCTH - CLIH
 * 12/18/10 RPI 1125 ADD E3C0-E3CF LBH - CLHF
 * 12/19/10 RPI 1125 ADD EBDC-EBFA SRAK - LAAL
+* 05/18/11 RPI 1164 ADD EXTENDED OPS FOR RNSBG,RXSBG,ROSBG,AND RISBH/LG
 *********************************************************************
          MACRO
 &N       CLCDD &S1,&S2
@@ -1063,6 +1065,129 @@ CC6_SKIP EQU    *
          RISBLG R5,R6,24,31,8  MOVE 9 TO G
          CG    R5,=C'12345679'
          RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         RISBLGZ R1,R2,0,31,32
+         CLG   R1,=X'01234567FEDCBA98'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         LLHFR R1,R2    RPI 1164
+         CLG   R1,=X'01234567FEDCBA98'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         RISBLGZ R1,R2,16,31,32
+         CLG   R1,=X'012345670000BA98'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         LLHLHR R1,R2    RPI 1164
+         CLG   R1,=X'012345670000BA98'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         RISBLGZ R1,R2,24,31,32
+         CLG   R1,=X'0123456700000098'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         LLCLHR R1,R2    RPI 1164
+         CLG   R1,=X'0123456700000098'
+         RT1   CCE
+* EC54 RNSBG
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         RNSBG R1,R2,0,31
+         CLG   R1,=X'99000099FF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         NHHR  R1,R2     RPI 1164
+         CLG   R1,=X'99000099FF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         RNSBG R1,R2,0,31,32
+         CLG   R1,=X'88000088FF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         NHLR  R1,R2     RPI 1164
+         CLG   R1,=X'88000088FF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         RNSBG R1,R2,32,63,32
+         CLG   R1,=X'FF0000FF99000099'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         NLHR  R1,R2     RPI 1164
+         CLG   R1,=X'FF0000FF99000099'
+         RT1   CCE
+* EC56 ROSBG
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         ROSBG R1,R2,0,31
+         CLG   R1,=X'FF9999FFFF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         OHHR  R1,R2     RPI 1164
+         CLG   R1,=X'FF9999FFFF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         ROSBG R1,R2,0,31,32
+         CLG   R1,=X'FF8888FFFF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         OHLR  R1,R2     RPI 1164
+         CLG   R1,=X'FF8888FFFF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         ROSBG R1,R2,32,63,32
+         CLG   R1,=X'FF0000FFFF9999FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         OLHR  R1,R2     RPI 1164
+         CLG   R1,=X'FF0000FFFF9999FF'
+         RT1   CCE
+* EC57 RXSBG
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         RXSBG R1,R2,0,31
+         CLG   R1,=X'66999966FF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         XHHR  R1,R2     RPI 1164
+         CLG   R1,=X'66999966FF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         RXSBG R1,R2,0,31,32
+         CLG   R1,=X'77888877FF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         XHLR  R1,R2     RPI 1164
+         CLG   R1,=X'77888877FF0000FF'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         RXSBG R1,R2,32,63,32
+         CLG   R1,=X'FF0000FF66999966'
+         RT1   CCE
+         LG    R1,=X'FF0000FFFF0000FF'
+         LG    R2,=X'9999999988888888'
+         XLHR  R1,R2     RPI 1164
+         CLG   R1,=X'FF0000FF66999966'
+         RT1   CCE
 * EC5D RISBHG
          LG    R5,=C'12345678'
          LG    R6,=C'9ABCDEFG'
@@ -1073,6 +1198,66 @@ CC6_SKIP EQU    *
          LG    R6,=C'9ABCDEFG'
          RISBHG R5,R6,24,31,40  MOVE 9 TO 4
          CG    R5,=C'12395678'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         RISBHGZ R1,R2,0,31
+         CLG   R1,=X'FEDCBA9889ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         LHHR  R1,R2    RPI 1164
+         CLG   R1,=X'FEDCBA9889ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         RISBHGZ R1,R2,0,31,32
+         CLG   R1,=X'7654321089ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         LHLR  R1,R2    RPI 1164
+         CLG    R1,=X'7654321089ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         RISBHGZ R1,R2,16,31
+         CLG   R1,=X'0000BA9889ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         LLHHHR  R1,R2    RPI 1164
+         CLG   R1,=X'0000BA9889ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         RISBHGZ R1,R2,16,31,32
+         CLG   R1,=X'0000321089ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         LLHHLR R1,R2    RPI 1164
+         CLG   R1,=X'0000321089ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         RISBHGZ R1,R2,24,31
+         CLG   R1,=X'0000009889ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         LLCHHR R1,R2    RPI 1164
+         CLG   R1,=X'0000009889ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         RISBHGZ R1,R2,24,31,32
+         CLG   R1,=X'0000001089ABCDEF'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+         LLCHLR R1,R2    RPI 1164
+         CLG   R1,=X'0000001089ABCDEF'
          RT1   CCE
 * ECD8 AHIK
          SR    R0,R0

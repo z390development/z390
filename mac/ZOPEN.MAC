@@ -24,6 +24,7 @@
 .* 04/19/09 RPI 1023 support lower case options                 
 .* 05/19/09 RPI 1029 remove SPM macros for compatibility      
 .* 05/28/09 RPI 1045 change to only assume register form if (..)
+.* 01/26/11 RPI 1139 remove space from SETC expression
 .*********************************************************************
 &N       ZOPEN &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
                &MF=I,      STD, LIST, OR EXEC                          X
@@ -100,7 +101,7 @@ ZOPEN_DO_EXIT&SYSNDX DS 0H
                :&I       SETA  1
                AWHILE (&I LE &NP)
                    :&DCB    SETC '&DCBLIST(&I)'
-                   :&OPTION SETC (UPPER '&DCBLIST(&I+1,1)')  RPI 1023
+                   :&OPTION SETC UPPER('&DCBLIST(&I+1,1)')  RPI 1023
                    AIF ('&DCB'(1,1) EQ '(') RPI 764 RPI 1045
                        ZOPTLR 1,&DCB(1)
                    AELSE

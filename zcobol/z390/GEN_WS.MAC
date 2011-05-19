@@ -23,7 +23,8 @@
 .* 07/21/09 RPI 1065 scale decimal values for COMP                     
 .* 07/21/09 RPI 1065 support ZC_DEC_IS_COMMA special names option      
 .* 01/07/09 RPI 1098 support x'...' values for G and Q type fields
-.*********************************************************************
+.* 04/05/11 RPI 1139 SETA INDEX ARG IN QUOTES FOR HLASM COMP.
+*********************************************************************
          GEN_WS      
          COPY  ZC_WS   
          LCLB  &DCBD ONLY GEN DCBD ONCE BEFORE FIRST DCB RPI 1048
@@ -64,11 +65,11 @@ ZC_WSLOC LOCTR
             AIF (&SYM_LVL(&I) EQ 91 AND NOT &LK_MODE)
                 ACALL GEN_FILE
             AELSEIF (&SYM_LVL(&I) NE 88                                X
-                AND ((NOT &LK_MODE AND &SYM_LK(&I) EQ 0)               X                            X
+                AND ((NOT &LK_MODE AND &SYM_LK(&I) EQ 0)               X
                      OR (&LK_MODE AND &SYM_LK(&I) GT 0)))
                :&NAME    SETC  '&SYM_NAME(&I)'
                AIF   (&LK_MODE AND &SYM_LVL(&I) EQ 1)
-                    :&K SETA (&NAME INDEX ' ')
+                    :&K SETA ('&NAME' INDEX ' ') RPI 1139
                     AIF (&K GT 0)
                         :&DSECT SETC '&NAME'(1,&K-1).'_DSECT'
                     AELSE 

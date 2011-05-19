@@ -43,7 +43,7 @@
                &LRECL=0,     RECORD SIZE                               X
                &MACRF=GM,    ACCESS METHOD (GM,PM,R,W)                 X
                &OPTCD=,      IGNORE                                    X
-               &RECFM=FB,    RECORD FORMAT (F,FB,V,VB,RT,VT) IGNOR A/M X                       
+               &RECFM=FB,    RECORD FORMAT (F,FB,V,VB,RT,VT) IGNOR A/M X
                &RECORD=0,    RECORD AREA                               X
                &SYNAD=0      ERROR EXIT                                
 &N       DS    0D             RPI 915

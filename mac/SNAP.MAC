@@ -18,7 +18,8 @@
 .* 06/23/07 RPI 642 SUPPORT TEXT=(REG)
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
-.* 04/18/09 RPI 1017 add MF=L/E support                         
+.* 04/18/09 RPI 1017 add MF=L/E support  
+.* 04/30/11 RPI 1143 default PDATA=ALL and use PDATA= for only storage
 .*********************************************************************
 .* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
 .*  1. PDATA= (DEFAULT IS ALL)
@@ -44,7 +45,7 @@
                &ID=0,        SHOW ID ON DUMP                           X
                &LIST=,       NOT SUPPORTED                             X
                &MF=I,        NOT SUPPORTED                             X
-               &PDATA=,      ALL, REGS, GPR, FPR, CDE, DCB, PSW (ALL)  X
+               &PDATA=ALL,   ALL, REGS, GPR, FPR, CDE, DCB, PSW (ALL)  X
                &SDATA=,      IGNORED                                   X
                &STORAGE=,    STORAGE ADDRESS RANGE                     X
                &STRHDR=,     NOT SUPPORTED                             X
@@ -58,7 +59,7 @@
          AIF   ('&LIST' NE '').ERR2
          AIF   ('&STRHDR' NE '').ERR3
          AIF   ('&SUBPLST' NE '').ERR4
-&FLAGS   SETA  X'7C00' DEFAULT ALL
+&FLAGS   SETA  X'0000' DEFAULT ALL     RPI 1143
          AIF   ('&PDATA' EQ '').NPOK2
 &FLAGS   SETA  0
 &NP      SETA  N'&PDATA+1

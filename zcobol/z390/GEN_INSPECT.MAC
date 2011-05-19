@@ -7,6 +7,7 @@
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
 .* 01/14/09 initial code                                                 
+.* 04/05/11 RPI 1139 FIX SETA STRINGS FOR HLASM COMP.
 .*********************************************************************
 .* ZC_R2=V1,ZC_R3=V2 THESE MAY BE PASSED MULTIPLE TIMES TO GEN/ZC390LIB
 .* ZC_R14=V3,ZC_R15=V4 THESE MUST BE RESET FOR EACH CALL TO GEN
@@ -40,9 +41,9 @@
          AENTRY GEN_TALLYING
          :&STYPE SETC '&SYSLIST(2)'
          :&V1    SETC '&SYSLIST(3)'
-         :&V1_IX SETA '&SYSLIST(4)'
+         :&V1_IX SETA D2A('&SYSLIST(4)') RPI 1139
          :&V2    SETC '&SYSLIST(5)'
-         :&V2_IX SETA '&SYSLIST(6)'
+         :&V2_IX SETA D2A('&SYSLIST(6)') RPI 1139
          LA    ZC_R1,ZCVT_WORKAREA
          LA    ZC_R0,&V1
          ST    ZC_R0,0(ZC_R1)             P1=A(V1) INSPECT FIELD
@@ -56,7 +57,7 @@
          AIF   ('&STYPE' EQ 'CHARACTERS') ADD CHAR CNT MEETING TEST
                :&TEST_TYPE SETC '&SYSLIST(7)'
                :&TEST_VAR  SETC '&SYSLIST(8)'
-               :&TEST_IX   SETA '&SYSLIST(9)'
+               :&TEST_IX   SETA D2A('&SYSLIST(9)') RPI 1139
                ACALL SET_TEST_PARMS
          AELSE
                :&VAR_OFF SETA 20  P6/P7=V3/V3L
@@ -65,7 +66,7 @@
                ACALL GEN_VAR_PARM
                :&TEST_TYPE SETC '&SYSLIST(9)'
                :&TEST_VAR  SETC '&SYSLIST(10)'
-               :&TEST_IX   SETA '&SYSLIST(11)'
+               :&TEST_IX   SETA D2A('&SYSLIST(11)') RPI 1139
                ACALL SET_TEST_PARMS
          AEND
          LA    ZC_R0,ZCVT_TALLYING
@@ -100,9 +101,9 @@
          AENTRY GEN_REPLACING
                :&STYPE SETC '&SYSLIST(2)'
                :&V1    SETC '&SYSLIST(3)'
-               :&V1_IX SETA '&SYSLIST(4)'
+               :&V1_IX SETA D2A('&SYSLIST(4)') RPI 1139
                :&V2    SETC '&SYSLIST(5)'
-               :&V2_IX SETA '&SYSLIST(6)'
+               :&V2_IX SETA D2A('&SYSLIST(6)') RPI 1139
          LA    ZC_R1,ZCVT_WORKAREA
          LA    ZC_R0,&V1
          ST    ZC_R0,0(ZC_R1)                 P1=A(V1) INSPECT FIELD
@@ -121,12 +122,12 @@
                AIF   ('&STYPE'(1,1) EQ 'C') REP CHARACTERS 
                     :&TEST_TYPE SETC '&SYSLIST(9)'
                     :&TEST_VAR  SETC '&SYSLIST(10)'
-                    :&TEST_IX   SETA '&SYSLIST(11)'
+                    :&TEST_IX   SETA D2A('&SYSLIST(11)') RPI 1130
                     ACALL SET_TEST_PARMS
                AELSE
                     :&TEST_TYPE SETC '&SYSLIST(9)'
                     :&TEST_VAR  SETC '&SYSLIST(10)'
-                    :&TEST_IX   SETA '&SYSLIST(11)'
+                    :&TEST_IX   SETA D2A('&SYSLIST(11)') RPI 1139
                     ACALL SET_TEST_PARMS
                AEND
          LA    ZC_R0,ZCVT_REPLACING
@@ -139,9 +140,9 @@
          AENTRY GEN_CONVERTING
                :&STYPE SETC 'X'
                :&V1    SETC '&SYSLIST(2)'
-               :&V1_IX SETA '&SYSLIST(3)'
+               :&V1_IX SETA D2A('&SYSLIST(3)') RPI 1139
                :&V2    SETC '&SYSLIST(4)'
-               :&V2_IX SETA '&SYSLIST(5)'
+               :&V2_IX SETA D2A('&SYSLIST(5)') RPI 1139
          LA    ZC_R1,ZCVT_WORKAREA
          LA    ZC_R0,&V1
          ST    ZC_R0,0(ZC_R1)                 P1=A(V1) INSPECT FIELD
@@ -159,7 +160,7 @@
                ACALL GEN_VAR_PARM
                :&TEST_TYPE SETC '&SYSLIST(8)'
                :&TEST_VAR  SETC '&SYSLIST(9)'
-               :&TEST_IX   SETA '&SYSLIST(10)'
+               :&TEST_IX   SETA D2A('&SYSLIST(10)') RPI 1139
                ACALL SET_TEST_PARMS
          LA    ZC_R0,ZCVT_CONVERTING
          L     ZC_R15,ZCVT_INSPECT

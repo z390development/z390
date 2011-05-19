@@ -159,8 +159,8 @@
          ST    13,4(1)                                                   
          LM    14,2,12(13)                                               
          L     13,8(13)                                                  
-         AIF   ('&RWALNG' EQ '0' AND '&RWA' EQ '').GEN   RPI 654   
-         AIF   ('&RWALNG' EQ '0' OR  '&RWA' EQ '').ERR1  RPI 654,709                              
+         AIF   ('&RWALNG' EQ '0' AND '&RWA' EQ '').GEN   RPI 654
+         AIF   ('&RWALNG' EQ '0' OR  '&RWA' EQ '').ERR1  RPI 654,709
          USING &RWA-(72+&STKSIZE),13                                     
          AGO   .GEN                                                      
 .NORENT  ANOP                                                            
@@ -174,15 +174,15 @@
          ST    13,4(15)                                                  
          LR    13,15                                                     
          AIF   (T'&BASES(1) NE 'N').CHKR13                               
-         AIF   (&BASES(1) EQ 13).GENB13                                  
+         AIF   (&BASES(1) EQ 13).GENB13
          AGO   .GENBX                                                    
 .CHKR13  ANOP                                                            
-         AIF   ('&BASES(1)' EQ 'R13').GENB13      RPI 654                         
+         AIF   ('&BASES(1)' EQ 'R13').GENB13      RPI 654
 .GENBX   ANOP
          ZOPTLR &BASES(1),13             
 .SKIPR13 ANOP               
          DROP  13                               RPI 654                  
-         USING &NAME+8,&BASES(1)                                         
+         USING &NAME+8,&BASES(1)
          AGO   .GEN                                                      
 .GENB13  ANOP                                                            
          USING &NAME+8,13                                                
@@ -194,8 +194,8 @@
          AIF   (&S GT &NBASE).EXIT                                       
 &OFFSET  SETA  &OFFSET+4096                    RPI 601                          
          LAY   &BASES(&S),4096(&BASES(&S-1))   RPI 601                          
-         USING &NAME+8+&OFFSET,&BASES(&S)                                
-         AGO   .LOOP                                                     
+         USING &NAME+8+&OFFSET,&BASES(&S)
+         AGO   .LOOP 
 .EXIT    ANOP                                                            
          MEXIT
 .ERR1    MNOTE 'SUBENTRY PARM ERROR RWA= REQUIRES RWALNG= ALSO'

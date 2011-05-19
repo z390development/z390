@@ -28,6 +28,7 @@
 .*                USE TRE TRACE PATH FOR LST AND LST INCLUDE PRN PATH.
 .*           12.  ISSUE ERROR AND ABORT IF LST/PRN NOT FOUND
 .*                VIA LOADLIB OR TRE LOAD PATH OR LST INCLUDE PATH
+.* 05/19/11 RPI 1139 FIX FOR HLASM COMPAT
 .*********************************************************************
 .* OPTIONS SYSPARM(%1+%?+%9)
 .*   1 - TRACE TRE FILE WITH OPTIONAL PATH MUST BE FIRST PARM
@@ -224,7 +225,7 @@
 .*
          AENTRY PROCESS_ASM_TRE
          :&ASM_KEY SETC 'A'.'&REC'(3,7)
-         LCLC &(&ASM_KEY)
+         :&(&ASM_KEY) SETC '&(&ASM_KEY)' RPI 1139 CVT FROM LCLC
          :&ASM_LINE SETC '&(&ASM_KEY)'
          AIF ('&ASM_LINE' NE '')
             AIF (&OPT_CBL)
@@ -244,7 +245,7 @@
                         :&TRS_LINE SETC ' '
                         ACALL PUT_TRS_LINE
                     AEND
-                    LCLC &(&CBL_KEY)
+                    :&(&CBL_KEY) SETC '&(&CBL_KEY)' RPI 1139 CVT LCLC
                     AIF ('&CBL_KEY'(1,1) EQ 'C')
                         :&TRS_LINE SETC 'CBL=&(&CBL_KEY)'  CBL
                         :&TOT_CBL SETA &TOT_CBL+1
@@ -421,8 +422,8 @@
          AWHILE ('&PRN_REC' NE '')
                :&TOT_PRN_REC SETA &TOT_PRN_REC+1
                ACTR 4096
-               AIF (K'&PRN_REC GT 54                                   X
-                    AND '&PRN_REC'(54,1) EQ '*')     COMMENT            
+               :&PRN_REC SETC '&PRN_REC'.(65)' ' PAD TO MIN RPI 1139
+               AIF ('&PRN_REC'(54,1) EQ '*')     COMMENT            
                     AIF (NOT &OPT_INC)
                         AEXIT AENTRY EXCLUDING MODULE AFTER ESD LENGTHS
                     AEND
@@ -450,8 +451,7 @@
                     AELSEIF ('&PRN_REC'(55,7) EQ ' ZCOBOL')
                         :&PGM_TYPE SETC 'C'
                     AEND
-               AELSEIF (K'&PRN_REC GT 65                               X
-                        AND '&PRN_REC'(54,11) EQ ' EXEC CICS,')  
+               AELSEIF ('&PRN_REC'(54,11) EQ ' EXEC CICS,')  
                      AIF (NOT &OPT_INC)
                         AEXIT AENTRY EXCLUDING MODULE AFTER ESD LENGTHS
                      AEND
@@ -464,8 +464,7 @@
                         :&CBL_LINE SETC '&NAME'.'&PRN_REC'(54,*)
                     AEND 
                     :&CBL_KEY  SETC ''  WILL BE SET AT NEXT ASM
-               AELSEIF (K'&PRN_REC GT 54                               X
-                    AND '&PRN_REC'(1,1)  EQ '0'                        X
+               AELSEIF ('&PRN_REC'(1,1)  EQ '0'                        X
                     AND '&PRN_REC'(7,1)  EQ ' '                        X
                     AND '&PRN_REC'(8,1)  NE ' '                        X
                     AND '&PRN_REC'(20,1) EQ ' ')      ASM INSTR LINE
@@ -473,7 +472,7 @@
                        AEXIT AENTRY  EXCLUDING MODULE AFTER ESD LENGTHS
                    AEND
                    :&REL_HEX  SETC '&PRN_REC'(1,6)
-                   :&REL_LOC  SETA X2A(&REL_HEX)
+                   :&REL_LOC  SETA X2A('&REL_HEX')
                    :&PSW_LOC  SETA &LOAD_LOC+&REL_LOC
                    :&PSW_HEX  SETC A2X(&PSW_LOC)
                    :&PSW_ADDR SETC '000000&PSW_HEX'(K'&PSW_HEX,7)
@@ -512,8 +511,7 @@
                    AEND
                    :&TOT_ASM_KEY SETA &TOT_ASM_KEY+1
                    :&PRN_ASM SETA &PRN_ASM+1
-               AELSEIF (K'&PRN_REC GT 54                               X
-                    AND '&PRN_REC'(1,1)  EQ '0'                        X
+               AELSEIF ('&PRN_REC'(1,1)  EQ '0'                        X
                     AND '&PRN_REC'(7,18) EQ (18)' '                    X
                     AND '&PRN_REC'(54,1) NE ' ')
                     AIF  ('&PRN_REC'(1,6) EQ '&PRN_REC'(19,6)          X
@@ -531,8 +529,7 @@
                             :&LAB_HEX  SETC '&PRN_REC'(1,6)
                         AEND
                     AEND
-               AELSEIF (K'&PRN_REC GT 44                               X
-                    AND '&PRN_REC'(2,4)  EQ 'ESD='                     X
+               AELSEIF ('&PRN_REC'(2,4)  EQ 'ESD='                     X
                     AND '&PRN_REC'(37,8) EQ 'TYPE=CST') ADD ESD CST LNG 
                     :&CST_LEN  SETA X2A('&PRN_REC'(28,8))           
                     :&MOD_LEN  SETA &MOD_LEN+&CST_LEN

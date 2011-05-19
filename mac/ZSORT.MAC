@@ -151,9 +151,9 @@
          AWHILE (&I LE N'&FIELDS)
          DC    A(&FIELDS(&I)-1) ZSORT KEY OFFSET
          DC    A(&FIELDS(&I+1)) ZSORT KEY LENGTH
-               AIF ('&FIELDS(&I+2)' EQ 'AC')                            X
+               AIF ('&FIELDS(&I+2)' EQ 'AC')                            
          DC    AL2(1) ZSORT KEY TYPE AC ASCII CHARACTER
-               AELSEIF ('&FIELDS(&I+2)' EQ 'BI')                         X
+               AELSEIF ('&FIELDS(&I+2)' EQ 'BI')                        
          DC    AL2(2) ZSORT KEY TYPE BI UNSIGNED BINARY
                AELSEIF ('&FIELDS(&I+2)' EQ 'CH')
          DC    AL2(3) ZSORT KEY TYPE CH EBCDIC CHARACTER

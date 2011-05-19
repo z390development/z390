@@ -24,6 +24,8 @@
 .* 08/09/09 RPI 1065 allow omitting subject and relation for AND OR   
 .* 08/14/09 RPI 1065 optimize mult OR's using same end target if true   
 .* 08/15/09 RPI 1065 detect and issue MNOTE for expressions for   
+.* 04/05/11 RPI 1139 SETA remove strings for HLASM comp.
+.* 04/20/11 RPI 1139 prevent dup GBL &(...) for NOALLOW
 .*********************************************************************
 .* Pending work includes support for field,lit,expression in either 
 .* first or second operand.  Coming after COMPUTE dubugs GEN_EXP.
@@ -194,8 +196,12 @@
                        :&LAST_VAR SETB 1
                    AELSEIF ('&PARM' FIND '=<>' GT 0)
                        :&LAST_VAR SETB 0
-                   AELSE
-                       GBLB &(ZCKW_&PARM)
+                   AELSE                      
+                       :&(ZC_CNT_ZCKW_&PARM) SETA &(ZC_CNT_ZCKW_&PARM)+X
+               1 RPI 1139 INC LCL COUNT OF EACH GBL ALLOC
+                       AIF (&(ZC_CNT_ZCKW_&PARM) EQ 1)  RPI 1139
+                           GBLB &(ZCKW_&PARM) 
+                       AEND                             RPI 1139
                        AIF (&(ZCKW_&PARM))   IS THIS KEY WORK VS VAR
                            :&LAST_VAR SETB 0    YES, NOT VAR
                        AELSE
@@ -885,7 +891,7 @@
          :&K SETA ('&FIELD_NAME' FIND '(')
          AIF   ('&FIELD_NAME'(1,1) GE '0')  IS THIS O(L,R) 
                AIF (&K GT 1)
-                   :&FIELD_OFF SETA '&FIELD_NAME'(1,&K-1)
+                   :&FIELD_OFF SETA D2A('&FIELD_NAME'(1,&K-1)) RPI 1139
                    :&J SETA ('&FIELD_NAME' FIND ',')
                    AIF (&J GT &K+1)
                        :&FIELD_LEN SETA '&FIELD_NAME'(&K+1,&J-1)

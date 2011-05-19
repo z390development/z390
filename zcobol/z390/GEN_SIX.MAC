@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 02/05/09 move subscript gen form zcobol\ZCGETFLD.CPY
 .* 02/25/09 RPI 1002 support PIC type I for INDEX BY and USAGE INDEX
+.* 04/25/11 RPI 1161 correct continuation casing undef var
 .*********************************************************************
          GEN_SIX                                    
          COPY  ZC_WS
@@ -132,8 +133,8 @@
                AELSE
          BCTR  ZC_R0,0
                AEND
-         MSFI  ZC_R0,&SYM_LEN(&SIX_OCCUR(&CUR_SIX)) L'&SYM_NAME(&SIX_OCCURX
-               (&CUR_SIX))
+         MSFI  ZC_R0,&SYM_LEN(&SIX_OCCUR(&CUR_SIX)) L'&SYM_NAME(&SIX_OCX
+               CUR(&CUR_SIX))    RPI 1161 CORRECT CONTINUE
          AR    &FIELD_REG,ZC_R0
             AELSE
                MNOTE 8,'ZCGETFLD SUBS SUB FOUND - &SIX_NAME(&CUR_SUB)'

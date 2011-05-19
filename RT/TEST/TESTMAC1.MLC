@@ -18,6 +18,7 @@
 * 06/10/07 RPI 633 test macro label parameters
 * 08/22/07 RPI 673 test &var in macro inline prototype name field
 * 11/07/08 RPI 938 double quotes in MNOTE text to avoid syntax errors
+* 01/25/11 RPI 1139 add quotes for DOUBLE for NOALLOW
 *********************************************************************
 TESTMAC1 SUBENTRY
          WTO   'TESTMAC1 TEST SUBSTRINGS, '''' (DOUBLE QUOTES), AND &&'
@@ -39,9 +40,9 @@ TESTMAC1 SUBENTRY
          dc     c'A',c'B',cl2'ABC',(2)c'1' EXPLICIT LEN, DUP FIELD, LC
          MACRO 
          TESTF  &A,&B
-&I       SETA  (&A FIND &B)
-&DA      SETC  (DOUBLE &A)
-&DB      SETC  (DOUBLE &B)
+&I       SETA  ('&A' FIND '&B')   RPI 1139
+&DA      SETC  (DOUBLE '&A')      RPI 1139
+&DB      SETC  (DOUBLE '&B')      RPI 1139
          MNOTE '&A FIND &B = &I'
          MEND
          TESTF ABC,A
@@ -53,9 +54,9 @@ TESTMAC1 SUBENTRY
          TESTF ,X
          MACRO 
          TESTI  &A,&B
-&I       SETA  (&A INDEX &B)
-&DA      SETC  (DOUBLE &A)
-&DB      SETC  (DOUBLE &B)
+&I       SETA  ('&A' INDEX '&B') RPI 1139
+&DA      SETC  (DOUBLE '&A')     RPI 1139
+&DB      SETC  (DOUBLE '&B')     RPI 1139
          MNOTE '&A INDEX &B = &I'
          MEND
          TESTI ABC,ABC
@@ -78,7 +79,7 @@ TESTMAC1 SUBENTRY
          MNOTE  'SDT=&SDT'
 * TEST DUPLICATION OF STRING OPERATOR (...)'...'
 &LBL     SETC  (4)'X'
-.* &LBL     SETC  '&LBL'.(8-K'&LBL)' '    * Fill up to 8 chars             00770000
+.* &LBL     SETC  '&LBL'.(8-K'&LBL)' '    * Fill up to 8 chars         
          MNOTE 'LBL=&LBL'
 * TEST D' OPERATOR
 &V       SETC  'X'
@@ -134,7 +135,7 @@ Y3       EQU    X3
 * TEST MACRO LABEL PARAMETERS FOR RPI 633
          MACRO
 &N       TESTL
-&DN      SETC  (DOUBLE &N)    RPI 938
+&DN      SETC  (DOUBLE '&N')    RPI 938 RPI 1139
 &TN      SETC  T'&N
          MNOTE 'N=&DN TN=&TN' 
          MEND

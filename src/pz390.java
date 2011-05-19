@@ -12,7 +12,7 @@ public class pz390 {
 	 * 
 	 * z390 portable mainframe assembler and emulator.
 	 * 
-	 * Copyright 2010 Automated Software Tools Corporation
+	 * Copyright 2011 Automated Software Tools Corporation
 	 * 
 	 * z390 is free software; you can redistribute it and/or modify it under the
 	 * terms of the GNU General Public License as published by the Free Software
@@ -318,6 +318,9 @@ public class pz390 {
 	 * 12/18/10 RPI 1125 ADD E3C0-E3CF LBH - CLHF
 	 * 12/19/10 RPI 1125 ADD EBDC-EBFA SRAK - LAAL
 	 * 12/21/10 RPI 1125 ADD EC51-ECDB RISBLG - ALGSIK
+	 * 04/06/11 RPI 1158 FIX ALT DFP RND FOR CXGTR,CDGTR,CGXTR,CGDTR
+	 * 05/06/11 RPI 1149 FIX TRACE FOR LAY, BCTR R,0
+	 * 05/17/11 RPI 1164 add RISBHGZ and RISBLGZ trace support
 	 ********************************************************* 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1088,13 +1091,6 @@ public class pz390 {
 			new MathContext(34,RoundingMode.HALF_EVEN), // 6 not used
 			new MathContext(34,RoundingMode.HALF_UP),   // 7
 	};
-	//dshx MathContext fp_e_context = MathContext.DECIMAL32; // fp_fpc_rnd default
-														// half even
-
-	//dshx MathContext fp_d_context = MathContext.DECIMAL64; // fp_fpc_rnd default
-														// half even
-
-	//dshx MathContext fp_x_context = MathContext.DECIMAL128; // fp_fpc_rnd default
 	byte fp_hfp_class = 0;
 	byte fp_bfp_class = 1;
 	byte fp_dfp_class = 3;
@@ -1138,9 +1134,6 @@ public class pz390 {
 			new MathContext(34,RoundingMode.UP),        // 6
 			new MathContext(34,RoundingMode.HALF_UP),   // 7
 	};
-	//dshx MathContext fp_ed_context = new MathContext(7,fp_dfp_rnd_mode[fp_rnd_near_even]);  // fp_ed default
-	//dshx MathContext fp_dd_context = new MathContext(16,fp_dfp_rnd_mode[fp_rnd_near_even]); // fp_dd default 
-	//dshx MathContext fp_ld_context = new MathContext(34,fp_dfp_rnd_mode[fp_rnd_near_even]); // fp_ld default
 	
 	double fp_log2 = Math.log(2);
 
@@ -2253,7 +2246,7 @@ public class pz390 {
 		       50,   // 5850 "E35E" "ALY" "RXY" 18
 		       50,   // 5860 "E35F" "SLY" "RXY" 18
 		       53,  // 5870 "E370" "STHY" "RXY" 18
-		       189,  // 5880 "E371" "LAY" "RXY" 18  RPI 738
+		       52,  // 5880 "E371" "LAY" "RXY" 18  RPI 738 RPI 1149
 		       186,  // 5890 "E372" "STCY" "RXY" 18
 		       186,  // 5900 "E373" "ICY" "RXY" 18
 		       52,  // 350 "E375" "LAEY" "RXY" 18  RPI 817
@@ -2374,15 +2367,35 @@ public class pz390 {
 		       230,  // 6600 "EC45" "BRXLG" "RIE" 23
 		       230,  // 6610 "EC45" "JXLEG" "RIE" 23
 		       400,  // "EC51","RISBLG","RIE8"  52 RPI 1125 Z196
+		       400,  // 'EC51$003132','LOAD (lOW  && HIGH) RISBLGZ','LLHFR','RIE8',52  RPI 1164
+		       400,  // 'EC51$163132','LOAD LOG HW (lOW  && HIGH) RISBLGZ','LLHLHR','RIE8',52  RPI 1164
+		       400,  // 'EC51$243132','LOAD LOG CH (lOW  && HIGH) RISBLGZ','LLCLHR','RIE8',52  RPI 1164
+		       400,  // "EC51Z","RISBLGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
 		       400,  // 510 "EC54" "RNSBG" "RIE8" 52  RPI 817
+		       400,     // 'EC54$003100','AND HIGH (HIGH && HIGH) RNSBG','NHHR','RIE8',52  RPI 1164
+		       400,     // 'EC54$003132','AND HIGH (HIGH && LOW ) RNSBG','NHLR','RIE8',52  RPI 1164
+		       400,     // 'EC54$326332','AND HIGH (lOW  && HIGH) RNSBG','NLHR','RIE8',52  RPI 1164
 		       400,  // 520 "EC54T" "RNSBGT" "RIE8" 52  RPI 817
 		       400,  // 530 "EC55" "RISBG" "RIE8" 52  RPI 817
 		       400,  // 540 "EC55Z" "RISBGZ" "RIE8" 52  RPI 817
 		       400,  // 550 "EC56" "ROSBG" "RIE8" 52  RPI 817
+		       400,  // 'EC56$003100','OR  HIGH (HIGH && HIGH) ROSBG','OHHR','RIE8',52  RPI 1164
+		       400,  // 'EC56$003132','OR  HIGH (HIGH && LOW ) ROSBG','OHLR','RIE8',52  RPI 1164
+		       400,  // 'EC56$326332','OR  HIGH (lOW  && HIGH) ROSBG','OLHR','RIE8',52  RPI 1164
 		       400,  // 560 "EC56T" "ROSBGT" "RIE8" 52  RPI 817
 		       400,  // 570 "EC57" "RXSBG" "RIE8" 52  RPI 817
+		       400,     // 'EC57$003100','XOR HIGH (HIGH && HIGH) RXSBG','XHHR','RIE8',52  RPI 1164
+		       400,     // 'EC57$003132','XOR HIGH (HIGH && LOW ) RXSBG','XHLR','RIE8',52  RPI 1164
+		       400,     // 'EC57$326332','AOR HIGH (lOW  && HIGH) RXSBG','XLHR','RIE8',52  RPI 1164
 		       400,  // 580 "EC57T" "RXSBGT" "RIE8" 52  RPI 817
 		       400,  // "EC5D","RISBHG","RIE8"  52 RPI 1125 Z196
+		       400,  // 'EC5D$003100','LOAD (HIGH && HIGH) RISBHGZ','LHHR','RIE8',52  RPI 1164
+		       400,  // 'EC5D$003132','LOAD (HIGH && LOW ) RISBHGZ','LHLR','RIE8',52  RPI 1164
+		       400,  // 'EC5D$163100','LOAD LOG HW (HIGH && HIGH) RISBHGZ','LLHHHR','RIE8',52  RPI 1164
+		       400,  // 'EC5D$163132','LOAD LOG HW (HIGH && LOW ) RISBHGZ','LLHHLR','RIE8',52  RPI 1164
+		       400,  // 'EC5D$243100','LOAD LOG CH (HIGH && HIGH) RISBHGZ','LLCHHR','RIE8',52  RPI 1164
+		       400,  // 'EC5D$243132','LOAD LOG CH (HIGH && LOW ) RISBHGZ','LLCHLR','RIE8',52  RPI 1164
+		       400,  // "EC5DZ","RISBHGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
 		       234,  // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
 		       234,  // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
 		       234,  // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
@@ -6733,7 +6746,7 @@ public class pz390 {
 			break;
 		case 0xE1: // "CGDTR" "B3E1" "RRF2" DFP 18
 			psw_check = false;
-			set_bfp_alt_mode_rr(); // RPI 1125
+			set_dfp_alt_mode_rr(); // RPI 1125 RPI 1158
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_dd(fp_reg, rf2)
 			                .divideAndRemainder(BigDecimal.ONE);
@@ -6747,7 +6760,7 @@ public class pz390 {
 			} else {
 				psw_cc = psw_cc3;
 			}
-			reset_bfp_alt_mode(); // RPI 1125
+			reset_dfp_alt_mode(); // RPI 1125 RPI 1158
 			break;
 		case 0xE2: // "CUDTR" "B3E2" "RRE" DFP 19
 			psw_check = false;
@@ -6809,7 +6822,7 @@ public class pz390 {
 			break;
 		case 0xE9: // "CGXTR" "B3E9" "RRF4" DFP 25
 			psw_check = false;
-			set_bfp_alt_mode_rr(); // RPI 1125
+			set_dfp_alt_mode_rr(); // RPI 1125 RPI 1158
 			ins_setup_rrf2();
 			fp_bd_int_rem = fp_get_bd_from_ld(fp_reg, rf2)
             .divideAndRemainder(BigDecimal.ONE);
@@ -6823,7 +6836,7 @@ public class pz390 {
 			} else {
 				psw_cc = psw_cc3;
 			}
-			reset_bfp_alt_mode(); // RPI 1125
+			reset_dfp_alt_mode();  // RPI 1125 RPI 1158
 			break;
 		case 0xEA: // "CUXTR" "B3EA" "RRE" DFP 26
 			psw_check = false;
@@ -6877,7 +6890,7 @@ public class pz390 {
 			break;
 		case 0xF1: // "CDGTR" "B3F1" "RRE" DFP 31
 			psw_check = false;
-			set_bfp_alt_mode_rr(); // RPI 1125
+			set_dfp_alt_mode_rr(); // RPI 1125 RPI 1158
 			ins_setup_rre();
 			fp_rbdv2 = BigDecimal.valueOf(reg.getLong(rf2));
 			fp_rbdv1 = fp_rbdv2.round(fp_dd_rnd_context[fp_dfp_rnd]);
@@ -6886,7 +6899,7 @@ public class pz390 {
 				set_psw_check(psw_pic_data);	
 			}
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-			reset_bfp_alt_mode(); // RPI 1125
+			reset_dfp_alt_mode(); // RPI 1125 RPI 1158
 			break;
 		case 0xF2: // "CDUTR" "B3F2" "RRE" DFP 32
 			psw_check = false;
@@ -6962,11 +6975,11 @@ public class pz390 {
 			break;
 		case 0xF9: // "CXGTR" "B3F9" "RRE" DFP 38
 			psw_check = false;
+			set_dfp_alt_mode_rr(); // RPI 1125 RPI 1158
 			ins_setup_rre();
-			set_bfp_alt_mode_rr(); // RPI 1125
 			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2));
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1); // RPI 1015 was DD vs LD
-			reset_bfp_alt_mode(); // RPI 1125
+			reset_dfp_alt_mode(); // RPI 1125
 			break;
 		case 0xFA: // "CXUTR" "B3FA" "RRE" DFP 39
 			psw_check = false;
@@ -10184,6 +10197,7 @@ public class pz390 {
 			break;
 		 case 0x51:  // "EC51","RISBLG","RIE8"  52 RPI 1125 Z196
 		    psw_check = false;
+		    set_risb_zero(); // RPI 1164
 		    ins_setup_rie8();
 		    risb_rotate_insert_high(false); // not high = store low 32 bits
 		    break;
@@ -10209,7 +10223,7 @@ public class pz390 {
 	    	if (rsbg_zero){
 	    		rlv1 = rlv2;
 	    	} else {
-	    		rlv1 = (rlv1 & rsbg_mask_zeros) | rlv2; 
+	    		rlv1 = (reg.getLong(rf1) & rsbg_mask_zeros) | rlv2; // RPI 1164 dsh
 	    	}
 	    	reg.putLong(rf1,rlv1);
 	    	if (rlv1 == 0){
@@ -10250,6 +10264,7 @@ public class pz390 {
 	        break;
 	     case 0x5D:  // "EC5D","RISBHG","RIE8"  52 RPI 1125 Z196
 			    psw_check = false;
+			    set_risb_zero(); // RPI 1164
 			    ins_setup_rie8();
 			    risb_rotate_insert_high(true); // not high = store low 32 bits
 			    break;   
@@ -14272,6 +14287,8 @@ public class pz390 {
 			return "CTD R1=A(TYPE,IN,OUT)";
 		case 171: // CFD
 			return "CFD R1=A(TYPE,OUT,IN)";
+		case 172: // x'ac' SYSTRACE options
+			return "SYSTRACE R1=A(TRACE OPTIONS EGQTV ";
 		default:
 			return "UNKNOWN";
 		}
@@ -18012,10 +18029,18 @@ public class pz390 {
 		case 10: // "E" 8 PR oooo
 			break;
 		case 20: // "RR" 60 LR oorr
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-                        + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8) 
-                        + " R" + tz390.get_hex(mf2, 1)
-                        + "="  + tz390.get_hex(reg.getInt(rf2 + 4), 8);
+			if (mf2 == 0                 // RPI 1149 
+				&& (opcode1 == 0x0D      // BASR,BALR,BCTR,BCR 
+					|| (opcode1 >= 0x05
+					    && opcode1 <= 0x07))){ // RPI 1149
+				trace_parms = " R" + tz390.get_hex(mf1, 1) 
+                        + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8);
+			} else {
+				trace_parms = " R" + tz390.get_hex(mf1, 1) 
+                + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8) 
+                + " R" + tz390.get_hex(mf2, 1)
+                + "="  + tz390.get_hex(reg.getInt(rf2 + 4), 8);
+			}
 		    break;
 		case 21: // x20-3f HFP RR
 			trace_parms =" F" + tz390.get_hex(mf1, 1) 
@@ -18921,7 +18946,7 @@ break;
 		case 400: // "RIE8" "RNSBG" r1,r2,i3,i4,i5
 			trace_parms = " R" + tz390.get_hex(mf1, 1) 
 			+ "=" + tz390.get_long_hex(reg.getLong(rf1),16) 
-			+ " R2=" + tz390.get_hex(mf2, 1)
+			+ " R" + tz390.get_hex(mf2, 1)
 			+ "=" + tz390.get_long_hex(reg.getLong(rf2),16)
 			+ " I3=" + tz390.get_hex(if3,2)
 			+ " I4=" + tz390.get_hex(if4,2)
@@ -19041,14 +19066,6 @@ break;
     		rv1 = (int) rlv1;
     		rv2 = (int) rlv2;
     	}
-    	/*
-    	 * set optional zero bit
-    	 */
-		if (if4 < 0){
-			risb_zero = true;
-		} else {
-			risb_zero = false;
-		}
 		if4 = if4 & 0x3f;
 		/*
 		 * 1.  Set rsbg_mask_ones to all 0's
@@ -19069,7 +19086,7 @@ break;
 			risb_mask_ones = risb_mask_zeros ^ -1;
 		}
 		if (risb_zero){
-			rv1 = rv1 & risb_mask_ones;
+			rv1 = rv2 & risb_mask_ones; // RPI 1164  WAS RV1 IN ERROR
 		} else {
 			rv1 = (rv1 & risb_mask_zeros) | (rv2 & risb_mask_ones);
 		}
@@ -19440,6 +19457,16 @@ break;
 		default:
 			set_psw_check(psw_pic_spec);
 	        return;
+		}
+	}
+	private void set_risb_zero(){ // RPI 1164 
+		/*
+		 * set risb_zero true if r4 high bit on (bit 24)
+		 */
+		if ((mem_byte[(psw_loc & psw_amode)+3] & 0x80) != 0){
+			risb_zero = true;
+		} else {
+			risb_zero = false;
 		}
 	}
 	private void set_bfp_alt_mode_rr(){

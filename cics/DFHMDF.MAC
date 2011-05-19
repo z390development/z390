@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
+.* 03/28/11 DSH RPI 1139 FIX DIMENSION FOR HLASM COMPAT.
+.* 04/30/11 DSH RPI 1143 FIX LABEL BADPMCI1 TO BADPCI1
          MACRO
 &FLDNAME DFHMDF                                                        X
                &POS=,                                                  X
@@ -42,7 +44,7 @@
 .*
          GBLC  &MDINAME           MAP NAME
          GBLC  &MDIORG            CURSOR POSITION LABEL
-         GBLC  &SCREEN(24*80)     POS CROSS-CHECK
+         GBLC  &SCREEN(1920)     POS CROSS-CHECK 24*80 RPI 1139 DSH
          GBLC  &GNAME             CURRENT GROUP NAME
          GBLC  &MDFORG            GROUP LENGTH LABEL
 .*
@@ -396,7 +398,7 @@
          AIF   ('&PICIN'(1,2) EQ '5C').PICI1OK
          AIF   ('&PICIN'(1,2) EQ '5B').PICI1OK
          AIF   ('&PICIN'(1,2) EQ '4D').PICI1OK
-         AGO   .BADPMCI1
+         AGO   .BADPCI1   RPI 1143 DSH
 .*
 .PICI1OK ANOP
 &PICNDX  SETA  3
@@ -438,7 +440,7 @@
          AIF   ('&PICOUT'(1,2) EQ '5C').PICO1OK
          AIF   ('&PICOUT'(1,2) EQ '5B').PICO1OK
          AIF   ('&PICOUT'(1,2) EQ '4D').PICO1OK
-         AGO   .BADPMCI1
+         AGO   .BADPCI1
 .*
 .PICO1OK ANOP
 &PICNDX  SETA  3

@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 04/24/09 RPI 1003 initial coding for ZC_CALC using IF as model
 .* 07/30/09 RPI 1065 FUNCTION not supported yet (see IF101A)      
+.* 04/06/11 RPI 1139 FIX SETA STRING FOR HLASM COMP, DUP &TMP_OFF
 .*********************************************************************
 .* ZC_CALC used by COMPUTE to gen code to calculate expression 
 .* defined by positional parm list.  The result is stored in data 
@@ -41,7 +42,6 @@
 .*
 .*
          LCLA  &MAX_TMP          MAX TMP ALLOCATED
-         LCLA  &TMP_OFF          OFFSET FOR TMP FIELD
          LCLA  &CUR_TMP_FREE     CURRENT FREE TMP
          LCLA  &TMP_FREE_IX(100) CURRENT FREE TMP INDEXES 1-N
 .*
@@ -313,7 +313,7 @@
                ACALL CALC_F3_TYPE
                :&F3_N SETC '&TMP_NAME(&TMP_IX)(&F3_L)'  
                :&TMP_TYPE(&TMP_IX) SETC '&F3_T'
-               :&TMP_LEN(&TMP_IX)  SETA '&F3_L'
+               :&TMP_LEN(&TMP_IX)  SETA D2A('&F3_L') RPI 1139
                :&F3_S SETB 1
                :&TMP_SIGN(&TMP_IX) SETB &F3_S
                AIF (&IOP_OP(&I) NE 4)  MOVE 1ST OP TO TEMP IF NOT DIV

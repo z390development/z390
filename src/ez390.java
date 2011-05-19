@@ -14,7 +14,7 @@ import javax.swing.Timer;
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2010 Automated Software Tools Corporation
+    Copyright 2011 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -172,6 +172,7 @@ import javax.swing.Timer;
     * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option
     * 09/24/09 RPI 1080 set z390_os_type before init tables 
     * 01/04/10 RPI 1094 move timeout to tz390 to share with gz390
+    * 05/10/11 RPI 1149 move started msg to put_trace
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -363,9 +364,6 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 	    pz390.init_pz390(tz390,sz390);
 		tz390.force_nocon = true;
 		sz390.put_log(tz390.started_msg); // RPI 755
-		if (tz390.opt_trace){
-			tz390.put_trace(tz390.started_msg); // RPI 755
-		}
 		tz390.force_nocon = false; // RPI 1050 moved after trace
 		sz390.init_time();
         sz390.init_test();
@@ -547,13 +545,13 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true;  // RPI 755
 	   	if  (z390_log_text == null){
-	   		sz390.put_log("EZ390I Copyright 2010 Automated Software Tools Corporation");
+	   		sz390.put_log("EZ390I Copyright 2011 Automated Software Tools Corporation");
 	   		sz390.put_log("EZ390I z390 is licensed under GNU General Public License");
 	   	}
 	   	sz390.put_log("EZ390I program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 	   	sz390.put_log("EZ390I options = " + tz390.cmd_parms);
 		if (tz390.opt_stats){
-			tz390.put_stat_line("Copyright 2010 Automated Software Tools Corporation");
+			tz390.put_stat_line("Copyright 2011 Automated Software Tools Corporation");
 			tz390.put_stat_line("z390 is licensed under GNU General Public License");
 			tz390.put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			tz390.put_stat_line("options = " + tz390.cmd_parms);

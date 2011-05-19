@@ -35,7 +35,7 @@ public  class  sz390 implements Runnable {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2010 Automated Software Tools Corporation
+    Copyright 2011 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -193,6 +193,9 @@ public  class  sz390 implements Runnable {
     * 07/28/10 RPI 865 issue error if FT text too long
     * 11/10/10 RPI 1125 use fp_bfp_rnd and fp_dfp_rnd for context
     * 11/25/10 RPI 1137 trap test command errors
+    * 02/27/11 RPI 1153 add GETMAIN best fit allocation
+    *          to minimize fragmentation 
+    * 05/07/11 RPI 1149 add SVC x'ac' SYSTRACE to reset trace options from R1 string with space eof
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -701,6 +704,9 @@ public  class  sz390 implements Runnable {
   int prev_fqe = 0;
   int next_fqe = 0;
   int next_fqe_len = 0;
+  int best_cur_fqe = 0;  // RPI 1153 smallest >= req_len
+  int best_prev_fqe = 0; // RPI 1153
+  int best_fqe_len = 0;  // RPI 1153
   int max_mem_blk = 0; // largest contiguous memory blk for sort RPI 1092
   int opt_getmain_amode31 = 0x02;
   int opt_getmain_cond    = 0x01;
@@ -923,6 +929,9 @@ public void svc(int svc_id){
 		break;
 	case 0xab: // cfd - convert from display format r1=a(type,in,out)
 		svc_cfd(); // RPI 370
+		break;
+	case 0xac: // SYSTRACE reset trace options to string at R1 ending with space
+		svc_systrace(); // RPI 1149
 		break;
 	default:
 		abort_error(23,"undefined svc - " + svc_id);
@@ -1180,7 +1189,7 @@ private synchronized void close_files(){  // RPI 661
 	  tz390.force_nocon = true;
 	  tz390.set_ended_msg(ez390_rc); // RPI 837
 	  put_log(tz390.ended_msg);
-	  if (tz390.opt_trace){  // RPI 1050 move within force_nocon
+	  if (tz390.trace_file != null){  // RPI 1050 move within force_nocon RPI 1149 
 		  tz390.put_trace(tz390.ended_msg);
 	  }
 	  tz390.force_nocon = false;
@@ -1322,11 +1331,11 @@ public void open_files(){
     	} else {
     		tz390.log_file_name = tz390.dir_log + tz390.log_file_name + tz390.log_type;  // RPI 730
     	}
-	    if (tz390.trace_file_name == null){ // RPI 719
-	    	tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tre_type;
-	    } else {
-	    	tz390.trace_file_name = tz390.dir_trc + tz390.trace_file_name + tz390.tre_type;  // RPI 730
-	    }	
+    	if (tz390.trace_file_name == null){ // RPI 719 
+    	   	tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tre_type;
+    	} else {
+    	  	tz390.trace_file_name = tz390.dir_trc + tz390.trace_file_name + tz390.tre_type;  // RPI 730
+    	}	
        	if (tz390.opt_list){
          	try {
                log_file = new File(tz390.log_file_name); // RPI 719 RPI 908
@@ -2016,6 +2025,10 @@ public void svc_getmain(){
 	 *   2.  If no 31 bit memory then allocate from
 	 *       24 bit memory else abort if requested
 	 *       memory type no available.
+	 *   3.  Select best fit from available blocks RPI 1153
+	 *       a.  Same size block to reduce fragmentation
+	 *       b.  Smallest block > requested len to save largest
+	 *   
 	 */
 	max_mem_blk = 0; // RPI 1092
 	req_len = pz390.reg.getInt(pz390.r1);	   
@@ -2033,68 +2046,94 @@ public void svc_getmain(){
 		cur_fqe = pz390.mem.getInt(pz390.zcvt_fqe24);
 		prev_fqe = pz390.zcvt_fqe24;
 	}
+	best_cur_fqe  = 0;
+	best_prev_fqe = 0;
+	best_fqe_len  = 0;
 	while (cur_fqe > 0){
 		cur_fqe_len = pz390.mem.getInt(cur_fqe+4);
         if (!check_fqe_ok()){
         	return;
         }
 		if (cur_fqe_len >= req_len){
-			if (tz390.opt_loadhigh){
-				// allocate from end of cur_fqe
-				cur_fqe_len = cur_fqe_len - req_len;
-				pz390.reg.putInt(pz390.r0,req_len);               // RPI 542
-				pz390.reg.putInt(pz390.r1,cur_fqe + cur_fqe_len); // RPI 542
-				if (tz390.opt_traceg){
-					trace_mem("GETMAIN ",cur_fqe+cur_fqe_len,req_len,0);
-				}
-				if (cur_fqe_len > 0){
-					pz390.mem.putInt(cur_fqe+4,cur_fqe_len);
-					if (tz390.opt_traceg){
-						trace_mem("FQE UPDT",cur_fqe,cur_fqe_len,next_fqe);
-					}
-				} else {
-					if (tz390.opt_traceg){
-						trace_mem("FQE DEL ",cur_fqe,req_len,next_fqe);
-					}
-					pz390.mem.putInt(prev_fqe,next_fqe);
-				}
-			} else {
-				// allocate from bottom up  RPI819
-				cur_fqe_len = cur_fqe_len - req_len;
-				pz390.reg.putInt(pz390.r0,req_len);               // RPI 542
-				pz390.reg.putInt(pz390.r1,cur_fqe); 
-				if (tz390.opt_traceg){
-					trace_mem("GETMAIN ",cur_fqe,req_len,0);
-				}
-				if (cur_fqe_len > 0){
-					pz390.mem.putInt(prev_fqe,cur_fqe + req_len);
-					pz390.mem.putInt(cur_fqe + req_len,next_fqe);
-					pz390.mem.putInt(cur_fqe + req_len +4,cur_fqe_len);
-					if (tz390.opt_traceg){
-						trace_mem("FQE UPDT",cur_fqe + req_len,cur_fqe_len,next_fqe);
-					}
-				} else {
-					if (tz390.opt_traceg){
-						trace_mem("FQE DEL ",cur_fqe,req_len,next_fqe);
-					}
-					pz390.mem.putInt(prev_fqe,next_fqe);
-				}
-			}			
-			pz390.tot_mem_alloc = pz390.tot_mem_alloc + req_len;
-			pz390.reg.putInt(pz390.r15,0);
-			return;
-		} else {
-			if (cur_fqe_len > max_mem_blk){
-				max_mem_blk = cur_fqe_len; // RPI 1092
+			if (cur_fqe_len == req_len){
+			   alloc_from_fqe();	
+			   pz390.tot_mem_alloc = pz390.tot_mem_alloc + req_len;
+			   pz390.reg.putInt(pz390.r15,0);
+			   return;
+			} else if (best_cur_fqe == 0
+					   || cur_fqe_len < best_fqe_len){
+				best_cur_fqe = cur_fqe;
+				best_prev_fqe = prev_fqe;
+				best_fqe_len  = cur_fqe_len;
 			}
-			prev_fqe = cur_fqe;
-			cur_fqe = pz390.mem.getInt(cur_fqe);
 		}
+		if (cur_fqe_len > max_mem_blk){
+		   max_mem_blk = cur_fqe_len; // RPI 1092
+		}
+		prev_fqe = cur_fqe;
+		cur_fqe = pz390.mem.getInt(cur_fqe);
+	}
+	if (best_cur_fqe > 0){
+		cur_fqe  = best_cur_fqe;
+		prev_fqe = best_prev_fqe;
+		cur_fqe_len = best_fqe_len;
+		alloc_from_fqe();	
+		pz390.tot_mem_alloc = pz390.tot_mem_alloc + req_len;
+		pz390.reg.putInt(pz390.r15,0);
+		return;
 	}
 	pz390.reg.putInt(pz390.r15,4); //RPI191
 	if ((req_opt & opt_getmain_cond) == 0){
 		pz390.set_psw_check(pz390.psw_pic_no_mem);
 	}
+}
+private void alloc_from_fqe(){
+	/*
+	 * alloc memory for GETMAIN from current FQE
+	 */
+	next_fqe = pz390.mem.getInt(cur_fqe); // RPI 1153 
+	if (tz390.opt_loadhigh){
+		// allocate from high end of cur_fqe
+		cur_fqe_len = cur_fqe_len - req_len;
+		pz390.reg.putInt(pz390.r0,req_len);               // RPI 542
+		pz390.reg.putInt(pz390.r1,cur_fqe + cur_fqe_len); // RPI 542
+		if (tz390.opt_traceg){
+			trace_mem("GETMAIN ",cur_fqe+cur_fqe_len,req_len,0);
+		}
+		if (cur_fqe_len > 0){
+			pz390.mem.putInt(cur_fqe+4,cur_fqe_len);
+			if (tz390.opt_traceg){
+				trace_mem("FQE UPDT",cur_fqe,cur_fqe_len,next_fqe);
+			}
+		} else {
+			if (tz390.opt_traceg){
+				trace_mem("FQE DEL ",cur_fqe,req_len,next_fqe);
+			}
+			pz390.mem.putInt(prev_fqe,next_fqe);
+		}
+	} else {
+		// allocate from bottom up  RPI819
+		cur_fqe_len = cur_fqe_len - req_len;
+		pz390.reg.putInt(pz390.r0,req_len);               // RPI 542
+		pz390.reg.putInt(pz390.r1,cur_fqe); 
+		if (tz390.opt_traceg){
+			trace_mem("GETMAIN ",cur_fqe,req_len,0);
+		}
+		if (cur_fqe_len > 0){
+			pz390.mem.putInt(prev_fqe,cur_fqe + req_len);
+			pz390.mem.putInt(cur_fqe + req_len,next_fqe);
+			pz390.mem.putInt(cur_fqe + req_len +4,cur_fqe_len);
+			if (tz390.opt_traceg){
+				trace_mem("FQE UPDT",cur_fqe + req_len,cur_fqe_len,next_fqe);
+			}
+		} else {
+			// alloc entire FQE
+			if (tz390.opt_traceg){
+				trace_mem("FQE DEL ",cur_fqe,req_len,next_fqe);
+			}
+			pz390.mem.putInt(prev_fqe,next_fqe);
+		}
+	}		
 }
 public void svc_freemain(){
 	/*
@@ -2202,6 +2241,7 @@ public void svc_freemain(){
 	pz390.mem.putInt(req_addr+4,req_len);
 	pz390.mem.putInt(prev_fqe,req_addr);
 	if (tz390.opt_traceg){
+		trace_mem("FQE ADD ",prev_fqe,cur_fqe_len,req_addr); // RPI 1153 
 		trace_mem("FQE ADD ",req_addr,req_len,0);
 	}
 	pz390.tot_mem_alloc = pz390.tot_mem_alloc - req_len;
@@ -7787,6 +7827,31 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
 			zsort_blk2_xrba_end = zsort_sortwk_len;
 		}
 	}
+private void svc_systrace(){
+	/*
+	 * reset ez390 trace options from string at R1 with trailing space 
+	 */
+	String systrace = "";
+	byte option_byte = 0;
+	char option_char = ' ';
+	int string_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	while (string_addr < pz390.tot_mem){
+		option_byte = pz390.mem.get(string_addr);
+		if (tz390.opt_ascii){
+			option_char = tz390.ascii_table.charAt(option_byte & 0xff);
+		} else {
+			option_char = tz390.ebcdic_table.charAt(option_byte & 0xff);
+		}
+		if (option_char == ' '){
+			tz390.set_trace_options(systrace);
+			return;
+		} else {
+			systrace = systrace + option_char;
+;		}
+		string_addr++;
+	}
+	log_error(126,"SYSTRACE space terminator not found");
+}
 /*
  *  end of sz390 code 
  */

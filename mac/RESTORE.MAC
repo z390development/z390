@@ -1,4 +1,4 @@
-         MACRO
+'         MACRO
 .*********************************************************************
 .* Copyright 2005 Automated Software Tools Corporation               *
 .* This source code is part of z390 assembler/emulator package       *
@@ -10,8 +10,9 @@
 .* 04/26/07 RPI 601- support R0-R15 format args                         
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .* 11/10/08 RPI 942 support RC=(15) and upgrade to ZSTRMAC 
+.* 03/16/11 RPI 1139 SET DEFAULT RC=(15) TO AVOID SUBSTR ERROR
 .*********************************************************************
-&N       RESTORE &REGS,&RC=           RPI 942 ADD RC= 
+&N       RESTORE &REGS,&RC='(15)' RPI 942,1139 ADD RC=(15) 
        AIF   ('&N' NE '')
 &N       DS    0H
        AEND
@@ -20,14 +21,14 @@
                MEXIT
       AEND
       AIF   ('&REGS(1)'(1,1) EQ 'R')      
-            :&R1 SETA  '&REGS(1)'(2,K'&REGS(1)-1)
+            :&R1 SETA   D2A('&REGS(1)'(2,K'&REGS(1)-1)) RPI 1139
       AELSE
             :&R1      SETA  &REGS(1)
       AEND
       :&R2      SETA  &R1
       AIF   ('&REGS(2)' NE '')
             AIF   ('&REGS(2)'(1,1) EQ 'R')      
-                  :&R2 SETA  '&REGS(2)'(2,K'&REGS(2)-1)
+                  :&R2 SETA  D2A('&REGS(2)'(2,K'&REGS(2)-1))
             AELSE
                   :&R2 SETA  &REGS(2)
             AEND
@@ -64,4 +65,4 @@
          LM    &R1,&R2,12+4*(&R1-14)(13)
                AEND
        AEND  
-         MEND
+         MEND  

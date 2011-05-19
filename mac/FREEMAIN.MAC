@@ -18,6 +18,7 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 01/28/11 RPI 1143 remove old bug due to offset 0777 versus 0
 .*********************************************************************
 &N       FREEMAIN &TYPE,      IGNORED                                  X
                &A=,        ADDRESS                                     X
@@ -54,7 +55,7 @@
          L    0,&LA
          AGO  .A
 .LAREG   ANOP
-         L    0,0777(&LA(1))
+         L    0,0(&LA(1)) RPI 1143
          AGO  .A 
 .LV      ANOP
          AIF  ('&LV' NE '').CHKLV

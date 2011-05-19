@@ -58,7 +58,7 @@ erase rt\test\TESTMCR1.STA
 copy  mac\SUBENTRY.MAC rt\test\SUBENTRY.MCR
 copy  mac\SUBEXIT.MAC rt\test\SUBEXIT.MCR
 copy  mac\WTO.MAC rt\test\WTO.MCR
-call MAC    rt\test\TESTMCR1.ASM stats sysmac(rt\test\*.mcr) notiming  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call MAC    rt\test\TESTMCR1.ASM @rt\test\testmcr1 sysmac(rt\test\*.mcr)  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTTXT1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTPC1  tracep  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTAIN1 %1 %2 %3 %4 %5 %6 %7 %8 %9
