@@ -4,8 +4,6 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 04/07/11 RPI 1139 REMOVE DUP &TYPE
-.* 04/30/11 RPI 1143 FIX FILLABL TO FILELBL ON 172
          MACRO
          CICS_INQUIRE
 .* LOGGING/JOURNALLING NOT INCLUDED
@@ -16,10 +14,10 @@
 .*   INQUIRE FILE END
 .*   INQUIRE FILE() ...
          GBLB  &PARMS_4C02
-         LCLB  &START,&NEXT,&END,&FILETYP,&NOHAND
-         LCLC  &TYPE,&ACCMETH,&ADD,&AT,&BSNAME,&BROWSE,&DELETE,&DSNAME
+         LCLB  &START,&NEXT,&END,&FILETYP,&NOEDF,&NOHAND
+         LCLC  &ACCMETH,&ADD,&AT,&BSNAME,&BROWSE,&DELETE,&DSNAME
          LCLC  &ENASTAT,&FILE,&KLENGTH,&KEYPOS,&OBJECT,&OPESTAT
-         LCLC  &READ,&RECFORM,&RECSIZE,&UPDATE    RPI 1139 DUP TYPE
+         LCLC  &READ,&RECFORM,&RECSIZE,&TYPE,&UPDATE
          LCLC  &RESP,&RESP2
 &INQTYPE SETC  '&SYSLIST(1)'
          AIF   ('&INQTYPE'(1,4) EQ 'FILE').INQFILE
@@ -55,6 +53,7 @@
          AIF   ('&PARM'(1,11) EQ 'RECORDSIZE(').RECSIZE
          AIF   ('&PARM'(1,5)  EQ 'TYPE(').TYPE
          AIF   ('&PARM'(1,7)  EQ 'UPDATE(').UPDATE
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
@@ -149,6 +148,10 @@
 &UPDATE  SETC  '&PARM'(8,K'&PARM-8)
          AGO   .PLOOP
 .*
+.NOEDF   ANOP
+&NOEDF   SETB  1
+         AGO   .PLOOP
+.*
 .NOHAND  ANOP
 &NOHAND  SETB  1
          AGO   .PLOOP
@@ -171,7 +174,9 @@
          AIF   ('&AT' NE '' AND (NOT &START)).ATNOSTR
          AIF   (NOT (&START OR &END) AND '&FILE' EQ '').MISSFLE
          AIF   (&NEXT AND '&FILE' EQ '').MISSFLE
-         AIF   (&NEXT AND '&FILE'(1,1) EQ '''').FILELBL DSH .FILLABL
+         AIF   ('&FILE' EQ '').NOFILE
+         AIF   (&NEXT AND '&FILE'(1,1) EQ '''').FILELBL
+.NOFILE  ANOP
 .*
          GEN_XC P4C02,P4C02END-P4C02,P4C02 CLEAR PARMS
          GEN_MVC P4C02FN,,=X'4C02' SET FUNCTION CODE
@@ -191,8 +196,8 @@
          LARL  R15,P4C02FIL       ADDRESS TARGET
          MVC   0(8,R15),&FILE     SET FILE NAME FROM LABEL
          AELSE
-         LA    R15,&FILE          ADDRESS OF FILE LABEL
-         ST    R15,P4C02FIL       SET ADDRESS OF FILE
+         LA    R0,&FILE           ADDRESS OF FILE LABEL
+         GEN_ST R0,P4C02FIL       SET ADDRESS OF FILE
          AEND
          AGO   .DOACC
 .*
@@ -282,6 +287,16 @@
 .ALLDUN  ANOP
          GEN_ST DFHEIBR,P4C02EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P4C02TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P4C02EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P4C02EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P4C02EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P4C02NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P4C02NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -293,8 +308,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P4C02RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P4C02EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P4C02EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P4C02)       R1=LCL MODULE PARAMETER LIST
+P4C02EDF_&SYSNDX EQU *
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P4C02NOH,X'FF'   NOHANDLE ?

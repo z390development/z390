@@ -82,6 +82,8 @@ DELTQRCV EQU   *
          BNZ   INVREQ             ERROR IF BAD
          CLC   TSPFN,=C'10FF'     UNSOL IC SCAN ?
          BE    DELTQRCV           EXIT IF IT IS
+         CLC   TSPFN,=C'FE04'     REQUEST SHUTDOWN ?
+         BE    DELTQRCV           EXIT IF IT IS
          CLC   TSPFN,=C'0A06'     WHAT WE ARE EXPECTING ?
          BE    DELTQRCK           EXIT IF IT IS
          DC    H'0'               TCPIO BAD RECEIVE

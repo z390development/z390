@@ -4,8 +4,7 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
-.* 04/30/11 RPI 1143 FIX MISSING LABEL PLOOP > PLOOPB
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
 .**********************************************************************
          MACRO
          CICS_HANDLE
@@ -111,7 +110,7 @@
          AIF   (&INNER GT 60).BADPRMA
 &BRACK   SETA  ('&PARM' FIND '(')
          AIF   (&BRACK EQ 0).NOLABA
-         AIF   ('&PARM'(1,K'&KEYS(&INNER)) EQ &KEYS(&INNER)).GOTKEY
+         AIF   ('&PARM'(1,&BRACK) EQ &KEYS(&INNER)).GOTKEY
          AGO   .ILOOPA
 .*
 .NOLABA  ANOP
@@ -292,7 +291,7 @@ P0206BYP_&SYSNDX DS 0H
          AIF   (K'&CONDS(&INNER) EQ 0).ILOOPC
 &BRACK   SETA  ('&PARM' FIND '(')
          AIF   (&BRACK EQ 0).NOLABC
-         AIF   ('&PARM'(1,K'&CONDS(&INNER)) EQ &CONDS(&INNER)).GOTCOND
+         AIF   ('&PARM'(1,&BRACK) EQ &CONDS(&INNER)).GOTCOND
          AGO   .ILOOPC
 .*
 .BADPRMC ANOP
@@ -472,7 +471,7 @@ P0204BYP_&SYSNDX DS 0H
 .*
 .NOEDF   ANOP
 &NOEDF   SETB  1
-         AGO   .PLOOPB RPI 1143 DSH WAS PLOOP
+         AGO   .PLOOPB
 .*
 .RESPB   ANOP
 &RESP    SETC  '&PARM'(6,K'&PARM-6)

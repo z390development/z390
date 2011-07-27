@@ -9,7 +9,7 @@
          MACRO
          CICS_FORMATTIME
          GBLB  &PARMS_4A04
-         LCLB  &DATESP2,&TIMESP2,&NOHAND
+         LCLB  &DATESP2,&TIMESP2,&NOEDF,&NOHAND
          LCLC  &ABSTIME
          LCLC  &DATE,&DATEFRM,&DATESP1,&FULLDAT
          LCLC  &DMY2,&MDY2,&YDM2,&YMD2
@@ -52,6 +52,7 @@
          AIF   ('&PARM'(1,5)  EQ 'TIME(').TIME
          AIF   ('&PARM'(1,8)  EQ 'TIMESEP(').TIMESP1
          AIF   ('&PARM'(1,7)  EQ 'TIMESEP').TIMESP2
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
          AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
@@ -156,6 +157,10 @@
 .*
 .TIMESP2 ANOP
 &TIMESP2 SETB  1
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
          AGO   .PLOOP
 .*
 .NOHAND  ANOP
@@ -288,6 +293,16 @@
 .NOTIME  ANOP
          GEN_ST DFHEIBR,P4A04EIB  SET EIB ADDRESS
          GEN_ST TCTTEAR,P4A04TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P4A04EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P4A04EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P4A04EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P4A04NED,X'FF'   SET NOEDF
+         AEND
          AIF   (NOT &NOHAND).DUNNOH
          GEN_MVI P4A04NOH,X'FF'   SET NOHANDLE
 .DUNNOH  ANOP
@@ -299,8 +314,11 @@
          LA    R0,&RESP2          ADDRESS OF RESP2
          GEN_ST R0,P4A04RS2       SAVE IT
 .NORESP2 ANOP
+         LARL  R0,P4A04EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P4A04EDF       SAVE IT
          L     R15,TCTTELCL       R15=LCL MODULE INDEXER
          LARL  R1,=A(P4A04)       R1=LCL MODULE PARAMETER LIST
+P4A04EDF_&SYSNDX EQU *
          BAKR  0,R15              STACK REGS AND GO
 .*
          GEN_CLI P4A04NOH,X'FF'   NOHANDLE ?
@@ -314,41 +332,7 @@
          AIF   (&PARMS_4A04).BYP4A04
 *
 &PARMS_4A04 SETB 1
-P4A04    DS    0H
-P4A04FN  DS    XL2                FUNCTION CODE
-P4A04EIB DS    AL4                EIB
-P4A04TCT DS    AL4                TCTTE
-P4A04ABS DS    PL8                ABSTIME
-P4A04DSP DS    C                  DATE SEPARATOR
-         DS    X
-P4A04TSP DS    C                  TIME SEPARATOR
-         DS    X
-P4A04DAT DS    AL4                DATE
-P4A04DFM DS    AL4                DATEFORM
-P4A04FDT DS    AL4                FULLDATE
-P4A04DM2 DS    AL4                DDMMYY
-P4A04MD2 DS    AL4                MMDDYY
-P4A04YD2 DS    AL4                YYDDMM
-P4A04YM2 DS    AL4                YYMMDD
-P4A04DM4 DS    AL4                DDMMYYYY
-P4A04MD4 DS    AL4                MMDDYYYY
-P4A04YD4 DS    AL4                YYYYDDMM
-P4A04YM4 DS    AL4                YYYYMMDD
-P4A04Y2D DS    AL4                YYDDD
-P4A04Y4D DS    AL4                YYYYDD
-P4A04DYC DS    AL4                DAYCOUNT
-P4A04DOW DS    AL4                DAYOFWEEK
-P4A04DOM DS    AL4                DAYOFMONTH
-P4A04MOY DS    AL4                MONTHOFYEAR
-P4A04YR  DS    AL4                YEAR
-P4A04DST DS    AL4                DATESTRING
-P4A04TIM DS    AL4                TIME
-P4A04NOH DS    X                  FF=NOHANDLE
-         DS    X
-P4A04RSP DS    AL4                RESP
-P4A04RS2 DS    AL4                RESP2
-P4A04END EQU   *                  END MARKER
-         DS    0H
+         P4A04
 *
 .BYP4A04 ANOP
 P4A04BYP_&SYSNDX DS 0H

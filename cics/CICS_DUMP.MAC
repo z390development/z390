@@ -5,7 +5,6 @@
 .* Author - Don Higgins                                               *
 .**********************************************************************
 .* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
-.* 04/05/11 RPI 1139 FIX SUBSTRING TEST FOR HLASM COMP.
 .**********************************************************************
          MACRO
          CICS_DUMP
@@ -178,9 +177,9 @@
 .* SEGMENTLIST/LENGTHLIST/NUMSEGMENTS
          GEN_MVC P1C02SEG,,=A(&SLIST) SAVE SEGMENTLIST ADDRESS
          GEN_MVC P1C02LST,,=A(&LLIST) SAVE LENGTHLIST ADDRESS
-         AIF   (K'&NUMSEG LT 2).NUM1 RPI 1139 DSH
-         AIF   ('&NUMSEG'(2,1) EQ '''').NUMSEG
-.NUM1   ANOP                        RPI 1139 DSH
+         AIF   (K'&NUMSEG LT 2).NSGNUM1
+         AIF   ('&NUMSEG'(2,1) EQ '''').NSGNUM
+.NSGNUM1 ANOP
          AIF   (T'&NUMSEG NE 'N').NSGLABL
 .NSGNUM  ANOP
          GEN_MVC P1C02NSG,,=A(&NUMSEG) SAVE NUMSEGMENTS

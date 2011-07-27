@@ -4,7 +4,6 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 03/27/11 DSH TEST STRING LENGTH FOR HLASM COMP.
          MACRO
          CICS_DEQ
          GBLB  &PARMS_1206
@@ -56,8 +55,9 @@
          GEN_MVC P1206FN,,=X'1206' SET FUNCTION CODE
          AIF   ('&LENGTH' EQ '').DUNLEN
 .* LENGTH MAY BE L' OR CONSTANT LIKE X'..'
-         AIF   (K'&LENGTH LT 2).LENNUM2 RPI 1139 DSH
+         AIF   (K'&LENGTH LT 2).LENNUM1
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM2
+.LENNUM1 ANOP
          AIF   (T'&LENGTH NE 'N').LENLABL
 .LENNUM2 ANOP
          LA    R0,&LENGTH         R0=LENGTH

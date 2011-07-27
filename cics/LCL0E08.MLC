@@ -75,7 +75,16 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R15),EIBRESP2  SET RESP2
 RETURN   EQU   *
-* ### WE NEED AN 'AFTER' EDF HERE
+         CLI   P0E08NED,X'FF'     NOEDF ?
+         BE    NOEDF2             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDF2             EXIT IF NOT
+         MVI   TCTTEEBA,X'FE'     SET 'AFTER' INTERCEPT (RETURN FAIL)
+         MVI   TCTTEEDL,X'FF'     SET DIRECT LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDF2   EQU   *
          L     R12,SAVER12        RESTORE ORIGINAL R12
          BR    R14                RETURN
 *

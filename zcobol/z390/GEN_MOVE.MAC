@@ -28,6 +28,7 @@
 .* 08/09/09 RPI 1065 use SCALE_NUM_LIT for WS,MOVE,IF etc.
 .* 11/26/10 RPI 1138 align dec for non-fp
 .* 04/05/11 RPI 1139 FIX SETA STRINGS FOR HLASM COMP.
+.* 07/19/11 RPI 1171 FIX LOW-VALUE/HIGH-VALUE DASH VERSUS UNDERSCORE
 .*********************************************************************
          GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
          COPY  ZC_WS
@@ -353,11 +354,11 @@
                          OR '&LIT' EQ 'SPACE')
          IILL   ZC_R3,0 FILL WITH PAD SPACES
          IILH   ZC_R3,X'4000'
-                    AELSEIF ('&LIT' EQ 'LOW-VALUES'                    X
-                         OR '&LIT' EQ 'LOW-VALUE')
+                    AELSEIF ('&LIT' EQ 'LOW_VALUES'                    X
+                         OR '&LIT' EQ 'LOW_VALUE')   RPI 1171
          LHI   ZC_R3,0 FILL WITH LOW VALUES
-                    AELSEIF ('&LIT' EQ 'HIGH-VALUES'                   X
-                         OR '&LIT' EQ 'HIGH-VALUE')
+                    AELSEIF ('&LIT' EQ 'HIGH_VALUES'                   X
+                         OR '&LIT' EQ 'HIGH_VALUE')  RPI 1171    
          IILL  ZC_R3,0 FILL WITH HIGH VALUES
          IILH  ZC_R3,X'FZC_F00'
                     AELSE

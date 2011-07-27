@@ -196,6 +196,7 @@ public  class  sz390 implements Runnable {
     * 02/27/11 RPI 1153 add GETMAIN best fit allocation
     *          to minimize fragmentation 
     * 05/07/11 RPI 1149 add SVC x'ac' SYSTRACE to reset trace options from R1 string with space eof
+    * 05/31/11 RPI 1165 correct zsort allocation to include work area record
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -7315,7 +7316,7 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
 			return;
 		}
 		pz390.reg.putInt(pz390.r0,0x80000000); // set RMODE31
-		pz390.reg.putInt(pz390.r1,zsort_blk_len); // set mem blk req len
+		pz390.reg.putInt(pz390.r1,zsort_blk_len+zsort_lrecl); // set mem blk req len RPI 1165
 		req_opt = 0; // request unconditional to avoid S80A
 		svc_getmain(); // force setting max_mem_blk
 		zsort_blk_addr = pz390.reg.getInt(pz390.r1);

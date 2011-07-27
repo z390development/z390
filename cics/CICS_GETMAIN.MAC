@@ -4,8 +4,7 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
-.* 03/27/11 RPI 1139 ADD STRING LENGTH CHK FOR HLASM COMP.
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
 .**********************************************************************
          MACRO
          CICS_GETMAIN
@@ -71,9 +70,9 @@
          AIF   ('&SET' EQ '').BADSET
 .* LENGTH MAY BE L' OR CONSTANT LIKE X'..'
          AIF   ('&FLENGTH' NE '').FLEN
-         AIF   (K'&LENGTH LT 2).LEN1   RPI 1139 DSH
+         AIF   (K'&LENGTH LT 2).LENNUM1
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
-.LEN1    ANOP                          RPI 1139 DSH
+.LENNUM1 ANOP
          AIF   (T'&LENGTH NE 'N').LENLABL
 .LENNUM  ANOP
          LARL  R1,=AL2(&LENGTH)   ADDRESS LITERAL
@@ -97,7 +96,9 @@
          AGO   .SAVLEN
 .*
 .FLEN    ANOP
+         AIF   (K'&FLENGTH LT 2).FLENNU1
          AIF   ('&FLENGTH'(2,1) EQ '''').FLENNUM
+.FLENNU1 ANOP
          AIF   (T'&FLENGTH NE 'N').FLENLAB
 .FLENNUM ANOP
          LARL  R1,=A(&FLENGTH)    ADDRESS LITERAL
@@ -124,8 +125,9 @@
 .*
          AIF   ('&INITIMG' EQ '').DOGETM
          GEN_MVI P0C02INM,X'FF'   SET INITIMG SPECIFIED
-         AIF   (K'&INITIMG LT 2).INITNUM  RPI 1139 DSH
+         AIF   (K'&INITIMG LT 2).INITNU1
          AIF   ('&INITIMG'(2,1) EQ '''').INITNUM
+.INITNU1 ANOP
          AIF   (T'&INITIMG NE 'N').INITLAB
 .INITNUM ANOP
          LARL  R1,=AL2(&INITIMG)  ADDRESS LITERAL

@@ -33,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P4A04NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          TP    P4A04ABS           VALID PACKED FIELD ?
          BNZ   INVREQ             EXIT IF BAD
          ZAP   P4A04ABS,P4A04ABS  CHECK -VE ?
@@ -538,6 +548,16 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
+         CLI   P4A04NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 ABSTIME  DS    PL16               WORK AREA
@@ -570,40 +590,7 @@ MNTHTAB  DC    AL2(31,28,31,30,31,30,31,31,30,31,30,31)
 DTAB     DC    C'SunMonTueWedThuFriSat'
 MTAB     DC    C'JanFebMarAprMayJunJulAugSepOctNovDec'
 *
-P4A04    DSECT
-P4A04FN  DS    XL2                FUNCTION CODE
-P4A04EIB DS    AL4                EIB
-P4A04TCT DS    AL4                TCTTE
-P4A04ABS DS    PL8                ABSTIME
-P4A04DSP DS    C                  DATE SEPARATOR
-         DS    X
-P4A04TSP DS    C                  TIME SEPARATOR
-         DS    X
-P4A04DAT DS    AL4                DATE
-P4A04DFM DS    AL4                DATEFORM
-P4A04FDT DS    AL4                FULLDATE
-P4A04DM2 DS    AL4                DDMMYY
-P4A04MD2 DS    AL4                MMDDYY
-P4A04YD2 DS    AL4                YYDDMM
-P4A04YM2 DS    AL4                YYMMDD
-P4A04DM4 DS    AL4                DDMMYYYY
-P4A04MD4 DS    AL4                MMDDYYYY
-P4A04YD4 DS    AL4                YYYYDDMM
-P4A04YM4 DS    AL4                YYYYMMDD
-P4A04Y2D DS    AL4                YYDDD
-P4A04Y4D DS    AL4                YYYYDD
-P4A04DYC DS    AL4                DAYCOUNT
-P4A04DOW DS    AL4                DAYOFWEEK
-P4A04DOM DS    AL4                DAYOFMONTH
-P4A04MOY DS    AL4                MONTHOFYEAR
-P4A04YR  DS    AL4                YEAR
-P4A04DST DS    AL4                DATESTRING
-P4A04TIM DS    AL4                TIME
-         DS    X                  FF=NOHANDLE
-         DS    X
-P4A04RSP DS    AL4                RESP
-P4A04RS2 DS    AL4                RESP2
-P4A04END EQU   *                  END MARKER
+         P4A04 DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

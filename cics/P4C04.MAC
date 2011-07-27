@@ -14,14 +14,22 @@ P4C04    DS    0H
 P4C04FN  DS    XL2                FUNCTION CODE
 P4C04EIB DS    AL4                EIB
 P4C04TCT DS    AL4                TCTTE
+* NEXT 8 LINES DUPLICATED IN GBL4C04
 P4C04FIL DS    CL8                FILENAME
 P4C04OPE DS    AL4                CVDA OPENSTATUS
 P4C04ENA DS    AL4                CVDA ENABLESTATUS
+P4C04RD  DS    AL4                CVDA READ
+P4C04UPD DS    AL4                CVDA UPDATE
 P4C04ADD DS    AL4                CVDA ADD
 P4C04BRW DS    AL4                CVDA BROWSE
 P4C04DEL DS    AL4                CVDA DELETE
-P4C04RD  DS    AL4                CVDA READ
-P4C04UPD DS    AL4                CVDA UPDATE
+*
+P4C04EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P4C04EDS DS    AL4                DSA ADDRESS FOR EDF
+P4C04EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P4C04EDL DS    XL2                DSA LENGTH FOR EDF
+P4C04NED DS    X                  FF=NOEDF
+         DS    X
 P4C04NOH DS    X                  FF=NOHANDLE
          DS    X
 P4C04RSP DS    AL4                RESP

@@ -135,7 +135,10 @@ public  class  z390 extends JApplet
      * 05/23/09 RPI 1041 replace EDIT SELECTALL with SELECT LOG and SELECT CMD
      * 06/04/09 RPI 1050 suppress blank lines on GUI log  
      * 09/26/09 RPI 1080 replace init_tables with init_tz390
-     * 12/08/10 RPI 1141 correct spelling on menu descriptions       
+     * 12/08/10 RPI 1141 correct spelling on menu descriptions
+     * 07/26/11 RPI 1173 correct LSN path logic to avoid double "" 
+     * 07/26/11 RPI 1174 Add "Apple Inc." as valid java vendor with
+     *          default to Linux type filenames (see tz390 os_type      
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -419,12 +422,21 @@ public  class  z390 extends JApplet
   		 */	
   			String java_vendor  = System.getProperty("java.vendor");
   			String java_version = System.getProperty("java.version");
-  			if (!java_vendor.equals("Sun Microsystems Inc.")
-  				||	java_version.compareTo("1.5") < 0
-  				|| java_version.compareTo("9.9" ) > 0){
+  			if (java_vendor.equals("Sun Microsystems Inc.")){
+  				if (java_version.compareTo("1.5") < 0
+  					|| java_version.compareTo("9.9" ) > 0){
+  					MessageBox box = new MessageBox();
+  					box.messageBox("SZ390E error ",
+  							"Unsupported Java Version " + java_vendor + " " + java_version);
+  					if (!main_applet){
+  						exit_main(16);
+  					} 
+  					return 16;
+  				}
+  			} else if (!java_version.equals("Apple Inc.")){ // RPI 1174
   				MessageBox box = new MessageBox();
   				box.messageBox("SZ390E error ",
-				    "Unsupported Java Version " +                                                        java_vendor + " " + java_version);
+				    "Unsupported Java Vendor " + java_vendor + " " + java_version);
   				if (!main_applet){
   					exit_main(16);
   				} 
@@ -3211,9 +3223,11 @@ public  class  z390 extends JApplet
 				&& file_name.substring(0,tz390.dir_cur.length()).equals(tz390.dir_cur)){
 				file_name = file_name.substring(tz390.dir_cur.length()); // skip dir + sep // RPI 499 remove +1 (already skipping sep)
 			}
-			int index = file_name.indexOf(" ");
-			if (index >=0){
-				return "\"" + file_name + "\""; // LSN
+			if (file_name.length() > 0 && file_name.charAt(0) != '"'){ // RPI 1173
+				int index = file_name.indexOf(" ");
+				if (index >=0){
+					return "\"" + file_name + "\""; // LSN
+				}
 			}
 			return file_name;
 		}

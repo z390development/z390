@@ -17,6 +17,7 @@
 *  02/21/07 RPI 553 REMOVE LMAX FROM TCPIO OPEN AND USE R5 FOR LMSG      
 *  02/26/07 RPI 553 ADD CONN= PARM FOR SERVER RESPONSE AND HANDLE
 *           VARIABLE LENGTH RECEIVE MSGS UP TO LMSG              
+*  07/27/11 DSH1 REMOVE UNDEFINED &CLIENT FROM WTO, FIX &NS.1 TO &NS,1
 **********************************************************************
 * GENERATE AN SOA SERVER TO HANDLE SERVICES DEFINED USING HOST
 * AND PORT SPECIFIED.ERVICE REQUEST MESSAGE
@@ -61,8 +62,8 @@ SERVICES LOCTR
                    IF  (CH,R15,EQ,=H'0')
                         ST  R0,&SERVICES(&NS,1)
                    ELSE 
-                        WTO '&SERVER LOAD ERROR ON &SERVICES(&NS.1)'
-                        B   ABORT
+                        WTO '&SERVER LOAD ERROR ON &SERVICES(&NS,1)'
+                        B   ABORT                              DSH1
                    ENDIF
                ENDIF
 *********************************************************************
@@ -153,7 +154,7 @@ SERVICES LOCTR
 *********************************************************************
 * ABORT DUE TO ERROR                                          
 *********************************************************************
-ABORT    WTO    '&CLIENT ABORTING DUE TO TCPIO ERROR ON PORT &PORT'
+ABORT    WTO    'ABORTING DUE TO TCPIO ERROR ON PORT &PORT'     DSH1
          ABEND  &PORT
 *********************************************************************
 * SAVE TRANS START TIME                                       

@@ -583,7 +583,7 @@ APPABEND DS    0H
          BNE   APPABORT           NO, IT'S A REAL ABEND
          L     R9,SDWAG64+(8*R13)+4 R9=DSA ADDRESS              RPI 845
          USING DFHEISTG,R9
-         ICM   R7,15,DFHEIHCN     ANY HANDLE CONDITION BLOCK #
+         ICM   R7,15,DFHEIHCN     ANY HANDLE CONDITION BLOCK
          BZ    APPABBLK           EXIT IF NONE
          USING DFHHCBLK,R7
          DROP  R9                 DROP TEMP DSA BASE

@@ -33,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P4C02NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          L     R8,INQFI           R8=MESSAGE LENGTH
          MVC   INQFITRM,TCTTETI   SET TERMID
          MVC   INQFITKN,EIBTASKN  SET TASK NO.
@@ -48,7 +58,7 @@ INQFRCV  EQU   *
          BNZ   INVREQ             EXIT IF BAD
          CLC   INQFREQ,=C'10FF'   UNSOL IC SCAN ?
          BE    INQFRCV            EXIT IF IT IS
-         CLC   INQFREQ,=C'FE05'   WHAT WE ARE EXPECTING ?
+         CLC   INQFREQ,=C'4C02'   WHAT WE ARE EXPECTING ?
          BE    INQFRCK            EXIT IF IT IS
          DC    H'0'               TCPIO BAD RECEIVE
 INQFRCK  EQU   *
@@ -123,18 +133,18 @@ GOTONE   EQU   *
          MVC   EIBRSRCE,IFILDFLE  FILENAME INTO EIB
 * FILL THE FIELDS AS REQUESTED
          ICM   R9,15,P4C02ACC     ANY ACCESSMETHOD ?
-         BZ    TRYADD             EXIT IF NOT
+         BZ    TRYADD             EXIT IF NONE
          MVC   0(4,R9),DFHVALUE(VSAM) ALWAYS VSAM
 TRYADD   EQU   *
          ICM   R9,15,P4C02ADD     ANY ADD ?
-         BZ    TRYBSN             EXIT IF NOT
+         BZ    TRYBSN             EXIT IF NONE
          MVC   0(4,R9),DFHVALUE(NOTADDABLE) SET NOTADDABLE
          TM    IFILDSRV,FCTADD    ADD ALLOWED ?
          BNO   TRYBSN             EXIT IF NOT
          MVC   0(4,R9),DFHVALUE(ADDABLE) SET ADDABLE
 TRYBSN   EQU   *
          ICM   R9,15,P4C02BSN     ANY BASEDSNAME ?
-         BZ    TRYBRW             EXIT IF NOT
+         BZ    TRYBRW             EXIT IF NONE
          LH    R15,P4C02BLN       R15=IMPLIED LENGTH OF DESTINATION
          CHI   R15,128            OVER MAXIMUM ?
          BNH   BSNOK              EXIT IF NOT
@@ -145,21 +155,21 @@ BSNOK    EQU   *
 BSNMVC   MVC   0(0,R9),IFILDBSN   SET BASEDSNAME
 TRYBRW   EQU   *
          ICM   R9,15,P4C02BRW     ANY BROWSE ?
-         BZ    TRYDEL             EXIT IF NOT
+         BZ    TRYDEL             EXIT IF NONE
          MVC   0(4,R9),DFHVALUE(NOTBROWSABLE) SET NOTBROWSABLE
          TM    IFILDSRV,FCTBRWSE  BROWSE ALLOWED ?
          BNO   TRYDEL             EXIT IF NOT
          MVC   0(4,R9),DFHVALUE(BROWSABLE) SET BROWSABLE
 TRYDEL   EQU   *
          ICM   R9,15,P4C02DEL     ANY DELETE ?
-         BZ    TRYDSN             EXIT IF NOT
+         BZ    TRYDSN             EXIT IF NONE
          MVC   0(4,R9),DFHVALUE(NOTDELETABLE) SET NOTDELETABLE
          TM    IFILDSRV,FCTDELT   DELETE ALLOWED ?
          BNO   TRYDSN             EXIT IF NOT
          MVC   0(4,R9),DFHVALUE(DELETABLE) SET DELETABLE
 TRYDSN   EQU   *
          ICM   R9,15,P4C02DSN     ANY DSNAME ?
-         BZ    TRYENA             EXIT IF NOT
+         BZ    TRYENA             EXIT IF NONE
          LH    R15,P4C02DLN       R15=IMPLIED LENGTH OF DESTINATION
          CHI   R15,128            OVER MAXIMUM ?
          BNH   DSNOK              EXIT IF NOT
@@ -170,7 +180,7 @@ DSNOK    EQU   *
 DSNMVC   MVC   0(0,R9),IFILDDSN   SET DSNAME
 TRYENA   EQU   *
          ICM   R9,15,P4C02ENA     ANY ENABLESTATUS ?
-         BZ    TRYKL              EXIT IF NOT
+         BZ    TRYKL              EXIT IF NONE
          TM    IFILDSTA,FCTUNENA  UNENABLED ?
          BNO   TRYENDIS           EXIT IF NOT
          MVC   0(4,R9),DFHVALUE(UNENABLED) SET UNENABLED
@@ -183,45 +193,50 @@ TRYENDIS EQU   *
          MVC   0(4,R9),DFHVALUE(ENABLED) SET ENABLED
 TRYKL    EQU   *
          ICM   R9,15,P4C02KL      ANY KEYLENGTH ?
-         BZ    TRYKP              EXIT IF NOT
+         BZ    TRYKP              EXIT IF NONE
          MVC   0(4,R9),IFILDKL    SET KEYLENGTH
 TRYKP    EQU   *
          ICM   R9,15,P4C02KP      ANY KEYPOSITION ?
-         BZ    TRYOBJ             EXIT IF NOT
+         BZ    TRYOBJ             EXIT IF NONE
          MVC   0(4,R9),IFILDKP    SET KEYPOSITION
 TRYOBJ   EQU   *
          ICM   R9,15,P4C02OBJ     ANY OBJECT ?
-         BZ    TRYOPE             EXIT IF NOT
-* ### AIX SUPPORT WILL ADD PATH
+         BZ    TRYOPE             EXIT IF NONE
          MVC   0(4,R9),DFHVALUE(BASE) SET BASE
+         CLC   IFILDDSN,IFILDBSN  DSNAMES THE SAME ?
+         BE    TRYOPE             EXIT IF THEY ARE
+         MVC   0(4,R9),DFHVALUE(PATH) SET PATH
 TRYOPE   EQU   *
          ICM   R9,15,P4C02OPE     ANY OPENSTATUS ?
-         BZ    TRYRD              EXIT IF NOT
+         BZ    TRYRD              EXIT IF NONE
          MVC   0(4,R9),DFHVALUE(CLOSED) SET CLOSED
          TM    IFILDSTA,FCTOPCLO  OPEN ?
          BNO   TRYRD              EXIT IF NOT
          MVC   0(4,R9),DFHVALUE(OPEN) SET OPEN
 TRYRD    EQU   *
          ICM   R9,15,P4C02RD      ANY READ ?
-         BZ    TRYRCF             EXIT IF NOT
+         BZ    TRYRCF             EXIT IF NONE
          MVC   0(4,R9),DFHVALUE(NOTREADABLE) SET NOTREADABLE
          TM    IFILDSRV,FCTREAD   READ ALLOWED ?
          BNO   TRYRCF             EXIT IF NOT
          MVC   0(4,R9),DFHVALUE(READABLE) SET READABLE
 TRYRCF   EQU   *
          ICM   R9,15,P4C02RCF     ANY RECORDFORMAT ?
-         BZ    TRYRCS             EXIT IF NOT
+         BZ    TRYRCS             EXIT IF NONE
          MVC   0(4,R9),DFHVALUE(VARIABLE) SET VARIABLE
          TM    IFILDFXV,FCTFXVIM  FIXED ?
          BNO   TRYRCS             EXIT IF NOT
          MVC   0(4,R9),DFHVALUE(FIXED) SET FIXED
 TRYRCS   EQU   *
          ICM   R9,15,P4C02RCS     ANY RECORDSIZE ?
-         BZ    TRYTYPE            EXIT IF NOT
+         BZ    TRYTYPE            EXIT IF NONE
          MVC   0(4,R9),IFILDRCS   SET RECORDSIZE
 TRYTYPE  EQU   *
          ICM   R9,15,P4C02TYP     ANY TYPE ?
-         BZ    TRYUPD             EXIT IF NOT
+         BZ    TRYUPD             EXIT IF NONE
+         XC    0(4,R9),0(R9)      CLEAR TYPE
+         CLI   IFILDTYP,X'00'     ANY TYPE SET ?
+         BE    TRYUPD             EXIT IF NONE
          TM    IFILDTYP,VCLRKSDS  KSDS ?
          BNO   TRYESDS            EXIT IF NOT
          MVC   0(4,R9),DFHVALUE(KSDS) SET KSDS
@@ -240,7 +255,7 @@ TRYRRDS  EQU   *
          MVC   0(4,R9),DFHVALUE(VRRDS) SET VRRDS
 TRYUPD   EQU   *
          ICM   R9,15,P4C02UPD     ANY UPDATE ?
-         BZ    ALLDONE            EXIT IF NOT
+         BZ    ALLDONE            EXIT IF NONE
          MVC   0(4,R9),DFHVALUE(NOTUPDATABLE) SET NOTUPDATABLE
          TM    IFILDSRV,FCTUPDT   UPDATE ALLOWED ?
          BNO   ALLDONE            EXIT IF NOT
@@ -288,11 +303,21 @@ DORESP2  EQU   *
          MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
          FREEMAIN LA=INQFGETL,A=INQFGETM
+         CLI   P4C02NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 INQFI    DS    0F
          DC    A(INQFIEND-*)
-         DC    C'FE05'            REQUEST ID
+         DC    C'4C02'            REQUEST ID
 INQFITRM DS    CL4                TERMID
 INQFITRN DS    CL4                TRANSID
          DC    C' '               TRANSID TYPE

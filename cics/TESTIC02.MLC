@@ -114,7 +114,7 @@ ERRTEST  EQU   *
                IOERR(ICIOERR)                                          X
                LENGERR(ICLENERR)                                       X
                TERMIDERR(ICBADTRM)                                     X
-               TRANSIDERR(ICBADTRN)                                     
+               TRANSIDERR(ICBADTRN)                                     X
 * RAISE INVREQ/0  QUEUE=REQID
          LA    R7,ICRETN1         R7=HANDLE RETURN
          EXEC  CICS START TRANSID('IC02') TERMID(EIBTRMID)             X
@@ -181,7 +181,7 @@ ICRETN8  EQU   *
                IOERR                                                   X
                LENGERR                                                 X
                TERMIDERR                                               X
-               TRANSIDERR                                               
+               TRANSIDERR                                               X
          AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
          BAL   R9,SENDMSG         SEND MESSAGE 17
 * 2 STARTS, SHOULD ONLY INITIATE ONE TRANSID
@@ -266,7 +266,7 @@ TEST10   EQU   *
          B     RETURN             EXIT
 *
 TEST11   EQU   *
-         EXEC  CICS HANDLE CONDITION ENDDATA(ICENDDTA)                                       
+         EXEC  CICS HANDLE CONDITION ENDDATA(ICENDDTA)                                       X
          LA    R7,ICRETN9         R7=HANDLE RETURN
 * DESTROY THE TS Q
          EXEC  CICS DELETEQ TS QUEUE('MYREQIDB')
@@ -285,7 +285,7 @@ ICRETN9  EQU   *
          B     RETURN             EXIT
 *
 TEST12   EQU   *
-         EXEC  CICS HANDLE CONDITION ENVDEFERR(ICENVDEF)                                     
+         EXEC  CICS HANDLE CONDITION ENVDEFERR(ICENVDEF)                                     X
          LA    R7,ICRETN10        R7=HANDLE RETURN
 * RETRIEVE THE DATA WHICH DOESN'T HAVE RTERMID
          EXEC  CICS RETRIEVE                                           X
@@ -302,7 +302,7 @@ ICRETN10 EQU   *
          B     RETURN             EXIT
 *
 TEST13   EQU   *
-         EXEC  CICS HANDLE CONDITION LENGERR(ICLENER2)                                     
+         EXEC  CICS HANDLE CONDITION LENGERR(ICLENER2)                                     X
          LA    R7,ICRETN11        R7=HANDLE RETURN
 * RETRIEVE THE SHORT DATA
          EXEC  CICS RETRIEVE                                           X
@@ -324,7 +324,7 @@ ICRETN11 EQU   *
 TEST14   EQU   *
          EXEC  CICS CANCEL REQID('MYREQIDG')
 * RAISE NOTFND
-         EXEC  CICS HANDLE CONDITION NOTFND(ICNOTFND)                                     
+         EXEC  CICS HANDLE CONDITION NOTFND(ICNOTFND)                                     X
          LA    R7,ICRETN12        R7=HANDLE RETURN
          EXEC  CICS CANCEL REQID('MYREQIDH')
 ICRETN12 EQU   *

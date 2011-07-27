@@ -33,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0E0CNED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          CLI   P0E0CCAN,X'FF'     CANCEL ?
          BNE   NOCANCEL           EXIT IF NOT
 * FREEMAIN THE ABEND BLOCK IF THERE IS ONE
@@ -43,19 +53,19 @@ NORESP2  EQU   *
          FREEMAIN R,A=(R1),LV=(R0)
          XC    TCTTEABD,TCTTEABD  CLEAR ABEND BLOCK ANCHOR
 NOCANCEL EQU   *
+         CLI   P0E0CNED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
-P0E0C    DSECT
-P0E0CFN  DS    XL2                FUNCTION CODE
-P0E0CEIB DS    AL4                EIB
-P0E0CTCT DS    AL4                TCTTE
-P0E0CCAN DS    X                  FF=CANCEL
-         DS    X
-         DS    X                  FF=NOHANDLE
-         DS    X
-P0E0CRSP DS    AL4                RESP
-P0E0CRS2 DS    AL4                RESP2
-P0E0CEND EQU   *                  END MARKER
+         P0E0C DSECT
 *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE

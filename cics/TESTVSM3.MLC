@@ -57,16 +57,15 @@ TESTVSM3 DFHEIENT CODEREG=(R12,R3,R4,R5)
 *                                        YUPPIFY *2
 *
 * COMPLEX TEST, MULTIPLE REQIDS ON MYFILE08
-* KSDS/VAR MYFILE08 BROWSE FORWARD GENERIC EQUAL KEY=XOA
-* KSDS/VAR MYFILE08 BROWSE FORWARD GENERIC GTEQ  KEY=XYMM
-*    PROVES GENERIC IS POSITIONAL, NOT RETRIEVAL
+* KSDS/FIX MYFILE08 BROWSE FORWARD GENERIC EQUAL KEY=XOA
+* KSDS/FIX MYFILE08 BROWSE FORWARD GENERIC GTEQ  KEY=XYMM
+*    GENERIC IS POSITIONAL, NOT RETRIEVAL
 *                                        XOANA
 *                                        XYRIDACEOUS
 *                                        XOANON
 *                                        XYST
 *                                        XU
 *                                        XYSTER
-*
 *    CHANGE GENERIC KEYS
 *                                        XERAFIN
 *                                        XENIA

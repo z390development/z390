@@ -1,0 +1,309 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+         DFHEISTG
+MYDATA   DS    CL35               DATA AREA
+MYLEN    DS    XL2                RECEIVED LENGTH
+MYRID    DS    CL8                RIDFLD (ALT KEY)
+MYRID1   DS    CL8                RIDFLD (ALT KEY)
+MYKL1    DS    XL2                KEYLENGTH
+MYKL2    DS    XL2                KEYLENGTH
+FWTSBA   DS    XL4                WCC,SBA FOR FOP MSG
+FWTMSG   DS    CL(FOPLN)          FOP MESSAGE
+*
+TESTVSM4 DFHEIENT CODEREG=(R12,R3)
+*
+* TEST VSAM 4
+*
+* TEST ALL FORMS OF AIX READS
+* KSDS/FIX AIXSURN READ/KEY/FKS/KEQ  Brewer and Davy
+* KSDS/FIX AIXSURN READ/KEY/FKS/KGE  R to get Smith
+* KSDS/FIX AIXSURN READ/KEY/GEN/KEQ  - to get Bloggs (KL=0, 1ST REC)
+* KSDS/FIX AIXSURN READ/KEY/GEN/KEQ  Gu to get Gurney (KL=2)
+* KSDS/FIX AIXSURN READ/KEY/GEN/KGE  Waa to get Whiddon (KL=3)
+*
+* START BROWSE
+* POINT AT Hm to get Hawk, FULLKEY, KGE READ BACK 4 RECS
+*    Hawk
+*    Gurney
+*    Doe
+*    Davy
+* CHANGE FULL KEY TO END AND READ BACK 2
+*    Whiddon
+*    Stoppard
+*
+* COMPLEX TEST, MULTIPLE REQIDS ON AIXSURN
+* 1.KSDS/FIX AIXSURN BROWSE FORWARD GENERIC EQUAL KEY=Cob to get Cobley
+* 2.KSDS/FIX AIXSURN BROWSE FORWARD GENERIC GTEQ KEY=Bmmm to get Brewer
+*    Cobley    1
+*    Brewer    2
+*    Davy      1
+*    Buffalo   2
+*    Doe       1
+*    Cobley    2
+* 1.CHANGE GENERIC KEYS  KEY=Doe to get Doe
+* 2.CHANGE GENERIC KEYS  KEY=Spot to get Stewer
+*    Doe       1
+*    Stewer    2
+*    Gurney    1
+*    Stoppard  2
+*    Hawk      1
+*    Whiddon   2
+* 1.CHANGE GENERIC KEYS AND KEYLENGTHS  KEY=Buffa to get Buffalo
+* 2.CHANGE GENERIC KEYS AND KEYLENGTHS  KEY=Aaaaaa to get Bloggs
+*    Buffalo   1
+*    Bloggs    2
+*    Cobley    1
+*    Brewer    2
+*    Davy      1
+*    Buffalo   2
+* 1.CHANGE TO GTEQ USING RESETBR  KEY=Ppppp to get Smith
+* 2.                              KEY=Hhhhhh to get Houdini
+*    Smith     1
+*    Houdini   2
+*    Stewer    1
+*    Pierce    2
+*    Stoppard  1
+*    Smith     2
+         AGO   .BYP               ###
+* ### next tests are for non unique when we've sorted out the rules
+         CLI   FOPSEP+1,C' '      SEND LENGTH ADJUSTED ?
+         BNE   NOTADJL            EXIT IF NOT
+         MVI   FOPSEP+1,C'|'      SET SEPARATOR
+         LH    R7,FOPL            MESSAGE LENGTH
+         AHI   R7,1               LENGTHEN BY 1
+         STH   R7,FOPL            STORE BACK
+NOTADJL  EQU   *
+         CLI   FHSEP,C' '         SEND CONDITION LENGTH ADJUSTED ?
+         BNE   NOTADJC            EXIT IF NOT
+         MVI   FHSEP,C'|'         SET SEPARATOR
+         LH    R7,FHANDL          MESSAGE LENGTH
+         AHI   R7,1               LENGTHEN BY 1
+         STH   R7,FHANDL          STORE BACK
+NOTADJC  EQU   *
+.BYP     ANOP                     ###
+* KSDS/FIX AIXSURN  READ/KEY/FKS/KEQ  Brewer and Davy
+         MVC   FOPTYPE,=C'KSDS'   SET FILE TYPE IN MESSAGE
+         MVC   FOPFIXVR,=C'FIX'   SET FIX/VAR IN MESSAGE
+         MVC   FOPNAME,=C'AIXSURN ' SET FILENAME IN MESSAGE
+         MVC   FOPFUNC,=CL8'READ/AIX' SET FUNCTION IN MESSAGE
+         MVC   FOPMETH,=CL4'KEY'  SET METHOD IN MESSAGE
+         MVC   FOPGNFL,=CL4'FKS'  SET FULL KEY
+         MVC   FOPMTYP,=C'KEQ'    SET KEY EQUAL
+         MVC   MYRID,=CL8'Brewer' RECORD BY ALT KEY
+         BAL   R9,RDFLSUR         READ MYKSDS01 BY AIX ON SURNAME
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTSBA,FOP1        MOVE WCC,SBA
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         BAL   R9,SENDIT          SCREEN DISPLAY
+         MVC   MYRID,=CL8'Davy  ' RECORD BY ALT KEY
+         BAL   R9,RDFLSUR         READ MYKSDS01 BY AIX ON SURNAME
+         BAL   R9,WQTS            WRITE IT TO TS Q
+*
+* KSDS/FIX AIXSURN  READ/KEY/FKS/KGE  R to get Smith
+         MVC   FOPMTYP,=C'KGE'    SET KEY GTEQ
+         MVC   MYRID,=CL8'R'      RECORD BY ALT KEY
+         EXEC  CICS READ FILE('AIXSURN') INTO(MYDATA) LENGTH(MYLEN)    X
+               RIDFLD(MYRID) GTEQ
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTSBA,FOP2        MOVE WCC,SBA
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         BAL   R9,SENDIT          SCREEN DISPLAY
+*
+* KSDS/FIX AIXSURN  READ/KEY/GEN/KEQ  - to get Bloggs (KL=0, 1ST REC)
+         MVC   FOPGNFL,=CL4'GEN'  SET GENERIC KEY
+         MVC   FOPMTYP,=C'KEQ'    SET KEY GTEQ
+         MVC   MYRID,=CL8'ZZ'     RECORD BY KEY (IGNORED)
+         EXEC  CICS READ FILE('AIXSURN') INTO(MYDATA) LENGTH(MYLEN)    X
+               RIDFLD(MYRID) KEYLENGTH(0) GENERIC
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTSBA,FOP3        MOVE WCC,SBA
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         BAL   R9,SENDIT          SCREEN DISPLAY
+*
+* KSDS/FIX AIXSURN  READ/KEY/GEN/KEQ  Gu to get Gurney (KL=2)
+         MVC   MYRID,=CL8'Gu'     RECORD BY ALT KEY
+         EXEC  CICS READ FILE('AIXSURN') INTO(MYDATA) LENGTH(MYLEN)    X
+               RIDFLD(MYRID) KEYLENGTH(2) GENERIC
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTSBA,FOP4        MOVE WCC,SBA
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         BAL   R9,SENDIT          SCREEN DISPLAY
+*
+* KSDS/FIX AIXSURN READ/KEY/GEN/KGE  Waa to get Whiddon (KL=3)
+         MVC   FOPGNFL,=CL4'GEN'  SET GENERIC KEY
+         MVC   FOPMTYP,=C'KGE'    SET KEY GTEQ
+         MVC   MYRID,=CL8'Waa'    RECORD BY ALT KEY
+         EXEC  CICS READ FILE('AIXSURN') INTO(MYDATA) LENGTH(MYLEN)    X
+               RIDFLD(MYRID) KEYLENGTH(3) GENERIC GTEQ
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTSBA,FOP5        MOVE WCC,SBA
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         BAL   R9,SENDIT          SCREEN DISPLAY
+*
+* START BROWSE
+* POINT AT Hm to get Hawk, FULLKEY, KGE READ BACK 4 RECS
+         MVC   MYRID,=CL8'Hm'     RECORD BY KEY
+         EXEC  CICS STARTBR FILE('AIXSURN') RIDFLD(MYRID) GTEQ
+* READPREV 4 RECORDS
+         MVC   FWTSBA,FOP6        MOVE WCC,SBA
+         MVC   FOPFUNC,=CL8'READPREV' SET FUNCTION IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         BAL   R9,SENDIT          SCREEN DISPLAY
+         LA    R7,4               READ 4 BACKWARDS
+RDPVLP1  EQU   *
+         EXEC  CICS READPREV FILE('AIXSURN') INTO(MYDATA)              X
+               LENGTH(MYLEN) RIDFLD(MYRID)
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         BCT   R7,RDPVLP1         LOOP
+* CHANGE FULL KEY TO END AND READ BACK 2
+         MVC   MYRID,=8X'FF'      RECORD BY KEY
+         LA    R7,2               READ 2 BACKWARDS
+RDPVLP2  EQU   *
+         EXEC  CICS READPREV FILE('AIXSURN') INTO(MYDATA)              X
+               LENGTH(MYLEN) RIDFLD(MYRID)
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         BCT   R7,RDPVLP2         LOOP
+         EXEC  CICS ENDBR FILE('AIXSURN')
+*
+* COMPLEX TESTS
+* START BROWSE FOR BOTH FILES, BOTH GENERIC
+         MVC   FWTSBA,FOP7        MOVE WCC,SBA
+         MVC   FOPNAME,=C'COMPLEX ' SET FILENAME IN MESSAGE
+         MVC   FOPFIXVR,=C'   '   RESET
+         MVC   FOPMTYP,=C'   '    RESET
+         MVC   FOPFUNC,=CL8'READS   ' SET FUNCTION IN MESSAGE
+         MVC   FOPGNFL,=CL4'GEN'  SET GENERIC KEY
+         MVC   MYRID,=CL8'Cob'    RECORD BY KEY
+         MVC   MYKL1,=H'3'        MOVE KEYLENGTH
+         EXEC  CICS STARTBR FILE('AIXSURN') RIDFLD(MYRID)              X
+               GENERIC EQUAL KEYLENGTH(MYKL1) REQID(1)
+         MVC   MYRID1,=CL8'Bmmm'  RECORD BY KEY
+         MVC   MYKL2,=H'4'        MOVE KEYLENGTH
+         EXEC  CICS STARTBR FILE('AIXSURN') RIDFLD(MYRID1)             X
+               GENERIC GTEQ  KEYLENGTH(MYKL2) REQID(2)
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         BAL   R9,SENDIT          SCREEN DISPLAY
+         MVI   RDCXGT1+1,X'00'    RESET SWITCH 1
+         MVI   RDCXGT2+1,X'00'    RESET SWITCH 2
+         MVI   RDCXGT3+1,X'00'    RESET SWITCH 3
+RDCXREAD EQU   *
+         LA    R7,3               READ 3 FORWARD GENERIC
+RDCXLP1  EQU   *
+         EXEC  CICS READNEXT FILE('AIXSURN') INTO(MYDATA)              X
+               LENGTH(MYLEN) KEYLENGTH(MYKL1) RIDFLD(MYRID) REQID(1)
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         EXEC  CICS READNEXT FILE('AIXSURN') INTO(MYDATA)              X
+               LENGTH(MYLEN) KEYLENGTH(MYKL2) RIDFLD(MYRID1) REQID(2)
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         BCT   R7,RDCXLP1         LOOP
+RDCXGT1  NOP   RDCXTST2           SWITCH 1
+RDCXGT2  NOP   RDCXTST3           SWITCH 2
+RDCXGT3  NOP   RDCXTST4           SWITCH 3
+* CHANGE GENERIC KEYS
+         MVC   MYRID,=CL8'Doe'    RECORD BY KEY
+         MVC   MYRID1,=CL8'Spot'  RECORD BY KEY
+         MVI   RDCXGT1+1,X'F0'    SET SWITCH 1
+         B     RDCXREAD           EXIT
+*
+RDCXTST2 EQU   *
+* CHANGE GENERIC KEYS AND KEYLENGTHS
+         MVC   MYRID,=CL8'Buffa'  RECORD BY KEY
+         MVC   MYKL1,=H'5'        MOVE KEYLENGTH
+         MVC   MYRID1,=CL8'Aaaaaa' RECORD BY KEY
+         MVC   MYKL2,=H'6'        MOVE KEYLENGTH
+         MVI   RDCXGT1+1,X'00'    RESET SWITCH 1
+         MVI   RDCXGT2+1,X'F0'    SET SWITCH 2
+         B     RDCXREAD           EXIT
+*
+RDCXTST3 EQU   *
+* RESET 1ST BROWSE TO GTEQ
+         MVC   MYRID,=CL8'Ppppp'  RECORD BY KEY
+         MVC   MYRID1,=CL8'Hhhhhh' RECORD BY KEY
+         EXEC  CICS RESETBR FILE('AIXSURN') RIDFLD(MYRID)              X
+               GENERIC GTEQ KEYLENGTH(MYKL1) REQID(1)
+         MVI   RDCXGT1+1,X'00'    RESET SWITCH 1
+         MVI   RDCXGT2+1,X'00'    RESET SWITCH 2
+         MVI   RDCXGT3+1,X'F0'    SET SWITCH 3
+         B     RDCXREAD           EXIT
+*
+RDCXTST4 EQU   *
+         EXEC  CICS ENDBR FILE('AIXSURN') REQID(2)
+         EXEC  CICS ENDBR FILE('AIXSURN') REQID(1)
+*
+         EXEC  CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL)
+*
+         EXEC  CICS RETURN
+*
+* SUBROUTINES
+*
+SENDIT   DS    0H
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         BR    R9                 RETURN
+*
+RDFLSUR  DS    0H
+         MVC   MYLEN,=H'17'       SET MAXIMUM LENGTH
+         EXEC  CICS READ FILE('AIXSURN') INTO(MYDATA) LENGTH(MYLEN)    X
+               RIDFLD(MYRID)
+         BR    R9                 RETURN
+*
+WQTS     DS    0H
+         EXEC  CICS WRITEQ TS QUEUE('VSM4') FROM(MYDATA) LENGTH(MYLEN)
+         BR    R9                 RETURN
+*
+FOP1     TN3270 WCC_KD,(SBA,3,1)
+FOP2     TN3270 WCC_KD,(SBA,4,1)
+FOP3     TN3270 WCC_KD,(SBA,5,1)
+FOP4     TN3270 WCC_KD,(SBA,6,1)
+FOP5     TN3270 WCC_KD,(SBA,7,1)
+FOP6     TN3270 WCC_KD,(SBA,8,1)
+FOP7     TN3270 WCC_KD,(SBA,9,1)
+FOP8     TN3270 WCC_KD,(SBA,10,1)
+FOP9     TN3270 WCC_KD,(SBA,11,1)
+FOP10    TN3270 WCC_KD,(SBA,12,1)
+FOP11    TN3270 WCC_KD,(SBA,13,1)
+FOP12    TN3270 WCC_KD,(SBA,14,1)
+FOP13    TN3270 WCC_KD,(SBA,15,1)
+FOP14    TN3270 WCC_KD,(SBA,16,1)
+FOP16    TN3270 WCC_KD,(SBA,18,1)
+FOP18    TN3270 WCC_KD,(SBA,20,1)
+FOP20    TN3270 WCC_KD,(SBA,22,1)
+FOP1C2   TN3270 WCC_KD,(SBA,3,42)
+FOP3C2   TN3270 WCC_KD,(SBA,5,42)
+FOP5C2   TN3270 WCC_KD,(SBA,7,42)
+FOP6C2   TN3270 WCC_KD,(SBA,8,42)
+FOP7C2   TN3270 WCC_KD,(SBA,9,42)
+FOP8C2   TN3270 WCC_KD,(SBA,10,42)
+FOP10C2  TN3270 WCC_KD,(SBA,12,42)
+FOP12C2  TN3270 WCC_KD,(SBA,14,42)
+FOP14C2  TN3270 WCC_KD,(SBA,16,42)
+FOP16C2  TN3270 WCC_KD,(SBA,18,42)
+FOP18C2  TN3270 WCC_KD,(SBA,20,42)
+FOP20C2  TN3270 WCC_KD,(SBA,22,42)
+*
+* KSDS FIX AIXSURN  READNEXT KEY GEN KEQ
+FOPTYPE  DS    CL4
+         DC    C'/'
+FOPFIXVR DS    CL3                FIX OR VAR
+         DC    C' '
+FOPNAME  DS    CL8
+         DC    C' '
+FOPFUNC  DC    C'READNEXT'
+         DC    C' '
+FOPMETH  DC    C'KEY '
+FOPGNFL  DC    CL4' '             FKS OR GEN
+FOPMTYP  DC    CL3' '             KEQ OR KGE
+FOPSEP   DC    C' |'
+FOPLN    EQU   *-FOPTYPE
+FOPL     DC    AL2(*-(FOPTYPE-4))
+*
+ENDMSG   TN3270 WCC_KD,(SBA,24,1)
+         DC    C'TESTVSM4 COMPLETED, PRESS CLEAR'
+ENDMSGL  DC    AL2(*-ENDMSG)
+*
+         TN3270 SYMBOLS
+         END
+

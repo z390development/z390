@@ -15,7 +15,8 @@
 * 01/22/07 RPI 542 CORRECT R1ADDR FROM GETMAIN FOR BUFFER         
 * 02/21/07 RPI 553 REMOVE TCPIO LMAX AND USE R5 VS R2 FOR LMSG CALC     
 *          AND HANDLE VARIABLE LENGTH MSGS UP TO LMSG
-.* 04/22/08 RPI 833 ADD SETC QUOTES FOR HLASM COMPATIBILITY
+* 04/22/08 RPI 833 ADD SETC QUOTES FOR HLASM COMPATIBILITY
+* 07/27/11 DSH1 corrent misspelled &CLEINT in WTO error message
 *********************************************************************
 * SOACMGR IS DYNAMICALLY CALLED FROM SOASTUB2 STUB WITH NAME/PARMS
 *
@@ -119,7 +120,7 @@
                LA    R14,IHAMSG    INTO MSG BUFFER
                BAL   R12,READ_VLR_MSG
                IF    (CLC,MSGNAME,NE,=CL8'&SERVICES(&NS,1)')
-                     WTO '&CLEINT INVALID TCPIO RECEIVE MSG NAME'
+                     WTO '&CLIENT INVALID TCPIO RECEIVE MSG NAME' DSH1
                      B   ABORT
                ENDIF
 *********************************************************************

@@ -36,7 +36,7 @@ TCTTECND DS    X           FF=XCTL COMMAREA MUST BE FREED ON RETURN
 TCTTEEDF DS    X           FF=EDF IS ACTIVE
 TCTTEEBA DS    X           CEDF INTERCEPT INDICATOR
 *                             00='BEFORE'
-*                             FE='AFTER' LINK/XCTL FAIL
+*                             FE='AFTER' LINK/XCTL/RETURN FAIL
 *                             FF='AFTER'
 TCTTEEDL DS    X           CEDF LINKAGE INDICATOR
 *                             00=NORMAL LINKAGE

@@ -379,8 +379,10 @@ public  class  az390 implements Runnable {
         * 05/03/11 RPI 1146 limit check signed I2 byte for RIE4/RIE5
         * 05/17/11 RPI 1164 1) correct RISBHGZ/RISBLGZ support
         *                   2) correct optional length field
+        * 07/26/11 RPI 1168 add DFH RESP codes for CICS  
+        * 07/25/11 RPI 1169 change az390 error to mz390 warning for missing END               
     *****************************************************
-    * Global variables                        (last RPI)
+    * Global variables                        ()
     *****************************************************/
 	tz390 tz390 = null;
 	String msg_id = "AZ390I ";
@@ -977,6 +979,10 @@ public  class  az390 implements Runnable {
     		  "SUPPRESSED)",      //28 - =F'72' RPI 1057
     		  "END)",             //29 - =F'83' RPI 1057
     		  "DISABLED)",        //30 - =F'84' RPI 687
+    		  "ACTIVITYERR)",     //31 - =F'109' RPI 1168
+    		  "CONTAINERERR)",    //32 - =F'110' RPI 1168
+    		  "TOKENERR)",        //33 - =F'112' RPI 1168
+    		  "CHANNELERR)",      //34 - =F'122' RPI 1168
     		  };
       String[] dfhresp_lit = {
     		  "=F'0'",           // 1 "NORMAL)" 
@@ -1009,6 +1015,10 @@ public  class  az390 implements Runnable {
     		  "=F'72'",          //28 "SUPPRESSED)" RPI 1057
     		  "=F'83'",          //29 "END)"      RPI 1057
     		  "=F'84'",          //30 "DISABLED)" RPI 687
+    		  "=F'109'",         //31 "ACTIVITYERR)"  RPI 1168
+    		  "=F'110'",         //32 "CONTAINERERR)" RPI 1168
+    		  "=F'112'",         //33 "TOKENERR)"     RPI 1168
+    		  "=F'122'",         //33 "CHANNELERR)",  RPI 1168
     		  };
   /*
    * EXEC CICS DFHVALUE(type) literal substitution
@@ -1751,7 +1761,8 @@ private void gen_obj_text(){
 			if (mz390_abort){  // RPI 433
 				log_error(165,"input truncated due to mz390 abort"); // RPI 935 
 			} else {
-				log_error(115,"END statement not found");
+				list_bal_line = false; // RPI 1169
+				process_end();         // RPI 1169
 			}
 		} else {
 			list_bal_line = false; // RPI 891 no end stmt 3

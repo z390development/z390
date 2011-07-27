@@ -4,15 +4,12 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 04/07/11 RPI 1139 REMOVE DUP LCLC &CWA,&EIB
-.* 04/30/11 RPI 1143 ADD MISSING .DOEIB
          MACRO
          CICS_ADDRESS
          GBLB  &PARMS_0202
          GBLB  &ZC_CICS
          LCLB  &NOEDF
-         LCLC  &COMM,&CWA,&EIB
-         LCLC  &COMMAREA,&RESP,&RESP2 RPI 1139 DUP CWA,EIB
+         LCLC  &COMM,&CWA,&EIB,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
 .PLOOP   ANOP
@@ -95,7 +92,7 @@
          LA    R0,&CWA            ADDRESS/REG OF CWA POINTER
          GEN_ST R0,P0202ACW       SAVE IT
          AEND
-.DOEIB   ANOP  RPI 1143 DSH
+.DOEIB   ANOP
          AIF   ('&EIB' EQ '').ALLDONE
 .* PROCESS EIB
          AIF   (&ZC_CICS)

@@ -273,7 +273,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.04";  //dsh
+    String version    = "V1.5.05";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -332,7 +332,7 @@ public  class  tz390 {
     boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
     boolean opt_protect  = true;  // prevent PSA mods by user
     boolean opt_r64      = true;  // allow 64 bit register instructions RPI 986
-    boolean opt_reformat = false;  // reformat BAL statements
+    boolean opt_reformat = false; // reformat BAL statements 
     boolean opt_regs     = false; // show registers on trace
     boolean opt_rmode24  = true;  // link to load below line
     boolean opt_rmode31  = false; // link to load above line
@@ -6895,14 +6895,14 @@ public String trim_continue(String line, boolean first_line,int ictl_end,int ict
 }
 public void split_line(String line){  // RPI 313
 	/*
-	 * split line into three strings:
+	 * split line into 4 strings:
 	 *   split_label
 	 *   split_op
 	 *   split_parms 
 	 * using precompiled patterm  RPI 313
 	 * 
-	 * 3 fields are null if none and 
-	 * there may be trailing comment on parms
+	 * 4 fields are null if none
+	 * 
 	 */
 	split_label = null;
 	split_op    = null;
@@ -6916,10 +6916,11 @@ public void split_line(String line){  // RPI 313
 		split_label = find_parm_match.group();
 	}
 	if (find_parm_match.find()){
-		split_op = find_parm_match.group().toUpperCase(); // RPI 532 
+		split_op = find_parm_match.group().toUpperCase(); // RPI 532
+		split_op_index = find_parm_match.start();
 		if (find_parm_match.find()){
-			split_parms = line.substring(find_parm_match.start());
 			split_parms_index = find_parm_match.start();
+			split_parms = line.substring(split_parms_index);
 		} else {
 			split_parms_index = -1;
 		}

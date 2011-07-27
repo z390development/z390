@@ -644,8 +644,17 @@ IFILENA2 EQU   *
          ED    WORK,DEC+2         EDIT KEYPOSITION
          MVC   IFIL2KPO(10),WORK+2 MOVE KEYPOSITION
 IFILNOK  EQU   *
-* ### AIX SUPPORT WILL ADD PATH
+         MVC   IFIL2OBO,=C'n/a )' MOVE DEFAULT OBJECT
+         CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
+         BNE   IFILNOBS           EXIT IF NOT
          MVC   IFIL2OBO,=C'Base)' MOVE OBJECT
+         CLI   IFIL2BSO,C' '      ANY BASE DSNAME ?
+         BE    IFILNOBS           EXIT IF NOT
+* IF DSNAME NOT = BASE DSNAME, THEN DSNAME IS A PATH
+         CLC   IFIL2BSO,IFIL2DSO  DSNAME=BASE DSNAME ?
+         BE    IFILNOBS           EXIT IF SAME
+         MVC   IFIL2OBO,=C'Path)' MOVE OBJECT
+IFILNOBS EQU   *
          MVC   IFIL2OPO,=C'Open)  ' SET OPEN
          CLC   IFILQOPE,DFHVALUE(OPEN) OPEN ?
          BE    IFILOPE2           EXIT IF IT IS
@@ -999,7 +1008,11 @@ SELECT   EQU   *
 *    DEFAULT TO ALL IF I FI
 *    ERROR IF S FI
          CLI   PARSE1,C'S'        S FI ?
-         BER   R9                 RETURN IF IT IS
+         BNE   SLCTSOK            EXIT IF NOT
+         MVI   SLCTERR,X'FF'      SET 'NO FILELIST' ERROR
+         BR    R9                 RETURN
+*
+SLCTSOK  EQU   *
          MVI   SLCTLIST,X'FF'     SET ALL FILES
          B     SLCTSCAN           EXIT
 *
@@ -1167,6 +1180,9 @@ SLCTSCAN EQU   *
          USING CEMTFILE,R13
          MVI   RESUME,X'FF'       SET RESUME MODE
 SLCTLOOP EQU   *
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
          EXEC  CICS INQUIRE FILE(IFILQFLE) NEXT                        X
                         ADD(IFILQADD)                                  X
                      BROWSE(IFILQBRW)                                  X
@@ -1178,9 +1194,16 @@ SLCTLOOP EQU   *
                RECORDFORMAT(IFILQRCF)                                  X
                      UPDATE(IFILQUPD)                                  X
                      NOHANDLE
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
          CLC   EIBRESP,DFHRESP(END) END OF BROWSE ?
          BNE   SLCTNOTE           EXIT IF NOT
+         LR    R9,R13             SAVE BASE 1
+         L     R13,IFILDSA        ADDRESS Z390CEMT DSA
+         USING DFHEISTG,R13
          EXEC  CICS INQUIRE FILE END
+         LR    R13,R9             RESTORE BASE 1
+         USING CEMTFILE,R13
          MVI   RESUME,X'00'       RESET RESUME MODE
          L     R9,IFILRTRN        RESTORE RETURN ADDRESS
          B     8(R9)              RETURN
@@ -1466,7 +1489,7 @@ SLCTERR  DC    X'00'              FF=NO FILE SELECTION
 *
 ABEND    DC    H'0'               THIS IS ALWAYS A PROGRAMMING ERROR
 *
-IFILQFLE DS    CL8
+IFILQFLE DC    CL8' '
 IFILQADD DS    XL4
 IFILQBSN DS    XL128
 IFILQBRW DS    XL4

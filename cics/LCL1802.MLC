@@ -58,7 +58,7 @@ NOEDFB   EQU   *
          L     R4,P1802MSA        ADDRESS MAPSET STRUCTURE
          AHI   R4,8               BYPASS MAPSET NAME
          USING BMSMHLL,R4
-         LH    R5,P1802MLN        R5=MAPSET LENGTH ROUNDED TO DWORD
+         LLH   R5,P1802MLN        R5=MAPSET LENGTH ROUNDED TO DWORD
          AHI   R5,-8              -LENGTH OF MAPSET NAME
 MAPLOOP  EQU   *
 * FIND THE MAP WITHIN THE MAPSET
@@ -111,11 +111,11 @@ NOCLEAR  EQU   *
          BZ    MAPFAIL3           ERROR IF NO FIELDS
          L     R8,P1802DSC        R8=INPUT MAP STRUCTURE ADDRESS
          USING DFHMAPST,R8
+         LH    R7,P1802DSL        R7=INPUT MAP STRUCTURE LENGTH
          TM    BMSMODE,BMSMHEXT   TIOAPFX=YES ?
-         BNO   NOTPFX1            EXIT IF NOT
+         BNO   CURSLOOP           EXIT IF NOT
          AHI   R8,12              ADJUST FOR TIOAPFX
-NOTPFX1  EQU   *
-         LH    R7,BMSMSI          R7=INPUT MAP STRUCTURE LENGTH
+         AHI   R7,-12             ADJUST FOR TIOAPFX
 CURSLOOP EQU   *
          TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
          BNO   CURSNOST           EXIT IF NOT
@@ -160,7 +160,6 @@ STREAM   EQU   *
          AHI   R6,3               MISS AID, CURSOR ADDRESS
 SBALOOP  EQU   *
          LH    R5,BMSMS           R5=MAP LENGTH
-         LH    R7,BMSMSI          R7=INPUT MAP STRUCTURE LENGTH
          CLI   0(R6),SBA          SBA ?
          BNE   MAPFAIL2           ERROR IF NOT
          AHI   R6,1               MISS SBA
@@ -189,9 +188,11 @@ NOTEND   EQU   *
          SH    R5,BMSMHLL         R5=REMAINING MAP LENGTH
          BZ    MAPFAIL3           ERROR IF NO FIELDS
          L     R8,P1802DSC        R8=INPUT MAP STRUCTURE ADDRESS
+         LH    R7,P1802DSL        R7=INPUT MAP STRUCTURE LENGTH
          TM    BMSMODE,BMSMHEXT   TIOAPFX=YES ?
          BNO   NOTPFX2            EXIT IF NOT
          AHI   R8,12              ADJUST FOR TIOAPFX
+         AHI   R7,-12             ADJUST FOR TIOAPFX
 NOTPFX2  EQU   *
          LR    R9,R4              R9=NEW BASE FOR MAP FIELDS
          AH    R9,BMSMHLL         MISS MAP DESCRIPTOR

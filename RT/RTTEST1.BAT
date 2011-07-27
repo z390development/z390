@@ -18,8 +18,8 @@ call rt\RT1 rt\test\TESTSYS1 sysparm(12345)  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSYS2 bs2000  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSYN1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSYN2 sysmac(mac+rt\test)  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RT1 rt\test\TESTPRM1  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RT1 rt\test\TESTPRM2  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTPRM1 sysmac(mac+rt\test)  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTPRM2 sysmac(mac+rt\test)  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTPRM3  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTMAC1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTMAC2 tracep  %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -38,8 +38,8 @@ call rt\RT1 rt\test\TESTSET1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSET2  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSET3  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTACT1  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RT1 rt\test\TESTCPY1  bal %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RT1 rt\test\TESTCPY2  bal %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTCPY1  bal syscpy(mac+rt\test) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTCPY2  bal syscpy(mac+rt\test) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSQL1 sysmac(rt\test+mac) syscpy(rt\test)  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTEQU1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTERR1  %1 %2 %3 %4 %5 %6 %7 %8 %9

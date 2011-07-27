@@ -405,6 +405,8 @@ public  class  mz390 {
 	 * 04/30/11 RPI 1143 remote reset of opt_chkmac if ainsert
 	 * 05/07/11 RPI 1163 support &SYSNDX > 9999 
 	 * 05/10/11 RPI 1149 move start/ended to put_trace
+	 * 07/13/11 RPI 1166 do not replace &var in comments or report errors
+	 * 07/25/11 RPI 1169 change az390 error to mz390 warning for missing END
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -472,6 +474,7 @@ public  class  mz390 {
 	String bal_line = null;
 	String bal_label = null;
 	String bal_op = null;
+	String bal_comments = null; // RPI 1166
 	String   save_bal_op = null; // original bal_op
 	int      save_opsyn_index = -1; // opsyn index of orig. bal_op
 	int ago_index      = 0; // current ago index value 1-n      
@@ -1621,14 +1624,12 @@ public  class  mz390 {
 		    	mac_line_index = mac_file_next_line[mac_line_index]; // RPI 956
 			}
 			if   (bal_line != null){
-				if (tz390.opt_asm){
-					if (bal_op != null && bal_op.equals("END")){
-						end_found = true;
-					} else if (end_found 
-							   && bal_line.length() > 0
-							   && bal_line.charAt(0) != '*'){
+				if (bal_op != null && bal_op.equals("END")){
+					end_found = true;
+				} else if (end_found 
+							&& bal_line.length() > 0
+							&& bal_line.charAt(0) != '*'){
 						abort_error(223,"batch assemblies not supported"); // RPI 1062
-					}
 				}
 				put_bal_line(bal_line);
 			}
@@ -1645,6 +1646,9 @@ public  class  mz390 {
 					abort_error(86,"time limit exceeded");
 				}
 			}
+		}
+		if (!end_found){
+			create_mnote(4,"missing END statement"); // RPI 1169
 		}
 	}
 	private void set_mlc_eof(){
@@ -3504,9 +3508,38 @@ public  class  mz390 {
 		if  (opcode_type <= tz390.max_asm_type){  // RPI 274 OPSYN cancel -2 
 			// replace vars on model statements
 			// but not conditional macro statements
-			bal_line = replace_vars(bal_line,false,tz390.opt_asm); //RPI 659 chk label for asm
-			if (exp_var_replacement_change){
-				split_bal_line();
+			if (bal_label.length() > 0)bal_label = replace_vars(bal_label,false,tz390.opt_asm); // RPI 1166
+			if (bal_op.length() > 0)bal_op = replace_vars(bal_op,false,false); 		 // RPI 1166
+			bal_comments = ""; // RPI 1166
+			if (bal_parms.length() > 0){
+				tz390.parm_match = tz390.parm_pattern.matcher(bal_parms);
+		        int index = 0;
+			    boolean split_parm_end = false;
+			    while (!split_parm_end && tz390.parm_match.find()){
+				      if (tz390.parm_match.group().charAt(0) <= ' '){
+				    	  split_parm_end = true;
+				    	  index = tz390.parm_match.start();
+				      } else {
+				          index = tz390.parm_match.end();
+				      }
+			    }
+			    if (split_parm_end){
+			    	bal_comments = bal_parms.substring(index); // RPI 1166
+			    	bal_parms = replace_vars(bal_parms.substring(0,index),false,false); // RPI 1166
+			    } else {
+			    	bal_parms = replace_vars(bal_parms,false,false);
+			    }
+
+			}
+			if (bal_label.length() < tz390.split_op_index){
+				bal_line = bal_label + tz390.pad_spaces(tz390.split_op_index - bal_label.length()) + bal_op;
+			} else {
+				bal_line = bal_label + " " + bal_op;
+			}
+			if (bal_line.length() < tz390.split_parms_index){
+				bal_line = bal_line + tz390.pad_spaces(tz390.split_parms_index - bal_line.length()) + bal_parms + bal_comments;
+			} else {
+				bal_line = bal_line + " " + bal_parms + bal_comments;
 			}
 		} else {
 			exp_var_replacement_change = true; // set for mac stmts
@@ -3550,7 +3583,7 @@ public  class  mz390 {
 			bal_parms = tz390.split_parms;
 		} else {
 			bal_parms = "";
-		}
+		}		
 	}
 	private String replace_vars(String text,boolean reduce,boolean check_label){
 		/* 
@@ -8993,7 +9026,8 @@ public  class  mz390 {
 		 */
 		msg = tz390.ascii_printable_string(msg); // RPI 938
 		if (level >= 0 // RPI 415 let az390 report mnote in seq on ERR
-			&& (!tz390.opt_asm || tz390.opt_mnote == 2)){ // RPI 1142 put on ERR if no ASM	
+			&& (!tz390.opt_asm || tz390.opt_mnote == 2)
+			|| mlc_eof){ // RPI 1142 put on ERR if no ASMm RPI 1169	
 			tz390.put_systerm("MNOTE " + level + "," + msg); // RPI 330, RPI 440, RPI 444
 		}
 		if (level > tz390.max_mnote_warning 
@@ -9015,7 +9049,8 @@ public  class  mz390 {
 			String sysm_hsev = "00" + cur_sysm_hsev; // RPI 898					
 			gbl_setc[gbl_sysm_hsev_index] = sysm_hsev.substring(sysm_hsev.length()-3); // RPI 898
 		}
-		if (level > mac_call_sysm_sev[mac_call_level]){  // RPI 898
+		if (mac_call_level >= 0  // RPI 1169 
+			&& level > mac_call_sysm_sev[mac_call_level]){  // RPI 898
 			mac_call_sysm_sev[mac_call_level] = level;   // RPI 898
 		}
 		if (tz390.opt_mnote != 2){ // RPI 1132

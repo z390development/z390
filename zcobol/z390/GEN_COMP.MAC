@@ -17,7 +17,9 @@
 .* 08/03/09 RPI 1065 ignore leading zeros on Z lits               
 .* 08/07/09 RPI 1065 use CLCL for type X compare > 256            
 .* 08/09/09 RPI 1065 use ZCNUMLIT to scale literals               
-.* 08/09/09 RPI 1065 set ZC_ERROR if exit with error mnote               
+.* 08/09/09 RPI 1065 set ZC_ERROR if exit with error mnote 
+.* 07/19/11 RPI 1171 FIX COMP LIT > 256 USING ACALL COMP_FIELD1_LIT
+.*              (FIXED LOW-VALUES - NEED TO FIX OTHER LITS PENDING)
 .*********************************************************************
          GEN_COMP  
          COPY  ZC_WS
@@ -178,7 +180,7 @@
             AELSE
          LARL  ZC_R1,=(&SYM_LEN(&FIELD1_IX))X'00'
             AEND
-         CLC   &FIELD1,0(ZC_R1)
+            ACALL COMP_FIELD1_LIT   RPI 1171
           AEND
        AELSEIF ('&FIELD2' EQ 'HIGH_VALUES'                             X
                 OR '&FIELD2' EQ 'HIGH_VALUE')
@@ -1882,6 +1884,20 @@
                        :&FIELD1 SETC '&FIELD1'(1,&I).'&FIELD1'(&J+1,*)
                    AEND
                AEND
+         AEND
+         AEND
+.*
+,* COMP FIELD1 TO LIT  RPI 1171
+.*
+         AENTRY COMP_FIELD1_LIT
+         AIF  (&SYM_LEN(&FIELD1_IX) GT 256) 
+              LA   ZC_R0,&FIELD1
+              LR   ZC_R2,ZC_R1
+              LGFI ZC_R1,&SYM_LEN(&FIELD1_IX)
+              LR   ZC_R3,ZC_R1
+              CLCL ZC_R0,ZC_R2
+         AELSE
+              CLC   &FIELD1,0(ZC_R1)      
          AEND
          AEND
          COPY  ZCNUMLIT

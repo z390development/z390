@@ -33,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P0208NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
 * GET THE ISYS DATA WHETHER WE NEED IT OR NOT
          L     R8,ASGNI           R8=MESSAGE LENGTH
          MVC   ASGNIREQ,=C'FE01'  SET ISYS REQUEST
@@ -249,9 +259,9 @@ DONIU    EQU   *
          BE    DONXT              EXIT IF IT IS
          MVI   0(R9),C'E'         SET TO US ENGLISH
 DONXT    EQU   *
-         ICM   R9,15,P0208NXT     ANY NEXT TRANSID ?
+         ICM   R9,15,P0208NXT     ANY NEXTTRANSID ?
          BZ    DOOUT              EXIT IF NONE
-         MVC   0(4,R9),TCTTENXT   SET NEXT TRANSID
+         MVC   0(4,R9),TCTTENXT   SET NEXTTRANSID
 DOOUT    EQU   *
          ICM   R9,15,P0208OUT     ANY OUTLINE ?
          BZ    DOPRT              EXIT IF NONE
@@ -322,11 +332,11 @@ DOSTC    EQU   *
 DOTKP    EQU   *
          ICM   R9,15,P0208TKP     ANY TASKPRIORITY ?
          BZ    DOTUL              EXIT IF NONE
-         MVC   0(2,R9),=H'0'      SET ZERO
+         XC    0(2,R9),0(R9)      SET ZERO
 DOTUL    EQU   *
          ICM   R9,15,P0208TUL     ANY TCTUALENG ?
          BZ    DOTMC              EXIT IF NONE
-         MVC   0(2,R9),=H'0'      SET ZERO
+         XC    0(2,R9),0(R9)      SET ZERO
 DOTMC    EQU   *
          ICM   R9,15,P0208TMC     ANY TERMCODE ?
          BZ    DOTMP              EXIT IF NONE
@@ -346,7 +356,7 @@ DOTMC    EQU   *
 DOTMP    EQU   *
          ICM   R9,15,P0208TMP     ANY TERMPRIORITY ?
          BZ    DOTXK              EXIT IF NONE
-         MVC   0(2,R9),=H'0'      SET ZERO
+         XC    0(2,R9),0(R9)      SET ZERO
 DOTXK    EQU   *
          ICM   R9,15,P0208TXK     ANY TEXTKYBD ?
          BZ    DOTXP              EXIT IF NONE
@@ -362,11 +372,11 @@ DOTXP    EQU   *
 DOTNP    EQU   *
          ICM   R9,15,P0208TNP     ANY TRANPRIORITY ?
          BZ    DOTWA              EXIT IF NONE
-         MVC   0(2,R9),=H'0'      SET ZERO
+         XC    0(2,R9),0(R9)      SET ZERO
 DOTWA    EQU   *
          ICM   R9,15,P0208TWA     ANY TWASIZE ?
          BZ    DOUNA              EXIT IF NONE
-         MVC   0(2,R9),=H'0'      SET ZERO
+         XC    0(2,R9),0(R9)      SET ZERO
 DOUNA    EQU   *
          ICM   R9,15,P0208UNA     ANY UNATTEND ?
          BZ    DOUSP              EXIT IF NONE
@@ -376,7 +386,7 @@ DOUNA    EQU   *
 DOUSP    EQU   *
          ICM   R9,15,P0208USP     ANY USERPRIORITY ?
          BZ    DOVAL              EXIT IF NONE
-         MVC   0(2,R9),=H'0'      SET ZERO
+         XC    0(2,R9),0(R9)      SET ZERO
 DOVAL    EQU   *
          ICM   R9,15,P0208VAL     ANY VALIDATION ?
          BZ    RETURN             RETURN IF NONE
@@ -404,6 +414,16 @@ DORESP2  EQU   *
          BZ    RETURN             EXIT IF NONE
          MVC   0(4,R14),EIBRESP2  SET RESP2
 RETURN   EQU   *
+         CLI   P0208NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 TCPIOERC ABEND 778,DUMP

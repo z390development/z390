@@ -6603,6 +6603,159 @@ set GIT_COMMITTER_DATE=2021-03-26 14:43:00 +0100
 git commit -m "Reconstructed version v1.5.04 of z390 committed on behalf of Don Higgins"
 git tag -a v1.5.04 -m "Reconstructed version v1.5.04 of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.05
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.5.05
+git add BLDJAR6.BAT
+git add RT/RTGENCMP.BAT
+git add RT/RTGENCMP.DAT
+git add RT/RTTEST1.BAT
+git add RT/Z390.IVP
+git add SOA/MACLIB/SOACMGR.MAC
+git add SOA/MACLIB/SOASMGR.MAC
+git add Z390.IVP
+git add cics/CEMTFILE.MLC
+git add cics/CEMTIFIL.CPY
+git add cics/CICS_ABEND.MAC
+git add cics/CICS_ADDRESS.MAC
+git add cics/CICS_ASSIGN.MAC
+git add cics/CICS_DEQ.MAC
+git add cics/CICS_DUMP.MAC
+git add cics/CICS_ENQ.MAC
+git add cics/CICS_FORMATTIME.MAC
+git add cics/CICS_GETMAIN.MAC
+git add cics/CICS_HANDLE.MAC
+git add cics/CICS_IGNORE.MAC
+git add cics/CICS_INQUIRE.MAC
+git add cics/CICS_LINK.MAC
+git add cics/CICS_READ.MAC
+git add cics/CICS_READQ.MAC
+git add cics/CICS_RECEIVE.MAC
+git add cics/CICS_RETURN.MAC
+git add cics/CICS_SEND.MAC
+git add cics/CICS_SET.MAC
+git add cics/CICS_START.MAC
+git add cics/CICS_STARTBR.MAC
+git add cics/CICS_WRITEQ.MAC
+git add cics/DFHALL.BAT
+git add cics/DFHALLV.BAT
+git add cics/DFHEIENT.MAC
+git add cics/DFHMDF.MAC
+git add cics/DFHMDI.MAC
+git add cics/DFHPCT.MLC
+git add cics/DFHTCTTE.MAC
+git add cics/GBL0602.MLC
+git add cics/GBL060C.MLC
+git add cics/GBL060E.MLC
+git add cics/GBL0610.MLC
+git add cics/GBL0614.MLC
+git add cics/GBL0A04.MLC
+git rm  cics/GBLFE05.MLC
+git rm  cics/GBLFE08.MLC
+git add cics/GEN_MVC.MAC
+git add cics/GEN_MVI.MAC
+git add cics/LCL0208.MLC
+git add cics/LCL0A06.MLC
+git add cics/LCL0E08.MLC
+git add cics/LCL0E0C.MLC
+git add cics/LCL1802.MLC
+git add cics/LCL1804.MLC
+git add cics/LCL4A04.MLC
+git add cics/LCL4C02.MLC
+git add cics/LCL4C04.MLC
+git add cics/LCLCEDF.MLC
+git add cics/MAPEDF.MLC
+git add cics/MAPLOGO.MLC
+git add cics/MAPedf.CPY
+git add cics/P0208.MAC
+git add cics/P4C02.MAC
+git add cics/P4C04.MAC
+git add cics/TESTBED1.MLC
+git add cics/TESTBED3.MLC
+git add cics/TESTBED5.MLC
+git add cics/TESTCIC1.MLC
+git add cics/TESTIC02.MLC
+git add cics/TESTVSM3.MLC
+git add cics/VSAM/MYKSDS1F.TXT
+git add cics/VSAM/Z390CAT1.MLC
+git add cics/Z390CEDF.MLC
+git add cics/Z390CEMT.MLC
+git add cics/Z390CICS.INI
+git add cics/Z390CICS.MLC
+git add cics/Z390FILE.BAT
+git add cics/Z390KCP.MLC
+git add cics/seq/SEQC0030.TXT
+git add cics/seq/SEQCOMP.TXT
+git add cics/seq/SEQDOC.TXT
+git add cics/seq/SEQI0030.TXT
+git add cics/seq/SEQO0001.TXT
+git add linklib/UNREF.MLC
+git rm  mac/TESTCP11.CPY
+git rm  mac/TESTCP12.CPY
+git rm  mac/TESTCP21.CPY
+git rm  mac/TESTCP22.CPY
+git rm  mac/TESTERR1.CPY
+git rm  mac/TESTPRM1.MAC
+git rm  mac/TESTPRM2.MAC
+git add mvs/Z390.IVP
+git add src/az390.java
+git add src/mz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/z390.java
+git add zcobol/z390/GEN_COMP.MAC
+git add zcobol/z390/GEN_MOVE.MAC
+git add cics/DFHREGS.MAC
+git add cics/GBL4C02.MLC
+git add cics/GBL4C04.MLC
+git add cics/MMMMCIC3.MLC
+git add cics/P0E0C.MAC
+git add cics/P4A04.MAC
+git add cics/TESTVSM4.MLC
+git add cics/VSAM/MYAIX01.TXT
+git add cics/VSAM/MYAIX02.TXT
+git add cics/VSAM/MYAIX03.TXT
+git add cics/VSAM/MYKSDS1F.TF2
+git add rt/test/TESTCP11.CPY
+git add rt/test/TESTCP12.CPY
+git add rt/test/TESTCP21.CPY
+git add rt/test/TESTCP22.CPY
+git add rt/test/TESTERR1.CPY
+git add rt/test/TESTPRM1.MAC
+git add rt/test/TESTPRM2.MAC
+git add zcobol/z390/MYSTUFF.MAC
+
+==> Create commit for V1.5.05
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2011-07-27 12:57:00 -0500
+set GIT_COMMITTER_DATE=2021-03-26 14:57:00 +0100
+git commit -m "Reconstructed version v1.5.05 of z390 committed on behalf of Don Higgins"
+git tag -a v1.5.05 -m "Reconstructed version v1.5.05 of z390 committed on behalf of Don Higgins"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,0 +1,9 @@
+        MACRO
+        MYSTUFF
+        COPY ZC_WS
+        :&I SETA 1
+        AWHILE (&I LE &SYM_TOT)
+          MNOTE 'SYM(&I)=&SYM_NAME(&I)'
+          :&I SETA &I+1
+        AEND
+        MEND

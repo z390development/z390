@@ -65,6 +65,6 @@ Sequential Terminal Streams
       Test all functions of mapping support
 0029  LOGO to ensure map values are consistant/CLEAR
       ASGN/CLEAR
-0030  SETF/CLEAR
+0030  SETF/CLEAR/SETF/CLEAR
 0031  shutdown
 

@@ -33,6 +33,16 @@ NORESP   EQU   *
          BZ    NORESP2            EXIT IF NONE
          XC    0(4,R1),0(R1)      CLEAR RESP2
 NORESP2  EQU   *
+         CLI   P4C04NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
          XC    INQFGETM,INQFGETM  CLEAR GETMAIN ADDRESS
 * VALIDATE THE PARMS
          OC    P4C04ADD,P4C04ADD  ANY ADD CVDA ?
@@ -99,7 +109,7 @@ INQFRCV  EQU   *
          BNZ   INVREQ             EXIT IF BAD
          CLC   INQFREQ,=C'10FF'   UNSOL IC SCAN ?
          BE    INQFRCV            EXIT IF IT IS
-         CLC   INQFREQ,=C'FE05'   WHAT WE ARE EXPECTING ?
+         CLC   INQFREQ,=C'4C02'   WHAT WE ARE EXPECTING ?
          BE    INQFRCK            EXIT IF IT IS
          DC    H'0'               TCPIO BAD RECEIVE
 INQFRCK  EQU   *
@@ -130,7 +140,7 @@ GOTFILE  EQU   *
          BE    CHKSTAT            EXIT IF IT IS
          CLC   P4C04ENA,DFHVALUE(ENABLED) ENABLED REQUEST ?
          BE    CHKSTAT            EXIT IF IT IS
-         OC    P4C04ADD(5*4),P4C04ADD ADD,BROWSE,DELETE,READ,UPDATE ?
+         OC    P4C04RD(5*4),P4C04RD READ,UPDATE,ADD,BROWSE,DELETE ?
          BZ    SENDREQ            EXIT IF NOT
 CHKSTAT  EQU   *
 * OPEN,ENABLED,ADD,BROWSE,DELETE,READ,UPDATE
@@ -158,7 +168,7 @@ SETFRCV  EQU   *
          BNZ   INVREQ             ERROR IF BAD
          CLC   SETFREQ,=C'10FF'   UNSOL IC SCAN ?
          BE    SETFRCV            EXIT IF IT IS
-         CLC   SETFREQ,=C'FE08'   WHAT WE ARE EXPECTING ?
+         CLC   SETFREQ,=C'4C04'   WHAT WE ARE EXPECTING ?
          BE    SETFRCK            EXIT IF IT IS
          DC    H'0'               TCPIO BAD RECEIVE
 SETFRCK  EQU   *
@@ -230,11 +240,21 @@ RETURN   EQU   *
          BZ    UNSTACK            EXIT IF NOT
          FREEMAIN LA=INQFGETL,A=INQFGETM
 UNSTACK  EQU   *
+         CLI   P4C04NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
 INQFI    DS    0F
          DC    A(INQFIEND-*)
-         DC    C'FE05'            REQUEST ID
+         DC    C'4C02'            REQUEST ID
 INQFITRM DS    CL4                TERMID
 INQFITRN DS    CL4                TRANSID
          DC    C' '               TRANSID TYPE
@@ -243,7 +263,7 @@ INQFIEND EQU   *
 *
 SETFI    DS    0F
          DC    A(SETFIEND-*)
-SETFREQ  DC    C'FE08'            REQUEST ID
+SETFREQ  DC    C'4C04'            REQUEST ID
 SETFITRM DS    CL4                TERMID
 SETFITRN DS    CL4                TRANSID
          DC    C' '               TRANSID TYPE

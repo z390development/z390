@@ -4,8 +4,6 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 03/28/11 DSH RPI 1139 FIX DIMENSION FOR HLASM COMPAT.
-.* 04/30/11 DSH RPI 1143 FIX LABEL BADPMCI1 TO BADPCI1
          MACRO
 &FLDNAME DFHMDF                                                        X
                &POS=,                                                  X
@@ -44,7 +42,7 @@
 .*
          GBLC  &MDINAME           MAP NAME
          GBLC  &MDIORG            CURSOR POSITION LABEL
-         GBLC  &SCREEN(1920)     POS CROSS-CHECK 24*80 RPI 1139 DSH
+         GBLC  &SCREEN(1920)      POS CROSS-CHECK
          GBLC  &GNAME             CURRENT GROUP NAME
          GBLC  &MDFORG            GROUP LENGTH LABEL
 .*
@@ -398,7 +396,7 @@
          AIF   ('&PICIN'(1,2) EQ '5C').PICI1OK
          AIF   ('&PICIN'(1,2) EQ '5B').PICI1OK
          AIF   ('&PICIN'(1,2) EQ '4D').PICI1OK
-         AGO   .BADPCI1   RPI 1143 DSH
+         AGO   .BADPCI1
 .*
 .PICI1OK ANOP
 &PICNDX  SETA  3
@@ -656,8 +654,12 @@
          AGO   .SETSCR
 .*
 .NOTATT  ANOP
-&SCRTYPE SETC  DOUBLE('&ACTINIT'(&I-1,1)) ASSUME BYTE FROM INITIAL
+&SCRTYPE SETC  ''
+         AIF   ('&ACTINIT' EQ '').NOINITC
+         AIF   (&I-1 GT K'&ACTINIT).NOINITC
+&SCRTYPE SETC  DOUBLE('&ACTINIT'(&I-1,1)) SET BYTE FROM INITIAL
          AIF   ('&SCRTYPE' NE '').SETSCR
+.NOINITC ANOP
 &SCRTYPE SETC  ' '                ASSUME BLANK FILL
          AIF   (T'&INITIAL NE 'O').SETSCR
 &SCRTYPE SETC  '.'                SET EMPTY FIELD MARKER

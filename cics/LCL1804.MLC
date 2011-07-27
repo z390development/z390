@@ -48,7 +48,7 @@ NOEDFB   EQU   *
          L     R4,P1804MSA        ADDRESS MAPSET STRUCTURE
          AHI   R4,8               BYPASS MAPSET NAME
          USING BMSMHLL,R4
-         LH    R5,P1804MLN        R5=MAPSET LENGTH ROUNDED TO DWORD
+         LLH   R5,P1804MLN        R5=MAPSET LENGTH ROUNDED TO DWORD
          AHI   R5,-8              -LENGTH OF MAPSET NAME
 MAPLOOP  EQU   *
 * FIND THE MAP WITHIN THE MAPSET
@@ -716,6 +716,8 @@ DOCURS   EQU   *
          BE    NOCRSPOS           EXIT IF NOT
 * CURSOR(NNN) OVERRIDES EVERYTHING
          LH    R7,P1804CRS        R7=CURSOR ON SEND MAP
+         MVI   P1804CRS,X'FF'     INVALIDATE CURSOR()
+         OI    BMSCURSR,X'80'     INVALIDATE CURSOR ADDRESS
          B     SETCURS            EXIT
 *
 NOCRSPOS EQU   *
@@ -742,10 +744,14 @@ NTMAPLY2 EQU   *
          TM    P1804OPT,P1804CSM  IS SYMBOLIC CURSOR REQUESTED ?
          BNO   NEXTFLD            EXIT IF NOT
 * DATAONLY AND STRUCTURE AND SYMBOLIC CURSOR REQUESTED
-         CLC   BMSLEN,=X'FFFF'    IS IT MARKED ?
+         CHHSI BMSLEN,X'FFFF'     IS IT MARKED ?
          BNE   NEXTFLD            EXIT IF NOT
          NI    P1804OPT,255-P1804CSM DON'T DO THIS AGAIN
-         LH    R7,BMSFP           R7=FIELD POSITION
+         LH    R7,BMSFP           R7=ATTRIBUTE POSITION
+         AHI   R7,1               R7=FIELD POSITION
+         CHI   R7,1920            SCREEN WRAP ?
+         BNE   CNVDTPOS           EXIT IF NOT
+         SR    R7,R7              CURSOR AT R1/C1
          B     CNVDTPOS           EXIT
 *
 NTMPDT2  EQU   *
@@ -759,10 +765,14 @@ NTMPDT2  EQU   *
          TM    P1804OPT,P1804CSM  IS SYMBOLIC CURSOR REQUESTED ?
          BNO   USEIC              EXIT IF NOT
 * STRUCTURE AND SYMBOLIC CURSOR REQUESTED
-         CLC   BMSLEN,=X'FFFF'    IS IT MARKED ?
+         CHHSI BMSLEN,X'FFFF'     IS IT MARKED ?
          BNE   NEXTFLD            EXIT IF NOT
          NI    P1804OPT,255-P1804CSM DON'T DO THIS AGAIN
-         LH    R7,BMSFP           R7=FIELD POSITION
+         LH    R7,BMSFP           R7=ATTRIBUTE POSITION
+         AHI   R7,1               R7=FIELD POSITION
+         CHI   R7,1920            SCREEN WRAP ?
+         BNE   CNVDTPOS           EXIT IF NOT
+         SR    R7,R7              CURSOR AT R1/C1
          B     CNVDTPOS           EXIT
 *
 USEIC    EQU   *

@@ -10,6 +10,32 @@ RECAREA  DS    CL80               RECEIVE AREA
 RECLEN   DS    AL2                RECEIVED LENGTH
 *
 TESTCIC1 CSECT
+         EXEC  CICS ASKTIME ABSTIME(SENDMSG)
+         EXEC  CICS FORMATTIME ABSTIME(SENDMSG)                        X
+               DATE(TEST01)                                            X
+               FULLDATE(TEST02)                                        X
+               DATESEP                                                 X
+               DDMMYY(TEST03)                                          X
+               MMDDYY(TEST04)                                          X
+               YYDDMM(TEST05)                                          X
+               YYMMDD(TEST06)                                          X
+               DATEFORM(TEST07)                                        X
+               DDMMYYYY(TEST08)                                        X
+               MMDDYYYY(TEST09)                                        X
+               YYYYDDMM(TEST10)                                        X
+               YYYYMMDD(TEST11)                                        X
+               YYDDD(TEST12)                                           X
+               YYYYDDD(TEST13)                                         X
+               DAYCOUNT(TEST14)                                        X
+               DAYOFWEEK(TEST15)                                       X
+               DAYOFMONTH(TEST16)                                      X
+               MONTHOFYEAR(TEST17)                                     X
+               YEAR(TEST18)                                            X
+               DATESTRING(TEST19)                                      X
+               TIME(TEST20)                                            X
+               TIMESEP                                                 X
+               NOHANDLE
+*
          EXEC  CICS ADDRESS CWA(R5)
          MVC   SENDMSG,WCC        MOVE WCC
 *
@@ -61,6 +87,26 @@ MSG2     DC    C'TESTCIC1 PRESS ENTER TO LINK TO TESTBED2'
 MSG3SBA  TN3270 (SBA,17,2)
 MSG3     DC    C'TESTCIC1 PRESS PF3 TO END TESTCIC1'
 *
+TEST01   DS    CL25
+TEST02   DS    CL25
+TEST03   DS    CL25
+TEST04   DS    CL25
+TEST05   DS    CL25
+TEST06   DS    CL25
+TEST07   DS    CL25
+TEST08   DS    CL25
+TEST09   DS    CL25
+TEST10   DS    CL25
+TEST11   DS    CL25
+TEST12   DS    CL25
+TEST13   DS    CL25
+TEST14   DS    CL25
+TEST15   DS    CL25
+TEST16   DS    CL25
+TEST17   DS    CL25
+TEST18   DS    CL25
+TEST19   DS    CL25
+TEST20   DS    CL25
          TN3270 SYMBOLS
          END
 

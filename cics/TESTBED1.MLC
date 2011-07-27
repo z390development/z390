@@ -4,13 +4,13 @@
 * The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
-DFHEISTG DSECT                    DSA STORAGE
+         DFHEISTG
 SENDWCC  DS    X
 SENDSBA  DS    CL3
 SENDLINE DS    CL45
 MYCOMM   DS    XL2
 *
-TESTBED1 CSECT
+TESTBED1 DFHEIENT CODEREG=(R12,R3)
 *
 * TEST BED 1
 *

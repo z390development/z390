@@ -4,8 +4,7 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 03/28/11 DSH RPI 1138 FIX DIMENSION FOR HLASM COMP.    
-    MACRO
+         MACRO
 &MAPNAME DFHMDI                                                        X
                &TYPE=,                                                 X
                &MODE=,                                                 X
@@ -54,7 +53,7 @@
          GBLC  &MCURSLC           CURSLOC
          GBLC  &MTIOAPX           TIOAPFX
          GBLC  &MDIORG            CURSOR POSITION LABEL
-         GBLC  &SCREEN(1920)     POS CROSS-CHECK 24*80 RPI 1139 DSH
+         GBLC  &SCREEN(1920)      POS CROSS-CHECK
 .*
          LCLA  &I
          LCLB  &ALRM,&FRKB,&FRST  CTRL OPTIONS FOR WCC
