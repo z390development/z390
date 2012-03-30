@@ -10,6 +10,7 @@
 * 03/12/09 RPI 1004 use CVTQTOLB/CVTLBTQ for Q and CVTLDTP for P 
 * 06/18/09 RPI 1042 move z390 version and CICS check to ZC390NUC rtn
 * 05/25/10 RPI 1118 set ZCVT_PVTMAXDL max dipslay line from PVT options
+* 09/27/11 RPI 1180 round FP to integer for CONVLDTP convert to PD
 *********************************************************************
 ZC390NUC CSECT                  
          USING ZC390CVT,R9
@@ -170,6 +171,7 @@ CVTLBTQ  DS    0H
 CVTLDTP  DS    0H
          USING *,R15
          STMG  R2,R3,ZCSAVE
+         FIXTR F0,0,F0,0  ROUND TO INTEGER  RPI 1180
          EEXTR R2,F0      EXTRACT LD BIAS EXPONENT
          IF    (AGFI,R2,NM,-6176)   REMOVE BIAS AND CHECK IF POS
                SLXT  F0,F0,0(R2)      SHIFT SIG DIGITS LEFT

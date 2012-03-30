@@ -1,0 +1,254 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+         DFHEISTG
+TESTIC04 DFHEIENT CODEREG=(R12,R3,R4,R5)
+*
+* TEST INTERVAL CONTROL START/RETRIEVE WITH CHANNEL
+*
+* THIS SHOULD BE RUN ON DON1, THEN THE CODE WILL WORK
+* EVEN IF DON0 IS THE CEDF MONITOR
+*
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 1 AND EVEN NUMBERS
+* DETERMINE WHERE TO GO NEXT
+         LARL  R6,PHASETAB        ADDRESS PHASE TABLE
+PHASLOOP EQU   *
+         CLC   0(2,R6),TESTNO     OUR PHASE ?
+         BNE   PHASINCR           EXIT IF NOT
+         L     R14,2(R6)          LOAD ADDRESS OF NEXT PHASE
+         BR    R14                GO TO IT
+*
+PHASINCR EQU   *
+         AHI   R6,6               BUMP PHASE TABLE POINTER
+         CLI   0(R6),X'FF'        END OF TABLE ?
+         BNE   PHASLOOP           LOOP IF NOT
+         DC    H'0'               SHOULD NOT OCCUR
+*
+* TEST 1 - SIMPLE START-NO-DATA, NO REQID, NO TIME, EMPTY CHANNEL
+TEST01   EQU   *
+         EXEC  CICS START TRANSID('IC04') TERMID(EIBTRMID)             X
+               CHANNEL('CHAN01')
+         B     RETURN             EXIT
+*
+* TEST 2 - SIMPLE START-NO-DATA, REQID, 2 SECS, ADD CONTAINER TO CHAN
+TEST02   EQU   *
+         EXEC  CICS ASSIGN CHANNEL(CHANNEL)
+         CLC   CHANNEL,=CL16'CHAN01' CORRECT CHANNEL ?
+         BE    TEST1OK            EXIT IF IT IS
+         DC    H'1'
+TEST1OK  EQU   *
+         BAL   R9,WQTS            WRITE CHANNEL STRUCTURE TO TS Q
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 3
+         EXEC  CICS PUT CONTAINER('CHAN01CONT01') CHANNEL('CHAN01')    X
+               FROM(CN01DATA) FLENGTH(50)
+         EXEC  CICS START TRANSID('IC04') TERMID(EIBTRMID)             X
+               CHANNEL('CHAN01')                                       X
+               REQID('MYREQID1')                                       X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+* TEST 3 - SIMPLE START-WITH-PREFIX DATA ONLY, NO REQID, 2 SECS
+*          ADD 2ND CONTAINER
+*    REQID IS C'DF',X'8FFFE1773CE0'
+TEST03   EQU   *
+         EXEC  CICS GET CONTAINER('CHAN01CONT01') CHANNEL('CHAN01')    X
+               INTO(MYINTO) FLENGTH(50)
+         CLC   MYINTO,CN01DATA    MATCH DATA ?
+         BE    TEST2OK            EXIT IF OK
+         DC    H'2'
+TEST2OK  EQU   *
+         BAL   R9,WQTS            WRITE CHANNEL STRUCTURE TO TS Q
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+         BAL   R9,SENDMSG         SEND MESSAGE 5
+         EXEC  CICS PUT CONTAINER('CHAN01CONT02') CHANNEL('CHAN01')    X
+               FROM(CN02DATA) FLENGTH(40)
+         EXEC  CICS START TRANSID('IC04') TERMID(EIBTRMID)             X
+               CHANNEL('CHAN01')                                       X
+               QUEUE('MYQUEUE1') RTRANSID('RTR1') RTERMID('RTM1')      X
+               AFTER SECONDS(2)
+         B     RETURN             EXIT
+*
+* ERROR TESTING
+ERRTEST  EQU   *
+         EXEC  CICS GET CONTAINER('CHAN01CONT02') CHANNEL('CHAN01')    X
+               INTO(MYINTO) FLENGTH(40)
+         CLC   MYINTO(40),CN02DATA MATCH DATA ?
+         BE    TEST3OK            EXIT IF OK
+         DC    H'3'
+TEST3OK  EQU   *
+         BAL   R9,WQTS            WRITE CHANNEL STRUCTURE TO TS Q
+         AP    TESTNO,=P'1'       INCREMENT TEST NUMBER
+*
+* RAISE CHANNELERR
+         EXEC  CICS START TRANSID('IC04') TERMID(EIBTRMID)             X
+               CHANNEL('BAD CHAN') NOHANDLE
+         CLC   EIBRESP,DFHRESP(CHANNELERR)
+         BE    ERROK
+         DC    H'4'
+ERROK    EQU   *
+         EXEC  CICS SEND FROM(HAND1) LENGTH(HAND1L)
+         EXEC  CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL)
+RETURN   EQU   *
+         EXEC  CICS RETURN
+*
+* SUBROUTINES
+*
+SENDMSG  EQU   *
+         LA    R6,MSGTAB          ADDRESS MESSAGE TABLE
+SENDLOOP EQU   *
+         CLC   0(2,R6),TESTNO     OUR MESSAGE ?
+         BE    SENDIT             EXIT IF IT IS
+         AHI   R6,MSGTABL         BUMP MESSAGE POINTER
+         CLI   0(R6),X'FF'        END OF TABLE ?
+         BNE   SENDLOOP           LOOP
+         DC    H'0'               SHOULD NOT OCCUR
+*
+SENDIT   EQU   *
+         EXEC  CICS SEND FROM(2(R6)) LENGTH(MSGTABS)
+         BR    R9
+*
+WQTS     EQU   *
+* WRITE PASSED CHANNEL AND CHANNEL/CONTAINER CHAIN TO TS
+         EXEC  CICS ASSIGN CHANNEL(PASSCHAN)
+         CLI   PASSCHAN,C' '      ANY PASSED CHANNEL ?
+         BNE   WQTSNOPS           EXIT IF THERE IS
+         MVC   PASSCHAN,NONE      SET MO CHANNEL NAME
+WQTSNOPS EQU   *
+         EXEC  CICS WRITEQ TS QUEUE('IC04') FROM(PASSMSG)              X
+               LENGTH(PASSMSGL)
+* SCAN CHANNEL CHAIN
+         MVC   CHNAME,NONE        SET DEFAULT CHANNEL NAME
+         ICM   R4,15,TCTTECAQ     ANY CHANNEL CHAIN ?
+         BZR   R9                 RETURN IF NONE
+         USING DFHCHAN,R4
+WQTSCHLP EQU   *
+         LH    R5,CHANLINK        R5=LINK LEVEL
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         UNPK  CHLINK-1(5),DEC+5(3) UNPACK LINK-LEVEL
+         OI    CHLINK+3,X'F0'     SET SIGN
+         MVI   CHLINK-1,C'@'      RESTORE @
+         MVC   CHNAME,CHANNAME    SET CHANNEL NAME
+         EXEC  CICS WRITEQ TS QUEUE('IC04') FROM(CHAN) LENGTH(CHANL)
+* SCAN CONTAINER CHAIN
+         ICM   R6,15,CHANCONT     ANY CONTAINER CHAIN ?
+         BZ    WQTSNXCH           EXIT IF NONE
+         USING DFHCONT,R6
+WQTSCNLP EQU   *
+         MVC   CNNAME,CONTNAME    SET CONTAINER NAME
+         L     R5,CONTLENG        R5=LENGTH
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         UNPK  CNLENG-1(11),DEC+2(6) UNPACK LENGTH
+         OI    CNLENG+9,X'F0'     SET SIGN
+         MVI   CNLENG-1,C' '      RESTORE SPACE
+         MVC   CNSET,=C'00'       DEFAULT SET INDICATOR
+         OC    CONTSET,CONTSET    ANY SET ADDRESS ?
+         BZ    WQTSNOST           EXIT IF NONE
+         MVC   CNSET,=C'FF'       SET SET INDICATOR
+WQTSNOST EQU   *
+         XC    CNDATA,CNDATA      CLEAR DATA
+         CHI   R5,50              TOO LONG ?
+         BNH   WQTSLNOK           EXIT IF NOT
+         LA    R5,50              SET TO MAXIMUM
+WQTSLNOK EQU   *
+         BCTR  R5,0               -1 FOR EXECUTE
+         EX    R5,WQTSMVC         SET CONTAINER DATA
+         EXEC  CICS WRITEQ TS QUEUE('IC04') FROM(CONT) LENGTH(CONTL)
+         ICM   R6,15,CONTADDR     ANY MORE CONTAINERS ?
+         BNZ   WQTSCNLP           LOOP IF THERE ARE
+WQTSNXCH EQU   *
+         ICM   R4,15,CHANADDR     ANY MORE CHANNELS ?
+         BNZ   WQTSCHLP           LOOP IF THERE ARE
+         BR    R9                 RETURN
+*
+WQTSMVC  MVC   CNDATA(0),CONTDATA SET CONTAINER DATA
+*
+PASSMSG  DC    C'PASSED CHANNEL '
+PASSCHAN DS    CL16
+PASSMSGL DC    AL2(*-PASSMSG)
+*
+CHAN     DC    C'CHANNEL@'
+CHLINK   DS    CL4
+         DC    C' '
+CHNAME   DS    CL16
+CHANL    DC    AL2(*-CHAN)
+*
+CONT     DC    C'   '
+         DC    C'CONTAINER '
+CNNAME   DS    CL16
+         DC    C' '
+CNLENG   DS    CL10
+         DC    C' '
+CNSET    DS    CL2
+         DC    C' '
+CNDATA   DS    CL50
+CONTL    DC    AL2(*-CONT)
+*
+TESTNO   DC    PL2'0'             TEST NUMBER
+DEC      DC    PL8'0'
+CHANNEL  DS    CL16
+CN01DATA DC    50C'A'
+CN02DATA DC    40C'B'
+NONE     DC    C'******NONE******'
+MYINTO   DS    CL50
+MSGTABS  DC    AL2(MSGTABL-2)     LENGTH FOR SEND
+*
+         LTORG
+*
+* MESSAGE TABLE
+*
+MSGTAB   EQU   *
+         DC    PL2'1'
+         TN3270 WCC_KD,(SBA,3,1)
+         DC    CL50'IC START   NO-DATA  NO REQID  EMPTY CHAN'
+MSGTABL  EQU   *-MSGTAB
+*
+         DC    PL2'2'
+         TN3270 WCC_KD,(SBA,4,1)
+         DC    CL50'IC START   NO-DATA  NO REQID  EMPTY CHAN OK'
+*
+         DC    PL2'3'
+         TN3270 WCC_KD,(SBA,5,1)
+         DC    CL50'IC START   NO-DATA     REQID  WITH 1 CONT'
+*
+         DC    PL2'4'
+         TN3270 WCC_KD,(SBA,6,1)
+         DC    CL50'IC START   NO-DATA     REQID  WITH 1 CONT OK'
+*
+         DC    PL2'5'
+         TN3270 WCC_KD,(SBA,7,1)
+         DC    CL50'IC START  PFX-ONLY  NO REQID  WITH 2 CONTS'
+*
+         DC    PL2'6'
+         TN3270 WCC_KD,(SBA,8,1)
+         DC    CL50'IC START  PFX-ONLY  NO REQID  WITH 2 CONTS OK'
+*
+         DC    X'FF'              STOPPER
+*
+HAND1    EQU   *
+         TN3270 WCC_KD,(SBA,9,1)
+         DC    CL12'CHANNELERR'
+         DC    C' CONDITION RAISED'
+HAND1L   DC    AL2(*-HAND1)
+*
+ENDMSG   EQU   *
+         TN3270 WCC_KD,(SBA,24,1)
+         DC    C' TESTIC04 COMPLETE - PRESS CLEAR'
+ENDMSGL  DC    AL2(*-ENDMSG)
+*
+PHASETAB DS    0H
+         DC    PL2'01',AL4(TEST01)
+         DC    PL2'02',AL4(TEST02)
+         DC    PL2'04',AL4(TEST03)
+         DC    PL2'06',AL4(ERRTEST)
+         DC    X'FF'
+*
+         DFHCHAN                  CHANNEL/CONTAINER STRUCTURES
+         TN3270 SYMBOLS
+*
+         END
+

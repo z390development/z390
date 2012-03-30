@@ -1,0 +1,271 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL3440  CSECT
+*
+* FN=3440  EXEC CICS MOVE CONTAINER
+*
+* R1  >>> P3440 BLOCK POINTER
+*
+         USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL3440'
+         LR    R13,R15            R13 AS BASE
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P3440,P3440END),R3
+         L     DFHEIBR,P3440EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P3440TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P3440FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P3440RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P3440RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         CLI   P3440NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
+* VERIFY CONTAINER NAME
+         LA    R15,P3440CTN       R15 POINTS TO CONTAINER NAME
+         BAL   R14,VERIFY         VERIFY CONTAINER NAME
+         B     CONTOK             EXIT IF OK
+         B     CONTERR            EXIT IF BAD
+*
+CONTOK   EQU   *
+* VERIFY AS NAME
+         LA    R15,P3440AS        R15 POINTS TO AS NAME
+         BAL   R14,VERIFY         VERIFY AS NAME
+         B     ASOK               EXIT IF OK
+         B     ASERR              EXIT IF BAD
+*
+ASOK     EQU   *
+         CLI   P3440CHN,X'00'     ANY CHANNEL ON MOVE ?
+         BE    INVREQ             ERROR IF NONE
+* VERIFY CHANNEL NAME
+         LA    R15,P3440CHN       R15 POINTS TO CHANNEL NAME
+         BAL   R14,VERIFY         VERIFY CHANNEL NAME
+         B     CHANOK             EXIT IF OK
+         B     CHANERR            EXIT IF BAD
+*
+CHANOK   EQU   *
+         CLI   P3440TOC,X'00'     ANY TOCHANNEL ON MOVE ?
+         BE    INVREQ             ERROR IF NONE
+* VERIFY TOCHANNEL NAME
+         LA    R15,P3440TOC       R15 POINTS TO TOCHANNEL NAME
+         BAL   R14,VERIFY         VERIFY TOCHANNEL NAME
+         B     TOCOK              EXIT IF OK
+         B     TOCERR             EXIT IF BAD
+*
+TOCOK    EQU   *
+* NAMES VALID, SEARCH THE STRUCTURE
+         LA    R12,TCTTECAQ       R12=CHANNEL ANCHOR POINTER
+         ICM   R2,15,TCTTECAQ     R2=CHANNEL CHAIN ADDRESS
+         BZ    CHANERR            ERROR IF NONE
+         USING DFHCHAN,R2
+CHANCHLP EQU   *
+* ASSUMING THAT ANY CHANNEL IS UP FOR GRABS
+         CLC   CHANNAME,P3440CHN  MATCH MOVE CHANNEL ?
+         BE    CHANFND            EXIT IF IT DOES
+         LA    R12,CHANADDR       R12=PREVIOUS POINTER ADDRESS
+         ICM   R2,15,CHANADDR     CHAIN TO NEXT
+         BNZ   CHANCHLP           LOOP UNTIL CHAIN END
+         B     CHANERR            ERROR IF NOT FOUND
+*
+CHANFND  EQU   *
+* CHANNEL FOUND, HUNT FOR CONTAINER
+         LA    R12,CHANCONT       R12=CONTAINER ANCHOR POINTER
+CONTLOOP EQU   *
+         OC    0(4,R12),0(R12)    ANY (MORE) CONTAINERS ?
+         BZ    CONTERR            ERROR IF NONE
+         L     R2,0(R12)          R2=CONTAINER POINTER
+         USING DFHCONT,R2
+         CLC   CONTNAME,P3440CTN  MATCH CONTAINER ?
+         BE    CONTFND            EXIT IF IT DOES
+         LA    R12,CONTADDR       R12=PREVIOUS POINTER ADDRESS
+         B     CONTLOOP           LOOP UNTIL CHAIN END
+*
+CONTFND  EQU   *
+* CONTAINER FOUND, RENAME IT
+         MVC   CONTNAME,P3440AS   CHANGE CONTAINER NAME
+         CLC   P3440CHN,P3440TOC  IS CONTAINER MOVING CHANNELS ?
+         BE    RETURN             EXIT IF NOT
+* CONTAINER IS MOVING CHANNELS
+         LR    R5,R2              SAVE MOVE CONTAINER ADDRESS
+         MVC   0(4,R12),CONTADDR  REPAIR CHAIN
+         XC    CONTADDR,CONTADDR  CLEAR POINTER
+* SEARCH THE STRUCTURE FOR TOCHANNEL
+         LA    R12,TCTTECAQ       R12=CHANNEL ANCHOR POINTER
+         ICM   R2,15,TCTTECAQ     R2=CHANNEL CHAIN ADDRESS
+         BZ    NOTOCHAN           ERROR IF NONE
+         USING DFHCHAN,R2
+CHANTOLP EQU   *
+* ASSUMING THAT ANY CHANNEL IS UP FOR GRABS
+         CLC   CHANNAME,P3440TOC  MATCH MOVE TOCHANNEL ?
+         BE    CHANFNDT           EXIT IF IT DOES
+         LA    R12,CHANADDR       R12=PREVIOUS POINTER ADDRESS
+         ICM   R2,15,CHANADDR     CHAIN TO NEXT
+         BNZ   CHANTOLP           LOOP UNTIL CHAIN END
+NOTOCHAN EQU   *
+* TO CHANNEL NOT FOUND, CREATE EMPTY ONE
+         GETMAIN R,LV=26
+         LR    R2,R1              SET GETMAIN ADDRESS
+         XC    DFHCHAN(26),DFHCHAN CLEAR CHANNEL
+         MVC   CHANNAME,P3440TOC  SET TO CHANNEL NAME
+         ST    R2,0(R12)          SAVE NEW CHANADDR
+         MVC   CHANLINK,TCTTELNK  SET LINK LEVEL
+CHANFNDT EQU   *
+* TOCHANNEL FOUND/CREATED:
+*    FIND LAST CONTAINER AND CHAIN MOVE CONTAINER
+*    IF AS CONTAINER EXISTS, REPLACE THE CONTAINER (LIKE PUT)
+         LA    R12,CHANCONT       R12=CONTAINER ANCHOR POINTER
+CONTTOLP EQU   *
+         OC    0(4,R12),0(R12)    ANY (MORE) CONTAINERS ?
+         BZ    CONTEND            EXIT IF NONE
+         L     R2,0(R12)          R2=CONTAINER POINTER
+NEWCONT  USING DFHCONT,R2
+         CLC   NEWCONT.CONTNAME,P3440AS MATCH AS CONTAINER ?
+         BE    CONTASFD           EXIT IF IT DOES
+         LA    R12,NEWCONT.CONTADDR R12=PREVIOUS POINTER ADDRESS
+         B     CONTTOLP           LOOP UNTIL CHAIN END
+*
+CONTASFD EQU   *
+* AS CONTAINER FOUND:
+*    CLEAR ANY SET ON AS CONTAINER
+*    DELETE, RECREATE AND RECHAIN
+OLDCONT  USING DFHCONT,R5
+         MVC   OLDCONT.CONTADDR,NEWCONT.CONTADDR SET NEW FORWARD CHAIN
+         L     R7,NEWCONT.CONTLENG R7=CONTAINER LENGTH
+         ICM   R8,15,NEWCONT.CONTSET ANY SET ?
+         BZ    CONTNOST           EXIT IF NONE
+         FREEMAIN A=(R8),LV=(R7)  FREE SET DATA
+CONTNOST EQU   *
+         LA    R8,NEWCONT.CONTNAME R8=CONTAINER ADDRESS
+         AHI   R7,28              + PREFIX LENGTH
+         FREEMAIN A=(R8),LV=(R7)  FREE CONTAINER
+CONTEND  EQU   *
+         ST    R5,0(R12)          CHAIN MOVE CONTAINER
+         B     RETURN             EXIT
+*
+CONTERR  EQU   *
+* INVOKE CONTAINERERR
+* NOTE: NO SEPARATE ERROR FOR BAD NAME
+         MVC   EIBRESP,DFHRESP(CONTAINERERR) SET EIBRESP=CONTAINERERR
+         MVC   EIBRCODE+2(1),EIBRESP+3 SET EIBRCODE
+         MVC   EIBRESP2,=F'10'    SET EIBRESP2=CONTAINER NOT FOUND
+         B     DORESP             EXIT
+*
+ASERR    EQU   *
+* INVOKE CONTAINERERR
+         MVC   EIBRESP,DFHRESP(CONTAINERERR) SET EIBRESP=CONTAINERERR
+         MVC   EIBRCODE+2(1),EIBRESP+3 SET EIBRCODE
+         MVC   EIBRESP2,=F'18'    SET EIBRESP2=INVALID AS NAME
+         B     DORESP             EXIT
+*
+TOCERR   EQU   *
+* INVOKE CHANNELERR
+         MVI   EIBRCODE,X'DA'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(CHANNELERR) SET EIBRESP=CHANNELERR
+         MVC   EIBRESP2,=F'1'     SET EIBRESP2=INVALID TOCHANNEL NAME
+         B     DORESP             EXIT
+*
+CHANERR  EQU   *
+* INVOKE CHANNELERR
+* NOTE: NO SEPARATE ERROR FOR BAD CHANNEL NAME
+* NOTE: NO SEPARATE ERROR FOR TOCHANNEL MOT FOUND
+         MVI   EIBRCODE,X'DA'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(CHANNELERR) SET EIBRESP=CHANNELERR
+         MVC   EIBRESP2,=F'2'     SET EIBRESP2=CHANNEL NOT FOUND
+         B     DORESP             EXIT
+*
+INVREQ   EQU   *
+* INVOKE INVREQ
+         MVI   EIBRCODE,X'20'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         MVC   EIBRESP2,=F'4'     SET EIBRESP2=NO CHANNEL
+DORESP   EQU   *
+         ICM   R14,15,P3440RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P3440RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         CLI   P3440NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
+         PR    ,                  UNSTACK AND RETURN TO MACRO
+*
+VERIFY   EQU   *
+* VALIDATE THE NAME, NO LEADING OR EMBEDDED BLANKS
+* TRAILING BLANKS PERMITTED
+         LR    R5,R15             R5=START OF NAME
+         CLI   0(R15),C' '        BLANK START ?
+         BE    4(R14)             ERROR IF IT IS
+         LA    R0,16              R0=LENGTH
+CHCTCHAR EQU   *
+         LA    R2,CHCTTAB         R2 POINTS TO CHAR LIST
+CHCTLOOP EQU   *
+         CLC   0(1,R15),0(R2)     MATCH TO CHAR ?
+         BNE   CHCTCINC           EXIT IF NOT
+         AHI   R15,1              BUMP NAME POINTER
+         BCT   R0,CHCTCHAR        LOOP THROUGH NAME
+         BR    R14                RETURN
+*
+CHCTCINC EQU   *
+         AHI   R2,1               BUMP CHAR LIST POINTER
+         CLI   0(R2),X'FF'        STOPPER ?
+         BNE   CHCTLOOP           LOOP IF NOT
+* FOUND A BAD CHAR
+         CLI   0(R15),C' '        IS IT BLANK ?
+         BNE   4(R14)             ERROR IF NOT
+* FOUND A BLANK, CHECK FOR TRAILING BLANKS
+         LA    R2,15(R5)          R2=END OF NAME
+         SR    R2,R15             R2=LENGTH OF TRAILING CHARS-1
+         EX    R2,CHCTCLC         TEST FOR TRAILING BLANKS
+         BNE   4(R14)             ERROR IF NOT ALL BLANK
+         BR    R14                RETURN
+*
+CHCTCLC  CLC   0(0,R15),=15C' '   TEST FOR TRAILING BLANKS
+*
+CHCTTAB  DC    C'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+         DC    C'abcdefghijklmnopqrstuvwxyz'
+         DC    C'0123456789'
+         DC    C'$@#/%&&?!:|"=ª,;<>.-_'
+         DC    X'FF'              STOPPER
+*
+         P3440 DSECT
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHCHAN                  CHANNEL/CONTAINER STRUCTURES
+*
+         EQUREGS REGS=GPR
+*
+         END
+

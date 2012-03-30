@@ -10,12 +10,19 @@
 .* 04/30/08 change SYM_FILE_IX to SYM_REF    
 .* 10/06/08 ZSTRMAC
 .* 07/09/09 RPI 1065 move FILE_IX from SYM_REF to SYM_FD for groups
+.* 03/14/12 RPI 1182 COPY ALL OF PARMS FOR FROM FIELD FOR USE IN MOVE
 .*********************************************************************
          WRITE &RECORD
          COPY  ZC_WS
-         :&NP  SETA  N'&SYSLIST
-         AIF   (&NP GT 1 AND '&SYSLIST(2)' EQ 'FROM')
-               MOVE  &SYSLIST(3),TO,&RECORD
+         :&NP  SETA  N'&SYSLIST        
+         AIF   (&NP GE 3 AND '&SYSLIST(2)' EQ 'FROM')
+                  :&PARMS SETC '&SYSLIST(3)'                               RPI 1182
+                  :&I     SETA 4                                                                RPI 1182
+                 AWHILE (&I LE &NP)                                                  RPI 1182
+                       :&PARMS SETC '&PARMS,&SYSLIST(&I)'      RPI 1182
+                       :&I SETA &I+1                                                         RPI 1182
+                AEND
+                 MOVE  &PARMS,TO,&RECORD
          AEND
          ZC_SYM_FIND &RECORD
          AIF   (&SYM_IX EQ 0)

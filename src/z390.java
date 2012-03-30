@@ -138,7 +138,8 @@ public  class  z390 extends JApplet
      * 12/08/10 RPI 1141 correct spelling on menu descriptions
      * 07/26/11 RPI 1173 correct LSN path logic to avoid double "" 
      * 07/26/11 RPI 1174 Add "Apple Inc." as valid java vendor with
-     *          default to Linux type filenames (see tz390 os_type      
+     *          default to Linux type filenames (see tz390 os_type 
+     * 07/30/11 RPI 1175 use shared tz390.check_java_version()              
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -420,27 +421,16 @@ public  class  z390 extends JApplet
   		 *       z390 instance started so only
   		 *       set class variables.
   		 */	
-  			String java_vendor  = System.getProperty("java.vendor");
-  			String java_version = System.getProperty("java.version");
-  			if (java_vendor.equals("Sun Microsystems Inc.")){
-  				if (java_version.compareTo("1.5") < 0
-  					|| java_version.compareTo("9.9" ) > 0){
+  		    tz390 = new tz390();              // RPI 1175
+            if (!tz390.check_java_version()){ // RPI 1175
   					MessageBox box = new MessageBox();
   					box.messageBox("SZ390E error ",
-  							"Unsupported Java Version " + java_vendor + " " + java_version);
+  							"Unsupported Java Version " 
+  					+ tz390.java_vendor + " " + tz390.java_version);
   					if (!main_applet){
   						exit_main(16);
   					} 
   					return 16;
-  				}
-  			} else if (!java_version.equals("Apple Inc.")){ // RPI 1174
-  				MessageBox box = new MessageBox();
-  				box.messageBox("SZ390E error ",
-				    "Unsupported Java Vendor " + java_vendor + " " + java_version);
-  				if (!main_applet){
-  					exit_main(16);
-  				} 
-  				return 16;
   			}
   			main_demo = false;
   			main_lic   = false;
@@ -1732,7 +1722,6 @@ public  class  z390 extends JApplet
 	   /*
 	    * load shared tables and file routines
 	    */	 	  
-	   tz390 = new tz390();
 	   tz390.init_tz390();    // RPI 1080
 	   dir_cur_file = new File(tz390.dir_cur); // RPI 309
        main_title = "Z390 " + tz390.version;

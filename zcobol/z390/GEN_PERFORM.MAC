@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 04/16/08 initial coding for Z390 PERFORM 
 .* 08/04/09 RPI support qualified paragraph names within sections
+.* 02/21/12 RPI 1182 FORCE BASE RELOAD AFTER PERFORM 
 .*********************************************************************
          GEN_PERFORM &PG_NAME1,&SN_NAME1,&PG_NAME2,&SN_NAME2                 
          COPY  ZC_WS
@@ -44,4 +45,5 @@
          LARL  ZC_R0,&LAB2+6
          L     ZC_R15,ZCVT_PERFORM
          BASR  ZC_R1,ZC_R15
+         GEN_BASE_RESET     RPI 1182
          MEND

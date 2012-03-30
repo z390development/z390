@@ -507,7 +507,7 @@
       *  MVI   LNGNUM,C'2'        SET LENGERR 2
             MOVE 2 TO LNGNUM.
             EXEC CICS READQ TS QUEUE('MYQUEUEA')
-                      SET(ADDRESS OF TSRECLK)
+                      INTO(TSREC)
                       LENGTH(20) ITEM(2) END-EXEC.
 
       * BED9RTN8 EQU   *

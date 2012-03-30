@@ -380,9 +380,17 @@ public  class  az390 implements Runnable {
         * 05/17/11 RPI 1164 1) correct RISBHGZ/RISBLGZ support
         *                   2) correct optional length field
         * 07/26/11 RPI 1168 add DFH RESP codes for CICS  
-        * 07/25/11 RPI 1169 change az390 error to mz390 warning for missing END               
+        * 07/25/11 RPI 1169 change az390 error to mz390 warning for missing END 
+        * 07/30/11 use tz390.check_java_version 
+        * 02/16/12 RPI 1186 NOTHREAD starts CSECT's at 0  
+        * 03/04/12 RPI 1196 support 20 bit sdt for LAY etc. 
+        * 03/07/12 RPI 1197 support OBJ optional entry on .END TXT
+        *          1) last .END entry overrides default 0
+        *          2) ENTRY command overrides any .END entry  
+        * 03/24/12 RPI 1198 correct misspelled sym_esd1 (was sym_sid1)
+        *          and remove remove sym_sid1 and sym_sid2                 
     *****************************************************
-    * Global variables                        ()
+    * Global variables                        last rpi
     *****************************************************/
 	tz390 tz390 = null;
 	String msg_id = "AZ390I ";
@@ -442,6 +450,9 @@ public  class  az390 implements Runnable {
     boolean report_equ_changes = true;   // RPI 605
     boolean bal_eof = false;
     boolean end_found = false;
+    String end_entry = "";                // RPI 1197
+    int    end_entry_sid = 0;            // RPI 1197
+    boolean end_entry_found = false; // RPI 1197
 	SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
 	SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
     boolean log_tod = true; 
@@ -765,8 +776,6 @@ public  class  az390 implements Runnable {
     String  exp_start_op = exp_term_op;
     String  exp_token = null;
     String  exp_op    = " ";
-    int     sym_sid1  = 0;
-    int     sym_sid2  = 0;
     int     sym_esd1  = 0;
     int     sym_esd2  = 0;
     byte    sym_type1 = 0;
@@ -1189,6 +1198,10 @@ private void init_az390(String[] args, JTextArea log_text){
 	    }
     	tz390 = new tz390();
     	tz390.init_tz390();  // RPI 1080
+    	if (!tz390.check_java_version()){ // RPI 1175
+    		abort_error(88,"unknown java version "
+    	    + tz390.java_vendor + " " + tz390.java_version);  
+    	}
     	tz390.init_options(args,tz390.bal_type);
     	if (!mz390_call){
    			tz390.open_systerm("AZ390");
@@ -1450,7 +1463,7 @@ private void process_bal(){
 	     gen_obj_esds();
 	     gen_obj_text();
 	     gen_obj_rlds();
-	     put_obj_line(".END");
+	     gen_obj_end();   // RPI 1197
 	     if (tz390.opt_list){
 	    	list_bal_line = true; // RPI 891  
 	     	gen_sym_list();
@@ -1565,6 +1578,9 @@ private void update_sects(){
 		if (sym_type[cur_sid] == sym_cst
 			&& sym_sect_prev[cur_sid] == 0){
 			// new CSECT/RSECT aligned to double word
+			if (!tz390.opt_thread){
+				cst_ctr = 0; // RPI 1186 NOTHREAD starts all CSECTS at 0
+			}
 			loc_ctr = (cst_ctr+7)/8*8;  // RPI 632
 			esd_loc[index] = loc_ctr; // RPI 778
 			if (sym_loc[cur_sid] != loc_ctr){
@@ -3088,6 +3104,18 @@ private void process_bal_op(){
     case 135:  // END 0 
     	bal_op_ok = true;
     	end_found = true;
+    	if (gen_obj_code && bal_parms != null){
+    	    label_match = label_pattern.matcher(bal_parms);
+    		if (!bal_abort && label_match.find()){
+    		   end_entry = label_match.group();
+    		   end_entry_sid = find_sym(end_entry); // RPI 1197
+    		   if (end_entry_sid > 0){
+    			   end_entry_found = true;
+    		   } else {
+    			   log_error(210,"END entry label not found - " + end_entry);
+    		   }
+    		}
+    	}
         process_end();
     	break;
     case 136:  // EQU 0
@@ -3468,6 +3496,18 @@ private void gen_obj_rlds(){
         put_prn_line(rld_code);
        	put_obj_line(".RLD" + rld_code);
 		index++;
+	}
+}
+private void gen_obj_end(){
+	/*
+	 * write END object record with entry if specified  RPI 1197
+	 */
+	if (end_entry_found){
+		put_obj_line(".END" + " ESD=" + tz390.get_hex(sym_esd[end_entry_sid],4)
+		                    + " LOC=" + tz390.get_hex(sym_loc[end_entry_sid]-sym_loc[esd_sid[sym_esd[end_entry_sid]]],8));
+	} else {
+		put_obj_line(".END" + " ESD=0000" 
+                            + " LOC=00000000");
 	}
 }
 private void gen_sym_list(){
@@ -4935,7 +4975,7 @@ private void get_stk_sym(){
 	if (tot_exp_stk_sym >= 2){
 	    sym_esd1 = exp_stk_sym_esd[tot_exp_stk_sym - 2];
 		sym_val1 = exp_stk_sym_val[tot_exp_stk_sym - 2];
-	    if (sym_sid1 > 0){
+	    if (sym_esd1 > 0){ // RPI 1198
 	    	sym_type1 = sym_rel;
 	    } else {
 	    	sym_type1 = sym_sdt;
@@ -5654,8 +5694,20 @@ private void put_copyright(){
 		   } else if (type.equals("END")){
 				bin_byte[1] = tz390.ascii_to_ebcdic['E'];
 				bin_byte[2] = tz390.ascii_to_ebcdic['N'];
-				bin_byte[3] = tz390.ascii_to_ebcdic['D'];
+				bin_byte[3] = tz390.ascii_to_ebcdic['D'];				
 				Arrays.fill(bin_byte,4,80,ebcdic_space);
+                // 15-16 ESD ID of referenced ESD  RPI 1197
+		        bin_byte[14] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
+		        bin_byte[15] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
+                // 6-8 relative entry address in ESD  RPI 1197
+		        if (!hex_rcd.substring(18,20).equals("00")){
+					log_error(211,"END invalid 24 bit entry address - " + hex_rcd); // RPI 851
+					return;
+				}
+				bin_byte[5] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
+				bin_byte[6] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
+				bin_byte[7] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
+				
 		   } else {
 			   log_error(130,"invalid object record - " + hex_rcd); // RPI 851
 			   return;
@@ -6414,12 +6466,12 @@ private String get_exp_bddd(){ // RPI 1148 supp 31 bit abs
 	if (!gen_obj_code){
         return get_default_bddd();
 	}
-	if (exp_esd == 0 && exp_val >= 0 && exp_val <= 0xfff){
+	if (exp_esd == 0 && exp_val >= 0){ // RPI 1196
 		cur_use_reg = 0;
 		cur_use_off = 0;
-		if (get_bdddhh){ // RPI 1148
-			return "0" + tz390.get_hex(exp_val,3) + "00"; 
-		} else {
+		if (get_bdddhh && exp_val <= 0xfffff){ // RPI 1148 RPI 1196
+			return "0" + tz390.get_hex(exp_val,3) + tz390.get_hex(exp_val >>> 12,2); 
+		} else if (exp_val <= 0xfff) {                  // RPI 1196
 			return "0" + tz390.get_hex(exp_val,3);
 		}
 	}

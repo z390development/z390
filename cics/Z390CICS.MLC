@@ -8,8 +8,7 @@
 ***********************************************************************
 Z390CICS SUBENTRY BASES=(R13)
          LA    R3,SECTOR2         BASE 2
-         LR    R4,R3              FORM
-         AHI   R4,4096                 BASE 3
+         LAY   R4,R3(4096)        BASE 3
          USING SECTOR2,R3,R4
 *
 * NOTE TO ME: CALLED ROUTINES MUST NOT BE IN THE 1ST 4K
@@ -990,6 +989,19 @@ TRANABD  DS    0H
          OI    WTOTASKN+6,X'F0'   CLEAR SIGN
          MVC   WTODESC,=CL45'<<<Z390KCP TRAN ABENDED XXXX'
          MVC   WTODESC+24(4),REQABCDE SET ABEND CODE
+         CLI   REQABCDE,C'A'      CICS ABEND ?
+         BNE   TRANABUS           EXIT IF NOT
+         LARL  R12,APPABTAB       R12=ABEND TABLE ADDRESS
+TRANABLP EQU   *
+         CLC   0(4,R12),REQABCDE  MATCH ABEND CODE ?
+         BE    TRANABOK           EXIT IF IT DOES
+         JH    ABEND444           ERROR IF ABEND CODE NOT KNOWN
+         AHI   R12,17             BUMP
+         B     TRANABLP           LOOP
+*
+TRANABOK EQU   *
+         MVC   WTODESC+29(13),4(R12) MOVE DESCRIPTION
+TRANABUS EQU   *
          MVI   CICSTIND,C'I'      SET INTERNAL TYPE
          BAL   R12,CICSTRCE       TRACE IT
          BAL   R12,VSWCLEAN       CLEAN ANY VSWAS
@@ -1278,6 +1290,7 @@ PROCCWA  DS    0H
          L     R13,SUBRSAVE       RESTORE BASE REG R13
          J     REQRETRN           EXIT
 *
+ABEND444 ABEND 444,DUMP           ABEND CODE NOT IN TABLE
 ABEND555 ABEND 555,DUMP           BAD REQUEST
 ABEND666 ABEND 666,DUMP           CMDPROC FAILED
 ABEND777 ABEND 777,DUMP           TCPIO OPEN/CLOSE SERVER FAILED
@@ -1422,6 +1435,38 @@ MSGTABLE EQU   *
          DC    X'FF0001',CL45'OPEN SERVER'
          DC    X'FF0101',CL45'CLOSE SERVER'
          DC    X'FFFFFF'          STOPPER
+*
+APPABTAB EQU   *
+         DC    C'AEI0',CL13'PGMIDERR'
+         DC    C'AEI1',CL13'TRANSIDERR'
+         DC    C'AEI2',CL13'ENDDATA'
+         DC    C'AEI4',CL13'EXPIRED'
+         DC    C'AEI9',CL13'MAPFAIL'
+         DC    C'AEIK',CL13'TERMIDERR'
+         DC    C'AEIL',CL13'FILENOTFOUND'
+         DC    C'AEIM',CL13'NOTFND'
+         DC    C'AEIN',CL13'DUPREC'
+         DC    C'AEIO',CL13'DUPKEY'
+         DC    C'AEIP',CL13'INVREQ'
+         DC    C'AEIQ',CL13'IOERR'
+         DC    C'AEIR',CL13'NOSPACE'
+         DC    C'AEIS',CL13'NOTOPEN'
+         DC    C'AEIT',CL13'ENDFILE'
+         DC    C'AEIU',CL13'ILLOGIC'
+         DC    C'AEIV',CL13'LENGERR'
+         DC    C'AEIZ',CL13'ITEMERR'
+         DC    C'AEXK',CL13'END'
+         DC    C'AEXL',CL13'DISABLED'
+         DC    C'AEYB',CL13'INVMPSZ'
+         DC    C'AEYH',CL13'QIDERR'
+         DC    C'AEYT',CL13'ENVDEFERR'
+         DC    C'AEYY',CL13'NOTALLOC'
+         DC    C'AEZI',CL13'ACTIVITYERR'
+         DC    C'AEZJ',CL13'CONTAINERERR'
+         DC    C'AEZL',CL13'TOKENERR'
+         DC    C'AEZV',CL13'CHANNELERR'
+         DC    C'ASRA',CL13'PROGRAM CHECK'
+         DC    4X'FF'             STOPPER
 *
 FAKE10FF DC    AL4(12),C'10FF',XL4'00'
 *

@@ -9,6 +9,8 @@
 .* 11/17/08 stub for pending support              
 .* 01/14/09 initial coding
 .* 07/19/09 RPI fix FIELD_REC ZC_R3
+.* 01/24/12 RPI 1181 FIX INSPECT F1 REPLACING ALL LOW_VALUES BY SPACES
+.*           TO ALLOW LIT SYMBOLS AND NOT REQUIRE TEST
 .*********************************************************************
 .* R2=V1,R3=V2   THESE MAY BE PASSED MULTIPLE TIMES TO GEN/ZC390LIB
 .* R14=V3,R15=V4 THESE MUST BE RESET FOR EACH CALL TO GEN
@@ -189,12 +191,12 @@
              :&STYPE_CNT SETA 0
              AWHILE ('&SYSLIST(&PARM_IX)' NE ''                        X
                      AND '&SYSLIST(&PARM_IX)' NE 'REPLACING')
-               :&STYPE_CNT SETA &STYPE+1
+               :&STYPE_CNT SETA &STYPE_CNT+1  RPI 1181 ADD MISSING _CNT
                :&FIELD_REG SETC 'ZC_R2'
                :&FIELD_SS1 SETB 0
                ACALL GET_PARM_FIELD
-               AIF (&FIELD_IX GT 0                                     X
-                    OR '&FIELD_NAME'(1,1) EQ '''')
+.*DSHX         AIF (&FIELD_IX GT 0                            X
+.*DSHX              OR '&FIELD_NAME'(1,1) EQ '''')
                 :&V2 SETC '&FIELD_NAME'
                 :&V2_IX SETA &FIELD_IX
                 AIF ('&SYSLIST(&PARM_IX)' EQ 'BY')
@@ -206,8 +208,8 @@
                 :&FIELD_REG SETC 'ZC_R3'
                 :&FIELD_SS1 SETB 0
                 ACALL GET_PARM_FIELD
-                AIF (&FIELD_IX GT 0                                    X
-                       OR '&FIELD_NAME'(1,1) EQ '''')
+.*DSHX          AIF (&FIELD_IX GT 0                            X
+.*DSHX               OR '&FIELD_NAME'(1,1) EQ '''')
                     :&V3 SETC '&FIELD_NAME'
                     :&V3_IX SETA &FIELD_IX
                     :&TEST_CNT SETA 0
@@ -221,19 +223,18 @@
                         AEND
                     AEND
                     AIF (&TEST_CNT EQ 0)
-                        MNOTE 8,'INSPECT REPLACING ALL/LEADING/FIRST MIX
-               SSING TEST'
-                        MEXIT
-                    AEND
-                 AELSE
-                    MNOTE 8,'INSPECT REPLACING UNDEFINED ID3'
-                    MEXIT
-                 AEND
-               AELSE
-                    MNOTE 8,'INSPECT REPLACING MISSING ID2'
-                    MEXIT
-               AEND
-             AEND
+                            GEN_INSPECT REPLACING,&STYPE,&V1,&V1_IX,&V2X
+               ,&V2_IX,&V3,&V3_IX,
+                   AEND
+.*DSHX          AELSE
+.*DSHX              MNOTE 8,'INSPECT REPLACING UNDEFINED ID3'
+.*DSHX              MEXIT
+,*DSHX          AEND
+.*DSHX         AELSE
+.*DSHX             MNOTE 8,'INSPECT REPLACING MISSING ID2'
+.*DSHX             MEXIT
+.*DSHX         AEND
+.*DSHXX      AEND
              AIF (&STYPE_CNT EQ 0)
                  MNOTE 8,'INSPECT REPLACING &STYPE MISSING VAR'
                  MEXIT
@@ -247,7 +248,7 @@
                MNOTE 8,'INSPECT REPLACING MISSING VAR'
                MEXIT
        AEND
-         AEND
+    AEND
 .*
 .* INSPECT V1 CONVERTING V2 TO V3 TEST
 .*  TEST = BEFORE/AFTER [INITIAL] V4

@@ -8,10 +8,12 @@
 .**********************************************************************
          MACRO
          CICS_WRITEQ
+.* FLENGTH IS AN EXTENSION
          GBLB  &PARMS_0A02
          GBLB  &ZC_CICS
          LCLB  &REWRITE,&NOEDF,&NOHAND
-         LCLC  &TYPE,&QUEUE,&QNAME,&FROM,&LENGTH,&NUMITEMS,&ITEM
+         LCLC  &TYPE,&QUEUE,&QNAME,&FROM,&LENGTH,&FLENGTH,&NUMITEMS
+         LCLC  &ITEM
 .* ICTERM AND ICTRAN ARE FOR INTERNAL USE ONLY
          LCLC  &ICTERM,&ICTRAN
          LCLC  &RESP,&RESP2
@@ -35,6 +37,7 @@
          AIF   ('&PARM'(1,6) EQ 'QNAME(').QNAME
          AIF   ('&PARM'(1,5) EQ 'FROM(').FROM
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,8) EQ 'FLENGTH(').FLENGTH
          AIF   ('&PARM'(1,9) EQ 'NUMITEMS(').NUMITEMS
          AIF   ('&PARM'(1,5) EQ 'ITEM(').ITEM
          AIF   ('&PARM'(1,7) EQ 'REWRITE').REWRITE
@@ -61,6 +64,10 @@
 .*
 .LENGTH  ANOP
 &LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.FLENGTH ANOP
+&FLENGTH SETC  '&PARM'(9,K'&PARM-9)
          AGO   .PLOOP
 .*
 .NUMITEMS ANOP
@@ -108,6 +115,7 @@
          AIF   ('&NUMITEMS' NE '' AND &REWRITE).BADNUM
          AIF   ('&FROM' EQ '').BADFROM
          AIF   ('&ITEM' NE '' AND (NOT &REWRITE)).COMPAT
+         AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BOTHLEN
          AGO   .WQGO
 .*
 .COMPAT  ANOP
@@ -155,12 +163,6 @@
          MVC   0(2,R15),&ITEM     MOVE ITEM FROM LABEL
 .DUNITEM ANOP
 .*
-         AIF   ('&FROM' NE '').GOTFROM
-         AIF   ('&LENGTH' EQ '').GOTFROM
-         MNOTE 12,'LENGTH WITHOUT FROM'
-         MEXIT
-.*
-.GOTFROM ANOP
 &FROMTQ  SETC  T'&FROM
          AIF   ('&FROM'(1,1) EQ '='                                    X
                OR '&FROMTQ' EQ 'A'                                     X
@@ -173,21 +175,16 @@
          L     R0,&FROM           R0=INDIRECT FROM ADDRESS FROM LABEL
          GEN_ST R0,P0A02FRM       SAVE IT
 .* LENGTH IS COMPULSORY FOR INDIRECT
-         AIF   ('&LENGTH' EQ '').BADLEN
+         AIF   ('&LENGTH' EQ '' AND '&FLENGTH' EQ '').BADLEN
 .FROMLEN ANOP
-         AIF   ('&LENGTH' NE '').LENVAL
-         LA    R0,L'&FROM         R0=IMPLIED LENGTH OF FROM
-         GEN_STH R0,P0A02LEN      SAVE IT
-         AGO   .DUNLEN
-.*
-.LENVAL  ANOP
+         AIF   ('&LENGTH' EQ '').NOLENG
          AIF   (K'&LENGTH LT 2).LENNUM1
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
 .LENNUM1 ANOP
          AIF   (T'&LENGTH NE 'N').LENLABL
 .LENNUM  ANOP
-         LA    R0,&LENGTH         R0=LENGTH
-         GEN_STH R0,P0A02LEN      SAVE IT
+         LAY   R0,&LENGTH         SET NUMERIC LENGTH
+         GEN_ST R0,P0A02LEN       SAVE IT
          AGO   .DUNLEN
 .*
 .LENLABL ANOP
@@ -195,18 +192,45 @@
          AIF   ('&LENGTH'(1,10) EQ 'LENGTH,OF,')
 .* COBOL LENGTH OF EXTRACT
 &LENLSL  SETC  '&LENGTH'(11,K'&LENGTH-10)
-         LA    R0,L'&LENLSL       R0=LENGTH
-         GEN_STH R0,P0A02LEN      SAVE IT
+         LAY   R0,L'&LENLSL       SET NUMERIC LENGTH
          AELSE
 .* COBOL LENGTH AS LABEL
-         LH    R0,&LENGTH         R0=LENGTH FROM LABEL
-         GEN_STH R0,P0A02LEN      SAVE IT
+         LH    R0,&LENGTH         SET LENGTH FROM LABEL
          AEND
          AELSE
 .* ASM LENGTH AS LABEL
-         LH    R0,&LENGTH         R0=LENGTH FROM LABEL
-         GEN_STH R0,P0A02LEN      SAVE IT
+         LH    R0,&LENGTH         SET LENGTH FROM LABEL
          AEND
+         GEN_ST R0,P0A02LEN       SAVE IT
+         AGO   .DUNLEN
+.*
+.NOLENG  ANOP
+         AIF   ('&FLENGTH' EQ '').NOLENS
+         AIF   (T'&FLENGTH NE 'N').FLENLBL
+         GEN_MVC P0A02LEN,,=AL4(&FLENGTH) SET NUMERIC FLENGTH
+         AGO   .DUNLEN
+.*
+.FLENLBL ANOP
+         AIF   (&ZC_CICS)
+         AIF   ('&FLENGTH'(1,10) EQ 'LENGTH,OF,')
+.* COBOL LENGTH OF EXTRACT
+&LENLSL  SETC  '&FLENGTH'(11,K'&FLENGTH-10)
+         GEN_MVC P0A02LEN,,=AL4(L'&LENLSL) SET NUMERIC FLENGTH
+         AELSE
+.* COBOL LENGTH AS LABEL
+         L     R0,&FLENGTH        SET FLENGTH FROM LABEL
+         GEN_ST R0,P0A02LEN       SAVE IT
+         AEND
+         AELSE
+.* ASM LENGTH AS LABEL
+         L     R0,&FLENGTH        SET FLENGTH FROM LABEL
+         GEN_ST R0,P0A02LEN       SAVE IT
+         AEND
+         AGO   .DUNLEN
+.*
+.NOLENS  ANOP
+         LAY   R0,L'&FROM         R0=IMPLIED LENGTH OF FROM
+         GEN_ST R0,P0A02LEN       SAVE IT
 .DUNLEN  ANOP
          AIF   ('&NUMITEMS' EQ '').NONUMIT
          AIF   (T'&NUMITEMS EQ 'N').BADNUM2
@@ -292,7 +316,11 @@ P0A02BYP_&SYSNDX DS 0H
 .BADFROM MNOTE 12,'FROM IS MANDATORY'
          MEXIT
 .*
-.BADLEN  MNOTE 12,'LENGTH IS MANDATORY FOR INDIRECT FROM'
+.BADLEN  MNOTE 12,'LENGTH/FLENGTH IS MANDATORY FOR INDIRECT FROM'
          MEXIT
+.*
+.BOTHLEN MNOTE 12,'BOTH LENGTH AND FLENGTH ARE SPECIFIED'
+         MEXIT
+.*
          MEND
 

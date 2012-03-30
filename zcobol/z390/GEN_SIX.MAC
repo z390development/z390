@@ -9,9 +9,11 @@
 .* 02/05/09 move subscript gen form zcobol\ZCGETFLD.CPY
 .* 02/25/09 RPI 1002 support PIC type I for INDEX BY and USAGE INDEX
 .* 04/25/11 RPI 1161 correct continuation casing undef var
+.* 03/23/12 RPI 1182 no extra GEN_BASE calls for suscript variables
 .*********************************************************************
          GEN_SIX                                    
          COPY  ZC_WS
+         :&SIX_REG SETC 'ZC_R15' RPI 1182
          AIF   (&TOT_SIX EQ 1)
                ACALL GEN_SUB1
          AELSE
@@ -27,49 +29,16 @@
          ACALL SET_FIELD_SIX
          IILF  &FIELD_REG,(&SIX_NAME(1)-1)*&SYM_LEN(&SIX_OCCUR(1)) (LITX
                -1)*LEN
-         GEN_BASE &FIELD_IX  RPI 1065
          LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)(&FIELD_REG)
         AEND
        AELSE
         ACALL SET_FIELD_SIX
         ZC_SYM_FIND &SIX_NAME(1)
         AIF (&SYM_IX GT 0)             SUBSCRIPT/INDEX FOUND
-               :&SUB_IX SETA &SYM_IX
-               GEN_BASE &SUB_IX
-               ACASE (C2A('&SYM_PIC_TYPE(&SUB_IX)'))
-               AWHEN C'I' ADD INDEX OFFSET  RPI 1002
-         L     &FIELD_REG,&SYM_NAME(&SUB_IX) INDEX OFFSET
-               GEN_BASE &FIELD_IX  RPI 1065
-         LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)(&FIELD_REG)
-               AEXIT AENTRY
-               AWHEN C'F'
-         L     &FIELD_REG,&SYM_NAME(&SUB_IX)
-               AWHEN C'G'
-         LG    &FIELD_REG,&SYM_NAME(&SUB_IX)
-               AWHEN C'H'
-         LH    &FIELD_REG,&SYM_NAME(&SUB_IX)
-               AWHEN C'P'
-         ZAP   ZCVT_PWORK,&SYM_NAME(&SUB_IX)
-         CVB   &FIELD_REG,ZCVT_PWORK
-               AWHEN C'Z'
-         :&LPLEN SETA &SYM_LEN(&SUB_IX)/2+1
-         PACK  ZCVT_PWORK1(&LPLEN),&SYM_NAME(&SUB_IX)
-         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
-         CVB   &FIELD_REG,ZCVT_PWORK
-               AELSE
-                  MNOTE 8,'ZCGETFLD INVALID SUBSCRIPT TYPE FOR &SYM_NAMX
-               E(&SUB_IX)'
-                  MEXIT
-               AEND
-               AIF  (&SIX_OFF(1) NE '')
-         AHI   &FIELD_REG,&SIX_OFF(1)-1
-               AELSE
-         BCTR  &FIELD_REG,0
-               AEND
-         MSFI  &FIELD_REG,&SYM_LEN(&SIX_OCCUR(1)) L'&SYM_NAME(&SIX_OCCUX
-               R(1))                                
-               GEN_BASE &FIELD_IX  RPI 1065
-         LA    &FIELD_REG,&SYM_NAME(&FIELD_IX).(&FIELD_REG)  
+               :&SUB_IX  SETA &SYM_IX
+               :&CUR_SIX SETA 1
+               ACALL SET_SIX_REG
+         LA    &FIELD_REG,&SYM_NAME(&FIELD_IX).(&SIX_REG)  
         AELSE
                MNOTE 8,'ZCGETFLD SUBSCRIPT NOT FOUND - &SYSLIST(&PARM_IX
                X)'
@@ -83,7 +52,6 @@
          AENTRY GEN_SUBN
          GEN_BASE &FIELD_IX
          ACALL SET_FIELD_SIX
-               GEN_BASE &FIELD_IX  RPI 1065
          LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)
          :&CUR_SIX SETA 1
          AWHILE (&CUR_SIX LE &TOT_SIX)
@@ -104,38 +72,8 @@
             ZC_SYM_FIND &SIX_NAME(&CUR_SIX)
             AIF (&SYM_IX GT 0)             SUBSCRIPT/INDEX VAR FOUND
                :&SUB_IX SETA &SYM_IX
-               GEN_BASE &SUB_IX
-               ACASE (C2A('&SYM_PIC_TYPE(&SUB_IX)'))
-               AWHEN C'I'  ADD INDEX OFFSET  RPI 1002
-         A     &FIELD_REG,&SYM_NAME(&SUB_IX) ADD INDEX OFFSET
-               AEXIT AENTRY
-               AWHEN C'F'
-         L     ZC_R0,&SYM_NAME(&SUB_IX)
-               AWHEN C'G'
-         LG    ZC_R0,&SYM_NAME(&SUB_IX)        WILL IGNORE HIGH 32 BITS
-               AWHEN C'H'
-         LH    ZC_R0,&SYM_NAME(&SUB_IX)
-               AWHEN C'P'
-         ZAP   ZCVT_PWORK,&SYM_NAME(&SUB_IX)
-         CVB   ZC_R0,ZCVT_PWORK
-               AWHEN C'Z'
-         :&LPLEN SETA &SYM_LEN(&SUB_IX)/2+1
-         PACK  ZCVT_PWORK1(&LPLEN),&SYM_NAME(&SUB_IX)
-         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
-         CVB   ZC_R0,ZCVT_PWORK
-               AELSE
-                  MNOTE 8,'ZCGETFLD INVALID SUBSCRIPT TYPE FOR &SYM_NAMX
-               E(&SUB_IX)'
-                  MEXIT
-               AEND
-               AIF  (&SIX_OFF(&CUR_SIX) NE '')
-         AHI   ZC_R0,&SIX_OFF(&CUR_SIX)-1
-               AELSE
-         BCTR  ZC_R0,0
-               AEND
-         MSFI  ZC_R0,&SYM_LEN(&SIX_OCCUR(&CUR_SIX)) L'&SYM_NAME(&SIX_OCX
-               CUR(&CUR_SIX))    RPI 1161 CORRECT CONTINUE
-         AR    &FIELD_REG,ZC_R0
+                ACALL SET_SIX_REG 
+         AR    &FIELD_REG,&SIX_REG                         RPI 1182
             AELSE
                MNOTE 8,'ZCGETFLD SUBS SUB FOUND - &SIX_NAME(&CUR_SUB)'
                MEXIT
@@ -152,5 +90,61 @@
          AELSE
              :&FIELD_NAME SETC '0(&FIELD_REG)'
          AEND
+         AEND
+.*
+.* SET SIX REG - SET SUBSCRIPT REG TO VALUE OF VAR+LIT  RPI 1182
+.*
+         AENTRY SET_SIX_REG
+               AIF (&SYM_LK(&SUB_IX) GT 0)
+                   :&DSECT_IX SETA &SYM_LK(&SUB_IX)
+                   :&VAR_IX   SETA &SYM_REF(&DSECT_IX)
+                   AIF (&VAR_IX EQ 0)
+                       MNOTE 8,'GEN_SIX LINKAGE PARM UNDEFINED - &SYM_NX
+               AME(&SUB_IX)'
+                       MEXIT
+                   AEND
+                   AIF (&ZC_CICS AND '&SYM_NAME(&DSECT_IX)' EQ 'DFHEIBLX
+               K') 
+         LA    &SIX_REG,&SYM_NAME(&SUB_IX)
+                   AELSE
+         L     &SIX_REG,&SYM_NAME(&VAR_IX)
+         AFI   &SIX_REG,&SYM_NAME(&SUB_IX)-&SYM_NAME(&DSECT_IX)._DSECT
+                   AEND
+               AELSE
+         IILF  &SIX_REG,&SYM_NAME(&SUB_IX)-ZC_WS   
+         AR    &SIX_REG,&BASE_WS                 
+               AEND
+               ACASE (C2A('&SYM_PIC_TYPE(&SUB_IX)'))
+               AWHEN C'I'  ADD INDEX OFFSET  RPI 1002
+         L     &SIX_REG,0(&SIX_REG) INDEX OFFSET
+.*               EXIT WITH NO ADJ AND NO MPY
+               AEXIT AENTRY
+               AWHEN C'F'
+         L     &SIX_REG,0(&SIX_REG) 
+               AWHEN C'G'
+         LG    &SIX_REG,0(&SIX_REG) WILL IGNORE HIGH 32 BITS 
+               AWHEN C'H'
+         LH    &SIX_REG,0(&SIX_REG) 
+               AWHEN C'P'                     
+         ZAP   ZCVT_PWORK,0(&&SYM_LEN(&SUB_IX),&SIX_REG)
+         CVB   &SIX_REG,ZCVT_PWORK
+               AWHEN C'Z'
+         :&LPLEN SETA &SYM_LEN(&SUB_IX)/2+1
+         PACK  ZCVT_PWORK1(&LPLEN),0(&SYM_LEN(&SUB_IX),&SIX_REG) 
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
+         CVB   &SIX_REG,ZCVT_PWORK
+               AELSE
+                  MNOTE 8,'ZCGETFLD INVALID SUBSCRIPT TYPE FOR &SYM_NAMX
+               E(&SUB_IX)'
+                  MEXIT
+               AEND
+               AIF  (&SIX_OFF(&CUR_SIX) NE '')
+         AHI   &SIX_REG,&SIX_OFF(&CUR_SIX)-1    
+               AELSE
+         BCTR  &SIX_REG,0                       
+               AEND
+         MSFI  &SIX_REG,&SYM_LEN(&SIX_OCCUR(&CUR_SIX)) L'&SYM_NAME(&SIXX
+               _OCCUR(&CUR_SIX)) RPI 1161 CORRECT CONTINUE RPI 1182
+ 
          AEND
          MEND

@@ -6,10 +6,11 @@
 .**********************************************************************
          MACRO
          CICS_RETRIEVE
+.* FLENGTH IS AN EXTENSION
          GBLB  &PARMS_100A
          GBLB  &ZC_CICS
          LCLB  &NOEDF,&NOHAND
-         LCLC  &INTO,&SET,&LENGTH,&RTRANID,&RTERMID,&QUEUE
+         LCLC  &INTO,&SET,&LENGTH,&FLENGTH,&RTRANID,&RTERMID,&QUEUE
          LCLC  &RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
@@ -20,6 +21,7 @@
          AIF   ('&PARM'(1,5) EQ 'INTO(').INTO
          AIF   ('&PARM'(1,4) EQ 'SET(').SET
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,8) EQ 'FLENGTH(').FLENGTH
          AIF   ('&PARM'(1,9) EQ 'RTRANSID(').RTRANID
          AIF   ('&PARM'(1,8) EQ 'RTERMID(').RTERMID
          AIF   ('&PARM'(1,6) EQ 'QUEUE(').QUEUE
@@ -40,6 +42,10 @@
 .*
 .LENGTH  ANOP
 &LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.FLENGTH ANOP
+&FLENGTH SETC  '&PARM'(9,K'&PARM-9)
          AGO   .PLOOP
 .*
 .RTRANID ANOP
@@ -74,7 +80,9 @@
 .ELOOP   ANOP
          AIF   ('&INTO' EQ '' AND '&SET'    EQ '').NOINTOST
          AIF   ('&INTO' NE '' AND '&SET'    NE '').BOTHINST
-         AIF   ('&SET'  NE '' AND '&LENGTH' EQ '').NEEDLEN
+         AIF   ('&SET'   NE '' AND                                     -
+               ('&LENGTH' EQ '' AND '&FLENGTH' EQ '')).NEEDLEN
+         AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BOTHLEN
          GEN_XC P100A,P100AEND-P100A,P100A CLEAR PARMS
          GEN_MVC P100AFN,,=X'100A' SET FUNCTION CODE
          AIF   ('&SET' EQ '').NOSET
@@ -85,15 +93,23 @@
          LA    R0,&INTO           R0=INTO ADDRESS
          GEN_ST R0,P100AINT       SAVE IT
 .DOLENG  ANOP
+         GEN_MVC P100ALAD,,=F'-1' SET NO LENGTH SPECIFIED
+         GEN_MVC P100AFAD,,=F'-1' SET NO FLENGTH SPECIFIED
          AIF   ('&LENGTH' EQ '').NOLENG
          AIF   (T'&LENGTH EQ 'N').BADLEN
          AIF   ('&LENGTH'(1,10) EQ 'LENGTH,OF,').BADLEN
-         LA    R0,&LENGTH         R0=ADDRESS OF LENGTH
-         GEN_ST R0,P100ALEN       SAVE IT
+         LA    R15,&LENGTH        R15=ADDRESS OF LENGTH
+         GEN_ST R15,P100ALAD      SAVE IT
+         MVC   P100ADLN+2(2),0(R15) MOVE TO LENGTH REQUIRED
          AGO   .DUNLEN
 .*
 .NOLENG  ANOP
-         GEN_MVC P100ALEN,,=F'-1' SET NO LENGTH SPECIFIED
+         AIF   ('&FLENGTH' EQ '').DUNLEN
+         AIF   (T'&FLENGTH EQ 'N').BADLEN
+         AIF   ('&FLENGTH'(1,10) EQ 'LENGTH,OF,').BADLEN
+         LA    R15,&FLENGTH       R15=ADDRESS OF FLENGTH
+         GEN_ST R15,P100AFAD      SAVE IT
+         MVC   P100ADLN,0(R15)    MOVE TO LENGTH REQUIRED
 .DUNLEN  ANOP
 .* PROCESS RTRANSID
          AIF   ('&RTRANID' EQ '').DORTRM
@@ -187,10 +203,14 @@ P100ABYP_&SYSNDX DS 0H
 .BADQUE  MNOTE 12,'INVALID QUEUE'
          MEXIT
 .*
-.NEEDLEN MNOTE 12,'SET REQUIRES LENGTH'
+.NEEDLEN MNOTE 12,'SET REQUIRES LENGTH OR FLENGTH'
          MEXIT
 .*
-.BADLEN  MNOTE 12,'LENGTH MUST BE A LABEL'
+.BADLEN  MNOTE 12,'LENGTH OR FLENGTH MUST BE A LABEL'
          MEXIT
+.*
+.BOTHLEN MNOTE 12,'BOTH LENGTH AND FLENGTH ARE SPECIFIED'
+         MEXIT
+.*
          MEND
 

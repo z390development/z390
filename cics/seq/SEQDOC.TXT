@@ -66,5 +66,6 @@ Sequential Terminal Streams
 0029  LOGO to ensure map values are consistant/CLEAR
       ASGN/CLEAR
 0030  SETF/CLEAR/SETF/CLEAR
-0031  shutdown
+0031  CHN1/CLEAR/CEBR CHN1/PF11*6/CLEAR
+0032  shutdown
 

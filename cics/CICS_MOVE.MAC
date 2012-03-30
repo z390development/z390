@@ -1,0 +1,185 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_MOVE
+         GBLB  &PARMS_3440
+         LCLB  &NOEDF,&NOHAND
+         LCLC  &CONTAINER,&AS,&CHANNEL,&TOCHANNEL,&RESP,&RESP2
+         LCLC  &CONT,&TOCHAN
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,10) EQ 'CONTAINER(').CONT
+         AIF   ('&PARM'(1,3)  EQ 'AS(').AS
+         AIF   ('&PARM'(1,8)  EQ 'CHANNEL(').CHAN
+         AIF   ('&PARM'(1,10) EQ 'TOCHANNEL(').TOCHAN
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
+         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.CONT    ANOP
+&CONT    SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.AS      ANOP
+&AS      SETC  '&PARM'(4,K'&PARM-4)
+         AGO   .PLOOP
+.*
+.CHAN    ANOP
+&CHANNEL SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.TOCHAN  ANOP
+&TOCHAN  SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   ('&CONT' EQ '').MISCONT
+         AIF   ('&AS' EQ '').MISCONT
+         GEN_XC P3440,P3440END-P3440,P3440 CLEAR PARMS
+         GEN_MVC P3440FN,,=X'3440' SET FUNCTION CODE
+.* PROCESS CONTAINER
+         AIF   ('&CONT'(1,1) EQ '''').COSTRNG
+         LARL  R15,P3440CTN       ADDRESS TARGET
+         MVC   0(16,R15),&CONT MOVE CONTAINER FROM LABEL
+         AGO   .DOAS
+.*
+.COSTRNG ANOP
+&CONTLEN SETA  K'&CONT
+         AIF   (&CONTLEN LT 3 OR &CONTLEN GT 18).INVCONT
+         GEN_MVC P3440CTN,,=CL16&CONT SET CONTAINER AS STRING
+.DOAS    ANOP
+.* PROCESS AS
+         AIF   ('&AS'(1,1) EQ '''').ASSTRNG
+         LARL  R15,P3440AS        ADDRESS TARGET
+         MVC   0(16,R15),&AS      MOVE CONTAINER FROM LABEL
+         AGO   .CHANNEL
+.*
+.ASSTRNG ANOP
+&ASLEN   SETA  K'&AS
+         AIF   (&ASLEN LT 3 OR &ASLEN GT 18).INVAS
+         GEN_MVC P3440AS,,=CL16&AS SET AS AS STRING
+.CHANNEL ANOP
+.* PROCESS CHANNEL
+         AIF   ('&CHANNEL' NE '').GOTCHAN
+         LARL  R15,P3440CHN       ADDRESS TARGET
+         MVC   0(16,R15),TCTTECHN SET DEFAULT CHANNEL
+         AGO   .DOTOCHN
+.*
+.GOTCHAN ANOP
+         AIF   ('&CHANNEL'(1,1) EQ '''').CHSTRNG
+         LARL  R15,P3440CHN       ADDRESS TARGET
+         MVC   0(16,R15),&CHANNEL MOVE CHANNEL FROM LABEL
+         AGO   .TOCHAN
+.*
+.CHSTRNG ANOP
+&CHANLEN SETA  K'&CHANNEL
+         AIF   (&CHANLEN LT 3 OR &CHANLEN GT 18).INVCHAN
+         GEN_MVC P3440CHN,,=CL16&CHANNEL SET CHANNEL AS STRING
+.DOTOCHN ANOP
+.* PROCESS TOCHANNEL
+         AIF   ('&TOCHAN' NE '').GOTTOCH
+         GEN_MVC P3440TOC,,TCTTECHN SET DEFAULT CHANNEL
+         AGO   .ALLDONE
+.*
+.GOTTOCH ANOP
+         AIF   ('&TOCHAN'(1,1) EQ '''').TOSTRNG
+         LARL  R15,P3440TOC       ADDRESS TARGET
+         MVC   0(16,R15),&TOCHAN MOVE TOCHANNEL FROM LABEL
+         AGO   .ALLDONE
+.*
+.TOSTRNG ANOP
+&TOCLEN  SETA  K'&TOCHAN
+         AIF   (&TOCLEN LT 3 OR &TOCLEN GT 18).INVTOC
+         GEN_MVC P3440TOC,,=CL16&TOCHAN SET TOCHANNEL AS STRING
+.ALLDONE ANOP
+         GEN_ST DFHEIBR,P3440EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P3440TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P3440EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P3440EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P3440EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P3440NED,X'FF'   SET NOEDF
+         AEND
+         AIF   (NOT &NOHAND).DUNNOH
+         GEN_MVI P3440NOH,X'FF'   SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P3440RSP       SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P3440RS2       SAVE IT
+.NORESP2 ANOP
+         LARL  R0,P3440EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P3440EDF       SAVE IT
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P3440)       R1=LCL MODULE PARAMETER LIST
+P3440EDF_&SYSNDX DS 0H
+         BAKR  0,R15              STACK REGS AND GO
+.*
+         GEN_CLI P3440NOH,X'FF'   NOHANDLE ?
+         JE    P3440BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         JZ    P3440BYP_&SYSNDX   EXIT IF NONE
+* CONTAINERERR, CHANNELERR, INVREQ
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P3440BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_3440).BYP3440
+&PARMS_3440 SETB 1
+         P3440
+*
+.BYP3440 ANOP
+P3440BYP_&SYSNDX DS 0H
+         MEXIT
+.*
+.MISCONT MNOTE 12,'CONTAINER AND/OR AS ARE MISSING'
+         MEXIT
+.*
+.INVCONT MNOTE 12,'INVALID CONTAINER'
+         MEXIT
+.*
+.INVAS   MNOTE 12,'INVALID AS'
+         MEXIT
+.*
+.INVCHAN MNOTE 12,'INVALID CHANNEL'
+         MEXIT
+.*
+.INVTOC  MNOTE 12,'INVALID TOCHANNEL'
+         MEXIT
+.*
+         MEND
+

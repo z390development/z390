@@ -39,13 +39,13 @@
            ACCEPT SYSTEM-TIME FROM TIME.
 
            EVALUATE SYSTEM-WEEKDAY
-               WHEN  1  MOVE 'Mon' TO HEADER-WEEKDAY
-               WHEN  2  MOVE 'Tue' TO HEADER-WEEKDAY
-               WHEN  3  MOVE 'Wed' TO HEADER-WEEKDAY
-               WHEN  4  MOVE 'Thu' TO HEADER-WEEKDAY
-               WHEN  5  MOVE 'Fri' TO HEADER-WEEKDAY
-               WHEN  6  MOVE 'Sat' TO HEADER-WEEKDAY
-               WHEN  7  MOVE 'Sun' TO HEADER-WEEKDAY
+               WHEN  2  MOVE 'Mon' TO HEADER-WEEKDAY
+               WHEN  3  MOVE 'Tue' TO HEADER-WEEKDAY
+               WHEN  4  MOVE 'Wed' TO HEADER-WEEKDAY
+               WHEN  5  MOVE 'Thu' TO HEADER-WEEKDAY
+               WHEN  6  MOVE 'Fri' TO HEADER-WEEKDAY
+               WHEN  7  MOVE 'Sat' TO HEADER-WEEKDAY
+               WHEN  1  MOVE 'Sun' TO HEADER-WEEKDAY
            END-EVALUATE.
 
            EVALUATE SYSTEM-MONTH

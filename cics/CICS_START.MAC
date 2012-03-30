@@ -8,13 +8,14 @@
 .**********************************************************************
          MACRO
          CICS_START
+.* FLENGTH IS AN EXTENSION
          GBLB  &PARMS_1008
          GBLB  &ZC_CICS
          LCLB  &AFTER,&AT,&NOEDF,&NOHAND
          LCLB  &ONLYH,&ONLYM,&ONLYS
          LCLC  &INTVAL,&TIME,&HOURS,&MINS,&SECS,&REQID
-         LCLC  &TRANSID,&TERMID,&RTRANID,&RTERMID,&QUEUE,&FROM,&LENGTH
-         LCLC  &RESP,&RESP2
+         LCLC  &TRANSID,&TERMID,&CHANNEL,&RTRANID,&RTERMID,&QUEUE
+         LCLC  &FROM,&LENGTH,&FLENGTH,&RESP,&RESP2
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
 .PLOOP   ANOP
@@ -30,12 +31,14 @@
          AIF   ('&PARM'(1,2) EQ 'AT').AT
          AIF   ('&PARM'(1,6) EQ 'REQID(').REQID
          AIF   ('&PARM'(1,8) EQ 'TRANSID(').TRANSID
+         AIF   ('&PARM'(1,8) EQ 'CHANNEL(').CHAN
          AIF   ('&PARM'(1,7) EQ 'TERMID(').TERMID
          AIF   ('&PARM'(1,9) EQ 'RTRANSID(').RTRANID
          AIF   ('&PARM'(1,8) EQ 'RTERMID(').RTERMID
          AIF   ('&PARM'(1,6) EQ 'QUEUE(').QUEUE
          AIF   ('&PARM'(1,5) EQ 'FROM(').FROM
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,8) EQ 'FLENGTH(').FLENGTH
          AIF   ('&PARM'(1,5) EQ 'NOEDF').NOEDF
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,5) EQ 'RESP(').RESP
@@ -71,6 +74,10 @@
 &TRANSID SETC  '&PARM'(9,K'&PARM-9)
          AGO   .PLOOP
 .*
+.CHAN    ANOP
+&CHANNEL SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
 .TERMID  ANOP
 &TERMID  SETC  '&PARM'(8,K'&PARM-8)
          AGO   .PLOOP
@@ -93,6 +100,10 @@
 .*
 .LENGTH  ANOP
 &LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.FLENGTH ANOP
+&FLENGTH SETC  '&PARM'(9,K'&PARM-9)
          AGO   .PLOOP
 .*
 .AFTER   ANOP
@@ -139,8 +150,27 @@
          AIF   ('&SECS'   NE '' AND NOT(&AFTER OR &AT)).BADHMS2
          AIF   ((&AFTER OR &AT) AND '&HOURS' EQ '' AND '&MINS' EQ '' AN-
                D '&SECS' EQ '').BADAFAT
-         AIF   ('&FROM' NE '' AND '&LENGTH' EQ '').BADFRML
-         AIF   ('&FROM' EQ '' AND '&LENGTH' NE '').BADFRML
+         AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BOTHLEN
+         AIF   ('&FROM' EQ '')
+         AIF   ('&LENGTH' NE '' OR '&FLENGTH' NE '').BADFRML
+         AELSE
+         AIF   ('&LENGTH' EQ '' AND '&FLENGTH' EQ '').BADFRML
+         AEND
+.* IF CHANNEL AND OTHER PARMS, RAISE MNOTE 0
+         AIF   ('&CHANNEL' NE '' AND (                                 -
+                '&INTVAL'  NE '' OR                                    -
+                '&TIME'    NE '' OR                                    -
+                '&HOURS'   NE '' OR                                    -
+                '&MINS'    NE '' OR                                    -
+                '&SECS'    NE '' OR                                    -
+                '&REQID'   NE '' OR                                    -
+                '&RTRANID' NE '' OR                                    -
+                '&RTERMID' NE '' OR                                    -
+                '&QUEUE'   NE '' OR                                    -
+                '&FROM'    NE '' OR                                    -
+                '&LENGTH'  NE '' OR                                    -
+                '&FLENGTH' NE '')).CHANPRM
+.GOON01  ANOP
 .* DEFAULT SETTING IS INTERVAL(0)
          AIF   ('&INTVAL' EQ '' AND '&TIME' EQ '' AND '&HOURS' EQ '' AN-
                D '&MINS' EQ '' AND '&SECS' EQ '').DEFINT
@@ -156,13 +186,25 @@
 .* TRANSID FROM LABEL
          LARL  R15,P1008TRN       ADDRESS TARGET
          MVC   0(4,R15),&TRANSID  SET TRANSID FROM LABEL
-         AGO   .DOTERM
+         AGO   .DOCHAN
 .*
 .TRNSTRG ANOP
 .* TRANSID AS STRING
 &TRNLEN  SETA  K'&TRANSID
          AIF   (&TRNLEN LT 3 OR &TRNLEN GT 6).BADTRAN
          GEN_MVC P1008TRN,,=CL4&TRANSID SET TRANSID AS STRING
+.DOCHAN  ANOP
+.* PROCESS CHANNEL
+         AIF   ('&CHANNEL' EQ '').DOTERM
+         AIF   ('&CHANNEL'(1,1) EQ '''').CHSTRNG
+         LARL  R15,P1008CHN       ADDRESS TARGET
+         MVC   0(16,R15),&CHANNEL MOVE CHANNEL FROM LABEL
+         AGO   .DOTERM
+.*
+.CHSTRNG ANOP
+&CHANLEN SETA  K'&CHANNEL
+         AIF   (&CHANLEN LT 3 OR &CHANLEN GT 18).INVCHAN
+         GEN_MVC P1008CHN,,=CL16&CHANNEL SET CHANNEL AS STRING
 .DOTERM  ANOP
 .* PROCESS TERMID
          AIF   ('&TERMID' NE '').GOTTERM
@@ -237,13 +279,14 @@
          L     R0,&FROM           R0=INDIRECT FROM ADDRESS FROM LABEL
          GEN_ST R0,P1008FRM       SAVE IT
 .FROMLEN ANOP
+         AIF   ('&LENGTH' EQ '').NOLENG
          AIF   (K'&LENGTH LT 2).LENNUM1
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
 .LENNUM1 ANOP
          AIF   (T'&LENGTH NE 'N').LENLABL
 .LENNUM  ANOP
-         LA    R0,&LENGTH         R0=LENGTH
-         GEN_STH R0,P1008LEN      SAVE IT
+         LAY   R0,&LENGTH         SET NUMERIC LENGTH
+         GEN_ST R0,P1008LEN       SAVE IT
          AGO   .DOREQ
 .*
 .LENLABL ANOP
@@ -251,17 +294,39 @@
          AIF   ('&LENGTH'(1,10) EQ 'LENGTH,OF,')
 .* COBOL LENGTH OF EXTRACT
 &LENLSL  SETC  '&LENGTH'(11,K'&LENGTH-10)
-         LA    R0,L'&LENLSL       R0=LENGTH
-         GEN_STH R0,P1008LEN      SAVE IT
+         LAY   R0,L'&LENLSL       SET NUMERIC LENGTH
          AELSE
 .* COBOL LENGTH AS LABEL
-         LH    R0,&LENGTH         R0=LENGTH FROM LABEL
-         GEN_STH R0,P1008LEN      SAVE IT
+         LH    R0,&LENGTH         SET LENGTH FROM LABEL
          AEND
          AELSE
 .* ASM LENGTH AS LABEL
-         LH    R0,&LENGTH         R0=LENGTH FROM LABEL
-         GEN_STH R0,P1008LEN      SAVE IT
+         LH    R0,&LENGTH         SET LENGTH FROM LABEL
+         AEND
+         GEN_ST R0,P1008LEN       SAVE IT
+         AGO   .DOREQ
+.*
+.NOLENG  ANOP
+         AIF   ('&FLENGTH' EQ '').NOLENS
+         AIF   (T'&FLENGTH NE 'N').FLENLBL
+         GEN_MVC P1008LEN,,=AL4(&FLENGTH) SET NUMERIC FLENGTH
+         AGO   .DOREQ
+.*
+.FLENLBL ANOP
+         AIF   (&ZC_CICS)
+         AIF   ('&FLENGTH'(1,10) EQ 'LENGTH,OF,')
+.* COBOL LENGTH OF EXTRACT
+&LENLSL  SETC  '&FLENGTH'(11,K'&FLENGTH-10)
+         GEN_MVC P1008LEN,,=AL4(L'&LENLSL) SET NUMERIC FLENGTH
+         AELSE
+.* COBOL LENGTH AS LABEL
+         L     R0,&FLENGTH        SET FLENGTH FROM LABEL
+         GEN_ST R0,P1008LEN       SAVE IT
+         AEND
+         AELSE
+.* ASM LENGTH AS LABEL
+         L     R0,&FLENGTH        SET FLENGTH FROM LABEL
+         GEN_ST R0,P1008LEN       SAVE IT
          AEND
 .DOREQ   ANOP
 .* PROCESS REQID
@@ -427,7 +492,18 @@ P1008BYP_&SYSNDX DS 0H
 .BADAFAT MNOTE 12,'AFTER/AT SPECIFIED, BUT NO TIME PARAMETERS'
          MEXIT
 .*
-.BADFRML MNOTE 12,'FROM/LENGTH MUST BOTH BE MISSING OR BOTH SPECIFIED'
+.BADFRML MNOTE 12,'FROM/(F)LENGTH MUST BOTH BE MISSING OR BOTH SPECIFIE-
+               D'
          MEXIT
+.*
+.BOTHLEN MNOTE 12,'BOTH LENGTH AND FLENGTH ARE SPECIFIED'
+         MEXIT
+.*
+.CHANPRM MNOTE 0,'CHANNEL AND OTHER PARMS SPECIFIED BUT ALLOWED'
+         AGO   .GOON01
+.*
+.INVCHAN MNOTE 12,'INVALID CHANNEL'
+         MEXIT
+.*
          MEND
 

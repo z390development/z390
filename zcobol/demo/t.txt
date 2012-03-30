@@ -1,0 +1,132 @@
+"T" - A rudimentary z390 zcobol debugger
+
+
+T is written in ZCOBOL.
+ 
+At the present T will not unpack binary and packed decimal fields 
+and will only allow display/monitor of level 01 and 77 variables. 
+
+Your program should include the FILE-CONTROL and FILE SECTION statements.
+
+
+T comprises
+
+TSET.CBL which does an ACCEPT FROM CONSOLE of the name of the cobol you want to test, in single quotes,
+ 
+    e.g. 'ZCOBOL\DEMO\COPYFILE.CBL'.
+ 
+    It creates T4.CBL from T1.CBL inserting the quoted name.
+
+
+T4.CBL (prototype T1.CBL) customises your quoted program and creates PROGRAM.CBL, inserting sections from T2.CBL.
+
+PROGRAM.CBL then runs the program you identified with "T" embedded. 
+
+
+TSET.CBL, T1.CBL and T2.CBL should be put into the ZCOBOL\DEMO\ directory.
+
+ 
+
+To use,
+
+Type T into the command line and press enter,
+
+this runs T.BAT in the Z390 directory which comprises
+
+CALL zc390clg zcobol\demo\tset notime guam
+CALL zc390clg zcobol\demo\t4 notime
+CALL zc390clg zcobol\demo\program notime guam 
+
+
+This should open another screen on which you should see
+
+
+T - Rudimentary Debugger for ZCOBOL
+===================================
+VERSION 1.01 John Hennesy
+-----------------------------------
+
+Enter - single step
+H - Here
+E - Erase - E nnnnnn or vvv...
+M - Monitor - M vvv... (max 30 char)
+M   List variables
+B - Break - B nnnnnn
+B   List lines
+G - Go - G nnnnnn
+G   Go next break
+W - Working storage - W Show w/s
+P - Procedure division - P Show proc div
+D - Display - D vvv... (max 30 char)
+X - eXit - X Exit
++ - another screen - + of W or P
+
+
+All commands should be in Upper Case.
+
+If you just hit Enter a few times you'll see how it single steps through the program. 
+
+Hit X to Exit the program. 
+
+Hit W to see the working-storage fields that you are allowed to display or monitor. 
+
+(I only allow level 01 and 77 to be displayed or monitored) 
+
+Hit + as the next command after W to scroll forward thru the working-storage fields. 
+
+Hit P to see the procedure division lines in the program. 
+
+Hit + as the next command to scroll forward thru the procedure division. 
+
+Hit H to show where the prog is now. 
+
+Hit M and a variable name to create a monitor for when that field changes 
+Maximum of 9 fields can be monitored 
+
+Hit M by itself to list the current fields being monitored. 
+
+Hit E and a variable name to erase that field from being monitored. 
+
+Hit G and a 6 digit line number for T not to show code until that line number is reached 
+
+Hit B and a 6 digit line number to set a breakpoint on that line
+Maximum of 9 lines can be brekpointed 
+
+Hit B by itself to list the current breakpoints. 
+
+Hit E and a 6 digit line number to erase that breakpoint. 
+
+Hit G by itself for T not to show code until the next breakpoint is reached. 
+
+You'll have to single-step off of a breakpoint before a solitary G will go to the next break. 
+
+Hit D and a variable name to display the contents of that variable
+Maximum field size displayable is 64000 bytes 
+(It will show binary and packed decimal fields in HEX) 
+(It will show a PIC X field which has non-displayable fields in char and then HEX) 
+
+
+T shows you where you are in the program by showing a screenful of code with a pointer of '>' in column 7
+of the next line to be obeyed.
+
+
+
+It would be preferable that
+
+    all numeric fields are not in COMP (binary) or COMP-3 (packed decimal) formats, 
+    as it makes it easier to display/monitor them,
+ 
+    that if you use READ that it is in the form READ INTO working storage field,
+
+    that if you use WRITE that it is in the form WRITE FROM working storage field,
+
+    that if you use a numeric field that it is unsigned. A PIC s9(04) VALUE 4321, will
+    display as 432A, because the last character has the value 1 in the lower nibble and
+    the plus sign in the upper nibble.
+
+Have fun and let me know what you think,
+
+Regards,
+
+John Hennesy
+

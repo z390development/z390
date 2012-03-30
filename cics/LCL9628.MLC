@@ -1,0 +1,138 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL9628  CSECT
+*
+* FN=9628  EXEC CICS GETNEXT
+*
+* R1  >>> P9628 BLOCK POINTER
+*
+         USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL9628'
+         LR    R13,R15            R13 AS BASE
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P9628,P9628END),R3
+         L     DFHEIBR,P9628EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P9628TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P9628FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P9628RSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P9628RS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         CLI   P9628NED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
+* SEARCH THE CHWA FOR THE TOKEN
+         ICM   R2,15,TCTTECHW     R2=CHWA CHAIN ADDRESS
+         BZ    TOKNERR            ERROR IF NONE
+         USING DFHCHWA,R2
+CHWALOOP EQU   *
+         CLC   CHWATOKN,P9628TKN  FOUND THE RIGHT CHWA ?
+         BE    CHWAFND            EXIT IF WE HAVE
+         ICM   R2,15,CHWAADDR     R2=NEXT CHWA
+         BZ    TOKNERR            ERROR IF NONE
+         B     CHWALOOP           LOOP TILL FOUND
+*
+CHWAFND  EQU   *
+* FOUND THE CHWA
+* FIND THE CHANNEL ON STARTBROWSE
+         ICM   R12,15,TCTTECAQ    R12=CHANNEL CHAIN ADDRESS
+         BZ    ENDCOND            RAISE END IF NONE
+         USING DFHCHAN,R12
+CHANCHLP EQU   *
+         CLC   CHANNAME,CHWANAME  MATCH STARTBROWSE CHANNEL ?
+         BE    CHANFND            EXIT IF IT DOES
+         ICM   R12,15,CHANADDR    CHAIN TO NEXT
+         BNZ   CHANCHLP           LOOP UNTIL CHAIN END
+         B     ENDCOND            RAISE END IF NOT FOUND
+*
+CHANFND  EQU   *
+* CHANNEL FOUND
+* IF NO CONTAINER IN CHWA, FETCH THE 1ST
+* IF CHWA HAS CONTAINER, FETCH THE NEXT ONE
+         LA    R12,CHANCONT       R12=CONTAINER ANCHOR POINTER
+         USING DFHCONT,R5
+CONTLOOP EQU   *
+         OC    0(4,R12),0(R12)    ANY (MORE) CONTAINERS ?
+         BZ    ENDCOND            RAISE END IF NONE
+         L     R5,0(R12)          R5=CONTAINER POINTER
+         CLI   CHWACONT,X'00'     ANY CONTAINER FETCHED ?
+         BE    CONTGOT            NO, 1ST CONTAINER IS RETURNED
+         LA    R12,CONTADDR       R12=NEXT POINTER ADDRESS
+         CLC   CONTNAME,CHWACONT  MATCH CONTAINER ?
+         BNE   CONTLOOP           LOOP UNTIL CHAIN END
+* CONTAINER FOUND, FETCH THE NEXT ONE
+         OC    0(4,R12),0(R12)    ANY (MORE) CONTAINERS ?
+         BZ    ENDCOND            RAISE END IF NONE
+         L     R5,0(R12)          R5=CONTAINER POINTER
+CONTGOT  EQU   *
+         MVC   CHWACONT,CONTNAME  SET NEXT CONTAINER NAME
+         L     R12,P9628CTN       R12=CONTAINER ADDRESS
+         MVC   0(16,R12),CONTNAME GIVE IT TO REQUESTOR
+         B     RETURN             EXIT
+*
+TOKNERR  EQU   *
+* INVOKE TOKENERR
+         MVC   EIBRESP,DFHRESP(TOKENERR) SET EIBRESP=TOKENERR
+         MVC   EIBRCODE+2(1),EIBRESP+3 SET EIBRCODE
+         MVC   EIBRESP2,=F'3'     SET EIBRESP2=TOKEN NOT FOUND
+         B     DORESP             EXIT
+*
+ENDCOND  EQU   *
+* INVOKE END
+         MVC   EIBRESP,DFHRESP(END) SET EIBRESP=END
+         MVC   EIBRCODE+2(1),EIBRESP+3 SET EIBRCODE
+         MVC   EIBRESP2,=F'2'     SET EIBRESP2=END
+DORESP   EQU   *
+         ICM   R14,15,P9628RSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P9628RS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         CLI   P9628NED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
+         PR    ,                  UNSTACK AND RETURN TO MACRO
+*
+         P9628 DSECT
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHCHAN                  CHANNEL/CONTAINER STRUCTURES
+         DFHCHWA                  STARTBROWSE CONTAINER BLOCK
+*
+         EQUREGS REGS=GPR
+*
+         END
+

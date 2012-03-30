@@ -1,0 +1,209 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_PUT
+         GBLB  &PARMS_3416
+         GBLB  &ZC_CICS
+         LCLB  &NOEDF,&NOHAND
+         LCLC  &CONT,&CHANNEL,&FROM,&FLENGTH,&RESP,&RESP2
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+.* DISCARDED PARMS
+         AIF   ('&PARM'(1,3) EQ 'BIT').PLOOP
+         AIF   ('&PARM'(1,4) EQ 'CHAR').PLOOP
+         AIF   ('&PARM'(1,9) EQ 'DATATYPE(').PLOOP
+.*
+         AIF   ('&PARM'(1,10) EQ 'CONTAINER(').CONT
+         AIF   ('&PARM'(1,8)  EQ 'CHANNEL(').CHAN
+         AIF   ('&PARM'(1,5)  EQ 'FROM(').FROM
+         AIF   ('&PARM'(1,8)  EQ 'FLENGTH(').FLENGTH
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
+         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.CONT    ANOP
+&CONT    SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.CHAN    ANOP
+&CHANNEL SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.FROM    ANOP
+&FROM    SETC '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.FLENGTH ANOP
+&FLENGTH SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   ('&CONT' EQ '').BADCONT
+         AIF   ('&FROM' EQ '').BADFROM
+         GEN_XC P3416,P3416END-P3416,P3416 CLEAR PARMS
+         GEN_MVC P3416FN,,=X'3416' SET FUNCTION CODE
+.* PROCESS CONTAINER
+         AIF   ('&CONT'(1,1) EQ '''').COSTRNG
+         LARL  R15,P3416CTN       ADDRESS TARGET
+         MVC   0(16,R15),&CONT MOVE CONTAINER FROM LABEL
+         AGO   .CHANNEL
+.*
+.COSTRNG ANOP
+&CONTLEN SETA  K'&CONT
+         AIF   (&CONTLEN LT 3 OR &CONTLEN GT 18).INVCONT
+         GEN_MVC P3416CTN,,=CL16&CONT SET CONTAINER AS STRING
+.CHANNEL ANOP
+.* PROCESS CHANNEL
+         AIF   ('&CHANNEL' NE '').GOTCHAN
+         LARL  R15,P3416CHN       ADDRESS TARGET
+         MVC   0(16,R15),TCTTECHN SET DEFAULT CHANNEL
+         AGO   .DUNCHAN
+.*
+.GOTCHAN ANOP
+         AIF   ('&CHANNEL'(1,1) EQ '''').CHSTRNG
+         LARL  R15,P3416CHN       ADDRESS TARGET
+         MVC   0(16,R15),&CHANNEL MOVE CHANNEL FROM LABEL
+         AGO   .DUNCHAN
+.*
+.CHSTRNG ANOP
+&CHANLEN SETA  K'&CHANNEL
+         AIF   (&CHANLEN LT 3 OR &CHANLEN GT 18).INVCHAN
+         GEN_MVC P3416CHN,,=CL16&CHANNEL SET CHANNEL AS STRING
+.DUNCHAN ANOP
+         AIF   ('&FROM' NE '').GOTFROM
+         AIF   ('&FLENGTH' EQ '').GOTFROM
+         MNOTE 12,'FLENGTH WITHOUT FROM'
+         MEXIT
+.*
+.GOTFROM ANOP
+&FROMPC  SETC  T'&FROM
+         AIF   ('&FROM'(1,1) EQ '='                                    X
+               OR '&FROMPC' EQ 'A'                                     X
+               OR '&FROMPC' EQ 'R').FRMADLIT
+         LA    R0,&FROM           R0=FROM ADDRESS FROM LABEL
+         GEN_ST R0,P3416FRM       SAVE IT
+         AGO   .FROMLEN
+.*
+.FRMADLIT ANOP
+         L     R0,&FROM           R0=INDIRECT FROM ADDRESS FROM LABEL
+         GEN_ST R0,P3416FRM       SAVE IT
+.* FLENGTH IS COMPULSORY FOR INDIRECT
+         AIF   ('&FLENGTH' EQ '').BADFLEN
+.FROMLEN ANOP
+         AIF   ('&FLENGTH' NE '').LENVAL
+         GEN_MVC P3416FLN,,=AL4(L'&FROM) SET IMPLIED LENGTH OF FROM
+         AGO   .ALLDONE
+.*
+.LENVAL  ANOP
+         AIF   ('&FLENGTH'(2,1) EQ '''').FLENNUM
+         AIF   (T'&FLENGTH NE 'N').FLENLAB
+.FLENNUM ANOP
+         GEN_MVC P3416FLN,,=AL4(&FLENGTH) MOVE FLENGTH
+         AGO   .ALLDONE
+.*
+.FLENLAB ANOP
+         AIF   (&ZC_CICS)
+         AIF   ('&FLENGTH'(1,10) EQ 'LENGTH,OF,')
+.* COBOL LENGTH OF EXTRACT
+&LENLSL  SETC  '&FLENGTH'(11,K'&FLENGTH-10)
+         GEN_MVC P3416FLN,,=AL4(L'&LENLSL) MOVE FLENGTH
+         AELSE
+.* COBOL FLENGTH AS LABEL
+         GEN_MVC P3416FLN,,&FLENGTH MOVE FLENGTH FROM LABEL
+         AEND
+         AELSE
+.* ASM FLENGTH AS LABEL
+         GEN_MVC P3416FLN,,&FLENGTH MOVE FLENGTH FROM LABEL
+         AEND
+.ALLDONE ANOP
+         GEN_ST DFHEIBR,P3416EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P3416TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P3416EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P3416EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P3416EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P3416NED,X'FF'   SET NOEDF
+         AEND
+         AIF   (NOT &NOHAND).DUNNOH
+         GEN_MVI P3416NOH,X'FF'   SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P3416RSP       SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P3416RS2       SAVE IT
+.NORESP2 ANOP
+         LARL  R0,P3416EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P3416EDF       SAVE IT
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P3416)       R1=LCL MODULE PARAMETER LIST
+P3416EDF_&SYSNDX DS 0H
+         BAKR  0,R15              STACK REGS AND GO
+.*
+         GEN_CLI P3416NOH,X'FF'   NOHANDLE ?
+         JE    P3416BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         JZ    P3416BYP_&SYSNDX   EXIT IF NONE
+* CONTAINERERR, CHANNELERR, INVREQ
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P3416BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_3416).BYP3416
+&PARMS_3416 SETB 1
+         P3416
+*
+.BYP3416 ANOP
+P3416BYP_&SYSNDX DS 0H
+         MEXIT
+.*
+.BADCONT MNOTE 12,'CONTAINER IS MANDATORY'
+         MEXIT
+.*
+.BADFROM MNOTE 12,'FROM IS MANDATORY'
+         MEXIT
+.*
+.BADFLEN MNOTE 12,'FLENGTH IS MANDATORY FOR INDIRECT FROM'
+         MEXIT
+.*
+.INVCONT MNOTE 12,'INVALID CONTAINER'
+         MEXIT
+.*
+.INVCHAN MNOTE 12,'INVALID CHANNEL'
+         MEXIT
+.*
+         MEND
+

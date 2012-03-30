@@ -22,7 +22,7 @@
                DATASET=MYFILE02,                                       X
                FILSTAT=(CLOSED,ENABLED),                               X
                RECFORM=FIXED,                                          X
-               SERVREQ=ADD,
+               SERVREQ=ADD
 *
 * TEST NOTOPEN
          DFHFCT TYPE=DATASET,                                          X

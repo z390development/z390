@@ -1,0 +1,28 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         DFHCHAN
+.* CHANNEL AND CONTAINER CONTROL BLOCKS
+*
+* CHANNEL CONTROL BLOCK
+*
+DFHCHAN  DSECT
+CHANNAME DS    CL16               CHANNEL NAME
+CHANADDR DS    AL4                CHAIN TO NEXT CHANNEL
+CHANLINK DS    XL2                LINK LEVEL (FROM TCTTELNK)
+CHANCONT DS    AL4                POINTER TO CONTAINER CHAIN
+*
+* CONTAINER CONTROL BLOCK
+*
+DFHCONT  DSECT
+CONTNAME DS    CL16               CONTAINER NAME
+CONTADDR DS    AL4                CHAIN TO NEXT CONTAINER
+CONTSET  DS    AL4                ADDRESS OF COPY FOR GET WITH SET
+CONTLENG DS    XL4                LENGTH OF FOLLOWING DATA
+CONTDATA DS    0H                 CONTAINER DATA
+         MEND
+

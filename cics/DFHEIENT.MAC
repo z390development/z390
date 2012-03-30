@@ -4,7 +4,8 @@
 .* The z390 package is distributed under GNU general public license   *
 .* Author - Don Higgins                                               *
 .**********************************************************************
-.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS PROLOG           *
+.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS PROLOG  
+.* 02/18/12 RPI 1181 REPLACE LAY WITH IILF FOR LARGE DSA WS
 .**********************************************************************
          MACRO
 &N       DFHEIENT &CODEREG=(R12),&DATAREG=(R13)
@@ -67,7 +68,7 @@ CICS_EIENT_&SYSNDX._NOSAVE EQU *
 *
 * GETMAIN THE DSA, AND SET UP THE CHAIN
 *
-         LAY   R1,(DFHEIEND-DFHEISTG) R1=DSA LENGTH
+         IILF  R1,(DFHEIEND-DFHEISTG) R1=DSA LENGTH RPI 1181
          GETMAIN R,LV=(R1)
 * DON'T SAVE THE REGS IF XCTL, THIS ISN'T A NEW LINK LEVEL
          CHHSI EIBFN,X'0E04'      XCTL ?
@@ -107,6 +108,7 @@ CICS_EIENT_&SYSNDX._01 DS 0H
          ST    R13,0(R1)          SAVE OUR DSA ADDRESS
          MVC   DFHEIINV,TCTTEINV  SET INVOKING PROGRAM FOR ASSIGN
          MVC   DFHEIRET,TCTTERET  SET RETURN PROGRAM FOR ASSIGN
+         MVC   DFHEICHN,TCTTECHN  SET CHANNEL FOR ASSIGN
 *
 &CBASE   SETA  N'&CODEREG
          AIF   (&CBASE EQ 1).CEXIT

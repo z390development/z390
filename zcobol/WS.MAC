@@ -43,6 +43,7 @@
 .* 07/25/10 RPI 1126 SUPPORT NE+N VALUE
 .* 11/26/10 RPI 1138 CORRECT SYM_PIC_DEC FOR DISPLAY PICTURE Z.99 ETC.
 .* 04/05/11 RPI 1139 FIX SETA STRING FOR HLASM COMP
+.* 02/16/12 RPI 1181 FIX TO HANDLE PIC X(8). WITH PERIOD FOLLOWING.
 .*********************************************************************
 .* 
 .* WS level,name,clauses in any order (PIC,VALUE,USAGE supported)
@@ -753,7 +754,10 @@
                     AIF (&DEC_MODE)
                         :&SYM_PIC_DEC(&SYM_TOT) SETA &SYM_PIC_DEC(&SYM_X
                TOT)+&PIC_DUP
+               MNOTE 4,'PIC_DEC=&SYM_PIC_DEC(&SYM_TOT)' DSHX
                     AEND
+                AELSEIF ('&PIC'(&J,1) EQ '.' AND K'&PIC LE &J)   RPI 1181
+                    AEXIT AWHILE
                 AELSEIF ('&PIC'(&J,1) EQ '''')  RPI 1032
                     MNOTE 8,'WS UNKNOWN PIC CLAUSE &PIC'
                     AEXIT AWHILE
@@ -763,7 +767,7 @@
                         :&DEC_MODE SETB 1
                     AELSEIF (&DEC_MODE)
                         :&SYM_PIC_DEC(&SYM_TOT) SETA &SYM_PIC_DEC(&SYM_X
-               TOT)+1                            
+               TOT)+1 
                     AEND
                 AEND
                 :&J SETA &J+1

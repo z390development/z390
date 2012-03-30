@@ -86,7 +86,7 @@
        AELSEIF ('&TYPE1' EQ 'P') CVT FP ?? TO PL31 IN ZC_R0-ZC_R1
          :&PFPO_TO SETC 'PFPO_TYPE_LD'
          LRL   ZC_R0,=AL1(PFPO_RADIX,&PFPO_TO,&PFPO_FROM,PFPO_RND)
-         PFPO
+         PFPO   
          L     ZC_R15,ZCVT_CVTLDTP IN F0-F2 TO PL31 IN ZC_R0-ZC_R1
          BASR  ZC_R14,ZC_R15
        AELSE

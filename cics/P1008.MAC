@@ -15,9 +15,10 @@ P1008FN  DS    XL2                FUNCTION CODE
 P1008EIB DS    AL4                EIB
 P1008TCT DS    AL4                TCTTE
 P1008TRN DS    CL4                INITIATED TRANSID
+P1008CHN DS    CL16               CHANNEL NAME
 P1008TRM DS    CL4                INITIATED TERMID (!!!! IF NON-TERM)
 P1008FRM DS    AL4                ADDRESS OF FROM
-P1008LEN DS    XL2                LENGTH
+P1008LEN DS    XL4                LENGTH
 P1008RTN DS    CL4                RTRANSID
 P1008RTM DS    CL4                RTERMID
 P1008QNM DS    CL8                QUEUE NAME

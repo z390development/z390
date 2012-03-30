@@ -265,6 +265,11 @@ public  class  tz390 {
     * 03/29/11 RPI 1157 add TRACEI to trace AINSERT
     * 05/08/11 RPI 1149 open TRE trace if put_trace called, add start/end
     * 05/17/11 RPI 1164 add RISBHGZ and RISBLGZ support
+    * 07/30/11 RPI 1175 public check_java_version() and
+    *          support Sun, Oracle, Apple vers 1.6-9.9
+    * 02/15/12 RPI 1186 continuous loc ctr on PRN across CSECT's
+    * 02/17/12 RPI 1191 allow periods in file path names
+    * 03/30/12 RPI 1199 remove upper limit on Apple release
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -273,12 +278,14 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.05";  //dsh
+    String version    = "V1.5.06rc1";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
 	 * global options 
 	 */ 
+	String java_vendor  = System.getProperty("java.vendor");  // RPI 1175
+	String java_version = System.getProperty("java.version"); // RPI 1175
 	String  os_name = ""; // RPI 1080
 	byte    z390_os_type  = 0;      // 1=win,2=Linux  RPI 499
 	byte    z390_os_win   = 1;
@@ -339,6 +346,7 @@ public  class  tz390 {
     boolean opt_stats    = false;  // show statistics on STA file
     String  opt_sysparm  = "";    // user parm string for mz390  
     boolean opt_test     = false; // invoke interactive test cmds
+    boolean opt_thread   = true;  // continuous PRN location counter RPI 1186
     boolean opt_time     = true;  // abend 422 if out of time TIME (sec)
     boolean opt_timing   = true;  // display current date, time, rate
     boolean opt_trace    = false; // trace pz390 instructions to LOG
@@ -5595,6 +5603,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_con  = true;
     } else if (token.toUpperCase().equals("NOTEST")){
        	opt_test = false;
+    } else if (token.toUpperCase().equals("THREAD")){
+       	opt_thread = true;  // RPI 1186
+    } else if (token.toUpperCase().equals("NOTHREAD")){
+       	opt_thread = false; // RPI 1186
     } else if (token.length() > 5
       		&& token.substring(0,5).toUpperCase().equals("TEST(")){
        	test_ddname = token.substring(5,token.length()-1);	
@@ -6217,6 +6229,7 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	        	|| file_name.length() == 0){ // RPI 903 allow 0 length type
 	        	return null; // RPI 880
 	        }
+	        int last_path_sep = file_dir.lastIndexOf(File.separatorChar); // RPI 1191
 	        file_dir = fix_file_separators(file_dir);  // RPI 1080
 	        file_name = fix_file_separators(file_name); // RPI 1080
 	    	if (file_name.charAt(0) == '\"' 
@@ -6242,8 +6255,8 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	    			}
 	    		} else {
 	    			temp_file = new File(file_dir);
-	    			index = file_dir.indexOf(".");
-	    			if (index > 0){
+	    			index = file_dir.lastIndexOf("."); // RPI 1191 
+	    			if (index > last_path_sep){        // RPI 1191 
 	    				// file_dir has filename.sfx so ignore file_name
 		    			if (file_dir.charAt(index-1) == '*'){  // RPI 908
 		    				if (index > 1){
@@ -7536,6 +7549,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOTEST");
 	     }
+	     if (opt_thread  ){ // continuous loc ctr RPI 1186
+		        add_final_opt("THREAD");
+		     } else {
+		        add_final_opt("NOTHREAD");
+		     }
 	     if (opt_time    ){ // abend 422 if out of time TIME (sec)
 	        add_final_opt("TIME");
 	     } else {
@@ -8164,4 +8182,20 @@ public void put_trace(String text){
 		}
 		return true;
 	}
+public boolean check_java_version(){
+	/*
+	 * verify version is from known vendor 
+	 * and version is 1.6+
+	 */
+		if (java_vendor.equals("Sun Microsystems Inc.") 
+			|| java_vendor.equals("Oracle Corporation") // RPI 1175
+			|| java_vendor.equals("Apple Inc.")){       // RPI 1174
+			if (java_version.compareTo("1.6") < 0){ // RPI 1199
+                return false;
+			}
+		} else { // RPI 1174
+			return false;
+		}
+		return true;
+}
 }

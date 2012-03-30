@@ -11,6 +11,7 @@
 .* 08/05/09 RPI 1065 add support for SN-PG paragraph names
 .* 08/16/09 RPI 1065 support GO TO without target as model for ALTER
 .*          see OBNC1M NIST test.
+.* 02/20/12 RPI 1182 support short form GO label 
 .*********************************************************************
          GO                                  
          COPY  ZC_WS
@@ -19,7 +20,7 @@
          AIF   ('&SYSLIST(&PARM_IX)' EQ 'TO')
                :&PARM_IX SETA  &PARM_IX+1
          AEND
-         AIF   (&NP EQ 1)                          RPI 1065
+         AIF   (&PARM_IX GT &NP)            RPI 1065, RPI 11
                GEN_B  &LAST_PG_NAME,&LAST_SN_NAME  MODEL FOR ALTER
                MEXIT
          AEND

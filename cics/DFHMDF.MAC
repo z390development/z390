@@ -828,7 +828,11 @@
          AELSE
          PUNCH '           02  &GNAME.I.'
          AEND
+         AIF   (&KFLD GT 7)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,8-&KFLD)
+         AEND
          AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.I-
                NPUT GROUP FIELD'
@@ -851,14 +855,22 @@
          AIF   (NOT &GFE).NOTGFE3
 .* GROUP FIELD ENTRY
          AIF   (&MLANG NE 0)
+         AIF   (&KFLD GT 7)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,8-&KFLD)
+         AEND
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.I-
                NPUT GROUP FIELD'
          AEND
          MEXIT
 .*
 .NOTGFE3 ANOP
+         AIF   (&KFLD GT 6)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AEND
          AIF   (&OCC EQ 1).NOOCI1
 .* FIRST OF MULTIPLE OCCURS
          AIF   (&MLANG NE 0)
@@ -928,13 +940,21 @@
          AEND
 &MDFCOBS SETA  &MDFCOBS+&OCC*(3+&LENGTH)
          AEND
+         AIF   (&KFLD GT 7)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,8-&KFLD)
+         AEND
          AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.I-
                NPUT FIELD'
          AEND
          AIF   (&OCC EQ 1).NOOCI2
+         AIF   (&KFLD GT 6)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AEND
          AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.N&SPACES DS    0C                 INPUT FIELD -
                NEXT OCCURRING'
@@ -1000,7 +1020,11 @@
          PUNCH '           02  FILLER.'
          AEND
          AEND
+         AIF   (&KFLD GT 7)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,8-&KFLD)
+         AEND
          AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.O-
                UTPUT GROUP FIELD'
@@ -1026,7 +1050,11 @@
 .NOTGFD2 ANOP
          AIF   (NOT &GFE).NOTGFE4
 .* GROUP FIELD ENTRY
+         AIF   (&KFLD GT 7)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,8-&KFLD)
+         AEND
          AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.O-
                UTPUT GROUP FIELD'
@@ -1034,7 +1062,11 @@
          MEXIT
 .*
 .NOTGFE4 ANOP
+         AIF   (&KFLD GT 6)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AEND
          AIF   (&OCC EQ 1).NOOCO1
 .* FIRST OF MULTIPLE OCCURS
          AIF   (&MLANG NE 0)
@@ -1102,13 +1134,21 @@
 &MDFCOBS SETA  &MDFCOBS+&OCC*(3+&LENGTH)
          AEND
          AIF   (&MLANG NE 0)
+         AIF   (&KFLD GT 7)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,8-&KFLD)
+         AEND
          PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.O-
                UTPUT FIELD'
          AEND
          AIF   (&OCC EQ 1).NOOCO2
          AIF   (&MLANG NE 0)
+         AIF   (&KFLD GT 6)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AEND
          PUNCH '&FLDNAME.N&SPACES DS    0C                 OUTPUT FIELD-
                 NEXT OCCURRING'
          PUNCH '         ORG   &FLDNAME.D+&OCC*(&FLDNAME.N-&FLDNAME.D)'
@@ -1199,7 +1239,11 @@
          AEND
 &MDFCOBS SETA  &MDFCOBS+3
          AEND
+         AIF   (&KFLD GT 6)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AEND
          AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.I&SPACES DS    CL&LENGTH              &SPACES2-
                .INPUT GROUP FIELD'
@@ -1247,7 +1291,11 @@
 .NOTGFD3 ANOP
          AIF   (NOT &GFE).NOTGFE5
 .* GROUP FIELD ENTRY
+         AIF   (&KFLD GT 6)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AEND
          AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.I&SPACES DS    CL&LENGTH              &SPACES2-
                .INPUT GROUP FIELD'
@@ -1289,7 +1337,11 @@
          MEXIT
 .*
 .NOTGFE5 ANOP
+         AIF   (&KFLD GT 6)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AEND
          AIF   (&OCC EQ 1).NOOCIO1
          AIF   (&MLANG NE 0)
          PUNCH '*'
@@ -1437,7 +1489,11 @@
 &MDFCOBS SETA  &MDFCOBS+&OCC*(3+&LENGTH)
          AEND
          AIF   (&OCC EQ 1).DUNMDF
+         AIF   (&KFLD GT 6)
+&SPACES  SETC  ''
+         AELSE
 &SPACES  SETC  '        '(1,7-&KFLD)
+         AEND
          AIF   (&MLANG NE 0)
          PUNCH '&FLDNAME.N&SPACES DS    0C                 I/O FIELD NE-
                XT OCCURRING'

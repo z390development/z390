@@ -6,7 +6,8 @@
 * Author - Don Higgins                                              *
 * Date   - 02/29/08                                                 *
 *********************************************************************
-* 02/29/08 RPI 812 TEST OPTION ASSIST 11 INSTRUCTIONS                   
+* 02/29/08 RPI 812 TEST OPTION ASSIST 11 INSTRUCTIONS 
+* 09/23/11 RPI 1179 TEST += FOR XDECI INPUT                  
 *********************************************************************
 TESTAST1 CSECT
          USING *,R15
@@ -81,6 +82,6 @@ R5       EQU   5
 R14      EQU   14
 R15      EQU   15
 LINE     DC    CL80' '
-DECTAB   DC    CL80'1 12 123 1234',X'FF'
+DECTAB   DC    CL80'1 -12 +123 1234',X'FF' RPI 1179 TEST -+
 HEXTAB   DC    CL80'A AB ABC ABCD',X'FF'
          END         

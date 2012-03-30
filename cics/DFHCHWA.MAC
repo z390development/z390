@@ -1,0 +1,18 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         DFHCHWA
+*
+* STARTBROWSE CONTAINER BLOCK
+*
+DFHCHWA  DSECT
+CHWANAME DS    CL16               BROWSE CHANNEL
+CHWAADDR DS    AL4                CHAIN TO NEXT CHWA
+CHWATOKN DS    XL4                TOKEN (FROM TCTTETKN)
+CHWACONT DS    CL16               LAST CONTAINER RETRIEVED
+         MEND
+

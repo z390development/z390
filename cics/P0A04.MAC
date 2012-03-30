@@ -16,8 +16,9 @@ P0A04EIB DS    AL4                EIB
 P0A04TCT DS    AL4                TCTTE
 P0A04QNM DS    CL16               QUEUE NAME
 P0A04ITM DS    XL2                ITEM
-P0A04LEN DS    XL2                LENGTH
+P0A04LEN DS    XL4                LENGTH
 P0A04LAD DS    AL4                ADDRESS OF LENGTH IF LABEL
+P0A04FAD DS    AL4                ADDRESS OF FLENGTH IF LABEL
 P0A04SET DS    X                  FF=SET IS SPECIFIED
          DS    X
 P0A04STA DS    AL4                ADDRESS FOR SET

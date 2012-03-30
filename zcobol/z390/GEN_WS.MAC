@@ -24,6 +24,8 @@
 .* 07/21/09 RPI 1065 support ZC_DEC_IS_COMMA special names option      
 .* 01/07/09 RPI 1098 support x'...' values for G and Q type fields
 .* 04/05/11 RPI 1139 SETA INDEX ARG IN QUOTES FOR HLASM COMP.
+.* 01/26/12 RPI 1181 correct literal values with _ vs -
+.* 02/16/12 RPI 1181 don't issue error for 0 length FILLER
 *********************************************************************
          GEN_WS      
          COPY  ZC_WS   
@@ -107,7 +109,8 @@ ZC_WSLOC LOCTR
                AIF   (K'&NAME LT 8)          
                     :&NAME SETC  '&NAME'.(8-K'&NAME)' ' PAD NAME TO 8
                AEND
-               AIF   (&SYM_LEN(&I) EQ 0)
+               AIF   (&SYM_LEN(&I) EQ 0 AND '&SYM_NAME(&I)' NE 'FILLER'X
+               ) RPI 1181 IGNORE FILLER 0
                      AIF (&ZC_CICS                                     X
                           AND '&SYM_NAME(&I)' EQ 'DFHCOMMAREA')
                          :&SYM_LEN(&I) SETA 1 FORCE 1 TO AVOID ERR
@@ -222,11 +225,11 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
        AELSEIF ('&PIC_VAL' EQ 'SPACE'                                  X
                 OR '&PIC_VAL' EQ 'SPACES')
 &NAME    DC CL&SYM_LEN(&I)' '
-       AELSEIF ('&PIC_VAL' EQ 'LOW_VALUES'                             X
-                OR '&PIC_VAL' EQ 'LOW_VALUE')
+       AELSEIF ('&PIC_VAL' EQ 'LOW-VALUES'                             X
+                OR '&PIC_VAL' EQ 'LOW-VALUE') RPI 1181 _ TO -
 &NAME    DC XL&SYM_LEN(&I)'00'
-       AELSEIF ('&PIC_VAL' EQ 'HIGH_VALUES'                            X
-                OR '&PIC_VAL' EQ 'HIGH_VALUE')
+       AELSEIF ('&PIC_VAL' EQ 'HIGH-VALUES'                            X
+                OR '&PIC_VAL' EQ 'HIGH-VALUE') RPI 1181 _ TO -
 &NAME    DC XL&SYM_LEN(&I)'FF'
        AELSE
          :&PIC_VAL SETC '''&PIC_VAL'''  RPI 1012

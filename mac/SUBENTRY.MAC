@@ -12,6 +12,7 @@
 .* 07/11/07 RPI 654 CLEANUP - ADD DROP, CHECK RENT+R13, RWA+RWALNG
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 10/01/07 RPI 709 FIX MISSING QUOTE IN AIF AFTER .NOSTK2           
+.* 02/17/12 RPI 1189 REMOVE DROP 13 WHEN NOT USING 13
 .*********************************************************************
 .*             MACRO-ID. 'SUBENTRY'                                      
 .*             AUTHOR.   DON HIGGINS.                                    
@@ -181,7 +182,7 @@
 .GENBX   ANOP
          ZOPTLR &BASES(1),13             
 .SKIPR13 ANOP               
-         DROP  13                               RPI 654                  
+.*       DROP  13                               RPI 654, RPI 1189        
          USING &NAME+8,&BASES(1)
          AGO   .GEN                                                      
 .GENB13  ANOP                                                            

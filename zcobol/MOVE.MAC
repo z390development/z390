@@ -11,12 +11,15 @@
 .* 10/06/08 ZSTRMAC
 .* 02/27/09 RPI 1012 SUPPORT ALL '?' LIT
 .* 06/18/09 RPI 1042 add ZCDFHLIT shared by IF and MOVE                 
-.* 01/01/10 RPI 1106 change target index reg to R3 from R2              
+.* 01/01/10 RPI 1106 change target index reg to R3 from R2    
+.* 03/26/12 RPI 1182 add GEN_BASE for source to support mult moves
+.* 03/27/12 RPI 1182 add RMD_REG and RMD_VLEN support for MOVE's
 .*********************************************************************
 .* MOVE id1 TO id2 id3 idn
 .*********************************************************************
          MOVE  
          COPY  ZC_WS
+         :&RMD_VLEN_ALLOW SETB 1    RPI 1182 ALLOW VAR LEN RMD
          :&SOURCE SETC '&SYSLIST(1)'
          :&ADDR_OF SETB 0
          :&PARM_IX SETA 2
@@ -81,9 +84,11 @@
                AEND
                :&PARM_IX SETA 1
                :&FIELD_REG SETC 'ZC_R2'
+               :&RMD_REG   SETC 'ZC_R14' RPI 1182 MAY HAVE VLEN SOURCE
                :&FIELD_SS1 SETB 0
                ACALL GET_PARM_FIELD
                :&SOURCE_IX SETA &FIELD_IX
+               :&RMD_VLEN_SRC SETB &RMD_VLEN  RPI 1182 SET GBL SRC VLEN
                AIF (&FIELD_IX GT 0)
                    :&SOURCE SETC '&FIELD_NAME'
                AEND
@@ -96,6 +101,7 @@
        AWHILE ('&SYSLIST(&PARM_IX)' NE '')
          ACTR 4096
          :&FIELD_REG SETC 'ZC_R3' RPI 1106 WAS ZC_R2
+         :&RMD_REG   SETC 'ZC_R15' RPI 1182 MAY HAVE VLEN TARGET
          :&FIELD_SS1 SETB 1
          ACALL GET_PARM_FIELD
          AIF (&FIELD_IX EQ 0)
@@ -104,7 +110,9 @@
          AEND
          :&TARGET_IX SETA &FIELD_IX
          :&TARGET SETC '&FIELD_NAME'
+         :&RMD_VLEN_TAR SETB &RMD_VLEN RPI 1182 SET GBL VLEN FOR TARGET
          AIF (&SOURCE_IX GT 0)
+               GEN_BASE &SOURCE_IX REPEAT FOR MULT MOVES RPI 1182
                AIF (&ADDR_OF AND '&SYM_PIC_TYPE(&TARGET_IX)' NE 'A')
                    MNOTE 8,'MOVE TARGET OF ADDRESS OF MUST BE POINTER'
                    MEXIT
@@ -112,6 +120,7 @@
          AEND
          GEN_MOVE &TARGET,&TARGET_IX,&SOURCE,&SOURCE_IX
        AEND
+         :&RMD_VLEN_ALLOW SETB 0 RPI 1182 TURN OFF
          MEXIT
          COPY ZCGETFLD
          COPY ZCDFHLIT

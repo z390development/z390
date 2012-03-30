@@ -1,0 +1,99 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL962A  CSECT
+*
+* FN=962A  EXEC CICS ENDBROWSE CONTAINER
+*
+* R1  >>> P962A BLOCK POINTER
+*
+         USING *,R13
+         B     12(R15)            BYPASS EYECATCHER
+         DC    CL8'LCL962A'
+         LR    R13,R15            R13 AS BASE
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P962A,P962AEND),R3
+         L     DFHEIBR,P962AEIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P962ATCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P962AFN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         ICM   R1,15,P962ARSP     R1=RESP ADDRESS
+         BZ    NORESP             EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP
+NORESP   EQU   *
+         ICM   R1,15,P962ARS2     R1=RESP2 ADDRESS
+         BZ    NORESP2            EXIT IF NONE
+         XC    0(4,R1),0(R1)      CLEAR RESP2
+NORESP2  EQU   *
+         CLI   P962ANED,X'FF'     NOEDF ?
+         BE    NOEDFB             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFB             EXIT IF NOT
+         MVI   TCTTEEBA,X'00'     SET 'BEFORE' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFB   EQU   *
+* FIND CHWA FOR THE TOKEN
+         LA    R12,TCTTECHW       R12=CHWA ANCHOR POINTER
+         ICM   R2,15,TCTTECHW     R2=CHWA CHAIN ADDRESS
+         BZ    TOKENERR           ERROR IF NONE
+         USING DFHCHWA,R2
+CHWALOOP EQU   *
+         CLC   CHWATOKN,P962ATKN  OUR TOKEN ?
+         BE    CHWAFND            EXIT IF IT IS
+         LA    R12,CHWAADDR       R12=PREVIOUS POINTER ADDRESS
+         ICM   R2,15,CHWAADDR     CHAIN TO NEXT
+         BNZ   CHWALOOP           LOOP TILL END
+         B     TOKENERR           ERROR IF NOT FOUND
+*
+CHWAFND  EQU   *
+* DELETE CHWA AND REPAIR CHAIN
+         MVC   0(4,R12),CHWAADDR  REPAIR CHWA CHAIN
+         FREEMAIN A=(R2),LV=40
+         B     RETURN             EXIT
+*
+TOKENERR EQU   *
+* INVOKE TOKENERR
+         MVC   EIBRESP,DFHRESP(TOKENERR) SET EIBRESP=TOKENERR
+         MVC   EIBRCODE+2(1),EIBRESP+3 SET EIBRCODE
+         MVC   EIBRESP2,=F'3'     SET EIBRESP2=TOKEN NOT FOUND
+         ICM   R14,15,P962ARSP    R14=RESP ADDRESS
+         BZ    DORESP2            EXIT IF NONE
+         MVC   0(4,R14),EIBRESP   SET RESP
+DORESP2  EQU   *
+         ICM   R14,15,P962ARS2    R14=RESP2 ADDRESS
+         BZ    RETURN             EXIT IF NONE
+         MVC   0(4,R14),EIBRESP2  SET RESP2
+RETURN   EQU   *
+         CLI   P962ANED,X'FF'     NOEDF ?
+         BE    NOEDFA             EXIT IF IT IS
+         CLI   TCTTEEDF,X'FF'     EDF ON ?
+         BNE   NOEDFA             EXIT IF NOT
+         MVI   TCTTEEBA,X'FF'     SET 'AFTER' INTERCEPT
+         MVI   TCTTEEDL,X'00'     SET NORMAL LINKAGE
+         L     R15,TCTTEEDA       R15=EDF PROCESSOR ADDRESS
+         BAKR  0,R15              STACK REGS AND GO
+*
+NOEDFA   EQU   *
+         PR    ,                  UNSTACK AND RETURN TO MACRO
+*
+         P962A DSECT
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHCHWA                  STARTBROWSE CONTAINER BLOCK
+*
+         EQUREGS REGS=GPR
+*
+         END
+

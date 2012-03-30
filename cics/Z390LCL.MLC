@@ -13,79 +13,137 @@ Z390LCL  CSECT
 *
 * EACH PARM STARTS WITH EIBFN
 *
+* EXAMPLE USING EIBFN=X'100C'
+* CALC: (1ST EIBFN BYTE-2)*2 = 1ST TABLE INDEX
+*   EG: X'10'-2=X'0E'*2=X'1C'
+*
+*   2ND TABLE ADDRESS @ IDXTABLE+X'1C'
+*
+* CALC: (2ND EIBFN BYTE-2)*2 = LCL MODULE POINTER
+*   EG: X'0C'-2=X'0A'*2=X'14'
+*
+*   LCL MODULE POINTER @ 2ND TABLE ADDRESS+X'14'
+*
          USING *,R13
          LR    R13,R15            R13 AS BASE
          LR    R3,R1              POINT TO
          L     R3,0(R3)                    PARAMETER BLOCK
-         LA    R4,LCLTABL         R4=ADDRESS OF LCL TABLE
-IXLOOP   EQU   *
-         CLC   0(2,R4),0(R3)      TABLE MATCH ?
-         BE    DOLCL              EXIT IF IT DOES
-         AHI   R4,6               BUMP TABLE ENTRY
-         CLC   0(2,R4),=X'FFFF'   STOPPER ?
-         BNE   IXLOOP             LOOP IF NOT
-         DC    H'0'               SHOULD NOT OCCUR
-*
-DOLCL    EQU   *
-         L     R15,2(R4)          R15=LCL MODULE ADDRESS
+         LLC   R4,0(R3)           R4=1ST BYTE OF EIBFN
+         AHI   R4,-2              -2
+         SLL   R4,1               *2
+         L     R4,IDXTABLE(R4)    R4=2ND TABLE ADDRESS
+         LLC   R5,1(R3)           R5=2ND BYTE OF EIBFN
+         AHI   R5,-2              -2
+         SLL   R5,1               *2
+         AR    R4,R5              R4=LCL MODULE POINTER
+         L     R15,0(R4)          R15=LCL MODULE ADDRESS
          BR    R15                GO TO IT
 *
-LCLTABL  EQU   *
-         DC    X'0202',VL4(LCL0202) ADDRESS
-         DC    X'0204',VL4(LCL0204) HANDLE CONDITION
-         DC    X'0206',VL4(LCL0206) HANDLE AID
-         DC    X'0208',VL4(LCL0208) ASSIGN
-         DC    X'020A',VL4(LCL020A) IGNORE CONDITION
-         DC    X'020C',VL4(LCL020C) PUSH HANDLE
-         DC    X'020E',VL4(LCL020E) POP HANDLE
+IDXTABLE EQU   *
+         DC    A(IDX02)           02..         GENERAL
+         DC    A(IDX04)           04..         TC
+         DC    A(IDX06)           06..         FC
+         DC    A(0)               08..         UNUSED
+         DC    A(IDX0A)           0A..         TS
+         DC    A(IDX0C)           0C..         SC
+         DC    A(IDX0E)           0E..         PC
+         DC    A(IDX10)           10..         IC1
+         DC    A(IDX12)           12..         KC
+         DC    2A(0)              14.. TO 16.. UNUSED
+         DC    A(IDX18)           18..         BMS
+         DC    A(0)               1A..         UNUSED
+         DC    A(IDX1C)           1C..         DC
+         DC    11A(0)             1E.. TO 32.. UNUSED
+         DC    A(IDX34)           34..         CHAN/CONT
+         DC    10A(0)             36.. TO 48.. UNUSED
+         DC    A(IDX4A)           4A..         IC2
+         DC    A(IDX4C)           4C..         INQ/SET
+         DC    36A(0)             4E.. TO 94.. UNUSED
+         DC    A(IDX96)           96..         BROWSE CONTAINER
 *
-         DC    X'0402',VL4(LCL0402) RECEIVE
-         DC    X'0404',VL4(LCL0404) SEND
+IDX02    EQU   *
+         DC    VL4(LCL0202)       ADDRESS
+         DC    VL4(LCL0204)       HANDLE CONDITION
+         DC    VL4(LCL0206)       HANDLE AID
+         DC    VL4(LCL0208)       ASSIGN
+         DC    VL4(LCL020A)       IGNORE CONDITION
+         DC    VL4(LCL020C)       PUSH HANDLE
+         DC    VL4(LCL020E)       POP HANDLE
 *
-         DC    X'0602',VL4(LCL0602) READ
-         DC    X'060C',VL4(LCL060C) STARTBR
-         DC    X'060E',VL4(LCL060E) READNEXT
-         DC    X'0610',VL4(LCL0610) READPREV
-         DC    X'0612',VL4(LCL0612) ENDBR
-         DC    X'0614',VL4(LCL0614) RESETBR
+IDX04    EQU   *
+         DC    VL4(LCL0402)       RECEIVE
+         DC    VL4(LCL0404)       SEND
 *
-         DC    X'0A02',VL4(LCL0A02) WRITEQ TS
-         DC    X'0A04',VL4(LCL0A04) READQ TS
-         DC    X'0A06',VL4(LCL0A06) WRITEQ TS
+IDX06    EQU   *
+         DC    VL4(LCL0602)       READ
+         DC    4A(0)              0604 TO 060A UNUSED
+         DC    VL4(LCL060C)       STARTBR
+         DC    VL4(LCL060E)       READNEXT
+         DC    VL4(LCL0610)       READPREV
+         DC    VL4(LCL0612)       ENDBR
+         DC    VL4(LCL0614)       RESETBR
 *
-         DC    X'0C02',VL4(LCL0C02) GETMAIN
-         DC    X'0C04',VL4(LCL0C04) FREEMAIN
+IDX0A    EQU   *
+         DC    VL4(LCL0A02)       WRITEQ TS
+         DC    VL4(LCL0A04)       READQ TS
+         DC    VL4(LCL0A06)       WRITEQ TS
 *
-******** DC    X'0E02',VL4(LCL0E02) LINK     DIRECT LINKAGE
-******** DC    X'0E04',VL4(LCL0E04) XCTL     DIRECT LINKAGE
-         DC    X'0E06',VL4(LCL0E06) LOAD
-******** DC    X'0E08',VL4(LCL0E08) RETURN   DIRECT LINKAGE
-         DC    X'0E0A',VL4(LCL0E0A) RELEASE
-         DC    X'0E0C',VL4(LCL0E0C) ABEND
-         DC    X'0E0E',VL4(LCL0E0E) HANDLE ABEND
+IDX0C    EQU   *
+         DC    VL4(LCL0C02)       GETMAIN
+         DC    VL4(LCL0C04)       FREEMAIN
 *
-         DC    X'1002',VL4(LCL1002) ASKTIME
-         DC    X'1004',VL4(LCL1004) DELAY
-         DC    X'1008',VL4(LCL1008) START
-         DC    X'100A',VL4(LCL100A) RETRIEVE
-         DC    X'100C',VL4(LCL100C) CANCEL
+IDX0E    EQU   *
+         DC    A(0)               0E02 LINK   DIRECT LINKAGE
+         DC    A(0)               0E04 XCTL   DIRECT LINKAGE
+         DC    VL4(LCL0E06)       LOAD
+         DC    A(0)               0E08 RETURN DIRECT LINKAGE
+         DC    VL4(LCL0E0A)       RELEASE
+         DC    VL4(LCL0E0C)       ABEND
+         DC    VL4(LCL0E0E)       HANDLE ABEND
 *
-         DC    X'1204',VL4(LCL1204) ENQ
-         DC    X'1206',VL4(LCL1206) DEQ
+IDX10    EQU   *
+         DC    VL4(LCL1002)       ASKTIME
+         DC    VL4(LCL1004)       DELAY
+         DC    A(0)               1006 UNUSED
+         DC    VL4(LCL1008)       START
+         DC    VL4(LCL100A)       RETRIEVE
+         DC    VL4(LCL100C)       CANCEL
 *
-         DC    X'1802',VL4(LCL1802) RECEIVE MAP
-         DC    X'1804',VL4(LCL1804) SEND MAP
-         DC    X'1812',VL4(LCL1812) SEND CONTROL
+IDX12    EQU   *
+         DC    A(0)               1202 UNUSED
+         DC    VL4(LCL1204)       ENQ
+         DC    VL4(LCL1206)       DEQ
 *
-         DC    X'1C02',VL4(LCL1C02) DUMP
+IDX18    EQU   *
+         DC    VL4(LCL1802)       RECEIVE MAP
+         DC    VL4(LCL1804)       SEND MAP
+         DC    6A(0)              1806 TO 1810 UNUSED
+         DC    VL4(LCL1812)       SEND CONTROL
 *
-         DC    X'4A02',VL4(LCL4A02) ASKTIME ABSTIME
-         DC    X'4A04',VL4(LCL4A04) FORMATTIME
+IDX1C    EQU   *
+         DC    VL4(LCL1C02)       DUMP
 *
-         DC    X'4C02',VL4(LCL4C02) INQUIRE FILE
-         DC    X'4C04',VL4(LCL4C04) SET FILE
+IDX34    EQU   *
+         DC    8A(0)              3402 TO 3410 UNUSED
+         DC    VL4(LCL3412)       DELETE CONTAINER
+         DC    VL4(LCL3414)       GET CONTAINER
+         DC    VL4(LCL3416)       PUT CONTAINER
+         DC    20A(0)             3418 TO 343E UNUSED
+         DC    VL4(LCL3440)       MOVE CONTAINER
 *
-         DC    X'FFFF'            STOPPER
+IDX4A    EQU   *
+         DC    VL4(LCL4A02)       ASKTIME ABSTIME
+         DC    VL4(LCL4A04)       FORMATTIME
+*
+IDX4C    EQU   *
+         DC    VL4(LCL4C02)       INQUIRE FILE
+         DC    VL4(LCL4C04)       SET FILE
+*
+IDX96    EQU   *
+         DC    18A(0)             9602 TO 9624 UNUSED
+         DC    VL4(LCL9626)       STARTBROWSE CONTAINER
+         DC    VL4(LCL9628)       GETNEXT CONTAINER
+         DC    VL4(LCL962A)       ENDBROWSE CONTAINER
 *
          EQUREGS
 *

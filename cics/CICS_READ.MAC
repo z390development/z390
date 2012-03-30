@@ -5,6 +5,8 @@
 .* Author - Don Higgins                                               *
 .**********************************************************************
 .* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.* 02/18/12 RPI 1181 USE LARL TO ELIM BASE REQ FOR ZC_...PTR
+.* 03/22/12 RPI 1181 CORRECT LARL TO IILF IN ABOVE 1181 FIX
 .**********************************************************************
          MACRO
          CICS_READ
@@ -170,8 +172,12 @@
          GEN_ST R0,P0602INT       SAVE IT
 .DOLEN   ANOP
          AIF   ('&LENGTH' EQ '').NOLENG
+         AIF   (K'&LENGTH LT 2).LENNUM1
+         AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
+.LENNUM1 ANOP
          AIF   (T'&LENGTH NE 'N').LENLABL
-         LA    R0,&LENGTH         R0=LENGTH
+.LENNUM  ANOP
+         LAY   R0,&LENGTH         SET NUMERIC LENGTH
          GEN_ST R0,P0602LEN       SAVE IT
          AGO   .DUNLEN
 .*
@@ -180,22 +186,18 @@
          AIF   ('&LENGTH'(1,10) EQ 'LENGTH,OF,')
 .* COBOL LENGTH OF EXTRACT
 &LENLSL  SETC  '&LENGTH'(11,K'&LENGTH-10)
-         LA    R0,L'&LENLSL       SET LENGTH
-         GEN_ST R0,P0602LEN       SAVE IT
+         LAY   R0,L'&LENLSL       SET NUMERIC LENGTH
          AELSE
 .* COBOL LENGTH AS LABEL
          LH    R0,&LENGTH         SET LENGTH FROM LABEL
-         GEN_ST R0,P0602LEN       SAVE IT
-         LA    R0,&LENGTH         R1=ADDRESS OF LENGTH
-         GEN_ST R0,P0602LAD       SAVE IT
          AEND
          AELSE
 .* ASM LENGTH AS LABEL
-         LH    R0,&LENGTH         R1=LENGTH FROM LABEL
-         GEN_ST R0,P0602LEN       SAVE IT
-         LA    R0,&LENGTH         R1=ADDRESS OF LENGTH
-         GEN_ST R0,P0602LAD       SAVE IT
+         LH    R0,&LENGTH         SET LENGTH FROM LABEL
          AEND
+         GEN_ST R0,P0602LEN       SAVE IT
+         LA    R0,&LENGTH         R0=ADDRESS OF LENGTH
+         GEN_ST R0,P0602LAD       SAVE IT
          AGO   .DUNLEN
 .*
 .NOLENG  ANOP
@@ -227,9 +229,8 @@
          AGO   .DUNLEN
 .*
 .NOLENS  ANOP
-         LA    R0,L'&INTO         R0=IMPLIED LENGTH OF INTO
+         LAY   R0,L'&INTO         R0=IMPLIED LENGTH OF INTO
          GEN_ST R0,P0602LEN       SAVE IT
-.*
 .DUNLEN  ANOP
          AIF   ('&KLENGTH' EQ '').CHKOPT
          AIF   (K'&KLENGTH LT 2).KLENNU1
@@ -237,7 +238,7 @@
 .KLENNU1 ANOP
          AIF   (T'&KLENGTH NE 'N').KLENLAB
 .KLENNUM ANOP
-         LA    R0,&KLENGTH        R0=KEYLENGTH
+         LAY   R0,&KLENGTH        SET NUMERIC KEYLENGTH
          GEN_STH R0,P0602KLN      SAVE IT
          GEN_MVI P0602KIN,X'FF'   SET VALID KEYLENGTH
          AGO   .CHKGEN
@@ -247,7 +248,7 @@
          AIF   ('&KLENGTH'(1,10) EQ 'LENGTH,OF,')
 .* COBOL LENGTH OF EXTRACT
 &LENLSL  SETC  '&KLENGTH'(11,K'&KLENGTH-10)
-         LA    R0,L'&LENLSL       RO=KEYLENGTH
+         LAY   R0,L'&LENLSL       SET NUMERIC KEYLENGTH
          GEN_STH R0,P0602KLN      SAVE IT
          GEN_MVI P0602KIN,X'FF'   SET VALID KEYLENGTH
          AELSE
@@ -276,7 +277,7 @@
          LARL  R15,P0602RID       ADDRESS TARGET
 CICS_READ_&SYSNDX._MVCKEY EQU *
          MVC   0(0,R15),&RIDFLD   MOVE RIDFLD
-         LA    R0,L'&RIDFLD       R0=LENGTH OF RIDFLD
+         LA    R0,L'&RIDFLD       SET NUMERIC RIDFLD LENGTH
          GEN_STC R0,P0602LRD      SAVE IT
 CICS_READ_&SYSNDX._NOKEY EQU *
          AGO   .DUNOPT
@@ -305,7 +306,7 @@ CICS_READ_&SYSNDX._NOKEY EQU *
 .NORRN   ANOP
 .* DEFAULT IS FULL KEY
          LARL  R15,P0602RID       ADDRESS TARGET
-         LA    R0,L'&RIDFLD       R0=LENGTH OF RIDFLD
+         LA    R0,L'&RIDFLD       SET NUMERIC RIDFLD LENGTH
          GEN_STC R0,P0602LRD      SAVE IT
          BCTR  R0,0               -1 FOR DYNAMIC LENGTH
          LARL  R1,CICS_READ_&SYSNDX._MVCKEY2 ADDRESS TARGET
@@ -353,7 +354,10 @@ P0602EDF_&SYSNDX DS 0H
 .* COBOL LINKAGE-SECTION LABEL, EXTRACT AND TRANSFORM
 &SETLSL  SETC  '&SET'(12,K'&SET-11)
          LARL  R1,P0602STA        ADDRESS SOURCE
-         MVC   ZC_&SETLSL._PTR(4),0(R1) SET ADDRESS IN L-S POINTER
+         L     R0,0(R1)                     RPI 1181
+         IILF  R1,ZC_&SETLSL._PTR-DFHEISTG  RPI 1181 AVOID BASE REQ
+         ST    R0,0(R1,R13)                 RPI 1181
+.* RPI 1181 MVC   ZC_&SETLSL._PTR(4),0(R1) SET ADDRESS IN L-S POINTER
          AELSE
 .* COBOL STANDARD POINTER
          GEN_MVC &SET,4,P0602STA  SET ADDRESS IN POINTER

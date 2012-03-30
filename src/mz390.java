@@ -407,6 +407,13 @@ public  class  mz390 {
 	 * 05/10/11 RPI 1149 move start/ended to put_trace
 	 * 07/13/11 RPI 1166 do not replace &var in comments or report errors
 	 * 07/25/11 RPI 1169 change az390 error to mz390 warning for missing END
+	 * 07/30/11 RPI 1175 use tz390.check_java_version()
+	 * 08/03/11 RPI 1177 don't issue warning for missing END if NOASM
+	 * 01/29/12/RPI 1185 correct exp_pattern to only
+	 *          allow C'..', CA'..' or CE'..' and
+	 *          terminate substring expression on any
+	 *          SDT with ' stripping
+	 * 02/19/12 RPI 1192 issue error for AIF with )).label
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -571,7 +578,7 @@ public  class  mz390 {
 	byte    zsm_type_awhile  = 11;
 	String[] zsm_type_pfx = {"???", // 0
 			                 "AIF", // 1 AELSE
-			                 "AIF", // 2 AEKSEUF
+			                 "AIF", // 2 AELSEIF
 			                 "???", // 3 AEND
 			                 "ACL", // 4 AENTRY
 			                 "???", // 5 AEXIT
@@ -1267,6 +1274,10 @@ public  class  mz390 {
 		 */
 		tz390 = new tz390();
 		tz390.init_tz390();  // RPI 1080
+    	if (!tz390.check_java_version()){ // RPI 1175
+    		abort_error(205,"unknown java version "
+    	    + tz390.java_vendor + " " + tz390.java_version);  
+    	}
 		tz390.init_options(args,tz390.mlc_type);  
 		tz390.open_systerm("MZ390");
 		tz390.init_codepage(tz390.codepage); // RPI 1069
@@ -1453,7 +1464,9 @@ public  class  mz390 {
 					+ "|([0-9]+)"                             // number
 					+ "|([dDiIkKlLnNoOsStT]['])"              // D' defined symbol test 0 or 1  RPI 336, RPI 434 RPI 481
 					+ "|([bB]['][0|1]+['])"                   // B'0110' binary self def. term
-					+ "|([cC][aAeE]*[']([^']|(['][']))+['])"         // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274
+					+ "|([cC][']([^']|(['][']))+['])"         // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274, 1185
+					+ "|([cC][aA][']([^']|(['][']))+['])"         // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274, 1185
+					+ "|([cC][eE][']([^']|(['][']))+['])"         // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274, 1185
 					+ "|([cC][\"]([^\"]|([\"][\"]))+[\"])"    // C"ABCD" ascii self def. term   RPI73, 274
 					+ "|([cC][!]([^!]|([!][!]))+[!])"         // C"ABCD" ebcdic self def. term  RPI84, 274
 					+ "|([xX]['][0-9a-fA-F]+['])"             // X'0F'   hex self defining term
@@ -1647,7 +1660,7 @@ public  class  mz390 {
 				}
 			}
 		}
-		if (!end_found){
+		if (tz390.opt_asm && !end_found){
 			create_mnote(4,"missing END statement"); // RPI 1169
 		}
 	}
@@ -3101,7 +3114,7 @@ public  class  mz390 {
 					if (exp_lvl == 0){
 						int index2 = tz390.parm_match.end()+1;
 						if (tz390.split_parms.length() > index2
-							&& tz390.split_parms.charAt(index2) == '.'){
+							&& tz390.split_parms.charAt(index2) > ' '){ // RPI 1192 was == '.'
 							return false; // assume std AIF with label
 						} else {
 						    zsm_aif_exp = tz390.split_parms.substring(index1,index2);
@@ -5120,6 +5133,9 @@ public  class  mz390 {
 				return;
 			}
 			exp_token = exp_match.group();
+			if (tz390.opt_traceall){
+				tz390.put_trace("EXP TOKEN=" + exp_token);
+			}
 			exp_next_index = exp_start_index + exp_match.end();
 			exp_next_op = exp_token.toUpperCase();
 			exp_next_first = exp_next_op.charAt(0);
@@ -7921,7 +7937,8 @@ public  class  mz390 {
 		 */
 		label_match = label_pattern.matcher(label_source); 
 		label_name = label_source;
-		if (label_match.find()){
+		if (label_source.charAt(0) == '.'  // RPI 1192 
+			&& label_match.find()){
 			label_name = label_match.group().toUpperCase();
 			int    label_name_index = find_lcl_key_index("B:" + label_name);
 			if (label_name_index != -1){

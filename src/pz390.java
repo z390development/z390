@@ -321,6 +321,9 @@ public class pz390 {
 	 * 04/06/11 RPI 1158 FIX ALT DFP RND FOR CXGTR,CDGTR,CGXTR,CGDTR
 	 * 05/06/11 RPI 1149 FIX TRACE FOR LAY, BCTR R,0
 	 * 05/17/11 RPI 1164 add RISBHGZ and RISBLGZ trace support
+	 * 09/23/11 RPI 1179 support +-num for XDECI
+	 * 09/27/11 RPI 1180 fix trace format for SRXT/SLXT etc.
+	 * 03/04/12 RPI 1195 issue spec error if CUSE r2 odd
 	 ********************************************************* 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -3379,28 +3382,51 @@ public class pz390 {
 				ins_setup_rx();
 				rv1 = 0;
 				boolean digit_found = false;
+				boolean minus = false;
+				int     digit=0;
 				if (!tz390.opt_ascii){ // RPI 878
 					while (mem.get(xbd2_loc) == 0x40){
 						xbd2_loc++;
 					}
-					while ((mem.get(xbd2_loc) & 0xff) >= 0xf0
-						&& (mem.get(xbd2_loc) & 0xff) <= 0xf9){
-						digit_found = true;
-						rv1 = rv1*10 + (mem.get(xbd2_loc) & 0xf);
+					digit = mem.get(xbd2_loc) & 0xff;
+					while ((digit >= 0xf0 
+							&& digit <= 0xf9) // ASCII digit RPI 1179
+							|| digit == 0x4E  // EBCDIC +
+				            || digit == 0x60  // EBCDIC -
+				            ){
+						if (digit == 0x60){
+							minus = true;
+						} else if (digit != 0x4E){
+						    digit_found = true;
+						    rv1 = rv1*10 + (digit & 0xf);
+						}
 						xbd2_loc++;
+						digit = mem.get(xbd2_loc) & 0xff;
 					}
 				} else {
 					while (mem.get(xbd2_loc) == 0x20){
 						xbd2_loc++;
 					}
-					while ((mem.get(xbd2_loc) & 0xff) >= 0x30
-						&& (mem.get(xbd2_loc) & 0xff) <= 0x39){
-						digit_found = true;
-						rv1 = rv1*10 + (mem.get(xbd2_loc) & 0xf);
+					digit = mem.get(xbd2_loc) & 0xff;
+					while ((digit >= 0x30 
+							&& digit <= 0x39) // ASCII digit RPI 1179
+							|| digit == 0x2b  // ASCII +
+				            || digit == 0x2d  // ASCII -
+				            ){
+						if (digit == 0x2d){
+							minus = true;
+						} else if (digit != 0x2b){
+						    digit_found = true;
+						    rv1 = rv1*10 + (digit & 0XF);
+						}
 						xbd2_loc++;
+						digit = mem.get(xbd2_loc) & 0xff;
 					}
 				}
 				if (digit_found){
+					if (minus){     // RPI 1179
+				       rv1 = -rv1;
+					}
 					reg.putInt(rf1+4,rv1);
 					reg.putInt(r1,xbd2_loc);
 					psw_cc = psw_cc0;
@@ -5342,7 +5368,8 @@ public class pz390 {
 		case 0x57: // 3190 "B257" "CUSE" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			if ((mf1 & 1) != 0){ // RPI 758
+			if ((mf1 & 1) != 0      // RPI 758
+				|| (mf2 & 1) != 0){ // RPI 1195
 				set_psw_check(psw_pic_spec);
 			}
 			exec_cuse();
@@ -10223,7 +10250,7 @@ public class pz390 {
 	    	if (rsbg_zero){
 	    		rlv1 = rlv2;
 	    	} else {
-	    		rlv1 = (reg.getLong(rf1) & rsbg_mask_zeros) | rlv2; // RPI 1164 dsh
+	    		rlv1 = (reg.getLong(rf1) & rsbg_mask_zeros) | rlv2; // RPI 1164
 	    	}
 	    	reg.putLong(rf1,rlv1);
 	    	if (rlv1 == 0){
@@ -18683,7 +18710,7 @@ break;
 			             + "="	  + get_fp_long_hex(rf1)
 			             + " F"   + tz390.get_hex(mf3, 1)
 			             + "="    + get_fp_long_hex(rf3) 
-			             + " S2(" + tz390.get_hex(bd2_loc, 8)
+			             + " S2(" + tz390.get_hex(xbd2_loc, 8) // RPI 1180
 					+ ")";
 			break;	
 		case 260:// AP SS2 oollbdddbddd

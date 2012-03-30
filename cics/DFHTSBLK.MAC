@@ -23,8 +23,8 @@ TSPNUMIT DS    XL2                NUMITEMS
 TSPICTRM DS    CL4                ICTERM
 TSPICTRN DS    CL4                ICTRAN
 TSPRETCD DS    XL4                RETURN CODE
-TSPACLEN DS    XL2                READQ ACTUAL ITEM LENGTH
-TSPLEN   DS    XL2                LENGTH OF FOLLOWING DATA
+TSPACLEN DS    XL4                READQ ACTUAL ITEM LENGTH
+TSPLEN   DS    XL4                LENGTH OF FOLLOWING DATA
          DS    0D
 TSPREFIX EQU   *-DFHTSBLK
 TSPDATA  DS    0X                 TS DATA

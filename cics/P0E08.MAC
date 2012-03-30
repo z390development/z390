@@ -15,6 +15,7 @@ P0E08FN  DS    XL2                FUNCTION CODE
 P0E08TRN DS    CL4                TRANSID
 P0E08COM DS    AL4                COMMAREA ADDRESS
 P0E08CLN DS    XL2                COMMAREA LENGTH
+P0E08CHN DS    CL16               CHANNEL NAME
 P0E08IMM DS    X                  FF=IMMEDIATE
          DS    X
 P0E08CNR DS    X                  FF=CLEANER

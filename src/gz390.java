@@ -135,6 +135,7 @@ public  class  gz390
 	 * 10/24/09 RPI 1091 remove extra field advance for SFE                             
 	 * 01/01/10 RPI 1094 skip unprotected fields on tab, abort if timeout
 	 * 05/10/11 RPI 1151 correct set field attribute higlight & color
+	 * 07/30/11 RPI 1175 use tz390.check_java_version()
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -558,14 +559,11 @@ public  class  gz390
   		 *       gz390 instance started so only
   		 *       set class variables.
   		 */	
-  			String java_vendor  = System.getProperty("java.vendor");
-  			String java_version = System.getProperty("java.version");
-  			if (!java_vendor.equals("Sun Microsystems Inc.")
-  				||	java_version.compareTo("1.5") < 0
-  				|| java_version.compareTo("9.9" ) > 0){
+  		  if (!tz390.check_java_version()){
   				MessageBox box = new MessageBox();
   				box.messageBox("GZ390E error ",
-				    "Unsupported Java Version " +                                                        java_vendor + " " + java_version);
+				    "Unsupported Java Version " +
+  				tz390.java_vendor + " " + tz390.java_version);
 				exit_main(16);
   			}
   			main_demo = false;

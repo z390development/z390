@@ -10,6 +10,8 @@
 * 05/20/10 RPI 1117 correct day of week for 2010  based on 1/1 =Friday   
 * 05/22/10 RPI 1120 correct EZ114E on display from console.   
 * 05/23/10 RPI 1121 correct LA to LR to prevent truncated field name
+* 02/18/12 RPI 1182 display ENTER field-name for ACCEPT WTOR
+* 02/23/12 RPI 1193 fix DOW for 1/1/12=1 SUNDAY
 *********************************************************************
 *
 *  CALL ACCEPT
@@ -83,13 +85,14 @@ ACCEPT_DDNAME  DS 0H   READ FROM DDNAME PASSED IN R3 AS CL8
          ICM   R1,8,=C' ' PAD WITH SPACES
          MVCL  R4,R0
          B     EXIT
-ACCEPT_CONSOLE DS 0H   R3=A(FIELD_NAME)
+ACCEPT_CONSOLE DS 0H    R3=A(FIELD_NAME)               RPI 1182
          LR    R4,R2    R4=A(TARGET FIELD)             RPI 1120 MISSING
          LM    R5,R6,4(R1) R5=FLD_LEN, R6=NAME_LEN
-         LA    R0,4+6(R6)            LENGTH OF PFX + 'ENTER ' + NAME
+         LA    R0,4+6(R6)              LENGTH OF PFX + 'ENTER ' + NAME
          STH   R0,WTORLMSG           SET LENGTH OF PROMPT MSG
+         MVC   WTORMSG(6),=C'ENTER ' RPI 1182
+         LA    R0,WTORMSG+6          RPI 1182
          LR    R1,R6
-         LA    R0,WTORMSG
          LR    R2,R3
          LR    R3,R6                                  RPI 1121 LA to LR
          MVCL  R0,R2                 MOVE FIELD NAME TO PROMPT MSG
@@ -138,7 +141,7 @@ ACCEPT_DOW DS 0H
          EQUREGS
 PWORK    DC    D'0'
 DWORK    DC    XL16'00'
-DOWTAB   DC    C'5671234'  UPDATED FOR 2010 WHERE 1=FRIDAY RPI 1117
+DOWTAB   DC    C'7123456'  UPDATED FOR 2012/01/01 SUNDAY = 1 RPI 1193
          DC    0D,CL16'HHMMSSTH0CYYDDDSMMDDYYYY'
 TIMEDATE DS    0XL16
 HHMMSSTH DC    XL4'00000000' HHMMSSTH

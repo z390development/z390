@@ -1,0 +1,39 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/30/08                                                 *
+.*********************************************************************
+.* 02/20/12 RPI 1182 fix base corruption after branch or perform     
+.*********************************************************************
+.*  GEN_BASE_RESET - reset to force reloading base regs at:    
+.*    1.  labeled paragraphs  - see GEN_LABEL
+.*    2.  return from perform - see GEN_PERFORM
+.*********************************************************************
+         GEN_BASE_RESET
+         COPY  ZC_WS
+         AIF (&BASE_B1_USED)               RPI 1065
+             :&BASE_B1_USED SETB 0
+             GEN_DROP &BASE_B1
+         AEND
+         AIF (&LBASE_B1_USED)              RPI 1065
+             :&LBASE_B1_USED SETB 0
+             GEN_DROP &LBASE_B1
+         AEND
+         AIF (&BASE_B2_USED)               RPI 1065
+             :&BASE_B2_USED SETB 0
+             GEN_DROP &BASE_B2
+         AEND
+         AIF (&LBASE_B2_USED)              RPI 1065
+             :&LBASE_B2_USED SETB 0
+             GEN_DROP &LBASE_B2
+          AEND             :
+         :&BASE_LRU     SETA 2   SET HIGH REG FIRST AND SKIP DROP     
+         :&BASE_B1_HIGH SETA 0   RESET DYNAMIC WS BASE REGS
+         :&BASE_B2_HIGH SETA 0
+         :&LBASE_LRU     SETA 2  SET HIGH REG FIRST AND SKIP DROP 
+         :&LBASE_B1_HIGH SETA 0  RESET DYNAMIC LK BASE REGS
+         :&LBASE_B2_HIGH SETA 0
+         MEND  

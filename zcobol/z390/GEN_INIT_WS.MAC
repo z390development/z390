@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 12/20/08 initial coding to initialize CICS DFHEISTG WS values
+.* 02/18/12 RPI 1181 add GEN_BASE for each item in case required.
 .*********************************************************************
          GEN_INIT_WS      
          COPY  ZC_WS   
@@ -23,6 +24,7 @@
                 AND  &SYM_LK(&I) EQ 0                                  X
                 AND  &SYM_VAL(&I) NE '')
                AIF (&SYM_DUP(&I) EQ 1)
+                   GEN_BASE &I            RPI 1181
                    GEN_MOVE &SYM_NAME(&I),&I,&SYM_VAL(&I),0
                AELSE
                    MNOTE 8,'GEN_INIT_WS DUP VAL NOT SUPPORTED YET'

@@ -117,10 +117,20 @@ DOASR    EQU   *
          MVC   0(64,R9),TCTTEASR  MOVE ASRAREGS
 DOBTR    EQU   *
          ICM   R9,15,P0208BTR     ANY BTRANS ?
-         BZ    DOCMD              EXIT IF NONE
+         BZ    DOCHAN             EXIT IF NONE
          CLI   TCTTETI,C'!'       NON-TERMINAL ?
          BE    INVREQ5            ERROR IF IT IS
          MVI   0(R9),X'00'        SET NO BTRANS
+DOCHAN   EQU   *
+         ICM   R9,15,P0208CHN     ANY CHANNEL ?
+         BZ    DOCMD              EXIT IF NONE
+         CLI   TCTTECHN,X'00'     ANY SAVED CHANNEL NAME ?
+         BE    NOCHAN             EXIT IF NONE
+         MVC   0(16,R9),TCTTECHN  SET SAVED CHANNEL NAME
+         B     DOCMD              EXIT
+*
+NOCHAN   EQU   *
+         MVC   0(16,R9),=16C' '   SET BLANK CHANNEL NAME
 DOCMD    EQU   *
          ICM   R9,15,P0208CMD     ANY CMDSEC ?
          BZ    DOCOL              EXIT IF NONE

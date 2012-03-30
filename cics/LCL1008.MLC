@@ -74,12 +74,10 @@ PCTFOUND EQU   *
 NOQURQ   EQU   *
          OC    P1008FRM,P1008FRM  ANY FROM ?
          BZ    NOFROM             EXIT IF NONE
-* FROM MEANS WE ALSO HAVE LENGTH
-         LH    R1,P1008LEN        R1=LENGTH
+* FROM MEANS WE ALSO HAVE LENGTH/FLENGTH
+         L     R1,P1008LEN        R1=LENGTH
          LTR   R1,R1              IS IT 0 OR NEGATIVE ?
          BNP   LENGERR            ERROR IF IT IS
-         CHI   R1,32763-16        VALID LENGTH ?
-         BH    LENGERR            ERROR IF TOO BIG
 NOFROM   EQU   *
          CLI   P1008INT,X'FF'     IS IT INTERVAL/TIME ?
          BE    INTIME             EXIT IF IT IS
@@ -238,17 +236,17 @@ NOTEXP   EQU   *
          L     R1,P1008TRN        R1=TRANSID
          M     R0,P1008TRM        MULTIPLY BY TERMID
          STM   R0,R1,EIBREQID     SAVE THE REQID
-         MVC   EIBREQID(2),=C'DF' OVERLAY THE TS Q PREFIX
+         MVHHI EIBREQID,C'DF'     OVERLAY THE TS Q PREFIX
 GOTREQ   EQU   *
 * IF FROM, RTRANSID, RTERMID OR QUEUE ARE SPECIFIED WE HAVE A TS Q
          MVI   RETVE,X'00'        RESET THE RETRIEVE INDICATOR
          OC    P1008FRM(22),P1008FRM ANY FROM/RTRANSID/RTERMID/QUEUE ?
-         BZ    SENDIC             EXIT IF NOT
+         BZ    DOCHAN             EXIT IF NOT
 * BUILD TS Q
-         LH    R4,P1008LEN        LENGTH OF DATA (IF ANY)
+         L     R4,P1008LEN        LENGTH OF DATA (IF ANY)
          AHI   R4,16              + LENGTH OF RTRANSID/RTERMID/QUEUE
-         STH   R4,TSACLEN         SAVE TS LENGTH
-         EXEC  CICS GETMAIN LENGTH(TSACLEN) SET(R4) INITIMG(0)         X
+         ST    R4,TSACLEN         SAVE TS LENGTH
+         EXEC  CICS GETMAIN FLENGTH(TSACLEN) SET(R4) INITIMG(0)        X
                NOHANDLE
          MVC   0(4,R4),P1008RTN   MOVE RTRANSID
          MVC   4(4,R4),P1008RTM   MOVE RTERMID
@@ -256,14 +254,14 @@ GOTREQ   EQU   *
          ICM   R14,15,P1008FRM    ANY FROM ?
          BZ    DOWQTS             EXIT IF NONE
 * MOVE FROM DATA
-         LH    R15,P1008LEN       R15=LENGTH FOR MOVE
+         L     R15,P1008LEN       R15=LENGTH FOR MOVE
          LR    R1,R15             R1=DESTINATION LENGTH
          LA    R0,16(R4)          R0=DESTINATION ADDRESS
          MVCL  R0,R14             COPY DATA
 DOWQTS   EQU   *
 * IF IOERR OCCURS IT BELONGS TO IC START, NOT TO THE WRITEQ TS
          EXEC  CICS WRITEQ TS QUEUE(EIBREQID)                          X
-               FROM(0(R4)) LENGTH(TSACLEN) NUMITEMS(TSNUMIT)           X
+               FROM(0(R4)) FLENGTH(TSACLEN)                            X
                ICTRAN(P1008TRN) ICTERM(P1008TRM) NOHANDLE
          CLC   EIBRESP,DFHRESP(IOERR) IS IT IOERR ?
          BE    IOERR              EXIT IF IT IS
@@ -275,6 +273,64 @@ DOWQTS   EQU   *
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+DOCHAN   EQU   *
+         CLI   P1008CHN,X'00'     ANY CHANNEL ?
+         BE    SENDIC             EXIT IF NONE
+* VERIFY CHANNEL NAME
+         LA    R15,P1008CHN       R15 POINTS TO CHANNEL NAME
+         BAL   R14,VERIFY         VERIFY CHANNEL NAME
+         B     CHANOK             EXIT IF OK
+         B     CHANERR            EXIT IF BAD
+*
+CHANOK   EQU   *
+* NAME VALID, SEARCH THE STRUCTURE
+         MVI   NEWCHAN,X'00'      RESET NEW CHANNEL INDICATOR
+         LA    R12,TCTTECAQ       R12=CHANNEL ANCHOR POINTER
+         ICM   R2,15,TCTTECAQ     R2=CHANNEL CHAIN ADDRESS
+         BZ    CHANNTFD           EXIT IF NONE
+         USING DFHCHAN,R2
+CHANCHLP EQU   *
+* ASSUMING THAT ANY CHANNEL IS UP FOR GRABS
+         CLC   CHANNAME,P1008CHN  MATCH START CHANNEL ?
+         BE    CHANFND            EXIT IF IT DOES
+         LA    R12,CHANADDR       R12=PREVIOUS POINTER ADDRESS
+         ICM   R2,15,CHANADDR     CHAIN TO NEXT
+         BNZ   CHANCHLP           LOOP UNTIL CHAIN END
+CHANNTFD EQU   *
+* CHANNEL NOT FOUND, CREATE EMPTY ONE
+         MVI   NEWCHAN,X'FF'      SET NEW CHANNEL INDICATOR
+         GETMAIN R,LV=26
+         LR    R2,R1              SET GETMAIN ADDRESS
+         XC    DFHCHAN(26),DFHCHAN CLEAR CHANNEL
+         MVC   CHANNAME,P1008CHN  SET START CHANNEL NAME
+CHANFND  EQU   *
+* CHANNEL FOUND OR CREATED
+* CREATE TS Q NAME AND WRITE CHANNEL RECORD
+         SR    R0,R0              CLEAR R0
+         L     R1,P1008TRN        R1=TRANSID
+         M     R0,P1008TRM        MULTIPLY BY TERMID
+         STM   R0,R1,WORK2        SAVE THE TS Q NAME
+         MVHHI WORK2,C'CH'        OVERLAY THE TS Q PREFIX
+         EXEC  CICS WRITEQ TS QUEUE(WORK2) FROM(0(R2)) LENGTH(26)
+         CLI   NEWCHAN,X'00'      DID WE CREATE NEW CHANNEL ?
+         BE    NONEWCHN           EXIT IF NOT
+         FREEMAIN A=(R2),LV=26    FREE CHANNEL
+NONEWCHN EQU   *
+* WRITE EACH CONTAINER TO THE TS Q
+         LA    R12,CHANCONT       R12=CONTAINER ANCHOR POINTER
+         DROP  R2
+CONTLOOP EQU   *
+         OC    0(4,R12),0(R12)    ANY (MORE) CONTAINERS ?
+         BZ    SENDIC             EXIT IF NONE
+         L     R2,0(R12)          R2=CONTAINER POINTER
+         USING DFHCONT,R2
+         L     R0,CONTLENG        R0=CONTAINER LENGTH
+         AHI   R0,28              + PREFIX LENGTH
+         ST    R0,TSACLEN         SAVE IT
+         EXEC  CICS WRITEQ TS QUEUE(WORK2) FROM(0(R2)) FLENGTH(TSACLEN)
+         LA    R12,CONTADDR       R12=PREVIOUS POINTER ADDRESS
+         B     CONTLOOP           LOOP UNTIL CHAIN END
+*
 SENDIC   EQU   *
 * GET AND CLEAR THE IC BLOCK
          EXEC  CICS GETMAIN FLENGTH(=A(ICPREFIX)) SET(R5) INITIMG(0)   X
@@ -319,6 +375,13 @@ DOICSCAN EQU   *
          LTR   R15,R15            CHECK RC ?
          BNZ   INVREQ             ERROR IF BAD
          B     RETURN             RETURN
+*
+CHANERR  EQU   *
+* INVOKE CHANNELERR
+         MVI   EIBRCODE,X'DA'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(CHANNELERR) SET EIBRESP=CHANNELERR
+         MVC   EIBRESP2,=F'1'     SET EIBRESP2=INVALID CHANNEL NAME
+         B     DORESP             EXIT
 *
 INVREQ4  EQU   *
          MVC   EIBRESP2,=F'4'     SET EIBRESP2=BAD HOURS
@@ -394,7 +457,46 @@ RETURN   EQU   *
 NOEDFA   EQU   *
          PR    ,                  UNSTACK AND RETURN TO MACRO
 *
+VERIFY   EQU   *
+* VALIDATE THE NAME, NO LEADING OR EMBEDDED BLANKS
+* TRAILING BLANKS PERMITTED
+         LR    R5,R15             R5=START OF NAME
+         CLI   0(R15),C' '        BLANK START ?
+         BE    4(R14)             ERROR IF IT IS
+         LA    R0,16              R0=LENGTH
+CHCTCHAR EQU   *
+         LA    R2,CHCTTAB         R2 POINTS TO CHAR LIST
+CHCTLOOP EQU   *
+         CLC   0(1,R15),0(R2)     MATCH TO CHAR ?
+         BNE   CHCTCINC           EXIT IF NOT
+         AHI   R15,1              BUMP NAME POINTER
+         BCT   R0,CHCTCHAR        LOOP THROUGH NAME
+         BR    R14                RETURN
+*
+CHCTCINC EQU   *
+         AHI   R2,1               BUMP CHAR LIST POINTER
+         CLI   0(R2),X'FF'        STOPPER ?
+         BNE   CHCTLOOP           LOOP IF NOT
+* FOUND A BAD CHAR
+         CLI   0(R15),C' '        IS IT BLANK ?
+         BNE   4(R14)             ERROR IF NOT
+* FOUND A BLANK, CHECK FOR TRAILING BLANKS
+         LA    R2,15(R5)          R2=END OF NAME
+         SR    R2,R15             R2=LENGTH OF TRAILING CHARS-1
+         EX    R2,CHCTCLC         TEST FOR TRAILING BLANKS
+         BNE   4(R14)             ERROR IF NOT ALL BLANK
+         BR    R14                RETURN
+*
+CHCTCLC  CLC   0(0,R15),=15C' '   TEST FOR TRAILING BLANKS
+*
+CHCTTAB  DC    C'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+         DC    C'abcdefghijklmnopqrstuvwxyz'
+         DC    C'0123456789'
+         DC    C'$@#/%&&?!:|"=ª,;<>.-_'
+         DC    X'FF'              STOPPER
+*
 WORK     DC    PL8'0'             WORK AREA
+WORK2    DS    XL8                WORK AREA
 INTDEC   DC    PL8'0'             INTERVAL IN 0.01 SECS
 INTCPY   DS    PL4                INTERVAL COPY AREA    0HHMMSS+
 INTBIN   DS    FL4                INTERVAL IN 0.01 SECS BINARY
@@ -404,9 +506,9 @@ RCODE    DS    XL4                SAVE RCODE
 RESP     DS    XL4                SAVE RESP
 RESP2    DS    XL4                SAVE RESP2
 RETVE    DS    X                  FF=TS Q DATA WRITTEN
+NEWCHAN  DS    X                  FF=EMPTY CHANNEL CREATED
 *
-TSACLEN  DS    XL2                ACTUAL TS LENGTH
-TSNUMIT  DS    XL2                NUMITEMS
+TSACLEN  DS    XL4                ACTUAL TS LENGTH
 *
 KCPICEQ  DS    0F
 * EXPIRED ICE REQUEST
@@ -420,6 +522,7 @@ KCPICEND EQU   *
          DFHEIBLK                 EIB
          DFHTCTTE                 TCTTE
          DFHICBLK                 INTERVAL CONTROL PREFIX AREA
+         DFHCHAN                  CHANNEL/CONTAINER STRUCTURES
 *
          EQUREGS REGS=GPR
 *

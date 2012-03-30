@@ -44,7 +44,7 @@ NORESP2  EQU   *
 *
 NOEDFB   EQU   *
          MVI   TSLENSV,X'FF'      INVALIDATE TS LENGTH
-         LH    R4,P0A02LEN        R4=LENGTH
+         L     R4,P0A02LEN        R4=LENGTH
          LTR   R4,R4              VALID LENGTH ?
          BNP   LENGERR            ERROR IF NOT POSITIVE
          CHI   R4,32763           VALID LENGTH ?
@@ -86,7 +86,7 @@ NOEDFB   EQU   *
          BE    INVREQ             ERROR IF IT IS
 GOTIC    EQU   *
          MVC   TSPITEM,P0A02ITM   SET ITEM NUMBER
-         STH   R4,TSPLEN          SET LENGTH
+         ST    R4,TSPLEN          SET LENGTH
 * MOVE THE DATA
          L     R14,P0A02FRM       R14=SOURCE
          LR    R15,R4             R15=SOURCE LENGTH

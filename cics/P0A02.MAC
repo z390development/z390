@@ -16,7 +16,7 @@ P0A02EIB DS    AL4                EIB
 P0A02TCT DS    AL4                TCTTE
 P0A02QNM DS    CL16               QUEUE NAME
 P0A02ITM DS    XL2                ITEM
-P0A02LEN DS    XL2                LENGTH
+P0A02LEN DS    XL4                LENGTH
 P0A02FRM DS    AL4                ADDRESS OF FROM
 P0A02NUM DS    AL4                ADDRESS OF NUMITEMS
 P0A02ICM DS    CL4                ICTERM

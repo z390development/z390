@@ -1,0 +1,139 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_DELETE
+         GBLB  &PARMS_3412
+         LCLB  &NOEDF,&NOHAND
+         LCLC  &CONT,&CHANNEL,&RESP,&RESP2
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,10) EQ 'CONTAINER(').CONT
+         AIF   ('&PARM'(1,8)  EQ 'CHANNEL(').CHAN
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
+         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.CONT    ANOP
+&CONT    SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.CHAN    ANOP
+&CHANNEL SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   ('&CONT' EQ '').BADCONT
+         GEN_XC P3412,P3412END-P3412,P3412 CLEAR PARMS
+         GEN_MVC P3412FN,,=X'3412' SET FUNCTION CODE
+.* PROCESS CONTAINER
+         AIF   ('&CONT'(1,1) EQ '''').COSTRNG
+         LARL  R15,P3412CTN       ADDRESS TARGET
+         MVC   0(16,R15),&CONT    MOVE CONTAINER FROM LABEL
+         AGO   .DOCHAN
+.*
+.COSTRNG ANOP
+&CONTLEN SETA  K'&CONT
+         AIF   (&CONTLEN LT 3 OR &CONTLEN GT 18).INVCONT
+         GEN_MVC P3412CTN,,=CL16&CONT SET CONTAINER AS STRING
+.DOCHAN  ANOP
+.* PROCESS CHANNEL
+         AIF   ('&CHANNEL' NE '').GOTCHAN
+         GEN_MVC P3412CHN,,TCTTECHN SET DEFAULT CHANNEL
+         AGO   .ALLDONE
+.*
+.GOTCHAN ANOP
+         AIF   ('&CHANNEL'(1,1) EQ '''').CHSTRNG
+         LARL  R15,P3412CHN       ADDRESS TARGET
+         MVC   0(16,R15),&CHANNEL MOVE CHANNEL FROM LABEL
+         AGO   .ALLDONE
+.*
+.CHSTRNG ANOP
+&CHANLEN SETA  K'&CHANNEL
+         AIF   (&CHANLEN LT 3 OR &CHANLEN GT 18).BADCHAN
+         GEN_MVC P3412CHN,,=CL16&CHANNEL SET CHANNEL AS STRING
+.ALLDONE ANOP
+         GEN_ST DFHEIBR,P3412EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P3412TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P3412EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P3412EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P3412EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P3412NED,X'FF'   SET NOEDF
+         AEND
+         AIF   (NOT &NOHAND).DUNNOH
+         GEN_MVI P3412NOH,X'FF'   SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P3412RSP       SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P3412RS2       SAVE IT
+.NORESP2 ANOP
+         LARL  R0,P3412EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P3412EDF       SAVE IT
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P3412)       R1=LCL MODULE PARAMETER LIST
+P3412EDF_&SYSNDX DS 0H
+         BAKR  0,R15              STACK REGS AND GO
+.*
+         GEN_CLI P3412NOH,X'FF'   NOHANDLE ?
+         JE    P3412BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         JZ    P3412BYP_&SYSNDX   EXIT IF NONE
+* CONTAINERERR, CHANNELERR
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P3412BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_3412).BYP3412
+&PARMS_3412 SETB 1
+         P3412
+*
+.BYP3412 ANOP
+P3412BYP_&SYSNDX DS 0H
+         MEXIT
+.*
+.BADCONT MNOTE 12,'CONTAINER IS MANDATORY'
+         MEXIT
+.*
+.INVCONT MNOTE 12,'INVALID CONTAINER'
+         MEXIT
+.*
+.BADCHAN MNOTE 12,'INVALID CHANNEL'
+         MEXIT
+.*
+         MEND
+

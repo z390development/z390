@@ -8,6 +8,8 @@
 .*********************************************************************
 .* 04/09/08 initial coding for global WHEN
 .* 10/06/08 ZSTRMAC
+.* 01/27/12 DSH RPI 1181 SUPPORT MULT TRUE/FALSE COND TESTS 
+.* 03/07/12 DSH RPI 1182 GEN BASE FOR INDEX AFTER EACH LABEL
 .*********************************************************************
          WHEN  &VAL  
          COPY  ZC_WS
@@ -20,14 +22,67 @@
                MEXIT
          AEND
          :&IE_WHEN(&IE_LVL) SETA &IE_WHEN(&IE_LVL)+1
-         AIF   (&IE_WHEN(&IE_LVL) GT 1)                
+         AIF   (&IE_WHEN(&IE_LVL) GT 1 AND N'&SYSLIST EQ 1) RPI 1181                
                GEN_B EVAL&IE_EVAL(&IE_LVL)._END
          AEND
          GEN_LABEL EVAL&IE_EVAL(&IE_LVL)._WHEN&IE_WHEN(&IE_lVL),WHEN
          AIF   ('&VAL' NE 'OTHER')
-               GEN_COMP &SYM_NAME(&IE_EVAL_IX(&IE_LVL)),&IE_EVAL_IX(&IEX
-               _LVL),&VAL,0
-               :&NEXT_WHEN SETA  &IE_WHEN(&IE_LVL)+1
-               GEN_BC   ZC_NE,EVAL&IE_EVAL(&IE_LVL)._WHEN&NEXT_WHEN
+               AIF ('&SYM_NAME(&IE_EVAL_IX(&IE_LVL))' EQ 'TRUE')
+                   ACALL EVAL_COND
+                   GEN_BC  &CCT,EVAL&IE_EVAL(&IE_LVL)._WHEN&NEXT_WHEN
+               AELSEIF ('&SYM_NAME(&IE_EVAL_IX(&IE_LVL))' EQ 'FALSE')
+                   ACALL EVAL_COND
+                   GEN_BC  15-&CCT,EVAL&IE_EVAL(&IE_LVL)._WHEN&NEXT_WHEX
+               N
+               AELSE
+                   GEN_BASE &IE_EVAL_IX(&IE_LVL)
+                   GEN_COMP &SYM_NAME(&IE_EVAL_IX(&IE_LVL)),&IE_EVAL_IXX
+               (&IE_LVL),&VAL,0
+                   :&NEXT_WHEN SETA  &IE_WHEN(&IE_LVL)+1
+                   GEN_BC   ZC_NE,EVAL&IE_EVAL(&IE_LVL)._WHEN&NEXT_WHEN
+               AEND
+         AEND
+.*
+.* EVAL CONDITION FOR EVAL TRUE OR FALSE
+.*
+         AENTRY EVAL_COND
+         ZC_SYM_FIND &SYSLIST(1)
+         :&V1_IX SETA &SYM_IX
+         AIF (&V1_IX GT 0)
+             GEN_BASE &V1_IX
+         AEND
+         ZC_SYM_FIND &SYSLIST(3)
+         :&V2_IX SETA &SYM_IX
+         AIF (&V2_IX GT 0)
+             GEN_BASE &V2_IX
+         AEND
+         GEN_COMP &SYSLIST(1),&V1_IX,&SYSLIST(3),&V2_IX  RPI 1182
+         :&PARM SETC '&SYSLIST(2)'
+         ACALL SET_CCT
+         :&NEXT_WHEN SETA  &IE_WHEN(&IE_LVL)+1                
+         AEND
+.*
+.* SET CCT IF RELATION FOUND ELSE CCT NULL 
+.*
+         AENTRY SET_CCT
+         :&CCT SETC ''     ASSUME RELATION NOT FOUND
+               AIF   ('&PARM' EQ '='                                   X
+                      OR '&PARM' EQ 'EQUAL'                            X            
+                      OR '&PARM' EQ 'EQUALS')            
+                   :&CCT    SETC 'ZC_NE'
+               AELSEIF ('&PARM' EQ '<'                                 X
+                        OR '&PARM' EQ 'LESS')
+                   :&CCT    SETC 'ZC_GE'
+               AELSEIF   ('&PARM' EQ '>'                               X
+                          OR '&PARM' EQ 'GREATER')
+                   :&CCT    SETC 'ZC_LE'
+               AELSEIF ('&PARM' EQ '<=')     RPI 1065
+                   :&CCT    SETC 'ZC_GT'
+               AELSEIF   ('&PARM' EQ '>=')   RPI 1065
+                   :&CCT    SETC 'ZC_LT'
+               AELSE
+                    MNOTE 'WHEN TRUE/FALSE CONDITION NOT FOUND - &CCT'
+                    MEXIT
+               AEND
          AEND
          MEND

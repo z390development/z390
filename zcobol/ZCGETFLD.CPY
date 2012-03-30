@@ -9,12 +9,16 @@
 .* 03/17/08 RPI 1004 COMBINE - WITH LITERAL VALUE                   
 .* 07/09/09 RPI 1065 ONLY COMBINE +- IF FIELD IS ONLY +-            
 .* 07/17/09 RPI 1065 TRUNC QUAL NAMES GT 63 USING ZC_GET_QNAME                  
-.* 08/11/09 RPI 1065 REPLACE ZC_GET_QNAME USING ONLY FIND_QUAL_ALIAS             
+.* 08/11/09 RPI 1065 REPLACE ZC_GET_QNAME USING ONLY FIND_QUAL_ALIAS 
+.* 02/16/12 RPI 1181 IGNORE (1) SUBSCRIPT IF OCCURS 1
+.* 03/06/12 RPI 1182 SUPPORT RMD (SUB+LIT:LIT) FORMAT
+.* 03/23/12 RPI 1182 ONLY REQ 1 GEN_BASE PER FIELD (NONE FOR SUB,OFF)
+.* 03/30/12 RPI 1182 SET &FIELD_LEN DEF IF FIELD NAME FOUND
 .*********************************************************************
 .* GET RX ADDRESSABLE QUALIFIED PARM FIELD FROM &SYSLIST(&PARM_IX)
 .* INPUT
 .*  1. &PARM_IX   SETA MUST BE SET TO CURRENT SYSLIST PARM
-.*  2. &FIELD_REG SETC MUST BE SET TO TARGET REG FOR SUBSC VAR ADDR
+.*  2. &FIELD_REG SETC MUST BE SET TO TARGET REG FOR SUBSC/RMOD ADDR
 .*  3. &FIELD_SS1 SETB MUST BE SET TO 1 IF OFF(LEN,REG) REQ VS OFF(REG)
 .* OUTPUT
 .*  1. &FIELD_IX   SETA = SYM_IX FOR FIELD IF FIELD FOUND ELSE 0 (LIT)
@@ -25,16 +29,16 @@
 .*  5. &FIELD_NAME SETC = FIELD NAME, OFF(REG), OR OFF(LEN,REG) IF SS1
 .*  6. &FIELD_88_IX SETA - 88 LVL INDEX ELSE 0
 .* WHERE USED:
-.*  1. ADD, DIVIDE, IF, GO, INSPECT, MULTIPLY, SUBTRACT, TRANSFORM
-.*     GEN_DISPLAY.
+.*  1. ALL VERBS THAT SUPPORT SUBSCRIPTED AND MODIFIED FIELD REFERENCES
+.*     SUCH AS MOVE.MAC WITH BOTH SUBSCRIPTED AND MODIFIED FIELDS.
 .* USES:
 .*  1. ZC_SYM_FIND  - find field &FIELD_NAME and set &FIELD_IX
 .*  2. ZC_SYM_INDEX - resolve duplicate names if qualified
 .*  3. ZC_GET_QNAME - build qualified name with turncation if > 63
 .* NOTES
-.*  1. May generate base setting code if required
-.*  2. May generate subscript code if required 
-.*  3. Errors - not found, no base, missing subsc., invalid subsc.
+.*  1. May generate one new base reg per field if required. RPI 1182
+.*  2. May generate subscript or RMOD code if required 
+.*  3. Errors - not found, no base, missing subsc, (var+lit:lit).
 .*********************************************************************
          AENTRY GET_PARM_FIELD
          :&QNAME(1) SETC '&SYSLIST(&PARM_IX)'
@@ -44,6 +48,7 @@
          :&FIELD_IX  SETA 0           RPI 1065 ASSUME NOT FOUND
          :&FIELD_SIX SETB 0           ASSUME NO SUBSCRIPT/INDEX
          :&FIELD_RMD SETB 0           ASSUME NO REF. MOD. (OFF:LEN)
+         :&RMD_VLEN  SETB 0           ASSUME NO RMD VARIABLE LENGTH
          :&PARM_IX SETA &PARM_IX+1
          AIF ('&FIELD_NAME' EQ '-' OR '&FIELD_NAME' EQ '+') RPI 1065
              :&FIELD_NAME SETC '&FIELD_NAME&SYSLIST(&PARM_IX)'
@@ -78,10 +83,11 @@
                    :&FIELD_88_IX SETA 0
                AEND
                :&FIELD_NAME SETC '&SYM_NAME(&FIELD_IX)' 
+               :&FIELD_LEN  SETA &SYM_LEN(&FIELD_IX) RPI 1182 DEF
                AIF (NOT &ZC_PROC_DIV) RPI 1065 NO BASE/SIX IN WS
                    AEXIT AENTRY
                AEND
-               GEN_BASE &FIELD_IX  GEN BASE IF REQ'D FOR RX ACCESS
+               GEN_BASE &FIELD_IX  GEN BASE REQ'D FOR RX ACCESS
                AIF   ('&SYSLIST(&PARM_IX)' EQ '''(''') SUBSC FOUND
                      AIF (&SYM_SIT(&FIELD_IX) GT 0)
                          ACALL GEN_SUBSCRIPT
@@ -176,7 +182,7 @@
                ACALL GET_NEXT_OCCURS_SYM
          AEND
          AIF   (&CUR_SIX NE &TOT_SIX                                   X
-               OR '&SYSLIST(&PARM_IX) NE ''')''')
+               OR '&SYSLIST(&PARM_IX)' NE ''')''')
                MNOTE 8,'ZCGETFLD SUBSCRIPT MISMATCH'
                MEXIT
          AEND
@@ -202,34 +208,33 @@
 .* CALC RMOD OFF SET - CALC OFFSET AND LENGTH FROM (OFF:LEN)
 .*
          AENTRY CALC_RMOD_OFF_LEN
-         AIF   ('&SYSLIST(&PARM_IX+2)' EQ ':'                          X
-               AND '&SYSLIST(&PARM_IX+4)' EQ ''')''')
-               :&FIELD_OFF SETA &SYSLIST(&PARM_IX+1)-1
-               :&FIELD_LEN SETA &SYSLIST(&PARM_IX+3)
-               AIF (&FIELD_OFF+&FIELD_LEN GT &SYM_LEN(&FIELD_IX))
-                   MNOTE 8,'ZCGETFLD RMOD OFF+LEN > FIELD LENGTH'
-                   MEXIT
-               AEND
-               AIF (&FIELD_SS1)
-                   AIF (&FIELD_SIX)
-                       :&FIELD_NAME SETC '&FIELD_OFF.(&FIELD_LEN,&FIELDX
-               _REG)'
-                   AELSE
-                       :&FIELD_NAME SETC '&FIELD_NAME+&FIELD_OFF.(&FIELX
-               D_LEN)'
-                   AEND
-               AELSE
-                   AIF (&FIELD_SIX)
-                       :&FIELD_NAME SETC '&FIELD_OFF.(&FIELD_REG)'
-                   AELSE
-                       :&FIELD_NAME SETC '&FIELD_NAME+&FIELD_OFF'
-                   AEND
-               AEND
-               :&PARM_IX SETA &PARM_IX+5
-         AELSE
-               MNOTE 8,'ZCGETFLD RMOD SYNTAX ERROR (LIT:LIT) ONLY'
-               MEXIT
+         AIF ('&SYSLIST(&PARM_IX+1)' EQ '1'                            X
+               AND '&SYSLIST(&PARM_IX+2)' EQ ''')''') RPI 1181
+               :&PARM_IX SETA &PARM_IX+3 
+               AEXIT AENTRY
          AEND
+         :&RMD_OFF     SETC '&SYSLIST(&PARM_IX+1)'
+         :&RMD_OFF_ADJ SETC '0'
+         AIF ('&SYSLIST(&PARM_IX+2)' EQ '+')
+             :&RMD_OFF_ADJ SETC '&SYSLIST(&PARM_IX+3)'
+             :&PARM_IX SETA &PARM_IX+4
+         AELSEIF ('&SYSLIST(&PARM_IX+2)' EQ '-')
+             :&RMD_OFF_ADJ SETC '-&SYSLIST(&PARM_IX+3)'
+             :&PARM_IX SETA &PARM_IX+4
+         AELSE
+             :&PARM_IX SETA &PARM_IX+2
+         AEND
+         AIF ('&SYSLIST(&PARM_IX)' NE ':')
+             MNOTE 8,'ZCGETFLD RMD INVALID FORMAT (OFF:LEN)'
+             MEXIT
+         AEND
+         :&RMD_LEN     SETC '&SYSLIST(&PARM_IX+1)' 
+         AIF ('&SYSLIST(&PARM_IX+2)' NE ''')''')
+             MNOTE 8,'ZCGETFLD RMD INVALID FORMAT (OFF:LEN)'
+             MEXIT
+         AEND
+         :&PARM_IX SETA &PARM_IX+3
+         GEN_RMD &RMD_OFF,&RMD_OFF_ADJ,&RMD_LEN          
          AEND
 .*
 .* END OF ZCGETFLD.CPY

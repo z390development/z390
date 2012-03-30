@@ -1,0 +1,33 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P3440 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P3440    DSECT
+         AELSE
+P3440    DS    0H
+         AEND
+P3440FN  DS    XL2                FUNCTION CODE
+P3440EIB DS    AL4                EIB
+P3440TCT DS    AL4                TCTTE
+P3440CTN DS    CL16               CONTAINER NAME
+P3440AS  DS    CL16               AS NAME
+P3440CHN DS    CL16               CHANNEL NAME
+P3440TOC DS    CL16               TOCHANNEL NAME
+P3440EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P3440EDS DS    AL4                DSA ADDRESS FOR EDF
+P3440EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P3440EDL DS    XL2                DSA LENGTH FOR EDF
+P3440NED DS    X                  FF=NOEDF
+         DS    X
+P3440NOH DS    X                  FF=NOHANDLE
+         DS    X
+P3440RSP DS    AL4                RESP
+P3440RS2 DS    AL4                RESP2
+P3440END EQU   *                  END MARKER
+         MEND
+

@@ -98,6 +98,10 @@ public  class  lz390 {
     * 07/18/09 RPI 1062 change abort msg from error to abort
     * 08/24/09 RPI 1069 add CODEPAGE(ascii+ebcdic+LIST) option
     * 09/26/09 RPI 1080 replace init_tables with init_tz390
+    * 07/30/11 RPI 1175 use tz390.check_java_version()
+    * 03/07/12 RPI 1197 support OBJ optional entry on .END TXT
+    *          1) last .END entry overrides default 0
+    *          2) ENTRY command overrides any .END entry 
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -128,6 +132,9 @@ public  class  lz390 {
     byte    obj_bin_id   = 0x02;
     RandomAccessFile obj_file = null;
     boolean obj_eod = false;
+    int obj_end_entry_esd = 0;      // RPI 1197 cur  .END entry esd or 0
+    int obj_end_entry_loc = 0;      // RPI 1197 cur  .END entry esd offset
+    int obj_end_entry_last_loc = 0; // RPI 1197 last .END entry load module offset
     RandomAccessFile z390_file = null;
     File lst_file = null;
     BufferedWriter lst_file_buff = null;
@@ -287,6 +294,10 @@ private void init_lz390(String[] args, JTextArea log_text){
 	    }
 	    tz390 = new tz390();
 	    tz390.init_tz390();  // RPI 1080
+    	if (!tz390.check_java_version()){ // RPI 1175
+    		abort_error(41,"unknown java version "
+    	    + tz390.java_vendor + " " + tz390.java_version);  
+    	}
         tz390.init_options(args,".OBJ");
 		tz390.open_systerm("LZ390");
 		tz390.init_codepage(tz390.codepage); // RPI 1069
@@ -661,7 +672,8 @@ private void resolve_esds(){
        }
        if (lkd_entry_loc == -1){
     	   if (lkd_entry == null || lkd_entry.equals(tz390.pgm_name)){
-    		   lkd_entry_loc = 0;
+  			   // else default to start and first csect
+   		       lkd_entry_loc = 0;
     	   } else {
     		   log_error(41,"LNK ENTRY " + lkd_entry + " NOT FOUND"); // RPI 732
     	   }
@@ -694,11 +706,17 @@ private boolean load_obj_file(boolean esds_only){
 	int max_obj_esd = 0;
 	while (!obj_eod
 			&& tot_obj_esd < tz390.opt_maxesd){
-		if (tz390.opt_tracel){
+		if (tz390.opt_tracel && (!esds_only || obj_line.substring(0,4).equals(".ESD"))){
 			tz390.put_trace("LOADING " + obj_line);
 		}
 		if (obj_line.substring(0,4).equals(".END")){
 			obj_eod = true;
+			// set last .END entry address if any RPI 1197
+			obj_end_entry_esd = Integer.valueOf(obj_line.substring(9,13),16).intValue();
+		    obj_end_entry_loc = Integer.valueOf(obj_line.substring(18,26),16).intValue();
+			if (obj_end_entry_esd > 0 &&!esds_only){
+			   obj_end_entry_last_loc = obj_end_entry_loc + gbl_esd_loc[obj_gbl_esd[obj_end_entry_esd]];
+			}
 		} else if (obj_line.substring(0,4).equals(".ESD")){
 			tot_obj_esd++;
 			obj_esd[tot_obj_esd] = Integer.valueOf(obj_line.substring(9,13),16).intValue();
@@ -718,6 +736,7 @@ private boolean load_obj_file(boolean esds_only){
 				}
 			}
 		} else if (obj_line.substring(0,4).equals(".TXT")){
+		  if (!esds_only){
 			int    obj_text_esd = Integer.valueOf(obj_line.substring(9,13),16).intValue();
 			if (obj_text_esd < 1 || obj_text_esd > max_obj_esd){
 				abort_error(29,"invalid object text esd - " + obj_text_esd + " in " + obj_file_name); // RPI 827
@@ -741,7 +760,9 @@ private boolean load_obj_file(boolean esds_only){
 			if (code_off + obj_text_len > mod_loc_ctr){
 				mod_loc_ctr = code_off + obj_text_len; // RPI 883
 			}
+		  }
 		} else if (obj_line.substring(0,4).equals(".RLD")){
+		  if (!esds_only){
 			int  obj_rld_esd = Integer.valueOf(obj_line.substring(9,13),16).intValue();
 			if (obj_rld_esd < 1 || obj_rld_esd > max_obj_esd){
 				abort_error(30,"invalid rld esd - " + obj_rld_esd + " in " + obj_file_name);  // RPI 827
@@ -829,15 +850,13 @@ private boolean load_obj_file(boolean esds_only){
 			} else {
 				abort_error(21,"z390 rld table exceeded");
 			}
+		  }
 		} else {
 			abort_error(20,"unknown obj record type - " + obj_line);
 		}
         get_obj_line();
-		if (obj_line == null){ // RPI 483
+		if (!obj_eod && obj_line == null){ // RPI 483
 			abort_error(38,"object file truncated - " + obj_file_name); // RPI 827
-		} else if (esds_only && !obj_line.substring(0,4).equals(".ESD")
-			|| obj_line.substring(0,4).equals(".END")){
-			obj_eod = true;
 		}
 	}
 	try {
@@ -965,7 +984,8 @@ private String cvt_obj_bin_to_hex(){
 		esd_loc = tz390.get_hex(bin_byte_buff.getInt(20),8);
     	text = text + " ESD=" + esd_id + " LOC=" + esd_loc + " LEN=" + esd_rld_len + " SIGN=" + esd_rld_sign + " XESD=" + xesd_id;
 	} else if (text.equals(".END")){
-		
+		esd_loc = tz390.get_hex(bin_byte_buff.getInt(5) >>> 8,8); // RPI 1197
+		text = text + " ESD=" + esd_id + " LOC=" + esd_loc; // RPI 1197		
 	} else {
 		abort_error(36,"invalid object record type - " + text + " in " + obj_file_name); // RPI 827
 	}
@@ -1169,7 +1189,11 @@ private void gen_load_module(){
 	 * output 390 load module in binary format
 	 * skipping rlds for unresolved wxtrn's 
 	 */
-	put_stats();
+	if (obj_end_entry_last_loc > 0 && lkd_entry_loc == 0){
+	   // if no ENTRY command, use last END Label entry
+	   lkd_entry_loc = obj_end_entry_last_loc; // RPI 1197
+	}
+    put_stats();
 	if (tz390.opt_mod && tot_rld > 0){
 		abort_error(40,"MOD file cannot contain RLD's =" + tot_rld); // RPI 883
 	}

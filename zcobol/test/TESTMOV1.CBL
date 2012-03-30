@@ -2,6 +2,9 @@
        PROGRAM-ID.    TESTMOV1.
        AUTHOR.        DON HIGGINS.
       * TEST MOVE.
+      ***************************************************************
+      * 01/26/12 DSH RPI 1181 ADD TEST 21
+      ***************************************************************
        ENVIRONMENT DIVISION.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
@@ -19,7 +22,10 @@
         77  DP1    PIC Z.
         77  DP2    PIC Z(3)9.
         77  DP3    PIC ZZ-99.
-        77  GOOD   COMP PIC S9(9) VALUE 0.
+        77  FLD1   PIC XX VALUE  'XY'.
+        77  FLD2   PIC XXX VALUE 'ABC'.
+        77  GOOD   COMP PIC S9(9) VALUE 0..
+       77 SUB1 PIC 9.
        PROCEDURE DIVISION.
        MAINLINE.
            MOVE 0 TO NF1
@@ -79,10 +85,23 @@
                PERFORM BAD ELSE PERFORM GOOD.
     20     MOVE ABC(1)(2:2) TO ABC(2)(2:2)
            IF ABC(2) NOT = 'DBC' PERFORM BAD ELSE PERFORM GOOD.
+    21     MOVE FLD1 TO FLD2(2:2)
+           IF FLD2 NOT = 'AXY' PERFORM BAD ELSE PERFORM GOOD.
+    22     MOVE 2 TO SUB1
+           MOVE '12' TO FLD2(SUB1:2)
+           IF FLD2 NOT = 'A12' PERFORM BAD ELSE PERFORM GOOD.
+    23     MOVE 1 TO SUB1
+            MOVE '12' TO FLD2(SUB1+1:2)
+           IF FLD2 NOT = 'A12' PERFORM BAD ELSE PERFORM GOOD.
+    24     MOVE 3 TO SUB1
+            MOVE '12' TO FLD2(SUB1 -1:2)
+           IF FLD2 NOT = 'A12' PERFORM BAD ELSE PERFORM GOOD.
+       WRAP-UP.
            DISPLAY 'TESTMOV1 GOOD TESTS =' GOOD 
            STOP RUN.
        GOOD.
            ADD 1 TO GOOD
        BAD.
+           DISPLAY 'TESTMOV1 GOOD TESTS =' GOOD 'BAD TESTS=1'.
            MOVE 16 TO RETURN-CODE
            STOP RUN.

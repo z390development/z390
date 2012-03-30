@@ -18,6 +18,7 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 03/04/12 RPI 1194 support single parm without (...)
 .*********************************************************************
 .* LOAD AND EXEC PGM VIA SVC 6
 .*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
@@ -52,7 +53,12 @@
 .NPOK    ANOP
          AIF    ('&ERRET' NE '').ERR1
          AIF    ('&PARAM' EQ '').ENDPARM
+         AIF    ('&PARAM'(1,1) NE '(').ONEPARM RPI 1194
          LA     1,=A&PARAM
+         AGO    .ONESKIP
+.ONEPARM ANOP
+         LA     1,=A(&PARAM)
+.ONESKIP ANOP
          AIF    (&VL NE 1).ENDPARM
 &OFF     SETA   N'&PARAM*4-4
          OI     &OFF.(1),X'80'

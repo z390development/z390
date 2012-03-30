@@ -12,6 +12,7 @@
 .* 03/12/09 RPI 1004 add ZC_PFPO copybook defining types
 .* 06/18/09 RPI 1042 move DROP ZC_R15 to non-cics section   
 .* 05/25/10 RPI 1118 add PVTMAXDL max display line length option
+.* 02/16/12 RPI 1181 add 01 FILLER to allow 05 levels in WS
 .*********************************************************************
 .* GLOBAL REGISTER ALLOCATION:
 .*  ZC_R0-ZC_R3 WORK USED BY ZCOBOL\Z390\GEN_*.MAC CODE GEN
@@ -76,6 +77,7 @@ ZC_WS    DS    0D           START WORKING STORAGE
          WS    77,ZC_WS_ID,PIC,X(8),VALUE,'WS*WS*WS' DUMP ID
          WS    77,ZC_WS_START,POINTER                WS START
          WS    77,ZC_WS_LEN,COMP,PIC,S9(9)           WS LENGTH
+         WS    01,FILLER                             RPI 1181 FORCE 01
 ZC390CVT DSECT
          COPY  ZC390CVT
 ZC390PVT DSECT

@@ -9,6 +9,7 @@
 .* 04/09/08 initial coding for z390 procedure label generation.
 .* 10/07/08 ZSTRMAC
 .* 08/04/09 RPI 1065 support section qualifiers for PG labels when req.
+.* 02/20/12 RPI 1182 RESET BASE REGS FOR MULT ENTRY
 .*********************************************************************
          GEN_LABEL &PG_NAME,&TYPE
          COPY  ZC_WS
@@ -39,6 +40,7 @@ SN_&LAST_SN_NAME._PG_&PG_NAME  DS    0H  &TYPE
                AELSE
 PG_&PG_NAME  DS    0H  &TYPE
                AEND
+               GEN_BASE_RESET   RPI 1182 RESET BASES FOR MULT ENTRY
                MEXIT
          AEND
 .*
@@ -92,6 +94,7 @@ PG_&PG_NAME  DS    0H  &TYPE
                    :&TARGET SETC 'PG_&PG_NAME'
                AEND
 &TARGET  DS    0H
+               GEN_BASE_RESET  RPI 1182
                AIF (&ZC_TRACE)
                    ZC_SYM_FIND READY_RESET_TRACE
                    GEN_COMP READY_RESET_TRACE,&SYM_IX,'T',0
@@ -103,6 +106,7 @@ PG_&PG_NAME  DS    0H  &TYPE
                :&LAST_SN_NAME SETC '&PG_NAME'
                :&TARGET SETC 'SN_&LAST_SN_NAME'
 &TARGET  DS 0H SECTION
+               GEN_BASE_RESET     RPI 1182
                AIF (&ZC_TRACE)
                    ZC_SYM_FIND READY_RESET_TRACE
                    GEN_COMP READY_RESET_TRACE,&SYM_IX,'T',0

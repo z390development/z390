@@ -40,6 +40,7 @@ call ZC390CLG zcobol\test\TESTSIX2 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTTRC1 notiming stats TRUNC %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTTRC2 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTTRC3 notiming stats TRUNC NOR64 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call ZC390CLG zcobol\test\TESTRMD1 notiming stats TRUNC NOR64 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTWS1  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy zcobol\test\*.* zcobol\test\z390
 rem

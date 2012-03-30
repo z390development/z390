@@ -1,0 +1,249 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_GET
+         GBLB  &PARMS_3414
+         GBLB  &ZC_CICS
+         LCLB  &NODATA,&NOEDF,&NOHAND
+         LCLC  &CONT,&CHANNEL,&INTO,&SET,&FLENGTH,&RESP,&RESP2
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,10) EQ 'CONTAINER(').CONT
+         AIF   ('&PARM'(1,8)  EQ 'CHANNEL(').CHAN
+         AIF   ('&PARM'(1,5)  EQ 'INTO(').INTO
+         AIF   ('&PARM'(1,4)  EQ 'SET(').SET
+         AIF   ('&PARM'(1,8)  EQ 'FLENGTH(').FLENGTH
+         AIF   ('&PARM'(1,6)  EQ 'NODATA').NODATA
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
+         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.CONT    ANOP
+&CONT    SETC  '&PARM'(11,K'&PARM-11)
+         AGO   .PLOOP
+.*
+.CHAN    ANOP
+&CHANNEL SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.INTO    ANOP
+&INTO    SETC '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.SET     ANOP
+&SET     SETC '&PARM'(5,K'&PARM-5)
+         AGO   .PLOOP
+.*
+.FLENGTH ANOP
+&FLENGTH SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.NODATA  ANOP
+&NODATA  SETB  1
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   ('&CONT' EQ '').MISCONT
+         AIF   (&NODATA AND '&INTO' NE '').NODINTO
+         AIF   (&NODATA AND '&SET' NE '').NODSET
+         AIF   (&NODATA AND '&FLENGTH' EQ '').NODFLEN
+         AIF   ('&SET' NE '' AND '&FLENGTH' EQ '').SETFLEN
+         AIF   ('&INTO' NE '' AND '&SET' NE '').INTOSET
+         AIF   (NOT &NODATA AND '&INTO' EQ '' AND '&SET' EQ '').NOINSET
+         GEN_XC P3414,P3414END-P3414,P3414 CLEAR PARMS
+         GEN_MVC P3414FN,,=X'3414' SET FUNCTION CODE
+.* PROCESS CONTAINER
+         AIF   ('&CONT'(1,1) EQ '''').COSTRNG
+         LARL  R15,P3414CTN       ADDRESS TARGET
+         MVC   0(16,R15),&CONT MOVE CONTAINER FROM LABEL
+         AGO   .CHANNEL
+.*
+.COSTRNG ANOP
+&CONTLEN SETA  K'&CONT
+         AIF   (&CONTLEN LT 3 OR &CONTLEN GT 18).INVCONT
+         GEN_MVC P3414CTN,,=CL16&CONT SET CONTAINER AS STRING
+.CHANNEL ANOP
+.* PROCESS CHANNEL
+         AIF   ('&CHANNEL' NE '').GOTCHAN
+         LARL  R15,P3414CHN       ADDRESS TARGET
+         MVC   0(16,R15),TCTTECHN SET DEFAULT CHANNEL
+         AGO   .DUNCHAN
+.*
+.GOTCHAN ANOP
+         AIF   ('&CHANNEL'(1,1) EQ '''').CHSTRNG
+         LARL  R15,P3414CHN       ADDRESS TARGET
+         MVC   0(16,R15),&CHANNEL MOVE CHANNEL FROM LABEL
+         AGO   .DUNCHAN
+.*
+.CHSTRNG ANOP
+&CHANLEN SETA  K'&CHANNEL
+         AIF   (&CHANLEN LT 3 OR &CHANLEN GT 18).INVCHAN
+         GEN_MVC P3414CHN,,=CL16&CHANNEL SET CHANNEL AS STRING
+.DUNCHAN ANOP
+         AIF   (NOT &NODATA).DOSET
+         GEN_MVI P3414NOD,X'FF'   SET NODATA INDICATOR
+         AGO   .FLENLBL
+.*
+.DOSET   ANOP
+         AIF   ('&SET' EQ '').NOSET
+         GEN_MVI P3414SET,X'FF'   SET SET INDICATOR
+         AGO   .FLENLBL
+.*
+.NOSET   ANOP
+         LA    R0,&INTO           R0=INTO ADDRESS
+         GEN_ST R0,P3414INT       SAVE IT
+         AIF   ('&FLENGTH' EQ '').NOFLEN
+         AIF   (T'&FLENGTH NE 'N').FLENLBL
+         AIF   ('&SET' NE '' OR &NODATA).BADFLEN
+         GEN_MVC P3414FLN,,=AL4(&FLENGTH) MOVE FLENGTH
+         AGO   .ALLDONE
+.*
+.FLENLBL ANOP
+         AIF   (&ZC_CICS)
+         AIF   ('&FLENGTH'(1,10) EQ 'LENGTH,OF,')
+.* COBOL LENGTH OF EXTRACT
+&LENLSL  SETC  '&FLENGTH'(11,K'&FLENGTH-10)
+         GEN_MVC P3414FLN,,=AL4(L'&LENLSL) MOVE FLENGTH
+         AELSE
+.* COBOL LENGTH AS LABEL
+         L     R0,&FLENGTH        SET FLENGTH FROM LABEL
+         GEN_ST R0,P3414FLN       SAVE IT
+         LA    R0,&FLENGTH        R0=ADDRESS OF FLENGTH
+         GEN_ST R0,P3414FAD       SAVE IT
+         AEND
+         AELSE
+.* ASM LENGTH AS LABEL
+         L     R0,&FLENGTH        R0=FLENGTH FROM LABEL
+         GEN_ST R0,P3414FLN       SAVE IT
+         LA    R0,&FLENGTH        R0=ADDRESS OF FLENGTH
+         GEN_ST R0,P3414FAD       SAVE IT
+         AEND
+         AGO   .ALLDONE
+.*
+.NOFLEN  ANOP
+         LAY   R0,L'&INTO         R0=IMPLIED LENGTH OF INTO
+         GEN_ST R0,P3414FLN       SAVE IT
+.*
+.ALLDONE ANOP
+         GEN_ST DFHEIBR,P3414EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P3414TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P3414EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P3414EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P3414EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P3414NED,X'FF'   SET NOEDF
+         AEND
+         AIF   (NOT &NOHAND).DUNNOH
+         GEN_MVI P3414NOH,X'FF'   SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P3414RSP       SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P3414RS2       SAVE IT
+.NORESP2 ANOP
+         LARL  R0,P3414EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P3414EDF       SAVE IT
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P3414)       R1=LCL MODULE PARAMETER LIST
+P3414EDF_&SYSNDX DS 0H
+         BAKR  0,R15              STACK REGS AND GO
+.*
+         AIF   ('&SET' EQ '').NOSET2
+         AIF   (&ZC_CICS)
+         AIF   ('&SET'(1,11) EQ 'ADDRESS,OF,')
+.* COBOL LINKAGE-SECTION LABEL, EXTRACT AND TRANSFORM
+&SETLSL  SETC  '&SET'(12,K'&SET-11)
+         LARL  R1,P3414STA        ADDRESS SOURCE
+         MVC   ZC_&SETLSL._PTR(4),0(R1) SET ADDRESS IN L-S POINTER
+         AELSE
+.* COBOL STANDARD POINTER
+         GEN_MVC &SET,4,P3414STA  SET ADDRESS IN POINTER
+         AEND
+         AELSE
+.* ASM GENERAL REGISTER
+         LRL   &SET,P3414STA      LOAD THE SET REGISTER
+         AEND
+.NOSET2  ANOP
+         GEN_CLI P3414NOH,X'FF'   NOHANDLE ?
+         JE    P3414BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         JZ    P3414BYP_&SYSNDX   EXIT IF NONE
+* CONTAINERERR, CHANNELERR, INVREQ, LENGERR
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P3414BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_3414).BYP3414
+&PARMS_3414 SETB 1
+         P3414
+*
+.BYP3414 ANOP
+P3414BYP_&SYSNDX DS 0H
+         MEXIT
+.*
+.MISCONT MNOTE 12,'CONTAINER IS MANDATORY'
+         MEXIT
+.*
+.NODINTO MNOTE 12,'INTO AND NODATA SPECIFIED'
+         MEXIT
+.*
+.NODSET  MNOTE 12,'SET AND NODATA SPECIFIED'
+         MEXIT
+.*
+.NODFLEN MNOTE 12,'NODATA REQUIRES FLENGTH'
+         MEXIT
+.*
+.SETFLEN MNOTE 12,'SET REQUIRES FLENGTH'
+         MEXIT
+.*
+.BADFLEN MNOTE 12,'SET OR NODATA REQUIRES FLENGTH AS LABEL'
+         MEXIT
+.*
+.INTOSET MNOTE 12,'BOTH INTO AND SET SPECIFIED'
+         MEXIT
+.*
+.NOINSET MNOTE 12,'INTO OR SET OR NODATA IS REQUIRED'
+         MEXIT
+.*
+.INVCONT MNOTE 12,'INVALID CONTAINER'
+         MEXIT
+.*
+.INVCHAN MNOTE 12,'INVALID CHANNEL'
+         MEXIT
+.*
+         MEND
+

@@ -22,6 +22,7 @@ P0208APT DS    AL4                APLTEXT
 P0208ASP DS    AL4                ASRAPSW
 P0208ASR DS    AL4                ASRAREGS
 P0208BTR DS    AL4                BTRANS
+P0208CHN DS    AL4                CHANNEL NAME
 P0208CMD DS    AL4                CMDSEC
 P0208COL DS    AL4                COLOR
 P0208CWA DS    AL4                CWALENG

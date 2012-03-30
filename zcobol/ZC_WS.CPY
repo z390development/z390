@@ -31,6 +31,8 @@
 .* 09/09/09 RPI 1065 replace FILE_TYPE with FILE_ORG,FILE_MODE,FILE_KEY                    
 .* 05/25/10 RPI 1118 ZC_MAXDISPLAY with default 80                                   
 .* 04/05/11 RPI 1139 FIX ARRAY DIM FOR HLASM COMP, REMOVE DUP ZC_LIST
+.* 03/24/12 RPI 1182 CORRECT SETC FOR &BASE_WS (WAS &BASE_SYS)
+.* 03/27/12 RPI 1182 add &RMD_VLEN flag and &RMD_REG for len if vlen
 .*********************************************************************
 .*
 .* PGM NAME AND ZCOBOL VERSION CHECKED BY ZC390NUC IN ZC390LIB.390
@@ -90,11 +92,11 @@
 .*
 .* WS BASE REGISTERS (GEN_ID sys init, GEN_BASE dynamic,PERIOD reset)
 .*
-.*   1.  Cnrrent preset WS base regs  = R7
-.*   2.  Currnet dynamic WS base regs = R6 and R5
+.*   1.  Cnrrent preset WS base regs  = R13
+.*   2.  Currnet dynamic WS base regs = R6, R7
 .*
          GBLC &BASE_WS
-&BASE_SYS SETC 'ZC_R13'           FIRST WS SYSTEM BASE
+&BASE_WS SETC 'ZC_R13'            FIRST WS SYSTEM BASE
          GBLA &BASE_WS_HIGH
 &BASE_WS_HIGH SETA 4096-16        MAX WS SYSTEM BASE OFFSET RPI 1065
          GBLC &BASE_B1,&BASE_B2
@@ -126,6 +128,11 @@
          GBLB  &FIELD_SS1              INPUT SS1 FIELD OFF(LEN,REG) 
          GBLB  &FIELD_SIX              OUTPUT REG USED FOR SUB/IDX/RMOD 
          GBLB  &FIELD_RMD              OUTPUT REF MODS (OFF:LEN)
+         GBLB  &RMD_VLEN_ALLOW         INPUT SET BY MOVE IF VLEN OK
+         GBLB  &RMD_VLEN               OUTPUT SET IF RMD_REG=VLEN OK
+         GBLB  &RMD_VLEN_SRC           OUTPUT SET IF SOURCE VLEN
+         GBLB  &RMD_VLEN_TAR           OUTPUT SET IF TARGET VLEN
+         GBLC  &RMD_REG                INPUT RMD ADDR/LENGTH REG     
          GBLA  &FIELD_IX               OUTPUT SYM_IX OF FIELD
          GBLA  &FIELD_88_IX            OUTPUT SYM_IX OF 88 FIELD           
          GBLC  &FIELD_NAME             OUTPUT SOURCE/TARGET NAME

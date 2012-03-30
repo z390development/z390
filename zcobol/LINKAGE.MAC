@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 04/16/08 initial coding for global LINKAGE SECTION
 .* 10/06/08 ZSTRMAC
+.* 03/03/12 RPI 1182 force 01 zc_ws_end before linkage section
 .*********************************************************************
 .* 1. LK_MODE SET FOR WS TO GEN DSECT FOR EACH 01 NAMED LK_NNNN 
 .* 2. &SYM_LK HAS INDEX TO 01 LVL WHICH HAS SYM_REF SET TO VAR_PTR IX
@@ -20,6 +21,7 @@
                MNOTE 4,'LINKAGE MISSING "SECTION"'
                MEXIT
          AEND
+         WS 01,ZC_WS_ID1,PIC,X(7),VALUE,'ZCWSID1'  RPI 1182
          :&FILE_IX SETA 0 END ANY FILE RECORD DEFINITIONS
          :&LK_SAVE_WS_LOC SETA &WS_LOC SAVE WS LAST LOC FOR PD      
          :&LK_MODE SETB  1             TURN LK MODE

@@ -26,6 +26,8 @@
 .* 08/15/09 RPI 1065 detect and issue MNOTE for expressions for   
 .* 04/05/11 RPI 1139 SETA remove strings for HLASM comp.
 .* 04/20/11 RPI 1139 prevent dup GBL &(...) for NOALLOW
+.* 02/23/12 RPI 1182 SET FIELD_REG TO R2/R3 FOR COMPARING SUBSC FIELDS
+.* 03/27/12 RPI 1182 ALLOW '(' OR ')'  AFTER = AS LIT VS NORMAL () 
 .*********************************************************************
 .* Pending work includes support for field,lit,expression in either 
 .* first or second operand.  Coming after COMPUTE dubugs GEN_EXP.
@@ -96,8 +98,8 @@
          :&SKIP_SIX_OR_LIT SETB 0  SKIP SUBSCRIPTS IN CD'S
          ACALL  GET_PARM           GET NEXT PARM OR ''
          AWHILE ('&PARM' NE '')
-               AIF ('&PARM' EQ '''(''')
-                   :&LAST_VAR SETB 0
+               AIF ('&PARM' EQ '''(''' AND '&PREV_PARM' NE '=')
+                   :&LAST_VAR SETB 0        RPI 1192 ALLOW '(' LIT
                    AIF ('&PREV_PARM' EQ 'DFHRESP'                      X
                         OR '&PREV_PARM' EQ 'DFHVALUE')  
                         AIF ('&SYSLIST(&PARM_IX+2' EQ ''')''')
@@ -111,8 +113,8 @@
                         :&IOP SETA 4
                         ACALL PUSH_OP      PUSH OP 4=(
                    AEND     
-               AELSEIF ('&PARM' EQ ''')''')
-                   :&LAST_VAR SETB 0
+               AELSEIF ('&PARM' EQ ''')''' AND '&PREV_PARM' NE '=') 
+                   :&LAST_VAR SETB 0         RPI 1182 ALLOW LIT ')'
                    :&LVL SETA &LVL-1
                    AIF (&STK_OP_TOT GT 0) 
                        :&LOOP_NE_4 SETB 1  RPI 1065
@@ -576,12 +578,14 @@
 .*  CD_PARM_IX - INPUT STARTING PARM INDEX
 .*  CCT        - SET   CONDITION CODE TEST TRUE (EQ,NE,LT,GT,LE,GE)
 .*  Notes:
-.*   1.  IF SUBJECT AND/OR RELATION OMITTED, USE LAST CD SUBJECT/REL                        
+.*   1.  IF SUBJECT AND/OR RELATION OMITTED, USE LAST CD SUBJECT/REL 
+.*   2.  SET FIELD_REG TO R2 AND R3 FOR SUBSCRIPT/RMOD CALS RPI 1182
 .*
          AENTRY IOP_GEN_CD
          :&SAVE_FIRST_CD_PARM_IX SETA &CD_PARM_IX        
          :&CD_PARM_IX SETA &CD_PARM_IX-1          
          :&FIELD_SS1 SETB 1
+         :&FIELD_REG SETC 'ZC_R2' RPI 1182 ASSUME F1 USING R2 
          ACALL  GET_CD_PARM
          AIF   (&FIELD_88_IX GT 0)
                :&LAST_CD_PARM_IX SETA 0        
@@ -591,6 +595,7 @@
                :&FIELD1 SETC '&FIELD_NAME'
                :&FIELD1_IX SETA &FIELD_IX
                :&FIELD_SS1 SETB 0
+               :&FIELD_REG SETC 'ZC_R3' RPI 1192 ASSUME F2 USING R3
                ACALL GET_CD_PARM
                ACALL SET_CCT
                AIF ('&CCT' EQ '')  AND/OR FIELD2 (OMITTED FIELD1,REL) 
@@ -601,7 +606,14 @@
                    ACALL SET_OMITTED_CCT
                AELSE
                    :&LAST_CD_PARM_IX SETA &SAVE_FIRST_CD_PARM_IX              
-                   ACALL GET_FIELD2  AND/OR FIELD1,REL,FIELD2 
+                    AIF (&FIELD_IX GT 0)
+                        ACALL RESET_SS1               RPI 1065 
+                        :&FIELD2 SETC '&FIELD_NAME'
+                        :&FIELD2_IX SETA &FIELD_IX
+                    AELSE
+                        :&FIELD2 SETC '&PARM'
+                        :&FIELD2_IX SETA 0
+                    AEND
                AEND
          AELSE
                :&CD_PARM_IX SETA &SAVE_FIRST_CD_PARM_IX               
@@ -609,14 +621,17 @@
                ACALL RESET_SS1               RPI 1065 
                AIF ('&CCT' EQ '') NOT REL SO ASSUME FIELD2 LIT
                    :&FIELD2 SETC '&FIELD_NAME'
-                   :&FIELD2_IX SETA &FIELD_IX
+                   :&FIELD2_IX SETA 0
+                   :&FIELD_REG SETC 'ZC_R2' RPI 1182 GET F1 USING R2 
                    ACALL SET_OMITTED_FIELD1
                    ACALL SET_OMITTED_CCT   AND/OR LIT (OMIT FLD1,REL)
                AELSE
                    :&FIELD_SS1 SETB 0
+                   :&FIELD_REG SETC 'ZC_R3' RPI 1182 GET F2 USING R3 
                    ACALL  GET_CD_PARM
                    :&FIELD2 SETC '&FIELD_NAME'
                    :&FIELD2_IX SETA &FIELD_IX
+                   :&FIELD_REG SETC 'ZC_R2' RPI 1182 GET F1 USING R3
                    ACALL SET_OMITTED_FIELD1 AND/OR REL,FLD2 (OMIT FLD1)
                AEND    
          AEND
@@ -739,7 +754,7 @@
          AENTRY SET_OMITTED_FIELD1
          AIF (&LAST_CD_PARM_IX GT 0)
              :&SAVE_CUR_CD_IX SETA &CD_PARM_IX
-             :&CD_PARM_IX SETA &LAST_CD_PARM_IX-1                     
+             :&CD_PARM_IX SETA &LAST_CD_PARM_IX-1        
              ACALL GET_CD_PARM   GET LAST FIELD1
              AIF (&FIELD_IX EQ 0)
                  MNOTE 8,'IF LAST FIELD1 NOT FOUND - &FIELD_NAME'
@@ -753,19 +768,6 @@
          AELSE
              MNOTE 8,'IF LAST CD PARM IX FOR FIELD1 NOT FOUND'
              MEXIT
-         AEND
-         AEND
-.*
-.* GET FIELD2
-.*
-         AENTRY GET_FIELD2
-         AIF (&FIELD_IX GT 0)
-             ACALL RESET_SS1               RPI 1065 
-             :&FIELD2 SETC '&FIELD_NAME'
-             :&FIELD2_IX SETA &FIELD_IX
-         AELSE
-             :&FIELD2 SETC '&PARM'
-             :&FIELD2_IX SETA 0
          AEND
          AEND
 .*
@@ -843,7 +845,11 @@
                     OR '&PARM' EQ ''')'''                              X 
                     OR '&PARM' EQ 'AND'                                X
                     OR '&PARM' EQ 'OR') RPI 1065 AND/OR FORCES NEW COMP
-                   :&PARM SETC ''
+                    AIF ('&PREV_PARM' NE '=')
+                        :&PARM SETC ''
+                    AELSE
+                        :&CD_PARM_IX SETA &CD_PARM_IX+1 RPI 1182 
+                    AEND
                AELSEIF ('&PARM' EQ '+' OR '&PARM' EQ '-')
                    :&PARM SETC '&PARM&SYSLIST(&CD_PARM_IX+1)'
                    :&CD_PARM_IX SETA &CD_PARM_IX+1
@@ -856,7 +862,6 @@
                         AND '&PARM'(1,1) NE '.') RPI 1065 FIND FIELD             
                    :&SAVE_PARM_IX SETA &PARM_IX
                    :&PARM_IX SETA &CD_PARM_IX
-                   :&FIELD_REG SETC 'ZC_R2'
                    ACALL GET_PARM_FIELD
                    :&PARM SETC '&FIELD_NAME'
                    :&CD_PARM_IX SETA &PARM_IX-1
@@ -894,7 +899,7 @@
                    :&FIELD_OFF SETA D2A('&FIELD_NAME'(1,&K-1)) RPI 1139
                    :&J SETA ('&FIELD_NAME' FIND ',')
                    AIF (&J GT &K+1)
-                       :&FIELD_LEN SETA '&FIELD_NAME'(&K+1,&J-1)
+                       :&FIELD_LEN SETA D2A('&FIELD_NAME'(&K+1,&J-1))
                        :&FIELD_REG SETC '&FIELD_NAME'(&J+1,K'&FIELD_NAMX
                E-&J-1)
                        :&FIELD_NAME SETC '&FIELD_NAME'(1,&K).'&FIELD_NAX

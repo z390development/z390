@@ -1,0 +1,160 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2011 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/06/12                                                 *
+.*********************************************************************
+.* 03/06/12 RPI 1182 copied from GEN_SIX, support (SUB+LIT:LIT)
+.* 03/24/12 RPI 1182 USE &RMD_REG and remove all GEN_BASE
+.* 03/30/12 RPI 1182 set RMD_VLEN if RMD_VLEN_ALLOW else set FIELD_LEN
+.*********************************************************************
+         GEN_RMD &RMD_OFF,&RMD_OFF_ADJ,&RMD_LEN                                   
+         COPY  ZC_WS
+.*
+.* FORCE FIELD_SIZ AND FIELD_RMD
+.*
+             AIF (NOT &FIELD_SIX)
+         LA    &FIELD_REG,&SYM_NAME(&FIELD_IX)
+             AEND
+             :&FIELD_SIX SETB 1
+             :&FIELD_RMD SETB 1
+  
+.*
+.* PROCESS RMD_OFF AND RMD_ADJ
+.*
+         ZC_SYM_FIND &RMD_OFF
+         :&RMD_OFF_IX SETA &SYM_IX
+         AIF (&RMD_OFF_IX GT 0)
+              AIF (&SYM_LK(&RMD_OFF_IX) GT 0)
+                   :&DSECT_IX SETA &SYM_LK(&RMD_OFF_IX)
+                   :&VAR_IX   SETA &SYM_REF(&DSECT_IX)
+                   AIF (&VAR_IX EQ 0)
+                       MNOTE 8,'GEN_RMD OFF LINKAGE PARM UNDEFINED - &SX
+               YM_NAME(&RMD_OFF_IX)'
+                       MEXIT
+                   AEND
+                   AIF (&ZC_CICS AND '&SYM_NAME(&DSECT_IX)' EQ 'DFHEIBLX
+               K') 
+         LA    &RMD_REG,&SYM_NAME(&RMD_OFF_IX)
+                   AELSE
+         L     &RMD_REG,&SYM_NAME(&VAR_IX)                            
+         AFI   &RMD_REG,&SYM_NAME(&RMD_OFF_IX)-&SYM_NAME(&DSECT_IX)._DSX
+               ECT
+                   AEND
+               AELSE
+         IILF  &RMD_REG,&SYM_NAME(&RMD_OFF_IX)-ZC_WS    
+         AR    &RMD_REG,&BASE_WS  
+               AEND
+             ACASE (C2A('&SYM_PIC_TYPE(&RMD_OFF_IX)'))
+             AWHEN C'F'
+         A     &FIELD_REG,0(&RMD_REG) 
+             AWHEN C'G'
+         A     &FIELD_REG,4(&RMD_REG) TRUNC HIGH 32
+             AWHEN C'H'
+         AH    &FIELD_REG,0(&RMD_REG)
+             AWHEN C'P'
+         ZAP   ZCVT_PWORK,0(&SYM_LEN(&RMD_OFF_IX),&RMD_REG)
+         CVB   &RMD_REG,ZCVT_PWORK
+         AR    &FIELD_REG,&RMD_REG
+             AWHEN C'Q'
+         A     &FIELD_REG,12(&RMD_REG) TRUNC HIGH 96 BITS         
+             AWHEN C'Z'
+              :&LPLEN SETA &SYM_LEN(&RMD_OFF_IX)/2+1
+         PACK  ZCVT_PWORK1(&LPLEN),0(&SYM_LEN(&RMD_OFF_IX),&RMD_REG)
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
+         CVB   &RMD_REG,ZCVT_PWORK
+         AR    &FIELD_REG,&RMD_REG
+             AELSE
+                 MNOTE 8,'ZCGETFLD INVALID RMD OFFSET TYPE'
+                 MEXIT
+             AEND
+             AIF (&FIELD_SS1)
+                 :&FIELD_NAME SETC '0(&RMD_LEN,&FIELD_REG)'
+             AELSE
+                 :&FIELD_NAME SETC '0(&FIELD_REG)'
+             AEND  
+         AELSEIF (&RMD_OFF_ADJ EQ 0) NO ADJ ALLOWED FOR LIT OFFSET
+             AIF (&FIELD_SIX)
+                 AIF (&FIELD_SS1)
+                  :&FIELD_NAME SETC '&RMD_OFF.(&RMD_LEN,&FIELD_REG)'
+                 AELSE
+                  :&FIELD_NAME SETC '&RMD_OFF.(&FIELD_REG)'
+                 AEND
+             AELSE
+                 AIF (&FIELD_SS1)
+                    :&FIELD_NAME SETC '&SYM_NAME(&FIELD_IX)+&RMD_OFF-1(X
+               &RMD_LEN)'
+                 AELSE
+                    :&FIELD_NAME SETC '&SYM_NAME(&FIELD_IX)+&RMD_OFF-1'
+                 AEND
+             AEND
+         AELSE
+             MNOTE 8,'GEN_RMD - NO ADJUSTMENT ALLOWED FOR LIT OFFSET'
+             MEXIT
+         AEND
+.*
+.* SET RMD_VLEN AND &RMD_REG TO VAR LENGTH IF FOUND
+.*
+         ZC_SYM_FIND &RMD_LEN
+         :&RMD_LEN_IX SETA &SYM_IX
+         :&RMD_VLEN SETB 0
+         AIF (&RMD_LEN_IX GT 0)
+              AIF (NOT &RMD_VLEN_ALLOW)
+                  MNOTE 8,'GEN_RMD VAR LEN RMD SUPPORT ONLY FOR MOVE'
+                  MEXIT
+              AEND
+              :&RMD_VLEN SETB 1 
+              AIF (&SYM_LK(&RMD_LEN_IX) GT 0)
+                   :&DSECT_IX SETA &SYM_LK(&RMD_LEN_IX)
+                   :&VAR_IX   SETA &SYM_REF(&DSECT_IX)
+                   AIF (&VAR_IX EQ 0)
+                       MNOTE 8,'GEN_RMD LEN LINKAGE PARM UNDEFINED - &SX
+               YM_NAME(&RMD_LEN_IX)'
+                       MEXIT
+                   AEND
+                   AIF (&ZC_CICS AND '&SYM_NAME(&DSECT_IX)' EQ 'DFHEIBLX
+               K') 
+         LA    &RMD_REG,&SYM_NAME(&RMD_LEN_IX)
+                   AELSE
+         L     &RMD_REG,&SYM_NAME(&VAR_IX)
+         AFI   &RMD_REG,&SYM_NAME(&RMD_LEN_IX)-&SYM_NAME(&DSECT_IX)._DSX
+               ECT
+                   AEND
+               AELSE
+         IILF  &RMD_REG,&SYM_NAME(&RMD_LEN_IX)-ZC_WS    
+         AR    &RMD_REG,&BASE_WS  
+               AEND
+             ACASE (C2A('&SYM_PIC_TYPE(&RMD_LEN_IX)'))
+             AWHEN C'F'
+         L     &RMD_REG,0(&RMD_REG) 
+             AWHEN C'G'
+         L     &RMD_REG,4(&RMD_REG) TRUNC HIGH 32
+             AWHEN C'H'
+         LH    &RMD_REG,0(&RMD_REG)
+             AWHEN C'P'
+         ZAP   ZCVT_PWORK,0(&SYM_LEN(&RMD_LEN_IX),&RMD_REG)
+         CVB   &RMD_REG,ZCVT_PWORK
+             AWHEN C'Q'
+         L     &RMD_REG,12(&RMD_REG) TRUNC HIGH 96 BITS
+             AWHEN C'Z'
+              :&LPLEN SETA &SYM_LEN(&RMD_LEN_IX)/2+1
+         PACK  ZCVT_PWORK1(&LPLEN),0(&SYM_LEN(&RMD_LEN_IX),&RMD_REG)
+         ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
+         CVB   &RMD_REG,ZCVT_PWORK
+             AELSE
+                 MNOTE 8,'ZCGETFLD INVALID RMD LEN TYPE'
+                 MEXIT
+             AEND
+         AELSEIF (&RMD_VLEN_ALLOW)        RPI 1182
+               :&RMD_VLEN SETB 1 FORCE VLEN EVEN FOR RMD LIT LEN
+         IILF  &RMD_REG,&RMD_LEN
+         AELSE
+               :&FIELD_LEN SETA &RMD_LEN  RPI 1182
+         AEND 
+         BCTR  &FIELD_REG,0 BACKUP FOR FULL OFFSET+ADJUSTMENT 
+               AIF (&RMD_OFF_ADJ NE 0)
+         AFI   &FIELD_REG,&RMD_OFF_ADJ
+               AEND
+         MEND

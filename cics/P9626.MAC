@@ -1,0 +1,31 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         P9626 &DSECT
+         AIF   ('&DSECT' EQ 'DSECT')
+P9626    DSECT
+         AELSE
+P9626    DS    0H
+         AEND
+P9626FN  DS    XL2                FUNCTION CODE
+P9626EIB DS    AL4                EIB
+P9626TCT DS    AL4                TCTTE
+P9626CHN DS    CL16               CHANNEL NAME
+P9626TKN DS    AL4                BROWSETOKEN ADDRESS
+P9626EDF DS    AL4                ORIGIN ADDRESS FOR CEDF
+P9626EDS DS    AL4                DSA ADDRESS FOR EDF
+P9626EDC DS    XL2                CICS DSA LENGTH FOR EDF
+P9626EDL DS    XL2                DSA LENGTH FOR EDF
+P9626NED DS    X                  FF=NOEDF
+         DS    X
+P9626NOH DS    X                  FF=NOHANDLE
+         DS    X
+P9626RSP DS    AL4                RESP
+P9626RS2 DS    AL4                RESP2
+P9626END EQU   *                  END MARKER
+         MEND
+

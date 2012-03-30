@@ -1,0 +1,134 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_STARTBROWSE
+         GBLB  &PARMS_9626
+         LCLB  &NOEDF,&NOHAND
+         LCLC  &CONT,&CHANNEL,&BTOKEN,&RESP,&RESP2
+&TYPE    SETC  '&SYSLIST(1)'
+         AIF   ('&TYPE' EQ 'CONTAINER').CONTOK
+         MNOTE 12,'STARTBROWSE TYPE NOT RECOGNIZED'
+         MEXIT
+.*
+.CONTOK  ANOP
+&NP      SETA  N'&SYSLIST
+&IP      SETA  1
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,8)  EQ 'CHANNEL(').CHAN
+         AIF   ('&PARM'(1,12) EQ 'BROWSETOKEN(').BTOKEN
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
+         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.CHAN    ANOP
+&CHANNEL SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.BTOKEN  ANOP
+&BTOKEN  SETC '&PARM'(13,K'&PARM-13)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   ('&BTOKEN' EQ '').MISTOKN
+         GEN_XC P9626,P9626END-P9626,P9626 CLEAR PARMS
+         GEN_MVC P9626FN,,=X'9626' SET FUNCTION CODE
+.* PROCESS CHANNEL
+         AIF   ('&CHANNEL' NE '').GOTCHAN
+         LARL  R15,P9626CHN       ADDRESS TARGET
+         MVC   0(16,R15),TCTTECHN SET DEFAULT CHANNEL
+         AGO   .DUNCHAN
+.*
+.GOTCHAN ANOP
+         AIF   ('&CHANNEL'(1,1) EQ '''').CHSTRNG
+         LARL  R15,P9626CHN       ADDRESS TARGET
+         MVC   0(16,R15),&CHANNEL MOVE CHANNEL FROM LABEL
+         AGO   .DUNCHAN
+.*
+.CHSTRNG ANOP
+&CHANLEN SETA  K'&CHANNEL
+         AIF   (&CHANLEN LT 3 OR &CHANLEN GT 18).INVCHAN
+         GEN_MVC P9626CHN,,=CL16&CHANNEL SET CHANNEL AS STRING
+.DUNCHAN ANOP
+         LA    R0,&BTOKEN         R0=BROWSETOKEN ADDRESS
+         GEN_ST R0,P9626TKN       SAVE IT
+         GEN_ST DFHEIBR,P9626EIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P9626TCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P9626EDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P9626EDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P9626EDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P9626NED,X'FF'   SET NOEDF
+         AEND
+         AIF   (NOT &NOHAND).DUNNOH
+         GEN_MVI P9626NOH,X'FF'   SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P9626RSP       SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P9626RS2       SAVE IT
+.NORESP2 ANOP
+         LARL  R0,P9626EDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P9626EDF       SAVE IT
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P9626)       R1=LCL MODULE PARAMETER LIST
+P9626EDF_&SYSNDX DS 0H
+         BAKR  0,R15              STACK REGS AND GO
+.*
+         GEN_CLI P9626NOH,X'FF'   NOHANDLE ?
+         JE    P9626BYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         JZ    P9626BYP_&SYSNDX   EXIT IF NONE
+* ACTIVITYERR, CHANNELERR
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P9626BYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_9626).BYP9626
+&PARMS_9626 SETB 1
+         P9626
+*
+.BYP9626 ANOP
+P9626BYP_&SYSNDX DS 0H
+         MEXIT
+.*
+.MISTOKN MNOTE 12,'BROWSETOKEN IS MANDATORY'
+         MEXIT
+.*
+.INVCHAN MNOTE 12,'INVALID CHANNEL'
+         MEXIT
+.*
+         MEND
+

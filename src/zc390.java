@@ -101,6 +101,7 @@ public class zc390{
     *          allow any cbl suffix to mlc, use init_tzz390
     * 09/29/09 RPI 1086 add *ZC NNNNNN IIIIII MLC SOURCE comment
     * 07/25/10 RPI 1126 prevent replacing - with _ in floating point exp constant
+    * 03/04/12 RPI 1182 don't allow embedded commas in parms for proc div
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -200,7 +201,8 @@ public class zc390{
 	String  zc_token   = null;   // next token or null at eof
 	int     zc_token_index = 0;
 	Pattern zc_name_pattern = null;    // RPI 1062 validate names
-	Pattern zc_token_pattern = null;   // parsing regular expression pattern
+	Pattern zc_data_token_pattern = null;   // parsing regular expression pattern
+	Pattern zc_proc_token_pattern = null; // RPI 1182
 	Matcher zc_name_match    = null;   // data name patrern matching
 	Matcher zc_token_match   = null;   // token pattern matching class
 	int     zc_match_offset  = 0;      // offset to start of matcher
@@ -341,7 +343,7 @@ public class zc390{
        	put_mlc_line(" ","COPY",lab_file_name); // RPI 1062  RPI 1074 RPI 1080
        	zc_comment_copy = true;
        	try {
-			zc_token_pattern = Pattern.compile(
+			zc_data_token_pattern = Pattern.compile(
 				  	 // parm in single or double quotes
 				   	"([']([^']|(['][']))*['])"  // parm in single quotes // RPI 1062
 		    	  +	"|([xX]['][0-9a-fA-F]+['])"   // hex value x'??'
@@ -357,7 +359,26 @@ public class zc390{
 				  + "|([=][=])|([\\.\\,:;\\'\"()=<>\\+\\-\\*\\/])"            
 			);
 		} catch (Exception e){
-			abort_error("zcobol cbl token pattern errror - " + e.toString());
+			abort_error("zcobol cbl data token pattern errror - " + e.toString());
+		}
+       	try {
+			zc_proc_token_pattern = Pattern.compile(
+				  	 // parm in single or double quotes
+				   	"([']([^']|(['][']))*['])"  // parm in single quotes // RPI 1062
+		    	  +	"|([xX]['][0-9a-fA-F]+['])"   // hex value x'??'
+		    	  +	"|([xX][\"][0-9a-fA-F]+[\"])" // hex value x"??"
+		    	  +	"|([bB]['][01]+['])"   // binary value b'??'
+		    	  +	"|([bB][\"][01]+[\"])" // binary value b"??"
+		    	  +	"|([\"]([^\"]|([\"][\"]))*[\"])"  // parm in double quotes // RPI 1062
+					 // any parm similar to data but without embedded commas
+				  +	"|([\\.]*[^\\s\\.\\,:;\\'\"()=<>\\+\\-\\*\\/]+(([^\\s\\.\\,:;\\'\"()=<>\\+\\*\\/]+)|([\\.][^\\s\\.\\,:;\\'\"()=<>\\+\\-\\*\\/]+))*)"	
+				     // COPY REPLACE lit ==???==
+				  + "|([=][=][.]+[=][=])"
+				     // .,:'"() single special char requiring processing
+				  + "|([=][=])|([\\.\\,:;\\'\"()=<>\\+\\-\\*\\/])"            
+			);
+		} catch (Exception e){
+			abort_error("zcobol cbl proc token pattern errror - " + e.toString());
 		}
 		try {
 			zc_name_pattern = Pattern.compile(
@@ -547,8 +568,13 @@ public class zc390{
 			mlc_parms = mlc_parms.substring(0,mlc_parms.length()-1) + zc_prev_token.substring(1);
 			// restart matcher after ending "/' 
 			// and exit split mode
-			zc_token_match = zc_token_pattern
+			if (zc_proc_div){
+			   zc_token_match = zc_proc_token_pattern
 			   .matcher(zc_line.substring(index+1));
+			} else {
+				zc_token_match = zc_data_token_pattern
+				.matcher(zc_line.substring(index+1));
+			}
 			zc_match_offset = index+1;
 			zc_split_lit  = false;  // end split lit at quote
 			zc_split_char = '\'';   // reset to default
@@ -591,8 +617,13 @@ public class zc390{
 					}
 					// restart matcher after ending "/' 
 					// and exit split mode
-					zc_token_match = zc_token_pattern
+					if (zc_proc_div){
+					   zc_token_match = zc_proc_token_pattern
 					   .matcher(zc_line.substring(index+1));
+					} else {
+						zc_token_match = zc_data_token_pattern
+						.matcher(zc_line.substring(index+1));
+					}					
 					zc_match_offset = index+1;
 					zc_split_lit  = false;  // end split lit at quote
 					zc_split_char = '\'';   // reset to default
@@ -731,9 +762,14 @@ public class zc390{
 				if (zc_copy_trailer){
 					zc_copy_trailer = false;
 				} else {
-			        zc_token_match = zc_token_pattern
-			        .matcher(zc_line.substring(7));
-			        zc_match_offset = 8;
+					if (zc_proc_div){
+					   zc_token_match = zc_proc_token_pattern
+					   .matcher(zc_line.substring(7));
+					} else {
+						zc_token_match = zc_data_token_pattern
+						.matcher(zc_line.substring(7));
+					}
+					zc_match_offset = 8;
 				}
 		        find_next_token();
 			}
@@ -824,8 +860,13 @@ public class zc390{
 					zc_copy_trailer = true;
 					zc_line = zc_copy_line[cur_zc_file]; // RPI 1062 add +1 for all 3
 					zc_copy_line[cur_zc_file] =null;
-					zc_token_match = zc_token_pattern
-					.matcher(zc_line.substring(zc_copy_line_ix[cur_zc_file]));
+					if (zc_proc_div){
+					   zc_token_match = zc_proc_token_pattern
+					   .matcher(zc_line.substring(zc_copy_line_ix[cur_zc_file]));
+					} else {
+						zc_token_match = zc_data_token_pattern
+						.matcher(zc_line.substring(zc_copy_line_ix[cur_zc_file]));
+					}
 					zc_match_offset = zc_copy_line_ix[cur_zc_file]+1;
 
 				}

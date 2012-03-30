@@ -1,0 +1,109 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+         CICS_ENDBROWSE
+         GBLB  &PARMS_962A
+         LCLB  &NOEDF,&NOHAND
+         LCLC  &CONT,&BTOKEN,&RESP,&RESP2
+&TYPE    SETC  '&SYSLIST(1)'
+         AIF   ('&TYPE' EQ 'CONTAINER').CONTOK
+         MNOTE 12,'ENDBROWSE TYPE NOT RECOGNIZED'
+         MEXIT
+.*
+.CONTOK  ANOP
+&NP      SETA  N'&SYSLIST
+&IP      SETA  1
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  '&SYSLIST(&IP)'
+         AIF   ('&PARM'(1,12) EQ 'BROWSETOKEN(').BTOKEN
+         AIF   ('&PARM'(1,5)  EQ 'NOEDF').NOEDF
+         AIF   ('&PARM'(1,8)  EQ 'NOHANDLE').NOHAND
+         AIF   ('&PARM'(1,5)  EQ 'RESP(').RESP
+         AIF   ('&PARM'(1,6)  EQ 'RESP2(').RESP2
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.BTOKEN  ANOP
+&BTOKEN  SETC '&PARM'(13,K'&PARM-13)
+         AGO   .PLOOP
+.*
+.NOEDF   ANOP
+&NOEDF   SETB  1
+         AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP    ANOP
+&RESP    SETC  '&PARM'(6,K'&PARM-6)
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
+.RESP2   ANOP
+&RESP2   SETC  '&PARM'(7,K'&PARM-7)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   ('&BTOKEN' EQ '').MISTOKN
+         GEN_XC P962A,P962AEND-P962A,P962A CLEAR PARMS
+         GEN_MVC P962AFN,,=X'962A' SET FUNCTION CODE
+         L     R0,&BTOKEN         R0=BROWSETOKEN
+         GEN_ST R0,P962ATKN       SAVE IT
+         GEN_ST DFHEIBR,P962AEIB  SET EIB ADDRESS
+         GEN_ST TCTTEAR,P962ATCT  SET TCTTE ADDRESS
+         AIF   (&SYSEDF AND NOT &NOEDF)
+         GEN_ST R13,P962AEDS      SET DSA ADDRESS FOR EDF
+         L     R0,DFHEILEN        DSA LENGTH
+         GEN_STH R0,P962AEDL      SET DSA LENGTH FOR EDF
+         LA    R0,DFHEIUSR        DSA USER AREA
+         SR    R0,R13             R0=CICS DSA LENGTH
+         GEN_STH R0,P962AEDC      SET CICS DSA LENGTH FOR EDF
+         AELSE
+         GEN_MVI P962ANED,X'FF'   SET NOEDF
+         AEND
+         AIF   (NOT &NOHAND).DUNNOH
+         GEN_MVI P962ANOH,X'FF'   SET NOHANDLE
+.DUNNOH  ANOP
+         AIF   ('&RESP' EQ '').NORESP
+         LA    R0,&RESP           ADDRESS OF RESP
+         GEN_ST R0,P962ARSP       SAVE IT
+.NORESP  ANOP
+         AIF   ('&RESP2' EQ '').NORESP2
+         LA    R0,&RESP2          ADDRESS OF RESP2
+         GEN_ST R0,P962ARS2       SAVE IT
+.NORESP2 ANOP
+         LARL  R0,P962AEDF_&SYSNDX ADDRESS ORIGIN FOR CEDF
+         GEN_ST R0,P962AEDF       SAVE IT
+         L     R15,TCTTELCL       R15=LCL MODULE INDEXER
+         LARL  R1,=A(P962A)       R1=LCL MODULE PARAMETER LIST
+P962AEDF_&SYSNDX DS 0H
+         BAKR  0,R15              STACK REGS AND GO
+.*
+         GEN_CLI P962ANOH,X'FF'   NOHANDLE ?
+         JE    P962ABYP_&SYSNDX   EXIT IF IT IS
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         JZ    P962ABYP_&SYSNDX   EXIT IF NONE
+* TOKENERR
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P962ABYP_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+         AIF   (&PARMS_962A).BYP962A
+&PARMS_962A SETB 1
+         P962A
+*
+.BYP962A ANOP
+P962ABYP_&SYSNDX DS 0H
+         MEXIT
+.*
+.MISTOKN MNOTE 12,'BROWSETOKEN IS MANDATORY'
+         MEXIT
+.*
+         MEND
+

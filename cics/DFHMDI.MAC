@@ -126,8 +126,8 @@
 &CUTMRK1 SETC  '&MARKS1'(1,&SIZECOL+4)
 &CUTMRK2 SETC  '&MARKS2'(1,&SIZECOL+4)
          PUNCH '&CUTMRK1',DSNAME=&MDINAME..IMG
-         PUNCH '&CUTMRK2'
-         PUNCH '&CUTSTAR'
+         PUNCH '&CUTMRK2',DSNAME=&MDINAME..IMG
+         PUNCH '&CUTSTAR',DSNAME=&MDINAME..IMG
 &I       SETA  1                  SCREEN INDEX
 &J       SETA  1                  COL INDEX
 &K       SETA  1                  ROW COUNTER
@@ -140,14 +140,14 @@
          AIF   (&K LT 10).SIZEKOK
 &SPACES  SETC  ''
 .SIZEKOK ANOP
-         PUNCH '&SPACES&K *&ROW.* &SPACES&K'
+         PUNCH '&SPACES&K *&ROW.* &SPACES&K',DSNAME=&MDINAME..IMG
 &ROW     SETC  ''                 RESET ROW STRING
 &J       SETA  1                  RESET COL INDEX
 &K       SETA  &K+1               BUMP ROW COUNTER
          AIF   (&K NE &SIZEROW+1).COLLOOP
-         PUNCH '&CUTSTAR'
-         PUNCH '&CUTMRK1'
-         PUNCH '&CUTMRK2'
+         PUNCH '&CUTSTAR',DSNAME=&MDINAME..IMG
+         PUNCH '&CUTMRK1',DSNAME=&MDINAME..IMG
+         PUNCH '&CUTMRK2',DSNAME=&MDINAME..IMG
 .NODISP  ANOP
          AIF   ('&TYPE' NE 'LAST').CLRSCRN
          MEXIT
@@ -323,7 +323,6 @@
          AIF   (&SIZEROW+&LINE-1 GT 24).BADLINE
 .GOON06  ANOP
          AIF   (&SIZECOL+&COLUMN-1 GT 80).BADCOL
-.*
 .GOON04  ANOP
          AIF   (&MTYPE EQ 1).DSECT
 .*

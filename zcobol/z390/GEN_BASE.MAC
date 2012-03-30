@@ -9,6 +9,8 @@
 .* 11/30/08 initial coding for z390 GEN_BASE &IX to set base reg
 .* 07/01/09 RPI 1065 avoid duplicate base warning for DFHEIBLK   
 .* 08/03/09 RPI 1065 correct to provide base for end of field OI etc.
+.* 03/07/12 RPI 1182 switch LRU each time a base is used to hold it
+.* 03/26/12 RPI 1182 only require start addr in base range (not end)
 .*********************************************************************
 .*  GEN_BASEX &IX - verify or set base register for SYM_NAME(&IX)    
 .*    1.  If &IX not GT 0 error
@@ -19,8 +21,8 @@
          GEN_BASE &IX
          COPY  ZC_WS
          AIF   (&IX GT 0)
-               :&ADDR1 SETA &SYM_LOC(&IX)           START OF FIELD
-               :&ADDR2 SETA &ADDR1+&SYM_LEN(&IX)-1  END OF FIELD
+               :&ADDR SETA &SYM_LOC(&IX)           START OF FIELD
+.* DEBUG MNOTE 'GEN_BASE DSHX SYM=&SYM_NAME(&IX) ADDR=&ADDR'
                AIF (&SYM_LK(&IX) GT 0)
                    ACALL SET_LK_BASE
                AELSE
@@ -34,13 +36,15 @@
 .* SET WS BASE
 ,*
          AENTRY SET_WS_BASE
-         AIF (&ADDR2 LT &BASE_WS_HIGH)
+         AIF (&ADDR LT &BASE_WS_HIGH)
              MEXIT
-         AELSEIF (&ADDR1 GE &BASE_B1_LOW                               X
-                  AND &ADDR2 LT &BASE_B1_HIGH)
+         AELSEIF (&ADDR GE &BASE_B1_LOW                                X
+                  AND &ADDR LT &BASE_B1_HIGH) 
+             :&BASE_LRU SETA 2  RPI 1182 SWITCH TO HOLD B1
              MEXIT
-         AELSEIF (&ADDR1 GE &BASE_B2_LOW                               X
-                  AND &ADDR2 LT &BASE_B2_HIGH)
+         AELSEIF (&ADDR GE &BASE_B2_LOW                                X
+                  AND &ADDR LT &BASE_B2_HIGH) 
+             :&BASE_LRU SETA 1  RPI 1182 SWITCH TO HOLD B2
              MEXIT
          AEND
 .*
@@ -52,24 +56,24 @@
                :&BASE_B2_HIGH SETA &BASE_B2_LOW+4096
                AIF (&BASE_B2_LOW LT X'FFFFF')
          LAY   &BASE_B2,&SYM_NAME(&IX)
-         USING &SYM_NAME(&IX),&BASE_B2
-                   :&BASE_B2_USED SETB 1  RPI 1065
                AELSE
          IILF  &BASE_B2,&SYM_NAME(&IX)-WS
          AR    &BASE_B2,&BASE_WS
                AEND
+         USING &SYM_NAME(&IX),&BASE_B2
+                :&BASE_B2_USED SETB 1  RPI 1065 
          AELSE
                :&BASE_LRU SETA 2
                :&BASE_B1_LOW  SETA &SYM_LOC(&IX)
                :&BASE_B1_HIGH SETA &BASE_B1_LOW+4096
                AIF (&BASE_B1_LOW LT X'FFFFF')
          LAY   &BASE_B1,&SYM_NAME(&IX)
-         USING &SYM_NAME(&IX),&BASE_B1
-                   :&BASE_B1_USED SETB 1  RPI 1065
                AELSE
          IILF  &BASE_B1,&SYM_NAME(&IX)-WS
          AR    &BASE_B1,&BASE_WS
                AEND
+         USING &SYM_NAME(&IX),&BASE_B1
+               :&BASE_B1_USED SETB 1  RPI 1065          
          AEND
          AEND
 .*
@@ -86,12 +90,14 @@
              MEXIT
          AEND
          AIF (&LBASE_B1_IX EQ &VAR_IX                                  X
-                  AND &ADDR1 GE &LBASE_B1_LOW                          X
-                  AND &ADDR2 LT &LBASE_B1_HIGH)
+                  AND &ADDR GE &LBASE_B1_LOW                           X
+                  AND &ADDR LT &LBASE_B1_HIGH)
+             :&LBASE_LRU SETA 2 RPI 1182 SWITCH TO HOLD LB1
              MEXIT
          AELSEIF (&LBASE_B2_IX EQ &VAR_IX                              X
-                  AND &ADDR1 GE &LBASE_B2_LOW                          X
-                  AND &ADDR2 LT &LBASE_B2_HIGH)
+                  AND &ADDR GE &LBASE_B2_LOW                           X
+                  AND &ADDR LT &LBASE_B2_HIGH)
+             :&LBASE_LRU SETA 1 RPI 1182 SWITCH TO HOLD LB2
              MEXIT
          AEND
 .*

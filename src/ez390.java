@@ -173,6 +173,7 @@ import javax.swing.Timer;
     * 09/24/09 RPI 1080 set z390_os_type before init tables 
     * 01/04/10 RPI 1094 move timeout to tz390 to share with gz390
     * 05/10/11 RPI 1149 move started msg to put_trace
+    * 07/30/11 RPI 1175 use tz390.check_java_version()
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -355,6 +356,10 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 	    sz390 = new sz390();
 	    vz390 = new vz390();
 	    tz390.init_tz390();  // RPI 1080
+    	if (!tz390.check_java_version()){ // RPI 1175
+    		sz390.abort_error(204,"unknown java version "
+    	    + tz390.java_vendor + " " + tz390.java_version);  
+    	}
 	    tz390.init_options(args,tz390.z390_type);  
 	    tz390.open_systerm("EZ390");
 	    tz390.init_codepage(tz390.codepage); // RPI 1069

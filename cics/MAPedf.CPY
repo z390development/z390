@@ -4127,9 +4127,9 @@ E0A02FMO DS    CL69               OUTPUT FIELD
          DS    0X                 INPUT FIELD FLAG
          DS    X                  OUTPUT ATTRIBUTE
          DS    X                  OUTPUT COLOUR ATTRIBUTE
-E0A02LNI DS    CL7                INPUT FIELD
+E0A02LNI DS    CL13               INPUT FIELD
          ORG   E0A02LNI
-E0A02LNO DS    CL7                OUTPUT FIELD
+E0A02LNO DS    CL13               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
@@ -4369,17 +4369,17 @@ E0A04ISO DS    CL79               OUTPUT FIELD
          DS    0X                 INPUT FIELD FLAG
          DS    X                  OUTPUT ATTRIBUTE
          DS    X                  OUTPUT COLOUR ATTRIBUTE
-E0A04LII DS    CL7                INPUT FIELD
+E0A04LII DS    CL13               INPUT FIELD
          ORG   E0A04LII
-E0A04LIO DS    CL7                OUTPUT FIELD
+E0A04LIO DS    CL13               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
          DS    X                  OUTPUT ATTRIBUTE
          DS    X                  OUTPUT COLOUR ATTRIBUTE
-E0A04LDI DS    CL22               INPUT FIELD
+E0A04LDI DS    CL28               INPUT FIELD
          ORG   E0A04LDI
-E0A04LDO DS    CL22               OUTPUT FIELD
+E0A04LDO DS    CL28               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
@@ -5183,6 +5183,14 @@ E0E02LNO DS    CL16               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
+E0E02CHA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E0E02CHI DS    CL27               INPUT FIELD
+         ORG   E0E02CHI
+E0E02CHO DS    CL27               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
          DS    X                  OUTPUT ATTRIBUTE
          DS    X                  OUTPUT COLOUR ATTRIBUTE
 E0E02NHI DS    CL8                INPUT FIELD
@@ -5379,9 +5387,9 @@ E0E04STO DS    CL26               OUTPUT FIELD
          DS    0X                 INPUT FIELD FLAG
          DS    X                  OUTPUT ATTRIBUTE
          DS    X                  OUTPUT COLOUR ATTRIBUTE
-E0E04PMI DS    CL19               INPUT FIELD
+E0E04PMI DS    CL10               INPUT FIELD
          ORG   E0E04PMI
-E0E04PMO DS    CL19               OUTPUT FIELD
+E0E04PMO DS    CL10               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
@@ -5398,6 +5406,14 @@ E0E04CMO DS    CL79               OUTPUT FIELD
 E0E04LNI DS    CL16               INPUT FIELD
          ORG   E0E04LNI
 E0E04LNO DS    CL16               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E0E04CHA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E0E04CHI DS    CL27               INPUT FIELD
+         ORG   E0E04CHI
+E0E04CHO DS    CL27               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
@@ -5826,6 +5842,14 @@ E0E08CMO DS    CL79               OUTPUT FIELD
 E0E08LNI DS    CL16               INPUT FIELD
          ORG   E0E08LNI
 E0E08LNO DS    CL16               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E0E08CHA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E0E08CHI DS    CL27               INPUT FIELD
+         ORG   E0E08CHI
+E0E08CHO DS    CL27               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
@@ -7059,9 +7083,9 @@ E1008FMO DS    CL79               OUTPUT FIELD
          DS    0X                 INPUT FIELD FLAG
          DS    X                  OUTPUT ATTRIBUTE
          DS    X                  OUTPUT COLOUR ATTRIBUTE
-E1008LNI DS    CL17               INPUT FIELD
+E1008LNI DS    CL23               INPUT FIELD
          ORG   E1008LNI
-E1008LNO DS    CL17               OUTPUT FIELD
+E1008LNO DS    CL23               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
@@ -7094,6 +7118,14 @@ E1008RMO DS    CL23               OUTPUT FIELD
 E1008QUI DS    CL31               INPUT FIELD
          ORG   E1008QUI
 E1008QUO DS    CL31               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E1008CHA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E1008CHI DS    CL28               INPUT FIELD
+         ORG   E1008CHI
+E1008CHO DS    CL28               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
@@ -7301,17 +7333,17 @@ E100AISO DS    CL79               OUTPUT FIELD
          DS    0X                 INPUT FIELD FLAG
          DS    X                  OUTPUT ATTRIBUTE
          DS    X                  OUTPUT COLOUR ATTRIBUTE
-E100ALNI DS    CL22               INPUT FIELD
+E100ALNI DS    CL28               INPUT FIELD
          ORG   E100ALNI
-E100ALNO DS    CL22               OUTPUT FIELD
+E100ALNO DS    CL28               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
          DS    X                  OUTPUT ATTRIBUTE
          DS    X                  OUTPUT COLOUR ATTRIBUTE
-E100ALDI DS    CL22               INPUT FIELD
+E100ALDI DS    CL28               INPUT FIELD
          ORG   E100ALDI
-E100ALDO DS    CL22               OUTPUT FIELD
+E100ALDO DS    CL28               OUTPUT FIELD
 *
          DS    AL2                INPUT FIELD LENGTH
          DS    0X                 INPUT FIELD FLAG
@@ -9028,6 +9060,878 @@ EDF1C02L EQU   EDF1C02E-EDF1C02S
 *
 * * * END OF MAP DEFINITION     * * *
 *
+EDF3412S DS    0H                 START OF MAP DEFINITION
+EDF3412I DS    0H                 START OF MAP INPUT DEFINITION
+EDF3412O DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412TSI DS    CL4                INPUT FIELD
+         ORG   E3412TSI
+E3412TSO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412PGI DS    CL8                INPUT FIELD
+         ORG   E3412PGI
+E3412PGO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412TNI DS    CL7                INPUT FIELD
+         ORG   E3412TNI
+E3412TNO DS    CL7                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3412DYA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412DYI DS    CL8                INPUT FIELD
+         ORG   E3412DYI
+         DS    CL8                OUTPUT FIELD
+*
+E3412DIL DS    AL2                INPUT FIELD LENGTH
+E3412DIF DS    0X                 INPUT FIELD FLAG
+E3412DIA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412DII DS    CL3                INPUT FIELD
+         ORG   E3412DII
+E3412DIO DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412DTI DS    CL4                INPUT FIELD
+         ORG   E3412DTI
+E3412DTO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412STI DS    CL26               INPUT FIELD
+         ORG   E3412STI
+E3412STO DS    CL26               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412CNI DS    CL18               INPUT FIELD
+         ORG   E3412CNI
+E3412CNO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412CHI DS    CL18               INPUT FIELD
+         ORG   E3412CHI
+E3412CHO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412NHI DS    CL8                INPUT FIELD
+         ORG   E3412NHI
+E3412NHO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412PRI DS    CL8                INPUT FIELD
+         ORG   E3412PRI
+E3412PRO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412OFI DS    CL9                INPUT FIELD
+         ORG   E3412OFI
+E3412OFO DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E34121RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E34121RI DS    CL9                INPUT FIELD
+         ORG   E34121RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412RPI DS    CL12               INPUT FIELD
+         ORG   E3412RPI
+E3412RPO DS    CL12               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E34122RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E34122RI DS    CL9                INPUT FIELD
+         ORG   E34122RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412R2I DS    CL3                INPUT FIELD
+         ORG   E3412R2I
+E3412R2O DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412RCI DS    CL25               INPUT FIELD
+         ORG   E3412RCI
+E3412RCO DS    CL25               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412ENI DS    CL18               INPUT FIELD
+         ORG   E3412ENI
+E3412ENO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3412P7A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412P7I DS    CL21               INPUT FIELD
+         ORG   E3412P7I
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3412P8A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412P8I DS    CL24               INPUT FIELD
+         ORG   E3412P8I
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3412PAA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412PAI DS    CL21               INPUT FIELD
+         ORG   E3412PAI
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3412PBA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412PBI DS    CL24               INPUT FIELD
+         ORG   E3412PBI
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3412PCA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3412PCI DS    CL19               INPUT FIELD
+         ORG   E3412PCI
+         DS    CL19               OUTPUT FIELD
+*
+EDF3412E EQU   *
+EDF3412L EQU   EDF3412E-EDF3412S
+*
+* * * END OF MAP DEFINITION     * * *
+*
+EDF3414S DS    0H                 START OF MAP DEFINITION
+EDF3414I DS    0H                 START OF MAP INPUT DEFINITION
+EDF3414O DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414TSI DS    CL4                INPUT FIELD
+         ORG   E3414TSI
+E3414TSO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414PGI DS    CL8                INPUT FIELD
+         ORG   E3414PGI
+E3414PGO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414TNI DS    CL7                INPUT FIELD
+         ORG   E3414TNI
+E3414TNO DS    CL7                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3414MDA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414MDI DS    CL6                INPUT FIELD
+         ORG   E3414MDI
+E3414MDO DS    CL6                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3414DYA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414DYI DS    CL8                INPUT FIELD
+         ORG   E3414DYI
+         DS    CL8                OUTPUT FIELD
+*
+E3414DIL DS    AL2                INPUT FIELD LENGTH
+E3414DIF DS    0X                 INPUT FIELD FLAG
+E3414DIA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414DII DS    CL3                INPUT FIELD
+         ORG   E3414DII
+E3414DIO DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414DTI DS    CL4                INPUT FIELD
+         ORG   E3414DTI
+E3414DTO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414STI DS    CL26               INPUT FIELD
+         ORG   E3414STI
+E3414STO DS    CL26               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414CNI DS    CL18               INPUT FIELD
+         ORG   E3414CNI
+E3414CNO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414CHI DS    CL18               INPUT FIELD
+         ORG   E3414CHI
+E3414CHO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414ISI DS    CL79               INPUT FIELD
+         ORG   E3414ISI
+E3414ISO DS    CL79               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3414LLA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414LLI DS    CL14               INPUT FIELD
+         ORG   E3414LLI
+         DS    CL14               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414LII DS    CL13               INPUT FIELD
+         ORG   E3414LII
+E3414LIO DS    CL13               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3414NDA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414NDI DS    CL6                INPUT FIELD
+         ORG   E3414NDI
+         DS    CL6                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414LDI DS    CL28               INPUT FIELD
+         ORG   E3414LDI
+E3414LDO DS    CL28               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414NHI DS    CL8                INPUT FIELD
+         ORG   E3414NHI
+E3414NHO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414PRI DS    CL8                INPUT FIELD
+         ORG   E3414PRI
+E3414PRO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414OFI DS    CL9                INPUT FIELD
+         ORG   E3414OFI
+E3414OFO DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E34141RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E34141RI DS    CL9                INPUT FIELD
+         ORG   E34141RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414RPI DS    CL12               INPUT FIELD
+         ORG   E3414RPI
+E3414RPO DS    CL12               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E34142RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E34142RI DS    CL9                INPUT FIELD
+         ORG   E34142RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414R2I DS    CL3                INPUT FIELD
+         ORG   E3414R2I
+E3414R2O DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414RCI DS    CL25               INPUT FIELD
+         ORG   E3414RCI
+E3414RCO DS    CL25               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414ENI DS    CL18               INPUT FIELD
+         ORG   E3414ENI
+E3414ENO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3414P2A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414P2I DS    CL21               INPUT FIELD
+         ORG   E3414P2I
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3414P7A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414P7I DS    CL21               INPUT FIELD
+         ORG   E3414P7I
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3414P8A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414P8I DS    CL24               INPUT FIELD
+         ORG   E3414P8I
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3414PAA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414PAI DS    CL21               INPUT FIELD
+         ORG   E3414PAI
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3414PBA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414PBI DS    CL24               INPUT FIELD
+         ORG   E3414PBI
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3414PCA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3414PCI DS    CL19               INPUT FIELD
+         ORG   E3414PCI
+         DS    CL19               OUTPUT FIELD
+*
+EDF3414E EQU   *
+EDF3414L EQU   EDF3414E-EDF3414S
+*
+* * * END OF MAP DEFINITION     * * *
+*
+EDF3416S DS    0H                 START OF MAP DEFINITION
+EDF3416I DS    0H                 START OF MAP INPUT DEFINITION
+EDF3416O DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416TSI DS    CL4                INPUT FIELD
+         ORG   E3416TSI
+E3416TSO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416PGI DS    CL8                INPUT FIELD
+         ORG   E3416PGI
+E3416PGO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416TNI DS    CL7                INPUT FIELD
+         ORG   E3416TNI
+E3416TNO DS    CL7                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416MDI DS    CL6                INPUT FIELD
+         ORG   E3416MDI
+E3416MDO DS    CL6                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3416DYA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416DYI DS    CL8                INPUT FIELD
+         ORG   E3416DYI
+         DS    CL8                OUTPUT FIELD
+*
+E3416DIL DS    AL2                INPUT FIELD LENGTH
+E3416DIF DS    0X                 INPUT FIELD FLAG
+E3416DIA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416DII DS    CL3                INPUT FIELD
+         ORG   E3416DII
+E3416DIO DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416DTI DS    CL4                INPUT FIELD
+         ORG   E3416DTI
+E3416DTO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416STI DS    CL26               INPUT FIELD
+         ORG   E3416STI
+E3416STO DS    CL26               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416CNI DS    CL18               INPUT FIELD
+         ORG   E3416CNI
+E3416CNO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416CHI DS    CL18               INPUT FIELD
+         ORG   E3416CHI
+E3416CHO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416FMI DS    CL67               INPUT FIELD
+         ORG   E3416FMI
+E3416FMO DS    CL67               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416LNI DS    CL13               INPUT FIELD
+         ORG   E3416LNI
+E3416LNO DS    CL13               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416NHI DS    CL8                INPUT FIELD
+         ORG   E3416NHI
+E3416NHO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416PRI DS    CL8                INPUT FIELD
+         ORG   E3416PRI
+E3416PRO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416OFI DS    CL9                INPUT FIELD
+         ORG   E3416OFI
+E3416OFO DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E34161RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E34161RI DS    CL9                INPUT FIELD
+         ORG   E34161RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416RPI DS    CL12               INPUT FIELD
+         ORG   E3416RPI
+E3416RPO DS    CL12               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E34162RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E34162RI DS    CL9                INPUT FIELD
+         ORG   E34162RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416R2I DS    CL3                INPUT FIELD
+         ORG   E3416R2I
+E3416R2O DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416RCI DS    CL25               INPUT FIELD
+         ORG   E3416RCI
+E3416RCO DS    CL25               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416ENI DS    CL18               INPUT FIELD
+         ORG   E3416ENI
+E3416ENO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3416P7A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416P7I DS    CL21               INPUT FIELD
+         ORG   E3416P7I
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3416P8A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416P8I DS    CL24               INPUT FIELD
+         ORG   E3416P8I
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3416PAA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416PAI DS    CL21               INPUT FIELD
+         ORG   E3416PAI
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3416PBA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416PBI DS    CL24               INPUT FIELD
+         ORG   E3416PBI
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3416PCA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3416PCI DS    CL19               INPUT FIELD
+         ORG   E3416PCI
+         DS    CL19               OUTPUT FIELD
+*
+EDF3416E EQU   *
+EDF3416L EQU   EDF3416E-EDF3416S
+*
+* * * END OF MAP DEFINITION     * * *
+*
+EDF3440S DS    0H                 START OF MAP DEFINITION
+EDF3440I DS    0H                 START OF MAP INPUT DEFINITION
+EDF3440O DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440TSI DS    CL4                INPUT FIELD
+         ORG   E3440TSI
+E3440TSO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440PGI DS    CL8                INPUT FIELD
+         ORG   E3440PGI
+E3440PGO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440TNI DS    CL7                INPUT FIELD
+         ORG   E3440TNI
+E3440TNO DS    CL7                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3440DYA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440DYI DS    CL8                INPUT FIELD
+         ORG   E3440DYI
+         DS    CL8                OUTPUT FIELD
+*
+E3440DIL DS    AL2                INPUT FIELD LENGTH
+E3440DIF DS    0X                 INPUT FIELD FLAG
+E3440DIA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440DII DS    CL3                INPUT FIELD
+         ORG   E3440DII
+E3440DIO DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440DTI DS    CL4                INPUT FIELD
+         ORG   E3440DTI
+E3440DTO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440STI DS    CL26               INPUT FIELD
+         ORG   E3440STI
+E3440STO DS    CL26               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440CNI DS    CL18               INPUT FIELD
+         ORG   E3440CNI
+E3440CNO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440ASI DS    CL18               INPUT FIELD
+         ORG   E3440ASI
+E3440ASO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440CHI DS    CL18               INPUT FIELD
+         ORG   E3440CHI
+E3440CHO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440TCI DS    CL18               INPUT FIELD
+         ORG   E3440TCI
+E3440TCO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440NHI DS    CL8                INPUT FIELD
+         ORG   E3440NHI
+E3440NHO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440PRI DS    CL8                INPUT FIELD
+         ORG   E3440PRI
+E3440PRO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440OFI DS    CL9                INPUT FIELD
+         ORG   E3440OFI
+E3440OFO DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E34401RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E34401RI DS    CL9                INPUT FIELD
+         ORG   E34401RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440RPI DS    CL12               INPUT FIELD
+         ORG   E3440RPI
+E3440RPO DS    CL12               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E34402RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E34402RI DS    CL9                INPUT FIELD
+         ORG   E34402RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440R2I DS    CL3                INPUT FIELD
+         ORG   E3440R2I
+E3440R2O DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440RCI DS    CL25               INPUT FIELD
+         ORG   E3440RCI
+E3440RCO DS    CL25               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440ENI DS    CL18               INPUT FIELD
+         ORG   E3440ENI
+E3440ENO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3440P7A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440P7I DS    CL21               INPUT FIELD
+         ORG   E3440P7I
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3440P8A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440P8I DS    CL24               INPUT FIELD
+         ORG   E3440P8I
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3440PAA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440PAI DS    CL21               INPUT FIELD
+         ORG   E3440PAI
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3440PBA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440PBI DS    CL24               INPUT FIELD
+         ORG   E3440PBI
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E3440PCA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E3440PCI DS    CL19               INPUT FIELD
+         ORG   E3440PCI
+         DS    CL19               OUTPUT FIELD
+*
+EDF3440E EQU   *
+EDF3440L EQU   EDF3440E-EDF3440S
+*
+* * * END OF MAP DEFINITION     * * *
+*
 EDF4A04S DS    0H                 START OF MAP DEFINITION
 EDF4A04I DS    0H                 START OF MAP INPUT DEFINITION
 EDF4A04O DS    0H                 START OF MAP OUTPUT DEFINITION
@@ -9799,6 +10703,580 @@ E4C04PCI DS    CL19               INPUT FIELD
 *
 EDF4C04E EQU   *
 EDF4C04L EQU   EDF4C04E-EDF4C04S
+*
+* * * END OF MAP DEFINITION     * * *
+*
+EDF9626S DS    0H                 START OF MAP DEFINITION
+EDF9626I DS    0H                 START OF MAP INPUT DEFINITION
+EDF9626O DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626TSI DS    CL4                INPUT FIELD
+         ORG   E9626TSI
+E9626TSO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626PGI DS    CL8                INPUT FIELD
+         ORG   E9626PGI
+E9626PGO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626TNI DS    CL7                INPUT FIELD
+         ORG   E9626TNI
+E9626TNO DS    CL7                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9626DYA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626DYI DS    CL8                INPUT FIELD
+         ORG   E9626DYI
+         DS    CL8                OUTPUT FIELD
+*
+E9626DIL DS    AL2                INPUT FIELD LENGTH
+E9626DIF DS    0X                 INPUT FIELD FLAG
+E9626DIA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626DII DS    CL3                INPUT FIELD
+         ORG   E9626DII
+E9626DIO DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626DTI DS    CL4                INPUT FIELD
+         ORG   E9626DTI
+E9626DTO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626STI DS    CL26               INPUT FIELD
+         ORG   E9626STI
+E9626STO DS    CL26               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626CHI DS    CL18               INPUT FIELD
+         ORG   E9626CHI
+E9626CHO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626BTI DS    CL13               INPUT FIELD
+         ORG   E9626BTI
+E9626BTO DS    CL13               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626NHI DS    CL8                INPUT FIELD
+         ORG   E9626NHI
+E9626NHO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626PRI DS    CL8                INPUT FIELD
+         ORG   E9626PRI
+E9626PRO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626OFI DS    CL9                INPUT FIELD
+         ORG   E9626OFI
+E9626OFO DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E96261RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E96261RI DS    CL9                INPUT FIELD
+         ORG   E96261RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626RPI DS    CL12               INPUT FIELD
+         ORG   E9626RPI
+E9626RPO DS    CL12               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E96262RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E96262RI DS    CL9                INPUT FIELD
+         ORG   E96262RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626R2I DS    CL3                INPUT FIELD
+         ORG   E9626R2I
+E9626R2O DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626RCI DS    CL25               INPUT FIELD
+         ORG   E9626RCI
+E9626RCO DS    CL25               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626ENI DS    CL18               INPUT FIELD
+         ORG   E9626ENI
+E9626ENO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9626P7A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626P7I DS    CL21               INPUT FIELD
+         ORG   E9626P7I
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9626P8A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626P8I DS    CL24               INPUT FIELD
+         ORG   E9626P8I
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9626PAA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626PAI DS    CL21               INPUT FIELD
+         ORG   E9626PAI
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9626PBA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626PBI DS    CL24               INPUT FIELD
+         ORG   E9626PBI
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9626PCA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9626PCI DS    CL19               INPUT FIELD
+         ORG   E9626PCI
+         DS    CL19               OUTPUT FIELD
+*
+EDF9626E EQU   *
+EDF9626L EQU   EDF9626E-EDF9626S
+*
+* * * END OF MAP DEFINITION     * * *
+*
+EDF9628S DS    0H                 START OF MAP DEFINITION
+EDF9628I DS    0H                 START OF MAP INPUT DEFINITION
+EDF9628O DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628TSI DS    CL4                INPUT FIELD
+         ORG   E9628TSI
+E9628TSO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628PGI DS    CL8                INPUT FIELD
+         ORG   E9628PGI
+E9628PGO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628TNI DS    CL7                INPUT FIELD
+         ORG   E9628TNI
+E9628TNO DS    CL7                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9628DYA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628DYI DS    CL8                INPUT FIELD
+         ORG   E9628DYI
+         DS    CL8                OUTPUT FIELD
+*
+E9628DIL DS    AL2                INPUT FIELD LENGTH
+E9628DIF DS    0X                 INPUT FIELD FLAG
+E9628DIA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628DII DS    CL3                INPUT FIELD
+         ORG   E9628DII
+E9628DIO DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628DTI DS    CL4                INPUT FIELD
+         ORG   E9628DTI
+E9628DTO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628STI DS    CL26               INPUT FIELD
+         ORG   E9628STI
+E9628STO DS    CL26               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628CNI DS    CL18               INPUT FIELD
+         ORG   E9628CNI
+E9628CNO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628BTI DS    CL13               INPUT FIELD
+         ORG   E9628BTI
+E9628BTO DS    CL13               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628NHI DS    CL8                INPUT FIELD
+         ORG   E9628NHI
+E9628NHO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628PRI DS    CL8                INPUT FIELD
+         ORG   E9628PRI
+E9628PRO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628OFI DS    CL9                INPUT FIELD
+         ORG   E9628OFI
+E9628OFO DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E96281RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E96281RI DS    CL9                INPUT FIELD
+         ORG   E96281RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628RPI DS    CL12               INPUT FIELD
+         ORG   E9628RPI
+E9628RPO DS    CL12               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E96282RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E96282RI DS    CL9                INPUT FIELD
+         ORG   E96282RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628R2I DS    CL3                INPUT FIELD
+         ORG   E9628R2I
+E9628R2O DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628RCI DS    CL25               INPUT FIELD
+         ORG   E9628RCI
+E9628RCO DS    CL25               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628ENI DS    CL18               INPUT FIELD
+         ORG   E9628ENI
+E9628ENO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9628P7A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628P7I DS    CL21               INPUT FIELD
+         ORG   E9628P7I
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9628P8A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628P8I DS    CL24               INPUT FIELD
+         ORG   E9628P8I
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9628PAA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628PAI DS    CL21               INPUT FIELD
+         ORG   E9628PAI
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9628PBA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628PBI DS    CL24               INPUT FIELD
+         ORG   E9628PBI
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E9628PCA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E9628PCI DS    CL19               INPUT FIELD
+         ORG   E9628PCI
+         DS    CL19               OUTPUT FIELD
+*
+EDF9628E EQU   *
+EDF9628L EQU   EDF9628E-EDF9628S
+*
+* * * END OF MAP DEFINITION     * * *
+*
+EDF962AS DS    0H                 START OF MAP DEFINITION
+EDF962AI DS    0H                 START OF MAP INPUT DEFINITION
+EDF962AO DS    0H                 START OF MAP OUTPUT DEFINITION
+         DS    12C                TIOA PREFIX
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962ATSI DS    CL4                INPUT FIELD
+         ORG   E962ATSI
+E962ATSO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962APGI DS    CL8                INPUT FIELD
+         ORG   E962APGI
+E962APGO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962ATNI DS    CL7                INPUT FIELD
+         ORG   E962ATNI
+E962ATNO DS    CL7                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E962ADYA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962ADYI DS    CL8                INPUT FIELD
+         ORG   E962ADYI
+         DS    CL8                OUTPUT FIELD
+*
+E962ADIL DS    AL2                INPUT FIELD LENGTH
+E962ADIF DS    0X                 INPUT FIELD FLAG
+E962ADIA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962ADII DS    CL3                INPUT FIELD
+         ORG   E962ADII
+E962ADIO DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962ADTI DS    CL4                INPUT FIELD
+         ORG   E962ADTI
+E962ADTO DS    CL4                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962ASTI DS    CL26               INPUT FIELD
+         ORG   E962ASTI
+E962ASTO DS    CL26               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962ABTI DS    CL13               INPUT FIELD
+         ORG   E962ABTI
+E962ABTO DS    CL13               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962ANHI DS    CL8                INPUT FIELD
+         ORG   E962ANHI
+E962ANHO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962APRI DS    CL8                INPUT FIELD
+         ORG   E962APRI
+E962APRO DS    CL8                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962AOFI DS    CL9                INPUT FIELD
+         ORG   E962AOFI
+E962AOFO DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E962A1RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962A1RI DS    CL9                INPUT FIELD
+         ORG   E962A1RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962ARPI DS    CL12               INPUT FIELD
+         ORG   E962ARPI
+E962ARPO DS    CL12               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E962A2RA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962A2RI DS    CL9                INPUT FIELD
+         ORG   E962A2RI
+         DS    CL9                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962AR2I DS    CL3                INPUT FIELD
+         ORG   E962AR2I
+E962AR2O DS    CL3                OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962ARCI DS    CL25               INPUT FIELD
+         ORG   E962ARCI
+E962ARCO DS    CL25               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+         DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962AENI DS    CL18               INPUT FIELD
+         ORG   E962AENI
+E962AENO DS    CL18               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E962AP7A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962AP7I DS    CL21               INPUT FIELD
+         ORG   E962AP7I
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E962AP8A DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962AP8I DS    CL24               INPUT FIELD
+         ORG   E962AP8I
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E962APAA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962APAI DS    CL21               INPUT FIELD
+         ORG   E962APAI
+         DS    CL21               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E962APBA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962APBI DS    CL24               INPUT FIELD
+         ORG   E962APBI
+         DS    CL24               OUTPUT FIELD
+*
+         DS    AL2                INPUT FIELD LENGTH
+         DS    0X                 INPUT FIELD FLAG
+E962APCA DS    X                  OUTPUT ATTRIBUTE
+         DS    X                  OUTPUT COLOUR ATTRIBUTE
+E962APCI DS    CL19               INPUT FIELD
+         ORG   E962APCI
+         DS    CL19               OUTPUT FIELD
+*
+EDF962AE EQU   *
+EDF962AL EQU   EDF962AE-EDF962AS
 *
 * * * END OF MAP DEFINITION     * * *
 *
