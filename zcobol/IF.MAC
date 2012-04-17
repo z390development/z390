@@ -28,6 +28,8 @@
 .* 04/20/11 RPI 1139 prevent dup GBL &(...) for NOALLOW
 .* 02/23/12 RPI 1182 SET FIELD_REG TO R2/R3 FOR COMPARING SUBSC FIELDS
 .* 03/27/12 RPI 1182 ALLOW '(' OR ')'  AFTER = AS LIT VS NORMAL () 
+.* 04/08/12 RPI 1202 Support '(' and ')' literals based on context
+.* 04/12/12 RPI 1202 Correct OR logic for compute (...) ORR (...)
 .*********************************************************************
 .* Pending work includes support for field,lit,expression in either 
 .* first or second operand.  Coming after COMPUTE dubugs GEN_EXP.
@@ -70,7 +72,7 @@
 .* BUILD IOP LIST WITH BACKWARD REF UPDATE AND THEN GEN CODE
 .*
          ACALL IOP_BUILD      BUILD IOP TABLE
-.*  ACALL LIST_IOPS   DEBUG
+.* DSHX    ACALL LIST_IOPS   DEBUG DSHX
          ACALL IOP_OPT_OR     OPTIMIZE MULT OR'S
          ACALL IOP_GEN_CODE   GEN CODE FROM IOP TABLE
          MEXIT
@@ -98,7 +100,11 @@
          :&SKIP_SIX_OR_LIT SETB 0  SKIP SUBSCRIPTS IN CD'S
          ACALL  GET_PARM           GET NEXT PARM OR ''
          AWHILE ('&PARM' NE '')
-               AIF ('&PARM' EQ '''(''' AND '&PREV_PARM' NE '=')
+               AIF ('&PARM' EQ '''('''                                 X
+                    AND '&SYSLIST(&PARM_IX+1)' NE ''                   X
+                    AND '&SYSLIST(&PARM_IX+1)' NE ''')'''              X
+                    AND '&SYSLIST(&PARM_IX+1)' NE 'AND'                X
+                    AND '&SYSLIST(&PARM_IX+1)' NE 'OR') RPI 1202                       
                    :&LAST_VAR SETB 0        RPI 1192 ALLOW '(' LIT
                    AIF ('&PREV_PARM' EQ 'DFHRESP'                      X
                         OR '&PREV_PARM' EQ 'DFHVALUE')  
@@ -519,12 +525,8 @@
          AELSE
                :&IOP SETA -&IOP_CD2(&I)     GEN COMP FROM T/F
                AIF  (&IOP GT 0)
-                    AIF (&IOP EQ &I-1)
-                        :&GEN_CD SETB 0
-                    AELSE
-                        GEN_COMP_BYTE ZCVT_WORKAREA+&IOP,1  
-                        :&CCT SETC 'ZC_EQ'      IS IOP COND TRUE
-                    AEND
+                    GEN_COMP_BYTE ZCVT_WORKAREA+&IOP,1  
+                    :&CCT SETC 'ZC_EQ'      IS IOP COND TRUE
                AELSE
                     MNOTE 8,'IF IOP &I MISSING CD2'
                     ACALL LIST_IOPS
@@ -533,12 +535,14 @@
          AEND
          AIF   (&IOP_TF(&I))         SAVE T/F FOR AND
                GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_IOP&I._T CD2 TRUE
-               GEN_MOVE_BYTE ZCVT_WORKAREA+&I,0     CD1 OR CD2 > F
-         AEND                       EXIT IF FALSE
-         AIF   (&IOP_OR_END(&I) GT 0)     USE OPTIMIZED OR END TARGET
-               GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_IOP&IOP_OR_END(&I)._T 
-         AELSE
-               GEN_BC 15-&CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IE_LVL)
+               GEN_MOVE_BYTE ZCVT_WORKAREA+&I,0     CD1 AND CD2 = F 
+         AELSE 
+.* RPI 1202 REPLACE AEND WITH AELSE
+               AIF   (&IOP_OR_END(&I) GT 0) USE OPTIMIZED OR END TARGET
+                 GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_IOP&IOP_OR_END(&I)._T 
+               AELSE
+                 GEN_BC 15-&CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IE_LVL)
+               AEND
          AEND
          AIF (&IOP_OR_END(&I) EQ 0)
              GEN_LABEL IF_&IE_TCNT(&IE_LVL)_IOP&I._T,IF_IOP_OR_TRUE
@@ -582,7 +586,8 @@
 .*   2.  SET FIELD_REG TO R2 AND R3 FOR SUBSCRIPT/RMOD CALS RPI 1182
 .*
          AENTRY IOP_GEN_CD
-         :&SAVE_FIRST_CD_PARM_IX SETA &CD_PARM_IX        
+         :&SAVE_FIRST_CD_PARM_IX SETA &CD_PARM_IX  
+         :&PARM SETC ''  RPI 1202
          :&CD_PARM_IX SETA &CD_PARM_IX-1          
          :&FIELD_SS1 SETB 1
          :&FIELD_REG SETC 'ZC_R2' RPI 1182 ASSUME F1 USING R2 
@@ -620,7 +625,7 @@
                ACALL SET_CCT
                ACALL RESET_SS1               RPI 1065 
                AIF ('&CCT' EQ '') NOT REL SO ASSUME FIELD2 LIT
-                   :&FIELD2 SETC '&FIELD_NAME'
+                   :&FIELD2 SETC '&PARM' RPI 1202 WAS '&FIELD_NAME'
                    :&FIELD2_IX SETA 0
                    :&FIELD_REG SETC 'ZC_R2' RPI 1182 GET F1 USING R2 
                    ACALL SET_OMITTED_FIELD1
@@ -845,10 +850,10 @@
                     OR '&PARM' EQ ''')'''                              X 
                     OR '&PARM' EQ 'AND'                                X
                     OR '&PARM' EQ 'OR') RPI 1065 AND/OR FORCES NEW COMP
-                    AIF ('&PREV_PARM' NE '=')
-                        :&PARM SETC ''
+                    AIF ('&PREV_PARM' NE '=' AND '&PREV_PARM' NE '') 
+                        :&PARM SETC ''     
                     AELSE
-                        :&CD_PARM_IX SETA &CD_PARM_IX+1 RPI 1182 
+                        :&CD_PARM_IX SETA &CD_PARM_IX+1 RPI 1182 1202 
                     AEND
                AELSEIF ('&PARM' EQ '+' OR '&PARM' EQ '-')
                    :&PARM SETC '&PARM&SYSLIST(&CD_PARM_IX+1)'

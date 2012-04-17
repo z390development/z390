@@ -38,24 +38,27 @@
 .* 03/26/12 RPI 1182 add source length for ZAP from ws temp loc
 .* 03/26/12 RPI 1182 add missing conversion from Q to Z
 .* 03/27/12 RPI 1182 support variable length RMD move
+.* 04/14/12 RPI 1202 use D2A to retrieve neg &NT_IX and &NS_IX
 .*********************************************************************
          GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
          COPY  ZC_WS
          :&PIC_TARGET SETB 1  ASSUME TARGET HAS PICTURE
+         :&NT_IX SETA -D2A('&T_IX')                         RPI 1202
+         :&NS_IX SETA -D2A('&S_IX')                         RPI 1202
          AIF (&T_IX GT 0)
              :&N_TARGET SETC '&T_NAME'
-             :&L_TARGET SETA  &SYM_LEN(&T_IX)
-             :&S_TARGET SETB  &SYM_PIC_SIGN(&T_IX)
+             :&L_TARGET SETA  &SYM_LEN(&T_IX)       
+             :&S_TARGET SETB  &SYM_PIC_SIGN(&T_IX)  
              :&T_TARGET SETC '&SYM_PIC_TYPE(&T_IX)'
              :&D_TARGET SETA  &SYM_PIC_DEC(&T_IX) RPI 1062
              AIF ('&T_TARGET' EQ 'X' AND '&SYM_PIC(&T_IX)' EQ '')
                  :&PIC_TARGET SETB 0 NO PIC FOR X GROUP
              AEND
-         AELSEIF (&T_IX LT 0)
-             :&L_TARGET SETA  &TMP_LEN(-&T_IX)
-             :&N_TARGET SETC '&TMP_NAME(-&T_IX)(&L_TARGET)'
-             :&S_TARGET SETB  &TMP_SIGN(-&T_IX)
-             :&T_TARGET SETC '&TMP_TYPE(-&T_IX)'
+         AELSEIF (&NT_IX GT 0)                              RPI 1202
+             :&L_TARGET SETA  &TMP_LEN(&NT_IX)              RPI 1202
+             :&N_TARGET SETC '&TMP_NAME(&NT_IX)(&L_TARGET)' RPI 1202
+             :&S_TARGET SETB  &TMP_SIGN(&NT_IX)             RPI 1202
+             :&T_TARGET SETC '&TMP_TYPE(&NT_IX)'            RPI 1202
              :&D_TARGET SETA 0                    RPI 1062 
          AELSE
             MNOTE 8,'GEN_MOVE MISSING TARGET INDEX FOR &T_NAME'
@@ -67,11 +70,11 @@
              :&S_SOURCE SETB  &SYM_PIC_SIGN(&S_IX)
              :&T_SOURCE SETC '&SYM_PIC_TYPE(&S_IX)'
              :&D_SOURCE SETA  &SYM_PIC_DEC(&S_IX)  RPI 1062
-         AELSEIF (&S_IX LT 0)
-             :&N_SOURCE SETC '&TMP_NAME(-&S_IX)'
-             :&L_SOURCE SETA  &TMP_LEN(-&S_IX)
-             :&S_SOURCE SETB  &TMP_SIGN(-&S_IX)
-             :&T_SOURCE SETC '&TMP_TYPE(-&S_IX)'
+         AELSEIF (&NS_IX GT 0)                              RPI 1202
+             :&N_SOURCE SETC '&TMP_NAME(&NS_IX)'           RPI 1202
+             :&L_SOURCE SETA  &TMP_LEN(&NS_IX)             RPI 1202
+             :&S_SOURCE SETB  &TMP_SIGN(&NS_IX)            RPI 1202
+             :&T_SOURCE SETC '&TMP_TYPE(&NS_IX)'           RPI 1202
              :&D_SOURCE SETA  0                    RPI 1052 
          AEND
          :&LIT   SETC '&N_SOURCE'
@@ -87,7 +90,7 @@
 .* MOVE LE 256
 .* 
          AENTRY MOVE_LE_256
-         AIF   (&S_IX NE 0)
+         AIF   (&NS_IX NE 0)  RPI 1202
                AIF  (('&T_TARGET' EQ '&T_SOURCE'                       X
                      AND '&D_TARGET' EQ '&D_SOURCE')                   X 
                      OR NOT &PIC_TARGET)   RPI 1042 MVC>GRP  RPI 1178
@@ -225,7 +228,7 @@
                AELSE
          IILF  ZC_R1,&L_TARGET  RPI 1182 LHI TO IILH
                AEND
-       AIF   (&S_IX NE 0)          
+       AIF   (&NS_IX NE 0)      RPI 1202    
          LA    ZC_R2,&N_SOURCE
                AIF   (&RMD_VLEN_SRC)
          LR    ZC_R3,ZC_R14     RPI 1182 RMD VLEN SRC REG
@@ -286,7 +289,7 @@
  .* MVC LIT
  .*
           AENTRY MVC_LIT
-                AIF (&T_IX LT 0)
+                AIF (&NT_IX GT 0) RPI 1202
           MVC   &N_TARGET.(&L_SOURCE),&LITREF
                 AELSE
           MVC   &N_TARGET,&LITREF

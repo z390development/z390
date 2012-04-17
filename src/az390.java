@@ -388,7 +388,11 @@ public  class  az390 implements Runnable {
         *          1) last .END entry overrides default 0
         *          2) ENTRY command overrides any .END entry  
         * 03/24/12 RPI 1198 correct misspelled sym_esd1 (was sym_sid1)
-        *          and remove remove sym_sid1 and sym_sid2                 
+        *          and remove remove sym_sid1 and sym_sid2  
+        * 04/05/12 RPI 1201 use lit_dup*lit_len to align lits  
+        * 04/13/12 RPI 1205 issue error for SDT C'12345' too long 
+        * 04/13/12 RPI 1206 drop unlabeled dependant using for drop reg
+        * 04/17/12 RPI 1208 don't generate RLD's in DSECT         
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -734,6 +738,7 @@ public  class  az390 implements Runnable {
     int[]     lit_esd          = null;
     int[]     lit_loc          = null;
     int[]     lit_len          = null;
+    int[]     lit_dup          = null;  // RPI 1200 use dup*len for alignment sizing
     int[]     lit_scale        = null;  // RPI 790
     byte[]    lit_dc_type      = null;  // RPI 790
     byte[]    lit_dc_type_sfx  = null;  // RPI 790
@@ -935,6 +940,7 @@ public  class  az390 implements Runnable {
       int     dc_dec_scale = 0;     // rpi 777 decimals to right of poind
       int    dc_exp   = 0;
       int    dc_first_len = 0;
+      int    dc_first_dup = 9; // RPI 1200
       int    dc_first_loc = 0;
       char   dc_first_type = ' ';  // dc first field type char
       char   dc_first_type_sfx = ' '; // dc first type suffix  RPI 790
@@ -1307,6 +1313,7 @@ private void init_arrays(){
     lit_esd          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     lit_loc          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     lit_len          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
+    lit_dup          = (int[])Array.newInstance(int.class,tz390.opt_maxsym); // RPI 1200    
     lit_scale        = (int[])Array.newInstance(int.class,tz390.opt_maxsym); // RPI 790
     lit_dc_type      = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym); // RPI 790
     lit_dc_type_sfx  = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym); // RPI 790
@@ -3368,6 +3375,9 @@ private void add_rld(int exp_esd){
 	/*
 	 * add plus rld
 	 */
+	if (cur_esd == 0 || sym_type[esd_sid[esd_base[cur_esd]]] != sym_cst){
+		return; // RPI 1208
+	}		       
 	if (tot_exp_rld_add < max_exp_rld){
 		exp_rld_add_esd[tot_exp_rld_add] = exp_esd;
 		tot_exp_rld_add++;
@@ -3377,6 +3387,9 @@ private void sub_rld(int exp_esd){
 	/*
 	 * sub rld
 	 */
+	if (cur_esd == 0 || sym_type[esd_sid[esd_base[cur_esd]]] != sym_cst){
+		return; // RPI 1208
+	}	
 	if (tot_exp_rld_sub < max_exp_rld){
 		exp_rld_sub_esd[tot_exp_rld_sub] = exp_esd;
 		tot_exp_rld_sub++;
@@ -3428,6 +3441,9 @@ private void gen_exp_rld(){
 	 *       for use in PRN display (i.e. show addresses
 	 *       relative to module versus CSECT).
 	 */
+	if (cur_esd == 0 || sym_type[esd_sid[esd_base[cur_esd]]] != sym_cst){ // RPI 1208
+		return;
+	}        
 	exp_rld_mod_val = exp_val;  // RPI 632 rel module vs CSECT
 	exp_rld_mod_set = true;     // RPI 632
 	int index = 0;
@@ -5050,7 +5066,7 @@ private void exp_term(){
         } else if (exp_esd == esd_cpx_rld){
         	if (exp_rld_len > 0){ // RPI 893
         		if (gen_obj_code){
-                    gen_exp_rld();
+        			gen_exp_rld();
         		}    
             } else {
             	log_error(61,"invalid complex rld expression: " + exp_text.substring(0,exp_index)); // RPI 1034
@@ -6042,18 +6058,21 @@ private void drop_cur_use_reg(){
 	 * but not labeled usings.
 	 */
 	int index = cur_use_start;
+	int dropped = 0; // RPI 1206
 	while (index < cur_use_end){
 		if (use_lab[index] == ""  // RPI 431, RPI 451
 			&& use_reg[index] == cur_use_reg){
 			cur_use_end--;
+			dropped++; // RPI 1206			
 			if (index < cur_use_end){
-				move_use_entry(cur_use_end,index);
+ 		        move_use_entry(cur_use_end,index);
+				index--; // RPI 1206 backup to check moved entry
 			}
-			return; // RPI 1052 exit after removing one
+			// RPI 1205 return; // RPI 1052 exit after removing one
 		}
 		index++;
 	}
-	if (explicit_drop_reg == true){
+	if (explicit_drop_reg == true && dropped == 0){ // RPI 1206
 		log_error(207,"Active USING not found for DROP register - " + cur_use_reg); // RPI 1052
 	}
 }
@@ -6853,6 +6872,7 @@ private void get_dc_field_modifiers(){
 	 		dc_first_len = dc_len;
 	 	}
 	 	dc_first_scale = dc_scale;
+	 	dc_first_dup   = dc_dup; // RPI 1200
 	 	loc_start = loc_ctr;
 	 }
 }
@@ -8453,6 +8473,7 @@ private void get_lit_addr(){
 			lit_esd[cur_lit] = cur_esd;
 			lit_loc[cur_lit] = -1; // set by gen_lit
 			lit_len[cur_lit] = dc_first_len;
+			lit_dup[cur_lit] = dc_first_dup; // RPI 1200 save for lit pool alignment sizing
 			lit_scale[cur_lit] = dc_first_scale; // RPI 790
 			lit_dc_type[cur_lit]  = (byte) dc_first_type;  // RPI 790
 			lit_dc_type_sfx[cur_lit] = (byte) dc_first_type_sfx; // RPI 790
@@ -8481,10 +8502,10 @@ private void gen_lit_size(int size){
 	 */
 	cur_lit = 0;
 	while (cur_lit < tot_lit){
-		if (lit_len[cur_lit] == lit_len[cur_lit]/size*size
+		if (lit_len[cur_lit]*lit_dup[cur_lit] == lit_len[cur_lit]*lit_dup[cur_lit]/size*size // RPI 1200 use dup for aligning
 				&& lit_gen[cur_lit] == 0
 				&& lit_pool[cur_lit] == cur_lit_pool
-				){
+				){			
 			lit_gen[cur_lit] = 1;
 			lit_esd[cur_lit] = esd_base[cur_esd]; // RPI 457
 			process_dc(3);

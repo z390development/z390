@@ -324,6 +324,8 @@ public class pz390 {
 	 * 09/23/11 RPI 1179 support +-num for XDECI
 	 * 09/27/11 RPI 1180 fix trace format for SRXT/SLXT etc.
 	 * 03/04/12 RPI 1195 issue spec error if CUSE r2 odd
+	 * 04/02/12 RPI 1200 correct LRVGR and LRVR when same reg.
+	 * 04/14/12 RPI 1207 correct E2xx() to E3xx() 
 	 ********************************************************* 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -4464,7 +4466,7 @@ public class pz390 {
 			ins_setup_ss();
 			break;
 		case 0xE3:
-			ins_E2XX();
+			ins_E3XX();  // RPI 1207
 			break;
 		case 0xE5:
 			ins_E5XX();
@@ -7242,9 +7244,11 @@ public class pz390 {
 		case 0x0F: // 4580 "B90F" "LRVGR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
+			
+			work_reg.putLong(0, reg.getLong(rf2)); // RPI 1200			
 			rflen = 7;
 			while (rflen >= 0) {
-				reg.put(rf1 + rflen, reg.get(rf2 + 7 - rflen));
+				reg.put(rf1 + rflen, work_reg.get(7 - rflen)); // RPI 1200
 				rflen--;
 			}
 			break;
@@ -7363,9 +7367,10 @@ public class pz390 {
 		case 0x1F: // 4730 "B91F" "LRVR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
+			work_reg.putInt(0, reg.getInt(rf2 + 4)); // RPI 1200			
 			rflen = 3;
 			while (rflen >= 0) {
-				reg.put(rf1 + 4 + rflen, reg.get(rf2 + 7 - rflen));
+				reg.put(rf1 + 4 + rflen, work_reg.get(3 - rflen)); // rpi 1200
 				rflen--;
 			}
 			break;
@@ -8821,7 +8826,7 @@ public class pz390 {
 			break;
 		}
 	}
-    private void ins_E2XX(){
+    private void ins_E3XX(){   // RPI 1207
     	opcode2 = mem_byte[psw_loc + opcode2_offset_rxy] & 0xff;
 		switch (opcode2) {
 		case 0x02: // 5810 "E302" "LTG" "RXY" Z9-42

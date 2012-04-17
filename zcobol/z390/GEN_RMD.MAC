@@ -9,9 +9,11 @@
 .* 03/06/12 RPI 1182 copied from GEN_SIX, support (SUB+LIT:LIT)
 .* 03/24/12 RPI 1182 USE &RMD_REG and remove all GEN_BASE
 .* 03/30/12 RPI 1182 set RMD_VLEN if RMD_VLEN_ALLOW else set FIELD_LEN
+.* 04/14/12 RPI 1202 use D2A to set &RMF_OFF_VAL in NOALLOW mode
 .*********************************************************************
          GEN_RMD &RMD_OFF,&RMD_OFF_ADJ,&RMD_LEN                                   
          COPY  ZC_WS
+         :&RMD_OFF_VAL SETA D2A('&RMD_OFF_ADJ') RPI 1202
 .*
 .* FORCE FIELD_SIZ AND FIELD_RMD
 .*
@@ -75,7 +77,7 @@
              AELSE
                  :&FIELD_NAME SETC '0(&FIELD_REG)'
              AEND  
-         AELSEIF (&RMD_OFF_ADJ EQ 0) NO ADJ ALLOWED FOR LIT OFFSET
+         AELSEIF (&RMD_OFF_VAL EQ 0) NO ADJ ALLOWED FOR LIT OFFSET
              AIF (&FIELD_SIX)
                  AIF (&FIELD_SS1)
                   :&FIELD_NAME SETC '&RMD_OFF.(&RMD_LEN,&FIELD_REG)'
@@ -154,7 +156,7 @@
                :&FIELD_LEN SETA &RMD_LEN  RPI 1182
          AEND 
          BCTR  &FIELD_REG,0 BACKUP FOR FULL OFFSET+ADJUSTMENT 
-               AIF (&RMD_OFF_ADJ NE 0)
+               AIF (&RMD_OFF_VAL NE 0)   RPI 1202
          AFI   &FIELD_REG,&RMD_OFF_ADJ
                AEND
          MEND

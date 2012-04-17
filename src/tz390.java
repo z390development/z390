@@ -278,7 +278,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.06rc1";  //dsh
+    String version    = "V1.5.06rc2";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -6612,6 +6612,7 @@ public boolean get_sdt_char_int(String sdt){
 	    */
 	   boolean ebcdic = true;
 	   int index = 2;
+	   int bytes = 0; // RPI 1205
 	   sdt_char_int = 0;
 	   char sdt_quote = '\'';
 	   char char_type = sdt.substring(1,2).toUpperCase().charAt(0); 
@@ -6645,6 +6646,8 @@ public boolean get_sdt_char_int(String sdt){
 				   index++;
 			   }
 		   }
+		   bytes++;
+		   if (bytes > 4)return false; // RPI 1205
 		   if (!ebcdic){ //RPI5  RPI 270
 			   sdt_char_int = (sdt_char_int << 8) + (sdt.charAt(index) & 0xff);
 		   } else {

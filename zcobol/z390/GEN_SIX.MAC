@@ -10,6 +10,7 @@
 .* 02/25/09 RPI 1002 support PIC type I for INDEX BY and USAGE INDEX
 .* 04/25/11 RPI 1161 correct continuation casing undef var
 .* 03/23/12 RPI 1182 no extra GEN_BASE calls for suscript variables
+.* 04/09/12 RPI 1202 correct &&SYM_LEN on pack line 129
 .*********************************************************************
          GEN_SIX                                    
          COPY  ZC_WS
@@ -126,11 +127,11 @@
                AWHEN C'H'
          LH    &SIX_REG,0(&SIX_REG) 
                AWHEN C'P'                     
-         ZAP   ZCVT_PWORK,0(&&SYM_LEN(&SUB_IX),&SIX_REG)
+         ZAP   ZCVT_PWORK,0(&SYM_LEN(&SUB_IX),&SIX_REG)
          CVB   &SIX_REG,ZCVT_PWORK
                AWHEN C'Z'
          :&LPLEN SETA &SYM_LEN(&SUB_IX)/2+1
-         PACK  ZCVT_PWORK1(&LPLEN),0(&SYM_LEN(&SUB_IX),&SIX_REG) 
+         PACK  ZCVT_PWORK1(&LPLEN),0(&SYM_LEN(&SUB_IX),&SIX_REG) 1202
          ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
          CVB   &SIX_REG,ZCVT_PWORK
                AELSE

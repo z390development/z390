@@ -414,6 +414,8 @@ public  class  mz390 {
 	 *          terminate substring expression on any
 	 *          SDT with ' stripping
 	 * 02/19/12 RPI 1192 issue error for AIF with )).label
+	 * 04/12/12 RPI 1204 NOALOOW return seta = 0 for non-dec SETC
+	 *          except for D2A, D2B, D2C, and D2X
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -6946,6 +6948,13 @@ public  class  mz390 {
 		 *   2.  If base 10, ignore trailing non digits
 		 *  
 		 */
+		if (!tz390.opt_allow && base == 10 
+			&& setc_text != null && setc_text.length() > 0){ // rpi 1204
+			char first = setc_text.trim().charAt(0);
+			if (first < '0' || first > '9'){
+				return 0;
+			}
+		}
 		try {
 			return (int)Long.valueOf(setc_text,base).longValue(); // RPI 1101. RPI 1105
 		} catch (Exception e) {
@@ -11773,7 +11782,10 @@ public  class  mz390 {
     	 * convert decimal string to int
     	 */
     	check_setc_quotes(1); // RPI 1139
+    	boolean save_opt_allow = tz390.opt_allow; // RPI 1204
+    	tz390.opt_allow = true;           // RPI 1204
     	seta_value = get_seta_stack_value(-1);
+    	tz390.opt_allow = save_opt_allow; // RPI 1204
 		setc_value1 = get_setc_stack_value();
 		put_seta_stack_var();
     }
@@ -11782,7 +11794,10 @@ public  class  mz390 {
     	 * convert decimal string to binary string
     	 */
     	check_setc_quotes(1); // RPI 1139
+    	boolean save_opt_allow = tz390.opt_allow; // RPI 1204
+    	tz390.opt_allow = true;           // RPI 1204
     	seta_value = get_seta_stack_value(-1);
+    	tz390.opt_allow = save_opt_allow; // RPI 1204
 		setc_value1 = get_setc_stack_value();
 		setc_value = Integer.toString(seta_value,2);
 		seta_value = setc_value.length();
@@ -11797,7 +11812,10 @@ public  class  mz390 {
     	 * convert decimal string to char string
     	 */
     	check_setc_quotes(1); // RPI 1139
+    	boolean save_opt_allow = tz390.opt_allow; // RPI 1204
+    	tz390.opt_allow = true;           // RPI 1204
     	seta_value = get_seta_stack_value(-1);
+    	tz390.opt_allow = save_opt_allow; // RPI 1204
 		setc_value1 = get_setc_stack_value();
 		setc_value = ""
 			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 24]
@@ -11812,7 +11830,10 @@ public  class  mz390 {
     	 * convert decimal string to hex string
     	 */
     	check_setc_quotes(1); // RPI 1139
-		seta_value = get_seta_stack_value(-1);
+    	boolean save_opt_allow = tz390.opt_allow; // RPI 1204
+    	tz390.opt_allow = true;           // RPI 1204
+    	seta_value = get_seta_stack_value(-1);
+    	tz390.opt_allow = save_opt_allow; // RPI 1204
 		setc_value1 = get_setc_stack_value();;
 		setc_value = Integer.toHexString(seta_value).toUpperCase(); // RPI 1101
 		setc_value = ("00000000" + setc_value).substring(setc_value.length());
