@@ -13,12 +13,15 @@
 .* 02/27/09 RPI 1012 GENERATED DEBUG-ITEM AT END OF WS
 .* 01/27/12 DSH RPI 1181 ADD TRUE,FALSE FOR USE IN EVALUATE
 .* 02/16/12 DSH RPI 1181 ADD 01 FILLER AT END TO ALLOW 05 STARTING WS
+.* 05/03/12 RPI 1211 ADD PRINT DATA TO SEE LARGE DC'S
 .********************************************************************
          DATA  &TYPE
          COPY  ZC_WS
          AIF   ('&TYPE' EQ 'END')   
                ACALL ADD_PREDEFINED_DATA  
-         AELSEIF ('&TYPE' NE 'DIVISION')
+         AELSEIF ('&TYPE' EQ 'DIVISION')
+         PRINT DATA
+         AELSE
                MNOTE 8,'DATA UNRECOGNIZED TYPE - &TYPE'
          AEND
          MEXIT

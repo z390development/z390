@@ -270,6 +270,8 @@ public  class  tz390 {
     * 02/15/12 RPI 1186 continuous loc ctr on PRN across CSECT's
     * 02/17/12 RPI 1191 allow periods in file path names
     * 03/30/12 RPI 1199 remove upper limit on Apple release
+    * 04/19/12 RPI 1210 allow period in path without corrupting file type
+    * 05/02/12 RPI 1211 limit check cf5_index for STE of type 4 ED
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -278,7 +280,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.06rc2";  //dsh
+    String version    = "V1.5.06rc3";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -6232,7 +6234,7 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	        int last_path_sep = file_dir.lastIndexOf(File.separatorChar); // RPI 1191
 	        file_dir = fix_file_separators(file_dir);  // RPI 1080
 	        file_name = fix_file_separators(file_name); // RPI 1080
-	    	if (file_name.charAt(0) == '\"' 
+	        if (file_name.charAt(0) == '\"' 
 	    		|| file_name.charAt(0) == '\''){
 	    		file_name = file_name.substring(1,file_name.length() - 1);
 	    	}
@@ -6254,7 +6256,7 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	    				return null; // rpi 880
 	    			}
 	    		} else {
-	    			temp_file = new File(file_dir);
+	    			temp_file = new File(file_dir + File.separator); // RPI 1210 
 	    			index = file_dir.lastIndexOf("."); // RPI 1191 
 	    			if (index > last_path_sep){        // RPI 1191 
 	    				// file_dir has filename.sfx so ignore file_name
@@ -6279,10 +6281,8 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	    		}
 	    	}
 	    	index = file_name.lastIndexOf(".");
-	    	if (index == -1 
-	    		|| (file_name.length() > index + 1  // RPI 900 allow .\ in absolute path
-	    			&& file_name.substring(index+1,index+2).equals(File.separator))
-   			){
+	    	int index1 = file_name.lastIndexOf(File.separatorChar); // RPI 1210 
+	    	if (index <= index1){ // RPI 1210 
 	    		// concat default type if none
 	    		file_name = file_name.trim() + file_type;
 	    	}
@@ -6352,14 +6352,15 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 	if (file_name.charAt(0) == '"'){
 		file_name = file_name.substring(1,file_name.length()-1); // RPI 1074 
 	}
-	file_name = fix_file_separators(file_name);
-	int index = file_name.lastIndexOf('.');
-	if (index != -1){
-		file_type_def = file_name.substring(index); // RPI 756
+	file_name  = fix_file_separators(file_name);
+	int index  = file_name.lastIndexOf(File.separator); // rpi 1210 
+	int index1 = file_name.lastIndexOf('.');
+	if (index1 > index){ // rpi 1210
+		file_type_def = file_name.substring(index1); // RPI 756 rpi 1210 
 		explicit_type = true;
-		file_name = file_name.substring(0,index);   // RPI 756
+		file_name = file_name.substring(0,index1);   // RPI 756 rpi 1210 
 	}
-	index = file_name.lastIndexOf(File.separator);
+	
 	if (index == -1
 		&& (file_name.length() > 2 
 			&& file_name.charAt(1) == ':')){
@@ -6378,7 +6379,7 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 		int path_len = 0;  
 		while (index <= parm_dir_list.length()){
 			file_type = file_type_def;
-			int index1 = parm_dir_list.substring(index).indexOf(";");
+			index1 = parm_dir_list.substring(index).indexOf(";");
 			if (index1 == -1)index1 = parm_dir_list.substring(index).indexOf("+");
 			if (index1 > 0){
 				path_len = path_len + index1;   
@@ -6491,16 +6492,17 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
     	dir_pgm = dir_cur;
 	  	// RPI 499 drop upper case file_name = file_name.toUpperCase();
     }
-    index = file_name.lastIndexOf('.');
-    if (index != -1){  // strip extension if any
-    	pgm_name = file_name.substring(0,index);
-    	if (file_name.substring(index).toUpperCase().equals(".OBJ")){
+    index  = file_name.lastIndexOf(File.separator); // rpi 1210 
+    int index1 = file_name.lastIndexOf('.');
+    if (index1 > index){  // strip extension if any rpi 1210 
+    	pgm_name = file_name.substring(0,index1);
+    	if (file_name.substring(index1).toUpperCase().equals(".OBJ")){
     		lkd_ignore = true;  // RPI 735 ignore LKD for link with explicit OBJ file
     	}
     	if (!file_type.equals(mlc_type)){ //RPI169
     		pgm_type = file_type;
     	} else {
-    		pgm_type = file_name.substring(index);
+    		pgm_type = file_name.substring(index1); // RPI 1210
     	}
     } else {
      	pgm_name = file_name;
@@ -7129,8 +7131,12 @@ public void put_trace(String text){
     		return true;
     	case 4: // fp_ed_type s1,cf5,bxcf8,ccf50
             dfp_digits = ("0000000" + dfp_digits).substring(dfp_digits.length());
-    		dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[(dfp_exp & 0xc0) >>> 2 
-    		             | (dfp_digits.charAt(0) & 0xf)];
+            cf5_index = (dfp_exp & 0xc0) >>> 2 
+		             | (dfp_digits.charAt(0) & 0xf); // RPI 1211 
+            if (cf5_index >= dfp_exp_bcd_to_cf5.length){
+            	cf5_index = dfp_exp_bcd_to_cf5.length-1; // RPI 820
+            }
+            dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[cf5_index];
     		fp_work_reg.putInt(0,
     				       (int)(dfp_scf << 26
                                  | ((dfp_exp & 0x3f) << 20
@@ -7140,7 +7146,7 @@ public void put_trace(String text){
     	case 7: // fp_ld_type s1,cf5,bxdf12,ccf110
             dfp_digits = ("0000000000000000000000000000000000" + dfp_digits).substring(dfp_digits.length());
     		cf5_index = (dfp_exp & 0x3000) >>> 8 | (dfp_digits.charAt(0) & 0xf); // RPI 820
-            if (cf5_index > dfp_exp_bcd_to_cf5.length){
+            if (cf5_index >= dfp_exp_bcd_to_cf5.length){
             	cf5_index = dfp_exp_bcd_to_cf5.length-1; // RPI 820
             }
             dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[cf5_index]; // RPI 820

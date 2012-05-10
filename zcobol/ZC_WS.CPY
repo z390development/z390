@@ -33,6 +33,8 @@
 .* 04/05/11 RPI 1139 FIX ARRAY DIM FOR HLASM COMP, REMOVE DUP ZC_LIST
 .* 03/24/12 RPI 1182 CORRECT SETC FOR &BASE_WS (WAS &BASE_SYS)
 .* 03/27/12 RPI 1182 add &RMD_VLEN flag and &RMD_REG for len if vlen
+.* 04/25/12 RPI 1211 add TMP_PIC_DEC for scaling ZC_CALC 
+.* 05/05/12 RPI 1211 add &BASE_MIN_RANGE to ensure block base coverage
 .*********************************************************************
 .*
 .* PGM NAME AND ZCOBOL VERSION CHECKED BY ZC390NUC IN ZC390LIB.390
@@ -106,6 +108,8 @@
          GBLA &BASE_B1_LOW,&BASE_B1_HIGH          
          GBLA &BASE_B2_LOW,&BASE_B2_HIGH          
          GBLA &BASE_LRU           LEAST RECENTLY USED WS DYNAMIC BASE
+         GBLA &BASE_MIN_RANGE
+&BASE_MIN_RANGE SETA 256         RPI 1211 MIN BASE COVERAGE FOR BLK
 .*
 .* LK BASE REGISTERS (GEN_BASE for dynamic,PERIOD for reset)
 .*
@@ -274,10 +278,11 @@
 .* TMP variables for ZC_CALC, GEN_ADD, GEN_SUB, GEN_MPY, GEN_DIV
 .* wheb target index is negative (used to store and fetch temp values)
 .*
-         GBLC &TMP_NAME(100) - NAME -  ZCVT_WORKAREA+16*(IX-1)
-         GBLC &TMP_TYPE(100) - TYPE OF TEMP VALUE '1-9FGHPQ'
-         GBLA &TMP_LEN(100)  - LENGTH OF TEMP VALUE FOR P
-         GBLB &TMP_SIGN(100) - SIGNED OR UNSIGNED P OR Z FIELD
+         GBLC &TMP_NAME(100)    - NAME -  ZCVT_WORKAREA+16*(IX-1)
+         GBLC &TMP_TYPE(100)    - TYPE OF TEMP VALUE '1-9FGHPQ' Z>P
+         GBLA &TMP_LEN(100)     - LENGTH OF TEMP VALUE FOR P
+         GBLB &TMP_SIGN(100)    - SIGNED OR UNSIGNED P OR Z FIELD
+         GBLA &TMP_PIC_DEC(100) - DECIMAL PLACES FOR FGHPQ  RPI 1211
 .*
 .* END OF CBL_WS.CPY
 .*

@@ -1,4 +1,4 @@
-z390 v1.5.06rc2 Release Candidate 2 04/17/12
+z390 v1.5.06rc3 Release Candidate 2 05/10/12
 Copyright 2011 Automated Software Tools Corporation
 
 To install this z390 full release candidate, do the following steps:

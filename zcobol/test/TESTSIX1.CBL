@@ -20,6 +20,7 @@
        77  I    COMP   PIC S99    VALUE 1.
        77  J    COMP   PIC S99    VALUE 2.
        77  GOOD COMP-3 PIC S9(9) VALUE 0.
+       77  BAD  COMP-3 PIC S9(9) VALUE 0.
        PROCEDURE DIVISION.
        MAINLINE.
            DISPLAY 'TESTSIX1 STARTING'
@@ -43,12 +44,14 @@
     10     IF NFS2(I+1) = 3 PERFORM GOOD ELSE PERFORM BAD.
       * TEST COMPUTE DFP WITH SUBSCRIPTS
            MOVE 1.1 TO FLT-SRT(2)
-           COMPUTE FLT-SRT(2) = FLT-SRT(2)+2.2
+           ADD  2.2 TO FLT-SRT(2).
     11     IF FLT-SRT(2) = 3.3 PERFORM GOOD ELSE PERFORM BAD.
-           DISPLAY 'TESTSIX1 GOOD TESTS =' GOOD
+           DISPLAY 'TESTSIX1 GOOD TESTS =' GOOD ' BAD TESTS = ' BAD
            STOP RUN.
        GOOD.
            ADD 1 TO GOOD.
+           DISPLAY 'GOOD'.
        BAD.
+           ADD 1 TO BAD.
            MOVE 16 TO RETURN-CODE
-           STOP RUN.
+           DISPLAY 'BAD'..

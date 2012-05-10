@@ -6994,7 +6994,77 @@ set GIT_COMMITTER_DATE=2021-03-26 15:56:00 +0100
 git commit -m "Reconstructed version v1.5.06rc2 of z390 committed on behalf of Don Higgins"
 git tag -a v1.5.06rc2 -m "Reconstructed version v1.5.06rc2 of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.06rc3
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Add to .gitignore file:
+# Cobol related stuff
+zcobol/test/TESTADD1.MLC
+zcobol/test/TESTCMP4.MLC
+zcobol/test/TESTDIV1.MLC
+zcobol/test/TESTMOV3.MLC
+zcobol/test/TESTMPY1.MLC
+zcobol/test/TESTSUB1.MLC
+
+# Backup and junk files
+linklib/DAT
+linklib/IEFBR14
+linklib/REPRO
+linklib/SQXTR
+linklib/TESTFPC1
+linklib/TESTFPC2
+linklib/UNREF
+linklib/ZSTRMAC
+linklib/rtlink
+zcobol/z390/ABORT
+zcobol/z390/ACCEPT
+zcobol/z390/DISPLAY
+zcobol/z390/INSPECT
+zcobol/z390/ZC390LIB
+zcobol/z390/ZC390NUC
+
+==> Stage files for V1.5.06rc3
+git add README.TXT
+git add ZCRTTEST.BAT
+git add src/az390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/tz390.java
+git add zcobol/DATA.MAC
+git add zcobol/WS.MAC
+git add zcobol/ZCNUMLIT.CPY
+git add zcobol/ZC_CALC.MAC
+git add zcobol/ZC_WS.CPY
+git add zcobol/test/TESTSIX1.CBL
+git add zcobol/z390/GEN_ADD.MAC
+git add zcobol/z390/GEN_BASE.MAC
+git add zcobol/z390/GEN_CLOSE.MAC
+git add zcobol/z390/GEN_COMP.MAC
+git add zcobol/z390/GEN_DIV.MAC
+git add zcobol/z390/GEN_MOVE.MAC
+git add zcobol/z390/GEN_MPY.MAC
+git add zcobol/z390/GEN_OPEN.MAC
+git add zcobol/z390/GEN_SUB.MAC
+git add zcobol/test/TESTADD1.CBL
+git add zcobol/test/TESTCMP4.CBL
+git add zcobol/test/TESTDIV1.CBL
+git add zcobol/test/TESTMOV3.CBL
+git add zcobol/test/TESTMPY1.CBL
+git add zcobol/test/TESTSUB1.CBL
+
+==> Create commit for V1.5.06rc3
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2012-05-10 17:54:00 -0500
+set GIT_COMMITTER_DATE=2021-03-26 17:19:00 +0100
+git commit -m "Reconstructed version v1.5.06rc3 of z390 committed on behalf of Don Higgins"
+git tag -a v1.5.06rc3 -m "Reconstructed version v1.5.06rc3 of z390 committed on behalf of Don Higgins"
 
 
 

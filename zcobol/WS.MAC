@@ -739,9 +739,6 @@
                          OR '&PIC'(&J,2) EQ 'A('                       X
                          OR '&PIC'(&J,2) EQ 'P('                       X
                          OR '&PIC'(&J,2) EQ 'Z(')  RPI 1065 ADD P,A
-.*DSHX                    AIF ('&PIC'(&J,1) EQ 'P')
-.*DSHX                       :&DEC_MODE SETB 1 
-.*DSHX                    AEND
                     :&PIC_DUP SETA D2A('&PIC'(&J+2,1)) RPI 1139
                     :&J SETA &J+3
                     AWHILE (&J LT K'&PIC                               X
@@ -754,7 +751,6 @@
                     AIF (&DEC_MODE)
                         :&SYM_PIC_DEC(&SYM_TOT) SETA &SYM_PIC_DEC(&SYM_X
                TOT)+&PIC_DUP
-               MNOTE 4,'PIC_DEC=&SYM_PIC_DEC(&SYM_TOT)' DSHX
                     AEND
                 AELSEIF ('&PIC'(&J,1) EQ '.' AND K'&PIC LE &J)   RPI 1181
                     AEXIT AWHILE

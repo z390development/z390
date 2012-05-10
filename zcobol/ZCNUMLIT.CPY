@@ -2,7 +2,10 @@
 .* SCALE NUL LIT - REMOVE DECIMAL POINT AND SCALE FIXED NUMERIC LITERAL  
 .*    &NUM     - SETC LITERAL VALUE WHICH IS SCALED
 .*    &DEC_SYM - DECIMAL PLACES REQUIRED FROM SYM_PIC_DEC (SET BY WS)
-.*
+.*               OR -1 IF NONE REQUIRED FOR MPY/DIV
+.*    &DEC_NUM = DECIMAL PLACES IN LITERAL
+.********************************************************************
+.* 04/29/12 RPI 1211 ADD &DEC_SYM = -1 FOR MPY/DIV
          AENTRY SCALE_NUM_LIT
          AIF (&ZC_DEC_IS_COMMA)
              :&DEC_IX SETA ('&NUM' FIND ',')
@@ -23,7 +26,7 @@
          AELSE
                :&DEC_NUM SETA 0
          AEND
-         AIF (&DEC_NUM EQ &DEC_SYM)
+         AIF (&DEC_NUM EQ &DEC_SYM OR &DEC_SYM EQ -1)  RPI 1211
              AEXIT AENTRY
          AEND
          AIF (&DEC_NUM GT &DEC_SYM)

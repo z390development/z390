@@ -7,9 +7,16 @@
 .* Date   - 04/17/08                                                 *
 .*********************************************************************
 .* 04/17/08 initial coding for Z390 CLOSE
+.* 05/05/12 RPI 1211 GEN BASE FOR DCB ACCESS
 .*********************************************************************
          GEN_CLOSE &FILE
          COPY  ZC_WS
+         ZC_SYM_FIND &FILE_NAME(&FILE_IX)
+         AIF (&SYM_IX EQ 0)  RPI 1211
+             MNOTE 'GEN_OPEN FILE NAME NOT FOUND &FILE_NAME(&FILE_IX)'
+             MEXIT
+         AEND
+         GEN_BASE &SYM_IX    RPI 1211
          ZCLOSE (&FILE_NAME(&FILE_IX))
          MEXIT
          MEND

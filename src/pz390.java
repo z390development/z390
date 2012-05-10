@@ -326,6 +326,8 @@ public class pz390 {
 	 * 03/04/12 RPI 1195 issue spec error if CUSE r2 odd
 	 * 04/02/12 RPI 1200 correct LRVGR and LRVR when same reg.
 	 * 04/14/12 RPI 1207 correct E2xx() to E3xx() 
+	 * 04/30/12 RPI 1211 round L? and D? when trunc BD
+	 * 05/10/12 RPI 1214 fix DXTR fp_rbdv2 to prevent S0C5
 	 ********************************************************* 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1055,6 +1057,7 @@ public class pz390 {
 	MathContext fp_ebg_context = null; //         for EB
 	MathContext fp_dh_context = null; // RPI 821
 	MathContext fp_lh_context = null; // RPI 821
+	MathContext fp_ld_context = null; // RPI 1211
 	// RPI 1125 use array for BFP context
 	RoundingMode[] fp_bfp_rnd_mode = {
 			RoundingMode.HALF_EVEN, // 0
@@ -1139,7 +1142,17 @@ public class pz390 {
 			new MathContext(34,RoundingMode.UP),        // 6
 			new MathContext(34,RoundingMode.HALF_UP),   // 7
 	};
-	
+	MathContext[] fp_dh_rnd_context = { // RPI 1211
+			new MathContext(15,RoundingMode.HALF_EVEN), // 0
+			new MathContext(15,RoundingMode.DOWN),      // 1
+			new MathContext(15,RoundingMode.CEILING),   // 2
+			new MathContext(15,RoundingMode.FLOOR),     // 3
+			new MathContext(15,RoundingMode.HALF_UP),   // 4
+			new MathContext(15,RoundingMode.HALF_DOWN), // 5
+			new MathContext(15,RoundingMode.UP),        // 6
+			new MathContext(15,RoundingMode.HALF_UP),   // 7
+	};
+
 	double fp_log2 = Math.log(2);
 
 	double fp_log10 = Math.log(10);
@@ -6694,9 +6707,10 @@ public class pz390 {
 			psw_check = false;
 			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
+			fp_rbdv2 = fp_get_bd_from_ld(fp_reg, rf2); // RPI 1214
 			fp_rbdv3 = fp_get_bd_from_ld(fp_reg, rf3);
 			if (fp_rbdv3.signum() != 0){
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
+				fp_rbdv1 = fp_rbdv2                    // RPI214
 				.divide(fp_rbdv3,fp_ld_rnd_context[fp_dfp_rnd]);  // RPI 517
 			} else {
 				fp_rbdv1 = BigDecimal.ZERO; // RPI 824
@@ -15564,7 +15578,7 @@ public class pz390 {
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
-				return fp_ctl_reg_to_bd(fp_ctl_index);
+				return fp_ctl_reg_to_bd(fp_ctl_index).round(fp_lb_rnd_context[fp_dfp_rnd]); // RPI 1211			
 			} else {
 				fp_store_reg(fp_reg, (fp_ctl_index -2) << 3); // RPI 824
 			}
@@ -15596,7 +15610,7 @@ public class pz390 {
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
-				return fp_ctl_reg_to_bd(fp_ctl_index);
+				return fp_ctl_reg_to_bd(fp_ctl_index).round(fp_dd_rnd_context[fp_dfp_rnd]); // RPI 1211
 			} else {
 				fp_store_reg(fp_reg, (fp_ctl_index -2) << 3); // RPI 824
 			}
@@ -15612,7 +15626,7 @@ public class pz390 {
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
-				return fp_ctl_reg_to_bd(fp_ctl_index);
+				return fp_ctl_reg_to_bd(fp_ctl_index).round(fp_ld_rnd_context[fp_dfp_rnd]); // RPI 1211
 			} else {
 				fp_store_reg(fp_reg, (fp_ctl_index -2) << 3); // RPI 824
 			}
@@ -15680,7 +15694,8 @@ public class pz390 {
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
-				return fp_ctl_reg_to_bd(fp_ctl_index); 
+				return fp_ctl_reg_to_bd(fp_ctl_index).round(fp_dh_rnd_context[fp_dfp_rnd]); // RPI 1211
+				 
 			} else {
 				fp_store_reg(fp_reg, (fp_ctl_index -2) << 3); // RPI 824
 			}

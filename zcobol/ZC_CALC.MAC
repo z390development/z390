@@ -9,6 +9,9 @@
 .* 04/24/09 RPI 1003 initial coding for ZC_CALC using IF as model
 .* 07/30/09 RPI 1065 FUNCTION not supported yet (see IF101A)      
 .* 04/06/11 RPI 1139 FIX SETA STRING FOR HLASM COMP, DUP &TMP_OFF
+.* 05/07/12 RPI 1211 add support for implied decimals via TMP_PIC_DEC
+.* 05/08/12 RPI 1211 add &DEBUG SETB 1 option for tracing IOP ops
+.* 05/09/12 RPI 1211 add single op literal suuport see TESTCMP4.CBL
 .*********************************************************************
 .* ZC_CALC used by COMPUTE to gen code to calculate expression 
 .* defined by positional parm list.  The result is stored in data 
@@ -18,6 +21,17 @@
 .*********************************************************************
          ZC_CALC &T_NAME,&T_IX,&EXP
          COPY  ZC_WS
+&DEBUG   SETB  0 TURN ON ZC_CALC DEBUG MNOTE'S SEE ERR LISTING RPI 1211
+         AIF   (&DEBUG)
+               :&PARMS SETC '&T_NAME,='
+               :&I     SETA 3
+               AWHILE (&I LE N'&SYSLIST)
+                  :&PARMS SETC '&PARMS,&SYSLIST(&I)'
+                  :&I SETA &I+1
+               AEND
+               :&PARMS SETC (DOUBLE '&PARMS')
+               MNOTE 'ZC_CALC PARMS=&PARMS'
+         AEND
 &ROUNDED SETB  0
 &ONSIZE  SETB  0
 &PREV_OP# SETA 0 PREV OP# ON STK OR 0 FOR NONE
@@ -48,7 +62,9 @@
 .*  BUILD IOP'S AND THEN GEN CODE
 .*
          ACALL IOP_BUILD
-.*  ACALL LIST_IOPS   DEBUG
+         AIF (&DEBUG)
+.* DEBUG IOPS  ACALL LIST_IOPS  
+         AEND
          ACALL IOP_GEN_CODE
          MEXIT
 .*
@@ -60,7 +76,7 @@
 .*
          AENTRY IOP_BUILD
          :&NP   SETA  N'&SYSLIST  TOTAL EXP PARMS
-         AIF (&NP EQ 0)
+         AIF (&NP LT 3)
              MNOTE 8,'ZC_CALC MISSING EXPRESSION'
              MEXIT
          AEND
@@ -139,6 +155,51 @@
          AWHILE (&STK_OP_TOT GT 0)
               ACALL IOP_ADD_OP
          AEND
+         AIF (&IOP_TOT EQ 0)
+             AIF (&STK_VAR_TOT EQ 1)
+                 ACALL MOVE_VAR
+             AELSE
+              MNOTE 8,'ZC_CALC EXPRESSION ERROR - NO OPERATIONS FOUND'
+             AEND
+         AEND
+         AEND
+.*
+.* MOVE SINGLE VAR (COMPUTE X = Y)
+.*
+         AENTRY MOVE_VAR
+         :&VAR_PARM_IX SETA 2        GET PARM INDEX (SKIP TARGET/INDEX)
+         :&PREV_PARM SETC ''      PREV PARM          
+         ACALL POP_VAR_IOP_IX
+         AIF   (&VAR_IOP_IX GE 0)
+               :&FIELD_SS1 SETB 1
+               :&FIELD_REG SETC 'ZC_R2'
+               ACALL  GET_VAR_PARM   GEN SIX CODE FOR VAR IF ANY
+               :&F1_N SETC '&FIELD_NAME'
+               :&F1_X SETA &FIELD_IX
+               :&F1_XC SETC '&F1_X'
+               AIF (&F1_X GT 0)
+                  :&F1_T SETC '&SYM_PIC_TYPE(&F1_X)'
+                  :&F1_L SETA &SYM_LEN(&F1_X)
+                  :&F1_P SETA &SYM_PIC_DEC(&F1_X) RPI 1211
+               AELSE
+                  :&F1_N SETC '&FIELD_NAME'
+                  :&F1_X  SETA 0
+                  :&F1_XC SETC '0'
+                  ACALL SET_LIT_TYPE_LEN
+                 :&F1_T SETC '&LIT_TYPE'
+                 :&F1_L SETA &LIT_LEN
+                 :&F1_P SETA &LIT_DEC RPI 1211
+               AEND
+               AIF (&DEBUG)
+                  :&OP SETA 5          FINAL MOVE TO TARGET
+                  :&X1 SETA &T_IX
+                  :&X2 SETA 0
+                  ACALL LIST_OP_F1_F2
+               AEND
+               GEN_MOVE &T_NAME,&T_IX,&F1_N,&F1_XC
+         AELSE
+               ,MNOTE 'ZC_CALC INVALID MOVE EXPRESSION'
+         AEND
          AEND
 .*
 .* GEN CODE FROM IOPS
@@ -152,7 +213,7 @@
 .*
          :&I   SETA 1
          AWHILE (&I LE &IOP_TOT)
-               ACALL IOP_GEN_OP
+               ACALL IOP_GEN_OP  
                :&I SETA &I+1
          AEND
          AEND
@@ -165,10 +226,10 @@
          :&IOP_OP(&IOP_TOT) SETA &OP#  (1-4 = ADD,SUB,MPY,DIV)
          ACALL POP_VAR_IOP_IX
          :&IOP_F2_X(&IOP_TOT) SETA &VAR_IOP_IX
-         ACALL POP_VAR_IOP_IX
-         :&IOP_F1_X(&IOP_TOT) SETA &VAR_IOP_IX
+         ACALL POP_VAR_IOP_IX               
+         :&IOP_F1_X(&IOP_TOT) SETA &VAR_IOP_IX            
          ACALL GET_TMP
-         :&IOP_F3_X(&IOP_TOT) SETA &TMP_IX
+         :&IOP_F3_X(&IOP_TOT) SETA &TMP_IX  
          :&VAR_IOP_IX SETA -&TMP_IX
          ACALL PUSH_VAR
          AIF  (&IOP_F1_X(&IOP_TOT) LT 0)
@@ -216,30 +277,39 @@
 .*
          AENTRY IOP_GEN_ADD
          ACALL CALC_SETUP
-         GEN_ADD &F3_N,&F3_XC,&F2_N,&F2_XC,&ROUNDED,&ONSIZE        
+         GEN_ADD &F3_N,&F3_XC,&F2_N,&F2_XC,&ROUNDED,&ONSIZE DEC(&F3_P,&X
+               F2_P)        
          AEND
 .*
 .* IOP GEN SUB
 .*
          AENTRY IOP_GEN_SUB
          ACALL CALC_SETUP
-         GEN_SUB &F3_N,&F3_XC,&F2_N,&F2_XC,&ROUNDED,&ONSIZE        
+         GEN_SUB &F3_N,&F3_XC,&F2_N,&F2_XC,&ROUNDED,&ONSIZE  DEC(&F3_P,X
+               &F2_P)      
          AEND
 .*
 .* IOP GEN MPY
 .*
          AENTRY IOP_GEN_MPY
          ACALL CALC_SETUP
-         GEN_MPY &F3_N,&F3_XC,&F2_N,&F2_XC,&ROUNDED,&ONSIZE        
+         GEN_MPY &F3_N,&F3_XC,&F2_N,&F2_XC,&ROUNDED,&ONSIZE DEC(&F3_P,&X
+               F2_P)        
          AEND
 .*
 .* IOP GEN DIV
 .*
          AENTRY IOP_GEN_DIV
          ACALL CALC_SETUP
-         GEN_DIV &F1_N,&F1_T,&F1_L,0,      DIVIDEND                    X
-               &F2_N,&F2_T,&F2_L,0,        DIVISOR                     X
-               &F3_N,&F3_T,&F3_L,&F3_S,0,  QUOTIENT                    X
+         AIF (&F1_X EQ 0)
+            :&F1_L SETA 0  INDICATE LIT DIVIDEND  RPI 1211
+         AEND
+         AIF (&F2_X EQ 0)
+             :&F2_L SETA 0  INDICATE LIT DIVISOR  RPI 1211
+         AEND
+         GEN_DIV &F1_N,&F1_T,&F1_L,&F1_P,      DIVIDEND   RPI 1211     X
+               &F2_N,&F2_T,&F2_L,&F2_P,        DIVISOR    RPI 1211     X
+               &F3_N,&F3_T,&F3_L,&F3_S,&F3_P,  QUOTIENT   RPI 1211     X
                ,,0,0,0,                    NO REMAINDER                X
                &ROUNDED,&ONSIZE        
          AEND
@@ -264,20 +334,24 @@
                AIF (&F1_X GT 0)
                    :&F1_T SETC '&SYM_PIC_TYPE(&F1_X)'
                    :&F1_L SETA &SYM_LEN(&F1_X)
+                   :&F1_P SETA &SYM_PIC_DEC(&F1_X) RPI 1211
                AELSE
+                   :&F1_N SETC '&FIELD_NAME'
                    :&F1_X  SETA 0
                    :&F1_XC SETC '0'
                    ACALL SET_LIT_TYPE_LEN
                    :&F1_T SETC '&LIT_TYPE'
                    :&F1_L SETA &LIT_LEN
+                   :&F1_P SETA &LIT_DEC RPI 1211
                AEND
          AELSE
                :&IOP SETA -&IOP_F1_X(&I)
                :&F1_N SETC '&TMP_NAME(&IOP)'
                :&F1_T SETC '&TMP_TYPE(&IOP)'
                :&F1_L SETA &TMP_LEN(&IOP)
+               :&F1_P SETA &TMP_PIC_DEC(&IOP) RPI 1211
                :&F1_X SETA -&IOP
-               :&F1_XC SETC '-&IOP'
+               :&F1_XC SETC '-&IOP'                 
          AEND
          AIF   (&IOP_F2_X(&I) GE 0)
                :&VAR_PARM_IX SETA &IOP_F2_X(&I)-1
@@ -291,18 +365,22 @@
                AIF (&F2_X GT 0)
                    :&F2_T SETC '&SYM_PIC_TYPE(&F2_X)'
                    :&F2_L SETA &SYM_LEN(&F2_X)
+                   :&F2_P SETA &SYM_PIC_DEC(&F2_X) RPI 1211
                AELSE
+                   :&F2_N SETC '&FIELD_NAME'
                    :&F2_X  SETA 0
                    :&F2_XC SETC '0'
                    ACALL SET_LIT_TYPE_LEN
                    :&F2_T SETC '&LIT_TYPE'
                    :&F2_L SETA &LIT_LEN
+                   :&F2_P SETA &LIT_DEC RPI 1211
                AEND
          AELSE
                :&IOP SETA -&IOP_F2_X(&I)
                :&F2_N SETC '&TMP_NAME(&IOP)'
                :&F2_T SETC '&TMP_TYPE(&IOP)'
                :&F2_L SETA &TMP_LEN(&IOP)
+               :&F2_P SETA &TMP_PIC_DEC(&IOP) RPI 1211
                :&F2_X SETA -&IOP
                :&F2_XC SETC '-&IOP'
          AEND
@@ -311,15 +389,34 @@
                :&F3_X SETA -&TMP_IX
                :&F3_XC SETC '-&TMP_IX'
                ACALL CALC_F3_TYPE
-               :&F3_N SETC '&TMP_NAME(&TMP_IX)(&F3_L)'  
+               :&F3_N SETC '&TMP_NAME(&TMP_IX)(&F3_L)' 
+               AIF (&F1_P GE &F2_P)
+                   :&F3_P SETA &F1_P
+               AELSE
+                   :&F3_P SETA &F2_P
+               AEND
                :&TMP_TYPE(&TMP_IX) SETC '&F3_T'
                :&TMP_LEN(&TMP_IX)  SETA D2A('&F3_L') RPI 1139
+               :&TMP_PIC_DEC(&TMP_IX) SETA &F3_P RPI 1211
                :&F3_S SETB 1
                :&TMP_SIGN(&TMP_IX) SETB &F3_S
                AIF (&IOP_OP(&I) NE 4)  MOVE 1ST OP TO TEMP IF NOT DIV
                    :&LAB SETC '&F1_N'
                    ACALL RESET_LAB_LEN
-                   GEN_MOVE &F3_N,&F3_XC,&LAB,&F1_XC
+                   AIF (&DEBUG)
+                       :&OP SETA 5
+                       :&X1 SETA &F3_X
+                       :&X2 SETA &F1_X
+                       ACALL LIST_OP_F1_F2
+                   AEND
+                   GEN_MOVE &F3_N,&F3_XC,&LAB,&F1_XC DEC(&F3_P,&F1_P) 
+               AELSE
+                   AIF (&DEBUG)        SHOW MOVE FOR DIVIDE
+                       :&OP SETA 5
+                       :&X1 SETA &F3_X
+                       :&X2 SETA &F1_X
+                       ACALL LIST_OP_F1_F2
+                   AEND                    
                AEND
          AELSE
                :&F3_N SETC '&T_NAME'
@@ -327,12 +424,25 @@
                :&F3_XC SETC '&F3_X'
                :&F3_T SETC '&SYM_PIC_TYPE(&T_IX)'
                :&F3_L SETA &SYM_LEN(&T_IX)
+               :&F3_P SETA &SYM_PIC_DEC(&T_IX) RPI 1211
                :&F3_S SETB &SYM_PIC_SIGN(&T_IX)
                AIF  ('&F3_N' NE '&F1_N')
                    :&LAB SETC '&F1_N'
                    ACALL RESET_LAB_LEN
+                   AIF (&DEBUG)
+                       :&OP SETA 5          FINAL MOVE TO TARGET
+                       :&X1 SETA &F3_X
+                       :&X2 SETA &F1_X
+                       ACALL LIST_OP_F1_F2
+                   AEND
                    GEN_MOVE &F3_N,&F3_XC,&LAB,&F1_XC
                AEND
+         AEND
+         AIF (&DEBUG)
+             :&OP SETA &IOP_OP(&I)      SHOW OPERATION
+             :&X1 SETA &F3_X
+             :&X2 SETA &F2_X
+             ACALL LIST_OP_F1_F2
          AEND
          AEND
 .*
@@ -360,23 +470,31 @@
 .* SET LIT TYPE LEN FROM FIELD_NAME VALUE
 .*
          AENTRY SET_LIT_TYPE_LEN
+         :&LIT_DEC SETA 0 RPI 1211 USES DD/LD IF . FOUND
          :&LIT_LEN SETA 0
-         :&FLT SETA ('&FIELD_NAME' INDEX '.')
-         AIF (&FLT GT 0)
+         :&FLT SETA ('&FIELD_NAME' FIND '.')
+         :&FEX SETA ('&FIELD_NAME' FIND 'Ee')
+         AIF (&FLT GT 0 OR &FEX GT 0)
              AIF (K'&FIELD_NAME GT 16)
                  :&LIT_TYPE SETC '9'
+                 :&LIT_lEN  SETA 16
              AELSE 
                  :&LIT_TYPE SETC '8'
+                 :&LIT_LEN  SETA 8
              AEND
          AELSE
              AIF (K'&FIELD_NAME GT 18)
                  :&LIT_TYPE SETC 'Q'
+                 :&LIT_LEN  SETA 16
              AELSEIF (K'&FIELD_NAME GT 9) 
                  :&LIT_TYPE SETC 'G'
-             AELSEIF (K'&FIELD_NAME GT 5) 
+                 :&LIT_LEN  SETA 8
+             AELSEIF (K'&FIELD_NAME GT 4) 
                  :&LIT_TYPE SETC 'F'
+                 :&LIT_LEN  SETA 4
              AELSE 
                  :&LIT_TYPE SETC 'H'
+                 :&LIT_LEN  SETA 2
              AEND
          AEND
          AEND
@@ -590,39 +708,65 @@
 .* 
          AENTRY LIST_IOPS
          :&J   SETA 1
-         MNOTE 'ZCOBOL IOP TABLE LISTING - TOTAL IOPS = &IOP_TOT'
+         MNOTE 'ZC_CALC DEBUG TRACE IOPS=&IOP_TOT'
          AWHILE (&J LE &IOP_TOT)
-               MNOTE 'IOP=&J OP=&IOP_OP(&J) F1=&IOP_F1_X(&J) F2=&IOP_F1X
+               MNOTE 'IOP=&J OP=&IOP_OP(&J) F1=&IOP_F1_X(&J) F2=&IOP_F2X
                _X(&J) F3=&TMP_TYPE(&J)'
                :&J SETA &J+1
          AEND
          AEND
 .*
-.* CALC F3_T TYPE FROM F1_T AND F2_T ALSO SET F3_L FOR TYPE P
+.* LIST OP AND F1, F2 NAME, TYPE, LEN, DEC USING &OP,&X1,&X2
+.*
+         AENTRY LIST_OP_F1_F2
+          :&OP_TAB(1) SETC 'ADD','SUB','MPY','DIV','MOVE'
+         AIF (&X1 GT 0)
+             :&F1_LIST SETC '&SYM_NAME(&X1),&SYM_PIC_TYPE(&X1),&SYM_LENX
+               (&X1),&SYM_PIC_DEC(&X1)'
+         AELSE
+             :&X1 SETA -&X1
+             :&F1_LIST SETC 'TMP-&X1,&TMP_TYPE(&X1),&TMP_LEN(&X1),&TMP_X
+               PIC_DEC(&X1)'
+         AEND
+         AIF (&X2 GT 0)
+             :&F2_LIST SETC '&SYM_NAME(&X2),&SYM_PIC_TYPE(&X2),&SYM_LENX
+               (&X2),&SYM_PIC_DEC(&X2)'
+         AELSEIF (&X2 LT 0)
+             :&X2 SETA -&X2
+             :&F2_LIST SETC 'TMP-&X2,&TMP_TYPE(&X2),&TMP_LEN(&X2),&TMP_X
+               PIC_DEC(&X2)'
+         AELSE
+             :&F2_LIST SETC '&FIELD_NAME'
+         AEND
+         MNOTE 'ZC_CALC   &OP_TAB(&OP) &F1_LIST &F2_LIST'
+         AEND      
+.*
+.* CALC F3_T, F3_L, F3_P FROM F1_T AND F2_T 
 .*
          AENTRY CALC_F3_TYPE
          :&EXTEND_FP_TYPE SETC '9'               
-         :&EXTEND_FP_LNG  SETA 16
          :&NOEXTEND_FP_TYPE SETC '2'
-         :&NOEXTEND_FP_LNG  SETA 8
+         AIF (&F1_P GT &F2_P)   RPI 1211
+             :&F3_P SETA &F1_P  
+         AELSE                  
+             :&F3_P SETA &F2_P
+         AEND
          ACASE (C2A('&F1_T'))
          AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
+               :&F3_P SETA 0 RPI 1211
                AIF (&ZC_EXTEND)
                    :&F3_T SETC '&EXTEND_FP_TYPE'
-                   :&F3_L SETA &EXTEND_FP_LNG
                AELSE
                    :&F3_T SETC '&NOEXTEND_FP_TYPE'
-                   :&F3_L SETA &NOEXTEND_FP_LNG
                AEND
          AWHEN C'F'
                ACASE (C2A('&F2_T'))
                AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
+                   :&F3_P SETA 0  RPI 1211
                    AIF (&ZC_EXTEND)
                        :&F3_T SETC '&EXTEND_FP_TYPE'
-                       :&F3_L SETA &EXTEND_FP_LNG
                    AELSE
                        :&F3_T SETC '&NOEXTEND_FP_TYPE'
-                       :&F3_L SETA &NOEXTEND_FP_LNG
                    AEND
                AWHEN C'F'
                  :&F3_T SETC 'Q'
@@ -653,10 +797,8 @@
                AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
                    AIF (&ZC_EXTEND)
                        :&F3_T SETC '&EXTEND_FP_TYPE'
-                       :&F3_L SETA &EXTEND_FP_LNG
                    AELSE
                        :&F3_T SETC '&NOEXTEND_FP_TYPE'
-                       :&F3_L SETA &NOEXTEND_FP_LNG
                    AEND
                AWHEN C'F'
                  :&F3_T SETC 'Q'
@@ -679,10 +821,8 @@
                AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
                    AIF (&ZC_EXTEND)
                        :&F3_T SETC '&EXTEND_FP_TYPE'
-                       :&F3_L SETA &EXTEND_FP_LNG
                    AELSE
                        :&F3_T SETC '&NOEXTEND_FP_TYPE'
-                       :&F3_L SETA &NOEXTEND_FP_LNG
                    AEND
                AWHEN C'F'
                  :&F3_T SETC 'G'
@@ -717,10 +857,8 @@
                AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
                    AIF (&ZC_EXTEND)
                        :&F3_T SETC '&EXTEND_FP_TYPE'
-                       :&F3_L SETA &EXTEND_FP_LNG
                    AELSE
                        :&F3_T SETC '&NOEXTEND_FP_TYPE'
-                       :&F3_L SETA &NOEXTEND_FP_LNG
                    AEND
                AWHEN C'F'
                  AIF (&F1_L LE 5)
@@ -763,10 +901,8 @@
                AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
                    AIF (&ZC_EXTEND)
                        :&F3_T SETC '&EXTEND_FP_TYPE'
-                       :&F3_L SETA &EXTEND_FP_LNG
                    AELSE
                        :&F3_T SETC '&NOEXTEND_FP_TYPE'
-                       :&F3_L SETA &NOEXTEND_FP_LNG
                    AEND
                AWHEN C'F'
                  :&F3_T SETC 'Q'
@@ -789,10 +925,8 @@
                AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
                    AIF (&ZC_EXTEND)
                        :&F3_T SETC '&EXTEND_FP_TYPE'
-                       :&F3_L SETA &EXTEND_FP_LNG
                    AELSE
                        :&F3_T SETC '&NOEXTEND_FP_TYPE'
-                       :&F3_L SETA &NOEXTEND_FP_LNG
                    AEND
                AWHEN C'F'
                  AIF (&F1_L GE 9)

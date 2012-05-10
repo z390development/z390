@@ -392,7 +392,8 @@ public  class  az390 implements Runnable {
         * 04/05/12 RPI 1201 use lit_dup*lit_len to align lits  
         * 04/13/12 RPI 1205 issue error for SDT C'12345' too long 
         * 04/13/12 RPI 1206 drop unlabeled dependant using for drop reg
-        * 04/17/12 RPI 1208 don't generate RLD's in DSECT         
+        * 04/17/12 RPI 1208 don't generate RLD's in DSECT  
+        * 04/20/12 RPI 1210 correct handling of periods in paths       
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -3869,7 +3870,7 @@ private String get_base_name(String file_name){
 	 */
 	int index1 = file_name.lastIndexOf(File.separator);
     int index2 = file_name.lastIndexOf('.');
-    if (index2 == -1){
+    if (index2 <= index1){  // RPI 1210 
     	index2 = file_name.length();
     }
     return file_name.substring(index1+1,index2);

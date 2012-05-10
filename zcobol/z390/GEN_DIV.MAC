@@ -12,6 +12,7 @@
 .* 04/28/09 RPI 1003 add support for ne
 .* 08/08/09 RPI 1065 correct negative SRP shift to 5 bit disp.
 .* 09/03/09 RPI 1065 reset ss1 length if any on &NQ and &NR for stores
+.* 05/02/12 RPI 1211 add support for implied decimal points
 .*********************************************************************
        GEN_DIV &NDD,&TDD,&LDD,&PDD, DIVIDEND  NAME/LIT,TYPE,LEN,PLACES X                  
                &NDR,&TDR,&LDR,&PDR, DIVISOR   NAME/LIT,TYPE,LEN,PLACES X                  
@@ -1701,7 +1702,7 @@
          ZAP   ZCVT_PWORK,&NDRX
          CVB   2,ZCVT_PWORK
                AWHEN C'Q'
-         LH    2,14+&NDRX  IGNORE HIGH 112 BITS
+         L     2,12+&NDRX  IGNORE HIGH 112 BITS
                AWHEN C'Z'
                 ZC_PACK31 ZCVT_PWORK1,16,&NDRX,&LDR
          CVB   2,ZCVT_PWORK1+8
@@ -2756,7 +2757,7 @@
 .* SHIFT, DIVIDE, AND ROUND TYPE EH ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_EH
-       :&SFT SETA &PQ-&PDR
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211 
        AIF   (&SFT GT 0)
          LARL  ZC_R15,=EH'1E&SFT'
          ME    0,0(ZC_R15)
@@ -2774,7 +2775,7 @@
 .* SHIFT,DIVIDE, AND ROUND TYPE DH ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_DH
-       :&SFT SETA &PQ-&PDR
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211
        AIF   (&SFT GT 0)
          LARL  ZC_R15,=DH'1E&SFT'
          MD    0,0(ZC_R15)
@@ -2792,37 +2793,37 @@
 .* SHIFT,DIVIDE, AND ROUND TYPE LH ZC_F0-ZC_F2 BY ZC_F1=ZC_F3
 .*
      AENTRY SFT_RND_LH
-       :&SFT SETA &PQ-&PDR
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211 
        AIF   (&SFT GT 0)
          LARL  ZC_R15,=LH'1E&SFT'
          LD    ZC_F4,0(ZC_R15)
          LD    ZC_F6,8(ZC_R15)
-         MXR   ZC_F0,ZC_F6
+         MXR   ZC_F0,ZC_F4
        AELSEIF (&SFT LT 0)
          LARL  ZC_R15,=LH'1E-&SFT'
          LD    ZC_F4,0(ZC_R15)
          LD    ZC_F6,8(ZC_R15)
-         MXR   ZC_F0,ZC_F6
+         MXR   ZC_F0,ZC_F4
        AEND
          DXR   ZC_F0,ZC_F1
         AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
          LARL  ZC_R15,=LH'0.5'
          LD    ZC_F4,0(ZC_R15)
          LD    ZC_F6,8(ZC_R15)
-         AXR   ZC_F0,ZC_F6
+         AXR   ZC_F0,ZC_F4
         AEND
      AEND
 .*
 .* SHIFT, DIVIDE, AND ROUND TYPE EB ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_EB
-       :&SFT SETA &PQ-&PDR
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211 
        AIF   (&SFT GT 0)
          LARL  ZC_R15,=EB'1E&SFT'
-         MEB   0,0(ZC_R15)
+         MEEB  ZC_F0,0(ZC_R15)
        AELSEIF (&SFT LT 0)
          LARL  ZC_R15,=EB'1E-&SFT'
-         MEB   0,0(ZC_R15)
+         MEEB  ZC_F0,0(ZC_R15)
        AEND
          DEBR  0,1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
@@ -2834,7 +2835,7 @@
 .* SHIFT,DIVIDE, AND ROUND TYPE DB ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_DB 
-       :&SFT SETA &PQ-&PDR
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211 
        AIF   (&SFT GT 0)
          LARL  ZC_R15,=DB'1E&SFT'
          MDB   0,0(ZC_R15)
@@ -2852,31 +2853,31 @@
 .* SHIFT,DIVIDE, AND ROUND TYPE LB ZC_F0-ZC_F2 BY ZC_F1=ZC_F3
 .*
      AENTRY SFT_RND_LB
-       :&SFT SETA &PQ-&PDR
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211
        AIF   (&SFT GT 0)
-         LARL  ZC_R15,=LH'1E&SFT'
+         LARL  ZC_R15,=LB'1E&SFT'
          LD    ZC_F4,0(ZC_R15)
          LD    ZC_F6,8(ZC_R15)
-         MXBR  ZC_F0,ZC_F6
+         MXBR  ZC_F0,ZC_F4
        AELSEIF (&SFT LT 0)
-         LARL  ZC_R15,=LH'1E-&SFT'
+         LARL  ZC_R15,=LB'1E-&SFT'
          LD    ZC_F4,0(ZC_R15)
          LD    ZC_F6,8(ZC_R15)
-         MXBR  ZC_F0,ZC_F6
+         MXBR  ZC_F0,ZC_F4
        AEND
          DXBR  ZC_F0,ZC_F1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LARL  ZC_R15,=LH'0.5'
+         LARL  ZC_R15,=LB'0.5'
          LD    ZC_F4,0(ZC_R15)
          LD    ZC_F6,8(ZC_R15)
-         AXBR  ZC_F0,ZC_F6
+         AXBR  ZC_F0,ZC_F4
          AEND
      AEND
 .*
 .* SHIFT, DIVIDE, AND ROUND TYPE ED ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_ED
-       :&SFT SETA &PQ-&PDR
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211 
        AIF   (&SFT GT 0)
          LARL  ZC_R15,=DD'1E&SFT'
          LD    ZC_F4,0(ZC_R15)
@@ -2898,17 +2899,20 @@
 .* SHIFT,DIVIDE, AND ROUND TYPE DD ZC_F0,ZC_F1 
 .*
      AENTRY SFT_RND_DD 
-       :&SFT SETA &PQ-&PDR
-       AIF   (&SFT GT 0)
-         LRL   ZC_F4,=DD'1E&SFT'
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211 
+        AIF   (&SFT GT 0)
+         LARL  ZC_R2,=DD'1E&SFT'
+         LD    ZC_F4,0(ZC_R2)
          MDTR  ZC_F0,ZC_F0,ZC_F4
        AELSEIF (&SFT LT 0)
-         LRL   ZC_F4,=DD'1E-&SFT'
+         LARL  ZC_R2,=DD'1E-&SFT'
+         LD    ZC_F4,0(ZC_R2)
          MDTR  ZC_F0,ZC_F0,ZC_F4
        AEND
          DDTR  ZC_F0,ZC_F0,ZC_F1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
-         LRL   ZC_F4,=DD'0.5'
+         LARL  ZC_R2,=DD'0.5'
+         LD    ZC_F4,0(ZC_R2)
          ADTR  ZC_F0,ZC_F0,ZC_F4
          AEND
      AEND
@@ -2916,31 +2920,31 @@
 .* SHIFT,DIVIDE, AND ROUND TYPE LD ZC_F0-ZC_F2 BY ZC_F1=ZC_F3
 .*
      AENTRY SFT_RND_LD
-       :&SFT SETA &PQ-&PDR
-       AIF   (&SFT GT 0)
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211 
+        AIF   (&SFT GT 0)
          LARL  ZC_R15,=LD'1E&SFT'
          LD    ZC_F4,0(ZC_R15)
          LD    ZC_F6,8(ZC_R15)
-         MXTR  ZC_F0,ZC_F0,ZC_F6
+         MXTR  ZC_F0,ZC_F0,ZC_F4
        AELSEIF (&SFT LT 0)
          LARL  ZC_R15,=LD'1E-&SFT'
          LD    ZC_F4,0(ZC_R15)
          LD    ZC_F6,8(ZC_R15)
-         MXTR  ZC_F0,ZC_F0,ZC_F6
+         MXTR  ZC_F0,ZC_F0,ZC_F4
        AEND
          DXTR  ZC_F0,ZC_F0,ZC_F1
          AIF   (&ROUNDED EQ 1)  ROUNDING FOR NON D TYPE GIVING QUOTIENT
          LARL  ZC_R15,=LD'0.5'
          LD    ZC_F4,0(ZC_R15)
          LD    ZC_F6,8(ZC_R15)
-         AXTR  ZC_F0,ZC_F6
+         AXTR  ZC_F0,ZC_F4
          AEND
      AEND
 .*
 .* SHIFT, DIVIDE, AND ROUND TYPE F ZC_R0,ZC_R2 (ALSO USED FOR H) 
 .*
      AENTRY SFT_RND_F
-       :&SFT SETA &PQ-(&PDD-&PDR)
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211
        AIF   (&SFT GT 0)
          LARL  ZC_R15,=F'1E&SFT'
          MS    1,0(ZC_R15)
@@ -2948,7 +2952,8 @@
          LARL  ZC_R15,=F'1E&SFT'
          MS    2,0(ZC_R15)
        AEND
-         SR    0,0
+         LR    ZC_R0,ZC_R1
+         SRA   ZC_R0,31
          DR    0,2
          AIF   (&ROUNDED EQ 1)
          BRAS  ZC_R14,ZC_RND_F
@@ -2958,7 +2963,7 @@
 .* SHIFT, DIVIDE, AND ROUND TYPE G ZC_R0,ZC_R2
 .*
      AENTRY SFT_RND_G
-       :&SFT SETA &PQ-(&PDD-&PDR)
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211 
        AIF   (&SFT GT 0)
          LARL  ZC_R15,=FL8'1E&SFT'
          MSG   1,0(ZC_R15)
@@ -2979,12 +2984,9 @@
 .*   REMAINDER = ZCVT_PWORK4+LDDP(&LDRP) OR ZCVT_PWORK2 IF LDRP=16
 .*
      AENTRY SFT_RND_P
-       :&SFT SETA &PQ-(&PDD-&PDR)
-       AIF   (&SFT GT 0)
-         SRP   ZCVT_PWORK1(&LDDP),&SFT,0
-       AEND
-        AIF (&LDDP+&LDRP GT 16)
-            ACALL DFP_DIVP       USE DFP LD IF TOO BIG
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211
+        AIF (&LDDP+&LDRP GT 16 OR &SFT GT 0) RPI 1211
+            ACALL DFP_DIVP       USE DFP LD IF TOO BIG OR SHIFT
         AELSE
          ZAP   ZCVT_PWORK4(&LDDP+&LDRP),ZCVT_PWORK1(&LDDP)
          DP    ZCVT_PWORK4(&LDDP+&LDRP),ZCVT_PWORK2(&LDRP)
@@ -3023,25 +3025,36 @@
          LMG   ZC_R0,ZC_R1,ZCVT_PWORK4
          CXSTR ZC_F1,ZC_R0
        AEND
+       AIF (&SFT GT 0)  RPI 1211
+         LARL  ZC_R2,=LD'1E&SFT'
+         LD    ZC_F4,0(ZC_R2)
+         LD    ZC_F6,8(ZC_R2)
+         MXTR  ZC_F0,ZC_F0,ZC_F4
+       AELSEIF (&SFT LT 0)
+         LARL  ZC_R2,=LD'1E&SFT'
+         LD    ZC_F4,0(ZC_R2)
+         LD    ZC_F6,8(ZC_R2)
+         MXTR  ZC_F1,ZC_F1,ZC_F4
+       AEND
          DXTR  ZC_F0,ZC_F0,ZC_F1
          L     ZC_R15,ZCVT_CVTLDTP
          BASR  ZC_R14,ZC_R15
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK4                   PW4=QUOTIENT
-       AIF ('&TR' NE '')
+        AIF ('&TR' NE '')
          ZAP   ZCVT_PWORK3,ZCVT_PWORK4        
          MP    ZCVT_PWORK3,ZAP,ZCVT_PWORK2(&LDRP)  PW3=QUOTIENT*DIVISOR
          ZAP   ZCVT_PWORK2,ZCVT_PWORK1(&LDDP)   
          SP    ZCVT_PWORK2,ZCVT_PWORK3             PW2=REMAINDER  
-         :&LDRP SETA 16 USED BY STORE P TO STORE FULL ZCVT_PWORK4 QUO
-         :&LDDP SETA 16 USED BY STORE P TO STORE FULL ZCVT_PWORK2 REM
-       AEND
-       AEND
+        AEND
+        :&LDRP SETA 16 USED BY STORE P TO STORE FULL ZCVT_PWORK4 QUO
+        :&LDDP SETA 16 USED BY STORE P TO STORE FULL ZCVT_PWORK2 REM
+        AEND
 .*
 .* SHIFT, DIVIDE, AND ROUND TYPE Q ZC_R0-ZC_R1 
 .* BY ZC_R2-ZC_R3 > RM=ZC_R0-ZC_R1 Q=ZC_R2-ZC_R3
 .*
      AENTRY SFT_RND_Q
-       :&SFT SETA &PQ-(&PDD-&PDR)    SAVE DIVISOR
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211 
        AIF   (&SFT GT 0)
          STMG  ZC_R2,ZC_R3,ZCVT_WORKAREA
          LARL  ZC_R15,=FL16'1E&SFT'                           

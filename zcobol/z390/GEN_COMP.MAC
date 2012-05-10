@@ -23,6 +23,7 @@
 .* 04/12/12 RPI 1202 ADD RESET SS1_FIELD1 FOR CLCL
 .* 04/12/12 RPI 1202 USE CLC VS CLI WHEN LITERAL GT 1
 .* 04/15/12 RPI 1202 ADJUST FOR IMPLIED DECIMAL SCALE DIFFERENCES
+.* 04/23/12 RPI 1211 CORRECT SLA VS MS FOUND BY ZCOBOL\TEST\TESTMOV3
 .*********************************************************************
          GEN_COMP  
          COPY  ZC_WS
@@ -372,7 +373,7 @@
          ACALL RESET_SS1_FIELD1
          CLI   &FIELD1,C'&NUM'
                     AELSE
-                         :&NUM SETC (&L_FIELD1)'0'.'&FIELD2'
+                         :&NUM SETC (&L_FIELD1)'0'.'&NUM' RPI 1211 
                          :&NUM SETC '&NUM'(K'&NUM-&L_FIELD1+1,*)
           AIF  (&L_FIELD1/2*2 NE &L_FIELD1)
                :&LPAD SETC ' ' PAD TO EVEN AND IGNORE
@@ -673,10 +674,10 @@
          LD    ZC_F3,8+&FIELD1
          CXR   ZC_F1,ZC_F0
                AWHEN C'9'              LH LD
-                 ZC_CONV LD,LH,&FIELD1
-         LD    ZC_F1,&FIELD2
-         LD    ZC_F3,8+&FIELD2
-         CXTR  ZC_F0,ZC_F1
+                 ZC_CONV LH,LD,&FIELD2
+         LD    ZC_F1,&FIELD1
+         LD    ZC_F3,8+&FIELD1
+         CXR   ZC_F0,ZC_F1
                AWHEN  C'A',C'F',C'I'   LH F
                ACALL RESET_SS1_FIELD1
          LD    ZC_F0,&FIELD1
@@ -786,7 +787,7 @@
                ACALL RESET_SS1_FIELD1
          LE    ZC_F0,&FIELD1
          L     ZC_R1,&FIELD2
-         CEFBR ZC_F1,ZC_R1
+         CEFBR ZC_F1,ZC_F1
                ACALL SCALE_EB   RPI 1202
          CEBR  ZC_F0,ZC_F1
                AWHEN  C'G'             EB G 
@@ -845,7 +846,7 @@
          LD    ZC_F0,&FIELD1
          CDBR  ZC_F0,ZC_F1
                AWHEN C'3'              DB LH
-                 ZC_CONV DB,LH,&FIELD1
+                 ZC_CONV DB,LH,&FIELD2
          LDR   ZC_F1,ZC_F0
          LD    ZC_F0,&FIELD1
          CDBR  ZC_F0,ZC_F1
@@ -874,7 +875,7 @@
          LD    ZC_F0,&FIELD1
          CDBR  ZC_F0,ZC_F1
                AWHEN C'9'              DB LD
-                 ZC_CONV DB,LB,&FIELD2
+                 ZC_CONV DB,LD,&FIELD2
          LDR   ZC_F1,ZC_F0
          LD    ZC_F0,&FIELD1
          CDBR  ZC_F0,ZC_F1
@@ -925,8 +926,8 @@
                AELSE
                     MNOTE 8,'GEN_COMP UNSUPPORTED COMP &SYM_PIC_TYPE(&FX
                IELD2_IX)'
-               AEND
                     MEXIT
+               AEND
         AWHEN  C'6'                    LB ??
                ACALL RESET_SS1_FIELD1
                ACASE (C2A('&SYM_PIC_TYPE(&FIELD2_IX)'))
@@ -1104,10 +1105,9 @@
                AWHEN C'9'              ED LD
                  ZC_CONV DD,LD,&FIELD2
          LDR   ZC_F1,ZC_F0
-         LDR   ZC_F3,ZC_F2
-         LD    ZC_F0,&FIELD2
-         LD    ZC_F2,8+&FIELD2
-         CXTR  ZC_F0,ZC_F1
+         LE    ZC_F0,&FIELD1
+         LDETR ZC_F0,ZC_F0,0
+         CDTR  ZC_F0,ZC_F1
                AWHEN  C'A',C'F',C'I'   ED F
                ACALL RESET_SS1_FIELD1
          LE    ZC_F0,&FIELD1
@@ -1304,6 +1304,7 @@
          LD    ZC_F2,8+&FIELD1
          CXTR  ZC_F0,ZC_F1
                AWHEN C'7'              LD ED
+                 ZC_CONV LD,ED,&FIELD2
          LDR   ZC_F1,ZC_F0
          LDR   ZC_F3,ZC_F2
          LD    ZC_F0,&FIELD1
@@ -1881,7 +1882,7 @@
                    ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
          CP    &FIELD1,ZCVT_PWORK2
                      AELSE
-                     ZC_PACK31,ZCVT_PWORK1,16,&FIELD2,&ZLEN2
+                   ZC_PACK31  ZCVT_PWORK1,16,&FIELD2,&ZLEN2
          CVBG  ZC_R1,ZCVT_PWORK1
          ZAP   ZCVT_PWORK1,&FIELD1
          CVBG  ZC_R0,ZCVT_PWORK1
@@ -1970,7 +1971,7 @@
          LG    ZC_R1,8+&FIELD1
          LGH   ZC_R3,&FIELD2
          LGR   ZC_R2,ZC_R3
-         SRAG  ZC_R2,ZC_R2,63 SIGN FILL
+         SRAG  ZC_R2,ZC_R2,63 SIGN FILL    
                ACALL SCALE_Q   RPI 1202
          CMPQR ZC_R0,ZC_R2
                AWHEN  C'P'             Q  P 
@@ -2175,19 +2176,21 @@
                 AWHEN  C'Z'             Z  Z
                :&ZLEN1 SETA &SYM_LEN(&FIELD1_IX)
                :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
-                   AIF (&SCALE EQ 0)
                :&PLEN1 SETA &ZLEN1/2+1
-               :&PLEN2 SETA &ZLEN2/2+1
+               :&PLEN2 SETA &ZLEN2/2+1  
+                   AIF (&SCALE EQ 0)
                ZC_PACK31  ZCVT_PWORK1,&PLEN1,&FIELD1,&ZLEN1
                ZC_PACK31  ZCVT_PWORK2,&PLEN2,&FIELD2,&ZLEN2
          CP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2(&PLEN2)
                    AELSE
-               ZC_PACK31  ZCVT_PWORK1,16,&FIELD1,&ZLEN1
+               ZC_PACK31  ZCVT_PWORK1,&PLEN1,&FIELD1,&ZLEN1
                ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
-         CVBG  ZC_R0,ZCVT_PWORK1
-         CVBG  ZC_R1,ZCVT_PWORK2
-               ACALL SCALE_G
-         CGR   ZC_R0,ZC_R1
+                      AIF (&SCALE GT 0)              
+         SRP   ZCVT_PWORK2,&SCALE,0                  
+                      AELSE                          
+         SRP   ZCVT_PWORK2,64-&SCALE,0              
+                      AEND
+         CP    ZCVT_PWORK1,ZCVT_PWORK2
                    AEND
                AELSE
                     MNOTE 8,'GEN_COMP UNSUPPORTED Z TYPE COMPARE - &SYMX
@@ -2221,10 +2224,10 @@
          AENTRY SCALE_EH
                AIF   (&SCALE GT 0)
          LARL  ZC_R2,=EH'1E&SCALE'
-         MDE   ZC_R1,0(ZC_R2)
+         ME    ZC_R1,0(ZC_R2)
                AELSEIF   (&SCALE LT 0)
          LARL  ZC_R2,=EH'1E&SCALE'
-         MDE   ZC_R0,0(ZC_R2)
+         ME    ZC_R0,0(ZC_R2)
                AEND
          AEND
 .        AENTRY SCALE_DH
@@ -2260,12 +2263,12 @@
 ..       AENTRY SCALE_EB
                AIF   (&SCALE GT 0)
          LARL  ZC_R2,=EB'1E&SCALE'
-         MDEB  ZC_R1,0(ZC_R2)
-         LEDBR ZC_R1,ZC_R1
+         MDEB  ZC_F1,0(ZC_R2)
+         LEDBR ZC_F1,ZC_F1
                AELSEIF   (&SCALE LT 0)
          LARL  ZC_R2,=EB'1E&SCALE'
-         MDEB  ZC_R0,0(ZC_R2)
-         LEDBR ZC_R0,ZC_R0
+         MDEB  ZC_F0,0(ZC_R2)
+         LEDBR ZC_F0,ZC_F0
                AEND
          AEND
 .        AENTRY SCALE_DB
@@ -2332,24 +2335,41 @@
          AEND
 ..       AENTRY SCALE_F
                AIF   (&SCALE GT 0)
-         SLA   ZC_R1,&SCALE
+         LARL  ZC_R2,=F'1E&SCALE'
+         MS    ZC_R1,0(ZC_R2)
                AELSEIF (&SCALE LT 0)
-         SLA   ZC_R0,&SCALE
+         LARL  ZC_R2,=F'1E&SCALE'
+         MS    ZC_R0,0(ZC_R2)
                AEND
          AEND
 .        AENTRY SCALE_G
                AIF   (&SCALE GT 0)
-         SLAG  ZC_R1,ZC_R1,&SCALE
+         LARL  ZC_R2,=FL8'1E&SCALE'
+         MSG   ZC_R1,0(ZC_R2)
                AELSEIF (&SCALE LT 0)
-         SLAG  ZC_R0,ZC_R0,&SCALE
+         LARL  ZC_R2,=FL8'1E&SCALE'
+         MSG   ZC_R0,0(ZC_R2)
                AEND
          AEND
          AENTRY SCALE_Q
-                        AIF   (&SCALE LT 0)
+                        AIF   (&SCALE GT 0)
+                  STMG  ZC_R0,ZC_R1,ZCVT_PWORK
+                  LGR   ZC_R0,ZC_R2
+                  LGR   ZC_R1,ZC_R3
+                  LARL  ZC_R2,=FL8'1E&SCALE'
+                  LG    ZC_R3,0(ZC_R2)
+                  SGR   ZC_R2,ZC_R2
+                  L     ZC_R15,ZCVT_MPYQ128
+                  BALR  ZC_R14,ZC_R15
+                  LGR   ZC_R2,ZC_R0
+                  LGR   ZC_R3,ZC_R1
+                  LMG   ZC_R0,ZC_R1,ZCVT_PWORK
+                        AELSEIF   (&SCALE LT 0)
                   STMG  ZC_R2,R3,ZCVT_PWORK
-                  LARL  ZC_R1,=LB'1E&SCALE'
-                  LMG   ZC_R2,ZC_R3,0(ZC_R1)
-                  LRL   ZC_R15,=A(MPQY128)
+                  LARL  ZC_R2,=FL8'1E&SCALE'
+                  LG    ZC_R3,0(ZC_R2)
+                  SGR   ZC_R2,ZC_R2
+                  L     ZC_R15,ZCVT_MPYQ128
                   BALR  ZC_R14,ZC_R15
                   LMG   ZC_R2,ZC_R3,ZCVT_PWORK
                         AEND

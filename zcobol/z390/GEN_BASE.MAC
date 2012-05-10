@@ -11,6 +11,7 @@
 .* 08/03/09 RPI 1065 correct to provide base for end of field OI etc.
 .* 03/07/12 RPI 1182 switch LRU each time a base is used to hold it
 .* 03/26/12 RPI 1182 only require start addr in base range (not end)
+.* 05/05/12 RPI 1211 use &BASE_MIN_RANGE to ensure min block coverage
 .*********************************************************************
 .*  GEN_BASEX &IX - verify or set base register for SYM_NAME(&IX)    
 .*    1.  If &IX not GT 0 error
@@ -53,7 +54,7 @@
          AIF   (&BASE_LRU EQ 2)
                :&BASE_LRU SETA 1
                :&BASE_B2_LOW  SETA &SYM_LOC(&IX)
-               :&BASE_B2_HIGH SETA &BASE_B2_LOW+4096
+               :&BASE_B2_HIGH SETA &BASE_B2_LOW+4096-&BASE_MIN_RANGE
                AIF (&BASE_B2_LOW LT X'FFFFF')
          LAY   &BASE_B2,&SYM_NAME(&IX)
                AELSE
@@ -65,7 +66,7 @@
          AELSE
                :&BASE_LRU SETA 2
                :&BASE_B1_LOW  SETA &SYM_LOC(&IX)
-               :&BASE_B1_HIGH SETA &BASE_B1_LOW+4096
+               :&BASE_B1_HIGH SETA &BASE_B1_LOW+4096-&BASE_MIN_RANGE
                AIF (&BASE_B1_LOW LT X'FFFFF')
          LAY   &BASE_B1,&SYM_NAME(&IX)
                AELSE
@@ -113,12 +114,12 @@
          USING &SYM_NAME(&IX),&LBASE_B2
                :&LBASE_B2_USED SETB 1                RPI 1065
                :&LBASE_B2_LOW  SETA &SYM_LOC(&IX)
-               :&LBASE_B2_HIGH SETA &LBASE_B2_LOW+4096
+               :&LBASE_B2_HIGH SETA &LBASE_B2_LOW+4096-&BASE_MIN_RANGE
                AELSE
          USING &SYM_NAME(&DSECT_IX)._DSECT,&LBASE_B2
                :&LBASE_B2_USED SETB 1                RPI 1065
                :&LBASE_B2_LOW  SETA 0
-               :&LBASE_B2_HIGH SETA 4096
+               :&LBASE_B2_HIGH SETA 4096-&BASE_MIN_RANGE
                AEND
        AELSE
                :&LBASE_LRU SETA 2
@@ -130,12 +131,12 @@
          USING &SYM_NAME(&IX),&LBASE_B1
                :&LBASE_B1_USED SETB 1                RPI 1065
                :&LBASE_B1_LOW  SETA &SYM_LOC(&IX)
-               :&LBASE_B1_HIGH SETA &LBASE_B1_LOW+4096
+               :&LBASE_B1_HIGH SETA &LBASE_B1_LOW+4096-&BASE_MIN_RANGE
                AELSE
          USING &SYM_NAME(&DSECT_IX)._DSECT,&LBASE_B1
                :&LBASE_B1_USED SETB 1                RPI 1065
                :&LBASE_B1_LOW  SETA 0
-               :&LBASE_B1_HIGH SETA 4096
+               :&LBASE_B1_HIGH SETA 4096-&BASE_MIN_RANGE
                AEND
        AEND
          AEND

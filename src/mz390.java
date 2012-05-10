@@ -416,6 +416,9 @@ public  class  mz390 {
 	 * 02/19/12 RPI 1192 issue error for AIF with )).label
 	 * 04/12/12 RPI 1204 NOALOOW return seta = 0 for non-dec SETC
 	 *          except for D2A, D2B, D2C, and D2X
+	 * 05/05/12 RPI 1212 add trace for common ops such as SLL  
+	 * 05/06/12 RPI 1213 correct SYSECT, SYSLOC, and SYSSTYP
+	 *          see rt\test\TESTSYS3.MLC regression test       
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -746,9 +749,12 @@ public  class  mz390 {
 	int hwm_lcl_setc = 0;
 	boolean sysinit_done = false;
 	int lcl_sysndx = -1;  // macro call counter
-	String lcl_sysect = "$$CSECT";
+	String lcl_sysect = ""; // RPI 1213 
 	String lcl_sysloc = lcl_sysect;
 	String lcl_sysstyp = "";
+	int lcl_sysect_setc_index  = -1; // RPI 1213
+	int lcl_sysloc_setc_index  = -1; // RPI 1213
+	int lcl_sysstyp_setc_index = -1; // RPI 1213
 	String[] lcl_set_name  = null; 
 	byte[]   lcl_set_type  = null;
 	int[]    lcl_set_start = null;
@@ -3467,11 +3473,7 @@ public  class  mz390 {
 				cur_mac_name = null;
 			}
 			az390.pass_bal_line(text_line,cur_mac_name,mac_file_type[mac_file_num[bal_xref_index]],mac_file_num[bal_xref_index],mac_file_line_num[bal_xref_index]); // RPI 549
-			if (az390.az390_private_sect){ // RPI 995
-				az390.az390_private_sect = false;
-				lcl_sysloc = az390.private_csect;
-				lcl_sysstyp = "CSECT";				
-			}
+			check_sysops(); // RPI 1213 update after az390 process 
 			if (az390.pass_bal_eof){
 				bal_eof = true;
 			}
@@ -5949,6 +5951,9 @@ public  class  mz390 {
 		 */
 		get_pc_parms();
 		seta_value = seta_value1 + seta_value2;
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("ADD " + seta_value + " = " + seta_value1  + " + " + seta_value2);  
+		}
 		put_seta_stack_var();
 	}
 	private void exec_pc_sub(){
@@ -5957,6 +5962,9 @@ public  class  mz390 {
 		 */
 		get_pc_parms();
 		seta_value = seta_value1 - seta_value2;
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("SUB " + seta_value + " = " + seta_value1  + " - " + seta_value2);  
+		}
 		put_seta_stack_var();
 	}
 	private void exec_pc_mpy(){
@@ -5965,6 +5973,9 @@ public  class  mz390 {
 		 */
 		get_pc_parms();
 		seta_value = seta_value1 * seta_value2;
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("MPY " + seta_value + " = " + seta_value1  + " * " + seta_value2);  
+		}
 		put_seta_stack_var();
 	}
 	private void exec_pc_div(){
@@ -5977,6 +5988,9 @@ public  class  mz390 {
 		} else {
 			seta_value = 0; // by definition for HLASM
 		}
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("DIV " + seta_value + " = " + seta_value1  + " / " + seta_value2);  
+		}
 		put_seta_stack_var();
 	}
 	private void exec_pc_concat(){
@@ -5985,6 +5999,9 @@ public  class  mz390 {
 		 */
 		get_setc_stack_values();
 		setc_value = setc_value1.concat(setc_value2);
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("CONCAT " + setc_value + " = " + setc_value1  + " . " + setc_value2);  
+		}
 		if (inc_tot_exp_stk_var()){
 			exp_stk_val_type[tot_exp_stk_var - 1] = val_setc_type;
 			exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
@@ -6000,6 +6017,9 @@ public  class  mz390 {
 			seta_value1 = get_seta_stack_value(-1);
 			tot_exp_stk_var--;
 			setc_value = tz390.get_dup_string(setc_value1,seta_value1);
+			if (tz390.opt_tracem){ // RPI 1212
+				tz390.put_trace("DUP " + setc_value + " = (" + seta_value1  + ")'" + setc_value1 + "'");  
+			}
 			put_setc_stack_var();
 		} else {
 			log_error(152,"missing variable for D' operator");
@@ -6013,9 +6033,6 @@ public  class  mz390 {
 		 */
 		check_setc_quotes(2); // RPI 1139
 		get_setc_stack_values();
-		if (tz390.opt_traceall){
-			tz390.put_trace("INDEX " + setc_value2 + " IN " + setc_value1);  // RPI 647
-		}
 		int str1_len = setc_value1.length();
 		int str2_len = setc_value2.length();
 		seta_value = 0;
@@ -6033,6 +6050,9 @@ public  class  mz390 {
 				index1++;
 			}
 		}
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("INDEX " + seta_value + " = " + setc_value2  + " IN " + setc_value1);  
+		}
         put_seta_stack_var(); 
 	}
 	private void exec_pc_find(){
@@ -6042,9 +6062,6 @@ public  class  mz390 {
 		 */
 		check_setc_quotes(2); // RPI 1139
 		get_setc_stack_values();
-		if (tz390.opt_traceall){
-			tz390.put_trace("FIND " + setc_value2 + " IN " + setc_value1);  // RPI 647
-		}
 		int str1_len = setc_value1.length();
 		int str2_len = setc_value2.length();
 		seta_value = 0;
@@ -6066,6 +6083,9 @@ public  class  mz390 {
 				}
 				index1++;
 			}
+		}
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("FIND " + seta_value + " = " + setc_value2  + " IN " + setc_value1);  
 		}
         put_seta_stack_var();		
 	}
@@ -6142,9 +6162,6 @@ public  class  mz390 {
 		/*
 		 * perform logical not operation on stk var
 		 */
-		if (tz390.opt_traceall){
-			tz390.put_trace("NOT");
-		}
 		if (tot_exp_stk_var > 0){
 			seta_value1 =  get_seta_stack_value(-1);
 			seta_value  = ~ seta_value1;
@@ -6175,6 +6192,9 @@ public  class  mz390 {
 		} else {
 			log_error(78,"missing NOT operand");
 		}
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("NOT " + seta_value + " = NOT " + seta_value1);  
+		}
 	}
 	private void exec_pc_and(){
 		/*
@@ -6183,9 +6203,6 @@ public  class  mz390 {
 		if (tot_exp_stk_var > 1){
 			seta_value1 = get_seta_stack_value(-2);
 			seta_value2 = get_seta_stack_value(-1);
-			if (tz390.opt_traceall){
-				tz390.put_trace("AND '" + seta_value1 + "' AND '" + seta_value2 + "'");
-			} 
 			seta_value = seta_value1 & seta_value2;
 			switch (exp_stk_val_type[tot_exp_stk_var - 2]){
 			case 1: // and seta
@@ -6205,6 +6222,10 @@ public  class  mz390 {
 		} else {
 			log_error(79,"missing AND operand");
 		}
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("AND " + seta_value + " = " + seta_value1  + " AND " + seta_value2);  
+		}
+		
 	}
 	private void exec_pc_or(){
 		/*
@@ -6213,9 +6234,6 @@ public  class  mz390 {
 		if (tot_exp_stk_var > 1){
 			seta_value1 = get_seta_stack_value(-2);
 			seta_value2 = get_seta_stack_value(-1);
-			if (tz390.opt_traceall){
-				tz390.put_trace("OR '" + seta_value1 + "' OR '" + seta_value2 + "'");
-			}
 			seta_value = seta_value1 | seta_value2; 
 			switch (exp_stk_val_type[tot_exp_stk_var - 2]){
 			case 1: // or seta
@@ -6235,6 +6253,9 @@ public  class  mz390 {
 		} else {
 			log_error(80,"missing OR operand");
 		}
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("OR " + seta_value + " = " + seta_value1  + " OR " + seta_value2);  
+		}
 	}
 	private void exec_pc_xor(){
 		/*
@@ -6243,9 +6264,6 @@ public  class  mz390 {
 		if (tot_exp_stk_var > 1){
 			seta_value1 = get_seta_stack_value(-2);
 			seta_value2 = get_seta_stack_value(-1);
-			if (tz390.opt_traceall){
-				tz390.put_trace("XOR '" + seta_value1 + "' XOR '" + seta_value2 + "'");
-			}
 			seta_value = seta_value1 ^ seta_value2; 
 			switch (exp_stk_val_type[tot_exp_stk_var - 2]){
 			case 1: // xor seta
@@ -6264,6 +6282,9 @@ public  class  mz390 {
 			tot_exp_stk_var--;
 		} else {
 			log_error(81,"missing XOR operand");
+		}
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("XOR " + seta_value + " = " + seta_value1  + " XOR " + seta_value2);  
 		}
 	}
 	private void exp_string_quote(){
@@ -8006,7 +8027,7 @@ public  class  mz390 {
 		int index = tz390.find_key_index('M',macro_name.toUpperCase());
 		if (index != -1){
 			if (index == -2){
-				check_sysops();
+				// rpi 1213 move check_sysops();
 			}
 			return index;
 		}
@@ -8022,7 +8043,7 @@ public  class  mz390 {
 					tz390.add_key_index(-2); // prevent repeat searches
 					tot_ins++;
 				}
-				check_sysops();
+				// rpi 1213 move check_sysops();
 				return -2; // don't allow search for instructions
 			}
 		}
@@ -8464,11 +8485,14 @@ public  class  mz390 {
 		add_lcl_sys("&SYSNEST",var_seta_type);
 		lcl_seta[tot_lcl_seta-1] = mac_call_level;
 		add_lcl_sys("&SYSECT",var_setc_type);
-		lcl_setc[tot_lcl_setc-1] = lcl_sysect;
+		lcl_sysect_setc_index = tot_lcl_setc-1; // RPI 1213
+		lcl_setc[lcl_sysect_setc_index] = lcl_sysect;
 		add_lcl_sys("&SYSLOC",var_setc_type);
-		lcl_setc[tot_lcl_setc-1] = lcl_sysloc;
+		lcl_sysloc_setc_index = tot_lcl_setc-1; // RPI 1213
+		lcl_setc[lcl_sysloc_setc_index] = lcl_sysloc;
 		add_lcl_sys("&SYSSTYP",var_setc_type);
-		lcl_setc[tot_lcl_setc-1] = lcl_sysstyp;
+		lcl_sysstyp_setc_index = tot_lcl_setc-1; // RPI 1213
+		lcl_setc[lcl_sysstyp_setc_index] = lcl_sysstyp;
 		if (tz390.opt_bs2000){  // RPI 604
 			add_lcl_sys("&SYSTSEC",var_setc_type);
 			lcl_setc[tot_lcl_setc-1] = lcl_sysstyp;
@@ -8491,12 +8515,18 @@ public  class  mz390 {
 		if (bal_op == null || bal_op.length() == 0){
 			return;
 		}
+		if (az390.az390_private_sect){ // RPI 995 RPI 1213
+			az390.az390_private_sect = false;
+			lcl_sysect = az390.private_csect; // RPI 1213
+			lcl_sysloc = az390.private_csect;
+			lcl_sysstyp = "CSECT";				
+		}		
 		switch (bal_op.charAt(0)){
 		case 'C':
 			if (bal_op.equals("CSECT")){
 				lcl_sysect = bal_label.toUpperCase();
 				lcl_sysloc = lcl_sysect;
-				lcl_sysstyp = "CSECT";
+				lcl_sysstyp = "CSECT";				
 			}
 			break;
 		case 'D':
@@ -8511,7 +8541,10 @@ public  class  mz390 {
 				lcl_sysloc = bal_label.toUpperCase();
 				int cur_sym = mz390_find_sym(lcl_sysloc);
 				if (cur_sym > 0){ // RPI 971 switch CSECT/DSECT
-					if (az390.sym_type[az390.esd_sid[az390.esd_base[az390.sym_esd[cur_sym]]]] == az390.sym_cst){
+					while (az390.sym_sect_prev[cur_sym] > 0){
+						cur_sym = az390.sym_sect_prev[cur_sym];
+					}
+					if (az390.sym_type[cur_sym] == az390.sym_cst){
 						lcl_sysstyp = "CSECT";
 					} else {
 						lcl_sysstyp = "DSECT";
@@ -8532,7 +8565,7 @@ public  class  mz390 {
 				lcl_sysstyp = "CSECT";
 			}
 			break;
-		}
+		}		
 	}
 	private void init_call_parms(){
 		/*
@@ -11279,7 +11312,10 @@ public  class  mz390 {
 		} else {
 			log_error(67,"A' missing variable");
 		}
-    }
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("A' " + seta_value + " = A'" + setc_value1);  
+		}
+   }
     private void exec_pc_pfx_d(){
     	/*
     	 * repalce top of stack with D'sym = 1/0
@@ -11301,7 +11337,9 @@ public  class  mz390 {
 		} else {
 			log_error(152,"missing variable for D' operator");
 		}
-    }
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("D' " + setb_value + " = D'" + setc_value1);  
+		}   }
     private void exec_pc_pfx_i(){
     	/*
     	 * return I'sym integer value
@@ -11320,9 +11358,12 @@ public  class  mz390 {
 			}
 			put_seta_stack_var();
 		} else {
-			log_error(152,"missing variable for D' operator");
+			log_error(152,"missing variable for I' operator");
 		}
-    }
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("I' " + seta_value + " = I'" + setc_value1);  
+		} 
+		}
     private void exec_pc_pfx_k(){
     	/*
     	 * K'sym returns string length
@@ -11334,7 +11375,9 @@ public  class  mz390 {
 		} else {
 			log_error(197,"K' missing variable");
 		}
-    }
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("K' " + seta_value + " = K'" + setc_value1);  
+		}}
     private void exec_pc_pfx_l(){
     	/*
     	 * L'sym returns symbol length
@@ -11346,7 +11389,9 @@ public  class  mz390 {
 		} else {
 			log_error(198,"L' missing variable");
 		}
-    }
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("L' " + seta_value + " = L'" + setc_value1);  
+		}   }
     private void exec_pc_pfx_n(){
     	/*
     	 * replace top of stack with N'stack
@@ -11464,7 +11509,10 @@ public  class  mz390 {
 		} else {
 			log_error(200,"O' missing variable");
 		}
-    }
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("O' " + setc_value + " = O'" + setc_value1);  
+		}
+		}
     private void exec_pc_pfx_s(){
     	/*
     	 * return exponent attrivute of ordinary symbol
@@ -11484,7 +11532,10 @@ public  class  mz390 {
 		} else {
 			log_error(152,"missing variable for D' operator");
 		}
-    }
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("S' " + seta_value + " = S'" + setc_value1);  
+		}
+		}
     private void exec_pc_pfx_t(){
     	/*
     	 * T'var/sym returns symbol type
@@ -11517,7 +11568,10 @@ public  class  mz390 {
 		} else {
 			log_error(201,"T' missing variable");
 		}
-    }
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("T' " + setc_value + " = T'" + setc_value1);  
+		}
+		}
     private boolean string_numeric(String text){
     	/*
     	 * return true if string or (string)
@@ -11549,6 +11603,9 @@ public  class  mz390 {
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		setc_value = setc_value1.toUpperCase();
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("UPPER " + setc_value + " = UPPER " + setc_value1);  
+		}		
 		put_setc_stack_var();
     }
     private void exec_pc_lower(){
@@ -11558,6 +11615,9 @@ public  class  mz390 {
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		setc_value = setc_value1.toLowerCase();
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("LOWER " + setc_value + " = LOWER " + setc_value1);  
+		}		
 		put_setc_stack_var();
     }
     private void exec_pc_ago(){
@@ -11978,7 +12038,10 @@ public  class  mz390 {
     	} else {
     		seta_value = seta_value | 0x80000000;
     	}
-    	put_seta_stack_var();
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("SLA " + seta_value + " = " + seta_value1  + " SLA " + seta_value2);  
+		}		
+   	put_seta_stack_var();
     }
     private void exec_pc_sll(){
     	/*
@@ -11988,6 +12051,9 @@ public  class  mz390 {
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
     	seta_value = seta_value1 << seta_value2;
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("SLL " + seta_value + " = " + seta_value1  + " SLL " + seta_value2);  
+		}		
     	put_seta_stack_var(); 
     }
     private void exec_pc_sra(){
@@ -11998,7 +12064,10 @@ public  class  mz390 {
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
     	seta_value = seta_value1 >> seta_value2;
-    	put_seta_stack_var();
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("SRA " + seta_value + " = " + seta_value1  + " SRA " + seta_value2);  
+		}		
+   	put_seta_stack_var();
     }
     private void exec_pc_srl(){
     	/*
@@ -12008,7 +12077,10 @@ public  class  mz390 {
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
     	seta_value = seta_value1 >>> seta_value2;
-    	put_seta_stack_var();
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("SRL " + seta_value + " = " + seta_value1  + " SRL " + seta_value2);  
+		}		
+   	put_seta_stack_var();
     }
     private void exec_pc_sattra(){
     	/*
@@ -12023,6 +12095,9 @@ public  class  mz390 {
 		} else {
 			setc_value = "";
 		}
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("SATTRA " + setc_value + " = SATTRA " + setc_value1);  
+		}		
     	put_setc_stack_var();
     }
     private void exec_pc_sattrp(){
@@ -12044,7 +12119,10 @@ public  class  mz390 {
     	} else {
     		setc_value = "";
     	}
-    	put_setc_stack_var();
+		if (tz390.opt_tracem){ // RPI 1212
+			tz390.put_trace("SATTRP " + setc_value + " = SATTRP " + setc_value1);  
+		}		
+  	    put_setc_stack_var();
     }
     private void exec_pc_x2a(){
     	/*
