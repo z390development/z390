@@ -41,6 +41,8 @@
 #                  pause on unknown BAT command file
 # 01/29/08 RPI 792 Support Windows compatible ECHO ON/OFF, IF EXIST file cmd
 # 10/07/09 RPI 1080 add support for J2SEOPTIONS 
+# 05/16/12 RPI 1216 patch to ignore spaces before "EXIT" command
+#              provided by Martin  Ward 01/31/12
 ##################################################################
 # Notes:
 #   1. Paths must be correct case with \ separators
@@ -78,6 +80,7 @@ die "Arguments <" . join(" ", @ARGV) . "> not yet implemented!\n" if @ARGV;
 
 while (<STDIN>) {
   s/\cM//g;
+  +s/^\s+//;
   chomp;
 
   print "$_\n";

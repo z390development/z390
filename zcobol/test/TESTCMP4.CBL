@@ -6,6 +6,15 @@
        ENVIRONMENT DIVISION.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
+       77 EH1 FLOAT-HEX-7       VALUE 1.5.
+       77 DH1 FLOAT-HEX-15      VALUE 1.5.
+       77 LH1 FLOAT-HEX-30      VALUE 1.5.
+       77 EB1 FLOAT-BINARY-7    VALUE 1.5.
+       77 DB1 FLOAT-BINARY-16   VALUE 1.5.
+       77 LB1 FLOAT-BINARY-34   VALUE 1.5.
+       77 ED1 FLOAT-DECIMAL-7   VALUE 1.5.
+       77 DD1 FLOAT-DECIMAL-16  VALUE 1.5.
+       77 LD1 FLOAT-DECIMAL-34  VALUE 1.5.
        77 H1      COMP PIC S9(3)V9       VALUE 1.5.
        77 F1      COMP PIC S9(7)V99      VALUE 1.5.
        77 G1      COMP PIC S9(15)V999    VALUE 1.5.
@@ -18,12 +27,49 @@
        77 Q2      COMP PIC S9(35)V9(4)   VALUE 1.5.
        77 P2      COMP-3 PIC S9(26)V9(5) VALUE 1.5.
        77 Z2             PIC S9(25)V9(6) VALUE 1.5.
+       77 ZT1            PIC S9 VALUE 5.
+       77 PT1     COMP-3 PIC S9 VALUE 5.
+       77 ZT31           PIC S9(31) VALUE 5.
+       77 PT31    COMP-3 PIC S9(31) VALUE 5.
+       77 ZT20           PIC S9(20) VALUE 5.
+       77 PT20    COMP-3 PIC S9(20) VALUE 5.
+       77 ZT21           PIC S9(21) VALUE 5.
+       77 PT21    COMP-3 PIC S9(21) VALUE 5.
+       77 PT16    COMP-3 PIC S9(16) VALUE 5.
        77 LD2 FLOAT-DECIMAL-34  VALUE 1.0.
        77 GOOD    COMP-3 PIC 9(4)   VALUE 0.
        77 BAD     COMP-3 PIC 9(4)   VALUE 0.
        PROCEDURE DIVISION.
        MAINLINE.
            DISPLAY 'TESTCMP4 TEST SCALED COMPUTE'
+           COMPUTE ZT20 = 12345678901234567890
+           COMPUTE LD2  = 12345678901234567890
+           IF ZT20 = LD2 PERFORM GOOD ELSE PERFORM BAD
+           COMPUTE ZT21 = 123456789012345678901
+           COMPUTE LD2  = 123456789012345678901
+           IF ZT21 = LD2 PERFORM GOOD ELSE PERFORM BAD
+           COMPUTE PT16 = PT1
+           IF PT16 = PT1 ERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT21 = PT21 + 1,
+           IF ZT21 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT20 = PT20 + 1,
+           IF ZT20 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT31 = PT31 + 1,
+           IF ZT31 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT1 = PT1 + 1,
+           IF ZT1 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = EH1+DH1+LH1
+                       +EB1+DB1+LB1
+                       +ED1+DD1+LD1
+                       +H1+F1+G1
+                       +Q1+P1+Z1
+           IF Z2 = 22.5 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = Z1+P1+Q1
+                       +G1+F1+H1
+                       +LD1+DD1+ED1
+                       +LB1+DB1+EB1
+                       +LH1+DH1+EH1
+           IF Z2 = 22.5 PERFORM GOOD ELSE PERFORM BAD.
            COMPUTE Z2 = 1.5
            IF Z2 = 1.5  PERFORM GOOD ELSE PERFORM BAD.
            COMPUTE Z2 = H1

@@ -7066,7 +7066,34 @@ set GIT_COMMITTER_DATE=2021-03-26 17:19:00 +0100
 git commit -m "Reconstructed version v1.5.06rc3 of z390 committed on behalf of Don Higgins"
 git tag -a v1.5.06rc3 -m "Reconstructed version v1.5.06rc3 of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.06rc4
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.5.06rc4
+git add README.TXT
+git add ZCRTTEST.BAT
+git add cmd.pl
+git add src/tz390.java
+git add zcobol/ZC_CALC.MAC
+git add zcobol/test/TESTCMP4.CBL
+git add zcobol/z390/GEN_COMP.MAC
+git add zcobol/z390/ZC_PACK31.MAC
+git add zcobol/test/TESTCMP5.CBL
+git add zcobol/test/TESTCMP6.CBL
+
+==> Create commit for V1.5.06rc4
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2012-05-16 16:41:00 -0500
+set GIT_COMMITTER_DATE=2021-03-26 17:30:00 +0100
+git commit -m "Reconstructed version v1.5.06rc4 of z390 committed on behalf of Don Higgins"
+git tag -a v1.5.06rc4 -m "Reconstructed version v1.5.06rc4 of z390 committed on behalf of Don Higgins"
 
 
 

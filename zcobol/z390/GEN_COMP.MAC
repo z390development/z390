@@ -24,6 +24,8 @@
 .* 04/12/12 RPI 1202 USE CLC VS CLI WHEN LITERAL GT 1
 .* 04/15/12 RPI 1202 ADJUST FOR IMPLIED DECIMAL SCALE DIFFERENCES
 .* 04/23/12 RPI 1211 CORRECT SLA VS MS FOUND BY ZCOBOL\TEST\TESTMOV3
+.* 05/13/12 RPI 1215 CORRECT CP LENGTH FOR PWORK1 AFTER SCALING
+.* 05/16/12 RPI 1215 CORRECT CQR AND CVBG FIELD FOR H-P15 COMPARE 
 .*********************************************************************
          GEN_COMP  
          COPY  ZC_WS
@@ -1475,8 +1477,8 @@
                AWHEN  C'Z'             F  Z
                  :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
                  AIF (&ZLEN2 LE 15)
-                     ZC_PACK31 ZCVT_PWORK,8,&FIELD2,&ZLEN2
-         CVBG  ZC_R1,ZCVT_PWORK 
+                     ZC_PACK31 ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         CVBG  ZC_R1,ZCVT_PWORK2 
          LGF   ZC_R0,&FIELD1
                ACALL SCALE_G   RPI 1202
          CGR   ZC_R0,ZC_R1
@@ -1595,8 +1597,8 @@
                AWHEN  C'Z'             G  Z
                  :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
                  AIF (&ZLEN2 LE 15)
-                     ZC_PACK31 ZCVT_PWORK,8,&FIELD2,&ZLEN2
-         CVBG  ZC_R1,ZCVT_PWORK 
+                     ZC_PACK31 ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         CVBG  ZC_R1,ZCVT_PWORK2 
          LG    ZC_R0,&FIELD1
                ACALL  SCALE_G  RPI 1202
          CGR   ZC_R0,ZC_R1
@@ -1715,11 +1717,11 @@
                      AWHEN  C'Z'             H  Z
                  :&ZLEN2 SETA &SYM_LEN(&FIELD2_IX)
                  AIF (&ZLEN2 LE 15)
-                     ZC_PACK31 ZCVT_PWORK,8,&FIELD2,&ZLEN2
-         CVBG  ZC_R1,ZCVT_PWORK 
+                     ZC_PACK31 ZCVT_PWORK2,16,&FIELD2,&ZLEN2
+         CVBG  ZC_R1,ZCVT_PWORK2 
          LGH   ZC_R0,&FIELD1
-               ACALL SCALE_Q   RPI 1202
-         CQR   ZC_R0,ZC_R1
+               ACALL SCALE_G   RPI 1202
+         CGR   ZC_R0,ZC_R1
                  AELSE       
                    ZC_PACK31  ZCVT_PWORK2,16,&FIELD2,&ZLEN2
          LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
@@ -2190,7 +2192,7 @@
                       AELSE                          
          SRP   ZCVT_PWORK2,64-&SCALE,0              
                       AEND
-         CP    ZCVT_PWORK1,ZCVT_PWORK2
+         CP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2 RPI 1215
                    AEND
                AELSE
                     MNOTE 8,'GEN_COMP UNSUPPORTED Z TYPE COMPARE - &SYMX
@@ -2353,7 +2355,7 @@
          AEND
          AENTRY SCALE_Q
                         AIF   (&SCALE GT 0)
-                  STMG  ZC_R0,ZC_R1,ZCVT_PWORK
+                  STMG  ZC_R0,ZC_R1,ZCVT_PWORK1
                   LGR   ZC_R0,ZC_R2
                   LGR   ZC_R1,ZC_R3
                   LARL  ZC_R2,=FL8'1E&SCALE'
@@ -2363,15 +2365,15 @@
                   BALR  ZC_R14,ZC_R15
                   LGR   ZC_R2,ZC_R0
                   LGR   ZC_R3,ZC_R1
-                  LMG   ZC_R0,ZC_R1,ZCVT_PWORK
+                  LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
                         AELSEIF   (&SCALE LT 0)
-                  STMG  ZC_R2,R3,ZCVT_PWORK
+                  STMG  ZC_R2,ZC_R3,ZCVT_PWORK1
                   LARL  ZC_R2,=FL8'1E&SCALE'
                   LG    ZC_R3,0(ZC_R2)
                   SGR   ZC_R2,ZC_R2
                   L     ZC_R15,ZCVT_MPYQ128
                   BALR  ZC_R14,ZC_R15
-                  LMG   ZC_R2,ZC_R3,ZCVT_PWORK
+                  LMG   ZC_R2,ZC_R3,ZCVT_PWORK1
                         AEND
                   AEND
 .        

@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 03/13/09 initial coding for use in GEN_MOVE/COMP/ADD/etc for Z to P   
 .* 08/03/09 RPI 1065 replace existing explicit length for source   
+.* 05/14/12 RPI 1215 correct logic for Z fields 16-30 bytes
 .*********************************************************************
 .* PACK 1 TO 31 ZD FIELD INTO PD FIELD 
 .*********************************************************************
@@ -17,42 +18,54 @@
          :&ZLEN     SETA &LZ             SOURCE ZD LENGTH
          :&TARGET   SETC '&P'            TARGET PD FIELD
          :&PLEN     SETA &LP             TARGET PD LENGTH
-       AIF   (&ZLEN LE 15 OR &PLEN LE 8)  IS THIS SINGLE OPERATION
-         AIF (&ZLEN GT 15)
-             :&ZLEN SETA &PLEN*2-1 IGNORE HIGH DIGITS IN Z FIELD
-         AEND
+         :&ZOFF     SETA 0               OFFSET INTO SOURCE RPI 1215  
+         :&POFF     SETA 0               OFFSET INTO TARGET RPI 1215
+        AIF (&ZLEN GT &PLEN*2-1)
+            :&ZOFF SETA &ZLEN-(&PLEN*2-1) TRUNCATE Z TO FIT IN P
+            :&ZLEN SETA &PLEN*2-1
+        AEND         
+        AIF   (&ZLEN LE 15)
          :&SLEN SETA &ZLEN
-         ACALL SET_SOURCE_LEN           SET EXPLICIT SOURCE LEN 
-         PACK  &TARGET.(&PLEN),&S_TEMP  PACK SOURCE 
+         ACALL SET_SOURCE_LEN
+         PACK  &TARGET.(&PLEN),&ZOFF+&S_TEMP PACK #1 NORMAL
          MEXIT
-       AEND
-       AIF     (&ZLEN/2*2 EQ &ZLEN)
-         :&SLEN SETA 14
-         ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN
-         PACK  &TARGET.(8),&S_TEMP    PACK FIRST 13 DIGITS OF EVEN TOT
-               :&ZLEN SETA &ZLEN-13
-               :&ZOFF SETA 13
-       AELSE
-         :&SLEN SETA 15
-         ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN
-         PACK  &TARGET.(8),&S_TEMP    PACK FIRST 14 DIGITS OF ODD TOT
-               :&ZLEN SETA &ZLEN-14
-               :&ZOFF SETA 14
-       AEND
-       :&PLEN SETA &PLEN-7            SKIP FIRST 7 PACKED BYTES
-       :&POFF SETA 7                  SET POFF TO OVERLAY LAST BYTE
-       AIF (&ZLEN GT 15)
+        AEND 
+.*
+.* PACK Z GT 15 USING 2 OR 3 PACK INSTRUCTIONS
+.*
            :&SLEN SETA 15
+           AIF (&ZLEN/2*2 EQ &ZLEN)
+               :&SLEN SETA &SLEN-1      PACK 1 LESS IF EVEN Z
+           AEND
            ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN
-         PACK  &TARGET+&POFF.(8),&ZOFF+&S_TEMP    PACK NEXT 14
-           :&ZLEN SETA &ZLEN-14
-           :&ZOFF SETA &ZOFF+14
-           :&POFF SETA &POFF+7
-           :&PLEN SETA &PLEN-7
-       AEND
-       :&SLEN SETA &ZLEN
-       ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN
-         PACK  &TARGET+&POFF.(&PLEN),&ZOFF+&S_TEMP  PACK REMAINDER
+           :&TLEN SETA 8
+           AIF (&PLEN GT &ZLEN/2+1)
+               :&TLEN SETA 8+&PLEN-(&ZLEN/2+1) PAD LONG P
+           AEND           
+         PACK  &TARGET.(&TLEN),&ZOFF+&S_TEMP PACK #1 FULL
+           :&ZLEN SETA &ZLEN-(&SLEN-1)
+           :&ZOFF SETA &ZOFF+(&SLEN-1)
+           :&PLEN SETA &PLEN-(&TLEN-1) SKIP FIRST PACKED BYTES
+           :&POFF SETA &POFF+(&TLEN-1) SET POFF TO OVERLAY LAST BYTE
+           AIF (&ZLEN GT 15)
+               :&SLEN SETA 15
+               ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN          
+         PACK  &POFF+&TARGET.(8),&ZOFF+&S_TEMP PACK #2 FULL
+               :&ZLEN SETA &ZLEN-14
+               :&ZOFF SETA &ZOFF+14
+               :&POFF SETA &POFF+7
+               :&PLEN SETA &PLEN-7
+           AELSE
+               :&SLEN SETA &ZLEN
+               ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN
+         PACK  &POFF+&TARGET.(&PLEN),&ZOFF+&S_TEMP  PACK #2 FINAL
+              :&ZLEN SETA 0
+           AEND
+           AIF (&ZLEN GT 0)
+               :&SLEN SETA &ZLEN
+               ACALL SET_SOURCE_LEN         SET EXPLICIT SOURCE LEN
+         PACK  &POFF+&TARGET.(&PLEN),&ZOFF+&S_TEMP  PACK #3 FINAL
+           AEND  
 .*
 .* SET SOURCE LEN - INSERT SLEN FOR SIX OR LABEL IN S_TEMP
 .*

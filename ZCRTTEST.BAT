@@ -20,6 +20,8 @@ call ZC390CLG zcobol\test\TESTCMP1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTCMP2 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTCMP3 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTCMP4 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
+call ZC390CLG zcobol\test\TESTCMP5 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
+call ZC390CLG zcobol\test\TESTCMP6 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTCPY1 notiming stats syscpy(+zcobol\test) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTCPY2 notiming stats syscpy(+zcobol\test) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ZC390CLG zcobol\test\TESTDFP1 notiming stats float(decimal) %1 %2 %3 %4 %5 %6 %7 %8 %9

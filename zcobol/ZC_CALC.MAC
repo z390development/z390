@@ -12,6 +12,7 @@
 .* 05/07/12 RPI 1211 add support for implied decimals via TMP_PIC_DEC
 .* 05/08/12 RPI 1211 add &DEBUG SETB 1 option for tracing IOP ops
 .* 05/09/12 RPI 1211 add single op literal suuport see TESTCMP4.CBL
+.* 05/12/12 RPI 1215 set scale to zero for move to floating point
 .*********************************************************************
 .* ZC_CALC used by COMPUTE to gen code to calculate expression 
 .* defined by positional parm list.  The result is stored in data 
@@ -390,11 +391,6 @@
                :&F3_XC SETC '-&TMP_IX'
                ACALL CALC_F3_TYPE
                :&F3_N SETC '&TMP_NAME(&TMP_IX)(&F3_L)' 
-               AIF (&F1_P GE &F2_P)
-                   :&F3_P SETA &F1_P
-               AELSE
-                   :&F3_P SETA &F2_P
-               AEND
                :&TMP_TYPE(&TMP_IX) SETC '&F3_T'
                :&TMP_LEN(&TMP_IX)  SETA D2A('&F3_L') RPI 1139
                :&TMP_PIC_DEC(&TMP_IX) SETA &F3_P RPI 1211
