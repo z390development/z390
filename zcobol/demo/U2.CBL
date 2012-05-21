@@ -184,7 +184,7 @@ TTTTTT* AFTER T-SERVICE
 ----------------------------------------- BEFORE LINKAGE OR PROCEDURE
 TTTTTT* BEGINNING AFTER T-SERVICE
 TTTTTT 01  MZ-ARRAY.
-TTTTTT     03  MZ-ENTRY OCCURS 500.
+TTTTTT     03  MZ-ENTRY OCCURS 999.
 TTTTTT         05  MZ-LVL           PIC X(02).
 TTTTTT         05  MZ-NAME          PIC X(30).
 TTTTTT         05  MZ-ADDR          PIC 9(09).
@@ -198,7 +198,7 @@ TTTTTT             07  MZ-PIC-2     PIC X(01).
 TTTTTT             07  FILLER       PIC X(08).
 TTTTTT         05  MZ-SUBS-IDS OCCURS 3.
 TTTTTT             07  MZ-SUBS-ID   PIC X(30).
-TTTTTT 01  MZ-MAX                   PIC 9(03) VALUE 500.
+TTTTTT 01  MZ-MAX                   PIC 9(03) VALUE 999.
 TTTTTT 01  MZ-SUB                   PIC 9(03) VALUE 0.
 TTTTTT 01  MZ-SUB2                  PIC 9(03).
 TTTTTT 01  MZ-SUB3                  PIC 9(03).
@@ -208,7 +208,7 @@ TTTTTT 01  B-NUMBER                  PIC X(06).
 TTTTTT 01  LINE-COUNT                PIC 9(06) VALUE ZERO.
 TTTTTT 01  LINE-COUNT2               PIC 9(06) VALUE ZERO.
 TTTTTT 01  LINE-ARRAY.
-TTTTTT     03  LINE-ENTRY OCCURS 500.
+TTTTTT     03  LINE-ENTRY OCCURS 999.
 TTTTTT         05  LINE-NUMBER       PIC X(06).
 TTTTTT         05  LINE-ASTER        PIC X(01).
 TTTTTT         05  LINE-30           PIC X(30).
@@ -254,6 +254,7 @@ TTTTTT     03  TRACE-ENTRY OCCURS 15 PIC X(30).
 TTTTTT 01  TUB                       PIC 9(06).
 TTTTTT 01  TUB2                      PIC 9(06).
 TTTTTT 01  TUB3                      PIC 9(06).
+TTTTTT 01  XOK                       PIC X(01).
 ----------------------------------------- BEFORE END-OF-PROGRAM
 TTTTTT/
 TTTTTT T SECTION.
@@ -1050,30 +1051,32 @@ TTTTTT         ELSE
 TTTTTT             IF MZ-PIC-2 (MZ-SUB2)
 TTTTTT             NOT ='A'
 TTTTTT                 PERFORM NAMEX-PROCESS
-TTTTTT                 MOVE 'N' TO NONDISPLAYABLE
-TTTTTT                 MOVE 'N' TO DISPLAYABLE
-TTTTTT                 PERFORM DISPLAYIT
-TTTTTT                     VARYING LUMB FROM 1 BY 1
-TTTTTT                       UNTIL LUMB > MZ-LEN (MZ-SUB2)
-TTTTTT                          OR LUMB > 64000
-TTTTTT                 MOVE MZ-LEN (MZ-SUB2) TO MUB2
-TTTTTT                 COMPUTE GUB = (MUB2 / 32)
-TTTTTT                 COMPUTE HUB = MUB2 - (GUB * 32)
-TTTTTT                 COMPUTE GUB = GUB + 1
-TTTTTT                 MOVE 1                    TO GUB2
-TTTTTT                 MOVE 1                    TO GUB6
-TTTTTT                 IF DIZPLAY = 'Y'
-TTTTTT                 IF DISPLAYABLE = 'Y' 
-TTTTTT                     IF NONDISPLAYABLE = 'N'
-TTTTTT                         PERFORM DISPLAYABLE-LUMP GUB TIMES
+TTTTTT                 IF XOK = 'Y'
+TTTTTT                     MOVE 'N' TO NONDISPLAYABLE
+TTTTTT                     MOVE 'N' TO DISPLAYABLE
+TTTTTT                     PERFORM DISPLAYIT
+TTTTTT                         VARYING LUMB FROM 1 BY 1
+TTTTTT                           UNTIL LUMB > MZ-LEN (MZ-SUB2)
+TTTTTT                              OR LUMB > 64000
+TTTTTT                     MOVE MZ-LEN (MZ-SUB2) TO MUB2
+TTTTTT                     COMPUTE GUB = (MUB2 / 32)
+TTTTTT                     COMPUTE HUB = MUB2 - (GUB * 32)
+TTTTTT                     COMPUTE GUB = GUB + 1
+TTTTTT                     MOVE 1                    TO GUB2
+TTTTTT                     MOVE 1                    TO GUB6
+TTTTTT                     IF DIZPLAY = 'Y'
+TTTTTT                     IF DISPLAYABLE = 'Y' 
+TTTTTT                         IF NONDISPLAYABLE = 'N'
+TTTTTT                             PERFORM DISPLAYABLE-LUMP GUB TIMES
+TTTTTT                         ELSE
+TTTTTT                             MOVE 1            TO GUB3
+TTTTTT                             PERFORM NONDISP-LUMP
+TTTTTT                         END-IF
 TTTTTT                     ELSE
 TTTTTT                         MOVE 1            TO GUB3
 TTTTTT                         PERFORM NONDISP-LUMP
 TTTTTT                     END-IF
-TTTTTT                 ELSE
-TTTTTT                         MOVE 1            TO GUB3
-TTTTTT                         PERFORM NONDISP-LUMP
-TTTTTT                 END-IF
+TTTTTT                     END-IF
 TTTTTT                 END-IF
 TTTTTT             END-IF 
 TTTTTT         END-IF
@@ -1359,8 +1362,8 @@ TTTTTT             MOVE 'Y' TO LINE-FILE-ENDED.
 TTTTTT     DISPLAY LINE-COUNT ' ' LINE-FILE-ENDED.
 TTTTTT     IF LINE-FILE-ENDED = 'N'
 TTTTTT         ADD 1                 TO LINE-COUNT
-TTTTTT         IF LINE-COUNT > 500
-TTTTTT             DISPLAY 'MAX OF 500 LINES EXCEEDED'
+TTTTTT         IF LINE-COUNT > 999
+TTTTTT             DISPLAY 'MAX OF 999 LINES EXCEEDED'
 TTTTTT             DISPLAY 'BOMBING'
 TTTTTT             STOP RUN
 TTTTTT         END-IF

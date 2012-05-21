@@ -8,13 +8,13 @@
 0*****         IF  GLOB-SUB1 = SPACES
 0*****         AND GLOB-SUB2 = SPACES
 0*****         AND GLOB-SUB3 = SPACES
-0*****             CONTINUE
+0*****             MOVE 'Y' TO XOK
 0*****         ELSE
 0*****             DISPLAY GLOB-NAME 
 0*****                   ' SHOULD NOT HAVE SUBSCRIPTS'
-0*****             GO TO NAMEX-PROCESS-EXIT
+0*****             MOVE 'N' TO XOK
 0*****         END-IF
-0*****         
+0*****         IF XOK = 'Y'
 0*****         IF  MONITORING = 'Y'
 0*****           IF DIZPLAY = 'Y'
 0*****            MOVE SPACES        TO MONITORIT-80
@@ -38,6 +38,7 @@
 0*2830            MOVE
 0*****              TO LUMP
 0*****         END-IF
+0*****         END-IF
 0*****     END-IF.
            
 1*2830     IF GLOB-NAME = '123456789012345678901234567890'
@@ -47,16 +48,16 @@
 1*****        PERFORM FIND-LENGTH
 1*****        MOVE FUB TO LEN0 KEEP-LEN0
 1*****     
-1*****         IF  GLOB-SUB1 NOT = SPACES
-1*****         AND GLOB-SUB2 = SPACES
-1*****         AND GLOB-SUB3 = SPACES
-1*****             CONTINUE
-1*****         ELSE
-1*****             DISPLAY GLOB-NAME 
-1*****                   ' SHOULD HAVE 1 SUBSCRIPT'
-1*****             GO TO NAMEX-PROCESS-EXIT
-1*****         END-IF
-1*****   
+1*****        IF  GLOB-SUB1 NOT = SPACES
+1*****        AND GLOB-SUB2 = SPACES
+1*****        AND GLOB-SUB3 = SPACES
+1*****            MOVE 'Y' TO XOK
+1*****        ELSE
+1*****            DISPLAY GLOB-NAME 
+1*****                  ' SHOULD HAVE 1 SUBSCRIPT'
+1*****            MOVE 'N' TO XOK
+1*****        END-IF
+1*****        IF XOK = 'Y'
 1*****        MOVE GLOB-SUB1 TO TEST-FIELD
 1*****                          FUB-NAME1
 1*****        PERFORM FIND-LENGTH
@@ -140,6 +141,7 @@
 1*2830           MOVE 
 1*****                   (DISP-SUB1)
 1*****             TO LUMP
+1*****        END-IF
 1*****        END-IF 
 1*****     END-IF.        
           
@@ -150,16 +152,16 @@
 2*****        PERFORM FIND-LENGTH
 2*****        MOVE FUB TO LEN0 KEEP-LEN0
 2*****
-2*****         IF  GLOB-SUB1 NOT = SPACES
-2*****         AND GLOB-SUB2 NOT = SPACES
-2*****         AND GLOB-SUB3 = SPACES
-2*****             CONTINUE
-2*****         ELSE
-2*****             DISPLAY GLOB-NAME 
-2*****                   ' SHOULD HAVE 2 SUBSCRIPTS'
-2*****             GO TO NAMEX-PROCESS-EXIT
-2*****         END-IF
-2*****          
+2*****        IF  GLOB-SUB1 NOT = SPACES
+2*****        AND GLOB-SUB2 NOT = SPACES
+2*****        AND GLOB-SUB3 = SPACES
+2*****            MOVE 'Y' TO XOK
+2*****        ELSE
+2*****            DISPLAY GLOB-NAME 
+2*****                  ' SHOULD HAVE 2 SUBSCRIPTS'
+2*****            MOVE 'N' TO XOK
+2*****        END-IF
+2*****        IF XOK = 'Y'  
 2*****        MOVE GLOB-SUB1 TO TEST-FIELD
 2*****                          FUB-NAME1
 2*****        PERFORM FIND-LENGTH
@@ -283,6 +285,7 @@
 2*****                  (DISP-SUB1, DISP-SUB2)
 2*****             TO LUMP
 2*****        END-IF
+2*****        END-IF
 2*****     END-IF.        
                  
 3*2830     IF GLOB-NAME = '123456789012345678901234567890'
@@ -292,16 +295,16 @@
 3*****        PERFORM FIND-LENGTH
 3*****        MOVE FUB TO LEN0 KEEP-LEN0
 3*****
-3*****         IF  GLOB-SUB1 NOT = SPACES
-3*****         AND GLOB-SUB2 NOT = SPACES
-3*****         AND GLOB-SUB3 NOT = SPACES
-3*****             CONTINUE
-3*****         ELSE
-3*****             DISPLAY GLOB-NAME 
-3*****                   ' SHOULD HAVE 3 SUBSCRIPTS'
-3*****             GO TO NAMEX-PROCESS-EXIT
-3*****         END-IF        
-3*****
+3*****        IF  GLOB-SUB1 NOT = SPACES
+3*****        AND GLOB-SUB2 NOT = SPACES
+3*****        AND GLOB-SUB3 NOT = SPACES
+3*****            MOVE 'Y' TO XOK
+3*****        ELSE
+3*****            DISPLAY GLOB-NAME 
+3*****                  ' SHOULD HAVE 3 SUBSCRIPTS'
+3*****            MOVE 'N' TO XOK
+3*****        END-IF        
+3*****        IF XOK = 'Y'
 3*****        MOVE GLOB-SUB1 TO TEST-FIELD
 3*****                          FUB-NAME1
 3*****        PERFORM FIND-LENGTH
@@ -463,5 +466,6 @@
 3*2830           MOVE 
 3*****                  (DISP-SUB1, DISP-SUB2, DISP-SUB3)
 3*****             TO LUMP
+3*****        END-IF
 3*****        END-IF
 3*****     END-IF.

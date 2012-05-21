@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 04/28/12 RPI 1211 copied from GEN_ADD and changed add to sub opcode
+.* 05/17/12 RPI 1217 remove erroneous LR r0,r1 from case F - Q
 .*********************************************************************
 .* Notes:
 .*  1.  ROUNDED not supported yet.
@@ -886,7 +887,6 @@
                AWHEN C'Q'
          LG    ZC_R0,8+&N_SOURCE
                ACALL SCALE_G
-         LR    ZC_R0,ZC_R1
                AWHEN C'Z'
                    ZC_PACK31  ZCVT_PWORK1,16,&N_SOURCE,&L_SOURCE
                     AIF (&SCALE GT 0)             

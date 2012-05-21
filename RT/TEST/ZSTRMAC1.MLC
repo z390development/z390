@@ -12,6 +12,8 @@
 *          z390 ZSTRMAC extensions to elimiate all explicit AGO and
 *          macro labels plus indent labeled statements starting with :
 * 09/17/08 RPI 911 change ASELECT to ACASE and APM to ACALL
+* 02/19/12 RPI 1192 remove extra comma before first AGO macro label
+* 02/19/12 RPI 1192 remove extra ) at line 352
 *********************************************************************
 * ZSTRMAC READS SYSUT1 SOURCE FILE AND OUTPUTS SYSUT2 SOURCE FILE
 * WITH TRANSLATION OF FOLLOWING Z390 ZSTRMAC EXTENSIONS TO STD HLASM:
@@ -348,7 +350,7 @@
 &ELSE_LAB SETC '.ACS_&LVL_TCNT(&LVL)_X'
 .AEND_ACASE_GEN_AGO ANOP
 &PCH_REC SETC '&LVL_ACASE(&LVL)'
-         AIF  (&LVL_ACASE_FIRST(&LVL) EQ 1)).AEND_ACASE_OFFSET_END
+         AIF  (&LVL_ACASE_FIRST(&LVL) EQ 1).AEND_ACASE_OFFSET_END 1192
 &OFFSET  SETC '+1-&LVL_ACASE_FIRST(&LVL)'
 &PCH_REC SETC '&LVL_ACASE(&LVL)'(1,K'&PCH_REC-1).'&OFFSET)'
 .AEND_ACASE_OFFSET_END ANOP
@@ -771,7 +773,7 @@
 .CHK_AIF_COM ANOP
          AIF   (K'&REC EQ &IS_EXP_END).GEN_AIF_AGO
 &PCH_REC SETC  '&PCH_REC '.'&REC'(&IS_EXP_END+1,*)
-.GEN_AIF_AGO AGO (&GEN_AIF),.GEN_AIF_1,.GEN_AIF_2,.GEN_AIF_3,.GEN_AIF_4
+.GEN_AIF_AGO AGO (&GEN_AIF).GEN_AIF_1,.GEN_AIF_2,.GEN_AIF_3,.GEN_AIF_4   RPI 1192
          AGO   .ERR3
 .GEN_AIF_ERR ANOP
 &GEN_AIF_ERR SETB 1

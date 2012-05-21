@@ -7,6 +7,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 04/29/12 RPI 1211 copy from GEN_MPY and modify for MPY see TESTMPY1
+.* 05/18/12 RPI 1217 replace SCALE_F with SCALE_G to avoid F and H ovf
 .*********************************************************************
 .* Notes:
 .*  1.  ROUNDED not supported yet.
@@ -180,17 +181,10 @@
          ST    ZC_R0,&N_TARGET
         AEND 
        AELSE
-        AIF (K'&NUM LE 2)
-         L     ZC_R0,&N_TARGET
-         MHI   ZC_R0,&NUM
-               ACALL SCALE_F
+         LGF   ZC_R0,&N_TARGET
+         MSGFI ZC_R0,&NUM
+               ACALL SCALE_G
          ST    ZC_R0,&N_TARGET
-        AELSE
-         L     ZC_R0,&N_TARGET
-         MSFI  ZC_R0,&NUM
-               ACALL SCALE_F
-         ST    ZC_R0,&N_TARGET
-        AEND
        AEND
 .*
 .* MPY_NUM_LIT G
@@ -221,7 +215,7 @@
          MSG    ZC_R0,0(ZC_R14)
                ACALL SCALE_G
          STG   ZC_R0,&N_TARGET
-         AEND
+        AEND
        AEND
 .*
 .* MPY_NUM_LIT H
@@ -242,9 +236,9 @@
          STH   ZC_R0,&N_TARGET
         AEND 
        AELSE
-         LH    ZC_R0,&N_TARGET
-         MSFI  ZC_R0,&NUM
-               ACALL SCALE_F
+         LGH   ZC_R0,&N_TARGET
+         MSGFI ZC_R0,&NUM
+               ACALL SCALE_G
          STH   ZC_R0,&N_TARGET
        AEND
 .*
@@ -801,66 +795,66 @@
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
          LE    ZC_F0,&N_SOURCE
-         CFER  ZC_R0,0,ZC_F0
+         CGER  ZC_R0,0,ZC_F0
                AWHEN C'2'
          LD    ZC_F0,&N_SOURCE
              
-         CFDR  ZC_R0,0,ZC_F0
+         CGDR  ZC_R0,0,ZC_F0
                AWHEN C'3'
          LD    ZC_F0,&N_SOURCE
          LD    ZC_F2,8+&N_SOURCE
          LDR   ZC_F4,ZC_F0
          LDR   ZC_F6,ZC_F2
          ZC_CONV Q,LH
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'4' 
          LE    ZC_F0,&N_SOURCE
          LDEBR ZC_F0,ZC_F0
          LDR   ZC_F4,ZC_F0
          ZC_CONV Q,DB
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'5'
          LD    ZC_F0,&N_SOURCE
          LDR   ZC_F4,ZC_F0
          ZC_CONV Q,DB
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'6'  
          LD    ZC_F0,&N_SOURCE
          LD    ZC_F2,8+&N_SOURCE
          LDR   ZC_F4,ZC_F0
          LDR   ZC_F6,ZC_F2
          ZC_CONV Q,LB
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'7' 
          LE    ZC_F0,&N_SOURCE
          LDETR ZC_F0,ZC_F0,0
          LDR   ZC_F4,ZC_F0
          ZC_CONV Q,DD
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'8' 
          LD    ZC_F0,&N_SOURCE
          LDR   ZC_F4,ZC_F0
          ZC_CONV Q,DD
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'9' 
          LD    ZC_F0,&N_SOURCE
          LD    ZC_F2,8+&N_SOURCE
          LDR   ZC_F4,ZC_F0
          LDR   ZC_F6,ZC_F2
          ZC_CONV Q,LD
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'F',C'A',C'I'
-         L     ZC_R0,&N_SOURCE
+         LGF   ZC_R0,&N_SOURCE
                AWHEN C'G'
          LG    ZC_R0,&N_SOURCE  
                AWHEN C'H'
-         LH    ZC_R0,&N_SOURCE
+         LGH   ZC_R0,&N_SOURCE
                AWHEN C'P'
          ZAP   ZCVT_PWORK1,&N_SOURCE
          LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
          CXSTR ZC_F4,ZC_R0
                ZC_CONV Q,LD
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'Q'
          LG    ZC_R0,8+&N_SOURCE 
                AWHEN C'Z'
@@ -868,14 +862,14 @@
          LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
          CXSTR ZC_F4,ZC_R0
                    ZC_CONV Q,LD
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AELSE
                     MNOTE 8,'GEN_MPY INVALID SOURCE DATA TYPE &N_SOURCEX
                '           
                     MEXIT
                AEND
-         MS    ZC_R0,&N_TARGET
-               ACALL SCALE_F
+         MSGF  ZC_R0,&N_TARGET
+               ACALL SCALE_G
          ST    ZC_R0,&N_TARGET             
 .*
 .*  MPY_FLD ?? TO G    
@@ -966,53 +960,53 @@
                ACASE (C2A('&T_SOURCE'))
                AWHEN C'1'
          LE    ZC_F0,&N_SOURCE    
-         CFER  ZC_R0,0,ZC_F0
+         CGER  ZC_R0,0,ZC_F0
                AWHEN C'2'
          LD    ZC_F0,&N_SOURCE    
-         CFDR  ZC_R0,0,ZC_F0
+         CGDR  ZC_R0,0,ZC_F0
                AWHEN C'3'
          LD    ZC_F0,&N_SOURCE
          LD    ZC_R2,8+&N_SOURCE  
          LDR   ZC_F4,ZC_F0
          LDR   ZC_F6,ZC_F2
                ZC_CONV Q,LH
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'4' 
          LE    ZC_F0,&N_SOURCE
          LDEBR ZC_F0,ZC_F0        
          LDR   ZC_F4,ZC_F0
                ZC_CONV Q,DB
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'5'
          LD    ZC_F0,&N_SOURCE    
          LDR   ZC_F4,ZC_F0
                ZC_CONV Q,DB
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'6'  
          LD    ZC_F0,&N_SOURCE
          LD    ZC_F2,8+&N_SOURCE  
          LDR   ZC_F4,ZC_F0
          LDR   ZC_F6,ZC_F2
                ZC_CONV Q,LB
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'7' 
          LE    ZC_F0,&N_SOURCE
          LDETR ZC_F0,ZC_F0,0      
          LDR   ZC_F4,ZC_F0
                ZC_CONV Q,DD
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'8' 
          LD    ZC_F0,&N_SOURCE    
          LDR   ZC_F4,ZC_F0
                ZC_CONV Q,DD
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'9' 
          LD    ZC_F0,&N_SOURCE
          LD    ZC_F2,8+&N_SOURCE  
          LDR   ZC_F4,ZC_F0
          LDR   ZC_F6,ZC_F2
                ZC_CONV Q,LD
-         LR    ZC_R0,ZC_R1
+         LGR   ZC_R0,ZC_R1
                AWHEN C'F',C'A',C'I'
          LGF   ZC_R0,&N_SOURCE    
                AWHEN C'G'
@@ -1376,17 +1370,6 @@
          DXTR  ZC_F0,ZC_F0,ZC_F1
                AEND
          AEND          
-         AENTRY SCALE_F
-               AIF (&SCALE GT 0)
-         LARL  ZC_R1,=F'1E&SCALE'
-         MS    ZC_R0,0(ZC_R1)
-               AELSEIF (&SCALE LT 0)
-         LGFR  ZC_R1,ZC_R0
-         LARL  ZC_R2,=FL8'1E&SCALE'
-         DSG   ZC_R0,0(ZC_R2)
-         LR    ZC_R0,ZC_R1
-               AEND
-         AEND
          AENTRY SCALE_G
                AIF (&SCALE GT 0)
          LARL  ZC_R1,=FL8'1E&SCALE'

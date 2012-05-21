@@ -16,6 +16,7 @@ rem mz390 macro processor
 rem
 call rt\RT1 rt\test\TESTSYS1 sysparm(12345)  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSYS2 bs2000  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTSYS3  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSYN1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSYN2 sysmac(mac+rt\test)  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTPRM1 sysmac(mac+rt\test)  %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -131,6 +132,8 @@ call ASM rt\test\TESTLNK3  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 SET  MYLIB=rt\test
 call LINK rt\test\TESTLNK2  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call EXEC rt\test\TESTLNK3  notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTLNK4 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTLNK5 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTLOD1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT5 rt\test\TESTLOD2  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTXCL4  %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -193,33 +196,40 @@ rem test zstrmac basic structures using bootstrap version 1
 set sysut1=rt\test\testspe1.zsm
 set sysut2=rt\test\testspe1.mlc
 call MZ390 rt\test\zstrmac1  NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+if errorlevel 1 pause mz390 zstrmac1 testspe1.zsm
 call rt\RT1 rt\test\TESTSPE1  STATS %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem translate structured version 2 using bootstrap version 1
 set sysut1=rt\test\TESTSPE2.zsm
 set sysut2=rt\test\TESTSPE2.mlc
 call MZ390 rt\test\zstrmac1  NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+if errorlevel 1 pause mz390 zstrmac1 testspe2.zsm
 call rt\RT1 rt\test\TESTSPE2  STATS %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem translate structured version 2 using bootstrap version 1
 set sysut1=rt\test\zstrmac2.zsm
 set sysut2=rt\test\zstrmac2.mlc
 call MZ390 rt\test\zstrmac1  NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+if errorlevel 1 pause mz390 zstrmac1 zstrmac2.zsm bootstrap
 REM verify TESTZSM1.ZSM translation using zstrmac2 matches zstrmac1
 set sysut1=rt\test\testspe1.zsm
 set sysut2=rt\test\testspe1.txt
 call MZ390 rt\test\zstrmac2  NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+if errorlevel 1 pause mz390 zstrmac2 testspe1.zsm
 rem regen ZSTRMAC2 using mz390 support to ver zstrmac2.txt = mlc
 set sysut1=rt\test\zstrmac2.zsm
 set sysut2=rt\test\zstrmac2.txt
 call MZ390 rt\test\zstrmac2.zsm NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+if errorlevel 1 pause mz390 zstrmac2 zstrmac2.zsm regen
 rem test extensions to ACASE added in zstrmac2 C,X,(v1,v2)
 set sysut1=rt\test\testspe3.zsm
 set sysut2=rt\test\testspe3.mlc
 call MZ390 rt\test\zstrmac2.zsm NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+if errorlevel 1 pause mz390 zstrmac2 testspe3.zsm
 call rt\RT1 rt\test\TESTSPE3  %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem test zstrmac error messages
 set sysut1=rt\test\testspe4.zsm
 set sysut2=rt\test\testspe4.mlc
 call MZ390 rt\test\zstrmac2.zsm NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+if errorlevel 9 pause mz390 zstrmac2 testspe4.zsm
 REM test ZSTRMAC SPM's
 call rt\RT1 rt\test\TESTSPM1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 erase rt\test\dif\*.* /q 

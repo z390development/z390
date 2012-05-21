@@ -7095,7 +7095,162 @@ set GIT_COMMITTER_DATE=2021-03-26 17:30:00 +0100
 git commit -m "Reconstructed version v1.5.06rc4 of z390 committed on behalf of Don Higgins"
 git tag -a v1.5.06rc4 -m "Reconstructed version v1.5.06rc4 of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.06
+==> Add webdoc_cobol from v1.5.05
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+# Backup and junk files
+rt/test/TESTACT1
+rt/test/TESTAIN1
+rt/test/TESTAIN2
+rt/test/TESTAIN3
+rt/test/TESTASC1
+rt/test/TESTASC2
+rt/test/TESTASC3
+rt/test/TESTASC5
+rt/test/TESTASM1
+rt/test/TESTASM2
+rt/test/TESTCAL1
+rt/test/TESTCAL2
+rt/test/TESTCDE1
+rt/test/TESTCPY1
+rt/test/TESTCPY2
+rt/test/TESTDC1
+rt/test/TESTDC2
+rt/test/TESTDFP1
+rt/test/TESTDFP2
+rt/test/TESTDST1
+rt/test/TESTENT1
+rt/test/TESTENV1
+rt/test/TESTEQU1
+rt/test/TESTERR1
+rt/test/TESTERR2
+rt/test/TESTERR3
+rt/test/TESTERR4
+rt/test/TESTERR5
+rt/test/TESTERR6
+rt/test/TESTERR7
+rt/test/TESTERR8
+rt/test/TESTERR9
+rt/test/TESTEXT1
+rt/test/TESTEXT2
+rt/test/TESTFP1
+rt/test/TESTFP2
+rt/test/TESTINS1
+rt/test/TESTINS2
+rt/test/TESTINS3
+rt/test/TESTINS4
+rt/test/TESTLAB1
+rt/test/TESTLCT1
+rt/test/TESTLNK1
+rt/test/TESTLOC1
+rt/test/TESTMAC1
+rt/test/TESTMAC2
+rt/test/TESTMAC3
+rt/test/TESTMAC4
+rt/test/TESTMAC5
+rt/test/TESTMAC6
+rt/test/TESTMAC7
+rt/test/TESTMAC8
+rt/test/TESTMAC9
+rt/test/TESTMCR1
+rt/test/TESTOBJ1
+rt/test/TESTOBJ2
+rt/test/TESTOPR1
+rt/test/TESTOPT1
+rt/test/TESTORG1
+rt/test/TESTPC1
+rt/test/TESTPCH1
+rt/test/TESTPCH2
+rt/test/TESTPCH3
+rt/test/TESTPRM1
+rt/test/TESTPRM2
+rt/test/TESTPRM3
+rt/test/TESTPRM4
+rt/test/TESTPRO1
+rt/test/TESTPRT1
+rt/test/TESTRLD1
+rt/test/TESTRLD2
+rt/test/TESTSDT1
+rt/test/TESTSET1
+rt/test/TESTSET2
+rt/test/TESTSET3
+rt/test/TESTSQL1
+rt/test/TESTSUB1
+rt/test/TESTSUB4
+rt/test/TESTSYM1
+rt/test/TESTSYN1
+rt/test/TESTSYN2
+rt/test/TESTSYS1
+rt/test/TESTSYS2
+rt/test/TESTTXT1
+rt/test/TESTUSE1
+rt/test/TESTUSE2
+rt/test/TESTWXT1
+
+==> Stage files for V1.5.06
+git add BLDJAR6.BAT
+git rm  README.TXT
+git add RT/RTGENCMP.BAT
+git add RT/RTGENCMP.DAT
+git add RT/RTTEST1.BAT
+git add RT/TEST/TESTASC3.MLC
+git add RT/TEST/TESTINS2.MLC
+git add RT/TEST/TESTSPE1.txt
+git add RT/TEST/ZSTRMAC1.MLC
+git add RT/TEST/ZSTRMAC2.ZSM
+git add RT/TEST/subentry.mcr
+git add RT/TEST/zstrmac2.txt
+git add RT/Z390.IVP
+git add ZCRTTEST.BAT
+git rm  bmk/BMKINS1.MLC
+git rm  bmk/BMKSAVE.BAT
+git rm  bmk/BMKTIME.BAT
+git rm  bmk/BMKTIME.MLC
+git rm  bmk/INSTTIME.BAT
+git rm  bmk/INSTTIME.INS
+git rm  bmk/INSTTIME.MLC
+git rm  bmk/INSTTIME.TXT
+git rm  bmk/INSTTIME.VER
+git rm  bmk/SIEVE.MLC
+git rm  cics/seq/SEQO0001.TXT
+git add mvs/Z390.IVP
+git add src/tz390.java
+git add zcobol/demo/U2.CBL
+git add zcobol/demo/U6B.CBL
+git add zcobol/demo/UPROGRAM.CBL
+git add zcobol/test/TESTCMP4.CBL
+git add zcobol/z390/GEN_ADD.MAC
+git add zcobol/z390/GEN_COMP.MAC
+git add zcobol/z390/GEN_DIV.MAC
+git add zcobol/z390/GEN_MPY.MAC
+git add zcobol/z390/GEN_SUB.MAC
+git add zcobol/z390/ZC_UNPK31.MAC
+git add rt/rtclean2.bat
+git add rt/test/TESTLNK4.MLC
+git add rt/test/TESTLNK5.LKD
+git add rt/test/TESTLNK5.MLC
+git add rt/test/TESTSYS3.MLC
+git add zcobol/demo/callcomp/
+git add zcobol/test/TESTADD2.CBL
+git add zcobol/test/TESTDIV2.CBL
+git add zcobol/test/TESTMPY2.CBL
+git add zcobol/test/TESTSUB2.CBL
+
+==> Create commit for V1.5.06
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2012-05-21 15:17:00 -0500
+set GIT_COMMITTER_DATE=2021-03-26 17:45:00 +0100
+git commit -m "Reconstructed version v1.5.06 of z390 committed on behalf of Don Higgins"
+git tag -a v1.5.06 -m "Reconstructed version v1.5.06 of z390 committed on behalf of Don Higgins"
+git gc --aggressive
 
 
 

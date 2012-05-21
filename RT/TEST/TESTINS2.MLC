@@ -76,6 +76,7 @@
 * 06/15/09 RPI 1055 ADD CPYA, SAR, and EAR support for AR registers
 * 02/25/10 RPI 1111 CORRECT PR TO ONLY RESTORE 2-14 (WAS 1-14)
 * 12/18/10 RPI 1125 FIX ALSI AND ALGSI TO SET BORROW ON NEG ADD
+* 04/02/12 RPI 1200 TEST LRVGR AND LRVR WITH SAME REG
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -2293,6 +2294,10 @@ SGR2     ESTAE 0
          LRVGR R0,R1
          CLG   R0,=X'EFCDAB8967452301'
          RT1   CCE
+         LG    1,=X'1122334455667788'
+         LRVGR 1,1  RPI 1200
+         CG    1,=X'8877665544332211'
+         RT1   CCE
 * B910 LPGFR
          L     R1,=F'-1'
          LPGFR R0,R1
@@ -2455,6 +2460,10 @@ SGR2     ESTAE 0
          L     R1,=X'12345678'
          LRVR  R0,R1
          CL    R0,=X'78563412'
+         RT1   CCE
+         L     1,=X'11223344'
+         LRVR  1,1  RPI 1200
+         C     1,=X'44332211'
          RT1   CCE
 * B920 CGR
          LG    R0,=FL8'1'

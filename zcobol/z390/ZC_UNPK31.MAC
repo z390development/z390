@@ -10,6 +10,7 @@
 .* 07/03/09 RPI 1065 OI unsigned for length < 15                       
 .* 07/19/09 RPI 1065 CORRECT SET TARGET LEN test from LE to LT         
 .* 08/08/09 RPI 1065 correct SET TARGET LEN to replace existing length 
+.* 05/17/12 RPI 1217 correct for pad z or trunc p on intermediate sizes
 .*********************************************************************
 .* UNPACK 1-31 DIGIT ZD FIELD FROM PD FIELD 
 .* AND SET LOW ORDER ZONE SIGN TO F IF UNSIGNED
@@ -23,58 +24,63 @@
        :&ZOFF   SETA 0
        :&POFF   SETA 0
        :&T_TEMP SETC '&TARGET'
-       AIF     (&PLEN*2-1 LT &ZLEN) PAD LEFT WITH C'0'
+       AIF     (&ZLEN GT &PLEN*2-1) PAD Z WITH LEADING C'0'
+               :&LPAD SETA &ZLEN-(&PLEN*2-1)
+               :&ZLEN SETA &ZLEN-&LPAD
+               :&ZOFF SETA &LPAD
+               AIF (&LPAD GT 0) 
          MVI   &TARGET,C'0'
-               :&TLEN SETA &ZLEN-&PLEN*2-1
-               :&ZOFF SETA &ZOFF+&TLEN+1
-               :&ZLEN SETA &ZLEN-&ZOFF
-               AIF (&ZLEN/2*2 EQ &ZLEN)
-                   :&TLEN SETA &TLEN+1
-                   :&ZLEN SETA &ZLEN-1
-                   :&ZOFF SETA &ZOFF+1
+                   AIF (&LPAD GT 1)
+                       :&TLEN SETA &LPAD-1
+                       ACALL SET_TARGET_LEN
+         MVC    1+&T_TEMP,&TARGET   
+                   AEND
                AEND
-               AIF (&TLEN GE 0) 
-                   ACALL SET_TARGET_LEN
-         MVC    1+&T_TEMP,&TARGET     
-               AEND
+       AEND
+       AIF     (&PLEN GT &ZLEN/2+1)
+               :&POFF SETA &PLEN-(&ZLEN/2+1)
+               :&PLEN SETA &PLEN-&POFF
        AEND      
        AIF     (&ZLEN LE 15)
                :&TLEN SETA &ZLEN
                ACALL SET_TARGET_LEN       SET EXPLICIT TARGET LEN
-         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPK UP TO 15 DIGITS 
+         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPK #1 NORMAL 
                AIF (&SZ EQ 0)  RPI 1065
                    ACALL REMOVE_TARGET_LEN
          OI    &LZ-1+&T_TEMP,X'F0'  RPI 1065
                AEND            RPI 1065 
-               MEXIT
-       AEND
-       :&TLEN  SETA 15
-       ACALL   SET_TARGET_LEN       SET EXPLICIT TARGET LEN
-         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(8)     UNPACK FIRST 14            
-       :&ZOFF  SETA &ZOFF+14
-       :&ZLEN  SETA &ZLEN-14
+       AELSE
+               :&TLEN  SETA 15
+               AIF (&ZLEN/2*2 EQ &ZLEN)
+                   :&TLEN SETA 14           UNPK ONE LESS IF ZLEN EVEN
+               AEND
+               ACALL   SET_TARGET_LEN       SET EXPLICIT TARGET LEN
+         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(8)     UNPK #1 FULL            
+       :&ZOFF  SETA &ZOFF+&TLEN-1
+       :&ZLEN  SETA &ZLEN-(&TLEN-1)
        :&POFF  SETA &POFF+7
        :&PLEN  SETA &PLEN-7
-       AIF     (&ZLEN GT 15)
+             AIF     (&ZLEN GT 15)
                :&TLEN SETA 15
                ACALL SET_TARGET_LEN       SET EXPLICIT TARGET LEN
-         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(8)     UNPACK NEXT 14            
-               :&ZOFF SETA &ZOFF+14
-               :&ZLEN SETA &ZLEN-14
+         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(8)     UNPK #2 FULL            
+               :&ZOFF SETA &ZOFF+&TLEN-1
+               :&ZLEN SETA &ZLEN-(&TLEN-1)
                :&POFF SETA &POFF+7
                :&PLEN SETA &PLEN-7
                :&TLEN SETA &ZLEN
                ACALL SET_TARGET_LEN       SET EXPLICIT TARGET LEN
-         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPACK REMAINING            
-       AELSE
+         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPK #3 FINAL            
+             AELSE
                :&TLEN SETA &ZLEN
                ACALL SET_TARGET_LEN       SET EXPLICIT TARGET LEN
-         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPACK REMAINING           
+         UNPK  &ZOFF+&T_TEMP,&POFF+&SOURCE.(&PLEN) UNPK #2 FINAL           
                AIF (&SZ EQ 0)
                    ACALL REMOVE_TARGET_LEN
          OI    &LZ-1+&T_TEMP,X'F0'  RPI 1065
                AEND
-       AEND         
+             AEND
+       AEND
        MEXIT
 .*
 .* SET TARGET LEN - INSERT TLEN FOR SIX OR LABEL IN t_TEMP

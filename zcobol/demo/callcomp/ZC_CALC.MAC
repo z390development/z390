@@ -1,0 +1,998 @@
+        MACRO
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/04/09                                                 *
+.*********************************************************************
+.* 04/24/09 RPI 1003 initial coding for ZC_CALC using IF as model
+.* 07/30/09 RPI 1065 FUNCTION not supported yet (see IF101A)      
+.* 04/06/11 RPI 1139 FIX SETA STRING FOR HLASM COMP, DUP &TMP_OFF
+.* 05/07/12 RPI 1211 add support for implied decimals via TMP_PIC_DEC
+.* 05/08/12 RPI 1211 add &DEBUG SETB 1 option for tracing IOP ops
+.* 05/09/12 RPI 1211 add single op literal suuport see TESTCMP4.CBL
+.* 05/12/12 RPI 1215 set scale to zero for move to floating point
+.*********************************************************************
+.* ZC_CALC used by COMPUTE to gen code to calculate expression 
+.* defined by positional parm list.  The result is stored in data 
+.* field defined by T_NAME and positive T_IX or by temporary storage
+.* field defined in ZCVT using negative T_IX to fetch characteristics
+.* from global tables &TMP_NAME/TYPE/LEN/SIGN
+.*********************************************************************
+         ZC_CALC &T_NAME,&T_IX,&EXP
+         COPY  ZC_WS
+&DEBUG   SETB  1 TURN ON ZC_CALC DEBUG MNOTE'S SEE ERR LISTING RPI 1211
+         AIF   (&DEBUG)
+               :&PARMS SETC '&T_NAME,='
+               :&I     SETA 3
+               AWHILE (&I LE N'&SYSLIST)
+                  :&PARMS SETC '&PARMS,&SYSLIST(&I)'
+                  :&I SETA &I+1
+               AEND
+               :&PARMS SETC (DOUBLE '&PARMS')
+               MNOTE 'ZC_CALC PARMS=&PARMS'
+         AEND
+&ROUNDED SETB  0
+&ONSIZE  SETB  0
+&PREV_OP# SETA 0 PREV OP# ON STK OR 0 FOR NONE
+&TMP_OFF  SETA 0 OFFSET TO NEXT TEMP STORE IN ZCVT_WORKAREA
+.*
+.* PUSH/POP VAR/LIT lNDEX AND OPERATOR STACKS FOR PARSING
+.*
+         LCLA  &STK_VAR_TOT      CUR TOTAL VAR/IOP IX'S ON STACK
+         LCLA  &STK_VAR_IX(100)  VAR IX,-TMP IX, OR 0 FOR LIT VAL
+         LCLA  &STK_OP_TOT       CUR TOTAL OP ON STACK
+         LCLA  &STK_OP(10)       OP 1-6  '+-*/()'
+         LCLA  &VAR_IOP_IX       POS PARM IX,NEG TMP IX, OR 0 FOR LIT
+.*
+.* GENERATED INTERMEDIATE OPCODE TABLE
+.*
+         LCLA  &IOP_TOT       TOTAL INTERMEDIATE LOG. OPS
+         LCLA  &IOP_OP(100)   LOG. OPER. (+=1,-=2,*=3,/=4)
+         LCLA  &IOP_F1_X(100) +PARM1 IX OR -TMP IX
+         LCLA  &IOP_F2_X(100) +PARM2 IX OR -TMP IX
+         LCLA  &IOP_F3_X(100) +TMP   IX FOR RESULT
+.*
+.*
+.*
+         LCLA  &MAX_TMP          MAX TMP ALLOCATED
+         LCLA  &CUR_TMP_FREE     CURRENT FREE TMP
+         LCLA  &TMP_FREE_IX(100) CURRENT FREE TMP INDEXES 1-N
+.*
+.*  BUILD IOP'S AND THEN GEN CODE
+.*
+         ACALL IOP_BUILD
+         AIF (&DEBUG)
+.* DEBUG IOPS  ACALL LIST_IOPS  
+         AEND
+         ACALL IOP_GEN_CODE
+         MEXIT
+.*
+.* BUILD IOP TABLE USING BNF PARM AND OPERATOR STACKS
+.*   1.  PUSH +PARM PTRS AND -IOP PTRS ON STK_VAR
+.*   2.  PUSH OPERATORS ON STK_OP (+-*/() = 123456)
+.*   3.  POP  OP AND 2 VAR IX'S TO GEN IOP 
+.*       WHEN OP PRECEDENCE DICTATES  
+.*
+         AENTRY IOP_BUILD
+         :&NP   SETA  N'&SYSLIST  TOTAL EXP PARMS
+         AIF (&NP LT 3)
+             MNOTE 8,'ZC_CALC MISSING EXPRESSION'
+             MEXIT
+         AEND
+         :&LVL  SETA  0           CUR (..) LEVEL WITHIN IF PARMS
+         :&IX_PARM_TOT SETA 0     CUR CONDITION PARM COUNT (A EQ B ETC)
+         :&STK_OP_TOT SETA 0      RESET LOGICAL IOP OPERATOR STACK
+         :&PARM_IX SETA  2        GET PARM INDEX (SKIP TARGET/INDEX)
+         :&PREV_PARM SETC ''      PREV PARM
+         :&PARM SETC ''           CUR  PARM
+         :&SKIP_SIX SETB 0      SKIP SUBSCRIPTS IN CD'S
+         ACALL  GET_PARM          GET NEXT PARM OR ''
+         AWHILE ('&PARM' NE '')
+               AIF ('&PARM' EQ '''(''')
+                   :&LVL SETA &LVL+1
+                   :&OP# SETA 5  OP_OPEN
+                   ACALL PUSH_OP      PUSH OP 5=(
+               AELSEIF ('&PARM' EQ ''')''')  OP_CLOSE
+                   :&LVL SETA &LVL-1
+                   AIF (&STK_OP_TOT GT 0) 
+                       AWHILE (&STK_OP(&STK_OP_TOT) NE 5) FLUSH (..)
+                           ACALL IOP_ADD_OP
+                       AEND
+                       ACALL POP_OP  REMOVE ( FOR MATCHING )
+                   AELSE
+                       MNOTE 8,'ZC_CALC UNBALANCED (..)'
+                       MEXIT
+                   AEND     
+               AELSEIF ('&PARM' EQ '+' OR '&PARM' EQ '-')
+                   AWHILE (&PREV_OP# EQ 1                              X
+                           OR &PREV_OP# EQ 2                           X
+                           OR &PREV_OP# EQ 3                           X
+                           OR &PREV_OP# EQ 4)                             
+                       ACALL IOP_ADD_OP
+                   AEND
+                   AIF ('&PARM' EQ '+')
+                       :&OP# SETA 1
+                   AELSE
+                       :&OP# SETA 2
+                   AEND
+                   ACALL PUSH_OP      PUSH OP 5=(
+               AELSEIF ('&PARM' EQ '*' OR '&PARM' EQ '/')
+                   AWHILE (&PREV_OP# EQ 3 OR &PREV_OP# EQ 4)
+                       ACALL IOP_ADD_OP
+                   AEND    
+                   AIF ('&PARM' EQ '*')
+                       :&OP# SETA 3 OP_MPY
+                   AELSE
+                       :&OP# SETA 4 OP_DIV
+                   AEND
+                   ACALL PUSH_OP      PUSH OP 5=(
+               AELSEIF ('&PARM' EQ 'FUNCTION')
+                   MNOTE 8,'ZC_CALC FUNCTION NOT SUPPORTED YET'
+                   MEXIT
+               AELSE
+                   :&VAR_IOP_IX SETA &PARM_IX
+                   ACALL PUSH_VAR   PUSH 1ST PARM PTR FOR VAR  
+                   :&SKIP_SIX SETB 1
+               AEND
+               ACALL GET_PARM
+               AIF  (&SKIP_SIX) SKIP SUBSCRIPTS FOR VAR'S
+                    :&SKIP_SIX SETB 0
+                    AWHILE ('&PARM' EQ '''(''') SKIP SIX AND RMOD 
+                        ACALL GET_PARM
+                        AWHILE ('&PARM' NE '' AND '&PARM' NE ''')''')
+                            ACALL GET_PARM
+                        AEND
+                        AIF ('&PARM' NE '')
+                            ACALL GET_PARM
+                        AEND
+                    AEND
+               AEND 
+         AEND
+.*
+.* FLUSH REMAINING OPS IF ANY AT END OR PARMS
+.*
+         AWHILE (&STK_OP_TOT GT 0)
+              ACALL IOP_ADD_OP
+         AEND
+         AIF (&IOP_TOT EQ 0)
+             AIF (&STK_VAR_TOT EQ 1)
+                 ACALL MOVE_VAR
+             AELSE
+              MNOTE 8,'ZC_CALC EXPRESSION ERROR - NO OPERATIONS FOUND'
+             AEND
+         AEND
+         AEND
+.*
+.* MOVE SINGLE VAR (COMPUTE X = Y)
+.*
+         AENTRY MOVE_VAR
+         :&VAR_PARM_IX SETA 2        GET PARM INDEX (SKIP TARGET/INDEX)
+         :&PREV_PARM SETC ''      PREV PARM          
+         ACALL POP_VAR_IOP_IX
+         AIF   (&VAR_IOP_IX GE 0)
+               :&FIELD_SS1 SETB 1
+               :&FIELD_REG SETC 'ZC_R2'
+               ACALL  GET_VAR_PARM   GEN SIX CODE FOR VAR IF ANY
+               :&F1_N SETC '&FIELD_NAME'
+               :&F1_X SETA &FIELD_IX
+               :&F1_XC SETC '&F1_X'
+               AIF (&F1_X GT 0)
+                  :&F1_T SETC '&SYM_PIC_TYPE(&F1_X)'
+                  :&F1_L SETA &SYM_LEN(&F1_X)
+                  :&F1_P SETA &SYM_PIC_DEC(&F1_X) RPI 1211
+               AELSE
+                  :&F1_N SETC '&FIELD_NAME'
+                  :&F1_X  SETA 0
+                  :&F1_XC SETC '0'
+                  ACALL SET_LIT_TYPE_LEN
+                 :&F1_T SETC '&LIT_TYPE'
+                 :&F1_L SETA &LIT_LEN
+                 :&F1_P SETA &LIT_DEC RPI 1211
+               AEND
+               AIF (&DEBUG)
+                  :&OP SETA 5          FINAL MOVE TO TARGET
+                  :&X1 SETA &T_IX
+                  :&X2 SETA 0
+                  ACALL LIST_OP_F1_F2
+               AEND
+               GEN_MOVE &T_NAME,&T_IX,&F1_N,&F1_XC
+         AELSE
+               ,MNOTE 'ZC_CALC INVALID MOVE EXPRESSION'
+         AEND
+         AEND
+.*
+.* GEN CODE FROM IOPS
+.*
+         AENTRY IOP_GEN_CODE
+.*
+.* GEN SINGLE IOP FROM STACK IF NO IOPS
+.*
+.*
+.* GEN CODE FROM IOP TABLE WITH MULTIPLE ENTRIES
+.*
+         :&I   SETA 1
+         AWHILE (&I LE &IOP_TOT)
+               ACALL IOP_GEN_OP  
+               :&I SETA &I+1
+         AEND
+         AEND
+.*
+.* IOP ADD OP - ADD OP ON STK TO IOP TABLE
+.*
+         AENTRY IOP_ADD_OP
+         ACALL POP_OP
+         :&IOP_TOT SETA &IOP_TOT+1
+         :&IOP_OP(&IOP_TOT) SETA &OP#  (1-4 = ADD,SUB,MPY,DIV)
+         ACALL POP_VAR_IOP_IX
+         :&IOP_F2_X(&IOP_TOT) SETA &VAR_IOP_IX
+         ACALL POP_VAR_IOP_IX               
+         :&IOP_F1_X(&IOP_TOT) SETA &VAR_IOP_IX            
+         ACALL GET_TMP
+         :&IOP_F3_X(&IOP_TOT) SETA &TMP_IX  
+         :&VAR_IOP_IX SETA -&TMP_IX
+         ACALL PUSH_VAR
+         AIF  (&IOP_F1_X(&IOP_TOT) LT 0)
+              :&TMP_IX SETA -&IOP_F1_X(&IOP_TOT)
+              ACALL FREE_TMP
+         AEND
+         AIF  (&IOP_F2_X(&IOP_TOT) LT 0)
+              :&TMP_IX SETA -&IOP_F2_X(&IOP_TOT)
+              ACALL FREE_TMP
+         AEND
+         AEND
+.*
+.* IOP GEN OP
+.*
+         AENTRY IOP_GEN_OP
+         ACASE (&IOP_OP(&I))
+         AWHEN 1  OP_ADD
+             ACALL IOP_GEN_ADD
+         AWHEN 2  OP_SUB
+             ACALL IOP_GEN_SUB
+         AWHEN 3  OP_MPY
+             ACALL IOP_GEN_MPY
+         AWHEN 4  OP_DIV
+             ACALL IOP_GEN_DIV
+         AELSE
+             MNOTE 8,'ZC_CALC IOP INVALID OPCODE &IOP_OP(&I)'
+             MEXIT
+         AEND
+         AEND
+.*
+.* POP VAR_IOP AND SET VAR_IOP_IX FROM TOP OF STK_VAR 
+.*
+         AENTRY POP_VAR_IOP_IX
+         AIF  (&STK_VAR_TOT GT 0)
+              :&VAR_IOP_IX SETA &STK_VAR(&STK_VAR_TOT) +VAR,-TMP 
+              :&STK_VAR_TOT SETA &STK_VAR_TOT-1
+         AELSE
+              MNOTE 8,'ZC_CALC MISSING VAR STACK PTR'
+              CALL LIST_IOPS
+              MEXIT
+         AEND
+         AEND
+.*
+.* IOP GEN ADD
+.*
+         AENTRY IOP_GEN_ADD
+         ACALL CALC_SETUP
+         GEN_ADD &F3_N,&F3_XC,&F2_N,&F2_XC,&ROUNDED,&ONSIZE DEC(&F3_P,&X
+               F2_P)        
+         AEND
+.*
+.* IOP GEN SUB
+.*
+         AENTRY IOP_GEN_SUB
+         ACALL CALC_SETUP
+         GEN_SUB &F3_N,&F3_XC,&F2_N,&F2_XC,&ROUNDED,&ONSIZE  DEC(&F3_P,X
+               &F2_P)      
+         AEND
+.*
+.* IOP GEN MPY
+.*
+         AENTRY IOP_GEN_MPY
+         ACALL CALC_SETUP
+         GEN_MPY &F3_N,&F3_XC,&F2_N,&F2_XC,&ROUNDED,&ONSIZE DEC(&F3_P,&X
+               F2_P)        
+         AEND
+.*
+.* IOP GEN DIV
+.*
+         AENTRY IOP_GEN_DIV
+         ACALL CALC_SETUP
+         AIF (&F1_X EQ 0)
+            :&F1_L SETA 0  INDICATE LIT DIVIDEND  RPI 1211
+         AEND
+         AIF (&F2_X EQ 0)
+             :&F2_L SETA 0  INDICATE LIT DIVISOR  RPI 1211
+         AEND
+         GEN_DIV &F1_N,&F1_T,&F1_L,&F1_P,      DIVIDEND   RPI 1211     X
+               &F2_N,&F2_T,&F2_L,&F2_P,        DIVISOR    RPI 1211     X
+               &F3_N,&F3_T,&F3_L,&F3_S,&F3_P,  QUOTIENT   RPI 1211     X
+               ,,0,0,0,                    NO REMAINDER                X
+               &ROUNDED,&ONSIZE        
+         AEND
+.*
+.*
+.* CALC_SETUP
+.*
+.*     1.  GEN SIX FOR F1 ABD F2 FIELDS IF ANY
+.*     2.  SET TMP_NAME/TYPE/LEN/SIGN TARGET FIELD FROM F1/F2 TYPES
+.*     3.  GEN MOVE F1 TO TARGET FIELD IF REQUIRED FOR ADD,SUB,MPY
+.*
+         AENTRY CALC_SETUP
+         AIF   (&IOP_F1_X(&I) GE 0)
+               :&VAR_PARM_IX SETA &IOP_F1_X(&I)-1
+               :&VAR_PREV_PARM SETC ''
+               :&FIELD_SS1 SETB 1
+               :&FIELD_REG SETC 'ZC_R2'
+               ACALL  GET_VAR_PARM   GEN SIX CODE FOR VAR IF ANY
+               :&F1_N SETC '&FIELD_NAME'
+               :&F1_X SETA &FIELD_IX
+               :&F1_XC SETC '&F1_X'
+               AIF (&F1_X GT 0)
+                   :&F1_T SETC '&SYM_PIC_TYPE(&F1_X)'
+                   :&F1_L SETA &SYM_LEN(&F1_X)
+                   :&F1_P SETA &SYM_PIC_DEC(&F1_X) RPI 1211
+               AELSE
+                   :&F1_N SETC '&FIELD_NAME'
+                   :&F1_X  SETA 0
+                   :&F1_XC SETC '0'
+                   ACALL SET_LIT_TYPE_LEN
+                   :&F1_T SETC '&LIT_TYPE'
+                   :&F1_L SETA &LIT_LEN
+                   :&F1_P SETA &LIT_DEC RPI 1211
+               AEND
+         AELSE
+               :&IOP SETA -&IOP_F1_X(&I)
+               :&F1_N SETC '&TMP_NAME(&IOP)'
+               :&F1_T SETC '&TMP_TYPE(&IOP)'
+               :&F1_L SETA &TMP_LEN(&IOP)
+               :&F1_P SETA &TMP_PIC_DEC(&IOP) RPI 1211
+               :&F1_X SETA -&IOP
+               :&F1_XC SETC '-&IOP'                 
+         AEND
+         AIF   (&IOP_F2_X(&I) GE 0)
+               :&VAR_PARM_IX SETA &IOP_F2_X(&I)-1
+               :&VAR_PREV_PARM SETC ''
+               :&FIELD_SS1 SETB 1
+               :&FIELD_REG SETC 'ZC_R3'
+               ACALL  GET_VAR_PARM   GEN SIX CODE FOR VAR IF ANY
+               :&F2_N SETC '&FIELD_NAME'
+               :&F2_X SETA &FIELD_IX
+               :&F2_XC SETC '&F2_X'
+               AIF (&F2_X GT 0)
+                   :&F2_T SETC '&SYM_PIC_TYPE(&F2_X)'
+                   :&F2_L SETA &SYM_LEN(&F2_X)
+                   :&F2_P SETA &SYM_PIC_DEC(&F2_X) RPI 1211
+               AELSE
+                   :&F2_N SETC '&FIELD_NAME'
+                   :&F2_X  SETA 0
+                   :&F2_XC SETC '0'
+                   ACALL SET_LIT_TYPE_LEN
+                   :&F2_T SETC '&LIT_TYPE'
+                   :&F2_L SETA &LIT_LEN
+                   :&F2_P SETA &LIT_DEC RPI 1211
+               AEND
+         AELSE
+               :&IOP SETA -&IOP_F2_X(&I)
+               :&F2_N SETC '&TMP_NAME(&IOP)'
+               :&F2_T SETC '&TMP_TYPE(&IOP)'
+               :&F2_L SETA &TMP_LEN(&IOP)
+               :&F2_P SETA &TMP_PIC_DEC(&IOP) RPI 1211
+               :&F2_X SETA -&IOP
+               :&F2_XC SETC '-&IOP'
+         AEND
+         AIF   (&I LT &IOP_TOT)
+               :&TMP_IX SETA &IOP_F3_X(&I)
+               :&F3_X SETA -&TMP_IX
+               :&F3_XC SETC '-&TMP_IX'
+               ACALL CALC_F3_TYPE
+               :&F3_N SETC '&TMP_NAME(&TMP_IX)(&F3_L)' 
+               :&TMP_TYPE(&TMP_IX) SETC '&F3_T'
+               :&TMP_LEN(&TMP_IX)  SETA D2A('&F3_L') RPI 1139
+               :&TMP_PIC_DEC(&TMP_IX) SETA &F3_P RPI 1211
+               :&F3_S SETB 1
+               :&TMP_SIGN(&TMP_IX) SETB &F3_S
+               AIF (&IOP_OP(&I) NE 4)  MOVE 1ST OP TO TEMP IF NOT DIV
+                   :&LAB SETC '&F1_N'
+                   ACALL RESET_LAB_LEN
+                   AIF (&DEBUG)
+                       :&OP SETA 5
+                       :&X1 SETA &F3_X
+                       :&X2 SETA &F1_X
+                       ACALL LIST_OP_F1_F2
+                   AEND
+                   GEN_MOVE &F3_N,&F3_XC,&LAB,&F1_XC DEC(&F3_P,&F1_P) 
+               AELSE
+                   AIF (&DEBUG)        SHOW MOVE FOR DIVIDE
+                       :&OP SETA 5
+                       :&X1 SETA &F3_X
+                       :&X2 SETA &F1_X
+                       ACALL LIST_OP_F1_F2
+                   AEND                    
+               AEND
+         AELSE
+               :&F3_N SETC '&T_NAME'
+               :&F3_X SETA &T_IX
+               :&F3_XC SETC '&F3_X'
+               :&F3_T SETC '&SYM_PIC_TYPE(&T_IX)'
+               :&F3_L SETA &SYM_LEN(&T_IX)
+               :&F3_P SETA &SYM_PIC_DEC(&T_IX) RPI 1211
+               :&F3_S SETB &SYM_PIC_SIGN(&T_IX)
+               AIF  ('&F3_N' NE '&F1_N')
+                   :&LAB SETC '&F1_N'
+                   ACALL RESET_LAB_LEN
+                   AIF (&DEBUG)
+                       :&OP SETA 5          FINAL MOVE TO TARGET
+                       :&X1 SETA &F3_X
+                       :&X2 SETA &F1_X
+                       ACALL LIST_OP_F1_F2
+                   AEND
+                   GEN_MOVE &F3_N,&F3_XC,&LAB,&F1_XC
+               AEND
+         AEND
+         AIF (&DEBUG)
+             :&OP SETA &IOP_OP(&I)      SHOW OPERATION
+             :&X1 SETA &F3_X
+             :&X2 SETA &F2_X
+             ACALL LIST_OP_F1_F2
+         AEND
+         AEND
+.*
+.* GET TMP - SET TMP_IX TO FREE TMP
+.*
+         AENTRY GET_TMP
+         AIF   (&CUR_TMP_FREE EQ 0)
+               :&MAX_TMP SETA &MAX_TMP+1
+               :&TMP_NAME(&MAX_TMP) SETC 'ZCVT_WORKAREA+&TMP_OFF'
+               :&TMP_OFF SETA &TMP_OFF+16
+               :&TMP_IX SETA &MAX_TMP
+         AELSE
+               :&TMP_IX SETA &TMP_FREE_IX(&CUR_TMP_FREE)
+               :&CUR_TMP_FREE SETA &CUR_TMP_FREE-1
+         AEND
+         AEND
+.*
+.* FREE TMP ADD TMP_IX TO FREE TMP FEILD LIST
+.*
+         AENTRY FREE_TMP
+         :&CUR_TMP_FREE SETA &CUR_TMP_FREE+1
+         :&TMP_FREE_IX(&CUR_TMP_FREE) SETA &TMP_IX
+         AEND
+.*
+.* SET LIT TYPE LEN FROM FIELD_NAME VALUE
+.*
+         AENTRY SET_LIT_TYPE_LEN
+         :&LIT_DEC SETA 0 RPI 1211 USES DD/LD IF . FOUND
+         :&LIT_LEN SETA 0
+         :&FLT SETA ('&FIELD_NAME' FIND '.')
+         :&FEX SETA ('&FIELD_NAME' FIND 'Ee')
+         AIF (&FLT GT 0 OR &FEX GT 0)
+             AIF (K'&FIELD_NAME GT 16)
+                 :&LIT_TYPE SETC '9'
+                 :&LIT_lEN  SETA 16
+             AELSE 
+                 :&LIT_TYPE SETC '8'
+                 :&LIT_LEN  SETA 8
+             AEND
+         AELSE
+             AIF (K'&FIELD_NAME GT 18)
+                 :&LIT_TYPE SETC 'Q'
+                 :&LIT_LEN  SETA 16
+             AELSEIF (K'&FIELD_NAME GT 9) 
+                 :&LIT_TYPE SETC 'G'
+                 :&LIT_LEN  SETA 8
+             AELSEIF (K'&FIELD_NAME GT 4) 
+                 :&LIT_TYPE SETC 'F'
+                 :&LIT_LEN  SETA 4
+             AELSE 
+                 :&LIT_TYPE SETC 'H'
+                 :&LIT_LEN  SETA 2
+             AEND
+         AEND
+         AEND
+,*
+.* PUSH VAR - PUSH VAR_IOP_IX (INDEX OF FIRST CD PARM OR -IOP INDEX)
+.*         
+         AENTRY PUSH_VAR
+         :&STK_VAR_TOT SETA &STK_VAR_TOT+1
+         :&STK_VAR(&STK_VAR_TOT) SETA &VAR_IOP_IX
+         AEND
+.*
+.* PUSH OP_# - PUSH LOGICAL OPERATOR '(+-*/()' = '123456'
+.*
+         AENTRY PUSH_OP
+         :&IX_PARM_TOT SETA 0             RESET CD PARM COUNTER AT LOP
+         :&STK_OP_TOT SETA &STK_OP_TOT+1
+         :&STK_OP(&STK_OP_TOT) SETA &OP#
+         :&PREV_OP# SETA &OP#
+         AEND           
+.*
+.* POP OP - POP LOGICAL OPERATOR NOT, AND, OR, '''('''
+.*
+         AENTRY POP_OP
+         AIF   (&STK_OP_TOT GE 1)
+               :&OP# SETA   &STK_OP(&STK_OP_TOT)
+               :&STK_OP_TOT SETA &STK_OP_TOT-1
+               AIF (&STK_OP_TOT GT 0)
+                   :&PREV_OP# SETA &STK_OP(&STK_OP_TOT)
+               AELSE
+                   :&PREV_OP# SETA 0  NONE
+               AEND
+         AELSE
+               MNOTE 8,'ZC_CALC POP OP ERROR - EMPTY STACK'
+         AEND           
+         AEND
+.*
+.* IOP GEN VAR - GEN SIX CODE FOR VAR AT VAR_PARM_IX IF ANY  
+.*
+         AENTRY IOP_GEN_VAR
+         :&VAR_PARM_IX SETA &VAR_PARM_IX-1
+         :&FIELD_SS1 SETB 1
+         ACALL  GET_VAR_PARM
+         AEND
+.*
+.*
+.* IOP GEN 88 - GEN 1 OR MORE CONDITION 88 LEVEL COMPARES
+.*
+         AENTRY IOP_GEN_88
+         :&FIELD1    SETC '&FIELD_NAME'
+         :&FIELD1_IX SETA &FIELD_IX
+         :&V88_IX    SETA &SYM_LOC(&FIELD_88_IX)  FIRST VALUE INDEX
+         :&V88_MULT  SETB 0                       ASSUME NOT MULT
+         :&CCT SETC 'EQ'       NO  THEN EQ = OK
+         AWHILE (&V88_IX GT 0)
+               GEN_COMP &FIELD1,&FIELD1_IX,&V88_VAL(&V88_IX),0
+               :&V88_IX SETA &V88_NEXT(&V88_IX)
+               AIF (&V88_IX GT 0)
+                   AIF (&IOP_OP(&I) NE 1)
+                       AIF (NOT &V88_MULT)
+                           :&V88_MULT SETB 1
+                           :&IOP_LAB SETA &IOP_LAB+1   IOP T LABEL
+                       AEND
+                       GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_IOP_&IOP_LAB
+                   AELSE
+                       GEN_BC &CCT,IF_&IE_TCNT(&IE_LVL)_&IE_BCNT(&IE_LVX
+               L)
+                   AEND
+               AEND
+         AEND
+         AEND
+.*
+.* GET DFHRESP VALUE
+.*
+         AENTRY GET_DFHRESP_VALUE
+         GBLA  &DFHRESP_TOT
+         GBLC  &DFHRESP_KEY(30),&DFHRESP_VALUE(30)
+         AIF   (&DFHRESP_TOT EQ 0)
+               :&DFHRESP_VALUE(01) SETC '0' DFHRESP(NORMAL) 
+               :&DFHRESP_VALUE(02) SETC '1' DFHRESP(ERROR)
+               :&DFHRESP_VALUE(03) SETC '12' DFHRESP(FILENOTFOUND) 
+               :&DFHRESP_VALUE(04) SETC '12' DFHRESP(DSIDERR)      
+               :&DFHRESP_VALUE(05) SETC '13' DFHRESP(NOTFND)       
+               :&DFHRESP_VALUE(06) SETC '14' DFHRESP(DUPREC)       
+               :&DFHRESP_VALUE(07) SETC '15' DFHRESP(DUPKEY)       
+               :&DFHRESP_VALUE(08) SETC '16' DFHRESP(INVREQ)
+               :&DFHRESP_VALUE(09) SETC '18' DFHRESP(NOSPACE)      
+               :&DFHRESP_VALUE(10) SETC '19' DFHRESP(NOTOPEN)      
+               :&DFHRESP_VALUE(11) SETC '20' DFHRESP(ENDFILE)      
+               :&DFHRESP_VALUE(13) SETC '21' DFHRESP(ILLOGIC)      
+               :&DFHRESP_VALUE(14) SETC '22' DFHRESP(LENGERR)
+               :&DFHRESP_VALUE(15) SETC '26' DFHRESP(ITEMERR)      
+               :&DFHRESP_VALUE(16) SETC '27' DFHRESP(PGMIDERR)
+               :&DFHRESP_VALUE(17) SETC '31' DFHRESP(EXPIRED)      
+               :&DFHRESP_VALUE(18) SETC '36' DFHRESP(MAPFAIL)      
+               :&DFHRESP_VALUE(19) SETC '38' DFHRESP(INVMPSZ)      
+               :&DFHRESP_VALUE(20) SETC '40' DFHRESP(OVERFLOW)     
+               :&DFHRESP_VALUE(21) SETC '44' DFHRESP(QIDERR)       
+               :&DFHRESP_VALUE(22) SETC '72' DFHRESP(SUPPRESSED)     
+               :&DFHRESP_VALUE(23) SETC '84' DFHRESP(DISABLED)     
+               :&DFHRESP_KEY(01) SETC 'NORMAL' 
+               :&DFHRESP_KEY(02) SETC 'ERROR'
+               :&DFHRESP_KEY(03) SETC 'FILENOTFOUND' 
+               :&DFHRESP_KEY(04) SETC 'DSIDERR'      
+               :&DFHRESP_KEY(05) SETC 'NOTFND'       
+               :&DFHRESP_KEY(06) SETC 'DUPREC'       
+               :&DFHRESP_KEY(07) SETC 'DUPKEY'       
+               :&DFHRESP_KEY(08) SETC 'INVREQ' 
+               :&DFHRESP_KEY(09) SETC 'NOSPACE'      
+               :&DFHRESP_KEY(10) SETC 'NOTOPEN'      
+               :&DFHRESP_KEY(11) SETC 'ENDFILE'      
+               :&DFHRESP_KEY(13) SETC 'ILLOGIC'      
+               :&DFHRESP_KEY(14) SETC 'LENGERR'
+               :&DFHRESP_KEY(15) SETC 'ITEMERR'      
+               :&DFHRESP_KEY(16) SETC 'PGMIDERR'
+               :&DFHRESP_KEY(17) SETC 'EXPIRED'      
+               :&DFHRESP_KEY(18) SETC 'MAPFAIL'      
+               :&DFHRESP_KEY(19) SETC 'INVMPSZ'      
+               :&DFHRESP_KEY(20) SETC 'OVERFLOW'     
+               :&DFHRESP_KEY(21) SETC 'QIDERR'       
+               :&DFHRESP_KEY(22) SETC 'SUPPRESSED'     
+               :&DFHRESP_KEY(23) SETC 'DISABLED'     
+               :&DFHRESP_TOT SETA 23
+         AEND
+         AIF   ('&SYSLIST(&VAR_PARM_IX+1)' EQ '''('''                  X
+                OR '&SYSLIST(&VAR_PARM_IX+3)' EQ ''')''')
+               :&PARM SETC '&SYSLIST(&VAR_PARM_IX+2)'
+               :&VAR_PARM_IX SETA &VAR_PARM_IX+3
+         AELSE
+               MNOTE 8,'ZC_CALC INVALID DFHRESP PARM FORMAT AT &PARM'
+               MEXIT
+         AEND
+         :&J SETA 1
+         AWHILE (&J LE &DFHRESP_TOT)
+               AIF ('&PARM' EQ '&DFHRESP_KEY(&J)')
+                   :&PARM SETC '&DFHRESP_VALUE(&J)'
+                   AEXIT AENTRY
+               AEND
+               :&J SETA &J+1
+         AEND
+         MNOTE 8,'ZC_CALC INVALID OR UNKNOWN DFHRESP VALUE - &PARM'
+         AEND
+.*
+.* GET DFHVALUE VALUE
+.*
+         AENTRY GET_DFHVALUE_VALUE
+         GBLA  &DFHVALUE_TOT
+         GBLC  &DFHVALUE_KEY(30),&DFHVALUE_VALUE(30)
+         AIF   (&DFHVALUE_TOT EQ 0)
+               :&DFHVALUE_VALUE(01) SETC '18' DFHVALUE(OPEN) 
+               :&DFHVALUE_VALUE(02) SETC '19' DFHVALUE(CLOSED)
+               :&DFHVALUE_KEY(01) SETC 'OPEN' 
+               :&DFHVALUE_KEY(02) SETC 'CLOSED'
+               :&DFHVALUE_TOT SETA 2
+         AEND
+         AIF   ('&SYSLIST(&VAR_PARM_IX+1)' EQ '''('''                  X
+                OR '&SYSLIST(&VAR_PARM_IX+3)' EQ ''')''')
+               :&PARM SETC '&SYSLIST(&VAR_PARM_IX+2)'
+               :&VAR_PARM_IX SETA &VAR_PARM_IX+3
+         AELSE
+               MNOTE 8,'ZC_CALC INVALID DFHVALUE PARM FORMAT AT &PARM'
+               MEXIT
+         AEND
+         :&J SETA 1
+         AWHILE (&J LE &DFHVALUE_TOT)
+               AIF ('&PARM' EQ '&DFHVALUE_KEY(&J)')
+                   :&PARM SETC '&DFHVALUE_VALUE(&J)'
+                   AEXIT AENTRY
+               AEND
+               :&J SETA &J+1
+         AEND
+         MNOTE 8,'ZC_CALC INVALID DFHVALUE VALUE - &PARM'
+         AEND
+.*
+.* GET NEXT IF PARM (SUBSTITUTE DFHRESP(CODE) WITH LITERAL VALUE)
+.*
+         AENTRY GET_PARM
+         :&PREV_PARM SETC '&PARM'
+         :&PARM_IX SETA &PARM_IX+1
+         AIF (&PARM_IX LE &NP)
+             :&PARM SETC '&SYSLIST(&PARM_IX)'     
+         AELSE
+             AIF (&LVL NE 0)
+                 MNOTE 8,'ZC_CALC UNBALANCED (...)'
+             AEND
+             :&PARM SETC ''
+         AEND
+         AEND
+.*
+.* GET VAR PARM USING VAR_PARM_IX UNTIL NEXT OP                                
+.*
+         AENTRY GET_VAR_PARM
+         :&PREV_PARM SETC '&PARM'
+         :&VAR_PARM_IX SETA &VAR_PARM_IX+1
+         AIF   (&VAR_PARM_IX LE &NP)
+               :&PARM SETC '&SYSLIST(&VAR_PARM_IX)'
+               AIF ('&PARM'(1,1) NE '''')              
+                   :&SAVE_PARM_IX SETA &PARM_IX
+                   :&PARM_IX SETA &VAR_PARM_IX
+                   ACALL GET_PARM_FIELD
+                   :&VAR_PARM_IX SETA &PARM_IX-1
+                   :&PARM_IX SETA &SAVE_PARM_IX
+               AELSE
+                   :&FIELD_IX SETA 0
+               AEND
+         AELSE
+               :&PARM SETC ''
+         AEND
+         AEND
+.*
+.* LIST IOPS FOR AID IN DEBUGGING
+.* 
+         AENTRY LIST_IOPS
+         :&J   SETA 1
+         MNOTE 'ZC_CALC DEBUG TRACE IOPS=&IOP_TOT'
+         AWHILE (&J LE &IOP_TOT)
+               MNOTE 'IOP=&J OP=&IOP_OP(&J) F1=&IOP_F1_X(&J) F2=&IOP_F2X
+               _X(&J) F3=&TMP_TYPE(&J)'
+               :&J SETA &J+1
+         AEND
+         AEND
+.*
+.* LIST OP AND F1, F2 NAME, TYPE, LEN, DEC USING &OP,&X1,&X2
+.*
+         AENTRY LIST_OP_F1_F2
+          :&OP_TAB(1) SETC 'ADD','SUB','MPY','DIV','MOVE'
+         AIF (&X1 GT 0)
+             :&F1_LIST SETC '&SYM_NAME(&X1),&SYM_PIC_TYPE(&X1),&SYM_LENX
+               (&X1),&SYM_PIC_DEC(&X1)'
+         AELSE
+             :&X1 SETA -&X1
+             :&F1_LIST SETC 'TMP-&X1,&TMP_TYPE(&X1),&TMP_LEN(&X1),&TMP_X
+               PIC_DEC(&X1)'
+         AEND
+         AIF (&X2 GT 0)
+             :&F2_LIST SETC '&SYM_NAME(&X2),&SYM_PIC_TYPE(&X2),&SYM_LENX
+               (&X2),&SYM_PIC_DEC(&X2)'
+         AELSEIF (&X2 LT 0)
+             :&X2 SETA -&X2
+             :&F2_LIST SETC 'TMP-&X2,&TMP_TYPE(&X2),&TMP_LEN(&X2),&TMP_X
+               PIC_DEC(&X2)'
+         AELSE
+             :&F2_LIST SETC '&FIELD_NAME'
+         AEND
+         MNOTE 'ZC_CALC   &OP_TAB(&OP) &F1_LIST &F2_LIST'
+         AEND      
+.*
+.* CALC F3_T, F3_L, F3_P FROM F1_T AND F2_T 
+.*
+         AENTRY CALC_F3_TYPE
+         :&EXTEND_FP_TYPE SETC '9'               
+         :&NOEXTEND_FP_TYPE SETC '2'
+         AIF (&F1_P GT &F2_P)   RPI 1211
+             :&F3_P SETA &F1_P  
+         AELSE                  
+             :&F3_P SETA &F2_P
+         AEND
+         ACASE (C2A('&F1_T'))
+         AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
+               :&F3_P SETA 0 RPI 1211
+               AIF (&ZC_EXTEND)
+                   :&F3_T SETC '&EXTEND_FP_TYPE'
+               AELSE
+                   :&F3_T SETC '&NOEXTEND_FP_TYPE'
+               AEND
+         AWHEN C'F'
+               ACASE (C2A('&F2_T'))
+               AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
+                   :&F3_P SETA 0  RPI 1211
+                   AIF (&ZC_EXTEND)
+                       :&F3_T SETC '&EXTEND_FP_TYPE'
+                   AELSE
+                       :&F3_T SETC '&NOEXTEND_FP_TYPE'
+                   AEND
+               AWHEN C'F'
+                 :&F3_T SETC 'Q'
+               AWHEN C'G'
+                 :&F3_T SETC 'Q'
+               AWHEN C'H'
+                 :&F3_T SETC 'G'
+               AWHEN C'P'
+                 AIF (&F2_L GT 5)
+                    :&F3_T SETC 'Q'
+                 AELSE
+                    :&F3_T SETC 'G'
+                 AEND
+               AWHEN C'Q'
+                 :&F3_T SETC 'Q'
+               AWHEN C'Z'
+                 AIF (&F2_L GT 9)
+                    :&F3_T SETC 'Q'
+                 AELSE
+                    :&F3_T SETC 'G'
+                 AEND
+               AELSE
+                MNOTE 8,'ZC_CALC INVALID TYPE &F2_T'
+                MEXIT
+               AEND
+         AWHEN C'G'
+               ACASE (C2A('&F2_T'))
+               AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
+                   AIF (&ZC_EXTEND)
+                       :&F3_T SETC '&EXTEND_FP_TYPE'
+                   AELSE
+                       :&F3_T SETC '&NOEXTEND_FP_TYPE'
+                   AEND
+               AWHEN C'F'
+                 :&F3_T SETC 'Q'
+               AWHEN C'G'
+                 :&F3_T SETC 'Q'
+               AWHEN C'H'
+                 :&F3_T SETC 'Q'
+               AWHEN C'P'
+                 :&F3_T SETC 'Q'
+               AWHEN C'Q'
+                 :&F3_T SETC 'Q'
+               AWHEN C'Z'
+                 :&F3_T SETC 'Q'
+               AELSE
+                MNOTE 8,'ZC_CALC INVALID TYPE &F2_T'
+                MEXIT
+               AEND
+         AWHEN C'H'
+               ACASE (C2A('&F2_T'))
+               AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
+                   AIF (&ZC_EXTEND)
+                       :&F3_T SETC '&EXTEND_FP_TYPE'
+                   AELSE
+                       :&F3_T SETC '&NOEXTEND_FP_TYPE'
+                   AEND
+               AWHEN C'F'
+                 :&F3_T SETC 'G'
+               AWHEN C'G'
+                 :&F3_T SETC 'Q'
+               AWHEN C'H'
+                 :&F3_T SETC 'G'
+               AWHEN C'P'
+                 AIF (&F2_L LE 2)
+                    :&F3_T SETC 'F'
+                 AELSEIF (&F2_L LE 7)
+                    :&F3_T SETC 'G'
+                 AELSE
+                    :&F3_T SETC 'Q'
+                 AEND
+               AWHEN C'Q'
+                 :&F3_T SETC 'Q'
+               AWHEN C'Z'
+                 AIF (&F2_L LE 4)
+                    :&F3_T SETC 'F'
+                 AELSEIF (&F2_L LE 13)
+                    :&F3_T SETC 'G'
+                 AELSE
+                    :&F3_T SETC 'Q'
+                 AEND
+               AELSE
+                MNOTE 8,'ZC_CALC INVALID TYPE &F2_T'
+                MEXIT
+               AEND
+         AWHEN C'P'
+               ACASE (C2A('&F2_T'))
+               AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
+                   AIF (&ZC_EXTEND)
+                       :&F3_T SETC '&EXTEND_FP_TYPE'
+                   AELSE
+                       :&F3_T SETC '&NOEXTEND_FP_TYPE'
+                   AEND
+               AWHEN C'F'
+                 AIF (&F1_L LE 5)
+                    :&F3_T SETC 'G'
+                 AELSE
+                    :&F3_T SETC 'Q'
+                 AEND
+               AWHEN C'G'
+                 :&F3_T SETC 'Q'
+               AWHEN C'H'
+                 AIF (&F1_L LE 2)
+                    :&F3_T SETC 'F'
+                 AELSEIF (&F1_L LE 7)
+                    :&F3_T SETC 'G'
+                 AELSE
+                    :&F3_T SETC 'Q'
+                 AEND
+               AWHEN C'P'
+                 AIF (&F1_L+&F2_L  LE 16)
+                    :&F3_T SETC 'P'
+                    :&F3_L SETA &F1_L+&F2_L
+                 AELSE
+                    :&F3_T SETC 'Q'
+                 AEND
+               AWHEN C'Q'
+                 :&F3_T SETC 'Q'
+               AWHEN C'Z'
+                 AIF (&F1_L+&F2_L LE 31)
+                     :&F3_T SETC 'P'
+                     :&F3_L SETA (&F1_L+&F2_L)/2+1
+                 AELSE
+                    :&F3_T SETC 'Q'
+                 AEND
+               AELSE
+                MNOTE 8,'ZC_CALC INVALID TYPE &F2_T'
+                MEXIT
+               AEND
+         AWHEN C'Q'
+               ACASE (C2A('&F2_T'))
+               AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
+                   AIF (&ZC_EXTEND)
+                       :&F3_T SETC '&EXTEND_FP_TYPE'
+                   AELSE
+                       :&F3_T SETC '&NOEXTEND_FP_TYPE'
+                   AEND
+               AWHEN C'F'
+                 :&F3_T SETC 'Q'
+               AWHEN C'G'
+                 :&F3_T SETC 'Q'
+               AWHEN C'H'
+                 :&F3_T SETC 'Q'
+               AWHEN C'P'
+                 :&F3_T SETC 'Q'
+               AWHEN C'Q'
+                 :&F3_T SETC 'Q'
+               AWHEN C'Z'
+                 :&F3_T SETC 'Q'
+               AELSE
+                MNOTE 8,'ZC_CALC INVALID TYPE &F2_T'
+                MEXIT
+               AEND
+         AWHEN C'Z'
+               ACASE (C2A('&F2_T'))
+               AWHEN C'1',C'2',C'3',C'4',C'5',C'6',C'7',C'8',C'9'
+                   AIF (&ZC_EXTEND)
+                       :&F3_T SETC '&EXTEND_FP_TYPE'
+                   AELSE
+                       :&F3_T SETC '&NOEXTEND_FP_TYPE'
+                   AEND
+               AWHEN C'F'
+                 AIF (&F1_L GE 9)
+                    :&F3_T SETC 'G'
+                 AELSE
+                    :&F3_T SETC 'Q'
+                 AEND
+               AWHEN C'G'
+                 :&F3_T SETC 'Q'
+               AWHEN C'H'
+                 AIF (&F1_L LE 4)
+                    :&F3_T SETC 'F'
+                 AELSEIF (&F1_L LE 13)
+                    :&F3_T SETC 'G'
+                 AELSE
+                    :&F3_T SETC 'Q'
+                 AEND
+               AWHEN C'P'
+                 AIF (&F1_L+2*&F2_L-1 LE 31)
+                     :&F3_T SETC 'P'
+                     :&F3_L SETA &F1_L/2+1+&F2_L
+                 AELSE
+                    :&F3_T SETC 'Q'
+                 AEND
+               AWHEN C'Q'
+                 :&F3_T SETC 'Q'
+               AWHEN C'Z'
+                 AIF (&F1_L+&F2_L LE 31)
+                     :&F3_T SETC 'P'
+                     :&F3_L SETA (&F1_L+&F2_L)/2+1
+                 AELSE
+                    :&F3_T SETC 'Q'
+                 AEND
+               AELSE
+                MNOTE 8,'ZC_CALC INVALID F2 TYPE &F2_T'
+                MEXIT
+               AEND
+         AELSE
+               MNOTE  8,'ZC_CALC INVALID F1 TYPE &F1_T'
+               MEXIT
+         AEND
+         ACASE (C2A('&F3_T'))
+         AWHEN C'1'
+              :&F3_L SETA 4
+         AWHEN C'2'
+              :&F3_L SETA 8
+         AWHEN C'3'
+              :&F3_L SETA 16
+         AWHEN C'4'
+              :&F3_L SETA 4
+         AWHEN C'5'
+              :&F3_L SETA 8
+         AWHEN C'6'
+              :&F3_L SETA 16
+         AWHEN C'7'
+              :&F3_L SETA 4
+         AWHEN C'8'
+              :&F3_L SETA 8
+         AWHEN C'9'
+              :&F3_L SETA 16
+         AWHEN C'F'
+              :&F3_L SETA 4
+         AWHEN C'G'
+              :&F3_L SETA 8
+         AWHEN C'H'
+              :&F3_L SETA 2
+         AWHEN C'Q'
+              :&F3_L SETA 16
+         AEND
+         AEND
+         COPY ZCRSTLAB
+         COPY ZCGETFLD
+         MEND

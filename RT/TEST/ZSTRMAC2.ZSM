@@ -11,6 +11,8 @@
 *          2.  GEN HLASM COMP VER - LINKLIB\ZSTRMAC.MLC VIA ZSTRMAC1
 * 09/17/08 RPI 911 CHANGE ASELECT TO ACASE AND APM TO ACALL AND
 *                  SUPPORT LOWER CASE
+* 02/19/12 RPI 1192 USE D2A(...) FOR &DIGIT SETA, REMOVE DUP )), 
+*                   FIX CONTINUE CONCAT
 *********************************************************************
 * ZSTRMAC READS SYSUT1 SOURCE FILE AND OUTPUTS SYSUT2 SOURCE FILE
 * WITH TRANSLATION OF FOLLOWING Z390 ZSTRMAC EXTENSIONS TO STD HLASM:
@@ -139,12 +141,17 @@
                    :&REC SETC '&TEXT'(1,71)
                    AIF ('&TEXT'(72,1) NE ' ')
                        ACALL READ_TEXT
+                       :&CONTINUE SETB 1    RPI 1192
                        AWHILE (NOT &EOF                                X
                                AND K'&TEXT GE 72                       X
                                AND '&TEXT'(1,15) EQ (15)' '            X
-                               AND '&TEXT'(72,1) NE ' ')
-                            :&REC SETC '&REC'.'&TEXT'(16,71-15)
-                            ACALL READ_TEXT
+                               AND &CONTINUE)           
+                            AIF ('&TEXT'(72,1) NE ' ')
+                                :&REC SETC '&REC'.'&TEXT'(16,71-15)
+                                ACALL READ_TEXT
+                            AELSE
+                                :&CONTINUE SETB 0    
+                            AEND
                        AEND
                        AIF  (NOT &EOF)
                             AIF  (K'&TEXT GE 16                        X
@@ -446,7 +453,7 @@
                     :&ELSE_LAB SETC '.ACS_&LVL_TCNT(&LVL)_E'
                AEND
                :&PCH_REC SETC '&LVL_ACASE(&LVL)'
-               AIF  (&LVL_ACASE_FIRST(&LVL) NE 1))
+               AIF  (&LVL_ACASE_FIRST(&LVL) NE 1) RPI 1192
                     :&OFFSET  SETC '+1-&LVL_ACASE_FIRST(&LVL)'
                     :&PCH_REC SETC '&PCH_REC'(1,K'&PCH_REC-1).'&OFFSET)X
                '
@@ -785,7 +792,7 @@
                    AIF ('&REC'(&IS_PARM,1) GE '0'                      X
                     AND '&REC'(&IS_PARM,1) LE '9')
                        :&VALUE_SET SETB 1
-                       :&DIGIT SETA '&REC'(&IS_PARM,1)
+                       :&DIGIT SETA D2A('&REC'(&IS_PARM,1)) RPI 1192
                        :&VALUE SETA &VALUE*10+&DIGIT  
                        :&IS_PARM SETA &IS_PARM+1
                    AELSE

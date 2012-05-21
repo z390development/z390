@@ -115,8 +115,7 @@
 .*                              AEND
                                   AGO   .ACS_2_E
 .ACS_2_G                          ANOP
-                                  AGO   (&J+1-1).ACS_2_1,.ACS_2_2,.ACS_X
-               2_3
+                                  AGO   (&J).ACS_2_1,.ACS_2_2,.ACS_2_3
                                   AGO   .ACS_2_X
 .ACS_2_E                          ANOP
 &J                              SETA &J+1
@@ -134,7 +133,7 @@
 .*               AEND
                    AGO   .ACS_1_E
 .ACS_1_G           ANOP
-                   AGO   (&I+1-1).ACS_1_1,.ACS_1_2,.ACS_1_3
+                   AGO   (&I).ACS_1_1,.ACS_1_2,.ACS_1_3
                    AGO   .ACS_1_X
 .ACS_1_E           ANOP
 &I               SETA &I+1
