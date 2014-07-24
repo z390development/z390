@@ -395,6 +395,7 @@ public  class  az390 implements Runnable {
         * 04/17/12 RPI 1208 don't generate RLD's in DSECT  
         * 04/20/12 RPI 1210 correct handling of periods in paths       
         * 05/15/12 RPI 1209A Report OPTABLE contents if LIST specified on OPTABLE or MACHINE (AFK)
+        * 07/20/14 RPI VF01 add support for vector opcodes
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1705,7 +1706,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
     while (index < tz390.op_name.length)
        {entry=tz390.op_name[index]+"                  ";
         entry=entry.substring(0,9);
-        if (tz390.op_type[index] >= tz390.max_ins_type)
+        if (tz390.op_type[index] >= 100)
            {entry=entry+"HLASM";
             }
         else
@@ -3434,6 +3435,118 @@ private void process_bal_op(){
     	check_end_parms();
     	put_obj_text();
     	break;	
+    case 58:  // "V-QST" VAS VR1,QR3,RS2(RT2) --> ooooqtvs RPI VF01
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 4;
+        get_hex_op(1,4);
+        get_hex_reg();    // VR1
+        skip_comma();
+        get_hex_reg();    // QR3
+        skip_comma();
+        get_hex_reg();    // RS2
+        get_exp_x();      // RT2
+        // We now have oooovqst --> ooooqtvs
+        obj_code = obj_code.substring(0,4)  // oooo
+        + obj_code.substring(5,6)           // QR3
+        + obj_code.substring(7,8)           // RT2
+        + obj_code.substring(4,5)           // VR1
+        + obj_code.substring(6,7);          // RS2
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 59:  // "V-QV" RPI VF01
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 4;
+        get_hex_op(1,4);
+        // Process operands **!!
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 60:  //60 "V-VST" VAE VR1,VR3,RS2(RT2) --> oooovtvs RPI VF01
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 4;
+        get_hex_op(1,4);
+        get_hex_reg();    // VR1
+        skip_comma();
+        get_hex_reg();    // VR3
+        skip_comma();
+        get_hex_reg();    // RS2
+        get_exp_x();      // RT2
+        // We now have oooovvst --> oooovtvs
+        obj_code = obj_code.substring(0,4)  // oooo
+        + obj_code.substring(5,6)           // VR3
+        + obj_code.substring(7,8)           // RT2
+        + obj_code.substring(4,5)           // VR1
+        + obj_code.substring(6,7);          // RS2
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 61:  // "V-VV" RPI VF01
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 4;
+        get_hex_op(1,4);
+        // Process operands **!!
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 62:  // "V-RRE" RPI VF01
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 4;
+        get_hex_op(1,4);
+        // Process operands **!!
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 63:  // "V-RSE" RPI VF01
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 6;
+        get_hex_op(1,4);
+        // Process operands **!!
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 64:  // "V-S" VRCL D2(B2) --> oooobddd RPI VF01
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 4;
+        get_hex_op(1,4);
+        get_hex_bddd2(true);
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 65:  // "V-VR" RPI VF01
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 4;
+        get_hex_op(1,4);
+        // Process operands **!!
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 66:  // "V-VS" RPI VF01
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 4;
+        get_hex_op(1,4);
+        // Process operands **!!
+        check_end_parms();
+        put_obj_text();
+        break;
     case 101:  // CCW  0 
     case 102:  // CCW0 0
     	bal_op_ok = true;

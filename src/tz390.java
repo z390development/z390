@@ -276,6 +276,7 @@ public  class  tz390 {
     * 05/07/12 RPI 1209 (AFK) Replace static content of arrays op_name, op_code,
     *          op_type, op_trace_type with same data generated from op_tables array
     * 05/09/12 RPI 1209A (AFK) Implement OPTABLE/MACHINE options
+    * 07/20/14 RPI VF01 add vector options Vector/Novector and SectionSize, PartialSums
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -284,7 +285,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.6.00b01";  //dsh + afk
+    String version    = "V1.6.00b02";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -375,6 +376,9 @@ public  class  tz390 {
     boolean opt_trunc    = false; // zcobol TRUNC option default NOTRUNC RPI 986
     boolean opt_ts       = false; // time-stamp logs RPI 662
     boolean opt_vcb      = true;  // vsam cache operational
+    boolean opt_vector   = false; // vector mode RPI VF01
+    int     opt_vsectsize= 64;    // vector section size RPI VF01
+    int     opt_vpartsums= 16;    // vector partial sums number RPI VF01
     boolean opt_warn     = true;  // issue zcobol warnings RPI 986
     boolean opt_xref     = true;   // cross reference symbols
     boolean opt_zstrmac  = true;   // allow ZSTRMAC extensions
@@ -1025,8 +1029,17 @@ public  class  tz390 {
          6,   //55
          6,   //56
          6,   //57
+         4,   //58 "V-QST" RPI VF01
+         4,   //59 "V-QV"  RPI VF01
+         4,   //60 "V-VST" VAE  oooovtvs RPI VF01
+         4,   //61 "V-VV"  RPI VF01
+         4,   //62 "V-RRE" RPI VF01
+         6,   //63 "V-RSE" RPI VF01
+         4,   //64 "V-S"   VRCL oooobddd RPI VF01
+         4,   //65 "V-VR"  RPI VF01
+         4,   //66 "V-VS"  RPI VF01
     };
-	int    max_op_type_offset = 57; // see changes required RPI 812, RPI 817, RPI 1125
+	int    max_op_type_offset = 66; // see changes required RPI 812, RPI 817, RPI 1125, RPI VF01
     int    max_ins_type = 100;    // RPI 315 
     int    max_asm_type = 200;
     int    max_mac_type = 300;
@@ -2631,14 +2644,18 @@ public void create_opcodes()  // Routine added for RPI 1209
         if (opt_optable.equals("370"))
            {process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
-            // process_opcodes(op_table_vector);
+            if (opt_vector) // RPI VF01
+               {process_opcodes(op_table_vector);
+                }
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         if (opt_optable.equals("XA"))
            {process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
-            // process_opcodes(op_table_vector);
+            if (opt_vector) // RPI VF01
+               {process_opcodes(op_table_vector);
+                }
             process_opcodes(op_table_XA);
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
@@ -2646,7 +2663,9 @@ public void create_opcodes()  // Routine added for RPI 1209
         if (opt_optable.equals("ESA"))
            {process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
-            // process_opcodes(op_table_vector);
+            if (opt_vector) // RPI VF01
+               {process_opcodes(op_table_vector);
+                }
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
             process_opcodes(op_table_DOS_directives);
@@ -2697,7 +2716,9 @@ public void create_opcodes()  // Routine added for RPI 1209
         if (opt_optable.equals("UNI"))
            {process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
-            // process_opcodes(op_table_vector);
+            if (opt_vector) // RPI VF01
+               {process_opcodes(op_table_vector);
+                }
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
             process_opcodes(op_table_ZOP);
@@ -2711,7 +2732,9 @@ public void create_opcodes()  // Routine added for RPI 1209
         if (opt_optable.equals("Z390"))
            {process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
-            // process_opcodes(op_table_vector);
+            if (opt_vector) // RPI VF01
+               {process_opcodes(op_table_vector);
+                }
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
             process_opcodes(op_table_ZOP);
@@ -3319,6 +3342,22 @@ private void check_options(){
         else
            {abort_error(778,"MACHINE("+opt_machine+") not supported");
             }
+    // Check vector support parameters RPI VF01
+    if (opt_vsectsize != 8
+        && opt_vsectsize != 16
+        && opt_vsectsize != 32
+        && opt_vsectsize != 64
+        && opt_vsectsize != 128
+        && opt_vsectsize != 256
+        && opt_vsectsize != 512){
+        abort_error(28,"option SectionSize must be 8, 16, 32, 64, 128, 256, or 512");
+        }
+    if (opt_vpartsums < 1){
+                        abort_error(29,"Partial Sums Number should be at least 1");
+        }
+    if (opt_vpartsums > opt_vsectsize){
+                        abort_error(29,"Partial Sums Number should not exceed Section Size");
+        }
 }
 private void process_option(String opt_file_name,int opt_file_line,String token){
 	/*
@@ -3693,6 +3732,13 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
         		&& opt_parm.charAt(opt_parm.length()-1) == '\''){
         		opt_parm = opt_parm.substring(1,opt_parm.length()-1); 		
         	}
+    } else if (token.length() > 13 // Block added for RPI VF01
+        && token.substring(0,12).toUpperCase().equals("PARTIALSUMS(")){
+        try {
+                opt_vpartsums = Integer.valueOf(token.substring(12,token.length()-1)).intValue();
+        } catch (Exception e){
+                add_invalid_option(opt_file_name,opt_file_line,token);
+        }
     } else if (token.toUpperCase().equals("PC")){
         opt_pc = true;
     } else if (token.toUpperCase().equals("NOPC")){
@@ -3750,6 +3796,13 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_rmode24 = true;
       	opt_rmode31 = false;
        	z390_rmode31 = 'F';
+    } else if (token.length() > 13 // Block added for RPI VF01
+        && token.substring(0,12).toUpperCase().equals("SECTIONSIZE(")){
+        try {
+                opt_vsectsize = Integer.valueOf(token.substring(12,token.length()-1)).intValue();
+                        } catch (Exception e){
+                add_invalid_option(opt_file_name,opt_file_line,token);
+                        }
     } else if (token.toUpperCase().equals("STATS")){
        	opt_stats = true;  // RPI 755
        	stats_file_name = pgm_name;
@@ -3971,6 +4024,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     	opt_vcb = true; // VSAM Cache Buffering to reduce I/O
     } else if (token.toUpperCase().equals("NOVCB")){
     	opt_vcb = false;
+    } else if (token.toUpperCase().equals("VECTOR")){
+        opt_vector = true; // Allow vector instructions RPI VF01
+    } else if (token.toUpperCase().equals("NOVECTOR")){
+        opt_vector = false; // Disallow vector instructions RPI VF01
     } else if (token.toUpperCase().equals("WARN")){
     	opt_warn = true; // VSAM Cache Buffering to reduce I/O
     } else if (token.toUpperCase().equals("NOWARN")){
@@ -5892,6 +5949,13 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOVCB");
 	     }
+         if (opt_vector  ){ // vector mode enabled RPI VF01
+            add_final_opt("VECTOR");
+                    add_final_opt("SectionSize=" + opt_vsectsize); // Section Size
+                    add_final_opt("PartialSums=" + opt_vpartsums); // Partial Sums number
+         } else {
+            add_final_opt("NOVECTOR");
+         }
 	     if (opt_warn     ){ // zcobol mnote level 4 warnings
 		        add_final_opt("WARN");
 		     } else {

@@ -329,6 +329,7 @@ public class pz390 {
 	 * 04/30/12 RPI 1211 round L? and D? when trunc BD
 	 * 05/10/12 RPI 1214 fix DXTR fp_rbdv2 to prevent S0C5
      * 04/19/12 RPI 1209 Move array op_trace_type to tz390
+     * 07/20/14 RPI VF01 add vector operations
 	 ********************************************************* 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -671,7 +672,17 @@ public class pz390 {
 
 	int opcode2_offset_ssf = 1; // SSF MVCOS oorobdddbddd
 
-	int dup_opcodes = 0; // count of duplicate opcodes
+    int opcode2_offset_vqst = 1; // V-QST VAS   RPI VF01
+    int opcode2_offset_vqv  = 1; // V-QV        RPI VF01
+    int opcode2_offset_vst  = 1; // V-VST       RPI VF01
+    int opcode2_offset_vv   = 1; // V-VV        RPI VF01
+    int opcode2_offset_vrre = 1; // V-RRE       RPI VF01
+    int opcode2_offset_vrse = 1; // V-RSE       RPI VF01
+    int opcode2_offset_vs   = 1; // V-S   VRCL  RPI VF01
+    int opcode2_offset_vvr  = 1; // V-VR        RPI VF01
+    int opcode2_offset_vvs  = 1; // V-VS        RPI VF01
+
+		int dup_opcodes = 0; // count of duplicate opcodes
 
 	int max_espie = 50;
 
@@ -2823,9 +2834,15 @@ public class pz390 {
 		case 0x9B: // 1810 "9B" "STAM" "RS"
 			ins_setup_rs();
 			break;
+        case 0xA4:               // RPI VF01
+                ins_A4XX_VF();   // RPI VF01
+                break;           // RPI VF01
 		case 0xA5:
 			ins_A5XX();
 			break;
+        case 0xA6:               // RPI VF01
+                ins_A6XX_VF();   // RPI VF01
+                break;           // RPI VF01
 		case 0xA7:
 			ins_A7XX();
 			break;
@@ -3263,6 +3280,9 @@ public class pz390 {
 		case 0xE3:
 			ins_E3XX();  // RPI 1207
 			break;
+        case 0xE4:               // RPI VF01
+                ins_E4XX_VF();   // RPI VF01
+                break;           // RPI VF01
 		case 0xE5:
 			ins_E5XX();
 			break;
@@ -3620,6 +3640,15 @@ public class pz390 {
 			break;
 		}
 	}
+    private void ins_A4XX_VF(){ // RPI VF01 new routine to support A4xx opcodes for vector facility
+            opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
+            switch (opcode2) {
+            case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
+                    psw_check = false;
+                    ins_setup_vs();
+                    break;
+            }
+    } // RPI VF01 end of new routine to support A4xx opcodes for vector facility
 	private void ins_A5XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ri] & 0x0f;
 		switch (opcode2) {
@@ -3753,6 +3782,24 @@ public class pz390 {
 			break;
 		}
 	}
+    private void ins_A5XX_VF(){ // RPI VF01 new routine to support A5xx opcodes for vector facility
+            opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
+            switch (opcode2) {
+            case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
+                    psw_check = false;
+                    ins_setup_vs();
+                    break;
+            }
+    } // RPI VF01 end of new routine to support A5xx opcodes for vector facility
+    private void ins_A6XX_VF(){ // RPI VF01 new routine to support A6xx opcodes for vector facility
+            opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
+            switch (opcode2) {
+            case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
+                    psw_check = false;
+                    ins_setup_vs();
+                    break;
+            }
+    } // RPI VF01 end of new routine to support A6xx opcodes for vector facility
 	private void ins_A7XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ri] & 0x0f;
 		switch (opcode2) {
@@ -8352,6 +8399,15 @@ public class pz390 {
 			break;		
 		}
     }
+    private void ins_E4XX_VF(){ // RPI VF01 new routine to support E4xx opcodes for vector facility
+            opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
+            switch (opcode2) {
+            case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
+                    psw_check = false;
+                    ins_setup_vs();
+                    break;
+            }
+    } // RPI VF01 end of new routine to support E4xx opcodes for vector facility
     private void ins_E5XX(){
     	opcode2 = mem_byte[psw_loc + opcode2_offset_sse] & 0xff;
 		switch (opcode2) {
@@ -11287,6 +11343,19 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+    private void ins_setup_vs() { // RPI VF01 routine added for support of vector instructions
+        /*
+         * fetch ??? **!!
+         */
+        psw_ins_len = 4;
+        if (tz390.opt_trace) {
+                trace_ins();
+        }
+        if (ex_mode) {
+                ex_restore();
+        }
+        psw_loc = psw_loc + 4;
+    }
 	public String get_ins_name(int ins_loc) {
 		/*
 		 * return opcode or ????? for given op1 and op2
@@ -16665,7 +16734,16 @@ public class pz390 {
 		op_type_offset[55] = 1; // SSF LDP/LDPR RPI 1125
 		op_type_offset[56] = 5; // RSY LOC/LOCG RPI 1125
 		op_type_offset[57] = 5; // RIE AHIK RPI 1125
-		int max_op_type_offset = 57; // RPI 1125
+        op_type_offset[58] = 1; // RPI VF01
+        op_type_offset[59] = 1; // RPI VF01
+        op_type_offset[60] = 1; // RPI VF01
+        op_type_offset[61] = 1; // RPI VF01
+        op_type_offset[62] = 1; // RPI VF01
+        op_type_offset[63] = 1; // RPI VF01
+        op_type_offset[64] = 1; // "V-S" VRCL RPI VF01
+        op_type_offset[65] = 1; // RPI VF01
+        op_type_offset[66] = 1; // RPI VF01
+        int max_op_type_offset = 66; // RPI 1125 RPI VF01
 		op_type_mask[1] = 0xff; // E PR oooo
 		op_type_mask[7] = 0xff; // S SSM oooobddd
 		op_type_mask[12] = 0x0f; // RI IIHH ooroiiii
@@ -16707,9 +16785,18 @@ public class pz390 {
 		op_type_mask[55] = 0xff; // SSF2 LDP/LDPR RPI 1125
 		op_type_mask[56] = 0xff; // RSY2 LOC/LOCG RPI 1125
 		op_type_mask[57] = 0xff; // RIE9 AHIK RPI 1125
-		int max_op_type_mask = 57; // RPI 1125
+        op_type_mask[58] = 0xff; // RPI VF01
+        op_type_mask[59] = 0xff; // RPI VF01
+        op_type_mask[60] = 0xff; // RPI VF01
+        op_type_mask[61] = 0xff; // RPI VF01
+        op_type_mask[62] = 0xff; // RPI VF01
+        op_type_mask[63] = 0xff; // RPI VF01
+        op_type_mask[64] = 0xff; // "V-S" VRCL RPI VF01
+        op_type_mask[65] = 0xff; // RPI VF01
+        op_type_mask[66] = 0xff; // RPI VF01
+        int max_op_type_mask = 66; // RPI 1125 RPI VF01
 		// init op2 offset and mask arrays indexed by op1
-		int max_op_type_setup = 57; // RPI 1125
+		int max_op_type_setup = 66; // RPI 1125
 		// add setup case for each new op type - see case 55 etc.
 		if (max_op_type_setup != tz390.max_op_type_offset){
 			tz390.abort_error(22,"max op type setup cases out of sync "
@@ -17800,6 +17887,12 @@ break;
             + " R" + tz390.get_hex(mf3, 1) 
             + "="  + tz390.get_long_hex(reg.getLong(rf3),16) 
 			+ " I2="  + tz390.get_hex(if2,4);	
+        case 560: // "V-S" oooobddd VRCL RPI VF01
+                trace_parms = " R"   + tz390.get_hex(mf1, 1)
+                            + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8)
+                            + " S2(" + tz390.get_hex(xbd2_loc, 8)
+                            + ")="   + bytes_to_hex(mem, xbd2_loc, 4, 0);
+            break;
 		}
 	} catch (Exception e){ // RPI 1054 
         if (tz390.opt_trace){
