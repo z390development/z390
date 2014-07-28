@@ -394,6 +394,7 @@ public  class  az390 implements Runnable {
         * 04/13/12 RPI 1206 drop unlabeled dependant using for drop reg
         * 04/17/12 RPI 1208 don't generate RLD's in DSECT  
         * 04/20/12 RPI 1210 correct handling of periods in paths       
+        * 05/15/12 RPI 1209A Report OPTABLE contents if LIST specified on OPTABLE or MACHINE (AFK)
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1229,6 +1230,9 @@ private void init_az390(String[] args, JTextArea log_text){
 		put_copyright();
         compile_patterns();
         tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
+        if (tz390.opt_optable_list.equals("LIST")) // RPI 1209A
+           {gen_list_mnemonics();                  // RPI 1209A
+            }                                      // RPI 1209A
 }
 private void init_push_pop(){
 	/*
@@ -1693,6 +1697,475 @@ private void reset_lits(){
 		Arrays.fill(lit_gen,0,tot_lit,(byte)0); // RPI 411
 	}
 }
+private void gen_list_mnemonics() // Routine added for RPI 1209A
+   {int     index;
+    String  entry;
+    /* List opcodes supported by current optable */
+    index=0;
+    while (index < tz390.op_name.length)
+       {entry=tz390.op_name[index]+"                  ";
+        entry=entry.substring(0,9);
+        if (tz390.op_type[index] >= tz390.max_ins_type)
+           {entry=entry+"HLASM";
+            }
+        else
+           {switch (tz390.op_type[index])
+               {case 0: // comment lines
+                    break;
+                case 1:
+                    entry=entry+"E    "+tz390.op_code[index];
+                    break;
+                case 2:
+                    entry=entry+"RR   "+tz390.op_code[index];
+                    if (tz390.op_name[index].equals("SPM"))
+                       {entry=entry+"   R1";
+                        }
+                    else if (tz390.op_trace_type[index]==30)
+                       {entry=entry+"   M1,R2";
+                        }
+                    else
+                       {entry=entry+"   R1,R2";
+                        }
+                    break;
+                case 3:
+                    entry=entry+"RR   "+tz390.op_code[index]+". R2";
+                    break;
+                case 4:
+                    entry=entry+"RR   "+tz390.op_code[index]+"   I1";
+                    break;
+                case 5:
+                    entry=entry+"RX   "+tz390.op_code[index];
+                    if (tz390.op_name[index].equals("BC"))
+                       {entry=entry+"   M1,D2(X2,B2)";
+                        }
+                    else
+                       {entry=entry+"   R1,D2(X2,B2)";
+                        }
+                    break;
+                case 6:
+                    entry=entry+"RX   "+tz390.op_code[index]+". D2(X2,B2)";
+                    break;
+                case 7:
+                    entry=entry+"S    "+tz390.op_code[index];
+                    if (!tz390.op_name[index].equals("IPK")
+                    &&  !tz390.op_name[index].equals("PTLB")
+                    &&  !tz390.op_name[index].equals("CSCH")
+                    &&  !tz390.op_name[index].equals("HSCH")
+                    &&  !tz390.op_name[index].equals("RCHP")
+                    &&  !tz390.op_name[index].equals("RSCH")
+                    &&  !tz390.op_name[index].equals("SCHM")
+                    &&  !tz390.op_name[index].equals("SAL")
+                    &&  !tz390.op_name[index].equals("XSCH"))
+                       {entry=entry+" D2(B2)";
+                        }
+                    break;
+                case 8: // Diagnose instruction
+                    entry=entry+"DM   "+tz390.op_code[index];
+                    break;
+                case 9:
+                    entry=entry+"RSI  "+tz390.op_code[index]+"   R1,R3,I2";
+                    break;
+                case 10:
+                    entry=entry+"RS   "+tz390.op_code[index];
+                    if (tz390.op_trace_type[index]==101)
+                       {entry=entry+"   R1,M3,D2(B2)";
+                        }
+                    else if (tz390.op_trace_type[index]==102)
+                       {entry=entry+"   R1,D2(B2)";
+                        }
+                    else
+                       {entry=entry+"   R1,R3,D2(B2)";
+                        }
+                    break;
+                case 11:
+                    entry=entry+"SI   "+tz390.op_code[index]+"   D1(B1),I2";
+                    break;
+                case 12:
+                    entry=entry+"RI   "+tz390.op_code[index].substring(0,2)+"."+tz390.op_code[index].substring(2);
+                    if (tz390.op_name[index].equals("BRC"))
+                       {entry=entry+" M1,I2";
+                        }
+                    else
+                       {entry=entry+" R1,I2";
+                        }
+                    break;
+                case 13:
+                    // Our op_code table has the last two nibbles swapped
+                    entry=entry+"RI   "+tz390.op_code[index].substring(0,2)+tz390.op_code[index].substring(3)+tz390.op_code[index].substring(2,3)+" I2";
+                    break;
+                case 14:
+                    if (tz390.opt_optable.equals("ZS3")
+                    ||  tz390.opt_optable.equals("ZS4")
+                    ||  tz390.opt_optable.equals("UNI")
+                        )
+                       {if (tz390.op_code[index].equals("B2A6")  // CU21 CUUTF
+                        ||  tz390.op_code[index].equals("B2A7")  // CU12 CUTFU
+                        ||  tz390.op_name[index].equals("CU14")
+                        ||  tz390.op_name[index].equals("CU24")
+                        ||  tz390.op_name[index].equals("LPTEA")
+                        ||  tz390.op_name[index].equals("SSKE")
+                        ||  tz390.op_trace_type[index] == 143    // TROO TROT TRTO TRTT
+                            )
+                            {entry=entry+"RRF  "+tz390.op_code[index];
+                             }
+                        else
+                            {entry=entry+"RRE  "+tz390.op_code[index];
+                             }
+                        }
+                    else
+                        {entry=entry+"RRE  "+tz390.op_code[index];
+                         }
+                    if ((tz390.opt_optable.equals("ZS3")
+                      || tz390.opt_optable.equals("ZS4")
+                      || tz390.opt_optable.equals("UNI")
+                         )
+                    &&  (tz390.op_code[index].equals("B2A6")  // CU21 CUUTF
+                      || tz390.op_code[index].equals("B2A7")  // CU12 CUTFU
+                      || tz390.op_name[index].equals("CU14")
+                      || tz390.op_name[index].equals("CU24")
+                      || tz390.op_name[index].equals("SSKE")
+                        ))
+                       {entry=entry+" R1,R2<,M3>";
+                        }
+                    else if (tz390.op_trace_type[index]==140)
+                       {if (tz390.op_name[index].equals("EPAR")
+                        ||  tz390.op_name[index].equals("ESAR")
+                        ||  tz390.op_name[index].equals("IAC")
+                        ||  tz390.op_name[index].equals("SSAR")
+                        ||  tz390.op_name[index].equals("IPM")
+                        ||  tz390.op_name[index].equals("MSTA")
+                            )
+                           {entry=entry+" R1";
+                            }
+                        else if (tz390.op_name[index].equals("PALB"))
+                           {}
+                        else
+                           {entry=entry+" R1,R2";
+                            }
+                        }
+                    else if (tz390.op_trace_type[index]==142)
+                       {if (tz390.op_name[index].equals("EFPC")
+                        ||  tz390.op_name[index].equals("LZDR")
+                        ||  tz390.op_name[index].equals("LZER")
+                        ||  tz390.op_name[index].equals("LZXR")
+                        ||  tz390.op_name[index].equals("SFPC")
+                        ||  tz390.op_name[index].equals("SFASR")
+                            )
+                           {entry=entry+" R1";
+                            }
+                        else
+                           {entry=entry+" R1,R2";
+                            }
+                        }
+                    else if (tz390.op_trace_type[index]==143)
+                       {if (tz390.opt_optable.equals("ZOP")
+                        ||  tz390.opt_optable.equals("YOP")
+                            )
+                           {entry=entry+" R1,R2";
+                            }
+                        else
+                           {entry=entry+" R1,R2<,M3>";
+                            }
+                        }
+                    else if (tz390.op_trace_type[index]==144)
+                       {if (tz390.op_name[index].equals("ESEA")
+                        ||  tz390.op_name[index].equals("EPAIR")
+                        ||  tz390.op_name[index].equals("ESAIR")
+                        ||  tz390.op_name[index].equals("SSAIR")
+                            )
+                           {entry=entry+" R1";
+                            }
+                        else if (tz390.op_name[index].equals("LPTEA"))
+                           {entry=entry+" R1,R3,R2,M4";
+                            }
+                        else if (tz390.op_name[index].equals("PCC")
+                             ||  tz390.op_name[index].equals("PCKMO")
+                                 )
+                           {}
+                        else
+                           {entry=entry+" R1,R2";
+                            }
+                        }
+                    else if (tz390.op_trace_type[index]==147)
+                       {entry=entry+" R1";
+                        }
+                    else
+                       {entry=entry+" R1,R2";
+                        }
+                    break;
+                case 15:
+                    entry=entry+"RRF  "+tz390.op_code[index]+" R1,R3,R2";
+                    break;
+                case 16:
+                    entry=entry+"RIL  "+tz390.op_code[index].substring(0,2)+"."+tz390.op_code[index].substring(2);
+                    if (tz390.op_name[index].equals("BRCL")
+                    ||  tz390.op_name[index].equals("PFDRL")
+                        )
+                       {entry=entry+" M1,I2";
+                        }
+                    else
+                       {entry=entry+" R1,I2";
+                        }
+                    break;
+                case 17:
+                    entry=entry+"SS   "+tz390.op_code[index];
+                    if (tz390.op_name[index].equals("PKU"))
+                       {entry=entry+"   D1(B1),D2(L2,B2)";
+                        }
+                    else if (tz390.op_name[index].equals("MVCK")
+                    ||  tz390.op_name[index].equals("MVCP")
+                    ||  tz390.op_name[index].equals("MVCS"))
+                       {entry=entry+"   D1(R1,B1),D2(B2),R3";
+                        }
+                    else
+                       {entry=entry+"   D1(L,B1),D2(B2)";
+                        }
+                    break;
+                case 18:
+                    if (tz390.opt_optable.equals("ESA")
+                    ||  tz390.opt_optable.equals("ZOP")
+                        )
+                       {entry=entry+"RXE  "+tz390.op_code[index];
+                        }
+                    else
+                       {entry=entry+"RXY  "+tz390.op_code[index];
+                        }
+                    if (tz390.op_trace_type[index]==189)
+                       {entry=entry+" M1,D2(X2,B2)";
+                        }
+                    else
+                       {entry=entry+" R1,D2(X2,B2)";
+                        }
+                    break;
+                case 19:
+                    entry=entry+"SSE  "+tz390.op_code[index]+" D1(B1),D2(B2)";
+                    break;
+                case 20:
+                    if (tz390.opt_optable.equals("ESA")
+                    ||  tz390.opt_optable.equals("ZOP")
+                        )
+                       {entry=entry+"RSE  "+tz390.op_code[index];
+                        }
+                    else
+                       {entry=entry+"RSY  "+tz390.op_code[index];
+                        }
+                    if (tz390.op_trace_type[index]==201
+                    ||  tz390.op_trace_type[index]==202
+                        )
+                       {entry=entry+" R1,M3,D2(B2)";
+                        }
+                    else
+                       {entry=entry+" R1,R3,D2(B2)";
+                        }
+                    break;
+                case 21:
+                    entry=entry+"SIY  "+tz390.op_code[index]+" D1(B1),I2";
+                    break;
+                case 22:
+                    entry=entry+"RSL  "+tz390.op_code[index]+" D1(L1,B1)";
+                    break;
+                case 23:
+                    entry=entry+"RIE  "+tz390.op_code[index]+" R1,R3,I2";
+                    break;
+                case 24:
+                    entry=entry+"RXE  "+tz390.op_code[index]+" R1,D2(X2,B2)";
+                    break;
+                case 25:
+                    entry=entry+"RXF  "+tz390.op_code[index]+" R1,R3,D2(X2,B2)";
+                    break;
+                case 26:
+                    entry=entry+"SS   "+tz390.op_code[index]+"   D1(L1,B1),D2(L2,B2)";
+                    break;
+                case 27:
+                    entry=entry+"SS   "+tz390.op_code[index]+"   R1,D2(B2),R3,D4(B4)";
+                    break;
+                case 28:
+                    entry=entry+"SS   "+tz390.op_code[index]+"   R1,R3,D2(B2),D4(B4)";
+                    break;
+                case 29:
+                    entry=entry+"SS   "+tz390.op_code[index]+"   D1(L1,B1),D2(B2),I3";
+                    break;
+                case 30:
+                    entry=entry+"RRF  "+tz390.op_code[index];
+                    if (tz390.op_trace_type[index]==301)
+                       {entry=entry+" R1,M3,R2,M4";
+                        }
+                    else if (tz390.op_trace_type[index]==303)
+                       {entry=entry+" R1,M3,R2,M4";
+                        }
+                    else if (tz390.op_trace_type[index]==304)
+                       {entry=entry+" R1,M3,R2,M4";
+                        }
+                    else if (tz390.op_trace_type[index]==305)
+                       {entry=entry+" R1,M3,R2,M4";
+                        }
+                    else if (tz390.op_trace_type[index]==306)
+                       {entry=entry+" R1,M3,R2,M4";
+                        }
+                    else if (tz390.op_trace_type[index]==342)
+                       {entry=entry+" R1,M3,R2,M4";
+                        }
+                    else
+                       {entry=entry+" R1,R3,R2,M4";
+                        }
+                    break;
+                case 31:
+                    entry=entry+"SS   "+tz390.op_code[index]+"   D1(B1),D2(L2,B2)";
+                    break;
+                case 32:
+                    entry=entry+"SSF  "+tz390.op_code[index].substring(0,2)+"."+tz390.op_code[index].substring(2)+" D1(B1),D2(B2),R3";
+                    break;
+                case 33:
+                    // Our op_code table has the last two nibbles swapped
+                    entry=entry+"RIL  "+tz390.op_code[index].substring(0,2)+tz390.op_code[index].substring(3)+tz390.op_code[index].substring(2,3)+" I2";
+                    break;
+                case 34:
+                    entry=entry+"RRF  "+tz390.op_code[index];
+                    if (tz390.op_trace_type[index]==340)
+                       {if (tz390.op_name[index].equals("IDTE")
+                        ||  tz390.op_name[index].equals("CPSDR")
+                            )
+                           {entry=entry+" R1,R3,R2";
+                            }
+                        else
+                           {entry=entry+" R1,M3,R2";
+                            }
+                        }
+                    else if (tz390.op_trace_type[index]==343)
+                       {entry=entry+" R1,R3,R2";
+                        }
+                    else
+                       {entry=entry+" R1,M3,R2";
+                        }
+                    break;
+                case 35:
+                    entry=entry+"RRF  "+tz390.op_code[index]+" R1,R2,M4";
+                    break;
+                case 36:
+                    // Alternate formats have mnemonics ending in 'A'
+                    if (tz390.op_name[index].substring(tz390.op_name[index].length()-1).equals("A"))
+                       {entry=entry+"RRF  "+tz390.op_code[index]+" R1,R2,R3,M4";
+                        }
+                    else
+                       {entry=entry+"RRR  "+tz390.op_code[index]+" R1,R2,R3";
+                        }
+                    break;
+                case 37: // ASSIST instructions
+                    entry=entry+"RX   "+tz390.op_code[index]+"   R1,S2";
+                    break;
+                case 38: // ASSIST instructions
+                    entry=entry+"RXSS "+tz390.op_code[index]+"  S1(X1),S2";
+                    break;
+                case 39:
+                    if (tz390.op_trace_type[index]==140)
+                       {entry=entry+"RRE  "+tz390.op_code[index]+" R1,R2";
+                        }
+                    else if (tz390.op_trace_type[index]==144)
+                       {if (tz390.op_name[index].equals("CHLR"))
+                           {entry=entry+"RRE  "+tz390.op_code[index]+" R1,R2";
+                            }
+                        else
+                           {entry=entry+"RRF  "+tz390.op_code[index]+" R1,R2<,M3>";
+                            }
+                        }
+                    else if (tz390.op_trace_type[index]==153)
+                       {entry=entry+"RRR  "+tz390.op_code[index]+" R1,R2,R3";
+                        }
+                    else if (tz390.op_trace_type[index]==154)
+                       {entry=entry+"RRR  "+tz390.op_code[index]+" R1,R2,R3";
+                        }
+                    else if (tz390.op_trace_type[index]==410)
+                       {entry=entry+"RRR  "+tz390.op_code[index]+" R1,R2,R3";
+                        }
+                    else
+                       {entry=entry+"RRF  "+tz390.op_code[index]+" R1,R2,M3";
+                        }
+                    break;
+                case 40:
+                    entry=entry+"RRF  "+tz390.op_code[index].substring(0,4)+" R1,R2";
+                    break;
+                case 41:
+                    entry=entry+"RIE  "+tz390.op_code[index]+" R1,I2,M3";
+                    break;
+                case 42:
+                    entry=entry+"RIE  "+tz390.op_code[index].substring(0,4)+" R1,I2";
+                    break;
+                case 43:
+                    entry=entry+"RIE  "+tz390.op_code[index]+" R1,I2,M3,I4";
+                    break;
+                case 44:
+                    entry=entry+"RIE  "+tz390.op_code[index].substring(0,4)+" R1,I2,I4";
+                    break;
+                case 45:
+                    entry=entry+"RRS  "+tz390.op_code[index]+" R1,R2,M3,D4(B4)";
+                    break;
+                case 46:
+                    entry=entry+"RRS  "+tz390.op_code[index].substring(0,4)+" R1,R2,D4(B4)";
+                    break;
+                case 47:
+                    entry=entry+"RIS  "+tz390.op_code[index]+" R1,I2,M3,D4(B4)";
+                    break;
+                case 48:
+                    entry=entry+"RIS  "+tz390.op_code[index].substring(0,4)+" R1,I2,D4(B4)";
+                    break;
+                case 49:
+                    entry=entry+"RIE  "+tz390.op_code[index]+" R1,R2,M3,I4";
+                    break;
+                case 50:
+                    entry=entry+"RIE  "+tz390.op_code[index].substring(0,4)+" R1,R2,I4";
+                    break;
+                case 51:
+                    entry=entry+"SIL  "+tz390.op_code[index]+" D1(B1),I2";
+                    break;
+                case 52:
+                    entry=entry+"RIE  "+tz390.op_code[index].substring(0,4);
+                     if (tz390.op_code[index].indexOf("$") == -1)
+                        {entry=entry+" R1,R2,I3,I4<,I5>";
+                         }
+                     else
+                        {entry=entry+" R1,R2";
+                         }
+                     break;
+                case 53:
+                    
+                    // Alternate formats have mnemonics ending in 'A'
+                    if (tz390.op_name[index].substring(tz390.op_name[index].length()-1).equals("A"))
+                       {entry=entry+"RRF  "+tz390.op_code[index]+" R1,M3,R2,M4";
+                        }
+                    else
+                       {entry=entry+"RRE  "+tz390.op_code[index]+" R1,R2";
+                        }
+                    break;
+                case 54:
+                    // Alternate formats have mnemonics ending in 'A'
+                    if (tz390.op_name[index].substring(tz390.op_name[index].length()-1).equals("A"))
+                       {entry=entry+"RRF  "+tz390.op_code[index]+" R1,M3,R2,M4";
+                        }
+                    else
+                       {entry=entry+"RRF  "+tz390.op_code[index]+" R1,M3,R2";
+                        }
+                    break;
+                case 55:
+                    entry=entry+"SSF  "+tz390.op_code[index].substring(0,2)+"."+tz390.op_code[index].substring(2)+" R3,D1(B1),D2(B2)";
+                    break;
+                case 56:
+                    entry=entry+"RSY  "+tz390.op_code[index]+" R1,D2(B2),M3";
+                    break;
+                case 57:
+                    entry=entry+"RIE  "+tz390.op_code[index]+" R1,R3,I2";
+                    break;
+                default:
+                    entry=entry+" op_type "+tz390.op_type[index]+" cannot be listed";
+                }
+            }
+            if (tz390.op_type[index]!=0     // comment lines
+            &&  tz390.op_type[index]!=122   //   empty lines (not used)
+                )
+               {put_prn_line(entry);
+                }
+        index++;
+        }
+    }
 private void gen_obj_esds(){
 	/*
 	 * write ESD's for CSECTS, EXTRNS, and ENTRIES

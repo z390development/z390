@@ -7252,7 +7252,187 @@ git commit -m "Reconstructed version v1.5.06 of z390 committed on behalf of Don 
 git tag -a v1.5.06 -m "Reconstructed version v1.5.06 of z390 committed on behalf of Don Higgins"
 git gc --aggressive
 
+========================================================================================
 
+==> Create new Branch and switch to it
+git switch -c zVSAM v1.5.06
+
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.06_zVSAM1 (V1.5.06 + zVSAM Handover 1)
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Add to .gitignore file:
+# Assembler/emulator and other input stuff
+# **/*.js  --> javascript
+
+==> Stage files for V1.5.06_zVSAM1 (V1.5.06 + zVSAM Handover 1)
+git add src/ez390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/vz390.java
+git add README.TXT
+git add src/CatEntry_Aix.java
+git add src/CatEntry_Cluster.java
+git add src/CatEntry_Path.java
+git add src/Catalog.java
+git add src/CatalogEntry.java
+git add src/CatalogImplementationType.java
+git add src/InlineCatalog.java
+git add src/ebcdicStryng.java
+git add test/
+
+==> Create commit for V1.5.06_zVSAM1 (V1.5.06 + zVSAM Handover 1)
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Hugh 2021-01-01 00:00:00 +0000
+set GIT_COMMITTER_DATE=2021-03-28 13:47:00 +0100
+git commit -m "Reconstructed version of zVSAM Handover 1 committed on behalf of Hugh Sweeney"
+git tag -a zVSAM_Handover1 -m "Reconstructed version of zVSAM Handover 1 committed on behalf of Hugh Sweeney"
+
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.06_zVSAM2 (V1.5.06 + zVSAM Handover 2)
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Add to .gitignore file:
+# Other output stuff
+**/RTGENCMP.[dD][aA][tT]
+**/ZAPDEMO1.[dD][aA][tT]
+**/rtgendr[1-3].[dD][aA][tT]
+**/RTGENDIF.[dD][aA][tT]
+
+==> Stage files for V1.5.06_zVSAM2 (V1.5.06 + zVSAM Handover 2)
+git add README.TXT
+git add src/ebcdicStryng.java
+git add src/sz390.java
+git add src/vz390.java
+git add test/Democat.java
+git add test/README.md
+git add test/execz.js
+git add test/preDiff.js
+git add src/emulator.txt
+git add src/zACB.java
+git add src/zBuffer.java
+git add src/zFCB.java
+git add src/zRPL.java
+git add test/ACBD2.mlc
+git add test/ACBD2.txt
+git add test/acb2m.mlc
+git add test/tasm.js
+git add test/tcompile.js
+
+==> Create commit for V1.5.06_zVSAM2 (V1.5.06 + zVSAM Handover 2)
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Hugh 2021-01-02 00:00:00 +0000
+set GIT_COMMITTER_DATE=2021-03-28 13:59:00 +0000
+git commit -m "Reconstructed version of zVSAM Handover 2 committed on behalf of Hugh Sweeney"
+git tag -a zVSAM_Handover2 -m "Reconstructed version of zVSAM Handover 2 committed on behalf of Hugh Sweeney"
+
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.06_zVSAM3 (V1.5.06 + zVSAM Handover 3)
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.5.06_zVSAM3 (V1.5.06 + zVSAM Handover 3)
+git rm  README.TXT
+git add src/ebcdicStryng.java
+git add src/ez390.java
+git add src/sz390.java
+git add src/vz390.java
+git add src/zACB.java
+git add src/zRPL.java
+git rm  test/ACBD2.txt
+git add test/acb1DI.mlc
+
+==> Create commit for V1.5.06_zVSAM3 (V1.5.06 + zVSAM Handover 3)
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Hugh 2021-01-03 00:00:00 +0000
+set GIT_COMMITTER_DATE=2021-03-28 14:12:00 +0000
+git commit -m "Reconstructed version of zVSAM Handover 3 committed on behalf of Hugh Sweeney"
+git tag -a zVSAM_Handover3 -m "Reconstructed version of zVSAM Handover 3 committed on behalf of Hugh Sweeney"
+
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.06_zVSAM3 (V1.5.06 + zVSAM Handover 3.1)
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.5.06_zVSAM3 (V1.5.06 + zVSAM Handover 3.1)
+git add src/ebcdicStryng.java
+git add src/emulator.txt
+git add src/ez390.java
+git add src/sz390.java
+git add src/vz390.java
+git add test/README.md
+git add test/execz.js
+git add test/preDiff.js
+git add README.TXT
+git add test/AixEntry.java
+git add test/CatEntry_Aix.java
+git add test/CatEntry_Cluster.java
+git add test/CatEntry_Path.java
+git add test/Catalog.java
+git add test/CatalogEntry.java
+git add test/CatalogImplementationType.java
+git add test/ClusterEntry.java
+git add test/ControlBlocks.java
+git add test/InlineCatalog.java
+git add test/PathEntry.java
+git add test/wto1.mlc
+
+==> Create commit for V1.5.06_zVSAM3 (V1.5.06 + zVSAM Handover 3.1)
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Hugh 2021-01-03 01:00:00 +0000
+set GIT_COMMITTER_DATE=2021-03-28 14:24:00 +0000
+git commit -m "Reconstructed version of zVSAM Handover 3.1 committed on behalf of Hugh Sweeney"
+git tag -a zVSAM_Handover3.1 -m "Reconstructed version of zVSAM Handover 3.1 committed on behalf of Hugh Sweeney"
+git gc --aggressive
+
+========================================================================================
+
+==> Back to Trunk
+git switch Trunk
+
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.6.00b01
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.6.00b01
+git add src/az390.java
+git add src/pz390.java
+git add src/tz390.java
+
+==> Create commit for V1.6.00b01
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Abe 2014-07-28 20:55:00 +0100
+set GIT_COMMITTER_DATE=2021-03-28 14:39:00 +0100
+git commit -m "Reconstructed version v1.6.00b01 of z390"
+git tag -a v1.6.00b01 -m "Reconstructed version v1.6.00b01 of z390"
 
 
 

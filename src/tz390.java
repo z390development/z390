@@ -272,6 +272,10 @@ public  class  tz390 {
     * 03/30/12 RPI 1199 remove upper limit on Apple release
     * 04/19/12 RPI 1210 allow period in path without corrupting file type
     * 05/02/12 RPI 1211 limit check cf5_index for STE of type 4 ED
+    * 04/19/12 RPI 1209 Move array op_trace_type to tz390
+    * 05/07/12 RPI 1209 (AFK) Replace static content of arrays op_name, op_code,
+    *          op_type, op_trace_type with same data generated from op_tables array
+    * 05/09/12 RPI 1209A (AFK) Implement OPTABLE/MACHINE options
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -280,7 +284,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.5.06";  //dsh
+    String version    = "V1.6.00b01";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -328,10 +332,13 @@ public  class  tz390 {
     boolean opt_listcall = true;  // list macro calls
     boolean opt_listuse  = true;  // list usage at USING and DROP
     boolean opt_loadhigh = true;  // load pgms and alloc storage from top down
+    String  opt_machine  = "";    // No machine specified RPI 1209A
     boolean opt_mcall    = false; // list MCALL and MEXIT on PRN // RPI 511
     boolean opt_mod      = false;  // generate raw code output from lz390 with sfx .MOD
     boolean opt_obj      = true;  // generate binary MVS compatible OBJ file RPI 694
     boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
+    String  opt_optable  = "*DFLT"; // default optable depends on z390/HLASM mode as indicated by allow option RPI 1209A
+    String  opt_optable_list = "NOLIST"; // do not to list instructions RPI 1209A
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
     boolean opt_pcopt    = true;  // optimize pc code for speed
@@ -957,1299 +964,8 @@ public  class  tz390 {
   /*
    * opcode tables for trace
    */
-      String[] op_name = {
-    		   "*",        // 00 comments
-		       "PR",       // 10 "0101" "PR" "E" 1
-		       "UPT",      // 20 "0102" "UPT" "E" 1
-		       "PTFF",     //    "0104" "PTFF" "E" 1 Z9-1
-		       "SCKPF",    // 30 "0107" "SCKPF" "E" 1
-		       "PFPO",     // 40 "010A" "PFPO" "E" 1   RPI 1013
-		       "TAM",      // 40 "010B" "TAM" "E" 1
-		       "SAM24",    // 50 "010C" "SAM24" "E" 1
-		       "SAM31",    // 60 "010D" "SAM31" "E" 1
-		       "SAM64",    // 70 "010E" "SAM64" "E" 1
-		       "TRAP2",    // 80 "01FF" "TRAP2" "E" 1
-		       "SPM",      // 90 "04" "SPM" "RR" 2
-		       "BALR",     // 100 "05" "BALR" "RR" 2
-		       "BCTR",     // 110 "06" "BCTR" "RR" 2
-		       "BCR",      // 120 "07" "BCR" "RR" 2
-		       "BR",       // 130 "07F" "BR" "BRX" 3
-		       "NOPR",     // 140 "070" "NOPR" "BRX" 3
-		       "BHR",      // 150 "072" "BHR" "BRX" 3
-		       "BLR",      // 160 "074" "BLR" "BRX" 3
-		       "BER",      // 170 "078" "BER" "BRX" 3
-		       "BNHR",     // 180 "07D" "BNHR" "BRX" 3
-		       "BNLR",     // 190 "07B" "BNLR" "BRX" 3
-		       "BNER",     // 200 "077" "BNER" "BRX" 3
-		       "BPR",      // 210 "072" "BPR" "BRX" 3
-		       "BOR",      // 220 "071" "BOR" "BRX" 3
-		       "BMR",      // 230 "074" "BMR" "BRX" 3
-		       "BZR",      // 240 "078" "BZR" "BRX" 3
-		       "BNPR",     // 250 "07D" "BNPR" "BRX" 3
-		       "BNMR",     // 260 "07B" "BNMR" "BRX" 3
-		       "BNZR",     // 270 "077" "BNZR" "BRX" 3
-		       "BNOR",     // 280 "07E" "BNOR" "BRX" 3
-		       "SVC",      // 290 "0A" "SVC" "I" 4
-		       "BSM",      // 300 "0B" "BSM" "RR" 2
-		       "BASSM",    // 310 "0C" "BASSM" "RR" 2
-		       "BASR",     // 320 "0D" "BASR" "RR" 2
-		       "MVCL",     // 330 "0E" "MVCL" "RR" 2
-		       "CLCL",     // 340 "0F" "CLCL" "RR" 2
-		       "LPR",      // 350 "10" "LPR" "RR" 2
-		       "LNR",      // 360 "11" "LNR" "RR" 2
-		       "LTR",      // 370 "12" "LTR" "RR" 2
-		       "LCR",      // 380 "13" "LCR" "RR" 2
-		       "NR",       // 390 "14" "NR" "RR" 2
-		       "CLR",      // 400 "15" "CLR" "RR" 2
-		       "OR",       // 410 "16" "OR" "RR" 2
-		       "XR",       // 420 "17" "XR" "RR" 2
-		       "LR",       // 430 "18" "LR" "RR" 2
-		       "CR",       // 440 "19" "CR" "RR" 2
-		       "AR",       // 450 "1A" "AR" "RR" 2
-		       "SR",       // 460 "1B" "SR" "RR" 2
-		       "MR",       // 470 "1C" "MR" "RR" 2
-		       "DR",       // 480 "1D" "DR" "RR" 2
-		       "ALR",      // 490 "1E" "ALR" "RR" 2
-		       "SLR",      // 500 "1F" "SLR" "RR" 2
-		       "LPDR",     // 510 "20" "LPDR" "RR" 2
-		       "LNDR",     // 520 "21" "LNDR" "RR" 2
-		       "LTDR",     // 530 "22" "LTDR" "RR" 2
-		       "LCDR",     // 540 "23" "LCDR" "RR" 2
-		       "HDR",      // 550 "24" "HDR" "RR" 2
-		       "LDXR",     // 560 "25" "LDXR" "RR" 2
-		       "LRDR",     // 570 "25" "LRDR" "RR" 2
-		       "MXR",      // 580 "26" "MXR" "RR" 2
-		       "MXDR",     // 590 "27" "MXDR" "RR" 2
-		       "LDR",      // 600 "28" "LDR" "RR" 2
-		       "CDR",      // 610 "29" "CDR" "RR" 2
-		       "ADR",      // 620 "2A" "ADR" "RR" 2
-		       "SDR",      // 630 "2B" "SDR" "RR" 2
-		       "MDR",      // 640 "2C" "MDR" "RR" 2
-		       "DDR",      // 650 "2D" "DDR" "RR" 2
-		       "AWR",      // 660 "2E" "AWR" "RR" 2
-		       "SWR",      // 670 "2F" "SWR" "RR" 2
-		       "LPER",     // 680 "30" "LPER" "RR" 2
-		       "LNER",     // 690 "31" "LNER" "RR" 2
-		       "LTER",     // 700 "32" "LTER" "RR" 2
-		       "LCER",     // 710 "33" "LCER" "RR" 2
-		       "HER",      // 720 "34" "HER" "RR" 2
-		       "LEDR",     // 730 "35" "LEDR" "RR" 2
-		       "LRER",     // 740 "35" "LRER" "RR" 2
-		       "AXR",      // 750 "36" "AXR" "RR" 2
-		       "SXR",      // 760 "37" "SXR" "RR" 2
-		       "LER",      // 770 "38" "LER" "RR" 2
-		       "CER",      // 780 "39" "CER" "RR" 2
-		       "AER",      // 790 "3A" "AER" "RR" 2
-		       "SER",      // 800 "3B" "SER" "RR" 2
-		       "MDER",     // 810 "3C" "MDER" "RR" 2
-		       "MER",      // 820 "3C" "MER" "RR" 2
-		       "DER",      // 830 "3D" "DER" "RR" 2
-		       "AUR",      // 840 "3E" "AUR" "RR" 2
-		       "SUR",      // 850 "3F" "SUR" "RR" 2
-		       "STH",      // 860 "40" "STH" "RX" 5
-		       "LA",       // 870 "41" "LA" "RX" 5
-		       "STC",      // 880 "42" "STC" "RX" 5
-		       "IC",       // 890 "43" "IC" "RX" 5
-		       "EX",       // 900 "44" "EX" "RX" 5
-		       "BAL",      // 910 "45" "BAL" "RX" 5
-		       "BCT",      // 920 "46" "BCT" "RX" 5
-		       "BC",       // 930 "47" "BC" "RX" 5
-		       "B",        // 940 "47F" "B" "BCX" 6
-		       "NOP",      // 950 "470" "NOP" "BCX" 6
-		       "BH",       // 960 "472" "BH" "BCX" 6
-		       "BL",       // 970 "474" "BL" "BCX" 6
-		       "BE",       // 980 "478" "BE" "BCX" 6
-		       "BNH",      // 990 "47D" "BNH" "BCX" 6
-		       "BNL",      // 1000 "47B" "BNL" "BCX" 6
-		       "BNE",      // 1010 "477" "BNE" "BCX" 6
-		       "BP",       // 1020 "472" "BP" "BCX" 6
-		       "BO",       // 1030 "471" "BO" "BCX" 6
-		       "BM",       // 1040 "474" "BM" "BCX" 6
-		       "BZ",       // 1050 "478" "BZ" "BCX" 6
-		       "BNP",      // 1060 "47D" "BNP" "BCX" 6
-		       "BNM",      // 1070 "47B" "BNM" "BCX" 6
-		       "BNZ",      // 1080 "477" "BNZ" "BCX" 6
-		       "BNO",      // 1090 "47E" "BNO" "BCX" 6
-		       "LH",       // 1100 "48" "LH" "RX" 5
-		       "CH",       // 1110 "49" "CH" "RX" 5
-		       "AH",       // 1120 "4A" "AH" "RX" 5
-		       "SH",       // 1130 "4B" "SH" "RX" 5
-		       "MH",       // 1140 "4C" "MH" "RX" 5
-		       "BAS",      // 1150 "4D" "BAS" "RX" 5
-		       "CVD",      // 1160 "4E" "CVD" "RX" 5
-		       "CVB",      // 1170 "4F" "CVB" "RX" 5
-		       "ST",       // 1180 "50" "ST" "RX" 5
-		       "LAE",      // 1190 "51" "LAE" "RX" 5
-		       "XDECO",    // 1193 "52" "XDECO" "RX" 37 RPI 812
-		       "XDECI",    // 1196 "53" "XDECI" "RX" 37 RPI 812	       
-		       "N",        // 1200 "54" "N" "RX" 5
-		       "CL",       // 1210 "55" "CL" "RX" 5
-		       "O",        // 1220 "56" "O" "RX" 5
-		       "X",        // 1230 "57" "X" "RX" 5
-		       "L",        // 1240 "58" "L" "RX" 5
-		       "C",        // 1250 "59" "C" "RX" 5
-		       "A",        // 1260 "5A" "A" "RX" 5
-		       "S",        // 1270 "5B" "S" "RX" 5
-		       "M",        // 1280 "5C" "M" "RX" 5
-		       "D",        // 1290 "5D" "D" "RX" 5
-		       "AL",       // 1300 "5E" "AL" "RX" 5
-		       "SL",       // 1310 "5F" "SL" "RX" 5
-		       "STD",      // 1320 "60" "STD" "RX" 5
-		       "XHEXI",    // 1323 "61" "XHEXI" "RX" 37 RPI 812
-		       "XHEXO",    // 1326 "62" "XHEXO" "RX" 37 RPI 812
-		       "MXD",      // 1330 "67" "MXD" "RX" 5
-		       "LD",       // 1340 "68" "LD" "RX" 5
-		       "CD",       // 1350 "69" "CD" "RX" 5
-		       "AD",       // 1360 "6A" "AD" "RX" 5
-		       "SD",       // 1370 "6B" "SD" "RX" 5
-		       "MD",       // 1380 "6C" "MD" "RX" 5
-		       "DD",       // 1390 "6D" "DD" "RX" 5
-		       "AW",       // 1400 "6E" "AW" "RX" 5
-		       "SW",       // 1410 "6F" "SW" "RX" 5
-		       "STE",      // 1420 "70" "STE" "RX" 5
-		       "MS",       // 1430 "71" "MS" "RX" 5
-		       "LE",       // 1440 "78" "LE" "RX" 5
-		       "CE",       // 1450 "79" "CE" "RX" 5
-		       "AE",       // 1460 "7A" "AE" "RX" 5
-		       "SE",       // 1470 "7B" "SE" "RX" 5
-		       "MDE",      // 1480 "7C" "MDE" "RX" 5
-		       "ME",       // 1490 "7C" "ME" "RX" 5
-		       "DE",       // 1500 "7D" "DE" "RX" 5
-		       "AU",       // 1510 "7E" "AU" "RX" 5
-		       "SU",       // 1520 "7F" "SU" "RX" 5
-		       "SSM",      // 1530 "8000" "SSM" "S" 7
-		       "LPSW",     // 1540 "8200" "LPSW" "S" 7
-		       "DIAGNOSE", // 1550 "83" "DIAGNOSE" "DM" 8
-		       "BRXH",     // 1560 "84" "BRXH" "RSI" 9
-		       "JXH",      // 1570 "84" "JXH" "RSI" 9
-		       "BRXLE",    // 1580 "85" "BRXLE" "RSI" 9
-		       "JXLE",     // 1590 "85" "JXLE" "RSI" 9
-		       "BXH",      // 1600 "86" "BXH" "RS" 10
-		       "BXLE",     // 1610 "87" "BXLE" "RS" 10
-		       "SRL",      // 1620 "88" "SRL" "RS" 10
-		       "SLL",      // 1630 "89" "SLL" "RS" 10
-		       "SRA",      // 1640 "8A" "SRA" "RS" 10
-		       "SLA",      // 1650 "8B" "SLA" "RS" 10
-		       "SRDL",     // 1660 "8C" "SRDL" "RS" 10
-		       "SLDL",     // 1670 "8D" "SLDL" "RS" 10
-		       "SRDA",     // 1680 "8E" "SRDA" "RS" 10
-		       "SLDA",     // 1690 "8F" "SLDA" "RS" 10
-		       "STM",      // 1700 "90" "STM" "RS" 10
-		       "TM",       // 1710 "91" "TM" "SI" 11
-		       "MVI",      // 1720 "92" "MVI" "SI" 11
-		       "TS",       // 1730 "9300" "TS" "S" 7
-		       "NI",       // 1740 "94" "NI" "SI" 11
-		       "CLI",      // 1750 "95" "CLI" "SI" 11
-		       "OI",       // 1760 "96" "OI" "SI" 11
-		       "XI",       // 1770 "97" "XI" "SI" 11
-		       "LM",       // 1780 "98" "LM" "RS" 10
-		       "TRACE",    // 1790 "99" "TRACE" "RS" 10
-		       "LAM",      // 1800 "9A" "LAM" "RS" 10
-		       "STAM",     // 1810 "9B" "STAM" "RS" 10
-		       "IIHH",     // 1820 "A50" "IIHH" "RI" 12
-		       "IIHL",     // 1830 "A51" "IIHL" "RI" 12
-		       "IILH",     // 1840 "A52" "IILH" "RI" 12
-		       "IILL",     // 1850 "A53" "IILL" "RI" 12
-		       "NIHH",     // 1860 "A54" "NIHH" "RI" 12
-		       "NIHL",     // 1870 "A55" "NIHL" "RI" 12
-		       "NILH",     // 1880 "A56" "NILH" "RI" 12
-		       "NILL",     // 1890 "A57" "NILL" "RI" 12
-		       "OIHH",     // 1900 "A58" "OIHH" "RI" 12
-		       "OIHL",     // 1910 "A59" "OIHL" "RI" 12
-		       "OILH",     // 1920 "A5A" "OILH" "RI" 12
-		       "OILL",     // 1930 "A5B" "OILL" "RI" 12
-		       "LLIHH",    // 1940 "A5C" "LLIHH" "RI" 12
-		       "LLIHL",    // 1950 "A5D" "LLIHL" "RI" 12
-		       "LLILH",    // 1960 "A5E" "LLILH" "RI" 12
-		       "LLILL",    // 1970 "A5F" "LLILL" "RI" 12
-		       "TMLH",     // 1980 "A70" "TMLH" "RI" 12
-		       "TMH",      // 1990 "A70" "TMH" "RI" 12
-		       "TMLL",     // 2000 "A71" "TMLL" "RI" 12
-		       "TML",      // 2010 "A71" "TML" "RI" 12
-		       "TMHH",     // 2020 "A72" "TMHH" "RI" 12
-		       "TMHL",     // 2030 "A73" "TMHL" "RI" 12
-		       "BRC",      // 2040 "A74" "BRC" "RI" 12
-		       "J",        // 2050 "A74F" "J" "BRCX" 13
-		       "JNOP",     // 2060 "A740" "JNOP" "BRCX" 13
-		       "BRU",      // 2070 "A74F" "BRU" "BRCX" 13
-		       "BRH",      // 2080 "A742" "BRH" "BRCX" 13
-		       "BRL",      // 2090 "A744" "BRL" "BRCX" 13
-		       "BRE",      // 2100 "A748" "BRE" "BRCX" 13
-		       "BRNH",     // 2110 "A74D" "BRNH" "BRCX" 13
-		       "BRNL",     // 2120 "A74B" "BRNL" "BRCX" 13
-		       "BRNE",     // 2130 "A747" "BRNE" "BRCX" 13
-		       "BRP",      // 2140 "A742" "BRP" "BRCX" 13
-		       "BRM",      // 2150 "A744" "BRM" "BRCX" 13
-		       "BRZ",      // 2160 "A748" "BRZ" "BRCX" 13
-		       "BRO",      // 2170 "A741" "BRO" "BRCX" 13
-		       "BRNP",     // 2180 "A74D" "BRNP" "BRCX" 13
-		       "BRNM",     // 2190 "A74B" "BRNM" "BRCX" 13
-		       "BRNZ",     // 2200 "A747" "BRNZ" "BRCX" 13
-		       "BRNO",     // 2210 "A74E" "BRNO" "BRCX" 13
-		       "JH",       // 2220 "A742" "JH" "BRCX" 13
-		       "JL",       // 2230 "A744" "JL" "BRCX" 13
-		       "JE",       // 2240 "A748" "JE" "BRCX" 13
-		       "JNH",      // 2250 "A74D" "JNH" "BRCX" 13
-		       "JNL",      // 2260 "A74B" "JNL" "BRCX" 13
-		       "JNE",      // 2270 "A747" "JNE" "BRCX" 13
-		       "JP",       // 2280 "A742" "JP" "BRCX" 13  
-		       "JM",       // 2290 "A744" "JM" "BRCX" 13
-		       "JZ",       // 2300 "A748" "JZ" "BRCX" 13
-		       "JO",       // 2310 "A741" "JO" "BRCX" 13
-		       "JNP",      // 2320 "A74D" "JNP" "BRCX" 13
-		       "JNM",      // 2330 "A74B" "JNM" "BRCX" 13
-		       "JNZ",      // 2340 "A747" "JNZ" "BRCX" 13
-		       "JNO",      // 2350 "A74E" "JNO" "BRCX" 13
-		       "BRAS",     // 2360 "A75" "BRAS" "RI" 12
-		       "JAS",      // 2370 "A75" "JAS" "RI" 12
-		       "BRCT",     // 2380 "A76" "BRCT" "RI" 12
-		       "JCT",      // 2390 "A76" "JCT" "RI" 12
-		       "BRCTG",    // 2400 "A77" "BRCTG" "RI" 12
-		       "JCTG",     // 2410 "A77" "JCTG" "RI" 12
-		       "LHI",      // 2420 "A78" "LHI" "RI" 12
-		       "LGHI",     // 2430 "A79" "LGHI" "RI" 12
-		       "AHI",      // 2440 "A7A" "AHI" "RI" 12
-		       "AGHI",     // 2450 "A7B" "AGHI" "RI" 12
-		       "MHI",      // 2460 "A7C" "MHI" "RI" 12
-		       "MGHI",     // 2470 "A7D" "MGHI" "RI" 12
-		       "CHI",      // 2480 "A7E" "CHI" "RI" 12
-		       "CGHI",     // 2490 "A7F" "CGHI" "RI" 12
-		       "MVCLE",    // 2500 "A8" "MVCLE" "RS" 10
-		       "CLCLE",    // 2510 "A9" "CLCLE" "RS" 10
-		       "STNSM",    // 2520 "AC" "STNSM" "SI" 11
-		       "STOSM",    // 2530 "AD" "STOSM" "SI" 11
-		       "SIGP",     // 2540 "AE" "SIGP" "RS" 10
-		       "MC",       // 2550 "AF" "MC" "SI" 11
-		       "LRA",      // 2560 "B1" "LRA" "RX" 5
-		       "STIDP",    // 2570 "B202" "STIDP" "S" 7
-		       "SCK",      // 2580 "B204" "SCK" "S" 7
-		       "STCK",     // 2590 "B205" "STCK" "S" 7
-		       "SCKC",     // 2600 "B206" "SCKC" "S" 7
-		       "STCKC",    // 2610 "B207" "STCKC" "S" 7
-		       "SPT",      // 2620 "B208" "SPT" "S" 7
-		       "STPT",     // 2630 "B209" "STPT" "S" 7
-		       "SPKA",     // 2640 "B20A" "SPKA" "S" 7
-		       "IPK",      // 2650 "B20B" "IPK" "S" 7
-		       "PTLB",     // 2660 "B20D" "PTLB" "S" 7
-		       "SPX",      // 2670 "B210" "SPX" "S" 7
-		       "STPX",     // 2680 "B211" "STPX" "S" 7
-		       "STAP",     // 2690 "B212" "STAP" "S" 7
-		       "PC",       // 2700 "B218" "PC" "S" 7
-		       "SAC",      // 2710 "B219" "SAC" "S" 7
-		       "CFC",      // 2720 "B21A" "CFC" "S" 7
-		       "IPTE",     // 2730 "B221" "IPTE" "RRE" 14
-		       "IPM",      // 2740 "B222" "IPM" "RRE" 14
-		       "IVSK",     // 2750 "B223" "IVSK" "RRE" 14
-		       "IAC",      // 2760 "B224" "IAC" "RRE" 14
-		       "SSAR",     // 2770 "B225" "SSAR" "RRE" 14
-		       "EPAR",     // 2780 "B226" "EPAR" "RRE" 14
-		       "ESAR",     // 2790 "B227" "ESAR" "RRE" 14
-		       "PT",       // 2800 "B228" "PT" "RRE" 14
-		       "ISKE",     // 2810 "B229" "ISKE" "RRE" 14
-		       "RRBE",     // 2820 "B22A" "RRBE" "RRE" 14
-		       "SSKE",     // 2830 "B22B" "SSKE" "RRE" 14
-		       "TB",       // 2840 "B22C" "TB" "RRE" 14
-		       "DXR",      // 2850 "B22D" "DXR" "RRE" 14
-		       "PGIN",     // 2860 "B22E" "PGIN" "RRE" 14
-		       "PGOUT",    // 2870 "B22F" "PGOUT" "RRE" 14
-		       "CSCH",     // 2880 "B230" "CSCH" "S" 7
-		       "HSCH",     // 2890 "B231" "HSCH" "S" 7
-		       "MSCH",     // 2900 "B232" "MSCH" "S" 7
-		       "SSCH",     // 2910 "B233" "SSCH" "S" 7
-		       "STSCH",    // 2920 "B234" "STSCH" "S" 7
-		       "TSCH",     // 2930 "B235" "TSCH" "S" 7
-		       "TPI",      // 2940 "B236" "TPI" "S" 7
-		       "SAL",      // 2950 "B237" "SAL" "S" 7
-		       "RSCH",     // 2960 "B238" "RSCH" "S" 7
-		       "STCRW",    // 2970 "B239" "STCRW" "S" 7
-		       "STCPS",    // 2980 "B23A" "STCPS" "S" 7
-		       "RCHP",     // 2990 "B23B" "RCHP" "S" 7
-		       "SCHM",     // 3000 "B23C" "SCHM" "S" 7
-		       "BAKR",     // 3010 "B240" "BAKR" "RRE" 14
-		       "CKSM",     // 3020 "B241" "CKSM" "RRE" 14
-		       "SQDR",     // 3030 "B244" "SQDR" "RRE" 14
-		       "SQER",     // 3040 "B245" "SQER" "RRE" 14
-		       "STURA",    // 3050 "B246" "STURA" "RRE" 14
-		       "MSTA",     // 3060 "B247" "MSTA" "RRE" 14
-		       "PALB",     // 3070 "B248" "PALB" "RRE" 14
-		       "EREG",     // 3080 "B249" "EREG" "RRE" 14
-		       "ESTA",     // 3090 "B24A" "ESTA" "RRE" 14
-		       "LURA",     // 3100 "B24B" "LURA" "RRE" 14
-		       "TAR",      // 3110 "B24C" "TAR" "RRE" 14
-		       "CPYA",     // 3120 "B24D" "CPYA" "RRE" 14
-		       "SAR",      // 3130 "B24E" "SAR" "RRE" 14
-		       "EAR",      // 3140 "B24F" "EAR" "RRE" 14
-		       "CSP",      // 3150 "B250" "CSP" "RRE" 14
-		       "MSR",      // 3160 "B252" "MSR" "RRE" 14
-		       "MVPG",     // 3170 "B254" "MVPG" "RRE" 14
-		       "MVST",     // 3180 "B255" "MVST" "RRE" 14
-		       "CUSE",     // 3190 "B257" "CUSE" "RRE" 14
-		       "BSG",      // 3200 "B258" "BSG" "RRE" 14
-		       "BSA",      // 3210 "B25A" "BSA" "RRE" 14
-		       "CLST",     // 3220 "B25D" "CLST" "RRE" 14
-		       "SRST",     // 3230 "B25E" "SRST" "RRE" 14
-		       "CMPSC",    // 3240 "B263" "CMPSC" "RRE" 14
-		       "XSCH",     // 3250 "B276" "XSCH" "S" 7
-		       "RP",       // 3260 "B277" "RP" "S" 7
-		       "STCKE",    // 3270 "B278" "STCKE" "S" 7
-		       "SACF",     // 3280 "B279" "SACF" "S" 7
-		       "STCKF",    //      "B27C" "STCKF" "S" 7 Z9-2
-		       "STSI",     // 3290 "B27D" "STSI" "S" 7
-		       "SRNM",     // 3300 "B299" "SRNM" "S" 7
-		       "STFPC",    // 3310 "B29C" "STFPC" "S" 7
-		       "LFPC",     // 3320 "B29D" "LFPC" "S" 7
-		       "TRE",      // 3330 "B2A5" "TRE" "RRE" 14
-		       "CUUTF",    // 3340 "B2A6" "CUUTF" "RRE" 14
-		       "CU21",     // 3350 "B2A6" "CU21" "RRE" 14
-		       "CUTFU",    // 3360 "B2A7" "CUTFU" "RRE" 14
-		       "CU12",     // 3370 "B2A7" "CU12" "RRE" 14
-		       "STFLE",    //      "B2B0" "STFLE" "S" 7 Z9-3
-		       "STFL",     // 3380 "B2B1" "STFL" "S" 7
-		       "LPSWE",    // 3390 "B2B2" "LPSWE" "S" 7
-		       "SRNMB",    // 3392 "B2B8" "SRNMB" "S" 7 RPI 1125
-		       "SRNMT",    // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
-		       "LFAS",     // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
-		       "TRAP4",    // 3400 "B2FF" "TRAP4" "S" 7
-		       "LPEBR",    // 3410 "B300" "LPEBR" "RRE" 14
-		       "LNEBR",    // 3420 "B301" "LNEBR" "RRE" 14
-		       "LTEBR",    // 3430 "B302" "LTEBR" "RRE" 14
-		       "LCEBR",    // 3440 "B303" "LCEBR" "RRE" 14
-		       "LDEBR",    // 3450 "B304" "LDEBR" "RRE" 14
-		       "LXDBR",    // 3460 "B305" "LXDBR" "RRE" 14
-		       "LXEBR",    // 3470 "B306" "LXEBR" "RRE" 14
-		       "MXDBR",    // 3480 "B307" "MXDBR" "RRE" 14
-		       "KEBR",     // 3490 "B308" "KEBR" "RRE" 14
-		       "CEBR",     // 3500 "B309" "CEBR" "RRE" 14
-		       "AEBR",     // 3510 "B30A" "AEBR" "RRE" 14
-		       "SEBR",     // 3520 "B30B" "SEBR" "RRE" 14
-		       "MDEBR",    // 3530 "B30C" "MDEBR" "RRE" 14
-		       "DEBR",     // 3540 "B30D" "DEBR" "RRE" 14
-		       "MAEBR",    // 3550 "B30E" "MAEBR" "RRF1" 15
-		       "MSEBR",    // 3560 "B30F" "MSEBR" "RRF1" 15
-		       "LPDBR",    // 3570 "B310" "LPDBR" "RRE" 14
-		       "LNDBR",    // 3580 "B311" "LNDBR" "RRE" 14
-		       "LTDBR",    // 3590 "B312" "LTDBR" "RRE" 14
-		       "LCDBR",    // 3600 "B313" "LCDBR" "RRE" 14
-		       "SQEBR",    // 3610 "B314" "SQEBR" "RRE" 14
-		       "SQDBR",    // 3620 "B315" "SQDBR" "RRE" 14
-		       "SQXBR",    // 3630 "B316" "SQXBR" "RRE" 14
-		       "MEEBR",    // 3640 "B317" "MEEBR" "RRE" 14
-		       "KDBR",     // 3650 "B318" "KDBR" "RRE" 14
-		       "CDBR",     // 3660 "B319" "CDBR" "RRE" 14
-		       "ADBR",     // 3670 "B31A" "ADBR" "RRE" 14
-		       "SDBR",     // 3680 "B31B" "SDBR" "RRE" 14
-		       "MDBR",     // 3690 "B31C" "MDBR" "RRE" 14
-		       "DDBR",     // 3700 "B31D" "DDBR" "RRE" 14
-		       "MADBR",    // 3710 "B31E" "MADBR" "RRF1" 15
-		       "MSDBR",    // 3720 "B31F" "MSDBR" "RRF1" 15
-		       "LDER",     // 3730 "B324" "LDER" "RRE" 14
-		       "LXDR",     // 3740 "B325" "LXDR" "RRE" 14
-		       "LXER",     // 3750 "B326" "LXER" "RRE" 14
-		       "MAER",     // 3760 "B32E" "MAER" "RRF1" 15
-		       "MSER",     // 3770 "B32F" "MSER" "RRF1" 15
-		       "SQXR",     // 3780 "B336" "SQXR" "RRE" 14
-		       "MEER",     // 3790 "B337" "MEER" "RRE" 14
-		       "MAYLR",    //      "B338" "MAYLR" "RRF1" 15 Z9-4
-		       "MYLR",     //      "B339" "MYLR" "RRF1" 15 Z9-5
-		       "MAYR",     //      "B33A" "MAYR" "RRF1" 15 Z9-6
-		       "MYR",      //      "B33B" "MYR" "RRF1" 15 Z9-7
-		       "MAYHR",    //      "B33C" "MAYHR" "RRF1" 15 Z9-8
-		       "MYHR",     //      "B33D" "MYHR" "RRF1" 15 Z9-9
-		       "MADR",     // 3800 "B33E" "MADR" "RRF1" 15
-		       "MSDR",     // 3810 "B33F" "MSDR" "RRF1" 15
-		       "LPXBR",    // 3820 "B340" "LPXBR" "RRE" 14
-		       "LNXBR",    // 3830 "B341" "LNXBR" "RRE" 14
-		       "LTXBR",    // 3840 "B342" "LTXBR" "RRE" 14
-		       "LCXBR",    // 3850 "B343" "LCXBR" "RRE" 14
-		       "LEDBR?",    // 3860 "B344" "LEDBR?" "RRE" 53 RPI 1125
-		       "LDXBR?",    // 3870 "B345" "LDXBR?" "RRE" 53 RPI 1125
-		       "LEXBR?",    // 3880 "B346" "LEXBR?" "RRE" 53 RPI 1125
-		       "FIXBR?",    // 3890 "B347" "FIXBR?" "RRF2" 54 RPI 1125
-		       "KXBR",     // 3900 "B348" "KXBR" "RRE" 14
-		       "CXBR",     // 3910 "B349" "CXBR" "RRE" 14
-		       "AXBR",     // 3920 "B34A" "AXBR" "RRE" 14
-		       "SXBR",     // 3930 "B34B" "SXBR" "RRE" 14
-		       "MXBR",     // 3940 "B34C" "MXBR" "RRE" 14
-		       "DXBR",     // 3950 "B34D" "DXBR" "RRE" 14
-		       "TBEDR",    // 3960 "B350" "TBEDR" "RRF2" 34
-		       "TBDR",     // 3970 "B351" "TBDR" "RRF2" 34
-		       "DIEBR",    // 3980 "B353" "DIEBR" "RRF3" 30
-		       "FIEBR?",   // 3990 "B357" "FIEBR?" "RRF2" 54 RPI 1125
-		       "THDER",    // 4000 "B358" "THDER" "RRE" 14
-		       "THDR",     // 4010 "B359" "THDR" "RRE" 14
-		       "DIDBR",    // 4020 "B35B" "DIDBR" "RRF3" 30
-		       "FIDBR?",    // 4030 "B35F" "FIDBR?" "RRF2" 54 RPI 1125
-		       "LPXR",     // 4040 "B360" "LPXR" "RRE" 14
-		       "LNXR",     // 4050 "B361" "LNXR" "RRE" 14
-		       "LTXR",     // 4060 "B362" "LTXR" "RRE" 14
-		       "LCXR",     // 4070 "B363" "LCXR" "RRE" 14
-		       "LXR",      // 4080 "B365" "LXR" "RRE" 14
-		       "LEXR",     // 4090 "B366" "LEXR" "RRE" 14
-		       "FIXR",     // 4100 "B367" "FIXR" "RRE" 14
-		       "CXR",      // 4110 "B369" "CXR" "RRE" 14
-		       "LPDFR",    // 4115 "B370" "LPDFR" "RRE"  14 DFP
-		       "LNDFR",    // 4115 "B371" "LNDFR" "RRE"  14 DFP
-		       "CPSDR",    // 4115 "B372" "CPSDR" "RRF2" 34 DFP
-		       "LCDFR",    // 4115 "B373" "LCDFR" "RRE"  14 DFP
-		       "LZER",     // 4120 "B374" "LZER" "RRE" 14
-		       "LZDR",     // 4130 "B375" "LZDR" "RRE" 14
-		       "LZXR",     // 4140 "B376" "LZXR" "RRE" 14
-		       "FIER",     // 4150 "B377" "FIER" "RRE" 14
-		       "FIDR",     // 4160 "B37F" "FIDR" "RRE" 14
-		       "SFPC",     // 4170 "B384" "SFPC" "RRE" 14
-		       "SFASR",    // 4175 "B385" "SFASR" "RRE" 14 DFP 57
-		       "EFPC",     // 4180 "B38C" "EFPC" "RRE" 14
-		       "CELFBR",   //      "B390" "CELFBR" "RRF3" 30 RPI 1125 Z196
-               "CDLFBR",   //      "B391" "CDLFBR" "RRF3" 30 RPI 1125 Z196
-               "CXLFBR",   //      "B392" "CXLFBR" "RRF3" 30 RPI 5 Z112196
-		       "CEFBR?",    // 4190 "B394" "CEFBR?" "RRE" 53 RPI 1125 Z196
-		       "CDFBR?",    // 4200 "B395" "CDFBR?" "RRE" 53 RPI 1125 Z196
-		       "CXFBR?",    // 4210 "B396" "CXFBR?" "RRE" 53 RPI 1125 Z196
-		       "CFEBR?",    // 4220 "B398" "CFEBR?" "RRF2" 34 RPI 1125 Z196
-		       "CFDBR?",    // 4230 "B399" "CFDBR?" "RRF2" 34 RPI 1125 Z196
-		       "CFXBR?",    // 4240 "B39A" "CFXBR?" "RRF2" 34 RPI 1125 Z196
-		       "CLFEBR",    // 'B39C' 'CLFEBR' 'RRF3' 30 RPI 1125 Z196
-               "CLFDBR",    // 'B39D' 'CLFDBR' 'RRF3' 30 RPI 1125 Z196
-               "CLFXBR",    // 'B39E' 'CLFXBR' 'RRF3' 30 RPI 1125 Z196
-               "CELGBR",    // 'B3A0' 'CELGBR' 'RRF3' 30 RPI 1125 Z196
-               "CDLGBR",    // 'B3A1' 'CDLGBR' 'RRF3' 30 RPI 1125 Z196
-               "CXLGBR",    // 'B3A2' 'CXLGBR' 'RRF3' 30 RPI 1125 Z196
-		       "CEGBR?",    // 4250 "B3A4" "CEGBR?" "RRE" 53 RPI 1125 Z196
-		       "CDGBR?",    // 4260 "B3A5" "CDGBR?" "RRE" 53 RPI 1125 Z196
-		       "CXGBR?",    // 4270 "B3A6" "CXGBR?" "RRE" 53 RPI 1125 Z196
-		       "CGEBR?",    // 4280 "B3A8" "CGEBR?" "RRF2" 54 RPI 1125 Z196
-		       "CGDBR?",    // 4290 "B3A9" "CGDBR?" "RRF2" 54 RPI 1125 Z196
-		       "CGXBR?",    // 4300 "B3AA" "CGXBR?" "RRF2" 54 RPI 1125 Z196
-		       "CLGEBR",    //      "B3AC" "CLGEBR" "RRF2" 30  RPI 1125 Z196
-               "CLGDBR",    //      "B3AD" "CLGDBR" "RRF2" 30  RPI 1125 Z196
-               "CLGXBR",    //      "B3AE" "CLGXBR" "RRF2" 30  RPI 1125 Z196
-		       "CEFR",     // 4310 "B3B4" "CEFR" "RRE" 14
-		       "CDFR",     // 4320 "B3B5" "CDFR" "RRE" 14
-		       "CXFR",     // 4330 "B3B6" "CXFR" "RRE" 14
-		       "CFER",     // 4340 "B3B8" "CFER" "RRF2" 34
-		       "CFDR",     // 4350 "B3B9" "CFDR" "RRF2" 34
-		       "CFXR",     // 4360 "B3BA" "CFXR" "RRF2" 34
-		       "LDGR",     // 4365 "B3C1" "LDGR" "RRE" 14 DFP
-		       "CEGR",     // 4370 "B3C4" "CEGR" "RRE" 14
-		       "CDGR",     // 4380 "B3C5" "CDGR" "RRE" 14
-		       "CXGR",     // 4390 "B3C6" "CXGR" "RRE" 14
-		       "CGER",     // 4400 "B3C8" "CGER" "RRF2" 34
-		       "CGDR",     // 4410 "B3C9" "CGDR" "RRF2" 34
-		       "CGXR",     // 4420 "B3CA" "CGXR" "RRF2" 34
-		       "LGDR",     // 4425 "B3CD" "LGDR" "RRE" 14 DFP
-		       "MDTR?",  // "B3D0" "RRR"  DFP  1 RPI 1125
-		       "DDTR?",  // "B3D1" "RRR"  DFP  2 RPI 1125
-		       "ADTR?",  // "B3D2" "RRR"  DFP  3 RPI 1125
-		       "SDTR?",  // "B3D3" "RRR"  DFP  4 RPI 1125
-		       "LDETR",  // "B3D4" "RRF4" DFP  5 
-		       "LEDTR",  // "B3D5" "RRF3" DFP  6 
-		       "LTDTR",  // "B3D6" "RRE"  DFP  7 
-		       "FIDTR",  // "B3D7" "RRF3" DFP  8 
-		       "MXTR?",  // "B3D8" "RRR"  DFP  9 RPI 1125
-		       "DXTR?",  // "B3D9" "RRR"  DFP 10 RPI 1125
-		       "AXTR?",  // "B3DA" "RRR"  DFP 11 RPI 1125
-		       "SXTR?",  // "B3DB" "RRR"  DFP 12 RPI 1125
-		       "LXDTR", // "B3DC" "RRF4" DFP 13
-		       "LDXTR", // "B3DD" "RRF3" DFP 14
-		       "LTXTR", // "B3DE" "RRE" DFP 15
-		       "FIXTR", // "B3DF" "RRF3" DFP 16
-		       "KDTR", // "B3E0" "RRE" DFP 17
-		       "CGDTR?", // "B3E1" "RRF7" DFP 18 RPI 1125
-		       "CUDTR", // "B3E2" "RRE" DFP 19
-		       "CSDTR", // "B3E3" "RRF4" DFP 20
-		       "CDTR", // "B3E4" "RRE" DFP 21
-		       "EEDTR", // "B3E5" "RRE" DFP 22
-		       "ESDTR", // "B3E7" "RRE" DFP 23
-		       "KXTR", // "B3E8" "RRE" DFP 24
-		       "CGXTR?", // "B3E9" "RRF7" DFP 25 RPI 1125
-		       "CUXTR", // "B3EA" "RRE" DFP 26
-		       "CSXTR", // "B3EB" "RRF4" DFP 27
-		       "CXTR", // "B3EC" "RRE" DFP 28
-		       "EEXTR", // "B3ED" "RRE" DFP 29
-		       "ESXTR", // "B3EF" "RRE" DFP 30
-		       "CDGTR?", // "B3F1" "RE3" DFP 31 RPI 1125
-		       "CDUTR", // "B3F2" "RRE" DFP 32
-		       "CDSTR", // "B3F3" "RRE" DFP 33
-		       "CEDTR", // "B3F4" "RRE" DFP 34
-		       "QADTR", // "B3F5" "RRF3" DFP 35
-		       "IEDTR", // "B3F6" "RRF2" DFP 36
-		       "RRDTR", // "B3F7" "RRF3" DFP 37
-		       "CXGTR?", // "B3F9" "RE3" DFP 38 RPI 1125
-		       "CXUTR", // "B3FA" "RRE" DFP 39
-		       "CXSTR", // "B3FB" "RRE" DFP 40
-		       "CEXTR", // "B3FC" "RRE" DFP 41
-		       "QAXTR", // "B3FD" "RRF3" DFP 42
-		       "IEXTR", // "B3FE" "RRF2" DFP 43
-		       "RRXTR", // "B3FF" "RRF3" DFP 44
-		       "STCTL",    // 4430 "B6" "STCTL" "RS" 10
-		       "LCTL",     // 4440 "B7" "LCTL" "RS" 10
-		       "LPGR",     // 4450 "B900" "LPGR" "RRE" 14
-		       "LNGR",     // 4460 "B901" "LNGR" "RRE" 14
-		       "LTGR",     // 4470 "B902" "LTGR" "RRE" 14
-		       "LCGR",     // 4480 "B903" "LCGR" "RRE" 14
-		       "LGR",      // 4490 "B904" "LGR" "RRE" 14
-		       "LURAG",    // 4500 "B905" "LURAG" "RRE" 14
-		       "LGBR",     //      "B906" "LGBR" "RRE" 14 Z9-10
-		       "LGHR",     //      "B907" "LGHR" "RRE" 14 Z9-11
-		       "AGR",      // 4510 "B908" "AGR" "RRE" 14
-		       "SGR",      // 4520 "B909" "SGR" "RRE" 14
-		       "ALGR",     // 4530 "B90A" "ALGR" "RRE" 14
-		       "SLGR",     // 4540 "B90B" "SLGR" "RRE" 14
-		       "MSGR",     // 4550 "B90C" "MSGR" "RRE" 14
-		       "DSGR",     // 4560 "B90D" "DSGR" "RRE" 14
-		       "EREGG",    // 4570 "B90E" "EREGG" "RRE" 14
-		       "LRVGR",    // 4580 "B90F" "LRVGR" "RRE" 14
-		       "LPGFR",    // 4590 "B910" "LPGFR" "RRE" 14
-		       "LNGFR",    // 4600 "B911" "LNGFR" "RRE" 14
-		       "LTGFR",    // 4610 "B912" "LTGFR" "RRE" 14
-		       "LCGFR",    // 4620 "B913" "LCGFR" "RRE" 14
-		       "LGFR",     // 4630 "B914" "LGFR" "RRE" 14
-		       "LLGFR",    // 4640 "B916" "LLGFR" "RRE" 14
-		       "LLGTR",    // 4650 "B917" "LLGTR" "RRE" 14
-		       "AGFR",     // 4660 "B918" "AGFR" "RRE" 14
-		       "SGFR",     // 4670 "B919" "SGFR" "RRE" 14
-		       "ALGFR",    // 4680 "B91A" "ALGFR" "RRE" 14
-		       "SLGFR",    // 4690 "B91B" "SLGFR" "RRE" 14
-		       "MSGFR",    // 4700 "B91C" "MSGFR" "RRE" 14
-		       "DSGFR",    // 4710 "B91D" "DSGFR" "RRE" 14
-		       "KMAC",     // 4720 "B91E" "KMAC" "RRE" 14
-		       "LRVR",     // 4730 "B91F" "LRVR" "RRE" 14
-		       "CGR",      // 4740 "B920" "CGR" "RRE" 14
-		       "CLGR",     // 4750 "B921" "CLGR" "RRE" 14
-		       "STURG",    // 4760 "B925" "STURG" "RRE" 14
-		       "LBR",      //      "B926" "LBR" "RRE" 14 Z9-12
-		       "LHR",      //      "B927" "LHR" "RRE" 14 Z9-13
-		       "PCKMO",    // "B928","PCKMO","RE4"  14 RPI 1125 Z196
-               "KMF",      // "B92A","KMF","RRE"    14 RPI 1125 Z196
-               "KMO",      // "B92B","KMO","RRE"    14 RPI 1125 Z196
-               "PCC",      // "B92C","PCC","RE4"    14 RPI 1125 Z196
-               "KMCTR",    // "B92D","KMCTR","RRF2" 34 RPI 1125 Z196
-		       "KM",       // 4770 "B92E" "KM" "RRE" 14
-		       "KMC",      // 4780 "B92F" "KMC" "RRE" 14
-		       "CGFR",     // 4790 "B930" "CGFR" "RRE" 14
-		       "CLGFR",    // 4800 "B931" "CLGFR" "RRE" 14
-		       "KIMD",     // 4810 "B93E" "KIMD" "RRE" 14
-		       "KLMD",     // 4820 "B93F" "KLMD" "RRE" 14
-		       "CFDTR",    // "B941","CFDTR","RRF3"  30 RPI 1125 Z196
-               "CLGDTR",   // "B942","CLGDTR","RRF3" 30 RPI 1125 Z196
-               "CLFDTR",   // "B943","CLFDTR","RRF3" 30 RPI 1125 Z196
-		       "BCTGR",    // 4830 "B946" "BCTGR" "RRE" 14
-		       "CFXTR",    // "B949","CFXTR","RRF3"   30 RPI 1125 Z196
-               "CLGXTR",   // "B94A","CLGXTR","RRF3"  30 RPI 1125 Z196
-               "CLFXTR",   // "B94B","CLFXTR","RRF3"  30 RPI 1125 Z196
-               "CDFTR",    // "B951","CDFTR","RRF3"   30 RPI 1125 Z196
-               "CDLGTR",   // "B952","CDLGTR","RRF3"  30 RPI 1125 Z196
-               "CDLFTR",   // "B953","CDLFTR","RRF3"  30 RPI 1125 Z196
-               "CXFTR",    // "B959","CXFTR","RRF3"   30 RPI 1125 Z196" 
-               "CXLGTR",   // "B95A","CXLGTR","RRF3"  30 RPI 1125 Z196
-               "CXLFTR",   // "B95B","CXLFTR","RRF3"  30 RPI 1125 Z196		       
-		       "CGRT",     // 10 "B960" "CGRT" "RRF5" 39 RPI 817
-		       "CGRTE",    // 20 "B9608" "CGRTE" "RRF6" 40 RPI 817
-		       "CGRTH",    // 30 "B9602" "CGRTH" "RRF6" 40 RPI 817
-		       "CGRTL",    // 40 "B9604" "CGRTL" "RRF6" 40 RPI 817
-		       "CGRTNE",   // 50 "B9606" "CGRTNE" "RRF6" 40 RPI 817
-		       "CGRTNH",   // 60 "B960C" "CGRTNH" "RRF6" 40 RPI 817
-		       "CGRTNL",   // 70 "B960A" "CGRTNL" "RRF6" 40 RPI 817
-		       "CLGRT",    // 10 "B961" "CLGRT" "RRF5" 39 RPI 817
-		       "CLGRTE",   // 20 "B9618" "CLGRTE" "RRF6" 40 RPI 817
-		       "CLGRTH",   // 30 "B9612" "CLGRTH" "RRF6" 40 RPI 817
-		       "CLGRTL",   // 40 "B9614" "CLGRTL" "RRF6" 40 RPI 817
-		       "CLGRTNE",  // 50 "B9616" "CLGRTNE" "RRF6" 40 RPI 817
-		       "CLGRTNH",  // 60 "B961C" "CLGRTNH" "RRF6" 40 RPI 817
-		       "CLGRTNL",  // 70 "B961A" "CLGRTNL" "RRF6" 40 RPI 817
-		       "CRT",      // 150 "B972" "CRT" "RRF5" 39 RPI 817
-		       "CRTE",     // 160 "B9728" "CRTE" "RRF6" 40 RPI 817
-		       "CRTH",     // 170 "B9722" "CRTH" "RRF6" 40 RPI 817
-		       "CRTL",     // 180 "B9724" "CRTL" "RRF6" 40 RPI 817
-		       "CRTNE",    // 190 "B9726" "CRTNE" "RRF6" 40 RPI 817
-		       "CRTNH",    // 200 "B972C" "CRTNH" "RRF6" 40 RPI 817
-		       "CRTNL",    // 210 "B972A" "CRTNL" "RRF6" 40 RPI 817
-		       "CLRT",     // 80 "B973" "CLRT" "RRF5" 39 RPI 817
-		       "CLRTE",    // 90 "B9738" "CLRTE" "RRF6" 40 RPI 817
-		       "CLRTH",    // 100 "B9732" "CLRTH" "RRF6" 40 RPI 817
-		       "CLRTL",    // 110 "B9734" "CLRTL" "RRF6" 40 RPI 817
-		       "CLRTNE",   // 120 "B9736" "CLRTNE" "RRF6" 40 RPI 817
-		       "CLRTNH",   // 130 "B973C" "CLRTNH" "RRF6" 40 RPI 817
-		       "CLRTNL",   // 140 "B973A" "CLRTNL" "RRF6" 40 RPI 817
-		       "NGR",      // 4840 "B980" "NGR" "RRE" 14
-		       "OGR",      // 4850 "B981" "OGR" "RRE" 14
-		       "XGR",      // 4860 "B982" "XGR" "RRE" 14
-		       "FLOGR",    //      "B983" "FLOGR" "RRE" 14 Z9-14
-		       "LLGCR",    //      "B984" "LLGCR" "RRE" 14 Z9-15
-		       "LLGHR",    //      "B985" "LLGHR" "RRE" 14 Z9-16
-		       "MLGR",     // 4870 "B986" "MLGR" "RRE" 14
-		       "DLGR",     // 4880 "B987" "DLGR" "RRE" 14
-		       "ALCGR",    // 4890 "B988" "ALCGR" "RRE" 14
-		       "SLBGR",    // 4900 "B989" "SLBGR" "RRE" 14
-		       "CSPG",     // 4910 "B98A" "CSPG" "RRE" 14
-		       "EPSW",     // 4920 "B98D" "EPSW" "RRE" 14
-		       "IDTE",     // 4930 "B98E" "IDTE" "RRF2" 34
-		       "TRTT",     // 4940 "B990" "TRTT" "RRE" 14
-		       "TRTO",     // 4950 "B991" "TRTO" "RRE" 14
-		       "TROT",     // 4960 "B992" "TROT" "RRE" 14
-		       "TROO",     // 4970 "B993" "TROO" "RRE" 14
-		       "LLCR",     //      "B994" "LLCR" "RRE" 14 Z9-17
-		       "LLHR",     //      "B995" "LLHR" "RRE" 14 Z9-18
-		       "MLR",      // 4980 "B996" "MLR" "RRE" 14
-		       "DLR",      // 4990 "B997" "DLR" "RRE" 14
-		       "ALCR",     // 5000 "B998" "ALCR" "RRE" 14
-		       "SLBR",     // 5010 "B999" "SLBR" "RRE" 14
-		       "EPAIR",    // 5020 "B99A" "EPAIR" "RRE" 14
-		       "ESAIR",    // 5030 "B99B" "ESAIR" "RRE" 14
-		       "ESEA",     // 5040 "B99D" "ESEA" "RRE" 14
-		       "PTI",      // 5050 "B99E" "PTI" "RRE" 14
-		       "SSAIR",    // 5060 "B99F" "SSAIR" "RRE" 14
-		       "PTF",      // 10 "B9A2" "PTF" "RRE" 14 RPI 817
-		       "LPTEA",    //      "B9AA" "LPTEA" "RRE" 14 Z9-19
-		       "RRBM",     // "B9AE","RRBM","RRE"  14 RPI 1125 Z196 
-		       "PFMF",     // 20 "B9AF" "PFMF" "RRF5" 39 RPI 817
-		       "CU14",     // 5070 "B9B0" "CU14" "RRE" 14
-		       "CU24",     // 5080 "B9B1" "CU24" "RRE" 14
-		       "CU41",     // 5090 "B9B2" "CU41" "RRE" 14
-		       "CU42",     // 5100 "B9B3" "CU42" "RRE" 14
-		       "TRTRE",    // 30 "B9BD" "TRTRE" "RRF5" 39 RPI 817
-		       "SRSTU",    // 5110 "B9BE" "SRSTU" "RRE" 14     
-		       "TRTE",     // 40 "B9BF" "TRTE" "RRF5" 39 RPI 817
-		       "AHHHR",    // "B9C8","AHHHR","RRF5"  39 RPI 1125 Z196
-		       "SHHHR",    // "B9C9","SHHHR","RRF5"  39 RPI 1125 Z196
-		       "ALHHHR",   // "B9CA","ALHHHR","RRF5" 39 RPI 1125 Z196
-		       "SLHHHR",   // "B9CB","SLHHHR","RRF5" 39 RPI 1125 Z196
-		       "CHHR",     // "B9CD","CHHR","RRE"     14 RPI 1125 Z196
-		       "CLHHR",    // "B9CF","CLHHR","RRE"    14 RPI 1125 Z196
-		       "AHHLR",    // "B9D8","AHHLR","RRF5 "  39 RPI 1125 Z196
-		       "SHHLR",    // "B9D9","SHHLR","RRF5 "  39 RPI 1125 Z196
-		       "ALHHLR",   // "B9DA","ALHHLR","RRF5 " 39 RPI 1125 Z196
-		       "SLHHLR",   // "B9DB","SLHHLR","RRF5 " 39 RPI 1125 Z196
-		       "CHLR",     // "B9DD","CHLR","RRE"     14 RPI 1125 Z196
-		       "CLHLR",    // "B9DF","CLHLR","RRE"    14 RPI 1125 Z196
-		       "POPCNT",   // 5115 "B9E1" "POPCNT" "RRE" 14 RPI 1125
-		       "LOCGR",    // "B9E2","LOCGR","RRF5"   39 RPI 1125 Z196
-		       "NGRK",     // "B9E4","NGRK","RRF5"    39 RPI 1125 Z196
-		       "OGRK",     // "B9E6","OGRK","RRF5"    39 RPI 1125 Z196
-		       "XGRK",     // "B9E7","XGRK","RRF5"    39 RPI 1125 Z196
-		       "AGRK",     // "B9E8","AGRK","RRF5"    39 RPI 1125 Z196
-		       "SGRK",     // "B9E9","SGRK","RRF5"    39 RPI 1125 Z196
-		       "ALGRK",    // "B9EA","ALGRK","RRF5"   39 RPI 1125 Z196
-		       "SLGRK",    // "B9EB","SLGRK","RRF5"   39 RPI 1125 Z196
-		       "LOCR",     // "B9F2","LOCR","RRF5"    39 RPI 1125 Z196
-		       "NRK",      // "B9F4","NRK","RRF5"     39 RPI 1125 Z196
-		       "ORK",      // "B9F6","ORK","RRF5"     39 RPI 1125 Z196
-		       "XRK",      // "B9F7","XRK","RRF5"     39 RPI 1125 Z196
-		       "ARK",      // "B9F8","ARK","RRF5"     39 RPI 1125 Z196
-		       "SRK",      // "B9F9","SRK","RRF5"     39 RPI 1125 Z196
-		       "ALRK",     // "B9FA","ALRK","RRF5"    39 RPI 1125 Z196
-		       "SLRK",     // "B9FB","SLRK","RRF5"    39 RPI 1125 Z196     
-		       "CS",       // 5120 "BA" "CS" "RS" 10
-		       "CDS",      // 5130 "BB" "CDS" "RS" 10
-		       "CLM",      // 5140 "BD" "CLM" "RS" 10
-		       "STCM",     // 5150 "BE" "STCM" "RS" 10
-		       "ICM",      // 5160 "BF" "ICM" "RS" 10
-		       "LARL",     // 5170 "C00" "LARL" "RIL" 16
-		       "LGFI",     //      "C01" "LGFI" "RIL" 16 Z9-20
-		       "BRCL",     // 5180 "C04" "BRCL" "RIL" 16
-		       "JLNOP",    // 5390 "C040" "JLNOP" "BLX" 33
-		       "BROL",     // 5400 "C041" "BROL" "BLX" 33
-		       "JLO",      // 5410 "C041" "JLO" "BLX" 33
-		       "BRHL",     // 5420 "C042" "BRHL" "BLX" 33
-		       "BRPL",     // 5430 "C042" "BRPL" "BLX" 33
-		       "JLH",      // 5440 "C042" "JLH" "BLX" 33
-		       "JLP",      // 5450 "C042" "JLP" "BLX" 33
-		       "BRLL",     // 5460 "C044" "BRLL" "BLX" 33
-		       "BRML",     // 5470 "C044" "BRML" "BLX" 33
-		       "JLL",      // 5480 "C044" "JLL" "BLX" 33
-		       "JLM",      // 5490 "C044" "JLM" "BLX" 33
-		       "BRNEL",    // 5500 "C047" "BRNEL" "BLX" 33
-		       "BRNZL",    // 5510 "C047" "BRNZL" "BLX" 33
-		       "JLNE",     // 5520 "C047" "JLNE" "BLX" 33
-		       "JLNZ",     // 5530 "C047" "JLNZ" "BLX" 33
-		       "BREL",     // 5540 "C048" "BREL" "BLX" 33
-		       "BRZL",     // 5550 "C048" "BRZL" "BLX" 33
-		       "JLE",      // 5560 "C048" "JLE" "BLX" 33
-		       "JLZ",      // 5570 "C048" "JLZ" "BLX" 33
-		       "BRNLL",    // 5580 "C04B" "BRNLL" "BLX" 33
-		       "BRNML",    // 5590 "C04B" "BRNML" "BLX" 33
-		       "JLNL",     // 5600 "C04B" "JLNL" "BLX" 33
-		       "JLNM",     // 5610 "C04B" "JLNM" "BLX" 33
-		       "BRNHL",    // 5620 "C04D" "BRNHL" "BLX" 33
-		       "BRNPL",    // 5630 "C04D" "BRNPL" "BLX" 33
-		       "JLNH",     // 5640 "C04D" "JLNH" "BLX" 33
-		       "JLNP",     // 5650 "C04D" "JLNP" "BLX" 33
-		       "BRNOL",    // 5660 "C04E" "BRNOL" "BLX" 33
-		       "JLNO",     // 5670 "C04E" "JLNO" "BLX" 33
-		       "BRUL",     // 5680 "C04F" "BRUL" "BLX" 33
-		       "JLU",      // 5690 "C04F" "JLU" "BLX" 33
-		       "BRASL",    // 5210 "C05" "BRASL" "RIL" 16
-		       "JASL",     // 5220 "C05" "JASL" "RIL" 16
-		       "XIHF",     //      "C06" "XIHF" "RIL" 16 Z9-21
-		       "XILF",     //      "C07" "XILF" "RIL" 16 Z9-22
-		       "IIHF",     //      "C08" "IIHF" "RIL" 16 Z9-23
-		       "IILF",     //      "C09" "IILF" "RIL" 16 Z9-24
-		       "NIHF",     //      "C0A" "NIHF" "RIL" 16 Z9-25
-		       "NILF",     //      "C0B" "NILF" "RIL" 16 Z9-26
-		       "OIHF",     //      "C0C" "OIHF" "RIL" 16 Z9-27
-		       "OILF",     //      "C0D" "OILF" "RIL" 16 Z9-28
-		       "LLIHF",    //      "C0E" "LLIHF" "RIL" 16 Z9-29
-		       "LLILF",    //      "C0F" "LLILF" "RIL" 16 Z9-30
-		       "MSGFI",    // 50 "C20" "MSGFI" "RIL" 16 RPI 817
-		       "MSFI",     // 60 "C21" "MSFI" "RIL" 16 RPI 817
-		       "SLGFI",    //      "C24" "SLGFI" "RIL" 16 Z9-31
-		       "SLFI",     //      "C25" "SLFI" "RIL" 16 Z9-32
-		       "AGFI",     //      "C28" "AGFI" "RIL" 16 Z9-33
-		       "AFI",      //      "C29" "AFI" "RIL" 16 Z9-34
-		       "ALGFI",    //      "C2A" "ALGFI" "RIL" 16 Z9-35
-		       "ALFI",     //      "C2B" "ALFI" "RIL" 16 Z9-36
-		       "CGFI",     //      "C2C" "CGFI" "RIL" 16 Z9-37
-		       "CFI",      //      "C2D" "CFI" "RIL" 16 Z9-38
-		       "CLGFI",    //      "C2E" "CLGFI" "RIL" 16 Z9-39
-		       "CLFI",     //      "C2F" "CLFI" "RIL" 16 Z9-40
-		       "LLHRL",    // 70 "C42" "LLHRL" "RIL" 16 RPI 817
-		       "LGHRL",    // 80 "C44" "LGHRL" "RIL" 16 RPI 817
-		       "LHRL",     // 90 "C45" "LHRL" "RIL" 16 RPI 817
-		       "LLGHRL",   // 100 "C46" "LLGHRL" "RIL" 16 RPI 817
-		       "STHRL",    // 110 "C47" "STHRL" "RIL" 16 RPI 817
-		       "LGRL",     // 120 "C48" "LGRL" "RIL" 16 RPI 817
-		       "STGRL",    // 130 "C4B" "STGRL" "RIL" 16 RPI 817
-		       "LGFRL",    // 140 "C4C" "LGFRL" "RIL" 16 RPI 817
-		       "LRL",      // 150 "C4D" "LRL" "RIL" 16 RPI 817
-		       "LLGFRL",   // 160 "C4E" "LLGFRL" "RIL" 16 RPI 817
-		       "STRL",     // 170 "C4F" "STRL" "RIL" 16 RPI 817
-		       "EXRL",     // 180 "C60" "EXRL" "RIL" 16 RPI 817
-		       "PFDRL",    // 190 "C62" "PFDRL" "RIL" 16 RPI 817
-		       "CGHRL",    // 200 "C64" "CGHRL" "RIL" 16 RPI 817
-		       "CHRL",     // 210 "C65" "CHRL" "RIL" 16 RPI 817
-		       "CLGHRL",   // 220 "C66" "CLGHRL" "RIL" 16 RPI 817
-		       "CLHRL",    // 230 "C67" "CLHRL" "RIL" 16 RPI 817
-		       "CGRL",     // 240 "C68" "CGRL" "RIL" 16 RPI 817
-		       "CLGRL",    // 250 "C6A" "CLGRL" "RIL" 16 RPI 817
-		       "CGFRL",    // 260 "C6C" "CGFRL" "RIL" 16 RPI 817
-		       "CRL",      // 270 "C6D" "CRL" "RIL" 16 RPI 817
-		       "CLGFRL",   // 280 "C6E" "CLGFRL" "RIL" 16 RPI 817
-		       "CLRL",     // 290 "C6F" "CLRL" "RIL" 16 RPI 817
-		       "MVCOS",    //      "C80" "MVCOS" "SSF" 32 Z9-41 // RPI 606
-		       "ECTG",     //      "C81" "ECTG" "SSF" 32  // RPI 1013
-		       "CSST",     //      "C82" "CSST" "SSF" 32  // RPI 1013
-		       "LPD",      // "C84","LPD","SSF2"  55 RPI 1125 Z196
-		       "LPDG",     // "C85","LPDG","SSF2" 55 RPI 1125 Z196
-		       "BRCTH",    // "CC6","BRCTH","RIL"  16 RPI 1125 Z196
-		       "AIH",      // "CC8","AIH","RIL"    16  RPI 1125 Z196
-		       "ALSIH",    // "CCA","ALSIH","RIL"  16  RPI 1125 Z196
-		       "ALSIHN",   // "CCB","ALSIHN","RIL" 16  RPI 1125 Z196
-		       "CIH",      // "CCD","CIH","RIL"    16  RPI 1125 Z196
-		       "CLIH",     // "CCF","CLIH","RIL"   16  RPI 1125 Z196		       
-		       "TRTR",     // 5230 "D0" "TRTR" "SS" 17
-		       "MVN",      // 5240 "D1" "MVN" "SS" 17
-		       "MVC",      // 5250 "D2" "MVC" "SS" 17
-		       "MVZ",      // 5260 "D3" "MVZ" "SS" 17
-		       "NC",       // 5270 "D4" "NC" "SS" 17
-		       "CLC",      // 5280 "D5" "CLC" "SS" 17
-		       "OC",       // 5290 "D6" "OC" "SS" 17
-		       "XC",       // 5300 "D7" "XC" "SS" 17
-		       "MVCK",     // 5310 "D9" "MVCK" "SS" 17
-		       "MVCP",     // 5320 "DA" "MVCP" "SS" 17
-		       "MVCS",     // 5330 "DB" "MVCS" "SS" 17
-		       "TR",       // 5340 "DC" "TR" "SS" 17
-		       "TRT",      // 5350 "DD" "TRT" "SS" 17
-		       "ED",       // 5360 "DE" "ED" "SS" 17
-		       "EDMK",     // 5370 "DF" "EDMK" "SS" 17
-		       "XREAD",    // 5375 "E00" "XREAD" "RXSS" 38 RPI 812
-		       "XPRNT",    // 5375 "E02" "XPRNT" "RXSS" 38 RPI 812
-		       "XPNCH",    // 5375 "E04" "XPNCH" "RXSS" 38 RPI 812
-		       "XDUMP",    // 5375 "E06" "XDUMP" "RXSS" 38 RPI 812
-		       "XLIMD",    // 5375 "E08" "XLIMD" "RXSS" 38 RPI 812
-		       "XGET",     // 5375 "E0A" "XGET"  "RXSS" 38 RPI 812
-		       "XPUT",     // 5375 "E0C" "XPUT"  "RXSS" 38 RPI 812
-		       "PKU",      // 5380 "E1" "PKU" "RXSS" 17
-		       "UNPKU",    // 5390 "E2" "UNPKU" "SS" 17
-		       "LTG",      //      "E302" "LTG" "RXY" 18 Z9-42
-		       "LRAG",     // 5400 "E303" "LRAG" "RXY" 18
-		       "LG",       // 5410 "E304" "LG" "RXY" 18
-		       "CVBY",     // 5420 "E306" "CVBY" "RXY" 18
-		       "AG",       // 5430 "E308" "AG" "RXY" 18
-		       "SG",       // 5440 "E309" "SG" "RXY" 18
-		       "ALG",      // 5450 "E30A" "ALG" "RXY" 18
-		       "SLG",      // 5460 "E30B" "SLG" "RXY" 18
-		       "MSG",      // 5470 "E30C" "MSG" "RXY" 18
-		       "DSG",      // 5480 "E30D" "DSG" "RXY" 18
-		       "CVBG",     // 5490 "E30E" "CVBG" "RXY" 18
-		       "LRVG",     // 5500 "E30F" "LRVG" "RXY" 18
-		       "LT",       //      "E312" "LT" "RXY" 18 Z9-43
-		       "LRAY",     // 5510 "E313" "LRAY" "RXY" 18
-		       "LGF",      // 5520 "E314" "LGF" "RXY" 18
-		       "LGH",      // 5530 "E315" "LGH" "RXY" 18
-		       "LLGF",     // 5540 "E316" "LLGF" "RXY" 18
-		       "LLGT",     // 5550 "E317" "LLGT" "RXY" 18
-		       "AGF",      // 5560 "E318" "AGF" "RXY" 18
-		       "SGF",      // 5570 "E319" "SGF" "RXY" 18
-		       "ALGF",     // 5580 "E31A" "ALGF" "RXY" 18
-		       "SLGF",     // 5590 "E31B" "SLGF" "RXY" 18
-		       "MSGF",     // 5600 "E31C" "MSGF" "RXY" 18
-		       "DSGF",     // 5610 "E31D" "DSGF" "RXY" 18
-		       "LRV",      // 5620 "E31E" "LRV" "RXY" 18
-		       "LRVH",     // 5630 "E31F" "LRVH" "RXY" 18
-		       "CG",       // 5640 "E320" "CG" "RXY" 18
-		       "CLG",      // 5650 "E321" "CLG" "RXY" 18
-		       "STG",      // 5660 "E324" "STG" "RXY" 18
-		       "CVDY",     // 5670 "E326" "CVDY" "RXY" 18
-		       "CVDG",     // 5680 "E32E" "CVDG" "RXY" 18
-		       "STRVG",    // 5690 "E32F" "STRVG" "RXY" 18
-		       "CGF",      // 5700 "E330" "CGF" "RXY" 18
-		       "CLGF",     // 5710 "E331" "CLGF" "RXY" 18
-		       "LTGF",     // 310 "E332" "LTGF" "RXY" 18 RPI 817
-		       "CGH",      // 320 "E334" "CGH" "RXY" 18 RPI 817
-		       "PFD",      // 330 "E336" "PFD" "RXY" 18 RPI 817
-		       "STRV",     // 5720 "E33E" "STRV" "RXY" 18
-		       "STRVH",    // 5730 "E33F" "STRVH" "RXY" 18
-		       "BCTG",     // 5740 "E346" "BCTG" "RXY" 18
-		       "STY",      // 5750 "E350" "STY" "RXY" 18
-		       "MSY",      // 5760 "E351" "MSY" "RXY" 18
-		       "NY",       // 5770 "E354" "NY" "RXY" 18
-		       "CLY",      // 5780 "E355" "CLY" "RXY" 18
-		       "OY",       // 5790 "E356" "OY" "RXY" 18
-		       "XY",       // 5800 "E357" "XY" "RXY" 18
-		       "LY",       // 5810 "E358" "LY" "RXY" 18
-		       "CY",       // 5820 "E359" "CY" "RXY" 18
-		       "AY",       // 5830 "E35A" "AY" "RXY" 18
-		       "SY",       // 5840 "E35B" "SY" "RXY" 18
-		       "MFY",      // 340 "E35C" "MFY" "RXY" 18 RPI 817
-		       "ALY",      // 5850 "E35E" "ALY" "RXY" 18
-		       "SLY",      // 5860 "E35F" "SLY" "RXY" 18
-		       "STHY",     // 5870 "E370" "STHY" "RXY" 18
-		       "LAY",      // 5880 "E371" "LAY" "RXY" 18
-		       "STCY",     // 5890 "E372" "STCY" "RXY" 18
-		       "ICY",      // 5900 "E373" "ICY" "RXY" 18
-		       "LAEY",     // 350 "E375" "LAEY" "RXY" 18 RPI 817
-		       "LB",       // 5910 "E376" "LB" "RXY" 18
-		       "LGB",      // 5920 "E377" "LGB" "RXY" 18
-		       "LHY",      // 5930 "E378" "LHY" "RXY" 18
-		       "CHY",      // 5940 "E379" "CHY" "RXY" 18
-		       "AHY",      // 5950 "E37A" "AHY" "RXY" 18
-		       "SHY",      // 5960 "E37B" "SHY" "RXY" 18
-		       "MHY",      // 360 "E37C" "MHY" "RXY" 18 RPI 817
-		       "NG",       // 5970 "E380" "NG" "RXY" 18
-		       "OG",       // 5980 "E381" "OG" "RXY" 18
-		       "XG",       // 5990 "E382" "XG" "RXY" 18
-		       "MLG",      // 6000 "E386" "MLG" "RXY" 18
-		       "DLG",      // 6010 "E387" "DLG" "RXY" 18
-		       "ALCG",     // 6020 "E388" "ALCG" "RXY" 18
-		       "SLBG",     // 6030 "E389" "SLBG" "RXY" 18
-		       "STPQ",     // 6040 "E38E" "STPQ" "RXY" 18
-		       "LPQ",      // 6050 "E38F" "LPQ" "RXY" 18
-		       "LLGC",     // 6060 "E390" "LLGC" "RXY" 18
-		       "LLGH",     // 6070 "E391" "LLGH" "RXY" 18
-		       "LLC",      //      "E394" "LLC" "RXY" 18 Z9-44
-		       "LLH",      //      "E395" "LLH" "RXY" 18 Z9-45
-		       "ML",       // 6080 "E396" "ML" "RXY" 18
-		       "DL",       // 6090 "E397" "DL" "RXY" 18
-		       "ALC",      // 6100 "E398" "ALC" "RXY" 18
-		       "SLB",      // 6110 "E399" "SLB" "RXY" 18
-		       "LBH",  // "E3C0","LBH","RXY"   18  RPI 1125 Z196
-		       "LLCH",  // "E3C2","LLCH","RXY"  18  RPI 1125 Z196
-		       "STCH",  // "E3C3","STCH","RXY"  18  RPI 1125 Z196
-		       "LHH",  // "E3C4","LHH","RXY"   18  RPI 1125 Z196
-		       "LLHH",  // "E3C6","LLHH","RXY"  18  RPI 1125 Z196
-		       "STHH",  // "E3C7","STHH","RXY"  18  RPI 1125 Z196
-		       "LFH",  // "E3CA","LFH","RXY"   18  RPI 1125 Z196
-		       "STFH",  // "E3CB","STFH","RXY"  18  RPI 1125 Z196
-		       "CHF",  // "E3CD","CHF","RXY"   18  RPI 1125 Z196
-		       "CLHF",  // "E3CF","CLHF","RXY"  18  RPI 1125 Z196
-		       "LASP",     // 6120 "E500" "LASP" "SSE" 19
-		       "TPROT",    // 6130 "E501" "TPROT" "SSE" 19
-		       "STRAG",    // 6140 "E502" "STRAG" "SSE" 19
-		       "MVCSK",    // 6150 "E50E" "MVCSK" "SSE" 19
-		       "MVCDK",    // 6160 "E50F" "MVCDK" "SSE" 19
-		       "MVHHI",    // 370 "E544" "MVHHI" "SIL" 51 RPI 817
-		       "MVGHI",    // 380 "E548" "MVGHI" "SIL" 51 RPI 817
-		       "MVHI",     // 390 "E54C" "MVHI" "SIL" 51 RPI 817
-		       "CHHSI",    // 400 "E554" "CHHSI" "SIL" 51 RPI 817
-		       "CLHHSI",   // 410 "E555" "CLHHSI" "SIL" 51 RPI 817
-		       "CGHSI",    // 420 "E558" "CGHSI" "SIL" 51 RPI 817
-		       "CLGHSI",   // 430 "E559" "CLGHSI" "SIL" 51 RPI 817
-		       "CHSI",     // 440 "E55C" "CHSI" "SIL" 51 RPI 817
-		       "CLFHSI",   // 450 "E55D" "CLFHSI" "SIL" 51 RPI 817
-		       "MVCIN",    // 6170 "E8" "MVCIN" "SS" 17
-		       "PKA",      // 6180 "E9" "PKA" "SS" 31
-		       "UNPKA",    // 6190 "EA" "UNPKA" "SS" 17
-		       "LMG",      // 6200 "EB04" "LMG" "RSY" 20
-		       "SRAG",     // 6210 "EB0A" "SRAG" "RSY" 20
-		       "SLAG",     // 6220 "EB0B" "SLAG" "RSY" 20
-		       "SRLG",     // 6230 "EB0C" "SRLG" "RSY" 20
-		       "SLLG",     // 6240 "EB0D" "SLLG" "RSY" 20
-		       "TRACG",    // 6250 "EB0F" "TRACG" "RSY" 20
-		       "CSY",      // 6260 "EB14" "CSY" "RSY" 20
-		       "RLLG",     // 6270 "EB1C" "RLLG" "RSY" 20
-		       "RLL",      // 6280 "EB1D" "RLL" "RSY" 20
-		       "CLMH",     // 6290 "EB20" "CLMH" "RSY" 20
-		       "CLMY",     // 6300 "EB21" "CLMY" "RSY" 20
-		       "STMG",     // 6310 "EB24" "STMG" "RSY" 20
-		       "STCTG",    // 6320 "EB25" "STCTG" "RSY" 20
-		       "STMH",     // 6330 "EB26" "STMH" "RSY" 20
-		       "STCMH",    // 6340 "EB2C" "STCMH" "RSY" 20
-		       "STCMY",    // 6350 "EB2D" "STCMY" "RSY" 20
-		       "LCTLG",    // 6360 "EB2F" "LCTLG" "RSY" 20
-		       "CSG",      // 6370 "EB30" "CSG" "RSY" 20
-		       "CDSY",     // 6380 "EB31" "CDSY" "RSY" 20
-		       "CDSG",     // 6390 "EB3E" "CDSG" "RSY" 20
-		       "BXHG",     // 6400 "EB44" "BXHG" "RSY" 20
-		       "BXLEG",    // 6410 "EB45" "BXLEG" "RSY" 20
-		       "ECAG",     // 460 "EB4C" "ECAG" "RSY" 20 RPI 817
-		       "TMY",      // 6420 "EB51" "TMY" "SIY" 21
-		       "MVIY",     // 6430 "EB52" "MVIY" "SIY" 21
-		       "NIY",      // 6440 "EB54" "NIY" "SIY" 21
-		       "CLIY",     // 6450 "EB55" "CLIY" "SIY" 21
-		       "OIY",      // 6460 "EB56" "OIY" "SIY" 21
-		       "XIY",      // 6470 "EB57" "XIY" "SIY" 21
-		       "ASI",      // 470 "EB6A" "ASI" "SIY" 21 RPI 817
-		       "ALSI",     // 480 "EB6E" "ALSI" "SIY" 21 RPI 817
-		       "AGSI",     // 490 "EB7A" "AGSI" "SIY" 21 RPI 817
-		       "ALGSI",    // 500 "EB7E" "ALGSI" "SIY" 21 RPI 817
-		       "ICMH",     // 6480 "EB80" "ICMH" "RSY" 20
-		       "ICMY",     // 6490 "EB81" "ICMY" "RSY" 20
-		       "MVCLU",    // 6500 "EB8E" "MVCLU" "RSY" 20
-		       "CLCLU",    // 6510 "EB8F" "CLCLU" "RSY" 20
-		       "STMY",     // 6520 "EB90" "STMY" "RSY" 20
-		       "LMH",      // 6530 "EB96" "LMH" "RSY" 20
-		       "LMY",      // 6540 "EB98" "LMY" "RSY" 20
-		       "LAMY",     // 6550 "EB9A" "LAMY" "RSY" 20
-		       "STAMY",    // 6560 "EB9B" "STAMY" "RSY" 20
-		       "TP",       // 6570 "EBC0" "TP" "RSL" 22
-		       "SRAK",  //  "EBDC","SRAK","RSY  "  20 RPI 1125 Z196
-		       "SLAK",  //  "EBDD","SLAK","RSY  "  20 RPI 1125 Z196
-		       "SRLK",  //  "EBDE","SRLK","RSY  "  20 RPI 1125 Z196
-		       "SLLK",  //  "EBDF","SLLK","RSY  "  20 RPI 1125 Z196
-		       "LOCG",  //  "EBE2","LOCG","RSY2 "  20 RPI 1125 Z196
-		       "STOCG", //  "EBE3","STOCG","RSY2 " 20 RPI 1125 Z196
-		       "LANG",  //  "EBE4","LANG","RSY  "  20 RPI 1125 Z196
-		       "LAOG",  //  "EBE6","LAOG","RSY  "  20 RPI 1125 Z196
-		       "LAXG",  //  "EBE7","LAXG","RSY  "  20 RPI 1125 Z196
-		       "LAAG",  //  "EBE8","LAAG","RSY  "  20 RPI 1125 Z196
-		       "LAALG", //  "EBEA","LAALG","RSY  " 20 RPI 1125 Z196
-		       "LOC",   //  "EBF2","LOC","RSY2 "   20 RPI 1125 Z196
-		       "STOC",  //  "EBF3","STOC","RSY2 "  20 RPI 1125 Z196
-		       "LAN",   //  "EBF4","LAN","RSY  "   20 RPI 1125 Z196
-		       "LAO",   //  "EBF6","LAO","RSY  "   20 RPI 1125 Z196
-		       "LAX",   //  "EBF7","LAX","RSY  "   20 RPI 1125 Z196
-		       "LAA",   //  "EBF8","LAA","RSY  "   20 RPI 1125 Z196
-		       "LAAL",  //  "EBFA","LAAL","RSY  "  20 RPI 1125 Z196
-		       "BRXHG",    // 6580 "EC44" "BRXHG" "RIE" 23
-		       "JXHG",     // 6590 "EC44" "JXHG" "RIE" 23
-		       "BRXLG",    // 6600 "EC45" "BRXLG" "RIE" 23
-		       "JXLEG",    // 6610 "EC45" "JXLEG" "RIE" 23    
-		       "RISBLG",  // "EC51","RISBLG","RIE8"  52 RPI 1125 Z196
-		       "LLHFR",  // 'EC51$003132','LOAD (lOW  && HIGH) RISBLGZ','LLHFR','RIE8',52  RPI 1164
-		       "LLHLHR",  // 'EC51$163132','LOAD LOG HW (lOW  && HIGH) RISBLGZ','LLHLHR','RIE8',52  RPI 1164
-		       "LLCLHR",  // 'EC51$243132','LOAD LOG CH (lOW  && HIGH) RISBLGZ','LLCLHR','RIE8',52  RPI 1164
-		       "RISBLGZ",  // "EC51Z","RISBLGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
-		       "RNSBG",    // 510 "EC54" "RNSBG" "RIE8" 52 RPI 817
-		       "NHHR",     // 'EC54$003100','AND HIGH (HIGH && HIGH) RNSBG','NHHR','RIE8',52  RPI 1164
-		       "NHLR",     // 'EC54$003132','AND HIGH (HIGH && LOW ) RNSBG','NHLR','RIE8',52  RPI 1164
-		       "NLHR",     // 'EC54$326332','AND HIGH (lOW  && HIGH) RNSBG','NLHR','RIE8',52  RPI 1164
-		       "RNSBGT",   // 520 "EC54T" "RNSBGT" "RIE8" 52 RPI 817
-		       "RISBG",    // 530 "EC55" "RISBG" "RIE8" 52 RPI 817
-		       "RISBGZ",   // 540 "EC55Z" "RISBGZ" "RIE8" 52 RPI 817
-		       "ROSBG",    // 550 "EC56" "ROSBG" "RIE8" 52 RPI 817
-		       "OHHR",     // 'EC56$003100','OR  HIGH (HIGH && HIGH) ROSBG','OHHR','RIE8',52  RPI 1164
-		       "OHLR",     // 'EC56$003132','OR  HIGH (HIGH && LOW ) ROSBG','OHLR','RIE8',52  RPI 1164
-		       "OLHR",     // 'EC56$326332','OR  HIGH (lOW  && HIGH) ROSBG','OLHR','RIE8',52  RPI 1164
-		       "ROSBGT",   // 560 "EC56T" "ROSBGT" "RIE8" 52 RPI 817
-		       "RXSBG",    // 570 "EC57" "RXSBG" "RIE8" 52 RPI 817
-		       "XHHR",     // 'EC57$003100','XOR HIGH (HIGH && HIGH) RXSBG','XHHR','RIE8',52  RPI 1164
-		       "XHLR",     // 'EC57$003132','XOR HIGH (HIGH && LOW ) RXSBG','XHLR','RIE8',52  RPI 1164
-		       "XLHR",     // 'EC57$326332','AOR HIGH (lOW  && HIGH) RXSBG','XLHR','RIE8',52  RPI 1164	
-		       "RXSBGT",   // 580 "EC57T" "RXSBGT" "RIE8" 52 RPI 817
-		       "RISBHG",  // "EC5D","RISBHG","RIE8"  52 RPI 1125 Z196
-		       "LHHR",    // 'EC5D$003100','LOAD (HIGH && HIGH) RISBHGZ','LHHR','RIE8',52  RPI 1164
-		       "LHLR",    // 'EC5D$003132','LOAD (HIGH && LOW ) RISBHGZ','LHLR','RIE8',52  RPI 1164
-		       "LLHHHR",  // 'EC5D$163100','LOAD LOG HW (HIGH && HIGH) RISBHGZ','LLHHHR','RIE8',52  RPI 1164
-		       "LLHHLR",  // 'EC5D$163132','LOAD LOG HW (HIGH && LOW ) RISBHGZ','LLHHLR','RIE8',52  RPI 1164
-		       "LLCHHR",  // 'EC5D$243100','LOAD LOG CH (HIGH && HIGH) RISBHGZ','LLCHHR','RIE8',52  RPI 1164
-		       "LLCHLR",  // 'EC5D$243132','LOAD LOG CH (HIGH && LOW ) RISBHGZ','LLCHLR','RIE8',52  RPI 1164
-		       "RISBHGZ",  // "EC5DZ","RISBHGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
-		       "CGRJ",     // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
-		       "CGRJE",    // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
-		       "CGRJH",    // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
-		       "CGRJL",    // 40 "EC644" "CGRJL" "RIE7" 50 RPI 817
-		       "CGRJNE",   // 50 "EC646" "CGRJNE" "RIE7" 50 RPI 817
-		       "CGRJNH",   // 60 "EC64C" "CGRJNH" "RIE7" 50 RPI 817
-		       "CGRJNL",   // 70 "EC64A" "CGRJNL" "RIE7" 50 RPI 817
-		       "CLGRJ",    // 80 "EC65" "CLGRJ" "RIE6" 49 RPI 817
-		       "CLGRJE",   // 90 "EC658" "CLGRJE" "RIE7" 50 RPI 817
-		       "CLGRJH",   // 100 "EC652" "CLGRJH" "RIE7" 50 RPI 817
-		       "CLGRJL",   // 110 "EC654" "CLGRJL" "RIE7" 50 RPI 817
-		       "CLGRJNE",  // 120 "EC656" "CLGRJNE" "RIE7" 50 RPI 817
-		       "CLGRJNH",  // 130 "EC65C" "CLGRJNH" "RIE7" 50 RPI 817
-		       "CLGRJNL",  // 140 "EC65A" "CLGRJNL" "RIE7" 50 RPI 817		       
-		       "CGIT",     // 1010 "EC70" "CGIT" "RIE2" 41 RPI 817
-		       "CGITE",    // 1020 "EC708" "CGITE" "RIE3" 42 RPI 817
-		       "CGITH",    // 1030 "EC702" "CGITH" "RIE3" 42 RPI 817
-		       "CGITL",    // 1040 "EC704" "CGITL" "RIE3" 42 RPI 817
-		       "CGITNE",   // 1050 "EC706" "CGITNE" "RIE3" 42 RPI 817
-		       "CGITNH",   // 1060 "EC70C" "CGITNH" "RIE3" 42 RPI 817
-		       "CGITNL",   // 1070 "EC70A" "CGITNL" "RIE3" 42 RPI 817
-		       "CLGIT",    // 150 "EC71" "CLGIT" "RIE2" 41 RPI 817
-		       "CLGITE",   // 160 "EC718" "CLGITE" "RIE3" 42 RPI 817
-		       "CLGITH",   // 170 "EC712" "CLGITH" "RIE3" 42 RPI 817
-		       "CLGITL",   // 180 "EC714" "CLGITL" "RIE3" 42 RPI 817
-		       "CLGITNE",  // 190 "EC716" "CLGITNE" "RIE3" 42 RPI 817
-		       "CLGITNH",  // 200 "EC71C" "CLGITNH" "RIE3" 42 RPI 817
-		       "CLGITNL",  // 210 "EC71A" "CLGITNL" "RIE3" 42 RPI 817
-		       "CIT",      // 1150 "EC72" "CIT" "RIE2" 41 RPI 817
-		       "CITE",     // 1160 "EC728" "CITE" "RIE3" 42 RPI 817
-		       "CITH",     // 1170 "EC722" "CITH" "RIE3" 42 RPI 817
-		       "CITL",     // 1180 "EC724" "CITL" "RIE3" 42 RPI 817
-		       "CITNE",    // 1190 "EC726" "CITNE" "RIE3" 42 RPI 817
-		       "CITNH",    // 1200 "EC72C" "CITNH" "RIE3" 42 RPI 817
-		       "CITNL",    // 1210 "EC72A" "CITNL" "RIE3" 42 RPI 817
-		       "CLFIT",    // 220 "EC73" "CLFIT" "RIE2" 41 RPI 817
-		       "CLFITE",   // 230 "EC738" "CLFITE" "RIE3" 42 RPI 817
-		       "CLFITH",   // 240 "EC732" "CLFITH" "RIE3" 42 RPI 817
-		       "CLFITL",   // 250 "EC734" "CLFITL" "RIE3" 42 RPI 817
-		       "CLFITNE",  // 260 "EC736" "CLFITNE" "RIE3" 42 RPI 817
-		       "CLFITNH",  // 270 "EC73C" "CLFITNH" "RIE3" 42 RPI 817
-		       "CLFITNL",  // 280 "EC73A" "CLFITNL" "RIE3" 42 RPI 817
-		       "CRJ",      // 150 "EC76" "CRJ" "RIE6" 49 RPI 817
-		       "CRJE",     // 160 "EC768" "CRJE" "RIE7" 50 RPI 817
-		       "CRJH",     // 170 "EC762" "CRJH" "RIE7" 50 RPI 817
-		       "CRJL",     // 180 "EC764" "CRJL" "RIE7" 50 RPI 817
-		       "CRJNE",    // 190 "EC766" "CRJNE" "RIE7" 50 RPI 817
-		       "CRJNH",    // 200 "EC76C" "CRJNH" "RIE7" 50 RPI 817
-		       "CRJNL",    // 210 "EC76A" "CRJNL" "RIE7" 50 RPI 817
-		       "CLRJ",     // 220 "EC77" "CLRJ" "RIE6" 49 RPI 817
-		       "CLRJE",    // 230 "EC778" "CLRJE" "RIE7" 50 RPI 817
-		       "CLRJH",    // 240 "EC772" "CLRJH" "RIE7" 50 RPI 817
-		       "CLRJL",    // 250 "EC774" "CLRJL" "RIE7" 50 RPI 817
-		       "CLRJNE",   // 260 "EC776" "CLRJNE" "RIE7" 50 RPI 817
-		       "CLRJNH",   // 270 "EC77C" "CLRJNH" "RIE7" 50 RPI 817
-		       "CLRJNL",   // 280 "EC77A" "CLRJNL" "RIE7" 50 RPI 817
-		       "CGIJ",     // 290 "EC7C" "CGIJ" "RIE4" 43 RPI 817
-		       "CGIJE",    // 300 "EC7C8" "CGIJE" "RIE5" 44 RPI 817
-		       "CGIJH",    // 310 "EC7C2" "CGIJH" "RIE5" 44 RPI 817
-		       "CGIJL",    // 320 "EC7C4" "CGIJL" "RIE5" 44 RPI 817
-		       "CGIJNE",   // 330 "EC7C6" "CGIJNE" "RIE5" 44 RPI 817
-		       "CGIJNH",   // 340 "EC7CC" "CGIJNH" "RIE5" 44 RPI 817
-		       "CGIJNL",   // 350 "EC7CA" "CGIJNL" "RIE5" 44 RPI 817
-		       "CLGIJ",    // 360 "EC7D" "CLGIJ" "RIE4" 43 RPI 817
-		       "CLGIJE",   // 370 "EC7D8" "CLGIJE" "RIE5" 44 RPI 817
-		       "CLGIJH",   // 380 "EC7D2" "CLGIJH" "RIE5" 44 RPI 817
-		       "CLGIJL",   // 390 "EC7D4" "CLGIJL" "RIE5" 44 RPI 817
-		       "CLGIJNE",  // 400 "EC7D6" "CLGIJNE" "RIE5" 44 RPI 817
-		       "CLGIJNH",  // 410 "EC7DC" "CLGIJNH" "RIE5" 44 RPI 817
-		       "CLGIJNL",  // 420 "EC7DA" "CLGIJNL" "RIE5" 44 RPI 817
-		       "CIJ",      // 430 "EC7E" "CIJ" "RIE4" 43 RPI 817
-		       "CIJE",     // 440 "EC7E8" "CIJE" "RIE5" 44 RPI 817
-		       "CIJH",     // 450 "EC7E2" "CIJH" "RIE5" 44 RPI 817
-		       "CIJL",     // 460 "EC7E4" "CIJL" "RIE5" 44 RPI 817
-		       "CIJNE",    // 470 "EC7E6" "CIJNE" "RIE5" 44 RPI 817
-		       "CIJNH",    // 480 "EC7EC" "CIJNH" "RIE5" 44 RPI 817
-		       "CIJNL",    // 490 "EC7EA" "CIJNL" "RIE5" 44 RPI 817
-		       "CLIJ",     // 500 "EC7F" "CLIJ" "RIE4" 43 RPI 817
-		       "CLIJE",    // 510 "EC7F8" "CLIJE" "RIE5" 44 RPI 817
-		       "CLIJH",    // 520 "EC7F2" "CLIJH" "RIE5" 44 RPI 817
-		       "CLIJL",    // 530 "EC7F4" "CLIJL" "RIE5" 44 RPI 817
-		       "CLIJNE",   // 540 "EC7F6" "CLIJNE" "RIE5" 44 RPI 817
-		       "CLIJNH",   // 550 "EC7FC" "CLIJNH" "RIE5" 44 RPI 817
-		       "CLIJNL",   // 560 "EC7FA" "CLIJNL" "RIE5" 44 RPI 817
-		       "AHIK",  // "ECD8","AHIK","RIE9"    57 RPI 1125 Z196
-		       "AGHIK",  // "ECD9","AGHIK","RIE9"   57 RPI 1125 Z196
-		       "ALHSIK",  // "ECDA","ALHSIK","RIE9"  57 RPI 1125 Z196
-		       "ALGHSIK",  // "ECDB","ALGHSIK","RIE9" 57 RPI 1125 Z196
-		       "CGRB",     // 570 "ECE4" "CGRB" "RRS1" 45 RPI 817
-		       "CGRBE",    // 580 "ECE48" "CGRBE" "RRS2" 46 RPI 817
-		       "CGRBH",    // 590 "ECE42" "CGRBH" "RRS2" 46 RPI 817
-		       "CGRBL",    // 600 "ECE44" "CGRBL" "RRS2" 46 RPI 817
-		       "CGRBNE",   // 610 "ECE46" "CGRBNE" "RRS2" 46 RPI 817
-		       "CGRBNH",   // 620 "ECE4C" "CGRBNH" "RRS2" 46 RPI 817
-		       "CGRBNL",   // 630 "ECE4A" "CGRBNL" "RRS2" 46 RPI 817
-		       "CLGRB",    // 640 "ECE5" "CLGRB" "RRS1" 45 RPI 817
-		       "CLGRBE",   // 650 "ECE58" "CLGRBE" "RRS2" 46 RPI 817
-		       "CLGRBH",   // 660 "ECE52" "CLGRBH" "RRS2" 46 RPI 817
-		       "CLGRBL",   // 670 "ECE54" "CLGRBL" "RRS2" 46 RPI 817
-		       "CLGRBNE",  // 680 "ECE56" "CLGRBNE" "RRS2" 46 RPI 817
-		       "CLGRBNH",  // 690 "ECE5C" "CLGRBNH" "RRS2" 46 RPI 817
-		       "CLGRBNL",  // 700 "ECE5A" "CLGRBNL" "RRS2" 46 RPI 817
-		       "CRB",      // 710 "ECF6" "CRB" "RRS1" 45 RPI 817
-		       "CRBE",     // 720 "ECF68" "CRBE" "RRS2" 46 RPI 817
-		       "CRBH",     // 730 "ECF62" "CRBH" "RRS2" 46 RPI 817
-		       "CRBL",     // 740 "ECF64" "CRBL" "RRS2" 46 RPI 817
-		       "CRBNE",    // 750 "ECF66" "CRBNE" "RRS2" 45 RPI 817
-		       "CRBNH",    // 760 "ECF6C" "CRBNH" "RRS2" 46 RPI 817
-		       "CRBNL",    // 770 "ECF6A" "CRBNL" "RRS2" 46 RPI 817
-		       "CLRB",     // 780 "ECF7" "CLRB" "RRS1" 45 RPI 817
-		       "CLRBE",    // 790 "ECF78" "CLRBE" "RRS2" 46 RPI 817
-		       "CLRBH",    // 800 "ECF72" "CLRBH" "RRS2" 46 RPI 817
-		       "CLRBL",    // 810 "ECF74" "CLRBL" "RRS2" 46 RPI 817
-		       "CLRBNE",   // 820 "ECF76" "CLRBNE" "RRS2" 46 RPI 817
-		       "CLRBNH",   // 830 "ECF7C" "CLRBNH" "RRS2" 46 RPI 817
-		       "CLRBNL",   // 840 "ECF7A" "CLRBNL" "RRS2" 46 RPI 817
-		       "CGIB",     // 850 "ECFC" "CGIB" "RRS3" 47 RPI 817
-		       "CGIBE",    // 860 "ECFC8" "CGIBE" "RRS4" 48 RPI 817
-		       "CGIBH",    // 870 "ECFC2" "CGIBH" "RRS4" 48 RPI 817
-		       "CGIBL",    // 880 "ECFC4" "CGIBL" "RRS4" 48 RPI 817
-		       "CGIBNE",   // 890 "ECFC6" "CGIBNE" "RRS4" 48 RPI 817
-		       "CGIBNH",   // 900 "ECFCC" "CGIBNH" "RRS4" 48 RPI 817
-		       "CGIBNL",   // 910 "ECFCA" "CGIBNL" "RRS4" 48 RPI 817
-		       "CLGIB",    // 920 "ECFD" "CLGIB" "RRS3" 47 RPI 817
-		       "CLGIBE",   // 930 "ECFD8" "CLGIBE" "RRS4" 48 RPI 817
-		       "CLGIBH",   // 940 "ECFD2" "CLGIBH" "RRS4" 48 RPI 817
-		       "CLGIBL",   // 950 "ECFD4" "CLGIBL" "RRS4" 48 RPI 817
-		       "CLGIBNE",  // 960 "ECFD6" "CLGIBNE" "RRS4" 48 RPI 817
-		       "CLGIBNH",  // 970 "ECFDC" "CLGIBNH" "RRS4" 48 RPI 817
-		       "CLGIBNL",  // 980 "ECFDA" "CLGIBNL" "RRS4" 48 RPI 817
-		       "CIB",      // 990 "ECFE" "CIB" "RRS3" 47 RPI 817
-		       "CIBE",     // 1000 "ECFE8" "CIBE" "RRS4" 48 RPI 817
-		       "CIBH",     // 1010 "ECFE2" "CIBH" "RRS4" 48 RPI 817
-		       "CIBL",     // 1020 "ECFE4" "CIBL" "RRS4" 48 RPI 817
-		       "CIBNE",    // 1030 "ECFE6" "CIBNE" "RRS4" 48 RPI 817
-		       "CIBNH",    // 1040 "ECFEC" "CIBNH" "RRS4" 48 RPI 817
-		       "CIBNL",    // 1050 "ECFEA" "CIBNL" "RRS4" 48 RPI 817
-		       "CLIB",     // 1060 "ECFF" "CLIB" "RRS3" 47 RPI 817
-		       "CLIBE",    // 1070 "ECFF8" "CLIBE" "RRS4" 48 RPI 817
-		       "CLIBH",    // 1080 "ECFF2" "CLIBH" "RRS4" 48 RPI 817
-		       "CLIBL",    // 1090 "ECFF4" "CLIBL" "RRS4" 48 RPI 817
-		       "CLIBNE",   // 1100 "ECFF6" "CLIBNE" "RRS4" 48 RPI 817
-		       "CLIBNH",   // 1110 "ECFFC" "CLIBNH" "RRS4" 48 RPI 817
-		       "CLIBNL",   // 1120 "ECFFA" "CLIBNL" "RRS4" 48 RPI 817		       
-		       "LDEB",     // 6620 "ED04" "LDEB" "RXE" 24
-		       "LXDB",     // 6630 "ED05" "LXDB" "RXE" 24
-		       "LXEB",     // 6640 "ED06" "LXEB" "RXE" 24
-		       "MXDB",     // 6650 "ED07" "MXDB" "RXE" 24
-		       "KEB",      // 6660 "ED08" "KEB" "RXE" 24
-		       "CEB",      // 6670 "ED09" "CEB" "RXE" 24
-		       "AEB",      // 6680 "ED0A" "AEB" "RXE" 24
-		       "SEB",      // 6690 "ED0B" "SEB" "RXE" 24
-		       "MDEB",     // 6700 "ED0C" "MDEB" "RXE" 24
-		       "DEB",      // 6710 "ED0D" "DEB" "RXE" 24
-		       "MAEB",     // 6720 "ED0E" "MAEB" "RXF" 25
-		       "MSEB",     // 6730 "ED0F" "MSEB" "RXF" 25
-		       "TCEB",     // 6740 "ED10" "TCEB" "RXE" 24
-		       "TCDB",     // 6750 "ED11" "TCDB" "RXE" 24
-		       "TCXB",     // 6760 "ED12" "TCXB" "RXE" 24
-		       "SQEB",     // 6770 "ED14" "SQEB" "RXE" 24
-		       "SQDB",     // 6780 "ED15" "SQDB" "RXE" 24
-		       "MEEB",     // 6790 "ED17" "MEEB" "RXE" 24
-		       "KDB",      // 6800 "ED18" "KDB" "RXE" 24
-		       "CDB",      // 6810 "ED19" "CDB" "RXE" 24
-		       "ADB",      // 6820 "ED1A" "ADB" "RXE" 24
-		       "SDB",      // 6830 "ED1B" "SDB" "RXE" 24
-		       "MDB",      // 6840 "ED1C" "MDB" "RXE" 24
-		       "DDB",      // 6850 "ED1D" "DDB" "RXE" 24
-		       "MADB",     // 6860 "ED1E" "MADB" "RXF" 25
-		       "MSDB",     // 6870 "ED1F" "MSDB" "RXF" 25
-		       "LDE",      // 6880 "ED24" "LDE" "RXE" 24
-		       "LXD",      // 6890 "ED25" "LXD" "RXE" 24
-		       "LXE",      // 6900 "ED26" "LXE" "RXE" 24
-		       "MAE",      // 6910 "ED2E" "MAE" "RXF" 25
-		       "MSE",      // 6920 "ED2F" "MSE" "RXF" 25
-		       "SQE",      // 6930 "ED34" "SQE" "RXE" 24
-		       "SQD",      // 6940 "ED35" "SQD" "RXE" 24
-		       "MEE",      // 6950 "ED37" "MEE" "RXE" 24
-		       "MAYL",     //      "ED38" "MAYL" "RXF" 25 Z9-46
-		       "MYL",      //      "ED39" "MYL" "RXF" 25 Z9-47
-		       "MAY",      //      "ED3A" "MAY" "RXF" 25 Z9-48
-		       "MY",       //      "ED3B" "MY" "RXF" 25 Z9-49 RPI 298
-		       "MAYH",     //      "ED3C" "MAYH" "RXF" 25 Z9-50
-		       "MYH",      //      "ED3D" "MYH" "RXF" 25 Z9-51 RPI 298
-		       "MAD",      // 6960 "ED3E" "MAD" "RXF" 25
-		       "MSD",      // 6970 "ED3F" "MSD" "RXF" 25
-		       "SLDT", // "ED40" "RXF" DFP 45
-		       "SRDT", // "ED41" "RXF" DFP 46
-		       "SLXT", // "ED48" "RXF" DFP 47
-		       "SRXT", // "ED49" "RXF" DFP 48
-		       "TDCET", // "ED50" "RXE" DFP 49
-		       "TDGET", // "ED51" "RXE" DFP 50
-		       "TDCDT", // "ED54" "RXE" DFP 51
-		       "TDGDT", // "ED55" "RXE" DFP 52
-		       "TDCXT", // "ED58" "RXE" DFP 53
-		       "TDGXT", // "ED59" "RXE" DFP 54
-
-		       "LEY",      // 6980 "ED64" "LEY" "RXY" 18
-		       "LDY",      // 6990 "ED65" "LDY" "RXY" 18
-		       "STEY",     // 7000 "ED66" "STEY" "RXY" 18
-		       "STDY",     // 7010 "ED67" "STDY" "RXY" 18
-		       "PLO",      // 7020 "EE" "PLO" "SS3" 27
-		       "LMD",      // 7030 "EF" "LMD" "SS4" 28
-		       "SRP",      // 7040 "F0" "SRP" "SS5" 29
-		       "MVO",      // 7050 "F1" "MVO" "SS2" 26
-		       "PACK",     // 7060 "F2" "PACK" "SS2" 26
-		       "UNPK",     // 7070 "F3" "UNPK" "SS2" 26
-		       "ZAP",      // 7080 "F8" "ZAP" "SS2" 26
-		       "CP",       // 7090 "F9" "CP" "SS2" 26
-		       "AP",       // 7100 "FA" "AP" "SS2" 26
-		       "SP",       // 7110 "FB" "SP" "SS2" 26
-		       "MP",       // 7120 "FC" "MP" "SS2" 26
-		       "DP",      // 7130 "FD" "DP" "SS2" 26
-		       "CCW",      // 7140  "CCW"  101
-		       "CCW0",     // 7150  "CCW0"  102
-		       "CCW1",     // 7160  "CCW1"  103
-		       "DC",       // 7170  "DC"  104
-		       "DS",       // 7180  "DS"  105
-		       "ALIAS",    // 7190  "ALIAS"  106
-		       "AMODE",    // 7200  "AMODE"  107
-		       "CATTR",    // 7210  "CATTR"  108
-		       "COM",      // 7220  "COM"  109
-		       "CSECT",    // 7230  "CSECT"  110
-		       "CXD",      // 7240  "CXD"  111
-		       "DSECT",    // 7250  "DSECT"  112
-		       "DXD",      // 7260  "DXD"  113
-		       "ENTRY",    // 7270  "ENTRY"  114
-		       "EXTRN",    // 7280  "EXTRN"  115
-		       "LOCTR",    // 7290  "LOCTR"  116
-		       "RMODE",    // 7300  "RMODE"  117
-		       "RSECT",    // 7310  "RSECT"  118
-		       "START",    // 7320  "START"  119
-		       "WXTRN",    // 7330  "WXTRN"  120
-		       "XATTR",    // 7340  "XATTR"  121
-		       "",         // 7350  ""  122
-		       "DROP",     // 7360  "DROP"  123
-		       "USING",    // 7370  "USING"  124
-		       "AEJECT",   // 7380  "AEJECT"  125
-		       "ASPACE",   // 7390  "ASPACE"  126
-		       "CEJECT",   // 7400  "CEJECT"  127
-		       "EJECT",    // 7410  "EJECT"  128
-		       "PRINT",    // 7420  "PRINT"  129
-		       "SPACE",    // 7430  "SPACE"  130
-		       "TITLE",    // 7440  "TITLE"  131
-		       "ADATA",    // 7450  "ADATA"  132
-		       "CNOP",     // 7460  "CNOP"  133
-		       "COPY",     // 7470  "COPY"  224
-		       "END",      // 7480  "END"  135
-		       "EQU",      // 7490  "EQU"  136
-		       "EXITCTL",  // 7500  "EXITCTL"  137
-		       "ICTL",    // 7510  "ICTL"  138 
-		       "ISEQ",    // 7520  "ISEQ"  139 
-		       "LTORG",    // 7530  "LTORG"  140
-		       "OPSYN",    // 7540  "OPSYN"  225
-		       "ORG",      // 7550  "ORG"  142
-		       "POP",      // 7560  "POP"  143
-		       "PUNCH",    // 7570  "PUNCH"  223
-		       "PUSH",     // 7580  "PUSH"  145
-		       "REPRO",    // 7590  "REPRO"  146
-		       "ACONTROL", // 7595  "ACONTROL" 147 /RPI 368
-		       "ACTR",     // 7600  "ACTR"  201
-		       "AGO",      // 7610  "AGO"  202
-		       "AIF",      // 7620  "AIF"  203
-		       "AINSERT",  // 7630  "AINSERT"  204
-		       "ANOP",     // 7640  "ANOP"  205
-		       "AREAD",    // 7650  "AREAD"  206
-		       "GBLA",     // 7660  "GBLA"  207
-		       "GBLB",     // 7670  "GBLB"  208
-		       "GBLC",     // 7680  "GBLC"  209
-		       "LCLA",     // 7690  "LCLA"  210
-		       "LCLB",     // 7700  "LCLB"  211
-		       "LCLC",     // 7710  "LCLC"  212
-		       "MHELP",    // 7720  "MHELP"  213
-		       "MNOTE",    // 7730  "MNOTE"  214
-		       "SETA",     // 7740  "SETA"  215
-		       "SETAF",    // 7750  "SETAF"  216
-		       "SETB",     // 7760  "SETB"  217
-		       "SETC",     // 7770  "SETC"  218
-		       "SETCF",    // 7780  "SETCF"  219
-		       "MACRO",    // 7790  "MACRO"  220
-		       "MEND",     // 7800  "MEND"  221
-		       "MEXIT",   // 7810  "MEXIT"  222
-		       "AGOB",    // 7820  "AGOB"   226
-		       "AIFB",    // 7830  "AIFB"   227
-	       
-      };
+  //String[] op_name = // Static content removed, content now generated RPI 1209
+    String[] op_name  = null; // See process_opcodes() RPI 1209
     int[]    op_type_len = {
     	 0, // 0 comment place holder	
          2,	// 1 "E" 8 PR oooo
@@ -2320,2519 +1036,1488 @@ public  class  tz390 {
     //  3.  Change az390 instruction format cases and
     //  4.  Change pz390 op_type_offset and op_type_mask if new primary opcode
     //  5.  Change pz390 trace_psw to add new case formats
-  	int[]    op_type  = {
-			   0,  // comments
-		       1,  // 10 "0101" "PR" "E" 1
-		       1,  // 20 "0102" "UPT" "E" 1		       
-		       1,  //    "0104" "PTFF" "E" 1 Z9-1
-		       1,  // 30 "0107" "SCKPF" "E" 1
-		       1,  // 40 "010A" "PFPO" "E" 1   RPI 1013
-		       1,  // 40 "010B" "TAM" "E" 1
-		       1,  // 50 "010C" "SAM24" "E" 1
-		       1,  // 60 "010D" "SAM31" "E" 1
-		       1,  // 70 "010E" "SAM64" "E" 1
-		       1,  // 80 "01FF" "TRAP2" "E" 1
-		       2,  // 90 "04" "SPM" "RR" 2
-		       2,  // 100 "05" "BALR" "RR" 2
-		       2,  // 110 "06" "BCTR" "RR" 2
-		       2,  // 120 "07" "BCR" "RR" 2
-		       3,  // 130 "07F" "BR" "BRX" 3
-		       3,  // 140 "070" "NOPR" "BRX" 3
-		       3,  // 150 "072" "BHR" "BRX" 3
-		       3,  // 160 "074" "BLR" "BRX" 3
-		       3,  // 170 "078" "BER" "BRX" 3
-		       3,  // 180 "07D" "BNHR" "BRX" 3
-		       3,  // 190 "07B" "BNLR" "BRX" 3
-		       3,  // 200 "077" "BNER" "BRX" 3
-		       3,  // 210 "072" "BPR" "BRX" 3
-		       3,  // 220 "071" "BOR" "BRX" 3
-		       3,  // 230 "074" "BMR" "BRX" 3
-		       3,  // 240 "078" "BZR" "BRX" 3
-		       3,  // 250 "07D" "BNPR" "BRX" 3
-		       3,  // 260 "07B" "BNMR" "BRX" 3
-		       3,  // 270 "077" "BNZR" "BRX" 3
-		       3,  // 280 "07E" "BNOR" "BRX" 3
-		       4,  // 290 "0A" "SVC" "I" 4
-		       2,  // 300 "0B" "BSM" "RR" 2
-		       2,  // 310 "0C" "BASSM" "RR" 2
-		       2,  // 320 "0D" "BASR" "RR" 2
-		       2,  // 330 "0E" "MVCL" "RR" 2
-		       2,  // 340 "0F" "CLCL" "RR" 2
-		       2,  // 350 "10" "LPR" "RR" 2
-		       2,  // 360 "11" "LNR" "RR" 2
-		       2,  // 370 "12" "LTR" "RR" 2
-		       2,  // 380 "13" "LCR" "RR" 2
-		       2,  // 390 "14" "NR" "RR" 2
-		       2,  // 400 "15" "CLR" "RR" 2
-		       2,  // 410 "16" "OR" "RR" 2
-		       2,  // 420 "17" "XR" "RR" 2
-		       2,  // 430 "18" "LR" "RR" 2
-		       2,  // 440 "19" "CR" "RR" 2
-		       2,  // 450 "1A" "AR" "RR" 2
-		       2,  // 460 "1B" "SR" "RR" 2
-		       2,  // 470 "1C" "MR" "RR" 2
-		       2,  // 480 "1D" "DR" "RR" 2
-		       2,  // 490 "1E" "ALR" "RR" 2
-		       2,  // 500 "1F" "SLR" "RR" 2
-		       2,  // 510 "20" "LPDR" "RR" 2
-		       2,  // 520 "21" "LNDR" "RR" 2
-		       2,  // 530 "22" "LTDR" "RR" 2
-		       2,  // 540 "23" "LCDR" "RR" 2
-		       2,  // 550 "24" "HDR" "RR" 2
-		       2,  // 560 "25" "LDXR" "RR" 2
-		       2,  // 570 "25" "LRDR" "RR" 2
-		       2,  // 580 "26" "MXR" "RR" 2
-		       2,  // 590 "27" "MXDR" "RR" 2
-		       2,  // 600 "28" "LDR" "RR" 2
-		       2,  // 610 "29" "CDR" "RR" 2
-		       2,  // 620 "2A" "ADR" "RR" 2
-		       2,  // 630 "2B" "SDR" "RR" 2
-		       2,  // 640 "2C" "MDR" "RR" 2
-		       2,  // 650 "2D" "DDR" "RR" 2
-		       2,  // 660 "2E" "AWR" "RR" 2
-		       2,  // 670 "2F" "SWR" "RR" 2
-		       2,  // 680 "30" "LPER" "RR" 2
-		       2,  // 690 "31" "LNER" "RR" 2
-		       2,  // 700 "32" "LTER" "RR" 2
-		       2,  // 710 "33" "LCER" "RR" 2
-		       2,  // 720 "34" "HER" "RR" 2
-		       2,  // 730 "35" "LEDR" "RR" 2
-		       2,  // 740 "35" "LRER" "RR" 2
-		       2,  // 750 "36" "AXR" "RR" 2
-		       2,  // 760 "37" "SXR" "RR" 2
-		       2,  // 770 "38" "LER" "RR" 2
-		       2,  // 780 "39" "CER" "RR" 2
-		       2,  // 790 "3A" "AER" "RR" 2
-		       2,  // 800 "3B" "SER" "RR" 2
-		       2,  // 810 "3C" "MDER" "RR" 2
-		       2,  // 820 "3C" "MER" "RR" 2
-		       2,  // 830 "3D" "DER" "RR" 2
-		       2,  // 840 "3E" "AUR" "RR" 2
-		       2,  // 850 "3F" "SUR" "RR" 2
-		       5,  // 860 "40" "STH" "RX" 5
-		       5,  // 870 "41" "LA" "RX" 5
-		       5,  // 880 "42" "STC" "RX" 5
-		       5,  // 890 "43" "IC" "RX" 5
-		       5,  // 900 "44" "EX" "RX" 5
-		       5,  // 910 "45" "BAL" "RX" 5
-		       5,  // 920 "46" "BCT" "RX" 5
-		       5,  // 930 "47" "BC" "RX" 5
-		       6,  // 940 "47F" "B" "BCX" 6
-		       6,  // 950 "470" "NOP" "BCX" 6
-		       6,  // 960 "472" "BH" "BCX" 6
-		       6,  // 970 "474" "BL" "BCX" 6
-		       6,  // 980 "478" "BE" "BCX" 6
-		       6,  // 990 "47D" "BNH" "BCX" 6
-		       6,  // 1000 "47B" "BNL" "BCX" 6
-		       6,  // 1010 "477" "BNE" "BCX" 6
-		       6,  // 1020 "472" "BP" "BCX" 6
-		       6,  // 1030 "471" "BO" "BCX" 6
-		       6,  // 1040 "474" "BM" "BCX" 6
-		       6,  // 1050 "478" "BZ" "BCX" 6
-		       6,  // 1060 "47D" "BNP" "BCX" 6
-		       6,  // 1070 "47B" "BNM" "BCX" 6
-		       6,  // 1080 "477" "BNZ" "BCX" 6
-		       6,  // 1090 "47E" "BNO" "BCX" 6
-		       5,  // 1100 "48" "LH" "RX" 5
-		       5,  // 1110 "49" "CH" "RX" 5
-		       5,  // 1120 "4A" "AH" "RX" 5
-		       5,  // 1130 "4B" "SH" "RX" 5
-		       5,  // 1140 "4C" "MH" "RX" 5
-		       5,  // 1150 "4D" "BAS" "RX" 5
-		       5,  // 1160 "4E" "CVD" "RX" 5
-		       5,  // 1170 "4F" "CVB" "RX" 5
-		       5,  // 1180 "50" "ST" "RX" 5
-		       5,  // 1190 "51" "LAE" "RX" 5
-		       37, // 1193 "52" "XDECO" "RX" 37 RPI 812
-		       37, // 1196 "53" "XDECI" "RX" 37 RPI 812	
-		       5,  // 1200 "54" "N" "RX" 5
-		       5,  // 1210 "55" "CL" "RX" 5
-		       5,  // 1220 "56" "O" "RX" 5
-		       5,  // 1230 "57" "X" "RX" 5
-		       5,  // 1240 "58" "L" "RX" 5
-		       5,  // 1250 "59" "C" "RX" 5
-		       5,  // 1260 "5A" "A" "RX" 5
-		       5,  // 1270 "5B" "S" "RX" 5
-		       5,  // 1280 "5C" "M" "RX" 5
-		       5,  // 1290 "5D" "D" "RX" 5
-		       5,  // 1300 "5E" "AL" "RX" 5
-		       5,  // 1310 "5F" "SL" "RX" 5
-		       5,  // 1320 "60" "STD" "RX" 5
-		       37, // 1323 "61" "XHEXI" "RX" 37 RPI 812
-		       37, // 1326 "62" "XHEXO" "RX" 37 RPI 812
-		       5,  // 1330 "67" "MXD" "RX" 5
-		       5,  // 1340 "68" "LD" "RX" 5
-		       5,  // 1350 "69" "CD" "RX" 5
-		       5,  // 1360 "6A" "AD" "RX" 5
-		       5,  // 1370 "6B" "SD" "RX" 5
-		       5,  // 1380 "6C" "MD" "RX" 5
-		       5,  // 1390 "6D" "DD" "RX" 5
-		       5,  // 1400 "6E" "AW" "RX" 5
-		       5,  // 1410 "6F" "SW" "RX" 5
-		       5,  // 1420 "70" "STE" "RX" 5
-		       5,  // 1430 "71" "MS" "RX" 5
-		       5,  // 1440 "78" "LE" "RX" 5
-		       5,  // 1450 "79" "CE" "RX" 5
-		       5,  // 1460 "7A" "AE" "RX" 5
-		       5,  // 1470 "7B" "SE" "RX" 5
-		       5,  // 1480 "7C" "MDE" "RX" 5
-		       5,  // 1490 "7C" "ME" "RX" 5
-		       5,  // 1500 "7D" "DE" "RX" 5
-		       5,  // 1510 "7E" "AU" "RX" 5
-		       5,  // 1520 "7F" "SU" "RX" 5
-		       7,  // 1530 "8000" "SSM" "S" 7
-		       7,  // 1540 "8202" "LPSW" "S" 7
-		       8,  // 1550 "83" "DIAGNOSE" "DM" 8
-		       9,  // 1560 "84" "BRXH" "RSI" 9
-		       9,  // 1570 "84" "JXH" "RSI" 9
-		       9,  // 1580 "85" "BRXLE" "RSI" 9
-		       9,  // 1590 "85" "JXLE" "RSI" 9
-		       10,  // 1600 "86" "BXH" "RS" 10
-		       10,  // 1610 "87" "BXLE" "RS" 10
-		       10,  // 1620 "88" "SRL" "RS" 10
-		       10,  // 1630 "89" "SLL" "RS" 10
-		       10,  // 1640 "8A" "SRA" "RS" 10
-		       10,  // 1650 "8B" "SLA" "RS" 10
-		       10,  // 1660 "8C" "SRDL" "RS" 10
-		       10,  // 1670 "8D" "SLDL" "RS" 10
-		       10,  // 1680 "8E" "SRDA" "RS" 10
-		       10,  // 1690 "8F" "SLDA" "RS" 10
-		       10,  // 1700 "90" "STM" "RS" 10
-		       11,  // 1710 "91" "TM" "SI" 11
-		       11,  // 1720 "92" "MVI" "SI" 11
-		       7,  // 1730 "93" "TS" "S" 7
-		       11,  // 1740 "94" "NI" "SI" 11
-		       11,  // 1750 "95" "CLI" "SI" 11
-		       11,  // 1760 "96" "OI" "SI" 11
-		       11,  // 1770 "97" "XI" "SI" 11
-		       10,  // 1780 "98" "LM" "RS" 10
-		       10,  // 1790 "99" "TRACE" "RS" 10
-		       10,  // 1800 "9A" "LAM" "RS" 10
-		       10,  // 1810 "9B" "STAM" "RS" 10
-		       12,  // 1820 "A50" "IIHH" "RI" 12
-		       12,  // 1830 "A51" "IIHL" "RI" 12
-		       12,  // 1840 "A52" "IILH" "RI" 12
-		       12,  // 1850 "A53" "IILL" "RI" 12
-		       12,  // 1860 "A54" "NIHH" "RI" 12
-		       12,  // 1870 "A55" "NIHL" "RI" 12
-		       12,  // 1880 "A56" "NILH" "RI" 12
-		       12,  // 1890 "A57" "NILL" "RI" 12
-		       12,  // 1900 "A58" "OIHH" "RI" 12
-		       12,  // 1910 "A59" "OIHL" "RI" 12
-		       12,  // 1920 "A5A" "OILH" "RI" 12
-		       12,  // 1930 "A5B" "OILL" "RI" 12
-		       12,  // 1940 "A5C" "LLIHH" "RI" 12
-		       12,  // 1950 "A5D" "LLIHL" "RI" 12
-		       12,  // 1960 "A5E" "LLILH" "RI" 12
-		       12,  // 1970 "A5F" "LLILL" "RI" 12
-		       12,  // 1980 "A70" "TMLH" "RI" 12
-		       12,  // 1990 "A70" "TMH" "RI" 12
-		       12,  // 2000 "A71" "TMLL" "RI" 12
-		       12,  // 2010 "A71" "TML" "RI" 12
-		       12,  // 2020 "A72" "TMHH" "RI" 12
-		       12,  // 2030 "A73" "TMHL" "RI" 12
-		       12,  // 2040 "A74" "BRC" "RI" 12
-		       13,  // 2050 "A74F" "J" "BRCX" 13
-		       13,  // 2060 "A740" "JNOP" "BRCX" 13
-		       13,  // 2070 "A74F" "BRU" "BRCX" 13
-		       13,  // 2080 "A742" "BRH" "BRCX" 13
-		       13,  // 2090 "A744" "BRL" "BRCX" 13
-		       13,  // 2100 "A748" "BRE" "BRCX" 13
-		       13,  // 2110 "A74D" "BRNH" "BRCX" 13
-		       13,  // 2120 "A74B" "BRNL" "BRCX" 13
-		       13,  // 2130 "A747" "BRNE" "BRCX" 13
-		       13,  // 2140 "A742" "BRP" "BRCX" 13
-		       13,  // 2150 "A744" "BRM" "BRCX" 13
-		       13,  // 2160 "A748" "BRZ" "BRCX" 13
-		       13,  // 2170 "A741" "BRO" "BRCX" 13
-		       13,  // 2180 "A74D" "BRNP" "BRCX" 13
-		       13,  // 2190 "A74B" "BRNM" "BRCX" 13
-		       13,  // 2200 "A747" "BRNZ" "BRCX" 13
-		       13,  // 2210 "A74E" "BRNO" "BRCX" 13
-		       13,  // 2220 "A742" "JH" "BRCX" 13
-		       13,  // 2230 "A744" "JL" "BRCX" 13
-		       13,  // 2240 "A748" "JE" "BRCX" 13
-		       13,  // 2250 "A74D" "JNH" "BRCX" 13
-		       13,  // 2260 "A74B" "JNL" "BRCX" 13
-		       13,  // 2270 "A747" "JNE" "BRCX" 13
-		       13,  // 2280 "A742" "JP" "BRCX" 13 
-		       13,  // 2290 "A744" "JM" "BRCX" 13
-		       13,  // 2300 "A748" "JZ" "BRCX" 13
-		       13,  // 2310 "A741" "JO" "BRCX" 13
-		       13,  // 2320 "A74D" "JNP" "BRCX" 13
-		       13,  // 2330 "A74B" "JNM" "BRCX" 13
-		       13,  // 2340 "A747" "JNZ" "BRCX" 13
-		       13,  // 2350 "A74E" "JNO" "BRCX" 13
-		       12,  // 2360 "A75" "BRAS" "RI" 12
-		       12,  // 2370 "A75" "JAS" "RI" 12
-		       12,  // 2380 "A76" "BRCT" "RI" 12
-		       12,  // 2390 "A76" "JCT" "RI" 12
-		       12,  // 2400 "A77" "BRCTG" "RI" 12
-		       12,  // 2410 "A77" "JCTG" "RI" 12
-		       12,  // 2420 "A78" "LHI" "RI" 12
-		       12,  // 2430 "A79" "LGHI" "RI" 12
-		       12,  // 2440 "A7A" "AHI" "RI" 12
-		       12,  // 2450 "A7B" "AGHI" "RI" 12
-		       12,  // 2460 "A7C" "MHI" "RI" 12
-		       12,  // 2470 "A7D" "MGHI" "RI" 12
-		       12,  // 2480 "A7E" "CHI" "RI" 12
-		       12,  // 2490 "A7F" "CGHI" "RI" 12
-		       10,  // 2500 "A8" "MVCLE" "RS" 10
-		       10,  // 2510 "A9" "CLCLE" "RS" 10
-		       11,  // 2520 "AC" "STNSM" "SI" 11
-		       11,  // 2530 "AD" "STOSM" "SI" 11
-		       10,  // 2540 "AE" "SIGP" "RS" 10
-		       11,  // 2550 "AF" "MC" "SI" 11
-		       5,  // 2560 "B1" "LRA" "RX" 5
-		       7,  // 2570 "B202" "STIDP" "S" 7
-		       7,  // 2580 "B204" "SCK" "S" 7
-		       7,  // 2590 "B205" "STCK" "S" 7
-		       7,  // 2600 "B206" "SCKC" "S" 7
-		       7,  // 2610 "B207" "STCKC" "S" 7
-		       7,  // 2620 "B208" "SPT" "S" 7
-		       7,  // 2630 "B209" "STPT" "S" 7
-		       7,  // 2640 "B20A" "SPKA" "S" 7
-		       7,  // 2650 "B20B" "IPK" "S" 7
-		       7,  // 2660 "B20D" "PTLB" "S" 7
-		       7,  // 2670 "B210" "SPX" "S" 7
-		       7,  // 2680 "B211" "STPX" "S" 7
-		       7,  // 2690 "B212" "STAP" "S" 7
-		       7,  // 2700 "B218" "PC" "S" 7
-		       7,  // 2710 "B219" "SAC" "S" 7
-		       7,  // 2720 "B21A" "CFC" "S" 7
-		       14,  // 2730 "B221" "IPTE" "RRE" 14
-		       14,  // 2740 "B222" "IPM" "RRE" 14
-		       14,  // 2750 "B223" "IVSK" "RRE" 14
-		       14,  // 2760 "B224" "IAC" "RRE" 14
-		       14,  // 2770 "B225" "SSAR" "RRE" 14
-		       14,  // 2780 "B226" "EPAR" "RRE" 14
-		       14,  // 2790 "B227" "ESAR" "RRE" 14
-		       14,  // 2800 "B228" "PT" "RRE" 14
-		       14,  // 2810 "B229" "ISKE" "RRE" 14
-		       14,  // 2820 "B22A" "RRBE" "RRE" 14
-		       14,  // 2830 "B22B" "SSKE" "RRE" 14
-		       14,  // 2840 "B22C" "TB" "RRE" 14
-		       14,  // 2850 "B22D" "DXR" "RRE" 14
-		       14,  // 2860 "B22E" "PGIN" "RRE" 14
-		       14,  // 2870 "B22F" "PGOUT" "RRE" 14
-		       7,  // 2880 "B230" "CSCH" "S" 7
-		       7,  // 2890 "B231" "HSCH" "S" 7
-		       7,  // 2900 "B232" "MSCH" "S" 7
-		       7,  // 2910 "B233" "SSCH" "S" 7
-		       7,  // 2920 "B234" "STSCH" "S" 7
-		       7,  // 2930 "B235" "TSCH" "S" 7
-		       7,  // 2940 "B236" "TPI" "S" 7
-		       7,  // 2950 "B237" "SAL" "S" 7
-		       7,  // 2960 "B238" "RSCH" "S" 7
-		       7,  // 2970 "B239" "STCRW" "S" 7
-		       7,  // 2980 "B23A" "STCPS" "S" 7
-		       7,  // 2990 "B23B" "RCHP" "S" 7
-		       7,  // 3000 "B23C" "SCHM" "S" 7
-		       14,  // 3010 "B240" "BAKR" "RRE" 14
-		       14,  // 3020 "B241" "CKSM" "RRE" 14
-		       14,  // 3030 "B244" "SQDR" "RRE" 14
-		       14,  // 3040 "B245" "SQER" "RRE" 14
-		       14,  // 3050 "B246" "STURA" "RRE" 14
-		       14,  // 3060 "B247" "MSTA" "RRE" 14
-		       14,  // 3070 "B248" "PALB" "RRE" 14
-		       14,  // 3080 "B249" "EREG" "RRE" 14
-		       14,  // 3090 "B24A" "ESTA" "RRE" 14
-		       14,  // 3100 "B24B" "LURA" "RRE" 14
-		       14,  // 3110 "B24C" "TAR" "RRE" 14
-		       14,  // 3120 "B24D" "CPYA" "RRE" 14
-		       14,  // 3130 "B24E" "SAR" "RRE" 14
-		       14,  // 3140 "B24F" "EAR" "RRE" 14
-		       14,  // 3150 "B250" "CSP" "RRE" 14
-		       14,  // 3160 "B252" "MSR" "RRE" 14
-		       14,  // 3170 "B254" "MVPG" "RRE" 14
-		       14,  // 3180 "B255" "MVST" "RRE" 14
-		       14,  // 3190 "B257" "CUSE" "RRE" 14
-		       14,  // 3200 "B258" "BSG" "RRE" 14
-		       14,  // 3210 "B25A" "BSA" "RRE" 14
-		       14,  // 3220 "B25D" "CLST" "RRE" 14
-		       14,  // 3230 "B25E" "SRST" "RRE" 14
-		       14,  // 3240 "B263" "CMPSC" "RRE" 14
-		       7,  // 3250 "B276" "XSCH" "S" 7
-		       7,  // 3260 "B277" "RP" "S" 7
-		       7,  // 3270 "B278" "STCKE" "S" 7
-		       7,  // 3280 "B279" "SACF" "S" 7
-		       7,  //      "B27C" "STCKF" "S" 7 Z9-2
-		       7,  // 3290 "B27D" "STSI" "S" 7
-		       7,  // 3300 "B299" "SRNM" "S" 7
-		       7,  // 3310 "B29C" "STFPC" "S" 7
-		       7,  // 3320 "B29D" "LFPC" "S" 7
-		       14,  // 3330 "B2A5" "TRE" "RRE" 14
-		       14,  // 3340 "B2A6" "CUUTF" "RRE" 14
-		       14,  // 3350 "B2A6" "CU21" "RRE" 14
-		       14,  // 3360 "B2A7" "CUTFU" "RRE" 14
-		       14,  // 3370 "B2A7" "CU12" "RRE" 14
-		       7,  //      "B2B0" "STFLE" "S" 7 Z9-3
-		       7,  // 3380 "B2B1" "STFL" "S" 7
-		       7,  // 3390 "B2B2" "LPSWE" "S" 7
-		       7,  // 3392 "B2B8" "SRNMB" "S" 7 RPI 1125
-		       7,  // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
-		       7,  // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
-		       7,  // 3400 "B2FF" "TRAP4" "S" 7
-		       14,  // 3410 "B300" "LPEBR" "RRE" 14
-		       14,  // 3420 "B301" "LNEBR" "RRE" 14
-		       14,  // 3430 "B302" "LTEBR" "RRE" 14
-		       14,  // 3440 "B303" "LCEBR" "RRE" 14
-		       14,  // 3450 "B304" "LDEBR" "RRE" 14
-		       14,  // 3460 "B305" "LXDBR" "RRE" 14
-		       14,  // 3470 "B306" "LXEBR" "RRE" 14
-		       14,  // 3480 "B307" "MXDBR" "RRE" 14
-		       14,  // 3490 "B308" "KEBR" "RRE" 14
-		       14,  // 3500 "B309" "CEBR" "RRE" 14
-		       14,  // 3510 "B30A" "AEBR" "RRE" 14
-		       14,  // 3520 "B30B" "SEBR" "RRE" 14
-		       14,  // 3530 "B30C" "MDEBR" "RRE" 14
-		       14,  // 3540 "B30D" "DEBR" "RRE" 14
-		       15,  // 3550 "B30E" "MAEBR" "RRF1" 15
-		       15,  // 3560 "B30F" "MSEBR" "RRF1" 15
-		       14,  // 3570 "B310" "LPDBR" "RRE" 14
-		       14,  // 3580 "B311" "LNDBR" "RRE" 14
-		       14,  // 3590 "B312" "LTDBR" "RRE" 14
-		       14,  // 3600 "B313" "LCDBR" "RRE" 14
-		       14,  // 3610 "B314" "SQEBR" "RRE" 14
-		       14,  // 3620 "B315" "SQDBR" "RRE" 14
-		       14,  // 3630 "B316" "SQXBR" "RRE" 14
-		       14,  // 3640 "B317" "MEEBR" "RRE" 14
-		       14,  // 3650 "B318" "KDBR" "RRE" 14
-		       14,  // 3660 "B319" "CDBR" "RRE" 14
-		       14,  // 3670 "B31A" "ADBR" "RRE" 14
-		       14,  // 3680 "B31B" "SDBR" "RRE" 14
-		       14,  // 3690 "B31C" "MDBR" "RRE" 14
-		       14,  // 3700 "B31D" "DDBR" "RRE" 14
-		       15,  // 3710 "B31E" "MADBR" "RRF1" 15
-		       15,  // 3720 "B31F" "MSDBR" "RRF1" 15
-		       14,  // 3730 "B324" "LDER" "RRE" 14
-		       14,  // 3740 "B325" "LXDR" "RRE" 14
-		       14,  // 3750 "B326" "LXER" "RRE" 14
-		       15,  // 3760 "B32E" "MAER" "RRF1" 15
-		       15,  // 3770 "B32F" "MSER" "RRF1" 15
-		       14,  // 3780 "B336" "SQXR" "RRE" 14
-		       14,  // 3790 "B337" "MEER" "RRE" 14
-		       15,  //      "B338" "MAYLR" "RRF1" 15 Z9-4
-		       15,  //      "B339" "MYLR" "RRF1" 15 Z9-5
-		       15,  //      "B33A" "MAYR" "RRF1" 15 Z9-6
-		       15,  //      "B33B" "MYR" "RRF1" 15 Z9-7
-		       15,  //      "B33C" "MAYHR" "RRF1" 15 Z9-8
-		       15,  //      "B33D" "MYHR" "RRF1" 15 Z9-9
-		       15,  // 3800 "B33E" "MADR" "RRF1" 15
-		       15,  // 3810 "B33F" "MSDR" "RRF1" 15
-		       14,  // 3820 "B340" "LPXBR" "RRE" 14
-		       14,  // 3830 "B341" "LNXBR" "RRE" 14
-		       14,  // 3840 "B342" "LTXBR" "RRE" 14
-		       14,  // 3850 "B343" "LCXBR" "RRE" 14
-		       53,  // 3860 "B344" "LEDBR?" "RRE" 53 RPI 1125
-		       53,  // 3870 "B345" "LDXBR?" "RRE" 53 RPI 1125
-		       53,  // 3880 "B346" "LEXBR?" "RRE" 53 RPI 1125
-		       54,  // 3890 "B347" "FIXBR?" "RRF2" 54 RPI 1125
-		       14,  // 3900 "B348" "KXBR" "RRE" 14
-		       14,  // 3910 "B349" "CXBR" "RRE" 14
-		       14,  // 3920 "B34A" "AXBR" "RRE" 14
-		       14,  // 3930 "B34B" "SXBR" "RRE" 14
-		       14,  // 3940 "B34C" "MXBR" "RRE" 14
-		       14,  // 3950 "B34D" "DXBR" "RRE" 14
-		       34,  // 3960 "B350" "TBEDR" "RRF2" 34
-		       34,  // 3970 "B351" "TBDR" "RRF2" 34
-		       30,  // 3980 "B353" "DIEBR" "RRF3" 30
-		       54,  // 3990 "B357" "FIEBR?" "RRF2" 54 RPI 1125
-		       14,  // 4000 "B358" "THDER" "RRE" 14
-		       14,  // 4010 "B359" "THDR" "RRE" 14
-		       30,  // 4020 "B35B" "DIDBR" "RRF3" 30
-		       54,  // 4030 "B35F" "FIDBR?" "RRF2" 54 RPI 1125
-		       14,  // 4040 "B360" "LPXR" "RRE" 14
-		       14,  // 4050 "B361" "LNXR" "RRE" 14
-		       14,  // 4060 "B362" "LTXR" "RRE" 14
-		       14,  // 4070 "B363" "LCXR" "RRE" 14
-		       14,  // 4080 "B365" "LXR" "RRE" 14
-		       14,  // 4090 "B366" "LEXR" "RRE" 14
-		       14,  // 4100 "B367" "FIXR" "RRE" 14
-		       14,  // 4110 "B369" "CXR" "RRE" 14
-		       14,  // 4115 "B370" "LPDFR" "RRE"  14 DFP
-		       14,  // 4115 "B371" "LNDFR" "RRE"  14 DFP
-		       34,  // 4115 "B372" "CPSDR" "RRF2" 34 DFP
-		       14,  // 4115 "B373" "LCDFR" "RRE"  14 DFP
-		       14,  // 4120 "B374" "LZER" "RRE" 14
-		       14,  // 4130 "B375" "LZDR" "RRE" 14
-		       14,  // 4140 "B376" "LZXR" "RRE" 14
-		       14,  // 4150 "B377" "FIER" "RRE" 14
-		       14,  // 4160 "B37F" "FIDR" "RRE" 14
-		       14,  // 4170 "B384" "SFPC" "RRE" 14
-		       14,  // 4175 "B385" "SFASR" "RRE" 14 DFP 57
-		       14,  // 4180 "B38C" "EFPC" "RRE" 14
-		       30,  //      "B390" "CELFBR" "RRF3" 30 RPI 1125 Z196
-               30,  //      "B391" "CDLFBR" "RRF3" 30 RPI 1125 Z196
-               30,  //      "B392" "CXLFBR" "RRF3" 30 RPI 1125 Z196
-		       53,  // 4190 "B394" "CEFBR?" "RRE" 53 RPI 1125 Z196
-		       53,  // 4200 "B395" "CDFBR?" "RRE" 53 RPI 1125 Z196
-		       53,  // 4210 "B396" "CXFBR?" "RRE" 53 RPI 1125 Z196
-		       54,  // 4220 "B398" "CFEBR?" "RRF" 54 RPI 1125 Z196 was RRF2 34
-		       54,  // 4230 "B399" "CFDBR?" "RRF" 54 RPI 1125 Z196 was RRF2 34
-		       54,  // 4240 "B39A" "CFXBR?" "RRF" 54 RPI 1125 Z196 was RRF2 34
-		       30,    // 'B39C' 'CLFEBR' 'RRF3' 30 RPI 1125 Z196
-               30,    // 'B39D' 'CLFDBR' 'RRF3' 30 RPI 1125 Z196
-               30,    // 'B39E' 'CLFXBR' 'RRF3' 30 RPI 1125 Z196
-               30,    // 'B3A0' 'CELGBR' 'RRF3' 30 RPI 1125 Z196
-               30,    // 'B3A1' 'CDLGBR' 'RRF3' 30 RPI 1125 Z196
-               30,    // 'B3A2' 'CXLGBR' 'RRF3' 30 RPI 1125 Z196
-		       53,  // 4250 "B3A4" "CEGBR" "RRE" 53 RPI 1125 Z196
-		       53,  // 4260 "B3A5" "CDGBR" "RRE" 53 RPI 1125 Z196
-		       53,  // 4270 "B3A6" "CXGBR" "RRE" 53 RPI 1125 Z196
-		       54,  // 4280 "B3A8" "CGEBR" "RRF2" 54 RPI 1125 Z196
-		       54,  // 4290 "B3A9" "CGDBR" "RRF2" 54 RPI 1125 Z196
-		       54,  // 4300 "B3AA" "CGXBR" "RRF2" 54 RPI 1125 Z196
-		       30,    //      "B3AC" "CLGEBR" "RRF2" 30  RPI 1125 Z196
-               30,    //      "B3AD" "CLGDBR" "RRF2" 30  RPI 1125 Z196
-               30,    //      "B3AE" "CLGXBR" "RRF2" 30  RPI 1125 Z196		       
-		       14,  // 4310 "B3B4" "CEFR" "RRE" 14
-		       14,  // 4320 "B3B5" "CDFR" "RRE" 14
-		       14,  // 4330 "B3B6" "CXFR" "RRE" 14
-		       34,  // 4340 "B3B8" "CFER" "RRF2" 34
-		       34,  // 4350 "B3B9" "CFDR" "RRF2" 34
-		       34,  // 4360 "B3BA" "CFXR" "RRF2" 34
-		       14,  // 4365 "B3C1" "LDGR" "RRE" 14 DFP
-		       14,  // 4370 "B3C4" "CEGR" "RRE" 14
-		       14,  // 4380 "B3C5" "CDGR" "RRE" 14
-		       14,  // 4390 "B3C6" "CXGR" "RRE" 14
-		       34,  // 4400 "B3C8" "CGER" "RRF2" 34
-		       34,  // 4410 "B3C9" "CGDR" "RRF2" 34
-		       34,  // 4420 "B3CA" "CGXR" "RRF2" 34
-		       14,  // 4425 "B3CD" "LGDR" "RRE" 14 DFP    
-		       36, // "MDTR?"  "B3D0" "RRR"  DFP 1  RPI 1125
-		       36, // "DDTR?"  "B3D1" "RRR"  DFP 2  RPI 1125
-		       36, // "ADTR?"  "B3D2" "RRR"  DFP 3  RPI 1125
-		       36, // "SDTR?"  "B3D3" "RRR"  DFP 4  RPI 1125
-		       35, // "LDETR"  "B3D4" "RRF4" DFP 5  
-		       30, // "LEDTR"  "B3D5" "RRF3" DFP 6  
-		       14, // "LTDTR"  "B3D6" "RRE"  DFP 7  
-		       30, // "FIDTR"  "B3D7" "RRF3" DFP 8  
-		       36, // "MXTR?"  "B3D8" "RRR"  DFP 9  RPI 1125
-		       36, // "DXTR?"  "B3D9" "RRR"  DFP 10 RPI 1125
-		       36, // "AXTR?"  "B3DA" "RRR"  DFP 11 RPI 1125
-		       36, // "SXTR?"  "B3DB" "RRR"  DFP 12 RPI 1125
-		       35, // "LXDTR" "B3DC" "RRF4" DFP 13
-		       30, // "LDXTR" "B3DD" "RRF3" DFP 14
-		       14, // "LTXTR" "B3DE" "RRE"  DFP 15
-		       30, // "FIXTR" "B3DF" "RRF3" DFP 16
-		       14, // "KDTR" "B3E0" "RRE" DFP 17
-		       54, // "CGDTR?" "B3E1" "RRF7" DFP 18 RPI 1125
-		       14, // "CUDTR" "B3E2" "RRE" DFP 19
-		       35, // "CSDTR" "B3E3" "RRF4" DFP 20
-		       14, // "CDTR" "B3E4" "RRE" DFP 21
-		       14, // "EEDTR" "B3E5" "RRE" DFP 22
-		       14, // "ESDTR" "B3E7" "RRE" DFP 23
-		       14, // "KXTR" "B3E8" "RRE" DFP 24
-		       54, // "CGXTR?" "B3E9" "RRF7" DFP 25 RPI 1125
-		       14, // "CUXTR" "B3EA" "RRE" DFP 26
-		       35, // "CSXTR" "B3EB" "RRF4" DFP 27
-		       14, // "CXTR" "B3EC" "RRE" DFP 28
-		       14, // "EEXTR" "B3ED" "RRE" DFP 29
-		       14, // "ESXTR" "B3EF" "RRE" DFP 30
-		       53, // "CDGTR?" "B3F1" "RE3" DFP 31 RPI 1125
-		       14, // "CDUTR" "B3F2" "RRE" DFP 32
-		       14, // "CDSTR" "B3F3" "RRE" DFP 33
-		       14, // "CEDTR" "B3F4" "RRE" DFP 34
-		       30, // "QADTR" "B3F5" "RRF3" DFP 35
-		       34, // "IEDTR" "B3F6" "RRF2" DFP 36
-		       30, // "RRDTR" "B3F7" "RRF3" DFP 37
-		       53, // "CXGTR?" "B3F9" "RE3" DFP 38 RPI 1125
-		       14, // "CXUTR" "B3FA" "RRE" DFP 39
-		       14, // "CXSTR" "B3FB" "RRE" DFP 40
-		       14, // "CEXTR" "B3FC" "RRE" DFP 41
-		       30, // "QAXTR" "B3FD" "RRF3" DFP 42
-		       34, // "IEXTR" "B3FE" "RRF2" DFP 43
-		       30, // "RRXTR" "B3FF" "RRF3" DFP 44
-		       10,  // 4430 "B6" "STCTL" "RS" 10
-		       10,  // 4440 "B7" "LCTL" "RS" 10
-		       14,  // 4450 "B900" "LPGR" "RRE" 14
-		       14,  // 4460 "B901" "LNGR" "RRE" 14
-		       14,  // 4470 "B902" "LTGR" "RRE" 14
-		       14,  // 4480 "B903" "LCGR" "RRE" 14
-		       14,  // 4490 "B904" "LGR" "RRE" 14
-		       14,  // 4500 "B905" "LURAG" "RRE" 14
-		       14,  //      "B906" "LGBR" "RRE" 14 Z9-10
-		       14,  //      "B907" "LGHR" "RRE" 14 Z9-11
-		       14,  // 4510 "B908" "AGR" "RRE" 14
-		       14,  // 4520 "B909" "SGR" "RRE" 14
-		       14,  // 4530 "B90A" "ALGR" "RRE" 14
-		       14,  // 4540 "B90B" "SLGR" "RRE" 14
-		       14,  // 4550 "B90C" "MSGR" "RRE" 14
-		       14,  // 4560 "B90D" "DSGR" "RRE" 14
-		       14,  // 4570 "B90E" "EREGG" "RRE" 14
-		       14,  // 4580 "B90F" "LRVGR" "RRE" 14
-		       14,  // 4590 "B910" "LPGFR" "RRE" 14
-		       14,  // 4600 "B911" "LNGFR" "RRE" 14
-		       14,  // 4610 "B912" "LTGFR" "RRE" 14
-		       14,  // 4620 "B913" "LCGFR" "RRE" 14
-		       14,  // 4630 "B914" "LGFR" "RRE" 14
-		       14,  // 4640 "B916" "LLGFR" "RRE" 14
-		       14,  // 4650 "B917" "LLGTR" "RRE" 14
-		       14,  // 4660 "B918" "AGFR" "RRE" 14
-		       14,  // 4670 "B919" "SGFR" "RRE" 14
-		       14,  // 4680 "B91A" "ALGFR" "RRE" 14
-		       14,  // 4690 "B91B" "SLGFR" "RRE" 14
-		       14,  // 4700 "B91C" "MSGFR" "RRE" 14
-		       14,  // 4710 "B91D" "DSGFR" "RRE" 14
-		       14,  // 4720 "B91E" "KMAC" "RRE" 14
-		       14,  // 4730 "B91F" "LRVR" "RRE" 14
-		       14,  // 4740 "B920" "CGR" "RRE" 14
-		       14,  // 4750 "B921" "CLGR" "RRE" 14
-		       14,  // 4760 "B925" "STURG" "RRE" 14
-		       14,  //      "B926" "LBR" "RRE" 14 Z9-12
-		       14,  //      "B927" "LHR" "RRE" 14 Z9-13
-		       14,  // "B928","PCKMO","RE4"  14 RPI 1125 Z196
-               14,  // "B92A","KMF","RRE"    14 RPI 1125 Z196
-               14,  // "B92B","KMO","RRE"    14 RPI 1125 Z196
-               14,  // "B92C","PCC","RE4"    14 RPI 1125 Z196
-               34,  // "B92D","KMCTR","RRF2" 34 RPI 1125 Z196
-		       14,  // 4770 "B92E" "KM" "RRE" 14
-		       14,  // 4780 "B92F" "KMC" "RRE" 14
-		       14,  // 4790 "B930" "CGFR" "RRE" 14
-		       14,  // 4800 "B931" "CLGFR" "RRE" 14
-		       14,  // 4810 "B93E" "KIMD" "RRE" 14
-		       14,  // 4820 "B93F" "KLMD" "RRE" 14
-		       30,    // "B941","CFDTR","RRF"  30 RPI 1125 Z196
-               30,   // "B942","CLGDTR","RRF" 30 RPI 1125 Z196
-               30,   // "B943","CLFDTR","RRF" 30 RPI 1125 Z196
-		       14,  // 4830 "B946" "BCTGR" "RRE" 14
-		       30,    // "B949","CFXTR","RRF3"   30 RPI 1125 Z196
-		       30,   // "B94A","CLGXTR","RRF3"  30 RPI 1125 Z196
-		       30,   // "B94B","CLFXTR","RRF3"  30 RPI 1125 Z196
-		       30,    // "B951","CDFTR","RRF3"   30 RPI 1125 Z196
-		       30,   // "B952","CDLGTR","RRF3"  30 RPI 1125 Z196
-		       30,   // "B953","CDLFTR","RRF3"  30 RPI 1125 Z196
-		       30,    // "B959","CXFTR","RRF3"   30 RPI 1125 Z196" 
-		       30,   // "B95A","CXLGTR","RRF3"  30 RPI 1125 Z196
-		       30,   // "B95B","CXLFTR","RRF3"  30 RPI 1125 Z196
-		       39,  // 10 "B960" "CGRT" "RRF5" 39 RPI 817
-		       40,  // 20 "B9608" "CGRTE" "RRF6" 40 RPI 817
-		       40,  // 30 "B9602" "CGRTH" "RRF6" 40 RPI 817
-		       40,  // 40 "B9604" "CGRTL" "RRF6" 40 RPI 817
-		       40,  // 50 "B9606" "CGRTNE" "RRF6" 40 RPI 817
-		       40,  // 60 "B960C" "CGRTNH" "RRF6" 40 RPI 817
-		       40,  // 70 "B960A" "CGRTNL" "RRF6" 40 RPI 817
-		       
-		       39,  // 10 "B961" "CLGRT" "RRF5" 39 RPI 817
-		       40,  // 20 "B9618" "CLGRTE" "RRF6" 40 RPI 817
-		       40,  // 30 "B9612" "CLGRTH" "RRF6" 40 RPI 817
-		       40,  // 40 "B9614" "CLGRTL" "RRF6" 40 RPI 817
-		       40,  // 50 "B9616" "CLGRTNE" "RRF6" 40 RPI 817
-		       40,  // 60 "B961C" "CLGRTNH" "RRF6" 40 RPI 817
-		       40,  // 70 "B961A" "CLGRTNL" "RRF6" 40 RPI 817
-		       39,  // 150 "B972" "CRT" "RRF5" 39 RPI 817
-		       40,  // 160 "B9728" "CRTE" "RRF6" 40 RPI 817
-		       40,  // 170 "B9722" "CRTH" "RRF6" 40 RPI 817
-		       40,  // 180 "B9724" "CRTL" "RRF6" 40 RPI 817
-		       40,  // 190 "B9726" "CRTNE" "RRF6" 40 RPI 817
-		       40,  // 200 "B972C" "CRTNH" "RRF6" 40 RPI 817
-		       40,  // 210 "B972A" "CRTNL" "RRF6" 40 RPI 817      
-		       39,  // 80 "B973" "CLRT" "RRF5" 39 RPI 817
-		       40,  // 90 "B9738" "CLRTE" "RRF6" 40 RPI 817
-		       40,  // 100 "B9732" "CLRTH" "RRF6" 40 RPI 817
-		       40,  // 110 "B9734" "CLRTL" "RRF6" 40 RPI 817
-		       40,  // 120 "B9736" "CLRTNE" "RRF6" 40 RPI 817
-		       40,  // 130 "B973C" "CLRTNH" "RRF6" 40 RPI 817
-		       40,  // 140 "B973A" "CLRTNL" "RRF6" 40 RPI 817
-		       14,  // 4840 "B980" "NGR" "RRE" 14
-		       14,  // 4850 "B981" "OGR" "RRE" 14
-		       14,  // 4860 "B982" "XGR" "RRE" 14
-		       14,  //      "B983" "FLOGR" "RRE" 14 Z9-14
-		       14,  //      "B984" "LLGCR" "RRE" 14 Z9-15
-		       14,  //      "B985" "LLGHR" "RRE" 14 Z9-16
-		       14,  // 4870 "B986" "MLGR" "RRE" 14
-		       14,  // 4880 "B987" "DLGR" "RRE" 14
-		       14,  // 4890 "B988" "ALCGR" "RRE" 14
-		       14,  // 4900 "B989" "SLBGR" "RRE" 14
-		       14,  // 4910 "B98A" "CSPG" "RRE" 14
-		       14,  // 4920 "B98D" "EPSW" "RRE" 14
-		       34,  // 4930 "B98E" "IDTE" "RRF2" 34
-		       14,  // 4940 "B990" "TRTT" "RRE" 14
-		       14,  // 4950 "B991" "TRTO" "RRE" 14
-		       14,  // 4960 "B992" "TROT" "RRE" 14
-		       14,  // 4970 "B993" "TROO" "RRE" 14
-		       14,  //      "B994" "LLCR" "RRE" 14 Z9-17
-		       14,  //      "B995" "LLHR" "RRE" 14 Z9-18
-		       14,  // 4980 "B996" "MLR" "RRE" 14
-		       14,  // 4990 "B997" "DLR" "RRE" 14
-		       14,  // 5000 "B998" "ALCR" "RRE" 14
-		       14,  // 5010 "B999" "SLBR" "RRE" 14
-		       14,  // 5020 "B99A" "EPAIR" "RRE" 14
-		       14,  // 5030 "B99B" "ESAIR" "RRE" 14
-		       14,  // 5040 "B99D" "ESEA" "RRE" 14
-		       14,  // 5050 "B99E" "PTI" "RRE" 14
-		       14,  // 5060 "B99F" "SSAIR" "RRE" 14
-		       14,  // 10 "B9A2" "PTF" "RRE" 14  RPI 817
-		       14,  //      "B9AA" "LPTEA" "RRE" 14 Z9-196
-		       14,  // "B9AE","RRBM","RRE"  14 RPI 1125 Z196
-		       39,  // 20 "B9AF" "PFMF" "RRF5" 39  RPI 817
-		       14,  // 5070 "B9B0" "CU14" "RRE" 14
-		       14,  // 5080 "B9B1" "CU24" "RRE" 14
-		       14,  // 5090 "B9B2" "CU41" "RRE" 14
-		       14,  // 5100 "B9B3" "CU42" "RRE" 14
-		       39,  // 30 "B9BD" "TRTRE" "RRF5" 39  RPI 817
-		       14,  // 5110 "B9BE" "SRSTU" "RRE" 14
-		       39,  // 40 "B9BF" "TRTE" "RRF5" 39  RPI 817
-		       39,    // "B9C8","AHHHR","RRF5"  39 RPI 1125 Z196
-		       39,    // "B9C9","SHHHR","RRF5"  39 RPI 1125 Z196
-		       39,   // "B9CA","ALHHHR","RRF5" 39 RPI 1125 Z196
-		       39,   // "B9CB","SLHHHR","RRF5" 39 RPI 1125 Z196
-		       14,     // "B9CD","CHHR","RRE"     14 RPI 1125 Z196
-		       14,    // "B9CF","CLHHR","RRE"    14 RPI 1125 Z196
-		       39,    // "B9D8","AHHLR","RRF5 "  39 RPI 1125 Z196
-		       39,    // "B9D9","SHHLR","RRF5 "  39 RPI 1125 Z196
-		       39,    // "B9DA","ALHHLR","RRF5 " 39 RPI 1125 Z196
-		       39,    // "B9DB","SLHHLR","RRF5 " 39 RPI 1125 Z196
-		       39,    // "B9DD","CHLR","RRE"     14 RPI 1125 Z196
-		       14,    // "B9DF","CLHLR","RRE"    14 RPI 1125 Z196     
-		       14,  // 5115 "B9E1" "POPCNT" "RRE" 14 RPI 1125
-		       39,     // "B9E2","LOCGR","RRF5"   39 RPI 1125 Z196
-		       39,     // "B9E4","NGRK","RRF5"    39 RPI 1125 Z196
-		       39,     // "B9E6","OGRK","RRF5"    39 RPI 1125 Z196
-		       39,     // "B9E7","XGRK","RRF5"    39 RPI 1125 Z196
-		       39,     // "B9E8","AGRK","RRF5"    39 RPI 1125 Z196
-		       39,     // "B9E9","SGRK","RRF5"    39 RPI 1125 Z196
-		       39,     // "B9EA","ALGRK","RRF5"   39 RPI 1125 Z196
-		       39,     // "B9EB","SLGRK","RRF5"   39 RPI 1125 Z196
-		       39,     // "B9F2","LOCR","RRF5"    39 RPI 1125 Z196
-		       39,     // "B9F4","NRK","RRF5"     39 RPI 1125 Z196
-		       39,     // "B9F6","ORK","RRF5"     39 RPI 1125 Z196
-		       39,     // "B9F7","XRK","RRF5"     39 RPI 1125 Z196
-		       39,     // "B9F8","ARK","RRF5"     39 RPI 1125 Z196
-		       39,     // "B9F9","SRK","RRF5"     39 RPI 1125 Z196
-		       39,     // "B9FA","ALRK","RRF5"    39 RPI 1125 Z196
-		       39,     // "B9FB","SLRK","RRF5"    39 RPI 1125 Z196 
-		       10,  // 5120 "BA" "CS" "RS" 10
-		       10,  // 5130 "BB" "CDS" "RS" 10
-		       10,  // 5140 "BD" "CLM" "RS" 10
-		       10,  // 5150 "BE" "STCM" "RS" 10
-		       10,  // 5160 "BF" "ICM" "RS" 10
-		       16,  // 5170 "C00" "LARL" "RIL" 16
-		       16,  //      "C01" "LGFI" "RIL" 16 Z9-20
-		       16,  // 5180 "C04" "BRCL" "RIL" 16
-		       33,  // 5390 "C040" "JLNOP" "BLX" 33
-		       33,  // 5400 "C041" "BROL" "BLX" 33
-		       33,  // 5410 "C041" "JLO" "BLX" 33
-		       33,  // 5420 "C042" "BRHL" "BLX" 33
-		       33,  // 5430 "C042" "BRPL" "BLX" 33
-		       33,  // 5440 "C042" "JLH" "BLX" 33
-		       33,  // 5450 "C042" "JLP" "BLX" 33
-		       33,  // 5460 "C044" "BRLL" "BLX" 33
-		       33,  // 5470 "C044" "BRML" "BLX" 33
-		       33,  // 5480 "C044" "JLL" "BLX" 33
-		       33,  // 5490 "C044" "JLM" "BLX" 33
-		       33,  // 5500 "C047" "BRNEL" "BLX" 33
-		       33,  // 5510 "C047" "BRNZL" "BLX" 33
-		       33,  // 5520 "C047" "JLNE" "BLX" 33
-		       33,  // 5530 "C047" "JLNZ" "BLX" 33
-		       33,  // 5540 "C048" "BREL" "BLX" 33
-		       33,  // 5550 "C048" "BRZL" "BLX" 33
-		       33,  // 5560 "C048" "JLE" "BLX" 33
-		       33,  // 5570 "C048" "JLZ" "BLX" 33
-		       33,  // 5580 "C04B" "BRNLL" "BLX" 33
-		       33,  // 5590 "C04B" "BRNML" "BLX" 33
-		       33,  // 5600 "C04B" "JLNL" "BLX" 33
-		       33,  // 5610 "C04B" "JLNM" "BLX" 33
-		       33,  // 5620 "C04D" "BRNHL" "BLX" 33
-		       33,  // 5630 "C04D" "BRNPL" "BLX" 33
-		       33,  // 5640 "C04D" "JLNH" "BLX" 33
-		       33,  // 5650 "C04D" "JLNP" "BLX" 33
-		       33,  // 5660 "C04E" "BRNOL" "BLX" 33
-		       33,  // 5670 "C04E" "JLNO" "BLX" 33
-		       33,  // 5680 "C04F" "BRUL" "BLX" 33
-		       33,  // 5690 "C04F" "JLU" "BLX" 33
-		       16,  // 5210 "C05" "BRASL" "RIL" 16
-		       16,  // 5220 "C05" "JASL" "RIL" 16
-		       16,  //      "C06" "XIHF" "RIL" 16 Z9-21
-		       16,  //      "C07" "XILF" "RIL" 16 Z9-22
-		       16,  //      "C08" "IIHF" "RIL" 16 Z9-23
-		       16,  //      "C09" "IILF" "RIL" 16 Z9-24
-		       16,  //      "C0A" "NIHF" "RIL" 16 Z9-25
-		       16,  //      "C0B" "NILF" "RIL" 16 Z9-26
-		       16,  //      "C0C" "OIHF" "RIL" 16 Z9-27
-		       16,  //      "C0D" "OILF" "RIL" 16 Z9-28
-		       16,  //      "C0E" "LLIHF" "RIL" 16 Z9-29
-		       16,  //      "C0F" "LLILF" "RIL" 16 Z9-30
-		       16,  // 50 "C20" "MSGFI" "RIL" 16  RPI 817
-		       16,  // 60 "C21" "MSFI" "RIL" 16  RPI 817
-		       16,  //      "C24" "SLGFI" "RIL" 16 Z9-31
-		       16,  //      "C25" "SLFI" "RIL" 16 Z9-32
-		       16,  //      "C28" "AGFI" "RIL" 16 Z9-33
-		       16,  //      "C29" "AFI" "RIL" 16 Z9-34
-		       16,  //      "C2A" "ALGFI" "RIL" 16 Z9-35
-		       16,  //      "C2B" "ALFI" "RIL" 16 Z9-36
-		       16,  //      "C2C" "CGFI" "RIL" 16 Z9-37
-		       16,  //      "C2D" "CFI" "RIL" 16 Z9-38
-		       16,  //      "C2E" "CLGFI" "RIL" 16 Z9-39
-		       16,  //      "C2F" "CLFI" "RIL" 16 Z9-40
-		       16,  // 70 "C42" "LLHRL" "RIL" 16  RPI 817
-		       16,  // 80 "C44" "LGHRL" "RIL" 16  RPI 817
-		       16,  // 90 "C45" "LHRL" "RIL" 16  RPI 817
-		       16,  // 100 "C46" "LLGHRL" "RIL" 16  RPI 817
-		       16,  // 110 "C47" "STHRL" "RIL" 16  RPI 817
-		       16,  // 120 "C48" "LGRL" "RIL" 16  RPI 817
-		       16,  // 130 "C4B" "STGRL" "RIL" 16  RPI 817
-		       16,  // 140 "C4C" "LGFRL" "RIL" 16  RPI 817
-		       16,  // 150 "C4D" "LRL" "RIL" 16  RPI 817
-		       16,  // 160 "C4E" "LLGFRL" "RIL" 16  RPI 817
-		       16,  // 170 "C4F" "STRL" "RIL" 16  RPI 817
-		       16,  // 180 "C60" "EXRL" "RIL" 16  RPI 817
-		       16,  // 190 "C62" "PFDRL" "RIL" 16  RPI 817
-		       16,  // 200 "C64" "CGHRL" "RIL" 16  RPI 817
-		       16,  // 210 "C65" "CHRL" "RIL" 16  RPI 817
-		       16,  // 220 "C66" "CLGHRL" "RIL" 16  RPI 817
-		       16,  // 230 "C67" "CLHRL" "RIL" 16  RPI 817
-		       16,  // 240 "C68" "CGRL" "RIL" 16  RPI 817
-		       16,  // 250 "C6A" "CLGRL" "RIL" 16  RPI 817
-		       16,  // 260 "C6C" "CGFRL" "RIL" 16  RPI 817
-		       16,  // 270 "C6D" "CRL" "RIL" 16  RPI 817
-		       16,  // 280 "C6E" "CLGFRL" "RIL" 16  RPI 817
-		       16,  // 290 "C6F" "CLRL" "RIL" 16  RPI 817
-		       32,  //      "C80" "MVCOS" "SSF" 32 Z9-41	
-		       32,  //      "C81" "ECTG" "SSF" 32 RPI 1013
-		       32,  //      "C82" "CSST" "SSF" 32 RPI 1013		       
-		       55,  // "C84","LPD","SSF2"  55 RPI 1125 Z196
-		       55,  // "C85","LPDG","SSF2" 55 RPI 1125 Z196
-               16, // "CC6","BRCTH","RIL"  16 RPI 1125 Z196
-               16, // "CC8","AIH","RIL"    16  RPI 1125 Z196
-               16, // "CCA","ALSIH","RIL"  16  RPI 1125 Z196
-               16, // "CCB","ALSIHN","RIL" 16  RPI 1125 Z196
-               16, // "CCD","CIH","RIL"    16  RPI 1125 Z196
-               16, // "CCF","CLIH","RIL"   16  RPI 1125 Z196
-		       17,  // 5230 "D0" "TRTR" "SS" 17
-		       17,  // 5240 "D1" "MVN" "SS" 17
-		       17,  // 5250 "D2" "MVC" "SS" 17
-		       17,  // 5260 "D3" "MVZ" "SS" 17
-		       17,  // 5270 "D4" "NC" "SS" 17
-		       17,  // 5280 "D5" "CLC" "SS" 17
-		       17,  // 5290 "D6" "OC" "SS" 17
-		       17,  // 5300 "D7" "XC" "SS" 17
-		       17,  // 5310 "D9" "MVCK" "SS" 17
-		       17,  // 5320 "DA" "MVCP" "SS" 17
-		       17,  // 5330 "DB" "MVCS" "SS" 17
-		       17,  // 5340 "DC" "TR" "SS" 17
-		       17,  // 5350 "DD" "TRT" "SS" 17
-		       17,  // 5360 "DE" "ED" "SS" 17
-		       17,  // 5370 "DF" "EDMK" "SS" 17
-		       38,  // 5375 "E00" "XREAD" "RXSS" 38 RPI 812
-		       38,  // 5375 "E02" "XPRNT" "RXSS" 38 RPI 812
-		       38,  // 5375 "E04" "XPNCH" "RXSS" 38 RPI 812
-		       38,  // 5375 "E06" "XDUMP" "RXSS" 38 RPI 812
-		       38,  // 5375 "E08" "XLIMD" "RXSS" 38 RPI 812
-		       38,  // 5375 "E0A" "XGET"  "RXSS" 38 RPI 812
-		       38,  // 5375 "E0C" "XPUT"  "RXSS" 38 RPI 812
-		       17,  // 5380 "E1" "PKU" "RXSS" 17
-		       17,  // 5390 "E2" "UNPKU" "SS" 17
-		       18,  //      "E302" "LTG" "RXY" 18 Z9-42
-		       18,  // 5400 "E303" "LRAG" "RXY" 18
-		       18,  // 5410 "E304" "LG" "RXY" 18
-		       18,  // 5420 "E306" "CVBY" "RXY" 18
-		       18,  // 5430 "E308" "AG" "RXY" 18
-		       18,  // 5440 "E309" "SG" "RXY" 18
-		       18,  // 5450 "E30A" "ALG" "RXY" 18
-		       18,  // 5460 "E30B" "SLG" "RXY" 18
-		       18,  // 5470 "E30C" "MSG" "RXY" 18
-		       18,  // 5480 "E30D" "DSG" "RXY" 18
-		       18,  // 5490 "E30E" "CVBG" "RXY" 18
-		       18,  // 5500 "E30F" "LRVG" "RXY" 18
-		       18,  //      "E312" "LT" "RXY" 18 Z9-43
-		       18,  // 5510 "E313" "LRAY" "RXY" 18
-		       18,  // 5520 "E314" "LGF" "RXY" 18
-		       18,  // 5530 "E315" "LGH" "RXY" 18
-		       18,  // 5540 "E316" "LLGF" "RXY" 18
-		       18,  // 5550 "E317" "LLGT" "RXY" 18
-		       18,  // 5560 "E318" "AGF" "RXY" 18
-		       18,  // 5570 "E319" "SGF" "RXY" 18
-		       18,  // 5580 "E31A" "ALGF" "RXY" 18
-		       18,  // 5590 "E31B" "SLGF" "RXY" 18
-		       18,  // 5600 "E31C" "MSGF" "RXY" 18
-		       18,  // 5610 "E31D" "DSGF" "RXY" 18
-		       18,  // 5620 "E31E" "LRV" "RXY" 18
-		       18,  // 5630 "E31F" "LRVH" "RXY" 18
-		       18,  // 5640 "E320" "CG" "RXY" 18
-		       18,  // 5650 "E321" "CLG" "RXY" 18
-		       18,  // 5660 "E324" "STG" "RXY" 18
-		       18,  // 5670 "E326" "CVDY" "RXY" 18
-		       18,  // 5680 "E32E" "CVDG" "RXY" 18
-		       18,  // 5690 "E32F" "STRVG" "RXY" 18
-		       18,  // 5700 "E330" "CGF" "RXY" 18
-		       18,  // 5710 "E331" "CLGF" "RXY" 18
-		       18,  // 310 "E332" "LTGF" "RXY" 18  RPI 817
-		       18,  // 320 "E334" "CGH" "RXY" 18  RPI 817
-		       18,  // 330 "E336" "PFD" "RXY" 18  RPI 817
-		       18,  // 5720 "E33E" "STRV" "RXY" 18
-		       18,  // 5730 "E33F" "STRVH" "RXY" 18
-		       18,  // 5740 "E346" "BCTG" "RXY" 18
-		       18,  // 5750 "E350" "STY" "RXY" 18
-		       18,  // 5760 "E351" "MSY" "RXY" 18
-		       18,  // 5770 "E354" "NY" "RXY" 18
-		       18,  // 5780 "E355" "CLY" "RXY" 18
-		       18,  // 5790 "E356" "OY" "RXY" 18
-		       18,  // 5800 "E357" "XY" "RXY" 18
-		       18,  // 5810 "E358" "LY" "RXY" 18
-		       18,  // 5820 "E359" "CY" "RXY" 18
-		       18,  // 5830 "E35A" "AY" "RXY" 18
-		       18,  // 5840 "E35B" "SY" "RXY" 18
-		       18,  // 340 "E35C" "MFY" "RXY" 18  RPI 817
-		       18,  // 5850 "E35E" "ALY" "RXY" 18
-		       18,  // 5860 "E35F" "SLY" "RXY" 18
-		       18,  // 5870 "E370" "STHY" "RXY" 18
-		       18,  // 5880 "E371" "LAY" "RXY" 18
-		       18,  // 5890 "E372" "STCY" "RXY" 18
-		       18,  // 5900 "E373" "ICY" "RXY" 18
-		       18,  // 350 "E375" "LAEY" "RXY" 18  RPI 817
-		       18,  // 5910 "E376" "LB" "RXY" 18
-		       18,  // 5920 "E377" "LGB" "RXY" 18
-		       18,  // 5930 "E378" "LHY" "RXY" 18
-		       18,  // 5940 "E379" "CHY" "RXY" 18
-		       18,  // 5950 "E37A" "AHY" "RXY" 18
-		       18,  // 5960 "E37B" "SHY" "RXY" 18
-		       18,  // 360 "E37C" "MHY" "RXY" 18  RPI 817
-		       18,  // 5970 "E380" "NG" "RXY" 18
-		       18,  // 5980 "E381" "OG" "RXY" 18
-		       18,  // 5990 "E382" "XG" "RXY" 18
-		       18,  // 6000 "E386" "MLG" "RXY" 18
-		       18,  // 6010 "E387" "DLG" "RXY" 18
-		       18,  // 6020 "E388" "ALCG" "RXY" 18
-		       18,  // 6030 "E389" "SLBG" "RXY" 18
-		       18,  // 6040 "E38E" "STPQ" "RXY" 18
-		       18,  // 6050 "E38F" "LPQ" "RXY" 18
-		       18,  // 6060 "E390" "LLGC" "RXY" 18
-		       18,  // 6070 "E391" "LLGH" "RXY" 18
-		       18,  //      "E394" "LLC" "RXY" 18 Z9-44
-		       18,  //      "E395" "LLH" "RXY" 18 Z9-45
-		       18,  // 6080 "E396" "ML" "RXY" 18
-		       18,  // 6090 "E397" "DL" "RXY" 18
-		       18,  // 6100 "E398" "ALC" "RXY" 18
-		       18,  // 6110 "E399" "SLB" "RXY" 18
-		       18,  // "E3C0","LBH","RXY"   18  RPI 1125 Z196
-		       18,  // "E3C2","LLCH","RXY"  18  RPI 1125 Z196
-		       18,  // "E3C3","STCH","RXY"  18  RPI 1125 Z196
-		       18,  // "E3C4","LHH","RXY"   18  RPI 1125 Z196
-		       18,  // "E3C6","LLHH","RXY"  18  RPI 1125 Z196
-		       18,  // "E3C7","STHH","RXY"  18  RPI 1125 Z196
-		       18,  // "E3CA","LFH","RXY"   18  RPI 1125 Z196
-		       18,  // "E3CB","STFH","RXY"  18  RPI 1125 Z196
-		       18,  // "E3CD","CHF","RXY"   18  RPI 1125 Z196
-		       18,  // "E3CF","CLHF","RXY"  18  RPI 1125 Z196
-		       19,  // 6120 "E500" "LASP" "SSE" 19
-		       19,  // 6130 "E501" "TPROT" "SSE" 19
-		       19,  // 6140 "E502" "STRAG" "SSE" 19
-		       19,  // 6150 "E50E" "MVCSK" "SSE" 19
-		       19,  // 6160 "E50F" "MVCDK" "SSE" 19
-		       51,  // 370 "E544" "MVHHI" "SIL" 51  RPI 817
-		       51,  // 380 "E548" "MVGHI" "SIL" 51  RPI 817
-		       51,  // 390 "E54C" "MVHI" "SIL" 51  RPI 817
-		       51,  // 400 "E554" "CHHSI" "SIL" 51  RPI 817
-		       51,  // 410 "E555" "CLHHSI" "SIL" 51  RPI 817
-		       51,  // 420 "E558" "CGHSI" "SIL" 51  RPI 817
-		       51,  // 430 "E559" "CLGHSI" "SIL" 51  RPI 817
-		       51,  // 440 "E55C" "CHSI" "SIL" 51  RPI 817
-		       51,  // 450 "E55D" "CLFHSI" "SIL" 51  RPI 817
-		       17,  // 6170 "E8" "MVCIN" "SS" 17
-		       31,  // 6180 "E9" "PKA" "SS" 31
-		       17,  // 6190 "EA" "UNPKA" "SS" 17
-		       20,  // 6200 "EB04" "LMG" "RSY" 20
-		       20,  // 6210 "EB0A" "SRAG" "RSY" 20
-		       20,  // 6220 "EB0B" "SLAG" "RSY" 20
-		       20,  // 6230 "EB0C" "SRLG" "RSY" 20
-		       20,  // 6240 "EB0D" "SLLG" "RSY" 20
-		       20,  // 6250 "EB0F" "TRACG" "RSY" 20
-		       20,  // 6260 "EB14" "CSY" "RSY" 20
-		       20,  // 6270 "EB1C" "RLLG" "RSY" 20
-		       20,  // 6280 "EB1D" "RLL" "RSY" 20
-		       20,  // 6290 "EB20" "CLMH" "RSY" 20
-		       20,  // 6300 "EB21" "CLMY" "RSY" 20
-		       20,  // 6310 "EB24" "STMG" "RSY" 20
-		       20,  // 6320 "EB25" "STCTG" "RSY" 20
-		       20,  // 6330 "EB26" "STMH" "RSY" 20
-		       20,  // 6340 "EB2C" "STCMH" "RSY" 20
-		       20,  // 6350 "EB2D" "STCMY" "RSY" 20
-		       20,  // 6360 "EB2F" "LCTLG" "RSY" 20
-		       20,  // 6370 "EB30" "CSG" "RSY" 20
-		       20,  // 6380 "EB31" "CDSY" "RSY" 20
-		       20,  // 6390 "EB3E" "CDSG" "RSY" 20
-		       20,  // 6400 "EB44" "BXHG" "RSY" 20
-		       20,  // 6410 "EB45" "BXLEG" "RSY" 20
-		       20,  // 460 "EB4C" "ECAG" "RSY" 20  RPI 817
-		       21,  // 6420 "EB51" "TMY" "SIY" 21
-		       21,  // 6430 "EB52" "MVIY" "SIY" 21
-		       21,  // 6440 "EB54" "NIY" "SIY" 21
-		       21,  // 6450 "EB55" "CLIY" "SIY" 21
-		       21,  // 6460 "EB56" "OIY" "SIY" 21
-		       21,  // 6470 "EB57" "XIY" "SIY" 21
-		       21,  // 470 "EB6A" "ASI" "SIY" 21  RPI 817
-		       21,  // 480 "EB6E" "ALSI" "SIY" 21  RPI 817
-		       21,  // 490 "EB7A" "AGSI" "SIY" 21  RPI 817
-		       21,  // 500 "EB7E" "ALGSI" "SIY" 21  RPI 817
-		       20,  // 6480 "EB80" "ICMH" "RSY" 20
-		       20,  // 6490 "EB81" "ICMY" "RSY" 20
-		       20,  // 6500 "EB8E" "MVCLU" "RSY" 20
-		       20,  // 6510 "EB8F" "CLCLU" "RSY" 20
-		       20,  // 6520 "EB90" "STMY" "RSY" 20
-		       20,  // 6530 "EB96" "LMH" "RSY" 20
-		       20,  // 6540 "EB98" "LMY" "RSY" 20
-		       20,  // 6550 "EB9A" "LAMY" "RSY" 20
-		       20,  // 6560 "EB9B" "STAMY" "RSY" 20
-		       22,  // 6570 "EBC0" "TP" "RSL" 22
-		       20,  //  "EBDC","SRAK","RSY  "  20 RPI 1125 Z196
-		       20,  //  "EBDD","SLAK","RSY  "  20 RPI 1125 Z196
-		       20,  //  "EBDE","SRLK","RSY  "  20 RPI 1125 Z196
-		       20,  //  "EBDF","SLLK","RSY  "  20 RPI 1125 Z196
-		       56,  //  "EBE2","LOCG","RSY2 "  20 RPI 1125 Z196
-		       56,  //  "EBE3","STOCG","RSY2 " 20 RPI 1125 Z196
-		       20,  //  "EBE4","LANG","RSY  "  20 RPI 1125 Z196
-		       20,  //  "EBE6","LAOG","RSY  "  20 RPI 1125 Z196
-		       20,  //  "EBE7","LAXG","RSY  "  20 RPI 1125 Z196
-		       20,  //  "EBE8","LAAG","RSY  "  20 RPI 1125 Z196
-		       20,  //  "EBEA","LAALG","RSY  " 20 RPI 1125 Z196
-		       56,  //  "EBF2","LOC","RSY2 "   20 RPI 1125 Z196
-		       56,  //  "EBF3","STOC","RSY2 "  20 RPI 1125 Z196
-		       20,  //  "EBF4","LAN","RSY  "   20 RPI 1125 Z196
-		       20,  //  "EBF6","LAO","RSY  "   20 RPI 1125 Z196
-		       20,  //  "EBF7","LAX","RSY  "   20 RPI 1125 Z196
-		       20,  //  "EBF8","LAA","RSY  "   20 RPI 1125 Z196
-		       20,  //  "EBFA","LAAL","RSY  "  20 RPI 1125 Z196
-		       23,  // 6580 "EC44" "BRXHG" "RIE" 23
-		       23,  // 6590 "EC44" "JXHG" "RIE" 23
-		       23,  // 6600 "EC45" "BRXLG" "RIE" 23
-		       23,  // 6610 "EC45" "JXLEG" "RIE" 23
-		       52,  // "EC51","RISBLG#","RIE8"  52 RPI 1125 Z196 RPI 1164
-		       52,  // 'EC51$003132','LOAD (lOW  && HIGH) RISBLGZ','LLHFR','RIE8',52  RPI 1164
-		       52,  // 'EC51$163132','LOAD LOG HW (lOW  && HIGH) RISBLGZ','LLHLHR','RIE8',52  RPI 1164
-		       52,  // 'EC51$243132','LOAD LOG CH (lOW  && HIGH) RISBLGZ','LLCLHR','RIE8',52  RPI 1164
-		       52,  // "EC51Z","RISBLGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
-		       52,  // 510 "EC54" "RNSBG" "RIE8" 52  RPI 817
-		       52,     // 'EC54$003100','AND HIGH (HIGH && HIGH) RNSBG','NHHR','RIE8',52  RPI 1164
-		       52,     // 'EC54$003132','AND HIGH (HIGH && LOW ) RNSBG','NHLR','RIE8',52  RPI 1164
-		       52,     // 'EC54$326332','AND HIGH (lOW  && HIGH) RNSBG','NLHR','RIE8',52  RPI 1164
-		       52,  // 520 "EC54T" "RNSBGT" "RIE8" 52  RPI 817
-		       52,  // 530 "EC55" "RISBG" "RIE2" 52  RPI 817
-		       52,  // 540 "EC55Z" "RISBGZ" "RIE8" 52  RPI 817
-		       52,  // 550 "EC56" "ROSBG" "RIE8" 52  RPI 817
-		       52,  // 'EC56$003100','OR  HIGH (HIGH && HIGH) ROSBG','OHHR','RIE8',52  RPI 1164
-		       52,  // 'EC56$003132','OR  HIGH (HIGH && LOW ) ROSBG','OHLR','RIE8',52  RPI 1164
-		       52,  // 'EC56$326332','OR  HIGH (lOW  && HIGH) ROSBG','OLHR','RIE8',52  RPI 1164
-		       52,  // 560 "EC56T" "ROSBGT" "RIE8" 52  RPI 817
-		       52,  // 570 "EC57" "RXSBG" "RIE8" 52  RPI 817
-		       52,     // 'EC57$003100','XOR HIGH (HIGH && HIGH) RXSBG','XHHR','RIE8',52  RPI 1164
-		       52,     // 'EC57$003132','XOR HIGH (HIGH && LOW ) RXSBG','XHLR','RIE8',52  RPI 1164
-		       52,     // 'EC57$326332','AOR HIGH (lOW  && HIGH) RXSBG','XLHR','RIE8',52  RPI 1164
-		       52,  // 580 "EC57T" "RXSBGT" "RIE8" 52  RPI 817
-		       52,  // "EC5D","RISBHG#","RIE8"  52 RPI 1125 Z196 RPI 1164
-		       52,  // 'EC5D$003100','LOAD (HIGH && HIGH) RISBHGZ','LHHR','RIE8',52  RPI 1164
-		       52,  // 'EC5D$003132','LOAD (HIGH && LOW ) RISBHGZ','LHLR','RIE8',52  RPI 1164
-		       52,  // 'EC5D$163100','LOAD LOG HW (HIGH && HIGH) RISBHGZ','LLHHHR','RIE8',52  RPI 1164
-		       52,  // 'EC5D$163132','LOAD LOG HW (HIGH && LOW ) RISBHGZ','LLHHLR','RIE8',52  RPI 1164
-		       52,  // 'EC5D$243100','LOAD LOG CH (HIGH && HIGH) RISBHGZ','LLCHHR','RIE8',52  RPI 1164
-		       52,  // 'EC5D$243132','LOAD LOG CH (HIGH && LOW ) RISBHGZ','LLCHLR','RIE8',52  RPI 1164
-		       52,  // "EC5DZ","RISBHGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
-		       49,  // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
-		       50,  // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
-		       50,  // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
-		       50,  // 40 "EC644" "CGRJL" "RIE7" 50 RPI 817
-		       50,  // 50 "EC646" "CGRJNE" "RIE7" 50 RPI 817
-		       50,  // 60 "EC64C" "CGRJNH" "RIE7" 50 RPI 817
-		       50,  // 70 "EC64A" "CGRJNL" "RIE7" 50 RPI 817
-		       49,  // 80 "EC65" "CLGRJ" "RIE6" 49 RPI 817
-		       50,  // 90 "EC658" "CLGRJE" "RIE7" 50 RPI 817
-		       50,  // 100 "EC652" "CLGRJH" "RIE7" 50 RPI 817
-		       50,  // 110 "EC654" "CLGRJL" "RIE7" 50 RPI 817
-		       50,  // 120 "EC656" "CLGRJNE" "RIE7" 50 RPI 817
-		       50,  // 130 "EC65C" "CLGRJNH" "RIE7" 50 RPI 817
-		       50,  // 140 "EC65A" "CLGRJNL" "RIE7" 50 RPI 817		       
-		       41,  // 1010 "EC70" "CGIT" "RIE2" 41 RPI 817
-		       42,  // 1020 "EC708" "CGITE" "RIE3" 42 RPI 817
-		       42,  // 1030 "EC702" "CGITH" "RIE3" 42 RPI 817
-		       42,  // 1040 "EC704" "CGITL" "RIE3" 42 RPI 817
-		       42,  // 1050 "EC706" "CGITNE" "RIE3" 42 RPI 817
-		       42,  // 1060 "EC70C" "CGITNH" "RIE3" 42 RPI 817
-		       42,  // 1070 "EC70A" "CGITNL" "RIE3" 42 RPI 817 
-		       41,  // 150 "EC71" "CLGIT" "RIE2" 41 RPI 817
-		       42,  // 160 "EC718" "CLGITE" "RIE3" 42 RPI 817
-		       42,  // 170 "EC712" "CLGITH" "RIE3" 42 RPI 817
-		       42,  // 180 "EC714" "CLGITL" "RIE3" 42 RPI 817
-		       42,  // 190 "EC716" "CLGITNE" "RIE3" 42 RPI 817
-		       42,  // 200 "EC71C" "CLGITNH" "RIE3" 42 RPI 817
-		       42,  // 210 "EC71A" "CLGITNL" "RIE3" 42 RPI 817
-		       41,  // 1150 "EC72" "CIT" "RIE2" 41 RPI 817
-		       42,  // 1160 "EC728" "CITE" "RIE3" 42 RPI 817
-		       42,  // 1170 "EC722" "CITH" "RIE3" 42 RPI 817
-		       42,  // 1180 "EC724" "CITL" "RIE3" 42 RPI 817
-		       42,  // 1190 "EC726" "CITNE" "RIE3" 42 RPI 817
-		       42,  // 1200 "EC72C" "CITNH" "RIE3" 42 RPI 817
-		       42,  // 1210 "EC72A" "CITNL" "RIE3" 42 RPI 817
-		       41,  // 220 "EC73" "CLFIT" "RIE2" 41 RPI 817
-		       42,  // 230 "EC738" "CLFITE" "RIE3" 42 RPI 817
-		       42,  // 240 "EC732" "CLFITH" "RIE3" 42 RPI 817
-		       42,  // 250 "EC734" "CLFITL" "RIE3" 42 RPI 817
-		       42,  // 260 "EC736" "CLFITNE" "RIE3" 42 RPI 817
-		       42,  // 270 "EC73C" "CLFITNH" "RIE3" 42 RPI 817
-		       42,  // 280 "EC73A" "CLFITNL" "RIE3" 42 RPI 817
-		       49,  // 150 "EC76" "CRJ" "RIE6" 49 RPI 817
-		       50,  // 160 "EC768" "CRJE" "RIE7" 50 RPI 817
-		       50,  // 170 "EC762" "CRJH" "RIE7" 50 RPI 817
-		       50,  // 180 "EC764" "CRJL" "RIE7" 50 RPI 817
-		       50,  // 190 "EC766" "CRJNE" "RIE7" 50 RPI 817
-		       50,  // 200 "EC76C" "CRJNH" "RIE7" 50 RPI 817
-		       50,  // 210 "EC76A" "CRJNL" "RIE7" 50 RPI 817
-		       49,  // 220 "EC77" "CLRJ" "RIE6" 49 RPI 817
-		       50,  // 230 "EC778" "CLRJE" "RIE7" 50 RPI 817
-		       50,  // 240 "EC772" "CLRJH" "RIE7" 50 RPI 817
-		       50,  // 250 "EC774" "CLRJL" "RIE7" 50 RPI 817
-		       50,  // 260 "EC776" "CLRJNE" "RIE7" 50 RPI 817
-		       50,  // 270 "EC77C" "CLRJNH" "RIE7" 50 RPI 817
-		       50,  // 280 "EC77A" "CLRJNL" "RIE7" 50 RPI 817
-		       43,  // 290 "EC7C" "CGIJ" "RIE4" 43 RPI 817
-		       44,  // 300 "EC7C8" "CGIJE" "RIE5" 44 RPI 817
-		       44,  // 310 "EC7C2" "CGIJH" "RIE5" 44 RPI 817
-		       44,  // 320 "EC7C4" "CGIJL" "RIE5" 44 RPI 817
-		       44,  // 330 "EC7C6" "CGIJNE" "RIE5" 44 RPI 817
-		       44,  // 340 "EC7CC" "CGIJNH" "RIE5" 44 RPI 817
-		       44,  // 350 "EC7CA" "CGIJNL" "RIE5" 44 RPI 817
-		       43,  // 360 "EC7D" "CLGIJ" "RIE4" 43 RPI 817
-		       44,  // 370 "EC7D8" "CLGIJE" "RIE5" 44 RPI 817
-		       44,  // 380 "EC7D2" "CLGIJH" "RIE5" 44 RPI 817
-		       44,  // 390 "EC7D4" "CLGIJL" "RIE5" 44 RPI 817
-		       44,  // 400 "EC7D6" "CLGIJNE" "RIE5" 44 RPI 817
-		       44,  // 410 "EC7DC" "CLGIJNH" "RIE5" 44 RPI 817
-		       44,  // 420 "EC7DA" "CLGIJNL" "RIE5" 44 RPI 817
-		       43,  // 430 "EC7E" "CIJ" "RIE4" 43 RPI 817
-		       44,  // 440 "EC7E8" "CIJE" "RIE5" 44 RPI 817
-		       44,  // 450 "EC7E2" "CIJH" "RIE5" 44 RPI 817
-		       44,  // 460 "EC7E4" "CIJL" "RIE5" 44 RPI 817
-		       44,  // 470 "EC7E6" "CIJNE" "RIE5" 44 RPI 817
-		       44,  // 480 "EC7EC" "CIJNH" "RIE5" 44 RPI 817
-		       44,  // 490 "EC7EA" "CIJNL" "RIE5" 44 RPI 817
-		       43,  // 500 "EC7F" "CLIJ" "RIE4" 43 RPI 817
-		       44,  // 510 "EC7F8" "CLIJE" "RIE5" 44 RPI 817
-		       44,  // 520 "EC7F2" "CLIJH" "RIE5" 44 RPI 817
-		       44,  // 530 "EC7F4" "CLIJL" "RIE5" 44 RPI 817
-		       44,  // 540 "EC7F6" "CLIJNE" "RIE5" 44 RPI 817
-		       44,  // 550 "EC7FC" "CLIJNH" "RIE5" 44 RPI 817
-		       44,  // 560 "EC7FA" "CLIJNL" "RIE5" 44 RPI 817
-		       57,  // "ECD8","AHIK","RIE9"    57 RPI 1125 Z196
-		       57,  // "ECD9","AGHIK","RIE9"   57 RPI 1125 Z196
-		       57,  // "ECDA","ALHSIK","RIE9"  57 RPI 1125 Z196
-		       57,  // "ECDB","ALGHSIK","RIE9" 57 RPI 1125 Z196
-		       45,  // 570 "ECE4" "CGRB" "RRS1" 45 RPI 817
-		       46,  // 580 "ECE48" "CGRBE" "RRS2" 446, RPI 817
-		       46,  // 590 "ECE42" "CGRBH" "RRS2" 46 RPI 817
-		       46,  // 600 "ECE44" "CGRBL" "RRS2" 46 RPI 817
-		       46,  // 610 "ECE46" "CGRBNE" "RRS2" 46 RPI 817
-		       46,  // 620 "ECE4C" "CGRBNH" "RRS2" 46 RPI 817
-		       46,  // 630 "ECE4A" "CGRBNL" "RRS2" 46 RPI 817
-		       45,  // 640 "ECE5" "CLGRB" "RRS1" 45 RPI 817
-		       46,  // 650 "ECE58" "CLGRBE" "RRS2" 46 RPI 817
-		       46,  // 660 "ECE52" "CLGRBH" "RRS2" 46 RPI 817
-		       46,  // 670 "ECE54" "CLGRBL" "RRS2" 46 RPI 817
-		       46,  // 680 "ECE56" "CLGRBNE" "RRS2" 46 RPI 817
-		       46,  // 690 "ECE5C" "CLGRBNH" "RRS2" 46 RPI 817
-		       46,  // 700 "ECE5A" "CLGRBNL" "RRS2" 46 RPI 817
-		       45,  // 710 "ECF6" "CRB" "RRS1" 45 RPI 817
-		       46,  // 720 "ECF68" "CRBE" "RRS2" 46 RPI 817
-		       46,  // 730 "ECF62" "CRBH" "RRS2" 46 RPI 817
-		       46,  // 740 "ECF64" "CRBL" "RRS2" 46 RPI 817
-		       46,  // 750 "ECF66" "CRBNE" "RRS2" 45 RPI 817
-		       46,  // 760 "ECF6C" "CRBNH" "RRS2" 46 RPI 817
-		       46,  // 770 "ECF6A" "CRBNL" "RRS2" 46 RPI 817
-		       45,  // 780 "ECF7" "CLRB" "RRS1" 45 RPI 817
-		       46,  // 790 "ECF78" "CLRBE" "RRS2" 46 RPI 817
-		       46,  // 800 "ECF72" "CLRBH" "RRS2" 46 RPI 817
-		       46,  // 810 "ECF74" "CLRBL" "RRS2" 46 RPI 817
-		       46,  // 820 "ECF76" "CLRBNE" "RRS2" 46 RPI 817
-		       46,  // 830 "ECF7C" "CLRBNH" "RRS2" 46 RPI 817
-		       46,  // 840 "ECF7A" "CLRBNL" "RRS2" 46 RPI 817
-		       47,  // 850 "ECFC" "CGIB" "RRS3" 47 RPI 817
-		       48,  // 860 "ECFC8" "CGIBE" "RRS4" 48 RPI 817
-		       48,  // 870 "ECFC2" "CGIBH" "RRS4" 48 RPI 817
-		       48,  // 880 "ECFC4" "CGIBL" "RRS4" 48 RPI 817
-		       48,  // 890 "ECFC6" "CGIBNE" "RRS4" 48 RPI 817
-		       48,  // 900 "ECFCC" "CGIBNH" "RRS4" 48 RPI 817
-		       48,  // 910 "ECFCA" "CGIBNL" "RRS4" 48 RPI 817
-		       47,  // 920 "ECFD" "CLGIB" "RRS3" 47 RPI 817
-		       48,  // 930 "ECFD8" "CLGIBE" "RRS4" 48 RPI 817
-		       48,  // 940 "ECFD2" "CLGIBH" "RRS4" 48 RPI 817
-		       48,  // 950 "ECFD4" "CLGIBL" "RRS4" 48 RPI 817
-		       48,  // 960 "ECFD6" "CLGIBNE" "RRS4" 48 RPI 817
-		       48,  // 970 "ECFDC" "CLGIBNH" "RRS4" 48 RPI 817
-		       48,  // 980 "ECFDA" "CLGIBNL" "RRS4" 48 RPI 817
-		       47,  // 990 "ECFE" "CIB" "RRS3" 47 RPI 817
-		       48,  // 1000 "ECFE8" "CIBE" "RRS4" 48 RPI 817
-		       48,  // 1010 "ECFE2" "CIBH" "RRS4" 48 RPI 817
-		       48,  // 1020 "ECFE4" "CIBL" "RRS4" 48 RPI 817
-		       48,  // 1030 "ECFE6" "CIBNE" "RRS4" 48 RPI 817
-		       48,  // 1040 "ECFEC" "CIBNH" "RRS4" 48 RPI 817
-		       48,  // 1050 "ECFEA" "CIBNL" "RRS4" 48 RPI 817
-		       47,  // 1060 "ECFF" "CLIB" "RRS3" 47 RPI 817
-		       48,  // 1070 "ECFF8" "CLIBE" "RRS4" 48 RPI 817
-		       48,  // 1080 "ECFF2" "CLIBH" "RRS4" 48 RPI 817
-		       48,  // 1090 "ECFF4" "CLIBL" "RRS4" 48 RPI 817
-		       48,  // 1100 "ECFF6" "CLIBNE" "RRS4" 48 RPI 817
-		       48,  // 1110 "ECFFC" "CLIBNH" "RRS4" 48 RPI 817
-		       48,  // 1120 "ECFFA" "CLIBNL" "RRS4" 48 RPI 817		       
-		       24,  // 6620 "ED04" "LDEB" "RXE" 24
-		       24,  // 6630 "ED05" "LXDB" "RXE" 24
-		       24,  // 6640 "ED06" "LXEB" "RXE" 24
-		       24,  // 6650 "ED07" "MXDB" "RXE" 24
-		       24,  // 6660 "ED08" "KEB" "RXE" 24
-		       24,  // 6670 "ED09" "CEB" "RXE" 24
-		       24,  // 6680 "ED0A" "AEB" "RXE" 24
-		       24,  // 6690 "ED0B" "SEB" "RXE" 24
-		       24,  // 6700 "ED0C" "MDEB" "RXE" 24
-		       24,  // 6710 "ED0D" "DEB" "RXE" 24
-		       25,  // 6720 "ED0E" "MAEB" "RXF" 25
-		       25,  // 6730 "ED0F" "MSEB" "RXF" 25
-		       24,  // 6740 "ED10" "TCEB" "RXE" 24
-		       24,  // 6750 "ED11" "TCDB" "RXE" 24
-		       24,  // 6760 "ED12" "TCXB" "RXE" 24
-		       24,  // 6770 "ED14" "SQEB" "RXE" 24
-		       24,  // 6780 "ED15" "SQDB" "RXE" 24
-		       24,  // 6790 "ED17" "MEEB" "RXE" 24
-		       24,  // 6800 "ED18" "KDB" "RXE" 24
-		       24,  // 6810 "ED19" "CDB" "RXE" 24
-		       24,  // 6820 "ED1A" "ADB" "RXE" 24
-		       24,  // 6830 "ED1B" "SDB" "RXE" 24
-		       24,  // 6840 "ED1C" "MDB" "RXE" 24
-		       24,  // 6850 "ED1D" "DDB" "RXE" 24
-		       25,  // 6860 "ED1E" "MADB" "RXF" 25
-		       25,  // 6870 "ED1F" "MSDB" "RXF" 25
-		       24,  // 6880 "ED24" "LDE" "RXE" 24
-		       24,  // 6890 "ED25" "LXD" "RXE" 24
-		       24,  // 6900 "ED26" "LXE" "RXE" 24
-		       25,  // 6910 "ED2E" "MAE" "RXF" 25
-		       25,  // 6920 "ED2F" "MSE" "RXF" 25
-		       24,  // 6930 "ED34" "SQE" "RXE" 24
-		       24,  // 6940 "ED35" "SQD" "RXE" 24
-		       24,  // 6950 "ED37" "MEE" "RXE" 24
-		       25,  //      "ED38" "MAYL" "RXF" 25 Z9-46
-		       25,  //      "ED39" "MYL" "RXF" 25 Z9-47
-		       25,  //      "ED3A" "MAY" "RXF" 25 Z9-48
-		       25,  //      "ED3B" "MY" "RXF" 25 Z9-49 RPI 298
-		       25,  //      "ED3C" "MAYH" "RXF" 25 Z9-50
-		       25,  //      "ED3D" "MYH" "RXF" 25 Z9-51 RPI 298
-		       25,  // 6960 "ED3E" "MAD" "RXF" 25
-		       25,  // 6970 "ED3F" "MSD" "RXF" 25
-		       25, // "SLDT" "ED40" "RXF" DFP 45
-		       25, // "SRDT" "ED41" "RXF" DFP 46
-		       25, // "SLXT" "ED48" "RXF" DFP 47
-		       25, // "SRXT" "ED49" "RXF" DFP 48
-		       24, // "TDCET" "ED50" "RXE" DFP 49
-		       24, // "TDGET" "ED51" "RXE" DFP 50
-		       24, // "TDCDT" "ED54" "RXE" DFP 51
-		       24, // "TDGDT" "ED55" "RXE" DFP 52
-		       24, // "TDCXT" "ED58" "RXE" DFP 53
-		       24, // "TDGXT" "ED59" "RXE" DFP 54
-		       18,  // 6980 "ED64" "LEY" "RXY" 18
-		       18,  // 6990 "ED65" "LDY" "RXY" 18
-		       18,  // 7000 "ED66" "STEY" "RXY" 18
-		       18,  // 7010 "ED67" "STDY" "RXY" 18
-		       27,  // 7020 "EE" "PLO" "SS3" 27
-		       28,  // 7030 "EF" "LMD" "SS4" 28
-		       29,  // 7040 "F0" "SRP" "SS5" 29
-		       26,  // 7050 "F1" "MVO" "SS2" 26
-		       26,  // 7060 "F2" "PACK" "SS2" 26
-		       26,  // 7070 "F3" "UNPK" "SS2" 26
-		       26,  // 7080 "F8" "ZAP" "SS2" 26
-		       26,  // 7090 "F9" "CP" "SS2" 26
-		       26,  // 7100 "FA" "AP" "SS2" 26
-		       26,  // 7110 "FB" "SP" "SS2" 26
-		       26,  // 7120 "FC" "MP" "SS2" 26
-		       26,  // 7130 "FD" "DP" "SS2" 26
-		       101,  // 7140  "CCW"  101
-		       102,  // 7150  "CCW0"  102
-		       103,  // 7160  "CCW1"  103
-		       104,  // 7170  "DC"  104
-		       105,  // 7180  "DS"  105
-		       106,  // 7190  "ALIAS"  106
-		       107,  // 7200  "AMODE"  107
-		       108,  // 7210  "CATTR"  108
-		       109,  // 7220  "COM"  109
-		       110,  // 7230  "CSECT"  110
-		       111,  // 7240  "CXD"  111
-		       112,  // 7250  "DSECT"  112
-		       113,  // 7260  "DXD"  113
-		       114,  // 7270  "ENTRY"  114
-		       115,  // 7280  "EXTRN"  115
-		       116,  // 7290  "LOCTR"  116
-		       117,  // 7300  "RMODE"  117
-		       118,  // 7310  "RSECT"  118
-		       119,  // 7320  "START"  119
-		       120,  // 7330  "WXTRN"  120
-		       121,  // 7340  "XATTR"  121
-		       122,  // 7350  ""  122
-		       123,  // 7360  "DROP"  123
-		       124,  // 7370  "USING"  124
-		       125,  // 7380  "AEJECT"  125
-		       126,  // 7390  "ASPACE"  126
-		       127,  // 7400  "CEJECT"  127
-		       128,  // 7410  "EJECT"  128
-		       129,  // 7420  "PRINT"  129
-		       130,  // 7430  "SPACE"  130
-		       131,  // 7440  "TITLE"  131
-		       132,  // 7450  "ADATA"  132
-		       133,  // 7460  "CNOP"  133
-		       224,  // 7470  "COPY"  224
-		       135,  // 7480  "END"  135
-		       136,  // 7490  "EQU"  136
-		       137,  // 7500  "EXITCTL"  137
-		       138,  // 7510  "ICTL"  138
-		       139,  // 7520  "ISEQ"  139
-		       140,  // 7530  "LTORG"  140
-		       225,  // 7540  "OPSYN"  225 //RPI150
-		       142,  // 7550  "ORG"  142
-		       143,  // 7560  "POP"  143
-		       223,  // 7570  "PUNCH"  223
-		       145,  // 7580  "PUSH"  145
-		       146,  // 7590  "REPRO"  146
-		       147,  // 7595  "ACONTROL" 147 // RPI 368
-		       201,  // 7600  "ACTR"   
-		       202,  // 7610  "AGO"  
-		       203,  // 7625  "AIF"  
-		       204,  // 7630  "AINSERT"  
-		       205,  // 7640  "ANOP"  
-		       206,  // 7650  "AREAD" 
-		       207,  // 7660  "GBLA"  
-		       208,  // 7670  "GBLB"  
-		       209,  // 7680  "GBLC"  
-		       210,  // 7690  "LCLA"  
-		       211,  // 7700  "LCLB"  
-		       212,  // 7710  "LCLC"  
-		       213,  // 7720  "MHELP"  
-		       214,  // 7730  "MNOTE"  
-		       215,  // 7740  "SETA"  
-		       216,  // 7750  "SETAF"  
-		       217,  // 7760  "SETB"  
-		       218,  // 7770  "SETC"  
-		       219,  // 7780  "SETCF"  
-		       220,  // 7790  "MACRO"  
-		       221,  // 7800  "MEND"  
-		       222,  // 7810  "MEXIT"  	
-		       226,  // 7820  "AGOB"  
-		       227,  // 7830  "AIFB"  
-  	           }; 
+    //  int[]    op_type = // Static content removed, content now generated RPI 1209
+        int[]    op_type = null; // See process_opcodes() RPI 1209
   	  int        op_code_index = -1;
-      String[]   op_code = {
-    		   "??",    // 00 comments
-		       "0101",  // 10 "0101" "PR" "E" 1
-		       "0102",  // 20 "0102" "UPT" "E" 1
-		       "0104",  //    "0104" "PTFF" "E" 1 Z9-1
-		       "0107",  // 30 "0107" "SCKPF" "E" 1
-		       "010A",  // 40 "010A" "PFPO" "E" 1    RPI 1013
-		       "010B",  // 40 "010B" "TAM" "E" 1
-		       "010C",  // 50 "010C" "SAM24" "E" 1
-		       "010D",  // 60 "010D" "SAM31" "E" 1
-		       "010E",  // 70 "010E" "SAM64" "E" 1
-		       "01FF",  // 80 "01FF" "TRAP2" "E" 1
-		       "04",  // 90 "04" "SPM" "RR" 2
-		       "05",  // 100 "05" "BALR" "RR" 2
-		       "06",  // 110 "06" "BCTR" "RR" 2
-		       "07",  // 120 "07" "BCR" "RR" 2
-		       "07F",  // 130 "07F" "BR" "BRX" 3
-		       "070",  // 140 "070" "NOPR" "BRX" 3
-		       "072",  // 150 "072" "BHR" "BRX" 3
-		       "074",  // 160 "074" "BLR" "BRX" 3
-		       "078",  // 170 "078" "BER" "BRX" 3
-		       "07D",  // 180 "07D" "BNHR" "BRX" 3
-		       "07B",  // 190 "07B" "BNLR" "BRX" 3
-		       "077",  // 200 "077" "BNER" "BRX" 3
-		       "072",  // 210 "072" "BPR" "BRX" 3
-		       "071",  // 220 "071" "BOR" "BRX" 3
-		       "074",  // 230 "074" "BMR" "BRX" 3
-		       "078",  // 240 "078" "BZR" "BRX" 3
-		       "07D",  // 250 "07D" "BNPR" "BRX" 3
-		       "07B",  // 260 "07B" "BNMR" "BRX" 3
-		       "077",  // 270 "077" "BNZR" "BRX" 3
-		       "07E",  // 280 "07E" "BNOR" "BRX" 3
-		       "0A",  // 290 "0A" "SVC" "I" 4
-		       "0B",  // 300 "0B" "BSM" "RR" 2
-		       "0C",  // 310 "0C" "BASSM" "RR" 2
-		       "0D",  // 320 "0D" "BASR" "RR" 2
-		       "0E",  // 330 "0E" "MVCL" "RR" 2
-		       "0F",  // 340 "0F" "CLCL" "RR" 2
-		       "10",  // 350 "10" "LPR" "RR" 2
-		       "11",  // 360 "11" "LNR" "RR" 2
-		       "12",  // 370 "12" "LTR" "RR" 2
-		       "13",  // 380 "13" "LCR" "RR" 2
-		       "14",  // 390 "14" "NR" "RR" 2
-		       "15",  // 400 "15" "CLR" "RR" 2
-		       "16",  // 410 "16" "OR" "RR" 2
-		       "17",  // 420 "17" "XR" "RR" 2
-		       "18",  // 430 "18" "LR" "RR" 2
-		       "19",  // 440 "19" "CR" "RR" 2
-		       "1A",  // 450 "1A" "AR" "RR" 2
-		       "1B",  // 460 "1B" "SR" "RR" 2
-		       "1C",  // 470 "1C" "MR" "RR" 2
-		       "1D",  // 480 "1D" "DR" "RR" 2
-		       "1E",  // 490 "1E" "ALR" "RR" 2
-		       "1F",  // 500 "1F" "SLR" "RR" 2
-		       "20",  // 510 "20" "LPDR" "RR" 2
-		       "21",  // 520 "21" "LNDR" "RR" 2
-		       "22",  // 530 "22" "LTDR" "RR" 2
-		       "23",  // 540 "23" "LCDR" "RR" 2
-		       "24",  // 550 "24" "HDR" "RR" 2
-		       "25",  // 560 "25" "LDXR" "RR" 2
-		       "25",  // 570 "25" "LRDR" "RR" 2
-		       "26",  // 580 "26" "MXR" "RR" 2
-		       "27",  // 590 "27" "MXDR" "RR" 2
-		       "28",  // 600 "28" "LDR" "RR" 2
-		       "29",  // 610 "29" "CDR" "RR" 2
-		       "2A",  // 620 "2A" "ADR" "RR" 2
-		       "2B",  // 630 "2B" "SDR" "RR" 2
-		       "2C",  // 640 "2C" "MDR" "RR" 2
-		       "2D",  // 650 "2D" "DDR" "RR" 2
-		       "2E",  // 660 "2E" "AWR" "RR" 2
-		       "2F",  // 670 "2F" "SWR" "RR" 2
-		       "30",  // 680 "30" "LPER" "RR" 2
-		       "31",  // 690 "31" "LNER" "RR" 2
-		       "32",  // 700 "32" "LTER" "RR" 2
-		       "33",  // 710 "33" "LCER" "RR" 2
-		       "34",  // 720 "34" "HER" "RR" 2
-		       "35",  // 730 "35" "LEDR" "RR" 2
-		       "35",  // 740 "35" "LRER" "RR" 2
-		       "36",  // 750 "36" "AXR" "RR" 2
-		       "37",  // 760 "37" "SXR" "RR" 2
-		       "38",  // 770 "38" "LER" "RR" 2
-		       "39",  // 780 "39" "CER" "RR" 2
-		       "3A",  // 790 "3A" "AER" "RR" 2
-		       "3B",  // 800 "3B" "SER" "RR" 2
-		       "3C",  // 810 "3C" "MDER" "RR" 2
-		       "3C",  // 820 "3C" "MER" "RR" 2
-		       "3D",  // 830 "3D" "DER" "RR" 2
-		       "3E",  // 840 "3E" "AUR" "RR" 2
-		       "3F",  // 850 "3F" "SUR" "RR" 2
-		       "40",  // 860 "40" "STH" "RX" 5
-		       "41",  // 870 "41" "LA" "RX" 5
-		       "42",  // 880 "42" "STC" "RX" 5
-		       "43",  // 890 "43" "IC" "RX" 5
-		       "44",  // 900 "44" "EX" "RX" 5
-		       "45",  // 910 "45" "BAL" "RX" 5
-		       "46",  // 920 "46" "BCT" "RX" 5
-		       "47",  // 930 "47" "BC" "RX" 5
-		       "47F",  // 940 "47F" "B" "BCX" 6
-		       "470",  // 950 "470" "NOP" "BCX" 6
-		       "472",  // 960 "472" "BH" "BCX" 6
-		       "474",  // 970 "474" "BL" "BCX" 6
-		       "478",  // 980 "478" "BE" "BCX" 6
-		       "47D",  // 990 "47D" "BNH" "BCX" 6
-		       "47B",  // 1000 "47B" "BNL" "BCX" 6
-		       "477",  // 1010 "477" "BNE" "BCX" 6
-		       "472",  // 1020 "472" "BP" "BCX" 6
-		       "471",  // 1030 "471" "BO" "BCX" 6
-		       "474",  // 1040 "474" "BM" "BCX" 6
-		       "478",  // 1050 "478" "BZ" "BCX" 6
-		       "47D",  // 1060 "47D" "BNP" "BCX" 6
-		       "47B",  // 1070 "47B" "BNM" "BCX" 6
-		       "477",  // 1080 "477" "BNZ" "BCX" 6
-		       "47E",  // 1090 "47E" "BNO" "BCX" 6
-		       "48",  // 1100 "48" "LH" "RX" 5
-		       "49",  // 1110 "49" "CH" "RX" 5
-		       "4A",  // 1120 "4A" "AH" "RX" 5
-		       "4B",  // 1130 "4B" "SH" "RX" 5
-		       "4C",  // 1140 "4C" "MH" "RX" 5
-		       "4D",  // 1150 "4D" "BAS" "RX" 5
-		       "4E",  // 1160 "4E" "CVD" "RX" 5
-		       "4F",  // 1170 "4F" "CVB" "RX" 5
-		       "50",  // 1180 "50" "ST" "RX" 5
-		       "51",  // 1190 "51" "LAE" "RX" 5
-		       "52",  // 1193 "52" "XDECO" "RX" 37 RPI 812
-		       "53",  // 1196 "53" "XDECI" "RX" 37 RPI 812	
-		       "54",  // 1200 "54" "N" "RX" 5
-		       "55",  // 1210 "55" "CL" "RX" 5
-		       "56",  // 1220 "56" "O" "RX" 5
-		       "57",  // 1230 "57" "X" "RX" 5
-		       "58",  // 1240 "58" "L" "RX" 5
-		       "59",  // 1250 "59" "C" "RX" 5
-		       "5A",  // 1260 "5A" "A" "RX" 5
-		       "5B",  // 1270 "5B" "S" "RX" 5
-		       "5C",  // 1280 "5C" "M" "RX" 5
-		       "5D",  // 1290 "5D" "D" "RX" 5
-		       "5E",  // 1300 "5E" "AL" "RX" 5
-		       "5F",  // 1310 "5F" "SL" "RX" 5
-		       "60",  // 1320 "60" "STD" "RX" 5
-		       "61",  // 1323 "61" "XHEXI" "RX" 37 RPI 812
-		       "62",  // 1326 "62" "XHEXO" "RX" 37 RPI 812
-		       "67",  // 1330 "67" "MXD" "RX" 5
-		       "68",  // 1340 "68" "LD" "RX" 5
-		       "69",  // 1350 "69" "CD" "RX" 5
-		       "6A",  // 1360 "6A" "AD" "RX" 5
-		       "6B",  // 1370 "6B" "SD" "RX" 5
-		       "6C",  // 1380 "6C" "MD" "RX" 5
-		       "6D",  // 1390 "6D" "DD" "RX" 5
-		       "6E",  // 1400 "6E" "AW" "RX" 5
-		       "6F",  // 1410 "6F" "SW" "RX" 5
-		       "70",  // 1420 "70" "STE" "RX" 5
-		       "71",  // 1430 "71" "MS" "RX" 5
-		       "78",  // 1440 "78" "LE" "RX" 5
-		       "79",  // 1450 "79" "CE" "RX" 5
-		       "7A",  // 1460 "7A" "AE" "RX" 5
-		       "7B",  // 1470 "7B" "SE" "RX" 5
-		       "7C",  // 1480 "7C" "MDE" "RX" 5
-		       "7C",  // 1490 "7C" "ME" "RX" 5
-		       "7D",  // 1500 "7D" "DE" "RX" 5
-		       "7E",  // 1510 "7E" "AU" "RX" 5
-		       "7F",  // 1520 "7F" "SU" "RX" 5
-		       "8000",  // 1530 "8000" "SSM" "S" 7
-		       "8200",  // 1540 "8200" "LPSW" "S" 7
-		       "83",  // 1550 "83" "DIAGNOSE" "DM" 8
-		       "84",  // 1560 "84" "BRXH" "RSI" 9
-		       "84",  // 1570 "84" "JXH" "RSI" 9
-		       "85",  // 1580 "85" "BRXLE" "RSI" 9
-		       "85",  // 1590 "85" "JXLE" "RSI" 9
-		       "86",  // 1600 "86" "BXH" "RS" 10
-		       "87",  // 1610 "87" "BXLE" "RS" 10
-		       "88",  // 1620 "88" "SRL" "RS" 10
-		       "89",  // 1630 "89" "SLL" "RS" 10
-		       "8A",  // 1640 "8A" "SRA" "RS" 10
-		       "8B",  // 1650 "8B" "SLA" "RS" 10
-		       "8C",  // 1660 "8C" "SRDL" "RS" 10
-		       "8D",  // 1670 "8D" "SLDL" "RS" 10
-		       "8E",  // 1680 "8E" "SRDA" "RS" 10
-		       "8F",  // 1690 "8F" "SLDA" "RS" 10
-		       "90",  // 1700 "90" "STM" "RS" 10
-		       "91",  // 1710 "91" "TM" "SI" 11
-		       "92",  // 1720 "92" "MVI" "SI" 11
-		       "9300",  // 1730 "9300" "TS" "S" 7
-		       "94",  // 1740 "94" "NI" "SI" 11
-		       "95",  // 1750 "95" "CLI" "SI" 11
-		       "96",  // 1760 "96" "OI" "SI" 11
-		       "97",  // 1770 "97" "XI" "SI" 11
-		       "98",  // 1780 "98" "LM" "RS" 10
-		       "99",  // 1790 "99" "TRACE" "RS" 10
-		       "9A",  // 1800 "9A" "LAM" "RS" 10
-		       "9B",  // 1810 "9B" "STAM" "RS" 10
-		       "A50",  // 1820 "A50" "IIHH" "RI" 12
-		       "A51",  // 1830 "A51" "IIHL" "RI" 12
-		       "A52",  // 1840 "A52" "IILH" "RI" 12
-		       "A53",  // 1850 "A53" "IILL" "RI" 12
-		       "A54",  // 1860 "A54" "NIHH" "RI" 12
-		       "A55",  // 1870 "A55" "NIHL" "RI" 12
-		       "A56",  // 1880 "A56" "NILH" "RI" 12
-		       "A57",  // 1890 "A57" "NILL" "RI" 12
-		       "A58",  // 1900 "A58" "OIHH" "RI" 12
-		       "A59",  // 1910 "A59" "OIHL" "RI" 12
-		       "A5A",  // 1920 "A5A" "OILH" "RI" 12
-		       "A5B",  // 1930 "A5B" "OILL" "RI" 12
-		       "A5C",  // 1940 "A5C" "LLIHH" "RI" 12
-		       "A5D",  // 1950 "A5D" "LLIHL" "RI" 12
-		       "A5E",  // 1960 "A5E" "LLILH" "RI" 12
-		       "A5F",  // 1970 "A5F" "LLILL" "RI" 12
-		       "A70",  // 1980 "A70" "TMLH" "RI" 12
-		       "A70",  // 1990 "A70" "TMH" "RI" 12
-		       "A71",  // 2000 "A71" "TMLL" "RI" 12
-		       "A71",  // 2010 "A71" "TML" "RI" 12
-		       "A72",  // 2020 "A72" "TMHH" "RI" 12
-		       "A73",  // 2030 "A73" "TMHL" "RI" 12
-		       "A74",  // 2040 "A74" "BRC" "RI" 12
-		       "A74F",  // 2050 "A74F" "J" "BRCX" 13
-		       "A740",  // 2060 "A740" "JNOP" "BRCX" 13
-		       "A74F",  // 2070 "A74F" "BRU" "BRCX" 13
-		       "A742",  // 2080 "A742" "BRH" "BRCX" 13
-		       "A744",  // 2090 "A744" "BRL" "BRCX" 13
-		       "A748",  // 2100 "A748" "BRE" "BRCX" 13
-		       "A74D",  // 2110 "A74D" "BRNH" "BRCX" 13
-		       "A74B",  // 2120 "A74B" "BRNL" "BRCX" 13
-		       "A747",  // 2130 "A747" "BRNE" "BRCX" 13
-		       "A742",  // 2140 "A742" "BRP" "BRCX" 13
-		       "A744",  // 2150 "A744" "BRM" "BRCX" 13
-		       "A748",  // 2160 "A748" "BRZ" "BRCX" 13
-		       "A741",  // 2170 "A741" "BRO" "BRCX" 13
-		       "A74D",  // 2180 "A74D" "BRNP" "BRCX" 13
-		       "A74B",  // 2190 "A74B" "BRNM" "BRCX" 13
-		       "A747",  // 2200 "A747" "BRNZ" "BRCX" 13
-		       "A74E",  // 2210 "A74E" "BRNO" "BRCX" 13
-		       "A742",  // 2220 "A742" "JH" "BRCX" 13
-		       "A744",  // 2230 "A744" "JL" "BRCX" 13
-		       "A748",  // 2240 "A748" "JE" "BRCX" 13
-		       "A74D",  // 2250 "A74D" "JNH" "BRCX" 13
-		       "A74B",  // 2260 "A74B" "JNL" "BRCX" 13
-		       "A747",  // 2270 "A747" "JNE" "BRCX" 13
-		       "A742",  // 2280 "A742" "JP" "BRCX" 13 
-		       "A744",  // 2290 "A744" "JM" "BRCX" 13
-		       "A748",  // 2300 "A748" "JZ" "BRCX" 13
-		       "A741",  // 2310 "A741" "JO" "BRCX" 13
-		       "A74D",  // 2320 "A74D" "JNP" "BRCX" 13
-		       "A74B",  // 2330 "A74B" "JNM" "BRCX" 13
-		       "A747",  // 2340 "A747" "JNZ" "BRCX" 13
-		       "A74E",  // 2350 "A74E" "JNO" "BRCX" 13
-		       "A75",  // 2360 "A75" "BRAS" "RI" 12
-		       "A75",  // 2370 "A75" "JAS" "RI" 12
-		       "A76",  // 2380 "A76" "BRCT" "RI" 12
-		       "A76",  // 2390 "A76" "JCT" "RI" 12
-		       "A77",  // 2400 "A77" "BRCTG" "RI" 12
-		       "A77",  // 2410 "A77" "JCTG" "RI" 12
-		       "A78",  // 2420 "A78" "LHI" "RI" 12
-		       "A79",  // 2430 "A79" "LGHI" "RI" 12
-		       "A7A",  // 2440 "A7A" "AHI" "RI" 12
-		       "A7B",  // 2450 "A7B" "AGHI" "RI" 12
-		       "A7C",  // 2460 "A7C" "MHI" "RI" 12
-		       "A7D",  // 2470 "A7D" "MGHI" "RI" 12
-		       "A7E",  // 2480 "A7E" "CHI" "RI" 12
-		       "A7F",  // 2490 "A7F" "CGHI" "RI" 12
-		       "A8",  // 2500 "A8" "MVCLE" "RS" 10
-		       "A9",  // 2510 "A9" "CLCLE" "RS" 10
-		       "AC",  // 2520 "AC" "STNSM" "SI" 11
-		       "AD",  // 2530 "AD" "STOSM" "SI" 11
-		       "AE",  // 2540 "AE" "SIGP" "RS" 10
-		       "AF",  // 2550 "AF" "MC" "SI" 11
-		       "B1",  // 2560 "B1" "LRA" "RX" 5
-		       "B202",  // 2570 "B202" "STIDP" "S" 7
-		       "B204",  // 2580 "B204" "SCK" "S" 7
-		       "B205",  // 2590 "B205" "STCK" "S" 7
-		       "B206",  // 2600 "B206" "SCKC" "S" 7
-		       "B207",  // 2610 "B207" "STCKC" "S" 7
-		       "B208",  // 2620 "B208" "SPT" "S" 7
-		       "B209",  // 2630 "B209" "STPT" "S" 7
-		       "B20A",  // 2640 "B20A" "SPKA" "S" 7
-		       "B20B",  // 2650 "B20B" "IPK" "S" 7
-		       "B20D",  // 2660 "B20D" "PTLB" "S" 7
-		       "B210",  // 2670 "B210" "SPX" "S" 7
-		       "B211",  // 2680 "B211" "STPX" "S" 7
-		       "B212",  // 2690 "B212" "STAP" "S" 7
-		       "B218",  // 2700 "B218" "PC" "S" 7
-		       "B219",  // 2710 "B219" "SAC" "S" 7
-		       "B21A",  // 2720 "B21A" "CFC" "S" 7
-		       "B221",  // 2730 "B221" "IPTE" "RRE" 14
-		       "B222",  // 2740 "B222" "IPM" "RRE" 14
-		       "B223",  // 2750 "B223" "IVSK" "RRE" 14
-		       "B224",  // 2760 "B224" "IAC" "RRE" 14
-		       "B225",  // 2770 "B225" "SSAR" "RRE" 14
-		       "B226",  // 2780 "B226" "EPAR" "RRE" 14
-		       "B227",  // 2790 "B227" "ESAR" "RRE" 14
-		       "B228",  // 2800 "B228" "PT" "RRE" 14
-		       "B229",  // 2810 "B229" "ISKE" "RRE" 14
-		       "B22A",  // 2820 "B22A" "RRBE" "RRE" 14
-		       "B22B",  // 2830 "B22B" "SSKE" "RRE" 14
-		       "B22C",  // 2840 "B22C" "TB" "RRE" 14
-		       "B22D",  // 2850 "B22D" "DXR" "RRE" 14
-		       "B22E",  // 2860 "B22E" "PGIN" "RRE" 14
-		       "B22F",  // 2870 "B22F" "PGOUT" "RRE" 14
-		       "B230",  // 2880 "B230" "CSCH" "S" 7
-		       "B231",  // 2890 "B231" "HSCH" "S" 7
-		       "B232",  // 2900 "B232" "MSCH" "S" 7
-		       "B233",  // 2910 "B233" "SSCH" "S" 7
-		       "B234",  // 2920 "B234" "STSCH" "S" 7
-		       "B235",  // 2930 "B235" "TSCH" "S" 7
-		       "B236",  // 2940 "B236" "TPI" "S" 7
-		       "B237",  // 2950 "B237" "SAL" "S" 7
-		       "B238",  // 2960 "B238" "RSCH" "S" 7
-		       "B239",  // 2970 "B239" "STCRW" "S" 7
-		       "B23A",  // 2980 "B23A" "STCPS" "S" 7
-		       "B23B",  // 2990 "B23B" "RCHP" "S" 7
-		       "B23C",  // 3000 "B23C" "SCHM" "S" 7
-		       "B240",  // 3010 "B240" "BAKR" "RRE" 14
-		       "B241",  // 3020 "B241" "CKSM" "RRE" 14
-		       "B244",  // 3030 "B244" "SQDR" "RRE" 14
-		       "B245",  // 3040 "B245" "SQER" "RRE" 14
-		       "B246",  // 3050 "B246" "STURA" "RRE" 14
-		       "B247",  // 3060 "B247" "MSTA" "RRE" 14
-		       "B248",  // 3070 "B248" "PALB" "RRE" 14
-		       "B249",  // 3080 "B249" "EREG" "RRE" 14
-		       "B24A",  // 3090 "B24A" "ESTA" "RRE" 14
-		       "B24B",  // 3100 "B24B" "LURA" "RRE" 14
-		       "B24C",  // 3110 "B24C" "TAR" "RRE" 14
-		       "B24D",  // 3120 "B24D" "CPYA" "RRE" 14
-		       "B24E",  // 3130 "B24E" "SAR" "RRE" 14
-		       "B24F",  // 3140 "B24F" "EAR" "RRE" 14
-		       "B250",  // 3150 "B250" "CSP" "RRE" 14
-		       "B252",  // 3160 "B252" "MSR" "RRE" 14
-		       "B254",  // 3170 "B254" "MVPG" "RRE" 14
-		       "B255",  // 3180 "B255" "MVST" "RRE" 14
-		       "B257",  // 3190 "B257" "CUSE" "RRE" 14
-		       "B258",  // 3200 "B258" "BSG" "RRE" 14
-		       "B25A",  // 3210 "B25A" "BSA" "RRE" 14
-		       "B25D",  // 3220 "B25D" "CLST" "RRE" 14
-		       "B25E",  // 3230 "B25E" "SRST" "RRE" 14
-		       "B263",  // 3240 "B263" "CMPSC" "RRE" 14
-		       "B276",  // 3250 "B276" "XSCH" "S" 7
-		       "B277",  // 3260 "B277" "RP" "S" 7
-		       "B278",  // 3270 "B278" "STCKE" "S" 7
-		       "B279",  // 3280 "B279" "SACF" "S" 7
-		       "B27C",  //      "B27C" "STCKF" "S" 7 Z9-2
-		       "B27D",  // 3290 "B27D" "STSI" "S" 7
-		       "B299",  // 3300 "B299" "SRNM" "S" 7
-		       "B29C",  // 3310 "B29C" "STFPC" "S" 7
-		       "B29D",  // 3320 "B29D" "LFPC" "S" 7
-		       "B2A5",  // 3330 "B2A5" "TRE" "RRE" 14
-		       "B2A6",  // 3340 "B2A6" "CUUTF" "RRE" 14
-		       "B2A6",  // 3350 "B2A6" "CU21" "RRE" 14
-		       "B2A7",  // 3360 "B2A7" "CUTFU" "RRE" 14
-		       "B2A7",  // 3370 "B2A7" "CU12" "RRE" 14
-		       "B2B0",  //      "B2B0" "STFLE" "S" 7 Z9-3
-		       "B2B1",  // 3380 "B2B1" "STFL" "S" 7
-		       "B2B2",  // 3390 "B2B2" "LPSWE" "S" 7
-		       "B2B8",    // 3392 "B2B8" "SRNMB" "S" 7 RPI 1125
-		       "B2B9",  // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
-		       "B2BD",  // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
-		       "B2FF",  // 3400 "B2FF" "TRAP4" "S" 7
-		       "B300",  // 3410 "B300" "LPEBR" "RRE" 14
-		       "B301",  // 3420 "B301" "LNEBR" "RRE" 14
-		       "B302",  // 3430 "B302" "LTEBR" "RRE" 14
-		       "B303",  // 3440 "B303" "LCEBR" "RRE" 14
-		       "B304",  // 3450 "B304" "LDEBR" "RRE" 14
-		       "B305",  // 3460 "B305" "LXDBR" "RRE" 14
-		       "B306",  // 3470 "B306" "LXEBR" "RRE" 14
-		       "B307",  // 3480 "B307" "MXDBR" "RRE" 14
-		       "B308",  // 3490 "B308" "KEBR" "RRE" 14
-		       "B309",  // 3500 "B309" "CEBR" "RRE" 14
-		       "B30A",  // 3510 "B30A" "AEBR" "RRE" 14
-		       "B30B",  // 3520 "B30B" "SEBR" "RRE" 14
-		       "B30C",  // 3530 "B30C" "MDEBR" "RRE" 14
-		       "B30D",  // 3540 "B30D" "DEBR" "RRE" 14
-		       "B30E",  // 3550 "B30E" "MAEBR" "RRF1" 15
-		       "B30F",  // 3560 "B30F" "MSEBR" "RRF1" 15
-		       "B310",  // 3570 "B310" "LPDBR" "RRE" 14
-		       "B311",  // 3580 "B311" "LNDBR" "RRE" 14
-		       "B312",  // 3590 "B312" "LTDBR" "RRE" 14
-		       "B313",  // 3600 "B313" "LCDBR" "RRE" 14
-		       "B314",  // 3610 "B314" "SQEBR" "RRE" 14
-		       "B315",  // 3620 "B315" "SQDBR" "RRE" 14
-		       "B316",  // 3630 "B316" "SQXBR" "RRE" 14
-		       "B317",  // 3640 "B317" "MEEBR" "RRE" 14
-		       "B318",  // 3650 "B318" "KDBR" "RRE" 14
-		       "B319",  // 3660 "B319" "CDBR" "RRE" 14
-		       "B31A",  // 3670 "B31A" "ADBR" "RRE" 14
-		       "B31B",  // 3680 "B31B" "SDBR" "RRE" 14
-		       "B31C",  // 3690 "B31C" "MDBR" "RRE" 14
-		       "B31D",  // 3700 "B31D" "DDBR" "RRE" 14
-		       "B31E",  // 3710 "B31E" "MADBR" "RRF1" 15
-		       "B31F",  // 3720 "B31F" "MSDBR" "RRF1" 15
-		       "B324",  // 3730 "B324" "LDER" "RRE" 14
-		       "B325",  // 3740 "B325" "LXDR" "RRE" 14
-		       "B326",  // 3750 "B326" "LXER" "RRE" 14
-		       "B32E",  // 3760 "B32E" "MAER" "RRF1" 15
-		       "B32F",  // 3770 "B32F" "MSER" "RRF1" 15
-		       "B336",  // 3780 "B336" "SQXR" "RRE" 14
-		       "B337",  // 3790 "B337" "MEER" "RRE" 14
-		       "B338",  //      "B338" "MAYLR" "RRF1" 15 Z9-4
-		       "B339",  //      "B339" "MYLR" "RRF1" 15 Z9-5
-		       "B33A",  //      "B33A" "MAYR" "RRF1" 15 Z9-6
-		       "B33B",  //      "B33B" "MYR" "RRF1" 15 Z9-7
-		       "B33C",  //      "B33C" "MAYHR" "RRF1" 15 Z9-8
-		       "B33D",  //      "B33D" "MYHR" "RRF1" 15 Z9-9
-		       "B33E",  // 3800 "B33E" "MADR" "RRF1" 15
-		       "B33F",  // 3810 "B33F" "MSDR" "RRF1" 15
-		       "B340",  // 3820 "B340" "LPXBR" "RRE" 14
-		       "B341",  // 3830 "B341" "LNXBR" "RRE" 14
-		       "B342",  // 3840 "B342" "LTXBR" "RRE" 14
-		       "B343",  // 3850 "B343" "LCXBR" "RRE" 14
-		       "B344",  // 3860 "B344" "LEDBR?" "RRE" 53 RPI 1125
-		       "B345",  // 3870 "B345" "LDXBR?" "RRE" 53 RPI 1125
-		       "B346",  // 3880 "B346" "LEXBR?" "RRE" 53 RPI 1125
-		       "B347",  // 3890 "B347" "FIXBR?" "RRF2" 54 RPI 1125
-		       "B348",  // 3900 "B348" "KXBR" "RRE" 14
-		       "B349",  // 3910 "B349" "CXBR" "RRE" 14
-		       "B34A",  // 3920 "B34A" "AXBR" "RRE" 14
-		       "B34B",  // 3930 "B34B" "SXBR" "RRE" 14
-		       "B34C",  // 3940 "B34C" "MXBR" "RRE" 14
-		       "B34D",  // 3950 "B34D" "DXBR" "RRE" 14
-		       "B350",  // 3960 "B350" "TBEDR" "RRF2" 34
-		       "B351",  // 3970 "B351" "TBDR" "RRF2" 34
-		       "B353",  // 3980 "B353" "DIEBR" "RRF2" 34
-		       "B357",  // 3990 "B357" "FIEBR?" "RRF2" 54 RPI 1125
-		       "B358",  // 4000 "B358" "THDER" "RRE" 14
-		       "B359",  // 4010 "B359" "THDR" "RRE" 14
-		       "B35B",  // 4020 "B35B" "DIDBR" "RRF2" 34
-		       "B35F",  // 4030 "B35F" "FIDBR?" "RRF2" 54 RPI 1125
-		       "B360",  // 4040 "B360" "LPXR" "RRE" 14
-		       "B361",  // 4050 "B361" "LNXR" "RRE" 14
-		       "B362",  // 4060 "B362" "LTXR" "RRE" 14
-		       "B363",  // 4070 "B363" "LCXR" "RRE" 14
-		       "B365",  // 4080 "B365" "LXR" "RRE" 14
-		       "B366",  // 4090 "B366" "LEXR" "RRE" 14
-		       "B367",  // 4100 "B367" "FIXR" "RRE" 14
-		       "B369",  // 4110 "B369" "CXR" "RRE" 14
-		       "B370",  // 4115 "B370" "LPDFR" "RRE"  14 DFP
-		       "B371",  // 4115 "B371" "LNDFR" "RRE"  14 DFP
-		       "B372",  // 4115 "B372" "CPSDR" "RRF2" 34 DFP
-		       "B373",  // 4115 "B373" "LCDFR" "RRE"  14 DFP
-		       "B374",  // 4120 "B374" "LZER" "RRE" 14
-		       "B375",  // 4130 "B375" "LZDR" "RRE" 14
-		       "B376",  // 4140 "B376" "LZXR" "RRE" 14
-		       "B377",  // 4150 "B377" "FIER" "RRE" 14
-		       "B37F",  // 4160 "B37F" "FIDR" "RRE" 14
-		       "B384",  // 4170 "B384" "SFPC" "RRE" 14
-		       "B385",  // 4175 "B385" "SFASR" "RRE" 14 DFP 57
-		       "B38C",  // 4180 "B38C" "EFPC" "RRE" 14
-		       "B390",  //      "B390" "CELFBR" "RRF3" 30 RPI 1125 Z196
-               "B391",  //      "B391" "CDLFBR" "RRF3" 30 RPI 1125 Z196
-               "B392",  //      "B392" "CXLFBR" "RRF3" 30 RPI 1125 Z196
-		       "B394",  // 4190 "B394?" "CEFBR" "RRE" 53 RPI 1125 Z196
-		       "B395",  // 4200 "B395?" "CDFBR" "RE3" 53 RPI 1125 Z196
-		       "B396",  // 4210 "B396?" "CXFBR" "RE3" 53 RPI 1125 Z196
-		       "B398",  // 4220 "B398" "CFEBR?" "RRF7" 34 RPI 1125 Z196
-		       "B399",  // 4230 "B399" "CFDBR?" "RRF7" 34 RPI 1125 Z196
-		       "B39A",  // 4240 "B39A" "CFXBR?" "RRF7" 34 RPI 1125 Z196
-		       "B39C",    // 'B39C' 'CLFEBR' 'RRF3' 30 RPI 1125 Z196
-               "B39D",    // 'B39D' 'CLFDBR' 'RRF3' 30 RPI 1125 Z196
-               "B39E",    // 'B39E' 'CLFXBR' 'RRF3' 30 RPI 1125 Z196
-               "B3A0",    // 'B3A0' 'CELGBR' 'RRF3' 30 RPI 1125 Z196
-               "B3A1",    // 'B3A1' 'CDLGBR' 'RRF3' 30 RPI 1125 Z196
-               "B3A2",    // 'B3A2' 'CXLGBR' 'RRF3' 30 RPI 1125 Z196
-		       "B3A4",  // 4250 "B3A4" "CEGBR" "RRE" 53 RPI 1125 Z196
-		       "B3A5",  // 4260 "B3A5" "CDGBR" "RRE" 53 RPI 1125 Z196
-		       "B3A6",  // 4270 "B3A6" "CXGBR" "RRE" 53 RPI 1125 Z196
-		       "B3A8",  // 4280 "B3A8" "CGEBR" "RRF2" 54 RPI 1125 Z196
-		       "B3A9",  // 4290 "B3A9" "CGDBR" "RRF2" 54 RPI 1125 Z1964
-		       "B3AA",  // 4300 "B3AA" "CGXBR" "RRF2" 54 RPI 1125 Z1964
-		       "B3AC",    //      "B3AC" "CLGEBR" "RRF2" 30  RPI 1125 Z196
-               "B3AD",    //      "B3AD" "CLGDBR" "RRF2" 30  RPI 1125 Z196
-               "B3AE",    //      "B3AE" "CLGXBR" "RRF2" 30  RPI 1125 Z196		       
-		       "B3B4",  // 4310 "B3B4" "CEFR" "RRE" 14
-		       "B3B5",  // 4320 "B3B5" "CDFR" "RRE" 14
-		       "B3B6",  // 4330 "B3B6" "CXFR" "RRE" 14
-		       "B3B8",  // 4340 "B3B8" "CFER" "RRF2" 34
-		       "B3B9",  // 4350 "B3B9" "CFDR" "RRF2" 34
-		       "B3BA",  // 4360 "B3BA" "CFXR" "RRF2" 34
-		       "B3C1",  // 4365 "B3C1" "LDGR" "RRE" 14 DFP
-		       "B3C4",  // 4370 "B3C4" "CEGR" "RRE" 14
-		       "B3C5",  // 4380 "B3C5" "CDGR" "RRE" 14
-		       "B3C6",  // 4390 "B3C6" "CXGR" "RRE" 14
-		       "B3C8",  // 4400 "B3C8" "CGER" "RRF2" 34
-		       "B3C9",  // 4410 "B3C9" "CGDR" "RRF2" 34
-		       "B3CA",  // 4420 "B3CA" "CGXR" "RRF2" 34
-		       "B3CD",  // 4425 "B3CD" "LGDR" "RRE" 14 DFP
-		       "B3D0", // "MDTR?"  "B3D0" "RRR"  DFP 1  RPI 1125
-		       "B3D1", // "DDTR?"  "B3D1" "RRR"  DFP 2  RPI 1125
-		       "B3D2", // "ADTR?"  "B3D2" "RRR"  DFP 3  RPI 1125
-		       "B3D3", // "SDTR?"  "B3D3" "RRR"  DFP 4  RPI 1125
-		       "B3D4", // "LDETR"  "B3D4" "RRF4" DFP 5  
-		       "B3D5", // "LEDTR"  "B3D5" "RRF3" DFP 6  
-		       "B3D6", // "LTDTR"  "B3D6" "RRE"  DFP 7  
-		       "B3D7", // "FIDTR"  "B3D7" "RRF3" DFP 8  
-		       "B3D8", // "MXTR?"  "B3D8" "RRR"  DFP 9  RPI 1125
-		       "B3D9", // "DXTR?"  "B3D9" "RRR"  DFP 10 RPI 1125
-		       "B3DA", // "AXTR?"  "B3DA" "RRR"  DFP 11 RPI 1125
-		       "B3DB", // "SXTR?"  "B3DB" "RRR"  DFP 12 RPI 1125		       
-		       "B3DC", // "LXDTR" "RRF4" DFP 13
-		       "B3DD", // "LDXTR" "RRF3" DFP 14
-		       "B3DE", // "LTXTR" "RRE" DFP 15
-		       "B3DF", // "FIXTR" "RRF3" DFP 16
-		       "B3E0", // "KDTR" "RRE" DFP 17
-		       "B3E1", // "CGDTR?" "RRF7" DFP 18 RPI 1125
-		       "B3E2", // "CUDTR" "RRE" DFP 19
-		       "B3E3", // "CSDTR" "RRF4" DFP 20
-		       "B3E4", // "CDTR" "RRE" DFP 21
-		       "B3E5", // "EEDTR" "RRE" DFP 22
-		       "B3E7", // "ESDTR" "RRE" DFP 23
-		       "B3E8", // "KXTR" "RRE" DFP 24
-		       "B3E9", // "CGXTR?" "RRF7" DFP 25 RPI 1125
-		       "B3EA", // "CUXTR" "RRE" DFP 26
-		       "B3EB", // "CSXTR" "RRF4" DFP 27
-		       "B3EC", // "CXTR" "RRE" DFP 28
-		       "B3ED", // "EEXTR" "RRE" DFP 29
-		       "B3EF", // "ESXTR" "RRE" DFP 30
-		       "B3F1", // "CDGTR?" "RE3" DFP 31 RPI 1125
-		       "B3F2", // "CDUTR" "RRE" DFP 32
-		       "B3F3", // "CDSTR" "RRE" DFP 33
-		       "B3F4", // "CEDTR" "RRE" DFP 34
-		       "B3F5", // "QADTR" "RRF3" DFP 35
-		       "B3F6", // "IEDTR" "RRF2" DFP 36
-		       "B3F7", // "RRDTR" "RRF3" DFP 37
-		       "B3F9", // "CXGTR?" "RE3" DFP 38 RPI 1125
-		       "B3FA", // "CXUTR" "RRE" DFP 39
-		       "B3FB", // "CXSTR" "RRE" DFP 40
-		       "B3FC", // "CEXTR" "RRE" DFP 41
-		       "B3FD", // "QAXTR" "RRF3" DFP 42
-		       "B3FE", // "IEXTR" "RRF2" DFP 43
-		       "B3FF", // "RRXTR" "RRF3" DFP 44
-		       "B6",  // 4430 "B6" "STCTL" "RS" 10
-		       "B7",  // 4440 "B7" "LCTL" "RS" 10
-		       "B900",  // 4450 "B900" "LPGR" "RRE" 14
-		       "B901",  // 4460 "B901" "LNGR" "RRE" 14
-		       "B902",  // 4470 "B902" "LTGR" "RRE" 14
-		       "B903",  // 4480 "B903" "LCGR" "RRE" 14
-		       "B904",  // 4490 "B904" "LGR" "RRE" 14
-		       "B905",  // 4500 "B905" "LURAG" "RRE" 14
-		       "B906",  //      "B906" "LGBR" "RRE" 14 Z9-10
-		       "B907",  //      "B907" "LGHR" "RRE" 14 Z9-11
-		       "B908",  // 4510 "B908" "AGR" "RRE" 14
-		       "B909",  // 4520 "B909" "SGR" "RRE" 14
-		       "B90A",  // 4530 "B90A" "ALGR" "RRE" 14
-		       "B90B",  // 4540 "B90B" "SLGR" "RRE" 14
-		       "B90C",  // 4550 "B90C" "MSGR" "RRE" 14
-		       "B90D",  // 4560 "B90D" "DSGR" "RRE" 14
-		       "B90E",  // 4570 "B90E" "EREGG" "RRE" 14
-		       "B90F",  // 4580 "B90F" "LRVGR" "RRE" 14
-		       "B910",  // 4590 "B910" "LPGFR" "RRE" 14
-		       "B911",  // 4600 "B911" "LNGFR" "RRE" 14
-		       "B912",  // 4610 "B912" "LTGFR" "RRE" 14
-		       "B913",  // 4620 "B913" "LCGFR" "RRE" 14
-		       "B914",  // 4630 "B914" "LGFR" "RRE" 14
-		       "B916",  // 4640 "B916" "LLGFR" "RRE" 14
-		       "B917",  // 4650 "B917" "LLGTR" "RRE" 14
-		       "B918",  // 4660 "B918" "AGFR" "RRE" 14
-		       "B919",  // 4670 "B919" "SGFR" "RRE" 14
-		       "B91A",  // 4680 "B91A" "ALGFR" "RRE" 14
-		       "B91B",  // 4690 "B91B" "SLGFR" "RRE" 14
-		       "B91C",  // 4700 "B91C" "MSGFR" "RRE" 14
-		       "B91D",  // 4710 "B91D" "DSGFR" "RRE" 14
-		       "B91E",  // 4720 "B91E" "KMAC" "RRE" 14
-		       "B91F",  // 4730 "B91F" "LRVR" "RRE" 14
-		       "B920",  // 4740 "B920" "CGR" "RRE" 14
-		       "B921",  // 4750 "B921" "CLGR" "RRE" 14
-		       "B925",  // 4760 "B925" "STURG" "RRE" 14
-		       "B926",  //      "B926" "LBR" "RRE" 14 Z9-12
-		       "B927",  //      "B927" "LHR" "RRE" 14 Z9-13
-		       "B928",  // "B928","PCKMO","RE4"  14 RPI 1125 Z196
-               "B92A",  // "B92A","KMF","RRE"    14 RPI 1125 Z196
-               "B92B",  // "B92B","KMO","RRE"    14 RPI 1125 Z196
-               "B92C",  // "B92C","PCC","RE4"    14 RPI 1125 Z196
-               "B92D",  // "B92D","KMCTR","RRF2" 34 RPI 1125 Z196
-		       "B92E",  // 4770 "B92E" "KM" "RRE" 14
-		       "B92F",  // 4780 "B92F" "KMC" "RRE" 14
-		       "B930",  // 4790 "B930" "CGFR" "RRE" 14
-		       "B931",  // 4800 "B931" "CLGFR" "RRE" 14
-		       "B93E",  // 4810 "B93E" "KIMD" "RRE" 14
-		       "B93F",  // 4820 "B93F" "KLMD" "RRE" 14
-		       "B941",    // "B941","CFDTR","RRF"  30 RPI 1125 Z196
-               "B942",   // "B942","CLGDTR","RRF" 30 RPI 1125 Z196
-               "B943",   // "B943","CLFDTR","RRF" 30 RPI 1125 Z196		
-		       "B946",  // 4830 "B946" "BCTGR" "RRE" 14
-		       "B949",    // "B949","CFXTR","RRF3"   30 RPI 1125 Z196
-               "B94A",   // "B94A","CLGXTR","RRF3"  30 RPI 1125 Z196
-               "B94B",   // "B94B","CLFXTR","RRF3"  30 RPI 1125 Z196
-               "B951",    // "B951","CDFTR","RRF3"   30 RPI 1125 Z196
-               "B952",   // "B952","CDLGTR","RRF3"  30 RPI 1125 Z196
-               "B953",   // "B953","CDLFTR","RRF3"  30 RPI 1125 Z196
-               "B959",    // "B959","CXFTR","RRF3"   30 RPI 1125 Z196" 
-               "B95A",   // "B95A","CXLGTR","RRF3"  30 RPI 1125 Z196
-               "B95B",   // "B95B","CXLFTR","RRF3"  30 RPI 1125 Z196		       
-		       "B960",  // 10 "B960" "CGRT" "RRF5" 39 RPI 817
-		       "B9608",  // 20 "B9608" "CGRTE" "RRF6" 40 RPI 817
-		       "B9602",  // 30 "B9602" "CGRTH" "RRF6" 40 RPI 817
-		       "B9604",  // 40 "B9604" "CGRTL" "RRF6" 40 RPI 817
-		       "B9606",  // 50 "B9606" "CGRTNE" "RRF6" 40 RPI 817
-		       "B960C",  // 60 "B960C" "CGRTNH" "RRF6" 40 RPI 817
-		       "B960A",  // 70 "B960A" "CGRTNL" "RRF6" 40 RPI 817
-		       "B961",  // 10 "B961" "CLGRT" "RRF5" 39 RPI 817
-		       "B9618",  // 20 "B9618" "CLGRTE" "RRF6" 40 RPI 817
-		       "B9612",  // 30 "B9612" "CLGRTH" "RRF6" 40 RPI 817
-		       "B9614",  // 40 "B9614" "CLGRTL" "RRF6" 40 RPI 817
-		       "B9616",  // 50 "B9616" "CLGRTNE" "RRF6" 40 RPI 817
-		       "B961C",  // 60 "B961C" "CLGRTNH" "RRF6" 40 RPI 817
-		       "B961A",  // 70 "B961A" "CLGRTNL" "RRF6" 40 RPI 817
-		       "B972",  // 80 "B972" "CRT" "RRF5" 39 RPI 817
-		       "B9728",  // 90 "B9728" "CRTE" "RRF6" 40 RPI 817
-		       "B9722",  // 100 "B9722" "CRTH" "RRF6" 40 RPI 817
-		       "B9724",  // 110 "B9724" "CRTL" "RRF6" 40 RPI 817
-		       "B9726",  // 120 "B9726" "CRTNE" "RRF6" 40 RPI 817
-		       "B972C",  // 130 "B972C" "CRTNH" "RRF6" 40 RPI 817
-		       "B972A",  // 140 "B972A" "CRTNL" "RRF6" 40 RPI 817
-		       "B973",  // 80 "B973" "CLRT" "RRF5" 39 RPI 817
-		       "B9738",  // 90 "B9738" "CLRTE" "RRF6" 40 RPI 817
-		       "B9732",  // 100 "B9732" "CLRTH" "RRF6" 40 RPI 817
-		       "B9734",  // 110 "B9734" "CLRTL" "RRF6" 40 RPI 817
-		       "B9736",  // 120 "B9736" "CLRTNE" "RRF6" 40 RPI 817
-		       "B973C",  // 130 "B973C" "CLRTNH" "RRF6" 40 RPI 817
-		       "B973A",  // 140 "B973A" "CLRTNL" "RRF6" 40 RPI 817
-		       "B980",  // 4840 "B980" "NGR" "RRE" 14
-		       "B981",  // 4850 "B981" "OGR" "RRE" 14
-		       "B982",  // 4860 "B982" "XGR" "RRE" 14
-		       "B983",  //      "B983" "FLOGR" "RRE" 14 Z9-14
-		       "B984",  //      "B984" "LLGCR" "RRE" 14 Z9-15
-		       "B985",  //      "B985" "LLGHR" "RRE" 14 Z9-16
-		       "B986",  // 4870 "B986" "MLGR" "RRE" 14
-		       "B987",  // 4880 "B987" "DLGR" "RRE" 14
-		       "B988",  // 4890 "B988" "ALCGR" "RRE" 14
-		       "B989",  // 4900 "B989" "SLBGR" "RRE" 14
-		       "B98A",  // 4910 "B98A" "CSPG" "RRE" 14
-		       "B98D",  // 4920 "B98D" "EPSW" "RRE" 14
-		       "B98E",  // 4930 "B98E" "IDTE" "RRF2" 34
-		       "B990",  // 4940 "B990" "TRTT" "RRE" 14
-		       "B991",  // 4950 "B991" "TRTO" "RRE" 14
-		       "B992",  // 4960 "B992" "TROT" "RRE" 14
-		       "B993",  // 4970 "B993" "TROO" "RRE" 14
-		       "B994",  //      "B994" "LLCR" "RRE" 14 Z9-17
-		       "B995",  //      "B995" "LLHR" "RRE" 14 Z9-18
-		       "B996",  // 4980 "B996" "MLR" "RRE" 14
-		       "B997",  // 4990 "B997" "DLR" "RRE" 14
-		       "B998",  // 5000 "B998" "ALCR" "RRE" 14
-		       "B999",  // 5010 "B999" "SLBR" "RRE" 14
-		       "B99A",  // 5020 "B99A" "EPAIR" "RRE" 14
-		       "B99B",  // 5030 "B99B" "ESAIR" "RRE" 14
-		       "B99D",  // 5040 "B99D" "ESEA" "RRE" 14
-		       "B99E",  // 5050 "B99E" "PTI" "RRE" 14
-		       "B99F",  // 5060 "B99F" "SSAIR" "RRE" 14
-		       "B9A2",  // 10 "B9A2" "PTF" "RRE" 14 RPI 817
-		       "B9AA",  //      "B9AA" "LPTEA" "RRE" 14 Z9-19
-		       "B9AE",  // "B9AE","RRBM","RRE"  14 RPI 1125 Z196		
-		       "B9AF",  // 20 "B9AF" "PFMF" "RRF5" 39 RPI 817
-		       "B9B0",  // 5070 "B9B0" "CU14" "RRE" 14
-		       "B9B1",  // 5080 "B9B1" "CU24" "RRE" 14
-		       "B9B2",  // 5090 "B9B2" "CU41" "RRE" 14
-		       "B9B3",  // 5100 "B9B3" "CU42" "RRE" 14
-		       "B9BD",  // 30 "B9BD" "TRTRE" "RRF5" 39 RPI 817
-		       "B9BE",  // 5110 "B9BE" "SRSTU" "RRE" 14
-		       "B9BF",  // 40 "B9BF" "TRTE" "RRF5" 39 RPI 817
-		       "B9C8",    // "B9C8","AHHHR","RRF5"  39 RPI 1125 Z196
-		       "B9C9",    // "B9C9","SHHHR","RRF5"  39 RPI 1125 Z196
-		       "B9CA",   // "B9CA","ALHHHR","RRF5" 39 RPI 1125 Z196
-		       "B9CB",   // "B9CB","SLHHHR","RRF5" 39 RPI 1125 Z196
-		       "B9CD",     // "B9CD","CHHR","RRE"     14 RPI 1125 Z196
-		       "B9CF",    // "B9CF","CLHHR","RRE"    14 RPI 1125 Z196
-		       "B9D8",    // "B9D8","AHHLR","RRF5 "  39 RPI 1125 Z196
-		       "B9D9",    // "B9D9","SHHLR","RRF5 "  39 RPI 1125 Z196
-		       "B9DA",    // "B9DA","ALHHLR","RRF5 " 39 RPI 1125 Z196
-		       "B9DB",    // "B9DB","SLHHLR","RRF5 " 39 RPI 1125 Z196
-		       "B9DD",    // "B9DD","CHLR","RRE"     14 RPI 1125 Z196
-		       "B9DF",    // "B9DF","CLHLR","RRE"    14 RPI 1125 Z196     		       
-		       "B9E1",  // 5115 "B9E1" "POPCNT" "RRE" 14 RPI 1125
-		       "B9E2",    // "B9E2","LOCGR","RRF5"   39 RPI 1125 Z196
-		       "B9E4",    // "B9E4","NGRK","RRF5"    39 RPI 1125 Z196
-		       "B9E6",    // "B9E6","OGRK","RRF5"    39 RPI 1125 Z196
-		       "B9E7",    // "B9E7","XGRK","RRF5"    39 RPI 1125 Z196
-		       "B9E8",    // "B9E8","AGRK","RRF5"    39 RPI 1125 Z196
-		       "B9E9",    // "B9E9","SGRK","RRF5"    39 RPI 1125 Z196
-		       "B9EA",    // "B9EA","ALGRK","RRF5"   39 RPI 1125 Z196
-		       "B9EB",    // "B9EB","SLGRK","RRF5"   39 RPI 1125 Z196
-		       "B9F2",    // "B9F2","LOCR","RRF5"    39 RPI 1125 Z196
-		       "B9F4",    // "B9F4","NRK","RRF5"     39 RPI 1125 Z196
-		       "B9F6",    // "B9F6","ORK","RRF5"     39 RPI 1125 Z196
-		       "B9F7",    // "B9F7","XRK","RRF5"     39 RPI 1125 Z196
-		       "B9F8",    // "B9F8","ARK","RRF5"     39 RPI 1125 Z196
-		       "B9F9",    // "B9F9","SRK","RRF5"     39 RPI 1125 Z196
-		       "B9FA",    // "B9FA","ALRK","RRF5"    39 RPI 1125 Z196
-		       "B9FB",    // "B9FB","SLRK","RRF5"    39 RPI 1125 Z196 	
-		       "BA",  // 5120 "BA" "CS" "RS" 10
-		       "BB",  // 5130 "BB" "CDS" "RS" 10
-		       "BD",  // 5140 "BD" "CLM" "RS" 10
-		       "BE",  // 5150 "BE" "STCM" "RS" 10
-		       "BF",  // 5160 "BF" "ICM" "RS" 10
-		       "C00",  // 5170 "C00" "LARL" "RIL" 16
-		       "C01",  //      "C01" "LGFI" "RIL" 16 Z9-20
-		       "C04",  // 5180 "C04" "BRCL" "RIL" 16
-		       "C040",  // 5390 "C040" "JLNOP" "BLX" 33
-		       "C041",  // 5400 "C041" "BROL" "BLX" 33
-		       "C041",  // 5410 "C041" "JLO" "BLX" 33
-		       "C042",  // 5420 "C042" "BRHL" "BLX" 33
-		       "C042",  // 5430 "C042" "BRPL" "BLX" 33
-		       "C042",  // 5440 "C042" "JLH" "BLX" 33
-		       "C042",  // 5450 "C042" "JLP" "BLX" 33
-		       "C044",  // 5460 "C044" "BRLL" "BLX" 33
-		       "C044",  // 5470 "C044" "BRML" "BLX" 33
-		       "C044",  // 5480 "C044" "JLL" "BLX" 33
-		       "C044",  // 5490 "C044" "JLM" "BLX" 33
-		       "C047",  // 5500 "C047" "BRNEL" "BLX" 33
-		       "C047",  // 5510 "C047" "BRNZL" "BLX" 33
-		       "C047",  // 5520 "C047" "JLNE" "BLX" 33
-		       "C047",  // 5530 "C047" "JLNZ" "BLX" 33
-		       "C048",  // 5540 "C048" "BREL" "BLX" 33
-		       "C048",  // 5550 "C048" "BRZL" "BLX" 33
-		       "C048",  // 5560 "C048" "JLE" "BLX" 33
-		       "C048",  // 5570 "C048" "JLZ" "BLX" 33
-		       "C04B",  // 5580 "C04B" "BRNLL" "BLX" 33
-		       "C04B",  // 5590 "C04B" "BRNML" "BLX" 33
-		       "C04B",  // 5600 "C04B" "JLNL" "BLX" 33
-		       "C04B",  // 5610 "C04B" "JLNM" "BLX" 33
-		       "C04D",  // 5620 "C04D" "BRNHL" "BLX" 33
-		       "C04D",  // 5630 "C04D" "BRNPL" "BLX" 33
-		       "C04D",  // 5640 "C04D" "JLNH" "BLX" 33
-		       "C04D",  // 5650 "C04D" "JLNP" "BLX" 33
-		       "C04E",  // 5660 "C04E" "BRNOL" "BLX" 33
-		       "C04E",  // 5670 "C04E" "JLNO" "BLX" 33
-		       "C04F",  // 5680 "C04F" "BRUL" "BLX" 33
-		       "C04F",  // 5690 "C04F" "JLU" "BLX" 33
-		       "C05",  // 5210 "C05" "BRASL" "RIL" 16
-		       "C05",  // 5220 "C05" "JASL" "RIL" 16
-		       "C06",  //      "C06" "XIHF" "RIL" 16 Z9-21
-		       "C07",  //      "C07" "XILF" "RIL" 16 Z9-22
-		       "C08",  //      "C08" "IIHF" "RIL" 16 Z9-23
-		       "C09",  //      "C09" "IILF" "RIL" 16 Z9-24
-		       "C0A",  //      "C0A" "NIHF" "RIL" 16 Z9-25
-		       "C0B",  //      "C0B" "NILF" "RIL" 16 Z9-26
-		       "C0C",  //      "C0C" "OIHF" "RIL" 16 Z9-27
-		       "C0D",  //      "C0D" "OILF" "RIL" 16 Z9-28
-		       "C0E",  //      "C0E" "LLIHF" "RIL" 16 Z9-29
-		       "C0F",  //      "C0F" "LLILF" "RIL" 16 Z9-30
-		       "C20",  // 50 "C20" "MSGFI" "RIL" 16 RPI 817
-		       "C21",  // 60 "C21" "MSFI" "RIL" 16 RPI 817
-		       "C24",  //      "C24" "SLGFI" "RIL" 16 Z9-31
-		       "C25",  //      "C25" "SLFI" "RIL" 16 Z9-32
-		       "C28",  //      "C28" "AGFI" "RIL" 16 Z9-33
-		       "C29",  //      "C29" "AFI" "RIL" 16 Z9-34
-		       "C2A",  //      "C2A" "ALGFI" "RIL" 16 Z9-35
-		       "C2B",  //      "C2B" "ALFI" "RIL" 16 Z9-36
-		       "C2C",  //      "C2C" "CGFI" "RIL" 16 Z9-37
-		       "C2D",  //      "C2D" "CFI" "RIL" 16 Z9-38
-		       "C2E",  //      "C2E" "CLGFI" "RIL" 16 Z9-39
-		       "C2F",  //      "C2F" "CLFI" "RIL" 16 Z9-40
-		       "C42",  // 70 "C42" "LLHRL" "RIL" 16 RPI 817
-		       "C44",  // 80 "C44" "LGHRL" "RIL" 16 RPI 817
-		       "C45",  // 90 "C45" "LHRL" "RIL" 16 RPI 817
-		       "C46",  // 100 "C46" "LLGHRL" "RIL" 16 RPI 817
-		       "C47",  // 110 "C47" "STHRL" "RIL" 16 RPI 817
-		       "C48",  // 120 "C48" "LGRL" "RIL" 16 RPI 817
-		       "C4B",  // 130 "C4B" "STGRL" "RIL" 16 RPI 817
-		       "C4C",  // 140 "C4C" "LGFRL" "RIL" 16 RPI 817
-		       "C4D",  // 150 "C4D" "LRL" "RIL" 16 RPI 817
-		       "C4E",  // 160 "C4E" "LLGFRL" "RIL" 16 RPI 817
-		       "C4F",  // 170 "C4F" "STRL" "RIL" 16 RPI 817
-		       "C60",  // 180 "C60" "EXRL" "RIL" 16 RPI 817
-		       "C62",  // 190 "C62" "PFDRL" "RIL" 16 RPI 817
-		       "C64",  // 200 "C64" "CGHRL" "RIL" 16 RPI 817
-		       "C65",  // 210 "C65" "CHRL" "RIL" 16 RPI 817
-		       "C66",  // 220 "C66" "CLGHRL" "RIL" 16 RPI 817
-		       "C67",  // 230 "C67" "CLHRL" "RIL" 16 RPI 817
-		       "C68",  // 240 "C68" "CGRL" "RIL" 16 RPI 817
-		       "C6A",  // 250 "C6A" "CLGRL" "RIL" 16 RPI 817
-		       "C6C",  // 260 "C6C" "CGFRL" "RIL" 16 RPI 817
-		       "C6D",  // 270 "C6D" "CRL" "RIL" 16 RPI 817
-		       "C6E",  // 280 "C6E" "CLGFRL" "RIL" 16 RPI 817
-		       "C6F",  // 290 "C6F" "CLRL" "RIL" 16 RPI 817
-		       "C80",  //      "C80" "MVCOS" "SSF" 32 Z9-41
-		       "C81",  //      "C81" "ECTG" "SSF" 32 RPI 1013
-		       "C82",  //      "C82" "CSST" "SSF" 32 RPI 1013
-		       "C84",  // "C84","LPD","SSF2"  55 RPI 1125 Z196
-		       "C85",  // "C85","LPDG","SSF2" 55 RPI 1125 Z196
-		       "CC6", // "CC6","BRCTH","RIL"  16 RPI 1125 Z196
-		       "CC8", // "CC8","AIH","RIL"    16  RPI 1125 Z196
-		       "CCA", // "CCA","ALSIH","RIL"  16  RPI 1125 Z196
-		       "CCB", // "CCB","ALSIHN","RIL" 16  RPI 1125 Z196
-		       "CCD", // "CCD","CIH","RIL"    16  RPI 1125 Z196
-		       "CCF", // "CCF","CLIH","RIL"   16  RPI 1125 Z196
-		       "D0",  // 5230 "D0" "TRTR" "SS" 17
-		       "D1",  // 5240 "D1" "MVN" "SS" 17
-		       "D2",  // 5250 "D2" "MVC" "SS" 17
-		       "D3",  // 5260 "D3" "MVZ" "SS" 17
-		       "D4",  // 5270 "D4" "NC" "SS" 17
-		       "D5",  // 5280 "D5" "CLC" "SS" 17
-		       "D6",  // 5290 "D6" "OC" "SS" 17
-		       "D7",  // 5300 "D7" "XC" "SS" 17
-		       "D9",  // 5310 "D9" "MVCK" "SS" 17
-		       "DA",  // 5320 "DA" "MVCP" "SS" 17
-		       "DB",  // 5330 "DB" "MVCS" "SS" 17
-		       "DC",  // 5340 "DC" "TR" "SS" 17
-		       "DD",  // 5350 "DD" "TRT" "SS" 17
-		       "DE",  // 5360 "DE" "ED" "SS" 17
-		       "DF",  // 5370 "DF" "EDMK" "SS" 17
-		       "E00", // 5375 "E00" "XREAD" "RXSS" 38 RPI 812
-		       "E02", // 5375 "E02" "XPRNT" "RXSS" 38 RPI 812
-		       "E04", // 5375 "E04" "XPNCH" "RXSS" 38 RPI 812
-		       "E06", // 5375 "E06" "XDUMP" "RXSS" 38 RPI 812
-		       "E08", // 5375 "E08" "XLIMD" "RXSS" 38 RPI 812
-		       "E0A", // 5375 "E0A" "XGET"  "RXSS" 38 RPI 812
-		       "E0C", // 5375 "E0C" "XPUT"  "RXSS" 38 RPI 812
-		       "E1",  // 5380 "E1" "PKU" "RXSS" 17
-		       "E2",  // 5390 "E2" "UNPKU" "SS" 17
-		       "E302",  //      "E302" "LTG" "RXY" 18 Z9-42
-		       "E303",  // 5400 "E303" "LRAG" "RXY" 18
-		       "E304",  // 5410 "E304" "LG" "RXY" 18
-		       "E306",  // 5420 "E306" "CVBY" "RXY" 18
-		       "E308",  // 5430 "E308" "AG" "RXY" 18
-		       "E309",  // 5440 "E309" "SG" "RXY" 18
-		       "E30A",  // 5450 "E30A" "ALG" "RXY" 18
-		       "E30B",  // 5460 "E30B" "SLG" "RXY" 18
-		       "E30C",  // 5470 "E30C" "MSG" "RXY" 18
-		       "E30D",  // 5480 "E30D" "DSG" "RXY" 18
-		       "E30E",  // 5490 "E30E" "CVBG" "RXY" 18
-		       "E30F",  // 5500 "E30F" "LRVG" "RXY" 18
-		       "E312",  //      "E312" "LT" "RXY" 18 Z9-43
-		       "E313",  // 5510 "E313" "LRAY" "RXY" 18
-		       "E314",  // 5520 "E314" "LGF" "RXY" 18
-		       "E315",  // 5530 "E315" "LGH" "RXY" 18
-		       "E316",  // 5540 "E316" "LLGF" "RXY" 18
-		       "E317",  // 5550 "E317" "LLGT" "RXY" 18
-		       "E318",  // 5560 "E318" "AGF" "RXY" 18
-		       "E319",  // 5570 "E319" "SGF" "RXY" 18
-		       "E31A",  // 5580 "E31A" "ALGF" "RXY" 18
-		       "E31B",  // 5590 "E31B" "SLGF" "RXY" 18
-		       "E31C",  // 5600 "E31C" "MSGF" "RXY" 18
-		       "E31D",  // 5610 "E31D" "DSGF" "RXY" 18
-		       "E31E",  // 5620 "E31E" "LRV" "RXY" 18
-		       "E31F",  // 5630 "E31F" "LRVH" "RXY" 18
-		       "E320",  // 5640 "E320" "CG" "RXY" 18
-		       "E321",  // 5650 "E321" "CLG" "RXY" 18
-		       "E324",  // 5660 "E324" "STG" "RXY" 18
-		       "E326",  // 5670 "E326" "CVDY" "RXY" 18
-		       "E32E",  // 5680 "E32E" "CVDG" "RXY" 18
-		       "E32F",  // 5690 "E32F" "STRVG" "RXY" 18
-		       "E330",  // 5700 "E330" "CGF" "RXY" 18
-		       "E331",  // 5710 "E331" "CLGF" "RXY" 18
-		       "E332",  // 310 "E332" "LTGF" "RXY" 18 RPI 817
-		       "E334",  // 320 "E334" "CGH" "RXY" 18 RPI 817
-		       "E336",  // 330 "E336" "PFD" "RXY" 18 RPI 817
-		       "E33E",  // 5720 "E33E" "STRV" "RXY" 18
-		       "E33F",  // 5730 "E33F" "STRVH" "RXY" 18
-		       "E346",  // 5740 "E346" "BCTG" "RXY" 18
-		       "E350",  // 5750 "E350" "STY" "RXY" 18
-		       "E351",  // 5760 "E351" "MSY" "RXY" 18
-		       "E354",  // 5770 "E354" "NY" "RXY" 18
-		       "E355",  // 5780 "E355" "CLY" "RXY" 18
-		       "E356",  // 5790 "E356" "OY" "RXY" 18
-		       "E357",  // 5800 "E357" "XY" "RXY" 18
-		       "E358",  // 5810 "E358" "LY" "RXY" 18
-		       "E359",  // 5820 "E359" "CY" "RXY" 18
-		       "E35A",  // 5830 "E35A" "AY" "RXY" 18
-		       "E35B",  // 5840 "E35B" "SY" "RXY" 18
-		       "E35C",  // 340 "E35C" "MFY" "RXY" 18 RPI 817
-		       "E35E",  // 5850 "E35E" "ALY" "RXY" 18
-		       "E35F",  // 5860 "E35F" "SLY" "RXY" 18
-		       "E370",  // 5870 "E370" "STHY" "RXY" 18
-		       "E371",  // 5880 "E371" "LAY" "RXY" 18
-		       "E372",  // 5890 "E372" "STCY" "RXY" 18
-		       "E373",  // 5900 "E373" "ICY" "RXY" 18
-		       "E375",  // 350 "E375" "LAEY" "RXY" 18 RPI 817
-		       "E376",  // 5910 "E376" "LB" "RXY" 18
-		       "E377",  // 5920 "E377" "LGB" "RXY" 18
-		       "E378",  // 5930 "E378" "LHY" "RXY" 18
-		       "E379",  // 5940 "E379" "CHY" "RXY" 18
-		       "E37A",  // 5950 "E37A" "AHY" "RXY" 18
-		       "E37B",  // 5960 "E37B" "SHY" "RXY" 18
-		       "E37C",  // 360 "E37C" "MHY" "RXY" 18 RPI 817
-		       "E380",  // 5970 "E380" "NG" "RXY" 18
-		       "E381",  // 5980 "E381" "OG" "RXY" 18
-		       "E382",  // 5990 "E382" "XG" "RXY" 18
-		       "E386",  // 6000 "E386" "MLG" "RXY" 18
-		       "E387",  // 6010 "E387" "DLG" "RXY" 18
-		       "E388",  // 6020 "E388" "ALCG" "RXY" 18
-		       "E389",  // 6030 "E389" "SLBG" "RXY" 18
-		       "E38E",  // 6040 "E38E" "STPQ" "RXY" 18
-		       "E38F",  // 6050 "E38F" "LPQ" "RXY" 18
-		       "E390",  // 6060 "E390" "LLGC" "RXY" 18
-		       "E391",  // 6070 "E391" "LLGH" "RXY" 18
-		       "E394",  //      "E394" "LLC" "RXY" 18 Z9-44
-		       "E395",  //      "E395" "LLH" "RXY" 18 Z9-45
-		       "E396",  // 6080 "E396" "ML" "RXY" 18
-		       "E397",  // 6090 "E397" "DL" "RXY" 18
-		       "E398",  // 6100 "E398" "ALC" "RXY" 18
-		       "E399",  // 6110 "E399" "SLB" "RXY" 18
-		       "E3C0",  // "E3C0","LBH","RXY"   18  RPI 1125 Z196
-		       "E3C2",  // "E3C2","LLCH","RXY"  18  RPI 1125 Z196
-		       "E3C3",  // "E3C3","STCH","RXY"  18  RPI 1125 Z196
-		       "E3C4",  // "E3C4","LHH","RXY"   18  RPI 1125 Z196
-		       "E3C6",  // "E3C6","LLHH","RXY"  18  RPI 1125 Z196
-		       "E3C7",  // "E3C7","STHH","RXY"  18  RPI 1125 Z196
-		       "E3CA",  // "E3CA","LFH","RXY"   18  RPI 1125 Z196
-		       "E3CB",  // "E3CB","STFH","RXY"  18  RPI 1125 Z196
-		       "E3CD",  // "E3CD","CHF","RXY"   18  RPI 1125 Z196
-		       "E3CF",  // "E3CF","CLHF","RXY"  18  RPI 1125 Z196
-		       "E500",  // 6120 "E500" "LASP" "SSE" 19
-		       "E501",  // 6130 "E501" "TPROT" "SSE" 19
-		       "E502",  // 6140 "E502" "STRAG" "SSE" 19
-		       "E50E",  // 6150 "E50E" "MVCSK" "SSE" 19
-		       "E50F",  // 6160 "E50F" "MVCDK" "SSE" 19
-		       "E544",  // 370 "E544" "MVHHI" "SIL" 51 RPI 817
-		       "E548",  // 380 "E548" "MVGHI" "SIL" 51 RPI 817
-		       "E54C",  // 390 "E54C" "MVHI" "SIL" 51 RPI 817
-		       "E554",  // 400 "E554" "CHHSI" "SIL" 51 RPI 817
-		       "E555",  // 410 "E555" "CLHHSI" "SIL" 51 RPI 817
-		       "E558",  // 420 "E558" "CGHSI" "SIL" 51 RPI 817
-		       "E559",  // 430 "E559" "CLGHSI" "SIL" 51 RPI 817
-		       "E55C",  // 440 "E55C" "CHSI" "SIL" 51 RPI 817
-		       "E55D",  // 450 "E55D" "CLFHSI" "SIL" 51 RPI 817
-		       "E8",  // 6170 "E8" "MVCIN" "SS" 17
-		       "E9",  // 6180 "E9" "PKA" "SS" 31
-		       "EA",  // 6190 "EA" "UNPKA" "SS" 17
-		       "EB04",  // 6200 "EB04" "LMG" "RSY" 20
-		       "EB0A",  // 6210 "EB0A" "SRAG" "RSY" 20
-		       "EB0B",  // 6220 "EB0B" "SLAG" "RSY" 20
-		       "EB0C",  // 6230 "EB0C" "SRLG" "RSY" 20
-		       "EB0D",  // 6240 "EB0D" "SLLG" "RSY" 20
-		       "EB0F",  // 6250 "EB0F" "TRACG" "RSY" 20
-		       "EB14",  // 6260 "EB14" "CSY" "RSY" 20
-		       "EB1C",  // 6270 "EB1C" "RLLG" "RSY" 20
-		       "EB1D",  // 6280 "EB1D" "RLL" "RSY" 20
-		       "EB20",  // 6290 "EB20" "CLMH" "RSY" 20
-		       "EB21",  // 6300 "EB21" "CLMY" "RSY" 20
-		       "EB24",  // 6310 "EB24" "STMG" "RSY" 20
-		       "EB25",  // 6320 "EB25" "STCTG" "RSY" 20
-		       "EB26",  // 6330 "EB26" "STMH" "RSY" 20
-		       "EB2C",  // 6340 "EB2C" "STCMH" "RSY" 20
-		       "EB2D",  // 6350 "EB2D" "STCMY" "RSY" 20
-		       "EB2F",  // 6360 "EB2F" "LCTLG" "RSY" 20
-		       "EB30",  // 6370 "EB30" "CSG" "RSY" 20
-		       "EB31",  // 6380 "EB31" "CDSY" "RSY" 20
-		       "EB3E",  // 6390 "EB3E" "CDSG" "RSY" 20
-		       "EB44",  // 6400 "EB44" "BXHG" "RSY" 20
-		       "EB45",  // 6410 "EB45" "BXLEG" "RSY" 20
-		       "EB4C",  // 460 "EB4C" "ECAG" "RSY" 20 RPI 817
-		       "EB51",  // 6420 "EB51" "TMY" "SIY" 21
-		       "EB52",  // 6430 "EB52" "MVIY" "SIY" 21
-		       "EB54",  // 6440 "EB54" "NIY" "SIY" 21
-		       "EB55",  // 6450 "EB55" "CLIY" "SIY" 21
-		       "EB56",  // 6460 "EB56" "OIY" "SIY" 21
-		       "EB57",  // 6470 "EB57" "XIY" "SIY" 21
-		       "EB6A",  // 470 "EB6A" "ASI" "SIY" 21 RPI 817
-		       "EB6E",  // 480 "EB6E" "ALSI" "SIY" 21 RPI 817
-		       "EB7A",  // 490 "EB7A" "AGSI" "SIY" 21 RPI 817
-		       "EB7E",  // 500 "EB7E" "ALGSI" "SIY" 21 RPI 817
-		       "EB80",  // 6480 "EB80" "ICMH" "RSY" 20
-		       "EB81",  // 6490 "EB81" "ICMY" "RSY" 20
-		       "EB8E",  // 6500 "EB8E" "MVCLU" "RSY" 20
-		       "EB8F",  // 6510 "EB8F" "CLCLU" "RSY" 20
-		       "EB90",  // 6520 "EB90" "STMY" "RSY" 20
-		       "EB96",  // 6530 "EB96" "LMH" "RSY" 20
-		       "EB98",  // 6540 "EB98" "LMY" "RSY" 20
-		       "EB9A",  // 6550 "EB9A" "LAMY" "RSY" 20
-		       "EB9B",  // 6560 "EB9B" "STAMY" "RSY" 20
-		       "EBC0",  // 6570 "EBC0" "TP" "RSL" 22
-		       "EBDC",  //  "EBDC","SRAK","RSY  "  20 RPI 1125 Z196
-		       "EBDD",  //  "EBDD","SLAK","RSY  "  20 RPI 1125 Z196
-		       "EBDE",  //  "EBDE","SRLK","RSY  "  20 RPI 1125 Z196
-		       "EBDF",  //  "EBDF","SLLK","RSY  "  20 RPI 1125 Z196
-		       "EBE2",  //  "EBE2","LOCG","RSY2 "  20 RPI 1125 Z196
-		       "EBE3",  //  "EBE3","STOCG","RSY2 " 20 RPI 1125 Z196
-		       "EBE4",  //  "EBE4","LANG","RSY  "  20 RPI 1125 Z196
-		       "EBE6",  //  "EBE6","LAOG","RSY  "  20 RPI 1125 Z196
-		       "EBE7",  //  "EBE7","LAXG","RSY  "  20 RPI 1125 Z196
-		       "EBE8",  //  "EBE8","LAAG","RSY  "  20 RPI 1125 Z196
-		       "EBEA",  //  "EBEA","LAALG","RSY  " 20 RPI 1125 Z196
-		       "EBF2",  //  "EBF2","LOC","RSY2 "   20 RPI 1125 Z196
-		       "EBF3",  //  "EBF3","STOC","RSY2 "  20 RPI 1125 Z196
-		       "EBF4",  //  "EBF4","LAN","RSY  "   20 RPI 1125 Z196
-		       "EBF6",  //  "EBF6","LAO","RSY  "   20 RPI 1125 Z196
-		       "EBF7",  //  "EBF7","LAX","RSY  "   20 RPI 1125 Z196
-		       "EBF8",  //  "EBF8","LAA","RSY  "   20 RPI 1125 Z196
-		       "EBFA",  //  "EBFA","LAAL","RSY  "  20 RPI 1125 Z196
-		       "EC44",  // 6580 "EC44" "BRXHG" "RIE" 23
-		       "EC44",  // 6590 "EC44" "JXHG" "RIE" 23
-		       "EC45",  // 6600 "EC45" "BRXLG" "RIE" 23
-		       "EC45",  // 6610 "EC45" "JXLEG" "RIE" 23
-		       "EC51",  // "EC51","RISBLG#","RIE8"  52 RPI 1125 Z196  RPI 1164
-		       "EC51$003132",  // 'EC51$003132','LOAD (lOW  && HIGH) RISBLGZ','LLHFR','RIE8',52  RPI 1164
-		       "EC51$163132",  // 'EC51$163132','LOAD LOG HW (lOW  && HIGH) RISBLGZ','LLHLHR','RIE8',52  RPI 1164
-		       "EC51$243132",  // 'EC51$243132','LOAD LOG CH (lOW  && HIGH) RISBLGZ','LLCLHR','RIE8',52  RPI 1164
-		       "EC51Z", // "EC51Z","RISBLGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
-		       "EC54",  // 510 "EC54" "RNSBG" "RIE8" 52 RPI 817
-		       "EC54$003100",     // 'EC54$003100','AND HIGH (HIGH && HIGH) RNSBG','NHHR','RIE8',52  RPI 1164
-		       "EC54$003132",     // 'EC54$003132','AND HIGH (HIGH && LOW ) RNSBG','NHLR','RIE8',52  RPI 1164
-		       "EC54$326332",     // 'EC54$326332','AND HIGH (lOW  && HIGH) RNSBG','NLHR','RIE8',52  RPI 1164
-		       "EC54T",  // 520 "EC54T" "RNSBGT" "RIE8" 52 RPI 817
-		       "EC55",  // 530 "EC55" "RISBG" "RIE8" 52 RPI 817
-		       "EC55Z",  // 540 "EC55Z" "RISBGZ" "RIE8" 52 RPI 817
-		       "EC56",  // 550 "EC56" "ROSBG" "RIE8" 52 RPI 817
-		       "EC56$003100",  // 'EC56$003100','OR  HIGH (HIGH && HIGH) ROSBG','OHHR','RIE8',52  RPI 1164
-		       "EC56$003132",  // 'EC56$003132','OR  HIGH (HIGH && LOW ) ROSBG','OHLR','RIE8',52  RPI 1164
-		       "EC56$326332",  // 'EC56$326332','OR  HIGH (lOW  && HIGH) ROSBG','OLHR','RIE8',52  RPI 1164
-		       "EC56T",  // 560 "EC56T" "ROSBGT" "RIE8" 52 RPI 817
-		       "EC57",  // 570 "EC57" "RXSBG" "RIE8" 52 RPI 817
-		       "EC57$003100",     // 'EC57$003100','XOR HIGH (HIGH && HIGH) RXSBG','XHHR','RIE8',52  RPI 1164
-		       "EC57$003132",     // 'EC57$003132','XOR HIGH (HIGH && LOW ) RXSBG','XHLR','RIE8',52  RPI 1164
-		       "EC57$326332",     // 'EC57$326332','AOR HIGH (lOW  && HIGH) RXSBG','XLHR','RIE8',52  RPI 1164
-		       "EC57T",  // 580 "EC57T" "RXSBGT" "RIE8" 52 RPI 817
-		       "EC5D",  // "EC5D","RISBHG#","RIE8"  52 RPI 1125 Z196 RPI 1164
-		       "EC5D$003100",  // 'EC5D$003100','LOAD (HIGH && HIGH) RISBHGZ','LHHR','RIE8',52  RPI 1164
-		       "EC5D$003132",  // 'EC5D$003132','LOAD (HIGH && LOW ) RISBHGZ','LHLR','RIE8',52  RPI 1164
-		       "EC5D$163100",  // 'EC5D$163100','LOAD LOG HW (HIGH && HIGH) RISBHGZ','LLHHHR','RIE8',52  RPI 1164
-		       "EC5D$163132",  // 'EC5D$163132','LOAD LOG HW (HIGH && LOW ) RISBHGZ','LLHHLR','RIE8',52  RPI 1164
-		       "EC5D$243100",  // 'EC5D$243100','LOAD LOG CH (HIGH && HIGH) RISBHGZ','LLCHHR','RIE8',52  RPI 1164
-		       "EC5D$243132",  // 'EC5D$243132','LOAD LOG CH (HIGH && LOW ) RISBHGZ','LLCHLR','RIE8',52  RPI 1164
-		       "EC5DZ", // "EC5DZ","RISBHGZ","RIE8"  52 RPI 1125 Z196  RPI 1164
-		       "EC64",  // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
-		       "EC648",  // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
-		       "EC642",  // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
-		       "EC644",  // 40 "EC644" "CGRJL" "RIE7" 50 RPI 817
-		       "EC646",  // 50 "EC646" "CGRJNE" "RIE7" 50 RPI 817
-		       "EC64C",  // 60 "EC64C" "CGRJNH" "RIE7" 50 RPI 817
-		       "EC64A",  // 70 "EC64A" "CGRJNL" "RIE7" 50 RPI 817
-		       "EC65",  // 80 "EC65" "CLGRJ" "RIE6" 49 RPI 817
-		       "EC658",  // 90 "EC658" "CLGRJE" "RIE7" 50 RPI 817
-		       "EC652",  // 100 "EC652" "CLGRJH" "RIE7" 50 RPI 817
-		       "EC654",  // 110 "EC654" "CLGRJL" "RIE7" 50 RPI 817
-		       "EC656",  // 120 "EC656" "CLGRJNE" "RIE7" 50 RPI 817
-		       "EC65C",  // 130 "EC65C" "CLGRJNH" "RIE7" 50 RPI 817
-		       "EC65A",  // 140 "EC65A" "CLGRJNL" "RIE7" 50 RPI 817		       
-		       "EC70",  // 150 "EC70" "CGIT" "RIE2" 41 RPI 817
-		       "EC708",  // 160 "EC708" "CGITE" "RIE3" 42 RPI 817
-		       "EC702",  // 170 "EC702" "CGITH" "RIE3" 42 RPI 817
-		       "EC704",  // 180 "EC704" "CGITL" "RIE3" 42 RPI 817
-		       "EC706",  // 190 "EC706" "CGITNE" "RIE3" 42 RPI 817
-		       "EC70C",  // 200 "EC70C" "CGITNH" "RIE3" 42 RPI 817
-		       "EC70A",  // 210 "EC70A" "CGITNL" "RIE3" 42 RPI 817
-		       "EC71",  // 150 "EC71" "CLGIT" "RIE2" 41 RPI 817
-		       "EC718",  // 160 "EC718" "CLGITE" "RIE3" 42 RPI 817
-		       "EC712",  // 170 "EC712" "CLGITH" "RIE3" 42 RPI 817
-		       "EC714",  // 180 "EC714" "CLGITL" "RIE3" 42 RPI 817
-		       "EC716",  // 190 "EC716" "CLGITNE" "RIE3" 42 RPI 817
-		       "EC71C",  // 200 "EC71C" "CLGITNH" "RIE3" 42 RPI 817
-		       "EC71A",  // 210 "EC71A" "CLGITNL" "RIE3" 42 RPI 817
-		       "EC72",  // 220 "EC72" "CIT" "RIE2" 41 RPI 817
-		       "EC728",  // 230 "EC728" "CITE" "RIE3" 42 RPI 817
-		       "EC722",  // 240 "EC722" "CITH" "RIE3" 42 RPI 817
-		       "EC724",  // 250 "EC724" "CITL" "RIE3" 42 RPI 817
-		       "EC726",  // 260 "EC726" "CITNE" "RIE3" 42 RPI 817
-		       "EC72C",  // 270 "EC72C" "CITNH" "RIE3" 42 RPI 817
-		       "EC72A",  // 280 "EC72A" "CITNL" "RIE3" 42 RPI 817
-		       "EC73",  // 220 "EC73" "CLFIT" "RIE2" 41 RPI 817
-		       "EC738",  // 230 "EC738" "CLFITE" "RIE3" 42 RPI 817
-		       "EC732",  // 240 "EC732" "CLFITH" "RIE3" 42 RPI 817
-		       "EC734",  // 250 "EC734" "CLFITL" "RIE3" 42 RPI 817
-		       "EC736",  // 260 "EC736" "CLFITNE" "RIE3" 42 RPI 817
-		       "EC73C",  // 270 "EC73C" "CLFITNH" "RIE3" 42 RPI 817
-		       "EC73A",  // 280 "EC73A" "CLFITNL" "RIE3" 42 RPI 817
-		       "EC76",  // 150 "EC76" "CRJ" "RIE6" 49 RPI 817
-		       "EC768",  // 160 "EC768" "CRJE" "RIE7" 50 RPI 817
-		       "EC762",  // 170 "EC762" "CRJH" "RIE7" 50 RPI 817
-		       "EC764",  // 180 "EC764" "CRJL" "RIE7" 50 RPI 817
-		       "EC766",  // 190 "EC766" "CRJNE" "RIE7" 50 RPI 817
-		       "EC76C",  // 200 "EC76C" "CRJNH" "RIE7" 50 RPI 817
-		       "EC76A",  // 210 "EC76A" "CRJNL" "RIE7" 50 RPI 817
-		       "EC77",  // 220 "EC77" "CLRJ" "RIE6" 49 RPI 817
-		       "EC778",  // 230 "EC778" "CLRJE" "RIE7" 50 RPI 817
-		       "EC772",  // 240 "EC772" "CLRJH" "RIE7" 50 RPI 817
-		       "EC774",  // 250 "EC774" "CLRJL" "RIE7" 50 RPI 817
-		       "EC776",  // 260 "EC776" "CLRJNE" "RIE7" 50 RPI 817
-		       "EC77C",  // 270 "EC77C" "CLRJNH" "RIE7" 50 RPI 817
-		       "EC77A",  // 280 "EC77A" "CLRJNL" "RIE7" 50 RPI 817
-		       "EC7C",  // 290 "EC7C" "CGIJ" "RIE4" 43 RPI 817
-		       "EC7C8",  // 300 "EC7C8" "CGIJE" "RIE5" 44 RPI 817
-		       "EC7C2",  // 310 "EC7C2" "CGIJH" "RIE5" 44 RPI 817
-		       "EC7C4",  // 320 "EC7C4" "CGIJL" "RIE5" 44 RPI 817
-		       "EC7C6",  // 330 "EC7C6" "CGIJNE" "RIE5" 44 RPI 817
-		       "EC7CC",  // 340 "EC7CC" "CGIJNH" "RIE5" 44 RPI 817
-		       "EC7CA",  // 350 "EC7CA" "CGIJNL" "RIE5" 44 RPI 817
-		       "EC7D",  // 360 "EC7D" "CLGIJ" "RIE4" 43 RPI 817
-		       "EC7D8",  // 370 "EC7D8" "CLGIJE" "RIE5" 44 RPI 817
-		       "EC7D2",  // 380 "EC7D2" "CLGIJH" "RIE5" 44 RPI 817
-		       "EC7D4",  // 390 "EC7D4" "CLGIJL" "RIE5" 44 RPI 817
-		       "EC7D6",  // 400 "EC7D6" "CLGIJNE" "RIE5" 44 RPI 817
-		       "EC7DC",  // 410 "EC7DC" "CLGIJNH" "RIE5" 44 RPI 817
-		       "EC7DA",  // 420 "EC7DA" "CLGIJNL" "RIE5" 44 RPI 817
-		       "EC7E",  // 430 "EC7E" "CIJ" "RIE4" 43 RPI 817
-		       "EC7E8",  // 440 "EC7E8" "CIJE" "RIE5" 44 RPI 817
-		       "EC7E2",  // 450 "EC7E2" "CIJH" "RIE5" 44 RPI 817
-		       "EC7E4",  // 460 "EC7E4" "CIJL" "RIE5" 44 RPI 817
-		       "EC7E6",  // 470 "EC7E6" "CIJNE" "RIE5" 44 RPI 817
-		       "EC7EC",  // 480 "EC7EC" "CIJNH" "RIE5" 44 RPI 817
-		       "EC7EA",  // 490 "EC7EA" "CIJNL" "RIE5" 44 RPI 817
-		       "EC7F",  // 500 "EC7F" "CLIJ" "RIE4" 43 RPI 817
-		       "EC7F8",  // 510 "EC7F8" "CLIJE" "RIE5" 44 RPI 817
-		       "EC7F2",  // 520 "EC7F2" "CLIJH" "RIE5" 44 RPI 817
-		       "EC7F4",  // 530 "EC7F4" "CLIJL" "RIE5" 44 RPI 817
-		       "EC7F6",  // 540 "EC7F6" "CLIJNE" "RIE5" 44 RPI 817
-		       "EC7FC",  // 550 "EC7FC" "CLIJNH" "RIE5" 44 RPI 817
-		       "EC7FA",  // 560 "EC7FA" "CLIJNL" "RIE5" 44 RPI 817
-		       "ECD8",  // "ECD8","AHIK","RIE9"    57 RPI 1125 Z196
-		       "ECD9",  // "ECD9","AGHIK","RIE9"   57 RPI 1125 Z196
-		       "ECDA",  // "ECDA","ALHSIK","RIE9"  57 RPI 1125 Z196
-		       "ECDB",  // "ECDB","ALGHSIK","RIE9" 57 RPI 1125 Z196
-		       "ECE4",  // 570 "ECE4" "CGRB" "RRS1" 45 RPI 817
-		       "ECE48",  // 580 "ECE48" "CGRBE" "RRS2" 46 RPI 817
-		       "ECE42",  // 590 "ECE42" "CGRBH" "RRS2" 46 RPI 817
-		       "ECE44",  // 600 "ECE44" "CGRBL" "RRS2" 46 RPI 817
-		       "ECE46",  // 610 "ECE46" "CGRBNE" "RRS2" 46 RPI 817
-		       "ECE4C",  // 620 "ECE4C" "CGRBNH" "RRS2" 46 RPI 817
-		       "ECE4A",  // 630 "ECE4A" "CGRBNL" "RRS2" 46 RPI 817
-		       "ECE5",  // 640 "ECE5" "CLGRB" "RRS1" 45 RPI 817
-		       "ECE58",  // 650 "ECE58" "CLGRBE" "RRS2" 46 RPI 817
-		       "ECE52",  // 660 "ECE52" "CLGRBH" "RRS2" 46 RPI 817
-		       "ECE54",  // 670 "ECE54" "CLGRBL" "RRS2" 46 RPI 817
-		       "ECE56",  // 680 "ECE56" "CLGRBNE" "RRS2" 46 RPI 817
-		       "ECE5C",  // 690 "ECE5C" "CLGRBNH" "RRS2" 46 RPI 817
-		       "ECE5A",  // 700 "ECE5A" "CLGRBNL" "RRS2" 46 RPI 817
-		       "ECF6",  // 710 "ECF6" "CRB" "RRS1" 45 RPI 817
-		       "ECF68",  // 720 "ECF68" "CRBE" "RRS2" 46 RPI 817
-		       "ECF62",  // 730 "ECF62" "CRBH" "RRS2" 46 RPI 817
-		       "ECF64",  // 740 "ECF64" "CRBL" "RRS2" 46 RPI 817
-		       "ECF66",  // 750 "ECF66" "CRBNE" "RRS1" 45 RPI 817
-		       "ECF6C",  // 760 "ECF6C" "CRBNH" "RRS2" 46 RPI 817
-		       "ECF6A",  // 770 "ECF6A" "CRBNL" "RRS2" 46 RPI 817
-		       "ECF7",  // 780 "ECF7" "CLRB" "RRS1" 45 RPI 817
-		       "ECF78",  // 790 "ECF78" "CLRBE" "RRS2" 46 RPI 817
-		       "ECF72",  // 800 "ECF72" "CLRBH" "RRS2" 46 RPI 817
-		       "ECF74",  // 810 "ECF74" "CLRBL" "RRS2" 46 RPI 817
-		       "ECF76",  // 820 "ECF76" "CLRBNE" "RRS2" 46 RPI 817
-		       "ECF7C",  // 830 "ECF7C" "CLRBNH" "RRS2" 46 RPI 817
-		       "ECF7A",  // 840 "ECF7A" "CLRBNL" "RRS2" 46 RPI 817
-		       "ECFC",  // 850 "ECFC" "CGIB" "RRS3" 47 RPI 817
-		       "ECFC8",  // 860 "ECFC8" "CGIBE" "RRS4" 48 RPI 817
-		       "ECFC2",  // 870 "ECFC2" "CGIBH" "RRS4" 48 RPI 817
-		       "ECFC4",  // 880 "ECFC4" "CGIBL" "RRS4" 48 RPI 817
-		       "ECFC6",  // 890 "ECFC6" "CGIBNE" "RRS4" 48 RPI 817
-		       "ECFCC",  // 900 "ECFCC" "CGIBNH" "RRS4" 48 RPI 817
-		       "ECFCA",  // 910 "ECFCA" "CGIBNL" "RRS4" 48 RPI 817
-		       "ECFD",  // 920 "ECFD" "CLGIB" "RRS3" 47 RPI 817
-		       "ECFD8",  // 930 "ECFD8" "CLGIBE" "RRS4" 48 RPI 817
-		       "ECFD2",  // 940 "ECFD2" "CLGIBH" "RRS4" 48 RPI 817
-		       "ECFD4",  // 950 "ECFD4" "CLGIBL" "RRS4" 48 RPI 817
-		       "ECFD6",  // 960 "ECFD6" "CLGIBNE" "RRS4" 48 RPI 817
-		       "ECFDC",  // 970 "ECFDC" "CLGIBNH" "RRS4" 48 RPI 817
-		       "ECFDA",  // 980 "ECFDA" "CLGIBNL" "RRS4" 48 RPI 817
-		       "ECFE",  // 990 "ECFE" "CIB" "RRS3" 47 RPI 817
-		       "ECFE8",  // 1000 "ECFE8" "CIBE" "RRS4" 48 RPI 817
-		       "ECFE2",  // 1010 "ECFE2" "CIBH" "RRS4" 48 RPI 817
-		       "ECFE4",  // 1020 "ECFE4" "CIBL" "RRS4" 48 RPI 817
-		       "ECFE6",  // 1030 "ECFE6" "CIBNE" "RRS4" 48 RPI 817
-		       "ECFEC",  // 1040 "ECFEC" "CIBNH" "RRS4" 48 RPI 817
-		       "ECFEA",  // 1050 "ECFEA" "CIBNL" "RRS4" 48 RPI 817
-		       "ECFF",  // 1060 "ECFF" "CLIB" "RRS3" 47 RPI 817
-		       "ECFF8",  // 1070 "ECFF8" "CLIBE" "RRS4" 48 RPI 817
-		       "ECFF2",  // 1080 "ECFF2" "CLIBH" "RRS4" 48 RPI 817
-		       "ECFF4",  // 1090 "ECFF4" "CLIBL" "RRS4" 48 RPI 817
-		       "ECFF6",  // 1100 "ECFF6" "CLIBNE" "RRS4" 48 RPI 817
-		       "ECFFC",  // 1110 "ECFFC" "CLIBNH" "RRS4" 48 RPI 817
-		       "ECFFA",  // 1120 "ECFFA" "CLIBNL" "RRS4" 48 RPI 817		       
-		       "ED04",  // 6620 "ED04" "LDEB" "RXE" 24
-		       "ED05",  // 6630 "ED05" "LXDB" "RXE" 24
-		       "ED06",  // 6640 "ED06" "LXEB" "RXE" 24
-		       "ED07",  // 6650 "ED07" "MXDB" "RXE" 24
-		       "ED08",  // 6660 "ED08" "KEB" "RXE" 24
-		       "ED09",  // 6670 "ED09" "CEB" "RXE" 24
-		       "ED0A",  // 6680 "ED0A" "AEB" "RXE" 24
-		       "ED0B",  // 6690 "ED0B" "SEB" "RXE" 24
-		       "ED0C",  // 6700 "ED0C" "MDEB" "RXE" 24
-		       "ED0D",  // 6710 "ED0D" "DEB" "RXE" 24
-		       "ED0E",  // 6720 "ED0E" "MAEB" "RXF" 25
-		       "ED0F",  // 6730 "ED0F" "MSEB" "RXF" 25
-		       "ED10",  // 6740 "ED10" "TCEB" "RXE" 24
-		       "ED11",  // 6750 "ED11" "TCDB" "RXE" 24
-		       "ED12",  // 6760 "ED12" "TCXB" "RXE" 24
-		       "ED14",  // 6770 "ED14" "SQEB" "RXE" 24
-		       "ED15",  // 6780 "ED15" "SQDB" "RXE" 24
-		       "ED17",  // 6790 "ED17" "MEEB" "RXE" 24
-		       "ED18",  // 6800 "ED18" "KDB" "RXE" 24
-		       "ED19",  // 6810 "ED19" "CDB" "RXE" 24
-		       "ED1A",  // 6820 "ED1A" "ADB" "RXE" 24
-		       "ED1B",  // 6830 "ED1B" "SDB" "RXE" 24
-		       "ED1C",  // 6840 "ED1C" "MDB" "RXE" 24
-		       "ED1D",  // 6850 "ED1D" "DDB" "RXE" 24
-		       "ED1E",  // 6860 "ED1E" "MADB" "RXF" 25
-		       "ED1F",  // 6870 "ED1F" "MSDB" "RXF" 25
-		       "ED24",  // 6880 "ED24" "LDE" "RXE" 24
-		       "ED25",  // 6890 "ED25" "LXD" "RXE" 24
-		       "ED26",  // 6900 "ED26" "LXE" "RXE" 24
-		       "ED2E",  // 6910 "ED2E" "MAE" "RXF" 25
-		       "ED2F",  // 6920 "ED2F" "MSE" "RXF" 25
-		       "ED34",  // 6930 "ED34" "SQE" "RXE" 24
-		       "ED35",  // 6940 "ED35" "SQD" "RXE" 24
-		       "ED37",  // 6950 "ED37" "MEE" "RXE" 24
-		       "ED38",  //      "ED38" "MAYL" "RXF" 25 Z9-46
-		       "ED39",  //      "ED39" "MYL" "RXF" 25 Z9-47
-		       "ED3A",  //      "ED3A" "MAY" "RXF" 25 Z9-48
-		       "ED3B",  //      "ED3B" "MY" "RXF" 25 Z9-49  RPI 298
-		       "ED3C",  //      "ED3C" "MAYH" "RXF" 25 Z9-50
-		       "ED3D",  //      "ED3D" "MYH" "RXF" 25 Z9-51  RPI 298
-		       "ED3E",  // 6960 "ED3E" "MAD" "RXF" 25
-		       "ED3F",  // 6970 "ED3F" "MSD" "RXF" 25
-		       "ED40", // "SLDT" "RXF" DFP 45
-		       "ED41", // "SRDT" "RXF" DFP 46
-		       "ED48", // "SLXT" "RXF" DFP 47
-		       "ED49", // "SRXT" "RXF" DFP 48
-		       "ED50", // "TDCET" "RXE" DFP 49
-		       "ED51", // "TDGET" "RXE" DFP 50
-		       "ED54", // "TDCDT" "RXE" DFP 51
-		       "ED55", // "TDGDT" "RXE" DFP 52
-		       "ED58", // "TDCXT" "RXE" DFP 53
-		       "ED59", // "TDGXT" "RXE" DFP 54
-		       "ED64",  // 6980 "ED64" "LEY" "RXY" 18
-		       "ED65",  // 6990 "ED65" "LDY" "RXY" 18
-		       "ED66",  // 7000 "ED66" "STEY" "RXY" 18
-		       "ED67",  // 7010 "ED67" "STDY" "RXY" 18
-		       "EE",  // 7020 "EE" "PLO" "SS3" 27
-		       "EF",  // 7030 "EF" "LMD" "SS4" 28
-		       "F0",  // 7040 "F0" "SRP" "SS5" 29
-		       "F1",  // 7050 "F1" "MVO" "SS2" 26
-		       "F2",  // 7060 "F2" "PACK" "SS2" 26
-		       "F3",  // 7070 "F3" "UNPK" "SS2" 26
-		       "F8",  // 7080 "F8" "ZAP" "SS2" 26
-		       "F9",  // 7090 "F9" "CP" "SS2" 26
-		       "FA",  // 7100 "FA" "AP" "SS2" 26
-		       "FB",  // 7110 "FB" "SP" "SS2" 26
-		       "FC",  // 7120 "FC" "MP" "SS2" 26
-		       "FD",  // 7130 "FD" "DP" "SS2" 26		       
-			};
+    //String[]   op_code = // Static content removed, content now generated RPI 1209
+      String[]   op_code = null; // See process_opcodes() RPI 1209
+    int op_code_count = 0;       // RPI 1209A
+    int op_directives_count = 0; // RPI 1209A
+    //int[]      op_trace_type = // Moved here from pz390; static content removed, content now generated RPI 1209
+      int[]      op_trace_type = null; // See process_opcodes() RPI 1209
+//
+// The op_tables below define all instructions. The format of the definitions is as follows:
+// opcode=mnemonic,op_type,op_trace_type
+// op_type is used during assembly; see process_bal_op() in az390
+// op_trace_type is used during tracing: see trace_ins() in pz390
+// Remark 1: op_type and op_trace_type are entered as -- for assembler directives
+// Remark 2: mnemonic may contain a ?, meaning that the next character in the mnemonic is optional,
+//           hence the mnemonic exists in two variants:
+//           the basic form (without the question mark) and the Alternate form with the optional character present
+// Remark 3: Extended (masked) instructions are generated according to the schema described in table opcode_masks
+//           Extended instructions are recognized by a lower case 'm' in both the opcode and mnemonic
+//           For extended instructions the definition is extended with ;maskval=mnemon which may occur 0, 1, or 2 times.
+//           Alternate syntax is ;*Short which will generate only H, L, E, NH, NL, NE rather than the full set
+//           This syntax allows us to override the default mnemonics for generated instructions.
+//           Omission of mnemon in the override implies that no  mnemonic exists for that mask.
+     String[]   op_table_start = // Table added for RPI 1209A
+        {"??=*,0,00",            //     00 comments
+         };
+     String[]   op_table_DOS =   // Table added for RPI 1209A
+        {"04=SPM,2,20",          //     90 "04"    "SPM"      "RR"    2
+         "05=BALR,2,20",         //    100 "05"    "BALR"     "RR"    2
+         "06=BCTR,2,20",         //    110 "06"    "BCTR"     "RR"    2
+         "07=BCR,2,30",          //    120 "07"    "BCR"      "RR"    2
+         "07m=BmR,3,30;0=NOPR",  //        "07m"   "BmR, NOPR" "BRX"  3
+         "0A=SVC,4,40",          //    290 "0A"    "SVC"      "I"     4
+         "0E=MVCL,2,22",         //    330 "0E"    "MVCL"     "RR"    2
+         "0F=CLCL,2,22",         //    340 "0F"    "CLCL"     "RR"    2
+         "10=LPR,2,20",          //    350 "10"    "LPR"      "RR"    2
+         "11=LNR,2,20",          //    360 "11"    "LNR"      "RR"    2
+         "12=LTR,2,20",          //    370 "12"    "LTR"      "RR"    2
+         "13=LCR,2,20",          //    380 "13"    "LCR"      "RR"    2
+         "14=NR,2,20",           //    390 "14"    "NR"       "RR"    2
+         "15=CLR,2,20",          //    400 "15"    "CLR"      "RR"    2
+         "16=OR,2,20",           //    410 "16"    "OR"       "RR"    2
+         "17=XR,2,20",           //    420 "17"    "XR"       "RR"    2
+         "18=LR,2,20",           //    430 "18"    "LR"       "RR"    2
+         "19=CR,2,20",           //    440 "19"    "CR"       "RR"    2
+         "1A=AR,2,20",           //    450 "1A"    "AR"       "RR"    2
+         "1B=SR,2,20",           //    460 "1B"    "SR"       "RR"    2
+         "1C=MR,2,23",           //    470 "1C"    "MR"       "RR"    2
+         "1D=DR,2,23",           //    480 "1D"    "DR"       "RR"    2
+         "1E=ALR,2,20",          //    490 "1E"    "ALR"      "RR"    2
+         "1F=SLR,2,20",          //    500 "1F"    "SLR"      "RR"    2
+         "20=LPDR,2,21",         //    510 "20"    "LPDR"     "RR"    2
+         "21=LNDR,2,21",         //    520 "21"    "LNDR"     "RR"    2
+         "22=LTDR,2,21",         //    530 "22"    "LTDR"     "RR"    2
+         "23=LCDR,2,21",         //    540 "23"    "LCDR"     "RR"    2
+         "24=HDR,2,21",          //    550 "24"    "HDR"      "RR"    2
+         "25=LRDR,2,21",         //    570 "25"    "LRDR"     "RR"    2
+         "26=MXR,2,21",          //    580 "26"    "MXR"      "RR"    2
+         "27=MXDR,2,21",         //    590 "27"    "MXDR"     "RR"    2
+         "28=LDR,2,21",          //    600 "28"    "LDR"      "RR"    2
+         "29=CDR,2,21",          //    610 "29"    "CDR"      "RR"    2
+         "2A=ADR,2,21",          //    620 "2A"    "ADR"      "RR"    2
+         "2B=SDR,2,21",          //    630 "2B"    "SDR"      "RR"    2
+         "2C=MDR,2,21",          //    640 "2C"    "MDR"      "RR"    2
+         "2D=DDR,2,21",          //    650 "2D"    "DDR"      "RR"    2
+         "2E=AWR,2,21",          //    660 "2E"    "AWR"      "RR"    2
+         "2F=SWR,2,21",          //    670 "2F"    "SWR"      "RR"    2
+         "30=LPER,2,21",         //    680 "30"    "LPER"     "RR"    2
+         "31=LNER,2,21",         //    690 "31"    "LNER"     "RR"    2
+         "32=LTER,2,21",         //    700 "32"    "LTER"     "RR"    2
+         "33=LCER,2,21",         //    710 "33"    "LCER"     "RR"    2
+         "34=HER,2,21",          //    720 "34"    "HER"      "RR"    2
+         "35=LRER,2,21",         //    740 "35"    "LRER"     "RR"    2
+         "36=AXR,2,21",          //    750 "36"    "AXR"      "RR"    2
+         "37=SXR,2,21",          //    760 "37"    "SXR"      "RR"    2
+         "38=LER,2,21",          //    770 "38"    "LER"      "RR"    2
+         "39=CER,2,21",          //    780 "39"    "CER"      "RR"    2
+         "3A=AER,2,21",          //    790 "3A"    "AER"      "RR"    2
+         "3B=SER,2,21",          //    800 "3B"    "SER"      "RR"    2
+         "3C=MDER,2,21",         //    810 "3C"    "MDER"     "RR"    2
+         "3C=MER,2,21",          //    820 "3C"    "MER"      "RR"    2
+         "3D=DER,2,21",          //    830 "3D"    "DER"      "RR"    2
+         "3E=AUR,2,21",          //    840 "3E"    "AUR"      "RR"    2
+         "3F=SUR,2,21",          //    850 "3F"    "SUR"      "RR"    2
+         "40=STH,5,53",          //    860 "40"    "STH"      "RX"    5
+         "41=LA,5,52",           //    870 "41"    "LA"       "RX"    5
+         "42=STC,5,56",          //    880 "42"    "STC"      "RX"    5
+         "43=IC,5,56",           //    890 "43"    "IC"       "RX"    5
+         "44=EX,5,59",           //    900 "44"    "EX"       "RX"    5
+         "45=BAL,5,51",          //    910 "45"    "BAL"      "RX"    5
+         "46=BCT,5,50",          //    920 "46"    "BCT"      "RX"    5
+         "47=BC,5,50",           //    930 "47"    "BC"       "RX"    5
+         "47m=Bm,6,60;0=NOP",    //        "47m"   "Bm, NOP"  "BRX"   6
+         "48=LH,5,53",           //   1100 "48"    "LH"       "RX"    5
+         "49=CH,5,53",           //   1110 "49"    "CH"       "RX"    5
+         "4A=AH,5,53",           //   1120 "4A"    "AH"       "RX"    5
+         "4B=SH,5,53",           //   1130 "4B"    "SH"       "RX"    5
+         "4C=MH,5,53",           //   1140 "4C"    "MH"       "RX"    5
+         "4E=CVD,5,57",          //   1160 "4E"    "CVD"      "RX"    5
+         "4F=CVB,5,57",          //   1170 "4F"    "CVB"      "RX"    5
+         "50=ST,5,50",           //   1180 "50"    "ST"       "RX"    5
+         "54=N,5,50",            //   1200 "54"    "N"        "RX"    5
+         "55=CL,5,50",           //   1210 "55"    "CL"       "RX"    5
+         "56=O,5,50",            //   1220 "56"    "O"        "RX"    5
+         "57=X,5,50",            //   1230 "57"    "X"        "RX"    5
+         "58=L,5,50",            //   1240 "58"    "L"        "RX"    5
+         "59=C,5,50",            //   1250 "59"    "C"        "RX"    5
+         "5A=A,5,50",            //   1260 "5A"    "A"        "RX"    5
+         "5B=S,5,50",            //   1270 "5B"    "S"        "RX"    5
+         "5C=M,5,55",            //   1280 "5C"    "M"        "RX"    5
+         "5D=D,5,55",            //   1290 "5D"    "D"        "RX"    5
+         "5E=AL,5,50",           //   1300 "5E"    "AL"       "RX"    5
+         "5F=SL,5,50",           //   1310 "5F"    "SL"       "RX"    5
+         "60=STD,5,54",          //   1320 "60"    "STD"      "RX"    5
+         "67=MXD,5,54",          //   1330 "67"    "MXD"      "RX"    5
+         "68=LD,5,54",           //   1340 "68"    "LD"       "RX"    5
+         "69=CD,5,54",           //   1350 "69"    "CD"       "RX"    5
+         "6A=AD,5,54",           //   1360 "6A"    "AD"       "RX"    5
+         "6B=SD,5,54",           //   1370 "6B"    "SD"       "RX"    5
+         "6C=MD,5,54",           //   1380 "6C"    "MD"       "RX"    5
+         "6D=DD,5,54",           //   1390 "6D"    "DD"       "RX"    5
+         "6E=AW,5,54",           //   1400 "6E"    "AW"       "RX"    5
+         "6F=SW,5,54",           //   1410 "6F"    "SW"       "RX"    5
+         "70=STE,5,58",          //   1420 "70"    "STE"      "RX"    5
+         "78=LE,5,58",           //   1440 "78"    "LE"       "RX"    5
+         "79=CE,5,58",           //   1450 "79"    "CE"       "RX"    5
+         "7A=AE,5,58",           //   1460 "7A"    "AE"       "RX"    5
+         "7B=SE,5,58",           //   1470 "7B"    "SE"       "RX"    5
+         "7C=MDE,5,58",          //   1480 "7C"    "MDE"      "RX"    5
+         "7C=ME,5,58",           //   1490 "7C"    "ME"       "RX"    5
+         "7D=DE,5,58",           //   1500 "7D"    "DE"       "RX"    5
+         "7E=AU,5,58",           //   1510 "7E"    "AU"       "RX"    5
+         "7F=SU,5,58",           //   1520 "7F"    "SU"       "RX"    5
+         "8000=SSM,7,70",        //   1530 "8000"  "SSM"      "S"     7
+         "8200=LPSW,7,70",       //   1540 "8200"  "LPSW"     "S"     7
+         "86=BXH,10,103",        //   1600 "86"    "BXH"      "RS"   10
+         "87=BXLE,10,103",       //   1610 "87"    "BXLE"     "RS"   10
+         "88=SRL,10,102",        //   1620 "88"    "SRL"      "RS"   10
+         "89=SLL,10,102",        //   1630 "89"    "SLL"      "RS"   10
+         "8A=SRA,10,102",        //   1640 "8A"    "SRA"      "RS"   10
+         "8B=SLA,10,102",        //   1650 "8B"    "SLA"      "RS"   10
+         "8C=SRDL,10,102",       //   1660 "8C"    "SRDL"     "RS"   10
+         "8D=SLDL,10,102",       //   1670 "8D"    "SLDL"     "RS"   10
+         "8E=SRDA,10,102",       //   1680 "8E"    "SRDA"     "RS"   10
+         "8F=SLDA,10,102",       //   1690 "8F"    "SLDA"     "RS"   10
+         "90=STM,10,100",        //   1700 "90"    "STM"      "RS"   10
+         "91=TM,11,110",         //   1710 "91"    "TM"       "SI"   11
+         "92=MVI,11,110",        //   1720 "92"    "MVI"      "SI"   11
+         "9300=TS,7,70",         //   1730 "9300"  "TS"       "S"     7
+         "94=NI,11,110",         //   1740 "94"    "NI"       "SI"   11
+         "95=CLI,11,110",        //   1750 "95"    "CLI"      "SI"   11
+         "96=OI,11,110",         //   1760 "96"    "OI"       "SI"   11
+         "97=XI,11,110",         //   1770 "97"    "XI"       "SI"   11
+         "98=LM,10,100",         //   1780 "98"    "LM"       "RS"   10
+         "AC=STNSM,11,110",      //   2520 "AC"    "STNSM"    "SI"   11
+         "AD=STOSM,11,110",      //   2530 "AD"    "STOSM"    "SI"   11
+         "AF=MC,11,110",         //   2550 "AF"    "MC"       "SI"   11
+         "B1=LRA,5,50",          //   2560 "B1"    "LRA"      "RX"    5
+         "B202=STIDP,7,70",      //   2570 "B202"  "STIDP"    "S"     7
+         "B204=SCK,7,70",        //   2580 "B204"  "SCK"      "S"     7
+         "B205=STCK,7,70",       //   2590 "B205"  "STCK"     "S"     7
+         "B206=SCKC,7,70",       //   2600 "B206"  "SCKC"     "S"     7
+         "B207=STCKC,7,70",      //   2610 "B207"  "STCKC"    "S"     7
+         "B208=SPT,7,70",        //   2620 "B208"  "SPT"      "S"     7
+         "B209=STPT,7,70",       //   2630 "B209"  "STPT"     "S"     7
+         "B20A=SPKA,7,70",       //   2640 "B20A"  "SPKA"     "S"     7
+         "B20B=IPK,7,70",        //   2650 "B20B"  "IPK"      "S"     7
+         "B20D=PTLB,7,70",       //   2660 "B20D"  "PTLB"     "S"     7
+         "B6=STCTL,10,100",      //   4430 "B6"    "STCTL"    "RS"   10
+         "B7=LCTL,10,100",       //   4440 "B7"    "LCTL"     "RS"   10
+         "BA=CS,10,100",         //   5120 "BA"    "CS"       "RS"   10
+         "BB=CDS,10,100",        //   5130 "BB"    "CDS"      "RS"   10
+         "BD=CLM,10,101",        //   5140 "BD"    "CLM"      "RS"   10
+         "BE=STCM,10,101",       //   5150 "BE"    "STCM"     "RS"   10
+         "BF=ICM,10,101",        //   5160 "BF"    "ICM"      "RS"   10
+         "D1=MVN,17,170",        //   5240 "D1"    "MVN"      "SS"   17
+         "D2=MVC,17,170",        //   5250 "D2"    "MVC"      "SS"   17
+         "D3=MVZ,17,170",        //   5260 "D3"    "MVZ"      "SS"   17
+         "D4=NC,17,170",         //   5270 "D4"    "NC"       "SS"   17
+         "D5=CLC,17,170",        //   5280 "D5"    "CLC"      "SS"   17
+         "D6=OC,17,170",         //   5290 "D6"    "OC"       "SS"   17
+         "D7=XC,17,170",         //   5300 "D7"    "XC"       "SS"   17
+         "DC=TR,17,170",         //   5340 "DC"    "TR"       "SS"   17
+         "DD=TRT,17,170",        //   5350 "DD"    "TRT"      "SS"   17
+         "DE=ED,17,170",         //   5360 "DE"    "ED"       "SS"   17
+         "DF=EDMK,17,170",       //   5370 "DF"    "EDMK"     "SS"   17
+         "E8=MVCIN,17,170",      //   6170 "E8"    "MVCIN"    "SS"   17
+         "F0=SRP,29,290",        //   7040 "F0"    "SRP"      "SS5"  29
+         "F1=MVO,26,260",        //   7050 "F1"    "MVO"      "SS2"  26
+         "F2=PACK,26,260",       //   7060 "F2"    "PACK"     "SS2"  26
+         "F3=UNPK,26,260",       //   7070 "F3"    "UNPK"     "SS2"  26
+         "F8=ZAP,26,260",        //   7080 "F8"    "ZAP"      "SS2"  26
+         "F9=CP,26,260",         //   7090 "F9"    "CP"       "SS2"  26
+         "FA=AP,26,260",         //   7100 "FA"    "AP"       "SS2"  26
+         "FB=SP,26,260",         //   7110 "FB"    "SP"       "SS2"  26
+         "FC=MP,26,260",         //   7120 "FC"    "MP"       "SS2"  26
+         "FD=DP,26,260",         //   7130 "FD"    "DP"       "SS2"  26
+         };
+     String[]   op_table_DOS_directives = // Table added for RPI 1209A
+        {"--=ACTR,201,--",       //   7600         "ACTR"           201
+         "--=AGO,202,--",        //   7610         "AGO"            202
+         "--=AGOB,226,--",       //   7820         "AGOB"           226
+         "--=AIF,203,--",        //   7620         "AIF"            203
+         "--=AIFB,227,--",       //   7830         "AIFB"           227
+         "--=ANOP,205,--",       //   7640         "ANOP"           205
+         "--=CCW,101,--",        //   7140         "CCW"            101
+         "--=CNOP,133,--",       //   7460         "CNOP"           133
+         "--=COM,109,--",        //   7220         "COM"            109
+         "--=COPY,224,--",       //   7470         "COPY"           224
+         "--=CSECT,110,--",      //   7230         "CSECT"          110
+         "--=DC,104,--",         //   7170         "DC"             104
+         "--=DROP,123,--",       //   7360         "DROP"           123
+         "--=DS,105,--",         //   7180         "DS"             105
+         "--=DSECT,112,--",      //   7250         "DSECT"          112
+         "--=EJECT,128,--",      //   7410         "EJECT"          128
+         "--=END,135,--",        //   7480         "END"            135
+         "--=ENTRY,114,--",      //   7270         "ENTRY"          114
+         "--=EQU,136,--",        //   7490         "EQU"            136
+         "--=EXTRN,115,--",      //   7280         "EXTRN"          115
+         "--=GBLA,207,--",       //   7660         "GBLA"           207
+         "--=GBLB,208,--",       //   7670         "GBLB"           208
+         "--=GBLC,209,--",       //   7680         "GBLC"           209
+         "--=ICTL,138,--",       //   7510         "ICTL"           138
+         "--=ISEQ,139,--",       //   7520         "ISEQ"           139
+         "--=LCLA,210,--",       //   7690         "LCLA"           210
+         "--=LCLB,211,--",       //   7700         "LCLB"           211
+         "--=LCLC,212,--",       //   7710         "LCLC"           212
+         "--=LTORG,140,--",      //   7530         "LTORG"          140
+         "--=MACRO,220,--",      //   7790         "MACRO"          220
+         "--=MEND,221,--",       //   7800         "MEND"           221
+         "--=MEXIT,222,--",      //   7810         "MEXIT"          222
+         "--=MNOTE,214,--",      //   7730         "MNOTE"          214
+         "--=ORG,142,--",        //   7550         "ORG"            142
+         "--=PRINT,129,--",      //   7420         "PRINT"          129
+         "--=PUNCH,223,--",      //   7570         "PUNCH"          223
+         "--=REPRO,146,--",      //   7590         "REPRO"          146
+         "--=SETA,215,--",       //   7740         "SETA"           215
+         "--=SETB,217,--",       //   7760         "SETB"           217
+         "--=SETC,218,--",       //   7770         "SETC"           218
+         "--=SPACE,130,--",      //   7430         "SPACE"          130
+         "--=START,119,--",      //   7320         "START"          119
+         "--=TITLE,131,--",      //   7440         "TITLE"          131
+         "--=USING,124,--",      //   7370         "USING"          124
+         "--=WXTRN,120,--",      //   7330         "WXTRN"          120
+         };
+     String[]   op_table_DOS_notsupported = // Table added for RPI 1209A
+        {"SSK      RR   08   R1,R2",
+         "ISK      RR   09   R1,R2",
+         "WRD      SI   84   D1(B1),I2",
+         "RDD      SI   85   D1(B1),I2",
+         "SIO      S    9C00 D2(B2)",
+         "SIOF     S    9C01 D2(B2)",
+         "TIO      S    9D00 D2(B2)",
+         "CLRIO    S    9D01 D2(B2)",
+         "HIO      S    9E00 D2(B2)",
+         "HDV      S    9E01 D2(B2)",
+         "TCH      S    9F00 D2(B2)",
+         "STIDC    S    B203 D2(B2)",
+         "RRB      S    B213 D2(B2)",
+         };
+     String[]   op_table_vector =   // Table added for RPI 1209A
+        {"A400=VAE,60,600",      //        "A400"  "VAE"      "V-VST" 60
+         "A401=VSE,60,600",      //        "A401"  "VSE"      "V-VST" 60
+         "A402=VME,60,600",      //        "A402"  "VME"      "V-VST" 60
+         "A403=VDE,60,600",      //        "A403"  "VDE"      "V-VST" 60
+         "A404=VMAE,60,600",     //        "A404"  "VMAE"     "V-VST" 60
+         "A405=VMSE,60,600",     //        "A405"  "VMSE"     "V-VST" 60
+         "A406=VMCE,60,600",     //        "A406"  "VMCE"     "V-VST" 60
+         "A407=VACE,60,600",     //        "A407"  "VACE"     "V-VST" 60
+         "A408=VCE,60,600",      //        "A408"  "VCE"      "V-VST" 60
+         "A409=VL,60,600",       //        "A409"  "VL"       "V-VST" 60
+         "A409=VLE,60,600",      //        "A409"  "VLE"      "V-VST" 60
+         "A40A=VLM,60,600",      //        "A40A"  "VLM"      "V-VST" 60
+         "A40A=VLME,60,600",     //        "A40A"  "VLME"     "V-VST" 60
+         "A40B=VLY,60,600",      //        "A40B"  "VLY"      "V-VST" 60
+         "A40B=VLYE,60,600",     //        "A40B"  "VLYE"     "V-VST" 60
+         "A40D=VST,60,600",      //        "A40D"  "VST"      "V-VST" 60
+         "A40D=VSTE,60,600",     //        "A40D"  "VSTE"     "V-VST" 60
+         "A40E=VSTM,60,600",     //        "A40E"  "VSTM"     "V-VST" 60
+         "A40E=VSTME,60,600",    //        "A40E"  "VSTME"    "V-VST" 60
+         "A40F=VSTK,60,600",     //        "A40F"  "VSTK"     "V-VST" 60
+         "A40F=VSTKE,60,600",    //        "A40F"  "VSTKE"    "V-VST" 60
+         "A410=VAD,60,600",      //        "A410"  "VAD"      "V-VST" 60
+         "A411=VSD,60,600",      //        "A411"  "VSD"      "V-VST" 60
+         "A412=VMD,60,600",      //        "A412"  "VMD"      "V-VST" 60
+         "A413=VDD,60,600",      //        "A413"  "VDD"      "V-VST" 60
+         "A414=VMAD,60,600",     //        "A414"  "VMAD"     "V-VST" 60
+         "A415=VMSD,60,600",     //        "A415"  "VMSD"     "V-VST" 60
+         "A416=VMCD,60,600",     //        "A416"  "VMCD"     "V-VST" 60
+         "A417=VACD,60,600",     //        "A417"  "VACD"     "V-VST" 60
+         "A418=VCD,60,600",      //        "A418"  "VCD"      "V-VST" 60
+         "A419=VLD,60,600",      //        "A419"  "VLD"      "V-VST" 60
+         "A41A=VLMD,60,600",     //        "A41A"  "VLMD"     "V-VST" 60
+         "A41B=VLYD,60,600",     //        "A41B"  "VLYD"     "V-VST" 60
+         "A41D=VSTD,60,600",     //        "A41D"  "VSTD"     "V-VST" 60
+         "A41E=VSTMD,60,600",    //        "A41E"  "VSTMD"    "V-VST" 60
+         "A41F=VSTKD,60,600",    //        "A41F"  "VSTKD"    "V-VST" 60
+         "A420=VA,60,600",       //        "A420"  "VA"       "V-VST" 60
+         "A421=VS,60,600",       //        "A421"  "VS"       "V-VST" 60
+         "A422=VM,60,600",       //        "A422"  "VM"       "V-VST" 60
+         "A424=VN,60,600",       //        "A424"  "VN"       "V-VST" 60
+         "A425=VO,60,600",       //        "A425"  "VO"       "V-VST" 60
+         "A426=VX,60,600",       //        "A426"  "VX"       "V-VST" 60
+         "A428=VC,60,600",       //        "A428"  "VC"       "V-VST" 60
+         "A429=VLH,60,600",      //        "A429"  "VLH"      "V-VST" 60
+         "A42A=VLINT,60,600",    //        "A42A"  "VLINT"    "V-VST" 60
+         "A42D=VSTH,60,600",     //        "A42D"  "VSTH"     "V-VST" 60
+         "A443=VSQE,60,600",     //        "A443"  "VSQE"     "V-VST" 60
+         "A444=VTAE,60,600",     //        "A444"  "VTAE"     "V-VST" 60
+         "A445=VTSE,60,600",     //        "A445"  "VTSE"     "V-VST" 60
+         "A453=VSQD,60,600",     //        "A453"  "VSQE"     "V-VST" 60
+         "A454=VTAD,60,600",     //        "A454"  "VTAD"     "V-VST" 60
+         "A455=VTSD,60,600",     //        "A455"  "VTSD"     "V-VST" 60
+         "A480=VAES,58,580",     //        "A480"  "VAES"     "V-QST" 58
+         "A481=VSES,58,580",     //        "A481"  "VSES"     "V-QST" 58
+         "A482=VMES,58,580",     //        "A482"  "VMES"     "V-QST" 58
+         "A483=VDES,58,580",     //        "A483"  "VDES"     "V-QST" 58
+         "A484=VMAES,58,580",    //        "A484"  "VMAES"    "V-QST" 58
+         "A485=VMSES,58,580",    //        "A485"  "VMSES"    "V-QST" 58
+         "A488=VCES,58,580",     //        "A488"  "VCES"     "V-QST" 58
+         "A490=VADS,58,580",     //        "A490"  "VADS"     "V-QST" 58
+         "A491=VSDS,58,580",     //        "A491"  "VSDS"     "V-QST" 58
+         "A492=VMDS,58,580",     //        "A492"  "VMDS"     "V-QST" 58
+         "A493=VDDS,58,580",     //        "A493"  "VDDS"     "V-QST" 58
+         "A494=VMADS,58,580",    //        "A494"  "VMADS"    "V-QST" 58
+         "A495=VMSDS,58,580",    //        "A495"  "VMSDS"    "V-QST" 58
+         "A498=VCDS,58,580",     //        "A498"  "VCDS"     "V-QST" 58
+         "A4A0=VAS,58,580",      //        "A4A0"  "VAS"      "V-QST" 58
+         "A4A1=VSS,58,580",      //        "A4A1"  "VSS"      "V-QST" 58
+         "A4A2=VMS,58,580",      //        "A4A2"  "VMS"      "V-QST" 58
+         "A4A4=VNS,58,580",      //        "A4A4"  "VNS"      "V-QST" 58
+         "A4A5=VOS,58,580",      //        "A4A5"  "VOS"      "V-QST" 58
+         "A4A6=VXS,58,580",      //        "A4A6"  "VXS"      "V-QST" 58
+         "A4A8=VCS,58,580",      //        "A4A8"  "VCS"      "V-QST" 58
+         "A500=VAER,61,610",     //        "A500"  "VAER"     "V-VV"  61
+         "A501=VSER,61,610",     //        "A501"  "VSER"     "V-VV"  61
+         "A502=VMER,61,610",     //        "A502"  "VMER"     "V-VV"  61
+         "A503=VDER,61,610",     //        "A503"  "VDER"     "V-VV"  61
+         "A506=VMCER,61,610",    //        "A506"  "VMCER"    "V-VV"  61
+         "A507=VACER,61,610",    //        "A507"  "VACER"    "V-VV"  61
+         "A508=VCER,61,610",     //        "A508"  "VCER"     "V-VV"  61
+         "A509=VLR,61,610",      //        "A509"  "VLR"      "V-VV"  61
+         "A509=VLER,61,610",     //        "A509"  "VLER"     "V-VV"  61
+         "A50A=VLMR,61,610",     //        "A50A"  "VLMR"     "V-VV"  61
+         "A50A=VLMER,61,610",    //        "A50A"  "VLMER"    "V-VV"  61
+         "A50B=VLZR,61,610",     //        "A50B"  "VLZR"     "V-VV"  61
+         "A50B=VLZER,61,610",    //        "A50B"  "VLZER"    "V-VV"  61
+         "A510=VADR,61,610",     //        "A510"  "VADR"     "V-VV"  61
+         "A511=VSDR,61,610",     //        "A511"  "VSDR"     "V-VV"  61
+         "A512=VMDR,61,610",     //        "A512"  "VMDR"     "V-VV"  61
+         "A513=VDDR,61,610",     //        "A513"  "VDDR"     "V-VV"  61
+         "A516=VMCDR,61,610",    //        "A516"  "VMCDR"    "V-VV"  61
+         "A517=VACDR,61,610",    //        "A517"  "VACDR"    "V-VV"  61
+         "A518=VCDR,61,610",     //        "A518"  "VCDR"     "V-VV"  61
+         "A519=VLDR,61,610",     //        "A519"  "VLDR"     "V-VV"  61
+         "A51A=VLMDR,61,610",    //        "A51A"  "VLMDR"    "V-VV"  61
+         "A51B=VLZDR,61,610",    //        "A51B"  "VLZDR"    "V-VV"  61
+         "A520=VAR,61,610",      //        "A520"  "VAR"      "V-VV"  61
+         "A521=VSR,61,610",      //        "A521"  "VSR"      "V-VV"  61
+         "A522=VMR,61,610",      //        "A522"  "VMR"      "V-VV"  61
+         "A524=VNR,61,610",      //        "A524"  "VNR"      "V-VV"  61
+         "A525=VOR,61,610",      //        "A525"  "VOR"      "V-VV"  61
+         "A526=VXR,61,610",      //        "A526"  "VXR"      "V-VV"  61
+         "A528=VCR,61,610",      //        "A528"  "VCR"      "V-VV"  61
+         "A540=VLPER,61,610",    //        "A540"  "VLPER"    "V-VV"  61
+         "A541=VLNER,61,610",    //        "A541"  "VLNER"    "V-VV"  61
+         "A542=VLCER,61,610",    //        "A542"  "VLCER"    "V-VV"  61
+         "A543=VSQER,61,610",    //        "A543"  "VSQER"    "V-VV"  61
+         "A550=VLPDR,61,610",    //        "A550"  "VLPDR"    "V-VV"  61
+         "A551=VLNDR,61,610",    //        "A551"  "VLNDR"    "V-VV"  61
+         "A552=VLCDR,61,610",    //        "A552"  "VLCDR"    "V-VV"  61
+         "A553=VSQDR,61,610",    //        "A553"  "VSQDR"    "V-VV"  61
+         "A560=VLPR,61,610",     //        "A560"  "VLPR"     "V-VV"  61
+         "A561=VLNR,61,610",     //        "A561"  "VLNR"     "V-VV"  61
+         "A562=VLCR,61,610",     //        "A562"  "VLCR"     "V-VV"  61
+         "A580=VAEQ,59,590",     //        "A580"  "VAEQ"     "V-QV"  59
+         "A581=VSEQ,59,590",     //        "A581"  "VSEQ"     "V-QV"  59
+         "A582=VMEQ,59,590",     //        "A582"  "VMEQ"     "V-QV"  59
+         "A583=VDEQ,59,590",     //        "A583"  "VDEQ"     "V-QV"  59
+         "A584=VMAEQ,59,590",    //        "A584"  "VMAEQ"    "V-QV"  59
+         "A585=VMSEQ,59,590",    //        "A585"  "VMSEQ"    "V-QV"  59
+         "A588=VCEQ,59,590",     //        "A588"  "VCEQ"     "V-QV"  59
+         "A589=VLEQ,59,590",     //        "A589"  "VLEQ"     "V-QV"  59
+         "A58A=VLMEQ,59,590",    //        "A58A"  "VLMEQ"    "V-QV"  59
+         "A590=VADQ,59,590",     //        "A590"  "VADQ"     "V-QV"  59
+         "A591=VSDQ,59,590",     //        "A591"  "VSDQ"     "V-QV"  59
+         "A592=VMDQ,59,590",     //        "A592"  "VMDQ"     "V-QV"  59
+         "A593=VDDQ,59,590",     //        "A593"  "VDDQ"     "V-QV"  59
+         "A594=VMADQ,59,590",    //        "A594"  "VMADQ"    "V-QV"  59
+         "A595=VMSDQ,59,590",    //        "A595"  "VMSDQ"    "V-QV"  59
+         "A598=VCDQ,59,590",     //        "A598"  "VCDQ"     "V-QV"  59
+         "A599=VLDQ,59,590",     //        "A599"  "VLDQ"     "V-QV"  59
+         "A59A=VLMDQ,59,590",    //        "A59A"  "VLMDQ"    "V-QV"  59
+         "A5A0=VAQ,59,590",      //        "A5A0"  "VAQ"      "V-QV"  59
+         "A5A1=VSQ,59,590",      //        "A5A1"  "VSQ"      "V-QV"  59
+         "A5A2=VMQ,59,590",      //        "A5A2"  "VMQ"      "V-QV"  59
+         "A5A4=VNQ,59,590",      //        "A5A4"  "VNQ"      "V-QV"  59
+         "A5A5=VOQ,59,590",      //        "A5A5"  "VOQ"      "V-QV"  59
+         "A5A6=VXQ,59,590",      //        "A5A6"  "VXQ"      "V-QV"  59
+         "A5A8=VCQ,59,590",      //        "A5A8"  "VCQ"      "V-QV"  59
+         "A5A9=VLQ,59,590",      //        "A5A9"  "VLQ"      "V-QV"  59
+         "A5AA=VLMQ,59,590",     //        "A5AA"  "VLMQ"     "V-QV"  59
+         "A600=VMXSE,65,650",    //        "A600"  "VMXSE"    "V-VR"  65
+         "A601=VMNSE,65,650",    //        "A601"  "VMNSE"    "V-VR"  65
+         "A602=VMXAE,65,650",    //        "A602"  "VMXAE"    "V-VR"  65
+         "A608=VLELE,65,650",    //        "A608"  "VLELE"    "V-VR"  65
+         "A609=VXELE,65,650",    //        "A609"  "VXELE"    "V-VR"  65
+         "A610=VMXSD,65,650",    //        "A610"  "VMXSD"    "V-VR"  65
+         "A611=VMNSD,65,650",    //        "A611"  "VMNSD"    "V-VR"  65
+         "A612=VMXAD,65,650",    //        "A612"  "VMXAD"    "V-VR"  65
+         "A618=VLELD,65,650",    //        "A618"  "VLELD"    "V-VR"  65
+         "A619=VXELD,65,650",    //        "A619"  "VXELD"    "V-VR"  65
+         "A61A=VSPSD,65,650",    //        "A61A"  "VSPSD"    "V-VR"  65
+         "A61B=VZPSD,65,650",    //        "A61B"  "VZPSD"    "V-VR"  65
+         "A628=VLEL,65,650",     //        "A628"  "VLEL"     "V-VR"  65
+         "A629=VXEL,65,650",     //        "A629"  "VXEL"     "V-VR"  65
+         "A640=VTVM,62,620",     //        "A640"  "VTVM"     "V-RRE" 62
+         "A641=VCVM,62,620",     //        "A641"  "VCVM"     "V-RRE" 62
+         "A642=VCZVM,62,620",    //        "A642"  "VCZVM"    "V-RRE" 62
+         "A643=VCOVM,62,620",    //        "A643"  "VCOVM"    "V-RRE" 62
+         "A644=VXVC,62,620",     //        "A644"  "VXVC"     "V-RRE" 62
+         "A645=VLVCU,62,620",    //        "A645"  "VLVCU"    "V-RRE" 62
+         "A646=VXVMM,62,620",    //        "A646"  "VXVMM"    "V-RRE" 62
+         "A648=VRRS,62,620",     //        "A648"  "VRRS"     "V-RRE" 62
+         "A649=VRSVC,62,620",    //        "A649"  "VRSVC"    "V-RRE" 62
+         "A64A=VRSV,62,620",     //        "A64A"  "VRSV"     "V-RRE" 62
+         "A680=VLVM,66,660",     //        "A680"  "VLVM"     "V-VS"  66
+         "A681=VLCVM,66,660",    //        "A681"  "VLCVM"    "V-VS"  66
+         "A682=VSTVM,66,660",    //        "A682"  "VSTVM"    "V-VS"  66
+         "A684=VNVM,66,660",     //        "A684"  "VNVM"     "V-VS"  66
+         "A685=VOVM,66,660",     //        "A685"  "VOVM"     "V-VS"  66
+         "A686=VXVM,66,660",     //        "A686"  "VXVM"     "V-VS"  66
+         "A6C0=VSRSV,64,640",    //        "A6C0"  "VSRSV"    "V-S"   64
+         "A6C1=VMRSV,64,640",    //        "A6C1"  "VMRSV"    "V-S"   64
+         "A6C2=VSRRS,64,640",    //        "A6C2"  "VSRRS"    "V-S"   64
+         "A6C3=VMRRS,64,640",    //        "A6C3"  "VMRRS"    "V-S"   64
+         "A6C4=VLVCA,64,640",    //        "A6C4"  "VLVCA"    "V-S"   64
+         "A6C5=VRCL,64,640",     //        "A6C5"  "VRCL"     "V-S"   64
+         "A6C6=VSVMM,64,640",    //        "A6C6"  "VSVMM"    "V-S"   64
+         "A6C7=VLVXA,64,640",    //        "A6C7"  "VLVXA"    "V-S"   64
+         "A6C8=VSTVP,64,640",    //        "A6C8"  "VSTVP"    "V-S"   64
+         "A6CA=VACSV,64,640",    //        "A6CA"  "VACSV"    "V-S"   64
+         "A6CB=VACRS,64,640",    //        "A6CB"  "VACRS"    "V-S"   64
+         "E400=VLI,63,630",      //        "E400"  "VLI"      "V-RSE" 63
+         "E400=VLIE,63,630",     //        "E400"  "VLIE"     "V-RSE" 63
+         "E401=VSTI,63,630",     //        "E401"  "VSTI"     "V-RSE" 63
+         "E401=VSTIE,63,630",    //        "E401"  "VSTIE"    "V-RSE" 63
+         "E410=VLID,63,630",     //        "E410"  "VLID"     "V-RSE" 63
+         "E411=VSTID,63,630",    //        "E411"  "VSTID"    "V-RSE" 63
+         "E424=VSRL,63,630",     //        "E424"  "VSRL"     "V-RSE" 63
+         "E425=VSLL,63,630",     //        "E425"  "VSLL"     "V-RSE" 63
+         "E428=VLBIX,63,630",    //        "E428"  "VLBIX"    "V-RSE" 63
+         };
+     String[]   op_table_370 =   // Table added for RPI 1209A
+        {"0D=BASR,2,20",         //    320 "0D"    "BASR"     "RR"    2
+         "4D=BAS,5,50",          //   1150 "4D"    "BAS"      "RX"    5
+         "AE=SIGP,10,100",       //   2540 "AE"    "SIGP"     "RS"   10
+         "B210=SPX,7,70",        //   2670 "B210"  "SPX"      "S"     7
+         "B211=STPX,7,70",       //   2680 "B211"  "STPX"     "S"     7
+         "B212=STAP,7,70",       //   2690 "B212"  "STAP"     "S"     7
+         "B218=PC,7,70",         //   2700 "B218"  "PC"       "S"     7
+         "B219=SAC,7,70",        //   2710 "B219"  "SAC"      "S"     7
+         "B221=IPTE,14,140",     //   2730 "B221"  "IPTE"     "RRE"  14
+         "B223=IVSK,14,140",     //   2750 "B223"  "IVSK"     "RRE"  14
+         "B224=IAC,14,140",      //   2760 "B224"  "IAC"      "RRE"  14
+         "B225=SSAR,14,140",     //   2770 "B225"  "SSAR"     "RRE"  14
+         "B226=EPAR,14,140",     //   2780 "B226"  "EPAR"     "RRE"  14
+         "B227=ESAR,14,140",     //   2790 "B227"  "ESAR"     "RRE"  14
+         "B228=PT,14,140",       //   2800 "B228"  "PT"       "RRE"  14
+         "B229=ISKE,14,140",     //   2810 "B229"  "ISKE"     "RRE"  14
+         "B22A=RRBE,14,140",     //   2820 "B22A"  "RRBE"     "RRE"  14
+         "B22B=SSKE,14,140",     //   2830 "B22B"  "SSKE"     "RRE"  14
+         "B22C=TB,14,140",       //   2840 "B22C"  "TB"       "RRE"  14
+         "D9=MVCK,17,170",       //   5310 "D9"    "MVCK"     "SS"   17
+         "DA=MVCP,17,170",       //   5320 "DA"    "MVCP"     "SS"   17
+         "DB=MVCS,17,170",       //   5330 "DB"    "MVCS"     "SS"   17
+         "E500=LASP,19,190",     //   6120 "E500"  "LASP"     "SSE"  19
+         "E501=TPROT,19,190",    //   6130 "E501"  "TPROT"    "SSE"  19
+         };
+     String[]   op_table_370_directives = // Table added for RPI 1209A
+        {"--=ACONTROL,147,--",   //   7595         "ACONTROL"       147 /RPI 368
+         "--=ADATA,132,--",      //   7450         "ADATA"          132
+         "--=AEJECT,125,--",     //   7380         "AEJECT"         125
+         "--=AINSERT,204,--",    //   7630         "AINSERT"        204
+         "--=ALIAS,106,--",      //   7190         "ALIAS"          106
+         "--=AMODE,107,--",      //   7200         "AMODE"          107
+         "--=AREAD,206,--",      //   7650         "AREAD"          206
+         "--=ASPACE,126,--",     //   7390         "ASPACE"         126
+         "--=CATTR,108,--",      //   7210         "CATTR"          108
+         "--=CCW0,102,--",       //   7150         "CCW0"           102
+         "--=CCW1,103,--",       //   7160         "CCW1"           103
+         "--=CEJECT,127,--",     //   7400         "CEJECT"         127
+         "--=CXD,111,--",        //   7240         "CXD"            111
+         "--=DXD,113,--",        //   7260         "DXD"            113
+         "--=EXITCTL,137,--",    //   7500         "EXITCTL"        137
+         "--=LOCTR,116,--",      //   7290         "LOCTR"          116
+         "--=MHELP,213,--",      //   7720         "MHELP"          213
+         "--=OPSYN,225,--",      //   7540         "OPSYN"          225
+         "--=POP,143,--",        //   7560         "POP"            143
+         "--=PUSH,145,--",       //   7580         "PUSH"           145
+         "--=RMODE,117,--",      //   7300         "RMODE"          117
+         "--=RSECT,118,--",      //   7310         "RSECT"          118
+         "--=SETAF,216,--",      //   7750         "SETAF"          216
+         "--=SETCF,219,--",      //   7780         "SETCF"          219
+         "--=XATTR,121,--",      //   7340         "XATTR"          121
+         };
+     String[]   op_table_370_notsupported = // Table added for RPI 1209A
+        {"RIO      S    9C02 D2(B2)",
+         "CLRCH    S    9F01 D2(B2)",
+         "CONCS    S    B200 D2(B2)",
+         "DISCS    S    B201 D2(B2)",
+         };
+     String[]   op_table_XA =    // Table added for RPI 1209A
+        {"0102=UPT,1,10",        //     20 "0102"  "UPT"      "E"     1
+         "0B=BSM,2,20",          //    300 "0B"    "BSM"      "RR"    2
+         "0C=BASSM,2,20",        //    310 "0C"    "BASSM"    "RR"    2
+         "99=TRACE,10,100",      //   1790 "99"    "TRACE"    "RS"   10
+         "B21A=CFC,7,70",        //   2720 "B21A"  "CFC"      "S"     7
+         "B222=IPM,14,140",      //   2740 "B222"  "IPM"      "RRE"  14
+         "B22D=DXR,14,142",      //   2850 "B22D"  "DXR"      "RRE"  14
+         "B230=CSCH,7,70",       //   2880 "B230"  "CSCH"     "S"     7
+         "B231=HSCH,7,70",       //   2890 "B231"  "HSCH"     "S"     7
+         "B232=MSCH,7,70",       //   2900 "B232"  "MSCH"     "S"     7
+         "B233=SSCH,7,70",       //   2910 "B233"  "SSCH"     "S"     7
+         "B234=STSCH,7,70",      //   2920 "B234"  "STSCH"    "S"     7
+         "B235=TSCH,7,70",       //   2930 "B235"  "TSCH"     "S"     7
+         "B236=TPI,7,70",        //   2940 "B236"  "TPI"      "S"     7
+         "B237=SAL,7,70",        //   2950 "B237"  "SAL"      "S"     7
+         "B238=RSCH,7,70",       //   2960 "B238"  "RSCH"     "S"     7
+         "B239=STCRW,7,70",      //   2970 "B239"  "STCRW"    "S"     7
+         "B23A=STCPS,7,70",      //   2980 "B23A"  "STCPS"    "S"     7
+         "B23B=RCHP,7,70",       //   2990 "B23B"  "RCHP"     "S"     7
+         "B23C=SCHM,7,70",       //   3000 "B23C"  "SCHM"     "S"     7
+         "B244=SQDR,14,142",     //   3030 "B244"  "SQDR"     "RRE"  14
+         "B245=SQER,14,142",     //   3040 "B245"  "SQER"     "RRE"  14
+         };
+     String[]   op_table_XA_notsupported = // Table added for RPI 1209A
+        {"SIE      S    B214 D2(B2)",
+         "SSK      RR   08   R1,R2",
+         "ISK      RR   09   R1,R2",
+         "WRD      SI   84   D1(B1),I2",
+         "RDD      SI   85   D1(B1),I2",
+         "SIO      S    9C00 D2(B2)",
+         "SIOF     S    9C01 D2(B2)",
+         "RIO      S    9C02 D2(B2)",
+         "TIO      S    9D00 D2(B2)",
+         "CLRIO    S    9D01 D2(B2)",
+         "HIO      S    9E00 D2(B2)",
+         "HDV      S    9E01 D2(B2)",
+         "TCH      S    9F00 D2(B2)",
+         "CLRCH    S    9F01 D2(B2)",
+         "CONCS    S    B200 D2(B2)",
+         "DISCS    S    B201 D2(B2)",
+         "STIDC    S    B203 D2(B2)",
+         "RRB      S    B213 D2(B2)",
+         };
+     String[]   op_table_ESA =   // Table added for RPI 1209A
+        {"0101=PR,1,10",         //     10 "0101"  "PR"       "E"     1
+         "0107=SCKPF,1,10",      //     30 "0107"  "SCKPF"    "E"     1
+         "010B=TAM,1,10",        //     40 "010B"  "TAM"      "E"     1
+         "010C=SAM24,1,10",      //     50 "010C"  "SAM24"    "E"     1
+         "010D=SAM31,1,10",      //     60 "010D"  "SAM31"    "E"     1
+         "01FF=TRAP2,1,10",      //     80 "01FF"  "TRAP2"    "E"     1
+         "25=LDXR,2,21",         //    560 "25"    "LDXR"     "RR"    2
+         "35=LEDR,2,21",         //    730 "35"    "LEDR"     "RR"    2
+         "51=LAE,5,52",          //   1190 "51"    "LAE"      "RX"    5
+         "71=MS,5,50",           //   1430 "71"    "MS"       "RX"    5
+         "84=BRXH,9,91",         //   1560 "84"    "BRXH"     "RSI"   9
+         "84=JXH,9,91",          //   1570 "84"    "JXH"      "RSI"   9
+         "85=BRXLE,9,91",        //   1580 "85"    "BRXLE"    "RSI"   9
+         "85=JXLE,9,91",         //   1590 "85"    "JXLE"     "RSI"   9
+         "9A=LAM,10,100",        //   1800 "9A"    "LAM"      "RS"   10
+         "9B=STAM,10,100",       //   1810 "9B"    "STAM"     "RS"   10
+         "A70=TMH,12,123",       //   1990 "A70"   "TMH"      "RI"   12
+         "A70=TMLH,12,123",      //   1980 "A70"   "TMLH"     "RI"   12
+         "A71=TML,12,123",       //   2010 "A71"   "TML"      "RI"   12
+         "A71=TMLL,12,123",      //   2000 "A71"   "TMLL"     "RI"   12
+         "A74=BRC,12,130",       //   2040 "A74"   "BRC"      "RI"   12
+         "A74m=BRm,13,130;0=;F=BRU", //    "A74m"  "BRm, BRU" "BRCX" 13
+         "A74m=Jm,13,130;0=JNOP", //       "A74m"  "Jm, JNOP" "BRCX" 13
+         "A75=BRAS,12,121",      //   2360 "A75"   "BRAS"     "RI"   12
+         "A75=JAS,12,121",       //   2370 "A75"   "JAS"      "RI"   12
+         "A76=BRCT,12,121",      //   2380 "A76"   "BRCT"     "RI"   12
+         "A76=JCT,12,121",       //   2390 "A76"   "JCT"      "RI"   12
+         "A78=LHI,12,122",       //   2420 "A78"   "LHI"      "RI"   12
+         "A7A=AHI,12,122",       //   2440 "A7A"   "AHI"      "RI"   12
+         "A7C=MHI,12,122",       //   2460 "A7C"   "MHI"      "RI"   12
+         "A7E=CHI,12,122",       //   2480 "A7E"   "CHI"      "RI"   12
+         "A8=MVCLE,10,104",      //   2500 "A8"    "MVCLE"    "RS"   10
+         "A9=CLCLE,10,104",      //   2510 "A9"    "CLCLE"    "RS"   10
+         "B240=BAKR,14,140",     //   3010 "B240"  "BAKR"     "RRE"  14
+         "B241=CKSM,14,140",     //   3020 "B241"  "CKSM"     "RRE"  14
+         "B246=STURA,14,140",    //   3050 "B246"  "STURA"    "RRE"  14
+         "B247=MSTA,14,140",     //   3060 "B247"  "MSTA"     "RRE"  14
+         "B248=PALB,14,140",     //   3070 "B248"  "PALB"     "RRE"  14
+         "B249=EREG,14,140",     //   3080 "B249"  "EREG"     "RRE"  14
+         "B24A=ESTA,14,140",     //   3090 "B24A"  "ESTA"     "RRE"  14
+         "B24B=LURA,14,140",     //   3100 "B24B"  "LURA"     "RRE"  14
+         "B24C=TAR,14,140",      //   3110 "B24C"  "TAR"      "RRE"  14
+         "B24D=CPYA,14,149",     //   3120 "B24D"  "CPYA"     "RRE"  14
+         "B24E=SAR,14,149",      //   3130 "B24E"  "SAR"      "RRE"  14
+         "B24F=EAR,14,149",      //   3140 "B24F"  "EAR"      "RRE"  14
+         "B252=MSR,14,140",      //   3160 "B252"  "MSR"      "RRE"  14
+         "B254=MVPG,14,140",     //   3170 "B254"  "MVPG"     "RRE"  14
+         "B255=MVST,14,140",     //   3180 "B255"  "MVST"     "RRE"  14
+         "B257=CUSE,14,140",     //   3190 "B257"  "CUSE"     "RRE"  14
+         "B258=BSG,14,140",      //   3200 "B258"  "BSG"      "RRE"  14
+         "B25A=BSA,14,140",      //   3210 "B25A"  "BSA"      "RRE"  14
+         "B25D=CLST,14,140",     //   3220 "B25D"  "CLST"     "RRE"  14
+         "B25E=SRST,14,140",     //   3230 "B25E"  "SRST"     "RRE"  14
+         "B263=CMPSC,14,140",    //   3240 "B263"  "CMPSC"    "RRE"  14
+         "B276=XSCH,7,70",       //   3250 "B276"  "XSCH"     "S"     7
+         "B277=RP,7,70",         //   3260 "B277"  "RP"       "S"     7
+         "B278=STCKE,7,70",      //   3270 "B278"  "STCKE"    "S"     7
+         "B279=SACF,7,70",       //   3280 "B279"  "SACF"     "S"     7
+         "B27D=STSI,7,70",       //   3290 "B27D"  "STSI"     "S"     7
+         "B299=SRNM,7,71",       //   3300 "B299"  "SRNM"     "S"     7
+         "B29C=STFPC,7,72",      //   3310 "B29C"  "STFPC"    "S"     7
+         "B29D=LFPC,7,72",       //   3320 "B29D"  "LFPC"     "S"     7
+         "B2A5=TRE,14,140",      //   3330 "B2A5"  "TRE"      "RRE"  14
+         "B2A6=CUUTF,14,140",    //   3340 "B2A6"  "CUUTF"    "RRE"  14
+         "B2A7=CUTFU,14,140",    //   3360 "B2A7"  "CUTFU"    "RRE"  14
+         "B2B1=STFL,7,70",       //   3380 "B2B1"  "STFL"     "S"     7
+         "B2FF=TRAP4,7,70",      //   3400 "B2FF"  "TRAP4"    "S"     7
+         "B300=LPEBR,14,142",    //   3410 "B300"  "LPEBR"    "RRE"  14
+         "B301=LNEBR,14,142",    //   3420 "B301"  "LNEBR"    "RRE"  14
+         "B302=LTEBR,14,142",    //   3430 "B302"  "LTEBR"    "RRE"  14
+         "B303=LCEBR,14,142",    //   3440 "B303"  "LCEBR"    "RRE"  14
+         "B304=LDEBR,14,142",    //   3450 "B304"  "LDEBR"    "RRE"  14
+         "B305=LXDBR,14,142",    //   3460 "B305"  "LXDBR"    "RRE"  14
+         "B306=LXEBR,14,142",    //   3470 "B306"  "LXEBR"    "RRE"  14
+         "B307=MXDBR,14,142",    //   3480 "B307"  "MXDBR"    "RRE"  14
+         "B308=KEBR,14,142",     //   3490 "B308"  "KEBR"     "RRE"  14
+         "B309=CEBR,14,142",     //   3500 "B309"  "CEBR"     "RRE"  14
+         "B30A=AEBR,14,142",     //   3510 "B30A"  "AEBR"     "RRE"  14
+         "B30B=SEBR,14,142",     //   3520 "B30B"  "SEBR"     "RRE"  14
+         "B30C=MDEBR,14,142",    //   3530 "B30C"  "MDEBR"    "RRE"  14
+         "B30D=DEBR,14,142",     //   3540 "B30D"  "DEBR"     "RRE"  14
+         "B30E=MAEBR,15,150",    //   3550 "B30E"  "MAEBR"    "RRF1" 15
+         "B30F=MSEBR,15,150",    //   3560 "B30F"  "MSEBR"    "RRF1" 15
+         "B310=LPDBR,14,142",    //   3570 "B310"  "LPDBR"    "RRE"  14
+         "B311=LNDBR,14,142",    //   3580 "B311"  "LNDBR"    "RRE"  14
+         "B312=LTDBR,14,142",    //   3590 "B312"  "LTDBR"    "RRE"  14
+         "B313=LCDBR,14,142",    //   3600 "B313"  "LCDBR"    "RRE"  14
+         "B314=SQEBR,14,142",    //   3610 "B314"  "SQEBR"    "RRE"  14
+         "B315=SQDBR,14,142",    //   3620 "B315"  "SQDBR"    "RRE"  14
+         "B316=SQXBR,14,142",    //   3630 "B316"  "SQXBR"    "RRE"  14
+         "B317=MEEBR,14,142",    //   3640 "B317"  "MEEBR"    "RRE"  14
+         "B318=KDBR,14,142",     //   3650 "B318"  "KDBR"     "RRE"  14
+         "B319=CDBR,14,142",     //   3660 "B319"  "CDBR"     "RRE"  14
+         "B31A=ADBR,14,142",     //   3670 "B31A"  "ADBR"     "RRE"  14
+         "B31B=SDBR,14,142",     //   3680 "B31B"  "SDBR"     "RRE"  14
+         "B31C=MDBR,14,142",     //   3690 "B31C"  "MDBR"     "RRE"  14
+         "B31D=DDBR,14,142",     //   3700 "B31D"  "DDBR"     "RRE"  14
+         "B31E=MADBR,15,150",    //   3710 "B31E"  "MADBR"    "RRF1" 15
+         "B31F=MSDBR,15,150",    //   3720 "B31F"  "MSDBR"    "RRF1" 15
+         "B324=LDER,14,142",     //   3730 "B324"  "LDER"     "RRE"  14
+         "B325=LXDR,14,142",     //   3740 "B325"  "LXDR"     "RRE"  14
+         "B326=LXER,14,142",     //   3750 "B326"  "LXER"     "RRE"  14
+         "B336=SQXR,14,142",     //   3780 "B336"  "SQXR"     "RRE"  14
+         "B337=MEER,14,142",     //   3790 "B337"  "MEER"     "RRE"  14
+         "B340=LPXBR,14,142",    //   3820 "B340"  "LPXBR"    "RRE"  14
+         "B341=LNXBR,14,142",    //   3830 "B341"  "LNXBR"    "RRE"  14
+         "B342=LTXBR,14,142",    //   3840 "B342"  "LTXBR"    "RRE"  14
+         "B343=LCXBR,14,142",    //   3850 "B343"  "LCXBR"    "RRE"  14
+         "B344=LEDBR,53,142",    //   3860 "B344"  "LEDBR"    "RRE"  53 RPI 1125
+         "B345=LDXBR,53,142",    //   3870 "B345"  "LDXBR"    "RRE"  53 RPI 1125
+         "B346=LEXBR,53,142",    //   3880 "B346"  "LEXBR"    "RRE"  53 RPI 1125
+         "B347=FIXBR,54,340",    //   3890 "B347"  "FIXBR"    "RRF2" 54 RPI 1125
+         "B348=KXBR,14,142",     //   3900 "B348"  "KXBR"     "RRE"  14
+         "B349=CXBR,14,142",     //   3910 "B349"  "CXBR"     "RRE"  14
+         "B34A=AXBR,14,142",     //   3920 "B34A"  "AXBR"     "RRE"  14
+         "B34B=SXBR,14,142",     //   3930 "B34B"  "SXBR"     "RRE"  14
+         "B34C=MXBR,14,142",     //   3940 "B34C"  "MXBR"     "RRE"  14
+         "B34D=DXBR,14,142",     //   3950 "B34D"  "DXBR"     "RRE"  14
+         "B350=TBEDR,34,340",    //   3960 "B350"  "TBEDR"    "RRF2" 34
+         "B351=TBDR,34,340",     //   3970 "B351"  "TBDR"     "RRF2" 34
+         "B353=DIEBR,30,300",    //   3980 "B353"  "DIEBR"    "RRF2" 30
+         "B357=FIEBR,54,340",    //   3990 "B357"  "FIEBR"    "RRF2" 54 RPI 1125
+         "B358=THDER,14,142",    //   4000 "B358"  "THDER"    "RRE"  14
+         "B359=THDR,14,142",     //   4010 "B359"  "THDR"     "RRE"  14
+         "B35B=DIDBR,30,300",    //   4020 "B35B"  "DIDBR"    "RRF2" 30
+         "B35F=FIDBR,54,340",    //   4030 "B35F"  "FIDBR"    "RRF2" 54 RPI 1125
+         "B360=LPXR,14,142",     //   4040 "B360"  "LPXR"     "RRE"  14
+         "B361=LNXR,14,142",     //   4050 "B361"  "LNXR"     "RRE"  14
+         "B362=LTXR,14,142",     //   4060 "B362"  "LTXR"     "RRE"  14
+         "B363=LCXR,14,142",     //   4070 "B363"  "LCXR"     "RRE"  14
+         "B365=LXR,14,142",      //   4080 "B365"  "LXR"      "RRE"  14
+         "B366=LEXR,14,142",     //   4090 "B366"  "LEXR"     "RRE"  14
+         "B367=FIXR,14,142",     //   4100 "B367"  "FIXR"     "RRE"  14
+         "B369=CXR,14,142",      //   4110 "B369"  "CXR"      "RRE"  14
+         "B374=LZER,14,142",     //   4120 "B374"  "LZER"     "RRE"  14
+         "B375=LZDR,14,142",     //   4130 "B375"  "LZDR"     "RRE"  14
+         "B376=LZXR,14,142",     //   4140 "B376"  "LZXR"     "RRE"  14
+         "B377=FIER,14,142",     //   4150 "B377"  "FIER"     "RRE"  14
+         "B37F=FIDR,14,142",     //   4160 "B37F"  "FIDR"     "RRE"  14
+         "B384=SFPC,14,142",     //   4170 "B384"  "SFPC"     "RRE"  14
+         "B38C=EFPC,14,142",     //   4180 "B38C"  "EFPC"     "RRE"  14
+         "B394=CEFBR,53,146",    //   4190 "B394"  "CEFBR"    "RRE"  53 RPI 1125 Z196
+         "B395=CDFBR,53,146",    //   4200 "B395"  "CDFBR"    "RE3"  53 RPI 1125 Z196
+         "B396=CXFBR,53,146",    //   4210 "B396"  "CXFBR"    "RE3"  53 RPI 1125 Z196
+         "B398=CFEBR,54,341",    //   4220 "B398"  "CFEBR"    "RRF7" 54 RPI 1125 Z196
+         "B399=CFDBR,54,341",    //   4230 "B399"  "CFDBR"    "RRF7" 54 RPI 1125 Z196
+         "B39A=CFXBR,54,341",    //   4240 "B39A"  "CFXBR"    "RRF7" 54 RPI 1125 Z196
+         "B3B4=CEFR,14,146",     //   4310 "B3B4"  "CEFR"     "RRE"  14
+         "B3B5=CDFR,14,146",     //   4320 "B3B5"  "CDFR"     "RRE"  14
+         "B3B6=CXFR,14,146",     //   4330 "B3B6"  "CXFR"     "RRE"  14
+         "B3B8=CFER,34,341",     //   4340 "B3B8"  "CFER"     "RRF2" 34
+         "B3B9=CFDR,34,341",     //   4350 "B3B9"  "CFDR"     "RRF2" 34
+         "B3BA=CFXR,34,341",     //   4360 "B3BA"  "CFXR"     "RRF2" 34
+         "B91F=LRVR,14,144",     //   4730 "B91F"  "LRVR"     "RRE"  14
+         "B98D=EPSW,14,144",     //   4920 "B98D"  "EPSW"     "RRE"  14
+         "B996=MLR,14,144",      //   4980 "B996"  "MLR"      "RRE"  14
+         "B997=DLR,14,144",      //   4990 "B997"  "DLR"      "RRE"  14
+         "B998=ALCR,14,144",     //   5000 "B998"  "ALCR"     "RRE"  14
+         "B999=SLBR,14,144",     //   5010 "B999"  "SLBR"     "RRE"  14
+         "C00=LARL,16,162",      //   5170 "C00"   "LARL"     "RIL"  16
+         "C04=BRCL,16,330",      //   5180 "C04"   "BRCL"     "RIL"  16
+         "C05=BRASL,16,163",     //   5210 "C05"   "BRASL"    "RIL"  16
+         "C05=JASL,16,163",      //   5220 "C05"   "JASL"     "RIL"  16
+         "E31E=LRV,18,180",      //   5620 "E31E"  "LRV"      "RXY"  18
+         "E31F=LRVH,18,182",     //   5630 "E31F"  "LRVH"     "RXY"  18
+         "E33E=STRV,18,180",     //   5720 "E33E"  "STRV"     "RXY"  18
+         "E33F=STRVH,18,182",    //   5730 "E33F"  "STRVH"    "RXY"  18
+         "E396=ML,18,180",       //   6080 "E396"  "ML"       "RXY"  18
+         "E397=DL,18,180",       //   6090 "E397"  "DL"       "RXY"  18
+         "E398=ALC,18,187",      //   6100 "E398"  "ALC"      "RXY"  18
+         "E399=SLB,18,187",      //   6110 "E399"  "SLB"      "RXY"  18
+         "E50E=MVCSK,19,190",    //   6150 "E50E"  "MVCSK"    "SSE"  19
+         "E50F=MVCDK,19,190",    //   6160 "E50F"  "MVCDK"    "SSE"  19
+         "EB1D=RLL,20,204",      //   6280 "EB1D"  "RLL"      "RSY"  20
+         "ED04=LDEB,24,240",     //   6620 "ED04"  "LDEB"     "RXE"  24
+         "ED05=LXDB,24,240",     //   6630 "ED05"  "LXDB"     "RXE"  24
+         "ED06=LXEB,24,240",     //   6640 "ED06"  "LXEB"     "RXE"  24
+         "ED07=MXDB,24,240",     //   6650 "ED07"  "MXDB"     "RXE"  24
+         "ED08=KEB,24,240",      //   6660 "ED08"  "KEB"      "RXE"  24
+         "ED09=CEB,24,240",      //   6670 "ED09"  "CEB"      "RXE"  24
+         "ED0A=AEB,24,240",      //   6680 "ED0A"  "AEB"      "RXE"  24
+         "ED0B=SEB,24,240",      //   6690 "ED0B"  "SEB"      "RXE"  24
+         "ED0C=MDEB,24,240",     //   6700 "ED0C"  "MDEB"     "RXE"  24
+         "ED0D=DEB,24,240",      //   6710 "ED0D"  "DEB"      "RXE"  24
+         "ED0E=MAEB,25,250",     //   6720 "ED0E"  "MAEB"     "RXF"  25
+         "ED0F=MSEB,25,250",     //   6730 "ED0F"  "MSEB"     "RXF"  25
+         "ED10=TCEB,24,240",     //   6740 "ED10"  "TCEB"     "RXE"  24
+         "ED11=TCDB,24,240",     //   6750 "ED11"  "TCDB"     "RXE"  24
+         "ED12=TCXB,24,240",     //   6760 "ED12"  "TCXB"     "RXE"  24
+         "ED14=SQEB,24,240",     //   6770 "ED14"  "SQEB"     "RXE"  24
+         "ED15=SQDB,24,240",     //   6780 "ED15"  "SQDB"     "RXE"  24
+         "ED17=MEEB,24,240",     //   6790 "ED17"  "MEEB"     "RXE"  24
+         "ED18=KDB,24,240",      //   6800 "ED18"  "KDB"      "RXE"  24
+         "ED19=CDB,24,240",      //   6810 "ED19"  "CDB"      "RXE"  24
+         "ED1A=ADB,24,240",      //   6820 "ED1A"  "ADB"      "RXE"  24
+         "ED1B=SDB,24,240",      //   6830 "ED1B"  "SDB"      "RXE"  24
+         "ED1C=MDB,24,240",      //   6840 "ED1C"  "MDB"      "RXE"  24
+         "ED1D=DDB,24,240",      //   6850 "ED1D"  "DDB"      "RXE"  24
+         "ED1E=MADB,25,250",     //   6860 "ED1E"  "MADB"     "RXF"  25
+         "ED1F=MSDB,25,250",     //   6870 "ED1F"  "MSDB"     "RXF"  25
+         "ED24=LDE,24,240",      //   6880 "ED24"  "LDE"      "RXE"  24
+         "ED25=LXD,24,240",      //   6890 "ED25"  "LXD"      "RXE"  24
+         "ED26=LXE,24,240",      //   6900 "ED26"  "LXE"      "RXE"  24
+         "ED34=SQE,24,240",      //   6930 "ED34"  "SQE"      "RXE"  24
+         "ED35=SQD,24,240",      //   6940 "ED35"  "SQD"      "RXE"  24
+         "ED37=MEE,24,240",      //   6950 "ED37"  "MEE"      "RXE"  24
+         "EE=PLO,27,270",        //   7020 "EE"    "PLO"      "SS3"  27
+         };
+     String[]   op_table_ESA_notsupported = // Table added for RPI 1209A
+        {"JC       RI   A7.4 M1,I2",
+         "JLC      RIL  C0.4 M1,I2",
+         "JLNOP    RIL  C004 I2",
+         };
+     String[]   op_table_ZOP =   // Table added for RPI 1209A
+        {"010E=SAM64,1,10",      //     70 "010E"  "SAM64"    "E"     1
+         "A50=IIHH,12,120",      //   1820 "A50"   "IIHH"     "RI"   12
+         "A51=IIHL,12,120",      //   1830 "A51"   "IIHL"     "RI"   12
+         "A52=IILH,12,120",      //   1840 "A52"   "IILH"     "RI"   12
+         "A53=IILL,12,120",      //   1850 "A53"   "IILL"     "RI"   12
+         "A54=NIHH,12,120",      //   1860 "A54"   "NIHH"     "RI"   12
+         "A55=NIHL,12,120",      //   1870 "A55"   "NIHL"     "RI"   12
+         "A56=NILH,12,120",      //   1880 "A56"   "NILH"     "RI"   12
+         "A57=NILL,12,120",      //   1890 "A57"   "NILL"     "RI"   12
+         "A58=OIHH,12,120",      //   1900 "A58"   "OIHH"     "RI"   12
+         "A59=OIHL,12,120",      //   1910 "A59"   "OIHL"     "RI"   12
+         "A5A=OILH,12,120",      //   1920 "A5A"   "OILH"     "RI"   12
+         "A5B=OILL,12,120",      //   1930 "A5B"   "OILL"     "RI"   12
+         "A5C=LLIHH,12,120",     //   1940 "A5C"   "LLIHH"    "RI"   12
+         "A5D=LLIHL,12,120",     //   1950 "A5D"   "LLIHL"    "RI"   12
+         "A5E=LLILH,12,120",     //   1960 "A5E"   "LLILH"    "RI"   12
+         "A5F=LLILL,12,120",     //   1970 "A5F"   "LLILL"    "RI"   12
+         "A72=TMHH,12,123",      //   2020 "A72"   "TMHH"     "RI"   12
+         "A73=TMHL,12,123",      //   2030 "A73"   "TMHL"     "RI"   12
+         "A77=BRCTG,12,121",     //   2400 "A77"   "BRCTG"    "RI"   12
+         "A77=JCTG,12,121",      //   2410 "A77"   "JCTG"     "RI"   12
+         "A79=LGHI,12,123",      //   2430 "A79"   "LGHI"     "RI"   12
+         "A7B=AGHI,12,123",      //   2450 "A7B"   "AGHI"     "RI"   12
+         "A7D=MGHI,12,123",      //   2470 "A7D"   "MGHI"     "RI"   12
+         "A7F=CGHI,12,123",      //   2490 "A7F"   "CGHI"     "RI"   12
+         "B250=CSP,14,140",      //   3150 "B250"  "CSP"      "RRE"  14
+         "B2B2=LPSWE,7,70",      //   3390 "B2B2"  "LPSWE"    "S"     7
+         "B3A4=CEGBR,53,141",    //   4250 "B3A4"  "CEGBR"    "RRE"  53 RPI 1125 Z196
+         "B3A5=CDGBR,53,141",    //   4260 "B3A5"  "CDGBR"    "RRE"  53 RPI 1125 Z196
+         "B3A6=CXGBR,53,141",    //   4270 "B3A6"  "CXGBR"    "RRE"  53 RPI 1125 Z196
+         "B3A8=CGEBR,54,342",    //   4280 "B3A8"  "CGEBR"    "RRF2" 54 RPI 1125 Z196
+         "B3A9=CGDBR,54,342",    //   4290 "B3A9"  "CGDBR"    "RRF2" 54 RPI 1125 Z1964
+         "B3AA=CGXBR,54,342",    //   4300 "B3AA"  "CGXBR"    "RRF2" 54 RPI 1125 Z1964
+         "B3C4=CEGR,14,141",     //   4370 "B3C4"  "CEGR"     "RRE"  14
+         "B3C5=CDGR,14,141",     //   4380 "B3C5"  "CDGR"     "RRE"  14
+         "B3C6=CXGR,14,141",     //   4390 "B3C6"  "CXGR"     "RRE"  14
+         "B3C8=CGER,34,342",     //   4400 "B3C8"  "CGER"     "RRF2" 34
+         "B3C9=CGDR,34,342",     //   4410 "B3C9"  "CGDR"     "RRF2" 34
+         "B3CA=CGXR,34,342",     //   4420 "B3CA"  "CGXR"     "RRF2" 34
+         "B900=LPGR,14,144",     //   4450 "B900"  "LPGR"     "RRE"  14
+         "B901=LNGR,14,144",     //   4460 "B901"  "LNGR"     "RRE"  14
+         "B902=LTGR,14,144",     //   4470 "B902"  "LTGR"     "RRE"  14
+         "B903=LCGR,14,144",     //   4480 "B903"  "LCGR"     "RRE"  14
+         "B904=LGR,14,144",      //   4490 "B904"  "LGR"      "RRE"  14
+         "B905=LURAG,14,144",    //   4500 "B905"  "LURAG"    "RRE"  14
+         "B908=AGR,14,144",      //   4510 "B908"  "AGR"      "RRE"  14
+         "B909=SGR,14,144",      //   4520 "B909"  "SGR"      "RRE"  14
+         "B90A=ALGR,14,144",     //   4530 "B90A"  "ALGR"     "RRE"  14
+         "B90B=SLGR,14,144",     //   4540 "B90B"  "SLGR"     "RRE"  14
+         "B90C=MSGR,14,144",     //   4550 "B90C"  "MSGR"     "RRE"  14
+         "B90D=DSGR,14,144",     //   4560 "B90D"  "DSGR"     "RRE"  14
+         "B90E=EREGG,14,144",    //   4570 "B90E"  "EREGG"    "RRE"  14
+         "B90F=LRVGR,14,144",    //   4580 "B90F"  "LRVGR"    "RRE"  14
+         "B910=LPGFR,14,148",    //   4590 "B910"  "LPGFR"    "RRE"  14
+         "B911=LNGFR,14,148",    //   4600 "B911"  "LNGFR"    "RRE"  14
+         "B912=LTGFR,14,148",    //   4610 "B912"  "LTGFR"    "RRE"  14
+         "B913=LCGFR,14,148",    //   4620 "B913"  "LCGFR"    "RRE"  14
+         "B914=LGFR,14,148",     //   4630 "B914"  "LGFR"     "RRE"  14
+         "B916=LLGFR,14,148",    //   4640 "B916"  "LLGFR"    "RRE"  14
+         "B917=LLGTR,14,144",    //   4650 "B917"  "LLGTR"    "RRE"  14
+         "B918=AGFR,14,148",     //   4660 "B918"  "AGFR"     "RRE"  14
+         "B919=SGFR,14,148",     //   4670 "B919"  "SGFR"     "RRE"  14
+         "B91A=ALGFR,14,148",    //   4680 "B91A"  "ALGFR"    "RRE"  14
+         "B91B=SLGFR,14,148",    //   4690 "B91B"  "SLGFR"    "RRE"  14
+         "B91C=MSGFR,14,148",    //   4700 "B91C"  "MSGFR"    "RRE"  14
+         "B91D=DSGFR,14,148",    //   4710 "B91D"  "DSGFR"    "RRE"  14
+         "B920=CGR,14,144",      //   4740 "B920"  "CGR"      "RRE"  14
+         "B921=CLGR,14,144",     //   4750 "B921"  "CLGR"     "RRE"  14
+         "B925=STURG,14,144",    //   4760 "B925"  "STURG"    "RRE"  14
+         "B930=CGFR,14,144",     //   4790 "B930"  "CGFR"     "RRE"  14
+         "B931=CLGFR,14,144",    //   4800 "B931"  "CLGFR"    "RRE"  14
+         "B946=BCTGR,14,144",    //   4830 "B946"  "BCTGR"    "RRE"  14
+         "B980=NGR,14,144",      //   4840 "B980"  "NGR"      "RRE"  14
+         "B981=OGR,14,144",      //   4850 "B981"  "OGR"      "RRE"  14
+         "B982=XGR,14,144",      //   4860 "B982"  "XGR"      "RRE"  14
+         "B986=MLGR,14,144",     //   4870 "B986"  "MLGR"     "RRE"  14
+         "B987=DLGR,14,144",     //   4880 "B987"  "DLGR"     "RRE"  14
+         "B988=ALCGR,14,144",    //   4890 "B988"  "ALCGR"    "RRE"  14
+         "B989=SLBGR,14,144",    //   4900 "B989"  "SLBGR"    "RRE"  14
+         "B990=TRTT,14,143",     //   4940 "B990"  "TRTT"     "RRE"  14
+         "B991=TRTO,14,143",     //   4950 "B991"  "TRTO"     "RRE"  14
+         "B992=TROT,14,143",     //   4960 "B992"  "TROT"     "RRE"  14
+         "B993=TROO,14,143",     //   4970 "B993"  "TROO"     "RRE"  14
+         "B99D=ESEA,14,144",     //   5040 "B99D"  "ESEA"     "RRE"  14
+         "C04m=BRmL,33,330;F=BRUL;0=", //   "C04m"  "BRmL"     "BLX"  33
+         "C04m=JLm,33,330;F=JLU;0=JLNOP", //"C04m"  "JLm"      "BLX"  33
+         "E1=PKU,17,170",        //   5380 "E1"    "PKU"      "RXSS" 17
+         "E2=UNPKU,17,170",      //   5390 "E2"    "UNPKU"    "SS"   17
+         "E303=LRAG,18,180",     //   5400 "E303"  "LRAG"     "RXY"  18
+         "E304=LG,18,180",       //   5410 "E304"  "LG"       "RXY"  18
+         "E308=AG,18,180",       //   5430 "E308"  "AG"       "RXY"  18
+         "E309=SG,18,180",       //   5440 "E309"  "SG"       "RXY"  18
+         "E30A=ALG,18,180",      //   5450 "E30A"  "ALG"      "RXY"  18
+         "E30B=SLG,18,180",      //   5460 "E30B"  "SLG"      "RXY"  18
+         "E30C=MSG,18,180",      //   5470 "E30C"  "MSG"      "RXY"  18
+         "E30D=DSG,18,180",      //   5480 "E30D"  "DSG"      "RXY"  18
+         "E30E=CVBG,18,188",     //   5490 "E30E"  "CVBG"     "RXY"  18
+         "E30F=LRVG,18,180",     //   5500 "E30F"  "LRVG"     "RXY"  18
+         "E314=LGF,18,184",      //   5520 "E314"  "LGF"      "RXY"  18
+         "E315=LGH,18,182",      //   5530 "E315"  "LGH"      "RXY"  18
+         "E316=LLGF,18,184",     //   5540 "E316"  "LLGF"     "RXY"  18
+         "E317=LLGT,18,180",     //   5550 "E317"  "LLGT"     "RXY"  18
+         "E318=AGF,18,184",      //   5560 "E318"  "AGF"      "RXY"  18
+         "E319=SGF,18,184",      //   5570 "E319"  "SGF"      "RXY"  18
+         "E31A=ALGF,18,184",     //   5580 "E31A"  "ALGF"     "RXY"  18
+         "E31B=SLGF,18,184",     //   5590 "E31B"  "SLGF"     "RXY"  18
+         "E31C=MSGF,18,184",     //   5600 "E31C"  "MSGF"     "RXY"  18
+         "E31D=DSGF,18,184",     //   5610 "E31D"  "DSGF"     "RXY"  18
+         "E320=CG,18,180",       //   5640 "E320"  "CG"       "RXY"  18
+         "E321=CLG,18,180",      //   5650 "E321"  "CLG"      "RXY"  18
+         "E324=STG,18,180",      //   5660 "E324"  "STG"      "RXY"  18
+         "E32E=CVDG,18,188",     //   5680 "E32E"  "CVDG"     "RXY"  18
+         "E32F=STRVG,18,180",    //   5690 "E32F"  "STRVG"    "RXY"  18
+         "E330=CGF,18,184",      //   5700 "E330"  "CGF"      "RXY"  18
+         "E331=CLGF,18,184",     //   5710 "E331"  "CLGF"     "RXY"  18
+         "E346=BCTG,18,180",     //   5740 "E346"  "BCTG"     "RXY"  18
+         "E380=NG,18,180",       //   5970 "E380"  "NG"       "RXY"  18
+         "E381=OG,18,180",       //   5980 "E381"  "OG"       "RXY"  18
+         "E382=XG,18,180",       //   5990 "E382"  "XG"       "RXY"  18
+         "E386=MLG,18,183",      //   6000 "E386"  "MLG"      "RXY"  18
+         "E387=DLG,18,183",      //   6010 "E387"  "DLG"      "RXY"  18
+         "E388=ALCG,18,180",     //   6020 "E388"  "ALCG"     "RXY"  18
+         "E389=SLBG,18,180",     //   6030 "E389"  "SLBG"     "RXY"  18
+         "E38E=STPQ,18,180",     //   6040 "E38E"  "STPQ"     "RXY"  18
+         "E38F=LPQ,18,180",      //   6050 "E38F"  "LPQ"      "RXY"  18
+         "E390=LLGC,18,185",     //   6060 "E390"  "LLGC"     "RXY"  18
+         "E391=LLGH,18,182",     //   6070 "E391"  "LLGH"     "RXY"  18
+         "E502=STRAG,19,190",    //   6140 "E502"  "STRAG"    "SSE"  19
+         "E9=PKA,31,310",        //   6180 "E9"    "PKA"      "SS"   31
+         "EA=UNPKA,17,170",      //   6190 "EA"    "UNPKA"    "SS"   17
+         "EB04=LMG,20,206",      //   6200 "EB04"  "LMG"      "RSY"  20
+         "EB0A=SRAG,20,203",     //   6210 "EB0A"  "SRAG"     "RSY"  20
+         "EB0B=SLAG,20,203",     //   6220 "EB0B"  "SLAG"     "RSY"  20
+         "EB0C=SRLG,20,203",     //   6230 "EB0C"  "SRLG"     "RSY"  20
+         "EB0D=SLLG,20,203",     //   6240 "EB0D"  "SLLG"     "RSY"  20
+         "EB0F=TRACG,20,206",    //   6250 "EB0F"  "TRACG"    "RSY"  20
+         "EB1C=RLLG,20,203",     //   6270 "EB1C"  "RLLG"     "RSY"  20
+         "EB20=CLMH,20,201",     //   6290 "EB20"  "CLMH"     "RSY"  20
+         "EB24=STMG,20,206",     //   6310 "EB24"  "STMG"     "RSY"  20
+         "EB25=STCTG,20,206",    //   6320 "EB25"  "STCTG"    "RSY"  20
+         "EB26=STMH,20,206",     //   6330 "EB26"  "STMH"     "RSY"  20
+         "EB2C=STCMH,20,201",    //   6340 "EB2C"  "STCMH"    "RSY"  20
+         "EB2F=LCTLG,20,206",    //   6360 "EB2F"  "LCTLG"    "RSY"  20
+         "EB30=CSG,20,206",      //   6370 "EB30"  "CSG"      "RSY"  20
+         "EB3E=CDSG,20,206",     //   6390 "EB3E"  "CDSG"     "RSY"  20
+         "EB44=BXHG,20,205",     //   6400 "EB44"  "BXHG"     "RSY"  20
+         "EB45=BXLEG,20,205",    //   6410 "EB45"  "BXLEG"    "RSY"  20
+         "EB80=ICMH,20,201",     //   6480 "EB80"  "ICMH"     "RSY"  20
+         "EB8E=MVCLU,20,200",    //   6500 "EB8E"  "MVCLU"    "RSY"  20
+         "EB8F=CLCLU,20,200",    //   6510 "EB8F"  "CLCLU"    "RSY"  20
+         "EB96=LMH,20,200",      //   6530 "EB96"  "LMH"      "RSY"  20
+         "EBC0=TP,22,220",       //   6570 "EBC0"  "TP"       "RSL"  22
+         "EC44=BRXHG,23,230",    //   6580 "EC44"  "BRXHG"    "RIE"  23
+         "EC44=JXHG,23,230",     //   6590 "EC44"  "JXHG"     "RIE"  23
+         "EC45=BRXLG,23,230",    //   6600 "EC45"  "BRXLG"    "RIE"  23
+         "EC45=JXLEG,23,230",    //   6610 "EC45"  "JXLEG"    "RIE"  23
+         "EF=LMD,28,280",        //   7030 "EF"    "LMD"      "SS4"  28
+         };
+     String[]   op_table_YOP =   // Table added for RPI 1209A
+        {"B2A6=CU21,14,140",     //   3350 "B2A6"  "CU21"     "RRE"  14
+         "B2A7=CU12,14,140",     //   3370 "B2A7"  "CU12"     "RRE"  14
+         "B32E=MAER,15,150",     //   3760 "B32E"  "MAER"     "RRF1" 15
+         "B32F=MSER,15,150",     //   3770 "B32F"  "MSER"     "RRF1" 15
+         "B33E=MADR,15,150",     //   3800 "B33E"  "MADR"     "RRF1" 15
+         "B33F=MSDR,15,150",     //   3810 "B33F"  "MSDR"     "RRF1" 15
+         "B91E=KMAC,14,144",     //   4720 "B91E"  "KMAC"     "RRE"  14
+         "B92E=KM,14,144",       //   4770 "B92E"  "KM"       "RRE"  14
+         "B92F=KMC,14,144",      //   4780 "B92F"  "KMC"      "RRE"  14
+         "B93E=KIMD,14,144",     //   4810 "B93E"  "KIMD"     "RRE"  14
+         "B93F=KLMD,14,144",     //   4820 "B93F"  "KLMD"     "RRE"  14
+         "B98A=CSPG,14,144",     //   4910 "B98A"  "CSPG"     "RRE"  14
+         "B98E=IDTE,34,340",     //   4930 "B98E"  "IDTE"     "RRF2" 34
+         "B99A=EPAIR,14,144",    //   5020 "B99A"  "EPAIR"    "RRE"  14
+         "B99B=ESAIR,14,144",    //   5030 "B99B"  "ESAIR"    "RRE"  14
+         "B99E=PTI,14,144",      //   5050 "B99E"  "PTI"      "RRE"  14
+         "B99F=SSAIR,14,144",    //   5060 "B99F"  "SSAIR"    "RRE"  14
+         "B9B0=CU14,14,144",     //   5070 "B9B0"  "CU14"     "RRE"  14
+         "B9B1=CU24,14,144",     //   5080 "B9B1"  "CU24"     "RRE"  14
+         "B9B2=CU41,14,144",     //   5090 "B9B2"  "CU41"     "RRE"  14
+         "B9B3=CU42,14,144",     //   5100 "B9B3"  "CU42"     "RRE"  14
+         "B9BE=SRSTU,14,144",    //   5110 "B9BE"  "SRSTU"    "RRE"  14
+         "D0=TRTR,17,170",       //   5230 "D0"    "TRTR"     "SS"   17
+         "E306=CVBY,18,57",      //   5420 "E306"  "CVBY"     "RXY"  18
+         "E313=LRAY,18,180",     //   5510 "E313"  "LRAY"     "RXY"  18
+         "E326=CVDY,18,57",      //   5670 "E326"  "CVDY"     "RXY"  18
+         "E350=STY,18,50",       //   5750 "E350"  "STY"      "RXY"  18
+         "E351=MSY,18,50",       //   5760 "E351"  "MSY"      "RXY"  18
+         "E354=NY,18,50",        //   5770 "E354"  "NY"       "RXY"  18
+         "E355=CLY,18,50",       //   5780 "E355"  "CLY"      "RXY"  18
+         "E356=OY,18,50",        //   5790 "E356"  "OY"       "RXY"  18
+         "E357=XY,18,50",        //   5800 "E357"  "XY"       "RXY"  18
+         "E358=LY,18,50",        //   5810 "E358"  "LY"       "RXY"  18
+         "E359=CY,18,50",        //   5820 "E359"  "CY"       "RXY"  18
+         "E35A=AY,18,50",        //   5830 "E35A"  "AY"       "RXY"  18
+         "E35B=SY,18,50",        //   5840 "E35B"  "SY"       "RXY"  18
+         "E35E=ALY,18,50",       //   5850 "E35E"  "ALY"      "RXY"  18
+         "E35F=SLY,18,50",       //   5860 "E35F"  "SLY"      "RXY"  18
+         "E370=STHY,18,53",      //   5870 "E370"  "STHY"     "RXY"  18
+         "E371=LAY,18,52",       //   5880 "E371"  "LAY"      "RXY"  18
+         "E372=STCY,18,186",     //   5890 "E372"  "STCY"     "RXY"  18
+         "E373=ICY,18,186",      //   5900 "E373"  "ICY"      "RXY"  18
+         "E376=LB,18,186",       //   5910 "E376"  "LB"       "RXY"  18
+         "E377=LGB,18,185",      //   5920 "E377"  "LGB"      "RXY"  18
+         "E378=LHY,18,53",       //   5930 "E378"  "LHY"      "RXY"  18
+         "E379=CHY,18,53",       //   5940 "E379"  "CHY"      "RXY"  18
+         "E37A=AHY,18,53",       //   5950 "E37A"  "AHY"      "RXY"  18
+         "E37B=SHY,18,53",       //   5960 "E37B"  "SHY"      "RXY"  18
+         "EB14=CSY,20,200",      //   6260 "EB14"  "CSY"      "RSY"  20
+         "EB21=CLMY,20,202",     //   6300 "EB21"  "CLMY"     "RSY"  20
+         "EB2D=STCMY,20,202",    //   6350 "EB2D"  "STCMY"    "RSY"  20
+         "EB31=CDSY,20,200",     //   6380 "EB31"  "CDSY"     "RSY"  20
+         "EB51=TMY,21,210",      //   6420 "EB51"  "TMY"      "SIY"  21
+         "EB52=MVIY,21,210",     //   6430 "EB52"  "MVIY"     "SIY"  21
+         "EB54=NIY,21,210",      //   6440 "EB54"  "NIY"      "SIY"  21
+         "EB55=CLIY,21,210",     //   6450 "EB55"  "CLIY"     "SIY"  21
+         "EB56=OIY,21,210",      //   6460 "EB56"  "OIY"      "SIY"  21
+         "EB57=XIY,21,210",      //   6470 "EB57"  "XIY"      "SIY"  21
+         "EB81=ICMY,20,202",     //   6490 "EB81"  "ICMY"     "RSY"  20
+         "EB90=STMY,20,200",     //   6520 "EB90"  "STMY"     "RSY"  20
+         "EB98=LMY,20,200",      //   6540 "EB98"  "LMY"      "RSY"  20
+         "EB9A=LAMY,20,200",     //   6550 "EB9A"  "LAMY"     "RSY"  20
+         "EB9B=STAMY,20,200",    //   6560 "EB9B"  "STAMY"    "RSY"  20
+         "ED2E=MAE,25,250",      //   6910 "ED2E"  "MAE"      "RXF"  25
+         "ED2F=MSE,25,250",      //   6920 "ED2F"  "MSE"      "RXF"  25
+         "ED3E=MAD,25,250",      //   6960 "ED3E"  "MAD"      "RXF"  25
+         "ED3F=MSD,25,250",      //   6970 "ED3F"  "MSD"      "RXF"  25
+         "ED64=LEY,18,180",      //   6980 "ED64"  "LEY"      "RXY"  18
+         "ED65=LDY,18,180",      //   6990 "ED65"  "LDY"      "RXY"  18
+         "ED66=STEY,18,180",     //   7000 "ED66"  "STEY"     "RXY"  18
+         "ED67=STDY,18,180",     //   7010 "ED67"  "STDY"     "RXY"  18
+         };
+     String[]   op_table_ZS3 =   // Table added for RPI 1209A
+        {"0104=PTFF,1,10",       //        "0104"  "PTFF"     "E"     1 Z9-1
+         "010A=PFPO,1,10",       //     40 "010A"  "PFPO"     "E"     1  RPI 1013
+         "B27C=STCKF,7,70",      //        "B27C"  "STCKF"    "S"     7 Z9-2
+         "B2B0=STFLE,7,70",      //        "B2B0"  "STFLE"    "S"     7 Z9-3
+         "B2B9=SRNMT,7,71",      //   3395 "B2B9"  "SRNMT"    "S"     7 DFP 56
+         "B2BD=LFAS,7,72",       //   3395 "B2BD"  "LFAS"     "S"     7 DFP 55
+         "B338=MAYLR,15,150",    //        "B338"  "MAYLR"    "RRF1" 15 Z9-4
+         "B339=MYLR,15,150",     //        "B339"  "MYLR"     "RRF1" 15 Z9-5
+         "B33A=MAYR,15,150",     //        "B33A"  "MAYR"     "RRF1" 15 Z9-6
+         "B33B=MYR,15,150",      //        "B33B"  "MYR"      "RRF1" 15 Z9-7
+         "B33C=MAYHR,15,150",    //        "B33C"  "MAYHR"    "RRF1" 15 Z9-8
+         "B33D=MYHR,15,150",     //        "B33D"  "MYHR"     "RRF1" 15 Z9-9
+         "B370=LPDFR,14,142",    //   4115 "B370"  "LPDFR"    "RRE"  14 DFP
+         "B371=LNDFR,14,142",    //   4115 "B371"  "LNDFR"    "RRE"  14 DFP
+         "B372=CPSDR,34,340",    //   4115 "B372"  "CPSDR"    "RRF2" 34 DFP
+         "B373=LCDFR,14,142",    //   4115 "B373"  "LCDFR"    "RRE"  14 DFP
+         "B385=SFASR,14,142",    //   4175 "B385"  "SFASR"    "RRE"  14 DFP 57
+         "B3C1=LDGR,14,141",     //   4365 "B3C1"  "LDGR"     "RRE"  14 DFP
+         "B3CD=LGDR,14,145",     //   4425 "B3CD"  "LGDR"     "RRE"  14 DFP
+         "B3D0=MDTR,36,360",     //        "B3D0"  "MDTR"     "RRR"  36 DFP 1 RPI 1125
+         "B3D1=DDTR,36,360",     //        "B3D1"  "DDTR"     "RRR"  36 DFP 2 RPI 1125
+         "B3D2=ADTR,36,360",     //        "B3D2"  "ADTR"     "RRR"  36 DFP 3 RPI 1125
+         "B3D3=SDTR,36,360",     //        "B3D3"  "SDTR"     "RRR"  36 DFP 4 RPI 1125
+         "B3D4=LDETR,35,350",    //        "B3D4"  "LDETR"    "RRF4" 35 DFP 5
+         "B3D5=LEDTR,30,301",    //        "B3D5"  "LEDTR"    "RRF3" 30 DFP 6
+         "B3D6=LTDTR,14,142",    //        "B3D6"  "LTDTR"    "RRE"  14 DFP 7
+         "B3D7=FIDTR,30,301",    //        "B3D7"  "FIDTR"    "RRF3" 30 DFP 8
+         "B3D8=MXTR,36,360",     //        "B3D8"  "MXTR"     "RRR"  36 DFP 9 RPI 1125
+         "B3D9=DXTR,36,360",     //        "B3D9"  "DXTR"     "RRR"  36 DFP 10 RPI 1125
+         "B3DA=AXTR,36,360",     //        "B3DA"  "AXTR"     "RRR"  36 DFP 11 RPI 1125
+         "B3DB=SXTR,36,360",     //        "B3DB"  "SXTR"     "RRR"  36 DFP 12 RPI 1125
+         "B3DC=LXDTR,35,350",    //                "LXDTR"    "RRF4" 35 DFP 13
+         "B3DD=LDXTR,30,301",    //                "LDXTR"    "RRF3" 30 DFP 14
+         "B3DE=LTXTR,14,142",    //                "LTXTR"    "RRE"  14 DFP 15
+         "B3DF=FIXTR,30,301",    //                "FIXTR"    "RRF3" 30 DFP 16
+         "B3E0=KDTR,14,142",     //                "KDTR"     "RRE"  14 DFP 17
+         "B3E1=CGDTR,54,342",    //                "CGDTR"    "RRF7" 54 DFP 18 RPI 1125
+         "B3E2=CUDTR,14,145",    //                "CUDTR"    "RRE"  14 DFP 19
+         "B3E3=CSDTR,35,351",    //                "CSDTR"    "RRF4" 35 DFP 20
+         "B3E4=CDTR,14,142",     //                "CDTR"     "RRE"  14 DFP 21
+         "B3E5=EEDTR,14,145",    //                "EEDTR"    "RRE"  14 DFP 22
+         "B3E7=ESDTR,14,145",    //                "ESDTR"    "RRE"  14 DFP 23
+         "B3E8=KXTR,14,142",     //                "KXTR"     "RRE"  14 DFP 24
+         "B3E9=CGXTR,54,342",    //                "CGXTR"    "RRF7" 54 DFP 25 RPI 1125
+         "B3EA=CUXTR,14,145",    //                "CUXTR"    "RRE"  14 DFP 26
+         "B3EB=CSXTR,35,351",    //                "CSXTR"    "RRF4" 35 DFP 27
+         "B3EC=CXTR,14,142",     //                "CXTR"     "RRE"  14 DFP 28
+         "B3ED=EEXTR,14,145",    //                "EEXTR"    "RRE"  14 DFP 29
+         "B3EF=ESXTR,14,145",    //                "ESXTR"    "RRE"  14 DFP 30
+         "B3F1=CDGTR,53,141",    //                "CDGTR"    "RE3"  53 DFP 31 RPI 1125
+         "B3F2=CDUTR,14,141",    //                "CDUTR"    "RRE"  14 DFP 32
+         "B3F3=CDSTR,14,141",    //                "CDSTR"    "RRE"  14 DFP 33
+         "B3F4=CEDTR,14,142",    //                "CEDTR"    "RRE"  14 DFP 34
+         "B3F5=QADTR,30,300",    //                "QADTR"    "RRF3" 30 DFP 35
+         "B3F6=IEDTR,34,343",    //                "IEDTR"    "RRF2" 34 DFP 36
+         "B3F7=RRDTR,30,302",    //                "RRDTR"    "RRF3" 30 DFP 37
+         "B3F9=CXGTR,53,141",    //                "CXGTR"    "RE3"  53 DFP 38 RPI 1125
+         "B3FA=CXUTR,14,141",    //                "CXUTR"    "RRE"  14 DFP 39
+         "B3FB=CXSTR,14,141",    //                "CXSTR"    "RRE"  14 DFP 40
+         "B3FC=CEXTR,14,142",    //                "CEXTR"    "RRE"  14 DFP 41
+         "B3FD=QAXTR,30,300",    //                "QAXTR"    "RRF3" 30 DFP 42
+         "B3FE=IEXTR,34,343",    //                "IEXTR"    "RRF2" 34 DFP 43
+         "B3FF=RRXTR,30,302",    //                "RRXTR"    "RRF3" 30 DFP 44
+         "B906=LGBR,14,144",     //        "B906"  "LGBR"     "RRE"  14 Z9-10
+         "B907=LGHR,14,144",     //        "B907"  "LGHR"     "RRE"  14 Z9-11
+         "B926=LBR,14,144",      //        "B926"  "LBR"      "RRE"  14 Z9-12
+         "B927=LHR,14,144",      //        "B927"  "LHR"      "RRE"  14 Z9-13
+         "B983=FLOGR,14,144",    //        "B983"  "FLOGR"    "RRE"  14 Z9-14
+         "B984=LLGCR,14,144",    //        "B984"  "LLGCR"    "RRE"  14 Z9-15
+         "B985=LLGHR,14,144",    //        "B985"  "LLGHR"    "RRE"  14 Z9-16
+         "B994=LLCR,14,144",     //        "B994"  "LLCR"     "RRE"  14 Z9-17
+         "B995=LLHR,14,144",     //        "B995"  "LLHR"     "RRE"  14 Z9-18
+         "B9AA=LPTEA,14,144",    //        "B9AA"  "LPTEA"    "RRE"  14 Z9-19
+         "C01=LGFI,16,160",      //        "C01"   "LGFI"     "RIL"  16 Z9-20
+         "C06=XIHF,16,160",      //        "C06"   "XIHF"     "RIL"  16 Z9-21
+         "C07=XILF,16,160",      //        "C07"   "XILF"     "RIL"  16 Z9-22
+         "C08=IIHF,16,160",      //        "C08"   "IIHF"     "RIL"  16 Z9-23
+         "C09=IILF,16,160",      //        "C09"   "IILF"     "RIL"  16 Z9-24
+         "C0A=NIHF,16,160",      //        "C0A"   "NIHF"     "RIL"  16 Z9-25
+         "C0B=NILF,16,160",      //        "C0B"   "NILF"     "RIL"  16 Z9-26
+         "C0C=OIHF,16,160",      //        "C0C"   "OIHF"     "RIL"  16 Z9-27
+         "C0D=OILF,16,160",      //        "C0D"   "OILF"     "RIL"  16 Z9-28
+         "C0E=LLIHF,16,160",     //        "C0E"   "LLIHF"    "RIL"  16 Z9-29
+         "C0F=LLILF,16,160",     //        "C0F"   "LLILF"    "RIL"  16 Z9-30
+         "C24=SLGFI,16,160",     //        "C24"   "SLGFI"    "RIL"  16 Z9-31
+         "C25=SLFI,16,161",      //        "C25"   "SLFI"     "RIL"  16 Z9-32
+         "C28=AGFI,16,160",      //        "C28"   "AGFI"     "RIL"  16 Z9-33
+         "C29=AFI,16,161",       //        "C29"   "AFI"      "RIL"  16 Z9-34
+         "C2A=ALGFI,16,160",     //        "C2A"   "ALGFI"    "RIL"  16 Z9-35
+         "C2B=ALFI,16,161",      //        "C2B"   "ALFI"     "RIL"  16 Z9-36
+         "C2C=CGFI,16,160",      //        "C2C"   "CGFI"     "RIL"  16 Z9-37
+         "C2D=CFI,16,161",       //        "C2D"   "CFI"      "RIL"  16 Z9-38
+         "C2E=CLGFI,16,160",     //        "C2E"   "CLGFI"    "RIL"  16 Z9-39
+         "C2F=CLFI,16,161",      //        "C2F"   "CLFI"     "RIL"  16 Z9-40
+         "C80=MVCOS,32,320",     //        "C80"   "MVCOS"    "SSF"  32 Z9-41
+         "C81=ECTG,32,320",      //        "C81"   "ECTG"     "SSF"  32 RPI 1013
+         "C82=CSST,32,320",      //        "C82"   "CSST"     "SSF"  32 RPI 1013
+         "E302=LTG,18,180",      //        "E302"  "LTG"      "RXY"  18 Z9-42
+         "E312=LT,18,180",       //        "E312"  "LT"       "RXY"  18 Z9-43
+         "E394=LLC,18,186",      //        "E394"  "LLC"      "RXY"  18 Z9-44
+         "E395=LLH,18,53",       //        "E395"  "LLH"      "RXY"  18 Z9-45
+         "ED38=MAYL,25,250",     //        "ED38"  "MAYL"     "RXF"  25 Z9-46
+         "ED39=MYL,25,250",      //        "ED39"  "MYL"      "RXF"  25 Z9-47
+         "ED3A=MAY,25,250",      //        "ED3A"  "MAY"      "RXF"  25 Z9-48
+         "ED3B=MY,25,250",       //        "ED3B"  "MY"       "RXF"  25 Z9-49 RPI 298
+         "ED3C=MAYH,25,250",     //        "ED3C"  "MAYH"     "RXF"  25 Z9-50
+         "ED3D=MYH,25,250",      //        "ED3D"  "MYH"      "RXF"  25 Z9-51 RPI 298
+         "ED40=SLDT,25,251",     //                "SLDT"     "RXF"  25 DFP 45
+         "ED41=SRDT,25,251",     //                "SRDT"     "RXF"  25 DFP 46
+         "ED48=SLXT,25,251",     //                "SLXT"     "RXF"  25 DFP 47
+         "ED49=SRXT,25,251",     //                "SRXT"     "RXF"  25 DFP 48
+         "ED50=TDCET,24,241",    //                "TDCET"    "RXE"  24 DFP 49
+         "ED51=TDGET,24,241",    //                "TDGET"    "RXE"  24 DFP 50
+         "ED54=TDCDT,24,241",    //                "TDCDT"    "RXE"  24 DFP 51
+         "ED55=TDGDT,24,241",    //                "TDGDT"    "RXE"  24 DFP 52
+         "ED58=TDCXT,24,241",    //                "TDCXT"    "RXE"  24 DFP 53
+         "ED59=TDGXT,24,241",    //                "TDGXT"    "RXE"  24 DFP 54
+         };
+     String[]   op_table_ZS4 =   // Table added for RPI 1209A
+        {"B928=PCKMO,14,144",    //        "B928"  "PCKMO"    "RE4"  14 RPI 1125 Z196
+         "B960=CGRT,39,151",     //     10 "B960"  "CGRT"     "RRF5" 39 RPI 817
+         "B960m=CGRTm,40,151;*Short", //   "B960m" "CGRTm"    "RRF6" 40
+         "B961=CLGRT,39,151",    //     10 "B961"  "CLGRT"    "RRF5" 39 RPI 817
+         "B961m=CLGRTm,40,151;*Short", //  "B961m" "CLGRTm"   "RRF6" 40
+         "B972=CRT,39,152",      //     80 "B972"  "CRT"      "RRF5" 39 RPI 817
+         "B972m=CRTm,40,152;*Short", //    "B972m" "CRTm"     "RRF6" 40
+         "B973=CLRT,39,152",     //     80 "B973"  "CLRT"     "RRF5" 39 RPI 817
+         "B973m=CLRTm,40,152;*Short", //   "B973m" "CLRTm"    "RRF6" 40
+         "B9A2=PTF,14,147",      //     10 "B9A2"  "PTF"      "RRE"  14 RPI 817
+         "B9AF=PFMF,39,140",     //     20 "B9AF"  "PFMF"     "RRF5" 39 RPI 817
+         "B9BD=TRTRE,39,144",    //     30 "B9BD"  "TRTRE"    "RRF5" 39 RPI 817
+         "B9BF=TRTE,39,144",     //     40 "B9BF"  "TRTE"     "RRF5" 39 RPI 817
+         "C20=MSGFI,16,160",     //     50 "C20"   "MSGFI"    "RIL"  16 RPI 817
+         "C21=MSFI,16,161",      //     60 "C21"   "MSFI"     "RIL"  16 RPI 817
+         "C42=LLHRL,16,164",     //     70 "C42"   "LLHRL"    "RIL"  16 RPI 817
+         "C44=LGHRL,16,168",     //     80 "C44"   "LGHRL"    "RIL"  16 RPI 817
+         "C45=LHRL,16,164",      //     90 "C45"   "LHRL"     "RIL"  16 RPI 817
+         "C46=LLGHRL,16,168",    //    100 "C46"   "LLGHRL"   "RIL"  16 RPI 817
+         "C47=STHRL,16,164",     //    110 "C47"   "STHRL"    "RIL"  16 RPI 817
+         "C48=LGRL,16,165",      //    120 "C48"   "LGRL"     "RIL"  16 RPI 817
+         "C4B=STGRL,16,165",     //    130 "C4B"   "STGRL"    "RIL"  16 RPI 817
+         "C4C=LGFRL,16,166",     //    140 "C4C"   "LGFRL"    "RIL"  16 RPI 817
+         "C4D=LRL,16,167",       //    150 "C4D"   "LRL"      "RIL"  16 RPI 817
+         "C4E=LLGFRL,16,166",    //    160 "C4E"   "LLGFRL"   "RIL"  16 RPI 817
+         "C4F=STRL,16,167",      //    170 "C4F"   "STRL"     "RIL"  16 RPI 817
+         "C60=EXRL,16,163",      //    180 "C60"   "EXRL"     "RIL"  16 RPI 817
+         "C62=PFDRL,16,169",     //    190 "C62"   "PFDRL"    "RIL"  16 RPI 817
+         "C64=CGHRL,16,168",     //    200 "C64"   "CGHRL"    "RIL"  16 RPI 817
+         "C65=CHRL,16,164",      //    210 "C65"   "CHRL"     "RIL"  16 RPI 817
+         "C66=CLGHRL,16,168",    //    220 "C66"   "CLGHRL"   "RIL"  16 RPI 817
+         "C67=CLHRL,16,164",     //    230 "C67"   "CLHRL"    "RIL"  16 RPI 817
+         "C68=CGRL,16,165",      //    240 "C68"   "CGRL"     "RIL"  16 RPI 817
+         "C6A=CLGRL,16,165",     //    250 "C6A"   "CLGRL"    "RIL"  16 RPI 817
+         "C6C=CGFRL,16,166",     //    260 "C6C"   "CGFRL"    "RIL"  16 RPI 817
+         "C6D=CRL,16,167",       //    270 "C6D"   "CRL"      "RIL"  16 RPI 817
+         "C6E=CLGFRL,16,166",    //    280 "C6E"   "CLGFRL"   "RIL"  16 RPI 817
+         "C6F=CLRL,16,167",      //    290 "C6F"   "CLRL"     "RIL"  16 RPI 817
+         "E332=LTGF,18,184",     //    310 "E332"  "LTGF"     "RXY"  18 RPI 817
+         "E334=CGH,18,182",      //    320 "E334"  "CGH"      "RXY"  18 RPI 817
+         "E336=PFD,18,189",      //    330 "E336"  "PFD"      "RXY"  18 RPI 817
+         "E35C=MFY,18,50",       //    340 "E35C"  "MFY"      "RXY"  18 RPI 817
+         "E375=LAEY,18,52",      //    350 "E375"  "LAEY"     "RXY"  18 RPI 817
+         "E37C=MHY,18,53",       //    360 "E37C"  "MHY"      "RXY"  18 RPI 817
+         "E544=MVHHI,51,390",    //    370 "E544"  "MVHHI"    "SIL"  51 RPI 817
+         "E548=MVGHI,51,391",    //    380 "E548"  "MVGHI"    "SIL"  51 RPI 817
+         "E54C=MVHI,51,392",     //    390 "E54C"  "MVHI"     "SIL"  51 RPI 817
+         "E554=CHHSI,51,390",    //    400 "E554"  "CHHSI"    "SIL"  51 RPI 817
+         "E555=CLHHSI,51,390",   //    410 "E555"  "CLHHSI"   "SIL"  51 RPI 817
+         "E558=CGHSI,51,391",    //    420 "E558"  "CGHSI"    "SIL"  51 RPI 817
+         "E559=CLGHSI,51,391",   //    430 "E559"  "CLGHSI"   "SIL"  51 RPI 817
+         "E55C=CHSI,51,392",     //    440 "E55C"  "CHSI"     "SIL"  51 RPI 817
+         "E55D=CLFHSI,51,392",   //    450 "E55D"  "CLFHSI"   "SIL"  51 RPI 817
+         "EB4C=ECAG,20,203",     //    460 "EB4C"  "ECAG"     "RSY"  20 RPI 817
+         "EB6A=ASI,21,211",      //    470 "EB6A"  "ASI"      "SIY"  21 RPI 817
+         "EB6E=ALSI,21,211",     //    480 "EB6E"  "ALSI"     "SIY"  21 RPI 817
+         "EB7A=AGSI,21,212",     //    490 "EB7A"  "AGSI"     "SIY"  21 RPI 817
+         "EB7E=ALGSI,21,212",    //    500 "EB7E"  "ALGSI"    "SIY"  21 RPI 817
+         "EC54=RNSBG,52,400",    //    510 "EC54"  "RNSBG"    "RIE8" 52 RPI 817
+         "EC54T=RNSBGT,52,400",  //    520 "EC54T" "RNSBGT"   "RIE8" 52 RPI 817
+         "EC55=RISBG,52,400",    //    530 "EC55"  "RISBG"    "RIE8" 52 RPI 817
+         "EC55Z=RISBGZ,52,400",  //    540 "EC55Z" "RISBGZ"   "RIE8" 52 RPI 817
+         "EC56=ROSBG,52,400",    //    550 "EC56"  "ROSBG"    "RIE8" 52 RPI 817
+         "EC56T=ROSBGT,52,400",  //    560 "EC56T" "ROSBGT"   "RIE8" 52 RPI 817
+         "EC57=RXSBG,52,400",    //    570 "EC57"  "RXSBG"    "RIE8" 52 RPI 817
+         "EC57T=RXSBGT,52,400",  //    580 "EC57T" "RXSBGT"   "RIE8" 52 RPI 817
+         "EC64=CGRJ,49,234",     //     10 "EC64"  "CGRJ"     "RIE6" 49 RPI 817
+         "EC64m=CGRJm,50,234;*Short", //   "EC64m" "CGRJm"    "RIE7" 50
+         "EC65=CLGRJ,49,234",    //     80 "EC65"  "CLGRJ"    "RIE6" 49 RPI 817
+         "EC65m=CLGRJm,50,234;*Short", //  "EC65m" "CLGRJm"   "RIE7" 50
+         "EC70=CGIT,41,232",     //    150 "EC70"  "CGIT"     "RIE2" 41 RPI 817
+         "EC70m=CGITm,42,232;*Short", //   "EC70m" "CGITm"    "RIE3" 42
+         "EC71=CLGIT,41,232",    //    150 "EC71"  "CLGIT"    "RIE2" 41 RPI 817
+         "EC71m=CLGITm,42,232;*Short", //  "EC71m" "CLGITm"   "RIE3" 42
+         "EC72=CIT,41,231",      //    220 "EC72"  "CIT"      "RIE2" 41 RPI 817
+         "EC72m=CITm,42,231;*Short", //    "EC72m" "CITm"     "RIE3" 42
+         "EC73=CLFIT,41,231",    //    220 "EC73"  "CLFIT"    "RIE2" 41 RPI 817
+         "EC73m=CLFITm,42,231;*Short", //  "EC73m" "CLFITm"   "RIE3" 42
+         "EC76=CRJ,49,235",      //    150 "EC76"  "CRJ"      "RIE6" 49 RPI 817
+         "EC76m=CRJm,50,235;*Short", //    "EC76m" "CRJm"     "RIE7" 50
+         "EC77=CLRJ,49,235",     //    220 "EC77"  "CLRJ"     "RIE6" 49 RPI 817
+         "EC77m=CLRJm,50,235;*Short", //   "EC77m" "CLRJm"    "RIE7" 50
+         "EC7C=CGIJ,43,233",     //    290 "EC7C"  "CGIJ"     "RIE4" 43 RPI 817
+         "EC7Cm=CGIJm,44,233;*Short", //   "EC7Cm" "CGIJm"    "RIE5" 44
+         "EC7D=CLGIJ,43,233",    //    360 "EC7D"  "CLGIJ"    "RIE4" 43 RPI 817
+         "EC7Dm=CLGIJm,44,233;*Short", //  "EC7Dm" "CLGIJm"   "RIE5" 44
+         "EC7E=CIJ,43,236",      //    430 "EC7E"  "CIJ"      "RIE4" 43 RPI 817
+         "EC7Em=CIJm,44,236;*Short", //    "EC7Em" "CIJm"     "RIE5" 44
+         "EC7F=CLIJ,43,236",     //    500 "EC7F"  "CLIJ"     "RIE4" 43 RPI 817
+         "EC7Fm=CLIJm,44,236;*Short", //   "EC7Fm" "CLIJm"    "RIE5" 44
+         "ECE4=CGRB,45,370",     //    570 "ECE4"  "CGRB"     "RRS1" 45 RPI 817
+         "ECE4m=CGRBm,46,370;*Short", //   "ECE4m" "CGRBm"    "RRS2" 46
+         "ECE5=CLGRB,45,370",    //    640 "ECE5"  "CLGRB"    "RRS1" 45 RPI 817
+         "ECE5m=CLGRBm,46,370;*Short", //  "ECE5m" "CLGRBm"   "RRS2" 46
+         "ECF6=CRB,45,371",      //    710 "ECF6"  "CRB"      "RRS1" 45 RPI 817
+         "ECF6m=CRBm,46,371;*Short", //    "ECF6m" "CRBm"     "RRS2" 46
+         "ECF7=CLRB,45,371",     //    780 "ECF7"  "CLRB"     "RRS1" 45 RPI 817
+         "ECF7m=CLRBm,46,371;*Short", //   "ECF7m" "CLRBm"    "RRS2" 46
+         "ECFC=CGIB,47,380",     //    850 "ECFC"  "CGIB"     "RRS3" 47 RPI 817
+         "ECFCm=CGIBm,48,380;*Short", //   "ECFCm" "CGIBm"    "RRS4" 48
+         "ECFD=CLGIB,47,380",    //    920 "ECFD"  "CLGIB"    "RRS3" 47 RPI 817
+         "ECFDm=CLGIBm,48,380;*Short", //  "ECFDm" "CLGIBm"   "RRS4" 48
+         "ECFE=CIB,47,381",      //    990 "ECFE"  "CIB"      "RRS3" 47 RPI 817
+         "ECFEm=CIBm,48,381;*Short", //    "ECFEm" "CIBm"     "RRS4" 48
+         "ECFF=CLIB,47,381",     //   1060 "ECFF"  "CLIB"     "RRS3" 47 RPI 817
+         "ECFFm=CLIBm,48,381;*Short", //   "ECFFm" "CLIBm"    "RRS4" 48
+         };
+     String[]   op_table_ZS4_notsupported =   // Table added for RPI 1209A
+        {"LPP      S    B280 D2(B2)",
+         "LCCTL    S    B284 D2(B2)",
+         "LPCTL    S    B285 D2(B2)",
+         "QSI      S    B286 D2(B2)",
+         "LSCTL    S    B287 D2(B2)",
+         "QCTRI    S    B28E D2(B2)",
+         "SCCTR    RRE  B2E0 R1,R2",
+         "SPCTR    RRE  B2E1 R1,R2",
+         "ECCTR    RRE  B2E4 R1,R2",
+         "EPCTR    RRE  B2E5 R1,R2",
+         "ECPGA    RRE  B2ED R1,R2",
+         };
+     String[]   op_table_UNI =   // Table added for RPI 1209A
+        {"B2B8=SRNMB,7,70",      //   3392 "B2B8"  "SRNMB"    "S"     7 RPI 1125
+         "B344=LEDBRA,53,142",   //   3860 "B344"  "LEDBRA"   "RRE"  53 RPI 1125
+         "B345=LDXBRA,53,142",   //   3870 "B345"  "LDXBRA"   "RRE"  53 RPI 1125
+         "B346=LEXBRA,53,142",   //   3880 "B346"  "LEXBRA"   "RRE"  53 RPI 1125
+         "B347=FIXBRA,54,340",   //   3890 "B347"  "FIXBRA"   "RRF2" 54 RPI 1125
+         "B357=FIEBRA,54,340",   //   3990 "B357"  "FIEBRA"   "RRF2" 54 RPI 1125
+         "B35F=FIDBRA,54,340",   //   4030 "B35F"  "FIDBRA"   "RRF2" 54 RPI 1125
+         "B390=CELFBR,30,301",   //        "B390"  "CELFBR"   "RRF3" 30 RPI 1125 Z196
+         "B391=CDLFBR,30,301",   //        "B391"  "CDLFBR"   "RRF3" 30 RPI 1125 Z196
+         "B392=CXLFBR,30,301",   //        "B392"  "CXLFBR"   "RRF3" 30 RPI 1125 Z196
+         "B394=CEFBRA,53,146",   //   4190 "B394"  "CEFBRA"   "RRE"  53 RPI 1125 Z196
+         "B395=CDFBRA,53,146",   //   4200 "B395"  "CDFBRA"   "RE3"  53 RPI 1125 Z196
+         "B396=CXFBRA,53,146",   //   4210 "B396"  "CXFBRA"   "RE3"  53 RPI 1125 Z196
+         "B398=CFEBRA,54,341",   //   4220 "B398"  "CFEBRA"   "RRF7" 54 RPI 1125 Z196
+         "B399=CFDBRA,54,341",   //   4230 "B399"  "CFDBRA"   "RRF7" 54 RPI 1125 Z196
+         "B39A=CFXBRA,54,341",   //   4240 "B39A"  "CFXBRA"   "RRF7" 54 RPI 1125 Z196
+         "B39C=CLFEBR,30,303",   //        "B39C"  "CLFEBR"   "RRF3" 30 RPI 1125 Z196
+         "B39D=CLFDBR,30,303",   //        "B39D"  "CLFDBR"   "RRF3" 30 RPI 1125 Z196
+         "B39E=CLFXBR,30,303",   //        "B39E"  "CLFXBR"   "RRF3" 30 RPI 1125 Z196
+         "B3A0=CELGBR,30,304",   //        "B3A0"  "CELGBR"   "RRF3" 30 RPI 1125 Z196
+         "B3A1=CDLGBR,30,304",   //        "B3A1"  "CDLGBR"   "RRF3" 30 RPI 1125 Z196
+         "B3A2=CXLGBR,30,304",   //        "B3A2"  "CXLGBR"   "RRF3" 30 RPI 1125 Z196
+         "B3A4=CEGBRA,53,141",   //   4250 "B3A4"  "CEGBRA"   "RRE"  53 RPI 1125 Z196
+         "B3A5=CDGBRA,53,141",   //   4260 "B3A5"  "CDGBRA"   "RRE"  53 RPI 1125 Z196
+         "B3A6=CXGBRA,53,141",   //   4270 "B3A6"  "CXGBRA"   "RRE"  53 RPI 1125 Z196
+         "B3A8=CGEBRA,54,342",   //   4280 "B3A8"  "CGEBRA"   "RRF2" 54 RPI 1125 Z196
+         "B3A9=CGDBRA,54,342",   //   4290 "B3A9"  "CGDBRA"   "RRF2" 54 RPI 1125 Z1964
+         "B3AA=CGXBRA,54,342",   //   4300 "B3AA"  "CGXBRA"   "RRF2" 54 RPI 1125 Z1964
+         "B3AC=CLGEBR,30,342",   //        "B3AC"  "CLGEBR"   "RRF2" 30  RPI 1125 Z196
+         "B3AD=CLGDBR,30,342",   //        "B3AD"  "CLGDBR"   "RRF2" 30  RPI 1125 Z196
+         "B3AE=CLGXBR,30,342",   //        "B3AE"  "CLGXBR"   "RRF2" 30  RPI 1125 Z196
+         "B3D0=MDTRA,36,360",    //        "B3D0"  "MDTRA"    "RRR"  36 DFP 1 RPI 1125
+         "B3D1=DDTRA,36,360",    //        "B3D1"  "DDTRA"    "RRR"  36 DFP 2 RPI 1125
+         "B3D2=ADTRA,36,360",    //        "B3D2"  "ADTRA"    "RRR"  36 DFP 3 RPI 1125
+         "B3D3=SDTRA,36,360",    //        "B3D3"  "SDTRA"    "RRR"  36 DFP 4 RPI 1125
+         "B3D8=MXTRA,36,360",    //        "B3D8"  "MXTRA"    "RRR"  36 DFP 9 RPI 1125
+         "B3D9=DXTRA,36,360",    //        "B3D9"  "DXTRA"    "RRR"  36 DFP 10 RPI 1125
+         "B3DA=AXTRA,36,360",    //        "B3DA"  "AXTRA"    "RRR"  36 DFP 11 RPI 1125
+         "B3DB=SXTRA,36,360",    //        "B3DB"  "SXTRA"    "RRR"  36 DFP 12 RPI 1125
+         "B3E1=CGDTRA,54,342",   //                "CGDTRA"   "RRF7" 54 DFP 18 RPI 1125
+         "B3E9=CGXTRA,54,342",   //                "CGXTRA"   "RRF7" 54 DFP 25 RPI 1125
+         "B3F1=CDGTRA,53,141",   //                "CDGTRA"   "RE3"  53 DFP 31 RPI 1125
+         "B3F9=CXGTRA,53,141",   //                "CXGTRA"   "RE3"  53 DFP 38 RPI 1125
+         "B92A=KMF,14,144",      //        "B92A"  "KMF"      "RRE"  14 RPI 1125 Z196
+         "B92B=KMO,14,144",      //        "B92B"  "KMO"      "RRE"  14 RPI 1125 Z196
+         "B92C=PCC,14,144",      //        "B92C"  "PCC"      "RE4"  14 RPI 1125 Z196
+         "B92D=KMCTR,34,343",    //        "B92D"  "KMCTR"    "RRF2" 34 RPI 1125 Z196
+         "B941=CFDTR,30,303",    //        "B941"  "CFDTR"    "RRF"  30 RPI 1125 Z196
+         "B942=CLGDTR,30,305",   //        "B942"  "CLGDTR"   "RRF"  30 RPI 1125 Z196
+         "B943=CLFDTR,30,303",   //        "B943"  "CLFDTR"   "RRF"  30 RPI 1125 Z196
+         "B949=CFXTR,30,303",    //        "B949"  "CFXTR"    "RRF3" 30 RPI 1125 Z196
+         "B94A=CLGXTR,30,305",   //        "B94A"  "CLGXTR"   "RRF3" 30 RPI 1125 Z196
+         "B94B=CLFXTR,30,303",   //        "B94B"  "CLFXTR"   "RRF3" 30 RPI 1125 Z196
+         "B951=CDFTR,30,301",    //        "B951"  "CDFTR"    "RRF3" 30 RPI 1125 Z196
+         "B952=CDLGTR,30,304",   //        "B952"  "CDLGTR"   "RRF3" 30 RPI 1125 Z196
+         "B953=CDLFTR,30,306",   //        "B953"  "CDLFTR"   "RRF3" 30 RPI 1125 Z196
+         "B959=CXFTR,30,306",    //        "B959"  "CXFTR"    "RRF3" 30 RPI 1125 Z196"
+         "B95A=CXLGTR,30,304",   //        "B95A"  "CXLGTR"   "RRF3" 30 RPI 1125 Z196
+         "B95B=CXLFTR,30,306",   //        "B95B"  "CXLFTR"   "RRF3" 30 RPI 1125 Z196
+         "B9AE=RRBM,14,144",     //        "B9AE"  "RRBM"     "RRE"  14 RPI 1125 Z196
+         "B9C8=AHHHR,39,410",    //        "B9C8"  "AHHHR"    "RRF5" 39 RPI 1125 Z196
+         "B9C9=SHHHR,39,410",    //        "B9C9"  "SHHHR"    "RRF5" 39 RPI 1125 Z196
+         "B9CA=ALHHHR,39,410",   //        "B9CA"  "ALHHHR"   "RRF5" 39 RPI 1125 Z196
+         "B9CB=SLHHHR,39,410",   //        "B9CB"  "SLHHHR"   "RRF5" 39 RPI 1125 Z196
+         "B9CD=CHHR,14,144",     //        "B9CD"  "CHHR"     "RRE"  14 RPI 1125 Z196
+         "B9CF=CLHHR,14,144",    //        "B9CF"  "CLHHR"    "RRE"  14 RPI 1125 Z196
+         "B9D8=AHHLR,39,410",    //        "B9D8"  "AHHLR"    "RRF5" 39 RPI 1125 Z196
+         "B9D9=SHHLR,39,410",    //        "B9D9"  "SHHLR"    "RRF5" 39 RPI 1125 Z196
+         "B9DA=ALHHLR,39,410",   //        "B9DA"  "ALHHLR"   "RRF5" 39 RPI 1125 Z196
+         "B9DB=SLHHLR,39,410",   //        "B9DB"  "SLHHLR"   "RRF5" 39 RPI 1125 Z196
+         "B9DD=CHLR,39,144",     //        "B9DD"  "CHLR"     "RRE"  39 RPI 1125 Z196
+         "B9DF=CLHLR,14,144",    //        "B9DF"  "CLHLR"    "RRE"  14 RPI 1125 Z196
+         "B9E1=POPCNT,14,144",   //   5115 "B9E1"  "POPCNT"   "RRE"  14 RPI 1125
+         "B9E2=LOCGR,39,141",    //        "B9E2"  "LOCGR"    "RRF5" 39 RPI 1125 Z196
+         "B9E4=NGRK,39,153",     //        "B9E4"  "NGRK"     "RRF5" 39 RPI 1125 Z196
+         "B9E6=OGRK,39,153",     //        "B9E6"  "OGRK"     "RRF5" 39 RPI 1125 Z196
+         "B9E7=XGRK,39,153",     //        "B9E7"  "XGRK"     "RRF5" 39 RPI 1125 Z196
+         "B9E8=AGRK,39,153",     //        "B9E8"  "AGRK"     "RRF5" 39 RPI 1125 Z196
+         "B9E9=SGRK,39,153",     //        "B9E9"  "SGRK"     "RRF5" 39 RPI 1125 Z196
+         "B9EA=ALGRK,39,153",    //        "B9EA"  "ALGRK"    "RRF5" 39 RPI 1125 Z196
+         "B9EB=SLGRK,39,153",    //        "B9EB"  "SLGRK"    "RRF5" 39 RPI 1125 Z196
+         "B9F2=LOCR,39,142",     //        "B9F2"  "LOCR"     "RRF5" 39 RPI 1125 Z196
+         "B9F4=NRK,39,154",      //        "B9F4"  "NRK"      "RRF5" 39 RPI 1125 Z196
+         "B9F6=ORK,39,154",      //        "B9F6"  "ORK"      "RRF5" 39 RPI 1125 Z196
+         "B9F7=XRK,39,154",      //        "B9F7"  "XRK"      "RRF5" 39 RPI 1125 Z196
+         "B9F8=ARK,39,154",      //        "B9F8"  "ARK"      "RRF5" 39 RPI 1125 Z196
+         "B9F9=SRK,39,154",      //        "B9F9"  "SRK"      "RRF5" 39 RPI 1125 Z196
+         "B9FA=ALRK,39,154",     //        "B9FA"  "ALRK"     "RRF5" 39 RPI 1125 Z196
+         "B9FB=SLRK,39,154",     //        "B9FB"  "SLRK"     "RRF5" 39 RPI 1125 Z196
+         "C84=LPD,55,321",       //        "C84"   "LPD"      "SSF2" 55 RPI 1125 Z196
+         "C85=LPDG,55,321",      //        "C85"   "LPDG"     "SSF2" 55 RPI 1125 Z196
+         "CC6=BRCTH,16,163",     //        "CC6"   "BRCTH"    "RIL"  16 RPI 1125 Z196
+         "CC8=AIH,16,160",       //        "CC8"   "AIH"      "RIL"  16 RPI 1125 Z196
+         "CCA=ALSIH,16,160",     //        "CCA"   "ALSIH"    "RIL"  16 RPI 1125 Z196
+         "CCB=ALSIHN,16,160",    //        "CCB"   "ALSIHN"   "RIL"  16 RPI 1125 Z196
+         "CCD=CIH,16,160",       //        "CCD"   "CIH"      "RIL"  16 RPI 1125 Z196
+         "CCF=CLIH,16,160",      //        "CCF"   "CLIH"     "RIL"  16 RPI 1125 Z196
+         "E3C0=LBH,18,185",      //        "E3C0"  "LBH"      "RXY"  18 RPI 1125 Z196
+         "E3C2=LLCH,18,185",     //        "E3C2"  "LLCH"     "RXY"  18 RPI 1125 Z196
+         "E3C3=STCH,18,185",     //        "E3C3"  "STCH"     "RXY"  18 RPI 1125 Z196
+         "E3C4=LHH,18,182",      //        "E3C4"  "LHH"      "RXY"  18 RPI 1125 Z196
+         "E3C6=LLHH,18,182",     //        "E3C6"  "LLHH"     "RXY"  18 RPI 1125 Z196
+         "E3C7=STHH,18,182",     //        "E3C7"  "STHH"     "RXY"  18 RPI 1125 Z196
+         "E3CA=LFH,18,184",      //        "E3CA"  "LFH"      "RXY"  18 RPI 1125 Z196
+         "E3CB=STFH,18,184",     //        "E3CB"  "STFH"     "RXY"  18 RPI 1125 Z196
+         "E3CD=CHF,18,184",      //        "E3CD"  "CHF"      "RXY"  18 RPI 1125 Z196
+         "E3CF=CLHF,18,184",     //        "E3CF"  "CLHF"     "RXY"  18 RPI 1125 Z196
+         "EBDC=SRAK,20,200",     //        "EBDC"  "SRAK"     "RSY"  20 RPI 1125 Z196
+         "EBDD=SLAK,20,200",     //        "EBDD"  "SLAK"     "RSY"  20 RPI 1125 Z196
+         "EBDE=SRLK,20,200",     //        "EBDE"  "SRLK"     "RSY"  20 RPI 1125 Z196
+         "EBDF=SLLK,20,200",     //        "EBDF"  "SLLK"     "RSY"  20 RPI 1125 Z196
+         "EBE2=LOCG,56,207",     //        "EBE2"  "LOCG"     "RSY2" 56 RPI 1125 Z196
+         "EBE3=STOCG,56,207",    //        "EBE3"  "STOCG"    "RSY2" 56 RPI 1125 Z196
+         "EBE4=LANG,20,208",     //        "EBE4"  "LANG"     "RSY"  20 RPI 1125 Z196
+         "EBE6=LAOG,20,208",     //        "EBE6"  "LAOG"     "RSY"  20 RPI 1125 Z196
+         "EBE7=LAXG,20,208",     //        "EBE7"  "LAXG"     "RSY"  20 RPI 1125 Z196
+         "EBE8=LAAG,20,208",     //        "EBE8"  "LAAG"     "RSY"  20 RPI 1125 Z196
+         "EBEA=LAALG,20,208",    //        "EBEA"  "LAALG"    "RSY"  20 RPI 1125 Z196
+         "EBF2=LOC,56,209",      //        "EBF2"  "LOC"      "RSY2" 56 RPI 1125 Z196
+         "EBF3=STOC,56,209",     //        "EBF3"  "STOC"     "RSY2" 56 RPI 1125 Z196
+         "EBF4=LAN,20,200",      //        "EBF4"  "LAN"      "RSY"  20 RPI 1125 Z196
+         "EBF6=LAO,20,200",      //        "EBF6"  "LAO"      "RSY"  20 RPI 1125 Z196
+         "EBF7=LAX,20,200",      //        "EBF7"  "LAX"      "RSY"  20 RPI 1125 Z196
+         "EBF8=LAA,20,200",      //        "EBF8"  "LAA"      "RSY"  20 RPI 1125 Z196
+         "EBFA=LAAL,20,200",     //        "EBFA"  "LAAL"     "RSY"  20 RPI 1125 Z196
+         "EC51=RISBLG,52,400",   //        "EC51"  "RISBLG#"  "RIE8" 52 RPI 1125 Z196 RPI 1164
+         "EC51$003132=LLHFR,52,400",  //   "EC51$003132","LOAD (lOW  && HIGH) RISBLGZ","LLHFR","RIE8",52  RPI 1164
+         "EC51$163132=LLHLHR,52,400", //   "EC51$163132","LOAD LOG HW (lOW  && HIGH) RISBLGZ","LLHLHR","RIE8",52  RPI 1164
+         "EC51$243132=LLCLHR,52,400", //   "EC51$243132","LOAD LOG CH (lOW  && HIGH) RISBLGZ","LLCLHR","RIE8",52  RPI 1164
+         "EC51Z=RISBLGZ,52,400", //        "EC51Z","RISBLGZ"  "RIE8" 52 RPI 1125 Z196 RPI 1164
+         "EC54$003100=NHHR,52,400",   //   "EC54$003100","AND HIGH (HIGH && HIGH) RNSBG","NHHR","RIE8",52  RPI 1164
+         "EC54$003132=NHLR,52,400",   //   "EC54$003132","AND HIGH (HIGH && LOW ) RNSBG","NHLR","RIE8",52  RPI 1164
+         "EC54$326332=NLHR,52,400",   //   "EC54$326332","AND HIGH (lOW  && HIGH) RNSBG","NLHR","RIE8",52  RPI 1164
+         "EC56$003100=OHHR,52,400",   //   "EC56$003100","OR  HIGH (HIGH && HIGH) ROSBG","OHHR","RIE8",52  RPI 1164
+         "EC56$003132=OHLR,52,400",   //   "EC56$003132","OR  HIGH (HIGH && LOW ) ROSBG","OHLR","RIE8",52  RPI 1164
+         "EC56$326332=OLHR,52,400",   //   "EC56$326332","OR  HIGH (lOW  && HIGH) ROSBG","OLHR","RIE8",52  RPI 1164
+         "EC57$003100=XHHR,52,400",   //   "EC57$003100","XOR HIGH (HIGH && HIGH) RXSBG","XHHR","RIE8",52  RPI 1164
+         "EC57$003132=XHLR,52,400",   //   "EC57$003132","XOR HIGH (HIGH && LOW ) RXSBG","XHLR","RIE8",52  RPI 1164
+         "EC57$326332=XLHR,52,400",   //   "EC57$326332","AOR HIGH (lOW  && HIGH) RXSBG","XLHR","RIE8",52  RPI 1164
+         "EC5D=RISBHG,52,400",   //        "EC5D"  "RISBHG#"  "RIE8" 52 RPI 1125 Z196 RPI 1164
+         "EC5D$003100=LHHR,52,400",   //   "EC5D$003100","LOAD (HIGH && HIGH) RISBHGZ","LHHR","RIE8",52  RPI 1164
+         "EC5D$003132=LHLR,52,400",   //   "EC5D$003132","LOAD (HIGH && LOW ) RISBHGZ","LHLR","RIE8",52  RPI 1164
+         "EC5D$163100=LLHHHR,52,400", //   "EC5D$163100","LOAD LOG HW (HIGH && HIGH) RISBHGZ","LLHHHR","RIE8",52  RPI 1164
+         "EC5D$163132=LLHHLR,52,400", //   "EC5D$163132","LOAD LOG HW (HIGH && LOW ) RISBHGZ","LLHHLR","RIE8",52  RPI 1164
+         "EC5D$243100=LLCHHR,52,400", //   "EC5D$243100","LOAD LOG CH (HIGH && HIGH) RISBHGZ","LLCHHR","RIE8",52  RPI 1164
+         "EC5D$243132=LLCHLR,52,400", //   "EC5D$243132","LOAD LOG CH (HIGH && LOW ) RISBHGZ","LLCHLR","RIE8",52  RPI 1164
+         "EC5DZ=RISBHGZ,52,400", //        "EC5DZ" "RISBHGZ"  "RIE8" 52 RPI 1125 Z196 RPI 1164
+         "ECD8=AHIK,57,420",     //        "ECD8"  "AHIK"     "RIE9" 57 RPI 1125 Z196
+         "ECD9=AGHIK,57,430",    //        "ECD9"  "AGHIK"    "RIE9" 57 RPI 1125 Z196
+         "ECDA=ALHSIK,57,420",   //        "ECDA"  "ALHSIK"   "RIE9" 57 RPI 1125 Z196
+         "ECDB=ALGHSIK,57,430",  //        "ECDB"  "ALGHSIK"  "RIE9" 57 RPI 1125 Z196
+         };
+     String[]   op_table_UNI_notsupported =   // Table added for RPI 1209A
+        {"LOCGRE   RRF  B9E2 R1,R2",
+         "LOCGRH   RRF  B9E2 R1,R2",
+         "LOCGRL   RRF  B9E2 R1,R2",
+         "LOCGRNE  RRF  B9E2 R1,R2",
+         "LOCGRNH  RRF  B9E2 R1,R2",
+         "LOCGRNL  RRF  B9E2 R1,R2",
+         "LOCRE    RRF  B9F2 R1,R2",
+         "LOCRH    RRF  B9F2 R1,R2",
+         "LOCRL    RRF  B9F2 R1,R2",
+         "LOCRNE   RRF  B9F2 R1,R2",
+         "LOCRNH   RRF  B9F2 R1,R2",
+         "LOCRNL   RRF  B9F2 R1,R2",
+         "JCTH     RIL  CC.6 R1,I2",
+         "LOCGE    RSY  EBE2 R1,D2(B2)",
+         "LOCGH    RSY  EBE2 R1,D2(B2)",
+         "LOCGL    RSY  EBE2 R1,D2(B2)",
+         "LOCGNE   RSY  EBE2 R1,D2(B2)",
+         "LOCGNH   RSY  EBE2 R1,D2(B2)",
+         "LOCGNL   RSY  EBE2 R1,D2(B2)",
+         "STOCGE   RSY  EBE3 R1,D2(B2)",
+         "STOCGH   RSY  EBE3 R1,D2(B2)",
+         "STOCGL   RSY  EBE3 R1,D2(B2)",
+         "STOCGNE  RSY  EBE3 R1,D2(B2)",
+         "STOCGNH  RSY  EBE3 R1,D2(B2)",
+         "STOCGNL  RSY  EBE3 R1,D2(B2)",
+         "LOCE     RSY  EBF2 R1,D2(B2)",
+         "LOCH     RSY  EBF2 R1,D2(B2)",
+         "LOCL     RSY  EBF2 R1,D2(B2)",
+         "LOCNE    RSY  EBF2 R1,D2(B2)",
+         "LOCNH    RSY  EBF2 R1,D2(B2)",
+         "LOCNL    RSY  EBF2 R1,D2(B2)",
+         "STOCE    RSY  EBF3 R1,D2(B2)",
+         "STOCH    RSY  EBF3 R1,D2(B2)",
+         "STOCL    RSY  EBF3 R1,D2(B2)",
+         "STOCNE   RSY  EBF3 R1,D2(B2)",
+         "STOCNH   RSY  EBF3 R1,D2(B2)",
+         "STOCNL   RSY  EBF3 R1,D2(B2)",
+         };
+     String[]   op_table_ASSIST = // Table added for RPI 1209A
+        {"52=XDECO,37,50",       //   1193 "52"    "XDECO"    "RX"   37 RPI 812
+         "53=XDECI,37,50",       //   1196 "53"    "XDECI"    "RX"   37 RPI 812
+         "61=XHEXI,37,50",       //   1323 "61"    "XHEXI"    "RX"   37 RPI 812
+         "62=XHEXO,37,50",       //   1326 "62"    "XHEXO"    "RX"   37 RPI 812
+         "E00=XREAD,38,171",     //   5375 "E00"   "XREAD"    "RXSS" 38 RPI 812
+         "E02=XPRNT,38,171",     //   5375 "E02"   "XPRNT"    "RXSS" 38 RPI 812
+         "E04=XPNCH,38,171",     //   5375 "E04"   "XPNCH"    "RXSS" 38 RPI 812
+         "E06=XDUMP,38,171",     //   5375 "E06"   "XDUMP"    "RXSS" 38 RPI 812
+         "E08=XLIMD,38,171",     //   5375 "E08"   "XLIMD"    "RXSS" 38 RPI 812
+         "E0A=XGET,38,171",      //   5375 "E0A"   "XGET"     "RXSS" 38 RPI 812
+         "E0C=XPUT,38,171",      //   5375 "E0C"   "XPUT"     "RXSS" 38 RPI 812
+         };
+     String[]   op_table_z390 =  // Table added for RPI 1209
+        {"83=DIAGNOSE,8,80",     //   1550 "83"    "DIAGNOSE" "DM"    8
+         "B22E=PGIN,14,140",     //   2860 "B22E"  "PGIN"     "RRE"  14
+         "B22F=PGOUT,14,140",    //   2870 "B22F"  "PGOUT"    "RRE"  14
+         "--=,122,--",           //   7350         ""               122
+         };
+     String[]   opcode_masks = { // Table added for RPI 1209
+               "F=",             // Always
+               "0=N",            // Never
+               "2=H",            // High
+               "4=L",            // Low
+               "8=E",            // Equal / Even
+               "D=NH",           // Not High
+               "B=NL",           // Not Low
+               "7=NE",           // Not Equal / Not Even
+               "2=P",            // Plus
+               "1=O",            // Odd / Ones
+               "4=M",            // Minus / Mixed
+               "8=Z",            // Zero
+               "D=NP",           // Not Plus
+               "B=NM",           // Not Minus / Not Mixed
+               "7=NZ",           // Not Zero
+               "E=NO",           // Not Odd / Not Ones
+               };
+     String[]   opcode_masks_short = { // Table added for RPI 1209
+               "2=H",            // High
+               "4=L",            // Low
+               "8=E",            // Equal
+               "C=NH",           // Not High
+               "A=NL",           // Not Low
+               "6=NE",           // Not Equal
+               };
+       String[] mask_opcode   = null; // See process_opcodes() RPI 1209
+       String[] mask_mnemonic = null; // See process_opcodes() RPI 1209
       /*
        * key search table data
        */
@@ -4869,8 +2554,424 @@ public void init_tz390(){
 	init_pat();      // init patterns for matcher
 	init_os_type();  // set os type
 	init_os_util();  // set os utilities (overides from env var)
-    init_opcodes();  // verify opcode tables
+        // init_opcodes();  // verify opcode tables - moved to init_options RPI 1209A
 }
+/*
+ * Create_opcodes builds the following arrays:
+ * - op_name
+ * - op_code
+ * - op_type
+ * - op_trace_type
+ * The content of the arrays is determined by the assembler options OPTABLE/MACHINE
+ */
+public void create_opcodes()  // Routine added for RPI 1209
+   {int     index, index2;
+    int     i, j;
+    String  entry;
+    String  opcode="";
+    String  mnemonic="";
+    //
+    // First extract data from both opcode_masks and opcode_masks_short into single table-set mask_opcode and mask_mnemonic
+    // These tables thus have first section (index 0 thru opcode_masks.length) and
+    //                       second section (index opcode_masks.length+1 thru mask_opcode.length
+    mask_opcode   = new String[opcode_masks.length+opcode_masks_short.length];
+    mask_mnemonic = new String[opcode_masks.length+opcode_masks_short.length];
+    index=0;
+    index2=0;
+    while (index < opcode_masks.length) // for each mask (opcode nibble + mnemonic letters) defined in opcode_masks
+       {entry=opcode_masks[index];
+        try                             // separate entry into opcode part and menmonic part
+           {i=entry.indexOf("=");
+            if (i == -1)
+               {abort_error(40,"Missing equal-sign in mask definition " + opcode_masks[index]);
+                }
+            opcode=entry.substring(0,i);
+            mnemonic=entry.substring(i+1);
+            }
+        catch (Exception e)
+           {abort_error(41,"Error in mask definition " + opcode_masks[index] + " - " + e.toString());
+            }
+        mask_opcode[index2]  =opcode;
+        mask_mnemonic[index2]=mnemonic;
+        index++;
+        index2++;
+        }
+    index=0;
+    while (index < opcode_masks_short.length) // for each mask (opcode nibble + mnemonic letters) defined in opcode_masks_short
+       {entry=opcode_masks_short[index];
+        try                             // separate entry into opcode part and menmonic part
+           {i=entry.indexOf("=");
+            if (i == -1)
+               {abort_error(42,"Missing equal-sign in mask definition " + opcode_masks_short[index]);
+                }
+            opcode=entry.substring(0,i);
+            mnemonic=entry.substring(i+1);
+            }
+        catch (Exception e)
+           {abort_error(43,"Error in mask definition " + opcode_masks_short[index] + " - " + e.toString());
+            }
+        mask_opcode[index2]  =opcode;
+        mask_mnemonic[index2]=mnemonic;
+        index++;
+        index2++;
+        }
+
+    // Process the opcode tables in two passes:
+    // the first pass determines the number of entries to allocate for each table
+    // the second pass actually stores the data into the allocated tables
+    index2=0;
+    while (index2 <= 1)
+       {op_code_count = 0;
+        op_directives_count = 0;
+        process_opcodes(op_table_start);
+        if (opt_optable.equals("DOS"))
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_DOS_directives);
+            }
+        if (opt_optable.equals("370"))
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_370);
+            // process_opcodes(op_table_vector);
+            process_opcodes(op_table_DOS_directives);
+            process_opcodes(op_table_370_directives);
+            }
+        if (opt_optable.equals("XA"))
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_370);
+            // process_opcodes(op_table_vector);
+            process_opcodes(op_table_XA);
+            process_opcodes(op_table_DOS_directives);
+            process_opcodes(op_table_370_directives);
+            }
+        if (opt_optable.equals("ESA"))
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_370);
+            // process_opcodes(op_table_vector);
+            process_opcodes(op_table_XA);
+            process_opcodes(op_table_ESA);
+            process_opcodes(op_table_DOS_directives);
+            process_opcodes(op_table_370_directives);
+            }
+        if (opt_optable.equals("ZOP"))
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_370);
+            process_opcodes(op_table_XA);
+            process_opcodes(op_table_ESA);
+            process_opcodes(op_table_ZOP);
+            process_opcodes(op_table_DOS_directives);
+            process_opcodes(op_table_370_directives);
+            }
+        if (opt_optable.equals("YOP"))
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_370);
+            process_opcodes(op_table_XA);
+            process_opcodes(op_table_ESA);
+            process_opcodes(op_table_ZOP);
+            process_opcodes(op_table_YOP);
+            process_opcodes(op_table_DOS_directives);
+            process_opcodes(op_table_370_directives);
+            }
+        if (opt_optable.equals("ZS3"))
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_370);
+            process_opcodes(op_table_XA);
+            process_opcodes(op_table_ESA);
+            process_opcodes(op_table_ZOP);
+            process_opcodes(op_table_YOP);
+            process_opcodes(op_table_ZS3);
+            process_opcodes(op_table_DOS_directives);
+            process_opcodes(op_table_370_directives);
+            }
+        if (opt_optable.equals("ZS4"))
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_370);
+            process_opcodes(op_table_XA);
+            process_opcodes(op_table_ESA);
+            process_opcodes(op_table_ZOP);
+            process_opcodes(op_table_YOP);
+            process_opcodes(op_table_ZS3);
+            process_opcodes(op_table_ZS4);
+            process_opcodes(op_table_DOS_directives);
+            process_opcodes(op_table_370_directives);
+            }
+        if (opt_optable.equals("UNI"))
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_370);
+            // process_opcodes(op_table_vector);
+            process_opcodes(op_table_XA);
+            process_opcodes(op_table_ESA);
+            process_opcodes(op_table_ZOP);
+            process_opcodes(op_table_YOP);
+            process_opcodes(op_table_ZS3);
+            process_opcodes(op_table_ZS4);
+            process_opcodes(op_table_UNI);
+            process_opcodes(op_table_DOS_directives);
+            process_opcodes(op_table_370_directives);
+            }
+        if (opt_optable.equals("Z390"))
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_370);
+            // process_opcodes(op_table_vector);
+            process_opcodes(op_table_XA);
+            process_opcodes(op_table_ESA);
+            process_opcodes(op_table_ZOP);
+            process_opcodes(op_table_YOP);
+            process_opcodes(op_table_ZS3);
+            process_opcodes(op_table_ZS4);
+            process_opcodes(op_table_UNI);
+            process_opcodes(op_table_ASSIST);
+            process_opcodes(op_table_z390);
+            process_opcodes(op_table_DOS_directives);
+            process_opcodes(op_table_370_directives);
+            }
+        if (index2 == 0) // only on first pass: allocate tables
+           {op_code       = new String[op_code_count];
+            op_name       = new String[op_code_count+op_directives_count];
+            op_type       = new int[op_code_count+op_directives_count];
+            op_trace_type = new int[op_code_count];
+            }
+        index2++; // indicate this pass is done
+        }
+    }
+public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
+   {int     index, index2;
+    int     i, j;
+    String  entry;
+    String  opcode="";
+    String  mnemonic="";
+    String  optype="";
+    Integer optype_nr=0;
+    String  tracetype="";
+    Integer tracetype_nr=0;
+    String  hex_digits="0123456789ABCDEF";
+    String  opcode_first_digit;
+    int     instruction_length;
+
+    // Variables used for generating masked instructions
+    String  opcode_hdr;
+    String  opcode_ftr;
+    String  mnemonic_hdr;
+    String  mnemonic_ftr;
+    String  override;
+    String  override_mask1;
+    String  override_mnemon1;
+    String  override_mask2;
+    String  override_mnemon2;
+    String  override_short;
+    int     index3, index4;
+
+    index=0;
+    index2=op_code_count+op_directives_count;
+    while (index < op_tables.length) // for each entry in op_tables
+       {entry=op_tables[index];
+        try                          // separate entry into opcode, mnemonic, op_type, trace_type
+           {// extract opcode
+            i=entry.indexOf("=");
+            if (i == -1)
+               {abort_error(44,"Missing equal-sign in opcode definition " + op_tables[index]);
+                }
+            opcode=entry.substring(0,i);
+            entry=entry.substring(i+1);
+            // extract mnemonic
+            i=entry.indexOf(",");
+            if (i == -1)
+               {abort_error(45,"Missing first comma in opcode definition " + op_tables[index]);
+                }
+            mnemonic=entry.substring(0,i);
+            entry=entry.substring(i+1);
+            // extract op_type
+            i=entry.indexOf(",");
+            if (i == -1)
+               {abort_error(46,"Missing second comma in opcode definition " + op_tables[index]);
+                }
+            optype=entry.substring(0,i);
+            entry=entry.substring(i+1);
+            // extract op_trace_type
+            i=entry.indexOf(";");
+            if (i == -1)
+               {tracetype=entry;
+                entry="";
+                }
+            else
+               {tracetype=entry.substring(0,i);
+                entry=entry.substring(i+1);
+                }
+            }
+        catch (Exception e)
+           {abort_error(47,"Error in opcode definition " + op_tables[index] + " - " + e.toString());
+            }
+        // convert op_type to an integer value and check its validity
+        try                                                     // convert op_type to Integer
+           {optype_nr=optype_nr.decode(optype);
+            }
+        catch (Exception e)
+           {abort_error(48,"Invalid number " + optype + " in opcode definition " + op_tables[index] + " - " + e.toString());
+            }
+        if (  optype_nr < 0                                      // Validate op_type
+        ||   (optype_nr == 0 && mnemonic.equals("*") == false)
+        ||   (optype_nr > max_op_type_offset && optype_nr < 101)
+        ||    optype_nr > 299
+            )
+           {abort_error(49,"Specified optype " + optype + " out of range in opcode definition " + op_tables[index]);
+            }
+        // determine length of instruction from its opcode
+        if (opcode.equals("--") == false                       // irrelevant for directives
+        &&  opcode.equals("??") == false)                      //        and for comment lines!
+           {opcode_first_digit=opcode.substring(0,1);          // get first digit of opcode
+            i=hex_digits.indexOf(opcode_first_digit);          // Get ordinal postition = numeric value of digit
+            if (i == -1)
+               {abort_error(50,"Illegal hex digit in opcode " + opcode + " in opcode definition " + op_tables[index]);
+                }
+            i=1+(i/4);                                         // from 0-15 to 1-4
+            if (i>2) {i=i-1;}                                  // length in halfwords (1-3)
+            instruction_length=2*i;
+            if (instruction_length != op_type_len[optype_nr])
+               {abort_error(777,"Instruction length mismatch for opcode definition " + op_tables[index]);
+                }
+              }
+        // convert op_trace_type to an integer value and check its validity
+        if (tracetype.equals("--") == false)                   // convert trace_type to Integer
+           {try
+               {tracetype_nr=tracetype_nr.decode(tracetype);
+                }
+            catch (Exception e)
+               {abort_error(51,"Invalid number " + tracetype + " in opcode definition " + op_tables[index] + " - " + e.toString());
+                }
+            if (  tracetype_nr < 0 || tracetype_nr > 999)       // Validate trace_trype
+               {abort_error(52,"Specified tracetype " + tracetype + " out of range in opcode definition " + op_tables[index]);
+                }
+            }
+        else
+           {tracetype_nr=-1;
+            }
+        // if entry is not an empty string, it contains overrides for extended instructions
+        i=opcode.indexOf("m");
+        j=mnemonic.indexOf("m");
+        if ((i == -1 && j != -1) // check validity of placeholders for mask
+        ||  (j == -1 && i != -1)
+            )
+           {abort_error(53,"Non-matching mask positions in opcode definition " + op_tables[index]);
+            }
+        if (i == -1 && j == -1)              // Not a masked instruction
+           {if (entry.equals("") == false)
+               {abort_error(54,"Overrides illegal for non-maksed opcode definition " + op_tables[index]);
+                }
+            if (mnemonic.indexOf("?")==mnemonic.length()-1)
+               {// abort_error(773,"? detected in entry " + op_tables[index]);
+                }
+            if (op_code != null) // insert data only if arrays allocated
+               {op_name[index2]       = mnemonic;
+                op_type[index2]       = optype_nr;
+                if (opcode.equals("--") == false)
+                   {op_code[index2]       = opcode;
+                    op_trace_type[index2] = tracetype_nr;
+                    }
+                }
+            index2++;
+            if (opcode.equals("--")) // Need to count directives separately!
+               {op_directives_count++;
+                }
+            }
+        else
+           {// first we'll need to extract the overrides definitions
+            override_mask1="";
+            override_mnemon1="";
+            override_mask2="";
+            override_mnemon2="";
+            override_short="";
+            // extract and verify override for *Short (if present)
+            if (entry.equals("*Short")) // only if entry contains *Short override
+               {override_short=entry;
+                entry="";
+                }
+            // extract and verify first override (if present)
+            if (entry.equals("") == false) // only if entry contains override(s)
+               {i=entry.indexOf(";");     // more overrides?
+                if (i == -1) // No more overrides
+                   {override=entry;
+                    entry="";
+                    }
+                else
+                   {override=entry.substring(0,i);
+                    entry=entry.substring(i+1);
+                    }
+                // override now contains first override definition
+                i=override.indexOf("=");
+                if (i == -1) // No separator!
+                   {abort_error(55,"Missing equal-sign in first override in opcode definition " + op_tables[index]);
+                    }
+                else
+                   {override_mask1=override.substring(0,i);
+                    override_mnemon1=override.substring(i+1);
+                    }
+                }
+            // extract and verify second override (if present)
+            if (entry.equals("") == false) // only if entry contains another override
+               {i=entry.indexOf(";");     // more overrides?
+                if (i == -1) // No more overrides
+                   {override=entry;
+                    entry="";
+                    }
+                else
+                   {override=entry.substring(0,i);
+                    entry=entry.substring(i+1);
+                    }
+                // override now contains second override definition
+                i=override.indexOf("=");
+                if (i == -1) // No separator!
+                   {abort_error(56,"Missing equal-sign in second override in opcode definition " + op_tables[index]);
+                    }
+                else
+                   {override_mask2=override.substring(0,i);
+                    override_mnemon2=override.substring(i+1);
+                    }
+                }
+            if (entry.equals("") == false)  // more overrides not supported!
+               {abort_error(57,"More than two overrides found in opcode definition " + op_tables[index]);
+                }
+            // split opcode and mnemonic; then combine with each mask to form valid masked instructions
+            i=opcode.indexOf("m");
+            j=mnemonic.indexOf("m");
+            opcode_hdr   = opcode.substring(0,i);   // first part of opcode
+            opcode_ftr   = opcode.substring(i+1);   // last part of opcode
+            mnemonic_hdr = mnemonic.substring(0,j); // first part of mnemonic
+            mnemonic_ftr = mnemonic.substring(j+1); // last part of mnemonic
+            if (override_short.equals("*Short"))
+               {index3=opcode_masks.length; // Select second section of combined tables
+                index4=mask_opcode.length;
+                }
+            else
+               {index3=0;  // select first section of combined tables
+                index4=opcode_masks.length;
+                }
+            while (index3 < index4)
+               {if (mask_opcode[index3].equals(override_mask1) && override_mnemon1.equals("")
+                ||  mask_opcode[index3].equals(override_mask2) && override_mnemon2.equals("")
+                    )
+                   {index3++; // suppress generated instruction - mnemonic not supported
+                    }
+                else // Ok to generate this masked instruction
+                   {if (op_code != null)
+                       {op_code[index2]       = opcode_hdr+mask_opcode[index3]+opcode_ftr;
+                        op_name[index2]       = mnemonic_hdr+mask_mnemonic[index3]+mnemonic_ftr;
+                        if (mask_opcode[index3].equals(override_mask1)) // Override 1 applies?
+                           {op_name[index2]   = override_mnemon1;
+                            }
+                        if (mask_opcode[index3].equals(override_mask2)) // Override 2 applies?
+                           {op_name[index2]   = override_mnemon2;
+                            }
+                        op_type[index2]       = optype_nr;
+                        op_trace_type[index2] = tracetype_nr;
+                        }
+                    index2++;
+                    index3++;
+                    }
+                }
+            }
+        index++;
+        }
+    op_code_count = index2-op_directives_count;
+    }
 private void init_opcodes(){
 	/*
 	 * init opcodes 
@@ -4890,7 +2991,7 @@ private void init_opcodes(){
 		}
 		index++;
 	}
-	if (max_type != max_op_type_offset){
+    if (max_type > max_op_type_offset){ // RPI 1209A
 		abort_error(2,"opcode max type out of sync - " + max_type + " vs " + max_op_type_offset);
 	}
 	if (ins_count != op_code.length){
@@ -5153,19 +3254,71 @@ public void init_options(String[] args,String pgm_type){
     	dir_cpy = dir_mac; // RPI 742
     }
     check_options();
+    create_opcodes(); // Create correct opcodes table; routine added for RPI 1209A
+    init_opcodes();  // verify opcode tables RPI 1209A
 }
 private void check_options(){
-	/*
-	 * check options for consistency
-	 */
-	if (!opt_asm){
-		if(opt_chkmac != 0){
-			abort_error(26,"NOASM requires CHKMAC(0)"); // RPI 1053
-		}
-		if (opt_chksrc == 3){
-			abort_error(27,"NOASM requires CHKSRC(0-2)"); // RPI 1053
-		}
-	}
+        /*
+         * check options for consistency
+         */
+        if (!opt_asm){
+                if(opt_chkmac != 0){
+                        abort_error(26,"NOASM requires CHKMAC(0)"); // RPI 1053
+                }
+                if (opt_chksrc == 3){
+                        abort_error(27,"NOASM requires CHKSRC(0-2)"); // RPI 1053
+                }
+        }
+        // If no optable was requested, select proper default RPI 1209A
+        if (opt_optable.equals("*DFLT"))
+           {if (opt_allow)
+               {opt_optable="Z390";
+                }
+            else
+               {opt_optable="UNI";
+                }
+            }
+        // Check MACHINE and OPTABLE options for compatability RPI 1209A
+        if (opt_machine.equals("")) // most common case
+           {}
+        else if (opt_machine.equals("S370"))
+                {if (opt_optable.equals("370") == false)
+                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(S370)");
+                     }
+                 }
+        else if (opt_machine.equals("S370XA"))
+                {if (opt_optable.equals("XA") == false)
+                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(S370XA)");
+                     }
+                 }
+        else if (opt_machine.equals("S390E"))
+                {if (opt_optable.equals("ESA") == false)
+                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(S390E)");
+                     }
+                 }
+        else if (opt_machine.equals("ZSERIES"))
+                {if (opt_optable.equals("ZOP") == false)
+                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(ZSERIES)");
+                     }
+                 }
+        else if (opt_machine.equals("ZSERIES-2"))
+                {if (opt_optable.equals("YOP") == false)
+                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(ZSERIES-2)");
+                     }
+                 }
+        else if (opt_machine.equals("ZSERIES-3"))
+                {if (opt_optable.equals("ZS3") == false)
+                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(ZSERIES-3)");
+                     }
+                 }
+        else if (opt_machine.equals("ZSERIES-4"))
+                {if (opt_optable.equals("ZS4") == false)
+                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(ZSERIES-4)");
+                     }
+                 }
+        else
+           {abort_error(778,"MACHINE("+opt_machine+") not supported");
+            }
 }
 private void process_option(String opt_file_name,int opt_file_line,String token){
 	/*
@@ -5356,6 +3509,60 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     } else if (token.length() > 4
       		&& token.substring(0,4).toUpperCase().equals("LOG(")){
      	log_file_name = token.substring(4,token.length()-1); // RPI 719
+    } else if (token.length() > 8 // Block added for RPI 1209A
+           &&  token.substring(0,8).toUpperCase().equals("MACHINE("))
+              {opt_machine = token.toUpperCase().substring(8,token.length()-1);
+               if (opt_machine.indexOf(",") != -1) // Machine name contains a comma?
+                   // list option is shared with OPTABLE parameter, hence opt_optable_list is used correctly here!
+                  {opt_optable_list = opt_machine.substring(1+opt_machine.indexOf(",")); // Extract list option
+                   opt_machine      = opt_machine.substring(0,opt_machine.indexOf(",")); // Extract machine name only
+                   }
+               if (opt_machine.equals("S370ESA")
+               ||  opt_machine.equals("S390")
+                   )
+                  {opt_machine = "S390E";
+                   }
+               if (opt_machine.equals("ZS"))
+                  {opt_machine = "ZSERIES";
+                   }
+               if (opt_machine.equals("ZS-2"))
+                  {opt_machine = "ZSERIES-2";
+                   }
+               if (opt_machine.equals("ZS-3"))
+                  {opt_machine = "ZSERIES-3";
+                   }
+               if (opt_machine.equals("ZS-4"))
+                  {opt_machine = "ZSERIES-4";
+                   }
+               if (opt_machine.equals("S370"))
+                  {opt_optable = "370";
+                   }
+               else if (opt_machine.equals("S370XA"))
+                  {opt_optable = "XA";
+                   }
+               else if (opt_machine.equals("S390E"))
+                  {opt_optable = "ESA";
+                   }
+               else if (opt_machine.equals("ZSERIES"))
+                  {opt_optable = "ZOP";
+                   }
+               else if (opt_machine.equals("ZSERIES-2"))
+                  {opt_optable = "YOP";
+                   }
+               else if (opt_machine.equals("ZSERIES-3"))
+                  {opt_optable = "ZS3";
+                   }
+               else if (opt_machine.equals("ZSERIES-4"))
+                  {opt_optable = "ZS4";
+                   }
+               else
+                   {add_invalid_option(opt_file_name,opt_file_line,token);
+                    }
+               if (opt_optable_list.equals("LIST")   != true
+               &&  opt_optable_list.equals("NOLIST") != true
+                   )
+                  {add_invalid_option(opt_file_name,opt_file_line,token);
+                   }
     } else if (token.length() > 8
       		&& token.substring(0,8).toUpperCase().equals("MAXCALL(")){
        	opt_maxcall = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
@@ -5453,6 +3660,31 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_objhex = true;
     } else if (token.toUpperCase().equals("NOOBJHEX")){
        	opt_objhex = false;
+    } else if (token.length() > 8 // Block added for RPI 1209A
+           &&  token.substring(0,8).toUpperCase().equals("OPTABLE("))
+              {opt_optable = token.toUpperCase().substring(8,token.length()-1);
+               if (opt_optable.indexOf(",") != -1) // Optable name contains a comma?
+                  {opt_optable_list = opt_optable.substring(1+opt_optable.indexOf(",")); // Extract list option
+                   opt_optable      = opt_optable.substring(0,opt_optable.indexOf(",")); // Extract optable name only
+                   }
+               if (opt_optable.equals("UNI") != true
+               &&  opt_optable.equals("DOS") != true
+               &&  opt_optable.equals("ESA") != true
+               &&  opt_optable.equals("XA")  != true
+               &&  opt_optable.equals("370") != true
+               &&  opt_optable.equals("YOP") != true
+               &&  opt_optable.equals("ZOP") != true
+               &&  opt_optable.equals("ZS3") != true
+               &&  opt_optable.equals("ZS4") != true
+               &&  opt_optable.equals("Z390") != true
+                   )
+                   {add_invalid_option(opt_file_name,opt_file_line,token);
+                    }
+               if (opt_optable_list.equals("LIST")   != true
+               &&  opt_optable_list.equals("NOLIST") != true
+                   )
+                  {add_invalid_option(opt_file_name,opt_file_line,token);
+                   }
     } else if (token.length() > 5
        		&& token.substring(0,5).toUpperCase().equals("PARM(")){
         	opt_parm = token.substring(5,token.length()-1);
@@ -7473,6 +5705,7 @@ public void put_trace(String text){
 		     } else {
 		        add_final_opt("NOLOADHIGH");
 		     }
+             add_final_opt("MACHINE("+opt_machine+","+opt_optable_list+")"); // RPI 1209A
 	     if (opt_mcall   ){ // list MCALL and MEXIT on PRN // RPI 511
 	        add_final_opt("MCALL");
 	     } else {
@@ -7493,6 +5726,7 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOOBJHEX");
 	     }
+             add_final_opt("OPTABLE("+opt_optable+","+opt_optable_list+")"); // RPI 1209A
 	     if (opt_pc      ){ // generate macro pseudo code
 	        add_final_opt("PC");
 	     } else {
