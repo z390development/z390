@@ -277,6 +277,7 @@ public  class  tz390 {
     *          op_type, op_trace_type with same data generated from op_tables array
     * 05/09/12 RPI 1209A (AFK) Implement OPTABLE/MACHINE options
     * 07/20/14 RPI VF01 add vector options Vector/Novector and SectionSize, PartialSums
+    * 07/25/14 RPI 1209G Make table op_type_len dynamic; fill from opcode_format definitions
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -968,78 +969,83 @@ public  class  tz390 {
   /*
    * opcode tables for trace
    */
+    String[] op_type_name = null; // See process_opcodes() RPI 1209G
+    int[]    op_type_len = null; // See process_opcodes() RPI 1209G
+    String[] op_type_src_format = null; // See process_opcodes() RPI 1209G
+    String[] op_type_obj_format = null; // See process_opcodes() RPI 1209G
   //String[] op_name = // Static content removed, content now generated RPI 1209
     String[] op_name  = null; // See process_opcodes() RPI 1209
-    int[]    op_type_len = {
-    	 0, // 0 comment place holder	
-         2,	// 1 "E" 8 PR oooo
-         2, // 2 "RR" 60  LR  oorr  
-         2, // 3 "BRX" 16  BER oomr
-         2, // 4 "I" 1 SVC 00ii
-         4, // 5 "RX" 52  L  oorxbddd
-         4, // 6 "BCX" 16 BE  oomxbddd
-         4, // 7 "S" 43 SPM oo00bddd
-         4, // 8 "DM" 1  DIAGNOSE 83000000
-         4, // 9 "RSI" 4 BRXH  oorriiii
-         4, //10 "RS" 25  oorrbddd
-         4, //11 "SI" 9 CLI  ooiibddd
-         4, //12 "RI" 37 IIHH  ooroiiii
-         4, //13 "BRCX" 31 BRE  oomoiiii
-         4, //14 "RRE" 185  MSR oooo00rr
-         4, //15 "RRF1" 28 MAER oooor0rr (r1,r3,r2 maps to r1,r3,r2)
-         6, //16 "RIL" 6  BRCL  oomollllllll
-         6, //17 "SS" 32  MVC oollbdddbddd  
-         6, //18 "RXY" 76 MLG oorxbdddhhoo
-         6, //19 "SSE" 5  LASP  oooobdddbddd
-         6, //20 "RSY" 31  LMG  oorrbdddhhoo
-         6, //21 "SIY" 6  TMY  ooiibdddhhoo
-         6, //22 "RSL" 1  TP  oor0bddd00oo
-         6, //23 "RIE" 4  BRXLG  oorriiii00oo
-         6, //24 "RXE" 28  ADB oorxbddd00oo
-         6, //25 "RXF" 8   MAE  oorxbdddr0oo (note r3 before r1)
-         6, //26 AP SS2  oollbdddbddd
-         6, //27 PLO SS3  oorrbdddbddd  r1,s2,r3,s4
-         6, //28 LMD SS5  oorrbdddbddd  r1,r3,s2,s4
-         6, //29 SRP SS2  oolibdddbddd s1(l1),s2,i3
-         4, //30 "RRF3" 30 DIEBR oooormrr (r1,r3,r2,m4 maps to r3,m4,r1,r2) RPI 407 fix (was 6) 
-         6, //31 "SS" PKA oollbdddbddd  ll from S2 
-         6, //32 "SSF" MVCOS oor0bdddbddd (s1,s2,r3) z9-41
-         6, //33 "BLX" BRCL  oomollllllll (label)
-         4,  //34 "RRF2" FIXBR oooom0rr (r1,m3,r2 maps to m3,r1,r2) RPI 407 fix was 6
-         4,  //35 "FFR4" CSDTR oooo0mrr (r1,r2,m4 maps to m4,r1,r2) RPI 407 add new
-         4,  //36 "RRR"  
-         4,  //37 "RXAS" RX    if ASSIST
-         6,   //38 "RXSS" RX-SS if ASSIST else PKU x'E1'
-         4,   //39 "RRF5" CRT   RPI 817
-         4,   //40 "RRF6" CRTE  RPI 817
-         6,   //41 "RIE2" CIT   RPI 817
-         6,   //42 "RIE3" CITE  RPI 817
-         6,   //43 "RIE4" CGIJ  RPI 817
-         6,   //44 "RIE5" CGIJE RPI 817
-         6,   //45 "RRS1" CGRB  RPI 817
-         6,   //46 "RRS2" CGRBE RPI 817
-         6,   //47 "RRS3" CGIB  RPI 817
-         6,   //48 "RRS4" CGIBE RPI 817
-         6,   //49 "RIE6" CGRJ  RPI 817
-         6,   //50 "RIE7" CGRJE RPI 817
-         6,   //51 "SIL"  MVHHI RPI 817
-         6,   //52 "RIE2"
-         4,   //53 
-         4,   //54
-         6,   //55
-         6,   //56
-         6,   //57
-         4,   //58 "V-QST" RPI VF01
-         4,   //59 "V-QV"  RPI VF01
-         4,   //60 "V-VST" VAE  oooovtvs RPI VF01
-         4,   //61 "V-VV"  RPI VF01
-         4,   //62 "V-RRE" RPI VF01
-         6,   //63 "V-RSE" RPI VF01
-         4,   //64 "V-S"   VRCL oooobddd RPI VF01
-         4,   //65 "V-VR"  RPI VF01
-         4,   //66 "V-VS"  RPI VF01
-    };
-	int    max_op_type_offset = 66; // see changes required RPI 812, RPI 817, RPI 1125, RPI VF01
+//    int[]    op_type_len = { // old definition commented out RPI 1209G
+//    	 0, // 0 comment place holder	
+//         2,	// 1 "E" 8 PR oooo
+//         2, // 2 "RR" 60  LR  oorr  
+//         2, // 3 "BRX" 16  BER oomr
+//         2, // 4 "I" 1 SVC 00ii
+//         4, // 5 "RX" 52  L  oorxbddd
+//         4, // 6 "BCX" 16 BE  oomxbddd
+//         4, // 7 "S" 43 SPM oo00bddd
+//         4, // 8 "DM" 1  DIAGNOSE 83000000
+//         4, // 9 "RSI" 4 BRXH  oorriiii
+//         4, //10 "RS" 25  oorrbddd
+//         4, //11 "SI" 9 CLI  ooiibddd
+//         4, //12 "RI" 37 IIHH  ooroiiii
+//         4, //13 "BRCX" 31 BRE  oomoiiii
+//         4, //14 "RRE" 185  MSR oooo00rr
+//         4, //15 "RRF1" 28 MAER oooor0rr (r1,r3,r2 maps to r1,r3,r2)
+//         6, //16 "RIL" 6  BRCL  oomollllllll
+//         6, //17 "SS" 32  MVC oollbdddbddd  
+//         6, //18 "RXY" 76 MLG oorxbdddhhoo
+//         6, //19 "SSE" 5  LASP  oooobdddbddd
+//         6, //20 "RSY" 31  LMG  oorrbdddhhoo
+//         6, //21 "SIY" 6  TMY  ooiibdddhhoo
+//         6, //22 "RSL" 1  TP  oor0bddd00oo
+//         6, //23 "RIE" 4  BRXLG  oorriiii00oo
+//         6, //24 "RXE" 28  ADB oorxbddd00oo
+//         6, //25 "RXF" 8   MAE  oorxbdddr0oo (note r3 before r1)
+//         6, //26 AP SS2  oollbdddbddd
+//         6, //27 PLO SS3  oorrbdddbddd  r1,s2,r3,s4
+//         6, //28 LMD SS5  oorrbdddbddd  r1,r3,s2,s4
+//         6, //29 SRP SS2  oolibdddbddd s1(l1),s2,i3
+//         4, //30 "RRF3" 30 DIEBR oooormrr (r1,r3,r2,m4 maps to r3,m4,r1,r2) RPI 407 fix (was 6) 
+//         6, //31 "SS" PKA oollbdddbddd  ll from S2 
+//         6, //32 "SSF" MVCOS oor0bdddbddd (s1,s2,r3) z9-41
+//         6, //33 "BLX" BRCL  oomollllllll (label)
+//         4,  //34 "RRF2" FIXBR oooom0rr (r1,m3,r2 maps to m3,r1,r2) RPI 407 fix was 6
+//         4,  //35 "FFR4" CSDTR oooo0mrr (r1,r2,m4 maps to m4,r1,r2) RPI 407 add new
+//         4,  //36 "RRR"  
+//         4,  //37 "RXAS" RX    if ASSIST
+//         6,   //38 "RXSS" RX-SS if ASSIST else PKU x'E1'
+//         4,   //39 "RRF5" CRT   RPI 817
+//         4,   //40 "RRF6" CRTE  RPI 817
+//         6,   //41 "RIE2" CIT   RPI 817
+//         6,   //42 "RIE3" CITE  RPI 817
+//         6,   //43 "RIE4" CGIJ  RPI 817
+//         6,   //44 "RIE5" CGIJE RPI 817
+//         6,   //45 "RRS1" CGRB  RPI 817
+//         6,   //46 "RRS2" CGRBE RPI 817
+//         6,   //47 "RRS3" CGIB  RPI 817
+//         6,   //48 "RRS4" CGIBE RPI 817
+//         6,   //49 "RIE6" CGRJ  RPI 817
+//         6,   //50 "RIE7" CGRJE RPI 817
+//         6,   //51 "SIL"  MVHHI RPI 817
+//         6,   //52 "RIE2"
+//         4,   //53 
+//         4,   //54
+//         6,   //55
+//         6,   //56
+//         6,   //57
+//         4,   //58 "V-QST" RPI VF01
+//         4,   //59 "V-QV"  RPI VF01
+//         4,   //60 "V-VST" VAE  oooovtvs RPI VF01
+//         4,   //61 "V-VV"  RPI VF01
+//         4,   //62 "V-RRE" RPI VF01
+//         6,   //63 "V-RSEv" RPI VF01
+//         4,   //64 "V-S"   VRCL oooobddd RPI VF01
+//         4,   //65 "V-VR"  RPI VF01
+//         4,   //66 "V-VS"  RPI VF01
+//    };
+//  int    max_op_type_offset = 66; // see changes required RPI 812, RPI 817, RPI 1125, RPI VF01. Commented out RPI 1209G
+    int    max_op_type_offset = 0; // Content inserted dynamically. See process_opcodes() RPI 1209G
     int    max_ins_type = 100;    // RPI 315 
     int    max_asm_type = 200;
     int    max_mac_type = 300;
@@ -1058,6 +1064,83 @@ public  class  tz390 {
     int op_directives_count = 0; // RPI 1209A
     //int[]      op_trace_type = // Moved here from pz390; static content removed, content now generated RPI 1209
       int[]      op_trace_type = null; // See process_opcodes() RPI 1209
+//
+// The opcode_formats table below defines all opcode formats and their lengths
+// The format of the definiitions is as follows:
+// formatname[$variant],length:operand_list[,object_format]
+// - formatname can be suffixed with a $-sign followed by an internal identifier to differentiate between variants
+// - length is the length of the instruction in bytes
+// - operand_list is the list of operands as listed in the overview of supported opcodes
+// - instruction_format is a representation of the format of the object code
+     String[]   opcode_formats = // Table added for RPI 1209G
+        {"*,0:comment",        // 0 comment place holder
+         "E,2:oooo",           // 1 PR
+         "RR,2:oorr",          // 2 LR
+         "BRX,2:oomr",         // 3 BER
+         "I,2:ooii",           // 4 SVC
+         "RX,4:oorxbddd",      // 5 L
+         "BCX,4:oomxbddd",     // 6 BE
+         "S,4:oo00bddd",       // 7 SPM
+         "DM,4:83000000",      // 8 DIAGNOSE
+         "RSI,4:oorriiii",     // 9 BRXH
+         "RS,4:oorrbddd",      // 10
+         "SI,4:ooiibddd",      // 11 CLI
+         "RI,4:ooroiiii",      // 12 IIHH
+         "BRCX,4:oomoiiii",    // 13 BRE
+         "RRE,4:oooo00rr",     // 14 MSR
+         "RRF1,4:oooor0rr",    // 15 MAER (r1,r3,r2 maps to r1,r3,r2)
+         "RIL,6:oomollllllll", // 16 BRCL
+         "SS,6:oollbdddbddd",  // 17 MVC
+         "RXY,6:oorxbdddhhoo", // 18 MLG
+         "SSE,6:oooobdddbddd", // 19 LASP
+         "RSY,6:oorrbdddhhoo", // 20 LMG
+         "SIY,6:ooiibdddhhoo", // 21 TMY
+         "RSL,6:oor0bddd00oo", // 22 TP
+         "RIE,6:oorriiii00oo", // 23 BRXLG
+         "RXE,6:oorxbddd00oo", // 24 ADB
+         "RXF,6:oorxbdddr0oo", // 25 MAE (note r3 before r1)
+         "SS2,6:oollbdddbddd", // 26 AP
+         "SS3,6:oorrbdddbddd", // 27 PLO (r1,s2,r3,s4)
+         "SS5,6:oorrbdddbddd", // 28 LMD (r1,r3,s2,s4)
+         "SS2,6:oolibdddbddd", // 29 SRP (s1(l1),s2,i3)
+         "RRF3,4:oooormrr",    // 30 DIEBR (r1,r3,r2,m4 maps to r3,m4,r1,r2)
+         "SS,6:oollbdddbddd",  // 31 PKA (ll from S2)
+         "SSF,6:oor0bdddbddd", // 32 MVCOS ((s1,s2,r3))
+         "BLX,6:oomollllllll", // 33 BRCL (label)
+         "RRF2,4:oooom0rr",    // 34 FIXBR (r1,m3,r2 maps to m3,r1,r2)
+         "FFR4,4:oooo0mrr",    // 35 CSDTR (r1,r2,m4 maps to m4,r1,r2)
+         "RRR,4:xxxx",         // 36
+         "RXAS,4:xxxx",        // 37 ASSIST
+         "RXSS,6:xxxx",        // 38 ASSIST else PKU x'E1'
+         "RRF5,4:xxxx",        // 39 CRT
+         "RRF6,4:xxxx",        // 40 CRTE
+         "RIE2,6:xxxx",        // 41 CIT
+         "RIE3,6:xxxx",        // 42 CITE
+         "RIE4,6:xxxx",        // 43 CGIJ
+         "RIE5,6:xxxx",        // 44 CGIJE
+         "RRS1,6:xxxx",        // 45 CGRB
+         "RRS2,6:xxxx",        // 46 CGRBE
+         "RRS3,6:xxxx",        // 47 CGIB
+         "RRS4,6:xxxx",        // 48 CGIBE
+         "RIE6,6:xxxx",        // 49 CGRJ
+         "RIE7,6:xxxx",        // 50 CGRJE
+         "SIL,6:xxxx",         // 51 MVHHI
+         "RIE2,6:xxxx",        // 52
+         "XX,4:xxxx",          // 53
+         "XX,4:xxxx",          // 54
+         "XX,6:xxxx",          // 55
+         "XX,6:xxxx",          // 56
+         "XX,6:xxxx",          // 57
+         "QST,4:xxxx",         // 58
+         "QV,4:xxxx",          // 59
+         "VST,4:oooovtvs",     // 60 VAE
+         "VV,4:xxxx",          // 61
+         "RRE,4:xxxx",         // 62
+         "RSEv,6:xxxx",        // 63
+         "S,4:oooobddd",       // 64 VRCL
+         "VR,4:xxxx",          // 65
+         "VS,4:xxxx",          // 66
+         };
 //
 // The op_tables below define all instructions. The format of the definitions is as follows:
 // opcode=mnemonic,op_type,op_trace_type
@@ -1311,197 +1394,197 @@ public  class  tz390 {
          "RRB      S    B213 D2(B2)",
          };
      String[]   op_table_vector =   // Table added for RPI 1209A
-        {"A400=VAE,60,600",      //        "A400"  "VAE"      "V-VST" 60
-         "A401=VSE,60,600",      //        "A401"  "VSE"      "V-VST" 60
-         "A402=VME,60,600",      //        "A402"  "VME"      "V-VST" 60
-         "A403=VDE,60,600",      //        "A403"  "VDE"      "V-VST" 60
-         "A404=VMAE,60,600",     //        "A404"  "VMAE"     "V-VST" 60
-         "A405=VMSE,60,600",     //        "A405"  "VMSE"     "V-VST" 60
-         "A406=VMCE,60,600",     //        "A406"  "VMCE"     "V-VST" 60
-         "A407=VACE,60,600",     //        "A407"  "VACE"     "V-VST" 60
-         "A408=VCE,60,600",      //        "A408"  "VCE"      "V-VST" 60
-         "A409=VL,60,600",       //        "A409"  "VL"       "V-VST" 60
-         "A409=VLE,60,600",      //        "A409"  "VLE"      "V-VST" 60
-         "A40A=VLM,60,600",      //        "A40A"  "VLM"      "V-VST" 60
-         "A40A=VLME,60,600",     //        "A40A"  "VLME"     "V-VST" 60
-         "A40B=VLY,60,600",      //        "A40B"  "VLY"      "V-VST" 60
-         "A40B=VLYE,60,600",     //        "A40B"  "VLYE"     "V-VST" 60
-         "A40D=VST,60,600",      //        "A40D"  "VST"      "V-VST" 60
-         "A40D=VSTE,60,600",     //        "A40D"  "VSTE"     "V-VST" 60
-         "A40E=VSTM,60,600",     //        "A40E"  "VSTM"     "V-VST" 60
-         "A40E=VSTME,60,600",    //        "A40E"  "VSTME"    "V-VST" 60
-         "A40F=VSTK,60,600",     //        "A40F"  "VSTK"     "V-VST" 60
-         "A40F=VSTKE,60,600",    //        "A40F"  "VSTKE"    "V-VST" 60
-         "A410=VAD,60,600",      //        "A410"  "VAD"      "V-VST" 60
-         "A411=VSD,60,600",      //        "A411"  "VSD"      "V-VST" 60
-         "A412=VMD,60,600",      //        "A412"  "VMD"      "V-VST" 60
-         "A413=VDD,60,600",      //        "A413"  "VDD"      "V-VST" 60
-         "A414=VMAD,60,600",     //        "A414"  "VMAD"     "V-VST" 60
-         "A415=VMSD,60,600",     //        "A415"  "VMSD"     "V-VST" 60
-         "A416=VMCD,60,600",     //        "A416"  "VMCD"     "V-VST" 60
-         "A417=VACD,60,600",     //        "A417"  "VACD"     "V-VST" 60
-         "A418=VCD,60,600",      //        "A418"  "VCD"      "V-VST" 60
-         "A419=VLD,60,600",      //        "A419"  "VLD"      "V-VST" 60
-         "A41A=VLMD,60,600",     //        "A41A"  "VLMD"     "V-VST" 60
-         "A41B=VLYD,60,600",     //        "A41B"  "VLYD"     "V-VST" 60
-         "A41D=VSTD,60,600",     //        "A41D"  "VSTD"     "V-VST" 60
-         "A41E=VSTMD,60,600",    //        "A41E"  "VSTMD"    "V-VST" 60
-         "A41F=VSTKD,60,600",    //        "A41F"  "VSTKD"    "V-VST" 60
-         "A420=VA,60,600",       //        "A420"  "VA"       "V-VST" 60
-         "A421=VS,60,600",       //        "A421"  "VS"       "V-VST" 60
-         "A422=VM,60,600",       //        "A422"  "VM"       "V-VST" 60
-         "A424=VN,60,600",       //        "A424"  "VN"       "V-VST" 60
-         "A425=VO,60,600",       //        "A425"  "VO"       "V-VST" 60
-         "A426=VX,60,600",       //        "A426"  "VX"       "V-VST" 60
-         "A428=VC,60,600",       //        "A428"  "VC"       "V-VST" 60
-         "A429=VLH,60,600",      //        "A429"  "VLH"      "V-VST" 60
-         "A42A=VLINT,60,600",    //        "A42A"  "VLINT"    "V-VST" 60
-         "A42D=VSTH,60,600",     //        "A42D"  "VSTH"     "V-VST" 60
-         "A443=VSQE,60,600",     //        "A443"  "VSQE"     "V-VST" 60
-         "A444=VTAE,60,600",     //        "A444"  "VTAE"     "V-VST" 60
-         "A445=VTSE,60,600",     //        "A445"  "VTSE"     "V-VST" 60
-         "A453=VSQD,60,600",     //        "A453"  "VSQE"     "V-VST" 60
-         "A454=VTAD,60,600",     //        "A454"  "VTAD"     "V-VST" 60
-         "A455=VTSD,60,600",     //        "A455"  "VTSD"     "V-VST" 60
-         "A480=VAES,58,580",     //        "A480"  "VAES"     "V-QST" 58
-         "A481=VSES,58,580",     //        "A481"  "VSES"     "V-QST" 58
-         "A482=VMES,58,580",     //        "A482"  "VMES"     "V-QST" 58
-         "A483=VDES,58,580",     //        "A483"  "VDES"     "V-QST" 58
-         "A484=VMAES,58,580",    //        "A484"  "VMAES"    "V-QST" 58
-         "A485=VMSES,58,580",    //        "A485"  "VMSES"    "V-QST" 58
-         "A488=VCES,58,580",     //        "A488"  "VCES"     "V-QST" 58
-         "A490=VADS,58,580",     //        "A490"  "VADS"     "V-QST" 58
-         "A491=VSDS,58,580",     //        "A491"  "VSDS"     "V-QST" 58
-         "A492=VMDS,58,580",     //        "A492"  "VMDS"     "V-QST" 58
-         "A493=VDDS,58,580",     //        "A493"  "VDDS"     "V-QST" 58
-         "A494=VMADS,58,580",    //        "A494"  "VMADS"    "V-QST" 58
-         "A495=VMSDS,58,580",    //        "A495"  "VMSDS"    "V-QST" 58
-         "A498=VCDS,58,580",     //        "A498"  "VCDS"     "V-QST" 58
-         "A4A0=VAS,58,580",      //        "A4A0"  "VAS"      "V-QST" 58
-         "A4A1=VSS,58,580",      //        "A4A1"  "VSS"      "V-QST" 58
-         "A4A2=VMS,58,580",      //        "A4A2"  "VMS"      "V-QST" 58
-         "A4A4=VNS,58,580",      //        "A4A4"  "VNS"      "V-QST" 58
-         "A4A5=VOS,58,580",      //        "A4A5"  "VOS"      "V-QST" 58
-         "A4A6=VXS,58,580",      //        "A4A6"  "VXS"      "V-QST" 58
-         "A4A8=VCS,58,580",      //        "A4A8"  "VCS"      "V-QST" 58
-         "A500=VAER,61,610",     //        "A500"  "VAER"     "V-VV"  61
-         "A501=VSER,61,610",     //        "A501"  "VSER"     "V-VV"  61
-         "A502=VMER,61,610",     //        "A502"  "VMER"     "V-VV"  61
-         "A503=VDER,61,610",     //        "A503"  "VDER"     "V-VV"  61
-         "A506=VMCER,61,610",    //        "A506"  "VMCER"    "V-VV"  61
-         "A507=VACER,61,610",    //        "A507"  "VACER"    "V-VV"  61
-         "A508=VCER,61,610",     //        "A508"  "VCER"     "V-VV"  61
-         "A509=VLR,61,610",      //        "A509"  "VLR"      "V-VV"  61
-         "A509=VLER,61,610",     //        "A509"  "VLER"     "V-VV"  61
-         "A50A=VLMR,61,610",     //        "A50A"  "VLMR"     "V-VV"  61
-         "A50A=VLMER,61,610",    //        "A50A"  "VLMER"    "V-VV"  61
-         "A50B=VLZR,61,610",     //        "A50B"  "VLZR"     "V-VV"  61
-         "A50B=VLZER,61,610",    //        "A50B"  "VLZER"    "V-VV"  61
-         "A510=VADR,61,610",     //        "A510"  "VADR"     "V-VV"  61
-         "A511=VSDR,61,610",     //        "A511"  "VSDR"     "V-VV"  61
-         "A512=VMDR,61,610",     //        "A512"  "VMDR"     "V-VV"  61
-         "A513=VDDR,61,610",     //        "A513"  "VDDR"     "V-VV"  61
-         "A516=VMCDR,61,610",    //        "A516"  "VMCDR"    "V-VV"  61
-         "A517=VACDR,61,610",    //        "A517"  "VACDR"    "V-VV"  61
-         "A518=VCDR,61,610",     //        "A518"  "VCDR"     "V-VV"  61
-         "A519=VLDR,61,610",     //        "A519"  "VLDR"     "V-VV"  61
-         "A51A=VLMDR,61,610",    //        "A51A"  "VLMDR"    "V-VV"  61
-         "A51B=VLZDR,61,610",    //        "A51B"  "VLZDR"    "V-VV"  61
-         "A520=VAR,61,610",      //        "A520"  "VAR"      "V-VV"  61
-         "A521=VSR,61,610",      //        "A521"  "VSR"      "V-VV"  61
-         "A522=VMR,61,610",      //        "A522"  "VMR"      "V-VV"  61
-         "A524=VNR,61,610",      //        "A524"  "VNR"      "V-VV"  61
-         "A525=VOR,61,610",      //        "A525"  "VOR"      "V-VV"  61
-         "A526=VXR,61,610",      //        "A526"  "VXR"      "V-VV"  61
-         "A528=VCR,61,610",      //        "A528"  "VCR"      "V-VV"  61
-         "A540=VLPER,61,610",    //        "A540"  "VLPER"    "V-VV"  61
-         "A541=VLNER,61,610",    //        "A541"  "VLNER"    "V-VV"  61
-         "A542=VLCER,61,610",    //        "A542"  "VLCER"    "V-VV"  61
-         "A543=VSQER,61,610",    //        "A543"  "VSQER"    "V-VV"  61
-         "A550=VLPDR,61,610",    //        "A550"  "VLPDR"    "V-VV"  61
-         "A551=VLNDR,61,610",    //        "A551"  "VLNDR"    "V-VV"  61
-         "A552=VLCDR,61,610",    //        "A552"  "VLCDR"    "V-VV"  61
-         "A553=VSQDR,61,610",    //        "A553"  "VSQDR"    "V-VV"  61
-         "A560=VLPR,61,610",     //        "A560"  "VLPR"     "V-VV"  61
-         "A561=VLNR,61,610",     //        "A561"  "VLNR"     "V-VV"  61
-         "A562=VLCR,61,610",     //        "A562"  "VLCR"     "V-VV"  61
-         "A580=VAEQ,59,590",     //        "A580"  "VAEQ"     "V-QV"  59
-         "A581=VSEQ,59,590",     //        "A581"  "VSEQ"     "V-QV"  59
-         "A582=VMEQ,59,590",     //        "A582"  "VMEQ"     "V-QV"  59
-         "A583=VDEQ,59,590",     //        "A583"  "VDEQ"     "V-QV"  59
-         "A584=VMAEQ,59,590",    //        "A584"  "VMAEQ"    "V-QV"  59
-         "A585=VMSEQ,59,590",    //        "A585"  "VMSEQ"    "V-QV"  59
-         "A588=VCEQ,59,590",     //        "A588"  "VCEQ"     "V-QV"  59
-         "A589=VLEQ,59,590",     //        "A589"  "VLEQ"     "V-QV"  59
-         "A58A=VLMEQ,59,590",    //        "A58A"  "VLMEQ"    "V-QV"  59
-         "A590=VADQ,59,590",     //        "A590"  "VADQ"     "V-QV"  59
-         "A591=VSDQ,59,590",     //        "A591"  "VSDQ"     "V-QV"  59
-         "A592=VMDQ,59,590",     //        "A592"  "VMDQ"     "V-QV"  59
-         "A593=VDDQ,59,590",     //        "A593"  "VDDQ"     "V-QV"  59
-         "A594=VMADQ,59,590",    //        "A594"  "VMADQ"    "V-QV"  59
-         "A595=VMSDQ,59,590",    //        "A595"  "VMSDQ"    "V-QV"  59
-         "A598=VCDQ,59,590",     //        "A598"  "VCDQ"     "V-QV"  59
-         "A599=VLDQ,59,590",     //        "A599"  "VLDQ"     "V-QV"  59
-         "A59A=VLMDQ,59,590",    //        "A59A"  "VLMDQ"    "V-QV"  59
-         "A5A0=VAQ,59,590",      //        "A5A0"  "VAQ"      "V-QV"  59
-         "A5A1=VSQ,59,590",      //        "A5A1"  "VSQ"      "V-QV"  59
-         "A5A2=VMQ,59,590",      //        "A5A2"  "VMQ"      "V-QV"  59
-         "A5A4=VNQ,59,590",      //        "A5A4"  "VNQ"      "V-QV"  59
-         "A5A5=VOQ,59,590",      //        "A5A5"  "VOQ"      "V-QV"  59
-         "A5A6=VXQ,59,590",      //        "A5A6"  "VXQ"      "V-QV"  59
-         "A5A8=VCQ,59,590",      //        "A5A8"  "VCQ"      "V-QV"  59
-         "A5A9=VLQ,59,590",      //        "A5A9"  "VLQ"      "V-QV"  59
-         "A5AA=VLMQ,59,590",     //        "A5AA"  "VLMQ"     "V-QV"  59
-         "A600=VMXSE,65,650",    //        "A600"  "VMXSE"    "V-VR"  65
-         "A601=VMNSE,65,650",    //        "A601"  "VMNSE"    "V-VR"  65
-         "A602=VMXAE,65,650",    //        "A602"  "VMXAE"    "V-VR"  65
-         "A608=VLELE,65,650",    //        "A608"  "VLELE"    "V-VR"  65
-         "A609=VXELE,65,650",    //        "A609"  "VXELE"    "V-VR"  65
-         "A610=VMXSD,65,650",    //        "A610"  "VMXSD"    "V-VR"  65
-         "A611=VMNSD,65,650",    //        "A611"  "VMNSD"    "V-VR"  65
-         "A612=VMXAD,65,650",    //        "A612"  "VMXAD"    "V-VR"  65
-         "A618=VLELD,65,650",    //        "A618"  "VLELD"    "V-VR"  65
-         "A619=VXELD,65,650",    //        "A619"  "VXELD"    "V-VR"  65
-         "A61A=VSPSD,65,650",    //        "A61A"  "VSPSD"    "V-VR"  65
-         "A61B=VZPSD,65,650",    //        "A61B"  "VZPSD"    "V-VR"  65
-         "A628=VLEL,65,650",     //        "A628"  "VLEL"     "V-VR"  65
-         "A629=VXEL,65,650",     //        "A629"  "VXEL"     "V-VR"  65
-         "A640=VTVM,62,620",     //        "A640"  "VTVM"     "V-RRE" 62
-         "A641=VCVM,62,620",     //        "A641"  "VCVM"     "V-RRE" 62
-         "A642=VCZVM,62,620",    //        "A642"  "VCZVM"    "V-RRE" 62
-         "A643=VCOVM,62,620",    //        "A643"  "VCOVM"    "V-RRE" 62
-         "A644=VXVC,62,620",     //        "A644"  "VXVC"     "V-RRE" 62
-         "A645=VLVCU,62,620",    //        "A645"  "VLVCU"    "V-RRE" 62
-         "A646=VXVMM,62,620",    //        "A646"  "VXVMM"    "V-RRE" 62
-         "A648=VRRS,62,620",     //        "A648"  "VRRS"     "V-RRE" 62
-         "A649=VRSVC,62,620",    //        "A649"  "VRSVC"    "V-RRE" 62
-         "A64A=VRSV,62,620",     //        "A64A"  "VRSV"     "V-RRE" 62
-         "A680=VLVM,66,660",     //        "A680"  "VLVM"     "V-VS"  66
-         "A681=VLCVM,66,660",    //        "A681"  "VLCVM"    "V-VS"  66
-         "A682=VSTVM,66,660",    //        "A682"  "VSTVM"    "V-VS"  66
-         "A684=VNVM,66,660",     //        "A684"  "VNVM"     "V-VS"  66
-         "A685=VOVM,66,660",     //        "A685"  "VOVM"     "V-VS"  66
-         "A686=VXVM,66,660",     //        "A686"  "VXVM"     "V-VS"  66
-         "A6C0=VSRSV,64,640",    //        "A6C0"  "VSRSV"    "V-S"   64
-         "A6C1=VMRSV,64,640",    //        "A6C1"  "VMRSV"    "V-S"   64
-         "A6C2=VSRRS,64,640",    //        "A6C2"  "VSRRS"    "V-S"   64
-         "A6C3=VMRRS,64,640",    //        "A6C3"  "VMRRS"    "V-S"   64
-         "A6C4=VLVCA,64,640",    //        "A6C4"  "VLVCA"    "V-S"   64
-         "A6C5=VRCL,64,640",     //        "A6C5"  "VRCL"     "V-S"   64
-         "A6C6=VSVMM,64,640",    //        "A6C6"  "VSVMM"    "V-S"   64
-         "A6C7=VLVXA,64,640",    //        "A6C7"  "VLVXA"    "V-S"   64
-         "A6C8=VSTVP,64,640",    //        "A6C8"  "VSTVP"    "V-S"   64
-         "A6CA=VACSV,64,640",    //        "A6CA"  "VACSV"    "V-S"   64
-         "A6CB=VACRS,64,640",    //        "A6CB"  "VACRS"    "V-S"   64
-         "E400=VLI,63,630",      //        "E400"  "VLI"      "V-RSE" 63
-         "E400=VLIE,63,630",     //        "E400"  "VLIE"     "V-RSE" 63
-         "E401=VSTI,63,630",     //        "E401"  "VSTI"     "V-RSE" 63
-         "E401=VSTIE,63,630",    //        "E401"  "VSTIE"    "V-RSE" 63
-         "E410=VLID,63,630",     //        "E410"  "VLID"     "V-RSE" 63
-         "E411=VSTID,63,630",    //        "E411"  "VSTID"    "V-RSE" 63
-         "E424=VSRL,63,630",     //        "E424"  "VSRL"     "V-RSE" 63
-         "E425=VSLL,63,630",     //        "E425"  "VSLL"     "V-RSE" 63
-         "E428=VLBIX,63,630",    //        "E428"  "VLBIX"    "V-RSE" 63
+        {"A400=VAE,VST,600",     //        "A400"  "VAE"      "VST" 60
+         "A401=VSE,VST,600",     //        "A401"  "VSE"      "VST" 60
+         "A402=VME,VST,600",     //        "A402"  "VME"      "VST" 60
+         "A403=VDE,VST,600",     //        "A403"  "VDE"      "VST" 60
+         "A404=VMAE,VST,600",    //        "A404"  "VMAE"     "VST" 60
+         "A405=VMSE,VST,600",    //        "A405"  "VMSE"     "VST" 60
+         "A406=VMCE,VST,600",    //        "A406"  "VMCE"     "VST" 60
+         "A407=VACE,VST,600",    //        "A407"  "VACE"     "VST" 60
+         "A408=VCE,VST,600",     //        "A408"  "VCE"      "VST" 60
+         "A409=VL,VST,600",      //        "A409"  "VL"       "VST" 60
+         "A409=VLE,VST,600",     //        "A409"  "VLE"      "VST" 60
+         "A40A=VLM,VST,600",     //        "A40A"  "VLM"      "VST" 60
+         "A40A=VLME,VST,600",    //        "A40A"  "VLME"     "VST" 60
+         "A40B=VLY,VST,600",     //        "A40B"  "VLY"      "VST" 60
+         "A40B=VLYE,VST,600",    //        "A40B"  "VLYE"     "VST" 60
+         "A40D=VST,VST,600",     //        "A40D"  "VST"      "VST" 60
+         "A40D=VSTE,VST,600",    //        "A40D"  "VSTE"     "VST" 60
+         "A40E=VSTM,VST,600",    //        "A40E"  "VSTM"     "VST" 60
+         "A40E=VSTME,VST,600",   //        "A40E"  "VSTME"    "VST" 60
+         "A40F=VSTK,VST,600",    //        "A40F"  "VSTK"     "VST" 60
+         "A40F=VSTKE,VST,600",   //        "A40F"  "VSTKE"    "VST" 60
+         "A410=VAD,VST,600",     //        "A410"  "VAD"      "VST" 60
+         "A411=VSD,VST,600",     //        "A411"  "VSD"      "VST" 60
+         "A412=VMD,VST,600",     //        "A412"  "VMD"      "VST" 60
+         "A413=VDD,VST,600",     //        "A413"  "VDD"      "VST" 60
+         "A414=VMAD,VST,600",    //        "A414"  "VMAD"     "VST" 60
+         "A415=VMSD,VST,600",    //        "A415"  "VMSD"     "VST" 60
+         "A416=VMCD,VST,600",    //        "A416"  "VMCD"     "VST" 60
+         "A417=VACD,VST,600",    //        "A417"  "VACD"     "VST" 60
+         "A418=VCD,VST,600",     //        "A418"  "VCD"      "VST" 60
+         "A419=VLD,VST,600",     //        "A419"  "VLD"      "VST" 60
+         "A41A=VLMD,VST,600",    //        "A41A"  "VLMD"     "VST" 60
+         "A41B=VLYD,VST,600",    //        "A41B"  "VLYD"     "VST" 60
+         "A41D=VSTD,VST,600",    //        "A41D"  "VSTD"     "VST" 60
+         "A41E=VSTMD,VST,600",   //        "A41E"  "VSTMD"    "VST" 60
+         "A41F=VSTKD,VST,600",   //        "A41F"  "VSTKD"    "VST" 60
+         "A420=VA,VST,600",      //        "A420"  "VA"       "VST" 60
+         "A421=VS,VST,600",      //        "A421"  "VS"       "VST" 60
+         "A422=VM,VST,600",      //        "A422"  "VM"       "VST" 60
+         "A424=VN,VST,600",      //        "A424"  "VN"       "VST" 60
+         "A425=VO,VST,600",      //        "A425"  "VO"       "VST" 60
+         "A426=VX,VST,600",      //        "A426"  "VX"       "VST" 60
+         "A428=VC,VST,600",      //        "A428"  "VC"       "VST" 60
+         "A429=VLH,VST,600",     //        "A429"  "VLH"      "VST" 60
+         "A42A=VLINT,VST,600",   //        "A42A"  "VLINT"    "VST" 60
+         "A42D=VSTH,VST,600",    //        "A42D"  "VSTH"     "VST" 60
+         "A443=VSQE,VST,600",    //        "A443"  "VSQE"     "VST" 60
+         "A444=VTAE,VST,600",    //        "A444"  "VTAE"     "VST" 60
+         "A445=VTSE,VST,600",    //        "A445"  "VTSE"     "VST" 60
+         "A453=VSQD,VST,600",    //        "A453"  "VSQE"     "VST" 60
+         "A454=VTAD,VST,600",    //        "A454"  "VTAD"     "VST" 60
+         "A455=VTSD,VST,600",    //        "A455"  "VTSD"     "VST" 60
+         "A480=VAES,QST,580",    //        "A480"  "VAES"     "QST" 58
+         "A481=VSES,QST,580",    //        "A481"  "VSES"     "QST" 58
+         "A482=VMES,QST,580",    //        "A482"  "VMES"     "QST" 58
+         "A483=VDES,QST,580",    //        "A483"  "VDES"     "QST" 58
+         "A484=VMAES,QST,580",   //        "A484"  "VMAES"    "QST" 58
+         "A485=VMSES,QST,580",   //        "A485"  "VMSES"    "QST" 58
+         "A488=VCES,QST,580",    //        "A488"  "VCES"     "QST" 58
+         "A490=VADS,QST,580",    //        "A490"  "VADS"     "QST" 58
+         "A491=VSDS,QST,580",    //        "A491"  "VSDS"     "QST" 58
+         "A492=VMDS,QST,580",    //        "A492"  "VMDS"     "QST" 58
+         "A493=VDDS,QST,580",    //        "A493"  "VDDS"     "QST" 58
+         "A494=VMADS,QST,580",   //        "A494"  "VMADS"    "QST" 58
+         "A495=VMSDS,QST,580",   //        "A495"  "VMSDS"    "QST" 58
+         "A498=VCDS,QST,580",    //        "A498"  "VCDS"     "QST" 58
+         "A4A0=VAS,QST,580",     //        "A4A0"  "VAS"      "QST" 58
+         "A4A1=VSS,QST,580",     //        "A4A1"  "VSS"      "QST" 58
+         "A4A2=VMS,QST,580",     //        "A4A2"  "VMS"      "QST" 58
+         "A4A4=VNS,QST,580",     //        "A4A4"  "VNS"      "QST" 58
+         "A4A5=VOS,QST,580",     //        "A4A5"  "VOS"      "QST" 58
+         "A4A6=VXS,QST,580",     //        "A4A6"  "VXS"      "QST" 58
+         "A4A8=VCS,QST,580",     //        "A4A8"  "VCS"      "QST" 58
+         "A500=VAER,VV,610",     //        "A500"  "VAER"     "VV"  61
+         "A501=VSER,VV,610",     //        "A501"  "VSER"     "VV"  61
+         "A502=VMER,VV,610",     //        "A502"  "VMER"     "VV"  61
+         "A503=VDER,VV,610",     //        "A503"  "VDER"     "VV"  61
+         "A506=VMCER,VV,610",    //        "A506"  "VMCER"    "VV"  61
+         "A507=VACER,VV,610",    //        "A507"  "VACER"    "VV"  61
+         "A508=VCER,VV,610",     //        "A508"  "VCER"     "VV"  61
+         "A509=VLR,VV,610",      //        "A509"  "VLR"      "VV"  61
+         "A509=VLER,VV,610",     //        "A509"  "VLER"     "VV"  61
+         "A50A=VLMR,VV,610",     //        "A50A"  "VLMR"     "VV"  61
+         "A50A=VLMER,VV,610",    //        "A50A"  "VLMER"    "VV"  61
+         "A50B=VLZR,VV,610",     //        "A50B"  "VLZR"     "VV"  61
+         "A50B=VLZER,VV,610",    //        "A50B"  "VLZER"    "VV"  61
+         "A510=VADR,VV,610",     //        "A510"  "VADR"     "VV"  61
+         "A511=VSDR,VV,610",     //        "A511"  "VSDR"     "VV"  61
+         "A512=VMDR,VV,610",     //        "A512"  "VMDR"     "VV"  61
+         "A513=VDDR,VV,610",     //        "A513"  "VDDR"     "VV"  61
+         "A516=VMCDR,VV,610",    //        "A516"  "VMCDR"    "VV"  61
+         "A517=VACDR,VV,610",    //        "A517"  "VACDR"    "VV"  61
+         "A518=VCDR,VV,610",     //        "A518"  "VCDR"     "VV"  61
+         "A519=VLDR,VV,610",     //        "A519"  "VLDR"     "VV"  61
+         "A51A=VLMDR,VV,610",    //        "A51A"  "VLMDR"    "VV"  61
+         "A51B=VLZDR,VV,610",    //        "A51B"  "VLZDR"    "VV"  61
+         "A520=VAR,VV,610",      //        "A520"  "VAR"      "VV"  61
+         "A521=VSR,VV,610",      //        "A521"  "VSR"      "VV"  61
+         "A522=VMR,VV,610",      //        "A522"  "VMR"      "VV"  61
+         "A524=VNR,VV,610",      //        "A524"  "VNR"      "VV"  61
+         "A525=VOR,VV,610",      //        "A525"  "VOR"      "VV"  61
+         "A526=VXR,VV,610",      //        "A526"  "VXR"      "VV"  61
+         "A528=VCR,VV,610",      //        "A528"  "VCR"      "VV"  61
+         "A540=VLPER,VV,610",    //        "A540"  "VLPER"    "VV"  61
+         "A541=VLNER,VV,610",    //        "A541"  "VLNER"    "VV"  61
+         "A542=VLCER,VV,610",    //        "A542"  "VLCER"    "VV"  61
+         "A543=VSQER,VV,610",    //        "A543"  "VSQER"    "VV"  61
+         "A550=VLPDR,VV,610",    //        "A550"  "VLPDR"    "VV"  61
+         "A551=VLNDR,VV,610",    //        "A551"  "VLNDR"    "VV"  61
+         "A552=VLCDR,VV,610",    //        "A552"  "VLCDR"    "VV"  61
+         "A553=VSQDR,VV,610",    //        "A553"  "VSQDR"    "VV"  61
+         "A560=VLPR,VV,610",     //        "A560"  "VLPR"     "VV"  61
+         "A561=VLNR,VV,610",     //        "A561"  "VLNR"     "VV"  61
+         "A562=VLCR,VV,610",     //        "A562"  "VLCR"     "VV"  61
+         "A580=VAEQ,QV,590",     //        "A580"  "VAEQ"     "QV"  59
+         "A581=VSEQ,QV,590",     //        "A581"  "VSEQ"     "QV"  59
+         "A582=VMEQ,QV,590",     //        "A582"  "VMEQ"     "QV"  59
+         "A583=VDEQ,QV,590",     //        "A583"  "VDEQ"     "QV"  59
+         "A584=VMAEQ,QV,590",    //        "A584"  "VMAEQ"    "QV"  59
+         "A585=VMSEQ,QV,590",    //        "A585"  "VMSEQ"    "QV"  59
+         "A588=VCEQ,QV,590",     //        "A588"  "VCEQ"     "QV"  59
+         "A589=VLEQ,QV,590",     //        "A589"  "VLEQ"     "QV"  59
+         "A58A=VLMEQ,QV,590",    //        "A58A"  "VLMEQ"    "QV"  59
+         "A590=VADQ,QV,590",     //        "A590"  "VADQ"     "QV"  59
+         "A591=VSDQ,QV,590",     //        "A591"  "VSDQ"     "QV"  59
+         "A592=VMDQ,QV,590",     //        "A592"  "VMDQ"     "QV"  59
+         "A593=VDDQ,QV,590",     //        "A593"  "VDDQ"     "QV"  59
+         "A594=VMADQ,QV,590",    //        "A594"  "VMADQ"    "QV"  59
+         "A595=VMSDQ,QV,590",    //        "A595"  "VMSDQ"    "QV"  59
+         "A598=VCDQ,QV,590",     //        "A598"  "VCDQ"     "QV"  59
+         "A599=VLDQ,QV,590",     //        "A599"  "VLDQ"     "QV"  59
+         "A59A=VLMDQ,QV,590",    //        "A59A"  "VLMDQ"    "QV"  59
+         "A5A0=VAQ,QV,590",      //        "A5A0"  "VAQ"      "QV"  59
+         "A5A1=VSQ,QV,590",      //        "A5A1"  "VSQ"      "QV"  59
+         "A5A2=VMQ,QV,590",      //        "A5A2"  "VMQ"      "QV"  59
+         "A5A4=VNQ,QV,590",      //        "A5A4"  "VNQ"      "QV"  59
+         "A5A5=VOQ,QV,590",      //        "A5A5"  "VOQ"      "QV"  59
+         "A5A6=VXQ,QV,590",      //        "A5A6"  "VXQ"      "QV"  59
+         "A5A8=VCQ,QV,590",      //        "A5A8"  "VCQ"      "QV"  59
+         "A5A9=VLQ,QV,590",      //        "A5A9"  "VLQ"      "QV"  59
+         "A5AA=VLMQ,QV,590",     //        "A5AA"  "VLMQ"     "QV"  59
+         "A600=VMXSE,VR,650",    //        "A600"  "VMXSE"    "VR"  65
+         "A601=VMNSE,VR,650",    //        "A601"  "VMNSE"    "VR"  65
+         "A602=VMXAE,VR,650",    //        "A602"  "VMXAE"    "VR"  65
+         "A608=VLELE,VR,650",    //        "A608"  "VLELE"    "VR"  65
+         "A609=VXELE,VR,650",    //        "A609"  "VXELE"    "VR"  65
+         "A610=VMXSD,VR,650",    //        "A610"  "VMXSD"    "VR"  65
+         "A611=VMNSD,VR,650",    //        "A611"  "VMNSD"    "VR"  65
+         "A612=VMXAD,VR,650",    //        "A612"  "VMXAD"    "VR"  65
+         "A618=VLELD,VR,650",    //        "A618"  "VLELD"    "VR"  65
+         "A619=VXELD,VR,650",    //        "A619"  "VXELD"    "VR"  65
+         "A61A=VSPSD,VR,650",    //        "A61A"  "VSPSD"    "VR"  65
+         "A61B=VZPSD,VR,650",    //        "A61B"  "VZPSD"    "VR"  65
+         "A628=VLEL,VR,650",     //        "A628"  "VLEL"     "VR"  65
+         "A629=VXEL,VR,650",     //        "A629"  "VXEL"     "VR"  65
+         "A640=VTVM,RRE,620",    //        "A640"  "VTVM"     "RRE" 62
+         "A641=VCVM,RRE,620",    //        "A641"  "VCVM"     "RRE" 62
+         "A642=VCZVM,RRE,620",   //        "A642"  "VCZVM"    "RRE" 62
+         "A643=VCOVM,RRE,620",   //        "A643"  "VCOVM"    "RRE" 62
+         "A644=VXVC,RRE,620",    //        "A644"  "VXVC"     "RRE" 62
+         "A645=VLVCU,RRE,620",   //        "A645"  "VLVCU"    "RRE" 62
+         "A646=VXVMM,RRE,620",   //        "A646"  "VXVMM"    "RRE" 62
+         "A648=VRRS,RRE,620",    //        "A648"  "VRRS"     "RRE" 62
+         "A649=VRSVC,RRE,620",   //        "A649"  "VRSVC"    "RRE" 62
+         "A64A=VRSV,RRE,620",    //        "A64A"  "VRSV"     "RRE" 62
+         "A680=VLVM,VS,660",     //        "A680"  "VLVM"     "VS"  66
+         "A681=VLCVM,VS,660",    //        "A681"  "VLCVM"    "VS"  66
+         "A682=VSTVM,VS,660",    //        "A682"  "VSTVM"    "VS"  66
+         "A684=VNVM,VS,660",     //        "A684"  "VNVM"     "VS"  66
+         "A685=VOVM,VS,660",     //        "A685"  "VOVM"     "VS"  66
+         "A686=VXVM,VS,660",     //        "A686"  "VXVM"     "VS"  66
+         "A6C0=VSRSV,S,640",     //        "A6C0"  "VSRSV"    "S"   64
+         "A6C1=VMRSV,S,640",     //        "A6C1"  "VMRSV"    "S"   64
+         "A6C2=VSRRS,S,640",     //        "A6C2"  "VSRRS"    "S"   64
+         "A6C3=VMRRS,S,640",     //        "A6C3"  "VMRRS"    "S"   64
+         "A6C4=VLVCA,S,640",     //        "A6C4"  "VLVCA"    "S"   64
+         "A6C5=VRCL,S,640",      //        "A6C5"  "VRCL"     "S"   64
+         "A6C6=VSVMM,S,640",     //        "A6C6"  "VSVMM"    "S"   64
+         "A6C7=VLVXA,S,640",     //        "A6C7"  "VLVXA"    "S"   64
+         "A6C8=VSTVP,S,640",     //        "A6C8"  "VSTVP"    "S"   64
+         "A6CA=VACSV,S,640",     //        "A6CA"  "VACSV"    "S"   64
+         "A6CB=VACRS,S,640",     //        "A6CB"  "VACRS"    "S"   64
+         "E400=VLI,RSEv,630",    //        "E400"  "VLI"      "RSE" 63
+         "E400=VLIE,RSEv,630",   //        "E400"  "VLIE"     "RSE" 63
+         "E401=VSTI,RSEv,630",   //        "E401"  "VSTI"     "RSE" 63
+         "E401=VSTIE,RSEv,630",  //        "E401"  "VSTIE"    "RSE" 63
+         "E410=VLID,RSEv,630",   //        "E410"  "VLID"     "RSE" 63
+         "E411=VSTID,RSEv,630",  //        "E411"  "VSTID"    "RSE" 63
+         "E424=VSRL,RSEv,630",   //        "E424"  "VSRL"     "RSE" 63
+         "E425=VSLL,RSEv,630",   //        "E425"  "VSLL"     "RSE" 63
+         "E428=VLBIX,RSEv,630",  //        "E428"  "VLBIX"    "RSE" 63
          };
      String[]   op_table_370 =   // Table added for RPI 1209A
         {"0D=BASR,2,20",         //    320 "0D"    "BASR"     "RR"    2
@@ -2570,7 +2653,12 @@ public void init_tz390(){
         // init_opcodes();  // verify opcode tables - moved to init_options RPI 1209A
 }
 /*
- * Create_opcodes builds the following arrays:
+ * Create_opcodes builds the following arrays to define opcode formats:
+ * op_type_name
+ * op_type_len
+ * op_type_src_format
+ * op_type_obj_format
+ * Create_opcodes builds the following arrays to define valid opcodes:
  * - op_name
  * - op_code
  * - op_type
@@ -2581,8 +2669,49 @@ public void create_opcodes()  // Routine added for RPI 1209
    {int     index, index2;
     int     i, j;
     String  entry;
+    String  part1;
+    String  part2;
     String  opcode="";
     String  mnemonic="";
+    //
+    // Build opcode formats tables from opcode_formats
+    max_op_type_offset = opcode_formats.length;
+    op_type_name = new String[opcode_formats.length];
+    op_type_len = new int[opcode_formats.length];
+    op_type_src_format = new String[opcode_formats.length];
+    op_type_obj_format = new String[opcode_formats.length];
+    index=0;
+    while (index < opcode_formats.length) // for each format defined in opcode_formats
+       {entry=opcode_formats[index];
+        try                              // separate entry into name/length part and formats part
+           {i=entry.indexOf(":");
+            if (i == -1)
+               {abort_error(40,"Missing colon in instruction format definition " + opcode_formats[index]);
+                }
+            part1=entry.substring(0,i);
+            part2=entry.substring(i+1);
+            // split part1 into name and length
+            i=part1.indexOf(",");
+            if (i == -1)
+               {abort_error(40,"Missing comma in first half of instruction format definition " + opcode_formats[index]);
+                }
+            op_type_name[index]=part1.substring(0,i);
+            op_type_len[index]=Integer.parseInt(part1.substring(i+1));
+            // split part2 into source and object formats
+            i=part2.indexOf(",");
+            if (i == -1) // no comma: assume source format
+               {op_type_src_format[index]=part2;
+                }
+            else
+               {op_type_src_format[index]=part2.substring(0,i);
+                op_type_obj_format[index]=part2.substring(i+1);
+                }
+            }
+        catch (Exception e)
+           {abort_error(41,"Error in instruction fomat definition " + opcode_formats[index] + " - " + e.toString());
+            }
+        index++;
+        }
     //
     // First extract data from both opcode_masks and opcode_masks_short into single table-set mask_opcode and mask_mnemonic
     // These tables thus have first section (index 0 thru opcode_masks.length) and
@@ -2593,7 +2722,7 @@ public void create_opcodes()  // Routine added for RPI 1209
     index2=0;
     while (index < opcode_masks.length) // for each mask (opcode nibble + mnemonic letters) defined in opcode_masks
        {entry=opcode_masks[index];
-        try                             // separate entry into opcode part and menmonic part
+        try                             // separate entry into opcode part and mnemonic part
            {i=entry.indexOf("=");
             if (i == -1)
                {abort_error(40,"Missing equal-sign in mask definition " + opcode_masks[index]);
@@ -2763,6 +2892,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
     String  opcode="";
     String  mnemonic="";
     String  optype="";
+    String  error_msg="";
     Integer optype_nr=0;
     String  tracetype="";
     Integer tracetype_nr=0;
@@ -2828,7 +2958,21 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
            {optype_nr=optype_nr.decode(optype);
             }
         catch (Exception e)
-           {abort_error(48,"Invalid number " + optype + " in opcode definition " + op_tables[index] + " - " + e.toString());
+           {error_msg = e.toString();
+            optype_nr=-1;
+            //abort_error(48,"Invalid number " + optype + " in opcode definition " + op_tables[index] + " - " + e.toString());
+            }
+        if (optype_nr < 0)                                      // If optype was not a number: look it up in table op_type_name
+           {i = 0; // use i to loop over op_type_name table
+            while (i < op_type_name.length && optype_nr < 0)
+               {if (optype.equals(op_type_name[i]))
+                   {optype_nr = i;
+                    }
+                i++;
+                }
+            }
+        if (optype_nr < 0)                                      // If optype was not a number and not found in the table: issue error
+           {abort_error(48,"Invalid number " + optype + " in opcode definition " + op_tables[index] + " - " + error_msg);
             }
         if (  optype_nr < 0                                      // Validate op_type
         ||   (optype_nr == 0 && mnemonic.equals("*") == false)

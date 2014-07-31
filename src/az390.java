@@ -395,7 +395,8 @@ public  class  az390 implements Runnable {
         * 04/17/12 RPI 1208 don't generate RLD's in DSECT  
         * 04/20/12 RPI 1210 correct handling of periods in paths       
         * 05/15/12 RPI 1209A Report OPTABLE contents if LIST specified on OPTABLE or MACHINE (AFK)
-        * 07/20/14 RPI VF01 add support for vector opcodes
+        * 07/20/14 RPI VF01  add support for vector opcodes
+        * 07/24/14 RPI 1209B Extend az390 to produce correct report of vector optypes
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1701,7 +1702,9 @@ private void reset_lits(){
 private void gen_list_mnemonics() // Routine added for RPI 1209A
    {int     index;
     String  entry;
-    /* List opcodes supported by current optable */
+    String[] report_entries = null; // See process_opcodes() RPI 1209G
+    /* Create Array of strings listing the opcodes supported by current optable */
+    report_entries = new String[tz390.op_name.length];
     index=0;
     while (index < tz390.op_name.length)
        {entry=tz390.op_name[index]+"                  ";
@@ -2155,15 +2158,53 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 57:
                     entry=entry+"RIE  "+tz390.op_code[index]+" R1,R3,I2";
                     break;
+                case 58:
+                    entry=entry+"QST  "+tz390.op_code[index]+" VR1,QR3,RS2(RT2)";
+                    break;
+                case 59:
+                    entry=entry+"QV   "+tz390.op_code[index]+" VR1,QR3,VR2";
+                    break;
+                case 60:
+                    entry=entry+"VST  "+tz390.op_code[index]+" VR1,VR3,RS2(RT2)";
+                    break;
+                case 61:
+                    entry=entry+"VV   "+tz390.op_code[index]+" VR1,VR2";
+                    break;
+                case 62:
+                    entry=entry+"RRE  "+tz390.op_code[index]+" R1";
+                    break;
+                case 63:
+                    entry=entry+"RSEv "+tz390.op_code[index]+" VR1,VR3,D2(B2)";
+                    break;
+                case 64:
+                    entry=entry+"S    "+tz390.op_code[index]+" D2(B2)";
+                    break;
+                case 65:
+                    entry=entry+"VR   "+tz390.op_code[index]+" VR1,QR3,R2";
+                    break;
+                case 66:
+                    entry=entry+"VS   "+tz390.op_code[index]+" RS2";
+                    break;
                 default:
                     entry=entry+" op_type "+tz390.op_type[index]+" cannot be listed";
                 }
             }
-            if (tz390.op_type[index]!=0     // comment lines
-            &&  tz390.op_type[index]!=122   //   empty lines (not used)
+            if (tz390.op_type[index] == 0     // comment lines
+            ||  tz390.op_type[index] == 122   //   empty lines (not used)
                 )
-               {put_prn_line(entry);
+               {report_entries[index] = " ";
                 }
+            else
+               {report_entries[index] = entry;
+                }
+        index++;
+        }
+    Arrays.sort(report_entries);
+    index = 0;
+    while (index < tz390.op_name.length)
+       {if (!report_entries[index].equals(" "))
+           {put_prn_line(report_entries[index]);
+            }
         index++;
         }
     }
