@@ -278,6 +278,7 @@ public  class  tz390 {
     * 05/09/12 RPI 1209A (AFK) Implement OPTABLE/MACHINE options
     * 07/20/14 RPI VF01 add vector options Vector/Novector and SectionSize, PartialSums
     * 07/25/14 RPI 1209G Make table op_type_len dynamic; fill from opcode_format definitions
+    * 08/27/14 RPI 1209H Mend optables out of sync condition detected by pz390
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -286,7 +287,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.6.00b02";  //dsh + afk
+    String version    = "V1.6.00b04";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -2675,7 +2676,7 @@ public void create_opcodes()  // Routine added for RPI 1209
     String  mnemonic="";
     //
     // Build opcode formats tables from opcode_formats
-    max_op_type_offset = opcode_formats.length;
+    max_op_type_offset = opcode_formats.length-1; // RPI 1209H
     op_type_name = new String[opcode_formats.length];
     op_type_len = new int[opcode_formats.length];
     op_type_src_format = new String[opcode_formats.length];
