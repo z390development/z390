@@ -397,6 +397,8 @@ public  class  az390 implements Runnable {
         * 05/15/12 RPI 1209A Report OPTABLE contents if LIST specified on OPTABLE or MACHINE (AFK)
         * 07/20/14 RPI VF01  add support for vector opcodes
         * 07/24/14 RPI 1209B Extend az390 to produce correct report of vector optypes
+        * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
+        * 11/03/14 RPI 1209O MR/DR instructions should issue error when operand1 is odd
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -3588,6 +3590,85 @@ private void process_bal_op(){
         check_end_parms();
         put_obj_text();
         break;
+    case 67:  // RR with 2 GPRs           // RPI 1209N
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 2;
+        get_hex_op(1,2); 
+        // MR, DR require operand1 even, all others dont care RPI 1209O
+        if (obj_code.substring(0,2).equals("1C") // RPI 1209O
+         || obj_code.substring(0,2).equals("1D") // RPI 1209O
+            )                                    // RPI 1209O
+           {get_hex_reg_even();                  // RPI 1209O
+            }                                    // RPI 1209O
+        else                                     // RPI 1209O
+           {get_hex_reg();                       // RPI 1209O
+            }                                    // RPI 1209O
+        skip_comma();
+        get_hex_reg();
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 68:  // RR with 2 FPRs           // RPI 1209N
+        // Even with old optables (e.g. DOS) HLASM will accept any register numbers!
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 2;
+        get_hex_op(1,2);
+        get_hex_reg();
+        skip_comma();
+        get_hex_reg();
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 69:  // RR with 1 mask and 1 GPR // RPI 1209N
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 2;
+        get_hex_op(1,2); 
+        get_hex_reg();
+        skip_comma();
+        get_hex_reg();
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 70:  // RR with 1 GPR            // RPI 1209N
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 2;
+        get_hex_op(1,2); 
+        get_hex_reg();
+        obj_code = obj_code.concat("0");
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 71:  // RR with 2 pairs of GPRs  // RPI 1209N
+        // Register numbers must be even
+        bal_op_ok = true;
+        loc_ctr = (loc_ctr+1)/2*2;
+        loc_start = loc_ctr;
+        loc_len = 2;
+        get_hex_op(1,2); 
+        get_hex_reg_even();
+        skip_comma();
+        get_hex_reg_even();
+        check_end_parms();
+        put_obj_text();
+        break;
+    case 72:  // "BRX" 16  BER oomr
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 2;
+    	get_hex_op(1,3);  // BCR OP includes mask
+    	get_hex_reg();
+    	check_end_parms();
+ 	    put_obj_text();
+    	break;
     case 101:  // CCW  0 
     case 102:  // CCW0 0
     	bal_op_ok = true;
@@ -6807,6 +6888,29 @@ private void get_hex_reg(){
 		obj_code = obj_code + "r";
 	}
 }
+private void get_hex_reg_even() // RPI 1209N
+   {/*
+     * append hex reg from next parm - if it is an even register
+     */
+    if (calc_abs_exp())
+       {if (exp_val >= 0 && exp_val <= 15)
+           {if ((exp_val/2)*2-exp_val == 0) // check for even register number
+               {obj_code = obj_code + tz390.get_hex(exp_val,1);
+                }
+            else
+               {log_error(56,"incorrect register specification - " + exp_val);
+                }
+            }
+        else
+           {log_error(55,"invalid register expression - " + exp_val);
+            obj_code = obj_code + "r";
+            }
+        }
+    else
+       {log_error(41,"invalid register value");
+        obj_code = obj_code + "r";
+        }
+    }
 private void get_hex_zero(int hex_ll){
 	/*
 	 * append zero nibbles

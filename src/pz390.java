@@ -330,7 +330,9 @@ public class pz390 {
 	 * 05/10/12 RPI 1214 fix DXTR fp_rbdv2 to prevent S0C5
      * 04/19/12 RPI 1209 Move array op_trace_type to tz390
      * 07/20/14 RPI VF01 add vector operations
-	 ********************************************************* 
+     * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
+     * 12/26/14 RPI 1505 BALR in amode 24 fails to construct correct high-order word in return address
+	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
 	/*
@@ -831,6 +833,7 @@ public class pz390 {
 	byte ex_mod_byte = 0; // save targe+1 byte
 
 	int ex_psw_return = 0; // return from ex
+    int ex_psw_ilc =0; // length of ex instruction in halfwords // RPI 1505
 
 	byte[] pd_bytes = (byte[]) Array.newInstance(byte.class, 16);
 
@@ -1504,7 +1507,22 @@ public class pz390 {
 			if (rf2 != 0) {
 				rv2 = reg.getInt(rf2 + 4); // RPI65
 			}
-			reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
+            if (psw_amode_bit == psw_amode24_bit)                 // RPI 1505
+               {if (ex_mode)                                      // RPI 1505
+                   {reg.putInt(rf1 + 4, (ex_psw_ilc << 30)        // RPI 1505
+                                      | (psw_cc << 28)            // RPI 1505
+                                      | (psw_pgm_mask << 24)      // RPI 1505
+                                      | (psw_loc & psw_amode24)); // RPI 1505
+                    }                                             // RPI 1505
+                else // not in EX-mode                            // RPI 1505
+                   {reg.putInt(rf1 + 4, (0x01 << 30)              // RPI 1505
+                                      | (psw_cc << 28)            // RPI 1505
+                                      | (psw_pgm_mask << 24)      // RPI 1505
+                                      | (psw_loc & psw_amode24)); // RPI 1505
+                }   }                                             // RPI 1505
+            else // Amode31                                       // RPI 1505
+               {reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
+                }                                                 // RPI 1505
 			if (rf2 != 0) {
 				set_psw_loc(rv2); // RPI65
 			}
@@ -2055,7 +2073,7 @@ public class pz390 {
 		case 0x44: // 900 "44" "EX" "RX"
 			psw_check = false;
 			ins_setup_rx();
-            exec_ex(xbd2_loc);
+            exec_ex(xbd2_loc, 2); // RPI 1505
 			break;
 		case 0x45: // 910 "45" "BAL" "RX"
 			psw_check = false;
@@ -7344,7 +7362,7 @@ public class pz390 {
 	     case 0x0:  // 180 "C60" "EXRL" "RIL" 16 RPI 817
 	         psw_check = false;
 	    	 ins_setup_ril();
-	    	 exec_ex(bd2_loc);
+	    	 exec_ex(bd2_loc, 3); // RPI 1505
 	         break;
 	     case 0x2:  // 190 "C62" "PFDRL" "RIL" 16 RPI 817
 	    	 psw_check = false;
@@ -13042,14 +13060,32 @@ public class pz390 {
 		case 57: // RPI 1125 "AHIK"  
 			ins_setup_rie9();
 			break;	
-	    // update max_op_type_setup and add cases to match
-		default: 
-			trace_ins(); // unknown op RPI 527
-		}
-		tz390.opt_trace = save_opt_trace;
-		psw_loc = save_psw_loc;
-		trace_psw = false;  // RPI 538
-	}
+        case 67: // RR with 2 GPRs                // RPI 1209N
+            ins_setup_rr();
+            break;
+        case 68: // RR with 2 FPRs                // RPI 1209N
+            ins_setup_rr();
+            break;
+        case 69: // RR with 1 mask and 1 GPR      // RPI 1209N
+            ins_setup_rr();
+            break;
+        case 70: // RR with 1 GPR                 // RPI 1209N
+            ins_setup_rr();
+            break;
+        case 71: // RR with 2 pairs of GPRs       // RPI 1209N
+            ins_setup_rr();
+            break;
+        case 72:// RR with implied mask and 1 GPR // RPI 1209N
+            ins_setup_rr();
+            break;
+         // update max_op_type_setup and add cases to match
+        default: 
+            trace_ins(); // unknown op RPI 527
+        }
+        tz390.opt_trace = save_opt_trace;
+        psw_loc = save_psw_loc;
+        trace_psw = false;  // RPI 538
+    }
 	private String trace_svc() { // RPI 312
 		/*
 		 * return extended svc trace information including svc function name and
@@ -16289,11 +16325,12 @@ public class pz390 {
 			rflen--;
 		}
 	}
-    private void exec_ex(int target_addr){
+    private void exec_ex(int target_addr, int ilc){ // RPI 1505
     	/*
     	 * share code for EX and EXRL RPI 817
     	 */
 		if (!ex_mode) {
+            ex_psw_ilc = ilc; // RPI 1505
 			ex_psw_return = psw_loc;
 			set_psw_loc(target_addr);
 			ex_mode = true;
@@ -16743,7 +16780,13 @@ public class pz390 {
         op_type_offset[64] = 1; // "V-S" VRCL RPI VF01
         op_type_offset[65] = 1; // RPI VF01
         op_type_offset[66] = 1; // RPI VF01
-        int max_op_type_offset = 66; // RPI 1125 RPI VF01
+        op_type_offset[67] = 0; // 67 RR with 2 GPRs                 // RPI 1209N
+        op_type_offset[68] = 0; // 68 RR with 2 FPRs                 // RPI 1209N
+        op_type_offset[69] = 0; // 69 RR with 1 mask and 1 GPR       // RPI 1209N
+        op_type_offset[70] = 0; // 70 RR with 1 GPR                  // RPI 1209N
+        op_type_offset[71] = 0; // 71 RR with 2 pairs of GPRs        // RPI 1209N
+        op_type_offset[72] = 0; // 72 RR with implied mask and 1 GPR // RPI 1209N
+        int max_op_type_offset = 72;                                 // RPI 1125 RPI VF01 RPI 1209N
 		op_type_mask[1] = 0xff; // E PR oooo
 		op_type_mask[7] = 0xff; // S SSM oooobddd
 		op_type_mask[12] = 0x0f; // RI IIHH ooroiiii
@@ -16794,9 +16837,15 @@ public class pz390 {
         op_type_mask[64] = 0xff; // "V-S" VRCL RPI VF01
         op_type_mask[65] = 0xff; // RPI VF01
         op_type_mask[66] = 0xff; // RPI VF01
-        int max_op_type_mask = 66; // RPI 1125 RPI VF01
+        op_type_mask[67] = 0x00; // 67 RR with 2 GPRs                 // RPI 1209N
+        op_type_mask[68] = 0x00; // 68 RR with 2 FPRs                 // RPI 1209N
+        op_type_mask[69] = 0x00; // 69 RR with 1 mask and 1 GPR       // RPI 1209N
+        op_type_mask[70] = 0x00; // 70 RR with 1 GPR                  // RPI 1209N
+        op_type_mask[71] = 0x00; // 71 RR with 2 pairs of GPRs        // RPI 1209N
+        op_type_mask[72] = 0x00; // 72 RR with implied mask and 1 GPR // RPI 1209N
+        int max_op_type_mask = 72;                                    // RPI 1125 RPI VF01 RPI 1209N
 		// init op2 offset and mask arrays indexed by op1
-		int max_op_type_setup = 66; // RPI 1125
+		int max_op_type_setup = 72;                                   // RPI 1125 RPI 1209N
 		// add setup case for each new op type - see case 55 etc.
 		if (max_op_type_setup != tz390.max_op_type_offset){
 			tz390.abort_error(22,"max op type setup cases out of sync "

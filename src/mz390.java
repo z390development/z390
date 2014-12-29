@@ -418,7 +418,7 @@ public  class  mz390 {
 	 *          except for D2A, D2B, D2C, and D2X
 	 * 05/05/12 RPI 1212 add trace for common ops such as SLL  
 	 * 05/06/12 RPI 1213 correct SYSECT, SYSLOC, and SYSSTYP
-	 *          see rt\test\TESTSYS3.MLC regression test       
+	 *          see rt\test\TESTSYS3.MLC regression test
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -3816,8 +3816,8 @@ public  class  mz390 {
 		/*
 		 * set mac_opcode_index and return
 		 * return opcode type:
-		 *   -1 - not found in opcode table
-		 *    0 - comment (no opcode)
+		 *                    -1                              - not found in opcode table
+		 *                     0                              - comment (no opcode)
 		 *      1-100 - machine type
 		 *    100-200 - assembler type
 		 *    200+    - macro operation 

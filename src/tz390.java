@@ -279,6 +279,11 @@ public  class  tz390 {
     * 07/20/14 RPI VF01 add vector options Vector/Novector and SectionSize, PartialSums
     * 07/25/14 RPI 1209G Make table op_type_len dynamic; fill from opcode_format definitions
     * 08/27/14 RPI 1209H Mend optables out of sync condition detected by pz390
+    * 09/04/14 RPI 1209I Add missing unsupported opcodes
+    * 09/07/14 RPI 1209J Remove duplicate opcodes from list of unsupported XA-instructions
+    * 09/13/14 RPI 1209K Add opcodes from Principles of Operation SA22-7832-09 as unsupported instructions
+    * 10/18/14 RPI 1209M Make usage of ASSIST instructions dependent upon option ASSIST/NOASSIST
+    * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -287,7 +292,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.6.00b04";  //dsh + afk
+    String version    = "V1.6.00b05";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -1051,23 +1056,25 @@ public  class  tz390 {
     int    max_asm_type = 200;
     int    max_mac_type = 300;
 	//  When adding new opcode case: // RPI 407 type 35 for CSDTR etc
-	//  1.  Increase the above max.
-	//  2.  Change above op_type_len table which must match
-    //  3.  Change az390 instruction format cases and
+	//  1.  Increase the above max.  // no longer relevant // RPI 1209G
+	//  2.  Change above op_type_len table which must match // no longer relevant // RPI 1209G
+    //  1.  Update routine gen_list_mnemonics in az390 when adding new opcode formats to table opcode_formats below  // RPI 1209G
+    //  2.  Extend routine process_bal_op     in az390 when adding new opcode formats to table opcode_formats below  // RPI 1209G
+    //  3.  Change az390 instruction format cases in az390 routine process_bal_op // RPI 1209N
     //  4.  Change pz390 op_type_offset and op_type_mask if new primary opcode
-    //  5.  Change pz390 trace_psw to add new case formats
+    //  5.  Change pz390 trace_psw routine to add new case formats
     //  int[]    op_type = // Static content removed, content now generated RPI 1209
-        int[]    op_type = null; // See process_opcodes() RPI 1209
-  	  int        op_code_index = -1;
-    //String[]   op_code = // Static content removed, content now generated RPI 1209
-      String[]   op_code = null; // See process_opcodes() RPI 1209
-    int op_code_count = 0;       // RPI 1209A
-    int op_directives_count = 0; // RPI 1209A
-    //int[]      op_trace_type = // Moved here from pz390; static content removed, content now generated RPI 1209
-      int[]      op_trace_type = null; // See process_opcodes() RPI 1209
+    int[]    op_type = null; // See process_opcodes() RPI 1209
+    int      op_code_index = -1;
+    //String[] op_code = // Static content removed, content now generated RPI 1209
+    String[] op_code = null; // See process_opcodes() RPI 1209
+    int      op_code_count = 0;       // RPI 1209A
+    int      op_directives_count = 0; // RPI 1209A
+    //int[]  op_trace_type = // Moved here from pz390; static content removed, content now generated RPI 1209
+    int[]    op_trace_type = null; // See process_opcodes() RPI 1209
 //
 // The opcode_formats table below defines all opcode formats and their lengths
-// The format of the definiitions is as follows:
+// The format of the definitions is as follows:
 // formatname[$variant],length:operand_list[,object_format]
 // - formatname can be suffixed with a $-sign followed by an internal identifier to differentiate between variants
 // - length is the length of the instruction in bytes
@@ -1076,8 +1083,8 @@ public  class  tz390 {
      String[]   opcode_formats = // Table added for RPI 1209G
         {"*,0:comment",        // 0 comment place holder
          "E,2:oooo",           // 1 PR
-         "RR,2:oorr",          // 2 LR
-         "BRX,2:oomr",         // 3 BER
+         "RR_old,2:oorr",      // 2 LR  // RPI 1209N
+         "BRX_old,2:oomr",     // 3 BER // RPI 1209N
          "I,2:ooii",           // 4 SVC
          "RX,4:oorxbddd",      // 5 L
          "BCX,4:oomxbddd",     // 6 BE
@@ -1141,6 +1148,12 @@ public  class  tz390 {
          "S,4:oooobddd",       // 64 VRCL
          "VR,4:xxxx",          // 65
          "VS,4:xxxx",          // 66
+         "RR,2:oorr",          // 67 RR with 2 GPRs                 // RPI 1209N
+         "RR-f,2:oomr",        // 68 RR with 2 FPRs                 // RPI 1209N
+         "RR-m,2:oomr",        // 69 RR with 1 mask and 1 GPR       // RPI 1209N
+         "RR-n,2:oo0r",        // 70 RR with 1 GPR                  // RPI 1209N
+         "RR-p,2:oorr",        // 71 RR with 2 pairs of GPRs        // RPI 1209N
+         "RR-mx,2:ooor",       // 72 RR with implied mask and 1 GPR // RPI 1209N
          };
 //
 // The op_tables below define all instructions. The format of the definitions is as follows:
@@ -1161,63 +1174,63 @@ public  class  tz390 {
         {"??=*,0,00",            //     00 comments
          };
      String[]   op_table_DOS =   // Table added for RPI 1209A
-        {"04=SPM,2,20",          //     90 "04"    "SPM"      "RR"    2
-         "05=BALR,2,20",         //    100 "05"    "BALR"     "RR"    2
-         "06=BCTR,2,20",         //    110 "06"    "BCTR"     "RR"    2
-         "07=BCR,2,30",          //    120 "07"    "BCR"      "RR"    2
-         "07m=BmR,3,30;0=NOPR",  //        "07m"   "BmR, NOPR" "BRX"  3
+        {"04=SPM,RR-n,20",       //     90 "04"    "SPM"      "RR"    2 // RPI 1209N
+         "05=BALR,RR,20",        //    100 "05"    "BALR"     "RR"    2 // RPI 1209N
+         "06=BCTR,RR,20",        //    110 "06"    "BCTR"     "RR"    2 // RPI 1209N
+         "07=BCR,RR-m,30",       //    120 "07"    "BCR"      "RR"    2 // RPI 1209N
+         "07m=BmR,RR-mx,30;0=NOPR", //     "07m"   "BmR, NOPR" "BRX"  3 // RPI 1209N
          "0A=SVC,4,40",          //    290 "0A"    "SVC"      "I"     4
-         "0E=MVCL,2,22",         //    330 "0E"    "MVCL"     "RR"    2
-         "0F=CLCL,2,22",         //    340 "0F"    "CLCL"     "RR"    2
-         "10=LPR,2,20",          //    350 "10"    "LPR"      "RR"    2
-         "11=LNR,2,20",          //    360 "11"    "LNR"      "RR"    2
-         "12=LTR,2,20",          //    370 "12"    "LTR"      "RR"    2
-         "13=LCR,2,20",          //    380 "13"    "LCR"      "RR"    2
-         "14=NR,2,20",           //    390 "14"    "NR"       "RR"    2
-         "15=CLR,2,20",          //    400 "15"    "CLR"      "RR"    2
-         "16=OR,2,20",           //    410 "16"    "OR"       "RR"    2
-         "17=XR,2,20",           //    420 "17"    "XR"       "RR"    2
-         "18=LR,2,20",           //    430 "18"    "LR"       "RR"    2
-         "19=CR,2,20",           //    440 "19"    "CR"       "RR"    2
-         "1A=AR,2,20",           //    450 "1A"    "AR"       "RR"    2
-         "1B=SR,2,20",           //    460 "1B"    "SR"       "RR"    2
-         "1C=MR,2,23",           //    470 "1C"    "MR"       "RR"    2
-         "1D=DR,2,23",           //    480 "1D"    "DR"       "RR"    2
-         "1E=ALR,2,20",          //    490 "1E"    "ALR"      "RR"    2
-         "1F=SLR,2,20",          //    500 "1F"    "SLR"      "RR"    2
-         "20=LPDR,2,21",         //    510 "20"    "LPDR"     "RR"    2
-         "21=LNDR,2,21",         //    520 "21"    "LNDR"     "RR"    2
-         "22=LTDR,2,21",         //    530 "22"    "LTDR"     "RR"    2
-         "23=LCDR,2,21",         //    540 "23"    "LCDR"     "RR"    2
-         "24=HDR,2,21",          //    550 "24"    "HDR"      "RR"    2
-         "25=LRDR,2,21",         //    570 "25"    "LRDR"     "RR"    2
-         "26=MXR,2,21",          //    580 "26"    "MXR"      "RR"    2
-         "27=MXDR,2,21",         //    590 "27"    "MXDR"     "RR"    2
-         "28=LDR,2,21",          //    600 "28"    "LDR"      "RR"    2
-         "29=CDR,2,21",          //    610 "29"    "CDR"      "RR"    2
-         "2A=ADR,2,21",          //    620 "2A"    "ADR"      "RR"    2
-         "2B=SDR,2,21",          //    630 "2B"    "SDR"      "RR"    2
-         "2C=MDR,2,21",          //    640 "2C"    "MDR"      "RR"    2
-         "2D=DDR,2,21",          //    650 "2D"    "DDR"      "RR"    2
-         "2E=AWR,2,21",          //    660 "2E"    "AWR"      "RR"    2
-         "2F=SWR,2,21",          //    670 "2F"    "SWR"      "RR"    2
-         "30=LPER,2,21",         //    680 "30"    "LPER"     "RR"    2
-         "31=LNER,2,21",         //    690 "31"    "LNER"     "RR"    2
-         "32=LTER,2,21",         //    700 "32"    "LTER"     "RR"    2
-         "33=LCER,2,21",         //    710 "33"    "LCER"     "RR"    2
-         "34=HER,2,21",          //    720 "34"    "HER"      "RR"    2
-         "35=LRER,2,21",         //    740 "35"    "LRER"     "RR"    2
-         "36=AXR,2,21",          //    750 "36"    "AXR"      "RR"    2
-         "37=SXR,2,21",          //    760 "37"    "SXR"      "RR"    2
-         "38=LER,2,21",          //    770 "38"    "LER"      "RR"    2
-         "39=CER,2,21",          //    780 "39"    "CER"      "RR"    2
-         "3A=AER,2,21",          //    790 "3A"    "AER"      "RR"    2
-         "3B=SER,2,21",          //    800 "3B"    "SER"      "RR"    2
-         "3C=MDER,2,21",         //    810 "3C"    "MDER"     "RR"    2
-         "3C=MER,2,21",          //    820 "3C"    "MER"      "RR"    2
-         "3D=DER,2,21",          //    830 "3D"    "DER"      "RR"    2
-         "3E=AUR,2,21",          //    840 "3E"    "AUR"      "RR"    2
-         "3F=SUR,2,21",          //    850 "3F"    "SUR"      "RR"    2
+         "0E=MVCL,RR-p,22",      //    330 "0E"    "MVCL"     "RR"    2 // RPI 1209N
+         "0F=CLCL,RR-p,22",      //    340 "0F"    "CLCL"     "RR"    2 // RPI 1209N
+         "10=LPR,RR,20",         //    350 "10"    "LPR"      "RR"    2 // RPI 1209N
+         "11=LNR,RR,20",         //    360 "11"    "LNR"      "RR"    2 // RPI 1209N
+         "12=LTR,RR,20",         //    370 "12"    "LTR"      "RR"    2 // RPI 1209N
+         "13=LCR,RR,20",         //    380 "13"    "LCR"      "RR"    2 // RPI 1209N
+         "14=NR,RR,20",          //    390 "14"    "NR"       "RR"    2 // RPI 1209N
+         "15=CLR,RR,20",         //    400 "15"    "CLR"      "RR"    2 // RPI 1209N
+         "16=OR,RR,20",          //    410 "16"    "OR"       "RR"    2 // RPI 1209N
+         "17=XR,RR,20",          //    420 "17"    "XR"       "RR"    2 // RPI 1209N
+         "18=LR,RR,20",          //    430 "18"    "LR"       "RR"    2 // RPI 1209N
+         "19=CR,RR,20",          //    440 "19"    "CR"       "RR"    2 // RPI 1209N
+         "1A=AR,RR,20",          //    450 "1A"    "AR"       "RR"    2 // RPI 1209N
+         "1B=SR,RR,20",          //    460 "1B"    "SR"       "RR"    2 // RPI 1209N
+         "1C=MR,RR,23",          //    470 "1C"    "MR"       "RR"    2 // RPI 1209N
+         "1D=DR,RR,23",          //    480 "1D"    "DR"       "RR"    2 // RPI 1209N
+         "1E=ALR,RR,20",         //    490 "1E"    "ALR"      "RR"    2 // RPI 1209N
+         "1F=SLR,RR,20",         //    500 "1F"    "SLR"      "RR"    2 // RPI 1209N
+         "20=LPDR,RR-f,21",      //    510 "20"    "LPDR"     "RR"    2 // RPI 1209N
+         "21=LNDR,RR-f,21",      //    520 "21"    "LNDR"     "RR"    2 // RPI 1209N
+         "22=LTDR,RR-f,21",      //    530 "22"    "LTDR"     "RR"    2 // RPI 1209N
+         "23=LCDR,RR-f,21",      //    540 "23"    "LCDR"     "RR"    2 // RPI 1209N
+         "24=HDR,RR-f,21",       //    550 "24"    "HDR"      "RR"    2 // RPI 1209N
+         "25=LRDR,RR-f,21",      //    570 "25"    "LRDR"     "RR"    2 // RPI 1209N
+         "26=MXR,RR-f,21",       //    580 "26"    "MXR"      "RR"    2 // RPI 1209N
+         "27=MXDR,RR-f,21",      //    590 "27"    "MXDR"     "RR"    2 // RPI 1209N
+         "28=LDR,RR-f,21",       //    600 "28"    "LDR"      "RR"    2 // RPI 1209N
+         "29=CDR,RR-f,21",       //    610 "29"    "CDR"      "RR"    2 // RPI 1209N
+         "2A=ADR,RR-f,21",       //    620 "2A"    "ADR"      "RR"    2 // RPI 1209N
+         "2B=SDR,RR-f,21",       //    630 "2B"    "SDR"      "RR"    2 // RPI 1209N
+         "2C=MDR,RR-f,21",       //    640 "2C"    "MDR"      "RR"    2 // RPI 1209N
+         "2D=DDR,RR-f,21",       //    650 "2D"    "DDR"      "RR"    2 // RPI 1209N
+         "2E=AWR,RR-f,21",       //    660 "2E"    "AWR"      "RR"    2 // RPI 1209N
+         "2F=SWR,RR-f,21",       //    670 "2F"    "SWR"      "RR"    2 // RPI 1209N
+         "30=LPER,RR-f,21",      //    680 "30"    "LPER"     "RR"    2 // RPI 1209N
+         "31=LNER,RR-f,21",      //    690 "31"    "LNER"     "RR"    2 // RPI 1209N
+         "32=LTER,RR-f,21",      //    700 "32"    "LTER"     "RR"    2 // RPI 1209N
+         "33=LCER,RR-f,21",      //    710 "33"    "LCER"     "RR"    2 // RPI 1209N
+         "34=HER,RR-f,21",       //    720 "34"    "HER"      "RR"    2 // RPI 1209N
+         "35=LRER,RR-f,21",      //    740 "35"    "LRER"     "RR"    2 // RPI 1209N
+         "36=AXR,RR-f,21",       //    750 "36"    "AXR"      "RR"    2 // RPI 1209N
+         "37=SXR,RR-f,21",       //    760 "37"    "SXR"      "RR"    2 // RPI 1209N
+         "38=LER,RR-f,21",       //    770 "38"    "LER"      "RR"    2 // RPI 1209N
+         "39=CER,RR-f,21",       //    780 "39"    "CER"      "RR"    2 // RPI 1209N
+         "3A=AER,RR-f,21",       //    790 "3A"    "AER"      "RR"    2 // RPI 1209N
+         "3B=SER,RR-f,21",       //    800 "3B"    "SER"      "RR"    2 // RPI 1209N
+         "3C=MDER,RR-f,21",      //    810 "3C"    "MDER"     "RR"    2 // RPI 1209N
+         "3C=MER,RR-f,21",       //    820 "3C"    "MER"      "RR"    2 // RPI 1209N
+         "3D=DER,RR-f,21",       //    830 "3D"    "DER"      "RR"    2 // RPI 1209N
+         "3E=AUR,RR-f,21",       //    840 "3E"    "AUR"      "RR"    2 // RPI 1209N
+         "3F=SUR,RR-f,21",       //    850 "3F"    "SUR"      "RR"    2 // RPI 1209N
          "40=STH,5,53",          //    860 "40"    "STH"      "RX"    5
          "41=LA,5,52",           //    870 "41"    "LA"       "RX"    5
          "42=STC,5,56",          //    880 "42"    "STC"      "RX"    5
@@ -1379,10 +1392,13 @@ public  class  tz390 {
          "--=USING,124,--",      //   7370         "USING"          124
          "--=WXTRN,120,--",      //   7330         "WXTRN"          120
          };
+     String[]   op_table_DOS_obsolete = // Table added for RPI 1209N
+         // These instructions are not included in pz390 and therefore cause a S0C1 failure when executed
+        {"08=SSK,RR,20",         //    100 "08"    "SSK"      "RR"    2 // RPI 1209N
+         "09=ISK,RR,20",         //    100 "09"    "ISK"      "RR"    2 // RPI 1209N
+         };
      String[]   op_table_DOS_notsupported = // Table added for RPI 1209A
-        {"SSK      RR   08   R1,R2",
-         "ISK      RR   09   R1,R2",
-         "WRD      SI   84   D1(B1),I2",
+        {"WRD      SI   84   D1(B1),I2",
          "RDD      SI   85   D1(B1),I2",
          "SIO      S    9C00 D2(B2)",
          "SIOF     S    9C01 D2(B2)",
@@ -1393,6 +1409,11 @@ public  class  tz390 {
          "TCH      S    9F00 D2(B2)",
          "STIDC    S    B203 D2(B2)",
          "RRB      S    B213 D2(B2)",
+         "HPR      SI   99   D1(B1)", // model 360/20 only
+         "SPSW     SI   81   D1(B1)", // model 360/20 only
+         "TIOB     IO   9A   ??", // model 360/20 only
+         "CIO      IO   9B   ??", // model 360/20 only
+         "XIO      IO   D0   ??", // model 360/20 only
          };
      String[]   op_table_vector =   // Table added for RPI 1209A
         {"A400=VAE,VST,600",     //        "A400"  "VAE"      "VST" 60
@@ -1588,7 +1609,7 @@ public  class  tz390 {
          "E428=VLBIX,RSEv,630",  //        "E428"  "VLBIX"    "RSE" 63
          };
      String[]   op_table_370 =   // Table added for RPI 1209A
-        {"0D=BASR,2,20",         //    320 "0D"    "BASR"     "RR"    2
+        {"0D=BASR,RR,20",        //    320 "0D"    "BASR"     "RR"    2 // RPI 1209N
          "4D=BAS,5,50",          //   1150 "4D"    "BAS"      "RX"    5
          "AE=SIGP,10,100",       //   2540 "AE"    "SIGP"     "RS"   10
          "B210=SPX,7,70",        //   2670 "B210"  "SPX"      "S"     7
@@ -1648,8 +1669,8 @@ public  class  tz390 {
          };
      String[]   op_table_XA =    // Table added for RPI 1209A
         {"0102=UPT,1,10",        //     20 "0102"  "UPT"      "E"     1
-         "0B=BSM,2,20",          //    300 "0B"    "BSM"      "RR"    2
-         "0C=BASSM,2,20",        //    310 "0C"    "BASSM"    "RR"    2
+         "0B=BSM,RR,20",         //    300 "0B"    "BSM"      "RR"    2 // RPI 1209N
+         "0C=BASSM,RR,20",       //    310 "0C"    "BASSM"    "RR"    2 // RPI 1209N
          "99=TRACE,10,100",      //   1790 "99"    "TRACE"    "RS"   10
          "B21A=CFC,7,70",        //   2720 "B21A"  "CFC"      "S"     7
          "B222=IPM,14,140",      //   2740 "B222"  "IPM"      "RRE"  14
@@ -1670,25 +1691,8 @@ public  class  tz390 {
          "B244=SQDR,14,142",     //   3030 "B244"  "SQDR"     "RRE"  14
          "B245=SQER,14,142",     //   3040 "B245"  "SQER"     "RRE"  14
          };
-     String[]   op_table_XA_notsupported = // Table added for RPI 1209A
+     String[]   op_table_XA_notsupported = // Table added for RPI 1209A, entries removed for RPI 1209J
         {"SIE      S    B214 D2(B2)",
-         "SSK      RR   08   R1,R2",
-         "ISK      RR   09   R1,R2",
-         "WRD      SI   84   D1(B1),I2",
-         "RDD      SI   85   D1(B1),I2",
-         "SIO      S    9C00 D2(B2)",
-         "SIOF     S    9C01 D2(B2)",
-         "RIO      S    9C02 D2(B2)",
-         "TIO      S    9D00 D2(B2)",
-         "CLRIO    S    9D01 D2(B2)",
-         "HIO      S    9E00 D2(B2)",
-         "HDV      S    9E01 D2(B2)",
-         "TCH      S    9F00 D2(B2)",
-         "CLRCH    S    9F01 D2(B2)",
-         "CONCS    S    B200 D2(B2)",
-         "DISCS    S    B201 D2(B2)",
-         "STIDC    S    B203 D2(B2)",
-         "RRB      S    B213 D2(B2)",
          };
      String[]   op_table_ESA =   // Table added for RPI 1209A
         {"0101=PR,1,10",         //     10 "0101"  "PR"       "E"     1
@@ -1697,8 +1701,8 @@ public  class  tz390 {
          "010C=SAM24,1,10",      //     50 "010C"  "SAM24"    "E"     1
          "010D=SAM31,1,10",      //     60 "010D"  "SAM31"    "E"     1
          "01FF=TRAP2,1,10",      //     80 "01FF"  "TRAP2"    "E"     1
-         "25=LDXR,2,21",         //    560 "25"    "LDXR"     "RR"    2
-         "35=LEDR,2,21",         //    730 "35"    "LEDR"     "RR"    2
+         "25=LDXR,RR-f,21",      //    560 "25"    "LDXR"     "RR"    2 // RPI 1209N
+         "35=LEDR,RR-f,21",      //    730 "35"    "LEDR"     "RR"    2 // RPI 1209N
          "51=LAE,5,52",          //   1190 "51"    "LAE"      "RX"    5
          "71=MS,5,50",           //   1430 "71"    "MS"       "RX"    5
          "84=BRXH,9,91",         //   1560 "84"    "BRXH"     "RSI"   9
@@ -2364,17 +2368,40 @@ public  class  tz390 {
          "ECFFm=CLIBm,48,381;*Short", //   "ECFFm" "CLIBm"    "RRS4" 48
          };
      String[]   op_table_ZS4_notsupported =   // Table added for RPI 1209A
-        {"LPP      S    B280 D2(B2)",
-         "LCCTL    S    B284 D2(B2)",
-         "LPCTL    S    B285 D2(B2)",
-         "QSI      S    B286 D2(B2)",
-         "LSCTL    S    B287 D2(B2)",
-         "QCTRI    S    B28E D2(B2)",
-         "SCCTR    RRE  B2E0 R1,R2",
-         "SPCTR    RRE  B2E1 R1,R2",
-         "ECCTR    RRE  B2E4 R1,R2",
-         "EPCTR    RRE  B2E5 R1,R2",
-         "ECPGA    RRE  B2ED R1,R2",
+        {"LPP      S     B280 D2(B2)",
+         "LCCTL    S     B284 D2(B2)",
+         "LPCTL    S     B285 D2(B2)",
+         "QSI      S     B286 D2(B2)",
+         "LSCTL    S     B287 D2(B2)",
+         "QCTRI    S     B28E D2(B2)",
+         "SCCTR    RRE   B2E0 R1,R2",
+         "SPCTR    RRE   B2E1 R1,R2",
+         "ECCTR    RRE   B2E4 R1,R2",
+         "EPCTR    RRE   B2E5 R1,R2",
+         "ECPGA    RRE   B2ED R1,R2",
+         "BPP      SMI   C7   M1,RI2,D3(B3)", // RPI 1209K
+         "BPRP     MII   C5   M1,RI2,RI3", // RPI 1209K
+         "CDZT     RSL-b EDAA R1,D2(L2,B2),M3", // RPI 1209K
+         "CLGT     RSY-b EB2B R1,M3,D2(B2)", // RPI 1209K
+         "CLT      RSY-b EB23 R1,M3,D2(B2)", // RPI 1209K
+         "CRDTE    RRF-b B98F R1,R3,R2,M4", // RPI 1209K
+         "CXZT     RSL-b EDAB R1,D2(L2,B2),M3", // RPI 1209K
+         "CZDT     RSL-b EDA8 R1,D2(L2,B2),M3", // RPI 1209K
+         "CZXT     RSL-b EDA9 R1,D2(L2,B2),M3", // RPI 1209K
+         "ETND     RRE   B2EC R1", // RPI 1209K
+         "LAT      RXY-a E39F R1,D2(X2,B2)", // RPI 1209K
+         "LFHAT    RXY-a E3C8 R1,D2(X2,B2)", // RPI 1209K
+         "LGAT     RXY-a E385 R1,D2(X2,B2)", // RPI 1209K
+         "LLGFAT   RXY-a E39D R1,D2(X2,B2)", // RPI 1209K
+         "LLGTAT   RXY-a E39C R1,D2(X2,B2)", // RPI 1209K
+         "NIAI     IE    B2FA I1,I2", // RPI 1209K
+         "NTSTG    RXY   E325 R1,D2(x2,B2)", // RPI 1209K
+         "PPA      RRF-c B2E8 R1,R2,M3", // RPI 1209K
+         "RISBGN   RIE-f ED59 R1,R2,I3,I4,I5", // RPI 1209K
+         "TABORT   S     B2FC D2(B2)", // RPI 1209K
+         "TBEGIN   SIL   E560 D1(B1),I2", // RPI 1209K
+         "TBEGINC  SIL   E561 D1(B1),I2", // RPI 1209K
+         "TEND     S     B2F8 --", // RPI 1209K
          };
      String[]   op_table_UNI =   // Table added for RPI 1209A
         {"B2B8=SRNMB,7,70",      //   3392 "B2B8"  "SRNMB"    "S"     7 RPI 1125
@@ -2762,17 +2789,27 @@ public void create_opcodes()  // Routine added for RPI 1209
     // Process the opcode tables in two passes:
     // the first pass determines the number of entries to allocate for each table
     // the second pass actually stores the data into the allocated tables
+    // WARNING: take heed to define all opcodes BEFORE defining any directives!    <<<<<<-------
     index2=0;
     while (index2 <= 1)
        {op_code_count = 0;
         op_directives_count = 0;
         process_opcodes(op_table_start);
+        if (opt_assist == true)               // RPI 1209M
+           {process_opcodes(op_table_ASSIST); // RPI 1209M
+            }                                 // RPI 1209M
         if (opt_optable.equals("DOS"))
            {process_opcodes(op_table_DOS);
+            if (opt_allow)                              // RPI 1209N
+               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+                }                                       // RPI 1209N
             process_opcodes(op_table_DOS_directives);
             }
         if (opt_optable.equals("370"))
            {process_opcodes(op_table_DOS);
+            if (opt_allow)                              // RPI 1209N
+               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             if (opt_vector) // RPI VF01
                {process_opcodes(op_table_vector);
@@ -2782,6 +2819,9 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("XA"))
            {process_opcodes(op_table_DOS);
+            if (opt_allow)                              // RPI 1209N
+               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             if (opt_vector) // RPI VF01
                {process_opcodes(op_table_vector);
@@ -2792,6 +2832,9 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("ESA"))
            {process_opcodes(op_table_DOS);
+            if (opt_allow)                              // RPI 1209N
+               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             if (opt_vector) // RPI VF01
                {process_opcodes(op_table_vector);
@@ -2803,6 +2846,9 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("ZOP"))
            {process_opcodes(op_table_DOS);
+            if (opt_allow)                              // RPI 1209N
+               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
@@ -2812,6 +2858,9 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("YOP"))
            {process_opcodes(op_table_DOS);
+            if (opt_allow)                              // RPI 1209N
+               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
@@ -2822,6 +2871,9 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("ZS3"))
            {process_opcodes(op_table_DOS);
+            if (opt_allow)                              // RPI 1209N
+               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
@@ -2833,6 +2885,9 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("ZS4"))
            {process_opcodes(op_table_DOS);
+            if (opt_allow)                              // RPI 1209N
+               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
@@ -2845,6 +2900,9 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("UNI"))
            {process_opcodes(op_table_DOS);
+            if (opt_allow)                              // RPI 1209N
+               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             if (opt_vector) // RPI VF01
                {process_opcodes(op_table_vector);
@@ -2861,6 +2919,9 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("Z390"))
            {process_opcodes(op_table_DOS);
+            if (opt_allow)                              // RPI 1209N
+               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             if (opt_vector) // RPI VF01
                {process_opcodes(op_table_vector);
@@ -2872,7 +2933,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
             process_opcodes(op_table_UNI);
-            process_opcodes(op_table_ASSIST);
+//          process_opcodes(op_table_ASSIST); // RPI 1209M
             process_opcodes(op_table_z390);
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
@@ -3024,8 +3085,8 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
            {if (entry.equals("") == false)
                {abort_error(54,"Overrides illegal for non-maksed opcode definition " + op_tables[index]);
                 }
-            if (mnemonic.indexOf("?")==mnemonic.length()-1)
-               {// abort_error(773,"? detected in entry " + op_tables[index]);
+            if (mnemonic.indexOf("?")==mnemonic.length()-1 && mnemonic.length()!=0)
+               {abort_error(773,"? detected in entry " + op_tables[index]);
                 }
             if (op_code != null) // insert data only if arrays allocated
                {op_name[index2]       = mnemonic;

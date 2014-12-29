@@ -102,6 +102,7 @@ public class zc390{
     * 09/29/09 RPI 1086 add *ZC NNNNNN IIIIII MLC SOURCE comment
     * 07/25/10 RPI 1126 prevent replacing - with _ in floating point exp constant
     * 03/04/12 RPI 1182 don't allow embedded commas in parms for proc div
+    * 11/03/14 RPI 1504 Final options not reported by ZC390
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -418,6 +419,7 @@ public class zc390{
     		abort_error("zcobol file close error " + zc_file_name);
     	}
         if (tz390.opt_stats){
+            tz390.put_stat_final_options(); // RPI 1504
             int index = 0;
             while (index < tot_cpz_file_name){
                     String xref_msg = "FID=" + tz390.right_justify(""+(index+1),3)
