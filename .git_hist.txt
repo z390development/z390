@@ -7521,6 +7521,38 @@ set GIT_COMMITTER_DATE=2021-03-28 15:50:00 +0100
 git commit -m "Reconstructed version v1.6.00b05 of z390"
 git tag -a v1.6.00b05 -m "Reconstructed version v1.6.00b05 of z390"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.6.00b06
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.6.00b06
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+
+==> Create commit for V1.6.00b06
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Abe 2015-02-01 16:13:00 +0100
+set GIT_COMMITTER_DATE=2021-03-28 16:00:00 +0100
+git commit -m "Reconstructed version v1.6.00b06 of z390"
+git tag -a v1.6.00b06 -m "Reconstructed version v1.6.00b06 of z390"
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -331,7 +331,11 @@ public class pz390 {
      * 04/19/12 RPI 1209 Move array op_trace_type to tz390
      * 07/20/14 RPI VF01 add vector operations
      * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
-     * 12/26/14 RPI 1505 BALR in amode 24 fails to construct correct high-order word in return address
+     * 12/26/14 RPI 1505  BALR in amode 24 fails to construct correct high-order word in return address
+     * 01/05/15 RPI 1506  Execution of SAM64 acts as no-op / basic support for Amode64
+     * 01/31/15 RPI 1509  BALR in amode64 turns on amode31 bit generated in return address
+     * 02/01/15 RPI 1510  BALR when EXecuted generates return address from target BALR instruction
+     *                    Return address should be generated from EX/EXRL instruction location
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -433,6 +437,11 @@ public class pz390 {
 	int psw_amode31_bit = 0x80000000;
 
 	int psw_amode_bit = psw_amode31_bit;
+
+    int psw_extended_amode64_bit = 1;                      // RPI 1506
+    int psw_extended_amode64_on = 1;                       // RPI 1506
+    int psw_extended_amode64_off = 0;                      // RPI 1506
+    int psw_extended_amode_bit = psw_extended_amode64_off; // RPI 1506
 
 	long cur_stck = 0;
 
@@ -1504,25 +1513,24 @@ public class pz390 {
 		case 0x05: // 100 "05" "BALR" "RR"
 			psw_check = false;
 			ins_setup_rr();
+            int retaddr = (ex_mode) ? ex_psw_return : psw_loc;      // RPI 1510
 			if (rf2 != 0) {
 				rv2 = reg.getInt(rf2 + 4); // RPI65
 			}
-            if (psw_amode_bit == psw_amode24_bit)                 // RPI 1505
-               {if (ex_mode)                                      // RPI 1505
-                   {reg.putInt(rf1 + 4, (ex_psw_ilc << 30)        // RPI 1505
-                                      | (psw_cc << 28)            // RPI 1505
-                                      | (psw_pgm_mask << 24)      // RPI 1505
-                                      | (psw_loc & psw_amode24)); // RPI 1505
-                    }                                             // RPI 1505
-                else // not in EX-mode                            // RPI 1505
-                   {reg.putInt(rf1 + 4, (0x01 << 30)              // RPI 1505
-                                      | (psw_cc << 28)            // RPI 1505
-                                      | (psw_pgm_mask << 24)      // RPI 1505
-                                      | (psw_loc & psw_amode24)); // RPI 1505
-                }   }                                             // RPI 1505
-            else // Amode31                                       // RPI 1505
-               {reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
-                }                                                 // RPI 1505
+            if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 1509
+               {reg.putLong(rf1, retaddr);                          // RPI 1509 RPI 1510
+                }                                                   // RPI 1509
+            else // either amode31 or amode24                       // RPI 1509
+               {if (psw_amode_bit == psw_amode24_bit)               // RPI 1505
+                   {int ilc = (ex_mode) ? ex_psw_ilc : 1;           // RPI 1505
+                    reg.putInt(rf1 + 4, (ilc << 30)                 // RPI 1505
+                                      | (psw_cc_code[psw_cc] << 28) // RPI 1505
+                                      | (psw_pgm_mask << 24)        // RPI 1505
+                                      | (retaddr & psw_amode24));   // RPI 1505 RPI 1510
+                    }                                               // RPI 1505
+                else // Amode31                                     // RPI 1505
+                   {reg.putInt(rf1 + 4, retaddr | psw_amode_bit);   // RI 1510
+                }   }                                               // RPI 1505
 			if (rf2 != 0) {
 				set_psw_loc(rv2); // RPI65
 			}
@@ -3651,7 +3659,9 @@ public class pz390 {
 			set_psw_amode(psw_amode31_bit);
 			break;
 		case 0x0E: // 70 "010E" "SAM64" "E"
+			psw_check = false;                                         // RPI 1506
 			ins_setup_e();
+			set_psw_amode(psw_amode31_bit | psw_extended_amode64_bit); // RPI 1506
 			break;
 		case 0xFF: // 80 "01FF" "TRAP2" "E"
 			ins_setup_e();
@@ -11670,18 +11680,27 @@ public class pz390 {
 
 	public void set_psw_amode(int amode_bit) {
 		/*
-		 * set psw_amode based on amode high bit
+		 * set psw_amode based on amode low bit and high bit  // RPI 1506
 		 */
-		if ((amode_bit & psw_amode31_bit) != 0) {
-			psw_amode = psw_amode31;
-			psw_amode_bit = psw_amode31_bit;
-			psw_amode_high_bits = psw_amode31_high_bits;
-		} else {
-			psw_amode = psw_amode24;
-			psw_amode_bit = psw_amode24_bit;
-			psw_amode_high_bits = psw_amode24_high_bits;
-		}
-	}
+        if((amode_bit & psw_extended_amode64_bit) == 1)       // RPI 1506
+          {psw_extended_amode_bit = psw_extended_amode64_on;  // RPI 1506
+           psw_amode = psw_amode31;                           // RPI 1506
+           psw_amode_bit = psw_amode31_bit;                   // RPI 1506
+           psw_amode_high_bits = psw_amode31_high_bits;       // RPI 1506
+           }                                                  // RPI 1506
+        else                                                  // RPI 1506
+          {psw_extended_amode_bit = psw_extended_amode64_off; // RPI 1506
+           if ((amode_bit & psw_amode31_bit) != 0) {
+              psw_amode = psw_amode31;
+              psw_amode_bit = psw_amode31_bit;
+              psw_amode_high_bits = psw_amode31_high_bits;
+              } else {
+              psw_amode = psw_amode24;
+              psw_amode_bit = psw_amode24_bit;
+              psw_amode_high_bits = psw_amode24_high_bits;
+              }
+           }                                                  // RPI 1506
+    }
 
 	public void set_psw_loc(int addr) {
 		/*
@@ -16336,10 +16355,9 @@ public class pz390 {
 			ex_mode = true;
 			ex_mod_byte = mem_byte[psw_loc + 1];
 			if (rf1 != 0) {
-				mem_byte[psw_loc + 1] = (byte) (ex_mod_byte | reg
-						.get(rf1 + 7));
+				mem_byte[psw_loc + 1] = (byte) (ex_mod_byte | reg.get(rf1 + 7));
 			}
-		} else {
+			} else {
 			set_psw_check(psw_pic_exec);
 		}
     }
@@ -17945,12 +17963,24 @@ break;
 		}
 	} catch (Exception e){ // RPI 1054 
         if (tz390.opt_trace){
-        	tz390.put_trace(" " + tz390.get_hex(psw_loc | psw_amode_bit, 8) + " "
+            if(psw_extended_amode_bit == psw_extended_amode64_on)                // RPI 1506
+              {ins_trace_line = " 00000000" + tz390.get_hex(psw_loc, 8);        // RPI 1506
+               }                                                                 // RPI 1506
+            else                                                                 // RPI 1506
+              {ins_trace_line = " " + tz390.get_hex(psw_loc | psw_amode_bit, 8); // RPI 1506
+               }                                                                 // RPI 1506
+        	tz390.put_trace(ins_trace_line + " "                                 // RPI 1506
 		               + psw_cc_code[psw_cc] + " TRACE EXCEPTION"); // RPI 1054
         }
         return;
 	}
-		ins_trace_line = " " + tz390.get_hex(psw_loc | psw_amode_bit, 8) + " "
+     if(psw_extended_amode_bit == psw_extended_amode64_on)                // RPI 1506
+       {ins_trace_line = " 00000000" + tz390.get_hex(psw_loc, 8);        // RPI 1506
+        }                                                                 // RPI 1506
+     else                                                                 // RPI 1506
+       {ins_trace_line = " " + tz390.get_hex(psw_loc | psw_amode_bit, 8); // RPI 1506
+        }                                                                 // RPI 1506
+     ins_trace_line = ins_trace_line + " "                                // RPI 1506
 		               + psw_cc_code[psw_cc] + " " + get_ins_hex(psw_loc) + " "
 		               + trace_name 
 		               + trace_parms;

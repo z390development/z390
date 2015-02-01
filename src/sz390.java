@@ -197,6 +197,8 @@ public  class  sz390 implements Runnable {
     *          to minimize fragmentation 
     * 05/07/11 RPI 1149 add SVC x'ac' SYSTRACE to reset trace options from R1 string with space eof
     * 05/31/11 RPI 1165 correct zsort allocation to include work area record
+    * 01/17/15 RPI 1506 Execution of SAM64 acts as no-op / basic support for Amode64
+    * 01/28/15 RPI 1507 Implement PSW and PSW+ commands in trace mode
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -796,6 +798,25 @@ public  class  sz390 implements Runnable {
 		int  zsort_merge_mem_blk_len = 0; // fixed blk size for 2 input and 1 output blk
 		long zsort_merge_wk_blk_len = 0;  // double zsort_blk_len on each merge pass
 		int  zsort_merge_pass    = 0;     // count merge passes for stats
+     /* Condition Code descriptions */              // RPI 1507
+     String[]   cc_descriptions = { // Table added for RPI 1507
+               "B'00'=Equal/Zero/Even",             // RPI 1507
+               "B'01'=Low/Minus/Mixed",             // RPI 1507
+               "B'10'=High/Positive",               // RPI 1507
+               "B'11'=Odd/Ones"                     // RPI 1507
+               };                                   // RPI 1507
+     /* Program Mask bit descriptions */                 // RPI 1507
+     String[]   maskbit_descriptions = { // Table added for RPI 1507
+               "Fixed Point Overflow",                  // RPI 1507
+               "Decimal Overflow",                      // RPI 1507
+               "HFP Exponent Underflow",                // RPI 1507
+               "HFP Significance"                       // RPI 1507
+               };                                       // RPI 1507
+     /* On/Off descriptions */             // RPI 1507
+     String[]   on_off = { // Table added for RPI 1507
+               "Off",                      // RPI 1507
+               "On",                       // RPI 1507
+               };                          // RPI 1507
   /*
    * end of global ez390 class data and start of procs
    */
@@ -2663,6 +2684,7 @@ private void list_trace_table(){
 }
 private String dump_psw(){ // RPI 819
 	/*
+     * in amode24/amode31: // RPI 1506
 	 * return 16 character hex PSW with
 	 * with the following bit settings:
 	 *   1. bits 0-7 x'07' translation, 
@@ -2678,20 +2700,47 @@ private String dump_psw(){ // RPI 819
 	 *   4. Bits 24-31 zeros (64 bit addressing if 31 & 32 are one)
 	 *   5. Bit  31    basic addressing mode 0=24, 1=31
 	 *   6. Bits 32-63 - address of next instruction       
+     *
+     * in amode64: // RPI 1506
+     * return 32 character hex PSW in format as definde by z-POP:     // RPI 1506
+     *   1. bits 0-7 x'07' PER disabled, DAT enabled                  // RPI 1506
+     *      I/O and external interrupts enabled                       // RPI 1506
+     *   2. Bits 8-15 x'05' key zero, machine check enabled           // RPI 1506
+     *      No Wait state, Problem state                              // RPI 1506
+     *   3. Bits 16-23 AS(2),CC(2),MASK(4)                            // RPI 1506
+     *      AS   - Address Space control: zero                        // RPI 1506
+     *      CC   - condition code 0=CC8, 1=CC4, 2=CC2, 3=CC1          // RPI 1506
+     *      MASK - fixed, decimal, HFP exp, HFP significance          // RPI 1506
+     *   4. Bits 24-31 x'01' Amode64 enabled                          // RPI 1506
+     *   5. Bits 32-63 x'80000000' Amode 64 requires amode31 on       // RPI 1506
+     *   6. Bits 64-95 x'00000000' High word of PSW address always 0  // RPI 1506
+     *   7. Bits 96-127: next sequential instruction address          // RPI 1506
 	 */
 	int   cc    = pz390.psw_cc_code[pz390.psw_cc];
 	int   mask  = pz390.psw_pgm_mask;
 	int   amode_and_addr;
-	if (pz390.psw_amode == pz390.psw_amode31){
-		amode_and_addr = pz390.int_high_bit
+    int   psw1;                                                       // RPI 1506
+    String formatted_psw;                                             // RPI 1506
+    psw1 = 0x07050000   // bits  0-15
+           | cc   << 12 // bits 18-19
+           | mask <<  8; // bits 20-23
+    if(pz390.psw_extended_amode_bit == pz390.psw_extended_amode64_on) // RPI 1506
+      {psw1 = psw1 | 1; // amode64 on                                 // RPI 1506
+       formatted_psw = tz390.get_hex(psw1,8)                          // RPI 1506
+                     + "80000000 00000000"                            // RPI 1506
+                     + tz390.get_hex(pz390.psw_loc,8);                // RPI 1506
+       }                                                              // RPI 1506
+    else {                                                            // RPI 1506
+		if (pz390.psw_amode == pz390.psw_amode31){
+			amode_and_addr = pz390.int_high_bit
 		        | pz390.psw_loc;
-	} else {
-		amode_and_addr = pz390.psw_loc;
-	}
-	int psw1 = 0x07050000   // bits  0-15
-			         | cc   << 12 // bits 18-19
-			         | mask <<  8; // bits 20-23			      
-	return tz390.get_hex(psw1,8) + " " + tz390.get_hex(amode_and_addr,8);		   
+		} else {
+			amode_and_addr = pz390.psw_loc;
+		}
+        formatted_psw = tz390.get_hex(psw1,8) + " "                   // RPI 1506
+                      + tz390.get_hex(amode_and_addr,8);              // RPI 1506
+      }                                                               // RPI 1506
+    return formatted_psw;                                             // RPI 1506
 }
 private void dump_req(boolean req_dump){
 	/*
@@ -5559,6 +5608,7 @@ private void exec_test_cmd(){
 		test_opcode = '=';
 		break;
 	case 'E': // no preprocessing for exit request
+	case 'P': // no preprocessing for P request // RPI 1507
 		break;
 	default:
 		test_addr = 0;
@@ -5660,6 +5710,8 @@ private void exec_test_cmd(){
 	    tz390.put_trace("  L addr len  list contents of memory area (ie l 10. 4 dumps cvt addr");
 	    tz390.put_trace("  M           display memory total allocated and free");
 	    tz390.put_trace("  P           display program information from CDE");
+	    tz390.put_trace("  PSW         display current PSW");
+	    tz390.put_trace("  PSW+        display current PSW in verbose mode");
 	    tz390.put_trace("  R nn        display specified general purpose register else all R0-RF");
 	    tz390.put_trace("  S           clear all breaks");
 	    tz390.put_trace("  S reg??sdt  set break on register change");
@@ -5741,9 +5793,41 @@ private void exec_test_cmd(){
 	case 'M': // show getmain/freemain memory stats
 		dump_mem_stat();
 		break;
-	case 'P': // show CDE program info.
-		dump_cde();
-		break;
+	case 'P': // show CDE program info or PSW                                                 // RPI 1507
+        switch (test_cmd.toUpperCase())                                                       // RPI 1507
+           {case "PSW":                                                                       // RPI 1507
+                tz390.put_trace(" PSW  "+dump_psw());                                         // RPI 1507
+                break;                                                                        // RPI 1507
+            case "PSW+":                                                                      // RPI 1507
+                int    cc    = pz390.psw_cc_code[pz390.psw_cc];                               // RPI 1507
+                String mask  = tz390.get_hex(pz390.psw_pgm_mask, 1);                          // RPI 1507
+                String mask_descr;                                                            // RPI 1507
+                tz390.put_trace(" PSW  "+dump_psw());                                         // RPI 1507
+                if (pz390.psw_extended_amode_bit == pz390.psw_extended_amode64_on)            // RPI 1507
+                   {tz390.put_trace("      AMODE 64");                                        // RPI 1507
+                    }                                                                         // RPI 1507
+                else if (pz390.psw_amode == pz390.psw_amode31)                                // RPI 1507
+                        {tz390.put_trace("      AMODE 31");                                   // RPI 1507
+                         }                                                                    // RPI 1507
+                     else                                                                     // RPI 1507
+                        {tz390.put_trace("      AMODE 24");                                   // RPI 1507
+                         }                                                                    // RPI 1507
+                tz390.put_trace("      CC    "+cc+"     "+cc_descriptions[cc]);               // RPI 1507
+                mask_descr = "Fixed Point Overflow  : "                                       // RPI 1507
+                   +((pz390.psw_pgm_mask & pz390.psw_pgm_mask_fix) != 0 ? "On,  " : "Off, "); // RPI 1507
+                mask_descr = mask_descr+"Decimal Overflow: "                                  // RPI 1507
+                   +((pz390.psw_pgm_mask & pz390.psw_pgm_mask_dec) != 0 ? "On " : "Off");     // RPI 1507
+                tz390.put_trace("      MASK  "+mask+"     "+mask_descr);                      // RPI 1507
+                mask_descr = "HFP Exponent Underflow: "                                       // RPI 1507
+                   +((pz390.psw_pgm_mask & pz390.psw_pgm_mask_exp) != 0 ? "On,  " : "Off, "); // RPI 1507
+                mask_descr = mask_descr+"HFP Significance: "                                  // RPI 1507
+                   +((pz390.psw_pgm_mask & pz390.psw_pgm_mask_sig) != 0 ? "On " : "Off");     // RPI 1507
+                tz390.put_trace("                         "+mask_descr);                      // RPI 1507
+                break;                                                                        // RPI 1507
+            default:                                                                          // RPI 1507
+                dump_cde();
+            }                                                                                 // RPI 1507
+        break;
 	case 'Q': // quit test mode
 		abort_error(109,"quitting test mode"); //RPI121
 		break;
