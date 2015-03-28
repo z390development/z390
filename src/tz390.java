@@ -284,6 +284,7 @@ public  class  tz390 {
     * 09/13/14 RPI 1209K Add opcodes from Principles of Operation SA22-7832-09 as unsupported instructions
     * 10/18/14 RPI 1209M Make usage of ASSIST instructions dependent upon option ASSIST/NOASSIST
     * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
+    * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -292,7 +293,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.6.00b06";  //dsh + afk
+    String version    = "V1.6.00b07";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -1154,6 +1155,7 @@ public  class  tz390 {
          "RR-n,2:oo0r",        // 70 RR with 1 GPR                  // RPI 1209N
          "RR-p,2:oorr",        // 71 RR with 2 pairs of GPRs        // RPI 1209N
          "RR-mx,2:ooor",       // 72 RR with implied mask and 1 GPR // RPI 1209N
+         "RI-a,4:ooroiiii",    // 73 IIHH                           // RPI 1522
          };
 //
 // The op_tables below define all instructions. The format of the definitions is as follows:
@@ -1922,10 +1924,10 @@ public  class  tz390 {
          "A59=OIHL,12,120",      //   1910 "A59"   "OIHL"     "RI"   12
          "A5A=OILH,12,120",      //   1920 "A5A"   "OILH"     "RI"   12
          "A5B=OILL,12,120",      //   1930 "A5B"   "OILL"     "RI"   12
-         "A5C=LLIHH,12,120",     //   1940 "A5C"   "LLIHH"    "RI"   12
-         "A5D=LLIHL,12,120",     //   1950 "A5D"   "LLIHL"    "RI"   12
-         "A5E=LLILH,12,120",     //   1960 "A5E"   "LLILH"    "RI"   12
-         "A5F=LLILL,12,120",     //   1970 "A5F"   "LLILL"    "RI"   12
+         "A5C=LLIHH,73,120",     //   1940 "A5C"   "LLIHH"    "RI"   12
+         "A5D=LLIHL,73,120",     //   1950 "A5D"   "LLIHL"    "RI"   12
+         "A5E=LLILH,73,120",     //   1960 "A5E"   "LLILH"    "RI"   12
+         "A5F=LLILL,73,120",     //   1970 "A5F"   "LLILL"    "RI"   12
          "A72=TMHH,12,123",      //   2020 "A72"   "TMHH"     "RI"   12
          "A73=TMHL,12,123",      //   2030 "A73"   "TMHL"     "RI"   12
          "A77=BRCTG,12,121",     //   2400 "A77"   "BRCTG"    "RI"   12

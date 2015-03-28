@@ -336,6 +336,9 @@ public class pz390 {
      * 01/31/15 RPI 1509  BALR in amode64 turns on amode31 bit generated in return address
      * 02/01/15 RPI 1510  BALR when EXecuted generates return address from target BALR instruction
      *                    Return address should be generated from EX/EXRL instruction location
+     * 02/05/15 RPI 1511  BCR should not branch when target address is contained in R0
+     * 14/02/15 RPI 1512  BASSM with odd target address should set amode64, not jump to odd address
+     * 14/02/15 RPI 1513  BASSM should set return address from EX/EXRL when executed
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1432,6 +1435,9 @@ public class pz390 {
 
 	int[] opcode2_mask = new int[256];
     // array op_trace_type moved to tz390 RPI 1209
+
+    // retaddr holds return address for instructions that form a return address
+    int retaddr = 0; // RPI 1510
 	/*
 	 * end of pz390 global variables
 	 */
@@ -1513,7 +1519,7 @@ public class pz390 {
 		case 0x05: // 100 "05" "BALR" "RR"
 			psw_check = false;
 			ins_setup_rr();
-            int retaddr = (ex_mode) ? ex_psw_return : psw_loc;      // RPI 1510
+            retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 1510
 			if (rf2 != 0) {
 				rv2 = reg.getInt(rf2 + 4); // RPI65
 			}
@@ -1529,7 +1535,7 @@ public class pz390 {
                                       | (retaddr & psw_amode24));   // RPI 1505 RPI 1510
                     }                                               // RPI 1505
                 else // Amode31                                     // RPI 1505
-                   {reg.putInt(rf1 + 4, retaddr | psw_amode_bit);   // RI 1510
+                   {reg.putInt(rf1 + 4, retaddr | psw_amode_bit);   // RPI 1510
                 }   }                                               // RPI 1505
 			if (rf2 != 0) {
 				set_psw_loc(rv2); // RPI65
@@ -1547,10 +1553,10 @@ public class pz390 {
 		case 0x07: // 120 "07" "BCR" "RR"
 			psw_check = false;
 			ins_setup_rr();
-			if ((psw_cc & mf1) > 0 && (rf1 != 0)) {
+			// if ((psw_cc & mf1) > 0 && (rf1 != 0)) { // RPI 1511
+            if ((psw_cc & mf1) > 0 && (rf2 != 0)) {    // RPI 1511
 				set_psw_loc(reg.getInt(rf2 + 4));
 			}
-
 			break;
 		case 0x0A: // 290 "0A" "SVC" "I"
 			psw_check = false;
@@ -1586,17 +1592,32 @@ public class pz390 {
 		case 0x0C: // 310 "0C" "BASSM" "RR"
 			psw_check = false;
 			ins_setup_rr();
+            retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 1513
 			if (rf2 != 0) {
 				rv2 = reg.getInt(rf2 + 4); // RPI65
 			}
-			reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
+            if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 1512
+               {reg.putLong(rf1, retaddr+1);                        // RPI 1512
+                }                                                   // RPI 1512
+            else // either amode31 or amode24                       // RPI 1512
+               {reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 1512 RPI 1513
+                }                                                   // RPI 1512
 			if (rf2 != 0) {
-				if ((rv2 & psw_amode31_bit) != 0) {
-					set_psw_amode(psw_amode31_bit);
-				} else {
-					set_psw_amode(psw_amode24_bit);
-				}
-				set_psw_loc(rv2);
+                if ((rv2 & 1) != 0)                                 // RPI 1512
+                   {set_psw_amode(psw_extended_amode64_on);         // RPI 1512
+                    rv2 = rv2>>1; // shift odd bit oou              // RPI 1512
+                    rv2 = rv2<<1; // repair target address          // RPI 1512
+                    }                                               // RPI 1512
+                else                                                // RPI 1512
+                   {if ((rv2 & psw_amode31_bit) != 0) {
+						set_psw_amode(psw_amode31_bit);
+					} else {
+						set_psw_amode(psw_amode24_bit);
+					}
+                    }                                               // RPI 1512
+                if (rf2 != 0)                                       // RPI 1512
+                   {set_psw_loc(rv2);
+                    }                                               // RPI 1512
 			}
 			break;
 		case 0x0D: // 320 "0D" "BASR" "RR"

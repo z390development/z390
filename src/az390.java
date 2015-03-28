@@ -399,6 +399,7 @@ public  class  az390 implements Runnable {
         * 07/24/14 RPI 1209B Extend az390 to produce correct report of vector optypes
         * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
         * 11/03/14 RPI 1209O MR/DR instructions should issue error when operand1 is odd
+    * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -3669,6 +3670,19 @@ private void process_bal_op(){
     	check_end_parms();
  	    put_obj_text();
     	break;
+    case 73:  // "RI-a" LLILL  ooroiiii //  RPI 1522
+    	bal_op_ok = true;               //  RPI 1522
+    	loc_ctr = (loc_ctr+1)/2*2;      //  RPI 1522
+    	loc_start = loc_ctr;            //  RPI 1522
+    	loc_len = 4;                    //  RPI 1522
+    	get_hex_op(1,2);                //  RPI 1522
+       	get_hex_reg();                  //  RPI 1522
+       	get_hex_op(3,1);                //  RPI 1522
+    	skip_comma();                   //  RPI 1522
+    	get_hex_halfword();             //  RPI 1522
+    	check_end_parms();              //  RPI 1522
+    	put_obj_text();                 //  RPI 1522
+    	break;                          //  RPI 1522
     case 101:  // CCW  0 
     case 102:  // CCW0 0
     	bal_op_ok = true;
@@ -6938,6 +6952,18 @@ private void get_hex_byte(){
 	} else {
 		log_error(42,"invalid byte value");
 		obj_code = obj_code + "ii";
+	}
+}
+private void get_hex_halfword(){
+	/*
+	 * append hex halfword from next parm
+	 */
+	if (calc_abs_exp() 
+		&& exp_val < 65536){
+		obj_code = obj_code + tz390.get_hex(exp_val,4);
+	} else {
+		log_error(42,"invalid halfword value");
+		obj_code = obj_code + "iiii";
 	}
 }
 private void get_hex_byte_signed(){

@@ -199,6 +199,7 @@ public  class  sz390 implements Runnable {
     * 05/31/11 RPI 1165 correct zsort allocation to include work area record
     * 01/17/15 RPI 1506 Execution of SAM64 acts as no-op / basic support for Amode64
     * 01/28/15 RPI 1507 Implement PSW and PSW+ commands in trace mode
+    * 02/17/15 RPI 1514 trace command PSW+ should display PSW key and Problem/Supervisor mode
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -5664,7 +5665,7 @@ private void exec_test_cmd(){
 				break;
 			}
 		} 
-		test_error("invalide B=addr");
+		test_error("invalid B=addr");
 		break;
 	case 'D': // dump tiot
     	dump_tiot();
@@ -5803,6 +5804,7 @@ private void exec_test_cmd(){
                 String mask  = tz390.get_hex(pz390.psw_pgm_mask, 1);                          // RPI 1507
                 String mask_descr;                                                            // RPI 1507
                 tz390.put_trace(" PSW  "+dump_psw());                                         // RPI 1507
+                tz390.put_trace("      KEY   8     MODE: Problem");                           // RPI 1514
                 if (pz390.psw_extended_amode_bit == pz390.psw_extended_amode64_on)            // RPI 1507
                    {tz390.put_trace("      AMODE 64");                                        // RPI 1507
                     }                                                                         // RPI 1507
