@@ -293,7 +293,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.6.00b07";  //dsh + afk
+    String version    = "V1.6.00b08";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -1713,10 +1713,10 @@ public  class  tz390 {
          "85=JXLE,9,91",         //   1590 "85"    "JXLE"     "RSI"   9
          "9A=LAM,10,100",        //   1800 "9A"    "LAM"      "RS"   10
          "9B=STAM,10,100",       //   1810 "9B"    "STAM"     "RS"   10
-         "A70=TMH,12,123",       //   1990 "A70"   "TMH"      "RI"   12
-         "A70=TMLH,12,123",      //   1980 "A70"   "TMLH"     "RI"   12
-         "A71=TML,12,123",       //   2010 "A71"   "TML"      "RI"   12
-         "A71=TMLL,12,123",      //   2000 "A71"   "TMLL"     "RI"   12
+         "A70=TMH,73,730",       //   1990 "A70"   "TMH"      "RI"   12 // RPI 1522
+         "A70=TMLH,73,730",      //   1980 "A70"   "TMLH"     "RI"   12 // RPI 1522
+         "A71=TML,73,730",       //   2010 "A71"   "TML"      "RI"   12 // RPI 1522
+         "A71=TMLL,73,730",      //   2000 "A71"   "TMLL"     "RI"   12 // RPI 1522
          "A74=BRC,12,130",       //   2040 "A74"   "BRC"      "RI"   12
          "A74m=BRm,13,130;0=;F=BRU", //    "A74m"  "BRm, BRU" "BRCX" 13
          "A74m=Jm,13,130;0=JNOP", //       "A74m"  "Jm, JNOP" "BRCX" 13
@@ -1724,10 +1724,10 @@ public  class  tz390 {
          "A75=JAS,12,121",       //   2370 "A75"   "JAS"      "RI"   12
          "A76=BRCT,12,121",      //   2380 "A76"   "BRCT"     "RI"   12
          "A76=JCT,12,121",       //   2390 "A76"   "JCT"      "RI"   12
-         "A78=LHI,12,122",       //   2420 "A78"   "LHI"      "RI"   12
-         "A7A=AHI,12,122",       //   2440 "A7A"   "AHI"      "RI"   12
-         "A7C=MHI,12,122",       //   2460 "A7C"   "MHI"      "RI"   12
-         "A7E=CHI,12,122",       //   2480 "A7E"   "CHI"      "RI"   12
+         "A78=LHI,73,731",       //   2420 "A78"   "LHI"      "RI"   12 // RPI 1522
+         "A7A=AHI,73,731",       //   2440 "A7A"   "AHI"      "RI"   12 // RPI 1522
+         "A7C=MHI,73,731",       //   2460 "A7C"   "MHI"      "RI"   12 // RPI 1522
+         "A7E=CHI,73,731",       //   2480 "A7E"   "CHI"      "RI"   12 // RPI 1522
          "A8=MVCLE,10,104",      //   2500 "A8"    "MVCLE"    "RS"   10
          "A9=CLCLE,10,104",      //   2510 "A9"    "CLCLE"    "RS"   10
          "B240=BAKR,14,140",     //   3010 "B240"  "BAKR"     "RRE"  14
@@ -1912,30 +1912,30 @@ public  class  tz390 {
          };
      String[]   op_table_ZOP =   // Table added for RPI 1209A
         {"010E=SAM64,1,10",      //     70 "010E"  "SAM64"    "E"     1
-         "A50=IIHH,12,120",      //   1820 "A50"   "IIHH"     "RI"   12
-         "A51=IIHL,12,120",      //   1830 "A51"   "IIHL"     "RI"   12
-         "A52=IILH,12,120",      //   1840 "A52"   "IILH"     "RI"   12
-         "A53=IILL,12,120",      //   1850 "A53"   "IILL"     "RI"   12
-         "A54=NIHH,12,120",      //   1860 "A54"   "NIHH"     "RI"   12
-         "A55=NIHL,12,120",      //   1870 "A55"   "NIHL"     "RI"   12
-         "A56=NILH,12,120",      //   1880 "A56"   "NILH"     "RI"   12
-         "A57=NILL,12,120",      //   1890 "A57"   "NILL"     "RI"   12
-         "A58=OIHH,12,120",      //   1900 "A58"   "OIHH"     "RI"   12
-         "A59=OIHL,12,120",      //   1910 "A59"   "OIHL"     "RI"   12
-         "A5A=OILH,12,120",      //   1920 "A5A"   "OILH"     "RI"   12
-         "A5B=OILL,12,120",      //   1930 "A5B"   "OILL"     "RI"   12
-         "A5C=LLIHH,73,120",     //   1940 "A5C"   "LLIHH"    "RI"   12
-         "A5D=LLIHL,73,120",     //   1950 "A5D"   "LLIHL"    "RI"   12
-         "A5E=LLILH,73,120",     //   1960 "A5E"   "LLILH"    "RI"   12
-         "A5F=LLILL,73,120",     //   1970 "A5F"   "LLILL"    "RI"   12
-         "A72=TMHH,12,123",      //   2020 "A72"   "TMHH"     "RI"   12
-         "A73=TMHL,12,123",      //   2030 "A73"   "TMHL"     "RI"   12
+         "A50=IIHH,73,730",      //   1820 "A50"   "IIHH"     "RI"   12 // RPI 1522
+         "A51=IIHL,73,730",      //   1830 "A51"   "IIHL"     "RI"   12 // RPI 1522
+         "A52=IILH,73,730",      //   1840 "A52"   "IILH"     "RI"   12 // RPI 1522
+         "A53=IILL,73,730",      //   1850 "A53"   "IILL"     "RI"   12 // RPI 1522
+         "A54=NIHH,73,730",      //   1860 "A54"   "NIHH"     "RI"   12 // RPI 1522
+         "A55=NIHL,73,730",      //   1870 "A55"   "NIHL"     "RI"   12 // RPI 1522
+         "A56=NILH,73,730",      //   1880 "A56"   "NILH"     "RI"   12 // RPI 1522
+         "A57=NILL,73,730",      //   1890 "A57"   "NILL"     "RI"   12 // RPI 1522
+         "A58=OIHH,73,730",      //   1900 "A58"   "OIHH"     "RI"   12 // RPI 1522
+         "A59=OIHL,73,730",      //   1910 "A59"   "OIHL"     "RI"   12 // RPI 1522
+         "A5A=OILH,73,730",      //   1920 "A5A"   "OILH"     "RI"   12 // RPI 1522
+         "A5B=OILL,73,730",      //   1930 "A5B"   "OILL"     "RI"   12 // RPI 1522
+         "A5C=LLIHH,73,730",     //   1940 "A5C"   "LLIHH"    "RI"   12 // RPI 1522
+         "A5D=LLIHL,73,730",     //   1950 "A5D"   "LLIHL"    "RI"   12 // RPI 1522
+         "A5E=LLILH,73,730",     //   1960 "A5E"   "LLILH"    "RI"   12 // RPI 1522
+         "A5F=LLILL,73,730",     //   1970 "A5F"   "LLILL"    "RI"   12 // RPI 1522
+         "A72=TMHH,73,730",      //   2020 "A72"   "TMHH"     "RI"   12 // RPI 1522
+         "A73=TMHL,73,730",      //   2030 "A73"   "TMHL"     "RI"   12 // RPI 1522
          "A77=BRCTG,12,121",     //   2400 "A77"   "BRCTG"    "RI"   12
          "A77=JCTG,12,121",      //   2410 "A77"   "JCTG"     "RI"   12
-         "A79=LGHI,12,123",      //   2430 "A79"   "LGHI"     "RI"   12
-         "A7B=AGHI,12,123",      //   2450 "A7B"   "AGHI"     "RI"   12
-         "A7D=MGHI,12,123",      //   2470 "A7D"   "MGHI"     "RI"   12
-         "A7F=CGHI,12,123",      //   2490 "A7F"   "CGHI"     "RI"   12
+         "A79=LGHI,73,731",      //   2430 "A79"   "LGHI"     "RI"   12 // RPI 1522
+         "A7B=AGHI,73,731",      //   2450 "A7B"   "AGHI"     "RI"   12 // RPI 1522
+         "A7D=MGHI,73,731",      //   2470 "A7D"   "MGHI"     "RI"   12 // RPI 1522
+         "A7F=CGHI,73,731",      //   2490 "A7F"   "CGHI"     "RI"   12 // RPI 1522
          "B250=CSP,14,140",      //   3150 "B250"  "CSP"      "RRE"  14
          "B2B2=LPSWE,7,70",      //   3390 "B2B2"  "LPSWE"    "S"     7
          "B3A4=CEGBR,53,141",    //   4250 "B3A4"  "CEGBR"    "RRE"  53 RPI 1125 Z196

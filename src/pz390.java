@@ -339,6 +339,7 @@ public class pz390 {
      * 02/05/15 RPI 1511  BCR should not branch when target address is contained in R0
      * 14/02/15 RPI 1512  BASSM with odd target address should set amode64, not jump to odd address
      * 14/02/15 RPI 1513  BASSM should set return address from EX/EXRL when executed
+     * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -13118,6 +13119,9 @@ public class pz390 {
         case 72:// RR with implied mask and 1 GPR // RPI 1209N
             ins_setup_rr();
             break;
+        case 73:// RI-a // RPI 1522
+            ins_setup_ri();
+            break;
          // update max_op_type_setup and add cases to match
         default: 
             trace_ins(); // unknown op RPI 527
@@ -16825,7 +16829,8 @@ public class pz390 {
         op_type_offset[70] = 0; // 70 RR with 1 GPR                  // RPI 1209N
         op_type_offset[71] = 0; // 71 RR with 2 pairs of GPRs        // RPI 1209N
         op_type_offset[72] = 0; // 72 RR with implied mask and 1 GPR // RPI 1209N
-        int max_op_type_offset = 72;                                 // RPI 1125 RPI VF01 RPI 1209N
+        op_type_offset[73] = 1; // 73 RI-a with implied mask and 1 GPR // RPI 1522
+        int max_op_type_offset = 73;                                 // RPI 1125 RPI VF01 RPI 1209N RPI 1522
 		op_type_mask[1] = 0xff; // E PR oooo
 		op_type_mask[7] = 0xff; // S SSM oooobddd
 		op_type_mask[12] = 0x0f; // RI IIHH ooroiiii
@@ -16882,9 +16887,10 @@ public class pz390 {
         op_type_mask[70] = 0x00; // 70 RR with 1 GPR                  // RPI 1209N
         op_type_mask[71] = 0x00; // 71 RR with 2 pairs of GPRs        // RPI 1209N
         op_type_mask[72] = 0x00; // 72 RR with implied mask and 1 GPR // RPI 1209N
-        int max_op_type_mask = 72;                                    // RPI 1125 RPI VF01 RPI 1209N
+        op_type_mask[73] = 0x0f; // 73 RI                             // RPI 1522
+        int max_op_type_mask = 73;                                    // RPI 1125 RPI VF01 RPI 1209N RPI 1522
 		// init op2 offset and mask arrays indexed by op1
-		int max_op_type_setup = 72;                                   // RPI 1125 RPI 1209N
+		int max_op_type_setup = 73;                                   // RPI 1125 RPI 1209N RPI 1522
 		// add setup case for each new op type - see case 55 etc.
 		if (max_op_type_setup != tz390.max_op_type_offset){
 			tz390.abort_error(22,"max op type setup cases out of sync "
@@ -17981,7 +17987,17 @@ break;
                             + " S2(" + tz390.get_hex(xbd2_loc, 8)
                             + ")="   + bytes_to_hex(mem, xbd2_loc, 4, 0);
             break;
-		}
+        case 730: // RI-a with unsigned immediate operand        // RPI 1522
+            trace_parms = " R" + tz390.get_hex(mf1, 1) + "="     // RPI 1522
+                    + get_long_hex(reg.getLong(rf1)) + " I2="    // RPI 1522
+                    + tz390.get_hex(if2, 4);                     // RPI 1522
+            break;                                               // RPI 1522
+        case 731: // RI-a with signed immediate operand          // RPI 1522
+            trace_parms = " R" + tz390.get_hex(mf1, 1) + "="     // RPI 1522
+                    + get_long_hex(reg.getLong(rf1)) + " I2="    // RPI 1522
+                    + tz390.get_hex(if2, 4);                     // RPI 1522
+            break;                                               // RPI 1522
+        }                                                        // RPI 1522
 	} catch (Exception e){ // RPI 1054 
         if (tz390.opt_trace){
             if(psw_extended_amode_bit == psw_extended_amode64_on)                // RPI 1506
