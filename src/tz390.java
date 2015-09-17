@@ -285,6 +285,7 @@ public  class  tz390 {
     * 10/18/14 RPI 1209M Make usage of ASSIST instructions dependent upon option ASSIST/NOASSIST
     * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
     * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
+    * 09/05/15 RPI 1529 Incorrect character x'92' in ascii character translation tables (backquote, should be quote = x'27')
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -293,7 +294,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.6.00b08";  //dsh + afk
+    String version    = "V1.6.00b09";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -595,7 +596,7 @@ public  class  tz390 {
 	    + "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // uppercase
 	    + "abcdefghijklmnopqrstuvwxyz" // lower case
 	    + "@#$" // additional leading symbol characters
-	    + "&’()*+-./:=_"; // mimimum zscii special char
+	    + "&'()*+-./:=_"; // mimimum zscii special char // RPI 1529
         String newline = System.getProperty("line.separator"); // RPI 500
         char   alarm_bell = 0x07;          // ascii bell char for system.out alarm
         int    sdt_char_int = 0; // RPI 192 shared character sdt
@@ -6301,7 +6302,7 @@ public void put_trace(String text){
 		 * available Charset codepages will be listed.  The two
 		 * codepages will be verified to have the required minimum
 		 * ebcdic code mapping for z390 assembler A-Z,a-z,0-9,@#$,
-		 * blank, and &’()*+-./:=_.  Any characters that have mapping
+		 * blank, and &'()*+-./:=_.  Any characters that have mapping // RPI 1529
 		 * will attempt to print otherwise they will appear as periods.
 		 */
 		// init hardcoded ascii/ebcdic tables if no codepage

@@ -340,6 +340,8 @@ public class pz390 {
      * 14/02/15 RPI 1512  BASSM with odd target address should set amode64, not jump to odd address
      * 14/02/15 RPI 1513  BASSM should set return address from EX/EXRL when executed
      * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
+     * 01/09/15 RPI 1527  TROO, TRTO, TROT, TRTT will process 1 character if length 0 is specified
+     * 11/09/15 RPI 1531  MVCL and MVCLE with source length zero abend
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -6639,6 +6641,10 @@ public class pz390 {
 			}
 			psw_cc = psw_cc3;
 			while (psw_cc == psw_cc3) {
+                if (bd2_loc >= bd2_end)                    // RPI 1527
+                  {psw_cc = psw_cc0;                       // RPI 1527
+                   }                                       // RPI 1527
+                else {                                     // RPI 1527
 				int index = xbd2_loc
 				+ ((mem.getShort(bd2_loc) & 0xffff) << 1); // RPI 580
 				function_byte1 = mem_byte[index];          // RPI 580
@@ -6652,8 +6658,8 @@ public class pz390 {
 					mem_byte[bd1_loc + 1] = function_byte2;
 					bd1_loc = bd1_loc + 2;
 					bd2_loc = bd2_loc + 2;
-					if (bd2_loc >= bd2_end) {
-						psw_cc = psw_cc0;
+/*					if (bd2_loc >= bd2_end) { */           // RPI 1527
+/*						psw_cc = psw_cc0;     */           // RPI 1527
 					}
 				}
 			}
@@ -6682,6 +6688,10 @@ public class pz390 {
 			}
 			psw_cc = psw_cc3;
 			while (psw_cc == psw_cc3) {
+                if (bd2_loc >= bd2_end)             // RPI 1527
+                  {psw_cc = psw_cc0;                // RPI 1527
+                   }                                // RPI 1527
+                else {                              // RPI 1527
 				int index = xbd2_loc + (mem.getShort(bd2_loc) & 0xffff);
 				function_byte1 = mem_byte[index];
 				if (test_control == 0 
@@ -6691,8 +6701,8 @@ public class pz390 {
 					mem_byte[bd1_loc] = function_byte1;
 					bd1_loc++;
 					bd2_loc = bd2_loc + 2;
-					if (bd2_loc >= bd2_end) {
-						psw_cc = psw_cc0;
+/*					if (bd2_loc >= bd2_end) { */    // RPI 1527
+/*						psw_cc = psw_cc0;     */    // RPI 1527
 					}
 				}
 			}
@@ -6719,10 +6729,14 @@ public class pz390 {
 			bd2_end = bd2_loc + reg.getInt(rf1 + 12);
 			psw_cc = psw_cc3;
 			while (psw_cc == psw_cc3) {
+                if (bd2_loc >= bd2_end)              // RPI 1527
+                  {psw_cc = psw_cc0;                 // RPI 1527
+                   }                                 // RPI 1527
+                else {                               // RPI 1527
 				int index = xbd2_loc
 				+ ((mem_byte[bd2_loc] & 0xff) << 1); // RPI 580
-		        function_byte1 = mem_byte[index]; // RPI 580
-		        function_byte2 = mem_byte[index+1]; // RPI 580                               
+		        function_byte1 = mem_byte[index];    // RPI 580
+		        function_byte2 = mem_byte[index+1];  // RPI 580                               
 				if (test_control == 0
 					&& test_byte1 == function_byte1
 					&& test_byte2 == function_byte2) {  // RPI 580
@@ -6732,8 +6746,8 @@ public class pz390 {
 					mem_byte[bd1_loc + 1] = function_byte2; // RPI  580
 					bd1_loc = bd1_loc + 2;
 					bd2_loc++;
-					if (bd2_loc >= bd2_end) {
-						psw_cc = psw_cc0;
+/*					if (bd2_loc >= bd2_end) { */     // RPI 1527
+/*						psw_cc = psw_cc0;     */     // RPI 1527
 					}
 				}
 			}
@@ -6759,6 +6773,10 @@ public class pz390 {
 			bd2_end = bd2_loc + reg.getInt(rf1 + 12);
 			psw_cc = psw_cc3;
 			while (psw_cc == psw_cc3) {
+                if (bd2_loc >= bd2_end)             // RPI 1527
+                  {psw_cc = psw_cc0;                // RPI 1527
+                   }                                // RPI 1527
+                else {                              // RPI 1527
 				function_byte1 = mem_byte[xbd2_loc  // RPI 580
 												+ (mem_byte[bd2_loc] & 0xff)];
 				if (test_control == 0
@@ -6768,8 +6786,8 @@ public class pz390 {
 					mem_byte[bd1_loc] = function_byte1; // RPI 580
 					bd1_loc++;
 					bd2_loc++;
-					if (bd2_loc >= bd2_end) {
-						psw_cc = psw_cc0;
+/*					if (bd2_loc >= bd2_end) { */    // RPI 1527
+/*						psw_cc = psw_cc0;     */    // RPI 1527
 					}
 				}
 			}
@@ -12784,6 +12802,10 @@ public class pz390 {
 			set_psw_check(psw_pic_addr); // RPI 397
 			return;
 		}
+         if (data_len == 0)            // RPI 1531
+            {// Only padding is needed // RPI 1523
+             }                         // RPI 1531
+        else                           // RPI 1531
 		if (bd1_loc + data_len <= bd2_loc || bd2_loc + data_len <= bd1_loc) {
 			System
 					.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc,

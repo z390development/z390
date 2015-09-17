@@ -200,6 +200,7 @@ public  class  sz390 implements Runnable {
     * 01/17/15 RPI 1506 Execution of SAM64 acts as no-op / basic support for Amode64
     * 01/28/15 RPI 1507 Implement PSW and PSW+ commands in trace mode
     * 02/17/15 RPI 1514 trace command PSW+ should display PSW key and Problem/Supervisor mode
+    * 08/17/15 RPI 1526 Add support to test mode for V (Verify) command
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -799,25 +800,25 @@ public  class  sz390 implements Runnable {
 		int  zsort_merge_mem_blk_len = 0; // fixed blk size for 2 input and 1 output blk
 		long zsort_merge_wk_blk_len = 0;  // double zsort_blk_len on each merge pass
 		int  zsort_merge_pass    = 0;     // count merge passes for stats
-     /* Condition Code descriptions */              // RPI 1507
-     String[]   cc_descriptions = { // Table added for RPI 1507
-               "B'00'=Equal/Zero/Even",             // RPI 1507
-               "B'01'=Low/Minus/Mixed",             // RPI 1507
-               "B'10'=High/Positive",               // RPI 1507
-               "B'11'=Odd/Ones"                     // RPI 1507
-               };                                   // RPI 1507
+     /* Condition Code descriptions */                   // RPI 1507
+     String[]   cc_descriptions = {      // Table added for RPI 1507
+               "B'00'=Equal/Zero/Even",                  // RPI 1507
+               "B'01'=Low/Minus/Mixed",                  // RPI 1507
+               "B'10'=High/Positive",                    // RPI 1507
+               "B'11'=Odd/Ones"                          // RPI 1507
+               };                                        // RPI 1507
      /* Program Mask bit descriptions */                 // RPI 1507
      String[]   maskbit_descriptions = { // Table added for RPI 1507
-               "Fixed Point Overflow",                  // RPI 1507
-               "Decimal Overflow",                      // RPI 1507
-               "HFP Exponent Underflow",                // RPI 1507
-               "HFP Significance"                       // RPI 1507
-               };                                       // RPI 1507
-     /* On/Off descriptions */             // RPI 1507
-     String[]   on_off = { // Table added for RPI 1507
-               "Off",                      // RPI 1507
-               "On",                       // RPI 1507
-               };                          // RPI 1507
+               "Fixed Point Overflow",                   // RPI 1507
+               "Decimal Overflow",                       // RPI 1507
+               "HFP Exponent Underflow",                 // RPI 1507
+               "HFP Significance"                        // RPI 1507
+               };                                        // RPI 1507
+     /* On/Off descriptions */                           // RPI 1507
+     String[]   on_off = {               // Table added for RPI 1507
+               "Off",                                    // RPI 1507
+               "On",                                     // RPI 1507
+               };                                        // RPI 1507
   /*
    * end of global ez390 class data and start of procs
    */
@@ -5718,6 +5719,9 @@ private void exec_test_cmd(){
 	    tz390.put_trace("  S reg??sdt  set break on register change");
 	    tz390.put_trace("  S addr??sdt set break on memory change");
 	    tz390.put_trace("  T nn/adr/op exec n instr. or to hex addr or until next break with trace");
+        tz390.put_trace("  V op1 = op2 validate memory content against literal");           // RPI 1526
+        tz390.put_trace("        op1:  addr len | reg[.+offser][length]");                  // RPI 1526
+        tz390.put_trace("        op2:  addr len | reg[.+offser][length] | sdt");            // RPI 1526
 	    tz390.put_trace("  Z or Q      Z to zoom to normal end or Q to quit now");
 	    tz390.put_trace("* addr = [hex.|*|dec|nnr%(24)|nnr?(31)][+-addr]");
 	    tz390.put_trace("* reg  = nnr where nn = 0-15");
@@ -5867,6 +5871,225 @@ private void exec_test_cmd(){
        	tz390.opt_trace = true;
        	go_test();
 	    break;
+    case 'V': // Verify command                                                              // RPI 1526
+        tz390.put_trace("V command still under construction");                               // RPI 1526
+        test_token = get_next_test_token();                                                  // RPI 1526
+        byte[] operand1;                                                                     // RPI 1526
+        byte[] operand2;                                                                     // RPI 1526
+        int operand1_len = -1;                                                               // RPI 1526
+        int operand2_len = -1;                                                               // RPI 1526
+        byte operand1_type = 0;                                                              // RPI 1526
+        byte operand2_type = 0;                                                              // RPI 1526
+        int operand1_offset = 0;                                                             // RPI 1526
+        int operand2_offset = 0;                                                             // RPI 1526
+        tz390.put_trace(test_token);                                                         // RPI 1526
+        /* extract first comparand */                                                        // RPI 1526
+        test_bias = test_token.charAt(0);                                                    // RPI 1526
+        if (test_bias == '+' || test_bias == '-')                                            // RPI 1526
+            // the address is relative to the base                                           // RPI 1526
+           {test_token = get_next_test_token();                                              // RPI 1526
+            test_addr = get_next_test_addr();                                                // RPI 1526
+            if (test_addr == -1 || test_base_addr == -1)                                     // RPI 1526
+               {test_error("operand1: invalid base or offset");                              // RPI 1526
+                return;                                                                      // RPI 1526
+                }                                                                            // RPI 1526
+            if (test_bias == '+')                                                            // RPI 1526
+               {test_addr = test_base_addr + test_addr;                                      // RPI 1526
+                }                                                                            // RPI 1526
+            else                                                                             // RPI 1526
+               {test_addr = test_base_addr - test_addr;                                      // RPI 1526
+                }                                                                            // RPI 1526
+           }                                                                                 // RPI 1526
+        else                                                                                 // RPI 1526
+           // no offset: it's a normal address or a register                                 // RPI 1526
+           {test_addr = get_next_test_addr();                                                // RPI 1526
+            }                                                                                // RPI 1526
+        if (test_addr == -1)                                                                 // RPI 1526
+           {test_error("operand1: invalid address");                                         // RPI 1526
+            return;                                                                          // RPI 1526
+            }                                                                                // RPI 1526
+        operand1_type = test_addr_type; // Save address type                                 // RPI 1526
+        if (test_token != null                                                               // RPI 1526
+         && operand1_type == test_addr_reg                                                   // RPI 1526
+         && test_token.charAt(0) == '.')                                                     // RPI 1526
+         // We found an offset within the register                                           // RPI 1526
+           {test_token = get_next_test_token();                                              // RPI 1526
+            if (test_token.charAt(0) == '+')                                                 // RPI 1526
+               {test_token = get_next_test_token();                                          // RPI 1526
+                operand1_offset = get_next_test_addr();                                      // RPI 1526
+                if (operand1_offset > 7)                                                     // RPI 1526
+                   {operand1_offset = 0;                                                     // RPI 1526
+                    }                                                                        // RPI 1526
+                }                                                                            // RPI 1526
+            else                                                                             // RPI 1526
+               {test_error("operand1: invalid register offset");                             // RPI 1526
+                return;                                                                      // RPI 1526
+                }                                                                            // RPI 1526
+            }                                                                                // RPI 1526
+        if (test_token != null                                                               // RPI 1526
+         && test_token.charAt(0) != '=')                                                     // RPI 1526
+           {operand1_len = get_test_addr(test_token);                                        // RPI 1526
+            test_token = get_next_test_token();                                              // RPI 1526
+            }                                                                                // RPI 1526
+        if (operand1_type == test_addr_reg)                                                  // RPI 1526
+           {if (operand1_len <1                                                              // RPI 1526
+             || operand1_len > 8 - operand1_offset)                                          // RPI 1526
+              {operand1_len = 8 - operand1_offset; // for register default length = 8 bytes  // RPI 1526
+               }                                                                             // RPI 1526
+            if (test_addr > 15                                                               // RPI 1526
+             || test_addr < 0)                                                               // RPI 1526
+               {test_error("operand1: invalid register");                                    // RPI 1526
+                return;                                                                      // RPI 1526
+                }                                                                            // RPI 1526
+            test_reg_loc = test_addr * 8 + operand1_offset;                                  // RPI 1526
+            operand1 = Arrays.copyOfRange(pz390.reg_byte, test_reg_loc                       // RPI 1526
+                                                         , test_reg_loc + operand1_len + 1); // RPI 1526
+            }                                                                                // RPI 1526
+        else // operand1_type == test_addr_mem                                               // RPI 1526
+           {test_mem_loc = test_addr;                                                        // RPI 1526
+            if (operand1_len < 0                                                             // RPI 1526
+             || operand1_len > 256)                                                          // RPI 1526
+              {operand1_len = 32; // for memory default length = 32 bytes                    // RPI 1526
+               }                                                                             // RPI 1526
+            if (test_mem_loc > pz390.tot_mem)                                                // RPI 1526
+               {test_error("operand1: invalid address or length");                           // RPI 1526
+                return;                                                                      // RPI 1526
+                }                                                                            // RPI 1526
+            if (test_mem_loc + operand1_len > pz390.tot_mem)                                 // RPI 1526
+               {operand1_len = pz390.tot_mem + 1 - test_mem_loc;                             // RPI 1526
+                }                                                                            // RPI 1526
+            operand1 = Arrays.copyOfRange(pz390.mem_byte, test_mem_loc                       // RPI 1526
+                                                         , test_mem_loc + operand1_len + 1); // RPI 1526
+            }                                                                                // RPI 1526
+        tz390.put_trace("test_token="+test_token); // RPI 1526
+        /* extract comparison operator */                                                    // RPI 1526
+        if (test_token == null                                                               // RPI 1526
+         || test_token.charAt(0) != '=')                                                     // RPI 1526
+           {test_error("comparison operator not found");                                     // RPI 1526
+            return;                                                                          // RPI 1526
+            }                                                                                // RPI 1526
+        test_token = get_next_test_token();                                                  // RPI 1526
+        tz390.put_trace("test_token="+test_token); // RPI 1526
+        /* extract second comparand */                                                       // RPI 1526
+        test_bias = test_token.charAt(0);                                                    // RPI 1526
+        if (test_bias == '+' || test_bias == '-')                                            // RPI 1526
+            // the address is relative to the base                                           // RPI 1526
+           {test_token = get_next_test_token();                                              // RPI 1526
+            test_addr = get_next_test_addr();                                                // RPI 1526
+            if (test_addr == -1 || test_base_addr == -1)                                     // RPI 1526
+               {test_error("operand2: invalid base or offset");                              // RPI 1526
+                return;                                                                      // RPI 1526
+                }                                                                            // RPI 1526
+            if (test_bias == '+')                                                            // RPI 1526
+               {test_addr = test_base_addr + test_addr;                                      // RPI 1526
+                }                                                                            // RPI 1526
+            else                                                                             // RPI 1526
+               {test_addr = test_base_addr - test_addr;                                      // RPI 1526
+                }                                                                            // RPI 1526
+           }                                                                                 // RPI 1526
+        else                                                                                 // RPI 1526
+           // no offset: it's a normal address or a register                                 // RPI 1526
+           {test_addr = get_next_test_addr();                                                // RPI 1526
+            }                                                                                // RPI 1526
+        if (test_addr == -1)                                                                 // RPI 1526
+           {test_error("operand2: invalid address");                                         // RPI 1526
+            return;                                                                          // RPI 1526
+            }                                                                                // RPI 1526
+        operand2_type = test_addr_type; // Save address type                                 // RPI 1526
+        if (test_token != null                                                               // RPI 1526
+         && operand2_type == test_addr_reg                                                   // RPI 1526
+         && test_token.charAt(0) == '.')                                                     // RPI 1526
+         // We found an offset within the register                                           // RPI 1526
+           {test_token = get_next_test_token();                                              // RPI 1526
+            if (test_token.charAt(0) == '+')                                                 // RPI 1526
+               {test_token = get_next_test_token();                                          // RPI 1526
+                operand2_offset = get_next_test_addr();                                      // RPI 1526
+                if (operand2_offset > 7)                                                     // RPI 1526
+                   {operand2_offset = 0;                                                     // RPI 1526
+                    }                                                                        // RPI 1526
+                }                                                                            // RPI 1526
+            else                                                                             // RPI 1526
+               {test_error("operand2: invalid register offset");                             // RPI 1526
+                return;                                                                      // RPI 1526
+                }                                                                            // RPI 1526
+            }                                                                                // RPI 1526
+        if (test_token != null                                                               // RPI 1526
+         && test_token.charAt(0) != '=')                                                     // RPI 1526
+           {operand2_len = get_test_addr(test_token);                                        // RPI 1526
+            }                                                                                // RPI 1526
+        if (operand2_type == test_addr_reg)                                                  // RPI 1526
+           {if (operand2_len <1                                                              // RPI 1526
+             || operand2_len > 8 - operand2_offset)                                          // RPI 1526
+              {operand2_len = 8 - operand2_offset; // for register default length = 8 bytes  // RPI 1526
+               }                                                                             // RPI 1526
+            if (test_addr > 15                                                               // RPI 1526
+             || test_addr < 0)                                                               // RPI 1526
+               {test_error("operand2: invalid register");                                    // RPI 1526
+                return;                                                                      // RPI 1526
+                }                                                                            // RPI 1526
+            test_reg_loc = test_addr * 8 + operand2_offset;                                  // RPI 1526
+            operand2 = Arrays.copyOfRange(pz390.reg_byte, test_reg_loc                       // RPI 1526
+                                                         , test_reg_loc + operand2_len + 1); // RPI 1526
+            }                                                                                // RPI 1526
+        else // operand2_type == test_addr_mem                                               // RPI 1526
+           {test_mem_loc = test_addr;                                                        // RPI 1526
+            if (operand2_len < 0                                                             // RPI 1526
+             || operand2_len > 256)                                                          // RPI 1526
+              {operand2_len = 32; // for memory default length = 32 bytes                    // RPI 1526
+               }                                                                             // RPI 1526
+            if (test_mem_loc > pz390.tot_mem)                                                // RPI 1526
+               {test_error("operand2: invalid address or length");                           // RPI 1526
+                return;                                                                      // RPI 1526
+                }                                                                            // RPI 1526
+            if (test_mem_loc + operand2_len > pz390.tot_mem)                                 // RPI 1526
+               {operand2_len = pz390.tot_mem + 1 - test_mem_loc;                             // RPI 1526
+                }                                                                            // RPI 1526
+            operand2 = Arrays.copyOfRange(pz390.mem_byte, test_mem_loc                       // RPI 1526
+                                                         , test_mem_loc + operand2_len + 1); // RPI 1526
+            }                                                                                // RPI 1526
+        /* Now that we have both operands we can do the actual comparison */                 // RPI 1526
+        int i = 0; // index into operand1 & 2                                                // RPI 1526
+        int result = 99; // no result known yet                                              // RPI 1526
+        while (result == 99)                                                                 // RPI 1526
+           {if (i <= operand1_len-1)                                                         // RPI 1526
+               {tz390.put_trace("operand1["+i+"]="+(operand1[i]&0xff));                      // RPI 1526
+                }                                                                            // RPI 1526
+            if (i <= operand2_len-1)                                                         // RPI 1526
+               {tz390.put_trace("operand2["+i+"]="+(operand2[i]&0xff));                      // RPI 1526
+                }                                                                            // RPI 1526
+            if (i > operand1_len-1 && i > operand2_len-1)                                    // RPI 1526
+               {result = 0; // operands are equal                                            // RPI 1526
+                }                                                                            // RPI 1526
+            else if (i > operand1_len-1)                                                     // RPI 1526
+               {result = -1; // operand1 shorter, therefore less                             // RPI 1526
+                }                                                                            // RPI 1526
+            else if (i > operand2_len-1)                                                     // RPI 1526
+               {result = 1; // operand1 longer, therefore more                               // RPI 1526
+                }                                                                            // RPI 1526
+            else if ((operand1[i]&0xff) < (operand2[i]&0xff))                                // RPI 1526
+               {result = -1; // operand1 less than operand2                                  // RPI 1526
+                }                                                                            // RPI 1526
+            else if ((operand1[i]&0xff) > (operand2[i]&0xff))                                // RPI 1526
+               {result = 1; // operand1 more than operand2                                   // RPI 1526
+                }                                                                            // RPI 1526
+            // remaining case: bytes are equal                                               // RPI 1526
+            i++;                                                                             // RPI 1526
+            if (result == 99                                                                 // RPI 1526
+             && i == operand1_len                                                            // RPI 1526
+             && i == operand2_len) // length counts from 1                                   // RPI 1526
+               {result = 0; // operands are equal                                            // RPI 1526
+                }                                                                            // RPI 1526
+            }                                                                                // RPI 1526
+        if (result == 0)                                                                     // RPI 1526
+           {tz390.put_trace("Equal");                                                        // RPI 1526
+            }                                                                                // RPI 1526
+        else if (result < 0)                                                                 // RPI 1526
+           {tz390.put_trace("Less");                                                         // RPI 1526
+            }                                                                                // RPI 1526
+        else // result > 0                                                                   // RPI 1526
+           {tz390.put_trace("More");                                                         // RPI 1526
+            }                                                                                // RPI 1526
+        break;                                                                               // RPI 1526
 	case 'Z':  // zoom to normal end by turning off trace and test
         tz390.opt_trace = false;
         tz390.opt_test  = false;     //RPI186

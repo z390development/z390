@@ -399,7 +399,8 @@ public  class  az390 implements Runnable {
         * 07/24/14 RPI 1209B Extend az390 to produce correct report of vector optypes
         * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
         * 11/03/14 RPI 1209O MR/DR instructions should issue error when operand1 is odd
-    * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
+        * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
+        * 09/11/15 RPI 1523  START with non-zero origin is starts location counter at 0 anyway
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -551,6 +552,7 @@ public  class  az390 implements Runnable {
      */
     int loc_ctr = 0;
     int loc_start = 0;
+    int start_loc = 0; // Value specified on START instruction // RPI 1523
     int loc_len = 0;
 	int cur_esd_sid = 0;
     int tot_esd = 0;
@@ -3773,6 +3775,7 @@ private void process_bal_op(){
     	} else if (cur_esd != first_cst_esd){
     		log_error(204,"START must be first CSECT"); // RPI 917
     	}
+        process_start();               // RPI 1523
     	bal_label_ok = false;
     	break;
     case 120:  // WXTRN 0
@@ -4854,7 +4857,11 @@ private void process_sect(byte sect_type,String sect_name){
 			// update prev section
 			cur_esd = sym_esd[cur_esd_sid];
 			loc_ctr = esd_loc[cur_esd]; // rpi 778
-		} else {
+            if (loc_ctr < start_loc)           // RPI 1523
+               {loc_ctr = start_loc;           // RPI 1523
+                start_loc = 0;                 // RPI 1523
+                }                              // RPI 1523
+			} else {
 			log_error(182,"Duplicate section name of different type");
 		}
 		prev_sect_type = sym_type[cur_esd_sid];
@@ -8970,6 +8977,30 @@ private void process_org(){
 		log_error(102,"org expression must be in same section");
 	}
 }
+private void process_start()                                    // RPI 1523 routine copied from process_org
+    /*                                                          // RPI 1523
+     *                                                          // RPI 1523
+     * set current location first csect                         // RPI 1523
+     */                                                         // RPI 1523
+   {if (bal_parms           == null                             // RPI 1523
+     || bal_parms.length()  == 0                                // RPI 1523
+     || bal_parms.charAt(0) == ','                              // RPI 1523
+        )                                                       // RPI 1523
+       {loc_ctr   = 0; // Start at address 0                    // RPI 1523
+        }                                                       // RPI 1523
+    else                                                        // RPI 1523
+       {exp_text  = bal_parms;                                  // RPI 1523
+        exp_index = 0;                                          // RPI 1523
+        if (calc_abs_exp()                                      // RPI 1523
+            )                                                   // RPI 1523
+           {start_loc = (exp_val+7)/8*8; // Round to Dword      // RPI 1523
+            }                                                   // RPI 1523
+        else                                                    // RPI 1523
+           {start_loc = 0;                                      // RPI 1523
+            log_error(102,"start expression must be absolute"); // RPI 1523
+            }                                                   // RPI 1523
+        }                                                       // RPI 1523
+    }                                                           // RPI 1523
 private void process_push(){
 	/*
 	 * push print or using level if any

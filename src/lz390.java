@@ -102,6 +102,7 @@ public  class  lz390 {
     * 03/07/12 RPI 1197 support OBJ optional entry on .END TXT
     *          1) last .END entry overrides default 0
     *          2) ENTRY command overrides any .END entry 
+    * 09/06/15 RPI 1528 Linker sets entry point incorrectly: An ENTRY with offset 0 is overridden by the last END statement's offset
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -1189,7 +1190,7 @@ private void gen_load_module(){
 	 * output 390 load module in binary format
 	 * skipping rlds for unresolved wxtrn's 
 	 */
-	if (obj_end_entry_last_loc > 0 && lkd_entry_loc == 0){
+	if (obj_end_entry_last_loc > 0 && lkd_entry == null){ // RPI 1528
 	   // if no ENTRY command, use last END Label entry
 	   lkd_entry_loc = obj_end_entry_last_loc; // RPI 1197
 	}
