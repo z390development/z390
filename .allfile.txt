@@ -1,3 +1,4 @@
+C:\z390\$RPI_list.txt
 C:\z390\.allfile.txt
 C:\z390\.git_hist.txt
 C:\z390\.gitignore
@@ -2178,6 +2179,7 @@ C:\z390\rt\mvs
 C:\z390\rt\RC1.BAT
 C:\z390\rt\RC2.BAT
 C:\z390\rt\RESET1.BAT
+C:\z390\rt\rt
 C:\z390\rt\RT.BAT
 C:\z390\rt\RT1.BAT
 C:\z390\rt\RT1.OPT
@@ -5445,6 +5447,8 @@ C:\z390\rt\mvs\test\save\TESTMVS1.MLC
 C:\z390\rt\mvs\test\save\TESTMVS1.OBJ
 C:\z390\rt\mvs\test\save\TESTMVS1.PRN
 C:\z390\rt\mvs\test\save\TESTMVS1.STA
+C:\z390\rt\rt\RPI1530.ASM
+C:\z390\rt\rt\RPI1530.RT
 C:\z390\rt\soa\demo
 C:\z390\rt\soa\dif
 C:\z390\rt\soa\test

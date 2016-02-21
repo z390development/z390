@@ -342,6 +342,7 @@ public class pz390 {
      * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
      * 01/09/15 RPI 1527  TROO, TRTO, TROT, TRTT will process 1 character if length 0 is specified
      * 11/09/15 RPI 1531  MVCL and MVCLE with source length zero abend
+     * 02/08/16 RPI 1530  CLIJ/CLGIJ incorrectly test their operands
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -9299,7 +9300,7 @@ public class pz390 {
 	     case 0x7D:  // 360 "EC7D" "CLGIJ" "RIE4"
 	         psw_check = false;
 	    	 ins_setup_rie4();
-			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), if2))
+			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), if2&0x000000ff)) // RPI 1530
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
@@ -9315,7 +9316,7 @@ public class pz390 {
 	     case 0x7F:  // 500 "EC7F" "CLIJ" "RIE4"
 	         psw_check = false;
 	    	 ins_setup_rie4();
-			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), if2))
+			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), if2&0x000000ff)) // RPI 1530
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
@@ -9399,7 +9400,7 @@ public class pz390 {
 	     case 0xFD:  // 920 "ECFD" "CLGIB" "RRS3"
 	         psw_check = false;
 	    	 ins_setup_rrs3();
-			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), if2))
+			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), if2&0x000000ff)) // RPI 1530
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
@@ -9415,7 +9416,7 @@ public class pz390 {
 	     case 0xFF:  // 1060 "ECFF" "CLIB" "RRS3"
 	         psw_check = false;
 	    	 ins_setup_rrs3();
-			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), if2))
+			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), if2&0x000000ff)) // RPI 1530
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }

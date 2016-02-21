@@ -1,0 +1,189 @@
+// RPI 1209   Implement Vector support
+// RPI 1209A  Implement OPTABLE/MACHINE options
+   RPI 1209B  List of supported operations is incorrect for vector operations
+              Extend az390 to produce correct report of vector optypes
+// RPI 1209C  Use instruction format names, rather than codes in opcode-defining tables
+              but beware of codes > 100
+   RPI 1209D  Sort list for supported operations alphabetically (EBCDIC)
+   RPI 1209E  When creating the list of supported instructions, write three instructions
+              on each line (just like HLASM)
+   RPI 1209F  OPTABLE(xxx,[NO]LIST) and and MACHINE(xxx,[NO]LIST) get split by DOS parser when
+              passed as direct parameter on the invocation command.
+              Subsequently they are not recognized as valid parameters.
+// RPI 1209G  Make table op_type_len dynamic. Fill from table with opcode format definitions
+// RPI 1209H  opcode tables out of sync in beta3 version
+// RPI 1209I  Add missing unsupported opcodes
+// RPI 1209J  Remove duplicate opcodes from list of unsupported XA-instructions
+// RPI 1209K  Add opcodes from Principles of Operation SA22-7832-09 as unsupported instructions
+   RPI 1209L  Extend optype range for instructions by 100
+// RPI 1209M  Make usage of ASSIST instructions dependent upon option ASSIST/NOASSIST
+// RPI 1209N  Re-implement RR-type instructions and create full regression test
+// RPI 1209O  MR/DR instructions should issue error when operand1 is odd
+
+   RPI 1500   MVZ fails to propagate zone nibble properly
+              Mail in folder z390 by Jürgen Winkelmann dd 2014-10-06
+              Status: not reproduced yet
+   RPI 1501   An error message is generated when DFHRESP(...) is used in an ELSE IF clause.
+              No error generated for just an IF ... DFHRESP(...)
+              Mail in folder z390team by Melvyn Maltz dd 12-10-2014 14:52
+              Status: request for additinal info sent to MM
+   RPI 1502   opcodes 473 and 47C not being recognized by trace
+              Mail in folder z390 by Bernd Oppolzer dd 9-10-2014 22:08
+              Status: request for version id sent to Bernd
+   RPI 1503   TS assembles as 9399 in stead of 9300
+              TS is not recognized by trace
+              MVCOS is not recognized by trace
+              Mail in folder z390 by Bernd Oppolzer dd 11-10-2014 17:15
+// RPI 1504   Final options not reported by ZC390
+// RPI 1505   BALR in amode 24 fails to construct correct high-order word in return address
+// RPI 1506   Execution of SAM64 acts as no-op / basic support for Amode64
+// RPI 1507   Implement PSW and PSW+ commands in trace mode
+   RPI 1508   Documented option TESTDD() is implemented as TEST() - Correct documentation
+              Also: explain that TEST() takes the name of a variable containing the command file path+name
+              Also: when end of command file is reached and program has not yet ended Quit command is generated
+// RPI 1509   BALR in amode64 turns on amode31 bit generated in return address
+// RPI 1510   BALR when EXecuted generates return address from target BALR instruction
+//            Return address should be generated from EX/EXRL instruction location
+// RPI 1511   BCR should not branch when target address is contained in R0
+// RPI 1512   BASSM with odd target address should set amode64, not jump to odd address
+// RPI 1513   BASSM should set return address from EX/EXRL when executed
+// RPI 1514   trace command PSW+ should display PSW key and Problem/Supervisor mode
+   RPI 1515   BSM with odd target address should set amode64, not jump to odd address
+   RPI 1516   BALR in amode64 disregards high-order word in branch target address
+   RPI 1517   Use Java subtasking facilities as described in
+              http://www.codeguru.com/java/article.php/c15917/Managing-Threads-in-J2SE-The -Java2-Standard-Edition-Thread-Container.htm
+              Mail in folder z390-team by Don Higgins dd 21-02-2015 15:44
+   RPI 1518   MP should generate -0 when multiplying negative number with zero.
+              Mail in folder z390 by Melvyn Maltz dd 05-03-2015 21:04
+   RPI 1519   Include a proper copy of the GPL license with the distributed code
+   RPI 1520   Broken link on the z390 site:
+              User Guide has a link to the zpar doc (which should be in utilities), but the site address has a colon on the end making it a broken link
+              Mail in folder z390team by Melvyn Maltz dd 22-03-2015 22:14
+   RPI 1521   2 issues with CICS macro DTFSD:
+              1) parm TYPEFLE not validated
+              2) line 61 generates A() when TYPEFLE=OUTPUT. Should be A(0)
+              Mail in folder z390team by Melvyn Maltz dd 18-03-2015 21:26
+// RPI 1522   Load Logical Immediate instructions and other RI-a instructions should issue error when argument is relocatable
+//            In stead it generates incorrect code (as if arg was an RI argument)
+//            Mail in folder z390team by Melvyn Maltz dd 25-03-2015 22:39
+// RPI 1523   START with non-zero origin is starts location counter at 0 anyway
+//            Mail in folder z390 by hermannsfeldt dd 16-06-2015 23:45
+   RPI 1524   360/20 has only registers 8-F. Usage of 0-7 generates 4096*Rn as a
+              base or index address.
+              Mail in folder z390 by hermannsfeldt dd 16-06-2015 08:16
+   RPI 1525   Extract 360/20 peculiarities from https://github.com/s390guy/SATK ??
+              Mail in folder z390 by Harold Grovesteen dd 2015-06-23 14:15
+// RPI 1526   Add support to test mode for V (Verify) command
+// RPI 1527   TROO, TRTO, TROT, TRTT will process 1 character if length 0 is specified
+//            Mail in folder z390 by Martin Ward dd 28-08-2015 14:07 and 14:19
+// RPI 1528   Linker sets entry point incorrectly
+//            Mail in folder z390 by Martin Ward dd 1-9-2015 15:10
+//            More precisely: An ENTRY with offset 0 is overridden by the last END statement's offset
+//            Mail in folder z390 by Martin Ward dd 3-9-2015 13:42
+// RPI 1529   Incorrect character x'92' in ascii character translation tables (backquote, should be quote = x'27')
+//            Mail in folder z390 by Martin Ward dd 2-9-2015 12:04
+// RPI 1530   Linkage editor ignores ENTRY command if coded after the NAME statement
+//            Mail in folder z390 by Martin Ward dd 3-9-2015 13:42
+//       -->  Withdrawn: this behaviour matches LKED behaviour documented by IBM
+// RPI 1531   MVCL and MVCLE with source length zero abend
+//            Mail in folder z390 by Martin Ward dd 11-9-2015 15:39
+// RPI 1532   CODEPAGE option causes unjustified error MZ390E error 838 ... invalid ascii source line ...
+//            Mail in folder z390 by Martin Ward dd 1-10-2015 16:08
+//       -->  Withdrawn: error was caused by invalid codepage specification
+// RPI 1533   Invalid codepage option is not flagged as an error. Should cause abortion.
+//            Mail in folder z390 by Martin Ward dd 1-10-2015 21:09
+   RPI 1534   CODEPAGE(xxx,LIST) option shows incorrect entries for square brackets []
+              Mail in folder z390 by Martin Ward dd 10-10-2015 12:19
+   RPI 1535   CODEPAGE(xxx,LIST) option always shows same table, regardless of codepage
+              Mail in folder z390 by Martin Ward dd 10-10-2015 12:19
+   RPI 1536   CODEPAGE(xxx,LIST) shows digits 0-9 as hex 90-99 in stead of F0-F9
+              Mail in folder z390 by Martin Ward dd 10-10-2015 12:19
+   RPI 1537   CODEPAGE(xxx,LIST) requires a correct codepage name. Allow omission of codepage
+              Mail in folder z390 by Martin Ward dd 10-10-2015 12:19
+   RPI 1528   Multiple definitions of an assembly-time variable should be flagged as
+              error only when multiple definitions encountered during expansion
+              Mail in folder z390 by James Cray dd 2015-10-19 08:42
+   RPI 1529   When multiple break points are in effect the break address reported is always
+              the one that was defined last, not necessarily the break address encoutnered.
+              Example message text is: test break on a 80fc.
+              Where the break occurred on 80f8.
+// RPI 1530   CLIJ incorrectly tests its operands
+//            Mail in folder z390 by Martin Ward dd 2016-02-02 14:42 and 14:54
+   RPI 1531   Provide support for built-in ESYM function'.
+              See http://www-01.ibm.com/support/docview.wss?uid=swg21975742&aid=1
+   RPI 1532   in Test mode "error invalid command" should set rc=12
+   RPI 1533   Enhance implementation of Immediate operands for unsigned operands.
+              Currently pz390 treats all immediate operands as signed integers.
+              For unsigned operands, the operand should not be sign-extended.
+   RPI 1534   Change test-mode command PSW to display PSW with key 8, rather than 0.
+
+Open issues with regard to support for new vector instructions:
+    //  4.  Change pz390 op_type_offset and op_type_mask if new primary opcode
+    //  5.  Change pz390 trace_psw to add new case formats
+
+extend sym_attra_type in az390 with Vector Registers
+
+List of RPI-issues resolved per version of z390
+===============================================
+
+V1.6.00b01
+   RPI 1209   Prepare z390 for OPTABLE/MACHINE support
+              - Move array op_trace_type to tz390
+              - Replace static content of arrays op_name, op_code,
+                op_type, op_trace_type with same data generated from op_tables array
+   RPI 1209A  Implement OPTABLE/MACHINE options
+              Report OPTABLE contents if LIST specified on OPTABLE or MACHINE
+
+V1.6.00b02
+   RPI VF01   Add vector options Vector/Novector and SectionSize, PartialSums
+
+V1.6.00b03
+   RPI 1209G  Table op_type_len is now created dynamically from opcode_formats
+              Opcodes can be defined with either the number of the opcode format (as before)
+                 or with the name of the opcode format. The latter is now used for Vector operations
+   RPI 1209B  (work in progress)
+
+V1.6.00b04
+   RPI 1209H  opcode tables out of sync in beta3 version
+
+V1.6.00b05
+   RPI 1209I  Add missing unsupported opcodes
+   RPI 1209J  Remove duplicate opcodes from list of unsupported XA-instructions
+   RPI 1209K  Add opcodes from Principles of Operation SA22-7832-09 as unsupported instructions
+   RPI 1209M  Make usage of ASSIST instructions dependent upon option ASSIST/NOASSIST
+   RPI 1209N  Re-implement RR-type instructions and create full regression test
+   RPI 1504   Final options not reported by ZC390              
+   RPI 1209O  MR/DR instructions should issue error when operand1 is odd
+   RPI 1505   BALR in amode 24 fails to construct correct high-order word in return address
+
+V1.6.00b06
+   RPI 1506   Execution of SAM64 acts as no-op / basic support for Amode64
+   RPI 1507   Implement PSW and PSW+ commands in trace mode
+   RPI 1509   BALR in amode64 turns on amode31 bit generated in return address
+   RPI 1510   BALR when EXecuted generates return address from target BALR instruction
+              Return address should be generated from EX/EXRL instruction location
+
+V1.6.00b07
+   RPI 1511   BCR should not branch when target address is contained in R0
+   RPI 1512   BASSM with odd target address should set amode64, not jump to odd address
+   RPI 1513   BASSM should set return address from EX/EXRL when executed
+   RPI 1514   trace command PSW+ should display PSW key and Problem/Supervisor mode
+   RPI 1515   BSM with odd target address should set amode64, not jump to odd address
+   RPI 1522   Load Logical Immediate instructions and other RI-a instructions should issue error when argument is relocatable
+
+V1.6.00b08
+   RPI 1522   Remaining RI-a instructions and trace logic for RI-a instructions repaired
+
+V1.6.00B09
+   RPI 1527   TROO, TRTO, TROT, TRTT will process 1 character if length 0 is specified
+   RPI 1529   Incorrect character x'92' in ascii character translation tables (backquote, should be quote = x'27')
+   RPI 1528   Linker sets entry point incorrectly: An ENTRY with offset 0 is overridden by the last END statement's offset
+   RPI 1523   START with non-zero origin is starts location counter at 0 anyway
+   RPI 1531   MVCL and MVCLE with source length zero abend
+
+V1.6.00b10
+   RPI 1533   Invalid codepage option is not flagged as an error. Should cause abortion.
+   RPI 1526   Add support to test mode for V (Verify) command
+   RPI 1530   CLIJ incorrectly tests its operands
+
+

@@ -285,7 +285,8 @@ public  class  tz390 {
     * 10/18/14 RPI 1209M Make usage of ASSIST instructions dependent upon option ASSIST/NOASSIST
     * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
     * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
-    * 09/05/15 RPI 1529 Incorrect character x'92' in ascii character translation tables (backquote, should be quote = x'27')
+    * 09/05/15 RPI 1529  Incorrect character x'92' in ascii character translation tables (backquote, should be quote = x'27')
+    * 10/03/15 RPI 1533  Invalid codepage option is not flagged as an error. Should cause abortion.
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -294,7 +295,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.6.00b09";  //dsh + afk
+    String version    = "V1.6.00b10";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -6461,7 +6462,8 @@ public void put_trace(String text){
 		list_available_charsets();
 		opt_codepage = false;
 		init_ascii_ebcdic();
-	}
+        abort_error(793,"CODEPAGE option error - " + msg); // RPI 1533
+		}
 	private void list_ebcdic_ascii_unicode(){
 		/* 
 		 * list unicode, char, ascii hex, ebcdic hex
