@@ -1,0 +1,278 @@
+*
+* skip intro
+t15
+*
+* SPM ######################################## (@15, t14)
+t1
+  v * 2      = x'0450'
+t1
+  v psw.cc   = x'00'
+  v psw.mask = x'0F'
+t1
+  v * 2      = x'0460'
+t1
+  v psw.cc   = x'01'
+  v psw.mask = x'09'
+t1
+  v * 2      = x'0450'
+t1
+  v psw.cc   = x'03'
+  v psw.mask = x'06'
+t1
+  v * 2      = x'0400'
+t1
+  v psw.cc   = x'02'
+  v psw.mask = x'00'
+* ---------------------------- EX SPM
+t3
+  v psw.cc   = x'01'
+  v psw.mask = x'09'
+t3
+  v psw.cc   = x'03'
+  v psw.mask = x'06'
+*
+* BALR ######################################## (@29, t58)
+* ---------------------------- amode24 (t11)
+t4
+  v * 2      = x'05E0'
+t1
+  v psw.addr = x'008086' 3             * Branch not taken
+  v 14r      = x'F1F2F3F456008086'
+t1
+  v * 2      = x'0500'
+t1
+  v psw.addr = x'00808A' 3             * Branch not taken
+  v 0r       = x'F4F4F4F44600808A'
+t1
+  v * 2      = x'05EF'
+t1
+  v psw.addr = x'008094' 3             * Branch taken
+  v 14r      = x'F1F2F3F466008090'
+t1
+  v * 2      = x'0555'
+  v 5r       = x'F4F4F4F40000809C'
+t1
+  v psw.addr = x'00809C' 3             * Branch taken
+  v 5r       = x'F4F4F4F46600809A'
+* ---------------------------- EX BALR (@11, t11)
+t4
+  v psw.addr = x'008092' 3             * Branch taken
+  v 14r      = x'F1F2F3F4A60080A8'
+t6
+  v psw.addr = x'008092' 3             * Branch taken
+  v 14r      = x'F1F2F3F4F60080B6'
+t1
+* ---------------------------- amode31 (@22, t8)
+t3
+  v * 2      = x'0540'
+t1
+  v psw.addr = x'000080C4' 4           * Branch not taken
+  v 4r       = x'F1F2F3F4800080C4'
+  v * 2      = x'0500'
+t1
+  v psw.addr = x'000080C6' 4           * no branch
+  v 0r       = x'F4F4F4F4800080C6'
+  v * 2      = x'0545'
+t1
+  v psw.addr = x'000080CA' 4           * branch taken
+  v 4r       = x'F1F2F3F4800080C8'
+t1
+  v 5r       = x'F4F4F4F4000080D2'
+  v * 2      = x'0555'
+t1
+  v psw.addr = x'000080D2' 4           * branch taken
+  v 5r       = x'F4F4F4F4800080D0'
+* ---------------------------- EX BALR (@30, t9)
+t4
+  v psw.addr = x'00008092' 4           * branch taken
+  v 14r      = x'F1F2F3F4800080DE'
+t4
+  v psw.addr = x'00008092' 4           * branch taken
+  v14r       = x'F1F2F3F4800080E6'
+t1
+* ---------------------------- amode64 (@39, t9)
+t3
+  v * 2 = x'05E0'
+t1
+  v psw.addr = x'00000000000080F4' 8   * no branch
+  v 14r      = x'00000000000080F4'
+  v * 2      = x'0500'
+t1
+  v psw.addr = x'00000000000080F6' 8   * no branch
+  v 0r       = x'00000000000080F6'
+  v * 2      = x'05EF'
+t1
+  v psw.addr = x'00000000000080FA' 8   * branch taken
+  v 14r      = x'00000000000080F8'
+t2
+  v * 2      = x'0555'
+  v 5r       = x'0000000000008106'
+t1
+  v psw.addr = x'0000000000008106' 8   * branch taken
+  v 5r       = x'0000000000008104'
+* ---------------------------- EX BALR (@48, t10)
+t4
+  v psw.addr = x'0000000000008092' 8   * branch taken
+  v 14r      = x'0000000000008112'
+t4
+  v psw.addr = x'0000000000008092' 8   * branch taken
+  v 14r      = x'000000000000811A'
+t2
+*
+* BCTR ######################################## (@87, t22)
+* ---------------------------- amode24 (t9)
+t1
+  v * 2      = X'0660'
+t1
+  v psw.addr = X'008124' 3             * no branch
+  v 6r       = X'1A1B1C1D00000002'
+t2
+  v * 2      = X'0667'
+  v psw.cc   = X'01'
+t1
+  V psw.addr = X'00812A' 3             * branch taken
+  v 6r       = X'1A1B1C1D00000001'
+t1
+  v psw.addr = X'00812C' 3             * branch not taken
+  v psw.cc   = X'01' 1                 * should be unchanged
+  v 6r       = X'1A1B1C1D00000000'
+t1
+  v * 2      = X'0667'
+t1
+  v psw.addr = X'008136' 3             * branch taken
+  v 6r       = X'1A1B1C1DFFFFFFFF'
+* ---------------------------- EX BCTR (@9, t13)
+t4
+  v psw.addr = X'008142' 3             * no branch
+  v 6r       = X'1A1B1C1D00000002'
+t4
+  v psw.addr = X'00814A' 3             * branch taken
+  v 6r       = X'1A1B1C1D00000001'
+t2
+  v psw.addr = X'008150' 3             * branch taken
+  v 6r       = X'1A1B1C1D00000000'
+t3
+  v psw.addr = X'00815A' 3             * branch not taken
+  v 6r       = X'1A1B1C1DFFFFFFFF'
+* ---------------------------- amode31 (@21, t?)
+* BCR ######################################## (@101, t37)
+t2
+* 07D4
+l * 2
+t1
+* PgmLoc: 00008148 (branch not taken)
+psw
+* 0724
+l * 2
+t1
+* PgmLoc: 0000814C (branch taken)
+psw
+t1
+* 07F0
+l * 2
+t1
+* PgmLoc: 00008152 (branch not taken)
+psw
+* 07F0
+l * 2
+t1
+* PgmLoc: 00008154 (branch not taken)
+psw
+t1
+* 07F5
+l * 2
+t1
+* PgmLoc: 0000815C (branch taken)
+psw
+* 0705
+l * 2
+t1
+* PgmLoc: 0000815E (branch not taken)
+psw
+t1
+* 07D4
+l * 2
+t1
+* PgmLoc: 00008164 (branch not taken)
+psw
+* 07D4
+l * 2
+t1
+* PgmLoc: 00008166 (branch not taken)
+psw
+* 0720
+l * 2
+t1
+* PgmLoc: 00008168 (branch not taken)
+psw
+* 0724
+l * 2
+t1
+* PgmLoc: 0000816C (branch taken)
+psw
+t2
+* 07B4
+l * 2
+t1
+* PgmLoc: 00008174 (branch not taken)
+psw
+* 07B4
+l * 2
+t1
+* PgmLoc: 00008176 (branch not taken)
+psw
+* 0740
+l * 2
+t1
+* PgmLoc: 00008178 (branch not taken)
+psw
+* 0744
+l * 2
+t1
+* PgmLoc: 0000817C (branch taken)
+psw
+t2
+* 0774
+l * 2
+t1
+* PgmLoc: 00008184 (branch not taken)
+psw
+* 0774
+l * 2
+t1
+* PgmLoc: 00008186 (branch not taken)
+psw
+* 0780
+l * 2
+t1
+* PgmLoc: 00008188 (branch not taken)
+psw
+* 0784
+l * 2
+t1
+* PgmLoc: 0000818C (branch taken)
+psw
+t2
+* 07E4
+l * 2
+t1
+* PgmLoc: 00008196 (branch not taken)
+psw
+* 0714
+l * 2
+* 0700
+l *+2 2
+t1
+* PgmLoc: 0000819A (branch taken)
+psw
+* EX BCR (@31, t6)
+t4
+* PgmLoc: 000081A8 (branch taken)
+psw
+t2
+* PgmLoc: 000081AE (branch taken)
+psw
+* SVC ######################################## (@138, t1)
+* 0A0A
+l *+4 2
+t1

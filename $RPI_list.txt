@@ -100,22 +100,34 @@
               Mail in folder z390 by Martin Ward dd 10-10-2015 12:19
    RPI 1537   CODEPAGE(xxx,LIST) requires a correct codepage name. Allow omission of codepage
               Mail in folder z390 by Martin Ward dd 10-10-2015 12:19
-   RPI 1528   Multiple definitions of an assembly-time variable should be flagged as
+   RPI 1538   Multiple definitions of an assembly-time variable should be flagged as
               error only when multiple definitions encountered during expansion
               Mail in folder z390 by James Cray dd 2015-10-19 08:42
-   RPI 1529   When multiple break points are in effect the break address reported is always
+   RPI 1539   When multiple break points are in effect the break address reported is always
               the one that was defined last, not necessarily the break address encoutnered.
               Example message text is: test break on a 80fc.
               Where the break occurred on 80f8.
-// RPI 1530   CLIJ incorrectly tests its operands
+// RPI 1540   CLIJ incorrectly tests its operands
 //            Mail in folder z390 by Martin Ward dd 2016-02-02 14:42 and 14:54
-   RPI 1531   Provide support for built-in ESYM function'.
+   RPI 1541   Provide support for built-in ESYM function'.
               See http://www-01.ibm.com/support/docview.wss?uid=swg21975742&aid=1
-   RPI 1532   in Test mode "error invalid command" should set rc=12
-   RPI 1533   Enhance implementation of Immediate operands for unsigned operands.
+   RPI 1542   in Test mode "error invalid command" should set rc=12
+   RPI 1543   Enhance implementation of Immediate operands for unsigned operands.
               Currently pz390 treats all immediate operands as signed integers.
               For unsigned operands, the operand should not be sign-extended.
-   RPI 1534   Change test-mode command PSW to display PSW with key 8, rather than 0.
+// RPI 1544   Change test-mode command PSW to display PSW with key 8, rather than 0.
+
+// RPI 2000   Add test-mode command AR to display one or all access registers
+// RPI 2001   BSM: changes for set branch address & amode 64;
+//            BASSM: remove redundant if statement
+// RPI 2002   BASR, BAL, BAS: make EXecute aware and amode 64 aware;
+//            BAL: cc,ilc,pgm mask put in return address for amode 24
+// RPI 2003   Add support for LAM, LAMY, STAM, and STAMY instructions
+// RPI 2004   Add support for TAM instruction
+// RPI 2005   Allow test-mode commands PSW and PSW+ to have leading and trailing spaces
+// RPI 2006   Test-mode L command in 24-bit mode: errors listing above the line storage
+// RPI 2007   Test-mode command "1r=x'8000000000000000'" fails (java bug); R1=-1 anyway
+// RPI 2008   Add test-mode command PSW16 to display 16 byte PSW
 
 Open issues with regard to support for new vector instructions:
     //  4.  Change pz390 op_type_offset and op_type_mask if new primary opcode
@@ -168,7 +180,6 @@ V1.6.00b07
    RPI 1512   BASSM with odd target address should set amode64, not jump to odd address
    RPI 1513   BASSM should set return address from EX/EXRL when executed
    RPI 1514   trace command PSW+ should display PSW key and Problem/Supervisor mode
-   RPI 1515   BSM with odd target address should set amode64, not jump to odd address
    RPI 1522   Load Logical Immediate instructions and other RI-a instructions should issue error when argument is relocatable
 
 V1.6.00b08
@@ -186,4 +197,17 @@ V1.6.00b10
    RPI 1526   Add support to test mode for V (Verify) command
    RPI 1530   CLIJ incorrectly tests its operands
 
+V1.6.00b11
+   RPI 1544   Change test-mode command PSW to display PSW with key 8, rather than 0.
+   RPI 2000   Add test-mode command AR to display one or all access registers
+   RPI 2001   BSM: changes for set branch address & amode 64;
+              BASSM: remove redundant if statement
+   RPI 2002   BASR, BAL, BAS: make EXecute aware and amode 64 aware;
+              BAL: cc,ilc,pgm mask put in return address for amode 24
+   RPI 2003   Add support for LAM, LAMY, STAM, and STAMY instructions
+   RPI 2004   Add support for TAM instruction
+   RPI 2005   Allow test-mode commands PSW and PSW+ to have leading and trailing spaces
+   RPI 2006   Test-mode L command in 24-bit mode: errors listing above the line storage
+   RPI 2007   Test-mode command "1r=x'8000000000000000'" fails (java bug); R1=-1 anyway
+   RPI 2008   Add test-mode command PSW16 to display 16 byte PSW
 

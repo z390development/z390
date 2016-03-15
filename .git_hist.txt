@@ -7636,6 +7636,70 @@ set GIT_COMMITTER_DATE=2021-03-28 16:45:00 +0100
 git commit -m "Reconstructed version v1.6.00b10 of z390"
 git tag -a v1.6.00b10 -m "Reconstructed version v1.6.00b10 of z390"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.6.00b11
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Add to .gitignore file
+# Assembler/emulator and other input stuff
+# **/*.rt  --> regression test scripts
+
+==> Stage files for V1.6.00b11
+git add $RPI_list.txt
+git rm  RT/rt/RPI1530.ASM
+git rm  RT/rt/RPI1530.RT
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add rt/RT/IEFBR14.ASM
+git add rt/RT/OPCD_DOS.ASM
+git add rt/RT/OPCD_DOS.RT
+git add rt/RT/OPCD_ERR.ASM
+git add rt/RT/OPCD_UNI.ASM
+git add rt/RT/OPCD_XA.ASM
+git add rt/RT/OPCD_XA.RT
+git add rt/RT/OPCD_ZZZ.ASM
+git add rt/RT/RPI1540.ASM
+git add rt/RT/RPI1540.RT
+git add rt/RT/RPI1544.ASM
+git add rt/RT/RPI1544.RT
+git add rt/RT/RPI2000.ASM
+git add rt/RT/RPI2000.RT
+git add rt/RT/RPI2001A.ASM
+git add rt/RT/RPI2001A.RT
+git add rt/RT/RPI2001B.ASM
+git add rt/RT/RPI2001B.RT
+git add rt/RT/RPI2002A.ASM
+git add rt/RT/RPI2002A.RT
+git add rt/RT/RPI2002B.ASM
+git add rt/RT/RPI2002B.RT
+git add rt/RT/RPI2002C.ASM
+git add rt/RT/RPI2002C.RT
+git add rt/RT/RPI2003.ASM
+git add rt/RT/RPI2003.RT
+git add rt/RT/RPI2004.ASM
+git add rt/RT/RPI2004.RT
+git add rt/RT/RPI2005.ASM
+git add rt/RT/RPI2005.RT
+git add rt/RT/RPI2006.ASM
+git add rt/RT/RPI2006.RT
+git add rt/RT/RPI2007.ASM
+git add rt/RT/RPI2007.RT
+git add rt/RT/RPI2008.ASM
+git add rt/RT/RPI2008.RT
+
+==> Create commit for V1.6.00b11
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Abe 2016-03-15 19:00:00 +0100
+set GIT_COMMITTER_DATE=2021-03-28 17:40:00 +0100
+git commit -m "Reconstructed version v1.6.00b11 of z390"
+git tag -a v1.6.00b11 -m "Reconstructed version v1.6.00b11 of z390"
 
 
 

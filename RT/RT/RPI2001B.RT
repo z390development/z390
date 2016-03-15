@@ -1,0 +1,436 @@
+*
+* skip intro
+t18
+*
+t1
+* ##################################################
+*
+* BASSM test 1: no branch; link register 0
+*
+* ################################################## (@ 92)
+  v * 2       = x'010c'
+t1
+  v psw.amode = x'0'
+t5
+  v psw.amode = x'0'
+  v 3r        = 0r
+t7
+  v psw.amode = x'1'
+  v 3r        = 0r
+t8
+  v psw.amode = x'3'
+  v 3r        = 0r
+t3
+*
+* ##################################################
+*
+* BASSM test 2: no branch; link register 15
+*
+* ################################################## (@ 134)
+  v * 2       = x'010c'
+t1
+  v psw.amode = x'0'
+t5
+  v psw.amode = x'0'
+  v 3r        = 15r
+t7
+  v psw.amode = x'1'
+  v 3r        = 15r
+t8
+  v psw.amode = x'3'
+  v 3r        = 15r
+t3
+*
+* ##################################################
+*
+* BASSM test 3: branch; no link register
+*
+* ################################################## (@ 178)
+  v * 2       = x'010c'
+t1
+  v psw.amode = x'0'
+t6
+  v psw.amode = x'0'
+  v 3r        = 0r
+t6
+  v psw.amode = x'1'
+  v 3r        = 0r
+t8
+  v psw.amode = x'3'
+  v 3r        = 0r
+t3
+*
+* #################### (@ 227)
+  v * 2       = x'010d'
+t7
+  v psw.amode = x'0'
+  v 3r        = 0r
+t8
+  v psw.amode = x'1'
+  v 3r        = 0r
+t9
+  v psw.amode = x'3'
+  v 3r        = 0r
+t3
+*
+* #################### (@ 279)
+  v * 2       = x'010e'
+t8
+  v psw.amode = x'0'
+  v 3r        = 0r
+t9
+  v psw.amode = x'1'
+  v 3r        = 0r
+t9
+  v psw.amode = x'3'
+  v 3r        = 0r
+t3
+*
+* ##################################################
+*
+* BASSM test 4: branch register and link register
+*
+* ################################################## (@ 341)
+  v * 2       = x'010c'
+t1
+  v psw.amode = x'0'
+t3
+t3
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'0'
+t1
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'1'
+t1
+  v psw.amode = x'0'
+t1
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'3'
+t1
+  v psw.amode = x'0'
+t1
+  v 3r        = 14r
+*
+t2
+* #################### (@ 384)
+  v * 2       = x'010d'
+t1
+  v psw.amode = x'1'
+*
+t4
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'1'
+t2
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'1'
+t1
+  v psw.amode = x'1'
+t2
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'3'
+t1
+  v psw.amode = x'1'
+t2
+  v 3r        = 14r
+*
+t2
+* #################### (@ 428)
+  v * 2       = x'010e'
+t1
+  v psw.amode = x'3'
+*
+t5
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'3'
+t2
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'1'
+t1
+  v psw.amode = x'3'
+t2
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'3'
+t1
+  v psw.amode = x'3'
+t2
+  v 3r        = 14r
+*
+t4
+*
+* ##################################################
+*
+* BASSM test 5: EX and EXRL tests
+*
+* ################################################## (@ 494)
+  v * 4       = x'411000e0'
+t1
+  v 1r        = x'f4f4f4f4000000e0'
+t1
+  v psw.amode = x'0'
+* ####################
+t5
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'0'
+t1
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'1'
+t1
+  v psw.amode = x'0'
+t1
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'3'
+t1
+  v psw.amode = x'0'
+t1
+  v 3r        = 14r
+*
+t5
+  v psw.amode = x'0'
+  v 3r        = 14r
+*
+* ####################
+t5
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'0'
+t1
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'1'
+t1
+  v psw.amode = x'0'
+t1
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'3'
+t1
+  v psw.amode = x'0'
+t1
+  v 3r        = 14r
+*
+t5
+  v psw.amode = x'0'
+  v 3r        = 14r
+*
+t2
+*
+* #################### (@ 583)
+t1
+  v psw.amode = x'1'
+*
+t5
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'1'
+t2
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'1'
+t1
+  v psw.amode = x'1'
+t2
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'3'
+t1
+  v psw.amode = x'1'
+t2
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'1'
+  v 3r        = 14r
+*
+* ####################
+t5
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'1'
+t2
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'1'
+t1
+  v psw.amode = x'1'
+t2
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'3'
+t1
+  v psw.amode = x'1'
+t2
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'1'
+  v 3r        = 14r
+*
+t2
+*
+* #################### (@ 676)
+t1
+  v psw.amode = x'3'
+*
+t2
+t4
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'3'
+t2
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'1'
+t1
+  v psw.amode = x'3'
+t2
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'3'
+t1
+  v psw.amode = x'3'
+t2
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'3'
+  v 3r        = 14r
+*
+* ####################
+t6
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'3'
+t2
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'1'
+t1
+  v psw.amode = x'3'
+t2
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'3'
+t1
+  v psw.amode = x'3'
+t2
+  v 3r        = 14r
+*
+t7
+  v psw.amode = x'3'
+  v 3r        = 14r
+*
+t4
+* ##################################################
+*
+* BASSM test 6: same as test 4 but BASSM Rx,Rx
+*
+* ################################################## (@ 804)
+t1
+  v psw.amode = x'0'
+t4
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'0'
+t1
+  v 3r        = 14r
+*
+t5
+  v psw.amode = x'1'
+t1
+  v psw.amode = '0'
+t1
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'3'
+t1
+  v psw.amode = '0'
+t2
+  v 3r        = 14r
+*
+t2
+* ############################## (@ 844)
+t1
+  v psw.amode = x'1'
+t4
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'1'
+t2
+  v 3r        = 14r
+*
+t5
+  v psw.amode = x'1'
+t1
+  v psw.amode = '1'
+t2
+  v 3r        = 14r
+*
+t6
+  v psw.amode = x'3'
+t1
+  v psw.amode = '1'
+t3
+  v 3r        = 14r
+*
+t2
+* ############################## (@ 887)
+t1
+  v psw.amode = x'3'
+t4
+  v psw.amode = x'0'
+t1
+  v psw.amode = x'3'
+t2
+  v 3r        = 14r
+*
+t5
+  v psw.amode = x'1'
+t1
+  v psw.amode = '3'
+t2
+  v 3r        = 14r
+*
+t5
+  v psw.amode = x'3'
+t1
+  v psw.amode = '3'
+t2
+  v 3r        = 14r
+*
+t2
+t2
+* ##################################################
+* done
+* ##################################################
+z

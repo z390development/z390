@@ -337,12 +337,18 @@ public class pz390 {
      * 02/01/15 RPI 1510  BALR when EXecuted generates return address from target BALR instruction
      *                    Return address should be generated from EX/EXRL instruction location
      * 02/05/15 RPI 1511  BCR should not branch when target address is contained in R0
-     * 14/02/15 RPI 1512  BASSM with odd target address should set amode64, not jump to odd address
-     * 14/02/15 RPI 1513  BASSM should set return address from EX/EXRL when executed
+     * 02/14/15 RPI 1512  BASSM with odd target address should set amode64, not jump to odd address
+     * 02/14/15 RPI 1513  BASSM should set return address from EX/EXRL when executed
      * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
      * 01/09/15 RPI 1527  TROO, TRTO, TROT, TRTT will process 1 character if length 0 is specified
      * 11/09/15 RPI 1531  MVCL and MVCLE with source length zero abend
-     * 02/08/16 RPI 1530  CLIJ/CLGIJ incorrectly test their operands
+     * 02/08/16 RPI 1540  CLIJ/CLGIJ incorrectly test their operands
+     * 02/10/16 RPI 2002  BASR, BAL, BAS: make EXecute aware and amode 64 aware;
+     *                    BAL: cc,ilc,pgm mask put in return address for amode 24
+     * 02/16/16 RPI 2001  BSM: changes for set branch address & amode 64;
+     *                    BASSM: remove redundant if statement
+     * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
+     * 03/01/16 RPI 2004  Add support for TAM instruction
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -433,6 +439,10 @@ public class pz390 {
 	int psw_amode24 = 0x00ffffff;
 
 	int psw_amode31 = 0x7fffffff;
+
+    /* psw address fields all 4 bytes long currnetly. */                       // RPI 2001
+    /* Needs to be extended to 8 bytes when amode64 is more fully supported */ // RPI 2001
+    int psw_amode64 = 0xfffffffe;                                              // RPI 2001
 
 	int psw_amode = psw_amode31;
 	int psw_amode24_high_bits = 0xff000000;          // RPI 828
@@ -1008,6 +1018,8 @@ public class pz390 {
 	byte[] ar_reg_byte = (byte[]) Array.newInstance(byte.class, 16 * 4); // RPI 1055
 
 	ByteBuffer ar_reg = ByteBuffer.wrap(ar_reg_byte, 0, 16 * 4); // RPI 1055
+
+    int ar_reg_len = 64;                                         // RPI 2003
 	/*
 	 * fp work variables
 	 */
@@ -1576,20 +1588,31 @@ public class pz390 {
 		case 0x0B: // 300 "0B" "BSM" "RR"
 			psw_check = false;
 			ins_setup_rr();
+            if (rf2 != 0) {                                                     // RPI 2001
+                rv2 = reg.getInt(rf2 + 4);                                      // RPI 2001
+            }                                                                   // RPI 2001
 			if (rf1 != 0) {
-				if (psw_amode == psw_amode31) {
-					reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) | psw_amode31_bit);
-				} else {
-					reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) & psw_amode31);
+                if (psw_extended_amode_bit == psw_extended_amode64_on) {        // RPI 2001
+                    reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) | 1);               // RPI 2001
+                }                                                               // RPI 2001
+                else                                                            // RPI 2001
+    				if (psw_amode == psw_amode31) {
+    					reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) | psw_amode31_bit);
+    				} else {
+    					reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) & psw_amode31);
 				}
 			}
 			if (rf2 != 0) {
-				rv2 = reg.getInt(rf2 + 4);
-				if ((rv2 & psw_amode31_bit) != 0) {
-					set_psw_amode(psw_amode31_bit);
-				} else {
-					set_psw_amode(psw_amode24_bit);
-				}
+                if ((rv2 & psw_extended_amode64_on) != 0) {                     // RPI 2001
+                    set_psw_amode(psw_extended_amode64_on);                     // RPI 2001
+                    rv2 = (rv2 & psw_amode64); // zero the odd bit              // RPI 2001
+                }                                                               // RPI 2001
+                else                                                            // RPI 2001
+    				if ((rv2 & psw_amode31_bit) != 0) {
+    					set_psw_amode(psw_amode31_bit);
+    				} else {
+    					set_psw_amode(psw_amode24_bit);
+    				}
 				set_psw_loc(rv2);
 			}
 			break;
@@ -1619,18 +1642,24 @@ public class pz390 {
 						set_psw_amode(psw_amode24_bit);
 					}
                     }                                               // RPI 1512
-                if (rf2 != 0)                                       // RPI 1512
-                   {set_psw_loc(rv2);
-                    }                                               // RPI 1512
+                set_psw_loc(rv2);
 			}
 			break;
 		case 0x0D: // 320 "0D" "BASR" "RR"
 			psw_check = false;
 			ins_setup_rr();
+            retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 2002
 			if (rf2 != 0) {
 				rv2 = reg.getInt(rf2 + 4); // RPI65
 			}
-			reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
+            if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 2002
+            {                                                       // RPI 2002
+                reg.putLong(rf1, retaddr);                          // RPI 2002
+            }                                                       // RPI 2002
+            else // either amode31 or amode 24                      // RPI 2002
+            {                                                       // RPI 2002
+                reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 2002
+            }                                                       // RPI 2002
 			if (rf2 != 0) {
 				set_psw_loc(rv2); // RPI65
 			}
@@ -2111,11 +2140,23 @@ public class pz390 {
 		case 0x45: // 910 "45" "BAL" "RX"
 			psw_check = false;
 			ins_setup_rx();
-			if (ex_mode) {
-				reg.putInt(rf1 + 4, ex_psw_return | psw_amode_bit);
-			} else {
-				reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
-			}
+            retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 2002
+            if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 2002
+            {                                                       // RPI 2002
+                reg.putLong(rf1, retaddr);                          // RPI 2002
+            }                                                       // RPI 2002
+            else if (psw_amode_bit == psw_amode31_bit)              // RPI 2002
+            {                                                       // RPI 2002
+                reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 2002
+            }                                                       // RPI 2002
+            else // amode24                                         // RPI 2002
+            {                                                       // RPI 2002
+                int ilc = (ex_mode ? ex_psw_ilc : 2);               // RPI 2002
+                reg.putInt(rf1 + 4, (ilc << 30)                     // RPI 2002
+                                  | (psw_cc_code[psw_cc] << 28)     // RPI 2002
+                                  | (psw_pgm_mask << 24)            // RPI 2002
+                                  | (retaddr & psw_amode24));       // RPI 2002
+            }                                                       // RPI 2002
 			set_psw_loc(xbd2_loc);
 			break;
 		case 0x46: // 920 "46" "BCT" "RX"
@@ -2172,11 +2213,15 @@ public class pz390 {
 		case 0x4D: // 1150 "4D" "BAS" "RX"
 			psw_check = false;
 			ins_setup_rx();
-			if (ex_mode) {
-				reg.putInt(rf1 + 4, ex_psw_return | psw_amode_bit);
-			} else {
-				reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
-			}
+            retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 2002
+            if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 2002
+            {                                                       // RPI 2002
+                reg.putLong(rf1, retaddr);                          // RPI 2002
+            }                                                       // RPI 2002
+            else  // amode31 or amode24                             // RPI 2002
+            {                                                       // RPI 2002
+                reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 2002
+            }                                                       // RPI 2002
 			set_psw_loc(xbd2_loc);
 			break;
 		case 0x4E: // 1160 "4E" "CVD" "RX"
@@ -2880,10 +2925,42 @@ public class pz390 {
 			ins_setup_rs();
 			break;
 		case 0x9A: // 1800 "9A" "LAM" "RS"
+            psw_check = false;                                       // RPI 2003
 			ins_setup_rs();
+            rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
+            rf3 >>= 1;                                               // RPI 2003
+            if (rf1 > rf3) {                                         // RPI 2003
+                while (rf1 < ar_reg_len) {                           // RPI 2003
+                    ar_reg.putInt(rf1, mem.getInt(bd2_loc));         // RPI 2003
+                    bd2_loc = bd2_loc + 4;                           // RPI 2003
+                    rf1 = rf1 + 4;                                   // RPI 2003
+                }                                                    // RPI 2003
+                rf1 = 0;                                             // RPI 2003
+            }                                                        // RPI 2003
+            while (rf1 <= rf3) {                                     // RPI 2003
+                ar_reg.putInt(rf1, mem.getInt(bd2_loc));             // RPI 2003
+                bd2_loc = bd2_loc + 4;                               // RPI 2003
+                rf1 = rf1 + 4;                                       // RPI 2003
+            }                                                        // RPI 2003
 			break;
 		case 0x9B: // 1810 "9B" "STAM" "RS"
+            psw_check = false;                                       // RPI 2003
 			ins_setup_rs();
+            rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
+            rf3 >>= 1;                                               // RPI 2003
+            if (rf1 > rf3) {                                         // RPI 2003
+                while (rf1 < ar_reg_len) {                           // RPI 2003
+                    mem.putInt(bd2_loc, ar_reg.getInt(rf1));         // RPI 2003
+                    bd2_loc = bd2_loc + 4;                           // RPI 2003
+                    rf1 = rf1 + 4;                                   // RPI 2003
+                }                                                    // RPI 2003
+                rf1 = 0;                                             // RPI 2003
+            }                                                        // RPI 2003
+            while (rf1 <= rf3) {                                     // RPI 2003
+                mem.putInt(bd2_loc, ar_reg.getInt(rf1));             // RPI 2003
+                bd2_loc = bd2_loc + 4;                               // RPI 2003
+                rf1 = rf1 + 4;                                       // RPI 2003
+            }                                                        // RPI 2003
 			break;
         case 0xA4:               // RPI VF01
                 ins_A4XX_VF();   // RPI VF01
@@ -3671,7 +3748,25 @@ public class pz390 {
 			exec_pfpo();
 			break;	
 		case 0x0B: // 40 "010B" "TAM" "E"
+            psw_check = false;                                       // RPI 2004
 			ins_setup_e();
+            if (psw_extended_amode_bit == psw_extended_amode64_on)   // RPI 2004
+            {                                                        // RPI 2004
+                psw_cc = psw_cc3;  // amode 64                       // RPI 2004
+            }                                                        // RPI 2004
+            else if (psw_amode_bit == psw_amode31_bit)               // RPI 2004
+            {                                                        // RPI 2004
+                psw_cc = psw_cc1;  // amode 31                       // RPI 2004
+            }                                                        // RPI 2004
+            else if (psw_amode_bit == psw_amode24_bit)               // RPI 2004
+            {                                                        // RPI 2004
+                psw_cc = psw_cc0;  // amode 24                       // RPI 2004
+            }                                                        // RPI 2004
+            else // invalid amode setting; PoO says causes an early  // RPI 2004
+                 // PSW specification exception to be recognized     // RPI 2004
+            {                                                        // RPI 2004
+                psw_check = true;  // S0C1                           // RPI 2004
+            }                                                        // RPI 2004
 			break;
 		case 0x0C: // 50 "010C" "SAM24" "E"
 			psw_check = false;
@@ -8902,10 +8997,42 @@ public class pz390 {
 			}
 			break;
 		case 0x9A: // 6550 "EB9A" "LAMY" "RSY"
+            psw_check = false;                                       // RPI 2003
 			ins_setup_rsy();
+            rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
+            rf3 >>= 1;                                               // RPI 2003
+            if (rf1 > rf3) {                                         // RPI 2003
+                while (rf1 < ar_reg_len) {                           // RPI 2003
+                    ar_reg.putInt(rf1, mem.getInt(bd2_loc));         // RPI 2003
+                    bd2_loc = bd2_loc + 4;                           // RPI 2003
+                    rf1 = rf1 + 4;                                   // RPI 2003
+                }                                                    // RPI 2003
+                rf1 = 0;                                             // RPI 2003
+            }                                                        // RPI 2003
+            while (rf1 <= rf3) {                                     // RPI 2003
+                ar_reg.putInt(rf1, mem.getInt(bd2_loc));             // RPI 2003
+                bd2_loc = bd2_loc + 4;                               // RPI 2003
+                rf1 = rf1 + 4;                                       // RPI 2003
+            }                                                        // RPI 2003
 			break;
 		case 0x9B: // 6560 "EB9B" "STAMY" "RSY"
+            psw_check = false;                                       // RPI 2003
 			ins_setup_rsy();
+            rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
+            rf3 >>= 1;                                               // RPI 2003
+            if (rf1 > rf3) {                                         // RPI 2003
+                while (rf1 < ar_reg_len) {                           // RPI 2003
+                    mem.putInt(bd2_loc, ar_reg.getInt(rf1));         // RPI 2003
+                    bd2_loc = bd2_loc + 4;                           // RPI 2003
+                    rf1 = rf1 + 4;                                   // RPI 2003
+                }                                                    // RPI 2003
+                rf1 = 0;                                             // RPI 2003
+            }                                                        // RPI 2003
+            while (rf1 <= rf3) {                                     // RPI 2003
+                mem.putInt(bd2_loc, ar_reg.getInt(rf1));             // RPI 2003
+                bd2_loc = bd2_loc + 4;                               // RPI 2003
+                rf1 = rf1 + 4;                                       // RPI 2003
+            }                                                        // RPI 2003
 			break;
 		case 0xC0: // 6570 "EBC0" "TP" "RSL"
 			psw_check = false;
@@ -9300,7 +9427,7 @@ public class pz390 {
 	     case 0x7D:  // 360 "EC7D" "CLGIJ" "RIE4"
 	         psw_check = false;
 	    	 ins_setup_rie4();
-			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), if2&0x000000ff)) // RPI 1530
+			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), if2&0x000000ff)) // RPI 1540
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
@@ -9316,7 +9443,7 @@ public class pz390 {
 	     case 0x7F:  // 500 "EC7F" "CLIJ" "RIE4"
 	         psw_check = false;
 	    	 ins_setup_rie4();
-			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), if2&0x000000ff)) // RPI 1530
+			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), if2&0x000000ff)) // RPI 1540
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
@@ -9400,7 +9527,7 @@ public class pz390 {
 	     case 0xFD:  // 920 "ECFD" "CLGIB" "RRS3"
 	         psw_check = false;
 	    	 ins_setup_rrs3();
-			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), if2&0x000000ff)) // RPI 1530
+			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), if2&0x000000ff)) // RPI 1540
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
@@ -9416,7 +9543,7 @@ public class pz390 {
 	     case 0xFF:  // 1060 "ECFF" "CLIB" "RRS3"
 	         psw_check = false;
 	    	 ins_setup_rrs3();
-			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), if2&0x000000ff)) // RPI 1530
+			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), if2&0x000000ff)) // RPI 1540
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
@@ -17250,6 +17377,14 @@ public class pz390 {
 			+ tz390.get_hex(reg.getInt(rf3 + 12), 8)
 			+ " PAD=" + tz390.get_hex(bd2_loc, 2);
 			break;
+        case 105:// "RS" 9a, 9b  oorrbddd  LAM and STAM                   // RPI 2003
+            trace_parms = " AR" + tz390.get_hex(mf1, 1) + "="             // RPI 2003
+                    + tz390.get_hex(ar_reg.getInt(rf1 >> 1), 8) + " AR"   // RPI 2003
+                    + tz390.get_hex(mf3, 1) + "="                         // RPI 2003
+                    + tz390.get_hex(ar_reg.getInt(rf3 >> 1), 8) + " S2("  // RPI 2003
+                    + tz390.get_hex(bd2_loc, 8) + ")="                    // RPI 2003
+                    + bytes_to_hex(mem, bd2_loc, 4, 0);                   // RPI 2003
+            break;                                                        // RPI 2003
 		case 110:// "SI" 9 CLI ooiibddd
 			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, 1, 0) + " I2="
@@ -17547,6 +17682,14 @@ break;
 					+ tz390.get_hex(bd2_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd2_loc, 4, 0);
 			break;
+        case 199:// eb9a, eb9b  oorrbdddhhpp  LAMY and STAMY              // RPI 2003
+            trace_parms = " AR" + tz390.get_hex(mf1, 1) + "="             // RPI 2003
+                    + tz390.get_hex(ar_reg.getInt(rf1 >> 1), 8) + " AR"   // RPI 2003
+                    + tz390.get_hex(mf3, 1) + "="                         // RPI 2003
+                    + tz390.get_hex(ar_reg.getInt(rf3 >> 1), 8) + " S2("  // RPI 2003
+                    + tz390.get_hex(bd2_loc, 8) + ")="                    // RPI 2003
+                    + bytes_to_hex(mem, bd2_loc, 4, 0);                   // RPI 2003
+            break;                                                        // RPI 2003
 		case 200:// "RSY" 31 CSY  oorrbdddhhoo
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 					+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " R"

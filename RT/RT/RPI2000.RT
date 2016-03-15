@@ -1,0 +1,51 @@
+*
+* skip intro
+*
+* Use the A command to do this rather
+* than the usual t18
+* 
+* This tests that the code added for the
+* new AR command is compatible with the
+* existing code that interprets the A command
+*
+* ########################################
+v *+90 4 = x'9809C0C8'
+a *+90
+t
+* ########################################
+* ### Initial access registers
+ar
+* ########################################
+* ### Setting all access registers
+t20
+* ########################################
+* ### Access registers after being set
+ar
+* ########################################
+* ### Display individual access registers
+ar 0
+ar 1
+ar 2
+ar 3
+ar 4
+ar 5
+ar 6
+ar 7
+ar 8
+ar 9
+ar 10
+ar 11
+ar 12
+ar 13
+ar 14
+ar 15
+* ########################################
+* ### Invalid command; displays all
+ar 17
+* ########################################
+* ### Display help; note new AR help line
+h
+* ########################################
+* done
+* ########################################
+z

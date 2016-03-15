@@ -1,4 +1,4 @@
-RPI1530  TITLE 'Reference program to test CLIJ / CLGIJ'
+RPI1540  TITLE 'Reference program to test CLIJ / CLGIJ'
 ***********************************************************************
 * Start create : 11-02-2016
 * 1st delivery :
@@ -30,19 +30,19 @@ WORKAREA_LEN EQU *-WORKAREA
 * Program entry and linkage
 *
 ***********************************************************************
-RPI1530  RSECT ,                       *
-RPI1530  AMODE 24
-RPI1530  RMODE 24
+RPI1540  RSECT ,                       *
+RPI1540  AMODE 24
+RPI1540  RMODE 24
 ***********************************************************************
-         USING RPI1530,R15             * Establish addressability
+         USING RPI1540,R15             * Establish addressability
          B     TESTOPC2                * Skip header data
-         DC    AL1(TESTOPC2-*),C'RPI1530  &SYSDATE &SYSTIME'
+         DC    AL1(TESTOPC2-*),C'RPI1540  &SYSDATE &SYSTIME'
 TESTOPC2 EQU   *
          STM   R14,R12,12(R13)         * Save GPRs
          LR    R12,R15                 * Copy base address
          LR    R2,R1                   * Copy ptr to parm string
          DROP  R15                     * No longer needed
-         USING RPI1530,R12             * Re-establish addressability
+         USING RPI1540,R12             * Re-establish addressability
          LA    R11,WORKAREA_LEN        * Size of req'd workarea
          GETMAIN R,LV=(R11),LOC=BELOW  * Acquire working storage
          ST    R1,8(,R13)              * Set ptr to new savearea
@@ -58,7 +58,7 @@ TESTOPC2 EQU   *
 * Set up working storage areas
 *
 ***********************************************************************
-         MVC   WAEYE,=CL8'RPI1530 '    * Init Eye-catcher
+         MVC   WAEYE,=CL8'RPI1540 '    * Init Eye-catcher
 
 ***********************************************************************
 *
@@ -346,7 +346,7 @@ CLGIJ_1   CLGIJH R4,-64,CLGIJ_ERR       * EC42FFFFC07D should not jump
           DC     X'0000'
 * Compare negative with negative
 CLGIJ_2   LGHI   R5,-8
-* RPI 1530: arith: -8 < -4 But logically: X'FFFFFFF8' > X'000000FC' 
+* RPI 1540: arith: -8 < -4 But logically: X'FFFFFFF8' > X'000000FC' 
           CLGIJL R5,-4,CLGIJ_ERR        * EC54FFF6FC7D should not jump
 ****      CLGIJH R5,-4,CLGIJ_ERR        * Fixed: CLGIJL _does_ jump
           CLGIJL R5,-16,CLGIJ_ERR       * EC54FFF3F07D should not jump
@@ -432,7 +432,7 @@ CLIJ_1   CLIJH R4,-64,CLIJ_ERR          * EC42FFFFC07F should not jump
          DC    X'0000'
 * Compare negative with negative
 CLIJ_2   LGHI  R5,-8
-* RPI 1530: arith: -8 < -4 But logically: X'FFFFFFF8' > X'000000FC' 
+* RPI 1540: arith: -8 < -4 But logically: X'FFFFFFF8' > X'000000FC' 
          CLIJL R5,-4,CLIJ_ERR           * EC52FFF6FC7F should not jump
 ****     CLIJH R5,-4,CLIJ_ERR           * Fixed: CLIJL _does_ jump
          CLIJL R5,-16,CLIJ_ERR          * EC54FFF3F07F should not jump
@@ -738,7 +738,7 @@ CLGIB_1   CLGIBH R4,-64,CLGIB_ERR       * EC42C018C0FD should not jump
           DC     X'0000'
 * Compare negative with negative
 CLGIB_2   LGHI   R5,-8
-* RPI 1530: arith: -8 < -4 But logically: X'FFFFFFF8' > X'000000FC' 
+* RPI 1540: arith: -8 < -4 But logically: X'FFFFFFF8' > X'000000FC' 
           CLGIBL R5,-4,CLGIB_ERR        * EC54C018FCFD should not jump
 ****      CLGIBH R5,-4,CLGIB_ERR        * Fixed: CLGIBL does branch
           CLGIBL R5,-16,CLGIB_ERR       * EC54C018F0FD should not jump
@@ -824,7 +824,7 @@ CLIB_1   CLIBH R4,-64,CLIB_ERR          * EC42C01AC0FF should not jump
          DC    X'0000'
 * Compare negative with negative
 CLIB_2   LGHI  R5,-8
-* RPI 1530: arith: -8 < -4 But logically: X'FFFFFFF8' > X'000000FC' 
+* RPI 1540: arith: -8 < -4 But logically: X'FFFFFFF8' > X'000000FC' 
          CLIBL R5,-4,CLIB_ERR           * EC54C01AFCFF should not jump
 ****     CLIBH R5,-4,CLIB_ERR           * Fixed: CLGIBL does branch
          CLIBL R5,-16,CLIB_ERR          * EC54C01AF0FF should not jump

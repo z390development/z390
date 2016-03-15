@@ -201,6 +201,12 @@ public  class  sz390 implements Runnable {
     * 01/28/15 RPI 1507 Implement PSW and PSW+ commands in trace mode
     * 02/17/15 RPI 1514 trace command PSW+ should display PSW key and Problem/Supervisor mode
     * 08/17/15 RPI 1526 Add support to test mode for V (Verify) command
+    * 02/14/16 RPI 2000 Add test-mode command AR to display one or all access registers
+    * 02/26/16 RPI 1544 Change test mode command PSW to display PSW with key 8, rather than 0
+    * 02/26/16 RPI 2005 Allow test-mode commands PSW and PSW+ to have leading and trailing spaces
+    * 02/29/16 RPI 2006 Test-mode L command in 24-bit mode: errors listing above the line storage
+    * 02/27/16 RPI 2007 Test-mode command "1r=x'8000000000000000'" fails (java bug); R1=-1 anyway
+    * 02/14/16 RPI 2008 Add test-mode command PSW16 to display 16 byte PSW
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -2695,7 +2701,7 @@ private String dump_psw(){ // RPI 819
 	 *   1. bits 0-7 x'07' translation, 
 	 *      I/O interrupts, and external
 	 *      interrupts enabled.
-	 *   2. Bits 8-15 x'05' key zero, machine
+	 *   2. Bits 8-15 x'85' key eight, machine                        // RPI 1544
 	 *      checks enabled, and problem state
 	 *      enabled.
 	 *   3. Bits 16-23 AS(2),CC(2),MASK(4)
@@ -2710,7 +2716,7 @@ private String dump_psw(){ // RPI 819
      * return 32 character hex PSW in format as definde by z-POP:     // RPI 1506
      *   1. bits 0-7 x'07' PER disabled, DAT enabled                  // RPI 1506
      *      I/O and external interrupts enabled                       // RPI 1506
-     *   2. Bits 8-15 x'05' key zero, machine check enabled           // RPI 1506
+     *   2. Bits 8-15 x'85' key eight, machine check enabled          // RPI 1506 RPI 1544
      *      No Wait state, Problem state                              // RPI 1506
      *   3. Bits 16-23 AS(2),CC(2),MASK(4)                            // RPI 1506
      *      AS   - Address Space control: zero                        // RPI 1506
@@ -2726,7 +2732,7 @@ private String dump_psw(){ // RPI 819
 	int   amode_and_addr;
     int   psw1;                                                       // RPI 1506
     String formatted_psw;                                             // RPI 1506
-    psw1 = 0x07050000   // bits  0-15
+    psw1 = 0x07850000   // bits  0-15                                 // RPI 1544
            | cc   << 12 // bits 18-19
            | mask <<  8; // bits 20-23
     if(pz390.psw_extended_amode_bit == pz390.psw_extended_amode64_on) // RPI 1506
@@ -2747,6 +2753,46 @@ private String dump_psw(){ // RPI 819
       }                                                               // RPI 1506
     return formatted_psw;                                             // RPI 1506
 }
+private String dump_psw16(){                                          // RPI 2008
+    /*                                                                // RPI 2008
+     * return 32 character PSW in format as defined by z-PoP:         // RPI 2008
+     *   1. bits 0-7 x'07' PER disabled, DAT enabled                  // RPI 2008
+     *      I/O and external interrupts enabled                       // RPI 2008
+     *   2. Bits 8-15 x'85' key eight, machine check enabled,         // RPI 2008
+     *      not wait state, problem state                             // RPI 2008
+     *   3. Bits 16-23 AS(2),CC(2),MASK(4)                            // RPI 2008
+     *      AS   - Address Space control: zero                        // RPI 2008
+     *      CC   - condition code 0=CC8, 1=CC4, 2=CC2, 3=CC1          // RPI 2008
+     *      MASK - fixed, decimal, HFP exp, HFP significance          // RPI 2008
+     *   4. Bits 24-31 x'01' Amode64 enabled                          // RPI 2008
+     *   5. Bits 32-63 x'80000000' Amode 64 requires amode31 on       // RPI 2008
+     *   6. Bits 64-95 x'00000000' High word of PSW address always 0  // RPI 2008
+     *   7. Bits 96-127: next sequential instruction address          // RPI 2008
+     */                                                               // RPI 2008
+    int   cc = pz390.psw_cc_code[pz390.psw_cc];                       // RPI 2008
+    int   mask = pz390.psw_pgm_mask;                                  // RPI 2008
+    int   psw1, psw2, psw3, psw4;                                     // RPI 2008
+    String formatted_psw;                                             // RPI 2008
+    psw1= 0x07850000    // bits  0-15                                 // RPI 2008
+          | cc << 12    // bits 18-19                                 // RPI 2008
+          | mask << 8;  // bits 20-23                                 // RPI 2008
+    psw2 = psw3 = 0;                                                  // RPI 2008
+    psw4 = pz390.psw_loc;                                             // RPI 2008
+    if(pz390.psw_extended_amode_bit == pz390.psw_extended_amode64_on) // RPI 2008
+    {                                                                 // RPI 2008
+        psw1 |= 1;        // amode64 on                               // RPI 2008
+        psw2 |= 1 << 31;  // amode31 also on                          // RPI 2008
+    }                                                                 // RPI 2008
+    else if (pz390.psw_amode == pz390.psw_amode31)                    // RPI 2008
+    {                                                                 // RPI 2008
+        psw2 |= 1 << 31;  // amode31 on                               // RPI 2008
+    }                                                                 // RPI 2008
+    formatted_psw = tz390.get_hex(psw1,8) + " "                       // RPI 2008
+                  + tz390.get_hex(psw2,8) + " "                       // RPI 2008
+                  + tz390.get_hex(psw3,8) + " "                       // RPI 2008
+                  + tz390.get_hex(psw4,8);                            // RPI 2008
+    return formatted_psw;                                             // RPI 2008
+}                                                                     // RPI 2008
 private void dump_req(boolean req_dump){
 	/*
 	 * dump regs and optionals dump everything
@@ -2777,6 +2823,24 @@ public void dump_gpr(int reg_offset){
 		tz390.put_trace("R" + reg_num + "=" + pz390.get_long_hex(pz390.reg.getLong(reg_offset)));
 	}
 }
+public void dump_ar(int ar_reg_num)                                          // RPI 2000
+{                                                                            // RPI 2000
+    /*                                                                       // RPI 2000
+     * dump specified access register or all if -1                           // RPI 2000
+     */                                                                      // RPI 2000
+    if (ar_reg_num < 0 || ar_reg_num > 15)                                   // RPI 2000
+    {                                                                        // RPI 2000
+        put_dump("  AR0-AR3   " + pz390.bytes_to_hex(pz390.ar_reg,0,16,4));  // RPI 2000
+        put_dump("  AR4-AR7   " + pz390.bytes_to_hex(pz390.ar_reg,16,16,4)); // RPI 2000
+        put_dump("  AR8-AR11  " + pz390.bytes_to_hex(pz390.ar_reg,32,16,4)); // RPI 2000
+        put_dump(" AR12-AR15  " + pz390.bytes_to_hex(pz390.ar_reg,48,16,4)); // RPI 2000
+    }                                                                        // RPI 2000
+    else                                                                     // RPI 2000
+    {                                                                        // RPI 2000
+        tz390.put_trace("AR" + ar_reg_num + "="                              // RPI 2000
+                + tz390.get_hex(pz390.ar_reg.getInt(ar_reg_num * 4),8));     // RPI 2000
+    }                                                                        // RPI 2000
+}                                                                            // RPI 2000
 public void dump_fpr(int reg_offset){
 	/*
 	 * dump specified fp register or all if -1
@@ -2820,7 +2884,7 @@ public void dump_mem(ByteBuffer memory,int mem_addr,int mem_len){
 		dump_text = tz390.get_ascii_printable_string(memory.array(),mem_addr,dump_len); // RPI 947
 		
 		dump_text = tz390.left_justify(dump_text,16); // RPI 411
-	    dump_hex = pz390.bytes_to_hex(memory,mem_addr,dump_len,4); 
+        dump_hex = bytes_to_hex(memory.array(),mem_addr,dump_len,4); // RPI 2006
 		if (!last_saved){
 			last_saved = true;
 			last_addr  = mem_addr;
@@ -2855,6 +2919,39 @@ public void dump_mem(ByteBuffer memory,int mem_addr,int mem_len){
 		put_dump(" " +tz390.get_hex(mem_addr-16,8) + " *"  + dump_hex + "* *" + dump_text + "*"); // RPI 1054 
 	}
 }
+private String bytes_to_hex(byte[] bytes, int byte_start, int byte_length, int chunk){  // RPI 2006
+	/*                                                                                  // RPI 2006
+	 * Format bytes into hex string                                                     // RPI 2006
+	 * If chunk > 0 insert space after each chunk                                       // RPI 2006
+	 */                                                                                 // RPI 2006
+	if (byte_start < 0 || byte_start >= bytes.length) {                                 // RPI 2006
+		return "";                                                                      // RPI 2006
+	}                                                                                   // RPI 2006
+	StringBuffer hex = new StringBuffer(72);                                            // RPI 2006
+	int index1 = 0;                                                                     // RPI 2006
+	int hex_bytes = 0;                                                                  // RPI 2006
+	if (byte_start + byte_length > bytes.length) {                                      // RPI 2006
+		byte_length = bytes.length - byte_start;                                        // RPI 2006
+	}                                                                                   // RPI 2006
+	while (index1 < byte_length){                                                       // RPI 2006
+		int work_int = bytes[byte_start + index1] & 0xff;                               // RPI 2006
+		String temp_string = Integer.toHexString(work_int);                             // RPI 2006
+		if  (temp_string.length() == 1){                                                // RPI 2006
+			hex.append("0" + temp_string);                                              // RPI 2006
+		} else {                                                                        // RPI 2006
+			hex.append(temp_string);                                                    // RPI 2006
+		}                                                                               // RPI 2006
+		if (chunk > 0){                                                                 // RPI 2006
+			hex_bytes++;                                                                // RPI 2006
+			if (hex_bytes >= chunk){                                                    // RPI 2006
+				hex.append(" ");                                                        // RPI 2006
+				hex_bytes = 0;                                                          // RPI 2006
+			}                                                                           // RPI 2006
+		}                                                                               // RPI 2006
+		index1++;                                                                       // RPI 2006
+	}                                                                                   // RPI 2006
+	return hex.toString().toUpperCase();                                                // RPI 2006
+}                                                                                       // RPI 2006
 private void put_dump(String text){
 	/*
 	 * route dump lines to LOG file
@@ -5617,6 +5714,11 @@ private void exec_test_cmd(){
 		break;
 	default:
 		test_addr = 0;
+        if ((test_token.length() > 1)                                       // RPI 2000
+            && (test_token.toUpperCase().startsWith("AR")))                 // RPI 2000
+        {                                                                   // RPI 2000
+            break;  // no preprocessing for AR request                      // RPI 2000
+        }                                                                   // RPI 2000
 		if (test_token.length() > 1
 			|| (test_token.charAt(0) >= '0'
 				&& test_token.charAt(0) <= '9')
@@ -5650,14 +5752,25 @@ private void exec_test_cmd(){
 			} else {  // nR=sdt gpr register change
 		    	test_reg_loc = test_addr * 8;
 				test_reg_sdt = get_test_reg_sdt(test_sdt);
-				pz390.reg.putLong(test_reg_loc,test_reg_sdt);
-				dump_gpr(test_reg_loc);
+                if (!test_cmd_abort){                              // RPI 2007
+				    pz390.reg.putLong(test_reg_loc,test_reg_sdt);
+				    dump_gpr(test_reg_loc);
+                }                                                  // RPI 2007
 			}
 		}
 		break;
-	case 'A':  // set address stop
-		test_token = get_next_test_token();
-		set_test_break_addr(get_next_test_addr());
+    case 'A':  // set address stop or dump access registers                     // RPI 2000
+        if (test_token.toUpperCase().startsWith("AR")) {  // dump access regs   // RPI 2000
+            test_token = get_next_test_token();                                 // RPI 2000
+            if (test_token == null) {                                           // RPI 2000
+                dump_ar(-1);                                                    // RPI 2000
+            } else {                                                            // RPI 2000
+                dump_ar(get_test_int(test_token));                              // RPI 2000
+            }                                                                   // RPI 2000
+        } else {    //set address stop                                          // RPI 2000
+		    test_token = get_next_test_token();
+		    set_test_break_addr(get_next_test_addr());
+		}                                                                       // RPI 2000
 		break;
 	case 'B':  // set base for rel addr of memory
 		test_token = get_next_test_token();
@@ -5705,6 +5818,7 @@ private void exec_test_cmd(){
 	    tz390.put_trace("  addr=sdt    set memory value  (ie 1r?=x'80' changes mem at (r1) 31 bit");
 	    tz390.put_trace("  reg=sdt     set register value (ie 15r=8 changes reg 15 to 8)");
 	    tz390.put_trace("  A addr      add/remove address stop (ie A FF348. or A *+4 etc.)");  // RPI 395
+		tz390.put_trace("  AR nn       display specified access register else all AR0-AR15");  // RPI 2000
 	    tz390.put_trace("  B=addr      set base for rel addr (ie B=15r% sets base to (r15) 24 bit");
 	    tz390.put_trace("  D           display DCB file status, DDNAME, and DSNAME information");
 	    tz390.put_trace("  E           toggle EBCDIC/ASCII mode for dumping storage etc.");
@@ -5717,6 +5831,7 @@ private void exec_test_cmd(){
 	    tz390.put_trace("  P           display program information from CDE");
 	    tz390.put_trace("  PSW         display current PSW");
 	    tz390.put_trace("  PSW+        display current PSW in verbose mode");
+        tz390.put_trace("  PSW16       display 16 byte current PSW");                          // RPI 2008
 	    tz390.put_trace("  R nn        display specified general purpose register else all R0-RF");
 	    tz390.put_trace("  S           clear all breaks");
 	    tz390.put_trace("  S reg??sdt  set break on register change");
@@ -5805,7 +5920,7 @@ private void exec_test_cmd(){
 		dump_mem_stat();
 		break;
 	case 'P': // show CDE program info or PSW                                                 // RPI 1507
-        switch (test_cmd.toUpperCase())                                                       // RPI 1507
+        switch (test_cmd.trim().toUpperCase())                                                // RPI 1507 RPI 2005
            {case "PSW":                                                                       // RPI 1507
                 tz390.put_trace(" PSW  "+dump_psw());                                         // RPI 1507
                 break;                                                                        // RPI 1507
@@ -5836,6 +5951,9 @@ private void exec_test_cmd(){
                    +((pz390.psw_pgm_mask & pz390.psw_pgm_mask_sig) != 0 ? "On " : "Off");     // RPI 1507
                 tz390.put_trace("                         "+mask_descr);                      // RPI 1507
                 break;                                                                        // RPI 1507
+            case "PSW16":                                                                     // RPI 2008
+                tz390.put_trace(" PSW16  "+dump_psw16());                                     // RPI 2008
+                break;                                                                        // RPI 2008
             default:                                                                          // RPI 1507
                 dump_cde();
             }                                                                                 // RPI 1507
@@ -6351,7 +6469,12 @@ private void set_test_break_reg(){
     test_break_reg_compare = test_compare;
     test_sdt = get_next_test_token();
 	test_break_reg_sdt = get_test_reg_sdt(test_sdt);
-	dump_gpr(test_break_reg_loc);
+    if (!test_cmd_abort){                              // RPI 2007
+        test_break_reg_mode = true;                    // RPI 2007
+	    dump_gpr(test_break_reg_loc);
+    } else {  // command aborted; turn off reg mode    // RPI 2007
+        test_break_reg_mode = false;                   // RPI 2007
+    }                                                  // RPI 2007
 }
 private void set_test_break_mem(){
 	/*
@@ -6574,7 +6697,19 @@ private long get_test_reg_sdt(String text){
 		case 'H':
 			return Long.valueOf(data);
 		case 'X':
-			return Long.valueOf(data,16);
+            // Next line from original source commented due       // RPI 2007
+            // to error in java when data = "x'16 hex digits'"    // RPI 2007
+            // with leftmost digit x'8' - x'F'.                   // RPI 2007
+//          return Long.valueOf(data,16);                         // RPI 2007
+            // Supposedly fixed in java 8.                        // RPI 2007
+            // Leave line here in case want to eventually use.    // RPI 2007
+            // Next 6 lines are a workaround for the problem.     // RPI 2007
+            long value_hex = get_long_from_hex_string(data);      // RPI 2007
+            if (test_cmd_abort)                                   // RPI 2007
+            {                                                     // RPI 2007
+                tz390.put_trace("test invalid reg sdt - "+text);  // RPI 2007
+            }                                                     // RPI 2007
+            return value_hex;                                     // RPI 2007
 		default:
 			tz390.put_trace("test invalid reg sdt - " + text);
 			test_cmd_abort = true;
@@ -6586,6 +6721,48 @@ private long get_test_reg_sdt(String text){
     }
 	return -1;
 }
+private long get_long_from_hex_string(String data)                               // RPI 2007
+{                                                                                // RPI 2007
+	/*                                                                           // RPI 2007
+	 * Convert string of hexadecimal digits to long                              // RPI 2007
+	 *                                                                           // RPI 2007
+	 *  Returns: The converted number if successful;                             // RPI 2007
+	 *           -1 if an error occurs; also sets global test_cmd_abort to true  // RPI 2007
+	 *                                                                           // RPI 2007
+	 *  Note: Code is a workaround to a bug in Long.valueOf(string,16)           // RPI 2007
+	 *        when string is 16 digits that begins with x'8' - x'F'              // RPI 2007
+	 *                                                                           // RPI 2007
+	 *        Supposedly fixed in java 8                                         // RPI 2007
+	 */                                                                          // RPI 2007
+	int i;                                                                       // RPI 2007
+	long j;                                                                      // RPI 2007
+	String s = data;                                                             // RPI 2007
+                                                                                 // RPI 2007
+	// remove leading zeros; leave as-is if all zeros                            // RPI 2007
+	for (i = 0; i < s.length() && s.charAt(i) == '0'; i++); // null loop         // RPI 2007 
+	if (i > 0 && i < s.length())                                                 // RPI 2007
+	{                                                                            // RPI 2007
+		s = s.substring(i);                                                      // RPI 2007
+	}                                                                            // RPI 2007
+	try                                                                          // RPI 2007
+	{                                                                            // RPI 2007
+		if (s.length() == 16 && !(s.charAt(0) >= '0' && s.charAt(0) <= '7'))     // RPI 2007
+		{                                                                        // RPI 2007
+			j = (Long.valueOf(s.substring(0,8),16) << 32)                        // RPI 2007
+                | Long.valueOf(s.substring(8,16),16);                            // RPI 2007
+		}                                                                        // RPI 2007
+		else                                                                     // RPI 2007
+		{                                                                        // RPI 2007
+			j = Long.valueOf(s,16);                                              // RPI 2007
+		}                                                                        // RPI 2007
+	}                                                                            // RPI 2007
+	catch (Exception e)                                                          // RPI 2007
+	{                                                                            // RPI 2007
+		test_cmd_abort = true;    // set global variable                         // RPI 2007
+		j = -1L;                                                                 // RPI 2007
+	}                                                                            // RPI 2007
+	return j;                                                                    // RPI 2007
+}                                                                                // RPI 2007
 private byte[] get_test_mem_sdt(String text){
 	/*
 	 * return memory sdt byte array

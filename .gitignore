@@ -20,6 +20,7 @@
 # **/*.opt --> Assembler options file
 # **/*.patch-> patch script
 # **/*.pl  --> perl script
+# **/*.rt  --> regression test scripts
 # **/*.rtf --> rtf documents
 # **/*.tf[1-3] --> test data files
 # **/*.tq[1-3] --> test data files

@@ -1,0 +1,50 @@
+*
+* skip intro
+*
+t18
+* ########################################
+* next sets CC to 3
+  v * 4       = x'9108c05b'
+t1
+* next is SAM24
+  v * 2       = x'010c'
+*
+* switch to amode 24, 31, and 64
+* note key 8, CC 3 in all psw displays
+*
+t1
+* ########################################
+* ### after SAM24: key 8, CC 3, amode 24
+psw
+psw+
+  v psw.key   = x'8'
+  v psw.cc    = x'3'
+  v psw.amode = x'0'
+* ########################################
+*
+* switch to amode 31
+*
+t1
+* ########################################
+* ### after SAM31: key 8, CC 3, amode 31
+psw
+psw+
+  v psw.key   = x'8'
+  v psw.cc    = x'3'
+  v psw.amode = x'1'
+* ########################################
+*
+* switch to amode 64
+*
+t1
+* ########################################
+* ### after SAM64: key 8, CC 3, amode 64
+psw
+psw+
+  v psw.key   = x'8'
+  v psw.cc    = x'3'
+  v psw.amode = x'3'
+* ########################################
+* done
+* ########################################
+z

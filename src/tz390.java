@@ -286,7 +286,8 @@ public  class  tz390 {
     * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
     * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
     * 09/05/15 RPI 1529  Incorrect character x'92' in ascii character translation tables (backquote, should be quote = x'27')
-    * 10/03/15 RPI 1533  Invalid codepage option is not flagged as an error. Should cause abortion.
+    * 10/03/15 RPI 1533  Invalid codepage option is not flagged as an error. Should cause abortion
+    * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -295,7 +296,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.6.00b10";  //dsh + afk
+    String version    = "V1.6.00b11";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -1713,8 +1714,8 @@ public  class  tz390 {
          "84=JXH,9,91",          //   1570 "84"    "JXH"      "RSI"   9
          "85=BRXLE,9,91",        //   1580 "85"    "BRXLE"    "RSI"   9
          "85=JXLE,9,91",         //   1590 "85"    "JXLE"     "RSI"   9
-         "9A=LAM,10,100",        //   1800 "9A"    "LAM"      "RS"   10
-         "9B=STAM,10,100",       //   1810 "9B"    "STAM"     "RS"   10
+         "9A=LAM,10,105",        //   1800 "9A"    "LAM"      "RS"   10 // RPI 2003
+         "9B=STAM,10,105",       //   1810 "9B"    "STAM"     "RS"   10 // RPI 2003
          "A70=TMH,73,730",       //   1990 "A70"   "TMH"      "RI"   12 // RPI 1522
          "A70=TMLH,73,730",      //   1980 "A70"   "TMLH"     "RI"   12 // RPI 1522
          "A71=TML,73,730",       //   2010 "A71"   "TML"      "RI"   12 // RPI 1522
@@ -2133,8 +2134,8 @@ public  class  tz390 {
          "EB81=ICMY,20,202",     //   6490 "EB81"  "ICMY"     "RSY"  20
          "EB90=STMY,20,200",     //   6520 "EB90"  "STMY"     "RSY"  20
          "EB98=LMY,20,200",      //   6540 "EB98"  "LMY"      "RSY"  20
-         "EB9A=LAMY,20,200",     //   6550 "EB9A"  "LAMY"     "RSY"  20
-         "EB9B=STAMY,20,200",    //   6560 "EB9B"  "STAMY"    "RSY"  20
+         "EB9A=LAMY,20,199",     //   6550 "EB9A"  "LAMY"     "RSY"  20 // RPI 2003
+         "EB9B=STAMY,20,199",    //   6560 "EB9B"  "STAMY"    "RSY"  20 // RPI 2003
          "ED2E=MAE,25,250",      //   6910 "ED2E"  "MAE"      "RXF"  25
          "ED2F=MSE,25,250",      //   6920 "ED2F"  "MSE"      "RXF"  25
          "ED3E=MAD,25,250",      //   6960 "ED3E"  "MAD"      "RXF"  25
