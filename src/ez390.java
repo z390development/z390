@@ -9,7 +9,7 @@ import java.util.Date;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.Timer;
-;public  class  ez390 implements Runnable {
+public  class  ez390 implements Runnable {
    /*****************************************************
 	
     z390 portable mainframe assembler and emulator.
@@ -174,6 +174,7 @@ import javax.swing.Timer;
     * 01/04/10 RPI 1094 move timeout to tz390 to share with gz390
     * 05/10/11 RPI 1149 move started msg to put_trace
     * 07/30/11 RPI 1175 use tz390.check_java_version()
+    * 04/08/18 RPI 1618 Create zoutput object to separate sequential output file handling from the main body of z390 classes
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -301,6 +302,7 @@ private void run_pgm(int zcvt_pgm_addr){
     }
     if (pz390.psw_check && pz390.psw_pic != pz390.psw_pic_exit){
        	sz390.svc_abend(pz390.psw_pic,sz390.svc_abend_type,sz390.svc_req_dump);
+       	tz390.zoutput.closeAll(); // dak RPI 1618
     }
 }
 private void exec_pz390(){
@@ -515,6 +517,7 @@ public void run() {
 				pz390.exec_pz390();
 			} catch (Exception e){
 				sz390.svc_abend(pz390.psw_pic_addr,sz390.system_abend,tz390.opt_dump); // RPI 536 // RPI 1054			
+				tz390.zoutput.closeAll(); // dak RPI 1618
 			}
 		} else {
 			pz390.exec_pz390();

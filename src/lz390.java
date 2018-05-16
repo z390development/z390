@@ -1,6 +1,6 @@
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+//import java.io.FileWriter; // dak
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Array;
@@ -103,6 +103,7 @@ public  class  lz390 {
     *          1) last .END entry overrides default 0
     *          2) ENTRY command overrides any .END entry 
     * 09/06/15 RPI 1528 Linker sets entry point incorrectly: An ENTRY with offset 0 is overridden by the last END statement's offset
+    * 04/08/18 RPI 1618 Create zoutput object to separate sequential output file handling from the main body of z390 classes
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -403,13 +404,16 @@ private void close_files(){
 	  if  (tz390.opt_list){
 		  if (lst_file != null && lst_file.isFile()){
 		  	  try {
-		  	  	  lst_file_buff.close();
-		  	  } catch (IOException e){
+		  		  tz390.zoutput.close(lst_file_buff); // dak RPI 1618
+		  	  	  //lst_file_buff.close(); // dak RPI 1618
+		  	  //} catch (IOException e){ // dak RPI 1618
+		  	  	} catch (Exception e){ // dak RPI 1618
 		  	  	  abort_error(4,"I/O error on lst close - " + e.toString());
 		  	  }
 		  }
 	  }
 	  tz390.close_trace_file();
+	  tz390.zoutput.closeAll(); // dak RPI 1618
 }
 private void log_error(int error,String msg){
 	/*
@@ -523,10 +527,14 @@ private void open_files(){
        		String lst_file_name = tz390.get_file_name(tz390.dir_lst,tz390.pgm_name,tz390.lst_type); // RPI 866
          	try {
                lst_file = new File(lst_file_name); // RPI 908
-       	       lst_file_buff = new BufferedWriter(new FileWriter(lst_file));
-       	    } catch (IOException e){
-       		   abort_error(9,"I/O error on lst open - " + e.toString());
-       	    }
+       	       //lst_file_buff = new BufferedWriter(new FileWriter(lst_file)); // dak RPI 1618
+               lst_file_buff = tz390.zoutput.open(lst_file.toString(), "lst_file_buff"); // dak RPI 1618
+       	    } //catch (IOException e){ // dak RPI 1618
+       		   //abort_error(9,"I/O error on lst open - " + e.toString()); // dak RPI 1618
+       	    //} // dak RPI 1618
+         	 catch (Exception e){
+         		   abort_error(9,"I/O error on lst open - " + e.toString());
+         	    }
        	}
 }
 private void process_lkd_cmds(){
@@ -636,7 +644,8 @@ private void create_alias_390(String alias,String pgm){
 	try {
 		alias_file_name = tz390.get_file_name(tz390.get_first_dir(tz390.dir_390),alias,tz390.z390_type); // RPI 866
 		alias_file = new File(alias_file_name);
-		alias_file_buff = new BufferedWriter(new FileWriter(alias_file));
+		//alias_file_buff = new BufferedWriter(new FileWriter(alias_file)); // dak RPI 1618
+		alias_file_buff = tz390.zoutput.open(alias_file.toString(), "alias_file_buff"); // dak RPI 1618
 		alias_file_buff.write(pgm.toUpperCase());
 		alias_file_buff.close();
 	} catch (Exception e){
@@ -1206,8 +1215,9 @@ private void gen_load_module(){
 		if (tz390.opt_mod){
 			z390_sfx = tz390.mod_type; // RPI 883
 		}
-        z390_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_390) + tz390.pgm_name + z390_sfx,"rw"); // RPI 883
-        z390_file.setLength(0);
+        //z390_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_390) + tz390.pgm_name + z390_sfx,"rw"); // RPI 883 // dak RPI 1618
+        z390_file = tz390.zoutput.openraf(tz390.get_first_dir(tz390.dir_390) + tz390.pgm_name + z390_sfx, "z390_file", "rw"); // dak RPI 1618
+		z390_file.setLength(0);
         z390_file.seek(0);
         if (!tz390.opt_mod){  // RPI 883
         	tz390.systerm_io = tz390.systerm_io + 6;
@@ -1234,7 +1244,8 @@ private void gen_load_module(){
             }
         	cur_rld++;
         }
-        z390_file.close();
+        //z390_file.close(); // dak RPI 1618
+        tz390.zoutput.close(z390_file); // dak RPI 1618
 	} catch (Exception e){
 	 	abort_error(22,"I/O error on z390 load module file - " + e.toString());
 	}

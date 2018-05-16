@@ -3,7 +3,7 @@ import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
+//import java.io.FileWriter; // dak
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.Timer;
-;@SuppressWarnings("unchecked")
+@SuppressWarnings("unchecked")
 public  class  sz390 implements Runnable {
    /*****************************************************
 	
@@ -208,6 +208,7 @@ public  class  sz390 implements Runnable {
     * 02/27/16 RPI 2007 Test-mode command "1r=x'8000000000000000'" fails (java bug); R1=-1 anyway
     * 02/14/16 RPI 2008 Add test-mode command PSW16 to display 16 byte PSW
     * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one
+    * 04/08/18 RPI 1618 Create zoutput object to separate sequential output file handling from the main body of z390 classes
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -1069,6 +1070,7 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 			}
 			close_files();
 		} catch (Exception e){
+			e.printStackTrace();
 			put_con("EZ390E close files failed");
 		}
 		System.exit(16);
@@ -1245,6 +1247,7 @@ private synchronized void close_files(){  // RPI 661
 	  ast_close_file(pz390.ast_xput_tiot);
 	  tz390.close_trace_file();
 	  tz390.close_systerm(ez390_rc);
+	  tz390.zoutput.closeAll(); // dak RPI 1618
 }
 private void close_cmd(){
 	/*
@@ -1377,7 +1380,8 @@ public void open_files(){
        	if (tz390.opt_list){
          	try {
                log_file = new File(tz390.log_file_name); // RPI 719 RPI 908
-       	       log_file_buff = new BufferedWriter(new FileWriter(log_file));
+       	       //log_file_buff = new BufferedWriter(new FileWriter(log_file)); // dak RPI 1618
+               log_file_buff = tz390.zoutput.open(log_file.toString(), "log_file_buff"); // dak RPI 1618
        	    } catch (Exception e){
        		   abort_error(9,"I/O error on log file open - " + e.toString());
        	    }
@@ -2680,6 +2684,7 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 	}
 	pz390.psw_loc = save_psw_loc; // RPI 1054
     svc_abend_type = system_abend;
+    tz390.zoutput.closeAll(); // dak RPI 1618
 }
 private void list_trace_table(){
 	/*
@@ -3050,8 +3055,9 @@ public void svc_open_dcb(String dsnam_path){
 		switch (cur_dcb_oflgs){
 		case 0x20: // write - dcb_oflgs_w (note NIO does not support write only)
 			try {
-	             tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw");
-	             if (cur_dcb_macrf == dcb_macrf_pm){
+	            tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw"); // dak RPI 1618
+	            //tiot_file[cur_tiot_index] = tz390.zoutput.openraf(cur_dcb_file_name, "tiot_file", "rw"); // dak RPI 1618 
+				if (cur_dcb_macrf == dcb_macrf_pm){
 	            	 tiot_file[cur_tiot_index].setLength(0);
 	             }
 	             tiot_eof_rba[cur_tiot_index] = tiot_file[cur_tiot_index].length();
@@ -3079,8 +3085,9 @@ public void svc_open_dcb(String dsnam_path){
 		    break;
 		case 0x60: // update - dcb_oflgs_rw
 			try {
-	             tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw");
-	             tiot_eof_rba[cur_tiot_index] = tiot_file[cur_tiot_index].length();
+	            tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw"); // dak RPI 1618
+				//tiot_file[cur_tiot_index] = tz390.zoutput.openraf(cur_dcb_file_name, "tiot_file", "rw"); // dak RPI 1618 
+				tiot_eof_rba[cur_tiot_index] = tiot_file[cur_tiot_index].length();
 			} catch (Exception e){
 				dcb_synad_error(23,"i/o error on open - " + e.toString());
 				return;
@@ -3193,7 +3200,8 @@ public void svc_close_dcb(){
             	tz390.systerm_io++;
             	tiot_file[cur_tiot_index].writeInt((tiot_vrec_blksi[cur_tiot_index]+4) << 16);
             }
-            tiot_file[cur_tiot_index].close();
+            tiot_file[cur_tiot_index].close(); // dak RPI 1618
+            //tz390.zoutput.close(tiot_file[cur_tiot_index]); // dak RPI 1618
             pz390.mem_byte[cur_dcb_addr+dcb_oflgs] = (byte)(pz390.mem_byte[cur_dcb_addr+dcb_oflgs] & (0xff ^ dcb_oflgs_open)); // RPI110
             pz390.mem.putInt(cur_dcb_addr + dcb_iobad,0); //RPI110
             tiot_dcb_open[cur_tiot_index] = false;  //RPI110
@@ -7558,7 +7566,8 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
  			    }
  		    } else {
  		    	try {
- 		    		tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw");
+ 		    		tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw"); // dak RPI 1618
+ 		    		//tiot_file[cur_tiot_index] = tz390.zoutput.openraf(cur_dcb_file_name, "tiot_file", "rw"); // dak RPI 1618
  		    		tiot_file[cur_tiot_index].setLength(0);
  				} catch (Exception e){
  				    dcb_synad_error(23,"i/o error on open - " + e.toString());

@@ -27,7 +27,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FilePermission;
 import java.io.FileReader;
-import java.io.FileWriter;
+//import java.io.FileWriter; // dak
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
@@ -139,7 +139,8 @@ public  class  z390 extends JApplet
      * 07/26/11 RPI 1173 correct LSN path logic to avoid double "" 
      * 07/26/11 RPI 1174 Add "Apple Inc." as valid java vendor with
      *          default to Linux type filenames (see tz390 os_type 
-     * 07/30/11 RPI 1175 use shared tz390.check_java_version()              
+     * 07/30/11 RPI 1175 use shared tz390.check_java_version()   
+     * 04/08/18 RPI 1618 Create zoutput object to separate sequential output file handling from the main body of z390 classes           
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -555,6 +556,7 @@ public  class  z390 extends JApplet
   					}  					
   					if  (args[index1].toUpperCase().equals("/SC")){
   						index1++;
+  					
   						if (index1 < args.length){
   	  						parm_ok = true;
   							startup_cmd_file = args[index1];
@@ -587,8 +589,9 @@ public  class  z390 extends JApplet
   			  	    close_log_file();
   			  	    try {
   			  	    	log_file_name = cmd_parm1;
-  			            log_file = new BufferedWriter(new FileWriter(log_file_name));
-  			            put_copyright();
+  			            //log_file = new BufferedWriter(new FileWriter(log_file_name)); // dak RPI 1618
+  			  	    	log_file = tz390.zoutput.open(log_file_name, "log_file"); // dak RPI 1618
+  			  	    	put_copyright();
   			 	   	    put_log("Log file = " + log_file_name);
   			        } catch (Exception e){
   			      	    abort_error(1,"log file open - " + e.toString());
@@ -621,7 +624,7 @@ public  class  z390 extends JApplet
 			  }
 			  log_file_name = tz390.get_file_name(tz390.dir_cur,"z390",tz390.log_type);
 		      try {
-		      	  if  (log_tod){
+		      	  if (log_tod){
 		      	      boolean new_log = false;
 		      	      String temp_log_name = "temp";
 		              while (!new_log){
@@ -645,10 +648,12 @@ public  class  z390 extends JApplet
 				  } else {
 				     log_file_name = log_file_name.concat(tz390.log_type);
 		      	  }
-		          log_file = new BufferedWriter(new FileWriter(log_file_name));
+		      	  log_file = tz390.zoutput.open(log_file_name, "log_file"); // dak RPI 1618
+		          //log_file = new BufferedWriter(new FileWriter(log_file_name)); // dak RPI 1618
 		          put_copyright();
 		 	   	  put_log("Log file = " + log_file_name);
 		      } catch (Exception e){
+		    	  e.printStackTrace();
 		    	  log_file = null;  // RPI 236
 		      	  System.out.println("z390 log file I/O error - use LOG command to open new log " + e.toString());
 		      }
@@ -664,7 +669,8 @@ public  class  z390 extends JApplet
 		 */
 			if (log_file != null){  // RPI 236
 			   try {
-	               log_file.close();
+				   tz390.zoutput.close(log_file); // dak RPI 1618
+	               //log_file.close(); // dak RPI 1618
 			       log_file = null;
 			   } catch (Exception e){
 			   	   System.out.println("S003 z390 log file close error - " + e.toString());
@@ -678,7 +684,9 @@ public  class  z390 extends JApplet
 		 * data and log files
 		 */	
             put_log("Z390I total errors = " + z390_errors);
-	        close_log_file();
+	        //close_log_file(); // dak RPI 1618
+            tz390.zoutput.close(log_file); // dak RPI 1618
+	        tz390.zoutput.closeAll(); // dak RPI 1618
 		}
 		private void log_error(int error,String msg){
 			z390_errors++;
@@ -776,11 +784,11 @@ public  class  z390 extends JApplet
 	   	 * if console mode or console option on.
 	   	 * 
 	   	 */
-            if (msg.trim().length() == 0){
+            if (msg.trim().length() == 0) {
             	return;  // RPI 1050
             }
 	   	    io_count++;
-	        if  (main_gui){      
+	        if (main_gui){      
 	        	tz390.log_text_append(log_text,msg); // RPI 731
    	        } else {
 	   	        if  (main_console || console_log) {
@@ -815,7 +823,7 @@ public  class  z390 extends JApplet
 	   	 *     cancel error message if command
 	   	 *     running on separate thread to avoid
 	   	 *     file conflicts or deadlocks.  Other
-	   	 *     non destructivecommands will proceed
+	   	 *     non destructive commands will proceed
 	   	 *     in parallel which may cause log 
 	   	 *     messages to be intermixed.
 	   	 * 
@@ -1749,6 +1757,7 @@ public  class  z390 extends JApplet
 					   process_command(temp_line);
 					   temp_line = temp_file.readLine();						   
 					}
+					temp_file.close(); // dak RPI 1618
 				} catch (Exception e){
 					log_error(72,"startup file I/O error - " + e.toString());
 				}

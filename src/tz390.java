@@ -3,7 +3,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
+//import java.io.FileWriter; // dak
 import java.io.RandomAccessFile;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
@@ -22,7 +22,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.JTextArea;
-
 
 public  class  tz390 {
    /*****************************************************
@@ -156,7 +155,7 @@ public  class  tz390 {
     * 11/25/07 RPI 742 abort if option invalid  
     *          add @file option to read options from file 
     * 11/29/07 RPI 744 validate prinatable ASCII source code  
-    * 11/30/07 RPI 742 add option @file support with default
+    * 11/30/07 RPI 742 add option file support with default
     *          suffix .OPT and search path SYSOPT which defaults
     *          to program path.  Any number of file
     *          and nested files with options * comments.
@@ -289,6 +288,7 @@ public  class  tz390 {
     * 10/03/15 RPI 1533  Invalid codepage option is not flagged as an error. Should cause abortion
     * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
     * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one
+    * 04/08/18 RPI 1618  Create zoutput object to separate sequential output file handling from the main body of z390 classes
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -503,6 +503,7 @@ public  class  tz390 {
     int bal_ictl_end   = 71; // RPI 728
     int bal_ictl_cont  = 16; // RPI 728
     int bal_ictl_cont_tot = 56; // RPI 728
+    zoutput zoutput =  null; //new zoutput(); // dak RPI 1618
     /*
      * shared SYSTERM error file
      */
@@ -2675,6 +2676,11 @@ public  class  tz390 {
       int[]     key_tab_index = (int[])Array.newInstance(int.class,max_key_tab);
       int[]     key_tab_low   = (int[])Array.newInstance(int.class,max_key_tab);
       int[]     key_tab_high  = (int[])Array.newInstance(int.class,max_key_tab);
+public tz390(zoutput zoutput2) { // dak RPI 1618
+		zoutput = zoutput2; // dak RPI 1618
+	} // dak RPI 1618
+public tz390() { // dak RPI 1618
+} // dak RPI 1618
 public void init_tz390(){
 	/*
 	 * initialize shared data and tables
@@ -2686,6 +2692,9 @@ public void init_tz390(){
 	init_os_type();  // set os type
 	init_os_util();  // set os utilities (overides from env var)
         // init_opcodes();  // verify opcode tables - moved to init_options RPI 1209A
+	if (zoutput == null) { // dak RPI 1618
+		zoutput = new zoutput(); // dak RPI 1618
+	} // dak RPI 1618
 }
 /*
  * Create_opcodes builds the following arrays to define opcode formats:
@@ -2954,6 +2963,7 @@ public void create_opcodes()  // Routine added for RPI 1209
         index2++; // indicate this pass is done
         }
     }
+@SuppressWarnings("static-access")
 public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
    {int     index, index2;
     int     i, j;
@@ -4395,7 +4405,8 @@ public void open_systerm(String z390_pgm){
     	&& stats_file_name != null){
     	stats_file_name = get_file_name(dir_err,stats_file_name,sta_type);
     	try {
-            stats_file = new RandomAccessFile(stats_file_name,"rw"); 
+            //stats_file = new RandomAccessFile(stats_file_name,"rw"); // dak  RPI 1618
+    		stats_file = zoutput.openraf(stats_file_name, "stats_file","rw"); // dak RPI 1618
             stats_file.seek(stats_file.length());
         } catch (Exception e){
         	stats_file = null; 
@@ -4409,7 +4420,8 @@ public void open_systerm(String z390_pgm){
 	}
 	systerm_file_name = get_file_name(dir_err,systerm_file_name,err_type);
     try {
-        systerm_file = new RandomAccessFile(systerm_file_name,"rw"); 
+        //systerm_file = new RandomAccessFile(systerm_file_name,"rw");  // dak RPI 1618
+    	systerm_file = zoutput.openraf(systerm_file_name, "systerm_file","rw"); // dak RPI 1618
         systerm_file.seek(systerm_file.length());
         if (invalid_options.length() > 0){
         	abort_error(21,"invalid options - " + invalid_options);
@@ -4498,15 +4510,18 @@ public synchronized void close_systerm(int rc){ // RPI 397
     		 systerm_file = null; // RPI 935
     	 }
     	 try {
-    		 systerm_file.close();
+    		 //systerm_file.close(); // dak RPI 1618
+    		 zoutput.close(systerm_file); // dak RPI 1618
     	 } catch (Exception e){
+    		 e.printStackTrace(); // dak???
     		 System.out.println("TZ390E systerm file close error - " + e.toString());
     	 }
     	 systerm_file = null;  
      }
      if (stats_file != null){
     	 try {
-    		 stats_file.close();
+    		 //stats_file.close(); // dak RPI 1618
+    		 zoutput.close(stats_file); // dak RPI 1618
     	 } catch (Exception e){
     		 System.out.println("TZ390E stats file close error - " + e.toString());
     	 }
@@ -5492,7 +5507,8 @@ public void put_trace(String text){
 	if (trace_file == null){
 		try {
 			trace_file = new File(trace_file_name);
-			trace_file_buff = new BufferedWriter(new FileWriter(trace_file));
+			//trace_file_buff = new BufferedWriter(new FileWriter(trace_file)); // dak RPI 1618
+			trace_file_buff = zoutput.open(trace_file.toString(), "trace_file_buff"); // dak RPI 1618
 			put_trace(started_msg); // RPI 755 RPI 1149 
 		} catch (Exception e){
 			abort_error(16,"trace file open failed - " + e.toString());
@@ -5518,8 +5534,9 @@ public void put_trace(String text){
 	 */
     	if (text_line == null)return;
 	    	cur_bal_line_num = cur_bal_line_num + 1 + prev_bal_cont_lines;
-	    if (text_line != null && text_line.length() > 71){ // RPI 415 adj for continuations for xref
-	        prev_bal_cont_lines = 1 + (text_line.length()-72)/56;	
+	    //if (text_line != null && text_line.length() > 71){ // RPI 415 adj for continuations for xref // dak  RPI 1618 get rid of warning
+	    	if (text_line.length() > 71){ // RPI 415 adj for continuations for xref // dak RPI 1618
+	    	prev_bal_cont_lines = 1 + (text_line.length()-72)/56;	
 	    } else {
 	    	prev_bal_cont_lines = 0; // RPI 550
 	    }
@@ -6518,14 +6535,14 @@ public void put_trace(String text){
    				     + "/U" + codepoint + "  ";
    	     return text;
 	}
-	@SuppressWarnings("unchecked")
+	//@SuppressWarnings("unchecked")
 	private void list_available_charsets(){
 		put_systerm("available ascii and ebcdic charset codepages");
 		int tot_charset = 0;
 		int tot_ebcdic  = 0;
 		int tot_ascii   = 0;
-		Map map = Charset.availableCharsets();
-		Iterator it = map.keySet().iterator();
+		Map<?, ?> map = Charset.availableCharsets();  // dak get rid of warning RPI 1618
+		Iterator<?> it = map.keySet().iterator(); // dak get rid of warning RPI 1618
 		while (it.hasNext()) {
 			tot_charset++;
 	        // Get charset name
@@ -6678,6 +6695,7 @@ public void put_trace(String text){
 			i++;
 		}
 	}
+	@SuppressWarnings({ "resource" }) //, "resource" }) // dak get rid of warning RPI 1618
 	private boolean load_ebcdic_charset_hex_file(){
 		/*
 		 * load ebcdic_charset_name as alternate
@@ -6692,6 +6710,7 @@ public void put_trace(String text){
 		    	if (hex_rec.charAt(0) != '*'){
 		    		int ver_offset = Integer.valueOf(hex_rec.substring(0,2),16);
 		    		if (hex_offset != ver_offset){
+		    			ebcdic_hex_buff.close(); // dak memory leak when file is not closed before return RPI 1618
 		    			return false;
 		    		}
 		    		if (hex_offset < 256){

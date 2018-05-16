@@ -2,7 +2,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
+//import java.io.FileWriter; // dak
 import java.io.RandomAccessFile;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
@@ -401,6 +401,7 @@ public  class  az390 implements Runnable {
         * 11/03/14 RPI 1209O MR/DR instructions should issue error when operand1 is odd
         * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
         * 09/11/15 RPI 1523  START with non-zero origin is starts location counter at 0 anyway
+        * 04/08/18 RPI 1618  Create zoutput object to separate sequential output file handling from the main body of z390 classes
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1101,7 +1102,14 @@ public  class  az390 implements Runnable {
               "=F'44'",           //24 "NOTDELETABLE)"
               "=F'732'",          //25 "VRRDS)"
               };
-  /* 
+  zoutput zoutput = null; // dak RPI 1618
+public az390() { // dak RPI 1618
+	
+} // dak RPI 1618
+public az390(zoutput zoutputx) { // dak RPI 1618
+	zoutput = zoutputx; // dak RPI 1618
+} // dak RPI 1618
+/* 
    * end of global az390 class data and start of procs
    */
 public static void main(String[] args) {
@@ -1201,6 +1209,7 @@ private void process_az390(){
 	    exit_az390();
 }
 private void init_az390(String[] args, JTextArea log_text){
+	//System.out.println("*** in init_az390 ***");
 	/*
 	 * 1.  initialize log routing
 	 * 2.  set options
@@ -1211,8 +1220,11 @@ private void init_az390(String[] args, JTextArea log_text){
 	    if  (log_text != null){
 	    	z390_log_text = log_text;
 	    }
-    	tz390 = new tz390();
+
+    	//tz390 = new tz390(); // dak RPI 1618
+	    tz390 = new tz390(zoutput); // dak RPI 1618
     	tz390.init_tz390();  // RPI 1080
+    	
     	if (!tz390.check_java_version()){ // RPI 1175
     		abort_error(88,"unknown java version "
     	    + tz390.java_vendor + " " + tz390.java_version);  
@@ -1456,7 +1468,8 @@ private void open_files(){
 	    }
        	if (tz390.opt_obj){  // RPI 694
        		try {
-       			obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw"); 
+       			//obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw"); // dak RPI 1618
+       			obj_file = tz390.zoutput.openraf(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type, "obj_file", "rw"); //dak RPI 1618
        		} catch (Exception e){
        			abort_error(4,"I/O error on obj open - " + e.toString());
        		}
@@ -1465,7 +1478,8 @@ private void open_files(){
        		String prn_file_name = tz390.get_file_name(tz390.dir_prn,tz390.pgm_name,tz390.prn_type); // RPI 866
             try {
             	prn_file = new File(prn_file_name); // RPI 908 catch null error
-       	        prn_file_buff = new BufferedWriter(new FileWriter(prn_file));
+       	        //prn_file_buff = new BufferedWriter(new FileWriter(prn_file)); // dak RPI 1618
+            	prn_file_buff = tz390.zoutput.open(prn_file.toString(), "prn_file_buff"); // dak RPI 1618
        	    } catch (Exception e){
        		    abort_error(4,"I/O error on prn open - " + e.toString());
        	    }
@@ -6027,7 +6041,8 @@ public void close_files(){
 	 */
 	  if (obj_file != null){
 	  	  try {
-	  	  	  obj_file.close();
+	  	  	  //obj_file.close(); // dak RPI 1618
+	  		  tz390.zoutput.close(obj_file); // dak RPI 1618
 	  	  } catch (Exception e){
 	  	  	  tz390.abort_error(24,"I/O error on obj close - " + e.toString());
 	  	  }
@@ -6049,13 +6064,15 @@ public void close_files(){
 	  if  (tz390.opt_list){
 		  if (prn_file != null && prn_file.isFile()){
 		  	  try {
-		  	  	  prn_file_buff.close();
+		  	  	  //prn_file_buff.close(); // dak RPI 1618
+		  		  tz390.zoutput.close(prn_file_buff); // dak RPI 1618
 		  	  } catch (Exception e){
 		  	  	  tz390.abort_error(24,"I/O error on prn close - " + e.toString());
 		  	  }
 		  }
 	    }
 	  tz390.close_trace_file();
+	  tz390.zoutput.closeAll(); // dak RPI 1618
 }
 private void log_error(int error,String msg){
 	/*
@@ -10158,8 +10175,8 @@ public int get_int_pfx(byte type,byte type_sfx,int len,int scale){
 	default:
 		return 0;
 	}
+	}
 }
 /*
  *  end of az390 code 
  */
-}

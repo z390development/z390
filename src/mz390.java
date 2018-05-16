@@ -2,7 +2,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -419,6 +418,7 @@ public  class  mz390 {
 	 * 05/05/12 RPI 1212 add trace for common ops such as SLL
 	 * 05/06/12 RPI 1213 correct SYSECT, SYSLOC, and SYSSTYP
 	 *          see rt\test\TESTSYS3.MLC regression test
+	 * 04/08/18 RPI 1618 Create zoutput object to separate sequential output file handling from the main body of z390 classes
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1280,6 +1280,7 @@ public  class  mz390 {
 		 * 2.  set options
 		 * 3.  open MLC and BAL buffered I/O files
 		 */
+		//System.out.println("*** starting tz390 from mz390 *** "+ System.currentTimeMillis());
 		tz390 = new tz390();
 		tz390.init_tz390();  // RPI 1080
     	if (!tz390.check_java_version()){ // RPI 1175
@@ -1301,7 +1302,8 @@ public  class  mz390 {
 			abort_error(118,"opcode key table error - aborting");
 		}
 		if (tz390.opt_asm){
-			az390 = new az390(); // RPI 415
+			az390 = new az390(tz390.zoutput); // RPI 415 // dak RPI 1618
+			az390.tz390 = tz390; // dak RPI 1618
 			az390.mz390_started_msg = tz390.started_msg; // RPI 755
 			az390.start_az390_thread(args,z390_log_text,tz390.systerm_file,tz390.stats_file); // RPI 737
 		}
@@ -1500,8 +1502,9 @@ public  class  mz390 {
 		}
 		String bal_file_name = tz390.get_file_name(tz390.dir_bal,tz390.pgm_name,tz390.bal_type); // RPI 866
 		try {
-			bal_file = new File(bal_file_name); // rpi 880 trap null error
-			bal_file_buff = new BufferedWriter(new FileWriter(bal_file));
+			//bal_file = new File(bal_file_name); // rpi 880 trap null error // dak RPI 1618 
+			//bal_file_buff = new BufferedWriter(new FileWriter(bal_file)); // dak RPI 1618
+			bal_file_buff = tz390.zoutput.open(bal_file_name, "bal_file_buff"); // dak RPI 1618
 		} catch (Exception e){
 			abort_error(8,"I/O error on BAL open - " + e.toString());
 		}
@@ -5006,7 +5009,8 @@ public  class  mz390 {
 				}
 				try {
 					pch_file[pch_file_index] = new File(ap_file_name);
-					pch_file_buff[pch_file_index] = new BufferedWriter(new FileWriter(pch_file[pch_file_index]));
+					//pch_file_buff[pch_file_index] = new BufferedWriter(new FileWriter(pch_file[pch_file_index])); // dak RPI 1618
+					pch_file_buff[pch_file_index] = tz390.zoutput.open(ap_file_name, "pch_file_buff[pch_file_index]"); // dak RPI 1618
 				} catch (Exception e){
 					abort_error(75,"I/O error on PUNCH open - " + e.toString());
 				}
@@ -9050,6 +9054,7 @@ public  class  mz390 {
 			tz390.force_nocon = false; // RPI 1050
 		}
 		tz390.close_trace_file();
+		tz390.zoutput.closeAll(); // dak RPI 1618
 	}
 	private void close_dat_file(int index){
 		/*
@@ -9067,7 +9072,8 @@ public  class  mz390 {
 		 * close specific pch file
 		 */
 		try {
-			pch_file_buff[index].close();
+			//pch_file_buff[index].close(); //dak RPI 1618
+			tz390.zoutput.close(pch_file_buff[index]); // dak RPI 1618
 			pch_file[index] = null;
 		} catch (Exception e){
 			abort_error(77,"I/O error on PUNCH file ID=" + index + " close - " + e.toString());
