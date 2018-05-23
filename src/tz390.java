@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap; // dak RPI 1606
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -289,6 +290,7 @@ public  class  tz390 {
     * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
     * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one
     * 04/08/18 RPI 1618  Create zoutput object to separate sequential output file handling from the main body of z390 classes
+    * 05/21/18 RPI 1606  Circular reference of options file causes unspecified exception in tz390
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -2676,12 +2678,20 @@ public  class  tz390 {
       int[]     key_tab_index = (int[])Array.newInstance(int.class,max_key_tab);
       int[]     key_tab_low   = (int[])Array.newInstance(int.class,max_key_tab);
       int[]     key_tab_high  = (int[])Array.newInstance(int.class,max_key_tab);
+      // dak RPI 1606
+      HashMap<String, String> optfilenames = new HashMap<String, String>(); // dak RPI 1606
 public tz390(zoutput zoutput2) { // dak RPI 1618
 		zoutput = zoutput2; // dak RPI 1618
 	} // dak RPI 1618
 public tz390() { // dak RPI 1618
 } // dak RPI 1618
 public void init_tz390(){
+	StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+	System.out.println("**1 " + stackTraceElements[1] + ": " + System.currentTimeMillis());
+	System.out.println("**2 " + stackTraceElements[2] + ": " + System.currentTimeMillis());
+	System.out.println("**3 " + stackTraceElements[3] + ": " + System.currentTimeMillis());
+	//System.out.println("**4 " + stackTraceElements[4] + ": " + System.currentTimeMillis());
+
 	/*
 	 * initialize shared data and tables
 	 */
@@ -4364,8 +4374,21 @@ private void process_options_file(String file_name,boolean required){ // RPI 115
 	 * 4.  @file option can be nested.
 	 */
     String opt_file_name = find_file_name(dir_opt,file_name,opt_type,dir_cur); // rpi 880
-	int    opt_file_line = 0; // rpi 880
+	// TODO - make sure to only process filenames only once
+    // RPI 1606   Circular reference of options file causes unspecified exception in tz390
+    int    opt_file_line = 0; // rpi 880
     if (opt_file_name != null){
+    	// dak RPI 1606
+    	if (optfilenames.containsKey(opt_file_name)) { // dak RPI 1606
+    		System.out.println(opt_file_name+" has already been processed as an option file"); // dak RPI 1606
+    		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+			System.out.println("*1 " + stackTraceElements[1] + ": " + System.currentTimeMillis());
+			System.out.println("*2 " + stackTraceElements[2] + ": " + System.currentTimeMillis());
+			System.out.println("*3 " + stackTraceElements[3] + ": " + System.currentTimeMillis());
+			System.out.println("*4 " + stackTraceElements[4] + ": " + System.currentTimeMillis());
+    		return; // dak RPI 1606
+    	} // dak RPI 1606
+    	optfilenames.put(opt_file_name, "");
 		try {
 			File opt_file = new File(opt_file_name);
 			BufferedReader opt_file_buff = new BufferedReader(new FileReader(opt_file));       
