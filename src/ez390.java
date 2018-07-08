@@ -302,7 +302,7 @@ private void run_pgm(int zcvt_pgm_addr){
     }
     if (pz390.psw_check && pz390.psw_pic != pz390.psw_pic_exit){
        	sz390.svc_abend(pz390.psw_pic,sz390.svc_abend_type,sz390.svc_req_dump);
-       	tz390.zoutput.closeAll(); // dak RPI 1618
+       	tz390.closeAll(); // dk RPI 1618
     }
 }
 private void exec_pz390(){
@@ -517,7 +517,7 @@ public void run() {
 				pz390.exec_pz390();
 			} catch (Exception e){
 				sz390.svc_abend(pz390.psw_pic_addr,sz390.system_abend,tz390.opt_dump); // RPI 536 // RPI 1054			
-				tz390.zoutput.closeAll(); // dak RPI 1618
+				tz390.closeAll(); // dk RPI 1618
 			}
 		} else {
 			pz390.exec_pz390();

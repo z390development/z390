@@ -36,9 +36,9 @@ private void list_default_charset(){
 	String name = Charset.defaultCharset().name();
 	System.out.println("default charset = " + name);
 }
-//@SuppressWarnings("unchecked") // dak get rid of warning
-private void list_available_charsets(){ // dak get rid of warning
-	Map<?, ?> map = Charset.availableCharsets(); // dak get rid of warning  RPI 1618
+//@SuppressWarnings("unchecked") // dk get rid of warning
+private void list_available_charsets(){ // dk get rid of warning
+	Map<?, ?> map = Charset.availableCharsets(); // dk get rid of warning  RPI 1618
 	Iterator<?> it = map.keySet().iterator();
 	while (it.hasNext()) {
     // Get charset name
