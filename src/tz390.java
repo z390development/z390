@@ -288,6 +288,7 @@ public  class  tz390 {
     * 09/05/15 RPI 1529  Incorrect character x'92' in ascii character translation tables (backquote, should be quote = x'27')
     * 10/03/15 RPI 1533  Invalid codepage option is not flagged as an error. Should cause abortion
     * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
+    * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -296,7 +297,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.6.00b11";  //dsh + afk
+    String version    = "V1.6.00b12";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -391,8 +392,9 @@ public  class  tz390 {
     int     opt_vsectsize= 64;    // vector section size RPI VF01
     int     opt_vpartsums= 16;    // vector partial sums number RPI VF01
     boolean opt_warn     = true;  // issue zcobol warnings RPI 986
-    boolean opt_xref     = true;   // cross reference symbols
-    boolean opt_zstrmac  = true;   // allow ZSTRMAC extensions
+    boolean opt_xref     = true;  // cross reference symbols
+    boolean opt_zstrmac  = true;  // allow ZSTRMAC extensions
+    int     opt_zvsam    = 0;     // Default to Don's zVSAM implementation RPI 1598
     boolean max_cmd_queue_exceeded = false;  // RPI 731
     String  cmd_parms = ""; // all options from command
     int     cmd_parms_len = 34; // RPI 755
@@ -3569,6 +3571,11 @@ private void check_options(){
     if (opt_vpartsums > opt_vsectsize){
                         abort_error(29,"Partial Sums Number should not exceed Section Size");
         }
+    // Check requested zVSAM version                  // RPI 1598
+    if (opt_zvsam != 0                                // RPI 1598
+    &&  opt_zvsam != 1)                               // RPI 1598
+       {abort_error(30,"option VSAM must be 0 or 1"); // RPI 1598
+        }                                             // RPI 1598
 }
 private void process_option(String opt_file_name,int opt_file_line,String token){
 	/*
@@ -4252,6 +4259,13 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_zstrmac = true;
     } else if (token.toUpperCase().equals("NOZSTRMAC")){
        	opt_zstrmac = false;
+    } else if (token.length() > 7 // Block added for RPI 1598
+           &&  token.substring(0,6).toUpperCase().equals("ZVSAM("))                              // RPI 1598
+              {try {opt_zvsam = Integer.valueOf(token.substring(6,token.length()-1)).intValue(); // RPI 1598
+                    }                                                                            // RPI 1598
+               catch (Exception e)                                                               // RPI 1598
+                   {add_invalid_option(opt_file_name,opt_file_line,token);                       // RPI 1598
+                    }                                                                            // RPI 1598
     } else {
         add_invalid_option(opt_file_name,opt_file_line,token);
     }
@@ -6182,6 +6196,7 @@ public void put_trace(String text){
 		 } else {
 		     add_final_opt("NOZSTRMAC");
 		 }
+         add_final_opt("ZVSAM=" + opt_zvsam); // RPI 1598
 	     /*
 	      * option limits
 	      */

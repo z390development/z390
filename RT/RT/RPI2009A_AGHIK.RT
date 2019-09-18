@@ -1,0 +1,335 @@
+*
+* skip to call CC test
+a 80d6.
+g
+s
+* ############################## (@228)
+  v * 2       = x'0def'
+*
+* call the CC test
+t1
+*
+* ########################################## cut from here
+*
+* ##############################
+*
+* AGHIK CC tests begin
+*
+* ############################## 
+*
+* AGHIK CC tests for CC 0
+*
+* ############################## (@3200)
+*
+* zzz0
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'0000000000000000'
+  v 1r        = x'0000000000000000'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'3'
+t2
+  v 2r        = x'0000000000000000'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* pnz0
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'0000000000000001'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'3'
+t2
+  v 2r        = x'0000000000000000'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* npz0
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'0000000000000001'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'3'
+t2
+  v 2r        = x'0000000000000000'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* ############################## 
+*
+* AGHIK CC tests for CC 1
+*
+* ############################## (@3228)
+*
+* znn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'0000000000000000'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* pnn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'0000000000000001'
+  v 1r        = x'fffffffffffffffe'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nzn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'0000000000000000'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* npn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'fffffffffffffffe'
+  v 1r        = x'0000000000000001'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nnn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'fffffffffffffffe'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'fffffffffffffffd'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* ############################## 
+*
+* AGHIK CC tests for CC 2
+*
+* ############################## (@3269)
+*
+* zpp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'0000000000000000'
+  v 1r        = x'0000000000000001'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'0000000000000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pzp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'0000000000000001'
+  v 1r        = x'0000000000000000'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'0000000000000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ppp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'0000000000000001'
+  v 1r        = x'0000000000000002'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'0000000000000003'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pnp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'0000000000000002'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'0000000000000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* npp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'0000000000000002'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'0000000000000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ############################## 
+*
+* AGHIK CC tests for CC 3
+*
+* ############################## (@3311)
+*
+* ppn3
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'7fffffffffffffff'
+  v 1r        = x'0000000000000001'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'8000000000000000'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* nnz3 cannot occur
+*
+*
+* nnp3
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'8000000000000001'
+  v 1r        = x'fffffffffffffffe'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'7fffffffffffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* ############################## 
+*
+* AGHIK CC tests end
+*
+* ############################## (@3335)
+*
+  v * 2       = x'07fe'
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@233)
+  v psw.addr  = x'000080d8'
+*
+* skip to call OV test
+* 
+s
+a 811a.
+g
+s
+* ############################## (@262)
+  v * 2       = x'0def'
+*
+* call the OV test
+t1
+*
+* ########################################## cut from here
+*
+* ############################## 
+*
+* AGHIK OV tests for CC 3 and overflow
+*
+* ############################## (@5084)
+*
+* ppn3
+*
+  v psw.addr  = x'0000a918'
+  v * 2       = x'1b00'
+t5
+  v 0r        = x'7fffffffffffffff'
+  v 1r        = x'0000000000000001'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+  v a936. 4   = x'b2220030'
+a a936.
+g
+  v psw.addr  = x'0000a936'
+t1
+  v 2r        = x'8000000000000000'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* nnz3 cannot occur
+*
+*
+* nnp3
+*
+  v * 2       = x'1b00'
+t5
+  v 0r        = x'8000000000000001'
+  v 1r        = x'fffffffffffffffe'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+  v a958. 4   = x'b2220030'
+a a958.
+g
+  v psw.addr  = x'0000a958'
+t1
+  v 2r        = x'7fffffffffffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* ############################## 
+*
+* AGHIK OV tests end
+*
+* ############################## (@5121)
+*
+  v * 2       = x'07fe'
+
+* clear brkpts
+s
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@264)
+  v psw.addr  = x'0000811c'
+* ##############################
+* done
+* ##############################
+z

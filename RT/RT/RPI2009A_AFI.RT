@@ -1,0 +1,341 @@
+*
+* skip to call CC test
+a 80d6.
+g
+s
+* ############################## (@228)
+  v * 2       = x'0def'
+*
+* call the CC test
+t1
+*
+* ########################################## cut from here
+*
+* ##############################
+*
+* AFI CC tests begin
+*
+* ############################## 
+*
+* AFI CC tests for CC 0
+*
+* ############################## (@2714)
+*
+* zzz0
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff00000000'
+  v 1r        = x'ffffffff00000000'
+  v psw.cc    = x'3'
+t2
+  v 0r        = x'ffffffff00000000'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* pnz0
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff00000001'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'3'
+t2
+  v 0r        = x'ffffffff00000000'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* npz0
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'ffffffff00000001'
+  v psw.cc    = x'3'
+t2
+  v 0r        = x'ffffffff00000000'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* ############################## 
+*
+* AFI CC tests for CC 1
+*
+* ############################## (@2739)
+*
+* znn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffff00000000'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* pnn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffff00000001'
+  v 1r        = x'fffffffffffffffe'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nzn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'ffffffff00000000'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* npn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'fffffffffffffffe'
+  v 1r        = x'ffffffff00000001'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nnn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'fffffffffffffffe'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'fffffffffffffffd'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* ############################## 
+*
+* AFI CC tests for CC 2
+*
+* ############################## (@2775)
+*
+* zpp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffff00000000'
+  v 1r        = x'ffffffff00000001'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffff00000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pzp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffff00000001'
+  v 1r        = x'ffffffff00000000'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffff00000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ppp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffff00000001'
+  v 1r        = x'ffffffff00000002'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffff00000003'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pnp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffff00000002'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffff00000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* npp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'ffffffff00000002'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffff00000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ############################## 
+*
+* AFI CC tests for CC 3
+*
+* ############################## (@2811)
+*
+* ppn3
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffff7fffffff'
+  v 1r        = x'ffffffff00000001'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffff80000000'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* nnz3
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffff80000000'
+  v 1r        = x'ffffffff80000000'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffff00000000'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* nnp3
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffff80000001'
+  v 1r        = x'fffffffffffffffe'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffff7fffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* ############################## 
+*
+* AFI CC tests end
+*
+* ############################## (@2833)
+*
+  v * 2       = x'07fe'
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@233)
+  v psw.addr  = x'000080d8'
+*
+* skip to call OV test
+* 
+s
+a 811a.
+g
+s
+* ############################## (@262)
+  v * 2       = x'0def'
+*
+* call the OV test
+t1
+*
+* ########################################## cut from here
+*
+* ############################## 
+*
+* AFI OV tests for CC 3 and overflow
+*
+* ############################## (@4933)
+*
+* ppn3
+*
+  v psw.addr  = x'0000a826'
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'ffffffff7fffffff'
+  v 1r        = x'ffffffff00000001'
+  v psw.cc    = x'0'
+  v a83e. 4   = x'b2220030'
+a a83e.
+g
+  v psw.addr  = x'0000a83e'
+t1
+  v 0r        = x'ffffffff80000000'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* nnz3
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'ffffffff80000000'
+  v 1r        = x'ffffffff80000000'
+  v psw.cc    = x'0'
+  v a85a. 4   = x'b2220030'
+a a85a.
+g
+  v psw.addr  = x'0000a85a'
+t1
+  v 0r        = x'ffffffff00000000'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* nnp3
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'ffffffff80000001'
+  v 1r        = x'fffffffffffffffe'
+  v psw.cc    = x'0'
+  v a876. 4   = x'b2220030'
+a a876.
+g
+  v psw.addr  = x'0000a876'
+t1
+  v 0r        = x'ffffffff7fffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* ############################## 
+*
+* AFI OV tests end
+*
+* ############################## (@4965)
+*
+  v * 2       = x'07fe'
+
+* clear brkpts
+s
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@264)
+  v psw.addr  = x'0000811c'
+* ##############################
+* done
+* ##############################
+z

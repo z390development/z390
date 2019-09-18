@@ -1,0 +1,323 @@
+*
+* skip to call CC test
+a 80d6.
+g
+s
+* ############################## (@205)
+  v * 2       = x'0def'
+*
+* call the CC test
+t1
+*
+* ########################################## cut from here
+*
+* ##############################
+*
+* SGFR CC tests begin
+*
+* ############################## 
+*
+* SGFR CC tests for CC 0
+*
+* ############################## (@1710)
+*
+* zzz0
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'0000000000000000'
+  v 1r        = x'0000000000000000'
+  v psw.cc    = x'3'
+t2
+  v 0r        = x'0000000000000000'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* ppz0
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'0000000000000001'
+  v 1r        = x'0000000000000001'
+  v psw.cc    = x'3'
+t2
+  v 0r        = x'0000000000000000'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* nnz0
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'3'
+t2
+  v 0r        = x'0000000000000000'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* nnz0_m cannot occur
+*
+*
+* ############################## 
+*
+* SGFR CC tests for CC 1
+*
+* ############################## (@1743)
+*
+* zpn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'0000000000000000'
+  v 1r        = x'0000000000000001'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* ppn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'0000000000000001'
+  v 1r        = x'0000000000000002'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nzn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'0000000000000000'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* npn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'0000000000000002'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'fffffffffffffffd'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nnn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'fffffffffffffffd'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'fffffffffffffffe'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* ############################## 
+*
+* SGFR CC tests for CC 2
+*
+* ############################## (@1779)
+*
+* znp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'0000000000000000'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'0000000000000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pzp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'0000000000000001'
+  v 1r        = x'0000000000000000'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'0000000000000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ppp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'0000000000000003'
+  v 1r        = x'0000000000000001'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'0000000000000002'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pnp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'0000000000000001'
+  v 1r        = x'fffffffffffffffe'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'0000000000000003'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* nnp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'fffffffffffffffe'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'0000000000000001'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ############################## 
+*
+* SGFR CC tests for CC 3
+*
+* ############################## (@1815)
+*
+* znn3 cannot occur
+*
+* ############################## (@1822)
+*
+* pnn3
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'7fffffffffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'8000000000000000'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* npp3
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'8000000000000001'
+  v 1r        = x'0000000000000002'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'7fffffffffffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* ############################## 
+*
+* SGFR CC tests end
+*
+* ############################## (@1837)
+*
+  v * 2       = x'07fe'
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@210)
+  v psw.addr  = x'000080d8'
+*
+* skip to call OV test
+* 
+s
+a 811a.
+g
+s
+* ############################## (@238)
+  v * 2       = x'0def'
+*
+* call the OV test
+t1
+*
+* ########################################## cut from here
+*
+* ############################## 
+*
+* SGFR OV tests for CC 3 and overflow
+*
+* ############################## (@2924)
+*
+* znn3 cannot occur
+*
+* ############################## (@2935)
+*
+* pnn3
+*
+  v psw.addr  = x'000096a2'
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'7fffffffffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'0'
+  v 96b8. 4   = x'b2220030'
+a 96b8.
+g
+  v psw.addr  = x'000096b8'
+t1
+  v 0r        = x'8000000000000000'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v 9ca2. 1   = x'38'
+*
+* npp3
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'8000000000000001'
+  v 1r        = x'0000000000000002'
+  v psw.cc    = x'0'
+  v 96d2. 4   = x'b2220030'
+a 96d2.
+g
+  v psw.addr  = x'000096d2'
+t1
+  v 0r        = x'7fffffffffffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v 9ca2. 1   = x'38'
+*
+* ############################## 
+*
+* SGFR OV tests end
+*
+* ############################## (@2958)
+*
+  v * 2       = x'07fe'
+
+* clear brkpts
+s
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@240)
+  v psw.addr  = x'0000811c'
+* ##############################
+* done
+* ##############################
+z

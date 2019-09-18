@@ -1,0 +1,341 @@
+*
+* skip to call CC test
+a 80d6.
+g
+s
+* ############################## (@228)
+  v * 2       = x'0def'
+*
+* call the CC test
+t1
+*
+* ########################################## cut from here
+*
+* ##############################
+*
+* AIH CC tests begin
+*
+* ############################## 
+*
+* AIH CC tests for CC 0
+*
+* ############################## (@3668)
+*
+* zzz0
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'00000000ffffffff'
+  v 1r        = x'00000000ffffffff'
+  v psw.cc    = x'3'
+t2
+  v 0r        = x'00000000ffffffff'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* pnz0
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'00000001ffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'3'
+t2
+  v 0r        = x'00000000ffffffff'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* npz0
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'00000001ffffffff'
+  v psw.cc    = x'3'
+t2
+  v 0r        = x'00000000ffffffff'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* ############################## 
+*
+* AIH CC tests for CC 1
+*
+* ############################## (@3693)
+*
+* znn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'00000000ffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* pnn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'00000001ffffffff'
+  v 1r        = x'fffffffeffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nzn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'00000000ffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* npn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'fffffffeffffffff'
+  v 1r        = x'00000001ffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nnn1
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'fffffffeffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'fffffffdffffffff'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* ############################## 
+*
+* AIH CC tests for CC 2
+*
+* ############################## (@3729)
+*
+* zpp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'00000000ffffffff'
+  v 1r        = x'00000001ffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'00000001ffffffff'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pzp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'00000001ffffffff'
+  v 1r        = x'00000000ffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'00000001ffffffff'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ppp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'00000001ffffffff'
+  v 1r        = x'00000002ffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'00000003ffffffff'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pnp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'00000002ffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'00000001ffffffff'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* npp2
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'00000002ffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'00000001ffffffff'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ############################## 
+*
+* AIH CC tests for CC 3
+*
+* ############################## (@3765)
+*
+* ppn3
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'7fffffffffffffff'
+  v 1r        = x'00000001ffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'80000000ffffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* nnz3
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'80000000ffffffff'
+  v 1r        = x'80000000ffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'00000000ffffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* nnp3
+*
+  v * 2       = x'1b00'
+t2
+  v 0r        = x'80000001ffffffff'
+  v 1r        = x'fffffffeffffffff'
+  v psw.cc    = x'0'
+t2
+  v 0r        = x'7fffffffffffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* ############################## 
+*
+* AIH CC tests end
+*
+* ############################## (@3787)
+*
+  v * 2       = x'07fe'
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@233)
+  v psw.addr  = x'000080d8'
+*
+* skip to call OV test
+* 
+s
+a 811a.
+g
+s
+* ############################## (@262)
+  v * 2       = x'0def'
+*
+* call the OV test
+t1
+*
+* ########################################## cut from here
+*
+* ############################## 
+*
+* AIH OV tests for CC 3 and overflow
+*
+* ############################## (@5234)
+*
+* ppn3
+*
+  v psw.addr  = x'0000a9ea'
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'7fffffffffffffff'
+  v 1r        = x'00000001ffffffff'
+  v psw.cc    = x'0'
+  v aa02. 4   = x'b2220030'
+a aa02.
+g
+  v psw.addr  = x'0000aa02'
+t1
+  v 0r        = x'80000000ffffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* nnz3
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'80000000ffffffff'
+  v 1r        = x'80000000ffffffff'
+  v psw.cc    = x'0'
+  v aa1e. 4   = x'b2220030'
+a aa1e.
+g
+  v psw.addr  = x'0000aa1e'
+t1
+  v 0r        = x'00000000ffffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* nnp3
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'80000001ffffffff'
+  v 1r        = x'fffffffeffffffff'
+  v psw.cc    = x'0'
+  v aa3a. 4   = x'b2220030'
+a aa3a.
+g
+  v psw.addr  = x'0000aa3a'
+t1
+  v 0r        = x'7fffffffffffffff'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* ############################## 
+*
+* AIH OV tests end
+*
+* ############################## (@5268)
+*
+  v * 2       = x'07fe'
+
+* clear brkpts
+s
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@264)
+  v psw.addr  = x'0000811c'
+* ##############################
+* done
+* ##############################
+z

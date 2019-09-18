@@ -414,9 +414,9 @@ public  class  mz390 {
 	 *          terminate substring expression on any
 	 *          SDT with ' stripping
 	 * 02/19/12 RPI 1192 issue error for AIF with )).label
-	 * 04/12/12 RPI 1204 NOALOOW return seta = 0 for non-dec SETC
+	 * 04/12/12 RPI 1204 NOALLOW return seta = 0 for non-dec SETC
 	 *          except for D2A, D2B, D2C, and D2X
-	 * 05/05/12 RPI 1212 add trace for common ops such as SLL  
+	 * 05/05/12 RPI 1212 add trace for common ops such as SLL
 	 * 05/06/12 RPI 1213 correct SYSECT, SYSLOC, and SYSSTYP
 	 *          see rt\test\TESTSYS3.MLC regression test
 	 ********************************************************

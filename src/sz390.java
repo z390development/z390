@@ -207,6 +207,7 @@ public  class  sz390 implements Runnable {
     * 02/29/16 RPI 2006 Test-mode L command in 24-bit mode: errors listing above the line storage
     * 02/27/16 RPI 2007 Test-mode command "1r=x'8000000000000000'" fails (java bug); R1=-1 anyway
     * 02/14/16 RPI 2008 Add test-mode command PSW16 to display 16 byte PSW
+    * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -828,6 +829,10 @@ public  class  sz390 implements Runnable {
                "Off",                                    // RPI 1507
                "On",                                     // RPI 1507
                };                                        // RPI 1507
+  /* ********************************************** */   // RPI 1598
+  /* Anchor points for globals supporting new zVSAM */   // RPI 1598
+  /* ********************************************** */   // RPI 1598
+  LinkedList<zACB> zACB_list;                            // RPI 1598
   /*
    * end of global ez390 class data and start of procs
    */
@@ -2982,7 +2987,12 @@ private void svc_open(){
 	if (cur_acb_id == tz390.acb_id_ver){
 		vz390.cur_vsam_op = vz390.vsam_op_open;
 		vz390.svc_vsam();  // RPI 644
-	} else {
+        if (tz390.opt_zvsam > 0)                   // RPI 1598
+           {zACB TempACB = new zACB(cur_dcb_addr); // RPI 1598
+            TempACB.Open();                        // RPI 1598
+            zACB_list.add(TempACB);                // RPI 1598
+            }                                      // RPI 1598
+        } else {
 		svc_open_dcb("");
 	}
 }
@@ -3154,6 +3164,11 @@ private void svc_close(){
 	if (cur_acb_id == tz390.acb_id_ver){
 		vz390.cur_vsam_op = vz390.vsam_op_close;
 		vz390.svc_vsam();  // RPI 644
+        if (tz390.opt_zvsam > 0)                   // RPI 1598
+           {zACB TempACB = new zACB(cur_dcb_addr); // RPI 1598
+            TempACB.Close();                       // RPI 1598
+            zACB_list.remove(TempACB);             // RPI 1598
+            }                                      // RPI 1598
 	} else {
 		svc_close_dcb();
 	}

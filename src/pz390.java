@@ -349,6 +349,19 @@ public class pz390 {
      *                    BASSM: remove redundant if statement
      * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
      * 03/01/16 RPI 2004  Add support for TAM instruction
+     * 02/26/17 RPI 2009  Fix condition code 3 errors
+     *                      1. Add (AR, AGR, A, etc) instructions and subtract
+     *                         (SR, SGR, S, etc) instructions do not set CC=3 and do not set
+     *                         destination value when (fixed-point) overflow occurs; also, if
+     *                         overflow occurs and the program mask fixed-point-overflow bit
+     *                         is one, the CC in the PSW at abend is not set
+     *                      2. LCR, LCGR, LPR, and LPGR do not set the destination
+     *                         register when CC=3; also, none of these check for
+     *                         fixed-point-overflow exceptions
+     *                      3. SLA, SLAK, SLDA, and SLAG do not check for
+     *                         fixed-point-overflow exceptions
+     *                    Remove invalid call to get_int_add_cc() in ALSIHN instruction emulation
+     * 03/29/17 RPI 2010 Save and restore field psw_ins_len in method trace_psw()
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1691,14 +1704,23 @@ public class pz390 {
 			ins_setup_rr();
 			rv1 = reg.getInt(rf2 + 4);
 			if (rv1 < 0) {
-				if (rv1 == int_high_bit) {
-					psw_cc = psw_cc3;
-					break;
-				}
+//				if (rv1 == int_high_bit) {                 // RPI 2009 line can be deleted
+//					psw_cc = psw_cc3;                      // RPI 2009 line can be deleted
+//					break;                                 // RPI 2009 line can be deleted
+//				}                                          // RPI 2009 line can be deleted
 				rv1 = -rv1;
 			}
 			reg.putInt(rf1 + 4, rv1);
-			psw_cc = get_int_comp_cc(rv1, 0);
+			if (rv1 == Integer.MIN_VALUE)                  // RPI 2009
+			{                                              // RPI 2009
+				psw_cc = psw_cc3;                          // RPI 2009
+				set_psw_check(psw_pic_fx_ovf);             // RPI 2009
+			}                                              // RPI 2009
+			else                                           // RPI 2009
+			{                                              // RPI 2009
+				psw_cc = get_int_comp_cc(rv1, 0);          // RPI 2009
+			}                                              // RPI 2009
+//			psw_cc = get_int_comp_cc(rv1, 0);              // RPI 2009 line can be deleted
 			break;
 		case 0x11: // 360 "11" "LNR" "RR"
 			psw_check = false;
@@ -1721,13 +1743,22 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rr();
 			rv1 = reg.getInt(rf2 + 4);
-			if (rv1 == int_high_bit) {
-				psw_cc = psw_cc3;
-				break;
-			}
+//			if (rv1 == int_high_bit) {                     // RPI 2009 line can be deleted
+//				psw_cc = psw_cc3;                          // RPI 2009 line can be deleted
+//				break;                                     // RPI 2009 line can be deleted
+//			}                                              // RPI 2009 line can be deleted
 			rv1 = -rv1;
 			reg.putInt(rf1 + 4, rv1);
-			psw_cc = get_int_comp_cc(rv1, 0);
+			if (rv1 == Integer.MIN_VALUE)                  // RPI 2009
+			{                                              // RPI 2009
+				psw_cc = psw_cc3;                          // RPI 2009
+				set_psw_check(psw_pic_fx_ovf);             // RPI 2009
+			}                                              // RPI 2009
+			else                                           // RPI 2009
+			{                                              // RPI 2009
+				psw_cc = get_int_comp_cc(rv1, 0);          // RPI 2009
+			}                                              // RPI 2009
+//			psw_cc = get_int_comp_cc(rv1, 0);              // RPI 2009 line can be deleted
 			break;
 		case 0x14: // 390 "14" "NR" "RR"
 			psw_check = false;
@@ -2759,6 +2790,10 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rs_shift(); // RPI 820
 			reg.putInt(rf1 + 4, get_sla32(reg.getInt(rf1 + 4), bd2_loc & 0x3f));
+			if (psw_cc == psw_cc3)                         // RPI 2009
+			{                                              // RPI 2009
+				set_psw_check(psw_pic_fx_ovf);             // RPI 2009
+			}                                              // RPI 2009
 			break;
 		case 0x8C: // 1660 "8C" "SRDL" "RS"
 			psw_check = false;
@@ -2808,6 +2843,10 @@ public class pz390 {
 																			// 398
 			reg.putInt(rf1 + 4, (int) (rlv1 >>> 32));
 			reg.putInt(rf1 + 12, (int) rlv1);
+			if (psw_cc == psw_cc3)                         // RPI 2009
+			{                                              // RPI 2009
+				set_psw_check(psw_pic_fx_ovf);             // RPI 2009
+			}                                              // RPI 2009
 			break;
 		case 0x90: // 1700 "90" "STM" "RS"
 			psw_check = false;
@@ -6097,14 +6136,23 @@ public class pz390 {
 			ins_setup_rre();
 			rlv1 = reg.getLong(rf2);
 			if (rlv1 < 0) {
-				if (rlv1 == long_high_bit) {
-					psw_cc = psw_cc3;
-					break;
-				}
+//				if (rlv1 == long_high_bit) {               // RPI 2009 line can be deleted
+//					psw_cc = psw_cc3;                      // RPI 2009 line can be deleted
+//					break;                                 // RPI 2009 line can be deleted
+//				}                                          // RPI 2009 line can be deleted
 				rlv1 = -rlv1;
 			}
 			reg.putLong(rf1, rlv1);
-			psw_cc = get_long_comp_cc(rlv1, 0);
+			if (rlv1 == Long.MIN_VALUE)                    // RPI 2009
+			{                                              // RPI 2009
+				psw_cc = psw_cc3;                          // RPI 2009
+				set_psw_check(psw_pic_fx_ovf);             // RPI 2009
+			}                                              // RPI 2009
+			else                                           // RPI 2009
+			{                                              // RPI 2009
+				psw_cc = get_long_comp_cc(rlv1, 0);        // RPI 2009
+			}                                              // RPI 2009
+//			psw_cc = get_long_comp_cc(rlv1, 0);            // RPI 2009 line can be deleted
 			break;
 		case 0x01: // 4460 "B901" "LNGR" "RRE"
 			psw_check = false;
@@ -6126,13 +6174,22 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			rlv1 = reg.getLong(rf2);
-			if (rlv1 == long_high_bit) {
-				psw_cc = psw_cc3;
-				break;
-			}
+//			if (rlv1 == long_high_bit) {                   // RPI 2009 line can be deleted
+//				psw_cc = psw_cc3;                          // RPI 2009 line can be deleted
+//				break;                                     // RPI 2009 line can be deleted
+//			}                                              // RPI 2009 line can be deleted
 			rlv1 = -rlv1;
 			reg.putLong(rf1, rlv1);
-			psw_cc = get_long_comp_cc(rlv1, 0);
+			if (rlv1 == Long.MIN_VALUE)                    // RPI 2009
+			{                                              // RPI 2009
+				psw_cc = psw_cc3;                          // RPI 2009
+				set_psw_check(psw_pic_fx_ovf);             // RPI 2009
+			}                                              // RPI 2009
+			else                                           // RPI 2009
+			{                                              // RPI 2009
+				psw_cc = get_long_comp_cc(rlv1, 0);        // RPI 2009
+			}                                              // RPI 2009
+//			psw_cc = get_long_comp_cc(rlv1, 0);            // RPI 2009 line can be deleted
 			break;
 		case 0x04: // 4490 "B904" "LGR" "RRE"
 			psw_check = false;
@@ -7612,7 +7669,7 @@ public class pz390 {
 			rvw = reg.getInt(rf1);
 			rv2 = if2;
 			rv1 = rvw + rv2;
-			reg.putInt(rf1, rv1); get_int_add_cc();
+			reg.putInt(rf1, rv1);                          // RPI 2009
 			break;
 		case 0xD: // "CC6" "CIH" "RIL" R1,S2
 			psw_check = false; 
@@ -8668,6 +8725,10 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rsy_shift(); // RPI 1015
 			reg.putLong(rf1, get_sla64(reg.getLong(rf3), bd2_loc & 0x3f));
+			if (psw_cc == psw_cc3)                         // RPI 2009
+			{                                              // RPI 2009
+				set_psw_check(psw_pic_fx_ovf);             // RPI 2009
+			}                                              // RPI 2009
 			break;
 		case 0x0C: // 6230 "EB0C" "SRLG" "RSY"
 			psw_check = false;
@@ -9051,6 +9112,10 @@ public class pz390 {
 				psw_check = false;
 				ins_setup_rsy_shift(); // RPI 1015
 				reg.putInt(rf1 + 4, get_sla32(reg.getInt(rf3 + 4), bd2_loc & 0x3f));
+				if (psw_cc == psw_cc3)                         // RPI 2009
+				{                                              // RPI 2009
+					set_psw_check(psw_pic_fx_ovf);             // RPI 2009
+				}                                              // RPI 2009
 				break;
 			case 0xDE: //  "EBDE","SRLK","RSY  "  20 RPI 1125 Z196
 				psw_check = false;
@@ -13079,6 +13144,7 @@ public class pz390 {
 		trace_psw = true;  // RPI 538
 		boolean save_opt_trace = tz390.opt_trace;
 		int save_psw_loc = psw_loc;
+		byte save_psw_ins_len = psw_ins_len;      // RPI 2010
 		tz390.opt_trace = true;
 		opcode1 = mem_byte[psw_loc] & 0xff;
 		opcode2 = opcode2_offset[opcode1];
@@ -13278,6 +13344,7 @@ public class pz390 {
         }
         tz390.opt_trace = save_opt_trace;
         psw_loc = save_psw_loc;
+		psw_ins_len = save_psw_ins_len;           // RPI 2010
         trace_psw = false;  // RPI 538
     }
 	private String trace_svc() { // RPI 312
@@ -13446,12 +13513,16 @@ public class pz390 {
 		if (rlv1 >= 0) {
 			if (rlv2 > 0) {
 				if (rlv3 < 0) {
+					psw_cc = psw_cc_ovf; // must set here in case abend        // RPI 2009
 					set_psw_check(psw_pic_fx_ovf);
+					return psw_cc_ovf; // redundant, but must return a value   // RPI 2009
 				}
 			}
 		} else if (rlv2 < 0) {
 			if (rlv3 >= 0) {
+				psw_cc = psw_cc_ovf; // must set here in case abend            // RPI 2009
 				set_psw_check(psw_pic_fx_ovf);
+				return psw_cc_ovf; // redundant, but must return a value       // RPI 2009
 			}
 		}
 		if (rlv3 == 0) {
@@ -13473,12 +13544,16 @@ public class pz390 {
 		if (rlv1 >= 0) {
 			if (rlv2 < 0) {
 				if (rlv3 < 0) {
+					psw_cc = psw_cc_ovf; // must set here in case abend        // RPI 2009
 					set_psw_check(psw_pic_fx_ovf);
+					return psw_cc_ovf; // redundant, but must return a value   // RPI 2009
 				}
 			}
 		} else if (rlv2 > 0) {
 			if (rlv3 >= 0) {
+				psw_cc = psw_cc_ovf; // must set here in case abend            // RPI 2009
 				set_psw_check(psw_pic_fx_ovf);
+				return psw_cc_ovf; // redundant, but must return a value       // RPI 2009
 			}
 		}
 		if (rlv3 == 0) {
@@ -13515,12 +13590,16 @@ public class pz390 {
 		if (rv1 >= 0) {
 			if (rv2 > 0) {
 				if (rv3 < 0) {
+					psw_cc = psw_cc_ovf; // must set here in case abend        // RPI 2009
 					set_psw_check(psw_pic_fx_ovf);
+					return psw_cc_ovf; // redundant, but must return a value   // RPI 2009
 				}
 			}
 		} else if (rv2 < 0) {
 			if (rv3 >= 0) {
+				psw_cc = psw_cc_ovf; // must set here in case abend            // RPI 2009
 				set_psw_check(psw_pic_fx_ovf);
+				return psw_cc_ovf; // redundant, but must return a value       // RPI 2009
 			}
 		}
 		if (rv3 == 0) {
@@ -13542,12 +13621,16 @@ public class pz390 {
 		if (rv1 >= 0) {
 			if (rv2 < 0) {
 				if (rv3 < 0) {
+					psw_cc = psw_cc_ovf; // must set here in case abend        // RPI 2009
 					set_psw_check(psw_pic_fx_ovf);
+					return psw_cc_ovf; // redundant, but must return a value   // RPI 2009
 				}
 			}
 		} else if (rv2 > 0) {
 			if (rv3 >= 0) {
+				psw_cc = psw_cc_ovf; // must set here in case abend            // RPI 2009
 				set_psw_check(psw_pic_fx_ovf);
+				return psw_cc_ovf; // redundant, but must return a value       // RPI 2009
 			}
 		}
 		if (rv3 == 0) {

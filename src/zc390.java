@@ -103,6 +103,8 @@ public class zc390{
     * 07/25/10 RPI 1126 prevent replacing - with _ in floating point exp constant
     * 03/04/12 RPI 1182 don't allow embedded commas in parms for proc div
     * 11/03/14 RPI 1504 Final options not reported by ZC390
+    * 17-01-22 RPI JH 1545 Compiler fails to flag undefined field after test on literal with embedded parenthesis
+    * 17-01-22 RPI JH 1546 Test on literal with embedded parenthesis not branching correctly
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -1040,6 +1042,24 @@ public class zc390{
 		    		zc_token = tz390.find_dash.matcher(zc_token).replaceAll("_");  // RPI 1080
 				} 			    
 			}
+                        if (mlc_op != null) {                               // jclh(RPI 1545 RPI 1546)
+                            if (!mlc_op.equals("WS")) {                     // jclh(RPI 1545 RPI 1546)
+                                if ((zc_token.charAt(0) == '\'')            // jclh(RPI 1545 RPI 1546)
+                                &&  (zc_token.charAt(1) == '(')             // jclh(RPI 1545 RPI 1546)
+                                &&  (zc_token.charAt(2) == '\'')) {         // jclh(RPI 1545 RPI 1546)
+                                     log_error("only use lit ( in WS");     // jclh(RPI 1545 RPI 1546)
+                                }                                           // jclh(RPI 1545 RPI 1546)
+                            }                                               // jclh(RPI 1545 RPI 1546)
+                        }                                                   // jclh(RPI 1545 RPI 1546)
+                        if (mlc_op != null) {                               // jclh(RPI 1545 RPI 1546)
+                            if (!mlc_op.equals("WS")) {                     // jclh(RPI 1545 RPI 1546)
+                                if ((zc_token.charAt(0) == '\'')            // jclh(RPI 1545 RPI 1546)
+                                &&  (zc_token.charAt(1) == ')')             // jclh(RPI 1545 RPI 1546)
+                                &&  (zc_token.charAt(2) == '\'')) {         // jclh(RPI 1545 RPI 1546)
+                                     log_error("only use lit ) in WS");     // jclh(RPI 1545 RPI 1546)
+                                }                                           // jclh(RPI 1545 RPI 1546)
+                            }                                               // jclh(RPI 1545 RPI 1546)
+                        }                                                   // jclh(RPI 1545 RPI 1546)
 		} else if (zc_token.length() == 1){
 			// single char token . or ,
 			if (zc_token.charAt(0) == '.'){

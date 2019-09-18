@@ -1,0 +1,53 @@
+*
+* skip intro
+t18
+* skip set program mask
+t2
+* skip set ESPIE
+t8
+*
+* ##############################
+*
+* skip past AR CC 3 and overflow
+* EPIEINC1 is 6 in ESPIE exit
+* reg4 plus 5 below is EPIEINC1
+*
+* ############################## (@103)
+*
+  v * 2       = x'1b00'
+  v 8088. 6   = x'c2f900000001'
+a 8098.
+g
+s
+ v 4r         = x'f4f4f4f4000600c8'
+*
+* ##############################
+*
+* skip up to AR CC 3 and overflow
+* psw_ins_len is still 6
+*
+* ############################## (@115)
+*
+  v * 2       = x'1b00'
+  v 80a6. 6   = x'c2f900000001'
+t5
+* ############################## (@120)
+*
+  v * 2       = x'1a01'
+*
+* ##############################
+*
+* skip past the AR
+* EPIEINC1 is 6 in ESPIE exit
+* reg4 plus 5 below is EPIEINC1
+*
+* ##############################
+a 80b6.
+g
+s
+ v 4r         = x'f4f4f4f4000600c8'
+*
+* ##############################
+* done
+* ##############################
+z

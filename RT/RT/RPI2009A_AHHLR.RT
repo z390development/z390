@@ -1,0 +1,360 @@
+*
+* skip to call CC test
+a 80d6.
+g
+s
+* ############################## (@228)
+  v * 2       = x'0def'
+*
+* call the CC test
+t1
+*
+* ########################################## cut from here
+*
+* ##############################
+*
+* AHHLR CC tests begin
+*
+* ############################## 
+*
+* AHHLR CC tests for CC 0
+*
+* ############################## (@2558)
+*
+* zzz0
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'ffffffff00000000'
+  v 1r        = x'00000000ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'3'
+t2
+  v 2r        = x'00000000a1b2c3d4'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* pnz0
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'ffffffff00000001'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'3'
+t2
+  v 2r        = x'00000000a1b2c3d4'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* npz0
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'00000001ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'3'
+t2
+  v 2r        = x'00000000a1b2c3d4'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* ############################## 
+*
+* AHHLR CC tests for CC 1
+*
+* ############################## (@2586)
+*
+* znn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff00000000'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffa1b2c3d4'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* pnn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff00000001'
+  v 1r        = x'fffffffeffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffa1b2c3d4'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nzn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'00000000ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffa1b2c3d4'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* npn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'fffffffffffffffe'
+  v 1r        = x'00000001ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffa1b2c3d4'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nnn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'fffffffeffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'fffffffda1b2c3d4'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* ############################## 
+*
+* AHHLR CC tests for CC 2
+*
+* ############################## (@2627)
+*
+* zpp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff00000000'
+  v 1r        = x'00000001ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000001a1b2c3d4'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pzp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff00000001'
+  v 1r        = x'00000000ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000001a1b2c3d4'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ppp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff00000001'
+  v 1r        = x'00000002ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000003a1b2c3d4'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pnp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff00000002'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000001a1b2c3d4'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* npp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'00000002ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000001a1b2c3d4'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ############################## 
+*
+* AHHLR CC tests for CC 3
+*
+* ############################## (@2668)
+*
+* ppn3
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff7fffffff'
+  v 1r        = x'00000001ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'80000000a1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* nnz3
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff80000000'
+  v 1r        = x'80000000ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000000a1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* nnp3
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffff80000001'
+  v 1r        = x'fffffffeffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'7fffffffa1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* ############################## 
+*
+* AHHLR CC tests end
+*
+* ############################## (@2693)
+*
+  v * 2       = x'07fe'
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@233)
+  v psw.addr  = x'000080d8'
+*
+* skip to call OV test
+* 
+s
+a 811a.
+g
+s
+* ############################## (@262)
+  v * 2       = x'0def'
+*
+* call the OV test
+t1
+*
+* ########################################## cut from here
+*
+* ############################## 
+*
+* AHHLR OV tests for CC 3 and overflow
+*
+* ############################## (@4881)
+*
+* ppn3
+*
+  v psw.addr  = x'0000a7c4'
+  v * 2       = x'1b00'
+t5
+  v 0r        = x'ffffffff7fffffff'
+  v 1r        = x'00000001ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+  v a7e0. 4   = x'b2220030'
+a a7e0.
+g
+  v psw.addr  = x'0000a7e0'
+t1
+  v 2r        = x'80000000a1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* nnz3
+*
+  v * 2       = x'1b00'
+t5
+  v 0r        = x'ffffffff80000000'
+  v 1r        = x'80000000ffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+  v a800. 4   = x'b2220030'
+a a800.
+g
+  v psw.addr  = x'0000a800'
+t1
+  v 2r        = x'00000000a1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* nnp3
+*
+  v * 2       = x'1b00'
+t5
+  v 0r        = x'ffffffff80000001'
+  v 1r        = x'fffffffeffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+  v a820. 4   = x'b2220030'
+a a820.
+g
+  v psw.addr  = x'0000a820'
+t1
+  v 2r        = x'7fffffffa1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v af92. 1   = x'38'
+*
+* ############################## 
+*
+* AHHLR OV tests end
+*
+* ############################## (@4918)
+*
+  v * 2       = x'07fe'
+
+* clear brkpts
+s
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@264)
+  v psw.addr  = x'0000811c'
+* ##############################
+* done
+* ##############################
+z

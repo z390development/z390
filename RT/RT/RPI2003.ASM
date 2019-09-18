@@ -78,8 +78,8 @@ RPI2003A DS    0H
          USING WORKAREA,R13            Overlay work area
          XR    R0,R0                   Zero
          ST    R0,WASAVE                    first word in save area
-         L     R1,8(,R13)              Caller's save area
-         LM    R14,R1,12(R13)          Restore altered registers
+         L     R1,4(,R13)              Caller's save area
+         LM    R14,R1,12(R1)           Restore altered registers
          ST    R1,WAPARM@              Save pointer to parameter list
          STMH  R12,R12,WAR12H          Save high half of R12
          LLGTR R12,R12                 Ensure high half of R12 is zero

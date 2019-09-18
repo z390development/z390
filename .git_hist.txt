@@ -7701,7 +7701,108 @@ set GIT_COMMITTER_DATE=2021-03-28 17:40:00 +0100
 git commit -m "Reconstructed version v1.6.00b11 of z390"
 git tag -a v1.6.00b11 -m "Reconstructed version v1.6.00b11 of z390"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.6.00b12
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.6.00b12
+git add $RPI_list.txt
+git add RT/RT/RPI1544.ASM
+git add RT/RT/RPI2000.ASM
+git add RT/RT/RPI2001A.ASM
+git add RT/RT/RPI2001B.ASM
+git add RT/RT/RPI2002A.ASM
+git add RT/RT/RPI2002B.ASM
+git add RT/RT/RPI2002C.ASM
+git add RT/RT/RPI2003.ASM
+git add RT/RT/RPI2004.ASM
+git add RT/RT/RPI2005.ASM
+git add RT/RT/RPI2006.ASM
+git add RT/RT/RPI2007.ASM
+git add RT/RT/RPI2008.ASM
+git add src/mz390.java
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/zc390.java
+git add rt/RT/$VSAMCAT.ASM
+git add rt/RT/BLDESDS0.ASM
+git add rt/RT/BLDESDS0.OPT
+git add rt/RT/OPCD_DOS.OPT
+git add rt/RT/OPCD_ERR.OPT
+git add rt/RT/OPCD_UNI.OPT
+git add rt/RT/OPCD_ZZZ.OPT
+git add rt/RT/RPI1609.ASM
+git add rt/RT/RPI1625.ASM
+git add rt/RT/RPI2009A.ASM
+git add rt/RT/RPI2009A.RT
+git add rt/RT/RPI2009A_A.RT
+git add rt/RT/RPI2009A_AFI.RT
+git add rt/RT/RPI2009A_AG.RT
+git add rt/RT/RPI2009A_AGF.RT
+git add rt/RT/RPI2009A_AGFI.RT
+git add rt/RT/RPI2009A_AGFR.RT
+git add rt/RT/RPI2009A_AGHI.RT
+git add rt/RT/RPI2009A_AGHIK.RT
+git add rt/RT/RPI2009A_AGR.RT
+git add rt/RT/RPI2009A_AGRK.RT
+git add rt/RT/RPI2009A_AGSI.RT
+git add rt/RT/RPI2009A_AH.RT
+git add rt/RT/RPI2009A_AHHHR.RT
+git add rt/RT/RPI2009A_AHHLR.RT
+git add rt/RT/RPI2009A_AHI.RT
+git add rt/RT/RPI2009A_AHIK.RT
+git add rt/RT/RPI2009A_AHY.RT
+git add rt/RT/RPI2009A_AIH.RT
+git add rt/RT/RPI2009A_AR.RT
+git add rt/RT/RPI2009A_ARK.RT
+git add rt/RT/RPI2009A_ASI.RT
+git add rt/RT/RPI2009A_AY.RT
+git add rt/RT/RPI2009A_LAA.RT
+git add rt/RT/RPI2009A_LAAG.RT
+git add rt/RT/RPI2009B.ASM
+git add rt/RT/RPI2009B.RT
+git add rt/RT/RPI2009B_S.RT
+git add rt/RT/RPI2009B_SG.RT
+git add rt/RT/RPI2009B_SGF.RT
+git add rt/RT/RPI2009B_SGFR.RT
+git add rt/RT/RPI2009B_SGR.RT
+git add rt/RT/RPI2009B_SGRK.RT
+git add rt/RT/RPI2009B_SH.RT
+git add rt/RT/RPI2009B_SHHHR.RT
+git add rt/RT/RPI2009B_SHHLR.RT
+git add rt/RT/RPI2009B_SHY.RT
+git add rt/RT/RPI2009B_SR.RT
+git add rt/RT/RPI2009B_SRK.RT
+git add rt/RT/RPI2009B_SY.RT
+git add rt/RT/RPI2009C.ASM
+git add rt/RT/RPI2009C.RT
+git add rt/RT/RPI2009D.ASM
+git add rt/RT/RPI2009D.RT
+git add rt/RT/RPI2009E.ASM
+git add rt/RT/RPI2009E.RT
+git add rt/RT/RPI2009F.ASM
+git add rt/RT/RPI2009F.RT
+git add rt/RT/RPI2009_readme.txt
+git add rt/RT/RPI2010.ASM
+git add rt/RT/RPI2010.RT
+git add src/zACB.java
+git add src/zCatVAIX.java
+git add src/zCatVCLR.java
+
+==> Create commit for V1.6.00b12
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Abe 2019-09-18 21:20:00 +0100
+set GIT_COMMITTER_DATE=2021-03-28 17:56:00 +0100
+git commit -m "Reconstructed version v1.6.00b12 of z390"
+git tag -a v1.6.00b12 -m "Reconstructed version v1.6.00b12 of z390"
+git gc --aggressive
 
 
 

@@ -1,0 +1,373 @@
+*
+* skip to call CC test
+a 80d6.
+g
+s
+* ############################## (@205)
+  v * 2       = x'0def'
+*
+* call the CC test
+t1
+*
+* ########################################## cut from here
+*
+* ##############################
+*
+* SHHLR CC tests begin
+*
+* ############################## 
+*
+* SHHLR CC tests for CC 0
+*
+* ############################## (@2355)
+*
+* zzz0
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'00000000ffffffff'
+  v 1r        = x'ffffffff00000000'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'3'
+t2
+  v 2r        = x'00000000a1b2c3d4'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* ppz0
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'00000001ffffffff'
+  v 1r        = x'ffffffff00000001'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'3'
+t2
+  v 2r        = x'00000000a1b2c3d4'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* nnz0
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'3'
+t2
+  v 2r        = x'00000000a1b2c3d4'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* nnz0_m
+*
+  v * 2       = x'1b00'
+t4
+  v 0r        = x'80000000ffffffff'
+  v 1r        = x'ffffffff80000000'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'3'
+t2
+  v 2r        = x'00000000a1b2c3d4'
+  v psw.cc    = x'0'
+  v 3r        = x'0000000000000000'
+*
+* ############################## 
+*
+* SHHLR CC tests for CC 1
+*
+* ############################## (@2392)
+*
+* zpn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'00000000ffffffff'
+  v 1r        = x'ffffffff00000001'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffa1b2c3d4'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* ppn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'00000001ffffffff'
+  v 1r        = x'ffffffff00000002'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffa1b2c3d4'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nzn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'ffffffff00000000'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'ffffffffa1b2c3d4'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* npn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'ffffffff00000002'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'fffffffda1b2c3d4'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* nnn1
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'fffffffdffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'fffffffea1b2c3d4'
+  v psw.cc    = x'1'
+  v 3r        = x'0000000010000000'
+*
+* ############################## 
+*
+* SHHLR CC tests for CC 2
+*
+* ############################## (@2433)
+*
+* znp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'00000000ffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000001a1b2c3d4'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pzp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'00000001ffffffff'
+  v 1r        = x'ffffffff00000000'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000001a1b2c3d4'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ppp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'00000003ffffffff'
+  v 1r        = x'ffffffff00000001'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000002a1b2c3d4'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* pnp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'00000001ffffffff'
+  v 1r        = x'fffffffffffffffe'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000003a1b2c3d4'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* nnp2
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'ffffffffffffffff'
+  v 1r        = x'fffffffffffffffe'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'00000001a1b2c3d4'
+  v psw.cc    = x'2'
+  v 3r        = x'0000000020000000'
+*
+* ############################## 
+*
+* SHHLR CC tests for CC 3
+*
+* ############################## (@2474)
+*
+* znn3
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'00000000ffffffff'
+  v 1r        = x'ffffffff80000000'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'80000000a1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* pnn3
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'7fffffffffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'80000000a1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* npp3
+*
+  v * 2       = x'1b00'
+t3
+  v 0r        = x'80000001ffffffff'
+  v 1r        = x'ffffffff00000002'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+t2
+  v 2r        = x'7fffffffa1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000030000000'
+*
+* ############################## 
+*
+* SHHLR CC tests end
+*
+* ############################## (@2499)
+*
+  v * 2       = x'07fe'
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@210)
+  v psw.addr  = x'000080d8'
+*
+* skip to call OV test
+* 
+s
+a 811a.
+g
+s
+* ############################## (@238)
+  v * 2       = x'0def'
+*
+* call the OV test
+t1
+*
+* ########################################## cut from here
+*
+* ############################## 
+*
+* SHHLR OV tests for CC 3 and overflow
+*
+* ############################## (@3121)
+*
+* znn3
+*
+  v psw.addr  = x'000097ba'
+  v * 2       = x'1b00'
+t5
+  v 0r        = x'00000000ffffffff'
+  v 1r        = x'ffffffff80000000'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+  v 97d6. 4   = x'b2220030'
+a 97d6.
+g
+  v psw.addr  = x'000097d6'
+t1
+  v 2r        = x'80000000a1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v 9ca2. 1   = x'38'
+*
+* pnn3
+*
+  v * 2       = x'1b00'
+t5
+  v 0r        = x'7fffffffffffffff'
+  v 1r        = x'ffffffffffffffff'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+  v 97f6. 4   = x'b2220030'
+a 97f6.
+g
+  v psw.addr  = x'000097f6'
+t1
+  v 2r        = x'80000000a1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v 9ca2. 1   = x'38'
+*
+* npp3
+*
+  v * 2       = x'1b00'
+t5
+  v 0r        = x'80000001ffffffff'
+  v 1r        = x'ffffffff00000002'
+  v 2r        = x'12345678a1b2c3d4'
+  v psw.cc    = x'0'
+  v 9816. 4   = x'b2220030'
+a 9816.
+g
+  v psw.addr  = x'00009816'
+t1
+  v 2r        = x'7fffffffa1b2c3d4'
+  v psw.cc    = x'3'
+  v 3r        = x'0000000038000000'
+  v 9ca2. 1   = x'38'
+*
+* ############################## 
+*
+* SHHLR OV tests end
+*
+* ############################## (@3158)
+*
+  v * 2       = x'07fe'
+
+* clear brkpts
+s
+* return
+t1
+*
+* ########################################## cut to here
+*
+* ############################## (@240)
+  v psw.addr  = x'0000811c'
+* ##############################
+* done
+* ##############################
+z
