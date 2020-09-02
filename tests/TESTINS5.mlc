@@ -1,0 +1,308 @@
+*********************************************************************
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 2019/10/07
+* Tests for new problem state instructions since z196 in 2011
+********************************************************************
+* 2019/10/07 dsh add NCRK, NCGRK, MVCRL
+* 2019/10/15 dsh add NNRK, NNGRK
+* 2019/10/21 dsh add NXRK, NXGRK, NORK, NOGRK, OCRK, OCGRK
+* 2019/10/22 dsh add SELR
+* 2019/10/25 dsh add SELGR, SELFHR
+* 2019/10/26 dsh add POPCNT mask bit 8 to return total one bits in r1
+* 2020/01/25 DSH ADD AGH, SGH, MGH, LLZRGF, LZRF, BIC
+* 2020/01/27 LLGFSG, LGG, MSGC
+* 2020/01/28 MG, LAT, LGAT
+* 2020/01/29 LLGTAT, LGHAT, LLGFAT, LFHAT
+*********************************************************************
+
+         PRINT DATACD
+         TITLE 'TESTINS5 - UNIT TEST EZ390 z15 PROBLEM STATE INSTR.'
+*
+* RT1 MACRO USED TO AUTOMATE CODE GENERATED FOR MAINLINE
+* AND TEST PSW CC ROUTINES. THE MACROS DEFINE NEW BASE REG
+* FOR EACH TEST SO THEY CAN EXTEND FOR ANY LENGTH.
+*
+* SEE TESTINS1 FOR ASSEMBLY TEST OF ALL POP INSTRUCTIONS
+* SEE TESTINS2 FOR UNIT TEST OF PROB. STATE INSTR. UP TO Z9
+* SEE TESTINS3 FOR UNIT TEST OF PROB. STATE Z10 INSTR. 
+* SEE TESTINS4 FOR UNIT TEST OF PROB. STATE Z196 INSTR.
+* SEE TESTFP1  FOR HFP AND BFP FLOATING POINT INSTR TESTS
+* SEE TESTDFP1 FOR DFP FLOATING POINT INSTR TESTS
+*********************************************************************
+TESTINS5 RT1   MAIN
+         EQUREGS REGS=GPR  
+*********************************************************************
+* START INSTRUCTION TESTS
+*********************************************************************
+         RT1   START
+* NCRK
+	 LM    R4,R5,=X'FFFFFFFF0F0F0F0F'
+         NCRK  R3,R4,R5      R3=R4 AND (COMP R5) = 1
+         RT1   CC1
+         CL    R3,=X'F0F0F0F0'
+         RT1   CC0
+         LM    R4,R5,=F'3,2'
+         NCRK  R3,R4,R5      R3=R4 AND (COMP R5) = 1
+         RT1   CC1
+         CL    R3,=F'1'
+         RT1   CC0
+* NCGRK
+	 LMG    R4,R5,=X'FFFFFFFFFFFFFFFF0F0F0F0F0F0F0F0F'
+         NCGRK R3,R4,R5      R3=R4 AND (COMP R5) = 1
+         RT1   CC1
+         CLG   R3,=X'F0F0F0F0F0F0F0F0'
+         RT1   CC0
+         LMG   R4,R5,=X'00000000000000030000000000000001'
+         NCGRK R3,R4,R5      R3=R4 AND (COMP R5) = 1
+         RT1   CC1
+         CLG   R3,=X'0000000000000002'
+         RT1   CC0
+* MVCRL
+         B     MVCRL1
+MVCRLD1  DS    XL5
+MVCRL1   DS    0H
+         MVC   MVCRLD1,=C'12345'
+         LA    R0,3-1
+         MVCRL MVCRLD1+1,=C'ABC'
+         CLC   MVCRLD1,=C'1ABC5'
+         RT1   CC0
+         MVC   MVCRLD1,=C'12345'
+         LA    R0,3-1
+         MVCRL MVCRLD1+2,MVCRLD1+1  SHIFT 234 RIGHT 1
+         CLC   MVCRLD1,=C'12234'
+         RT1   CC0
+* NNRK
+	 LM    R4,R5,=X'FFFFFFFF0F0F0F0F'
+         NNRK  R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC1
+         CL    R3,=X'F0F0F0F0'
+         RT1   CC0
+         LM    R4,R5,=F'3,1'
+         NNRK  R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC1
+         CL    R3,=X'FFFFFFFE'
+         RT1   CC0
+* NNGRK
+	 LMG    R4,R5,=X'FFFFFFFFFFFFFFFF0F0F0F0F0F0F0F0F'
+         NNGRK R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC1
+         CLG   R3,=X'F0F0F0F0F0F0F0F0'
+         RT1   CC0
+         LMG   R4,R5,=X'00000000000000030000000000000001'
+         NNGRK R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC1
+         CLG   R3,=X'FFFFFFFFFFFFFFFE'
+         RT1   CC0
+* NXRK
+	 LM    R4,R5,=X'FFFFFFFF0F0F0F0F'
+         NXRK  R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC1
+         CL    R3,=X'0F0F0F0F'
+         RT1   CC0
+         LM    R4,R5,=F'3,1'
+         NXRK  R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC1
+         CL    R3,=X'FFFFFFFD'
+         RT1   CC0
+* NXGRK
+	 LMG    R4,R5,=X'FFFFFFFFFFFFFFFF0F0F0F0F0F0F0F0F'
+         NXGRK R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC1
+         CLG   R3,=X'0F0F0F0F0F0F0F0F'
+         RT1   CC0
+         LMG   R4,R5,=X'00000000000000030000000000000001'
+         NXGRK R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC1
+         CLG   R3,=X'FFFFFFFFFFFFFFFD'
+         RT1   CC0
+* NORK
+	 LM    R4,R5,=X'FFFFFFFF0F0F0F0F'
+         NORK  R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC0
+         CL    R3,=X'00000000'
+         RT1   CC0
+         LM    R4,R5,=F'3,1'
+         NORK  R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC1
+         CL    R3,=X'FFFFFFFC'
+         RT1   CC0
+* NOGRK
+	 LMG    R4,R5,=X'FFFFFFFFFFFFFFFF0F0F0F0F0F0F0F0F'
+         NOGRK R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC0
+         CLG   R3,=X'0000000000000000'
+         RT1   CC0
+         LMG   R4,R5,=X'00000000000000030000000000000001'
+         NOGRK R3,R4,R5      R3=COMP(R4 AND R5)
+         RT1   CC1
+         CLG   R3,=X'FFFFFFFFFFFFFFFC'
+         RT1   CC0
+* OCRK
+	 LM    R4,R5,=X'123456780F0F0F0F'
+         OCRK  R3,R4,R5      R3=R4 AND (COMP R5) = 1
+         RT1   CC1
+         CL    R3,=X'F2F4F6F8'
+         RT1   CC0
+         LM    R4,R5,=F'2,1'
+         OCRK  R3,R4,R5      R3=R4 AND (COMP R5) = 1
+         RT1   CC1
+         CL    R3,=X'FFFFFFFE'
+         RT1   CC0
+* OCGRK
+	 LMG    R4,R5,=X'12345678123456780F0F0F0F0F0F0F0F'
+         OCGRK R3,R4,R5      R3=R4 AND (COMP R5) = 1
+         RT1   CC1
+         CLG   R3,=X'F2F4F6F8F2F4F6F8'
+         RT1   CC0
+         LMG   R4,R5,=X'00000000000000020000000000000001'
+         OCGRK R3,R4,R5      R3=R4 AND (COMP R5) = 1
+         RT1   CC1
+         CLG   R3,=X'FFFFFFFFFFFFFFFE'
+         RT1   CC0
+* SELR
+         LM    R3,R5,=F'3,4,5'
+         CLR   R3,R3
+         SELR  R3,R4,R5,8  R3=R4
+         CLR   R3,R4
+         RT1   CC0
+         SR    R3,R3
+         SELRE R3,R4,R5
+         CLR   R3,R4
+         RT1   CC0
+         SR    R3,R3
+         SELR  R3,R4,R5,7
+         CLR   R3,R5
+         RT1   CC0
+* SELGR
+         LMG   R3,R5,=FL8'3,4,5'
+         CLGR  R3,R3
+         SELGR R3,R4,R5,8  R3=R4
+         CLGR  R3,R4
+         RT1   CC0
+         SGR   R3,R3
+         SELGRE R3,R4,R5
+         CLGR  R3,R4
+         RT1   CC0
+         SGR   R3,R3
+         SELGR R3,R4,R5,7
+         CLGR  R3,R5
+         RT1   CC0
+* SELFHR
+         LMG   R3,R5,=F'3,0,4,0,5,0'
+         CLGR  R3,R3
+         SELFHR R3,R4,R5,8  R3=R4
+         CLGR  R3,R4
+         RT1   CC0
+         SGR   R3,R3
+         SELFHRE R3,R4,R5
+         CLGR  R3,R4
+         RT1   CC0
+         SGR   R3,R3
+         SELFHR R3,R4,R5,7
+         CLGR  R3,R5
+         RT1   CC0
+* POPCNT
+         LG     R4,=X'0102030405060708'
+         POPCNT R3,R4
+         RT1    CC1
+         CLG    R3,=X'0101020102020301'
+         RT1    CC0
+         POPCNT R3,R4,8
+         RT1    CC1
+         CLG    R3,=FL8'13'
+         RT1    CC0
+* AGH
+         LG     R3,=FL8'-1'
+         AGH    R3,=H'3'
+         RT1    CC2
+         CLG    R3,=FL8'2'
+         RT1    CC0
+* SGH
+         LG     R3,=FL8'2'
+         SGH    R3,=H'3'
+         RT1    CC1
+         CLG    R3,=FL8'-1'
+         RT1    CC0
+* MGH
+         LG     R3,=FL8'2'
+         MGH    R3,=H'3'
+         CLG    R3,=FL8'6'
+         RT1    CC0
+* LZRF
+         LG     R3,=8X'FF'
+         LZRF   R3,=X'01020304'
+         CLG    R3,=X'FFFFFFFF01020300'
+         RT1    CC0
+* LLZRGF
+         LG     R3,=8X'FF'
+         LLZRGF   R3,=X'01020304'
+         CLG    R3,=X'0000000001020300'
+         RT1    CC0
+* BIC
+         SGR    R1,R1
+         BIC    X'7',BIC_ERR1
+         BIC    X'8',BIC_OK1
+BIC_ERR1 BAL    R1,1
+BIC_OK1  AHI    R1,1
+         BIC    X'2',BIC_OK2
+BIC_ERR2 BAL    R1,3
+BIC_OK2  EQU    *
+* LLGFSG
+         LG     R3,=XL8'1122334455667788'
+         LLGFSG R3,=XL4'F1F2F3F4'
+         CLG    R3,=XL8'0000000071F2F3F4'
+         RT1    CC0
+* LGG
+         LG     R3,=XL8'1122334455667788'
+         LGG    R3,=XL8'00000000F1F2F3F4'
+         CLG    R3,=XL8'0000000071F2F3F4'
+         RT1    CC0
+* MSG
+         LG     R1,=FL8'2'
+         MSGC   R1,=FL8'3'
+         CLG    R1,=FL8'6'
+         RT1    CC0
+* MG
+         LMG    R2,R3,=FL8'-1,2'
+         MG     R2,=FL8'3'
+         CLG    R2,=FL8'0'
+         RT1    CC0
+         CLG    R3,=FL8'6'
+         RT1    CC0
+* LGAT NO TRAP TEST
+         LG     R1,=FL8'0'
+         LGAT   R1,=FL8'1'
+         CLG    R1,=FL8'1'
+         RT1    CC0
+* LAT NO TRAP TEST
+         L     R1,=FL4'0'
+         LAT   R1,=FL4'1'
+         CL    R1,=FL4'1'
+         RT1    CC0
+* LLGTAT NO TRAP TEST
+         LG     R1,=XL8'F1F2F3F4F5F6F7F8'
+         LLGTAT R1,=XL4'FFFFFFFF'
+         CLG    R1,=XL8'000000007FFFFFFF'
+         RT1    CC0
+* LGAT NO TRAP TEST
+         LG     R1,=XL8'F1F2F3F4F5F6F7F8'
+         LGAT   R1,=XL8'FFFFFFFFFFFFFFFF'
+         CLG    R1,=XL8'FFFFFFFFFFFFFFFF'
+         RT1    CC0
+* LLGFAT NO TRAP TEST
+         LG     R1,=XL8'F1F2F3F4F5F6F7F8'
+         LLGFAT R1,=XL4'FFFFFFFF'
+         CLG    R1,=XL8'00000000FFFFFFFF'
+         RT1    CC0
+* LFHAT NO TRAP TEST
+         LG     R1,=XL8'F1F2F3F4F5F6F7F8'
+         LFHAT  R1,=XL4'FFFFFFFF'
+         CLG    R1,=XL8'FFFFFFFFF5F6F7F8'
+         RT1    CC0
+*****************************************************************************
+* END
+         RT1   END
+         END         
+

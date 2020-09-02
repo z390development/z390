@@ -1,0 +1,69 @@
+* open source z390 regression test of opcodes
+* 2019/11/07 dsh test all z390 opcodes defined in latest POP
+* 2019/12/03 dsh macros copied from testins6.mac
+*                macro calls copied from testins6.dat
+*************************************************************
+* copyright 2019 Don Higgins
+* This program assembles all the opcodes in z15 POP
+* and verified that generated code matches expected  DC code
+*************************************************************
+* COPY ALL THE TYPE MACROS
+        COPY INS6MACS
+* DEFINE ALL THE OPERAND VARIABLES IN TYPE MACRO CALLS
+        EQUREGS
+RI2     EQU  X'EEE'    SEE BPP TYPE SMI, MMI
+RI3     EQU  X'FFFFFF' SEE BPRP TYPES MMI 
+RXB     EQU  0 // vector RXB instruction code
+V1      EQU  1
+V2      EQU  2
+V3      EQU  3
+V4      EQU  4
+M1      EQU  1
+M2      EQU  2
+M3      EQU  3
+M4      EQU  4
+M5      EQU  5
+M6      EQU  6
+I1      EQU  1
+I2      EQU  2
+I3      EQU  3
+I4      EQU  4
+I5      EQU  5
+D1      EQU  11*16
+D2      EQU  12*16
+D3      EQU  13*16
+D4      EQU  14*16
+DH1     EQU  0
+DH2     EQU  0
+B1      EQU  11
+B2      EQU  12
+B3      EQU  13
+B4      EQU  14
+X1      EQU  13
+X2      EQU  14
+L1      EQU  11*16 L-1
+LP1     EQU  11 MAX 16 FOR PD
+L2      EQU  12*16 L-1
+LP2     EQU  12
+* DEFINE MAIN PROGRAM AND SNAP ROUTINE TO DISPLAY DIFF
+TEST    SUBENTRY
+        B     START
+ASNAP   DC    A(SNAP) ADDRESS OF SNAP FOR MACRO CALL
+START   DS    0H
+* COPY ALL THE TYPE MACRO CALLS FOR Z15 OPCODES
+        COPY  INS6OPRS
+        SUBEXIT
+* ROUTINE CALLED BY MACRO TO DISPLAY ERRORS
+SNAP    SUBENTRY
+        LA    R2,4(R10)
+        LA    R3,32(R2)
+		L     R4,SNAPID
+		LA    R4,1(R4)
+		ST    R4,SNAPID
+        SNAP   STORAGE=((R2),(R3)),PDATA=,ID=(R4)
+        SUBEXIT
+SNAPID  DC    F'0'
+        MNOTE 0,'TESTINS6 TOT_OPS=&TOT_OPS TOT_UND=&TOT_UND'
+        MNOTE 0,'TESTINS6 TOT_PROB=&TOT_PROB TOT_SUPR=&TOT_SUPR'
+        MNOTE 0,'TESTINS6 TOT_MASK=&TOT_MASK TOT_DUP=&TOT_DUP'
+        END

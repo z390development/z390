@@ -1,0 +1,5307 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* MAINTENANCE
+* 10/05/05 RPI5 MAKE ASCII MODE AWARE USING X'A0' BIGH BIT ASCII SP
+* 10/17/05 ADD CLST, CUSE, AND SRST STRING INSTRUCTIONS
+* 10/22/05 RPI44 FIX TM TO SET CC3 IF OR'D BYTE = MASK VS MEMORY
+* 10/23/05 RPI43 FIX ED AND EDMK SIGNIFICANCE 1 DIGIT EARLY      
+* 10/26/05 RPI49 FIX D TEST TO USE REG PAIR LIKE DR ALEADY DOES      
+* 11/02/05 RPI69 REMOVE ED/EDMK MASK CHANGES FOR ASCII NOT NEEDED      
+* 11/03/05 RPI65 ADD TEST FOR BALR, BASR, BASSM WITH R1=R2      
+* 11/07/05 RPI73 ADD TESTS FOR C!..! AND HEX MASK, PKA, UNPKA      
+* 11/11/05 RPI73 UPDATE UNPK TESTS FOR ASCII MODE SUPPORT          
+* 11/11/05 RPI82 ADD TESTS FOR MVC WITH OVERLAP AT +1 AND +2     
+* 11/20/05 RPI106 UPDATE TESTS FOR SPM, IPM, NR, OR, XR, AND PC/PR     
+* 11/23/05 RPI109 ADD PD TESTS FOR OPTIMIZED PD USING INT VS BIGINT     
+* 12/08/05 RPI120 ADD SRP TEST OF EXPLICIT BDDD2                        
+* 01/07/06 RPI158 - CLEAR REMAINING BITS IN LLIHH LLIHL LLILH LLILL
+* 01/08/06 RPI160 - CORRECT LLGT WHICH WAS LOADING FROM LOC+4                              
+* 01/11/06 RPI166 TEST SRAG 1,2,3(4) AND TMY 1(2),3 USING BASE REG
+* 01/15/06 RPI173 ADD LRV, STPQ, and LPQ                                            
+* 01/15/06 RPI174 CORRECT ALC?? AND SLB?? CC0 CARRY ERRORS                 
+* 02/04/06 RPI185 ADD MISSING EXTENDED BRNNCH AND Z9 OPCODES               
+* 02/08/06 RPI185 ADD Z9 INSTUCTIONS (SEE TESTFP1 FOR FP INSTR)
+*          PTFF, STCKF (FIX STCK TO BE UNIQUE), STFLE
+*          LGBR, LGBR, LGHR, LBR, LHR, FLOGR
+*          LLGCR, LLGHR, LLCR, LLHR, LGFI, XIHF, XILF
+*          IIHF, IILF, NIHF, NILF, OIHF, OILF 
+*          LLIHF, LLILF, SLGFI, SLFI
+*          AGFI, AFI, ALGFI, ALFI, CGFI, CFI, CLGFI, CLFI
+*          LTG, LT, LLC, LLH
+* 02/10/06 RPI199 ADD EXTENDED BRANCH BRCL INSTRUCTIONS
+* 04/01/06 ADD 32 * 32 = 64 BIT TEST OF MR                
+* 04/05/06 ADD 32 * 32 = 64 BIT TEST OF MR AND VERIFY R1 IGNORED                
+* 04/07/06 ADD 32 * 32 = 64 BIT TEST OF MLR AND ML                
+* 04/23/06 RPI 295 ADD ADDITIONAL TESTS FOR ICM AND OIHL          
+* 04/28/06 RPI 303 ADD ADDITIONAL TESTS FOR ICM TO SET HIGH IF POS          
+* 05/02/06 RPI 305 USE NEW ESPIE AND ESTAE CONTROL BLOCKS                   
+* 07/20/06 RPI 376 TEST ALR CC=1 WHEN HIGH BIT TURNED ON AND NO CARRY       
+* 07/24/06 RPI 383 CORRECT TESTS FOR MLG AND MLGR TO USE R1+1 * S2/R2       
+* 08/06/06 RPI 398 CORRECT TESTS FOR D AND DR TO INCLUDE 64 BITS            
+* 09/08/06 RPI 441 ADD TEST FOR MVST MOVE STRING AND UPDATE TP TESTS                           
+* 09/19/06 RPI 454 ADD TEST FOR TRE, TROO, TROT, TRTO, TRTT                                          
+* 11/10/06 RPI 476 ADD CC TEST FOR MVST ALONG WITH SPEEDUP                                           
+* 03/18/07 RPI 580 CORRECT TEST CHAR FOR TR??
+* 05/07/07 RPI 606 add MVCOS tests
+* 06/10/07 RPI 636 set ESTAE required exit RC=4 for restart request
+* 02/27/08 RPI 815 correct support for negative index register 24/31
+* 03/12/08 RPI 820 test fix to prevent S0C5 on negative SRP b2 reg  
+* 03/15/08 RPI 823 correct test for MVCIN using right most source addr
+* 03/28/08 RPI 828 test clearing high bit in AMODE31 for TRT/EDMK     
+* 03/28/08 RPI 831 test SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF FOR CC1  
+*          WHEN BORROW FOR TWO VALUES WITH HIGH BIT ON.
+* 06/07/08 RPI 844 corrections for compatibility with z9,z10 tests 
+*          1) Align TROO, TROT, TRTO, TRTT table to dword else 0C4
+*          2) TMHH, TMHL, TMLH, TMLL set CC1 high sel bit 0 else cc2   
+*          3) FORCE AMODE31 WITH SAM31 FOR TRT TEST ON Z9/Z10
+*          4) CORRECT TESTS FOR TMY MIXED
+*          5) RECODE LMD TEST USING DC VS LITERALS FOR HLASM COMPAT.
+*          6) ISSUE S0C7 ABEND FOR X'3' PD SIGN UNLESS OPTION ASCII
+*          7) ALIGN REGS ON 16 BYTE BOUNDARY TO ELIM. HLASM WARNING
+* 06/09/08 RPI 859 move MVCOS updated test to TESTINS3 removing overlap
+*          2) Set R0 to 7 for STFLE  store faciliies.
+* 06/17/08 RPI 845 change EPIED to IHAEPIE (NOTE ESPIEPSW OFFSET CHG)      
+* 06/21/08 RPI 845 change ESTAD to IHASDWA and remove ESTAPSW ref.                                 
+* 07/05/08 RPI 875 correct test for CLIY bug introduced by RPI 859                                 
+* 07/08/08 RPI 875 add missing test for ALY, LTGF, CGH,MFY,MHY,                                    
+*          ASI, ALSI, AGSI, ALGSI
+* 07/23/08 RPI 879 test SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
+*          FOR CC3 NZ,NB WHEN BOTH SIGNS MEG AND S1 > S2 
+* 04/20/09 RPI 1026 ADD TEST FOR ESTA, EREG, EREGG
+* 06/15/09 RPI 1055 ADD CPYA, SAR, and EAR support for AR registers
+* 02/25/10 RPI 1111 CORRECT PR TO ONLY RESTORE 2-14 (WAS 1-14)
+* 12/18/10 RPI 1125 FIX ALSI AND ALGSI TO SET BORROW ON NEG ADD
+* 04/02/12 RPI 1200 TEST LRVGR AND LRVR WITH SAME REG
+* 2019/10/12 dsh prevent LPR, SLA fixed overflow S0C8
+*                after RPI #2009 fix by AK
+*********************************************************************
+         TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
+* THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
+* ADDED TO EZ390.JAVA J2SE 390 EMULATOR.
+*
+* RT1 MACRO USED TO AUTOMATE CODE GENERATED FOR MAINLINE
+* AND TEST PSW CC ROUTINES. THE MACROS DEFINE NEW BASE REG
+* FOR EACH TEST SO THEY CAN EXTEND FOR ANY LENGTH.
+*
+* SEE TESTFP1 FOR HFP AND BFP FLOATING POINT INSTR TESTS
+*********************************************************************
+TESTINS2 RT1   MAIN
+         EQUREGS
+ESPIE_EXIT DS  0H
+         USING *,R15
+         USING EPIE,R1         RPI 845 NEW DSECT NAME
+         L     R0,EPIEPARM                            
+         ST    R0,EPIEPSW+4
+         BR    R14
+         DROP  R15,R1
+ESTAE_EXIT DS  0H
+         USING *,R15
+         USING SDWA,R1
+         L     R0,SDWAPARM     RPI 845 USE SDWA PARM VS ESTAD
+         LA    R15,4   REQUEST RESTART RPI 636
+         BR    R14
+         DROP  R15,R1
+LMD1     DC    0D,X'01234567',X'01234567' RPI 844
+LMD2     DC    0D,X'89ABCDEF',X'89ABCDEF' RPI 844
+         CNOP  8,16      RPI 844 PREVENT STPQ WARNING MESSAGE
+PWORK    DS    D
+PWORK16  DS    XL16
+DWORD    DS    D
+PL1      DS    PL1
+WORD     DS    F
+BYTE     DS    X
+         CNOP  0,16      RPI 844 PREVENT CDS WARNING MESSAGE
+REGS     DS    XL(16*8)
+EBMIN    DC    EB'1.2E-38'
+FPCREG   DS    F        BFP CONTROL REG WITH MASKS AND DXC CODE
+FPCDXC   EQU   FPCREG+2 REASON CODES FOR 0C7 DATA EXCEPTIONS
+SVC35    DC    AL2(SVC35END-*,0),C'TEST SVC 35 OK'
+SVC35END EQU   *
+ESTACC   DC    X'00'
+ESTAPSW  DC    2F'0'
+EREGSAVE DC    XL8'00'
+EREGGSAV DC    XL16'00'
+KEY      DC    C'EFE'
+PAD      DC    C' '
+STRING1  DC    C'CABCBFDEFEAB'
+STRING2  DC    C'ACBABBCEFEAB'
+STRING3  DC    C'1234',X'00'
+STRING4  DC    C'ABCD',X'EE'
+&ZONE    SETC  'F'    EBCDIC ZONE FOR DIGITS
+         AIF   (C'A' EQ X'C1').SKIP_ASCII_MODE
+&ZONE    SETC  '3'    ASCII ZONE FOR DIGITS
+.SKIP_ASCII_MODE ANOP
+NEGMASK  DC    C! !,X'202020',C!-   ! BI-MODAL EBCDIC MASK 
+TREEOD   EQU   X'EE' TRE EOD TEST BYTE
+TRETAB   DC    240X'FF',C!ABCD!,12X'FF' TRE TRANS TAB 0123 > ABCD
+TREF1    DC    C!0123!
+TREV1    DC    C!ABCD!
+TREF2    DC    X'F0F1EEF3'  EOD IN 3RD BYTE
+TREV2    DC    X'C1C2EEF3'
+TROOEOD  EQU   X'C3' TROO EOD TEST BYTE RPI 580
+* RPI 844 ALIGN TROOTAB, TROTTAB, TRTTTAB TO DOUBLE WORK
+TROOTAB  DC    0D,240X'FF',C!ABCD!,12X'FF' TROO TRANS TAB 0123 > ABCD
+TROOF1   DC    C!9999!
+TROOF1V1 DC    X'C1C2C3C4'  RESULT WITH NO TESTING FOR 4 BYTES
+TROOF1V2 DC    X'C1C2F9F9'  RESULT WITH TESTING STOP ON 3RD BYTE
+TROOF2   DC    X'F0F1F2F3'                     
+TROTEOD  EQU   X'C3C3' TROO EOD TEST BYTE RPI 580
+TROTTAB  DC    0D,240X'FFFF',C!AABBCCDD!,12X'FFFF' (F0 * 2 > C1C1) ETC
+TROTF1   DC    C!99999999!
+TROTF1V1 DC    X'C1C1C2C2C3C3C4C4'  RESULT WITH NO TESTING FOR 4 BYTES
+TROTF1V2 DC    X'C1C1C2C2F9F9F9F9'  RESULT WITH STOP ON 3RD BYTE
+TROTF2   DC    X'F0F1F2F3'                     
+TRTOEOD  EQU   X'C3' TROO EOD TEST BYTES RPI 580
+TRTOTAB  DC    0D,128X'FFFF',C!ABCD! (X'0100' > C'A' ETC
+TRTOF1   DC    C!9999!
+TRTOF1V1 DC    C!ABCD!  RESULT WITH NO TESTING FOR 4 BYTES
+TRTOF1V2 DC    C!AB99!  RESULT WITH STOP ON 3RD BYTE
+TRTOF2   DC    X'0100010101020103'                     
+TRTTEOD  EQU   X'C3C3' TROO EOD TEST BYTES RPI 580
+TRTTTAB  DC    0D,256X'FFFF',C!AABBCCDD! (X'0100' > C'AA' ETC
+TRTTF1   DC    C!99999999!
+TRTTF1V1 DC    C!AABBCCDD!  RESULT WITH NO TESTING
+TRTTF1V2 DC    C!AABB9999!  RESULT WITH STOP ON 3RD ENTRY
+TRTTF2   DC    X'0100010101020103'  EOD IN 3RD ENTRY
+* START TESTS
+         RT1   START
+* 0101 PR
+         LA    0,1
+         LA    1,1
+         LMG   2,3,=A(111,222,333,444)
+         LA    14,1
+         LA    15,1
+         PC    PR1
+PCRET1   EQU   *
+         CHI   0,2
+         RT1   CCE
+         CHI   1,2  RPI 1111 WAS 1 VS 2
+         RT1   CCE
+         CHI   14,1
+         RT1   CCE
+         CHI   15,2
+         RT1   CCE
+         B     PR2
+         RT1   ABORT
+PR1      EQU   *
+         BALR  2,0
+         USING *,2
+         WTO   'PR1 SUB CALLED'
+         LA    2,2  REQUEST PSW                    RPI 1026
+         ESTA  0,2  EXTRACT RETURN PSW INTO R0-R1  RPI 1026
+         MVI   ESTACC,0
+         JZ    *+8
+         MVI   ESTACC,1
+         STM   0,1,ESTAPSW
+         SGR   2,2
+         SGR   3,3
+         EREG  2,3
+         STM   2,3,EREGSAVE
+         SGR   2,2
+         SGR   3,3
+         EREGG 2,3
+         STMG  2,3,EREGGSAV
+         LA    0,2
+         LA    1,2
+         LA    14,2
+         LA    15,2
+         PR
+         DROP  2
+PR2      EQU   *
+         CLI   ESTACC,1 PC TYPE
+         RT1   CCE
+         CLC   ESTAPSW,=AL8(PCRET1)
+         RT1   CCE           RPI 1026
+         CLC   EREGSAVE,=A(222,444)
+         RT1   CCE
+         CLC   EREGGSAV,=A(111,222,333,444)
+         RT1   CCE
+* 010C SAM24
+         SAM24
+         L     1,=A(X'FFFFFF')
+         LA    1,1(1)
+         CL    1,=A(0)
+         RT1   CCE
+* 010D SAM31
+         SAM31
+         L     1,=A(X'FFFFFF')
+         LA    1,1(1)
+         CL    1,=A(X'01000000')
+         RT1   CCE
+* 04   SPM
+         L     R0,=X'3F000000'
+         SPM   R0
+         RT1   CC3
+         SR    R0,R0
+         AHI   R0,1
+         IPM   R0
+         CLM   R0,8,=X'2F'
+         RT1   CCE
+* 05   BALR
+         BALR  R1,0
+BALR1    EQU   *
+         NILH  R1,X'7FFF'
+         ST    R1,WORD
+         RT1   CCE,WORD,=A(BALR1)
+         LA    R2,BALR3 
+         BALR  R1,R2
+BALR2    EQU   *
+         RT1   ABORT
+BALR3    EQU   *
+         NILH  R1,X'7FFF'
+         ST    R1,WORD
+         RT1   CCE,WORD,=A(BALR2)
+         LA    R1,*+6
+         BALR  R1,R1
+         CLM   R1,7,=AL3(*)
+         RT1   CCE
+* 06   BCTR
+         LA    R1,2
+         BCTR  R1,0
+         CL    R1,=F'1'
+         RT1   CCE
+* 07   BCR
+         LA    R3,BCRERR
+         B     BCROK
+BCRERR   RT1   ABORT
+BCROK    EQU   *
+         NOPR  R3
+         CLI   =X'1',1
+         BNER  R3
+         CLI   =X'1',2
+         BNLR  R3
+         BER   R3
+         CLI   =X'2',1
+         BNHR  R3
+         BER   R3
+* 0A   SVC
+         LA    R1,SVC35
+         SVC   35
+* 0B   BSM
+         LA    R0,0
+         BSM   R0,R0
+         CL    R0,=F'0'
+         RT1   CCE
+         LA    R1,0
+         BSM   R1,R0
+         CL    R1,=X'80000000'
+         RT1   CCE
+         LA    R2,BSM1
+         BSM   R1,R2           SWITCH TO AMODE24
+         RT1   ABORT
+BSM1     EQU   *
+         CL    R1,=X'80000000' VERIFY WAS AMODE31
+         RT1   CCE
+         LA    R1,0
+         BSM   R1,R0
+         CL    R1,=X'00000000' VERIFY NOW AMODE24
+         RT1   CCE
+         LA    R2,BSM2
+         OILH  R2,X'8000'
+         BSM   R1,R2           SWITCH TO AMODE31
+         RT1   ABORT
+BSM2     EQU   *
+         CL    R1,=X'00000000' VERIFY WAS AMODE24
+         RT1   CCE
+         LA    R1,0
+         BSM   R1,R0
+         CL    R1,=X'80000000' VERIFY NOW AMODE31
+         RT1   CCE
+* 0C   BASSM
+         BASSM R1,0
+BASSM1   EQU   *
+         NILH  R1,X'7FFF'
+         ST    R1,WORD
+         RT1   CCE,WORD,=A(BASSM1)
+         LA    R2,BASSM3 
+         BASSM R1,R2      SWITCH TO AMODE24
+BASSM2    EQU   *
+         RT1   ABORT
+BASSM3    EQU   *
+         ST    R1,WORD
+         RT1   CCE,WORD,=A(BASSM2+X'80000000') VER WAS AMODE31 BEFORE
+         L     R2,=A(BASSM5+X'80000000')
+         BASSM R1,R2   SWITCH BACK TO AMODE31
+BASSM4   EQU   *
+         RT1   ABORT
+BASSM5   EQU   *
+         CL    R1,=A(BASSM4)
+         RT1   CCE
+         L     R1,=X'00FFFFFF'
+         LA    R1,1(R1)
+         CL    R1,=X'01000000'
+         RT1   CCE                                      
+         LA    R1,*+10
+         OILH  R1,X'8000'
+         BASSM R1,R1
+         CLM   R1,7,=AL3(*)
+         RT1   CCE
+* 0D   BASR
+         BASR  R1,0
+BASR1    EQU   *
+         NILH  R1,X'7FFF'
+         ST    R1,WORD
+         RT1   CCE,WORD,=A(BASR1)
+         LA    R2,BASR3 
+         BASR  R1,R2
+BASR2    EQU   *
+         RT1   ABORT
+BASR3    EQU   *
+         NILH  R1,X'7FFF'
+         ST    R1,WORD
+         RT1   CCE,WORD,=A(BASR2)
+         LA    R1,*+6
+         BASR  R1,R1
+         CLM   R1,7,=AL3(*)
+         RT1   CCE
+* 0E   MVCL
+         MVC   WORD,=C'1234'
+         MVC   PWORK(4),=C'ABCD'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,4)
+         MVCL  R0,R2
+         RT1   CCE
+         CLC   WORD,=C'ABCD'
+         RT1   CCE
+         CL    R0,=A(WORD+4)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+4)                 
+         RT1   CCE
+         CL    R3,=A(0)
+         RT1   CCE
+         MVC   WORD,=C'1234'
+         MVC   PWORK(4),=C'ABXX'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,2)
+         ICM   R3,8,=C' ' 
+         MVCL  R0,R2
+         RT1   CCH
+         CL    R0,=A(WORD+4)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+2)                 
+         RT1   CCE
+         CLM   R3,8,=C' '
+         CLM   R3,7,=AL3(0)
+         RT1   CCE
+         CLC   WORD,=C'AB  '
+         RT1   CCE
+         MVC   WORD,=C'1234'
+         MVC   PWORK(4),=C'ABCX'
+         LM    R0,R1,=A(WORD,3)
+         LM    R2,R3,=A(PWORK,4)
+         ICM   R3,8,=C' ' 
+         MVCL  R0,R2
+         RT1   CCL
+         CL    R0,=A(WORD+3)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+3)                 
+         RT1   CCE
+         CLM   R3,8,=C' '
+         CLM   R3,7,=AL3(1)
+         RT1   CCE
+         CLC   WORD,=C'ABC4'
+         RT1   CCE
+* 0F   CLCL
+         MVC   WORD,=C'ABCD'
+         MVC   PWORK(4),=C'ABCD'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,4)
+         CLCL  R0,R2
+         RT1   CCE
+         CL    R0,=A(WORD+4)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+4)                 
+         RT1   CCE
+         CL    R3,=A(0)
+         RT1   CCE
+         MVC   WORD,=C'AB  '
+         MVC   PWORK(4),=C'ABXX'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,2)
+         ICM   R3,8,=C' ' 
+         CLCL  R0,R2
+         RT1   CCE
+         CL    R0,=A(WORD+4)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+2)                 
+         RT1   CCE
+         CLM   R3,8,=C' '
+         CLM   R3,7,=AL3(0)
+         RT1   CCE
+         MVC   WORD,=C'ABC4'
+         MVC   PWORK(4),=C'ABC '
+         LM    R0,R1,=A(WORD,3)
+         LM    R2,R3,=A(PWORK,4)
+         ICM   R3,8,=C' ' 
+         CLCL  R0,R2
+         RT1   CCE
+         CL    R0,=A(WORD+3)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+4)                 
+         RT1   CCE
+         CLM   R3,8,=C' '
+         CLM   R3,7,=AL3(0)
+         RT1   CCE
+         MVC   WORD,=C'AB  '
+         MVC   PWORK(4),=C'ACXX'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,2)
+         ICM   R3,8,=C' ' 
+         CLCL  R0,R2
+         RT1   CCL
+         CL    R0,=A(WORD+1)
+         RT1   CCE
+         CL    R1,=A(3)            
+         RT1   CCE
+         CL    R2,=A(PWORK+1)                 
+         RT1   CCE
+         CLM   R3,8,=C' '
+         CLM   R3,7,=AL3(1)
+         RT1   CCE
+         MVC   WORD,=C'AB C'
+         MVC   PWORK(4),=C'ABXX'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,2)
+         ICM   R3,8,=C' ' 
+         CLCL  R0,R2
+         RT1   CCH
+         CL    R0,=A(WORD+3)
+         RT1   CCE
+         CL    R1,=A(1)            
+         RT1   CCE
+         CL    R2,=A(PWORK+2)                 
+         RT1   CCE
+         CLM   R3,8,=C' '
+         CLM   R3,7,=AL3(0)
+         RT1   CCE
+* 10   LPR
+         L     R1,=X'30000000'  DSH RPI 2202
+         SPM   R1               DSH RPI 2202 PREVENT s0C8 
+         L     R1,=F'-1'
+         LPR   R0,R1
+         RT1   CCH
+         CL    R0,=F'1'
+         RT1   CCE
+         L     R1,=X'80000000'
+         LPR   R0,R1
+         RT1   CC3
+* 11   LNR
+         L     R1,=F'1'
+         LNR   R0,R1
+         RT1   CCL
+         CL    R0,=F'-1'
+         RT1   CCE
+* 12   LTR
+         L     R1,=F'1'
+         LTR   R0,R1
+         RT1   CCH
+         L     R1,=F'-1'
+         LTR   R0,R1
+         RT1   CCL
+         L     R1,=F'0'
+         LTR   R0,R1
+         RT1   CCE
+* 13   LCR
+         L     R1,=F'1'
+         LCR   R0,R1
+         RT1   CCL
+         CL    R0,=F'-1'
+         RT1   CCE
+         L     R1,=F'-1'
+         LCR   R0,R1
+         RT1   CCH
+         CL    R0,=F'1'
+         RT1   CCE
+         L     R1,=X'80000000'
+         LCR   R0,R1
+         RT1   CC3
+* 15   CLR
+         LA    R1,1
+         LA    R2,1
+         CLR   R1,R2
+         RT1   CCE
+         LA    R1,0
+         L     R2,=F'1'
+         CLR   R1,R2
+         RT1   CCL
+         LA    R1,2
+         L     R2,=F'1'
+         CLR   R1,R2
+         RT1   CCH
+         L     R1,=F'-1'
+         L     R2,=F'1'
+         CLR   R1,R2
+         RT1   CCH
+         L     R1,=F'1'
+         L     R2,=F'-1'
+         CLR   R1,R2
+         RT1   CCL
+* 14   NR
+         LA    R0,X'F0'
+         LA    R1,X'0F'
+         NR    R0,R1
+         RT1   CC0
+         LTR   R0,R0
+         RT1   CC0
+         LA    R0,3
+         LA    R1,2
+         NR    R0,R1
+         RT1   CC1
+         CLM   R0,15,=F'2'
+         RT1   CCE
+* 16   OR
+         LA    R0,0     
+         LA    R1,0    
+         OR    R0,R1
+         RT1   CC0
+         LTR   R0,R0
+         RT1   CC0
+         LA    R0,1
+         LA    R1,2
+         OR    R0,R1
+         RT1   CC1
+         CLM   R0,15,=F'3'
+         RT1   CCE
+* 17   XR
+         LA    R0,X'FF' 
+         LA    R1,X'FF'
+         XR    R0,R1
+         RT1   CC0
+         LTR   R0,R0
+         RT1   CC0
+         LA    R0,3
+         LA    R1,2
+         XR    R0,R1
+         RT1   CC1
+         CLM   R0,15,=F'1'
+         RT1   CCE
+* 18   LR 
+         LA    R0,1
+         LA    R1,2
+         LR    R1,R0
+         STC   R1,BYTE
+         CLI   BYTE,1
+         RT1   CCE
+* 19   CR
+         LA    R0,1
+         LA    R1,1
+         CR    R0,R1
+         RT1   CCE
+         LA    R0,1
+         LA    R1,2
+         CR    R0,R1
+         RT1   CCL
+         LA    R0,2
+         LA    R1,1
+         CR    R0,R1
+         RT1   CCH
+* 1A   AR
+         LA    R0,1
+         LA    R1,2
+         AR    R0,R1
+         RT1   CCH
+         CL    R0,=F'3'
+         RT1   CCE
+         ESPIE SET,ESPIE_EXIT,8,PARAM=AR1
+         L     R0,=X'7FFFFFFF'
+         LA    R1,1
+         AR    R0,R1
+         RT1   ABORT
+AR1      ESPIE RESET
+         WTO   'ESPIE FOR FIXED POINT OVERFLOW OK'
+         ESTAE ESTAE_EXIT,PARAM=AR2
+         L     R0,=X'80000000'
+         L     R1,=F'-1'
+         AR    R0,R1
+         RT1   ABORT
+AR2      ESTAE 0
+         WTO   'ESTAE FOR FIXED POINT OVERFLOW OK'
+* 1B   SR   
+         LA    R0,1
+         LA    R1,2
+         SR    R0,R1
+         RT1   CCL
+         CL    R0,=F'-1'
+         RT1   CCE
+         ESPIE SET,ESPIE_EXIT,8,PARAM=SR1
+         L     R0,=X'7FFFFFFF'
+         L     R1,=F'-1'
+         SR    R0,R1
+         RT1   ABORT
+SR1      ESPIE RESET
+         ESTAE ESTAE_EXIT,PARAM=SR2
+         L     R0,=X'80000000'
+         L     R1,=F'1'
+         SR    R0,R1
+         RT1   ABORT
+SR2      ESTAE 0
+* 1C   MR  
+         LA    R0,1        RPI 272
+         LA    R1,2
+         LA    R2,5
+         MR    R0,R2
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'10'
+         RT1   CCE
+         LA    R14,2
+         LA    R15,3
+         MR    R14,R14
+         CL    R14,=F'0'  RPI 272
+         RT1   CCE
+         CL    R15,=F'6'
+         RT1   CCE
+* 1D   DR
+         LA    R0,0
+         LA    R1,13
+         LA    R2,4
+         DR    R0,R2
+         CL    R0,=F'1'
+         RT1   CCE
+         CL    R1,=F'3'
+         RT1   CCE
+         LM    R0,R1,=FL8'1E17'
+         L     R3,=F'1E9'
+         DR    R0,R3
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'1E8'
+         RT1   CCE
+         LM    R0,R1,=FL8'-1E17'
+         L     R3,=F'1E9'
+         DR    R0,R3
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'-1E8'
+         RT1   CCE
+         LM    R0,R1,=FL8'1E17'
+         L     R3,=F'-1E9'
+         DR    R0,R3
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'-1E8'
+         RT1   CCE
+         LM    R0,R1,=F'1,3'
+         L     R3,=F'4'    
+         DR    R0,R3
+         CL    R0,=F'3'
+         RT1   CCE
+         CL    R1,=FS30'1'
+         RT1   CCE
+         LM    R0,R1,=F'1,3'
+         L     R3,=F'-4'  
+         DR    R0,R3
+         CL    R0,=F'3'
+         RT1   CCE
+         CL    R1,=FS30'-1'
+         RT1   CCE
+         ESPIE SET,ESPIE_EXIT,9,PARAM=DR1
+         LA    R2,0
+         DR    R0,R2
+         RT1   ABORT
+DR1      ESPIE RESET
+         WTO   'ESPIE FOR FIXED POINT DIVIDE OK'
+* 1E   ALR
+         L     R0,=F'3'
+         L     R2,=F'2'
+         ALR   R0,R2
+         RT1   CC1        NZ,NC
+         CL    R0,=F'5'
+         RT1   CCE
+         L     R0,=X'80000000'
+         L     R2,=X'00000001'
+         ALR   R0,R2
+         RT1   CC1        NZ,NC
+         L     R0,=X'40000000'
+         L     R2,=X'40000001'
+         ALR   R0,R2
+         RT1   CC1        NZ,NC  RPI 376
+         CL    R0,=X'80000001'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000001'
+         ALR   R0,R2
+         RT1   CC2        Z,C
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000002'
+         ALR   R0,R2
+         RT1   CC3        NZ,C
+         CL    R0,=X'00000001'
+         RT1   CCE
+         L     R0,=X'00000000'
+         L     R2,=X'00000000'
+         ALR   R0,R2
+         RT1   CC0        Z,NC
+         CL    R0,=X'00000000'
+         RT1   CCE
+* 1F   SLR
+         L     R0,=X'FFFFFFFF'  RPI 879
+         L     R2,=X'80000000'  RPI 879
+         SLR   R0,R2            RPI 879
+         RT1   CC3        NZ,NB RPI 879
+         CL    R0,=X'7FFFFFFF'  RPI 879
+         RT1   CCE              RPI 879
+         L     R0,=X'80000000'  RPI 831
+         L     R2,=X'A0000000'
+         SLR   R0,R2
+         RT1   CC1        NZ,B
+         CL    R0,=X'E0000000'
+         RT1   CCE
+         L     R0,=F'3'
+         L     R2,=F'2'
+         SLR   R0,R2
+         RT1   CC3        NZ,NB
+         CL    R0,=F'1'
+         RT1   CCE
+         L     R0,=X'80000000'
+         L     R2,=X'00000001'
+         SLR   R0,R2
+         RT1   CC3        NZ,NB
+         CL    R0,=X'7FFFFFFF'
+         RT1   CCE
+         L     R0,=X'00000000'
+         L     R2,=X'00000001'
+         SLR   R0,R2
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFF'
+         RT1   CCE
+         L     R0,=X'00000001'
+         L     R2,=X'00000001'
+         SLR   R0,R2
+         RT1   CC2        Z,NB
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=X'00000000'
+         L     R2,=X'00000002'
+         SLR   R0,R2
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+* 40   STH
+         L     R0,=F'1'
+         STH   R0,WORD
+         CLC   WORD(2),=H'1'
+         RT1   CCE
+         L     R0,=F'-1'
+         STH   R0,WORD
+         CLC   WORD(2),=H'-1'
+         RT1   CCE
+* 41   LA
+         LA    R1,*+4
+         CL    R1,=A(*)
+         RT1   CCE
+* 42   STC
+         LA    R0,X'FF'
+         STC   R0,BYTE
+         CLI   BYTE,X'FF'
+         RT1   CCE
+* 43   IC
+         SR    R0,R0
+         IC    R0,=C'A'
+         CL    R0,=A(C'A')
+         RT1   CCE
+         LA    R1,=C'AB'
+         L     R2,=F'-1'
+         IC    R0,1(R1)
+         CLM   R0,1,=C'B'
+         RT1   CCE
+         IC    R0,1(R1,R2)      RPI 815 INDEX BY -1
+         CLM   R0,1,=C'A'
+         RT1   CCE
+* 44   EX
+         MVI   BYTE,C'A'
+         EX    0,EX1
+         B     EX2
+EX1      MVI   BYTE,C'B'
+EX2      CLI   BYTE,C'B'
+         RT1   CCE
+         MVI   BYTE,C'A'
+         LA    1,C'B'
+         EX    1,EX3
+         B     EX4
+EX3      MVI   BYTE,C'B'
+EX4      CLI   BYTE,C'B'
+         RT1   CCE
+         EX    0,EX5
+         RT1   ABORT
+EX5      B     EX6
+EX6      EQU   *
+         LA    2,EX8
+         EX    0,EX9
+         B     EX10
+EX7      WTO   'EX BAL RTN ENTERED'
+         BR    2
+EX8      RT1   ABORT
+EX9      BAL   2,EX7
+         RT1   ABORT
+EX10     EQU   *
+* 45   BAL
+BAL1     BAL   R1,BAL2
+         RT1   ABORT
+BAL2     EQU   *
+         NILH  R1,X'7FFF'
+         CL    R1,=A(BAL1+4)
+         RT1   CCE
+* 46   BCT 
+         LA    R1,10
+         SR    R2,R2
+BCT1     LA    R2,1(R2)
+         BCT   R1,BCT1
+         CL    R1,=F'0'
+         RT1   CCE
+         CL    R2,=F'10'
+         RT1   CCE
+* 47   BC
+         NOP   BCERR
+         CLI   =X'1',1
+         BNE   BCERR
+         RT1   CCE
+         CLI   =X'1',2
+         BNL   BCERR
+         BE    BCERR
+         RT1   CCL
+         CLI   =X'2',1
+         BNH   BCERR
+         BE    BCERR
+         RT1   CCH
+         B     BCOK
+BCERR    RT1   ABORT
+BCOK     EQU   *
+* 48   LH
+         LH    R0,=H'-2'
+         CL    R0,=F'-2'
+         RT1   CCE
+* 49   CH
+         LH    R0,=H'1'
+         CH    R0,=H'1'
+         RT1   CCE
+         LH    R0,=H'-1'
+         CH    R0,=H'1'
+         RT1   CCL
+         LH    R0,=H'1'
+         CH    R0,=H'-1'
+         RT1   CCH
+* 4A   AH
+         LH    R0,=H'1'
+         AH    R0,=H'3'
+         RT1   CCH
+         CH    R0,=H'4'
+         RT1   CCE
+* 4B   SH
+         LH    R0,=H'1'
+         SH    R0,=H'3'
+         RT1   CCL
+         CH    R0,=H'-2'
+         RT1   CCE
+* 4C   MH
+         LH    R0,=H'2'
+         MH    R0,=H'3'
+         CH    R0,=H'6'
+         RT1   CCE
+* 4D   BAS
+BAS1     BAS   R1,BAS2
+         RT1   ABORT
+BAS2     EQU   *
+         NILH  R1,X'7FFF'
+         CL    R1,=A(BAS1+4)
+         RT1   CCE
+* 4E   CVD
+         LA    R1,123
+         CVD   R1,PWORK
+         RT1   CCE,PWORK,=PL8'123'
+* 4F   CVB 
+         CVB   R0,=PL8'2147483647'
+         CVD   R0,PWORK
+         CP  PWORK,=P'2147483647'
+         RT1 CCE
+* 50   ST
+         LA    R1,1234
+         ST    R1,WORD
+         RT1   CCE,WORD,=F'1234'
+* 54   N
+         L     R0,=X'12345678'
+         N     R0,=X'1335577F'
+         RT1   CCL
+         CL    R0,=X'12345678'
+         RT1   CCE
+* 55   CL
+         LA    R1,1
+         CL    R1,=F'1'
+         RT1   CCE
+         LA    R1,0
+         CL    R1,=F'1'
+         RT1   CCL
+         LA    R1,2
+         CL    R1,=F'1'
+         RT1   CCH
+         L     R1,=F'-1'
+         CL    R1,=F'1'
+         RT1   CCH
+         L     R1,=F'1'
+         CL    R1,=F'-1'
+         RT1   CCL
+* 56   O
+         L     R0,=X'12345678'
+         O     R0,=X'11315177'
+         RT1   CCL
+         CL    R0,=X'1335577F'
+         RT1   CCE
+* 57   X
+         L     R0,=X'12345678'
+         X     R0,=X'11315177'
+         RT1   CCL
+         CL    R0,=X'0305070F'
+         RT1   CCE
+* 58   L
+         L     R1,=F'12345'
+         CL    R1,=A(12345)
+         RT1   CCE
+* 59   C
+         LA    R1,1
+         C     R1,=F'1'
+         RT1   CCE
+         LA    R1,0
+         C     R1,=F'1'
+         RT1   CCL
+         LA    R1,2
+         C     R1,=F'1'
+         RT1   CCH
+         L     R1,=F'-1'
+         C     R1,=F'1'
+         RT1   CCL
+         L     R1,=F'1'
+         C     R1,=F'-1'
+         RT1   CCH
+* 5A   A 
+         L     R0,=F'1'
+         A     R0,=F'3'
+         RT1   CCH
+         C     R0,=F'4'
+         RT1   CCE
+* 5B   S 
+         L     R0,=F'1'
+         S     R0,=F'3'
+         RT1   CCL
+         C     R0,=F'-2'
+         RT1   CCE
+* 5C   M 
+         L     R0,=C'JUNK' 
+         L     R1,=F'2'
+         M     R0,=F'3'
+         C     R0,=F'0'
+         RT1   CCE
+         C     R1,=F'6'
+         RT1   CCE
+* 5D   D
+         LM    R0,R1,=F'0,100'
+         D     R0,=F'33'
+         CL    R0,=F'1'
+         RT1   CCE
+         CL    R1,=F'3'
+         RT1   CCE
+         LM    R0,R1,=FL8'1E17'
+         D     R0,=F'1E9'
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'1E8'
+         RT1   CCE
+         LM    R0,R1,=FL8'-1E17'
+         D     R0,=F'1E9'
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'-1E8'
+         RT1   CCE
+         LM    R0,R1,=FL8'1E17'
+         D     R0,=F'-1E9'
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'-1E8'
+         RT1   CCE
+         LM    R0,R1,=F'1,3'
+         D     R0,=F'4'
+         CL    R0,=F'3'
+         RT1   CCE
+         CL    R1,=FS30'1'
+         RT1   CCE
+         LM    R0,R1,=F'1,3'
+         D     R0,=F'-4'
+         CL    R0,=F'3'
+         RT1   CCE
+         CL    R1,=FS30'-1'
+         RT1   CCE
+* 5E   AL
+         L     R0,=F'3'
+         AL    R0,=F'2'
+         RT1   CC1        NZ,NC
+         CL    R0,=F'5'
+         RT1   CCE
+         L     R0,=X'80000000'
+         AL    R0,=X'00000001'
+         RT1   CC1        NZ,NC
+         CL    R0,=X'80000001'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         AL    R0,=X'00000001'
+         RT1   CC2        Z,C
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         AL    R0,=X'00000002'
+         RT1   CC3        NZ,C
+         CL    R0,=X'00000001'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'  RPI 376
+         AL    R0,=X'FFFFFFFF'
+         RT1   CC3        NZ,C
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+         L     R0,=X'00000000'
+         AL    R0,=X'00000000'
+         RT1   CC0        Z,NC
+         CL    R0,=X'00000000'
+         RT1   CCE
+* 5F   SL 
+         L     R0,=X'FFFFFFFF'  RPI 879
+         SL    R0,=X'80000000'  RPI 879
+         RT1   CC3        NZ,NB RPI 879
+         CL    R0,=X'7FFFFFFF'  RPI 879
+         RT1   CCE              RPI 879
+         L     R0,=X'80000000'  RPI 831
+         SL    R0,=X'A0000000'
+         RT1   CC1        NZ,B
+         CL    R0,=X'E0000000'
+         RT1   CCE
+         L     R0,=F'3'
+         SL    R0,=F'2'
+         RT1   CC3        NZ,NB
+         CL    R0,=F'1'
+         RT1   CCE
+         L     R0,=X'80000000'
+         SL    R0,=X'00000001'
+         RT1   CC3        NZ,NB
+         CL    R0,=X'7FFFFFFF'
+         RT1   CCE
+         L     R0,=X'00000000'
+         SL    R0,=X'00000001'
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFF'
+         RT1   CCE
+         L     R0,=X'00000001'
+         SL    R0,=X'00000001'
+         RT1   CC2        Z,NB
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=X'00000000'
+         SL    R0,=X'00000002'
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+* 71   MS
+         L     R0,=F'2'    
+         MS    R0,=F'3'
+         C     R0,=F'6'
+         RT1   CCE
+* 84   BRXH
+         LM    R1,R3,=A(2,-1,0)
+         BRXH  R1,R2,BRXH2
+BRXH1    RT1   ABORT
+BRXH2    EQU   *
+         CL    R1,=A(1)
+         RT1   CCE
+         BRXH  R1,R2,BRXH1
+         CL    R1,=A(0)
+         RT1   CCE
+         LM    R1,R3,=A(2,-10,-1)
+         BRXH  R1,R3,BRXH3
+         RT1   ABORT
+BRXH3    EQU   *
+         CL    R1,=A(1)
+         RT1   CCE
+         BRXH  R1,R3,BRXH4
+         RT1   ABORT
+BRXH4    EQU   *
+         CL    R1,=A(0)
+         RT1   CCE
+         BRXH  R1,R3,BRXH1
+         CL    R1,=F'-1'
+         RT1   CCE
+* 85   BRXLE
+         LM    R1,R3,=A(1,1,2)
+         BRXLE R1,R2,BRXLE2
+BRXLE1   RT1   ABORT
+BRXLE2   EQU   *
+         CL    R1,=A(2)
+         RT1   CCE
+         BRXLE R1,R2,BRXLE1
+         CL    R1,=A(3)
+         RT1   CCE
+         LM    R1,R3,=A(0,-10,1)
+         BRXLE R1,R3,BRXLE3
+         RT1   ABORT
+BRXLE3   EQU   *
+         CL    R1,=A(1)
+         RT1   CCE
+         BRXLE R1,R3,BRXLE1
+         CL    R1,=F'2'
+         RT1   CCE
+* 86   BXH
+         LM    R1,R3,=A(2,-1,0)
+         BXH   R1,R2,BXH2
+         B     RT1_ABORT
+BXH2     EQU   *
+         CL    R1,=A(1)
+         RT1   CCE
+         BXH   R1,R2,RT1_ABORT
+         CL    R1,=A(0)
+         RT1   CCE
+         LM    R1,R3,=A(2,-10,-1)
+         BXH   R1,R3,BXH3
+         B     RT1_ABORT
+BXH3     EQU   *
+         CL    R1,=A(1)
+         RT1   CCE
+         BXH   R1,R3,BXH4
+         B     RT1_ABORT
+BXH4     EQU   *
+         CL    R1,=A(0)
+         RT1   CCE
+         BXH   R1,R3,RT1_ABORT
+         CL    R1,=F'-1'
+         RT1   CCE
+* 87   BXLE
+         LM    R1,R3,=A(1,1,2)
+         BXLE  R1,R2,BXLE2
+         B     RT1_ABORT
+BXLE2    EQU   *
+         CL    R1,=A(2)
+         RT1   CCE
+         BXLE  R1,R2,RT1_ABORT
+         CL    R1,=A(3)
+         RT1   CCE
+         LM    R1,R3,=A(0,-10,1)
+         BXLE  R1,R3,BXLE3
+         RT1   ABORT
+BXLE3    EQU   *
+         CL    R1,=A(1)
+         RT1   CCE
+         BXLE  R1,R3,RT1_ABORT
+         CL    R1,=F'2'
+         RT1   CCE
+* 88   SRL
+         LA    R0,2
+         SRL   R0,1
+         CL    R0,=F'1'
+         RT1   CCE
+         LA    R0,0
+         SRL   R0,1
+         CL    R0,=F'0'
+         RT1   CCE
+         L     R0,=F'-2'
+         SRL   R0,1
+         CL    R0,=X'7FFFFFFF'
+         RT1   CCE
+         L     R0,=X'C0000000'
+         SRL   R0,1
+         CL    R0,=X'60000000'
+         RT1   CCE
+         L     R0,=X'A0000000'
+         SRL   R0,1
+         CL    R0,=X'50000000'
+         RT1   CCE
+* 89   SLL
+         LA    R0,1
+         SLL   R0,1
+         CL    R0,=F'2'
+         RT1   CCE
+         LA    R0,0
+         SLL   R0,1
+         CL    R0,=F'0'
+         RT1   CCE
+         L     R0,=F'-1'
+         SLL   R0,1
+         CL    R0,=F'-2'
+         RT1   CCE
+         L     R0,=X'60000000'
+         SLL   R0,1
+         CL    R0,=X'C0000000'
+         RT1   CCE
+         L     R0,=X'A0000000'
+         SLL   R0,1
+         CL    R0,=X'40000000'
+         RT1   CCE
+* 8A   SRA
+         LA    R0,2
+         SRA   R0,1
+         RT1   CC2
+         CL    R0,=F'1'
+         RT1   CCE
+         LA    R0,0
+         SRA   R0,1
+         RT1   CC0
+         CL    R0,=F'0'
+         RT1   CCE
+         L     R0,=F'-2'
+         SRA   R0,1
+         RT1   CC1
+         CL    R0,=F'-1'
+         RT1   CCE
+         L     R0,=X'C0000000'
+         SRA   R0,1
+         RT1   CC1
+         CL    R0,=X'E0000000'
+         RT1   CCE
+* 8B   SLA
+         L     R1,=X'30000000'  DSH RPI 2202
+         SPM   R1               DSH RPI 2202 PREVENT s0C8
+         LA    R0,1
+         SLA   R0,1
+         RT1   CC2
+         CL    R0,=F'2'
+         RT1   CCE
+         LA    R0,0
+         SLA   R0,1
+         RT1   CC0
+         CL    R0,=F'0'
+         RT1   CCE
+         L     R0,=F'-1'
+         SLA   R0,1
+         RT1   CC1
+         CL    R0,=F'-2'
+         RT1   CCE
+         L     R0,=X'60000000'
+         SLA   R0,1
+         RT1   CC3
+         CL    R0,=X'40000000'
+         RT1   CCE
+         L     R0,=X'A0000000'
+         SLA   R0,1
+         RT1   CC3
+         CL    R0,=X'C0000000'
+         RT1   CCE
+* 8C   SRDL
+         LM    R0,R1,=F'0,2'
+         SRDL  R0,1
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'1'
+         RT1   CCE
+         LM    R0,R1,=F'0,0'
+         SRDL  R0,1
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+         LM    R0,R1,=F'-1,-2'
+         SRDL  R0,1
+         CL    R0,=X'7FFFFFFF'
+         RT1   CCE
+         CL    R1,=F'-1'
+         RT1   CCE
+         LM    R0,R1,=XL4'C0000000,0'
+         SRDL  R0,1
+         CL    R0,=X'60000000'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+         LM    R0,R1,=XL4'A0000000,0'
+         SRDL  R0,1
+         CL    R0,=X'50000000'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+* 8D   SLDL
+         LM    R0,R1,=F'0,1'
+         SLDL  R0,1
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'2'
+         RT1   CCE
+         LM    R0,R1,=F'0,0'
+         SLDL  R0,1
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+         LM    R0,R1,=F'-1,-1'
+         SLDL  R0,1
+         CL    R0,=F'-1'
+         RT1   CCE
+         CL    R1,=F'-2'
+         RT1   CCE
+         LM    R0,R1,=XL4'60000000,0'
+         SLDL  R0,1
+         CL    R0,=X'C0000000'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+         LM    R0,R1,=XL4'A0000000,0'
+         SLDL  R0,1
+         CL    R0,=X'40000000'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+* 8E   SRDA
+         LM    R0,R1,=F'0,2'
+         SRDA  R0,1
+         RT1   CC2
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'1'
+         RT1   CCE
+         LM    R0,R1,=F'0,0'
+         SRDA  R0,1
+         RT1   CC0
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+         LM    R0,R1,=F'-1,-2'
+         SRDA  R0,1
+         RT1   CC1
+         CL    R0,=F'-1'
+         RT1   CCE
+         CL    R1,=F'-1'
+         RT1   CCE
+         LM    R0,R1,=XL4'C0000000,0'
+         SRDA  R0,1
+         RT1   CCL
+         CL    R0,=X'E0000000'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+* 8F   SLDA
+         LM    R0,R1,=F'0,1'
+         SLDA  R0,1
+         RT1   CC2
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'2'
+         RT1   CCE
+         LM    R0,R1,=F'0,0'
+         SLDA  R0,1
+         RT1   CC0
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+         LM    R0,R1,=F'-1,-1'
+         SLDA  R0,1
+         RT1   CC1
+         CL    R0,=F'-1'
+         RT1   CCE
+         CL    R1,=F'-2'
+         RT1   CCE
+         LM    R0,R1,=XL4'60000000,0'
+         SLDA  R0,1
+         RT1   CC3
+         CL    R0,=X'40000000'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+         LM    R0,R1,=XL4'A0000000,0'
+         SLDA  R0,1
+         RT1   CC3
+         CL    R0,=X'C0000000'
+         RT1   CCE
+         CL    R1,=F'0'
+         RT1   CCE
+* 90   STM
+         LA    R1,1
+         LA    R2,2
+         STM   R1,R2,PWORK
+         RT1   CCE,PWORK,=A(1,2)
+* 91   TM 
+         TM    =X'00',X'00'
+         RT1   CC0
+         TM    =X'FF',X'00'
+         RT1   CC0
+         TM    =X'00',X'FF'
+         RT1   CC0
+         TM    =X'FF',X'F0'
+         RT1   CC3
+         TM    =X'FF',X'FF'
+         RT1   CC3
+         TM    =X'F0',X'FF'
+         RT1   CC1
+* 92   MVI
+         MVI   BYTE,C'A'
+         CLI   BYTE,C'A'
+         RT1   CCE,BYTE,=C'A'
+* 93   TS
+         MVI   BYTE,X'FF'
+         TS    BYTE
+         RT1   CC1
+         MVI   BYTE,X'7F'
+         TS    BYTE
+         RT1   CC0
+* 94   NI
+         MVI   BYTE,X'32'
+         NI    BYTE,X'23'
+         RT1   CCL
+         CLI   BYTE,X'22'
+         RT1   CCE
+* 95   CLI
+         MVI   BYTE,C'B'
+         CLI   BYTE,C'B'
+         RT1   CCE,BYTE,=C'B'
+         MVI   BYTE,C'A'
+         CLI   BYTE,C'B'
+         RT1   CCL,BYTE,=C'B'
+         MVI   BYTE,C'C'
+         CLI   BYTE,C'B'
+         RT1   CCH,BYTE,=C'B'
+* 96   OI
+         MVI   BYTE,X'32'
+         OI    BYTE,X'23'
+         RT1   CCL
+         CLI   BYTE,X'33'
+         RT1   CCE
+* 97   XI
+         MVI   BYTE,X'32'
+         XI    BYTE,X'23'
+         RT1   CCL
+         CLI   BYTE,X'11'
+         RT1   CCE
+* 98   LM
+         LM    R15,R0,=A(123,456)
+         STM   R15,R0,PWORK
+         RT1   CCE,PWORK,=A(123,456)
+* A50  IIHH
+         ICMH  R1,15,=X'12345678'
+         STG   R1,PWORK
+         CLC   PWORK(4),=X'12345678'
+         RT1   CCE
+         IIHH  R1,X'1030'
+         STG   R1,PWORK
+         CLC   PWORK(4),=X'10305678'
+         RT1   CCE
+         CLMH  R1,15,=X'10305678'
+         RT1   CCE
+* A51  IIHL
+         ICMH  R1,15,=X'12345678'
+         IIHL  R1,X'5070'
+         CLMH  R1,15,=X'12345070'
+         RT1   CCE
+* A52  IILH
+         L     R1,=X'12345678'
+         IILH  R1,X'1030'
+         CLM   R1,15,=X'10305678'
+         RT1   CCE
+* A53  IILL
+         L     R1,=X'12345678'
+         IILL  R1,X'5070'
+         CLM   R1,15,=X'12345070'
+         RT1   CCE
+* A54  NIHH
+         ICMH  R1,15,=X'12345678'
+         SR    R0,R0
+         NIHH  R1,X'1030'
+         RT1   CCL
+         STG   R1,PWORK
+         CLC   PWORK(4),=X'10305678'
+         RT1   CCE
+         CLMH  R1,15,=X'10305678'
+         RT1   CCE
+* A55  NIHL
+         ICMH  R1,15,=X'12345678'
+         SR    R0,R0
+         NIHL  R1,X'5070'
+         RT1   CCL
+         CLMH  R1,15,=X'12345070'
+         RT1   CCE
+* A56  NILH
+         L     R1,=X'12345678'
+         NILH  R1,X'1030'
+         RT1   CCL
+         CLM   R1,15,=X'10305678'
+         RT1   CCE
+* A57  NILL
+         L     R1,=X'12345678'
+         NILL  R1,X'5070'
+         RT1   CCL
+         CLM   R1,15,=X'12345070'
+         RT1   CCE
+* A58  OIHH
+         ICMH  R1,15,=X'12345678'
+         SR    R0,R0
+         OIHH  R1,X'1111'
+         RT1   CCL
+         CLMH  R1,15,=X'13355678'
+         RT1   CCE
+* A59  OIHL
+         ICMH  R1,15,=X'12345678'
+         SR    R0,R0
+         OIHL  R1,X'1111'
+         RT1   CCL
+         CLMH  R1,15,=X'12345779'
+         RT1   CCE
+* A5A  OILH
+         L     R1,=X'12345678'
+         SR    R0,R0
+         OILH  R1,X'1111'
+         RT1   CCL
+         CLM   R1,15,=X'13355678'
+         RT1   CCE
+* A5B  OILL
+         L     R1,=X'12345678'
+         SR    R0,R0
+         OILL  R1,X'1111'
+         RT1   CCL
+         CLM   R1,15,=X'12345779'
+         RT1   CCE
+* A5C  LLIHH
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         LLIHH R0,X'CCCC'
+         CLG   R0,=X'CCCC000000000000'
+* A5D  LLIHL
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         LLIHL R0,X'DDDD'
+         CLG   R0,=X'0000DDDD00000000'
+* A5E  LLILH
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         LLILH R0,X'EEEE'
+         CLG   R0,=X'00000000EEEE0000'
+* A5F  LLILL
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         LLILL R0,X'EEEE'
+         CLG   R0,=X'000000000000EEEE'
+* A70  TMLH / TMH
+         IILH  R0,X'0000'
+         TMLH  R0,X'0000'
+         RT1   CC0
+         IILH  R0,X'FFFF'
+         TMLH  R0,X'0000'
+         RT1   CC0
+         IILH  R0,X'0000'
+         TMLH  R0,X'FFFF'
+         RT1   CC0
+         IILH  R0,X'FFFF'
+         TMLH  R0,X'FFFF'
+         RT1   CC3
+         IILH  R0,X'BFFF'  RPI 844
+         TMLH  R0,X'FF00'
+         RT1   CC2
+         IILH  R0,X'7FFF'
+         TMLH  R0,X'FF00'
+         RT1   CC1
+         IILH  R0,X'F9FF'  RPI 844
+         TMLH  R0,X'0F00'
+         RT1   CC2
+         IILH  R0,X'F3FF'
+         TMLH  R0,X'0F00'
+         RT1   CC1
+* A71  TMLL / TML
+         IILL  R0,X'0000'
+         TMLL  R0,X'0000'
+         RT1   CC0
+         IILL  R0,X'FFFF'
+         TMLL  R0,X'0000'
+         RT1   CC0
+         IILL  R0,X'0000'
+         TMLL  R0,X'FFFF'
+         RT1   CC0
+         IILL  R0,X'FFFF'
+         TMLL  R0,X'FFFF'
+         RT1   CC3
+         IILL  R0,X'BFFF'  RPI 844
+         TMLL  R0,X'FF00'
+         RT1   CC2
+         IILL  R0,X'7FFF'
+         TMLL  R0,X'FF00'
+         RT1   CC1
+         IILL  R0,X'F9FF'  RPI 844
+         TMLL  R0,X'0F00'
+         RT1   CC2
+         IILL  R0,X'F3FF'
+         TMLL  R0,X'0F00'
+         RT1   CC1
+* A72  TMHH 
+         IIHH  R0,X'0000'
+         TMHH  R0,X'0000'
+         RT1   CC0
+         IIHH  R0,X'FFFF'
+         TMHH  R0,X'0000'
+         RT1   CC0
+         IIHH  R0,X'0000'
+         TMHH  R0,X'FFFF'
+         RT1   CC0
+         IIHH  R0,X'FFFF'
+         TMHH  R0,X'FFFF'
+         RT1   CC3
+         IIHH  R0,X'BFFF'  RPI 844
+         TMHH  R0,X'FF00'
+         RT1   CC2
+         IIHH  R0,X'7FFF'
+         TMHH  R0,X'FF00'
+         RT1   CC1
+         IIHH  R0,X'F9FF'  RPI 844
+         TMHH  R0,X'0F00'
+         RT1   CC2
+         IIHH  R0,X'F3FF'
+         TMHH  R0,X'0F00'
+         RT1   CC1
+* A73  TMHL 
+         IIHL  R0,X'0000'
+         TMHL  R0,X'0000'
+         RT1   CC0
+         IIHL  R0,X'FFFF'
+         TMHL  R0,X'0000'
+         RT1   CC0
+         IIHL  R0,X'0000'
+         TMHL  R0,X'FFFF'
+         RT1   CC0
+         IIHL  R0,X'FFFF'
+         TMHL  R0,X'FFFF'
+         RT1   CC3
+         IIHL  R0,X'BFFF'  RPI 844
+         TMHL  R0,X'FF00'
+         RT1   CC2
+         IIHL  R0,X'7FFF'
+         TMHL  R0,X'FF00'
+         RT1   CC1
+         IIHL  R0,X'F9FF'  RPI 844
+         TMHL  R0,X'0F00'
+         RT1   CC2
+         IIHL  R0,X'F3FF'
+         TMHL  R0,X'0F00'
+         RT1   CC1
+* A74  BRC
+         J     BRCOK
+BRCERR   RT1   ABORT
+BRCOK    EQU   *
+         JNOP  BRCERR
+         CLI   =X'1',1
+         JNE   BRCERR
+         RT1   CCE
+         CLI   =X'1',2
+         JNL   BRCERR
+         JE    BRCERR
+         RT1   CCL
+         CLI   =X'2',1
+         JNH   BRCERR
+         JE    BRCERR
+         RT1   CCH
+* A75  BRAS
+BRAS1    BRAS  R1,BRAS2
+         RT1   ABORT
+BRAS2    EQU   *
+         NILH  R1,X'7FFF'
+         CL    R1,=A(BRAS1+4)
+         RT1   CCE
+* A76  BRCT 
+         LA    R1,10
+         SR    R2,R2
+BRCT1    LA    R2,1(R2)
+         BRCT  R1,BRCT1
+         CL    R1,=F'0'
+         RT1   CCE
+         CL    R2,=F'10'
+         RT1   CCE
+* A77  BRCTG 
+         LG    R1,=FL8'10'
+         SR    R2,R2
+BRCTG1   LA    R2,1(R2)
+         BRCTG R1,BRCTG1
+         CLG   R1,=FL8'0'
+         RT1   CCE
+         CL    R2,=F'10'
+         RT1   CCE
+* A78  LHI
+         LHI   R0,1
+         CL    R0,=F'1'
+         RT1   CCE
+         LHI   R0,-2
+         CL    R0,=F'-2'
+         RT1   CCE
+* A79  LGHI
+         LGHI  R0,1
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LGHI  R0,-2
+         CLG   R0,=FL8'-2'
+         RT1   CCE
+* A7A  AHI
+         LA    R0,1
+         AHI   R0,2
+         CL    R0,=F'3'
+         RT1   CCE
+* A7B  AGHI
+         LG    R0,=FL8'1'
+         AGHI  R0,2
+         CLG   R0,=FL8'3'
+         RT1   CCE
+* A7C  MHI
+         LH    R0,=H'2'
+         MHI   R0,3
+         CH    R0,=H'6'
+         RT1   CCE
+* A7D  MGHI
+         LG    R0,=FL8'2'
+         MGHI  R0,3
+         CH    R0,=H'6'
+         RT1   CCE
+* A7E  CHI
+         LA    R1,1
+         CHI   R1,1
+         RT1   CCE
+         LA    R1,0
+         CHI   R1,1
+         RT1   CCL
+         LA    R1,2
+         CHI   R1,1
+         RT1   CCH
+         L     R1,=F'-1'
+         CHI   R1,1
+         RT1   CCL
+         L     R1,=F'1'
+         CHI   R1,-1
+         RT1   CCH
+* A7F  CGHI
+         LG    R1,=FL8'1'
+         CGHI  R1,1
+         RT1   CCE
+         LG    R1,=FL8'0'
+         CGHI  R1,1
+         RT1   CCL
+         LG    R1,=FL8'2'
+         CGHI  R1,1
+         RT1   CCH
+         LG    R1,=FL8'-1'
+         CGHI  R1,1
+         RT1   CCL
+         LG    R1,=FL8'1'
+         CGHI  R1,-1
+         RT1   CCH
+* A8   MVCLE
+         MVC   WORD,=C'1234'
+         MVC   PWORK(4),=C'ABCD'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,4)
+         MVCLE R0,R2,0
+         JO    *-4                    RPI 844
+         RT1   CCE
+         CLC   WORD,=C'ABCD'
+         RT1   CCE
+         CL    R0,=A(WORD+4)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+4)                 
+         RT1   CCE
+         CL    R3,=A(0)
+         RT1   CCE
+         MVC   WORD,=C'1234'
+         MVC   PWORK(4),=C'ABXX'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,2)
+         MVCLE R0,R2,C' '
+         JO    *-4                    RPI 844
+         RT1   CCH
+         CL    R0,=A(WORD+4)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+2)                 
+         RT1   CCE
+         CL    R3,=A(0)
+         RT1   CCE
+         CLC   WORD,=C'AB  '
+         RT1   CCE
+         MVC   WORD,=C'1234'
+         MVC   PWORK(4),=C'ABCX'
+         LM    R0,R1,=A(WORD,3)
+         LM    R2,R3,=A(PWORK,4)
+         MVCLE R0,R2,0
+         JO    *-4                    RPI 844
+         RT1   CCL
+         CL    R0,=A(WORD+3)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+3)                 
+         RT1   CCE
+         CL    R3,=A(1)
+         RT1   CCE
+         CLC   WORD,=C'ABC4'
+         RT1   CCE
+* A9   CLCLE
+         MVC   WORD,=C'ABCD'
+         MVC   PWORK(4),=C'ABCD'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,4)
+         CLCLE R0,R2,0
+         JO    *-4                    RPI 844
+         RT1   CCE
+         CL    R0,=A(WORD+4)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+4)                 
+         RT1   CCE
+         CL    R3,=A(0)
+         RT1   CCE
+         MVC   WORD,=C'AB  '
+         MVC   PWORK(4),=C'ABXX'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,2)
+         CLCLE R0,R2,C' '
+         JO    *-4                    RPI 844
+         RT1   CCE
+         CL    R0,=A(WORD+4)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+2)                 
+         RT1   CCE
+         CL    R3,=A(0)
+         RT1   CCE
+         MVC   WORD,=C'ABC4'
+         MVC   PWORK(4),=C'ABC '
+         LM    R0,R1,=A(WORD,3)
+         LM    R2,R3,=A(PWORK,4)
+         CLCLE R0,R2,C' ' 
+         JO    *-4                    RPI 844
+         RT1   CCE
+         CL    R0,=A(WORD+3)
+         RT1   CCE
+         CL    R1,=A(0)            
+         RT1   CCE
+         CL    R2,=A(PWORK+4)                 
+         RT1   CCE
+         CL    R3,=A(0)
+         RT1   CCE
+         MVC   WORD,=C'AB  '
+         MVC   PWORK(4),=C'ACXX'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,2)
+         CLCLE R0,R2,C' '
+         JO    *-4                    RPI 844
+         RT1   CCL
+         CL    R0,=A(WORD+1)
+         RT1   CCE
+         CL    R1,=A(3)            
+         RT1   CCE
+         CL    R2,=A(PWORK+1)                 
+         RT1   CCE
+         CL    R3,=A(1)
+         RT1   CCE
+         MVC   WORD,=C'AB C'
+         MVC   PWORK(4),=C'ABXX'
+         LM    R0,R1,=A(WORD,4)
+         LM    R2,R3,=A(PWORK,2)
+         CLCLE R0,R2,C' '
+         JO    *-4                    RPI 844
+         RT1   CCH
+         CL    R0,=A(WORD+3)
+         RT1   CCE
+         CL    R1,=A(1)            
+         RT1   CCE
+         CL    R2,=A(PWORK+2)                 
+         RT1   CCE
+         CL    R3,=A(0)
+         RT1   CCE
+* B202 STIDP
+         STIDP PWORK
+         CLC   PWORK,=XL8'390' VERIFY CPU ID
+         RT1   CCE
+* B205 STCK
+         STCK  PWORK  STORES J2SE MILLISECONDS FROM JAN 1, 1970
+         LG    R0,PWORK
+         STCK  PWORK
+         CLG   R0,PWORK
+         RT1   CCL        VERIFY UNIQUE
+* B218 PC
+         PC    PC1
+         B     PC2
+         RT1   ABORT
+PC1      WTO   'PC1 SUB CALLED'
+         PR
+PC2      EQU   *
+* B222 IPM
+         L     R1,=X'3F000000' DSH RPI 2202
+         SPM   R1              DSH RESET MASKS ON (SEE LPR AND SRA) 
+         SR    0,0
+         IPM   0
+         CLM   0,8,=B'00001111' 00CCFPES CC=00 MASK=1111 FX,PD,EX,SG
+         RT1   CCE
+         AHI   0,1
+         IPM   0
+         CLM   0,8,=B'00101111' 00CCFPES CC=10 MASK=1111 FX,PD,EX,SG
+         RT1   CCE
+         L     R1,=X'30000000' DSH RPI 2202 TURN BACK OFF
+         SPM   R1 
+* B240 BAKR
+         LA    R0,1
+         LA    R1,BAKR2
+         LA    R2,BAKR1
+         BAKR  R1,R2
+         RT1   ABORT
+BAKR1    WTO   'BAKR1 SUB CALLED'
+         LA    2,2  REQUEST PSW                    RPI 1026
+         ESTA  0,2  EXTRACT RETURN PSW INTO R0-R1  RPI 1026
+         MVI   ESTACC,0
+         JZ    *+8
+         MVI   ESTACC,1
+         STM   0,1,ESTAPSW
+         PR
+BAKR2    EQU   *
+         CLI   ESTACC,0 BAKR TYPE
+         RT1   CCE
+         CLC   ESTAPSW,=AL8(BAKR2)
+         RT1   CCE           RPI 1026
+         BAKR  0,R2
+BAKR3    EQU   *
+         CLI   ESTACC,0 BAKR TYPE
+         RT1   CCE
+         CLC   ESTAPSW,=AL8(BALR3)
+         RT1   CCE           RPI 1026
+* B249 EREG    R1,R2 RESTORE 32 BIT REGISTERS SEE PC/BAKR
+* B24A ESTA    R1,R1 (SEE PC AND BAKR TESTS WITH ESTA,EREG,EREGG
+* B24D CPYA    AR1,AR2  COPY    ACCESS REGISTER RPI 1055
+* B24E SAR     AR1,AR2  SET     ACCESS REGISTER RPI 1055
+* B24F EAR     AR1,AR2  EXTRACT ACCESS REGISTER RPI 1055
+         LA    1,123
+         SAR   0,1      SET     ACCESS REGISTER AR0 FROM R1
+         CPYA  1,0      COPY    ACCESS REGISTER AR1 FROM AR0
+         EAR   2,1      EXTRACT ACCESS REGISTER AR1 TO   R2
+         CLR   1,2
+         RT1   CCE
+* B252 MSR
+         L     R0,=F'2'
+         L     R2,=F'3'    
+         MSR   R0,R2
+         C     R0,=F'6'
+         RT1   CCE
+* B255 MVST
+         LM    R0,R2,=A(X'EE',STRING3,STRING4)
+         MVST  R1,R2
+         RT1   CC1
+         CLC   STRING3,STRING4
+         RT1   CCE
+         CL    R1,=A(STRING3+L'STRING4)
+         RT1   CCE
+         CLI   0(R1),X'EE'
+         RT1   CCE
+* B257 CUSE
+         LA    R0,L'KEY
+         LA    R1,PAD
+         LM    R2,R5,=A(STRING1,L'STRING1,STRING2,L'STRING2)
+         CUSE  2,4
+         JO    *-4
+         RT1   CCE,0(L'KEY,R2),KEY
+         RT1   CCE,0(L'KEY,R4),KEY
+         CL    R3,=A(L'STRING1-7)
+         RT1   CCE
+         CL    R5,=A(L'STRING2-7)
+         RT1   CCE
+* B25D CLST
+         LA    R0,C'X'
+         LA    R1,=C'ABCX'
+         LA    R2,=C'ABCX'
+         CLST  R1,R2
+         JO    *-4
+         RT1   CCE
+         LA    R1,=C'ABAX'
+         LA    R2,=C'ABCX'
+         CLST  R1,R2
+         JO    *-4
+         RT1   CC1
+         CLI   0(R1),C'A'
+         RT1   CCE
+         CLI   0(R2),C'C'
+         RT1   CCE
+         LA    R1,=C'ABDX'
+         LA    R2,=C'ABCX'
+         CLST  R1,R2
+         JO    *-4
+         RT1   CC2
+         CLI   0(R1),C'D'
+         RT1   CCE
+         CLI   0(R2),C'C'
+         RT1   CCE
+* B25E SRST
+         LA    R0,C'B'
+         LA    R2,=C'ABC'
+         LA    R1,3(R2)
+         SRST  R1,R2
+         RT1   CC1
+         CLI   0(R1),C'B'
+         RT1   CCE
+         LA    R0,C'X'
+         LA    R2,=C'ABC'
+         LA    R1,3(R2)
+         SRST  R1,R2
+         RT1   CC2
+* B27C STCKF
+         STCKF PWORK
+         RT1   CC0
+* B29D LFPC
+         STFPC FPCREG
+         CLI   FPCREG,X'70' VERIFY MASK FOR BFP DIV, OVF, UNF ONLY
+         RT1   CCE
+         OI    FPCREG,X'08' TURN ON BFP SIGNIFICANCE MASK IN FPC REG
+         LFPC  FPCREG       RELOAD FPC
+         ESPIE SET,ESPIE_EXIT,7,PARAM=SEBR1  BFP SIG FPCDXC=08
+         LE    R0,EBMIN
+         LE    R1,EBMIN
+         SEBR  R0,R1
+         RT1   ABORT
+SEBR1    ESPIE RESET
+         STFPC FPCREG
+         CLI   FPCDXC,X'08' VERIFY DXC
+         RT1   CCE
+         WTO   'ESPIE BFP EB SIGNIFICANCE OK'
+         XI    FPCREG,X'08' TURN IT BACK OFF
+         LFPC  FPCREG
+         STFPC FPCREG
+         CLI   FPCREG,X'70' VERIFY MASK FOR BFP DIV, OVF, UNF ONLY
+         RT1   CCE
+* B2A5 TRE
+         LA    R0,TREEOD
+         LM    R2,R4,=A(TREF1,L'TREF1,TRETAB)
+         TRE   R2,R4
+         RT1   CC0
+         CL    R2,=A(TREF1+L'TREF1)
+         RT1   CCE
+         LTR   R3,R3
+         RT1   CCE
+         CLC   TREF1,TREV1
+         RT1   CCE 
+         LM    R2,R4,=A(TREF2,L'TREF2,TRETAB)
+         TRE   R2,R4
+         RT1   CC1
+         CL    R2,=A(TREF2+2)   TREF2 HAS EOD X'FF' IN 3RD BYTE
+         RT1   CCE
+         CL    R3,=A(L'TREF2-2)
+         RT1   CCE
+         CLC   TREF2,TREV2
+         RT1   CCE 
+* B2B0 STFLE Z9 STORE FACILITIES BIT LIST EXTENDED
+         LA    R0,7    RPI 859 LENGTH OF FACILITY BIT FIELD - 1
+         STFLE PWORK
+         CLC   PWORK(8),=X'E1000DC000000000'
+         RT1   CCE          VERIFY ZOS FACILITIES INSTALLED AND ACTIVE
+* B384 LFPC
+* B38C EFPC
+         EFPC  R0
+         CLM   R0,8,=X'70'  VERIFY MASK FOR BFP DIV, OVF, UNF ONLY
+         RT1   CCE
+         OILH  R0,X'0800'   TURN ON BFP SIGNIFICANCE MASK IN FPC REG
+         SFPC  R0           RELOAD FPC
+         ESPIE SET,ESPIE_EXIT,7,PARAM=SEBR2  BFP SIG FPCDXC=08
+         LE    R0,EBMIN
+         LE    R1,EBMIN
+         SEBR  R0,R1
+         RT1   ABORT
+SEBR2    ESPIE RESET
+         EFPC  R0
+         CLM   R0,2,=X'08' VERIFY FPCDXC CODE
+         RT1   CCE
+         NILH  R0,X'F7FF'  TURN BFP SIG MASK BACK OFF
+         SFPC  R0
+         EFPC  R0
+         CLM   R0,8,=X'70' VERIFY MASK FOR BFP DIV, OVF, UNF ONLY
+         RT1   CCE
+* B900 LPGR
+         LG    R1,=FL8'-1'
+         LPGR  R0,R1
+         RT1   CCH
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LG    R1,=X'8000000000000000'
+         LPGR  R0,R1
+         RT1   CC3
+* B901 LNGR
+         LG    R1,=FL8'1'
+         LNGR  R0,R1
+         RT1   CCL
+         CLG   R0,=FL8'-1'
+         RT1   CCE
+* B902 LTGR
+         LG    R1,=FL8'1'
+         LTGR  R0,R1
+         RT1   CCH
+         LG    R1,=FL8'-1'
+         LTGR  R0,R1
+         RT1   CCL
+         LG    R1,=FL8'0'
+         LTGR  R0,R1
+         RT1   CCE
+* B903 LCGR
+         LG    R1,=FL8'1'
+         LCGR  R0,R1
+         RT1   CCL
+         CLG   R0,=FL8'-1'
+         RT1   CCE
+         LG    R1,=FL8'-1'
+         LCGR  R0,R1
+         RT1   CCH
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LG    R1,=X'8000000000000000'
+         LCGR  R0,R1
+         RT1   CC3
+* B906 LGBR Z9 LOAD BYTE
+         LA    R1,X'FF'
+         SGR   R0,R0
+         LGBR  R0,R1
+         CLG   R0,=FL8'-1'
+         RT1   CCE
+* B907 LGHR Z9 LOAD HALFWORD
+         ICM   R1,3,=X'FFFF'
+         SGR   R0,R0
+         LGHR  R0,R1
+         CLG   R0,=FL8'-1'
+         RT1   CCE
+* B908 AGR
+         LG    R0,=FL8'1'
+         LG    R1,=FL8'3'
+         AGR   R0,R1      
+         RT1   CCH
+         CG    R0,=FL8'4'
+         RT1   CCE
+         ESPIE SET,ESPIE_EXIT,8,PARAM=AGR1
+         LG     R0,=X'7FFFFFFFFFFFFFFF'
+         LG    R1,=FL8'1'
+         AGR   R0,R1
+         RT1   ABORT
+AGR1     ESPIE RESET
+         ESTAE ESTAE_EXIT,PARAM=AGR2
+         LG    R0,=X'8000000000000000'
+         LG    R1,=FL8'-1'
+         AGR   R0,R1
+         RT1   ABORT
+AGR2     ESTAE 0
+* B909 SGR
+         LG    R0,=FL8'1'
+         LG    R1,=FL8'3'
+         SGR   R0,R1      
+         RT1   CCL
+         CG    R0,=FL8'-2'
+         RT1   CCE
+         ESPIE SET,ESPIE_EXIT,8,PARAM=SGR1
+         LG     R0,=X'7FFFFFFFFFFFFFFF'
+         LG    R1,=FL8'-1'
+         SGR   R0,R1
+         RT1   ABORT
+SGR1     ESPIE RESET
+         ESTAE ESTAE_EXIT,PARAM=SGR2
+         LG    R0,=X'8000000000000000'
+         LG    R1,=FL8'1'
+         SGR   R0,R1
+         RT1   ABORT
+SGR2     ESTAE 0
+* B90A ALGR
+         LG    R0,=FL8'3'
+         LG    R2,=FL8'2'
+         ALGR  R0,R2
+         RT1   CC1        NZ,NC
+         CLG   R0,=FL8'5'
+         RT1   CCE
+         LG    R0,=X'8000000000000000'
+         LG    R2,=X'0000000000000001'
+         ALGR  R0,R2
+         RT1   CC1        NZ,NC
+         CLG   R0,=X'8000000000000001'
+         RT1   CCE
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         LG    R2,=X'0000000000000001'
+         ALGR  R0,R2
+         RT1   CC2        Z,C
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         LG    R2,=X'0000000000000002'
+         ALGR  R0,R2
+         RT1   CC3        NZ,C
+         CLG   R0,=X'0000000000000001'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         LG    R2,=X'0000000000000000'
+         ALGR  R0,R2
+         RT1   CC0        Z,NC
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+* B90B SLGR
+         LG    R0,=X'FFFFFFFFFFFFFFFF'  RPI 879
+         LG    R2,=X'8000000000000000'  RPI 879
+         SLGR  R0,R2                    RPI 879
+         RT1   CC3        NZ,NB         RPI 879
+         CLG   R0,=X'7FFFFFFFFFFFFFFF'  RPI 879
+         RT1   CCE                      RPI 879
+         LG    R0,=X'8000000000000000'  RPI 831
+         LG    R2,=X'A000000000000000'  RPI 831
+         SLGR  R0,R2                    RPI 831
+         RT1   CC1        NZ,B          RPI 831
+         CLG   R0,=X'E000000000000000'  RPI 831
+         RT1   CCE                      RPI 831
+         LG    R0,=FL8'3'
+         LG    R2,=FL8'2'
+         SLGR  R0,R2
+         RT1   CC3        NZ,NB
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LG    R0,=X'8000000000000000'
+         LG    R2,=X'0000000000000001'
+         SLGR  R0,R2
+         RT1   CC3        NZ,NB
+         CLG   R0,=X'7FFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         LG    R2,=X'0000000000000001'
+         SLGR  R0,R2
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R0,=X'0000000000000001'
+         LG    R2,=X'0000000000000001'
+         SLGR  R0,R2
+         RT1   CC2        Z,NB
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         LG    R2,=X'0000000000000002'
+         SLGR  R0,R2
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFE'
+         RT1   CCE
+* B90C MSGR
+         LG    R0,=FL8'2'
+         LG    R2,=FL8'3'    
+         MSGR  R0,R2
+         CG    R0,=FL8'6'
+         RT1   CCE
+* B90D DSGR
+         LG    R1,=FL8'13'
+         LG    R2,=FL8'4'
+         DSGR  R0,R2
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         CLG   R1,=FL8'3'
+         RT1   CCE
+* B90E EREGG   R1,R2 RESTORE 64 BIT REGISTERS SEE PC/BAKR
+* B91F LRVGR
+         LG    R1,=X'0123456789ABCDEF'
+         LRVGR R0,R1
+         CLG   R0,=X'EFCDAB8967452301'
+         RT1   CCE
+         LG    1,=X'1122334455667788'
+         LRVGR 1,1  RPI 1200
+         CG    1,=X'8877665544332211'
+         RT1   CCE
+* B910 LPGFR
+         L     R1,=F'-1'
+         LPGFR R0,R1
+         RT1   CCH
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         L     R1,=X'80000000'
+         LPGFR R0,R1
+         RT1   CCH
+         CLG   R0,=X'0000000080000000'
+         RT1   CCE 
+* B911 LNGFR
+         L     R1,=F'1'
+         LNGFR R0,R1
+         RT1   CCL
+         CLG   R0,=FL8'-1'
+         RT1   CCE
+* B912 LTGFR
+         L     R1,=F'1'
+         LTGFR  R0,R1
+         RT1   CCH
+         L     R1,=F'-1'
+         LTGFR R0,R1
+         RT1   CCL
+         L     R1,=F'0'
+         LTGFR R0,R1
+         RT1   CCE
+* B913 LCGFR
+         L     R1,=F'1'
+         LCGFR R0,R1
+         RT1   CCL
+         CLG   R0,=FL8'-1'
+         RT1   CCE
+         L     R1,=F'-1'
+         LCGFR R0,R1
+         RT1   CCH
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         L     R1,=X'80000000'
+         LCGFR R0,R1
+         RT1   CCH
+         CLG   R0,=X'0000000080000000'
+         RT1   CCE 
+* B914 LGFR
+         L     R1,=F'-1'
+         LGFR  R0,R1
+         CLG   R0,=FL8'-1'
+         RT1   CCE
+         L     R1,=X'80000000'
+         LGFR  R0,R1
+         CLG   R0,=X'FFFFFFFF80000000'
+         RT1   CCE 
+* B916 LLGFR
+         L     R1,=F'-1'
+         LLGFR R0,R1
+         CLG   R0,=A(0,-1)
+         RT1   CCE
+* B917 LLGTR
+         LG    R1,=FL8'-1'
+         LLGTR R0,R1
+         CLG   R0,=A(0,X'7FFFFFFF')
+         RT1   CCE
+* B918 AGFR
+         LG    R0,=FL8'1'
+         L     R1,=F'3'
+         AGFR  R0,R1      
+         RT1   CCH
+         CG    R0,=FL8'4'
+         RT1   CCE
+* B919 SGFR
+         LG    R0,=FL8'1'
+         L     R1,=F'3'
+         SGFR  R0,R1      
+         RT1   CCL
+         CG    R0,=FL8'-2'
+         RT1   CCE
+* B91A ALGFR
+         LG    R0,=FL8'3'
+         L     R2,=F'2'
+         ALGFR  R0,R2
+         RT1   CC1        NZ,NC
+         CLG   R0,=FL8'5'
+         RT1   CCE
+         LG    R0,=X'8000000000000000'
+         L    R2,=X'00000001'
+         ALGFR  R0,R2
+         RT1   CC1        NZ,NC
+         CLG   R0,=X'8000000000000001'
+         RT1   CCE
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         L     R2,=X'00000001'
+         ALGFR  R0,R2
+         RT1   CC2        Z,C
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         L     R2,=X'00000002'
+         ALGFR  R0,R2
+         RT1   CC3        NZ,C
+         CLG   R0,=X'0000000000000001'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         L     R2,=X'00000000'
+         ALGFR  R0,R2
+         RT1   CC0        Z,NC
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+* B91B SLGFR
+         LG    R0,=X'FFFFFFFFFFFFFFFF'  RPI 879
+         L     R2,=X'80000000'          RPI 879
+         SLGFR R0,R2                    RPI 879
+         RT1   CC3        NZ,NB         RPI 879
+         CLG   R0,=X'FFFFFFFF7FFFFFFF'  RPI 879
+         RT1   CCE                      RPI 879
+         LG    R0,=FL8'3'
+         L     R2,=F'2'
+         SLGFR  R0,R2
+         RT1   CC3        NZ,NB
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LG    R0,=X'8000000000000000'
+         L     R2,=X'00000001'
+         SLGFR  R0,R2
+         RT1   CC3        NZ,NB
+         CLG   R0,=X'7FFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         L     R2,=X'00000001'
+         SLGFR  R0,R2
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R0,=X'0000000000000001'
+         L     R2,=X'00000001'
+         SLGFR  R0,R2
+         RT1   CC2        Z,NB
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         L     R2,=X'00000002'
+         SLGFR  R0,R2
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFE'
+         RT1   CCE
+* B91C MSGFR
+         LG    R0,=FL8'2'
+         L     R2,=F'3'    
+         MSGFR R0,R2
+         CG    R0,=FL8'6'
+         RT1   CCE
+* B91D DSGFR
+         LG    R1,=FL8'13'
+         L     R2,=F'4'
+         DSGFR R0,R2
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         CLG   R1,=FL8'3'
+         RT1   CCE
+* B91F LRVR
+         L     R1,=X'12345678'
+         LRVR  R0,R1
+         CL    R0,=X'78563412'
+         RT1   CCE
+         L     1,=X'11223344'
+         LRVR  1,1  RPI 1200
+         C     1,=X'44332211'
+         RT1   CCE
+* B920 CGR
+         LG    R0,=FL8'1'
+         LG    R1,=FL8'1'
+         CGR   R0,R1
+         RT1   CCE
+         LG    R0,=FL8'-1'
+         LG    R1,=FL8'1'
+         CGR   R0,R1
+         RT1   CCL
+         LG    R0,=FL8'1'
+         LG    R1,=FL8'-1'
+         CGR   R0,R1
+         RT1   CCH
+* B921 CLGR
+         LG    R1,=C'ABCDEFGH'
+         LG    R2,=C'ABCDEFGH'
+         CLGR  R1,R2
+         RT1   CCE
+         LG    R1,=C'ABCDEFGI'
+         LG    R2,=C'ABCDEFGH'
+         CLGR  R1,R2
+         RT1   CCH
+         LG    R1,=C'ABCCEFGH'
+         LG    R2,=C'ABCDEFGH'
+         CLGR  R1,R2
+         RT1   CCL
+* B926 LBR Z9 LOAD BYTE
+         LA    R1,X'FF'
+         SGR   R0,R0
+         LBR   R0,R1
+         CL    R0,=F'-1'
+         RT1   CCE
+* B927 LHR Z9 LOAD HALFWORD
+         ICM   R1,3,=X'FFFF'
+         SGR   R0,R0
+         LHR   R0,R1
+         CL    R0,=F'-1'
+         RT1   CCE
+* B930 CGFR
+         LG    R0,=FL8'1'
+         L     R1,=F'1'
+         CGFR  R0,R1
+         RT1   CCE
+         LG    R0,=FL8'-1'
+         L     R1,=F'1'
+         CGFR  R0,R1
+         RT1   CCL
+         LG    R0,=FL8'1'
+         L     R1,=F'-1'
+         CGFR  R0,R1
+         RT1   CCH
+* B931 CLGFR
+         LG    R0,=FL8'1'
+         L     R1,=F'1'
+         CLGFR  R0,R1
+         RT1   CCE
+         LG    R0,=FL8'-1'
+         L     R1,=F'1'
+         CLGFR  R0,R1
+         RT1   CCH
+         LG    R0,=FL8'1'
+         L     R1,=F'-1'
+         CLGFR  R0,R1
+         RT1   CCL
+* B946 BCTGR
+         LG    R1,=FL8'2'
+         BCTR  R1,0
+         CLG   R1,=FL8'1'
+         RT1   CCE
+* B980 NGR
+         LG    R0,=FL8'3'
+         LG    R1,=FL8'2'
+         NGR   R0,R1
+         RT1   CCL
+         CLG   R0,=FL8'2'
+         RT1   CCE
+* B981 OGR
+         LG    R0,=FL8'1'
+         LG    R1,=FL8'2'
+         OGR   R0,R1
+         RT1   CCL
+         CLG   R0,=FL8'3'
+         RT1   CCE
+* B982 XGR
+         LG    R0,=FL8'3'
+         LG    R1,=FL8'2'
+         XGR   R0,R1
+         RT1   CCL
+         CLG   R0,=FL8'1'
+         RT1   CCE
+* B983 FLOGR Z9 FIND LEFTMOST ONE
+         LG    R2,=X'8000000000000000'
+         FLOGR R0,R2
+         RT1   CC2
+         CLG   R0,=XL8'0'
+         RT1   CCE
+         CLG   R1,=FL8'0'
+         RT1   CCE
+         LG    R2,=FL8'0'
+         FLOGR R0,R2
+         RT1   CC0
+         CLG   R0,=FL8'64'
+         RT1   CCE
+         CLG   R1,=FL8'0'
+         RT1   CCE
+         LG    R2,=FL8'1'
+         FLOGR R0,R2
+         RT1   CC2
+         CLG   R0,=FL8'63'
+         RT1   CCE
+         CLG   R1,=FL8'0'
+         RT1   CCE
+         LG    R2,=FL8'3'
+         FLOGR R0,R2
+         RT1   CC2
+         CLG   R0,=FL8'62'
+         RT1   CCE
+         CLG   R1,=FL8'1'
+         RT1   CCE
+* B984 LLGCR Z9 LOAD LOGICAL CHARACTER
+         LA    R1,X'FF'
+         SGR   R0,R0
+         LLGCR R0,R1
+         CLG   R0,=AD(X'FF')
+         RT1   CCE
+* B907 LLGHR Z9 LOAD LOGICAL HALFWORD
+         ICM   R1,3,=X'FFFF'
+         SGR   R0,R0
+         LLGHR R0,R1
+         CLG   R0,=AD(X'FFFF')
+         RT1   CCE
+* B986 MLGR
+         LG    R1,=FL8'3'
+         LG    R2,=FL8'2'
+         MLGR  R0,R2
+         CLG   R0,=FL8'0'
+         RT1   CCE
+         CLG   R1,=FL8'6'
+         RT1   CCE
+         LG     R1,=X'8000000000000000'
+         LG     R2,=X'8000000000000000'
+         MLGR  R0,R2
+         CLG   R0,=X'4000000000000000'
+         RT1   CCE
+         CLG   R1,=X'0000000000000000'
+         RT1   CCE
+* B987 DLGR
+         LG    R0,=FL8'0'
+         LG    R1,=FL8'13'
+         LG    R2,=FL8'4'
+         DLGR  R0,R2
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         CLG   R1,=FL8'3'
+         RT1   CCE
+         LG    R0,=X'4000000000000000'
+         LG    R1,=FL8'2'
+         LG    R2,=X'8000000000000000'
+         DLGR  R0,R2
+         CLG   R0,=FL8'2'
+         RT1   CCE
+         CLG   R1,=X'8000000000000000'
+         RT1   CCE
+* B988 ALCGR
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000001'
+         ALR   R0,R2      Z,C
+         LG    R0,=FL8'3'
+         LG    R2,=FL8'2'
+         ALCGR R0,R2
+         RT1   CC1        NZ,NC
+         CLG   R0,=FL8'6'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000002'
+         ALR   R0,R2      NZ,C
+         LG    R0,=X'8000000000000000'
+         LG    R2,=X'0000000000000001'
+         ALCGR R0,R2
+         RT1   CC1        NZ,NC
+         CLG   R0,=X'8000000000000002'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         LG    R2,=X'0000000000000001'
+         ALCGR R0,R2
+         RT1   CC2        Z,C
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         LG    R0,=X'0000000000000000'
+         LG    R2,=X'0000000000000000'
+         ALCGR R0,R2      Z,NC
+         RT1   CC0        Z,NC
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         LG    R2,=X'0000000000000002'
+         ALCGR R0,R2
+         RT1   CC3        NZ,C
+         CLG   R0,=X'0000000000000001'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         LG    R0,=X'0000000000000000'
+         LG    R2,=X'0000000000000000'
+         ALCGR R0,R2
+         RT1   CC0        Z,NC
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=FL8'-1'     
+         ALG   R0,=FL8'2'          CC3 NZ,C
+         LG    R1,=FL8'1'
+         ALCGR R0,R1       
+         RT1   CC1
+         CLG   R0,=FL8'3'      
+         RT1   CCE
+         SGR   R0,R0              FORCE CC0 Z,NC
+         LG    R1,=FL8'1'
+         ALCGR R0,R1              RPI174 TEST < CC0 
+         RT1   CC1
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         SGR   R0,R0              FORCE CC0 Z,NC
+         LG    R0,=FL8'-1'
+         LG    R1,=FL8'-1'
+         ALCGR R0,R1                                     
+         RT1   CC3                RPI 376
+         CLG   R0,=FL8'-2'
+         RT1   CCE
+* B989 SLBGR
+         CLI   =C'A',C'B' CC1= NZ,B 
+         LG    R0,=FL8'4'
+         LG    R2,=FL8'2'
+         SLBGR R0,R2
+         RT1   CC3        NZ,NB
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1= NZ,B 
+         LG    R0,=X'8000000000000000'
+         LG    R2,=X'0000000000000001'
+         SLBGR R0,R2
+         RT1   CC3        NZ,NB
+         CLG   R0,=X'7FFFFFFFFFFFFFFE'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1= NZ,B 
+         LG    R0,=X'0000000000000000'
+         LG    R2,=X'0000000000000001'
+         SLBGR R0,R2
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFE'
+         RT1   CCE
+         CLI   =C'B',C'A' CC2= Z,NB 
+         LG    R0,=X'0000000000000001'
+         LG    R2,=X'0000000000000001'
+         SLBGR  R0,R2
+         RT1   CC2        Z,NB
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         CLI   =C'B',C'A' CC2= Z,NB 
+         LG    R0,=X'0000000000000000'
+         LG    R2,=X'0000000000000002'
+         SLBGR R0,R2
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFE'
+         RT1   CCE
+         LG    R0,=FL8'2'            
+         LG    R2,=FL8'1'             
+         SLGR  R0,R2               CC3 NZ,NB
+         SLBGR R0,R2               RPI174 TEST < CC3 NZ,NB     
+         RT1   CC2                 CC2 Z,NB
+         CLG   R0,=FL8'0'
+         RT1   CCE
+         SGR   R0,R0               FORCE CC0 = Z,B 
+         LG    R1,=FL8'-1'
+         SLBGR R0,R1               RPI174 TEST > CC0 Z,B
+         LG    R1,=FL8'1'
+         SLBGR R0,R1               RPI174 TEST < CC0 Z,B    
+         RT1   CC1                 NZ,B 
+         CLG   R0,=FL8'-2'
+         RT1   CCE
+* B990 TRTT
+         L     R0,=A(TRTTEOD) TWO BYTE END OF DATA RPI 580
+         LA    R1,TRTTTAB
+         LM    R2,R4,=A(TRTTF1,L'TRTTF2,TRTTF2)
+         TRTT  R2,R4,1 NO TEST BYTES
+         RT1   CC0
+         CL    R2,=A(TRTTF1+L'TRTTF2)
+         RT1   CC0
+         LTR   R3,R3
+         RT1   CC0
+         CL    R4,=A(TRTTF2+L'TRTTF2)
+         RT1   CC0
+         CLC   TRTTF1,TRTTF1V1
+         RT1   CCE
+         MVC   TRTTF1,=C!99999999!
+         L     R0,=A(TRTTEOD) TWO BYTE END OF DATA RPI 580
+         LA    R1,TRTTTAB
+         LM    R2,R4,=A(TRTTF1,L'TRTTF2,TRTTF2)
+         TRTT  R2,R4,0 TEST BYTES
+         RT1   CC1         
+         CL    R2,=A(TRTTF1+4)
+         RT1   CC0
+         CL    R3,=A(L'TRTTF2-4)
+         RT1   CC0
+         CL    R4,=A(TRTTF2+4)
+         RT1   CC0
+         CLC   TRTTF1,TRTTF1V2
+         RT1   CCE
+* B991 TRTO
+         L     R0,=A(TRTOEOD) TWO BYTE END OF DATA RPI 580
+         LA    R1,TRTOTAB
+         LM    R2,R4,=A(TRTOF1,L'TRTOF2,TRTOF2)
+         TRTO  R2,R4,1 NO TEST BYTES
+         RT1   CC0
+         CL    R2,=A(TRTOF1+L'TRTOF2/2)
+         RT1   CC0
+         LTR   R3,R3
+         RT1   CC0
+         CL    R4,=A(TRTOF2+L'TRTOF2)
+         RT1   CC0
+         CLC   TRTOF1,TRTOF1V1
+         RT1   CCE
+         MVC   TRTOF1,=C!9999!
+         L     R0,=A(TRTOEOD) TWO BYTE END OF DATA RPI 580
+         LA    R1,TRTOTAB
+         LM    R2,R4,=A(TRTOF1,L'TRTOF2,TRTOF2)
+         TRTO  R2,R4,0 TEST BYTES
+         RT1   CC1         
+         CL    R2,=A(TRTOF1+2)
+         RT1   CC0
+         CL    R3,=A(L'TRTOF2-4)
+         RT1   CC0
+         CL    R4,=A(TRTOF2+4)
+         RT1   CC0
+         CLC   TRTOF1,TRTOF1V2
+         RT1   CCE
+* B992 TROT
+         L     R0,=A(TROTEOD) ONE BYTE END OF DATA RPI 580
+         LA    R1,TROTTAB
+         LM    R2,R4,=A(TROTF1,L'TROTF2,TROTF2)
+         TROT  R2,R4,1 NO TEST BYTES
+         RT1   CC0
+         CL    R2,=A(TROTF1+2*L'TROTF2)
+         RT1   CC0
+         LTR   R3,R3
+         RT1   CC0
+         CL    R4,=A(TROTF2+L'TROTF2)
+         RT1   CC0
+         CLC   TROTF1,TROTF1V1
+         RT1   CCE
+         MVC   TROTF1,=C!99999999!
+         L     R0,=A(TROTEOD) ONE BYTE END OF DATA RPI 580
+         LA    R1,TROTTAB
+         LM    R2,R4,=A(TROTF1,L'TROTF2,TROTF2)
+         TROT  R2,R4,0 TEST BYTES
+         RT1   CC1         
+         CL    R2,=A(TROTF1+4)
+         RT1   CC0
+         CL    R3,=A(L'TROTF2-2)
+         RT1   CC0
+         CL    R4,=A(TROTF2+2)
+         RT1   CC0
+         CLC   TROTF1,TROTF1V2
+         RT1   CCE
+* B993 TROO
+         L     R0,=A(TROOEOD) ONE BYTE END OF DATA RPI 580
+         LA    R1,TROOTAB
+         LM    R2,R4,=A(TROOF1,L'TROOF2,TROOF2)
+         TROO  R2,R4,1 NO TEST BYTES
+         RT1   CC0
+         CL    R2,=A(TROOF1+L'TROOF2)
+         RT1   CC0
+         LTR   R3,R3
+         RT1   CC0
+         CL    R4,=A(TROOF2+L'TROOF2)
+         RT1   CC0
+         CLC   TROOF1,TROOF1V1
+         RT1   CCE
+         MVC   TROOF1,=C!9999!
+         L     R0,=A(TROOEOD) ONE BYTE END OF DATA RPI 580
+         LA    R1,TROOTAB
+         LM    R2,R4,=A(TROOF1,L'TROOF2,TROOF2)
+         TROO  R2,R4,0 TEST BYTES
+         RT1   CC1         
+         CL    R2,=A(TROOF1+2)
+         RT1   CC0
+         CL    R3,=A(L'TROOF2-2)
+         RT1   CC0
+         CL    R4,=A(TROOF2+2)
+         RT1   CC0
+         CLC   TROOF1,TROOF1V2
+         RT1   CCE
+* B994 LLCR Z9 LOAD LOGICAL CHARACTER
+         LA    R1,X'FF'
+         SGR   R0,R0
+         LLCR  R0,R1
+         CL    R0,=A(X'FF')
+         RT1   CCE
+* B995 LLHR Z9 LOAD LOGICAL HALFWORD
+         ICM   R1,3,=X'FFFF'
+         SGR   R0,R0
+         LLHR  R0,R1
+         CL    R0,=A(X'FFFF')
+         RT1   CCE
+* B996 MLR
+         L     R0,=F'-1' JUNK
+         L     R1,=F'3'
+         L     R2,=F'2'
+         MLR   R0,R2
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'6'
+         RT1   CCE
+         L     R1,=X'80000000'
+         L     R2,=X'80000000'
+         L     R0,=F'-1' JUNK
+         MLR   R0,R2
+         CL    R0,=X'40000000'
+         RT1   CCE
+         CL    R1,=X'00000000'
+         RT1   CCE
+* B997 DLR
+         L     R0,=F'0'
+         L     R1,=F'13'
+         L     R2,=F'4'
+         DLR   R0,R2
+         CL    R0,=F'1'
+         RT1   CCE
+         CL    R1,=F'3'
+         RT1   CCE
+         L     R0,=X'40000000'
+         L     R1,=F'2'
+         L     R2,=X'80000000'
+         DLR   R0,R2
+         CL    R0,=F'2'
+         RT1   CCE
+         CL    R1,=X'80000000'
+         RT1   CCE
+* B998 ALCR
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000001'
+         ALR   R0,R2      Z,C
+         L     R0,=F'3'
+         L     R2,=F'2'
+         ALCR  R0,R2
+         RT1   CC1        NZ,NC
+         CL    R0,=F'6'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000002'
+         ALR   R0,R2      NZ,C
+         L     R0,=X'80000000'
+         L     R2,=X'00000001'
+         ALCR  R0,R2
+         RT1   CC1        NZ,NC
+         CL    R0,=X'80000002'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000001'
+         ALCR  R0,R2
+         RT1   CC2        Z,C
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         L     R0,=X'00000000'
+         L     R2,=X'00000000'
+         ALCR  R0,R2      Z,NC
+         RT1   CC0        Z,NC
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000002'
+         ALCR  R0,R2
+         RT1   CC3        NZ,C
+         CL    R0,=X'00000001'
+         RT1   CCE
+         SR    R0,R0
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'FFFFFFFF'
+         ALCR  R0,R2
+         RT1   CC3        NZ,C    RPI 376
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         L     R0,=X'00000000'
+         L     R2,=X'00000000'
+         ALCR  R0,R2
+         RT1   CC0        Z,NC
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000002'
+         ALR   R0,R2    CC3 NZ,C
+         L     R1,=F'1'
+         ALCR  R0,R1               RPI174 TEST < CC3                  
+         RT1   CC1
+         CL    R0,=X'00000003'
+         RT1   CC0
+         SR    R0,R0               FORCE CC0 Z,NC
+         L     R1,=F'1'
+         ALCR  R0,R1               RPI174 TEST < CC0      
+         RT1   CC1                 NZ,NC
+         CL    R0,=F'1'
+         RT1   CCE
+* B999 SLBR
+         CLI   =C'A',C'B'  CC1 = NZ,B
+         L     R0,=F'4'
+         L     R2,=F'2'
+         SLBR  R0,R2
+         RT1   CC3        NZ,NB
+         CL    R0,=F'1'
+         RT1   CCE
+         CLI   =C'A',C'B'  CC1 = NZ,B
+         L     R0,=X'80000000'
+         L     R2,=X'00000001'
+         SLBR  R0,R2
+         RT1   CC3        NZ,NB
+         CL    R0,=X'7FFFFFFE'
+         RT1   CCE
+         CLI   =C'A',C'B'  CC1 = NZ,B
+         L     R0,=X'00000000'
+         L     R2,=X'00000001'
+         SLBR  R0,R2
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+         CLI   =C'B',C'A'  CC2 = Z,NB
+         L     R0,=X'00000001'
+         L     R2,=X'00000001'
+         SLBR  R0,R2
+         RT1   CC2        Z,NB
+         CL    R0,=X'00000000'
+         RT1   CCE
+         CLI   =C'B',C'A'  CC2 = Z,NB
+         L     R0,=X'00000000'
+         L     R2,=X'00000002'
+         SLBR  R0,R2
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+         L     R0,=F'2'            
+         L     R2,=F'1'             
+         SLR   R0,R2               CC3 NZ,NB
+         SLBR  R0,R2               RPI174 TEST < CC3      
+         RT1   CC2
+         CL    R0,=X'00000000'
+         RT1   CC0
+         SR    R0,R0               FORCE CC0 = Z,B 
+         L     R0,=F'0'            
+         L     R2,=F'-1'      
+         SLBR  R0,R2               RPI174 TEST > CC0 Z,B
+         L     R1,=F'1'
+         SLBR  R0,R1               RPI174 TEST < CC0 Z,B    
+         RT1   CC1                 NZ,B 
+         CL    R0,=F'-2'
+         RT1   CCE
+* BA   CS
+         LM    R1,R2,=A(1,2)
+         MVC   WORD,=A(3)
+         CS    R1,R2,WORD
+         RT1   CC1
+         CL    R1,=A(3)
+         RT1   CCE
+         CLC   WORD,=A(3)
+         RT1   CCE
+         LM    R1,R2,=A(4,5)
+         MVC   WORD,=A(4)
+         CS    R1,R2,WORD
+         RT1   CC0
+         CL    R1,=A(4)
+         RT1   CCE
+         CLC   WORD,=A(5)
+         RT1   CCE
+* BB   CDS 
+         LM    R0,R3,=A(1,2,3,4)
+         MVC   REGS(8),=A(5,6)
+         CDS   R0,R2,REGS
+         RT1   CC1
+         CL    R0,=A(5)
+         RT1   CCE
+         CL    R1,=A(6)
+         RT1   CCE
+         CLC   REGS(8),=A(5,6)
+         RT1   CCE
+         LM    R0,R3,=A(1,2,3,4)
+         MVC   REGS(8),=A(1,2)
+         CDS   R0,R2,REGS
+         RT1   CC0
+         CL    R0,=A(1)
+         RT1   CCE
+         CL    R1,=A(2)
+         RT1   CCE
+         CLC   REGS(8),=A(3,4)
+         RT1   CCE
+* BD   CLM
+         L     R1,=C'ABCD'
+         CLM   R1,9,=C'AD'
+         RT1   CCE
+         L     R1,=C'ABCD'
+         CLM   R1,9,=C'AC'
+         RT1   CCH
+         L     R1,=C'ABCD'
+         CLM   R1,9,=C'AE'
+         RT1   CCL
+* BE   STCM
+         L     R1,=C'4567'
+         STCM  R1,15,WORD
+         CLC   WORD,=C'4567'
+         RT1   CCE
+         L     R1,=C'4567'
+         STCM  R1,9,WORD
+         CLC   WORD(2),=C'47'
+         RT1   CCE
+* BF   ICM
+         L     R1,=X'F1F2F3F4' 
+         ICM   R1,9,=X'CACD'
+         RT1   CCL
+         CL    R1,=X'CAF2F3CD'
+         RT1   CCE
+         ICM   R1,9,=X'0000'
+         RT1   CCE
+         CL    R1,=X'00F2F300'
+         RT1   CCE
+         ICM   R1,15,=X'12345678'
+         RT1   CCH                 RPI 295 TEST
+         CL    R1,=X'12345678'
+         RT1   CCE
+         ICM   R1,3,=X'FFFF'
+         RT1   CCL                 RPI 295 TEST
+         CL    R1,=X'1234FFFF'
+         RT1   CCE
+         ICM   R1,15,=X'FFFFFFFF'  RPI 303 TESTS
+         RT1   CCL
+         ICM   R1,15,=X'00FFFFFF'
+         RT1   CCH
+         ICM   R1,15,=X'7FFFFFFF'
+         RT1   CCH
+         ICM   R1,15,=X'00000000'
+         RT1   CCE
+         ICM   R1,0,=X'FFFFFFFF'
+         RT1   CCE
+         ICM   R1,7,=X'FFFFFF'
+         RT1   CCL
+         ICM   R1,7,=X'00FFFF'
+         RT1   CCH
+         ICM   R1,7,=X'7FFFFF'
+         RT1   CCH
+         ICM   R1,7,=X'000000'
+         RT1   CCE
+         ICM   R1,3,=X'FFFF'
+         RT1   CCL
+         ICM   R1,3,=X'00FF'
+         RT1   CCH
+         ICM   R1,3,=X'7FFF'
+         RT1   CCH
+         ICM   R1,3,=X'0000'
+         RT1   CCE
+         ICM   R1,1,=X'FF'
+         RT1   CCL
+         ICM   R1,1,=X'01'
+         RT1   CCH
+         ICM   R1,1,=X'7F'
+         RT1   CCH
+         ICM   R1,1,=X'00'
+         RT1   CCE
+* C00  LARL
+         LARL  R1,*+6     RPI 844 WAS LARL R1,3
+         CL    R1,=A(*)
+         RT1   CCE
+         LARL  R1,LARL1
+LARL1    CL    R1,=A(LARL1)
+* C01  LGFI
+         SGR   R0,R0
+         LGFI  R0,-1
+         CG    R0,=FL8'-1'
+         RT1   CCE
+         SGR   R3,R3
+         LGFI  R3,-1
+         CG    R3,=FL8'-1'
+         RT1   CCE
+* C04  BRCL
+         BRCL  15,BRCLOK
+BRCLERR  RT1   ABORT
+BRCLOK   EQU   *
+         BRCL  0,BRCLERR
+         JLNOP BRCLERR     RPI199
+         BRUL  *+6         RPI199
+         JLU   *+6         RPI199
+         CLI   =X'1',1
+         BRCL  7,BRCLERR
+         BROL  BRCLERR     RPI199
+         JLO   BRCLERR     RPI199
+         BRHL  BRCLERR     RPI199
+         JLH   BRCLERR     RPI199
+         BRLL  BRCLERR     RPI199
+         BRML  BRCLERR     RPI199
+         JLL   BRCLERR     RPI199
+         JLM   BRCLERR     RPI199
+         BRNEL BRCLERR     RPI199
+         BRNZL BRCLERR     RPI199
+         JLNE  BRCLERR     RPI199
+         JLNZ  BRCLERR     RPI199
+         BRNOL *+6         RPI199
+         JLNO  *+6         RPI199
+         RT1   CCE
+         CLI   =X'1',2
+         BRCL  11,BRCLERR
+         BRPL  BRCLERR     RPI199
+         JLP   BRCLERR     RPI199
+         BRNLL BRCLERR     RPI199
+         BRNML BRCLERR     RPI199
+         JLNL  BRCLERR     RPI199
+         JLNM  BRCLERR     RPI199
+         RT1   CCL
+         CLI   =X'2',1
+         BRCL  13,BRCLERR
+         BREL  BRCLERR     RPI199
+         BRZL  BRCLERR     RPI199
+         JLE   BRCLERR     RPI199
+         JLZ   BRCLERR     RPI199
+         BRNHL BRCLERR     RPI199
+         BRNPL BRCLERR     RPI199
+         JLNH  BRCLERR     RPI199
+         JLNP  BRCLERR     RPI199
+         RT1   CCH
+* C05  BRASL
+BRASL1   BRASL R1,BRASL2
+         RT1   ABORT
+BRASL2   EQU   *
+         NILH  R1,X'7FFF'
+         CL    R1,=A(BRASL1+6)
+         RT1   CCE
+* C06  XIHF
+         LG    R0,=X'0102030405060708'
+         XIHF  R0,X'F1F0F0F0'
+         CG    R0,=X'F0F2F3F405060708'
+         RT1   CCE
+* C07  XILF
+         LG    R0,=X'0102030405060708'
+         XILF  R0,X'F1F0F0F0'
+         CG    R0,=X'01020304F4F6F7F8'
+         RT1   CCE
+* C08  IIHF
+         LG    R0,=X'0102030405060708'
+         IIHF  R0,X'F1F0F0F0'
+         CG    R0,=X'F1F0F0F005060708'
+         RT1   CCE
+* C09  IILF
+         LG    R0,=X'0102030405060708'
+         IILF  R0,X'F1F0F0F0'
+         CG    R0,=X'01020304F1F0F0F0'
+         RT1   CCE
+* C0A  NIHF
+         LG    R0,=X'0102030405060708'
+         NIHF  R0,X'F1F0F0F0'
+         CG    R0,=X'0100000005060708'
+         RT1   CCE
+* C0B  NILF
+         LG    R0,=X'0102030405060708'
+         NILF  R0,X'F1F0F0F0'
+         CG    R0,=X'0102030401000000'
+         RT1   CCE
+* C0C  OIHF
+         LG    R0,=X'0102030405060708'
+         OIHF  R0,X'F1F0F0F0'
+         CG    R0,=X'F1F2F3F405060708'
+         RT1   CCE
+* C0D  OILF
+         LG    R0,=X'0102030405060708'
+         OILF  R0,X'F1F0F0F0'
+         CG    R0,=X'01020304F5F6F7F8'
+         RT1   CCE
+* C0E  LLIHF
+         LG    R0,=X'0102030405060708'
+         LLIHF R0,X'F1F0F0F0'
+         CG    R0,=X'F1F0F0F000000000'
+         RT1   CCE
+* C0F  LLILF
+         LG    R0,=X'0102030405060708'
+         LLILF R0,X'F1F0F0F0'
+         CG    R0,=X'00000000F1F0F0F0'
+         RT1   CCE
+* C24  SLGFI
+         LG    R0,=FL8'3'
+         SLGFI R0,2
+         RT1   CC3        NZ,NB
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LG    R0,=X'8000000000000000'
+         SLGFI R0,X'00000001'
+         RT1   CC3        NZ,NB
+         CLG   R0,=X'7FFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         SLGFI R0,X'00000001'
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R0,=X'0000000000000001'
+         SLG   R0,=X'0000000000000001'
+         RT1   CC2        Z,NB
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         SLGFI R0,X'00000002'
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFE'
+         RT1   CCE
+         LG    R3,=FL8'3'
+         SLGFI R3,2
+         RT1   CC3        NZ,NB
+         CLG   R3,=FL8'1'
+         RT1   CCE
+* C25  SLFI
+         L     R0,=F'3'
+         SLFI  R0,2
+         RT1   CC3        NZ,NB
+         CL    R0,=F'1'
+         RT1   CCE
+         L     R0,=X'80000000'
+         SLFI  R0,X'00000001'
+         RT1   CC3        NZ,NB
+         CL    R0,=X'7FFFFFFF'
+         RT1   CCE
+         L     R0,=X'00000000'
+         SLFI  R0,X'00000001'
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFF'
+         RT1   CCE
+         L     R0,=X'00000001'
+         SLFI  R0,X'00000001'
+         RT1   CC2        Z,NB
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=X'00000000'
+         SLFI  R0,X'00000002'
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+* C28  AGFI
+         LG    R0,=X'0102030405060708'
+         AGFI  R0,X'01010101'
+         RT1   CCH
+         CLG   R0,=X'0102030406070809'
+         RT1   CCE
+         LG    R0,=FL8'1'
+         AGFI  R0,-2
+         RT1   CCL
+         CLG   R0,=FL8'-1'
+         RT1   CCE
+* C29  AFI
+         L     R0,=X'01020304'
+         AFI   R0,X'01010101'
+         RT1   CCH
+         CL    R0,=X'02030405'
+         RT1   CCE
+         L     R0,=F'1'
+         AFI   R0,-2
+         RT1   CCL
+         CL    R0,=F'-1'
+         RT1   CCE
+* C2A  ALGFI
+         LG    R0,=X'0102030405060708'
+         ALGFI R0,X'F1F1F1F1'
+         RT1   CC1
+         CLG   R0,=X'01020304F6F7F8F9'
+         RT1   CCE
+* C2B  ALFI
+         L     R0,=X'01020304'
+         ALFI  R0,X'F1F1F1F1'
+         RT1   CC1
+         CL    R0,=X'F2F3F4F5'
+         RT1   CCE
+* C2C  CGFI
+         LG    R0,=FL8'-123456'
+         CGFI  R0,-123456
+         RT1   CCE
+* C2D  CFI
+         L     R0,=F'-123456'
+         CFI   R0,-123456
+         RT1   CCE
+* C2E  CLGFI
+         LG    R0,=X'00000000FFFFFFFF'
+         CLGFI R0,X'FFFFFFFF'
+         RT1   CCE
+* C2F  CLFI
+         L     R0,=X'FFFFFFFF'
+         CLFI  R0,X'FFFFFFFF'
+         RT1   CCE
+* D0   TRTR
+         MVC   WORD,=AL1(3,2,1,0)
+         LA    R1,0
+         LA    R2,0
+         TRTR  WORD+3,=C'ABCD'
+         RT1   CC1
+         CL    R1,=A(WORD+3)
+         RT1   CCE
+         CL    R2,=A(C'A')
+         RT1   CCE
+         MVC   WORD,=AL1(3,2,1,0)
+         LA    R1,0
+         LA    R2,0
+         TRTR  WORD+3,=AL1(0,X'FF',0,0)
+         RT1   CC1
+         CL    R1,=A(WORD+2)
+         RT1   CCE
+         CL    R2,=A(X'FF')
+         RT1   CCE
+         MVC   WORD,=AL1(3,2,1,0)
+         LA    R1,0
+         LA    R2,0
+         TRTR  WORD+3,=AL1(0,0,0,X'FF')
+         RT1   CC2
+         CL    R1,=A(WORD)
+         RT1   CCE
+         CL    R2,=A(X'FF')
+         RT1   CCE
+* D1   MVN
+         MVC   BYTE,=C'A'
+         MVN   BYTE,=C'2'
+         CLI   BYTE,C'B'
+         RT1   CCE
+         MVC   PWORK,=C'ABCDEFGH'
+         MVN   PWORK,=C'23456789'
+         CLC   PWORK,=C'BCDEFGHI'
+         RT1   CCE
+* D2   MVC
+         MVC   BYTE,=X'EE'
+         CLI   BYTE,X'EE'
+         RT1   CCE
+         MVC   PWORK,=F'1,2'
+         CLC   PWORK,=A(1,2)
+         RT1   CCE
+         MVC   PWORK,=8X'FF'
+         CLC   PWORK,=8X'FF'
+         RT1   CCE
+         MVI   PWORK,X'EE'
+         MVC   PWORK+1(7),PWORK  FILL WITH 1 BYTE
+         CLC   PWORK,=8X'EE'
+         RT1   CCE
+         MVC   PWORK(2),=X'ABCD'
+         MVC   PWORK+2(6),PWORK  FILL WITH 2 BYTES
+         CLC   PWORK,=4X'ABCD'
+         RT1   CCE
+* D3   MVZ
+         MVC   BYTE,=C'A'
+         MVZ   BYTE,=C'2'
+         CLI   BYTE,C'1'
+         RT1   CCE
+         MVC   PWORK,=C'ABCDEFGH'
+         MVZ   PWORK,=C'23456789'
+         CLC   PWORK,=C'12345678'
+         RT1   CCE
+* D4   NC
+         MVC   PWORK,=X'0123456789ABCDEF'
+         NC    PWORK,=X'0133557789ABCDFF'
+         RT1   CCL
+         CLC   PWORK,=X'0123456789ABCDEF'
+         RT1   CCE
+* D5   CLC 
+         MVC   PWORK,=F'1,2'
+         CLC   PWORK,=A(1,2)
+         RT1   CCE
+         MVC   PWORK,=F'1,2'
+         CLC   PWORK,=A(1,3)
+         RT1   CCL
+         MVC   PWORK,=F'1,2'
+         CLC   PWORK,=A(1,1)
+         RT1   CCH
+* D6   OC
+         MVC   PWORK,=X'123456789ABCDEF'
+         OC    PWORK,=X'113151779ABCDFF'
+         RT1   CCL
+         CLC   PWORK,=X'1335577F9ABCDFF'
+         RT1   CCE
+* D7   XC
+         MVC   PWORK,=X'123456789ABCDE8'
+         XC    PWORK,=X'113151779ABCDE7'
+         RT1   CCL
+         CLC   PWORK,=X'0305070F000000F'
+         RT1   CCE
+* DC   TR
+         MVC   WORD,=AL1(3,2,1,0)
+         TR    WORD,=C'ABCD'
+         CLC   WORD,=C'DCBA'
+         RT1   CCE
+* DD   TRT
+         SAM31 ,                   RPI 844 FORCE AMODE31 FOR Z9/Z10
+         MVC   WORD,=AL1(3,2,1,0)
+         LHI   R1,-1               RPI 828
+         LA    R2,0
+         TRT   WORD,=C'ABCD'
+         RT1   CC1
+         CL    R1,=A(WORD)
+         RT1   CCE
+         CL    R2,=A(C'D')
+         RT1   CCE
+         MVC   WORD,=AL1(3,2,1,0)
+         LHI   R1,-1               RPI 828
+         LA    R2,0
+         TRT   WORD,=AL1(0,X'FF',0,0)
+         RT1   CC1
+         CL    R1,=A(WORD+2)
+         RT1   CCE
+         CL    R2,=A(X'FF')
+         RT1   CCE
+         MVC   WORD,=AL1(3,2,1,0)
+         LHI   R1,-1               RPI 828
+         LA    R2,0
+         TRT   WORD,=AL1(X'FF',0,0,0)
+         RT1   CC2
+         CL    R1,=A(WORD+3)
+         RT1   CCE
+         CL    R2,=A(X'FF')
+         RT1   CCE
+* DE   ED
+         MVC   WORD,=X'40202020'
+         ED    WORD,=P'123'
+         RT1   CCH
+         CLC   WORD,=C' 123'
+         RT1   CCE
+         MVC   WORD,=X'40202020'
+         ED    WORD,=PL2'0'
+         RT1   CCE
+         CLC   WORD,=C'    '
+         RT1   CCE
+         MVC   WORD,=X'40202020'
+         ED    WORD,=PL2'-1'
+         RT1   CCL
+         CLC   WORD,=C'   1'
+         RT1   CCE
+         MVC   WORD,=X'40202021'
+         ED    WORD,=PL2'0'
+         RT1   CCE
+         CLC   WORD,=C'    '
+         RT1   CCE
+         MVC   WORD,=X'40202120'
+         ED    WORD,=PL2'0'
+         RT1   CCE
+         CLC   WORD,=C'   0'
+         RT1   CCE
+         MVC   PWORK,NEGMASK BIMODAL EBCDIC MASK
+         ED    PWORK,=P'123'
+         CLC   PWORK,=CL8' 123'
+         RT1   CCE
+         MVC   PWORK,NEGMASK BIMODAL EBCDIC MASK
+         ED    PWORK,=P'-123'
+         CLC   PWORK+4(4),=C'-   '
+         RT1   CCE
+         CLC   PWORK,=CL8' 123-'
+         RT1   CCE
+* DF   EDMK
+         LHI   R1,-1                 RPI 828
+         MVC   WORD,=X'40202020'
+         LHI   R1,-1                 RPI 828
+         EDMK  WORD,=P'123'
+         BCTR  R1,0
+         MVI   0(R1),C'$'
+         CLC   WORD,=C'$123'
+* E302 LTG
+         LTG   R0,=FL8'1'
+         RT1   CCH
+         LTG   R0,=FL8'-1'
+         RT1   CCL
+         LTG   R0,=FL8'0'
+         RT1   CCE
+* E304 LG
+         LG    R0,=FL8'-1'
+         STG   R0,PWORK
+         CLC   PWORK,=X'FFFFFFFFFFFFFFFF'
+* E306 CVBY
+         CVBY  R0,=PL8'2147483647'
+         CVDY  R0,PWORK
+         CP  PWORK,=P'2147483647'
+         RT1 CCE
+* E308 AG
+         LG    R0,=FL8'1'
+         AG    R0,=FL8'3'
+         RT1   CCH
+         CG    R0,=FL8'4'
+         RT1   CCE
+* E309 SG
+         LG    R0,=FL8'1'
+         SG    R0,=FL8'3'
+         RT1   CCL
+         CG    R0,=FL8'-2'
+         RT1   CCE
+* E30A ALG
+         LG    R0,=FL8'3'
+         ALG   R0,=FL8'2'
+         RT1   CC1        NZ,NC
+         CLG   R0,=FL8'5'
+         RT1   CCE
+         LG    R0,=X'8000000000000000'
+         ALG   R0,=X'0000000000000001'
+         RT1   CC1        NZ,NC
+         CLG   R0,=X'8000000000000001'
+         RT1   CCE
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         ALG   R0,=X'0000000000000001'
+         RT1   CC2        Z,C
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         ALG   R0,=X'0000000000000002'
+         RT1   CC3        NZ,C
+         CLG   R0,=X'0000000000000001'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         ALG   R0,=X'0000000000000000'
+         RT1   CC0        Z,NC
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+* E30B SLG
+         LG    R0,=X'FFFFFFFFFFFFFFFF'  RPI 879
+         SLG   R0,=X'8000000000000000'  RPI 879
+         RT1   CC3        NZ,NB         RPI 879
+         CLG   R0,=X'7FFFFFFFFFFFFFFF'  RPI 879
+         RT1   CCE                      RPI 879
+         LG    R0,=X'8000000000000000'  RPI 831
+         SLG   R0,=X'A000000000000000'
+         RT1   CC1        NZ,B
+         CLG   R0,=X'E000000000000000'
+         RT1   CCE
+         LG    R0,=FL8'3'
+         SLG   R0,=FL8'2'
+         RT1   CC3        NZ,NB
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LG    R0,=X'8000000000000000'
+         SLG   R0,=X'0000000000000001'
+         RT1   CC3        NZ,NB
+         CLG   R0,=X'7FFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         SLG   R0,=X'0000000000000001'
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R0,=X'0000000000000001'
+         SLG   R0,=X'0000000000000001'
+         RT1   CC2        Z,NB
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         SLG   R0,=X'0000000000000002'
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFE'
+         RT1   CCE
+* E30C MSG
+         LG    R0,=FL8'2'    
+         MSG   R0,=FL8'3'
+         CG    R0,=FL8'6'
+         RT1   CCE
+* E30D DSG
+         LG    R1,=FL8'13'
+         DSG   R0,=FL8'4'
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         CLG   R1,=FL8'3'
+         RT1   CCE
+* E30E CVBG
+         CVBG  R0,=PL16'800'
+         CH    R0,=H'800'
+         RT1   CCE
+         CVDG  R0,PWORK16
+         CP  PWORK16,=P'800'
+         RT1 CCE
+         CVBG  R0,=PL16'9223372036854775807'
+         CVDG  R0,PWORK16
+         CP  PWORK16,=P'9223372036854775807'
+         RT1 CCE
+* E30F LRVG 
+         LRVG  R1,=X'0123456789ABCDEF'
+         CLG   R1,=X'EFCDAB8967452301'
+         RT1   CCE
+* E312 LT 
+         LT    R0,=F'1'
+         RT1   CCH
+         LT    R0,=F'-1'
+         RT1   CCL
+         LT    R0,=F'0'
+         RT1   CCE
+* E314 LGF
+         LGF    R0,=F'-1'
+         STG   R0,PWORK
+         CLC   PWORK,=X'FFFFFFFFFFFFFFFF'
+* E315 LGH
+         LGH    R0,=H'-1'
+         STG   R0,PWORK
+         CLC   PWORK,=X'FFFFFFFFFFFFFFFF'
+* E316 LLGF 
+         LLGF  R0,=F'-1'
+         CLG   R0,=A(0,-1)
+         RT1   CCE
+* E317 LLGT 
+         LLGT  R0,=F'-1'               RPI 160
+         CLG   R0,=A(0,X'7FFFFFFF')
+         RT1   CCE
+* E31A ALGF
+         LG    R0,=FL8'3'
+         ALGF  R0,=F'2'
+         RT1   CC1        NZ,NC
+         CLG   R0,=FL8'5'
+         RT1   CCE
+         LG    R0,=X'8000000000000000'
+         ALGF  R0,=X'00000001'
+         RT1   CC1        NZ,NC
+         CLG   R0,=X'8000000000000001'
+         RT1   CCE
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         ALGF  R0,=X'00000001'
+         RT1   CC2        Z,C
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         ALGF  R0,=X'00000002'
+         RT1   CC3        NZ,C
+         CLG   R0,=X'0000000000000001'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         ALGF  R0,=X'00000000'
+         RT1   CC0        Z,NC
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+* E31B SLGF
+         LG    R0,=X'FFFFFFFFFFFFFFFF'  RPI 879
+         SLGF  R0,=X'80000000'          RPI 879
+         RT1   CC3        NZ,NB         RPI 879
+         CLG   R0,=X'FFFFFFFF7FFFFFFF'  RPI 879
+         RT1   CCE                      RPI 879
+         LG    R0,=FL8'3'
+         SLGF  R0,=F'2'
+         RT1   CC3        NZ,NB
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LG    R0,=X'8000000000000000'
+         SLGF  R0,=X'00000001'
+         RT1   CC3        NZ,NB
+         CLG   R0,=X'7FFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         SLGF  R0,=X'00000001'
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R0,=X'0000000000000001'
+         SLG   R0,=X'0000000000000001'
+         RT1   CC2        Z,NB
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=X'0000000000000000'
+         SLGF  R0,=X'00000002'
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFE'
+         RT1   CCE
+* E318 AGF
+         LG    R0,=FL8'1'
+         AGF   R0,=F'3'
+         RT1   CCH
+         CG    R0,=FL8'4'
+         RT1   CCE
+* E319 SGF
+         LG    R0,=FL8'1'
+         SGF   R0,=F'3'
+         RT1   CCL
+         CG    R0,=FL8'-2'
+         RT1   CCE
+* E31C MSGF
+         LG    R0,=FL8'2'    
+         MSGF  R0,=F'3'
+         CG    R0,=FL8'6'
+         RT1   CCE
+* E31D DSGF
+         LG    R1,=FL8'13'    
+         DSGF  R0,=F'3'
+         CG    R0,=FL8'1'
+         RT1   CCE
+         CG    R1,=FL8'4'
+         RT1   CCE
+* E31E LRV                     RPI173
+         SR    R0,R0
+         LRV   R0,=X'01020304'
+         CL    R0,=A(X'04030201')
+         RT1   CCE
+* E31F LRVH 
+         SR    R0,R0
+         LRVH  R0,=X'0102'
+         CL    R0,=A(X'0201')
+         RT1   CCE
+* E320 CG
+         LG    R1,=FL8'1'
+         CG    R1,=FL8'1'       
+         RT1   CCE
+         LG    R1,=FL8'-1'
+         CG    R1,=FL8'1'       
+         RT1   CCL
+         LG    R1,=FL8'1'
+         CG    R1,=FL8'-1'       
+         RT1   CCH
+* E321 CLG
+         LG    R1,=C'ABCDEFGH'
+         CLG   R1,=C'ABCDEFGH'
+         RT1   CCE
+         LG    R1,=C'ABCDEFGI'
+         CLG   R1,=C'ABCDEFGH'
+         RT1   CCH
+         LG    R1,=C'ABCDEFGH'
+         CLG   R1,=C'ABCDFFGH'
+         RT1   CCL
+* E324 STG
+         LG    R0,=X'0123456789ABCDEF'
+         STG   R0,PWORK
+         CLC   PWORK,=X'0123456789ABCDEF'
+* E326 CVDY
+         CVBY  R0,=PL8'2147483647'
+         CVDY  R0,PWORK
+         CP  PWORK,=P'2147483647'
+         RT1 CCE
+* E32E CVDG
+         CVBG  R0,=PL16'9223372036854775807'
+         CVDG  R0,PWORK16
+         CP  PWORK16,=P'9223372036854775807'
+         RT1 CCE
+* E32F STRVG 
+         LG    R1,=X'0123456789ABCDEF'
+         STRVG R1,PWORK
+         CLC   PWORK,=X'EFCDAB8967452301'
+         RT1   CCE
+* E330 CGF
+         LG    R1,=FL8'1'
+         CGF   R1,=F'1'       
+         RT1   CCE
+         LG    R1,=FL8'-1'
+         CGF   R1,=F'1'       
+         RT1   CCL
+         LG    R1,=FL8'1'
+         CGF   R1,=F'-1'       
+         RT1   CCH
+* E331 CLGF
+         LG    R1,=XL8'FFFFFFFF'
+         CLGF  R1,=X'FFFFFFFF'
+         RT1   CCE
+         LG    R1,=XL8'80000001'
+         CLGF  R1,=X'80000000'
+         RT1   CCH
+         LG    R1,=XL8'80000001'
+         CLG   R1,=X'80000002'
+         RT1   CCL
+* E334 CGH                    RPI 875
+         LG    R1,=FL8'1'
+         CGH   R1,=H'1'       
+         RT1   CCE
+         LG    R1,=FL8'-1'
+         CGH   R1,=H'1'       
+         RT1   CCL
+         LG    R1,=FL8'1'
+         CGH   R1,=H'-1'       
+         RT1   CCH
+* E33E STRV 
+         L     R1,=X'01234567'
+         STRV  R1,PWORK
+         CLC   PWORK(4),=X'67452301'
+         RT1   CCE
+* E332 LTGF              RPI 875
+         LTGF  R0,=f'1'
+         RT1   CCH
+         LTGF  R0,=f'-1'
+         RT1   CCL
+         LTGF  R0,=f'0'
+         RT1   CCE
+* E33F STRVH 
+         L     R1,=X'01234567'
+         STRVH R1,PWORK
+         CLC   PWORK(2),=X'6745'
+         RT1   CCE
+* E346 BCTG 
+         LG    R1,=FL8'10'
+         SR    R2,R2
+BCTG1    LA    R2,1(R2)
+         BCTG  R1,BCTG1
+         CLG   R1,=FL8'0'
+         RT1   CCE
+         CL    R2,=F'10'
+         RT1   CCE
+* E350 STY
+         LA    R1,1234
+         STY    R1,WORD
+         RT1   CCE,WORD,=F'1234'
+* E351 MSY
+         L     R0,=F'2'    
+         MSY   R0,=F'3'
+         C     R0,=F'6'
+         RT1   CCE
+* E354 NY
+         L     R0,=X'12345678'
+         NY    R0,=X'1335577F'
+         RT1   CCL
+         CL    R0,=X'12345678'
+         RT1   CCE
+* E355 CLY
+         LA    R1,1
+         CLY   R1,=F'1'
+         RT1   CCE
+         LA    R1,0
+         CLY   R1,=F'1'
+         RT1   CCL
+         LA    R1,2
+         CLY   R1,=F'1'
+         RT1   CCH
+         L     R1,=F'-1'
+         CLY   R1,=F'1'
+         RT1   CCH
+         L     R1,=F'1'
+         CLY   R1,=F'-1'
+         RT1   CCL
+* E356 OY
+         L     R0,=X'12345678'
+         OY    R0,=X'11315177'
+         RT1   CCL
+         CL    R0,=X'1335577F'
+         RT1   CCE
+* E357 XY
+         L     R0,=X'12345678'
+         XY    R0,=X'11315177'
+         RT1   CCL
+         CL    R0,=X'0305070F'
+         RT1   CCE
+* E358 LY
+         LY    R1,=F'12345'
+         CL    R1,=A(12345)
+         RT1   CCE
+* E359 CY
+         LA    R1,1
+         CY    R1,=F'1'
+         RT1   CCE
+         LA    R1,0
+         CY    R1,=F'1'
+         RT1   CCL
+         LA    R1,2
+         CY    R1,=F'1'
+         RT1   CCH
+         L     R1,=F'-1'
+         CY    R1,=F'1'
+         RT1   CCL
+         L     R1,=F'1'
+         CY    R1,=F'-1'
+         RT1   CCH
+* E35A AY 
+         L     R0,=F'1'
+         AY    R0,=F'3'
+         RT1   CCH
+         C     R0,=F'4'
+         RT1   CCE
+* E35B SY 
+         L     R0,=F'1'
+         SY    R0,=F'3'
+         RT1   CCL
+         C     R0,=F'-2'
+         RT1   CCE
+* E35C MFY                   RPI 875
+         L     R0,=C'JUNK' 
+         L     R1,=F'2'
+         MFY   R0,=F'3'
+         C     R0,=F'0'
+         RT1   CCE
+         C     R1,=F'6'
+         RT1   CCE
+* E35E ALY                        RPI 875
+         L     R0,=F'3'
+         ALY   R0,=F'2'
+         RT1   CC1        NZ,NC
+         CL    R0,=F'5'
+         RT1   CCE
+         L     R0,=X'80000000'
+         ALY   R0,=X'00000001'
+         RT1   CC1        NZ,NC
+         CL    R0,=X'80000001'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         ALY   R0,=X'00000001'
+         RT1   CC2        Z,C
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         ALY   R0,=X'00000002'
+         RT1   CC3        NZ,C
+         CL    R0,=X'00000001'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'  RPI 376
+         ALY   R0,=X'FFFFFFFF'
+         RT1   CC3        NZ,C
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+         L     R0,=X'00000000'
+         ALY   R0,=X'00000000'
+         RT1   CC0        Z,NC
+         CL    R0,=X'00000000'
+         RT1   CCE
+* E35F SLY 
+         L     R0,=X'FFFFFFFF'  RPI 879
+         SLY   R0,=X'80000000'  RPI 879
+         RT1   CC3        NZ,NB RPI 879
+         CL    R0,=X'7FFFFFFF'  RPI 879
+         RT1   CCE              RPI 879
+         L     R0,=X'80000000'  RPI 831
+         SLY    R0,=X'A0000000'
+         RT1   CC1        NZ,B
+         CL    R0,=X'E0000000'
+         RT1   CCE
+         L     R0,=F'3'
+         SLY   R0,=F'2'
+         RT1   CC3        NZ,NB
+         CL    R0,=F'1'
+         RT1   CCE
+         L     R0,=X'80000000'
+         SLY   R0,=X'00000001'
+         RT1   CC3        NZ,NB
+         CL    R0,=X'7FFFFFFF'
+         RT1   CCE
+         L     R0,=X'00000000'
+         SLY   R0,=X'00000001'
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFF'
+         RT1   CCE
+         L     R0,=X'00000001'
+         SLY   R0,=X'00000001'
+         RT1   CC2        Z,NB
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=X'00000000'
+         SLY   R0,=X'00000002'
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+* E370 STHY
+         L     R0,=F'1'
+         STHY  R0,WORD
+         CLC   WORD(2),=H'1'
+         RT1   CCE
+         L     R0,=F'-1'
+         STHY  R0,WORD
+         CLC   WORD(2),=H'-1'
+         RT1   CCE
+* E371 LAY
+         LAY   R1,*+6
+         CL    R1,=A(*)
+         RT1   CCE
+* E372 STCY
+         LA    R0,X'FF'
+         STCY  R0,BYTE
+         CLI   BYTE,X'FF'
+         RT1   CCE
+* E373 ICY
+         SR    R0,R0
+         ICY   R0,=C'A'
+         CL    R0,=A(C'A')
+         RT1   CCE
+* E376 LB
+         LB    R0,=FL1'1'
+         CL    R0,=F'1'
+         RT1   CCE
+         LB    R0,=FL1'-1'
+         CL    R0,=F'-1'
+         RT1   CCE
+* E377 LGB
+         LGB   R0,=FL1'1'
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LGB   R0,=FL1'-1'
+         CLG   R0,=FL8'-1'
+         RT1   CCE
+* E378 LHY
+         LHY   R0,=H'-2'
+         CL    R0,=F'-2'
+         RT1   CCE
+* E379 CHY
+         LH    R0,=H'1'
+         CHY   R0,=H'1'
+         RT1   CCE
+         LH    R0,=H'-1'
+         CHY   R0,=H'1'
+         RT1   CCL
+         LH    R0,=H'1'
+         CHY   R0,=H'-1'
+         RT1   CCH
+* E37A AHY
+         LH    R0,=H'1'
+         AHY   R0,=H'3'
+         RT1   CCH
+         CH    R0,=H'4'
+         RT1   CCE
+* E37B SHY
+         LH    R0,=H'1'
+         SHY   R0,=H'3'
+         RT1   CCL
+         CH    R0,=H'-2'
+         RT1   CCE
+* E37C MHY                 RPI 875
+         LH    R0,=H'2'
+         MHY   R0,=H'3'
+         CH    R0,=H'6'
+         RT1   CCE
+* E380 NG
+         LG    R0,=X'0123456789ABCDEF'
+         NG    R0,=X'0133557789ABCDFF'
+         RT1   CCL
+         CLG   R0,=X'0123456789ABCDEF'
+         RT1   CCE
+* E381 OG
+         LG    R0,=X'123456789ABCDEF'
+         OG    R0,=X'113151779ABCDFF'
+         RT1   CCL
+         CLG   R0,=X'1335577F9ABCDFF'
+         RT1   CCE
+* E382 XG
+         LG    R0,=X'123456789ABCDE8'
+         XG    R0,=X'113151779ABCDE7'
+         RT1   CCL
+         CLG   R0,=X'0305070F000000F'
+         RT1   CCE
+* E386 MLG
+         LG    R1,=FL8'3'
+         MLG   R0,=FL8'2'
+         CLG   R0,=FL8'0'
+         RT1   CCE
+         CLG   R1,=FL8'6'
+         RT1   CCE
+         LG     R1,=X'8000000000000000'
+         MLG    R0,=X'8000000000000000'
+         CLG   R0,=X'4000000000000000'
+         RT1   CCE
+         CLG   R1,=X'0000000000000000'
+         RT1   CCE
+* E387 DLG
+         LG    R0,=FL8'0'
+         LG    R1,=FL8'13'
+         DLG   R0,=FL8'4'
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         CLG   R1,=FL8'3'
+         RT1   CCE
+         LG    R0,=X'4000000000000000'
+         LG    R1,=FL8'2'
+         DLG   R0,=X'8000000000000000'
+         CLG   R0,=FL8'2'
+         RT1   CCE
+         CLG   R1,=X'8000000000000000'
+         RT1   CCE
+* E388 ALCG
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000001'
+         ALR   R0,R2      Z,C
+         LG    R0,=FL8'3'
+         ALCG  R0,=FL8'2'
+         RT1   CC1        NZ,NC
+         CLG   R0,=FL8'6'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'00000002'
+         ALR   R0,R2      NZ,C
+         LG    R0,=X'8000000000000000'
+         ALCG  R0,=X'0000000000000001'
+         RT1   CC1        NZ,NC
+         CLG   R0,=X'8000000000000002'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         ALCG  R0,=X'0000000000000001'
+         RT1   CC2        Z,C
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         LG    R0,=X'0000000000000000'
+         ALCG  R0,=X'0000000000000000'
+         RT1   CC0        Z,NC
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         ALCG  R0,=X'0000000000000002'
+         RT1   CC3        NZ,C
+         CLG   R0,=X'0000000000000001'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         ALCG  R0,=X'FFFFFFFFFFFFFFFF'
+         RT1   CC3        NZ,C
+         CLG   R0,=X'FFFFFFFFFFFFFFFE'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         LG    R0,=X'0000000000000000'
+         ALCG  R0,=X'0000000000000000'
+         RT1   CC0        Z,NC
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         LG    R0,=FL8'-1'     
+         ALG   R0,=FL8'2'          CC3 NZ,C
+         ALCG  R0,=FL8'1'       
+         RT1   CC1
+         CLG   R0,=FL8'3'      
+         RT1   CC0
+         SGR   R0,R0               FORCE CC0 Z,NC
+         ALCG  R0,=FL8'1'          RPI174 TEST < CC0 
+         RT1   CC1                 NZ,NC
+         CLG   R0,=FL8'1'
+         RT1   CCE
+* E389 SLBG
+         CLI   =C'A',C'B' CC1= NZ,B 
+         LG    R0,=FL8'4'
+         SLBG  R0,=FL8'2'
+         RT1   CC3        NZ,NB
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1= NZ,B 
+         LG    R0,=X'8000000000000000'
+         SLBG  R0,=X'0000000000000001'
+         RT1   CC3        NZ,NB
+         CLG   R0,=X'7FFFFFFFFFFFFFFE'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1= NZ,B 
+         LG    R0,=X'0000000000000000'
+         SLBG  R0,=X'0000000000000001'
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFE'
+         RT1   CCE
+         CLI   =C'B',C'A' CC2= Z,NB 
+         LG    R0,=X'0000000000000001'
+         SLBG  R0,=X'0000000000000001'
+         RT1   CC2        Z,NB
+         CLG   R0,=X'0000000000000000'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1= NZ,B 
+         LG    R0,=X'0000000000000000'
+         SLBG  R0,=X'0000000000000002'
+         RT1   CC1        NZ,B
+         CLG   R0,=X'FFFFFFFFFFFFFFFD'
+         RT1   CCE
+         LG    R0,=FL8'2'            
+         LG    R2,=FL8'1'             
+         SLGR  R0,R2               CC3 NZ,NB
+         SLBG  R0,=FL8'1'          RPI174 TEST < CC3 NZ,NB     
+         RT1   CC2                 CC2 Z,NB
+         CLG   R0,=FL8'0'
+         RT1   CCE
+         SGR   R0,R0               FORCE CC0 = Z,B 
+         SLBG  R0,=FL8'-1'         RPI174 TEST > CC0 Z,B
+         SLBG  R0,=FL8'1'          RPI174 TEST < CC0 Z,B    
+         RT1   CC1                 NZ,B 
+         CLG   R0,=FL8'-2'
+         RT1   CCE
+* E38E STPQ                 RPI173
+         MVC   PWORK16,=16C' '
+         LMG   R0,R1,=X'00112233445566778899AABBCCDDEEFF'
+         STPQ  R0,PWORK16
+         RT1   CCE,PWORK16,=X'00112233445566778899AABBCCDDEEFF'
+* E38F LPQ                  RPI173
+         MVC   PWORK16,=X'00112233445566778899AABBCCDDEEFF'
+         SGR   R0,R0
+         SGR   R1,R1
+         LPQ   R0,PWORK16
+         CG    R0,=X'0011223344556677'
+         RT1   CCE
+         CG    R1,=X'8899AABBCCDDEEFF'
+         RT1   CCE
+* E390 LLGC
+         LLGC  R0,=X'FF'
+         CLG   R0,=FL8'255'
+         RT1   CCE
+* E391 LLGH
+         LLGH  R0,=X'FFFF'
+         CLG   R0,=XL8'000000FFFF'
+         RT1   CCE
+* E394 LLC  Z9 LOAD LOGICAL CHARACTER
+         L     R0,=F'-2'
+         LLC   R0,=X'FF'
+         CL    R0,=A(X'FF')
+         RT1   CCE
+* E395 LLH  Z9 LOAD LOGICAL HALFWORD
+         L     R0,=F'-2'    
+         LLH   R0,=X'FFFF'
+         CL    R0,=A(X'FFFF')
+         RT1   CCE
+* E396 ML 
+         L     R0,=F'-1' JUNK
+         L     R1,=F'3'
+         ML    R0,=F'2'
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'6'
+         RT1   CCE
+         L     R0,=F'-1' JUNK
+         L     R1,=X'80000000'
+         ML    R0,=X'80000000'
+         CL    R0,=X'40000000'
+         RT1   CCE
+         CL    R1,=X'00000000'
+         RT1   CCE
+* E397 DL
+         L     R0,=F'0'
+         L     R1,=F'13'
+         DL    R0,=F'4'
+         CL    R0,=F'1'
+         RT1   CCE
+         CL    R1,=F'3'
+         RT1   CCE
+         L     R0,=X'40000000'
+         L     R1,=F'2'
+         DL    R0,=X'80000000'
+         CL    R0,=F'2'
+         RT1   CCE
+         CL    R1,=X'80000000'
+         RT1   CCE
+* E398 ALC
+         CLI   =C'B',C'A' CC2 = Z,C
+         L     R0,=F'3'
+         ALC   R0,=F'2'
+         RT1   CC1        NZ,NC
+         CL    R0,=F'6'
+         RT1   CCE
+         CLI   =C'B',C'A' CC2 = Z,C
+         L     R0,=X'80000000'
+         ALC   R0,=X'00000001'
+         RT1   CC1        NZ,NC
+         CL    R0,=X'80000002'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1 = NZ,NC
+         L     R0,=X'FFFFFFFF'
+         ALC   R0,=X'00000001'
+         RT1   CC2        Z,C
+         CL    R0,=X'00000000'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1 = NZ,NC
+         L     R0,=X'FFFFFFFF'
+         ALC   R0,=X'00000002'
+         RT1   CC3        NZ,C
+         CL    R0,=X'00000001'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1 = NZ,NC
+         L     R0,=X'00000000'
+         ALC   R0,=X'00000000'
+         RT1   CC0        Z,NC
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         AL    R0,=X'00000002'     CC3 NZ,C
+         ALC   R0,=X'00000001'     RPI174 TEST < CC3                  
+         RT1   CC1
+         CL    R0,=X'00000003'
+         RT1   CC0
+         SR    R0,R0               FORCE CC0 Z,NC
+         L     R0,=X'FFFFFFFF'
+         ALC   R0,=X'FFFFFFFF'                                        
+         RT1   CC3                 RPI 376
+         CL    R0,=X'FFFFFFFE'
+         RT1   CC0
+         SR    R0,R0               FORCE CC0 Z,NC
+         ALC   R0,=F'1'            RPI174 TEST < CC0 
+         RT1   CC1
+         CL    R0,=F'1'
+         RT1   CCE
+* E399 SLB
+         CLI   =C'A',C'B' CC1= NZ,B 
+         L     R0,=F'4'
+         SLB   R0,=F'2'
+         RT1   CC3        NZ,NB
+         CL    R0,=F'1'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1= NZ,B 
+         L     R0,=X'80000000'
+         SLB   R0,=X'00000001'
+         RT1   CC3        NZ,NB
+         CL    R0,=X'7FFFFFFE'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1= NZ,B 
+         L     R0,=X'00000000'
+         SLB   R0,=X'00000001'
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+         CLI   =C'B',C'A' CC2= Z,NB 
+         L     R0,=X'00000001'
+         SLB   R0,=X'00000001'
+         RT1   CC2        Z,NB
+         CL    R0,=X'00000000'
+         RT1   CCE
+         CLI   =C'A',C'B' CC1= NZ,B 
+         L     R0,=X'00000000'
+         SLB    R0,=X'00000002'
+         RT1   CC1        NZ,B
+         CL    R0,=X'FFFFFFFD'
+         RT1   CCE
+         L     R0,=F'2'            
+         L     R2,=F'1'             
+         SLR   R0,R2               CC3 NZ,NB
+         SLB   R0,=F'1'            RPI174 TEST < CC3 NZ,NB     
+         RT1   CC2                 CC2 Z,NB
+         CL    R0,=F'0'
+         RT1   CCE
+         SR    R0,R0               FORCE CC0 = Z,B 
+         SLB   R0,=F'-1'           RPI174 TEST > CC0 Z,B
+         SLB   R0,=F'1'            RPI174 TEST < CC0 Z,B    
+         RT1   CC1                 NZ,B 
+         CL    R0,=F'-2'
+         RT1   CCE
+* E8   MVCIN
+         MVCIN BYTE,=X'EE'
+         CLI   BYTE,X'EE'
+         RT1   CCE
+         MVCIN PWORK,=C'ABCDEFGH'+7
+         CLC   PWORK,=C'HGFEDCBA'
+         RT1   CCE
+* E9   PKA
+         PKA   PWORK16,=C"123"
+         CLC   PWORK16,=XL16'123C'
+         RT1   CCE
+         PKA   PWORK16,=C"1234567890123456789012345678901"
+         CLC   PWORK16,=X'1234567890123456789012345678901C'
+         RT1   CCE         
+* EA   UNPKA
+         UNPKA PWORK(4),=PL16'1234'
+         RT1   CC0
+         CLC   PWORK(4),=C"1234"
+         RT1   CCE
+         UNPKA PWORK(3),=XL16'123F'
+         RT1   CC0
+         CLC   PWORK(3),=C"123" 
+         RT1   CCE
+         UNPKA PWORK(3),=PL16'123'
+         RT1   CC0
+         CLC   PWORK(3),=C"123"
+         RT1   CCE
+         UNPKA PWORK(3),=PL16'-123'
+         RT1   CC1
+         CLC   PWORK(3),=C"123" ALWAYS POSITIVE SIGN
+         RT1   CCE
+         UNPKA PWORK(3),=XL16'1234' 
+         RT1   CC3
+* EB04 LMG
+         LMG   R15,R0,=AD(123,456)
+         CLG   R15,=AD(123)
+         RT1   CCE                        
+         CLG   R0,=AD(456)
+         RT1   CCE                        
+* EB0A SRAG
+         LG    R1,=FL8'2'
+         SRAG  R0,R1,1
+         RT1   CC2
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LG    R1,=FL8'0'
+         SRAG  R0,R1,1
+         RT1   CC0
+         CLG   R0,=FL8'0'
+         RT1   CCE
+         LG    R1,=FL8'-2'
+         SRAG  R0,R1,1
+         RT1   CC1
+         CLG   R0,=FL8'-1'
+         RT1   CCE
+         LG    R1,=XL8'C000000000000000'
+         SRAG  R0,R1,1
+         RT1   CCL
+         CLG   R0,=X'E000000000000000'
+         RT1   CCE
+         LG    R1,=XL8'C000000000000000'
+         LA    2,1
+         SRAG  R0,R1,0(2)
+         RT1   CCL
+         CLG   R0,=X'E000000000000000'
+         RT1   CCE
+* EB0B SLAG
+         L     R1,=X'30000000' DSH RPI 2202
+         SPM   R1 
+         LG    R1,=FL8'1'
+         SLAG  R0,R1,1
+         RT1   CC2
+         CLG   R0,=FL8'2'
+         RT1   CCE
+         LG    R1,=FL8'0'
+         SLAG  R0,R1,1
+         RT1   CC0
+         CLG   R0,=FL8'0'
+         RT1   CCE
+         LG    R1,=FL8'-1'
+         SLAG  R0,R1,1
+         RT1   CC1
+         CLG   R0,=FL8'-2'
+         RT1   CCE
+         LG    R1,=XL8'6000000000000000'
+         SLAG  R0,R1,1
+         RT1   CC3
+         CLG   R0,=X'4000000000000000'
+         RT1   CCE
+         LG    R1,=XL8'A000000000000000'
+         SLAG  R0,R1,1
+         RT1   CC3
+         CLG   R0,=X'C000000000000000'
+         RT1   CCE
+* EB0C SRLG
+         LG    R1,=FL8'2'
+         SRLG  R0,R1,1
+         CLG   R0,=FL8'1'
+         RT1   CCE
+         LG    R1,=FL8'0'
+         SRLG  R0,R1,1
+         CLG   R0,=FL8'0'
+         RT1   CCE
+         LG    R1,=FL8'-2'
+         SRLG  R0,R1,1
+         CLG   R0,=X'7FFFFFFFFFFFFFFF'
+         RT1   CCE
+         LG    R1,=XL8'C000000000000000'
+         SRLG  R0,R1,1
+         CLG   R0,=X'6000000000000000'
+         RT1   CCE
+* EB0D SLLG
+         LG    R1,=FL8'1'
+         SLLG  R0,R1,1
+         CLG   R0,=FL8'2'
+         RT1   CCE
+         LG    R1,=FL8'0'
+         SLLG  R0,R1,1
+         CLG   R0,=FL8'0'
+         RT1   CCE
+         LG    R1,=FL8'-1'
+         SLLG  R0,R1,1
+         CLG   R0,=FL8'-2'
+         RT1   CCE
+         LG    R1,=XL8'6000000000000000'
+         SLLG  R0,R1,1
+         CLG   R0,=X'C000000000000000'
+         RT1   CCE
+         LG    R1,=XL8'A000000000000000'
+         SLLG  R0,R1,1
+         CLG   R0,=X'4000000000000000'
+         RT1   CCE
+* EB14 CSY
+         LM    R1,R2,=A(1,2)
+         MVC   WORD,=A(3)
+         CSY   R1,R2,WORD
+         RT1   CC1
+         CL    R1,=A(3)
+         RT1   CCE
+         CLC   WORD,=A(3)
+         RT1   CCE
+         LM    R1,R2,=A(4,5)
+         MVC   WORD,=A(4)
+         CSY   R1,R2,WORD
+         RT1   CC0
+         CL    R1,=A(4)
+         RT1   CCE
+         CLC   WORD,=A(5)
+         RT1   CCE
+* EB1C RLLG
+         LG    R1,=FL8'1'
+         RLLG  R0,R1,1
+         CLG   R0,=FL8'2'
+         RT1   CCE
+         LG    R1,=X'0123456789ABCDEF'
+         RLLG  R0,R1,12
+         CLG   R0,=X'3456789ABCDEF012'
+         RT1   CCE
+* EB1D RLL
+         L     R1,=F'1'
+         RLL   R0,R1,3
+         CL    R0,=F'8'
+         L     R1,=X'12345678'
+         RLL   R0,R1,12
+         CL    R0,=X'45677123'
+         L     R1,=X'ABCD1234'
+         RLL   R0,R1,16
+         CL    R0,=X'1234ABCD'
+* EB20 CLMH
+         LG    R0,=X'1234567800000000'
+         CLMH  R0,15,=X'1234567800000000'
+         RT1   CCE
+         CLMH  R0,15,=X'1234567900000000'
+         RT1   CCL
+         CLMH  R0,15,=X'1234567700000000'
+         RT1   CCH
+* EB21 CLMY
+         L     R1,=C'ABCD'
+         CLMY  R1,9,=C'AD'
+         RT1   CCE
+         L     R1,=C'ABCD'
+         CLMY  R1,9,=C'AC'
+         RT1   CCH
+         L     R1,=C'ABCD'
+         CLMY  R1,9,=C'AE'
+         RT1   CCL
+* EB24 STMG
+         LMG   R14,R15,=FL8'1,-1'
+         STMG  R14,R15,REGS
+         RT1   CCE,REGS(16),=FL8'1,-1'
+* EB26 STMH
+         LG    R15,=AL4(1,2)
+         LG    R0,=AL4(3,4)
+         STMH  R15,R0,PWORK
+         RT1   CCE,PWORK,=A(1,3)
+* EB2C STCMH
+         ICMH  R1,15,=C'4567'
+         STCMH R1,15,WORD
+         CLC   WORD,=C'4567'
+         RT1   CCE
+         ICMH  R1,15,=C'4567'
+         STCMH R1,9,WORD
+         CLC   WORD(2),=C'47'
+         RT1   CCE
+* EB2D STCMY
+         ICM   R1,15,=C'4567'
+         STCMY R1,15,WORD
+         CLC   WORD,=C'4567'
+         RT1   CCE
+         ICM   R1,15,=C'4567'
+         STCMY R1,9,WORD
+         CLC   WORD(2),=C'47'
+         RT1   CCE
+* EB30 CSG
+         LMG   R1,R2,=AD(1,2)
+         MVC   PWORK,=AD(3)
+         CSG   R1,R2,PWORK
+         RT1   CC1
+         CLG   R1,=AD(3)
+         RT1   CCE
+         CLC   PWORK,=AD(3)
+         RT1   CCE
+         LMG   R1,R2,=AD(4,5)
+         MVC   PWORK,=AD(4)
+         CSG   R1,R2,PWORK
+         RT1   CC0
+         CLG   R1,=AD(4)
+         RT1   CCE
+         CLC   PWORK,=AD(5)
+         RT1   CCE
+* BB31 CDSY
+         LM    R0,R3,=A(1,2,3,4)
+         MVC   REGS(8),=A(5,6)
+         CDSY  R0,R2,REGS
+         RT1   CC1
+         CL    R0,=A(5)
+         RT1   CCE
+         CL    R1,=A(6)
+         RT1   CCE
+         CLC   REGS(8),=A(5,6)
+         RT1   CCE
+         LM    R0,R3,=A(1,2,3,4)
+         MVC   REGS(8),=A(1,2)
+         CDSY  R0,R2,REGS
+         RT1   CC0
+         CL    R0,=A(1)
+         RT1   CCE
+         CL    R1,=A(2)
+         RT1   CCE
+         CLC   REGS(8),=A(3,4)
+         RT1   CCE
+* EB3E CDSG
+         LMG   R0,R3,=AD(1,2,3,4)
+         MVC   REGS(16),=AD(5,6)
+         CDSG  R0,R2,REGS
+         RT1   CC1
+         CLG   R0,=AD(5)
+         RT1   CCE
+         CLG   R1,=AD(6)
+         RT1   CCE
+         CLC   REGS(16),=AD(5,6)
+         RT1   CCE
+         LMG   R0,R3,=AD(1,2,3,4)
+         MVC   REGS,=AD(1,2)
+         CDSG  R0,R2,REGS
+         RT1   CC0
+         CLG   R0,=AD(1)
+         RT1   CCE
+         CLG   R1,=AD(2)
+         RT1   CCE
+         CLC   REGS(16),=AD(3,4)
+         RT1   CCE
+* EB44 BXHG
+         LMG   R1,R3,=AD(2,-1,0)
+         BXHG  R1,R2,BXHG2
+         B     RT1_ABORT
+BXHG2    EQU   *
+         CLG   R1,=AD(1)
+         RT1   CCE
+         BXHG  R1,R2,RT1_ABORT
+         CLG   R1,=AD(0)
+         RT1   CCE
+         LMG   R1,R3,=AD(2,-10,-1)
+         BXHG  R1,R3,BXHG3
+         B     RT1_ABORT
+BXHG3    EQU   *
+         CLG   R1,=AD(1)
+         RT1   CCE
+         BXHG  R1,R3,BXHG4
+         B     RT1_ABORT
+BXHG4    EQU   *
+         CLG   R1,=AD(0)
+         RT1   CCE
+         BXHG  R1,R3,RT1_ABORT
+         CLG   R1,=FL8'-1'
+         RT1   CCE
+* EB45 BXLEG
+         LMG   R1,R3,=AD(1,1,2)
+         BXLEG R1,R2,BXLEG2
+         B     RT1_ABORT
+BXLEG2   EQU   *
+         CLG   R1,=AD(2)
+         RT1   CCE
+         BXLEG R1,R2,RT1_ABORT 
+         CLG   R1,=AD(3)
+         RT1   CCE
+         LMG   R1,R3,=AD(0,-10,1)
+         BXLEG R1,R3,BXLEG3
+         B     RT1_ABORT
+BXLEG3   EQU   *
+         CLG   R1,=AD(1)
+         RT1   CCE
+         BXLEG R1,R3,RT1_ABORT 
+         CLG   R1,=FL8'2'
+         RT1   CCE
+* EB51 TMY
+         TMY   =X'00',X'00'
+         RT1   CC0
+         TMY   =X'FF',X'00'
+         RT1   CC0
+         TMY   =X'00',X'FF'
+         RT1   CC0
+         TMY   =X'FF',X'FF'
+         RT1   CC3
+         TMY   =X'FF',X'F0'
+         RT1   CC3             RPI 844
+         LA    2,=X'FF'
+         TMY   0(2),X'FF'
+         RT1   CC3
+         LA    2,=X'00'
+         TMY   0(2),X'00'
+         RT1   CC0
+         TMY   =X'CF',X'F0'    RPI 844
+         RT1   CC1             RPI 844
+         TMY   =X'F3',X'0F'    RPI 844
+         RT1   CC1             RPI 844
+* EB52 MVIY
+         MVIY  BYTE,C'A'
+         CLI   BYTE,C'A'
+         RT1   CCE,BYTE,=C'A'
+* EB54 NIY
+         MVI   BYTE,X'32'
+         NIY   BYTE,X'23'
+         RT1   CCL
+         CLI   BYTE,X'22'
+         RT1   CCE
+* EB55 CLIY
+         MVI   BYTE,C'B'
+         CLIY  BYTE,C'B'      
+         RT1   CCE         RPI 875
+         MVI   BYTE,C'A'
+         CLIY  BYTE,C'B'
+         RT1   CCL         RPI 875
+         MVI   BYTE,C'C'
+         CLIY  BYTE,C'B'
+         RT1   CCH         RPI 875      
+         MVI   BYTE,X'01'
+         CLIY  BYTE,X'81'
+         RT1   CCL         RPI 875
+         MVI   BYTE,X'81'
+         CLIY  BYTE,X'01'
+         RT1   CCH         RPI 875      
+* EB56 OIY
+         MVI   BYTE,X'32'
+         OIY   BYTE,X'23'
+         RT1   CCL
+         CLI   BYTE,X'33'
+         RT1   CCE
+* EB57 XIY
+         MVI   BYTE,X'32'
+         XIY   BYTE,X'23'
+         RT1   CCL
+         CLI   BYTE,X'11'
+         RT1   CCE
+* EB6A ASI                 RPI 875                     
+         MVC   WORD,=F'2'
+         ASI   WORD,3
+         RT1   CCH
+         CLC   WORD,=F'5'
+         RT1   CCE
+         MVC   WORD,=F'1'
+         ASI   WORD,-2
+         RT1   CCL
+         CLC   WORD,=F'-1'
+         RT1   CCE
+* EB6E ALSI                RPI 875                     
+         MVC   WORD,=F'3'
+         ALSI  WORD,2
+         RT1   CC1        NZ,NC
+         CLC   WORD,=F'5'
+         RT1   CCE
+         MVC   WORD,=X'80000000'
+         ALSI  WORD,1
+         RT1   CC1        NZ,NC
+         CLC   WORD,=X'80000001'
+         RT1   CCE
+         MVC   WORD,=X'FFFFFFFF'
+         ALSI  WORD,1
+         RT1   CC2        Z,C
+         CLC   WORD,=X'00000000'
+         RT1   CCE
+         MVC   WORD,=X'FFFFFFFF'
+         ALSI  WORD,2
+         RT1   CC3        NZ,C
+         CLC   WORD,=X'00000001'
+         RT1   CCE
+         MVC   WORD,=X'FFFFFFFF'             
+         ALSI  WORD,-1
+         RT1   CC1       NZ,NC    RPI 1125 FIX ALSI, ALGSI
+         CLC   WORD,=X'FFFFFFFE'
+         RT1   CCE
+         MVC   WORD,=X'00000000'
+         ALSI  WORD,0
+         RT1   CC0        Z,NC
+         CLC   WORD,=X'00000000'
+         RT1   CCE
+         MVC   WORD,=X'80000000'
+         ALSI  WORD,-1
+         RT1   CC1       NZ,NB    RPI 1125 FIX ALSI, ALGSI
+         CLC   WORD,=X'7FFFFFFF'
+         RT1   CCE
+         MVC   WORD,=F'0'                
+         ALSI  WORD,-1
+         RT1   CC3        NZ,B RPI 1125 FIX ALSI, ALGSI
+         CLC   WORD,=F'-1'
+         RT1   CCE
+* EB7A AGSI                RPI 875                      
+         MVC   DWORD,=FL8'2'
+         AGSI  DWORD,3
+         RT1   CCH
+         CLC   DWORD,=FL8'5'
+         RT1   CCE
+         MVC   DWORD,=FL8'1'
+         AGSI  DWORD,-2
+         RT1   CCL
+         CLC   DWORD,=FL8'-1'
+         RT1   CCE
+* EB7E ALGSI               RPI 875                        
+         MVC   DWORD,=FL8'3'
+         ALGSI DWORD,2
+         RT1   CC1        NZ,NC
+         CLC   DWORD,=FL8'5'
+         RT1   CCE
+         MVC   DWORD,=X'8000000000000000'
+         ALGSI DWORD,1
+         RT1   CC1        NZ,NC
+         CLC   DWORD,=X'8000000000000001'
+         RT1   CCE
+         MVC   DWORD,=FL8'-1'
+         ALGSI DWORD,1
+         RT1   CC2        Z,C
+         CLC   DWORD,=FL8'0'
+         RT1   CCE
+         MVC   DWORD,=FL8'-1'
+         ALGSI DWORD,2
+         RT1   CC3        NZ,C
+         CLC   DWORD,=FL8'1'
+         RT1   CCE
+         MVC   DWORD,=FL8'-1'                
+         ALGSI DWORD,-1
+         RT1   CC1        NZ,NC RPI 1125 FIX ALSI, ALGSI
+         CLC   DWORD,=FL8'-2'
+         RT1   CCE
+         MVC   DWORD,=FL8'0'      
+         ALGSI DWORD,0
+         RT1   CC0        Z,NC
+         CLC   DWORD,=FL8'0'
+         RT1   CCE
+         MVC   DWORD,=X'8000000000000000'
+         ALGSI DWORD,-1
+         RT1   CC1       NZ,NB     RPI 1125 FIX ALSI,ALGSI
+         CLC   DWORD,=X'7FFFFFFFFFFFFFFF'
+         RT1   CCE
+         MVC   DWORD,=FL8'0'                
+         ALGSI DWORD,-1
+         RT1   CC3        NZ,B RPI 1125 FIX ALSI, ALGSI
+         CLC   DWORD,=FL8'-1'
+         RT1   CCE
+* EB80 ICMH
+         SGR   R0,R0                       
+         ICMH  R0,15,=X'12345678'
+         RT1   CCH                  RPI 295 FIX
+         CLMH  R0,15,=X'12345678'
+         RT1   CCE
+         ICMH  R0,15,=X'00000000'
+         RT1   CCE
+         CLMH  R0,15,=X'00000000'
+         RT1   CCE
+         ICMH  R0,3,=X'FFFF'
+         RT1   CCL                  RPI 295 TEST
+* EB81 ICMY
+         L     R1,=X'F1F2F3F4'
+         ICMY  R1,9,=X'CACD'
+         RT1   CCL
+         CL    R1,=X'CAF2F3CD'
+         RT1   CCE
+         ICMY  R1,9,=X'0000'
+         RT1   CCE
+         CL    R1,=X'00F2F300'
+         RT1   CCE
+         ICMY  R0,3,=X'FFFF'
+         RT1   CCL                  RPI 295 TEST
+* EB90 STMY
+         LA    R1,1
+         LA    R2,2
+         STMY  R1,R2,PWORK
+         RT1   CCE,PWORK,=A(1,2)
+* EB96 LMH
+         LMH   R15,R0,=A(123,456)
+         STMH  R15,R0,PWORK
+         RT1   CCE,PWORK,=A(123,456)
+* EB98 LMY
+         LMY   R15,R0,=A(123,456)
+         STM   R15,R0,PWORK
+         RT1   CCE,PWORK,=A(123,456)
+* EBC0 TP
+         TP    =X'1C'   CC0 - OK
+         RT1   CC0
+         TP    =X'1F'   CC0 - OK
+         RT1   CC0
+         TP    =X'10'   CC1 - BAD SIGN
+         RT1   CC1
+         TP    =X'FC'   CC2 - BAD DIGIT   
+         RT1   CC2
+         TP    =X'FFF0' CC3 - BAD DIGIT AND SIGN     
+         RT1   CC3
+* 1-16 CC0 OK
+         TP    =PL1'1'  1-8 > LONG
+         RT1   CC0
+         TP    =PL2'1'
+         RT1   CC0
+         TP    =PL3'1'
+         RT1   CC0
+         TP    =PL4'1'
+         RT1   CC0
+         TP    =PL5'1'
+         RT1   CC0
+         TP    =PL6'1'
+         RT1   CC0
+         TP    =PL7'1'                   
+         RT1   CC0
+         TP    =PL8'1'                   
+         RT1   CC0
+         TP    =PL9'1'  9-16 > BIG DECIMAL
+         RT1   CC0
+         TP    =PL10'1'                          
+         RT1   CC0
+         TP    =PL11'1'                          
+         RT1   CC0
+         TP    =PL11'1'                          
+         RT1   CC0
+         TP    =PL12'1'                          
+         RT1   CC0
+         TP    =PL13'1'                          
+         RT1   CC0
+         TP    =PL14'1'                          
+         RT1   CC0
+         TP    =PL15'1'                          
+         RT1   CC0
+         TP    =PL16'1'                          
+         RT1   CC0
+* 1-16 CC1 BAD SIGNS
+         TP    =XL1'1'  1-8 > LONG
+         RT1   CC1
+         TP    =XL2'1'
+         RT1   CC1
+         TP    =XL3'1'
+         RT1   CC1
+         TP    =XL4'1'
+         RT1   CC1
+         TP    =XL5'1'
+         RT1   CC1
+         TP    =XL6'1'
+         RT1   CC1
+         TP    =XL7'1'                   
+         RT1   CC1
+         TP    =XL8'1'                   
+         RT1   CC1
+         TP    =XL9'1'  9-16 > BIG DECIMAL
+         RT1   CC1
+         TP    =XL10'1'                          
+         RT1   CC1
+         TP    =XL11'1'                          
+         RT1   CC1
+         TP    =XL11'1'                          
+         RT1   CC1
+         TP    =XL12'1'                          
+         RT1   CC1
+         TP    =XL13'1'                          
+         RT1   CC1
+         TP    =XL14'1'                          
+         RT1   CC1
+         TP    =XL15'1'                          
+         RT1   CC1
+         TP    =XL16'1'                          
+         RT1   CC1
+* 1-16 CC2 BAD DIGIT               
+         TP    =XL1'AC'  1-8 > LONG
+         RT1   CC2
+         TP    =XL2'AC'
+         RT1   CC2
+         TP    =XL3'AC'
+         RT1   CC2
+         TP    =XL4'AC'
+         RT1   CC2
+         TP    =XL5'AC'
+         RT1   CC2
+         TP    =XL6'AC'
+         RT1   CC2
+         TP    =XL7'AC'                   
+         RT1   CC2
+         TP    =XL8'AC'                   
+         RT1   CC2
+         TP    =XL9'AC'  9-16 > BIG DECIMAL
+         RT1   CC2
+         TP    =XL10'AC'                          
+         RT1   CC2
+         TP    =XL11'AC'                          
+         RT1   CC2
+         TP    =XL11'AC'                          
+         RT1   CC2
+         TP    =XL12'AC'                          
+         RT1   CC2
+         TP    =XL13'AC'                          
+         RT1   CC2
+         TP    =XL14'AC'                          
+         RT1   CC2
+         TP    =XL15'AC'                          
+         RT1   CC2
+         TP    =XL16'AC'                          
+         RT1   CC2
+* 1-16 CC3 BAD DIGIT AND SIGN
+         TP    =XL1'A1'  1-8 > LONG
+         RT1   CC3
+         TP    =XL2'A1'
+         RT1   CC3
+         TP    =XL3'A1'
+         RT1   CC3
+         TP    =XL4'A1'
+         RT1   CC3
+         TP    =XL5'A1'
+         RT1   CC3
+         TP    =XL6'A1'
+         RT1   CC3
+         TP    =XL7'A1'                   
+         RT1   CC3
+         TP    =XL8'A1'                   
+         RT1   CC3
+         TP    =XL9'A1'  9-16 > BIG DECIMAL
+         RT1   CC3
+         TP    =XL10'A1'                          
+         RT1   CC3
+         TP    =XL11'A1'                          
+         RT1   CC3
+         TP    =XL11'A1'                          
+         RT1   CC3
+         TP    =XL12'A1'                          
+         RT1   CC3
+         TP    =XL13'A1'                          
+         RT1   CC3
+         TP    =XL14'A1'                          
+         RT1   CC3
+         TP    =XL15'A1'                          
+         RT1   CC3
+         TP    =XL16'A1'                          
+         RT1   CC3
+* EC44 BRXHG           
+         LMG   R1,R3,=AD(2,-1,0)
+         BRXHG R1,R2,BRXHG2
+BRXHG1   RT1   ABORT
+BRXHG2   EQU   *
+         CLG   R1,=AD(1)
+         RT1   CCE
+         BRXHG R1,R2,BRXHG1
+         CLG   R1,=AD(0)
+         RT1   CCE
+         LMG   R1,R3,=AD(2,-10,-1)
+         BRXHG R1,R3,BRXHG3
+         RT1   ABORT
+BRXHG3   EQU   *
+         CLG   R1,=AD(1)
+         RT1   CCE
+         BRXHG R1,R3,BRXHG4
+         RT1   ABORT
+BRXHG4   EQU   *
+         CLG   R1,=AD(0)
+         RT1   CCE
+         BRXHG R1,R3,BRXHG1
+         CLG   R1,=FL8'-1'
+         RT1   CCE
+* EC45 BRXLG
+         LMG   R1,R3,=AD(1,1,2)
+         BRXLG R1,R2,BRXLG2
+BRXLG1   RT1   ABORT
+BRXLG2   EQU   *
+         CLG   R1,=AD(2)
+         RT1   CCE
+         BRXLG R1,R2,BRXLG1
+         CLG   R1,=AD(3)
+         RT1   CCE
+         LMG   R1,R3,=AD(0,-10,1)
+         BRXLG R1,R3,BRXLG3
+         RT1   ABORT
+BRXLG3   EQU   *
+         CLG   R1,=AD(1)
+         RT1   CCE
+         BRXLG R1,R3,BRXLG1
+         CLG   R1,=FL8'2'
+         RT1   CCE
+* EF   LMD
+         LMD   R15,R0,LMD1,LMD2           RPI 844
+         CLG   R15,=X'0123456789ABCDEF'
+         RT1   CCE
+         CLG   R0,=X'0123456789ABCDEF'
+         RT1   CCE
+* F0   SRP
+         ZAP   PWORK,=P'123'
+         SRP   PWORK,1,0
+         RT1   CCH
+         CP    PWORK+5(3),=P'1230'
+         RT1   CCE
+         ZAP   PWORK,=P'123'
+         RT1   CCH
+         LA    R3,1
+         SRP   PWORK,0(R3),0
+         CP    PWORK+5(3),=P'1230'
+         RT1   CCE
+         ZAP   PWORK,=P'12350'
+         SRP   PWORK,64-2,5
+         RT1   CCH
+         CP    PWORK+5(3),=P'124'
+         RT1   CCE
+         ZAP   PWORK,=P'12349'
+         SRP   PWORK,64-2,5
+         RT1   CCH
+         CP    PWORK+5(3),=P'123'
+         RT1   CCE
+         ZAP   PWORK,=P'12350'
+         LHI   R1,-2               RPI 820 TEST NEG REG
+         SRP   PWORK,0(R1),5       RPI 820
+         RT1   CCH
+         CP    PWORK+5(3),=P'124'
+         RT1   CCE
+         ZAP   PWORK,=P'12349'
+         LHI   R1,-2               RPI 820 TEST NEG REG
+         SRP   PWORK,0(R1),5       RPI 820 
+         RT1   CCH
+         CP    PWORK+5(3),=P'123'
+         RT1   CCE
+         ESPIE SET,ESPIE_EXIT,7,PARAM=SRP1
+         ZAP   PWORK,=X'40'
+         RT1   ABORT
+SRP1     ESPIE RESET
+         STFPC FPCREG
+         CLI   FPCDXC,X'00' PD DATA EXCEPTION
+         RT1   CCE
+         WTO   'ESPIE PD DATA EXCEPTION OK'
+* F1   MVO
+         ZAP   PWORK,=P'-1'
+         MVO   PWORK,=X'1234'
+         CP    PWORK+5(3),=P'-1234'
+         RT1   CCE
+         ZAP   PWORK,=P'1'
+         MVO   PWORK,=X'123'
+         CP    PWORK+5(3),=P'123'
+         RT1   CCE
+* F2   PACK
+         PACK  PWORK,=X'F1F2F3'
+         CLC   PWORK+6(2),=X'123F'
+         RT1   CCE
+         CP    PWORK+6(2),=P'123'
+         RT1   CCE
+         PACK  PWORK,=X'F1F2C3'
+         CLC   PWORK+6(2),=X'123C'
+         RT1   CCE
+         CP    PWORK+6(2),=P'123'
+         RT1   CCE
+         PACK  PWORK,=X'F1F2D3'
+         CLC   PWORK+6(2),=X'123D'
+         RT1   CCE
+         CP    PWORK+6(2),=P'-123'
+         RT1   CCE
+         PACK  PWORK,=X'3132F3'    RPI 844 (3>F 3 CAUSED 0C7)
+         CP    PWORK+6(2),=X'123F'
+         RT1   CCE
+         CP    PWORK+6(2),=P'123'
+         RT1   CCE
+         PACK  PWORK,=X'3132B3'
+         CLC   PWORK+6(2),=X'123B'
+         RT1   CCE
+         CP    PWORK+6(2),=P'-123'
+         RT1   CCE
+* F3   UNPK
+         UNPK  PWORK(4),=P'1234'
+         CLC   PWORK(3),=C'123'
+         RT1   CCE
+         CLI   PWORK+3,X'C4'
+         RT1   CCE
+         UNPK  PWORK(3),=X'123F'
+         CLC   PWORK(2),=C'12' 
+         RT1   CCE
+         CLI   PWORK+2,X'F3'
+         RT1   CCE
+         UNPK  PWORK(3),=P'123'
+         CLC   PWORK(2),=C'12'
+         RT1   CCE
+         CLI   PWORK+2,X'C3'
+         RT1   CCE
+         UNPK  PWORK(3),=P'-123' 
+         CLC   PWORK(2),=C'12'
+         RT1   CCE
+         CLI   PWORK+2,X'D3'
+         RT1   CCE
+         UNPK  PWORK(4),=X'012343' 
+         CLC   PWORK(3),=C'123'
+         RT1   CCE
+         CLI   PWORK+3,X'34'
+         RT1   CCE
+         UNPK  PWORK(3),=X'123B' 
+         CLC   PWORK(2),=C'12'
+         RT1   CCE
+         CLI   PWORK+2,X'B3'
+         RT1   CCE
+* F8   ZAP
+         ZAP   PWORK,=P'0'
+         RT1   CCE
+         CLC   PWORK,=A(0,X'C')
+         RT1   CCE
+         ZAP   PWORK,=P'1'
+         RT1   CCH
+         ZAP   PWORK,=P'-1'
+         RT1   CCL
+         ESPIE SET,ESPIE_EXIT,7,PARAM=ZAP1
+         ZAP   PWORK,=X'00'
+         RT1   ABORT
+ZAP1     ESPIE RESET
+         WTO   'ESPIE FOR PACKED DATA EXCEPTION OK'
+* F9   CP
+         CP    =P'1',=P'1'
+         RT1   CCE
+         CP    =P'1',=P'2'
+         RT1   CCL
+         CP    =P'3',=P'2'
+         RT1   CCH
+         CP    =P'-2',=P'1'
+         RT1   CCL
+         CP    =P'3',=P'-1'
+         RT1   CCH
+* FA   AP
+         ZAP   PWORK,=P'0'
+         AP    PWORK,=P'1'
+         RT1   CCH
+         CLC   PWORK,=A(0,X'1C')
+         RT1   CCE
+         AP    PWORK,=P'-2'
+         RT1   CCL
+         CLC   PWORK,=A(0,X'1D')
+         RT1   CCE
+         ZAP   PL1,=P'1'
+         AP    PL1,=P'-1'
+         CP    PL1,=P'0'
+         RT1   CCE
+         ZAP   PWORK16,=PL16'1234567890123456789012345678901'
+         AP    PWORK16,=PL16'0000000001000000000100000000011'
+         CP    PWORK16,=PL16'1234567891123456789112345678912'
+         RT1   CCE
+         ZAP   PWORK,=X'999999999999999C'
+         ESPIE SET,ESPIE_EXIT,10,PARAM=AP1
+         AP    PWORK,=P'1'
+         RT1   ABORT
+AP1      ESPIE RESET
+         WTO   'ESPIE FOR PACKED OVERFLOW OK'
+* FB   SP
+         ZAP   PWORK,=P'0'
+         SP    PWORK,=P'1'
+         RT1   CCL
+         CLC   PWORK,=A(0,X'1D')
+         RT1   CCE
+         SP    PWORK,=P'-2'
+         RT1   CCH
+         CLC   PWORK,=A(0,X'1C')
+         RT1   CCE
+         ZAP   PWORK,=X'999999999999999D'
+         ESPIE SET,ESPIE_EXIT,10,PARAM=SP1
+         SP    PWORK,=P'1'
+         RT1   ABORT
+SP1      ESPIE RESET
+* FC   MP
+         ZAP   PWORK,=P'2'
+         MP    PWORK,=P'123412341234'
+         CP    PWORK,=P'246824682468'
+         RT1   CCE
+         ZAP   PWORK,=P'-2'
+         MP    PWORK,=P'123412341234'
+         CP    PWORK,=P'-246824682468'
+         RT1   CCE
+* FD   DP 
+         ZAP   PWORK,=P'100'
+         DP    PWORK,=PL2'33'
+         CP    PWORK(6),=P'3'
+         RT1   CCE
+         CP    PWORK+6(2),=P'1'
+         RT1   CCE
+         ESPIE SET,ESPIE_EXIT,11,PARAM=DP1
+         ZAP   PWORK,=P'1'
+         DP    PWORK,=P'0'
+         RT1   ABORT
+DP1      ESPIE RESET
+         WTO   'ESPIE FOR PACKED DIVIDE OK'
+* END
+         RT1   END
+         IHAEPIE         
+         IHASDWA
+         END         
+

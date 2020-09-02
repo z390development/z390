@@ -419,6 +419,8 @@ public  class  mz390 {
 	 * 05/05/12 RPI 1212 add trace for common ops such as SLL
 	 * 05/06/12 RPI 1213 correct SYSECT, SYSLOC, and SYSSTYP
 	 *          see rt\test\TESTSYS3.MLC regression test
+	 * 2019-09-20 dsh fix depreciated Integer() with Integer.valueOf()
+	 * 2019-12-05 dsh fix to prevent abort error 288 on instruction with no parsm and no &&SYSLIST
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -3643,6 +3645,7 @@ public  class  mz390 {
 			} else {
 				parm_value = calc_setc_exp(bal_text.substring(bal_text_index1),0);
 				if (parm_value == null
+					&& bal_text.length() >= bal_text_index1 + 8    // dsh RPI 2208
 					&& !bal_text.substring(bal_text_index1,bal_text_index1+8).equals("&SYSLIST")){ // RPI 1161 
 					mac_abort = false;
 					log_error(288,"undefined set variable = " + bal_text.substring(bal_text_index1));
@@ -4777,10 +4780,10 @@ public  class  mz390 {
 				cur_date = new Date();
 			}
 			String hhmmssmmm = sdf_systime_clockd.format(cur_date);
-			int hh  = new Integer(hhmmssmmm.substring(0,2));
-			int mm  = new Integer(hhmmssmmm.substring(2,4));
-			int ss  = new Integer(hhmmssmmm.substring(4,6));
-			int th  = new Integer(hhmmssmmm.substring(6,9))/10;
+			int hh  = Integer.valueOf(hhmmssmmm.substring(0,2));
+			int mm  = Integer.valueOf(hhmmssmmm.substring(2,4));
+			int ss  = Integer.valueOf(hhmmssmmm.substring(4,6));
+			int th  = Integer.valueOf(hhmmssmmm.substring(6,9))/10;
 			int tod = th + 100*(ss + 60*(mm + 60*hh));
 	        String tod_str = "" + tod;
 			aread_text = ("00000000" + tod_str).substring(tod_str.length());
@@ -11184,12 +11187,16 @@ public  class  mz390 {
     	 *   1.  PUSHV,ADD 1,STORV = INC 
     	 *   2.  PUSHV,SUB 1,STORV = DEC
     	 */
+		if (1 == 1)return; // force exit until bug fixed dsh 2020-09-01
     	pc_req_opt[pc_loc] = false;
     	switch (pc_op[pc_loc]){
     	case  3: // opt pc_op_pushv                //  0    1     2    3  
     		if (get_pc_loc_list(pcl_inc_list) // pushv,add 1,storv
     			&& pc_setc[pc_loc_list[0]].equals(pc_setc[pc_loc_list[2]])
     			&& pc_seta[pc_loc_list[1]] == 1){
+			    if (tz390.opt_traceall){
+					tz390.put_trace("PCOPT INc SETA VALUE" + pc_seta[pc_loc_list[1]]);
+				}
     			pc_op[pc_loc] = pc_op_inc;
                 tot_pc_exec_opt++;
                 pc_next[pc_loc] = 0;
@@ -11197,6 +11204,9 @@ public  class  mz390 {
     		} else if (get_pc_loc_list(pcl_dec_list) // set,pushv,sub 1,store
             	&& pc_setc[pc_loc_list[0]].equals(pc_setc[pc_loc_list[2]])
             	&& pc_seta[pc_loc_list[1]] == 1){
+				if (tz390.opt_traceall){
+					tz390.put_trace("PCOPT INc SETA VALUE" + pc_seta[pc_loc_list[1]]);
+				}	
             	pc_op[pc_loc] = pc_op_dec;
                 tot_pc_exec_opt++;
                 pc_next[pc_loc] = 0;
@@ -11557,7 +11567,11 @@ public  class  mz390 {
 						if (string_numeric(setc_value1)){ // RPI 180, RPI 468
 							setc_value  = "N";
 						} else {
-							setc_value = "U";
+							if (find_opcode_type(setc_value1) > 0) {
+								setc_value = "I";
+							} else {
+							    setc_value = "U";
+							}
 						}
 					} else {
 						setc_value = "O";;

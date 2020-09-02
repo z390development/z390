@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -37,8 +38,6 @@ import java.util.StringTokenizer;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
-import javax.swing.JApplet;
-import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -55,7 +54,7 @@ import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import javax.swing.filechooser.FileFilter;
 
-public  class  z390 extends JApplet 
+public  class  z390 
     implements MouseListener, KeyListener,
 	           ActionListener, 
 			   ComponentListener,
@@ -140,6 +139,8 @@ public  class  z390 extends JApplet
      * 07/26/11 RPI 1174 Add "Apple Inc." as valid java vendor with
      *          default to Linux type filenames (see tz390 os_type 
      * 07/30/11 RPI 1175 use shared tz390.check_java_version()              
+	 * 2019-09-20 dsh fix memory leak by closing temp_file
+	 * 2019-09-23 dsh remove JApplet depreciated support
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -378,28 +379,7 @@ public  class  z390 extends JApplet
        /* 
         * end of global z390 class data and start of procs
         */
-        public void init() {
-        /*
-         * JApplet execution launched from web broswer
-         */	
-            ImageIcon start_icon = createImageIcon("z390.jpg","Run z390");
-            JButton start_button = new JButton(start_icon);
-            start_button.setSize(48,48);
-            start_button.setToolTipText("Click on z390 icon to start Z390 GUI");
-            start_button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                    String[] args = new String[1];           
-                    args[0] = "/G";
-                    main_applet = true;
-                    applet_status_height = status_height;
-                    if (set_main_mode(args) == 0){
-                 	   init_z390(args);
-                    }
-                }
-            });
-            getContentPane().add(start_button);
-            setSize(200,100); 
-        }
+
   	public static void main(String[] args) {
   	/*
   	 * Create instance of z390 class
@@ -724,7 +704,7 @@ public  class  z390 extends JApplet
 				main_frame.dispose();
 			}
 			if (main_applet){
-				showStatus("Z390I total errors = " + z390_errors);
+				System.out.println("Z390I total errors = " + z390_errors);
 			} else {
 			    if  (!shutdown_exit){
 					shutdown_exit = true; //disable exit
@@ -1749,6 +1729,7 @@ public  class  z390 extends JApplet
 					   process_command(temp_line);
 					   temp_line = temp_file.readLine();						   
 					}
+					temp_file.close(); // 2019-09-20 dsh
 				} catch (Exception e){
 					log_error(72,"startup file I/O error - " + e.toString());
 				}
