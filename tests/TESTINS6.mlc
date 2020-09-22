@@ -14,13 +14,13 @@
 RI2     EQU  X'EEE'    SEE BPP TYPE SMI, MMI
 RI3     EQU  X'FFFFFF' SEE BPRP TYPES MMI 
 RXB     EQU  0 // vector RXB instruction code
-V1      EQU  1
-V2      EQU  2
-V3      EQU  3
-V4      EQU  4
-M1      EQU  1
-M2      EQU  2
-M3      EQU  3
+V1      EQU  21
+V2      EQU  22
+V3      EQU  23
+V4      EQU  24
+M1      EQU  11
+M2      EQU  12
+M3      EQU  13
 M4      EQU  4
 M5      EQU  5
 M6      EQU  6

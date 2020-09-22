@@ -1,0 +1,25 @@
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 04/24/06 RPI 291 - ADD AND IGNORE FOR TESTING                 
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
+        MACRO
+&N      DEQ    &LIST,  (QNAMEA,RNAMEA,LEN,STEP/SYSTEM/SYSTEMS),,,      X
+               &MF=I,        L/E NOT SUPPORTED                         X
+               &RET=NONE,    CHNG,HAVE,TEST,USE,NONE (CONTROL ALL)     X
+               &RNL=YES,     GLOBAL RESOURCE SERIALIZATION             X
+               &RELATED=,    IGNORED                                   X
+               &LINKAGE=SVC, SVC INTERFACE                             X
+               &UCB=         IGNORED
+        AIF    ('&N' EQ '').SKIPDS
+&N      DS     0H
+.SKIPDS ANOP
+        AIF    ('&MF' EQ 'I').EXIT
+        MNOTE  12,'DEQ MF= NOT SUPPORTED'
+.EXIT   ANOP
+        MEND

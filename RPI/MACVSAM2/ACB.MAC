@@ -1,0 +1,157 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 07/26/07 INITIAL CODING
+.* 08/19/07 RPI 680 FIX 10 MUTUALLY MISSPELLED
+.* 09/04/07 RPI 691 ADD ACBNAME, ACBDCBN, ACBDCBS, ACBDCBP
+.* 09/24/07 RPI 702 ADD ACBOPENC UNIQUE ACB OPEN COUNT FOR RPL RESET
+.* 11/26/07 RPI 723 MOVE GETOK, GETNF FROM ACB TO RPL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 10/15/18         zVSAM VERSION (Melvyn Maltz)
+.*********************************************************************
+&N       ACB   &AM=VSAM,      VSAM VS VTAM                             X
+               &BSTRNO=0,     NUMBER OF CONCURRENT REQUESTS FOR AIX    X
+               &BUFND=0,      NUMBER OF DATA BUFFERS                   X
+               &BUFNI=0,      NUMBER OF INDEX BUFFERS                  X
+               &BUFSP=0,      MAX STORAGE FOR BUFFERS IN BYTES         X
+               &DDNAME=,      DDNAME > SET > PATH\CAT.CLUSTER          X
+               &EXLST=,       POINTER TO EXIT LIST                     X
+               &MACRF=,       PROCESSING OPTIONS                       X
+               &MAREA=,       NOT SUPPORTED                            X
+               &MLEN=,        NOT SUPPORTED                            X
+               &PASSWD=,      POINTER TO PASSWORD                      X
+               &RLSREAD=,     NOT SUPPORTED                            X
+               &RMODE31=NONE, 31-BIT ADDRESSING FOR BUFFS/CONTROL BLKS X
+               &SHRPOOL=0,                                             X
+               &STRNO=0       NUMBER OF CONCURRENT REQUESTS
+.*
+         GBLB  &RMODEBF           PASSED TO ZGENMACF
+         GBLC  &ZGENMACF1,&ZGENMACF2,&ZGENMACF3,&ZGENMACF4
+         LCLB  &RMODECB
+.*
+.* ERRORS FOR POSITIONAL OPERANDS
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP AIF   (&NPOS EQ 0).POSEND
+         MNOTE 15,'ACB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP
+.*
+.* ERRORS FOR UNSUPPORTED OPERANDS
+         AIF   ('&MAREA' EQ '').TESTOP2
+         MNOTE 15,'ACB UNSUPPORTED OPERAND - MAREA'
+.TESTOP2 AIF   ('&MLEN' EQ '').TESTOP3
+         MNOTE 15,'ACB UNSUPPORTED OPERAND - MLEN'
+.TESTOP3 AIF   ('&RLSREAD' EQ '').TESTDUN
+         MNOTE 15,'ACB UNSUPPORTED OPERAND - RLSREAD'
+.*
+.TESTDUN ANOP
+         AIF   ('&AM' NE 'VSAM')
+         MNOTE 15,'ACB ONLY AM=VSAM IS SUPPORTED'
+         AEND
+.*
+         AIF   ('&N' NE '')
+&N       DS    0D
+         AELSE
+         DS    0D
+         AEND
+.*
+         DC    C'zACB'            ACBEYE     EYECATCHER
+         DC    X'A0'              ACBID      VSAM
+         DC    X'10'              ACBSTYPE   10=VSAM
+         DC    AL2(ACBEND-IHAACB) ACBLENG    ACB LENGTH
+&DD      SETC  '&DDNAME'
+.* IF DDNAME NOT SPECIFIED USE ACB NAME
+.* IF NEITHER SPECIFIED, USE CL8' '
+         AIF   ('&DD' EQ '' AND '&N' EQ '')
+         DC    CL8' '             ACBDDNM    DDNAME
+         AGO   .DORMODE
+         AEND
+.*
+         AIF   ('&DD' EQ '')
+&DD      SETC  '&N'
+         AEND
+         AIF   (K'&DD EQ 0 OR K'&DD GT 8)
+         MNOTE 15,'DDNAME MUST BE 1-8 BYTES'
+         AEND
+         DC    CL8'&DD'           ACBDDNM    DDNAME
+.*
+.DORMODE ANOP
+         AIF   ('&RMODE31' EQ 'ALL'                                    X
+               OR '&RMODE31'  EQ 'BUFF'                                X
+               OR '&RMODE31'  EQ 'CB'                                  X
+               OR '&RMODE31'  EQ 'NONE').RMODOK
+         MNOTE 15,'INVALID RMODE31 - &RMODE31'
+.RMODOK  ANOP
+         AIF   ('&RMODE31' EQ 'ALL' OR '&RMODE31' EQ 'BUFF')
+               :&RMODEBF SETB 1
+         AEND
+         AIF   ('&RMODE31' EQ 'ALL' OR '&RMODE31' EQ 'CB')
+               :&RMODECB SETB 1
+         AEND
+.*
+.* SET ZGENMAC1-4 USING ZGENMACF SHARED WITH MODCB
+.* RMODEBF IS USED BY ZGENMACF
+         ZGENMACF MACRF=&MACRF,MODE=ACB
+         DC    B'&ZGENMACF1'   ACBMACF1
+         DC    B'&ZGENMACF2'   ACBMACF2
+         DC    B'&ZGENMACF3'   ACBMACF3
+         DC    B'&ZGENMACF4'   ACBMACF4
+         AIF   ('&BUFND' GT 32767)
+         MNOTE 15,'BUFND TOO LARGE - &BUFND'
+         AEND
+         DC    AL2(&BUFND)        ACBBUFND
+         AIF   ('&BUFNI' GT 32767)
+         MNOTE 15,'BUFNI TOO LARGE - &BUFNI'
+         AEND
+         DC    AL2(&BUFNI)        ACBBUFNI
+         AIF   ('&BUFSP' GT 16777215)
+         MNOTE 15,'BUFSP TOO LARGE - &BUFSP'
+         AEND
+         DC    AL4(&BUFSP)        ACBBUFSP
+         DC    AL2(0)             ACBLRECL
+         AIF   (T'&PASSWD EQ 'O')
+         DC    AL4(0)             ACBPASSW
+         AELSE
+         DC    AL4(&PASSWD)       ACBPASSW
+         AEND
+         AIF   (T'&EXLST EQ 'O')
+         DC    AL4(0)             ACBEXLST
+         AELSE
+         DC    AL4(&EXLST)        ACBEXLST
+         AEND
+         DC    X'00'              ACBINFL1
+         DC    X'00'              ACBINFL2
+&OFLAGS  SETC  '&RMODEBF&RMODECB.000000'
+         DC    B'&OFLAGS'         ACBOFLGS
+         DC    X'00'              ACBERFLG
+         AIF   ('&BSTRNO' GT 255)
+         MNOTE 15,'BSTRNO TOO LARGE - &BSTRNO'
+         AEND
+         DC    AL1(&BSTRNO)       ACBBSTNO
+         AIF   ('&STRNO' GT 255)
+         MNOTE 15,'STRNO TOO LARGE - &BSTRNO'
+         AEND
+         DC    AL1(&STRNO)        ACBSTRNO
+         AIF   ('&SHRPOOL' GT 255)
+         MNOTE 15,'SHRPOOL TOO LARGE - &SHRPOOL'
+         AEND
+         DC    AL1(&SHRPOOL)      ACBSHRP
+.* zVSAM EXTENSIONS
+         DC    X'02'              ACBVER zACB v2
+         DC    AL4(0)             ACBPFX
+         DC    AL4(0)             ACBXPFX
+         DC    AL4(0)             ACBBUFD
+         DC    AL4(0)             ACBBUFI
+         DC    XL2'00'            ALIGN
+         DS    0D
+.*
+         ACBD
+         MEXIT
+         MEND
+

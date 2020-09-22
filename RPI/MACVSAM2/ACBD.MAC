@@ -1,0 +1,148 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.* Date   - 09/30/05                                                  *
+.**********************************************************************
+.* 07/26/07 INITIAL CODING                                            *
+.* 08/29/07 RPI 688 SPLIT MACRF INTO MACR1-4 WITH 1 BYTE EQU'S        *
+.* 09/04/07 RPI 691 ADD ACBVCLRN, ACBVCLRA, ACBVAIXA, ACBDCBT, ACBDCBA*
+.* 09/24/07 RPI 702 ADD ACBOPENC UNIQUE OPEN COUNT FOR RPL RESET      *
+.* 11/25/07 RPI 723 ADD ACBGETNF PRE-REQ FOR KSDS UPD INSERT VS REWRTE*
+.* 11/26/07 RPI 723 MOVE GETOK, GETNF FROM ACB TO RPL                 *
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility           *
+.* 10/14/18         zVSAM V2 version (Melvyn Maltz)                   *
+.**********************************************************************
+         ACBD
+.*
+         GBLB  &Z390_ACBD
+         GBLC  &Z390_ACBD_NAME,&Z390_ACBD_TYPE
+.* IF ACBD ALREADY DEFINED EXIT NOW
+         AIF   (&Z390_ACBD).EXIT
+&Z390_ACBD SETB 1
+&Z390_ACBD_NAME SETC '&SYSLOC'  PROGRAM NAME
+&Z390_ACBD_TYPE SETC '&SYSSTYP' LAST SECTION (CSECT)
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'ACBD UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.* ACCESS CONTROL BLOCK DSECT FOR zVSAM
+.*
+IHAACB   DSECT
+IFGACB   EQU   IHAACB
+ACBEYE   DS    CL4                EYECATCHER
+ACBZACB  EQU   C'zACB'               EYECATCHER VALUE
+ACBID    DS    X                  IDENTIFIER
+ACBIDVAL EQU   X'A0'                 VSAM
+ACBSTYP  DS    X                  SUBTYPE
+ACBSTYPE EQU   ACBSTYP
+ACBTYPE  EQU   ACBSTYP
+ACBSVSAM EQU   X'10'                 VSAM SUBTYPE
+ACBLENG  DS    XL2                ACB LENGTH
+ACBLENG2 EQU   ACBLENG
+ACBLEN   EQU   ACBLENG
+ACBLEN2  EQU   ACBLENG
+ACBDDNM  DS    CL8                DDNAME > SET > PATH\CAT.CLUSTER
+ACBDDNAM EQU   ACBDDNM
+ACBMACRF DS    0XL2               MACRO ACCESS TYPE FLAGS 1 & 2
+ACBMACR1 DS    B                  MACRF FLAGS BYTE 1
+ACBKEY   EQU   X'80'                 INDEXED ACCESS BY LOGICAL KEY
+ACBMACR1_KEY EQU ACBKEY
+ACBADR   EQU   X'40'                 NON-INDEXED ACCESS BY ADDRESS
+ACBADD   EQU   ACBADR
+ACBMACR1_ADR EQU ACBADR
+* ACBMACR1_CNV EQU X'20'             CI ACCESS (NOT SUPPORTED)
+ACBSEQ   EQU   X'10'                 SEQUENTIAL ACCESS
+ACBMACR1_SEQ EQU ACBSEQ
+ACBDIR   EQU   X'08'                 DIRECT ACCESS
+ACBMACR1_DIR EQU ACBDIR
+ACBIN    EQU   X'04'                 GET ALLOWED
+ACBGET   EQU   ACBIN
+ACBMACR1_IN  EQU ACBIN
+ACBOUT   EQU   X'02'                 GET, PUT, ERASE ALLOWED
+ACBPUT   EQU   ACBOUT
+ACBMACR1_OUT EQU ACBOUT
+* ACBMACR1_UBF EQU X'01'             USER BUFFER MGT (NOT SUPPORTED)
+*
+ACBMACR2 DS    B                  MACRF FLAGS BYTE 2
+ACBSKP   EQU   X'10'                 SKIP SEQUENTIAL ACCESS
+ACBMACR2_SKP EQU ACBSKP
+* ACBMACR2_NLOGON EQU X'40'          NO LOGON REQUIRED (NOT SUPPORTED)
+* ACBRST   EQU   X'04'               DATASET REUSABLE (NOT SUPPORTED)
+* ACBMACR2_RST EQU ACBRST
+* ACBMACR2_DSN EQU X'10'             SUBTASK SHARING (NOT SUPPORTED)
+ACBAIX   EQU   X'01'                 ACCESS THROUGH AIX
+ACBAIXP  EQU   ACBAIX
+ACBMACR2_AIX EQU ACBAIX
+*
+ACBMACR3 DS    B                  MACRF FLAGS BYTE 3
+* ACBNLW   EQU   X'80'               NO LSR EXC. CTRL WT (NOT SUPP)
+ACBLSR   EQU   X'40'                 LOCAL SHARED RESOURCES
+ACBMACR3_LSR EQU ACBLSR
+ACBGSR   EQU   X'20'                 GLOBAL SHARED RESOURCES
+ACBMACR3_GSR EQU ACBGSR
+* ACBMACR2_ICI EQU X'10'             IMPROVED CI PROC. (NOT ALLOWED)
+ACBDFR   EQU   X'08'                 DEFERRED WRITES ALLOWED
+ACBMACR3_DFR EQU ACBDFR
+ACBSIS   EQU   X'04'                 SEQUENTIAL INSERT STRATEGY
+ACBMACR3_SIS EQU ACBSIS
+* ACBMACR3_CFX EQU X'20'             FIX CBS AND BUFFS (NOT ALLOWED)
+ACBMODE  EQU   X'01'                 BUFFERS ALLOWED ABOVE THE LINE
+*
+ACBMACR4 DS    B                  MACRF FLAGS BYTE 4
+* ACBRLS EQU   X'80'                 RES. LEVEL SHARING (NOT ALLOWED)
+*
+ACBBUFND DS    XL2                NO. OF DATA BUFFERS
+ACBBUFNI DS    XL2                NO. OF INDEX BUFFERS
+ACBBUFSP DS    XL4                MAX BUFFER SPACE IN BYTES
+ACBLRECL DS    XL2                RECORD LENGTH FROM CATALOG
+ACBPASSW DS    AL4                PASSWORD POINTER
+ACBEXLST DS    AL4                EXLST POINTER
+ACBUEL   EQU   ACBEXLST
+*
+ACBINFL  DS    0BL2               INPUT FLAGS 1 & 2
+ACBINFLG EQU   ACBINFL
+ACBINFL1 DS    B                  INPUT FLAG 1
+ACBCAT   EQU   X'10'                 ACB FOR VSAM CATALOG (NOT SUPP)
+*
+ACBINFL2 DS    B                  INPUT FLAG 2
+ACBSWARN EQU   X'80'                 SUPPRESS OPEN WARNING
+ACBSHROP EQU   X'03'                 SHAREOPTIONS
+ACBSHR02 EQU   X'02'                 CROSS REGION SHARE 2
+ACBSHR01 EQU   X'01'                 CROSS REGION SHARE 1
+*
+ACBOFLGS DS    B                  OPEN FLAGS
+ACBR31B  EQU   X'80'                 31-BIT ADDRESSING FOR BUFFERS
+ACBR31C  EQU   X'40'                 31-BIT ADDRESSING FOR CONTROL BLKS
+ACBEOV   EQU   X'20'                 EOV CONCATENATION
+ACBOPEN  EQU   X'10'                 ACB CURRENTLY OPEN
+ACBDSERR EQU   X'08'                 ERROR-ACB MUST BE CLOSED
+ACBRECOV EQU   X'04'                 OPEN FOR RECOVERY
+ACBEXFG  EQU   X'02'                 OFF WHEN USER EXIT IN PROGRESS
+ACBLOCK  EQU   ACBEXFG
+ACBIOSFG EQU   X'01'                 OPEN/CLOSE IN PROGRESS
+ACBBUSY  EQU   ACBIOSFG
+*
+ACBERFLG DS    B                  ERROR FLAGS
+*
+ACBBSTNO DS    X                  NO. OF AIX CONCURRENT STRINGS
+ACBSTRNO DS    X                  NO. OF CONCURRENT REQUEST STRINGS
+ACBSHRP  DS    X                  LSR SHARE POOL NUMBER
+.* zVSAM EXTENSIONS
+ACBVER   DS    X                  zACB LAYOUT VERSION
+ACBV2    EQU   X'02'              zACB V2
+ACBPFX   DS    AL4                ADDRESS OF DATA PREFIX BLOCK
+ACBXPFX  DS    AL4                ADDRESS OF INDEX PREFIX BLOCK
+ACBBUFD  DS    AL4                ADDRESS OF DATA BUFFERS
+ACBBUFI  DS    AL4                ADDRESS OF INDEX BUFFERS
+         DS    XL2                ALIGN
+         DS    0D
+ACBEND   EQU   *
+         AIF   ('&Z390_ACBD_NAME' EQ '' OR '&Z390_ACBD_TYPE' EQ '').EXIX
+               T
+&Z390_ACBD_NAME &Z390_ACBD_TYPE
+.EXIT    ANOP
+         MEND
+

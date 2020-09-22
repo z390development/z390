@@ -8244,7 +8244,157 @@ SetGit ++Abe 2021-03-29 20:17:00 +0100
 set GIT_COMMITTER_DATE=2021-03-29 20:17:00 +0100
 git commit -m "Intermediate commit to trace renamed files"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.7.01
+dir *.* /B /on /s      >.allfile.txt
+dir *.cbl /B /on /s    >\temp\.genmlc.lst
+dir *.zsm /B /on /s   >>\temp\.genmlc.lst
+dir *. /B /A-D /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.7.01
+git add bat/ASM.BAT
+git add bat/ASML.BAT
+git add bat/ASMLG.BAT
+git add bat/ZC390.BAT
+git add perl/cmd.pl
+git add perl/dos.pl
+git add src/az390.java
+git add src/mz390.java
+git add src/tz390.java
+git add tests/INS6MACS.CPY
+git add tests/INS6OPRS.CPY
+git add tests/TESTINS6.mlc
+git rm  z390_v1700_readme.txt
+git rm  zcobol/CVT/ZCOBOL.BAT
+git rm  zcobol/CVT/ZCOBOL.CPY
+git rm  zcobol/README.TXT
+git rm  zcobol/demo/BYTEFILE.IN
+git rm  zcobol/demo/CLG.BAT
+git add zcobol/demo/COPYFILE.IN
+git rm  zcobol/demo/MZARRAY.CBL
+git rm  zcobol/demo/PROGRAM.CBL
+git rm  zcobol/demo/PROGRAM.LIN
+git rm  zcobol/demo/U.txt
+git rm  zcobol/demo/U1.CBL
+git rm  zcobol/demo/U2.CBL
+git rm  zcobol/demo/U4.CBL
+git rm  zcobol/demo/U6.CBL
+git rm  zcobol/demo/U6B.CBL
+git rm  zcobol/demo/UPROGRAM.CBL
+git rm  zcobol/demo/UPROGRAM.LIN
+git rm  zcobol/demo/USET.CBL
+git rm  zcobol/demo/ZC_CALC.MAC
+git rm  zcobol/i586/ALG.BAT
+git rm  zcobol/i586/CLG.BAT
+git rm  zcobol/i586/GEN_COMMENT.MAC
+git rm  zcobol/i586/GEN_DISPLAY.MAC
+git rm  zcobol/i586/GEN_ID.MAC
+git rm  zcobol/i586/GEN_PROC_END.MAC
+git rm  zcobol/i586/GEN_PROC_START.MAC
+git rm  zcobol/i586/GEN_STOP.MAC
+git rm  zcobol/i586/GEN_WS.MAC
+git rm  zcobol/i586/README.TXT
+git rm  zcobol/i586/ZC586CLG.OPT
+git rm  zcobol/java/GEN_COMMENT.MAC
+git rm  zcobol/java/GEN_DISPLAY.MAC
+git rm  zcobol/java/GEN_ID.MAC
+git rm  zcobol/java/GEN_PROC_END.MAC
+git rm  zcobol/java/GEN_PROC_START.MAC
+git rm  zcobol/java/GEN_STOP.MAC
+git rm  zcobol/java/GEN_WS.MAC
+git rm  zcobol/java/README.TXT
+git rm  zcobol/java/ZCJAVCLG.OPT
+git rm  zcobol/lib/README.TXT
+git rm  zcobol/lib/ZC390CLG.OPT
+git rm  zcobol/mac/MYSTUFF.MAC
+git rm  zcobol/test/COPYFILE.MLC
+git rm  zcobol/test/TESTASM4.MLC
+git rm  zcobol/test/TESTBFP1.CBL
+git rm  zcobol/test/TESTCAL1.CBL
+git rm  zcobol/test/TESTCAL2.CBL
+git rm  zcobol/test/TESTCAL3.CBL
+git rm  zcobol/test/TESTCMP1.CBL
+git rm  zcobol/test/TESTCMP2.CBL
+git rm  zcobol/test/TESTCMP3.CBL
+git rm  zcobol/test/TESTCMP4.CBL
+git rm  zcobol/test/TESTCMP5.CBL
+git rm  zcobol/test/TESTCMP6.CBL
+git rm  zcobol/test/TESTCPY1.CBL
+git rm  zcobol/test/TESTCPY2.CBL
+git rm  zcobol/test/TESTCPY2.CPZ
+git rm  zcobol/test/TESTCPYA.CPZ
+git rm  zcobol/test/TESTCPYB.CPZ
+git rm  zcobol/test/TESTDFP1.CBL
+git rm  zcobol/test/TESTDIV1.CBL
+git rm  zcobol/test/TESTDIV2.CBL
+git rm  zcobol/test/TESTDSP1.CBL
+git rm  zcobol/test/TESTFIL1.CBL
+git rm  zcobol/test/TESTFIL1.IN
+git rm  zcobol/test/TESTFIL2.CBL
+git rm  zcobol/test/TESTFIL2.IN
+git rm  zcobol/test/TESTFUN1.CBL
+git rm  zcobol/test/TESTGO1.CBL
+git rm  zcobol/test/TESTHFP1.CBL
+git rm  zcobol/test/TESTINT1.CBL
+git rm  zcobol/test/TESTISP1.CBL
+git rm  zcobol/test/TESTMPY1.CBL
+git rm  zcobol/test/TESTMPY2.CBL
+git rm  zcobol/test/TESTPIC1.CBL
+git rm  zcobol/test/TESTPM1.CBL
+git rm  zcobol/test/TESTPM2.CBL
+git rm  zcobol/test/TESTPM3.CBL
+git rm  zcobol/test/TESTPM3.IN
+git rm  zcobol/test/TESTRMD1.CBL
+git rm  zcobol/test/TESTSIX1.CBL
+git rm  zcobol/test/TESTSIX2.CBL
+git rm  zcobol/test/TESTSUB1.CBL
+git rm  zcobol/test/TESTSUB2.CBL
+git rm  zcobol/test/TESTTRC1.CBL
+git rm  zcobol/test/TESTTRC2.CBL
+git rm  zcobol/test/TESTTRC3.CBL
+git rm  zcobol/test/TESTWS1.CBL
+git rm  zcobol/test/datetime.MLC
+git add zcobol/tests/TESTADD1.CBL
+git add zcobol/tests/TESTADD2.CBL
+git rm  zcobol/vce/CLG.BAT
+git rm  zcobol/vce/GEN_COMMENT.MAC
+git rm  zcobol/vce/GEN_DISPLAY.MAC
+git rm  zcobol/vce/GEN_ID.MAC
+git rm  zcobol/vce/GEN_PROC_END.MAC
+git rm  zcobol/vce/GEN_PROC_START.MAC
+git rm  zcobol/vce/GEN_STOP.MAC
+git rm  zcobol/vce/GEN_WS.MAC
+git rm  zcobol/vce/README.TXT
+git rm  zcobol/vce/ZCVCECLG.OPT
+git add RPI/
+git add bat/BLDCBLLIB.BAT
+git add bat/CBLC.BAT
+git add bat/CBLCL.BAT
+git add bat/CBLCLG.BAT
+git add bat/CBLOPT.OPT
+git add bat/RUNASMDEMOS.BAT
+git add bat/RUNASMTESTS.bat
+git add bat/RUNCBLDEMOS.BAT
+git add bat/RUNCBLTESTS.BAT
+git add demo/HELLO.MLC
+git add perl/readme.txt
+git add z390_v1701_readme.txt
+git add zcobol/cpy/ZC390CVT.CPY
+git add zcobol/cpy/ZC390PVT.CPY
+git add zcobol/cpy/ZC_EQUS.CPY
+git add zcobol/cpy/ZC_PFPO.CPY
+git add zcobol/lib/CVTTOHEX.MLC
+
+==> Create commit for V1.7.01
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2020-09-22 07:44:00 -0500
+set GIT_COMMITTER_DATE=2021-03-29 20:30:00 +0100
+git commit -m "Reconstructed version v1.7.01 of z390 committed on behalf of Don Higgins"
+git tag -a v1.7.01 -m "Reconstructed version v1.7.01 of z390 committed on behalf of Don Higgins"
 
 
 

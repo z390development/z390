@@ -1,0 +1,7 @@
+         macro
+&label   xyz   &p3
+         lcla  &o3
+&o3      seta  &p3
+&label   dc    al1(&o3)
+         mend
+

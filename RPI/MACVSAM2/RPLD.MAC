@@ -1,0 +1,99 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 06/23/07                                                 *
+.*********************************************************************
+.* 06/23/07 INITIAL CODING
+.* 08/29/07 RPI 688 ADD RPLXRBA XRBA/RBA FIELD AND SPLIT OPT1/OPT2 EQU
+.* 09/16/07 RPI 682 CORRECT RPLID
+.* 09/16/07 RPI 702 REPLACE RPLXRBA WITH RPLCXRBA AND RPLLXRBA
+.*                  ALSO ADD RPLOPENC UNIQUE ACB OPEN COUNT
+.* 11/26/07 RPI 723 MOVE GETOK, GETNF FLAGS TO RPLFLAG, ADD KSIT,KSIR
+.* 12/08/07 RPI 750 SPLIT RPLFLAG INTO 4 BYTE FIELDS WITH EQUATES
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*
+.* 12/30/18 zVSAM V2 rewrite by Melvyn Maltz
+.*********************************************************************
+         RPLD
+.*
+         GBLB  &Z390_RPL
+         GBLC  &Z390_RPL_NAME,&Z390_RPL_TYPE
+.* IF RPLD ALREADY DEFINED EXIT NOW
+         AIF   (&Z390_RPL).EXIT
+&Z390_RPL SETB 1
+&Z390_RPL_NAME SETC '&SYSLOC'
+&Z390_RPL_TYPE SETC '&SYSSTYP'
+.*
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.* REQUEST PARAMETER LIST FOR VSAM
+.*
+IHARPL   DSECT
+IFGRPL   EQU   IHARPL
+RPLEYE   DS    CL4                EYECATCHER
+RPLZRPL  EQU   C'zRPL'               EYECATCHER VALUE
+RPLDACB  DS    A                  ACB ADDRESS
+RPLAREA  DS    A                  AREA ADDRESS
+RPLAREAL DS    XL4                AREA LENGTH
+RPLARG   DS    A                  ARG (KEY, RRDS REC NO., RBA/XRBA)
+RPLECB   DS    A                  ECB ADDRESS (POSTED IF PRESENT)
+RPLMSGAR DS    A                  MESSAGE AREA
+RPLNXTRP DS    A                  POINTER TO RPL CHAIN
+RPLRECLN DS    XL4                RECORD LENGTH
+RPLMSGLN DS    XL2                MESSAGE LENGTH
+RPLKEYLN DS    X                  KEY LENGTH
+RPLOPTCD DS    0XL2               OPTION BYTES 1 AND 2
+RPLOPT1  DS    X                  OPTION BYTE 1
+RPLOPT1_KEY EQU X'80'                1=KEY 0=ADR
+RPLOPT1_SEQ EQU X'40'                1=SEQ 0=DIR
+RPLOPT1_SKP EQU X'20'                1=SKP 0=SEQ/DIR
+RPLOPT1_ARD EQU X'10'                1=ARD 0=LRD
+RPLOPT1_FWD EQU X'08'                1=FWD 0=BWD
+RPLOPT1_SYN EQU X'04'                1=SYN 0=ASY
+RPLOPT1_NUP EQU X'02'                1=NUP 0=UPD
+RPLOPT2_NSP EQU X'01'                1=NSP 0=NUP/UPD
+*
+RPLOPT2  DS    X                  OPTION BYTE 2
+RPLOPT2_KEQ EQU X'80'                1=KEQ 0=KGE
+RPLOPT2_FKS EQU X'40'                1=FKS 0=GEN
+RPLOPT2_MVE EQU X'20'                1=MVE 0=LOC
+RPLOPT2_RBA EQU X'10'                1=RBA 0=XRBA
+RPLFEEDB DS    0XL4               RPL FEEDBACK CODES
+RPLFUNCD DS    X                     RPL FUNCTION CODE
+RPLRTNCD DS    X                     RPL RETURN CODE
+RPLCMPON DS    X                     RPL COMPONENT CODE
+RPLERRCD DS    X                     RPL REASON CODE
+RPLCXRBA DS    XL8                CURRENT XRBA
+         DS    XL3                ALIGN
+         DS    0D
+RPLEND   EQU   *
+RPLLEN   EQU   RPLEND-IHARPL
+* FIELDS FROM HERE NOT DEFINED IN D&L AND MAY NOT BE NEEDED
+RPLID    DS    X                  RPL ID
+RPLSTYPE DS    X                  RPL TYPE VSAM
+RPLLXRBA DS    XL8 XRBA OF LAST REC VES (ESDS,RRDS) OR VX0 (KSDS,VRRDS)
+RPLOPENC DS    F   UNIQUE ACB OPEN COUNT TO DETECT RPL REPOSITION REQ'D
+RPLFLAG  DS    0F                 RPL FLAG BITS FOR UPD GET ETC.
+RPLFLAG1 DS    X
+RPLF1GOK EQU   X'80'              PREV GET SUCCESSFUL
+RPLF1GNF EQU   X'40'              PREV GET RECORD NOT FOUND
+RPLFLAG2 DS    X
+RPLFLAG3 DS    X
+RPLFLAG4 DS    X
+*
+* VSAM RPL SVC 151 FUNCTION CODES IN R0
+*
+RPLOPGET EQU   1                  GET
+RPLOPPUT EQU   2                  PUT
+RPLOPERA EQU   3                  ERASE
+RPLOPPNT EQU   4                  POINT
+         AIF  ('&Z390_RPL_NAME' EQ '' OR '&Z390_RPL_TYPE' EQ '').EXIT
+&Z390_RPL_NAME &Z390_RPL_TYPE
+.EXIT    ANOP
+         MEND
+

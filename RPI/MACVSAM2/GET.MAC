@@ -1,0 +1,104 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.* Date   - 09/30/05                                                  *
+.*                                                                    *
+.* Modified for zVSAM V2 by Melvyn Maltz                              *
+.* Date   - 20th March 2019                                           *
+.**********************************************************************
+.* 10/12/05 ADD USE OF DCBREC IF RECORD NOT SPECIFIED                 *
+.* 10/20/05 RPI27 - issue error for any undefined operands            *
+.* 10/20/05 RPI38 - check for register conflicts                      *
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER                          *
+.* 04/12/06 RPI163 ISSUE MNOTE ERROR FOR TYPE=P                       *
+.* 06/14/07 RPI 641 DEFAULT MF=I                                      *
+.* 06/22/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC 121 R0=1 R1=A(RPL)   *
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL *
+.* 10/01/07 RPI 709 CORRECT MNOTE TEXT                                *
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility           *
+.*                                                                    *
+.* Mods for zVSAM V2                                                  *
+.*    Removed MF=                                                     *
+.*    General clean-up                                                *
+.**********************************************************************
+&N       GET   &DCB,    DCB                                            X
+               &AREA,   RECORD AREA                                    X
+               &RPL=,   VSAM REQUEST PARAMETER LIST                    X
+               &TYPE=   TYPE=P NOT SUPPORTED
+.*
+         AIF   ('&N' NE '')
+&N       DS    0H
+         AEND
+.*
+.* ELIMINATE POSITIONALS
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'GET UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AIF   (&NPOS GT 0).POSLOOP
+.*
+.POSEND  ANOP
+.*
+.* ERRORS FOR UNSUPPORTED OPERANDS
+         AIF   ('&TYPE' NE '')
+         MNOTE 12,'GET TYPE NOT SUPPORTED'
+         AEND
+.*
+.* SYNTAX ERRORS
+.* NON-VSAM
+         AIF   ('&RPL' EQ '' AND '&DCB' EQ '')
+         MNOTE 15,'GET RPL= MISSING AND NO DCB SPECIFIED'
+         AEND
+.*
+         AIF   ('&AREA(1)' EQ '1' OR '&AREA(1)' EQ 'R1')
+         MNOTE 15,'GET AREA REG INVALID - &AREA(1)'
+         AEND
+.*
+.* VSAM
+         AIF   ('&RPL' NE '' AND '&DCB' NE '')
+         MNOTE 15,'GET RPL= AND DCB IS SPECIFIED'
+         AEND
+.*
+         AIF   ('&RPL' NE '' AND '&AREA' NE '')
+         MNOTE 15,'GET RPL= AND AREA IS SPECIFIED'
+         AEND
+.* NON-VSAM
+         AIF   ('&RPL' EQ '')
+            AIF   ('&DCB'(1,1) EQ '(')
+         ZOPTLR 1,&DCB(1)
+            AELSE
+         LA    1,&DCB             R1=DCB ADDRESS
+            AEND
+.*
+            AIF   ('&AREA' NE '')
+               AIF   ('&AREA'(1,1) EQ '(')
+         ZOPTLR 0,&AREA(1)
+               AELSE
+         LA    0,&AREA            R0=AREA ADDRESS
+               AEND
+            AELSE
+.* NOTE: THERE IS NO RECORD= IN REAL LIFE
+.*       IF AREA IS OMITTED R0 IS ASSUMED TO CONTAIN THE AREA ADDRESS
+         L     0,DCBREC-IHADCB(1) R0=AREA ADDRESS FROM DCB
+            AEND
+.*
+         SVC  151
+         MEXIT
+         AELSE
+.* VSAM
+            AIF   ('&RPL'(1,1) EQ '(')
+         ZOPTLR 1,&RPL(1)
+            AELSE
+         LA    1,&RPL             R1=RPL ADDRESS
+            AEND
+         LA    0,RPLOPGET         R0=FUNCTION
+         SVC   121                VSAM GET R0=1 R1=A(RPL)
+         MEXIT
+         AEND
+.*
+         MEND
+

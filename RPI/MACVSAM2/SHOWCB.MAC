@@ -1,0 +1,1598 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.* Date   - 09/30/05                                                  *
+.**********************************************************************
+.* 08/10/07 INITIAL CODING TO SUPPORT FDBK, AREA, RECLEN INITIALLY    *
+.* 09/14/07 RPI 672 VERIFY RPL VS ACB                                 *
+.* 09/19/07 RPI 697 SET RC=0                                          *
+.* 09/24/07 RPI 702 CHANGE RPLXRBA TO RPLLXRBA                        *
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility           *
+.*                                                                    *
+.* 07/07/19          zVSAM V2 version (Melvyn Maltz)                  *
+.*                   &EXLST= added                                    *
+.*                   &MF=I added                                      *
+.*                   Combined ZSHOWCB                                 *
+.**********************************************************************
+.* MF=I or omitted    Generates CBMR and invokes ZVSAM19C to retrieve
+.*                    fields
+.* MF=L               Generates CBMR inline
+.* MF=(L,addr)        Generates CBMR inline and then moves it to addr
+.* MF=(L,addr,label)  as above and generates label equ size
+.*
+.* MF=(E,addr)        Modifies the CBMR at addr
+.*                    Invokes ZVSAM19C to retrieve fields using
+.*                    the CBMR
+.*
+.* MF=(G,addr)        Generates CBMR inline and then moves it to addr
+.*                    Invokes ZVSAM19C to retrieve fields using
+.*                    the CBMR
+.* MF=(G,addr,label)  as above and generates label equ size
+.*
+.* addr can be label or (reg), reg cannot be R0, R1, R14 or R15
+.* reg is not permitted for MF=L
+.*
+&N       SHOWCB &AM=VSAM,         VSAM                                 X
+               &RPL=,             RPL ADDRESS                          X
+               &ACB=,             ACB ADDRESS                          X
+               &EXLST=,           EXLST ADDRESS                        X
+               &AREA=,            USER AREA TO RECEIVE FIELDS          X
+               &LENGTH=,          USER AREA LENGTH                     X
+               &OBJECT=DATA,      DATA/INDEX FOR ACB                   X
+               &FIELDS=,          NAMES OF FIELDS TO RETRIEVE          X
+               &MF=I
+.*
+         ACTR  8000
+.*
+         LCLA  &OFFREG(10)
+         LCLC  &OFFCHR(10)
+.* FOR NO BLOCK
+         LCLB  &NBKHAND
+.* FOR EXLST
+         LCLB  &EXLHAND
+.* FOR ACB
+         LCLB  &ACBHAND
+.* FOR RPL
+         LCLB  &RPLHAND
+.*
+         AIF   ('&N' NE '')
+&N       DS    0D
+         AEND
+.*
+.* ELIMINATE POSITIONALS
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'SHOWCB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AIF   (&NPOS GT 0).POSLOOP
+.*
+.POSEND  ANOP
+.* VALIDATE AM
+         AIF   ('&AM' NE 'VSAM')
+         MNOTE 12,'SHOWCB ONLY AM=VSAM IS SUPPORTED'
+         AEND
+.* VALIDATE BLOCK TYPE
+.* BLOCK TYPE ISN'T NEEDED IF ONLY LENGTH FIELDS REQUIRED
+&BLK     SETA  0
+         AIF   ('&RPL' NE '')
+&BLK     SETA  &BLK+1
+         AEND
+         AIF   ('&ACB' NE '')
+&BLK     SETA  &BLK+1
+         AEND
+         AIF   ('&EXLST' NE '')
+&BLK     SETA  &BLK+1
+         AEND
+         AIF   (&BLK GT 1)
+         MNOTE 12,'SHOWCB MORE THAN ONE BLOCK TYPE SPECIFIED'
+         AEND
+.* LENGTH MUST BE NUMERIC (OPTIONAL FOR MF=E)
+         AIF   ('&MF(1)' NE 'E')
+            AIF   (T'&LENGTH NE 'N')
+         MNOTE 12,'SHOWCB LENGTH= IS NOT NUMERIC'
+            AEND
+         AEND
+.* MUST HAVE AREA AND LENGTH (OPTIONAL FOR MF=E)
+         AIF   ('&MF(1)' NE 'E')
+            AIF   ('&AREA' EQ '' OR '&LENGTH' EQ '')
+         MNOTE 12,'SHOWCB REQUIRES AREA= AND LENGTH='
+            AEND
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'I')
+            AIF   ('&AREA'(1,1) EQ '(')
+         ZOPTLR 1,&AREA
+            AELSE
+         LA    1,&AREA            R1=AREA ADDRESS
+            AEND
+         AEND
+.* MUST HAVE FIELDS IF MF= NOT E
+         AIF   ('&MF(1)' NE 'E')
+            AIF   ('&FIELDS' EQ '')
+         MNOTE 12,'SHOWCB REQUIRES FIELDS='
+            AEND
+         AEND
+.* VALIDATE MF=
+         AIF   ('&MF(1)' NE 'I' AND                                    X
+               '&MF(1)'  NE 'L' AND                                    X
+               '&MF(1)'  NE 'E' AND                                    X
+               '&MF(1)'  NE 'G')
+         MNOTE 12,'SHOWCB MF= INVALID - &MF'
+         AEND
+.*
+         AIF   ('&EXLST' NE '').DOEXLST
+         AIF   ('&RPL'   NE '').DORPL
+         AIF   ('&ACB'   NE '').DOACB
+.*
+.*******************
+.* SHOWCB NO BLOCK *
+.*******************
+.* VALIDATE FIELDS, ONLY EXLLEN, RPLLEN AND ACBLEN ALLOWED
+&I       SETA  1
+.NBKVALP ANOP
+         AIF   (&I GT N'&FIELDS).NBKVALD
+         AIF   ('&FIELDS(&I)' EQ 'ACBLEN' OR                           X
+               '&FIELDS(&I)'  EQ 'EXLLEN' OR                           X
+               '&FIELDS(&I)'  EQ 'RPLLEN')
+&I       SETA  &I+1
+         AGO   .NBKVALP
+         AELSE
+         MNOTE 12,'SHOWCB NO BLOCK SPECIFIED INVALID FIELDS - &FIELDS(&-
+               I)'
+&I       SETA  &I+1
+         AGO   .NBKVALP
+         AEND
+.*
+.NBKVALD ANOP
+.* SHOWCB ONLY NEEDS VERB CODES AND VALUES FOR AREA AND LENGTH
+         AIF   ('&MF(1)' EQ 'L' AND '&AREA'(1,1) EQ '(')
+         MNOTE 12,'SHOWCB AREA= REGISTER NOTATION NOT ALLOWED WITH MF=L-
+               '
+         AEND
+.* DON'T NEED TO GEN A CBMR FOR MF=E
+         AIF   ('&MF(1)' EQ 'E').NBKMFEG
+.* COUNT NO. OF VERBS AND FIELDS
+.* NO. OF PARMS IN FIELDS=, 2 FOR AREA AND LENGTH
+&VERBS   SETA  N'&FIELDS+2        FOR FIELDS, AREA AND LENGTH
+&FIELDNO SETA  2                  FOR AREA AND LENGTH
+&BRAS    SETA  0
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+&BRAS    SETA  4
+         AEND
+.* (BRAS) 15(CBMR HEADER) &VERBS(BYTE CODES) &FIELDNO*4(FIELDS)
+&TOTSIZE SETA  &BRAS+15+&VERBS+&FIELDNO*4
+&RESID   SETA  (&TOTSIZE-(&TOTSIZE/4)*4)
+         AIF   (&RESID NE 0)
+&RESID   SETA  4-&RESID
+&TOTSIZE SETA  &TOTSIZE+&RESID
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+         BRAS  15,*+&TOTSIZE
+         AEND
+         DC    C'CBMR'            CBMREYE
+         DC    AL1(CBMRSHOW)      CBMRREQ
+         DC    AL1(0)             CBMRRMOD
+         DC    AL1(&VERBS)        CBMRVRBS
+         DC    AL4(0)             CBMRWORK
+         DC    AL2(0)             CBMRLEN
+         DC    AL2(&TOTSIZE-&BRAS) CBMRSIZE
+* LIST OF VERB CODES
+         DC    AL1(CBMRNB_LENGTH)
+         DC    AL1(CBMRNB_AREA)
+&I       SETA  0
+.NBKLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&FIELDS).NBKEXIT
+.*
+         AIF   ('&FIELDS(&I)' EQ 'EXLLEN')
+         DC    AL1(CBMRXL_XLSTLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'RPLLEN')
+         DC    AL1(CBMRRPL_RPLLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'ACBLEN')
+         DC    AL1(CBMRACB_ACBLEN)
+         AEND
+         AGO   .NBKLOOP
+.*
+.NBKEXIT ANOP
+* LIST OF FIELD VALUES IN SAME ORDER AS VERB CODES
+* VALUES FOR FIELDS= NOT REQUIRED
+&OFFSET  SETA  15+&VERBS          HEADER+NO. OF VERBS
+&I       SETA  1
+         DC    AL4(&LENGTH)
+&OFFSET  SETA  &OFFSET+4
+         DC    AL4(&AREA)
+         AIF   ('&AREA'(1,1) EQ '(')
+            AIF ('&AREA' EQ '(0)'   OR                                 X
+               '&AREA'   EQ '(R0)'  OR                                 X
+               '&AREA'   EQ '(1)'   OR                                 X
+               '&AREA'   EQ '(R1)'  OR                                 X
+               '&AREA'   EQ '(14)'  OR                                 X
+               '&AREA'   EQ '(R14)' OR                                 X
+               '&AREA'   EQ '(15)'  OR                                 X
+               '&AREA'   EQ '(R15)')
+         MNOTE 12,'SHOWCB AREA= INVALID REGISTER USE'
+            AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&AREA'
+         AEND
+.*
+         AIF   (&RESID NE 0)
+         DC    &RESID.X'00'       ALIGN
+         AEND
+.*
+&I       SETA  1
+.NBKRGLP ANOP
+         AIF   (&I GT 10).NBKRGDN
+         AIF   (&OFFREG(&I) NE 0)
+            AIF   (NOT &NBKHAND)
+* HANDLE REGISTER NOTATION
+&NBKHAND SETB  1
+            AEND
+         ST    &OFFCHR(&I),&OFFREG(&I).(15) STORE REGISTER INTO CBMR
+         AEND
+&I       SETA  &I+1
+         AGO   .NBKRGLP
+.*
+.NBKRGDN ANOP
+&REQLEN  SETA  N'&FIELDS*4
+         AIF   (&REQLEN GT &LENGTH)
+         MNOTE 12,'SHOWCB FIELDS=&REQLEN EXCEED AREA LENGTH=&LENGTH'
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'L' OR '&MF(1)' EQ 'G').NBKMFL
+.*
+.* PROCESS NO BLOCK MF=I
+         LR    1,15               R1=CBMR ADDRESS
+         IIHF  1,C'&MF(1)'        R1 HIGH=MF
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.*
+.NBKMFL  ANOP
+.* PROCESS SHOWCB NO BLOCK MF=L
+         AIF   (T'&MF(2) EQ 'O' AND '&N' EQ '')
+         MNOTE 12,'SHOWCB NO BLOCK NO LABEL FOR CBMR'
+         AEND
+         AIF   (T'&MF(2) NE 'O')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+            MNOTE 12,'SHOWCB MF= INVALID REGISTER USE'
+            AEND
+            AIF ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AEND
+         MVC   0(&TOTSIZE-&BRAS,1),0(15) MOVE TO REQUESTED AREA
+         AEND
+.*
+         AIF   (T'&MF(3) NE 'O')
+&MF(3)   EQU   &TOTSIZE-&BRAS
+         AEND
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'G').NBKMFEG
+         SR    15,15              RC=0
+         MEXIT
+.*
+.NBKMFEG ANOP
+.* PROCESS SHOWCB NO BLOCK MF=E/G
+.*   FOR MF=G ONLY THE PREP CODING IS DONE
+.*   FOR MF=E ONLY AREA AND LENGTH CAN BE MODIFIED
+.*            FIELDS= IS INVALID
+.* CALL ZVSAM19C TO MOVE THE FIELDS INTO AREA
+         AIF   (T'&MF(2) EQ 'O')
+         MNOTE 12,'SHOWCB NO BLOCK MF=E/G SECOND PARAMETER MISSING'
+         AEND
+.*
+         AIF ('&MF(2)'(1,1) EQ '(')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+            MNOTE 12,'SHOWCB MF= INVALID REGISTER USE'
+            AEND
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'G').NBKMFG
+.* MF=E
+         AIF   ('&FIELDS' NE '')
+         MNOTE 12,'SHOWCB FIELDS= IS INVALID WHEN MF=E'
+         AEND
+.*
+         AIF   ('&LENGTH' EQ '' AND '&AREA' EQ '').NBKMFG
+.* MODIFY THE CBMR
+         USING CBMR,1
+         LLC   0,CBMRVRBS         R0=NO. OF VERBS
+         LA    14,CBMRBODY        R14=ADDRESS OF VERBS
+         ARK   15,0,14            R15=ADDRESS OF FIELDS
+         DROP  1
+.*
+         AIF   ('&LENGTH' NE '')
+         IILF  14,&LENGTH         R14=LENGTH
+         ST    14,0(15)           STORE LENGTH IN CBMR
+         AEND
+.*
+         AIF   ('&AREA' NE '')
+            AIF   ('&AREA'(1,1) EQ '(')
+               AIF ('&AREA' EQ '(0)'   OR                              X
+               '&AREA'      EQ '(R0)'  OR                              X
+               '&AREA'      EQ '(1)'   OR                              X
+               '&AREA'      EQ '(R1)'  OR                              X
+               '&AREA'      EQ '(14)'  OR                              X
+               '&AREA'      EQ '(R14)' OR                              X
+               '&AREA'      EQ '(15)'  OR                              X
+               '&AREA'      EQ '(R15)')
+         MNOTE 12,'SHOWCB AREA= INVALID REGISTER USE'
+               AEND
+         ST    &AREA,4(15)        STORE AREA IN CBMR
+            AELSE
+         LARL  14,&AREA           R14=AREA ADDRESS
+         ST    14,4(15)           STORE AREA IN CBMR
+            AEND
+         AEND
+.*
+.NBKMFG  ANOP
+         IIHF  1,C'&MF(1)'        R1 HIGH=MF
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.*
+.DOEXLST ANOP
+.****************
+.* SHOWCB EXLST *
+.****************
+.* VALIDATE FIELDS=
+&I       SETA  1
+.EXLVALP ANOP
+         AIF   (&I GT N'&FIELDS).EXLVALD
+         AIF   ('&FIELDS(&I)' EQ 'ACBLEN' OR                           X
+               '&FIELDS(&I)'  EQ 'EODAD'  OR                           X
+               '&FIELDS(&I)'  EQ 'EXLLEN' OR                           X
+               '&FIELDS(&I)'  EQ 'JRNAD'  OR                           X
+               '&FIELDS(&I)'  EQ 'LERAD'  OR                           X
+               '&FIELDS(&I)'  EQ 'RPLLEN' OR                           X
+               '&FIELDS(&I)'  EQ 'SYNAD')
+&I       SETA  &I+1
+         AGO   .EXLVALP
+         AELSE
+         MNOTE 12,'SHOWCB EXLST INVALID FIELDS - &FIELDS(&I)'
+&I       SETA  &I+1
+         AGO   .EXLVALP
+         AEND
+.*
+.EXLVALD ANOP
+.* SHOWCB ONLY NEEDS VERB CODES AND VALUES FOR EXLST, AREA AND LENGTH
+         AIF   ('&MF(1)' EQ 'L')
+            AIF   ('&AREA'(1,1) EQ '(')
+         MNOTE 12,'SHOWCB AREA= REGISTER NOTATION NOT ALLOWED WITH MF=L-
+               '
+            AEND
+            AIF   ('&EXLST'(1,1) EQ '(')
+         MNOTE 12,'SHOWCB EXLST= REGISTER NOTATION NOT ALLOWED WITH MF=-
+               L'
+            AEND
+         AEND
+.* DON'T NEED TO GEN A CBMR FOR MF=E
+         AIF   ('&MF(1)' EQ 'E').EXLMFEG
+.* COUNT NO. OF VERBS AND FIELDS
+.* EXLST=, NO. OF PARMS IN FIELDS=, 2 FOR AREA AND LENGTH
+&VERBS   SETA  N'&FIELDS+3        FOR EXLST, FIELDS, AREA AND LENGTH
+&FIELDNO SETA  3                  FOR EXLST, AREA AND LENGTH
+&BRAS    SETA  0
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+&BRAS    SETA  4
+         AEND
+.* (BRAS) 15(CBMR HEADER) &VERBS(BYTE CODES) &FIELDNO*4(FIELDS)
+&TOTSIZE SETA  &BRAS+15+&VERBS+&FIELDNO*4
+&RESID   SETA  (&TOTSIZE-(&TOTSIZE/4)*4)
+         AIF   (&RESID NE 0)
+&RESID   SETA  4-&RESID
+&TOTSIZE SETA  &TOTSIZE+&RESID
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+         BRAS  15,*+&TOTSIZE
+         AEND
+         DC    C'CBMR'            CBMREYE
+         DC    AL1(CBMRXLST+CBMRSHOW) CBMRREQ
+         DC    AL1(0)             CBMRRMOD
+         DC    AL1(&VERBS)        CBMRVRBS
+         DC    AL4(0)             CBMRWORK
+         DC    AL2(0)             CBMRLEN
+         DC    AL2(&TOTSIZE-&BRAS) CBMRSIZE
+* LIST OF VERB CODES
+         DC    AL1(CBMRXL_LENGTH)
+         DC    AL1(CBMRXL_AREA)
+         DC    AL1(CBMRXL_EXLST)
+&I       SETA  0
+.EXLLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&FIELDS).EXLEXIT
+.*
+         AIF   ('&FIELDS(&I)' EQ 'EODAD')
+         DC    AL1(CBMRXL_EODAD)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'EXLLEN')
+         DC    AL1(CBMRXL_XLSTLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'RPLLEN')
+         DC    AL1(CBMRRPL_RPLLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'ACBLEN')
+         DC    AL1(CBMRACB_ACBLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'LERAD')
+         DC    AL1(CBMRXL_LERAD)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'SYNAD')
+         DC    AL1(CBMRXL_SYNAD)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'JRNAD')
+         DC    AL1(CBMRXL_JRNAD)
+         AEND
+         AGO   .EXLLOOP
+.*
+.EXLEXIT ANOP
+* LIST OF FIELD VALUES IN SAME ORDER AS VERB CODES
+* VALUES FOR FIELDS= NOT REQUIRED
+&OFFSET  SETA  15+&VERBS          HEADER+NO. OF VERBS
+&I       SETA  1
+         DC    AL4(&LENGTH)
+&OFFSET  SETA  &OFFSET+4
+         DC    AL4(&AREA)
+         AIF   ('&AREA'(1,1) EQ '(')
+            AIF ('&AREA' EQ '(0)'   OR                                 X
+               '&AREA'   EQ '(R0)'  OR                                 X
+               '&AREA'   EQ '(1)'   OR                                 X
+               '&AREA'   EQ '(R1)'  OR                                 X
+               '&AREA'   EQ '(14)'  OR                                 X
+               '&AREA'   EQ '(R14)' OR                                 X
+               '&AREA'   EQ '(15)'  OR                                 X
+               '&AREA'   EQ '(R15)')
+         MNOTE 12,'SHOWCB AREA= INVALID REGISTER USE'
+            AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&AREA'
+&I       SETA  &I+1
+         AEND
+&OFFSET  SETA  &OFFSET+4
+         DC    AL4(&EXLST)
+         AIF   ('&EXLST'(1,1) EQ '(')
+            AIF ('&EXLST' EQ '(0)'   OR                                X
+               '&EXLST'   EQ '(R0)'  OR                                X
+               '&EXLST'   EQ '(1)'   OR                                X
+               '&EXLST'   EQ '(R1)'  OR                                X
+               '&EXLST'   EQ '(14)'  OR                                X
+               '&EXLST'   EQ '(R14)' OR                                X
+               '&EXLST'   EQ '(15)'  OR                                X
+               '&EXLST'   EQ '(R15)')
+         MNOTE 12,'SHOWCB EXLST= INVALID REGISTER USE'
+            AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&EXLST'
+         AEND
+.*
+         AIF   (&RESID NE 0)
+         DC    &RESID.X'00'       ALIGN
+         AEND
+.*
+&I       SETA  1
+.EXLRGLP ANOP
+         AIF   (&I GT 10).EXLRGDN
+         AIF   (&OFFREG(&I) NE 0)
+            AIF   (NOT &EXLHAND)
+* HANDLE REGISTER NOTATION
+&EXLHAND SETB  1
+            AEND
+         ST    &OFFCHR(&I),&OFFREG(&I).(15) STORE REGISTER INTO CBMR
+         AEND
+&I       SETA  &I+1
+         AGO   .EXLRGLP
+.*
+.EXLRGDN ANOP
+&REQLEN  SETA  N'&FIELDS*4
+         AIF   (&REQLEN GT &LENGTH)
+         MNOTE 12,'SHOWCB FIELDS=&REQLEN EXCEED AREA LENGTH=&LENGTH'
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'L' OR '&MF(1)' EQ 'G').EXLMFL
+.*
+.* PROCESS EXLST MF=I
+         LR    1,15               R1=CBMR ADDRESS
+         IIHF  1,C'&MF(1)'        R1 HIGH=MF
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.*
+.EXLMFL  ANOP
+.* PROCESS EXLST SHOWCB MF=L
+         AIF   (T'&MF(2) EQ 'O' AND '&N' EQ '')
+         MNOTE 12,'SHOWCB EXLST NO LABEL FOR CBMR'
+         AEND
+         AIF   (T'&MF(2) NE 'O')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+            MNOTE 12,'SHOWCB MF= INVALID REGISTER USE'
+            AEND
+            AIF   ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AEND
+         MVC   0(&TOTSIZE-&BRAS,1),0(15) MOVE TO REQUESTED AREA
+         AEND
+.*
+         AIF   (T'&MF(3) NE 'O')
+&MF(3)   EQU   &TOTSIZE-&BRAS
+         AEND
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'G').EXLMFEG
+         SR    15,15              RC=0
+         MEXIT
+.*
+.EXLMFEG ANOP
+.* PROCESS SHOWCB EXLST MF=E/G
+.*   FOR MF=G ONLY THE PREP CODING IS DONE
+.*   FOR MF=E ONLY EXLST, AREA AND LENGTH CAN BE MODIFIED
+.*            FIELDS= IS INVALID
+.* CALL ZVSAM19C TO MOVE THE FIELDS INTO AREA
+         AIF   (T'&MF(2) EQ 'O')
+         MNOTE 12,'SHOWCB EXLST MF=E/G SECOND PARAMETER MISSING'
+         AEND
+.*
+         AIF ('&MF(2)'(1,1) EQ '(')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+            MNOTE 12,'SHOWCB MF= INVALID REGISTER USE'
+            AEND
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'G').EXLMFG
+.* MF=E
+         AIF   ('&FIELDS' NE '')
+         MNOTE 12,'SHOWCB FIELDS= IS INVALID WHEN MF=E'
+         AEND
+.*
+         AIF   ('&LENGTH' EQ '' AND                                    X
+               '&AREA'    EQ '' AND                                    X
+               '&EXLST'   EQ '').EXLMFG
+.* MODIFY THE CBMR
+         USING CBMR,1
+         LLC   0,CBMRVRBS         R0=NO. OF VERBS
+         LA    14,CBMRBODY        R14=ADDRESS OF VERBS
+         ARK   15,0,14            R15=ADDRESS OF FIELDS
+         DROP  1
+.*
+         AIF   ('&LENGTH' NE '')
+         IILF  14,&LENGTH         R14=LENGTH
+         ST    14,0(15)           STORE LENGTH IN CBMR
+         AEND
+.*
+         AIF   ('&AREA' NE '')
+            AIF   ('&AREA'(1,1) EQ '(')
+               AIF ('&AREA' EQ '(0)'   OR                              X
+               '&AREA'      EQ '(R0)'  OR                              X
+               '&AREA'      EQ '(1)'   OR                              X
+               '&AREA'      EQ '(R1)'  OR                              X
+               '&AREA'      EQ '(14)'  OR                              X
+               '&AREA'      EQ '(R14)' OR                              X
+               '&AREA'      EQ '(15)'  OR                              X
+               '&AREA'      EQ '(R15)')
+         MNOTE 12,'SHOWCB AREA= INVALID REGISTER USE'
+               AEND
+         ST    &AREA,4(15)        STORE AREA IN CBMR
+            AELSE
+         LARL  14,&AREA           R14=AREA ADDRESS
+         ST    14,4(15)           STORE AREA IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&EXLST'(1,1) EQ '(')
+            AIF ('&EXLST' EQ '(0)'   OR                                X
+               '&EXLST'   EQ '(R0)'  OR                                X
+               '&EXLST'   EQ '(1)'   OR                                X
+               '&EXLST'   EQ '(R1)'  OR                                X
+               '&EXLST'   EQ '(14)'  OR                                X
+               '&EXLST'   EQ '(R14)' OR                                X
+               '&EXLST'   EQ '(15)'  OR                                X
+               '&EXLST'   EQ '(R15)')
+         MNOTE 12,'SHOWCB EXLST= INVALID REGISTER USE'
+            AEND
+         ST    &EXLST,8(15)       STORE EXLST IN CBMR
+         AELSE
+         LARL  14,&EXLST          R14=EXLST ADDRESS
+         ST    14,8(15)           STORE EXLST IN CBMR
+         AEND
+.*
+.EXLMFG  ANOP
+         IIHF  1,C'&MF(1)'        R1 HIGH=MF
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.*
+.DORPL   ANOP
+.**************
+.* SHOWCB RPL *
+.**************
+.* VALIDATE FIELDS=
+&I       SETA  1
+.RPLVALP ANOP
+         AIF   (&I GT N'&FIELDS).RPLVALD
+         AIF   ('&FIELDS(&I)' EQ 'ACB'     OR                          X
+               '&FIELDS(&I)'  EQ 'ACBLEN'  OR                          X
+               '&FIELDS(&I)'  EQ 'AIXPC'   OR                          X
+               '&FIELDS(&I)'  EQ 'AREA'    OR                          X
+               '&FIELDS(&I)'  EQ 'AREALEN' OR                          X
+               '&FIELDS(&I)'  EQ 'ARG'     OR                          X
+               '&FIELDS(&I)'  EQ 'ECB'     OR                          X
+               '&FIELDS(&I)'  EQ 'EXLLEN'  OR                          X
+               '&FIELDS(&I)'  EQ 'FDBK'    OR                          X
+               '&FIELDS(&I)'  EQ 'FTNCD'   OR                          X
+               '&FIELDS(&I)'  EQ 'KEYLEN'  OR                          X
+               '&FIELDS(&I)'  EQ 'MSGAREA' OR                          X
+               '&FIELDS(&I)'  EQ 'MSGLEN'  OR                          X
+               '&FIELDS(&I)'  EQ 'NXTRPL'  OR                          X
+               '&FIELDS(&I)'  EQ 'RBA'     OR                          X
+               '&FIELDS(&I)'  EQ 'RECLEN'  OR                          X
+               '&FIELDS(&I)'  EQ 'RPLLEN'  OR                          X
+               '&FIELDS(&I)'  EQ 'TRANSID' OR                          X
+               '&FIELDS(&I)'  EQ 'XRBA')
+&I       SETA  &I+1
+         AGO   .RPLVALP
+         AELSE
+         MNOTE 12,'SHOWCB RPL INVALID FIELDS - &FIELDS(&I)'
+&I       SETA  &I+1
+         AGO   .RPLVALP
+         AEND
+.*
+.RPLVALD ANOP
+.* SHOWCB ONLY NEEDS VERB CODES AND VALUES FOR RPL, AREA AND LENGTH
+         AIF   ('&MF(1)' EQ 'L')
+            AIF   ('&AREA'(1,1) EQ '(')
+         MNOTE 12,'SHOWCB AREA= REGISTER NOTATION NOT ALLOWED WITH MF=L-
+               '
+            AEND
+            AIF   ('&RPL'(1,1) EQ '(')
+         MNOTE 12,'SHOWCB RPL= REGISTER NOTATION NOT ALLOWED WITH MF=L'
+            AEND
+         AEND
+.* DON'T NEED TO GEN A CBMR FOR MF=E
+         AIF   ('&MF(1)' EQ 'E').RPLMFEG
+.* COUNT NO. OF VERBS AND FIELDS
+.* RPL=, NO. OF PARMS IN FIELDS=, 2 FOR AREA AND LENGTH
+&VERBS   SETA  N'&FIELDS+3        FOR RPL, FIELDS, AREA AND LENGTH
+&FIELDNO SETA  3                  FOR RPL, AREA AND LENGTH
+&BRAS    SETA  0
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+&BRAS    SETA  4
+         AEND
+.* (BRAS) 15(CBMR HEADER) &VERBS(BYTE CODES) &FIELDNO*4(FIELDS)
+&TOTSIZE SETA  &BRAS+15+&VERBS+&FIELDNO*4
+&RESID   SETA  (&TOTSIZE-(&TOTSIZE/4)*4)
+         AIF   (&RESID NE 0)
+&RESID   SETA  4-&RESID
+&TOTSIZE SETA  &TOTSIZE+&RESID
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+         BRAS  15,*+&TOTSIZE
+         AEND
+         DC    C'CBMR'            CBMREYE
+         DC    AL1(CBMRRPL+CBMRSHOW) CBMRREQ
+         DC    AL1(0)             CBMRRMOD
+         DC    AL1(&VERBS)        CBMRVRBS
+         DC    AL4(0)             CBMRWORK
+         DC    AL2(0)             CBMRLEN
+         DC    AL2(&TOTSIZE-&BRAS) CBMRSIZE
+* LIST OF VERB CODES
+         DC    AL1(CBMRRPL_LENGTH)
+         DC    AL1(CBMRRPL_AREA)
+         DC    AL1(CBMRRPL_RPL)
+&I       SETA  0
+.RPLLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&FIELDS).RPLEXIT
+.*
+         AIF   ('&FIELDS(&I)' EQ 'ACB')
+         DC    AL1(CBMRRPL_ACB)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'AIXPC')
+         DC    AL1(CBMRRPL_AIXPC)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'AREA')
+         DC    AL1(CBMRRPL_RECAREA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'AREALEN')
+         DC    AL1(CBMRRPL_AREALEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'ARG')
+         DC    AL1(CBMRRPL_ARG)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'ECB')
+         DC    AL1(CBMRRPL_ECB)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'FDBK')
+         DC    AL1(CBMRRPL_FDBK)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'FTNCD')
+         DC    AL1(CBMRRPL_FTNCD)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'KEYLEN')
+         DC    AL1(CBMRRPL_KEYLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'MSGAREA')
+         DC    AL1(CBMRRPL_MSGAREA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'MSGLEN')
+         DC    AL1(CBMRRPL_MSGLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NXTRPL')
+         DC    AL1(CBMRRPL_NEXTRPL)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'RBA')
+         DC    AL1(CBMRRPL_RBA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'RECLEN')
+         DC    AL1(CBMRRPL_RECLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'EXLLEN')
+         DC    AL1(CBMRXL_XLSTLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'TRANSID')
+         DC    AL1(CBMRRPL_TRANSID)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XRBA')
+         DC    AL1(CBMRRPL_XRBA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'RPLLEN')
+         DC    AL1(CBMRRPL_RPLLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'ACBLEN')
+         DC    AL1(CBMRACB_ACBLEN)
+         AEND
+         AGO   .RPLLOOP
+.*
+.RPLEXIT ANOP
+* LIST OF FIELD VALUES IN SAME ORDER AS VERB CODES
+* VALUES FOR FIELDS= NOT REQUIRED
+&OFFSET  SETA  15+&VERBS          HEADER+NO. OF VERBS
+&I       SETA  1
+         DC    AL4(&LENGTH)
+&OFFSET  SETA  &OFFSET+4
+         DC    AL4(&AREA)
+         AIF   ('&AREA'(1,1) EQ '(')
+            AIF ('&AREA' EQ '(0)'   OR                                 X
+               '&AREA'   EQ '(R0)'  OR                                 X
+               '&AREA'   EQ '(1)'   OR                                 X
+               '&AREA'   EQ '(R1)'  OR                                 X
+               '&AREA'   EQ '(14)'  OR                                 X
+               '&AREA'   EQ '(R14)' OR                                 X
+               '&AREA'   EQ '(15)'  OR                                 X
+               '&AREA'   EQ '(R15)')
+         MNOTE 12,'SHOWCB AREA= INVALID REGISTER USE'
+            AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&AREA'
+&I       SETA  &I+1
+         AEND
+&OFFSET  SETA  &OFFSET+4
+         DC    AL4(&RPL)
+         AIF   ('&RPL'(1,1) EQ '(')
+            AIF ('&RPL' EQ '(0)'   OR                                  X
+               '&RPL'   EQ '(R0)'  OR                                  X
+               '&RPL'   EQ '(1)'   OR                                  X
+               '&RPL'   EQ '(R1)'  OR                                  X
+               '&RPL'   EQ '(14)'  OR                                  X
+               '&RPL'   EQ '(R14)' OR                                  X
+               '&RPL'   EQ '(15)'  OR                                  X
+               '&RPL'   EQ '(R15)')
+         MNOTE 12,'SHOWCB RPL= INVALID REGISTER USE'
+            AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&RPL'
+         AEND
+.*
+         AIF   (&RESID NE 0)
+         DC    &RESID.X'00'       ALIGN
+         AEND
+.*
+&I       SETA  1
+.RPLRGLP ANOP
+         AIF   (&I GT 10).RPLRGDN
+         AIF   (&OFFREG(&I) NE 0)
+            AIF   (NOT &RPLHAND)
+* HANDLE REGISTER NOTATION
+&RPLHAND SETB  1
+            AEND
+         ST    &OFFCHR(&I),&OFFREG(&I).(15) STORE REGISTER INTO CBMR
+         AEND
+&I       SETA  &I+1
+         AGO   .RPLRGLP
+.*
+.RPLRGDN ANOP
+.* COUNT ALL 8-BYTE FIELDS
+&I       SETA  1
+&BYTE8   SETA  0
+.RPLIBT8 ANOP
+         AIF   (&I GT N'&FIELDS).RPLIXRD
+         AIF   ('&FIELDS(&I)' EQ 'XRBA')
+&BYTE8   SETA  &BYTE8+1
+         AEND
+&I       SETA  &I+1
+         AGO   .RPLIBT8
+.*
+.RPLIXRD ANOP
+&REQLEN  SETA  (N'&FIELDS+&BYTE8)*4
+         AIF   (&REQLEN GT &LENGTH)
+         MNOTE 12,'SHOWCB FIELDS=&REQLEN EXCEED AREA LENGTH=&LENGTH'
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'L' OR '&MF(1)' EQ 'G').RPLMFL
+.*
+.* PROCESS RPL MF=I
+         LR    1,15               R1=CBMR ADDRESS
+         IIHF  1,C'&MF(1)'        R1 HIGH=MF
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.*
+.RPLMFL  ANOP
+.* PROCESS RPL SHOWCB MF=L
+         AIF   (T'&MF(2) EQ 'O' AND '&N' EQ '')
+         MNOTE 12,'SHOWCB RPL NO LABEL FOR CBMR'
+         AEND
+         AIF   (T'&MF(2) NE 'O')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+            MNOTE 12,'SHOWCB MF= INVALID REGISTER USE'
+            AEND
+            AIF ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AEND
+         MVC   0(&TOTSIZE-&BRAS,1),0(15) MOVE TO REQUESTED AREA
+         AEND
+.*
+         AIF   (T'&MF(3) NE 'O')
+&MF(3)   EQU   &TOTSIZE-&BRAS
+         AEND
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'G').RPLMFEG
+         SR    15,15              RC=0
+         MEXIT
+.*
+.RPLMFEG ANOP
+.* PROCESS SHOWCB RPL MF=E/G
+.*   FOR MF=G ONLY THE PREP CODING IS DONE
+.*   FOR MF=E ONLY RPL, AREA AND LENGTH CAN BE MODIFIED
+.*            FIELDS= IS INVALID
+.* CALL ZVSAM19C TO MOVE THE FIELDS INTO AREA
+         AIF   (T'&MF(2) EQ 'O')
+         MNOTE 12,'SHOWCB RPL MF=E/G SECOND PARAMETER MISSING'
+         AEND
+.*
+         AIF ('&MF(2)'(1,1) EQ '(')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+            MNOTE 12,'SHOWCB MF= INVALID REGISTER USE'
+            AEND
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'G').RPLMFG
+.* MF=E
+         AIF   ('&FIELDS' NE '')
+         MNOTE 12,'SHOWCB FIELDS= IS INVALID WHEN MF=E'
+         AEND
+.*
+         AIF   ('&LENGTH' EQ '' AND                                    X
+               '&AREA'    EQ '' AND                                    X
+               '&RPL'     EQ '').RPLMFG
+.* MODIFY THE CBMR
+         USING CBMR,1
+         LLC   0,CBMRVRBS         R0=NO. OF VERBS
+         LA    14,CBMRBODY        R14=ADDRESS OF VERBS
+         ARK   15,0,14            R15=ADDRESS OF FIELDS
+         DROP  1
+.*
+         AIF   ('&LENGTH' NE '')
+         IILF  14,&LENGTH         R14=LENGTH
+         ST    14,0(15)           STORE LENGTH IN CBMR
+         AEND
+.*
+         AIF   ('&AREA' NE '')
+            AIF   ('&AREA'(1,1) EQ '(')
+               AIF ('&AREA' EQ '(0)'   OR                              X
+               '&AREA'      EQ '(R0)'  OR                              X
+               '&AREA'      EQ '(1)'   OR                              X
+               '&AREA'      EQ '(R1)'  OR                              X
+               '&AREA'      EQ '(14)'  OR                              X
+               '&AREA'      EQ '(R14)' OR                              X
+               '&AREA'      EQ '(15)'  OR                              X
+               '&AREA'      EQ '(R15)')
+         MNOTE 12,'SHOWCB AREA= INVALID REGISTER USE'
+               AEND
+         ST    &AREA,4(15)        STORE AREA IN CBMR
+            AELSE
+         LARL  14,&AREA           R14=AREA ADDRESS
+         ST    14,4(15)           STORE AREA IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&RPL'(1,1) EQ '(')
+            AIF ('&RPL' EQ '(0)'   OR                                  X
+               '&RPL'   EQ '(R0)'  OR                                  X
+               '&RPL'   EQ '(1)'   OR                                  X
+               '&RPL'   EQ '(R1)'  OR                                  X
+               '&RPL'   EQ '(14)'  OR                                  X
+               '&RPL'   EQ '(R14)' OR                                  X
+               '&RPL'   EQ '(15)'  OR                                  X
+               '&RPL'   EQ '(R15)')
+         MNOTE 12,'SHOWCB RPL= INVALID REGISTER USE'
+            AEND
+         ST    &RPL,8(15)         STORE RPL IN CBMR
+         AELSE
+         LARL  14,&RPL            R14=RPL ADDRESS
+         ST    14,8(15)           STORE RPL IN CBMR
+         AEND
+.*
+.RPLMFG  ANOP
+         IIHF  1,C'&MF(1)'        R1 HIGH=MF
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.DOACB   ANOP
+.**************
+.* SHOWCB ACB *
+.**************
+.* VALIDATE OBJECT=
+         AIF   ('&OBJECT' NE 'DATA' AND '&OBJECT' NE 'INDEX')
+         MNOTE 12,'SHOWCB ACB INVALID OBJECT - &OBJECT'
+         AEND
+.* VALIDATE FIELDS=
+&I       SETA  1
+.ACBVALP ANOP
+         AIF   (&I GT N'&FIELDS).ACBVALD
+         AIF   ('&FIELDS(&I)' EQ 'ACBLEN'   OR                         X
+               '&FIELDS(&I)'  EQ 'AVSPAC'   OR                         X
+               '&FIELDS(&I)'  EQ 'BFRFND'   OR                         X
+               '&FIELDS(&I)'  EQ 'BSTRNO'   OR                         X
+               '&FIELDS(&I)'  EQ 'BUFND'    OR                         X
+               '&FIELDS(&I)'  EQ 'BUFNI'    OR                         X
+               '&FIELDS(&I)'  EQ 'BUFNO'    OR                         X
+               '&FIELDS(&I)'  EQ 'BUFNOL'   OR                         X
+               '&FIELDS(&I)'  EQ 'BUFRDS'   OR                         X
+               '&FIELDS(&I)'  EQ 'BUFSP'    OR                         X
+               '&FIELDS(&I)'  EQ 'BUFUSE'   OR                         X
+               '&FIELDS(&I)'  EQ 'CDTASIZE' OR                         X
+               '&FIELDS(&I)'  EQ 'CINV'     OR                         X
+               '&FIELDS(&I)'  EQ 'CIPCA'    OR                         X
+               '&FIELDS(&I)'  EQ 'DDNAME'   OR                         X
+               '&FIELDS(&I)'  EQ 'ENDRBA'   OR                         X
+               '&FIELDS(&I)'  EQ 'ERROR'    OR                         X
+               '&FIELDS(&I)'  EQ 'EXLLEN'   OR                         X
+               '&FIELDS(&I)'  EQ 'EXLST'    OR                         X
+               '&FIELDS(&I)'  EQ 'FS'       OR                         X
+               '&FIELDS(&I)'  EQ 'HALCRBA'  OR                         X
+               '&FIELDS(&I)'  EQ 'HLRBA'    OR                         X
+               '&FIELDS(&I)'  EQ 'KEYLEN'   OR                         X
+               '&FIELDS(&I)'  EQ 'LEVEL'    OR                         X
+               '&FIELDS(&I)'  EQ 'LOKEY'    OR                         X
+               '&FIELDS(&I)'  EQ 'LRECL'    OR                         X
+               '&FIELDS(&I)'  EQ 'MAREA'    OR                         X
+               '&FIELDS(&I)'  EQ 'MLEN'     OR                         X
+               '&FIELDS(&I)'  EQ 'NCIS'     OR                         X
+               '&FIELDS(&I)'  EQ 'NDELR'    OR                         X
+               '&FIELDS(&I)'  EQ 'NEXCP'    OR                         X
+               '&FIELDS(&I)'  EQ 'NEXT'     OR                         X
+               '&FIELDS(&I)'  EQ 'NINSR'    OR                         X
+               '&FIELDS(&I)'  EQ 'NIXL'     OR                         X
+               '&FIELDS(&I)'  EQ 'NLOGR'    OR                         X
+               '&FIELDS(&I)'  EQ 'NRETR'    OR                         X
+               '&FIELDS(&I)'  EQ 'NSSS'     OR                         X
+               '&FIELDS(&I)'  EQ 'NUIW'     OR                         X
+               '&FIELDS(&I)'  EQ 'NUPDR'    OR                         X
+               '&FIELDS(&I)'  EQ 'PASSWD'   OR                         X
+               '&FIELDS(&I)'  EQ 'RELEASE'  OR                         X
+               '&FIELDS(&I)'  EQ 'RMODE31'  OR                         X
+               '&FIELDS(&I)'  EQ 'RPLLEN'   OR                         X
+               '&FIELDS(&I)'  EQ 'RKP'      OR                         X
+               '&FIELDS(&I)'  EQ 'SDTASIZE' OR                         X
+               '&FIELDS(&I)'  EQ 'SHRPOOL'  OR                         X
+               '&FIELDS(&I)'  EQ 'STMST'    OR                         X
+               '&FIELDS(&I)'  EQ 'STRMAX'   OR                         X
+               '&FIELDS(&I)'  EQ 'STRNO'    OR                         X
+               '&FIELDS(&I)'  EQ 'UIW'      OR                         X
+               '&FIELDS(&I)'  EQ 'XAVSPAC'  OR                         X
+               '&FIELDS(&I)'  EQ 'XBFRFND'  OR                         X
+               '&FIELDS(&I)'  EQ 'XBUFNO'   OR                         X
+               '&FIELDS(&I)'  EQ 'XBUFRDS'  OR                         X
+               '&FIELDS(&I)'  EQ 'XBUFUSE'  OR                         X
+               '&FIELDS(&I)'  EQ 'XENDRBA'  OR                         X
+               '&FIELDS(&I)'  EQ 'XHALCRBA' OR                         X
+               '&FIELDS(&I)'  EQ 'XHLRBA'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNCIS'    OR                         X
+               '&FIELDS(&I)'  EQ 'XNDELR'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNEXCP'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNINSR'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNLOGR'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNRETR'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNUIW'    OR                         X
+               '&FIELDS(&I)'  EQ 'XNUPDR'   OR                         X
+               '&FIELDS(&I)'  EQ 'XUIW'     OR                         X
+               '&FIELDS(&I)'  EQ 'XSTRMAX')
+&I       SETA  &I+1
+         AGO   .ACBVALP
+         AELSE
+         MNOTE 12,'SHOWCB ACB INVALID FIELDS - &FIELDS(&I)'
+&I       SETA  &I+1
+         AGO   .ACBVALP
+         AEND
+.*
+.ACBVALD ANOP
+.* SHOWCB ONLY NEEDS VERB CODES AND VALUES FOR ACB, AREA AND LENGTH
+         AIF   ('&MF(1)' EQ 'L')
+            AIF   ('&AREA'(1,1) EQ '(')
+         MNOTE 12,'SHOWCB AREA= REGISTER NOTATION NOT ALLOWED WITH MF=L-
+               '
+            AEND
+            AIF   ('&ACB'(1,1) EQ '(')
+         MNOTE 12,'SHOWCB ACB= REGISTER NOTATION NOT ALLOWED WITH MF=L'
+            AEND
+         AEND
+.* DON'T NEED TO GEN A CBMR FOR MF=E
+         AIF   ('&MF(1)' EQ 'E').ACBMFEG
+.* COUNT NO. OF VERBS AND FIELDS
+.* ACB=, NO. OF PARMS IN FIELDS=, 2 FOR AREA AND LENGTH
+&VERBS   SETA  N'&FIELDS+3        FOR ACB, FIELDS, AREA AND LENGTH
+&FIELDNO SETA  3                  FOR ACB, AREA AND LENGTH
+&BRAS    SETA  0
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+&BRAS    SETA  4
+         AEND
+.* (BRAS) 15(CBMR HEADER) &VERBS(BYTE CODES) &FIELDNO*4(FIELDS)
+&TOTSIZE SETA  &BRAS+15+&VERBS+&FIELDNO*4
+&RESID   SETA  (&TOTSIZE-(&TOTSIZE/4)*4)
+         AIF   (&RESID NE 0)
+&RESID   SETA  4-&RESID
+&TOTSIZE SETA  &TOTSIZE+&RESID
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+         BRAS  15,*+&TOTSIZE
+         AEND
+         DC    C'CBMR'            CBMREYE
+         DC    AL1(CBMRACB+CBMRSHOW) CBMRREQ
+         AIF   ('&OBJECT' EQ 'DATA')
+         DC    X'10'              CBMRRMOD OBJECT=DATA
+         AELSE
+         DC    X'20'              CBMRRMOD OBJECT=INDEX
+         AEND
+         DC    AL1(&VERBS)        CBMRVRBS
+         DC    AL4(0)             CBMRWORK
+         DC    AL2(0)             CBMRLEN
+         DC    AL2(&TOTSIZE-&BRAS) CBMRSIZE
+* LIST OF VERB CODES
+         DC    AL1(CBMRACB_LENGTH)
+         DC    AL1(CBMRACB_AREA)
+         DC    AL1(CBMRACB_ACB)
+&I       SETA  0
+.ACBLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&FIELDS).ACBEXIT
+.*
+         AIF   ('&FIELDS(&I)' EQ 'ACB')
+         DC    AL1(CBMRACB_ACB)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'ACBLEN')
+         DC    AL1(CBMRACB_ACBLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'AVSPAC')
+         DC    AL1(CBMRACB_AVSPAC)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'BFRFND')
+         DC    AL1(CBMRACB_BFRFND)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'BSTRNO')
+         DC    AL1(CBMRACB_BSTRNO)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'BUFND')
+         DC    AL1(CBMRACB_BUFND)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'BUFNI')
+         DC    AL1(CBMRACB_BUFNI)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'BUFNO')
+         DC    AL1(CBMRACB_BUFNO)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'BUFNOL')
+         DC    AL1(CBMRACB_BUFNOL)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'BUFRDS')
+         DC    AL1(CBMRACB_BUFRDS)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'BUFSP')
+         DC    AL1(CBMRACB_BUFSP)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'BUFUSE')
+         DC    AL1(CBMRACB_BUFUSE)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'CDTASIZE')
+         DC    AL1(CBMRACB_CDTASZ)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'CINV')
+         DC    AL1(CBMRACB_CINV)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'CIPCA')
+         DC    AL1(CBMRACB_CIPCA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'DDNAME')
+         DC    AL1(CBMRACB_DDNM)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'ENDRBA')
+         DC    AL1(CBMRACB_ENDRBA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'ERROR')
+         DC    AL1(CBMRACB_ERROR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'EXLLEN')
+         DC    AL1(CBMRXL_XLSTLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'EXLST')
+         DC    AL1(CBMRACB_EXLST)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'FS')
+         DC    AL1(CBMRACB_FS)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'HALCRBA')
+         DC    AL1(CBMRACB_HALCRBA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'HLRBA')
+         DC    AL1(CBMRACB_HLRBA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'KEYLEN')
+         DC    AL1(CBMRACB_KEYLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'LEVEL')
+         DC    AL1(CBMRACB_LEVEL)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'LOKEY')
+         DC    AL1(CBMRACB_LOKEY)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'LRECL')
+         DC    AL1(CBMRACB_LRECL)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'MAREA')
+         DC    AL1(CBMRACB_MAREA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'MLEN')
+         DC    AL1(CBMRACB_MLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NCIS')
+         DC    AL1(CBMRACB_NCIS)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NDELR')
+         DC    AL1(CBMRACB_NDELR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NEXCP')
+         DC    AL1(CBMRACB_NEXCP)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NEXT')
+         DC    AL1(CBMRACB_NEXT)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NINSR')
+         DC    AL1(CBMRACB_NINSR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NIXL')
+         DC    AL1(CBMRACB_NIXL)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NLOGR')
+         DC    AL1(CBMRACB_NLOGR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NRETR')
+         DC    AL1(CBMRACB_NRETR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NSSS')
+         DC    AL1(CBMRACB_NSSS)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NUIW')
+         DC    AL1(CBMRACB_NUIW)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'NUPDR')
+         DC    AL1(CBMRACB_NUPDR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'PASSWD')
+         DC    AL1(CBMRACB_PASSWD)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'RELEASE')
+         DC    AL1(CBMRACB_RELEASE)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'RMODE31')
+         DC    AL1(CBMRACB_RMODE31)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'RPLLEN')
+         DC    AL1(CBMRRPL_RPLLEN)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'RKP')
+         DC    AL1(CBMRACB_RKP)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'SDTASIZE')
+         DC    AL1(CBMRACB_SDTASZ)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'SHRPOOL')
+         DC    AL1(CBMRACB_SHRPL)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'STMST')
+         DC    AL1(CBMRACB_STMST)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'STRMAX')
+         DC    AL1(CBMRACB_STRMAX)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'STRNO')
+         DC    AL1(CBMRACB_STRNO)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'UIW')
+         DC    AL1(CBMRACB_UIW)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XAVSPAC')
+         DC    AL1(CBMRACB_XAVSPAC)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XBFRFND')
+         DC    AL1(CBMRACB_XBFRFND)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XBUFNO')
+         DC    AL1(CBMRACB_XBUFNO)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XBUFRDS')
+         DC    AL1(CBMRACB_XBUFRDS)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XBUFUSE')
+         DC    AL1(CBMRACB_XBUFUSE)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XENDRBA')
+         DC    AL1(CBMRACB_XENDRBA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XHALCRBA')
+         DC    AL1(CBMRACB_XHALCRBA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XHLRBA')
+         DC    AL1(CBMRACB_XHLRBA)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XNCIS')
+         DC    AL1(CBMRACB_XNCIS)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XNDELR')
+         DC    AL1(CBMRACB_XNDELR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XNEXCP')
+         DC    AL1(CBMRACB_XNEXCP)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XNINSR')
+         DC    AL1(CBMRACB_XNINSR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XNLOGR')
+         DC    AL1(CBMRACB_XNLOGR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XNRETR')
+         DC    AL1(CBMRACB_XNRETR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XNUIW')
+         DC    AL1(CBMRACB_XNUIW)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XNUPDR')
+         DC    AL1(CBMRACB_XNUPDR)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XUIW')
+         DC    AL1(CBMRACB_XUIW)
+         AEND
+         AIF   ('&FIELDS(&I)' EQ 'XSTRMAX')
+         DC    AL1(CBMRACB_XSTRMAX)
+         AEND
+         AGO   .ACBLOOP
+.*
+.ACBEXIT ANOP
+* LIST OF FIELD VALUES IN SAME ORDER AS VERB CODES
+* VALUES FOR FIELDS= NOT REQUIRED
+&OFFSET  SETA  15+&VERBS          HEADER+NO. OF VERBS
+&I       SETA  1
+         DC    AL4(&LENGTH)
+&OFFSET  SETA  &OFFSET+4
+         DC    AL4(&AREA)
+         AIF   ('&AREA'(1,1) EQ '(')
+            AIF ('&AREA' EQ '(0)'   OR                                 X
+               '&AREA'   EQ '(R0)'  OR                                 X
+               '&AREA'   EQ '(1)'   OR                                 X
+               '&AREA'   EQ '(R1)'  OR                                 X
+               '&AREA'   EQ '(14)'  OR                                 X
+               '&AREA'   EQ '(R14)' OR                                 X
+               '&AREA'   EQ '(15)'  OR                                 X
+               '&AREA'   EQ '(R15)')
+         MNOTE 12,'SHOWCB AREA= INVALID REGISTER USE'
+            AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&AREA'
+&I       SETA  &I+1
+         AEND
+&OFFSET  SETA  &OFFSET+4
+         DC    AL4(&ACB)
+         AIF   ('&ACB'(1,1) EQ '(')
+            AIF ('&ACB' EQ '(0)'   OR                                  X
+               '&ACB'   EQ '(R0)'  OR                                  X
+               '&ACB'   EQ '(1)'   OR                                  X
+               '&ACB'   EQ '(R1)'  OR                                  X
+               '&ACB'   EQ '(14)'  OR                                  X
+               '&ACB'   EQ '(R14)' OR                                  X
+               '&ACB'   EQ '(15)'  OR                                  X
+               '&ACB'   EQ '(R15)')
+         MNOTE 12,'SHOWCB ACB= INVALID REGISTER USE'
+            AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&ACB'
+         AEND
+.*
+         AIF   (&RESID NE 0)
+         DC    &RESID.X'00'       ALIGN
+         AEND
+.*
+&I       SETA  1
+.ACBRGLP ANOP
+         AIF   (&I GT 10).ACBRGDN
+         AIF   (&OFFREG(&I) NE 0)
+            AIF   (NOT &ACBHAND)
+* HANDLE REGISTER NOTATION
+&ACBHAND SETB  1
+            AEND
+         ST    &OFFCHR(&I),&OFFREG(&I).(15) STORE REGISTER INTO CBMR
+         AEND
+&I       SETA  &I+1
+         AGO   .ACBRGLP
+.*
+.ACBRGDN ANOP
+.* COUNT ALL 8-BYTE FIELDS
+&I       SETA  1
+&BYTE8   SETA  0
+.ACBIBT8 ANOP
+         AIF   (&I GT N'&FIELDS).ACBIXRD
+         AIF   ('&FIELDS(&I)' EQ 'CDTASIZE' OR                         X
+               '&FIELDS(&I)'  EQ 'DDNAME'   OR                         X
+               '&FIELDS(&I)'  EQ 'LEVEL'    OR                         X
+               '&FIELDS(&I)'  EQ 'LOKEY'    OR                         X
+               '&FIELDS(&I)'  EQ 'RELEASE'  OR                         X
+               '&FIELDS(&I)'  EQ 'SDTASIZE' OR                         X
+               '&FIELDS(&I)'  EQ 'STMST'    OR                         X
+               '&FIELDS(&I)'  EQ 'XAVSPAC'  OR                         X
+               '&FIELDS(&I)'  EQ 'XENDRBA'  OR                         X
+               '&FIELDS(&I)'  EQ 'XHALCRBA' OR                         X
+               '&FIELDS(&I)'  EQ 'XHLRBA'   OR                         X
+               '&FIELDS(&I)'  EQ 'XBFRFND'  OR                         X
+               '&FIELDS(&I)'  EQ 'XBUFNO'   OR                         X
+               '&FIELDS(&I)'  EQ 'XBUFRDS'  OR                         X
+               '&FIELDS(&I)'  EQ 'XBUFUSE'  OR                         X
+               '&FIELDS(&I)'  EQ 'XNCIS'    OR                         X
+               '&FIELDS(&I)'  EQ 'XNDELR'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNEXCP'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNINSR'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNLOGR'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNRETR'   OR                         X
+               '&FIELDS(&I)'  EQ 'XNUIW'    OR                         X
+               '&FIELDS(&I)'  EQ 'XNUPDR'   OR                         X
+               '&FIELDS(&I)'  EQ 'XUIW'     OR                         X
+               '&FIELDS(&I)'  EQ 'XSTRMAX')
+&BYTE8   SETA  &BYTE8+1
+         AEND
+&I       SETA  &I+1
+         AGO   .ACBIBT8
+.*
+.ACBIXRD ANOP
+&REQLEN  SETA  (N'&FIELDS+&BYTE8)*4
+         AIF   (&REQLEN GT &LENGTH)
+         MNOTE 12,'SHOWCB FIELDS=&REQLEN EXCEED AREA LENGTH=&LENGTH'
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'L' OR '&MF(1)' EQ 'G').ACBMFL
+.*
+.* PROCESS ACB MF=I
+         LR    1,15               R1=CBMR ADDRESS
+         IIHF  1,C'&MF(1)'        R1 HIGH=MF
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.*
+.ACBMFL  ANOP
+.* PROCESS SHOWCB ACB MF=L
+         AIF   (T'&MF(2) EQ 'O' AND '&N' EQ '')
+         MNOTE 12,'SHOWCB ACB NO LABEL FOR CBMR'
+         AEND
+         AIF   (T'&MF(2) NE 'O')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+            MNOTE 12,'SHOWCB MF= INVALID REGISTER USE'
+            AEND
+            AIF ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AEND
+         MVC   0(&TOTSIZE-&BRAS,1),0(15) MOVE TO REQUESTED AREA
+         AEND
+.*
+         AIF   (T'&MF(3) NE 'O')
+&MF(3)   EQU   &TOTSIZE-&BRAS
+         AEND
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'G').ACBMFEG
+         SR    15,15              RC=0
+         MEXIT
+.*
+.ACBMFEG ANOP
+.* PROCESS SHOWCB ACB MF=E/G
+.*   FOR MF=G ONLY THE PREP CODING IS DONE
+.*   FOR MF=E ONLY ACB, AREA, LENGTH AND OBJECT CAN BE MODIFIED
+.*            FIELDS= IS INVALID
+.* CALL ZVSAM19C TO MOVE THE FIELDS INTO AREA
+         AIF   (T'&MF(2) EQ 'O')
+         MNOTE 12,'SHOWCB ACB MF=E/G SECOND PARAMETER MISSING'
+         AEND
+.*
+         AIF ('&MF(2)'(1,1) EQ '(')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+            MNOTE 12,'SHOWCB MF= INVALID REGISTER USE'
+            AEND
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'G').ACBMFG
+.* MF=E
+         AIF   ('&FIELDS' NE '')
+         MNOTE 12,'SHOWCB FIELDS= IS INVALID WHEN MF=E'
+         AEND
+.*
+         AIF   ('&LENGTH' EQ '' AND                                    X
+               '&AREA'    EQ '' AND                                    X
+               '&ACB'     EQ '' AND                                    X
+               '&OBJECT'  EQ '').ACBMFG
+.* MODIFY THE CBMR
+         USING CBMR,1
+         LLC   0,CBMRVRBS         R0=NO. OF VERBS
+         LA    14,CBMRBODY        R14=ADDRESS OF VERBS
+         ARK   15,0,14            R15=ADDRESS OF FIELDS
+.*
+         AIF   ('&LENGTH' NE '')
+         IILF  14,&LENGTH         R14=LENGTH
+         ST    14,0(15)           STORE LENGTH IN CBMR
+         AEND
+.*
+         AIF   ('&AREA' NE '')
+            AIF   ('&AREA'(1,1) EQ '(')
+               AIF ('&AREA' EQ '(0)'   OR                              X
+               '&AREA'      EQ '(R0)'  OR                              X
+               '&AREA'      EQ '(1)'   OR                              X
+               '&AREA'      EQ '(R1)'  OR                              X
+               '&AREA'      EQ '(14)'  OR                              X
+               '&AREA'      EQ '(R14)' OR                              X
+               '&AREA'      EQ '(15)'  OR                              X
+               '&AREA'      EQ '(R15)')
+         MNOTE 12,'SHOWCB AREA= INVALID REGISTER USE'
+               AEND
+         ST    &AREA,4(15)        STORE AREA IN CBMR
+            AELSE
+         LARL  14,&AREA           R14=AREA ADDRESS
+         ST    14,4(15)           STORE AREA IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&ACB'(1,1) EQ '(')
+            AIF ('&ACB' EQ '(0)'   OR                                  X
+               '&ACB'   EQ '(R0)'  OR                                  X
+               '&ACB'   EQ '(1)'   OR                                  X
+               '&ACB'   EQ '(R1)'  OR                                  X
+               '&ACB'   EQ '(14)'  OR                                  X
+               '&ACB'   EQ '(R14)' OR                                  X
+               '&ACB'   EQ '(15)'  OR                                  X
+               '&ACB'   EQ '(R15)')
+         MNOTE 12,'SHOWCB ACB= INVALID REGISTER USE'
+            AEND
+         ST    &ACB,8(15)         STORE ACB IN CBMR
+         AELSE
+         LARL  14,&ACB            R14=ACB ADDRESS
+         ST    14,8(15)           STORE ACB IN CBMR
+         AEND
+.*
+         AIF   ('&OBJECT' NE '')
+         NI    CBMRRMOD,255-(CBMROBJD+CBMROBJI) REMOVE OBJECT=
+            AIF ('&OBJECT' EQ 'DATA')
+         OI    CBMRRMOD,CBMROBJD  CHANGE TO OBJECT=DATA
+            AELSE
+         OI    CBMRRMOD,CBMROBJI  CHANGE TO OBJECT=INDEX
+            AEND
+         AEND
+         DROP  1
+.*
+.ACBMFG  ANOP
+         IIHF  1,C'&MF(1)'        R1 HIGH=MF
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+         MEND
+

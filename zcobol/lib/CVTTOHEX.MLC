@@ -1,0 +1,42 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 07/20/06                                                 *
+*********************************************************************
+* 07/20/06 RPI 374 - add CVTTOHEX for use in TESTFPC1 
+* 05/07/07 RPI 609 - fix DC CL9                         
+* 08/12/07 RPI 674 - use single TROT to replace UNPK and TR loop
+*********************************************************************
+*
+*  CALL CVTTOHEX,(IN,OUT,INLEN)
+*
+*    IN    - ADDR INPUT BYTES
+*    OUT   - ADDR OUTPUT HEX EBCDIC BYTES
+*    INLEN - COUNT OF BYTES TO CONVERT
+*********************************************************************
+         COPY  ASMMSP       STRUCTURED PROGRAM MACROS AND EQUS
+CVTTOHEX SUBENTRY
+         LM    R3,R5,0(R1)  R3=IN, R4=OUT, R5=LENGTH OF INPUT
+         LA    R1,TROTTAB 512 BYTE HEX TRANSLATE TABLE FOR TROT
+         TROT  R4,R3,1 TRANS ONE TO TWO FROM (R3) TO (R4) NO TESTING
+         SUBEXIT
+         PRINT DATA
+TROTTAB  EQU   *
+&HEX(1)  SETC  '0','1','2','3','4','5','6','7','8',                    X
+               '9','A','B','C','D','E','F'
+&I       SETA  1
+&J       SETA  1
+.LOOP    ANOP
+&CHARS   SETC  '&CHARS&HEX(&I)&HEX(&J)'
+&J       SETA  &J+1
+         AIF   (&J LE 16).LOOP
+         DC    C'&CHARS'
+&CHARS   SETC  ''
+&J       SETA  1
+&I       SETA  &I+1
+         AIF   (&I LE 16).LOOP
+         LTORG
+         EQUREGS
+         END

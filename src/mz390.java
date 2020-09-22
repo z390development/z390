@@ -421,6 +421,7 @@ public  class  mz390 {
 	 *          see rt\test\TESTSYS3.MLC regression test
 	 * 2019-09-20 dsh fix depreciated Integer() with Integer.valueOf()
 	 * 2019-12-05 dsh fix to prevent abort error 288 on instruction with no parsm and no &&SYSLIST
+	 * 2020-09-07 dsh rpi 2210 support &var seta &varname such as n equ 25 followed by &o2 seta &parm where &parm = n
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -6730,7 +6731,7 @@ public  class  mz390 {
 		} else {
             int index = mz390_find_sym(text);
             if (index >= 0){ // RPI 449
-                return az390.sym_loc[index];  
+                return az390.sym_loc[index];  // dsh1
             } else {
                 return 0;
             } 
@@ -6976,6 +6977,15 @@ public  class  mz390 {
 			&& setc_text != null && setc_text.length() > 0){ // rpi 1204
 			char first = setc_text.trim().charAt(0);
 			if (first < '0' || first > '9'){
+				// dsh rpi 2210 support &var seta &varname such as n equ 25
+				int index = mz390_find_sym(setc_value);
+		        if (index >= 0){
+			       seta_value = az390.sym_loc[index];
+		           if (tz390.opt_traceall){
+				      tz390.put_trace("get_int_from_string(" + setc_value + ")=" + seta_value); // dsh1 rpi 2210
+			       }
+				   return seta_value;
+				}
 				return 0;
 			}
 		}
@@ -9443,6 +9453,7 @@ public  class  mz390 {
 			pc_var_loc[pc_loc]  = var_loc;
 			pc_seta[pc_loc]     = var_name_index;
 			pc_setc[pc_loc]     = var_name;
+			mz390_find_sym(var_name); // dsh1 force var lookup via az390
 			pc_req_opt[pc_loc]  = true; // request inc/dec opt
             break;
 		case  4: // gen pc_op_pushvs       calculate var subscript
@@ -12267,8 +12278,11 @@ public  class  mz390 {
     	 * on stack else issue error
     	 */
 		int index = mz390_find_sym(setc_value);
-		if (index >= 0){ 
+		if (index >= 0){
 			seta_value = az390.sym_loc[index];
+		    if (tz390.opt_traceall){
+				tz390.put_trace("pushing sym " + setc_value + " = " + seta_value); // dsh1 rpi 2210
+			}
 			put_seta_stack_var();
 		} else if (exp_prev_class == exp_class_oper) {
 			put_setc_stack_var(); // push the setc name

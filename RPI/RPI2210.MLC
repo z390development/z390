@@ -1,0 +1,10 @@
+test     csect
+         using test,15
+		 clc   dc1,=al1(n)
+		 bne   error
+		 clc   dc1,=al1(n)
+		 bne   error
+n        EQU   25
+dc1      XYZ   n
+dc2      XYZ   n
+         END 

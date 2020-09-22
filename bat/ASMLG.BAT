@@ -15,7 +15,7 @@ if exist %1.LOG erase %1.LOG
 if exist %1.ERR erase %1.ERR
 if exist %1.STA erase %1.STA
 if exist %1.TR* erase %1.TR*
-call %~dps0MZ390 %1  sysmac(%~dps0mac+.) syscpy(%~dps0mac+.) %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0MZ390 %1  sysmac(+mac) syscpy(+mac) %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto mzerr
 call %~dps0LZ390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto lzerr

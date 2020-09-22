@@ -299,7 +299,6 @@
            DISPLAY 'TOTAL GOOD = ' GOOD ' TOTAL BAD = ' BAD
            STOP RUN.
        INIT.
-           DISPLAY 'INIT'
            MOVE 1.0 TO EH1.
            MOVE 1.0 TO DH1.
            MOVE 1.0 TO LH1.

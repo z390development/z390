@@ -1,0 +1,23 @@
+***********************************************************************
+* Copyright 2007 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+*                                                                     *
+* Author - Melvyn Maltz                                               *
+* Date   - 24th December 2016                                         *
+***********************************************************************
+         MACRO
+         ZVSAMSPX
+*
+* ZVSAM SEGMENT PREFIX
+*
+ZVSAMSPX DSECT
+SPXSEGCC DS    X                  SEGMENT CONTROL CODE
+SPXSFRST EQU   X'80'              FIRST SEGMENT
+SPXSMIDL EQU   X'40'              MIDDLE SEGMENT
+SPXSLAST EQU   X'20'              LAST SEGMENT
+SPXSEGLN DS    XL3                LENGTH OF SEGMENT (INC. SPX+RLF)
+SPXBNEXT DS    XL8                XLRA OF NEXT SEGMENT (BLOCK/RECORD)
+SPXLENG  EQU   *-ZVSAMSPX         DSECT LENGTH
+         MEND
+
