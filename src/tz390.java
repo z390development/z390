@@ -30,6 +30,7 @@ public  class  tz390 {
     z390 portable mainframe assembler and emulator.
 	
     Copyright 2011 Automated Software Tools Corporation
+	Copyright 2020 Don Higgins
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -293,6 +294,9 @@ public  class  tz390 {
     * 2019-10-01 RPI 2202 dsh add new instructions up to z15 including NCRK, NCGRK, MVCRL
 	* 2020-08-29 RPI 2202 dsh TESTINS6.MLC complete with 2121 opcode+operand tests for POP SA22-7832-12
 	*                         Version V1.7.00 with z390.jar for Oracle SE 8 and Open JDK 11.0.08
+	^ 2020-10-18 RPI 2202 DSH add missing mnemonics BI,CLT,CLGT,LOCHI,LOCGHI,LOCHHI,LOCFHR,STOC,STOCG,STOCFH
+	* 2020-10-22 DSH V1701b RPI 2202 opcode fixes repackage zopcheck
+    * 2020-11-02 DSH v1702  add option zvsam(0=default/1=zvsam1/2=zvsam2)
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -301,7 +305,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.7.00";  //dsh + afk
+    String version    = "V1.7.02";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -1877,6 +1881,7 @@ public  class  tz390 {
          "B999=SLBR,14,144",     //   5010 "B999"  "SLBR"     "RRE"  14
          "C00=LARL,16,162",      //   5170 "C00"   "LARL"     "RIL"  16
          "C04=BRCL,16,330",      //   5180 "C04"   "BRCL"     "RIL"  16
+		 
          "C05=BRASL,16,163",     //   5210 "C05"   "BRASL"    "RIL"  16
          "C05=JASL,16,163",      //   5220 "C05"   "JASL"     "RIL"  16
          "E31E=LRV,18,180",      //   5620 "E31E"  "LRV"      "RXY"  18
@@ -2448,21 +2453,38 @@ public  class  tz390 {
             "B9C0m=SELFHRm,74,156",   //  "B9F0"  "SELRm'  "RRR"  RPI 2202
             "B9A1=TPEI,14,144", // B9A1 RRE 14,144 TPEI R1,R2 RPI 2202 
             "B9AC=IRBM,14,144", // B9AC RRE 14,144 IRBM R1,R2 RPI 2202
-			"B9E0=LOCFRH,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E01=LOCFRHO,39,153", // B9E0 RRF LOCFRH R1,R2,M3  RPI 2202
-			"B9E02=LOCFRHH,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E03=LOCFRHP,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E04=LOCFRHL,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E04=LOCFRHM,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E07=LOCFRHNE,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E07=LOCFRHNZ,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E08=LOCFRHE,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E08=LOCFRHZ,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E0B=LOCFRHNL,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E0B=LOCFRHNM,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E0D=LOCFRHNH,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E0D=LOCFRHNP,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202
-			"B9E0E=LOCFRHNO,39,153", // B9E0 RRF LOCFRH R1,R2  RPI 2202			
+			"B9E0=LOCFHR,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E01=LOCFHRO,39,153", // B9E0 RRF LOCFHR R1,R2,M3  RPI 2202
+			"B9E02=LOCFHRH,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E02=LOCFHRP,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E04=LOCFHRL,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E04=LOCFHRM,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E07=LOCFHRNE,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E07=LOCFHRNZ,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E08=LOCFHRE,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E08=LOCFHRZ,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E0B=LOCFHRNL,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E0B=LOCFHRNM,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E0D=LOCFHRNH,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E0D=LOCFHRNP,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
+			"B9E0E=LOCFHRNO,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202			
+			
+			"B9E2=LOCGR,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E21=LOCGRO,39,141", // B9E2 RRF LOGGRH R1,R2,M3  RPI 2202
+			"B9E22=LOCGRH,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E22=LOCGRP,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E24=LOCGRL,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E24=LOCGRM,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E27=LOCGRNE,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E27=LOCGRNZ,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E28=LOCGRE,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E28=LOCGRZ,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E2B=LOCGRNL,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E2B=LOCGRNM,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E2D=LOCGRNH,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E2D=LOCGRNP,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202
+			"B9E2E=LOCGRNO,39,141", // B9E2 RRF LOGGRH R1,R2  RPI 2202	
+			
 			
             "B9E3m=SELGRm,74,156",   //  "B9F0"  "SELRm'  "RRR"  RPI 2202
             "B9E5=NCGRK,39,153",     //  "B9E5"  "NCGRK'  "RRR"  RPI 2202
@@ -2481,6 +2503,7 @@ public  class  tz390 {
             "E33B=LZRF,18,180", // E33B RXYa LLZRF,R1,D2(X2,B2) Z15?
             "E33C=MGH,18,180", // E33C RXYa MGH R1,D2(X2,B2) RPI 2202
             "E347=BIC,18,180", // E347 RXYb BIC M1,D2(X2,B2) RPI 2202
+			"E347m=BIm,18,180", // E347 RXYb BIC M1,D2(X2,B2) RPI 2202
             "E348=LLGFSG,18,180", // E348 RXYa LLGFSG R1,D2(X2,B2) RPI 2202
             "E349=STGSC,18,180", // E349 RXYa STGSC R1,D2(X2,B2) RPI 2202
             "E34C=LGG,18,180", // E34C RXYa LGG R1,D2(X2,B2) RPI 2202
@@ -2578,9 +2601,9 @@ public  class  tz390 {
             "E70B=VSTEF,78,734", // E70B VRX VSTEF V1,D2(X2,B2),M3 RPI 2202
             "E70E=VST,78,734",     // E70E VRX VST V1,D2(X2,B2),M3 RPI 2202
             "E712=VGEG,83,734",     // E712 VRV VGEG V1,D2(V2,B2),M3 RPI 2202
-            "E713=VGEF,78,734",     // E713 VRV VGEF V1,D2(V2,B2),M3 RPI 2202
+            "E713=VGEF,83,734",     // E713 VRV VGEF V1,D2(V2,B2),M3 RPI 2202
             "E71A=VSCEG,83,734",     // E71A VRV VSCEG V1,D2(V2,B2),M3 RPI 2202
-            "E71B=VSCEF,78,734",     // E71B VRV VSCEF V1,D2(V2,B2),M3 RPI 2202
+            "E71B=VSCEF,83,734",     // E71B VRV VSCEF V1,D2(V2,B2),M3 RPI 2202
             "E721=VLGV,80,736",     // E721 VRSc VLGV R1,V3,D2(B2),M4 RPI 2202
             "E7210=VLGVB,80,736", // E7210 VRSc VLGVB R1,V3,D2(B2) RPI 2202
             "E7211=VLGVH,80,736", // E7211 VRSc VLGVH R1,V3,D2(B2) RPI 2202
@@ -2592,11 +2615,11 @@ public  class  tz390 {
             "E7222=VLVGF,80,736", // E7222 VRSc VLVGF V1,R3,D2(B2) RPI 2202
             "E7223=VLVGG,80,736", // E7223 VRSc VLVGG V1,R3,D2(B2) RPI 2202
             "E727=LCBB,24,240",      // E727 RXE R1,D2(X2,B2),M3 RPI 2202
-			"E730=VERL,80,736",      // E730  VRSa VERL V1,V3,D2(B2).M4 RPI 2202
-            "E7300=VERLB,80,736",    // E7300 VRSa VERLB V1,V3,D2(B2) RPI 2202
-            "E7301=VERLH,80,736",    // E7301 VRSa VERLH V1,V3,D2(B2) RPI 2202
-            "E7302=VERLF,80,736",    // E7302 VRSa VERLF V1,V3,D2(B2) RPI 2202
-            "E7303=VERLG,80,736",    // E7303 VRSa VERG V1,V3,D2(B2) RPI 2202
+			"E730=VESL,80,736",      // E730  VRSa VESL V1,V3,D2(B2).M4 RPI 2202 RPI 2216
+            "E7300=VESLB,80,736",    // E7300 VRSa VESLB V1,V3,D2(B2) RPI 2202 RPI 2216
+            "E7301=VESLH,80,736",    // E7301 VRSa VESLH V1,V3,D2(B2) RPI 2202 RPI 2216
+            "E7302=VESLF,80,736",    // E7302 VRSa VESLF V1,V3,D2(B2) RPI 2202 RPI 2216
+            "E7303=VESLG,80,736",    // E7303 VRSa VESRG V1,V3,D2(B2) RPI 2202 RPI 2216
             "E733=VERLL,80,736",     // E733 VRSa VESL V1,V3,D2(B2).M4 RPI 2202
             "E7330=VERLLB,80,736", // E7330 VRSa VESLB V1,V3,D2(B2) RPI 2202
             "E7331=VERLLH,80,736", // E7331 VRSa VESLH V1,V3,D2(B2) RPI 2202
@@ -2731,7 +2754,7 @@ public  class  tz390 {
             "E77A3=VESRAVG,82,738",  // E77A3 VRRc VESRAVG V1,V2,V3 RPI 2202
             "E77C=VSRL,82,738",   // E77C VRRc VSRL V1,V2,V3 RPI 2202
             "E77D=VSRLB,82,738",   // E77D VRRc VSRLB V1,V2,V3 RPI 2202
-            "E77E=VSRA,81,737", // E77E VRRc VSRA V1,V2,V3 RPI 2202
+            "E77E=VSRA,82,737", // E77E VRRc VSRA V1,V2,V3 RPI 2202
             "E77F=VSRAB,82,738",   // E77F VRRc VSRAB V1,V2,V3 RPI 2202
             "E780=VFEE,82,738",         // E780 VRRb VFEE V1,V2,V3,M4,M5 RPI 2202
             "E7800=VFEEB,82,738",    // E7800 VRRb VFEEB V1,V2,V3,M5 RPI 2202
@@ -2780,6 +2803,11 @@ public  class  tz390 {
 			"E78A0=VSTRCB,82,738",  // E78A0 VRRd VSTRCB  V1,V2,V3,V4,M6 RPI 2202
 			"E78A1=VSTRCH,82,738",  // E78A0 VRRd VSTRCH  V1,V2,V3,V4,M6 RPI 2202
 			"E78A2=VSTRCF,82,738",  // E78A0 VRRd VSTRCF  V1,V2,V3,V4,M6 RPI 2202
+			
+			"E78A01=VSTRCBS,82,738",  // E78A01 VRRd VSTRCBS  V1,V2,V3,V4,M6 RPI 2202
+			"E78A11=VSTRCHS,82,738",  // E78A11 VRRd VSTRCHS  V1,V2,V3,V4,M6 RPI 2202
+			"E78A21=VSTRCFS,82,738",  // E78A21 VRRd VSTRCFS  V1,V2,V3,V4,M6 RPI 2202
+			
 			"E78A02=VSTRCZB,82,738",  // E78A02 VRRd VSTRCZB  V1,V2,V3,V4,M6 RPI 2202
 			"E78A12=VSTRCZH,82,738",  // E78A12 VRRd VSTRCZH  V1,V2,V3,V4,M6 RPI 2202
 			"E78A22=VSTRCZF,82,738",  // E78A22 VRRd VSTRCZF  V1,V2,V3,V4,M6 RPI 2202
@@ -2943,7 +2971,7 @@ public  class  tz390 {
             "E7C428=WLDEB,82,738",  // E7C43 VRRa VCDGB V1,V2 RPI 2202
             "E7C420=VFLLS,82,738",  // E7C42 VRRa WCEFB V1,V2 RPI 2202
             "E7C428=WFLLS,82,738",  // E7C43 VRRa WCDGB V1,V2 RPI 2202
-			"E7C428=WFLLD,82,738",  // E7C43 VRRa WCDGB V1,V2 RPI 2202
+			"E7C438=WFLLD,82,738",  // E7C43 VRRa WCDGB V1,V2 RPI 2202
 			"E7C5=VFLR,82,738",    // E7C5  VRRa VFLR  V1,V2,M3,M4,M5 RPI 2202
             "E7C5=VLED,82,738",    // E7C5  VRRa VLED  V1,V2,M3,M4,M5 RPI 2202
             "E7C53=VLEDB,82,738",  // E7C53 VRRa VLEDB V1,V2,M4,M5 RPI 2202
@@ -2978,10 +3006,11 @@ public  class  tz390 {
             "E7CC38=WFPSODB,82,738",  //  VRRa WFPSODB V1,V2,M5 Z15?
             "E7CC300=VFLCDB,82,738",  //  VRRa VFLCDB  V1,V2 Z15?
             "E7CC380=WFLCDB,82,738",  //  VRRa WFLCDB  V1,V2 Z15?
-            "E7CC301=WFLNDB,82,738",  //  VRRa WFLNDB  V1,V2 Z15?
+			"E7CC301=VFLNDB,82,738",  //  VRRa WFLNDB  V1,V2 Z15?
+            "E7CC381=WFLNDB,82,738",  //  VRRa WFLNDB  V1,V2 Z15?
             "E7CC302=VFLPDB,82,738",  //  VRRa VFLPDB  V1,V2 Z15?
             "E7CC382=WFLPDB,82,738",  //  VRRa WFLPDB  V1,V2 Z15?
-            "E7CC48=WFPSDXB,82,738",  //  VRRa WFPSDXB V1,V2,M5 Z15?
+            "E7CC48=WFPSOXB,82,738",  //  VRRa WFPSOXB V1,V2,M5 Z15?
             "E7CC480=WFLCXB,82,738",  //  VRRa WFLCXB  V1,V2 Z15?
             "E7CC481=WFLNXB,82,738",  //  VRRa WFLNXB  V1,V2 Z15?
             "E7CC481=WFLPXB,82,738",  //  VRRa WFLPXB  V1,V2 Z15?
@@ -3214,13 +3243,30 @@ public  class  tz390 {
             "E7FF1=VMXH,82,738",  // E7FF1 VRRc VMXH V1,V2,V3 RPI 2202
             "E7FF2=VMXF,82,738",  // E7FF2 VRRc VMXF V1,V2,V3 RPI 2202
             "E7FF3=VMXG,82,738",  // E7FF3 VRRc VMXG V1,V2,V3 RPI 2202
-			"EB23=CLT,20,201",    // EB23  RSYb CLT  R1,M3,D2(B2) RPI 2202
-			"EB2B=CLGT,20,201",   // EB2B  RSYb CLGT R1,M3,D2(B2) RPI 2202
-			"EBE0m=LOCFHm,56,207",   // EBE0  RSYb LOCFH  R1,D2(B2) RPI 2202
-            "EBE1=STOCFH,56,207",  // EBE1  RSYb STOCFH R1,D2(B2),M3
-			"EC42=LOCHI,23,230",  // EC42  RIEg LOCHI  R1,I2,M3    RPI 2202
-			"EC46=LOCGHI,23,230", // EC46  RIEg LOCGHI R1,I2,M3    RPI 2202
-			"EC4E=LOCHHI,23,230", // EC4E  RIEg LOCHHI R1,I2,M3    RPI 2202
+			"EB23=CLT,20,201",       // EB23   RSYb CLT     R1,M3,D2(B2) RPI 2202
+			"EB238=CLTE,20,201",     // EB238  RSYb CLTE    R1,D2(B2) RPI 2202
+			"EB232=CLTH,20,201",     // EB232  RSYb CLTH    R1,D2(B2) RPI 2202
+			"EB234=CLTL,20,201",     // EB234  RSYb CLTL    R1,D2(B2) RPI 2202
+			"EB236=CLTNE,20,201",    // EB236  RSYb CLTNE   R1,D2(B2) RPI 2202
+			"EB23C=CLTNH,20,201",    // EB23C  RSYb CLTNH   R1,D2(B2) RPI 2202
+			"EB23A=CLTNL,20,201",    // EB23A  RSYb CLTNL   R1,D2(B2) RPI 2202
+			"EB2B=CLGT,20,201",      // EB2B   RSYb CLGT    R1,M3,D2(B2) RPI 2202
+			"EB2B8=CLGTE,20,201",    // EB2B8  RSYb CLGTE   R1,D2(B2) RPI 2202
+			"EB2B2=CLGTH,20,201",    // EB2B2  RSYb CLGTH   R1,D2(B2) RPI 2202
+			"EB2B4=CLGTL,20,201",    // EB2B4  RSYb CLGTL   R1,D2(B2) RPI 2202
+			"EB2B6=CLGTNE,20,201",   // EB2B6  RSYb CLGTNE  R1,D2(B2) RPI 2202
+			"EB2BC=CLGTNH,20,201",   // EB2BC  RSYb CLGTNH  R1,D2(B2) RPI 2202
+			"EB2BA=CLGTNL,20,201",   // EB2BA  RSYb CLGTNL  R1,D2(B2) RPI 2202
+	        "EBE0=LOCFH,56,207",        // EBE0  RSYb LOCFH  R1,D2(B2),M3 RPI 2202
+			"EBE0m=LOCFHm,56,207;F=",   // EBE0  RSYb LOCFHm  R1,D2(B2) RPI 2202
+            "EBE1=STOCFH,56,207",       // EBE1  RSYb STOCFH R1,D2(B2),M3
+			"EBE1m=STOCFHm,56,207;F=",  // EBE1  RSYb STOCFHm R1,D2(B2)
+			"EC42=LOCHI,23,230",       // EC42  RIEg LOCHI   R1,I2,m3  RPI 2202			
+			"EC42m=LOCHIm,23,230;F=",  // EC42  RIEg LOCHIm  R1,I2  RPI 2202
+			"EC46=LOCGHI,23,230",      // EC46  RIEg LOCGHI R1,I2,M3    RPI 2202
+			"EC46m=LOCGHIm,23,230;F=", // EC46  RIEg LOCGHIm R1,I2,M3    RPI 2202
+			"EC4E=LOCHHI,23,230",      // EC4E  RIEg LOCHHI  R1,I2,M3    RPI 2202
+			"EC4Em=LOCHHIm,23,230;F=", // EC4E  RIEg LOCHHIm R1,I2    RPI 2202
 			"EDA8=CZDT,22,230",   // EDA8  RSLb CZDT   R1,D2(l2,B2),M3 RPI 2202
 			"EDA9=CZXT,22,230",   // EDA9  RSLb CZXT   R1,D2(l2,B2),M3 RPI 2202
 			"EDAA=CDZT,22,230",   // EDAA  RSLb CDZT   R1,D2(l2,B2),M3 RPI 2202
@@ -3308,7 +3354,7 @@ public  class  tz390 {
          "B9DD=CHLR,39,144",     //        "B9DD"  "CHLR"     "RRE"  39 RPI 1125 Z196
          "B9DF=CLHLR,14,144",    //        "B9DF"  "CLHLR"    "RRE"  14 RPI 1125 Z196
          "B9E1=POPCNT,39,151",   //   5115 "B9E1"  "POPCNT"   "RRE"  14 RPI 1125  RPI 2202 support m3=8
-         "B9E2m=LOCGRm,39,141",    //        "B9E2"  "LOCGR"    "RRF5" 39 RPI 1125 Z196
+        
          "B9E4=NGRK,39,153",     //        "B9E4"  "NGRK"     "RRF5" 39 RPI 1125 Z196
          "B9E6=OGRK,39,153",     //        "B9E6"  "OGRK"     "RRF5" 39 RPI 1125 Z196
          "B9E7=XGRK,39,153",     //        "B9E7"  "XGRK"     "RRF5" 39 RPI 1125 Z196
@@ -3346,15 +3392,19 @@ public  class  tz390 {
          "EBDD=SLAK,20,200",     //        "EBDD"  "SLAK"     "RSY"  20 RPI 1125 Z196
          "EBDE=SRLK,20,200",     //        "EBDE"  "SRLK"     "RSY"  20 RPI 1125 Z196
          "EBDF=SLLK,20,200",     //        "EBDF"  "SLLK"     "RSY"  20 RPI 1125 Z196
-         "EBE2m=LOCGm,56,207",     //        "EBE2"  "LOCG"     "RSY2" 56 RPI 1125 Z196
+		 "EBE2=LOCG,56,207",     //        "EBE2"  "LOCG"     "RSY2" 56 RPI 1125 Z196
+         "EBE2m=LOCGm,56,207;F=",     //        "EBE2"  "LOCG"     "RSY2" 56 RPI 1125 Z196
          "EBE3=STOCG,56,207",    //        "EBE3"  "STOCG"    "RSY2" 56 RPI 1125 Z196
+		 "EBE3m=STOCGm,56,207;F=",   //    "EBE3"  "STOCG"    "RSY2" 56 RPI 1125 Z196
          "EBE4=LANG,20,208",     //        "EBE4"  "LANG"     "RSY"  20 RPI 1125 Z196
          "EBE6=LAOG,20,208",     //        "EBE6"  "LAOG"     "RSY"  20 RPI 1125 Z196
          "EBE7=LAXG,20,208",     //        "EBE7"  "LAXG"     "RSY"  20 RPI 1125 Z196
          "EBE8=LAAG,20,208",     //        "EBE8"  "LAAG"     "RSY"  20 RPI 1125 Z196
          "EBEA=LAALG,20,208",    //        "EBEA"  "LAALG"    "RSY"  20 RPI 1125 Z196
-         "EBF2m=LOCm,56,209",      //        "EBF2"  "LOC"      "RSY2" 56 RPI 1125 Z196
+		 "EBF2=LOC,56,209",      //        "EBF2"  "LOC"      "RSY2" 56 RPI 1125 Z196
+         "EBF2m=LOCm,56,209;F=",      //        "EBF2"  "LOC"      "RSY2" 56 RPI 1125 Z196
          "EBF3=STOC,56,209",     //        "EBF3"  "STOC"     "RSY2" 56 RPI 1125 Z196
+		 "EBF3m=STOCm,56,209;F=",     //        "EBF3"  "STOC"     "RSY2" 56 RPI 1125 Z196
          "EBF4=LAN,20,200",      //        "EBF4"  "LAN"      "RSY"  20 RPI 1125 Z196
          "EBF6=LAO,20,200",      //        "EBF6"  "LAO"      "RSY"  20 RPI 1125 Z196
          "EBF7=LAX,20,200",      //        "EBF7"  "LAX"      "RSY"  20 RPI 1125 Z196
@@ -4425,8 +4475,9 @@ private void check_options(){
         }
     // Check requested zVSAM version                  // RPI 1598
     if (opt_zvsam != 0                                // RPI 1598
-    &&  opt_zvsam != 1)                               // RPI 1598
-       {abort_error(30,"option VSAM must be 0 or 1"); // RPI 1598
+    &&  opt_zvsam != 1                               // RPI 1598
+	&&  opt_zvsam != 2)                                 // RPI 1628 DSH 2020-10-25
+       {abort_error(30,"option VSAM must be 0,1 or 2"); // RPI 1628 DSH
         }                                             // RPI 1598
 }
 private void process_option(String opt_file_name,int opt_file_line,String token){

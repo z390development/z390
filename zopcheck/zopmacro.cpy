@@ -1,0 +1,1592 @@
+* open source z390 regression test of opcodes
+* 2019/11/07 dsh TESTINS6.MAC macros for TESTINS6.MLC
+* 2020/01/03 DSH USE TEST_OP TO CALL TYPE_??? TO GEN TESTS
+* 2020/01/23 DSH SUPRESS OP GEN IF UNDEFINED
+* 2020/09/15 DSH RPI 2212 ADD VECTOR REGISTERS 0-31 USING RXB FIELD
+* 2020/09/19 DSH RPI 2213 REMOVE TYPE DM, ADD DIAGNOSE/DIAG RS, SIE S
+* 2020/10/02 DSH RPI 2212 RESTORE TYPE_VRR FROM V1700, ADD VREGS 0-31
+*************************************************************
+* COPYRIGHT 2020 DON HIGGINS
+************************************************************
+        GBLA &TOT_OPS,&TOT_MASK,&TOT_DUP,&TOT_UND
+        GBLA &TOT_PROB,&TOT_SUPR,&TOT_MISSING
+        GBLC &LAB_OP,&OP_LAB
+		GBLA &VREG_RXB
+		GBLA &V1,&V2,&V3,&V4
+        MACRO
+&LAB    TEST_OP &TYPE,&OP,&P1,&P2,&P3,&P4,&P5,&P6,&P7,&P8
+        GBLA &TOT_OPS,&TOT_DUP,&TOT_UND
+        GBLA &TOT_PROB,&TOT_SUPR,&TOT_MISSING
+        GBLC &LAB_OP,&OP_LAB,&LAST_OP
+        AIF  ('&LAB'(1,1) EQ 'P')
+&TOT_PROB SETA &TOT_PROB+1
+        AelseIF  ('&LAB'(1,1) EQ 'S')
+&TOT_SUPR SETA &TOT_SUPR+1
+        AELSE
+		   MNOTE 8,'UNDEFINED OPERATION TYPE FOR &LAB'
+        AEND
+&NP     SETC  ''
+&I      SETA  3
+        AWHILE (&I LE N'&SYSLIST)
+&NP       SETC '&NP.,&SYSLIST(&I)'
+&I        SETA &I+1
+        AEND
+&OP_LAB SETC    '&OP._&LAB' DSH REMOVE LABEL TO OPT ASM
+&LAB_OP SETC    '&LAB._&OP'
+&TOT_OPS SETA &TOT_OPS+1
+         BAL   R12,CHECKZOP  
+         DC    32X'FF'
+         ORG *-32 
+&TESTOP SETC '&OP'
+      AIF (T'&OP EQ 'I')
+&LAB    TYPE_&TYPE &OP&NP
+      AELSEIF ('&OP' EQ '&LAST_OP')
+&TOT_DUP SETA &TOT_DUP+1
+      AELSE
+&TOT_UND SETA &TOT_UND+1
+        MNOTE 12,'UNDEFINED OP &OP  &LAB &TOT_UND'
+      AEND
+&LAST_OP SETC '&OP'
+           ORG 
+        MEND 
+		MACRO
+		VREGS &VP1=0,&VP2=0,&VP3=0,&VP4=0  SUPPORT 0-31 VREGS 
+		GBLA &VREG_RXB
+		GBLA &V1,&V2,&V3,&V4
+&VREG_RXB SETA 0		
+		AIF (&VP1 GT 15)
+&V1         SETA &VP1-16
+&VREG_RXB   SETA &VREG_RXB+8
+        AELSE
+&V1         SETA &VP1		
+        AEND
+		AIF (&VP2 GT 15)
+&V2         SETA &VP2-16
+&VREG_RXB   SETA &VREG_RXB+4
+        AELSE
+&V2         SETA &VP2
+        AEND
+		AIF (&VP3 GT 15)
+&V3         SETA &VP3-16
+&VREG_RXB   SETA &VREG_RXB+2
+        AELSE
+&V3         SETA &VP3
+        AEND
+		AIF (&VP4 GT 15)
+&V4         SETA &VP4-16
+&VREG_RXB   SETA &VREG_RXB+1
+        AELSE
+&V4         SETA &VP4
+        AEND		
+        MEND		
+	MACRO
+&LAB	TYPE_E	&OP
+        GBLC &LAB_OP,&OP_LAB
+      AIF (N'&SYSLIST EQ 1)		
+&OP_LAB   &OP 
+&HEX	SETC	'&LAB'(3,4)
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX'
+      AELSE
+&NP     SETA  N'&SYSLIST
+        MNOTE 12,'E INVALID OPERAND COUNT &LAB_OP &NP'
+      AEND        
+        MEND
+	MACRO
+&LAB	TYPE_I	&OP,&P1
+        GBLC &LAB_OP,&OP_LAB
+      AIF (N'&SYSLIST EQ 2) 	
+&OP_LAB   &OP	&P1
+&HEX	SETC	'&LAB'(3,2)
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1)
+      AELSE
+        MNOTE 12,'I INVALID OPERAND COUNT &LAB_OP  '
+      AEND        
+        MEND
+	MACRO
+&LAB	TYPE_IE	&OP,&P1,&P2
+        GBLC &LAB_OP,&OP_LAB
+      AIF (N'&SYSLIST EQ 3) NIAI	
+&OP_LAB   &OP &P1,&P2
+&HEX	SETC	'&LAB'(3,4)
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX.00',AL1(&P1*16+&P2)
+      AELSE
+        MNOTE 12,'IE INVALID OPERAND COUNT &LAB_OP  '
+      AEND       
+        MEND
+        MACRO
+&LAB	TYPE_MII &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB 	
+&HEX	SETC	'&LAB'(3,2)
+      AIF (N'&SYSLIST EQ 4)  BPRP
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL2(&P1*16*16*16+&P2),AL3(&P3)
+      AELSE
+        MNOTE 12,'MII INVALID OPERAND COUNT &LAB_OP  '
+      AEND    
+        MEND 
+	MACRO
+&LAB	TYPE_R	&OP,&P1
+        GBLC &LAB_OP,&OP_LAB
+      AIF (N'&SYSLIST EQ 2)	
+&OP_LAB     &OP     &P1
+&HEX	SETC	'&LAB'(3,2)
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16)
+      AELSE
+        MNOTE 12,'R INVALID OPERAND COUNT &LAB_OP  '
+      AEND        
+        MEND
+	MACRO
+&LAB	TYPE_RI	&OP,&P1,&P2
+        GBLC &LAB_OP,&OP_LAB 
+&HEX	SETC	'&LAB_OP'(3,2)
+&HEX2   SETC    '&LAB_OP'(5,1)
+      AIF (N'&SYSLIST EQ 3 AND '&HEX2' EQ '_')
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+0),AL2(&P2)
+      AELSE
+&HEX2A  SETA    X2A('&HEX2')
+&HEX3   SETC    '&LAB_OP'(6,1)
+        AIF (N'&SYSLIST EQ 3 AND '&HEX3' EQ '_')
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&HEX2A),AL2(&P2)
+        AELSEIF (N'&SYSLIST EQ 2 AND '&HEX3' NE '_')
+        GBLA    &TOT_MASK
+&TOT_MASK SETA &TOT_MASK+1
+&HEX3A  SETA    X2A('&HEX3')
+&OP_LAB     &OP     &P1
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&HEX3A*16+&HEX2A),AL2(&P1)
+        AELSE
+          MNOTE 12,'RI INVALID OPERAND COUNT &LAB_OP  '
+        AEND    
+      AEND             
+        MEND
+	MACRO
+&LAB	TYPE_RIE &OP,&P1,&P2,&P3,&P4,&P5,&I345=
+        GBLC &LAB_OP,&OP_LAB 	
+&HEX	SETC	'&LAB_OP'(3,2)
+&HEX2   SETC    '&LAB_OP'(5,2)
+.* P3 ***********************************************
+      AIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+        AIF (N'&I345 EQ 3) 
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL1&I345,X'&HEX2'
+        AELSEIF ('&LAB_OP'(7,1) NE '_') 
+        GBLA    &TOT_MASK
+&TOT_MASK SETA &TOT_MASK+1
+&M3       SETA  X2A('&LAB_OP'(7,1))
+&LAB_OP ORG &OP_LAB+16
+          AIF ('&LAB'(3,4) EQ 'EC42')
+ DC  X'&HEX',AL1(&P1*16+&M3),AL2(&P2),X'00&HEX2'
+           AELSEIF ('&LAB'(3,4) EQ 'EC46')
+ DC  X'&HEX',AL1(&P1*16+&M3),AL2(&P2),X'00&HEX2'
+           AELSEIF ('&LAB'(3,4) EQ 'EC4E')
+ DC  X'&HEX',AL1(&P1*16+&M3),AL2(&P2),X'00&HEX2'
+          AELSE 
+ DC  X'&HEX',AL1(&P1*16+0),AL2(&P2),AL1(&M3*16+0),X'&HEX2'
+          AEND 
+        AELSE
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+0),AL2(&P2),X'&P3.0&HEX2'
+        AEND
+.* P4 ***************************************************************
+      AELSEIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP     &P1,&P2,&P3
+        AIF (K'&LAB GE 7 AND '&LAB(7,1)' NE '_') 
+&M3      SETA   X2A('&LAB'(7,1))	
+        GBLA    &TOT_MASK
+&TOT_MASK SETA &TOT_MASK+1
+            AIF ('&LAB_OP'(3,4) EQ 'EC76')
+&LAB_OP ORG &OP_LAB+16
+         DC  X'&HEX',AL1(&P1*16+&P2),AL2(&P3),AL1(&M3*16+0),X'&HEX2'
+            AELSEIF ('&LAB_OP'(3,4) EQ 'EC77')
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL2(&P3),AL1(&M3*16+0),X'&HEX2'
+            AELSEIF ('&LAB_OP'(3,3) EQ 'EC7')
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&M3),AL2(&P3),AL1(&P2),X'&HEX2'
+            AELSE
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL2(&P3),AL1(&M3*16+0),X'&HEX2'
+            AEND
+		AELSEIF ('&LAB_OP'(3,4) EQ 'EC42') LOCHI R1,I2,M3
+&LAB_OP ORG &OP_LAB+16
+         DC  X'&HEX',AL1(&P1*16+&P3),AL2(&P2),X'00&HEX2'
+		AELSEIF ('&LAB_OP'(3,4) EQ 'EC46') LOCGHI R1,I2,M3
+&LAB_OP ORG &OP_LAB+16
+         DC  X'&HEX',AL1(&P1*16+&P3),AL2(&P2),X'00&HEX2'
+	    AELSEIF ('&LAB_OP'(3,4) EQ 'EC4E') LOCHI R1,I2,M3
+&LAB_OP ORG &OP_LAB+16
+         DC  X'&HEX',AL1(&P1*16+&P3),AL2(&P2),X'00&HEX2'	 
+        AELSEIF ('&LAB_OP'(3,3) EQ 'EC7')
+&LAB_OP ORG &OP_LAB+16
+  DC  X'&HEX',AL1(&P1*16+0),AL2(&P2),AL1(&P3*16+0),X'&HEX2'
+        AELSE
+&LAB_OP ORG &OP_LAB+16
+  DC  X'&HEX',AL1(&P1*16+&P2),AL2(&P3),X'00&HEX2'
+        AEND
+      AELSEIF (N'&SYSLIST EQ 5)  RI?/RN?/RO? WITH 4 PARMS
+&OP_LAB   &OP     &P1,&P2,&P3,&P4    
+&LASTOPC SETC '&OP'(K'&OP,1)
+        AIF ('&LAB_OP'(3,3) EQ 'EC6') EC64,EC65,EC67
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL2(&P4),AL1(&P3*16+0),X'&HEX2'
+        AELSEIF ('&LAB_OP'(3,4) EQ 'EC76')
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL2(&P4),AL1(&P3*16+0),X'&HEX2'
+        AELSEIF ('&LAB_OP'(3,4) EQ 'EC77')
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL2(&P4),AL1(&P3*16+0),X'&HEX2'
+        AELSEIF ('&LAB_OP'(3,4) GE 'EC7C') CGIJ ETC.
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P3),AL2(&P4),AL1(&P2),X'&HEX2'
+        AELSEIF ('&LAB_OP'(3,3) EQ 'EC7') EC74
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL2(&P4),AL1(&P3*16+0),X'&HEX2'
+        AELSEIF ('&LASTOPC' EQ 'Z')
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL1(&P3,&P4+X'80'),X'00&HEX2'
+        AELSEIF ('&LASTOPC' EQ 'T')
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL1(&P3+X'80',&P4),X'00&HEX2'
+        AELSE 
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL1(&P3,&P4),X'00&HEX2'	
+        AEND
+      AELSEIF (N'&SYSLIST EQ 6)  RI?/RN?/RO? WITH 5 PARMS
+&OP_LAB     &OP     &P1,&P2,&P3,&P4,&P5
+&LASTOPC SETC '&OP'(K'&OP,1)
+        AIF ('&LASTOPC' EQ 'Z')
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL1(&P3,&P4+X'80',&P5),X'&HEX2'
+        AELSEIF ('&LASTOPC' EQ 'T')
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL1(&P3+X'80',&P4,&P5),X'&HEX2'
+        AELSE
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&P2),AL1(&P3,&P4,&P5),X'&HEX2'
+        AEND
+      AELSE
+        MNOTE 12,'RIE INVALID OPERAND COUNT &LAB_OP  '
+      AEND               
+        MEND
+	MACRO
+&LAB	TYPE_RIL &OP,&P1,&P2
+        GBLC &LAB_OP,&OP_LAB
+&HEX	SETC	'&LAB_OP'(3,2)
+&HEX2   SETC    '&LAB_OP'(5,1)
+&HEX3   SETC    '&LAB_OP'(6,1)
+      AIF (N'&SYSLIST EQ 3 AND '&HEX3' EQ '_')
+&OP_LAB     &OP     &P1,&P2
+&HEX2A  SETA    X2A('&HEX2')
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&HEX2A),AL4(&P2)
+      AELSEIF (N'&SYSLIST EQ 2 AND '&HEX3' NE '_')
+        GBLA    &TOT_MASK
+&TOT_MASK SETA &TOT_MASK+1
+&HEX2A  SETA    X2A('&HEX2')
+&HEX3A  SETA    X2A('&HEX3')
+&OP_LAB     &OP     &P1
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&HEX2A*16+&HEX3A),AL4(&P1)
+      AELSE
+        MNOTE 12,'RIL INVALID OPERAND COUNT &LAB_OP  '   
+      AEND              
+        MEND
+	MACRO
+&LAB	TYPE_RIS &OP,&P1,&P2,&P3,&P4
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+&HEX3   SETC    '&LAB_OP'(7,1)
+&M3     SETA    X2A('&HEX3')
+      AIF (N'&SYSLIST EQ 4 AND '&HEX3' NE '_')
+        GBLA    &TOT_MASK
+&TOT_MASK SETA &TOT_MASK+1
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&P1*16+&M3),S(&P3),AL1(&P2),X'&HEX2'
+      AELSEIF (N'&SYSLIST EQ 5)
+&OP_LAB     &OP     &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&P1*16+&P3),S(&P4),AL1(&P2),X'&HEX2'
+      AELSE
+        MNOTE 12,'RIS INVALID OPERAND COUNT &LAB_OP  '
+      AEND       
+        MEND
+	MACRO
+&LAB	TYPE_RR	&OP,&P1,&P2
+        GBLC &LAB_OP,&OP_LAB
+&HEX	SETC	'&LAB'(3,2)
+     AIF (N'&SYSLIST EQ 3 AND K'&LAB EQ 4)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16 
+ DC      X'&HEX',AL1(&P1*16+&P2)
+     AELSEIF (N'&SYSLIST EQ 2 AND K'&LAB EQ 5)
+&OP_LAB     &OP     &P1
+&ACC    SETA    X2A('&LAB'(5,1))
+&LAB_OP ORG &OP_LAB+16 
+ DC      X'&HEX',AL1(&ACC*16+&P1)
+      AELSE
+        MNOTE 12,'RR INVALID OPERAND COUNT &LAB_OP  '
+      AEND      
+        MEND
+	MACRO
+&LAB	TYPE_RRD &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,4)
+     AIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16  
+ DC      X'&HEX',AL1(&P1*16+0,&P2*16+&P3)
+      AELSE
+        MNOTE 12,'RRD INVALID OPERAND COUNT &LAB_OP  '
+      AEND   
+        MEND 
+	MACRO
+&LAB	TYPE_RRE &OP,&P1,&P2,&P3,&P4
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,4)
+     AIF (N'&SYSLIST EQ 5)
+&OP_LAB      &OP     &P1,&P2,&P3,&P4
+        AIF     ('&HEX'(3,2) EQ '44')
+&LAB_OP ORG &OP_LAB+16  
+ DC      X'&HEX',AL1(&P2*16+&P4,&P1*16+&P3)
+        AELSE
+&LAB_OP ORG &OP_LAB+16  
+ DC      X'&HEX',AL1(&P1*16+&P2,&P3*16+&P4)
+        AEND
+     AELSEIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16 
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
+     AELSEIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16 
+ DC      X'&HEX',AL1(0,&P1*16+&P2)
+     AELSEIF (N'&SYSLIST EQ 2)
+&OP_LAB     &OP     &P1
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(0,&P1*16+0)
+     AELSEIF (N'&SYSLIST EQ 1)
+&OP_LAB     &OP    
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL2(0)
+      AELSE
+        MNOTE 12,'RRE INVALID OPERAND COUNT &LAB_OP  '
+      AEND     
+        MEND
+	MACRO
+&LAB	TYPE_RRF &OP,&P1,&P2,&P3,&P4
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,4)
+&HEX1   SETC    '&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+.* P5 ************************************************************
+      AIF (N'&SYSLIST EQ 5) 
+&OP_LAB     &OP     &P1,&P2,&P3,&P4
+        AIF ('&HEX'(1,2) EQ 'B2')
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2)		
+        AELSEIF ('&HEX'(1,3) EQ 'B3D') 
+          AIF ('&HEX'(4,1) EQ '0') MDTRA
+&LAB_OP ORG &OP_LAB+16 
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ '1') DDTRA
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ '2') ADTRA
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ '3') SDTRA
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ '8') MXTRA
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ '9')
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ 'A') AXTR 
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ 'B') SXTRA
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2) LEDTR 00003412
+          AELSE
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P2*16+&P4,&P1*16+&P3) LEDTR 00002413
+          AEND
+        AELSE
+         AIF ('&HEX' EQ 'B9C0') SELFHR R1,R2,R3,M4 00003412
+&LAB_OP ORG &OP_LAB+16 
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2) 
+         AELSEIF ('&HEX' EQ 'B9E3') SELGR R1,R2,R3,M4 00003412
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2)
+         AELSEIF ('&HEX' EQ 'B9F0') SELR R1,R2,R3,M4 00003412
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P3*16+&P4,&P1*16+&P2)  
+         AELSE
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P2*16+&P4,&P1*16+&P3) LEDBRA R1,M3,R2,M4
+         AEND
+        AEND
+.* P4 ************************************************************		
+      AELSEIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP     &P1,&P2,&P3
+        AIF ('&HEX'(1,3) EQ 'B3D') DDTR R1,R2,R3 OOOO3012
+          AIF ('&HEX'(4,1) EQ '0') MDTR 		
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ '1') DDTR
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ '2') ADTR 
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ '3') SDTR
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2
+          AELSEIF ('&HEX'(4,1) EQ '4') 
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3,&P1*16+&P2) LDETR,LXDTR
+          AELSEIF ('&HEX'(4,1) EQ '8') MXTR 
+&LAB_OP ORG &OP_LAB+16 
+DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ '9') DXTR
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
+          AELSEIF ('&HEX'(4,1) EQ 'C') OOOOO312
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3,&P1*16+&P2) LDETR,LXDTR
+          AEND 
+        AELSEIF ('&HEX'(1,4) EQ 'B221' OR '&HEX'(1,4) EQ 'B2A7')                                 
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)		 
+         AELSEIF ('&HEX'(1,4) EQ 'B2E8') PPA
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
+          AELSEIF ('&HEX'(1,4) EQ 'B929') KMA
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P2*16+0,&P1*16+&P3)
+          AELSEIF ('&HEX'(1,4) EQ 'B960') CGRT
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
+          AELSEIF ('&HEX'(1,4) EQ 'B98E') IDTE
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P2*16+0,&P1*16+&P3)
+           AELSEIF ('&HEX'(1,4) EQ 'B98F') CRDTE
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P2*16+0,&P1*16+&P3)
+        AELSEIF ('&HEX'(1,4) EQ 'B3E3') CSDTR OOOOO312
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3,&P1*16+&P2) 
+        AELSEIF ('&HEX'(1,4) EQ 'B3EB') CSXTR OOOOO312
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3,&P1*16+&P2) 
+        AELSEIF ('&HEX'(1,2) EQ 'B3') TBEDR R1,M3,R2 OOOO3012
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P2*16+0,&P1*16+&P3)
+
+        AELSEIF ('&HEX'(1,2) EQ 'B9')
+          AIF ('&HEX'(3,2) EQ '2D') KMCTR R1,R3,R2 OOOO3012
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P2*16+0,&P1*16+&P3) 
+      AELSEIF ('&LAB_OP'(1,4) EQ 'B9E0') B9E0 LOCFRH,R1,R2,M3 OOOOM012
+          GBLA    &TOT_MASK
+&TOT_MASK SETA &TOT_MASK+1
+&M3       SETA    X2A('&LAB_OP'(7,1))
+&LAB_OP ORG &OP_LAB+16 
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
+         AELSE    SELGR R1,R2 OOOO3M12
+          GBLA    &TOT_MASK
+&TOT_MASK SETA &TOT_MASK+1
+&M3       SETA    X2A('&LAB_OP'(7,1))
+&LAB_OP ORG &OP_LAB+16 
+ DC      X'&HEX',AL1(&P3*16+&M3,&P1*16+&P2)
+ 
+          AEND
+        AEND
+.* P3 ************************************************************		
+        AELSEIF (N'&SYSLIST EQ 3 AND '&LAB_OP'(7,1) NE '_')
+.* B9E02 LOCFRHP R1,R2
+&OP_LAB     &OP     &P1,&P2 
+&M3     SETA    X2A('&LAB_OP'(7,1))
+&LAB_OP ORG &OP_LAB+16 
+            AIF ('&LAB'(3,4) EQ 'EC42') LOCHI R1,I2
+ DC X'&HEX1',AL1(&P1*16+&M3),AL2(&P2),AL1(0),X'&HEX2'
+             AELSEIF ('&LAB'(3,4) EQ 'EC46') LOCHI R1,I2
+ DC X'&HEX1',AL1(&P1*16+&M3),AL2(&P2),AL1(0),X'&HEX2'
+             AELSEIF ('&LAB'(3,4) EQ 'EC4E') LOCHI R1,I2
+ DC X'&HEX1',AL1(&P1*16+&M3),AL2(&P2),AL1(0),X'&HEX2' 
+			AELSE
+ DC X'&HEX',AL1(&M3*16+0,&P1*16+&P2)
+            AEND
+      AELSEIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(0,&P1*16+&P2)
+      AELSE
+        MNOTE 12,'RRF INVALID OPERAND COUNT &LAB_OP  '
+      AEND       
+        MEND
+	MACRO
+&LAB	TYPE_RRR &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,4)
+      AIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
+      AELSEIF (N'&SYSLIST EQ 3)  NOTGR, NOTR
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P2*16+0,&P1*16+&P2)	  
+      AELSE
+        MNOTE 12,'RRR INVALID OPERAND COUNT &LAB_OP  '
+      AEND         
+        MEND
+	MACRO
+&LAB	TYPE_RRS &OP,&P1,&P2,&P3,&P4
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+&HEX3   SETC    '&LAB_OP'(7,1)
+      AIF (N'&SYSLIST EQ 4 AND '&HEX3' NE '_')
+        GBLA    &TOT_MASK
+&TOT_MASK SETA &TOT_MASK+1
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&P1*16+&P2),S(&P3),X'&HEX3.0&HEX2'
+      AELSEIF (N'&SYSLIST EQ 5)
+&OP_LAB     &OP     &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16 
+ DC X'&HEX',AL1(&P1*16+&P2),S(&P4),AL1(&P3*16+0),X'&HEX2'
+      AELSE
+        MNOTE 12,'RRS INVALID OPERAND COUNT &LAB_OP  '
+      AEND     
+        MEND
+	MACRO
+&LAB	TYPE_RS	&OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB
+&HEX	SETC	'&LAB'(3,2)
+      AIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+0),AL2(B2*256*16+D2)
+      AELSEIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&P2),AL2(B2*256*16+D2)
+      AELSE
+        MNOTE 12,'RS INVALID OPERAND COUNT &LAB_OP  '
+      AEND      
+        MEND
+	MACRO
+&LAB	TYPE_RSI	&OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB
+&HEX	SETC	'&LAB'(3,2)
+      AIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&P2),AL2(&P3)
+      AELSE
+        MNOTE 12,'RSI INVALID OPERAND COUNT &LAB_OP  '
+      AEND       
+        MEND
+	MACRO
+&LAB	TYPE_RSL &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+      AIF (N'&SYSLIST EQ 4)  CDPT
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16 
+ DC      X'&HEX',AL1(L2-1),X'C0C0',AL1(&P1*16+&P3),X'&HEX2'
+      AELSEIF (N'&SYSLIST EQ 2) EBC0 TP RSLa
+&OP_LAB     &OP     &P1
+&LAB_OP ORG &OP_LAB+16 
+ DC      X'&HEX',AL1((LP1-1)*16+0),X'B0B0',AL1(DH1),X'&HEX2'
+      AELSE
+        MNOTE 12,'RSL INVALID OPERAND COUNT &LAB_OP  '
+      AEND         
+        MEND
+	MACRO
+&LAB	TYPE_RSY &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+      AIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP     &P1,&P2,&P3
+        AIF ('&HEX2' EQ 'E2')  LOCG R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&P3),S(&P2),AL1(DH2),X'&HEX2'
+        AELSEIF ('&HEX2' EQ 'E3')  STOCG
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&P3),S(&P2),AL1(DH2),X'&HEX2'
+        AELSEIF ('&HEX2' EQ 'F2')  LOCR R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&P3),S(&P2),AL1(DH2),X'&HEX2'
+         AELSEIF ('&HEX2' EQ 'E0')  LOCFH R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&P3),S(&P2),AL1(DH2),X'&HEX2'
+         AELSEIF ('&HEX2' EQ 'E1')  STOCFH R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&P3),S(&P2),AL1(DH2),X'&HEX2'
+        AELSEIF ('&HEX2' EQ 'F3')  STOC R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&P3),S(&P2),AL1(DH2),X'&HEX2'
+        AELSE
+&LAB_OP ORG &OP_LAB+16  CLT, CLGT R1,M3,D2(B2)
+ DC      X'&HEX',AL1(&P1*16+&P2),S(&P3),AL1(DH2),X'&HEX2'
+		AEND
+     AELSEIF (N'&SYSLIST EQ 3)
+&M3         SETA X2A('&LAB'(7,1))
+&OP_LAB     &OP     &P1,&P2
+        AIF ('&HEX2' EQ 'E2')  LOCG R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&M3),S(&P2),AL1(DH2),X'&HEX2'
+        AELSEIF ('&HEX2' EQ 'E3')  STOCG R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&M3),S(&P2),AL1(DH2),X'&HEX2'
+        AELSEIF ('&HEX2' EQ 'F2')  LOCR R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&M3),S(&P2),AL1(DH2),X'&HEX2'
+         AELSEIF ('&HEX2' EQ 'E0')  LOCFH R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&M3),S(&P2),AL1(DH2),X'&HEX2'
+         AELSEIF ('&HEX2' EQ 'E1')  STOCFH R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&M3),S(&P2),AL1(DH2),X'&HEX2'
+        AELSEIF ('&HEX2' EQ 'F3')  STOC R1,D2(B2),M3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+&M3),S(&P2),AL1(DH2),X'&HEX2'
+         AELSEIF ('&HEX2' EQ '23')
+&LAB_OP ORG &OP_LAB+16  CLTE R1,D2(B2)
+ DC      X'&HEX',AL1(&P1*16+&M3),S(&P2),AL1(DH2),X'&HEX2'
+          AELSEIF ('&HEX2' EQ '2B')
+&LAB_OP ORG &OP_LAB+16  CLGTE R1,D2(B2)
+ DC      X'&HEX',AL1(&P1*16+&M3),S(&P2),AL1(DH2),X'&HEX2'
+        AELSE
+&LAB_OP ORG &OP_LAB+16  CG R1,D2(X2,B2)
+ DC      X'&HEX',AL1(&P1*16+X2),S(&P2),AL1(DH2),X'&HEX2'
+        AEND
+      AELSE
+        MNOTE 12,'RSY INVALID OPERAND COUNT &LAB_OP  '
+      AEND      
+        MEND
+	MACRO
+&LAB	TYPE_RX	&OP,&P1,&P2
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,2)
+     AIF (N'&SYSLIST EQ 3 AND K'&LAB EQ 4)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+X2),AL2(B2*256*16+D2)
+     AELSEIF (N'&SYSLIST EQ 2 AND K'&LAB EQ 5)
+&OP_LAB     &OP     &P1
+&HEXCC  SETC    '&LAB'(5,1)
+&ACC    SETA    X2A('&HEXCC')
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&ACC*16+X2),AL2(B2*256*16+D2)
+      AELSE
+        MNOTE 12,'RX INVALID OPERAND COUNT &LAB_OP  '
+      AEND         
+        MEND
+	MACRO
+&LAB	TYPE_RXE &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+     AIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&P1*16+X2)
+ DC AL2(B2*256*16+D2),AL1(&P3*16+0),X'&HEX2'
+     AELSEIF (N'&SYSLIST EQ 3 AND K'&LAB EQ 6)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+X2)
+ DC      AL2(B2*256*16+D2),X'00&HEX2'
+      AELSE
+        MNOTE 12,'RXE INVALID OPERAND COUNT &LAB_OP  '
+      AEND       
+        MEND
+	MACRO
+&LAB	TYPE_RXF &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+     AIF (N'&SYSLIST EQ 4 AND K'&LAB EQ 6)
+&OP_LAB     &OP     &P1,&P2,&P3
+.*34567890123456789012345678901234567890123456789012345678901234567890
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&P2*16+X2)
+ DC AL2(B2*256*16+D2),AL1(&P1*16+0),X'&HEX2'
+      AELSE
+        MNOTE 12,'RXF INVALID OPERAND COUNT &LAB_OP  '
+      AEND         
+        MEND
+	MACRO
+&LAB	TYPE_RXY &OP,&P1,&P2
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+     AIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC   X'&HEX',AL1(&P1*16+X2),AL2(B2*256*16+D2),AL1(DH2),X'&HEX2'
+      AELSEIF (N'&SYSLIST EQ 2) BIm D2(X2,B2)
+&OP_LAB     &OP &P1
+&LAB_OP ORG &OP_LAB+16
+&M1     SETA X2A('&LAB'(7,1))
+ DC   X'&HEX',AL1(&M1*16+X2),AL2(B2*16*16*16+D2),AL1(DH2),X'&HEX2'
+      AELSE
+        MNOTE 12,'RXY INVALID OPERAND COUNT &LAB_OP  '
+      AEND        
+        MEND
+	MACRO
+&LAB	TYPE_S	&OP,&P1
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,4)
+     AIF (N'&SYSLIST EQ 2)
+&OP_LAB     &OP     &P1
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL2(B2*256*16+D2)
+     AELSEIF (N'&SYSLIST EQ 1)
+&OP_LAB     &OP     
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL2(0)
+      AELSE
+        MNOTE 12,'S INVALID OPERAND COUNT &LAB_OP  '
+      AEND      
+        MEND
+	MACRO
+&LAB	TYPE_SI	&OP,&P1,&P2
+        GBLC &LAB_OP,&OP_LAB
+&HEX	SETC	'&LAB'(3,2)
+      AIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P2),S(&P1)
+      AELSEIF (N'&SYSLIST EQ 2)
+&OP_LAB     &OP     &P1
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',X'00',S(&P1)
+      AELSE
+        MNOTE 12,'SI INVALID OPERAND COUNT &LAB_OP  '
+      AEND       
+        MEND
+	MACRO
+&LAB	TYPE_SIL &OP,&P1,&P2
+        GBLC &LAB_OP,&OP_LAB
+&HEX	SETC	'&LAB'(3,4)
+      AIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',S(&P1),AL2(&P2)
+      AELSE
+        MNOTE 12,'SIL INVALID OPERAND COUNT &LAB_OP  '
+      AEND        
+        MEND
+	MACRO
+&LAB	TYPE_SIY &OP,&P1,&P2
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+      AIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P2),S(&P1),AL1(DH1),X'&HEX2'
+      AELSE
+        MNOTE 12,'SIY INVALID OPERAND COUNT &LAB_OP  '
+      AEND    
+        MEND 
+        MACRO
+&LAB	TYPE_SMI &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB	
+&HEX	SETC	'&LAB'(3,2)
+      AIF (N'&SYSLIST EQ 4)  BPP
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P1*16+0),S(&P3),AL2(&P2)
+      AELSE
+        MNOTE 12,'SMI INVALID OPERAND COUNT &LAB_OP  '
+      AEND      
+        MEND 
+        MACRO
+&LAB	TYPE_SS	&OP,&P1,&P2,&P3,&P4
+        GBLC &LAB_OP,&OP_LAB
+&HEX	SETC	'&LAB_OP'(3,2)	
+      AIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+        AIF ('&HEX' EQ 'E1')
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(L2-1),S(&P1),X'C0C0'
+        AELSEIF ('&HEX'(1,1) EQ 'F') AP ETC.
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1((LP1-1)*16+LP2-1),X'B0B0',X'C0C0'
+        AELSE
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(L1-1),X'B0B0',S(&P2)
+        AEND
+      AELSEIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP   &P1,&P2,&P3
+        AIF ('&HEX' EQ 'F0') SRP
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1((LP1-1)*16+&P3),X'B0B0',S(&P2)
+        AELSEIF ('&HEX' EQ 'D9') MVCK
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(R1*16+&P3),X'B0B0',S(&P2)
+        AELSE
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(LP1*16+LP2),X'B0B0',X'C0C0'
+        AEND
+      AELSEIF (N'&SYSLIST EQ 5)
+&OP_LAB     &OP   &P1,&P2,&P3,&P4
+        AIF ('&HEX' EQ 'EE')  PLO
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P1*16+&P3),S(&P2,&P4)
+        AELSE
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P1*16+&P2),S(&P3,&P4)
+        AEND
+      AELSE
+        MNOTE 12,'SS INVALID OPERAND COUNT &LAB_OP  '
+      AEND       
+        MEND
+        MACRO
+&LAB	TYPE_SSD &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB
+&HEX	SETC	'&LAB_OP'(3,2)
+      AIF (N'&SYSLIST EQ 4)
+&OP_LAB     &OP     &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(R1*16+&P3),X'B0B0',S(&P2)
+      AELSE
+        MNOTE 12,'SSD INVALID OPERAND COUNT &LAB_OP  '
+      AEND       
+        MEND
+        MACRO
+&LAB	TYPE_SSE &OP,&P1,&P2
+        GBLC &LAB_OP,&OP_LAB
+&HEX	SETC	'&LAB_OP'(3,4)	
+      AIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',S(&P1,&P2)
+      AELSE
+        MNOTE 12,'SSE INVALID OPERAND COUNT &LAB_OP  '
+      AEND       
+        MEND
+	MACRO
+&LAB	TYPE_SSF &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB
+&HEX	SETC	'&LAB_OP'(3,2)
+&HEX2   SETC    '&LAB_OP'(5,1)
+      AIF (N'&SYSLIST EQ 4 AND '&HEX2' NE '_')
+        GBLA    &TOT_MASK
+&TOT_MASK SETA &TOT_MASK+1
+&OP_LAB     &OP     &P1,&P2,&P3
+&HEX2A  SETA    X2A('&HEX2')
+        AIF ('&HEX2' EQ '4' OR '&HEX2' EQ '5')
+&LAB_OP ORG &OP_LAB+16
+ DC    X'&HEX',AL1(&P1*16+&HEX2A),S(&P2,&P3)  LPD OR LPDG
+        AELSE
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(&P3*16+&HEX2A),S(&P1,&P2)
+        AEND
+      AELSEIF (N'&SYSLIST EQ 3)
+&OP_LAB     &OP     &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1(L2-1),S(&P1),X'C0C0' PKU OR PKA
+      AELSE
+        MNOTE 12,'SSF INVALID OPERAND COUNT &LAB_OP  '
+      AEND        
+        MEND 
+        MACRO
+&LAB	TYPE_VRI &OP,&P1,&P2,&P3,&P4,&P5
+        GBLC &LAB_OP,&OP_LAB
+		GBLA &VREG_RXB
+		GBLA &V1,&V2,&V3,&V4		
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+
+     AIF (N'&SYSLIST EQ 6 AND '&HEX&HEX2' EQ 'E772') VERIM
+	        VREGS VP1=&P1,VP2=&P2,VP3=&P3 // RPI 2212 VECTOR REGS 0-31
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL1(&V3*16+0,&P4,&P5*16+&VREG_RXB),X'&HEX2'
+     AELSEIF (N'&SYSLIST EQ 6 AND '&HEX&HEX2' EQ 'E659') VSRP
+	 	        VREGS VP1=&P1,VP2=&P2 // RPI 2212 VSRP,V1,V2,I3,I4,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL3(((&P4*16+&P5)*256+&P3)*16+&VREG_RXB),X'&HEX2'
+      AELSEIF (N'&SYSLIST EQ 6 AND '&HEX&HEX2' EQ 'E65B') VPSOP
+	  VREGS VP1=&P1,VP2=&P2 // RPI 2212 VPSOP,V1,V2,I3,I4,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL3(((&P4*16+&P5)*256+&P3)*16+&VREG_RXB),X'&HEX2'
+       AELSEIF (N'&SYSLIST EQ 6 AND '&HEX&HEX2' EQ 'E74A') 
+	   VREGS VP1=&P1,VP2=&P2 // RPI 2212 VFTCISB,V1,V2,I3,M4,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL2(&P3*16+&P4),AL1(&P5*16+&VREG_RXB),X'&HEX2'
+
+           AELSEIF (N'&SYSLIST EQ 6) VAP,V1,V2,V3,I4,M5
+		   VREGS VP1=&P1,VP2=&P2,VP3=&P3 // RPI 2212
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+  DC X'&HEX',AL1(&V1*16+&V2)
+  DC AL1(&V3*16+0),AL2((&P5*256+&P4)*16+&VREG_RXB),X'&HEX2'
+     AELSEIF (N'&SYSLIST EQ 5 AND '&HEX&HEX2' EQ 'E772') VERIM VRId
+	 VREGS VP1=&P1,VP2=&P2,VP3=&P3 // RPI 2212 VERIM,V1,V2,V3,I4,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+&M5 SETA X2A('&LAB'(7,1))
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL1(&V3*16+0,&P4,&M5*16+&VREG_RXB),X'&HEX2'
+       AELSEIF (N'&SYSLIST EQ 5 AND '&HEX&HEX2' EQ 'E786') VSLD VRId
+	   VREGS VP1=&P1,VP2=&P2,VP3=&P3 // RPI 2212 VSLD,V1,V2,V3,I4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL1(&V3*16+0,&P4,0+&VREG_RXB),X'&HEX2'
+        AELSEIF (N'&SYSLIST EQ 5 AND '&HEX&HEX2' EQ 'E787') VSRD VRId
+		VREGS VP1=&P1,VP2=&P2,VP3=&P3 // RPI 2212 VSRD,V1,V2,V3,I4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL1(&V3*16+0,&P4,0+&VREG_RXB),X'&HEX2'
+      AELSEIF (N'&SYSLIST EQ 5 AND '&HEX&HEX2' EQ 'E777') VSLDB VRId
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // RPI 2212 VSLDB,V1,V2,V3,I4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL1(&V3*16+0,&P4,0+&VREG_RXB),X'&HEX2'
+      AELSEIF (N'&SYSLIST EQ 5 AND '&HEX&HEX2' EQ 'E746') VGM VRIb
+	  VREGS VP1=&P1 // RPI 2212 VGM,V1,I2,I3,M4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+0)
+ DC AL1(&P2,&P3,&P4*16+&VREG_RXB),X'&HEX2'
+       AELSEIF (N'&SYSLIST EQ 5 AND '&HEX&HEX2' EQ 'E74D') VREP VRIc
+	   VREGS VP1=&P1,VP2=&P2 // RPI 2212 VREP,V1,V3,I2,M4 RPI 2216
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL2(&P3),AL1(&P4*16+&VREG_RXB),X'&HEX2'
+         AELSEIF (N'&SYSLIST EQ 5 AND '&HEX&HEX2' EQ 'E772') VERIM VRId
+		 VREGS VP1=&P1,VP2=&P2,VP3=&P3 // RPI 2212 VERIM,V1,V2,V3,I4,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+&M5     SETA X2A('&LAB'(7,1))
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0,&P4,&M5*16+&VREG_RXB),X'&HEX2'
+      AELSEIF (N'&SYSLIST EQ 5 AND '&HEX&HEX2' EQ 'E658') VCVD
+	  VREGS VP1=&P1 // RPI 2212 VCVD,V1,R2,I3,M4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&P2)
+  DC AL3((&P4*256+&P3)*16+&VREG_RXB),X'&HEX2'
+        AELSEIF (N'&SYSLIST EQ 5 AND '&HEX&HEX2' EQ 'E65A') VCVDG
+		VREGS VP1=&P1 // RPI 2212 VCVDG,V1,R2,I3,M4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&P2)
+  DC AL3((&P4*256+&P3)*16+&VREG_RXB),X'&HEX2'
+       AELSEIF (N'&SYSLIST EQ 4 AND '&HEX&HEX2' EQ 'E746') VGM VRIb
+	   VREGS VP1=&P1 // RPI 2212 VGM,V1,I2,I3,M4
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+&M4     SETA X2A('&LAB'(7,1))
+ DC X'&HEX',AL1(&V1*16+0)
+ DC AL1(&P2,&P3,&M4*16+&VREG_RXB),X'&HEX2'
+        AELSEIF (N'&SYSLIST EQ 4 AND '&HEX&HEX2' EQ 'E74A') VFTCI VRIe
+		VREGS VP1=&P1,VP2=&P2 // RPI 2212 VFTCI,V1,V2,I3,M4,M5
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+&M4     SETA X2A('&LAB'(7,1))
+&M5     SETA X2A('&LAB'(8,1))
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL2(&P3*16+&M4),AL1(&M5*16+&VREG_RXB),X'&HEX2'
+        AELSEIF (N'&SYSLIST EQ 4 AND '&HEX&HEX2' EQ 'E74D') VREP VRIc
+		VREGS VP1=&P1,VP2=&P2 // RPI 2212 VREP,V1,V3,I2,M4 RPI 2216
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+&M4     SETA X2A('&LAB'(7,1))
+ DC X'&HEX',AL1(&V1*16+&V2)
+ DC AL2(&P3),AL1(&M4*16+&VREG_RXB),X'&HEX2'
+     AELSEIF (N'&SYSLIST EQ 4)
+	 VREGS VP1=&P1 // RPI 2212 VLIP,V1,I2,I3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+0)
+ DC AL2(&P2),AL1(&P3*16+&VREG_RXB),X'&HEX2'
+     AELSEIF (N'&SYSLIST EQ 3)
+	 VREGS VP1=&P1 // RPI 2212 VGBM V1,I2 
+&OP_LAB     &OP &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+     AIF (K'&LAB EQ 7)
+&M3     SETA X2A('&LAB'(7,1))
+     AELSE
+&M3     SETA 0
+     AEND
+ DC X'&HEX',AL1(&V1*16+0)
+ DC AL2(&P2),AL1(&M3*16+&VREG_RXB),X'&HEX2'
+     AELSEIF (N'&SYSLIST EQ 2 AND '&OP' EQ 'VZERO')  VGBM V1,0
+	 VREGS VP1=&P1 // RPI 2212
+&OP_LAB     &OP &P1
+&VR2 SETA  X2A('&LAB_OP'(5,1))
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+0)
+ DC AL2(0),AL1(0+&VREG_RXB),X'&HEX2'
+     AELSEIF (N'&SYSLIST EQ 2 AND '&OP' EQ 'VONE')  VGBM V1,X'FFFF'
+	 VREGS VP1=&P1 // RPI 2212
+&OP_LAB     &OP &P1
+&VR2 SETA  X2A('&LAB_OP'(5,1))
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+0)
+ DC XL2'FFFF',AL1(0+&VREG_RXB),X'&HEX2'
+      AELSE
+        MNOTE 12,'VRI INVALID OPERAND COUNT &LAB_OP  '
+      AEND     
+        MEND
+	MACRO
+&LAB	TYPE_VRR &OP,&P1,&P2,&P3,&P4,&P5,&P6
+        GBLC &LAB_OP,&OP_LAB
+		GBLA &VREG_RXB
+		GBLA &V1,&V2,&V3,&V4
+&HEX	SETC	'&LAB'(3,2)
+&H2     SETC    '&LAB'(5,2)
+
+.* P7 **********************************************************
+     AIF (N'&SYSLIST EQ 7 AND '&LAB'(3,3) GE 'E78'                     X
+	                      AND '&LAB'(3,3) LE 'E79') 
+	 VREGS VP1=&P1,VP2=&P2,VP3=&P3,VP4=&P4 E78B VRR VSTRS
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5,&P6
+&LAB_OP ORG &OP_LAB+16 // VRR VSTRC V1-4,M5-6
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+&P5)
+ DC AL1(&P6*16+0,&V4*16+&VREG_RXB),X'&H2'
+ AELSEIF (N'&SYSLIST EQ 7 AND '&LAB'(3,4) EQ 'E7B8')
+	 VREGS VP1=&P1,VP2=&P2,VP3=&P3,VP4=&P4 E7B8 VMSL V1,V2,V3,V4,M5,M6
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5,&P6
+&LAB_OP ORG &OP_LAB+16 
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+&P5)
+ DC AL1(&P6*16+0,&V4*16+&VREG_RXB),X'&H2'
+      AELSEIF (N'&SYSLIST EQ 7 AND '&LAB'(3,4) GE 'E7B') E7B8 VFCE
+	 VREGS VP1=&P1,VP2=&P2,VP3=&P3 // RPI 2212
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5,&P6
+&LAB_OP ORG &OP_LAB+16 // VRR VSTRC V1-4,M5-6
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0)
+ DC AL1(&P6*16+&P5,&P4*16+&VREG_RXB),X'&H2'
+.* P6 **********************************************************
+ AELSEIF (N'&SYSLIST EQ 6 AND '&LAB_OP'(3,3) EQ 'E78') 
+   AIF ('&LAB'(6,1) GE 'A' AND '&LAB'(6,1) LE 'F')
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3,VP4=&P4  
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+&M5          SETA &P5
+&M6          SETA 0
+           AIF (K'&LAB GE 7)
+  		     AIF ('&LAB'(7,1) NE '_')
+&M5            SETA X2A('&LAB'(7,1))
+&M6            SETA &P5
+             AEND	
+           AEND	   
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+&M5,&M6*16+0,&V4*16+&VREG_RXB)
+ DC X'&H2'
+   AELSE
+   	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // RPI 2212
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0,&P5*16+0,&P4*16+&VREG_RXB),X'&H2'
+   AEND
+   
+  AELSEIF (N'&SYSLIST EQ 6 AND '&LAB'(3,3) GE 'E7A' AND                X
+                               '&LAB'(3,3) LE 'E7B') 
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3,VP4=&P4 E7A9 VMLH V1,V2,V3,V4,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+&M5     SETA &P5
+&M6     SETA 0
+       AIF (K'&LAB EQ 7)  E7B8 VSML V1,V2,V3,V4,M5,M6
+&M5     SETA X2A('&LAB'(7,1))
+&M6     SETA &P5
+       AEND 
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+&M5,&M6*16+0,&V4*16+&VREG_RXB),X'&H2'  
+  AELSEIF (N'&SYSLIST EQ 6 AND '&LAB'(3,3) GE 'E7C' AND                X
+                               '&LAB'(3,3) LE 'E7D') 
+	  VREGS VP1=&P1,VP2=&P2 E7C0 VCLGD V1,V2,M3,M4,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2,0,&P5*16+&P4,&P3*16+&VREG_RXB),X'&H2' 
+    AELSEIF (N'&SYSLIST EQ 6 AND '&LAB'(3,4) GE 'E7FB'                 X
+	                         AND '&LAB'(3,4) LE 'E7F9') EBCDIC ORDER 
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 E7F8 VCEQ V1,V2,V3,M4,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0,&P5*16+0,&P4*16+&VREG_RXB),X'&H2'
+   AELSEIF (N'&SYSLIST EQ 6 AND '&LAB'(3,3) GE 'E7E' AND               X
+                                '&LAB'(3,3) LE 'E7F') 
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 E7E2 VFS V1,V2,V3,M4,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0,0+&P5,&P4*16+&VREG_RXB),X'&H2'
+ AELSEIF (N'&SYSLIST EQ 6) VFEE
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // RPI 2212
+&OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0,&P5*16+0,&P4*16+&VREG_RXB),X'&H2'
+.* P5 **********************************************************
+      AELSEIF (N'&SYSLIST EQ 5 AND '&LAB_OP'(3,4) EQ 'E650')
+	  VREGS VP2=&P2 // E650 VCVB R1,V2,M3,M4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&V2,0,&P3*16+&P4,0+&VREG_RXB),X'&H2'
+       AELSEIF (N'&SYSLIST EQ 5 AND '&LAB_OP'(3,4) EQ 'E652')
+	  VREGS VP2=&P2 // E652 VCVBG R1,V2,M3,M4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&P1*16+&V2,0,&P3*16+&P4,0+&VREG_RXB),X'&H2'
+      AELSEIF (N'&SYSLIST EQ 5 AND '&LAB_OP'(3,4) EQ 'E75C')
+	  VREGS VP1=&P1,VP2=&P2 // RPI 2212
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2,0,&P4*16+0,&P3*16+&VREG_RXB),X'&H2'
+       AELSEIF (N'&SYSLIST EQ 5 AND '&LAB_OP'(3,3) EQ 'E76')
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // E760 VMRL V1,V2,V3,M4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&V1*16+&V2,&V3*16+0,0,&P4*16+&VREG_RXB),X'&H2'
+        AELSEIF (N'&SYSLIST EQ 5 AND '&LAB_OP'(3,3) EQ 'E77')
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // E770 VESLV V1,V2,V3,M4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&V1*16+&V2,&V3*16+0,0,&P4*16+&VREG_RXB),X'&H2'
+      AELSEIF (N'&SYSLIST EQ 5 AND '&LAB'(3,3) GE 'E78')
+	    AIF ('&LAB'(6,1) GE '0' AND '&LAB'(6,1) LE '9')
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // E780 VFEE V1,V2,V3,M4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+&M3          SETA &P4
+&M5          SETA 0
+           AIF (K'&LAB GE 7)
+  		     AIF ('&LAB'(7,1) NE '_')
+&M3            SETA X2A('&LAB'(7,1))
+&M5            SETA &P4
+             AEND	
+           AEND	   
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0,&M5*16+0,&M3*16+&VREG_RXB),X'&H2'
+       AELSE
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3,VP4=&P4 // E78A VSTRC V1,V2,V3,V4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+&M5        SETA 0
+&M6        SETA 0
+           AIF (K'&LAB GE 7)
+  		     AIF ('&LAB'(7,1) NE '_')
+&M5            SETA X2A('&LAB'(7,1))
+             AEND
+		   AEND
+           AIF (K'&LAB GE 8)
+              AIF ('&LAB'(8,1) NE '_')
+&M6             SETA X2A('&LAB'(8,1))
+              AEND			  
+           AEND	   
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+&M5,&M6*16+0,&V4*16+&VREG_RXB)
+ DC X'&H2'
+        AEND
+   AELSEIF (N'&SYSLIST EQ 5 AND '&LAB'(3,3) GE 'E7A'                   X
+                            AND '&LAB'(3,3) LE 'E7B')
+   
+     AIF ('&LAB'(6,1) EQ '9')
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3,VP4=&P4 // E7A9 VMFHH V1,V2,V3,V4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+          AIF (K'&LAB EQ 7)
+&M5          SETA X2A('&LAB'(7,1))
+          AELSE
+&M5          SETA 0
+          AEND		  
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+&M5,0,&V4*16+&VREG_RXB),X'&H2'	 
+
+     AELSEIF ('&LAB'(6,1) GE 'A' )
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3,VP4=&P4 // E7AA VMFHH V1,V2,V3,V4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+          AIF (K'&LAB EQ 7)
+&M5          SETA X2A('&LAB'(7,1))
+          AELSE
+&M5          SETA 0
+          AEND		  
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+&M5,0,&V4*16+&VREG_RXB),X'&H2'
+ 
+        AELSE		
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // E7A1 VMFHH V1,V2,V3,M4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16		  
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0,0,&P4*16+&VREG_RXB),X'&H2'	 
+
+        AEND 
+		
+	    AELSEIF (N'&SYSLIST EQ 5 AND '&LAB'(3,3) EQ 'E7C' )
+	  VREGS VP1=&P1,VP2=&P2 E7C0 VCLGD V1,V2,M4,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+      AIF (K'&LAB EQ 7)
+&M3    SETA X2A('&LAB'(7,1))
+&M4    SETA &P3
+&M5    SETA &P4  
+      AELSE
+&M3    SETA &P3
+&M4    SETA &P4
+&M5    SETA 0
+      AEND
+ DC X'&HEX',AL1(&V1*16+&V2,0,&M5*16+&M4,&M3*16+&VREG_RXB),X'&H2'	
+	    AELSEIF (N'&SYSLIST EQ 5 AND '&LAB'(3,3) GE 'E7E')
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 E7E7 VFM V1,V2,V3,M5
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+&M4   SETA &P4
+&M5   SETA 0
+&M6   SETA 0
+      AIF (K'&LAB GE 7)
+&M4     SETA X2A('&LAB'(7,1))
+&M5     SETA &P4  
+      AEND
+	  AIF (K'&LAB GE 8)
+&M5     SETA X2A('&LAB'(8,1))
+&M6     SETA &P4
+      AEND
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0,&M6*16+&M5,&M4*16+&VREG_RXB),X'&H2'			
+      AELSEIF (N'&SYSLIST EQ 5 AND K'&LAB EQ 8) OP+2
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3,VP4=&P4 // RPI 2212
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&M5     SETA X2A('&LAB'(7,1))
+&M6     SETA X2A('&LAB'(8,1))
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&V1*16+&V2,&V3*16+&V4,&M5,&M6,&VREG_RXB),X'&H2'
+     AELSEIF (N'&SYSLIST EQ 5 AND K'&LAB EQ 7) OP+1
+	 VREGS VP1=&P1,VP2=&P2 // RPI 2212
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&M3     SETA X2A('&LAB'(7,1))
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2,0,&P4*16+&P3,&M3*16+&VREG_RXB),X'&H2'
+     AELSEIF (N'&SYSLIST EQ 5)
+      	 
+	   VREGS VP1=&P1,VP2=&P2 // E75C VISTR V1,V2,M3,M4
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2,0,&P4*16+0,+&P3*16+&VREG_RXB),X'&H2'	   
+.* P4 *********************************************************	   
+     AELSEIF (N'&SYSLIST EQ 4 AND '&LAB_OP'(3,4) EQ 'E677') 
+	  VREGS VP1=&P1,VP2=&P2 // VCT V1,V2,M3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(0+&V1,&V2*16+0,&P3*16+0,0+&VREG_RXB),X'&H2'
+     AELSEIF (N'&SYSLIST EQ 4 AND '&LAB_OP'(3,4) EQ 'E75C')
+	 VREGS VP1=&P1,VP2=&P2  E75C VISTR V1,V2,M3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+        AIF (K'&LAB EQ 7)
+&M3       SETA X2A('&LAB'(7,1))
+&M5       SETA &P3
+        AELSE
+&M3       SETA &P3
+&M5       SETA 0
+        AEND
+ DC X'&HEX',AL1(&V1*16+&V2,0,&M5*16+0,&M3*16+&VREG_RXB),X'&H2' 
+     AELSEIF (N'&SYSLIST EQ 4 AND '&LAB_OP'(3,3) EQ 'E75') 
+	  VREGS VP1=&P1,VP2=&P2 // E750-F VPOPCT V1,V2,M3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2,0,0,&P3*16+&VREG_RXB),X'&H2'
+       AELSEIF (N'&SYSLIST EQ 4 AND '&LAB_OP'(3,3) GE 'E76')
+	     AIF ('&LAB_OP'(3,4) EQ 'E762') 
+ 	  VREGS VP1=&P1 // E762 VLVGP V1,R2,R3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&V1*16+&P2,&P3*16+0,0,0+&VREG_RXB),X'&H2'    
+         AELSEIF (K'&LAB GE 8)           		  
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // E780 VFEE V1,V2,V3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+&M4  SETA 0
+&M5  SETA 0
+     AIF (K'&LAB GE 7 AND '&LAB'(7,1) NE '_')
+&M4   SETA X2A('&LAB'(7,1))
+     AEND
+	 AIF (K'&LAB GE 8 AND '&LAB'(8,1) NE '_')
+&M5   SETA X2A('&LAB'(8,1))
+     AEND
+ DC  X'&HEX',AL1(&V1*16+&V2,&V3*16+0,&M5*16+0,&M4*16+&VREG_RXB),X'&H2'
+ 		 AELSEIF (K'&LAB GE 7) 
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // E760 VMRLB V1,V2,V3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+&M4   SETA X2A('&LAB'(7,1))
+ DC  X'&HEX',AL1(&V1*16+&V2,&V3*16+0,0,&M4*16+&VREG_RXB),X'&H2'
+ 		 AELSE 
+	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // E766 VCKSM V1,V2,V3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC  X'&HEX',AL1(&V1*16+&V2,&V3*16+0,0,0+&VREG_RXB),X'&H2'
+         AEND
+     AELSEIF (N'&SYSLIST EQ 4 AND '&LAB_OP'(3,4) EQ 'E7CC') 
+ 	  VREGS VP1=&P1,VP2=&P2 // E7CC VFPSO V1,V2,M3,M4,M5
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+        AIF (K'&LAB EQ 8)
+&M3       SETA X2A('&LAB'(7,1))
+&M4       SETA X2A('&LAB'(8,1))
+        AELSE
+&M3       SETA 0
+&M4       SETA 0
+        AEND 
+&M5     SETA &P3
+ DC  X'&HEX',AL1(&V1*16+&V2,0,&M5*16+&M4,&M3*16+&VREG_RXB),X'&H2' 		 
+
+	     AELSEIF (N'&SYSLIST EQ 4 AND '&LAB'(3,3) EQ 'E7D')
+	 VREGS VP1=&P1,VP2=&P2  E7D7 VUPH V1,V2,M3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2,0,0,&P3*16+&VREG_RXB),X'&H2'	 
+      AELSEIF (N'&SYSLIST EQ 4 AND '&LAB_OP'(3,3) EQ 'E7F') 
+ 	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // E7F8 VCEQ V1,V2,V3,M4,M5
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+&M4      SETA 0
+&M5      SETA 0
+         AIF (K'&LAB GE 7)
+&M4        SETA X2A('&LAB'(7,1))
+         AEND
+		 AIF (K'&LAB GE 8)
+&M5        SETA X2A('&LAB'(8,1))
+         AEND	 
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0,&M5*16+0,&M4*16+&VREG_RXB),X'&H2' 
+
+     AELSEIF (N'&SYSLIST EQ 4 AND '&LAB_OP'(3,3) GE 'E7A') 
+ 	  VREGS VP1=&P1,VP2=&P2,VP3=&P3 // E7A1 VMLLH V1,V2,V3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+&M4      SETA 0
+&M5      SETA 0
+&M6      SETA 0
+         AIF (K'&LAB GE 7)
+&M4        SETA X2A('&LAB'(7,1))
+         AEND
+		 AIF (K'&LAB GE 8)
+&M5        SETA X2A('&LAB'(8,1))
+         AEND
+		 AIF (K'&LAB GE 9)
+&M6        SETA X2A('&LAB'(9,1))
+         AEND		 
+ DC X'&HEX',AL1(&V1*16+&V2,&V3*16+0,&M6*16+&M5,&M4*16+&VREG_RXB),X'&H2' 
+		 
+     AELSEIF (N'&SYSLIST EQ 4)
+	 VREGS VP2=&P2  E650 VCVB R1,V2,M3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+        AIF (K'&LAB EQ 7)
+&M3       SETA X2A('&LAB_OP'(7,1))
+        AELSE
+&M3       SETA 0
+        AEND
+ DC X'&HEX',AL1(&P1*16+&V2,0,&P3*16+0,&M3*16+&VREG_RXB),X'&H2'
+.* P3 **********************************************************
+     AELSEIF (N'&SYSLIST EQ 3 AND '&LAB_OP'(3,4) EQ 'E75C') 
+	  VREGS VP1=&P1,VP2=&P2 // E75C VISTR V1,V2
+&OP_LAB     &OP &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+        AIF (K'&LAB GE 7 AND '&LAB'(7,1) NE '_')
+&M3       SETA X2A('&LAB_OP'(7,1))
+          AIF (K'&LAB GE 8 AND '&LAB'(8,1) NE '_')
+&M5           SETA X2A('&LAB'(8,1))
+          AELSE
+&M5           SETA 0
+          AEND 
+		AELSE
+		  MNOTE 12,'VRR MISSING MNEMONIC PARMS FOR &LAB_OP'
+        AEND
+ DC X'&HEX',AL1(&V1*16+&V2,0,&M5*16+0,&M3*16+&VREG_RXB),X'&H2'
+      AELSEIF (N'&SYSLIST EQ 3 AND '&LAB_OP'(3,4) EQ 'E7C4') 
+	  VREGS VP1=&P1,VP2=&P2 // E7C4 VFLL V1,V2,M3,M4
+&OP_LAB     &OP &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+        AIF (K'&LAB EQ 8)
+&M3       SETA X2A('&LAB'(7,1))
+&M4       SETA X2A('&LAB'(8,1))
+        AELSE
+&M3       SETA 0
+&M4       SETA 0
+        AEND 
+ DC X'&HEX',AL1(&V1*16+&V2,0,0+&M4,&M3*16+&VREG_RXB),X'&H2'
+     AELSEIF (N'&SYSLIST EQ 3) VLR V1,V2
+	  VREGS VP1=&P1,VP2=&P2 // RPI
+&OP_LAB     &OP &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+&M3     SETA  0
+&M4     SETA  0
+&M5     SETA  0
+        AIF (K'&LAB GE 7)
+&M3       SETA X2A('&LAB'(7,1))
+        AEND
+		AIF (K'&LAB GE 8)
+&M4       SETA X2A('&LAB'(8,1))
+        AEND
+		AIF (K'&LAB EQ 9)
+&M5       SETA X2A('&LAB'(9,1))
+        AEND	
+ DC X'&HEX',AL1(&V1*16+&V2,0,&M5*16+&M4,&M3*16+&VREG_RXB),X'&H2'
+.* P2**************************************************************
+     AELSEIF (N'&SYSLIST EQ 2) VTP
+	  VREGS VP2=&P1 // RPI
+&OP_LAB     &OP &P1
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(0+&V2,0,0,0+&VREG_RXB),X'&H2'
+     AELSE
+        MNOTE 12,'VRR INVALID OPERAND COUNT &LAB_OP  '
+     AEND 
+     MEND
+     
+
+        MACRO
+&LAB	TYPE_VRS &OP,&P1,&P2,&P3,&P4
+        GBLC &LAB_OP,&OP_LAB
+		GBLA &VREG_RXB
+		GBLA &V1,&V2,&V3,&V4		
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+     AIF (N'&SYSLIST EQ 5) E73E VSTM V1,V3,D2(B2)
+	  VREGS VP1=&P1,VP2=&P2 // RPI 2212 VECTOR REGS 0-31 RPI 2216
+&OP_LAB     &OP &P1,&P2,&P3,&P4
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2),S(&P3),AL1(&P4*16+&VREG_RXB),X'&HEX2'
+     AELSEIF (N'&SYSLIST EQ 4) VSTM P3
+&OP_LAB     &OP &P1,&P2,&P3
+ 	           AIF ('&LAB'(3,4) EQ 'E721')
+			   VREGS VP2=&P2 // RPI 2212 VLGV,R1,V3,D2(B2) RPI 2216
+&M4 SETA X2A('&LAB'(7,1))
+&LAB_OP&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&P1*16+&V2),S(&P3),AL1(&M4*16+&VREG_RXB),X'&HEX2'
+  	           AELSEIF ('&LAB'(3,4) EQ 'E722')
+			   VREGS VP1=&P1 // RPI 2212 VLVG V1,R3,D2(B2) 
+&M4 SETA X2A('&LAB'(7,1))
+&LAB_OP&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&P2),S(&P3),AL1(&M4*16+&VREG_RXB),X'&HEX2'
+   	           AELSEIF ('&LAB'(3,4) EQ 'E737') VLL V1,R3,D2(B2)
+			   VREGS VP1=&P1 // RPI 2212 VLVG V1,R3,D2(B2) 
+&LAB_OP&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&P2),S(&P3),AL1(&VREG_RXB),X'&HEX2'
+   	           AELSEIF ('&LAB'(3,4) EQ 'E733') 
+			   VREGS VP1=&P1,VP2=&P2 // RPI 2212 VERLL V1,V3,D2(B2)
+&M4 SETA X2A('&LAB'(7,1))
+&LAB_OP&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2),S(&P3),AL1(&M4*16+&VREG_RXB),X'&HEX2'
+  	         AELSEIF ('&LAB'(3,4) EQ 'E736')
+			 VREGS VP1=&P1,VP2=&P2 // RPI 2212 VLM V1,V3,D2(B2),M4
+&M3 SETA X2A('&LAB'(7,1))
+&LAB_OP&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2),S(&P3),AL1(&M3*16+&VREG_RXB),X'&HEX2'
+   	         AELSEIF ('&LAB'(3,4) EQ 'E738' OR '&LAB'(3,4) EQ 'E73A')
+	VREGS VP1=&P1,VP2=&P2 // RPI 2212 VESRL V1,V3,D2(B2) OR VESRA
+&M4 SETA X2A('&LAB'(7,1))
+&LAB_OP&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2),S(&P3),AL1(&M4*16+&VREG_RXB),X'&HEX2'
+    	     AELSEIF ('&LAB'(3,4) EQ 'E73F') VSTL NO M3
+			 VREGS VP1=&P1 // RPI 2212 VSTL V1,R3,D2(B2)
+&LAB_OP&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&P2),S(&P3),AL1(&VREG_RXB),X'&HEX2'
+     	         AELSEIF ('&LAB'(3,4) EQ 'E73E')
+	VREGS VP1=&P1,VP2=&P2 // RPI 2212 VSTM V1,V3,D2(B2) RPI 2216
+&M4 SETA X2A('&LAB'(7,1))
+&LAB_OP&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2),S(&P3),AL1(&M4*16+&VREG_RXB),X'&HEX2'
+      	        AELSEIF ('&LAB'(3,4) EQ 'E730')
+	VREGS VP1=&P1,VP2=&P2 // RPI 2212 VRS,VESL V1,V3,D2(B2) RPI 2216
+&M4 SETA X2A('&LAB'(7,1))
+&LAB_OP&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2),S(&P3),AL1(&M4*16+&VREG_RXB),X'&HEX2'
+			   AELSE   
+&LAB_OP ORG &OP_LAB+16  
+ DC X'&HEX',AL1(&P2),S(&P3),AL1(&P1*16+&VREG_RXB),X'&HEX2'
+               AEND
+      AELSE
+        MNOTE 12,'VRS INVALID OPERAND COUNT &LAB_OP  '
+      AEND      
+        MEND
+        MACRO
+&LAB	TYPE_VRV &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB
+		GBLA &VREG_RXB
+		GBLA &V1,&V2,&V3,&V4		
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+     AIF (N'&SYSLIST EQ 4)
+	 VREGS VP1=&P1 // RPI 2212 VGEG,V1,D2(V2,B2),M3 Z15?
+&OP_LAB     &OP &P1,&P2,&P3
+&V2 SETA 6 // DSH FORCE V2=22 FOR NOW
+&VREG_RXB SETA &VREG_RXB+4 VIRTUAL INDEX REG V2
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+&V2),X'C0C0',AL1(&P3*16+&VREG_RXB),X'&HEX2'
+      AELSE
+        MNOTE 12,'VRV INVALID OPERAND COUNT &LAB_OP  '
+      AEND     
+        MEND
+	MACRO
+&LAB	TYPE_VRX &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB
+		GBLA &VREG_RXB
+		GBLA &V1,&V2,&V3,&V4		
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+     AIF (N'&SYSLIST EQ 4)
+	 VREGS VP1=&P1 // RPI 2212 VLEBRH V1,D2(X2,B2),M3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+X2),X'C0C0',AL1(&P3*16+&VREG_RXB),X'&HEX2'
+     AELSEIF (N'&SYSLIST EQ 3 AND K'&LAB EQ 7)
+	 VREGS VP1=&P1 // RPI 2212 VLLEBRZH V1,D2(X2,B2)
+&OP_LAB     &OP &P1,&P2
+&M3 SETA X2A('&LAB'(7,1))
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+X2),X'C0C0',AL1(&M3*16+&VREG_RXB),X'&HEX2'
+     AELSEIF (N'&SYSLIST EQ 3)
+	 VREGS VP1=&P1 // RPI 2212 VLLEBRZH V1,D2(X2,B2)
+&OP_LAB     &OP &P1,&P2
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&V1*16+X2),X'C0C0',AL1(0+&VREG_RXB),X'&HEX2'
+      AELSE
+        MNOTE 12,'VRX INVALID OPERAND COUNT &LAB_OP  '
+      AEND     
+        MEND
+	MACRO
+&LAB	TYPE_VSI &OP,&P1,&P2,&P3
+        GBLC &LAB_OP,&OP_LAB
+		GBLA &VREG_RXB
+		GBLA &V1,&V2,&V3,&V4		
+&HEX	SETC	'&LAB'(3,2)
+&HEX2   SETC    '&LAB'(5,2)
+     AIF (N'&SYSLIST EQ 4)
+	 VREGS VP1=&P1 // RPI 2212 VPKZ V1,D2(B2),I3
+&OP_LAB     &OP &P1,&P2,&P3
+&LAB_OP ORG &OP_LAB+16
+ DC X'&HEX',AL1(&P3),S(&P2),AL1(&V1*16+&VREG_RXB),X'&HEX2'
+      AELSE
+        MNOTE 12,'VSI INVALID OPERAND COUNT &LAB_OP  '
+      AEND     
+        MEND
+* END OF INS6MACS.CPY BY TESTINS6.MLC

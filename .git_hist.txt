@@ -8396,7 +8396,72 @@ set GIT_COMMITTER_DATE=2021-03-29 20:30:00 +0100
 git commit -m "Reconstructed version v1.7.01 of z390 committed on behalf of Don Higgins"
 git tag -a v1.7.01 -m "Reconstructed version v1.7.01 of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.7.02
+dir *.* /B /on /s      >.allfile.txt
+dir *.cbl /B /on /s    >\temp\.genmlc.lst
+dir *.zsm /B /on /s   >>\temp\.genmlc.lst
+dir *. /B /A-D /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.7.02
+git rm  RPI/RPI2210.MAC
+git rm  RPI/RPI2210.MLC
+git rm  RPI/TEST2210.BAT
+git rm  RPI/TEST2210_ref.BAT
+git add RPI/TESTMDCB.BAT
+git rm  RPI/TESTMDCB.txt
+git rm  RPI/rpi2210_ref.mlc
+git rm  RPI/xyz.mac
+git add bat/BLDJAR.BAT
+git rm  bat/BLDJAR1108.BAT
+git rm  bat/BLDJAR80261.BAT
+git add bat/RUNASMTESTS.bat
+git rm  bat/RUNDEMOS.BAT
+git rm  bat/RUNTESTS.bat
+git rm  bat/Z390.BAT
+git rm  demo/DEMO.MLC
+git rm  demo/DEMOBMK1.MLC
+git rm  demo/DEMOBMK2.MLC
+git rm  demo/DEMODFP1.MLC
+git rm  demo/DEMOM8Q1.ZSM
+git rm  demo/DEMONUM1.MLC
+git rm  demo/DEMONUM2.MLC
+git rm  demo/DEMOSTR1.MLC
+git rm  demo/DEMOWTO1.MLC
+git rm  demo/DEMOWTO2.MLC
+git rm  demo/SIEVE.MLC
+git rm  demo/STDDEVLB.MLC
+git add perl/readme.txt
+git add src/az390.java
+git add src/mz390.java
+git add src/tz390.java
+git rm  tests/INS6MACS.CPY
+git rm  tests/INS6OPRS.CPY
+git rm  tests/TESTINS6.mlc
+git rm  z390_v1701_readme.txt
+git add RPI/EntMnem.bat
+git add RPI/ExtMnem.mlc
+git add RPI/RPLTEST.MAC
+git add RPI/TESTOPT.MAC
+git add RPI/TESTRPL.MLC
+git add RPI/test.MLC
+git add RPI/test.bat
+git add RPI/testrpl.bat
+git add bat/ZOPCHECK.BAT
+git add structuredmacros/
+git add z390_v1702_readme.txt
+git add zopcheck/
+
+==> Create commit for V1.7.02
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2020-11-02 12:44:00 -0500
+set GIT_COMMITTER_DATE=2021-03-29 20:43:00 +0100
+git commit -m "Reconstructed version v1.7.02 of z390 committed on behalf of Don Higgins"
+git tag -a v1.7.02 -m "Reconstructed version v1.7.02 of z390 committed on behalf of Don Higgins"
 
 
 

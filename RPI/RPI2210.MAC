@@ -1,4 +1,0 @@
-         macro
-&label   rpi2210   &p3
-&label   dc    al1(&p3)
-         mend

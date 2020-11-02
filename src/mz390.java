@@ -422,6 +422,9 @@ public  class  mz390 {
 	 * 2019-09-20 dsh fix depreciated Integer() with Integer.valueOf()
 	 * 2019-12-05 dsh fix to prevent abort error 288 on instruction with no parsm and no &&SYSLIST
 	 * 2020-09-07 dsh rpi 2210 support &var seta &varname such as n equ 25 followed by &o2 seta &parm where &parm = n
+	 * 2020-09-30 dsh rpi 2217 support SETA self defining term x'..' as operand to convert to integer
+	 * 2020-10-25 dsh rpi 1628 add option zvsam(0/1/2) and gbla &syszvsam for access in macros
+	 * 2020-10-29 dsh rpi 2211 prevent pcopt from optimizing part of pc_op list for macro line
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -829,6 +832,7 @@ public  class  mz390 {
 	String sys_dsn = null; // full path, file name, and suffix
 	String sys_mem = null; // file name and suffix
 	String sys_vol = null; // drive letter
+	int gbl_syszvsam = 0; // dsh rpi 1628 2020-10-25 zvsam option 0=default/1=vsam1/2=vsan2 rpi
 	int tot_gbl_name = 0;
 	int tot_gbl_seta = 0;
 	int tot_gbl_setb = 0;
@@ -7142,7 +7146,10 @@ public  class  mz390 {
 			exp_stk_val_type[tot_exp_stk_var - 1] = val_seta_type;
 			switch (setc_value.substring(0,1).toUpperCase().charAt(0)){
 			case 'B': // B'11000001' binary
-				seta_value = get_int_from_string(setc_value.substring(2,setc_value.length()-1),2); 
+				seta_value = get_int_from_string(setc_value.substring(2,setc_value.length()-1),2);
+                		if (tz390.opt_traceall){
+						tz390.put_trace(" PUSH SDT B'=" + setc_value + " = "+ seta_value); // dsh2
+		                }		
 				exp_stk_seta[tot_exp_stk_var-1] = seta_value;
 				break;
 			case 'C': // RPI192 C'..'|C".."|C!..! char sdt 
@@ -8434,6 +8441,8 @@ public  class  mz390 {
 		gbl_setc[tot_gbl_setc-1] = tz390.trace_options; // RPI 930
 		add_gbl_sys("&SYSVER",var_setc_type);
 		gbl_setc[tot_gbl_setc-1] = tz390.version;
+		add_gbl_sys("&SYSZVSAM",var_seta_type);     // dsh rpi 1628 add option zvsam and gbla &syszvsam
+		gbl_seta[tot_gbl_seta-1] = tz390.opt_zvsam;  // dsh rpi 1628
 	    if (tz390.opt_bs2000){  // RPI 604
 	    	add_gbl_sys("&SYSTEM",var_setc_type);
 	    	gbl_setc[tot_gbl_setc-1] = tz390.version.substring(1,2)
@@ -9654,13 +9663,13 @@ public  class  mz390 {
 	    tot_exp_stk_var = 0;
 	    tot_pcl_exec++;
 	    pc_loc_prev = 0;
+		if (tz390.opt_pcopt 
+	       	&& pc_req_opt[pc_loc]){
+	       	opt_pcl(); // dsh rpi 2211 remove from inside loop causing erroneous opt on trailing ops
+	    }
 		while (pc_loc > 0){
 			tot_pc_exec++;
 			mac_branch = false;
-	        if (tz390.opt_pcopt 
-	        	&& pc_req_opt[pc_loc]){
-	        	opt_pcl();
-	        }
 	        tracem_pc_op = false; // RPI 930
 	        exec_pc_op = true; // RPI 1139 
 			switch (pc_op[pc_loc]){
@@ -10464,9 +10473,17 @@ public  class  mz390 {
 			if (setc_value == null){
 				setc_value = "";  // RPI 565
 			}
-			exp_stk_val_type[tot_exp_stk_var - 1] = val_setc_type; // RPI 447
-			exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
-			pc_push_var_setc_value = "'" + setc_value + "'";
+			if (setc_value.length() > 3              // rpi 2217 is this sdt of the form ?'...' fir seta value
+ 			 && setc_value.charAt(1) == '\'' 
+		     && setc_value.charAt(setc_value.length()-1) == '\''){
+				tot_exp_stk_var -=1;               // rpi 2017 backup for push_sdt inc
+				exp_push_sdt();                    // RPI 2017 push sdt seta value
+                return;
+			} else {
+			    exp_stk_val_type[tot_exp_stk_var - 1] = val_setc_type; // RPI 447
+			    exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
+			    pc_push_var_setc_value = "'" + setc_value + "'";
+			}
 			break;	                                                   
 		case 26:  // syslist
             if (setc_value == null){
@@ -11198,7 +11215,7 @@ public  class  mz390 {
     	 *   1.  PUSHV,ADD 1,STORV = INC 
     	 *   2.  PUSHV,SUB 1,STORV = DEC
     	 */
-		if (1 == 1)return; // force exit until bug fixed dsh 2020-09-01
+		// DSH RPI 2211 BYPASS if (1 == 1)return; // force exit until bug fixed dsh 2020-09-01
     	pc_req_opt[pc_loc] = false;
     	switch (pc_op[pc_loc]){
     	case  3: // opt pc_op_pushv                //  0    1     2    3  
@@ -11301,6 +11318,7 @@ public  class  mz390 {
     		next = pc_next[next];
     		index++;
     	}
+		if (next != 0)return false; // dsh rpi 2211 don't return partial list
     	return true;
     }
     private void free_pc_list(int head, int tail){

@@ -28,7 +28,7 @@ public  class  az390 implements Runnable {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2011 Automated Software Tools Corporation
+    Copyright 2020 Don Higgins
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -403,6 +403,8 @@ public  class  az390 implements Runnable {
         * 09/11/15 RPI 1523  START with non-zero origin is starts location counter at 0 anyway
         * 2020/09/02 RPI 2202  add all opcodes and mnemonics in latest POP
 		* 2020/09/11 RPI 2212 correct vector to support v1-v4 from 0-31 using RXB for high bits
+		* 2020/10/18 RPI 2212 add missing mnemonics BI, CLT, CLGT,LOCHI,LOCGHI,LOCHHI,LCOFHR,SOC,STOCG,STOCFH
+		* 2020/11/02 RPI 2212 fix NOTRK and NOTR by setting R3=R2
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -2728,9 +2730,15 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 6;
     	get_hex_op(1,2); 
-       	get_hex_reg();
-       	skip_comma();
-    	get_hex_xbdddhh2();
+		if (  tz390.op_code[bal_op_index].length() == 5 // m1 
+		   && tz390.op_code[bal_op_index].substring(0,4).equals("E347")){   // E347 BIC  M1,D2(X2,B2)
+		    get_hex_op(5,1);    // M1 BIE D2(X2,B2)
+		    get_hex_xbdddhh2(); // d2(x2,b2)
+		} else {
+		   get_hex_reg();   // R1  CG R1,D2(X2,B2)
+		   skip_comma();
+   	       get_hex_xbdddhh2(); 
+	    }		   
     	get_hex_op(3,2);
     	check_end_parms();
     	put_obj_text();
@@ -2753,11 +2761,27 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 6;
     	get_hex_op(1,2); 
-       	get_hex_reg();
-       	skip_comma();
-       	get_hex_reg();
-       	skip_comma();
-    	get_hex_bdddhh2();
+	    if   (tz390.op_code[bal_op_index].substring(0,4).equals("EB23")   // EB23 CLT  R1,M3,D2(X2,B2)
+		   || tz390.op_code[bal_op_index].substring(0,4).equals("EB2B")){
+			 if ( tz390.op_code[bal_op_index].length() == 5){ // m1 found
+       	        get_hex_reg();   // R1
+				skip_comma();
+			    get_hex_op(5,1); // M3 CLT, CLGT R1,M3,D2(B2)
+				get_hex_bdddhh2();
+		    } else {
+			    get_hex_reg();     	       
+			    skip_comma();
+       	        get_hex_reg();  // M3
+				skip_comma();
+				get_hex_bdddhh2();
+		    }
+		} else {
+			get_hex_reg();     	       
+			skip_comma();
+       	    get_hex_reg(); 
+            skip_comma();
+			get_hex_bdddhh2();
+		}
     	get_hex_op(3,2);
     	check_end_parms();
     	put_obj_text();
@@ -2822,9 +2846,25 @@ private void process_bal_op(){
     	get_hex_op(1,2);
     	get_hex_reg(); 
     	skip_comma();
-       	get_hex_reg();
-       	skip_comma();
-       	get_hex_rel();
+		if (tz390.op_code[bal_op_index].substring(0,4).equals("EC42")   // EC42 LOCHI  R1,I2,M3
+		 || tz390.op_code[bal_op_index].substring(0,4).equals("EC46")   // EC46 LOCGHI R1,I2,M3
+		 || tz390.op_code[bal_op_index].substring(0,4).equals("EC4E")){ // EC42 LOCHHI R1,I2,M3
+			get_hex_rel();
+			if (tz390.op_code[bal_op_index].length() == 5){
+			    get_hex_op(5,1); // M3 for extended mnemonic like LOCHIE R1,I2
+		    } else {
+				skip_comma();
+				get_hex_reg(); // M3
+			}
+			// move 001iiii3 to 0013iiii
+			obj_code = obj_code.substring(0,3)  // oo1 
+		         + obj_code.substring(7,8)      // m3
+				 + obj_code.substring(3,7);  // iiii
+		} else {
+       	    get_hex_reg();
+       	    skip_comma();
+       	    get_hex_rel();
+		}
        	get_hex_zero(2);
        	get_hex_op(3,2);
     	check_end_parms();
@@ -3172,8 +3212,15 @@ private void process_bal_op(){
 			if ((tz390.op_code[bal_op_index].length() == 5)){  
    		       get_hex_op(5,1);  // M3
     	    } else {
-     		   get_hex_zero(1);  // m3=0 
-     	    }
+			   if (tz390.op_code[bal_op_index].substring(0,4).equals("B966")   // NOTGR - NORGK r1,r2,r2
+		        || tz390.op_code[bal_op_index].substring(0,4).equals("B976")){ // NOTR  = MORK  r1,r2,r2 
+				  // set r3 = r2 for NOT
+				  obj_code = obj_code.substring(0,7)  // oooo102
+     	                   + obj_code.substring(6,7); // set r3=r2
+			   } else {	
+     		      get_hex_zero(1);  // m3=0 
+     	       }
+			}
 		}
     	obj_code = obj_code.substring(0,4)  // oooo
      	    + obj_code.substring(7,8)   // m3
@@ -3639,14 +3686,29 @@ private void process_bal_op(){
     	get_hex_op(1,2); 
        	get_hex_reg();       	
        	skip_comma();
-    	get_hex_bdddhh2();    	
-    	get_hex_op(3,2);
-    	skip_comma();
-       	get_hex_reg();
-    	obj_code = obj_code.substring(0,2)  // oooo
- 	    + obj_code.substring(2,3)  // r1
-    	+ obj_code.substring(11,12)  // m3
-    	+ obj_code.substring(3,11); // r2 
+		get_hex_bdddhh2(); 
+		if (tz390.op_code[bal_op_index].substring(0,4).equals("EBF3")   // EBF3 STOC   R1,D2(B2),M3
+		 || tz390.op_code[bal_op_index].substring(0,4).equals("EBE3")   // EBE3 STOCG  R1,D2(B2),M3
+		 || tz390.op_code[bal_op_index].substring(0,4).equals("EBE1")   // EBE1 STOCFH R1,D2(B2),M3
+	     || tz390.op_code[bal_op_index].substring(0,4).equals("EBF2")   // EBF2 LOCC   R1,D2(B2),M3
+		 || tz390.op_code[bal_op_index].substring(0,4).equals("EBE2")   // EBE2 LOGG   R1,D2(B2),M3
+		 || tz390.op_code[bal_op_index].substring(0,4).equals("EBE0")){ // EBE0 LOCFH  R1,D2(B2),M3
+			if (tz390.op_code[bal_op_index].length() == 5
+			 && tz390.op_code[bal_op_index].substring(4,5) != "F"){
+			    get_hex_op(5,1); // M3 for extended mnemonic like STOCE R1,D2(B2)
+		    } else {
+				skip_comma();
+				get_hex_reg(); // M3
+			}
+		} else {
+       	    skip_comma();
+       	    get_hex_rel();
+		}
+		// move 001BDDDDD3 to 0013BDDDDD
+		obj_code = obj_code.substring(0,3)   // oo1 
+		         + obj_code.substring(9,10)  // m3
+				 + obj_code.substring(3,9);  // BDDDDD
+		get_hex_op(3,2); 
     	check_end_parms();
     	put_obj_text();
     	break;
@@ -4003,7 +4065,7 @@ private void process_bal_op(){
            // r1, v3 
     	   		get_hex_reg();        // R1
     	   		skip_comma();
-    	   		get_hex_vreg(3);       // V3
+    	   		get_hex_vreg(2);       // V3 in v2 rxb position RPI 2216 
        		 skip_comma();
        		 get_hex_bddd2(true); // bddd
          	if (!bal_abort && exp_next_char(',')){
@@ -4017,7 +4079,8 @@ private void process_bal_op(){
 		    	}
 			}
 	} else if ( tz390.op_code[bal_op_index].substring(0,4).equals("E73F")    // E73F VRSb VSTL V1,R3,D2(B2) RPI 2202
-   	         || tz390.op_code[bal_op_index].substring(0,4).equals("E722")) { // E722 VRSc VLVG V1,R3,D2(B2),,M4 RPI 2202	 
+	         || tz390.op_code[bal_op_index].substring(0,4).equals("E737")    // E737 VRSb VLL  V1,R3,D2(B2) RPI 2202	
+   	         || tz390.op_code[bal_op_index].substring(0,4).equals("E722")) { // E722 VRSc VLVG V1,R3,D2(B2),M4 RPI 2202	 
     	   		get_hex_vreg(1);        // V1
     	   		skip_comma();
     	   		get_hex_reg();          // R3
@@ -4038,7 +4101,7 @@ private void process_bal_op(){
 	         || tz390.op_code[bal_op_index].substring(0,4).equals("E736")){ // E736 VRSa VLM  V1,V3,D2(B2),,M4 RPI 2202
     	   		get_hex_vreg(1);        // V1
     	   		skip_comma();
-    	   		get_hex_vreg(2);       // V3
+    	   		get_hex_vreg(2);       // V3 in rxb v2 pos RPI 2216
        		 skip_comma();
        		 get_hex_bddd2(true); // bddd
          	if (!bal_abort && exp_next_char(',')){
@@ -4057,7 +4120,7 @@ private void process_bal_op(){
     			  ||  tz390.op_code[bal_op_index].substring(0,4).equals("E73A")){  // E73A VRSa VESRA V1,V3,D2(B2),M4 RPI 2202
     		 get_hex_vreg(1);   // V1
  	   		skip_comma();
- 	   		get_hex_vreg(3);    // V3
+ 	   		get_hex_vreg(2);    // V3 in rxb v2 pos RPI 2216
     		 skip_comma();
     		 get_hex_bddd2(true); // bddd
       	     if (!bal_abort && exp_next_char(',')){
@@ -4155,7 +4218,7 @@ private void process_bal_op(){
              	    + obj_code.substring(4,6);  // I3
         } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E74D")) { // E74D VRIc VREP V1,V3,I2,M4
         	skip_comma();
-            get_hex_vreg(3);       // V3
+            get_hex_vreg(2);       // V3 in v2 rxb pos  RPI 2216
             skip_comma();   
             get_hex_rel(16);      // I2
            	if ((tz390.op_code[bal_op_index].length() == 5)) {
@@ -4255,7 +4318,7 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 6;
     	get_hex_op(1,2);   //  oo
-      if ( tz390.op_code[bal_op_index].substring(0,4).equals("E6??")     // E650 VRRi VCVB R1,V2,M3,M4
+      if ( tz390.op_code[bal_op_index].substring(0,4).equals("E650")     // E650 VRRi VCVB R1,V2,M3,M4
     	 || tz390.op_code[bal_op_index].substring(0,4).equals("E652")) { // E652 VRRi VCVBG R1,V2,M3,M4
    		get_hex_reg();        // R1
    		skip_comma();
@@ -4272,7 +4335,7 @@ private void process_bal_op(){
     	get_hex_zero(1);    // 0
       } else  if (tz390.op_code[bal_op_index].substring(0,4).equals("E65F")) { // E65F VRRg VTP V1
           get_hex_zero(1);
-          get_hex_vreg(1);        // V1
+          get_hex_vreg(2);        // V1
           get_hex_zero(5);
       } else  if (tz390.op_code[bal_op_index].substring(0,4).equals("E677")) {     // E677 VRRh VCP V1,V2,M3
           get_hex_zero(1);
@@ -4290,15 +4353,14 @@ private void process_bal_op(){
     	  get_hex_vreg(1);        // V1
           skip_comma();
           get_hex_vreg(2);        // V2
-          get_hex_zero(2);
+          get_hex_zero(4);
           if (!bal_abort && exp_next_char(',')){
        		skip_comma();
        		get_hex_reg();   // M3
        	  } else {
         	get_hex_op(5,1);   //  M3
        	  }
-		  //  TEST
-      } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E760")         // E760 VRRc VMRL V1,V2,V3,M4
+      } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E760")           // E760 VRRc VMRL V1,V2,V3,M4
  	             ||  tz390.op_code[bal_op_index].substring(0,4).equals("E761")       // E761 VRRc VMRH V1,V2,V3,M4
  	             ||  tz390.op_code[bal_op_index].substring(0,4).equals("E764")       // E764 VRRc VSUM V1,V2,V3,M4
     	         ||  tz390.op_code[bal_op_index].substring(0,4).equals("E765")       // E765 VRRc VSUMG V1,V2,V3,M4
@@ -4309,24 +4371,23 @@ private void process_bal_op(){
 	             ||     tz390.op_code[bal_op_index].substring(0,4).equals("E77A")    // E77A VRRc VERSRAV V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E784")    // E784 VRRc VPDI    V1,V2,V3,M4 RPI 2202
 	             ||     tz390.op_code[bal_op_index].substring(0,4).equals("E785")    // E785 VRRc VBPERM  V1,V2,V3,M4 RPI 2202
-				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E794")    // E794 VRRc VPK     V1,V2,V3,M4 RPI 2202
-				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A1")    // E7A1 VRRc VMLH    V1,V2,V3,M4 RPI 2202
-				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A2")    // E7A2 VRRc VML     V1,V2,V3,M4 RPI 2202
-				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A3")    // E7A3 VRRc VMH     V1,V2,V3,M4 RPI 2202
-				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A4")    // E7A4 VRRc VMLE    V1,V2,V3,M4 RPI 2202
-				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A5")    // E7A5 VRRc VMLO    V1,V2,V3,M4 RPI 2202
+				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E794")    // E794 VRRc VPK    V1,V2,V3,M4 RPI 2202
+				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A1")    // E7A1 VRRc VMLH   V1,V2,V3,M4 RPI 2202
+				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A2")    // E7A2 VRRc VML    V1,V2,V3,M4 RPI 2202
+				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A3")    // E7A3 VRRc VMH    V1,V2,V3,M4 RPI 2202
+				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A4")    // E7A4 VRRc VMLE   V1,V2,V3,M4 RPI 2202
+				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A5")    // E7A5 VRRc VMLO   V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A6")    // E7A6 VRRc VME    V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7A7")    // E7A7 VRRc VMO    V1,V2,V3,M4 RPI 2202 
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7B4")    // E7B4 VRRc VGFM   V1,V2,V3,M4 RPI 2202
-				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7EE")    // E7EE VRRc VFMIN  V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7F0")    // E7F0 VRRc VFAVGL V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7F1")    // E7F1 VRRc VFACC  V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7F2")    // E7F2 VRRc VFAVG  V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7F3")    // E7F3 VRRc VFA    V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7F5")    // E7F5 VRRc VFSCBI V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7F7")    // E7F7 VRRc VFS    V1,V2,V3,M4 RPI 2202
-				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7FC")    // E7FC VRRc VMNL    V1,V2,V3,M4 RPI 2202
-				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7FD")    // E7FD VRRc VMXL    V1,V2,V3,M4 RPI 2202
+				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7FC")    // E7FC VRRc VMNL   V1,V2,V3,M4 RPI 2202
+				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7FD")    // E7FD VRRc VMXL   V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7FE")    // E7FE VRRc VMN    V1,V2,V3,M4 RPI 2202
 				 ||     tz390.op_code[bal_op_index].substring(0,4).equals("E7FF")) { // E7FF VRRc VMX    V1,V2,V3,M4 RPI 2202
 	   get_hex_vreg(1);        // V1
@@ -4359,7 +4420,7 @@ private void process_bal_op(){
     		 skip_comma();
     		 get_hex_reg();   // M4
     	  } else {
-			if ((tz390.op_code[bal_op_index].length() == 5)) {
+			if ((tz390.op_code[bal_op_index].length() >= 5)) {
      	       get_hex_op(5,1);   //  M4
 			} else {
 				get_hex_zero(1);
@@ -4369,15 +4430,20 @@ private void process_bal_op(){
     		 skip_comma();
     		 get_hex_reg();   // M5
     	  } else {
-			if ((tz390.op_code[bal_op_index].length() == 6)) {
+			if ((tz390.op_code[bal_op_index].length() >= 6)) {
      	       get_hex_op(6,1);   //  M5
 			} else {
 				get_hex_zero(1);
 			}
     	  }
+		  // move I4 before M5 001230034 to oo124054
+          	obj_code = obj_code.substring(0,7)  // oo12300
+         			+ obj_code.substring(8,9)   // M5
+             	    + obj_code.substring(7,8);  // M4
 	  } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E7E8")       // E7E8 VRRc VFCE  V1,V2,V3,M4,M5,M6
               || tz390.op_code[bal_op_index].substring(0,4).equals("E7EA")       // E7E8 VRRc VFCHE V1,V2,V3,M4,M5,M6  
 			  || tz390.op_code[bal_op_index].substring(0,4).equals("E7EB")       // E7EB VRRc VFCH  V1,V2,V3,M4,M5,M6 
+	          || tz390.op_code[bal_op_index].substring(0,4).equals("E7EE")       // E7EE VRRC VFMIN V1,V2,V3,M4,M5,M6 
 			  || tz390.op_code[bal_op_index].substring(0,4).equals("E7EF")) {    // E7EF VRRc VFMAX V1,V2,V3,M4,M5,M6
 	      get_hex_vreg(1);        // V1
           skip_comma();
@@ -4385,37 +4451,42 @@ private void process_bal_op(){
           skip_comma();
           get_hex_vreg(3);        // V3
           get_hex_zero(1);
+          if ((tz390.op_code[bal_op_index].length() >= 5)) {
+              	get_hex_op(5,1);    // M3
+          } else {  
+                if (!bal_abort && exp_next_char(',')){
+       		       skip_comma();
+       		       get_hex_reg();   // M3
+				} else {
+					get_hex_zero(1); // M3 = 0?
+				}
+          }
+		  if ((tz390.op_code[bal_op_index].length() >= 6)) {
+           	  get_hex_op(6,1);    // M4
+          } else { 
+		     if (!bal_abort && exp_next_char(',')){
+       		    skip_comma();
+       		    get_hex_reg();   // M4
+             } else {
+                get_hex_zero(1);    // M4
+             } 
+          }
           if (!bal_abort && exp_next_char(',')){
-    		 skip_comma();
-    		 get_hex_reg();   // M4
-    	  } else {
-			if ((tz390.op_code[bal_op_index].length() == 5)) {
-     	       get_hex_op(5,1);   //  M4
-			} else {
-				get_hex_zero(1);
-			}
-    	  }
-		  if (!bal_abort && exp_next_char(',')){
-    		 skip_comma();
-    		 get_hex_reg();   // M5
-    	  } else {
-			if ((tz390.op_code[bal_op_index].length() == 6)) {
-     	       get_hex_op(6,1);   //  M5
-			} else {
-				get_hex_zero(1);
-			}
-    	  }
-		  if (!bal_abort && exp_next_char(',')){
-    		 skip_comma();
-    		 get_hex_reg();   // M6
-    	  } else {
-			if ((tz390.op_code[bal_op_index].length() == 7)) {
-     	       get_hex_op(7,1);   //  M6
-			} else {
-				get_hex_zero(1);
-			}
-    	  }	  
-      } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E762")             // E762 VRRf VLVGP V1,R2,R3 RPI 2202 
+       		 skip_comma();
+       		 get_hex_reg();   // M5
+          } else {
+        		if ((tz390.op_code[bal_op_index].length() == 7)) {
+               		get_hex_op(7,1);    // M5
+               	} else {
+                    get_hex_zero(1);    // M5
+               	}
+         }
+		  // move 001230456 to 001230654
+		  obj_code = obj_code.substring(0,6)  // op1+v1,v2,v3,0
+ 	      + obj_code.substring(8,9)           // m6
+    	  + obj_code.substring(7,8)           // m5
+		  + obj_code.substring(6,7);          // m4		  
+      } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E762")                // E762 VRRf VLVGP V1,R2,R3 RPI 2202 
     	      ||     tz390.op_code[bal_op_index].substring(0,4).equals("E766")            // E766 VRRc VCKSM V1,V2,V3 RPI 2202  
     	      ||     tz390.op_code[bal_op_index].substring(0,4).equals("E768")            // E768 VRRc VN V1,V2,V3 RPI 2202  
     	      ||     tz390.op_code[bal_op_index].substring(0,4).equals("E769")            // E769 VRRc VNC V1,V2,V3 RPI 2202   
@@ -4468,6 +4539,10 @@ private void process_bal_op(){
                     get_hex_zero(1);    // M5
                	}
           }
+		  obj_code = obj_code.substring(0,6)  // op1+v1,v2,0,0
+ 	      + obj_code.substring(8,9)           // m5
+    	  + obj_code.substring(7,8)           // m4
+		  + obj_code.substring(6,7);          // m3
 	  } else  if (  tz390.op_code[bal_op_index].substring(0,4).equals("E7C0")        // E7C0 VRRa VCLFP/VCLGD V1,V2,M3,M4,M5 
 	             || tz390.op_code[bal_op_index].substring(0,4).equals("E7C1")        // E7C1 VRRa VCDLG V1,V2,M3,M4,M5
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7C2")        // E7C2 VRRa VCGD  V1,V2,M3,M4,M5
@@ -4476,7 +4551,7 @@ private void process_bal_op(){
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7C5")        // E7C5 VRRa VFLR  V1,V2,M3,M4,M5
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7C7")        // E7C7 VRRa VFI   V1,V2,M3,M4,M5
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7CA")        // E7CA VRRa WFK   V1,V2,M3,M4
-				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7CA")        // E7CB VRRa WFC   V1,V2,M3,M4
+				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7CB")        // E7CB VRRa WFC   V1,V2,M3,M4
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7CC")        // E7CC VRRa VFPSO V1,V2,M3,M4
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7CE")        // E7CE VRRa VFSQ   V1,V2,M3,M4
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7D4")        // E7D4 VRRa VUPLL  V1,V2,M3
@@ -4491,33 +4566,42 @@ private void process_bal_op(){
     	  get_hex_vreg(1);        // V1
           skip_comma();
           get_hex_vreg(2);        // V2
-          get_hex_zero(2);
-          if (!bal_abort && exp_next_char(',')){
-       		 skip_comma();
-       		 get_hex_reg();   // M3
-          } else {
-        	get_hex_op(5,1);   //  M3
-          } 
-		  if (!bal_abort && exp_next_char(',')){
-       		 skip_comma();
-       		 get_hex_reg();   // M4
-          } else {
-        	if ((tz390.op_code[bal_op_index].length() >= 6)) {
-              	get_hex_op(6,1);    // M4
-            } else {
+          get_hex_zero(2);  // assume m3,m4,m5 with m3 possibly implied by extended mnemonic
+		  if ((tz390.op_code[bal_op_index].length() >= 5)) {
+              	get_hex_op(5,1);    // M3
+          } else {  
+                if (!bal_abort && exp_next_char(',')){
+       		       skip_comma();
+       		       get_hex_reg();   // M3
+				} else {
+					get_hex_zero(1); // M3 = 0?
+				}
+          }
+		  if ((tz390.op_code[bal_op_index].length() >= 6)) {
+           	  get_hex_op(6,1);    // M4
+          } else { 
+		     if (!bal_abort && exp_next_char(',')){
+       		    skip_comma();
+       		    get_hex_reg();   // M4
+             } else {
                 get_hex_zero(1);    // M4
-            }
+             } 
           }
           if (!bal_abort && exp_next_char(',')){
        		 skip_comma();
        		 get_hex_reg();   // M5
           } else {
         		if ((tz390.op_code[bal_op_index].length() == 7)) {
-               		get_hex_op(6,1);    // M5
+               		get_hex_op(7,1);    // M5
                	} else {
                     get_hex_zero(1);    // M5
                	}
          }
+		 // map 001200345 to 001200543
+		 obj_code = obj_code.substring(0,6)  // op1+v1,v2,0,0
+ 	      + obj_code.substring(8,9)           // m5
+    	  + obj_code.substring(7,8)           // m4
+		  + obj_code.substring(6,7);          // m3
       } else  if (tz390.op_code[bal_op_index].substring(0,4).equals("E780")        // E780 VRRb VFEE  V1,V2,V3,M4,M5
                   || tz390.op_code[bal_op_index].substring(0,4).equals("E781")     // E781 VRRb VFENE V1,V2,V3,M4,M5
 				  || tz390.op_code[bal_op_index].substring(0,4).equals("E782")     // E782 VRRb VFAE  V1,V2,V3,M4,M5
@@ -4554,7 +4638,12 @@ private void process_bal_op(){
          } else if ((tz390.op_code[bal_op_index].length() == 6)) {
       		   get_hex_op(5,1); // M4
       		   get_hex_zero(1);
-    		   get_hex_op(6,1); // M5
+			   if (!bal_abort && exp_next_char(',')){
+       		       skip_comma();
+       		       get_hex_reg();   // M5
+               } else {
+        	       get_hex_op(6,1); // M5
+			   }
        	  } 
 		  // MAP 001230405 TO OO1230504
 		  obj_code = obj_code.substring(0,6)  // op1+v1,v2,v3,0
@@ -4565,7 +4654,7 @@ private void process_bal_op(){
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E78C")    // E78C VRRe VPERM V1,V2,V3,V4
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E78D")    // E78D VRRe VSEL  V1,V2,V3,V4
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E78E")    // E78E VRRe VFMS  V1,V2,V3,V4
-				 || tz390.op_code[bal_op_index].substring(0,4).equals("E78F")    // E78E VRRe VFMS  V1,V2,V3,V4
+				 || tz390.op_code[bal_op_index].substring(0,4).equals("E78F")    // E78F VRRe VFMS  V1,V2,V3,V4
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E79E")    // E79E VRRb VFNMS V1,V2,V3,V4,M5,M6
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E79F")    // E79F VRRb VFNMA V1,V2,V3,V4,M5,M6
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7A9")    // E7A9 VRRd VMALH V1,V2,V3,V4,M5,M6
@@ -4574,14 +4663,14 @@ private void process_bal_op(){
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7AC")    // E7AC VRRd VMALE V1,V2,V3,V4,M5,M6
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7AD")    // E7AD VRRd VMALO V1,V2,V3,V4,M5,M6
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7AE")    // E7AE VRRd VMAE  V1,V2,V3,V4,M5,M6
-				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7AF")    // E7AF VRRd VMAO  V1,V2,V3,V4,M5,M6
+				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7AF")    // E7AF VRRe VMAO  V1,V2,V3,V4,M5,M6
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7B8")    // E7B8 VRRd VMSL  V1,V2,V3,V4,M5,M6
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7B9")    // E7B9 VRRd VACCC V1,V2,V3,V4,M5
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7BB")    // E7BB VRRd VAC   V1,V2,V3,V4,M5
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7BC")    // E7BC VRRd VGFMA V1,V2,V3,V4,M5
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7BD")    // E7BD VRRd VSBCBI V1,V2,V3,V4,M5
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7BF")) { // E7BF VRRd VSBI   V1,V2,V3,V4,M5
-		  // reformat to oo,v1,v2,v3,m5,m6,0,v4,rxb,oo
+		  // reformat OO,V1,V2,V3,V4,M5 to oo,v1,v2,v3,m5,m6,0,v4,rxb,oo
 		  get_hex_vreg(1);     // V1
    		  skip_comma();
           get_hex_vreg(2);     // V2
@@ -4609,9 +4698,10 @@ private void process_bal_op(){
     	        get_hex_zero(1);   // M6
 		     }
           }
-		  obj_code = obj_code.substring(0,5)  // op1+v1,v2,v3
+		  // map oo123456 to oo1235604xoo
+          obj_code = obj_code.substring(0,5)  // op1+v1,v2,v3
  	      + obj_code.substring(6,8)           // m5,m6
-		  + obj_code.substring(8,9)           // 0 (was m6)
+		  + "0"                               // 0
     	  + obj_code.substring(5,6);          // v4
 		}		
     	get_hex_vreg_rxb();    // RXB
@@ -7118,7 +7208,7 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true; // RPI 755
 	   	if  (z390_log_text == null){
-	   	    put_log(msg_id + "Copyright 2011 Automated Software Tools Corporation");
+	   	    put_log(msg_id + "Copyright 2020 Don Higgins");
 	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
 	   	}
 	   	put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name);
