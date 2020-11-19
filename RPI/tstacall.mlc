@@ -1,0 +1,16 @@
+       MACRO
+       TSTACALL
+       MNOTE 'TSTACALL SUB1,SUB2,SUB1'
+       ACALL SUB1
+       ACALL SUB2
+       ACALL SUB1
+       MNOTE 'TSTACALL ENDING'
+       AENTRY SUB1
+       MNOTE 'TSTACALL SUB1'
+       AEND
+       AENTRY SUB2
+       MNOTE 'TSTACALL SUB2'
+       AEND
+       MEND
+       TSTACALL
+       END

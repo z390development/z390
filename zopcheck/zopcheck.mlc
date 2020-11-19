@@ -4,6 +4,8 @@
 *                macro calls copied from testins6.dat
 * 2020/10/19 dsh moved to zopcheck directory and renamed
 * 2020/10/30 dsh reorganize to reduce code and labels 
+* 2020/11/08 dsh add open and close dcb for use by SNAP on mainframe
+*            snap defaults to the TRACE file output for z390
 *************************************************************
 * copyright 2020 Don Higgins
 * This program assembles all the opcodes in z15 POP
@@ -17,6 +19,7 @@
          COPY ZOPMACRO.CPY
 * DEFINE MAIN PROGRAM, CHECKZOP, WRAPUP, AND SNAP ROUTINE 
 ZOPCHECK SUBENTRY
+         OPEN  (SNAPOUT,OUTPUT)
          B     START  TABLE OF ZOPCODES AT END GT THAN 4K BASE
 * CALLED VIA BAL R12,CHECKOP BEFORE EACH 32 BYTE OBJECT CODE AREA
 CHECKZOP DS    0H
@@ -39,16 +42,17 @@ DIFFERENCE DS  0H
 		 ST    R4,SNAPS
          LR    R2,R12
          LA    R3,32(R2)
-		 SAVE  (R14,R12)
-         SNAP   STORAGE=((R2),(R3)),PDATA=,ID=(R4)
-         RESTORE (R14,R12)		 
-		 B     CONTINUE
+	     SAVE  (R14,R12)
+         SNAP   STORAGE=((R2),(R3)),PDATA=,ID=(R4),DCB=SNAPOUT
+         RESTORE (R14,R12)
+	     B     CONTINUE
 WRAPUP   DS    0H
+         CLOSE SNAPOUT
          L     R4,MISSING
-		 LTR   R4,R4
-		 BZ    NO_MISSING
-		 WTO   'ERROR RC = TOTAL MISSING GENERATED OPCODES'
-		 B     NO_SNAPS
+	 LTR   R4,R4
+	 BZ    NO_MISSING
+	 WTO   'ERROR RC = TOTAL MISSING GENERATED OPCODES'
+	 B     NO_SNAPS
 NO_MISSING EQU *	
 		 L     R4,SNAPS
 		 LTR   R4,R4
@@ -56,7 +60,9 @@ NO_MISSING EQU *
 		 WTO   'ERROR RC = TOTAL SNAP DUMPS OF OPCODE DIFFERENCES'
 NO_SNAPS DS    0H	
          SUBEXIT RC=(R4) R4 = TOTAL MISSING OR TOTAL SNAPS	
-         LTORG		 
+         LTORG	
+SNAPOUT  DCB   DDNAME=SNAPOUT,DSORG=PS,RECFM=VBA,BLKSIZE=882,          X
+               LRECL=125,MACRF=W	 
 SNAPS    DC    F'0' COUNT SNAPS
 MISSING  DC    F'0' COUNT MISSING OPCODE
 * DEFINE ALL THE OPERAND VARIABLES IN TYPE MACRO CALLS

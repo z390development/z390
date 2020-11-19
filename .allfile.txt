@@ -27,7 +27,7 @@ C:\z390\vse
 C:\z390\webdoc
 C:\z390\webdoc_cobol
 C:\z390\z390.jar
-C:\z390\z390_v1702_readme.txt
+C:\z390\z390_v1703_readme.txt
 C:\z390\zcobol
 C:\z390\zopcheck
 C:\z390\zpar
@@ -59,6 +59,7 @@ C:\z390\bat\RUNASMDEMOS.BAT
 C:\z390\bat\RUNASMTESTS.bat
 C:\z390\bat\RUNCBLDEMOS.BAT
 C:\z390\bat\RUNCBLTESTS.BAT
+C:\z390\bat\RUNSORT.BAT
 C:\z390\bat\ZC390.BAT
 C:\z390\bat\ZOPCHECK.BAT
 C:\z390\cics\BMS2.IMG
@@ -1169,6 +1170,18 @@ C:\z390\demo\TESTDCB1.PRN
 C:\z390\demo\TESTDCB1.TF1
 C:\z390\demo\TESTDCB1.TF2
 C:\z390\demo\TESTDCB1.TF3
+C:\z390\doc\Z390 Portable Mainframe Assembler and Emulator File Types.doc
+C:\z390\doc\Z390 Portable Mainframe Assembler and Emulator File Types.pdf
+C:\z390\doc\Z390 Portable Mainframe Assembler Options.doc
+C:\z390\doc\Z390 Portable Mainframe Assembler Options.pdf
+C:\z390\doc\z390_options.xlsx
+C:\z390\doc\z390_Sort_Utility.doc
+C:\z390\doc\z390_Sort_Utility.pdf
+C:\z390\doc\z390_Sort_Utility.txt
+C:\z390\doc\ZCOBOL File Types.doc
+C:\z390\doc\ZCOBOL Files Types.pdf
+C:\z390\doc\ZCOBOL Options.doc
+C:\z390\doc\ZCOBOL Options.pdf
 C:\z390\guam\demo
 C:\z390\guam\README.TXT
 C:\z390\guam\test
@@ -2216,7 +2229,6 @@ C:\z390\mvs\test\TESTMVS1.STA
 C:\z390\perl\cmd.pl
 C:\z390\perl\dos.pl
 C:\z390\perl\readme.txt
-C:\z390\perl\v17b02-pk01.zip
 C:\z390\perl\z390.pl
 C:\z390\RPI\EntMnem.bat
 C:\z390\RPI\ExtMnem.ERR
@@ -2248,6 +2260,13 @@ C:\z390\RPI\TESTRPL.MLC
 C:\z390\RPI\testrpl.PRN
 C:\z390\RPI\testrpl.TRA
 C:\z390\RPI\testrpl.TRM
+C:\z390\RPI\tstacall.bat
+C:\z390\RPI\tstacall.ERR
+C:\z390\RPI\tstacall.mlc
+C:\z390\RPI\tstacall.OBJ
+C:\z390\RPI\tstacall.PRN
+C:\z390\RPI\tstacall.TRA
+C:\z390\RPI\tstacall.TRM
 C:\z390\RPI\MACVSAM2\ACB.MAC
 C:\z390\RPI\MACVSAM2\ACBD.MAC
 C:\z390\RPI\MACVSAM2\CBMR.MAC
@@ -11784,19 +11803,55 @@ C:\z390\soa\maclib\SOASMGR.MAC
 C:\z390\soa\maclib\SOASTUB.MAC
 C:\z390\soa\test\TESTMSGC.MLC
 C:\z390\soa\test\TESTMSGS.MLC
+C:\z390\sort\RUNSORT.BAT
+C:\z390\sort\SORT.390
+C:\z390\sort\SORT.ERR
+C:\z390\sort\SORT.LOG
+C:\z390\sort\SORT.LST
+C:\z390\sort\SORT.MLC
+C:\z390\sort\SORT.OBJ
+C:\z390\sort\SORT.PRN
+C:\z390\sort\SORT.STA
+C:\z390\sort\SORT1.STA
+C:\z390\sort\SORT2.STA
+C:\z390\sort\SORT3.STA
 C:\z390\sort\TESTSORT.IN
 C:\z390\sort\TESTSORT.INI
 C:\z390\sort\TESTSORT.OUT
+C:\z390\sort\TESTSRT1.390
+C:\z390\sort\TESTSRT1.ERR
 C:\z390\sort\TESTSRT1.IN
 C:\z390\sort\TESTSRT1.INI
+C:\z390\sort\TESTSRT1.LOG
+C:\z390\sort\TESTSRT1.LST
 C:\z390\sort\TESTSRT1.MLC
+C:\z390\sort\TESTSRT1.OBJ
 C:\z390\sort\TESTSRT1.OUT
+C:\z390\sort\TESTSRT1.PRN
+C:\z390\sort\TESTSRT2.390
+C:\z390\sort\TESTSRT2.ERR
+C:\z390\sort\TESTSRT2.LOG
+C:\z390\sort\TESTSRT2.LST
 C:\z390\sort\TESTSRT2.MLC
+C:\z390\sort\TESTSRT2.OBJ
+C:\z390\sort\TESTSRT2.PRN
+C:\z390\sort\TESTSRT3.390
+C:\z390\sort\TESTSRT3.ERR
 C:\z390\sort\TESTSRT3.IN
 C:\z390\sort\TESTSRT3.INI
+C:\z390\sort\TESTSRT3.LOG
+C:\z390\sort\TESTSRT3.LST
 C:\z390\sort\TESTSRT3.MLC
+C:\z390\sort\TESTSRT3.OBJ
 C:\z390\sort\TESTSRT3.OUT
+C:\z390\sort\TESTSRT3.PRN
+C:\z390\sort\TESTSRT4.390
+C:\z390\sort\TESTSRT4.ERR
+C:\z390\sort\TESTSRT4.LOG
+C:\z390\sort\TESTSRT4.LST
 C:\z390\sort\TESTSRT4.MLC
+C:\z390\sort\TESTSRT4.OBJ
+C:\z390\sort\TESTSRT4.PRN
 C:\z390\src\az390.java
 C:\z390\src\ez390.java
 C:\z390\src\gz390.java
@@ -13228,19 +13283,24 @@ C:\z390\zcobol\tests\testmov3.MLC
 C:\z390\zcobol\tests\testmov3.OBJ
 C:\z390\zcobol\tests\testmov3.PRN
 C:\z390\zcobol\tests\testmov3_ZC_LABELS.CPY
-C:\z390\zopcheck\zopcheck.390
-C:\z390\zopcheck\zopcheck.BAL
-C:\z390\zopcheck\zopcheck.bat
-C:\z390\zopcheck\ZOPCHECK.docx
-C:\z390\zopcheck\zopcheck.ERR
-C:\z390\zopcheck\zopcheck.LOG
-C:\z390\zopcheck\zopcheck.LST
-C:\z390\zopcheck\zopcheck.mlc
-C:\z390\zopcheck\zopcheck.OBJ
-C:\z390\zopcheck\zopcheck.PRN
-C:\z390\zopcheck\zopcheck.TRE
-C:\z390\zopcheck\zopcodes.cpy
-C:\z390\zopcheck\zopmacro.cpy
+C:\z390\zopcheck\HLASM_Instruction_Set_Summary.TXT
+C:\z390\zopcheck\HLASM_ZOPCHECK.TXT
+C:\z390\zopcheck\HLASM_ZOPCHK7F.TXT
+C:\z390\zopcheck\SNAPOUT.TXT
+C:\z390\zopcheck\ZOPCHECK.390
+C:\z390\zopcheck\ZOPCHECK.BAL
+C:\z390\zopcheck\ZOPCHECK.BAT
+C:\z390\zopcheck\ZOPCHECK.doc
+C:\z390\zopcheck\ZOPCHECK.ERR
+C:\z390\zopcheck\ZOPCHECK.LOG
+C:\z390\zopcheck\ZOPCHECK.LST
+C:\z390\zopcheck\ZOPCHECK.MLC
+C:\z390\zopcheck\ZOPCHECK.OBJ
+C:\z390\zopcheck\ZOPCHECK.PDF
+C:\z390\zopcheck\ZOPCHECK.PRN
+C:\z390\zopcheck\ZOPCHECK.TRE
+C:\z390\zopcheck\ZOPCODES.CPY
+C:\z390\zopcheck\ZOPMACRO.CPY
 C:\z390\zpar\FIXCRLF.BAT
 C:\z390\zpar\FIXCRLF.MLC
 C:\z390\zpar\TEMPBAT.DIR

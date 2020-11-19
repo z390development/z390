@@ -1,6 +1,6 @@
 #!/usr/bin/perl --
 # z390 IBM assembler control program
-# Usage: z390 [options] file [assembler options]
+# Usage: z390 [-X...] [options] file [assembler options]
 #
 # Options:
 # -a assemble
@@ -11,13 +11,21 @@
 # Just give the base name of the file to process.
 # Assembler options are things like sysmac(...) syscpy(...) etc.
 #
+# LISTCALL, MCALL: Ensure all lines are listed in PRN file
+#
+# TRACE: Generate an execution trace file xxx.TRE
+# NOTIME: Disable the execution time limit
+# MAXSIZE(999999): Disable the file size limit
+# NOINIT: Initialise data areas to X'00' (INIT initialises to X'F6')
+# PRINTALL: equivalent of PCONTROL(GEN,MCALL,ON) on the mainframe
+#
 # The support files (z390.jar etc.) are searched for in the following places:
 # (1) The directory given in the Z390 environment variable
 # (2) $HOME/lib/z390
 # (3) /usr/local/lib/z390
 # (4) /usr/lib/z390
 ###########################################################
-# Author Martin Ward http://www.cse.dmu.ac.uk/~mward/
+# Author Martin Ward http://www.gkc.org.uk
 ###########################################################
 # Maintenace Log of changes for z390 by Don Higgins www.z390.org
 # Copyright 2007 Automated Software Tools Corporation
@@ -32,18 +40,24 @@
 #           files edited on Windows work fine.)
 # 02/09/07 RPI 548 add -- on first line to allow Windows editing
 ###########################################################
+# To recompile source files and rebuild z390.jar:
+# cd ~/lib/z390/src
+# javac *.java
+# jar cmvf Z390.MAN z390.jar *.class
+# cp z390.jar ../z390.jar
 
 use strict;
 use warnings;
 use Getopt::Std;
 
+### Bugfix:
+$ENV{LC_CTYPE} = "en_GB.ISO-8859-1";
+###
+
 sub run($$$);
 
-our($opt_a, $opt_l, $opt_g);
-getopts('alg');
-
 (my $myname = $0) =~ s|(.*/)*||;        # strip path component from name
-my $Usage = "Usage: $myname [-alg] ... \n";
+my $Usage = "Usage: $myname [-X...] [-alg] ... \n";
 
 my $HOME = $ENV{'HOME'} || $ENV{'LOGDIR'} ||
                 (getpwuid($<))[7] || die "You're homeless!\n";
@@ -60,24 +74,36 @@ foreach my $d (@dirs) {
 }
 die "Cannot find z390.jar file in any of @dirs!\n" unless $dir;
 
-my $jar = "$dir/z390.jar";  # Location of jar file
-my $sysmac = "$dir/mac+.";  # Default macro search path
-my $syscpy = "$dir/mac+.";  # Default copybook search path
+my $jar = "$dir/z390.jar";      # Location of jar file
+my $sysmac = ".+mac+$dir/mac";  # Default macro search path
+my $syscpy = ".+cpy+$dir/mac";  # Default copybook search path
+my $java = "/usr/bin/java";
+$java = $ENV{JAVA} if defined($ENV{JAVA});
+
+while (@ARGV && ($ARGV[0] =~ /^-X/)) {
+  $java .= " $ARGV[0]";
+  shift(@ARGV);
+}
+
+our($opt_a, $opt_l, $opt_g);
+getopts('alg');
 
 if (!@ARGV) {
   # Run the GUI:
   chdir $dir or die "Can't chdir to $dir: $!\n"; # RPI 542
-  exec "java -jar z390.jar";                     # RPI 542
+  exec "$java -jar $dir/z390.jar";                     # RPI 542
   exit(1);
 }
 
 my $options = "'sysmac($sysmac)' 'syscpy($syscpy)'"; # default options
+# Default is IBM1047, use this to change to IBM01140:
+#$options .= " 'CODEPAGE(ISO-8859-1+IBM01140+LIST)'";
 my %opt = (); # Command line options
 
 my $base = shift(@ARGV);
 $base =~ s/\.\w+$//;
 
-$options = " " . join(" ", map { "'$_'" } @ARGV) if @ARGV;
+$options .= " " . join(" ", map { "'$_'" } @ARGV) if @ARGV;
 
 if (!$opt_a && !$opt_l && !$opt_g) {
   # Default is -alg:
@@ -113,8 +139,8 @@ exit(0);
 
 sub run($$$) {
   my ($command, $file, $err) = @_;
-  print "\nRunning $command $file...\n\n";
-  my $res = system qq[java -classpath $jar -Xrs $command $file $options];
+  print "\nRunning $command $file $options...\n\n";
+  my $res = system qq[$java -classpath $jar -Xrs $command $file $options];
   return if $res == 0;
   if ($? == -1) {
     print "$command $file failed to execute: $!\n";

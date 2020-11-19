@@ -23,7 +23,7 @@ if exist %1.java  erase %1.java
 if exist %1.class erase %1.class   
 call %~dps0ZC390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto mzerr
-call %~dps0MZ390 %1 @%~dps0cblopt sysmac(zcobol\mac+mac) syscpy(+zcobol\cpy) %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0MZ390 %1 @%~dps0CBLOPT sysmac(zcobol\mac+mac) syscpy(+zcobol\cpy) %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto mzerr
 call %~dps0LZ390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto lzerr

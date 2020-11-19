@@ -405,6 +405,7 @@ public  class  az390 implements Runnable {
 		* 2020/09/11 RPI 2212 correct vector to support v1-v4 from 0-31 using RXB for high bits
 		* 2020/10/18 RPI 2212 add missing mnemonics BI, CLT, CLGT,LOCHI,LOCGHI,LOCHHI,LCOFHR,SOC,STOCG,STOCFH
 		* 2020/11/02 RPI 2212 fix NOTRK and NOTR by setting R3=R2
+		* 2020/11/12 RPI 2221 add 20 missing instr to az390 and zopcheck
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -2596,9 +2597,14 @@ private void process_bal_op(){
     	loc_ctr = (loc_ctr+1)/2*2;
     	loc_start = loc_ctr;
     	loc_len = 4;
-    	get_hex_op(1,2); 
-       	get_hex_op(4,1);
-       	get_hex_op(3,1);
+    	get_hex_op(1,2);       // oo
+		if ((tz390.op_code[bal_op_index].length() == 4)){ // rpi 2221 support JC M1,I2
+     		  get_hex_op(4,1); // m3 extended op
+     	} else {
+     		  get_hex_reg();    // m3
+			  skip_comma();
+     	}
+       	get_hex_op(3,1);        // last op nibble such A74 JC rpi 2221
     	get_hex_rel();
     	check_end_parms();
     	put_obj_text();
@@ -3057,7 +3063,12 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 6;
     	get_hex_op(1,2); //BRCL C0 OP
-    	get_hex_op(4,1); //BRCL MASK 
+		if ((tz390.op_code[bal_op_index].length() == 4)){ // rpi 2221 support JLC M1,I2
+     		  get_hex_op(4,1); // m3 extended op
+     	} else {
+     		  get_hex_reg();    // m3
+			  skip_comma();
+     	}
     	get_hex_op(3,1); //BRCL 4  OP
     	get_hex_long();
     	check_end_parms();

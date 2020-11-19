@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl --
 # cmd.pl perl script for emulation of cmd.exe
 # for handling DOS BAT file command
 #
@@ -43,6 +43,19 @@
 # 10/07/09 RPI 1080 add support for J2SEOPTIONS 
 # 05/16/12 RPI 1216 patch to ignore spaces before "EXIT" command
 #              provided by Martin  Ward 01/31/12
+# 2020/10/12 RPI 2011 Changes for z390 version 1.7.
+#              1. *.BAT files are now in the bat subdirectory.
+#            Note that the base cmd.pl file has changes that make it
+#            different from the one provided in z390 version 1.7.01.
+#            The changes are in the batch_file() subroutine.
+#            Change summary:
+#              1. Add labels LINE: and REDO: and code to use them.
+#              2. Add case to process "if %1 == tron ECHO ON".
+#              3. Add case to process "if %1 == tron shift".
+#            The changed/added lines for 1  and 2 were done unofficially
+#            as part of z390 version 1.6 and do not contain "RPI xxxx"
+#            comments. Item 3 was done as part of RPI 2011. It does have
+#            an RPI comment.
 ##################################################################
 # Notes:
 #   1. Paths must be correct case with \ separators
@@ -56,13 +69,13 @@ sub set_meta($);
 sub split_args($);
 
 $| = 1;
- my $ECHO = 1;
- my $HOME = $ENV{'HOME'} || $ENV{'LOGDIR'} ||
- 		(getpwuid($<))[7] || die "You're homeless!\n";
-+my $J2SEOPTIONS = $ENV{'J2SEOPTIONS'} || "";
- my $dir; # Base directory for support files
- my @dirs = ("$HOME/lib/z390", "/usr/local/lib/z390", "/usr/lib/z390");
- unshift(@dirs, $ENV{Z390}) if $ENV{Z390};
+my $ECHO = 1;
+my $HOME = $ENV{'HOME'} || $ENV{'LOGDIR'} ||
+               (getpwuid($<))[7] || die "You're homeless!\n";
+my $J2SEOPTIONS = $ENV{'J2SEOPTIONS'} || "";
+my $dir; # Base directory for support files
+my @dirs = ("$HOME/lib/z390", "/usr/local/lib/z390", "/usr/lib/z390");
+unshift(@dirs, $ENV{Z390}) if $ENV{Z390};
 
 foreach my $d (@dirs) {
   if (-f "$d/z390.jar") {
@@ -73,29 +86,29 @@ foreach my $d (@dirs) {
 die "Cannot find z390.jar file in any of @dirs!\n" unless $dir;
 
 my $jar = "$dir/z390.jar";  # Location of jar file
-my $bat = "$dir";           # Directory to search for batch files.
+my $bat = "$dir/bat";       # Directory to search for batch files. # RPI 2011
 my $errorlevel = 0;         # Save return code of last command
 
 die "Arguments <" . join(" ", @ARGV) . "> not yet implemented!\n" if @ARGV;
 
 while (<STDIN>) {
   s/\cM//g;
-  +s/^\s+//;
+  s/^\s+//;
   chomp;
 
   print "$_\n";
 # cd command outside bat file
-  if (/^cd (.*)$/i) {  
+  if (/^cd (.*)$/i) {
     chdir $1;
-    system("ls");
+#    system("ls");
 # dir path command outside bat file
-  } elsif (/^dir\s+(.*)$/i) { 
+  } elsif (/^dir\s+(.*)$/i) {
       system("ls -l $1");
 # dir cur directory command outside bat file
-  } elsif (/^dir/i) { 
-      system("ls -l");       
+  } elsif (/^dir/i) {
+      system("ls -l");
 # exit dos command processor
-  } elsif (/^exit$/i) { 
+  } elsif (/^exit$/i) {
     last;
 # ignore blank lines
   } elsif (/^\s*$/) {
@@ -119,7 +132,7 @@ sub open_bat_file_error(){
 
 sub batch_file($$) {
   my ($cmd, $args) = @_;
-  $cmd =~ s/\\/\//g;              # replace \ with / 
+  $cmd =~ s/\\/\//g;              # replace \ with /
   $args =~ s/\\/\//g;             # replace \ with / (could change literals vs paths)
   $cmd =~ s/\.bat$//i;
   $cmd =~ s/(\w+)$/\U$1\E/i; # batch file names are all upper case.
@@ -134,7 +147,7 @@ sub batch_file($$) {
     $file = "$cmd.BAT";
   } else {
     # $cmd is relative path without suffix
-    $file = "$bat/$cmd.BAT"; 
+    $file = "$bat/$cmd.BAT";
   }
 # load bat file into @lines array
   my $fh;
@@ -149,159 +162,189 @@ sub batch_file($$) {
     chomp;
     s/^\s+//;
     if (/^:(\S+)/) {
-      $labline{lc $1} = $i; 
+      $labline{lc $1} = $i;
     }
     $i++;
   }
 
   # Execute the batch file:
   $i = 0; # Current line
+ LINE:
   while (1) {
 # exec next line within bat file line array
-     my $line = $lines[$i];
-     $line =~ s/\%\~dps0/$bat\//g;       # replace bat %dps0 with $bat path                         
-     $line =~ s/\%([1-9])/$args[$1]/g;   # substitute current bat parms 1-9
-+    $line =~ s/\%J2SEOPTIONS\%/$J2SEOPTIONS/g;   # substitute current bat parms 1-9
-     $line =~ s/\s+$//;                  # Trim trailing spaces.
-     $line =~ s/\\/\//g;              # replace \ with /
-     if ($ECHO == 1){
+    my $line = $lines[$i];
+    $line =~ s/\%\~dps0/$bat\//g;              # replace bat %dps0 with $bat path
+    $line =~ s/\%([1-9])/$args[$1]/g;          # substitute current bat parms 1-9
+    $line =~ s/\%J2SEOPTIONS\%/$J2SEOPTIONS/g; # substitute Java options
+    $line =~ s/\s+$//;                         # Trim trailing spaces.
+    $line =~ s/\\/\//g;                        # replace \ with /
+    if ($ECHO == 1){
       print "$line\n";
     }
 
+  REDO:
+    while(1) {
 # exec dos command or assume it is native command
-    if ($line =~ /^\s*$/) {
-      # Blank line
+      if ($line =~ /^\s*$/) {
+        # Blank line
 
 # :label
-    } elsif ($line =~ /^:\S/i) {
-      # Label line
+      } elsif ($line =~ /^:\S/i) {
+        # Label line
 
 # call
-    } elsif ($line =~ /^call\s+(\S+)(.*)$/i) { 
-      # Call another batch file:
-      batch_file($1, $2);
+      } elsif ($line =~ /^call\s+(\S+)(.*)$/i) {
+        # Call another batch file:
+        batch_file($1, $2);
 
 # copy one or more files
-    } elsif ($line =~ /^copy\s+(\S+)\s+(\S+)$/i){  
-         $errorlevel = system("cp $1 $2");
-         if ($errorlevel){
-            print "Copy error: $errorlevel\n";
-         }
+      } elsif ($line =~ /^copy\s+(\S+)\s+(\S+)$/i){
+        $errorlevel = system("cp $1 $2");
+        if ($errorlevel){
+          print "Copy error: $errorlevel\n";
+        }
 
 # diff dir1 dir2 file3
-    } elsif ($line =~ /^diff\s+(\S+)\s+(\S+)\s+(\S+)$/i) {
-      open IN, "diff -b $1 $2 |" or die "diff generation failed"; ## RPI 713 ignore white space
-      open OUT,"> $3" or die "diff open output $3 failed";
-      print OUT <IN>;
-      close IN;
-      close OUT;
-      $errorlevel = system("diff -b -q $1 $2"); ## // RPI 713 set rc, skip white space, brief
-      print "diff errorlevel: $errorlevel\n";
+      } elsif ($line =~ /^diff\s+(\S+)\s+(\S+)\s+(\S+)$/i) {
+        open IN, "diff -b $1 $2 |" or die "diff generation failed"; ## RPI 713 ignore white space
+        open OUT,"> $3" or die "diff open output $3 failed";
+        print OUT <IN>;
+        close IN;
+        close OUT;
+        $errorlevel = system("diff -b -q $1 $2"); ## // RPI 713 set rc, skip white space, brief
+        print "diff errorlevel: $errorlevel\n";
+
+# fc dir1 dir2 > file3
+      } elsif ($line =~ /^fc\s+(\S+)\s+(\S+)\s*>\s*(\S+)$/i) {
+        open IN, "diff -b $1 $2 |" or die "diff generation failed"; ## RPI 713 ignore white space
+        open OUT,"> $3" or die "diff open output $3 failed";
+        print OUT <IN>;
+        close IN;
+        close OUT;
+        $errorlevel = system("diff -b -q $1 $2"); ## // RPI 713 set rc, skip white space, brief
+        print "diff errorlevel: $errorlevel\n";
 
 # dir
-    } elsif ($line =~ /^dir\s+(.*)$/i) { 
-      $errorlevel = system("ls -l $1");
-      if ($errorlevel) {
-          print "dir errorlevel: $errorlevel\n";
-      }
+      } elsif ($line =~ /^dir\s+(.*)$/i) {
+        $errorlevel = system("ls -l $1");
+        if ($errorlevel) {
+            print "dir errorlevel: $errorlevel\n";
+        }
 # echo on/off
-    } elsif ($line =~ /^echo\s+(\S+)$/i) { 
-      if ($1 eq "ON"){
-         $ECHO = 1;
-      } else {
-         $ECHO = 0;
-      }
+      } elsif ($line =~ /^echo\s+(\S+)$/i) {
+        if ($1 eq "ON"){
+           $ECHO = 1;
+        } else {
+           $ECHO = 0;
+        }
 # erase file
-    } elsif ($line =~ /^erase\s+(\S+)$/i) { 
-      $errorlevel = system("rm $1");
-      if ($errorlevel) {
-          print "erase errorlevel: $errorlevel\n";
-      };
-# erase files /q    
-    } elsif ($line =~ /^erase\s+(\S+)\s+(\S+)$/i) {
-      $errorlevel = system("rm $1");
+      } elsif ($line =~ /^erase\s+(\S+)$/i) {
+        $errorlevel = system("rm $1");
+        if ($errorlevel) {
+            print "erase errorlevel: $errorlevel\n";
+        };
+# erase files /q
+      } elsif ($line =~ /^erase\s+(\S+)\s+(\S+)$/i) {
+        $errorlevel = system("rm $1");
 # exit
-    } elsif ($line =~ /^exit\s$/i) { 
-      die "EXIT\n";
+      } elsif ($line =~ /^exit\s$/i) {
+        die "EXIT\n";
 # gedit file1
-    } elsif ($line =~ /gedit\s+(.*)$/i) { 
-      $errorlevel = system("gedit $1");
-      if ($errorlevel) {
-          print "gedit errorlevel: $errorlevel\n";
-      }
+      } elsif ($line =~ /gedit\s+(.*)$/i) {
+        $errorlevel = system("gedit $1");
+        if ($errorlevel) {
+            print "gedit errorlevel: $errorlevel\n";
+        }
 # goto
-    } elsif ($line =~ /^goto\s+(\S+)$/i) { 
-      $i = $labline{lc $1}; 
-      die "Label $1 not found!\n" unless defined($i);
-      next;
+      } elsif ($line =~ /^goto\s+(\S+)$/i) {
+        $i = $labline{lc $1}; 
+        die "Label $1 not found!\n" unless defined($i);
+        next LINE;
 # if exist file erase file
-    } elsif ($line =~ /^if\s+exist\s+(\S+)+\s+erase\s+(\S+)$/i) {
-      if (-f "$1") {
-          $errorlevel = system("rm $2");
-	  next;
-      }
+      } elsif ($line =~ /^if\s+exist\s+(\S+)+\s+erase\s+(\S+)$/i) {
+        if (-f "$1") {
+            $errorlevel = system("rm $2");
+            next LINE;
+        }
 # if exist file goto label
-    } elsif ($line =~ /^if\s+exist\s+(\S+)+\s+goto\s+(\S+)$/i) {
-      if (-f "$1") {
-          $i = $labline{lc $2}; 
-	  die "Label $1 not found!\n" unless defined($i);
-	  next;
-      }
+      } elsif ($line =~ /^if\s+exist\s+(\S+)+\s+goto\s+(\S+)$/i) {
+        if (-f "$1") {
+            $i = $labline{lc $2};
+            die "Label $1 not found!\n" unless defined($i);
+            next LINE;
+        }
 # if errorlevel 1 goto label
-    } elsif ($line =~ /^if\s+errorlevel\s+(\d+)\s+goto\s+(\S+)$/i) {
-      my $RC = $errorlevel/256; ## RPI 548
-      if ($RC >= $1) {
-	$i = $labline{lc $2}; 
-	die "Label $2 not found!\n" unless defined($i);
-	next;
-      }
+      } elsif ($line =~ /^if\s+errorlevel\s+(\d+)\s+goto\s+(\S+)$/i) {
+        my $RC = $errorlevel/256; ## RPI 548
+        if ($RC >= $1) {
+          $i = $labline{lc $2};
+          die "Label $2 not found!\n" unless defined($i);
+          next LINE;
+        }
 # if errorlevel 1 pause text
-    } elsif ($line =~ /^if\s+errorlevel\s+(\d+)\s+pause\s+(.*)$/i) {
-      my $RC = $errorlevel/256; ## RPI 548
-      if ($RC >= $1) {
-          open(TTY,"/dev/tty");  ## RPI 548
-          my $REPLY = getc(TTY);
-          close(TTY);  
-      }
+      } elsif ($line =~ /^if\s+errorlevel\s+(\d+)\s+pause\s+(.*)$/i) {
+        my $RC = $errorlevel/256; ## RPI 548
+        if ($RC >= $1) {
+            open(TTY,"/dev/tty");  ## RPI 548
+            my $REPLY = getc(TTY);
+            close(TTY);
+        }
 
+# if %1 == tron ECHO ON
+# if %1. == TRON. shift
+      } elsif ($line =~ /^if\s+(\S+)\s+==\s+(\S+)\s+(.*)$/i) {
+        if ($1 eq $2) {
+          # Execute the rest of the line:
+          $line = $3;
+          redo REDO;
+	}
+
+# shift
+      } elsif ($line =~ /^shift$/i) {                   # RPI 2011
+        shift(@args);       # remove dummy entry
+        shift(@args);       # shift out entry 1
+        unshift(@args, ""); # put dummy entry back
+        push(@args, "");    # put empty entry on right
 
 # pause
-    } elsif ($line =~ /^pause\s+(.*)$/i) { 
-      open(TTY,"/dev/tty");  ## RPI 548
-      my $REPLY = getc(TTY);
-      close(TTY);
+      } elsif ($line =~ /^pause\s+(.*)$/i) {
+        open(TTY,"/dev/tty");  ## RPI 548
+        my $REPLY = getc(TTY);
+        close(TTY);
 # rem
-    } elsif (($line =~ /^rem/i) || ($line =~ /^REM/i)) {  
-      # Comment line
+      } elsif (($line =~ /^rem/i) || ($line =~ /^REM/i)) {
+        # Comment line
 # set
-    } elsif ($line =~ /^set\s+(\w+)=(\S+)$/i){ ## RPI 713
-      printf "SET NAME=%s\n", $1;
-      printf "SET PARM VALUE=%s\n", $2;
-      my $VAL = $2;
-      $VAL =~ s/\\=/\>\//g;       # replace = with > to avoid Linux set error
-      $ENV{$1} = $VAL;
-      printf "SET ENV VALUE=%s\n", $ENV{$1}; ## RPI 713
-     
-# default - assume Linux command and attempt to execute it     
+      } elsif ($line =~ /^set\s+(\w+)=(\S+)$/i){ ## RPI 713
+        printf "SET NAME=%s\n", $1;
+        printf "SET PARM VALUE=%s\n", $2;
+        my $VAL = $2;
+        $VAL =~ s/\\=/\>\//g;       # replace = with > to avoid Linux set error
+        $ENV{$1} = $VAL;
+        printf "SET ENV VALUE=%s\n", $ENV{$1}; ## RPI 713
 
-    } else {
-      my @args = split_args($line);
-      $errorlevel = system(@args);
-      if ($errorlevel) {
-        if ($? == -1) {
-          print "@args failed to execute: $!\n";
-        } elsif ($? & 127) {
-          printf "@args child died with signal %d, %s coredump\n",
-              ($? & 127),  ($? & 128) ? 'with' : 'without';
-        } else {
-          printf "program exited with value %d\n", $? >> 8;
+# default - assume Linux command and attempt to execute it
+
+      } else {
+        my @args = split_args($line);
+        $errorlevel = system(@args);
+        if ($errorlevel) {
+          if ($? == -1) {
+            print "@args failed to execute: $!\n";
+          } elsif ($? & 127) {
+            printf "@args child died with signal %d, %s coredump\n",
+                ($? & 127),  ($? & 128) ? 'with' : 'without';
+          } else {
+            printf "program exited with value %d\n", $? >> 8;
+          }
         }
       }
+      last REDO;
     }
 
     # If we are here, then go on to next line:
     $i++;
-    last if $i > $#lines;
+    last LINE if $i > $#lines;
 
   } # Next line
 }
@@ -329,4 +372,3 @@ sub split_args($) {
   }
   return(@args);
 }
-

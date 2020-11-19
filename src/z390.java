@@ -141,6 +141,7 @@ public  class  z390
      * 07/30/11 RPI 1175 use shared tz390.check_java_version()              
 	 * 2019-09-20 dsh fix memory leak by closing temp_file
 	 * 2019-09-23 dsh remove JApplet depreciated support
+	 * 2020-10-12 John Ganci RPI 2011 Perl scripts in z390 version 1.7  are in perl subdirectory.
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -1448,12 +1449,12 @@ public  class  z390
 	   	    	    if  (cmd_line != null){
 	   	    	        cmd_parms = new String[3];
 	   	    			cmd_parms[0] = tz390.z390_command;
-	   	    			cmd_parms[1] = install_loc + "/cmd.pl"; // RPI 532 
+	   	    			cmd_parms[1] = install_loc + "/perl/cmd.pl"; // RPI 532 // RPI 2011
 	   	    			cmd_parms[2] = cmd_line;
 	   	    		} else {
 	   	    			cmd_parms = new String[2];
 	   	    			cmd_parms[0] = tz390.z390_command;
-	   	    		    cmd_parms[1] = install_loc + "/cmd.pl";// RPI 532 
+	   	    		    cmd_parms[1] = install_loc + "/perl/cmd.pl";// RPI 532 // RPI 2011 
 	   	    		}
 	   	    	} else {
 	   	    		if  (cmd_line != null){

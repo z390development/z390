@@ -1,41 +1,24 @@
-z390_v1702_readme.txt updated 2020-11-02 by don@higgins.net
+z390_v1703_readme.txt updated 2020-11-18 by don@higgins.net
 
-This z390 version has the following fixes and changes:
+This z390_v1703.zip version has the following fixes and changes:
 
-1.  TEST\TESTINS6.MLC has been renamed and moved to ZOPCHECK\ZOPCHECK.MLC
-    with its own BAT\ZOPCHECK command.  The total number of opcode
-    and operand tests has grown from 2216 to 2336 by adding some missing 
-    mnemonics in zopcodes.cpy.  The program has now been optimized so its BAL file
-    can now be run on mainframe using IBM COBOL course system.   The only missing
-    opcode errors were for DIAG, SIE, and PGIN.  Most of the errors generated
-    are primarily due to mask fields not having specific bit settings for specific
-    instruction options.  Additional errors were for specific register requirements
-    for floating point and 128 bit result instructions. 
+1.  John Ganci has contributed updates to improve Linux support:
+    a.  The perl commands in the perl directory have been updated.
+    b.  The bat directory commands have been updated to improve Linux compatibility
+    c.  The source file src\z390.java has been updated to include the perl directory 
+        in the command directory path.
 
-2.  A new option zvsam(0=none,1=zvsam1, or 2=zvsam2) has been added which sets
-    GBLA &SYSZVSAM which is used by new vsam macros to determine which vsam version to use.
+2.  An additional 20 new opcodes have been added to the z390 assembler and are now
+    included in the zopcheck verification program.  the paper zopcheck.pdf version 1.1
+    has been updated including new references for the new instructions including
+    machine measurement instructions and the SORTL instruction for sort enhancements:
+    http://www.zopcheck.info/zopcheck.pdf
 
-3.  A new structured programming set of macros  developed by Dan Snyder has been
-    added in directory named "structuredmacros".  It is released as open source software.
-    These macros support more complex logical expressions in IF and DO macros and
-    have been tested on z390 and mainframe by Dan.  A future z390 project may be to 
-    integrate this support with existing z390 structured macro support.
-    The structuredmacros subdirectories included are:
-    1.  Documentation
-    2.  z390 - maclib to concatenate with z390 mac library
-    3.  zOS  - iebupdte jcl to update user library
+3.  Following up on the new SORTL instruction in support of IBM DFSORT Z SORT facility,
+    I've added a sort directory and demo sorts that can be run by double clicking on 
+    sort\RUNSORT.BAT.  The z390 sort utility is described in doc\z390_Sort_Utility.pdf.
 
-4.  John Ganci has contributed an updated perl directory which now contains a readme.txt
-    file plus a zip file with 3 directories: bat, perl, and src.  The bat directory contains
-    updated bat files for use on linux. The perl directory contains updated cmd.pl and dos.pl
-    perl commands to process the bat files on linus.  The src directory contains updated
-    z390.java with changes including new path to perl files.  The java update will require 
-    rebuild of z390.jar on linus platform with java jda 8+ installed.
 
-5.  RPI 2211 fix for macro assembler prevents erroneous optimization of part of pseudo code
-    generated for a macro assembler line.  This occurred in a vsam macro Melvyn was working
-    with.  Note I used latest version of Eclipse to debug this problem, and Eclipse no
-    longer supports Java JDK 8 so I had to switch to JDK 11.
 
 This z390 zipped directory contains everything you need to install and run z390 Portable Mainframe
 Assembler and zCOBOL.  It has been regression tested on Windows 10.  Additional volunteers are
@@ -54,8 +37,12 @@ This will not work if only a Java runtime is installed.  If the current Java run
 is not compatible with the current Java 8+ z390.jar, install Java SDK and rebuild
 z390.jar by double clicking on bat\BLDJAR.BAT.
 
-Double click zopcheck\zopcheck.bat to assemble, link, and execute
-assembler program zopcheck.mlc which verifies all z390 instruction opcodes.
+Double click bat\zopcheck.bat to assemble, link, and execute
+assembler program zopcheck.mlc which verifies all z390 assembler instruction opcodes.
+
+Double click bat\runsort.bat to assemble, link, and execute z390 sort utility 
+including demo sort merge of 100,000 records.  See doc\z390_Sort_Utility.pdf
+for documention on sort and demos. 
 
 Double click bat\runasmdemos.bat to assemble, link, and execute assembler demo programs: 
   1. DEMO\HELLO.MLC     - Display "Hello World" via WTO macro
@@ -89,7 +76,7 @@ Here is link to last z390 SHARE presentation Melvyn and I did togehter:
 
 Join the z390 user group here: https://groups.google.com/g/z390
 
-Join monthly zoom share sessions via www.ZoomToSHARE.org
+Join zoom share sessions via www.ZoomToSHARE.org
 
 Future planned releases and pending priority fixes will be posted on www.z390.info
 

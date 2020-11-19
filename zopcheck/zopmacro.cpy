@@ -296,7 +296,11 @@
 &HEX3A  SETA    X2A('&HEX3')
 &OP_LAB     &OP     &P1
 &LAB_OP ORG &OP_LAB+16
- DC      X'&HEX',AL1(&HEX2A*16+&HEX3A),AL4(&P1)
+         AIF ('&HEX' EQ 'C0')
+ DC      X'&HEX',AL1(&HEX2A*16+&HEX3A),AL4(&P1) 
+         AELSE
+ DC      X'&HEX',AL1(&HEX3A*16+&HEX2A),AL4(&P1)
+         AEND 
       AELSE
         MNOTE 12,'RIL INVALID OPERAND COUNT &LAB_OP  '   
       AEND              

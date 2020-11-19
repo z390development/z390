@@ -32,16 +32,26 @@
 #           applies to first line of perl scripts as BAT
 #           files edited on Windows work fine.)
 # 02/09/07 RPI 548 add -- to first line to allow Windows editing
+# 2020/10/12 RPI 2011 Changes for z390 version 1.7.
+#              1. Find z390 base directory same way as cmd.pl and z390.pl.
+#              2. Perl scripts now in perl subdirectory.
+#            Complete source replacement so only one line has RPI 2011.
 ###########################################################
 use strict;
 use warnings;
-use Getopt::Std;
-sub run();
-if (-f "/usr/local/lib/z390/z390.jar") {
-   print "z390 dos command processor started - enter bat file command or exit\n";
-} else {
-   die "z390 dos error - z390 not installed in /usr/local/lib/z390\n";
-}
-chdir '/usr/local/lib/z390';
-system("cmd.pl");
 
+my $HOME = $ENV{'HOME'} || $ENV{'LOGDIR'} ||
+		(getpwuid($<))[7] || die "You're homeless!\n";
+my $dir; # Base directory for support files
+my @dirs = ("$HOME/lib/z390", "/usr/local/lib/z390", "/usr/lib/z390");
+unshift(@dirs, $ENV{Z390}) if $ENV{Z390};
+foreach my $d (@dirs) {
+  if (-f "$d/z390.jar") {                                 
+    $dir = $d;
+    last;
+  }
+}
+die "Cannot find z390.jar file in any of @dirs!\n" unless $dir;
+print "z390 dos command processor started - enter bat file command or exit\n";
+chdir "$dir";
+system("./perl/cmd.pl"); # RPI 2011

@@ -297,6 +297,7 @@ public  class  tz390 {
 	^ 2020-10-18 RPI 2202 DSH add missing mnemonics BI,CLT,CLGT,LOCHI,LOCGHI,LOCHHI,LOCFHR,STOC,STOCG,STOCFH
 	* 2020-10-22 DSH V1701b RPI 2202 opcode fixes repackage zopcheck
     * 2020-11-02 DSH v1702  add option zvsam(0=default/1=zvsam1/2=zvsam2)
+	* 2020-11-16 DSH V1703 rpi 2221 ADD 20 MISSING OPCODES
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -305,7 +306,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.7.02";  //dsh + afk
+    String version    = "V1.7.03";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -1742,6 +1743,7 @@ public  class  tz390 {
          "A71=TMLL,73,730",      //   2000 "A71"   "TMLL"     "RI"   12 // RPI 1522
          "A74=BRC,12,130",       //   2040 "A74"   "BRC"      "RI"   12
          "A74m=BRm,13,130;0=;F=BRU", //    "A74m"  "BRm, BRU" "BRCX" 13
+		 "A74=JC,13,130", //       "A74"  "JC" "BRCX" 13 RPI 2221
          "A74m=Jm,13,130;0=JNOP", //       "A74m"  "Jm, JNOP" "BRCX" 13
          "A75=BRAS,12,121",      //   2360 "A75"   "BRAS"     "RI"   12
          "A75=JAS,12,121",       //   2370 "A75"   "JAS"      "RI"   12
@@ -1779,6 +1781,14 @@ public  class  tz390 {
          "B278=STCKE,7,70",      //   3270 "B278"  "STCKE"    "S"     7
          "B279=SACF,7,70",       //   3280 "B279"  "SACF"     "S"     7
          "B27D=STSI,7,70",       //   3290 "B27D"  "STSI"     "S"     7
+		 
+		 "B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
+         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
+         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
+		 "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
+         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
+         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
+		 
          "B299=SRNM,7,71",       //   3300 "B299"  "SRNM"     "S"     7
          "B29C=STFPC,7,72",      //   3310 "B29C"  "STFPC"    "S"     7
          "B29D=LFPC,7,72",       //   3320 "B29D"  "LFPC"     "S"     7
@@ -1881,7 +1891,7 @@ public  class  tz390 {
          "B999=SLBR,14,144",     //   5010 "B999"  "SLBR"     "RRE"  14
          "C00=LARL,16,162",      //   5170 "C00"   "LARL"     "RIL"  16
          "C04=BRCL,16,330",      //   5180 "C04"   "BRCL"     "RIL"  16
-		 
+		
          "C05=BRASL,16,163",     //   5210 "C05"   "BRASL"    "RIL"  16
          "C05=JASL,16,163",      //   5220 "C05"   "JASL"     "RIL"  16
          "E31E=LRV,18,180",      //   5620 "E31E"  "LRV"      "RXY"  18
@@ -2020,6 +2030,12 @@ public  class  tz390 {
          "B993=TROO,14,143",     //   4970 "B993"  "TROO"     "RRE"  14
          "B99D=ESEA,14,144",     //   5040 "B99D"  "ESEA"     "RRE"  14
          "C04m=BRmL,33,330;F=BRUL;0=", //   "C04m"  "BRmL"     "BLX"  33
+         "C04=JLC,33,330", //   "C04"  "JLC"     "BLX"  33 RPI 2221
+		 "B2E0=SCCTR,14,142",  // RRE,SCCTR,R1,R2 RPI 2221
+		 "B2E1=SPCTR,14,142",  // RRE,SPCTR,R1,R2 RPI 2221
+		 "B2E4=ECCTR,14,142",  //  RRE   B2E4 R1,R2", // RPI 2221
+         "B2E5=EPCTR,14,142",  //  RRE   B2E5 R1,R2", // RPI 2221
+         "B2ED=ECPGA,14,142",  //  RRE   B2ED R1,R2", // RPI 2221
          "C04m=JLm,33,330;F=JLU;0=JLNOP", //"C04m"  "JLm"      "BLX"  33
          "E1=PKU,17,170",        //   5380 "E1"    "PKU"      "RXSS" 17
          "E2=UNPKU,17,170",      //   5390 "E2"    "UNPKU"    "SS"   17
@@ -2435,6 +2451,7 @@ public  class  tz390 {
             "B2FA=NIAI,75,710", //  B2FA IE 75,710 NIAI I1,I2 RPI 2202
             "B2FC=TABORT,7,72", // B2FC S 7,72 TABORT D2(B2) RPI 2202
             "B929=KMA,54,340", // B929 RRFb 54,340 KMA R1,M3,R2 RPI 2202
+			"B938=SORTL,14,144",  // RRE,SORTL,R1,R2 RPI 2221
             "B939=DFLTCC,36,360", // B929 RRFa 36,360 DFLTCC R1,R2,R3 RPI 2202
             "B93A=KDSA,14,144", // "B93A RRE 14,144 KDSA R1,R2 RPI 2202"
             "B93C=PRNO,14,144", // B93C RRE 14,144 PRNO R1,R2 RPI 2202
@@ -3373,6 +3390,7 @@ public  class  tz390 {
          "C84=LPD,55,321",       //        "C84"   "LPD"      "SSF2" 55 RPI 1125 Z196
          "C85=LPDG,55,321",      //        "C85"   "LPDG"     "SSF2" 55 RPI 1125 Z196
          "CC6=BRCTH,16,163",     //        "CC6"   "BRCTH"    "RIL"  16 RPI 1125 Z196
+		 "CC6=JCTH,16,163",      //   2390 "CC6"   "JCTH"     "RI"   12 // RPI 2221
          "CC8=AIH,16,160",       //        "CC8"   "AIH"      "RIL"  16 RPI 1125 Z196
          "CCA=ALSIH,16,160",     //        "CCA"   "ALSIH"    "RIL"  16 RPI 1125 Z196
          "CCB=ALSIHN,16,160",    //        "CCB"   "ALSIHN"   "RIL"  16 RPI 1125 Z196
