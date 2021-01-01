@@ -1,0 +1,31 @@
+acb2     subentry ,
+         b     run
+         dc    c'&SYSDATE'
+         dc    c' '
+         dc    c'&SYSTIME'
+
+run      ds    0h
+         snap  storage=(myacb,myacbend),PDATA=,ID=001
+         la    1,myacb
+         svc   X'13'
+         nop   0
+         nop   0
+         nop   0
+         nop   0
+         l     15,0
+         b     exit
+
+
+* acb    ACB   ddname=ESF1
+myacb    ds    0d
+acbeye   dc    c'zACB'
+acbid    dc    x'a0'
+acbstyp  dc    x'10'
+acblen   ds    xl2                 !! dunno
+acbddnm  dc    cl8'ESF1'
+myacbend EQU   *
+
+
+exit     ltr   15,15
+         subexit ,
+         end   ,

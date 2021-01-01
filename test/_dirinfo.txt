@@ -1,0 +1,1 @@
+I created the "test" directory to hold testing data and tools: developer's assets, not part of the product. HS

@@ -11,6 +11,7 @@
 # **/*.in[0-9] --> Test input data
 # **/*.ini --> Initialization file
 # **/*.ivp --> Data for Installation Verification Procedure
+# **/*.js  --> javascript
 # **/*.lkd --> Link-edit instructions
 # **/*.mac --> Macro definitions
 # **/*.man --> Manifesto file
