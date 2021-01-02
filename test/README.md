@@ -1,4 +1,4 @@
-Contents of the _handover/1/test_ Directory
+Contents of the _handover/2/test_ Directory
 ===========================================
 
 This directory contains files that are not part of the product, nor even part of the developer's deliverables.
@@ -6,8 +6,8 @@ They include test data and test drivers (procedures/scripts). There may be half-
 But in general they exist to allow me or possibly A.N. Other to test my code.
 
 As of today, they are:
-acb2.*      a user assembly prog that opens a v2 ACB to verify that vz390 recognises it and proceeds to opening 
-            the corresponding file.
+acb2.*      a user assembly prog that opens a zzVSAM v2 ACB to verify that vz390 recognises it and proceeds to
+            opening the corresponding file.
 DEMOCAT.*   a replica written in Java of (some of) the contents of the DEMOCAT in 1.5.06. It allows vz390.v2 to
             call upon catalog services without knowing anything about v1 catalog loadmod layout.
 ESF1.dta    a little scrap of a file matching the ESF1 entry in DEMOCAT so that vz390 will find a file to
@@ -23,18 +23,20 @@ Test results
 ------------
 1. execz.js
 Commands:
-  cd handover/1
-  export ESF1=test/DEMOCAT.ESF1
-  jjs -cp test:classes -scripting --language=es6 test/execz.js -- acb2 zVSAM\(2\)
+  cd handover/2
+  export ESF1=test/DEMOCAT.ESF1                                                       # Linux
+  jjs -cp test:classes -scripting --language=es6 test/execz.js -- acb2 zVSAM\(2\)     # Linux
+  set ESF1=test\DEMOCAT.ESF1                                                          # Windows
+  jjs -cp test:classes -scripting --language=es6 test\execz.js -- acb2 zVSAM(2)       # Windows
 This results in vz390 passing control to the_VSAM_Handler, which passes control to vz390.v2's handle_open_req method,
 validating the correct version of ACB, creating a zACB, adding it to the ACB Hashmap, extracting the DDNAME, and 
 retrieving and logging the value from the environment.
 
 2. tcat.js
 Commands:
-  cd handover/1
+  cd handover/2
   export ESF1=test/DEMOCAT.ESF1
-  jjs -cp test:classes -scripting --language=es6 test/tcat.js                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+  jjs -cp test:classes -scripting --language=es6 test/tcat.js
 This exercises the catalog access classes DEMOCAT, Catalog, InlineCatalog, CatalogEntry, CatalogImplementationType
 and CatEntry_Cluster. It locates the catalog, adds some extra cluster entries to it in order to stress the subsequent
 search method a little, and retrieves all the cluster entries from the catalog and lists them on the console. Then,
@@ -57,7 +59,7 @@ I believed that was true at that time. It's more accurate to say that it's 50% t
 acb2 drives the code up to entering the VSAM open() routine, extracting the ddname and fetching the corresponding env
 value; and tcat.js establishes that, given a ddname, my Java code successfully navigates the Catalog, derives the DSN
 and determines that that file exists on disk. There's a slight overlap between these two tests, so perhaps 98% true.
-The (Java) catalog navigation code used in tcat.js is not yet incorporated into vz390, but is glued together with JS.
+The Java catalog-manipulation code used in tcat.js is not yet incorporated into vz390, but is glued together with JS.
 
 
 

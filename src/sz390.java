@@ -7398,9 +7398,7 @@ public void init_sz390(tz390 shared_tz390,pz390 shared_pz390, vz390 shared_vz390
    pz390 = shared_pz390;
    vz390 = shared_vz390;
 
-   try {
-     ebcdic_dcb_id_ver = new ebcdicStryng(tz390.dcb_id_ver);   // RPI 1598
-     } catch(java.io.IOException e) { abort_error(99, "!! sz390 failed convert to EBCDIC: "+ e); }
+   ebcdic_dcb_id_ver = new ebcdicStryng(tz390.dcb_id_ver, true);   // RPI 1598
 }
 
 

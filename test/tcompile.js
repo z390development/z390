@@ -1,7 +1,8 @@
-/* A Nashorn script to test zVSAM V2 on my USB thumb drive, label CRUZER3, on both Windows & Linux. *\
-\* Also on my HP Stream 7, without USB, Win 8.1 only. This script runs a .390 load module.          */
+// Compile from-to ./test
+// Env: Nashorn; cwd: handover/2
+// Args: list of 1 or more files or dirs, presumed in the 'test' directory.
 
-//   Housekeeping: adopt path charactors specific to this OS:
+//   Housekeeping: adopt path characters specific to this OS:
 var psep = java.io.File.pathSeparator;
 var dsep = java.io.File.separator;
 var base = "?Dev?zVSAM".replace(/\?/g, dsep);     // Where I keep pre-existing z390 classes.
@@ -12,7 +13,7 @@ if  (p.substr(-10, 8) == "handover"       &&
      p.substr( -2, 1) == dsep             &&
      "23456789".indexOf(p.substr(-1, 1)) > -1     // Presumed not compatible with handover/1/
     ) {}
-else throw new Error(__FILE__ +" requires current dir to be ... handover"+dsep+"N (N=1,2,3); found "+ p);
+else throw new Error(__FILE__ +" requires current dir to be ... handover"+dsep+"N (N=2,3); found "+ p);
 }
 /*  ------------  End of housekeeping. Actual functionality starts here.  ------------  */
 
@@ -25,8 +26,12 @@ var strCp = [   // classpath
   java.nio.file.Paths.get( base, "..", "z",    "z390.jar"    ), // 1.5.06       absolute
   ].join(psep);
 
-// Build the whole comamnd line to run this .390 prog:
-cmd = 'java -cp '+ strCp +' ez390 test'+ dsep + arguments.join(" ");
+var cmd = "javac -encoding UTF-8 "             +
+                "-source 8 -target 8 "         +
+                "-classpath " + strCp +" "     +
+                "-d test "                     +
+                arguments.map(function(f){return " test"+dsep+f;}).join("");
+
 print('Issuing: "'+ cmd +'".');                   // and log it.
 $EXEC( cmd );                                     // Run the .390 prog.
 java.lang.System.out.print($OUT);                 // Show the captured STDOUT data.

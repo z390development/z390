@@ -67,6 +67,7 @@ though visible to the containing class.
   |    | Class name: V1                |    |
   |    | - original methods            |    |
   |    | - method: handle_vsam_request |    |
+  |    | - method: isValidACB          |    |
   |    |                               |    |
   |    +-------------------------------+    |
   |                                         |
@@ -76,6 +77,7 @@ though visible to the containing class.
   |    | - new fields                  |    |
   |    | - new methods                 |    |
   |    | - method: handle_vsam_request |    |
+  |    | - method: isValidACB          |    |
   |    |                               |    |
   |    +-------------------------------+    |
   |                                         |
@@ -104,6 +106,7 @@ After initialisation, one of the following sets of objects exist, dependent on v
                                    |    | Object type: V1                       |    |
                                    |    | Implements : Generic_VSAM_Handler     |    |
                                    |    | - method name: handle_vsam_request    |    |
+                                   |    | - method name: isValidACB             |    |
                                    |    +---------------------------------------+    |
                                    |                                                 |
                                    +-------------------------------------------------+  
@@ -120,6 +123,7 @@ After initialisation, one of the following sets of objects exist, dependent on v
                                    |    | Object type: V2                       |    |
                                    |    | Implements : Generic_VSAM_Handler     |    |
                                    |    | - method name: handle_vsam_request    |    |
+                                   |    | - method name: isValidACB             |    |
                                    |    +---------------------------------------+    |
                                    |                                                 |
                                    +-------------------------------------------------+  
@@ -1007,37 +1011,43 @@ public class vz390 {
 
 
 
-  /*---------------------------------------------------------------------------*\
-   |                                                                           |
-   |  RPI 1614: Changes to re-structure vz390 to provide both the original     |
-   |  zVSAM support and zVSAM V2. This was done by organising the source       |
-   |  into 3 parts:                                                            |
-   |  1. The original vz390 global variables and public methods. These public  |
-   |     methods now simply forward the call to one of the following classes.  |
-   |  2. An inner class, V1, within the vz390 class, containing the original   |
-   |     private vz390 logic.                                                  |
-   |  3. An inner class, V2, within the vz390 class, containing the zVSAM V2   |
-   |     logic.                                                                |
-   |                                                                           |
-   |  The constructor (newly introduced with this RPI) instantiates either     |
-   |  one OR the other of the inner classes, based on the value of the version |
-   |  code that was set in tz390 at startup. Both of them implement the same   |
-   |  public method, specified in the Generic_VSAM_Handler interface. Any      |
-   |  caller of that method, therefore, remains agnostic as to which version   |
-   |  of zVSAM is running.                                                     |
-   |                                                                           |
-  \*---------------------------------------------------------------------------*/
-
-
-
+   // RPI 1614
    /**
-    *  Interface implemented by both class versions.
+    *  Interface implemented by both inner class versions.                                                                
+    *
+    *
+<pre>
+    *---------------------------------------------------------------------------*
+    |                                                                           |
+    |  RPI 1614: Changes to re-structure vz390 to provide both the original     |
+    |  zVSAM support and zVSAM V2. This was done by organising the source       |
+    |  into 3 parts:                                                            |
+    |  1. The original vz390 global variables and public methods. These public  |
+    |     methods now simply forward the call to one of the following classes.  |
+    |  2. An inner class, V1, within the vz390 class, containing the original   |
+    |     private vz390 logic.                                                  |
+    |  3. An inner class, V2, within the vz390 class, containing the zVSAM V2   |
+    |     logic.                                                                |
+    |                                                                           |
+    |  The constructor (newly introduced with this RPI) instantiates either     |
+    |  one OR the other of the inner classes (but never both), based on the     |
+    |  value of the version code that was set in tz390 at startup. Each of      |
+    |  them implements the same public methods, specified in the                |
+    |  <code>Generic_VSAM_Handler</code> interface. Any caller of that method,  |
+    |  therefore, remains agnostic as to which version of zVSAM is running.     |
+    |                                                                           |
+    *---------------------------------------------------------------------------*
+</pre>
     *
     *  The compiler verifies that both implement methods with signatures 
     *  identical to these, and thereby guarantees that methods in whichever 
     *  inner class is instantiated in the vz390 constructor will be called
     *  from outside without the caller having to know which version
     *  of zVSAM is running.
+    *
+    *  @author   Hugh Sweeney
+    *  @version  1.6.00
+    *
     */
    interface Generic_VSAM_Handler {              // RPI 1614
      public void handle_vsam_request(byte req);
@@ -1046,38 +1056,65 @@ public class vz390 {
 
 
 
-   /**
-   *  This will refer to whichever VSAM handler is created in the constructor.
-   */
-   private Generic_VSAM_Handler the_VSAM_Handler;
-
-
 
    /**
-   * EBCDIC value of eyecatcher in V2 ACB. (May be tested in both V1 & V2.)
+   *  The reference to whichever VSAM handler is created in the constructor.
+   *
+   *  The constructor, obeying the zVSAM option in tz390, creates a VSAM request
+   *  handler object, either version 1 (DSH's original vz390 code) or version 2
+   *  (HS' new code). It then assigns that object to this reference.
+   *<p>
+   *  Provided that all access to the VSAM handler is made via this reference,
+   *  no class calling the handler will be aware of which version is being run.
+   *  Nor should it.
+   *</p>
    */
-   ebcdicStryng ebcdic_acb_id_ver_v2 = null;
+   private final Generic_VSAM_Handler the_VSAM_Handler;
+
+
+
+
+
+
+   /**
+   * EBCDIC value of eyecatcher in V2 ACB. (RPI 1614)                                     
+   *
+   * The user's Asm program will contain an ACB with character fields coded in EBCDIC. Including (in
+   * Version 2) the block's eyecatcher. This object provides a method to compare each field with a 
+   * predefined literal.
+   *<p>
+   * This may be tested in both V1 & V2. In each version, the ACB Open logic verifies that the block supplied
+   * is actually an ACB of the right version. If not, rather than just reporting 'not an ACB' it may   
+   * attempt to report if the user has supplied a wrong-version ACB rather than just garbage.
+   * Declared 'final' as it is only assigned a value once (in the constructor).
+   */
+   private final ebcdicStryng ebcdic_acb_id_ver_v2;         /* EBCDIC-coded ACB eyecatcher. */
+
+
+
+
 
 
    /**
    * Constructor: instantiates one XOR other version of zVSAM services.
+   * Which version is chosen is based on user specification of the zVSAM() option at startup.
+   *
+   * @param shared_tz390   the single tz390 instance (tables)
+   * @param shared_pz390   the single pz390 instance (instruction processor)
+   * @param shared_sz390   the single sz390 instance (svc processor)
+   *
    */
-   public vz390(tz390 shared_tz390, pz390 shared_pz390, sz390 shared_sz390) {
+   public vz390(tz390 shared_tz390, pz390 shared_pz390, sz390 shared_sz390) {      /* RPI 1614 */
       tz390 = shared_tz390;
       pz390 = shared_pz390;
       sz390 = shared_sz390;
+      ebcdic_acb_id_ver_v2 = new ebcdicStryng(tz390.acb_id_ver_v2, true); 
 
-      /* RPI 1614 */
-      try { ebcdicStryng ebcdic_acb_id_ver_v2 = new ebcdicStryng(tz390.acb_id_ver_v2); } 
-      catch(IOException e) { sz390.abort_error(99, "!! vz390 failed convert to EBCDIC: "+ e); }
-
-      if (DEVEL) System.out.println("!! VZ390: init_vz390 about to construct selected VSAM handler...");
-
-      if (tz390.opt_zvsam == 2) 
-        the_VSAM_Handler = new V2();
-      else 
-        the_VSAM_Handler = new V1();
+      if (DEVEL) System.out.println("!! VZ390: init_vz390 about to construct selected VSAM handler (V1 or V2) ...");
+      the_VSAM_Handler = (tz390.opt_zvsam == 2) ?  new V2( shared_pz390 )  // Version 2 specified 
+                                                :  new V1();               // Version 1 (default)
    }
+  
   
   
 
@@ -1090,28 +1127,37 @@ public class vz390 {
 
 
 
+
    /**
       Functions to distinguish between ACB layouts for zVSAM versions 1 and 2.
-      These functions reside here because they have to know about both zVSAM versions.
+      These functions reside in vz390 because they have to know about both zVSAM versions.
    */
+
 
    /**
    *  Function to identify version 1 ACB.
+   *
+   *  @param   addr   main storage address of a putative ACB.
+   *  @return  <code>true</code> if block begins with a Version 1 code.
+   *
    */
    private boolean isValidV1ACB(int addr) {
      return (pz390.mem.get(addr) == tz390.acb_id_ver);
    }
 
+
+
+
    /**
    *  Function to identify version 2 ACB.
+   *
+   *  @param   addr   main storage address of a putative ACB.
+   *  @return  <code>true</code> if block begins with a Version 2 ACB id.
+   *
    */
-
    private boolean isValidV2ACB(int addr) {
      return (ebcdic_acb_id_ver_v2.equals(pz390.mem_byte[addr]));
    }
-
-
-
 
 
 
@@ -1129,10 +1175,14 @@ public class vz390 {
 
      /**
      *  This constructor just remarks that it's the original zVSAM.
+     *  Constructor newly added at RPI 1614 just to log which version is running.
      */
      V1() {  if (DEVEL)
        System.out.println("!! vz390.V1: Constructor running; Don's original implementation.");
      }
+
+
+
 
    /**
    *  Function to determine if an ACB id is for this zVSAM version.
@@ -1142,6 +1192,8 @@ public class vz390 {
      if (isValidV2ACB(acb_addr)) return (byte) 8;    // looks like an ACB for other zVSAM version.
      return (byte) 4;                                // neither of the above.
    }
+
+
 
 
    /**
@@ -4630,34 +4682,70 @@ public class vz390 {
 
    private class V2 implements Generic_VSAM_Handler {  // RPI 1614
 
+     /* Reference to 'global' object passed in constructor. */
+     pz390 obj_pz390;
+  
+
+
 
      /* ********************************************** */   // RPI 1598
      /* Anchor points for globals supporting new zVSAM */   // RPI 1598
      /* ********************************************** */   // RPI 1598
      private HashMap<Integer, zACB> zACB_map = new HashMap<Integer, zACB>();
 
+
+
+
      /**
      *  EBCDIC equivalent of ACB eyecatcher
+     *
+     *  It is a constant value so is declared final. 
+     *
      */
-     private ebcdicStryng ebcdic_zACB = null;
-     {
-       try { ebcdic_zACB = new ebcdicStryng("zACB"); }
-       catch(IOException e) { sz390.abort_error(98, "!! failed to concvert to EBCDIC: "+ e); }
-     }
+     private final ebcdicStryng ebcdic_zACB = new ebcdicStryng("zACB", true);
+  
+  
   
 
      /**
      *  This constructor just remarks that very little has been implemented yet.
+     *
+     *  @param parm_pz390 The single instance of the processor class. Needed 
+     *                    for all access to z memory and registers.
+     *
+     <p>
+     *
+     *  The 'global' pz390 object (which is just a single instance of the class
+     *  containing useful routines) is passed to this constructor as a parameter in
+     *  order to decouple this class from the global variable used in the original 
+     *  vz390 initialisation. This has two purposes: (1) it will be simpler later
+     *  to separate this class from what is now the V1 class; and (2) elimination of
+     *  the duplication where the class name (pz390) was also used as the instance
+     *  name. That duplication led to really obscure compilation error messages
+     *  if the name was used where the object was out of scope. HS. RPI 1614.
+     <pre>
+     *  Further explanation in this email to the zVSAM team:  
+     *  Date: Fri, 9 Aug 2019 13:14:46 +0100
+     *  Message-ID: <CAJuTTaFQDdqpD3eF8muBwGRS4DSdRKKXsASdkerk7HiWQ-eKHg@mail.gmail.com>
+     *  Subject: Strange Java error: non-static variable in static context. One case solved.
+     *  From: Hugh Sweeney <hsweeney@pobox.com>
+     </pre>
      */
-     V2() {  if (DEVEL)
-       System.out.println("!! vz390.V2: Constructor running; little functionality implemented here yet.");
+     V2( pz390 parm_pz390 ) {
+       if (DEVEL)
+         System.out.println("!! vz390.V2: Constructor has been entered.");
+
+       obj_pz390 = parm_pz390;
+
      }
+
+
 
 
      /**
      *  Function to determine if an ACB id is for this zVSAM version.
      */
-     public byte isValidACB(int acb_addr) {
+     public byte isValidACB(int acb_addr) { 
        if (isValidV2ACB(acb_addr)) return (byte) 0;    // valid ACB for this zVSAM version.
        if (isValidV1ACB(acb_addr)) return (byte) 8;    // looks like an ACB for other zVSAM version.
        return                             (byte) 4;    // neither of the above.
@@ -4665,9 +4753,11 @@ public class vz390 {
   
   
   
+  
      /**
-     *  Select and execute VSAM access method service requested
-     *  @param req request code, copied from vsam_cur_op.
+     *  Select and execute the VSAM access method service requested.
+     *
+     *  @param req The request code, copied from vsam_cur_op.
      */
      public void handle_vsam_request(byte req) {
 
@@ -4676,19 +4766,19 @@ public class vz390 {
         case vsam_op_get:                       // GET R1=A(RPL)
            handle_get_req();
            break;
-/*!!
+
         case vsam_op_put:                       // PUT R1=A(RPL)
-           svc_rpl_put();
+           handle_put_req();
            break;
 
         case vsam_op_erase:                     // ERASE R1=A(RPL)
-           svc_rpl_erase();
+           handle_erase_req();
            break;
 
         case vsam_op_point:                     // POINT R1=A(RPL)
-           svc_rpl_point();
+           handle_point_req();
            break;
-*/
+
         case vsam_op_open:                      // OPEN R1=A(ACB)
            handle_open_req();
            break;
@@ -4698,10 +4788,12 @@ public class vz390 {
            break;
 
         default:
-           pz390.set_psw_check(pz390.psw_pic_oper);
-           throw new RuntimeException("!! vz390 VSAM op ("+ req +") not yet implemented."); 
+           obj_pz390.set_psw_check(obj_pz390.psw_pic_oper);
+           throw new RuntimeException("!! vz390.V2 VSAM op ("+ req +") not yet implemented."); 
         }
      }
+
+
 
 
      private void handle_get_req() {
@@ -4709,25 +4801,58 @@ public class vz390 {
      }
 
 
+     private void handle_put_req() {
+        devLog("!! Handler for Put req.");
+     }
+
+
+     private void handle_erase_req() {
+        devLog("!! Handler for Erase req.");
+     }
+
+
+     private void handle_point_req() {
+        devLog("!! Handler for Point req.");
+     }
+
+
+
+
+
      /**
      *  Validate and execute an Open request
+     *  
+     <pre>
+     *  param  none  (ACB addr is in GPR 1.)  
+     *  return void  (return code in GPR 15 & reason codes set in ACB) 
+     </pre>
+     *  
      */
-     private void handle_open_req() {          devLog("!! .open_acb() reached.");
-        cur_acb_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+     private void handle_open_req() {          devLog("!! .open_acb() has been entered.");
+        cur_acb_addr = obj_pz390.reg.getInt(obj_pz390.r1) & obj_pz390.psw_amode;
         validate_ACB(cur_acb_addr);
-        //!! verify acbver (D&L v2.1 p65; does it exist?)
-//!!    if already open, fail.
 
-        zACB TempACB = new zACB(cur_acb_addr); // RPI 1598
+        // Validate ACB contents and create shadow ACB
+        zACB TempACB = new zACB(obj_pz390.mem, cur_acb_addr); // RPI 1598
+
+        if (TempACB.last_op_completion_code > 0) { 
+          fail_open(TempACB.last_op_completion_msg);
+          return;     //!! percolate failure status upwards
+          }
 
         // Find the catalog entry key from the ddname:
         StringBuilder ddn = new StringBuilder(TempACB.DDNAM());   // Environment variable name
         int spaceX = ddn.indexOf(" "); if (spaceX != -1) ddn.setLength(spaceX);      // Trim trailing space.
-        String dsn = System.getenv(ddn.toString());   // Retrieve environment variable value.
+        String dsn = System.getenv(ddn.toString());         // Retrieve environment variable value.
         System.out.println("!! DSN: "+ dsn);
 
-//!!    find in catalog
-//!!    TempACB.Open();                        // RPI 1598
+        //!!    find in catalog
+        TempACB.open();                             // RPI 1598
+
+        if (TempACB.last_op_completion_code > 0) { 
+          fail_open(TempACB.last_op_completion_msg);
+          return;     //!! percolate failure status upwards
+          }
 
         // Retain this ACB
         zACB_map.put(cur_acb_addr, TempACB);   // RPI 1598
@@ -4736,29 +4861,45 @@ public class vz390 {
 
 
 
+
+
      /**
      *  Validate and execute a Close request
+     *  
+     <pre>
+     *  param  none  (ACB addr is in GPR 1.)  
+     *  return void  (return & reason codes set in ACB) 
+     </pre>
+     *  
      */
      private void handle_close_req() {         devLog("!! .close_acb() reached.");
-        cur_acb_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
-//!!    zACB TempACB = new zACB(cur_acb_addr); // RPI 1598   fetch from map
-//!!    TempACB.Close();                       // RPI 1598
+        cur_acb_addr = obj_pz390.reg.getInt(obj_pz390.r1) & obj_pz390.psw_amode;
+        //!!    zACB TempACB = new zACB(cur_acb_addr); // RPI 1598   fetch from map
+        //!!    TempACB.Close();                       // RPI 1598
         zACB_map.remove(cur_acb_addr);         // RPI 1598
      }
 
 
+
+
+
      private void validate_ACB(int ACB_addr) {
-       if (pz390.mem_byte[ACB_addr] == (byte) 0xA0)       fail_open("!! ACB is for wrong zVSAM version");
-       if (!ebcdic_zACB.equals(pz390.mem_byte, ACB_addr)) fail_open("!! Unrecognisable ACB");
+       if (obj_pz390.mem_byte[ACB_addr] == (byte) 0xA0)       fail_open("!! ACB is for wrong zVSAM version");
+       if (!ebcdic_zACB.equals(obj_pz390.mem_byte, ACB_addr)) fail_open("!! Unrecognisable ACB");
      }
+
+
 
 
      /**
      *  !! Needs lots of details filled in for reason codes etc.
      */
      private void fail_open(String msg) {
-       sz390.abort_error(97, "!! vz390.v2 "+ msg);
+       //!! Abort is too drastic: obj_......abort_error(97, "!! vz390.v2 "+ msg);
+       // !! Callers of this need to know of failure. Return boolean? 
      }
+
+
 
 
      /**
@@ -4766,74 +4907,10 @@ public class vz390 {
      */
      private void devLog(String msg) {
        if (DEVEL) System.out.println("!! vz390: " + msg);
-       }
+     }
 
 
    } 
 
 // =========================== End of V2 class. ===========================
-
-   /**
-   *  Shadow ACB
-   */
-   class zACB {
-     Integer ACB_addr; 
-   
-     /**
-     *  Constructor, just stores the pointer to user`s ACB.
-     */
-     zACB(int addr) {
-       ACB_addr = addr;
-       //!! lots more tbd
-       }
-   
-     /**
-     *  Open this ACB.                                                                
-     *  @return      return code (for R15)
-     */
-     int open() {
-//!!   devLog(".zACB.open() has been called.");
-       //!! body goes here
-       return 16;    //!! Keeps the compiler happy.
-       }
-
-
-     /**
-     *  Getters for ACB fields.
-     */
-     byte   ID()    { return pz390.mem_byte[ACB_addr + V2OFF + ID]; }
-     byte   STYPE() { return pz390.mem_byte[ACB_addr + V2OFF + STYPE]; }
-     short  LEN()   { return pz390.mem.getShort(ACB_addr + V2OFF + LEN); }
-     int    AMBL()  { return pz390.mem.getInt(ACB_addr + V2OFF + AMBL); }
-     int    IFR()   { return pz390.mem.getInt(ACB_addr + V2OFF + IFR); }
-     byte   MACRF() { return pz390.mem_byte[ACB_addr + V2OFF + MACRF]; }
-     byte   MACR2() { return pz390.mem_byte[ACB_addr + V2OFF + MACR2]; }
-     byte   MACR3() { return pz390.mem_byte[ACB_addr + V2OFF + MACR3]; }
-     byte   OFLGS() { return pz390.mem_byte[ACB_addr + V2OFF + OFLGS]; }
-     String DDNAM() { try {
-               return new String(pz390.mem_byte, ACB_addr + V2OFF + DDNAM, 8, "cp1047"); 
-             } catch (java.io.UnsupportedEncodingException e) 
-             { sz390.abort_error(95, "!! can't convert DDNAM from cp1047: "+ e); }
-     return "";
-     }
-   
-     /**
-     *  Offsets of various fields in user`s zACB. This is information about ACB internals.
-     *  No information about ACB internal layout should be defined outside this class.
-     */
-     static final short V2OFF = 0;     // !! additional offset for V2 ACB (check it!)
-     static final short ID    = 0x4;
-     static final short STYPE = 0x5;
-     static final short VER   = 0;     // !exist?
-     static final short LEN   = 0x6;   
-     static final short DDNAM = 0x08;
-     static final short AMBL  = 0x4;   // !exist?
-     static final short IFR   = 0x8;   // !exist?
-     static final short MACRF = 0x10;
-     static final short MACR1 = 0x10;
-     static final short MACR2 = 0x11;
-     static final short MACR3 = 0x12;
-     static final short MACR4 = 0x13;
-     static final short OFLGS = 0x28;
-   }
 }

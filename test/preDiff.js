@@ -1,4 +1,5 @@
 print(__FILE__ +", line "+ __LINE__ +": Starting.");
+// Environment: Nashorn shell.  cd handover/N
 
 /**                                                                                                       **\
 
@@ -12,26 +13,22 @@ print(__FILE__ +", line "+ __LINE__ +": Starting.");
 
 \**                                                                                                       **/
 
-var psep, dsep, base;
-// Windows or Linux? Basic z390 source files are at different locations;
-var os = java.lang.System.getProperty("os.name");  
-switch (os.toUpperCase().slice(0,3)) {
-  case "WIN" : psep = ";"; dsep = "\\"; base = "\\Dev\\zVSAM"; break;
-  case "LIN" : psep = ":"; dsep = "/";  base = "/media/CRUZER3/Dev/zVSAM"; break;
-  default    : throw ("Unknown OS: "+ os);
-  }
 
-{ // Enforce correct current dir
+//   Housekeeping: adopt path charactors specific to this OS:
+var psep = java.io.File.pathSeparator;
+var dsep = java.io.File.separator;
+var base = "?Dev?zVSAM".replace(/\?/g, dsep);
+
+{ // Housekeeping: enforce correct working dir
 let p = java.lang.System.getProperty("user.dir");
 if  (p.substr(-10, 8) == "handover"       &&
      p.substr( -2, 1) == dsep             &&
-     "123".indexOf(p.substr(-1, 1)) > -1
+     "23456789".indexOf(p.substr(-1, 1)) > -1     // Presume no compatibility with handover/1/.
     ) {}
 else throw new Error(__FILE__ +" requires current dir to be ... handover"+dsep+"N (N=1,2,3); found "+ p);
 }
 
-// Environment: Nashorn shell.  cd zVSAM
-// Short JS names for Java types:
+// Housekeeping: short JS names for Java types:
 var juTM  = Java.type("java.util.TreeMap");
 var jiF   = Java.type("java.io.File");
 var jiFnF = Java.type("java.io.FilenameFilter");
@@ -40,10 +37,11 @@ var jlSy  = Java.type("java.lang.System");
 var juC   = Java.type("java.util.Comparator");
 var juFmt = Java.type("java.util.Formatter");
 var JiFW  = Java.type("java.io.FileWriter");
+/*  ------------  End of housekeeping. Actual functionality starts here.  ------------  */
 
-// All source file names & timestamps
+// All source file names & timestamps are recorded here:
 var allFiles = new juTM(
-  new juC (    // Comparator
+  new juC (    // Comparator, required by iterator.
     { compare: function( k1, k2 ) 
                 { 
                   if (k1 < k2) return -1;
@@ -56,12 +54,12 @@ var allFiles = new juTM(
   )
 );
 
-// Test-data, assuming CD is ... handover/N
-var args = [  ".java",                              // Extension of interest.
-              "src",                                // Directory of interest.
-              base + dsep +"../zB12/test/java",     // Older directories ...
-              base + dsep +"../zB11/src",           // ... in reverse date ...
-              base + dsep +"../z/src"               // ... order.
+// Test-data, relative to handover/N
+var args = [  ".java",                                                           // Extension of interest.
+              "./src",                                                           // Directory of interest.
+              java.nio.file.Paths.get(base, "../zB12/test/java").toString(),     // Older directories ...
+              java.nio.file.Paths.get(base, "../zB11/src").toString(),           // ... in reverse date ...
+              java.nio.file.Paths.get(base, "../z/src").toString()               // ... order.
            ];
 for (let i=1; i<args.length; i++) args[i] = new jiF(args[i]).getCanonicalPath(); 
 var filter        = args[0];                        // file extension
@@ -77,7 +75,7 @@ var fmtr = new juFmt();
 var longType = Java.type("java.lang.Long"); var longVar = new longType( (new Date()).getTime() );
 fmtr.format("All source file last-modified timestamps in all directories.\n");
 fmtr.format("This analysis was run on %1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS.\n", longVar );
-fmtr.format("\n\u2193File               Dir\u2192 %1$21s %2$21s %3$21s %4$21s\n", args[1], args[2], args[3], args[4]);
+fmtr.format("\n\u2193File                       Dir\u2192 %1$21s %2$21s %3$21s %4$21s\n", abbr(args[1]), abbr(args[2]), abbr(args[3]), abbr(args[4]));
 fmtr.format("==============================   --------------------- --------------------- --------------------- ---------------------\n");
 for (var srcSorted = allFiles.keySet().iterator(); srcSorted.hasNext(); )  { 
   var name1 =    srcSorted.next();
@@ -149,4 +147,9 @@ function d(msec) {    // Format a (possible) date.
 
 function fWrt( text ) {     // Write to the diff FileWriter.
   pD.write(text, 0, text.length );
+}
+
+function abbr(path) { // abbreviate a path name 
+if (path.length <= 21) return path;
+return ( path.substr(0,3) + "..." + path.substr(-15, 15) );
 }

@@ -1,0 +1,35 @@
+acb2m    subentry ,
+         b     run
+         dc    c'&SYSDATE'
+         dc    c' '
+         dc    c'&SYSTIME'
+*!!      HSTEST ,
+
+run      ds    0h
+         snap  storage=(myacb,myacbend),PDATA=,ID=002
+*        la    1,myacb
+*        svc   X'13'
+         open  myacb
+         nop   0
+         nop   0
+         nop   0
+         nop   0
+         l     15,0
+         b     exit
+
+
+myacb    ds    0d
+         ACB   ddname=ESF1
+
+*acbeye   dc    c'zACB'
+*acbid    dc    x'a0'
+*acbstyp  dc    x'10'
+*acblen   ds    xl2                 !! dunno
+*acbddnm  dc    cl8'ESF1'
+
+myacbend EQU   *
+ 
+
+exit     ltr   15,15
+         subexit ,
+         end   ,
