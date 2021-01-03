@@ -1,0 +1,52 @@
+*        zVSAM v1 DI: Direct and Indirect Open/Close addressing
+acb1DI   subentry ,
+         b     run
+         dc    c'&SYSDATE'
+         dc    c' '
+         dc    c'&SYSTIME'
+
+run      ds    0h
+         wto   '&SYSECT now running.'
+         snap  storage=(myacb1,myacbend),PDATA=,ID=001
+         la    1,myacb1
+         svc   X'13'
+         nop   0
+         nop   0
+         nop   0
+         nop   0
+         l     15,0
+         b     exit
+
+
+* acb    ACB   ddname=ESF1
+myacb1   ds    0d
+acbid    dc    x'a0'
+acbstyp  dc    x'10'
+acblen   ds    xl2                 !! dunno
+acbddnm  dc    cl8'ESF1'
+         org   myacb1+x'3c'
+*
+* acb    ACB   ddname=ESF2
+myacb2   ds    0d
+         ds    0d
+         dc    x'a0'
+         dc    x'10'
+         ds    xl2                 !! dunno
+         dc    cl8'ESF2'
+         org   myacb2+x'3c'
+*
+* acb    ACB   ddname=ESF3
+myacb3   ds    0d
+         ds    0d
+         dc    x'a0'
+         dc    x'10'
+         ds    xl2                 !! dunno
+         dc    cl8'ESF3'
+         org   myacb3+x'3c'
+*
+myacbend EQU   *
+
+
+exit     ltr   15,15
+         subexit ,
+         end   ,

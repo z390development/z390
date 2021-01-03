@@ -7338,6 +7338,39 @@ set GIT_COMMITTER_DATE=2021-03-28 13:59:00 +0000
 git commit -m "Reconstructed version of zVSAM Handover 2 committed on behalf of Hugh Sweeney"
 git tag -a zVSAM_Handover2 -m "Reconstructed version of zVSAM Handover 2 committed on behalf of Hugh Sweeney"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.5.06_zVSAM3 (V1.5.06 + zVSAM Handover 3)
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.5.06_zVSAM3 (V1.5.06 + zVSAM Handover 3)
+git rm  README.TXT
+git add src/ebcdicStryng.java
+git add src/ez390.java
+git add src/sz390.java
+git add src/vz390.java
+git add src/zACB.java
+git add src/zRPL.java
+git rm  test/ACBD2.txt
+git add test/acb1DI.mlc
+
+==> Create commit for V1.5.06_zVSAM3 (V1.5.06 + zVSAM Handover 3)
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Hugh 2021-01-03 00:00:00 +0000
+set GIT_COMMITTER_DATE=2021-03-28 14:12:00 +0000
+git commit -m "Reconstructed version of zVSAM Handover 3 committed on behalf of Hugh Sweeney"
+git tag -a zVSAM_Handover3 -m "Reconstructed version of zVSAM Handover 3 committed on behalf of Hugh Sweeney"
+
+
+
+
+
+
 
 
 

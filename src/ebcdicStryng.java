@@ -122,13 +122,13 @@ public class ebcdicStryng {
 * The one-parameter constructor may be more suitable for other cases.
 *
 * @param   referenceString The String to be re-encoded in EBCDIC.
-* @param   abendOnExcpn    Terminate JVM if any error.
+* @param   excpnAction     Terminate JVM, or return exception, if any error.
 *
 */
-  public ebcdicStryng(String referenceString, boolean abendOnExcpn) {
+  public ebcdicStryng(String referenceString, onException excpnAction ) {
     this(referenceString);
     if (ctorXcpn != null) {                   // There was a problem.
-      if (abendOnExcpn) {                     // We've been told to abend if a problem occurs.
+      if (excpnAction == onException.ABNDZ390) {             // We've been told to abend if a problem occurs.
         System.out.println("Fatal Error: ebdicStryng(\""+referenceString+"\") failed initialisation: " + ctorXcpn);
         System.exit(100);                     // !! Is exit code unique? Does it matter?
       }
@@ -136,7 +136,8 @@ public class ebcdicStryng {
     } 
   }
 
-
+/** Constants to allow a client to document what it wants to happen if constructor throws an exception. */
+  enum onException { ABNDZ390, RETURNX };
 
 
 /**

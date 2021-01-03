@@ -207,8 +207,8 @@ public  class  sz390 implements Runnable {
     * 02/29/16 RPI 2006 Test-mode L command in 24-bit mode: errors listing above the line storage
     * 02/27/16 RPI 2007 Test-mode command "1r=x'8000000000000000'" fails (java bug); R1=-1 anyway
     * 02/14/16 RPI 2008 Add test-mode command PSW16 to display 16 byte PSW
-    * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one . !! HS moving to vz390.
-    * 19-01-31 RPI 1628  VSAM versions now 1,2 rather than 0,1.
+    * 16-12-24 RPI 1598 Provide a means to select either original VSAM or the new one.
+    * 20-11-10 RPI HS02 !! Open/Close SVC: indirect API detected in place of direct.   RPI ????
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -831,7 +831,9 @@ public  class  sz390 implements Runnable {
                "On",                                     // RPI 1507
                };                                        // RPI 1507
 
-     ebcdicStryng ebcdic_dcb_id_ver = null;              // RPI 1598
+     // Constants (ids, eyecatchers)
+     private final ebcdicStryng ebcdic_dcb_id_ver;                     // RPI 1598
+     private final ebcdicStryng eyeOPC = new ebcdicStryng("zOPC", ebcdicStryng.onException.ABNDZ390);    // RPI HS02 !!
 
   /*
    * end of global ez390 class data and start of procs
@@ -839,6 +841,17 @@ public  class  sz390 implements Runnable {
 
 
   /* ************************************************************* */
+
+/**
+ Constructor: for pre-execution initialisations.
+ !! I created this to enable initialisation of a final field.
+ I have made the minimal changes necessary to init_sz390 and to ez390.init_ez390 in order to implement this. 
+ Possibly in the long run, all the functionality of init_sz390 should be moved in here. !! HS
+*/
+public sz390(tz390 parm_tz390) {                                                       // RPI 1598
+   this.tz390 = parm_tz390;     // required here for use in next line.                 
+   ebcdic_dcb_id_ver = new ebcdicStryng(tz390.dcb_id_ver, ebcdicStryng.onException.ABNDZ390);
+}
 
 
    /**
@@ -890,10 +903,10 @@ public void svc(int svc_id){
       svc_bldl();
       break;
    case 0x13:  // OPEN DCB R0=(x'40' input,x'20' output) R1=DCB
-      svc_open();
-     break; 
+      process_open_parms();                                     // RPI HS02 !!
+      break; 
    case 0x14:  // CLOSE DCB R1=DCB
-      svc_close();
+      process_close_parms();                                    // RPI HS02 !!
       break;
    case 0x22:  // SVC 34 R1=COMMAND
       svc_cmd();
@@ -3203,15 +3216,105 @@ private void dump_mem_stat(){
 
 
 
+/**  Structure of a detected Open-Close parmlist */
+private class opcl_plist_struct { /* Parmlist Structure Descriptor */  // RPI HS02 !!
+/**   Address of (putative) parmlist.     */    int parmlist;
+/**   To mask xCB addresses.              */    int amask;
+/**   Length of each parm element in list */    short l_parm;    
+/**   Offset to xCB address within parm   */    short o_addr;
+}
+
+
+
+
+/**
+  Detect whether this Open/Close SVC uses a parmlist.
+  @return a parmlist structure descriptor if detected, else null.
+*/
+private opcl_plist_struct detect_opcl_parmlist() {                     // RPI HS02 !!
+  opcl_plist_struct pstruc = new opcl_plist_struct();
+  
+  // Address putative parmlist independently of amode:
+  pstruc.parmlist = pz390.reg.getInt(pz390.r1);        // Assume r1->parmlist
+  if (pstruc.parmlist == 0) {                          // Unless it's zero
+    pstruc.parmlist = pz390.reg.getInt(pz390.r0);      // r0->parmlist
+    pstruc.amask = (2 << 31)-1; pstruc.l_parm = 8; pstruc.o_addr = 4;
+  } else
+    pstruc.amask = (2 << 24)-1; pstruc.l_parm = 4; pstruc.o_addr = 0;
+
+  // Is putative parmlist actually a parmlist?
+  System.out.print  ("!! sz390.process_open_parms(): seeking zOPC eyecatcher... ");
+  if (! eyeOPC.equals(pz390.mem_byte, pstruc.parmlist) ) /* Eyecatcher (indicates indirect)? */  {  // Not the eyecatcher 
+    System.out.println(" not found: treat as a single file.");
+    return null;      // No parmlist
+    }
+  System.out.println(" found: treat as parmlist.");
+  return pstruc;      // Structure of parmlist.
+}
+
+
+
+
+/**
+ Process the Open request according to whether caller is using direct or indirect Open/Close API.
+ <pre>
+ Direct API (Up to version 1.5.06): 
+     R1 -> a single block (DCB/ACB)
+
+ Indirect (2020-11-11) API (From version 1.6b13): 
+     Parmlist begins with eyecatcher "zOPC";
+     If R1 nonzero: -> zOPC, list of 24-bit parms
+     If R1 zero: R0 -> zOPC, list of 31-bit parms
+     Each parm: option, -> single block (DCB/ACB)
+ </pre>
+ We look for the presence of the zOPC eyecatcher in order to determine 
+ whether this SVC uses the (original) direct API, or the (later) indirect API.
+*/
+private void process_open_parms() {                                    // RPI HS02 !!
+  opcl_plist_struct pstruc = detect_opcl_parmlist();    // Detect an OPCL eyecatcher if present.
+  if (pstruc == null) svc_open();        // Not detected; directly-addressed single file.
+  else open_via_parmlist(pstruc);        // Use indirect addressing.
+}
+
+
+
+
+/**
+ Iterate over the OPCL parmlist, opening one xCB at a time.
+ Memorise success or failure of each Open, and set R15 for the whole process.
+ @param pstruc parmlist structure descriptor. 
+*/
+private void open_via_parmlist(opcl_plist_struct pstruc) {             // RPI HS02 !!
+  int parm = pstruc.parmlist + 4             /* advance past eyecatcher;         */ 
+                             - pstruc.l_parm /* in prep for advance to next parm */;
+
+  int good_opens=0, bad_opens=0;             // To memorise the count of individual file successes and failures.
+
+  do {  // iterate over parmlist, opening each file according to original API
+    parm = parm + pstruc.l_parm;                                              // Advance to next parm;
+    pz390.reg.putInt(pz390.r0, (int) (pz390.mem_byte[parm] & 0x000000ff));    // Option
+    pz390.reg.putInt(pz390.r1, pz390.mem.getInt(parm + pstruc.o_addr) & pstruc.amask);      // Address of DCB/ACB 
+    svc_open();
+    if (pz390.reg.getInt(pz390.r15) == 0) good_opens++; else bad_opens++;     // Save state (success/failure counts)
+  } 
+  while ( (pz390.mem_byte[parm] & 0x80) != 0x80 );                            // Last parm?
+
+  // Set R15 return code dependent on saved state;
+  pz390.reg.putInt(pz390.r15, (bad_opens == 0)? 0x00         // All ok.
+                                              : 0x08);       // Some failed.
+}
+
+
+
+
+/**
+ * Check for DCB or ACB and route to appropriate Open routine.   
+ */
 private void svc_open(){
-   /*
-    * check for DCB or ACB and route accordingly   
-    */
-   // !! Testing: assume R1->xCB, not R1->plist->xCB...
    cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode; // RPI 1021
    cur_open_opt  = pz390.reg.getInt(pz390.r0);
 
-   if (ebcdic_dcb_id_ver.equals(pz390.mem_byte[cur_dcb_addr])) {
+   if (ebcdic_dcb_id_ver.equals(pz390.mem_byte[cur_dcb_addr])) {    // RPI 1598
      svc_open_dcb("");
      }
    else {
@@ -3223,9 +3326,9 @@ private void svc_open(){
 
 
 
-public void svc_open_dcb(String dsnam_path){
-   /*
-    * open DCB file for sequential or random I/O
+   /**
+    * Open DCB file for sequential or random I/O
+<pre>
     * and use dsnam_path prefix for dcbdsnam option
     * Notes:
     *   1.  R1 = DCB
@@ -3247,7 +3350,9 @@ public void svc_open_dcb(String dsnam_path){
     *  
     *  Output registers:
     *    R0  - 64 bit file length RPI 587                     3
+</pre>
     */
+public void svc_open_dcb(String dsnam_path){
    tot_dcb_open++; 
    tot_dcb_oper++;
    check_dcb_addr();
@@ -3327,11 +3432,11 @@ public void svc_open_dcb(String dsnam_path){
 
 
 
-private void get_dcb_locate_buffer(){
-   /*
+   /**
     * set dcb_rec to address of get/put 
     * locate buffer else abort RPI 764
     */
+private void get_dcb_locate_buffer(){
    if (cur_dcb_lrecl_f == 0){
       pz390.reg.putInt(pz390.r1,cur_dcb_blksi_f); 
    } else {
@@ -3348,8 +3453,7 @@ private void get_dcb_locate_buffer(){
 
 
 
-private String get_dcb_file_name(String dsnam_path){
-   /*
+   /**
     * Get file name from DCBDSNAM if not zero
     *   and append dsnam_path RPI 668
     * else get file from DCBDDNAM environment 
@@ -3359,6 +3463,7 @@ private String get_dcb_file_name(String dsnam_path){
     *   2.  File spec up to 265 long spacey name
     *       with drive and path. 
     */
+private String get_dcb_file_name(String dsnam_path){
    String file_name = "";
    int dcb_dsn = pz390.mem.getInt(cur_dcb_addr + dcb_dsnam);
    if (dcb_dsn > 0){
@@ -3384,10 +3489,10 @@ private String get_dcb_file_name(String dsnam_path){
 
 
 
-private String get_tiot_file_name(int tiot_index){
-   /*
+   /**
     * return file name for tiot using ddname for tiot
     */
+private String get_tiot_file_name(int tiot_index){
    String file_name = get_ascii_env_var_string(tiot_ddnam[tiot_index]);
    if (file_name != null && file_name.length() > 0){
         file_name = tz390.fix_file_separators(file_name); // RPI 1080
@@ -3398,14 +3503,63 @@ private String get_tiot_file_name(int tiot_index){
 
 
 
-private void svc_close(){
-   /*
+/**
+ Process the Close request according to whether caller is using direct or indirect Open/Close API.
+ <pre>
+ Direct API
+ Up to version 1.5.06: R1 -> a single block (DCB/ACB)
+
+ Indirect (2020-11-11) API
+ From version 1.6b13: parmlist begins with eyecatcher "zOPC";
+         If R1 nonzero: -> zOPC, list of 24-bit parms
+         If R1 zero: R0 -> zOPC, list of 31-bit parms
+         Each parm: option, -> single block (DCB/ACB)
+ </pre>
+ We look for the presence of the zOPC eyecatcher in order to determine whether this SVC uses the (original) direct
+ API, or the (later) indirect API.
+*/
+private void process_close_parms() {                                   // RPI HS02 !!
+  opcl_plist_struct pstruc = detect_opcl_parmlist();    // Detect an OPCL eyecatcher if present.
+  if (pstruc == null) svc_close();       // Not detected; directly-addressed single file.
+  else close_via_parmlist(pstruc);       // Use indirect addressing.
+}
+
+
+
+
+/**
+ Iterate over the OPCL parmlist, closing one xCB at a time.
+ Memorise success or failure of each Close, and set R15 for the whole process.
+*/
+private void close_via_parmlist(opcl_plist_struct pstruc) {            // RPI HS02 !!
+  int parm = pstruc.parmlist + 4             /* advance past eyecatcher;         */ 
+                             - pstruc.l_parm /* in prep for advance to next parm */;
+
+  int good_closes=0, bad_closes=0;             // To memorise the count of individual file successes and failures.
+
+  do {  // iterate over parmlist, closing each file according to original API
+    parm = parm + pstruc.l_parm;                                              // Advance to next parm;
+    pz390.reg.putInt(pz390.r1, pz390.mem.getInt(parm + pstruc.o_addr) & pstruc.amask);      // Address of DCB/ACB 
+    svc_close();
+    if (pz390.reg.getInt(pz390.r15) == 0) good_closes++; else bad_closes++;     // Save state (success/failure counts)
+  } 
+  while ( (pz390.mem_byte[parm] & 0x80) != 0x80 );                            // Last parm?
+
+  // Set R15 return code dependent on saved state;
+  pz390.reg.putInt(pz390.r15, (bad_closes == 0)? 0x00         // All ok.
+                                               : 0x08);       // Some failed.
+}
+
+
+
+
+   /**
     * check for DCB or ACB and route accordingly
     */
-   // !! Testing: assume R1->xCB, not R1->plist->xCB...
+private void svc_close(){
    cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode; // RPI 1021
    byte cur_acb_id = pz390.mem.get(cur_dcb_addr);
-   if (ebcdic_dcb_id_ver.equals(pz390.mem_byte[cur_dcb_addr])) {
+   if (ebcdic_dcb_id_ver.equals(pz390.mem_byte[cur_dcb_addr])) {    // RPI 1598
       svc_close_dcb();
    } else {
       vz390.cur_vsam_op = vz390.vsam_op_close;
@@ -3416,10 +3570,10 @@ private void svc_close(){
 
 
 
-public void svc_close_dcb(){
-   /*
+   /**
     * close file if open else synad error
     */
+public void svc_close_dcb(){
    tot_dcb_close++; 
    tot_dcb_oper++;
    check_dcb_addr();
@@ -7390,15 +7544,13 @@ private byte[] get_test_mem_sdt(String text){
 
 
 
+/**
+ * Init sz390
+ */
 public void init_sz390(tz390 shared_tz390,pz390 shared_pz390, vz390 shared_vz390){
-   /*
-    * init tz390
-    */
-   tz390 = shared_tz390;
+// tz390 = shared_tz390;    //!! Now assigned in constructor; (minimal required change). // RPI 1598
    pz390 = shared_pz390;
    vz390 = shared_vz390;
-
-   ebcdic_dcb_id_ver = new ebcdicStryng(tz390.dcb_id_ver, true);   // RPI 1598
 }
 
 

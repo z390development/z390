@@ -174,6 +174,7 @@ import javax.swing.Timer;
     * 01/04/10 RPI 1094 move timeout to tz390 to share with gz390
     * 05/10/11 RPI 1149 move started msg to put_trace
     * 07/30/11 RPI 1175 use tz390.check_java_version()
+    * 11/25/20 RPI 1598 support zVSAM v1 or v2 transparently.
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -377,9 +378,9 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
        }
        tz390 = new tz390();
        pz390 = new pz390();
-       sz390 = new sz390();
 //!!   vz390 = new vz390();
        tz390.init_tz390();  // RPI 1080
+       sz390 = new sz390(tz390);                                 // RPI 1598
       if (!tz390.check_java_version()){ // RPI 1175
          sz390.abort_error(204,"unknown java version "
           + tz390.java_vendor + " " + tz390.java_version);  

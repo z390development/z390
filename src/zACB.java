@@ -70,33 +70,30 @@ public class zACB {
   /**
   *  Set completion status of failed operation.
   *
-  *  @param    parm_msg Message detailing te failure.
+  *  @param    parm_msg Message detailing the failure.
   *  @return            false
   */
   boolean fail_op(String parm_msg) {
     last_op_completion_msg = parm_msg; 
     last_op_completion_code = 16;
+
+    // !! Dev kludge: mark all ops failed, with invalid reason code. Replace with real reasons...
+    zMemByteArr[ACB_addr + V2OFF + ERFLG] = (byte) 0xFE; // = pz390.mem_byte
     return false;
     }
 
 
 
 
-  /**
+  /*
   *  Getters for ACB fields.
   *
   *  These are the only methods that should be available to other classes to access ACB fields.
   */
-  byte   ID()    { return zMemByteArr[ACB_addr + V2OFF + ID];      }
-  byte   STYPE() { return zMemByteArr[ACB_addr + V2OFF + STYPE];   }
-  byte   VER()   { return zMemByteArr[ACB_addr + V2OFF + VER];     }
-  short  LEN()   { return zMemByteBuf.getShort(ACB_addr + V2OFF + LEN); }
+                   /** -> AMB */
   int    AMBL()  { return zMemByteBuf.getInt(ACB_addr + V2OFF + AMBL);  }
-  int    IFR()   { return zMemByteBuf.getInt(ACB_addr + V2OFF + IFR);   }
-  byte   MACRF() { return zMemByteArr[ACB_addr + V2OFF + MACRF];   }
-  byte   MACR2() { return zMemByteArr[ACB_addr + V2OFF + MACR2];   }
-  byte   MACR3() { return zMemByteArr[ACB_addr + V2OFF + MACR3];   }
-  byte   OFLGS() { return zMemByteArr[ACB_addr + V2OFF + OFLGS];   }  
+
+                   /** DDNAME (UTF-8) */
   String DDNAM() { try {
             return new String(zMemByteArr, ACB_addr + V2OFF + DDNAM, 8, "cp1047"); 
           } catch (java.io.UnsupportedEncodingException e) { 
@@ -104,6 +101,36 @@ public class zACB {
             return ""; 
           }
   }
+
+                   /** Error field (reason code) */
+  byte   ERFLG() { return zMemByteArr[ACB_addr + V2OFF + ERFLG];   }  
+
+                   /** A0 = VSAM */
+  byte   ID()    { return zMemByteArr[ACB_addr + V2OFF + ID];      }
+
+
+  int    IFR()   { return zMemByteBuf.getInt(ACB_addr + V2OFF + IFR);   }
+
+                   /** ACB length */
+  short  LEN()   { return zMemByteBuf.getShort(ACB_addr + V2OFF + LEN); }
+
+                   /** Macro access type flags */
+  byte   MACRF() { return zMemByteArr[ACB_addr + V2OFF + MACRF];   }
+ 
+                   /** MACRF flags byte 2 */
+  byte   MACR2() { return zMemByteArr[ACB_addr + V2OFF + MACR2];   }
+
+                   /** MACRF flags byte 3 */
+  byte   MACR3() { return zMemByteArr[ACB_addr + V2OFF + MACR3];   }
+
+                   /** Open flags */
+  byte   OFLGS() { return zMemByteArr[ACB_addr + V2OFF + OFLGS];   }  
+
+                   /** 10 Subtype VSAM */
+  byte   STYPE() { return zMemByteArr[ACB_addr + V2OFF + STYPE];   }
+
+                   /** 02 (Version 2) */
+  byte   VER()   { return zMemByteArr[ACB_addr + V2OFF + VER];     }
 
 
 
@@ -140,6 +167,7 @@ public class zACB {
   private static final short MACR3 = 0x12;
   private static final short MACR4 = 0x13;
   private static final short OFLGS = 0x28;
+  private static final short ERFLG = 0x29;
   private static final short VER   = 0x2D;    
 
   /**

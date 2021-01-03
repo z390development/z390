@@ -1108,9 +1108,10 @@ public class vz390 {
       tz390 = shared_tz390;
       pz390 = shared_pz390;
       sz390 = shared_sz390;
-      ebcdic_acb_id_ver_v2 = new ebcdicStryng(tz390.acb_id_ver_v2, true); 
+      ebcdic_acb_id_ver_v2 = new ebcdicStryng(tz390.acb_id_ver_v2, ebcdicStryng.onException.ABNDZ390); 
 
       if (DEVEL) System.out.println("!! VZ390: init_vz390 about to construct selected VSAM handler (V1 or V2) ...");
+
       the_VSAM_Handler = (tz390.opt_zvsam == 2) ?  new V2( shared_pz390 )  // Version 2 specified 
                                                 :  new V1();               // Version 1 (default)
    }
@@ -4702,7 +4703,7 @@ public class vz390 {
      *  It is a constant value so is declared final. 
      *
      */
-     private final ebcdicStryng ebcdic_zACB = new ebcdicStryng("zACB", true);
+     private final ebcdicStryng ebcdic_zACB = new ebcdicStryng("zACB", ebcdicStryng.onException.ABNDZ390);
   
   
   
@@ -4731,9 +4732,7 @@ public class vz390 {
      *  From: Hugh Sweeney <hsweeney@pobox.com>
      </pre>
      */
-     V2( pz390 parm_pz390 ) {
-       if (DEVEL)
-         System.out.println("!! vz390.V2: Constructor has been entered.");
+     V2( pz390 parm_pz390 ) {     if (DEVEL) System.out.println("!! vz390.V2: Constructor has been entered.");
 
        obj_pz390 = parm_pz390;
 
@@ -4761,30 +4760,34 @@ public class vz390 {
      */
      public void handle_vsam_request(byte req) {
 
+        // Reg contents used by all methods below.
+        int r0 = obj_pz390.reg.getInt(obj_pz390.r0);
+        int r1 = obj_pz390.reg.getInt(obj_pz390.r1);
+
         switch (req) {
 
         case vsam_op_get:                       // GET R1=A(RPL)
-           handle_get_req();
+           handle_get_req(r0, r1);
            break;
 
         case vsam_op_put:                       // PUT R1=A(RPL)
-           handle_put_req();
+           handle_put_req(r0, r1);
            break;
 
         case vsam_op_erase:                     // ERASE R1=A(RPL)
-           handle_erase_req();
+           handle_erase_req(r0, r1);
            break;
 
         case vsam_op_point:                     // POINT R1=A(RPL)
-           handle_point_req();
+           handle_point_req(r0, r1);
            break;
 
         case vsam_op_open:                      // OPEN R1=A(ACB)
-           handle_open_req();
+           handle_open_req(r0, r1);
            break;
 
         case vsam_op_close:                     // CLOSE R1=A(ACB)
-           handle_close_req();
+           handle_close_req(r0, r1);
            break;
 
         default:
@@ -4796,23 +4799,31 @@ public class vz390 {
 
 
 
-     private void handle_get_req() {
-        devLog("!! Handler for Get req.");
+     private void handle_get_req(int op, int parm_rpl) {                  devLog("!! Handler for Get req.");
+        int rpl_addr = parm_rpl;
+        zRPL rpl = new zRPL(op, rpl_addr, obj_pz390.mem);
+        //!! Actual GET logic here
      }
 
 
-     private void handle_put_req() {
-        devLog("!! Handler for Put req.");
+     private void handle_put_req(int op, int parm_rpl) {                  devLog("!! Handler for Put req.");
+        int rpl_addr = parm_rpl;
+        zRPL rpl = new zRPL(op, rpl_addr, obj_pz390.mem);
+        //!! Actual PUT logic here
      }
 
 
-     private void handle_erase_req() {
-        devLog("!! Handler for Erase req.");
+     private void handle_erase_req(int op, int parm_rpl) {                devLog("!! Handler for Erase req.");
+        int rpl_addr = parm_rpl;
+        zRPL rpl = new zRPL(op, rpl_addr, obj_pz390.mem);
+        //!! Actual ERASE logic here
      }
 
 
-     private void handle_point_req() {
-        devLog("!! Handler for Point req.");
+     private void handle_point_req(int op, int parm_rpl) {                devLog("!! Handler for Point req.");
+        int rpl_addr = parm_rpl;
+        zRPL rpl = new zRPL(op, rpl_addr, obj_pz390.mem);
+        //!! Actual POINT logic here
      }
 
 
@@ -4828,8 +4839,8 @@ public class vz390 {
      </pre>
      *  
      */
-     private void handle_open_req() {          devLog("!! .open_acb() has been entered.");
-        cur_acb_addr = obj_pz390.reg.getInt(obj_pz390.r1) & obj_pz390.psw_amode;
+     private void handle_open_req(int parm_alt, int parm_acb) {          devLog("!! .open_acb() has been entered.");
+        cur_acb_addr = parm_acb & obj_pz390.psw_amode;
         validate_ACB(cur_acb_addr);
 
         // Validate ACB contents and create shadow ACB
@@ -4841,9 +4852,9 @@ public class vz390 {
           }
 
         // Find the catalog entry key from the ddname:
-        StringBuilder ddn = new StringBuilder(TempACB.DDNAM());   // Environment variable name
+        StringBuilder ddn = new StringBuilder(TempACB.DDNAM());   // Environment variable name (UTF-8)
         int spaceX = ddn.indexOf(" "); if (spaceX != -1) ddn.setLength(spaceX);      // Trim trailing space.
-        String dsn = System.getenv(ddn.toString());         // Retrieve environment variable value.
+        String dsn = System.getenv(ddn.toString());               // Environment variable value.
         System.out.println("!! DSN: "+ dsn);
 
         //!!    find in catalog
@@ -4872,8 +4883,8 @@ public class vz390 {
      </pre>
      *  
      */
-     private void handle_close_req() {         devLog("!! .close_acb() reached.");
-        cur_acb_addr = obj_pz390.reg.getInt(obj_pz390.r1) & obj_pz390.psw_amode;
+     private void handle_close_req(int parm_alt, int parm_acb) {         devLog("!! .close_acb() reached.");
+        cur_acb_addr = parm_acb & obj_pz390.psw_amode;
         //!!    zACB TempACB = new zACB(cur_acb_addr); // RPI 1598   fetch from map
         //!!    TempACB.Close();                       // RPI 1598
         zACB_map.remove(cur_acb_addr);         // RPI 1598
