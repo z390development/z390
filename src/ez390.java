@@ -380,7 +380,8 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
        pz390 = new pz390();
 //!!   vz390 = new vz390();
        tz390.init_tz390();  // RPI 1080
-       sz390 = new sz390(tz390);                                 // RPI 1598
+//!!   sz390 = new sz390(tz390);                                 // RPI 1598
+       sz390 = new sz390();                                
       if (!tz390.check_java_version()){ // RPI 1175
          sz390.abort_error(204,"unknown java version "
           + tz390.java_vendor + " " + tz390.java_version);  

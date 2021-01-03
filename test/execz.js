@@ -8,9 +8,9 @@ var base = "?Dev?zVSAM".replace(/\?/g, dsep);     // Where I keep pre-existing z
 
 { // Housekeeping: enforce correct working dir:
 let p = java.lang.System.getProperty("user.dir");
-if  (p.substr(-10, 8) == "handover"       &&
-     p.substr( -2, 1) == dsep             &&
-     "23456789".indexOf(p.substr(-1, 1)) > -1     // Presumed not compatible with handover/1/
+if  (p.substr(-12, 8) == "handover"       &&
+     p.substr( -4, 1) == dsep             &&
+     "23456789".indexOf(p.substr(-3, 1)) > -1     // Presumed not compatible with handover/1/
     ) {}
 else throw new Error(__FILE__ +" requires current dir to be ... handover"+dsep+"N (N=1,2,3); found "+ p);
 }

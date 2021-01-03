@@ -9,7 +9,8 @@ import java.io.*;
 
 
 /**
-*  This class contains the EBCDIC re-encoding of a Unicode string. 
+*  This class contains the EBCDIC re-encoding of a Unicode string, 
+*  and an <code>equals()</code> method to compare it with a slice of a given byte array.
 <p>
 *  (The class name is spelt with a 'y' to emphasize that it's not really a java.lang.String. 
 *  There is no such thing as an EBCDIC String in Java.) It is actually stored as a byte array. 
@@ -72,10 +73,10 @@ public class ebcdicStryng {
 * indicative of very serious problems (1. the EBCDIC code page is not available in
 * this JVM instance, and 2. some part of the reference String is untranslateable 
 * to EBCDIC) so in most cases it would be pointless for z390 to continue. 
-* In such a case the Java coder need only write their declaration as
-* <b><code>final ebcdicStryng myField = new ebcdicStryng("XYZ", true)</code></b> and
-* need not test the result. That boolean passed in the <b><code>abendOnExcpn</code></b>
-* constructor parameter tells the constructor to abend the JVM if a problem occurs.
+* In such a case the Java coder need only write their declaration as <b><code>
+* final ebcdicStryng myField = new ebcdicStryng("XYZ", ebcdicStryng.onException.ABNDZ390)
+* </code></b> and need not test the result. That second constructor parameter tells the 
+* constructor to abend the JVM if a problem occurs.
 * So, if control returns to z390 after the <b><code>new</code></b> operator, there 
 * was no problem.
 *

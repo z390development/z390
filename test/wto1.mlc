@@ -1,0 +1,3 @@
+wto1     subentry ,
+         wto   'JUST ONE LINE.'
+         subexit ,

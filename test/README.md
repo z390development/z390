@@ -1,5 +1,5 @@
-Contents of the _handover/2/test_ Directory
-===========================================
+Contents of the _handover/3.1/test_ Directory
+=============================================
 
 This directory contains files that are not part of the product, nor even part of the developer's deliverables.
 They include test data and test drivers (procedures/scripts). There may be half-baked READMEs, like this one.
@@ -14,7 +14,7 @@ ESF1.dta    a little scrap of a file matching the ESF1 entry in DEMOCAT so that 
             open as an ESDS for reading.
 *.js        scripts to do the above tests. Specifically:
 execz.js    functionally similar to EXEC.BAT in z390 as shipped. It executes the specified .390 program.
-tcat.js     a test of catalog processing.
+tcat.js     a test of catalog processing, prototyped in ECMAScript 6 rather than Java. It runs in the Nashorn shell.
 preDiff.js  a script to work out the most recent version of each source file (in Beta 12, Beta 11, 1.5.06) that
             I have updated, and create a diff file for each, in handover/N/diff. (N=1, 2 or 3)
 
@@ -23,18 +23,18 @@ Test results
 ------------
 1. execz.js
 Commands:
-  cd handover/2
+  cd handover/3.1
   export ESF1=test/DEMOCAT.ESF1                                                       # Linux
   jjs -cp test:classes -scripting --language=es6 test/execz.js -- acb2 zVSAM\(2\)     # Linux
   set ESF1=test\DEMOCAT.ESF1                                                          # Windows
-  jjs -cp test:classes -scripting --language=es6 test\execz.js -- acb2 zVSAM(2)       # Windows
+  jjs -cp test;classes -scripting --language=es6 test\execz.js -- acb2 zVSAM(2)       # Windows
 This results in vz390 passing control to the_VSAM_Handler, which passes control to vz390.v2's handle_open_req method,
 validating the correct version of ACB, creating a zACB, adding it to the ACB Hashmap, extracting the DDNAME, and 
 retrieving and logging the value from the environment.
 
 2. tcat.js
 Commands:
-  cd handover/2
+  cd handover/3.1
   export ESF1=test/DEMOCAT.ESF1
   jjs -cp test:classes -scripting --language=es6 test/tcat.js
 This exercises the catalog access classes DEMOCAT, Catalog, InlineCatalog, CatalogEntry, CatalogImplementationType

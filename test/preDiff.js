@@ -20,10 +20,11 @@ var dsep = java.io.File.separator;
 var base = "?Dev?zVSAM".replace(/\?/g, dsep);
 
 { // Housekeeping: enforce correct working dir
+  // Special case: only works for handover/3.1 (non-std name length) !!
 let p = java.lang.System.getProperty("user.dir");
-if  (p.substr(-10, 8) == "handover"       &&
-     p.substr( -2, 1) == dsep             &&
-     "23456789".indexOf(p.substr(-1, 1)) > -1     // Presume no compatibility with handover/1/.
+if  (p.substr(-12, 8) == "handover"       &&
+     p.substr( -4, 1) == dsep             &&
+     "23456789".indexOf(p.substr(-3, 1)) > -1     // Presume no compatibility with handover/1/.
     ) {}
 else throw new Error(__FILE__ +" requires current dir to be ... handover"+dsep+"N (N=1,2,3); found "+ p);
 }

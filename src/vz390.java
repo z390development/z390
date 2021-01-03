@@ -1088,7 +1088,7 @@ public class vz390 {
    * attempt to report if the user has supplied a wrong-version ACB rather than just garbage.
    * Declared 'final' as it is only assigned a value once (in the constructor).
    */
-   private final ebcdicStryng ebcdic_acb_id_ver_v2;         /* EBCDIC-coded ACB eyecatcher. */
+   private        final ebcdicStryng ebcdic_acb_id_ver_v2;         /* EBCDIC-coded ACB eyecatcher. */
 
 
 
@@ -4703,7 +4703,7 @@ public class vz390 {
      *  It is a constant value so is declared final. 
      *
      */
-     private final ebcdicStryng ebcdic_zACB = new ebcdicStryng("zACB", ebcdicStryng.onException.ABNDZ390);
+     private        final ebcdicStryng ebcdic_zACB = new ebcdicStryng("zACB", ebcdicStryng.onException.ABNDZ390);
   
   
   
