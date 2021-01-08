@@ -5,10 +5,10 @@ if %1 == tron shift
 if %1 == TRON ECHO ON
 if %1 == TRON shift
 if exist %1.390 erase %1.390
-if exist %1.lst erase %1.lst
-if exist %1.err erase %1.err
-if exist %1.sta erase %1.sta
-if exist %1.tr* erase %1.tr*
+if exist %1.LST erase %1.LST
+if exist %1.ERR erase %1.ERR
+if exist %1.STA erase %1.STA
+if exist %1.TR* erase %1.TR*
 call %~dps0lz390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 1 goto lzerr
 goto end

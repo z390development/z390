@@ -1,0 +1,34 @@
+*******************************************************
+* 2020-12-20 DSH TEST MZ390 ACALL PARM SUPPORT
+*******************************************************
+       MACRO
+       TSTACALL
+       ACALL SUB1(A)
+       ACALL SUB2(F1,F2)
+       AENTRY SUB1
+&N     SETA N'&SUB1
+&P1    SETC '&SUB1(1)'
+&P2    SETC '&SUB1(2)'
+       AIF (&N EQ 1).OK1
+       MNOTE 8.'SUB1 &N COUNT ERROR'
+.OK1   AIF ('&P1' EQ 'A').OK2
+       MNOTE 8,'SUB1 &P1 PARM ERROR'
+.OK2   AIF ('&P2' EQ '').OK3
+       MNOTE 8,'SUB1 &P2 PARM ERROR'
+.OK3   MNOTE 'TSTACALL SUB1 N=&N P1=&SUB1(1) P2=&SUB1(2)'
+       AEND
+       AENTRY SUB2
+&N     SETA N'&SUB2
+&P1    SETC '&SUB2(1)'
+&P2    SETC '&SUB2(2)'
+       AIF (&N EQ 2).OK4
+       MNOTE 8,'SUB2 &N COUNT ERROR'
+.OK4   AIF ('&P1' EQ 'F1').OK5
+       MNOTE 8,'SUB2 &P1 PARM ERROR'
+.OK5   AIF ('&P2' EQ 'F2').OK6
+       MNOTE 8,'SUB2 &P2 PARM ERROR'
+.OK6   MNOTE 'TSTACALL SUB2 N=&N P1=&SUB2(1) P2=&SUB2(2)'
+       AEND
+       MEND
+       TSTACALL
+       END

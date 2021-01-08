@@ -11,6 +11,7 @@
 * 06/18/09 RPI 1042 move z390 version and CICS check to ZC390NUC rtn
 * 05/25/10 RPI 1118 set ZCVT_PVTMAXDL max dipslay line from PVT options
 * 09/27/11 RPI 1180 round FP to integer for CONVLDTP convert to PD
+* 2021-01-02 DSH RPI 2225 CORRECT INCORRECT USE OF BR? TO B?R
 *********************************************************************
 ZC390NUC CSECT                  
          USING ZC390CVT,R9
@@ -567,16 +568,16 @@ ROUNDF   DS 0H
          BRM   RND_F_PR_ND
 RND_F_PR_PD DS 0H
          CR    R3,R2   IS REMAINDER GE HALF OF DIVISOR
-         BRL   R14     NO, EXIT
+         BLR   R14     NO, EXIT RPI 2225
          AHI   R1,1    ADD 1 TO QUOTIENT (MUST BE POS TOO)
          SR    R0,R2   SUB DIVIDOR FROM REMAINDER
-         BRU   R14     EXIT
+         BR    R14     EXIT RPI 2225
 RND_F_PR_ND DS 0H
          CR    R3,R2   IS REMAINDER GE HALF OF DIVISOR
-         BRL   R14     NO, EXIT
+         BLR   R14     NO, EXIT RPI 2225
          AHI   R1,1    ADD 1 TO QUOTIENT (MUST BE POS TOO)
          AR    R0,R2   ADD DIVIDOR TO REMAINDER
-         BRU   R14     EXIT
+         BR    R14     EXIT RPI 2225
 RND_F_NR DS 0H
          SLA   R3,1    DOUBLE NEG REMAINDER
          LTR   R2,R2   IS DIVISOR POS
@@ -584,16 +585,16 @@ RND_F_NR DS 0H
 RND_F_NR_PD DS 0F
          LCR   R3,R3   GET POS 2*REMAINDER
          CR    R3,R2   IS REMAINDER GE HALF OF DIVISOR
-         BRL   R14     NO, EXIT
+         BLR   R14     NO, EXIT RPI 2225
          AHI   R1,1    ADD 1 TO QUOTIENT (MUST BE MEG TOO)
          SR    R0,R2   SUB DIVIDOR FROM REMAINDER
-         BRU   R14     EXIT
+         BR    R14     EXIT
 RND_F_NR_ND DS 0H
          CR    R3,R2   IS REMAINDER LE HALF OF DIVISOR
-         BRH   R14     NO, EXIT
+         BHR   R14     NO, EXIT RPI 2225
          AHI   R1,-1   SUB 1 FROM QUOTIENT (MUST BE NEG TOO)
          AR    R0,R2   ADD DIVIDOR TO REMAINDER
-         BRU   R14     EXIT
+         BR    R14     EXIT RPI 2225
          DROP  R15
 *
 * TEST ALPHABETIC X   R1=A(FIELD) R2=LENGTH

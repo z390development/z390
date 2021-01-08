@@ -208,6 +208,8 @@ public  class  sz390 implements Runnable {
     * 02/27/16 RPI 2007 Test-mode command "1r=x'8000000000000000'" fails (java bug); R1=-1 anyway
     * 02/14/16 RPI 2008 Add test-mode command PSW16 to display 16 byte PSW
     * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one
+    * 2021-01-02 DSH RPI 2225 display 16 bit failing RLD address for abort error 120
+    * 2021-01-06 DSH RPI 2012 Fix to bytes_to_hex for SNAP contributed by John Ganci
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -1648,7 +1650,7 @@ private void svc_load_rlds(){
 		    	rld_field = pz390.mem.getInt();
 	    		rld_field = (rld_field >>> 16) + load_code_load;
 	    		if (rld_field > 0xffff){ // RPI 894
-	    			abort_error(120,"loader 2 byte RLD address too high in - " + tz390.pgm_name);
+	    			abort_error(120,"loader 2 byte RLD address" + tz390.get_hex(rld_loc,8) + " too high in - " + tz390.pgm_name); // RPI 2225
 	    		}
 	    		pz390.mem.position(load_code_load + rld_loc);
 	        	pz390.mem.putShort((short)(rld_field));
@@ -1680,7 +1682,7 @@ private void svc_load_rlds(){
 	        	pz390.mem.putInt(rld_field);
 	        	break;	
 	    	default:
-	    		abort_error(119,"invalid RLD length in load module -" + tz390.pgm_name);
+	    		abort_error(119,"invalid RLD length in load module -" + tz390.pgm_name + " at offset " + tz390.get_hex(rld_loc,8)); // RPI 2225
 	        }
 	    	cur_rld++;
 	    }
@@ -2927,7 +2929,7 @@ public void dump_mem(ByteBuffer memory,int mem_addr,int mem_len){
 private String bytes_to_hex(byte[] bytes, int byte_start, int byte_length, int chunk){  // RPI 2006
 	/*                                                                                  // RPI 2006
 	 * Format bytes into hex string                                                     // RPI 2006
-	 * If chunk > 0 insert space after each chunk                                       // RPI 2006
+	 * If chunk > 0 insert space after each chunk except the last chunk                 // RPI 2006 // RPI 2012
 	 */                                                                                 // RPI 2006
 	if (byte_start < 0 || byte_start >= bytes.length) {                                 // RPI 2006
 		return "";                                                                      // RPI 2006
@@ -2946,17 +2948,17 @@ private String bytes_to_hex(byte[] bytes, int byte_start, int byte_length, int c
 		} else {                                                                        // RPI 2006
 			hex.append(temp_string);                                                    // RPI 2006
 		}                                                                               // RPI 2006
+		index1++;                                                                       // RPI 2012   
 		if (chunk > 0){                                                                 // RPI 2006
 			hex_bytes++;                                                                // RPI 2006
-			if (hex_bytes >= chunk){                                                    // RPI 2006
+			if (hex_bytes >= chunk && index1 < byte_length){                            // RPI 2006 // RPI 2012
 				hex.append(" ");                                                        // RPI 2006
 				hex_bytes = 0;                                                          // RPI 2006
 			}                                                                           // RPI 2006
 		}                                                                               // RPI 2006
-		index1++;                                                                       // RPI 2006
 	}                                                                                   // RPI 2006
-	return hex.toString().toUpperCase();                                                // RPI 2006
-}                                                                                       // RPI 2006
+    return (hex.length() > 0 ? hex.toString().toUpperCase() : "");                      // RPI 2012
+}                                                                                         // RPI 2006
 private void put_dump(String text){
 	/*
 	 * route dump lines to LOG file

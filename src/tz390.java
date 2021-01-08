@@ -29,8 +29,7 @@ public  class  tz390 {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2011 Automated Software Tools Corporation
-	Copyright 2020 Don Higgins
+	Copyright 2021 Don Higgins
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -298,6 +297,9 @@ public  class  tz390 {
 	* 2020-10-22 DSH V1701b RPI 2202 opcode fixes repackage zopcheck
     * 2020-11-02 DSH v1702  add option zvsam(0=default/1=zvsam1/2=zvsam2)
 	* 2020-11-16 DSH V1703 rpi 2221 ADD 20 MISSING OPCODES
+	* 2020-12-25 DSH V1704 RPI 2225 ADD STCCTM, change BRAS,JAS to case 13
+	* 2020-12-28 DSH RPI 2226 change zvsam option default to 1 - sets GBLA &SYSZVSAM = 1
+	* 2020-12-30 DSH RPI 2220 add macro APARM to reset ACALL parm before entering AENTRY
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -306,7 +308,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.7.03";  //dsh + afk
+    String version    = "V1.7.04";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -403,7 +405,7 @@ public  class  tz390 {
     boolean opt_warn     = true;  // issue zcobol warnings RPI 986
     boolean opt_xref     = true;  // cross reference symbols
     boolean opt_zstrmac  = true;  // allow ZSTRMAC extensions
-    int     opt_zvsam    = 0;     // Default to Don's zVSAM implementation RPI 1598
+    int     opt_zvsam    = 1;     // Default to Don's zVSAM implementation RPI 1598 RPI 2226
     boolean max_cmd_queue_exceeded = false;  // RPI 731
     String  cmd_parms = ""; // all options from command
     int     cmd_parms_len = 34; // RPI 755
@@ -1667,6 +1669,7 @@ public  class  tz390 {
          "--=AINSERT,204,--",    //   7630         "AINSERT"        204
          "--=ALIAS,106,--",      //   7190         "ALIAS"          106
          "--=AMODE,107,--",      //   7200         "AMODE"          107
+		 "--=APARM,228,--",      //                "APARM" RPI 2220 resets ACALL parms just before AENTRY
          "--=AREAD,206,--",      //   7650         "AREAD"          206
          "--=ASPACE,126,--",     //   7390         "ASPACE"         126
          "--=CATTR,108,--",      //   7210         "CATTR"          108
@@ -1741,14 +1744,14 @@ public  class  tz390 {
          "A70=TMLH,73,730",      //   1980 "A70"   "TMLH"     "RI"   12 // RPI 1522
          "A71=TML,73,730",       //   2010 "A71"   "TML"      "RI"   12 // RPI 1522
          "A71=TMLL,73,730",      //   2000 "A71"   "TMLL"     "RI"   12 // RPI 1522
-         "A74=BRC,12,130",       //   2040 "A74"   "BRC"      "RI"   12
+         "A74=BRC,13,130",       //   2040 "A74"   "BRC"      "RI"   12 // RPI 2225
          "A74m=BRm,13,130;0=;F=BRU", //    "A74m"  "BRm, BRU" "BRCX" 13
 		 "A74=JC,13,130", //       "A74"  "JC" "BRCX" 13 RPI 2221
          "A74m=Jm,13,130;0=JNOP", //       "A74m"  "Jm, JNOP" "BRCX" 13
-         "A75=BRAS,12,121",      //   2360 "A75"   "BRAS"     "RI"   12
-         "A75=JAS,12,121",       //   2370 "A75"   "JAS"      "RI"   12
-         "A76=BRCT,12,121",      //   2380 "A76"   "BRCT"     "RI"   12
-         "A76=JCT,12,121",       //   2390 "A76"   "JCT"      "RI"   12
+         "A75=BRAS,13,121",      //   2360 "A75"   "BRAS"     "RI"   12 RPI 2225
+         "A75=JAS,13,121",       //   2370 "A75"   "JAS"      "RI"   12 RPI 2225
+         "A76=BRCT,13,121",      //   2380 "A76"   "BRCT"     "RI"   12 RPI 2225
+         "A76=JCT,13,121",       //   2390 "A76"   "JCT"      "RI"   12 RPI 2225
          "A78=LHI,73,731",       //   2420 "A78"   "LHI"      "RI"   12 // RPI 1522
          "A7A=AHI,73,731",       //   2440 "A7A"   "AHI"      "RI"   12 // RPI 1522
          "A7C=MHI,73,731",       //   2460 "A7C"   "MHI"      "RI"   12 // RPI 1522
@@ -1964,8 +1967,8 @@ public  class  tz390 {
          "A5F=LLILL,73,730",     //   1970 "A5F"   "LLILL"    "RI"   12 // RPI 1522
          "A72=TMHH,73,730",      //   2020 "A72"   "TMHH"     "RI"   12 // RPI 1522
          "A73=TMHL,73,730",      //   2030 "A73"   "TMHL"     "RI"   12 // RPI 1522
-         "A77=BRCTG,12,121",     //   2400 "A77"   "BRCTG"    "RI"   12
-         "A77=JCTG,12,121",      //   2410 "A77"   "JCTG"     "RI"   12
+         "A77=BRCTG,13,121",     //   2400 "A77"   "BRCTG"    "RI"   12 // RPI 2225
+         "A77=JCTG,13,121",      //   2410 "A77"   "JCTG"     "RI"   12 // RPI 2225
          "A79=LGHI,73,731",      //   2430 "A79"   "LGHI"     "RI"   12 // RPI 1522
          "A7B=AGHI,73,731",      //   2450 "A7B"   "AGHI"     "RI"   12 // RPI 1522
          "A7D=MGHI,73,731",      //   2470 "A7D"   "MGHI"     "RI"   12 // RPI 1522
@@ -2356,6 +2359,7 @@ public  class  tz390 {
          "E55C=CHSI,51,392",     //    440 "E55C"  "CHSI"     "SIL"  51 RPI 817
          "E55D=CLFHSI,51,392",   //    450 "E55D"  "CLFHSI"   "SIL"  51 RPI 817
          "EB4C=ECAG,20,203",     //    460 "EB4C"  "ECAG"     "RSY"  20 RPI 817
+		 "EB17=STCCTM,18,189",    //  RPI 2225 
          "EB6A=ASI,21,211",      //    470 "EB6A"  "ASI"      "SIY"  21 RPI 817
          "EB6E=ALSI,21,211",     //    480 "EB6E"  "ALSI"     "SIY"  21 RPI 817
          "EB7A=AGSI,21,212",     //    490 "EB7A"  "AGSI"     "SIY"  21 RPI 817
@@ -2383,13 +2387,13 @@ public  class  tz390 {
       // dsh rpi 2202 "EC77=CLRJ,49,235",     //    220 "EC77"  "CLRJ"     "RIE6" 49 RPI 817
          "EC77m=CLRJm,50,235;*Short", //   "EC77m" "CLRJm"    "RIE7" 50
       // dsh rpi 2202  "EC7C=CGIJ,43,233",     //    290 "EC7C"  "CGIJ"     "RIE4" 43 RPI 817
-         "EC7Cm=CGIJm,44,233;*Short", //   "EC7Cm" "CGIJm"    "RIE5" 44
+         "EC7Cm=CGIJm,43,233;*Short", //   "EC7Cm" "CGIJm"    "RIE5" 44
       // dsh rpi 2202    "EC7D=CLGIJ,43,233",    //    360 "EC7D"  "CLGIJ"    "RIE4" 43 RPI 817
-         "EC7Dm=CLGIJm,44,233;*Short", //  "EC7Dm" "CLGIJm"   "RIE5" 44
+         "EC7Dm=CLGIJm,43,233;*Short", //  "EC7Dm" "CLGIJm"   "RIE5" 44
       // dsh rpi 2202    "EC7E=CIJ,43,236",      //    430 "EC7E"  "CIJ"      "RIE4" 43 RPI 817
-         "EC7Em=CIJm,44,236;*Short", //    "EC7Em" "CIJm"     "RIE5" 44
+         "EC7Em=CIJm,43,236;*Short", //    "EC7Em" "CIJm"     "RIE5" 44
       // dsh rpi 2202    "EC7F=CLIJ,43,236",     //    500 "EC7F"  "CLIJ"     "RIE4" 43 RPI 817
-         "EC7Fm=CLIJm,44,236;*Short", //   "EC7Fm" "CLIJm"    "RIE5" 44
+         "EC7Fm=CLIJm,43,236;*Short", //   "EC7Fm" "CLIJm"    "RIE5" 44
       // dsh rpi 2202   "ECE4=CGRB,45,370",     //    570 "ECE4"  "CGRB"     "RRS1" 45 RPI 817
          "ECE4m=CGRBm,46,370;*Short", //   "ECE4m" "CGRBm"    "RRS2" 46
       // dsh rpi 2202   "ECE5=CLGRB,45,370",    //    640 "ECE5"  "CLGRB"    "RRS1" 45 RPI 817
@@ -2510,8 +2514,8 @@ public  class  tz390 {
             "B9F0m=SELRm,74,155",   //  "B9F0"  "SELRm'  "RRR"  RPI 2202			
             "B9F5=NCRK,39,154",        //  "B9F5"  "NCRK"   "RRR"  RPI 2202
             "B9FD=MSRKC,39,153", // B9FD rrfa MSRKC R1,R2,R3 RPI 2202
-            "C5=BPRP,76,732", // C5 mii BPRP R1,I2,I3 RPI 2202
-            "C7=BPP,77,733", // C7 smi BPP M1,I2,D3(B3) RPI 2202
+            "C5=BPRP,76,732", // C5 MII BPRP R1,I2,I3 RPI 2202
+            "C7=BPP,77,733",  // C7 SMI BPP M1,I2,D3(B3) RPI 2202
             "E325=NTSTG,18,180", // E325 RXYa NTSTG R1,D2(B2) RPI 2202
             "E32A=LZRG,18,180", // E32A RXYa LZRG R1,D2(B2) RPI 2202
             "E338=AGH,18,180", // E338 RXYa AGH R1,D2(X2,B2) RPI 2202
@@ -3293,7 +3297,7 @@ public  class  tz390 {
 			"EDAE=CDPT,22,230",   // EDAE  RSLb CDPT   R1,D2(l2,B2),M3 RPI 2202
 			"EDAF=CXPT,22,230",   // EDAF  RSLb CXPT   R1,D2(l2,B2),M3 RPI 2202
 			};
-     String[]   op_table_Z15_notsupported =   // dsh Table added for RPI 2202
+     String[]   op_table_Z15_notsupported =   // Table added for RPI 2202
     	 {
     	  "DFLTCC   RRR  B939 R1,R2,R3",
     	 };
@@ -3539,7 +3543,7 @@ public  class  tz390 {
                "E=NO",           // Not Odd / Not Ones
                };
      String[]   opcode_masks_short = { // Table added for RPI 1209
-               "F=",             // Always  // dsh rpi 2202 support base opcode for short extended mnemonic ops
+               "F=",             // Always  // rpi 2202 support base opcode for short extended mnemonic ops
                "2=H",            // High
                "4=L",            // Low
                "8=E",            // Equal
@@ -3805,7 +3809,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
-        if (opt_optable.equals("Z15"))  // dsh rpi 2202
+        if (opt_optable.equals("Z15"))  // rpi 2202
         {process_opcodes(op_table_DOS);
          if (opt_allow)                              // RPI 1209N
             {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
@@ -3817,7 +3821,7 @@ public void create_opcodes()  // Routine added for RPI 1209
          process_opcodes(op_table_YOP);
          process_opcodes(op_table_ZS3);
          process_opcodes(op_table_ZS4);
-         process_opcodes(op_table_Z15);  // dsh rpi 2202
+         process_opcodes(op_table_Z15);  // rpi 2202
          process_opcodes(op_table_DOS_directives);
          process_opcodes(op_table_370_directives);
          }
@@ -3836,7 +3840,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
-            process_opcodes(op_table_Z15); // dsh rpi 2202
+            process_opcodes(op_table_Z15); // rpi 2202
             process_opcodes(op_table_UNI);
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
@@ -3856,7 +3860,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
-            process_opcodes(op_table_Z15); // dsh rpi 2202
+            process_opcodes(op_table_Z15); // rpi 2202
             process_opcodes(op_table_UNI);
 //          process_opcodes(op_table_ASSIST); // RPI 1209M
             process_opcodes(op_table_z390);
@@ -4470,7 +4474,7 @@ private void check_options(){
                     {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(ZSERIES-4)");
                      }
                  }
-        else if (opt_machine.equals("Z15")) // dsh rpi 2202
+        else if (opt_machine.equals("Z15")) // rpi 2202
                 {}
         else
            {abort_error(778,"MACHINE("+opt_machine+") not supported");
@@ -4494,8 +4498,8 @@ private void check_options(){
     // Check requested zVSAM version                  // RPI 1598
     if (opt_zvsam != 0                                // RPI 1598
     &&  opt_zvsam != 1                               // RPI 1598
-	&&  opt_zvsam != 2)                                 // RPI 1628 DSH 2020-10-25
-       {abort_error(30,"option VSAM must be 0,1 or 2"); // RPI 1628 DSH
+	&&  opt_zvsam != 2)                                 // RPI 1628 RPI 2226
+       {abort_error(30,"option VSAM must be 0,1 or 2"); // RPI 1628 RPI 2226
         }                                             // RPI 1598
 }
 private void process_option(String opt_file_name,int opt_file_line,String token){
@@ -4734,7 +4738,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                   {opt_optable = "ZS4";
                    }
                else if (opt_machine.contentEquals("Z15"))
-               		{opt_optable = "Z15";  // dsh rpi 2202
+               		{opt_optable = "Z15";  // rpi 2202
                      }
                else
                    {add_invalid_option(opt_file_name,opt_file_line,token);
@@ -4857,7 +4861,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                &&  opt_optable.equals("ZOP") != true
                &&  opt_optable.equals("ZS3") != true
                &&  opt_optable.equals("ZS4") != true
-               &&  opt_optable.contentEquals("Z15") != true  // dsh rpi 2202
+               &&  opt_optable.contentEquals("Z15") != true  // rpi 2202
                &&  opt_optable.equals("Z390") != true
                    )
                    {add_invalid_option(opt_file_name,opt_file_line,token);
@@ -5877,20 +5881,20 @@ public boolean init_opcode_name_keys(){
 		// add alternate opcodes for ? = blank and A  RPI 1125
 		if (find_key_index('O',op_name[index].substring(0,op_name[index].length()-1)) == -1){
 			if(!add_key_index(index)){ 
-				abort_error(118,"1 abort on add opcode " + op_name[index]); // dsh rpi 2202 debug
+				abort_error(118,"1 abort on add opcode " + op_name[index]); // rpi 2202 debug
 				return false;
 			}
 		} else {
-			abort_error(118,"2 abort on duplicate opcode " + op_name[index]); // dsh rpi 2202 debug
+			abort_error(118,"2 abort on duplicate opcode " + op_name[index]); // rpi 2202 debug
 			return false;
 		}
 		if (find_key_index('O',op_name[index].substring(0,op_name[index].length()-1).concat("A")) == -1){
 			if(!add_key_index(index)){ 
-				abort_error(118,"3 abort on duplicate opcode " + op_name[index]); // dsh rpi 2202 debug
+				abort_error(118,"3 abort on duplicate opcode " + op_name[index]); // rpi 2202 debug
 				return false;
 			}
 		} else {
-			abort_error(118,"4 abort on duplicate opcode " + op_name[index]); // dsh rpi 2202 debug
+			abort_error(118,"4 abort on duplicate opcode " + op_name[index]); // rpi 2202 debug
 			return false;
 		}
 	  } else {
@@ -5900,7 +5904,7 @@ public boolean init_opcode_name_keys(){
 					return false;
 				}
 			} else {
-				abort_error(118,"6 abort on duplicate opcode " + op_name[index]); // dsh rpi 2202 debug
+				abort_error(118,"6 abort on duplicate opcode " + op_name[index]); // rpi 2202 
 				return false;
 			}
 	  }
@@ -7636,7 +7640,7 @@ public void put_trace(String text){
 		    		}
 		    	}
 		    	hex_rec = ebcdic_hex_buff.readLine();
-		    	ebcdic_hex_buff.close(); // 2019-09-20 dsh 
+		    	ebcdic_hex_buff.close(); // 2019-09-20  
 		    }
 		    if (hex_offset == 256){
                 test_ebcdic = String.valueOf(ebcdic_charset);
@@ -7653,7 +7657,7 @@ public boolean check_java_version(){
 	 * verify version is from known vendor 
 	 * and version is 1.6+
 	 */
-	    if (1 != 0)return true; // force ok to test open jdk by dsh 2020/08/11
+	    if (1 != 0)return true; // force ok to test open jdk by 2020/08/11
 		if (java_vendor.equals("Sun Microsystems Inc.") 
 			|| java_vendor.equals("Oracle Corporation") // RPI 1175
 			|| java_vendor.equals("Apple Inc.")){       // RPI 1174

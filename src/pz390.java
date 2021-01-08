@@ -374,7 +374,8 @@ public class pz390 {
      *   SELECT (SEL, SELGR)
      *   SELECT HIGH (SELFHR)
      *  2019-10-01 RPI 2202 dsh fix trace case 154 for NRK etc to show R vs F for regs
-     *  2019-10-26 RPI 2202 add POPCNT high mask bit support to return total one bits 
+     *  2019-10-26 RPI 2202 add POPCNT high mask bit support to return total one bits
+     *  2021-01-06 RPI 2227 add 16 byte memory buffer to prevent pd fetch exception 
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -17723,8 +17724,8 @@ public class pz390 {
 		 */
 		tot_mem = tz390.max_mem << 20; // cvt MB to bytes
 		try {
-			mem_byte = new byte[tot_mem + 8];
-			mem = ByteBuffer.wrap(mem_byte, 0, tot_mem + 6);
+			mem_byte = new byte[tot_mem + 16];                // RPI 2227 add 16 byte pad
+			mem = ByteBuffer.wrap(mem_byte, 0, tot_mem + 16); // RPI 2227 add 16 byte pad
 			Arrays.fill(mem_byte, mem24_start, tot_mem, fill_mem_char); // ZRPI 866
 		} catch (Exception e) {
 			set_psw_check(psw_pic_memerr);

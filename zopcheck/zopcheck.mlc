@@ -6,6 +6,7 @@
 * 2020/10/30 dsh reorganize to reduce code and labels 
 * 2020/11/08 dsh add open and close dcb for use by SNAP on mainframe
 *            snap defaults to the TRACE file output for z390
+* 2020/12/23 DSH ADD I2RLD TO TEST IILF ETC. RPI 2223
 *************************************************************
 * copyright 2020 Don Higgins
 * This program assembles all the opcodes in z15 POP
@@ -66,9 +67,7 @@ SNAPOUT  DCB   DDNAME=SNAPOUT,DSORG=PS,RECFM=VBA,BLKSIZE=882,          X
 SNAPS    DC    F'0' COUNT SNAPS
 MISSING  DC    F'0' COUNT MISSING OPCODE
 * DEFINE ALL THE OPERAND VARIABLES IN TYPE MACRO CALLS
-         EQUREGS
-RI2      EQU  X'EEE'    SEE BPP TYPE SMI, MMI
-RI3      EQU  X'FFFFFF' SEE BPRP TYPES MMI 
+         EQUREGS 
 RXB      EQU  0 // vector RXB instruction code
 V1       EQU  21
 V2       EQU  22
@@ -81,8 +80,9 @@ M4       EQU  4
 M5       EQU  5
 M6       EQU  6
 I1       EQU  1
-I2       EQU  2
-I3       EQU  3
+I2       EQU  2  
+I2RLD    DC   H'0' RPI 2220
+I3       EQU  6  RPI 2225 MUST BE EVEN VS 3
 I4       EQU  4
 I5       EQU  5
 D1       EQU  11*16
@@ -113,5 +113,5 @@ START   DS    0H
          DC     c'END'	end of ZOPCODES.CPY table	
          MNOTE 'ZOPCHECK TOT_OPS=&TOT_OPS TOT_UND=&TOT_UND'
          MNOTE 'ZOPCHECK TOT_PROB=&TOT_PROB TOT_SUPR=&TOT_SUPR'
-         MNOTE 'ZOPCHECK TOT_MASK=&TOT_MASK TOT_DUP=&TOT_DUP'		 
+         MNOTE 'ZOPCHECK TOT_MASK=&TOT_MASK TOT_DUP=&TOT_DUP'	 
          END

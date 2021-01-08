@@ -8516,7 +8516,120 @@ set GIT_COMMITTER_DATE=2021-03-29 20:55:00 +0100
 git commit -m "Reconstructed version v1.7.03 of z390 committed on behalf of Don Higgins"
 git tag -a v1.7.03 -m "Reconstructed version v1.7.03 of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.7.04
+dir *.* /B /on /s      >.allfile.txt
+dir *.cbl /B /on /s    >\temp\.genmlc.lst
+dir *.zsm /B /on /s   >>\temp\.genmlc.lst
+dir *. /B /A-D /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.7.04
+git rm  RPI/EntMnem.bat
+git rm  RPI/ExtMnem.mlc
+git rm  RPI/MACVSAM2/ACB.MAC
+git rm  RPI/MACVSAM2/ACBD.MAC
+git rm  RPI/MACVSAM2/CBMR.MAC
+git rm  RPI/MACVSAM2/CLOSEV2.MAC
+git rm  RPI/MACVSAM2/DEFINE.MAC
+git rm  RPI/MACVSAM2/DEQ.MAC
+git rm  RPI/MACVSAM2/ENDREQ.MAC
+git rm  RPI/MACVSAM2/ENQ.MAC
+git rm  RPI/MACVSAM2/ERASE.MAC
+git rm  RPI/MACVSAM2/EXLST.MAC
+git rm  RPI/MACVSAM2/EXLSTD.MAC
+git rm  RPI/MACVSAM2/GENCB.MAC
+git rm  RPI/MACVSAM2/GET.MAC
+git rm  RPI/MACVSAM2/MODCB.MAC
+git rm  RPI/MACVSAM2/MODCB_OLD.MAC
+git rm  RPI/MACVSAM2/OPENV2.MAC
+git rm  RPI/MACVSAM2/RPL.MAC
+git rm  RPI/MACVSAM2/RPLD.MAC
+git rm  RPI/MACVSAM2/SHOWCB.MAC
+git rm  RPI/MACVSAM2/VCDTD.MAC
+git rm  RPI/MACVSAM2/ZDEFINE.CPY
+git rm  RPI/MACVSAM2/ZDEFINE.MAC
+git rm  RPI/MACVSAM2/ZGENMACF.MAC
+git rm  RPI/MACVSAM2/ZGENOPTD.MAC
+git rm  RPI/MACVSAM2/ZMODCB.MAC
+git rm  RPI/MACVSAM2/ZVSAMCTR.MAC
+git rm  RPI/MACVSAM2/ZVSAMFTR.MAC
+git rm  RPI/MACVSAM2/ZVSAMHDR.MAC
+git rm  RPI/MACVSAM2/ZVSAMMAP.MAC
+git rm  RPI/MACVSAM2/ZVSAMPFX.MAC
+git rm  RPI/MACVSAM2/ZVSAMRPT.MAC
+git rm  RPI/MACVSAM2/ZVSAMSPX.MAC
+git rm  RPI/RPLTEST.MAC
+git rm  RPI/TESTMDCB.BAT
+git rm  RPI/TESTMDCB.MLC
+git rm  RPI/TESTOPT.MAC
+git rm  RPI/TESTRPL.MLC
+git add RPI/test.MLC
+git add RPI/test.bat
+git rm  RPI/testrpl.bat
+git add RPI/tstacall.mlc
+git add bat/ASM.BAT
+git add bat/ASML.BAT
+git add bat/EXEC.BAT
+git add bat/LINK.BAT
+git add bat/MAC.BAT
+git add bat/RUNASMTESTS.bat
+git add src/az390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add tests/TESTINS5.mlc
+git rm  z390_v1703_readme.txt
+git add zcobol/lib/ZC390NUC.MLC
+git add zcobol/mac/GEN_ADD.MAC
+git add zopcheck/zopcheck.mlc
+git add zopcheck/zopcodes.cpy
+git add zopcheck/zopmacro.cpy
+git rm  zpar/FIXCRLF.BAT
+git rm  zpar/FIXCRLF.MLC
+git rm  zpar/TEMPGEN.BAT
+git rm  zpar/ZCCLG.BAT
+git rm  zpar/ZCTRAN.BAT
+git rm  zpar/ZPARERR.BAT
+git rm  zpar/ZPARERR.MLC
+git rm  zpar/ZPARGEN.BAT
+git rm  zpar/ZPARGEN.MLC
+git rm  zpar/ZPARMLC.BAT
+git rm  zpar/ZPARMLC.MLC
+git rm  zpar/ZPARSUM1.BAT
+git rm  zpar/ZPARSUM1.MLC
+git rm  zpar/ZPARSUM2.BAT
+git rm  zpar/ZPARSUM2.MLC
+git rm  zpar/ZPARTRA.BAT
+git rm  zpar/ZPARTRC.BAT
+git rm  zpar/ZPARTRS.BAT
+git add RPI/HLASM_TESTIRLD.TXT
+git add RPI/SAMPLE3.MLC
+git add RPI/SAMPLE3.bat
+git add RPI/TESTFILE.TXT
+git add RPI/TESTIRLD.BAT
+git add RPI/TESTIRLD.MLC
+git add RPI/TESTMEL1.BAT
+git add RPI/TESTMEL1.MLC
+git add RPI/TSTACAL2.MLC
+git add RPI/TSTACAL2.bat
+git add bat/RUNZPAR.BAT
+git add bat/ZPARTRS.BAT
+git add bat/test.bat
+git add tests/TESTINS1.MLC
+git add z390_v1704_readme.txt
+git add zpar/zpar_doc.txt
+
+==> Create commit for V1.7.04
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2021-01-08 12:37:00 -0500
+set GIT_COMMITTER_DATE=2021-03-29 21:06:00 +0100
+git commit -m "Reconstructed version v1.7.04 of z390 committed on behalf of Don Higgins"
+git tag -a v1.7.04 -m "Reconstructed version v1.7.04 of z390 committed on behalf of Don Higgins"
 
 
 

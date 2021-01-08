@@ -1,0 +1,8 @@
+         MACRO
+         MEL   &MEL=
+         MNOTE 'MEL=&MEL'
+         MEND
+         MNOTE 'SYSZVSAM=&SYSZVSAM'
+         MEL   MEL=12345
+         MEL   MEL=56789
+         END

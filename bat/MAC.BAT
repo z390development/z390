@@ -4,10 +4,10 @@ if %1 == tron ECHO ON
 if %1 == tron shift
 if %1 == TRON ECHO ON
 if %1 == TRON shift
-if exist %1.bal erase %1.bal
-if exist %1.err erase %1.err
-if exist %1.sta erase %1.sta
-if exist %1.tr* erase %1.tr*
+if exist %1.BAL erase %1.BAL
+if exist %1.ERR erase %1.ERR
+if exist %1.STA erase %1.STA
+if exist %1.TR* erase %1.TR*
 call %~dps0mz390 %1  bal noasm sysmac(%~dps0mac+.) syscpy(%~dps0mac+.) chksrc(0) chkmac(0) %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto err
 goto end

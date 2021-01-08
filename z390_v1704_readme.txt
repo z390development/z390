@@ -1,23 +1,55 @@
-z390_v1703_readme.txt updated 2020-11-18 by don@higgins.net
+z390_v1704_readme.txt updated 2021-01-08 by don@higgins.net
 
-This z390_v1703.zip version has the following fixes and changes:
+This z390_v1704.zip version has the following fixes and changes:
 
-1.  John Ganci has contributed updates to improve Linux support:
-    a.  The perl commands in the perl directory have been updated.
-    b.  The bat directory commands have been updated to improve Linux compatibility
-    c.  The source file src\z390.java has been updated to include the perl directory 
-        in the command directory path.
+1.  RPI 2223: Based on IBM APAR PH30740 issued Nov. 3, 2020, HLASM supports relocatable addresses 
+    in 28 RIL intructions with 4 byte immediate fields: 
+    https://www.ibm.com/support/pages/apar/PH30740 
+    These are identified in zopcheck by the I2 filed defined as I2RLD.
+    These non relative long instructions include: 
+    a.  LGFI loads 64 bit register with sign extented 4 byte value
+    b.  IIHF inserts into high 32 bits of register
+    c.  IILF inserts into low 32 bits of register
+    The test program TESTINS5.MLC has been updated to test these instructions with immediate RLDs
+    Note that IILF R1,EXTRN1 functions as a faster replacement for L R1,=A(EXTRN1) as it
+    eliminates need to calculate D2(X2,B2) and eliminates second memory fetch.
 
-2.  An additional 20 new opcodes have been added to the z390 assembler and are now
-    included in the zopcheck verification program.  the paper zopcheck.pdf version 1.1
-    has been updated including new references for the new instructions including
-    machine measurement instructions and the SORTL instruction for sort enhancements:
-    http://www.zopcheck.info/zopcheck.pdf
+2.  RPI 2220: The ACALL, AENTRY, and AEXIT support for called routines within macros has been expanded
+    to support a parameter list following the ACALL name.  The number of parms passed can be
+    tested via N'&name.  The individual parms can be extracted via &name(n).
+    There is a new control macro APARM that is generated inline by each ACALL to reset the
+    ACALL parms just before entering AENTRY code.  For example:
+      ACALL SUB1(P!,P2)
+      ...
+      AENTRY SUB1
+      &N  SETA N'&SUB1      will be set to 2
+      &PN SETC '&SUB1(2)'   will be set to 'P2' 
+    See new test program TESTINS1.MLC as part of bat\RUNASMTESTS.  Note ACALL is used heavily to
+    structure code in zCOBOL macros and resulted in additional testing required to prevent 
+    regression errors.
 
-3.  Following up on the new SORTL instruction in support of IBM DFSORT Z SORT facility,
-    I've added a sort directory and demo sorts that can be run by double clicking on 
-    sort\RUNSORT.BAT.  The z390 sort utility is described in doc\z390_Sort_Utility.pdf.
+3.  Changes contributed by John Ganci
+    a.  Five BAT command files have been updated to correct case for Linux and MacOS.
+    b.  RPI 2012 Correction to bytes_to_hex SNAP support routine in sz390.java
 
+4.  RPI 2225 The following updates have been made to zopcheck V1.2 and the PDF docuement has been updated here:
+    http://www.zopcodes.info/zopcheck.pdf  
+    a.  Add STCCTM STORE CPU COUNTER MULTIPLE, opcode EB-17, format RSY-b, for machine measurement
+    b.  Correct BPP and BPRP to support relative offsets to target branch/exec instr.
+    c.  Test and verify total of 167 relative address operands.
+    d.  Correct vector instruction RXB field for following instructions:
+        VCP, VLRLR, and VSTRLR.
+    e.  Correct order and placement of M4 and M5 fields in following instructions:
+        VFTCI, VFMA, VFMS, VFNMA, and VFNMS.
+
+5.  RPI 2227 add 16 byte pad to memory to prevent PD fetch exceptions
+
+6.  Add ZPARTRS utility to support debugging z390 programs
+    See website doc here: http://www.z390.info/zpar/ZPARTRS_Source_Execution_Trace_Utility.htm     
+    A new BAT\ZPARTRS command and BAT\RUNZPAR have been added to generate a source execuiion trace for assembler
+    or zCOBOL program that has been assembled, linked, and executed with trace option.  This utility
+    consists of a macro assembler program zpar\zpartrs.mlc that syncs the source MLC, the linker LST,
+    and the execution TRS trace to produce report file with type TRS.  
 
 
 This z390 zipped directory contains everything you need to install and run z390 Portable Mainframe

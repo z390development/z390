@@ -15,6 +15,8 @@
 * 2020/01/27 LLGFSG, LGG, MSGC
 * 2020/01/28 MG, LAT, LGAT
 * 2020/01/29 LLGTAT, LGHAT, LLGFAT, LFHAT
+* 2020/12/02 dsh add Insert Immediate LGFI, IILF, IIHF with relocation
+*            IIHH, IIHL, IILH, IILL half word inserts
 *********************************************************************
 
          PRINT DATACD
@@ -24,10 +26,11 @@
 * AND TEST PSW CC ROUTINES. THE MACROS DEFINE NEW BASE REG
 * FOR EACH TEST SO THEY CAN EXTEND FOR ANY LENGTH.
 *
-* SEE TESTINS1 FOR ASSEMBLY TEST OF ALL POP INSTRUCTIONS
-* SEE TESTINS2 FOR UNIT TEST OF PROB. STATE INSTR. UP TO Z9
-* SEE TESTINS3 FOR UNIT TEST OF PROB. STATE Z10 INSTR. 
-* SEE TESTINS4 FOR UNIT TEST OF PROB. STATE Z196 INSTR.
+* TESTINS1 FOR ASSEMBLY TEST OF ALL POP INSTRUCTIONS
+* TESTINS2 FOR UNIT TEST OF PROB. STATE INSTR. UP TO Z9
+* TESTINS3 FOR UNIT TEST OF PROB. STATE Z10 INSTR. 
+* TESTINS4 FOR UNIT TEST OF PROB. STATE Z196 INSTR.
+* TESTINS5 FOR NEWER PROB. STATE AND Z15 INSTR.
 * SEE TESTFP1  FOR HFP AND BFP FLOATING POINT INSTR TESTS
 * SEE TESTDFP1 FOR DFP FLOATING POINT INSTR TESTS
 *********************************************************************
@@ -301,8 +304,33 @@ BIC_OK2  EQU    *
          LFHAT  R1,=XL4'FFFFFFFF'
          CLG    R1,=XL8'FFFFFFFFF5F6F7F8'
          RT1    CC0
+*
+* INSERT IMMEDIATE INSTRUCTIONS
+*
+         LG     R3,=FL8'-1'
+         LGFI   R3,EXTSUB INSERT RLD INTO 64 BIT REG
+         CLG    R3,=AL8(EXTSUB)
+         RT1    CC0
+         L      R3,=F'-1'
+         IIHF   R3,EXTSUB INSERT RLD INTO HIGH REG
+         CLHF   R3,=A(EXTSUB)
+         RT1    CC0
+         L      R3,=F'-1'
+         IILF   R3,EXTSUB INSERT RLD INTO LOW REG
+         CL     R3,=A(EXTSUB)
+         RT1    CC0
+         LG     R3,=FL8'-1'
+         IIHH   R3,1
+         IIHL   R3,2
+         IILH   R3,3
+         IILL   R3,4
+         CLG    R3,=AL2(1,2,3,4)
+         RT1    CC0
 *****************************************************************************
 * END
          RT1   END
+EXTSUB   CSECT
+         LA    R15,999
+         BR    R14
          END         
 
