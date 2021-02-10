@@ -27,10 +27,11 @@
          AIF   ('&REG'(1,1) EQ '(').REG
 .DEFAULT ANOP
          LA    1,ZCVT_COMRG
+		 USING ZCVT_COMRG,1  DSH1
          AGO   .ZCVTD
 .REG     ANOP
          LA    &REG(1),ZCVT_COMRG
 .ZCVTD   ANOP
-         DROP  1
+.* DSH1        DROP  1
          ZCVTD DEFINE Z390 CVT IN LOW STORAGE WITH COMRG COMM AREA
 .EXIT    MEND

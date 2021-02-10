@@ -210,6 +210,7 @@ public  class  sz390 implements Runnable {
     * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one
     * 2021-01-02 DSH RPI 2225 display 16 bit failing RLD address for abort error 120
     * 2021-01-06 DSH RPI 2012 Fix to bytes_to_hex for SNAP contributed by John Ganci
+    * 2021-02-08 RPI 2014 Modify add_cde() to zero CDE before setting fields
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -1984,6 +1985,7 @@ private void add_cde(){
 	    } else {
 	    	abort_error(123,"error allocating CDE for LOAD");
 	    }
+		Arrays.fill(pz390.mem_byte, cde_addr[cur_cde], cde_addr[cur_cde] + cded_len, (byte)0); // RPI 2014
 	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdchain,pz390.mem.getInt(pz390.cvt_cde));
 	    pz390.mem.putInt(pz390.cvt_cde,cde_addr[cur_cde]);
 	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdentpt,load_code_ent);

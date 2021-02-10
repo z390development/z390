@@ -376,6 +376,15 @@ public class pz390 {
      *  2019-10-01 RPI 2202 dsh fix trace case 154 for NRK etc to show R vs F for regs
      *  2019-10-26 RPI 2202 add POPCNT high mask bit support to return total one bits
      *  2021-01-06 RPI 2227 add 16 byte memory buffer to prevent pd fetch exception 
+	 * 2021-01-10 RPI 2204 add CDPT, CXPT, CZDT, CZXT; change to RPI 2227 - add 32 bytes
+	 * 2021-01-10 RPI 2013 Modify MP, DP to verify operands.
+     *                     1. MP and DP: 2nd op len <= 8 and < 1st op len;
+     *                        else specification exception.
+     *                     2. MP: 1st op has at least as many bytes of
+     *                        leftmost zeros as 2nd op len; else
+     *                        general-purpose data exception.
+	 *                     3. DP: delete setting psw_cc
+     *                     4. Add missing else clause to get_pdf_ints().
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -897,11 +906,21 @@ public class pz390 {
 
 	ByteBuffer pd_byte = ByteBuffer.wrap(pd_bytes, 0, 16);
 
+    byte[] zone_bytes = null;
+	byte zone_byte_zone = (byte)0xf0;
+	int    zone_len = 0;
+	int    zone_index = 0;
+	boolean zone_sign_zero = true;
+	
 	String pdf_str = null;
 
 	int pdf_str_len = 0;
 
 	int pdf_zeros = 0;
+
+	int pdf_leftmost_zeros = 0;  // RPI 2013
+
+	int pdf_leftmost_zeros1 = 0; // RPI 2013
 
 	char pdf_sign = '+';
     boolean pdf_trunc = false; // RPI 788
@@ -921,6 +940,7 @@ public class pz390 {
 
 	boolean pdf_is_big = false;
 	boolean pdf_signed = true;
+	boolean pdf_ignore_sign = false; // rpi 2204
 
 	BigInteger pdf_big_int = null;
 
@@ -3735,52 +3755,65 @@ public class pz390 {
 		case 0xFC: // 7120 "FC" "MP" "SS"
 			psw_check = false;
 			ins_setup_ssp();
-			if (get_pdf_ints()){ // RPI 981
-				if (pdf_is_big) {
-					pdf_big_int = pdf_big_int1
-				            .multiply(pdf_big_int2);
-				} else {
-					if (pdf_long1 < max_pos_int && pdf_long1 > min_neg_int
-						&& pdf_long2 < max_pos_int && pdf_long2 > min_neg_int) {
-						pdf_long = pdf_long1 * pdf_long2;
-					} else {
-						pdf_is_big = true;
-						pdf_big_int1 = BigInteger.valueOf(pdf_long1);
-						pdf_big_int2 = BigInteger.valueOf(pdf_long2);
-						pdf_big_int = pdf_big_int1
-					            .multiply(pdf_big_int2);
-					}
-				}
-				put_pd(mem_byte, bd1_loc, rflen1);
-			}
+	        if (rflen2 <= 8 && rflen2 < rflen1) { // RPI 2013
+	            if (get_pdf_ints()){ // RPI 981
+	                if ((pdf_leftmost_zeros1 >>> 1) >= rflen2) { // RPI 2013
+	                    if (pdf_is_big) {
+	                        pdf_big_int = pdf_big_int1
+	                                .multiply(pdf_big_int2);
+	                    } else {
+	                        if (pdf_long1 < max_pos_int && pdf_long1 > min_neg_int
+	                                && pdf_long2 < max_pos_int && pdf_long2 > min_neg_int) {
+	                            pdf_long = pdf_long1 * pdf_long2;
+	                        } else {
+	                            pdf_is_big = true;
+	                            pdf_big_int1 = BigInteger.valueOf(pdf_long1);
+	                            pdf_big_int2 = BigInteger.valueOf(pdf_long2);
+	                            pdf_big_int = pdf_big_int1
+	                                    .multiply(pdf_big_int2);
+	                        }
+	                    }
+	                    put_pd(mem_byte, bd1_loc, rflen1);
+	                } else {                               // RPI 2013
+	                    fp_dxc = fp_dxc_dec;               // RPI 2013
+	                    set_psw_check(psw_pic_data);       // RPI 2013
+	                }                                      // RPI 2013
+	            }
+	        } else {                                       // RPI 2013
+	            set_psw_check(psw_pic_spec);               // RPI 2013
+	        }                                              // RPI 2013
 			break;
 		case 0xFD: // 7130 "FD" "DP" "SS"
 			psw_check = false;
 			ins_setup_ssp();
-			if (get_pdf_ints()){  // RPI 981
-				if (pdf_is_big) {
-					if (pdf_big_int2.signum() == 0) {
-						psw_cc = psw_cc3;
-						set_psw_check(psw_pic_pd_div);
-					}
-					BigInteger[] big_quo_rem = pdf_big_int1
-						.divideAndRemainder(pdf_big_int2);
-					pdf_big_int = big_quo_rem[0];
-					put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
-					pdf_big_int = big_quo_rem[1];
-					put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
-				} else {
-					if (pdf_long2 == 0) {
-						psw_cc = psw_cc3;
-						set_psw_check(psw_pic_pd_div);
-						break;
-					}
-					pdf_long = pdf_long1 / pdf_long2;
-					put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
-					pdf_long = pdf_long1 - pdf_long * pdf_long2;
-					put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
-				}
-			}
+	        if (rflen2 <= 8 && rflen2 < rflen1) { // RPI 2013
+	            if (get_pdf_ints()){  // RPI 981
+	                if (pdf_is_big) {
+	                    if (pdf_big_int2.signum() == 0) {
+//	                        psw_cc = psw_cc3;              // RPI 2013
+	                        set_psw_check(psw_pic_pd_div);
+	                    }
+	                    BigInteger[] big_quo_rem = pdf_big_int1
+	                            .divideAndRemainder(pdf_big_int2);
+	                    pdf_big_int = big_quo_rem[0];
+	                    put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
+	                    pdf_big_int = big_quo_rem[1];
+	                    put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
+	                } else {
+	                    if (pdf_long2 == 0) {
+//	                        psw_cc = psw_cc3;              // RPI 2013
+	                        set_psw_check(psw_pic_pd_div);
+	                        break;
+	                    }
+	                    pdf_long = pdf_long1 / pdf_long2;
+	                    put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
+	                    pdf_long = pdf_long1 - pdf_long * pdf_long2;
+	                    put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
+	                }
+	            }
+	        } else {                              // RPI 2013
+	            set_psw_check(psw_pic_spec);      // RPI 2013
+	        }                                     // RPI 2013
 			break;
 		}
 	}
@@ -9495,7 +9528,7 @@ public class pz390 {
 			break;
 		case 0xC0: // 6570 "EBC0" "TP" "RSL"
 			psw_check = false;
-			ins_setup_rsl();
+			ins_setup_rsla();
 			get_pd(mem,bd1_loc, rflen1);
 			psw_cc = pd_cc;
 			break;
@@ -11012,7 +11045,250 @@ public class pz390 {
 			}
 			mem.putLong(xbd2_loc, fp_reg.getLong(rf1));
 			break;
-		}
+		case 0xA8: // EDA8 CZDT R1,D2(l2,B2),M3  RPI 2204 convert long DFP to zoned
+			psw_check = false;
+			ins_setup_rslb(); 
+			if (rflen2 > 16)set_psw_check(psw_pic_spec); // spec abort if over 16 digit zone
+			work_fp_bi1 = fp_get_bd_from_dd(fp_reg,rf1).toBigInteger();
+			zone_bytes = work_fp_bi1.abs().toString().getBytes();
+			// set zones and check for overflow
+			zone_len = zone_bytes.length;
+			zone_index = 0;
+			zone_sign_zero = true; // assume all digits zero
+			if ((mf3 & 4) > 0){ // check z bit from szpf mask
+				zone_byte_zone = (byte)0x30; // edbdi digit
+			} else {
+				zone_byte_zone = (byte)0xf0; // ascii digit
+			}
+			psw_cc = psw_cc_equal; // not overflow
+			while (zone_index < zone_len){
+				zone_bytes[zone_index] = (byte)(zone_bytes[zone_index] & (byte)0x0f); // clear default ascii zone 
+				if (zone_bytes[zone_index] > 0){
+				   if ((zone_len - rflen2) > zone_index){ // check for overflow digit > 0 being truncated
+				      set_psw_check(psw_pic_fx_ovf);
+					  psw_cc = psw_cc_ovf; // set cc overflow incase pgm chk masked
+				   }
+				   zone_sign_zero = false; // result is not zero may be pos or neg
+				}
+				zone_bytes[zone_index] = (byte)(zone_bytes[zone_index] | zone_byte_zone);
+				zone_index++;
+			}
+			if (zone_len > rflen2){
+				zone_index = zone_len - rflen2 - 1;
+				zone_len = rflen2;				
+			} else if (zone_len < rflen2){
+				//dsh2 chk rflen2 > 16
+				if (rflen2 > 16)set_psw_check(psw_pic_spec);
+				// dsh pad with zeros if short
+				while (rflen2 > zone_len){
+					mem_byte[bd2_loc] = zone_byte_zone; 
+			        bd2_loc++;
+					rflen2--;
+				}
+			} else {
+				zone_index = 0; // start at 0 if equal
+			}	
+			//dsh3 set zone sign
+			if ((mf3 & 0x8) > 0){ // check signed s bit from szpf mask
+			   zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] & (byte)0x0f); // clear zone to add sign			   
+		       if (zone_sign_zero){
+			      if ((mf3 & 0x1) > 0){ // s+f force plus sign
+                     if ((mf3 & 0x2) > 0){ // if p is 1 then sign 0xc0 else 0xf0
+					    zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
+					 } else {
+					    zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xf0);
+					 }				
+			      } else { // set sign based on P 
+				     if ((mf3 & 0x2) > 0){ // if p is 1 then sign 0xc0 else 0xf0
+				        if  (work_fp_bi1.signum() == 1){
+					        zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
+					    } else {
+						    zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xd0);
+					    }
+				     } else {
+				        zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xf0);
+				     }
+				  }				  				   
+			   } else { // signed and not zero
+	              if  (work_fp_bi1.signum() == 1){
+				      zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
+				  } else {
+				      zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xd0);
+				  }
+			   }
+		    }
+			if (psw_cc != psw_cc_ovf){  // set cc if not already set to ovf
+			   if (work_fp_bi1.signum() == 0){
+			      psw_cc = psw_cc_equal;
+			   } else if (work_fp_bi1.signum() == 1){
+				  psw_cc = psw_cc_high;
+			   } else {
+				  psw_cc = psw_cc_low;
+			   }
+			}
+			//dsh4 copy to memory
+			System.arraycopy(zone_bytes,zone_index,mem_byte,bd2_loc,zone_len);
+			break;
+		case 0xA9: // EDA9 CZXT R1,D2(l2,B2),M3  RPI 2204 convert extended DFP to zoned
+			psw_check = false;
+			ins_setup_rslb(); 
+			if (rflen2 > 34)set_psw_check(psw_pic_spec); // spec abort if over 34 digit zone
+			work_fp_bi1 = fp_get_bd_from_ld(fp_reg,rf1).toBigInteger();
+			zone_bytes = work_fp_bi1.abs().toString().getBytes();
+			// set zones and check for overflow
+			zone_len = zone_bytes.length;
+			zone_index = 0;
+			zone_sign_zero = true; // assume all digits zero
+			if ((mf3 & 4) > 0){ // check z bit from szpf mask
+				zone_byte_zone = (byte)0x30; // edbdi digit
+			} else {
+				zone_byte_zone = (byte)0xf0; // ascii digit
+			}
+			psw_cc = psw_cc_equal; // not overflow
+			while (zone_index < zone_len){
+				zone_bytes[zone_index] = (byte)(zone_bytes[zone_index] & (byte)0x0f); // clear default ascii zone 
+				if (zone_bytes[zone_index] > 0){
+				   if ((zone_len - rflen2) > zone_index){ // check for overflow digit > 0 being truncated
+				      set_psw_check(psw_pic_fx_ovf);
+					  psw_cc = psw_cc_ovf; // set cc overflow incase pgm chk masked
+				   }
+				   zone_sign_zero = false; // result is not zero may be pos or neg
+				}
+				zone_bytes[zone_index] = (byte)(zone_bytes[zone_index] | zone_byte_zone);
+				zone_index++;
+			}
+			if (zone_len > rflen2){
+				zone_index = zone_len - rflen2 - 1;
+				zone_len = rflen2;				
+			} else if (zone_len < rflen2){
+				//dsh2 chk rflen2 > 16
+				if (rflen2 > 16)set_psw_check(psw_pic_spec);
+				// dsh pad with zeros if short
+				while (rflen2 > zone_len){
+					mem_byte[bd2_loc] = zone_byte_zone; 
+			        bd2_loc++;
+					rflen2--;
+				}
+			} else {
+				zone_index = 0; // start at 0 if equal
+			}	
+			//dsh3 set zone sign
+			if ((mf3 & 0x8) > 0){ // check signed s bit from szpf mask
+			   zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] & (byte)0x0f); // clear zone to add sign			   
+		       if (zone_sign_zero){
+			      if ((mf3 & 0x1) > 0){ // s+f force plus sign
+                     if ((mf3 & 0x2) > 0){ // if p is 1 then sign 0xc0 else 0xf0
+					    zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
+					 } else {
+					    zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xf0);
+					 }				
+			      } else { // set sign based on P 
+				     if ((mf3 & 0x2) > 0){ // if p is 1 then sign 0xc0 else 0xf0
+				        if  (work_fp_bi1.signum() == 1){
+					        zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
+					    } else {
+						    zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xd0);
+					    }
+				     } else {
+				        zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xf0);
+				     }
+				  }				  				   
+			   } else { // signed and not zero
+	              if  (work_fp_bi1.signum() == 1){
+				      zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
+				  } else {
+				      zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xd0);
+				  }
+			   }
+		    }
+			if (psw_cc != psw_cc_ovf){  // set cc if not already set to ovf
+			   if (work_fp_bi1.signum() == 0){
+			      psw_cc = psw_cc_equal;
+			   } else if (work_fp_bi1.signum() == 1){
+				  psw_cc = psw_cc_high;
+			   } else {
+				  psw_cc = psw_cc_low;
+			   }
+			}
+			//dsh4 copy to memory
+			System.arraycopy(zone_bytes,zone_index,mem_byte,bd2_loc,zone_len);
+			break;
+	case 0xAE: // EDAE CDPT R1,D2(l2,B2),M3  RPI 2204 convert from packed to long DFP
+			psw_check = false;
+			ins_setup_rslb(); // pdf_signed = true if mf1 >- 8 if pdf_signed = false get_pd includes low nibble as digit
+			if (mf3 >= 8){
+			   pdf_signed = true;  // low nibble is sign
+			   if (mf3 == 9){
+			      pdf_ignore_sign = true;
+		       } else {
+			      pdf_ignore_sign = false;
+			   }
+		    } else {
+			   pdf_signed = false;  // low nibble is digit
+			   pdf_ignore_sign = true;
+		    }
+			if (rflen2 > 9
+	            || (rflen2 == 9 && (!pdf_signed || mem_byte[bd2_loc] > 15))
+		       ){
+               set_psw_check(psw_pic_fx_ovf);
+               break;
+			} 
+			if (get_pd(mem,bd2_loc,rflen2)) { 
+				if (pdf_is_big) { 
+					fp_put_bd(rf1, tz390.fp_dd_type, new BigDecimal(pdf_big_int,0));
+			        fp_store_reg(fp_reg, rf1); 
+				} else {
+					if (pdf_long <= max_pos_int && pdf_long >= min_neg_int) {
+						fp_put_bd(rf1, tz390.fp_dd_type, BigDecimal.valueOf(pdf_long));
+			            fp_store_reg(fp_reg, rf1); 
+					} else {
+						set_psw_check(psw_pic_fx_div);
+					}
+				}
+			}
+			if (fp_reg_ctl[mf1] != fp_ctl_ld) {
+				fp_store_reg(fp_reg, rf1);
+			}
+			break;
+	case 0xAF: // EDAF CXPT R1,D2(l2,B2),M3  RPI 2204 convert from packed to extended DFP
+			psw_check = false;
+			ins_setup_rslb(); // pdf_signed = true if mf1 >- 8 if pdf_signed = false get_pd includes low nibble as digit
+			if (mf3 >= 8){
+			   pdf_signed = true;  // low nibble is sign
+			   if (mf3 == 9){
+			      pdf_ignore_sign = true;
+		       } else {
+			      pdf_ignore_sign = false;
+			   }
+		    } else {
+			   pdf_signed = false;  // low nibble is digit
+			   pdf_ignore_sign = true;
+		    }
+			if (rflen2 > 18
+	            || (rflen2 == 18 && (!pdf_signed || mem_byte[bd2_loc] > 15))
+		       ){
+               set_psw_check(psw_pic_fx_ovf);
+               break;
+			}
+			
+			if (get_pd(mem,bd2_loc,rflen2)) { 
+				if (pdf_is_big) { 
+					fp_put_bd(rf1, tz390.fp_ld_type, new BigDecimal(pdf_big_int,0));
+		            fp_store_reg(fp_reg, rf1); 
+				} else {
+					if (pdf_long <= max_pos_int && pdf_long >= min_neg_int) {
+						fp_put_bd(rf1, tz390.fp_ld_type, BigDecimal.valueOf(pdf_long));
+			            fp_store_reg(fp_reg, rf1); 
+					} else {
+						set_psw_check(psw_pic_fx_div);
+					}
+				}
+			}
+			if (fp_reg_ctl[mf1] != fp_ctl_ld) {
+				fp_store_reg(fp_reg, rf1);
+			}
+			break;
+		}	
     }
 	/*
 	 * end of ez390 emulator while switch code
@@ -11523,7 +11799,7 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
-	private void ins_setup_rsl() { // "RSL" 1 TP oor0bddd00oo
+	private void ins_setup_rsla() { // "RSLa" 1 TP oor0bddd00oo
 		psw_ins_len = 6;
 		rflen1 = ((mem_byte[psw_loc + 1] & 0xff) >> 4) + 1;
 		bf1 = mem.getShort(psw_loc + 2) & 0xffff;
@@ -11534,6 +11810,29 @@ public class pz390 {
 		} else {
 			bd1_loc = df1;
 		}
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+	}
+	
+	private void ins_setup_rslb() { // "RSLb" CZDT, CZXT, CDPT, CXPT oollbdddrmoo RPI 2204 
+		psw_ins_len = 6;
+		rflen2 = (mem_byte[psw_loc + 1] & 0xff) + 1;
+		bf2 = mem.getShort(psw_loc + 2) & 0xffff;
+		df2 = bf2 & 0xfff;
+		bf2 = (bf2 & 0xf000) >> 9;
+		if (bf2 > 0) {
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode; // PRI 815
+		} else {
+			bd2_loc = df2;
+		}
+		rf1 = mem_byte[psw_loc + 4] & 0xff;
+		mf3 = rf1 & 0xf;
+		rf1 = (rf1 & 0xf0) >> 1;
 		if (tz390.opt_trace) {
 			trace_ins();
 		}
@@ -13748,7 +14047,7 @@ public class pz390 {
 			ins_setup_siy();
 			break;
 		case 22:// "RSL" 1 TP oor0bddd00oo
-			ins_setup_rsl();
+			ins_setup_rsla();
 			break;
 		case 23:// "RIE" 4 BRXLG oorriiii00oo
 			ins_setup_rie();
@@ -17152,8 +17451,12 @@ public class pz390 {
 		 * 1.  Return true if ok else false.  RPI 981
 		 * 2.  Set pdf_is_big to true or false and set pdf_big_int1 and pdf_big_int2
 		 *     or pdf_long1 and pdf_long2
+		 * 3.  Set pdf_leftmost_zeros to 1st operand number of leftmost zeros. RPI 2013
 		 */
+		 pdf_signed = true;       // rpi 2204
+		 pdf_ignore_sign = false; // rpi 2204
 		if (get_pd(mem,bd1_loc, rflen1)) { // RPI 305
+			pdf_leftmost_zeros1 = pdf_leftmost_zeros; // RPI 2013
 			if (pdf_is_big) {
 				pdf_big_int1 = pdf_big_int;
 				if (get_pd(mem,bd2_loc, rflen2)) { // RPI 305
@@ -17175,6 +17478,8 @@ public class pz390 {
 					} else {
 						pdf_long2 = pdf_long;
 					}
+				} else {                           // RPI 2013
+					return false;                  // RPI 2013
 				}
 			}
 		} else {
@@ -17194,29 +17499,66 @@ public class pz390 {
 		 *       1 = sign invalid
 		 *       2 = digit invalid
 		 *   3.  Raise 0C7 if not TP opcode
-		 *   4.  If pdf_signed = false, return value
-		 *       including low order digit if ok.
-		 * 
+		 *   4.  If pdf_signed = false, return positive value including low digit
+		 ^   5.  if pdf_signed = true and pdf_ignore_sign = true then ignore sign and set positive, RPI 2204
+		 *   6.  Add support for up to 34 digits using 3 segments (16+16+2) RPI 2204
+		 *   7.  Calculate number of leftmost zeros RPI 2013
 		 * 
 		 * 
 		 */
 		pdf_is_big = false; // RPI 389
 		pd_cc = psw_cc0;
+		pdf_leftmost_zeros = -1; // RPI 2013
 		if (pdf_len <= 4) { 
 			pdf_str = Integer.toHexString(pd_buff.getInt(pdf_loc));
 			pdf_zeros = 8 - pdf_str.length();
+			pdf_leftmost_zeros = (pdf_str.length() == 1 && pdf_str.charAt(0) == '0' ? 8 : pdf_zeros);  // RPI 2013
 		} else if (pdf_len <= 8) {
 			pdf_str = Long.toHexString(pd_buff.getLong(pdf_loc));
 			pdf_zeros = 16 - pdf_str.length(); // RPI 389 was 16
+			pdf_leftmost_zeros = (pdf_str.length() == 1 && pdf_str.charAt(0) == '0' ? 16 : pdf_zeros); // RPI 2013
 		} else {
 			pdf_str = Long.toHexString(pd_buff.getLong(pdf_loc));
-			String last_half = Long.toHexString(pd_buff.getLong(pdf_loc + 8));
+			String pdf_17_32 = Long.toHexString(pd_buff.getLong(pdf_loc + 8));        // rpi 2204
+
+			// Calculate pdf_leftmost_zeros when 2 longs used                         // RPI 2013
+			if (pdf_str.length() == 1 && pdf_str.charAt(0) == '0') {                  // RPI 2013
+				if (pdf_17_32.length() == 1 && pdf_17_32.charAt(0) == '0') {          // RPI 2013
+					pdf_leftmost_zeros = 32;                                          // RPI 2013
+				}                                                                     // RPI 2013
+				else {                                                                // RPI 2013
+					pdf_leftmost_zeros = 32 - pdf_17_32.length();                     // RPI 2013
+				}                                                                     // RPI 2013
+			} else {                                                                  // RPI 2013
+				pdf_leftmost_zeros = 16 - pdf_str.length();                           // RPI 2013
+			}                                                                         // RPI 2013
+
 			pdf_str = pdf_str
-					+ ("0000000000000000" + last_half).substring(last_half
-							.length());
+					+ ("0000000000000000" + pdf_17_32).substring(pdf_17_32.length()); // rpi 2204
 			pdf_zeros = 32 - pdf_str.length();
+			if (pdf_len > 16){                                                        // rpi 2204
+				String pdf_33_34 = Long.toHexString(pd_buff.getLong(pdf_loc + 16));   // rpi 2204
+
+				// Adjust pdf_leftmost_zeros if necessary (for CXPT instruction)      // RPI 2013
+				if (pdf_leftmost_zeros == 32) { // 32 when 1st 2 longs are zero       // RPI 2013
+					if (pdf_33_34.length() == 1 && pdf_33_34.charAt(0) == '0') {      // RPI 2013
+						pdf_leftmost_zeros = 34; // see PofOp pp 20-27 -- 20-28       // RPI 2013
+					}                                                                 // RPI 2013
+					else {                                                            // RPI 2013
+						pdf_leftmost_zeros = 48 - pdf_33_34.length();                 // RPI 2013
+					}                                                                 // RPI 2013
+				}                                                                     // RPI 2013
+
+			    pdf_str = pdf_str                                                     // rpi 2204
+					+ ("0000000000000000" + pdf_33_34).substring(pdf_33_34.length()); // rpi 2204
+			    pdf_zeros = 48 - pdf_str.length();                                    // rpi 2204
+			}                                                                         // rpi 2204
 		}
-		pdf_str_len = 2 * pdf_len - 1 - pdf_zeros; // assume positive
+		if (pdf_signed) {
+		   pdf_str_len = 2 * pdf_len - 1 - pdf_zeros; // assume positive
+		} else {
+			pdf_str_len = 2*pdf_len - pdf_zeros;  // rpi 2204
+		}
 		if (pdf_str_len < 0) {
 			pdf_signed = true;
 			pdf_str_len = 0; // RPI109 catch 0 sign nibble
@@ -17234,6 +17576,7 @@ public class pz390 {
 				pdf_str = "0";
 				pdf_str_len = 1;
 			}
+		  if (!pdf_ignore_sign){
 			switch (pdf_sign) {
 			case '3': // ascii plus
 				pdf_str = pdf_str.substring(0, pdf_str_len);
@@ -17266,8 +17609,12 @@ public class pz390 {
 				}
 				break;
 			}
+		  } else {
+			  pdf_str = pdf_str.substring(0, pdf_str_len); // ignore sign and make positive RPI 2204
+		  }
 		} else {
-			pdf_signed = true;
+			// not signed
+			pdf_str = pdf_str.substring(0, pdf_str_len); // rpi 2204
 		}
 		try {
 			if (pdf_str.length() < 9){  // RPI 389 <= 18 digits, RPI 781 <= 16 digits to allow carry w/o ovf
@@ -17712,8 +18059,8 @@ public class pz390 {
 		 * memory on machine. See TEST\TESTMEM1 for test of ABOVE/BELOW GETMAIN
 		 * using MEM(32) to allocate 16MB below and 16 MB above. b. If less than
 		 * 16 MB allocated 31 bit fqe is set to 0 and RMODE31 requests use
-		 * memory below the line. 5. Add 8 bytes to physical mem_byte array
-		 * allocated to allow get_pd to fetch 8 bytes from last byte in memory
+		 * memory below the line. 5. Add 16 bytes to physical mem_byte array
+		 * allocated to allow get_pd to fetch 16 bytes from last byte in memory
 		 * for 1-8 byte packed decimal field. Notes: 1. The default J2RE maximum
 		 * memory available is limited by default to small fraction of total
 		 * memory to prevent stalling OS or other J2RE applications running. To
@@ -17724,8 +18071,8 @@ public class pz390 {
 		 */
 		tot_mem = tz390.max_mem << 20; // cvt MB to bytes
 		try {
-			mem_byte = new byte[tot_mem + 16];                // RPI 2227 add 16 byte pad
-			mem = ByteBuffer.wrap(mem_byte, 0, tot_mem + 16); // RPI 2227 add 16 byte pad
+			mem_byte = new byte[tot_mem + 32];                // RPI 2227 add 16 byte pad // RPI 2204 add 32
+			mem = ByteBuffer.wrap(mem_byte, 0, tot_mem + 32); // RPI 2227 add 16 byte pad // RPI 2204 add 32
 			Arrays.fill(mem_byte, mem24_start, tot_mem, fill_mem_char); // ZRPI 866
 		} catch (Exception e) {
 			set_psw_check(psw_pic_memerr);

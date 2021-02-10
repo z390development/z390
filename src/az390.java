@@ -409,6 +409,7 @@ public  class  az390 implements Runnable {
 		* 2020/12/03 RPI 2223 update RIL instr. to support immediate 32 bit RLDS for non branch and non relative long instr.
 		*            note this is documented in IBM APAR PH30740 dated 2020-11-03 
 		* 2020-12-31 RPI 2225 add STCCTM, use get_hex_relative_offset(bits) and get_hex_int(bits), and fix BPRP, BPPm, fix vcp, etc.
+		* 2021-02-07 RPI 2226 correct RSYb EB17 STCCTM R1,M3,D2(B2) and fix VNOT not setting v3=v2 
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -2746,7 +2747,7 @@ private void process_bal_op(){
 		    get_hex_op(5,1);    // M1 BIE D2(X2,B2)
 		    get_hex_xbdddhh2(); // d2(x2,b2)
 		} else {
-		   get_hex_reg();   // R1  CG R1,D2(X2,B2) OR STCCTM M1,D2(X2,B2)
+		   get_hex_reg();   // R1  CG R1,D2(X2,B2) 
 		   skip_comma();
    	       get_hex_xbdddhh2(); 
 	    }		   
@@ -2772,8 +2773,9 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 6;
     	get_hex_op(1,2); 
-	    if   (tz390.op_code[bal_op_index].substring(0,4).equals("EB23")   // EB23 CLT  R1,M3,D2(X2,B2)
-		   || tz390.op_code[bal_op_index].substring(0,4).equals("EB2B")){
+	    if   (tz390.op_code[bal_op_index].substring(0,4).equals("EB23")   // EB23 RSYb CLT  R1,M3,D2(B2)
+		   || tz390.op_code[bal_op_index].substring(0,4).equals("EB2B")   // EB2B RSYb CLGT R1,M3,D2(B2)
+		   || tz390.op_code[bal_op_index].substring(0,4).equals("EB17")){ // EB17 RSYb STCCTM R1,M3,D2(B2)
 			 if ( tz390.op_code[bal_op_index].length() == 5){ // m1 found
        	        get_hex_reg();   // R1
 				skip_comma();
@@ -4497,8 +4499,16 @@ private void process_bal_op(){
   		  skip_comma();
   		  get_hex_vreg(3);       // V3
        } else {
-   	     get_hex_zero(1);  
-       }    
+		 if (tz390.op_name[bal_op_index].equals("VNOT")){ // RPI 2226 VNOT V1,V2,V2 extention of VNO
+			obj_code = obj_code.substring(0,4)  // op1+v1,v2
+ 	          + obj_code.substring(3,4);        // v3 = v2
+			if ((vreg_rxb & 4) == 4){ 
+			   vreg_rxb  = vreg_rxb + 2; // set v3 rxb bit
+			}
+	     } else {
+   	        get_hex_zero(1);  
+         }
+	   }		 
        get_hex_zero(4);
       } else  if (tz390.op_code[bal_op_index].substring(0,4).equals("E756")) {     // E756 VRRa VLR V1,V2
     	  get_hex_vreg(1);        // V1

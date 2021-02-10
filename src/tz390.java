@@ -300,6 +300,8 @@ public  class  tz390 {
 	* 2020-12-25 DSH V1704 RPI 2225 ADD STCCTM, change BRAS,JAS to case 13
 	* 2020-12-28 DSH RPI 2226 change zvsam option default to 1 - sets GBLA &SYSZVSAM = 1
 	* 2020-12-30 DSH RPI 2220 add macro APARM to reset ACALL parm before entering AENTRY
+	* 2021-02-07 DSH RPI 2226 correct STCCTM type RSYb EB17, VNOT
+        * 2021-02-09 DSH V1705a RPI 2204, 2226, 2213, 2214
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -308,7 +310,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.7.04";  //dsh + afk
+    String version    = "V1.7.05a";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -2359,7 +2361,7 @@ public  class  tz390 {
          "E55C=CHSI,51,392",     //    440 "E55C"  "CHSI"     "SIL"  51 RPI 817
          "E55D=CLFHSI,51,392",   //    450 "E55D"  "CLFHSI"   "SIL"  51 RPI 817
          "EB4C=ECAG,20,203",     //    460 "EB4C"  "ECAG"     "RSY"  20 RPI 817
-		 "EB17=STCCTM,18,189",    //  RPI 2225 
+		 "EB17=STCCTM,20,201",   //  RPI 2225 2226
          "EB6A=ASI,21,211",      //    470 "EB6A"  "ASI"      "SIY"  21 RPI 817
          "EB6E=ALSI,21,211",     //    480 "EB6E"  "ALSI"     "SIY"  21 RPI 817
          "EB7A=AGSI,21,212",     //    490 "EB7A"  "AGSI"     "SIY"  21 RPI 817
@@ -2740,7 +2742,7 @@ public  class  tz390 {
             "E769=VNC,82,738",   // E769 VRRc VNC V1,V2,V3 RPI 2202
             "E76A=VO,82,738",   // E76A VRRc VO V1,V2,V3 RPI 2202
             "E76B=VNO,82,738",   // E76B VRRc VNO V1,V2,V3 RPI 2202
-            "E76B=VNOT,82,738",   // E76B VRRc VNOT V1,V2,V3 RPI 2202
+            "E76BF=VNOT,82,738",   // E76B VRRc VNOT V1,V2 RPI 2202 RPI 2226 V3=V2
             "E76C=VNX,82,738",   // E76C VRRc VNX V1,V2,V3 RPI 2202
             "E76D=VX,82,738",     // E76D VRRc VX V1,V2,V3 RPI 2202
             "E76E=VNN,82,738",   // E76E VRRc VNN V1,V2,V3 RPI 2202
