@@ -1,0 +1,32 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 03/14/06 RPI 228 - ADD CVTDCB AND ALSO CVTECB, CVTPARM
+.* 03/28/06 RPI 266 - CORRECT ,* VS .* ON ABOVE LINE      
+.* 04/10/06 RPI 276 - ADD CVTDATE IPL DATE SET BY IPL(TESTIPL1)
+.* 04/23/06 RPI 286 - MOVE ZCVT FIELDS LEAVING ONLY MVS COMPAT. FIELDS
+.* 04/23/06 RPI 1063  SET CVTCDE TO FIRST CDE ENTRY DEFINED BY CDED
+.*********************************************************************
+         CVTD
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.* EZ390 CVT DSECT - ADDRESS STORED AT LOC X'10' AND X'4C'
+.*
+IHACVT   DSECT
+         ORG    IHACVT+X'38'
+CVTDATE  DS     PL4   IPL DATE SET BY IPL(TESTIPL1)             
+         ORG    IHACVT+X'74'
+CVTDCB   DS     X     OS FLAGS X'80' = 31 BITS, X'13' = MVS+
+         ORG    IHACVT+200
+CVTABEND DS     A     SECONDARY CVT  (ZERO FOR NOW)
+CVTUSER  DS     A     USER POINTER
+CVTCDE   DS     A     ADDRESS FIRST CDE FOR Z390 RPI 1063
+         MEND

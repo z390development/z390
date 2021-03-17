@@ -1,0 +1,57 @@
+        MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
+.* 04/11/06 RPI 244 IGNORE UNUSED KEYWORDS, SUPPORT CV,CT,PARAM=       
+.* 06/03/06 RPI 321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
+.* 11/10/06 RPI 475 SUPPORT CT AS IF OV            
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N      ESTAE  &ADDR,          ADDRESS OF ABEND RECOVERY EXIT          X
+               &TYPE,          OV=REPLACE EXIT, CT=ADD NEW EXIT        X
+               &ASYNCH=NO,     IGNORE                                  X
+               &MF=I,          NOT SUPPORTED                           X
+               &PARAM=,        ADDRESS PASSED IN R1 IF SPECIFIED       X
+               &PURGE=NONE,    IGNORE                                  X
+               &RELATED=,      IGNORE                                  X
+               &SDWALOC31=NO,  IGNORE                                  X
+               &TERM=NO,       IGNORE                                  X
+               &XCTL=NO        IGNORE
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR1
+         AIF   (N'&SYSLIST LE 2).NPOK  R[ 475
+         MNOTE 12,'ESTAE UNSUPPORTED OPERANDS - &SYSLIST(2)'
+.NPOK    ANOP
+        AIF    ('&ADDR'(1,1) EQ '(').AREG
+        LA     0,&ADDR
+        AGO    .CHKP
+.AREG   ANOP
+        ZOPTLR 0,&ADDR(1)
+.CHKP   ANOP
+        AIF    ('&PARAM' EQ '').ZPARM
+        AIF    ('&PARAM'(1,1) EQ '(').PREG
+        LA     1,&PARAM
+        AGO    .CHKTYPE
+.PREG   ANOP
+        ZOPTLR 1,&PARAM(1)
+        AGO    .CHKTYPE
+.ZPARM  ANOP
+        SR     1,1
+.CHKTYPE ANOP
+        AIF    ('&TYPE' NE 'OV').SVC
+        OILH   0,X'8000' 
+.SVC    ANOP
+        SVC    X'3C' ESTAE R0=EXIT, R0+=CT, R0-=OV,R1=PARAM OR 0
+        MEXIT
+.ERR1   MNOTE  12,'ESTAE MF= NOT SUPPORTED'
+        MEND

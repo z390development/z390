@@ -1,0 +1,71 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/14/06                                                 *
+.*********************************************************************
+.* 03/14/06 RPI 210 ADD STORAGE MACRO
+.* 04/11/06 RPI 244 UPDATE KW PARMS, SUPPORT LOC=ANY
+.* 06/03/06 RPI 324 CORRECT ADDR=(REG) TO STORE R0 AT 0(REG)
+.* 01/23/07 RPI 542 CORRECT OUTPUT REGS R0=LEN AND R1=ADDR   
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
+&N       STORAGE &TYPE,      OBTAIN/RELEASE                            X
+               &ADDR=,       ADDRESS TO STORE ALLOC STORAGE            X
+               &BNDRY=,      IGNORE                                    X
+               &CALLRKY=,    IGNORE                                    X
+               &CHECKZERO=,  IGNORE                                    X
+               &COND=NO,     CONDITIONAL NO/YES                        X
+               &CONTBDY=,    IGNORED                                   X
+               &INADDR=,     NOT SUPPORTED                             X
+               &KEY=,        IGNORE                                    X
+               &LENGTH=,     LENGTH OF REQUEST                         X
+               &LOC=,        24,31,ANY,ABOVE,BELOW                     X
+               &MF=I,        NOT SUPPORTED                             X
+               &RELATED=,    IGNORE                                    X
+               &RTCD=,       NOT SUPPORTED                             X
+               &SP=,         IGNORE                                    X
+               &STARTBDY=    IGNORE
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+         MEXIT
+.NPOK    ANOP
+         AIF   ('&INADDR' NE '').ERR1
+         AIF   ('&RTCD'   NE '').ERR2
+         AIF   ('&MF' NE 'I').ERR3
+         AIF   ('&TYPE' EQ 'OBTAIN').OBTAIN
+         AIF   ('&TYPE' EQ 'RELEASE').RELEASE
+         MNOTE 12,'STORAGE TYPE NOT OBTAIN/RELEASE - &TYPE'
+         MEXIT
+.OBTAIN  ANOP
+         AIF   ('&COND' EQ 'YES').GMRC
+.GMR     ANOP
+         GETMAIN R,LV=&LENGTH,LOC=&LOC
+         AGO     .STORE
+.GMRC    ANOP
+         GETMAIN RC,LV=&LENGTH,LOC=&LOC
+.STORE   ANOP
+         AIF   ('&ADDR' EQ '').EXIT
+         AIF   ('&ADDR'(1,1) EQ '(').STOREREG
+         ST    1,&ADDR                          RPI 542
+         AGO   .EXIT
+.STOREREG ANOP
+         ST    1,0(&ADDR(1)) RPI 324            RPI 542
+.EXIT    ANOP
+         MEXIT
+.RELEASE ANOP
+         FREEMAIN R,A=&ADDR,LV=&LENGTH
+         MEXIT
+.ERR1    MNOTE 12,'STORAGE INADDR= NOT SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'STORAGE RTCD= NOT SUPPORTED'
+         MEXIT
+.ERR3    MNOTE 12,'STORAGE MF= NOT SUPPORTED'
+         MEXIT
+         MEND

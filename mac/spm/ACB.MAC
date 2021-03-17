@@ -1,0 +1,71 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 07/26/07 INITIAL CODING                  
+.* 08/19/07 RPI 680 FIX 10 MUTUALLY MISSPELLED
+.* 09/04/07 RPI 691 ADD ACBNAME, ACBDCBN, ACBDCBS, ACBDCBP
+.* 09/24/07 RPI 702 ADD ACBOPENC UNIQUE ACB OPEN COUNT FOR RPL RESET
+.* 11/26/07 RPI 723 MOVE GETOK, GETNF FROM ACB TO RPL               
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       ACB   &AM=VSAM,      VSAM VS VTAM                             X
+               &BUFSP=0,      MAXIMUM BUFFER SPACE FOR CLUSTER         X
+               &DDNAME=,      DDNAME FOR VSAM CLUSTER DEFINITION TABLE X
+               &DSNAME=0,     DSNAME FOR VSAM CLUSTER DEFINITION TABLE X 
+               &EXLST=0,      NOT CURRENTLY SUPPORTED                  X
+               &MACRF=        PROCESSING OPTIONS                                         
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP  
+         AIF   ('&AM' NE 'VSAM').ERR1                
+         AIF   ('&EXLST' NE 0).ERR2
+&N       DS    0D
+         DC    X'A0'                    ACBID    VSAM VS VTAM
+         DC    X'11'                    ACBSTYPE 11-1F VSAM 20-2F VTAM
+         DC    AL2(ACBEND-IHAACB)       ACBLEN   ACB LENGTH
+         DC    A(0)                     ACBAMBL  ACCESS METHOD PARMS
+         DC    A(0)                     ACBIFR   VTAM INTERFACE ROUTINE
+.*
+.* SET ZGENMAC1-4 USING ZGENMACF SHARED WITH MODCB
+.*
+         GBLC  &ZGENMACF1,&ZGENMACF2,&ZGENMACF3,&ZGENMACF4
+         ZGENMACF MACRF=&MACRF
+         DC    B'&ZGENMACF1' ACBMACF1         
+         DC    B'&ZGENMACF2' ACBMACF2         
+         DC    B'&ZGENMACF3' ACBMACF3         
+         DC    B'&ZGENMACF4' ACBMACF4         
+         DC    X'00'                    ACBOFLAGS OPEN FLAGS
+         DC    XL3'00'                  ALIGNMENT
+         AIF   ('&DDNAME' EQ '').DDDEF
+         DC    CL8'&DDNAME'
+         AGO   .DDEND                   ACBDDNAM  DDNAME FOR VCDT CAT
+.DDDEF   ANOP
+         DC    CL8'&N'
+.DDEND   ANOP
+*
+* ACB Z390 EXTENSIONS
+* 
+         DC    A(&DSNAME)               ACBDSNAM  DSNAME FOR VCDT.390
+         DC    CL8'&N'                  ACBVCLRN  ACB LABEL DEF VCLR 
+         DC    A(0)                     ACBVCLRA  ADDR OF VCLR ENTRY
+         DC    A(0)                     ACBVAIXA  ADDR OF VAIX PTH ENT
+         DC    F'0'                     ACBDCBN   NUMBER OF DCBS OPEN
+         DC    A(0)                     ACBDCBA   ADDR OF DCB TABLE
+         DC    F'0'                     ACBOPENC  UNIQUE ACB OPEN COUNT
+         ACBD
+         DCBD
+         MEXIT
+.ERR1    MNOTE 12,'ACB ONLY AM=VSAM IS SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'ACB EXLST NOT CURRENTLY SUPPORTED'
+         MEXIT
+         MEND

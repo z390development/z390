@@ -1,0 +1,65 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/23/05                                                 *
+.*********************************************************************
+.* 04/23/06 RPI 279 - add TTIMER to test or cancel STIMER REAL         
+.* 09/19/06 RPI 452 - return time for CANCEL,TU OR CANCEL,MIC,ADDR                          
+.* 10/07/06 RPI 472 - set TYPE=TU for default on CANCEL                                     
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       TTIMER &CANCEL,   CANCEL TTIMER INTERVAL IF DEFINED           X
+               &TYPE,      TU (DEFAULT RETURN IN R0) OR MIC,MICADDR    X
+               &ADDR,      DOUBLE WORD TO STORE MIC TIME REMAINING     X
+               &ERRET=,    IGNORE                                      X 
+               &MF=I        NOT SUPPORTED
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR2
+         AIF   ('&CANCEL' EQ 'CANCEL').CANCEL
+         AIF   ('&TYPE' EQ '').TU
+         AIF   ('&TYPE' EQ 'TU').TU
+         AIF   ('&TYPE' EQ 'MIC').MIC
+         AGO   .ERR3
+.CANCEL  ANOP
+         AIF   ('&TYPE' EQ '').CAN_TU      RPI 472
+         AIF   ('&TYPE' EQ 'TU').CAN_TU
+         AIF   ('&TYPE' EQ 'MIC').CAN_MIC
+         AGO   .ERR3
+.CAN_TU  ANOP
+         LA    0,B'10' CANCEL, TU
+         AGO   .SVC
+.CAN_MIC ANOP
+         LA    0,B'11' CANCEL, MIC'
+         AIF   ('&ADDR' EQ '').ERR1
+         AIF   ('&ADDR'(1,1) EQ '(').REGADDR
+         LA    1,&ADDR
+         AGO   .SVC
+.TU      ANOP
+         LA    0,B'00' NO CANCEL, TU
+         AGO   .SVC
+.MIC     ANOP
+         LA    0,B'01' NO CANCEL, MIC
+         AIF   ('&ADDR' EQ '').ERR1
+         AIF   ('&ADDR'(1,1) EQ '(').REGADDR
+         LA    1,&ADDR
+         AGO   .SVC
+.REGADDR ANOP
+         ZOPTLR 1,&ADDR(1)
+.SVC     ANOP
+         SVC   X'2E' TTIMER (R0 BIT0=MIC BIT1=CAN, R1=A(MIC ADDR)
+         MEXIT
+.ERR1    MNOTE 12,'TTIMER MIC REQUIRES DOUBLE WORD ADDRESS PARM'
+         MEXIT
+.ERR2    MNOTE 12,'TTIMER MF= NOT SUPPORTED'
+         MEXIT
+.ERR3    MNOTE 12,'TTIMER - INVALID TYPE TU OR MIC - &TYPE'
+         MEXIT
+         MEND
+

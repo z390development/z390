@@ -1,0 +1,15 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 12/15/06 RPI 406 UPDATE FOR USE IN TESTDFP1 USING REG PAIR N,N+2
+.* 2021-01-20 DSH REMOVE R15 BASE
+.*********************************************************************
+&N       STX   &R1,&S2   STORE LH/LB
+&N       STD   &R1,&S2
+         STD   &R1+2,&S2+8
+         MEND

@@ -1,0 +1,112 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* MAINTENANCE
+.* 10/12/05 ADD DCBAREA AND DCBDSNAM FIELDS
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 11/13/05 RPI  88 - add DCBID id EBCDIC/ASCII ID for I/O verification
+.* 04/10/06 RPI 244  support RECFM A/M, DSORG=, unsupported DEVD=                    
+.* 05/05/06 RPI 281  add DCBDCBE field                                               
+.* 03/12/07 RPI 558  add glba z390_dcbd to only define once for DCB/DTF              
+.* 03/12/07 RPI 587  add DCBBLKSIF and DCBLRECLF 32 bit len extension             
+.* 04/13/07 RPI 591  correct to handle DCBD before any CSECT/DSECT                
+.* 05/17/07 RPI 625  correct to handle LOCTR as well as CSECT/DSECT               
+.* 09/10/08 RPI 764  add  DCBMACRF_GL and PL locate support labels          
+.* 09/10/08 RPI 906  move DCBOFLGS_OPEN to X'10', add DCBOFOPN X'10'           
+.* 02/04/09 RPI 989  add DCBEODA (note DCBEODAD is same 31 bit addr)      
+.* 02/06/09 RPI 989  add DCBRECF,DCBRECBR,DCBRECFU bits (RECU never on)
+.*********************************************************************
+         DCBD  &DSORG=,     IGNORE                                     X
+               &DEVD=       IGNORE
+.*
+.* IF DCBD ALREADY DEFINED EXIT NOW
+.*
+         GBLB  &Z390_DCBD                       RPI 591
+         GBLC  &Z390_DCBD_NAME,&Z390_DCBD_TYPE  RPI 591
+         AIF   (&Z390_DCBD).EXIT                RPI 591
+&Z390_DCBD      SETB 1                          RPI 591
+&Z390_DCBD_NAME SETC '&SYSLOC'                  RPI 591 RPI 625   
+&Z390_DCBD_TYPE SETC '&SYSSTYP'        
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*       DATA CONTROL BLOCK DSECT 
+.*
+IHADCB   DSECT
+         ORG   IHADCB+X'00'
+DCBID    DS    CL4            DCB ID RPI88
+         ORG   IHADCB+X'1A'
+DCBDSORG DS    X              DATA SET ORGANIZATION
+DCBDSORG_PS EQU X'40'           PHYSICAL SEQUENTIAL
+DCBDSORG_DA EQU X'20'           DIRECT ACCESS
+         ORG   IHADCB+X'1C'
+DCBIOBAD DS    A              INPUT/OUTPUT BLOCK (TIOT TABLE INDEX)
+         ORG   IHADCB+X'20'
+DCBEODA  DS    0A ADDRESS OF END OF FILE EXIT 31 BIT VS 24 RPI 989
+DCBEODAD DS    A ADDRESS OF END OF FILE EXIT  31 BIT VS 24
+         ORG   IHADCB+X'24'
+DCBRECFM DS    X              RECORD FORMAT
+DCBRECF      EQU X'80'           FIXED  RPI 989
+DCBRECFM_F   EQU X'80'           FIXED
+DCBRECFM_FA  EQU X'80'           FIXED
+DCBRECFM_FM  EQU X'80'           FIXED
+DCBRECFM_V   EQU X'40'           VARIABLE
+DCBRECFM_VA  EQU X'40'           VARIABLE
+DCBRECFM_VM  EQU X'40'           VARIABLE
+DCBRECFM_FB  EQU X'90'           FIXED BLOCKED
+DCBRECBR     EQU X'10'           BLOCKED RECORDS RPI 989
+DCBRECFM_FBA EQU X'90'           FIXED BLOCKED
+DCBRECFM_FBM EQU X'90'           FIXED BLOCKED
+DCBRECFM_VB  EQU X'50'           VARIABLE BLOCKED
+DCBRECFM_VBA EQU X'50'           VARIABLE BLOCKED
+DCBRECFM_VBM EQU X'50'           VARIABLE BLOCKED
+DCBRECFM_FT  EQU X'A0'           FIXED ASCII TEXT
+DCBRECFM_VT  EQU X'60'           VARIABLE ASCII TEXT
+DCBRECU      EQU X'C0'           UNDEFINED RCDS NOT SUPPORTED RPI 989
+         ORG   IHADCB+X'28'
+DCBDDNAM DS    CL8            DDNAME > ENV VAR > FILE NAME
+         ORG   IHADCB+X'30'
+DCBOFLGS DS    X              OPEN FLAGS
+DCBOFLGS_OPEN EQU X'10'          FILE OPEN (X'80' > X'10' RPI 906)_
+DCBOFOPN      EQU X'10'          FILE OPEN RPI 906
+DCBOFLGS_GM   EQU X'40'          READ  ALLOWED
+DCBOFLGS_PM   EQU X'20'          WRITE ALLOWED
+DCBOFLGS_GL   EQU X'40'          READ  ALLOWED                  
+DCBOFLGS_PL   EQU X'20'          WRITE ALLOWED                      
+DCBOFLGS_R    EQU X'40'          READ  ALLOWED
+DCBOFLGS_W    EQU X'20'          WRITE ALLOWED
+DCBOFLGS_RW   EQU X'60'          READ AND WRITE ALLOWED
+         ORG   IHADCB+X'32'
+DCBMACRF DS    H              MACRO REFERENCE ACCESS TYPE
+DCBMACRF_GM EQU X'5000'         GET MOVE   QSAM
+DCBMACRF_PM EQU X'0050'         PUT MOVE   QSAM
+DCBMACRF_GL EQU X'4800'         GET LOCATE QSAM    RPI 764
+DCBMACRF_PL EQU X'0048'         PUT LOCATE QSAM    RPI 764
+DCBMACRF_R  EQU X'2000'         READ  RANDOM BDAM
+DCBMACRF_W  EQU X'0020'         WRITE RANDOM BDAM
+DCBMACRF_RW EQU X'2020'         READ/WRITE RANDOM BDAM
+         ORG   IHADCB+X'38'
+DCBSYNAD DS    A              ERROR EXIT 
+         ORG   IHADCB+X'3C'
+DCBBLKSIF DS   F              BLOCK SIZE    RPI 587 32 BIT BLOCK SIZE  
+         ORG   IHADCB+X'3E'
+DCBBLKSI DS    H              BLOCK SIZE    (ALSO UNBLOCKED MAX RECORD)
+         ORG   IHADCB+X'50'
+DCBLRECLF DS   F              RECORD LENGTH RPI 587 32 BIT RECORD LEN
+         ORG   IHADCB+X'52'
+DCBLRECL DS    H              RECORD LENGTH (MAY BE ZERO FOR UNBLOCKED)
+         ORG   IHADCB+X'58'
+DCBREC   DS    A      X'58'   ADDRESS OF USER SUPPLIED RECORD AREA
+DCBDSNAM DS    A      X'5C'   ADDRESS OF USER SUPPLIED DSN FILE SPEC 
+DCBDCBE  DS    A      X'60'   ADDRESS OF DCBE EODAD/SYNAD  RPI 281
+DCBIO    DS    F      X'64'   TOTAL DCB IO OPERATIONS SINCE OPEN
+DCBLEN   EQU   *-IHADCB
+          AIF  ('&Z390_DCBD_NAME' EQ '' OR '&Z390_DCBD_TYPE' EQ '').EXIX
+               T
+&Z390_DCBD_NAME &Z390_DCBD_TYPE                    RPI 591
+.EXIT    MEND

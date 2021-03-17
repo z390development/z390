@@ -1,0 +1,87 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 11/10/06 RPI 477 SUPPORT ASCII OPTION, REGISTER INPUT, RC=12 VS ERR
+.* 11/29/06 RPI 507 SUPPORT IN=REG (GPR OR FPR INPUT VALUE IN REG)
+.*                  (NOTE REG MUST NOT BE GPR 1)
+.*                  (NOTE IN=(REG) INDICATES FIELD ADDR IN GPR)
+.* 12/10/06 RPI 514 ADD DFP DECIMAL FLOATING POINT TYPES          
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
+.* 06/14/08 RPI 863 add error messages for extra positional parms 
+.*********************************************************************
+.*
+.*  CONVERT INPUT NUMERIC FIELD TO DISPLAY EBCDIC FORMAT
+.*    TYPE    INPUT                OUTPUT
+.*      1       128 BIT INTEGER      45 BYTE DECIMAL (SIGN+39 DIGITS)
+.*      2       HFP SHORT EH         45 BYTE SCIENTIFIC (N.N(7)+ENNNN)
+.*      3       BFP SHORT EB         45 BYTE SCIENTIFIC (N.N(7)+ENNNN)
+.*      4       HFP LONG  DH         45 BYTE SCIENTIFIC (N.N(14)+ENNNN)
+.*      5       BFP LONG  DB         45 BYTE SCIENTIFIC (N.N(14)+ENNNN)
+.*      6       HFP EXT.  LH         45 BYTE SCIENTIFIC (N.N(34)+ENNNN)
+.*      7       BFP EXT.  LB         45 BYTE SCIENTIFIC (N.N(34)+ENNNN)
+.*      8       DFP LONG  DD         45 BYTE SCIENTIFIC (N.N(34)+ENNNN)
+.*      9       DFP SHORT ED         45 BYTE SCIENTIFIC (N.N(34)+ENNNN)
+.*     10       DFP EXT.  LD         45 BYTE SCIENTIFIC (N.N(34)+ENNNN)
+.*
+.* SVC 170 INPUT 
+.*  R1 = A(TYPE,IN,OUT)
+.* SVC 170 OUTPUT
+.*  R15 = 0 OK, 12 INVALID REQUEST
+.*********************************************************************
+&N       CTD   &TYPE,        CONVERTION TYPE - SEE BELOW               X
+               &IN=,         SOURCE FIELD (RX OR REG)                  X
+               &OUT=,        TARGET FIELD (RX OR REG)                  X
+               &LINKAGE=SVC  USE Z390 SVC ELSE USE CALL TO FPCONMFC
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS LE 1).POSEND
+         MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP        
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP 
+         GBLB  &CTD_EQUS
+         AIF   (&CTD_EQUS).SKIP_CTD_EQUS
+&CTD_EQUS SETB 1
+CTD_INT128 EQU 1 CONVERT 128 BIT INT TO 45 BYTE EBCDIC DECIMAL 
+CTD_EH   EQU   2 CONVERT HFP SHORT EH TO 45 BYTE EBCDIC N.N( 6)+ENNNN
+CTD_EB   EQU   3 CONVERT BFP SHORT EB TO 45 BYTE EBCDIC N.N( 7)+ENNNN
+CTD_DH   EQU   4 CONVERT HFP LONG  DH TO 45 BYTE EBCDIC N.N(14)+ENNNN
+CTD_DB   EQU   5 CONVERT BFP LONG  DB TO 45 BYTE EBCDIC N.N(15)+ENNNN
+CTD_LH   EQU   6 CONVERT HFP EXT.  LH TO 45 BYTE EBCDIC N.N(34)+ENNNN
+CTD_LB   EQU   7 CONVERT BFP EXT.  LB TO 45 BYTE EBCDIC N.N(34)+ENNNN
+CTD_DD   EQU   8 CONVERT DFP LONG  DD TO 45 BYTE EBCDIC N.N(16)+ENNNN
+CTD_ED   EQU   9 CONVERT DFP SHORT ED TO 45 BYTE EBCDIC N.N( 7)+ENNNN
+CTD_LD   EQU  10 CONVERT DFP EXT.  LD TO 45 BYTE EBCDIC N.N(34)+ENNNN
+.SKIP_CTD_EQUS ANOP
+         AIF   ('&IN'(1,1) EQ '=').LIT
+         LA    1,=A(&TYPE,&IN,&OUT)
+         AGO   .SKPLIT
+.LIT     ANOP
+         LA    1,=A(&TYPE,0,&OUT)
+         LA    0,&IN
+         ST    0,4(1)
+.SKPLIT  ANOP
+         AIF   ('&TYPE'(1,1) NE '(').CHKIN
+         ST    &TYPE(1),0(1)
+.CHKIN   ANOP
+         AIF   ('&IN'(1,1) NE '(').CHKOUT
+         ST    &IN(1),4(1)
+.CHKOUT  ANOP
+         AIF   ('&OUT'(1,1) NE '(').SVC
+         ST    &OUT(1),8(1)
+.SVC     ANOP
+         AIF   ('&LINKAGE' NE 'SVC').CALL
+         SVC   170 CTD R1=A(TYPE,IN,OUT)
+         MEXIT
+.CALL    ANOP
+         L     15,=V(FPCONMFC) CFD MAINFRAME CALL ROUTINE
+         BASR  14,15 CALL FPCONMFC,(TYPE,OUT,IN)
+         MEND               

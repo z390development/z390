@@ -1,0 +1,91 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 06/23/07                                                 *
+.*********************************************************************
+.* 06/23/07 INITIAL CODING                    
+.* 08/29/07 RPI 688 ADD RPLXRBA XRBA/RBA FIELD AND SPLIT OPT1/OPT2 EQU       
+.* 09/16/07 RPI 682 CORRECT RPLID                                            
+.* 09/16/07 RPI 702 REPLACE RPLXRBA WITH RPLCXRBA AND RPLLXRBA
+.*                  ALSO ADD RPLOPENC UNIQUE ACB OPEN COUNT                         
+.* 11/26/07 RPI 723 MOVE GETOK, GETNF FLAGS TO RPLFLAG, ADD KSIT,KSIR
+.* 12/08/07 RPI 750 SPLIT RPLFLAG INTO 4 BYTE FIELDS WITH EQUATES     
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+         RPLD   
+.*
+.* IF RPLD ALREADY DEFINED EXIT NOW
+.*
+         GBLB  &Z390_RPL                          
+         GBLC  &Z390_RPL_NAME,&Z390_RPL_TYPE            
+         AIF   (&Z390_RPL).EXIT                          
+&Z390_RPL      SETB 1                                   
+&Z390_RPL_NAME SETC '&SYSLOC'                                    
+&Z390_RPL_TYPE SETC '&SYSSTYP'        
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*       ACCESS CONTROL BLOCK DSECT FOR VSAM
+.*
+IHARPL   DSECT
+RPLID    DS   X   RPL ID
+RPLSTYPE DS   X   RPL TYPE VSAM
+RPLLEN   DS   X   RPL LENGTH
+         DS   X   (ALIGN)
+RPLECB   DS   F   ECB ADDRESS (POSTED IF PRESENT)
+RPLFEEDB DS   XL4 RPL FEEDBACK CODES (PDF,RC,COMP,REASON CODE)
+RPLLKEY  DS   A   KEY LENGTH
+RPLACB   DS   A   ACB
+RPLAREA  DS   A   AREA
+RPLARG   DS   A   ARG (KSDS KEY, RRDS REC NUMBER, OR RBA/XRBA)
+RPLOPTCD DS   0H  OPTION BYTES 1 AND 2
+RPLOPT1  DS   X   OPTION BYTE 1
+RPLOPT1_LOC   EQU X'80' - leave record from GET in I/O buffer (IG)
+RPLOPT1_DIR   EQU X'40' - direct access to RRDS, KSDS, or ESDS  
+RPLOPT1_SEQ   EQU X'20' - Sequential access to RRDS, KSDS, or ESDS
+RPLOPT1_SKP   EQU X'10' - Skip sequential access.                 
+RPLOPT1_ASY   EQU X'08' - Asynchronous access (ignored)
+RPLOPT1_KGE   EQU X'04' - key GE, for RRDS rel rcd > max returns EOD
+RPLOPT1_GEN   EQU X'02' - A generic key provided with RPLKEYL length
+RPLOPT1_XRBA  EQU X'01' - for ADR, use 8 vs 4 byte RBA in ARG field
+RPLOPT2  DS   X   OPTION BYTE 2
+RPLOPT2_KEY   EQU X'80' - rel rcd RRDS access or key KSDS access  
+RPLOPT2_ADR   EQU X'40' - addressed access to KSDS or ESDS by RBA 
+RPLOPT2_CNV   EQU X'20' - control intervAL access (not supported) 
+RPLOPT2_BWD   EQU X'10' - proceed backward for KEY, SEQ, DIR 
+RPLOPT2_LRD   EQU X'08' - locate last record in the data set
+RPLOPT2_WAITX EQU X'04' - if SYN and UPAD, take UPAD exit vs WAIT
+RPLOPT2_UPD   EQU X'02' - rcds may be updated or deleted after GET
+RPLOPT2_NSP   EQU X'01' - For DIR, remember position for seq access
+         DS   H   (ALIGN)      
+RPLNEXT  DS   A   NEXT RPL
+RPLLREC  DS   A   RECORD LENGTH FOR GET/PUT VAR LENGTH RECORDS
+RPLLXRBA DS   XL8 XRBA OF LAST REC VES (ESDS,RRDS) OR VX0 (KSDS,VRRDS)
+RPLCXRBA DS   XL8 XRBA OF CURR POS VES (ESDS,RRDS) OR VX0 (KSDS,VRRDS)
+RPLOPENC DS   F   UNIQUE ACB OPEN COUNT TO DETECT RPL REPOSITION REQ'D
+RPLLAREA DS   F   AREA LENGTH
+RPLFLAG  DS   0F  RPL FLAG BITS FOR UPD GET ETC.
+RPLFLAG1 DS   X
+RPLF1GOK EQU  X'80' PREV GET SUCCESSFUL 
+RPLF1GNF EQU  X'40' PREV GET RECORD NOT FOUND
+RPLFLAG2 DS   X
+RPLFLAG3 DS   X
+RPLFLAG4 DS   X
+RPLKSIT  DS   XL8 XRBA OF KSIT KSDS INSERT TOP OF TREE CONTROL BLOCK
+RPLKSIR  DS   XL8 XBRA OF KSIR KSDS INSERT CUR RECORD  CONTROL BLOCK
+RPLEND   EQU *
+*
+* VSAM RPL SVC 97 AND OPEN/CLOSE ACB OPCODES IN R0
+*
+RPLOPGET  EQU  1 GET
+RPLOPPUT  EQU  2 PUT
+RPLOPERA  EQU  3 ERASE
+RPLOPPNT  EQU  4 POINT
+          AIF  ('&Z390_RPL_NAME' EQ '' OR '&Z390_RPL_TYPE' EQ '').EXIT
+&Z390_RPL_NAME &Z390_RPL_TYPE                    
+.EXIT    ANOP
+         MEND

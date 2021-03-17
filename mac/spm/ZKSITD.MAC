@@ -1,0 +1,60 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 10/05/07                                                 *
+.*********************************************************************
+.* 10/05/07 RPI INITIAL CODING OF KSDS INSERT TREE ZKSITD        
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+.*
+.* ZKSIT - Z390 VSAM KSDS INSERT TREE CONTROL BLOCK
+.*
+.* 1.  When record is inserted in KSDS, the VX0 index pointer for 
+.*     next lowest or first xrba in index is replaced with negative
+.*     xrba to ZKSIT control block defining balanced binary tree
+.*     structure in VES containing all inserted records.  
+.* 2.  The ZKSIT control block has 3 pointers to ZKSIR Z390 VSAM
+.*     KSDS INSERT RECORD CONTROL BLOCKS (top, lowest, and highest).
+.* 3.  If first record, the existing key is moved into the tree as 
+.*     it may not be the lowest key after insert in which case the
+.*     VX0 first record key is updated accordingly with lowest key.
+.* 4.  The ZKSIR control block prefixes each inserted record and
+.*     contains XRBA pointers to parent, next lower, next higher,
+.*     next foward, and next backward XRBA pointers to support
+.*     searching tree or reading sequentially forward or backward.
+.* 5.  The high bit is set on in the next lower or higher XRBA field
+.*     to indicated last add.  This flag is used to keep the tree
+.*     balanced by moving nodes in tree up or down as required.
+.*
+.*
+.*********************************************************************
+         ZKSITD
+.*
+.* IF ZKSITD ALREADY DEFINED EXIT NOW
+.*
+         GBLB  &Z390_ZKSIT                         
+         GBLC  &Z390_ZKSIT_NAME,&Z390_ZKSIT_TYPE            
+         AIF   (&Z390_ZKSIT).EXIT                          
+&Z390_ZKSIT SETB 1                                   
+&Z390_ZKSIT_NAME SETC '&SYSLOC'                                    
+&Z390_ZKSIT_TYPE SETC '&SYSSTYP'        
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'ZKSITD UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+*
+* IHAZKSIT VSAM KSDS INSERT TOP OF BALANCED TREE DSECT
+*
+IHAZKSIT DSECT
+ZKSITID  DS    CL4    0 C'KSIT'
+ZKSITTOP DS    XL8    4 XRBA OF TOP   KSIR RECORD 
+ZKSITFST DS    XL8   12 XRBA OF FIRST KSIR RECORD 
+ZKSITLST DS    XL8   20 XRBA OF LAST  KSIR RECORD 
+ZKSITLEN EQU   *-IHAZKSIT
+         AIF   ('&Z390_ZKSIT_NAME' EQ '' OR '&Z390_ZKSIT_TYPE' EQ '').EX
+               XIT
+&Z390_ZKSIT_NAME &Z390_ZKSIT_TYPE                    
+.EXIT    ANOP
+         MEND

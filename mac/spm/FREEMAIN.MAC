@@ -1,0 +1,103 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 12/06/05 RPI 117 - support 32 bit LV= and short forms nnnK, nnnM
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/21/06 RPI187 CORRECT FREEMAIN and GETMAIN comments, LA/L length,
+.*          limit check length, correct K/M support
+.* 03/14/06 RPI 210 allow positional type operand and support LA=
+.* 04/11/06 RPI 244 CHECK FOR REGISTER CONFLICT, IGNORE UNUSED KWDS,
+.*          ALSO SWITCH R0=LENGTH AND R1=ADDR FOR COMPATIBILITY
+.* 04/16/06 RPI 293 IGNORE SP= AND FIX MNOTES
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 01/28/11 RPI 1143 remove old bug due to offset 0777 versus 0
+.*********************************************************************
+&N       FREEMAIN &TYPE,      IGNORED                                  X
+               &A=,        ADDRESS                                     X
+               &KEY=,      NOT SUPPORTED ERROR                         X
+               &LA=,       LENGTH ADDRESS                              X
+               &LV=,       LENGTH VALUE                                X
+               &MF=I,      NOT SUPPORTED                               X
+               &RELATED=,  IGNORED                                     X
+               &SP=        IGNORED                                  
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR5
+         AIF   (N'&SYSLIST LE 1).NPOK   RPI 210
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+         MEXIT
+.NPOK    ANOP
+.*
+.* FREEMAIN - RELEASE MEMORY FROM ABOVE OR BELOW 16MB LINE
+.*
+.*  LENGTH LV= 
+.*    ABSOLUTE LENGTH OR (REG) 
+.*  LENGTH LA=
+.*    ADDRESS OF FULL WORD LENGTH OR (REG)
+.*  ADDRESS A= 
+.*    RX OF FULLWORD OR (REG) WITH DEFAULT REG 0
+.* OUTPUT
+.*    ABORT WITH A0A ABEND IF REQUEST FAILS
+.*
+         AIF   ('&KEY' NE '').ERR2
+.LA      ANOP                 RPI 210
+         AIF  ('&LA' EQ '').LV
+         AIF  ('&LA'(1,1) EQ '(').LAREG
+         L    0,&LA
+         AGO  .A
+.LAREG   ANOP
+         L    0,0(&LA(1)) RPI 1143
+         AGO  .A 
+.LV      ANOP
+         AIF  ('&LV' NE '').CHKLV
+         MNOTE 12,'FREEMAIN LV= MISSING'
+         MEXIT
+.CHKLV   ANOP
+         AIF  ('&LV'(1,1) EQ '(').LVREG
+         AIF  ('&LV'(1,1) GE'0' AND '&LV'(1,1) LE '9').LVLIT
+         L    0,=A(&LV)
+         AGO  .A
+.LVLIT   ANOP
+&LEN     SETA &LV
+         AIF  ('&LV'(K'&LV,1) NE 'K').CHKLVM
+         AIF  (&LEN GT 1048576).ERR1
+&LEN     SETA &LEN*1024
+         AGO  .SETLV
+.CHKLVM  ANOP
+         AIF  ('&LV'(K'&LV,1) NE 'M').SETLV
+         AIF  (&LEN GT 1024).ERR1
+&LEN     SETA &LEN*1048576
+.SETLV   ANOP
+         L    0,=A(&LEN)  RPI 117
+         AGO  .A
+.LVREG   ANOP
+         ZOPTLR 0,&LV(1)
+.A       ANOP
+         AIF  ('&A' EQ '').SVC
+         AIF  ('&A'(1,1) EQ '(').AREG
+         L    1,&A
+         AGO  .SVC
+.AREG    ANOP
+         AIF   ('&A(1)' EQ '1' OR '&A(1)' EQ 'R1').SVC  RPI163
+         ZOPTLR 1,&A(1)
+.SVC     ANOP
+         SVC   5 FREEMAIN R0=LEN, R1=ADDR
+         MEXIT
+.ERR1    MNOTE 12,'FREEMAIN LV LENGTH TOO LONG - &LV'
+         MEXIT
+.ERR2    MNOTE 12,'FREEMAIN KEY= NOT SUPPORTED'
+         MEXIT
+.ERR4    MNOTE 12,'FREEMAIN A=(0) INVALID'         
+         MEXIT
+.ERR5    MNOTE 12,'FREEMAIN MF= NOT SUPPORTED'         
+         MEXIT
+         MEND

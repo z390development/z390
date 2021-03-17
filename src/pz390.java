@@ -7901,7 +7901,7 @@ public class pz390 {
 			rv1 = reg.getInt(rf1) - 1;
 			reg.putInt(rf1, rv1);
 			if (rv1 != 0) {
-				set_psw_loc(psw_loc - 4 + if2 + if2); // RPI 357
+				set_psw_loc(psw_loc - 6 + if2 + if2); // RPI 357
 			}
 			break;
 		case 0x8: // "CC8" "AIH" "RIL" R1,S2

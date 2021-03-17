@@ -1,0 +1,45 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 10/05/07                                                 *
+.*********************************************************************
+.* 10/05/07 RPI INITIAL CODING OF KSDS INSERT RECORD DESECT        
+.* 08/03/07 RPI 668 VCDTTIOT TABLE INDEX AFTER LOADING                                   
+.* 08/06/07 RPI 668 VCDTPATH ADDR KSDS ALT PATH IHAAIX SECTION                         
+.* 09/03/07 RPI 681 EXPAND TO IHAVCDT, IHACLR, IHAAIX, IHAPTH                          
+.* 09/23/07 RPI 704 ADD VCLRCI OPTIONAL CI SIZE TO SUPPORT LINEAR                      
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+         ZKSIRD
+.*
+.* IF ZKSIRD ALREADY DEFINED EXIT NOW
+.*
+         GBLB  &Z390_ZKSIR                         
+         GBLC  &Z390_ZKSIR_NAME,&Z390_ZKSIR_TYPE            
+         AIF   (&Z390_ZKSIR).EXIT                          
+&Z390_ZKSIR SETB 1                                   
+&Z390_ZKSIR_NAME SETC '&SYSLOC'                                    
+&Z390_ZKSIR_TYPE SETC '&SYSSTYP'        
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'ZKSIRD UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+*
+* IHAZKSIT VSAM CATALOG DEFINITION TABLE(vcdt) DSECT
+*
+IHAZKSIR DSECT
+ZKSIRID  DS    CL4    0 C'KSIR'
+ZKSIRP   DS    XL8    4 XRBA OF PARENT   ZKSIR RECORD
+ZKSIRL   DS    XL8   12 XRBA OF LOWER    ZKSIR RECORD 
+ZKSIRH   DS    XL8   20 XRBA OF HIGHER   ZKSIR RECORD
+ZKSIRF   DS    XL8   28 XRBA OF FORWARD  ZKSIR RECORD
+ZKSIRB   DS    XL8   36 XRBA OF BACKWARD ZKSIR RECORD
+ZKSIREC  EQU   *     44 START OF FIXED OR VARIABLE KSDS DATA RECORD
+ZKSIRLEN EQU   *-IHAZKSIR
+         AIF   ('&Z390_ZKSIR_NAME' EQ '' OR '&Z390_ZKSIR_TYPE' EQ '').EX
+               XIT
+&Z390_ZKSIR_NAME &Z390_ZKSIR_TYPE                    
+.EXIT    ANOP
+         MEND

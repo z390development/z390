@@ -1,0 +1,108 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/16/07                                                 *
+.*********************************************************************
+.* 09/16/07 RPI 682 INITIAL CODING TO GENERATE ACBMACRF FROM MACRF=
+.*********************************************************************
+         ZGENMACF &MACRF=
+.*
+.* SET 27 MACRF OPTION BITS USING PUBLIC DOMAIN MVS 3.8
+.* IDAVSACB CODE AS INITIAL MODEL
+.*
+         LCLB  &MKEY,&MADR,&MCNV,&MSEQ,&MSKP
+         LCLB  &LOGONF,&NLOGON
+         LCLB  &MDIR,&IN,&OUT,&NUB,&UBF
+         LCLB  &NFX,&CFX,&RST,&NRS,&DDN,&DSN
+         LCLB  &NRM,&AIX,&NSR,&LSR,&GSR
+         LCLB  &NCI,&ICI,&NDF,&DFR,&NIS,&SIS
+&I       SETA  0
+.MACRF_LOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&MACRF).MACRF_CHECK
+&MKEY    SETB  ('&MACRF(&I)' EQ 'KEY' OR &MKEY)
+&MADR    SETB  ('&MACRF(&I)' EQ 'ADR' OR &MADR)
+&MCNV    SETB  ('&MACRF(&I)' EQ 'CNV' OR &MCNV)
+&MSEQ    SETB  ('&MACRF(&I)' EQ 'SEQ' OR &MSEQ)
+&MSKP    SETB  ('&MACRF(&I)' EQ 'SKP' OR &MSKP)
+&MDIR    SETB  ('&MACRF(&I)' EQ 'DIR' OR &MDIR)
+&OUT     SETB  ('&MACRF(&I)' EQ 'OUT' OR &OUT)
+&IN      SETB  ('&MACRF(&I)' EQ 'IN' OR &IN)
+&NUB     SETB  ('&MACRF(&I)' EQ 'NUB' OR &NUB)
+&UBF     SETB  ('&MACRF(&I)' EQ 'UBF' OR &UBF)
+&NFX     SETB  ('&MACRF(&I)' EQ 'NFX' OR &NFX)
+&CFX     SETB  ('&MACRF(&I)' EQ 'CFX' OR &CFX)
+&DDN     SETB  ('&MACRF(&I)' EQ 'DDN' OR &DDN)
+&DSN     SETB  ('&MACRF(&I)' EQ 'DSN' OR &DSN)
+&NRM     SETB  ('&MACRF(&I)' EQ 'NRM' OR &NRM)
+&AIX     SETB  ('&MACRF(&I)' EQ 'AIX' OR &AIX)
+&NSR     SETB  ('&MACRF(&I)' EQ 'NSR' OR &NSR)
+&LSR     SETB  ('&MACRF(&I)' EQ 'LSR' OR &LSR)
+&GSR     SETB  ('&MACRF(&I)' EQ 'GSR' OR &GSR)
+&NCI     SETB  ('&MACRF(&I)' EQ 'NCI' OR &NCI)
+&ICI     SETB  ('&MACRF(&I)' EQ 'ICI' OR &ICI)
+&NDF     SETB  ('&MACRF(&I)' EQ 'NDF' OR &NDF)
+&DFR     SETB  ('&MACRF(&I)' EQ 'DFR' OR &DFR)
+&NIS     SETB  ('&MACRF(&I)' EQ 'NIS' OR &NIS)
+&SIS     SETB  ('&MACRF(&I)' EQ 'SIS' OR &SIS)
+&RST     SETB  ('&MACRF(&I)' EQ 'RST' OR &RST)
+&NRS     SETB  ('&MACRF(&I)' EQ 'NRS' OR &NRS)
+         AGO   .MACRF_LOOP
+.*
+.* CHECK FOR MUTUALLY EXCLUSIVE OPTIONS
+.*
+.MACRF_CHECK ANOP
+         LCLB  &ACBERR
+.CHK1    AIF   (NOT(&UBF AND &NUB)).CHK2
+         MNOTE 12,'ZGENACB ACB UBF AND NUB MUTUALLY EXCLUSIVE'
+&ACBERR  SETB  1
+.CHK2    AIF   (NOT(&LOGONF AND &NLOGON)).CHK3
+         MNOTE 12,'ZGENACB ACB LOGONF AND NLOGON MUTUALLY EXCLUSIVE'
+&ACBERR  SETB  1
+.CHK3    AIF   (NOT(&RST AND &NRS)).CHK4
+         MNOTE 12,'ZGENACB ACB RST AND NRS MUTUALLY EXCLUSIVE'
+&ACBERR  SETB  1
+.CHK4    AIF   (NOT(&NFX AND &CFX)).CHK5
+         MNOTE 12,'ZGENACB ACB NFX AND CFX MUTUALLY EXCLUSIVE'
+&ACBERR  SETB  1
+.CHK5    AIF   (NOT(&DDN AND &DSN)).CHK6
+         MNOTE 12,'ACB DDN AND DSN MUTUALLY EXCLUSIVE'
+&ACBERR  SETB  1
+.CHK6    AIF   (NOT(&NRM AND &AIX)).CHK7
+         MNOTE 12,'ZGENACB ACB NRM AND AIX MUTUALLY EXCLUSIVE'
+&ACBERR  SETB  1
+.CHK7    AIF   ((NOT(&NSR AND &GSR)) AND (NOT(&GSR AND &LSR))          X
+               AND (NOT(&LSR AND &NSR))).CHK8
+         MNOTE 12,'ZGENACB ACB NSR, LSR, AND GXR MUTUALLY EXCLUSIVE'
+&ACBERR  SETB  1
+.CHK8    AIF   (NOT(&NCI AND &ICI)).CHK9
+         MNOTE 12,'ZGENACB ACB NCI AND ICI MUTUALLY EXCLUSIVE'
+&ACBERR  SETB  1
+.CHK9    AIF   (NOT(&NDF AND &DFR)).CHK10
+         MNOTE 12,'ZGENACB ACB NDF AND DFR MUTUALLY EXCLUSIVE'
+&ACBERR  SETB  1
+.CHK10   AIF   (NOT(&NIS AND &SIS)).CHK11
+         MNOTE 12,'ZGENACB ACB NIS AND SIS MUTUALLY EXCLUSIVE'
+&ACBERR  SETB  1
+.CHK11   ANOP
+         AIF   (NOT &ACBERR).MACRF_DEF
+         MEXIT
+.MACRF_DEF ANOP
+.*
+.* SET DEFAULT OPTIONS
+.*
+&MKEY    SETB  (NOT(&MADR OR &MCNV) OR &MKEY)
+&MSEQ    SETB  (NOT(&MSKP OR &MDIR) OR &MSEQ)
+&IN      SETB  (NOT(&OUT) OR &IN)
+.*
+.* GEN MACRF FLAG BYTES (SEE ACBD FOR FLAG SYMBOLS AND DESCRIPTIONS)
+.*
+         GBLC  &ZGENMACF1,&ZGENMACF2,&ZGENMACF3,&ZGENMACF4
+&ZGENMACF1 SETC '&MKEY&MADR&MCNV&MSEQ&MDIR&IN&OUT&UBF'
+&ZGENMACF2 SETC '000&MSKP&NLOGON&RST&DSN&AIX'
+&ZGENMACF3 SETC '0&LSR&GSR&ICI&DFR&SIS&CFX.0'
+&ZGENMACF4 SETC '00000000'
+         MEND

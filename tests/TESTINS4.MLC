@@ -26,6 +26,7 @@
 * 12/19/10 RPI 1125 ADD EBDC-EBFA SRAK - LAAL
 * 05/18/11 RPI 1164 ADD EXTENDED OPS FOR RNSBG,RXSBG,ROSBG,AND RISBH/LG
 * 2019/10/26 dsh RPI 2202 fix POPCNT rc for non-zero test
+* 2020/03/16 DSH RPI 1647 FIX TEST FOR BRCTH WRONG REG, BAD OFFSET
 *********************************************************************
          MACRO
 &N       CLCDD &S1,&S2
@@ -776,12 +777,13 @@ POPCNT_LOOP EQU *
          CLG    R1,=FL8'-456'
          RT1    CCE
 * CC6 BRCTH
-         LA     R1,2
-         BRCTH  R1,CC6_ABORT
-         BRCTH  R1,CC6_SKIP
-CC6_ABORT EQU   *
-         DC     X'0000'
-CC6_SKIP EQU    *  
+         LFH    R1,=F'3'
+         SR     R1,R1
+CC6_LOOP EQU    *
+         LA     R1,1(R1)
+         BRCTH  R1,CC6_LOOP
+         CH     R1,=H'3'
+         RT1    CCE
 * CC8 AIH
          SGR   R1,R1
          AIH   R1,123

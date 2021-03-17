@@ -1,0 +1,22 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/15/08                                                 *
+.*********************************************************************
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION                     
+.*********************************************************************
+&N       WRITE &DECB,                                                  X
+               &TYPE,                                                  X
+               &DCB,                                                   X
+               &AREA,                                                  X
+               &LENGTH,                                                X
+               &MF=I       NOT SUPPORTED
+         AIF   ('&LENGTH' EQ '').PARM4
+&N       ZWRITE &DECB,&TYPE,&DCB,&AREA,&LENGTH,MF=&MF
+         MEXIT
+.PARM4   ANOP
+&N       ZWRITE &DECB,&TYPE,&DCB,&AREA,MF=&MF
+         MEND

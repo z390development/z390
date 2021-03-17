@@ -1,0 +1,25 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 09/18/09 RPI 1063 DEFINE IHADCB DSECT 
+.*********************************************************************
+.* Z390 ZCVT CVTCDE POINTS TO FIRST CDE SINCE THERE IS NO TCB OR RB
+.*********************************************************************
+         CDED                                                           
+IHACDE   DSECT
+CDENTRY  DS    0X
+CDCHAIN  DS    A   ADDRESS OF NEXT CDE ENTRY OR 0
+         DS    XL4 RESERVED
+CDNAME   DS    CL8 PROGRAM NAME OF LOADED MODULE
+CDENTPT  DS    A   ADDRESS OF RELOCATED ENTRY POINT
+         DS    XL4 RESERVED
+CDUSE    DS    H   USE COUNT
+         DS    XL6
+CDLOADPT DS    A   LOAD ADDRESS (MAY BE DIFFERENT FROM ENTRY) Z390 EXT
+CDMODLEN DS    A   LOAD MODULE LENGTH                         Z390 EXT
+CDELEN   EQU   *-IHACDE
+         MEND

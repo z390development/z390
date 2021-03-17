@@ -1,0 +1,58 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 04/27/07 RPI 601 - support R0-R15 register references     
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 01/15/09 RPI 984 correct to use R13 when ending reg > first reg
+.* 03/24/11 RPI 1139 correct strings in SETA
+.*********************************************************************
+&N       SAVE  &REGS,   (REGS TO SAVE)                                 X
+               &T,      IGNORED                                        X
+               &ID,     IGNORED                                        X
+               &MF=I    NOT SUPPORTED
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR1
+         AIF   (N'&SYSLIST LE 3).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
+.NPOK    ANOP
+         AIF   ('&REGS(1)'(1,1) EQ 'R').SETR1
+&R1      SETA  &REGS(1)
+         AGO   .CHKR2
+.SETR1   ANOP
+&R1      SETA  D2A('&REGS(1)'(2,K'&REGS(1)-1)) RPI 1139
+.CHKR2   ANOP
+&R2      SETA  &R1
+         AIF   ('&REGS(2)' EQ '').CHKREGS
+         AIF   ('&REGS(2)'(1,1) EQ 'R').SETR2
+&R2      SETA  &REGS(2)
+         AGO   .CHKREGS
+.SETR2   ANOP
+&R2      SETA  D2A('&REGS(2)'(2,K'&REGS(2)-1)) RPI 1139
+.CHKREGS ANOP
+         AIF   (&R1 LT 0 OR &R1 GT 15).ERR
+         AIF   (&R2 LT 0 OR &R2 GT 15).ERR
+         AIF   (&R1 EQ 13).ERR
+         AIF   (&R2 EQ 13).ERR
+         AIF   (&R1 GE 14).R1_GE_14
+         AIF   (&R1 GT &R2).ERR OVERLAPS 13        
+         STM   &R1,&R2,20+4*&R1.(13)   RPI 984
+         AGO   .EXIT
+.R1_GE_14 ANOP
+         AIF   (&R2 EQ 14 AND &R1 EQ 15).ERR OVERLAPS 13
+         STM   &R1,&R2,12+4*(&R1-14)(13)
+         AGO   .EXIT
+.ERR     ANOP
+         MNOTE 8,'MZ390E 1002 SAVE RANGE INVALID (&R1,&R2)'
+.EXIT    ANOP
+         MEXIT
+.ERR1    MNOTE 12,'SAVE MF= NOT SUPPORTED'
+         MEND

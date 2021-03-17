@@ -1,0 +1,333 @@
+        MACRO                                                           
+&PROBLEM ZMFACC &SECTION,     START OR STOP                       DSH2 X
+               &OP,           CODE, INPUT, OUTPUT, OR DUMP        DSH2 X
+               &NAME=,        P? SOLUTION NAME REQ'D ON 1ST CALL  DSH2 X
+               &RUNSYS=,      MVS, CMS, VSE, ZOS (DEFAULT IS 390) DSH2 X
+               &ST=,&LEN=,&END=,&ID=  DUMP OPTIONS USED BY CMS    DSH2  
+.********************************************************************
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.********************************************************************
+         GBLC  &ZRUNSYS           Global OS TARGET EXECUTION ID         
+         GBLB  &SYPOPN            IS SYSPRINT OPEN                      
+         LCLA  &N,&L,&K                                                 
+         LCLC  &WT,&TNAME,&XNAME                                        
+      AIF   ('&ZRUNSYS' NE '').GUSERUN  DON'T LOOK IF ZRUNSYS SET  DSH2 
+      AIF   ('&RUNSYS' NE '').GSETRUN   IF MACRO DEFINITION USE IT DSH2 
+&N       SETA  1                  Start index                           
+&L       SETA  K'&SYSPARM-7       Max loop                              
+.SYSPLP ANOP                                                            
+      AIF   ('&N' GT &L).NOSYS            STOP IF TOO FAR                 
+      AIF   ('&SYSPARM'(&N,7) EQ 'RUNSYS=').GOTSYS IF MAGIC WORD GO     
+&N       SETA  &N+1               Bump index                            
+      AGO   .SYSPLP               Loop de loop                          
+.GOTSYS ANOP                                                            
+&N       SETA  &N+7               Index over 'RUNSYS='                  
+&ZRUNSYS  SETC  '&SYSPARM'(&N,3)        GET THREE BYTE CODE             
+      AGO   .TSYS                 Go check validity                     
+.NOSYS ANOP  SET                  default                               
+         MNOTE 4,'No RUNSYS= on first ZMFACC, 390 assumed.'             
+&ZRUNSYS  SETC  '390'                                                   
+      AGO   .TSYS                                                       
+.GSETRUN ANOP                                                           
+&ZRUNSYS  SETC  '&RUNSYS'        GET VALUE FROM MACRO HEADER DSH2    
+.TSYS ANOP                                                              
+      AIF   ('&ZRUNSYS' EQ '390').SAYZOP                                
+      AIF   ('&ZRUNSYS' EQ 'CMS').SAYZOP                                
+      AIF   ('&ZRUNSYS' EQ 'MVS').SAYZOP                                
+      AIF   ('&ZRUNSYS' EQ 'VSE').SAYZOP        DSH2                    
+      AIF   ('&ZRUNSYS' EQ 'ZOS').SAYZOP        DSH2                    
+         MNOTE 8,'ZRUNSYS=&ZRUNSYS not valid, No generation'            
+      MEXIT                                                             
+.SAYZOP ANOP                                                            
+         MNOTE 0,'ZRUNSYS=&ZRUNSYS'                          DSH2
+.GUSERUN ANOP                                                           
+.***** 390, MVS and CMS Version *****                                   
+.* Z390 Mainframe Assembler Coding Contest                              
+.* macro to isolate problem solutions from                              
+.* specific operating systems. This macro                               
+.* may be customizied to work on users                                  
+.* specific operating system.  The functions                            
+.* it performs are as follows:                                          
+.*  CODE,START,NAME='YOUR NAME'                                         
+.*    1.  generate standard linkage                                     
+.*        and define base register.                                     
+.*    2.  Verify problem # and name are specified and display them.     
+.*    3.  Generate code                                                 
+.*         to display the memory between INPUT_START and INPUT_END.     
+.*  CODE,END                                                            
+.*    1.  Generate code                                                 
+.*         to display the memory between INPUT_START and INPUT_END.     
+.*    2.  Exit with return code 0.                                      
+.*    3.  Generate equates for Regs                                     
+.*  INPUT,START                                                         
+.*    1.  Define INPUT_START on double word boundary for start          
+.*        of data input storage to be displayed at CODE,START time.     
+.*  INPUT,END                                                           
+.*    1.  Define INPUT_END for end                                      
+.*        of data input storage to be displayed at CODE,START time.     
+.*  OUTPUT,START                                                        
+.*    1.  Define OUTPUT_START on double word boundary for start         
+.*        of data output storage to be displayed at CODE,END time.      
+.*  OUTPUT,END                                                          
+.*    1.  Define OUTPUT_END for end                                     
+.*        of data output storage to be displayed at CODE,END time.      
+.*                                                                      
+.*  DUMP ID=,NAME=,ST=,END=                                             
+.*    1.  Generate code to display data (CMS has no SNAP)               
+.****************************************************************       
+.* 12/13/07 Don Higgins initial version for z390 environment            
+.* 12/15/07 Rafa Pereira modified for MVS 3.8, Hercules environ.        
+.* 12/16/07 Don Higgins - merged z390 and Hercules support using        
+.*          test of &SYSASM for 'z390' else assume MVS compat. OS       
+.* 12/17/07 Chris L    Update version for 390, MVS AND CMS environment  
+.*                     &SYSASM specified on first ZFMACC or via         
+.*                     SYSPARM contains 'SYSASM=xxx'                  
+.*                     Added DUMP section to isolate SNAP code          
+.* 12/18/07 DSH2 Don Higgins changes:
+.*          1.  Change program ID back to P versus # for        
+.*              compatibility with published solutions and for
+.*              compatibility with MVS 3.8 IFOX00 assembler.
+.*          2.  Change ZMFACC new parm from SYSASM to RUNSYS=
+.*              to avoid conflist with SYSASM keyword vs global.
+.*          3.  Add support for RUNSYS=ZOS using same code as MVS
+.*          4.  Add support for RUNSYS=VSE using WTO and PDUMP
+.* 12/18/07 Rafa Pereira fix restrictions req'd for IFOX00              
+.* 12/18/07 Chris Langford change to &RUNSYS= to support SYSPARM
+.*          overrides, set VSE base and save area and use EOJ exit      
+.* 12/19/07 CL3 Chris Langford chnage to correct MVS/ZOS SNAP msgs
+.* 12/19/07 RP2 Rafa Pereira   chnage to correct MVS/ZOS SNAP areas
+.* 12/19/07 CL4 Chris Langford chnage PDUMP fields and SNAP ID    
+.* 12/21/07 DSH3 Display RUNSYS=??? after programmer name         
+.* 12/22/07 DSH4 Add all 16 F?? registers with comment showing pairs
+.****************************************************************       
+      AIF   ('&SECTION' EQ 'CODE').CODE                                 
+      AIF   ('&SECTION' EQ 'DUMP').DUMP                                 
+      AIF   ('&SECTION' EQ 'INPUT').INPUT                               
+      AIF   ('&SECTION' EQ 'OUTPUT').OUTPUT                             
+         MNOTE 12,'ZMFACC SECTION NOT CODE/INPUT/OUTPUT - &SECTION'     
+         MEXIT                                                          
+.*                                                ********************  
+.*                                                 CODE  Routine        
+.*                                                ********************  
+.CODE    ANOP                                                           
+      AIF   ('&OP' EQ 'START').CODEST                                   
+      AIF   ('&OP' EQ 'END').CODEEND                                    
+         MNOTE 12,'ZMFACC OP MUST BE START OR END - &OP'                
+         MEXIT                                                          
+.*                                                ********************  
+.*                                                 CODE,START  Routine  
+.*                                                ********************  
+.CODEST ANOP                                                            
+         AIF   (K'&PROBLEM LT 2 OR '&PROBLEM'(1,1) NE 'P').BADPGM DSH2  
+         AIF   (K'&NAME LT 2).BADNAME                                   
+&PROBLEM CSECT    
+         AIF   ('&ZRUNSYS' EQ 'VSE').VSEBALR                            
+         STM   14,12,12(13)                                             
+         BAL   15,GO&SYSNDX-&PROBLEM.(15)                               
+SV&SYSNDX DC    18F'0'                                                  
+         DC    CL8'&PROBLEM'                                            
+         DC    CL8'&SYSDATE'                                            
+         DC    CL8'&SYSTIME'                                            
+      AIF   ('&ZRUNSYS' NE 'MVS' AND '&ZRUNSYS' NE 'ZOS').NOSYSP  DSH2  
+SYSPRINT DCB   DSORG=PS,MACRF=W,RECFM=VBA,BLKSIZE=1632,LRECL=125,      X
+               DDNAME=SYSPRINT                                          
+        AGO    .NOSYSP
+.VSEBALR ANOP
+        BAL    13,18*4(13)
+        USING  *,13
+        DC     18F'0'
+        AGO    .SHOWID
+.NOSYSP ANOP                                                            
+GO&SYSNDX DS    0H                                                      
+         ST    15,8(13)                                                 
+         ST    13,4(15)                                                 
+         LR    13,15
+      USING SV&SYSNDX,13
+.SHOWID  ANOP                                                
+&TNAME   SETC  '&NAME'(2,K'&NAME-2)                                     
+      AIF   ('&ZRUNSYS' EQ 'CMS').WRTER                                 
+         WTO   'ZMFACC Solution for problem &PROBLEM by &TNAME using RUX
+               NSYS=&ZRUNSYS'   DSH3
+      AGO   .AFWRT                                                      
+.WRTER ANOP                                                             
+         WRTERM 'ZMFACC Solution for problem &PROBLEM by &TNAME using RX
+               UNSYS=&ZRUNSYS'  DSH3      
+.AFWRT ANOP                                                             
+         ZMFACC DUMP,ID=1,ST=INPUTSTR,END=INPUTEND,NAME='Input Area'    
+         MEXIT                                                          
+.*                                                ********************  
+.*                                                 CODE,END  Routine    
+.*                                                ********************  
+.CODEEND ANOP                                                           
+      ZMFACC DUMP,ID=2,ST=OUTPUTST,END=OUTPUTEN,NAME='Output Area' RP2  
+      AIF   (&SYPOPN EQ 0).NOTOP                                        
+         CLOSE (SYSPRINT)                                               
+.NOTOP ANOP 
+         AIF   ('&ZRUNSYS' EQ 'VSE').EXITVSE                            
+         L     13,4(,13)                                                
+         L     14,12(,13)                                               
+         LM    2,12,28(13)                                              
+         SR    15,15                                                    
+         BR    14                                                       
+         AGO   .EXITEND
+.EXITVSE ANOP
+         EOJ
+.EXITEND ANOP
+*        YREGS                                                          
+***      REGISTER EQUATES                                               
+*                                                                       
+         SPACE 2                                                        
+.*   Generate REG equates inline. CMS does not have YREGS               
+* GENERAL  REGISTERS                                                    
+         SPACE                                                          
+R0        EQU  0                                                        
+R1        EQU  1                                                        
+R2        EQU  2                                                        
+R3        EQU  3                                                        
+R4        EQU  4                                                        
+R5        EQU  5                                                        
+R6        EQU  6                                                        
+R7        EQU  7                                                        
+R8        EQU  8                                                        
+R9        EQU  9                                                        
+R10       EQU  10                                                       
+R11       EQU  11                                                       
+R12       EQU  12                                                       
+R13       EQU  13                                                       
+R14       EQU  14                                                       
+R15       EQU  15                                                       
+         SPACE                                                          
+* FLOATING POINT REGISTERS                                              
+         SPACE                                                          
+F0        EQU  0  L0                                                      
+F1        EQU  1  L1
+F2        EQU  2  L0+
+F3        EQU  3  L1+                                                      
+F4        EQU  4  L4
+F5        EQU  5  L5                                                      
+F6        EQU  6  L4+
+F7        EQU  7  L5+
+F8        EQU  8  L8
+F9        EQU  9  L9
+F10       EQU  10 L8+
+F11       EQU  11 L9+
+F12       EQU  12 L12
+F13       EQU  13 L13
+F14       EQU  14 L12+
+F15       EQU  15 L13+                                                       
+         SPACE                                                          
+* EXTENDED CONTROL REGISTERS                                            
+         SPACE                                                          
+C0        EQU  0                                                        
+C1        EQU  1                                                        
+C2        EQU  2                                                        
+C3        EQU  3                                                        
+C4        EQU  4                                                        
+C5        EQU  5                                                        
+C6        EQU  6                                                        
+C7        EQU  7                                                        
+C8        EQU  8                                                        
+C9        EQU  9                                                        
+C10       EQU  10                                                       
+C11       EQU  11                                                       
+C12       EQU  12                                                       
+C13       EQU  13                                                       
+C14       EQU  14                                                       
+C15       EQU  15                                                       
+         MEXIT                                                          
+.*                                                ********************  
+.*                                                 INPUT Routine        
+.*                                                ********************  
+.INPUT   ANOP                                                           
+      AIF   ('&OP' EQ 'START').INPUTST                                  
+      AIF   ('&OP' EQ 'END').INPUTE                                     
+         MNOTE 12,'ZMFACC OP MUST BE START OR END - &OP'                
+         MEXIT                                                          
+.INPUTST ANOP                                                           
+INPUTSTR DS    0F                                                       
+         MEXIT                                                          
+.INPUTE ANOP                                                            
+INPUTEND  EQU  *                                                        
+         MEXIT                                                          
+.*                                                ********************  
+.*                                                 OUTPUT Routine       
+.*                                                ********************  
+.OUTPUT ANOP                                                            
+      AIF   ('&OP' EQ 'START').OUTST                                    
+      AIF   ('&OP' EQ 'END').OUTEND                                     
+         MNOTE 12,'ZMFACC OP MUST BE START OR END - &OP'                
+         MEXIT                                                          
+.OUTST ANOP                                                             
+OUTPUTST DS    0F                                                       
+         MEXIT                                                          
+.OUTEND ANOP                                                            
+OUTPUTEN  EQU  *                                                        
+         MEXIT                                                          
+.BADPGM  MNOTE 12,'ZMFACC PROGRAM NAME MUST BE P? - &PROBLEM' DSH2      
+         MEXIT                                                          
+.BADNAME MNOTE 12,'ZMFACC PROGRAMMER NAME MUST BE DEFINED'              
+         MEXIT                                                          
+.*                                                ********************  
+.*                                                 DUMP Routine         
+.*                                                ********************  
+.DUMP ANOP                                                              
+&PROBLEM DS    0H                                                       
+&TNAME   SETC  '&NAME'                                                  
+      AIF   ('&NAME'(1,1) NE '''').SKN                                  
+&K       SETA  K'&NAME                                                  
+&XNAME   SETC  '&NAME'(2,&K-2)                                          
+.SKN ANOP                                                               
+&TNAME SETC 'ID:&ID &XNAME'                                             
+      AIF   ('&ZRUNSYS' NE 'CMS').DMPNCMS                               
+         STM   2,4,RSV&SYSNDX                                           
+         LA    2,&ST                                                    
+      AIF      ('&END' EQ '').DOLEN                                     
+         LA    4,&END                                                   
+&WT      SETC  'END'                                                    
+         SR    4,2                                                      
+      AGO   .GOT                                                        
+.DOLEN ANOP                                                             
+         LA    4,&LEN                                                   
+&WT      SETC  'LEN'                                                    
+.GOT ANOP                                                               
+         LINEDIT TEXT='Dump of &TNAME Starts ........ Len ........',   X
+               SUB=(HEX,(2),HEX,(4)),RENT=NO                            
+         SR    3,3                                                      
+LP&SYSNDX DS    0H                                                      
+  LINEDIT TEXT=' ........ .... ........ ........ ........ ........  >..X
+               ..............<',RENT=NO,COMP=NO,DOT=NO,                X
+               SUB=(HEX,(2),HEX,(3),HEXA,0(2),HEXA,4(2),HEXA,8(2),     X
+               HEXA,12(2),CHARA,0(2))                                   
+         LA    2,16(2)                                                  
+         LA    3,16(3)                                                  
+         SH    4,=H'16'                                                 
+         BP    LP&SYSNDX                                                
+         LM    2,4,RSV&SYSNDX                                           
+         B     A&SYSNDX                                                 
+RSV&SYSNDX DS    3F                                                     
+A&SYSNDX DS    0H                                                       
+      MEXIT                                                             
+.DMPNCMS ANOP                                                           
+      AIF    ('&ZRUNSYS' EQ 'MVS').GENMDMP 
+      AIF    ('&ZRUNSYS' EQ 'ZOS').GENMDMP    DSH2
+      AIF    ('&ZRUNSYS' EQ 'VSE').GENPDMP    DSH2                      
+         SNAP  ID=&ID,PDATA=,STORAGE=(&ST,&END),TEXT='&XNAME'           
+      MEXIT                                
+.GENPDMP ANOP                                 DSH2
+      PDUMP  &ST,&END                         DSH2 CL4
+      MEXIT                                   DSH2
+.GENMDMP ANOP                                                           
+      AIF    (&SYPOPN).DIDOPN                                           
+         OPEN  (SYSPRINT,(OUTPUT))                                      
+&SYPOPN  SETB  1                  Set 'DCB is open'                     
+.DIDOPN ANOP                                                            
+         SNAP  DCB=SYSPRINT,                                           X
+               ID=&ID,PDATA=,STORAGE=(&ST,&END),         RP2 CL4       X
+               STRHDR=(HDR&SYSNDX)                       CL3
+         B     AF&SYSNDX  skip over message              CL3
+&K       SETA  K'&XNAME   length of message              CL3
+HDR&SYSNDX DC AL1(&K)                                    RP2
+           DC C'&XNAME' msg for snap                     CL3
+AF&SYSNDX DS 0H           skip label                     CL3           
+      MEXIT                                                             
+      MEND

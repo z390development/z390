@@ -1,0 +1,20 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *  
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 11/17/08 RPI 953 move code to ZDELETE to share with maclibs  
+.*********************************************************************
+&N       DELETE &DE=,      BLDL ENTRY                                  X
+               &EP=,      PROGRAM NAME                                 X
+               &EPLOC=,   ADDR OF PROGRAM NAME                         X
+               &DDNAME=,  1-9 CHARACTER DDNAME                         X
+               &DSNAME=,  RX ADDR OF DSN WITH PATH                     X
+               &MF=I,     NOT SUPPORTED                                X
+               &RELATED=  IGNORED
+&N      ZDELETE DE=&DE,EP=&EP,EPLOC=&EPLOC,DDNAME=&DDNAME,             X
+               DSNAME=&DSNAME,MF=&MF,RELATED=&RELATED
+         MEND

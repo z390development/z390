@@ -1,0 +1,48 @@
+        MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.*  EQUREGS ,        - default to R0 - R15 symbols for 0-15 general
+.*                     purpose register references
+.*  EQUREGS REGS=FPR - generate F0 - F15 symbols for 0-15 floating
+.*                     point registers
+.*  EQUREGS TYPE=HEX - generate R0 - RF symbols for 0-15 general
+.*                     purpose registers      
+.*  EQUREGS REGS=FPC,TYPE=HEX - generate F0 - FF symbols for FPR's
+.*********************************************************************
+.* 10/20/05 RPI27  - issue error for any undefined operands     
+.* 12/07/05 RPI119 - add FPR and hex options                     
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+        EQUREGS &REGS=GPR,&TYPE=DEC
+        GBLB  &EQUREGS_GPR_DEC(16),&EQUREGS_GPR_HEX(16)
+        GBLB  &EQUREGS_FPR_DEC(16),&EQUREGS_FPR_HEX(16)
+        AIF    ('&REGS' EQ 'GPR')
+               :&PFX SETC 'R'
+        AELSE
+               :&PFX SETC 'F'
+        AEND
+        LCLC   &HEX(16)
+&HEX(1) SETC   '0','1','2','3','4','5','6','7',                        X
+               '8','9','A','B','C','D','E','F'
+        AIF   ('&SYSLIST(1)' NE '')
+              MNOTE 12,'EQUREGS UNSUPPORTED OPERANDS - &SYSLIST(1)'
+              MEXIT
+        AEND
+&I      SETA   0
+        AWHILE (&I LT 16)
+               AIF (NOT &(EQUREGS_&REGS._&TYPE)(&I+1))
+                   :&(EQUREGS_&REGS._&TYPE)(&I+1) SETB 1
+                   AIF ('&TYPE' EQ 'DEC')
+                       :&PFX&I EQU &I
+                   AELSE
+                       :&PFX&HEX(&I+1) EQU &I
+                   AEND
+               AEND
+               :&I SETA &I+1
+        AEND
+        MEND

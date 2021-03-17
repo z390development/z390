@@ -1,0 +1,176 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* MAINTENANCE 
+.* 10/04/05 ADD SUPPORT FOR ASCII MODE ED MASK WITH X'A0' VS X'20'
+.* 11/02/05 REMOVE ASCII MODE ED MASK WITH X'A0' NO LONGER REQUIRED
+.* 11/20/05 CHANGE LA 1,X'101', SVC 13 TO ABEND 101                  
+.* 09/22/06 ADD CCLE AND CCGE OPTIONS FOR USE IN TESTTIM2 TESTS        
+.* 03/05/08 ADD RT1 OK - INC COUNT BY 1                                
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&NAME    RT1   &CMD,&CLC1,&CLC2,&LL  
+.*
+.* REGRESSION TEST V1 COMMAND MACROS
+.* 
+.* 1.  RT1 MAIN  - START PGM AND DISPLAY STARTUP WTO
+.* 2,  RT1 START - START OF RT1 TEST MACROS FOLLOWING DATA
+.* 3.  RT1 CCE   - TEST FOR PSW CC EQUAL (OPTIONAL CLC PARMS)
+.* 4.  RT1 CCL   - TEST FOR PSW CC LOW   (OPTIONAL CLC PARMS)
+.* 5.  RT1 CCH   - TEST FOR PSW CC HIGH  (OPTIONAL CLC PARMS)
+.* 6.  RT1 CCGE  - TEST FOR PSW CC HIGH  (OPTIONAL CLC PARMS) RPI 461
+.* 7.  RT1 CCLE  - TEST FOR PSW CC HIGH  (OPTIONAL CLC PARMS) RPI 461
+.* 8.  RT1 CC?   - TEST FOR PSW CC = CC0-CC3     
+.* 9.  RT1 OK    - INC TEST COUNT BY 1                                    
+.* 9.  RT1 ABORT - ABORT WITH TOTAL TESTS TO FAILURE AND USER 101 DUMP
+.*10.  RT1 END   - DISPLAY TOTAL TESTS AND ENDED OK WTO
+.*
+         GBLA  &RT1_TOT
+         GBLC  &RT1NAME
+         AIF   ('&CMD' EQ 'MAIN').RT1MAIN
+         AIF   ('&CMD' EQ 'START').RT1START
+         AIF   ('&CMD' EQ 'END').RT1END
+&NAME    DS    0H
+&RT1_TOT SETA  &RT1_TOT+1
+         AIF   ('&CMD' EQ 'OK').RT1OK
+         AIF   ('&CMD' EQ 'ABORT').RT1ABORT
+         AIF   ('&CLC1' EQ '').NOCLC
+         AIF   ('&LL'   EQ '').NOCLCLL
+         LA    1,&CLC1
+         LA    2,&CLC2
+         CLC   0(&LL,1),0(2)
+         AGO   .NOCLC
+.NOCLCLL ANOP
+         CLC   &CLC1,&CLC2
+.NOCLC   ANOP
+         AIF   ('&CMD' EQ 'CCE').RT1CCE
+         AIF   ('&CMD' EQ 'CCL').RT1CCL
+         AIF   ('&CMD' EQ 'CCH').RT1CCH
+         AIF   ('&CMD' EQ 'CCLE').RT1CCLE
+         AIF   ('&CMD' EQ 'CCGE').RT1CCGE
+         AIF   ('&CMD' EQ 'CC0').RT1CC0
+         AIF   ('&CMD' EQ 'CC1').RT1CC1
+         AIF   ('&CMD' EQ 'CC2').RT1CC2
+         AIF   ('&CMD' EQ 'CC3').RT1CC3
+         MNOTE 8,'RT1 INVALID COMMAND - &CMD'
+         MEXIT
+.RT1MAIN ANOP
+&RT1NAME SETC  '&NAME'
+&RT1NAME SUBENTRY
+         WTO   '&RT1NAME RT1 STARTED'
+         BRCL    15,RT1_START
+RT1_ABORT DS 0H
+         MVI   RT1_ABORTED,C'T'
+         WTO   '&RT1NAME RT1 TESTING ABORTED'
+RT1_END  DS    0H
+         MVC   RT1_DTOT,=X'402020202020'
+         ED    RT1_DTOT,RT1_TOT
+         WTO   MF=(E,RT1_WTO1)
+         CLI   RT1_ABORTED,C'T'
+         BE    RT1_DUMP
+         WTO   '&RT1NAME RT1 ENDED OK'
+         SUBEXIT
+RT1_DUMP DS    0H
+         ABEND 101     
+RT1_LINK EQU   11
+RT1_DATA EQU   *
+RT1_TOT  DC    PL3'0' TOTAL RT1 TESTS COMPLETED
+RT1_ONE  DC    P'1'
+RT1_WTO1 DC    AL2(RT1_WTO_END-*,0),C'&RT1NAME RT1 TESTS COMPLETED = '
+RT1_DTOT DC    CL6' ZZZZZ'
+RT1_WTO_END EQU *         
+RT1_ABORTED DC C'F'
+         LTORG
+RT1_TEST_CC0  DS    0H
+         BNE   RT1_ABORT
+RT1_OK   DS    0H
+         AP    RT1_TOT,RT1_ONE
+         BR    RT1_LINK
+RT1_TEST_CC1  DS    0H
+         BNL   RT1_ABORT
+         AP    RT1_TOT,RT1_ONE
+         BR    RT1_LINK
+RT1_TEST_CC2  DS    0H
+         BNH   RT1_ABORT
+         AP    RT1_TOT,RT1_ONE
+         BR    RT1_LINK
+RT1_TEST_CC3  DS    0H
+         BNO   RT1_ABORT
+         AP    RT1_TOT,RT1_ONE
+         BR    RT1_LINK
+RT1_TEST_CCGE  DS    0H
+         BL    RT1_ABORT
+         AP    RT1_TOT,RT1_ONE
+         BR    RT1_LINK
+RT1_TEST_CCLE  DS    0H
+         BH    RT1_ABORT
+         AP    RT1_TOT,RT1_ONE
+         BR    RT1_LINK
+         MEXIT
+.RT1START ANOP
+RT1_START DS  0H
+         MEXIT
+.RT1CCE  ANOP
+.RT1CC0  ANOP
+RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC0
+         USING *,RT1_LINK
+         B     RT1_CCE&RT1_TOT
+         LTORG
+RT1_CCE&RT1_TOT DS 0H
+         MEXIT
+.RT1CCL  ANOP
+.RT1CC1  ANOP
+RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC1
+         USING *,RT1_LINK
+         B     RT1_CCL&RT1_TOT
+         LTORG
+RT1_CCL&RT1_TOT DS 0H
+         MEXIT
+.RT1CCH  ANOP
+.RT1CC2  ANOP
+RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC2
+         USING *,RT1_LINK
+         B     RT1_CCH&RT1_TOT
+         LTORG
+RT1_CCH&RT1_TOT DS 0H
+         MEXIT
+.RT1CC3  ANOP
+RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC3
+         USING *,RT1_LINK
+         B     RT1_CC3&RT1_TOT
+         LTORG
+RT1_CC3&RT1_TOT DS 0H
+         MEXIT
+.RT1CCLE ANOP
+RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CCLE
+         USING *,RT1_LINK
+         B     RT1_CCLE&RT1_TOT
+         LTORG
+RT1_CCLE&RT1_TOT DS 0H
+         MEXIT
+.RT1CCGE ANOP
+RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CCGE
+         USING *,RT1_LINK
+         B     RT1_CCGE&RT1_TOT
+         LTORG
+RT1_CCGE&RT1_TOT DS 0H
+         MEXIT
+.RT1OK   ANOP
+         BAS   RT1_LINK,RT1_OK
+         USING *,RT1_LINK
+         B     RT1_OK&RT1_TOT
+         LTORG
+RT1_OK&RT1_TOT DS 0H
+         MEXIT
+.RT1ABORT ANOP
+         B      RT1_ABORT
+         MEXIT
+.RT1END  ANOP
+         B      RT1_END
+         MEXIT
+         MEND

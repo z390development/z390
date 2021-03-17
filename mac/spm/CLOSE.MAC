@@ -1,0 +1,16 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/15/08                                                 *
+.*********************************************************************
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION                     
+.*********************************************************************
+&N       CLOSE &DCBLIST, ((DCB,OPT),(DCB2,OPT2)..) OR (DCB) OR DCB     X
+               &MODE=,   IGNORED AS IT WORKS IN EITHER MODE            X
+               &MF=I,    NOT SUPPORTED                                 X
+               &TYPE=    IGNORED
+&N       ZCLOSE &DCBLIST,MODE=&MODE,MF=&MF,TYPE=&TYPE
+         MEND

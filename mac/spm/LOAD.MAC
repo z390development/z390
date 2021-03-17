@@ -1,0 +1,142 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               * 
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27  - issue error for any undefined operands     
+.* 10/20/05 RPI89  - issue error for any undefined operands     
+.* 11/16/05 RPI95  - add DDNAME and DSNAME support and doc RC   
+.* 11/19/05 RPI102 - allow DDNAME/DSNAME to replace EP/EPLOC   
+.* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 03/28/06 RPI266 CORRECT MISSING .SKP1 TO .SKPLR1
+.* 04/11/06 RPI244 ERROR ON UNSUPPORTED KEYWORDS, SUPPORT DE=,LOADPT=
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 10/23/08 RPI 921 add support for ERRET= exit on load error, ZSTRMAC
+.*********************************************************************
+.* LOAD PGM VIA SVC 8
+.*
+.* INPUT 
+.*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
+.*   R15 = 0    USE SYS390 DEFAULT PATH FROM EZ390 PARM
+.*   R15 = ADDR DSNAME FILE SPEC IF HIGH BIT OFF (NULL OR DQ DELIMITED)
+.*   R15 = ADDR DDNAME IF HIGH BIT ON (8 BYTES SPACE FILLED)
+.*
+.* OUTPUT
+.*   R0  = LOAD ADDRESS
+.*   R15 = O IF SUCCESSFUL
+.*   R15 = 4 IF LOAD FAILED
+.*
+.* NOTES:
+.*   1.  DSNAME OR DDNAME MAY BE 1 OR MORE DIRECTORY PATHS TO SEARCH
+.*       OR THEY MAY BE PATH AND FILE NAME WHICH OVERRIDES EP/EPLOC
+.*********************************************************************
+&N       LOAD  &DCB=,     IGNORED                                      X
+               &DDNAME=,  1 TO 8 CHARACTER DDNAME                      X
+               &DE=,      BLDL ENTRY                                   X
+               &DSNAME=,  RX LABEL OR (REG) > NULL OR ".." DIR/DSN     X
+               &EP=,      1 TO 8 CHARACTER PROGRAM NAME                X
+               &EPLOC=,   RX LABEL OR (REG) > OF 8 BYTE PGM NAME       X
+               &ERRET=,   NOT UNSUPPORTED                              X
+               &EXTINFO=, IGNORED                                      X
+               &LSEARCH=, IGNORED                                      X
+               &LOADPT=,  STORE LOAD ADDRESS                           X
+               &MF=I,     NOT SUPPORTED                                X
+               &RELATED=  IGNORED
+       AIF   ('&N' NE '')  
+&N       DS    0H
+       AEND
+       AIF   ('&MF' NE 'I')
+               MNOTE 12,'LOAD MF= NOT SUPPORTED'
+               MEXIT
+       AEND
+       AIF   (N'&SYSLIST NE 0)    
+               MNOTE 12,'LOAD UNSUPPORTED OPERANDS - &SYSLIST(1)'
+               MEXIT
+       AEND
+       AIF   ('&DE' NE '')
+               AIF   ('&DE'(1,1) EQ '(')      
+         ZOPTLR 0,&DE(1)
+               AELSE
+         LA    0,&DE
+               AEND
+         AHI   0,2
+               AIF   ('&EP' NE '' OR '&EPLOC' NE '')       
+                     MNOTE 12,'LOAD DE EP EPLOC MUTUALLY EXCLUSIVE'
+                     MEXIT
+               AEND
+       AELSEIF ('&EP' NE '')
+         LA    0,=CL8'&EP'
+               AIF   ('&EPLOC' NE '')
+                     MNOTE 12,'LOAD  EP AND EPLOC MUTUALLY EXCLUSIVE'
+                     MEXIT
+               AEND
+       AELSEIF ('&EPLOC' NE '')  
+               AIF   ('&EPLOC'(1,1) EQ '(')          
+         ZOPTLR 0,&EPLOC(1)
+               AELSE
+         LA    0,&EPLOC
+               AEND
+       AELSE
+         SR    0,0
+               AIF   ('&DDNAME' EQ '' AND '&DSNAME' EQ '')
+                     MNOTE 12,'LOAD REQUIRES DE, EP, EPLOC, DDNAME, OR X
+               DSNAME'
+                     MEXIT
+               AEND
+       AEND
+       AIF   ('&DSNAME' EQ '')       
+             AIF   ('&DDNAME' EQ '')        
+         SR    15,15 USE DEFAULT SYS390 SEARCH
+               AELSE
+                   AIF   ('&DDNAME'(1,1) EQ '(')         
+                         AIF   ('&DDNAME(1)' EQ '0' OR '&DDNAME(1)' EQ X
+               'R0')
+                               MNOTE 12,'LOAD DDNAME INVALID REG'
+                               MEXIT
+                         AEND
+         ZOPTLR 15,&DDNAME(1)
+                   AELSE 
+         LA    15,=CL8'&DDNAME'
+                   AEND
+         OILH  15,X'8000' DD VS DSN
+               AEND
+       AELSE
+               AIF   ('&DDNAME' NE '')       
+                     MNOTE 12,'LOAD DSNAME AND DDNAME MUTUALLY EXCLUSIVX
+               E'
+                     MEXIT
+               AEND
+               AIF   ('&DSNAME'(1,1) NE '(')
+         LA    15,&DSNAME
+               AELSE
+                   AIF   ('&DSNAME(1)' EQ '0' OR '&DSNAME(1)' EQ 'R0')
+                         MNOTE 12,'LOAD DSNAME INVALID REG'
+                         MEXIT
+                   AEND
+         ZOPTLR 15,&DSNAME(1)
+               AEND
+         AEND
+         SVC   8 LOAD R0=A(NAME) R15=DDNAME/DSNAME ADDR OR 0
+         AIF   ('&LOADPT' NE '')      
+               AIF   ('&LOADPT'(1,1) EQ '(')       
+         ST    0,0(&LOADPT(1))
+               AELSE
+         ST    0,&LOADPT
+               AEND
+         AEND
+         AIF   ('&ERRET' NE '')             RPI 921
+         LTR   15,15
+               AIF  ('&ERRET'(1,1) EQ '(')
+         BNZR  &ERRET(1)
+               AELSE
+         BNZ   &ERRET
+               AEND
+         AEND
+         MEXIT
+         MEND

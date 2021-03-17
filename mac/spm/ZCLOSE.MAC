@@ -1,0 +1,120 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 11/13/05 RPI88 - correct error in checking for DCB register parm
+.* 11/26/05 RPI112- check for invalid DCB RX form (reg) vs ((reg)) 
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/10/06 RPI244 support (reg) and ignore other keywords
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/03/07 RPI 668 check return code for each svc and exit if nz
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 10/14/07 RPI 718 ISSUE MNOTE ERR FOR NN OR RNN WITHOUT ((REG),OPT)   
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION                     
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 09/12/08 RPI 764 upgrade to ZSTRMAC and allow CLOSE (reg)
+.* 04/22/09 RPI 1021 add MF=L/E and cleanup reg support        
+.* 05/19/09 RPI 1029 remove SPM macro code for compatibility   
+.* 05/28/09 RPI 1045 change to only assume reg form if (...)
+.*********************************************************************
+&N       ZCLOSE &DCBLIST, (DCB1,OPT1,DCB2,OPT2..) OR (DCB), DCB, ((r)) X
+               &MODE=,   IGNORED AS IT WORKS IN EITHER MODE            X
+               &MF=I,    NOT SUPPORTED                                 X
+               &TYPE=    IGNORED
+         AIF   (N'&SYSLIST GT 1)
+               MNOTE 12,'CLOSE UNSUPPORTED OPERANDS - &SYSLIST(2)'
+               MEXIT
+         AEND
+         :&NP  SETA  N'&DCBLIST
+         AIF   ('&MF' EQ 'L') 
+.*
+.* LIST FORM
+.*
+               AIF ('&N' NE '')    
+                   :&N       DS    0F
+               AEND
+               :&I SETA  1
+               AWHILE (&I LE &NP)
+                   :&DCB     SETC  '&DCBLIST(&I)'
+                   :&OPTION  SETC  '&DCBLIST(&I+1)'
+                   AIF ('&DCB'(1,1) EQ '(')  RPI 764 RPI 1045
+                       MNOTE 8,'ZCLOSE REG FORM NOT ALLOWED'
+                       MEXIT
+                   AEND
+                   AIF   ('&OPTION' NE '')
+                         MNOTE 12,'CLOSE OPTION NOT SUPPORTED - &OPTIONX
+               '
+                         MEXIT
+                   AEND
+                   AIF   (&I+1 GE &NP)
+                         :&VL SETC 'X''80000000''+'
+                   AELSE
+                         :&VL SETC ''
+                   AEND
+                   DC    A(&VL&DCB)
+                   :&I SETA &I+2
+               AEND
+         AELSEIF ('&MF(1)' EQ 'E') 
+.*
+.* EXEC FORM
+.*
+               AIF   ('&N' NE '')          
+                    :&N       DS    0H
+               AEND
+               AIF  ('&MF(2)'(1,1) EQ '(')
+                    ZOPTLR 14,&MF(2)
+               AELSE
+                    LA     14,&MF(2)
+               AEND
+               B    ZCLOSE_DO_LOOP&SYSNDX
+ZCLOSE_DO_UNTIL&SYSNDX DS 0H
+               LTR  1,1
+               BM   ZCLOSE_DO_EXIT&SYSNDX
+               LTR  15,15
+               BNZ  ZCLOSE_DO_EXIT&SYSNDX
+ZCLOSE_DO_LOOP&SYSNDX DS 0H
+                    L   1,0(14)
+                    SVC 20
+                    AHI 14,4
+               B    ZCLOSE_DO_UNTIL&SYSNDX
+ZCLOSE_DO_EXIT&SYSNDX DS 0H
+         AELSEIF ('&MF(1)' EQ 'I') 
+.*
+.* STD FORM  
+.*
+               AIF ('&N' NE '')    
+                   :&N       DS    0H
+               AEND
+               :&I SETA  1
+               AWHILE (&I LE &NP)
+                   :&DCB     SETC  '&DCBLIST(&I)'
+                   :&OPTION  SETC  '&DCBLIST(&I+1)'
+                   AIF ('&DCB'(1,1) EQ '(')  RPI 764 TPI 1045
+                       ZOPTLR 1,&DCB(1)
+                   AELSE
+                       LA     1,&DCB
+                   AEND
+                   AIF   ('&OPTION' NE '')
+                         MNOTE 12,'CLOSE OPTION NOT SUPPORTED - &OPTION'
+                         MEXIT
+                   AEND
+                   SVC   20 CLOSE R1=DCB/ACB
+                   :&I SETA &I+2
+                   AIF    (&I LE &NP)
+                          LTR   15,15
+                          BNZ   Z390_CLOSE_EXIT&SYSNDX RPI 668
+                   AEND
+               AEND
+               AIF (&NP GT 2)       
+                   :Z390_CLOSE_EXIT&SYSNDX EQU *
+               AEND
+         AELSE
+               MNOTE 12,'CLOSE MF=&MF NOT SUPPORTED'
+               MEXIT
+         AEND
+         MEND

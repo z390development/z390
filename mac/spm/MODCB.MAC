@@ -1,0 +1,183 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 08/10/07 INITIAL CODING TO SUPPORT AREA, RECLEN INITIALLY
+.* 08/22/07 RPI 680  CORRECT REPLRECL
+.* 08/27/07 RPI 688  SUPPORT RPL=(REG)
+.* 09/03/07 RPI 690  ADD ARG= AND OPTCD= SUPPORT
+.* 09/03/07 RPI 672  FIX 3 MISSPELLED LABELS,&OPTCDF,OPTF1/2,&MODS ERRS
+.*          ADD CROSS CHECK FOR ACB/RPL OPTION MATCHS
+.* 09/15/07 RPI 696  ADD SUPPORT FOR RPL OPTCD FWD DEFAULT OPTION SET
+.*          ADD RPL FIELD ACB ADDR
+.* 09/17/07 RPI 682  ADD ACB DDNAME, DSNAME, VCLRN,
+.*          and use  ZGENMACF and ZGENOPTD
+.* 09/19/07 RPI 697  SET RC=0
+.* 12/08/07 RPI 750  ADD RPL KEYLEN= PARM FOR GENERIC KEY LENGTH
+.* 04/19/08 RPI 833  add SETC quotes for HLASM compatibility
+.* 04/23/09 RPI 1023 jm1 MNOTE 4 instead of 12 if STRNO specified
+.* 04/23/09 RPI 1023 jm2 MODCB generates OI and NI instead of MVI
+.* 04/23/09 RPI 1023 jm3 support for AREALEN
+.*********************************************************************
+&N       MODCB &ACB=,        ACB CONTROL BLOCK ADDRESS (ALSO RPL FIELD)X
+               &DDNAME=,     ACB DDNAME FOR VCDT VSAM CATALOG.ENTRY    X
+               &DSNAME=,     ACB DSNAME OVERRIDE ADDR VCDT CAT.ENTRY   X
+               &MACRF=,      ACB OPTIONS                               X
+               &VCLRN=,      ACB VCDT CATALOG DEFAULT ENTRY NAME       X
+               &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS        X
+               &AREA=,       RPL ADDR OF RECORD AREA                   X
+               &AREALEN=,    RPL AREA LENGTH       jm3                 X
+               &ARG=,        RPL ADDR OF ARG FOR KEY/REC#/RBA/XRBA     X
+               &KEYLEN=,     RPL GENERIC KEY LENGTH OR ZERO TO USE DEF X
+               &OPTCD=,      RPL OPTION FLAGS                          X
+               &RECLEN=,     RPL RECORD LENGTH                         X
+               &STRNO=       UNSUPPORTED ERROR     jm1
+         LCLB  &MODS         SET IF MOD FOUND
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'MODCB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AIF   (&NPOS GT 0).POSLOOP
+         MEXIT
+.POSEND  ANOP
+         AIF   ('&STRNO'  EQ '').NO_STRNO
+         MNOTE 4,'MODCB STRNO NOT SUPPORTED YET - IGNORED'  jm1
+&MODS    SETB   1
+.NO_STRNO ANOP
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+.*
+.*  CHECK ACB FIELDS
+.*
+         AIF   ('&ACB'  EQ '').CHK_RPL_FIELDS
+         AIF   ('&DDNAME' NE '').DDNAME
+.DDNAME_END ANOP
+         AIF   ('&DSNAME' NE '').DSNAME
+.DSNAME_END ANOP
+         AIF   ('&MACRF'  NE '').MACRF
+.MACRF_END ANOP
+         AIF   ('&VCLRN' NE '').VCLRN
+.VCLRN_END ANOP
+.*
+.* CHECK RPL FIELDS
+.*
+.CHK_RPL_FIELDS ANOP
+         AIF   ('&RPL'  EQ '').CHK_MODS
+         AIF   ('&ACB'  NE '').ACB
+.ACB_END ANOP
+         AIF   ('&AREA' NE '').AREA
+.AREA_END ANOP
+         AIF   ('&ARG'    NE '').ARG
+.ARG_END ANOP
+         AIF   ('&KEYLEN' NE '').KEYLEN
+.KEYLEN_END ANOP
+         AIF   ('&OPTCD'  NE '').OPTCD
+.OPTCD_END ANOP
+         AIF   ('&RECLEN' NE '').RECLEN
+.RECLEN_END ANOP
+         AIF   ('&AREALEN' NE '').AREALEN    jm3
+.AREALEN_END ANOP
+.*
+.* CHECK IF ANY FIELDS FOUND
+.*
+.CHK_MODS ANOP
+         AIF   (&MODS).EXIT
+         MNOTE 12,'MODCB NO SUPPORTED FIELDS FOUND'
+         MEXIT
+.EXIT    ANOP
+         SR    15,15
+         MEXIT
+.*
+.* MODIFY ACB DDNAME
+.*
+.DDNAME  ANOP
+&MODS    SETB   1
+         ZMODCB &ACB,ACBDDNAM-IHAACB,&DDNAME,8
+         AGO   .DDNAME_END
+.*
+.* MODIFY ACB DSNAME
+.*
+.DSNAME  ANOP
+&MODS    SETB   1
+         ZMODCB &ACB,ACBDSNAM-IHAACB,&DSNAME,4
+         AGO   .MACRF_END
+.*
+.* MODIFY ACB MACRF
+.*
+.MACRF   ANOP
+         GBLC  &ZGENMACF1,&ZGENMACF2,&ZGENMACF3,&ZGENMACF4
+         ZGENMACF MACRF=&MACRF
+&MODS    SETB   1
+         ZMODCB &ACB,ACBMACR1-IHAACB,B'&ZGENMACF1',1
+         ZMODCB &ACB,ACBMACR2-IHAACB,B'&ZGENMACF2',1
+         ZMODCB &ACB,ACBMACR3-IHAACB,B'&ZGENMACF3',1
+         ZMODCB &ACB,ACBMACR4-IHAACB,B'&ZGENMACF4',1
+         AGO   .MACRF_END
+.*
+.* MODIFY ACB VCLRN VCDT VSAM CATALOG ENTRY DEFAULT NAME
+.*
+.VCLRN  ANOP
+&MODS    SETB   1
+         ZMODCB &ACB,ACBVCLRN-IHAACB,&VCLRN,8
+         AGO   .VCLRN_END
+.*
+.* MODIFY RPL ACB ADDRESS FIELD    RPI 696
+.*
+.ACB     ANOP
+&MODS    SETB   1
+         ZMODCB &RPL,RPLACB-IHARPL,&ACB,4
+         AGO   .ACB_END
+.*
+.* MODIFY RPL AREA
+.*
+.AREA    ANOP
+&MODS    SETB   1
+         ZMODCB &RPL,RPLAREA-IHARPL,&AREA,4
+         AGO   .AREA_END
+.*
+.* MODIFY RPL ARG
+.*
+.ARG     ANOP
+&MODS    SETB   1
+         ZMODCB &RPL,RPLARG-IHARPL,&ARG,4
+         AGO    .ARG_END
+.*
+.* MODIFY RPL KEYLEN
+.*
+.KEYLEN  ANOP
+&MODS    SETB   1
+         ZMODCB &RPL,RPLLKEY-IHARPL,&KEYLEN,4
+         AGO    .KEYLEN_END
+.*
+.* MODIFY RPL OPTCD
+.*
+.OPTCD   ANOP
+         GBLC   &ZGENOPT1,&ZGENOPT2
+         GBLC   &XGENOPT1,&XGENOPT2                               jm2
+         ZGENOPTD OPTCD=&OPTCD
+&MODS    SETB   1
+         ZMODCB &RPL,RPLOPT1-IHARPL,B'&ZGENOPT1',1,B'&XGENOPT1'   jm2
+         ZMODCB &RPL,RPLOPT2-IHARPL,B'&ZGENOPT2',1,B'&XGENOPT2'   jm2
+         AGO   .OPTCD_END
+.*
+.* MODIFY RPL LREC
+.*
+.RECLEN  ANOP
+&MODS    SETB   1
+         ZMODCB &RPL,RPLLREC-IHARPL,&RECLEN,4
+         AGO   .RECLEN_END
+.*
+.* MODIFY RPL AREALEN
+.*
+.AREALEN ANOP
+&MODS    SETB   1
+         ZMODCB &RPL,RPLLAREA-IHARPL,&AREALEN,4                    jm3
+         AGO   .AREALEN_END
+.*
+         MEND

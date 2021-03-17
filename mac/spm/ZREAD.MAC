@@ -1,0 +1,88 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* MAINTENANCE
+.* 10/13/05 ADD DCBREC SUPPORT
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 10/20/05 RPI38 - check for register conflicts
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/11/06 RPI170 ALLOW 'S' AS FIFTH PARM  
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION                     
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       ZREAD &DECB,                                                  X
+               &TYPE,                                                  X
+               &DCB,                                                   X
+               &AREA,                                                  X
+               &LENGTH,                                                X
+               &MF=I        NOT SUPPORTED
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR3
+         AIF   (N'&SYSLIST LT 5).NPOK
+         AIF   (N'&SYSLIST EQ 5 AND '&SYSLIST(5)' EQ '''S''').NPOK
+         MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(5)'
+.NPOK    ANOP
+.*
+.*       SEQUENTIALLY READ BLOCK AT CURRENT FILE POSITION
+.*
+.*       USE CHECK TO VERIFY COMPLETION AND TAKE EODAD/SYNAD EXITS
+.*       USE POINT TO CHANGE CURRENT FILE POSITION
+.*
+.*       DECB -  CREATED INLINE FOR REFERENCE BY CHECK (SEE DECBD)
+.*       TYPE -  SF FOR SEQUENTIAL FORWARD, SB FOR SEQUENTIAL BACKWARD
+.*       DCB  -  DATA CONTROL BLOCK OPENED WITH R OR RW MACRF
+.*       AREA -  AREA TO RECEIVE BLOCK (MUST BE >= DCBBLKSI)
+.*
+         AIF   ('&DECB'(1,1) EQ '(').DECBREG
+         CNOP  0,4
+         BAL   1,&DECB+DECBL
+&DECB    DC    F'0' DECBECB  (X'40' OK, X'41' I/O ERROR, X'42' EOF)
+         DC    H'0' DECBTYPE
+         DC    AL2(DECBL)
+         DC    A(0) DECBDCBA OPEN DCB WITH MACRF R OR RW
+         DC    A(0) DECBAREA AREA FOR BLOCK MUST BE >= DCBBLKSI
+         ORG   &DECB+DECBL
+         AGO   .CHKDCB
+.DECBREG ANOP
+         ZOPTLR 1,&DECB(1)
+.CHKDCB  ANOP
+         AIF   ('&DCB' EQ '').CHKAREA
+         AIF   ('&DCB'(1,1) EQ '(').DCBREG
+         LA    0,&DCB
+         ST    0,DECBDCBA-IHADECB(1)
+         AGO   .CHKAREA
+.DCBREG  ANOP
+         AIF   ('&DCB(1)' EQ 1 OR '&DCB(1)' EQ 'R1').ERR1
+         ST    &DCB(1),DECBDCBA-IHADECB(1)
+.CHKAREA ANOP
+         AIF   ('&AREA' EQ '').AREADEF
+         AIF   ('&AREA'(1,1) EQ '(').AREAREG
+         LA    0,&AREA
+         ST    0,DECBAREA-IHADECB(1)
+         AGO   .SVC
+.AREADEF ANOP
+         L     15,DECBDCBA-IHADECB(1)
+         MVC   DECBAREA-IHADECB(4,1),DCBREC-IHADCB(15)
+         AGO   .SVC
+.AREAREG ANOP
+         AIF   ('&AREA(1)' EQ 1 OR '&AREA(1)' EQ 'R1').ERR2
+         ST    &AREA(1),DECBAREA-IHADECB(1)
+.SVC     ANOP
+         SVC   153 READ R0=AREA, R1=DECB
+         MEXIT
+.ERR1    MNOTE 12,'READ INVALID DCB REGISTER - &DCB(1)'
+         MEXIT
+.ERR2    MNOTE 12,'READ INVALID AREA REGISTER - &AREA(1)'
+         MEXIT
+.ERR3    MNOTE 12,'READ MF= NOT SUPPORTED'
+         MEXIT
+         MEND

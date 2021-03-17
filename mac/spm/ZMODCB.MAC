@@ -1,0 +1,71 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 08/27/05                                                 *
+.*********************************************************************
+.* 08/27/07 INITIAL CODING TO SUPPORT MODCB ACB OR RPL FIELD MODS
+.* 09/03/07 RPI 690  ADD OPTCD LENGTH 2 SUPPORT
+.* 09/15/07 RPI 696  CORRECT SUPPORT FOR 1 BYTE FIELD LENGHTS
+.* 09/15/07 RPI 682  ADD SUPPORT FOR 8 BYTE DDNAME,VCLRN TYPE MODS
+.* 04/19/08 RPI 833  add SETC quotes for HLASM compatibility
+.* 04/23/09 RPI 1023 jm2 MODCB generates OI and NI instead of MVI
+.*********************************************************************
+&N       ZMODCB &CB,         ACB/RPL ADDRESS OR (REG)                  X
+               &OFFSET,      OFFSET TO TARGET FIELD                    X
+               &SOURCE,      ABS VAL, RX ADDR, (REG), (S,SCON),(*,SCON)X
+               &LENGTH,      LENGTH FOR ABS VAL MODS LIKE MACRF/OPTCD  X
+               &CLEAN        MODCB CLEAN UP     jm2
+         AIF   ('&CB'(1,1) EQ '(').REGCB
+&STADDR  SETC  '&CB+&OFFSET'
+         AGO   .SOURCE
+.REGCB   ANOP
+&STADDR  SETC  '&OFFSET.&CB'
+.SOURCE  ANOP
+         AIF   ('&SOURCE'(1,1) EQ '(').CHK_SCON
+         AIF   ('&LENGTH' EQ '4').MV4
+         AIF   ('&LENGTH' EQ '1').MV1
+         AIF   ('&LENGTH' EQ '8').MV8
+         MNOTE 12,'ZMODCB INVALID LENGTH - &LENGTH'
+         MEXIT
+.MV1     ANOP
+.*        MVI   &STADDR,&SOURCE         jm2
+         AIF   (T'&CLEAN EQ 'O').MV1OI
+         NI    &STADDR,X'FF'-(&CLEAN)   jm2
+.MV1OI   ANOP
+         OI    &STADDR,&SOURCE          jm2
+         MEXIT
+.MV4     ANOP
+         AIF   ('&SOURCE'(1,1) EQ '=').MV4LIT
+         L     0,=A(&SOURCE)
+         AGO   .MV4ST
+.MV8     ANOP
+         AIF   ('&CB'(1,1) EQ '(').MV8REG
+         MVC   &CB+&OFFSET.(8),=CL8'&SOURCE'
+         MEXIT
+.MV8REG  ANOP
+         MVC   &OFFSET.(8,&CB(1)),=CL8'&SOURCE'
+         MEXIT
+.MV4LIT  ANOP
+         L     0,&SOURCE
+.MV4ST   ANOP
+         ST    0,&STADDR
+         MEXIT
+.CHK_SCON ANOP
+         AIF   ('&SOURCE'(1,3) EQ '(S,').SCON_ADDR
+         AIF   ('&SOURCE'(1,3) EQ '(*,').SCON_IADDR
+.STREG   ANOP
+         ST    &SOURCE(1),&STADDR
+         MEXIT
+.SCON_ADDR ANOP
+&ADDR    SETC  '&SOURCE'(4,K'&SOURCE-4)
+         LA    0,&ADDR
+         ST    0,&STADDR
+         MEXIT
+.SCON_IADDR ANOP
+&ADDR    SETC  '&SOURCE'(4,K'&SOURCE-4)
+         L     0,&ADDR
+         ST    0,&STADDR
+         MEND

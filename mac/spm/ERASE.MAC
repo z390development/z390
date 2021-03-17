@@ -1,0 +1,37 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 08/07/07                                                 *
+.*********************************************************************
+.* 08/07/07 RPI 644 INITIAL CODING FOR VSAM ERASE FOLLOWING GET UPD
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       ERASE &RPL=,   VSAM REQUEST PARAMETER LIST                    X
+               &MF=I    NOT SUPPORTED                                   
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR2
+         AIF   (N'&SYSLIST LE 0).NPOK
+         MNOTE 12,'ERASE UNSUPPORTED OPERANDS - &SYSLIST(1)'
+         MEXIT
+.NPOK    ANOP
+         AIF   ('&RPL' EQ '').ERR1
+         AIF   ('&RPL'(1,1) EQ '(').RPLREG
+         LA    1,&RPL
+         AGO   .VSVC
+.RPLREG  ANOP
+         ZOPTLR 1,&RPL(1)
+.VSVC    ANOP
+         LA    0,RPLOPERA
+         SVC   121 VSAM ERASE R0=3 R1=A(RPL)
+         MEXIT         
+.ERR1    MNOTE 12,'ERASE REQUIRES RPL='
+         MEXIT
+.ERR2    MNOTE 12,'ERASE MF= NOT SUPPORTED'
+         MEXIT
+         MEND

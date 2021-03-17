@@ -1,0 +1,87 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 07/26/07 INITIAL CODING                    
+.* 08/29/07 RPI 688 SPLIT MACRF INTO MACR1-4 WITH 1 BYTE EQU'S
+.* 09/04/07 RPI 691 ADD ACBVCLRN, ACBVCLRA, ACBVAIXA, ACBDCBT, ACBDCBA
+.* 09/24/07 RPI 702 ADD ACBOPENC UNIQUE OPEN COUNT FOR RPL RESET       
+.* 11/25/07 RPI 723 ADD ACBGETNF PRE-REQ FOR KSDS UPD INSERT VS REWRITE 
+.* 11/26/07 RPI 723 MOVE GETOK, GETNF FROM ACB TO RPL               
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+         ACBD   
+.*
+.* IF ACBD ALREADY DEFINED EXIT NOW
+.*
+         GBLB  &Z390_ACBD                          
+         GBLC  &Z390_ACBD_NAME,&Z390_ACBD_TYPE            
+         AIF   (&Z390_ACBD).EXIT                          
+&Z390_ACBD      SETB 1                                   
+&Z390_ACBD_NAME SETC '&SYSLOC'                                    
+&Z390_ACBD_TYPE SETC '&SYSSTYP'        
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'ACBD UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*       ACCESS CONTROL BLOCK DSECT FOR VSAM
+.*
+IHAACB   DSECT
+ACBID    DS    X              X'A0'  = VSAM VS VTAM
+ACBSTYPE DS    X              X'11-1F' = VSAM SUBTYPES
+ACBLEN   DS    H              LENGTH OF ACB
+ACBAMBL  DS    A              AMB LIST POINTER
+ACBIFR   DS    A              VTAM INTERFACE ROUTINE (O FOR VSAM)
+ACBMACRF DS    F              MACRO ACCESS TYPE FLAGS
+         ORG   *-4
+ACBMACR1 DS    X              MACRF FLAGS BYTE 1
+ACBMACR1_KEY    EQU X'80' KEY ACCESS TO KS OR RR
+ACBMACR1_ADR    EQU X'40' RBA ADDRESS ACCESS TO KS OR ES
+ACBMACR1_CNV    EQU X'20' CONTROL INTERAL ACCESS(NOT SUPPORTED)     
+ACBMACR1_SEQ    EQU X'10' SEQUENTIAL ACCESS TO KS, ES, RR      
+ACBMACR1_DIR    EQU X'08' DIRECT     ACCESS TO KS, ES, RR
+ACBMACR1_IN     EQU X'04' INPUT ONLY FROM KS, ES, RR
+ACBMACR1_OUT    EQU X'02' OUTPUT ADD, UPDATE, DELETE KS,ES,RR
+ACBMACR1_UBF    EQU X'01' USER BUFFER MGT - USE AREA   (IGNORED)
+ACBMACR2 DS    X              MACRF FLAGS BYTE 2
+ACBMACR2_SKP    EQU X'80' SKIP SEQUENTIAL ACCESS TO KS, RR
+ACBMACR2_NLOGON EQU X'40' NO LOGON REQUIRED - ALWAYS   (IGNORED)
+ACBMACR2_RST    EQU X'20' DATA SET REUSABLE - ALWAYS   (IGNORED)
+ACBMACR2_DSN    EQU X'10' SUBTASK SHARING BASED ON DSN (IGNORED)      
+ACBMACR2_AIX    EQU X'08' PROCESS ALT. INDEX VS BASE   (IGNORED)
+ACBMACR2_LSR    EQU X'04' LOCAL SHARED RESOURCES       (IGNORED)
+ACBMACR2_GSR    EQU X'02' GLOBAL SHARED RESOURCES      (IGNORED)
+ACBMACR2_ICI    EQU X'01' IMPROVE CONTROL INT. PROC.   (IGNORED)     
+ACBMACR3 DS    X              MACRF FLAGS BYTE 3
+ACBMACR3_DFR    EQU X'80' DEFERR PUT'S UNTIL WRTBFR    (IGNORED)     
+ACBMACR3_SIS    EQU X'40' SEQUENTIAL INSERT STRATEGY   (IGNORED)      
+ACBMACR3_CFX    EQU X'20' FIX CBS AND BUFFERS          (IGNORED)        
+ACBMACR4 DS    X              MACRF FLAGS BYTE 4
+ACBOFLGS DS    X              OPEN FLAGS
+ACBOPEN  EQU   X'80'          ACB IS OPEN
+ACBGET   EQU   X'40'          GET ALLOWED
+ACBPUT   EQU   X'20'          PUT ALLOWED
+ACBAIXP  EQU   X'10'          USE PATH AIX KEY VERSUS PRIMARY KEY
+ACBAIXU  EQU   X'08'          UPGRADE AIX INDEXES (SEE VPTH OPTION)
+         DS    XL3            ALIGNMENT
+ACBDDNAM DS    CL8            DDNAME > ENV VAR > VCDT_NAME[.VCLR/VPTH]
+*
+* ACB Z390 EXTENSIONS
+*
+ACBDSNAM DS    A              ADDRESS OF USER SUPPLIED VCDT[.VCLR/VPTH] 
+ACBVCLRN DS    CL8            VCLR NAME LABEL (CAT.VCLR MAY OVERRIDE) 
+ACBVCLRA DS    A              ADDRESS VCLR CLUSTER ENTRY IN VCDT CAT
+ACBVAIXA DS    A              ADDRESS VAIX FOR ALTERNATE PATH  ACCESS
+ACBDCBT  DS    F              TOTAL DCBS FOR VES,VX0, AND VXN UGRADES
+ACBDCBA  DS    A              ADDR OF DYN ALLOC DCB TABLE
+ACBOPENC DS    F              UNIQUE ACB OPEN COUNT FOR RPL RESET
+ACBEND   EQU  *
+          AIF  ('&Z390_ACBD_NAME' EQ '' OR '&Z390_ACBD_TYPE' EQ '').EXIX
+               T
+&Z390_ACBD_NAME &Z390_ACBD_TYPE                    
+.EXIT    ANOP
+         MEND

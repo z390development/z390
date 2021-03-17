@@ -1,0 +1,68 @@
+'         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 12/06/05 RPI 118- use RESTORE in RETURN and XCTL to restore regs
+.* 04/26/07 RPI 601- support R0-R15 format args                         
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 11/10/08 RPI 942 support RC=(15) and upgrade to ZSTRMAC 
+.* 03/16/11 RPI 1139 SET DEFAULT RC=(15) TO AVOID SUBSTR ERROR
+.*********************************************************************
+&N       RESTORE &REGS,&RC='(15)' RPI 942,1139 ADD RC=(15) 
+       AIF   ('&N' NE '')
+&N       DS    0H
+       AEND
+       AIF     (N'&SYSLIST NE 1)  
+               MNOTE 12,'RESTORE REQUIRES SINGLE REG SUBLIST OPERAND'
+               MEXIT
+      AEND
+      AIF   ('&REGS(1)'(1,1) EQ 'R')      
+            :&R1 SETA   D2A('&REGS(1)'(2,K'&REGS(1)-1)) RPI 1139
+      AELSE
+            :&R1      SETA  &REGS(1)
+      AEND
+      :&R2      SETA  &R1
+      AIF   ('&REGS(2)' NE '')
+            AIF   ('&REGS(2)'(1,1) EQ 'R')      
+                  :&R2 SETA  D2A('&REGS(2)'(2,K'&REGS(2)-1))
+            AELSE
+                  :&R2 SETA  &REGS(2)
+            AEND
+       AEND
+       AIF     (&R1 LT 0                                               X
+                OR &R1 GT 15                                           X
+                OR &R2 LT 0                                            X
+                OR &R2 GT 15                                           X
+                OR &R1 EQ 13                                           X
+                OR &R2 EQ 13)
+               MNOTE 8,'RESTORE RANGE INVALID (&R1,&R2)'
+               MEXIT
+       AEND
+       AIF     (&R1 LT 13)        
+               AIF  (&R1 GT &R2 OR &R2 GT 13)
+                    MNOTE 8,'RESTORE RANGE OVERLAPS R13 (&R1,&R2)'
+                    MEXIT
+               AEND
+         LM    &R1,&R2,20+4*&R1.(13)
+       AELSE
+               AIF  (&R2 EQ 14 AND &R1 EQ 15)
+                    MNOTE 8,'RESTORE RANGE OVERLAPS R13 (&R1,&R2)'
+                    MEXIT
+               AEND
+               AIF  (&R1 EQ 14 AND '&RC'(1,1) EQ '(')
+         L     14,12(13)
+                    AIF  ('&RC(1)' NE '15' AND '&RC(1)' NE 'R15')
+         LR    15,&RC(1)
+                    AEND
+                    AIF  (&R2 LT 14)
+         LM    0,&R2,20(13)
+                    AEND
+               AELSE
+         LM    &R1,&R2,12+4*(&R1-14)(13)
+               AEND
+       AEND  
+         MEND  

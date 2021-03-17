@@ -1,0 +1,87 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 08/10/07 INITIAL CODING TO SUPPORT FDBK, AREA, RECLEN INITIALLY                 
+.* 09/14/07 RPI 672 VERIFY RPL VS ACB                                              
+.* 09/19/07 RPI 697 SET RC=0                                                       
+.* 09/24/07 RPI 702 CHANGE RPLXRBA TO RPLLXRBA                                     
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       SHOWCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS       X
+               &ACB=,         ACB ACCESS CONTROL BLOCK                 X
+               &AREA=,        USER AREA TO RECEIVE ACB/RPL FIELD       X
+               &LENGTH=,      USER AREA LENGTH                         X
+               &FIELDS=       NAME OF FIELD TO RETRIEVE       
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'SHOWCB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AIF   (&NPOS GT 0).POSLOOP
+         MEXIT
+.POSEND  ANOP  
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&RPL' NE '').SHOW_RPL
+         MNOTE 12,'SHOWCB ONLY SUPPORTS RPL CURRENTLY'         
+         MEXIT
+.SHOW_RPL ANOP
+         AIF   ('&AREA' EQ '').ERR1
+         AIF   ('&LENGTH' EQ '').ERR2
+&OFFSET  SETA  0
+.LOOP    ANOP
+         AIF   ('&OFFSET' GT '&LENGTH').ERR3
+&I       SETA  &I+1
+         AIF   (&I GT N'&FIELDS).EXIT
+         AIF   ('&FIELDS(&I)' EQ 'AREA').AREA
+         AIF   ('&FIELDS(&I)' EQ 'FDBK').FDBK
+         AIF   ('&FIELDS(&I)' EQ 'RBA').RBA
+         AIF   ('&FIELDS(&I)' EQ 'RECLEN').RECLEN
+         AIF   ('&FIELDS(&I)' EQ 'XRBA').XRBA
+         MNOTE 12,'SHOWCB FIELD NOT SUPPORTED - &FIELDS(&I)'
+         MEXIT
+.EXIT    ANOP
+         SR    15,15 RC=0
+         MEXIT
+.AREA    ANOP  RETURN ADDRESS OF RECORD AREA   
+         ZSHOWCB &RPL,RPLAREA-IHARPL,&AREA,&OFFSET,4
+&OFFSET  SETA  &OFFSET+4
+         AIF   ('&RPL' NE '').LOOP
+         MNOTE 12,'SHOWCB RPL RQUIRED FOR AREA'
+         AGO   .LOOP
+.FDBK    ANOP  RETURN REASON CODE FROM RPLFEEDB
+         ZSHOWCB &RPL,RPLFEEDB-IHARPL+3,&AREA,&OFFSET,1
+&OFFSET  SETA  &OFFSET+1
+         AIF   ('&RPL' NE '').LOOP
+         MNOTE 12,'SHOWCB RPL RQUIRED FOR FDBK'
+         AGO   .LOOP
+.RBA     ANOP
+         ZSHOWCB &RPL,RPLLXRBA-IHARPL+4,&AREA,&OFFSET,4  RPI 702
+&OFFSET  SETA  &OFFSET+4
+         AIF   ('&RPL' NE '').LOOP
+         MNOTE 12,'SHOWCB RPL RQUIRED FOR RBA'
+         AGO   .LOOP
+.RECLEN  ANOP
+         ZSHOWCB &RPL,RPLLREC-IHARPL,&AREA,&OFFSET,4
+&OFFSET  SETA  &OFFSET+4
+         AIF   ('&RPL' NE '').LOOP
+         MNOTE 12,'SHOWCB RPL RQUIRED FOR RECLEN'
+         AGO   .LOOP
+.XRBA    ANOP
+         ZSHOWCB &RPL,RPLLXRBA-IHARPL,&AREA,&OFFSET,8    RPI 702
+&OFFSET  SETA  &OFFSET+8
+         AIF   ('&RPL' NE '').LOOP
+         MNOTE 12,'SHOWCB RPL RQUIRED FOR XRBA'
+         AGO   .LOOP
+.ERR1    MNOTE 12,'SHOWCB REQUIRES AREA='
+         MEXIT
+.ERR2    MNOTE 12,'SHOWCB REQUIRES LENGTH='
+         MEXIT
+.ERR3    MNOTE 12,'SHOWCB FIELDS EXCEED AREA LENGTH'
+         MEND

@@ -1,0 +1,146 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27  - issue error for any undefined operands     
+.* 12/06/05 RPI117 - allow LV=full word and nnnK or nnnM short forms                     
+.* 01/09/06 RPI162 - correct support for nnnK and mmmM extensions.                    
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/21/06 RPI187 CORRECT FREEMAIN and GETMAIN comments, LA/L length,
+.*          limit check length, correct K/M support
+.* 03/14/06 RPI 210 ALLOW LOC=24,(24),31,(31),(24,31)
+.* 04/11/06 RPI 244 ISSUE ERROR FOR UNSUPPORTED KW OPERANDS
+.* 06/03/06 RPI 324 correct register 0 versus 1 for A= store                
+.* 01/23/07 RPI 542 correct output regs r0=len, r1=addr                     
+.* 03/08/07 RPI 568 correct output regs r0=len, r1=addr comments            
+.* 03/12/07 RPI 575 correct to honor LOC=RES equivalent to LOC=BELOW        
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       GETMAIN &TYPE,     TYPE OF REQUEST R,RC,RU ELSE UNSUPP ERROR  X
+               &A=,         ADDR TO STORE ADDR                         X
+               &BNDRY=,     IGNORED                                    X
+               &CHECKZERO=, IGNORED                                    X
+               &CONTBDY,    IGNORED                                    X
+               &INADDR=,    UNSUPPORTED ERROR                          X
+               &KEY=,       IGNORED                                    X
+               &LA=,        ADDR OF LENGTH                             X
+               &LV=,        LENGTH VALUE                               X
+               &LOC=,       BELOW/RES=24, ABOVE,ANY/64=31              X
+               &MF=I,       NOT SUPPORTED                              X
+               &RELATED=,   IGNORED                                    X
+               &SP=,        IGNORED (SEE RPI 244, 248, AND 394)        X
+               &STARTBDY=   IGNORED
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR4
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+.NPOK    ANOP
+.*
+.* GETMAIN - ALLOCATE MEMORY FROM ABOVE OR BELOW 16MB LINE
+.*
+.*  TYPE
+.*    R   - UNCONDITIONAL (DEFAULT IS BELOW THE LINE)
+.*    RC  - CONDITIONAL (DEFAULT IS ABOVE THE LINE)
+.*    RU  - UNCONDITIONAL (DEFAULT IS ABOVE THE LINE)
+.*  LENGHT LA= ADDR OF LENGTH OR (REG)
+.*  LENGTH LV= ABSOLUTE LENGTH OR (REG) 
+.*  LOCATION LOC=
+.*    BELOW, RES = 24
+.*    ABOVE, ANY = 31                             
+.*  INPUT TO SVC 4
+.*    R0 OPTION BITS
+.*        BIT 0 - AMODE 31 ALLOCATION ABOVE LINE
+.*        BIT 1 - CONDITIONAL REQUEST
+.*    R1 LENGTH
+.*  OUTPUT
+.*    R1 = ADDRESS OF ALLOCATED AREA  RPI 568
+.*    R0 = LENGTH ROUNDED UP TO *8    RPI 568
+.*    R15 RETURN CODE
+.*         0 - OK
+.*         4 - REQUEST FAILED OR ABEND 80A IF UNCONDITIONAL
+.*
+         AIF   ('&INADDR' NE '').ERR2
+         AIF   ('&SP'     EQ '').SKPWARN
+         MNOTE 4,'GETMAIN IGNORING SP AND USING DEFAULT' RPI 394
+.SKPWARN ANOP
+         AIF   ('&TYPE' EQ 'R').R
+         AIF   ('&TYPE' EQ 'RC').RC
+         AIF   ('&TYPE' EQ 'RU').RU
+         MNOTE 12,'GETMAIN INVALID TYPE - &TYPE'
+         MEXIT
+.R       ANOP
+&ABOVE   SETB 0  
+&COND    SETB 0  
+         AGO  .LV
+.RC      ANOP
+&ABOVE   SETB 1
+&COND    SETB 1
+         AGO  .LV
+.RU      ANOP
+&ABOVE   SETB 1
+&COND    SETB 0
+.LV      ANOP
+         AIF  ('&LV' NE '').CHKLV
+         MNOTE 12,'GETMAIN LV= MISSING'
+         MEXIT
+.CHKLV   ANOP
+         AIF  ('&LV'(1,1) EQ '(').LVREG
+         AIF  ('&LV'(1,1) GE'0' AND '&LV'(1,1) LE '9').LVLIT
+         L    1,=A(&LV)
+         AGO  .LOC
+.LVLIT   ANOP
+&LEN     SETA &LV
+         AIF  ('&LV'(K'&LV,1) NE 'K').CHKLVM
+         AIF  (&LEN GT 1048576).ERR1
+&LEN     SETA &LEN*1024
+         AGO  .SETLV
+.CHKLVM  ANOP
+         AIF  ('&LV'(K'&LV,1) NE 'M').SETLV
+         AIF  (&LEN GT 1024).ERR1
+&LEN     SETA &LEN*1048576
+.SETLV   ANOP
+         L    1,=A(&LEN)  RPI 117
+         AGO  .LOC
+.LVREG   ANOP
+         ZOPTLR 1,&LV(1)
+.LOC     ANOP
+         AIF  ('&LOC' EQ '').OPTIONS
+         AIF  ('&LOC' EQ 'ANY').SETABOVE
+         AIF  ('&LOC' EQ 'ABOVE').SETABOVE
+         AIF  ('&LOC' EQ 'BELOW').SETBELOW
+         AIF  ('&LOC' EQ 'RES').SETBELOW         RPI 575
+         AIF  ('&LOC(1)' EQ '31' OR '&LOC(2)' EQ '31').SETABOVE 
+         AIF  ('&LOC(1)' EQ '24' OR '&LOC(2)' EQ '24').SETBELOW 
+         MNOTE 12,'GETMAIN INVALID LOC - &LOC'
+         MEXIT
+.SETABOVE ANOP
+&ABOVE   SETB  1
+         AGO   .OPTIONS
+.SETBELOW ANOP
+&ABOVE   SETB  0
+.OPTIONS ANOP
+         LA    0,B'&ABOVE&COND'
+         SVC   4 GMAIN R0=(X'02'=31B,X'01'=COND),R1=LEN OUT(R0=L,R1=A)
+         AIF   ('&A' EQ '').EXIT
+         AIF   ('&A'(1,1) EQ '(').AREG
+         ST    1,&A RPI 542
+         MEXIT
+.AREG    ST    1,0(&A(1)) RPI 542
+         MEXIT
+.ERR1    MNOTE 12,'GETMAIN LENGTH TOO LONG - &LV'
+         MEXIT
+.ERR2    MNOTE 12,'GETMAIN INADDR= NOT SUPPORTED'
+         MEXIT
+.ERR3    MNOTE 12,'GETMAIN LENGTH TOO LONG - &LV'
+         MEXIT
+.ERR4    MNOTE 12,'GETMAIN MF= NOT SUPPORTED'
+         MEXIT
+.EXIT    MEND

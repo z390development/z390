@@ -1,0 +1,210 @@
+         MACRO  
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/07/09                                                *
+.*********************************************************************
+.* 11/07/09 RPI 865 ADD INTERNAL SORT CALLED ZSORT USING SVC X'A1'
+.* 03/14/10 RPI 1110 CHANGE MEMORY=0 TO ALLOC LARGEST BLOCK AVAIL.
+.* 05/24/10 RPI 1116 CORRECT TYPE AND ORDER FIELDS TO 2 BYTES      
+.* 07/26/10 RPI 865  CORRECT OFFSET TO KEY PARMS
+.* 07/26/10 RPI 865  CORRECT EXPANDED KEY TYPES 1-7
+.*********************************************************************
+.* ISORT - INITIALIZE FOR INTERNAL SORT
+.* PUT   - PUT UNOSRTED RECORD TO INTERNAL SORT
+.* GET   - GET SORTED   RECORD FORM INTERNAL SORT
+.*
+.* ISORT REQUIRE FOLLOWING 3 KEYWORD PARAMETERS OR MF > PARMLIST:
+.*   LRECL=    - FIXED RECORD LENGTH (MAY BE MAX VARIABLE REC LENGTH)
+.*   MEMORY=   - SIZE OF SORT TABLE AVAILABLE FOR RECORDS
+.*   FIELDS=   - (OFFSET,LENGTH,TYPE,A/D,,,,,) 
+.*               WITH FOLLOWING 4 PARAMETERS FOR EACH KEY
+.*               A.  OFFSET - BYTES FROM START OF RECORD + 1        
+.*                   1.  +1 IS FOR COMPATIBILITY WITH IDCAMS CMDS.
+.*                   2.  GENERATED OFFSET PASSED TO SORT IS +0
+.*                   3.  IF REGISTER (N) USED IT CONTAINS +0 VALUE
+.*                   4.  OFFSET DOES NOT INCLUDE VAR PREFIX.  
+.*               B.  LENGTH - LENGHT OF KEY IN BYTES
+.*               C.  TYPE OF KEY:
+.*                   1.  AC - ASCII CHARACTERS
+.*                   2.  BI - UNSIGNED BINARY
+.*                   3.  CH - EBCDIC CHARACTERS    
+.*                   4.  FI - SIGNED BINARY (F, H, Q - 2, 4, 8, 16)
+.*                   5.  FL - FLOATING POINT (HFP,BFP,DFP 4,8,16)
+.*                   6.  PD - PACKED DECIMAL (1-16)
+.*                   7.  ZD - ZONED DECIMAL 
+.*               D.  A/D - ASCENDING OR DESCENDING SEQUENCE
+.* THE GENERATED PARMLIST OR PARMLIST PASSED VIA MF=(E,addr) HAS
+.* THE FOLLOWING FORMAT:
+.*   OFFSET LENGTH
+.*        0    4   RECORD LENGTH (MAY BE MAX VAR LENGTH)
+.*        4    4   MAXIMUM MEMORY TO BE USED BY SORT
+.*        8    4   OFFSET TO KEY FIELD N
+.*       12    4   LENGTH OF KEY FIELD N
+.*       16    2   TYPE OF KEY FIELD N (1-7 SEE ABOVE) VL BIT IF LAST 
+.*       18    2   ASCENDING=1 OR DESCENDING=0 FIELD N
+.*
+.* PUT AND GET REQUIRE FOLLOWING KEYWORD PARAMETER:
+.*   REC= - ADDRESS OF RECORD AREA FOR INPUT OR OUTPUT
+.*
+.* RETURN CODES
+.*   0  - OPERATION SUCCESSFUL
+.*   4  - END OF FILE ON GET
+.*  16  - SEE ERROR MESSAGE IF ZSORT ABORTS
+.*
+.* NOTES:
+.*   1.  WOKR FILES SORTWK01 AND SORTWK02 ONLY USED IF MERGE FOR MORE
+.*       THAN 2 SORTED STRINGS REQUIRED.  WORK FILES ARE DYNAMICALLY 
+.*       ALLOCATED TO SORTWK01.TMP AND SORTWK02.TMP IF NOT DEFINED.
+.*********************************************************************
+&NAME    ZSORT &OP,               ISORT, PUT, GET            ALL       X
+               &FIELDS=,          (OFFSET,LENGTH,TYPE,A/D,,) IS/FS     X
+               &LRECL=,           FIXED RECORD LENGTH        IS/FS     X
+               &MEMORY=0,         MEMORY AVAILABLE TO ZSORT  IS/FS     X
+               &REC=,             RECORD ADDRESS             PUT, GET  X
+               &MF=               OPTIONAL LIST FOR EXEC ISORT/FSORT
+&NAME    DS    0H
+         AIF       ('&OP' EQ 'ISORT')
+               ACALL ISORT
+         AELSEIF   ('&OP' EQ 'PUT')
+               ACALL PUT
+         AELSEIF   ('&OP' EQ 'GET')
+               ACALL GET
+         AELSE
+               MNOTE 12,'ZSORT INVALID OP (ISORT,FSORT,PUT, OR GET)'
+         AEND
+         MEXIT
+*
+* INTERNAL SORT
+*
+         AENTRY ISORT
+         CNOP  0,4
+         LA    0,1   ISORT
+         ACALL INIT_PARMS
+         ACALL SVC
+         AEND 
+*
+* PUT RECORD FOR INTERNAL SORT
+*
+         AENTRY PUT
+         ACALL SET_REC
+         LA    0,2   PUT
+         ACALL SVC
+         AEND 
+*
+* GET SORTED RECORD FROM INTERAL SORT AND RETURN ADDR IN R1
+*
+         AENTRY GET
+         ACALL  SET_REC
+         LA    0,3   GET
+         ACALL SVC
+         AEND 
+*
+*
+*
+         AENTRY SET_REC
+       AIF   ('&MF' NE '')
+             MNOTE 12,'ZSORT PUT/GET MF= NOT SUPPORED'
+             MEXIT
+       AEND
+       AIF   ('&REC' EQ '')
+             MNOTE 12,'ZSORT PUT/GET MISSING REC='
+             MEXIT
+       AEND
+       AIF   ('&REC'(1,1) EQ '(')
+         LR    1,&REC(1)
+       AELSE
+         LA    1,&REC
+       AEND
+       AEND
+*
+* GEN PARMS FOR ISORT
+*
+         AENTRY INIT_PARMS
+         AIF   ('&MF' NE '')
+               AIF ('&MF(2)'(1,1) EQ '(')
+         LR    R1,&MF(2)
+               AELSE
+         LA    R1,&MF
+               AEND
+               AEXIT AENTRY
+         AEND
+&NF      SETA  N'&FIELDS/4
+         BAS   1,*+4+8+(8+4)*&NF
+         AIF   ('&LRECL' EQ '')
+               MNOTE 8,'ZSORT - LRECL NOT DEFINED'
+               MEXIT
+         AEND
+         DC    A(&LRECL) ZSORT LRECL
+         AIF   ('&MEMORY' EQ '')
+               MNOTE 8,'ZSORT - MEMORY NOT DEFINED'
+               MEXIT
+         AEND
+         DC    A(&MEMORY) ZSORT MEMORY AVAILABLE
+         AIF   ('&FIELDS' EQ '')
+               MNOTE 8,'ZSORT - FIELDS=(OFF,LNG,TYPE,A/D) NOT DEFINED'
+               MEXIT
+         AEND
+         :&I SETA 1
+         AWHILE (&I LE N'&FIELDS)
+         DC    A(&FIELDS(&I)-1) ZSORT KEY OFFSET
+         DC    A(&FIELDS(&I+1)) ZSORT KEY LENGTH
+               AIF ('&FIELDS(&I+2)' EQ 'AC')                            
+         DC    AL2(1) ZSORT KEY TYPE AC ASCII CHARACTER
+               AELSEIF ('&FIELDS(&I+2)' EQ 'BI')                        
+         DC    AL2(2) ZSORT KEY TYPE BI UNSIGNED BINARY
+               AELSEIF ('&FIELDS(&I+2)' EQ 'CH')
+         DC    AL2(3) ZSORT KEY TYPE CH EBCDIC CHARACTER
+               AELSEIF ('&FIELDS(&I+2)' EQ 'FI')
+         DC    AL2(4) ZSORT KEY TYPE FI SIGNED BINARY (FHQ)
+               AELSEIF ('&FIELDS(&I+2)' EQ 'FL')
+         DC    AL2(5) ZSORT KEY TYPE FL FLOATING POINT
+               AELSEIF ('&FIELDS(&I+2)' EQ 'PD')
+         DC    AL2(6) ZSORT KEY TYPE PD PACKED DECIMAL     
+               AELSEIF ('&FIELDS(&I+2)' EQ 'ZD')
+         DC    AL2(7) ZSORT KEY TYPE ZD ZONED DECIMAL      
+               AELSE                                     
+                   MNOTE 8,'ZSORT KEY TYPE UNKNOWN - &FIELD(&I+2)'
+                   MEXIT
+               AEND
+               AIF ('&FIELDS(&I+3)' EQ 'A')
+         DC    AL2(1) ZSORT KEY ASCENDING     
+               AELSEIF ('&FIELDS(&I+3)'(1,1) EQ 'D')
+         DC    AL2(0) ZSORT KEY DESCENDING      
+               AELSE                                     
+                   MNOTE 8,'ZSORT KEY ORDER NOT A/D - &FIELD(&I+3)'
+                   MEXIT
+               AEND
+               :&I SETA &I+4
+         AEND
+         ORG   *-4
+         DC    X'80' OVERLAY VL BIT FOR END OF LIST
+         ORG
+       AIF   ('&LRECL'(1,1) EQ '(')
+         ST    &LRECL(1),0(1)
+       AEND
+       AIF   ('&MEMORY'(1,1) EQ '(')      
+         ST    &MEMORY(1),4(1)
+       AEND
+         :&I SETA 1
+         :&OFFSET SETA 8         RPI 865
+         AWHILE (&I LE N'&FIELDS)
+               AIF ('&FIELDS(&I)'(1,1) EQ '(') 
+         ST    &FIELDS(&I,1),&OFFSET.(1)       STORE AIX OFFSET REG
+               AEND
+               AIF ('&FIELDS(&I+1)'(1,1) EQ '(') 
+         ST    &FIELDS(&I+1,1),&OFFSET+4(1)   STORE AIX KEY LEN REG
+               AEND
+               :&OFFSET SETA &OFFSET+12
+               :&I      SETA &I+4
+         AEND
+         AEND  
+*
+* ISSUE ZSORT SVC
+*
+         AENTRY SVC
+         SVC   X'A1' ZSORT R0=1-ISORT,2-PUT,3=GET R15= 4 AT EOF
+         AEND
+         MEND

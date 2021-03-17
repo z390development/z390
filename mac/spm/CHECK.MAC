@@ -1,0 +1,43 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI244 IGNORE DSORG=                  
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
+.*********************************************************************
+&N       CHECK &DECB,                                                  X
+               &DSORG=ALL,                                             X
+               &MF=I        NOT SUPPORTED                  
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR1
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*       CHECK COMPLETION OF SEQUENTIAL READ OR WRITE
+.*
+.*       CHECK ECB COMPLETION CODE IN DECB (NO WAIT REQ'D)
+.*          IF      ECB = X'42' TAKE EODAD EXIT
+.*          ELSE IF ECB = X'41' TAKE SYNAD EXIT
+.*          ELSE    EXIT NORMALLY
+.*
+         AIF   ('&DECB'(1,1) EQ '(').DECBREG
+         LA    1,&DECB
+         AGO   .SVC
+.DECBREG ANOP
+         ZOPTLR 1,&DECB(1)
+.SVC     ANOP
+         SVC   155 CHECK R1=DECB
+         MEXIT
+.ERR1    MNOTE 12,'CHECK MF= NOT SUPPORTED'
+         MEND

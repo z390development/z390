@@ -8673,7 +8673,169 @@ git commit -m "Reconstructed version v1.7.05a of z390 committed on behalf of Don
 git tag -a v1.7.05 -m "Version v1.7.05 of z390 has never been released"
 git tag -a v1.7.05a -m "Reconstructed version v1.7.05a of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.7.06
+dir *.* /B /on /s      >.allfile.txt
+dir *.cbl /B /on /s    >\temp\.genmlc.lst
+dir *.zsm /B /on /s   >>\temp\.genmlc.lst
+dir *. /B /A-D /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.7.06
+git add RPI/test.MLC
+git add mac/spm/CASE.MAC
+git add mac/spm/CASENTRY.MAC
+git add mac/spm/DO.MAC
+git add mac/spm/ELSE.MAC
+git add mac/spm/ELSEIF.MAC
+git add mac/spm/ENDCASE.MAC
+git add mac/spm/ENDDO.MAC
+git add mac/spm/ENDIF.MAC
+git add mac/spm/ENDSEL.MAC
+git add mac/spm/IF.MAC
+git add mac/spm/OTHRWISE.MAC
+git add mac/spm/SELECT.MAC
+git add mac/spm/WHEN.MAC
+git add mac/spm/ZSTREQU.MAC
+git add mac/spm/ZSTRGBL.CPY
+git add mac/spm/ZSTRMAC.CPY
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add tests/TESTINS4.MLC
+git rm  z390_v1705a_readme.txt
+git add bat/RUNRTQSAM.BAT
+git add mac/spm/ABEND.MAC
+git add mac/spm/ACB.MAC
+git add mac/spm/ACBD.MAC
+git add mac/spm/ASMMREL.MAC
+git add mac/spm/BLDL.MAC
+git add mac/spm/CALL.MAC
+git add mac/spm/CDED.MAC
+git add mac/spm/CFD.MAC
+git add mac/spm/CHECK.MAC
+git add mac/spm/CLOSE.MAC
+git add mac/spm/CMDPROC.MAC
+git add mac/spm/CPOOL.MAC
+git add mac/spm/CTD.MAC
+git add mac/spm/CVTD.MAC
+git add mac/spm/DCB.MAC
+git add mac/spm/DCBD.MAC
+git add mac/spm/DCBE.MAC
+git add mac/spm/DECBD.MAC
+git add mac/spm/DEFINE.MAC
+git add mac/spm/DEFLMOD.CPY
+git add mac/spm/DELETE.MAC
+git add mac/spm/DEQ.MAC
+git add mac/spm/ENQ.MAC
+git add mac/spm/EQUREGS.MAC
+git add mac/spm/ERASE.MAC
+git add mac/spm/ESPIE.MAC
+git add mac/spm/ESTAE.MAC
+git add mac/spm/ESTAEX.MAC
+git add mac/spm/EXEC.MAC
+git add mac/spm/EXIT.MAC
+git add mac/spm/EXTRACT.MAC
+git add mac/spm/FREEMAIN.MAC
+git add mac/spm/GENCB.MAC
+git add mac/spm/GET.MAC
+git add mac/spm/GETENV.MAC
+git add mac/spm/GETMAIN.MAC
+git add mac/spm/GPARMOD.MAC
+git add mac/spm/GUAM.MAC
+git add mac/spm/IHADCBE.MAC
+git add mac/spm/IHAEPIE.MAC
+git add mac/spm/IHASDWA.MAC
+git add mac/spm/KSIRD.MAC
+git add mac/spm/KSITD.MAC
+git add mac/spm/LINK.MAC
+git add mac/spm/LOAD.MAC
+git add mac/spm/LX.MAC
+git add mac/spm/MODCB.MAC
+git add mac/spm/OPEN.MAC
+git add mac/spm/PENTRY.MAC
+git add mac/spm/PERFORM.MAC
+git add mac/spm/PEXIT.MAC
+git add mac/spm/PM.MAC
+git add mac/spm/POINT.MAC
+git add mac/spm/POST.MAC
+git add mac/spm/PSAD.MAC
+git add mac/spm/PUT.MAC
+git add mac/spm/READ.MAC
+git add mac/spm/RESTORE.MAC
+git add mac/spm/RETURN.MAC
+git add mac/spm/RPL.MAC
+git add mac/spm/RPLD.MAC
+git add mac/spm/RT1.MAC
+git add mac/spm/SAVE.MAC
+git add mac/spm/SETRP.MAC
+git add mac/spm/SHOWCB.MAC
+git add mac/spm/SNAP.MAC
+git add mac/spm/SQL_INCLUDE.MAC
+git add mac/spm/SQXTR.MAC
+git add mac/spm/STFSMODE.MAC
+git add mac/spm/STIMER.MAC
+git add mac/spm/STLINENO.MAC
+git add mac/spm/STORAGE.MAC
+git add mac/spm/STTMPMD.MAC
+git add mac/spm/STX.MAC
+git add mac/spm/SUBENTRY.MAC
+git add mac/spm/SUBEXIT.MAC
+git add mac/spm/SYSSTATE.MAC
+git add mac/spm/SYSTRACE.MAC
+git add mac/spm/TCPIO.MAC
+git add mac/spm/TESTCB.MAC
+git add mac/spm/TGET.MAC
+git add mac/spm/TIME.MAC
+git add mac/spm/TN3270.MAC
+git add mac/spm/TPUT.MAC
+git add mac/spm/TTIMER.MAC
+git add mac/spm/VCDTD.MAC
+git add mac/spm/WAIT.MAC
+git add mac/spm/WRITE.MAC
+git add mac/spm/WTO.MAC
+git add mac/spm/WTOR.MAC
+git add mac/spm/XCTL.MAC
+git add mac/spm/XLATE.MAC
+git add mac/spm/YREGS.MAC
+git add mac/spm/ZCALL.MAC
+git add mac/spm/ZCLOSE.MAC
+git add mac/spm/ZCVTD.MAC
+git add mac/spm/ZDEFINE.CPY
+git add mac/spm/ZDEFINE.MAC
+git add mac/spm/ZDELETE.MAC
+git add mac/spm/ZGENACB.MAC
+git add mac/spm/ZGENMACF.MAC
+git add mac/spm/ZGENOPTD.MAC
+git add mac/spm/ZGENRPL.MAC
+git add mac/spm/ZKSIRD.MAC
+git add mac/spm/ZKSITD.MAC
+git add mac/spm/ZMFACC.MAC
+git add mac/spm/ZMODCB.MAC
+git add mac/spm/ZOPEN.MAC
+git add mac/spm/ZOPTLR.MAC
+git add mac/spm/ZREAD.MAC
+git add mac/spm/ZRETURN.MAC
+git add mac/spm/ZSHOWCB.MAC
+git add mac/spm/ZSORT.MAC
+git add mac/spm/ZTESTCB.MAC
+git add mac/spm/ZWRITE.MAC
+git add qsam/
+git add rpi/RUNRPI2015.BAT
+git add rpi/TDP.MLC
+git add rpi/TMP.MLC
+git add z390_v1706_readme.txt
+
+==> Create commit for V1.7.06
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2021-03-17 14:21:00 -0500
+set GIT_COMMITTER_DATE=2021-03-29 23:49:00 +0100
+git commit -m "Reconstructed version v1.7.06 of z390 committed on behalf of Don Higgins"
+git tag -a v1.7.06 -m "Reconstructed version v1.7.06 of z390 committed on behalf of Don Higgins"
+git gc --aggressive
 
 
 

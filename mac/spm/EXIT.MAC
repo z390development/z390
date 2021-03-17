@@ -1,0 +1,17 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/08/06 RPI 308 ADD EXIT FOR SVC 3 USED IN CICS.MLC TO EXIT LINK
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+         MACRO
+&N       EXIT                                                           
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         SVC   3   EXIT FROM LINK TO CALLER OR EZ390
+         MEND
+

@@ -1,0 +1,50 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/26/07                                                 *
+.*********************************************************************
+.* 11/26/07 INITIAL CODING OF KSIR KSDS INSERT TREE RECORD CONTROL BLK                   
+.* 01/08/08 RPI 723 REVERSE FWD/BWD FOR CONSISTENCE WITH LOW/HIGH SEQ                    
+.* 02/18/08 RPI 807 ADD KSIRLOWH AND KSIRHGHH                    
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+         KSIRD  
+.*
+.* IF KSIR ALREADY DEFINED EXIT NOW
+.*
+         GBLB  &Z390_KSIR                         
+         GBLC  &Z390_KSIR_NAME,&Z390_KSIR_TYPE            
+         AIF   (&Z390_KSIR).EXIT                          
+&Z390_KSIR     SETB 1                                   
+&Z390_KSIR_NAME SETC '&SYSLOC'                                    
+&Z390_KSIR_TYPE SETC '&SYSSTYP'        
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'KSIR UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*       KEYED SEQUENTIAL INSERT RECORD CONTROL BLOCK
+.*
+.*       IF VX0 INDEX XRBA HIGH BIT (HB) THEN IT POINTS TO VES KSIT
+.*       KSITTOP - XRBA TO TOP   KSIR IN BALANCED TREE
+.*       KSITFST - XRBA TO FIRST KSIR IN TREE FOR SEQ FWD
+.*       KSITLST - XRBA TO LAST  KSIR IN TREE FOR SEQ BWD
+.*        
+IHAKSIR  DSECT
+KSIRID   DS   CL4 KSIT ID C'KSIR'
+KSIRPAR  DS   XL8 XRBA TO PARENT KSIR OR KSIT IN AVL BALANCED TREE
+KSIRLOW  DS   XL8 XRBA TO NEXT LOWEST  KSIR NODE IN TREE OR -1   
+KSIRHIGH DS   XL8 XRBA TO NEXT HIGHEST KSIR NODE IN TREE OR -1 
+KSIRBWD  DS   XL8 XRBA TO NEXT LOWEST  KSIR IN TREE OR -1
+KSIRFWD  DS   XL8 XRBA TO NEXT HIGHEST KSIR IN TREE OR -1
+KSIRREC  DS   XL8 XRBA TO RECORD OR -1 IF DELETED             
+KSIRLHT  DS   X   LOW  BRANCH AVL TREE HEIGHT (0-63)
+KSIRHHT  DS   X   HIGH BRANCH AVL TREE HEIGHT (0-63)
+KSIRLEN  EQU  *-IHAKSIR                                 
+          AIF  ('&Z390_KSIR_NAME' EQ '' OR '&Z390_KSIR_TYPE' EQ '').EXIX
+               T
+&Z390_KSIR_NAME &Z390_KSIR_TYPE                    
+.EXIT    ANOP
+         MEND

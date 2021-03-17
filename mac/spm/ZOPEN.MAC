@@ -1,0 +1,135 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/15/08                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands   
+.* 11/13/05 RPI88 - correct test for DCB register parm  
+.* 11/13/05 RPI96 - add additional validity checking for parms
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/10/06 RPI244 IGNORE OR ISSUE UNSUPPORTED ERROR, SUPPORT (REG)
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/03/07 RPI 668 check return code for each svc and exit if nz
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 09/16/07 RPI 697 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 09/16/07 RPI 682 CHANGE TO GEN DCBD REQUIRED FOR OPEN FLAG REFS  
+.* 10/14/07 RPI 718 ISSUE MNOTE ERR FOR NN OR RNN WITHOUT ((REG),OPT)   
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION                     
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 09/11/08 RPI 764 allow OPEN (reg) for input, use ZSTRMAC     
+.* 04/19/09 RPI 1021 support MF=L/E                             
+.* 04/19/09 RPI 1023 support lower case options                 
+.* 05/19/09 RPI 1029 remove SPM macros for compatibility      
+.* 05/28/09 RPI 1045 change to only assume register form if (..)
+.* 01/26/11 RPI 1139 remove space from SETC expression
+.*********************************************************************
+&N       ZOPEN &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
+               &MF=I,      STD, LIST, OR EXEC                          X
+               &MODE=31,   IGNORED AS IT WORKS IN BOTH                 X
+               &TYPE=      FLAG TYPE J AS UNSUPPORTED               
+         AIF   (N'&SYSLIST NE 1)
+               MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+               MEXIT
+         AEND
+.*
+.* OPEN 1 OR MORE FILES DEFINED BY DCB'S WITH INPUT, OUTPUT, UPDATE
+.* OPTIONS
+.*
+         AIF   ('&TYPE' NE '')             
+               MNOTE 12,'OPEN TYPE= NOT SUPPORTED'
+               MEXIT
+         AEND
+         :&NP      SETA  N'&DCBLIST
+         AIF   ('&MF' EQ 'L')
+               AIF   ('&N' NE '')          
+                    :&N       DS    0F
+               AEND
+               :&I       SETA  1
+               AWHILE (&I LE &NP)
+                   :&DCB    SETC '&DCBLIST(&I)'
+                   :&OPTION SETC (UPPER '&DCBLIST(&I+1,1)')  RPI 1023
+                   AIF ('&DCB'(1,1) EQ '(') RPI 764 RPI 1045
+                       MNOTE 8,'ZOPEN REGISTER FORM NOT ALLOWED'        
+                       MEXIT
+                   AEND
+                   AIF (&I+2 GE &NP)
+                       :&VL SETC 'X''80000000''+'
+                   AELSE
+                       :&VL SETC ''
+                   AEND
+                   AIF ('&OPTION' EQ '' OR '&OPTION' EQ 'INPUT')
+                       DC  A(&VL&DCB,DCBOFLGS_GM)   READ ONLY
+                   AELSEIF   ('&OPTION' EQ 'OUTPUT')
+                       DC  A(&VL&DCB,DCBOFLGS_PM)   WRITE ONLY
+                   AELSEIF   ('&OPTION' EQ 'UPDATE')
+                       DC  A(&VL&DCB,DCBOFLGS_RW)   READ AND WRITE
+                   AELSE
+                       MNOTE 12,'OPEN OPTION NOT SUPPORTED - &OPTION'
+                       MEXIT
+                   AEND
+                   :&I SETA &I+2
+               AEND
+         AELSEIF ('&MF(1)' EQ 'E')
+               AIF   ('&N' NE '')          
+                    :&N       DS    0H
+               AEND
+               AIF  ('&MF(2)'(1,1) EQ '(')
+                    ZOPTLR 14,&MF(2)
+               AELSE
+                    LA     14,&MF(2)
+               AEND
+               B    ZOPEN_DO_LOOP&SYSNDX
+ZOPEN_DO_UNTIL&SYSNDX DS 0H
+               LTR  1,1
+               BM   ZOPEN_DO_EXIT&SYSNDX
+               LTR  15,15
+               BNZ  ZOPEN_DO_EXIT&SYSNDX
+ZOPEN_DO_LOOP&SYSNDX DS 0H
+                    L   1,0(14)
+                    L   0,4(14)
+                    SVC 19
+                    AHI 14,8
+               B    ZOPEN_DO_UNTIL&SYSNDX
+ZOPEN_DO_EXIT&SYSNDX DS 0H
+         AELSEIF ('&MF'  EQ 'I')
+               AIF   ('&N' NE '')          
+                    :&N       DS    0H
+               AEND
+               :&I       SETA  1
+               AWHILE (&I LE &NP)
+                   :&DCB    SETC '&DCBLIST(&I)'
+                   :&OPTION SETC UPPER('&DCBLIST(&I+1,1)')  RPI 1023
+                   AIF ('&DCB'(1,1) EQ '(') RPI 764 RPI 1045
+                       ZOPTLR 1,&DCB(1)
+                   AELSE
+                       LA     1,&DCB
+                   AEND
+                   AIF ('&OPTION' EQ '' OR '&OPTION' EQ 'INPUT')
+                       LA  0,DCBOFLGS_GM   READ ONLY
+                   AELSEIF   ('&OPTION' EQ 'OUTPUT')
+                       LA  0,DCBOFLGS_PM   WRITE ONLY
+                   AELSEIF   ('&OPTION' EQ 'UPDATE')
+                       LA  0,DCBOFLGS_RW   READ AND WRITE
+                   AELSE
+                       MNOTE 12,'OPEN OPTION NOT SUPPORTED - &OPTION'
+                       MEXIT
+                   AEND
+                   SVC   19 OPEN R0=TYPE,R1=DCB/ACB
+                   AIF    (&NP GT 2)
+                         LTR   15,15
+                         BNZ   Z390_OPEN_EXIT&SYSNDX RPI 668
+                   AEND
+                   :&I SETA &I+2
+               AEND
+               AIF   (&NP GT 2)
+                   :Z390_OPEN_EXIT&SYSNDX EQU *
+               AEND
+         AELSE
+               MNOTE 12,'OPEN MF= TYPE NOT SUPPORTED &MF'
+               MEXIT
+         AEND
+         DCBD
+         MEND

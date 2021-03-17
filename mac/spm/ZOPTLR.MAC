@@ -1,0 +1,30 @@
+         MACRO                                                          00002   
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 08/22/07                                                 *
+.*********************************************************************
+.* 08/22/07 RPI 680 ADD ZOPTLR TO OPTIMIZE LR GENERATION        
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 11/10/08 RPI 943 check for (reg) and upgrade to ZSTRMAC 
+.*********************************************************************
+.*
+.* TEST FOR SOURCE AND TARGET MATCH TO SKIP GEN OF LR.
+.*
+.*   1. CHECK FOR LITERAL MATCH OF &P1 VS &P2 OR R&P1 VS &P2
+.*      (THIS WILL HANDLE R?? WHEN NOT DEFINED YET BY MACRO).
+.*   2. IF &P2 IS DEFINED SYMBOL THEN COMPARE &P1 WITH &P2 EQU VALUE.
+.*   3. ELSE GENERATE LR TO BE SAFE. 
+.*********************************************************************
+&N       ZOPTLR &P1,&P2                                                 
+       AIF   ('&N' NE '')           
+&N       DS    0H
+       AEND   
+       AIF     ('&P1(1)' NE '&P2(1)'                                   X
+                AND '&P1(1)' NE 'R&P2(1)'                              X
+                AND 'R&P1(1)' NE '&P2(1)')
+         LR    &P1,&P2
+       AEND
+         MEND

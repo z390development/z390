@@ -1,0 +1,73 @@
+         MACRO                                                           
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/11/07                                                 *
+.*********************************************************************
+.* 07/11/07 RPI 654 ADD PERFORM, PM, PENTRY, PEXIT WITH RENT SUPPORT       
+.* 10/01/07 RPI 709 REMOVE PTRACE REFS                                     
+.*********************************************************************
+&N       PENTRY                                                         
+.*             AUTHOR.   DON HIGGINS.                                   
+.*             DATE.     01/06/75.                                      
+.*             REMARKS.  PERFORM ROUTINE ENTRY POINT  RPI 709            
+.*                                                                      
+.*       REV1 01/04/78 DSH - ADD STACK OPTIONS (SEE SUBENTRY)           
+         GBLC  &PSTKREG,&PBASREG,&PBASLAB                               
+         GBLB  &PSTKSW,&PBASESW,&PSAVESW,&PCHKSW                        
+         LCLC  &STKREG                                                  
+         LCLA  &OFFSET                                                  
+         GBLB  &STKOPT  RPI 709 REMOVE &TRACE                   
+         GBLC  &PENAME                                                  
+         AIF   (&PBASESW EQ 0).L0                                       
+         LTORG                                                          
+.L0      ANOP                                                           
+&PENAME  SETC  '&N'                                                     
+         DC    0H'0',CL8'&N'                                            
+         AIF   (&STKOPT EQ 1).STK                                       
+         B     *+4                                                      
+&N       EQU   *                                                        
+         AGO   .EXIT  RPI 709                                           
+.STK     AIF   (K'&N EQ 0).STK1                                         
+&N       DS    0H                                                       
+.STK1    ANOP                                                           
+         AIF   (&PSTKSW EQ 1).L1                                        
+&STKREG  SETC  '15'                                                     
+         L     15,80(13)                    LOAD STACK POINTER          
+&OFFSET  SETA  &OFFSET+4                                                
+         AGO   .L2                                                      
+.L1      ANOP                                                           
+&STKREG  SETC  '&PSTKREG'                                               
+.L2      AIF   (&PCHKSW EQ 1).L3                                        
+         ST    14,0(&STKREG)  STORE LINK - NO CHECKING                  
+&OFFSET  SETA  &OFFSET+4                                                
+         AGO   .L4                                                      
+.L3      ANOP                                                           
+         CLI   0(&STKREG),X'00'                                         
+         BE    *+6                                                      
+         DC    X'0000'                                                  
+         STCM  14,7,1(&STKREG) STORE LINK - WITH CHECKING               
+&OFFSET  SETA  &OFFSET+14                                               
+.L4      ANOP                                                           
+         AIF   (&PBASESW EQ 0).L4A                                      
+         ST    &PBASREG,4(&STKREG) SAVE BASE                            
+         BALR  &PBASREG,0 SET NEW BASE                                  
+         USING *,&PBASREG                                               
+&OFFSET  SETA  &OFFSET+6                                                
+&PBASLAB SETC  '&N+&OFFSET'                                             
+         LA    &STKREG,8(&STKREG)  INCREMENT STACK WITH PBASE=YES       
+         AGO   .L4B                                                     
+.L4A     ANOP                                                           
+         LA    &STKREG,4(&STKREG)  INCREMENT STACK WITHOUT BASES        
+.L4B     ANOP                                                           
+         AIF   (&PSTKSW EQ 1).L5                                        
+         ST    15,80(13) STORE STACK                                    
+.L5      AIF   (&PSAVESW EQ 0).L6                                       
+         LM    14,15,72(13)                                             
+.L6      ANOP                                                           
+.* RPI 709                                      
+.EXIT    ANOP                                                           
+         MEND                                                           
+

@@ -1,0 +1,50 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 10/27/05 RPI56 - correct OIHH to OILH to set dump bit       
+.* 04/10/06 RPI 244 - update parm support                        
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       ABEND &COMP,      COMPLETION CODE NNN OR (REG)                X
+               &DUMP,      DUMP ALLOCATED PROGRAM STORAGE              X
+               &STEP,      IGNORED                                     X
+               &TYPE,      IGNORED                                     X
+               &MF=I,      NOT SUPPORTED                               X
+               &REASON=,   IGNORED                                     X
+               &DUMPOPT=,  IGNORED                                     X
+               &DUMPOPX=   IGNORED                                     
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR1
+         AIF   (N'&SYSLIST GE 1).CHKHIGH
+         MNOTE 12,'ABEND COMPLETION CODE REQUIRED'
+         MEXIT
+.CHKHIGH AIF   (N'&SYSLIST LE 4).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
+         MEXIT
+.NPOK    ANOP
+.*
+.* ABORT TASK WITH OPTIONAL DUMP
+.*
+         AIF  ('&COMP'(1,1) EQ '(').REGCOMP
+         LA   1,&COMP
+         AGO  .CHKDUMP
+.REGCOMP ANOP
+         ZOPTLR 1,&COMP(1)
+.CHKDUMP ANOP
+         AIF  ('&DUMP' EQ '').SKIPDUMP
+         OILH 1,X'8000'
+.SKIPDUMP ANOP  
+         SVC  13 ABEND R1=COMP CODE AND HIGH BIT = DUMP PGM STORAGE
+         MEXIT
+.ERR1    MNOTE 12,'ABEND MF= NOT SUPPORTED'
+         MEND

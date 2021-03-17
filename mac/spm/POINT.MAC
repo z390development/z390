@@ -1,0 +1,82 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 11/26/05 RPI111- add missing AGO      
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI244 SUPPORT TYPE=REL         
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 07/11/07 RPI 654 CORRECT TO SUPPORT DCBBLKSIF
+.* 08/07/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       POINT &DCB,         DCB                                       X
+               &REL,         RELATIVE BLOCK                            X
+               &MF=I,        NOT SUPPORTED                             X
+               &RBA=,        EXTENSION RELATIVE BYTE ADDR              X
+               &RPL=,        VSAM RPL ADDR FOR KSDS/RRDS/ESDS          X
+               &TYPE=REL     REL (ABS NOT SUPPORTED)
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR2
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+         MEXIT
+.NPOK    ANOP
+         AIF   ('&RPL' NE '').VSAM
+.*
+.* SET FILE POINTER FOR READ/WRITE RANDOM ACCESS
+.*   DCB  - REQUIRED WITH DCBBLKSI DEFINED 
+.*   REL  - RX OF FULL WORD RELATIVE RECORD NUMBER (0-N)
+.*   RBA= - RX OF DOUBLE WORD RELATIVE BYTE POSITION (OVERRIDES REL)
+.*
+.*   NOTE RBA= IS EXTENSION OF POINT FOR UP TO 2 GB RANDOM ACCESS
+.*
+         AIF   ('&TYPE' NE 'REL').ERR1
+         AIF   ('&DCB'(1,1) EQ '(').DCBREG
+         LA    1,&DCB
+         AGO   .CHKRBA
+.DCBREG  ANOP
+         ZOPTLR 1,&DCB(1)
+.CHKRBA  ANOP
+         AIF   ('&RBA' EQ '').CHKREL
+         AIF   ('&RBA'(1,1) EQ '(').RBAREG
+         LG    0,&RBA
+         AGO   .SVC
+.RBAREG  ANOP
+         LG    0,0(&RBA(1))
+         AGO   .SVC            RPI111
+.CHKREL  ANOP
+         AIF   ('&REL'(1,1) EQ '(').RELREG
+         LGF   0,&REL
+         AGO   .TORBA
+.RELREG  ANOP
+         LGF   0,0(&REL(1))
+.TORBA   ANOP
+         L     15,DCBBLKSIF-IHADCB(1)      RPI 654
+         MSGFR 0,15
+.SVC     ANOP
+         SVC   156 POINT R1=DCB R0=(64 BIT RBA)
+         MEXIT
+.VSAM    ANOP
+         AIF   ('&RPL'(1,1) EQ '(').RPLREG
+         LA    1,&RPL
+         AGO   .VSVC
+.RPLREG  ANOP
+         ZOPTLR 1,&RPL(1)
+.VSVC    ANOP
+         LA    0,RPLOPPNT
+         SVC   121 VSAM POINT R0=4 R1=A(RPL)
+         MEXIT         
+.ERR1    MNOTE 12,'POINT ONLY TYPE=REL SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'POINT MF= NOT SUPPORTED'
+         MEXIT
+         MEND

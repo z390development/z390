@@ -1,0 +1,137 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/28/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI  47  - add WTOR as part of first GUAM release in v1008  
+.* 12/02/05 RPI 114 - make wto label more unique to avoid duplicates   
+.* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
+.* 01/21/06 RPI 188 REQUIRE LENGTH IF REPLY REG FORM  
+.* 04/12/06 RPI 244 IGNORE UNUSED KW PARMS, MNOTE ERROR FOR TEXT=
+.* 04/25/06 RPI 290 ALWAYS GEN LABEL IF ANY, CHECK MF=
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 02/06/09 RPI 992 add WTOR list and execute forms 
+.* 05/22/10 RPI 1120 clear high bits in replay address (was NIHH)
+.*********************************************************************
+.*
+.*  WTOR - write to operator with reply (routed to GUAM window if 
+.*         GUI option active and copy of msg and reply to log)
+.*
+.*  WTOR   'msg',reply,reply_len,ecb
+.*
+.*         'msg' - text to be displayed prior to waiting for reply
+.*         reply - rx label or (reg) pointing to reply field
+.*         reply_len - length of reply field (omit to use rx length)
+.*         ecb       - rx label or (reg) of 4 byte ECB which should be
+.*                     zeros when WTOR issued.  Set to X'80000000'
+.*                     while waiting for reply and X'40000000' when
+.*                     reply complete.  Use WAIT ECB=ecb to wait for
+.*                     reply posting.
+.*  INPUT:
+.*    R0  - REPLY FIELD ADDR
+.*    R1  - WTO MSG ADDR WITH 4 BYTE PREFIX
+.*    R14 - LENGTH OF REPLY FIELD
+.*    R15 - ECB ADDR
+.*********************************************************************
+&N       WTOR  &MSG,         PROMPT MSG FOR REPLY                      X
+               &REPLY,       REPLY ADDRESS                             X
+               &REPLYLEN,    REPLY LENGTH                              X
+               &ECB,         ECB POSTED WHEN REPLY READY               X
+               &TEXT=,       NOT SUPPORTED                             X
+               &MF=I,        LIMITED MF=L AND MF=(E,WTORL) RPI 992     X
+               &CART=,       IGNORED                                   X
+               &CONSID=,     IGNORED                                   X
+               &CONSNAME=,   IGNORED                                   X
+               &DESC=,       IGNORED                                   X
+               &KEY=,        IGNORED                                   X
+               &MCSFLAG=,    IGNORED                                   X
+               &MSGTYPE=,    IGNORED                                   X
+               &RPLYISUR=,   IGNORED                                   X
+               &ROUTCDE=,    IGNORED                                   X
+               &TOKEN=       IGNORED                                           
+         AIF   (N'&SYSLIST LE 4).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
+         MEXIT
+.NPOK    ANOP
+         AIF   ('&TEXT' NE '').ERR1
+         AIF   ('&MF'    EQ 'L').WTORLIST RPI 992
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF(1)' EQ 'E').WTOREXEC RPI 992
+         AIF   ('&MF'    NE 'I').ERR2
+         BAL   1,*+(WTOR#&SYSNDX._EOT-*+1)/2*2
+         DC    AL2(WTOR#&SYSNDX._EOT-*,0),C&MSG
+WTOR#&SYSNDX._EOT EQU *
+         AIF   ('&REPLY'(1,1) EQ  '(').REPLY_REG
+         LA    0,&REPLY
+         AGO   .CHKLEN
+.REPLY_REG ANOP
+         ZOPTLR 0,&REPLY(1)
+         AIF   ('&REPLYLEN' NE '').CHKLENREG
+         MNOTE 12,'WTOR REPLY LENGTH REQUIRED'
+         MEXIT
+.CHKLEN  ANOP
+         AIF   ('&REPLYLEN' EQ '').DEFLEN
+.CHKLENREG ANOP
+         AIF   ('&REPLYLEN'(1,1) EQ '(').LEN_REG
+         LA    14,&REPLYLEN
+         AGO   .CHKECB
+.LEN_REG ANOP
+         AIF   ('&REPLYLEN(1)' EQ '0' OR '&REPLYLEN(1)' EQ 'R0').ERR3
+         ZOPTLR 14,&REPLYLEN(1)
+         AGO   .CHKECB
+.DEFLEN  ANOP
+         LA    14,L'&REPLY
+.CHKECB  ANOP
+         AIF   ('&ECB'(1,1) EQ '(').ECBREG
+         LA    15,&ECB
+         AGO   .SVC
+.ECBREG  ANOP
+         ZOPTLR 15,&ECB(1)
+.SVC     ANOP
+         SVC   160 WTOR R1=MSG,R0=REPLY,R14=LEN,R15=ECB
+         MEXIT
+.********************************************************************
+.* WTOR MF=L LIST FORM       RPI 992
+.********************************************************************
+.WTORLIST ANOP
+&N       DS    0A
+         DC    AL1(&REPLYLEN)  +00 REPLY LENGTH
+         DC    AL3(&REPLY)     +01 REPLY ADDR (24 BIT)  
+         DC    A(&ECB)         +04 REPLY ECB ADDRESS
+&LMSG    SETA  K'&MSG-2
+         DC    AL2(&LMSG)      +08 LENGTH OF MSG
+         DC    AL2(X'8020')    +0A WTOR MCS FLAGS (PRI CON,PGMR INFO)
+         DC    C&MSG           +0C MESSAGE
+         MEXIT
+.********************************************************************
+.* WTOR MF=(E,WTORLIST) EXEC FORM   RPI 992
+.********************************************************************
+.WTOREXEC ANOP
+         AIF   ('&MF(2)'(1,1) EQ '(').WTOREXEC_REG
+         LA    1,&MF(2)   R1=WTOR LIST ADDR
+         AGO   .WTOREXEC_COM
+.WTOREXEC_REG ANOP
+         ZOPTLR 1,&MF(2,1) R1=WTOR LIST ADDR
+.WTOREXEC_COM ANOP
+         L     0,0(1)      R0 =REPLY FIELD ADDR (24B REQUIRES RMODE24)
+         NILH  0,X'00FF'   TURN OFF HIGH BITS IN 24 BIT ADDR RPI 1120
+         SR    14,14
+         IC    14,0(1)     R14=REPLY LENGTH    
+         L     15,4(1)     R15=ECB ADDR
+         LA    1,8(1)      R1 =MSG WITH 4 BYTE PREFIX AL2(LEN,FLAGS)     
+         AGO   .SVC
+.ERR1    MNOTE 12,'WTOR TEXT= NOT SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'WTOR MF=E/L NOT SUPPORTED'
+         MEXIT
+.ERR3    MNOTE 12,'WTOR REPLY LENGTH REGISTER 0 NOT ALLOWED'
+         MEXIT
+         MEND
+

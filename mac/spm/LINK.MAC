@@ -1,0 +1,138 @@
+         MACRO
+.********************************************************************* 
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27  - issue error for any undefined operands     
+.* 10/21/05 RPI41  - add PARAM= and VL= support
+.* 11/13/05 RPI89  - add support for DDNAME= and DSNAME=
+.* 11/16/05 RPI95  - add DDNAME= and DSNAME= conflict checking
+.* 11/19/05 RPI102 - allow DDNAME or DSNAME to replace EP or EPLOC
+.* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 03/28/06 RPI266 CORRECT MISSING .DSNERR LABEL (WAS .DSHERR)
+.* 04/11/06 RPI244 SUPPORT DE=, UNSUPPORTED ERRET=                         
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 03/04/12 RPI 1194 support single parm without (...)
+.*********************************************************************
+.* LOAD AND EXEC PGM VIA SVC 6
+.*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
+.*   R15 = 0    USE SYS390 DEFAULT PATH FROM EZ390 PARM
+.*   R15 = ADDR DSNAME FILE SPEC IF HIGH BIT OFF (NULL OR DQ DELIMITED)
+.*   R15 = ADDR DDNAME IF HIGH BIT ON (8 BYTES SPACE FILLED)
+.* NOTES:
+.*   1.  DSNAME OR DDNAME MAY BE 1 OR MORE DIRECTORY PATHS TO SEARCH
+.*       OR THEY MAY BE PATH AND FILE NAME WHICH OVERRIDES EP/EPLOC
+.*   2.  RETURN CODE SET BY CALLED PGM IF SUCCESSFUL
+.*   3.  ABEND WITH S806
+.*********************************************************************
+&N       LINK  &DCB=,         IGNORED                                  X
+               &DDNAME=,      LOAD FROM DIR OR FILE DEFINED IN ENV.VAR X
+               &DE=,          BLDL DIRECTORY ENTRY                     X
+               &DSNAME=,      LOAD FROM RX OR (REG) FILE SPEC          X
+               &EP=,          PGMNAME 1-8 CHAR                         X
+               &EPLOC=,       RX LABEL OR (REG) POINTER TO PGM FIELD   X
+               &ERRET=,       ERROR EXIT NOT SUPPORTED                 X
+               &ID=,          IGNORED                                  X
+               &LSEARCH=,     IGNORED                                  X
+               &MF=I,         NOT SUPPORTED                            X
+               &PARAM=,       PARAMETER LIST                           X
+               &VL=1          SET HIGH BIT IN LAST PARM ADDR           
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR2
+         AIF   (N'&SYSLIST LE 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+         MEXIT
+.NPOK    ANOP
+         AIF    ('&ERRET' NE '').ERR1
+         AIF    ('&PARAM' EQ '').ENDPARM
+         AIF    ('&PARAM'(1,1) NE '(').ONEPARM RPI 1194
+         LA     1,=A&PARAM
+         AGO    .ONESKIP
+.ONEPARM ANOP
+         LA     1,=A(&PARAM)
+.ONESKIP ANOP
+         AIF    (&VL NE 1).ENDPARM
+&OFF     SETA   N'&PARAM*4-4
+         OI     &OFF.(1),X'80'
+.ENDPARM ANOP
+         AIF   ('&DE' NE '').DE   
+         AIF   ('&EP' NE '').EP
+         AIF   ('&EPLOC' NE '').EPLOC
+         SR    0,0
+         AIF   ('&DDNAME' NE '' OR '&DSNAME' NE '').CHKDSN
+         MNOTE 12,'LINK REQUIRES EP, EPLOC, DDNAME, OR DSNAME'
+         MEXIT
+.DE      ANOP
+         AIF   ('&DE'(1,1) EQ '(').DEREG
+         LA    0,&DE
+         AGO   .DEADD
+.DEREG ANOP
+         ZOPTLR 0,&DE(1)
+.DEADD   ANOP
+         AHI   0,2
+         AIF   ('&EP' EQ '' AND '&EPLOC' EQ '').CHKDSN
+         MNOTE 12,'LINK DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
+         MEXIT
+.EP      ANOP
+         LA    0,=CL8'&EP'
+         AGO   .CHKDSN
+.EPLOC   ANOP
+         AIF   ('&EPLOC'(1,1) EQ '(').EPLOCREG
+         LA    0,&EPLOC
+         AGO   .CHKDSN
+.EPLOCREG ANOP
+         AIF   ('&EPLOC(1)' EQ '1' OR '&EPLOC(1)' EQ 'R1').EPERR
+         ZOPTLR 0,&EPLOC(1)
+         AGO   .CHKDSN
+.EPERR   ANOP
+         MNOTE 12,'LINK INVALID EPLOC REG'
+         MEXIT
+.CHKDSN  ANOP
+         AIF   ('&DSNAME' EQ '').CHKDD
+         AIF   ('&DDNAME' EQ '').DSNOK
+         MNOTE 12,'LINK DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
+         MEXIT
+.DSNOK   ANOP
+         AIF   ('&DSNAME'(1,1) EQ '(').DSNREG
+         LA    15,&DSNAME
+         AGO   .SVC
+.DSNREG  ANOP
+         AIF   ('&DSNAME(1)' EQ '0' OR '&DSNAME(1)' EQ 'R0').DSNERR
+         ZOPTLR 15,&DSNAME(1)
+         AGO   .SVC
+.DSNERR  ANOP
+         MNOTE 12,'LINK INVALID DSNAME REG'
+         MEXIT
+.CHKDD   ANOP
+         AIF   ('&DDNAME' EQ '').DEFPATH
+         AIF   ('&DDNAME'(1,1) EQ '(').DDREG
+         LA    15,=CL8'&DDNAME'
+         OILH  15,X'8000' DD VS DSN
+         AGO   .SVC
+.DDREG   ANOP
+         AIF   ('&DDNAME(1)' EQ '0' OR '&DDNAME(1)' EQ 'R0').DDERR
+         ZOPTLR 15,&DDNAME(1)
+.SKP1    ANOP
+         OILH  15,X'8000' DD VS DSN
+         AGO   .SVC
+.DDERR   ANOP
+         MNOTE 12,'LINK INVALID DDNAME REG'
+         MEXIT
+.DEFPATH ANOP
+         SR    15,15 USE DEFAULT SYS390 SEARCH
+.SVC     ANOP
+         SVC    6 LINK R0=A(PGM) R1-PARMS R15=DDNAME/DSNAME ADDR OR 0
+         MEXIT
+.ERR1    MNOTE 12,'LINK ERRET= UNSUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'LINK MF= UNSUPPORTED'
+         MEXIT
+         MEND

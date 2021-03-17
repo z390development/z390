@@ -1,0 +1,43 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/26/07                                                 *
+.*********************************************************************
+.* 11/26/07 INITIAL CODING OF KSIT KSDS INSERT TREE CONTROL BLOCK                   
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+         KSITD  
+.*
+.* IF KSIT ALREADY DEFINED EXIT NOW
+.*
+         GBLB  &Z390_KSIT                         
+         GBLC  &Z390_KSIT_NAME,&Z390_KSIT_TYPE            
+         AIF   (&Z390_KSIT).EXIT                          
+&Z390_KSIT     SETB 1                                   
+&Z390_KSIT_NAME SETC '&SYSLOC'                                    
+&Z390_KSIT_TYPE SETC '&SYSSTYP'        
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'KSIT UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*       KEYED SEQUENTIAL INSERT TREE CONTROL BLOCK
+.*
+.*       IF VX0 INDEX XRBA IS NEG, IT POINTS TO KSIT INSERT TREE CB
+.*       KSITTOP - XRBA TO TOP   KSIR AT TOP OF BALANCED TREE
+.*       KSITFST - XRBA TO FIRST KSIR IN TREE FOR SEQ FWD
+.*       KSITLST - XRBA TO LAST  KSIR IN TREE FOR SEQ BWD
+.*
+IHAKSIT  DSECT
+KSITID   DS   CL4 KSIT ID C'KSIT'
+KSITTOP  DS   XL8 TOP   XRBA TO TOP KSIR IN BALANCED TREE
+KSITFST  DS   XL8 FIRST XRBA TO FIRST (LOWEST)  KSIR IN TREE
+KSITLST  DS   XL8 LAST  XRBA TO LAST  (HIGHEST) KSIR IN TREE
+KSITLEN  EQU  *-IHAKSIT                                 
+          AIF  ('&Z390_KSIT_NAME' EQ '' OR '&Z390_KSIT_TYPE' EQ '').EXIX
+               T
+&Z390_KSIT_NAME &Z390_KSIT_TYPE                    
+.EXIT    ANOP
+         MEND

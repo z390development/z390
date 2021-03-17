@@ -1,0 +1,59 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 08/27/05                                                 *
+.*********************************************************************
+.* 08/27/07 INITIAL CODING TO SUPPORT MODCB ACB OR RPL FIELD MODS                         
+.* 09/14/07 RPI 672 CORRECT TARGET > AREA                                                 
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       ZSHOWCB &CB,        ACB/RPL ADDRESS OR (REG)                  X
+               &CBOFF,       OFFSET TO ACB/RPL FIELD                   X
+               &AREA,        RX ADDR, (REG), (S,SCON),(*,SCON)         X
+               &AREAOFF,     OFFSET TO AREA FIELD                      X
+               &LAREA        LENGTH OF AREA FIELD TO STORE
+         AIF   ('&CB'(1,1) EQ '(').REGCB
+&SADDR   SETC  '&CB+&CBOFF'
+         AGO   .AREA    
+.REGCB   ANOP
+&SADDR   SETC  '&CBOFF.&CB'
+.AREA    ANOP
+         AIF   ('&AREA'(1,1) EQ '(').CHK_SCON
+         AIF   ('&LAREA' EQ '1').MOV1
+         AIF   ('&LAREA' EQ '4').MOV4
+         AIF   ('&LAREA' EQ '8').MOV8
+         MNOTE 12,'ZSHOWCB INVALID AREA FIELD LENGTH - &LAREA'
+         MEXIT
+.MOV1    ANOP
+         IC    0,&SADDR
+         STC   0,&AREA+&AREAOFF
+         MEXIT
+.MOV4    ANOP
+         L     0,&SADDR
+         ST    0,&AREA+&AREAOFF
+         MEXIT
+.MOV8    ANOP
+         LG    0,&SADDR
+         STG   0,&AREA+&AREAOFF
+         MEXIT
+.CHK_SCON ANOP
+         AIF   ('&AREA'(1,3) EQ '(S,').SCON_ADDR
+         AIF   ('&AREA'(1,3) EQ '(*,').SCON_IADDR
+.LREG   ANOP
+         L     &AREA(1),&SADDR
+         MEXIT
+.SCON_ADDR ANOP
+&ADDR    SETC  '&AREA'(4,K'&AREA-4)
+         L     0,&SADDR
+         ST    0,&ADDR+&AREAOFF
+         MEXIT
+.SCON_IADDR ANOP
+&ADDR    SETC  '&AREA'(4,K'&AREA-4)
+.LST     ANOP
+         L     0,&SADDR
+         L     1,&ADDR
+         ST    0,&AREAOFF.(1) 
+         MEND

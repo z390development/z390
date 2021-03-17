@@ -1,0 +1,99 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 06/22/07                                                 *
+.*********************************************************************
+.* 07/28/07 RPI 644 INITIAL CODING OF RPL OPTIONS        
+.* 08/04/07 RPI 644 UPDATE RPLFEEDB TO 4 BYTE CODES      
+.* 08/19/07 RPI 680 CORRECT LOOP GE TO GT, ADD LCLB &LRD 
+.* 08/29/07 RPI 688 CORRECT SETTING OF MACR1_XRBA OPTION BIT, ADD XRBA
+.* 09/14/07 RPI 672 ISSUE MNOTE ERROR FOR UNDEFINED OPTIONS              
+.* 09/16/07 RPI 682 SHARE ZGENOPTD TO GEN OPTCD BITS                     
+.* 09/24/07 RPI 702 REPLACE RPLXRBA WITH RPLLXRTA AND RPLCXRBA           
+.*          ADD RPLOPENC UNIQUE ACB OPEN COUNT FOR REPOSITION REQ'D
+.* 11/26/07 RPI 723 MOVE GETOK, GETNF FLAGS TO RPLFLAG, ADD KSIT,KSIR
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+.*
+.* RPL 28 VSAM OPTCD OPTIONS - MODELED ON MVS 3.8 IDAVSOPT
+.*
+.* ADR - addressed access to KSDS or ESDS by RBA, seq access by ESDS
+.* ARD - User's argument determines the record to be processed (NS)                   
+.* ASY - Asynchronous access (ignored)
+.* BWD - proceed backward for KEY, SEQ, DIR for POINT, GET, PUT, ERASE
+.* CNV - control intervAL access (not supported)            
+.* CR  - For RLS, CR (consistent read integrity) (ignored)
+.* CRE - For RLS transactional POINT and GET NUP CR locks (ignored)    
+.* DIR - direct access to a RRDS, KSDS, or ESDS.               
+.* FKS - a full key is provided as a search argument
+.* FWD - Processing to proceed in a forward direction.         
+.* GEN - A generic key is provided as a search argument using KEYLEN
+.* KEQ - key must match for GET (key,dir/skp) and POINT (key)
+.* KEY - rel rcd RRDS access or key KDSD access, seq rel rcd or key
+.* KGE - key GE, for RRDS rel rcd > max existing returns EOD, PUT adds
+.* LOC - leave record from GET in I/O buffer (ignored) 
+.* LRD - Last record in the data set is to be located via POINT/GET
+.* MVE - move record to/from area (ignored - always in RPL AREA=)
+.* NRI - For RLS, NRI (no read integrity) (ignored)
+.* NSP - For DIR, remember position for seq access until ENDREQ
+.* NUP - records will not be updated, PUT stores new record, no pos
+.* NWAITX - Never take the UPAD or RLSWAIT exit (ignored)
+.* RBA - for ADR, use 4 byte RBA in ARG field (default)           
+.* SEQ - Sequential access to a RRDS, KSDS, or ESDS.           
+.* SKP - Skip sequential access.                               
+.* SYN - Synchronous access (always)
+.* UPD - records may be updated or deleted after DIR+UPD GET
+.* WAITX  - if SYN and UPAD, take UPAD exit instead of WAIT (ignored)
+.* XRBA - for ADR, use 8 byte XRBA in ARG field
+.*********************************************************************
+&N       RPL   &ACB=0,    VSAM ACCESS CONTROL BLOCK ADDRESS            X
+               &AM=VSAM,  VSAM VS VTAM                                 X
+               &AREA=0,   RECORD WORK AREA (DATA FOR MVE, ADDR FOR LOC)X
+               &AREALEN=0, LENGTH OF AREA (MAX LRECL IF MVS, 4 FOR LOC)X
+               &ARG=0,    KEY(KSDS), XRBA/RBA(KSDS/ESDS), REC#(RRDSS)  X
+               &ECB=0,    ECB TO BE POSTED ON COMPLETION               X
+               &KEYLEN=0, KEY LENGTH FOR GENERIC KEY SEARCH            X
+               &NXTRPL=0, NEXT RPL IN CHAINED RPL LIST                 X
+               &OPTCD=,   OPTIONS (SEE SUPPORTED OPTIONS ABOVE)        X
+               &RECLEN=0  RECORD LENGTH FOR VARIABLE LENGTH PUT
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0D
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'RPL UNSUPPORTED OPERANDS - &SYSLIST(1)'
+         MEXIT
+.NPOK    ANOP
+         AIF   ('&AM' NE 'VSAM').ERR1
+         GBLC  &ZGENOPT1,&ZGENOPT2
+         ZGENOPTD OPTCD=&OPTCD
+.*
+.* GENERATE VSAM RPL
+.*
+         DC    AL1(0)             RPLTYPE   RPL ID
+         DC    AL1(10)            RPLSTYPE  RPL TYPE VSAM
+         DC    AL1(RPLEND-IHARPL) RPLLEN    RPL LENGTH
+         DC    X'00'              (ALIGN)
+         DC    A(&ECB)            RPLECB    ECB (POSTED IF PRESENT)
+         DC    XL4'00'            RPLFEEDBK RPL FEEDBACK CODES
+         DC    A(&KEYLEN)         RPLKEYLEN KEY LENGTH
+         DC    A(&ACB)            RPLACB    ACB
+         DC    A(&AREA)           RPLAREA   AREA
+         DC    A(&ARG)            RPLARG    ARG (KS KEY, RR NUM)
+         DC    B'&ZGENOPT1&ZGENOPT2' RPLOPT OPTION BYTES 1+2
+         DC    X'0000'            (ALIGN)
+         DC    A(&NXTRPL)         RPLNEXT   NEXT RPL
+         DC    A(&RECLEN)         RPLRECL   RECORD LENGTH FOR PUT
+         DC    XL8'00'            RPLLXRBA  LAST RCD VES/VX0 XRBA 
+         DC    XL8'00'            RPLCXRBA  CURR POS VES/VX0 XRBA  
+         DC    A(0)               RPLOPENC  UNIQUE ACB OPEN COUNT 
+         DC    A(&AREALEN)        RPLAREAL  AREA LENGTH
+         DC    F'0'               RPLFLAG   UPD GETOK,GETNF FLAGS ETC
+         DC    XL8'00'            RPLKSIT   CURRENT KSIT XRBA
+         DC    XL8'00'            RPLKSIR   CURRENT KSIR XRBA
+         RPLD
+         MEXIT
+.ERR1    MNOTE 12,'ONLY AM=VSAM IS SUPPORTED'
+         MEND

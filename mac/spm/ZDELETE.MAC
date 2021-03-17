@@ -1,0 +1,102 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *  
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27  - issue error for any undefined operands     
+.* 11/19/05 RPI102 - allow DDNAME or DSNAME to replace EP or EPLOC
+.* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 11/17/08 RPI 953 move DELETE code to ZDELETE code to share maclibs
+.*********************************************************************
+&N      ZDELETE &DE=,      BLDL ENTRY                                  X
+               &EP=,      PROGRAM NAME                                 X
+               &EPLOC=,   ADDR OF PROGRAM NAME                         X
+               &DDNAME=,  1-9 CHARACTER DDNAME                         X
+               &DSNAME=,  RX ADDR OF DSN WITH PATH                     X
+               &MF=I,     NOT SUPPORTED                                X
+               &RELATED=  IGNORED
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR1
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+         AIF   ('&DE' NE '').DE
+         AIF   ('&EP' NE '').EP
+         AIF   ('&EPLOC' NE '').EPLOC
+         SR    0,0
+         AIF   ('&DDNAME' NE '' OR '&DSNAME' NE '').CHKDSN
+         MNOTE 12,'DELETE REQUIRES EP, EPLOC, DDNAME, OR DSNAME'
+         MEXIT
+.DE      ANOP
+         AIF   ('&DE'(1,1) EQ '(').DEREG
+         LA    0,&DE
+         AGO   .DEADD
+.DEREG ANOP
+         ZOPTLR 0,&DE(1)
+.DEADD   ANOP
+         AHI   0,2
+         AIF   ('&EP' EQ '' AND '&EPLOC' EQ '').CHKDSN
+         MNOTE 12,'DELETE DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
+         MEXIT
+.EP      ANOP
+         LA    0,=CL8'&EP'
+         AIF   ('&DE' EQ '' AND '&EPLOC' EQ '').CHKDSN
+         MNOTE 12,'DELETE DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
+         MEXIT
+.EPLOC   ANOP
+         AIF   ('&EPLOC'(1,1) EQ '(').EPLOCREG
+         LA    0,&EPLOC
+         AIF   ('&DE' EQ '' AND '&EP' EQ '').CHKDSN
+         MNOTE 12,'DELETE DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
+         MEXIT
+.EPLOCREG ANOP
+         AIF   ('&EPLOC(1)' EQ '0').CHKDSN  RPI163
+         LR    0,&EPLOC(1)
+.CHKDSN  ANOP
+         AIF   ('&DSNAME' EQ '').CHKDD
+         AIF   ('&DDNAME' EQ '').DSNOK
+         MNOTE 12,'DELETE DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
+.DSNOK   ANOP
+         AIF   ('&DSNAME'(1,1) EQ '(').DSNREG
+         LA    15,&DSNAME
+         AGO   .SVC
+.DSNREG  ANOP
+         AIF   ('&DSNAME(1)' EQ '0').DSNERR
+         AIF   ('&DSNAME(1)' EQ '15').SVC  RPI163
+         LR    15,&DSNAME(1)
+         AGO   .SVC
+.DSNERR  ANOP
+         MNOTE 12,'DELETE INVALID DSNAME REG'
+         MEXIT
+.CHKDD   ANOP
+         AIF   ('&DDNAME' EQ '').DEFPATH
+         AIF   ('&DDNAME'(1,1) EQ '(').DDREG
+         LA    15,=CL8'&DDNAME'
+         OILH  15,X'8000' DD VS DSN
+         AGO   .SVC
+.DDREG   ANOP
+         AIF   ('&DSNAME(1)' EQ '0').DDERR
+         AIF   ('&DDNAME(1)' EQ '15').SKP1 RPI163
+         LR    15,&DDNAME(1)
+.SKP1    ANOP
+         OILH  15,X'8000' DD VS DSN
+         AGO   .SVC
+.DDERR   ANOP
+         MNOTE 12,'DELETE INVALID DDNAME REG'
+         MEXIT 
+.DEFPATH ANOP
+         SR    15,15 USE DEFAULT SYS390 SEARCH
+.SVC     ANOP
+         SVC   9 DELETE R0=A(NAME) R15=DSNAME/DDNAME ADDR OR 0
+         MEXIT
+.ERR1    MNOTE 12,'DELETE MF= NOT SUPPORTED'
+         MEND

@@ -1,0 +1,18 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/30/05                                                 *
+.*********************************************************************
+.* 02/16/06 RPI136 TN3270 FULL SCREEN SUPPORT FOR TPUT/TGET
+.*********************************************************************
+.*
+.* STFSMODE ON/OFF,INITIAL=YES/NO  SET TSO MODE
+.*
+.*********************************************************************
+&N       STFSMODE  &MODE,&INITIAL=NO
+&N       DS    0H
+         MEND
+

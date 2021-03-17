@@ -1,0 +1,22 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 05/16/07                                                 *
+.*********************************************************************
+.* 05/16/07 RPI 604 ADD BS2000 MACRO TO SET &SYSMOD TO 24 OR 31      
+.*********************************************************************
+         GPARMOD &MODE
+         GBLC    &SYSMOD
+         AIF     ('&MODE' EQ '24').MODE24
+         AIF     ('&MODE' EQ '31').MODE31
+         MNOTE   1,'GPARMOD &MODE INVALID'
+         MEXIT
+.MODE24  ANOP
+&SYSMOD  SETC    '24'
+         MEXIT
+.MODE31  ANOP
+&SYSMOD  SETC    '31'
+         MEND

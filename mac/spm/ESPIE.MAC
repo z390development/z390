@@ -1,0 +1,153 @@
+        MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               * 
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27  - issue error for any undefined operands     
+.* 11/20/05 RPI106 - correct alignment for SPM mask             
+.* 12/12/05 RPI132 - correct to support range within list (5,7,(9,11))
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI244 SUPPORT PARAM=             
+.* 04/29/06 RPI305 CORRECT REGISTER FORM OF PARAM= (AIR TO AIF)
+.* 06/03/06 RPI321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       ESPIE &OP,     SET/RESET                                      X
+               &ADDR,   EXIT ADDRESS                                   X
+               &LIST,   INTERRUPTION LIST (1,2...15)                   X
+               &MF=I,   NOT SUPPORTED                                  X
+               &PARAM=  OPTIONAL PARM TO PASS TO EXIT
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR1
+         AIF   (N'&SYSLIST LE 3).NPOK
+         MNOTE 12,'ESPIE UNSUPPORTED OPERANDS - &SYSLIST(4)'
+         MEXIT
+.NPOK    ANOP
+.*
+.* Set or reset program interruption exit
+.*    ESPIE SET,ADDR
+.*    ESPIE RESET
+.* Notes:
+.*  1.  SPM can be used to set the psw program mask bits and cc:
+.*         mask bit 0 - pic  8 - fixed point overflow
+.*         mask bit 1 - pic 10 - packed decimal overflow
+.*         mask bit 2 - pic 13 - HFP floating point exponent underflow
+.*         mask bit 3 - pic 14 - HFP floating point mantissa signif.
+.*  2.  If mask bit is off, then the above exceptions are not
+.*      generated and cannot be handled by ESPIE or ESTAE.
+.*  3.  The interrupt codes that can be specified in 3rd positional
+.*      operand sublist are as follows:
+.*         1 - operation
+.*         2 - privilege
+.*         3 - execute 
+.*         4 - protection
+.*         5 - addressing
+.*         6 - specification
+.*         7 - data exception - see DXC reason codes:
+.*               00 packed decimal data exception
+.*               08 BFP inexact truncated
+.*               0C BFP inexact incremented
+.*               10 BFP underflow exact
+.*               18 BFP underflow inexact truncated
+.*               1C BFP underflow inexact incremented 
+.*               20 BFP overflow  exact                           
+.*               28 BFP overflow  inexact truncated
+.*               2C BFP overflow  inexact incremented
+.*               40 BFP division by zero
+.*               80 BFP invalid operation
+.*         8 - fixed point overflow   (SPM mask bit x'8')
+.*         9 - fixed point divide
+.*        10 - decimal overflow       (SPM mask bit x'4')
+.*        11 - decimal divide                          
+.*        12 - HFP exponent overflow                          
+.*        13 - HFP exponent underflow (SPM mask bit x'2')
+.*        14 - HFP significance       (SPM mask bit x'1')
+.*        15 - HFP divide
+.*
+.*  4.  Any of the above interrupts raised are not handled by ESPIE
+.*      or ESTAE user defined exit will result in 0Cx abend.
+.*
+        LCLA   B(31)
+        AIF    ('&PARAM' EQ '').ZPARM
+        AIF    ('&PARAM'(1,1) EQ '(').REGPARM
+        LA     15,&PARAM
+        AGO    .ENDPARM
+.REGPARM ANOP
+        ZOPTLR 15,&PARAM(1)
+        AGO    .ENDPARM
+.ZPARM  ANOP
+        SR     15,15
+.ENDPARM ANOP
+        AIF    ('&OP' EQ 'SET').SET
+        AIF    ('&OP' EQ 'RESET').RESET
+        MNOTE  8,'ESPIE INVALID OPERATION - SET/RESET - &OP'
+        MEXIT
+.SET    ANOP
+&NP     SETA   N'&LIST
+        IPM    0  GET CURRENT PGM MASK
+&MASK   SETA   0
+.PLOOP  ANOP
+        AIF    (&NP EQ 0).SETMASK
+&I1     SETA   &LIST(&NP,1)
+&I2     SETA   &LIST(&NP,2)
+.RLOOP  ANOP
+        AIF    (&I1 GT 0 AND &I1 LT 16).SETBIT
+        MNOTE  8,'ESPIE INVALID INTERRUPT CODE = &RANGE'
+        MEXIT
+.SETBIT ANOP
+&B(&I1) SETA   1
+        AIF    (&I1 EQ  8).SETM0 FIXED OVERFLOW
+        AIF    (&I1 EQ 10).SETM1 DEC   OVERFLOW
+        AIF    (&I1 EQ 13).SETM2 HFP   UNDERFLOW
+        AIF    (&I1 EQ 14).SETM3 HFP   SIGNIFICANCE
+        AGO    .NEXT
+.SETM0  ANOP
+&MASK   SETA   &MASK+X'0800'
+        AGO    .NEXT
+.SETM1  ANOP
+&MASK   SETA   &MASK+X'0400'
+        AGO    .NEXT
+.SETM2  ANOP
+&MASK   SETA   &MASK+X'0200'
+        AGO    .NEXT
+.SETM3  ANOP
+&MASK   SETA   &MASK+X'0100'
+.NEXT   ANOP
+&I1     SETA   &I1+1
+        AIF    (&I1 LE &I2).RLOOP
+&NP     SETA   &NP-1
+        AGO    .PLOOP
+.SETMASK ANOP
+        AIF    (&MASK EQ 0).BLDPIE
+        OILH   0,&MASK
+.BLDPIE ANOP
+        SPM    0 TURN ON ANY MASKS REQUIRED
+&I      SETA   1
+&PIE    SETC   '0'
+.BLOOP  ANOP
+        AIF    (&I GT 31).SETR0                
+&PIE    SETC   '&PIE&B(&I)'
+&I      SETA   &I+1
+        AGO    .BLOOP
+.SETR0  ANOP
+        L      0,=B'&PIE'
+        AIF    ('&ADDR'(1,1) EQ '(').AREG
+        LA     1,&ADDR
+        AGO    .SVC
+.AREG   ANOP
+        ZOPTLR 1,&ADDR(1)
+        AGO    .SVC
+.RESET  ANOP
+        SR     1,1
+.SVC    ANOP
+        SVC    X'6D' ESPIE R0=INT BITS R1=EXIT R15=PARAM
+        MEXIT
+.ERR1   MNOTE 12,'ESPIE MF= NOT SUPPORTED'
+        MEND

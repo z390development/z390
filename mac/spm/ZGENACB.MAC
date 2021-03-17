@@ -1,0 +1,56 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/16/07                                                 *
+.*********************************************************************
+.* 09/16/07 RPI 682 INITIAL CODING TO GENERATE ACB AT R1 ADDR
+.* 09/20/07 RPI 703 SKIP GEN FOR ZERO VALUE FIELDS           
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+         ZGENACB &BUFSP=0,    MAXIMUM BUFFER SPACE FOR CLUSTER         X
+               &DDNAME=,      DDNAME FOR VSAM CLUSTER DEFINITION TABLE X
+               &DSNAME=0,     DSNAME FOR VSAM CLUSTER DEFINITION TABLE X 
+               &EXLST=0,      NOT CURRENTLY SUPPORTED                  X
+               &MACRF=        PROCESSING OPTIONS                        
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'ZGENACB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP  
+         AIF   ('&EXLST' EQ '0').NOEXLST
+         MNOTE 12,'ZGENACB EXLST NOT SUPPORTED YET'
+.NOEXLST ANOP
+.*
+.* SET ACBID,ACBTYPE,ACBLEN NON-ZERO FIELDS
+.*
+         MVC   ACBID-IHAACB(4,1),=AL1(X'A0',X'11',0,ACBEND-IHAACB)
+.*
+.* SET ACBMACRF USING ZGENMACF SHARED WITH ACB
+.*
+         MODCB ACB=(1),MACRF=&MACRF
+.*
+.* SET ACBDDNAM OR DEFAULT ACB#&SYSNDX
+.*
+&ACBDDNAM SETC '&DDNAME'
+         AIF   ('&DDNAME' NE '').DDMOD
+&ACBDDNAM SETC 'ACB#&SYSNDX'
+.DDMOD   ANOP
+         MODCB  ACB=(1),DDNAME=&ACBDDNAM
+*
+* SET DSNAME OVERRIDE ADDRESS IF SPECIFIED
+* 
+         AIF   ('&DSNAME' EQ '0').END_DSNAME     RPI 703
+         ZMODCB (1),ACBDSNAM-IHAACB,&DSNAME,4
+.END_DSNAME ANOP
+.*
+.* SET DEFAULT VCLR VSAM CATALOG CLUSTER NAME ACB#SYSNDX WHICH
+.* CAN BE CHANGED PRIOR TO OPEN OR MAY BE SET FROM DDNAME CATALOG
+.* SUFFIX (I.E. SET DDNAME=DEMOCAT.ESF1 WILL SET ACBVCLRN TO ESF1)
+.* 
+         MVC   ACBVCLRN-IHAACB(8,1),=CL8'ACB#&SYSNDX' ACB VCLR NAME
+         MEND

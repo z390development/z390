@@ -1,0 +1,184 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/16/07                                                 *
+.*********************************************************************
+.* 09/16/07 RPI 687  INITIAL CODING TO GEN RPL OPTCD BITS
+.* 04/19/08 RPI 833  add SETC quotes for HLASM compatibility
+.* 04/23/09 RPI 1024 jm2 MODCB generates OI and NI instead of MVI
+.* 04/07/11 RPI 1158 REMOVE DUPLICATE LCLB ASY,XASY
+.*********************************************************************
+         ZGENOPTD &OPTCD=
+.*
+.* DEFINE 2 OPTION BYTES FROM OPTCD PARMS USING IDAVSOPT AS MODEL
+.*
+         LCLB  &KEY,&ADR,&CNV,&SEQ,&DIR,&SKP     6
+         LCLB  &SYN,&ASY,&NUP,&UPD,&NSP,&KEQ     6
+         LCLB  &KGE,&FKS,&GEN,&MVE,&LOC,&LRD     5
+         LCLB  &WAITX,&NWAITX                    2
+         LCLB  &ARD,&BWD,&CR,&CRE RPI 1158 ASY   5
+         LCLB  &FWD,&NRI,&RBA,&XRBA              4
+         LCLB  &XKEY,&XADR,&XCNV,&XSEQ,&XDIR,&XSKP     6    jm2
+         LCLB  &XSYN,&XASY,&XNUP,&XUPD,&XNSP,&XKEQ     6    jm2
+         LCLB  &XKGE,&XFKS,&XGEN,&XMVE,&XLOC,&XLRD     5    jm2
+         LCLB  &XWAITX,&XNWAITX                        2    jm2
+         LCLB  &XARD,&XBWD,&XCR,&XCRE RPI 1158 XASY    5    jm2
+         LCLB  &XFWD,&XNRI,&XXRBA     RPI 1158 XRBA    4    jm2
+&OPTS(1) SETC  'ADR',   1                                              X
+               'ARD',   2                                              X
+               'ASY',   3                                              X
+               'BWD',   4                                              X
+               'CNV',   5                                              X
+               'CR',    6                                              X
+               'CRE',   7                                              X
+               'DIR',   8                                              X
+               'FKS',   9                                              X
+               'FWD',  10                                              X
+               'GEN',  11                                              X
+               'KEQ',  12                                              X
+               'KEY',  13                                              X
+               'KGE',  14                                              X
+               'LOC',  15                                              X
+               'LRD',  16                                              X
+               'MVE',  17                                              X
+               'NRI',  18                                              X
+               'NSP',  19                                              X
+               'NUP',  20                                              X
+               'NWAITX', 21                                            X
+               'RBA',  22                                              X
+               'SEQ',  23                                              X
+               'SKP',  24                                              X
+               'SYN',  25                                              X
+               'UPD',  26                                              X
+               'WAITX', 27                                             X
+               'XRBA'  28
+&I       SETA  0
+.OPTLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&OPTCD).CHK_OPT  RPI 680
+&J       SETA  0
+.FINDOPT ANOP
+&J       SETA  &J+1
+         AIF   (&J GT N'&OPTS).OPT_NOT_FND
+         AIF   ('&OPTCD(&I)' EQ '&OPTS(&J)').OPT_FND
+         AGO   .FINDOPT
+.OPT_NOT_FND ANOP
+         MNOTE 12,'ZGENRPL OPTCD NOT FOUND - &OPTCD(&I)'
+         AGO   .OPTLOOP
+.OPT_FND ANOP
+&ADR     SETB  ('&OPTCD(&I)' EQ 'ADR' OR &ADR)
+&ARD     SETB  ('&OPTCD(&I)' EQ 'ARD' OR &ARD)
+&ASY     SETB  ('&OPTCD(&I)' EQ 'ASY' OR &ASY)
+&BWD     SETB  ('&OPTCD(&I)' EQ 'BWD' OR &BWD)
+&CNV     SETB  ('&OPTCD(&I)' EQ 'CNV' OR &CNV)
+&CR      SETB  ('&OPTCD(&I)' EQ 'CR'  OR &CR)   NEW
+&CRE     SETB  ('&OPTCD(&I)' EQ 'CRE' OR &CRE)  NEW
+&DIR     SETB  ('&OPTCD(&I)' EQ 'DIR' OR &DIR)
+&FKS     SETB  ('&OPTCD(&I)' EQ 'FKS' OR &FKS)
+&FWD     SETB  ('&OPTCD(&I)' EQ 'FWD' OR &FWD)
+&GEN     SETB  ('&OPTCD(&I)' EQ 'GEN' OR &GEN)
+&KEQ     SETB  ('&OPTCD(&I)' EQ 'KEQ' OR &KEQ)
+&KEY     SETB  ('&OPTCD(&I)' EQ 'KEY' OR &KEY)
+&KGE     SETB  ('&OPTCD(&I)' EQ 'KGE' OR &KGE)
+&LOC     SETB  ('&OPTCD(&I)' EQ 'LOC' OR &LOC)
+&LRD     SETB  ('&OPTCD(&I)' EQ 'LRD' OR &LRD)
+&MVE     SETB  ('&OPTCD(&I)' EQ 'MVE' OR &MVE)
+&NRI     SETB  ('&OPTCD(&I)' EQ 'NRI' OR &NRI)       NEW
+&NSP     SETB  ('&OPTCD(&I)' EQ 'NSP' OR &NSP)
+&NUP     SETB  ('&OPTCD(&I)' EQ 'NUP' OR &NUP)
+&NWAITX  SETB  ('&OPTCD(&I)' EQ 'NWAITX' OR &NWAITX)
+&RBA     SETB  ('&OPTCD(&I)' EQ 'RBA' OR &RBA)       NEW
+&SEQ     SETB  ('&OPTCD(&I)' EQ 'SEQ' OR &SEQ)
+&SKP     SETB  ('&OPTCD(&I)' EQ 'SKP' OR &SKP)
+&SYN     SETB  ('&OPTCD(&I)' EQ 'SYN' OR &SYN)
+&UPD     SETB  ('&OPTCD(&I)' EQ 'UPD' OR &UPD)
+&WAITX   SETB  ('&OPTCD(&I)' EQ 'WAITX' OR &WAITX)
+&XRBA    SETB  ('&OPTCD(&I)' EQ 'XRBA' OR &XRBA)     NEW
+         AGO   .OPTLOOP
+.CHK_OPT ANOP
+.*
+.* CHECK MUTUALLY EXCLUSIVE OPTIONS
+.*
+.CHK1    AIF   (NOT(&KEY AND &ADR)).CHK2
+         MNOTE 12,'ZGENRPL KEY AND ADR MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK2    AIF   (NOT(&KEY AND &CNV)).CHK3
+         MNOTE 12,'ZGENRPL KEY AND CNV MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK3    AIF   (NOT(&ADR AND &CNV)).CHK4
+         MNOTE 12,'ZGENRPL ADR AND CNV MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK4    AIF   (NOT(&SEQ AND &DIR)).CHK5
+         MNOTE 12,'ZGENRPL SEQ AND DIR MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK5    AIF   (NOT(&SEQ AND &SKP)).CHK6
+         MNOTE 12,'ZGENRPL SEQ AND SKP MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK6    AIF   (NOT(&DIR AND &SKP)).CHK7
+         MNOTE 12,'ZGENRPL DIR AND SKP MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK7    AIF   (NOT(&SYN AND &ASY)).CHK8
+         MNOTE 12,'ZGENRPL SYN AND ASY MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK8    AIF   (NOT(&NUP AND &UPD)).CHK9
+         MNOTE 12,'ZGENRPL NUP AND UPD MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK9    AIF   (NOT(&NUP AND &NSP)).CHK10
+         MNOTE 12,'ZGENRPL NUP AND NSP MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK10   AIF   (NOT(&UPD AND &NSP)).CHK11
+         MNOTE 12,'ZGENRPL UPD AND NSP MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK11   AIF   (NOT(&KEQ AND &KGE)).CHK12
+         MNOTE 12,'ZGENRPL KEY AND KGE MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK12   AIF   (NOT(&WAITX AND &NWAITX)).CHK13
+         MNOTE 12,'ZGENRPL WAITX AND NWAITX MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK13   AIF   (NOT(&FKS AND &GEN)).CHK14
+         MNOTE 12,'ZGENRPL FKS AND GEN MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK14   AIF   (NOT(&MVE AND &LOC)).CHK15
+         MNOTE 12,'ZGENRPL MVE AND LOC MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK15   AIF   (NOT(&BWD AND &FWD)).CHK16
+         MNOTE 12,'ZGENRPL FWD AND BWD MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHK16   AIF   (NOT(&ARD AND &LRD)).CHKEND
+         MNOTE 12,'ZGENRPL ARD AND LRD MUTUALLY EXCLUSIVE'
+&RPLERR  SETB  1
+.CHKEND  ANOP
+         GBLC  &ZGENOPT1,&ZGENOPT2
+&ZGENOPT1 SETC '&LOC&DIR&SEQ&SKP&ASY&KGE&GEN&XRBA'  OPTCD BYTE 1
+&ZGENOPT2 SETC '&KEY&ADR&CNV&BWD&LRD&WAITX&UPD&NSP' OPTCD BYTE 2
+.*
+&XADR     SETB  (&KEY OR &CNV)                              jm2
+&XARD     SETB  (&LRD)                                      jm2
+&XASY     SETB  (&SYN)                                      jm2
+&XBWD     SETB  (&FWD)                                      jm2
+&XCNV     SETB  (&KEY OR &ADR)                              jm2
+&XDIR     SETB  (&SEQ OR &SKP )                             jm2
+&XFKS     SETB  (&GEN)                                      jm2
+&XFWD     SETB  (&BWD)                                      jm2
+&XGEN     SETB  (&FKS)                                      jm2
+&XKEY     SETB  (&ADR OR &CNV OR &KGE)                      jm2
+&XKGE     SETB  (&KEY)                                      jm2
+&XLOC     SETB  (&MVE)                                      jm2
+&XLRD     SETB  (&ARD)                                      jm2
+&XMVE     SETB  (&LOC)                                      jm2
+&XNSP     SETB  (&NUP OR &UPD)                              jm2
+&XNUP     SETB  (&NUP OR &NSP)                              jm2
+&XNWAITX  SETB  (&WAITX)                                    jm2
+&XSEQ     SETB  (&DIR OR &SKP)                              jm2
+&XSKP     SETB  (&DIR OR &SEQ)                              jm2
+&XSYN     SETB  (&ASY)                                      jm2
+&XUPD     SETB  (&NUP OR &NSP)                              jm2
+&XWAITX   SETB  (&NWAITX)                                   jm2
+         GBLC  &XGENOPT1,&XGENOPT2                          jm2
+&XGENOPT1 SETC '&XLOC&XDIR&XSEQ&XSKP&XASY&XKGE&XGEN&XXRBA'  OPTCD1
+&XGENOPT2 SETC '&XKEY&XADR&XCNV&XBWD&XLRD&XWAITX&XUPD&XNSP' OPTCD2
+.*
+         MEND

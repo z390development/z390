@@ -1,0 +1,137 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 11/16/05 RPI95 - add XCTL support with DDNAME= and DSNAME=
+.* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI244 SUPPORT DE= SAME REGISTER
+.* 04/25/06 RPI290 ALWAYS GEN LABEL IF ANY, CHECK MF=
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+.* XCTL AND EXEC PGM VIA SVC 7 (DELETES CALLING PGM FROM MEMORY)
+.*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
+.*   R15 = 0    USE SYS390 DEFAULT PATH FROM EZ390 PARM
+.*   R15 = ADDR DSNAME FILE SPEC IF HIGH BIT OFF (NULL OR DQ DELIMITED)
+.*   R15 = ADDR DDNAME IF HIGH BIT ON (8 BYTES SPACE FILLED)
+.* NOTES:
+.*   1.  DSNAME OR DDNAME MAY BE 1 OR MORE DIRECTORY PATHS TO SEARCH
+.*       OR THEY MAY BE PATH AND FILE NAME WHICH OVERRIDES EP/EPLOC
+.*   2.  RETURN CODE SET BY CALLED PGM IF SUCCESSFUL
+.*   3.  ABEND WITH S906 IF NOT FOUND
+.*   4.  IF (REGS) ARE SPECIFIED, THEN R13 MUST BE SET TO SAVE AREA
+.*********************************************************************
+&N       XCTL  &REGS,         OPTIONAL (REG) OR (REGS) TO RESTORE      X
+               &DDNAME=,      LOAD FROM DIR OR FILE DEFINED IN ENV.VAR X
+               &DE=,          BLDL ENTRY                               X
+               &DSNAME=,      LOAD FROM RX OR (REG) FILE SPEC          X
+               &EP=,          PGMNAME 1-8 CHAR                         X
+               &EPLOC=,       RX LABEL OR (REG) POINTER TO PGM FIELD   X
+               &ERRET=,       NOT SUPPORTED                            X
+               &MF=I,         NOT SUPPORTED                            X
+               &PARAM=,       PARAMETER LIST                           X
+               &VL=1          SET HIGH BIT IN LAST PARM ADDR            
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST LE 1).NPOK
+         MNOTE 12,'XCTL UNSUPPORTED OPERANDS - &SYSLIST(2)'
+         MEXIT
+.NPOK    ANOP
+         AIF    ('&MF' NE 'I').ERR2
+         AIF    ('&ERRET' NE '').ERR1
+         AIF    ('&PARAM' EQ '').ENDPARM
+         LA     1,=A&PARAM
+         AIF    ('&VL' NE 1).ENDPARM
+&OFF     SETA   N'&PARAM*4-4
+         OI     &OFF.(1),X'80'
+.ENDPARM ANOP
+         AIF   ('&DE' NE '').DE
+         AIF   ('&EP' NE '').EP
+         AIF   ('&EPLOC' NE '').EPLOC
+         SR    0,0
+         AIF   ('&DDNAME' NE '' OR '&DSNAME' NE '').CHKDSN
+         MNOTE 12,'XCTL REQUIRES EP, EPLOC, DDNAME, OR DSNAME'
+.DE      ANOP
+         AIF   ('&DE'(1,1) EQ '(').DEREG
+         LA    0,&DE
+         AGO   .DEADD
+.DEREG ANOP
+         ZOPTLR 0,&DE(1)
+.DEADD   ANOP
+         AHI   0,2
+         AIF   ('&EP' EQ '' AND '&EPLOC' EQ '').CHKDSN
+         MNOTE 12,'XCTL DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
+         MEXIT
+         MEXIT
+.EP      ANOP
+         LA    0,=CL8'&EP'
+         AGO   .CHKDSN
+.EPLOC   ANOP
+         AIF   ('&EPLOC'(1,1) EQ '(').EPLOCREG
+         LA    0,&EPLOC
+         AGO   .CHKDSN
+.EPLOCREG ANOP
+         AIF   ('&EPLOC(1)' EQ '1' OR '&EPLOC(1)' EQ 'R1').EPERR
+         ZOPTLR 0,&EPLOC(1)
+         AGO   .CHKDSN
+.EPERR   ANOP
+         MNOTE 12,'XCTL INVALID EPLOC REG'
+         MEXIT
+.CHKDSN  ANOP
+         AIF   ('&DSNAME' EQ '').CHKDD
+         AIF   ('&DDNAME' EQ '').DSNOK
+         MNOTE 12,'DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
+.DSNOK   ANOP
+         AIF   ('&DSNAME'(1,1) EQ '(').DSNREG
+         LA    15,&DSNAME
+         AGO   .CHKRST
+.DSNREG  ANOP
+         AIF   ('&DSNAME(1)' LE '1' OR '&DSNAME(1)' EQ 'R1').DSNERR
+         ZOPTLR 15,&DSNAME(1)
+         AGO   .CHKRST
+.DSNERR  ANOP
+         MNOTE 12,'XCTL INVALID DSNAME REG'
+         MEXIT
+.CHKDD   ANOP
+         AIF   ('&DDNAME' EQ '').DEFPATH
+         AIF   ('&DDNAME'(1,1) EQ '(').DDREG
+         LA    15,=CL8'&DDNAME'
+         OILH  15,X'8000' DD VS DSN
+         AGO   .CHKRST
+.DDREG   ANOP
+         AIF   ('&DDNAME(1)' LE '1' OR &DDNAME(1) EQ 'R1').DDERR
+         ZOPTLR 15,&DDNAME(1)                           
+.SKPLR1  ANOP
+         OILH  15,X'8000' DD VS DSN
+         AGO   .CHKRST
+.DDERR   ANOP
+         MNOTE 12,'XCTL INVALID DDNAME REG'
+         MEXIT
+.DEFPATH ANOP
+         SR    15,15 USE DEFAULT SYS390 SEARCH
+.CHKRST  ANOP
+         AIF   ('&REGS' EQ '').SVC
+&R1      SETA  &REGS(1)
+&R2      SETA  &R1
+         AIF   ('&REGS(2)' EQ '').R2OK
+&R2      SETA  &REGS(2)
+.R2OK    ANOP
+         AIF   (&R1 GT &R2 OR &R1 LT 2 OR &R2 GT 12).REGERR
+         RESTORE &REGS
+.SVC     ANOP
+         SVC    7 XCTL R0=A(PGM) R1-PARMS R15=DDNAME/DSNAME ADDR OR 0
+         MEXIT
+.REGERR  ANOP
+         MNOTE 12,'XCTL RESTORE RANGE MUST BE 2-12'
+         MEXIT
+.ERR1    MNOTE 12,'XCTL ERRET= NOT SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'XCTL MF= NOT SUPPORTED'
+         MEND

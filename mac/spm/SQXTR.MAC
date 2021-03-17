@@ -1,0 +1,19 @@
+         MACRO
+&N       SQXTR &FR1,&FR2
+.*********************************************************************
+.* CALCULATE DFP LD EXTENED SQUARE ROOT OF FR2 IN FR1
+.* (THIS INSTRUCTION IS MISSING FROM POP - SEE HFP SQXR AND BFP SQXBR)
+.* (THIS MACRO CALLS SQXTR CSECT PASSING LD ARG AT +8 IN CSECT)
+.* (RESULT IS RETURNED AT +8 ELSE PGM EXCEPTION FOR NEG VALUE ETC.)
+.* (SQXTR.OBJ IS LOCATED IN LINKLIB ALONG WITH SQXTR.MLC)
+.*********************************************************************
+.* 04/25/11 RPI 1161 correct FP2 > FR2
+.*********************************************************************
+&N       DS   0H
+         L    15,=V(SQXTR)
+         STD  &FR2,8+0(15)
+         STD  &FR2+2,8+8(15)
+         BASR 14,15
+         LD   &FR1,8+0(15)
+         LD   &FR1+2,8+8(15)
+         MEND

@@ -1,0 +1,47 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 04/26/06 RPI 279 ADD POST SVC                               
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
+         MACRO
+&N       POST  &ECB,         POST ECB COMPLETION                       X
+               &CODE,        EVENT COMPLETION CODE                     X
+               &LINKAGE=SVC, IGNORED                                   X
+               &MF=I,        NOT SUPPORTED                             X
+               &RELATED=     IGNORED
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR3
+         AIF   ('&ECB' EQ '').ERR1
+         AIF   ('&ECB'(1,1) EQ '(').REGECB
+         LA    1,&ECB
+         AGO   .CHKCODE
+.REGECB  ANOP
+         ZOPTLR 1,&ECB(1)
+.CHKCODE ANOP
+         AIF   ('&CODE' EQ '').ZCODE
+         AIF   ('&CODE'(1,1) EQ '(').REGCODE
+         L     0,=A(&CODE)
+         AGO   .SVC
+.REGCODE ANOP
+         AIF   ('&CODE(1)' EQ '1' OR '&CODE(1)' EQ 'R1').ERR2
+         ZOPTLR 0,&CODE(1)
+         AGO   .SVC
+.ZCODE   ANOP
+         SR    0,0       ZERO DEFAULT CODE
+.SVC     ANOP
+         SVC   2 POST R0=CODE, R1=A(ECB)
+         MEXIT
+.ERR1    MNOTE 12,'POST REQUIRES ECB'
+         MEXIT
+.ERR2    MNOTE 12,'POST CODE REGISTER CONFLICTS WITH ECB REGISTER'
+         MEXIT
+.ERR3    MNOTE 12,'POST MF= NOT SUPPORTED'
+         MEND

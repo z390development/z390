@@ -1,0 +1,40 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* XLATE TRANSLATE AREA TO EBCDIC OR ASCII
+.*********************************************************************
+.* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       XLATE &AREA,&LEN,&TO=
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 2).NPOK
+.ERR     MNOTE 12,'XLATE REQUIRES AREA,LEN,TO=A/E'
+         MEXIT
+.NPOK    ANOP
+         AIF   ('&AREA'(1,1) EQ '(').AREAREG
+         LA    0,&AREA
+         AGO   .CHKLEN
+.AREAREG ANOP
+         ZOPTLR 0,&AREA(1)
+.CHKLEN  ANOP
+         AIF   ('&LEN'(1,1) EQ '(').LENREG
+         LA    1,&LEN
+         AGO   .CHKTO
+.LENREG  ANOP
+         ZOPTLR 1,&LEN(1)
+.CHKTO   ANOP
+         AIF   ('&TO' EQ 'E').SVC
+         AIF   ('&TO' NE 'A').ERR
+         OILH  0,X'8000' HIGH ADDR BIT ON FOR EBCDIC TO ASCII
+.SVC     ANOP
+         SVC   X'67' TRANSLATE R0=AREA R1=LEN R0 HIGH BIT FOR E>A         
+         MEND

@@ -1,10 +1,15 @@
 TEST  CSECT
       USING *,15
-* convert from packed
-VNOT_P_E76B VNOT V1,V2
-         BR    14
-F0       EQU   0
-V1 EQU 21
-V2 EQU 2
+* CC6 BRCTH
+         LFH    R1,=F'3'
+         SR     R1,R1
+CC6_LOOP EQU    *
+         LA     R1,1(R1)
+         BRCTH  R1,CC6_LOOP
+         CH     R1,=H'3'
+         BNE    ABORT
+         BR     R14
+ABORT    ABEND  111,DUMP
+         EQUREGS
          LTORG
          END

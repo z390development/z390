@@ -1,0 +1,21 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 06/23/06 RPI 845 add new SETRP macro to set restart options  
+.*********************************************************************
+.* SET RESTART PARAMETERS FOR ESTAE EXIT
+.*  1.  USER MUST SET R15=4 AND R0=RESTART PSW ADDR FOR RESTART
+.*  2.  SETRP DEFAULT IS RETREGS=64 TO RESTORE ALL 64 BIT GPRS 
+.*********************************************************************
+         MACRO
+         SETRP &RETREGS=64    RESTORE ALL 16 64 BIT REGS                 
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'SETRP NON-SUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+         AIF   ('&RETREGS' NE '64').ERR1
+         MEXIT
+.ERR1    MNOTE 4,'SETRP DEFAULT IS ALWAYS RETREGS=64 FOR NOW'
+         MEND

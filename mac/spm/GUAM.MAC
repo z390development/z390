@@ -1,0 +1,383 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 12/01/05                                                 *
+.*********************************************************************
+.*
+.* GUI GRAPHICAL USER ACCESS METHOD MACRO FOR Z390
+.*
+.*********************************************************************
+.* 12/01/05 RPI47 ADD GUI USER INTERFACE SUPPORT
+.* 12/16/05 RPI47 ADD GUI COLOR DEFINITIONS      
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 02/21/06 RPI205 RENAME GUI MACRO TO GUAM TO REDUCE CONFUSION
+.* 02/24/06 RPI217 CORRECT GRAPH,TEXT COMMAND TO SET TEXT LENGTH 
+.* 05/08/06 RPI308 FIX WINDOW,VIEW TO SWITCH WITH NO RESET OPTIONS
+.* 05/24/06 RPI227 ADD SCREEN,COLOR TO SET BACKGROUND AND TEXT COLOR              
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       GUAM  &MAJOR,&MINOR
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+&NP     SETA   N'&SYSLIST
+        AIF    ('&MAJOR' EQ 'WINDOW').WINDOW 
+        AIF    ('&MAJOR' EQ 'SCREEN').SCREEN 
+        AIF    ('&MAJOR' EQ 'GRAPH').GRAPH  
+        AIF    ('&MAJOR' EQ 'KEYBOARD').KEYBOARD
+        AIF    ('&MAJOR' EQ 'MOUSE').MOUSE 
+        AIF    ('&MAJOR' EQ 'SOUND').SOUND 
+        AIF    ('&MAJOR' EQ 'SYMBOLS').SYMBOLS 
+        AIF    ('&MAJOR' EQ 'COLOR').COLOR   
+        MNOTE  12,'GUI INVALID MAJOR FUNCTION - &MAJOR'
+        MEXIT
+.WINDOW ANOP 
+        AIF    ('&MINOR' EQ 'TITLE').WINDOW_TITLE 
+        AIF    ('&MINOR' EQ 'LOC').WINDOW_LOC 
+        AIF    ('&MINOR' EQ 'SIZE').WINDOW_SIZE  
+        AIF    ('&MINOR' EQ 'FONT').WINDOW_FONT  
+        AIF    ('&MINOR' EQ 'VIEW').WINDOW_VIEW  
+        AIF    ('&MINOR' EQ 'GETVIEW').WINDOW_GETVIEW
+        MNOTE  12,'GUI WINDOW INVALID MINOR FUNCTION - &MINOR'
+        MEXIT
+.WINDOW_TITLE  ANOP R1=A(TITLE) DQ OR NULL TERM
+        LA     0,GUI_WINDOW_TITLE
+        AIF    ('&SYSLIST(3)'(1,1) EQ '''').WINDOW_TITLE_LIT
+        AIF    ('&SYSLIST(3)'(1,1) EQ '(').WINDOW_TITLE_REG
+        LA     1,=A(&SYSLIST(3)) R1=A(TITLE) DQ OR NULL TERM
+        AGO    .SVC
+.WINDOW_TITLE_LIT ANOP
+&TEXT   SETC   '&SYSLIST(3)'(2,K'&SYSLIST(3)-2)
+        LA     15,=C'"&TEXT"'     R15=A(TITLE) DQ DELIMITED
+        LA     1,=A(*-*)
+        ST     15,0(1)            R1=A(A(TITLE))
+        AGO    .SVC
+.WINDOW_TITLE_REG ANOP   
+        LA     1,=A(*-*)
+        ST     &SYSLIST(3,1),0(1) R1=A(A(TITLE))
+        AGO    .SVC
+.WINDOW_LOC ANOP R1=A(X,Y)
+        LA     0,GUI_WINDOW_LOC
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4)) R1=A(X,Y) PIXELS
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP8
+        ST     &SYSLIST(3,1),0(1)
+.SKP8   ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP9
+        ST     &SYSLIST(4,1),4(1)
+.SKP9   ANOP
+        AGO    .SVC
+.WINDOW_SIZE ANOP R1=A(WIDTH,HEIGHT)
+        LA     0,GUI_WINDOW_SIZE
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4)) R1=A(WIDTH,HEIGHT)
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP10
+        ST     &SYSLIST(3,1),0(1)
+.SKP10  ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP11
+        ST     &SYSLIST(4,1),4(1)
+.SKP11  ANOP
+        AGO    .SVC
+.WINDOW_FONT ANOP  R1=FONT (8,30)
+        LA     0,GUI_WINDOW_FONT
+        LA     15,-A(&SYSLIST(3)) R1=A(FONT SIZE) (8-30)
+        LA     1,=A(*-*)
+        ST     15,0(1) R1=A(A(FONT))
+        AGO    .SVC
+.WINDOW_VIEW ANOP  R1=VIEW (0-3)
+        LA     0,GUI_WINDOW_VIEW
+        AIF    ('&SYSLIST(4)' NE '').WINDOW_VIEW_PARMS
+        LA     1,=A(GUI_WINDOW_VIEW_&SYSLIST(3),0,0,0)
+        AGO    .SVC
+.WINDOW_VIEW_PARMS ANOP
+        LA     1,=A(GUI_WINDOW_VIEW_&SYSLIST(3),&SYSLIST(4),&SYSLIST(5)X
+               ,&SYSLIST(6)) R1=VIEW (0-NONE,1=MCS,2=SCREEN,3=GRAPH)
+        AIF    ('&SYSLIST(4)'(1,1) LT '0' OR '&SYSLIST(4)'(1,1) GT '9')X
+               .SKPLIT1
+        LA     15,=A(&SYSLIST(4))
+        ST     15,4(1)
+.SKPLIT1 ANOP
+        AIF    ('&SYSLIST(5)'(1,1) LT '0' OR '&SYSLIST(5)'(1,1) GT '9')X
+               .SKPLIT2
+        LA     15,=A(&SYSLIST(5))
+        ST     15,8(1)
+.SKPLIT2 ANOP
+        AGO    .SVC
+.WINDOW_GETVIEW ANOP R1=VIEW (0-3)
+        LA     0,GUI_WINDOW_GETVIEW SET R0 = CURRENT VIEW (0-3)
+        AGO    .SVC
+.SCREEN ANOP 
+        AIF    ('&MINOR' EQ 'READ').SCREEN_READ  
+        AIF    ('&MINOR' EQ 'WRITE').SCREEN_WRITE 
+        AIF    ('&MINOR' EQ 'FIELD').SCREEN_FIELD  
+        AIF    ('&MINOR' EQ 'CURSOR').SCREEN_CURSOR  
+        AIF    ('&MINOR' EQ 'COLOR').SCREEN_COLOR  
+        MNOTE  12,'GUI SCREEN INVALID MINOR FUNCTION - &MINOR'
+        MEXIT
+.SCREEN_READ ANOP R1=A(BUFF,LBUFF,WAIT/NOWAIT,EDIT/NOEDIT)
+        LA     0,GUI_SCREEN_READ
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),GUI_&SYSLIST(5),GUI_&SYSLISX
+               T(6)) R1=(BUFF,LBUFF,WAIT/NOWAIT,EDIT/NOEDIT)
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP1
+        ST     &SYSLIST(3,1),0(1)
+.SKP1   ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP2
+        ST     &SYSLIST(4,1),4(1)
+.SKP2   ANOP
+        AGO    .SVC
+.SCREEN_WRITE ANOP R1=A(ROW,COL,BUFF,LBUFF,EDIT/NOEDIT)
+        LA     0,GUI_SCREEN_READ
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),&SYSLIST(5),&SYSLIST(6),   X
+               &SYSLIST(7)) R1=A(ROW,COL,BUFF,LBUFF,EDIT/NOEDIT)
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP3
+        ST     &SYSLIST(3,1),0(1)
+.SKP3   ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP4
+        ST     &SYSLIST(4,1),4(1)
+.SKP4   ANOP
+        AIF    ('&SYSLIST(5)'(1,1) NE '(').SKP5
+        ST     &SYSLIST(3,1),8(1)
+.SKP5   ANOP
+        AIF    ('&SYSLIST(6)'(1,1) NE '(').SKP6
+        ST     &SYSLIST(4,1),12(1)
+.SKP6   ANOP
+        AIF    ('&SYSLIST(7)'(1,1) NE '(').SKP7
+        ST     &SYSLIST(3,1),16(1)
+.SKP7   ANOP
+        AGO    .SVC
+.SCREEN_FIELD ANOP R1=A(ROW,COL,LFIELD)
+        LA     0,GUI_SCREEN_FIELD
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),&SYSLIST(5))  R1=A(ROW,COL,X
+               LFIELD)
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP12
+        ST     &SYSLIST(3,1),0(1)
+.SKP12  ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP13
+        ST     &SYSLIST(4,1),4(1)
+.SKP13  ANOP
+        AIF    ('&SYSLIST(5)'(1,1) NE '(').SKP14
+        ST     &SYSLIST(3,1),8(1)
+.SKP14  ANOP
+        AGO    .SVC
+.SCREEN_CURSOR ANOP R1=A(ROW,COL,TYPE)
+        LA     0,GUI_SCREEN_CURSOR
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),&SYSLIST(5)) R1=A(ROW,COL,TX
+               YPE)
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP15
+        ST     &SYSLIST(3,1),0(1)
+.SKP15  ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP16
+        ST     &SYSLIST(4,1),4(1)
+.SKP16  ANOP
+        AIF    ('&SYSLIST(5)'(1,1) NE '(').SKP17
+        ST     &SYSLIST(3,1),8(1)
+.SKP17  ANOP
+        AGO    .SVC
+.SCREEN_COLOR ANOP R1=A(BG_COLOR,TEXT_COLOR)
+        LA     0,GUI_SCREEN_COLOR
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4))
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP40
+        ST     &SYSLIST(3,1),0(1)
+.SKP40  ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP41
+        ST     &SYSLIST(4,1),4(1)
+.SKP41  ANOP
+        AGO    .SVC
+.GRAPH ANOP 
+        AIF    ('&MINOR' EQ 'POINT').GRAPH_POINT 
+        AIF    ('&MINOR' EQ 'LINE').GRAPH_LINE  
+        AIF    ('&MINOR' EQ 'FILL').GRAPH_FILL    
+        AIF    ('&MINOR' EQ 'TEXT').GRAPH_TEXT     
+        MNOTE  12,'GUI GRAPH INVALID MINOR FUNCTION - &MINOR'
+        MEXIT
+.GRAPH_POINT ANOP R1=A(X,Y,COLOR)
+        LA     0,GUI_GRAPH_POINT   
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),&SYSLIST(5)) R1=A(X,Y,COLORX
+               )
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP37
+        ST     &SYSLIST(3,1),0(1)
+.SKP37  ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP38
+        ST     &SYSLIST(4,1),4(1)
+.SKP38  ANOP
+        AIF    ('&SYSLIST(5)'(1,1) NE '(').SKP39
+        ST     &SYSLIST(3,1),8(1)
+.SKP39  ANOP
+        AGO    .SVC
+.GRAPH_LINE ANOP R1=A(X1,Y1,X2,Y2,COLOR)
+        LA     0,GUI_GRAPH_LINE    
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),&SYSLIST(5),&SYSLIST(6),&SYX
+               SLIST(7)) R1=A(X1,Y1,X2,Y2,COLOR)
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP18
+        ST     &SYSLIST(3,1),0(1)
+.SKP18  ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP19
+        ST     &SYSLIST(4,1),4(1)
+.SKP19  ANOP
+        AIF    ('&SYSLIST(5)'(1,1) NE '(').SKP20
+        ST     &SYSLIST(3,1),8(1)
+.SKP20  ANOP
+        AIF    ('&SYSLIST(6)'(1,1) NE '(').SKP21
+        ST     &SYSLIST(3,1),12(1)
+.SKP21  ANOP
+        AIF    ('&SYSLIST(7)'(1,1) NE '(').SKP22
+        ST     &SYSLIST(4,1),16(1)
+.SKP22  ANOP
+        AGO    .SVC
+.GRAPH_FILL ANOP R1=A(X1,Y1,X2,Y2,COLOR)
+        LA     0,GUI_GRAPH_FILL    
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),&SYSLIST(5),&SYSLIST(6),&SYX
+               SLIST(7)) R1=A(X1,Y1,X2,Y2,COLOR)
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP23
+        ST     &SYSLIST(3,1),0(1)
+.SKP23  ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP24
+        ST     &SYSLIST(4,1),4(1)
+.SKP24  ANOP
+        AIF    ('&SYSLIST(5)'(1,1) NE '(').SKP25
+        ST     &SYSLIST(3,1),8(1)
+.SKP25  ANOP
+        AIF    ('&SYSLIST(6)'(1,1) NE '(').SKP26
+        ST     &SYSLIST(3,1),12(1)
+.SKP26  ANOP
+        AIF    ('&SYSLIST(7)'(1,1) NE '(').SKP27
+        ST     &SYSLIST(4,1),16(1)
+.SKP27  ANOP
+        AGO    .SVC
+.GRAPH_TEXT ANOP R1=A(X,Y,'text',text_length,color)
+        LA     0,GUI_GRAPH_TEXT
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),*-*,*-*,&SYSLIST(7))       X
+               R1=A(X,Y,'text',text_length,COLOR)   RPI217
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP28
+        ST     &SYSLIST(3,1),0(1)
+.SKP28  ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP29
+        ST     &SYSLIST(4,1),4(1)
+.SKP29  ANOP
+        AIF    ('&SYSLIST(5)'(1,1) EQ '''').GRAPH_TEXT_LIT
+        AIF    ('&SYSLIST(5)'(1,1) EQ '(').GRAPH_TEXT_REG
+        LA     15,&SYSLIST(5)
+        ST     15,8(1)
+        AGO    .SVC
+.GRAPH_TEXT_LIT ANOP
+&TEXT   SETC   '&SYSLIST(5)'(2,K'&SYSLIST(5)-2)
+        LA     15,=C'&TEXT' 
+        ST     15,8(1)
+&LTEXT  SETA   K'&TEXT  
+        LA     15,&LTEXT RPI217
+        ST     15,12(1)
+        AGO    .SVC
+.GRAPH_TEXT_REG ANOP   
+        ST     &SYSLIST(3,1),8(1)
+        AIF    ('&SYSLIST(6)'(1,1) NE '(').SKP30
+        ST     &SYSLIST(3,1),12(1)
+.SKP30  ANOP
+        AGO    .SVC
+.KEYBOARD ANOP 
+        AIF    ('&MINOR' EQ 'READ').KEYBOARD_READ 
+        MNOTE  12,'GUI KEYBOARD INVALID MINOR FUNCTION - &MINOR'
+        MEXIT
+.KEYBOARD_READ ANOP R1=A(mode,char,WAIT/NOWAIT)
+        LA     0,GUI_KEYBOARD_READ   
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),GUI_&SYSLIST(5)) R1=A(mode,X
+               char,WAIT/NOWAIT)
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP31
+        ST     &SYSLIST(3,1),0(1)
+.SKP31  ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP32
+        ST     &SYSLIST(4,1),4(1)
+.SKP32  ANOP
+        AGO    .SVC
+.MOUSE  ANOP 
+        AIF    ('&MINOR' EQ 'READ').MOUSE_READ 
+        MNOTE  12,'GUI MOUSE INVALID MINOR FUNCTION - &MINOR'
+        MEXIT
+.MOUSE_READ ANOP R1=A(x,y,left,right)
+        LA     0,GUI_MOUSE_READ   
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),&SYSLIST(5),&SYSLIST(6)) R1X
+               =A(x,y,left,right)
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP33
+        ST     &SYSLIST(3,1),0(1)
+.SKP33  ANOP
+        AIF    ('&SYSLIST(4)'(1,1) NE '(').SKP34
+        ST     &SYSLIST(4,1),4(1)
+.SKP34  ANOP
+        AIF    ('&SYSLIST(5)'(1,1) NE '(').SKP35
+        ST     &SYSLIST(5,1),8(1)
+.SKP35  ANOP
+        AIF    ('&SYSLIST(6)'(1,1) NE '(').SKP36
+        ST     &SYSLIST(6,1),12(1)
+.SKP36  ANOP
+        AGO    .SVC
+.SOUND  ANOP 
+        AIF    ('&MINOR' EQ 'PLAY').SOUND_PLAY 
+        MNOTE  12,'GUI SOUND INVALID MINOR FUNCTION - &MINOR'
+        MEXIT
+.SOUND_PLAY ANOP R1=A(wav_file) DQ or null term
+        LA     0,GUI_SOUND_PLAY   
+        AIF    ('&SYSLIST(3)'(1,1) NE '(').SOUND_PLAY_REG
+        LA     1,&SYSLIST(3) R1=A(wave_file) DQ or null terminated
+        AGO    .SVC                   
+.SOUND_PLAY_REG ANOP
+        ZOPTLR 1,&SYSLIST(3,1)
+        AGO    .SVC
+.SYMBOLS ANOP
+GUI_WINDOW_TITLE       EQU X'0101' GUI WINDOW,TITLE,'text'
+GUI_WINDOW_LOC         EQU X'0102' GUI WINDOW,LOC,x,y 
+GUI_WINDOW_SIZE        EQU X'0103' GUI WINDOW,width,height
+GUI_WINDOW_FONT        EQU X'0104' GUI WINDOW,size (8-30)
+GUI_WINDOW_VIEW        EQU X'0105' GUI WINDOW,VIEW,type (0-3)
+GUI_WINDOW_VIEW_NONE   EQU 0       GUI WINDOW,VIEW,NONE window closed
+GUI_WINDOW_VIEW_MCS    EQU 1       GUI WINDOW,VIEW,MCS console log  
+GUI_WINDOW_VIEW_SCREEN EQU 2       GUI WINDOW,VIEW,SCREEN,row,col,color
+GUI_WINDOW_VIEW_GRAPH  EQU 3       GUI WINDOW,VIEW,GRAPH,x,y,color
+GUI_WINDOW_GETVIEW     EQU X'0106' GUI WINDOW,GETVIEW return view 0-3
+GUI_SCREEN_READ        EQU X'0201' GUI SCREEN,READ,b,lb,WAIT/NOWAIT 
+GUI_WAIT               EQU 1       GUI WAIT FOR KEYBOARD INPUT         
+GUI_NOWAIT             EQU 0       GUI NOWAIT RETURN R15=4 IF NO INPUT
+GUI_SCREEN_WRITE       EQU X'0202' GUI SCREEN,WRITE,row,col,b,lb,color
+GUI_SCREEN_FIELD       EQU X'0203' GUI SCREEN,FIELD,row,col,length
+GUI_SCREEN_CURSOR      EQU X'0204' GUI SCREEN,CURSOR,row,col,type 
+GUI_SCREEN_COLOR       EQU X'0205' GUI SCREEN,COLOR,bg_color,text_color
+GUI_GRAPH_POINT        EQU X'0301' GUI GRAPH,POINT,x,y,color
+GUI_GRAPH_LINE         EQU X'0302' GUI GRAPH,LINE,x1,y1,x2,y2,color
+GUI_GRAPH_FILL         EQU X'0303' GUI GRAPH,FILL,x1,y1,x2,y2,color
+GUI_GRAPH_TEXT         EQU X'0304' GUI GRAPH,TEXT,x,y,'text',color
+GUI_KEYBOARD_READ      EQU X'0401' GUI KEYBOARD,mode,char,WAIT/NOWAIT
+GUI_MOUSE_READ         EQU X'0501' GUI MOUSE,x,y,left,right
+GUI_BUTTON_DOWN        EQU 1 MOUSE BUTTON PRESSED DOWN
+GUI_BUTTON_UP          EQU 0 MOUSE BUTTON UP
+GUI_SOUND_PLAY         EQU X'0601' GUI SOUND,PLAY,wav_file
+         MEXIT
+.COLOR   ANOP
+         AIF   (N'&SYSLIST EQ 4).COLOR_RGB
+         AIF   ('&SYSLIST(2)' EQ 'RED').COLOR_RED
+         AIF   ('&SYSLIST(2)' EQ 'GREEN').COLOR_GREEN
+         AIF   ('&SYSLIST(2)' EQ 'BLUE').COLOR_BLUE
+         AIF   ('&SYSLIST(2)' EQ 'WHITE').COLOR_WHITE
+         AIF   ('&SYSLIST(2)' EQ 'BLACK').COLOR_BLACK
+         MNOTE 12,'GUI COLOR UNDEFINED - &SYSLIST(2)'
+         MEXIT
+.COLOR_RGB ANOP
+&N       DC    AL1(0,&SYSLIST(2),&SYSLIST(3),&SYSLIST(4)) RGB COLOR
+         MEXIT
+.COLOR_RED ANOP
+         DC    AL1(0,255,0,0) RGB RED COLOR
+         MEXIT
+.COLOR_GREEN ANOP
+         DC    AL1(0,0,255,0) RGB GREEN COLOR
+         MEXIT
+.COLOR_BLUE ANOP
+         DC    AL1(0,0,0,255) RGB BLUE COLOR
+         MEXIT
+.COLOR_BLACK ANOP
+         DC    AL1(0,0,0,0) RGB BLACK COLOR
+         MEXIT
+.COLOR_WHITE ANOP
+         DC    AL1(0,255,255,255) RGB WHITE COLOR
+         MEXIT
+.SVC     ANOP
+         SVC   84 GUAM R0LL=MAJOR/MINOR 
+         MEND

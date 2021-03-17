@@ -1,0 +1,135 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 03/03/06 RPI 209 ADD STIMER WAIT INTERVAL SUPPORT
+.* 04/11/06 RPI 244 UPDATE PARMS, SUPPORT REAL       
+.* 04/20/06 RPI 279 ADD REAL/TASK,EXIT AND DINTVL= SUPPORT
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
+.*
+.*  STIMER WAIT,BINTVL=s  -  where S is RX type label of full 
+.*                           word containing 0.01 seconds to wait
+.*
+.*  STIMER WAIT,DINTVL=s  -  where S is RX type label of double 
+.*                           word containing PL8'HHMMSSTH' interval
+.*
+.*  STIMER WAIT,MICVL=s   -  where S is RX type label of doubleword
+.*                           containing microseconds to wait
+.*
+.*  STIMER WAIT,TUINTVL=s -  where S is RX type label of doubleword
+.*                           containing timer unit 26.04166 sec ms 
+.*
+.*  STIMER REAL,EXIT,BINTVL=s  -  where S is RX type label of full 
+.*                           word containing 0.01 seconds to wait
+.*
+.*  STIMER REAL,EXIT,DINTVL=s  -  where S is RX type label of double 
+.*                           word containing PL8'HHMMSSTH' interval
+.*
+.*  STIMER REAL,EXIT,MICVL=s   -  where S is RX type label of dblword
+.*                           containing microseconds to wait
+.*
+.*  STIMER REAL,EXIT,TUINTVL=s -  where S is RX type label of dblword
+.*                           containing timer unit 26.04166 sec ms 
+.*
+.*  REGISTER INPUT
+.*    R0 - HIGH BYTE REQUEST TYPE:
+.*           1=WAIT
+.*           2=REAL
+.*           3=TASK
+.*    R0 - SECOND BYTE INTERVAL TYPE
+.*           1=BINTVL  FULLWORD    0.01 SECONDS IN INTERVAL
+.*           2=DINTVL  DOUBLEWORD  0000000HHMMSSTHF INTERVAL
+.*           3=MICVL   DOUBLEWORD  MICROSECONDS IN INTERVAL
+.*           4=TUINTVL FULLWORD    26.04166 MICROSECOND TIMER UNITS
+.*    R0 - LOW 4 BYTES = EXIT ADDRESS IF NOT ZERO
+.*    R1 = ADDRESS OF WORD OR DOUBLEWORD INTERVAL ARGUMENT
+.*
+.*********************************************************************
+&N      STIMER &TYPE,      WAIT/REAL/TASK                              X
+               &EXIT,      EXIT ROUTINE FOR REAL/TASK                  X
+               &BINTVL=,   FULL WORD 0.01 SECONDS                      X
+               &DINTVL=,   DOUBLE WORD DEC HHMMSSTH INTERVAL           X
+               &ERRET=,    IGNORED                                     X
+               &GMT=,      NOT SUPPORTED                               X
+               &MF=I,      NOT SUPPORTED                               X
+               &MICVL=,    DOUBLE WORD MICROSECONDS                    X
+               &TUINTVL=   DOUBLE WORD TIMER UNTIS 26.04166 MICROSEC  
+        AIF   ('&N' EQ '').SKPLAB
+&N      DS    0H
+.SKPLAB ANOP
+        AIF   ('&GMT'    NE '').ERR3
+        AIF   ('&MF' NE 'I').ERR5
+        AIF   ('&TYPE' EQ 'WAIT').WAIT
+        AIF   ('&TYPE' EQ 'REAL').REAL
+        AIF   ('&TYPE' EQ 'TASK').TASK
+        MNOTE 12,'STIMER - INVALID WAIT/REAL/TASK TYPE - &TYPE'
+        MEXIT
+.WAIT   ANOP
+        AIF   ('&EXIT' NE '').ERR4
+        AIF   ('&BINTVL' EQ '').WCHK_DINTVL
+        IIHF  0,X'01010000' WAIT BINTVL
+        LA    1,&BINTVL
+        AGO   .SVC
+.WCHK_DINTVL ANOP
+        AIF   ('&DINTVL' EQ '').WCHK_MICVL
+        IIHF  0,X'01020000' WAIT DINTVL
+        LA    1,&DINTVL
+        AGO   .SVC
+.WCHK_MICVL ANOP
+        AIF   ('&MICVL' EQ '').WCHK_TUINTVL
+        IIHF  0,X'01030000' WAIT MICVL
+        LA    1,&MICVL
+        AGO   .SVC
+.WCHK_TUINTVL ANOP
+        AIF   ('&TUINTVL' EQ '').ERR1
+        IIHF  0,X'01040000' WAIT TUINTVL
+        LA    1,&TUINTVL
+        AGO   .SVC
+.REAL   ANOP  TAKE EXIT WHEN REAL TIME INTERVAL ENDS
+.TASK   ANOP  TAKE EXIT WHEN TASK ITME INTERVAL ENDS (TASK=REAL LIMIT)
+        AIF   ('&EXIT' EQ '').ERR2
+        AIF   ('&EXIT'(1,1) EQ '(').REGEXIT
+        LA    0,&EXIT       REAL EXIT
+        AGO   .RCHKTYPE
+.REGEXIT ANOP
+        ZOPTLR 0,&EXIT(1)    REAL EXIT
+.RCHKTYPE ANOP
+        AIF   ('&BINTVL' EQ '').RCHK_DINTVL
+        IIHF  0,X'02010000' REAL BINTVL
+        LA    1,&BINTVL
+        AGO   .SVC
+.RCHK_DINTVL ANOP
+        AIF   ('&DINTVL' EQ '').RCHK_MICVL
+        IIHF  0,X'02020000' REAL DINTVL
+        LA    1,&DINTVL
+        AGO   .SVC
+.RCHK_MICVL ANOP
+        AIF   ('&MICVL' EQ '').RCHK_TUINTVL
+        IIHF  0,X'02030000' REAL MICVL
+        LA    1,&MICVL
+        AGO   .SVC
+.RCHK_TUINTVL ANOP
+        AIF   ('&TUINTVL' EQ '').ERR1
+        IIHF  0,X'02040000' REAL TUINTVL
+        LA    1,&TUINTVL
+.SVC    ANOP
+        SVC   X'2F' STIMER R0B0=TYPE,R0B1=INT, R0=EXIT, R1=INTVL ARG
+        MEXIT
+.ERR1   MNOTE 12,'STIMER INTERVAL OPTION NOT DEFINED'
+        MEXIT
+.ERR2   MNOTE 12,'STIMER EXIT ADDRESS REQUIRED FOR REAL/TASK'
+        MEXIT
+.ERR3   MNOTE 12,'STIMER GMT= NOT SUPPORTED'
+        MEXIT
+.ERR4   MNOTE 12,'STIMER WAIT DOES NOT SUPPORT EXIT ADDRESS'
+        MEXIT
+.ERR5   MNOTE 12,'STIMER MF= NOT SUPPORTED'
+        MEXIT
+        MEND

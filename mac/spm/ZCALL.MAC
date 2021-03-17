@@ -1,0 +1,142 @@
+        MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 10/21/05 RPI  41 - add VL positional parm support
+.* 12/12/05 RPI  18 - correct VL bit OI instrcution (missing .)
+.* 01/09/06 RPI 163 - SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI 244 - IGNORE NON CRITICAL KW PARMS
+.* 04/12/06 RPI 322 - support VL option with MF=L 
+.* 07/22/06 RPI 381 - support register substitution of parametrs 
+.* 11/10/06 RPI 473 - correct macro bugs and update RT\TEST\TESTCAL1
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
+.* 11/08/08 RPI 942 check for (reg) parm conflict with R1, ZSTRMAC UPDT         
+.* 11/14/08 RPI 953 move CALL to ZCALL to share with other macro libs           
+.*********************************************************************
+&N      ZCALL  &NAME,                                                  X
+               &PARMS,                                                 X
+               &VL,            SET END OF LIST HIGH BIT                X
+               &ID=,           IGNORE                                  X
+               &LINKINST=BALR,                                         X
+               &MF=I           I/L/E FORMS SUPPORTED
+         CNOP  0,4
+         AIF   ('&N' NE '')             
+&N       DS    0F
+         AEND 
+         AIF   (N'&SYSLIST GT 3)      
+               MNOTE 12,'CALL UNSUPPORTED OPERANDS - &SYSLIST(4)'
+               MEXIT
+         AEND
+         :&NPARMS SETA N'&PARMS
+         AIF   (&NPARMS EQ 0 AND '&VL' NE '')    RPI 473
+               MNOTE 12,'CALL VL INVALID WHEN NO PARMS'     
+               MEXIT
+         AEND
+         AIF   ('&MF' EQ 'I')   
+               ACALL STD_FORM
+         AELSEIF ('&MF' EQ 'L')
+               ACALL LIST_FORM
+         AELSEIF ('&MF(1)' EQ 'E')
+               ACALL EXEC_FORM
+         AELSE
+               MNOTE 12,'CALL INVALID MF=&MF'
+         AEND
+         MEXIT
+.*
+.* STD FORM
+.*
+         AENTRY STD_FORM
+       AIF    (&NPARMS NE 0)
+         BRAS   1,*+4+&NPARMS*4
+         DC     A&PARMS
+                :&I SETA   1
+                AWHILE (&I LE &NPARMS)
+                    AIF ('&PARMS(&I)'(1,1) EQ '(')
+                        :&OFF     SETA   &I*4-4
+                        AIF    ('&PARMS(&I,1)' EQ 1                    X
+                                OR '&PARMS(&I,1)' EQ 'R1')
+                        MNOTE 8,'CALL (REG) TYPE PARM MUST BE (2)-(12)'
+                        MEXIT
+                        AEND
+         ST     &PARMS(&I,1),&OFF.(1)
+                    AEND
+                    :&I SETA   &I+1
+                AEND
+                AIF    ('&VL' EQ 'VL') 
+                       :&OFF     SETA   N'&PARMS*4-4
+         OI     &OFF.(1),X'80'
+                AEND
+       AEND
+       AIF   ('&NAME' NE '')      
+             AIF ('&NAME'(1,1) NE '(')
+         LRL    15,=V(&NAME)
+             AELSE
+         ZOPTLR 15,&NAME(1)
+             AEND
+       AEND
+         &LINKINST 14,15
+         AEND
+.*
+.* LIST FORM
+.*
+         AENTRY LIST_FORM
+       AIF    ('&VL' NE 'VL')    
+         DC    A&PARMS
+       AELSE       
+               :&I SETA 1
+               AWHILE (&I LT &NPARMS) 
+         DC    A(&PARMS(&I))
+                      :&I SETA  &I+1
+               AEND
+         DC    A(&PARMS(&I)+X'80000000')
+       AEND
+         AEND
+.*
+.* EXEC FORM
+.*
+         AENTRY EXEC_FORM
+         AIF    ('&MF(2)' EQ '')   RPI 473
+                MNOTE 12,'CALL EXEC FORM MISSING LIST ADDR'
+                MEXIT
+         AEND
+       AIF    ('&MF(2)' NE '(')
+         LA     1,&MF(2)
+       AELSE
+         ZOPTLR 1,&MF(2,1)
+       AEND
+       :&NPARMS  SETA   N'&PARMS
+       AIF    (&NPARMS GT 0)
+              :&EXOFF   SETA   0
+              :&I       SETA   1
+              AWHILE (&I LE &NPARMS)
+                    :&EXPARM  SETC   '&PARMS(&I)'              
+                    AIF    ('&EXPARM'(1,1) NE '(')
+         LA     0,&EXPARM
+         ST     0,&EXOFF.(1)
+                    AELSE
+         ST     &EXPARM,&EXOFF.(1)   RPI 473
+                    AEND
+                    :&EXOFF   SETA   &EXOFF+4
+                    :&I SETA &I+1
+              AEND
+              AIF  ('&VL' EQ 'VL' AND &EXOFF NE 0)   RPI 473
+         OI     &EXOFF-4(1),X'80'
+              AEND
+       AEND
+       AIF   ('&NAME' NE '')      
+             AIF ('&NAME'(1,1) NE '(')
+         LRL    15,=V(&NAME)
+             AELSE
+         ZOPTLR 15,&NAME(1)
+             AEND
+       AEND
+         &LINKINST 14,15
+         AEND
+         MEND

@@ -1,0 +1,34 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 04/25/06 RPI 293 ADD EXEC SQL INCLUDE SUPPORT VIA COPY
+.* 05/05/06 RPI 308 GENERALIZED FOR CICS, DLI, AND SQL    
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+.*
+.* The mz390 loader parses space delimited EXEC parms and forms to
+.* form standard comma delimited macro call to EXEC macro to support
+.* EXEC SQL/CICS/DLI type statements.
+.*
+.*********************************************************************
+         MACRO
+&N       EXEC
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+&EXEC_TYPE      SETC  '&SYSLIST(1)'
+&EXEC_CMD       SETC  '&SYSLIST(2)'
+&EXEC_CMD_PARMS SETC  '&SYSLIST(3)'
+&NP      SETA  N'&SYSLIST
+&I       SETA  3
+.PLOOP   ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &NP).ENDPARMS
+&EXEC_CMD_PARMS SETC  '&EXEC_CMD_PARMS,&SYSLIST(&I)'
+         AGO   .PLOOP
+.ENDPARMS ANOP 
+         &EXEC_TYPE._&EXEC_CMD &EXEC_CMD_PARMS
+         MEND

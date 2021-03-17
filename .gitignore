@@ -233,6 +233,7 @@ rt/test/save/ZSTRMAC2.[mM][lL][cC]
 **/[cC][iI][cC][sS]
 !**/[cC][iI][cC][sS]/
 zpar/*.[dD][aA][tT]
+DUMMY
 linklib/CVTTOHEX
 linklib/DAT
 linklib/FPCONMFC

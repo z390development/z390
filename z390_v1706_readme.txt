@@ -1,15 +1,21 @@
-z390_v1705a_readme.txt updated 2021-02-09 by don@higgins.net
+z390_v1706_readme.txt updated 2021-03-17 by don@higgins.net
 
 This zip version has the following fixes and changes:
 
-1.  RPI 2204 Implement new problem state instructions  CDPT, CXPT, CZDT, CZXT.
-    See updated regression tests in tests\TESTDFP1.MLC
-2.  RPI 2226 Correct instructions STCCTM and VNOT.
-    See updated ZOPCHECK regression test and additional machine measurement referrence.
-3.  Fixes contributed by John Ganci
-    1. RPI 2013 modifications to MP and DP emulation.
-    2. RPI 2014 initialize new CDE storage to zeros before setting fields.
-    3. RPI 2204 fix minor typos in source; change increase in memory to +32.
+1.  RPI 2229 adds QSAM support for LBI large block V, VB, and VT record formats where RDW LL00 is
+    replaced with LLLL with high bit on.  A new directory QSAM has been added that has build and
+    verify programs for each record format including V, VB, VT, VL, VBL, VTL, F, FB, FT, FL, FBL,
+    and FTL where L indicates Large blocks over 32767.  For VL, VBL, and VTL the DCBE block must
+    be referenced by DCB and have the DCBE keyword BLKSIZE=1 versus default 0 for no LBI.  Run the 
+    bat command BAT\RUNRTQSAM.BAT to buld and verify QSAM files of each type.
+
+2.  RPI 1647 fix BRCTH which had incorrect relative branch offset.  Also fix TESTINS4.MLC which
+    was testing low half of register.  Run BAT\RUNASMTESTS.BAT to verify fix.
+
+3.  RPI 2015 fix contributed by John Ganci fixes correct field name in IHASDWA control block.
+    Run RPI\RUNRPI2015.BAT to assemble, link, and execute TDP.MLC and TMP.MLC to test new IHASDWA.
+
+
 
 This z390 zipped directory contains everything you need to install and run z390 Portable Mainframe
 Assembler and zCOBOL.  It has been regression tested on Windows 10.  Additional volunteers are
@@ -39,6 +45,8 @@ Double click bat\runasmdemos.bat to assemble, link, and execute assembler demo p
   1. DEMO\HELLO.MLC     - Display "Hello World" via WTO macro
   2. DEMO\DEMOM8Q1.MLC  - Solve 8 Queens Problem written as structured macro
   3. DEMO\TESTDCB1.MLC  - Copy sequential ASCII text file using QSAM.
+
+Double click bat\bldcbllib.bat to compile and link zcobol runtime.
 
 Double click bat\runcbldemos.bat to compile, link,and execute 5 zcobol programs:
   1. ZCOBOL\DEMO\HELLO.CBL    - Display "Hello World"

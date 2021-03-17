@@ -302,6 +302,7 @@ public  class  tz390 {
 	* 2020-12-30 DSH RPI 2220 add macro APARM to reset ACALL parm before entering AENTRY
 	* 2021-02-07 DSH RPI 2226 correct STCCTM type RSYb EB17, VNOT
         * 2021-02-09 DSH V1705a RPI 2204, 2226, 2213, 2214
+	* 2021-03-09 DSH V1706 RPI 2229 QSAM LLLL large block opt
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -310,7 +311,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.7.05a";  //dsh + afk
+    String version    = "V1.7.06";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*

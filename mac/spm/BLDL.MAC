@@ -1,0 +1,51 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               * 
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 04/12/06 RPI244 ADD BLDL FOR SUPPORT OF DE= ON LINK, LOAD, XCTL
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
+.*********************************************************************
+.* BLDL SEARCH SYS390 DIRECTORIES FOR MEMBER NAMES IN LIST AND 
+.* SET R15 RETURN CODE:
+.*   0 - ALL MEMBERS FOUND
+.*   4 - ONE OR MORE NOT FOUND (R FIELD SET TO 1 IF FOUND ELSE 0)
+.*   8 - LIST COUNT < 1 OR ENTRY LENGTH < 12
+.*
+.* BLDL LIST HAS HWORD COUNT OF NUMBER OF ENTRIES (1 OR MORE) 
+.* BLDL ENTRY HAS FOLLOWING FORMAT (THIS ADDR CAN BE USED IN DE=)
+.*   LL    HWORD COUNT OF BYTES IN ENTRY (12 OR MORE)
+.*   NAME  CL8   EBCDIC NAME
+.*   TTR   XL3   TRACK AND RECORD POINTER (R=0 IF NOT FOUND ELSE > 0)
+.*   K     XL1   CONCATENATION #
+.*   Z     XL1   LOCATION FOUND (0=PRIVATE,1=LPA,2=JPA,3+=PARENT)
+.*   C     XL1   ALIAS IF HIGH BIT ON, LENGTH OF USER DATA
+.*   ???   XLN   USER DATA INCLUDED IN ENTRY LL (SUCH AS PGM LINK DATA)
+.*********************************************************************
+&N       BLDL  &DCB,      IGNORED                                      X
+               &LIST,     BLDL LIST WITH HWORD TOTAL LENGTH            X
+               &MF=I,     NOT SUPPORTED                                X
+               &START=,   INGORED                                      X
+               &STOP=     IGNORED                                       
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR2
+         AIF   ('&LIST' EQ '').ERR1
+         AIF   ('&LIST'(1,1) EQ '(').REGLIST
+         LA    1,&LIST
+         AGO   .SVC
+.REGLIST ANOP
+         ZOPTLR 1,&LIST(1)
+.SVC     ANOP
+         SVC   X'12' BLDL R1=BLDL LIST LL(LL,NAME,TTR,KZC,USER),(...)
+         MEXIT
+.ERR1    MNOTE 12,'BLDL MISSING BLDL LIST ADDRESS'
+         MEXIT
+.ERR2    MNOTE 12,'BLDL MF= NOT SUPPORTED'
+         MEXIT
+         MEND

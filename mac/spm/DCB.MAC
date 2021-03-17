@@ -1,0 +1,158 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/16/08                                                 *
+.*********************************************************************
+.* MAINTENANCE
+.* 10/12/05 ADD DCBREC AND DCBDSNAM FIELDS, AND DEFAULT DDNAME
+.* 10/17/05 RPI  26 - correct missing .DDDEF label
+.* 10/17/05 RPI  27 - issue error for any defined key word parms
+.* 11/13/05 RPI  88 - add DCBID EBCDIC/ASCII ID for I/O verification               
+.* 11/16/05 RPI  95 - add DDNAME and DSNAME conflict check                         
+.* 11/17/05 RPI  96 - add RECFM, LRECL, and BLKSIZE consistency check              
+.* 04/10/06 RPI 244  support RECFM A/M, allow LRECL=0                     
+.* 05/05/06 RPI 281  add DCBE support for EODAD and SYNAD                 
+.* 04/11/07 RPI 587  support 32 bit DCBLRECLF and DCBBLKSIF fields  
+.* 04/23/07 RPI 599  add call to DCBD to define referened fields       
+.* 08/03/07 RPI 644  zero DCBOFLGS and fix DCBMACRF when 2 operands     
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 06/23/08 RPI 867 JUST ISSUE WARNING FOR EXLST NOT SUPPORTED
+.* 09/11/08 RPI 764 ADD DCBIO TOTAL IO REQUESTS SINCE OPEN USED BY PL       
+.* 09/16/08 RPI 91764 ADD DCBIO TOTAL IO REQUESTS SINCE OPEN USED BY PL       
+.* 11/10/08 RPI 946 INIT ENTIRE DCB TO ZEROS TO AVOID INIT X'F6' FILLER       
+.*********************************************************************
+&N       DCB   &DSORG=PS,    PHYSICAL SEQUENTIAL                       X
+               &BFALN=,      IGNORE                                    X
+               &BFTEK=,      IGNORE                                    X
+               &BLKSIZE=0,   BLOCK SIZE                                X
+               &BUFCB=,      IGNORE                                    X
+               &BUFL=,       IGNORE                                    X
+               &BUFNO=,      IGNORE                                    X
+               &BUFOPT=,     IGNORE                                    X
+               &DCBE=0,      USE DCBE EODAD AND SYNAD IF NZ  RPI 281   X
+               &DDNAME=,     ENVIRONMENT VARIABLE WITH PATH OR FILE    X
+               &DEVD=,       UNSUPPORTED ERROR                         X
+               &DSNAME=0,    DSN AREA WITH PATH OR FILE (NULL OR "..") X 
+               &EODAD=0,     END OF FILE EXIT                          X
+               &EXLST=,      UNSUPPORTED ERROR                         X
+               &KEYLEN=,     UNSUPPORTED ERROR                         X
+               &LINCT,       IGNORE                                    X
+               &LRECL=0,     RECORD SIZE                               X
+               &MACRF=GM,    ACCESS METHOD (GM,PM,R,W)                 X
+               &OPTCD=,      IGNORE                                    X
+               &RECFM=FB,    RECORD FORMAT (F,FB,V,VB,RT,VT) IGNOR A/M X
+               &RECORD=0,    RECORD AREA                               X
+               &SYNAD=0      ERROR EXIT                                
+&N       DS    0D             RPI 915
+         DC    XL(DCBLEN)'00' RPI 946
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP        
+         AIF   ('&DEVD'   NE '').ERR2
+         AIF   ('&EXLST'  EQ '').NO_EXLST
+         MNOTE 4,'DCB EXLST NOT SUPPORTED YET - IGNORED'  RPI 867
+.NO_EXLST ANOP
+         AIF   ('&KEYLEN' NE '').ERR4
+         AIF   ('&RECFM' EQ 'F').CHKF
+         AIF   ('&RECFM' EQ 'FA').CHKF
+         AIF   ('&RECFM' EQ 'FM').CHKF
+         AIF   ('&RECFM' EQ 'FB').CHKFB
+         AIF   ('&RECFM' EQ 'FBA').CHKFB
+         AIF   ('&RECFM' EQ 'FBM').CHKFB
+         AIF   ('&RECFM' EQ 'V').CHKV
+         AIF   ('&RECFM' EQ 'VA').CHKV
+         AIF   ('&RECFM' EQ 'VM').CHKV
+         AIF   ('&RECFM' EQ 'VB').CHKVB
+         AIF   ('&RECFM' EQ 'VBA').CHKVB
+         AIF   ('&RECFM' EQ 'VBM').CHKVB
+         AIF   ('&RECFM' EQ 'FT').CHKFT
+         AIF   ('&RECFM' EQ 'VT').CHKVT
+         MNOTE 12,'INVALID RECFM - &RECFM'
+         MEXIT
+.CHKF    ANOP
+         AIF   (&LRECL GT 0 AND &BLKSIZE GT 0 AND &LRECL NE &BLKSIZE).EX
+               RR_LRECL
+         AGO   .CHKEND
+.CHKFB   ANOP
+         AIF   (&LRECL GT 0 AND &BLKSIZE GT 0 AND &BLKSIZE/&LRECL*&LRECX
+               L NE &BLKSIZE).ERR_LRECL
+         AGO   .CHKEND
+.CHKV    ANOP
+         AIF   (&LRECL GT 0 AND &BLKSIZE GT 0 AND &BLKSIZE NE &LRECL).EX
+               RR_LRECL
+         AGO   .CHKEND
+.CHKVB   ANOP
+         AIF   (&LRECL GT 0 AND &BLKSIZE GT 0 AND (&BLKSIZE LT (&LRECL+X
+               4))).ERR_LRECL
+         AGO   .CHKEND
+.CHKFT   ANOP
+         AIF   (&LRECL GT 0 AND &BLKSIZE GT 0 AND &BLKSIZE NE &LRECL).EX
+               RR_LRECL
+         AGO   .CHKEND
+.CHKVT   ANOP
+         AIF   (&LRECL EQ 0 AND &BLKSIZE EQ 0).ERR_LRECL
+         AIF   (&LRECL GT 0 AND &BLKSIZE GT 0 AND &BLKSIZE NE &LRECL).EX
+               RR_LRECL
+.CHKEND  ANOP
+         AIF   ('&DDNAME' EQ '' OR '&DSNAME' EQ '0').DSNOK
+         MNOTE 12,'DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
+         MEXIT
+.DSNOK   ANOP
+         ORG   &N+DCBID-IHADCB        RPI88
+         DC    C'DCBV1001'            RPI88
+         ORG   &N+DCBDSORG-IHADCB
+         DC    AL1(DCBDSORG_&DSORG) DCBDSORG
+         ORG   &N+DCBEODAD-IHADCB
+         DC    A(&EODAD) DCBEODAD
+         ORG   &N+DCBRECFM-IHADCB
+         DC    AL1(DCBRECFM_&RECFM) DCBRECFM
+         ORG   &N+DCBDDNAM-IHADCB
+         AIF   ('&DDNAME' EQ '').DDDEF
+         DC    CL8'&DDNAME' DCBDDNAM
+         AGO   .DDEND
+.DDDEF   ANOP
+         DC    CL8'&N' DCBDDNAME        
+.DDEND   ANOP
+         ORG   &N+DCBOFLGS-IHADCB
+         DC    AL1(0) DCBOFLGS RPI 668 ZERO (SET AT OPEN)
+         ORG   &N+DCBMACRF-IHADCB
+         AIF   (N'&MACRF GT 1).MACRF2 RPI 668
+         DC    AL2(DCBMACRF_&MACRF(1)) DCBMACRF
+         AGO   .MACRF2_END
+.MACRF2  ANOP
+         DC    AL2(DCBMACRF_&MACRF(1)+DCBMACRF_&MACRF(2)) DCBMACRF 
+.MACRF2_END ANOP
+         ORG   &N+DCBSYNAD-IHADCB
+         DC    A(&SYNAD) DCBSYNAD DCBSYNAD
+         ORG   &N+DCBBLKSIF-IHADCB    RPI 587
+         DC    F'&BLKSIZE' DCBBLKSIF  RPI 587
+         ORG   &N+DCBLRECLF-IHADCB    RPI 587
+         DC    F'&LRECL' DCBLRECLF    RPI 587
+         ORG   &N+DCBREC-IHADCB
+         DC    A(&RECORD) DCBREC
+         ORG   &N+DCBDSNAM-IHADCB
+         DC    A(&DSNAME) DCBDSNAM
+         ORG   &N+DCBDCBE-IHADCB   RPI 281
+         DC    A(&DCBE) DCBDCBE
+         ORG   &N+DCBIO-IHADCB     RPI 907
+         DC    A(0)     DCBIO      RPI 907 TOTAL IO COUNT SINCE OPEN
+         ORG   &N+DCBLEN
+.EXIT    ANOP
+         DCBD
+         MEXIT
+.ERR_LRECL MNOTE 12,'DCB INVALID LRECL/BLKSIZE'
+         AGO   .EXIT
+.ERR2    MNOTE 12,'DCB DEVD NOT SUPPORTED'
+         AGO   .EXIT
+.ERR3    MNOTE 12,'DCB EXLST NOT SUPPORTED'
+         AGO   .EXIT
+.ERR4    MNOTE 12,'DCB KEYLEN NOT SUPPORTED'
+         AGO   .EXIT
+         MEND

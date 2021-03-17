@@ -1,0 +1,139 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/30/05                                                 *
+.*********************************************************************
+.* 12/11/05 RPI47 - add TGET/TPUT support for GUI window
+.* 12/16/05 RPI47 - add TGET/TPUT extension for literal edit msg    
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 02/21/06 RPI211 MAKE TGET/TPUT MAINFRAME COMPATIBLE AT SVC LEVEL
+.* 05/05/06 RPI308 CORRECT BUT IN .ASIS CODE FOUND DEBUGGING TESTCIC1
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+.*
+.* TPUT BUFFER,LBUFFER,OPTIONS
+.*
+.*     BUFFER  - RX or reg pointer to TN3290 data stream buffer
+.*     LBUFFER - absolute value or reg length of buffer
+.*     OPTIONS - the follwing options may be coded:                  
+.*                 EDIT    - write text only and add cursor control  
+.*                 NOEDIT  - write text as is with cursor control
+.*                 WAIT    - wait for output to be moved to buffer
+.*                 NOWAIT  - return with R15=4 if no buffer avail.   
+.*                 ASIS    - write text as is with cursor control
+.*                 CONTROL - non text (bell, reset kb, etc.)          
+.*                 NOHOLD  - don't wait for buffer transmission     
+.*                 HOLD    - wait until buffer is transmitted
+.*                 NOBREAK - wait for input to be sent before write
+.*                 BREAKIN - write now and discard input in process 
+.*                 FULLSCR - write 3270 data stream with no changes
+.*                 R       - all options set in regstier 1
+.*
+.* TPUT (R0),(R1),R may to coded to pass all parms via registers
+.*
+.* Register input:                                           
+.*
+.* R0LH = ASID (NOT USED)
+.* R0LL = BUFFER LENGTH
+.* R1   = LOW 24 BIT BUFFER ADDRESS (RMODE24 REQUIRED)
+.* R1   = FLAGS IN HIGH BYTE     
+.*           X'80' - 1=TGET 0=TPUT
+.*           X'40' - USERID IN R15 (NOT USED)
+.*           X'20' - LOWP PROCESSING REQUIRED (NOT USED)
+.*           X'10' - 1=NOWAIT 0=WAIT
+.*           X'08' - 1=HOLD 0=NOHOLD
+.*           X'04' - 1=BREAKIN 0=NOBREAKIN
+.*           X'03' - 00=EDIT, 01=ASIS, 10=CONTROL, 11=FULLSCR 
+.*********************************************************************
+&N       TPUT  &BUFF,                                                  X
+               &LBUFF,                                                 X
+               &MF=I      NOT SUPPORTED
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR1
+         AIF   ('&BUFF'(1,1) EQ '(').RECREG
+         LA    1,&BUFF
+         AGO   .CHKLEN
+.RECREG  ANOP
+         ZOPTLR 1,&BUFF(1)
+.CHKLEN  ANOP
+         AIF   ('&LBUFF'(1,1) EQ '(').LENREG
+         LA    0,&LBUFF
+         AGO   .SETOPT
+.LENREG  ANOP
+         AIF   (&LBUFF(1) NE 1).LENREGOK
+         MNOTE 12,'TPUT INVALID LENGTH REGISTER - &LBUFF(1)'
+.LENREGOK ANOP
+         ZOPTLR 0,&LBUFF(1)
+.SETOPT  ANOP
+&OP      SETC  '0'  X'80' 1=TGET, 0=TPUT
+&USERID  SETC  '0'  X'40' 0=NO USERID IN R15    (NOT USED)
+&LOWP    SETC  '0'  X'20' 0=LOWP                (NOT USED)
+&WAIT    SETC  '0'  X'10' 0=WAIT, 1=NOWAIT
+&HOLD    SETC  '0'  X'08' 0=NOHOLD, 1=HOLD      (NOT USED)
+&BREAKIN SETC  '0'  X'04' 0=NOBREAK, 1=BREANKIN               
+&TYPE    SETC  '00' X'03' 00=EDIT, 01=ASIS, 10=CONTROL, 11=FULLSCR
+.CHKOPT  ANOP
+&NP      SETA  N'&SYSLIST
+         AIF   (&NP GE 3 AND '&SYSLIST(3)' EQ 'R').SVC USER REG PARMS                   
+&I       SETA  2
+.OPTLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &NP).OPTEND
+         AIF   ('&SYSLIST(&I)' EQ 'EDIT').EDIT
+         AIF   ('&SYSLIST(&I)' EQ 'NOEDIT').NOEDIT
+         AIF   ('&SYSLIST(&I)' EQ 'ASIS').ASIS
+         AIF   ('&SYSLIST(&I)' EQ 'WAIT').WAIT
+         AIF   ('&SYSLIST(&I)' EQ 'NOWAIT').NOWAIT
+         AIF   ('&SYSLIST(&I)' EQ 'CONTROL').CONTROL
+         AIF   ('&SYSLIST(&I)' EQ 'HOLD').HOLD
+         AIF   ('&SYSLIST(&I)' EQ 'NOHOLD').NOHOLD
+         AIF   ('&SYSLIST(&I)' EQ 'BREAKIN').BREAKIN
+         AIF   ('&SYSLIST(&I)' EQ 'NOBREAK').NOBREAK
+         AIF   ('&SYSLIST(&I)' EQ 'FULLSCR').FULLSCR
+         MNOTE 12,'TPUT INVALID OPTION - &SYSLIST(&I)'
+         AGO   .OPTLOOP
+.EDIT    ANOP
+&TYPE    SETC  '00' X'03' 00=EDIT
+         AGO   .OPTLOOP
+.NOEDIT  ANOP  SAME AS ASIS 
+.ASIS    ANOP
+&TYPE    SETC  '01' X'03'  01=ASIS  RPI 308
+         AGO   .OPTLOOP
+.WAIT    ANOP
+&WAIT    SETC  '0' X'10'  0=WAIT 
+         AGO   .OPTLOOP
+.NOWAIT  ANOP
+&WAIT    SETC  '1' X'10'  1=NOWAIT
+         AGO   .OPTLOOP
+.CONTROL ANOP
+&TYPE    SETC  '10' X'03' 10=CONTROL (NON TEXT - BELL, KB RESET)
+         AGO   .OPTLOOP
+.HOLD    ANOP
+&HOLD    SETC  '1' X'08' 1=HOLD UNTIL BUFFER FILLED
+         AGO   .OPTLOOP
+.NOHOLD  ANOP
+&HOLD    SETC  '0' X'08' 1=HOLD UNTIL BUFFER FILLED
+         AGO   .OPTLOOP
+.BREAKIN ANOP
+&BREAK   SETC  '0' X'04' 0=NOBREAK                   
+         AGO   .OPTLOOP
+.NOBREAK ANOP
+&BREAK   SETC  '1' X'04' 1=BREAKIN                      
+         AGO   .OPTLOOP
+.FULLSCR ANOP
+&TYPE    SETC  '11' X'03' 11=FULLSCR
+         AGO   .OPTLOOP
+.OPTEND  ANOP
+         ICM   1,8,=B'&OP&USERID&LOWP&WAIT&HOLD&BREAKIN&TYPE'
+.SVC     ANOP
+         SVC   93 R0=(ASID,LENGTH) R1=(FLAGS,ADDR)
+         MEXIT
+.ERR1    MNOTE 12,'TPUT MF= NOT SUPPORTED'
+         MEND

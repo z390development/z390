@@ -1,0 +1,58 @@
+         MACRO                                                          00002   
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/11/07                                                 *
+.*********************************************************************
+.* 07/11/07 RPI 654 ADD PERFORM, PM, PENTRY, PEXIT WITH RENT SUPPORT       
+.*********************************************************************
+&N       PEXIT                                                          
+.*                                                                      
+.*       EXIT FROM PERFORMED PROCEDURE DEFINED BY PENTRY                
+.*       SEE SUBENTRY FOR OPTIONS                                       
+.*                                                                      
+.*       REV1 01/04/78 DSH - ADD STACK OPTIONS                          
+.*       REV2 01/17/80 DSH - CHANGE DEFAULT TEMP STACK REG. TO R14      
+.*                           TO ALLOW RC IN R15 TO BE RETURNED FROM     
+.*                           PERFORMED ROUTINE.                         
+.*                                                                      
+.*                                                                      
+.*                                                                      
+         GBLC  &PSTKREG,&PBASREG,&PBASLAB                               
+         GBLB  &PSTKSW,&PBASESW,&PSAVESW,&PCHKSW                        
+         LCLC  &STKREG                                                  
+         GBLB  &STKOPT                                                  
+         GBLC  &PENAME                                                  
+         AIF   (&STKOPT EQ 1).STK                                       
+&N       B     &PENAME-4                                                
+         MEXIT                                                          
+.STK     AIF   (K'&N EQ 0).STK1                                         
+&N       DS    0H                                                       
+.STK1    ANOP                                                           
+         AIF   (&PSAVESW EQ 0).L1                                       
+         STM   14,15,72(13)                                             
+.L1      AIF   (&PSTKSW  EQ 1).L2                                       
+&STKREG  SETC  '14'                                                     
+         L     14,80(13) LOAD STACK POINTER                             
+         AGO   .L3                                                      
+.L2      ANOP                                                           
+&STKREG  SETC  '&PSTKREG'                                               
+.L3      ANOP                                                           
+         SL    &STKREG,84(13) DECREMENT STACK                           
+         AIF   (&PSTKSW EQ 1).L4                                        
+         ST    14,80(13) SAVE STACK                                     
+.L4      AIF   (&PBASESW EQ 0).L4A                                      
+         L     &PBASREG,4(&STKREG) RELOAD BASE                          
+.L4A     AIF   (&PCHKSW EQ 0).L5                                        
+         ICM   14,15,0(&STKREG)  LOAD LINK WITH CHECKING                
+         BCR   P,14                                                     
+         DC    X'0000'                                                  
+         AGO   .L6                                                      
+.L5      ANOP                                                           
+         L     14,0(&STKREG)  LOAD LINK WITHOUT CHECKING                
+         BR    14                                                       
+.L6      ANOP                                                           
+         MEND                                                           
+

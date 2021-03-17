@@ -1,0 +1,204 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               * 
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 11/22/05 RPI 110 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
+.* 01/06/06 RPI 154 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
+.* 01/08/06 RPI 154 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
+.* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
+.* 04/11/06 RPI 244 UPDATE KW PARMS, SUPPORT PDATA=PSW
+.* 04/25/06 RPI 297 USE L VS LA FOR STOARGE PARMS        
+.* 04/14/07 RPI 583 CHANGE PDATA=ALL TO ALSO DUMP ALL STORAGE
+.* 05/15/07 RPI 623 SUPPORT ID=(REG)                            
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 06/23/07 RPI 642 SUPPORT TEXT=(REG)
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 04/18/09 RPI 1017 add MF=L/E support  
+.* 04/30/11 RPI 1143 default PDATA=ALL and use PDATA= for only storage
+.*********************************************************************
+.* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
+.*  1. PDATA= (DEFAULT IS ALL)
+.*     A. REGS   - ALL REGISTERS     
+.*     B.   GPR  - GENERAL PURPOSE REGISTERS         
+.*     C.   FPR  - FLOATING POINT REGISTERS
+.*     D. CB     - ALL CONTROL BLOCKS
+.*     E.   CDE  - PROGRAMS (LINK AND LOAD)
+.*     F.   DCB  - DDNAME, DCB, AND DSNAME'S
+.*  2. STORAGE=(ADDR1,ADDR2) 
+.*  3. ID=0 - IDENTIFICATION NUMBER
+.*  4. TEXT=  IDENTIFICATION TEXT (EXTENDED OPTION)
+.*********************************************************************
+.* INPUT:
+.*   R0  BIT 0 - STORAGE REQUEST (R14=START, R15=END)
+.*   R0  BIT 1 = GPR REGS
+.*   R0  BIT 2 = FPR REGS
+.*   R0  BIT 3 = CDE LOADED 390 PROGRAMS AND FILES
+.*   R0  BIT 4 = DCBS WITH DDNAME AND DSNAME
+.*   R0  BIT 5 = DUMP ALL MEMORY  RPI 583
+.*********************************************************************
+&N       SNAP  &DCB=,        IGNORED                                   X
+               &ID=0,        SHOW ID ON DUMP                           X
+               &LIST=,       NOT SUPPORTED                             X
+               &MF=I,        NOT SUPPORTED                             X
+               &PDATA=ALL,   ALL, REGS, GPR, FPR, CDE, DCB, PSW (ALL)  X
+               &SDATA=,      IGNORED                                   X
+               &STORAGE=,    STORAGE ADDRESS RANGE                     X
+               &STRHDR=,     NOT SUPPORTED                             X
+               &SUBPLST=,    NOT SUPPORTED                             X
+               &TCB=,        IGNORED                                   X
+               &TEXT=        EXTENSION TEXT TO DISPLAY                 
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'                 
+         MEXIT
+.NPOK    ANOP
+         AIF   ('&LIST' NE '').ERR2
+         AIF   ('&STRHDR' NE '').ERR3
+         AIF   ('&SUBPLST' NE '').ERR4
+&FLAGS   SETA  X'0000' DEFAULT ALL     RPI 1143
+         AIF   ('&PDATA' EQ '').NPOK2
+&FLAGS   SETA  0
+&NP      SETA  N'&PDATA+1
+.NPLOOP  ANOP
+&NP      SETA  &NP-1
+         AIF   (&NP EQ 0).NPOK2
+         AIF   ('&PDATA(&NP)' EQ 'ALL').ALL
+         AIF   ('&PDATA(&NP)' EQ 'REGS').REGS
+         AIF   ('&PDATA(&NP)' EQ 'GPR').GPR
+         AIF   ('&PDATA(&NP)' EQ 'FPR').FPR
+         AIF   ('&PDATA(&NP)' EQ 'CDE').CDE
+         AIF   ('&PDATA(&NP)' EQ 'DCB').DCB 
+         AIF   ('&PDATA(&NP)' EQ 'PSW').PSW 
+         MNOTE 8,'SNAP UNSUPPORTED PARM - &PDATA(&NP)'
+         AGO   .NPLOOP
+.ALL     ANOP                       8     4   2   1   8   4
+&FLAGS   SETA  &FLAGS+X'7C00' NO STORAGE,GPR,FPR,CDE,DCB,ALL  RPI 583
+         AGO   .NPOK2
+.REGS    ANOP
+&FLAGS   SETA  &FLAGS+X'6000'
+         AGO   .NPLOOP 
+.GPR     ANOP
+&FLAGS   SETA  &FLAGS+X'4000'
+         AGO   .NPLOOP 
+.FPR     ANOP
+&FLAGS   SETA  &FLAGS+X'2000'
+         AGO   .NPLOOP 
+.CDE     ANOP
+&FLAGS   SETA  &FLAGS+X'1000'
+         AGO   .NPLOOP 
+.DCB     ANOP
+&FLAGS   SETA  &FLAGS+X'0800'
+         AGO   .NPLOOP 
+.PSW     ANOP   PSW INCLUDED BY DEFAULT
+         AGO   .NPLOOP
+.NPOK2   ANOP
+         AIF   ('&MF' EQ 'L').LISTFORM
+         AIF   ('&MF(1)' EQ 'E').EXECFORM
+         AIF   ('&MF' NE 'I').ERR2
+.*
+.* STD FORM SNAP A MEMORY DUMP OF SPECIFIED AREA
+.*
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&STORAGE' EQ '').SETUP
+         AIF   (N'&STORAGE NE 2).ERR1
+&FLAGS   SETA  &FLAGS+X'8000'           RPI110 
+         AIF   ('&STORAGE(1)'(1,1) EQ '(').ADDR1_REG
+         L     14,=A(&STORAGE(1))
+         AGO   .ADDR2_CHK
+.ADDR1_REG ANOP
+         ZOPTLR 14,&STORAGE(1,1)
+.ADDR2_CHK ANOP
+         AIF   ('&STORAGE(2)'(1,1) EQ '(').ADDR2_REG
+         L     15,=A(&STORAGE(2))
+         AGO   .SETUP
+.ADDR2_REG ANOP
+         AIF   ('&STORAGE(2,1)' EQ '14' OR '&STORAGE(2,1)' EQ 'R14').ERX
+               R1
+         ZOPTLR 15,&STORAGE(2,1)
+.SETUP   ANOP
+         AIF   ('&ID'(1,1) EQ '(').IDREG     RPI 623
+         IILL  0,&ID                  RPI158
+         AGO   .SETFLAGS
+.IDREG   ANOP
+         ZOPTLR 0,&ID(1)                      RPI 623
+.SETFLAGS ANOP
+         IILH 0,&FLAGS               RPI158
+         AIF   ('&TEXT' EQ '').NOTEXT
+         AIF   ('&TEXT'(1,1) EQ '(').REGTEXT  RPI 642
+&TEMP    SETC  '&TEXT'
+         AIF   ('&TEMP'(1,1) NE '''').SKIP
+&TEMP    SETC  '&TEMP'(2,K'&TEMP-2)
+.SKIP    ANOP
+         LA    1,=CL60'&TEMP'
+         AGO   .SVC
+.REGTEXT ANOP
+         ZOPTLR 1,&TEXT(1) RPI 642 PTR TO TEXT WITH NULL TERM (MAX 60)
+         AGO   .SVC
+.NOTEXT  ANOP
+         LA    1,0
+.SVC     ANOP
+         SVC   51  SNAP DUMP R0=FLAGS,ID,R1=A(TEXT),R14-15=A(LOW,HIGH)
+         MEXIT
+.*
+.* LIST FORM
+.*
+.LISTFORM ANOP
+&N       DS    0F
+         AIF   ('&STORAGE(1)' EQ '').Nl_NOSTOR
+         DC    A(&STORAGE(1),&STORAGE(2)) R14-R15 STORAGE RANGE
+         AGO   .NL_FLAGS
+.NL_NOSTOR ANOP
+         DC    A(0,0) R14-R15 STORAGE RANGE
+.NL_FLAGS ANOP
+         DC    AL2(&FLAGS,&ID) R0 FLAGS AND ID
+&TEMP    SETC  ' '
+         AIF   ('&TEXT' EQ '').NL_NOTEXT
+&TEMP    SETC  '&TEXT'(2,K'&TEXT-2)
+.NL_NOTEXT ANOP
+         DC    A(*+4)          R1 A(TEXT)
+         DC    C'&TEMP',X'00'
+         MEXIT
+.*
+.* EXEC FORM
+.*
+.EXECFORM ANOP
+         AIF   ('&MF(2)'(1,1) EQ '(').EF_REG
+         LM    14,1,&MF(2)
+         AGO   .EF_OPTS
+.EF_REG  ANOP
+         LM    14,1,0(&MF(2,1))
+.EF_OPTS ANOP
+         AIF   ('&PDATA' EQ '').EF_NOPDATA
+         IILH  0,&FLAGS
+.EF_NOPDATA ANOP
+         AIF   (&ID EQ 0).EF_NOID    
+         IILL  0,&ID    
+.EF_NOID ANOP
+         AIF   ('&TEXT' EQ '').EF_NOTEXT    
+         LA    1,=C&TEXT    
+.EF_NOTEXT ANOP
+         AIF   ('&STORAGE' EQ '').SVC
+         AIF   ('&STORAGE(1)'(1,1) EQ '(').EF_STORREG
+         LM    14,15,=A(&STORAGE(1),&STORAGE(2))
+         AGO   .SVC
+.EF_STORREG ANOP
+         ZOPTLR 14,&STORAGE(1)
+         ZOPTLR 15,&STORAGE(2)
+         AGO   .SVC
+.ERR1    MNOTE 12,'SNAP INVALID STORAGE=(ADDR1,ADDR2) - &STORAGE'
+         MEXIT
+.ERR2    MNOTE 12,'SNAP INVALID MF= OPTION'
+         MEXIT
+.ERR3    MNOTE 12,'SNAP STRHDR= NOT SUPPORTED'
+         MEXIT
+.ERR4    MNOTE 12,'SNAP SUBPLST NOT SUPPORTED'
+         MEXIT
+.ERR5    MNOTE 12,'SNAP MF= NOT SUPPORTED'
+         MEXIT
+         MEND

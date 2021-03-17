@@ -1,0 +1,166 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 11/02/05 RPI68 - add SVC CLOCK options for STCK, STCKE, and JAVA  
+.* 11/15/05 RPI94 - add SVC NS option for nano-second interval timer  
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/16/06 RPI175 ADD CHECK FOR MISSING ADDR PARM
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 06/22/07 RPI 662 ADD SVC TS OPTION FOR 29 CHAR NANOSEC TIMESTAMP
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 03/18/08 RPI 825 ADD EXTENDED OPTION INS TO RETURN R1=INSTR. COUNT
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE,NS,TS,INS   X
+               &ADDR,               STORE RESULT ADDR                  X
+               &CLOCKTYPE=,         STCK/STCKE(1900),EXT JAVA (1970)   X
+               &DATETYPE=YYYYDDD,   SYSTEM DATE FORMATS                X
+               &LINKAGE=SVC,        SVC/SYSTEM                         X
+               &MF=I,               NOT SUPPORTED                      X
+               &ZONE=LT             LOCAL TIME (GMT/UTC NOT SUPPORTED)
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'TIME UNSUPPORTED OPERANDS - &SYSLIST(3)'
+         MEXIT
+.NPOK    ANOP
+.*
+.* RETURN TIME AND DATE IN REQUESTED FORMAT
+.*
+         AIF   ('&MF' NE 'I').ERR3
+         AIF   ('&ZONE' NE 'LT').ERR2
+         AIF   ('&LINKAGE' EQ 'SVC').SVCLINK
+         AIF   ('&LINKAGE' EQ 'SYSTEM').SYSLINK
+         MNOTE 12,'TIME INVALID LINKAGE TYPE - &LINKAGE'
+         MEXIT
+.*
+.* LINKAGE=SVC DEFAULT
+.*
+.SVCLINK ANOP
+         AIF   ('&TYPE' EQ '').SVCDEC
+         AIF   ('&TYPE' EQ 'DEC').SVCDEC
+         AIF   ('&TYPE' EQ 'BIN').SVCBIN
+         AIF   ('&TYPE' EQ 'TU').SVCTU
+         AIF   ('&TYPE' EQ 'MIC').SVCMIC
+         AIF   ('&TYPE' EQ 'STCK').SVCSTCK
+         AIF   ('&TYPE' EQ 'CLOCK').SVCCLOCK
+         AIF   ('&TYPE' EQ 'NS').SVCNS
+         AIF   ('&TYPE' EQ 'TS').SVCTS        RPI 662
+         AIF   ('&TYPE' EQ 'INS').SVCINS      RPI 825
+         MNOTE 12,'TIME INVALID SVC LINKAGE TYPE - &TYPE'
+         MEXIT
+.SVCDEC  ANOP             R1 = HEX CCYYDDDF
+         LA    0,0   DEC  R0 = HEX HHMMSSTH
+         AGO   .SVCSVC
+.SVCBIN  ANOP
+         LA    0,1   BIN  R0 = 0.01 SECONDS
+         AGO   .SVCSVC
+.SVCTU   ANOP
+         LA    0,2   TU   R0 = 26.04166 MIC UNITS
+         AGO   .SVCSVC
+.SVCMIC  ANOP
+         LA    0,3   MIC  0(8,R1) = DOUBLE WORD MICROSECONDS
+         AGO   .SVCADDR
+.SVCSTCK ANOP
+         LA    0,4   STCK 0(8,R1) = TOD DOUBLE WORD (BIT 51=MIC)
+.SVCADDR ANOP
+         AIF   ('&ADDR' EQ '').ERR1
+         AIF   ('&ADDR'(1,1) EQ '(').SVCAREG
+         LA    1,&ADDR
+         AGO   .SVCSVC
+.SVCAREG ANOP
+         ZOPTLR 1,&ADDR(1)
+.SVCSVC  ANOP
+         SVC   11 TIME AND DATE
+         MEXIT
+.SVCCLOCK ANOP
+         AIF   ('&CLOCKTYPE' EQ 'STCK').CLOCK_STCK
+         AIF   ('&CLOCKTYPE' EQ 'STCKE').CLOCK_STCKE
+         AIF   ('&CLOCKTYPE' EQ 'JAVA').CLOCK_JAVA
+         MNOTE 12,'TIME INVALID SVC CLOCK TYPE - &TYPE'
+.CLOCK_STCK ANOP
+         LA    0,5 CLOCK STCK - DOUBLE WORD BIT 51 MICS FROM 1900
+         AGO   .SVCADDR
+.CLOCK_STCKE ANOP
+         LA    0,6 CLOCK STCKE - 2 DOUBLE WORDS BIT 59 MICS FROM 1900
+         AGO   .SVCADDR
+.CLOCK_JAVA  ANOP
+         LA    0,7 CLOCK JAVA - DOUBLE WORD BIT 63 MILL-SEC FROM 1970
+         AGO   .SVCADDR
+.SVCNS   ANOP
+         LA    0,8 NANOSECONDS - DOUBLE WORD BIT 63 NANO-SEC COUNTER
+         AGO   .SVCADDR
+.SVCTS   ANOP      RPI 662 YYYY-MM-DD HH:MM:SS.NNNNNNNNN (29 CHAR)
+         LA    0,9 OBDC TIMESTAMP WITH 9 DIGIT NANOSECONDS 
+         AGO   .SVCADDR
+.SVCINS  ANOP
+         LA    0,16 RPI 825 R1=INSTRUCTION COUNTER
+         AGO   .SVCSVC
+.*
+.* LINKAGE=SYSTEM 
+.*
+.SYSLINK ANOP
+         AIF   ('&TYPE' EQ '').SYSDEC
+         AIF   ('&TYPE' EQ 'DEC').SYSDEC
+         AIF   ('&TYPE' EQ 'BIN').SYSBIN
+         AIF   ('&TYPE' EQ 'MIC').SYSMIC
+         AIF   ('&TYPE' EQ 'STCK').SYSSTCK
+         AIF   ('&TYPE' EQ 'STCKE').SYSSTCKE
+         MNOTE 12,'TIME INVALID SYS LINKAGE TYPE - &TYPE'
+         MEXIT
+.SYSDEC  ANOP
+         LA    0,10   DEC   0(4,R1) = HHMMSSTH
+         AGO   .SYSADDR
+.SYSBIN  ANOP
+         LA    0,11   BIN   0(4,R1) = 0.01 SECONDS
+         AGO   .SYSADDR 
+.SYSMIC  ANOP
+         LA    0,13  MIC    0(8,R1) = MICROSECONDS 
+         AGO   .SYSADDR
+.SYSSTCK ANOP
+         LA    0,14   STCK  0(8,R1) = CLOCK (BIT 51 = MIC)
+         AGO   .SYSADDR
+.SYSSTCKE ANOP
+         LA    0,15   SKCKE 0(16,R1) = ECLOCK (BIT 59 = MIC)
+.SYSADDR ANOP
+         AIF   ('&ADDR' EQ '').ERR1
+         AIF   ('&ADDR'(1,1) EQ '(').SYSAREG
+         LA    1,&ADDR
+         AGO   .SYSDATE
+.SYSAREG ANOP
+         ZOPTLR 1,&ADDR(1)
+.SYSDATE ANOP
+         AIF   ('&TYPE' EQ 'STCKE').SYSSVC NO DATE
+         AIF   ('&DATETYPE' EQ 'YYYYDDD').SYSYYYYDDD
+         AIF   ('&DATETYPE' EQ 'MMDDYYYY').SYSMMDDYYYY
+         AIF   ('&DATETYPE' EQ 'DDMMYYYY').SYSDDMMYYYY
+         AIF   ('&DATETYPE' EQ 'YYYYMMDD').SYSYYYYMMDD
+         MNOTE 12,'TIME INVALID SYS LINKAGE DATETYPE - &DATETYPE'
+         MEXIT
+.SYSYYYYDDD ANOP
+         IILH  0,1      8(4,R1) = HEX 0YYYYDDD
+         AGO   .SYSSVC
+.SYSMMDDYYYY ANOP
+         IILH  0,2      8(4,R1) = HEX MMDDYYYY
+         AGO   .SYSSVC
+.SYSDDMMYYYY ANOP 
+         IILH  0,3      8(4,R1) = HEX DDMMYYYY
+         AGO   .SYSSVC
+.SYSYYYYMMDD ANOP
+         IILH  0,4      8(4,R1) = HEX YYYYMMDD
+.SYSSVC  ANOP
+         SVC   11 TIME AND DATE
+         MEXIT
+.ERR1    MNOTE 12,'TIME MISSING POSITIONAL ADDRESS PARM'
+         MEXIT
+.ERR2    MNOTE 12,'TIME ZONE ONLY SUPPORTS LT'
+         MEXIT
+.ERR3    MNOTE 12,'TIME MF= NOT SUPPORTED'
+         MEND

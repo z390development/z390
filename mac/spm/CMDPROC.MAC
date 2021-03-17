@@ -1,0 +1,109 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 10/29/05                                                 *
+.*********************************************************************
+.* MAINTENANCE
+.* 11/09/05 ADD &ID=0 TASK ID AND &WAIT=500 MILLISECONDS WAIT FOR READ 
+.* 11/11/05 FIX INCORRECT LENGHT IN R2                                 
+.* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
+.* 01/16/06 RPI 177 REQUIRE LENGTH PARM IF REC IS REGISTER FORM
+.* 02/20/07 RPI 551 ADD SUPPORT FOR IP=(REG)                       
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 10/29/07 RPI 731 ADD CMDLOG=YES TO COPY ALL CMD STD OUTPUT TO LOG
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
+.*********************************************************************
+.*
+.* CMDPROC PROVIDES INTERFACE TO SUPPORT UP TO 10 CONCURRENT 
+.* WINDOWS PROCESSES:
+.*  START,ID=N STARTS PROCESS WITH OR WITHOUT AUTO LOGGING OF OUTPUT
+.*             IF CMDLOG=NO THEN PARENT TASK MUST ISSUE CMDPROC READ
+.*             TO RETRIEVE CMD OUTPUT FROM MEMORY QUEUE.  IF MEMORY
+.*             QUEUE EXCEEDS OPTION MAXQUE(1000) THEN ERROR IS ISSUED
+.*             AND AUTO LOGGING IS TURNED ON FOR ALL CMDS AND 
+.*  STOP,ID=N  STOPS  PROCESS
+.*  WRITE,REC,ID=N SENDS NULL OR DOUBLE QUOTE DELIMITED COMMAND
+.*             TO A PROCESS STANDARD INPUT 
+.*  READ,REC,LEN,ID=N,WAIT=S READS NEXT STANDARD OUTPUT LINE FROM 
+.*             PROCESS.  READ WILL WAIT UP TO MILLISECOND LIMIT.
+.*  RETURN CODES:
+.*    0 - OPERATIN SUCCESSFUL (RECORD RETURNED FOR READ)
+.*    4 - NO READ RETURNED IN TIME ALLOWED
+.*    8 - NO READ RECORD RETURNED AND PROCESS ENDED
+.*   12 - PROCESS ERROR OCCURRED - SEE ERROR MESSAGE ON LOG 
+.*********************************************************************
+&N       CMDPROC &OP,&REC,&LEN,&ID=0,&WAIT=500,&CMDLOG=YES
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST LE 3).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
+.NPOK    ANOP
+         AIF   ('&OP' EQ 'START').START
+         AIF   ('&OP' EQ 'STOP').STOP
+         AIF   ('&OP' EQ 'WRITE').WRITE
+         AIF   ('&OP' EQ 'READ').READ 
+         MNOTE 12,'CMDPROC UNDEFINED OPERATION - &OP'
+         MEXIT
+.START   ANOP
+         LA    0,0 ASSUME START WITH NO CMDLOG
+         AIF   ('&CMDLOG' NE 'YES').SETID
+         ICM   0,4,=X'01' SET CMDLOG ON TO ROUTE ALL OUTPUT TO LOG
+         AGO   .SETID
+.START_CMDLOG ANOP
+         LA    0,X'0100' TEXT MAXQUE START CMD WITH AUTO LOGGING
+         AGO   .SETID
+.STOP    ANOP
+         LA    0,1  STOP COMMAND PROCESSOR
+         AGO   .SETID
+.WRITE   ANOP
+         LA    0,2  WRITE CMD TO PROCESS
+         AIF   ('&REC'(1,1) EQ '(').WRITE_REC_REG
+         LA    1,&REC EBCDIC NULL TERM OR DQOUTES
+         AGO   .SETID
+.WRITE_REC_REG  ANOP
+         ZOPTLR 1,&REC(1)
+         AGO   .SETID
+.READ    ANOP
+         LA    0,3 READ CMD OUTPUT LINE
+         AIF   ('&REC'(1,1) EQ '(').READ_REC_REG
+         LA    1,&REC
+         AGO   .READ_LEN
+.READ_REC_REG ANOP
+         ZOPTLR 1,&REC(1)
+         AIF   ('&LEN' NE '').READ_LEN
+         MNOTE 12,'CMDPROC READ MISSING LENGTH FOR REGISTER REC FORM'
+         MEXIT
+.READ_LEN ANOP
+         AIF   ('&LEN' EQ '').LREC
+         AIF   ('&LEN'(1,1) EQ '(').READ_LEN_REG
+         LA    2,&LEN
+         AGO   .READ_WAIT
+.LREC    ANOP
+         LA    2,L'&REC
+         AGO   .READ_WAIT
+.READ_LEN_REG  ANOP
+         ZOPTLR 2,&LEN(1)
+.READ_WAIT ANOP
+         AIF   ('&WAIT'(1,1) EQ '(').READ_WAIT_REG
+         LA    3,&WAIT
+         AGO   .SETID
+.READ_WAIT_REG  ANOP
+         ZOPTLR 3,&WAIT(1)
+.SETID   ANOP                                              RPI 551
+         AIF   ('&ID' EQ '0').SVC
+         AIF   ('&ID'(1,1) EQ '(').IDREG
+         ICM   0,2,=AL1(&ID)  
+         AGO   .SVC
+.IDREG   ANOP
+         ZOPTLR 15,&ID(1)
+.SKIP15  ANOP
+         SLL  15,8
+         OR   0,15    
+.SVC     ANOP
+         SVC   34 R0=(BYTE3=ID,BYTE4=OP),R1=A(REC),R2=LREC,R3=MILS WAIT
+         MEXIT
+         MEND

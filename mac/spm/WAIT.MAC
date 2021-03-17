@@ -1,0 +1,69 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/28/05                                                 *
+.*********************************************************************
+.*
+.*  WAIT ECB=ecb
+.* 
+.*                                                      
+.*********************************************************************
+.* 10/20/05 RP47 - add WTOR as part of first GUAM release in v1008  
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/10/06 RPI244 IGNORE LONG=, LINKAGE=, RELATED=, SUPPORT NUM
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       WAIT  &NUM,       EVENT COUNT (DEFAULT 1)                     X
+               &ECB=,      ECB ADDRESS                                 X
+               &ECBLIST=,  ECB ADDRESS LIST                            X
+               &LONG=,     IGNORE                                      X
+               &LINKAGE=,  IGNORE                                      X
+               &MF=I,      NOT SUPPORTED                               X
+               &RELATED=   IGNORE
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR1
+         AIF   (N'&SYSLIST LE 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+         MEXIT
+.NPOK    ANOP
+         AIF   ('&ECB' EQ '').CHKLIST
+         SR    0,0
+         AIF   ('&NUM' EQ '' OR '&NUM' EQ 1).CHKECB
+         MNOTE 12,'WAIT COUNT INVALID FOR ECB= ONLY 1 SUPPORTED - &NUM'
+         MEXIT
+.CHKECB  ANOP
+         AIF   ('&ECB'(1,1) EQ '(').ECBREG
+         LA    1,&ECB
+         AGO   .SVC
+.ECBREG  ANOP
+         ZOPTLR 1,&ECB(1)
+         AGO   .SVC
+.CHKLIST ANOP
+         AIF   ('&ECBLIST' EQ '').ERR2
+         AIF   ('&NUM' EQ '').NUM1
+         LA    0,&NUM
+         AGO   .CHKREG
+.NUM1    ANOP
+         LA    0,1
+.CHKREG  ANOP
+         AIF   ('&ECBLIST'(1,1) EQ '(').REGLIST
+         LA    1,&ECBLIST
+         AGO   .SVC
+.REGLIST ANOP
+         ZOPTLR 1,&ECBLIST(1)
+.SVC     ANOP
+         SVC   1 (R0=0,R1=A(ECB) OR (R0=NUM,R1=ECBLIST)
+         MEXIT
+.ERR1    MNOTE 12,'WAIT MF= NOT SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'WAIT ECB= OR ECBLIST= REQUIRED'
+         MEXIT
+         MEND
+

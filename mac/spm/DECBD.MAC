@@ -1,0 +1,25 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.*********************************************************************
+         DECBD
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*  EVENT CONTROL BLOCKS CREATED BY READ/WRITE
+.*
+IHADECB  DSECT
+DECBECB  DS    F
+DECBTYPE DS    XL2 
+DECBLEN  DS    XL2
+DECBDCBA DS    A
+DECBAREA DS    A
+DECBL    EQU   *-IHADECB
+         MEND

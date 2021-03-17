@@ -1,0 +1,84 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/17/06                                                 *
+.*********************************************************************
+.* 11/10/06 RPI 477 SUPPORT ASCII OPTION, REGISTER INPUT, RC=12 VS ERR
+.* 11/29/06 RPI 507 SUPPORT OUT=REG (GPR OR FPR OUTPUT REG)
+.*                  (NOTE OUT=(REG) INDICATES FIELD ADDR IN GPR)
+.* 12/10/06 RPI 514 ADD DFP SUPPORT FOR DD, ED, AND LD TYPES
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
+.* 06/14/08 RPI 863 add error messages for extra positional parms 
+.*********************************************************************
+.*
+.*  CONVERT FROM EBCDIC DECIMAL FIELD TO BINARY FIELD FORMAT
+.*    TYPE    OUTPUT               INPUT 
+.*     21      128 BIT INTEGER     45 BYTE DECIMAL (SIGN+39 DIGITS)
+.*     22      HFP SHORT EH        45 BYTE SCIENTIFIC (N.N( 7)+ENNNN)
+.*     23      DFP SHORT EB        45 BYTE SCIENTIFIC (N.N( 7)+ENNNN)
+.*     24      HFP LONG  DH        45 BYTE SCIENTIFIC (N.N(14)+ENNNN)
+.*     25      BFP LONG  DB        45 BYTE SCIENTIFIC (N.N(14)+ENNNN)
+.*     26      HFP EXT.  LH        45 BYTE SCIENTIFIC (N.N(34)+ENNNN)
+.*     27      BFP EXT.  LB        45 BYTE SCIENTIFIC (N.N(34)+ENNNN)
+.*     28      DFP LONG  DD        45 BYTE SCIENTIFIC (N.N(16)+ENNNN)
+.*     29      DFP SHORT ED        45 BYTE SCIENTIFIC (N.N( 7)+ENNNN)
+.*     30      DFP EXT.  LD        45 BYTE SCIENTIFIC (N.N(34)+ENNNN)
+.*
+.* IF LINKAGE=SVC
+.*   USE CFD Z390 SVC 171 R1=A(TYPE,OUT,IN)
+.* ELSE
+.*   USE CFD MAINFRAME SERVICE ROUTINE MFCONMFS(TYPE,OUT,IN)
+.* ENDIF
+.*
+.* R15 RETURN CODE
+.*    0 OK
+.*   12 INVALID REQUEST
+.*
+.*********************************************************************
+&N       CFD   &TYPE,         SEE 7 CONVERSION TYPES BELOW             X
+               &IN=,          SOURCE FIELD (RX OR REG)                 X
+               &OUT=,         TARGET FIELD (RX OR REG)                 X
+               &LINKAGE=SVC   SVC= Z390 171, MF=CALL TO FPCONMFC          
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS LE 1).POSEND
+         MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP        
+&N       DS    0H
+.SKIPDS  ANOP 
+         GBLB  &CFD_EQUS
+         AIF   (&CFD_EQUS).SKIP_CFD_EQUS
+&CFD_EQUS SETB 1
+CFD_INT128 EQU 21 CONVERT TO 128 BIT INT FROM 45 BYTE SN(39) 
+CFD_EH   EQU   22 CONVERT TO HFP SHORT EH FROM 45 BYTE SN.N(7)+ENNNN
+CFD_EB   EQU   23 CONVERT TO BFP SHORT EB FROM 45 BYTE SN.N(7)+ENNNN
+CFD_DH   EQU   24 CONVERT TO HFP LONG  DH FROM 45 BYTE SN.N(14)+ENNNN
+CFD_DB   EQU   25 CONVERT TO BFP LONG  DB FROM 45 BYTE SN.N(14)+ENNNN
+CFD_LH   EQU   26 CONVERT TO HFP EXT.  LH FROM 45 BYTE SN.N(34)+ENNNN
+CFD_LB   EQU   27 CONVERT TO BFP EXT.  LB FROM 45 BYTE SN.N(34)+ENNNN
+CFD_DD   EQU   28 CONVERT TO DFP LONG  DD FROM 45 BYTE SN.N(16)+ENNNN
+CFD_ED   EQU   29 CONVERT TO DFP SHORT ED FROM 45 BYTE SN.N( 7)+ENNNN
+CFD_LD   EQU   30 CONVERT TO DFP EXT.  LD FROM 45 BYTE SN.N(34)+ENNNN
+.SKIP_CFD_EQUS ANOP
+         LA    1,=A(&TYPE,&OUT,&IN)
+         AIF   ('&TYPE'(1,1) NE '(').CHKIN
+         ST    &TYPE(1),0(1)
+.CHKIN   ANOP
+         AIF   ('&IN'(1,1) NE '(').CHKOUT
+         ST    &IN(1),8(1)                  RPI 507
+.CHKOUT  ANOP
+         AIF   ('&OUT'(1,1) NE '(').SVC
+         ST    &OUT(1),4(1)                 RPI 507
+.SVC     ANOP
+         AIF   ('&LINKAGE' NE 'SVC').CALL
+         SVC   171 CFD Z390 SVC R1=A(TYPE,OUT,IN)
+         MEXIT
+.CALL    ANOP
+         L     15,=V(FPCONMFC) CFD MAINFRAME CALL ROUTINE
+         BASR  14,15 CALL FPCONMFC,(TYPE,OUT,IN)
+         MEND               

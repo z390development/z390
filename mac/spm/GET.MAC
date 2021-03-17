@@ -1,0 +1,71 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* MAINTENANCE
+.* 10/12/05 ADD USE OF DCBREC IF RECORD NOT SPECIFIED
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 10/20/05 RPI38 - check for register conflicts     
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI163 ISSUE MNOTE ERROR FOR TYPE=P
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 06/22/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC 221 R0=1 R1=A(RPL)
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 10/01/07 RPI 709 CORRECT MNOTE TEXT                                    
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       GET   &DCB,    DCB                                            X
+               &REC,    RECORD                                         X
+               &MF=I,   NOT SUPPORTED                                  X
+               &RPL=,   VSAM REQUEST PARAMETER LIST                    X
+               &TYPE=   TYPE=P NOT SUPPORTED
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR3
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'GET UNSUPPORTED OPERANDS - &SYSLIST(3)'
+         MEXIT
+.NPOK    ANOP
+         AIF   ('&RPL' NE '').VSAM
+         AIF   ('&TYPE' NE '').ERR1
+         AIF   ('&DCB'(1,1) EQ '(').DCBREG
+         LA    1,&DCB
+         AGO   .CHKREC
+.DCBREG  ANOP
+         ZOPTLR 1,&DCB(1)
+.CHKREC  ANOP
+         AIF   ('&REC' EQ '').RECDEF
+         AIF   ('&REC'(1,1) EQ '(').RECREG
+         LA    0,&REC
+         AGO   .SVC
+.RECREG  ANOP
+         AIF   ('&REC(1)' EQ '1' OR '&REC(1)' EQ 'R1').ERR2
+         ZOPTLR 0,&REC(1)
+         AGO   .SVC
+.RECDEF  ANOP
+         L     0,DCBREC-IHADCB(1)
+.SVC     ANOP
+         SVC  151 
+         MEXIT
+.VSAM    ANOP
+         AIF   ('&RPL'(1,1) EQ '(').RPLREG
+         LA    1,&RPL
+         AGO   .VSVC
+.RPLREG  ANOP
+         ZOPTLR 1,&RPL(1)
+.VSVC    ANOP
+         LA    0,RPLOPGET
+         SVC   121 VSAM GET R0=1 R1=A(RPL)
+         MEXIT         
+.ERR1    MNOTE 12,'GET TYPE= NOT SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'GET RECORD REG INVALID - &REC(1)'
+         MEXIT
+.ERR3    MNOTE 12,'GET MF= NOT SUPPORTED'
+         MEXIT
+         MEND

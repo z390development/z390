@@ -1,0 +1,64 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* MAINTENANCE
+.* 10/12/05 ADD USE OF DCBREC IF RECORD NOT SPECIFIED
+.* 10/20/05 RPI27 - issue error for any undefined operands
+.* 10/20/05 RPI38 - check for register conflicts     
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 06/14/07 RPI 641 DEFAULT MF=I
+.* 07/22/07 RPI 644 ADD RPL VSAM SUPPORT VIA SVC 121 R0=2, R1=A(RPL)
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       PUT   &DCB,                                                   X
+               &REC,                                                   X
+               &RPL=,    VSAM REQUEST PARAMETER LIST                   X
+               &MF=I  NOT SUPPORTED
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&MF' NE 'I').ERR2
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+.NPOK    ANOP
+         AIF   ('&RPL' NE '').VSAM
+         AIF   ('&DCB'(1,1) EQ '(').DCBREG
+         LA    1,&DCB
+         AGO   .CHKREC
+.DCBREG  ANOP
+         ZOPTLR 1,&DCB(1)
+.CHKREC  ANOP
+         AIF   ('&REC' EQ '').RECDEF
+         AIF   ('&REC'(1,1) EQ '(').RECREG
+         LA    0,&REC
+         AGO   .SVC
+.RECREG  ANOP
+         AIF   ('&REC(1)' EQ '1' OR '&REC(1)' EQ 'R1').ERR1
+         ZOPTLR 0,&REC(1)
+         AGO   .SVC
+.RECDEF  ANOP
+         L     0,DCBREC-IHADCB(1)
+.SVC     ANOP
+         SVC  152 QSAM PUT R0=REC, R1=DCB 
+         MEXIT
+.VSAM    ANOP
+         AIF   ('&RPL'(1,1) EQ '(').RPLREG
+         LA    1,&RPL
+         AGO   .VSVC
+.RPLREG  ANOP
+         ZOPTLR 1,&RPL(1)
+.VSVC    ANOP
+         LA    0,RPLOPPUT
+         SVC   121 VSAM PUT R0=2 R1=A(RPL)
+         MEXIT         
+.ERR1    MNOTE 12,'PUT RECORD REG INVALID - &REC(1)'
+         MEXIT
+.ERR2    MNOTE 12,'PUT MF= NOT SUPPORTED'
+         MEXIT
+         MEND

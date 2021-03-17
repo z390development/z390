@@ -1,0 +1,43 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/12/07                                                 *
+.*********************************************************************
+.* 07/12/07 RPI 413 INITIAL CODING                                    
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/29/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+.*
+.* GETENV - GET ENVIRONMENT VARIABLE VALUE
+.*   INPUT
+.*     R0  = 1 EXTRACE SVC FUNCTION CODE
+.*     R1  = ADDRESS OF NULL TERMINATED ENVIRONMENT VARIABLE NAME
+.*   OUTPUT
+.*     R2  = ADDRESS OF NULL TERMINATED ENVIRONMENT VARIABLE VALUE
+.*           (THE AREA IS GETMAIN'D FOR ENTIRE VALUE PLUS NULL)
+.*     R15 = RETURN CODE
+.*             0 - OK
+.*             4 - VALUE NULL
+.*             8 - NAME NULL
+.*
+.*********************************************************************
+&N       GETENV &NAME                                                   
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&NAME' EQ '').ERR1
+         AIF   ('&NAME'(1,1) EQ '(').REGNAME
+         LA    1,&NAME
+         AGO   .SVC
+.REGNAME ANOP
+         ZOPTLR 1,&NAME(1)
+.SVC     ANOP
+         LA   0,1
+         SVC  40 EXTRACT GETENV R0=1, R1=A(NAME) OUTPUT R2=A(VALUE)
+         MEXIT
+.ERR1    MNOTE 12,'GETENV MISSING NULL TERMINATED NAME'
+         MEXIT
+         MEND

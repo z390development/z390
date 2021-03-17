@@ -1,0 +1,124 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/16/07                                                 *
+.*********************************************************************
+.* 09/16/07 RPI 682 INITIAL CODING                  
+.* 09/20/07 RPI 703 CORRECT NISSING QUOTE IN AIF    
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*********************************************************************
+&N       GENCB &AM=VSAM, VSAM VS VTAM                                  X
+               &BLK=,    ACB OR RPL CONTROL BLOCK GENERATION           X
+               &COPIES=1,  ACB NUMBER OF COPIES TO ALLOCATE            X
+               &LENGTH=, LENGTH OF USER WAREA PROVIDED                 X
+               &LOC=BELOW, ALLOCATE AREA ABOVE OR BELOW 24 BIT LINE    X
+               &WAREA=,  USER PROVIDED WORK AREA FOR ACB/RPL COPIES    X
+               &BUFSP=0,   ACB MAXIMUM BUFFER SPACE FOR CLUSTER        X
+               &DDNAME=,   ACB DDNAME FOR VSAM CLUSTER DEFINITION TABLEX
+               &DSNAME=0,  ACB DSNAME FOR VSAM CLUSTER DEFINITION TABLEX 
+               &EXLST=0,   ACB NOT CURRENTLY SUPPORTED                 X
+               &MACRF=,    ACB PROCESSING OPTIONS                      X
+               &ACB=,      RPL ADDR ACB                                X
+               &AREA=0,    RPL RECORD WORK AREA (DATA MVE, ADDR LOC)   X
+               &AREALEN=0, RPL LENGTH OF AREA (MAX MVE, 4 FOR LOC)     X
+               &ARG=0,     RPL KEY FIELD FOR KSDS ACCESS               X
+               &ECB=0,     RPL ECB TO BE POSTED ON COMPLETION          X
+               &KEYLEN=0,  RPL KEY LENGTH FOR GENERIC KEY SEARCH       X
+               &OPTCD=,    RPL OPTIONS (SEE SUPPORTED OPTIONS ABOVE)   X
+               &RECLEN=0   RPL RECORD LENGTH FOR VARIABLE LENGTH PUT
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP  
+         AIF   ('&AM' EQ 'VSAM').CHK_EXLST                
+         MNOTE 12,'GENCB ONLY AM=VSAM IS SUPPORTED'
+         MEXIT
+.CHK_EXLST ANOP
+         AIF   ('&EXLST' EQ '0').NOEXLST
+         MNOTE 12,'GENCB ACB EXLST NOT CURRENTLY SUPPORTED'
+         MEXIT
+.NOEXLST ANOP
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         &BLK.D , GEN ACB/RPL DSECT AND &BLK.LEN IF NOT ALREADY DONE
+&BLKEND  SETC   '&BLK.END'
+&BLKSTRT SETC   'IHA&BLK'
+&LBLK    SETA   &BLKEND-&BLKSTRT
+&LBLKS   SETA   &COPIES*&LBLK                    
+         AIF    (&LBLK GT 1).LBLKOK
+         MNOTE  12,'GENCB LENGTH OF &BLK FROM DSECT INVALID - &LBLK'
+.LBLKOK  ANOP
+.*
+.* INIT R14 = USER WORK AREA OR DYNAMIC ALLOC AREA
+.*
+         AIF   ('&LENGTH' EQ '' AND '&WAREA' EQ '').ALLOC
+         AIF   ('&LENGTH' NE '').WAREA  
+         MNOTE 12,'GENCB MISSING LENGTH FOR WAREA'
+         MEXIT
+.WAREA   ANOP
+         AIF   ('&WAREA'  NE '').WAREA2
+         MNOTE 12,'GENCB MISSING WAREA FOR LENGTH'
+         MEXIT
+.WAREA2  ANOP
+         AIF   ('&WAREA'(1,1) EQ '(').REGWAREA   RPI 703
+         LA    1,&WAREA  
+         LR    14,1
+         AGO   .LENGTH
+.REGWAREA ANOP
+         ZOPTLR 14,&WAREA(1) 
+.LENGTH  ANOP
+         AIF   ('&LENGTH' GE '&LBLKS').CLEAR
+         MNOTE 12,'GENCB &LENGTH TOO SHORT FOR &COPIES COPIES OF &BLK'
+         MEXIT
+.ALLOC   ANOP
+         GETMAIN RU,LV=&LBLKS,LOC=&LOC
+.CLEAR   ANOP
+         MVI   0(1),0
+         MVC   1(&LBLK-1,1),0(1) CLEAR FIRST &BLK
+.CHKTYPE ANOP 
+&TCOPY   SETA  &COPIES
+         AIF   ('&BLK' EQ 'ACB').GENACB
+         AIF   ('&BLK' EQ 'RPL').GENRPL
+         MNOTE 12,'GENCB ONLY BLK=ACB OR BLK=RPL SUPPORTED'
+         MEXIT
+.*
+.* GENERATE FIRST ACB STARTING AT R1
+.*
+.GENACB  ANOP
+         ZGENACB BUFSP=&BUFSP, ACB MAXIMUM BUFFER SPACE FOR CLUSTER    X
+               DDNAME=&DDNAME, ACB DDNAME FOR CLUSTER DEFINITION TABLE X
+               DSNAME=&DSNAME, ACB DSNAME FOR CLUSTER DEFINITION TABLE X 
+               EXLST=&EXLST,   ACB NOT CURRENTLY SUPPORTED             X
+               MACRF=&MACRF    ACB PROCESSING OPTIONS                       
+         AGO   .MAKE_COPIES         
+.*
+.* GENERATE FIRST RPL AT R1
+.*
+.GENRPL  ANOP
+         ZGENRPL ACB=&ACB,      RPL ADDR ACB                           X
+               AREA=&AREA,      RPL WORK AREA (DATA MVE, ADDR LOC)     X
+               AREALEN=&AREALEN, RPL LEN OF AREA (MAX MVE, 4 FOR LOC)  X
+               ARG=&ARG,        RPL KEY FIELD FOR KSDS ACCESS          X
+               ECB=&ECB,        RPL ECB TO BE POSTED ON COMPLETION     X
+               KEYLEN=&KEYLEN,  RPL KEY LENGTH FOR GENERIC KEY SEARCH  X
+               OPTCD=&OPTCD,    RPL OPTIONS (SEE RPL FOR LIST)         X
+               RECLEN=&RECLEN   RPL REC LENGTH FOR VARIABLE LENGTH PUT
+.MAKE_COPIES ANOP
+         AIF   (&TCOPY LE 1).EXIT
+         LR    14,1
+.COPY_LOOP ANOP
+&TCOPY   SETA  &TCOPY-1
+         AIF   (&TCOPY LE 0).EXIT
+         AHI   14,&LBLK
+         MVC   0(&LBLK,14),0(1) COPY &BLK
+         AGO   .COPY_LOOP
+.EXIT    ANOP
+         MEXIT         
+         MEND

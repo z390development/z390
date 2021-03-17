@@ -1,0 +1,60 @@
+         MACRO                                                          00002   
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/30/08                                                 *
+.*********************************************************************
+.* 07/31/08 RPI 884 USE OPSYN TO REPLACE BC WITH BR TYPE BRANCH OPS   
+.*********************************************************************
+&N       ASMMREL &OPTION                                                
+         AIF   ('&N' EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&OPTION' EQ 'OFF').EXIT
+*
+* RELATIVE BRANCH SUTSTITUTIONS FOR BASE DISPLACEMENT BRANCH
+*
+B        OPSYN BRU
+BC       OPSYN BRC
+BE       OPSYN BRE
+BH       OPSYN BRH
+BL       OPSYN BRL
+BNE      OPSYN BRNE
+BNH      OPSYN BRNH
+BNL      OPSYN BRNL
+BM       OPSYN BRM
+BO       OPSYN BRO 
+BP       OPSYN BRP
+BZ       OPSYN BRZ
+BNM      OPSYN BRNM
+BNO      OPSYN BRNO
+BNP      OPSYN BRNP
+BNZ      OPSYN BRNZ
+BCT      OPSYN BRCT
+BXH      OPSYN BRXH
+BXHG     OPSYN BRXHG
+BXLE     OPSYN BRXLE
+BXLEG    OPSYN BRXLG
+BCT      OPSYN BRCT
+*
+* LONG DISPLACEMENT SUBSTITUTION FOR STANDARD BASE DISPLACMENT
+*
+CS       OPSYN CSY
+CLM      OPSYN CLMY
+STCM     OPSYN STCMY
+CDS      OPSYN CDSY
+TM       OPSYN TMY
+MVI      OPSYN MVIY
+NI       OPSYN NIY
+CLI      OPSYN CLIY
+OI       OPSYN OIY
+XI       OPSYN XIY
+ICM      OPSYN ICMY
+STM      OPSYN STMY
+LM       OPSYN LMY
+LAM      OPSYN LAMY
+STAM     OPSYN STAMY
+.EXIT    ANOP
+         MEND

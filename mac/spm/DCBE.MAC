@@ -1,0 +1,36 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/05/06 RPI 281 ADD DCBE SUPPORT FOR EODAD= AND SYNAD=
+.* 2021/02/16 DSH RPI 2229 ADD DCBEFLG1(DCBELBI) FOR LARGE BLOCKSIZES
+.*            SEE: https://www.ibm.com/support/knowledgecenter
+.*                 /en/SSLTBW_2.1.0/com.ibm.zos.v2r1.idad500/dcbem.htm
+.*********************************************************************
+.* ADD KEYWORD BLKSIZE= WITH DEFAULT 0, SET TO NOT ZERO FOR BWD LBI
+.* If the DCBDCBE field in DCB is not zero then the EODAD and SYNAD
+.* exit addresses will be fetched from DCDE block when required.    
+.* See IHADCBE for IHADCBE DSECT with DCBEEODA and DCBESYNA fields
+.*********************************************************************
+         MACRO
+&N       DCBE  &EODAD=0,      END OF FILE EXIT ADDRESS                 X
+               &SYNAD=0,      I/O ERROR EXIT ADDRESS                   X
+               &BLKSIZE=0      SET TO NON-ZERO VALUE FOR KARGE BLOCKS
+		 AIF   ('&BLKSIZE' EQ '0')
+&FLG1    SETA  X'00'
+         AELSE
+&FLG1    SETA  X'04'          TURN ON DCBEULBI LARGE BLOCKS BIT
+         AEND		 
+&N       DS    0F
+         DC    C'DCBE'        ETE CATCHER
+		 ORG   &N+X'17'                         
+         DC    X'&FLG1'    DCBEFLG1 WITH DCBEULBI BDW LARGE BLOCKS
+		 ORG   &N+X'40'
+         DC    A(&EODAD)      DCBEEODA
+		 ORG   &N+X'44'
+         DC    A(&SYNAD)      DCBESYNA
+		 ORG   &N+X'48'
+		 DS    0X             DCBEEND
+         MEND
