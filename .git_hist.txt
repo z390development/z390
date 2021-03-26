@@ -6917,6 +6917,32 @@ set GIT_COMMITTER_DATE=2021-03-26 15:31:00 +0100
 git commit -m "Reconstructed version v1.5.06rc1 of z390 committed on behalf of Don Higgins"
 git tag -a v1.5.06rc1 -m "Reconstructed version v1.5.06rc1 of z390 committed on behalf of Don Higgins"
 
+==> Rename files
+REN T.BAT U.BAT
+git rm  T.BAT
+git add U.BAT
+REN zcobol\demo\t.txt    U.txt
+REN zcobol\demo\T1.CBL   U1.CBL
+REN zcobol\demo\T2.CBL   U2.CBL
+REN zcobol\demo\T4.CBL   U4.CBL
+REN zcobol\demo\TSET.CBL USET.CBL
+git rm  zcobol\demo\t.txt   
+git rm  zcobol\demo\T1.CBL  
+git rm  zcobol\demo\T2.CBL  
+git rm  zcobol\demo\T4.CBL  
+git rm  zcobol\demo\TSET.CBL
+git add zcobol\demo\U.txt
+git add zcobol\demo\U1.CBL
+git add zcobol\demo\U2.CBL
+git add zcobol\demo\U4.CBL
+git add zcobol\demo\USET.CBL
+
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Abe 2021-03-26 15:45:00 +0100
+set GIT_COMMITTER_DATE=2021-03-26 15:45:00 +0100
+git commit -m "Intermediate commit to trace renamed files"
 
 
 
