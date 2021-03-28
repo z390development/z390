@@ -5,95 +5,135 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .* Date   - 04/19/07                                                 *
+.* Modified by Melvyn Maltz                                          *
+.* Date   - 02/16/16                                                 *
 .*********************************************************************
-.* 07/31/07 RPI 668 INITIAL CODING                               
-.* 08/04/07 RPI 668 ADD VCDTTIOT FOR ACCESSING TIOT PATH/FILE     
-.* 09/02/07 RPI 681 EXPAND DEFINE TO DEFINE ENTIRE VSAM CATALOG      
-.* 09/23/07 RPI 704 ADD CLUSTER SUPPORT FOR CONTROLINTERVALSIZE=     
+.* 07/31/07 RPI 668 INITIAL CODING
+.* 08/04/07 RPI 668 ADD VCDTTIOT FOR ACCESSING TIOT PATH/FILE
+.* 09/02/07 RPI 681 EXPAND DEFINE TO DEFINE ENTIRE VSAM CATALOG
+.* 09/23/07 RPI 704 ADD CLUSTER SUPPORT FOR CONTROLINTERVALSIZE=
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .* 10/14/10 RPI 1130 change keyword parms and check for errors:
 .*             REUSE=NO,UNIQUEKEY=YES,UPGRADE=YES,UPDATE=YES
+.* 02/16/16 ZVSAM rewrite
+.*          Bugs VSEDSN s/be VESDSN
+.*          VX0DSN removed
+.*          VXNDSN replaced with VESDSN
+.*          DCB, MODELDCB and VCDTDCBA removed
+.*          DATABLOCKSIZE/INDEXBLOCKSIZE added to CLUSTER and AIX
+.*             in bytes or nK
+.*             to replace CONTROLINTERVALSIZE
+.*          DATAFREESPACE(ci%,ca%)/INDEXFREESPACE(ci%,ca%)
+.*          SPANNED=YES/NO (default NO)
+.*          DATAADJUST/INDEXADJUST=YES/NO (default NO)
+.*             This optimizes DATABLOCKSIZE/INDEXBLOCKSIZE (if YES)
+.*             DATAADJUST only applicable to FIXED datasets/unique AIX
+.*          Not supporting DISP=MOD overrides
+.*          VES now changed to DTA
 .*********************************************************************
 .*
 .* DEFINE - define z390 VSAM catalog loadable table entries:
 .*
 .*           1. DEFINE CATALOG,        DEFINE VCDT VSAM CATALOG TABLE
 .*                     NAME=           NAME OF VCDT CATALOG TABLE
-.*           2. DEFINE CLUSTER,        DEFINE BASE CLUSTER (DATA/INDEX)
-.*                     NAME=,          BASE OF BASE CLUSTER
-.*                     INDEX=INDEXED/NONINDEXED/NUMBERED/LINEAR, TYPE
-.*                     RECORDSIZE=(average,max) or fixed length, V/F
+.*
+.*           2. DEFINE CLUSTER,        DEFINE CLUSTER (DATA/INDEX)
+.*                     NAME=,          CLUSTER NAME
+.*                     INDEX=INDEXED/NONINDEXED/NUMBERED/LINEAR TYPE
+.*                     RECORDSIZE=(average,max), or fixed length, V/F
+.*                     SPANNED=NO,     SPANNED NO/YES
 .*                     KEYS=(64,0),    KSDS PRIMARY KEY LENGTH, OFFSET
 .*                     REUSE=YES,      ERASE ALL DATA AT OPEN RPI 1130
-.*                     VESDSN=,        OPTIONAL DSNAME FOR VES FILE 
-.*                     VX0DSN=         OPTIONAL DSNAME FOR VX0 INDEX
-.*                     CONTROLINTERVALSIZE= OPTIONAL CI BLOCK PADDING      
+.*                     DTADSN=,        OPTIONAL DSNAME FOR DTA FILE
+.*                     DATABLOCKSIZE=4K, DATA BLOCKSIZE
+.*                     INDEXBLOCKSIZE=4K, INDEX BLOCKSIZE
+.*                     DATAADJUST=YES, ADJUST DATABLOCKSIZE NO/YES
+.*                     INDEXADJUST=YES, ADJUST INDEXBLOCKSIZE NO/YES
+.*                     DATAFREESPACE=(%CA,%CI), DATA FREESPACE %
+.*                     INDEXFREESPACE=(%CA,%CI) INDEX FREESPACE %
+.*
 .*           3. DEFINE ALTERNATEINDEX, DEFINE KSDS ALTERNATE INDEX KEY
 .*                     NAME=,          NAME OF KSDS ALT IDX
-.*                     RELATE=,        NAME OF BASE CLUSTER
-.*                     KEYS=(64,0),    ALT KEY IN BASE CLUSTER 
+.*                     RELATE=,        NAME OF CLUSTER
+.*                     KEYS=(64,0),    ALTERNATE KEY IN CLUSTER
 .*                     UNIQUEKEY=YES,  DO NOT ALLOW DUPLICATES RPI 1130
 .*                     UPGRADE=YES,    UPDATE AIX FOR BASE CHANGE  1130
-.*                     VXNDSN=         OPTIONAL DSNAME FOR AIX
+.*                     REUSE=YES,      ERASE ALL DATA AT OPEN RPI 1130
+.*                     SPANNED=NO,     SPANNED NO/YES
+.*                     DTADSN=,        OPTIONAL DSNAME FOR AIX
+.*                     DATABLOCKSIZE=4K, DATA BLOCKSIZE
+.*                     INDEXBLOCKSIZE=4K, INDEX BLOCKSIZE
+.*                     DATAADJUST=YES, ADJUST DATABLOCKSIZE NO/YES
+.*                     INDEXADJUST=YES, ADJUST INDEXBLOCKSIZE NO/YES
+.*                     DATAFREESPACE=(%CA,%CI), DATA FREESPACE %
+.*                     INDEXFREESPACE=(%CA,%CI) INDEX FREESPACE %
+.*
 .*           4. DEFINE PATH,           DEFINE PATH FOR KSDS ACCESS
 .*                     NAME=,          NAME OF PATH
 .*                     ENTRY=,         NAME OF AIX OR BASE     RPI 1130
 .*                     UPDATE=YES      UPDATE AIX FOR BASE CHANGE  1130
+.*
 .*           5. DEFINE END             GENERATE CATALOG TABLE
 .*
 .*   See example in vsam\demo and vsam\test directories:
 .*     1.  vsam\demo\DEMOCAT.MLC defines demo VSAM files
 .*     2.  vsam\test\TESTCAT.MLC defines test VSAM files
 .*
-.*     The DDNAME in ACB must point to the VCDT loadable catalog table
-.*     containing the base cluster or alternate path to be opened.  
+.*     The DDNAME in ACB must point to the VCDT loadable catalog
+.*     containing the base cluster or alternate path to be opened
 .*     The DDNAME may have optional specific name appended to catalog
 .*     name separated by period otherwise the ACB label field name will
 .*     be the name used to search VCDT catalog for matching cluster
-.*     or alternate path name.  For REPRO the OUTFILE spec pointing to 
-.*     catalog and entry may also be followed by [DISP=MOD] to add rcds
+.*     or alternate path name
 .*
 .*  Notes:
-.*    1.  Variable length VSAM records are prefixed by 4 byte length  
-.*        which is not included in RECORDSIZE=(average,maximum)      
-.*    2.  Specify INDEXED=NONINDEXED for ESDS sequential file.
-.*        Specify INDEXED=NUMBERED   for RRDS relative record file.
-.*        Specify INDEXED=LINEAR     for LDS  CI size required.
-.*        The default is KSDS key sequened file with at primary key.
+.*    1.  Variable length VSAM records are prefixed by 4 byte length
+.*        which is not included in RECORDSIZE=(average,maximum)
+.*    2.  Specify INDEXED=INDEXED    for KSDS (default)
+.*        Specify INDEXED=NONINDEXED for ESDS sequential file
+.*        Specify INDEXED=NUMBERED   for RRDS relative record file
+.*        Specify INDEXED=LINEAR     for LDS  CI size required
 .*    3.  KSDS and VRRDS use VX0 index file to obtain XRBA of VES
-.*        records.  For KSDS, the VX0 file has key field after XRBA. 
+.*        records.  For KSDS, the VX0 file has key field after XRBA.
 .*        For VRRDS, 0 XRBA indicates no record written.  All VRRDS
 .*        record XRBA's are stored with +1 added.  For KSDS files
 .*        negative_value XRBA point to inserted record binary tree
 .*        structure records at the end of VX0 index file.
 .*        Note updates for variable records with different lengths and
-.*        new inserted records are added to VRRDS and KSDS data file 
-.*        and the corresponding VX0 RBA pointer is updated accordingly.         
+.*        new inserted records are added to VRRDS and KSDS data file
+.*        and the corresponding VX0 RBA pointer is updated accordingly.
 .*    5.  Any number of additional alternate key indexes can be
-.*        defined with contain XRBA pointers into VX0 primary index.  
+.*        defined which contain XRBA pointers into VX0 primary index.
 .*        Beware of overhead to update each alternate index file
 .*        every time a record is added, deleted, or updated.
 .*********************************************************************
          DEFINE &TYPE,         CATALOG,CLUSTER,ALTERNATEINDEX,PATH     X
                &NAME=,         NAME OF CATALOG, CLUSTER, AIX, OR PATH  X
-               &CONTROLINTERVALSIZE=0, OPTIONAL CI SIZE NOT REQUIRED   X
+               &DATABLOCKSIZE=4K,  DATA BLOCKSIZE                      X
+               &INDEXBLOCKSIZE=4K, INDEX BLOCKSIZE                     X
+               &DATAADJUST=NO,     ADJUST DATA BLOCKSIZE               X
+               &INDEXADJUST=NO,    ADJUST INDEX BLOCKSIZE              X
+               &DATAFREESPACE=(0,0), DATA FREESPACE (%CA,%CI)          X
+               &INDEXFREESPACE=(0,0), INDEX FREESPACE (%CA,%CI)        X
                &ENTRY=,        AIX OR BASE CLUSTER NAME FOR PATH       X
-               &INDEX=INDEXED, LINEAR/NONINDEXED/NUMBERED CLUSTER TYPE X
-               &KEYS=(64,0),   (LENGTH,OFFSET) FOR KSDS PRI/ALT KEY    X
+               &INDEX=,        INDEXED/NONINDEXED/NUMBERED/LINEAR      X
+               &KEYS=(0,0),    (LENGTH,OFFSET) FOR KSDS PRI/ALT KEY    X
                &RECORDSIZE=,   FIXED LENGTH OR VAR (AVG,MAX) CLUSTER   X
-               &RELATE=,       BASE CLUSTER NAME FOR ALTERNATEINDEX    X
+               &SPANNED=NO,    SPANNED NO/YES                          X
+               &RELATE=,       CLUSTER NAME FOR ALTERNATEINDEX         X
                &REUSE=NO,      RESET HIGH XRBA AT OPEN FOR AIX/CLUSTER X
                &UNIQUEKEY=YES, REQUIRE UNIQUE AIX KEYS        RPI 1130 X
                &UPDATE=YES,    REQUIRE AIX UPDATES FOR THIS PATH  1130 X
                &UPGRADE=YES,   REQUIRE AIX UPDATE FOR THIS AIX    1130 X
-               &VESDSN=, OPTIONAL CLUSTER DSNAME FOR VES (DEF NAME.VES)X
-               &VX0DSN=, OPTIONAL CLUSTER DSNAME FOR VX0 (DEF NAME.VX0)X
-               &VXNDSN=  OPTIONAL AIX     DSNAME FOR VXN (DEF NAME.VXN)
+               &DTADSN=,       OVERRIDE CLUSTER DSNAME FOR DTA         X
+               &IDXDSN=,       OVERRIDE CLUSTER DSNAME FOR IDX
+.*
          COPY  ZDEFINE.CPY   INCLUDE GLOBALS SHARED WITH ZDEFINE.MAC
+.*
          AIF   (N'&SYSLIST LE 1).CHKTYPE
 &ERROR   SETB  1
-         MNOTE 12,'UNDEFINED PARAMETER - &SYSLIST(2)' RPI 1130        
-         MEXIT
+         MNOTE 12,'UNDEFINED PARAMETER - &SYSLIST(2)' RPI 1130
+.*
 .CHKTYPE ANOP
          AIF   ('&TYPE' EQ 'CATALOG').DEFINE_CATALOG
          AIF   ('&TYPE' EQ 'CLUSTER').DEFINE_CLUSTER
@@ -102,8 +142,7 @@
          AIF   ('&TYPE' EQ 'PATH').DEFINE_PATH
          AIF   ('&TYPE' EQ 'END').DEFINE_END
 &ERROR   SETB  1
-         MNOTE 12,'DEFINE INVALID TYPE - &TYPE'        
-         MEXIT
+         MNOTE 12,'DEFINE INVALID TYPE - &TYPE'
 .*
 .* DEFINE CATALOG
 .*
@@ -117,19 +156,101 @@
 .*
 .DEFINE_CLUSTER ANOP
 &CLR_TOT SETA  &CLR_TOT+1
-&CLR_CI(&CLR_TOT) SETA &CONTROLINTERVALSIZE
 .*
-.* SET BASE CLUSTER NAME
+.* SET CLUSTER DATABLOCKSIZE
+.*
+&LEN     SETA  &DATABLOCKSIZE
+         AIF   ('&DATABLOCKSIZE'(K'&DATABLOCKSIZE,1) NE 'K')
+               :&CLR_DBS(&CLR_TOT) SETA &DATABLOCKSIZE
+         AELSE
+               :&LEN SETA &LEN*1024
+               :&CLR_DBS(&CLR_TOT) SETA &LEN
+         AEND
+.*
+.* SET CLUSTER INDEXBLOCKSIZE
+.*
+&LEN     SETA  &INDEXBLOCKSIZE
+.*
+         AIF   ('&INDEXBLOCKSIZE'(K'&INDEXBLOCKSIZE,1) NE 'K')
+               :&CLR_IBS(&CLR_TOT) SETA &INDEXBLOCKSIZE
+         AELSE
+               :&LEN SETA &LEN*1024
+               :&CLR_IBS(&CLR_TOT) SETA &LEN
+         AEND
+.*
+.* SET CLUSTER DATAADJUST
+.*
+         AIF   ('&DATAADJUST' EQ 'NO').SET_CLR_NODADJ
+         AIF   ('&DATAADJUST' EQ 'YES').SET_CLR_DADJ
+&ERROR   SETB  1
+         MNOTE 12,'CLUSTER DATAADJUST MUST BE YES/NO - &DATAADJUST'
+.*
+.SET_CLR_DADJ ANOP
+&CLR_DADJ(&CLR_TOT) SETB 1
+.*
+.SET_CLR_NODADJ ANOP
+.*
+.* SET CLUSTER INDEXADJUST
+.*
+         AIF   ('&INDEXADJUST' EQ 'NO').SET_CLR_DFREE
+         AIF   ('&INDEXADJUST' EQ 'YES').SET_CLR_IADJ
+&ERROR   SETB  1
+         MNOTE 12,'CLUSTER INDEXADJUST MUST BE YES/NO - &INDEXADJUST'
+.*
+.SET_CLR_IADJ ANOP
+&CLR_IADJ(&CLR_TOT) SETB 1
+.*
+.SET_CLR_DFREE ANOP
+.*
+.* SET CLUSTER DATAFREESPACE
+.*
+         AIF   (N'&DATAFREESPACE EQ 1)
+               :&CA SETA &DATAFREESPACE(1)
+               :&CI SETA 0
+               :&CACI SETA &CA+&CI
+         AEND
+         AIF   (N'&DATAFREESPACE EQ 2)
+               :&CA SETA &DATAFREESPACE(1)
+               :&CI SETA &DATAFREESPACE(2)
+               :&CACI SETA &CA+&CI
+         AEND
+         AIF   (&CA GT 99 OR &CI GT 99)
+&ERROR   SETB  1
+         MNOTE 12,'INVALID CLUSTER DATAFREESPACE - &DATAFREESPACE'
+         AELSE
+               :&CLR_DCA(&CLR_TOT) SETA &CA
+               :&CLR_DCI(&CLR_TOT) SETA &CI
+         AEND
+.*
+.* SET CLUSTER INDEXFREESPACE
+.*
+         AIF   (N'&INDEXFREESPACE EQ 1)
+               :&CA SETA &INDEXFREESPACE
+               :&CI SETA 0
+         AEND
+         AIF   (N'&INDEXFREESPACE EQ 2)
+               :&CA SETA &INDEXFREESPACE(1)
+               :&CI SETA &INDEXFREESPACE(2)
+         AEND
+         AIF   (&CA GT 99 OR &CI GT 99)
+&ERROR   SETB  1
+         MNOTE 12,'INVALID CLUSTER INDEXFREESPACE - &INDEXFREESPACE'
+         AELSE
+               :&CLR_ICA(&CLR_TOT) SETA &CA
+               :&CLR_ICI(&CLR_TOT) SETA &CI
+         AEND
+.*
+.* SET CLUSTER NAME
 .*
 .SET_CLR_NAME ANOP
          AIF   ('&NAME' NE '' AND K'&NAME LE 8).SET_CLR_NAME2
 &ERROR   SETB  1
-         MNOTE 12,'DEFINE INVALID BASE CLUSTER NAME - &NAME'
-         MEXIT
-.SET_CLR_NAME2 ANOP
-&CLR_NAME(&CLR_TOT) SETC '&NAME'       
+         MNOTE 12,'INVALID CLUSTER NAME - &NAME'
 .*
-.* SET BASE CLUSTER TYPE
+.SET_CLR_NAME2 ANOP
+&CLR_NAME(&CLR_TOT) SETC '&NAME'
+.*
+.* SET CLUSTER TYPE
 .*
 .SET_CLR_TYPE ANOP
          AIF   ('&INDEX' EQ 'INDEXED').SET_CLR_KSDS
@@ -137,81 +258,107 @@
          AIF   ('&INDEX' EQ 'NUMBERED').SET_CLR_RRDS
          AIF   ('&INDEX' EQ 'LINEAR').SET_CLR_LDS
 &ERROR   SETB  1
-         MNOTE 12,'ZDEFCLR INVALID INDEX TYPE - &INDEX'
-         MEXIT
+         MNOTE 12,'INVALID INDEX TYPE - &INDEX'
+.*
 .SET_CLR_KSDS ANOP
 &CLR_TYPE(&CLR_TOT) SETC 'KSDS'
 &CLR_KSDS(&CLR_TOT) SETB 1
          AGO   .SET_CLR_VREC
+.*
 .SET_CLR_ESDS ANOP
 &CLR_TYPE(&CLR_TOT) SETC 'ESDS'
 &CLR_ESDS(&CLR_TOT) SETB 1
+.* IF FIXED ESDS AND CI% OR CA% NOT ZERO IT'S AN ERROR
+         AIF  (N'&RECORDSIZE NE 2 AND &CACI NE 0)
+&ERROR   SETB  1
+         MNOTE 12,'FIXED ESDS CANNOT HAVE FREESPACE'
+         AEND
          AGO   .SET_CLR_VREC
+.*
 .SET_CLR_RRDS ANOP
 &CLR_TYPE(&CLR_TOT) SETC 'RRDS'
 &CLR_RRDS(&CLR_TOT) SETB 1
          AGO   .SET_CLR_VREC
+.*
 .SET_CLR_LDS ANOP
 &CLR_TYPE(&CLR_TOT) SETC 'LDS'
 &CLR_LDS(&CLR_TOT) SETB 1
-         AIF   ('&CONTROLINTERVALSIZE' NE '0').SET_CLR_LDS2
-         MNOTE 12,'DEFINE LINEAR REQUIRES CONTROL INTERVAL SIZE'
-.SET_CLR_LDS2 ANOP
-         AGO   .SET_CLR_VESDSN
+         AGO   .SET_CLR_DTADSN
 .*
-.* SET BASE CLUSTER VREC FLAG AND LAVG AND LMAX
+.* SET CLUSTER VREC FLAG AND LAVG AND LMAX
 .*
 .SET_CLR_VREC ANOP
          AIF  (N'&RECORDSIZE EQ 2).SET_CLR_VREC2
-&CLR_LMAX(&CLR_TOT) SETA &RECORDSIZE
-         AGO  .SET_CLR_KEY
-.SET_CLR_VREC2 ANOP
-&CLR_VREC(&CLR_TOT) SETB 1
-&CLR_LAVG(&CLR_TOT) SETA &RECORDSIZE(1)
-&CLR_LMAX(&CLR_TOT) SETA &RECORDSIZE(2)
+&CLR_LMAX(&CLR_TOT) SETA &RECORDSIZE  SET FIXED RECORDSIZE
+         AGO  .SET_CLR_DOSPAN
 .*
-.* SET BASE CLUSTER KSDS KEY LENGTH AND OFFSET
+.SET_CLR_VREC2 ANOP
+&CLR_VREC(&CLR_TOT) SETB 1              INDICATE VARIABLE
+&CLR_LAVG(&CLR_TOT) SETA &RECORDSIZE(1) SET AVG RECORDSIZE
+&CLR_LMAX(&CLR_TOT) SETA &RECORDSIZE(2) SET MAX RECORDSIZE
+.* CANNOT ADJUST IF VARIABLE
+         AIF   ('&DATAADJUST' EQ 'YES').ADJERR
+         AGO   .SET_CLR_DOSPAN
+.*
+.ADJERR  ANOP
+         MNOTE 12,'DATA/INDEXADJUST MUST BE NO FOR VARIABLE FILES'
+.*
+.SET_CLR_DOSPAN ANOP
+.*
+.* SET CLUSTER SPANNED
+.*
+         AIF   ('&SPANNED' EQ 'NO').SET_CLR_KEY
+         AIF   ('&SPANNED' EQ 'YES').SET_CLR_SPAN
+&ERROR   SETB  1
+         MNOTE 12,'CLUSTER SPANNED MUST BE YES/NO - &SPANNED'
+.*
+.SET_CLR_SPAN ANOP
+&CLR_SPAN(&CLR_TOT) SETB 1
+.*
+.* SET CLUSTER KSDS KEY LENGTH AND OFFSET
 .*
 .SET_CLR_KEY ANOP
-         AIF ('&CLR_TYPE(&CLR_TOT)' NE 'KSDS').SET_CLR_REUSE
+         AIF ('&CLR_TYPE(&CLR_TOT)' NE 'KSDS').SET_CLR_DOREUSE
          AIF (N'&KEYS EQ 2).SET_CLR_KEY2
 &ERROR   SETB  1
          MNOTE 12,'DEFINE INVALID KEYS FOR KSDS - &KEYS'
-         MEXIT
+.*
 .SET_CLR_KEY2 ANOP
-&CLR_KLEN(&CLR_TOT) SETA &KEYS(1)       
+&CLR_KLEN(&CLR_TOT) SETA &KEYS(1)
 &CLR_KOFF(&CLR_TOT) SETA &KEYS(2)
          AIF   (&CLR_KOFF(&CLR_TOT)+&CLR_KLEN(&CLR_TOT) LE &CLR_LMAX(&CX
                LR_TOT)).SET_CLR_KEY3
 &ERROR   SETB  1
          MNOTE 12,'DEFINE KEY EXTENDS BEYOND RECORDSIZE'
-         MEXIT
+.*
 .SET_CLR_KEY3 ANOP
 .*
-.* SET BASE CLUSTER REUSE
+.* SET CLUSTER REUSE
+.*
+.SET_CLR_DOREUSE ANOP
+         AIF   ('&REUSE' EQ 'NO').SET_CLR_DTADSN
+         AIF   ('&REUSE' EQ 'YES').SET_CLR_REUSE
+&ERROR   SETB  1
+         MNOTE 12,'CLUSTER REUSE MUST BE YES/NO - &REUSE'
 .*
 .SET_CLR_REUSE ANOP
-         AIF   ('&REUSE' EQ 'NO').SET_CLR_VESDSN
-         AIF   ('&REUSE' EQ 'YES').SET_REUSE
-         MNOTE 12,'REUSE MUST BE YES/NO - &REUSE'
-         MEXIT
-.SET_REUSE ANOP
 &CLR_REUSE(&CLR_TOT) SETB 1
 .*
-.* SET BASE CLUSTER VESDSN
+.* SET CLUSTER DTADSN
 .*
-.SET_CLR_VESDSN ANOP
-&CLR_VES(&CLR_TOT) SETC '&NAME..VES'
-         AIF   ('&VESDSN' EQ '').SET_CLR_VX0DSN
-&CLR_VES(&CLR_TOT) SETC '&VSEDSN'
+.SET_CLR_DTADSN ANOP
+         AIF   ('&DTADSN' EQ '').SET_CLR_IDXDSN
+&CLR_DTA(&CLR_TOT) SETC '&DTADSN'
 .*
-.* SET BASE CLUSTER VX0DSN
+.* SET CLUSTER IDXDSN
 .*
-.SET_CLR_VX0DSN ANOP
-&CLR_VX0(&CLR_TOT) SETC '&NAME..VX0'
-         AIF   ('&VESDSN' EQ '').SET_CLR_VX0DSN2
-&CLR_VX0(&CLR_TOT) SETC '&VSEDSN'
-.SET_CLR_VX0DSN2 ANOP
+.SET_CLR_IDXDSN ANOP
+         AIF   ('&IDXDSN' EQ '').SET_CLR_MEXIT
+         AIF   ('&DTADSN' EQ '&IDXDSN')
+         MNOTE 12,'DTADSN AND IDXDSN ARE IDENTICAL'
+         AEND
+&CLR_IDX(&CLR_TOT) SETC '&IDXDSN'
+.SET_CLR_MEXIT ANOP
          MEXIT
 .*
 .* DEFINE AIX
@@ -225,9 +372,8 @@
          AIF   ('&NAME' NE '' AND K'&NAME LE 8).SET_AIX_NAME2
 &ERROR   SETB  1
          MNOTE 12,'DEFINE INVALID AIX NAME - &NAME'
-         MEXIT
 .SET_AIX_NAME2 ANOP
-&AIX_NAME(&AIX_TOT) SETC '&NAME'       
+&AIX_NAME(&AIX_TOT) SETC '&NAME'
 .*
 .* SET AIX KEY LENGTH AND OFFSET
 .*
@@ -235,53 +381,158 @@
          AIF (N'&KEYS EQ 2).SET_AIX_KEY2
 &ERROR   SETB  1
          MNOTE 12,'DEFINE INVALID AIX KEYS LENGTH AND OFFSET - &KEYS'
-         MEXIT
 .SET_AIX_KEY2 ANOP
-&AIX_KLEN(&AIX_TOT) SETA &KEYS(1)       
+&AIX_KLEN(&AIX_TOT) SETA &KEYS(1)
 &AIX_KOFF(&AIX_TOT) SETA &KEYS(2)
 .*
-.* SET AIX RELATE        
+.* SET AIX RELATE
 .*
 .SET_AIX_RELATE ANOP
          AIF   ('&RELATE' NE '').SET_AIX_RELATE2
 &ERROR   SETB  1
-         MNOTE 12,'DEFINE AIX MISSING RELATE NAME OF BASE CLUSTER'
+         MNOTE 12,'AIX MISSING RELATE NAME OF CLUSTER'
 .SET_AIX_RELATE2 ANOP
 &AIX_RELATE(&AIX_TOT) SETC '&RELATE'
 .*
-.* SET BASE CLUSTER REUSE
+.* SET AIX REUSE
 .*
 .SET_AIX_REUSE ANOP
-         AIF   ('&REUSE' EQ 'NOREUSE').SET_AIX_UNIQUEKEY
+         AIF   ('&REUSE' EQ 'NO').SET_AIX_UNIQUEKEY
+         AIF   ('&REUSE' EQ 'YES').SET_REUSE
+&ERROR   SETB  1
+         MNOTE 12,'AIX REUSE MUST BE YES/NO - &REUSE'
+.*
+.SET_REUSE ANOP
 &AIX_REUSE(&AIX_TOT) SETB 1
 .*
-.* SET AIX UNIQUEKEY      
+.* SET AIX UNIQUEKEY
 .*
 .SET_AIX_UNIQUEKEY ANOP
          AIF   ('&UNIQUEKEY' EQ 'NO').SET_AIX_UPGRADE RPI 1130
          AIF   ('&UNIQUEKEY' EQ 'YES').SET_UNIQUEKEY
          MNOTE 12,'UNIQUEKEY MUST BE YES/NO - &UNIQUEKEY'
-         MEXIT
 .SET_UNIQUEKEY ANOP
 &AIX_UNIQUEKEY(&AIX_TOT) SETB 1
 .*
-.* SET AIX UPGRADE      
+.* SET AIX UPGRADE
 .*
 .SET_AIX_UPGRADE ANOP
-         AIF   ('&UPGRADE' EQ 'NO').SET_AIX_VXNDSN
+         AIF   ('&UPGRADE' EQ 'NO').SET_AIX_DOSPAN
          AIF   ('&UPGRADE' EQ 'YES').SET_UPGRADE
-         MNOTE 12,'UPGRADE MUST BE YES/NO - &UPGRADE'
-         MEXIT
+         MNOTE 12,'AIX UPGRADE MUST BE YES/NO - &UPGRADE'
+.*
 .SET_UPGRADE ANOP
 &AIX_UPGRADE(&AIX_TOT) SETB 1
 .*
-.* SET AIX VXNDSN
+.* SET AIX SPANNED
 .*
-.SET_AIX_VXNDSN ANOP
-&AIX_VXN(&AIX_TOT) SETC '&NAME..VXN'
-         AIF   ('&VXNDSN' EQ '').SET_AIX_VXNDSN2
-&AIX_VXN(&AIX_TOT) SETC '&VXNDSN'
-.SET_AIX_VXNDSN2 ANOP
+.SET_AIX_DOSPAN ANOP
+         AIF   ('&SPANNED' EQ 'NO').SET_AIX_DTADSN
+         AIF   ('&SPANNED' EQ 'YES').SET_AIX_SPAN
+&ERROR   SETB  1
+         MNOTE 12,'AIX SPANNED MUST BE YES/NO - &SPANNED'
+.*
+.SET_AIX_SPAN ANOP
+&AIX_SPAN(&AIX_TOT) SETB 1
+.*
+.* SET AIX DTADSN
+.*
+.SET_AIX_DTADSN ANOP
+         AIF   ('&DTADSN' EQ '').SET_AIX_IDXDSN
+&AIX_DTA(&AIX_TOT) SETC '&DTADSN'
+.*
+.* SET CLUSTER IDXDSN
+.*
+.SET_AIX_IDXDSN ANOP
+         AIF   ('&IDXDSN' EQ '').SET_AIX_DBS
+         AIF   ('&DTADSN' EQ '&IDXDSN')
+         MNOTE 12,'DTADSN AND IDXDSN ARE IDENTICAL'
+         AEND
+&AIX_IDX(&AIX_TOT) SETC '&IDXDSN'
+.SET_AIX_DBS ANOP
+.*
+.* SET AIX DATABLOCKSIZE
+.*
+&LEN     SETA  &DATABLOCKSIZE
+         AIF   ('&DATABLOCKSIZE'(K'&DATABLOCKSIZE,1) NE 'K')
+               :&AIX_DBS(&AIX_TOT) SETA &DATABLOCKSIZE
+         AELSE
+               :&LEN SETA &LEN*1024
+               :&AIX_DBS(&AIX_TOT) SETA &LEN
+         AEND
+.*
+.* SET AIX INDEXBLOCKSIZE
+.*
+&LEN     SETA  &INDEXBLOCKSIZE
+         AIF   ('&INDEXBLOCKSIZE'(K'&INDEXBLOCKSIZE,1) NE 'K')
+               :&AIX_IBS(&AIX_TOT) SETA &INDEXBLOCKSIZE
+         AELSE
+               :&LEN SETA &LEN*1024
+               :&AIX_IBS(&AIX_TOT) SETA &LEN
+         AEND
+.*
+.* SET AIX DATAADJUST
+.*
+         AIF   ('&DATAADJUST' EQ 'NO').SET_AIX_NODADJ
+         AIF   ('&DATAADJUST' EQ 'YES').SET_AIX_DADJ
+&ERROR   SETB  1
+         MNOTE 12,'AIX DATAADJUST MUST BE YES/NO - &DATAADJUST'
+.*
+.SET_AIX_DADJ ANOP
+         AIF   ('&UNIQUEKEY' EQ 'NO')
+&ERROR   SETB  1
+         MNOTE 12,'AIX DATAADJUST MUST BE NO FOR NONUNIQUE KEYS'
+         AEND
+&AIX_DADJ(&AIX_TOT) SETB 1
+.*
+.SET_AIX_NODADJ ANOP
+.*
+.* SET AIX INDEXADJUST
+.*
+         AIF   ('&INDEXADJUST' EQ 'NO').SET_AIX_IADJ
+         AIF   ('&INDEXADJUST' EQ 'YES').SET_AIX_IADJ
+&ERROR   SETB  1
+         MNOTE 12,'AIX INDEXADJUST MUST BE YES/NO - &INDEXADJUST'
+.*
+.SET_AIX_IADJ ANOP
+&AIX_IADJ(&AIX_TOT) SETB 1
+.*
+.* SET AIX DATAFREESPACE
+.*
+         AIF   (N'&DATAFREESPACE EQ 1)
+               :&CA SETA &DATAFREESPACE(1)
+               :&CI SETA 0
+         AEND
+         AIF   (N'&DATAFREESPACE EQ 2)
+               :&CA SETA &DATAFREESPACE(1)
+               :&CI SETA &DATAFREESPACE(2)
+         AEND
+         AIF   (&CA GT 99 OR &CI GT 99)
+&ERROR   SETB  1
+         MNOTE 12,'INVALID AIX DATAFREESPACE - &DATAFREESPACE'
+         AELSE
+               :&AIX_DCA(&AIX_TOT) SETA &CA
+               :&AIX_DCI(&AIX_TOT) SETA &CI
+         AEND
+.*
+.* SET AIX INDEXFREESPACE
+.*
+         AIF   (N'&INDEXFREESPACE EQ 1)
+               :&CA SETA &INDEXFREESPACE
+               :&CI SETA 0
+         AEND
+         AIF   (N'&INDEXFREESPACE EQ 2)
+               :&CA SETA &INDEXFREESPACE(1)
+               :&CI SETA &INDEXFREESPACE(2)
+         AEND
+         AIF   (&CA GT 99 OR &CI GT 99)
+&ERROR   SETB  1
+         MNOTE 12,'INVALID AIX INDEXFREESPACE - &INDEXFREESPACE'
+         AELSE
+               :&AIX_ICA(&AIX_TOT) SETA &CA
+               :&AIX_ICI(&AIX_TOT) SETA &CI
+         AEND
+.SET_AIX_MEXIT ANOP
          MEXIT
 .*
 .* DEFINE PATH
@@ -295,27 +546,24 @@
          AIF   ('&NAME' NE '' AND K'&NAME LE 8).SET_PTH_NAME2
 &ERROR   SETB  1
          MNOTE 12,'DEFINE INVALID PATH NAME - &NAME'
-         MEXIT
 .SET_PTH_NAME2 ANOP
-&PTH_NAME(&PTH_TOT) SETC '&NAME'       
+&PTH_NAME(&PTH_TOT) SETC '&NAME'
 .*
-.* SET PATH ENTRY        
+.* SET PATH ENTRY
 .*
 .SET_PTH_ENTRY ANOP
          AIF   ('&ENTRY' NE '').SET_PTH_ENTRY2
 &ERROR   SETB  1
          MNOTE 12,'DEFINE PATH MISSING ENTRY NAME OF AIX OR BASE'
-         MEXIT
 .SET_PTH_ENTRY2 ANOP
 &PTH_ENTRY(&PTH_TOT) SETC '&ENTRY'
 .*
 .* SET PATH UPDATE
 .*
 .SET_PTH_UPDATE ANOP
-         AIF   ('&UPDATE' EQ 'NO').SET_PTH_UPDATE2   
+         AIF   ('&UPDATE' EQ 'NO').SET_PTH_UPDATE2
          AIF   ('&UPDATE' EQ 'YES').SET_UPDATE
          MNOTE 12,'UPDATE MUST BE YES/NO - &UPDATE'
-         MEXIT
 .SET_UPDATE ANOP
 &PTH_UPDATE(&PTH_TOT) SETB 1
 .SET_PTH_UPDATE2 ANOP
@@ -325,7 +573,7 @@
 .*
 .DEFINE_END ANOP
 .*
-.* VERIFY VAIX ENTRIES HAVE MATCHING VCLR RELATE 
+.* VERIFY VAIX ENTRIES HAVE MATCHING VCLR RELATE
 .*
 &AIX_CUR SETA  0
 .CHK_AIX ANOP
@@ -341,15 +589,16 @@
                LR_CUR)).CHK_AIX
 &ERROR   SETB  1
          MNOTE 12,'DEFINE AIX &AIX_NAME(&AIX_CUR) KEY BEYOND CLUSTER &CX
-               LR_NAME(&CLR_CUR) RECORD' 
+               LR_NAME(&CLR_CUR) RECORD'
          AGO   .CHK_AIX
+.*
 .AIX_ERR ANOP
 &ERROR   SETB  1
          MNOTE 12,'DEFINE AIX RELATE=&AIX_RELATE(&AIX_CUR) NOT FOUND'
          AGO   .CHK_AIX
-.CHK_AIX_END ANOP
 .*
-.* VERIFY VPTH ENTRIES HAVE MATCHING VCLR OR VAIX ENTRY 
+.CHK_AIX_END ANOP
+.* VERIFY VPTH ENTRIES HAVE MATCHING VCLR OR VAIX ENTRY
 .* AND SET VPTH_AIXP ACCORDINGLY
 .*
 &PTH_CUR SETA  0
@@ -363,9 +612,11 @@
          AIF   ('&PTH_ENTRY(&PTH_CUR)' EQ '&AIX_NAME(&AIX_CUR)').SET_AIX
                XP
          AGO   .FIND_AIX
+.*
 .SET_AIXP ANOP
 &PTH_AIXP(&PTH_CUR) SETB 1
          AGO   .CHK_PTH
+.*
 .CHK_CLR ANOP
 &CLR_CUR SETA  0
 .FIND_CLR2 ANOP
@@ -374,15 +625,17 @@
          AIF   ('&PTH_ENTRY(&PTH_CUR)' EQ '&CLR_NAME(&CLR_CUR)').CHK_PTX
                H
          AGO   .FIND_CLR2
+.*
 .PTH_ERR ANOP
 &ERROR   SETB  1
          MNOTE 12,'DEFINE PTH ENTER=&PTH_ENTRY(&PTH_CUR) NOT FOUND'
          AGO   .CHK_PTH
+.*
 .CHK_PTH_END ANOP
          AIF   (&ERROR).EXIT
          ZDEFINE  , GENERATE VCDT CATALOG LOADABLE TABLE
          VCDTD    , GENERATE VCDT DSECTS
-         DCBD     , GENERATE DCB  DSECT
 .EXIT    ANOP
          MEXIT
-         MEND  
+         MEND
+

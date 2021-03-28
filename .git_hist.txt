@@ -7804,7 +7804,71 @@ git commit -m "Reconstructed version v1.6.00b12 of z390"
 git tag -a v1.6.00b12 -m "Reconstructed version v1.6.00b12 of z390"
 git gc --aggressive
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.6.00next
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Create new Branch and switch to it
+git branch -c v1600next
+git switch v1600next
+
+==> Stage files for V1.6.00next
+git add ASM.BAT
+git add ASML.BAT
+git add ASMLG.BAT
+git add BLDJAR6.BAT
+git add EXEC.BAT
+git add IVP.BAT
+git add LINK.BAT
+git add MAC.BAT
+git add ZC390C.BAT
+git add ZC390CL.BAT
+git add ZC390CLG.BAT
+git add ZC586CLG.BAT
+git add ZCJAVCLG.BAT
+git add ZCVCECLG.BAT
+git add cics/DFHABBLK.MAC
+git add cics/DFHPCT.MLC
+git add cics/MMMMCIC3.MLC
+git add cmd.pl
+git add dos.pl
+git add linklib/BUILDAIX.MLC
+git add mac/DEFINE.MAC
+git add mac/SYSTRACE.MAC
+git add mac/VCDTD.MAC
+git add mac/ZDEFINE.MAC
+git add mfacc/EXSAMPL2.MLC
+git add src/mz390.java
+git add src/tz390.java
+git add zcobol/MOVE.MAC
+git add zcobol/PROGRAM_ID.MAC
+git add zcobol/ZCDFHLIT.CPY
+git add zcobol/ZC_CALC.MAC
+git add zcobol/z390/GEN_DIV.MAC
+git add cics/Z390CICS.TXT
+git add mac/ZCVTD.txt
+git add mac/ZVSAMFTR.MAC
+git add mac/ZVSAMHDR.MAC
+git add mac/ZVSAMMAP.MAC
+git add mac/ZVSAMPFX.MAC
+git add mac/ZVSAMRPT.MAC
+git add mfacc/P4RAFA1.MLC
+git add mfacc/P8JFC.CBL
+git add mvs/maclib/README.TXT
+git add rt/RT/RPI1641.asm
+
+==> Create commit for V1.6.00next
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Abe 2021-03-28 18:08:00 +0100
+set GIT_COMMITTER_DATE=2021-03-28 18:08:00 +0100
+git commit -m "Pending changes for version v1.6.00 of z390 - not yet distributed"
+git tag -a v1.6.00next -m "Pending changes for version v1.6.00 of z390 - not yet distributed"
 
 
 

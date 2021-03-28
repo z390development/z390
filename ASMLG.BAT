@@ -1,11 +1,11 @@
 rem asmlg assemble, link, and go from mlc to 390 execution
+rem 2016-04-16 RPI 1581 John Ganci - Unix-specific code no longer needed - removed
+rem 2019-07-22 RPI 1636 Abe Kornelis - Shift in .bat files not handled correctly - option /1 added
 echo off
-if exist /usr/local/lib/z390/z390.jar goto linux
 if %1 == tron ECHO ON
-if %1 == tron shift
+if %1 == tron shift /1
 if %1 == TRON ECHO ON
-if %1 == TRON shift
-:linux
+if %1 == TRON shift /1
 if exist %1.BAL erase %1.BAL
 if exist %1.PRN erase %1.PRN
 if exist %1.OBJ erase %1.OBJ

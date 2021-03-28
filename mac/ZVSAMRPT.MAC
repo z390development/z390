@@ -1,0 +1,29 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+*                                                                   *
+* Author - Melvyn Maltz                                             *
+* Date   -  4th April 2016                                          *
+*********************************************************************
+         MACRO
+         ZVSAMRPT
+*
+* zVSAM RECORD POINTER
+*
+ZVSAMRPT DSECT
+RPTRFLGS DS    X                  Flags
+RPTR_ACT EQU   X'00'                 active record
+RPTR_MTY EQU   X'80'                 inactive record
+RPTR_DIS EQU   X'40'                 record displaced to another Block
+RPTR_MOV EQU   X'20'                 new location of moved record
+RPTR_FAK EQU   X'10'                 fake XLRA, used whenever the XLRA
+*                                    is not the record's true XLRA
+*                                    Occurs for non-first segments and
+*                                    displaced records
+RPTR_END EQU   X'FF'                 terminating entry
+RPTRREC@ DC    XL3                Offset in the Block to this record
+*                                    Foxes when RPTR_END set
+RPTRLENG EQU   *-ZVSAMRPT         DSECT LENGTH
+         MEND
+

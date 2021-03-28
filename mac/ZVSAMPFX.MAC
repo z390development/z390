@@ -1,0 +1,92 @@
+***********************************************************************
+* Copyright 2007 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+*                                                                     *
+* Author - Melvyn Maltz                                               *
+* Date   - 12th March 2016                                            *
+***********************************************************************
+         MACRO
+         ZVSAMPFX
+*
+* zVSAM PREFIX BLOCK...FOLLOWS ZVSAMHDR
+*
+ZVSAMPFX DSECT
+PFXDVOL@ DS    XL3                offset to the data volume label(n/a)
+PFXDNAM@ DS    XL3                offset to the data filename
+PFXDPAT@ DS    XL3                offset to the data pathname
+PFXXVOL@ DS    XL3                offset to the index volume label(n/a)
+PFXXNAM@ DS    XL3                offset to the index filename
+PFXXPAT@ DS    XL3                offset to the index pathname
+         DS    X                  reserved
+PFXALTHR DS    X                  allocation redrive threshold
+PFXBLKSZ DS    XL4                actual Blocksize used for all Blocks
+*                                 except Prefix Block
+PFXHXLRA DS    XL8                XLRA of highest allocated block
+PFXBMAP  DS    XL8                XLRA of first spacemap block
+PFXEMAP  DS    XL8                XLRA of last spacemap block
+PFXMAPNW DS    XL8                XLRA of spacemap block last used for
+*                                 allocation
+PFXBDATA DS    XL8                XLRA of first data (or index) block
+PFXEDATA DS    XL8                XLRA of last data (or index) block
+PFXBOVFL DS    XL8                XLRA of first Overflow block
+PFXEOVFL DS    XL8                XLRA of last Overflow block
+PFXROOT  DS    XL8                XLRA of root index block
+PFXBLVL0 DS    XL8                XLRA of Header Block index level 0
+PFXELVL0 DS    XL8                XLRA of End Block index level 0
+PFXBLVL1 DS    XL8                XLRA of Header Block index level 1
+PFXELVL1 DS    XL8                XLRA of End Block index level 1
+PFXBLVL2 DS    XL8                XLRA of Header Block index level 2
+PFXELVL2 DS    XL8                XLRA of End Block index level 2
+PFXBLVL3 DS    XL8                XLRA of Header Block index level 3
+PFXELVL3 DS    XL8                XLRA of End Block index level 3
+PFXBLVL4 DS    XL8                XLRA of Header Block index level 4
+PFXELVL4 DS    XL8                XLRA of End Block index level 4
+PFXBLVL5 DS    XL8                XLRA of Header Block index level 5
+PFXELVL5 DS    XL8                XLRA of End Block index level 5
+PFXBLVL6 DS    XL8                XLRA of Header Block index level 6
+PFXELVL6 DS    XL8                XLRA of End Block index level 6
+PFXBLVL7 DS    XL8                XLRA of Header Block index level 7
+PFXELVL7 DS    XL8                XLRA of End Block index level 7
+PFXBLVL8 DS    XL8                XLRA of Header Block index level 8
+PFXELVL8 DS    XL8                XLRA of End Block index level 8
+PFXBLVL9 DS    XL8                XLRA of Header Block index level 9
+PFXELVL9 DS    XL8                XLRA of End Block index level 9
+PFXBLVLA DS    XL8                XLRA of Header Block index level 10
+PFXELVLA DS    XL8                XLRA of End Block index level 10
+PFXBLVLB DS    XL8                XLRA of Header Block index level 11
+PFXELVLB DS    XL8                XLRA of End Block index level 11
+PFXBLVLC DS    XL8                XLRA of Header Block index level 12
+PFXELVLC DS    XL8                XLRA of End Block index level 12
+PFXBLVLD DS    XL8                XLRA of Header Block index level 13
+PFXELVLD DS    XL8                XLRA of End Block index level 13
+PFXBLVLE DS    XL8                XLRA of Header Block index level 14
+PFXELVLE DS    XL8                XLRA of End Block index level 14
+PFXBLVLF DS    XL8                XLRA of Header Block index level 15
+PFXELVLF DS    XL8                XLRA of End Block index level 15
+PFXMAPOF DS    XL3                offset within spacemap block to last
+*                                 used byte for allocation
+PFXMAPDT DS    XL4                unsigned packed date YYYYMMDD of last
+*                                 allocation action
+PFXFRSPC DS    X                  initial freespace % within block
+PFXFRBLK DS    X                  initial freespace blocks
+PFXFRINT DS    X                  Initial freepace interval between
+*                                 free blocks
+PFXFFLGS DS    X                  file flags
+PFX_ESDS EQU   X'80'                 ESDS
+PFX_KSDS EQU   X'40'                 KSDS
+PFX_RRDS EQU   X'20'                 RRDS
+PFX_LDS  EQU   X'10'                 LDS
+PFX_INDX EQU   X'01'                 index component
+PFXRFLGS DS    X                  record flags
+PFX_RFIX EQU   X'80'                 fixed
+PFX_RSEG EQU   X'40'                 spanned
+PFX_KFIX EQU   X'20'                 fixed-length keys (KSDS/AIX only)
+PFX_KUNQ EQU   X'10'                 unique key values (KSDS/AIX only)
+*                                    non-unique keys supported for AIX
+PFXRCLEN DS    F                  record length, max length if variable
+PFXKYLEN DS    F                  key length
+PFXKYOFF DS    F                  key offset, excluding SDW/RDW
+PFXLENG  EQU   *-ZVSAMPFX         DSECT LENGTH
+         MEND
+

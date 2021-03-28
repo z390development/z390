@@ -13,6 +13,7 @@
 .* 05/08/12 RPI 1211 add &DEBUG SETB 1 option for tracing IOP ops
 .* 05/09/12 RPI 1211 add single op literal suuport see TESTCMP4.CBL
 .* 05/12/12 RPI 1215 set scale to zero for move to floating point
+.* 17-01-22 JH  RPI 1558 Incorect call of LIST_IOPS
 .*********************************************************************
 .* ZC_CALC used by COMPUTE to gen code to calculate expression 
 .* defined by positional parm list.  The result is stored in data 
@@ -269,7 +270,8 @@
               :&STK_VAR_TOT SETA &STK_VAR_TOT-1
          AELSE
               MNOTE 8,'ZC_CALC MISSING VAR STACK PTR'
-              CALL LIST_IOPS
+.**********   CALL LIST_IOPS  // jclh(RPI 1558)
+              ACALL LIST_IOPS // jclh(RPI 1558)
               MEXIT
          AEND
          AEND

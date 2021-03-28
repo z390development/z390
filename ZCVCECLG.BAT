@@ -1,9 +1,10 @@
 rem ZCVCECLG translate CBL to CPP, compile to EXE via MS VC, and exec 
+rem 2019-07-22 RPI 1636 Abe Kornelis - Shift in .bat files not handled correctly - option /1 added
 echo off
 if %1 == tron ECHO ON
-if %1 == tron shift
+if %1 == tron shift /1
 if %1 == TRON ECHO ON
-if %1 == TRON shift
+if %1 == TRON shift /1
 if exist %1.MLC erase %1.MLC
 if exist %1.390 erase %1.390
 if exist %1.BAL erase %1.BAL

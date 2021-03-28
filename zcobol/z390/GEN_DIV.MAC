@@ -13,7 +13,9 @@
 .* 08/08/09 RPI 1065 correct negative SRP shift to 5 bit disp.
 .* 09/03/09 RPI 1065 reset ss1 length if any on &NQ and &NR for stores
 .* 05/02/12 RPI 1211 add support for implied decimal points
-.* 05/18/12 RPI 1217 replace SCALE_F with SCALE_G to prevent F/H ovf.
+.* 17-01-22 JH RPI 1559 Error in GEN_DIV where &LNQ should be &LQ
+.* 17-01-22 JH RPI 1560 Error in GEN_DIV where &LNR should be &LR
+.*                      (two locations)
 .*********************************************************************
        GEN_DIV &NDD,&TDD,&LDD,&PDD, DIVIDEND  NAME/LIT,TYPE,LEN,PLACES X                  
                &NDR,&TDR,&LDR,&PDR, DIVISOR   NAME/LIT,TYPE,LEN,PLACES X                  
@@ -1429,45 +1431,45 @@
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV Q,EH,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'2'
                  ZC_CONV Q,DH,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'3'          
                  ZC_CONV Q,LH,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'4'
                  ZC_CONV Q,EB,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'5'
                  ZC_CONV Q,DB,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'6'
                  ZC_CONV Q,LB,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'7'
                  ZC_CONV Q,ED,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'8'
                  ZC_CONV Q,DD,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'9'
                  ZC_CONV Q,LD,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96 BITS
                AWHEN C'F'
-         LGF   ZC_R2,&NDRX
+         L     2,&NDRX
                AWHEN C'G'
-         LG    ZC_R2,&NDRX    HIGH 32 BITS IGNORED
+         LG    2,&NDRX    HIGH 32 BITS IGNORED
                AWHEN C'H'
-         LGH   ZC_R2,&NDRX
+         LH    2,&NDRX
                AWHEN C'P'
-         ZAP   ZCVT_PWORK1,&NDRX
-         CVBG  ZC_R2,ZCVT_PWORK1
+         ZAP   ZCVT_PWORK,&NDRX
+         CVB   2,ZCVT_PWORK
                AWHEN C'Q'
-         LG    ZC_R2,8+&NDRX  IGNORE HIGH 96 BITS
+         L     2,12+&NDRX  IGNORE HIGH 96 BITS
                AWHEN C'Z'
                  ZC_PACK31 ZCVT_PWORK1,16,&NDRX,&LDR
-         CVBG  ZC_R2,ZCVT_PWORK1
+         CVB   2,ZCVT_PWORK1+8
                AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
                     MEXIT
@@ -1475,8 +1477,8 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDING NOT SUPPORTED YET'
                AEND
-         LGF   ZC_R1,ZCVT_NDDX
-                    ACALL SFT_RND_G
+         L     1,ZCVT_NDDX
+                    ACALL SFT_RND_F
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
@@ -1668,45 +1670,45 @@
                ACASE (C2A('&TDR'))
                AWHEN C'1'
                  ZC_CONV Q,EH,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'2'
                  ZC_CONV Q,DH,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'3'          
                  ZC_CONV Q,LH,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'4'
                  ZC_CONV Q,EB,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'5'
                  ZC_CONV Q,DB,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'6'
                  ZC_CONV Q,LB,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'7'
                  ZC_CONV Q,ED,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'8'
                  ZC_CONV Q,DD,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'9'
                  ZC_CONV Q,LD,&NDRX
-         LGR   ZC_R2,ZC_R1 IGNORE HIGH 96
+                 LR  ZC_R2,ZC_R1 IGNORE HIGH 96
                AWHEN C'F'
-         LGF   ZC_R2,&NDRX
+         L     2,&NDRX
                AWHEN C'G'
-         LG    ZC_R2,&NDRX
+         L     2,4+&NDRX  IGNORE HIGH 32 BITS
                AWHEN C'H'
-         LGH   ZC_R2,&NDRX
+         LH    2,&NDRX
                AWHEN C'P'
-         ZAP   ZCVT_PWORK1,&NDRX
-         CVBG  ZC_R2,ZCVT_PWORK1
+         ZAP   ZCVT_PWORK,&NDRX
+         CVB   2,ZCVT_PWORK
                AWHEN C'Q'
-         LG    ZC_R2,8+&NDRX  IGNORE HIGH 64 BITS
+         L     2,12+&NDRX  IGNORE HIGH 112 BITS
                AWHEN C'Z'
                 ZC_PACK31 ZCVT_PWORK1,16,&NDRX,&LDR
-         CVBG  ZC_R2,ZCVT_PWORK1
+         CVB   2,ZCVT_PWORK1+8
                AELSE
                     MNOTE 8,'GEN_DIV INVALID DIVISOR TYPE &TDR'
                     MEXIT
@@ -1714,8 +1716,8 @@
                AIF (&ROUNDED EQ 1)
                    MNOTE 8,'GEN_DIV ROUNDING NOT SUPPORTED YET'
                AEND
-         LGH   ZC_R1,ZCVT_NDDX
-                    ACALL SFT_RND_G
+         LH    1,ZCVT_NDDX
+                    ACALL SFT_RND_F
                AIF (&ON_SIZE EQ 1 OR &NOT_ON_SIZE EQ 1)
                    MNOTE 8,'GEN_DIV ON SIZE NOT SUPPORTED YET'
                    MEXIT
@@ -1895,7 +1897,8 @@
                  ZC_CONV Q,LD
          STMG  ZC_R0,ZC_R1,&NQ_ST
                AWHEN C'Z'
-               ZC_UNPK31 &NQ,&LNQ,&SQ,ZCVT_PWORK4,&LDDP
+.***********   ZC_UNPK31 &NQ,&LNQ,&SQ,ZCVT_PWORK4,&LDDP // jclh(RPI 1559)
+               ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK4,&LDDP  // jclh(RPI 1559)
                AELSE
                    MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
                    MEXIT
@@ -2025,9 +2028,11 @@
          STMG  0,1,&NR_ST
                AWHEN C'Z'
                  AIF (&LDRP EQ 16)
-                   ZC_UNPK31 &NR,&LNR,&SR,ZCVT_PWORK2,16
+.**************    ZC_UNPK31 &NR,&LNR,&SR,ZCVT_PWORK2,16    // jclh(RPI 1560)
+                   ZC_UNPK31 &NR,&LR,&SR,ZCVT_PWORK2,16     // jclh(RPI 1560)
                  AELSE
-                   ZC_UNPK31 &NR,&LNR,&SR,ZCVT_PWORK4,&LDRP
+.**************    ZC_UNPK31 &NR,&LNR,&SR,ZCVT_PWORK4,&LDRP // jclh(RPI 1560)
+                   ZC_UNPK31 &NR,&LR,&SR,ZCVT_PWORK4,&LDRP  // jclh(RPI 1560)
                  AEND
                AELSE
                    MNOTE 8,'GEN_DIV INVALID REMAINDER TYPE &TR'
@@ -2939,6 +2944,25 @@
          LD    ZC_F4,0(ZC_R15)
          LD    ZC_F6,8(ZC_R15)
          AXTR  ZC_F0,ZC_F4
+         AEND
+     AEND
+.*
+.* SHIFT, DIVIDE, AND ROUND TYPE F ZC_R0,ZC_R2 (ALSO USED FOR H) 
+.*
+     AENTRY SFT_RND_F
+       :&SFT SETA (&PQ-&PDD)+&PDR  RPI 1211
+       AIF   (&SFT GT 0)
+         LARL  ZC_R15,=F'1E&SFT'
+         MS    1,0(ZC_R15)
+       AELSEIF (&SFT LT 0)
+         LARL  ZC_R15,=F'1E&SFT'
+         MS    2,0(ZC_R15)
+       AEND
+         LR    ZC_R0,ZC_R1
+         SRA   ZC_R0,31
+         DR    0,2
+         AIF   (&ROUNDED EQ 1)
+         BRAS  ZC_R14,ZC_RND_F
          AEND
      AEND
 .*

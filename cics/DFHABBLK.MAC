@@ -20,4 +20,3 @@ ABDLEVEL DS    XL2                LINK LEVEL OF LABEL
 ABDREGS  DS    12AL4              REG SAVE, R2-R13
 ABDLENG  EQU   *-ABDDEST
          MEND
-

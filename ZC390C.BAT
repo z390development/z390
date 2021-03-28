@@ -1,9 +1,10 @@
 rem ZC390C translate CBL to MLC and assemble using z390 
+rem 2019-07-22 RPI 1636 Abe Kornelis - Shift in .bat files not handled correctly - option /1 added
 echo off
 if %1 == tron ECHO ON
-if %1 == tron shift
+if %1 == tron shift /1
 if %1 == TRON ECHO ON
-if %1 == TRON shift
+if %1 == TRON shift /1
 if exist %1.CBL goto erase
 echo on
 pause no zcobol program found %1.CBL

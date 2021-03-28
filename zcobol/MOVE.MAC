@@ -14,6 +14,8 @@
 .* 01/01/10 RPI 1106 change target index reg to R3 from R2    
 .* 03/26/12 RPI 1182 add GEN_BASE for source to support mult moves
 .* 03/27/12 RPI 1182 add RMD_REG and RMD_VLEN support for MOVE's
+.* 17-01-22 JH  RPI 1605 Move.mac failing to switch off Reference
+.*                       Modification - causing subsequent S0C7
 .*********************************************************************
 .* MOVE id1 TO id2 id3 idn
 .*********************************************************************
@@ -121,6 +123,8 @@
          GEN_MOVE &TARGET,&TARGET_IX,&SOURCE,&SOURCE_IX
        AEND
          :&RMD_VLEN_ALLOW SETB 0 RPI 1182 TURN OFF
+         :&RMD_VLEN_SRC SETB 0 // JCLH(RPI 1605)
+         :&RMD_VLEN_TAR SETB 0 // JCLH(RPI 1605)
          MEXIT
          COPY ZCGETFLD
          COPY ZCDFHLIT

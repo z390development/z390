@@ -12,6 +12,13 @@
 .*            4. Q - QVSAM I/O
 .*            5. T - TCPIO I/O
 .*            6. V - VSAM  I/O
+.*
+.* Next 4 lines added by MM (RPI 1217)
+         AIF  ('&TRACE_OPTIONS' EQ '(1)' OR '&TRACE_OPTIONS' EQ '(R1)')
+&NAME    SVC  X'AC' SET EZ390 TRACE OPTIONS FROM STRING
+         MEXIT
+         AEND
+.* End of fix for RPI 1217
 &TEXT    SETC '&TRACE_OPTIONS'(2,K'&TRACE_OPTIONS-2)
 &NAME    LA   1,=C'&TEXT '
          SVC  X'AC' SET EZ390 TRACE OPTIONS FROM STRING

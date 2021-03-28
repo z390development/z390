@@ -1,0 +1,34 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+*                                                                   *
+* Author - Melvyn Maltz                                             *
+* Date   - 23th March 2016                                          *
+*********************************************************************
+         MACRO
+         ZVSAMHDR
+*
+* zVSAM HEADER BLOCK
+*
+ZVSAMHDR DSECT
+BHDREYE  DS    CL3                HDR
+BHDRSEQ# DS    XL1                Write control value
+BHDRVER  DS    XL1                Design sequence number
+BHDR_V1  EQU   X'01'              - Version 1 (this version)
+BHDRFLGS DS    XL1                Flags to indicate Block type
+BHDR_PFX EQU   X'80'              - Prefix Block
+BHDR_MAP EQU   X'40'              - Spacemap Block
+BHDR_DTA EQU   X'20'              - Data Block
+BHDR_NDX EQU   X'10'              - Index Block
+BHDR#REC DS    XL1                no. of records in this Block
+BHDRXLVL DS    XL1                Index level. 0 for Leaf Block
+BHDRSELF DS    XL8                XLRA pointer to self
+BHDRNEXT DS    XL8                XLRA pointer to next sequential block
+BHDRPREV DS    XL8                XLRA pointer to prev sequential block
+BHDRFRE@ DS    XL3                Offset to free space area
+BHDRFREE DS    XL3                Remaining free space in Block
+         DS    0D                 Round for PFX DSECT which follows
+BHDRLENG EQU   *-ZVSAMHDR         DSECT LENGTH
+         MEND
+

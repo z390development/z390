@@ -6,7 +6,7 @@ copy  w:\work\eclipse\workspace\z390\src\*.java  jar
 copy w:\work\eclipse\workspace\z390\src\z390.man jar
 cd jar
 rem compile z390 java sources to class vm object code
-"c:\program files\Java\jdk1.6.0_31\bin\javac.exe" -g:none *.java
+"c:\program files\Java\jdk1.6.0_31\bin\javac.exe" -encoding UTF-8 -g:none *.java
 if errorlevel 1 pause j2se 1.6.0_31 compiler error
 rem build z390.jar with j2se sdk utility
 "c:\program files\java\jdk1.6.0_31\bin\jar.exe" cmf z390.man z390.jar *.class 

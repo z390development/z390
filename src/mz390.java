@@ -419,6 +419,7 @@ public  class  mz390 {
 	 * 05/05/12 RPI 1212 add trace for common ops such as SLL
 	 * 05/06/12 RPI 1213 correct SYSECT, SYSLOC, and SYSSTYP
 	 *          see rt\test\TESTSYS3.MLC regression test
+	 * 09/30/19 RPI 1641 System variable for zVSAM version 
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -8305,7 +8306,8 @@ public  class  mz390 {
 		add_gbl_sys("&SYSADATA_VOLUME",var_setc_type); // drive letter if any
 		gbl_setc[tot_gbl_setc-1] = sys_vol;
 		add_gbl_sys("&SYSASM",var_setc_type);
-		gbl_setc[tot_gbl_setc-1] = "z390";
+		add_gbl_sys("&SYS_ZVSAM_VER",var_setc_type); // RPI 1641
+		gbl_setc[tot_gbl_setc-1] = Integer.toString(tz390.opt_zvsam);  // RPI 1641 (need to convert int to char)
 		add_gbl_sys("&SYSEDF",var_setb_type); // RPI 1027 RPI 1123
 		if (tz390.opt_edf){ // RPI 1123
 			gbl_setb[tot_gbl_setb-1] = 1;   // RPI 1027
