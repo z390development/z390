@@ -7804,8 +7804,460 @@ git commit -m "Reconstructed version v1.6.00b12 of z390"
 git tag -a v1.6.00b12 -m "Reconstructed version v1.6.00b12 of z390"
 git gc --aggressive
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.6.00next
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Create new Branch and switch to it
+git branch -c v1600next
+git switch v1600next
 
+==> Stage files for V1.6.00next
+git add ASM.BAT
+git add ASML.BAT
+git add ASMLG.BAT
+git add BLDJAR6.BAT
+git add EXEC.BAT
+git add IVP.BAT
+git add LINK.BAT
+git add MAC.BAT
+git add ZC390C.BAT
+git add ZC390CL.BAT
+git add ZC390CLG.BAT
+git add ZC586CLG.BAT
+git add ZCJAVCLG.BAT
+git add ZCVCECLG.BAT
+git add cics/DFHABBLK.MAC
+git add cics/DFHPCT.MLC
+git add cics/MMMMCIC3.MLC
+git add cmd.pl
+git add dos.pl
+git add linklib/BUILDAIX.MLC
+git add mac/DEFINE.MAC
+git add mac/SYSTRACE.MAC
+git add mac/VCDTD.MAC
+git add mac/ZDEFINE.MAC
+git add mfacc/EXSAMPL2.MLC
+git add src/mz390.java
+git add src/tz390.java
+git add zcobol/MOVE.MAC
+git add zcobol/PROGRAM_ID.MAC
+git add zcobol/ZCDFHLIT.CPY
+git add zcobol/ZC_CALC.MAC
+git add zcobol/z390/GEN_DIV.MAC
+git add cics/Z390CICS.TXT
+git add mac/ZCVTD.txt
+git add mac/ZVSAMFTR.MAC
+git add mac/ZVSAMHDR.MAC
+git add mac/ZVSAMMAP.MAC
+git add mac/ZVSAMPFX.MAC
+git add mac/ZVSAMRPT.MAC
+git add mfacc/P4RAFA1.MLC
+git add mfacc/P8JFC.CBL
+git add mvs/maclib/README.TXT
+git add rt/RT/RPI1641.asm
+
+==> Create commit for V1.6.00next
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Abe 2021-03-28 18:08:00 +0100
+set GIT_COMMITTER_DATE=2021-03-28 18:08:00 +0100
+git commit -m "Pending changes for version v1.6.00 of z390 - not yet distributed"
+git tag -a v1.6.00next -m "Pending changes for version v1.6.00 of z390 - not yet distributed"
+
+========================================================================================
+
+==> Back to Trunk
+git switch Trunk
+
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.6.00b12
+
+==> Move files
+md   bat
+move A*.BAT      bat\
+move E*.BAT      bat\
+move L*.BAT      bat\
+move M*.BAT      bat\
+move BLDJAR6.BAT bat\BLDJAR.BAT
+move DEMO.BAT    bat\RUNDEMOS.BAT
+move ZC390.BAT   bat\
+move Z390.BAT    bat\
+move z390.IVP    src\
+del  *.BAT
+md   perl
+move *.pl        perl\
+del  *.i*
+
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Stage moved / deleted files
+git rm  ASM.BAT
+git rm  ASML.BAT
+git rm  ASMLG.BAT
+git rm  ASSIST.BAT
+git rm  AZ390.BAT
+git rm  BLDJAR6.BAT
+git rm  EXEC.BAT
+git rm  EZ390.BAT
+git rm  IVP.BAT
+git rm  LINK.BAT
+git rm  LZ390.BAT
+git rm  MAC.BAT
+git rm  MZ390.BAT
+git rm  REPRO.BAT
+git rm  RTCOMP.BAT
+git rm  RTLIST.BAT
+git rm  SUPERZAP.BAT
+git rm  U.BAT
+git rm  UNREF.BAT
+git rm  Z390.BAT
+git rm  Z390.INI
+git rm  Z390.IVP
+git rm  ZC390.BAT
+git rm  ZC390BLD.BAT
+git rm  ZC390C.BAT
+git rm  ZC390CL.BAT
+git rm  ZC390CLG.BAT
+git rm  ZC586CLG.BAT
+git rm  ZCASM.BAT
+git rm  ZCJAVCLG.BAT
+git rm  ZCRT390.BAT
+git rm  ZCRT586.BAT
+git rm  ZCRTCICS.BAT
+git rm  ZCRTJAV.BAT
+git rm  ZCRTLOGS.BAT
+git rm  ZCRTSAVE.BAT
+git rm  ZCRTTEST.BAT
+git rm  ZCRTVCE.BAT
+git rm  ZCVCECLG.BAT
+git rm  ZSTRMAC.BAT
+git rm  cmd.pl
+git rm  demo.bat
+git rm  dos.pl
+git add src/tz390.java
+git rm  z390.pl
+git add bat/
+git add perl/
+git add src/Z390.IVP
+
+==> Create commit for moved / deleted files
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Abe 2021-03-29 20:44:00 +0100
+set GIT_COMMITTER_DATE=2021-03-29 20:44:00 +0100
+git commit -m "Intermediate commit to trace moved and deleted files"
+
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.7.00
+==> Add BLDJAR.BAT and ZC390.BAT from v1.600b12
+==> Add perl directory with 3 .pl scripts from v1.6.00b12
+dir *.* /B /on /s      >.allfile.txt
+dir *.cbl /B /on /s    >\temp\.genmlc.lst
+dir *.zsm /B /on /s   >>\temp\.genmlc.lst
+dir *. /B /A-D /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Add to .gitignore
+zcobol/lib/ABORT
+zcobol/lib/ACCEPT
+zcobol/lib/DISPLAY
+zcobol/lib/INSPECT
+zcobol/lib/ZC390LIB
+zcobol/lib/ZC390NUC
+
+==> Stage files for V1.7.00
+git rm  $RPI_list.txt
+git add bat/BLDJAR.BAT
+git add bat/EZ390.BAT
+git add bat/LZ390.BAT
+git add bat/MZ390.BAT
+git add bat/RUNDEMOS.BAT
+git add bat/Z390.BAT
+git add perl/cmd.pl
+git add perl/dos.pl
+git add src/az390.java
+git add src/gz390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/test_unicode.java
+git add src/tz390.java
+git add src/z390.java
+git add bat/BLDJAR1108.BAT
+git add bat/BLDJAR80261.BAT
+git add bat/RUNTESTS.bat
+git add demo/TESTDCB1.MLC
+git add demo/TESTDCB1.TF1
+git add demo/TESTDCB1.TF2
+git add demo/TESTDCB1.TF3
+git add tests/
+git add z390_v1700_readme.txt
+
+==> Create commit for V1.7.00
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2020-09-01 21:23:00 -0500
+set GIT_COMMITTER_DATE=2021-03-28 20:58:00 +0100
+git commit -m "Reconstructed version v1.7.00 of z390 committed on behalf of Don Higgins"
+git tag -a v1.7.00 -m "Reconstructed version v1.7.00 of z390 committed on behalf of Don Higgins"
+
+==> Move files
+md                            zcobol\cpy
+move zcobol\*.cpy             zcobol\cpy
+md                            zcobol\mac
+move zcobol\*.mac             zcobol\mac
+move zcobol\demo\callcomp\*.* zcobol\demo\
+md                            zcobol\lib\
+move zcobol\z390\*.*          zcobol\lib\
+move zcobol\lib\*.mac         zcobol\mac\
+md                            zcobol\tests
+move zcobol\test\TESTADD*.*   zcobol\tests
+move zcobol\test\TESTIF*.*    zcobol\tests
+move zcobol\test\TESTMOV*.*   zcobol\tests
+
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Stage changes
+git rm  zcobol/ACCEPT.MAC
+git rm  zcobol/ADD.MAC
+git rm  zcobol/ALPHABET.MAC
+git rm  zcobol/ALTER.MAC
+git rm  zcobol/AUTHOR.MAC
+git rm  zcobol/CALL.MAC
+git rm  zcobol/CANCEL.MAC
+git rm  zcobol/CBL.MAC
+git rm  zcobol/CD.MAC
+git rm  zcobol/CLASS.MAC
+git rm  zcobol/CLOSE.MAC
+git rm  zcobol/COMMUNICATION.MAC
+git rm  zcobol/COMPUTE.MAC
+git rm  zcobol/CONFIGURATION.MAC
+git rm  zcobol/CONTINUE.MAC
+git rm  zcobol/CRT.MAC
+git rm  zcobol/CURRENCY.MAC
+git rm  zcobol/CURSOR.MAC
+git rm  zcobol/DATA.MAC
+git rm  zcobol/DATE_COMPILED.MAC
+git rm  zcobol/DATE_WRITTEN.MAC
+git rm  zcobol/DECIMAL_POINT.MAC
+git rm  zcobol/DECLARATIVES.MAC
+git rm  zcobol/DELETE.MAC
+git rm  zcobol/DISABLE.MAC
+git rm  zcobol/DISPLAY.MAC
+git rm  zcobol/DIVIDE.MAC
+git rm  zcobol/EJECT.MAC
+git rm  zcobol/ELSE.MAC
+git rm  zcobol/ENABLE.MAC
+git rm  zcobol/END_ADD.MAC
+git rm  zcobol/END_DECLARATIVES.MAC
+git rm  zcobol/END_DIVIDE.MAC
+git rm  zcobol/END_EVALUATE.MAC
+git rm  zcobol/END_IF.MAC
+git rm  zcobol/END_MULTIPLY.MAC
+git rm  zcobol/END_PERFORM.MAC
+git rm  zcobol/END_READ.MAC
+git rm  zcobol/END_SUBTRACT.MAC
+git rm  zcobol/ENTRY.MAC
+git rm  zcobol/ENVIRONMENT.MAC
+git rm  zcobol/EVALUATE.MAC
+git rm  zcobol/EXAMINE.MAC
+git rm  zcobol/EXHIBIT.MAC
+git rm  zcobol/EXIT.MAC
+git rm  zcobol/FD.MAC
+git rm  zcobol/FILE.MAC
+git rm  zcobol/FILE_CONTROL.MAC
+git rm  zcobol/GENERATE.MAC
+git rm  zcobol/GO.MAC
+git rm  zcobol/GOBACK.MAC
+git rm  zcobol/IDENTIFICATION.MAC
+git rm  zcobol/IF.MAC
+git rm  zcobol/INITIALIZE.MAC
+git rm  zcobol/INITIATE.MAC
+git rm  zcobol/INPUT_OUTPUT.MAC
+git rm  zcobol/INSPECT.MAC
+git rm  zcobol/INSTALLATION.MAC
+git rm  zcobol/I_O_CONTROL.MAC
+git rm  zcobol/LABEL.MAC
+git rm  zcobol/LINKAGE.MAC
+git rm  zcobol/LOCALE.MAC
+git rm  zcobol/MERGE.MAC
+git rm  zcobol/MOVE.MAC
+git rm  zcobol/MULTIPLY.MAC
+git rm  zcobol/NEXT.MAC
+git rm  zcobol/NOT.MAC
+git rm  zcobol/NOTE.MAC
+git rm  zcobol/OBJECT_COMPUTER.MAC
+git rm  zcobol/OPEN.MAC
+git rm  zcobol/ORDER.MAC
+git rm  zcobol/PERFORM.MAC
+git rm  zcobol/PERIOD.MAC
+git rm  zcobol/PROCEDURE.MAC
+git rm  zcobol/PROGRAM_ID.MAC
+git rm  zcobol/RD.MAC
+git rm  zcobol/READ.MAC
+git rm  zcobol/READY.MAC
+git rm  zcobol/RECEIVE.MAC
+git rm  zcobol/RELEASE.MAC
+git rm  zcobol/REMARKS.MAC
+git rm  zcobol/REPLACE.MAC
+git rm  zcobol/REPORT.MAC
+git rm  zcobol/RESET.MAC
+git rm  zcobol/RETURN.MAC
+git rm  zcobol/REWRITE.MAC
+git rm  zcobol/SEARCH.MAC
+git rm  zcobol/SECURITY.MAC
+git rm  zcobol/SELECT.MAC
+git rm  zcobol/SEND.MAC
+git rm  zcobol/SET.MAC
+git rm  zcobol/SORT.MAC
+git rm  zcobol/SOURCE_COMPUTER.MAC
+git rm  zcobol/SPECIAL_NAMES.MAC
+git rm  zcobol/STOP.MAC
+git rm  zcobol/STRING.MAC
+git rm  zcobol/SUBTRACT.MAC
+git rm  zcobol/SYMBOLIC.MAC
+git rm  zcobol/TERMINATE.MAC
+git rm  zcobol/TRANSFORM.MAC
+git rm  zcobol/UNSTRING.MAC
+git rm  zcobol/USE.MAC
+git rm  zcobol/WHEN.MAC
+git rm  zcobol/WORKING_STORAGE.MAC
+git rm  zcobol/WRITE.MAC
+git rm  zcobol/WS.MAC
+git rm  zcobol/ZCDFHLIT.CPY
+git rm  zcobol/ZCEND.MAC
+git rm  zcobol/ZCGETFLD.CPY
+git rm  zcobol/ZCGETLAB.CPY
+git rm  zcobol/ZCNUMLIT.CPY
+git rm  zcobol/ZCOBOL.MAC
+git rm  zcobol/ZCRSTLAB.CPY
+git rm  zcobol/ZCSD.MAC
+git rm  zcobol/ZCSTART.MAC
+git rm  zcobol/ZC_CALC.MAC
+git rm  zcobol/ZC_DATA_LIST.MAC
+git rm  zcobol/ZC_DFHRESP.CPY
+git rm  zcobol/ZC_DFHVALUE.CPY
+git rm  zcobol/ZC_FILE_FIND.MAC
+git rm  zcobol/ZC_GET_QNAME.MAC
+git rm  zcobol/ZC_KEYS.CPY
+git rm  zcobol/ZC_PIC_DIGITS.MAC
+git rm  zcobol/ZC_PIC_LEN.MAC
+git rm  zcobol/ZC_STATS.MAC
+git rm  zcobol/ZC_SYM_FIND.MAC
+git rm  zcobol/ZC_SYM_INDEX.MAC
+git rm  zcobol/ZC_WS.CPY
+git rm  zcobol/demo/callcomp/CALLCOMP.MLC
+git rm  zcobol/demo/callcomp/CLG.BAT
+git rm  zcobol/demo/callcomp/COMPSUM.CBL
+git rm  zcobol/demo/callcomp/ZC_CALC.MAC
+git rm  zcobol/test/TESTADD1.CBL
+git rm  zcobol/test/TESTADD2.CBL
+git rm  zcobol/test/TESTIF1.CBL
+git rm  zcobol/test/TESTIF2.CBL
+git rm  zcobol/test/TESTIF3.CBL
+git rm  zcobol/test/TESTMOV1.CBL
+git rm  zcobol/test/TESTMOV2.CBL
+git rm  zcobol/test/TESTMOV3.CBL
+git rm  zcobol/z390/ABORT.MLC
+git rm  zcobol/z390/ACCEPT.MLC
+git rm  zcobol/z390/CMPQR.MAC
+git rm  zcobol/z390/DISPLAY.MLC
+git rm  zcobol/z390/GEN_ACCEPT.MAC
+git rm  zcobol/z390/GEN_ADD.MAC
+git rm  zcobol/z390/GEN_ALTER.MAC
+git rm  zcobol/z390/GEN_B.MAC
+git rm  zcobol/z390/GEN_BASE.MAC
+git rm  zcobol/z390/GEN_BASE_RESET.MAC
+git rm  zcobol/z390/GEN_BC.MAC
+git rm  zcobol/z390/GEN_CALL.MAC
+git rm  zcobol/z390/GEN_CLOSE.MAC
+git rm  zcobol/z390/GEN_COMMENT.MAC
+git rm  zcobol/z390/GEN_COMP.MAC
+git rm  zcobol/z390/GEN_COMP_BYTE.MAC
+git rm  zcobol/z390/GEN_DISPLAY.MAC
+git rm  zcobol/z390/GEN_DIV.MAC
+git rm  zcobol/z390/GEN_DROP.MAC
+git rm  zcobol/z390/GEN_EDIT.MAC
+git rm  zcobol/z390/GEN_GOBACK.MAC
+git rm  zcobol/z390/GEN_GO_DEPEND.MAC
+git rm  zcobol/z390/GEN_ID.MAC
+git rm  zcobol/z390/GEN_INIT_WS.MAC
+git rm  zcobol/z390/GEN_INSPECT.MAC
+git rm  zcobol/z390/GEN_L.MAC
+git rm  zcobol/z390/GEN_LABEL.MAC
+git rm  zcobol/z390/GEN_MOVE.MAC
+git rm  zcobol/z390/GEN_MOVE_BYTE.MAC
+git rm  zcobol/z390/GEN_MPY.MAC
+git rm  zcobol/z390/GEN_ONSIZE_START.MAC
+git rm  zcobol/z390/GEN_OPEN.MAC
+git rm  zcobol/z390/GEN_PERFORM.MAC
+git rm  zcobol/z390/GEN_PM_LVL.MAC
+git rm  zcobol/z390/GEN_PROC_END.MAC
+git rm  zcobol/z390/GEN_PROC_START.MAC
+git rm  zcobol/z390/GEN_READ.MAC
+git rm  zcobol/z390/GEN_RETURN.MAC
+git rm  zcobol/z390/GEN_RMD.MAC
+git rm  zcobol/z390/GEN_SET.MAC
+git rm  zcobol/z390/GEN_SIX.MAC
+git rm  zcobol/z390/GEN_STOP.MAC
+git rm  zcobol/z390/GEN_SUB.MAC
+git rm  zcobol/z390/GEN_VAR.MAC
+git rm  zcobol/z390/GEN_WRITE.MAC
+git rm  zcobol/z390/GEN_WS.MAC
+git rm  zcobol/z390/INSPECT.MLC
+git rm  zcobol/z390/MYSTUFF.MAC
+git rm  zcobol/z390/README.TXT
+git rm  zcobol/z390/ZC390CLG.OPT
+git rm  zcobol/z390/ZC390CVT.CPY
+git rm  zcobol/z390/ZC390LIB.MLC
+git rm  zcobol/z390/ZC390NUC.MLC
+git rm  zcobol/z390/ZC390PVT.CPY
+git rm  zcobol/z390/ZC_CONV.MAC
+git rm  zcobol/z390/ZC_EQUS.CPY
+git rm  zcobol/z390/ZC_LPQR.MAC
+git rm  zcobol/z390/ZC_PACK31.MAC
+git rm  zcobol/z390/ZC_PFPO.CPY
+git rm  zcobol/z390/ZC_UNPK31.MAC
+git add zcobol/cpy/
+git add zcobol/demo/CALLCOMP.MLC
+git add zcobol/demo/CLG.BAT
+git add zcobol/demo/COMPSUM.CBL
+git add zcobol/demo/ZC_CALC.MAC
+git add zcobol/lib/
+git add zcobol/mac/
+git add zcobol/tests/
+
+==> Create commit for moved / deleted files
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Abe 2021-03-29 07:25:00 +0100
+set GIT_COMMITTER_DATE=2021-03-29 07:25:00 +0100
+git commit -m "Intermediate commit to trace renamed files"
+
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.7.01
+dir *.* /B /on /s >.allfile.txt
+dir *.cbl /B /on /s  >\temp\.genmlc.lst
+dir *.zsm /B /on /s >>\temp\.genmlc.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .cbl/.zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
 
 
