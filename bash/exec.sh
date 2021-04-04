@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# exec: execute z390 load module
+
+# debug flag; 0=no debug, 1=debug
+debug=0
+
+ECHO=0
+if [ "$1" = "tron" ] || [ "$1" = "TRON" ]; then
+#    echo "setting echo to 1"
+	ECHO=1
+	shift
+fi
+
+if [ -f "$1.LOG" ]; then rm $1.LOG; fi
+if [ -f "$1.ERR" ]; then rm $1.ERR; fi
+if [ -f "$1.STA" ]; then rm $1.STA; fi
+#if [ -f $1.TR* ]; then rm $1.TR*; fi
+shopt -s nullglob
+for f in $1.TR*; do
+#    echo "remove file: $f"
+    rm $f
+done
+shopt -u nullglob
+
+# extract longest substring that ends with "/"
+dir=${0%/*}
+
+${dir}/ez390.sh $1 $2 $3 $4 $5 $6 $7 $8 $9
+rc=$?
+if [ $debug -eq 1 ]; then echo "exec: ez390 rc=$rc"; fi
