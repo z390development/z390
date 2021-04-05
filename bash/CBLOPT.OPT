@@ -1,5 +1,0 @@
-sysmac(+zcobol/mac)
-syscpy(+zcobol/mac)
-BAL
-NOLISTCALL
-MAXGBL(1500000) * INCR MAX GBLA/GBLB/GBLC 
