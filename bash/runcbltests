@@ -13,13 +13,13 @@ zdir=$(dirname $zdir)
 
 cd ..
 
-${dir}/bash/cblclg.sh zcobol/tests/TESTADD1 $1 $2 $3 $4 $5 $6 $7 $8 $9
-${dir}/bash/cblclg.sh zcobol/tests/TESTADD2 $1 $2 $3 $4 $5 $6 $7 $8 $9
-${dir}/bash/cblclg.sh zcobol/tests/TESTIF1 $1 $2 $3 $4 $5 $6 $7 $8 $9
-${dir}/bash/cblclg.sh zcobol/tests/TESTIF2 $1 $2 $3 $4 $5 $6 $7 $8 $9
-${dir}/bash/cblclg.sh zcobol/tests/TESTIF3 $1 $2 $3 $4 $5 $6 $7 $8 $9
-${dir}/bash/cblclg.sh zcobol/tests/TESTMOV1 $1 $2 $3 $4 $5 $6 $7 $8 $9
-${dir}/bash/cblclg.sh zcobol/tests/TESTMOV2 $1 $2 $3 $4 $5 $6 $7 $8 $9
-${dir}/bash/cblclg.sh zcobol/tests/TESTMOV3 $1 $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/bash/cblclg zcobol/tests/TESTADD1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/bash/cblclg zcobol/tests/TESTADD2 $1 $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/bash/cblclg zcobol/tests/TESTIF1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/bash/cblclg zcobol/tests/TESTIF2 $1 $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/bash/cblclg zcobol/tests/TESTIF3 $1 $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/bash/cblclg zcobol/tests/TESTMOV1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/bash/cblclg zcobol/tests/TESTMOV2 $1 $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/bash/cblclg zcobol/tests/TESTMOV3 $1 $2 $3 $4 $5 $6 $7 $8 $9
 
 echo "Verify ZCOBOL regression tests"

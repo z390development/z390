@@ -17,11 +17,11 @@ cd ..
 sysmac='sysmac('$zdir'/mac)'
 optable='optable(z390)'
 
-${dir}/bash/asm.sh tests/TESTINS1 trace $sysmac
-${dir}/bash/asmlg.sh tests/TESTINS2 trace $sysmac
-${dir}/bash/asmlg.sh tests/TESTINS3 trace $sysmac
-${dir}/bash/asmlg.sh tests/TESTINS4 trace $sysmac
-${dir}/bash/asmlg.sh tests/TESTINS5 trace $sysmac $optable
-${dir}/bash/asmlg.sh tests/TESTDFP1 trace $sysmac $optable
-${dir}/bash/asmlg.sh tests/TESTDFP2 trace $sysmac $optable
+${dir}/bash/asm tests/TESTINS1 trace $sysmac
+${dir}/bash/asmlg tests/TESTINS2 trace $sysmac
+${dir}/bash/asmlg tests/TESTINS3 trace $sysmac
+${dir}/bash/asmlg tests/TESTINS4 trace $sysmac
+${dir}/bash/asmlg tests/TESTINS5 trace $sysmac $optable
+${dir}/bash/asmlg tests/TESTDFP1 trace $sysmac $optable
+${dir}/bash/asmlg tests/TESTDFP2 trace $sysmac $optable
 echo "Verify tests ran without errors"

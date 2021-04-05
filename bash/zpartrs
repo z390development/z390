@@ -14,7 +14,7 @@ zdir=$(dirname $zdir)
 if [ -f "$1.TRS" ]; then rm $1.TRS; fi
 
 sysparm="SYSPARM($1+$2+$3+$4+$5+$6+$7+$8+$9)"
-${zdir}/bash/mac.sh zpar/ZPARTRS $sysparm @$zdir/zpar/ZPARTRS
+${zdir}/bash/mac zpar/ZPARTRS $sysparm @$zdir/zpar/ZPARTRS
 rc=$?
 echo "zpartrs: mac rc=$rc"
 if [ "$rc" -ne "0" ]; then

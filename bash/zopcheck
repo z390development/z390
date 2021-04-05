@@ -20,7 +20,7 @@ sysmac='sysmac('$zdir'/mac)'
 syscpy='syscpy('$zdir'/zopcheck+'$zdir'/mac)'
 optable='optable(z390)'
 
-${dir}/bash/asmlg.sh zopcheck/ZOPCHECK trace $sysmac $syscpy $optable
+${dir}/bash/asmlg zopcheck/ZOPCHECK trace $sysmac $syscpy $optable
 
 # done with tests
 echo "Verify zopcheck ran without errors"

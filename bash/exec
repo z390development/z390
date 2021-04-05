@@ -19,13 +19,13 @@ if [ -f "$1.STA" ]; then rm $1.STA; fi
 shopt -s nullglob
 for f in $1.TR*; do
 #    echo "remove file: $f"
-    rm $f
+    if [ -f "$f" ]; then rm "$f"; fi
 done
 shopt -u nullglob
 
 # extract longest substring that ends with "/"
 dir=${0%/*}
 
-${dir}/ez390.sh $1 $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/ez390 $1 $2 $3 $4 $5 $6 $7 $8 $9
 rc=$?
 if [ $debug -eq 1 ]; then echo "exec: ez390 rc=$rc"; fi

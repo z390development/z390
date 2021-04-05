@@ -19,7 +19,7 @@ if [ -f "$1.STA" ]; then rm $1.STA; fi
 shopt -s nullglob
 for f in $1.TR*; do
 #    echo "remove file: $f"
-    rm $f
+    if [ -f "$f" ]; then rm "$f"; fi
 done
 shopt -u nullglob
 
@@ -50,7 +50,7 @@ if [ $debug -eq 1 ]; then
     echo "mac chkmac=$chkmac"
 fi
 
-${dir}/mz390.sh $1 bal noasm $sysmac $syscpy $chksrc $chkmac $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/mz390 $1 bal noasm $sysmac $syscpy $chksrc $chkmac $2 $3 $4 $5 $6 $7 $8 $9
 rc=$?
 if [ $debug -eq 1 ]; then echo "mac: mz390 rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then

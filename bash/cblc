@@ -29,24 +29,21 @@ if [ -f "$1.CBL" ]; then
     dir=${0%/*}
     if [ $debug -eq 1 ]; then echo "cblc: dir=$dir"; fi
 
-    # COBOL options directory is full path name of z390/bash directory; may change
-    optdir=$(cd $dir && pwd)
-    if [ $debug -eq 1 ]; then echo "cblc: optdir=$optdir"; fi
-
     # get the z390 directory
     zdir=$(dirname $0)
     zdir=$(cd $zdir && pwd)
     zdir=$(dirname $zdir)
     if [ $debug -eq 1 ]; then echo "cblc: zdir=$zdir"; fi
 
-    ${dir}/zc390.sh $1 $2 $3 $4 $5 $6 $7 $8 $9
+    ${dir}/zc390 $1 $2 $3 $4 $5 $6 $7 $8 $9
     rc=$?
     if [ $debug -eq 1 ]; then echo "cblc: zc390 rc=$rc"; fi
     if [ "$rc" -eq "0" ]; then
-        cblopt='@'$optdir'/CBLOPT'
+        cblopt='@'$zdir'/zcobol/opt/CBLOPT'
         sysmac='sysmac('$zdir'/zcobol/mac+'$zdir'/mac)'
         syscpy='syscpy(+'$zdir'/zcobol/cpy)'
-        ${dir}/mz390.sh $1 $cblopt $sysmac $syscpy $2 $3 $4 $5 $6 $7 $8 $9
+        if [ $debug -eq 1 ]; then echo "cblc: cblopt=$cblopt"; fi
+        ${dir}/mz390 $1 $cblopt $sysmac $syscpy $2 $3 $4 $5 $6 $7 $8 $9
         rc=$?
         if [ $debug -eq 1 ]; then echo "cblc: mz390 rc=$rc"; fi
         if [ "$rc" -ne "0" ]; then
