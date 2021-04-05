@@ -24,7 +24,7 @@ if [ -f "$1.STA" ]; then rm $1.STA; fi
 shopt -s nullglob
 for f in $1.TR*; do
 #    echo "remove file: $f"
-    rm $f
+    if [ -f "$f" ]; then rm "$f"; fi
 done
 shopt -u nullglob
 
@@ -39,15 +39,15 @@ zdir=$(dirname $zdir)
 sysmac='sysmac(+'$zdir'/mac)'
 syscpy='syscpy(+'$zdir'/mac)'
 
-${dir}/mz390.sh $1 $sysmac $syscpy $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/mz390 $1 $sysmac $syscpy $2 $3 $4 $5 $6 $7 $8 $9
 rc=$?
 if [ $debug -eq 1 ]; then echo "asmlg: mz390 rc=$rc"; fi
 if [ "$rc" -eq "0" ]; then
-    ${dir}/lz390.sh $1 $2 $3 $4 $5 $6 $7 $8 $9
+    ${dir}/lz390 $1 $2 $3 $4 $5 $6 $7 $8 $9
     rc=$?
     if [ $debug -eq 1 ]; then echo "asmlg: lz390 rc=$rc"; fi
     if [ "$rc" -eq "0" ]; then
-        ${dir}/ez390.sh $1 $2 $3 $4 $5 $6 $7 $8 $9
+        ${dir}/ez390 $1 $2 $3 $4 $5 $6 $7 $8 $9
         rc=$?
         if [ $debug -eq 1 ]; then echo "asmlg: ez390 rc=$rc"; fi
         if [ "$rc" -ne "0" ]; then

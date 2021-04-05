@@ -14,15 +14,15 @@ zdir=$(dirname $zdir)
 
 cd ..
 
-${dir}/bash/asmlg.sh demo/HELLO trace
+${dir}/bash/asmlg demo/HELLO trace
 
 sysparm="SYSPARM(demo/HELLO)"
-${dir}/bash/mac.sh zpar/ZPARTRS $sysparm
+${dir}/bash/mac zpar/ZPARTRS $sysparm
 
-${dir}/bash/cblclg.sh zcobol/demo/HELLO trace
+${dir}/bash/cblclg zcobol/demo/HELLO trace
 
 sysparm="SYSPARM(zcobol/demo/HELLO)"
-${dir}/bash/mac.sh zpar/ZPARTRS $sysparm
+${dir}/bash/mac zpar/ZPARTRS $sysparm
 
 # done with tests
 echo "See generated TRS files to verify ZPAR demos ok"

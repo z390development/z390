@@ -1,4 +1,4 @@
-readme.txt for Linux and Mac users of z390 as of 2021-04-01 Don Higgins don@higgins.net
+readme.txt for Linux and Mac users of z390 as of 2021-04-05 Don Higgins don@higgins.net
 
 The bash directory consists of bash scripts that Linux and Mac users of z390 can
 use to perform the same z390 functions provided by the bat files used by Windows
@@ -9,22 +9,23 @@ See below for assumptions, restrictions, and known issues.
  As is the bat directory, the bash directory must be a subdirectory of the
 z390 directory.
 
-The bash directory contains 30 files:
+The bash directory contains 29 files:
 
-  asmlg.sh      bldjar.sh   ez390.sh    runasmdemos.sh  runzpar.sh
-  asml.sh       cblclg.sh   link.sh     runasmtests.sh  test.sh
-  asm.sh        cblcl.sh    lz390.sh    runcbldemos.sh  z390.sh
-  assist.sh     cblc.sh     mac.sh      runcbltests.sh  zc390.sh
-  az390.sh      CBLOPT.OPT  mz390.sh    runrtqsam.sh    zopcheck.sh
-  bldcbllib.sh  exec.sh     readme.txt  runsort.sh      zpartrs.sh
+asm     az390      cblcl   link   readme.txt   runcbltests  test.sh   zpartrs
+asml    bldcbllib  cblclg  lz390  runasmdemos  runrtqsam    z390
+asmlg   bldjar     exec    mac    runasmtests  runsort      zc390
+assist  cblc       ez390   mz390  runcbldemos  runzpar      zopcheck
 
-Except for two files readme.txt and z390.sh, the remaining 28 files are
-replacements for the 28 files in the bat subdirectory. For example, asm.sh
+
+Except for the two files readme.txt and z390, the remaining 27 files are
+replacements for the 28 files in the bat subdirectory. For example, asm
 replaces ASM.BAT.
 
 The readme.txt file is the file you are now reading.
 
-The z390.sh bash script is used to start the z390 GUI.
+The z390 bash script is used to start the z390 GUI.
+
+Note: the test.sh script is used to test bash functionality. It is not used by z390.
 
 Try running the test.sh script.
 
@@ -34,7 +35,11 @@ Try running the test.sh script.
 If you get "Permission denied", you probably need to make the bash scripts executable:
 
   $ cd <full path to z390>/bash
-  $ chmod 755 *.sh
+  $ chmod 755 *
+  $ chmod 644 readme.txt
+
+The second "chmod" resets the readme.txt permissions back to what they were before the
+first "chmod" was done.
 
 Running test.sh should now be successful.
 
@@ -45,11 +50,8 @@ Assumptions, restrictions, and known issues.
    the z390 directory.
 2. The bash scripts properly extract the "tron" parameter, if present, but
    do not use it.
-3. Scripts runzpar.sh and zpartrs.sh do not yet work. Research in progress.
-4. The CBLOPT.OPT file should probably be moved elsewhere. It is here because
-   it is in the bat directory, where it really doesn't belong either. If/when this
-   is done, the COBOL scripts clbc.sh, cblcl.sh, and cblclg.sh will require change.
-5. Depending on when you begin using these scripts, you may encounter a couple of
+3. Scripts runzpar and zpartrs do not yet work. Research in progress.
+4. Depending on when you begin using these scripts, you may encounter a couple of
    errors when running the demo and test scripts for assembler and COBOL due to
    upper/lower case issues.
    1. Rename z390/tests/TESTINS5.mlc to z390/tests/TESTINS5.MLC.
