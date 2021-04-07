@@ -6,7 +6,7 @@
 # -XmxnK      set max     memory allocation to nK
 # -Xrs        allow control break interruption of java tasks
 
-# debug flag; 0=no
+# debug flag; 0=no debug, 1=debug
 debug=0
 
 # get full directory path to z390.jar; assumes that this bash script is in the z390 subdirectory

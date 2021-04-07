@@ -2,7 +2,7 @@
 
 # z390: start z390 GUI in background
 
-# debug flag; 0=no
+# debug flag; 0=no debug, 1=debug
 debug=0
 
 # get full directory path to z390.jar; assumes that this script is in the z390/bash subdirectory
