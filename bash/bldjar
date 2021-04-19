@@ -9,9 +9,14 @@ echo "";
 
 # Windows BLDJAR.BAT copied src *.java and Z390.MAN to jar; not done here
 
-# cd to destination directory; empty it
+# ensure destination directory exists; exit if not
+if [ ! -d "../jar" ]; then
+    echo "Error: ../jar directory does not exist"
+    exit 1
+fi
+# empty destination directory; cd to it
+rm ../jar/*
 cd ../jar
-rm *
 # compile z390 java sources to class vm object code
 echo "Compiling ../src/*.java into jar"
 javac -d . -g:none ../src/*.java
