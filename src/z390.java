@@ -142,6 +142,7 @@ public  class  z390
 	 * 2019-09-20 dsh fix memory leak by closing temp_file
 	 * 2019-09-23 dsh remove JApplet depreciated support
 	 * 2020-10-12 John Ganci RPI 2011 Perl scripts in z390 version 1.7  are in perl subdirectory.
+     * 2021-04-19 jjg Replace Linux/Mac Perl usage with Linux shell; 
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -819,7 +820,7 @@ public  class  z390
             String cmd_parm2 = null;
 	   	    boolean cmd_opcode_ok = false;
 	   	    if (cmd_line.length() > 2 && cmd_line.substring(0,2).toUpperCase().equals("CD")){
-	   	    	cmd_line = "CD " + cmd_line.substring(2); // RPI 235
+	   	    	cmd_line = "cd " + cmd_line.substring(2); // RPI 235
 	   	    }
             StringTokenizer st = new StringTokenizer(cmd_line," ,\'\"",true);
             String next_token;
@@ -860,17 +861,17 @@ public  class  z390
         	}
             if  (cmd_opcode.equals("ASM")) {
               	cmd_opcode_ok = true;
-              	batch_cmd("ASM",cmd_parm1,"MLC",cmd_parm2);
+              	batch_cmd("asm",cmd_parm1,"MLC",cmd_parm2);
               	break;
             }
             if  (cmd_opcode.equals("ASML")) {
               	cmd_opcode_ok = true;
-              	batch_cmd("ASML",cmd_parm1,"MLC",cmd_parm2);
+              	batch_cmd("asml",cmd_parm1,"MLC",cmd_parm2);
               	break;
             }
             if  (cmd_opcode.equals("ASMLG")) {
               	cmd_opcode_ok = true;
-              	batch_cmd("ASMLG",cmd_parm1,"MLC",cmd_parm2);
+              	batch_cmd("asmlg",cmd_parm1,"MLC",cmd_parm2);
               	break;
             }
             break;
@@ -973,7 +974,7 @@ public  class  z390
               }
              if  (cmd_opcode.equals("EXEC")) {
                	cmd_opcode_ok = true;
-               	batch_cmd("EXEC",cmd_parm1,"390",cmd_parm2);
+               	batch_cmd("exec",cmd_parm1,"390",cmd_parm2);
                	break;
              }
              if  (cmd_opcode.equals("EXIT")) {
@@ -1024,7 +1025,7 @@ public  class  z390
           case 'L':
              if  (cmd_opcode.equals("LINK")) {
                 	cmd_opcode_ok = true;
-                	batch_cmd("LINK",cmd_parm1,"OBJ",cmd_parm2);
+                	batch_cmd("link",cmd_parm1,"OBJ",cmd_parm2);
                 	break;
              }  
              if  (cmd_opcode.equals("LIST")){
@@ -1446,16 +1447,14 @@ public  class  z390
 	   	    String[] cmd_parms;
 	   	    try {
 	   	    	if (tz390.z390_os_type == tz390.z390_os_linux) {
-	   	    	    if  (cmd_line != null){
-	   	    	        cmd_parms = new String[3];
-	   	    			cmd_parms[0] = tz390.z390_command;
-	   	    			cmd_parms[1] = install_loc + "/perl/cmd.pl"; // RPI 532 // RPI 2011
-	   	    			cmd_parms[2] = cmd_line;
-	   	    		} else {
-	   	    			cmd_parms = new String[2];
-	   	    			cmd_parms[0] = tz390.z390_command;
-	   	    		    cmd_parms[1] = install_loc + "/perl/cmd.pl";// RPI 532 // RPI 2011 
-	   	    		}
+	   	    	    if (cmd_line != null) {
+	   	    	        cmd_parms = new String[2];
+	   	    	        cmd_parms[0] = tz390.z390_command;
+	   	    	        cmd_parms[1] = cmd_line;
+	   	    	    } else {
+	   	    	        cmd_parms = new String[1];
+	   	    	        cmd_parms[0] = tz390.z390_command;
+	   	    	    }
 	   	    	} else {
 	   	    		if  (cmd_line != null){
 	   	    			cmd_parms = new String[3];
@@ -1516,12 +1515,12 @@ public  class  z390
 		    */
 	           if (!tz390.dir_cur.equals(install_loc)){
 	        	   if (tz390.z390_os_type == tz390.z390_os_linux){
-	        		   cmd_exec_input("CD " + tz390.dir_cur); // RPI 499 change Linux directory and/or drive
+	        		   cmd_exec_input("cd " + tz390.dir_cur); // RPI 499 change Linux directory and/or drive
 	        	   } else {
 	        		   if (!tz390.dir_cur.substring(0,2).equals(install_loc.substring(0,2))){
 		           			cmd_exec_input(tz390.dir_cur.substring(0,2)); // change windows drive
 	        		   }
-	        		   cmd_exec_input("CD " + tz390.dir_cur.substring(2)); // change windows directory
+	        		   cmd_exec_input("cd " + tz390.dir_cur.substring(2)); // change windows directory
 	        	   }
 		       }
 	   }
@@ -2144,15 +2143,15 @@ public  class  z390
   	 	   }
   	   	}
  	    if (event_name.equals("ASM..")){
-            batch_cmd("ASM","","MLC",asm_opt);
+            batch_cmd("asm","","MLC",asm_opt);
             break;
  	    }
  	    if (event_name.equals("ASML..")){
-            batch_cmd("ASML","","MLC",asml_opt);
+            batch_cmd("asml","","MLC",asml_opt);
             break;
  	    }
  	    if (event_name.equals("ASMLG..")){
-            batch_cmd("ASMLG","","MLC",asmlg_opt);
+            batch_cmd("asmlg","","MLC",asmlg_opt);
             break;
  	    }
    	    break;
@@ -2161,7 +2160,7 @@ public  class  z390
    	  case 'C':	
    		if (event_name.equals("CD..")){
    			put_log("CD change current directory");
-	  		z390_cmd_line.setText("CD");
+	  		z390_cmd_line.setText("cd");
 	  		break;
    		}
  	  	if (event_name.equals("CMD MODE")){
@@ -2233,7 +2232,7 @@ public  class  z390
             break;
  	    }
  	    if (event_name.equals("EXEC..")){
-            batch_cmd("EXEC","","390",exec_opt);
+            batch_cmd("exec","","390",exec_opt);
             break;
  	    }
    	  	if (event_name.equals("EXIT")){
@@ -2265,7 +2264,7 @@ public  class  z390
  	    }
    	 case 'L':
   	    if (event_name.equals("LINK..")){
-            batch_cmd("LINK","","OBJ",link_opt);
+            batch_cmd("link","","OBJ",link_opt);
             break;
  	    }
 	  	if (event_name.equals("LIST")){
@@ -2285,7 +2284,7 @@ public  class  z390
    	    break;	
    	  case 'M':
      	    if (event_name.equals("MAC..")){
-                batch_cmd("MAC","","MLC",mac_opt);
+                batch_cmd("mac","","MLC",mac_opt);
                 break;
      	    }
      	    break;
@@ -3047,10 +3046,10 @@ public  class  z390
 	                 if (selected_file != null){
 	                 	selected_dir_name = selected_file.getPath();
 	                    if  (main_gui){
-	                        z390_cmd_line.setText("CD " + "\"" + selected_dir_name + "\"");
+	                        z390_cmd_line.setText("cd " + "\"" + selected_dir_name + "\"");
 	                        z390_cmd_line.postActionEvent();
 	                    } else {
-	                    	cd_command("CD " + "\"" + selected_dir_name + "\"");
+	                    	cd_command("cd " + "\"" + selected_dir_name + "\"");
 	                    }
 	                 } else {
 	                 	log_error(37,"directory not selected");
@@ -3160,7 +3159,9 @@ public  class  z390
 	                        			  + select_opt);
                        		z390_cmd_line.postActionEvent();
                        	 } else {
-                       		select_cmd = get_short_file_name(install_loc 
+                       		select_cmd = get_short_file_name(install_loc
+                                       + File.separator
+                                       + tz390.z390_procdir
             					       + File.separator 
                			               + select_cmd);
                        		selected_file_name = get_short_file_name(selected_file_name);
@@ -3574,7 +3575,9 @@ public  class  z390
 	     				   cmd_command(get_short_file_name(bat_file_name) 
 								   + select_opt);
 	     			    } else {
-	     				   cmd_command(get_short_file_name(install_loc 
+	     				   cmd_command(get_short_file_name(install_loc
+                                                      + File.separator  
+                                                      + tz390.z390_procdir 
 							                          + File.separator 
 							                          + bat_cmd)
 							   + " " + get_short_file_name(bat_file_name) 
