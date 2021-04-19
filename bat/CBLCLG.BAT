@@ -43,4 +43,4 @@ pause see errors on lz390 generated lst file and console
 goto end
 :ezerr
 pause see errors on ez390 generated log file and console
-:end 
+:end

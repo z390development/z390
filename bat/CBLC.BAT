@@ -34,4 +34,4 @@ if errorlevel 5 goto mzerr
 goto end
 :mzerr
 pause see errors on mz390 generated bal file and console
-:end 
+:end
