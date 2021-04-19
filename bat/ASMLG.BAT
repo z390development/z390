@@ -34,4 +34,4 @@ erase %1.390
 goto end
 :ezerr
 pause see errors on ez390 generated log file and console
-:end 
+:end
