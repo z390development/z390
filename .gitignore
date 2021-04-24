@@ -1,3 +1,7 @@
+# Intellij project files
+.idea/
+*.iml
+
 # Java compiler output stuff
 **/*.[jJ][aA][rR]
 **/*.[eEe][xX][eE]
