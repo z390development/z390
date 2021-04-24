@@ -142,7 +142,8 @@ public  class  z390
 	 * 2019-09-20 dsh fix memory leak by closing temp_file
 	 * 2019-09-23 dsh remove JApplet depreciated support
 	 * 2020-10-12 John Ganci RPI 2011 Perl scripts in z390 version 1.7  are in perl subdirectory.
-     * 2021-04-19 jjg Replace Linux/Mac Perl usage with Linux shell; 
+     * 2021-04-19 jjg Replace Linux/Mac Perl usage with Linux shell
+     * 2021-04-21 jjg Add CBLC, CBLCL, CBLCLG as commands
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -877,7 +878,22 @@ public  class  z390
             break;
          case 'B':           
             break;
-         case 'C': 
+         case 'C':
+            if  (cmd_opcode.equals("CBLC")) {
+                cmd_opcode_ok = true;
+                batch_cmd("cblc",cmd_parm1,"MLC",cmd_parm2);
+                break;
+            }
+            if  (cmd_opcode.equals("CBLCL")) {
+                cmd_opcode_ok = true;
+                batch_cmd("cblcl",cmd_parm1,"MLC",cmd_parm2);
+                break;
+            }
+            if  (cmd_opcode.equals("CBLCLG")) {
+                cmd_opcode_ok = true;
+                batch_cmd("cblclg",cmd_parm1,"MLC",cmd_parm2);
+                break;
+            }
             if  (cmd_opcode.equals("CD")) {
              	cmd_opcode_ok = true; 
              	cd_command(cmd_parm1); 
@@ -3215,6 +3231,9 @@ public  class  z390
 	    	put_log("ASM      MLC file        submit assembly of MLC source to OBJ object code file");
 	    	put_log("ASML     MLC file        submit assembly and link MLC source to 390 load module file");
 	    	put_log("ASMLG    MLC file        submit assembly, link, and execute 390 load module file");
+	    	put_log("CBLC     CBL file        submit compile of CBL source to OBJ object code file");
+            put_log("CBLCL    CBL file        submit compile and link CBL source to 390 load module file");
+            put_log("CBLCLG   CBL file        submit compile, link, and execute 390 load module file");
 	    	put_log("CD       directory path  change directory");
 	    	put_log("CMD      command         set cmd mode and submit batch cmd");
 	    	put_log("Copy                     copy selected text to clipboard (GUI right click)    ");
