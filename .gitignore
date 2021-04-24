@@ -2,6 +2,9 @@
 .idea/
 *.iml
 
+# doc python venv
+docenv/
+
 # Java compiler output stuff
 **/*.[jJ][aA][rR]
 **/*.[eEe][xX][eE]
