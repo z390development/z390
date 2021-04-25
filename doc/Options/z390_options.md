@@ -7,6 +7,12 @@ The scope value details where the option is used.
 * L - Linker
 * E - Execution
 
+!!! Note "Use of parameters with parentheses in *nix shells"
+    Unix shells like sh and bash interpret parentheses if not quoted. For this reason, if you need to specify a z390 parameter that contains
+    parenthisis, then that parameter should be quoted. For example, the SYSMAC parameter is quoted as it uses parenthesis, whereas the ALIGN parameter is not.
+
+        "SYSMAC(foldername)" ALIGN 
+
 Option | Scope | Default | Description  
 -------|-------|---------|--------------
 @filename	| MALE	| Options in Z390.OPT file if found. |	Retrieve additional options from free form text file with default suffix OPT.  Options can be specified delimited by spaces on as many lines as requires.  All characters on a line following * are ignored as comments. The @file option can be nested.  The default path is the program path.  If a file named Z390.OPT exists in the z390 install directory, these options will be applied first as default options.
