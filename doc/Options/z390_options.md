@@ -86,7 +86,7 @@ SYSERR(dir) | MALE | pgm dir | Define directory for output ERR files. This optio
 SYSLKD(file) | L | pgm dir | Define input source file for linker commands such as INCLUDE, ALIAS, ENTRY, and NAME.
 SYSLOG(dir) | E | pgm dir | Define directory for output LOG file. This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).
 SYSLST(dir) | AL | pgm dir | Define directory for output LST files.  This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).
-SYSMAC(dir) | M | mac dir | Define one or more directories for source MAC files.  If the option starts with + the directories listed will be concatenated with current list.  Multiple directories are always separated by +.  This option may also override suffix by adding *.sfx.
+SYSMAC(dir) | M | mac dir | Define one or more directories for source MAC files.  If the option starts with + the directories listed will be appended to the maclib list.  Multiple directories can be specified in one parameter and are always separated by +. When you specify this option more than once and want previous parameter instructions to remain in place, ensure that you start parameter with a `+` otherwise it will drop prior directories.  This option may also override suffix by adding *.sfx.
 SYSMLC(dir) | MA | pgm dir | Define directory for source input MLC files.
 SYSOBJ(dir) | AL | pgm dir | Define directory for OBJ relocatible object files
 SYSOPT(dir) | MALE | pgm dir | Define directory for @file option files.  This option may override suffix using *.sfx.
