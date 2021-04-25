@@ -65,7 +65,7 @@ MNOTE(0) | MA | 0 | Control MNOTE error/warning messages during macro expansion 
 MOD | L | NO | Generate raw code file from lz390 with .MOD suffix and no header or trailer and no RLD's. 
 OBJ | A | YES | Generate relocatible object code file
 OBJHEX | A | NO | Generate ASCII readable form of OBJ file with support for 31 bit long sections.  The default is to generate binary OBJ file which is compatible with mainframe linkers but is limited to 24 bit long sections.
-PARM('text') | E | none | Define character string parm to passed to executable program via address in R1 at startup pointing to half word length followed by EBCDIC characters. Default length is 0.
+PARM('text') | E | none | Define character string parm to passed to executable program via address in R1 at startup pointing to a fullword pointing to a halfword length followed by EBCDIC characters. When the length is zero, no PARM is present.
 PC | M | YES | Generate macro pseudo code in cache memory for speeding up macro code that is executed more than once during macro expansion.
 PCOPT | M | YES | Optimize macro pseudo code by looking for push, add/sub, store sequences and replacing them with inc/dec pseudo code opcodes.  These pseudo codes are maintained in a cache in memory during macro execution only and have no affect on generated object code.
 PRINTALL | A | NO | Suppress PRINT OFF and PRINT NOGEN commands to force all source lines on PRN listing.
