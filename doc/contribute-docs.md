@@ -34,8 +34,8 @@ You will need some version of Python, and the version should be 3.4 or above.
 
 ### Run the live web server
 
-When updating the You run a live web server which checks for changes in the markdown files and updates the content as you edit.
-You can view the site using a web browser pointed at the following address:
+When updating the markdown content, you can run a live web server which checks for changes in the markdown files and updates the web content as you edit.
+You can view the web site preview using a web browser pointed at the following address:
 
 <http://localhost:8000>
 
