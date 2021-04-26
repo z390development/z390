@@ -2,10 +2,10 @@
 
 The scope value details where the option is used.
 
-* M - Macro assembler
-* A - Assembler
-* L - Linker
-* E - Execution
+* M - mz390 macro processor which reads ASCII assembler source and generates expanded BAL
+* A - az390 assembler which reads BAL and generated OBJ relocatible object code
+* L - lz390 linker which reads OBJ relocatible object files and generates 390 load module
+* E - ez390 emulator runtime which loads and executes 390 load module
 
 File extension | Scope | Format | File Description | File or Report Format Description
 ---|---|---|---|---

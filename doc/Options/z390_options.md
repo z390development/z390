@@ -2,10 +2,10 @@
 
 The scope value details where the option is used.
 
-* M - Macro assembler
-* A - Assembler
-* L - Linker
-* E - Execution
+* M - mz390 macro processor which reads ASCII assembler source and generates expanded BAL
+* A - az390 assembler which reads BAL and generated OBJ relocatible object code
+* L - lz390 linker which reads OBJ relocatible object files and generates 390 load module
+* E - ez390 emulator runtime which loads and executes 390 load module
 
 !!! Note "Use of parameters with parentheses in *nix shells"
     Unix shells like sh and bash interpret parentheses if not quoted. For this reason, if you need to specify a z390 parameter that contains
@@ -102,7 +102,7 @@ SYSPRN(dir) | A | pgm dir | Define directory for assembler listing PRN output fi
 SYSTERM(file) | MALE | pgm.ERR | Define alternate file for all start/end messages plus any error messages, plus related source file statistics for each file containing errors.  The default is the program name with ERR suffix.
 SYSTRC(dir) | MALE | pgm dir | Define directory for output TRACE TR? files
 TEST | E | NO | Start execution with interactive TEST mode active which prompts for commands such as T opcode or G opcode to trace or execution to the next occurrence of opcode name.
-TESTDD(file) | E | NO | Define input command file to run TEST commands.  See regression test rt\test\TESTTST1.MLC for example.
+TEST(ddname) | E | NO | Define input command file to run TEST commands.  `ddname` is an environment variable set to the name of the command file. See regression test rt\test\TESTTST1.MLC for example.
 THREAD | A | NO | Assign continuing CSECT addresses for multiple CSECT's assembled in the same module to help identify location of instruction and data labels.
 TIME or TIME(seconds) | MALE | YES | Limit execution time of each program to the number of seconds specified.  The default is 15 seconds. This option is turned off if NOTIMING specified.  Use NOTIME to allow tasks such as SOA servers like z390CICS to run continuously while still supporting application use of timing functions.
 TIMING | MALE | YES | Calculate elapsed time and instructions per second statistics for display on START/END messages and STA statistics. tTIMING also displays current z390 and J2SE version on start message and memory usage on ended message.  Note NOTIMING is used in regression tests to force generated files to be identical by using fixed data/time stamp using GregorianCalendar(2005,0,2,22,33,44).  NOTIMING suppresses versions on start message and memory usage on ended message.  NOTIMING also sets NOTIME which prevents application from using time functions..
