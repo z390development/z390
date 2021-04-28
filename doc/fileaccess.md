@@ -28,7 +28,36 @@ Include the DECBD DSECT if you are using READ or WRITE.
 
 ### Read a file
 
+The following code demonstrates the read of a file `TEACHERS` with a
+layout as described as `IREC`. The environment variable `TEACHER` should
+be set to point to the input file.
+
+    123456789!123456789!123456789!123456789!123456789!123456789!123456789!12
+             OPEN  (TEACHERS,INPUT)    Opens the file
+             GET   TEACHERS            Reads record
+             CLOSE TEACHERS            Closes the file
+    ....
+    TEACHERS DCB   LRECL=27,RECFM=FT,MACRF=R,EODAD=ATEND,                  X
+                   DDNAME=TEACHER,RECORD=IREC
+    
+    IREC     DS    0CL27    Teacher record
+
 ### Write to a file
+
+The following code demonstrates the write to a file `REPORT` with a
+layout as described as `OREC`. The environment variable `REPORT` should
+be set to point to the output file.
+
+    123456789!123456789!123456789!123456789!123456789!123456789!123456789!12
+             OPEN  (REPORT,OUTPUT)     Opens the file
+             PUT   REPORT,OREC         Write OREC to record
+             CLOSE REPORT              Closes the file
+    ....
+    REPORT   DCB   LRECL=60,RECFM=FT,MACRF=W,                              X
+                   DDNAME=REPORT
+    
+    OREC     DS    0CL60                Report output structure
+
 
 ## Macro reference
 
