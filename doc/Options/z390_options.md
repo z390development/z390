@@ -3,13 +3,13 @@
 The scope value details where the option is used.
 
 * M - mz390 macro processor which reads ASCII assembler source and generates expanded BAL
-* A - az390 assembler which reads BAL and generated OBJ relocatible object code
-* L - lz390 linker which reads OBJ relocatible object files and generates 390 load module
+* A - az390 assembler which reads BAL and generated OBJ relocatable object code
+* L - lz390 linker which reads OBJ relocatable object files and generates 390 load module
 * E - ez390 emulator runtime which loads and executes 390 load module
 
 !!! Note "Use of parameters with parentheses in *nix shells"
     Unix shells like sh and bash interpret parentheses if not quoted. For this reason, if you need to specify a z390 parameter that contains
-    parenthisis, then that parameter should be quoted. For example, the SYSMAC parameter is quoted as it uses parenthesis, whereas the ALIGN parameter is not.
+    parentheses, then that parameter should be quoted. For example, the SYSMAC parameter is quoted as it uses parentheses, whereas the ALIGN parameter is not.
 
         "SYSMAC(foldername)" ALIGN 
 
@@ -69,7 +69,7 @@ MINHEIGHT(150) | E | 150 | Minimum pixel height for GUI dialog windows
 MINWIDTH(150) | E | 150 | Minimum pixel width for GUI dialog windows
 MNOTE(0) | MA | 0 | Control MNOTE error/warning messages during macro expansion and assembly: <br/> 0 - default generates MNOTE error/warning during mz390 and az390 <br/> 1 - suppress mz390 error/warning and only pass MNOTE to az390 <br/> 2 - generates MNOTE error/warning during mz390 and suppresses passing them on to az390
 MOD | L | NO | Generate raw code file from lz390 with .MOD suffix and no header or trailer and no RLD's. 
-OBJ | A | YES | Generate relocatible object code file
+OBJ | A | YES | Generate relocatable object code file
 OBJHEX | A | NO | Generate ASCII readable form of OBJ file with support for 31 bit long sections.  The default is to generate binary OBJ file which is compatible with mainframe linkers but is limited to 24 bit long sections.
 PARM('text') | E | none | Define character string parm to passed to executable program via address in R1 at startup pointing to a fullword pointing to a halfword length followed by EBCDIC characters. When the length is zero, no PARM is present.
 PC | M | YES | Generate macro pseudo code in cache memory for speeding up macro code that is executed more than once during macro expansion.
