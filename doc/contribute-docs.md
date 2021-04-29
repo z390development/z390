@@ -22,15 +22,19 @@ You will need some version of Python, and the version should be 3.4 or above.
 
 #### MacOS/Unix
 
-    python -m venv docenv
-    source docenv/bin/activate
-    pip install -r doc/requirements.txt
+``` sh
+python -m venv docenv
+source docenv/bin/activate
+pip install -r doc/requirements.txt
+```
 
 #### Windows
 
-    python -m venv docenv
-    docenv\Scripts\activate
-    pip install -r doc\requirements.txt
+``` dos
+python -m venv docenv
+docenv\Scripts\activate
+pip install -r doc\requirements.txt
+```
 
 ### Run the live web server
 
@@ -41,9 +45,14 @@ You can view the web site preview using a web browser pointed at the following a
 
 #### MacOS/Unix
     
-    source docenv/bin/activate
-    mkdocs serve
+``` sh
+source docenv/bin/activate
+mkdocs serve
+```
 
 #### Windows
-    docenv\Scripts\activate
-    mkdocs serve
+
+``` dos
+docenv\Scripts\activate
+mkdocs serve
+```

@@ -7,7 +7,7 @@ ZSORT is implemented with the intent of being compatible with IBM&reg; DFSORT.
 
 SORT.MLC utility assembler program included in the sort and linklib folders performs a sort with the following input files:
 
-* SORTIN – unsored input file with DCB options 
+* SORTIN – unsorted input file with DCB options 
 * SORTOUT – sorted output file with DCB options
 * SYSIN – sort field definitions
 * SORTWK01/SORTWK02 - sort work files
@@ -28,14 +28,16 @@ The operations available:
 
 Here is an example usage of ZSORT macro interface:
 
-     ZSORT    ISORT,LRECL=80.MEMORY=10000000,FIELDS=(1,80,CH,A)
-     .......
-     ZSORT    PUT,REC=(R2)
-     .......
-     ZSORT    GET,REC=(R2)
-     CHI      R15,4
-     BE       END_OF_FILE
-     
+``` hlasm
+ZSORT    ISORT,LRECL=80,MEMORY=10000000,FIELDS=(1,80,CH,A)
+.......
+ZSORT    PUT,REC=(R2)
+.......
+ZSORT    GET,REC=(R2)
+         CHI   R15,4
+         BE    END_OF_FILE
+```
+
 ### ISORT parameters
 
 !!! Note
@@ -44,7 +46,9 @@ Here is an example usage of ZSORT macro interface:
 #### FIELDS
 Any number of key fields defined as 
 
-    (offset,length,type,order,{.repeat.})
+``` hlasm
+FIELDS=(offset,length,type,order,{.repeat.})
+```
 
 **Offset** to start of key starts at 1 and cannot be greater than LRECL.  
 For variable length records the offset does not include the 4 byte prefix.
@@ -63,8 +67,8 @@ For variable length records the offset does not include the 4 byte prefix.
 
 **Order**
 
-* A - Accending
-* D - Decending
+* A - Ascending
+* D - Descending
 
 #### LRECL
 
