@@ -48,10 +48,10 @@ LOG(file) | MALE | pgm | Set file name for ERR, TR?, and LOG files.  The defaul
 MAXCALL(50) | M | 50 | Set limit for nested macro calls.
 MAXDISPLAY(80) | M | 80 | Use to increase zcobol DISPLAY line size up to 256 characters.
 MAXESD(1000) | AL | 1000 | Set limit for ESD sections or entries in one program.
-MAXFILE(1000) | M | 1000 | Maximum macro and copybook files
-MAXGBL(1000000) | M | 100000 | Maximum global macro variables
-MAXHEIGHT(600) | E | 600 | Maximum pixel height for GUI dialog windows
-MAXLCL(100000) | M | 100000 | Maximum local macro variables
+MAXFILE(1000) | M | 1000 | Maximum macro and copybook files.
+MAXGBL(1000000) | M | 100000 | Maximum global macro variables.
+MAXHEIGHT(600) | E | 600 | Maximum pixel height for GUI dialog windows.
+MAXLCL(100000) | M | 100000 | Maximum local macro variables.
 MAXLINE(200000) | MA | 200000 | Maximum MLC, MAC, CPY, and BAL source lines that can be loaded into memory during an assembly.
 MAXLOG(1000000) | MALE | 1000000 | Maximum GUI log file output before truncation begins by removing 50% to limit memory consumption. The only limit on size of log file is MAXSIZE.
 MAXPARM(100000) | M | 10000 | Maximum length of any string during macro processing.  This is an extension as HLASM limit is currently 1024.
@@ -59,32 +59,32 @@ MAXPASS(2) | A | 2 | Maximum passes of the BAL source by assembler to resolve fo
 MAXPC(50000) | M | 50000 | Maximum pseudo code instructions held in cache before LRU replacement begins.
 MAXQUE(1000) | E | 1000 | Maximum output queue length from any CMD started task before queue messages are automatically copied to GUI output log to conserve memory and prevent stall.
 MAXRLD(10000) | L | 10000 | Maximum RLD relocation records allowed in a program.
-MAXSIZE(50)| MALE | 50 | Maximum size of any output file in MB
-MAXSYM(50000) | MA | 50000 | Maximum symbols in one macro assembly
+MAXSIZE(50)| MALE | 50 | Maximum size of any output file in MB.
+MAXSYM(50000) | MA | 50000 | Maximum symbols in one macro assembly.
 MAXWARN(4) | MA | 4 | Maximum MNOTE warning level without generating error.
-MAXWIDTH(800) | E | 800 | Maximum pixel width for GUI dialog windows
+MAXWIDTH(800) | E | 800 | Maximum pixel width for GUI dialog windows.
 MCALL | A | NO | List each macro call and exit on the PRN assembly listing in addition to first level calls if LISTCALL option is also on.
 MEM(1) | E | 1 | Memory allocated for 390 program execution in MB.  Note for RMODE31 loads and GETMAIN's memory above the 16 MB line must be allocated.  For example MEM(32) would provide 16 MB below the line and 16 MB above.
-MINHEIGHT(150) | E | 150 | Minimum pixel height for GUI dialog windows
-MINWIDTH(150) | E | 150 | Minimum pixel width for GUI dialog windows
-MNOTE(0) | MA | 0 | Control MNOTE error/warning messages during macro expansion and assembly: <br/> 0 - default generates MNOTE error/warning during mz390 and az390 <br/> 1 - suppress mz390 error/warning and only pass MNOTE to az390 <br/> 2 - generates MNOTE error/warning during mz390 and suppresses passing them on to az390
+MINHEIGHT(150) | E | 150 | Minimum pixel height for GUI dialog windows.
+MINWIDTH(150) | E | 150 | Minimum pixel width for GUI dialog windows.
+MNOTE(0) | MA | 0 | Control MNOTE error/warning messages during macro expansion and assembly: <br/> 0 - default generates MNOTE error/warning during mz390 and az390 <br/> 1 - suppress mz390 error/warning and only pass MNOTE to az390 <br/> 2 - generates MNOTE error/warning during mz390 and suppresses passing them on to az390.
 MOD | L | NO | Generate raw code file from lz390 with .MOD suffix and no header or trailer and no RLD's. 
-OBJ | A | YES | Generate relocatable object code file
+OBJ | A | YES | Generate relocatable object code file.
 OBJHEX | A | NO | Generate ASCII readable form of OBJ file with support for 31 bit long sections.  The default is to generate binary OBJ file which is compatible with mainframe linkers but is limited to 24 bit long sections.
-PARM('text') | E | none | Define character string parm to passed to executable program via address in R1 at startup pointing to a fullword pointing to a halfword length followed by EBCDIC characters. When the length is zero, no PARM is present.
+PARM('text') | E | none | Define character string parm passed to executable program via address in R1 at startup pointing to a fullword pointing to a halfword length followed by EBCDIC characters. When the length is zero, no PARM is present.
 PC | M | YES | Generate macro pseudo code in cache memory for speeding up macro code that is executed more than once during macro expansion.
-PCOPT | M | YES | Optimize macro pseudo code by looking for push, add/sub, store sequences and replacing them with inc/dec pseudo code opcodes.  These pseudo codes are maintained in a cache in memory during macro execution only and have no affect on generated object code.
+PCOPT | M | YES | Optimize macro pseudo code by looking for push, add/sub, store sequences and replacing them with inc/dec pseudo code opcodes.  These pseudo codes are maintained in a cache in memory during macro execution only and have no effect on generated object code.
 PRINTALL | A | NO | Suppress PRINT OFF and PRINT NOGEN commands to force all source lines on PRN listing.
-PDSMEM8 | M | NO | If PDSMEM8 option is specified, error messages will be issued for any macro or copybook file names with length greater than 8.  This options is available to provide compatibility with mainframe PDS libraries that are limited to 8 character names. Note zCOBOL and zCICS use names longer than 8 characters such as zcobol\IDENTIFICATION.MAC and cics\CICS_INQUIRE.MAC.
-PROFILE(file) | M | NO | Insert COPY file in front of MLC source file
+PDSMEM8 | M | NO | If PDSMEM8 option is specified, error messages will be issued for any macro or copybook file names with length greater than 8.  This option is available to provide compatibility with mainframe PDS libraries that are limited to 8 character names. Note zCOBOL and zCICS use names longer than 8 characters such as zcobol\IDENTIFICATION.MAC and cics\CICS_INQUIRE.MAC.
+PROFILE(file) | M | NO | Insert COPY file in front of MLC source file.
 PROLOG | M | YES | Generate CICS prolog macro calls DFHEIGBL, DFHEISTG, and  DFHEIENT if CICS option and PROLOG options are on.
-PROTECT | E | YES | Prevent modification of PSA in low memory 8k block
+PROTECT | E | YES | Prevent modification of PSA in low memory 8k block.
 REFORMAT | M | NO | Reformat expanded BAL code to align all opcodes at column 10 and operands at column 16 if possible.
 REGS | E | NO | Generate GPR register trace before and after each instruction if TRACE option on.
 RMODE24 | LE | YES | Set 390 load module options to load module below the 24 bit address line.
-RMODE31 | LE | NO | Set 390 load module options to load module above the 31 bit address line.  Note this options requires option MEM be set to include enough memory above the 31 bit address line.
+RMODE31 | LE | NO | Set 390 load module options to load module above the 31 bit address line.  Note this load module option requires option MEM be set to include enough memory above the 31 bit address line.
 STATS or STATS(file) | MALE | NO | Generate statistics file STA with final options listing, macro and copybook file listing, plus all program statistics.  If file is omitted the program path and file name are used with STA suffix.
-SYS390(dir) | LE | pgm dir | Define directory for storing and retrieving 390 load modules
+SYS390(dir) | LE | pgm dir | Define directory for storing and retrieving 390 load modules.
 SYSBAL(dir) | MA | pgm dir | Define directory for storing and retrieving generated BAL files.  This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).
 SYSCPY(dir) | MA | pgm dir | Define one or more directories for retrieving CPY source input files.  If the option starts with + the directories listed will be concatenated with current list.  Multiple directories are always separated by +.  This option may also override suffix by adding *.sfx.
 SYSDAT(dir) | M | pgm dir | Define directory for retrieving DAT source input files for AREAD.  Set to SYSDAT(.) for current directory when no path is specified on DSNAME parm for AREAD.
@@ -94,36 +94,36 @@ SYSLOG(dir) | E | pgm dir | Define directory for output LOG file. This option ma
 SYSLST(dir) | AL | pgm dir | Define directory for output LST files.  This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).
 SYSMAC(dir) | M | mac dir | Define one or more directories for source MAC files.  If the option starts with + the directories listed will be appended to the maclib list.  Multiple directories can be specified in one parameter and are always separated by +. When you specify this option more than once and want previous parameter instructions to remain in place, ensure that you start parameter with a `+` otherwise it will drop prior directories.  This option may also override suffix by adding *.sfx.
 SYSMLC(dir) | MA | pgm dir | Define directory for source input MLC files.
-SYSOBJ(dir) | AL | pgm dir | Define directory for OBJ relocatible object files
+SYSOBJ(dir) | AL | pgm dir | Define directory for OBJ relocatable object files.
 SYSOPT(dir) | MALE | pgm dir | Define directory for @file option files.  This option may override suffix using *.sfx.
 SYSPARM('text') | M | none | Define text string which can be accessed by mz390 global macro variable &SYSPARM.
 SYSPCH(dir) | M | pgm dir | Define directory for PCH output files from PUNCH.  This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).  Note PUNCH output is in ASCII source format and is not directed to the OBJ file.  These files may be used as linker input commands via SYSLKD(file) option.  Set to SYSPCH(.) for current directory when no path is specified on DSNAME parm for PUNCH.
-SYSPRN(dir) | A | pgm dir | Define directory for assembler listing PRN output files.  This option may also override file name and suffix.  This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).
+SYSPRN(dir) | A | pgm dir | Define directory for assembler listing PRN output files. This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).
 SYSTERM(file) | MALE | pgm.ERR | Define alternate file for all start/end messages plus any error messages, plus related source file statistics for each file containing errors.  The default is the program name with ERR suffix.
-SYSTRC(dir) | MALE | pgm dir | Define directory for output TRACE TR? files
+SYSTRC(dir) | MALE | pgm dir | Define directory for output TRACE TR? files.
 TEST | E | NO | Start execution with interactive TEST mode active which prompts for commands such as T opcode or G opcode to trace or execution to the next occurrence of opcode name.
-TEST(ddname) | E | NO | Define input command file to run TEST commands.  `ddname` is an environment variable set to the name of the command file. See regression test rt\test\TESTTST1.MLC for example.
+TEST(ddname) | E | NO | Define input command file to run TEST commands. ddname is an environment variable set to the name of the command file. See regression test rt\test\TESTTST1.MLC for example.
 THREAD | A | NO | Assign continuing CSECT addresses for multiple CSECT's assembled in the same module to help identify location of instruction and data labels.
 TIME or TIME(seconds) | MALE | YES | Limit execution time of each program to the number of seconds specified.  The default is 15 seconds. This option is turned off if NOTIMING specified.  Use NOTIME to allow tasks such as SOA servers like z390CICS to run continuously while still supporting application use of timing functions.
-TIMING | MALE | YES | Calculate elapsed time and instructions per second statistics for display on START/END messages and STA statistics. tTIMING also displays current z390 and J2SE version on start message and memory usage on ended message.  Note NOTIMING is used in regression tests to force generated files to be identical by using fixed data/time stamp using GregorianCalendar(2005,0,2,22,33,44).  NOTIMING suppresses versions on start message and memory usage on ended message.  NOTIMING also sets NOTIME which prevents application from using time functions..
-TRACE or TRACE(AEGILMPQTV) | E | NO | Turn on ez390 execution trace generation on TRE file and turn off CON.   TRACE will display every instruction executed along with address and value of each operand.  Any combination of the following trace options can be set using the TRACE(...) option.  TRACE(*) will also set TRACEALL.  Note the &SYSTRACE global SETC variable can be used to turn any trace options on or off during execution.
+TIMING | MALE | YES | Calculate elapsed time and instructions per second statistics for display on START/END messages and STA statistics. TIMING also displays current z390 and J2SE version on start message and memory usage on ended message.  Note NOTIMING is used in regression tests to force generated files to be identical by using fixed data/time stamp using GregorianCalendar(2005,0,2,22,33,44).  NOTIMING suppresses versions on start message and memory usage on ended message.  NOTIMING also sets NOTIME which prevents application from using time functions.
+TRACE or TRACE(AEGILMPQTV) | E | NO | Turn on ez390 execution trace generation on TRE file and turn off CON. TRACE will display every instruction executed along with address and value of each operand.  Any combination of the following trace options can be set using the TRACE(...) option. TRACE(*) will also set TRACEALL. Note the &SYSTRACE global SETC variable can be used to turn any trace options on or off during execution.
 TRACEA or TRACE(A) | A | NO | Turn on az390 assembly trace generation on TRA file and turn off CON.  TRACEA will display each BAL statement during each pass of the assembler.
 TRACEALL | MALE | NO | Turn on all trace options generating TRM, TRA, TRL, and TRE files and turn off CON.
-TRACEC or TRACE(C) | M | NO | Trace copy file code for TRACEM and TRACEP.  The default is NOTRACEC to eliminated redundant code that usually just contains global variable declarations.
+TRACEC or TRACE(C) | M | NO | Trace copy file code for TRACEM and TRACEP.  The default is NOTRACEC to eliminate redundant code that usually just contains global variable declarations.
 TRACEG or TRACE(G) | E | NO | Turn on ez390 emulator trace generation on TRE file with trace of GETMAIN/FREEMAIN FQE memory management control block changes and turn off CON.
 TRACEI or TRACE(I) | M | NO | TRACEI will trace each AINSERT showing source on the TRM trace file.
 TRACEL or TRACE(L) | L | NO | Turn on lz390 linker trace generation on TRL file and turn off CON.  TRACEL shows each CSECT, ENTRY, EXTRN and OBJ file being loaded.
 TRACEM or TRACE(M) | M | NO | Turn on mz390 macro processor trace generation on TRM file and turn off CON.  TRACEM displays each conditional macro statement executed plus stored values and AIF compare values.
 TRACEP or TRACE(P) | M | NO | Turn on mz390 macro processor pseudo code generation and execution trace on TRM file and turn off CON.  TRACEP shows each conditional macro pseudo operation performed for each conditional macro statement and the values of all variables.
 TRACEQ or TRACE(Q) | E | NO | Turn on ez390 emulator QSAM/BSAM DCB I/O trace generation on TRE file and turn off CON.
-TRACES or TRACE(S) | M | NO | Displace MLC source lines on console regardless of CON setting to help locate any loops, waits, or hangs in large macro process.  If MCALL is also on, then *MCALL and *MEXIT comments will also be displayed to show location with nested macros.
+TRACES or TRACE(S) | M | NO | Display MLC source lines on console regardless of CON setting to help locate any loops, waits, or hangs in large macro process.  If MCALL is also on, then \*MCALL and \*MEXIT comments will also be displayed to show location with nested macros.
 TRACET or TRACE(T) | E | NO | Turn on ez390 emulator TGET/TPUT and TCP/IO trace generation on TRE file and turn off CON.
 TRACEV or TRACE(V) | E | NO | Turn on ez390 emulator VSAM ACB/RPL I/O trace generation on TRE file and turn off CON.
 TRAP | E | YES | Trap any unexpected J2SE program exceptions and generate emulator 0C5 exception which can be handled by SPIE/STAE exits if defined.  NOTRAP can be used with Eclipse source debugger to stop at J2SE statement causing exception.
 TS | MALE | NO | Generate JDBC compatible time-stamp on all TRACE and ERR file records for use in debugging time dependent issue.
 VCB | E | YES | Generate VSAM cache buffer for improving VSAM performance by storing most recently accessed records and indexes.
 XREF | A | YES | Cross reference symbols to source lines in PRN assembly listing.
-ZSTRMAC | M | YES | Support expansion of ZSTRMAC structured conditional macro code instructions during loading of MLC, MAC, and CPY files.   Note z390 macros in z390\mac directory now are using zstrmac for structured coding.  NOZSTRMAC can only be used with MVS, VSE, or other non-structured macro libraries.
-ZVSAM | E | 0 | ZVSAM 0=no vsam, 1=zvsam1 support, 2=zvsam2 support
+ZSTRMAC | M | YES | Support expansion of ZSTRMAC structured conditional macro code instructions during loading of MLC, MAC, and CPY files.   Note z390 macros in z390\mac directory now are using zstrmac for structured coding. NOZSTRMAC can only be used with MVS, VSE, or other non-structured macro libraries.
+ZVSAM | E | 0 | ZVSAM 0=no vsam, 1=zvsam1 support, 2=zvsam2 support.
 
 
