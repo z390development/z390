@@ -1,0 +1,20 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Melvyn Maltz                                              *
+.* Date   - 12/21/20                                                  *
+.**********************************************************************
+.* 12/22/20 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.**********************************************************************
+         RPLD
+.*
+         AIF   (&SYSZVSAM EQ 0)
+         MNOTE 15,'RPLD VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM'
+         MEXIT
+         AEND
+.*
+         RPLD&SYSZVSAM
+.*
+         MEND

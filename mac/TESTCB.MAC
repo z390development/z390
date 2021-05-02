@@ -1,0 +1,212 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Melvyn Maltz                                              *
+.* Date   - 12/20/20                                                  *
+.**********************************************************************
+.* 12/21/20 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.**********************************************************************
+&N       TESTCB &RPL=,            RPL ADDRESS                          X
+               &ACB=,             ACB ADDRESS/RPLDACB                  X
+               &EXLST=,           EXLST ADDRESS/ACBEXLST               X
+               &ERET=,            ERROR ROUTINE ADDRESS                X
+               &AIXFLAG=,         RPLAIXID                             X
+               &AIXPC=,           RPL AIX POINTER COUNT                X
+               &AREA=,            RPLAREA                              X
+               &AREALEN=,         RPLAREAL                             X
+               &ARG=,             RPLARG                               X
+               &ECB=,             RPLECB                               X
+               &FDBK=,            RPLFEEDB                             X
+               &FTNCD=,           RPLCMPON                             X
+               &IO=,              RPL IO COMPLETE                      X
+               &KEYLEN=,          RPL RPLKEYLN/ACB PFXKEYLN            X
+               &MSGAREA=,         RPLMSGAR                             X
+               &MSGLEN=,          RPLMSGLN                             X
+               &NXTRPL=,          RPLNXTRP                             X
+               &OPTCD=,           RPLOPTCD                             X
+               &RBA=,             RPLCXRBA+4                           X
+               &RECLEN=,          RPLRECLN                             X
+               &RPLLEN=,          RPL LENGTH                           X
+               &TRANSID=,         RPL NOT SUPPORTED                    X
+               &XRBA=,            RPLCXRBA                             X
+               &ACBLEN=,          ACB LENGTH                           X
+               &ATRB=,            ACB ATTRIBUTES PFXFFLGS/PFXRFLGS     X
+               &AVSPAC=,          ACB CTRAVSPAC+4                      X
+               &BFRFND=,          ACB CTRNBFRFND+4                     X
+               &BSTRNO=,          ACBBSTNO                             X
+               &BUFND=,           ACBBUFND                             X
+               &BUFNI=,           ACBBUFNI                             X
+               &BUFNO=,           ACB CTRNBUFNO+4                      X
+               &BUFRDS=,          ACB CTRNBUFRDS+4                     X
+               &BUFSP=,           ACBBUFSP                             X
+               &BUFUSE=,          ACB CTRNBUFUSE+4                     X
+               &CINV=,            ACB PFXBLKSZ                         X
+               &DDNAME=,          ACBDDNM                              X
+               &ENDRBA=,          ACB CTRENDRBA+4                      X
+               &ERROR=,           ACBERFLG                             X
+               &FS=,              ACB (ALWAYS 0)                       X
+               &HALCRBA=,         ACB CTRHALCRBA+4                     X
+               &HLRBA=,           ACB CTRHLRBA+4                       X
+               &LRECL=,           ACB PFXRCLEN                         X
+               &MACRF=,           ACBMACR1-4                           X
+               &MAREA=,           ACB NOT SUPPORTED                    X
+               &MLEN=,            ACB NOT SUPPORTED                    X
+               &NCIS=,            ACB CTRNCIS+4                        X
+               &NDELR=,           ACB CTRNDELR+4                       X
+               &NEXCP=,           ACB CTRNEXCP+4                       X
+               &NEXT=,            ACB CTRNEXT+4 (ALWAYS 1)             X
+               &NINSR=,           ACB CTRNINSR+4                       X
+               &NIXL=,            ACB PFXBLVLn                         X
+               &NLOGR=,           ACB CTRNLOGR+4                       X
+               &NRETR=,           ACB CTRNRETR+4                       X
+               &NSSS=,            ACB (ALWAYS 0)                       X
+               &NUIW=,            ACB CTRNNUIW+4                       X
+               &NUPDR=,           ACB CTRNUPDR+4                       X
+               &OBJECT=DATA,      ACB DATA/INDEX                       X
+               &OFLAGS=,          ACBOFLGS                             X
+               &OPENOBJ=,         ACBDTYPE                             X
+               &PASSWD=,          ACBPASSW                             X
+               &RKP=,             ACB PFXKYOFF                         X
+               &SHRPOOL=,         ACBSHRP                              X
+               &SDTASZ=,          ACB CTRSDTASZ                        X
+               &STMST=,           ACB CTRSTMST                         X
+               &STRMAX=,          ACB CTRSTRMAX+4                      X
+               &STRNO=,           ACBSTRNO                             X
+               &UIW=,             ACB CTRNUIW                          X
+               &XAVSPAC=,         ACB CTRAVSPAC                        X
+               &XBFRFND=,         ACB CTRNBFRFND                       X
+               &XBUFNO=,          ACB CTRNBUFNO                        X
+               &XBUFRDS=,         ACB CTRNBUFRDS                       X
+               &XBUFUSE=,         ACB CTRNBUFUSE                       X
+               &XENDRBA=,         ACB CTRENDRBA                        X
+               &XHALCRBA=,        ACB CTRHALCRBA                       X
+               &XHLRBA=,          ACB CTRHLRBA                         X
+               &XNCIS=,           ACB CTRNCIS                          X
+               &XNDELR=,          ACB CTRNDELR                         X
+               &XNEXCP=,          ACB CTRNEXCP                         X
+               &XNEXT=,           ACB CTRNEXT (ALWAYS 1)               X
+               &XNINSR=,          ACB CTRNINSR                         X
+               &XNLOGR=,          ACB CTRNLOGR                         X
+               &XNRETR=,          ACB CTRNRETR                         X
+               &XNUIW=,           ACB CTRNNUIW                         X
+               &XNUPDR=,          ACB CTRNUPDR                         X
+               &XSTRMAX=,         ACB CTRSTRMAX                        X
+               &XUIW=,            ACB CTRNUIW                          X
+               &EODAD=,           EXLST EODAD                          X
+               &JRNAD=,           EXLST JRNAD                          X
+               &LERAD=,           EXLST LERAD                          X
+               &SYNAD=,           EXLST SYNAD                          X
+               &EXLLEN=,          EXLST LENGTH                         X
+               &MF=I
+.*
+         AIF   (&SYSZVSAM EQ 0)
+         MNOTE 15,'TESTCB VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM-
+               '
+         MEXIT
+         AEND
+.*
+         AIF   (&SYSZVSAM EQ 1)
+&N       TESTCB1 RPL=&RPL,        RPL ADDRESS                          X
+               ACB=&ACB,          ACB ADDRESS/RPLDACB                  X
+               FDBK=&FDBK,        RPLFEEDB                             X
+               RECLEN=&RECLEN     RPLRECLN
+         AEND
+.*
+         AIF   (&SYSZVSAM EQ 2)
+&N       TESTCB2 RPL=&RPL,        RPL ADDRESS                          X
+               ACB=&ACB,          ACB ADDRESS/RPLDACB                  X
+               EXLST=&EXLST,      EXLST ADDRESS/ACBEXLST               X
+               ERET=&ERET,        ERROR ROUTINE ADDRESS                X
+               AIXFLAG=&AIXFLAG,  RPLAIXID                             X
+               AIXPC=&AIXPC,      RPL AIX POINTER COUNT                X
+               AREA=&AREA,        RPLAREA                              X
+               AREALEN=&AREALEN,  RPLAREAL                             X
+               ARG=&ARG,          RPLARG                               X
+               ECB=&ECB,          RPLECB                               X
+               FDBK=&FDBK,        RPLFEEDB                             X
+               FTNCD=&FTNCD,      RPLCMPON                             X
+               IO=&IO,            RPL IO COMPLETE                      X
+               KEYLEN=&KEYLEN,    RPL RPLKEYLN/ACB PFXKEYLN            X
+               MSGAREA=&MSGAREA,  RPLMSGAR                             X
+               MSGLEN=&MSGLEN,    RPLMSGLN                             X
+               NXTRPL=&NXTRPL,    RPLNXTRP                             X
+               OPTCD=&OPTCD,      RPLOPT1-2                            X
+               RBA=&RBA,          RPLCXRBA+4                           X
+               RECLEN=&RECLEN,    RPLRECLN                             X
+               RPLLEN=&RPLLEN,    RPL LENGTH                           X
+               TRANSID=&TRANSID,  RPL NOT SUPPORTED                    X
+               XRBA=&XRBA,        RPLCXRBA                             X
+               ACBLEN=&ACBLEN,    ACB LENGTH                           X
+               ATRB=&ATRB,        ACB ATTRIBUTES PFXFFLGS/PFXRFLGS     X
+               AVSPAC=&AVSPAC,    ACB CTRAVSPAC+4                      X
+               BFRFND=&BFRFND,    ACB CTRNBFRFND+4                     X
+               BSTRNO=&BSTRNO,    ACBBSTNO                             X
+               BUFND=&BUFND,      ACBBUFND                             X
+               BUFNI=&BUFNI,      ACBBUFNI                             X
+               BUFNO=&BUFNO,      ACB CTRNBUFNO+4                      X
+               BUFRDS=&BUFRDS,    ACB CTRNBUFRDS+4                     X
+               BUFSP=&BUFSP,      ACBBUFSP                             X
+               BUFUSE=&BUFUSE,    ACB CTRNBUFUSE+4                     X
+               CINV=&CINV,        ACB PFXBLKSZ                         X
+               DDNAME=&DDNAME,    ACBDDNM                              X
+               ENDRBA=&ENDRBA,    ACB CTRENDRBA+4                      X
+               ERROR=&ERROR,      ACBERFLG                             X
+               FS=&FS,            ACB (ALWAYS 0)                       X
+               HALCRBA=&HALCRBA,  ACB CTRHALCRBA+4                     X
+               HLRBA=&HLRBA,      ACB CTRHLRBA+4                       X
+               LRECL=&LRECL,      ACB PFXRCLEN                         X
+               MACRF=&MACRF,      ACBMACR1-4                           X
+               MAREA=&MAREA,      ACB NOT SUPPORTED                    X
+               MLEN=&MLEN,        ACB NOT SUPPORTED                    X
+               NCIS=&NCIS,        ACB CTRNCIS+4                        X
+               NDELR=&NDELR,      ACB CTRNDELR+4                       X
+               NEXCP=&NEXCP,      ACB CTRNEXCP+4                       X
+               NEXT=&NEXT,        ACB CTRNEXT+4 (ALWAYS 1)             X
+               NINSR=&NINSR,      ACB CTRNINSR+4                       X
+               NIXL=&NIXL,        ACB PFXBLVLn                         X
+               NLOGR=&NLOGR,      ACB CTRNLOGR+4                       X
+               NRETR=&NRETR,      ACB CTRNRETR+4                       X
+               NSSS=&NSSS,        ACB (ALWAYS 0)                       X
+               NUIW=&NUIW,        ACB CTRNNUIW+4                       X
+               NUPDR=&NUPDR,      ACB CTRNUPDR+4                       X
+               OBJECT=&OBJECT,    ACB DATA/INDEX                       X
+               OFLAGS=&OFLAGS,    ACBOFLGS                             X
+               OPENOBJ=&OPENOBJ,  ACBDTYPE                             X
+               PASSWD=&PASSWD,    ACBPASSW                             X
+               RKP=&RKP,          ACB PFXKYOFF                         X
+               SHRPOOL=&SHRPOOL,  ACBSHRP                              X
+               SDTASZ=&SDTASZ,    ACB CTRSDTASZ                        X
+               STMST=&STMST,      ACB CTRSTMST                         X
+               STRMAX=&STRMAX,    ACB CTRSTRMAX+4                      X
+               STRNO=&STRNO,      ACBSTRNO                             X
+               UIW=&UIW,          ACB CTRNUIW                          X
+               XAVSPAC=&XAVSPAC,  ACB CTRAVSPAC                        X
+               XBFRFND=&XBFRFND,  ACB CTRNBFRFND                       X
+               XBUFNO=&XBUFNO,    ACB CTRNBUFNO                        X
+               XBUFRDS=&XBUFRDS,  ACB CTRNBUFRDS                       X
+               XBUFUSE=&XBUFUSE,  ACB CTRNBUFUSE                       X
+               XENDRBA=&XENDRBA,  ACB CTRENDRBA                        X
+               XHALCRBA=&XHALCRBA, ACB CTRHALCRBA                      X
+               XHLRBA=&XHLRBA,    ACB CTRHLRBA                         X
+               XNCIS=&XNCIS,      ACB CTRNCIS                          X
+               XNDELR=&XNDELR,    ACB CTRNDELR                         X
+               XNEXCP=&XNEXCP,    ACB CTRNEXCP                         X
+               XNEXT=&XNEXT,      ACB CTRNEXT (ALWAYS 1)               X
+               XNINSR=&XNINSR,    ACB CTRNINSR                         X
+               XNLOGR=&XNLOGR,    ACB CTRNLOGR                         X
+               XNRETR=&XNRETR,    ACB CTRNRETR                         X
+               XNUIW=&XNUIW,      ACB CTRNNUIW                         X
+               XNUPDR=&XNUPDR,    ACB CTRNUPDR                         X
+               XSTRMAX=&XSTRMAX,  ACB CTRSTRMAX                        X
+               XUIW=&XUIW,        ACB CTRNUIW                          X
+               EODAD=&EODAD,      EXLST EODAD                          X
+               JRNAD=&JRNAD,      EXLST JRNAD                          X
+               LERAD=&LERAD,      EXLST LERAD                          X
+               SYNAD=&SYNAD,      EXLST SYNAD                          X
+               EXLLEN=&EXLLEN,    EXLST LENGTH                         X
+               MF=&MF
+         AEND
+.*
+         MEND

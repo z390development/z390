@@ -1,0 +1,34 @@
+    Fix for the use of the IBM Asselbler H with this set of Structured Programming Macros
+
+This technique is to allow correct code to be produced by this macro set in the event that the program(s) will be processed by the IBM Assembler H. It is not recommended to use this fix if the processing will be provided by the IBM High Level Assembler (HLASM) or the z390 Portable Assembler.
+
+Instead of using the following, or similar, statement to provide the source input for the assembler:
+
+//SYSIN  DD    DISP=SHR,DSN=<HIGHLVL.USERID.SRCLIB(PGMNAME)>
+
+you should use the following update. Assembler H does not support the JUMP instruction; the BRANCH instruction will now be substituted for all instances of the JUMP instruction:
+
+//SYSIN  DD    *                                             
+J        OPSYN B                                             
+JE       OPSYN BE                                            
+JH       OPSYN BH                                            
+JL       OPSYN BL                                            
+JM       OPSYN BM                                            
+JO       OPSYN BO                                            
+JP       OPSYN BP                                            
+JZ       OPSYN BZ                                            
+JNE      OPSYN BNE                                           
+JNH      OPSYN BNH                                           
+JNL      OPSYN BNL                                           
+JNM      OPSYN BNM                                           
+JNO      OPSYN BNO                                           
+JNP      OPSYN BNP                                           
+JNZ      OPSYN BNZ                                           
+/*                                                           
+//       DD    DD    DISP=SHR,DSN=<HIGHLVL.USERID.SRCLIB(IFTEST)>
+
+Please replace the values between the "<" and ">" with the actual dataset and member names.
+
+For a permanent and automatic implementation, please contact the author:
+
+  Daniel.H.Snyder@protonmail.com  

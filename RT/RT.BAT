@@ -16,7 +16,7 @@ call rt\RTDEMO1   systerm(demo\rtdemo) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTMFACC1  systerm(mfacc\rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTMVS1    systerm(mvs\test\rtmvs) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTSORT1   systerm(sort\rtsort) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RTVSAM1   systerm(w:\work\z390\vsam\test\rtvsam) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTVSAM1   systerm(vsam\test\rtvsam) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTVSE1    systerm(vse\test\rtvse) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTTEST1   systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy rt\linklib\dif\*.*         rt\all

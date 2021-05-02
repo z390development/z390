@@ -1,0 +1,736 @@
+         ZCOBOL PGM='cics\TESTBEC5',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :47:33,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTBEC5_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * TEST HANDLE AID/PUSH/POP
+*      * TEST GETMAIN/FREEMAIN
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTBEC5.
+         PROGRAM_ID TESTBEC5
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*         77  GET1     PIC 9(9) COMP USAGE IS POINTER.
+         WS      77,GET1,PIC,9(9),COMP,USAGE,IS,POINTER
+*         77  GET2     PIC 9(9) COMP USAGE IS POINTER.
+         WS      77,GET2,PIC,9(9),COMP,USAGE,IS,POINTER
+*         77  GET3     PIC 9(9) COMP USAGE IS POINTER.
+         WS      77,GET3,PIC,9(9),COMP,USAGE,IS,POINTER
+*         77  GET4     PIC 9(9) COMP USAGE IS POINTER.
+         WS      77,GET4,PIC,9(9),COMP,USAGE,IS,POINTER
+*         77  GET5     PIC 9(9) COMP USAGE IS POINTER.
+         WS      77,GET5,PIC,9(9),COMP,USAGE,IS,POINTER
+*         77  GETBAD   PIC 9(9) COMP USAGE IS POINTER.
+         WS      77,GETBAD,PIC,9(9),COMP,USAGE,IS,POINTER
+*         77  RECAREA  PIC X(80).
+         WS      77,RECAREA,PIC,X(80)
+*         77  RECLEN   PIC 9(4) COMP.
+         WS      77,RECLEN,PIC,9(4),COMP
+*         01  HEAD.
+         WS      01,HEAD
+*             02  FILLER  PIC X(6)  VALUE X'27F5C311C1D1'.
+         WS        02,FILLER,PIC,X(6),VALUE,X'27F5C311C1D1'
+*             02  FILLER  PIC X(51)
+*            VALUE 'TESTBEC5 TEST HANDLE, PUSH/POP AND GETMAIN/FREEMAINX
+               '.
+         WS        02,FILLER,PIC,X(51),VALUE,'TESTBEC5 TEST HANDLE, PUSX
+               H/POP AND GETMAIN/FREEMAIN'
+*             02  FILLER  PIC X(3)  VALUE X'11C261'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C261'
+*             02  FILLER  PIC X(14) VALUE 'PRESS PF KEY 4'.
+         WS        02,FILLER,PIC,X(14),VALUE,'PRESS PF KEY 4'
+*             02  FILLER  PIC X(3)  VALUE X'11C3F1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C3F1'
+*             02  FILLER  PIC X(25) VALUE 'CLEAR WILL END TASK EARLY'.
+         WS        02,FILLER,PIC,X(25),VALUE,'CLEAR WILL END TASK EARLYX
+               '
+*         77  HEADL    PIC 9(4) COMP.
+         WS      77,HEADL,PIC,9(4),COMP
+*         01  BADMSG1.
+         WS      01,BADMSG1
+*             02  FILLER  PIC X(4)  VALUE X'C311C5C1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C5C1'
+*             02  FILLER  PIC X(19) VALUE 'THAT KEY WASN''T PF4'.
+         WS        02,FILLER,PIC,X(19),VALUE,'THAT KEY WASN''T PF4'
+*         77  BADMSG1L PIC 9(4) COMP.
+         WS      77,BADMSG1L,PIC,9(4),COMP
+*         01  BADMSG2.
+         WS      01,BADMSG2
+*             02  FILLER  PIC X(4)  VALUE X'C311C761'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C761'
+*             02  FILLER  PIC X(19) VALUE 'THAT KEY WASN''T PF5'.
+         WS        02,FILLER,PIC,X(19),VALUE,'THAT KEY WASN''T PF5'
+*         77  BADMSG2L PIC 9(4) COMP.
+         WS      77,BADMSG2L,PIC,9(4),COMP
+*         01  BADMSG3.
+         WS      01,BADMSG3
+*             02  FILLER  PIC X(4)  VALUE X'C3114AC1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3114AC1'
+*             02  FILLER  PIC X(19) VALUE 'THAT KEY WASN''T PF6'.
+         WS        02,FILLER,PIC,X(19),VALUE,'THAT KEY WASN''T PF6'
+*         77  BADMSG3L PIC 9(4) COMP.
+         WS      77,BADMSG3L,PIC,9(4),COMP
+*         01  PF4MSG.
+         WS      01,PF4MSG
+*             02  FILLER  PIC X(4)  VALUE X'C311C5C1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C5C1'
+*             02  FILLER  PIC X(20) VALUE 'I GOT PF4, THANKYOU '.
+         WS        02,FILLER,PIC,X(20),VALUE,'I GOT PF4, THANKYOU '
+*         77  PF4MSGL  PIC 9(4) COMP.
+         WS      77,PF4MSGL,PIC,9(4),COMP
+*         01  PF5ASK.
+         WS      01,PF5ASK
+*             02  FILLER  PIC X(4)  VALUE X'C311C6D1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C6D1'
+*             02  FILLER  PIC X(14) VALUE 'PRESS PF KEY 5'.
+         WS        02,FILLER,PIC,X(14),VALUE,'PRESS PF KEY 5'
+*         77  PF5ASKL  PIC 9(4) COMP.
+         WS      77,PF5ASKL,PIC,9(4),COMP
+*         01  PF5MSG.
+         WS      01,PF5MSG
+*             02  FILLER  PIC X(4)  VALUE X'C311C761'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C761'
+*             02  FILLER  PIC X(20) VALUE 'I GOT PF5, THANKYOU '.
+         WS        02,FILLER,PIC,X(20),VALUE,'I GOT PF5, THANKYOU '
+*         77  PF5MSGL  PIC 9(4) COMP.
+         WS      77,PF5MSGL,PIC,9(4),COMP
+*         01  PF6ASK.
+         WS      01,PF6ASK
+*             02  FILLER  PIC X(4)  VALUE X'C311C8F1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C8F1'
+*             02  FILLER  PIC X(14) VALUE 'PRESS PF KEY 6'.
+         WS        02,FILLER,PIC,X(14),VALUE,'PRESS PF KEY 6'
+*         77  PF6ASKL  PIC 9(4) COMP.
+         WS      77,PF6ASKL,PIC,9(4),COMP
+*         01  PF6MSG.
+         WS      01,PF6MSG
+*             02  FILLER  PIC X(4)  VALUE X'C3114AC1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3114AC1'
+*             02  FILLER  PIC X(20) VALUE 'I GOT PF6, THANKYOU '.
+         WS        02,FILLER,PIC,X(20),VALUE,'I GOT PF6, THANKYOU '
+*         77  PF6MSGL  PIC 9(4) COMP.
+         WS      77,PF6MSGL,PIC,9(4),COMP
+*         01  PGMMSG.
+         WS      01,PGMMSG
+*             02  FILLER  PIC X(4)  VALUE X'C3114BD1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3114BD1'
+*             02  FILLER  PIC X(27) VALUE 'PGMIDERR WILL NOW BE RAISED'X
+               .
+         WS        02,FILLER,PIC,X(27),VALUE,'PGMIDERR WILL NOW BE RAISX
+               ED'
+*         77  PGMMSGL  PIC 9(4) COMP.
+         WS      77,PGMMSGL,PIC,9(4),COMP
+*         01  PGMMSGE.
+         WS      01,PGMMSGE
+*             02  FILLER  PIC X(4)  VALUE X'C3114C61'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3114C61'
+*             02  FILLER  PIC X(29)
+*                         VALUE 'PGMIDERR CONDITION HANDLED OK'.
+         WS        02,FILLER,PIC,X(29),VALUE,'PGMIDERR CONDITION HANDLEX
+               D OK'
+*         77  PGMMSGEL PIC 9(4) COMP.
+         WS      77,PGMMSGEL,PIC,9(4),COMP
+*         01  PGMMSG2.
+         WS      01,PGMMSG2
+*             02  FILLER  PIC X(4)  VALUE X'C3114DF1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3114DF1'
+*             02  FILLER  PIC X(33)
+*                         VALUE 'PGMIDERR WILL NOW BE RAISED AGAIN'.
+         WS        02,FILLER,PIC,X(33),VALUE,'PGMIDERR WILL NOW BE RAISX
+               ED AGAIN'
+*         77  PGMMSG2L PIC 9(4) COMP.
+         WS      77,PGMMSG2L,PIC,9(4),COMP
+*         01  ERRMSG.
+         WS      01,ERRMSG
+*             02  FILLER  PIC X(4)  VALUE X'C3114FC1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3114FC1'
+*             02  FILLER  PIC X(26) VALUE 'ERROR CONDITION HANDLED OK'.
+         WS        02,FILLER,PIC,X(26),VALUE,'ERROR CONDITION HANDLED OX
+               K'
+*         77  ERRMSGL  PIC 9(4) COMP.
+         WS      77,ERRMSGL,PIC,9(4),COMP
+*         01  IGNMSG.
+         WS      01,IGNMSG
+*             02  FILLER  PIC X(4)  VALUE X'C31150D1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C31150D1'
+*             02  FILLER  PIC X(27) VALUE 'IGNORE CONDITION HANDLED OK'X
+               .
+         WS        02,FILLER,PIC,X(27),VALUE,'IGNORE CONDITION HANDLED X
+               OK'
+*         77  IGNMSGL  PIC 9(4) COMP.
+         WS      77,IGNMSGL,PIC,9(4),COMP
+*         01  GTMMSG.
+         WS      01,GTMMSG
+*             02  FILLER  PIC X(4)  VALUE X'C311D161'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311D161'
+*             02  FILLER  PIC X(40)
+*                      VALUE 'GETMAIN/FREEMAIN TESTING, OK IF NO ABEND'X
+               .
+         WS        02,FILLER,PIC,X(40),VALUE,'GETMAIN/FREEMAIN TESTING,X
+                OK IF NO ABEND'
+*         77  GTMMSGL  PIC 9(4) COMP.
+         WS      77,GTMMSGL,PIC,9(4),COMP
+*         01  ABDMSG.
+         WS      01,ABDMSG
+*             02  FILLER  PIC X(4)  VALUE X'C311D2F1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311D2F1'
+*             02  FILLER  PIC X(34)
+*                         VALUE 'PGMIDERR WILL NOW CAUSE ABEND AEI0'.
+         WS        02,FILLER,PIC,X(34),VALUE,'PGMIDERR WILL NOW CAUSE AX
+               BEND AEI0'
+*             02  FILLER  PIC X(3)  VALUE X'11D4C1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11D4C1'
+*             02  FILLER  PIC X(11) VALUE 'PRESS CLEAR'.
+         WS        02,FILLER,PIC,X(11),VALUE,'PRESS CLEAR'
+*         77  ABDMSGL  PIC 9(4) COMP.
+         WS      77,ABDMSGL,PIC,9(4),COMP
+*         77  INIT5    PIC X    VALUE X'05'.
+*         COPY DFHAID.
+*      * AID VALUES
+         WS      77,INIT5,PIC,X,VALUE,X'05'
+*        01  DFHAID.
+         WS      01,DFHAID
+*          02  DFHNULL  PIC X VALUE X'00'.
+         WS        02,DFHNULL,PIC,X,VALUE,X'00'
+*          02  DFHENTER PIC X VALUE X'7D'.
+         WS        02,DFHENTER,PIC,X,VALUE,X'7D'
+*          02  DFHPF1   PIC X VALUE X'F1'.
+         WS        02,DFHPF1,PIC,X,VALUE,X'F1'
+*          02  DFHPF2   PIC X VALUE X'F2'.
+         WS        02,DFHPF2,PIC,X,VALUE,X'F2'
+*          02  DFHPF3   PIC X VALUE X'F3'.
+         WS        02,DFHPF3,PIC,X,VALUE,X'F3'
+*          02  DFHPF4   PIC X VALUE X'F4'.
+         WS        02,DFHPF4,PIC,X,VALUE,X'F4'
+*          02  DFHPF5   PIC X VALUE X'F5'.
+         WS        02,DFHPF5,PIC,X,VALUE,X'F5'
+*          02  DFHPF6   PIC X VALUE X'F6'.
+         WS        02,DFHPF6,PIC,X,VALUE,X'F6'
+*          02  DFHPF7   PIC X VALUE X'F7'.
+         WS        02,DFHPF7,PIC,X,VALUE,X'F7'
+*          02  DFHPF8   PIC X VALUE X'F8'.
+         WS        02,DFHPF8,PIC,X,VALUE,X'F8'
+*          02  DFHPF9   PIC X VALUE X'F9'.
+         WS        02,DFHPF9,PIC,X,VALUE,X'F9'
+*          02  DFHPF10  PIC X VALUE X'7A'.
+         WS        02,DFHPF10,PIC,X,VALUE,X'7A'
+*          02  DFHPF11  PIC X VALUE X'7B'.
+         WS        02,DFHPF11,PIC,X,VALUE,X'7B'
+*          02  DFHPF12  PIC X VALUE X'7C'.
+         WS        02,DFHPF12,PIC,X,VALUE,X'7C'
+*          02  DFHPF13  PIC X VALUE X'C1'.
+         WS        02,DFHPF13,PIC,X,VALUE,X'C1'
+*          02  DFHPF14  PIC X VALUE X'C2'.
+         WS        02,DFHPF14,PIC,X,VALUE,X'C2'
+*          02  DFHPF15  PIC X VALUE X'C3'.
+         WS        02,DFHPF15,PIC,X,VALUE,X'C3'
+*          02  DFHPF16  PIC X VALUE X'C4'.
+         WS        02,DFHPF16,PIC,X,VALUE,X'C4'
+*          02  DFHPF17  PIC X VALUE X'C5'.
+         WS        02,DFHPF17,PIC,X,VALUE,X'C5'
+*          02  DFHPF18  PIC X VALUE X'C6'.
+         WS        02,DFHPF18,PIC,X,VALUE,X'C6'
+*          02  DFHPF19  PIC X VALUE X'C7'.
+         WS        02,DFHPF19,PIC,X,VALUE,X'C7'
+*          02  DFHPF20  PIC X VALUE X'C8'.
+         WS        02,DFHPF20,PIC,X,VALUE,X'C8'
+*          02  DFHPF21  PIC X VALUE X'C9'.
+         WS        02,DFHPF21,PIC,X,VALUE,X'C9'
+*          02  DFHPF22  PIC X VALUE X'4A'.
+         WS        02,DFHPF22,PIC,X,VALUE,X'4A'
+*          02  DFHPF23  PIC X VALUE X'4B'.
+         WS        02,DFHPF23,PIC,X,VALUE,X'4B'
+*          02  DFHPF24  PIC X VALUE X'4C'.
+         WS        02,DFHPF24,PIC,X,VALUE,X'4C'
+*          02  DFHPA1   PIC X VALUE X'6C'.
+         WS        02,DFHPA1,PIC,X,VALUE,X'6C'
+*          02  DFHPA2   PIC X VALUE X'6E'.
+         WS        02,DFHPA2,PIC,X,VALUE,X'6E'
+*          02  DFHPA3   PIC X VALUE X'6B'.
+         WS        02,DFHPA3,PIC,X,VALUE,X'6B'
+*          02  DFHCLEAR PIC X VALUE X'6D'.
+* 
+         WS        02,DFHCLEAR,PIC,X,VALUE,X'6D'
+         LINKAGE SECTION
+         WS    01,DFHCOMMAREA
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*             MOVE LENGTH OF HEAD    TO HEADL.
+*ZC    163         MOVE  LENGTH,OF,HEAD,TO,HEADL
+         MOVE  LENGTH,OF,HEAD,TO,HEADL
+         PERIOD 
+*             MOVE LENGTH OF BADMSG1 TO BADMSG1L.
+*ZC    164         MOVE  LENGTH,OF,BADMSG1,TO,BADMSG1L
+         MOVE  LENGTH,OF,BADMSG1,TO,BADMSG1L
+         PERIOD 
+*             MOVE LENGTH OF BADMSG2 TO BADMSG2L.
+*ZC    165         MOVE  LENGTH,OF,BADMSG2,TO,BADMSG2L
+         MOVE  LENGTH,OF,BADMSG2,TO,BADMSG2L
+         PERIOD 
+*             MOVE LENGTH OF BADMSG3 TO BADMSG3L.
+*ZC    166         MOVE  LENGTH,OF,BADMSG3,TO,BADMSG3L
+         MOVE  LENGTH,OF,BADMSG3,TO,BADMSG3L
+         PERIOD 
+*             MOVE LENGTH OF PF4MSG  TO PF4MSGL.
+*ZC    167         MOVE  LENGTH,OF,PF4MSG,TO,PF4MSGL
+         MOVE  LENGTH,OF,PF4MSG,TO,PF4MSGL
+         PERIOD 
+*             MOVE LENGTH OF PF5ASK  TO PF5ASKL.
+*ZC    168         MOVE  LENGTH,OF,PF5ASK,TO,PF5ASKL
+         MOVE  LENGTH,OF,PF5ASK,TO,PF5ASKL
+         PERIOD 
+*             MOVE LENGTH OF PF5MSG  TO PF5MSGL.
+*ZC    169         MOVE  LENGTH,OF,PF5MSG,TO,PF5MSGL
+         MOVE  LENGTH,OF,PF5MSG,TO,PF5MSGL
+         PERIOD 
+*             MOVE LENGTH OF PF6ASK  TO PF6ASKL.
+*ZC    170         MOVE  LENGTH,OF,PF6ASK,TO,PF6ASKL
+         MOVE  LENGTH,OF,PF6ASK,TO,PF6ASKL
+         PERIOD 
+*             MOVE LENGTH OF PF6MSG  TO PF6MSGL.
+*ZC    171         MOVE  LENGTH,OF,PF6MSG,TO,PF6MSGL
+         MOVE  LENGTH,OF,PF6MSG,TO,PF6MSGL
+         PERIOD 
+*             MOVE LENGTH OF PGMMSG  TO PGMMSGL.
+*ZC    172         MOVE  LENGTH,OF,PGMMSG,TO,PGMMSGL
+         MOVE  LENGTH,OF,PGMMSG,TO,PGMMSGL
+         PERIOD 
+*             MOVE LENGTH OF PGMMSGE TO PGMMSGEL.
+*ZC    173         MOVE  LENGTH,OF,PGMMSGE,TO,PGMMSGEL
+         MOVE  LENGTH,OF,PGMMSGE,TO,PGMMSGEL
+         PERIOD 
+*             MOVE LENGTH OF PGMMSG2 TO PGMMSG2L.
+*ZC    174         MOVE  LENGTH,OF,PGMMSG2,TO,PGMMSG2L
+         MOVE  LENGTH,OF,PGMMSG2,TO,PGMMSG2L
+         PERIOD 
+*             MOVE LENGTH OF ERRMSG  TO ERRMSGL.
+*ZC    175         MOVE  LENGTH,OF,ERRMSG,TO,ERRMSGL
+         MOVE  LENGTH,OF,ERRMSG,TO,ERRMSGL
+         PERIOD 
+*             MOVE LENGTH OF IGNMSG  TO IGNMSGL.
+*ZC    176         MOVE  LENGTH,OF,IGNMSG,TO,IGNMSGL
+         MOVE  LENGTH,OF,IGNMSG,TO,IGNMSGL
+         PERIOD 
+*             MOVE LENGTH OF GTMMSG  TO GTMMSGL.
+*ZC    177         MOVE  LENGTH,OF,GTMMSG,TO,GTMMSGL
+         MOVE  LENGTH,OF,GTMMSG,TO,GTMMSGL
+         PERIOD 
+*             MOVE LENGTH OF ABDMSG  TO ABDMSGL.
+*ZC    178         MOVE  LENGTH,OF,ABDMSG,TO,ABDMSGL
+         MOVE  LENGTH,OF,ABDMSG,TO,ABDMSGL
+         PERIOD 
+*             EXEC CICS SEND FROM(HEAD) LENGTH(HEADL) END-EXEC.
+*ZC    179         EXEC  CICS,SEND,FROM(HEAD),LENGTH(HEADL)
+         EXEC  CICS,SEND,FROM(HEAD),LENGTH(HEADL)
+         PERIOD 
+*      * CREATE AND MODIFY 1ST AID BLOCK
+*             EXEC CICS HANDLE AID
+*                  ENTER(BADKEY1)
+*                  ANYKEY(BADKEY1)
+*                  PF4(GOTPF4) CLEAR
+*ZC    181         EXEC  CICS,HANDLE,AID,ENTER(BADKEY1),ANYKEY(BADKEY1)X
+               ,PF4(GOTPF4),CLEAR
+         EXEC  CICS,HANDLE,AID,ENTER(BADKEY1),ANYKEY(BADKEY1),PF4(GOTPFX
+               4),CLEAR
+         PERIOD 
+*                  END-EXEC.
+*      *  KEYPRES1 EQU   *
+*         KEYPRES1.
+         LABEL KEYPRES1
+*             EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN) END-EXEC.
+*ZC    188         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         PERIOD 
+*      *  CLI   EIBAID,DFHCLEAR    CLEAR PRESSED ?
+*      *  BE    RETURN             END TASK IF IT IS
+*      *  B     KEYPRES1           LOOP
+*             IF EIBAID = DFHCLEAR THEN GO TO ALLDONE
+*ZC    192         IF    EIBAID,=,DFHCLEAR,THEN
+         IF    EIBAID,=,DFHCLEAR,THEN
+*ZC    192         GO    TO,ALLDONE
+         GO    TO,ALLDONE
+*             ELSE GO TO KEYPRES1.
+*ZC    193         ELSE  
+         ELSE  
+*      * BADKEY1  EQU   *
+*ZC    193         GO    TO,KEYPRES1
+         GO    TO,KEYPRES1
+         PERIOD 
+*         BADKEY1.
+         LABEL BADKEY1
+*             EXEC CICS SEND FROM(BADMSG1) LENGTH(BADMSG1L) END-EXEC.
+*ZC    196         EXEC  CICS,SEND,FROM(BADMSG1),LENGTH(BADMSG1L)
+         EXEC  CICS,SEND,FROM(BADMSG1),LENGTH(BADMSG1L)
+         PERIOD 
+*      *  B     KEYPRES1           WAIT FOR NEXT KEY
+*             GO TO KEYPRES1.
+*      * GOTPF4   EQU   *
+*ZC    198         GO    TO,KEYPRES1
+         GO    TO,KEYPRES1
+         PERIOD 
+*         GOTPF4.
+         LABEL GOTPF4
+*             EXEC CICS SEND FROM(PF4MSG) LENGTH(PF4MSGL) END-EXEC.
+*ZC    201         EXEC  CICS,SEND,FROM(PF4MSG),LENGTH(PF4MSGL)
+         EXEC  CICS,SEND,FROM(PF4MSG),LENGTH(PF4MSGL)
+         PERIOD 
+*             EXEC CICS SEND FROM(PF5ASK) LENGTH(PF5ASKL) END-EXEC.
+*ZC    202         EXEC  CICS,SEND,FROM(PF5ASK),LENGTH(PF5ASKL)
+         EXEC  CICS,SEND,FROM(PF5ASK),LENGTH(PF5ASKL)
+         PERIOD 
+*      * CREATE 2ND AID BLOCK
+*             EXEC CICS PUSH HANDLE END-EXEC.
+*ZC    204         EXEC  CICS,PUSH,HANDLE
+         EXEC  CICS,PUSH,HANDLE
+         PERIOD 
+*      * MODIFY 2ND AID BLOCK
+*             EXEC CICS HANDLE AID
+*                  ENTER(BADKEY2)
+*                  ANYKEY(BADKEY2)
+*                  PF5(GOTPF5) CLEAR
+*ZC    206         EXEC  CICS,HANDLE,AID,ENTER(BADKEY2),ANYKEY(BADKEY2)X
+               ,PF5(GOTPF5),CLEAR
+         EXEC  CICS,HANDLE,AID,ENTER(BADKEY2),ANYKEY(BADKEY2),PF5(GOTPFX
+               5),CLEAR
+         PERIOD 
+*                  END-EXEC.
+*      * KEYPRES2 EQU   *
+*         KEYPRES2.
+         LABEL KEYPRES2
+*             EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN) END-EXEC.
+*ZC    213         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         PERIOD 
+*      *  CLI   EIBAID,DFHCLEAR    CLEAR PRESSED ?
+*      *  BE    RETURN             END TASK IF IT IS
+*      *  B     KEYPRES2           LOOP
+*             IF EIBAID = DFHCLEAR THEN GO TO ALLDONE
+*ZC    217         IF    EIBAID,=,DFHCLEAR,THEN
+         IF    EIBAID,=,DFHCLEAR,THEN
+*ZC    217         GO    TO,ALLDONE
+         GO    TO,ALLDONE
+*             ELSE GO TO KEYPRES2.
+*ZC    218         ELSE  
+         ELSE  
+*      * BADKEY2  EQU   *
+*ZC    218         GO    TO,KEYPRES2
+         GO    TO,KEYPRES2
+         PERIOD 
+*         BADKEY2.
+         LABEL BADKEY2
+*             EXEC CICS SEND FROM(BADMSG2) LENGTH(BADMSG2L) END-EXEC.
+*ZC    221         EXEC  CICS,SEND,FROM(BADMSG2),LENGTH(BADMSG2L)
+         EXEC  CICS,SEND,FROM(BADMSG2),LENGTH(BADMSG2L)
+         PERIOD 
+*      *  B     KEYPRES2           WAIT FOR NEXT KEY
+*             GO TO KEYPRES2.
+*      * GOTPF5   EQU   *
+*ZC    223         GO    TO,KEYPRES2
+         GO    TO,KEYPRES2
+         PERIOD 
+*         GOTPF5.
+         LABEL GOTPF5
+*             EXEC CICS SEND FROM(PF5MSG) LENGTH(PF5MSGL) END-EXEC.
+*ZC    226         EXEC  CICS,SEND,FROM(PF5MSG),LENGTH(PF5MSGL)
+         EXEC  CICS,SEND,FROM(PF5MSG),LENGTH(PF5MSGL)
+         PERIOD 
+*             EXEC CICS SEND FROM(PF6ASK) LENGTH(PF6ASKL) END-EXEC.
+*ZC    227         EXEC  CICS,SEND,FROM(PF6ASK),LENGTH(PF6ASKL)
+         EXEC  CICS,SEND,FROM(PF6ASK),LENGTH(PF6ASKL)
+         PERIOD 
+*      * DELETE 2ND AID BLOCK
+*             EXEC CICS POP HANDLE END-EXEC.
+*ZC    229         EXEC  CICS,POP,HANDLE
+         EXEC  CICS,POP,HANDLE
+         PERIOD 
+*      * MODIFY 1ST AID BLOCK
+*             EXEC CICS HANDLE AID
+*                  ENTER(BADKEY3)
+*                  ANYKEY(BADKEY3)
+*                  PF4 PF6(GOTPF6) CLEAR
+*ZC    231         EXEC  CICS,HANDLE,AID,ENTER(BADKEY3),ANYKEY(BADKEY3)X
+               ,PF4,PF6(GOTPF6),CLEAR
+         EXEC  CICS,HANDLE,AID,ENTER(BADKEY3),ANYKEY(BADKEY3),PF4,PF6(GX
+               OTPF6),CLEAR
+         PERIOD 
+*                  END-EXEC.
+*      * KEYPRES3 EQU   *
+*         KEYPRES3.
+         LABEL KEYPRES3
+*             EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN) END-EXEC.
+*ZC    238         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         PERIOD 
+*      *  CLI   EIBAID,DFHCLEAR    CLEAR PRESSED ?
+*      *  BE    RETURN             END TASK IF IT IS
+*      *  B     KEYPRES3           LOOP
+*             IF EIBAID = DFHCLEAR THEN GO TO ALLDONE
+*ZC    242         IF    EIBAID,=,DFHCLEAR,THEN
+         IF    EIBAID,=,DFHCLEAR,THEN
+*ZC    242         GO    TO,ALLDONE
+         GO    TO,ALLDONE
+*             ELSE GO TO KEYPRES3.
+*ZC    243         ELSE  
+         ELSE  
+*      * BADKEY3  EQU   *
+*ZC    243         GO    TO,KEYPRES3
+         GO    TO,KEYPRES3
+         PERIOD 
+*         BADKEY3.
+         LABEL BADKEY3
+*             EXEC CICS SEND FROM(BADMSG3) LENGTH(BADMSG3L) END-EXEC.
+*ZC    246         EXEC  CICS,SEND,FROM(BADMSG3),LENGTH(BADMSG3L)
+         EXEC  CICS,SEND,FROM(BADMSG3),LENGTH(BADMSG3L)
+         PERIOD 
+*      *  B     KEYPRES3           WAIT FOR NEXT KEY
+*             GO TO KEYPRES3.
+*      * GOTPF6   EQU   *
+*ZC    248         GO    TO,KEYPRES3
+         GO    TO,KEYPRES3
+         PERIOD 
+*         GOTPF6.
+         LABEL GOTPF6
+*             EXEC CICS SEND FROM(PF6MSG) LENGTH(PF6MSGL) END-EXEC.
+*ZC    251         EXEC  CICS,SEND,FROM(PF6MSG),LENGTH(PF6MSGL)
+         EXEC  CICS,SEND,FROM(PF6MSG),LENGTH(PF6MSGL)
+         PERIOD 
+*      * DELETE 1ST AID BLOCK
+*             EXEC CICS POP HANDLE END-EXEC.
+*ZC    253         EXEC  CICS,POP,HANDLE
+         EXEC  CICS,POP,HANDLE
+         PERIOD 
+*      * CREATE AND MODIFY 1ST CONDITION BLOCK
+*             EXEC CICS HANDLE CONDITION PGMIDERR(GOTPGMER) END-EXEC.
+*ZC    255         EXEC  CICS,HANDLE,CONDITION,PGMIDERR(GOTPGMER)
+         EXEC  CICS,HANDLE,CONDITION,PGMIDERR(GOTPGMER)
+         PERIOD 
+*             EXEC CICS SEND FROM(PGMMSG) LENGTH(PGMMSGL) END-EXEC.
+*ZC    256         EXEC  CICS,SEND,FROM(PGMMSG),LENGTH(PGMMSGL)
+         EXEC  CICS,SEND,FROM(PGMMSG),LENGTH(PGMMSGL)
+         PERIOD 
+*      * THIS SHOULD RAISE PGMIDERR
+*             EXEC CICS LINK PROGRAM('BADPROG1') END-EXEC.
+*ZC    258         EXEC  CICS,LINK,PROGRAM('BADPROG1')
+         EXEC  CICS,LINK,PROGRAM('BADPROG1')
+         PERIOD 
+*      * NEXT1    EQU   *
+*         NEXT1.
+*      * CREATE 2ND CONDITION BLOCK
+         LABEL NEXT1
+*             EXEC CICS PUSH HANDLE END-EXEC.
+*ZC    262         EXEC  CICS,PUSH,HANDLE
+         EXEC  CICS,PUSH,HANDLE
+         PERIOD 
+*      * MODIFY 2ND CONDITION BLOCK
+*             EXEC CICS HANDLE CONDITION ERROR(GOTERROR) END-EXEC.
+*ZC    264         EXEC  CICS,HANDLE,CONDITION,ERROR(GOTERROR)
+         EXEC  CICS,HANDLE,CONDITION,ERROR(GOTERROR)
+         PERIOD 
+*             EXEC CICS SEND FROM(PGMMSG2) LENGTH(PGMMSG2L) END-EXEC.
+*ZC    265         EXEC  CICS,SEND,FROM(PGMMSG2),LENGTH(PGMMSG2L)
+         EXEC  CICS,SEND,FROM(PGMMSG2),LENGTH(PGMMSG2L)
+         PERIOD 
+*      * THIS SHOULD RAISE PGMIDERR, BUT HANDLED BY ERROR
+*             EXEC CICS LINK PROGRAM('BADPROG2') END-EXEC.
+*ZC    267         EXEC  CICS,LINK,PROGRAM('BADPROG2')
+         EXEC  CICS,LINK,PROGRAM('BADPROG2')
+         PERIOD 
+*      * NEXT2    EQU   *
+*         NEXT2.
+         LABEL NEXT2
+*             EXEC CICS HANDLE CONDITION ERROR END-EXEC.
+*ZC    270         EXEC  CICS,HANDLE,CONDITION,ERROR
+         EXEC  CICS,HANDLE,CONDITION,ERROR
+         PERIOD 
+*             EXEC CICS IGNORE CONDITION PGMIDERR END-EXEC.
+*ZC    271         EXEC  CICS,IGNORE,CONDITION,PGMIDERR
+         EXEC  CICS,IGNORE,CONDITION,PGMIDERR
+         PERIOD 
+*      * THIS SHOULD BE IGNORED
+*             EXEC CICS LINK PROGRAM('BADPROG3') END-EXEC.
+*ZC    273         EXEC  CICS,LINK,PROGRAM('BADPROG3')
+         EXEC  CICS,LINK,PROGRAM('BADPROG3')
+         PERIOD 
+*             EXEC CICS SEND FROM(IGNMSG) LENGTH(IGNMSGL) END-EXEC.
+*ZC    274         EXEC  CICS,SEND,FROM(IGNMSG),LENGTH(IGNMSGL)
+         EXEC  CICS,SEND,FROM(IGNMSG),LENGTH(IGNMSGL)
+         PERIOD 
+*             EXEC CICS HANDLE CONDITION PGMIDERR END-EXEC.
+*ZC    275         EXEC  CICS,HANDLE,CONDITION,PGMIDERR
+         EXEC  CICS,HANDLE,CONDITION,PGMIDERR
+         PERIOD 
+*      * THIS SHOULD SUCCEED
+*             EXEC CICS LINK PROGRAM('MMMMCIC2') END-EXEC.
+*ZC    277         EXEC  CICS,LINK,PROGRAM('MMMMCIC2')
+         EXEC  CICS,LINK,PROGRAM('MMMMCIC2')
+         PERIOD 
+*      * GETMAIN/FREEMAIN TESTS
+*             EXEC CICS GETMAIN SET(GET1) LENGTH(100) INITIMG(1)
+*ZC    279         EXEC  CICS,GETMAIN,SET(GET1),LENGTH(100),INITIMG(1)
+         EXEC  CICS,GETMAIN,SET(GET1),LENGTH(100),INITIMG(1)
+         PERIOD 
+*                       END-EXEC.
+*      *  ST    R5,GET1            SAVE ADDRESS
+*             EXEC CICS GETMAIN SET(GET2) LENGTH(200) INITIMG(X'02')
+*ZC    282         EXEC  CICS,GETMAIN,SET(GET2),LENGTH(200),INITIMG(X'0X
+               2')
+         EXEC  CICS,GETMAIN,SET(GET2),LENGTH(200),INITIMG(X'02')
+         PERIOD 
+*                       END-EXEC.
+*      *  ST    R5,GET2            SAVE ADDRESS
+*             EXEC CICS GETMAIN SET(GET3) LENGTH(300) INITIMG(B'11')
+*ZC    285         EXEC  CICS,GETMAIN,SET(GET3),LENGTH(300),INITIMG(B'1X
+               1')
+         EXEC  CICS,GETMAIN,SET(GET3),LENGTH(300),INITIMG(B'11')
+         PERIOD 
+*                       END-EXEC.
+*      *  ST    R5,GET3            SAVE ADDRESS
+*             EXEC CICS GETMAIN SET(GET4) LENGTH(400) INITIMG(4)
+*ZC    288         EXEC  CICS,GETMAIN,SET(GET4),LENGTH(400),INITIMG(4)
+         EXEC  CICS,GETMAIN,SET(GET4),LENGTH(400),INITIMG(4)
+         PERIOD 
+*                       END-EXEC.
+*      *  ST    R5,GET4            SAVE ADDRESS
+*             EXEC CICS GETMAIN SET(GET5) LENGTH(500) INITIMG(INIT5)
+*ZC    291         EXEC  CICS,GETMAIN,SET(GET5),LENGTH(500),INITIMG(INIX
+               T5)
+         EXEC  CICS,GETMAIN,SET(GET5),LENGTH(500),INITIMG(INIT5)
+         PERIOD 
+*                       END-EXEC.
+*      *  ST    R5,GET5            SAVE ADDRESS
+*      * FREEMAIN IN RANDOM ORDER...42153
+*      *  L     R5,GET4            ADDRESS TO FREEMAIN
+*             EXEC CICS FREEMAIN DATAPOINTER(GET4) END-EXEC.
+*ZC    296         EXEC  CICS,FREEMAIN,DATAPOINTER(GET4)
+         EXEC  CICS,FREEMAIN,DATAPOINTER(GET4)
+         PERIOD 
+*             EXEC CICS FREEMAIN DATAPOINTER(GET2) END-EXEC.
+*ZC    297         EXEC  CICS,FREEMAIN,DATAPOINTER(GET2)
+         EXEC  CICS,FREEMAIN,DATAPOINTER(GET2)
+         PERIOD 
+*      *  L     R5,GET1            ADDRESS TO FREEMAIN
+*             EXEC CICS FREEMAIN DATAPOINTER(GET1) END-EXEC.
+*ZC    299         EXEC  CICS,FREEMAIN,DATAPOINTER(GET1)
+         EXEC  CICS,FREEMAIN,DATAPOINTER(GET1)
+         PERIOD 
+*             EXEC CICS FREEMAIN DATAPOINTER(GET5) END-EXEC.
+*ZC    300         EXEC  CICS,FREEMAIN,DATAPOINTER(GET5)
+         EXEC  CICS,FREEMAIN,DATAPOINTER(GET5)
+         PERIOD 
+*             EXEC CICS FREEMAIN DATAPOINTER(GET3) END-EXEC
+*ZC    301         EXEC  CICS,FREEMAIN,DATAPOINTER(GET3)
+         EXEC  CICS,FREEMAIN,DATAPOINTER(GET3)
+*             EXEC CICS IGNORE CONDITION INVREQ END-EXEC.
+*ZC    302         EXEC  CICS,IGNORE,CONDITION,INVREQ
+         EXEC  CICS,IGNORE,CONDITION,INVREQ
+         PERIOD 
+*      *  L     R5,=4X'FF'         INVALID ADDRESS
+*             EXEC CICS FREEMAIN DATAPOINTER(GETBAD) END-EXEC.
+*ZC    304         EXEC  CICS,FREEMAIN,DATAPOINTER(GETBAD)
+         EXEC  CICS,FREEMAIN,DATAPOINTER(GETBAD)
+         PERIOD 
+*             EXEC CICS SEND FROM(GTMMSG) LENGTH(GTMMSGL) END-EXEC.
+*ZC    305         EXEC  CICS,SEND,FROM(GTMMSG),LENGTH(GTMMSGL)
+         EXEC  CICS,SEND,FROM(GTMMSG),LENGTH(GTMMSGL)
+         PERIOD 
+*             EXEC CICS SEND FROM(ABDMSG) LENGTH(ABDMSGL) END-EXEC
+*      * THIS SHOULD ABEND PGMIDERR (AEI0)
+*ZC    306         EXEC  CICS,SEND,FROM(ABDMSG),LENGTH(ABDMSGL)
+         EXEC  CICS,SEND,FROM(ABDMSG),LENGTH(ABDMSGL)
+*             EXEC CICS LINK PROGRAM('BADPROG4') END-EXEC.
+*ZC    308         EXEC  CICS,LINK,PROGRAM('BADPROG4')
+         EXEC  CICS,LINK,PROGRAM('BADPROG4')
+         PERIOD 
+*      * RETURN   EQU   *
+*         ALLDONE.
+         LABEL ALLDONE
+*             EXEC CICS RETURN END-EXEC.
+*ZC    311         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+         PERIOD 
+*      * GOTPGMER DS    0H
+*         GOTPGMER.
+         LABEL GOTPGMER
+*             EXEC CICS SEND FROM(PGMMSGE) LENGTH(PGMMSGEL) END-EXEC.
+*ZC    314         EXEC  CICS,SEND,FROM(PGMMSGE),LENGTH(PGMMSGEL)
+         EXEC  CICS,SEND,FROM(PGMMSGE),LENGTH(PGMMSGEL)
+         PERIOD 
+*      *  B     NEXT1              EXIT
+*             GO TO NEXT1.
+*      * GOTERROR DS    0H
+*ZC    316         GO    TO,NEXT1
+         GO    TO,NEXT1
+         PERIOD 
+*         GOTERROR.
+         LABEL GOTERROR
+*             EXEC CICS SEND FROM(ERRMSG) LENGTH(ERRMSGL) END-EXEC.
+*ZC    319         EXEC  CICS,SEND,FROM(ERRMSG),LENGTH(ERRMSGL)
+         EXEC  CICS,SEND,FROM(ERRMSG),LENGTH(ERRMSGL)
+         PERIOD 
+*      *  B     NEXT2              EXIT
+*             GO TO NEXT2.
+*ZC    321         GO    TO,NEXT2
+         GO    TO,NEXT2
+         PERIOD 
+         PROCEDURE END
+         END   

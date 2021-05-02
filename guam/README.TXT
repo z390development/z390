@@ -12,4 +12,4 @@ For more information on the z390 GUAM services see the GUAM User Guide
 available on www.z390.org.
 
 Don Higgins
-don@higgins.net
+don@higgins.net 9/11/2006

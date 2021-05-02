@@ -1,0 +1,251 @@
+         AGO   .SKIP                                                    00010000
+* Copyright (C) <2021>  Daniel H. Snyder                                00020000
+*                       ALL RIGHTS RESERVED                             00030000
+*                       Daniel.H.Snyder@proton.com                      00040000
+*                                                                       00050000
+.SKIP    ANOP                                                           00060000
+         TITLE 'EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS'              00070000
+*                                                                       00080000
+R0       EQU   0                                                        00090000
+R1       EQU   1       STANDARD                                         00100000
+R2       EQU   2        EQUATES                                         00110000
+R3       EQU   3         FOR                                            00120000
+R4       EQU   4          GENERAL                                       00130000
+R5       EQU   5           PURPOSE                                      00140000
+R6       EQU   6            REGISTERS.                                  00150000
+R7       EQU   7             YOU                                        00160000
+R8       EQU   8              MIGHT                                     00170000
+R9       EQU   9               AS                                       00180000
+R10      EQU   10               WELL                                    00190000
+R11      EQU   11                JUST                                   00200000
+R12      EQU   12                 GET                                   00210000
+R13      EQU   13                  USED                                 00220000
+R14      EQU   14                   TO                                  00230000
+R15      EQU   15                    IT.                                00240000
+*                                                                       00250000
+DODOC    CSECT                                                          00260000
+         COPY  $MGBLDEF                                                 00270000
+*                                                                       00280000
+         STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA      00290000
+         LR    R12,R15             PRIME BASE REG                       00300000
+         LA    R11,2048(,R12)      LET'S ADDRESS                        00310000
+         LA    R11,2048(,R11)      - ANOTHER 4K                         00320000
+         USING DODOC,R12,R11       SET BASE REGISTER FOR PROGRAM        00330000
+         LR    R1,R13              COPY POINTER TO CALLER'S SA          00340000
+         L     R13,VCON$WA$        ADDRESS OF MY SAVE/WORK AREA         00350000
+         IF    (CLR,R1,R1,NE)                                           00360000
+VCON$WA$ DC    V($$WA$$)                                                00370006
+         ENDIF                                                          00380000
+         USING $$WA$$,R13          SEPARATE CSECT FOR REENTRANCY        00390000
+         ST    R1,SAVEAREA+4       BACK LINK TO CALLER'S SAVE AREA      00400000
+         ST    R13,8(,R1)          FORWARD LINK TO MY SAVE AREA         00410000
+*                                                                       00420000
+$$WA$$   CSECT                                                          00430000
+SAVEAREA DC    18F'0'              MY SAVE AREA                         00440000
+DODOC    CSECT                                                          00450000
+*                                                                       00460000
+         OPEN  (SYSPRINT,OUTPUT)                                        00470000
+*                                                                       00480000
+         PRINT GEN                                                      00490000
+*                                                                       00500000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00510000
+*                                                                     * 00520000
+*                      THE "DO" STATEMENT                             * 00530000
+*                                                                     * 00540000
+*      The "DO" MACRO PROVIDES A LOOPING STRUCTURE FOR PERFORMING     * 00550000
+*      MULTIPLE PASSES THROUGH THE DESIRED CODE. THE "DO" HAS         * 00560000
+*      ADDITIONAL PARAMETERS OVER THE "IF", BUT USES THE SAME         * 00570000
+*      STRUCTURE FOR CREATING THE LOGICAL REQUIREMENTS AS THE "IF"    * 00580000
+*      MACRO (IT CALLS THE "IF" MACRO TO DO THE PROCESSING OF YOUR    * 00590000
+*      LOGIC). THE DIFFERENCE IS THAT AN EXTRA SET OF PARENTHESES     * 00600000
+*      MUST SURROUND YOUR ENTIRE LOGIC EXPRESSIONS, DUE TO THE        * 00610000
+*      SPECIAL WAY OF HANDLING POSITIONAL PARAMETERS USED BY THE "IF" * 00620000
+*      MACRO                                                          * 00630000
+*                                                                     * 00640000
+*      THE TWO SIMPLEST EXAMPLES ARE THE "DO WHILE" AND THE           * 00650000
+*      "DO UNTIL":                                                    * 00660000
+*                                                                     * 00670000
+*       DO UNTIL=((LTR,R1,R1,NZ))                                     * 00680000
+*                                                                     * 00690000
+*       DO WHILE=((LTR,R1,R1,NZ))                                     * 00700000
+*                                                                     * 00710000
+*       THE ONLY OTHER AVAILABLE PARAMETER IS THE "TEST=". "BEFORE"   * 00720000
+*       IS THE DEFAULT. "TEST=AFTER" CAUSES THE DO-GROUP TO BE        * 00730000
+*       PERFORMED ONE TIME BEFORE THE FIRST TEST IS MADE.             * 00740000
+*                                                                     * 00750000
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=BEFORE                         * 00760000
+*                                                                     * 00770000
+*       DO WHILE=((LTR,R1,R1,NZ)),TEST=BEFORE                         * 00780000
+*                                                                     * 00790000
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          * 00800000
+*                                                                     * 00810000
+*       DO WHILE=((LTR,R1,R1,NZ)),TEST=AFTER                          * 00820000
+*                                                                     * 00830000
+*       THE DO-GROUP MUST BE TERMINATED WITH AN "ENDDO" STATEMENT:    * 00840000
+*                                                                     * 00850000
+*       FOLLOWING THE STATEMENTS TO BE EXECUTED WHEN THE "DO"         * 00860000
+*       STATEMENT SUCCEEDS, THERE SHOULD BE AN "ENDO" TO TERMINATE    * 00870000
+*       THE LOGIC.                                                    * 00880000
+*                                                                     * 00890000
+*       SPECIAL NOTE: THE "ENDIF" AND "ENDO" ARE INTERCHANGEABLE.     * 00900000
+*       THEY ARE BOTH PROVIDED FOR DOCUMENTATION PURPOSES.            * 00910000
+*                                                                     * 00920000
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          * 00930000
+*                                                                     * 00940000
+*                      ONE                                            * 00950000
+*                    OR MORE                                          * 00960000
+*                  INSTRUCTIONS                                       * 00970000
+*                                                                     * 00980000
+*       ENDDO                                                         * 00990000
+*                                                                     * 01000000
+*       THE DEFAULT FOR WHEN THE TEST IS PERFORMED IS BEFORE THE      * 01010000
+*       BODY OF THE DO-GROUP IS RUN FOR THE FIRST TIME. IF THE LOGIC  * 01020000
+*       TEST(S) FAIL, THEN THE INSTUCTIONS IN THE BODY OF THE         * 01030000
+*       ARE BYPASSED ENTIRELY.                                        * 01040000
+*                                                                     * 01050000
+*       IF YOU NEED THE DO-GROUP TO BE PERFORMED AT LEAST ONCE, THEN  * 01060000
+*       CODE THE "TEST=AFTER" PARAMETER. THE DEFAULT FOR "TEST" IS    * 01070000
+*       "BEFORE", SO IF THAT IS WHAT YOU WANT, THEN YOU DO NOT NEED   * 01080000
+*       TO SPECIFY IT.                                                * 01090000
+*                                                                     * 01100000
+*       IF YOU SPECIFY "BEFORE", OR DEFAULT TO IT, THEN THE LOGICAL   * 01110000
+*       TEST IS DETERMINED BEFORE THE BODY OF CODE IS EXECUTED, AND   * 01120000
+*       IF THAT TEST FAILS THEN THE BODY OF CODE IS BYPASSED WITHOUT  * 01130000
+*       BEING EXECUTED EVEN ONCE. IF YOU SPECIFY "AFTER", THEN THE    * 01140000
+*       CODE IS EXECUTED ONE TIME BEFORE THE LOGICAL TEST IS APPLIED. * 01150000
+*       IF THAT TEST FAILS, THEN THAT ONE TIME IS THE ONLY TIME THAT  * 01160000
+*       THAT CODE IS EXECUTED.                                        * 01170000
+*                                                                     * 01180000
+*       NOTE THAT THE ALLOWABLE STUCTURE OF THE CONDITIONAL           * 01190000
+*       PARAMETERS INCLUDES ALL OF THE POWER OF THOSE OF THE          * 01200000
+*       "IF" MACRO (NOTE ALSO THE REQUIRED ADDITIONAL SET OF          * 01210000
+*       PARENTHESES SURROUNDING THE ENTIRE LOGIC STRUCTURE.)          * 01220000
+*                                                                     * 01230000
+*       DO    WHILE=((LTR,R1,R1,NZ),AND,                     C        * 01240000
+*             ((CLC,B,Z,NE),OR,                              C        * 01250000
+*             (CLC,C,Z,E))),                                 C        * 01260000
+*             TEST=AFTER                                              * 01270000
+*                                                                     * 01280000
+*                      ONE                                            * 01290000
+*                    OR MORE                                          * 01300000
+*                  INSTRUCTIONS                                       * 01310000
+*                                                                     * 01320000
+*       ENDDO                                                         * 01330000
+*                                                                     * 01340000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01350000
+* DO WHILE                                                            * 01360000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01370000
+         PACK  PACK1,=Z'0'                                              01380000
+         MVC   TESTNBR,=C'TEST010A'                                     01390000
+TEST010A DO    WHILE=((CP,PACK1,=P'3',NH))                              01400007
+           AP    PACK1,=P'1'                                            01410000
+           UNPK  COUNTER,PACK1                                          01420000
+           OI    COUNTER+3,X'F0'                                        01430000
+           PUT   SYSPRINT,OUTPUT                                        01440000
+         ENDDO ,                                                        01450000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01460000
+* DO UNTIL                                                            * 01470000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01480000
+         PACK  PACK1,=Z'0'                                              01490000
+         MVC   TESTNBR,=C'TEST020A'                                     01500000
+TEST020A DO    UNTIL=((CP,PACK1,=P'3',E))                               01510008
+           AP    PACK1,=P'1'                                            01520000
+           UNPK  COUNTER,PACK1                                          01530000
+           OI    COUNTER+3,X'F0'                                        01540000
+           PUT   SYSPRINT,OUTPUT                                        01550000
+         ENDDO ,                                                        01560000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01570000
+* DO WHILE WITH TEST BEFORE                                           * 01580012
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01590000
+         PACK  PACK1,=Z'0'                                              01600010
+         MVC   TESTNBR,=C'TEST030A'                                     01610000
+TEST030A DO    WHILE=((CP,PACK1,=P'3',NH)),TEST=BEFORE                  01620012
+           AP    PACK1,=P'1'                                            01630009
+           UNPK  COUNTER,PACK1                                          01640000
+           OI    COUNTER+3,X'F0'                                        01650000
+           PUT   SYSPRINT,OUTPUT                                        01660000
+         ENDDO ,                                                        01670000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01680000
+* DO UNTIL WITH TEST BEFORE                                           * 01690012
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01700000
+         PACK  PACK1,=Z'0'                                              01710000
+         MVC   TESTNBR,=C'TEST040A'                                     01720000
+TEST040A DO    UNTIL=((CP,PACK1,=P'3',E)),TEST=BEFORE                   01730012
+           AP    PACK1,=P'1'                                            01740000
+           UNPK  COUNTER,PACK1                                          01750000
+           OI    COUNTER+3,X'F0'                                        01760000
+           PUT   SYSPRINT,OUTPUT                                        01770000
+         ENDDO ,                                                        01780000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01781011
+* DO WHILE WITH TEST AFTER                                            * 01782012
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01783011
+         PACK  PACK1,=Z'0'                                              01784011
+         MVC   TESTNBR,=C'TEST050A'                                     01785011
+TEST050A DO    WHILE=((CP,PACK1,=P'3',L)),TEST=AFTER                    01786013
+           AP    PACK1,=P'1'                                            01787011
+           UNPK  COUNTER,PACK1                                          01788011
+           OI    COUNTER+3,X'F0'                                        01789011
+           PUT   SYSPRINT,OUTPUT                                        01789111
+         ENDDO ,                                                        01789211
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01789311
+* DO UNTIL WITH TEST AFTER                                            * 01789412
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01789511
+         PACK  PACK1,=Z'-1'                                             01789613
+         MVC   TESTNBR,=C'TEST060A'                                     01789711
+TEST060A DO    UNTIL=((CP,PACK1,=P'0',E)),TEST=AFTER                    01789812
+           AP    PACK1,=P'1'                                            01789911
+           UNPK  COUNTER,PACK1                                          01790011
+           OI    COUNTER+3,X'F0'                                        01790111
+           PUT   SYSPRINT,OUTPUT                                        01790211
+         ENDDO ,                                                        01790311
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01791000
+*                                                                     * 01800000
+*      THESE FOLLOWING STATEMENTS ARE NORMAL zOS TERMINATION.         * 01810000
+*                                                                     * 01820000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01830000
+*                                                                       01840000
+         CLOSE SYSPRINT                                                 01850000
+         L     R13,SAVEAREA+4      ADDRESS OF CALLER'S SAVE AREA        01860000
+         LM    R14,R12,12(R13)     RESTORE R14 WRAPPED AROUND TO R12    01870000
+         DROP  R12                 NO LONGER VALID                      01880000
+         SLR   R15,R15             SET RETURN CODE TO ZERO              01890000
+         BR    R14                 RETURN TO CALLER                     01900000
+*                                                                       01910000
+$$WA$$   CSECT                                                          01920000
+         LTORG                                                          01930000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01930103
+SYSPRINT DCB   DDNAME=SYSPRINT,RECFM=FBA,LRECL=133,MACRF=PM,           C01931005
+               DSORG=PS                                                 01932003
+PACK1    DC    PL4'0'                                                   01940000
+ZONED1   DC    Z'0000'                                                  01950000
+OUTPUT   DC    CL133' '                                                 01960000
+         ORG   OUTPUT                                                   01970000
+         DC    C' '                                                     01980000
+TESTNBR  DC    CL8' '                                                   01990000
+         DC    C' '                                                     02000000
+COUNTER  DC    ZL4'0'                                                   02010000
+         ORG   OUTPUT+133                                               02020000
+*                                                                       02030000
+EOFSW    DC    C'N'                SET END-OF-FILE SWITCH TO 'Y' AT EOF 02040000
+PL5      DC    PL5'7'                                                   02050000
+         DC    0F'0'                                                    02060000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02070000
+*                                                                     * 02080000
+*      THESE FOLLOWING STATEMENTS DEFINE VARIABLES REQUIRED.          * 02090000
+*                                                                     * 02100000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02110000
+LEVEL_ONE_PASS_COUNTER DC PL4'0'                                        02120000
+A        DC    C'AAAA'                                                  02130000
+B        DC    C'BBBB'                                                  02140000
+C        DC    C'CCCC'                                                  02150000
+D        DC    C'DDDD'                                                  02160000
+E        DC    C'EEEE'                                                  02170000
+F        DC    C'FFFF'                                                  02180000
+G        DC    C'GGGG'                                                  02190000
+H        DC    C'HHHH'                                                  02200000
+Z        DC    C'ZZZZ'                                                  02210000
+TEMP     DC    C'TEMP'                                                  02220000
+LOOP_COUNTER DC PL4'0'             FOR TEST OF "DO UNTIL"               02230000
+PACKED_ONE DC  PL4'1'              FOR TEST OF "DO UNTIL"               02240000
+DODOC    CSECT                                                          02250000
+         END   DODOC                                                    02260000

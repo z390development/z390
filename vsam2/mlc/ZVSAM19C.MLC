@@ -1,0 +1,3209 @@
+***********************************************************************
+* Copyright 2005 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Melvyn Maltz                                               *
+* Date   - 11/02/19                                                   *
+***********************************************************************
+* THIS IS THE ZVSAM V2 EQUIVALENT OF IDA019C1 WHICH HANDLES PROCESSING*
+* FOR GENCB, MODCB, SHOWCB AND TESTCB MF=I/E/G                        *
+*                                                                     *
+* FOR SHOWCB MF=E...                                                  *
+*    R1 ==> A(CBMR,LENGTH,AREA,BLOCK)                                 *
+*    --OR FOR SHOWCB ACB--                                            *
+*    R1 ==> A(CBMR,LENGTH,AREA,BLOCK,OBJECT)                          *
+*    IF LENGTH, AREA, BLOCK OR OBJECT NOT PRESENT IT'S SET TO FOXES   *
+*                                                                     *
+* SOME CBMRs HAVE FIXED FIELDS...                                     *
+*    SHOWCB WITHOUT BLK=   LENGTH, AREA                               *
+*    SHOWCB WITH BLK=      LENGTH, AREA, BLOCK                        *
+*                                                                     *
+*    MODCB                 BLOCK                                      *
+*                                                                     *
+*    GENCB                 COPIES, LENGTH, WAREA, LOC                 *
+*                                                                     *
+*    TESTCB NO BLOCK       AL4(0), ERET, PARM                         *
+*    TESTCB WITH BLOCK     BLOCK,  ERET, PARM                         *
+*                                                                     *
+* REGISTER USAGE:                                                     *
+*    R1 ==> A(CBMR) FOR MF=E                                          *           *
+*    R1 =   A(CBMR) FOR MF=I/G                                        *           *
+*    R3 =   NO. OF VERBS                                              *
+*    R4 =   ADDRESS OF VERBS                                          *
+*    R5 =   CBMR BASE                                                 *
+*    R7 =   ADDRESS OF FIELDS                                         *
+*    R8 =   ADDRESS OF AREA                                           *
+*    R9 =   ADDRESS OF EXLST/RPL/ACB/WAREA                            *
+*    R10=   ADDRESS OF PFX/CTR                                        *
+***********************************************************************
+ZVSAM19C SUBENTRY
+         LR    R5,R1              R5=CBMR ADDRESS
+         USING CBMR,R5
+         IILF  R0,C'CBMR'         R0=CBMR EYECATCHER
+         C     R0,CBMREYE         IS IT A CBMR ?
+         JNE   ERR0404            ERROR IF NOT
+         LLC   R3,CBMRVRBS        R3=NO. OF VERBS
+         LA    R4,CBMRBODY        R4=ADDRESS OF VERBS
+         LA    R7,0(R3,R4)        R7=ADDRESS OF FIELDS
+         TM    CBMRREQ,CBMRSHOW   SHOWCB ?
+         JNO   NOTSHOW            EXIT IF NOT
+**********
+* SHOWCB *
+**********
+* LENGTH CHECK
+* NOTE: LENGTH CHECK IS DONE IN THE MACRO, THIS IS EXTRA PROTECTION
+         AHI   R3,-2              -2 FOR LENGTH,AREA
+         TM    CBMRREQ,CBMRRPL+CBMRXLST+CBMRACB NO BLOCK ?
+         JZ    SHWNOBK2           EXIT IF NO BLOCK
+         AHI   R3,-1              -1 FOR BLOCK
+SHWNOBK2 DS    0H
+         SLL   R3,2               R3=NO. OF FIELDS*4
+* CHECK FOR 8-BYTE FIELDS
+         LLC   R0,CBMRVRBS        R0=NO. OF VERBS
+SHWLOOP8 DS    0H
+         CLI   0(R4),X'E0'        8-BYTE FIELD ?
+         JL    SHWNOT8            EXIT IF NOT
+         AHI   R3,4               BUMP LENGTH
+SHWNOT8  DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         BRCT  R0,SHWLOOP8        LOOP
+*
+         LA    R4,CBMRBODY        R4=ADDRESS OF VERBS
+         C     R3,0(R7)           ENOUGH ROOM ?
+         JH    ERR0409            ERROR IF NOT
+         L     R8,4(R7)           R8=AREA ADDRESS
+         LLC   R3,CBMRVRBS        R3=NO. OF VERBS
+* BLOCK TYPE
+         TM    CBMRREQ,CBMRRPL+CBMRXLST+CBMRACB NO BLOCK ?
+         JZ    SHWNBK             EXIT IF IT IS
+         TM    CBMRREQ,CBMRXLST   EXLST ?
+         JO    SHWEXL             EXIT IF IT IS
+         TM    CBMRREQ,CBMRRPL    RPL ?
+         JO    SHWRPL             EXIT IF IT IS
+         TM    CBMRREQ,CBMRACB    ACB ?
+         JO    SHWACB             EXIT IF IT IS
+         J     ERR0800            EXIT TO RC=8 ERROR
+*
+SHWNBK   DS    0H
+*******************
+* SHOWCB          *
+* NO BLOCK FIELDS *
+*******************
+         CLI   0(R4),CBMRXL_XLSTLEN EXLST LENGTH ?
+         JNE   SHWNBV02           EXIT IF NOT
+         MVHI  0(R8),EXLSTLEN     MOVE EXLST LENGTH
+         J     SHWNBINA           EXIT
+*
+SHWNBV02 DS   0H
+         CLI   0(R4),CBMRRPL_RPLLEN RPL LENGTH ?
+         JNE   SHWNBV03           EXIT IF NOT
+         MVHI  0(R8),RPLLEN       MOVE RPL LENGTH
+         J     SHWNBINA           EXIT
+*
+SHWNBV03 DS    0H
+         CLI   0(R4),CBMRACB_ACBLEN ACB LENGTH ?
+         JNE   SHWNBINV           EXIT IF NOT
+         MVHI  0(R8),ACB_LEN      MOVE ACB LENGTH
+SHWNBINA DS    0H
+         AHI   R8,4               BUMP AREA POINTER
+SHWNBINV DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         BRCT  R3,SHWNBK          LOOP
+*
+         J     EXIT0              EXIT
+*
+SHWEXL   DS    0H
+****************
+* SHOWCB       *
+* EXLST FIELDS *
+****************
+         LA    R9,9(R5,R3)        R9=CBMR FIELD VALUES
+         L     R9,8(R9)           R9=EXLST ADDRESS
+         USING IHAEXLST,R9
+         IILF  R0,C'zLST'         R0=EXLST EYECATCHER
+         C     R0,EXLEYE          IS IT AN EXLST ?
+         JNE   ERR0404            ERROR IF NOT
+SHWEXLP  DS    0H
+         CLI   0(R4),CBMRXL_EODAD EXLST EODAD ADDRESS ?
+         JNE   SHWEXV02           EXIT IF NOT
+         MVC   0(4,R8),EXLEODP    MOVE EODAD ADDRESS
+         J     SHWEXINA           EXIT
+*
+SHWEXV02 DS    0H
+         CLI   0(R4),CBMRXL_XLSTLEN EXLST LENGTH ?
+         JNE   SHWEXV03           EXIT IF NOT
+         MVHI  0(R8),EXLSTLEN     MOVE EXLST LENGTH
+         J     SHWEXINA           EXIT
+*
+SHWEXV03 DS    0H
+         CLI   0(R4),CBMRRPL_RPLLEN RPL LENGTH ?
+         JNE   SHWEXV04           EXIT IF NOT
+         MVHI  0(R8),RPLLEN       MOVE RPL LENGTH
+         J     SHWEXINA           EXIT
+*
+SHWEXV04 DS    0H
+         CLI   0(R4),CBMRACB_ACBLEN ACB LENGTH ?
+         JNE   SHWEXV05           EXIT IF NOT
+         MVHI  0(R8),ACB_LEN      MOVE ACB LENGTH
+         J     SHWEXINA           EXIT
+*
+SHWEXV05 DS    0H
+         CLI   0(R4),CBMRXL_LERAD EXLST LERAD ADDRESS ?
+         JNE   SHWEXV06           EXIT IF NOT
+         MVC   0(4,R8),EXLLERP    MOVE LERAD ADDRESS
+         J     SHWEXINA           EXIT
+*
+SHWEXV06 DS    0H
+         CLI   0(R4),CBMRXL_SYNAD EXLST SYNAD ADDRESS ?
+         JNE   SHWEXV07           EXIT IF NOT
+         MVC   0(4,R8),EXLSYNP    MOVE SYNAD ADDRESS
+         J     SHWEXINA           EXIT
+*
+SHWEXV07 DS    0H
+         CLI   0(R4),CBMRXL_JRNAD EXLST JRNAD ADDRESS ?
+         JNE   SHWEXINV           EXIT IF NOT
+         MVHI  0(R8),0            MOVE ZERO JRNAD ADDRESS
+SHWEXINA DS    0H
+         AHI   R8,4               BUMP AREA POINTER
+SHWEXINV DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         BRCT  R3,SHWEXLP         LOOP
+*
+         J     EXIT0              EXIT
+         DROP  R9
+*
+SHWRPL   DS    0H
+**************
+* SHOWCB     *
+* RPL FIELDS *
+**************
+         LA    R9,9(R5,R3)        R9=CBMR FIELD VALUES
+         L     R9,8(R9)           R9=RPL ADDRESS
+         USING IHARPL,R9
+         IILF  R0,C'zRPL'         R0=RPL EYECATCHER
+         C     R0,RPLEYE          IS IT AN RPL ?
+         JNE   ERR0404            ERROR IF NOT
+SHWRPLP  DS    0H
+         CLI   0(R4),CBMRRPL_ACB  RPL ACB ADDRESS ?
+         JNE   SHWRPV02           EXIT IF NOT
+         MVC   0(4,R8),RPLDACB    MOVE ACB ADDRESS
+         J     SHWRPINA           EXIT
+*
+SHWRPV02 DS    0H
+* ACCESS FIELD VIA ACB AND DATA PREFIX BLOCK, ERROR IF ACB NOT OPEN
+         CLI   0(R4),CBMRRPL_AIXPC RPL AIXPC ?
+         JNE   SHWRPV03           EXIT IF NOT
+         ICM   R10,15,RPLDACB     R10=ACB ADDRESS
+         JZ    ERR0401            ERROR IF ZERO
+         USING IHAACB,R10
+         ICM   R10,15,ACBPFX      R10=DATA PREFIX BLOCK ADDRESS
+         JZ    ERR0401            ERROR IF ZERO
+         AHI   R10,BHDRLENG       MISS HEADER BLOCK
+         USING ZVSAMPFX,R10
+         MVHI  0(R8),0            CLEAR AREA
+         MVC   3(1,R8),PFXAIXN    MOVE AIXPC
+         DROP  R10
+         J     SHWRPINA           EXIT
+*
+SHWRPV03 DS    0H
+         CLI   0(R4),CBMRRPL_RECAREA RPL AREA ADDRESS ?
+         JNE   SHWRPV04           EXIT IF NOT
+         MVC   0(4,R8),RPLAREA    MOVE RECAREA ADDRESS
+         J     SHWRPINA           EXIT
+*
+SHWRPV04 DS    0H
+         CLI   0(R4),CBMRRPL_AREALEN RPL AREA LENGTH ?
+         JNE   SHWRPV05           EXIT IF NOT
+         MVC   0(4,R8),RPLAREAL   MOVE AREA LENGTH
+         J     SHWRPINA           EXIT
+*
+SHWRPV05 DS    0H
+         CLI   0(R4),CBMRRPL_ARG  RPL ARG ADDRESS ?
+         JNE   SHWRPV06           EXIT IF NOT
+         MVC   0(4,R8),RPLARG     MOVE ARG ADDRESS
+         J     SHWRPINA           EXIT
+*
+SHWRPV06 DS    0H
+         CLI   0(R4),CBMRRPL_ECB  RPL ECB ADDRESS ?
+         JNE   SHWRPV07           EXIT IF NOT
+         MVC   0(4,R8),RPLECB     MOVE ECB ADDRESS
+         J     SHWRPINA           EXIT
+*
+SHWRPV07 DS    0H
+         CLI   0(R4),CBMRRPL_FDBK RPL REASON CODE ?
+         JNE   SHWRPV08           EXIT IF NOT
+         MVHI  0(R8),0            CLEAR AREA
+         MVC   3(1,R8),RPLERRCD   MOVE REASON CODE
+         J     SHWRPINA           EXIT
+*
+SHWRPV08 DS    0H
+         CLI   0(R4),CBMRRPL_FTNCD RPL FUNCTION CODE ?
+         JNE   SHWRPV09           EXIT IF NOT
+         MVHI  0(R8),0            CLEAR AREA
+         MVC   3(1,R8),RPLCMPON   MOVE COMPONENT CODE
+         J     SHWRPINA           EXIT
+*
+SHWRPV09 DS    0H
+         CLI   0(R4),CBMRRPL_KEYLEN RPL KEY LENGTH ?
+         JNE   SHWRPV10           EXIT IF NOT
+         MVHI  0(R8),0            CLEAR AREA
+         MVC   3(1,R8),RPLKEYLN   MOVE KEY LENGTH
+         J     SHWRPINA           EXIT
+*
+SHWRPV10 DS    0H
+         CLI   0(R4),CBMRRPL_MSGAREA RPL MESSAGE AREA ADDRESS ?
+         JNE   SHWRPV11           EXIT IF NOT
+         MVC   0(4,R8),RPLMSGAR   MOVE MESSAGE AREA ADDRESS
+         J     SHWRPINA           EXIT
+*
+SHWRPV11 DS    0H
+         CLI   0(R4),CBMRRPL_MSGLEN RPL MESSAGE AREA LENGTH ?
+         JNE   SHWRPV12           EXIT IF NOT
+         MVHI  0(R8),0            CLEAR AREA
+         MVC   2(2,R8),RPLMSGLN   MOVE MESSAGE AREA LENGTH
+         J     SHWRPINA           EXIT
+*
+SHWRPV12 DS    0H
+         CLI   0(R4),CBMRRPL_NEXTRPL RPL NEXT RPL ADDRESS ?
+         JNE   SHWRPV13           EXIT IF NOT
+         MVC   0(4,R8),RPLNXTRP   MOVE NEXT RPL ADDRESS
+         J     SHWRPINA           EXIT
+*
+SHWRPV13 DS    0H
+         CLI   0(R4),CBMRRPL_RBA  RPL RBA ?
+         JNE   SHWRPV14           EXIT IF NOT
+         CHSI  RPLCXRBA,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),RPLCXRBA+4 MOVE RBA
+         J     SHWRPINA           EXIT
+*
+SHWRPV14 DS    0H
+         CLI   0(R4),CBMRRPL_RECLEN RPL RECORD LENGTH ?
+         JNE   SHWRPV15           EXIT IF NOT
+         MVC   0(4,R8),RPLRECLN   MOVE RECORD LENGTH
+         J     SHWRPINA           EXIT
+*
+SHWRPV15 DS    0H
+         CLI   0(R4),CBMRXL_XLSTLEN EXLST LENGTH ?
+         JNE   SHWRPV16           EXIT IF NOT
+         MVHI  0(R8),EXLSTLEN     MOVE EXLST LENGTH
+         J     SHWRPINA           EXIT
+*
+SHWRPV16 DS    0H
+         CLI   0(R4),CBMRRPL_TRANSID RPL TRANSID ?
+         JNE   SHWRPV17           EXIT IF NOT
+         MVHI  0(R8),-1           MOVE FOXES FOR TRANSID
+         J     SHWRPINA           EXIT
+*
+SHWRPV17 DS    0H
+         CLI   0(R4),CBMRRPL_XRBA RPL XRBA ?
+         JNE   SHWRPV18           EXIT IF NOT
+         MVC   0(8,R8),RPLCXRBA   MOVE XRBA
+         J     SHWRPINA           EXIT
+*
+SHWRPV18 DS    0H
+         CLI   0(R4),CBMRRPL_RPLLEN RPL LENGTH ?
+         JNE   SHWRPV19           EXIT IF NOT
+         MVHI  0(R8),RPLLEN       MOVE RPL LENGTH
+         J     SHWRPINA           EXIT
+*
+SHWRPV19 DS    0H
+         CLI   0(R4),CBMRACB_ACBLEN ACB LENGTH ?
+         JNE   SHWRPINV           EXIT IF NOT
+         MVHI  0(R8),ACB_LEN      MOVE ACB LENGTH
+SHWRPINA DS    0H
+         AHI   R8,4               BUMP AREA POINTER
+         CLI   0(R4),X'E0'        8-BYTE FIELD ?
+         JL    SHWRPINV           EXIT IF NOT
+         AHI   R8,4               BUMP AREA POINTER
+SHWRPINV DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         BRCT  R3,SHWRPLP         LOOP
+*
+         J     EXIT0              EXIT
+         DROP  R9
+*
+SHWACB   DS    0H
+**************
+* SHOWCB     *
+* ACB FIELDS *
+**************
+* SOME VERBS HAVE VALUES IN EITHER DATA OR INDEX PREFIX BLOCKS
+         LA    R9,9(R5,R3)        R9=CBMR FIELD VALUES
+         L     R9,8(R9)           R9=ACB ADDRESS
+         USING IHAACB,R9
+         IILF  R0,C'zACB'         R0=ACB EYECATCHER
+         C     R0,ACBEYE          IS IT AN ACB ?
+         JNE   ERR0404            ERROR IF NOT
+         L     R10,ACBPFX         R10=DATA PREFIX BLOCK ADDRESS
+         TM    CBMRRMOD,CBMROBJD  OBJECT=DATA ?
+         JO    SHWACDAT           EXIT IF IT IS
+         L     R10,ACBXPFX        R10=INDEX PREFIX BLOCK ADDRESS
+SHWACDAT DS    0H
+         AHI   R10,BHDRLENG       MISS HEADER BLOCK
+         USING ZVSAMPFX,R10
+         USING ZVSAMCTR,ZVSAMPFX+PFXLENG
+*
+SHWACLP  DS    0H
+         CLI   0(R4),CBMRACB_ACBLEN ACB LENGTH ?
+         JNE   SHWACV02           EXIT IF NOT
+         MVHI  0(R8),ACB_LEN      MOVE ACB LENGTH
+         J     SHWACINA           EXIT
+*
+SHWACV02 DS    0H
+         CLI   0(R4),CBMRACB_AVSPAC AVSPAC ?
+         JNE   SHWACV03           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRAVSPAC,0        1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRAVSPAC+4 MOVE AVSPAC
+         J     SHWACINA           EXIT
+*
+SHWACV03 DS    0H
+         CLI   0(R4),CBMRACB_BFRFND BFRFND ?
+         JNE   SHWACV04           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNBFRFND,0       1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNBFRFND+4 MOVE BFRFND
+         J     SHWACINA           EXIT
+*
+SHWACV04 DS    0H
+         CLI   0(R4),CBMRACB_BSTRNO BSTRNO ?
+         JNE   SHWACV05           EXIT IF NOT
+         LLC   R14,ACBBSTNO       R14=BSTRNO
+         ST    R14,0(R8)          STORE BSTRNO
+         J     SHWACINA           EXIT
+*
+SHWACV05 DS    0H
+         CLI   0(R4),CBMRACB_BUFND BUFND ?
+         JNE   SHWACV06           EXIT IF NOT
+         LLH   R14,ACBBUFND       R14=BUFND
+         ST    R14,0(R8)          STORE BUFND
+         J     SHWACINA           EXIT
+*
+SHWACV06 DS    0H
+         CLI   0(R4),CBMRACB_BUFNI BUFNI ?
+         JNE   SHWACV07           EXIT IF NOT
+         LLH   R14,ACBBUFNI       R14=BUFNI
+         ST    R14,0(R8)          STORE BUFNI
+         J     SHWACINA           EXIT
+*
+SHWACV07 DS    0H
+         CLI   0(R4),CBMRACB_BUFNO BUFNO ?
+         JNE   SHWACV08           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNBUFNO,0        1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNBUFNO+4 MOVE BUFNO
+         J     SHWACINA           EXIT
+*
+SHWACV08 DS    0H
+         CLI   0(R4),CBMRACB_BUFNOL BUFNOL ?
+         JNE   SHWACV09           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO
+         J     SHWACINA           EXIT
+*
+SHWACV09 DS    0H
+         CLI   0(R4),CBMRACB_BUFRDS BUFRDS ?
+         JNE   SHWACV10           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNBUFRDS,0       1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNBUFRDS+4 MOVE BUFRDS
+         J     SHWACINA           EXIT
+*
+SHWACV10 DS    0H
+         CLI   0(R4),CBMRACB_BUFSP BUFSP ?
+         JNE   SHWACV11           EXIT IF NOT
+         MVC   0(4,R8),ACBBUFSP   MOVE BUFSP
+         J     SHWACINA           EXIT
+*
+SHWACV11 DS    0H
+         CLI   0(R4),CBMRACB_BUFUSE BUFUSE ?
+         JNE   SHWACV12           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNBUFUSE,0       1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNBUFUSE+4 MOVE BUFUSE
+         J     SHWACINA           EXIT
+*
+SHWACV12 DS    0H
+         CLI   0(R4),CBMRACB_CDTASZ CDTASZ ?
+         JNE   SHWACV13           EXIT IF NOT
+         MVGHI 0(R8),0            RETURN ZERO
+         J     SHWACINA           EXIT
+*
+SHWACV13 DS    0H
+         CLI   0(R4),CBMRACB_CINV CINV ?
+         JNE   SHWACV14           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(4,R8),PFXBLKSZ   MOVE BLOCKSIZE
+         J     SHWACINA           EXIT
+*
+SHWACV14 DS    0H
+         CLI   0(R4),CBMRACB_CIPCA CIPCA ?
+         JNE   SHWACV15           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO
+         J     SHWACINA           EXIT
+*
+SHWACV15 DS    0H
+         CLI   0(R4),CBMRACB_DDNM DDNAME ?
+         JNE   SHWACV16           EXIT IF NOT
+         MVC   0(8,R8),ACBDDNM    MOVE DDNAME
+         J     SHWACINA           EXIT
+*
+SHWACV16 DS    0H
+         CLI   0(R4),CBMRACB_ENDRBA ENDRBA ?
+         JNE   SHWACV17           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRENDRBA,0        1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRENDRBA+4 MOVE ENDRBA
+         J     SHWACINA           EXIT
+*
+SHWACV17 DS    0H
+         CLI   0(R4),CBMRACB_ERROR ERROR ?
+         JNE   SHWACV18           EXIT IF NOT
+         LLC   R14,ACBERFLG       R14=ACBERFLG
+         ST    R14,0(R8)          STORE ACBERFLG
+         J     SHWACINA           EXIT
+*
+SHWACV18 DS    0H
+         CLI   0(R4),CBMRXL_XLSTLEN EXLST LENGTH ?
+         JNE   SHWACV19           EXIT IF NOT
+         MVHI  0(R8),EXLSTLEN     MOVE EXLST LENGTH
+         J     SHWACINA           EXIT
+*
+SHWACV19 DS    0H
+         CLI   0(R4),CBMRACB_EXLST EXLST ?
+         JNE   SHWACV20           EXIT IF NOT
+         MVC   0(4,R8),ACBEXLST   MOVE EXLST
+         J     SHWACINA           EXIT
+*
+SHWACV20 DS    0H
+         CLI   0(R4),CBMRACB_FS   FS ?
+         JNE   SHWACV21           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO
+         J     SHWACINA           EXIT
+*
+SHWACV21 DS    0H
+         CLI   0(R4),CBMRACB_HALCRBA HALCRBA ?
+         JNE   SHWACV22           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRHALCRBA,0       1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRHALCRBA+4 MOVE HALCRBA
+         J     SHWACINA           EXIT
+*
+SHWACV22 DS    0H
+         CLI   0(R4),CBMRACB_HLRBA HLRBA ?
+         JNE   SHWACV23           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRHLRBA,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         TM    CBMRRMOD,CBMROBJD  OBJECT=DATA ?
+         JO    ERR0401            ERROR IF IT IS
+         MVC   0(4,R8),CTRHLRBA+4 MOVE HLRBA
+         J     SHWACINA           EXIT
+*
+SHWACV23 DS    0H
+         CLI   0(R4),CBMRACB_KEYLEN KEYLEN ?
+         JNE   SHWACV24           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(4,R8),PFXKYLEN   MOVE KEYLEN
+         J     SHWACINA           EXIT
+*
+SHWACV24 DS    0H
+         CLI   0(R4),CBMRACB_LEVEL LEVEL ?
+         JNE   SHWACV25           EXIT IF NOT
+         LA    R14,ACBVER         R14=ACBVER ADDRESS
+         ST    R14,0(R8)          SAVE IT
+         MVHI  4(R8),1            SAVE LENGTH=1
+         J     SHWACINA           EXIT
+*
+SHWACV25 DS    0H
+         CLI   0(R4),CBMRACB_LOKEY LOKEY ?
+         JNE   SHWACV26           EXIT IF NOT
+* FOXES IF:
+*    NON-KSDS
+*    KSDS INDEX
+*    KSDS DATA BUT EMPTY
+         CHHSI CTRLOKEY@,-1       FOXES ?
+         JE    ERR0401            ERROR IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         LLH   R14,CTRLOKEY@      R14=OFFSET FROM HEADER
+         AHI   R14,-BHDRLENG      -HEADER LENGTH
+         LA    R14,2(R10,R14)     +PREFIX AREA ADDRESS+2(LENGTH)
+         ST    R14,0(R8)          SAVE LOKEY POINTER
+         MVC   4(4,R8),PFXKYLEN   MOVE KEYLENGTH
+         J     SHWACINA           EXIT
+*
+SHWACV26 DS    0H
+         CLI   0(R4),CBMRACB_LRECL LRECL ?
+         JNE   SHWACV27           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(4,R8),PFXRCLEN   MOVE LRECL
+         J     SHWACINA           EXIT
+*
+SHWACV27 DS    0H
+         CLI   0(R4),CBMRACB_MAREA MAREA ?
+         JNE   SHWACV28           EXIT IF NOT
+         MVHI  0(R8),-1           RETURN FOXES
+         J     SHWACINA           EXIT
+*
+SHWACV28 DS    0H
+         CLI   0(R4),CBMRACB_MLEN MLEN ?
+         JNE   SHWACV29           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO
+         J     SHWACINA           EXIT
+*
+SHWACV29 DS    0H
+         CLI   0(R4),CBMRACB_NCIS NCIS ?
+         JNE   SHWACV30           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO FOR OBJECT=INDEX
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    SHWACINA           EXIT IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNCIS,0          1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNCIS+4  MOVE NCIS
+         J     SHWACINA           EXIT
+*
+SHWACV30 DS    0H
+         CLI   0(R4),CBMRACB_NDELR NDELR ?
+         JNE   SHWACV31           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO FOR OBJECT=INDEX
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    SHWACINA           EXIT IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNDELR,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNDELR+4 MOVE NDELR
+         J     SHWACINA           EXIT
+*
+SHWACV31 DS    0H
+         CLI   0(R4),CBMRACB_NEXCP NEXCP ?
+         JNE   SHWACV32           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNEXCP,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNEXCP+4 MOVE NEXCP
+         J     SHWACINA           EXIT
+*
+SHWACV32 DS    0H
+         CLI   0(R4),CBMRACB_NEXT NEXT ?
+         JNE   SHWACV33           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(4,R8),CTRNEXT+4  MOVE NEXT (ALWAYS 1)
+         J     SHWACINA           EXIT
+*
+SHWACV33 DS    0H
+         CLI   0(R4),CBMRACB_NINSR NINSR ?
+         JNE   SHWACV34           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO FOR OBJECT=INDEX
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    SHWACINA           EXIT IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNINSR,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNINSR+4 MOVE NINSR
+         J     SHWACINA           EXIT
+*
+SHWACV34 DS    0H
+         CLI   0(R4),CBMRACB_NIXL NIXL ?
+         JNE   SHWACV35           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO FOR OBJECT=DATA
+         TM    CBMRRMOD,CBMROBJD  OBJECT=DATA ?
+         JO    SHWACINA           EXIT IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         SR    R0,R0              CLEAR R0
+         LA    R14,PFXBLVL0       R14=START OF INDEX LEVELS
+         LA    R2,16              R2=LOOP LIMIT
+SHWACNXL DS   0H
+         CGHSI 0(R14),-1          LEVEL IN USE ?
+         JE    SHWACNXK           EXIT IF NOT
+         AHI   R0,1               COUNT LEVELS IN USE
+         AHI   R14,16             BUMP INDEX LEVEL
+         BRCT  R2,SHWACNXL        LOOP
+*
+SHWACNXK DS   0H
+         ST    R0,0(R8)           SAVE NIXL
+         J     SHWACINA           EXIT
+*
+SHWACV35 DS    0H
+         CLI   0(R4),CBMRACB_NLOGR NLOGR ?
+         JNE   SHWACV36           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNLOGR,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNLOGR+4 MOVE NLOGR
+         J     SHWACINA           EXIT
+*
+SHWACV36 DS    0H
+         CLI   0(R4),CBMRACB_NRETR NRETR ?
+         JNE   SHWACV37           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO FOR OBJECT=INDEX
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    SHWACINA           EXIT IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNRETR,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNRETR+4 MOVE NRETR
+         J     SHWACINA           EXIT
+*
+SHWACV37 DS    0H
+         CLI   0(R4),CBMRACB_NSSS NSSS ?
+         JNE   SHWACV38           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO
+         J     SHWACINA           EXIT
+*
+SHWACV38 DS    0H
+         CLI   0(R4),CBMRACB_NUIW NUIW ?
+         JNE   SHWACV39           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNNUIW,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNNUIW+4 MOVE NUIW
+         J     SHWACINA           EXIT
+*
+SHWACV39 DS    0H
+         CLI   0(R4),CBMRACB_NUPDR NUPDR ?
+         JNE   SHWACV40           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNUPDR,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNUPDR+4 MOVE NUPDR
+         J     SHWACINA           EXIT
+*
+SHWACV40 DS    0H
+         CLI   0(R4),CBMRACB_PASSWD PASSWD ?
+         JNE   SHWACV41           EXIT IF NOT
+         MVC   0(4,R8),ACBPASSW   MOVE PASSWD POINTER
+         J     SHWACINA           EXIT
+*
+SHWACV41 DS    0H
+         CLI   0(R4),CBMRACB_RELEASE RELEASE ?
+         JNE   SHWACV42           EXIT IF NOT
+         LA    R14,ACBVER         R14=ACBVER ADDRESS
+         ST    R14,0(R8)          SAVE IT
+         MVHI  4(R8),1            SAVE LENGTH=1
+         J     SHWACINA           EXIT
+*
+SHWACV42 DS    0H
+         CLI   0(R4),CBMRACB_RMODE31 RMODE31 ?
+         JNE   SHWACV43           EXIT IF NOT
+         MVHI  0(R8),0            ASSUME NONE
+         TM    ACBOFLGS,ACBR31B+ACBR31C ANY RMODE31 ?
+         JZ    SHWACINA           EXIT IF NONE
+         MVHI  0(R8),3            ASSUME ALL
+         TM    ACBOFLGS,ACBR31B+ACBR31C BOTH BUFF+CB ?
+         JO    SHWACINA           EXIT IF ALL
+         MVHI  0(R8),1            ASSUME BUFF
+         TM    ACBOFLGS,ACBR31B   ONLY BUFF ?
+         JO    SHWACINA           EXIT IF BUFF
+         MVHI  0(R8),2            SET ONLY CB
+         J     SHWACINA           EXIT
+*
+SHWACV43 DS    0H
+         CLI   0(R4),CBMRRPL_RPLLEN RPL LENGTH ?
+         JNE   SHWACV44           EXIT IF NOT
+         MVHI  0(R8),RPLLEN       MOVE RPL LENGTH
+         J     SHWACINA           EXIT
+*
+SHWACV44 DS    0H
+         CLI   0(R4),CBMRACB_RKP  RKP ?
+         JNE   SHWACV45           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(4,R8),PFXKYOFF   MOVE RKP
+         J     SHWACINA           EXIT
+*
+SHWACV45 DS    0H
+         CLI   0(R4),CBMRACB_SDTASZ SDTASZ ?
+         JNE   SHWACV46           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRSDTASZ  MOVE SDTASZ
+         J     SHWACINA           EXIT
+*
+SHWACV46 DS    0H
+         CLI   0(R4),CBMRACB_SHRPL SHRPL ?
+         JNE   SHWACV47           EXIT IF NOT
+         LLC   R14,ACBSHRP        R14=ACBSHRP
+         ST    R14,0(R8)          STORE ACBSHRP
+         J     SHWACINA           EXIT
+*
+SHWACV47 DS    0H
+         CLI   0(R4),CBMRACB_STMST STMST ?
+         JNE   SHWACV48           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRSTMST   MOVE STMST
+         J     SHWACINA           EXIT
+*
+SHWACV48 DS    0H
+         CLI   0(R4),CBMRACB_STRMAX STRMAX ?
+         JNE   SHWACV49           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRSTRMAX,0        1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRSTRMAX+4 MOVE STRMAX
+         J     SHWACINA           EXIT
+*
+SHWACV49 DS    0H
+         CLI   0(R4),CBMRACB_STRNO STRNO ?
+         JNE   SHWACV50           EXIT IF NOT
+         LLC   R14,ACBSTRNO       R14=ACBSTRNO
+         ST    R14,0(R8)          STORE ACBSTRNO
+         J     SHWACINA           EXIT
+*
+SHWACV50 DS    0H
+         CLI   0(R4),CBMRACB_UIW  UIW ?
+         JNE   SHWACV51           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNUIW,0          1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         MVC   0(4,R8),CTRNUIW+4  MOVE UIW
+         J     SHWACINA           EXIT
+*
+SHWACV51 DS    0H
+         CLI   0(R4),CBMRACB_XAVSPAC AVSPAC ?
+         JNE   SHWACV52           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRAVSPAC  MOVE AVSPAC
+         J     SHWACINA           EXIT
+*
+SHWACV52 DS    0H
+         CLI   0(R4),CBMRACB_XBFRFND BFRFND ?
+         JNE   SHWACV53           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNBFRFND MOVE BFRFND
+         J     SHWACINA           EXIT
+*
+SHWACV53 DS    0H
+         CLI   0(R4),CBMRACB_XBUFNO BUFNO ?
+         JNE   SHWACV54           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNBUFNO  MOVE BUFNO
+         J     SHWACINA           EXIT
+*
+SHWACV54 DS    0H
+         CLI   0(R4),CBMRACB_XBUFRDS BUFRDS ?
+         JNE   SHWACV55           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNBUFRDS MOVE BUFRDS
+         J     SHWACINA           EXIT
+*
+SHWACV55 DS    0H
+         CLI   0(R4),CBMRACB_XBUFUSE BUFUSE ?
+         JNE   SHWACV56           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNBUFUSE MOVE BUFUSE
+         J     SHWACINA           EXIT
+*
+SHWACV56 DS    0H
+         CLI   0(R4),CBMRACB_XENDRBA ENDRBA ?
+         JNE   SHWACV57           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRENDRBA  MOVE ENDRBA
+         J     SHWACINA           EXIT
+*
+SHWACV57 DS    0H
+         CLI   0(R4),CBMRACB_XHALCRBA HALCRBA ?
+         JNE   SHWACV58           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRHALCRBA MOVE HALCRBA
+         J     SHWACINA           EXIT
+*
+SHWACV58 DS    0H
+         CLI   0(R4),CBMRACB_XHLRBA HLRBA ?
+         JNE   SHWACV59           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         TM    CBMRRMOD,CBMROBJD  OBJECT=DATA ?
+         JO    ERR0401            ERROR IF IT IS
+         MVC   0(8,R8),CTRHLRBA   MOVE HLRBA
+         J     SHWACINA           EXIT
+*
+SHWACV59 DS    0H
+         CLI   0(R4),CBMRACB_XNCIS NCIS ?
+         JNE   SHWACV60           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO FOR OBJECT=INDEX
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    SHWACINA           EXIT IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNCIS    MOVE NCIS
+         J     SHWACINA           EXIT
+*
+SHWACV60 DS    0H
+         CLI   0(R4),CBMRACB_XNDELR NDELR ?
+         JNE   SHWACV61           EXIT IF NOT
+         MVGHI 0(R8),0            RETURN ZERO FOR OBJECT=INDEX
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    SHWACINA           EXIT IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNDELR   MOVE NDELR
+         J     SHWACINA           EXIT
+*
+SHWACV61 DS    0H
+         CLI   0(R4),CBMRACB_XNEXCP NEXCP ?
+         JNE   SHWACV62           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNEXCP   MOVE NEXCP
+         J     SHWACINA           EXIT
+*
+SHWACV62 DS    0H
+         CLI   0(R4),CBMRACB_XNINSR NINSR ?
+         JNE   SHWACV63           EXIT IF NOT
+         MVGHI 0(R8),0            RETURN ZERO FOR OBJECT=INDEX
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    SHWACINA           EXIT IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNINSR   MOVE NINSR
+         J     SHWACINA           EXIT
+*
+SHWACV63 DS    0H
+         CLI   0(R4),CBMRACB_XNLOGR NLOGR ?
+         JNE   SHWACV64           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNLOGR   MOVE NLOGR
+         J     SHWACINA           EXIT
+*
+SHWACV64 DS    0H
+         CLI   0(R4),CBMRACB_XNRETR NRETR ?
+         JNE   SHWACV65           EXIT IF NOT
+         MVHI  0(R8),0            RETURN ZERO FOR OBJECT=INDEX
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    SHWACINA           EXIT IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNRETR   MOVE NRETR
+         J     SHWACINA           EXIT
+*
+SHWACV65 DS    0H
+         CLI   0(R4),CBMRACB_XNUIW NUIW ?
+         JNE   SHWACV66           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNNUIW   MOVE NNUIW
+         J     SHWACINA           EXIT
+*
+SHWACV66 DS    0H
+         CLI   0(R4),CBMRACB_XNUPDR NUPDR ?
+         JNE   SHWACV67           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNUPDR   MOVE NUPDR
+         J     SHWACINA           EXIT
+*
+SHWACV67 DS    0H
+         CLI   0(R4),CBMRACB_XSTRMAX STRMAX ?
+         JNE   SHWACV68           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRSTRMAX  MOVE STRMAX
+         J     SHWACINA           EXIT
+*
+SHWACV68 DS    0H
+         CLI   0(R4),CBMRACB_XUIW UIW ?
+         JNE   SHWACINV           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         MVC   0(8,R8),CTRNUIW    MOVE NUIW
+SHWACINA DS    0H
+         AHI   R8,4               BUMP AREA POINTER
+         CLI   0(R4),X'E0'        8-BYTE FIELD ?
+         JL    SHWACINV           EXIT IF NOT
+         AHI   R8,4               BUMP AREA POINTER
+SHWACINV DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         BRCT  R3,SHWACLP         LOOP
+*
+         J     EXIT0              EXIT
+         DROP  R9
+*
+NOTSHOW  DS    0H
+         TM    CBMRREQ,CBMRMOD    MODCB ?
+         JNO   NOTMOD             EXIT IF NOT
+*********
+* MODCB *
+*********
+* BLOCK TYPE
+         TM    CBMRREQ,CBMRXLST   EXLST ?
+         JO    MODEXL             EXIT IF IT IS
+         TM    CBMRREQ,CBMRRPL    RPL ?
+         JO    MODRPL             EXIT IF IT IS
+         TM    CBMRREQ,CBMRACB    ACB ?
+         JO    MODACB             EXIT IF IT IS
+         J     ERR0800            EXIT TO RC=8 ERROR
+*
+MODEXL   DS    0H
+****************
+* MODCB        *
+* EXLST FIELDS *
+****************
+         L     R9,0(R7)           R9=EXLST ADDRESS
+         USING IHAEXLST,R9
+         AHI   R4,1               BUMP OVER EXLST VERB
+         AHI   R7,4               BUMP OVER EXLST FIELD
+         AHI   R3,-1              1 FEWER VERB
+         IILF  R0,C'zLST'         R0=EXLST EYECATCHER
+         C     R0,EXLEYE          IS IT AN EXLST ?
+         JNE   ERR0404            ERROR IF NOT
+MODEXLP  DS    0H
+         CLI   0(R4),CBMRXL_EODAD EXLST EODAD ADDRESS ?
+         JNE   MODEXV02           EXIT IF NOT
+         MVC   EXLEODP,0(R7)      MOVE EODAD ADDRESS
+         OI    EXLEODF,EXLEODS    SET EODAD PRESENT
+         J     MODEXINA           EXIT
+*
+MODEXV02 DS    0H
+         CLI   0(R4),CBMRXL_EOD_MODS EXLST EODAD MODS ?
+         JNE   MODEXV03           EXIT IF NOT
+* &EOD_A&EOD_N BOTH COULD BE OFF BUT NOT ON
+         TM    0(R7),CBMRXL_EOD_MODA IS IT MOD A ?
+         JNO   MODEODN            EXIT IF NOT
+         OI    EXLEODF,EXLEODA    SET EODAD ACTIVE
+         J     MODEXINA           EXIT
+*
+MODEODN  DS    0H
+         TM    0(R7),CBMRXL_EOD_MODN IS IT MOD N ?
+         JNO   MODEXINA           EXIT IF NOT
+         NI    EXLEODF,255-EXLEODA SET EODAD INACTIVE
+         J     MODEXINA           EXIT
+*
+MODEXV03 DS    0H
+         CLI   0(R4),CBMRXL_LERAD EXLST LERAD ADDRESS ?
+         JNE   MODEXV04           EXIT IF NOT
+         MVC   EXLLERP,0(R7)      MOVE LERAD ADDRESS
+         OI    EXLLERF,EXLLERS    SET LERAD PRESENT
+         J     MODEXINA           EXIT
+*
+MODEXV04 DS    0H
+         CLI   0(R4),CBMRXL_LER_MODS EXLST LERAD MODS ?
+         JNE   MODEXV05           EXIT IF NOT
+* &LER_A&LER_N BOTH COULD BE OFF BUT NOT ON
+         TM    0(R7),CBMRXL_LER_MODA IS IT MOD A ?
+         JNO   MODLERN            EXIT IF NOT
+         OI    EXLLERF,EXLLERA    SET LERAD ACTIVE
+         J     MODEXINA           EXIT
+*
+MODLERN  DS    0H
+         TM    0(R7),CBMRXL_LER_MODN IS IT MOD N ?
+         JNO   MODEXINA           EXIT IF NOT
+         NI    EXLLERF,255-EXLLERA SET LERAD INACTIVE
+         J     MODEXINA           EXIT
+*
+MODEXV05 DS    0H
+         CLI   0(R4),CBMRXL_SYNAD EXLST SYNAD ADDRESS ?
+         JNE   MODEXV06           EXIT IF NOT
+         MVC   EXLSYNP,0(R7)      MOVE SYNAD ADDRESS
+         OI    EXLSYNF,EXLSYNS    SET SYNAD PRESENT
+         J     MODEXINA           EXIT
+*
+MODEXV06 DS    0H
+         CLI   0(R4),CBMRXL_SYN_MODS EXLST SYNAD MODS ?
+         JNE   MODEXINA           EXIT IF NOT
+* &SYN_A&SYN_N BOTH COULD BE OFF BUT NOT ON
+         TM    0(R7),CBMRXL_SYN_MODA IS IT MOD A ?
+         JNO   MODSYNN            EXIT IF NOT
+         OI    EXLSYNF,EXLSYNA    SET SYNAD ACTIVE
+         J     MODEXINA           EXIT
+*
+MODSYNN  DS    0H
+         TM    0(R7),CBMRXL_SYN_MODN IS IT MOD N ?
+         JNO   MODEXINA           EXIT IF NOT
+         NI    EXLSYNF,255-EXLSYNA SET SYNAD INACTIVE
+MODEXINA DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         AHI   R7,4               BUMP FIELDS POINTER
+         BRCT  R3,MODEXLP         LOOP
+*
+         J     EXIT0              EXIT
+         DROP  R9
+*
+MODRPL   DS    0H
+**************
+* MODCB      *
+* RPL FIELDS *
+**************
+         L     R9,0(R7)           R9=RPL ADDRESS
+         USING IHARPL,R9
+         AHI   R4,1               BUMP OVER RPL VERB
+         AHI   R7,4               BUMP OVER RPL FIELD
+         AHI   R3,-1              1 FEWER VERB
+         IILF  R0,C'zRPL'         R0=RPL EYECATCHER
+         C     R0,RPLEYE          IS IT AN RPL ?
+         JNE   ERR0404            ERROR IF NOT
+MODRPLP  DS    0H
+         CLI   0(R4),CBMRRPL_ACB  RPL ACB ADDRESS ?
+         JNE   MODRPV02           EXIT IF NOT
+         MVC   RPLDACB,0(R7)      MOVE ACB ADDRESS
+         J     MODRPINA           EXIT
+*
+MODRPV02 DS    0H
+         CLI   0(R4),CBMRRPL_RECAREA RPL AREA ADDRESS ?
+         JNE   MODRPV03           EXIT IF NOT
+         MVC   RPLAREA,0(R7)      MOVE AREA ADDRESS
+         J     MODRPINA           EXIT
+*
+MODRPV03 DS    0H
+         CLI   0(R4),CBMRRPL_AREALEN RPL AREA LENGTH ?
+         JNE   MODRPV04           EXIT IF NOT
+         MVC   RPLAREAL,0(R7)     MOVE AREA LENGTH
+         J     MODRPINA           EXIT
+*
+MODRPV04 DS    0H
+         CLI   0(R4),CBMRRPL_ARG  RPL ARG ADDRESS ?
+         JNE   MODRPV05           EXIT IF NOT
+         MVC   RPLARG,0(R7)       MOVE ARG ADDRESS
+         J     MODRPINA           EXIT
+*
+MODRPV05 DS    0H
+         CLI   0(R4),CBMRRPL_ECB  RPL ECB ADDRESS ?
+         JNE   MODRPV06           EXIT IF NOT
+         MVC   RPLECB,0(R7)       MOVE ECB ADDRESS
+         NI    RPLOPT2,255-RPLOPT2_ECB TURN OFF ECB FLAG
+         CHSI  RPLECB,0           ANY EXTERNAL ECB ?
+         JE    MODRPINA           EXIT IF NOT
+         OI    RPLOPT2,RPLOPT2_ECB TURN ON ECB FLAG
+         J     MODRPINA           EXIT
+*
+MODRPV06 DS    0H
+         CLI   0(R4),CBMRRPL_KEYLEN RPL KEY LENGTH ?
+         JNE   MODRPV07           EXIT IF NOT
+         MVC   RPLKEYLN,3(R7)     MOVE KEY LENGTH
+         J     MODRPINA           EXIT
+*
+MODRPV07 DS    0H
+         CLI   0(R4),CBMRRPL_MSGAREA RPL MESSAGE AREA ADDRESS ?
+         JNE   MODRPV08           EXIT IF NOT
+         MVC   RPLMSGAR,0(R7)     MOVE MESSAGE AREA ADDRESS
+         J     MODRPINA           EXIT
+*
+MODRPV08 DS    0H
+         CLI   0(R4),CBMRRPL_MSGLEN RPL MESSAGE AREA LENGTH ?
+         JNE   MODRPV09           EXIT IF NOT
+         MVC   RPLMSGLN,2(R7)     MOVE MESSAGE AREA LENGTH
+         J     MODRPINA           EXIT
+*
+MODRPV09 DS    0H
+         CLI   0(R4),CBMRRPL_NEXTRPL RPL NEXT RPL ADDRESS ?
+         JNE   MODRPV10           EXIT IF NOT
+         MVC   RPLNXTRP,0(R7)     MOVE NEXT RPL ADDRESS
+         J     MODRPINA           EXIT
+*
+MODRPV10 DS    0H
+         CLI   0(R4),CBMRRPL_OPTCD RPL OPTCD ?
+         JNE   MODRPV11           EXIT IF NOT
+         TM    0(R7),CBMRRPL_OPTCD1_KEY KEY=KEY ON ?
+         JNO   MODRPO02           EXIT IF NOT
+         OI    RPLOPT1,RPLOPT1_KEY KEY=KEY ON
+MODRPO02 DS    0H
+         TM    0(R7),CBMRRPL_OPTCD1_ADR ADR=KEY OFF ?
+         JNO   MODRPO03           EXIT IF NOT
+         NI    RPLOPT1,255-RPLOPT1_KEY ADR=KEY OFF
+MODRPO03 DS    0H
+         TM    0(R7),CBMRRPL_OPTCD1_SKP SKP=SEQ OFF, SKP ON ?
+         JNO   MODRPO04           EXIT IF NOT
+         NI    RPLOPT1,255-RPLOPT1_SEQ SKP=SEQ OFF
+         OI    RPLOPT1,RPLOPT1_SKP SKP=SKP ON
+MODRPO04 DS    0H
+         TM    0(R7),CBMRRPL_OPTCD1_SEQ SEQ=SEQ ON, SKP OFF ?
+         JNO   MODRPO05           EXIT IF NOT
+         OI    RPLOPT1,RPLOPT1_SEQ SEQ=SEQ ON
+         NI    RPLOPT1,255-RPLOPT1_SKP SEQ=SKP OFF
+MODRPO05 DS    0H
+         TM    0(R7),CBMRRPL_OPTCD1_DIR DIR=SEQ+SKP OFF ?
+         JNO   MODRPO06           EXIT IF NOT
+         NI    RPLOPT1,255-(RPLOPT1_SEQ+RPLOPT1_SKP) DIR=SEQ+SKP OFF
+MODRPO06 DS    0H
+         TM    0(R7),CBMRRPL_OPTCD1_ARD ARD=ARD ON ?
+         JNO   MODRPO07           EXIT IF NOT
+         OI    RPLOPT1,RPLOPT1_ARD ARD=ARD ON
+MODRPO07 DS    0H
+         TM    0(R7),CBMRRPL_OPTCD1_LRD LRD=ARD OFF ?
+         JNO   MODRPO08           EXIT IF NOT
+         NI    RPLOPT1,255-RPLOPT1_ARD LRD=ARD OFF
+MODRPO08 DS    0H
+         TM    0(R7),CBMRRPL_OPTCD1_FWD FWD=FWD ON ?
+         JNO   MODRPO09           EXIT IF NOT
+         OI    RPLOPT1,RPLOPT1_FWD FWD=FWD ON
+MODRPO09 DS    0H
+         TM    1(R7),CBMRRPL_OPTCD2_BWD BWD=FWD OFF ?
+         JNO   MODRPO10           EXIT IF NOT
+         NI    RPLOPT1,255-RPLOPT1_FWD BWD=FWD OFF
+MODRPO10 DS    0H
+         TM    1(R7),CBMRRPL_OPTCD2_SYN SYN=SYN ON ?
+         JNO   MODRPO11           EXIT IF NOT
+         OI    RPLOPT1,RPLOPT1_SYN SYN=SYN ON
+MODRPO11 DS    0H
+         TM    1(R7),CBMRRPL_OPTCD2_ASY ASY=SYN OFF ?
+         JNO   MODRPO12           EXIT IF NOT
+         NI    RPLOPT1,255-RPLOPT1_SYN ASY=SYN OFF
+MODRPO12 DS    0H
+         TM    1(R7),CBMRRPL_OPTCD2_NSP NSP=NUP OFF, NSP ON ?
+         JNO   MODRPO13           EXIT IF NOT
+         NI    RPLOPT1,255-RPLOPT1_NUP NSP=NUP OFF
+         OI    RPLOPT1,RPLOPT1_NSP NSP=NSP ON
+MODRPO13 DS    0H
+         TM    1(R7),CBMRRPL_OPTCD2_NUP NUP=NSP OFF, NUP ON ?
+         JNO   MODRPO14           EXIT IF NOT
+         NI    RPLOPT1,255-RPLOPT1_NSP NSP=NSP OFF
+         OI    RPLOPT1,RPLOPT1_NUP NUP=NUP ON
+MODRPO14 DS    0H
+         TM    1(R7),CBMRRPL_OPTCD2_UPD UPD=NUP+NSP OFF ?
+         JNO   MODRPO15           EXIT IF NOT
+         NI    RPLOPT1,255-(RPLOPT1_NUP+RPLOPT1_NSP) UPD=NUP+NSP OFF
+MODRPO15 DS    0H
+         TM    1(R7),CBMRRPL_OPTCD2_KEQ KEQ=KEQ ON ?
+         JNO   MODRPO16           EXIT IF NOT
+         OI    RPLOPT2,RPLOPT2_KEQ KEQ=KEQ ON
+MODRPO16 DS    0H
+         TM    1(R7),CBMRRPL_OPTCD2_KGE KGE=KEQ OFF ?
+         JNO   MODRPO17           EXIT IF NOT
+         NI    RPLOPT2,255-RPLOPT2_KEQ KGE=KEQ OFF
+MODRPO17 DS    0H
+         TM    2(R7),CBMRRPL_OPTCD3_FKS FKS=FKS ON ?
+         JNO   MODRPO18           EXIT IF NOT
+         OI    RPLOPT2,RPLOPT2_FKS FKS=FKS ON
+MODRPO18 DS    0H
+         TM    2(R7),CBMRRPL_OPTCD3_GEN GEN=FKS OFF ?
+         JNO   MODRPO19           EXIT IF NOT
+         NI    RPLOPT2,255-RPLOPT2_FKS GEN=FKS OFF
+MODRPO19 DS    0H
+         TM    2(R7),CBMRRPL_OPTCD3_MVE MVE=MVE ON ?
+         JNO   MODRPO20           EXIT IF NOT
+         OI    RPLOPT2,RPLOPT2_MVE MVE=MVE ON
+MODRPO20 DS    0H
+         TM    2(R7),CBMRRPL_OPTCD3_LOC LOC=MVE OFF ?
+         JNO   MODRPO21           EXIT IF NOT
+         NI    RPLOPT2,255-RPLOPT2_MVE LOC=MVE OFF
+MODRPO21 DS    0H
+         TM    2(R7),CBMRRPL_OPTCD3_RBA RBA=RBA ON ?
+         JNO   MODRPO22           EXIT IF NOT
+         OI    RPLOPT2,RPLOPT2_RBA RBA=RBA ON
+MODRPO22 DS    0H
+         TM    2(R7),CBMRRPL_OPTCD3_XRBA XRBA=RBA OFF ?
+         JNO   MODRPINA           EXIT IF NOT
+         NI    RPLOPT2,255-RPLOPT2_RBA XRBA=RBA OFF
+         J     MODRPINA           EXIT
+*
+MODRPV11 DS    0H
+         CLI   0(R4),CBMRRPL_RECLEN RPL RECORD LENGTH ?
+         JNE   MODRPINA           EXIT IF NOT
+         MVC   RPLRECLN,0(R7)     MOVE RECORD LENGTH
+MODRPINA DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         AHI   R7,4               BUMP FIELDS POINTER
+         BRCT  R3,MODRPLP         LOOP
+*
+         J     EXIT0              EXIT
+         DROP  R9
+*
+MODACB   DS    0H
+         L     R9,0(R7)           R9=ACB ADDRESS
+         USING IHAACB,R9
+         AHI   R4,1               BUMP OVER ACB VERB
+         AHI   R7,4               BUMP OVER ACB FIELD
+         AHI   R3,-1              1 FEWER VERB
+         IILF  R0,C'zACB'         R0=ACB EYECATCHER
+         C     R0,ACBEYE          IS IT AN ACB ?
+         JNE   ERR0404            ERROR IF NOT
+         TM    ACBOFLGS,ACBOPEN   IS ACB OPEN ?
+         JO    ERR040C            ERROR IF IT IS
+MODACLP  DS    0H
+         CLI   0(R4),CBMRACB_BSTRNO BSTRNO ?
+         JNE   MODACV02           EXIT IF NOT
+         MVC   ACBBSTNO,3(R7)     MOVE BSTRNO INTO ACB
+         J     MODACINA           EXIT
+*
+MODACV02 DS    0H
+         CLI   0(R4),CBMRACB_BUFND BUFND ?
+         JNE   MODACV03           EXIT IF NOT
+         MVC   ACBBUFND,2(R7)     MOVE BUFND INTO ACB
+         J     MODACINA           EXIT
+*
+MODACV03 DS    0H
+         CLI   0(R4),CBMRACB_BUFNI BUFNI ?
+         JNE   MODACV04           EXIT IF NOT
+         MVC   ACBBUFNI,2(R7)     MOVE BUFNI INTO ACB
+         J     MODACINA           EXIT
+*
+MODACV04 DS    0H
+         CLI   0(R4),CBMRACB_BUFSP BUFSP ?
+         JNE   MODACV05           EXIT IF NOT
+         MVC   ACBBUFSP,0(R7)     MOVE BUFSP INTO ACB
+         J     MODACINA           EXIT
+*
+MODACV05 DS    0H
+         CLI   0(R4),CBMRACB_DDNM DDNAME ?
+         JNE   MODACV06           EXIT IF NOT
+         MVC   ACBDDNM,0(R7)      MOVE DDNAME INTO ACB
+         J     MODACINA           EXIT
+*
+MODACV06 DS    0H
+         CLI   0(R4),CBMRACB_EXLST EXLST ?
+         JNE   MODACV07           EXIT IF NOT
+         MVC   ACBEXLST,0(R7)     MOVE EXLST INTO ACB
+         J     MODACINA           EXIT
+*
+MODACV07 DS    0H
+         CLI   0(R4),CBMRACB_RMODE31 RMODE31 ?
+         JNE   MODACV08           EXIT IF NOT
+         NI    ACBOFLGS,255-(ACBR31B+ACBR31C) TURN OFF RMODE31 BITS
+         NI    ACBMACR3,255-ACBMODE TURN OFF ACBMODE
+         CLI   0(R7),CBMRACB_RMODE31_NON RMODE31=NONE ?
+         JE    MODACINA           EXIT IF IT IS
+         CLI   0(R7),CBMRACB_RMODE31_ALL RMODE31=ALL ?
+         JNE   MODRMBUF           EXIT IF NOT
+         OI    ACBOFLGS,ACBR31B+ACBR31C TURN ON BUFF+CB
+         OI    ACBMACR3,ACBMODE   TURN ON MODE
+         J     MODACINA           EXIT
+*
+MODRMBUF DS    0H
+         CLI   0(R7),CBMRACB_RMODE31_BUF RMODE31=BUFF ?
+         JNE   MODRMCB            EXIT IF NOT
+         OI    ACBOFLGS,ACBR31B   TURN ON BUFF
+         OI    ACBMACR3,ACBMODE   TURN ON MODE
+         J     MODACINA           EXIT
+*
+MODRMCB  DS    0H
+         CLI   0(R7),CBMRACB_RMODE31_CB RMODE31=CB ?
+         JNE   MODACINA           EXIT IF NOT
+         OI    ACBOFLGS,ACBR31C   TURN ON CB
+         J     MODACINA           EXIT
+*
+MODACV08 DS    0H
+         CLI   0(R4),CBMRACB_MACRF MACRF ?
+         JNE   MODACV09           EXIT IF NOT
+         TM    0(R7),CBMRACB_MACRF1_KEY KEY=KEY ON ?
+         JNO   MODACM02           EXIT IF NOT
+         OI    ACBMACR1,ACBKEY    KEY=KEY ON
+MODACM02 DS    0H
+         TM    0(R7),CBMRACB_MACRF1_ADR ADR=ADR ON ?
+         JNO   MODACM03           EXIT IF NOT
+         OI    ACBMACR1,ACBADR    ADR=ADR ON
+MODACM03 DS    0H
+         TM    0(R7),CBMRACB_MACRF1_NDF NDF=DFR OFF ?
+         JNO   MODACM04           EXIT IF NOT
+         NI    ACBMACR3,255-ACBDFR NDF=DFR OFF
+MODACM04 DS    0H
+         TM    0(R7),CBMRACB_MACRF1_DFR DFR=DFR ON ?
+         JNO   MODACM05           EXIT IF NOT
+         OI    ACBMACR3,ACBDFR    DFR=DFR ON
+MODACM05 DS    0H
+         TM    0(R7),CBMRACB_MACRF1_SEQ SEQ=SEQ ON ?
+         JNO   MODACM06           EXIT IF NOT
+         OI    ACBMACR1,ACBSEQ    SEQ=SEQ ON
+MODACM06 DS    0H
+         TM    0(R7),CBMRACB_MACRF1_DIR DIR=DIR ON ?
+         JNO   MODACM07           EXIT IF NOT
+         OI    ACBMACR1,ACBDIR    DIR=DIR ON
+MODACM07 DS    0H
+         TM    0(R7),CBMRACB_MACRF1_SKP SKP=SKP ON ?
+         JNO   MODACM08           EXIT IF NOT
+         OI    ACBMACR2,ACBSKP    SKP=SKP ON
+MODACM08 DS    0H
+         TM    0(R7),CBMRACB_MACRF1_IN IN=IN ON ?
+         JNO   MODACM09           EXIT IF NOT
+         OI    ACBMACR1,ACBIN     IN=IN ON
+MODACM09 DS    0H
+* OUT ALLOWS IN
+         TM    1(R7),CBMRACB_MACRF2_OUT OUT=OUT ON ?
+         JNO   MODACM10           EXIT IF NOT
+         OI    ACBMACR1,ACBOUT    OUT=OUT ON
+MODACM10 DS    0H
+         TM    1(R7),CBMRACB_MACRF2_NIS NIS=SIS OFF ?
+         JNO   MODACM11           EXIT IF NOT
+         NI    ACBMACR3,255-ACBSIS NIS=SIS OFF
+MODACM11 DS    0H
+         TM    1(R7),CBMRACB_MACRF2_SIS SIS=SIS ON ?
+         JNO   MODACM12           EXIT IF NOT
+         OI    ACBMACR3,ACBSIS    SIS=SIS ON
+MODACM12 DS    0H
+         TM    1(R7),CBMRACB_MACRF2_NRM NRM=AIX OFF ?
+         JNO   MODACM13           EXIT IF NOT
+         NI    ACBMACR2,255-ACBAIX NRM=AIX OFF
+MODACM13 DS    0H
+         TM    1(R7),CBMRACB_MACRF2_AIX AIX=AIX ON ?
+         JNO   MODACM14           EXIT IF NOT
+         OI    ACBMACR2,ACBAIX    AIX=AIX ON
+MODACM14 DS    0H
+         TM    1(R7),CBMRACB_MACRF2_NSR NSR=LSR AND GSR OFF ?
+         JNO   MODACM15           EXIT IF NOT
+         NI    ACBMACR3,255-(ACBLSR+ACBGSR) NSR=LSR AND GSR OFF
+MODACM15 DS    0H
+         TM    1(R7),CBMRACB_MACRF2_LSR LSR=LSR ON, GSR OFF ?
+         JNO   MODACM16           EXIT IF NOT
+         OI    ACBMACR3,ACBLSR     LSR=LSR ON
+         NI    ACBMACR3,255-ACBGSR LSR=GSR OFF
+MODACM16 DS    0H
+         TM    1(R7),CBMRACB_MACRF2_GSR GSR=GSR ON, LSR OFF ?
+         JNO   MODACINA           EXIT IF NOT
+         OI    ACBMACR3,ACBGSR     GSR=GSR ON
+         NI    ACBMACR3,255-ACBLSR GSR=LSR OFF
+         J     MODACINA           EXIT
+*
+MODACV09 DS    0H
+         CLI   0(R4),CBMRACB_PASSWD PASSWORD ?
+         JNE   MODACV10           EXIT IF NOT
+         MVC   ACBPASSW,0(R7)     MOVE PASSWORD ADDRESS INTO ACB
+         J     MODACINA           EXIT
+*
+MODACV10 DS    0H
+         CLI   0(R4),CBMRACB_SHRPL SHAREPOOL NUMBER ?
+         JNE   MODACV11           EXIT IF NOT
+         MVC   ACBSHRP,3(R7)      MOVE SHAREPOOL INTO ACB
+         J     MODACINA           EXIT
+*
+MODACV11 DS    0H
+         CLI   0(R4),CBMRACB_STRNO STRNO ?
+         JNE   MODACINA           EXIT IF NOT
+         MVC   ACBSTRNO,3(R7)     MOVE STRNO INTO ACB
+MODACINA DS    0H
+         AHI   R7,4               BUMP FIELDS POINTER
+         CLI   0(R4),X'E0'        8-BYTE FIELD ?
+         JL    MODACINV           EXIT IF NOT
+         AHI   R7,4               BUMP FIELDS POINTER
+MODACINV DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         BRCT  R3,MODACLP         LOOP
+*
+         J     EXIT0              EXIT
+         DROP  R9
+*
+NOTMOD   DS    0H
+         TM    CBMRREQ,CBMRGEN    GENCB ?
+         JNO   NOTGEN             EXIT IF NOT
+*********
+* GENCB *
+*********
+* IF WAREA NOT SUPPLIED WE MUST GETMAIN IT
+         CHSI  8(R7),0            IS WAREA ZERO ?
+         JE    GENNOWA            EXIT IF IT IS
+         LM    R0,R1,4(R7)        LOAD LENGTH, WAREA FOR RETURN
+         J     GENGOTWA           EXIT
+*
+GENNOWA  DS    0H
+* GETMAIN WAREA
+         L     R0,4(R7)           R0=LENGTH
+         CLI   12(R7),CBMRXL_LOC_BLW LOC=BELOW ?
+         JNE   GENANY             EXIT IF NOT
+         GETMAIN RU,LV=(R0),LOC=BELOW
+         J     GENGOTWA           EXIT
+*
+GENANY   DS    0H
+         GETMAIN RU,LV=(R0),LOC=ANY
+GENGOTWA DS    0H
+         LR    R9,R1              R9=WAREA ADDRESS
+* BLOCK TYPE
+         TM    CBMRREQ,CBMRXLST   EXLST ?
+         JO    GENEXL             EXIT IF IT IS
+         TM    CBMRREQ,CBMRACB    ACB ?
+         JO    GENACB             EXIT IF IT IS
+         TM    CBMRREQ,CBMRRPL    RPL ?
+         JO    GENRPL             EXIT IF IT IS
+         J     ERR0800            EXIT TO RC=8 ERROR
+*
+GENEXL   DS    0H
+****************
+* GENCB        *
+* EXLST FIELDS *
+****************
+         USING IHAEXLST,R9
+* LENGTH CHECK
+         L     R12,0(R7)          R12=COPIES
+         LA    R11,EXLSTLEN       R11=EXLST LENGTH
+         MSR   R11,R12            R11=LENGTH NEEDED
+         CR    R11,R0             LENGTH OK ?
+         JH    ERR0409            ERROR IF NOT
+         LR    R0,R11             R0=LENGTH RETURNED
+* GENERATE FIRST EXLST
+         XC    0(EXLSTLEN,R9),0(R9) CLEAR FIRST EXLST
+         IILF  R11,C'zLST'        R11=EXLST EYECATCHER
+         ST    R11,EXLEYE         STORE EXLST EYECATCHER
+         MVHHI EXLLEN,EXLSTLEN    MOVE EXLST LENGTH
+         MVI   EXLSTYP,EXLSVSAM   MOVE EXLST SUBTYPE
+         AHI   R4,4               BUMP OVER FIXED VERBS
+         AHI   R7,4*4             BUMP OVER FIXED FIELDS
+         AHI   R3,-4              4 FEWER VERBS
+GENEXLP  DS    0H
+         CLI   0(R4),CBMRXL_EODAD EXLST EODAD ADDRESS ?
+         JNE   GENEXV02           EXIT IF NOT
+         MVC   EXLEODP,0(R7)      MOVE EODAD ADDRESS
+         OI    EXLEODF,EXLEODS    SET EODAD PRESENT
+         J     GENEXINA           EXIT
+*
+GENEXV02 DS    0H
+         CLI   0(R4),CBMRXL_EOD_MODS EXLST EODAD MODS ?
+         JNE   GENEXV03           EXIT IF NOT
+* &EOD_A&EOD_N BOTH COULD BE OFF BUT NOT ON
+         TM    0(R7),CBMRXL_EOD_MODA IS IT MOD A ?
+         JNO   GENEODN            EXIT IF NOT
+         OI    EXLEODF,EXLEODA    SET EODAD ACTIVE
+         J     GENEXINA           EXIT
+*
+GENEODN  DS    0H
+         TM    0(R7),CBMRXL_EOD_MODN IS IT MOD N ?
+         JNO   GENEXINA           EXIT IF NOT
+         NI    EXLEODF,255-EXLEODA SET EODAD INACTIVE
+         J     GENEXINA           EXIT
+*
+GENEXV03 DS    0H
+         CLI   0(R4),CBMRXL_LERAD EXLST LERAD ADDRESS ?
+         JNE   GENEXV04           EXIT IF NOT
+         MVC   EXLLERP,0(R7)      MOVE LERAD ADDRESS
+         OI    EXLLERF,EXLLERS    SET LERAD PRESENT
+         J     GENEXINA           EXIT
+*
+GENEXV04 DS    0H
+         CLI   0(R4),CBMRXL_LER_MODS EXLST LERAD MODS ?
+         JNE   GENEXV05           EXIT IF NOT
+* &LER_A&LER_N BOTH COULD BE OFF BUT NOT ON
+         TM    0(R7),CBMRXL_LER_MODA IS IT MOD A ?
+         JNO   GENLERN            EXIT IF NOT
+         OI    EXLLERF,EXLLERA    SET LERAD ACTIVE
+         J     GENEXINA           EXIT
+*
+GENLERN  DS    0H
+         TM    0(R7),CBMRXL_LER_MODN IS IT MOD N ?
+         JNO   GENEXINA           EXIT IF NOT
+         NI    EXLLERF,255-EXLLERA SET LERAD INACTIVE
+         J     GENEXINA           EXIT
+*
+GENEXV05 DS    0H
+         CLI   0(R4),CBMRXL_SYNAD EXLST SYNAD ADDRESS ?
+         JNE   GENEXV06           EXIT IF NOT
+         MVC   EXLSYNP,0(R7)      MOVE SYNAD ADDRESS
+         OI    EXLSYNF,EXLSYNS    SET SYNAD PRESENT
+         J     GENEXINA           EXIT
+*
+GENEXV06 DS    0H
+         CLI   0(R4),CBMRXL_SYN_MODS EXLST SYNAD MODS ?
+         JNE   GENEXINA           EXIT IF NOT
+* &SYN_A&SYN_N BOTH COULD BE OFF BUT NOT ON
+         TM    0(R7),CBMRXL_SYN_MODA IS IT MOD A ?
+         JNO   GENSYNN            EXIT IF NOT
+         OI    EXLSYNF,EXLSYNA    SET SYNAD ACTIVE
+         J     GENEXINA           EXIT
+*
+GENSYNN  DS    0H
+         TM    0(R7),CBMRXL_SYN_MODN IS IT MOD N ?
+         JNO   GENEXINA           EXIT IF NOT
+         NI    EXLSYNF,255-EXLSYNA SET SYNAD INACTIVE
+GENEXINA DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         AHI   R7,4               BUMP FIELDS POINTER
+         BRCT  R3,GENEXLP         LOOP
+         DROP  R9
+*
+* FIRST EXLST BUILT, NOW DO COPIES
+* IF COPIES=1 THEN WE'RE DONE
+         AHI   R12,-1             WE NEED N-1 COPIES
+         JZ    EXIT0              EXIT IF COPIES=1
+GENEXCPY DS    0H
+         MVC   EXLSTLEN(EXLSTLEN,R9),0(R9) COPY EXLST
+         AHI   R9,EXLSTLEN        BUMP AREA POINTER
+         BRCT  R12,GENEXCPY       LOOP
+*
+         J     EXIT0              EXIT
+*
+GENACB   DS    0H
+**************
+* GENCB      *
+* ACB FIELDS *
+**************
+         USING IHAACB,R9
+* LENGTH CHECK
+         L     R12,0(R7)          R12=COPIES
+         LA    R11,ACB_LEN        R11=ACB LENGTH
+         MSR   R11,R12            R11=LENGTH NEEDED
+         CR    R11,R0             LENGTH OK ?
+         JH    ERR0409            ERROR IF NOT
+         LR    R0,R11             R0=LENGTH RETURNED
+* GENERATE FIRST ACB
+         XC    0(ACB_LEN,R9),0(R9) CLEAR FIRST ACB
+         IILF  R11,C'zACB'        R11=ACB EYECATCHER
+         ST    R11,ACBEYE         STORE ACB EYECATCHER
+         MVI   ACBID,ACBIDVAL     MOVE ACB IDENTIFIER
+         MVI   ACBSTYP,ACBSVSAM   MOVE ACB SUBTYPE
+         MVHHI ACBLEN,ACB_LEN     MOVE ACB LENGTH
+         IILF  R11,C'    '        DEFAULT
+         ST    R11,ACBDDNM                BLANK
+         ST    R11,ACBDDNM+4                    DDNAME
+* zVSAM EXTENSIONS
+         MVI   ACBVER,X'02'       MOVE ACBVER zACB v2
+         AHI   R4,4               BUMP OVER FIXED VERBS
+         AHI   R7,4*4             BUMP OVER FIXED FIELDS
+         AHI   R3,-4              4 FEWER VERBS
+GENACLP  DS    0H
+         CLI   0(R4),CBMRACB_BSTRNO BSTRNO ?
+         JNE   GENACV02           EXIT IF NOT
+         MVC   ACBBSTNO,3(R7)     MOVE BSTRNO INTO ACB
+         J     GENACINA           EXIT
+*
+GENACV02 DS    0H
+         CLI   0(R4),CBMRACB_BUFND BUFND ?
+         JNE   GENACV03           EXIT IF NOT
+         MVC   ACBBUFND,2(R7)     MOVE BUFND INTO ACB
+         J     GENACINA           EXIT
+*
+GENACV03 DS    0H
+         CLI   0(R4),CBMRACB_BUFNI BUFNI ?
+         JNE   GENACV04           EXIT IF NOT
+         MVC   ACBBUFNI,2(R7)     MOVE BUFNI INTO ACB
+         J     GENACINA           EXIT
+*
+GENACV04 DS    0H
+         CLI   0(R4),CBMRACB_BUFSP BUFSP ?
+         JNE   GENACV05           EXIT IF NOT
+         MVC   ACBBUFSP,0(R7)     MOVE BUFSP INTO ACB
+         J     GENACINA           EXIT
+*
+GENACV05 DS    0H
+         CLI   0(R4),CBMRACB_DDNM DDNAME ?
+         JNE   GENACV06           EXIT IF NOT
+         MVC   ACBDDNM,0(R7)      MOVE DDNAME INTO ACB
+         J     GENACINA           EXIT
+*
+GENACV06 DS    0H
+         CLI   0(R4),CBMRACB_EXLST EXLST ADDRESS ?
+         JNE   GENACV07           EXIT IF NOT
+         MVC   ACBEXLST,0(R7)     MOVE EXLST ADDRESS INTO ACB
+         J     GENACINA           EXIT
+*
+GENACV07 DS    0H
+         CLI   0(R4),CBMRACB_MACRF MACRF ?
+         JNE   GENACV08           EXIT IF NOT
+         MVC   ACBMACRF(4),0(R7)  MOVE ACBMACRF
+         J     GENACINA           EXIT
+*
+GENACV08 DS    0H
+         CLI   0(R4),CBMRACB_RMODE31 RMODE31 ?
+         JNE   GENACV09           EXIT IF NOT
+         CLI   0(R7),CBMRACB_RMODE31_NON RMODE31=NONE ?
+         JO    GENACINA           EXIT IF IT IS
+         CLI   0(R7),CBMRACB_RMODE31_ALL RMODE31=ALL ?
+         JNE   GENRMBUF           EXIT IF NOT
+         OI    ACBOFLGS,ACBR31B+ACBR31C TURN ON BUFF+CB
+         OI    ACBMACR3,ACBMODE   TURN ON MODE
+         J     GENACINA           EXIT
+*
+GENRMBUF DS    0H
+         CLI   0(R7),CBMRACB_RMODE31_BUF RMODE31=BUFF ?
+         JNE   GENRMCB            EXIT IF NOT
+         OI    ACBOFLGS,ACBR31B   TURN ON BUFF
+         OI    ACBMACR3,ACBMODE   TURN ON MODE
+         J     MODACINA           EXIT
+*
+GENRMCB  DS    0H
+         CLI   0(R7),CBMRACB_RMODE31_CB RMODE31=CB ?
+         JNE   GENACINA           EXIT IF NOT
+         OI    ACBOFLGS,ACBR31C   TURN ON CB
+         J     GENACINA           EXIT
+*
+GENACV09 DS    0H
+         CLI   0(R4),CBMRACB_PASSWD PASSWORD ?
+         JNE   GENACV10           EXIT IF NOT
+         MVC   ACBPASSW,0(R7)     MOVE PASSWORD ADDRESS INTO ACB
+         J     GENACINA           EXIT
+*
+GENACV10 DS    0H
+         CLI   0(R4),CBMRACB_SHRPL SHAREPOOL NUMBER ?
+         JNE   GENACV11           EXIT IF NOT
+         MVC   ACBSHRP,3(R7)      MOVE SHAREPOOL INTO ACB
+         J     GENACINA           EXIT
+*
+GENACV11 DS    0H
+         CLI   0(R4),CBMRACB_STRNO STRNO ?
+         JNE   GENACINA           EXIT IF NOT
+         MVC   ACBSTRNO,3(R7)     MOVE STRNO INTO ACB
+GENACINA DS    0H
+         AHI   R7,4               BUMP FIELDS POINTER
+         CLI   0(R4),X'E0'        8-BYTE FIELD ?
+         JL    GENACINV           EXIT IF NOT
+         AHI   R7,4               BUMP FIELDS POINTER
+GENACINV DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         BRCT  R3,GENACLP         LOOP
+         DROP  R9
+*
+* FIRST ACB BUILT, NOW DO COPIES
+* IF COPIES=1 THEN WE'RE DONE
+         AHI   R12,-1             WE NEED N-1 COPIES
+         JZ    EXIT0              EXIT IF COPIES=1
+GENACCPY DS    0H
+         MVC   ACB_LEN(ACB_LEN,R9),0(R9) COPY ACB
+         AHI   R9,ACB_LEN         BUMP AREA POINTER
+         BRCT  R12,GENACCPY       LOOP
+*
+         J     EXIT0              EXIT
+*
+GENRPL   DS    0H
+**************
+* GENCB      *
+* RPL FIELDS *
+**************
+         USING IHARPL,R9
+* LENGTH CHECK
+         L     R12,0(R7)          R12=COPIES
+         LA    R11,RPLLEN         R11=RPL LENGTH
+         MSR   R11,R12            R11=LENGTH NEEDED
+         CR    R11,R0             LENGTH OK ?
+         JH    ERR0409            ERROR IF NOT
+         LR    R0,R11             R0=LENGTH RETURNED
+* GENERATE FIRST RPL
+         XC    0(RPLLEN,R9),0(R9) CLEAR FIRST RPL
+         IILF  R11,C'zRPL'        R11=RPL EYECATCHER
+         ST    R11,RPLEYE         STORE RPL EYECATCHER
+         AHI   R4,4               BUMP OVER FIXED VERBS
+         AHI   R7,4*4             BUMP OVER FIXED FIELDS
+         AHI   R3,-4              4 FEWER VERBS
+GENRPLP  DS    0H
+         CLI   0(R4),CBMRRPL_ACB  RPL ACB ADDRESS ?
+         JNE   GENRPV02           EXIT IF NOT
+         MVC   RPLDACB,0(R7)      MOVE ACB ADDRESS
+         J     GENRPINA           EXIT
+*
+GENRPV02 DS    0H
+         CLI   0(R4),CBMRRPL_RECAREA RPL AREA ADDRESS ?
+         JNE   GENRPV03           EXIT IF NOT
+         MVC   RPLAREA,0(R7)      MOVE AREA ADDRESS
+         J     GENRPINA           EXIT
+*
+GENRPV03 DS    0H
+         CLI   0(R4),CBMRRPL_AREALEN RPL AREA LENGTH ?
+         JNE   GENRPV04           EXIT IF NOT
+         MVC   RPLAREAL,0(R7)     MOVE AREA LENGTH
+         J     GENRPINA           EXIT
+*
+GENRPV04 DS    0H
+         CLI   0(R4),CBMRRPL_ARG  RPL ARG ADDRESS ?
+         JNE   GENRPV05           EXIT IF NOT
+         MVC   RPLARG,0(R7)       MOVE ARG ADDRESS
+         J     GENRPINA           EXIT
+*
+GENRPV05 DS    0H
+         CLI   0(R4),CBMRRPL_ECB  RPL ECB ADDRESS ?
+         JNE   GENRPV06           EXIT IF NOT
+         MVC   RPLECB,0(R7)       MOVE ECB ADDRESS
+         J     GENRPINA           EXIT
+*
+GENRPV06 DS    0H
+         CLI   0(R4),CBMRRPL_KEYLEN RPL KEY LENGTH ?
+         JNE   GENRPV07           EXIT IF NOT
+         MVC   RPLKEYLN,3(R7)     MOVE KEY LENGTH
+         J     GENRPINA           EXIT
+*
+GENRPV07 DS    0H
+         CLI   0(R4),CBMRRPL_MSGAREA RPL MESSAGE AREA ADDRESS ?
+         JNE   GENRPV08           EXIT IF NOT
+         MVC   RPLMSGAR,0(R7)     MOVE MESSAGE AREA ADDRESS
+         J     GENRPINA           EXIT
+*
+GENRPV08 DS    0H
+         CLI   0(R4),CBMRRPL_MSGLEN RPL MESSAGE AREA LENGTH ?
+         JNE   GENRPV09           EXIT IF NOT
+         MVC   RPLMSGLN,2(R7)     MOVE MESSAGE AREA LENGTH
+         J     GENRPINA           EXIT
+*
+GENRPV09 DS    0H
+         CLI   0(R4),CBMRRPL_NEXTRPL RPL NEXT RPL ADDRESS ?
+         JNE   GENRPV10           EXIT IF NOT
+         MVC   RPLNXTRP,0(R7)     MOVE NEXT RPL ADDRESS
+         J     GENRPINA           EXIT
+*
+GENRPV10 DS    0H
+         CLI   0(R4),CBMRRPL_OPTCD RPL OPTCD ?
+         JNE   GENRPV11           EXIT IF NOT
+         MVC   RPLOPTCD,0(R7)     MOVE OPTCD
+         CHSI  RPLECB,0           ANY EXTERNAL ECB ?
+         JE    GENRPINA           EXIT IF NOT
+         OI    RPLOPT2,RPLOPT2_ECB TURN ON ECB FLAG
+         J     GENRPINA           EXIT
+*
+GENRPV11 DS    0H
+         CLI   0(R4),CBMRRPL_RECLEN RPL RECORD LENGTH ?
+         JNE   GENRPINA           EXIT IF NOT
+         MVC   RPLRECLN,0(R7)     MOVE RECORD LENGTH
+GENRPINA DS    0H
+         AHI   R4,1               BUMP VERBS POINTER
+         AHI   R7,4               BUMP FIELDS POINTER
+         BRCT  R3,GENRPLP         LOOP
+         DROP  R9
+*
+* FIRST RPL BUILT, NOW DO COPIES
+* IF COPIES=1 THEN WE'RE DONE
+         AHI   R12,-1             WE NEED N-1 COPIES
+         JZ    EXIT0              EXIT IF COPIES=1
+GENRPCPY DS    0H
+         MVC   RPLLEN(RPLLEN,R9),0(R9) COPY RPL
+         AHI   R9,RPLLEN          BUMP AREA POINTER
+         BRCT  R12,GENRPCPY       LOOP
+*
+         J     EXIT0              EXIT
+*
+NOTGEN   DS    0H
+         TM    CBMRREQ,CBMRTEST   TESTCB ?
+         JNO   ERR0800            ERROR IF NOT
+**********
+* TESTCB *
+**********
+         LA    R4,CBMRBODY        R4=ADDRESS OF VERBS
+* BLOCK TYPE
+         TM    CBMRREQ,CBMRRPL+CBMRXLST+CBMRACB NO BLOCK ?
+         JZ    TSTNBK             EXIT IF IT IS
+         TM    CBMRREQ,CBMRRPL    RPL ?
+         JO    TSTRPL             EXIT IF IT IS
+         TM    CBMRREQ,CBMRACB    ACB ?
+         JO    TSTACB             EXIT IF IT IS
+         TM    CBMRREQ,CBMRXLST   EXLST ?
+         JO    TSTEXL             EXIT IF IT IS
+         J     ERR0800            EXIT TO RC=8 ERROR
+*
+TSTNBK   DS    0H
+*******************
+* TESTCB          *
+* NO BLOCK FIELDS *
+*******************
+         CLI   2(R4),CBMRXL_XLSTLEN EXLST LENGTH ?
+         JNE   TSTNBV02           EXIT IF NOT
+         CHSI  8(R7),EXLSTLEN     TEST EXLST LENGTH
+         J     EXIT0              EXIT
+*
+TSTNBV02 DS   0H
+         CLI   2(R4),CBMRRPL_RPLLEN RPL LENGTH ?
+         JNE   TSTNBV03           EXIT IF NOT
+         CHSI  8(R7),RPLLEN       TEST RPL LENGTH
+         J     EXIT0              EXIT
+*
+TSTNBV03 DS    0H
+         CLI   2(R4),CBMRACB_ACBLEN ACB LENGTH ?
+         JNE   EXIT0              EXIT IF NOT
+         CHSI  8(R7),ACB_LEN      TEST ACB LENGTH
+         J     EXIT0              EXIT
+*
+TSTRPL   DS    0H
+**************
+* TESTCB     *
+* RPL FIELDS *
+**************
+         LA    R9,9(R5,R3)        R9=CBMR FIELD VALUES
+         L     R9,0(R9)           R9=RPL ADDRESS
+         USING IHARPL,R9
+         IILF  R0,C'zRPL'         R0=RPL EYECATCHER
+         C     R0,RPLEYE          IS IT AN RPL ?
+         JNE   ERR0404            ERROR IF NOT
+         CLI   2(R4),CBMRXL_XLSTLEN EXLST LENGTH ?
+         JNE   TSTRPV02           EXIT IF NOT
+         CHSI  8(R7),EXLSTLEN     TEST EXLST LENGTH
+         J     EXIT0              EXIT
+*
+TSTRPV02 DS    0H
+         CLI   2(R4),CBMRRPL_RPLLEN RPL LENGTH ?
+         JNE   TSTRPV03           EXIT IF NOT
+         CHSI  8(R7),RPLLEN       TEST RPL LENGTH
+         J     EXIT0              EXIT
+*
+TSTRPV03 DS    0H
+         CLI   2(R4),CBMRACB_ACBLEN ACB LENGTH ?
+         JNE   TSTRPV04           EXIT IF NOT
+         CHSI  8(R7),ACB_LEN      TEST ACB LENGTH
+         J     EXIT0              EXIT
+*
+TSTRPV04 DS    0H
+         CLI   2(R4),CBMRRPL_ACB  RPL ACB ?
+         JNE   TSTRPV05           EXIT IF NOT
+         CLC   8(4,R7),RPLDACB    TEST ACB ADDRESS
+         J     EXIT0              EXIT
+*
+TSTRPV05 DS    0H
+         CLI   2(R4),CBMRRPL_AIXFLAG RPL AIXFLAG ?
+         JNE   TSTRPV06           EXIT IF NOT
+* BIT OFF=HI, BIT ON=EQ
+         LHI   R11,1              R11=1 ASSUME BIT IS OFF
+         TM    RPLAIXID,RPLAXPKP  TEST AIXFLAG ?
+         JNO   TSTRPXOF           EXIT IF BIT OFF
+* AIXFLAG IS ON
+         SR    R11,R11            R11=0
+TSTRPXOF DS    0H
+* AIXFLAG IS OFF
+         LTR   R11,R11            TEST BIT ON/OFF
+         J     EXIT0              EXIT
+*
+TSTRPV06 DS    0H
+* ACCESS FIELD VIA ACB AND DATA PREFIX BLOCK, ERROR IF ACB NOT OPEN
+         CLI   2(R4),CBMRRPL_AIXPC RPL AIXPC ?
+         JNE   TSTRPV07           EXIT IF NOT
+         ICM   R10,15,RPLDACB     R10=ACB ADDRESS
+         JZ    ERR0401            ERROR IF ZERO
+         USING IHAACB,R10
+         ICM   R10,15,ACBPFX      R10=DATA PREFIX BLOCK ADDRESS
+         JZ    ERR0401            ERROR IF ZERO
+         AHI   R10,BHDRLENG       MISS HEADER BLOCK
+         USING ZVSAMPFX,R10
+         LLC   R11,PFXAIXN        R11=PFXAIXN
+         DROP  R10
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST PFXAIXN
+         J     EXIT0              EXIT
+*
+TSTRPV07 DS    0H
+         CLI   2(R4),CBMRRPL_RECAREA RPL AREA ?
+         JNE   TSTRPV08           EXIT IF NOT
+         CLC   8(4,R7),RPLAREA    TEST AREA ADDRESS
+         J     EXIT0              EXIT
+*
+TSTRPV08 DS    0H
+         CLI   2(R4),CBMRRPL_AREALEN RPL AREA LENGTH ?
+         JNE   TSTRPV09           EXIT IF NOT
+         CLC   8(4,R7),RPLAREAL   TEST AREA LENGTH
+         J     EXIT0              EXIT
+*
+TSTRPV09 DS    0H
+         CLI   2(R4),CBMRRPL_ARG  RPL ARG ?
+         JNE   TSTRPV10           EXIT IF NOT
+         CLC   8(4,R7),RPLARG     TEST ARG ADDRESS
+         J     EXIT0              EXIT
+*
+TSTRPV10 DS    0H
+         CLI   2(R4),CBMRRPL_ECB  RPL ECB ?
+         JNE   TSTRPV11           EXIT IF NOT
+         CLC   8(4,R7),RPLECB     TEST ECB ADDRESS
+         J     EXIT0              EXIT
+*
+TSTRPV11 DS    0H
+         CLI   2(R4),CBMRRPL_FDBK RPL FDBK ?
+         JNE   TSTRPV12           EXIT IF NOT
+         LLC   R11,RPLERRCD       R11=RPLERRCD
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST RPLERRCD
+         J     EXIT0              EXIT
+*
+TSTRPV12 DS    0H
+         CLI   2(R4),CBMRRPL_FTNCD RPL FTNCD ?
+         JNE   TSTRPV13           EXIT IF NOT
+         LLC   R11,RPLCMPON       R11=RPLCMPON
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST RPLCMPON
+         J     EXIT0              EXIT
+*
+TSTRPV13 DS    0H
+         CLI   2(R4),CBMRRPL_IO   RPL IO=COMPLETE ?
+         JNE   TSTRPV14           EXIT IF NOT
+         TM    RPLOPT2,RPLOPT2_ECB INTERNAL OR EXTERNAL ECB ?
+         JO    TSTRPVIN           EXIT IF EXTERNAL
+* INTERNAL ECB
+         LA    R12,RPLECB         R12=INTERNAL ECB ADDRESS
+         J     TSTRPVTM           EXIT
+*
+TSTRPVIN DS    0H
+* EXTERNAL ECB
+         L     R12,RPLECB         R12=EXTERNAL ECB ADDRESS
+TSTRPVTM DS    0H
+         LHI   R11,-1             R11=-1 ASSUME NON-COMPLETE
+         TM    0(R12),RPLPOST     TEST IF IO COMPLETED ?
+         JNO   TSTRPIOC           EXIT IT NOT
+* I/O COMPLETE
+         SR    R11,R11            R11=0
+TSTRPIOC DS    0H
+* I/O NOT COMPLETE
+         LTR   R11,R11            TEST SUCCESS/FAIL
+         J     EXIT0              EXIT
+*
+TSTRPV14 DS    0H
+         CLI   2(R4),CBMRRPL_KEYLEN RPL KEYLEN ?
+         JNE   TSTRPV15           EXIT IF NOT
+         LLC   R11,RPLKEYLN       R11=RPLKEYLN
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST RPLKEYLN
+         J     EXIT0              EXIT
+*
+TSTRPV15 DS    0H
+         CLI   2(R4),CBMRRPL_MSGAREA RPL MSGAREA ?
+         JNE   TSTRPV16           EXIT IF NOT
+         CLC   8(4,R7),RPLMSGAR   TEST MSGAREA
+         J     EXIT0              EXIT
+*
+TSTRPV16 DS    0H
+         CLI   2(R4),CBMRRPL_MSGLEN RPL MSGLEN ?
+         JNE   TSTRPV17           EXIT IF NOT
+         LLH   R11,RPLMSGLN       R11=RPLMSGLN
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST RPLMSGLN
+         J     EXIT0              EXIT
+*
+TSTRPV17 DS    0H
+         CLI   2(R4),CBMRRPL_NEXTRPL RPL NEXTRPL ?
+         JNE   TSTRPV18           EXIT IF NOT
+         CLC   8(4,R7),RPLNXTRP   TEST NEXTRPL
+         J     EXIT0              EXIT
+*
+TSTRPV18 DS    0H
+         CLI   2(R4),CBMRRPL_OPTCD RPL OPTCD ?
+         JNE   TSTRPV19           EXIT IF NOT
+         SR    R11,R11            R11=0 ASSUME WE WILL SUCCEED
+* AS SOON AS A TEST OPTION IS NOT TRUE WE END, MUST SET HIGH
+* ALL TEST OPTIONS MUST BE TRUE
+* CONFLICTS ARE HANDLED BY ZGENOPTD
+         TM    8(R7),CBMRRPL_OPTCD1_KEY KEY REQUESTED ?
+         JNO   TSTRPO02           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_KEY RPL KEY ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO02 DS    0H
+         TM    8(R7),CBMRRPL_OPTCD1_ADR ADR REQUESTED ?
+         JNO   TSTRPO03           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_KEY RPL KEY OFF ?
+         JO    TSTRPOFL           EXIT IF NOT
+TSTRPO03 DS    0H
+         TM    8(R7),CBMRRPL_OPTCD1_SKP SKP REQUESTED ?
+         JNO   TSTRPO04           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_SKP RPL SKP ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO04 DS    0H
+         TM    8(R7),CBMRRPL_OPTCD1_SEQ SEQ REQUESTED ?
+         JNO   TSTRPO05           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_SEQ RPL SEQ ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO05 DS    0H
+         TM    8(R7),CBMRRPL_OPTCD1_DIR DIR REQUESTED ?
+         JNO   TSTRPO06           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_SEQ+RPLOPT1_SKP RPL SEQ+SKP OFF ?
+         JO    TSTRPOFL           EXIT IF NOT
+TSTRPO06 DS    0H
+         TM    8(R7),CBMRRPL_OPTCD1_ARD ARD REQUESTED ?
+         JNO   TSTRPO07           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_ARD RPL ARD ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO07 DS    0H
+         TM    8(R7),CBMRRPL_OPTCD1_LRD LRD REQUESTED ?
+         JNO   TSTRPO08           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_ARD RPL ARD OFF ?
+         JO    TSTRPOFL           EXIT IF NOT
+TSTRPO08 DS    0H
+         TM    8(R7),CBMRRPL_OPTCD1_FWD FWD REQUESTED ?
+         JNO   TSTRPO09           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_FWD RPL FWD ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO09 DS    0H
+         TM    9(R7),CBMRRPL_OPTCD2_BWD BWD REQUESTED ?
+         JNO   TSTRPO10           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_FWD RPL FWD OFF ?
+         JO    TSTRPOFL           EXIT IF NOT
+TSTRPO10 DS    0H
+         TM    9(R7),CBMRRPL_OPTCD2_SYN SYN REQUESTED ?
+         JNO   TSTRPO11           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_SYN RPL SYN ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO11 DS    0H
+         TM    9(R7),CBMRRPL_OPTCD2_ASY ASY REQUESTED ?
+         JNO   TSTRPO12           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_SYN RPL SYN OFF ?
+         JO    TSTRPOFL           EXIT IF NOT
+TSTRPO12 DS    0H
+         TM    9(R7),CBMRRPL_OPTCD2_NSP NSP REQUESTED ?
+         JNO   TSTRPO13           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_NSP RPL NSP ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO13 DS    0H
+         TM    9(R7),CBMRRPL_OPTCD2_NUP NUP REQUESTED ?
+         JNO   TSTRPO14           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_NUP RPL NUP ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO14 DS    0H
+         TM    9(R7),CBMRRPL_OPTCD2_UPD UPD REQUESTED ?
+         JNO   TSTRPO15           EXIT IF NOT
+         TM    RPLOPT1,RPLOPT1_NUP+RPLOPT1_NSP RPL NUP+NSP OFF ?
+         JO    TSTRPOFL           EXIT IF NOT
+TSTRPO15 DS    0H
+         TM    9(R7),CBMRRPL_OPTCD2_KEQ KEQ REQUESTED ?
+         JNO   TSTRPO16           EXIT IF NOT
+         TM    RPLOPT2,RPLOPT2_KEQ RPL KEQ ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO16 DS    0H
+         TM    9(R7),CBMRRPL_OPTCD2_KGE KGE REQUESTED ?
+         JNO   TSTRPO17           EXIT IF NOT
+         TM    RPLOPT2,RPLOPT2_KEQ RPL KEQ OFF ?
+         JO    TSTRPOFL           EXIT IF NOT
+TSTRPO17 DS    0H
+         TM    10(R7),CBMRRPL_OPTCD3_FKS FKS=FKS ON ?
+         JNO   TSTRPO18           EXIT IF NOT
+         TM    RPLOPT2,RPLOPT2_FKS RPL FKS ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO18 DS    0H
+         TM    10(R7),CBMRRPL_OPTCD3_GEN GEN REQUESTED ?
+         JNO   TSTRPO19           EXIT IF NOT
+         TM    RPLOPT2,RPLOPT2_FKS RPL FKS OFF ?
+         JO    TSTRPOFL           EXIT IF NOT
+TSTRPO19 DS    0H
+         TM    10(R7),CBMRRPL_OPTCD3_MVE MVE REQUESTED ?
+         JNO   TSTRPO20           EXIT IF NOT
+         TM    RPLOPT2,RPLOPT2_MVE RPL MVE ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO20 DS    0H
+         TM    10(R7),CBMRRPL_OPTCD3_LOC LOC REQUESTED ?
+         JNO   TSTRPO21           EXIT IF NOT
+         TM    RPLOPT2,RPLOPT2_MVE RPL MVE OFF ?
+         JO    TSTRPOFL           EXIT IF NOT
+TSTRPO21 DS    0H
+         TM    10(R7),CBMRRPL_OPTCD3_RBA RBA REQUESTED ?
+         JNO   TSTRPO22           EXIT IF NOT
+         TM    RPLOPT2,RPLOPT2_RBA RPL RBA ON ?
+         JNO   TSTRPOFL           EXIT IF NOT
+TSTRPO22 DS    0H
+         TM    10(R7),CBMRRPL_OPTCD3_XRBA XRBA REQUESTED ?
+         JNO   TSTRPOOK           EXIT IF TEST OK
+         TM    RPLOPT2,RPLOPT2_RBA RPL RBA OFF ?
+         JNO   TSTRPOOK           EXIT IF NOT
+TSTRPOFL DS    0H
+* OPTCD FAILED
+         LHI   R11,1              R11=1
+TSTRPOOK DS    0H
+* OPTCD SUCCEEDED
+         LTR   R11,R11            TEST SUCCESS/FAIL
+         J     EXIT0              EXIT
+*
+TSTRPV19 DS    0H
+         CLI   2(R4),CBMRRPL_RBA  RPL RBA ?
+         JNE   TSTRPV20           EXIT IF NOT
+         CHSI  RPLCXRBA,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),RPLCXRBA+4 TEST RPLCXRBA
+         J     EXIT0              EXIT
+*
+TSTRPV20 DS    0H
+         CLI   2(R4),CBMRRPL_RECLEN RPL RECLEN ?
+         JNE   TSTRPV21           EXIT IF NOT
+         CLC   8(4,R7),RPLRECLN   TEST RPLRECLN
+         J     EXIT0              EXIT
+*
+TSTRPV21 DS    0H
+* TRANSID IS NOT SUPPORTED, ALWAYS RETURN EQ
+         CLI   2(R4),CBMRRPL_TRANSID RPL TRANSID ?
+         JNE   TSTRPV22           EXIT IF NOT
+         CR    R4,R4              ALWAYS RETURN EQ
+         J     EXIT0              EXIT
+*
+TSTRPV22 DS    0H
+         CLI   2(R4),CBMRRPL_XRBA RPL XRBA ?
+         JNE   EXIT0              EXIT IF NOT
+         CLC   8(8,R7),RPLCXRBA   TEST RPLCXRBA
+         J     EXIT0              EXIT
+*
+TSTACB   DS    0H
+**************
+* TESTCB     *
+* ACB FIELDS *
+**************
+         LA    R9,9(R5,R3)        R9=CBMR FIELD VALUES
+         L     R9,0(R9)           R9=ACB ADDRESS
+         USING IHAACB,R9
+         IILF  R0,C'zACB'         R0=ACB EYECATCHER
+         C     R0,ACBEYE          IS IT AN ACB ?
+         JNE   ERR0404            ERROR IF NOT
+         L     R10,ACBPFX         R10=DATA PREFIX BLOCK ADDRESS
+         TM    CBMRRMOD,CBMROBJD  OBJECT=DATA ?
+         JO    TSTACDAT           EXIT IF IT IS
+         L     R10,ACBXPFX        R10=INDEX PREFIX BLOCK ADDRESS
+TSTACDAT DS    0H
+         AHI   R10,BHDRLENG       MISS HEADER BLOCK
+         USING ZVSAMPFX,R10
+         USING ZVSAMCTR,ZVSAMPFX+PFXLENG
+*
+         CLI   2(R4),CBMRACB_ACBLEN ACB LENGTH ?
+         JNE   TSTACV02           EXIT IF NOT
+         CHSI  8(R7),ACB_LEN      TEST ACB LENGTH
+         J     EXIT0              EXIT
+*
+TSTACV02 DS    0H
+         CLI   2(R4),CBMRACB_ATRB ATRB ?
+         JNE   TSTACV03           EXIT IF NOT
+* MULTIPLE KEYWORDS ARE 'AND'ED
+* KSDS,ESDS,RRDS,LDS,VRRDS CONSIDERED MUTUALLY EXCLUSIVE
+* REPL,SSWD,COMPRESS,WCK WILL ASSUME NOT EQUAL
+* XADDR WILL ASSUME EQUAL (SO NOT TESTED)
+         LHI   R11,1              R11=1 ASSUME WE WILL FAIL
+         TM    8(R7),CBMRACB_ATRB1_REPL REPL REQUESTED ?
+         JO    TSTACAFL           EXIT TO FAIL IF IT IS
+         TM    8(R7),CBMRACB_ATRB1_SSWD SSWD REQUESTED ?
+         JO    TSTACAFL           EXIT TO FAIL IF IT IS
+         TM    8(R7),CBMRACB_ATRB1_COMP COMPRESS REQUESTED ?
+         JO    TSTACAFL           EXIT TO FAIL IF IT IS
+         TM    9(R7),CBMRACB_ATRB2_WCK WCK REQUESTED ?
+         JO    TSTACAFL           EXIT TO FAIL IF IT IS
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         TM    8(R7),CBMRACB_ATRB1_KSDS KSDS REQUESTED ?
+         JNO   TSTACA02           EXIT IF NOT
+         TM    PFXFFLGS,PFX_KSDS  IS IT KSDS ?
+         JNO   TSTACAFL           EXIT TO FAIL IF NOT
+         J     TSTACA06           EXIT
+*
+TSTACA02 DS    0H
+         TM    8(R7),CBMRACB_ATRB1_ESDS ESDS REQUESTED ?
+         JNO   TSTACA03           EXIT IF NOT
+         TM    PFXFFLGS,PFX_ESDS  IS IT ESDS ?
+         JNO   TSTACAFL           EXIT TO FAIL IF NOT
+         J     TSTACA06           EXIT
+*
+TSTACA03 DS    0H
+         TM    8(R7),CBMRACB_ATRB1_RRDS RRDS REQUESTED ?
+         JNO   TSTACA04           EXIT IF NOT
+         TM    PFXFFLGS,PFX_RRDS  IS IT RRDS ?
+         JNO   TSTACAFL           EXIT TO FAIL IF NOT
+         J     TSTACA06           EXIT
+*
+TSTACA04 DS    0H
+         TM    8(R7),CBMRACB_ATRB1_LDS LDS REQUESTED ?
+         JNO   TSTACA05           EXIT IF NOT
+         TM    PFXFFLGS,PFX_LDS   IS IT LDS ?
+         JNO   TSTACAFL           EXIT TO FAIL IF NOT
+         J     TSTACA06           EXIT
+*
+TSTACA05 DS    0H
+         TM    8(R7),CBMRACB_ATRB1_VRRDS VRRDS REQUESTED ?
+         JNO   TSTACA06           EXIT IF NOT
+         TM    PFXRFLGS,PFX_RFIX  IS IT VARIABLE ?
+         JO    TSTACAFL           EXIT TO FAIL IF NOT
+         TM    PFXFFLGS,PFX_RRDS  IS IT RRDS ?
+         JNO   TSTACAFL           EXIT TO FAIL IF NOT
+TSTACA06 DS    0H
+         TM    9(R7),CBMRACB_ATRB2_SPAN SPAN REQUESTED ?
+         JNO   TSTACA07           EXIT IF NOT
+         TM    PFXRFLGS,PFX_RSPN  IS IT SPANNED ?
+         JNO   TSTACAFL           EXIT TO FAIL IF NOT
+TSTACA07 DS    0H
+         TM    9(R7),CBMRACB_ATRB2_UNQ AIX UNIQUE REQUESTED ?
+         JNO   TSTACAOK           EXIT IF NOT
+         TM    PFXRFLGS,PFX_KUNQ  IS IT AIX UNIQUE ?
+         JNO   TSTACAFL           EXIT TO FAIL IF NOT
+TSTACAOK DS    0H
+* ATRB SUCCEEDED
+         SR    R11,R11            R11=0 SUCCESS
+TSTACAFL DS    0H
+         LTR   R11,R11            TEST SUCCESS/FAIL
+         J     EXIT0              EXIT
+*
+TSTACV03 DS    0H
+         CLI   2(R4),CBMRACB_AVSPAC AVSPAC ?
+         JNE   TSTACV04           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRAVSPAC,0        1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRAVSPAC+4 TEST AVSPAC
+         J     EXIT0              EXIT
+*
+TSTACV04 DS    0H
+         CLI   2(R4),CBMRACB_BFRFND BFRFND ?
+         JNE   TSTACV05           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNBFRFND,0       1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRNBFRFND+4 TEST BFRFND
+         J     EXIT0              EXIT
+*
+TSTACV05 DS    0H
+         CLI   2(R4),CBMRACB_BSTRNO BSTRNO ?
+         JNE   TSTACV06           EXIT IF NOT
+         LLC   R11,ACBBSTNO       R11=ACBBSTNO
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST ACBBSTNO
+         J     EXIT0              EXIT
+*
+TSTACV06 DS    0H
+         CLI   2(R4),CBMRACB_BUFND BUFND ?
+         JNE   TSTACV07           EXIT IF NOT
+         LLH   R11,ACBBUFND       R11=BUFND
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST ACBBUFND
+         J     EXIT0              EXIT
+*
+TSTACV07 DS    0H
+         CLI   2(R4),CBMRACB_BUFNI BUFNI ?
+         JNE   TSTACV08           EXIT IF NOT
+         LLH   R11,ACBBUFNI       R11=BUFNI
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST ACBBUFNI
+         J     EXIT0              EXIT
+*
+TSTACV08 DS    0H
+         CLI   2(R4),CBMRACB_BUFNO BUFNO ?
+         JNE   TSTACV09           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNBUFNO,0        1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRNBUFNO+4 TEST BUFNO
+         J     EXIT0              EXIT
+*
+TSTACV09 DS    0H
+         CLI   2(R4),CBMRACB_BUFRDS BUFRDS ?
+         JNE   TSTACV10           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNBUFRDS,0       1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRNBUFRDS+4 TEST BUFRDS
+         J     EXIT0              EXIT
+*
+TSTACV10 DS    0H
+         CLI   2(R4),CBMRACB_BUFSP BUFSP ?
+         JNE   TSTACV11           EXIT IF NOT
+         CLC   8(4,R7),ACBBUFSP   TEST BUFSP
+         J     EXIT0              EXIT
+*
+TSTACV11 DS    0H
+         CLI   2(R4),CBMRACB_BUFUSE BUFUSE ?
+         JNE   TSTACV12           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNBUFUSE,0       1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRNBUFUSE+4 TEST BUFUSE
+         J     EXIT0              EXIT
+*
+TSTACV12 DS    0H
+         CLI   2(R4),CBMRACB_CINV CINV ?
+         JNE   TSTACV13           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(4,R7),PFXBLKSZ   TEST BLOCKSIZE
+         J     EXIT0              EXIT
+*
+TSTACV13 DS    0H
+         CLI   2(R4),CBMRACB_DDNM DDNAME ?
+         JNE   TSTACV14           EXIT IF NOT
+         CLC   8(8,R7),ACBDDNM    TEST DDNAME
+         J     EXIT0              EXIT
+*
+TSTACV14 DS    0H
+         CLI   2(R4),CBMRACB_ENDRBA ENDRBA ?
+         JNE   TSTACV15           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRENDRBA,0        1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRENDRBA+4 TEST ENDRBA
+         J     EXIT0              EXIT
+*
+TSTACV15 DS    0H
+         CLI   2(R4),CBMRACB_ERROR ERROR ?
+         JNE   TSTACV16           EXIT IF NOT
+         LLC   R11,ACBERFLG       R11=ACBERFLG
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST ACBERFLG
+         J     EXIT0              EXIT
+*
+TSTACV16 DS    0H
+         CLI   2(R4),CBMRACB_EXLST EXLST ?
+         JNE   TSTACV17           EXIT IF NOT
+         CLC   8(4,R7),ACBEXLST   TEST EXLST
+         J     EXIT0              EXIT
+*
+TSTACV17 DS    0H
+         CLI   2(R4),CBMRACB_FS   FS ?
+         JNE   TSTACV18           EXIT IF NOT
+         CHSI  8(R7),0            TEST FS (ALWAYS ZERO)
+         J     EXIT0              EXIT
+*
+TSTACV18 DS    0H
+         CLI   2(R4),CBMRACB_HALCRBA HALCRBA ?
+         JNE   TSTACV19           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRHALCRBA,0       1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRHALCRBA+4 TEST HALCRBA
+         J     EXIT0              EXIT
+*
+TSTACV19 DS    0H
+         CLI   2(R4),CBMRACB_HLRBA HLRBA ?
+         JNE   TSTACV20           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRHLRBA,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         TM    CBMRRMOD,CBMROBJD  OBJECT=DATA ?
+         JO    ERR0401            ERROR IF IT IS
+         CLC   8(4,R7),CTRHLRBA+4 TEST HLRBA
+         J     EXIT0              EXIT
+*
+TSTACV20 DS    0H
+         CLI   2(R4),CBMRACB_KEYLEN KEYLEN ?
+         JNE   TSTACV21           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(4,R7),PFXKYLEN   TEST KEYLEN
+         J     EXIT0              EXIT
+*
+TSTACV21 DS    0H
+         CLI   2(R4),CBMRACB_LRECL LRECL ?
+         JNE   TSTACV22           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(4,R7),PFXRCLEN   TEST LRECL
+         J     EXIT0              EXIT
+*
+TSTACV22 DS    0H
+         CLI   2(R4),CBMRACB_MACRF MACRF ?
+         JNE   TSTACV23           EXIT IF NOT
+* MULTIPLE KEYWORDS ARE 'AND'ED
+* ANY UNSUPPORTED KEYWORDS IN CBMRACB_MACRF3/4 WILL FAIL
+         LHI   R11,1              R11=1 ASSUME WE WILL FAIL
+         TM    10(R7),X'FF'       ANY BITS ON IN MACRF3 ?
+         JNZ   TSTACMFL           EXIT TO FAIL IF THERE ARE
+         TM    11(R7),X'FF'       ANY BITS ON IN MACRF4 ?
+         JNZ   TSTACMFL           EXIT TO FAIL IF THERE ARE
+         TM    8(R7),CBMRACB_MACRF1_KEY KEY REQUESTED ?
+         JNO   TSTACM02           EXIT IF NOT
+         TM    ACBMACR1,ACBKEY    KEY ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM02 DS    0H
+         TM    8(R7),CBMRACB_MACRF1_ADR ADR REQUESTED ?
+         JNO   TSTACM03           EXIT IF NOT
+         TM    ACBMACR1,ACBADR    ADR ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM03 DS    0H
+         TM    8(R7),CBMRACB_MACRF1_NDF NDF REQUESTED ?
+         JNO   TSTACM04           EXIT IF NOT
+         TM    ACBMACR3,ACBDFR    DFR OFF ?
+         JO    TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM04 DS    0H
+         TM    8(R7),CBMRACB_MACRF1_DFR DFR REQUESTED ?
+         JNO   TSTACM05           EXIT IF NOT
+         TM    ACBMACR3,ACBDFR    DFR ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM05 DS    0H
+         TM    8(R7),CBMRACB_MACRF1_SEQ SEQ REQUESTED ?
+         JNO   TSTACM06           EXIT IF NOT
+         TM    ACBMACR1,ACBSEQ    SEQ ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM06 DS    0H
+         TM    8(R7),CBMRACB_MACRF1_DIR DIR REQUESTED ?
+         JNO   TSTACM07           EXIT IF NOT
+         TM    ACBMACR1,ACBDIR    DIR ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM07 DS    0H
+         TM    8(R7),CBMRACB_MACRF1_SKP SKP REQUESTED ?
+         JNO   TSTACM08           EXIT IF NOT
+         TM    ACBMACR2,ACBSKP    SKP ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM08 DS    0H
+         TM    8(R7),CBMRACB_MACRF1_IN IN REQUESTED ?
+         JNO   TSTACM09           EXIT IF NOT
+         TM    ACBMACR1,ACBIN     IN ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM09 DS    0H
+* OUT ALLOWS IN
+         TM    9(R7),CBMRACB_MACRF2_OUT OUT REQUESTED ?
+         JNO   TSTACM10           EXIT IF NOT
+         TM    ACBMACR1,ACBOUT    OUT ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM10 DS    0H
+         TM    9(R7),CBMRACB_MACRF2_NIS NIS REQUESTED ?
+         JNO   TSTACM11           EXIT IF NOT
+         TM    ACBMACR3,ACBSIS    SIS OFF ?
+         JO    TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM11 DS    0H
+         TM    9(R7),CBMRACB_MACRF2_SIS SIS REQUESTED ?
+         JNO   TSTACM12           EXIT IF NOT
+         TM    ACBMACR3,ACBSIS    SIS ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM12 DS    0H
+         TM    9(R7),CBMRACB_MACRF2_NRM NRM REQUESTED ?
+         JNO   TSTACM13           EXIT IF NOT
+         TM    ACBMACR2,ACBAIX    AIX OFF ?
+         JO    TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM13 DS    0H
+         TM    9(R7),CBMRACB_MACRF2_AIX AIX REQUESTED ?
+         JNO   TSTACM14           EXIT IF NOT
+         TM    ACBMACR2,ACBAIX    AIX ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM14 DS    0H
+         TM    9(R7),CBMRACB_MACRF2_NSR NSR REQUESTED ?
+         JNO   TSTACM15           EXIT IF NOT
+         TM    ACBMACR3,ACBLSR+ACBGSR LSR AND GSR OFF ?
+         JNZ   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM15 DS    0H
+         TM    9(R7),CBMRACB_MACRF2_LSR LSR REQUESTED ?
+         JNO   TSTACM16           EXIT IF NOT
+         TM    ACBMACR3,ACBLSR    LSR ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACM16 DS    0H
+         TM    9(R7),CBMRACB_MACRF2_GSR GSR REQUESTED ?
+         JNO   TSTACMOK           EXIT IF NOT
+         TM    ACBMACR3,ACBGSR    GSR ON ?
+         JNO   TSTACMFL           EXIT TO FAIL IF NOT
+TSTACMOK DS    0H
+* MACRF SUCCEEDED
+         SR    R11,R11            R11=0 SUCCESS
+TSTACMFL DS    0H
+         LTR   R11,R11            TEST SUCCESS/FAIL
+         J     EXIT0              EXIT
+*
+TSTACV23 DS    0H
+         CLI   2(R4),CBMRACB_NCIS NCIS ?
+         JNE   TSTACV24           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNCIS,0          1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    TSTACNCI           EXIT IF IT IS
+         CLC   8(4,R7),CTRNCIS+4  TEST NCIS (OBJECT=DATA)
+         J     EXIT0              EXIT
+*
+TSTACNCI DS    0H
+         CHSI  CTRNCIS+4,0        TEST NCIS (OBJECT=INDEX)
+         J     EXIT0              EXIT
+*
+TSTACV24 DS    0H
+         CLI   2(R4),CBMRACB_NDELR NDELR ?
+         JNE   TSTACV25           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNDELR,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    TSTACNDL           EXIT IF IT IS
+         CLC   8(4,R7),CTRNDELR+4 TEST NDELR (OBJECT=DATA)
+         J     EXIT0              EXIT
+*
+TSTACNDL DS    0H
+         CHSI  CTRNDELR+4,0       TEST NDELR (OBJECT=INDEX)
+         J     EXIT0              EXIT
+*
+TSTACV25 DS    0H
+         CLI   2(R4),CBMRACB_NEXCP NEXCP ?
+         JNE   TSTACV26           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNEXCP,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRNEXCP+4 TEST NEXCP
+         J     EXIT0              EXIT
+*
+TSTACV26 DS    0H
+         CLI   2(R4),CBMRACB_NEXT NEXT ?
+         JNE   TSTACV27           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNEXT,0          1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRNEXT+4  TEST NEXT (ALWAYS 1)
+         J     EXIT0              EXIT
+*
+TSTACV27 DS    0H
+         CLI   2(R4),CBMRACB_NINSR NINSR ?
+         JNE   TSTACV28           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNINSR,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    TSTACNIN           EXIT IF IT IS
+         CLC   8(4,R7),CTRNINSR+4 TEST NINSR (OBJECT=DATA)
+         J     EXIT0              EXIT
+*
+TSTACNIN DS    0H
+         CHSI  CTRNINSR+4,0       TEST NINSR (OBJECT=INDEX)
+         J     EXIT0              EXIT
+*
+TSTACV28 DS    0H
+         CLI   2(R4),CBMRACB_NIXL NIXL ?
+         JNE   TSTACV29           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         SR    R11,R11            CLEAR R11
+         TM    CBMRRMOD,CBMROBJD  OBJECT=DATA ?
+         JO    TSTACNXK           EXIT IF IT IS
+         LA    R14,PFXBLVL0       R14=START OF INDEX LEVELS
+         LA    R2,16              R2=LOOP LIMIT
+TSTACNXL DS    0H
+         CGHSI 0(R14),-1          LEVEL IN USE ?
+         JE    TSTACNXK           EXIT IF NOT
+         AHI   R11,1              COUNT LEVELS IN USE
+         AHI   R14,16             BUMP INDEX LEVEL
+         BRCT  R2,TSTACNXL        LOOP
+*
+TSTACNXK DS    0H
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST NIXL (R11=0 FOR OBJECT=DATA)
+         J     EXIT0              EXIT
+*
+TSTACV29 DS    0H
+         CLI   2(R4),CBMRACB_NLOGR NLOGR ?
+         JNE   TSTACV30           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNLOGR,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRNLOGR+4 TEST NLOGR
+         J     EXIT0              EXIT
+*
+TSTACV30 DS    0H
+         CLI   2(R4),CBMRACB_NRETR NRETR ?
+         JNE   TSTACV31           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNRETR,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    TSTACNRE           EXIT IF IT IS
+         CLC   8(4,R7),CTRNRETR+4 TEST NRETR (OBJECT=DATA)
+         J     EXIT0              EXIT
+*
+TSTACNRE DS    0H
+         CHSI  CTRNRETR+4,0       TEST NRETR (OBJECT=INDEX)
+         J     EXIT0              EXIT
+*
+TSTACV31 DS    0H
+         CLI   2(R4),CBMRACB_NSSS NSSS ?
+         JNE   TSTACV32           EXIT IF NOT
+         CHSI  8(R7),0            TEST NSSS (ALWAYS ZERO)
+         J     EXIT0              EXIT
+*
+TSTACV32 DS    0H
+         CLI   2(R4),CBMRACB_NUIW NUIW ?
+         JNE   TSTACV33           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNUIW,0          1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRNNUIW+4 TEST NUIW
+         J     EXIT0              EXIT
+*
+TSTACV33 DS    0H
+         CLI   2(R4),CBMRACB_NUPDR NUPDR ?
+         JNE   TSTACV34           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNUPDR,0         1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRNUPDR+4 TEST NUPDR
+         J     EXIT0              EXIT
+*
+TSTACV34 DS    0H
+         CLI   2(R4),CBMRACB_OFLAGS OFLAGS ?
+         JNE   TSTACV35           EXIT IF NOT
+         LHI   R11,1              R11=1 ASSUME WE WILL FAIL
+         TM    ACBOFLGS,ACBOPEN   TEST ACBOFLGS
+         JZ    TSTACOFL           EXIT TO FAIL IF NOT OPEN
+* OFLAGS SUCCEEDED
+         SR    R11,R11            R11=0 SUCCESS
+TSTACOFL DS    0H
+         LTR   R11,R11            TEST SUCCESS/FAIL
+         J     EXIT0              EXIT
+*
+TSTACV35 DS    0H
+         CLI   2(R4),CBMRACB_OPENOBJ OPENOBJ ?
+         JNE   TSTACV36           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         LHI   R11,1              R11=1 ASSUME WE WILL FAIL
+         CLI   8(R7),CBMRACB_OPENOBJ_PATH PATH REQUESTED ?
+         JNE   TSTACJ02           EXIT IF NOT
+         TM    ACBDTYPE,ACB_PATH  PATH ?
+         JNO   TSTACJFL           EXIT TO FAIL IF NOT
+         J     TSTACJOK           EXIT
+*
+TSTACJ02 DS    0H
+         CLI   8(R7),CBMRACB_OPENOBJ_BASE BASE REQUESTED ?
+         JNE   TSTACJ03           EXIT IF NOT
+         TM    ACBDTYPE,ACB_BASE  BASE ?
+         JNO   TSTACJFL           EXIT TO FAIL IF NOT
+         J     TSTACJOK           EXIT
+*
+TSTACJ03 DS    0H
+         CLI   8(R7),CBMRACB_OPENOBJ_AIX AIX REQUESTED ?
+         JNE   TSTACJOK           EXIT IF NOT
+         TM    ACBDTYPE,ACB_AIX   AIX ?
+         JNO   TSTACJFL           EXIT TO FAIL IF NOT
+TSTACJOK DS    0H
+* OPENOBJ SUCCEEDED
+         SR    R11,R11            R11=0 SUCCESS
+TSTACJFL DS    0H
+         LTR   R11,R11            TEST SUCCESS/FAIL
+         J     EXIT0              EXIT
+*
+TSTACV36 DS    0H
+         CLI   2(R4),CBMRACB_PASSWD PASSWD ?
+         JNE   TSTACV37           EXIT IF NOT
+         CLC   8(4,R7),ACBPASSW   TEST PASSWD POINTER
+         J     EXIT0              EXIT
+*
+TSTACV37 DS    0H
+         CLI   2(R4),CBMRACB_RKP  RKP ?
+         JNE   TSTACV38           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(4,R7),PFXKYOFF   TEST RKP
+         J     EXIT0              EXIT
+*
+TSTACV38 DS    0H
+         CLI   2(R4),CBMRACB_SHRPL SHRPL ?
+         JNE   TSTACV39           EXIT IF NOT
+         LLC   R11,ACBSHRP        R11=ACBSHRP
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST ACBSHRP
+         J     EXIT0              EXIT
+*
+TSTACV39 DS    0H
+         CLI   2(R4),CBMRACB_SDTASZ SDTASZ ?
+         JNE   TSTACV40           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRSDTASZ  TEST SDTASZ
+         J     EXIT0              EXIT
+*
+TSTACV40 DS    0H
+         CLI   2(R4),CBMRACB_STMST STMST ?
+         JNE   TSTACV41           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRSTMST   TEST STMST
+         J     EXIT0              EXIT
+*
+TSTACV41 DS    0H
+         CLI   2(R4),CBMRACB_STRMAX STRMAX ?
+         JNE   TSTACV42           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRSTRMAX,0        1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRSTRMAX+4 TEST STRMAX
+         J     EXIT0              EXIT
+*
+TSTACV42 DS    0H
+         CLI   2(R4),CBMRACB_STRNO STRNO ?
+         JNE   TSTACV43           EXIT IF NOT
+         LLC   R11,ACBSTRNO       R11=ACBSTRNO
+         L     R12,8(R7)          R12=TEST VALUE
+         CR    R12,R11            TEST ACBSTRNO
+         J     EXIT0              EXIT
+*
+TSTACV43 DS    0H
+         CLI   2(R4),CBMRACB_UIW  UIW ?
+         JNE   TSTACV44           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CHSI  CTRNUIW,0          1ST 4 BYTES ZERO ?
+         JNE   ERR0401            ERROR IF NOT ZERO
+         CLC   8(4,R7),CTRNUIW+4  TEST UIW
+         J     EXIT0              EXIT
+*
+TSTACV44 DS    0H
+         CLI   2(R4),CBMRACB_XAVSPAC AVSPAC ?
+         JNE   TSTACV45           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRAVSPAC  TEST AVSPAC
+         J     EXIT0              EXIT
+*
+TSTACV45 DS    0H
+         CLI   2(R4),CBMRACB_XBFRFND BFRFND ?
+         JNE   TSTACV46           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRNBFRFND TEST BFRFND
+         J     EXIT0              EXIT
+*
+TSTACV46 DS    0H
+         CLI   2(R4),CBMRACB_XBUFNO BUFNO ?
+         JNE   TSTACV47           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRNBUFNO  TEST BUFNO
+         J     EXIT0              EXIT
+*
+TSTACV47 DS    0H
+         CLI   2(R4),CBMRACB_XBUFRDS BUFRDS ?
+         JNE   TSTACV48           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRNBUFRDS TEST BUFRDS
+         J     EXIT0              EXIT
+*
+TSTACV48 DS    0H
+         CLI   2(R4),CBMRACB_XBUFUSE BUFUSE ?
+         JNE   TSTACV49           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRNBUFUSE TEST BUFUSE
+         J     EXIT0              EXIT
+*
+TSTACV49 DS    0H
+         CLI   2(R4),CBMRACB_XENDRBA ENDRBA ?
+         JNE   TSTACV50           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRENDRBA  TEST ENDRBA
+         J     EXIT0              EXIT
+*
+TSTACV50 DS    0H
+         CLI   2(R4),CBMRACB_XHALCRBA HALCRBA ?
+         JNE   TSTACV51           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRHALCRBA TEST HALCRBA
+         J     EXIT0              EXIT
+*
+TSTACV51 DS    0H
+         CLI   2(R4),CBMRACB_XHLRBA HLRBA ?
+         JNE   TSTACV52           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         TM    CBMRRMOD,CBMROBJD  OBJECT=DATA ?
+         JO    ERR0401            ERROR IF IT IS
+         CLC   8(8,R7),CTRHLRBA   TEST HLRBA
+         J     EXIT0              EXIT
+*
+TSTACV52 DS    0H
+         CLI   2(R4),CBMRACB_XNCIS NCIS ?
+         JNE   TSTACV53           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    TSTACXNC           EXIT IF IT IS
+         CLC   8(8,R7),CTRNCIS    TEST NCIS (OBJECT=DATA)
+         J     EXIT0              EXIT
+*
+TSTACXNC DS    0H
+         CGHSI CTRNCIS,0          TEST NCIS (OBJECT=INDEX)
+         J     EXIT0              EXIT
+*
+TSTACV53 DS    0H
+         CLI   2(R4),CBMRACB_XNDELR NDELR ?
+         JNE   TSTACV54           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    TSTACXND           EXIT IF IT IS
+         CLC   8(8,R7),CTRNDELR   TEST NDELR (OBJECT=DATA)
+         J     EXIT0              EXIT
+*
+TSTACXND DS    0H
+         CGHSI CTRNDELR,0         TEST NDELR (OBJECT=INDEX)
+         J     EXIT0              EXIT
+*
+TSTACV54 DS    0H
+         CLI   2(R4),CBMRACB_XNEXCP NEXCP ?
+         JNE   TSTACV55           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRNEXCP   TEST NEXCP
+         J     EXIT0              EXIT
+*
+TSTACV55 DS    0H
+         CLI   2(R4),CBMRACB_XNEXT NEXT ?
+         JNE   TSTACV56           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRNEXT    TEST NEXT
+         J     EXIT0              EXIT
+*
+TSTACV56 DS    0H
+         CLI   2(R4),CBMRACB_XNINSR XNINSR ?
+         JNE   TSTACV57           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    TSTACXNI           EXIT IF IT IS
+         CLC   8(8,R7),CTRNINSR   TEST NINSR (OBJECT=DATA)
+         J     EXIT0              EXIT
+*
+TSTACXNI DS    0H
+         CGHSI CTRNINSR,0         TEST NINSR (OBJECT=INDEX)
+         J     EXIT0              EXIT
+*
+TSTACV57 DS    0H
+         CLI   2(R4),CBMRACB_XNLOGR NLOGR ?
+         JNE   TSTACV58           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRNLOGR   TEST NLOGR
+         J     EXIT0              EXIT
+*
+TSTACV58 DS    0H
+         CLI   2(R4),CBMRACB_XNRETR NRETR ?
+         JNE   TSTACV59           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         TM    CBMRRMOD,CBMROBJI  OBJECT=INDEX ?
+         JO    TSTACXNR           EXIT IF IT IS
+         CLC   8(8,R7),CTRNRETR   TEST NRETR (OBJECT=DATA)
+         J     EXIT0              EXIT
+*
+TSTACXNR DS    0H
+         CGHSI CTRNRETR,0         TEST NRETR (OBJECT=INDEX)
+         J     EXIT0              EXIT
+*
+TSTACV59 DS    0H
+         CLI   2(R4),CBMRACB_XNUIW NUIW ?
+         JNE   TSTACV60           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRNNUIW   TEST NNUIW
+         J     EXIT0              EXIT
+*
+TSTACV60 DS    0H
+         CLI   2(R4),CBMRACB_XNUPDR NUPDR ?
+         JNE   TSTACV61           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRNUPDR   TEST NUPDR
+         J     EXIT0              EXIT
+*
+TSTACV61 DS    0H
+         CLI   2(R4),CBMRACB_XSTRMAX STRMAX ?
+         JNE   TSTACV62           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRSTRMAX  TEST STRMAX
+         J     EXIT0              EXIT
+*
+TSTACV62 DS    0H
+         CLI   2(R4),CBMRACB_XUIW UIW ?
+         JNE   TSTACV63           EXIT IF NOT
+         LTR   R10,R10            ACB OPEN ?
+         JZ    ERR0401            ERROR IF NOT
+         CLC   8(8,R7),CTRNUIW    TEST NUIW
+         J     EXIT0              EXIT
+*
+TSTACV63 DS    0H
+         CLI   2(R4),CBMRRPL_RPLLEN RPL LENGTH ?
+         JNE   TSTACV64           EXIT IF NOT
+         CHSI  8(R7),RPLLEN       TEST RPL LENGTH
+         J     EXIT0              EXIT
+*
+TSTACV64 DS    0H
+         CLI   2(R4),CBMRXL_XLSTLEN EXLST LENGTH ?
+         JNE   EXIT0              EXIT IF NOT
+         CHSI  8(R7),EXLSTLEN     TEST EXLST LENGTH
+         J     EXIT0              EXIT
+*
+TSTEXL   DS    0H
+****************
+* TESTCB       *
+* EXLST FIELDS *
+****************
+* FORMAT: xxxAD=(addr,mods)
+*
+* IF JRNAD= OR MOD L IS SPECIFIED THEN NE=LO IS RETURNED
+* IF THE ENTRY IS NOT IN THE EXLST THEN NE=LO IS RETURNED
+*
+* IF addr IS ZERO OR OMITTED...
+*    AND NO mods SPECIFIED THEN EQ IS RETURNED
+*    AND mods SPECIFIED THEN EQ OR NE=LO IS RETURNED
+*    NO addr TEST IS DONE
+*
+* IF addr IS SPECIFIED WITHOUT mods THEN EQ, LO OR HI IS RETURNED
+* IF addr IS SPECIFIED WITH mods THEN EQ OR NE=LO IS RETURNED
+*    (addr CHECK FOR EQ OR NE ONLY)
+         LA    R9,9(R5,R3)        R9=CBMR FIELD VALUES
+         L     R9,0(R9)           R9=EXLST ADDRESS
+         USING IHAEXLST,R9
+         IILF  R0,C'zLST'         R0=EXLST EYECATCHER
+         C     R0,EXLEYE          IS IT AN EXLST ?
+         JNE   ERR0404            ERROR IF NOT
+         CLI   2(R4),CBMRACB_ACBLEN ACB LENGTH ?
+         JNE   TSTEXV02           EXIT IF NOT
+         CHSI  8(R7),ACB_LEN      TEST ACB LENGTH
+         J     EXIT0              EXIT
+*
+TSTEXV02 DS    0H
+         CLI   2(R4),CBMRRPL_RPLLEN RPL LENGTH ?
+         JNE   TSTEXV03           EXIT IF NOT
+         CHSI  8(R7),RPLLEN       TEST RPL LENGTH
+         J     EXIT0              EXIT
+*
+TSTEXV03 DS    0H
+         CLI   2(R4),CBMRXL_XLSTLEN EXLST LENGTH ?
+         JNE   TSTEXV04           EXIT IF NOT
+         CHSI  8(R7),EXLSTLEN     TEST EXLST LENGTH
+         J     EXIT0              EXIT
+*
+TSTEXV04 DS    0H
+         LHI   R11,-1             R11=-1 ASSUME WE WILL FAIL
+* JRNAD= FAILS
+         CLI   2(R4),CBMRXL_JRNAD EXLST JRNAD ADDRESS ?
+         JE    TSTEXLFL           EXIT IF IT IS
+* MOD L FAILS
+         TM    12(R7),CBMRXL_MODL MOD L ?
+         JO    TSTEXLFL           EXIT IF IT IS
+*
+         CLI   2(R4),CBMRXL_EODAD EXLST EODAD ADDRESS ?
+         JNE   TSTEXV05           EXIT IF NOT
+* TEST IF PRESENT
+         TM    EXLEODF,EXLEODS    IS EODAD PRESENT ?
+         JNO   TSTEXLFL           EXIT IF NOT
+* TEST FOR ADDRESS=0 AND NO MODS
+         CHSI  8(R7),0            EXLST EODAD ADDRESS REQUESTED ?
+         JNE   TSTEXEAD           EXIT IF IT WAS
+         CLI   12(R7),X'00'       ANY MODS REQUESTED ?
+         JE    TSTEXLOK           EXIT IF NONE
+* ADDRESS=0 AND MODS REQUESTED
+         TM    12(R7),CBMRXL_EOD_MODA MOD A REQUESTED ?
+         JNO   TSTEXEM1           EXIT IF NOT
+         TM    EXLEODF,EXLEODA    IS EODAD ACTIVE ?
+         JO    TSTEXLOK           EXIT IF IT IS
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXEM1 DS    0H
+         TM    12(R7),CBMRXL_EOD_MODN MOD N REQUESTED ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         TM    EXLEODF,EXLEODA    IS EODAD ACTIVE ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXEAD DS    0H
+* ADDRESS IS REQUESTED
+         CLI   12(R7),X'00'       ANY MODS REQUESTED ?
+         JNE   TSTEXEMD           EXIT IF THEY ARE
+* ADDRESS IS REQUESTED AND NO MODS
+         CLC   8(4,R7),EXLEODP    TEST EODAD ADDRESS
+         J     EXIT0              EXIT
+*
+TSTEXEMD DS    0H
+* ADDRESS IS REQUESTED AND MODS
+         CLC   8(4,R7),EXLEODP    TEST EODAD ADDRESS=EXLST EODAD ?
+         JNE   TSTEXLFL           EXIT IF NOT
+* EODAD ADDRESS MATCHES
+         TM    12(R7),CBMRXL_EOD_MODA MOD A REQUESTED ?
+         JNO   TSTEXEM2           EXIT IF NOT
+         TM    EXLEODF,EXLEODA    IS EODAD ACTIVE ?
+         JO    TSTEXLOK           EXIT IF IT IS
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXEM2 DS    0H
+         TM    12(R7),CBMRXL_EOD_MODN MOD N REQUESTED ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         TM    EXLEODF,EXLEODA    IS EODAD ACTIVE ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXV05 DS    0H
+         CLI   2(R4),CBMRXL_LERAD EXLST LERAD ADDRESS ?
+         JNE   TSTEXV06           EXIT IF NOT
+* TEST IF PRESENT
+         TM    EXLLERF,EXLLERS    IS LERAD PRESENT ?
+         JNO   TSTEXLFL           EXIT IF NOT
+* TEST FOR ADDRESS=0 AND NO MODS
+         CHSI  8(R7),0            EXLST LERAD ADDRESS REQUESTED ?
+         JNE   TSTEXLAD           EXIT IF IT WAS
+         CLI   12(R7),X'00'       ANY MODS REQUESTED ?
+         JE    TSTEXLOK           EXIT IF NONE
+* ADDRESS=0 AND MODS REQUESTED
+         TM    12(R7),CBMRXL_LER_MODA MOD A REQUESTED ?
+         JNO   TSTEXLM1           EXIT IF NOT
+         TM    EXLLERF,EXLLERA    IS LERAD ACTIVE ?
+         JO    TSTEXLOK           EXIT IF IT IS
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXLM1 DS    0H
+         TM    12(R7),CBMRXL_LER_MODN MOD N REQUESTED ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         TM    EXLLERF,EXLLERA    IS LERAD ACTIVE ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXLAD DS    0H
+* ADDRESS IS REQUESTED
+         CLI   12(R7),X'00'       ANY MODS REQUESTED ?
+         JNE   TSTEXLMD           EXIT IF THEY ARE
+* ADDRESS IS REQUESTED AND NO MODS
+         CLC   8(4,R7),EXLLERP    TEST LERAD ADDRESS
+         J     EXIT0              EXIT
+*
+TSTEXLMD DS    0H
+* ADDRESS IS REQUESTED AND MODS
+         CLC   8(4,R7),EXLLERP    TEST LERAD ADDRESS=EXLST LERAD ?
+         JNE   TSTEXLFL           EXIT IF NOT
+* LERAD ADDRESS MATCHES
+         TM    12(R7),CBMRXL_LER_MODA MOD A REQUESTED ?
+         JNO   TSTEXLM2           EXIT IF NOT
+         TM    EXLLERF,EXLLERA    IS LERAD ACTIVE ?
+         JO    TSTEXLOK           EXIT IF IT IS
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXLM2 DS    0H
+         TM    12(R7),CBMRXL_LER_MODN MOD N REQUESTED ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         TM    EXLLERF,EXLLERA    IS LERAD ACTIVE ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXV06 DS    0H
+         CLI   2(R4),CBMRXL_SYNAD EXLST SYNAD ADDRESS ?
+         JNE   TSTEXLOK           EXIT IF NOT
+* TEST IF PRESENT
+         TM    EXLSYNF,EXLSYNS    IS SYNAD PRESENT ?
+         JNO   TSTEXLFL           EXIT IF NOT
+* TEST FOR ADDRESS=0 AND NO MODS
+         CHSI  8(R7),0            EXLST SYNAD ADDRESS REQUESTED ?
+         JNE   TSTEXSAD           EXIT IF IT WAS
+         CLI   12(R7),X'00'       ANY MODS REQUESTED ?
+         JE    TSTEXLOK           EXIT IF NONE
+* ADDRESS=0 AND MODS REQUESTED
+         TM    12(R7),CBMRXL_SYN_MODA MOD A REQUESTED ?
+         JNO   TSTEXSM1           EXIT IF NOT
+         TM    EXLSYNF,EXLSYNA    IS SYNAD ACTIVE ?
+         JO    TSTEXLOK           EXIT IF IT IS
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXSM1 DS    0H
+         TM    12(R7),CBMRXL_SYN_MODN MOD N REQUESTED ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         TM    EXLSYNF,EXLSYNA    IS SYNAD ACTIVE ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXSAD DS    0H
+* ADDRESS IS REQUESTED
+         CLI   12(R7),X'00'       ANY MODS REQUESTED ?
+         JNE   TSTEXSMD           EXIT IF THEY ARE
+* ADDRESS IS REQUESTED AND NO MODS
+         CLC   8(4,R7),EXLSYNP    TEST SYNAD ADDRESS
+         J     EXIT0              EXIT
+*
+TSTEXSMD DS    0H
+* ADDRESS IS REQUESTED AND MODS
+         CLC   8(4,R7),EXLSYNP    TEST SYNAD ADDRESS=EXLST SYNAD ?
+         JNE   TSTEXLFL           EXIT IF NOT
+* SYNAD ADDRESS MATCHES
+         TM    12(R7),CBMRXL_SYN_MODA MOD A REQUESTED ?
+         JNO   TSTEXSM2           EXIT IF NOT
+         TM    EXLSYNF,EXLSYNA    IS SYNAD ACTIVE ?
+         JO    TSTEXLOK           EXIT IF IT IS
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXSM2 DS    0H
+         TM    12(R7),CBMRXL_SYN_MODN MOD N REQUESTED ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         TM    EXLSYNF,EXLSYNA    IS SYNAD ACTIVE ?
+         JNO   TSTEXLOK           EXIT IF NOT
+         J     TSTEXLFL           EXIT TO FAIL
+*
+TSTEXLOK DS    0H
+* xxxAD SUCCEEDED
+         SR    R11,R11            R11=0 SUCCESS
+TSTEXLFL DS    0H
+         LTR   R11,R11            TEST SUCCESS/FAIL
+         J     EXIT0              EXIT
+*
+ERR0401  DS    0H
+* AIXPC, RPLDACB, ACBPFX OR ACBXPFX ARE ZERO
+*
+* (X)HLRBA REQUESTED AND OBJECT=DATA
+*
+* FOR FIELDS THAT HAVE 8-BYTE VALUES (EG. XRBA)
+* THE 4-BYTE VERSION IS REQUESTED BUT THE 1ST FOUR BYTES ARE NOT ZERO
+*
+* CTRLOKEY@ IS FOXES FOR:
+*    NON-KSDS
+*    KSDS INDEX
+*    KSDS DATA BUT EMPTY
+*
+* TESTCB ATRB= AND OBJECT=INDEX
+*
+         LA    R0,1               REASON CODE=1 (INVALID REQUEST)
+         J     ERR04              EXIT
+*
+ERR0404  DS    0H
+* WRONG BLOCK TYPE
+         LA    R0,4               REASON CODE=4 (WRONG BLOCK TYPE)
+         J     ERR04              EXIT
+*
+ERR0409  DS    0H
+* LENGTH TOO SMALL
+         LA    R0,9               REASON CODE=9 (LENGTH TOO SMALL)
+         J     ERR04              EXIT
+*
+ERR040C  DS    0H
+* MODCB ACB AND ACB IS OPEN
+         LA    R0,12              REASON CODE=12 (ACB IS OPEN)
+ERR04    DS    0H
+* IF TESTCB AND WE HAVE AN ERET ADDRESS WE MUST GO TO IT
+         TM    CBMRREQ,CBMRTEST   IS IT TESTCB ?
+         JNO   ERR04GO            EXIT IF NOT
+         ICM   R14,15,4(R7)       ANY ERET ADDRESS ?
+         JZ    ERR04GO            EXIT IF NONE
+         LA    R15,4              SET RC=4
+* CUT-DOWN SUBEXIT
+         L     R13,4(R13)         R13=SAVEAREA
+         LM    R2,R12,28(R13)     RESTORE REGS
+         BR    R14                GO TO ERET ROUTINE
+*
+ERR04GO  DS    0H
+         SUBEXIT RC=4             RC=4
+*
+ERR0800  DS    0H
+* CANNOT DETERMINE CBMR BLOCK TYPE OR MACRO TYPE
+         SR    R0,R0              R0=0
+* IF TESTCB AND WE HAVE AN ERET ADDRESS WE MUST GO TO IT
+         TM    CBMRREQ,CBMRTEST   IS IT TESTCB ?
+         JNO   ERR08GO            EXIT IF NOT
+         ICM   R14,15,4(R7)       ANY ERET ADDRESS ?
+         JZ    ERR08GO            EXIT IF NONE
+         LA    R15,8              SET RC=8
+* CUT-DOWN SUBEXIT
+         L     R13,4(R13)         R13=SAVEAREA
+         LM    R2,R12,28(R13)     RESTORE REGS
+         BR    R14                GO TO ERET ROUTINE
+*
+ERR08GO  DS    0H
+         SUBEXIT RC=8             RC=8
+*
+EXIT0    DS    0H
+         SUBEXIT RC=0
+*
+         CBMR
+         ACBD
+         EXLSTD
+         RPLD
+         ZVSAMHDR
+         ZVSAMPFX
+*
+         YREGS
+         END
+

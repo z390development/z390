@@ -1,0 +1,447 @@
+         ZCOBOL PGM='cics\TESTBEC6',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :47:43,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTBEC6_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * TEST HANDLE ABEND
+*      * TEST 1: HANDLE ASRA ABEND BY LABEL
+*      *         PRETEND NOTHING HAPPENED
+*      * TEST 2: RAISE PGMIDERR
+*      *         HANDLE AEI0 ABEND BY LABEL
+*      *         PRETEND NOTHING HAPPENED
+*      * TEST 3: HANDLE ASRA ABEND BY PROGRAM TESTBEC7
+*      *         PRETEND NOTHING HAPPENED
+*      * THE FOLLOWING TESTS ARE DRIVEN BY TRANSID BEC5
+*      * TEST 4: SET HANDLE ABEND LABEL HERE
+*      *         LINK TO TESTBEC7 AND ABEND ASRA
+*      *         RETURN IS AFTER OUR LINK
+*      * TEST 5: LINK TO TESTBEC7 AND HANDLE ABEND AEI0 THERE BY PROGRAX
+               M
+*      *         TESTBEC8
+*      *         RETURN IS AFTER OUR LINK
+*      * TEST 6: EXEC CICS ABEND WITH DUMP HANDLED HERE BY LABEL
+*      *         PRETEND NOTHING HAPPENED
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTBEC6.
+         PROGRAM_ID TESTBEC6
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*         77  RECAREA  PIC X(80).
+         WS      77,RECAREA,PIC,X(80)
+*         77  RECLEN   PIC 9(4) COMP.
+         WS      77,RECLEN,PIC,9(4),COMP
+*         01  TEST1.
+         WS      01,TEST1
+*             02  FILLER  PIC X(4)  VALUE X'C311C1D1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C1D1'
+*             02  FILLER  PIC X(59)
+*                 VALUE 'TESTBEC6 TEST 1:PRESS AID KEY TO HANDLE ASRA AX
+               BEN
+*       -               'D BY LABEL'.
+*       -               'D BY LABEL'.
+         WS        02,FILLER,PIC,X(59),VALUE,'TESTBEC6 TEST 1:PRESS AIDX
+                KEY TO HANDLE ASRA ABEND BY LABEL'
+*         77  TEST1L   PIC 9(4) COMP.
+         WS      77,TEST1L,PIC,9(4),COMP
+*         01  TEST1R.
+         WS      01,TEST1R
+*             02  FILLER  PIC X(4)  VALUE X'C311C261'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C261'
+*             02  FILLER  PIC X(33)
+*                         VALUE 'TESTBEC6 ASRA HANDLED OK BY LABEL'.
+         WS        02,FILLER,PIC,X(33),VALUE,'TESTBEC6 ASRA HANDLED OK X
+               BY LABEL'
+*             02  FILLER  PIC X(3)  VALUE X'11C3F1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C3F1'
+*             02  FILLER  PIC X(59)
+*                 VALUE 'TESTBEC6 TEST 2:PRESS AID KEY TO HANDLE AEI0 AX
+               BEN
+*       -               'D BY LABEL'.
+*       -               'D BY LABEL'.
+         WS        02,FILLER,PIC,X(59),VALUE,'TESTBEC6 TEST 2:PRESS AIDX
+                KEY TO HANDLE AEI0 ABEND BY LABEL'
+*         77  TEST1RL  PIC 9(4) COMP.
+         WS      77,TEST1RL,PIC,9(4),COMP
+*         01  TEST2R.
+         WS      01,TEST2R
+*             02  FILLER  PIC X(4)  VALUE X'C311C5C1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C5C1'
+*             02  FILLER  PIC X(33)
+*                         VALUE 'TESTBEC6 AEI0 HANDLED OK BY LABEL'.
+         WS        02,FILLER,PIC,X(33),VALUE,'TESTBEC6 AEI0 HANDLED OK X
+               BY LABEL'
+*             02  FILLER  PIC X(3)  VALUE X'11C6D1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C6D1'
+*             02  FILLER  PIC X(61)
+*                 VALUE 'TESTBEC6 TEST 3:PRESS AID KEY TO HANDLE ASRA AX
+               BEN
+*       -               'D BY PROGRAM'.
+*       -               'D BY PROGRAM'.
+         WS        02,FILLER,PIC,X(61),VALUE,'TESTBEC6 TEST 3:PRESS AIDX
+                KEY TO HANDLE ASRA ABEND BY PROGRAM'
+*         77  TEST2RL  PIC 9(4) COMP.
+         WS      77,TEST2RL,PIC,9(4),COMP
+*         01  TEST4.
+         WS      01,TEST4
+*             02  FILLER  PIC X(4)  VALUE X'C311C1D1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C1D1'
+*             02  FILLER  PIC X(77)
+*                 VALUE 'TESTBEC6 TEST 4:PRESS AID KEY TO HANDLE ASRA AX
+               BEN
+*       -               'D IN LINKED PROGRAM BY LABEL'.
+*       -               'D IN LINKED PROGRAM BY LABEL'.
+         WS        02,FILLER,PIC,X(77),VALUE,'TESTBEC6 TEST 4:PRESS AIDX
+                KEY TO HANDLE ASRA ABEND IN LINKED PROGRAM BY LABEL'
+*         77  TEST4L   PIC 9(4) COMP.
+         WS      77,TEST4L,PIC,9(4),COMP
+*         01  TEST4R.
+         WS      01,TEST4R
+*             02  FILLER  PIC X(4)  VALUE X'C311C3F1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C3F1'
+*             02  FILLER  PIC X(45)
+*                 VALUE 'TESTBEC6 ASRA IN TESTBEC7 HANDLED OK BY LABEL'X
+               .
+         WS        02,FILLER,PIC,X(45),VALUE,'TESTBEC6 ASRA IN TESTBEC7X
+                HANDLED OK BY LABEL'
+*         77  TEST4RL  PIC 9(4) COMP.
+         WS      77,TEST4RL,PIC,9(4),COMP
+*         01  TEST4K.
+         WS      01,TEST4K
+*             02  FILLER  PIC X(4)  VALUE X'C311C5C1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C5C1'
+*             02  FILLER  PIC X(43)
+*                 VALUE 'TESTBEC6 HANDLE ABEND RETURNED SUCCESSFULLY'.
+         WS        02,FILLER,PIC,X(43),VALUE,'TESTBEC6 HANDLE ABEND RETX
+               URNED SUCCESSFULLY'
+*             02  FILLER  PIC X(3)  VALUE X'11C6D1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C6D1'
+*             02  FILLER  PIC X(79)
+*                 VALUE 'TESTBEC6 TEST 5:PRESS AID KEY TO HANDLE AEI0 AX
+               BEN
+*       -               'D IN LINKED PROGRAM BY PROGRAM'.
+*       -               'D IN LINKED PROGRAM BY PROGRAM'.
+         WS        02,FILLER,PIC,X(79),VALUE,'TESTBEC6 TEST 5:PRESS AIDX
+                KEY TO HANDLE AEI0 ABEND IN LINKED PROGRAM BY PROGRAM'
+*         77  TEST4KL  PIC 9(4) COMP.
+         WS      77,TEST4KL,PIC,9(4),COMP
+*         01  TEST5K.
+         WS      01,TEST5K
+*             02  FILLER  PIC X(4)  VALUE X'C3114AC1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3114AC1'
+*             02  FILLER  PIC X(43)
+*                 VALUE 'TESTBEC6 HANDLE ABEND RETURNED SUCCESSFULLY'.
+         WS        02,FILLER,PIC,X(43),VALUE,'TESTBEC6 HANDLE ABEND RETX
+               URNED SUCCESSFULLY'
+*             02  FILLER  PIC X(3)  VALUE X'114BD1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'114BD1'
+*             02  FILLER  PIC X(55)
+*                 VALUE 'TESTBEC6 TEST6:PRESS AID KEY TO ABEND, HANDLEDX
+                BY
+*       -               ' LABEL'.
+*       -               ' LABEL'.
+         WS        02,FILLER,PIC,X(55),VALUE,'TESTBEC6 TEST6:PRESS AID X
+               KEY TO ABEND, HANDLED BY LABEL'
+*         77  TEST5KL  PIC 9(4) COMP.
+         WS      77,TEST5KL,PIC,9(4),COMP
+*         01  TEST6R.
+         WS      01,TEST6R
+*             02  FILLER  PIC X(4)  VALUE X'C3114C61'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3114C61'
+*             02  FILLER  PIC X(39)
+*                 VALUE 'TESTBEC6 ABEND ZZZZ HANDLED OK BY LABEL'.
+         WS        02,FILLER,PIC,X(39),VALUE,'TESTBEC6 ABEND ZZZZ HANDLX
+               ED OK BY LABEL'
+*             02  FILLER  PIC X(3)  VALUE X'114FC1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'114FC1'
+*             02  FILLER  PIC X(30)
+*                 VALUE 'BEC5 ENDED OK, NOW PRESS CLEAR'.
+         WS        02,FILLER,PIC,X(30),VALUE,'BEC5 ENDED OK, NOW PRESS X
+               CLEAR'
+*         77  TEST6RL  PIC 9(4) COMP.
+         WS      77,TEST6RL,PIC,9(4),COMP
+*         77  ACOMM    PIC X(4) VALUE 'AEI0'.
+         WS      77,ACOMM,PIC,X(4),VALUE,'AEI0'
+*         77  BADFLD1  PIC 9(4) COMP VALUE 0.
+         WS      77,BADFLD1,PIC,9(4),COMP,VALUE,0
+*         77  BADFLD2  PIC S9(3) REDEFINES BADFLD1 COMP-3.
+         WS      77,BADFLD2,PIC,S9(3),REDEFINES,BADFLD1,COMP_3
+         LINKAGE SECTION
+         WS    01,DFHCOMMAREA
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*             MOVE LENGTH OF TEST1   TO TEST1L.
+*ZC    131         MOVE  LENGTH,OF,TEST1,TO,TEST1L
+         MOVE  LENGTH,OF,TEST1,TO,TEST1L
+         PERIOD 
+*             MOVE LENGTH OF TEST1R  TO TEST1RL.
+*ZC    132         MOVE  LENGTH,OF,TEST1R,TO,TEST1RL
+         MOVE  LENGTH,OF,TEST1R,TO,TEST1RL
+         PERIOD 
+*             MOVE LENGTH OF TEST2R  TO TEST2RL.
+*ZC    133         MOVE  LENGTH,OF,TEST2R,TO,TEST2RL
+         MOVE  LENGTH,OF,TEST2R,TO,TEST2RL
+         PERIOD 
+*             MOVE LENGTH OF TEST4   TO TEST4L.
+*ZC    134         MOVE  LENGTH,OF,TEST4,TO,TEST4L
+         MOVE  LENGTH,OF,TEST4,TO,TEST4L
+         PERIOD 
+*             MOVE LENGTH OF TEST4R  TO TEST4RL.
+*ZC    135         MOVE  LENGTH,OF,TEST4R,TO,TEST4RL
+         MOVE  LENGTH,OF,TEST4R,TO,TEST4RL
+         PERIOD 
+*             MOVE LENGTH OF TEST4K  TO TEST4KL.
+*ZC    136         MOVE  LENGTH,OF,TEST4K,TO,TEST4KL
+         MOVE  LENGTH,OF,TEST4K,TO,TEST4KL
+         PERIOD 
+*             MOVE LENGTH OF TEST5K  TO TEST5KL.
+*ZC    137         MOVE  LENGTH,OF,TEST5K,TO,TEST5KL
+         MOVE  LENGTH,OF,TEST5K,TO,TEST5KL
+         PERIOD 
+*             MOVE LENGTH OF TEST6R  TO TEST6RL.
+*      *  CLC   EIBTRNID,=C'BEC5'  SECOND TEST TRANSID ?
+*      *  BE    BEC5               EXIT IF IT IS
+*ZC    138         MOVE  LENGTH,OF,TEST6R,TO,TEST6RL
+         MOVE  LENGTH,OF,TEST6R,TO,TEST6RL
+         PERIOD 
+*             IF EIBTRNID = 'BEC5' THEN GO TO BEC5.
+*ZC    141         IF    EIBTRNID,=,'BEC5',THEN
+         IF    EIBTRNID,=,'BEC5',THEN
+*ZC    141         GO    TO,BEC5
+         GO    TO,BEC5
+         PERIOD 
+*             EXEC CICS SEND FROM(TEST1) LENGTH(TEST1L) END-EXEC.
+*ZC    142         EXEC  CICS,SEND,FROM(TEST1),LENGTH(TEST1L)
+         EXEC  CICS,SEND,FROM(TEST1),LENGTH(TEST1L)
+         PERIOD 
+*      * CREATE AND MODIFY HANDLE ABEND BLOCK
+*             EXEC CICS HANDLE ABEND LABEL(BEC6ASRA) END-EXEC.
+*ZC    144         EXEC  CICS,HANDLE,ABEND,LABEL(BEC6ASRA)
+         EXEC  CICS,HANDLE,ABEND,LABEL(BEC6ASRA)
+         PERIOD 
+*             EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN) END-EXEC.
+*ZC    145         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         PERIOD 
+*      * CAUSE ASRA
+*      * THIS IS 'REPLACED' BY SEND AND B AB2
+*      *  DC    H'0'
+*             ADD 1 TO BADFLD2.
+*      * AB2      EQU   *
+*ZC    149         ADD   1,TO,BADFLD2
+         ADD   1,TO,BADFLD2
+         PERIOD 
+*         AB2.
+*      * ASRA HANDLED OK
+*      * MODIFY HANDLE ABEND BLOCK
+         LABEL AB2
+*             EXEC CICS HANDLE ABEND LABEL(BEC6AEI0) END-EXEC.
+*ZC    154         EXEC  CICS,HANDLE,ABEND,LABEL(BEC6AEI0)
+         EXEC  CICS,HANDLE,ABEND,LABEL(BEC6AEI0)
+         PERIOD 
+*             EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN) END-EXEC.
+*ZC    155         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         PERIOD 
+*      * CAUSE AEI0
+*      * THIS IS 'REPLACED' BY SEND AND B AB3
+*             EXEC CICS LOAD PROGRAM('BADPROG') END-EXEC.
+*ZC    158         EXEC  CICS,LOAD,PROGRAM('BADPROG')
+         EXEC  CICS,LOAD,PROGRAM('BADPROG')
+         PERIOD 
+*      * AB3      EQU   *
+*         AB3.
+*      * AEI0 HANDLED OK
+*      * MODIFY HANDLE ABEND BLOCK
+         LABEL AB3
+*             EXEC CICS HANDLE ABEND PROGRAM('TESTBEC7') END-EXEC.
+*ZC    163         EXEC  CICS,HANDLE,ABEND,PROGRAM('TESTBEC7')
+         EXEC  CICS,HANDLE,ABEND,PROGRAM('TESTBEC7')
+         PERIOD 
+*             EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN) END-EXEC.
+*ZC    164         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         PERIOD 
+*      * CAUSE ASRA
+*      * THIS ACTS AS THOUGH WE HAD AN XCTL TO TESTBEC7 HERE
+*      * THE RETURN IN TESTBEC7 ENDS THE TASK NORMALLY
+*      *  DC    H'0'
+*             MOVE 0 TO BADFLD1.
+*ZC    169         MOVE  0,TO,BADFLD1
+         MOVE  0,TO,BADFLD1
+         PERIOD 
+*             ADD 1 TO BADFLD2.
+*      * BEC6ASRA EQU   *
+*ZC    170         ADD   1,TO,BADFLD2
+         ADD   1,TO,BADFLD2
+         PERIOD 
+*         BEC6ASRA.
+         LABEL BEC6ASRA
+*             EXEC CICS SEND FROM(TEST1R) LENGTH(TEST1RL) END-EXEC.
+*ZC    173         EXEC  CICS,SEND,FROM(TEST1R),LENGTH(TEST1RL)
+         EXEC  CICS,SEND,FROM(TEST1R),LENGTH(TEST1RL)
+         PERIOD 
+*      * B     AB2                CONTINUE TESTS
+*             GO TO AB2.
+*      * BEC6AEI0 EQU   *
+*ZC    175         GO    TO,AB2
+         GO    TO,AB2
+         PERIOD 
+*         BEC6AEI0.
+         LABEL BEC6AEI0
+*             EXEC CICS SEND FROM(TEST2R) LENGTH(TEST2RL) END-EXEC.
+*ZC    178         EXEC  CICS,SEND,FROM(TEST2R),LENGTH(TEST2RL)
+         EXEC  CICS,SEND,FROM(TEST2R),LENGTH(TEST2RL)
+         PERIOD 
+*      * B     AB3                CONTINUE TESTS
+*             GO TO AB3.
+*      * BEC5 TESTS
+*      * BEC5     EQU   *
+*ZC    180         GO    TO,AB3
+         GO    TO,AB3
+         PERIOD 
+*         BEC5.
+         LABEL BEC5
+*             EXEC CICS SEND FROM(TEST4) LENGTH(TEST4L) END-EXEC.
+*ZC    186         EXEC  CICS,SEND,FROM(TEST4),LENGTH(TEST4L)
+         EXEC  CICS,SEND,FROM(TEST4),LENGTH(TEST4L)
+         PERIOD 
+*             EXEC CICS HANDLE ABEND LABEL(BEC7ASRA) END-EXEC.
+*ZC    187         EXEC  CICS,HANDLE,ABEND,LABEL(BEC7ASRA)
+         EXEC  CICS,HANDLE,ABEND,LABEL(BEC7ASRA)
+         PERIOD 
+*             EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN) END-EXEC.
+*ZC    188         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         PERIOD 
+*      * TESTBEC7 WILL ABEND ASRA
+*             EXEC CICS LINK PROGRAM('TESTBEC7') END-EXEC.
+*ZC    190         EXEC  CICS,LINK,PROGRAM('TESTBEC7')
+         EXEC  CICS,LINK,PROGRAM('TESTBEC7')
+         PERIOD 
+*         BEC7ASOK.
+*      * RETURN HERE AFTER HANDLING ASRA ABEND
+         LABEL BEC7ASOK
+*             EXEC CICS SEND FROM(TEST4K) LENGTH(TEST4KL) END-EXEC.
+*ZC    194         EXEC  CICS,SEND,FROM(TEST4K),LENGTH(TEST4KL)
+         EXEC  CICS,SEND,FROM(TEST4K),LENGTH(TEST4KL)
+         PERIOD 
+*             EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN) END-EXEC.
+*ZC    195         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         PERIOD 
+*      * TESTBEC7 WILL ABEND AEI0
+*             EXEC CICS LINK PROGRAM('TESTBEC7') COMMAREA(ACOMM)
+*ZC    197         EXEC  CICS,LINK,PROGRAM('TESTBEC7'),COMMAREA(ACOMM)
+         EXEC  CICS,LINK,PROGRAM('TESTBEC7'),COMMAREA(ACOMM)
+         PERIOD 
+*                       END-EXEC.
+*      * RETURN HERE AFTER HANDLING AEI0 ABEND
+*             EXEC CICS SEND FROM(TEST5K) LENGTH(TEST5KL) END-EXEC.
+*ZC    200         EXEC  CICS,SEND,FROM(TEST5K),LENGTH(TEST5KL)
+         EXEC  CICS,SEND,FROM(TEST5K),LENGTH(TEST5KL)
+         PERIOD 
+*             EXEC CICS HANDLE ABEND LABEL(BEC6ZZZZ) END-EXEC.
+*ZC    201         EXEC  CICS,HANDLE,ABEND,LABEL(BEC6ZZZZ)
+         EXEC  CICS,HANDLE,ABEND,LABEL(BEC6ZZZZ)
+         PERIOD 
+*             EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN) END-EXEC.
+*ZC    202         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         PERIOD 
+*      * TAKE THE DUMP, IGNORE THE ABEND
+*             EXEC CICS ABEND ABCODE('ZZZZ') END-EXEC.
+*ZC    204         EXEC  CICS,ABEND,ABCODE('ZZZZ')
+         EXEC  CICS,ABEND,ABCODE('ZZZZ')
+         PERIOD 
+*      * AB4      EQU   *
+*         AB4.
+         LABEL AB4
+*             EXEC CICS RETURN END-EXEC.
+*ZC    207         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+         PERIOD 
+*      * BEC7ASRA EQU   *
+*         BEC7ASRA.
+         LABEL BEC7ASRA
+*             EXEC CICS SEND FROM(TEST4R) LENGTH(TEST4RL) END-EXEC.
+*ZC    210         EXEC  CICS,SEND,FROM(TEST4R),LENGTH(TEST4RL)
+         EXEC  CICS,SEND,FROM(TEST4R),LENGTH(TEST4RL)
+         PERIOD 
+*             GO TO BEC7ASOK.
+*      * BEC6ZZZZ EQU   *
+*ZC    211         GO    TO,BEC7ASOK
+         GO    TO,BEC7ASOK
+         PERIOD 
+*         BEC6ZZZZ.
+         LABEL BEC6ZZZZ
+*             EXEC CICS SEND FROM(TEST6R) LENGTH(TEST6RL) END-EXEC.
+*ZC    214         EXEC  CICS,SEND,FROM(TEST6R),LENGTH(TEST6RL)
+         EXEC  CICS,SEND,FROM(TEST6R),LENGTH(TEST6RL)
+         PERIOD 
+*      *  B     AB4                EXIT
+*             GO TO AB4.
+*ZC    216         GO    TO,AB4
+         GO    TO,AB4
+         PERIOD 
+         PROCEDURE END
+         END   

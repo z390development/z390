@@ -9,12 +9,14 @@
 .* MAINTENANCE
 .* 10/12/05 ADD USE OF DCBREC IF RECORD NOT SPECIFIED
 .* 10/20/05 RPI27 - issue error for any undefined operands
-.* 10/20/05 RPI38 - check for register conflicts     
+.* 10/20/05 RPI38 - check for register conflicts
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 07/22/07 RPI 644 ADD RPL VSAM SUPPORT VIA SVC 121 R0=2, R1=A(RPL)
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*
+.* 04/05/21 zVSAM Added MNOTE for ZVSAM(0)
 .*********************************************************************
 &N       PUT   &DCB,                                                   X
                &REC,                                                   X
@@ -45,9 +47,13 @@
 .RECDEF  ANOP
          L     0,DCBREC-IHADCB(1)
 .SVC     ANOP
-         SVC  152 QSAM PUT R0=REC, R1=DCB 
+         SVC  152 QSAM PUT R0=REC, R1=DCB
          MEXIT
 .VSAM    ANOP
+         AIF   (&SYSZVSAM EQ 0)
+         MNOTE 15,'PUT VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM'
+         MEXIT
+         AEND
          AIF   ('&RPL'(1,1) EQ '(').RPLREG
          LA    1,&RPL
          AGO   .VSVC
@@ -56,9 +62,10 @@
 .VSVC    ANOP
          LA    0,RPLOPPUT
          SVC   121 VSAM PUT R0=2 R1=A(RPL)
-         MEXIT         
+         MEXIT
 .ERR1    MNOTE 12,'PUT RECORD REG INVALID - &REC(1)'
          MEXIT
 .ERR2    MNOTE 12,'PUT MF= NOT SUPPORTED'
          MEXIT
          MEND
+

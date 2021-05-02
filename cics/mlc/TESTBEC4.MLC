@@ -1,0 +1,534 @@
+         ZCOBOL PGM='cics\TESTBEC4',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :47:26,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTBEC4_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * TEST BED 4 IN COBOL
+*      * TEST HANDLE AID AND DUMP
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTBEC4.
+         PROGRAM_ID TESTBEC4
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*         01  WORDSEND.
+         WS      01,WORDSEND
+*           02  FILLER   PIC X    VALUE X'C3'.
+         WS        02,FILLER,PIC,X,VALUE,X'C3'
+*           02  WORDMSG.
+         WS        02,WORDMSG
+*               03  FILLER   PIC X(10).
+         WS          03,FILLER,PIC,X(10)
+*               03  WORDLEN  PIC 9(4) COMP.
+         WS          03,WORDLEN,PIC,9(4),COMP
+*         77  KEYINDS  PIC X(18).
+         WS      77,KEYINDS,PIC,X(18)
+*         77  KEYINTAB REDEFINES KEYINDS OCCURS 18 TIMES PIC X.
+         WS      77,KEYINTAB,REDEFINES,KEYINDS,OCCURS,18,TIMES,PIC,X
+*         77  KEYIDX   PIC 9(4) COMP.
+         WS      77,KEYIDX,PIC,9(4),COMP
+*         77  RECAREA  PIC X(80).
+         WS      77,RECAREA,PIC,X(80)
+*         77  RECLEN   PIC 9(4) COMP.
+         WS      77,RECLEN,PIC,9(4),COMP
+*         77  DUMP1    PIC X(6)   VALUE 'ABCDEF'.
+         WS      77,DUMP1,PIC,X(6),VALUE,'ABCDEF'
+*         77  DUMP2    PIC X(4)   VALUE 'STUV'.
+         WS      77,DUMP2,PIC,X(4),VALUE,'STUV'
+*         77  DUMP3    PIC X(11)  VALUE 'PQRSTUVWXYZ'.
+         WS      77,DUMP3,PIC,X(11),VALUE,'PQRSTUVWXYZ'
+*         77  DUMP4    PIC X(26)  VALUE 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.
+         WS      77,DUMP4,PIC,X(26),VALUE,'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+*         77  DUMP5    PIC X(22)  VALUE 'ALPHA BETA GAMMA DELTA'.
+         WS      77,DUMP5,PIC,X(22),VALUE,'ALPHA BETA GAMMA DELTA'
+*         01  KEYTABLE PIC X(19)
+*                      VALUE X'F1F2F3F4F5F6F7F8F97A7B7CC1C2C3C4C5C6FF'.
+         WS      01,KEYTABLE,PIC,X(19),VALUE,X'F1F2F3F4F5F6F7F8F97A7B7CX
+               C1C2C3C4C5C6FF'
+*         01  KEYTAB REDEFINES KEYTABLE.
+         WS      01,KEYTAB,REDEFINES,KEYTABLE
+*             02  KEYS  OCCURS 19 TIMES PIC X.
+         WS        02,KEYS,OCCURS,19,TIMES,PIC,X
+*         01  HEAD.
+         WS      01,HEAD
+*             02  FILLER  PIC X(6)  VALUE X'27F5C311C1D1'.
+         WS        02,FILLER,PIC,X(6),VALUE,X'27F5C311C1D1'
+*             02  FILLER  PIC X(24) VALUE 'TESTBEC4 TEST HANDLE AID'.
+         WS        02,FILLER,PIC,X(24),VALUE,'TESTBEC4 TEST HANDLE AID'
+*             02  FILLER  PIC X(3)  VALUE X'11C261'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C261'
+*             02  FILLER  PIC X(31)
+*                         VALUE 'PRESS PF KEYS 1-18 IN ANY ORDER'.
+         WS        02,FILLER,PIC,X(31),VALUE,'PRESS PF KEYS 1-18 IN ANYX
+                ORDER'
+*             02  FILLER  PIC X(3)  VALUE X'11C3F1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C3F1'
+*             02  FILLER  PIC X(25) VALUE 'CLEAR WILL END TASK EARLY'.
+         WS        02,FILLER,PIC,X(25),VALUE,'CLEAR WILL END TASK EARLYX
+               '
+*         77  HEADL    PIC 9(4) COMP.
+         WS      77,HEADL,PIC,9(4),COMP
+*         01  TAIL.
+         WS      01,TAIL
+*             02  FILLER  PIC X(4)  VALUE X'C3114C61'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3114C61'
+*             02  FILLER  PIC X(34)
+*                         VALUE 'TESTBEC4 ENDED OK, NOW PRESS CLEAR'.
+         WS        02,FILLER,PIC,X(34),VALUE,'TESTBEC4 ENDED OK, NOW PRX
+               ESS CLEAR'
+*         77  TAILL    PIC 9(4) COMP.
+         WS      77,TAILL,PIC,9(4),COMP
+*         01  WORDS.
+         WS      01,WORDS
+*             02  FILLER  PIC X(3)  VALUE X'11C6E7'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C6E7'
+*             02  FILLER  PIC X(7)  VALUE 'that'.
+         WS        02,FILLER,PIC,X(7),VALUE,'that'
+*             02  FILLER  PIC 9(4)  VALUE 8  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,8,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C7F4'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C7F4'
+*             02  FILLER  PIC X(7)  VALUE 'the'.
+         WS        02,FILLER,PIC,X(7),VALUE,'the'
+*             02  FILLER  PIC 9(4)  VALUE 7  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,7,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C6D8'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C6D8'
+*             02  FILLER  PIC X(7)  VALUE 'go'.
+         WS        02,FILLER,PIC,X(7),VALUE,'go'
+*             02  FILLER  PIC 9(4)  VALUE 6  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,6,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C7E7'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C7E7'
+*             02  FILLER  PIC X(7)  VALUE 'rage'.
+         WS        02,FILLER,PIC,X(7),VALUE,'rage'
+*             02  FILLER  PIC 9(4)  VALUE 8  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,8,COMP
+*             02  FILLER  PIC X(3)  VALUE X'114AC7'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'114AC7'
+*             02  FILLER  PIC X(7)  VALUE 'Thomas'.
+         WS        02,FILLER,PIC,X(7),VALUE,'Thomas'
+*             02  FILLER  PIC 9(4)  VALUE 10 COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,10,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C77E'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C77E'
+*             02  FILLER  PIC X(7)  VALUE 'of'.
+         WS        02,FILLER,PIC,X(7),VALUE,'of'
+*             02  FILLER  PIC 9(4)  VALUE 6  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,6,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C6D1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C6D1'
+*             02  FILLER  PIC X(7)  VALUE 'Do'.
+         WS        02,FILLER,PIC,X(7),VALUE,'Do'
+*             02  FILLER  PIC 9(4)  VALUE 6  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,6,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C6F1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C6F1'
+*             02  FILLER  PIC X(7)  VALUE 'night,'.
+         WS        02,FILLER,PIC,X(7),VALUE,'night,'
+*             02  FILLER  PIC 9(4)  VALUE 10 COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,10,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C76C'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C76C'
+*             02  FILLER  PIC X(7)  VALUE 'against'.
+         WS        02,FILLER,PIC,X(7),VALUE,'against'
+*             02  FILLER  PIC 9(4)  VALUE 11 COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,11,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C6E2'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C6E2'
+*             02  FILLER  PIC X(7)  VALUE 'into'.
+         WS        02,FILLER,PIC,X(7),VALUE,'into'
+*             02  FILLER  PIC 9(4)  VALUE 8  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,8,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C8C5'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C8C5'
+*             02  FILLER  PIC X(7)  VALUE 'light.'.
+         WS        02,FILLER,PIC,X(7),VALUE,'light.'
+*             02  FILLER  PIC 9(4)  VALUE 10 COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,10,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C761'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C761'
+*             02  FILLER  PIC X(7)  VALUE 'Rage,'.
+         WS        02,FILLER,PIC,X(7),VALUE,'Rage,'
+*             02  FILLER  PIC 9(4)  VALUE 9  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,9,COMP
+*             02  FILLER  PIC X(3)  VALUE X'114AC1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'114AC1'
+*             02  FILLER  PIC X(7)  VALUE 'Dylan'.
+         WS        02,FILLER,PIC,X(7),VALUE,'Dylan'
+*             02  FILLER  PIC 9(4)  VALUE 9  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,9,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C66C'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C66C'
+*             02  FILLER  PIC X(7)  VALUE 'good'.
+         WS        02,FILLER,PIC,X(7),VALUE,'good'
+*             02  FILLER  PIC 9(4)  VALUE 8  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,8,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C8C1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C8C1'
+*             02  FILLER  PIC X(7)  VALUE 'the'.
+         WS        02,FILLER,PIC,X(7),VALUE,'the'
+*             02  FILLER  PIC 9(4)  VALUE 7  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,7,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C65B'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C65B'
+*             02  FILLER  PIC X(7)  VALUE 'gentle'.
+         WS        02,FILLER,PIC,X(7),VALUE,'gentle'
+*             02  FILLER  PIC 9(4)  VALUE 10 COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,10,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C7F8'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C7F8'
+*             02  FILLER  PIC X(7)  VALUE 'dying'.
+         WS        02,FILLER,PIC,X(7),VALUE,'dying'
+*             02  FILLER  PIC 9(4)  VALUE 9  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,9,COMP
+*             02  FILLER  PIC X(3)  VALUE X'11C6D4'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C6D4'
+*             02  FILLER  PIC X(7)  VALUE 'not'.
+         WS        02,FILLER,PIC,X(7),VALUE,'not'
+*             02  FILLER  PIC 9(4)  VALUE 7  COMP.
+         WS        02,FILLER,PIC,9(4),VALUE,7,COMP
+*         01  FILLER REDEFINES WORDS.
+         WS      01,FILLER,REDEFINES,WORDS
+*             02  WORDENT OCCURS 18 TIMES PIC X(12).
+         WS        02,WORDENT,OCCURS,18,TIMES,PIC,X(12)
+*         01  SEGS.
+         WS      01,SEGS
+*             02  ADUMP1  PIC 9(9) COMP USAGE IS POINTER.
+         WS        02,ADUMP1,PIC,9(9),COMP,USAGE,IS,POINTER
+*             02  ADUMP2  PIC 9(9) COMP USAGE IS POINTER.
+         WS        02,ADUMP2,PIC,9(9),COMP,USAGE,IS,POINTER
+*             02  ADUMP3  PIC 9(9) COMP USAGE IS POINTER.
+         WS        02,ADUMP3,PIC,9(9),COMP,USAGE,IS,POINTER
+*             02  ADUMP4  PIC 9(9) COMP USAGE IS POINTER.
+         WS        02,ADUMP4,PIC,9(9),COMP,USAGE,IS,POINTER
+*             02  ADUMP5  PIC 9(9) COMP USAGE IS POINTER.
+         WS        02,ADUMP5,PIC,9(9),COMP,USAGE,IS,POINTER
+*         01  LENS.
+         WS      01,LENS
+*             02  LDUMP1  PIC 9(9) COMP.
+         WS        02,LDUMP1,PIC,9(9),COMP
+*             02  LDUMP2  PIC 9(9) COMP.
+         WS        02,LDUMP2,PIC,9(9),COMP
+*             02  LDUMP3  PIC 9(9) COMP.
+         WS        02,LDUMP3,PIC,9(9),COMP
+*             02  LDUMP4  PIC 9(9) COMP.
+         WS        02,LDUMP4,PIC,9(9),COMP
+*             02  LDUMP5  PIC 9(9) COMP.
+*         COPY DFHAID.
+*      * AID VALUES
+         WS        02,LDUMP5,PIC,9(9),COMP
+*        01  DFHAID.
+         WS      01,DFHAID
+*          02  DFHNULL  PIC X VALUE X'00'.
+         WS        02,DFHNULL,PIC,X,VALUE,X'00'
+*          02  DFHENTER PIC X VALUE X'7D'.
+         WS        02,DFHENTER,PIC,X,VALUE,X'7D'
+*          02  DFHPF1   PIC X VALUE X'F1'.
+         WS        02,DFHPF1,PIC,X,VALUE,X'F1'
+*          02  DFHPF2   PIC X VALUE X'F2'.
+         WS        02,DFHPF2,PIC,X,VALUE,X'F2'
+*          02  DFHPF3   PIC X VALUE X'F3'.
+         WS        02,DFHPF3,PIC,X,VALUE,X'F3'
+*          02  DFHPF4   PIC X VALUE X'F4'.
+         WS        02,DFHPF4,PIC,X,VALUE,X'F4'
+*          02  DFHPF5   PIC X VALUE X'F5'.
+         WS        02,DFHPF5,PIC,X,VALUE,X'F5'
+*          02  DFHPF6   PIC X VALUE X'F6'.
+         WS        02,DFHPF6,PIC,X,VALUE,X'F6'
+*          02  DFHPF7   PIC X VALUE X'F7'.
+         WS        02,DFHPF7,PIC,X,VALUE,X'F7'
+*          02  DFHPF8   PIC X VALUE X'F8'.
+         WS        02,DFHPF8,PIC,X,VALUE,X'F8'
+*          02  DFHPF9   PIC X VALUE X'F9'.
+         WS        02,DFHPF9,PIC,X,VALUE,X'F9'
+*          02  DFHPF10  PIC X VALUE X'7A'.
+         WS        02,DFHPF10,PIC,X,VALUE,X'7A'
+*          02  DFHPF11  PIC X VALUE X'7B'.
+         WS        02,DFHPF11,PIC,X,VALUE,X'7B'
+*          02  DFHPF12  PIC X VALUE X'7C'.
+         WS        02,DFHPF12,PIC,X,VALUE,X'7C'
+*          02  DFHPF13  PIC X VALUE X'C1'.
+         WS        02,DFHPF13,PIC,X,VALUE,X'C1'
+*          02  DFHPF14  PIC X VALUE X'C2'.
+         WS        02,DFHPF14,PIC,X,VALUE,X'C2'
+*          02  DFHPF15  PIC X VALUE X'C3'.
+         WS        02,DFHPF15,PIC,X,VALUE,X'C3'
+*          02  DFHPF16  PIC X VALUE X'C4'.
+         WS        02,DFHPF16,PIC,X,VALUE,X'C4'
+*          02  DFHPF17  PIC X VALUE X'C5'.
+         WS        02,DFHPF17,PIC,X,VALUE,X'C5'
+*          02  DFHPF18  PIC X VALUE X'C6'.
+         WS        02,DFHPF18,PIC,X,VALUE,X'C6'
+*          02  DFHPF19  PIC X VALUE X'C7'.
+         WS        02,DFHPF19,PIC,X,VALUE,X'C7'
+*          02  DFHPF20  PIC X VALUE X'C8'.
+         WS        02,DFHPF20,PIC,X,VALUE,X'C8'
+*          02  DFHPF21  PIC X VALUE X'C9'.
+         WS        02,DFHPF21,PIC,X,VALUE,X'C9'
+*          02  DFHPF22  PIC X VALUE X'4A'.
+         WS        02,DFHPF22,PIC,X,VALUE,X'4A'
+*          02  DFHPF23  PIC X VALUE X'4B'.
+         WS        02,DFHPF23,PIC,X,VALUE,X'4B'
+*          02  DFHPF24  PIC X VALUE X'4C'.
+         WS        02,DFHPF24,PIC,X,VALUE,X'4C'
+*          02  DFHPA1   PIC X VALUE X'6C'.
+         WS        02,DFHPA1,PIC,X,VALUE,X'6C'
+*          02  DFHPA2   PIC X VALUE X'6E'.
+         WS        02,DFHPA2,PIC,X,VALUE,X'6E'
+*          02  DFHPA3   PIC X VALUE X'6B'.
+         WS        02,DFHPA3,PIC,X,VALUE,X'6B'
+*          02  DFHCLEAR PIC X VALUE X'6D'.
+* 
+         WS        02,DFHCLEAR,PIC,X,VALUE,X'6D'
+         LINKAGE SECTION
+         WS    01,DFHCOMMAREA
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*             MOVE LENGTH OF HEAD TO HEADL.
+*ZC    182         MOVE  LENGTH,OF,HEAD,TO,HEADL
+         MOVE  LENGTH,OF,HEAD,TO,HEADL
+         PERIOD 
+*             MOVE LENGTH OF TAIL TO TAILL.
+*      *  MVC   KEYINDS,=18X'FF'   MARK ALL KEYS UNPRESSED
+*ZC    183         MOVE  LENGTH,OF,TAIL,TO,TAILL
+         MOVE  LENGTH,OF,TAIL,TO,TAILL
+         PERIOD 
+*             MOVE HIGH-VALUES TO KEYINDS.
+*      *  MVC   WORDWCC,WCC        SET WORD WCC
+*ZC    185         MOVE  HIGH_VALUES,TO,KEYINDS
+         MOVE  HIGH_VALUES,TO,KEYINDS
+         PERIOD 
+*             EXEC CICS SEND FROM(HEAD) LENGTH(HEADL) END-EXEC.
+*ZC    187         EXEC  CICS,SEND,FROM(HEAD),LENGTH(HEADL)
+         EXEC  CICS,SEND,FROM(HEAD),LENGTH(HEADL)
+         PERIOD 
+*      * HANDLE PF KEYS 1-18
+*             EXEC CICS HANDLE AID
+*                  ANYKEY(PROCKEY)
+*                  CLEAR PA1 PA2 PA3
+*                  PF19 PF20 PF21 PF22 PF23 PF24
+*ZC    191         EXEC  CICS,HANDLE,AID,ANYKEY(PROCKEY),CLEAR,PA1,PA2,X
+               PA3,PF19,PF20,PF21,PF22,PF23,PF24
+         EXEC  CICS,HANDLE,AID,ANYKEY(PROCKEY),CLEAR,PA1,PA2,PA3,PF19,PX
+               F20,PF21,PF22,PF23,PF24
+         PERIOD 
+*                  END-EXEC.
+*         KEYPRESS.
+         LABEL KEYPRESS
+*             MOVE 1 TO KEYIDX.
+*ZC    198         MOVE  1,TO,KEYIDX
+         MOVE  1,TO,KEYIDX
+         PERIOD 
+*             EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN) END-EXEC.
+*ZC    199         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         EXEC  CICS,RECEIVE,INTO(RECAREA),LENGTH(RECLEN)
+         PERIOD 
+*      *  CLI   EIBAID,CLEAR       CLEAR PRESSED ?
+*      *  BE    RETURN             END TASK IF IT IS
+*      *  B     KEYPRESS           LOOP
+*             IF EIBAID = DFHCLEAR THEN GO TO ALLDONE
+*ZC    203         IF    EIBAID,=,DFHCLEAR,THEN
+         IF    EIBAID,=,DFHCLEAR,THEN
+*ZC    203         GO    TO,ALLDONE
+         GO    TO,ALLDONE
+*             ELSE GO TO KEYPRESS.
+*ZC    204         ELSE  
+         ELSE  
+*      *  LA    R3,KEYTAB          ADDRESS KEY TABLE
+*      *  SR    R4,R4              CLEAR R4
+*      *  KEYLOOP  EQU   *
+*      *  CLC   0(1,R3),EIBAID     FOUND AID ?
+*      *  BE    GETWORD            EXIT TO PROCESS IT
+*      *  AHI   R4,1               BUMP INDEX
+*      *  AHI   R3,1               BUMP TABLE POINTER
+*      *  CLI   0(R3),X'FF'        STOPPER ?
+*      *  BE    ABEND              EXIT IF BAD AID
+*      *  B     KEYLOOP
+*ZC    204         GO    TO,KEYPRESS
+         GO    TO,KEYPRESS
+         PERIOD 
+*         PROCKEY.
+         LABEL PROCKEY
+*             IF EIBAID = KEYS (KEYIDX) THEN GO TO GETWORD.
+*ZC    217         IF    EIBAID,=,KEYS,'(',KEYIDX,')',THEN
+         IF    EIBAID,=,KEYS,'(',KEYIDX,')',THEN
+*ZC    217         GO    TO,GETWORD
+         GO    TO,GETWORD
+         PERIOD 
+*             ADD 1 TO KEYIDX
+*ZC    218         ADD   1,TO,KEYIDX
+         ADD   1,TO,KEYIDX
+*             IF KEYS (KEYIDX) = X'FF' THEN GO TO ABEND.
+*ZC    219         IF    KEYS,'(',KEYIDX,')',=,X'FF',THEN
+         IF    KEYS,'(',KEYIDX,')',=,X'FF',THEN
+*ZC    219         GO    TO,ABEND
+         GO    TO,ABEND
+         PERIOD 
+*             GO TO PROCKEY.
+*      * GETWORD  EQU   *
+*ZC    220         GO    TO,PROCKEY
+         GO    TO,PROCKEY
+         PERIOD 
+*         GETWORD.
+*      * GOT A VALID AID
+*      *  LA    R5,KEYINDS(R4)     INDEX TO KEY INDICATORS
+*      *  MVI   0(R5),X'00'        RESET INDICATOR
+         LABEL GETWORD
+*             MOVE LOW-VALUE TO KEYINTAB (KEYIDX).
+*      *  MS    R4,=F'12'          INDEX TO WORD LIST
+*      *  LA    R4,WORDS(R4)       + WORD BASE
+*      *  MVC   WORDMSG(12),0(R4)  MOVE WORD
+*ZC    226         MOVE  LOW_VALUE,TO,KEYINTAB,'(',KEYIDX,')'
+         MOVE  LOW_VALUE,TO,KEYINTAB,'(',KEYIDX,')'
+         PERIOD 
+*             MOVE WORDENT (KEYIDX) TO WORDMSG.
+*ZC    230         MOVE  WORDENT,'(',KEYIDX,')',TO,WORDMSG
+         MOVE  WORDENT,'(',KEYIDX,')',TO,WORDMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(WORDSEND) LENGTH(WORDLEN) END-EXEC.
+*ZC    231         EXEC  CICS,SEND,FROM(WORDSEND),LENGTH(WORDLEN)
+         EXEC  CICS,SEND,FROM(WORDSEND),LENGTH(WORDLEN)
+         PERIOD 
+*      *  OC    KEYINDS,KEYINDS    ALL DONE YET ?
+*      *  BNZ   KEYPRESS           LOOP
+*             IF KEYINDS NOT = LOW-VALUES THEN GO TO KEYPRESS.
+*ZC    234         IF    KEYINDS,NOT,=,LOW_VALUES,THEN
+         IF    KEYINDS,NOT,=,LOW_VALUES,THEN
+*ZC    234         GO    TO,KEYPRESS
+         GO    TO,KEYPRESS
+         PERIOD 
+*             EXEC CICS SEND FROM(TAIL) LENGTH(TAILL) END-EXEC.
+*ZC    235         EXEC  CICS,SEND,FROM(TAIL),LENGTH(TAILL)
+         EXEC  CICS,SEND,FROM(TAIL),LENGTH(TAILL)
+         PERIOD 
+*         ALLDONE.
+*      * TEST DUMP
+         LABEL ALLDONE
+*             EXEC CICS DUMP TRANSACTION DUMPCODE('MEL1') COMPLETE
+*ZC    238         EXEC  CICS,DUMP,TRANSACTION,DUMPCODE('MEL1'),COMPLETX
+               E
+         EXEC  CICS,DUMP,TRANSACTION,DUMPCODE('MEL1'),COMPLETE
+         PERIOD 
+*                  END-EXEC.
+*             MOVE ADDRESS OF DUMP1 TO ADUMP1.
+*ZC    240         MOVE  ADDRESS,OF,DUMP1,TO,ADUMP1
+         MOVE  ADDRESS,OF,DUMP1,TO,ADUMP1
+         PERIOD 
+*             MOVE ADDRESS OF DUMP2 TO ADUMP2.
+*ZC    241         MOVE  ADDRESS,OF,DUMP2,TO,ADUMP2
+         MOVE  ADDRESS,OF,DUMP2,TO,ADUMP2
+         PERIOD 
+*             MOVE ADDRESS OF DUMP3 TO ADUMP3.
+*ZC    242         MOVE  ADDRESS,OF,DUMP3,TO,ADUMP3
+         MOVE  ADDRESS,OF,DUMP3,TO,ADUMP3
+         PERIOD 
+*             MOVE ADDRESS OF DUMP4 TO ADUMP4.
+*ZC    243         MOVE  ADDRESS,OF,DUMP4,TO,ADUMP4
+         MOVE  ADDRESS,OF,DUMP4,TO,ADUMP4
+         PERIOD 
+*             MOVE ADDRESS OF DUMP5 TO ADUMP5.
+*ZC    244         MOVE  ADDRESS,OF,DUMP5,TO,ADUMP5
+         MOVE  ADDRESS,OF,DUMP5,TO,ADUMP5
+         PERIOD 
+*             MOVE LENGTH OF DUMP1 TO LDUMP1.
+*ZC    245         MOVE  LENGTH,OF,DUMP1,TO,LDUMP1
+         MOVE  LENGTH,OF,DUMP1,TO,LDUMP1
+         PERIOD 
+*             MOVE LENGTH OF DUMP2 TO LDUMP2.
+*ZC    246         MOVE  LENGTH,OF,DUMP2,TO,LDUMP2
+         MOVE  LENGTH,OF,DUMP2,TO,LDUMP2
+         PERIOD 
+*             MOVE LENGTH OF DUMP3 TO LDUMP3.
+*ZC    247         MOVE  LENGTH,OF,DUMP3,TO,LDUMP3
+         MOVE  LENGTH,OF,DUMP3,TO,LDUMP3
+         PERIOD 
+*             MOVE LENGTH OF DUMP4 TO LDUMP4.
+*ZC    248         MOVE  LENGTH,OF,DUMP4,TO,LDUMP4
+         MOVE  LENGTH,OF,DUMP4,TO,LDUMP4
+         PERIOD 
+*             MOVE LENGTH OF DUMP5 TO LDUMP5.
+*ZC    249         MOVE  LENGTH,OF,DUMP5,TO,LDUMP5
+         MOVE  LENGTH,OF,DUMP5,TO,LDUMP5
+         PERIOD 
+*             EXEC CICS DUMP TRANSACTION DUMPCODE('MEL2')
+*                  FROM(KEYTAB) LENGTH(19)
+*                  SEGMENTLIST(SEGS) LENGTHLIST(LENS) NUMSEGMENTS(5)
+*ZC    250         EXEC  CICS,DUMP,TRANSACTION,DUMPCODE('MEL2'),FROM(KEX
+               YTAB),LENGTH(19),SEGMENTLIST(SEGS),LENGTHLIST(LENS),NUMSX
+               EGMENTS(5)
+         EXEC  CICS,DUMP,TRANSACTION,DUMPCODE('MEL2'),FROM(KEYTAB),LENGX
+               TH(19),SEGMENTLIST(SEGS),LENGTHLIST(LENS),NUMSEGMENTS(5)
+         PERIOD 
+*                  END-EXEC.
+*             EXEC CICS RETURN END-EXEC.
+*ZC    254         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+         PERIOD 
+*         ABEND.
+         LABEL ABEND
+*             EXEC CICS ABEND ABCODE('BEC4') END-EXEC.
+*ZC    256         EXEC  CICS,ABEND,ABCODE('BEC4')
+         EXEC  CICS,ABEND,ABCODE('BEC4')
+         PERIOD 
+         PROCEDURE END
+         END   

@@ -1,0 +1,4 @@
+         MACRO                                                          00050000
+&NAME    PUT   &DCB,&AREA,&RPL=                                         00100000
+         MNOTE *,'NO CODE GENERATED'
+         MEND

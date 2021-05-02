@@ -1,0 +1,40 @@
+***********************************************************************
+* Copyright 2007 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+*                                                                     *
+* Author - Melvyn Maltz                                               *
+* Date   - 23th March 2016                                            *
+***********************************************************************
+         MACRO
+         ZVSAMHDR
+*
+* zVSAM HEADER BLOCK
+*
+ZVSAMHDR DSECT
+BHDREYE  DS    CL3                HDR
+BHDRSEQ# DS    X                  Write control value
+BHDRVER  DS    X                  Design sequence number
+BHDR_V2  EQU   X'02'              - Version 2 (this version)
+BHDRFLG1 DS    X                  Flags to indicate Block type (1)
+BHDR_PFX EQU   X'80'              - Prefix Block
+BHDR_MAP EQU   X'40'              - Spacemap Block
+BHDR_DTA EQU   X'20'              - Data Block
+BHDR_IDX EQU   X'10'              - Index Block
+BHDR_SEG EQU   X'08'              - Segment Block
+BHDR_LEF EQU   X'04'              - Index Block (Leaf)
+BHDR_INT EQU   X'02'              - Index Block (Intermediate)
+BHDR_ROT EQU   X'01'              - Index Block (Root)
+BHDRFLG2 DS    X                  Flags to indicate Block type (2)
+BHDR_ELX EQU   X'80'              - Extended Level Index (ELIX)
+BHDR#REC DS    X                  No. of records in this Block
+BHDRXLVL DS    X                  Index level. 0 for Leaf Block
+BHDRSELF DS    XL8                XLRA pointer to self
+BHDRNEXT DS    XL8                XLRA pointer to next sequential block
+BHDRPREV DS    XL8                XLRA pointer to prev sequential block
+BHDRFRE@ DS    XL4                Offset to free space area
+BHDRFREE DS    XL4                Remaining free space in Block
+         DS    0D                 Round for ZVSAMPFX which follows
+BHDRLENG EQU   *-ZVSAMHDR         DSECT LENGTH
+         MEND
+

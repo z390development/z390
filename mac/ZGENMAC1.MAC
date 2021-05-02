@@ -1,14 +1,15 @@
          MACRO
-.*********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.* Date   - 09/16/07                                                 *
-.*********************************************************************
-.* 09/16/07 RPI 682 INITIAL CODING TO GENERATE ACBMACRF FROM MACRF=
-.*********************************************************************
-         ZGENMACF &MACRF=
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.* Date   - 09/16/07                                                  *
+.**********************************************************************
+.* 09/16/07 RPI 682 INITIAL CODING TO GENERATE ACBMACRF FROM MACRF=   *
+.* 12/20/20 zVSAM RENAMED TO ZGENMAC1 FOR HYBRID \MAC                 *
+.**********************************************************************
+         ZGENMAC1 &MACRF=
 .*
 .* SET 27 MACRF OPTION BITS USING PUBLIC DOMAIN MVS 3.8
 .* IDAVSACB CODE AS INITIAL MODEL

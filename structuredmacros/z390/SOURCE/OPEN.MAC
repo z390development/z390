@@ -1,0 +1,4 @@
+         MACRO                                                          00020000
+&NAME    OPEN  &PAR1,&MF=I,&TYPE=,&MODE=                           @01C 00021900
+         MNOTE *,'NO CODE GENERATED'
+         MEND

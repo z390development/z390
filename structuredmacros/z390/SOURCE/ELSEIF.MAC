@@ -1,0 +1,48 @@
+.*   Copyright (C) <2021>  Daniel H. Snyder
+.*   Structured Programming Macros for the IBM High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    ELSEIF &EXP
+         COPY  $MGBLDEF
+         LCLC  &X,&Y
+         AIF   (&$MLVL GT 0).OK20
+         MNOTE 8,'"ELSEIF" INVALID OUTSIDE OF AN "IF" GROUP'
+         MNOTE ' - MACRO GENERATION TERMINATED'
+         MEXIT
+.OK20    ANOP
+         AIF   ('&$MCVERB(&$MLVL)' EQ 'IF').OK30
+         AIF   ('&$MCVERB(&$MLVL)' EQ 'ELSEIF').OK30
+         MNOTE 8,'"ELSEIF" INVALID FOLLOWING "&$MCVERB(&$MLVL)"'
+         MNOTE ' - MACRO GENERATION TERMINATED'
+         MEXIT
+.OK30    AIF   ('&$MFINI(&$MLVL)' NE '').OK40
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MFINI(&$MLVL) SETC '$FINI&$Y$NDX'
+.OK40    J     &$MFINI(&$MLVL)
+&X       SETC  '&$MFNAME(&$MLVL)'
+&$MFNAME(&$MLVL) SETC ''
+&$MLVL   SETA  &$MLVL-1          SO 'IF' CAN BUMP IT UP AGAIN
+&X       IF    &SYSLIST(1),&SYSLIST(2),&SYSLIST(3),&SYSLIST(4),        C
+               &SYSLIST(5),&SYSLIST(6),&SYSLIST(7),&SYSLIST(8),        C
+               &SYSLIST(9),&SYSLIST(10),&SYSLIST(11),&SYSLIST(12),     C
+               &SYSLIST(13),&SYSLIST(14),&SYSLIST(15),&SYSLIST(16),    C
+               &SYSLIST(17),&SYSLIST(18),&SYSLIST(19),&SYSLIST(20),    C
+               &SYSLIST(21),&SYSLIST(22),&SYSLIST(23),&SYSLIST(24),    C
+               &SYSLIST(25),&SYSLIST(26),&SYSLIST(27),&SYSLIST(28),    C
+               &SYSLIST(29),&SYSLIST(30),&SYSLIST(31),&SYSLIST(32)
+&$MCVERB(&$MLVL) SETC 'ELSEIF'
+         MEND

@@ -1,8 +1,13 @@
-rem assemble, link, and exec ASSIST prgram %1.MLC
-echo off
-set XREAD=%1.XRD
-set XPRNT=%1.XPR
-set XPNCH=%1.XPH
-set XGET=%1.XGT
-set XPUT=%1.XPT
-call ASMLG %1 assist %2 %3 %4 %5 %6 %7 %8 %9
+rem run demo and test assist programs
+cd..
+set XPRNT=assist\demo\DEMOAST1.XPR
+call bat\asmlg assist\demo\DEMOAST1 ASSIST TRACEALL
+IF ERRORLEVEL 1 PAUSE ERROR IN DEMOAST1
+set XREAD=assist\test\TESTAST1.XRD
+set XPRNT=assist\test\TESTAST1.XPR
+set XPNCH=assist\test\TESTAST1.XPH
+set XGET=assist\test\TESTAST1.XGT
+set XPUT=assist\test\TESTAST1.XPT
+call bat\asmlg assist\test\TESTAST1 ASSIST TRACEALL
+IF ERRORLEVEL 1 PAUSE ERROR IN TESTAST1
+pause verify assist demo and test

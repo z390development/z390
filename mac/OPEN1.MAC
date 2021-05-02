@@ -6,11 +6,12 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION                     
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION*
+.* 04/11/21 zVSAM RENAMED TO OPEN1 FOR HYBRID \MAC                   *
 .*********************************************************************
-&N       OPEN  &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
+&N       OPEN1 &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
                &MF=I,      NOT SUPPORTED                               X
                &MODE=31,   IGNORED AS IT WORKS IN BOTH                 X
-               &TYPE=      FLAG TYPE J AS UNSUPPORTED               
+               &TYPE=      FLAG TYPE J AS UNSUPPORTED
 &N       ZOPEN &DCBLIST,MF=&MF,MODE=&MODE,TYPE=&TYPE
          MEND

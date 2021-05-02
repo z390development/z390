@@ -1,0 +1,4 @@
+REM build DEMOCAT.390 with all VSAM catalog entries for vsam\demo pgms
+CALL bat\ASML vsam1\demo\DEMOCAT %1 %2 %3 %4 %5 zvsam(1)
+IF ERRORLEVEL 1 PAUSE ERROR BUILDING DEMOCAT.390 VSAM CATALOG
+PAUSE TO VERIFY BUILD CATALOG

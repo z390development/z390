@@ -57,7 +57,8 @@
 !**/*.[tT][fF][1-3]
 **/*.[tT][rR]?
 **/*.[tT][sS][tT]
-**/*.[xX][pP][hH]
+# *.XPH / *.XPR / *.XPT
+**/*.[xX][pP][hHrRtT]
 **/*_ZC_LABELS.CPY
 
 # Other output stuff
@@ -77,6 +78,7 @@
 **/*.[vV][eE][sS]
 # *.VX0 / *.VXN
 **/*.[vV][xX][0nN]
+**/DEMOCAT.[nN][eE][wW]
 **/RTGENCMP.[dD][aA][tT]
 **/ZAPDEMO1.[dD][aA][tT]
 **/rtgendr[1-3].[dD][aA][tT]
@@ -99,19 +101,19 @@ zcobol/demo/z390/
 zcobol/test/z390/
 
 # Generated .mlc files
-cics/TESTBEC1.[mM][lL][cC]
-cics/TESTBEC2.[mM][lL][cC]
-cics/TESTBEC4.[mM][lL][cC]
-cics/TESTBEC5.[mM][lL][cC]
-cics/TESTBEC6.[mM][lL][cC]
-cics/TESTBEC7.[mM][lL][cC]
-cics/TESTBEC8.[mM][lL][cC]
-cics/TESTBEC9.[mM][lL][cC]
-cics/TESTBMC1.[mM][lL][cC]
-cics/TESTICC1.[mM][lL][cC]
-cics/TESTVSC1.[mM][lL][cC]
-cics/TESTVSC2.[mM][lL][cC]
-cics/TESTVSC3.[mM][lL][cC]
+cics/cbl/TESTBEC1.[mM][lL][cC]
+cics/cbl/TESTBEC2.[mM][lL][cC]
+cics/cbl/TESTBEC4.[mM][lL][cC]
+cics/cbl/TESTBEC5.[mM][lL][cC]
+cics/cbl/TESTBEC6.[mM][lL][cC]
+cics/cbl/TESTBEC7.[mM][lL][cC]
+cics/cbl/TESTBEC8.[mM][lL][cC]
+cics/cbl/TESTBEC9.[mM][lL][cC]
+cics/cbl/TESTBMC1.[mM][lL][cC]
+cics/cbl/TESTICC1.[mM][lL][cC]
+cics/cbl/TESTVSC1.[mM][lL][cC]
+cics/cbl/TESTVSC2.[mM][lL][cC]
+cics/cbl/TESTVSC3.[mM][lL][cC]
 rt/CICS/TEST/TESTBEC1.[mM][lL][cC]
 rt/CICS/TEST/TESTBEC2.[mM][lL][cC]
 rt/CICS/TEST/TESTBEC4.[mM][lL][cC]
@@ -155,13 +157,19 @@ soa/demo/DEMOCMGR.[mM][lL][cC]
 soa/demo/DEMOMAIN.[mM][lL][cC]
 soa/demo/DEMOSUB1.[mM][lL][cC]
 soa/demo/DEMOSUB2.[mM][lL][cC]
-webdoc/zcobol/demo/callcomp/COMPSUM.[mM][lL][cC]
-webdoc/zcobol/demo/callcomp/_vti_cnf/COMPSUM.[mM][lL][cC]
 zcobol/demo/COMPSUM.[mM][lL][cC]
 zcobol/demo/COPYFILE.[mM][lL][cC]
+zcobol/demo/COPYFILE_OLD.[mM][lL][cC]
 zcobol/demo/DATETIME.[mM][lL][cC]
 zcobol/demo/HELLO.[mM][lL][cC]
 zcobol/demo/POWERS.[mM][lL][cC]
+zcobol/demo/U1.[mM][lL][cC]
+zcobol/demo/U2.[mM][lL][cC]
+zcobol/demo/U4.[mM][lL][cC]
+zcobol/demo/U6.[mM][lL][cC]
+zcobol/demo/U6B.[mM][lL][cC]
+zcobol/demo/UPROGRAM.[mM][lL][cC]
+zcobol/demo/USET.[mM][lL][cC]
 zcobol/tests/TESTADD1.[mM][lL][cC]
 zcobol/tests/TESTADD2.[mM][lL][cC]
 zcobol/tests/TESTIF1.[mM][lL][cC]
@@ -196,6 +204,7 @@ rt/test/save/ZSTRMAC2.[mM][lL][cC]
 **/[wW][eE][bB][dD][oO][cC]*/
 **/*.[bB][mM][pP]
 **/*.[dD][oO][cC]
+**/*.[dD][oO][cC][xX]
 **/*.[gG][iI][fF]
 **/*.[iI][cC][oO]
 **/*.[jJ][pP][gG]
@@ -203,17 +212,21 @@ rt/test/save/ZSTRMAC2.[mM][lL][cC]
 **/*.[pP][nN][gG]
 **/*.[pP][pP][tT]
 **/*.[xX][lL][sS]
+**/*.[xX][lL][sS][xX]
 **/*.[xX][mM][lL]
 
 # Backup and junk files
+macold/
 **/_private/
 **/_vti_cnf/
 **/_vti_pvt/
+**/*_[oO][lL][dD].*
 **/*.[bB][aA][kK]
 **/*.[cC][pP]1
 **/*.[cC][pP][lL]
 **/*.[mM][aA]1
 **/*.[sS][aA][vV]
+**/*.[xX][xX][xX]
 !util/superzap/*.[sS][aA][vV]
 !linklib/ZAPDEMO1.[sS][aA][vV]
 **/*.[tT][mM][pP]
@@ -234,6 +247,8 @@ rt/test/save/ZSTRMAC2.[mM][lL][cC]
 !**/[cC][iI][cC][sS]/
 zpar/*.[dD][aA][tT]
 DUMMY
+
+# Generated files without filetype
 linklib/CVTTOHEX
 linklib/DAT
 linklib/FPCONMFC
@@ -375,13 +390,11 @@ rt/linklib/save/FPCONMFC
 rt/linklib/save/FPCONVRT
 rt/linklib/save/IEFBR14
 rt/linklib/save/REPRO
-rt/linklib/save/RTGENCMP
 rt/linklib/save/RTGENDIF
 rt/linklib/save/RTGENDIR
 rt/linklib/save/rtlink
 rt/linklib/save/SQXTR
 rt/linklib/save/SUPERZAP
-rt/linklib/save/TESTFPC1
 rt/linklib/save/TESTFPC2
 rt/linklib/save/UNREF
 rt/linklib/save/ZSTRMAC
@@ -391,7 +404,6 @@ rt/test/TESTAIN2
 rt/test/TESTAIN3
 rt/test/TESTASC1
 rt/test/TESTASC2
-rt/test/TESTASC3
 rt/test/TESTASC5
 rt/test/TESTASM1
 rt/test/TESTASM2
@@ -402,7 +414,6 @@ rt/test/TESTCPY1
 rt/test/TESTCPY2
 rt/test/TESTDC1
 rt/test/TESTDC2
-rt/test/TESTDFP1
 rt/test/TESTDFP2
 rt/test/TESTDST1
 rt/test/TESTENT1
@@ -420,12 +431,7 @@ rt/test/TESTERR9
 rt/test/TESTERRA
 rt/test/TESTEXT1
 rt/test/TESTEXT2
-rt/test/TESTFP1
 rt/test/TESTFP2
-rt/test/TESTINS1
-rt/test/TESTINS2
-rt/test/TESTINS3
-rt/test/TESTINS4
 rt/test/TESTLAB1
 rt/test/TESTLCT1
 rt/test/TESTLNK1

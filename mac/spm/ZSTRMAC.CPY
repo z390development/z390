@@ -12,7 +12,7 @@
 .* THE ZSTRMAC MACROS HAVE BEEN UPDATED TO BE A COMPATIBLE
 .* SUBSET OF IBM HLASM TOOLKIT MACROS BASED ON SHARE PRESENTATION
 .* VISIT FOLLOWING SITE FOR LATEST DOCUMENTATION AND LINKS:
-.*   www.z390.org/z390_STRMAC_Structured_Macro_Support.mac                
+.*   www.z390.org/z390_STRMAC_Structured_Macro_Support.mac
 .********************************************************************
 .* THE ZSTRMAC SPE SPM MACROS ARE IN z390\mac
 .* THE HLASM COMPATIBLE TRANSLATED VERSIONS ARE IN z390\mac\spm

@@ -4,10 +4,10 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT IN-FILE
-               ASSIGN TO 'ZCOBOL\DEMO\COPYFILE.IN'
+               ASSIGN TO 'zcobol\demo\COPYFILE.IN'
                ORGANIZATION IS LINE SEQUENTIAL.
            SELECT OUT-FILE
-               ASSIGN TO 'ZCOBOL\DEMO\COPYFILE.OUT'
+               ASSIGN TO 'zcobol\demo\COPYFILE.OUT'
                ORGANIZATION IS LINE SEQUENTIAL.
        DATA DIVISION.
        FILE SECTION.
