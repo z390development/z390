@@ -5,3 +5,4 @@ theme: readthedocs
 docs_dir: doc
 markdown_extensions:
   - admonition
+  - footnotes

@@ -1,5 +1,13 @@
 # zCOBOL options
 
+!!! Note "Use of parameters with parentheses in *nix shells"
+    Unix shells like sh and bash interpret parentheses if not quoted. For this reason, if you need to specify a parameter that contains
+    parentheses, then that parameter should be quoted. 
+    
+    For example, the FLOAT parameter is quoted as it uses parentheses, whereas the COMMENT parameter is not.
+
+    `"FLOAT(BINARY)" COMMENT`
+
 Option          | Default | Description
 ----------------|---------|------------
 @file           | NO      | Retrieve additional options from free form text file with default suffix OPT.  Options can be specified delimited by spaces on as many lines as required.  All characters on a line following * are ignored as comments. The @file option can be nested.  The default path is the program path.
