@@ -1,0 +1,121 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Melvyn Maltz                                              *
+.* Date   - 12/20/20                                                  *
+.**********************************************************************
+.* 12/20/20 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.**********************************************************************
+&N       GENCB &AM=VSAM,          VSAM                                 X
+               &BLK=,             ACB, RPL OR EXLST                    X
+               &COPIES=1,         NUMBER OF COPIES                     X
+               &LENGTH=,          LENGTH OF WAREA                      X
+               &LOC=,             AREA BELOW OR ANY                    X
+               &WAREA=,           USER PROVIDED WORK AREA              X
+               &EXLST=,           ACBEXLST                             X
+               &DDNAME=,          ACBDDNM                              X
+               &DSNAME=,  ACB DSNAME FOR VSAM CLUSTER DEFINITION TABLE X
+               &PASSWD=,          ACBPASSW                             X
+               &MACRF=,           ACBMACR1-4                           X
+               &BUFND=,           ACBBUFND                             X
+               &BUFNI=,           ACBBUFNI                             X
+               &BUFSP=,           ACBBUFSP                             X
+               &RMODE31=,         ACBMODE                              X
+               &STRNO=,           ACBSTRNO                             X
+               &BSTRNO=,          ACBBSTNO                             X
+               &MAREA=,           ACB NOT SUPPORTED                    X
+               &MLEN=,            ACB NOT SUPPORTED                    X
+               &RLSREAD=,         ACB NOT SUPPORTED                    X
+               &SHRPOOL=,         ACBSHRP                              X
+               &ACB=,             RPLDACB                              X
+               &AREA=,            RPLAREA                              X
+               &AREALEN=,         RPLAREAL                             X
+               &ARG=,             RPLARG                               X
+               &ECB=,             RPLECB                               X
+               &MSGAREA=,         RPLMSGAR                             X
+               &MSGLEN=,          RPLMSGLN                             X
+               &NXTRPL=,          RPLNXTRP                             X
+               &RECLEN=,          RPLRECLN                             X
+               &KEYLEN=,          RPLKEYLN                             X
+               &OPTCD=,           RPLOPT1-2                            X
+               &TRANSID=,         RPL NOT SUPPORTED                    X
+               &EODAD=,           EXLST EODAD                          X
+               &LERAD=,           EXLST LERAD                          X
+               &SYNAD=,           EXLST SYNAD                          X
+               &JRNAD=,           EXLST NOT SUPPORTED                  X
+               &UPAD=,            EXLST NOT SUPPORTED                  X
+               &RLSWAIT=,         EXLST NOT SUPPORTED                  X
+               &MF=I
+.*
+         AIF   (&SYSZVSAM EQ 0)
+         MNOTE 15,'GENCB VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM'
+         MEXIT
+         AEND
+.*
+         AIF   (&SYSZVSAM EQ 1)
+&N       GENCB1 AM=&AM,           VSAM                                 X
+               BLK=&BLK,          ACB OR RPL                           X
+               COPIES=&COPIES,    NUMBER OF COPIES                     X
+               LENGTH=&LENGTH,    LENGTH OF WAREA                      X
+               LOC=&LOC,          AREA BELOW OR ANY                    X
+               WAREA=&WAREA,      USER WORK AREA FOR ACB/RPL COPIES    X
+               BUFSP=&BUFSP,      ACB MAXIMUM BUFFER SPACE FOR CLUSTER X
+               DDNAME=&DDNAME,    ACB DDNAME FOR CLUSTER DEF TABLE     X
+               DSNAME=&DSNAME,    ACB DSNAME FOR CLUSTER DEF TABLE     X
+               EXLST=&EXLST,      ACB NOT SUPPORTED                    X
+               MACRF=&MACRF,      ACBMACR1-4                           X
+               ACB=&ACB,          RPLDACB                              X
+               AREA=&AREA,        RPLAREA                              X
+               AREALEN=&AREALEN,  RPLAREAL                             X
+               ARG=&ARG,          RPLARG                               X
+               ECB=&ECB,          RPLECB                               X
+               KEYLEN=&KEYLEN,    RPLKEYLN                             X
+               OPTCD=&OPTCD,      RPLOPT1-2                            X
+               RECLEN=&RECLEN     RPLRECLN
+         AEND
+.*
+         AIF   (&SYSZVSAM EQ 2)
+&N       GENCB2 AM=&AM,           VSAM                                 X
+               BLK=&BLK,          ACB, RPL OR EXLST                    X
+               COPIES=&COPIES,    NUMBER OF COPIES                     X
+               LENGTH=&LENGTH,    LENGTH OF WAREA                      X
+               LOC=&LOC,          AREA BELOW OR ANY                    X
+               WAREA=&WAREA,      USER PROVIDED WORK AREA              X
+               EXLST=&EXLST,      ACBEXLST                             X
+               DDNAME=&DDNAME,    ACBDDNM                              X
+               PASSWD=&PASSWD,    ACBPASSW                             X
+               MACRF=&MACRF,      ACBMACR1-4                           X
+               BUFND=&BUFND,      ACBBUFND                             X
+               BUFNI=&BUFNI,      ACBBUFNI                             X
+               BUFSP=&BUFSP,      ACBBUFSP                             X
+               RMODE31=&RMODE31,  ACBMODE                              X
+               STRNO=&STRNO,      ACBSTRNO                             X
+               BSTRNO=&BSTRNO,    ACBBSTNO                             X
+               MAREA=&MAREA,      ACB NOT SUPPORTED                    X
+               MLEN=&MLEN,        ACB NOT SUPPORTED                    X
+               RLSREAD=&RLSREAD,  ACB NOT SUPPORTED                    X
+               SHRPOOL=&SHRPOOL,  ACBSHRP                              X
+               ACB=&ACB,          RPLDACB                              X
+               AREA=&AREA,        RPLAREA                              X
+               AREALEN=&AREALEN,  RPLAREAL                             X
+               ARG=&ARG,          RPLARG                               X
+               ECB=&ECB,          RPLECB                               X
+               KEYLEN=&KEYLEN,    RPLKEYLN                             X
+               MSGAREA=&MSGAREA,  RPLMSGAR                             X
+               MSGLEN=&MSGLEN,    RPLMSGLN                             X
+               NXTRPL=&NXTRPL,    RPLNXTRP                             X
+               OPTCD=&OPTCD,      RPLOPT1-2                            X
+               RECLEN=&RECLEN,    RPLRECLN                             X
+               TRANSID=&TRANSID,  RPL NOT SUPPORTED                    X
+               EODAD=&EODAD,      EXLST EODAD                          X
+               LERAD=&LERAD,      EXLST LERAD                          X
+               SYNAD=&SYNAD,      EXLST SYNAD                          X
+               JRNAD=&JRNAD,      EXLST NOT SUPPORTED                  X
+               UPAD=&UPAD,        EXLST NOT SUPPORTED                  X
+               RLSWAIT=&RLSWAIT,  EXLST NOT SUPPORTED                  X
+               MF=&MF
+         AEND
+.*
+         MEND

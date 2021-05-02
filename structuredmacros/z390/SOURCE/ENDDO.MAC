@@ -1,0 +1,27 @@
+.*   Copyright (C) <2021>  Daniel H. Snyder                             00010000
+.*   Structured Programming Macros for the IBM High Level Assembler     00020000
+.*   Daniel.H.Snyder@protonmail.com                                     00030000
+.*                                                                      00040000
+.* This program is free software: you can redistribute it and/or modify 00050000
+.* it under the terms of the GNU General Public License as published by 00060000
+.* the Free Software Foundation, either version 3 of the License, or    00070000
+.* any later version.                                                   00080000
+.*                                                                      00090000
+.* This program is distributed in the hope that it will be useful,      00100000
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of       00110000
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        00120000
+.* GNU General Public License for more details.                         00130000
+.*                                                                      00140000
+.* You should have received a copy of the GNU General Public License    00150000
+.* along with this program. See <https://www.gnu.org/licenses/>.        00160000
+.*                                                                      00170000
+         MACRO                                                          00180000
+&NAME    ENDDO , STUB FOR "ENDIF"                                       00190000
+         COPY  $MGBLDEF                                                 00191000
+         AIF   (&$MLVL GT 0).OK002                                      00200000
+         MNOTE 8,'"ENDDO" INVALID OUTSIDE OF A "DO" GROUP'              00210000
+         MNOTE ' - MACRO GENERATION TERMINATED'                         00220000
+         MEXIT                                                          00230000
+.OK002   ANOP                                                           00240000
+         ENDIF ,                                                        00250000
+         MEND                                                           00260000

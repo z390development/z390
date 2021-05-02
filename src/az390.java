@@ -409,7 +409,8 @@ public  class  az390 implements Runnable {
 		* 2020/12/03 RPI 2223 update RIL instr. to support immediate 32 bit RLDS for non branch and non relative long instr.
 		*            note this is documented in IBM APAR PH30740 dated 2020-11-03 
 		* 2020-12-31 RPI 2225 add STCCTM, use get_hex_relative_offset(bits) and get_hex_int(bits), and fix BPRP, BPPm, fix vcp, etc.
-		* 2021-02-07 RPI 2226 correct RSYb EB17 STCCTM R1,M3,D2(B2) and fix VNOT not setting v3=v2 
+		* 2021-02-07 RPI 2226 correct RSYb EB17 STCCTM R1,M3,D2(B2) and fix VNOT not setting v3=v2
+        * 2821-04-26 Uaayw #239 fix no error on undefined sym for RIL i2 operand		
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -6876,6 +6877,9 @@ private void push_exp_sym(){
 	 */
 	if (inc_tot_exp_stk_sym()){
 	   cur_sid = find_sym(exp_token);
+	   if (cur_sid > 0 && sym_type[cur_sid] == sym_und){
+		   log_error(98,"symbol not found - " + exp_token); // #239 DSH
+	   }
 	   if (cur_sid > 0 
 		   && (sym_def[cur_sid] >= sym_def_ref || lookahead_mode)){  // RPI 488
 	   	  if (exp_first_sym_len){

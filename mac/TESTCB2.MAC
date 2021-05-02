@@ -1,0 +1,4536 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.* Date   - 09/30/05                                                  *
+.**********************************************************************
+.* 08/10/07 INITIAL CODING TO TEST FDBK OR RECLEN FIELDS              *
+.* 08/19/07 RPI 680 SHOWCB TO TESTCB                                  *
+.* 09/14/07 RPI 672 VERIFY RPL VS ACB                                 *
+.* 09/19/07 RPI 697 SET RC=0                                          *
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility           *
+.*                                                                    *
+.* 09/27/20 zVSAM V2 version (Melvyn Maltz)                           *
+.*          Reconstructed code                                        *
+.*          Combined ZTESTCB                                          *
+.* 12/21/20 zVSAM RENAMED TO TESTCB2 FOR HYBRID \MAC                  *
+.**********************************************************************
+.* MF=I or omitted    Generates CBMR and invokes ZVSAM19C to test     *
+.*                    fields                                          *
+.* MF=L               Generates CBMR inline                           *
+.* MF=(L,addr)        Generates CBMR inline and then moves it to addr *
+.* MF=(L,addr,label)  as above and generates label equ size           *
+.*                                                                    *
+.* MF=(E,addr)        Modifies the CBMR at addr                       *
+.*                    Invokes ZVSAM19C to test fields using the CBMR  *
+.*                                                                    *
+.* MF=(G,addr)        Generates CBMR inline and then moves it to addr *
+.*                    Invokes ZVSAM19C to test fields using the CBMR  *
+.* MF=(G,addr,label)  as above and generates label equ size           *
+.*                                                                    *
+.* addr can be label or (reg), reg cannot be R0, R1, R14 or R15       *
+.* reg is not permitted for MF=L                                      *
+.**********************************************************************
+&N       TESTCB2 &RPL=,           RPL ADDRESS                          X
+               &ACB=,             ACB ADDRESS/RPLDACB                  X
+               &EXLST=,           EXLST ADDRESS/ACBEXLST               X
+               &ERET=,            ERROR ROUTINE ADDRESS                X
+               &AIXFLAG=,         RPLAIXID                             X
+               &AIXPC=,           RPL AIX POINTER COUNT                X
+               &AREA=,            RPLAREA                              X
+               &AREALEN=,         RPLAREAL                             X
+               &ARG=,             RPLARG                               X
+               &ECB=,             RPLECB                               X
+               &FDBK=,            RPLFEEDB                             X
+               &FTNCD=,           RPLCMPON                             X
+               &IO=,              RPL IO COMPLETE                      X
+               &KEYLEN=,          RPL RPLKEYLN/ACB PFXKEYLN            X
+               &MSGAREA=,         RPLMSGAR                             X
+               &MSGLEN=,          RPLMSGLN                             X
+               &NXTRPL=,          RPLNXTRP                             X
+               &OPTCD=,           RPLOPTCD                             X
+               &RBA=,             RPLCXRBA+4                           X
+               &RECLEN=,          RPLRECLN                             X
+               &RPLLEN=,          RPL LENGTH                           X
+               &TRANSID=,         RPL NOT SUPPORTED                    X
+               &XRBA=,            RPLCXRBA                             X
+               &ACBLEN=,          ACB LENGTH                           X
+               &ATRB=,            ACB ATTRIBUTES PFXFFLGS/PFXRFLGS     X
+               &AVSPAC=,          ACB CTRAVSPAC+4                      X
+               &BFRFND=,          ACB CTRNBFRFND+4                     X
+               &BSTRNO=,          ACBBSTNO                             X
+               &BUFND=,           ACBBUFND                             X
+               &BUFNI=,           ACBBUFNI                             X
+               &BUFNO=,           ACB CTRNBUFNO+4                      X
+               &BUFRDS=,          ACB CTRNBUFRDS+4                     X
+               &BUFSP=,           ACBBUFSP                             X
+               &BUFUSE=,          ACB CTRNBUFUSE+4                     X
+               &CINV=,            ACB PFXBLKSZ                         X
+               &DDNAME=,          ACBDDNM                              X
+               &ENDRBA=,          ACB CTRENDRBA+4                      X
+               &ERROR=,           ACBERFLG                             X
+               &FS=,              ACB (ALWAYS 0)                       X
+               &HALCRBA=,         ACB CTRHALCRBA+4                     X
+               &HLRBA=,           ACB CTRHLRBA+4                       X
+               &LRECL=,           ACB PFXRCLEN                         X
+               &MACRF=,           ACBMACR1-4                           X
+               &MAREA=,           ACB NOT SUPPORTED                    X
+               &MLEN=,            ACB NOT SUPPORTED                    X
+               &NCIS=,            ACB CTRNCIS+4                        X
+               &NDELR=,           ACB CTRNDELR+4                       X
+               &NEXCP=,           ACB CTRNEXCP+4                       X
+               &NEXT=,            ACB CTRNEXT+4 (ALWAYS 1)             X
+               &NINSR=,           ACB CTRNINSR+4                       X
+               &NIXL=,            ACB PFXBLVLn                         X
+               &NLOGR=,           ACB CTRNLOGR+4                       X
+               &NRETR=,           ACB CTRNRETR+4                       X
+               &NSSS=,            ACB (ALWAYS 0)                       X
+               &NUIW=,            ACB CTRNNUIW+4                       X
+               &NUPDR=,           ACB CTRNUPDR+4                       X
+               &OBJECT=DATA,      ACB DATA/INDEX                       X
+               &OFLAGS=,          ACBOFLGS                             X
+               &OPENOBJ=,         ACBDTYPE                             X
+               &PASSWD=,          ACBPASSW                             X
+               &RKP=,             ACB PFXKYOFF                         X
+               &SHRPOOL=,         ACBSHRP                              X
+               &SDTASZ=,          ACB CTRSDTASZ                        X
+               &STMST=,           ACB CTRSTMST                         X
+               &STRMAX=,          ACB CTRSTRMAX+4                      X
+               &STRNO=,           ACBSTRNO                             X
+               &UIW=,             ACB CTRNUIW                          X
+               &XAVSPAC=,         ACB CTRAVSPAC                        X
+               &XBFRFND=,         ACB CTRNBFRFND                       X
+               &XBUFNO=,          ACB CTRNBUFNO                        X
+               &XBUFRDS=,         ACB CTRNBUFRDS                       X
+               &XBUFUSE=,         ACB CTRNBUFUSE                       X
+               &XENDRBA=,         ACB CTRENDRBA                        X
+               &XHALCRBA=,        ACB CTRHALCRBA                       X
+               &XHLRBA=,          ACB CTRHLRBA                         X
+               &XNCIS=,           ACB CTRNCIS                          X
+               &XNDELR=,          ACB CTRNDELR                         X
+               &XNEXCP=,          ACB CTRNEXCP                         X
+               &XNEXT=,           ACB CTRNEXT (ALWAYS 1)               X
+               &XNINSR=,          ACB CTRNINSR                         X
+               &XNLOGR=,          ACB CTRNLOGR                         X
+               &XNRETR=,          ACB CTRNRETR                         X
+               &XNUIW=,           ACB CTRNNUIW                         X
+               &XNUPDR=,          ACB CTRNUPDR                         X
+               &XSTRMAX=,         ACB CTRSTRMAX                        X
+               &XUIW=,            ACB CTRNUIW                          X
+               &EODAD=,           EXLST EODAD                          X
+               &JRNAD=,           EXLST JRNAD                          X
+               &LERAD=,           EXLST LERAD                          X
+               &SYNAD=,           EXLST SYNAD                          X
+               &EXLLEN=,          EXLST LENGTH                         X
+               &MF=I
+.*
+         LCLA  &COUNT,&COUNTNB,&COUNTRP,&COUNTAC,&COUNTXL
+         LCLA  &BYTE8
+         LCLA  &OFFREG(10)
+         LCLC  &OFFCHR(10)
+.* FOR NO BLOCK
+         LCLB  &NBKHAND
+.* FOR RPL
+         GBLC  &ZGENOPT1,&ZGENOPT2,&ZGENOPT3,&ZGENOPT4
+         LCLB  &RPLHAND
+.* FOR ACB
+         GBLC  &ZGENATB1,&ZGENATB2
+         GBLC  &ZGENMACF1,&ZGENMACF2,&ZGENMACF3,&ZGENMACF4
+         LCLB  &ACBHAND
+.* FOR EXLST
+         LCLB  &EXLHAND
+.*
+         AIF   ('&N' NE '')
+&N       DS    0H
+         AEND
+.*
+.* ELIMINATE POSITIONALS
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'TESTCB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.*
+.POSEND  ANOP
+.* VALIDATE MF=
+         AIF   ('&MF(1)' NE 'I' AND                                    X
+               '&MF(1)'  NE 'L' AND                                    X
+               '&MF(1)'  NE 'E' AND                                    X
+               '&MF(1)'  NE 'G')
+         MNOTE 12,'TESTCB MF= INVALID - &MF'
+         AEND
+.* COUNT NO. OF KEYWORDS, ONLY ONE ALLOWED
+         AIF   ('&RPL' NE '' AND '&ACB' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&AIXFLAG' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&AIXPC' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&AREA' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&AREALEN' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&ARG' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&ECB' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&FDBK' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&FTNCD' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&IO' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&KEYLEN' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&MSGAREA' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&MSGLEN' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&NXTRPL' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&OPTCD' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&RBA' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&RECLEN' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&RPLLEN' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTNB SETA  &COUNTNB+1
+&COUNTRP SETA  &COUNTRP+1
+&COUNTAC SETA  &COUNTAC+1
+&COUNTXL SETA  &COUNTXL+1
+         AEND
+         AIF   ('&TRANSID' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&XRBA' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTRP SETA  &COUNTRP+1
+         AEND
+         AIF   ('&ACBLEN' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTNB SETA  &COUNTNB+1
+&COUNTRP SETA  &COUNTRP+1
+&COUNTAC SETA  &COUNTAC+1
+&COUNTXL SETA  &COUNTXL+1
+         AEND
+         AIF   ('&ATRB' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&AVSPAC' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&BFRFND' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&BSTRNO' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&BUFND' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&BUFNI' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&BUFNO' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&BUFRDS' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&BUFSP' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&BUFUSE' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&CINV' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&DDNAME' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&ENDRBA' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&ERROR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&ACB' NE '' AND '&EXLST' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&FS' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&HALCRBA' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&HLRBA' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&LRECL' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&MACRF' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NCIS' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NDELR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NEXCP' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NEXT' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NINSR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NIXL' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NLOGR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NRETR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NSSS' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NUIW' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&NUPDR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&OFLAGS' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&OPENOBJ' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&PASSWD' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&RKP' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&SHRPOOL' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&SDTASZ' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&STMST' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&STRMAX' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&STRNO' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&UIW' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XAVSPAC' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XBFRFND' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XBUFNO' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XBUFRDS' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XBUFUSE' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XENDRBA' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XHALCRBA' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XHLRBA' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XNCIS' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XNDELR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XNEXCP' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XNEXT' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XNINSR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XNLOGR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XNRETR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XNUIW' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XNUPDR' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XSTRMAX' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&XUIW' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTAC SETA  &COUNTAC+1
+         AEND
+         AIF   ('&EODAD' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTXL SETA  &COUNTXL+1
+         AEND
+         AIF   ('&JRNAD' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTXL SETA  &COUNTXL+1
+         AEND
+         AIF   ('&LERAD' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTXL SETA  &COUNTXL+1
+         AEND
+         AIF   ('&SYNAD' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTXL SETA  &COUNTXL+1
+         AEND
+         AIF   ('&EXLLEN' NE '')
+&COUNT   SETA  &COUNT+1
+&COUNTNB SETA  &COUNTNB+1
+&COUNTRP SETA  &COUNTRP+1
+&COUNTAC SETA  &COUNTAC+1
+&COUNTXL SETA  &COUNTXL+1
+         AEND
+         AIF   (&COUNT EQ 0)
+         MNOTE 12,'TESTCB NO KEYWORDS SPECIFIED'
+         AEND
+         AIF   (&COUNT GT 1)
+         MNOTE 12,'TESTCB MORE THAN ONE KEYWORD SPECIFIED (&COUNT)'
+         AEND
+.*
+         AIF   ('&RPL' NE '').DORPL
+         AIF   ('&ACB' NE '').DOACB
+         AIF   ('&EXLST' NE '').DOEXLST
+.*
+.*******************
+.* TESTCB NO BLOCK *
+.*******************
+.* ONLY RPLLEN, ACBLEN OR EXLLEN ALLOWED
+         AIF   (&COUNT EQ 1 AND &COUNTNB NE 1)
+         MNOTE 12,'TESTCB NO BLOCK SPECIFIED AND KEYWORD IS NOT RPLLEN,-
+                ACBLEN OR EXLLEN'
+         AEND
+.* DON'T NEED TO GEN A CBMR FOR MF=E
+         AIF   ('&MF(1)' EQ 'E').NBKMFEG
+&FIELDS  SETA  3                  NULL+ERET+KEYWORD
+&BRAS    SETA  0
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+&BRAS    SETA  4
+         AEND
+.* (BRAS) 9(CBMR HEADER) &FIELDS(BYTE CODES) &FIELDS*4(FIELDS)
+&TOTSIZE SETA  &BRAS+9+&FIELDS+&FIELDS*4
+&RESID   SETA  (&TOTSIZE-(&TOTSIZE/4)*4)
+         AIF   (&RESID NE 0)
+&RESID   SETA  4-&RESID
+&TOTSIZE SETA  &TOTSIZE+&RESID
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+         BRAS  15,*+&TOTSIZE
+         AEND
+         DC    C'CBMR'            CBMREYE
+         DC    AL1(CBMRTEST)      CBMRREQ
+         DC    AL1(0)             CBMRRMOD
+         DC    AL1(&FIELDS)       CBMRVRBS
+         DC    AL2(&TOTSIZE-&BRAS) CBMRSIZE
+* LIST OF VERB CODES
+         DC    AL1(CBMRNB_NULL)   NO BLOCK
+         DC    AL1(CBMRNB_ERET)   ERET ADDRESS
+         AIF   ('&RPLLEN' NE '')
+         DC    AL1(CBMRRPL_RPLLEN) RPLLEN
+         AEND
+         AIF   ('&ACBLEN' NE '')
+         DC    AL1(CBMRACB_ACBLEN) ACBLEN
+         AEND
+         AIF   ('&EXLLEN' NE '')
+         DC    AL1(CBMRXL_XLSTLEN) EXLLEN
+         AEND
+* LIST OF FIELD VALUES IN SAME ORDER AS VERB CODES
+         DC    AL4(0)             NO BLOCK ADDRESS
+         AIF   ('&ERET' EQ '')
+         DC    AL4(0)             NO ERET ADDRESS
+         AELSE
+         DC    AL4(&ERET)         ERET ADDRESS
+            AIF ('&ERET'(1,1) EQ '(')
+               AIF ('&ERET' EQ '(0)'  OR                               X
+                  '&ERET'  EQ '(R0)'  OR                               X
+                  '&ERET'  EQ '(1)'   OR                               X
+                  '&ERET'  EQ '(R1)'  OR                               X
+                  '&ERET'  EQ '(14)'  OR                               X
+                  '&ERET'  EQ '(R14)' OR                               X
+                  '&ERET'  EQ '(15)'  OR                               X
+                  '&ERET'  EQ '(R15)')
+         MNOTE 12,'TESTCB NO BLOCK ERET= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&ERET'
+            AEND
+         AEND
+.*
+         AIF   ('&RPLLEN' NE '')
+         DC    AL4(&RPLLEN)       RPLLEN
+         AEND
+         AIF   ('&ACBLEN' NE '')
+         DC    AL4(&ACBLEN)       ACBLEN
+         AEND
+         AIF   ('&EXLLEN' NE '')
+         DC    AL4(&EXLLEN)       EXLLEN
+         AEND
+.*
+         AIF   (&RESID NE 0)
+         DC    &RESID.X'00'       ALIGN
+         AEND
+.*
+&I       SETA  1
+.NBKRGLP ANOP
+         AIF   (&I GT 10).NBKRGDN
+         AIF   (&OFFREG(&I) NE 0)
+            AIF (NOT &NBKHAND)
+* HANDLE REGISTER NOTATION
+&NBKHAND SETB  1
+            AEND
+         ST    &OFFCHR(&I),&OFFREG(&I).(15) STORE REGISTER INTO CBMR
+         AEND
+&I       SETA  &I+1
+         AGO   .NBKRGLP
+.*
+.NBKRGDN ANOP
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'L' OR '&MF(1)' EQ 'G').NBKMFL
+.*
+.* PROCESS NO BLOCK MF=I
+         LR    1,15               R1=CBMR ADDRESS
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.*
+.NBKMFL  ANOP
+.* PROCESS TESTCB NO BLOCK MF=L
+         AIF   (T'&MF(2) EQ 'O' AND '&N' EQ '')
+         MNOTE 12,'TESTCB NBK NO LABEL FOR CBMR'
+         AEND
+         AIF   (T'&MF(2) NE 'O')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+         MNOTE 12,'TESTCB NBK MF= INVALID REGISTER USE'
+            AEND
+            AIF ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AEND
+         MVC   0(&TOTSIZE-&BRAS,1),0(15) MOVE TO REQUESTED AREA
+         AEND
+.*
+         AIF   (T'&MF(3) NE 'O')
+&MF(3)   EQU   &TOTSIZE-&BRAS
+         AEND
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'G').NBKMFEG
+         SR    15,15              RC=0
+         MEXIT
+.*
+.NBKMFEG ANOP
+.* PROCESS TESTCB NO BLOCK MF=E/G
+.*   FOR MF=G ONLY THE PREP CODING IS DONE
+.* FOR EACH PARAMETER SPECIFIED, SEARCH THE CBMR FOR THE ENTRY
+.* WHEN FOUND, MOVE THE NEW VALUE INTO THE CBMR
+.* CALL ZVSAM19C TO TEST THE FIELD
+         AIF   (T'&MF(2) EQ 'O')
+         MNOTE 12,'TESTCB NBK MF=E/G SECOND PARAMETER MISSING'
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'G').NBKMFG
+.*
+         AIF   ('&MF(2)'(1,1) EQ '(')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+         MNOTE 12,'TESTCB NBK MF= INVALID REGISTER USE'
+            AEND
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.* MF=E
+.* MODIFY THE CBMR
+         USING CBMR,1
+         LLC   0,CBMRVRBS         R0=NO. OF VERBS
+         LA    1,CBMRBODY         R1=ADDRESS OF VERBS
+         DROP  1
+         BRAS  15,*+12            BRANCH AROUND SAVE AREA
+TSTCBSV&SYSNDX DS 0H
+         DS    2AL4               SAVE AREA
+         STM   0,1,TSTCBSV&SYSNDX SAVE R0-R1
+.*
+         AIF   ('&ERET' NE '')
+            AIF (T'&ERET EQ 'N')
+         MNOTE 12,'TESTCB NO BLOCK ERET= CANNOT BE NUMERIC'
+            AEND
+         LHI   14,CBMRNB_ERET     ERET VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&ERET'(1,1) EQ '(')
+               AIF ('&ERET' EQ '(0)'  OR                               X
+               '&ERET'     EQ '(R0)'  OR                               X
+               '&ERET'     EQ '(1)'   OR                               X
+               '&ERET'     EQ '(R1)'  OR                               X
+               '&ERET'     EQ '(14)'  OR                               X
+               '&ERET'     EQ '(R14)' OR                               X
+               '&ERET'     EQ '(15)'  OR                               X
+               '&ERET'     EQ '(R15)')
+         MNOTE 12,'TESTCB NO BLOCK ERET= INVALID REGISTER USE'
+               AEND
+         ST    &ERET,0(14)        STORE ERET ADDRESS IN CBMR
+            AELSE
+         LARL  15,&ERET           R15=ERET ADDRESS
+         ST    15,0(14)           STORE ERET ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&RPLLEN' NE '')
+         LHI   14,CBMRRPL_RPLLEN  RPLLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&RPLLEN      MOVE RPLLEN TO CBMR
+         AEND
+.*
+         AIF   ('&ACBLEN' NE '')
+         LHI   14,CBMRACB_ACBLEN  ACBLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&ACBLEN      MOVE ACBLEN TO CBMR
+         AEND
+.*
+         AIF   ('&EXLLEN' NE '')
+         LHI   14,CBMRXL_XLSTLEN  XLSTLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&EXLLEN      MOVE EXLLEN TO CBMR
+         AEND
+.*
+         AIF   ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.*
+.NBKMFG  ANOP
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         AIF   ('&MF(1)' EQ 'G')
+         MEXIT
+         AEND
+         J     TSTCBE&SYSNDX      EXIT
+*
+* VERB SEARCH SUBROUTINE, RC=8 IF NOT FOUND
+TSTCBS&SYSNDX DS 0H
+         LM    0,1,TSTCBSV&SYSNDX RESTORE R0-R1 (NO. & ADDR OF VERBS)
+TSTCBL&SYSNDX DS 0H
+         CLM   14,B'0001',0(1)    THIS VERB ?
+         JE    TSTCBF&SYSNDX      EXIT IF IT IS
+         AHI   1,1                BUMP VERB POINTER
+         BRCT  0,TSTCBL&SYSNDX    LOOP
+*
+         J     TSTCB8&SYSNDX      ERROR IF NOT FOUND
+*
+TSTCBF&SYSNDX DS 0H
+* FIELD LOCATE
+         L     14,TSTCBSV&SYSNDX  R14=NO. OF VERBS
+         SR    14,0               R14=VERB POSITION
+         SLL   14,2               *4
+         A     14,TSTCBSV&SYSNDX+4 +A(CBMRBODY)
+         A     14,TSTCBSV&SYSNDX  +NO. OF VERBS=FIELD POSITION
+         BR    15                 RETURN
+*
+TSTCB8&SYSNDX DS 0H
+         LA    15,8               RC=8 (FIELD NOT FOUND)
+         LM    0,1,TSTCBSV&SYSNDX RESTORE R0-R1 (NO. & ADDR OF VERBS)
+         ARK   14,0,1             R14=ADDRESS OF FIELDS
+         ICM   14,15,4(14)        ANY ERET ADDRESS ?
+         JZ    TSTCBE&SYSNDX      EXIT IF NONE
+         SR    0,0                R0=0
+         BR    14                 EXIT TO ERET ROUTINE
+*
+TSTCBE&SYSNDX DS 0H
+         MEXIT
+.*
+.DORPL   ANOP
+.**************
+.* TESTCB RPL *
+.**************
+.* CHECK RPL UNSUPPORTED FIELDS
+         AIF   ('&TRANSID' NE '')
+         MNOTE 12,'TESTCB RPL TRANSID IS NOT SUPPORTED'
+         AEND
+.*
+         AIF   (&COUNT EQ 1 AND &COUNTRP NE 1)
+         MNOTE 12,'TESTCB RPL= SPECIFIED AND KEYWORD IS NOT VALID FOR A-
+               N RPL'
+         AEND
+.* DON'T NEED TO GEN A CBMR FOR MF=E
+         AIF   ('&MF(1)' EQ 'E').RPLMFEG
+&FIELDS  SETA  3                  RPL+ERET+KEYWORD
+.* HANDLE 8-BYTE FIELDS
+         AIF   ('&XRBA' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+&BRAS    SETA  0
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+&BRAS    SETA  4
+         AEND
+.* (BRAS) 9(CBMR HEADER) &FIELDS-&BYTE8(BYTE CODES) &FIELDS*4(FIELDS)
+&TOTSIZE SETA  &BRAS+9+(&FIELDS-&BYTE8)+&FIELDS*4
+&RESID   SETA  (&TOTSIZE-(&TOTSIZE/4)*4)
+         AIF   (&RESID NE 0)
+&RESID   SETA  4-&RESID
+&TOTSIZE SETA  &TOTSIZE+&RESID
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+         BRAS  15,*+&TOTSIZE
+         AEND
+         DC    C'CBMR'            CBMREYE
+         DC    AL1(CBMRRPL+CBMRTEST) CBMRREQ
+         DC    AL1(0)             CBMRRMOD
+         DC    AL1(&FIELDS-&BYTE8) CBMRVRBS
+         DC    AL2(&TOTSIZE-&BRAS) CBMRSIZE
+* LIST OF VERB CODES
+         DC    AL1(CBMRRPL_RPL)   RPL ADDRESS
+         DC    AL1(CBMRRPL_ERET)  ERET ADDRESS
+         AIF   ('&ACB' NE '')
+         DC    AL1(CBMRRPL_ACB)   ACB ADDRESS
+         AEND
+         AIF   ('&AIXFLAG' NE '')
+         DC    AL1(CBMRRPL_AIXFLAG) AIXFLAG
+         AEND
+         AIF   ('&AIXPC' NE '')
+         DC    AL1(CBMRRPL_AIXPC) AIXPC
+         AEND
+         AIF   ('&AREA' NE '')
+         DC    AL1(CBMRRPL_RECAREA) AREA
+         AEND
+         AIF   ('&AREALEN' NE '')
+         DC    AL1(CBMRRPL_AREALEN) AREALEN
+         AEND
+         AIF   ('&ARG' NE '')
+         DC    AL1(CBMRRPL_ARG)   ARG
+         AEND
+         AIF   ('&ECB' NE '')
+         DC    AL1(CBMRRPL_ECB)   ECB
+         AEND
+         AIF   ('&FDBK' NE '')
+         DC    AL1(CBMRRPL_FDBK)  FDBK
+         AEND
+         AIF   ('&FTNCD' NE '')
+         DC    AL1(CBMRRPL_FTNCD) FTNCD
+         AEND
+         AIF   ('&IO' NE '')
+         DC    AL1(CBMRRPL_IO)    IO
+         AEND
+         AIF   ('&KEYLEN' NE '')
+         DC    AL1(CBMRRPL_KEYLEN) KEYLEN
+         AEND
+         AIF   ('&MSGAREA' NE '')
+         DC    AL1(CBMRRPL_MSGAREA) MSGAREA
+         AEND
+         AIF   ('&MSGLEN' NE '')  MSGLEN
+         DC    AL1(CBMRRPL_MSGLEN)
+         AEND
+         AIF   ('&NXTRPL' NE '')
+         DC    AL1(CBMRRPL_NEXTRPL) NXTRPL
+         AEND
+         AIF   ('&OPTCD' NE '')
+         DC    AL1(CBMRRPL_OPTCD) OPTCD
+         AEND
+         AIF   ('&RBA' NE '')
+         DC    AL1(CBMRRPL_RBA)   RBA
+         AEND
+         AIF   ('&RECLEN' NE '')
+         DC    AL1(CBMRRPL_RECLEN) RECLEN
+         AEND
+         AIF   ('&TRANSID' NE '')
+         DC    AL1(CBMRRPL_TRANSID) TRANSID
+         AEND
+         AIF   ('&XRBA' NE '')
+         DC    AL1(CBMRRPL_XRBA)  XRBA
+         AEND
+         AIF   ('&RPLLEN' NE '')
+         DC    AL1(CBMRRPL_RPLLEN) RPLLEN
+         AEND
+         AIF   ('&ACBLEN' NE '')
+         DC    AL1(CBMRACB_ACBLEN) ACBLEN
+         AEND
+         AIF   ('&EXLLEN' NE '')
+         DC    AL1(CBMRXL_XLSTLEN) EXLLEN
+         AEND
+* LIST OF FIELD VALUES IN SAME ORDER AS VERB CODES
+&OFFSET  SETA  9+&FIELDS         HEADER+NO. OF VERBS
+&I       SETA  1
+.*
+         DC    AL4(&RPL)          RPL ADDRESS
+         AIF   ('&RPL'(1,1) EQ '(')
+            AIF ('&RPL' EQ '(0)'   OR                                  X
+               '&RPL'   EQ '(R0)'  OR                                  X
+               '&RPL'   EQ '(1)'   OR                                  X
+               '&RPL'   EQ '(R1)'  OR                                  X
+               '&RPL'   EQ '(14)'  OR                                  X
+               '&RPL'   EQ '(R14)' OR                                  X
+               '&RPL'   EQ '(15)'  OR                                  X
+               '&RPL'   EQ '(R15)')
+         MNOTE 12,'TESTCB RPL RPL= INVALID REGISTER USE'
+            AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&RPL'
+&I       SETA  &I+1
+         AEND
+&OFFSET  SETA  &OFFSET+4
+.*
+         AIF   ('&ERET' EQ '')
+         DC    AL4(0)             NO ERET ADDRESS
+         AELSE
+         DC    AL4(&ERET)         ERET ADDRESS
+            AIF ('&ERET'(1,1) EQ '(')
+               AIF ('&ERET' EQ '(0)'  OR                               X
+                  '&ERET'  EQ '(R0)'  OR                               X
+                  '&ERET'  EQ '(1)'   OR                               X
+                  '&ERET'  EQ '(R1)'  OR                               X
+                  '&ERET'  EQ '(14)'  OR                               X
+                  '&ERET'  EQ '(R14)' OR                               X
+                  '&ERET'  EQ '(15)'  OR                               X
+                  '&ERET'  EQ '(R15)')
+         MNOTE 12,'TESTCB RPL ERET= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&ERET'
+&I       SETA  &I+1
+            AEND
+&OFFSET  SETA  &OFFSET+4
+         AEND
+.*
+         AIF   ('&ACB' NE '')
+         DC    AL4(&ACB)          ACB ADDRESS
+            AIF ('&ACB'(1,1) EQ '(')
+               AIF ('&ACB' EQ '(0)'   OR                               X
+                  '&ACB'   EQ '(R0)'  OR                               X
+                  '&ACB'   EQ '(1)'   OR                               X
+                  '&ACB'   EQ '(R1)'  OR                               X
+                  '&ACB'   EQ '(14)'  OR                               X
+                  '&ACB'   EQ '(R14)' OR                               X
+                  '&ACB'   EQ '(15)'  OR                               X
+                  '&ACB'   EQ '(R15)')
+         MNOTE 12,'TESTCB RPL ACB= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&ACB'
+            AEND
+         AEND
+.*
+         AIF   ('&AIXFLAG' NE '')
+         AIF   ('&AIXFLAG' NE 'AIXPKP')
+         MNOTE 12,'TESTCB RPL AIXFLAG IS INVALID - &AIXFLAG'
+         AEND
+         DC    AL4(0)             AIXFLAG DUMMY VALUE
+         AEND
+.*
+         AIF   ('&AIXPC' NE '')
+         DC    AL4(&AIXPC)        AIXPC
+         AEND
+.*
+         AIF   ('&AREA' NE '')
+         DC    AL4(&AREA)         AREA
+            AIF ('&AREA'(1,1) EQ '(')
+               AIF ('&AREA' EQ '(0)'  OR                               X
+                  '&AREA'  EQ '(R0)'  OR                               X
+                  '&AREA'  EQ '(1)'   OR                               X
+                  '&AREA'  EQ '(R1)'  OR                               X
+                  '&AREA'  EQ '(14)'  OR                               X
+                  '&AREA'  EQ '(R14)' OR                               X
+                  '&AREA'  EQ '(15)'  OR                               X
+                  '&AREA'  EQ '(R15)')
+         MNOTE 12,'TESTCB RPL AREA= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&AREA'
+            AEND
+         AEND
+.*
+         AIF   ('&AREALEN' NE '')
+         DC    AL4(&AREALEN)      AREALEN
+         AEND
+.*
+         AIF   ('&ARG' NE '')
+         DC    AL4(&ARG)          ARG
+            AIF ('&ARG'(1,1) EQ '(')
+               AIF ('&ARG' EQ '(0)'   OR                               X
+                  '&ARG'   EQ '(R0)'  OR                               X
+                  '&ARG'   EQ '(1)'   OR                               X
+                  '&ARG'   EQ '(R1)'  OR                               X
+                  '&ARG'   EQ '(14)'  OR                               X
+                  '&ARG'   EQ '(R14)' OR                               X
+                  '&ARG'   EQ '(15)'  OR                               X
+                  '&ARG'   EQ '(R15)')
+         MNOTE 12,'TESTCB RPL ARG= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&ARG'
+            AEND
+         AEND
+.*
+         AIF   ('&ECB' NE '')
+         DC    AL4(&ECB)          ECB
+            AIF ('&ECB'(1,1) EQ '(')
+               AIF ('&ECB' EQ '(0)'   OR                               X
+                  '&ECB'   EQ '(R0)'  OR                               X
+                  '&ECB'   EQ '(1)'   OR                               X
+                  '&ECB'   EQ '(R1)'  OR                               X
+                  '&ECB'   EQ '(14)'  OR                               X
+                  '&ECB'   EQ '(R14)' OR                               X
+                  '&ECB'   EQ '(15)'  OR                               X
+                  '&ECB'   EQ '(R15)')
+         MNOTE 12,'TESTCB RPL ECB= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&ECB'
+            AEND
+         AEND
+.*
+         AIF   ('&FDBK' NE '')
+         DC    AL4(&FDBK)         FDBK
+         AEND
+.*
+         AIF   ('&FTNCD' NE '')
+         DC    AL4(&FTNCD)        FTNCD
+         AEND
+.*
+         AIF   ('&IO' NE '')
+         AIF   ('&IO' NE 'COMPLETE')
+         MNOTE 12,'TESTCB RPL IO IS INVALID - &IO'
+         AEND
+         DC    AL4(0)             IO DUMMY VALUE
+         AEND
+.*
+         AIF   ('&KEYLEN' NE '')
+         DC    AL4(&KEYLEN)       KEYLEN
+         AEND
+.*
+         AIF   ('&MSGAREA' NE '')
+         DC    AL4(&MSGAREA)      MSGAREA
+            AIF ('&MSGAREA'(1,1) EQ '(')
+               AIF ('&MSGAREA' EQ '(0)' OR                             X
+                  '&MSGAREA' EQ '(R0)'  OR                             X
+                  '&MSGAREA' EQ '(1)'   OR                             X
+                  '&MSGAREA' EQ '(R1)'  OR                             X
+                  '&MSGAREA' EQ '(14)'  OR                             X
+                  '&MSGAREA' EQ '(R14)' OR                             X
+                  '&MSGAREA' EQ '(15)'  OR                             X
+                  '&MSGAREA' EQ '(R15)')
+         MNOTE 12,'TESTCB RPL MSGAREA= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&MSGAREA'
+            AEND
+         AEND
+.*
+         AIF   ('&MSGLEN' NE '')
+         DC    AL4(&MSGLEN)       MSGLEN
+         AEND
+.*
+         AIF   ('&NXTRPL' NE '')
+         DC    AL4(&NXTRPL)       NXTRPL
+            AIF ('&NXTRPL'(1,1) EQ '(')
+               AIF ('&NXTRPL' EQ '(0)' OR                              X
+                  '&NXTRPL' EQ '(R0)'  OR                              X
+                  '&NXTRPL' EQ '(1)'   OR                              X
+                  '&NXTRPL' EQ '(R1)'  OR                              X
+                  '&NXTRPL' EQ '(14)'  OR                              X
+                  '&NXTRPL' EQ '(R14)' OR                              X
+                  '&NXTRPL' EQ '(15)'  OR                              X
+                  '&NXTRPL' EQ '(R15)')
+         MNOTE 12,'TESTCB RPL NXTRPL= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&NXTRPL'
+            AEND
+         AEND
+.*
+         AIF   ('&OPTCD' NE '')
+         ZGENOPTD OPTCD=&OPTCD,MODE=CBMR GENERATE 4-BYTE OPTCD
+         DC    B'&ZGENOPT1'       OPTCD BYTE 1
+         DC    B'&ZGENOPT2'       OPTCD BYTE 2
+         DC    B'&ZGENOPT3'       OPTCD BYTE 3
+         DC    B'&ZGENOPT4'       OPTCD BYTE 4
+         AEND
+.*
+         AIF   ('&RBA' NE '')
+         DC    AL4(&RBA)          RBA
+         AEND
+.*
+         AIF   ('&RECLEN' NE '')
+         DC    AL4(&RECLEN)       RECLEN
+         AEND
+.*
+         AIF   ('&TRANSID' NE '')
+         DC    AL4(&TRANSID)      TRANSID
+         AEND
+.*
+         AIF   ('&XRBA' NE '')
+         DC    AL8(&XRBA)         XRBA
+         AEND
+.*
+         AIF   ('&RPLLEN' NE '')
+         DC    AL4(&RPLLEN)       RPLLEN
+         AEND
+.*
+         AIF   ('&ACBLEN' NE '')
+         DC    AL4(&ACBLEN)       ACBLEN
+         AEND
+.*
+         AIF   ('&EXLLEN' NE '')
+         DC    AL4(&EXLLEN)       EXLLEN
+         AEND
+.*
+         AIF   (&RESID NE 0)
+         DC    &RESID.X'00'       ALIGN
+         AEND
+.*
+&I       SETA  1
+.RPLRGLP ANOP
+         AIF   (&I GT 10).RPLRGDN
+         AIF   (&OFFREG(&I) NE 0)
+            AIF (NOT &RPLHAND)
+* HANDLE REGISTER NOTATION
+&RPLHAND SETB  1
+            AEND
+         ST    &OFFCHR(&I),&OFFREG(&I).(15) STORE REGISTER INTO CBMR
+         AEND
+&I       SETA  &I+1
+         AGO   .RPLRGLP
+.*
+.RPLRGDN ANOP
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'L' OR '&MF(1)' EQ 'G').RPLMFL
+.*
+.* PROCESS RPL MF=I
+         LR    1,15               R1=CBMR ADDRESS
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.*
+.RPLMFL  ANOP
+.* PROCESS TESTCB RPL MF=L
+         AIF   (T'&MF(2) EQ 'O' AND '&N' EQ '')
+         MNOTE 12,'TESTCB RPL NO LABEL FOR CBMR'
+         AEND
+         AIF   (T'&MF(2) NE 'O')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+         MNOTE 12,'TESTCB RPL MF= INVALID REGISTER USE'
+            AEND
+            AIF ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AEND
+         MVC   0(&TOTSIZE-&BRAS,1),0(15) MOVE TO REQUESTED AREA
+         AEND
+.*
+         AIF   (T'&MF(3) NE 'O')
+&MF(3)   EQU   &TOTSIZE-&BRAS
+         AEND
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'G').RPLMFEG
+         SR    15,15              RC=0
+         MEXIT
+.*
+.RPLMFEG ANOP
+.* PROCESS TESTCB RPL MF=E/G
+.*   FOR MF=G ONLY THE PREP CODING IS DONE
+.* FOR EACH PARAMETER SPECIFIED, SEARCH THE CBMR FOR THE ENTRY
+.* WHEN FOUND, MOVE THE NEW VALUE INTO THE CBMR
+.* CALL ZVSAM19C TO TEST THE FIELD
+         AIF   (T'&MF(2) EQ 'O')
+         MNOTE 12,'TESTCB RPL MF=E/G SECOND PARAMETER MISSING'
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'G').RPLMFG
+.*
+         AIF   ('&MF(2)'(1,1) EQ '(')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+         MNOTE 12,'TESTCB RPL MF= INVALID REGISTER USE'
+            AEND
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.* MF=E
+.* MODIFY THE CBMR
+         USING CBMR,1
+         LLC   0,CBMRVRBS         R0=NO. OF VERBS
+         LA    1,CBMRBODY         R1=ADDRESS OF VERBS
+         DROP  1
+         BRAS  15,*+12            BRANCH AROUND SAVE AREA
+TSTCBSV&SYSNDX DS 0H
+         DS    2AL4               SAVE AREA
+         STM   0,1,TSTCBSV&SYSNDX SAVE R0-R1
+.*
+         AIF   ('&RPL' NE '')
+         LHI   14,CBMRRPL_RPL     RPL RPL VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&RPL'(1,1) EQ '(')
+               AIF ('&RPL' EQ '(0)'   OR                               X
+               '&RPL'      EQ '(R0)'  OR                               X
+               '&RPL'      EQ '(1)'   OR                               X
+               '&RPL'      EQ '(R1)'  OR                               X
+               '&RPL'      EQ '(14)'  OR                               X
+               '&RPL'      EQ '(R14)' OR                               X
+               '&RPL'      EQ '(15)'  OR                               X
+               '&RPL'      EQ '(R15)')
+         MNOTE 12,'TESTCB RPL RPL= INVALID REGISTER USE'
+               AEND
+         ST    &RPL,0(14)         STORE RPL ADDRESS IN CBMR
+            AELSE
+               AIF (T'&RPL EQ 'N')
+         IILF  15,&RPL            R15=RPL ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&RPL            R15=RPL ADDRESS
+               AEND
+         ST    15,0(14)           STORE RPL ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&ERET' NE '')
+            AIF (T'&ERET EQ 'N')
+         MNOTE 12,'TESTCB RPL ERET= CANNOT BE NUMERIC'
+            AEND
+         LHI   14,CBMRRPL_ERET    ERET VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&ERET'(1,1) EQ '(')
+               AIF ('&ERET' EQ '(0)'  OR                               X
+               '&ERET'     EQ '(R0)'  OR                               X
+               '&ERET'     EQ '(1)'   OR                               X
+               '&ERET'     EQ '(R1)'  OR                               X
+               '&ERET'     EQ '(14)'  OR                               X
+               '&ERET'     EQ '(R14)' OR                               X
+               '&ERET'     EQ '(15)'  OR                               X
+               '&ERET'     EQ '(R15)')
+         MNOTE 12,'TESTCB RPL ERET= INVALID REGISTER USE'
+               AEND
+         ST    &ERET,0(14)        STORE ERET ADDRESS IN CBMR
+            AELSE
+         LARL  15,&ERET           R15=ERET ADDRESS
+         ST    15,0(14)           STORE ERET ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&RPLLEN' NE '')
+         LHI   14,CBMRRPL_RPLLEN  RPLLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&RPLLEN      MOVE RPLLEN TO CBMR
+         AEND
+.*
+         AIF   ('&ACBLEN' NE '')
+         LHI   14,CBMRACB_ACBLEN  ACBLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&ACBLEN      MOVE ACBLEN TO CBMR
+         AEND
+.*
+         AIF   ('&EXLLEN' NE '')
+         LHI   14,CBMRXL_XLSTLEN  XLSTLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&EXLLEN      MOVE EXLLEN TO CBMR
+         AEND
+.*
+         AIF   ('&ACB' NE '')
+         LHI   14,CBMRRPL_ACB     RPL ACB VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&ACB'(1,1) EQ '(')
+               AIF ('&ACB' EQ '(0)'   OR                               X
+               '&ACB'      EQ '(R0)'  OR                               X
+               '&ACB'      EQ '(1)'   OR                               X
+               '&ACB'      EQ '(R1)'  OR                               X
+               '&ACB'      EQ '(14)'  OR                               X
+               '&ACB'      EQ '(R14)' OR                               X
+               '&ACB'      EQ '(15)'  OR                               X
+               '&ACB'      EQ '(R15)')
+         MNOTE 12,'TESTCB RPL ACB= INVALID REGISTER USE'
+               AEND
+         ST    &ACB,0(14)         STORE ACB ADDRESS IN CBMR
+            AELSE
+               AIF (T'&ACB EQ 'N')
+         IILF  15,&ACB            R15=ACB ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&ACB            R15=ACB ADDRESS
+               AEND
+         ST    15,0(14)           STORE ACB ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&AIXFLAG' NE '')
+         LHI   14,CBMRRPL_AIXFLAG RPL AIXFLAG
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),0            MOVE DUMMY VALUE TO CBMR
+         AEND
+.*
+         AIF   ('&AIXPC' NE '')
+         LHI   14,CBMRRPL_AIXPC   RPL AIXPC
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&AIXPC       MOVE AIXPC TO CBMR
+         AEND
+.*
+         AIF   ('&AREA' NE '')
+         LHI   14,CBMRRPL_RECAREA RPL AREA VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&AREA'(1,1) EQ '(')
+               AIF ('&AREA' EQ '(0)'   OR                              X
+               '&AREA'      EQ '(R0)'  OR                              X
+               '&AREA'      EQ '(1)'   OR                              X
+               '&AREA'      EQ '(R1)'  OR                              X
+               '&AREA'      EQ '(14)'  OR                              X
+               '&AREA'      EQ '(R14)' OR                              X
+               '&AREA'      EQ '(15)'  OR                              X
+               '&AREA'      EQ '(R15)')
+         MNOTE 12,'TESTCB RPL AREA= INVALID REGISTER USE'
+               AEND
+         ST    &AREA,0(14)        STORE AREA ADDRESS IN CBMR
+            AELSE
+               AIF (T'&AREA EQ 'N')
+         IILF  15,&AREA           R15=AREA ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&AREA           R15=AREA ADDRESS
+               AEND
+         ST    15,0(14)           STORE AREA ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&AREALEN' NE '')
+         LHI   14,CBMRRPL_AREALEN RPL AREALEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&AREALEN        R15=AREALEN
+         ST    15,0(14)           STORE AREALEN IN CBMR
+         AEND
+.*
+         AIF   ('&ARG' NE '')
+         LHI   14,CBMRRPL_ARG     RPL ARG VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&ARG'(1,1) EQ '(')
+               AIF ('&ARG' EQ '(0)'   OR                               X
+               '&ARG'      EQ '(R0)'  OR                               X
+               '&ARG'      EQ '(1)'   OR                               X
+               '&ARG'      EQ '(R1)'  OR                               X
+               '&ARG'      EQ '(14)'  OR                               X
+               '&ARG'      EQ '(R14)' OR                               X
+               '&ARG'      EQ '(15)'  OR                               X
+               '&ARG'      EQ '(R15)')
+         MNOTE 12,'TSTCB RPL ARG= INVALID REGISTER USE'
+               AEND
+         ST    &ARG,0(14)         STORE ARG ADDRESS IN CBMR
+            AELSE
+               AIF (T'&ARG EQ 'N')
+         IILF  15,&ARG            R15=ARG ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&ARG            R15=ARG ADDRESS
+               AEND
+         ST    15,0(14)           STORE ARG ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&ECB' NE '')
+         LHI   14,CBMRRPL_ECB     RPL ECB VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&ECB'(1,1) EQ '(')
+               AIF ('&ECB' EQ '(0)'   OR                               X
+               '&ECB'      EQ '(R0)'  OR                               X
+               '&ECB'      EQ '(1)'   OR                               X
+               '&ECB'      EQ '(R1)'  OR                               X
+               '&ECB'      EQ '(14)'  OR                               X
+               '&ECB'      EQ '(R14)' OR                               X
+               '&ECB'      EQ '(15)'  OR                               X
+               '&ECB'      EQ '(R15)')
+         MNOTE 12,'TESTCB RPL ECB= INVALID REGISTER USE'
+               AEND
+         ST    &ECB,0(14)         STORE ECB ADDRESS IN CBMR
+            AELSE
+               AIF (T'&ECB EQ 'N')
+         IILF  15,&ECB            R15=ECB ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&ECB            R15=ECB ADDRESS
+               AEND
+         ST    15,0(14)           STORE ECB ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&FDBK' NE '')
+         LHI   14,CBMRRPL_FDBK    RPL FDBK VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&FDBK        MOVE FDBK TO CBMR
+         AEND
+.*
+         AIF   ('&FTNCD' NE '')
+         LHI   14,CBMRRPL_FTNCD   RPL FTNCD VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&FTNCD       MOVE FTNCD TO CBMR
+         AEND
+.*
+         AIF   ('&IO' NE '')
+         LHI   14,CBMRRPL_IO      RPL IO
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),0            MOVE DUMMY VALUE TO CBMR
+         AEND
+.*
+         AIF   ('&KEYLEN' NE '')
+         LHI   14,CBMRRPL_KEYLEN  RPL KEYLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&KEYLEN      MOVE KEYLEN TO CBMR
+         AEND
+.*
+         AIF   ('&MSGAREA' NE '')
+         LHI   14,CBMRRPL_MSGAREA RPL MSGAREA VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&MSGAREA'(1,1) EQ '(')
+               AIF ('&MSGAREA' EQ '(0)'   OR                           X
+               '&MSGAREA'      EQ '(R0)'  OR                           X
+               '&MSGAREA'      EQ '(1)'   OR                           X
+               '&MSGAREA'      EQ '(R1)'  OR                           X
+               '&MSGAREA'      EQ '(14)'  OR                           X
+               '&MSGAREA'      EQ '(R14)' OR                           X
+               '&MSGAREA'      EQ '(15)'  OR                           X
+               '&MSGAREA'      EQ '(R15)')
+         MNOTE 12,'TESTCB RPL MSGAREA= INVALID REGISTER USE'
+               AEND
+         ST    &MSGAREA,0(14)     STORE MSGAREA ADDRESS IN CBMR
+            AELSE
+               AIF (T'&MSGAREA EQ 'N')
+         IILF  15,&MSGAREA        R15=MSGAREA ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&MSGAREA        R15=MSGAREA ADDRESS
+               AEND
+         ST    15,0(14)           STORE MSGAREA ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&MSGLEN' NE '')
+         LHI   14,CBMRRPL_MSGLEN RPL MSGLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&MSGLEN      MOVE MSGLEN TO CBMR
+         AEND
+.*
+         AIF   ('&NXTRPL' NE '')
+         LHI   14,CBMRRPL_NEXTRPL RPL NXTRPL VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&NXTRPL'(1,1) EQ '(')
+               AIF ('&NXTRPL' EQ '(0)'   OR                            X
+               '&NXTRPL'      EQ '(R0)'  OR                            X
+               '&NXTRPL'      EQ '(1)'   OR                            X
+               '&NXTRPL'      EQ '(R1)'  OR                            X
+               '&NXTRPL'      EQ '(14)'  OR                            X
+               '&NXTRPL'      EQ '(R14)' OR                            X
+               '&NXTRPL'      EQ '(15)'  OR                            X
+               '&NXTRPL'      EQ '(R15)')
+         MNOTE 12,'TESTCB RPL NXTRPL= INVALID REGISTER USE'
+               AEND
+         ST    &NXTRPL,0(14)      STORE NXTRPL ADDRESS IN CBMR
+            AELSE
+               AIF (T'&NXTRPL EQ 'N')
+         IILF  15,&NXTRPL         R15=NXTRPL ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&NXTRPL         R15=NXTRPL ADDRESS
+               AEND
+         ST    15,0(14)           STORE NXTRPL ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&OPTCD' NE '')
+         LHI   14,CBMRRPL_OPTCD RPL OPTCD VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         J     *+8                BYPASS CONSTANTS
+         ZGENOPTD OPTCD=&OPTCD,MODE=CBMR GENERATE 4-BYTE OPTCD
+         DC    B'&ZGENOPT1'       OPTCD BYTE 1
+         DC    B'&ZGENOPT2'       OPTCD BYTE 2
+         DC    B'&ZGENOPT3'       OPTCD BYTE 3
+         DC    B'&ZGENOPT4'       OPTCD BYTE 4
+         MVC   0(4,14),4(15)      MOVE FIELD TO CBMR
+         AEND
+.*
+         AIF   ('&RBA' NE '')
+         LHI   14,CBMRRPL_RBA     RPL RBA VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&RBA            R15=RBA
+         ST    15,0(14)           STORE RBA IN CBMR
+         AEND
+.*
+         AIF   ('&RECLEN' NE '')
+         LHI   14,CBMRRPL_RECLEN RPL RECLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&RECLEN         R15=RECLEN
+         ST    15,0(14)           STORE RECLEN IN CBMR
+         AEND
+.*
+         AIF   ('&TRANSID' NE '')
+         LHI   14,CBMRRPL_TRANSID RPL TRANSID VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&TRANSID     MOVE TRANSID TO CBMR
+         AEND
+.*
+         AIF   ('&XRBA' NE '')
+         LHI   14,CBMRRPL_XRBA    RPL XRBA VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LARL  15,=AL8(&XRBA)     BASE-FREE
+         MVC   0(8,14),0(15)      MOVE XRBA TO CBMR
+         AEND
+.*
+         AIF   ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.*
+.RPLMFG  ANOP
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         AIF   ('&MF(1)' EQ 'G')
+         MEXIT
+         AEND
+         J     TSTCBE&SYSNDX      EXIT
+*
+* VERB SEARCH SUBROUTINE, RC=8 IF NOT FOUND
+TSTCBS&SYSNDX DS 0H
+         SGR   1,1                CLEAR R1 HIGH
+         LM    0,1,TSTCBSV&SYSNDX RESTORE R0-R1 (NO. & ADDR OF VERBS)
+TSTCBL&SYSNDX DS 0H
+         CLM   14,B'0001',0(1)    THIS VERB ?
+         JE    TSTCBF&SYSNDX      EXIT IF IT IS
+         AIH   1,4                ASSUME 4-BYTE FIELD
+         CLI   0(1),X'E0'         8-BYTE FIELD ?
+         JL    *+10               EXIT IF NOT
+         AIH   1,4                8-BYTE FIELD
+         AHI   1,1                BUMP VERB POINTER
+         BRCT  0,TSTCBL&SYSNDX    LOOP
+*
+         J     TSTCB8&SYSNDX      ERROR IF NOT FOUND
+*
+TSTCBF&SYSNDX DS 0H
+* FIELD LOCATE
+         L     14,TSTCBSV&SYSNDX+4 14=ADDRESS OF VERB CODES (CBMRBODY)
+         A     14,TSTCBSV&SYSNDX  +NO. OF VERBS=START OF FIELDS
+         SRLG  1,1,32             R1=FIELD OFFSET
+         AR    14,1               R14=FIELD POSITION
+         BR    15                 RETURN
+*
+TSTCB8&SYSNDX DS 0H
+         LA    15,8               RC=8 (FIELD NOT FOUND)
+         LM    0,1,TSTCBSV&SYSNDX RESTORE R0-R1 (NO. & ADDR OF VERBS)
+         ARK   14,0,1             R14=ADDRESS OF FIELDS
+         ICM   14,15,4(14)        ANY ERET ADDRESS ?
+         JZ    TSTCBE&SYSNDX      EXIT IF NONE
+         SR    0,0                R0=0
+         BR    14                 EXIT TO ERET ROUTINE
+*
+TSTCBE&SYSNDX DS 0H
+         MEXIT
+.*
+.DOACB   ANOP
+.**************
+.* TESTCB ACB *
+.**************
+.* VALIDATE DDNAME
+         AIF   ('&DDNAME' NE '')
+            AIF (K'&DDNAME GT 8)
+         MNOTE 12,'TESTCB ACB DDNAME TOO LONG'
+            AEND
+            AIF (('&DDNAME'(1,1) LT 'A' OR '&DDNAME'(1,1) GT 'Z') AND  X
+               ('&DDNAME'(1,1) NE '#' AND '&DDNAME'(1,1) NE '@'   AND  X
+               '&DDNAME'(1,1) NE '$'))
+         MNOTE 12,'TESTCB ACB DDNAME IS INVALID - &DDNAME'
+             AEND
+         AEND
+.* VALIDATE OBJECT=
+         AIF   ('&OBJECT' NE 'DATA' AND '&OBJECT' NE 'INDEX')
+         MNOTE 12,'TESTCB ACB INVALID OBJECT - &OBJECT'
+         AEND
+.* VALIDATE OFLAGS
+         AIF   ('&OFLAGS' NE '')
+            AIF ('&OFLAGS' NE 'OPEN')
+         MNOTE 12,'TESTCB ACB INVALID OFLAGS - &OFLAGS'
+            AEND
+         AEND
+.* VALIDATE OPENOBJ
+         AIF   ('&OPENOBJ' NE '')
+            AIF ('&OPENOBJ' NE 'PATH' AND                              X
+               '&OPENOBJ' NE 'BASE'   AND                              X
+               '&OPENOBJ' NE 'AIX')
+         MNOTE 12,'TESTCB ACB INVALID OPENOBJ - &OPENOBJ'
+            AEND
+         AEND
+.* VALIDATE 8-BYTE FIELDS
+.* THESE INVALID FORMS ARE DETECTED
+.*    ANYTHING THAT DOESN'T HAVE * AS THE 1ST SUBLIST ELEMENT
+.*    NOT 2 SUBLIST ELEMENTS
+.*    (*,*) (*,NNN) (*,() (*,)) (*,()) (*,)() (*,(REG))
+.*    (*,NNN(REG)) WHEN REG=0,1,14,15
+.*
+.* ###DDNAME NOT DONE YET AS THAT WILL BE PART OF IMPLEMENTING THIS
+.* ###FORM FOR ALL PARMS
+.*
+.* VALIDATE SDTASZ
+         AIF   ('&SDTASZ' NE '')
+            AIF (N'&SDTASZ NE 2 OR '&SDTASZ(1)' NE '*' OR              X
+               '&SDTASZ(2)'(1,1) EQ '*').SDTASER
+&SDTASB1 SETA  ('&SDTASZ(2)' FIND '(')
+&SDTASB2 SETA  ('&SDTASZ(2)' FIND ')')
+            AIF (T'&SDTASZ(2) EQ 'N').SDTASER
+            AIF (&SDTASB1+&SDTASB2 EQ 0).SDTASDN
+            AIF (&SDTASB1 EQ 0 OR &SDTASB2 EQ 0 OR                     X
+               &SDTASB2 LT &SDTASB1).SDTASER
+            AIF ('&SDTASZ(2)'(1,1) LT '0' OR '&SDTASZ(2)'(1,1) GT '9').-
+               SDTASER
+&SDTASRG SETC  '&SDTASZ(2)'(&SDTASB1,&SDTASB2)
+            AIF ('&SDTASRG' EQ '()').SDTASER
+            AIF ('&SDTASRG' EQ '(0)' OR                                X
+               '&SDTASRG' EQ '(R0)'  OR                                X
+               '&SDTASRG' EQ '(1)'   OR                                X
+               '&SDTASRG' EQ '(R1)'  OR                                X
+               '&SDTASRG' EQ '(14)'  OR                                X
+               '&SDTASRG' EQ '(R14)' OR                                X
+               '&SDTASRG' EQ '(15)'  OR                                X
+               '&SDTASRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB SDTASZ= INVALID REGISTER USE'
+            AEND
+         AGO   .SDTASDN
+.SDTASER ANOP
+         MNOTE 12,'TESTCB ACB SDTASZ= PARM INVALID FORMAT - &SDTASZ'
+         AEND
+.SDTASDN ANOP
+.* VALIDATE STMST
+         AIF   ('&STMST' NE '')
+            AIF (N'&STMST NE 2 OR '&STMST(1)' NE '*' OR                X
+               '&STMST(2)'(1,1) EQ '*').STMSTER
+&STMSTB1 SETA  ('&STMST(2)' FIND '(')
+&STMSTB2 SETA  ('&STMST(2)' FIND ')')
+            AIF (T'&STMST(2) EQ 'N').STMSTER
+            AIF (&STMSTB1+&STMSTB2 EQ 0).STMSTDN
+            AIF (&STMSTB1 EQ 0 OR &STMSTB2 EQ 0 OR                     X
+               &STMSTB2 LT &STMSTB1).STMSTER
+            AIF ('&STMST(2)'(1,1) LT '0' OR '&STMST(2)'(1,1) GT '9').ST-
+               MSTER
+&STMSTRG SETC  '&STMST(2)'(&STMSTB1,&STMSTB2)
+            AIF ('&STMSTRG' EQ '()').STMSTER
+            AIF ('&STMSTRG' EQ '(0)' OR                                X
+               '&STMSTRG' EQ '(R0)'  OR                                X
+               '&STMSTRG' EQ '(1)'   OR                                X
+               '&STMSTRG' EQ '(R1)'  OR                                X
+               '&STMSTRG' EQ '(14)'  OR                                X
+               '&STMSTRG' EQ '(R14)' OR                                X
+               '&STMSTRG' EQ '(15)'  OR                                X
+               '&STMSTRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB STMST= INVALID REGISTER USE'
+            AEND
+         AGO   .STMSTDN
+.STMSTER ANOP
+         MNOTE 12,'TESTCB ACB STMST= PARM INVALID FORMAT - &STMST'
+         AEND
+.STMSTDN ANOP
+.* VALIDATE XAVSPAC
+         AIF   ('&XAVSPAC' NE '')
+            AIF (N'&XAVSPAC NE 2 OR '&XAVSPAC(1)' NE '*' OR            X
+               '&XAVSPAC(2)'(1,1) EQ '*').XAVSPER
+&XAVSPB1 SETA  ('&XAVSPAC(2)' FIND '(')
+&XAVSPB2 SETA  ('&XAVSPAC(2)' FIND ')')
+            AIF (T'&XAVSPAC(2) EQ 'N').XAVSPER
+            AIF (&XAVSPB1+&XAVSPB2 EQ 0).XAVSPDN
+            AIF (&XAVSPB1 EQ 0 OR &XAVSPB2 EQ 0 OR                     X
+               &XAVSPB2 LT &XAVSPB1).XAVSPER
+            AIF ('&XAVSPAC(2)'(1,1) LT '0' OR '&XAVSPAC(2)'(1,1) GT '9'-
+               ).XAVSPER
+&XAVSPRG SETC  '&XAVSPAC(2)'(&XAVSPB1,&XAVSPB2)
+            AIF ('&XAVSPRG' EQ '()').XAVSPER
+            AIF ('&XAVSPRG' EQ '(0)' OR                                X
+               '&XAVSPRG' EQ '(R0)'  OR                                X
+               '&XAVSPRG' EQ '(1)'   OR                                X
+               '&XAVSPRG' EQ '(R1)'  OR                                X
+               '&XAVSPRG' EQ '(14)'  OR                                X
+               '&XAVSPRG' EQ '(R14)' OR                                X
+               '&XAVSPRG' EQ '(15)'  OR                                X
+               '&XAVSPRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XAVSPAC= INVALID REGISTER USE'
+            AEND
+         AGO   .XAVSPDN
+.XAVSPER ANOP
+         MNOTE 12,'TESTCB ACB XAVSPAC= PARM INVALID FORMAT - &XAVSPAC'
+         AEND
+.XAVSPDN ANOP
+.* VALIDATE XBFRFND
+         AIF   ('&XBFRFND' NE '')
+            AIF (N'&XBFRFND NE 2 OR '&XBFRFND(1)' NE '*' OR            X
+               '&XBFRFND(2)'(1,1) EQ '*').XBFRFER
+&XBFRFB1 SETA  ('&XBFRFND(2)' FIND '(')
+&XBFRFB2 SETA  ('&XBFRFND(2)' FIND ')')
+            AIF (T'&XBFRFND(2) EQ 'N').XBFRFER
+            AIF (&XBFRFB1+&XBFRFB2 EQ 0).XBFRFDN
+            AIF (&XBFRFB1 EQ 0 OR &XBFRFB2 EQ 0 OR                     X
+               &XBFRFB2 LT &XBFRFB1).XBFRFER
+            AIF ('&XBFRFND(2)'(1,1) LT '0' OR '&XBFRFND(2)'(1,1) GT '9'-
+               ).XBFRFER
+&XBFRFRG SETC  '&XBFRFND(2)'(&XBFRFB1,&XBFRFB2)
+            AIF ('&XBFRFRG' EQ '()').XBFRFER
+            AIF ('&XBFRFRG' EQ '(0)' OR                                X
+               '&XBFRFRG' EQ '(R0)'  OR                                X
+               '&XBFRFRG' EQ '(1)'   OR                                X
+               '&XBFRFRG' EQ '(R1)'  OR                                X
+               '&XBFRFRG' EQ '(14)'  OR                                X
+               '&XBFRFRG' EQ '(R14)' OR                                X
+               '&XBFRFRG' EQ '(15)'  OR                                X
+               '&XBFRFRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XBFRFND= INVALID REGISTER USE'
+            AEND
+         AGO   .XBFRFDN
+.XBFRFER ANOP
+         MNOTE 12,'TESTCB ACB XBFRFND= PARM INVALID FORMAT - &XBFRFND'
+         AEND
+.XBFRFDN ANOP
+.* VALIDATE XBUFNO
+         AIF   ('&XBUFNO' NE '')
+            AIF (N'&XBUFNO NE 2 OR '&XBUFNO(1)' NE '*' OR              X
+               '&XBUFNO(2)'(1,1) EQ '*').XBUFNER
+&XBUFNB1 SETA  ('&XBUFNO(2)' FIND '(')
+&XBUFNB2 SETA  ('&XBUFNO(2)' FIND ')')
+            AIF (T'&XBUFNO(2) EQ 'N').XBUFNER
+            AIF (&XBUFNB1+&XBUFNB2 EQ 0).XBUFNDN
+            AIF (&XBUFNB1 EQ 0 OR &XBUFNB2 EQ 0 OR                     X
+               &XBUFNB2 LT &XBUFNB1).XBUFNER
+            AIF ('&XBUFNO(2)'(1,1) LT '0' OR '&XBUFNO(2)'(1,1) GT '9').-
+               XBUFNER
+&XBUFNRG SETC  '&XBUFNO(2)'(&XBUFNB1,&XBUFNB2)
+            AIF ('&XBUFNRG' EQ '()').XBUFNER
+            AIF ('&XBUFNRG' EQ '(0)' OR                                X
+               '&XBUFNRG' EQ '(R0)'  OR                                X
+               '&XBUFNRG' EQ '(1)'   OR                                X
+               '&XBUFNRG' EQ '(R1)'  OR                                X
+               '&XBUFNRG' EQ '(14)'  OR                                X
+               '&XBUFNRG' EQ '(R14)' OR                                X
+               '&XBUFNRG' EQ '(15)'  OR                                X
+               '&XBUFNRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XBUFNO= INVALID REGISTER USE'
+            AEND
+         AGO   .XBUFNDN
+.XBUFNER ANOP
+         MNOTE 12,'TESTCB ACB XBUFNO= PARM INVALID FORMAT - &XBUFNO'
+         AEND
+.XBUFNDN ANOP
+.* VALIDATE XBUFRDS
+         AIF   ('&XBUFRDS' NE '')
+            AIF (N'&XBUFRDS NE 2 OR '&XBUFRDS(1)' NE '*' OR            X
+               '&XBUFRDS(2)'(1,1) EQ '*').XBUFRER
+&XBUFRB1 SETA  ('&XBUFRDS(2)' FIND '(')
+&XBUFRB2 SETA  ('&XBUFRDS(2)' FIND ')')
+            AIF (T'&XBUFRDS(2) EQ 'N').XBUFRER
+            AIF (&XBUFRB1+&XBUFRB2 EQ 0).XBUFRDN
+            AIF (&XBUFRB1 EQ 0 OR &XBUFRB2 EQ 0 OR                     X
+               &XBUFRB2 LT &XBUFRB1).XBUFRER
+            AIF ('&XBUFRDS(2)'(1,1) LT '0' OR '&XBUFRDS(2)'(1,1) GT '9'-
+               ).XBUFRER
+&XBUFRRG SETC  '&XBUFRDS(2)'(&XBUFRB1,&XBUFRB2)
+            AIF ('&XBUFRRG' EQ '()').XBUFRER
+            AIF ('&XBUFRRG' EQ '(0)' OR                                X
+               '&XBUFRRG' EQ '(R0)'  OR                                X
+               '&XBUFRRG' EQ '(1)'   OR                                X
+               '&XBUFRRG' EQ '(R1)'  OR                                X
+               '&XBUFRRG' EQ '(14)'  OR                                X
+               '&XBUFRRG' EQ '(R14)' OR                                X
+               '&XBUFRRG' EQ '(15)'  OR                                X
+               '&XBUFRRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XBUFRDS= INVALID REGISTER USE'
+            AEND
+         AGO   .XBUFRDN
+.XBUFRER ANOP
+         MNOTE 12,'TESTCB ACB XBUFRDS= PARM INVALID FORMAT - &XBUFRDS'
+         AEND
+.XBUFRDN ANOP
+.* VALIDATE XBUFUSE
+         AIF   ('&XBUFUSE' NE '')
+            AIF (N'&XBUFUSE NE 2 OR '&XBUFUSE(1)' NE '*' OR            X
+               '&XBUFUSE(2)'(1,1) EQ '*').XBUFUER
+&XBUFUB1 SETA  ('&XBUFUSE(2)' FIND '(')
+&XBUFUB2 SETA  ('&XBUFUSE(2)' FIND ')')
+            AIF (T'&XBUFUSE(2) EQ 'N').XBUFUER
+            AIF (&XBUFUB1+&XBUFUB2 EQ 0).XBUFUDN
+            AIF (&XBUFUB1 EQ 0 OR &XBUFUB2 EQ 0 OR                     X
+               &XBUFUB2 LT &XBUFUB1).XBUFUER
+            AIF ('&XBUFUSE(2)'(1,1) LT '0' OR '&XBUFUSE(2)'(1,1) GT '9'-
+               ).XBUFUER
+&XBUFURG SETC  '&XBUFUSE(2)'(&XBUFUB1,&XBUFUB2)
+            AIF ('&XBUFURG' EQ '()').XBUFUER
+            AIF ('&XBUFURG' EQ '(0)' OR                                X
+               '&XBUFURG' EQ '(R0)'  OR                                X
+               '&XBUFURG' EQ '(1)'   OR                                X
+               '&XBUFURG' EQ '(R1)'  OR                                X
+               '&XBUFURG' EQ '(14)'  OR                                X
+               '&XBUFURG' EQ '(R14)' OR                                X
+               '&XBUFURG' EQ '(15)'  OR                                X
+               '&XBUFURG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XBUFUSE= INVALID REGISTER USE'
+            AEND
+         AGO   .XBUFUDN
+.XBUFUER ANOP
+         MNOTE 12,'TESTCB ACB XBUFUSE= PARM INVALID FORMAT - &XBUFUSE'
+         AEND
+.XBUFUDN ANOP
+.* VALIDATE XENDRBA
+         AIF   ('&XENDRBA' NE '')
+            AIF (N'&XENDRBA NE 2 OR '&XENDRBA(1)' NE '*' OR            X
+               '&XENDRBA(2)'(1,1) EQ '*').XENDRER
+&XENDRB1 SETA  ('&XENDRBA(2)' FIND '(')
+&XENDRB2 SETA  ('&XENDRBA(2)' FIND ')')
+            AIF (T'&XENDRBA(2) EQ 'N').XENDRER
+            AIF (&XENDRB1+&XENDRB2 EQ 0).XENDRDN
+            AIF (&XENDRB1 EQ 0 OR &XENDRB2 EQ 0 OR                     X
+               &XENDRB2 LT &XENDRB1).XENDRER
+            AIF ('&XENDRBA(2)'(1,1) LT '0' OR '&XENDRBA(2)'(1,1) GT '9'-
+               ).XENDRER
+&XENDRRG SETC  '&XENDRBA(2)'(&XENDRB1,&XENDRB2)
+            AIF ('&XENDRRG' EQ '()').XENDRER
+            AIF ('&XENDRRG' EQ '(0)' OR                                X
+               '&XENDRRG' EQ '(R0)'  OR                                X
+               '&XENDRRG' EQ '(1)'   OR                                X
+               '&XENDRRG' EQ '(R1)'  OR                                X
+               '&XENDRRG' EQ '(14)'  OR                                X
+               '&XENDRRG' EQ '(R14)' OR                                X
+               '&XENDRRG' EQ '(15)'  OR                                X
+               '&XENDRRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XENDRBA= INVALID REGISTER USE'
+            AEND
+         AGO   .XENDRDN
+.XENDRER ANOP
+         MNOTE 12,'TESTCB ACB XENDRBA PARM MUST BE (*,NNN(REG)) - &XEND-
+               RBA'
+         MNOTE 12,'TESTCB ACB XENDRBA= PARM INVALID FORMAT - &XENDRBA'
+         AEND
+.XENDRDN ANOP
+.* VALIDATE XHALCRBA
+         AIF   ('&XHALCRBA' NE '')
+            AIF (N'&XHALCRBA NE 2 OR '&XHALCRBA(1)' NE '*' OR          X
+               '&XHALCRBA(2)'(1,1) EQ '*').XHALCER
+&XHALCB1 SETA  ('&XHALCRBA(2)' FIND '(')
+&XHALCB2 SETA  ('&XHALCRBA(2)' FIND ')')
+            AIF (T'&XHALCRBA(2) EQ 'N').XHALCER
+            AIF (&XHALCB1+&XHALCB2 EQ 0).XHALCDN
+            AIF (&XHALCB1 EQ 0 OR &XHALCB2 EQ 0 OR                     X
+               &XHALCB2 LT &XHALCB1).XHALCER
+            AIF ('&XHALCRBA(2)'(1,1) LT '0' OR '&XHALCRBA(2)'(1,1) GT '-
+               9').XHALCER
+&XHALCRG SETC  '&XHALCRBA(2)'(&XHALCB1,&XHALCB2)
+            AIF ('&XHALCRG' EQ '()').XHALCER
+            AIF ('&XHALCRG' EQ '(0)' OR                                X
+               '&XHALCRG' EQ '(R0)'  OR                                X
+               '&XHALCRG' EQ '(1)'   OR                                X
+               '&XHALCRG' EQ '(R1)'  OR                                X
+               '&XHALCRG' EQ '(14)'  OR                                X
+               '&XHALCRG' EQ '(R14)' OR                                X
+               '&XHALCRG' EQ '(15)'  OR                                X
+               '&XHALCRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XHALCRBA= INVALID REGISTER USE'
+            AEND
+         AGO   .XHALCDN
+.XHALCER ANOP
+         MNOTE 12,'TESTCB ACB XHALCRBA= PARM INVALID FORMAT - &XHALCRBA-
+               '
+         AEND
+.XHALCDN ANOP
+.* VALIDATE XHLRBA
+         AIF   ('&XHLRBA' NE '')
+            AIF (N'&XHLRBA NE 2 OR '&XHLRBA(1)' NE '*' OR              X
+               '&XHLRBA(2)'(1,1) EQ '*').XHLRBER
+&XHLRBB1 SETA  ('&XHLRBA(2)' FIND '(')
+&XHLRBB2 SETA  ('&XHLRBA(2)' FIND ')')
+            AIF (T'&XHLRBA(2) EQ 'N').XHLRBER
+            AIF (&XHLRBB1+&XHLRBB2 EQ 0).XHLRBDN
+            AIF (&XHLRBB1 EQ 0 OR &XHLRBB2 EQ 0 OR                     X
+               &XHLRBB2 LT &XHLRBB1).XHLRBER
+            AIF ('&XHLRBA(2)'(1,1) LT '0' OR '&XHLRBA(2)'(1,1) GT '9').-
+               XHLRBER
+&XHLRBRG SETC  '&XHLRBA(2)'(&XHLRBB1,&XHLRBB2)
+            AIF ('&XHLRBRG' EQ '()').XHLRBER
+            AIF ('&XHLRBRG' EQ '(0)' OR                                X
+               '&XHLRBRG' EQ '(R0)'  OR                                X
+               '&XHLRBRG' EQ '(1)'   OR                                X
+               '&XHLRBRG' EQ '(R1)'  OR                                X
+               '&XHLRBRG' EQ '(14)'  OR                                X
+               '&XHLRBRG' EQ '(R14)' OR                                X
+               '&XHLRBRG' EQ '(15)'  OR                                X
+               '&XHLRBRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XHLRBA= INVALID REGISTER USE'
+            AEND
+         AGO   .XHLRBDN
+.XHLRBER ANOP
+         MNOTE 12,'TESTCB ACB XHLRBA= PARM INVALID FORMAT - &XHLRBA'
+         AEND
+.XHLRBDN ANOP
+.* VALIDATE XNCIS
+         AIF   ('&XNCIS' NE '')
+            AIF (N'&XNCIS NE 2 OR '&XNCIS(1)' NE '*' OR                X
+               '&XNCIS(2)'(1,1) EQ '*').XNCISER
+&XNCISB1 SETA  ('&XNCIS(2)' FIND '(')
+&XNCISB2 SETA  ('&XNCIS(2)' FIND ')')
+            AIF (T'&XNCIS(2) EQ 'N').XNCISER
+            AIF (&XNCISB1+&XNCISB2 EQ 0).XNCISDN
+            AIF (&XNCISB1 EQ 0 OR &XNCISB2 EQ 0 OR                     X
+               &XNCISB2 LT &XNCISB1).XNCISER
+            AIF ('&XNCIS(2)'(1,1) LT '0' OR '&XNCIS(2)'(1,1) GT '9').XN-
+               CISER
+&XNCISRG SETC  '&XNCIS(2)'(&XNCISB1,&XNCISB2)
+            AIF ('&XNCISRG' EQ '()').XNCISER
+            AIF ('&XNCISRG' EQ '(0)' OR                                X
+               '&XNCISRG' EQ '(R0)'  OR                                X
+               '&XNCISRG' EQ '(1)'   OR                                X
+               '&XNCISRG' EQ '(R1)'  OR                                X
+               '&XNCISRG' EQ '(14)'  OR                                X
+               '&XNCISRG' EQ '(R14)' OR                                X
+               '&XNCISRG' EQ '(15)'  OR                                X
+               '&XNCISRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XNCIS= INVALID REGISTER USE'
+            AEND
+         AGO   .XNCISDN
+.XNCISER ANOP
+         MNOTE 12,'TESTCB ACB XNCIS= PARM INVALID FORMAT - &XNCIS'
+         AEND
+.XNCISDN ANOP
+.* VALIDATE XNDELR
+         AIF   ('&XNDELR' NE '')
+            AIF (N'&XNDELR NE 2 OR '&XNDELR(1)' NE '*' OR              X
+               '&XNDELR(2)'(1,1) EQ '*').XNDELER
+&XNDELB1 SETA  ('&XNDELR(2)' FIND '(')
+&XNDELB2 SETA  ('&XNDELR(2)' FIND ')')
+            AIF (T'&XNDELR(2) EQ 'N').XNDELER
+            AIF (&XNDELB1+&XNDELB2 EQ 0).XNDELDN
+            AIF (&XNDELB1 EQ 0 OR &XNDELB2 EQ 0 OR                     X
+               &XNDELB2 LT &XNDELB1).XNDELER
+            AIF ('&XNDELR(2)'(1,1) LT '0' OR '&XNDELR(2)'(1,1) GT '9').-
+               XNDELER
+&XNDELRG SETC  '&XNDELR(2)'(&XNDELB1,&XNDELB2)
+            AIF ('&XNDELRG' EQ '()').XNDELER
+            AIF ('&XNDELRG' EQ '(0)' OR                                X
+               '&XNDELRG' EQ '(R0)'  OR                                X
+               '&XNDELRG' EQ '(1)'   OR                                X
+               '&XNDELRG' EQ '(R1)'  OR                                X
+               '&XNDELRG' EQ '(14)'  OR                                X
+               '&XNDELRG' EQ '(R14)' OR                                X
+               '&XNDELRG' EQ '(15)'  OR                                X
+               '&XNDELRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XNDELR= INVALID REGISTER USE'
+            AEND
+         AGO   .XNDELDN
+.XNDELER ANOP
+         MNOTE 12,'TESTCB ACB XNDELR= PARM INVALID FORMAT - &XNDELR'
+         AEND
+.XNDELDN ANOP
+.* VALIDATE XNEXCP
+         AIF   ('&XNEXCP' NE '')
+            AIF (N'&XNEXCP NE 2 OR '&XNEXCP(1)' NE '*' OR              X
+               '&XNEXCP(2)'(1,1) EQ '*').XNEXCER
+&XNEXCB1 SETA  ('&XNEXCP(2)' FIND '(')
+&XNEXCB2 SETA  ('&XNEXCP(2)' FIND ')')
+            AIF (T'&XNEXCP(2) EQ 'N').XNEXCER
+            AIF (&XNEXCB1+&XNEXCB2 EQ 0).XNEXCDN
+            AIF (&XNEXCB1 EQ 0 OR &XNEXCB2 EQ 0 OR                     X
+               &XNEXCB2 LT &XNEXCB1).XNEXCER
+            AIF ('&XNEXCP(2)'(1,1) LT '0' OR '&XNEXCP(2)'(1,1) GT '9').-
+               XNEXCER
+&XNEXCRG SETC  '&XNEXCP(2)'(&XNEXCB1,&XNEXCB2)
+            AIF ('&XNEXCRG' EQ '()').XNEXCER
+            AIF ('&XNEXCRG' EQ '(0)' OR                                X
+               '&XNEXCRG' EQ '(R0)'  OR                                X
+               '&XNEXCRG' EQ '(1)'   OR                                X
+               '&XNEXCRG' EQ '(R1)'  OR                                X
+               '&XNEXCRG' EQ '(14)'  OR                                X
+               '&XNEXCRG' EQ '(R14)' OR                                X
+               '&XNEXCRG' EQ '(15)'  OR                                X
+               '&XNEXCRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XNEXCP= INVALID REGISTER USE'
+            AEND
+         AGO   .XNEXCDN
+.XNEXCER ANOP
+         MNOTE 12,'TESTCB ACB XNEXCP= PARM INVALID FORMAT - &XNEXCP'
+         AEND
+.XNEXCDN ANOP
+.* VALIDATE XNEXT
+         AIF   ('&XNEXT' NE '')
+            AIF (N'&XNEXT NE 2 OR '&XNEXT(1)' NE '*' OR                X
+               '&XNEXT(2)'(1,1) EQ '*').XNEXTER
+&XNEXTB1 SETA  ('&XNEXT(2)' FIND '(')
+&XNEXTB2 SETA  ('&XNEXT(2)' FIND ')')
+            AIF (T'&XNEXT(2) EQ 'N').XNEXTER
+            AIF (&XNEXTB1+&XNEXTB2 EQ 0).XNEXTDN
+            AIF (&XNEXTB1 EQ 0 OR &XNEXTB2 EQ 0 OR                     X
+               &XNEXTB2 LT &XNEXTB1).XNEXTER
+            AIF ('&XNEXT(2)'(1,1) LT '0' OR '&XNEXT(2)'(1,1) GT '9').XN-
+               EXTER
+&XNEXTRG SETC  '&XNEXT(2)'(&XNEXTB1,&XNEXTB2)
+            AIF ('&XNEXTRG' EQ '()').XNEXTER
+            AIF ('&XNEXTRG' EQ '(0)' OR                                X
+               '&XNEXTRG' EQ '(R0)'  OR                                X
+               '&XNEXTRG' EQ '(1)'   OR                                X
+               '&XNEXTRG' EQ '(R1)'  OR                                X
+               '&XNEXTRG' EQ '(14)'  OR                                X
+               '&XNEXTRG' EQ '(R14)' OR                                X
+               '&XNEXTRG' EQ '(15)'  OR                                X
+               '&XNEXTRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XNEXT= INVALID REGISTER USE'
+            AEND
+         AGO   .XNEXTDN
+.XNEXTER ANOP
+         MNOTE 12,'TESTCB ACB XNEXT= PARM INVALID FORMAT - &XNEXT'
+         AEND
+.XNEXTDN ANOP
+.* VALIDATE XNINSR
+         AIF   ('&XNINSR' NE '')
+            AIF (N'&XNINSR NE 2 OR '&XNINSR(1)' NE '*' OR              X
+               '&XNINSR(2)'(1,1) EQ '*').XNINSER
+&XNINSB1 SETA  ('&XNINSR(2)' FIND '(')
+&XNINSB2 SETA  ('&XNINSR(2)' FIND ')')
+            AIF (T'&XNINSR(2) EQ 'N').XNINSER
+            AIF (&XNINSB1+&XNINSB2 EQ 0).XNINSDN
+            AIF (&XNINSB1 EQ 0 OR &XNINSB2 EQ 0 OR                     X
+               &XNINSB2 LT &XNINSB1).XNINSER
+            AIF ('&XNINSR(2)'(1,1) LT '0' OR '&XNINSR(2)'(1,1) GT '9').-
+               XNINSER
+&XNINSRG SETC  '&XNINSR(2)'(&XNINSB1,&XNINSB2)
+            AIF ('&XNINSRG' EQ '()').XNINSER
+            AIF ('&XNINSRG' EQ '(0)' OR                                X
+               '&XNINSRG' EQ '(R0)'  OR                                X
+               '&XNINSRG' EQ '(1)'   OR                                X
+               '&XNINSRG' EQ '(R1)'  OR                                X
+               '&XNINSRG' EQ '(14)'  OR                                X
+               '&XNINSRG' EQ '(R14)' OR                                X
+               '&XNINSRG' EQ '(15)'  OR                                X
+               '&XNINSRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XNINSR= INVALID REGISTER USE'
+            AEND
+         AGO   .XNINSDN
+.XNINSER ANOP
+         MNOTE 12,'TESTCB ACB XNINSR= PARM INVALID FORMAT - &XNINSR'
+         AEND
+.XNINSDN ANOP
+.* VALIDATE XNLOGR
+         AIF   ('&XNLOGR' NE '')
+            AIF (N'&XNLOGR NE 2 OR '&XNLOGR(1)' NE '*' OR              X
+               '&XNLOGR(2)'(1,1) EQ '*').XNLOGER
+&XNLOGB1 SETA  ('&XNLOGR(2)' FIND '(')
+&XNLOGB2 SETA  ('&XNLOGR(2)' FIND ')')
+            AIF (T'&XNLOGR(2) EQ 'N').XNLOGER
+            AIF (&XNLOGB1+&XNLOGB2 EQ 0).XNLOGDN
+            AIF (&XNLOGB1 EQ 0 OR &XNLOGB2 EQ 0 OR                     X
+               &XNLOGB2 LT &XNLOGB1).XNLOGER
+            AIF ('&XNLOGR(2)'(1,1) LT '0' OR '&XNLOGR(2)'(1,1) GT '9').-
+               XNLOGER
+&XNLOGRG SETC  '&XNLOGR(2)'(&XNLOGB1,&XNLOGB2)
+            AIF ('&XNLOGRG' EQ '()').XNLOGER
+            AIF ('&XNLOGRG' EQ '(0)' OR                                X
+               '&XNLOGRG' EQ '(R0)'  OR                                X
+               '&XNLOGRG' EQ '(1)'   OR                                X
+               '&XNLOGRG' EQ '(R1)'  OR                                X
+               '&XNLOGRG' EQ '(14)'  OR                                X
+               '&XNLOGRG' EQ '(R14)' OR                                X
+               '&XNLOGRG' EQ '(15)'  OR                                X
+               '&XNLOGRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XNLOGR= INVALID REGISTER USE'
+            AEND
+         AGO   .XNLOGDN
+.XNLOGER ANOP
+         MNOTE 12,'TESTCB ACB XNLOGR= PARM INVALID FORMAT - &XNLOGR'
+         AEND
+.XNLOGDN ANOP
+.* VALIDATE XNRETR
+         AIF   ('&XNRETR' NE '')
+            AIF (N'&XNRETR NE 2 OR '&XNRETR(1)' NE '*' OR              X
+               '&XNRETR(2)'(1,1) EQ '*').XNRETER
+&XNRETB1 SETA  ('&XNRETR(2)' FIND '(')
+&XNRETB2 SETA  ('&XNRETR(2)' FIND ')')
+            AIF (T'&XNRETR(2) EQ 'N').XNRETER
+            AIF (&XNRETB1+&XNRETB2 EQ 0).XNRETDN
+            AIF (&XNRETB1 EQ 0 OR &XNRETB2 EQ 0 OR                     X
+               &XNRETB2 LT &XNRETB1).XNRETER
+            AIF ('&XNRETR(2)'(1,1) LT '0' OR '&XNRETR(2)'(1,1) GT '9').-
+               XNRETER
+&XNRETRG SETC  '&XNRETR(2)'(&XNRETB1,&XNRETB2)
+            AIF ('&XNRETRG' EQ '()').XNRETER
+            AIF ('&XNRETRG' EQ '(0)' OR                                X
+               '&XNRETRG' EQ '(R0)'  OR                                X
+               '&XNRETRG' EQ '(1)'   OR                                X
+               '&XNRETRG' EQ '(R1)'  OR                                X
+               '&XNRETRG' EQ '(14)'  OR                                X
+               '&XNRETRG' EQ '(R14)' OR                                X
+               '&XNRETRG' EQ '(15)'  OR                                X
+               '&XNRETRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XNRETR= INVALID REGISTER USE'
+            AEND
+         AGO   .XNRETDN
+.XNRETER ANOP
+         MNOTE 12,'TESTCB ACB XNRETR= PARM INVALID FORMAT - &XNRETR'
+         AEND
+.XNRETDN ANOP
+.* VALIDATE XNUIW
+         AIF   ('&XNUIW' NE '')
+            AIF (N'&XNUIW NE 2 OR '&XNUIW(1)' NE '*' OR                X
+               '&XNUIW(2)'(1,1) EQ '*').XNUIWER
+&XNUIWB1 SETA  ('&XNUIW(2)' FIND '(')
+&XNUIWB2 SETA  ('&XNUIW(2)' FIND ')')
+            AIF (T'&XNUIW(2) EQ 'N').XNUIWER
+            AIF (&XNUIWB1+&XNUIWB2 EQ 0).XNUIWDN
+            AIF (&XNUIWB1 EQ 0 OR &XNUIWB2 EQ 0 OR                     X
+               &XNUIWB2 LT &XNUIWB1).XNUIWER
+            AIF ('&XNUIW(2)'(1,1) LT '0' OR '&XNUIW(2)'(1,1) GT '9').XN-
+               UIWER
+&XNUIWRG SETC  '&XNUIW(2)'(&XNUIWB1,&XNUIWB2)
+            AIF ('&XNUIWRG' EQ '()').XNUIWER
+            AIF ('&XNUIWRG' EQ '(0)' OR                                X
+               '&XNUIWRG' EQ '(R0)'  OR                                X
+               '&XNUIWRG' EQ '(1)'   OR                                X
+               '&XNUIWRG' EQ '(R1)'  OR                                X
+               '&XNUIWRG' EQ '(14)'  OR                                X
+               '&XNUIWRG' EQ '(R14)' OR                                X
+               '&XNUIWRG' EQ '(15)'  OR                                X
+               '&XNUIWRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XNUIW= INVALID REGISTER USE'
+            AEND
+         AGO   .XNUIWDN
+.XNUIWER ANOP
+         MNOTE 12,'TESTCB ACB XNUIW= PARM INVALID FORMAT - &XNUIW'
+         AEND
+.XNUIWDN ANOP
+.* VALIDATE XNUPDR
+         AIF   ('&XNUPDR' NE '')
+            AIF (N'&XNUPDR NE 2 OR '&XNUPDR(1)' NE '*' OR              X
+               '&XNUPDR(2)'(1,1) EQ '*').XNUPDER
+&XNUPDB1 SETA  ('&XNUPDR(2)' FIND '(')
+&XNUPDB2 SETA  ('&XNUPDR(2)' FIND ')')
+            AIF (T'&XNUPDR(2) EQ 'N').XNUPDER
+            AIF (&XNUPDB1+&XNUPDB2 EQ 0).XNUPDDN
+            AIF (&XNUPDB1 EQ 0 OR &XNUPDB2 EQ 0 OR                     X
+               &XNUPDB2 LT &XNUPDB1).XNUPDER
+            AIF ('&XNUPDR(2)'(1,1) LT '0' OR '&XNUPDR(2)'(1,1) GT '9').-
+               XNUPDER
+&XNUPDRG SETC  '&XNUPDR(2)'(&XNUPDB1,&XNUPDB2)
+            AIF ('&XNUPDRG' EQ '()').XNUPDER
+            AIF ('&XNUPDRG' EQ '(0)' OR                                X
+               '&XNUPDRG' EQ '(R0)'  OR                                X
+               '&XNUPDRG' EQ '(1)'   OR                                X
+               '&XNUPDRG' EQ '(R1)'  OR                                X
+               '&XNUPDRG' EQ '(14)'  OR                                X
+               '&XNUPDRG' EQ '(R14)' OR                                X
+               '&XNUPDRG' EQ '(15)'  OR                                X
+               '&XNUPDRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XNUPDR= INVALID REGISTER USE'
+            AEND
+         AGO   .XNUPDDN
+.XNUPDER ANOP
+         MNOTE 12,'TESTCB ACB XNUPDR= PARM INVALID FORMAT - &XNUPDR'
+         AEND
+.XNUPDDN ANOP
+.* VALIDATE XSTRMAX
+         AIF   ('&XSTRMAX' NE '')
+            AIF (N'&XSTRMAX NE 2 OR '&XSTRMAX(1)' NE '*' OR            X
+               '&XSTRMAX(2)'(1,1) EQ '*').XSTRMER
+&XSTRMB1 SETA  ('&XSTRMAX(2)' FIND '(')
+&XSTRMB2 SETA  ('&XSTRMAX(2)' FIND ')')
+            AIF (T'&XSTRMAX(2) EQ 'N').XSTRMER
+            AIF (&XSTRMB1+&XSTRMB2 EQ 0).XSTRMDN
+            AIF (&XSTRMB1 EQ 0 OR &XSTRMB2 EQ 0 OR                     X
+               &XSTRMB2 LT &XSTRMB1).XSTRMER
+            AIF ('&XSTRMAX(2)'(1,1) LT '0' OR '&XSTRMAX(2)'(1,1) GT '9'-
+               ).XSTRMER
+&XSTRMRG SETC  '&XSTRMAX(2)'(&XSTRMB1,&XSTRMB2)
+            AIF ('&XSTRMRG' EQ '()').XSTRMER
+            AIF ('&XSTRMRG' EQ '(0)' OR                                X
+               '&XSTRMRG' EQ '(R0)'  OR                                X
+               '&XSTRMRG' EQ '(1)'   OR                                X
+               '&XSTRMRG' EQ '(R1)'  OR                                X
+               '&XSTRMRG' EQ '(14)'  OR                                X
+               '&XSTRMRG' EQ '(R14)' OR                                X
+               '&XSTRMRG' EQ '(15)'  OR                                X
+               '&XSTRMRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XSTRMAX= INVALID REGISTER USE'
+            AEND
+         AGO   .XSTRMDN
+.XSTRMER ANOP
+         MNOTE 12,'TESTCB ACB XSTRMAX= PARM INVALID FORMAT - &XSTRMAX'
+         AEND
+.XSTRMDN ANOP
+.* VALIDATE XUIW
+         AIF   ('&XUIW' NE '')
+            AIF (N'&XUIW NE 2 OR '&XUIW(1)' NE '*' OR                  X
+               '&XUIW(2)'(1,1) EQ '*').XUIWER
+&XUIWB1  SETA  ('&XUIW(2)' FIND '(')
+&XUIWB2  SETA  ('&XUIW(2)' FIND ')')
+            AIF (T'&XUIW(2) EQ 'N').XUIWER
+            AIF (&XUIWB1+&XUIWB2 EQ 0).XUIWDN
+            AIF (&XUIWB1 EQ 0 OR &XUIWB2 EQ 0 OR                       X
+               &XUIWB2 LT &XUIWB1).XUIWER
+            AIF ('&XUIW(2)'(1,1) LT '0' OR '&XUIW(2)'(1,1) GT '9').XUIW-
+               ER
+&XUIWR   SETC  '&XUIW(2)'(&XUIWB1,&XUIWB2)
+            AIF ('&XUIWRG' EQ '()').XUIWER
+            AIF ('&XUIWRG' EQ '(0)' OR                                 X
+               '&XUIWRG' EQ '(R0)'  OR                                 X
+               '&XUIWRG' EQ '(1)'   OR                                 X
+               '&XUIWRG' EQ '(R1)'  OR                                 X
+               '&XUIWRG' EQ '(14)'  OR                                 X
+               '&XUIWRG' EQ '(R14)' OR                                 X
+               '&XUIWRG' EQ '(15)'  OR                                 X
+               '&XUIWRG' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB XUIW= INVALID REGISTER USE'
+            AEND
+         AGO   .XUIWDN
+.XUIWER  ANOP
+         MNOTE 12,'TESTCB ACB XUIW= PARM INVALID FORMAT - &XUIW'
+         AEND
+.XUIWDN  ANOP
+.* CHECK ACB UNSUPPORTED FIELDS
+         AIF   ('&MAREA' NE '')
+         MNOTE 12,'TESTCB ACB MAREA IS NOT SUPPORTED'
+         AEND
+         AIF   ('&MLEN' NE '')
+         MNOTE 12,'TESTCB ACB MLEN IS NOT SUPPORTED'
+         AEND
+.*
+         AIF   (&COUNT EQ 1 AND &COUNTAC NE 1)
+         MNOTE 12,'TESTCB ACB= SPECIFIED AND KEYWORD IS NOT VALID FOR A-
+               N ACB'
+         AEND
+.* DON'T NEED TO GEN A CBMR FOR MF=E
+         AIF   ('&MF(1)' EQ 'E').ACBMFEG
+&FIELDS  SETA  3                  ACB+ERET+KEYWORD
+.* HANDLE AN 8-BYTE FIELD
+         AIF   ('&DDNAME' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&SDTASZ' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&STMST' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XAVSPAC' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XBFRFND' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XBUFNO' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XBUFRDS' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XBUFUSE' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XENDRBA' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XHALCRBA' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XHLRBA' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XNCIS' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XNDELR' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XNEXCP' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XNEXT' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XNINSR' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XNLOGR' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XNRETR' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XNUIW' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XNUPDR' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XSTRMAX' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+         AIF   ('&XUIW' NE '')
+&BYTE8   SETA  1
+&FIELDS  SETA  &FIELDS+1
+         AEND
+&BRAS    SETA  0
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+&BRAS    SETA  4
+         AEND
+.* (BRAS) 9(CBMR HEADER) &FIELDS-&BYTE8(BYTE CODES) &FIELDS*4(FIELDS)
+&TOTSIZE SETA  &BRAS+9+(&FIELDS-&BYTE8)+&FIELDS*4
+&RESID   SETA  (&TOTSIZE-(&TOTSIZE/4)*4)
+         AIF   (&RESID NE 0)
+&RESID   SETA  4-&RESID
+&TOTSIZE SETA  &TOTSIZE+&RESID
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+         BRAS  15,*+&TOTSIZE
+         AEND
+         DC    C'CBMR'            CBMREYE
+         DC    AL1(CBMRACB+CBMRTEST) CBMRREQ
+         AIF   ('&OBJECT' EQ 'DATA')
+         DC    AL1(CBMROBJD)      CBMRRMOD OBJECT=DATA
+         AELSE
+         DC    AL1(CBMROBJI)      CBMRRMOD OBJECT=INDEX
+         AEND
+         DC    AL1(&FIELDS-&BYTE8) CBMRVRBS
+         DC    AL2(&TOTSIZE-&BRAS) CBMRSIZE
+* LIST OF VERB CODES
+         DC    AL1(CBMRACB_ACB)   ACB ADDRESS
+         DC    AL1(CBMRACB_ERET)  ERET ADDRESS
+         AIF   ('&ACBLEN' NE '')
+         DC    AL1(CBMRACB_ACBLEN) ACBLEN
+         AEND
+         AIF   ('&ATRB' NE '')
+         DC    AL1(CBMRACB_ATRB)  ATRB
+         AEND
+         AIF   ('&AVSPAC' NE '')
+         DC    AL1(CBMRACB_AVSPAC) AVSPAC
+         AEND
+         AIF   ('&BFRFND' NE '')
+         DC    AL1(CBMRACB_BFRFND) BFRFND
+         AEND
+         AIF   ('&BSTRNO' NE '')
+         DC    AL1(CBMRACB_BSTRNO) BSTRNO
+         AEND
+         AIF   ('&BUFND' NE '')
+         DC    AL1(CBMRACB_BUFND) BUFND
+         AEND
+         AIF   ('&BUFNI' NE '')
+         DC    AL1(CBMRACB_BUFNI) BUFNI
+         AEND
+         AIF   ('&BUFNO' NE '')
+         DC    AL1(CBMRACB_BUFNO) BUFNO
+         AEND
+         AIF   ('&BUFRDS' NE '')
+         DC    AL1(CBMRACB_BUFRDS) BUFRDS
+         AEND
+         AIF   ('&BUFSP' NE '')
+         DC    AL1(CBMRACB_BUFSP) BUFSP
+         AEND
+         AIF   ('&BUFUSE' NE '')
+         DC    AL1(CBMRACB_BUFUSE) BUFUSE
+         AEND
+         AIF   ('&CINV' NE '')
+         DC    AL1(CBMRACB_CINV)  CINV
+         AEND
+         AIF   ('&DDNAME' NE '')
+         DC    AL1(CBMRACB_DDNM)  DDNAME
+         AEND
+         AIF   ('&ENDRBA' NE '')
+         DC    AL1(CBMRACB_ENDRBA) ENDRBA
+         AEND
+         AIF   ('&ERROR' NE '')
+         DC    AL1(CBMRACB_ERROR) ERROR
+         AEND
+         AIF   ('&EXLST' NE '')
+         DC    AL1(CBMRACB_EXLST) EXLST ADDRESS
+         AEND
+         AIF   ('&FS' NE '')
+         DC    AL1(CBMRACB_FS)    FS
+         AEND
+         AIF   ('&HALCRBA' NE '')
+         DC    AL1(CBMRACB_HALCRBA) HALCRBA
+         AEND
+         AIF   ('&HLRBA' NE '')
+         DC    AL1(CBMRACB_HLRBA) HLRBA
+         AEND
+         AIF   ('&KEYLEN' NE '')
+         DC    AL1(CBMRACB_KEYLEN) KEYLEN
+         AEND
+         AIF   ('&LRECL' NE '')
+         DC    AL1(CBMRACB_LRECL) LRECL
+         AEND
+         AIF   ('&MACRF' NE '')
+         DC    AL1(CBMRACB_MACRF) MACRF
+         AEND
+         AIF   ('&NCIS' NE '')
+         DC    AL1(CBMRACB_NCIS)  NCIS
+         AEND
+         AIF   ('&NDELR' NE '')
+         DC    AL1(CBMRACB_NDELR) NDELR
+         AEND
+         AIF   ('&NEXCP' NE '')
+         DC    AL1(CBMRACB_NEXCP) NEXCP
+         AEND
+         AIF   ('&NEXT' NE '')
+         DC    AL1(CBMRACB_NEXT)  NEXT
+         AEND
+         AIF   ('&NINSR' NE '')
+         DC    AL1(CBMRACB_NINSR) NINSR
+         AEND
+         AIF   ('&NIXL' NE '')
+         DC    AL1(CBMRACB_NIXL)  NIXL
+         AEND
+         AIF   ('&NLOGR' NE '')
+         DC    AL1(CBMRACB_NLOGR) NLOGR
+         AEND
+         AIF   ('&NRETR' NE '')
+         DC    AL1(CBMRACB_NRETR) NRETR
+         AEND
+         AIF   ('&NSSS' NE '')
+         DC    AL1(CBMRACB_NSSS)  NSSS
+         AEND
+         AIF   ('&NUIW' NE '')
+         DC    AL1(CBMRACB_NUIW)  NUIW
+         AEND
+         AIF   ('&NUPDR' NE '')
+         DC    AL1(CBMRACB_NUPDR) NUPDR
+         AEND
+         AIF   ('&OFLAGS' NE '')
+         DC    AL1(CBMRACB_OFLAGS) OFLAGS
+         AEND
+         AIF   ('&OPENOBJ' NE '')
+         DC    AL1(CBMRACB_OPENOBJ) OPENOBJ
+         AEND
+         AIF   ('&PASSWD' NE '')
+         DC    AL1(CBMRACB_PASSWD) PASSWD
+         AEND
+         AIF   ('&RKP' NE '')
+         DC    AL1(CBMRACB_RKP) RKP
+         AEND
+         AIF   ('&SHRPOOL' NE '')
+         DC    AL1(CBMRACB_SHRPL) SHRPOOL
+         AEND
+         AIF   ('&SDTASZ' NE '')
+         DC    AL1(CBMRACB_SDTASZ) SDTASZ
+         AEND
+         AIF   ('&STMST' NE '')
+         DC    AL1(CBMRACB_STMST) STMST
+         AEND
+         AIF   ('&STRMAX' NE '')
+         DC    AL1(CBMRACB_STRMAX) STRMAX
+         AEND
+         AIF   ('&STRNO' NE '')
+         DC    AL1(CBMRACB_STRNO) STRNO
+         AEND
+         AIF   ('&UIW' NE '')
+         DC    AL1(CBMRACB_UIW)   UIW
+         AEND
+         AIF   ('&XAVSPAC' NE '')
+         DC    AL1(CBMRACB_XAVSPAC) XAVSPAC
+         AEND
+         AIF   ('&XBFRFND' NE '')
+         DC    AL1(CBMRACB_XBFRFND) XBFRFND
+         AEND
+         AIF   ('&XBUFNO' NE '')
+         DC    AL1(CBMRACB_XBUFNO) XBUFNO
+         AEND
+         AIF   ('&XBUFRDS' NE '')
+         DC    AL1(CBMRACB_XBUFRDS) XBUFRDS
+         AEND
+         AIF   ('&XBUFUSE' NE '')
+         DC    AL1(CBMRACB_XBUFUSE) XBUFUSE
+         AEND
+         AIF   ('&XENDRBA' NE '')
+         DC    AL1(CBMRACB_XENDRBA) XENDRBA
+         AEND
+         AIF   ('&XHALCRBA' NE '')
+         DC    AL1(CBMRACB_XHALCRBA) XHALCRBA
+         AEND
+         AIF   ('&XHLRBA' NE '')
+         DC    AL1(CBMRACB_XHLRBA) XHLRBA
+         AEND
+         AIF   ('&XNCIS' NE '')
+         DC    AL1(CBMRACB_XNCIS) XNCIS
+         AEND
+         AIF   ('&XNDELR' NE '')
+         DC    AL1(CBMRACB_XNDELR) XNDELR
+         AEND
+         AIF   ('&XNEXCP' NE '')
+         DC    AL1(CBMRACB_XNEXCP) XNEXCP
+         AEND
+         AIF   ('&XNEXT' NE '')
+         DC    AL1(CBMRACB_XNEXT) XNEXT
+         AEND
+         AIF   ('&XNINSR' NE '')
+         DC    AL1(CBMRACB_XNINSR) XNINSR
+         AEND
+         AIF   ('&XNLOGR' NE '')
+         DC    AL1(CBMRACB_XNLOGR) XNLOGR
+         AEND
+         AIF   ('&XNRETR' NE '')
+         DC    AL1(CBMRACB_XNRETR) XNRETR
+         AEND
+         AIF   ('&XNUIW' NE '')
+         DC    AL1(CBMRACB_XNUIW) XNUIW
+         AEND
+         AIF   ('&XNUPDR' NE '')
+         DC    AL1(CBMRACB_XNUPDR) XNUPDR
+         AEND
+         AIF   ('&XSTRMAX' NE '')
+         DC    AL1(CBMRACB_XSTRMAX) XSTRMAX
+         AEND
+         AIF   ('&XUIW' NE '')
+         DC    AL1(CBMRACB_XUIW)  XUIW
+         AEND
+         AIF   ('&RPLLEN' NE '')
+         DC    AL1(CBMRRPL_RPLLEN) RPLLEN
+         AEND
+         AIF   ('&EXLLEN' NE '')
+         DC    AL1(CBMRXL_XLSTLEN) EXLLEN
+         AEND
+* LIST OF FIELD VALUES IN SAME ORDER AS VERB CODES
+&OFFSET  SETA  9+&FIELDS-&BYTE8   HEADER+NO. OF VERBS
+&I       SETA  1
+.*
+         DC    AL4(&ACB)          ACB ADDRESS
+         AIF   ('&ACB'(1,1) EQ '(')
+            AIF ('&ACB' EQ '(0)'   OR                                  X
+               '&ACB'   EQ '(R0)'  OR                                  X
+               '&ACB'   EQ '(1)'   OR                                  X
+               '&ACB'   EQ '(R1)'  OR                                  X
+               '&ACB'   EQ '(14)'  OR                                  X
+               '&ACB'   EQ '(R14)' OR                                  X
+               '&ACB'   EQ '(15)'  OR                                  X
+               '&ACB'   EQ '(R15)')
+         MNOTE 12,'TESTCB ACB ACB= INVALID REGISTER USE'
+            AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&ACB'
+&I       SETA  &I+1
+         AEND
+&OFFSET  SETA  &OFFSET+4
+.*
+         AIF   ('&ERET' EQ '')
+         DC    AL4(0)             NO ERET ADDRESS
+         AELSE
+         DC    AL4(&ERET)         ERET ADDRESS
+            AIF ('&ERET'(1,1) EQ '(')
+               AIF ('&ERET' EQ '(0)'  OR                               X
+                  '&ERET'  EQ '(R0)'  OR                               X
+                  '&ERET'  EQ '(1)'   OR                               X
+                  '&ERET'  EQ '(R1)'  OR                               X
+                  '&ERET'  EQ '(14)'  OR                               X
+                  '&ERET'  EQ '(R14)' OR                               X
+                  '&ERET'  EQ '(15)'  OR                               X
+                  '&ERET'  EQ '(R15)')
+         MNOTE 12,'TESTCB ACB ERET= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&ERET'
+&I       SETA  &I+1
+            AEND
+         AEND
+&OFFSET  SETA  &OFFSET+4
+.*
+         AIF   ('&ACBLEN' NE '')
+         DC    AL4(&ACBLEN)       ACBLEN
+         AEND
+.*
+         AIF   ('&ATRB' NE '')
+         ZGENATRB ATRB=&ATRB      GENERATE 2-BYTE ATRB
+         DC    B'&ZGENATB1'       ATRB BYTE 1
+         DC    B'&ZGENATB2'       ATRB BYTE 2
+         DC    2X'00'             ATRB PADDING
+         AEND
+.*
+         AIF   ('&AVSPAC' NE '')
+         DC    AL4(&AVSPAC)       AVSPAC
+         AEND
+.*
+         AIF   ('&BFRFND' NE '')
+         DC    AL4(&BFRFND)       BFRFND
+         AEND
+.*
+         AIF   ('&BSTRNO' NE '')
+         DC    AL4(&BSTRNO)       BSTRNO
+         AEND
+.*
+         AIF   ('&BUFND' NE '')
+         DC    AL4(&BUFND)        BUFND
+         AEND
+.*
+         AIF   ('&BUFNI' NE '')
+         DC    AL4(&BUFNI)        BUFNI
+         AEND
+.*
+         AIF   ('&BUFNO' NE '')
+         DC    AL4(&BUFNO)        BUFNO
+         AEND
+.*
+         AIF   ('&BUFRDS' NE '')
+         DC    AL4(&BUFRDS)       BUFRDS
+         AEND
+.*
+         AIF   ('&BUFSP' NE '')
+         DC    AL4(&BUFSP)        BUFSP
+         AEND
+.*
+         AIF   ('&BUFUSE' NE '')
+         DC    AL4(&BUFUSE)       BUFUSE
+         AEND
+.*
+         AIF   ('&CINV' NE '')
+         DC    AL4(&CINV)         CINV
+         AEND
+.*
+         AIF   ('&DDNAME' NE '')
+         DC    CL8'&DDNAME'       DDNAME
+         AEND
+.*
+         AIF   ('&ENDRBA' NE '')
+         DC    AL4(&ENDRBA)       ENDRBA
+         AEND
+.*
+         AIF   ('&ERROR' NE '')
+         DC    AL4(&ERROR)        ERROR
+         AEND
+.*
+         AIF   ('&EXLST' NE '')
+         DC    AL4(&EXLST)        EXLST ADDRESS
+            AIF ('&EXLST'(1,1) EQ '(')
+               AIF ('&EXLST' EQ '(0)' OR                               X
+                  '&EXLST' EQ '(R0)'  OR                               X
+                  '&EXLST' EQ '(1)'   OR                               X
+                  '&EXLST' EQ '(R1)'  OR                               X
+                  '&EXLST' EQ '(14)'  OR                               X
+                  '&EXLST' EQ '(R14)' OR                               X
+                  '&EXLST' EQ '(15)'  OR                               X
+                  '&EXLST' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB EXLST= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&EXLST'
+            AEND
+         AEND
+.*
+         AIF   ('&FS' NE '')
+         DC    AL4(&FS)           FS
+         AEND
+.*
+         AIF   ('&HALCRBA' NE '')
+         DC    AL4(&HALCRBA)      HALCRBA
+         AEND
+.*
+         AIF   ('&HLRBA' NE '')
+         DC    AL4(&HLRBA)        HLRBA
+         AEND
+.*
+         AIF   ('&KEYLEN' NE '')
+         DC    AL4(&KEYLEN)       KEYLEN
+         AEND
+.*
+         AIF   ('&LRECL' NE '')
+         DC    AL4(&LRECL)        LRECL
+         AEND
+.*
+         AIF   ('&MACRF' NE '')
+         ZGENMACF MACRF=&MACRF,MODE=CBMR GENERATE 4-BYTE MACRF
+         DC    B'&ZGENMACF1'      MACRF BYTE 1
+         DC    B'&ZGENMACF2'      MACRF BYTE 2
+         DC    B'&ZGENMACF3'      MACRF BYTE 3
+         DC    B'&ZGENMACF4'      MACRF BYTE 4
+         AEND
+.*
+         AIF   ('&NCIS' NE '')
+         DC    AL4(&NCIS)         NCIS
+         AEND
+.*
+         AIF   ('&NDELR' NE '')
+         DC    AL4(&NDELR)        NDELR
+         AEND
+.*
+         AIF   ('&NEXCP' NE '')
+         DC    AL4(&NEXCP)        NEXCP
+         AEND
+.*
+         AIF   ('&NEXT' NE '')
+         DC    AL4(&NEXT)         NEXT
+         AEND
+.*
+         AIF   ('&NINSR' NE '')
+         DC    AL4(&NINSR)        NINSR
+         AEND
+.*
+         AIF   ('&NIXL' NE '')
+         DC    AL4(&NIXL)         NIXL
+         AEND
+.*
+         AIF   ('&NLOGR' NE '')
+         DC    AL4(&NLOGR)        NLOGR
+         AEND
+.*
+         AIF   ('&NRETR' NE '')
+         DC    AL4(&NRETR)        NRETR
+         AEND
+.*
+         AIF   ('&NSSS' NE '')
+         DC    AL4(&NSSS)         NSSS
+         AEND
+.*
+         AIF   ('&NUIW' NE '')
+         DC    AL4(&NUIW)         NUIW
+         AEND
+.*
+         AIF   ('&NUPDR' NE '')
+         DC    AL4(&NUPDR)        NUPDR
+         AEND
+.*
+         AIF   ('&OFLAGS' NE '')
+         DC    AL4(0)             OFLAGS DUMMY VALUE
+         AEND
+.*
+         AIF   ('&OPENOBJ' NE '')
+            AIF ('&OPENOBJ' EQ 'PATH')
+         DC    AL1(CBMRACB_OPENOBJ_PATH),3X'00' OPENOBJ PATH
+            AEND
+            AIF ('&OPENOBJ' EQ 'BASE')
+         DC    AL1(CBMRACB_OPENOBJ_BASE),3X'00' OPENOBJ BASE
+            AEND
+            AIF ('&OPENOBJ' EQ 'AIX')
+         DC    AL1(CBMRACB_OPENOBJ_AIX),3X'00' OPENOBJ AIX
+            AEND
+         AEND
+.*
+         AIF   ('&PASSWD' NE '')
+         DC    AL4(&PASSWD)       PASSWD ADDRESS
+            AIF ('&PASSWD'(1,1) EQ '(')
+               AIF ('&PASSWD' EQ '(0)' OR                              X
+                  '&PASSWD' EQ '(R0)'  OR                              X
+                  '&PASSWD' EQ '(1)'   OR                              X
+                  '&PASSWD' EQ '(R1)'  OR                              X
+                  '&PASSWD' EQ '(14)'  OR                              X
+                  '&PASSWD' EQ '(R14)' OR                              X
+                  '&PASSWD' EQ '(15)'  OR                              X
+                  '&PASSWD' EQ '(R15)')
+         MNOTE 12,'TESTCB ACB PASSWD= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&PASSWD'
+            AEND
+         AEND
+.*
+         AIF   ('&RKP' NE '')
+         DC    AL4(&RKP)          RKP
+         AEND
+.*
+         AIF   ('&SHRPOOL' NE '')
+         DC    AL4(&SHRPOOL)      SHRPOOL
+         AEND
+.*
+         AIF   ('&SDTASZ' NE '')
+         DC    AL8(0)             SDTASZ DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&SDTASZ(2)          R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&STMST' NE '')
+         DC    AL8(0)             STMST DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&STMST(2)           R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&STRMAX' NE '')
+         DC    AL4(&STRMAX)       STRMAX
+         AEND
+.*
+         AIF   ('&STRNO' NE '')
+         DC    AL4(&STRNO)        STRNO
+         AEND
+.*
+         AIF   ('&UIW' NE '')
+         DC    AL4(&UIW)          UIW
+         AEND
+.*
+         AIF   ('&XAVSPAC' NE '')
+         DC    AL8(0)             XAVSPAC DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XAVSPAC(2)         R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XBFRFND' NE '')
+         DC    AL8(0)             XBFRFND DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XBFRFND(2)         R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XBUFNO' NE '')
+         DC    AL8(0)             XBUFNO DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XBUFNO(2)          R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XBUFRDS' NE '')
+         DC    AL8(0)             XBUFRDS DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XBUFRDS(2)         R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XBUFUSE' NE '')
+         DC    AL8(0)             XBUFUSE DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XBUFUSE(2)         R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XENDRBA' NE '')
+         DC    AL8(0)             XENDRBA DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XENDRBA(2)         R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XHALCRBA' NE '')
+         DC    AL8(0)             XHALCRBA DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XHALCRBA(2)        R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XHLRBA' NE '')
+         DC    AL8(0)             XHLRBA DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XHLRBA(2)          R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XNCIS' NE '')
+         DC    AL8(0)             XNCIS DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XNCIS(2)           R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XNDELR' NE '')
+         DC    AL8(0)             XNDELR DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XNDELR(2)          R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XNEXCP' NE '')
+         DC    AL8(0)             XNEXCP DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XNEXCP(2)          R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XNEXT' NE '')
+         DC    AL8(0)             XNEXT DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XNEXT(2)           R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XNINSR' NE '')
+         DC    AL8(0)             XNINSR DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XNINSR(2)          R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XNLOGR' NE '')
+         DC    AL8(0)             XNLOGR DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XNLOGR(2)          R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XNRETR' NE '')
+         DC    AL8(0)             XNRETR DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XNRETR(2)          R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XNUIW' NE '')
+         DC    AL8(0)             XNUIW DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XNUIW(2)           R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XNUPDR' NE '')
+         DC    AL8(0)             XNUPDR DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XNUPDR(2)          R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XSTRMAX' NE '')
+         DC    AL8(0)             XSTRMAX DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XSTRMAX(2)         R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&XUIW' NE '')
+         DC    AL8(0)             XUIW DUMMY VALUE
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC 'LA    14,&XUIW(2)            R14=INDIRECT ADDRESS'
+         AEND
+.*
+         AIF   ('&RPLLEN' NE '')
+         DC    AL4(&RPLLEN)       RPLLEN
+         AEND
+.*
+         AIF   ('&EXLLEN' NE '')
+         DC    AL4(&EXLLEN)       EXLLEN
+         AEND
+.*
+         AIF   (&RESID NE 0)
+         DC    &RESID.X'00'       ALIGN
+         AEND
+.*
+&I       SETA  1
+.ACBRGLP ANOP
+         AIF   (&I GT 10).ACBRGDN
+         AIF   (&OFFREG(&I) NE 0)
+            AIF (NOT &ACBHAND)
+* HANDLE REGISTER/INDIRECT NOTATION
+&ACBHAND SETB  1
+            AEND
+            AIF ('&OFFCHR(&I)'(1,9) EQ 'LA    14,')
+         &OFFCHR(&I)
+         MVC   &OFFREG(&I).(8,15),0(14)     MOVE INDIRECT VALUE INTO CB-
+               MR
+            AELSE
+         ST    &OFFCHR(&I),&OFFREG(&I).(15) STORE REGISTER INTO CBMR
+            AEND
+         AEND
+&I       SETA  &I+1
+         AGO   .ACBRGLP
+.*
+.ACBRGDN ANOP
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'L' OR '&MF(1)' EQ 'G').ACBMFL
+.*
+.* PROCESS ACB MF=I
+         LR    1,15               R1=CBMR ADDRESS
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.*
+.ACBMFL  ANOP
+.* PROCESS TESTCB ACB MF=L
+         AIF   (T'&MF(2) EQ 'O' AND '&N' EQ '')
+         MNOTE 12,'TESTCB ACB NO LABEL FOR CBMR'
+         AEND
+         AIF   (T'&MF(2) NE 'O')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+         MNOTE 12,'TESTCB ACB MF= INVALID REGISTER USE'
+            AEND
+            AIF ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AEND
+         MVC   0(&TOTSIZE-&BRAS,1),0(15) MOVE TO REQUESTED AREA
+         AEND
+.*
+         AIF   (T'&MF(3) NE 'O')
+&MF(3)   EQU   &TOTSIZE-&BRAS
+         AEND
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'G').ACBMFEG
+         SR    15,15              RC=0
+         MEXIT
+.*
+.ACBMFEG ANOP
+.* PROCESS TESTCB ACB MF=E/G
+.*   FOR MF=G ONLY THE PREP CODING IS DONE
+.* FOR EACH PARAMETER SPECIFIED, SEARCH THE CBMR FOR THE ENTRY
+.* WHEN FOUND, MOVE THE NEW VALUE INTO THE CBMR
+.* CALL ZVSAM19C TO TEST THE FIELD
+         AIF   (T'&MF(2) EQ 'O')
+         MNOTE 12,'TESTCB ACB MF=E/G SECOND PARAMETER MISSING'
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'G').ACBMFG
+.*
+         AIF   ('&MF(2)'(1,1) EQ '(')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+         MNOTE 12,'TESTCB ACB MF= INVALID REGISTER USE'
+            AEND
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.* MF=E
+.* MODIFY THE CBMR
+         USING CBMR,1
+         LLC   0,CBMRVRBS         R0=NO. OF VERBS
+         LA    1,CBMRBODY         R1=ADDRESS OF VERBS
+         DROP  1
+         BRAS  15,*+12            BRANCH AROUND SAVE AREA
+TSTCBSV&SYSNDX DS 0H
+         DS    2AL4               SAVE AREA
+         STM   0,1,TSTCBSV&SYSNDX SAVE R0-R1
+.*
+         AIF   ('&ACB' NE '')
+         LHI   14,CBMRACB_ACB     ACB ACB VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&ACB'(1,1) EQ '(')
+               AIF ('&ACB' EQ '(0)'   OR                               X
+               '&ACB'      EQ '(R0)'  OR                               X
+               '&ACB'      EQ '(1)'   OR                               X
+               '&ACB'      EQ '(R1)'  OR                               X
+               '&ACB'      EQ '(14)'  OR                               X
+               '&ACB'      EQ '(R14)' OR                               X
+               '&ACB'      EQ '(15)'  OR                               X
+               '&ACB'      EQ '(R15)')
+         MNOTE 12,'TESTCB ACB ACB= INVALID REGISTER USE'
+               AEND
+         ST    &ACB,0(14)         STORE ACB ADDRESS IN CBMR
+            AELSE
+               AIF (T'&ACB EQ 'N')
+         IILF  15,&ACB            R15=ACB ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&ACB            R15=ACB ADDRESS
+               AEND
+         ST    15,0(14)           STORE ACB ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&ERET' NE '')
+            AIF (T'&ERET EQ 'N')
+         MNOTE 12,'TESTCB ACB ERET= CANNOT BE NUMERIC'
+            AEND
+         LHI   14,CBMRACB_ERET    ERET VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&ERET'(1,1) EQ '(')
+               AIF ('&ERET' EQ '(0)'  OR                               X
+               '&ERET'     EQ '(R0)'  OR                               X
+               '&ERET'     EQ '(1)'   OR                               X
+               '&ERET'     EQ '(R1)'  OR                               X
+               '&ERET'     EQ '(14)'  OR                               X
+               '&ERET'     EQ '(R14)' OR                               X
+               '&ERET'     EQ '(15)'  OR                               X
+               '&ERET'     EQ '(R15)')
+         MNOTE 12,'TESTCB ACB ERET= INVALID REGISTER USE'
+               AEND
+         ST    &ERET,0(14)        STORE ERET ADDRESS IN CBMR
+            AELSE
+         LARL  15,&ERET           R15=ERET ADDRESS
+         ST    15,0(14)           STORE ERET ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&ACBLEN' NE '')
+         LHI   14,CBMRACB_ACBLEN  ACBLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&ACBLEN      MOVE ACBLEN TO CBMR
+         AEND
+.*
+         AIF   ('&ATRB' NE '')
+         ZGENATRB ATRB=&ATRB      GENERATE 2-BYTE ATRB
+         LHI   14,CBMRACB_ATRB    ATRB VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         J     *+8                BYPASS CONSTANTS
+         DC    B'&ZGENATB1'       ATRB BYTE 1
+         DC    B'&ZGENATB2'       ATRB BYTE 2
+         DC    2X'00'             ATRB PADDING
+         MVC   0(4,14),4(15)      MOVE ATRB TO CBMR
+         AEND
+.*
+         AIF   ('&AVSPAC' NE '')
+         LHI   14,CBMRACB_AVSPAC  AVSPAC VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&AVSPAC         R15=AVSPAC
+         ST    15,0(14)           STORE AVSPAC IN CBMR
+         AEND
+.*
+         AIF   ('&BFRFND' NE '')
+         LHI   14,CBMRACB_BFRFND  ACB BFRFND VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&BFRFND      MOVE BFRFND TO CBMR
+         AEND
+.*
+         AIF   ('&BSTRNO' NE '')
+         LHI   14,CBMRACB_BSTRNO  ACB BSTRNO VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&BSTRNO      MOVE BSTRNO TO CBMR
+         AEND
+.*
+         AIF   ('&BUFND' NE '')
+         LHI   14,CBMRACB_BUFND   ACB BUFND VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&BUFND       MOVE BUFND TO CBMR
+         AEND
+.*
+         AIF   ('&BUFNI' NE '')
+         LHI   14,CBMRACB_BUFNI   ACB BUFNI VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&BUFNI       MOVE BUFNI TO CBMR
+         AEND
+.*
+         AIF   ('&BUFNO' NE '')
+         LHI   14,CBMRACB_BUFNO   ACB BUFNO VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&BUFNO          R15=BUFNO
+         ST    15,0(14)           STORE BUFNO IN CBMR
+         AEND
+.*
+         AIF   ('&BUFRDS' NE '')
+         LHI   14,CBMRACB_BUFRDS  ACB BUFRDS VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&BUFRDS         R15=BUFRDS
+         ST    15,0(14)           STORE BUFRDS IN CBMR
+         AEND
+.*
+         AIF   ('&BUFSP' NE '')
+         LHI   14,CBMRACB_BUFSP   ACB BUFSP VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&BUFSP          R15=BUFSP
+         ST    15,0(14)           STORE BUFSP IN CBMR
+         AEND
+.*
+         AIF   ('&BUFUSE' NE '')
+         LHI   14,CBMRACB_BUFUSE  ACB BUFUSE VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&BUFUSE         R15=BUFUSE
+         ST    15,0(14)           STORE BUFUSE IN CBMR
+         AEND
+.*
+         AIF   ('&CINV' NE '')
+         LHI   14,CBMRACB_CINV    ACB CINV VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&CINV           R15=CINV
+         ST    15,0(14)           STORE CINV IN CBMR
+         AEND
+.*
+         AIF   ('&DDNAME' NE '')
+         LHI   14,CBMRACB_DDNM    ACB DDNAME VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LARL  15,=CL8'&DDNAME'   BASE-FREE
+         MVC   0(8,14),0(15)      MOVE DDNAME TO CBMR
+         AEND
+.*
+         AIF   ('&ENDRBA' NE '')
+         LHI   14,CBMRACB_ENDRBA  ACB ENDRBA VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&ENDRBA         R15=ENDRBA
+         ST    15,0(14)           STORE ENDRBA IN CBMR
+         AEND
+.*
+         AIF   ('&ERROR' NE '')
+         LHI   14,CBMRACB_ERROR   ACB ERROR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&ERROR       MOVE ERROR TO CBMR
+         AEND
+.*
+         AIF   ('&EXLST' NE '')
+         LHI   14,CBMRACB_EXLST   ACB EXLST VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&EXLST'(1,1) EQ '(')
+               AIF ('&EXLST' EQ '(0)'   OR                             X
+               '&EXLST'      EQ '(R0)'  OR                             X
+               '&EXLST'      EQ '(1)'   OR                             X
+               '&EXLST'      EQ '(R1)'  OR                             X
+               '&EXLST'      EQ '(14)'  OR                             X
+               '&EXLST'      EQ '(R14)' OR                             X
+               '&EXLST'      EQ '(15)'  OR                             X
+               '&EXLST'      EQ '(R15)')
+         MNOTE 12,'TESTCB ACB EXLST= INVALID REGISTER USE'
+               AEND
+         ST    &EXLST,0(14)       STORE EXLST ADDRESS IN CBMR
+            AELSE
+               AIF (T'&EXLST EQ 'N')
+         IILF  15,&EXLST          R15=EXLST ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&EXLST          R15=EXLST ADDRESS
+               AEND
+         ST    15,0(14)           STORE EXLST ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&FS' NE '')
+         LHI   14,CBMRACB_FS      ACB FS VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&FS          MOVE FS TO CBMR
+         AEND
+.*
+         AIF   ('&HALCRBA' NE '')
+         LHI   14,CBMRACB_HALCRBA ACB HALCRBA VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&HALCRBA        R15=HALCRBA
+         ST    15,0(14)           STORE HALCRBA IN CBMR
+         AEND
+.*
+         AIF   ('&HLRBA' NE '')
+         LHI   14,CBMRACB_HLRBA   ACB HLRBA VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&HLRBA          R15=HLRBA
+         ST    15,0(14)           STORE HLRBA IN CBMR
+         AEND
+.*
+         AIF   ('&KEYLEN' NE '')
+         LHI   14,CBMRACB_KEYLEN  ACB KEYLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&KEYLEN      MOVE KEYLEN TO CBMR
+         AEND
+.*
+         AIF   ('&LRECL' NE '')
+         LHI   14,CBMRACB_LRECL   ACB LRECL VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&LRECL          R15=LRECL
+         ST    15,0(14)           STORE LRECL IN CBMR
+         AEND
+.*
+         AIF   ('&MACRF' NE '')
+         LHI   14,CBMRACB_MACRF   ACB MACRF VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         J     *+8                BYPASS CONSTANTS
+         ZGENMACF MACRF=&MACRF,MODE=CBMR GENERATE 4-BYTE MACRF
+         DC    B'&ZGENMACF1'      MACRF BYTE 1
+         DC    B'&ZGENMACF2'      MACRF BYTE 2
+         DC    B'&ZGENMACF3'      MACRF BYTE 3
+         DC    B'&ZGENMACF4'      MACRF BYTE 4
+         MVC   0(4,14),4(15)      MOVE MACRF TO CBMR
+         AEND
+.*
+         AIF   ('&NCIS' NE '')
+         LHI   14,CBMRACB_NCIS    ACB NCIS VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NCIS           R15=NCIS
+         ST    15,0(14)           STORE NCIS IN CBMR
+         AEND
+.*
+         AIF   ('&NDELR' NE '')
+         LHI   14,CBMRACB_NDELR   ACB NDELR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NDELR          R15=NDELR
+         ST    15,0(14)           STORE NDELR IN CBMR
+         AEND
+.*
+         AIF   ('&NEXCP' NE '')
+         LHI   14,CBMRACB_NEXCP   ACB NEXCP VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NEXCP          R15=NEXCP
+         ST    15,0(14)           STORE NEXCP IN CBMR
+         AEND
+.*
+         AIF   ('&NEXT' NE '')
+         LHI   14,CBMRACB_NEXT    ACB NEXT VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NEXT           R15=NEXT
+         ST    15,0(14)           STORE NEXT IN CBMR
+         AEND
+.*
+         AIF   ('&NINSR' NE '')
+         LHI   14,CBMRACB_NINSR   ACB NINSR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NINSR          R15=NINSR
+         ST    15,0(14)           STORE NINSR IN CBMR
+         AEND
+.*
+         AIF   ('&NIXL' NE '')
+         LHI   14,CBMRACB_NIXL    ACB NIXL VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NIXL           R15=NIXL
+         ST    15,0(14)           STORE NIXL IN CBMR
+         AEND
+.*
+         AIF   ('&NLOGR' NE '')
+         LHI   14,CBMRACB_NLOGR   ACB NLOGR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NLOGR          R15=NLOGR
+         ST    15,0(14)           STORE NLOGR IN CBMR
+         AEND
+.*
+         AIF   ('&NRETR' NE '')
+         LHI   14,CBMRACB_NRETR   ACB NRETR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NRETR          R15=NRETR
+         ST    15,0(14)           STORE NRETR IN CBMR
+         AEND
+.*
+         AIF   ('&NSSS' NE '')
+         LHI   14,CBMRACB_NSSS    ACB NSSS VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NSSS           R15=NSSS
+         ST    15,0(14)           STORE NSSS IN CBMR
+         AEND
+.*
+         AIF   ('&NUIW' NE '')
+         LHI   14,CBMRACB_NUIW    ACB NUIW VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NUIW           R15=NUIW
+         ST    15,0(14)           STORE NUIW IN CBMR
+         AEND
+.*
+         AIF   ('&NUPDR' NE '')
+         LHI   14,CBMRACB_NUPDR   ACB NUPDR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&NUPDR          R15=NUPDR
+         ST    15,0(14)           STORE NUPDR IN CBMR
+         AEND
+.*
+         AIF   ('&OFLAGS' NE '')
+         LHI   14,CBMRACB_OFLAGS  ACB OFLAGS VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),0            MOVE OFLAGS DUMMY VALUE TO CBMR
+         AEND
+.*
+         AIF   ('&OPENOBJ' NE '')
+         LHI   14,CBMRACB_OPENOBJ ACB OPENOBJ VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         J     *+8                BYPASS CONSTANTS
+            AIF ('&OPENOBJ' EQ 'PATH')
+         DC    AL1(CBMRACB_OPENOBJ_PATH),3X'00' OPENOBJ PATH
+            AEND
+            AIF ('&OPENOBJ' EQ 'BASE')
+         DC    AL1(CBMRACB_OPENOBJ_BASE),3X'00' OPENOBJ BASE
+            AEND
+            AIF ('&OPENOBJ' EQ 'AIX')
+         DC    AL1(CBMRACB_OPENOBJ_AIX),3X'00' OPENOBJ AIX
+            AEND
+         MVC   0(4,14),4(15)      MOVE OPENOBJ TO CBMR
+         AEND
+.*
+         AIF   ('&PASSWD' NE '')
+         LHI   14,CBMRACB_PASSWD  ACB PASSWD VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&PASSWD'(1,1) EQ '(')
+               AIF ('&PASSWD' EQ '(0)'   OR                            X
+               '&PASSWD'      EQ '(R0)'  OR                            X
+               '&PASSWD'      EQ '(1)'   OR                            X
+               '&PASSWD'      EQ '(R1)'  OR                            X
+               '&PASSWD'      EQ '(14)'  OR                            X
+               '&PASSWD'      EQ '(R14)' OR                            X
+               '&PASSWD'      EQ '(15)'  OR                            X
+               '&PASSWD'      EQ '(R15)')
+         MNOTE 12,'TESTCB ACB PASSWD= INVALID REGISTER USE'
+               AEND
+         ST    &PASSWD,0(14)      STORE PASSWORD ADDRESS IN CBMR
+            AELSE
+               AIF (T'&PASSWD EQ 'N')
+         IILF  15,&PASSWD         R15=PASSWORD ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&PASSWD         R15=PASSWORD ADDRESS
+               AEND
+         ST    15,0(14)           STORE PASSWORD ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&RKP' NE '')
+         LHI   14,CBMRACB_RKP     ACB RKP VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&RKP            R15=RKP
+         ST    15,0(14)           STORE RKP IN CBMR
+         AEND
+.*
+         AIF   ('&SHRPOOL' NE '')
+         LHI   14,CBMRACB_SHRPL   ACB SHRPOOL VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&SHRPOOL     MOVE SHRPOOL TO CBMR
+         AEND
+.*
+         AIF   ('&SDTASZ' NE '')
+         LHI   14,CBMRACB_SDTASZ  ACB SDTASZ VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&SDTASZ(2)      R15=SDTASZ INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&STMST' NE '')
+         LHI   14,CBMRACB_STMST   ACB STMST VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&STMST(2)       R15=STMST INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&STRMAX' NE '')
+         LHI   14,CBMRACB_STRMAX  ACB STRMAX VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&STRMAX      MOVE STRMAX TO CBMR
+         AEND
+.*
+         AIF   ('&STRNO' NE '')
+         LHI   14,CBMRACB_STRNO   ACB STRNO VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&STRNO       MOVE STRNO TO CBMR
+         AEND
+.*
+         AIF   ('&UIW' NE '')
+         LHI   14,CBMRACB_UIW     ACB UIW VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&UIW            R15=UIW
+         ST    15,0(14)           STORE UIW IN CBMR
+         AEND
+.*
+         AIF   ('&XAVSPAC' NE '')
+         LHI   14,CBMRACB_XAVSPAC ACB XAVSPAC VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XAVSPAC(2)     R15=XAVSPAC INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XBFRFND' NE '')
+         LHI   14,CBMRACB_XBFRFND ACB XBFRFND VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XBFRFND(2)     R15=XBFRFND INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XBUFNO' NE '')
+         LHI   14,CBMRACB_XBUFNO  ACB XBUFNO VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XBUFNO(2)      R15=XBUFNO INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XBUFRDS' NE '')
+         LHI   14,CBMRACB_XBUFRDS ACB XBUFRDS VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XBUFRDS(2)     R15=XBUFRDS INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XBUFUSE' NE '')
+         LHI   14,CBMRACB_XBUFUSE ACB XBUFUSE VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XBUFUSE(2)     R15=XBUFUSE INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XENDRBA' NE '')
+         LHI   14,CBMRACB_XENDRBA ACB XENDRBA VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XENDRBA(2)     R15=XENDRBA INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XHALCRBA' NE '')
+         LHI   14,CBMRACB_XHALCRBA ACB XHALCRBA VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XHALCRBA(2)    R15=XHALCRBA INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XHLRBA' NE '')
+         LHI   14,CBMRACB_XHLRBA  ACB XHLRBA VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XHLRBA(2)      R15=XHLRBA INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XNCIS' NE '')
+         LHI   14,CBMRACB_XNCIS   ACB XNCIS VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XNCIS(2)       R15=XNCIS INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XNDELR' NE '')
+         LHI   14,CBMRACB_XNDELR  ACB XNDELR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XNDELR(2)      R15=XNDELR INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XNEXCP' NE '')
+         LHI   14,CBMRACB_XNEXCP  ACB XNEXCP VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XNEXCP(2)      R15=XNEXCP INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XNEXT' NE '')
+         LHI   14,CBMRACB_XNEXT   ACB XNEXT VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XNEXT(2)       R15=XNEXT INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XNINSR' NE '')
+         LHI   14,CBMRACB_XNINSR  ACB XNINSR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XNINSR(2)      R15=XNINSR INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XNLOGR' NE '')
+         LHI   14,CBMRACB_XNLOGR  ACB XNLOGR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XNLOGR(2)      R15=XNLOGR INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XNRETR' NE '')
+         LHI   14,CBMRACB_XNRETR  ACB XNRETR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XNRETR(2)      R15=XNRETR INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XNUIW' NE '')
+         LHI   14,CBMRACB_XNUIW   ACB XNUIW VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&XNUIW          R15=XNUIW
+         ST    15,0(14)           STORE XNUIW IN CBMR
+         AEND
+.*
+         AIF   ('&XNUPDR' NE '')
+         LHI   14,CBMRACB_XNUPDR  ACB XNUPDR VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         LA    15,&XNUPDR(2)      R15=XNUPDR INDIRECT ADDRESS
+         MVC   0(8,14),0(15)      MOVE INDIRECT VALUE INTO CBMR
+         AEND
+.*
+         AIF   ('&XSTRMAX' NE '')
+         LHI   14,CBMRACB_XSTRMAX ACB XSTRMAX VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&XSTRMAX        R15=XSTRMAX
+         ST    15,0(14)           STORE XSTRMAX IN CBMR
+         AEND
+.*
+         AIF   ('&XUIW' NE '')
+         LHI   14,CBMRACB_XUIW    ACB XUIW VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         IILF  15,&XUIW           R15=XUIW
+         ST    15,0(14)           STORE XUIW IN CBMR
+         AEND
+.*
+         AIF   ('&RPLLEN' NE '')
+         LHI   14,CBMRRPL_RPLLEN  RPLLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&RPLLEN      MOVE RPLLEN TO CBMR
+         AEND
+.*
+         AIF   ('&EXLLEN' NE '')
+         LHI   14,CBMRXL_EXLLEN   EXLLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&EXLLEN      MOVE EXLLEN TO CBMR
+         AEND
+.*
+         AIF   ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.*
+.ACBMFG  ANOP
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         AIF   ('&MF(1)' EQ 'G')
+         MEXIT
+         AEND
+         J     TSTCBE&SYSNDX      EXIT
+*
+* VERB SEARCH SUBROUTINE, RC=8 IF NOT FOUND
+TSTCBS&SYSNDX DS 0H
+         SGR   1,1                CLEAR R1 HIGH
+         LM    0,1,TSTCBSV&SYSNDX RESTORE R0-R1 (NO. & ADDR OF VERBS)
+TSTCBL&SYSNDX DS 0H
+         CLM   14,B'0001',0(1)    THIS VERB ?
+         JE    TSTCBF&SYSNDX      EXIT IF IT IS
+         AIH   1,4                ASSUME 4-BYTE FIELD
+         CLI   0(1),X'E0'         8-BYTE FIELD ?
+         JL    *+10               EXIT IF NOT
+         AIH   1,4                8-BYTE FIELD
+         AHI   1,1                BUMP VERB POINTER
+         BRCT  0,TSTCBL&SYSNDX    LOOP
+*
+         J     TSTCB8&SYSNDX      ERROR IF NOT FOUND
+*
+TSTCBF&SYSNDX DS 0H
+* FIELD LOCATE
+         L     14,TSTCBSV&SYSNDX+4 14=ADDRESS OF VERB CODES (CBMRBODY)
+         A     14,TSTCBSV&SYSNDX  +NO. OF VERBS=START OF FIELDS
+         SRLG  1,1,32             R1=FIELD OFFSET
+         AR    14,1               R14=FIELD POSITION
+         BR    15                 RETURN
+*
+TSTCB8&SYSNDX DS 0H
+         LA    15,8               RC=8 (FIELD NOT FOUND)
+         LM    0,1,TSTCBSV&SYSNDX RESTORE R0-R1 (NO. & ADDR OF VERBS)
+         ARK   14,0,1             R14=ADDRESS OF FIELDS
+         ICM   14,15,4(14)        ANY ERET ADDRESS ?
+         JZ    TSTCBE&SYSNDX      EXIT IF NONE
+         SR    0,0                R0=0
+         BR    14                 EXIT TO ERET ROUTINE
+*
+TSTCBE&SYSNDX DS 0H
+         MEXIT
+.*
+.DOEXLST ANOP
+.****************
+.* TESTCB EXLST *
+.****************
+.* WE GENERATE MODS, NOT PROCESSED IF ZERO
+         AIF   (&COUNT EQ 1 AND &COUNTXL NE 1)
+         MNOTE 12,'TESTCB EXLST= SPECIFIED AND KEYWORD IS NOT VALID FOR-
+                AN EXLST'
+         AEND
+.* DON'T NEED TO GEN A CBMR FOR MF=E
+         AIF   ('&MF(1)' EQ 'E').EXLMFEG
+&FIELDS  SETA  3                  EXLST+ERET+KEYWORD
+         AIF   ('&ACBLEN' EQ ''  AND                                   X
+               '&RPLLEN'  EQ ''  AND                                   X
+               '&EXLLEN'  EQ '')
+&FIELDS  SETA  4                  EXLST+ERET+KEYWORD+MODS
+         AEND
+&BRAS    SETA  0
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+&BRAS    SETA  4
+         AEND
+.* (BRAS) 9(CBMR HEADER) &FIELDS(BYTE CODES) &FIELDS*4(FIELDS)
+&TOTSIZE SETA  &BRAS+9+&FIELDS+&FIELDS*4
+&RESID   SETA  (&TOTSIZE-(&TOTSIZE/4)*4)
+         AIF   (&RESID NE 0)
+&RESID   SETA  4-&RESID
+&TOTSIZE SETA  &TOTSIZE+&RESID
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'I' OR T'&MF(2) NE 'O')
+         BRAS  15,*+&TOTSIZE
+         AEND
+         DC    C'CBMR'            CBMREYE
+         DC    AL1(CBMRXLST+CBMRTEST) CBMRREQ
+         DC    AL1(0)             CBMRRMOD
+         DC    AL1(&FIELDS)       CBMRVRBS
+         DC    AL2(&TOTSIZE-&BRAS) CBMRSIZE
+* LIST OF VERB CODES
+         DC    AL1(CBMRXL_EXLST)  EXLST ADDRESS
+         DC    AL1(CBMRXL_ERET)   ERET ADDRESS
+         AIF   ('&ACBLEN' NE '')
+         DC    AL1(CBMRACB_ACBLEN) ACBLEN
+         AEND
+         AIF   ('&RPLLEN' NE '')
+         DC    AL1(CBMRRPL_RPLLEN) RPLLEN
+         AEND
+         AIF   ('&EXLLEN' NE '')
+         DC    AL1(CBMRXL_XLSTLEN) EXLLEN
+         AEND
+         AIF   ('&EODAD' NE '')
+         DC    AL1(CBMRXL_EODAD)    EODAD ADDRESS
+         DC    AL1(CBMRXL_EOD_MODS) EODAD MODS
+         AEND
+         AIF   ('&JRNAD' NE '')
+         DC    AL1(CBMRXL_JRNAD)    JRNAD ADDRESS
+         DC    AL1(CBMRXL_JRN_MODS) JRNAD MODS
+         AEND
+         AIF   ('&LERAD' NE '')
+         DC    AL1(CBMRXL_LERAD)    LERAD ADDRESS
+         DC    AL1(CBMRXL_LER_MODS) LERAD MODS
+         AEND
+         AIF   ('&SYNAD' NE '')
+         DC    AL1(CBMRXL_SYNAD)    SYNAD ADDRESS
+         DC    AL1(CBMRXL_SYN_MODS) SYNAD MODS
+         AEND
+* LIST OF FIELD VALUES IN SAME ORDER AS VERB CODES
+&OFFSET  SETA  9+&FIELDS          HEADER+NO. OF VERBS
+&I       SETA  1
+.*
+         DC    AL4(&EXLST)        EXLST ADDRESS
+         AIF   ('&EXLST'(1,1) EQ '(')
+            AIF ('&EXLST' EQ '(0)' OR                                  X
+               '&EXLST' EQ '(R0)'  OR                                  X
+               '&EXLST' EQ '(1)'   OR                                  X
+               '&EXLST' EQ '(R1)'  OR                                  X
+               '&EXLST' EQ '(14)'  OR                                  X
+               '&EXLST' EQ '(R14)' OR                                  X
+               '&EXLST' EQ '(15)'  OR                                  X
+               '&EXLST' EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST EXLST= INVALID REGISTER USE'
+            AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&EXLST'
+&I       SETA  &I+1
+         AEND
+&OFFSET  SETA  &OFFSET+4
+.*
+         AIF   ('&ERET' EQ '')
+         DC    AL4(0)             NO ERET ADDRESS
+         AELSE
+         DC    AL4(&ERET)         ERET ADDRESS
+            AIF ('&ERET'(1,1) EQ '(')
+               AIF ('&ERET' EQ '(0)'  OR                               X
+                  '&ERET'  EQ '(R0)'  OR                               X
+                  '&ERET'  EQ '(1)'   OR                               X
+                  '&ERET'  EQ '(R1)'  OR                               X
+                  '&ERET'  EQ '(14)'  OR                               X
+                  '&ERET'  EQ '(R14)' OR                               X
+                  '&ERET'  EQ '(15)'  OR                               X
+                  '&ERET'  EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST ERET= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&ERET'
+&I       SETA  &I+1
+            AEND
+         AEND
+&OFFSET  SETA  &OFFSET+4
+.*
+         AIF   ('&ACBLEN' NE '')
+         DC    AL4(&ACBLEN)       ACBLEN
+         AEND
+.*
+         AIF   ('&RPLLEN' NE '')
+         DC    AL4(&RPLLEN)       RPLLEN
+         AEND
+.*
+         AIF   ('&EXLLEN' NE '')
+         DC    AL4(&EXLLEN)       EXLLEN
+         AEND
+.*
+         AIF   ('&EODAD' NE '')
+            AIF ('&EODAD(1)' EQ '')
+         DC    AL4(0)             NO EODAD ADDRESS
+            AELSE
+         DC    AL4(&EODAD(1))     EODAD ADDRESS
+            AEND
+            AIF ('&EODAD(1)'(1,1) EQ '(')
+               AIF ('&EODAD(1)' EQ '(0)'   OR                          X
+                  '&EODAD(1)'   EQ '(R0)'  OR                          X
+                  '&EODAD(1)'   EQ '(1)'   OR                          X
+                  '&EODAD(1)'   EQ '(R1)'  OR                          X
+                  '&EODAD(1)'   EQ '(14)'  OR                          X
+                  '&EODAD(1)'   EQ '(R14)' OR                          X
+                  '&EODAD(1)'   EQ '(15)'  OR                          X
+                  '&EODAD(1)'   EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST EODAD= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&EODAD(1)'
+&I       SETA  &I+1
+            AEND
+&OFFSET  SETA  &OFFSET+4
+         AEND
+.*
+         AIF   ('&EODAD' EQ '').DOJRN
+         AIF   (N'&EODAD GT 1)
+&EODCNT  SETA  2
+&EOD_A   SETB  0
+&EOD_N   SETB  0
+&EOD_L   SETB  0
+.EODLPL  ANOP
+         AIF   (&EODCNT GT N'&EODAD).EODDUNL
+            AIF ('&EODAD(&EODCNT)' EQ 'A')
+&EOD_A   SETB  1
+            AEND
+            AIF ('&EODAD(&EODCNT)' EQ 'N')
+&EOD_N   SETB  1
+            AEND
+            AIF ('&EODAD(&EODCNT)' EQ 'L')
+&EOD_L   SETB  1
+            AEND
+            AIF ('&EODAD(&EODCNT)' NE 'A' AND                          X
+               '&EODAD(&EODCNT)'   NE 'N' AND                          X
+               '&EODAD(&EODCNT)'   NE 'L')
+         MNOTE 12,'TESTCB EXLST EODAD INVALID MODIFIER - &EODAD(&EODCNT-
+               )'
+            AEND
+&EODCNT  SETA  &EODCNT+1
+         AGO   .EODLPL
+.*
+.EODDUNL ANOP
+            AIF (&EOD_A AND &EOD_N)
+         MNOTE 12,'TESTCB EXLST EODAD MODIFIERS A AND N ARE MUTUALLY EX-
+               CLUSIVE'
+         MNOTE 12,'       NO ACTION TAKEN'
+&EOD_A   SETB  0
+&EOD_N   SETB  0
+            AEND
+         DC    B'&EOD_A&EOD_N&EOD_L.00000',3X'00' EODAD MODS
+         AELSE
+         DC    AL4(0)             NO EODAD MODS
+&OFFSET  SETA  &OFFSET+4
+         AEND
+.*
+.DOJRN   ANOP
+         AIF   ('&JRNAD' NE '')
+            AIF ('&JRNAD(1)' EQ '')
+         DC    AL4(0)             NO JRNAD ADDRESS
+            AELSE
+         DC    AL4(&JRNAD(1))     JRNAD ADDRESS
+            AEND
+            AIF ('&JRNAD(1)'(1,1) EQ '(')
+               AIF ('&JRNAD(1)' EQ '(0)'   OR                          X
+                  '&JRNAD(1)'   EQ '(R0)'  OR                          X
+                  '&JRNAD(1)'   EQ '(1)'   OR                          X
+                  '&JRNAD(1)'   EQ '(R1)'  OR                          X
+                  '&JRNAD(1)'   EQ '(14)'  OR                          X
+                  '&JRNAD(1)'   EQ '(R14)' OR                          X
+                  '&JRNAD(1)'   EQ '(15)'  OR                          X
+                  '&JRNAD(1)'   EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST JRNAD= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&JRNAD(1)'
+&I       SETA  &I+1
+            AEND
+&OFFSET  SETA  &OFFSET+4
+         AEND
+.*
+         AIF   ('&JRNAD' EQ '').DOLER
+         AIF   (N'&JRNAD GT 1)
+&JRNCNT  SETA  2
+&JRN_A   SETB  0
+&JRN_N   SETB  0
+&JRN_L   SETB  0
+.JRNLPL  ANOP
+         AIF   (&JRNCNT GT N'&JRNAD).JRNDUNL
+            AIF ('&JRNAD(&JRNCNT)' EQ 'A')
+&JRN_A   SETB  1
+            AEND
+            AIF ('&JRNAD(&JRNCNT)' EQ 'N')
+&JRN_N   SETB  1
+            AEND
+            AIF ('&JRNAD(&JRNCNT)' EQ 'L')
+&JRN_L   SETB  1
+            AEND
+            AIF ('&JRNAD(&JRNCNT)' NE 'A' AND                          X
+               '&JRNAD(&JRNCNT)'   NE 'N' AND                          X
+               '&JRNAD(&JRNCNT)'   NE 'L')
+         MNOTE 12,'TESTCB EXLST JRNAD INVALID MODIFIER - &JRNAD(&JRNCNT-
+               )'
+            AEND
+&JRNCNT  SETA  &JRNCNT+1
+         AGO   .JRNLPL
+.*
+.JRNDUNL ANOP
+            AIF (&JRN_A AND &JRN_N)
+         MNOTE 12,'TESTCB EXLST JRNAD MODIFIERS A AND N ARE MUTUALLY EX-
+               CLUSIVE'
+         MNOTE 12,'       NO ACTION TAKEN'
+&JRN_A   SETB  0
+&JRN_N   SETB  0
+            AEND
+         DC    B'&JRN_A&JRN_N&JRN_L.00000',3X'00' JRNAD MODS
+         AELSE
+         DC    AL4(0)             NO JRNAD MODS
+&OFFSET  SETA  &OFFSET+4
+         AEND
+.*
+.DOLER   ANOP
+         AIF   ('&LERAD' NE '')
+            AIF ('&LERAD(1)' EQ '')
+         DC    AL4(0)             NO LERAD ADDRESS
+            AELSE
+         DC    AL4(&LERAD(1))     LERAD ADDRESS
+            AEND
+            AIF ('&LERAD(1)'(1,1) EQ '(')
+               AIF ('&LERAD(1)' EQ '(0)'   OR                          X
+                  '&LERAD(1)'   EQ '(R0)'  OR                          X
+                  '&LERAD(1)'   EQ '(1)'   OR                          X
+                  '&LERAD(1)'   EQ '(R1)'  OR                          X
+                  '&LERAD(1)'   EQ '(14)'  OR                          X
+                  '&LERAD(1)'   EQ '(R14)' OR                          X
+                  '&LERAD(1)'   EQ '(15)'  OR                          X
+                  '&LERAD(1)'   EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST LERAD= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&LERAD(1)'
+&I       SETA  &I+1
+            AEND
+&OFFSET  SETA  &OFFSET+4
+         AEND
+.*
+         AIF   ('&LERAD' EQ '').DOSYN
+         AIF   (N'&LERAD GT 1)
+&LERCNT  SETA  2
+&LER_A   SETB  0
+&LER_N   SETB  0
+&LER_L   SETB  0
+.LERLPL  ANOP
+         AIF   (&LERCNT GT N'&LERAD).LERDUNL
+            AIF ('&LERAD(&LERCNT)' EQ 'A')
+&LER_A   SETB  1
+            AEND
+            AIF ('&LERAD(&LERCNT)' EQ 'N')
+&LER_N   SETB  1
+            AEND
+            AIF ('&LERAD(&LERCNT)' EQ 'L')
+&LER_L   SETB  1
+            AEND
+            AIF ('&LERAD(&LERCNT)' NE 'A' AND                          X
+               '&LERAD(&LERCNT)'   NE 'N' AND                          X
+               '&LERAD(&LERCNT)'   NE 'L')
+         MNOTE 12,'TESTCB EXLST LERAD INVALID MODIFIER - &LERAD(&LERCNT-
+               )'
+            AEND
+&LERCNT  SETA  &LERCNT+1
+         AGO   .LERLPL
+.*
+.LERDUNL ANOP
+            AIF (&LER_A AND &LER_N)
+         MNOTE 12,'TESTCB EXLST LERAD MODIFIERS A AND N ARE MUTUALLY EX-
+               CLUSIVE'
+         MNOTE 12,'       NO ACTION TAKEN'
+&LER_A   SETB  0
+&LER_N   SETB  0
+            AEND
+         DC    B'&LER_A&LER_N&LER_L.00000',3X'00' LERAD MODS
+         AELSE
+         DC    AL4(0)             NO LERAD MODS
+&OFFSET  SETA  &OFFSET+4
+         AEND
+.*
+.DOSYN   ANOP
+         AIF   ('&SYNAD' NE '')
+            AIF ('&SYNAD(1)' EQ '')
+         DC    AL4(0)             NO SYNAD ADDRESS
+            AELSE
+         DC    AL4(&SYNAD(1))     SYNAD ADDRESS
+            AEND
+            AIF ('&SYNAD(1)'(1,1) EQ '(')
+               AIF ('&SYNAD(1)' EQ '(0)'   OR                          X
+                  '&SYNAD(1)'   EQ '(R0)'  OR                          X
+                  '&SYNAD(1)'   EQ '(1)'   OR                          X
+                  '&SYNAD(1)'   EQ '(R1)'  OR                          X
+                  '&SYNAD(1)'   EQ '(14)'  OR                          X
+                  '&SYNAD(1)'   EQ '(R14)' OR                          X
+                  '&SYNAD(1)'   EQ '(15)'  OR                          X
+                  '&SYNAD(1)'   EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST SYNAD= INVALID REGISTER USE'
+               AEND
+&OFFREG(&I) SETA &OFFSET
+&OFFCHR(&I) SETC '&SYNAD(1)'
+&I       SETA  &I+1
+            AEND
+&OFFSET  SETA  &OFFSET+4
+         AEND
+.*
+         AIF   ('&SYNAD' EQ '').DORESID
+         AIF   (N'&SYNAD GT 1)
+&SYNCNT  SETA  2
+&SYN_A   SETB  0
+&SYN_N   SETB  0
+&SYN_L   SETB  0
+.SYNLPL  ANOP
+         AIF   (&SYNCNT GT N'&SYNAD).SYNDUNL
+            AIF ('&SYNAD(&SYNCNT)' EQ 'A')
+&SYN_A   SETB  1
+            AEND
+            AIF ('&SYNAD(&SYNCNT)' EQ 'N')
+&SYN_N   SETB  1
+            AEND
+            AIF ('&SYNAD(&SYNCNT)' EQ 'L')
+&SYN_L   SETB  1
+            AEND
+            AIF ('&SYNAD(&SYNCNT)' NE 'A' AND                          X
+               '&SYNAD(&SYNCNT)'   NE 'N' AND                          X
+               '&SYNAD(&SYNCNT)'   NE 'L')
+         MNOTE 12,'TESTCB EXLST SYNAD INVALID MODIFIER - &SYNAD(&SYNCNT-
+               )'
+            AEND
+&SYNCNT  SETA  &SYNCNT+1
+         AGO   .SYNLPL
+.*
+.SYNDUNL ANOP
+            AIF (&SYN_A AND &SYN_N)
+         MNOTE 12,'TESTCB EXLST SYNAD MODIFIERS A AND N ARE MUTUALLY EX-
+               CLUSIVE'
+         MNOTE 12,'       NO ACTION TAKEN'
+&SYN_A   SETB  0
+&SYN_N   SETB  0
+            AEND
+         DC    B'&SYN_A&SYN_N&SYN_L.00000',3X'00' SYNAD MODS
+         AELSE
+         DC    AL4(0)             NO SYNAD MODS
+&OFFSET  SETA  &OFFSET+4
+         AEND
+.*
+.DORESID ANOP
+         AIF   (&RESID NE 0)
+         DC    &RESID.X'00'       ALIGN
+         AEND
+.*
+         CBMR
+.*
+&I       SETA  1
+.EXLRGLP ANOP
+         AIF   (&I GT 10).EXLRGDN
+         AIF   (&OFFREG(&I) NE 0)
+            AIF (NOT &EXLHAND)
+* HANDLE REGISTER NOTATION
+&EXLHAND SETB  1
+            AEND
+         ST    &OFFCHR(&I),&OFFREG(&I).(15) STORE REGISTER INTO CBMR
+         AEND
+&I       SETA  &I+1
+         AGO   .EXLRGLP
+.*
+.EXLRGDN ANOP
+         AIF   ('&MF(1)' EQ 'L' OR '&MF(1)' EQ 'G').EXLMFL
+.*
+.* PROCESS EXLST MF=I
+         LR    1,15               R1=CBMR ADDRESS
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         MEXIT
+.*
+.EXLMFL  ANOP
+.* PROCESS EXLST TESTCB MF=L
+         AIF   (T'&MF(2) EQ 'O' AND '&N' EQ '')
+         MNOTE 12,'TESTCB EXLST NO LABEL FOR CBMR'
+         AEND
+         AIF   (T'&MF(2) NE 'O')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST MF= INVALID REGISTER USE'
+            AEND
+            AIF ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+            AEND
+         MVC   0(&TOTSIZE-&BRAS,1),0(15) MOVE TO REQUESTED AREA
+         AEND
+.*
+         AIF   (T'&MF(3) NE 'O')
+&MF(3)   EQU   &TOTSIZE-&BRAS
+         AEND
+.*
+         CBMR
+.*
+         AIF   ('&MF(1)' EQ 'G').EXLMFEG
+.*
+         AIF   (T'&MF(2) NE 'O')
+         SR    15,15              RC=0
+         MEXIT
+.*
+.EXLMFEG ANOP
+.* PROCESS TESTCB EXLST MF=E/G
+.*   FOR MF=G ONLY THE PREP CODING IS DONE
+.* FOR EACH PARAMETER SPECIFIED, SEARCH THE CBMR FOR THE ENTRY
+.* WHEN FOUND, MOVE THE NEW VALUE INTO THE CBMR
+.* CALL ZVSAM19C TO TEST THE EXLST
+         AIF   (T'&MF(2) EQ 'O')
+         MNOTE 12,'TESTCB EXLST MF=E/G SECOND PARAMETER MISSING'
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'G').EXLMFG
+.*
+         AIF   ('&MF(2)'(1,1) EQ '(')
+            AIF ('&MF(2)' EQ '(0)'   OR                                X
+               '&MF(2)'   EQ '(R0)'  OR                                X
+               '&MF(2)'   EQ '(1)'   OR                                X
+               '&MF(2)'   EQ '(R1)'  OR                                X
+               '&MF(2)'   EQ '(14)'  OR                                X
+               '&MF(2)'   EQ '(R14)' OR                                X
+               '&MF(2)'   EQ '(15)'  OR                                X
+               '&MF(2)'   EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST MF= INVALID REGISTER USE'
+            AEND
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.* MF=E
+.* MODIFY THE CBMR
+         USING CBMR,1
+         LLC   0,CBMRVRBS         R0=NO. OF VERBS
+         LA    1,CBMRBODY         R1=ADDRESS OF VERBS
+         DROP  1
+         BRAS  15,*+12            BRANCH AROUND SAVE AREA
+TSTCBSV&SYSNDX DS 0H
+         DS    2AL4               SAVE AREA
+         STM   0,1,TSTCBSV&SYSNDX SAVE R0-R1
+.*
+         AIF   ('&EXLST' NE '')
+         LHI   14,CBMRXL_EXLST    EXLST ADDRESS
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&EXLST'(1,1) EQ '(')
+               AIF ('&EXLST' EQ '(0)'   OR                             X
+               '&EXLST'      EQ '(R0)'  OR                             X
+               '&EXLST'      EQ '(1)'   OR                             X
+               '&EXLST'      EQ '(R1)'  OR                             X
+               '&EXLST'      EQ '(14)'  OR                             X
+               '&EXLST'      EQ '(R14)' OR                             X
+               '&EXLST'      EQ '(15)'  OR                             X
+               '&EXLST'      EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST EXLST= INVALID REGISTER USE'
+               AEND
+         ST    &EXLST,0(14)       STORE EXLST ADDRESS IN CBMR
+            AELSE
+               AIF (T'&EXLST EQ 'N')
+         IILF  15,&EXLST          R15=EXLST ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&EXLST          R15=EXLST ADDRESS
+               AEND
+         ST    15,0(14)           STORE EXLST ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&ERET' NE '')
+            AIF (T'&ERET EQ 'N')
+         MNOTE 12,'TESTCB EXLST ERET= CANNOT BE NUMERIC'
+            AEND
+         LHI   14,CBMRXL_ERET     ERET VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&ERET'(1,1) EQ '(')
+               AIF ('&ERET' EQ '(0)'  OR                               X
+               '&ERET'     EQ '(R0)'  OR                               X
+               '&ERET'     EQ '(1)'   OR                               X
+               '&ERET'     EQ '(R1)'  OR                               X
+               '&ERET'     EQ '(14)'  OR                               X
+               '&ERET'     EQ '(R14)' OR                               X
+               '&ERET'     EQ '(15)'  OR                               X
+               '&ERET'     EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST ERET= INVALID REGISTER USE'
+               AEND
+         ST    &ERET,0(14)        STORE ERET ADDRESS IN CBMR
+            AELSE
+         LARL  15,&ERET           R15=ERET ADDRESS
+         ST    15,0(14)           STORE ERET ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   ('&RPLLEN' NE '')
+         LHI   14,CBMRRPL_RPLLEN  RPLLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&RPLLEN      MOVE RPLLEN TO CBMR
+         AEND
+.*
+         AIF   ('&ACBLEN' NE '')
+         LHI   14,CBMRACB_ACBLEN  ACBLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&ACBLEN      MOVE ACBLEN TO CBMR
+         AEND
+.*
+         AIF   ('&EXLLEN' NE '')
+         LHI   14,CBMRXL_XLSTLEN  XLSTLEN VERB
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+         MVHI  0(14),&EXLLEN      MOVE EXLLEN TO CBMR
+         AEND
+.*
+&EOD_A   SETB  0
+&EOD_N   SETB  0
+&EOD_L   SETB  0
+&EOD_0   SETB  1
+         AIF   ('&EODAD(1)' EQ '')
+&EOD_0   SETB  0
+         AEND
+         AIF   (T'&EODAD(1) EQ 'N' AND &EODAD(1) EQ 0)
+&EOD_0   SETB  0
+         AEND
+         AIF   (&EOD_0)
+         LHI   14,CBMRXL_EODAD    EXLST EODAD ADDRESS
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&EODAD(1)'(1,1) EQ '(')
+               AIF ('&EODAD(1)' EQ '(0)'   OR                          X
+               '&EODAD(1)'      EQ '(R0)'  OR                          X
+               '&EODAD(1)'      EQ '(1)'   OR                          X
+               '&EODAD(1)'      EQ '(R1)'  OR                          X
+               '&EODAD(1)'      EQ '(14)'  OR                          X
+               '&EODAD(1)'      EQ '(R14)' OR                          X
+               '&EODAD(1)'      EQ '(15)'  OR                          X
+               '&EODAD(1)'      EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST EODAD= INVALID REGISTER USE'
+               AEND
+         ST    &EODAD(1),0(14)    STORE EODAD ADDRESS IN CBMR
+            AELSE
+               AIF (T'&EODAD(1) EQ 'N')
+         IILF  15,&EODAD(1)       R15=EODAD ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&EODAD(1)       R15=EODAD ADDRESS
+               AEND
+         ST    15,0(14)           STORE EODAD ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   (N'&EODAD GT 1)
+         LHI   14,CBMRXL_EOD_MODS EXLST EODAD MODIFIERS
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+&EODCNT  SETA  2
+.EODLPEG ANOP
+         AIF   (&EODCNT GT N'&EODAD).EODDNEG
+            AIF ('&EODAD(&EODCNT)' EQ 'A')
+&EOD_A   SETB  1
+            AEND
+            AIF ('&EODAD(&EODCNT)' EQ 'N')
+&EOD_N   SETB  1
+            AEND
+            AIF ('&EODAD(&EODCNT)' EQ 'L')
+&EOD_L   SETB  1
+            AEND
+            AIF ('&EODAD(&EODCNT)' NE 'A' AND                          X
+               '&EODAD(&EODCNT)'   NE 'N' AND                          X
+               '&EODAD(&EODCNT)'   NE 'L')
+         MNOTE 12,'TESTCB EXLST EODAD INVALID MODIFIER - &EODAD(&EODCNT-
+               )'
+            AEND
+&EODCNT  SETA  &EODCNT+1
+            AGO .EODLPEG
+.*
+.EODDNEG ANOP
+            AIF (&EOD_A AND &EOD_N)
+         MNOTE 12,'TESTCB EXLST EODAD MODIFIERS A AND N ARE MUTUALLY EX-
+               CLUSIVE'
+         MNOTE 12,'       NO ACTION TAKEN'
+&EOD_A   SETB  0
+&EOD_N   SETB  0
+            AEND
+         IILF  15,B'&EOD_A&EOD_N&EOD_L.00000000000000000000000000000' E-
+               OD MODS'
+         ST    15,0(14)           STORE EOD MODS IN CBMR
+         AEND
+.*
+&JRN_A   SETB  0
+&JRN_N   SETB  0
+&JRN_L   SETB  0
+&JRN_0   SETB  1
+         AIF   ('&JRNAD(1)' EQ '')
+&JRN_0   SETB  0
+         AEND
+         AIF   (T'&JRNAD(1) EQ 'N' AND &JRNAD(1) EQ 0)
+&JRN_0   SETB  0
+         AEND
+         AIF   (&JRN_0)
+         LHI   14,CBMRXL_JRNAD    EXLST JRNAD ADDRESS
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&JRNAD(1)'(1,1) EQ '(')
+               AIF ('&JRNAD(1)' EQ '(0)'   OR                          X
+               '&JRNAD(1)'      EQ '(R0)'  OR                          X
+               '&JRNAD(1)'      EQ '(1)'   OR                          X
+               '&JRNAD(1)'      EQ '(R1)'  OR                          X
+               '&JRNAD(1)'      EQ '(14)'  OR                          X
+               '&JRNAD(1)'      EQ '(R14)' OR                          X
+               '&JRNAD(1)'      EQ '(15)'  OR                          X
+               '&JRNAD(1)'      EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST JRNAD= INVALID REGISTER USE'
+               AEND
+         ST    &JRNAD(1),0(14)    STORE JRNAD ADDRESS IN CBMR
+            AELSE
+               AIF (T'&JRNAD(1) EQ 'N')
+         IILF  15,&JRNAD(1)       R15=JRNAD ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&JRNAD(1)       R15=JRNAD ADDRESS
+               AEND
+         ST    15,0(14)           STORE JRNAD ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   (N'&JRNAD GT 1)
+         LHI   14,CBMRXL_JRN_MODS EXLST JRNAD MODIFIERS
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+&JRNCNT  SETA  2
+.JRNLPEG ANOP
+         AIF   (&JRNCNT GT N'&JRNAD).JRNDNEG
+            AIF ('&JRNAD(&JRNCNT)' EQ 'A')
+&JRN_A   SETB  1
+            AEND
+            AIF ('&JRNAD(&JRNCNT)' EQ 'N')
+&JRN_N   SETB  1
+            AEND
+            AIF ('&JRNAD(&JRNCNT)' EQ 'L')
+&JRN_L   SETB  1
+            AEND
+            AIF ('&JRNAD(&JRNCNT)' NE 'A' AND                          X
+               '&JRNAD(&JRNCNT)'   NE 'N' AND                          X
+               '&JRNAD(&JRNCNT)'   NE 'L')
+         MNOTE 12,'TESTCB EXLST JRNAD INVALID MODIFIER - &JRNAD(&JRNCNT-
+               )'
+            AEND
+&JRNCNT  SETA  &JRNCNT+1
+            AGO .JRNLPEG
+.*
+.JRNDNEG ANOP
+            AIF (&JRN_A AND &JRN_N)
+         MNOTE 12,'TESTCB EXLST JRNAD MODIFIERS A AND N ARE MUTUALLY EX-
+               CLUSIVE'
+         MNOTE 12,'       NO ACTION TAKEN'
+&JRN_A   SETB  0
+&JRN_N   SETB  0
+            AEND
+         IILF  15,B'&JRN_A&JRN_N&JRN_L.00000000000000000000000000000' J-
+               RN MODS'
+         ST    15,0(14)           STORE JRN MODS IN CBMR
+         AEND
+.*
+&LER_A   SETB  0
+&LER_N   SETB  0
+&LER_L   SETB  0
+&LER_0   SETB  1
+         AIF   ('&LERAD(1)' EQ '')
+&LER_0   SETB  0
+         AEND
+         AIF   (T'&LERAD(1) EQ 'N' AND &LERAD(1) EQ 0)
+&LER_0   SETB  0
+         AEND
+         AIF   (&JRN_0)
+         LHI   14,CBMRXL_LERAD    EXLST LERAD ADDRESS
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&LERAD(1)'(1,1) EQ '(')
+               AIF ('&LERAD(1)' EQ '(0)'   OR                          X
+               '&LERAD(1)'      EQ '(R0)'  OR                          X
+               '&LERAD(1)'      EQ '(1)'   OR                          X
+               '&LERAD(1)'      EQ '(R1)'  OR                          X
+               '&LERAD(1)'      EQ '(14)'  OR                          X
+               '&LERAD(1)'      EQ '(R14)' OR                          X
+               '&LERAD(1)'      EQ '(15)'  OR                          X
+               '&LERAD(1)'      EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST LERAD= INVALID REGISTER USE'
+               AEND
+         ST    &LERAD(1),0(14)    STORE LERAD ADDRESS IN CBMR
+            AELSE
+               AIF (T'&LERAD(1) EQ 'N')
+         IILF  15,&LERAD(1)       R15=LERAD ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&LERAD(1)       R15=LERAD ADDRESS
+               AEND
+         ST    15,0(14)           STORE LERAD ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   (N'&LERAD GT 1)
+         LHI   14,CBMRXL_LER_MODS EXLST LERAD MODIFIERS
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+&LERCNT  SETA  2
+.LERLPEG ANOP
+            AIF (&LERCNT GT N'&LERAD).LERDNEG
+            AIF ('&LERAD(&LERCNT)' EQ 'A')
+&LER_A   SETB  1
+            AEND
+            AIF ('&LERAD(&LERCNT)' EQ 'N')
+&LER_N   SETB  1
+            AEND
+            AIF ('&LERAD(&LERCNT)' EQ 'L')
+&LER_L   SETB  1
+            AEND
+            AIF ('&LERAD(&LERCNT)' NE 'A' AND                          X
+               '&LERAD(&LERCNT)'   NE 'N' AND                          X
+               '&LERAD(&LERCNT)'   NE 'L')
+         MNOTE 12,'TESTCB EXLST LERAD INVALID MODIFIER - &LERAD(&LERCNT-
+               )'
+            AEND
+&LERCNT  SETA  &LERCNT+1
+            AGO .LERLPEG
+.*
+.LERDNEG ANOP
+            AIF (&LER_A AND &LER_N)
+         MNOTE 12,'TESTCB EXLST LERAD MODIFIERS A AND N ARE MUTUALLY EX-
+               CLUSIVE'
+         MNOTE 12,'       NO ACTION TAKEN'
+&LER_A   SETB  0
+&LER_N   SETB  0
+            AEND
+         IILF  15,B'&LER_A&LER_N&LER_L.00000000000000000000000000000' L-
+               ER MODS'
+         ST    15,0(14)           STORE LER MODS IN CBMR
+         AEND
+.*
+&SYN_A   SETB  0
+&SYN_N   SETB  0
+&SYN_L   SETB  0
+&SYN_0   SETB  1
+         AIF   ('&SYNAD(1)' EQ '')
+&SYN_0   SETB  0
+         AEND
+         AIF   (T'&SYNAD(1) EQ 'N' AND &SYNAD(1) EQ 0)
+&SYN_0   SETB  0
+         AEND
+         AIF   (&SYN_0)
+         LHI   14,CBMRXL_SYNAD    EXLST SYNAD ADDRESS
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+            AIF ('&SYNAD(1)'(1,1) EQ '(')
+               AIF ('&SYNAD(1)' EQ '(0)'   OR                          X
+               '&SYNAD(1)'      EQ '(R0)'  OR                          X
+               '&SYNAD(1)'      EQ '(1)'   OR                          X
+               '&SYNAD(1)'      EQ '(R1)'  OR                          X
+               '&SYNAD(1)'      EQ '(14)'  OR                          X
+               '&SYNAD(1)'      EQ '(R14)' OR                          X
+               '&SYNAD(1)'      EQ '(15)'  OR                          X
+               '&SYNAD(1)'      EQ '(R15)')
+         MNOTE 12,'TESTCB EXLST SYNAD= INVALID REGISTER USE'
+               AEND
+         ST    &SYNAD(1),0(14)    STORE SYNAD ADDRESS IN CBMR
+            AELSE
+               AIF (T'&SYNAD(1) EQ 'N')
+         IILF  15,&SYNAD(1)       R15=SYNAD ADDRESS (NUMERIC)
+               AELSE
+         LARL  15,&SYNAD(1)       R15=SYNAD ADDRESS
+               AEND
+         ST    15,0(14)           STORE SYNAD ADDRESS IN CBMR
+            AEND
+         AEND
+.*
+         AIF   (N'&SYNAD GT 1)
+         LHI   14,CBMRXL_SYN_MODS EXLST SYNAD MODIFIERS
+         BRAS  15,TSTCBS&SYSNDX   FIND VERB
+&SYNCNT  SETA  2
+.SYNLPEG ANOP
+            AIF (&SYNCNT GT N'&SYNAD).SYNDNEG
+            AIF ('&SYNAD(&SYNCNT)' EQ 'A')
+&SYN_A   SETB  1
+            AEND
+            AIF ('&SYNAD(&SYNCNT)' EQ 'N')
+&SYN_N   SETB  1
+            AEND
+            AIF ('&SYNAD(&SYNCNT)' EQ 'L')
+&SYN_L   SETB  1
+            AEND
+            AIF ('&SYNAD(&SYNCNT)' NE 'A' AND                          X
+               '&SYNAD(&SYNCNT)'   NE 'N' AND                          X
+               '&SYNAD(&SYNCNT)'   NE 'L')
+         MNOTE 12,'TESTCB EXLST SYNAD INVALID MODIFIER - &SYNAD(&SYNCNT-
+               )'
+            AEND
+&SYNCNT  SETA  &SYNCNT+1
+            AGO .SYNLPEG
+.*
+.SYNDNEG ANOP
+            AIF (&SYN_A AND &SYN_N)
+         MNOTE 12,'TESTCB EXLST SYNAD MODIFIERS A AND N ARE MUTUALLY EX-
+               CLUSIVE'
+         MNOTE 12,'      NO ACTION TAKEN'
+&SYN_A   SETB  0
+&SYN_N   SETB  0
+            AEND
+         IILF  15,B'&SYN_A&SYN_N&SYN_L.00000000000000000000000000000' S-
+               YN MODS'
+         ST    15,0(14)           STORE SYN MODS IN CBMR
+         AEND
+.*
+         AIF   ('&MF(2)'(1,1) EQ '(')
+         LR    1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AELSE
+         LARL  1,&MF(2)           R1=CBMR STRUCTURE ADDRESS
+         AEND
+.*
+.EXLMFG  ANOP
+         LRL   15,=V(ZVSAM19C)    R15=CB PROCESSOR
+         BASR  14,15              CALL IT
+*
+         AIF   ('&MF(1)' EQ 'G')
+         MEXIT
+         AEND
+         J     TSTCBE&SYSNDX      EXIT
+*
+* VERB SEARCH SUBROUTINE, RC=8 IF NOT FOUND
+TSTCBS&SYSNDX DS 0H
+         LM    0,1,TSTCBSV&SYSNDX RESTORE R0-R1 (NO. & ADDR OF VERBS)
+TSTCBL&SYSNDX DS 0H
+         CLM   14,B'0001',0(1)    THIS VERB ?
+         JE    TSTCBF&SYSNDX      EXIT IF IT IS
+         AHI   1,1                BUMP VERB POINTER
+         BRCT  0,TSTCBL&SYSNDX    LOOP
+*
+         J     TSTCB8&SYSNDX      ERROR IF NOT FOUND
+*
+TSTCBF&SYSNDX DS 0H
+* FIELD LOCATE
+         L     14,TSTCBSV&SYSNDX  R14=NO. OF VERBS
+         SR    14,0               R14=VERB POSITION
+         SLL   14,2               *4
+         A     14,TSTCBSV&SYSNDX+4 +A(CBMRBODY)
+         A     14,TSTCBSV&SYSNDX  +NO. OF VERBS=FIELD POSITION
+         BR    15                 RETURN
+*
+TSTCB8&SYSNDX DS 0H
+         LA    15,8               RC=8 (FIELD NOT FOUND)
+         LM    0,1,TSTCBSV&SYSNDX RESTORE R0-R1 (NO. & ADDR OF VERBS)
+         ARK   14,0,1             R14=ADDRESS OF FIELDS
+         ICM   14,15,4(14)        ANY ERET ADDRESS ?
+         JZ    TSTCBE&SYSNDX      EXIT IF NONE
+         SR    0,0                R0=0
+         BR    14                 EXIT TO ERET ROUTINE
+*
+TSTCBE&SYSNDX DS 0H
+         MEXIT
+.*
+         MEND

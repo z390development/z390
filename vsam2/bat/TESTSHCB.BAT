@@ -1,0 +1,1 @@
+bat\asml vsam2\mlc\TESTSHCB zvsam(2)

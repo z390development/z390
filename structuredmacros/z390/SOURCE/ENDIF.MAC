@@ -1,0 +1,60 @@
+.*   Copyright (C) <2021>  Daniel H. Snyder
+.*   Structured Programming Macros for the IBM High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    ENDIF &ELSE,&DOGROUP=
+         COPY  $MGBLDEF
+         LCLC  &X,&Y
+         AIF   (&$MLVL GT 0).OK002
+         MNOTE 8,'"ENDIF" INVALID OUTSIDE OF AN "IF" GROUP'
+         MNOTE ' - MACRO GENERATION TERMINATED'
+         MEXIT
+.OK002   ANOP
+&X       SETC  '&$MCVERB(&$MLVL)'
+         AIF   ('&X' EQ 'DO').CONT005
+         AIF   ('&X' EQ 'IF').CONT010
+         AIF   ('&X' EQ 'ELSE').CONT010
+         AIF   ('&X' EQ 'ELSEIF').CONT010
+         MNOTE 4,'"ENDIF" USED TO TERMINATE "&X" GROUP'
+         AGO   .CONT010
+.CONT005 J     &$MLNAME(&$MLVL) GO BACK AND TRY AGAIN
+.CONT010 AIF   ('&$MFNAME(&$MLVL)' EQ '').NEXT015
+&X       SETC  '&$MFNAME(&$MLVL)'
+&X       DC    0H'0'
+&$MFNAME(&$MLVL) SETC ''
+.NEXT015 AIF   ('&$MTNAME(&$MLVL)' EQ '').NEXT020
+&X       SETC  '&$MTNAME(&$MLVL)'
+&X       DC    0H'0'
+&$MTNAME(&$MLVL) SETC ''
+.NEXT020 AIF   ('&$MFINI(&$MLVL)' EQ '').LOOP027
+&X       SETC  '&$MFINI(&$MLVL)'
+&X       DC    0H'0'
+&$MFINI(&$MLVL) SETC ''
+.LOOP027 AIF   (&$MPTR EQ 0).MEND030
+&X       SETC  '&$MEQ1(&$MPTR)'
+&Y       SETC  '&$MEQ2(&$MPTR)'
+         AIF   ('&X' EQ '').SKIP028
+&X       EQU   &Y
+&$MEQ1(&$MPTR) SETC ''
+.SKIP028 ANOP
+&$MEQ2(&$MPTR) SETC ''
+&$MPTR   SETA  &$MPTR-1
+         AGO   .LOOP027
+.MEND030 ANOP
+&$MCVERB(&$MLVL) SETC 'ASTRONOMY'
+&$MLVL   SETA  &$MLVL-1
+         MEND

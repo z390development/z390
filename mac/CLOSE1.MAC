@@ -6,9 +6,9 @@
 .* Author - Don Higgins                                              *
 .* Date   - 04/15/08                                                 *
 .*********************************************************************
-.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION                     
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION
 .*********************************************************************
-&N       CLOSE &DCBLIST, ((DCB,OPT),(DCB2,OPT2)..) OR (DCB) OR DCB     X
+&N       CLOSE1 &DCBLIST, ((DCB,OPT),(DCB2,OPT2)..) OR (DCB) OR DC     X
                &MODE=,   IGNORED AS IT WORKS IN EITHER MODE            X
                &MF=I,    NOT SUPPORTED                                 X
                &TYPE=    IGNORED

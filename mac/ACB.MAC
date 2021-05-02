@@ -1,0 +1,61 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Melvyn Maltz                                              *
+.* Date   - 12/20/20                                                  *
+.**********************************************************************
+.* 12/20/20 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.**********************************************************************
+&N       ACB   &AM=VSAM,      VSAM                                     X
+               &BSTRNO=0,     NUMBER OF CONCURRENT REQUESTS FOR AIX    X
+               &BUFND=0,      NUMBER OF DATA BUFFERS                   X
+               &BUFNI=0,      NUMBER OF INDEX BUFFERS                  X
+               &BUFSP=0,      MAX STORAGE FOR BUFFERS IN BYTES         X
+               &DDNAME=,      DDNAME > SET > PATH\CAT.CLUSTER          X
+               &DSNAME=0,     DSNAME FOR VSAM CLUSTER DEFINITION TABLE X
+               &EXLST=,       POINTER TO EXIT LIST                     X
+               &MACRF=,       PROCESSING OPTIONS                       X
+               &MAREA=,       NOT SUPPORTED                            X
+               &MLEN=,        NOT SUPPORTED                            X
+               &PASSWD=,      POINTER TO PASSWORD                      X
+               &RLSREAD=,     NOT SUPPORTED                            X
+               &RMODE31=NONE, 31-BIT ADDRESSING FOR BUFFS/CONTROL BLKS X
+               &SHRPOOL=0,    SHAREPOOL NUMBER                         X
+               &STRNO=0       NUMBER OF CONCURRENT REQUESTS
+.*
+         AIF   (&SYSZVSAM EQ 0)
+         MNOTE 15,'ACB VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM'
+         MEXIT
+         AEND
+.*
+         AIF   (&SYSZVSAM EQ 1)
+&N       ACB1  AM=&AM,        VSAM                                     X
+               BUFSP=&BUFSP,  MAXIMUM BUFFER SPACE FOR CLUSTER         X
+               DDNAME=&DDNAME, DDNAME FOR VSAM CLUSTER DEFINITION TABLEX
+               DSNAME=&DSNAME, DSNAME FOR VSAM CLUSTER DEFINITION TABLEX
+               EXLST=&EXLST,  NOT CURRENTLY SUPPORTED                  X
+               MACRF=&MACRF   PROCESSING OPTIONS
+         AEND
+.*
+         AIF   (&SYSZVSAM EQ 2)
+&N       ACB2  AM=&AM,        VSAM                                     X
+               BSTRNO=&BSTRNO, NUMBER OF CONCURRENT REQUESTS FOR AIX   X
+               BUFND=&BUFND,  NUMBER OF DATA BUFFERS                   X
+               BUFNI=&BUFNI,  NUMBER OF INDEX BUFFERS                  X
+               BUFSP=&BUFSP,  MAX STORAGE FOR BUFFERS IN BYTES         X
+               DDNAME=&DDNAME, DDNAME > SET > PATH\CAT.CLUSTER         X
+               EXLST=&EXLST,  POINTER TO EXIT LIST                     X
+               MACRF=&MACRF,  PROCESSING OPTIONS                       X
+               MAREA=&MAREA,  NOT SUPPORTED                            X
+               MLEN=&MLEN,    NOT SUPPORTED                            X
+               PASSWD=&PASSWD, POINTER TO PASSWORD                     X
+               RLSREAD=&RLSREAD, NOT SUPPORTED                         X
+               RMODE31=&RMODE31, 31-BIT ADDRESSING FOR BUFFS/CNTL BLKS X
+               SHRPOOL=&SHRPOOL, SHAREPOOL NUMBER                      X
+               STRNO=&STRNO   NUMBER OF CONCURRENT REQUESTS
+         AEND
+.*
+         MEND
+

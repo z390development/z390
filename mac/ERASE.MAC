@@ -9,9 +9,11 @@
 .* 08/07/07 RPI 644 INITIAL CODING FOR VSAM ERASE FOLLOWING GET UPD
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*
+.* 04/05/21 zVSAM Added MNOTE for ZVSAM(0)
 .*********************************************************************
 &N       ERASE &RPL=,   VSAM REQUEST PARAMETER LIST                    X
-               &MF=I    NOT SUPPORTED                                   
+               &MF=I    NOT SUPPORTED
          AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
@@ -21,6 +23,10 @@
          MEXIT
 .NPOK    ANOP
          AIF   ('&RPL' EQ '').ERR1
+         AIF   (&SYSZVSAM EQ 0)
+         MNOTE 15,'ERASE VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM'
+         MEXIT
+         AEND
          AIF   ('&RPL'(1,1) EQ '(').RPLREG
          LA    1,&RPL
          AGO   .VSVC
@@ -29,9 +35,10 @@
 .VSVC    ANOP
          LA    0,RPLOPERA
          SVC   121 VSAM ERASE R0=3 R1=A(RPL)
-         MEXIT         
+         MEXIT
 .ERR1    MNOTE 12,'ERASE REQUIRES RPL='
          MEXIT
 .ERR2    MNOTE 12,'ERASE MF= NOT SUPPORTED'
          MEXIT
          MEND
+

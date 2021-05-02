@@ -1,0 +1,286 @@
+.*   Copyright (C) <2021>  Daniel H. Snyder                             00010002
+.*   Structured Programming Macros for the IBM High Level Assembler     00020001
+.*   Daniel.H.Snyder@protonmail.com                                     00030001
+.*                                                                      00040001
+.* This program is free software: you can redistribute it and/or modify 00050001
+.* it under the terms of the GNU General Public License as published by 00060001
+.* the Free Software Foundation, either version 3 of the License, or    00070001
+.* any later version.                                                   00080001
+.*                                                                      00090001
+.* This program is distributed in the hope that it will be useful,      00100001
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of       00110001
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        00120001
+.* GNU General Public License for more details.                         00130001
+.*                                                                      00140001
+.* You should have received a copy of the GNU General Public License    00150001
+.* along with this program. See <https://www.gnu.org/licenses/>.        00160001
+.*                                                                      00170001
+         COPY  $MGBLDEF            BRING IN GLOBAL SYMBOLS              00180001
+         LCLA  &I,&J,&K                                                 00190001
+         LCLC  &LENGTH1,&LENGTH2,&LENGTH3 ANALYZE &$BT                  00200001
+         LCLC  &X,&Y,&OP,&OPND1,&OPND2,&OPND3,&C,&NC,&TSTCOND           00210001
+         LCLC  &OPND4,&OPND5,&OPND6                                     00220001
+.*                                                                      00230001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00240001
+.*                                                                    * 00250001
+.* IMPORTANT SET SYMBOL NAMES                                         * 00260001
+.*                                                                    * 00270001
+.* &$MFNAME WILL CONTAIN THE UNIQUE TAG FOR THE CONDITION WHERE A     * 00280001
+.*          BRANCH ON FALSE WILL OCCUR.                               * 00290001
+.* &$MTNAME WILL CONTAIN THE UNIQUE TAG FOR THE CONDITION WHERE A     * 00300001
+.*          BRANCH ON TRUE WILL OCCUR.                                * 00310001
+.* &$BT     IS THE EXTENDED CONDITION CODE MNEMONIC SPECIFIED IN THE  * 00320001
+.*          MACRO CALL STATING THE CONDITION IN WHICH THE PREMISE OF  * 00330001
+.*          THE LOGIC PHRASE IS TRUE.                                 * 00340001
+.* &$BF     IS THE EXTENDED CONDITION CODE MNEMONIC CALCULATED WITHIN * 00350001
+.*          THE MACRO GENERATION STATING THE CONDITION IN WHICH THE   * 00360001
+.*          PREMISE OF THE LOGIC PHRASE IS FALSE.                     * 00370001
+.*                                                                    * 00380001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00390001
+.*                                                                      00400001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00410001
+.*                                                                    * 00420001
+.* INITIALIZATION.                                                    * 00430001
+.*                                                                    * 00440001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00450001
+.*                                                                      00460001
+&$MLVL   SETA  &$MLVL+1            INCREASE RECURSION/NESTING COUNT     00470001
+&I       SETA  1                   SET TO FIRST POSITIONAL              00480001
+&$MNAME  SETC  '&NAME'             TAG FOR FIRST TEST                   00490001
+.*                                                                      00500001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00510001
+.*                                                                    * 00520001
+.* PROCESS THE LOGIC PACK FOR OP-CODE, OPERAND(S), AND THE CONDITION  * 00530001
+.* UNDER WHICH THE THE CODE FOLLOWING THE "IF" IS TO BE EXECUTED.     * 00540001
+.*                                                                    * 00550001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00560001
+.*                                                                      00570001
+.LOOP020 ANOP  START THE PROCESS (MAYBE) AGAIN                          00580001
+         AIF   ('&SYSLIST(&I)' EQ '').FINISH260  GO TO FINISH IF DONE   00600001
+&$ERRSW  SETC  'N'                 NO ERROR EXISTS AT THIS POINT        00610001
+         AIF   ('&SYSLIST(&I)'(1,1) NE '(').FATAL180   MUST BE '('      00620001
+         AIF   ('&SYSLIST(&I)'(2,1) EQ '(').RECURS120 GO IF NESTED      00630001
+&OP      SETC  '&SYSLIST(&I,1)'    OP-CODE IS ALWAYS 1ST SUB-OPERAND    00640001
+&J       SETA  (N'&SYSLIST(&I))    NUMBER OF SUBPARAMETERS FOR THIS ONE 00650001
+         AIF   (&J NE 2).TEST030     GO TEST FOR 1-OPERAND INST         00660001
+&$MNAME  &OP   ,                   ZERO OPERAND INSTRUCTION             00670002
+&$BT     SETC  '&SYSLIST(&I,2)'    CONDITION IS ALWAYS LAST SUB-OPERAND 00680001
+         AGO   .FINGEN070             GO SET UP BRANCH INST             00690001
+.TEST030 ANOP  ,                                                        00700001
+&OPND1   SETC  '&SYSLIST(&I,2)'    FIRST (ONLY?) OPERAND                00710001
+         AIF   (&J NE 3).TEST040     GO TEST FOR 2-OPERAND INST         00720001
+&$MNAME  &OP   &OPND1              ONE OPERAND                          00730002
+&$BT     SETC  '&SYSLIST(&I,3)'    CONDITION IS ALWAYS LAST SUB-OPERAND 00740001
+         AGO   .FINGEN070             GO SET UP BRANCH INST             00750001
+.TEST040 ANOP  ,                                                        00760001
+&OPND2   SETC  '&SYSLIST(&I,3)'    SECOND OPERAND                       00770001
+         AIF   (&J NE 4).TEST050     GO TEST FOR 3-OPERAND INST         00780001
+&$MNAME  &OP   &OPND1,&OPND2       TWO OPERANDS                         00790002
+&$BT     SETC  '&SYSLIST(&I,4)'    CONDITION IS ALWAYS LAST SUB-OPERAND 00800001
+         AGO   .FINGEN070             GO SET UP BRANCH INST             00810001
+.TEST050 ANOP  ,                                                        00820001
+&OPND3   SETC  '&SYSLIST(&I,4)'    THIRD OPERAND                        00830001
+         AIF   (&J NE 5).TEST052                                        00840001
+&$MNAME  &OP   &OPND1,&OPND2,&OPND3 THREE OPERANDS                      00850002
+&$BT     SETC  '&SYSLIST(&I,5)'   CONDITION IS ALWAYS LAST SUB-OPERAND  00860001
+         AGO   .FINGEN070            GO SET UP BRANCH INST              00870001
+.TEST052 ANOP                                                           00880001
+&OPND4   SETC  '&SYSLIST(&I,5)'    FOURTH OPERAND                       00890001
+         AIF   (&J NE 6).TEST054                                        00900001
+&$MNAME  &OP   &OPND1,&OPND2,&OPND3,&OPND4  FOUR OPERANDS               00910002
+&$BT     SETC  '&SYSLIST(&I,6)'   CONDITION IS ALWAYS LAST SUB-OPERAND  00920001
+         AGO   .FINGEN070            GO SET UP BRANCH INST              00930001
+.TEST054 ANOP                                                           00940001
+&OPND5   SETC  '&SYSLIST(&I,6)'    FIFTH OPERAND                        00950001
+         AIF   (&J NE 7).TEST056                                        00960001
+&$MNAME  &OP   &OPND1,&OPND2,&OPND3,&OPND4,&OPND5 FIVE OPERANDS         00970002
+&$BT     SETC  '&SYSLIST(&I,7)'   CONDITION IS ALWAYS LAST SUB-OPERAND  00980001
+         AGO   .FINGEN070            GO SET UP BRANCH INST              00990001
+.TEST056 ANOP                                                           01000001
+&OPND6   SETC  '&SYSLIST(&I,7)'    SIXTH OPERAND                        01010001
+         AIF   (&J NE 8).ERROR060                                       01020001
+&$MNAME  &OP   &OPND1,&OPND2,&OPND3,&OPND4,&OPND5,&OPND6  SIX OPERANDS  01030002
+&$BT     SETC  '&SYSLIST(&I,8)'   CONDITION IS ALWAYS LAST SUB-OPERAND  01040001
+         AGO   .FINGEN070            GO SET UP B                        01050001
+.ERROR060 ANOP ,                                                        01060001
+&K       SETA  ((&I+3)/2)          GET SEQUENCE # OF PHRASE IN ERROR    01070001
+         MNOTE 08,'INVALID NUMBER OF PARMS (&J) IN CONDITIONAL PHRASE #*01080001
+               &K &SYSLIST(&I); IT WILL BE DELETED FROM THE MACRO EXPAN*01090001
+               SION'                                                    01100001
+&I       SETA  &I+2                INCREMENT                            01110001
+         AGO   .LOOP020             BACK FOR MORE                       01120001
+.*                                                                      01130001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01140001
+.*                                                                    * 01150001
+.* THE TEST INSTRUCTION THAT SETS THE CONDITION CODE HAS BEEN         * 01160001
+.* GENERATED; NOW SET UP FOR CREATING THE BRANCH-ON-CONDITION.        * 01170001
+.*                                                                    * 01180001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01190001
+.*                                                                      01200001
+.FINGEN070 ANOP                                                         01210001
+&$MNAME  SETC  ''                  PREVENT DUPLICATE TAG                01230001
+.*                                                                      01240001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01250001
+.*                                                                    * 01260001
+.* &$BT IS THE VALUE OF THE CONDITION SPECIFIED IN THE MACRO CALL.    * 01270001
+.* &$BT IS THE MNEMONIC PORTION OF THE BRANCH INSTRUCTION THAT WILL   * 01280001
+.* GENERATE A BRANCH CONDITION THAT WILL BRANCH IF THE CONDITION      * 01290001
+.* BEING TESTED IS TRUE. IF &$BT HAS THE VALUE OF "NE", THAT MEANS    * 01300001
+.* THAT THE BODY OF THE IF-GROUP WILL BE EXECUTED IF THE RESULT OF    * 01310001
+.* PREVIOUSLY GENERATED INSTRUCTION IS "NE", AND THE INSTRUCTION      * 01320001
+.* GENERATED WILL NORMALLY BE "JE" TO BRANCH AROUND THE EXECUTABLE    * 01330001
+.* BODY OF THE IF-GROUP. THE ONLY EXCEPTION IS IF THE LOGIC AROSE     * 01340001
+.* FROM A "DO UNTIL=..." MACRO CALL, WHERE THE BRANCH AROUND THE      * 01350001
+.* EXECUTABLE BODY OF THE DO-GROUP WOULD BE "JNE".                    * 01360001
+.*                                                                    * 01370001
+.* &$BF (BRANCH ON FALSE) WILL HAVE THE OPPOSITE VALUE TO &$BT; IN    * 01380001
+.* THIS INSTANCE, IT WOULD BE "E".                                    * 01390001
+.*                                                                    * 01400001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01410001
+.*                                                                      01420001
+&LENGTH1 SETC  '&$BT'(1,1)        1ST CHAR OF USER-SPECIFIED CONDITION  01430001
+&LENGTH2 SETC  '&$BT'(1,2)        FIRST TWO CHARACTERS                  01440001
+&LENGTH3 SETC  '&$BT'             ALL CHARACTERS                        01450001
+         AIF ('&LENGTH2' NE '&LENGTH3').ERR100 LENGTH OF COND PARM > 2? 01460001
+         AIF   ('&LENGTH1' EQ '&LENGTH2').ONE080 ONE CHAR CONDITION     01470001
+         AIF   ('&LENGTH1' NE 'N').ERR100 IF 2 CHAR 1ST MUST BE "N"     01480001
+&$BF     SETC  '&LENGTH2'(2,1) &$BT 1ST CHAR IS "N", 2ND IS CONDITION   01490001
+&TSTCOND SETC  '&$BF'   FOR VALIDATING CONDITION                        01500001
+         AGO   .FIRST090                                                01510001
+.ONE080  ANOP                                                           01520001
+&$BF     SETC  'N&LENGTH1' 1 CHAR CONDITION; "N" WILL BE 1ST CHAR       01530001
+&TSTCOND SETC  '&$BT'   FOR VALIDATING CONDITION                        01540001
+.FIRST090 ANOP , MNOTE '$BT "&$BT" $BF "&$BF"'                          01550001
+         AIF   ('&TSTCOND' EQ 'E').OK065                                01560001
+         AIF   ('&TSTCOND' EQ 'H').OK065                                01570001
+         AIF   ('&TSTCOND' EQ 'L').OK065                                01580001
+         AIF   ('&TSTCOND' EQ 'M').OK065                                01590001
+         AIF   ('&TSTCOND' EQ 'O').OK065                                01600001
+         AIF   ('&TSTCOND' EQ 'P').OK065                                01610001
+         AIF   ('&TSTCOND' EQ 'Z').OK065                                01620001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01630001
+.ERR100  MNOTE 8,'INVALID CONDITION REQUESTED: "&LENGTH3"'              01640001
+         MNOTE 'THIS CLAUSE DELETED FROM ASSEMBLY'                      01650001
+&$ERRSW  SETC  'Y'                 FLAG ERROR                           01660001
+&$BT     SETC  'NOP'               FLAG ERROR                           01670001
+&$BF     SETC  'NOP'               FLAG ERROR                           01680001
+.OK065   AIF   ('&$ERRSW' EQ 'N').DISTR175                              01690001
+&I       SETA  &I+2                                                     01700001
+         AGO   .LOOP020                                                 01710001
+.*                                                                      01720001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01730001
+.*                                                                    * 01740001
+.* PROCESS A NEW LOGIC PACK OPENED WITH MULTIPLE PARENTHESES, MEANING * 01750001
+.* THAT "OR" CONJUNCTIONS MAY BE FORCED TO A HIGHER PRIORITY THAN THE * 01760001
+.* "AND" CONJUNCTION.                                                 * 01770001
+.*                                                                    * 01780001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01790001
+.*                                                                      01800001
+.RECURS120 ANOP                    HERE FOR RECURSIVE CALL              01810001
+&$MNAME  IF2   &SYSLIST(&I,1),&SYSLIST(&I,2),&SYSLIST(&I,3),           C01830001
+               &SYSLIST(&I,4),&SYSLIST(&I,5),&SYSLIST(&I,6),           C01840001
+               &SYSLIST(&I,7),&SYSLIST(&I,8),&SYSLIST(&I,9),           C01850001
+               &SYSLIST(&I,10),&SYSLIST(&I,11),&SYSLIST(&I,12),        C01860001
+               &SYSLIST(&I,13),&SYSLIST(&I,14),&SYSLIST(&I,15),        C01870001
+               &SYSLIST(&I,16),&SYSLIST(&I,17),&SYSLIST(&I,18),        C01880001
+               &SYSLIST(&I,19),&SYSLIST(&I,20),&SYSLIST(&I,21)          01890001
+&J       SETA  &$MLVL+1              VALUE OF LEVEL JUST RETURNED FROM  01900001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01910001
+.* RESOLVE THE TWO POSSIBLE &$FNAME VALUES FROM RECURSIVE LEVEL AND   * 01920001
+.* THIS LEVEL.                                                        * 01930001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01940001
+         AIF   ('&$MFNAME(&J)' EQ '').RECURS150 IF '' DON'T DO ANYTHING 01960001
+         AIF   ('&$MFNAME(&$MLVL)' EQ '').RECURS140 IF '' SIMPLY COPY   01970001
+&Y       SETC  '&$MFNAME(&J)'                                           01980001
+&Y       EQU   &$MFNAME(&$MLVL)    ANCHOR NESTED FALSE NAME             01990003
+         AGO   .RECURS150                                               02000001
+&$MPTR   SETA  &$MPTR+1            BOTH EXIST - QUEUE FOR LATER         02010001
+&$MEQ1(&$MPTR) SETC '&$MFNAME(&J)'       "EQUATE" STATEMENT CREATED     02020001
+&$MEQ2(&$MPTR) SETC '&$MFNAME(&$MLVL)'   IN "ENDIF" MACRO               02030001
+         AGO   .RECURS150                                               02040001
+.RECURS140 ANOP ,                  NO VAL FOR THIS LEVEL -              02050001
+&$MFNAME(&$MLVL) SETC '&$MFNAME(&J)'      COPY FROM "UPPER" LEVEL       02060001
+.RECURS150 ANOP                                                         02070001
+&$MFNAME(&J) SETC ''                                                    02080001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02090001
+.* IF THERE IS AN "AND" CONJUNCTION AS THE NEXT PHRASE, THEN DO NOT   * 02100001
+.* MIGRATE THE MTNAME VALUE; THE &$MTNAME PASSED FROM THE RECURSIVE   * 02110001
+.* LEVEL (IF THERE IS ONE) WILL BE TRAPPED FOLLOWING THE              * 02120001
+.* BRANCH-ON-FALSE GENERATED IN THE ".AND220" ROUTINE.                * 02130001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02140001
+         AIF   ('&SYSLIST(&I+1)' EQ 'AND').AND220                       02150001
+         AIF   ('&$MTNAME(&J)' EQ '').RECURS170 IF '' DON'T DO ANYTHING 02160001
+         AIF   ('&$MTNAME(&$MLVL)' EQ '').RECURS160 IF '' SIMPLE COPY   02170001
+&Y       SETC  '&$MTNAME(&J)'                                           02180001
+&Y       EQU   &$MTNAME(&$MLVL)    ANCHOR NESTED TRUE NAME              02190003
+         AGO   .RECURS170                                               02200001
+&$MPTR   SETA  &$MPTR+1            CREATE UNIQUE VALUE FOR EQU QUEUE    02210001
+&$MEQ1(&$MPTR) SETC '&$MTNAME(&J)' QUEUE BOTH VALUES FOR EVENTUAL       02220001
+&$MEQ2(&$MPTR) SETC '&$MTNAME(&$MLVL)' . EQUATE STATEMENT               02230001
+         AGO   .RECURS170                                               02240001
+.RECURS160 ANOP                                                         02250001
+&$MTNAME(&$MLVL) SETC '&$MTNAME(&J)' COPY RECURS LEVEL TO CURRENT LVL   02260001
+.RECURS170 ANOP                                                         02270001
+&$MTNAME(&J) SETC ''                                                    02280001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02290001
+.DISTR175 AIF  ('&SYSLIST(&I+1)' EQ 'OR').OR190                         02300001
+         AIF   ('&SYSLIST(&I+1)' EQ 'AND').AND220                       02310001
+         AIF   ('&SYSLIST(&I+1)' EQ '').FINISH260 GO IF NO CONJUNCTION  02320001
+         MNOTE 8,'INVALID CONJUNCTION "&SYSLIST(&I+1)"'                 02330001
+         MNOTE 'THIS PHRASE DELETED FROM MACRO EXPANSION'               02340001
+&I       SETA  &I+2                BUMP TO NEXT CLAUSE                  02350001
+         AGO   .LOOP020                                                 02360001
+.*                                                                      02370001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02380001
+.*                                                                    * 02390001
+.* A LOGIC PACK DID NOT OPEN WITH A "(". ===> FATAL MISTAKE <===      * 02400001
+.*                                                                    * 02410001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02420001
+.*                                                                      02430001
+.FATAL180   MNOTE 8,'MISSING PARENS AT "&SYSLIST(&I)" - TERMINATED'     02440001
+         MEXIT                                                          02450001
+.*                                                                      02460001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02470001
+.*                                                                    * 02480001
+.* PROCESS A CLAUSE THAT IS FOLLOWED BY AN "OR" CONJUNCTION.          * 02490001
+.*                                                                    * 02500001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02510001
+.*                                                                      02520001
+.OR190   AIF   ('&SYSLIST(&I+2)'(1,1) NE '(').ERROR255 MUST BE '('      02530001
+         AIF   ('&$MTNAME(&$MLVL)' NE '').OR200 SKIP IF NOT NEEDED      02550001
+&$Y$NDX  SETA  &$Y$NDX+1           BUMP FOR UNIQUENESS                  02560001
+&$MTNAME(&$MLVL) SETC '$MDT&$Y$NDX' CREATE UNIQUE TAG                   02570001
+.OR200   J&$BT &$MTNAME(&$MLVL)    TRUE RESULT - POSSIBLE PASS          02580002
+&$MNAME  SETC  '&$MFNAME(&$MLVL)'  QUEUE NAME (IF ANY) FOR .LOOP020     02590001
+&$MFNAME(&$MLVL) SETC  ''          NULLIFY                              02600001
+&I       SETA  &I+2                BUMP TO NEXT CLAUSE                  02610001
+         AGO   .LOOP020             AND BACK                            02620001
+.*                                                                      02630001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02640001
+.*                                                                    * 02650001
+.* PROCESS A CLAUSE THAT IS FOLLOWED BY AN "AND" CONJUNCTION.         * 02660001
+.*                                                                    * 02670001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02680001
+.*                                                                      02690001
+.AND220  ANOP                                                           02700001
+         AIF   ('&SYSLIST(&I+2)'(1,1) NE '(').ERROR255 MUST BE '('      02720001
+         AIF   ('&$MFNAME(&$MLVL)' NE '').AND230                        02730001
+&$Y$NDX  SETA  &$Y$NDX+1           MUST HAVE A UNIQUE -                 02740001
+&$MFNAME(&$MLVL) SETC '$MDF&$Y$NDX' CREATE UNIQUE TAG                   02750001
+.AND230  J&$BF &$MFNAME(&$MLVL)    FALSE RESULT - POSSIBLE FAIL         02760002
+&J       SETA  &$MLVL+1            INDEX OF (POSSIBLE) RECURSIVE NAME   02770001
+&$MNAME  SETC  '&$MTNAME(&J)'      QUEUE NAME FOR USE IN .LOOP020       02780001
+&$MTNAME(&J) SETC  ''              NULLIFY                              02790001
+&I       SETA  &I+2                BUMP TO NEXT                         02800001
+         AGO   .LOOP020             AND BACK                            02810001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02820001
+.ERROR255 ANOP                                                          02830001
+         MNOTE 8,'NO VALID PHRASE FOLLOWING THE "&SYSLIST(&I+1)"'       02840001
+&$ERRSW  SETC  'Y'                 FLAG ERROR                           02850001
+.*                                                                      02860001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02870001
+.*                                                                    * 02880001
+.* THIS IS THE END OF CONDITIONAL PHRASES AT THIS RECURSIVE LEVEL.    * 02890001
+.*                                                                    * 02900001
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02910001
+.*                                                                      02920001

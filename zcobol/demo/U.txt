@@ -1,0 +1,176 @@
+"U" - A debugger for z390 zcobol
+
+
+U is written in ZCOBOL.
+ 
+U is to T, what C++ is to C.
+T can still be used as a debugger but U has extra functionality. 
+
+Your program should include the FILE-CONTROL and FILE SECTION statements.
+You must get a clean compile of your code before using "U", as it accesses its PRN file.
+
+You can enter in either lower or upper case and numerics do not require leading zeros
+
+
+U comprises
+
+USET.CBL which does an ACCEPT FROM CONSOLE of the name of the cobol you want to test, in single quotes,
+ 
+    e.g. 'ZCOBOL\DEMO\COPYFILE.CBL'.
+ 
+    It creates U4.CBL from U1.CBL inserting the quoted name.
+
+
+U4.CBL (prototype U1.CBL) customises your quoted program and creates UPROGRAM.CBL, inserting sections from U2.CBL 
+and generating extra code from prototypes in U6.CBL and U6B.CBL. These latter 2 files are to allow the display
+and monitoring of any field.
+
+UPROGRAM.CBL then runs the program you identified with "U" embedded.
+It should be emphasised that UPROGRAM can be run on it's own, temporary changes can be inserted and UPROGRAM
+can be compiled and tested. 
+
+
+USET.CBL, U1.CBL, U2.CBL, U6.CBL and U6B.CBL should be put into the ZCOBOL\DEMO\ directory.
+U.BAT should be put into the Z390 directory.
+The file you are reading is U.TXT
+
+ 
+
+To use,
+
+Type U into the command line and press enter,
+
+this runs U.BAT in the Z390 directory which comprises
+
+CALL zc390clg zcobol\demo\uset notime guam
+CALL zc390clg zcobol\demo\u4 notime
+CALL zc390clg zcobol\demo\uprogram notime guam 
+
+
+This process may take 30 to 40 seconds before you enter
+another screen on which you should see
+
+
+U - Debugger for ZCOBOL by John Hennesy
+Enter - single step
+H - Here
+E - Erase -   E nnnnnn or vvv...
+M - Monitor - M vvv... (max 30 char)
+              M List variables
+B - Break -   B nnnnnn
+              B   List lines
+G - Go -      G nnnnnn
+              G vvv...
+              G   Go next break
+W - Working storage - W Show w/s
+P - Procedure division - P Show proc div
+D - Display - D vvv... (max 30 char)
+X - eXit - X Exit
++ - another screen - + of W or P
+? - help
+T = Trace
+
+
+commands may be in either Case.
+
+If you just 
+
+Hit Enter 
+       a few times you'll see how it single steps through the program. 
+
+Hit X 
+       to Exit the program. 
+
+Hit W 
+       to see the file section and working-storage section fields 
+       that you are allowed to display or monitor. 
+
+Hit + 
+       as the next command after W to scroll forward thru the working-storage fields. 
+
+Hit P 
+       to see the procedure division lines in the program.
+ 
+Hit P 
+       followed by a line number to start
+       the display of the procedure division at that line number.
+
+Hit P
+       followed by a paragraph or section name to start
+       the display of the procedure division at that para/section.
+
+Hit + 
+       as the next command to scroll forward thru the procedure division. 
+
+Hit H 
+       to show where the prog is now. 
+
+Hit M 
+       and a variable name to create a monitor for when that field changes 
+       Maximum of 9 fields can be monitored. You can monitor subscripted fields 
+       using either 6 digit subscripts or field variable names, 
+       thus M FRED(TOM, DICK, 000002) or any combination of field names and literal
+       values. 
+
+Hit M 
+       by itself to list the current fields being monitored. 
+
+Hit E 
+       and a variable name to erase that field from being monitored. 
+       You don't have to enter the whole name, just sufficient to make it unique. 
+
+Hit G 
+       and a line number for U not to show code until that line number is reached. 
+
+Hit G 
+       and a field variable name to likewise skip until the monitored field changes.  
+
+Hit B 
+       and a line number to set a breakpoint on that line
+       Maximum of 9 lines can be breakpointed 
+
+Hit B 
+       by itself to list the current breakpoints. 
+
+Hit E 
+       and a line number to erase that breakpoint. 
+
+Hit G 
+       by itself for U not to show code until the next breakpoint is reached. 
+
+Hit Enter
+       to single-step off of a breakpoint, before a solitary G will go to the next break. 
+
+Hit D 
+       and a variable name to display the contents of that variable
+       Maximum field size displayable is 64000 bytes 
+      (It will show a PIC X field which has non-displayable fields in char and then HEX)
+       You can monitor subscripted fields using either numeric subscripts
+       or field variable names, thus D FRED(1, 3, HARRY) 
+       or any combination of field names and literal values.
+       If the field has no subscripts then "D field-name" will suffice.
+       If one subscript "D field-name(subscript-field-name or a number".
+       If two subscripts then "D field-name(sub1/literal1, sub2/literal2).
+       And 3 subscripts as above.  
+
+Hit ? 
+       followed by a command letter will show help for that command
+
+Hit T
+       shows the last 15 paragraphs/sections thru which execution has passed.
+
+
+U shows you where you are in the program by showing a screenful of code with a pointer of '>' in column 7
+You can always scroll back thru the screen to see previous monitors/displays or maximise the GUI screen.
+Don't forget that you have to single step off the initial help screen, no other
+command will work here.
+
+
+
+
+Have fun and let me know what you think,
+
+Regards,
+
+John Hennesy
+

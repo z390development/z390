@@ -1,0 +1,264 @@
+         ZCOBOL PGM='cics\TESTBEC1',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :47:16,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTBEC1_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * TEST BED 1 (COBOL)
+*      *    TESTBED3 HAS BEEN LEFT AS ASM TO PROVE LINKAGE
+*      *    TEST RETURN TRANSID AND COMMAREA
+*      *    BEC1 DISPLAYS 1ST LINE
+*      *    EACH SUBSEQUENT LINE INDEX COMES FROM IMPORTED COMMAREA
+*      *    TEST LINK WITH DIFFERENT COMMAREAS
+*      *    TEST XCTL WITH COMMAREA
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTBEC1.
+         PROGRAM_ID TESTBEC1
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*         77  SENDWCC  PIC X.
+         WS      77,SENDWCC,PIC,X
+*         77  SENDSBA  PIC X(3).
+         WS      77,SENDSBA,PIC,X(3)
+*         77  SENDLINE PIC X(45).
+         WS      77,SENDLINE,PIC,X(45)
+*         77  MYCOMM   PIC 9(4)  COMP.
+         WS      77,MYCOMM,PIC,9(4),COMP
+*         77  WCC      PIC X     VALUE X'F5'.
+         WS      77,WCC,PIC,X,VALUE,X'F5'
+*         77  MYBEC2   PIC X(8)  VALUE 'TESTBEC2'.
+         WS      77,MYBEC2,PIC,X(8),VALUE,'TESTBEC2'
+*         77  COMM1    PIC X(6)  VALUE 'QUOTE2'.
+         WS      77,COMM1,PIC,X(6),VALUE,'QUOTE2'
+*         77  COMM2    PIC X(6)  VALUE 'QUOTE3'.
+         WS      77,COMM2,PIC,X(6),VALUE,'QUOTE3'
+*         77  COMM3    PIC X(6)  VALUE 'QUOTE6'.
+         WS      77,COMM3,PIC,X(6),VALUE,'QUOTE6'
+*         01  SBAS.
+*      * SBA,3,2 THRU SBA,11,2
+         WS      01,SBAS
+*             02  FILLER   PIC X(3)  VALUE X'11C261'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C261'
+*             02  FILLER   PIC X(3)  VALUE X'11C3F1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C3F1'
+*             02  FILLER   PIC X(3)  VALUE X'11C5C1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C5C1'
+*             02  FILLER   PIC X(3)  VALUE X'11C6D1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C6D1'
+*             02  FILLER   PIC X(3)  VALUE X'11C761'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C761'
+*             02  FILLER   PIC X(3)  VALUE X'11C8F1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11C8F1'
+*             02  FILLER   PIC X(3)  VALUE X'114AC1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'114AC1'
+*             02  FILLER   PIC X(3)  VALUE X'114BD1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'114BD1'
+*             02  FILLER   PIC X(3)  VALUE X'114C61'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'114C61'
+*          01 FILLER REDEFINES SBAS.
+         WS      01,FILLER,REDEFINES,SBAS
+*             02  SBA      OCCURS 9 TIMES PIC X(3).
+         WS        02,SBA,OCCURS,9,TIMES,PIC,X(3)
+*         01  LINES.
+         WS      01,LINES
+*             02  LINE1    PIC X(45) VALUE 'What a piece of work is manX
+               '.
+         WS        02,LINE1,PIC,X(45),VALUE,'What a piece of work is maX
+               n'
+*             02  FILLER   PIC X(45) VALUE 'How noble in reason'.
+         WS        02,FILLER,PIC,X(45),VALUE,'How noble in reason'
+*             02  FILLER   PIC X(45) VALUE 'How infinite in faculties'.
+         WS        02,FILLER,PIC,X(45),VALUE,'How infinite in facultiesX
+               '
+*             02  FILLER   PIC X(45) VALUE
+*                       'In form and moving, how express and admirable'X
+               .
+         WS        02,FILLER,PIC,X(45),VALUE,'In form and moving, how eX
+               xpress and admirable'
+*             02  FILLER   PIC X(45) VALUE 'In action, how like an angeX
+               l'.
+         WS        02,FILLER,PIC,X(45),VALUE,'In action, how like an anX
+               gel'
+*             02  FILLER   PIC X(45) VALUE
+*                       'In apprehension, how like a god'.
+         WS        02,FILLER,PIC,X(45),VALUE,'In apprehension, how likeX
+                a god'
+*             02  FILLER   PIC X(45) VALUE 'The beauty of the world'.
+         WS        02,FILLER,PIC,X(45),VALUE,'The beauty of the world'
+*             02  FILLER   PIC X(45) VALUE 'The paragon of animals'.
+         WS        02,FILLER,PIC,X(45),VALUE,'The paragon of animals'
+*             02  FILLER   PIC X(45) VALUE 'END'.
+         WS        02,FILLER,PIC,X(45),VALUE,'END'
+*          01 FILLER REDEFINES LINES.
+         WS      01,FILLER,REDEFINES,LINES
+*             02  LINE_N   OCCURS 9 TIMES PIC X(45).
+         WS        02,LINE_N,OCCURS,9,TIMES,PIC,X(45)
+*         LINKAGE SECTION.
+         LINKAGE SECTION
+*         01  DFHCOMMAREA.
+         WS      01,DFHCOMMAREA
+*             02  INCOMM   PIC 9(4)  COMP.
+         WS        02,INCOMM,PIC,9(4),COMP
+*         01  DFHCWA.
+         WS      01,DFHCWA
+*             02  FILLER   PIC X.
+         WS        02,FILLER,PIC,X
+*         PROCEDURE DIVISION USING DFHEIBLK DFHCOMMAREA.
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*      * XC    MYCOMM,MYCOMM      INITIALISE COMMAREA
+*             MOVE 1 TO MYCOMM.
+*      *  MVC   SENDWCC,WCC        MOVE WCC
+*ZC     94         MOVE  1,TO,MYCOMM
+         MOVE  1,TO,MYCOMM
+         PERIOD 
+*             MOVE WCC TO SENDWCC.
+*      *  OC    TCTTECA,TCTTECA    ANY COMMAREA ?
+*      *  BNZ   NOT1ST             EXIT IF NOT FIRST
+*ZC     96         MOVE  WCC,TO,SENDWCC
+         MOVE  WCC,TO,SENDWCC
+         PERIOD 
+*             IF EIBCALEN = 0 THEN
+*      * FIRST LINE
+*ZC     99         IF    EIBCALEN,=,0,THEN
+         IF    EIBCALEN,=,0,THEN
+*                EXEC CICS ADDRESS CWA(ADDRESS OF DFHCWA) END-EXEC
+*      *  MVC   SENDSBA,SBA1       1ST SBA
+*ZC    101         EXEC  CICS,ADDRESS,CWA(ADDRESS,OF,DFHCWA)
+         EXEC  CICS,ADDRESS,CWA(ADDRESS,OF,DFHCWA)
+*                MOVE SBA (1) TO SENDSBA
+*      *  MVC   SENDLINE,LINE1     1ST LINE
+*ZC    103         MOVE  SBA,'(',1,')',TO,SENDSBA
+         MOVE  SBA,'(',1,')',TO,SENDSBA
+*                MOVE LINE_N (1) TO SENDLINE
+*ZC    105         MOVE  LINE_N,'(',1,')',TO,SENDLINE
+         MOVE  LINE_N,'(',1,')',TO,SENDLINE
+*                EXEC CICS SEND FROM(SENDWCC) LENGTH(49) END-EXEC
+*ZC    106         EXEC  CICS,SEND,FROM(SENDWCC),LENGTH(49)
+         EXEC  CICS,SEND,FROM(SENDWCC),LENGTH(49)
+*                EXEC CICS RETURN TRANSID('BEC1')
+*                                 COMMAREA(MYCOMM) END-EXEC
+*ZC    107         EXEC  CICS,RETURN,TRANSID('BEC1'),COMMAREA(MYCOMM)
+         EXEC  CICS,RETURN,TRANSID('BEC1'),COMMAREA(MYCOMM)
+*             ELSE
+*      * NOT FIRST LINE
+*      *  L     R5,TCTTECA         ADDRESS RECEIVED COMMAREA
+*      *  LH    R6,0(R5)           R6=INDEX
+*      *  AHI   R6,1               INCREMENT
+*      *  STH   R6,0(R5)           SAVE
+*ZC    115         ELSE  
+         ELSE  
+*                ADD 1 TO INCOMM
+*      *  MS    R6,=F'3'           INDEX TO SBA
+*      *  LA    R7,SBA1(R6)        R7=ADDRESS OF NEXT SBA
+*      *  MVC   SENDSBA,0(R7)      MOVE NEXT SBA TO OUTPUT
+*ZC    115         ADD   1,TO,INCOMM
+         ADD   1,TO,INCOMM
+*                MOVE SBA (INCOMM) TO SENDSBA
+*      *  LH    R6,0(R5)           R6=INDEX
+*      *  MS    R6,=F'45'          INDEX TO NEXT LINE
+*      *  LA    R7,LINE1(R6)       R7=ADDRESS OF NEXT LINE
+*      *  MVC   SENDLINE,0(R7)     MOVE NEXT LINE TO OUTPUT
+*ZC    119         MOVE  SBA,'(',INCOMM,')',TO,SENDSBA
+         MOVE  SBA,'(',INCOMM,')',TO,SENDSBA
+*                MOVE LINE_N (INCOMM) TO SENDLINE
+*ZC    124         MOVE  LINE_N,'(',INCOMM,')',TO,SENDLINE
+         MOVE  LINE_N,'(',INCOMM,')',TO,SENDLINE
+*                EXEC CICS SEND FROM(SENDWCC) LENGTH(49) END-EXEC
+*      *  CLC   0(2,R5),=H'8'      DISPLAYED LAST ?
+*      *  BE    NEXT1              EXIT IF WE HAVE
+*ZC    125         EXEC  CICS,SEND,FROM(SENDWCC),LENGTH(49)
+         EXEC  CICS,SEND,FROM(SENDWCC),LENGTH(49)
+*                IF INCOMM NOT = 9 THEN
+*ZC    128         IF    INCOMM,NOT,=,9,THEN
+         IF    INCOMM,NOT,=,9,THEN
+*                   EXEC CICS RETURN TRANSID('BEC1') COMMAREA(INCOMM)
+*                                    LENGTH(2) END-EXEC
+*ZC    129         EXEC  CICS,RETURN,TRANSID('BEC1'),COMMAREA(INCOMM),LX
+               ENGTH(2)
+         EXEC  CICS,RETURN,TRANSID('BEC1'),COMMAREA(INCOMM),LENGTH(2)
+*                ELSE
+*      * TEST LINK
+*ZC    133         ELSE  
+         ELSE  
+*                   EXEC CICS LINK PROGRAM(MYBEC2) END-EXEC
+*      * TEST LINK WITH COMMAREA 1
+*ZC    133         EXEC  CICS,LINK,PROGRAM(MYBEC2)
+         EXEC  CICS,LINK,PROGRAM(MYBEC2)
+*                   EXEC CICS LINK PROGRAM('TESTBEC2') COMMAREA(COMM1)
+*                                  END-EXEC
+*      * TEST LINK WITH COMMAREA 2
+*ZC    135         EXEC  CICS,LINK,PROGRAM('TESTBEC2'),COMMAREA(COMM1)
+         EXEC  CICS,LINK,PROGRAM('TESTBEC2'),COMMAREA(COMM1)
+*                   EXEC CICS LINK PROGRAM('TESTBEC2') COMMAREA(COMM2)
+*                                  LENGTH(6) END-EXEC
+*      * TEST XCTL WITH COMMAREA 3
+*ZC    138         EXEC  CICS,LINK,PROGRAM('TESTBEC2'),COMMAREA(COMM2),X
+               LENGTH(6)
+         EXEC  CICS,LINK,PROGRAM('TESTBEC2'),COMMAREA(COMM2),LENGTH(6)
+*                   EXEC CICS XCTL PROGRAM('TESTBED3') COMMAREA(COMM3)
+*ZC    141         EXEC  CICS,XCTL,PROGRAM('TESTBED3'),COMMAREA(COMM3)
+         EXEC  CICS,XCTL,PROGRAM('TESTBED3'),COMMAREA(COMM3)
+         PERIOD 
+*                                  END-EXEC.
+         PROCEDURE END
+         END   

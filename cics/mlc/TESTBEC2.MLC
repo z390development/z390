@@ -1,0 +1,202 @@
+         ZCOBOL PGM='cics\TESTBEC2',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :47:21,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTBEC2_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * TEST BED 2 (COBOL)
+*      *    TESTBED3 HAS BEEN LEFT AS ASM TO PROVE LINKAGE
+*      *    LINKED-TO FROM TESTBEC1
+*      *    DISPLAYS ANOTHER QUOTE
+*      *    IF A COMMAREA IS PASSED, ANOTHER QUOTE IS DISPLAYED DEPENDIX
+               NG
+*      *    ON COMMAREA PASSED
+*      *    XCTL TO TESTBED3 FOR FINAL QUOTE
+*      *    RETURN TO TESTBEC1
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTBEC2.
+         PROGRAM_ID TESTBEC2
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*         01 SENDLNS1.
+         WS      01,SENDLNS1
+*            02 FILLER PIC X      VALUE X'C3'.
+         WS        02,FILLER,PIC,X,VALUE,X'C3'
+*            02 FILLER PIC X(3)   VALUE X'114DF1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'114DF1'
+*            02 FILLER PIC X(55)  VALUE 'How sour sweet music is'.
+         WS        02,FILLER,PIC,X(55),VALUE,'How sour sweet music is'
+*            02 FILLER PIC X(3)   VALUE X'114FC1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'114FC1'
+*            02 FILLER PIC X(55)  VALUE
+*                          'When time is broke and no proportion kept'.
+         WS        02,FILLER,PIC,X(55),VALUE,'When time is broke and noX
+                proportion kept'
+*            02 FILLER PIC X(3)   VALUE X'1150D1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'1150D1'
+*            02 FILLER PIC X(55)  VALUE
+*                          'So is it in the music of men''s lives'.
+         WS        02,FILLER,PIC,X(55),VALUE,'So is it in the music of X
+               men''s lives'
+*            02 FILLER PIC X(3)   VALUE X'11D161'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11D161'
+*            02 FILLER PIC X(55)  VALUE 'END'.
+         WS        02,FILLER,PIC,X(55),VALUE,'END'
+*         01 SENDLNS2.
+         WS      01,SENDLNS2
+*            02 FILLER PIC X      VALUE X'C3'.
+         WS        02,FILLER,PIC,X,VALUE,X'C3'
+*            02 FILLER PIC X(3)   VALUE X'11D2F1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11D2F1'
+*            02 FILLER PIC X(55)  VALUE
+*               'This blessed plot, this earth, this realm, this EnglanX
+               d'.
+         WS        02,FILLER,PIC,X(55),VALUE,'This blessed plot, this eX
+               arth, this realm, this England'
+*            02 FILLER PIC X(3)   VALUE X'11D4C1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11D4C1'
+*            02 FILLER PIC X(55)  VALUE 'END'.
+         WS        02,FILLER,PIC,X(55),VALUE,'END'
+*         01 SENDLNS3.
+         WS      01,SENDLNS3
+*            02 FILLER PIC X      VALUE X'C3'.
+         WS        02,FILLER,PIC,X,VALUE,X'C3'
+*            02 FILLER PIC X(3)   VALUE X'11D5D1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11D5D1'
+*            02 FILLER PIC X(55)  VALUE 'How beauteous mankind is!'.
+         WS        02,FILLER,PIC,X(55),VALUE,'How beauteous mankind is!X
+               '
+*            02 FILLER PIC X(3)   VALUE X'11D661'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11D661'
+*            02 FILLER PIC X(55)  VALUE
+*               'O brave new world, that hath such people in''t!'.
+         WS        02,FILLER,PIC,X(55),VALUE,'O brave new world, that hX
+               ath such people in''t!'
+*            02 FILLER PIC X(3)   VALUE X'11D7F1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'11D7F1'
+*            02 FILLER PIC X(55)  VALUE 'END'.
+         WS        02,FILLER,PIC,X(55),VALUE,'END'
+*         LINKAGE SECTION.
+         LINKAGE SECTION
+*         01  DFHCOMMAREA.
+         WS      01,DFHCOMMAREA
+*             02  INCOMM   PIC X(6).
+         WS        02,INCOMM,PIC,X(6)
+*         PROCEDURE DIVISION USING DFHEIBLK DFHCOMMAREA.
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*      *  MVC   SENDLNS1(LINE1END),LINE1 MESSAGE
+*             EXEC CICS SEND FROM(SENDLNS1) LENGTH(233) END-EXEC.
+*ZC     85         EXEC  CICS,SEND,FROM(SENDLNS1),LENGTH(233)
+         EXEC  CICS,SEND,FROM(SENDLNS1),LENGTH(233)
+         PERIOD 
+*      *  ICM   R4,15,DFHEICAP     ANY COMMAREA ?
+*      *  BNZ   TRYCOMM1           EXIT IF THERE IS
+*             IF EIBCALEN = 0 THEN EXEC CICS RETURN END-EXEC
+*ZC     88         IF    EIBCALEN,=,0,THEN
+         IF    EIBCALEN,=,0,THEN
+*ZC     88         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+*             ELSE
+*      *  TRYCOMM1 EQU   *
+*      *  CLC   0(6,R4),=C'QUOTE2' IS IT QUOTE 2 ?
+*      *  BNE   TRYCOMM2           EXIT IF NOT
+*ZC     93         ELSE  
+         ELSE  
+*             IF INCOMM = 'QUOTE2' THEN
+*      *  MVC   SENDLNS2(LINE2END),LINE2 MESSAGE
+*ZC     93         IF    INCOMM,=,'QUOTE2',THEN
+         IF    INCOMM,=,'QUOTE2',THEN
+*                EXEC CICS SEND FROM(SENDLNS2) LENGTH(117) END-EXEC
+*ZC     95         EXEC  CICS,SEND,FROM(SENDLNS2),LENGTH(117)
+         EXEC  CICS,SEND,FROM(SENDLNS2),LENGTH(117)
+*                EXEC CICS RETURN END-EXEC
+*ZC     96         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+*             ELSE
+*             IF INCOMM = 'QUOTE3' THEN
+*ZC     98         ELSE  
+         ELSE  
+*      *  TRYCOMM2 EQU   *
+*      *  CLC   0(6,R4),=C'QUOTE3' IS IT QUOTE 3 ?
+*      *  BNE   ABORT              EXIT IF NOT
+*      *  MVC   SENDLNS3(LINE3END),LINE3 MESSAGE
+*ZC     98         IF    INCOMM,=,'QUOTE3',THEN
+         IF    INCOMM,=,'QUOTE3',THEN
+*                EXEC CICS SEND FROM(SENDLNS3) LENGTH(174) END-EXEC
+*      * XCTL WITH NO COMMAREA TO TESTBED3 FOR THE NEXT QUOTE
+*      * CONTROL WILL RETURN TO TESTBEC1
+*ZC    103         EXEC  CICS,SEND,FROM(SENDLNS3),LENGTH(174)
+         EXEC  CICS,SEND,FROM(SENDLNS3),LENGTH(174)
+*                EXEC CICS XCTL PROGRAM('TESTBED3') END-EXEC
+*ZC    108         EXEC  CICS,XCTL,PROGRAM('TESTBED3')
+         EXEC  CICS,XCTL,PROGRAM('TESTBED3')
+*             ELSE
+*      * ABORT    ABEND 999,DUMP
+*ZC    111         ELSE  
+         ELSE  
+*                EXEC CICS ABEND ABCODE(' 999') END-EXEC.
+*ZC    111         EXEC  CICS,ABEND,ABCODE(' 999')
+         EXEC  CICS,ABEND,ABCODE(' 999')
+         PERIOD 
+         PROCEDURE END
+         END   

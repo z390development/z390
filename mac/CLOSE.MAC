@@ -1,0 +1,23 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Melvyn Maltz                                              *
+.* Date   - 04/11/21                                                  *
+.**********************************************************************
+.* 04/11/21 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.*          zVSAM(0) defaults to 1                                    *
+.**********************************************************************
+&N       CLOSE &DCBLIST,&MF=I,&MODE=24,&TYPE=
+.*
+&SVSAM   SETA  &SYSZVSAM
+.******OVERRIDE CODE UNTIL ZVSAM V2 CLOSE IS FULLY IMPLEMENTED
+&SVSAM   SETA  1
+.******END OF OVERRIDE
+         AIF   (&SYSZVSAM EQ 0)
+&SVSAM   SETA 1
+         AEND
+&N       CLOSE&SVSAM &DCBLIST,MF=&MF,MODE=&MODE,TYPE=&TYPE
+.*
+         MEND

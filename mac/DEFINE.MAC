@@ -1,0 +1,91 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Melvyn Maltz                                              *
+.* Date   - 12/20/20                                                  *
+.**********************************************************************
+.* 12/20/20 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.**********************************************************************
+         DEFINE &TYPE,           CATALOG,CLUSTER,ALTERNATEINDEX,PATH   X
+               &NAME=,           NAME OF CATALOG, CLUSTER, AIX, OR PATHX
+               &VERSION=2,       CATALOG VERSION ID                    X
+               &DATABLOCKSIZE=4K, DATA BLOCKSIZE                       X
+               &INDEXBLOCKSIZE=4K, INDEX BLOCKSIZE                     X
+               &DATAADJUST=NO,   ADJUST DATA BLOCKSIZE                 X
+               &INDEXADJUST=NO,  ADJUST INDEX BLOCKSIZE                X
+               &DATAFREESPACE=0, DATA FREESPACE %                      X
+               &INDEXFREESPACE=0, INDEX FREESPACE %                    X
+               &DATAFREEBLOCKS=(0,0), FREE DATA BLOCKS AFTER NUMBER    X
+               &INDEXFREEBLOCKS=(0,0), FREE INDEX BLOCKS AFTER NUMBER  X
+               &CONTROLINTERVALSIZE=0, OPTIONAL CI SIZE NOT REQUIRED   X
+               &ENTRY=,          AIX OR BASE CLUSTER NAME FOR PATH     X
+               &INDEX=INDEXED,   INDEXED/NONINDEXED/NUMBERED/LINEAR    X
+               &KEYS=(64,0),     (LENGTH,OFFSET) FOR KSDS PRI/ALT KEY  X
+               &RECORDSIZE=,     FIXED LENGTH OR VAR (AVG,MAX) CLUSTER X
+               &SPANNED=NO,      SPANNED NO/YES                        X
+               &RELATE=,         BASE CLUSTER NAME FOR ALTERNATEINDEX  X
+               &REUSE=NO,        RESET HIGH XRBA AT OPEN               X
+               &UNIQUEKEY=YES,   REQUIRE UNIQUE AIX KEYS      RPI 1130 X
+               &MAXELEMENTS=0,   WHEN UNIQUEKEY=NO, ADJUST BLOCKSIZE   X
+               &UPDATE=YES,      REQUIRE AIX UPDATES FOR THIS PATH 1130X
+               &UPGRADE=YES,     REQUIRE AIX UPGRADE FOR THIS AIX  1130X
+               &VESDSN=,         OPT VES CLUSTER DSNAME (DEF NAME.VES) X
+               &VX0DSN=,         OPT VX0 CLUSTER DSNAME (DEF NAME.VX0) X
+               &VXNDSN=,         OPT VXN AIX     DSNAME (DEF NAME.VXN) X
+               &DTADSN=,         OVERRIDE CLUSTER DSNAME FOR DTA       X
+               &IDXDSN=          OVERRIDE CLUSTER DSNAME FOR IDX
+.*
+         AIF   (&SYSZVSAM EQ 0)
+         MNOTE 15,'DEFINE VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM-
+               '
+         MEXIT
+         AEND
+.*
+         AIF   (&SYSZVSAM EQ 1)
+         DEFINE1 &TYPE,          CATALOG,CLUSTER,ALTERNATEINDEX,PATH   X
+               NAME=&NAME,       NAME OF CATALOG, CLUSTER, AIX, OR PATHX
+               CONTROLINTERVALSIZE=&CONTROLINTERVALSIZE=, OPT CISIZE   X
+               ENTRY=&ENTRY,     AIX OR BASE CLUSTER NAME FOR PATH     X
+               INDEX=&INDEX,     INDEXED/NONINDEXED/NUMBERED/LINEAR    X
+               KEYS=&KEYS,       (LENGTH,OFFSET) FOR KSDS PRI/ALT KEY  X
+               RECORDSIZE=&RECORDSIZE, FIX LEN OR VAR (AVG,MAX) CLUSTERX
+               RELATE=&RELATE,   BASE CLUSTER NAME FOR ALTERNATEINDEX  X
+               REUSE=&REUSE,     RESET HIGH XRBA AT OPEN               X
+               UNIQUEKEY=&UNIQUEKEY, REQUIRE UNIQUE AIX KEYS   RPI 1130X                X
+               UPDATE=&UPDATE,   REQUIRE AIX UPDATES FOR THIS PATH 1130X
+               UPGRADE=&UPGRADE, REQUIRE AIX UPGRADE FOR THIS AIX  1130X
+               VESDSN=&VESDSN,   OPT VES CLUSTER DSNAME (DEF NAME.VES) X
+               VX0DSN=&VX0DSN,   OPT VX0 CLUSTER DSNAME (DEF NAME.VX0) X
+               VXNDSN=&VXNDSN,   OPT VXN AIX     DSNAME (DEF NAME.VXN)
+         AEND
+.*
+         AIF   (&SYSZVSAM EQ 2)
+         DEFINE2 &TYPE,          CATALOG,CLUSTER,ALTERNATEINDEX,PATH   X
+               NAME=&NAME,       NAME OF CATALOG, CLUSTER, AIX, OR PATHX
+               VERSION=&VERSION, CATALOG VERSION ID                    X
+               DATABLOCKSIZE=&DATABLOCKSIZE, DATA BLOCKSIZE            X
+               INDEXBLOCKSIZE=&INDEXBLOCKSIZE, INDEX BLOCKSIZE         X
+               DATAADJUST=&DATAADJUST, ADJUST DATA BLOCKSIZE           X
+               INDEXADJUST=&INDEXADJUST, ADJUST INDEX BLOCKSIZE        X
+               DATAFREESPACE=&DATAFREESPACE, DATA FREESPACE %          X
+               INDEXFREESPACE=&INDEXFREESPACE, INDEX FREESPACE %       X
+               DATAFREEBLOCKS=&DATAFREEBLOCKS, FREE DTA BLKS AFT NO.   X
+               INDEXFREEBLOCKS=&INDEXFREEBLOCKS, FREE IDX BLKS AFT NO. X                     X
+               ENTRY=&ENTRY,     AIX OR BASE CLUSTER NAME FOR PATH     X
+               INDEX=&INDEX,     INDEXED/NONINDEXED/NUMBERED/LINEAR    X
+               KEYS=&KEYS,       (LENGTH,OFFSET) FOR KSDS PRI/ALT KEY  X
+               RECORDSIZE=&RECORDSIZE, FIXED LENGTH OR VAR (AVG,MAX)   X
+               SPANNED=&SPANNED, SPANNED NO/YES                        X
+               RELATE=&RELATE,   CLUSTER NAME FOR ALTERNATEINDEX       X
+               REUSE=&REUSE,     RESET HIGH XRBA AT OPEN               X
+               UNIQUEKEY=&UNIQUEKEY, REQUIRE UNIQUE AIX KEYS  RPI 1130 X
+               MAXELEMENTS=&MAXELEMENTS, WHEN UNIQUEKEY=NO, ADJ BLKSIZEX
+               UPDATE=&UPDATE,   REQUIRE AIX UPDATES FOR THIS PATH 1130X
+               UPGRADE=&UPGRADE, REQUIRE AIX UPGRADE FOR THIS AIX  1130X
+               DTADSN=&DTADSN,   OVERRIDE CLUSTER DSNAME FOR DTA       X
+               IDXDSN=&IDXDSN    OVERRIDE CLUSTER DSNAME FOR IDX
+         AEND
+.*
+         MEND

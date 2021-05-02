@@ -32,10 +32,10 @@ call vsam\test\KSF1TEST @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem test aix creates and path listing compares
 rem aix create is in current dir so KSF1AIX cmds change dir
 rem this is only required if catalog does not have absolute path for aix
-call vsam\test\KSF1AIXA @..\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
-call vsam\test\KSF1AIXC @..\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
-call vsam\test\KSF1AIXS @..\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
-call vsam\test\KSF1AIXZ @..\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
+call vsam\test\KSF1AIXA @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
+call vsam\test\KSF1AIXC @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
+call vsam\test\KSF1AIXS @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
+call vsam\test\KSF1AIXZ @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\KSF2TST1 @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\KSF2TST2 @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\KSF2TST3 @vsam\rtvsam %1 %2 %3 %4 %5 %6 %7 %8 %9

@@ -1,0 +1,4 @@
+         MACRO                                                          00020000
+&CNAME   CLOSE &PAR1,&MF=I,&TYPE=,&MODE=                           @02C 00021500
+         MNOTE *,'NO CODE GENERATED'
+         MEND

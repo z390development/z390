@@ -1,0 +1,47 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Melvyn Maltz                                              *
+.* Date   - 12/20/20                                                  *
+.**********************************************************************
+.* 12/21/20 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.**********************************************************************
+&N       SHOWCB &AM=VSAM,         VSAM                                 X
+               &RPL=,             RPL ADDRESS                          X
+               &ACB=,             ACB ADDRESS                          X
+               &EXLST=,           EXLST ADDRESS                        X
+               &AREA=,            USER AREA TO RECEIVE FIELDS          X
+               &LENGTH=,          USER AREA LENGTH                     X
+               &OBJECT=DATA,      DATA/INDEX FOR ACB                   X
+               &FIELDS=,          NAMES OF FIELDS TO RETRIEVE          X
+               &MF=I
+.*
+         AIF   (&SYSZVSAM EQ 0)
+         MNOTE 15,'SHOWCB VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM-
+               '
+         MEXIT
+         AEND
+.*
+         AIF   (&SYSZVSAM EQ 1)
+&N       SHOWCB1 RPL=&RPL,        RPL ADDRESS                          X
+               ACB=&ACB,          ACB ADDRESS                          X
+               AREA=&AREA,        USER AREA TO RECEIVE FIELDS          X
+               LENGTH=&LENGTH,    USER AREA LENGTH                     X
+               FIELDS=&FIELDS     NAMES OF FIELDS TO RETRIEVE
+         AEND
+.*
+         AIF   (&SYSZVSAM EQ 2)
+&N       SHOWCB2 AM=&AM,          VSAM                                 X
+               RPL=&RPL,          RPL ADDRESS                          X
+               ACB=&ACB,          ACB ADDRESS                          X
+               EXLST=&EXLST,      EXLST ADDRESS                        X
+               AREA=&AREA,        USER AREA TO RECEIVE FIELDS          X
+               LENGTH=&LENGTH,    USER AREA LENGTH                     X
+               OBJECT=&OBJECT,    DATA/INDEX FOR ACB                   X
+               FIELDS=&FIELDS,    NAMES OF FIELDS TO RETRIEVE          X
+               MF=&MF
+         AEND
+.*
+         MEND

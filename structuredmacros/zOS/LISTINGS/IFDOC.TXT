@@ -1,0 +1,1066 @@
+1                                         High Level Assembler Option Summary                   (PTF UI64093)   Page    1
+-                                                                                            HLASM R6.0  2021/03/26 12.02
+0  No Overriding ASMAOPT Parameters
+   No Overriding Parameters
+   No Process Statements
+
+
+   Options for this Assembly
+0                    NOADATA
+                       ALIGN
+                       ASA
+                       BATCH
+                       CODEPAGE(047C)
+                     NOCOMPAT
+                     NODATAMAP
+                     NODBCS
+                     NODECK
+                       DXREF
+                       ESD
+                     NOEXIT
+                       FAIL(NOMSG,NOMNOTE,MAXERRS(500))
+                       FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,NOSIGNED,NOSUBSTR,NOTRUNC,USING0)
+                     NOFOLD
+                     NOGOFF
+                     NOINFO
+                       ILMA
+                       LANGUAGE(EN)
+                     NOLIBMAC
+                       LINECOUNT(60)
+                       LIST(121)
+                       MACHINE(,NOLIST)
+                       MXREF(SOURCE)
+                       OBJECT
+                       OPTABLE(UNI,NOLIST)
+                     NOPCONTROL
+                     NOPESTOP
+                     NOPROFILE
+                     NORA2
+                     NORENT
+                       RLD
+                       RXREF
+                       SECTALGN(8)
+                       SIZE(MAX)
+                     NOSUPRWARN
+                       SYSPARM()
+                     NOTERM
+                     NOTEST
+                       THREAD
+                     NOTRANSLATE
+                       TYPECHECK(MAGNITUDE,REGISTER)
+                       USING(NOLIMIT,MAP,WARN(15))
+                     NOWORKFILE
+                       XREF(SHORT,UNREFS)
+
+   No Overriding DD Names
+1IFDOC                                         External Symbol Dictionary                                       Page    2
+-Symbol   Type   Id     Address  Length   Owner Id Flags Alias-of                            HLASM R6.0  2021/03/26 12.02
+0          PC 00000001 00000000 00000000             00
+ IFDOC     SD 00000002 00000000 000004C5             00
+ $$WA$$    SD 00000003 000004C8 00000049             00
+ $$WA$$    ER 00000004
+1IFDOC                                                                                                          Page    3
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0                                      1          AGO   .SKIP                                                    00010000
+                                       2 .SKIP    ANOP                                                           00430000
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    4
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0                                      4          GBLA  &$MBLATH,&$MBL2                                          00450000
+                                       5 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00460000
+                                       6 *                                                                     * 00470000
+                                       7 *      THESE FOLLOWING STATEMENTS ARE NORMAL zOS INITIALIZATION       * 00480000
+                                       8 *                                                                     * 00490000
+                                       9 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00500000
+                                      10 *                                                                       00510000
+                       00000          11 R0       EQU   0                                                        00520000
+                       00001          12 R1       EQU   1       STANDARD                                         00530000
+                       00002          13 R2       EQU   2        EQUATES                                         00540000
+                       00003          14 R3       EQU   3         FOR                                            00550000
+                       00004          15 R4       EQU   4          GENERAL                                       00560000
+                       00005          16 R5       EQU   5           PURPOSE                                      00570000
+                       00006          17 R6       EQU   6            REGISTERS.                                  00580000
+                       00007          18 R7       EQU   7             YOU                                        00590000
+                       00008          19 R8       EQU   8              MIGHT                                     00600000
+                       00009          20 R9       EQU   9               AS                                       00610000
+                       0000A          21 R10      EQU   10               WELL                                    00620000
+                       0000B          22 R11      EQU   11                JUST                                   00630000
+                       0000C          23 R12      EQU   12                 GET                                   00640000
+                       0000D          24 R13      EQU   13                  USED                                 00650000
+                       0000E          25 R14      EQU   14                   TO                                  00660000
+                       0000F          26 R15      EQU   15                    IT.                                00670000
+                                      27 *                                                                       00680000
+ 000000                00000 004C5    28 IFDOC    CSECT                                                          00690000
+                                      29 *                                                                       00700000
+ 000000 90EC D00C            0000C    30          STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA      00710000
+ 000004 18CF                          31          LR    R12,R15             PRIME BASE REG                       00720000
+ 000006 41B0 C800            00800    32          LA    R11,2048(,R12)      LET'S ADDRESS                        00730000
+ 00000A 41B0 B800            00800    33          LA    R11,2048(,R11)      - ANOTHER 4K                         00740000
+                 R:CB  00000          34          USING IFDOC,R12,R11       SET BASE REGISTER FOR PROGRAM        00750000
+ 00000E 181D                          35          LR    R1,R13              COPY POINTER TO CALLER'S SA          00760000
+ 000010 58D0 C42C            0042C    36          L     R13,VCON$WA$        ADDRESS OF MY SAVE/WORK AREA         00770000
+                  R:D  004C8          37          USING $$WA$$,R13          SEPARATE CSECT FOR REENTRANCY        00780000
+ 000014 5010 D004            004CC    38          ST    R1,SAVEAREA+4       BACK LINK TO CALLER'S SAVE AREA      00790000
+ 000018 50D0 1008            00008    39          ST    R13,8(,R1)          FORWARD LINK TO MY SAVE AREA         00800000
+                                      40 *                                                                       00810000
+ 00001C 47F0 0000            00000    41          B     0                   CREATE ABEND                         00820000
+                                      42 *                                                                       00830000
+ 0004C8                004C8 00049    43 $$WA$$   CSECT                                                          00840000
+ 0004C8 0000000000000000              44 SAVEAREA DC    18F'0'              MY SAVE AREA                         00850000
+ 000020                00000 004C5    45 IFDOC    CSECT                                                          00860000
+                                      46 *                                                                       00870000
+                                      47          PRINT GEN                                                      00880000
+                                      48 *                                                                       00890000
+                                      49 &$MBL2   SETA  0                                                        00900000
+                                      50 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00910000
+                                      51 * TEST "FIRST" MACRO                                                  * 00920000
+                                      52 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00930000
+                                      53 TS010    FIRST ,                                                        00940000
+ 000020 9101 D048      00510          54+         TM    $SW1,X'01'                                               01-FIRST
+ 000024 A784 0007            00032    55+         JZ    $NEXT1                                                   01-FIRST
+ 000028 9200 D048      00510          56+         MVI   $SW1,X'00'                                               01-FIRST
+ 000510                004C8 00049    57+$$WA$$   CSECT                     ENTER WORK AREA                      01-FIRST
+ 000510 01                            58+$SW1     DC    X'01'               EXECUTION SWITCH                     01-FIRST
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    5
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+000002C                00000 004C5    59+IFDOC    CSECT                     RESUME INSTRUCTION AREA              01-FIRST
+ 00002C FA30 C460 C454 00460 00454    60            AP    LEVEL1_PASS_COUNTER,=P'1'                              00950000
+                                      61          ENDFIRST ,                                                     00960000
+ 000032                               62+$NEXT1   DC    0H'0'                                                    01-ENDFI
+                                      63 *                                                                       00970000
+                                      64 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00980000
+                                      65 *                                                                     * 00990000
+                                      66 *                   THE "IF" STATEMENT                                * 01000000
+                                      67 *                                                                     * 01010000
+                                      68 *      THE FORMAT OF THE STATEMENT IS:                                * 01020000
+                                      69 *                                                                     * 01030000
+                                      70 *        IF    (CLC,A,Z,NE)                                           * 01040000
+                                      71 *                                                                     * 01050000
+                                      72 * WHERE THE 'CLC' CAN BE ANY INSTRUCTION THAT SETS THE CONDITION      * 01060000
+                                      73 * CODE, 'A' IS THE FIRST OPERAND, 'Z' THE SECOND, AND 'NE' CAN BE ANY * 01070000
+                                      74 * CONDITION WHICH IS A MEMBER OF THE EXTENDED MNEMONIC BRANCH         * 01080000
+                                      75 * INSTRUCTIONS, AND SETS THE CONDITION IN WHICH THE IF-GROUP IS TO    * 01090000
+                                      76 * BE EXECUTED. EXAMPLES INCLUDE 'E', 'NE', 'NO', ETC. THE INSTRUCTION * 01100000
+                                      77 * DOES NOT HAVE TO HAVE TWO OPERANDS. IN ANY CASE, THE OP-CODE MUST   * 01110000
+                                      78 * BE THE FIRST POSITIONAL PARAMETER WITHIN THE PARENTHESES, AND THE   * 01120000
+                                      79 * CONDITION, SUCH AS "E" OR "NE", MUST BE THE LAST.                   * 01130000
+                                      80 *                                                                     * 01140000
+                                      81 *      IF    (CLC,A,Z,NE)                                             * 01150000
+                                      82 *                                                                     * 01160000
+                                      83 *               ONE OR MORE INSTRUCTIONS                              * 01170000
+                                      84 *               TO BE EXECUTED IF THE ABOVE                           * 01180000
+                                      85 *               LOGIC GROUP EVALUATES TO "TRUE"                       * 01190000
+                                      86 *                                                                     * 01200000
+                                      87 *      ENDIF                                                          * 01210000
+                                      88 *                                                                     * 01220000
+                                      89 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01230000
+                                      90 *        1         2         3         4         5         6         7  01240000
+                                      91 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 01250000
+                                      92          IF    (CLC,A,Z,NE)                                             01260000
+ 000032 D503 C491 C4C1 00491 004C1    94+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 000038 A784 0005            00042    98+         JE    $NEXT2              BRANCH IF CC INDICATES FAIL          01-IF
+ 00003C FA30 C460 C454 00460 00454    99            AP    LEVEL1_PASS_COUNTER,=P'1'                              01270000
+                                     100          ENDIF                                                          01280000
+ 000042                              102+$NEXT2   DC    0H'0'                                                    01-ENDIF
+                                     103 *                                                                       01290000
+ 000042 41A0 C491            00491   104          LA    R10,A                                                    01300000
+                                     105 *        1         2         3         4         5         6         7  01310000
+                                     106 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 01320000
+                                     107          IF    (CLC,0(4,R10),=C'ZZZZ',NE)                               01330000
+ 000046 D503 A000 C450 00000 00450   109+         CLC   0(4,R10),=C'ZZZZ'   TWO OPERANDS                         01-IF
+ 00004C A784 0005            00056   113+         JE    $NEXT3              BRANCH IF CC INDICATES FAIL          01-IF
+ 000050 FA30 C460 C454 00460 00454   114            AP    LEVEL1_PASS_COUNTER,=P'1'                              01340000
+                                     115          ENDIF                                                          01350000
+ 000056                              117+$NEXT3   DC    0H'0'                                                    01-ENDIF
+                                     118 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01360000
+                                     119 * SAME - WITH A ONE OPERAND INSTRUCTION                               * 01370000
+                                     120 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01380000
+                                     121 TS010    IF    (TS,SPECIAL,Z)                                           01390000
+ 000056 9300 C490      00490         123+TS010    TS    SPECIAL             ONE OPERAND                          01-IF
+ 00005A A774 0005            00064   127+         JNZ   $NEXT4              BRANCH IF CC INDICATES FAIL          01-IF
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    6
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+000005E FA30 C460 C454 00460 00454   128            AP    LEVEL1_PASS_COUNTER,=P'1'                              01400000
+                                     129          ENDIF  ,                                                       01410000
+ 000064                              131+$NEXT4   DC    0H'0'                                                    01-ENDIF
+                                     132 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01420000
+                                     133 * SAME - WITH A THREE OPERAND INSTRUCTION                             * 01430000
+                                     134 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01440000
+ 000064 F236 C48C C455 0048C 00455   135          PACK  SHIFT_PACKED,=Z'1234567'                                 01450000
+                                     136 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01460000
+                                     137 *  "SRP" INSTRUCTION "SHIFT AND ROUND DECIMAL" - THREE OPERANDS       * 01470000
+                                     138 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01480000
+                                     139 SRP010   IF    (SRP,SHIFT_PACKED,5,3,P) "POSITIVE"                      01490000
+ 00006A F033 C48C 0005 0048C 00005   141+SRP010   SRP   SHIFT_PACKED,5,3     THREE OPERANDS                      01-IF
+ 000070 A7D4 0005            0007A   145+         JNP   $NEXT5              BRANCH IF CC INDICATES FAIL          01-IF
+ 000074 FA30 C460 C454 00460 00454   146            AP    LEVEL1_PASS_COUNTER,=P'1'                              01500000
+                                     147          ENDIF  ,                                                       01510000
+ 00007A                              149+$NEXT5   DC    0H'0'                                                    01-ENDIF
+                                     150 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01520000
+                                     151 * "RISBHGZ" - A FOUR OPERAND INSTRUCTION                              * 01530000
+                                     152 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01540000
+ 00007A E310 C430 0004       00430   153          LG    R1,=X'0123456789ABCDEF'                                  01550000
+ 000080 E320 C438 0004       00438   154          LG    R2,=X'FEDCBA9876543210'                                  01560000
+                                     155 RISBHGZ010 IF (RISBHGZ,R1,R2,16,31,Z)                                   01570000
+ 000086 EC12 109F 005D       00000   157+RISBHGZ010 RISBHGZ R1,R2,16,31              FOUR OPERANDS               01-IF
+ 00008C A774 0005            00096   161+         JNZ   $NEXT6              BRANCH IF CC INDICATES FAIL          01-IF
+ 000090 FA30 C460 C454 00460 00454   162            AP    LEVEL1_PASS_COUNTER,=P'1'                              01580000
+                                     163          ENDIF  ,                                                       01590000
+ 000096                              165+$NEXT6   DC    0H'0'                                                    01-ENDIF
+                                     166 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01600000
+                                     167 *  "RNSBG" INSTRUCTION  - FIVE OPERANDS                               * 01610000
+                                     168 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01620000
+ 000096 E350 C440 0004       00440   169          LG    R5,=C'12345672'                                          01630000
+ 00009C E360 C448 0004       00448   170          LG    R6,=C'ABCDEFGC'                                          01640000
+                                     171 RNSBG010 IF    (RNSBG,R5,R6,56,7,0,P) "POSITIVE"                        01650000
+ 0000A2 EC56 3807 0054       00000   173+RNSBG010 RNSBG R5,R6,56,7,0                       FIVE OPERANDS         01-IF
+ 0000A8 A7D4 0005            000B2   177+         JNP   $NEXT7              BRANCH IF CC INDICATES FAIL          01-IF
+ 0000AC FA30 C460 C454 00460 00454   178            AP    LEVEL1_PASS_COUNTER,=P'1'                              01660000
+                                     179          ENDIF  ,                                                       01670000
+ 0000B2                              181+$NEXT7   DC    0H'0'                                                    01-ENDIF
+                                     182 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01680000
+                                     183 *                                                                     * 01690000
+                                     184 *                 THE "ELSE" STATEMENT                                * 01700000
+                                     185 *                                                                     * 01710000
+                                     186 *      THE FORMAT OF THE STATEMENT IS:                                * 01720000
+                                     187 *                                                                     * 01730000
+                                     188 *        ELSE                                                         * 01740000
+                                     189 *                                                                     * 01750000
+                                     190 * IT MUST FOLLOW AN "IF" STATEMENT AND PRECEDE ITS MATCHING "ENDIF".  * 01760000
+                                     191 * THE CODE THAT YOU PROVIDE BETWEEN THE "ELSE" AND THE "ENDIF" WILL   * 01770000
+                                     192 * BE EXECUTED IF THE "IF" CLAUSE(S) RESULT IN "NOT TRUE". THE "ELSE"  * 01780000
+                                     193 * IS OPTIONAL, AND IN ITS ABSENCE NO ACTION WILL BE TAKEN IN THE      * 01790000
+                                     194 * EVENT THAT THE EXECUTION OF THE "IF" MACRO RESULTS IN "FALSE".      * 01800000
+                                     195 *                                                                     * 01810000
+                                     196 *      IF    ...                                                      * 01820000
+                                     197 *                                                                     * 01830000
+                                     198 *               ONE OR MORE INSTRUCTIONS                              * 01840000
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    7
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0                                    199 *               TO BE EXECUTED IF THE ABOVE                           * 01850000
+                                     200 *               LOGIC GROUP EVALUATES TO "TRUE"                       * 01860000
+                                     201 *                                                                     * 01870000
+                                     202 *      ELSE                                                           * 01880000
+                                     203 *                                                                     * 01890000
+                                     204 *               ONE OR MORE INSTRUCTIONS                              * 01900000
+                                     205 *               TO BE EXECUTED IF THE ABOVE                           * 01910000
+                                     206 *               LOGIC GROUP EVALUATES TO "FALSE"                      * 01920000
+                                     207 *                                                                     * 01930000
+                                     208 *      ENDIF                                                          * 01940000
+                                     209 *                                                                     * 01950000
+                                     210 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01960000
+                                     211 *        1         2         3         4         5         6         7  01970000
+                                     212 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 01980000
+                                     213          IF    (CLI,EOFSW,C'N',E)                                       01990000
+ 0000B2 95D5 C45C      0045C         215+         CLI   EOFSW,C'N'          TWO OPERANDS                         01-IF
+ 0000B6 A774 0007            000C4   219+         JNE   $NEXT8              BRANCH IF CC INDICATES FAIL          01-IF
+ 0000BA FA30 C460 C454 00460 00454   220            AP    LEVEL1_PASS_COUNTER,=P'1'                              02000000
+                                     221          ELSE                                                           02010000
+ 0000C0 A7F4 0005            000CA   223+         J     $FINI9                                                   01-ELSE
+ 0000C4                              224+$NEXT8   DC    0H'0'                                                    01-ELSE
+ 0000C4 FA30 C468 C454 00468 00454   225            AP    LEVEL1_ELSE_COUNTER,=P'1'                              02020000
+                                     226          ENDIF                                                          02030000
+ 0000CA                              228+$FINI9   DC    0H'0'                                                    01-ENDIF
+                                     229 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02040000
+                                     230 *                                                                     * 02050000
+                                     231 *                 THE "ELSEIF" STATEMENT                              * 02060000
+                                     232 *                                                                     * 02070000
+                                     233 *      THE FORMAT OF THE STATEMENT IS:                                * 02080000
+                                     234 *                                                                     * 02090000
+                                     235 *        ELSEIF (CLC,A,Z,E)                                           * 02100000
+                                     236 *                                                                     * 02110000
+                                     237 * IT MUST FOLLOW AN "IF" STATEMENT AND PRECEDE ITS MATCHING "ENDIF".  * 02120000
+                                     238 * IF THERE IS AN "ELSE" STATEMENT WITHIN THIS "IF" GROUP, THEN THE    * 02130000
+                                     239 * "ELSEIF" MUST PRECEDE THE "ELSE".                                   * 02140000
+                                     240 *                                                                     * 02150000
+                                     241 * THE "ELSEIF" STATEMENT SUPPORTS THE SAME RICHNESS OF FUNCTION THAT  * 02160000
+                                     242 * THE "IF" STATEMENT PROVIDES. THE "IF" STATEMENT'S FULL POWER IS     * 02170000
+                                     243 * DESCRIBED IN SOME OF THE EXAMPLES THAT FOLLOW.                      * 02180000
+                                     244 *                                                                     * 02190000
+                                     245 * THE CODE THAT YOU PROVIDE BETWEEN THE "ELSEIF" AND THE FOLLOWING    * 02200000
+                                     246 * "ELSE" OR "ENDIF" WILL BE EXECUTED IF THE "IF" CLAUSE(S) AND ALL    * 02210000
+                                     247 * PREVIOUS "ELSEIF" STATEMENTS ARE FALSE, AND THE RESULT OF THIS      * 02220000
+                                     248 * "ELSEIF" IS TRUE. THE "ELSEIF" IS OPTIONAL, MAY OCCUR MORE THAN     * 02230000
+                                     249 * ONCE, AND MUST BE CODED BETWEEN THE "IF" AND THE "ELSE" OR "ENDIF". * 02240000
+                                     250 *                                                                     * 02250000
+                                     251 *      IF       ...                                                   * 02260000
+                                     252 *                                                                     * 02270000
+                                     253 *               ONE OR MORE INSTRUCTIONS                              * 02280000
+                                     254 *               TO BE EXECUTED IF THE ABOVE                           * 02290000
+                                     255 *               LOGIC GROUP EVALUATES TO "TRUE"                       * 02300000
+                                     256 *                                                                     * 02310000
+                                     257 *      ELSEIF   ...                                                   * 02320000
+                                     258 *                                                                     * 02330000
+                                     259 *               ONE OR MORE INSTRUCTIONS TO BE EXECUTED IF THIS       * 02340000
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    8
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0                                    260 *               "ELSEIF" EVALUATES TO "TRUE" AND THE PRECEDING "IF"   * 02350000
+                                     261 *               AND ANY ADDITIONAL "ELSEIF" STATEMENT(S) ALL EVALUATE * 02360000
+                                     262 *               TO "FALSE"                                            * 02370000
+                                     263 *                                                                     * 02380000
+                                     264 *      ENDIF                                                          * 02390000
+                                     265 *                                                                     * 02400000
+                                     266 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02410000
+                                     267 *        1         2         3         4         5         6         7  02420000
+                                     268 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 02430000
+                                     269          IF    (CLC,A,Z,NE)                                             02440000
+ 0000CA D503 C491 C4C1 00491 004C1   271+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 0000D0 A784 0007            000DE   275+         JE    $NEXT10             BRANCH IF CC INDICATES FAIL          01-IF
+ 0000D4 FA30 C460 C454 00460 00454   276            AP    LEVEL1_PASS_COUNTER,=P'1'                              02450000
+                                     277          ELSEIF (CLC,B,Z,E)                                             02460000
+ 0000DA A7F4 000A            000EE   279+         J     $FINI11                                                  01-ELSEI
+ 0000DE D503 C495 C4C1 00495 004C1   282+$NEXT10  CLC   B,Z                 TWO OPERANDS                         02-IF
+ 0000E4 A774 0005            000EE   286+         JNE   $NEXT12             BRANCH IF CC INDICATES FAIL          02-IF
+ 0000E8 FA30 C464 C454 00464 00454   287            AP    LEVEL1_ELSEIF_COUNTER,=P'1'                            02470000
+                                     288          ENDIF                                                          02480000
+ 0000EE                              290+$NEXT12  DC    0H'0'                                                    01-ENDIF
+ 0000EE                              291+$FINI11  DC    0H'0'                                                    01-ENDIF
+                                     292 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02490000
+                                     293 *                                                                     * 02500000
+                                     294 *                 BOTH "ELSEIF" AND "ELSE"                            * 02510000
+                                     295 *                                                                     * 02520000
+                                     296 * NOTE: IF AN "ELSE" IS USED IN THE SAME IF-GROUP AS ONE OR MORE      * 02530000
+                                     297 *       "ELSEIF" STATEMENTS, THEN THE "ELSE" MUST BE THE LAST.        * 02540000
+                                     298 *                                                                     * 02550000
+                                     299 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02560000
+                                     300 *        1         2         3         4         5         6         7  02570000
+                                     301 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 02580000
+                                     302          IF    (CLC,A,Z,NE)                                             02590000
+ 0000EE D503 C491 C4C1 00491 004C1   304+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 0000F4 A784 0007            00102   308+         JE    $NEXT13             BRANCH IF CC INDICATES FAIL          01-IF
+ 0000F8 FA30 C460 C454 00460 00454   309            AP    LEVEL1_PASS_COUNTER,=P'1'                              02600000
+                                     310          ELSEIF (CLC,B,Z,E)                                             02610000
+ 0000FE A7F4 0023            00144   312+         J     $FINI14                                                  01-ELSEI
+ 000102 D503 C495 C4C1 00495 004C1   315+$NEXT13  CLC   B,Z                 TWO OPERANDS                         02-IF
+ 000108 A774 0007            00116   319+         JNE   $NEXT15             BRANCH IF CC INDICATES FAIL          02-IF
+ 00010C FA30 C464 C454 00464 00454   320            AP    LEVEL1_ELSEIF_COUNTER,=P'1'                            02620000
+                                     321          ELSEIF (CLC,C,Z,E)                                             02630000
+ 000112 A7F4 0019            00144   323+         J     $FINI14                                                  01-ELSEI
+ 000116 D503 C499 C4C1 00499 004C1   326+$NEXT15  CLC   C,Z                 TWO OPERANDS                         02-IF
+ 00011C A774 0007            0012A   330+         JNE   $NEXT16             BRANCH IF CC INDICATES FAIL          02-IF
+ 000120 FA30 C464 C454 00464 00454   331            AP    LEVEL1_ELSEIF_COUNTER,=P'1'                            02640000
+                                     332          ELSEIF (CLC,D,Z,E)                                             02650000
+ 000126 A7F4 000F            00144   334+         J     $FINI14                                                  01-ELSEI
+ 00012A D503 C49D C4C1 0049D 004C1   337+$NEXT16  CLC   D,Z                 TWO OPERANDS                         02-IF
+ 000130 A774 0007            0013E   341+         JNE   $NEXT17             BRANCH IF CC INDICATES FAIL          02-IF
+ 000134 FA30 C464 C454 00464 00454   342            AP    LEVEL1_ELSEIF_COUNTER,=P'1'                            02660000
+                                     343          ELSE  ,                                                        02670000
+ 00013A A7F4 0005            00144   345+         J     $FINI14                                                  01-ELSE
+ 00013E                              346+$NEXT17  DC    0H'0'                                                    01-ELSE
+ 00013E FA30 C468 C454 00468 00454   347            AP    LEVEL1_ELSE_COUNTER,=P'1'                              02680000
+                                     348          ENDIF                                                          02690000
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    9
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0000144                              350+$FINI14  DC    0H'0'                                                    01-ENDIF
+                                     351 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02700000
+                                     352 *                                                                     * 02710000
+                                     353 *                      THE "OR" CONJUNCTION                           * 02720000
+                                     354 *                                                                     * 02730000
+                                     355 *      TO EXECUTE THE IF-GROUP IF EITHER ONE OF TWO CONDITIONS IS     * 02740000
+                                     356 * TRUE, THE FORMAT IS:                                                * 02750000
+                                     357 *                                                           72        * 02760000
+                                     358 *      IF    (CLC,A,Z,NE),OR,                                C        * 02770000
+                                     359 *            (CLC,B,Z,NE)                                             * 02780000
+                                     360 *                                                                     * 02790000
+                                     361 *               ONE OR MORE INSTRUCTIONS                              * 02800000
+                                     362 *               TO BE EXECUTED IF THE ABOVE                           * 02810000
+                                     363 *               LOGIC GROUP EVALUATES TO "TRUE"                       * 02820000
+                                     364 *                                                                     * 02830000
+                                     365 *      ENDIF                                                          * 02840000
+                                     366 *                                                                     * 02850000
+                                     367 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02860000
+                                     368 *        1         2         3         4         5         6         7  02870000
+                                     369 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 02880000
+                                     370          IF    (CLC,A,Z,NE),OR,    NOTE "C" IN COLUMN 72 ============> C02890000
+                                                        (CLC,B,Z,NE)                                             02900000
+ 000144 D503 C491 C4C1 00491 004C1   372+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 00014A A774 0007            00158   375+         JNE   $MDT18              TRUE RESULT - POSSIBLE PASS          01-IF
+ 00014E D503 C495 C4C1 00495 004C1   377+         CLC   B,Z                 TWO OPERANDS                         01-IF
+ 000154 A784 0005            0015E   381+         JE    $NEXT19             BRANCH IF CC INDICATES FAIL          01-IF
+ 000158                              382+$MDT18   DC    0H'0'               END RESULT WAS PASS - DO THE EXECUTE 01-IF
+ 000158 FA30 C460 C454 00460 00454   383            AP    LEVEL1_PASS_COUNTER,=P'1'                              02910000
+                                     384          ENDIF                                                          02920000
+ 00015E                              386+$NEXT19  DC    0H'0'                                                    01-ENDIF
+                                     387 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02930000
+                                     388 *                                                                     * 02940000
+                                     389 *                      THE "AND" CONJUNCTION                          * 02950000
+                                     390 *                                                                     * 02960000
+                                     391 *      TO EXECUTE THE IF-GROUP IF BOTH OF THE TWO CONDITIONS ARE      * 02970000
+                                     392 * TRUE, THE FORMAT IS:                                                * 02980000
+                                     393 *                                                                     * 02990000
+                                     394 *      IF    (CLC,A,Z,NE),AND,(LTR,R15,R15,Z)                         * 03000000
+                                     395 *                                                                     * 03010000
+                                     396 *               ONE OR MORE INSTRUCTIONS                              * 03020000
+                                     397 *               TO BE EXECUTED IF THE ABOVE                           * 03030000
+                                     398 *               LOGIC GROUP EVALUATES TO "TRUE"                       * 03040000
+                                     399 *                                                                     * 03050000
+                                     400 *      ENDIF                                                          * 03060000
+                                     401 *                                                                     * 03070000
+                                     402 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 03080000
+                                     403 *        1         2         3         4         5         6         7  03090000
+                                     404 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 03100000
+                                     405          IF    (CLC,A,Z,NE),AND,(LTR,R15,R15,Z)                         03110000
+ 00015E D503 C491 C4C1 00491 004C1   407+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 000164 A784 0008            00174   410+         JE    $MDF20              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 000168 12FF                         412+         LTR   R15,R15             TWO OPERANDS                         01-IF
+ 00016A A774 0005            00174   416+         JNZ   $MDF20              BRANCH IF CC INDICATES FAIL          01-IF
+ 00016E FA30 C460 C454 00460 00454   417            AP    LEVEL1_PASS_COUNTER,=P'1'                              03120000
+                                     418          ENDIF                                                          03130000
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   10
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0000174                              420+$MDF20   DC    0H'0'                                                    01-ENDIF
+                                     421 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 03140000
+                                     422 *                                                                     * 03150000
+                                     423 *      TO EXECUTE THE IF-GROUP IF THE FIRST AND SECOND LOGICAL        * 03160000
+                                     424 * EXPRESSIONS ARE TRUE, OR THE THIRD EXPRESSION IS TRUE, THE FORMAT   * 03170000
+                                     425 * IS:                                                                 * 03180000
+                                     426 *                                                                     * 03190000
+                                     427 *      IF    (CLC,A,Z,NE),AND,(CLC,B,Z,NE),OR,(CLC,C,Z,NE)            * 03200000
+                                     428 *                                                                     * 03210000
+                                     429 *               ONE OR MORE INSTRUCTIONS                              * 03220000
+                                     430 *               TO BE EXECUTED IF THE ABOVE                           * 03230000
+                                     431 *               LOGIC GROUP EVALUATES TO "TRUE".                      * 03240000
+                                     432 *                                                                     * 03250000
+                                     433 *      ENDIF                                                          * 03260000
+                                     434 *                                                                     * 03270000
+                                     435 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 03280000
+                                     436 *        1         2         3         4         5         6         7  03290000
+                                     437 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 03300000
+                                     438          IF    (CLC,A,Z,NE),AND,(CLC,B,Z,NE),OR,(CLC,C,Z,NE)            03310000
+ 000174 D503 C491 C4C1 00491 004C1   440+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 00017A A784 0007            00188   443+         JE    $MDF21              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 00017E D503 C495 C4C1 00495 004C1   445+         CLC   B,Z                 TWO OPERANDS                         01-IF
+ 000184 A774 0007            00192   448+         JNE   $MDT22              TRUE RESULT - POSSIBLE PASS          01-IF
+ 000188 D503 C499 C4C1 00499 004C1   450+$MDF21   CLC   C,Z                 TWO OPERANDS                         01-IF
+ 00018E A784 0005            00198   454+         JE    $NEXT23             BRANCH IF CC INDICATES FAIL          01-IF
+ 000192                              455+$MDT22   DC    0H'0'               END RESULT WAS PASS - DO THE EXECUTE 01-IF
+ 000192 FA30 C460 C454 00460 00454   456            AP    LEVEL1_PASS_COUNTER,=P'1'                              03320000
+                                     457          ENDIF                                                          03330000
+ 000198                              459+$NEXT23  DC    0H'0'                                                    01-ENDIF
+                                     460 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 03340000
+                                     461 *                                                                     * 03350000
+                                     462 *      SINCE THE EVALUATION OF "AND" IN A LOGICAL EXPRESSION TAKES    * 03360000
+                                     463 * PRECEDENCE OVER "OR", YOU MAY NEED TO OVERRIDE THAT PRECEDENCE TO   * 03370000
+                                     464 * FORCE AN "OR" CONJUNCTION TO BE EVALUATED BEFORE AN "AND". YOU      * 03380000
+                                     465 * WOULD ENCLOSE THE TWO EXPRESSIONS JOINED BY AN "OR" WITH AN         * 03390000
+                                     466 * ADDITIONAL PAIR OF PARENTHESES. HERE THE BODY OF THE IF-GROUP WILL  * 03400000
+                                     467 * EXECUTE IF THE FIRST PHRASE IS TRUE AND EITHER OF THE OTHER TWO     * 03410000
+                                     468 * PHRASES IS TRUE.                                                    * 03420000
+                                     469 *                             |                            |          * 03430000
+                                     470 *                             |                            |          * 03440000
+                                     471 *                             |                            |          * 03450000
+                                     472 *                             V                            V          * 03460000
+                                     473 *      IF    (CLC,A,Z,NE),AND,((CLC,B,Z,NE),OR,(CLC,C,Z,NE))          * 03470000
+                                     474 *                                                                     * 03480000
+                                     475 *               ONE OR MORE INSTRUCTIONS                              * 03490000
+                                     476 *               TO BE EXECUTED IF THE ABOVE                           * 03500000
+                                     477 *               LOGIC GROUP EVALUATES TO "TRUE"                       * 03510000
+                                     478 *                                                                     * 03520000
+                                     479 *      ENDIF                                                          * 03530000
+                                     480 *                                                                     * 03540000
+                                     481 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 03550000
+                                     482 *        1         2         3         4         5         6         7  03560000
+                                     483 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 03570000
+                                     484 *                                                                       03580000
+                                     485 *                               V<<<< EXTRA PARENTHESES: >>>>V          03590000
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   11
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0                                    486 *                               V                            V          03600000
+                                     487          IF    (CLC,A,Z,NE),AND,((CLC,B,Z,NE),OR,(CLC,C,Z,NE))          03610000
+ 000198 D503 C491 C4C1 00491 004C1   489+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 00019E A784 000F            001BC   492+         JE    $MDF24              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 0001A2 D503 C495 C4C1 00495 004C1   497+         CLC   B,Z                 TWO OPERANDS                         02-IF2
+ 0001A8 A774 0007            001B6   500+         JNE   $MDT25              TRUE RESULT - POSSIBLE PASS          02-IF2
+ 0001AC D503 C499 C4C1 00499 004C1   502+         CLC   C,Z                 TWO OPERANDS                         02-IF2
+ 0001B2 A784 0005            001BC   508+         JE    $MDF24              BRANCH IF CC INDICATES FAIL          01-IF
+ 0001B6                              509+$MDT25   DC    0H'0'               END RESULT WAS PASS - DO THE EXECUTE 01-IF
+ 0001B6 FA30 C460 C454 00460 00454   510            AP    LEVEL1_PASS_COUNTER,=P'1'                              03620000
+                                     511          ENDIF                                                          03630000
+ 0001BC                              513+$MDF24   DC    0H'0'                                                    01-ENDIF
+                                     514 *                                                                       03640000
+                                     515 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 03650000
+                                     516 *                                                                     * 03660000
+                                     517 *      IF (A OR B) AND (C OR D)                                       * 03670000
+                                     518 *                                                                     * 03680000
+                                     519 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 03690000
+                                     520 *        1         2         3         4         5         6         7  03700000
+                                     521 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 03710000
+                                     522          IF    ((CLC,A,Z,NE),OR,(CLC,B,Z,NE)),AND,                     C03720000
+                                                        ((CLC,C,Z,NE),OR,(CLC,D,Z,NE))                           03730000
+ 0001BC D503 C491 C4C1 00491 004C1   527+         CLC   A,Z                 TWO OPERANDS                         02-IF2
+ 0001C2 A774 0007            001D0   530+         JNE   $MDT26              TRUE RESULT - POSSIBLE PASS          02-IF2
+ 0001C6 D503 C495 C4C1 00495 004C1   532+         CLC   B,Z                 TWO OPERANDS                         02-IF2
+ 0001CC A784 000F            001EA   537+         JE    $MDF27              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 0001D0 D503 C499 C4C1 00499 004C1   542+$MDT26   CLC   C,Z                 TWO OPERANDS                         02-IF2
+ 0001D6 A774 0007            001E4   545+         JNE   $MDT28              TRUE RESULT - POSSIBLE PASS          02-IF2
+ 0001DA D503 C49D C4C1 0049D 004C1   547+         CLC   D,Z                 TWO OPERANDS                         02-IF2
+ 0001E0 A784 0005            001EA   553+         JE    $MDF27              BRANCH IF CC INDICATES FAIL          01-IF
+ 0001E4                              554+$MDT28   DC    0H'0'               END RESULT WAS PASS - DO THE EXECUTE 01-IF
+ 0001E4 FA30 C460 C454 00460 00454   555            AP    LEVEL1_PASS_COUNTER,=P'1'                              03740000
+                                     556          ENDIF                                                          03750000
+ 0001EA                              558+$MDF27   DC    0H'0'                                                    01-ENDIF
+                                     559 *                                                                       03760000
+                                     560 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 03770000
+                                     561 *                                                                     * 03780000
+                                     562 *      IF YOU REQUIRE MORE COMPLEX LOGIC, YOU MAY NEST THE "OR"       * 03790000
+                                     563 *      CONJUNCTIONS TO ANOTHER LEVEL. YOU MAY ADD EVEN ADDITIONAL     * 03800000
+                                     564 *      LEVELS OF COMPLEXITY AS REQUIRED.                              * 03810000
+                                     565 *                                                                     * 03820000
+                                     566 *      IF A OR B AND ( C OR D AND (E OR F))                           * 03830000
+                                     567 *                                                                     * 03840000
+                                     568 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 03850000
+                                     569 *        1         2         3         4         5         6         7  03860000
+                                     570 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 03870000
+                                     571          IF    (CLC,A,Z,E),OR,(CLC,B,Z,E),AND,                         C03880000
+                                                        ((CLC,C,Z,E),OR,(CLC,D,Z,E),AND,                        C03890000
+                                                        ((CLC,E,Z,E),OR,(CLC,F,Z,E)))                            03900000
+ 0001EA D503 C491 C4C1 00491 004C1   573+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 0001F0 A784 001B            00226   576+         JE    $MDT29              TRUE RESULT - POSSIBLE PASS          01-IF
+ 0001F4 D503 C495 C4C1 00495 004C1   578+         CLC   B,Z                 TWO OPERANDS                         01-IF
+ 0001FA A774 0019            0022C   581+         JNE   $MDF30              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 0001FE D503 C499 C4C1 00499 004C1   586+         CLC   C,Z                 TWO OPERANDS                         02-IF2
+ 000204 A784 0011            00226   589+         JE    $MDT31              TRUE RESULT - POSSIBLE PASS          02-IF2
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   12
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0000208 D503 C49D C4C1 0049D 004C1   591+         CLC   D,Z                 TWO OPERANDS                         02-IF2
+ 00020E A774 000F            0022C   594+         JNE   $MDF32              FALSE RESULT - POSSIBLE FAIL         02-IF2
+ 000212 D503 C4A1 C4C1 004A1 004C1   599+         CLC   E,Z                 TWO OPERANDS                         03-IF2
+ 000218 A784 0007            00226   602+         JE    $MDT33              TRUE RESULT - POSSIBLE PASS          03-IF2
+ 00021C D503 C4A5 C4C1 004A5 004C1   604+         CLC   F,Z                 TWO OPERANDS                         03-IF2
+                       00226         608+$MDT33   EQU   $MDT31              ANCHOR NESTED TRUE NAME              02-IF2
+                       0022C         611+$MDF32   EQU   $MDF30              ANCHOR NESTED FALSE NAME             01-IF
+                       00226         612+$MDT31   EQU   $MDT29              ANCHOR NESTED TRUE NAME              01-IF
+ 000222 A774 0005            0022C   615+         JNE   $MDF30              BRANCH IF CC INDICATES FAIL          01-IF
+ 000226                              616+$MDT29   DC    0H'0'               END RESULT WAS PASS - DO THE EXECUTE 01-IF
+ 000226 FA30 C460 C454 00460 00454   617            AP    LEVEL1_PASS_COUNTER,=P'1'                              03910000
+                                     618          ENDIF                                                          03920000
+ 00022C                              620+$MDF30   DC    0H'0'                                                    01-ENDIF
+                                     621 *                                                                       03930000
+                                     622 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 03940000
+                                     623 *                                                                     * 03950000
+                                     624 * IF A IS TRUE AND EITHER B OR C IS TRUE AND D IS TRUE  -  OR...      * 03960000
+                                     625 * IF E IS TRUE AND EITHER F OR G IS TRUE AND H IS TRUE, THEN EXECUTE  * 03970000
+                                     626 * THE CODE FOLLOWING THIS "IF" STATEMENT:                             * 03980000
+                                     627 *                                                                     * 03990000
+                                     628 *      IF     A & ( B | C) & D    |    E & (F | G) & H                * 04000000
+                                     629 *                                                                     * 04010000
+                                     630 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 04020000
+                                     631 *        1         2         3         4         5         6         7  04030000
+                                     632 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 04040000
+                                     633          IF    (CLC,A,Z,E),AND,                                        C04050000
+                                                        ((CLC,B,Z,E),OR,(CLC,C,Z,E)),AND,                       C04060000
+                                                        (CLC,D,Z,E),OR,                                         C04070000
+                                                        (CLC,E,Z,E),AND,                                        C04080000
+                                                        ((CLC,F,Z,E),OR,(CLC,G,Z,E)),AND,                       C04090000
+                                                        (CLC,H,Z,E)                                              04100000
+ 00022C D503 C491 C4C1 00491 004C1   635+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 000232 A774 0011            00254   638+         JNE   $MDF34              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 000236 D503 C495 C4C1 00495 004C1   643+         CLC   B,Z                 TWO OPERANDS                         02-IF2
+ 00023C A784 0007            0024A   646+         JE    $MDT35              TRUE RESULT - POSSIBLE PASS          02-IF2
+ 000240 D503 C499 C4C1 00499 004C1   648+         CLC   C,Z                 TWO OPERANDS                         02-IF2
+ 000246 A774 0007            00254   653+         JNE   $MDF34              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 00024A D503 C49D C4C1 0049D 004C1   655+$MDT35   CLC   D,Z                 TWO OPERANDS                         01-IF
+ 000250 A784 0016            0027C   658+         JE    $MDT36              TRUE RESULT - POSSIBLE PASS          01-IF
+ 000254 D503 C4A1 C4C1 004A1 004C1   660+$MDF34   CLC   E,Z                 TWO OPERANDS                         01-IF
+ 00025A A774 0014            00282   663+         JNE   $MDF37              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 00025E D503 C4A5 C4C1 004A5 004C1   668+         CLC   F,Z                 TWO OPERANDS                         02-IF2
+ 000264 A784 0007            00272   671+         JE    $MDT38              TRUE RESULT - POSSIBLE PASS          02-IF2
+ 000268 D503 C4A9 C4C1 004A9 004C1   673+         CLC   G,Z                 TWO OPERANDS                         02-IF2
+ 00026E A774 000A            00282   678+         JNE   $MDF37              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 000272 D503 C4AD C4C1 004AD 004C1   680+$MDT38   CLC   H,Z                 TWO OPERANDS                         01-IF
+ 000278 A774 0005            00282   684+         JNE   $MDF37              BRANCH IF CC INDICATES FAIL          01-IF
+ 00027C                              685+$MDT36   DC    0H'0'               END RESULT WAS PASS - DO THE EXECUTE 01-IF
+ 00027C FA30 C460 C454 00460 00454   686            AP    LEVEL1_PASS_COUNTER,=P'1'                              04110000
+                                     687          ENDIF                                                          04120000
+ 000282                              689+$MDF37   DC    0H'0'                                                    01-ENDIF
+                                     690 *                                                                       04130000
+                                     691 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 04140000
+                                     692 *                                                                     * 04150000
+                                     693 * IF A | B & ( C | D & ( E | F & G ) & H ) & J                        * 04160000
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   13
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0                                    694 *                                                                     * 04170000
+                                     695 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 04180000
+                                     696 *        1         2         3         4         5         6         7  04190000
+                                     697 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 04200000
+                                     698          IF    (CLC,A,Z,E),OR,(CLC,B,Z,E),AND,((CLC,C,Z,E),OR,         C04210000
+                                                        (CLC,D,Z,E),AND,((CLC,E,Z,E),OR,                        C04220000
+                                                        (CLC,F,Z,E),AND,(CLC,G,Z,E)),AND,                       C04230000
+                                                        (CLC,H,Z,E)),AND,(CLC,J,Z,E)                             04240000
+ 000282 D503 C491 C4C1 00491 004C1   700+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 000288 A784 002A            002DC   703+         JE    $MDT39              TRUE RESULT - POSSIBLE PASS          01-IF
+ 00028C D503 C495 C4C1 00495 004C1   705+         CLC   B,Z                 TWO OPERANDS                         01-IF
+ 000292 A774 0028            002E2   708+         JNE   $MDF40              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 000296 D503 C499 C4C1 00499 004C1   713+         CLC   C,Z                 TWO OPERANDS                         02-IF2
+ 00029C A784 001B            002D2   716+         JE    $MDT41              TRUE RESULT - POSSIBLE PASS          02-IF2
+ 0002A0 D503 C49D C4C1 0049D 004C1   718+         CLC   D,Z                 TWO OPERANDS                         02-IF2
+ 0002A6 A774 001E            002E2   721+         JNE   $MDF42              FALSE RESULT - POSSIBLE FAIL         02-IF2
+ 0002AA D503 C4A1 C4C1 004A1 004C1   726+         CLC   E,Z                 TWO OPERANDS                         03-IF2
+ 0002B0 A784 000C            002C8   729+         JE    $MDT43              TRUE RESULT - POSSIBLE PASS          03-IF2
+ 0002B4 D503 C4A5 C4C1 004A5 004C1   731+         CLC   F,Z                 TWO OPERANDS                         03-IF2
+ 0002BA A774 0014            002E2   734+         JNE   $MDF44              FALSE RESULT - POSSIBLE FAIL         03-IF2
+ 0002BE D503 C4A9 C4C1 004A9 004C1   736+         CLC   G,Z                 TWO OPERANDS                         03-IF2
+                       002E2         740+$MDF44   EQU   $MDF42              ANCHOR NESTED FALSE NAME             02-IF2
+ 0002C4 A774 000F            002E2   742+         JNE   $MDF42              FALSE RESULT - POSSIBLE FAIL         02-IF2
+ 0002C8 D503 C4AD C4C1 004AD 004C1   744+$MDT43   CLC   H,Z                 TWO OPERANDS                         02-IF2
+                       002E2         748+$MDF42   EQU   $MDF40              ANCHOR NESTED FALSE NAME             01-IF
+ 0002CE A774 000A            002E2   750+         JNE   $MDF40              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 0002D2 D503 C4B5 C4C1 004B5 004C1   752+$MDT41   CLC   J,Z                 TWO OPERANDS                         01-IF
+ 0002D8 A774 0005            002E2   756+         JNE   $MDF40              BRANCH IF CC INDICATES FAIL          01-IF
+ 0002DC                              757+$MDT39   DC    0H'0'               END RESULT WAS PASS - DO THE EXECUTE 01-IF
+ 0002DC FA30 C460 C454 00460 00454   758            AP    LEVEL1_PASS_COUNTER,=P'1'                              04250000
+                                     759          ENDIF                                                          04260000
+ 0002E2                              761+$MDF40   DC    0H'0'                                                    01-ENDIF
+                                     762 *                                                                       04270000
+                                     763 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 04280000
+                                     764 *                                                                     * 04290000
+                                     765 * IF A | B & ( C | D & ( E | F & G ) | H ) | J                        * 04300000
+                                     766 *                                                                     * 04310000
+                                     767 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 04320000
+                                     768 *        1         2         3         4         5         6         7  04330000
+                                     769 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 04340000
+                                     770          IF    (CLC,A,Z,E),OR,(CLC,B,Z,E),AND,((CLC,C,Z,E),OR,         C04350000
+                                                        (CLC,D,Z,E),AND,((CLC,E,Z,E),OR,                        C04360000
+                                                        (CLC,F,Z,E),AND,(CLC,G,Z,E)),OR,                        C04370000
+                                                        (CLC,H,Z,E)),OR,(CLC,J,Z,E)                              04380000
+ 0002E2 D503 C491 C4C1 00491 004C1   772+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 0002E8 A784 002A            0033C   775+         JE    $MDT45              TRUE RESULT - POSSIBLE PASS          01-IF
+ 0002EC D503 C495 C4C1 00495 004C1   777+         CLC   B,Z                 TWO OPERANDS                         01-IF
+ 0002F2 A774 0020            00332   780+         JNE   $MDF46              FALSE RESULT - POSSIBLE FAIL         01-IF
+ 0002F6 D503 C499 C4C1 00499 004C1   785+         CLC   C,Z                 TWO OPERANDS                         02-IF2
+ 0002FC A784 0020            0033C   788+         JE    $MDT47              TRUE RESULT - POSSIBLE PASS          02-IF2
+ 000300 D503 C49D C4C1 0049D 004C1   790+         CLC   D,Z                 TWO OPERANDS                         02-IF2
+ 000306 A774 0011            00328   793+         JNE   $MDF48              FALSE RESULT - POSSIBLE FAIL         02-IF2
+ 00030A D503 C4A1 C4C1 004A1 004C1   798+         CLC   E,Z                 TWO OPERANDS                         03-IF2
+ 000310 A784 0016            0033C   801+         JE    $MDT49              TRUE RESULT - POSSIBLE PASS          03-IF2
+ 000314 D503 C4A5 C4C1 004A5 004C1   803+         CLC   F,Z                 TWO OPERANDS                         03-IF2
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   14
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+000031A A774 0007            00328   806+         JNE   $MDF50              FALSE RESULT - POSSIBLE FAIL         03-IF2
+ 00031E D503 C4A9 C4C1 004A9 004C1   808+         CLC   G,Z                 TWO OPERANDS                         03-IF2
+                       00328         812+$MDF50   EQU   $MDF48              ANCHOR NESTED FALSE NAME             02-IF2
+                       0033C         813+$MDT49   EQU   $MDT47              ANCHOR NESTED TRUE NAME              02-IF2
+ 000324 A784 000C            0033C   815+         JE    $MDT47              TRUE RESULT - POSSIBLE PASS          02-IF2
+ 000328 D503 C4AD C4C1 004AD 004C1   817+$MDF48   CLC   H,Z                 TWO OPERANDS                         02-IF2
+                       0033C         821+$MDT47   EQU   $MDT45              ANCHOR NESTED TRUE NAME              01-IF
+ 00032E A784 0007            0033C   823+         JE    $MDT45              TRUE RESULT - POSSIBLE PASS          01-IF
+ 000332 D503 C4B5 C4C1 004B5 004C1   825+$MDF46   CLC   J,Z                 TWO OPERANDS                         01-IF
+ 000338 A774 0005            00342   829+         JNE   $NEXT51             BRANCH IF CC INDICATES FAIL          01-IF
+ 00033C                              830+$MDT45   DC    0H'0'               END RESULT WAS PASS - DO THE EXECUTE 01-IF
+ 00033C FA30 C460 C454 00460 00454   831            AP    LEVEL1_PASS_COUNTER,=P'1'                              04390000
+                                     832          ENDIF                                                          04400000
+ 000342                              834+$NEXT51  DC    0H'0'                                                    01-ENDIF
+                                     835 *                                                                       04410000
+                                     836 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 04420000
+                                     837 *                                                                     * 04430000
+                                     838 *                 THE NESTING OF MULTIPLE "IF" GROUPS                 * 04440000
+                                     839 *                                                                     * 04450000
+                                     840 * IF WITHIN THE CONFINES OF ONE "IF" GROUP YOU FIND IT NECESSARY TO   * 04460000
+                                     841 * ADD ANOTHER LEVEL OF CONDITIONAL EXECUTION, THEN YOU MAY NEST ONE   * 04470000
+                                     842 * "IF" GROUP WITHING ANOTHER. EACH SEPERATE "IF" STATEMENT WILL HAVE  * 04480000
+                                     843 * ITS OWN LOGICAL CONSTRUCT, AND MUST BE TERMINATED WITH ITS OWN      * 04490000
+                                     844 * "ENDIF" STATEMENT. THE "ELSEIF" AND "ENDIF" STATEMENTS ARE          * 04500000
+                                     845 * SUPPORTED. YOU MAY INDENT THE NESTED "IF" GROUPS, BUT DOING THAT    * 04510000
+                                     846 * WOULD BE FOR DOCUMENTATION PURPOSES ONLY.                           * 04520000
+                                     847 *      IF    (CLC,A,Z,NE)                                             * 04530000
+                                     848 *                                                                     * 04540000
+                                     849 *               ONE OR MORE INSTRUCTIONS                              * 04550000
+                                     850 *               TO BE EXECUTED IF THE ABOVE                           * 04560000
+                                     851 *               LOGIC GROUP EVALUATES TO "TRUE"                       * 04570000
+                                     852 *                                                                     * 04580000
+                                     853 *        IF    (CLC,B,Z,NE)                                           * 04590000
+                                     854 *                                                                     * 04600000
+                                     855 *               ONE OR MORE INSTRUCTIONS                              * 04610000
+                                     856 *               TO BE EXECUTED IF THE ABOVE (NESTED)                  * 04620000
+                                     857 *               LOGIC GROUP EVALUATES TO "TRUE"                       * 04630000
+                                     858 *                                                                     * 04640000
+                                     859 *        ELSE                                                         * 04650000
+                                     860 *                                                                     * 04660000
+                                     861 *               ONE OR MORE INSTRUCTIONS                              * 04670000
+                                     862 *               TO BE EXECUTED IF THE ABOVE (NESTED)                  * 04680000
+                                     863 *               LOGIC GROUP EVALUATES TO "FALSE"                      * 04690000
+                                     864 *                                                                     * 04700000
+                                     865 *        ENDIF                                                        * 04710000
+                                     866 *                                                                     * 04720000
+                                     867 *      ENDIF                                                          * 04730000
+                                     868 *                                                                     * 04740000
+                                     869 * THE "IF" MACRO SUPPORTS THE NESTING OF AS MANY "IF" GROUPS AS YOU   * 04750000
+                                     870 * REQUIRE TO SUPPORT YOUR LOGIC. HOW MANY LEVELS CAN YOU ACTUALLY     * 04760000
+                                     871 * KEEP TRACK OF?                                                      * 04770000
+                                     872 *                                                                     * 04780000
+                                     873 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 04790000
+                                     874 *        1         2         3         4         5         6         7  04800000
+                                     875 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 04810000
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   15
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0                                    876          IF    (CLC,A,Z,NE)                                             04820000
+ 000342 D503 C491 C4C1 00491 004C1   878+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 000348 A784 0012            0036C   882+         JE    $NEXT52             BRANCH IF CC INDICATES FAIL          01-IF
+ 00034C FA30 C460 C454 00460 00454   883            AP    LEVEL1_PASS_COUNTER,=P'1'                              04830000
+                                     884            IF    (CLC,B,Z,NE)                                           04840000
+ 000352 D503 C495 C4C1 00495 004C1   886+         CLC   B,Z                 TWO OPERANDS                         01-IF
+ 000358 A784 0007            00366   890+         JE    $NEXT53             BRANCH IF CC INDICATES FAIL          01-IF
+ 00035C FA30 C470 C454 00470 00454   891              AP    LEVEL2_PASS_COUNTER,=P'1'                            04850000
+                                     892            ELSE                                                         04860000
+ 000362 A7F4 0005            0036C   894+         J     $FINI54                                                  01-ELSE
+ 000366                              895+$NEXT53  DC    0H'0'                                                    01-ELSE
+ 000366 FA30 C478 C454 00478 00454   896              AP    LEVEL2_ELSE_COUNTER,=P'1'                            04870000
+                                     897            ENDIF                                                        04880000
+ 00036C                              899+$FINI54  DC    0H'0'                                                    01-ENDIF
+                                     900          ENDIF                                                          04890000
+ 00036C                              902+$NEXT52  DC    0H'0'                                                    01-ENDIF
+                                     903 *                                                                       04900000
+                                     904 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 04910000
+                                     905 *                                                                     * 04920000
+                                     906 *       ANOTHER EXAMPLE OF THE NESTING OF MULTIPLE "IF" GROUPS        * 04930000
+                                     907 *                                                                     * 04940000
+                                     908 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 04950000
+                                     909 *                                                                       04960000
+                                     910 *        1         2         3         4         5         6         7  04970000
+                                     911 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 04980000
+                                     912          IF    (CLC,A,Z,E)                                              04990000
+ 00036C D503 C491 C4C1 00491 004C1   914+         CLC   A,Z                 TWO OPERANDS                         01-IF
+ 000372 A774 0049            00404   918+         JNE   $NEXT55             BRANCH IF CC INDICATES FAIL          01-IF
+ 000376 FA30 C460 C454 00460 00454   919            AP    LEVEL1_PASS_COUNTER,=P'1'                              05000000
+                                     920            IF    (CLC,B,Z,E)                                            05010000
+ 00037C D503 C495 C4C1 00495 004C1   922+         CLC   B,Z                 TWO OPERANDS                         01-IF
+ 000382 A774 0032            003E6   926+         JNE   $NEXT56             BRANCH IF CC INDICATES FAIL          01-IF
+ 000386 FA30 C470 C454 00470 00454   927              AP    LEVEL2_PASS_COUNTER,=P'1'                            05020000
+                                     928              IF    (CLC,C,Z,E)                                          05030000
+ 00038C D503 C499 C4C1 00499 004C1   930+         CLC   C,Z                 TWO OPERANDS                         01-IF
+ 000392 A774 0007            003A0   934+         JNE   $NEXT57             BRANCH IF CC INDICATES FAIL          01-IF
+ 000396 FA30 C480 C454 00480 00454   935                AP    LEVEL3_PASS_COUNTER,=P'1'                          05040000
+                                     936              ELSEIF (CLC,D,Z,E)                                         05050000
+ 00039C A7F4 0023            003E2   938+         J     $FINI58                                                  01-ELSEI
+ 0003A0 D503 C49D C4C1 0049D 004C1   941+$NEXT57  CLC   D,Z                 TWO OPERANDS                         02-IF
+ 0003A6 A774 0007            003B4   945+         JNE   $NEXT59             BRANCH IF CC INDICATES FAIL          02-IF
+ 0003AA FA30 C484 C454 00484 00454   946                AP    LEVEL3_ELSEIF_COUNTER,=P'1'                        05060000
+                                     947              ELSEIF (CLC,E,Z,E)                                         05070000
+ 0003B0 A7F4 0019            003E2   949+         J     $FINI58                                                  01-ELSEI
+ 0003B4 D503 C4A1 C4C1 004A1 004C1   952+$NEXT59  CLC   E,Z                 TWO OPERANDS                         02-IF
+ 0003BA A774 0007            003C8   956+         JNE   $NEXT60             BRANCH IF CC INDICATES FAIL          02-IF
+ 0003BE FA30 C484 C454 00484 00454   957                AP    LEVEL3_ELSEIF_COUNTER,=P'1'                        05080000
+                                     958              ELSEIF (CLC,F,Z,E)                                         05090000
+ 0003C4 A7F4 000F            003E2   960+         J     $FINI58                                                  01-ELSEI
+ 0003C8 D503 C4A5 C4C1 004A5 004C1   963+$NEXT60  CLC   F,Z                 TWO OPERANDS                         02-IF
+ 0003CE A774 0007            003DC   967+         JNE   $NEXT61             BRANCH IF CC INDICATES FAIL          02-IF
+ 0003D2 FA30 C484 C454 00484 00454   968                AP    LEVEL3_ELSEIF_COUNTER,=P'1'                        05100000
+                                     969              ELSE                                                       05110000
+ 0003D8 A7F4 0005            003E2   971+         J     $FINI58                                                  01-ELSE
+ 0003DC                              972+$NEXT61  DC    0H'0'                                                    01-ELSE
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   16
+   Active Usings: IFDOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+00003DC FA30 C488 C454 00488 00454   973                AP    LEVEL3_ELSE_COUNTER,=P'1'                          05120000
+                                     974              ENDIF                                                      05130000
+ 0003E2                              976+$FINI58  DC    0H'0'                                                    01-ENDIF
+                                     977            ELSEIF (CLC,G,Z,E)                                           05140000
+ 0003E2 A7F4 000F            00400   979+         J     $FINI62                                                  01-ELSEI
+ 0003E6 D503 C4A9 C4C1 004A9 004C1   982+$NEXT56  CLC   G,Z                 TWO OPERANDS                         02-IF
+ 0003EC A774 0007            003FA   986+         JNE   $NEXT63             BRANCH IF CC INDICATES FAIL          02-IF
+ 0003F0 FA30 C474 C454 00474 00454   987              AP    LEVEL2_ELSEIF_COUNTER,=P'1'                          05150000
+                                     988            ELSE                                                         05160000
+ 0003F6 A7F4 0005            00400   990+         J     $FINI62                                                  01-ELSE
+ 0003FA                              991+$NEXT63  DC    0H'0'                                                    01-ELSE
+ 0003FA FA30 C478 C454 00478 00454   992              AP    LEVEL2_ELSE_COUNTER,=P'1'                            05170000
+                                     993            ENDIF                                                        05180000
+ 000400                              995+$FINI62  DC    0H'0'                                                    01-ENDIF
+                                     996          ELSEIF  (CLC,H,Z,E)                                            05190000
+ 000400 A7F4 000F            0041E   998+         J     $FINI64                                                  01-ELSEI
+ 000404 D503 C4AD C4C1 004AD 004C1  1001+$NEXT55  CLC   H,Z                 TWO OPERANDS                         02-IF
+ 00040A A774 0007            00418  1005+         JNE   $NEXT65             BRANCH IF CC INDICATES FAIL          02-IF
+ 00040E FA30 C468 C454 00468 00454  1006            AP    LEVEL1_ELSE_COUNTER,=P'1'                              05200000
+                                    1007          ELSE                                                           05210000
+ 000414 A7F4 0005            0041E  1009+         J     $FINI64                                                  01-ELSE
+ 000418                             1010+$NEXT65  DC    0H'0'                                                    01-ELSE
+ 000418 FA30 C460 C454 00460 00454  1011            AP    LEVEL1_PASS_COUNTER,=P'1'                              05220000
+                                    1012          ENDIF                                                          05230000
+ 00041E                             1014+$FINI64  DC    0H'0'                                                    01-ENDIF
+                                    1015 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 05240000
+                                    1016 *                                                                     * 05250000
+                                    1017 *      THESE FOLLOWING STATEMENTS ARE NORMAL zOS TERMINATION.         * 05260000
+                                    1018 *                                                                     * 05270000
+                                    1019 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 05280000
+                                    1020 *                                                                       05290000
+                                    1021 .QUIT    ANOP                                                           05300000
+ 00041E 58D0 D004            004CC  1022          L     R13,SAVEAREA+4      ADDRESS OF CALLER'S SAVE AREA        05310000
+ 000422 98EC D00C            0000C  1023          LM    R14,R12,12(R13)     RESTORE R14 WRAPPED AROUND TO R12    05320000
+                                    1024          DROP  R12                 NO LONGER VALID                      05330000
+ 000426 1FFF                        1025          SLR   R15,R15             SET RETURN CODE TO ZERO              05340000
+ 000428 07FE                        1026          BR    R14                 RETURN TO CALLER                     05350000
+                                    1027 *                                                                       05360000
+ 00042A 0000
+ 00042C 00000000                    1028 VCON$WA$ DC    V($$WA$$)                                                05370000
+                                    1029 *                                                                       05380000
+ 000430                             1030          LTORG                                                          05390000
+ 000430 0123456789ABCDEF            1031                =X'0123456789ABCDEF'
+ 000438 FEDCBA9876543210            1032                =X'FEDCBA9876543210'
+ 000440 F1F2F3F4F5F6F7F2            1033                =C'12345672'
+ 000448 C1C2C3C4C5C6C7C3            1034                =C'ABCDEFGC'
+ 000450 E9E9E9E9                    1035                =C'ZZZZ'
+ 000454 1C                          1036                =P'1'
+ 000455 F1F2F3F4F5F6C7              1037                =Z'1234567'
+ 00045C D5                          1038 EOFSW    DC    C'N'                                                     05400000
+ 000460                             1039          DS    0D                                                       05410000
+                                    1040 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 05420000
+                                    1041 *                                                                     * 05430000
+                                    1042 *      THESE FOLLOWING STATEMENTS DEFINE VARIABLES REQUIRED.          * 05440000
+                                    1043 *                                                                     * 05450000
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   17
+   Active Usings: IFDOC,,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 12.02
+0                                   1044 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 05460000
+ 000460 0000000C                    1045 LEVEL1_PASS_COUNTER DC PL4'0'                                           05470000
+ 000464 0000000C                    1046 LEVEL1_ELSEIF_COUNTER DC PL4'0'                                         05480000
+ 000468 0000000C                    1047 LEVEL1_ELSE_COUNTER DC PL4'0'                                           05490000
+ 00046C 0000000C                    1048 LEVEL1_FAIL_COUNTER DC PL4'0'                                           05500000
+ 000470 0000000C                    1049 LEVEL2_PASS_COUNTER DC PL4'0'                                           05510000
+ 000474 0000000C                    1050 LEVEL2_ELSEIF_COUNTER DC PL4'0'                                         05520000
+ 000478 0000000C                    1051 LEVEL2_ELSE_COUNTER DC PL4'0'                                           05530000
+ 00047C 0000000C                    1052 LEVEL2_FAIL_COUNTER DC PL4'0'                                           05540000
+ 000480 0000000C                    1053 LEVEL3_PASS_COUNTER DC PL4'0'                                           05550000
+ 000484 0000000C                    1054 LEVEL3_ELSEIF_COUNTER DC PL4'0'                                         05560000
+ 000488 0000000C                    1055 LEVEL3_ELSE_COUNTER DC PL4'0'                                           05570000
+ 00048C 1234567C                    1056 SHIFT_PACKED DC  PL4'1234567'                                           05580000
+ 000490 C0                          1057 SPECIAL  DC    X'C0'                                                    05590000
+ 000491 C1C1C1C1                    1058 A        DC    C'AAAA'                                                  05600000
+ 000495 C2C2C2C2                    1059 B        DC    C'BBBB'                                                  05610000
+ 000499 C3C3C3C3                    1060 C        DC    C'CCCC'                                                  05620000
+ 00049D C4C4C4C4                    1061 D        DC    C'DDDD'                                                  05630000
+ 0004A1 C5C5C5C5                    1062 E        DC    C'EEEE'                                                  05640000
+ 0004A5 C6C6C6C6                    1063 F        DC    C'FFFF'                                                  05650000
+ 0004A9 C7C7C7C7                    1064 G        DC    C'GGGG'                                                  05660000
+ 0004AD C8C8C8C8                    1065 H        DC    C'HHHH'                                                  05670000
+ 0004B1 C9C9C9C9                    1066 I        DC    C'IIII'                                                  05680000
+ 0004B5 D1D1D1D1                    1067 J        DC    C'JJJJ'                                                  05690000
+ 0004B9 D2D2D2D2                    1068 K        DC    C'KKKK'                                                  05700000
+ 0004BD D3D3D3D3                    1069 L        DC    C'LLLL'                                                  05710000
+ 0004C1 E9E9E9E9                    1070 Z        DC    C'ZZZZ'                                                  05720000
+ 000000                             1071          END   IFDOC                                                    05730000
+1IFDOC                                            Relocation Dictionary                                         Page   18
+-   Pos.Id   Rel.Id   Address  Type    Length  Action                                        HLASM R6.0  2021/03/26 12.02
+0  00000002 00000004 0000042C   V         4      ST
+1IFDOC                          Ordinary Symbol and Literal Cross Reference                                     Page   19
+-Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2021/03/26 12.02
+0$$WA$$        1 000004C8 00000003     J                   43   37U   57
+ $$WA$$        1 00000000 00000004     T                 1028 1028
+ $FINI11       2 000000EE 00000002     H  H               291  279B
+ $FINI14       2 00000144 00000002     H  H               350  312B  323B  334B  345B
+ $FINI54       2 0000036C 00000002     H  H               899  894B
+ $FINI58       2 000003E2 00000002     H  H               976  938B  949B  960B  971B
+ $FINI62       2 00000400 00000002     H  H               995  979B  990B
+ $FINI64       2 0000041E 00000002     H  H              1014  998B 1009B
+ $FINI9        2 000000CA 00000002     H  H               228  223B
+ $MDF20        2 00000174 00000002     H  H               420  410B  416B
+ $MDF21        6 00000188 00000002     I                  450  443B
+ $MDF24        2 000001BC 00000002     H  H               513  492B  508B
+ $MDF27        2 000001EA 00000002     H  H               558  537B  553B
+ $MDF30        2 0000022C 00000002     H  H               620  581B  611   615B
+ $MDF32        2 0000022C 00000002     U                  611  594B
+ $MDF34        6 00000254 00000002     I                  660  638B  653B
+ $MDF37        2 00000282 00000002     H  H               689  663B  678B  684B
+ $MDF40        2 000002E2 00000002     H  H               761  708B  748   750B  756B
+ $MDF42        2 000002E2 00000002     U                  748  721B  740   742B
+ $MDF44        2 000002E2 00000002     U                  740  734B
+ $MDF46        6 00000332 00000002     I                  825  780B
+ $MDF48        6 00000328 00000002     I                  817  793B  812
+ $MDF50        6 00000328 00000002     U                  812  806B
+ $MDT18        2 00000158 00000002     H  H               382  375B
+ $MDT22        2 00000192 00000002     H  H               455  448B
+ $MDT25        2 000001B6 00000002     H  H               509  500B
+ $MDT26        6 000001D0 00000002     I                  542  530B
+ $MDT28        2 000001E4 00000002     H  H               554  545B
+ $MDT29        2 00000226 00000002     H  H               616  576B  612
+ $MDT31        2 00000226 00000002     U                  612  589B  608
+ $MDT33        2 00000226 00000002     U                  608  602B
+ $MDT35        6 0000024A 00000002     I                  655  646B
+ $MDT36        2 0000027C 00000002     H  H               685  658B
+ $MDT38        6 00000272 00000002     I                  680  671B
+ $MDT39        2 000002DC 00000002     H  H               757  703B
+ $MDT41        6 000002D2 00000002     I                  752  716B
+ $MDT43        6 000002C8 00000002     I                  744  729B
+ $MDT45        2 0000033C 00000002     H  H               830  775B  821   823B
+ $MDT47        2 0000033C 00000002     U                  821  788B  813   815B
+ $MDT49        2 0000033C 00000002     U                  813  801B
+ $NEXT1        2 00000032 00000002     H  H                62   55B
+ $NEXT10       6 000000DE 00000002     I                  282  275B
+ $NEXT12       2 000000EE 00000002     H  H               290  286B
+ $NEXT13       6 00000102 00000002     I                  315  308B
+ $NEXT15       6 00000116 00000002     I                  326  319B
+ $NEXT16       6 0000012A 00000002     I                  337  330B
+ $NEXT17       2 0000013E 00000002     H  H               346  341B
+ $NEXT19       2 0000015E 00000002     H  H               386  381B
+ $NEXT2        2 00000042 00000002     H  H               102   98B
+ $NEXT23       2 00000198 00000002     H  H               459  454B
+ $NEXT3        2 00000056 00000002     H  H               117  113B
+ $NEXT4        2 00000064 00000002     H  H               131  127B
+ $NEXT5        2 0000007A 00000002     H  H               149  145B
+ $NEXT51       2 00000342 00000002     H  H               834  829B
+ $NEXT52       2 0000036C 00000002     H  H               902  882B
+1IFDOC                          Ordinary Symbol and Literal Cross Reference                                     Page   20
+-Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2021/03/26 12.02
+0$NEXT53       2 00000366 00000002     H  H               895  890B
+ $NEXT55       6 00000404 00000002     I                 1001  918B
+ $NEXT56       6 000003E6 00000002     I                  982  926B
+ $NEXT57       6 000003A0 00000002     I                  941  934B
+ $NEXT59       6 000003B4 00000002     I                  952  945B
+ $NEXT6        2 00000096 00000002     H  H               165  161B
+ $NEXT60       6 000003C8 00000002     I                  963  956B
+ $NEXT61       2 000003DC 00000002     H  H               972  967B
+ $NEXT63       2 000003FA 00000002     H  H               991  986B
+ $NEXT65       2 00000418 00000002     H  H              1010 1005B
+ $NEXT7        2 000000B2 00000002     H  H               181  177B
+ $NEXT8        2 000000C4 00000002     H  H               224  219B
+ $SW1          1 00000510 00000003     X  X                58   54    56M
+ A             4 00000491 00000002     C  C              1058   94   104   271   304   372   407   440   489   527   573
+                                                               635   700   772   878   914
+ B             4 00000495 00000002     C  C              1059  282   315   377   445   497   532   578   643   705   777
+                                                               886   922
+ C             4 00000499 00000002     C  C              1060  326   450   502   542   586   648   713   785   930
+ D             4 0000049D 00000002     C  C              1061  337   547   591   655   718   790   941
+ E             4 000004A1 00000002     C  C              1062  599   660   726   798   952
+ EOFSW         1 0000045C 00000002     C  C              1038  215
+ F             4 000004A5 00000002     C  C              1063  604   668   731   803   963
+ G             4 000004A9 00000002     C  C              1064  673   736   808   982
+ H             4 000004AD 00000002     C  C              1065  680   744   817  1001
+ IFDOC         1 00000000 00000002     J                   28   34U   45    59  1071
+ J             4 000004B5 00000002     C  C              1067  752   825
+ LEVEL1_ELSE_COUNTER
+               4 00000468 00000002     P  P              1047  225M  347M 1006M
+ LEVEL1_ELSEIF_COUNTER
+               4 00000464 00000002     P  P              1046  287M  320M  331M  342M
+ LEVEL1_PASS_COUNTER
+               4 00000460 00000002     P  P              1045   60M   99M  114M  128M  146M  162M  178M  220M  276M  309M
+                                                               383M  417M  456M  510M  555M  617M  686M  758M  831M  883M
+                                                               919M 1011M
+ LEVEL2_ELSE_COUNTER
+               4 00000478 00000002     P  P              1051  896M  992M
+ LEVEL2_ELSEIF_COUNTER
+               4 00000474 00000002     P  P              1050  987M
+ LEVEL2_PASS_COUNTER
+               4 00000470 00000002     P  P              1049  891M  927M
+ LEVEL3_ELSE_COUNTER
+               4 00000488 00000002     P  P              1055  973M
+ LEVEL3_ELSEIF_COUNTER
+               4 00000484 00000002     P  P              1054  946M  957M  968M
+ LEVEL3_PASS_COUNTER
+               4 00000480 00000002     P  P              1053  935M
+ R1            1 00000001 00000001 A   U                   12   35M   38    39   153M  157M
+ R10           1 0000000A 00000001 A   U                   21  104M  109
+ R11           1 0000000B 00000001 A   U                   22   32M   33M   33    34U
+ R12           1 0000000C 00000001 A   U                   23   30    31M   32    34U 1023M 1024D
+ R13           1 0000000D 00000001 A   U                   24   30    35    36M   37U   39  1022M 1023
+ R14           1 0000000E 00000001 A   U                   25   30  1023M 1026B
+ R15           1 0000000F 00000001 A   U                   26   31   412M  412  1025M 1025
+ R2            1 00000002 00000001 A   U                   13  154M  157
+ R5            1 00000005 00000001 A   U                   16  169M  173M
+1IFDOC                          Ordinary Symbol and Literal Cross Reference                                     Page   21
+-Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2021/03/26 12.02
+0R6            1 00000006 00000001 A   U                   17  170M  173
+ SAVEAREA      4 000004C8 00000003     F  F                44   38M 1022
+ SHIFT_PACKED
+               4 0000048C 00000002     P  P              1056  135M  141M
+ SPECIAL       1 00000490 00000002     X  X              1057  123M
+ VCON$WA$      4 0000042C 00000002     V  V              1028   36
+ Z             4 000004C1 00000002     C  C              1070   94   271   282   304   315   326   337   372   377   407
+                                                               440   445   450   489   497   502   527   532   542   547
+                                                               573   578   586   591   599   604   635   643   648   655
+                                                               660   668   673   680   700   705   713   718   726   731
+                                                               736   744   752   772   777   785   790   798   803   808
+                                                               817   825   878   886   914   922   930   941   952   963
+                                                               982  1001
+ =C'ABCDEFGC'
+               8 00000448 00000002     C                 1034  170
+ =C'ZZZZ'      4 00000450 00000002     C                 1035  109
+ =C'12345672'
+               8 00000440 00000002     C                 1033  169
+ =P'1'         1 00000454 00000002     P                 1036   60    99   114   128   146   162   178   220   225   276
+                                                               287   309   320   331   342   347   383   417   456   510
+                                                               555   617   686   758   831   883   891   896   919   927
+                                                               935   946   957   968   973   987   992  1006  1011
+ =X'FEDCBA9876543210'
+               8 00000438 00000002     X                 1032  154
+ =X'0123456789ABCDEF'
+               8 00000430 00000002     X                 1031  153
+ =Z'1234567'
+               7 00000455 00000002     Z                 1037  135
+1IFDOC                             Unreferenced Symbols Defined in CSECTs                                       Page   22
+-  Defn  Symbol                                                                              HLASM R6.0  2021/03/26 12.02
+0  1066  I
+   1068  K
+   1069  L
+   1048  LEVEL1_FAIL_COUNTER
+   1052  LEVEL2_FAIL_COUNTER
+    157  RISBHGZ010
+    173  RNSBG010
+     11  R0
+     14  R3
+     15  R4
+     18  R7
+     19  R8
+     20  R9
+    141  SRP010
+    123  TS010
+1IFDOC                                     Macro and Copy Code Source Summary                                   Page   23
+- Con Source                                        Volume    Members                        HLASM R6.0  2021/03/26 12.02
+0  L1 IBMUSER.DHSNYDER.MACLIB                       A24SYS    $MGBLDEF ELSE     ELSEIF   ENDFIRST ENDIF    FIRST    IF
+                                                              IFCOPY   IF2      TRD
+1IFDOC                                                 Using Map                                                Page   24
+-                                                                                            HLASM R6.0  2021/03/26 12.02
+   Stmt  -----Location----- Action ----------------Using----------------- Reg Max     Last Label and Using Text
+           Count      Id           Type          Value    Range     Id        Disp    Stmt
+0    34  0000000E  00000002 USING  ORDINARY    00000000 00001000 00000002  12 004C1   1011 IFDOC,R12,R11
+     34  0000000E  00000002 USING  ORDINARY    00001000 00001000 00000002  11 00000
+     37  00000014  00000002 USING  ORDINARY    000004C8 00001000 00000003  13 00048   1022 $$WA$$,R13
+   1024  00000426  00000002 DROP                                           12              R12
+1                                   General Purpose Register Cross Reference                                    Page   25
+- Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R6.0  2021/03/26 12.02
+0    0(0)      30  1023M
+     1(1)      30    35M   38    39   153M  157M 1023M
+     2(2)      30   154M  157  1023M
+     3(3)      30  1023M
+     4(4)      30  1023M
+     5(5)      30   169M  173M 1023M
+     6(6)      30   170M  173  1023M
+     7(7)      30  1023M
+     8(8)      30  1023M
+     9(9)      30  1023M
+    10(A)      30   104M  109  1023M
+    11(B)      30    32M   33M   33    34U 1023M
+    12(C)      30    31M   32    34U 1023M 1024D
+    13(D)      30    35    36M   37U   39  1022M 1023
+    14(E)      30  1023M 1026B
+    15(F)      30    31   412M  412  1023M 1025M 1025
+1IFDOC                             Diagnostic Cross Reference and Assembler Summary                             Page   26
+-                                                                                            HLASM R6.0  2021/03/26 12.02
+0     No Statements Flagged in this Assembly
+ HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UI64093
+0SYSTEM: z/OS 02.04.00              JOBNAME: IBMUSERA    STEPNAME: C          PROCSTEP: (NOPROC)
+0Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1
+ Data Sets Allocated for this Assembly
+  Con DDname   Data Set Name                                Volume  Member
+   P1 SYSIN    IBMUSER.DHSNYDER.SRCLIB                      A24SYS  IFDOC
+   L1 SYSLIB   IBMUSER.DHSNYDER.MACLIB                      A24SYS
+   L2          SYS1.MACLIB                                  A24RES
+      SYSLIN   SYS21085.T120239.RA000.IBMUSERA.OBJ.H01      A24SYS
+      SYSPRINT IBMUSER.DHSNYDER.SYSPRINT                    A24RES
+
+   26812K allocated to Buffer Pool       Storage required     400K
+     573 Primary Input Records Read         1054 Library Records Read                  0 Work File Reads
+       0 ASMAOPT Records Read               1065 Primary Print Records Written         0 Work File Writes
+      31 Object Records Written                0 ADATA Records Written
+0Assembly Start Time: 12.02.40 Stop Time: 12.02.40 Processor Time: 00.00.00.2018
+ Return Code 000
+

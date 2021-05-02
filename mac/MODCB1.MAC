@@ -1,29 +1,30 @@
          MACRO
-.*********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.* Date   - 09/30/05                                                 *
-.*********************************************************************
-.* 08/10/07 INITIAL CODING TO SUPPORT AREA, RECLEN INITIALLY
-.* 08/22/07 RPI 680  CORRECT REPLRECL
-.* 08/27/07 RPI 688  SUPPORT RPL=(REG)
-.* 09/03/07 RPI 690  ADD ARG= AND OPTCD= SUPPORT
-.* 09/03/07 RPI 672  FIX 3 MISSPELLED LABELS,&OPTCDF,OPTF1/2,&MODS ERRS
-.*          ADD CROSS CHECK FOR ACB/RPL OPTION MATCHS
-.* 09/15/07 RPI 696  ADD SUPPORT FOR RPL OPTCD FWD DEFAULT OPTION SET
-.*          ADD RPL FIELD ACB ADDR
-.* 09/17/07 RPI 682  ADD ACB DDNAME, DSNAME, VCLRN,
-.*          and use  ZGENMACF and ZGENOPTD
-.* 09/19/07 RPI 697  SET RC=0
-.* 12/08/07 RPI 750  ADD RPL KEYLEN= PARM FOR GENERIC KEY LENGTH
-.* 04/19/08 RPI 833  add SETC quotes for HLASM compatibility
-.* 04/23/09 RPI 1023 jm1 MNOTE 4 instead of 12 if STRNO specified
-.* 04/23/09 RPI 1023 jm2 MODCB generates OI and NI instead of MVI
-.* 04/23/09 RPI 1023 jm3 support for AREALEN
-.*********************************************************************
-&N       MODCB &ACB=,        ACB CONTROL BLOCK ADDRESS (ALSO RPL FIELD)X
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.* Date   - 09/30/05                                                  *
+.**********************************************************************
+.* 08/10/07 INITIAL CODING TO SUPPORT AREA, RECLEN INITIALLY          *
+.* 08/22/07 RPI 680  CORRECT REPLRECL                                 *
+.* 08/27/07 RPI 688  SUPPORT RPL=(REG)                                *
+.* 09/03/07 RPI 690  ADD ARG= AND OPTCD= SUPPORT                      *
+.* 09/03/07 RPI 672  FIX 3 MISSPELLED LABELS,&OPTCDF,OPTF1/2,&MODS ERR*
+.*          ADD CROSS CHECK FOR ACB/RPL OPTION MATCHS                 *
+.* 09/15/07 RPI 696  ADD SUPPORT FOR RPL OPTCD FWD DEFAULT OPTION SET *
+.*          ADD RPL FIELD ACB ADDR                                    *
+.* 09/17/07 RPI 682  ADD ACB DDNAME, DSNAME, VCLRN,                   *
+.*          and use  ZGENMACF and ZGENOPTD                            *
+.* 09/19/07 RPI 697  SET RC=0                                         *
+.* 12/08/07 RPI 750  ADD RPL KEYLEN= PARM FOR GENERIC KEY LENGTH      *
+.* 04/19/08 RPI 833  add SETC quotes for HLASM compatibility          *
+.* 04/23/09 RPI 1023 jm1 MNOTE 4 instead of 12 if STRNO specified     *
+.* 04/23/09 RPI 1023 jm2 MODCB generates OI and NI instead of MVI     *
+.* 04/23/09 RPI 1023 jm3 support for AREALEN                          *
+.* 12/20/20 zVSAM RENAMED TO MODCB1 FOR HYBRID \MAC                   *
+.**********************************************************************
+&N       MODCB1 &ACB=,       ACB CONTROL BLOCK ADDRESS (ALSO RPL FIELD)X
                &DDNAME=,     ACB DDNAME FOR VCDT VSAM CATALOG.ENTRY    X
                &DSNAME=,     ACB DSNAME OVERRIDE ADDR VCDT CAT.ENTRY   X
                &MACRF=,      ACB OPTIONS                               X
@@ -181,3 +182,4 @@
          AGO   .AREALEN_END
 .*
          MEND
+
