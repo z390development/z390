@@ -8,10 +8,12 @@ The scope value details where the option is used.
 * E - ez390 emulator runtime which loads and executes 390 load module
 
 !!! Note "Use of parameters with parentheses in *nix shells"
-    Unix shells like sh and bash interpret parentheses if not quoted. For this reason, if you need to specify a z390 parameter that contains
-    parentheses, then that parameter should be quoted. For example, the SYSMAC parameter is quoted as it uses parentheses, whereas the ALIGN parameter is not.
+    Unix shells like sh and bash interpret parentheses if not quoted. For this reason, if you need to specify a parameter that contains
+    parentheses, then that parameter should be quoted. 
+    
+    For example, the SYSMAC parameter is quoted as it uses parentheses, whereas the ALIGN parameter is not.
 
-        "SYSMAC(foldername)" ALIGN 
+    `"SYSMAC(foldername)" ALIGN`
 
 Option | Scope | Default | Description  
 -------|-------|---------|--------------
@@ -22,14 +24,14 @@ AMODE24 | LE | NO | Set 390 load module options to start in 24 bit address mode
 AMODE31 | LE | YES | Set 390 load module options to start in 31 bit address mode
 ASCII | AE | NO | Generate ASCII versus EBCDIC DC character constants, compare character strings in ASCII versus EBCDIC in macro processor, generate ASCII versus EBCDIC output for UNPK, ED, and EDMK.    Note ASCII mode is not mainframe compatible and requires careful review of program to insure no EBCDIC immediate compare constants such as X'40', 64, X'F0', 240 etc. are used and that there are no assumptions about EBCDIC versus ASCII collating sequences which have numbers and letters reversed, and EBCDIC letters are non-contiguous.  Typically HLASM compatible programs are run in default EBCDIC mode and DCB RECFM=FT?VT or some other translation option is used to convert between EBCDIC and ASCII where necessary.  Note there are a few instructions affected by ASCII mode: <br />1) ED/EDMK generate ASCII versus EBCDIC but the mask must always be in EBCDIC (masks are usually coded in X'...' format)<br />2)  UNPK generates X'3' versus X'F' in zone field (high order nibble)
 ASM | MA | YES |Run az390 assembler as subtask of mz390 passing BAL.  Note NOASM is for use in pure text processing programs which only use conditional macro code and AREAD/PUNCH with extensions to process ascii text files.  NOASM does not support ordinary symbol attribute tests, OPSYN, or lookahead mode, and requires CHKMAC(0) and CHKSRC(0-2).
-ASSIST | MAE | NO | Enable assembly and execution of 11 new ASSIST extended instructions to simplify I/O for student use.  This option also sets NOLOADHIGH.  See ASSIST Support.
+ASSIST | MAE | NO | Enable assembly and execution of ASSIST I/O and debugging instructions. This option also sets NOLOADHIGH.  See [ASSIST Support](../assist.md).
 AUTOLINK | L | YES | Search for unresolved external references in SYSOBJ directory list which defaults to linklib.
 BAL | M | NO | Generate BAL expanded assembler source file
 BS2000 | MA | NO | Support Siemens BS2000 assembler global variables
 CHKMAC(0-2) | M | 0 | Check macros during loading as follows: <br />0 - no checking<br />1- check for missing AGO and AIF labels and issue warning<br />2 - also check missing labels and also check for non comment text after MEND
 CHKSRC(0-3) | MA | 1 | Check input source files as follows:<br />0 - no checking<br />1 - check MLC or BAL input source files for any  non-ASCII characters and issue error<br />2 - check MLC, MAC, CPY, and BAL input source files for any non-ASCII characters and issue error.<br />3 - also check for out of sequence characters in 73-80 or any non-blank characters beyond 80 and issue error.<br />Note this should detect any EBCDIC literal character strings containing non-ASCII characters such as binary 0 byte which must be changed to hex X'00' type strings for portability.
 CICS | MA | NO | Support EXEC CICS pre-processor expansion and constants.  If this option is not on during macro expansion, PROLOG and EPILOG option settings will be ignored.
-CODEPAGE(ascii+ebcdic+LIST) | MALE | YES | The default is CODEPAGE(ISO-8859-1+IBM1047).  If +LIST is added the mapping of the 2 codepages along with printable character and Unicode values are displayed on ERR file.  A hex dump of the tables and a list of the valid ASCII and EBCDIC Unicode Charset codepages are listed.  There are 162 Charset codepages available on J2SE 1.6.0_16 including 64 valid ASCII and 15 valid EBCDIC codepages.  If the EBCDIC codepage you need is not on the host system, you can replace the EBCDIC codepage name with a file specification such as IBM1047.HCP (example included) which is in hex dump format.  The above defaults match z/OS nnd has been successfully tested on Windows Vista and XP.
+CODEPAGE(ascii+ebcdic+LIST) | MALE | YES | The default is CODEPAGE(ISO-8859-1+IBM1047).  If +LIST is added the mapping of the 2 codepages along with printable character and Unicode values are displayed on ERR file.  A hex dump of the tables and a list of the valid ASCII and EBCDIC Unicode Charset codepages are listed.  You can replace the EBCDIC codepage name with a file specification such as IBM1047.HCP (example included) which is in hex dump format.  The above defaults match z/OS.
 CON | MALE | YES | Console output for all start/stop, error, trace, MNOTE's with level > 4, and WTO messages.  When the TRACE??? option is specified, the CON option is turned off so only start/stop and abort error messages appear on console log.  You can specify CON after last TRACE option to turn it back on if you want all display, trace, and error messages displayed on console log.  All the trace messages appear on corresponding TR? file for each z390 program executed.
 DUMP | E | NO | Generate full memory dump on LOG or TRE if abort
 EDF | M | YES | CICS Execution Diagnostic Facility
@@ -37,8 +39,8 @@ EPILOG | M | YES | Generate epilog macro call DFHEIEND for CICS program at END s
 ERR(100) | MALE | 100 | Terminate process if total errors for program exceeds limit. Use ERR(0) to eliminate any error limit and always generate PRN file.
 ERRSUM | M | NO | Generate critical error summary on console and ERR file listing missing macros and copybooks. This option requires ASM option and is turned on automatically if missing macros or copybooks are found in the executed macro code path.  When ERRSUM is on, ERR(0) is set to prevent abort prior to finding all macro and copybook references.  All errors are listed on ERR file along with summary report.  Note several iterations may be required to identify and resolve all missing macros and copybooks.
 GUAM | E | NO | Support one or more GUI Graphical User Access Method dialogs for MCS, TN3270, or graphics user interface.
-INIT | E | YES | Initialize all registers to hex x'F4', all memory to hex x'F5', and all uninitialized load module areas to x'F6' for easier identification of access to uninitialized registers, memory or program fields.  This default option was adopted when ASSIST option was added after fixing a number of regression test initialization bugs.  Use NOINIT to revert to all zeros as work-around for bugs.  The x'F6' init was added in v1403d PTF.
-INSTALL(dir) | MALE | NO | Define alternate z390 install directory to run batch command.  The default is set from J2SE Property "user.dir".
+INIT | E | YES | Initialize all registers to hex x'F4', all memory to hex x'F5', and all uninitialized load module areas to x'F6' for easier identification of access to uninitialized registers, memory or program fields. Use NOINIT to perform low value initialization.
+INSTALL(dir) | MALE | NO | Define alternate z390 install directory to run batch command.  The default is set from Java property "user.dir".
 IPL(pgm) | E | none | Execute 390 program at startup.
 LIST | ALE | YES | Generate PRN, LST, and LOG files for assembler, linker, and execution respectively.
 LISTCALL | MA | YES | Generate level macro call and exit comments in BAL file which are used by assembler to format first level macro calls preceding assembler lines with "+" for macro generated source. 
