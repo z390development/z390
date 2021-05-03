@@ -1,4 +1,4 @@
-# Non-VSAM file services
+# Non-VSAM File Services
 
 z390 supports sequential and random access to files through the provision of SVC functions and assembler macros.
 
@@ -598,7 +598,7 @@ The same, using register notation
    processed by the CHECK macro.
 2. If the decbname parameter is specified in register notation,
    no internal DECB is generated. It is the programmer's
-   responsibilty to create and address the 16-byte DECB.
+   responsibility to create and address the 16-byte DECB.
  
 #### Usage
  
@@ -637,7 +637,7 @@ Write a block to a file.
    by the CHECK macro.
 2. If the decbname parameter is specified in register notation,
    no internal DECB is generated. It is the programmer's
-   responsibilty to create and address the 16-byte DECB.
+   responsibility to create and address the 16-byte DECB.
 
 #### Usage
 
