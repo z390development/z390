@@ -12,7 +12,7 @@ SORT.MLC utility assembler program included in the sort and linklib folders perf
 * SYSIN – sort field definitions
 * SORTWK01/SORTWK02 - sort work files
 
-## Macro Interface
+## Macro reference
 
 The ZSORT utility function can be called from z390 assembler using standard call interface with full work parameters in list pointed to by register 1.
 
