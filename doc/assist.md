@@ -59,7 +59,7 @@ A trace table is used to display the last 10 instructions prior to abnormal term
 
 The PSW displayed at abnormal termination includes ILC, CC, MASK, and AMODE.
 
-## Supported ASSIST instructions
+## ASSIST instructions
 
 ### XDECI - Convert decimal to binary
 

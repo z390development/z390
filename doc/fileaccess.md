@@ -1,7 +1,6 @@
-# Non-VSAM file access
+# Non-VSAM file services
 
-z390 supports sequential and random access to files through the provision of 
-SVC functions and assembler macros.
+z390 supports sequential and random access to files through the provision of SVC functions and assembler macros.
 
 The macros described here seek to emulate those provided by IBM&reg; as part of their
 operating system macro services where it makes sense in the context of z390 runtime environments. 
@@ -11,7 +10,7 @@ operating system macro services where it makes sense in the context of z390 runt
 !!! Note "VSAM support"
     The macros GET, PUT and POINT can be used for VSAM access with the
     parameter RPL=rpladdress. VSAM usage is not documented here. Please refer
-    to [Z390 VSAM User Guide]().
+    to [VSAM file services]().
 
 ## Quick starts
 
@@ -62,7 +61,19 @@ OREC     DS    0CL60                Report output structure
 
 ## Macro reference
 
-### DCB
+### Terminology
+
+Term     | Definition
+---------|-----------
+dcbname  | the label on the DCB macro.
+reg      | general register, avoid 0, 1, 14 or 15.
+type     | INPUT, OUTPUT or UPDATE (default is INPUT).
+ioarea   | label of the I/O area for the record to be read/written.
+decbname | internal or external DECB for controlling READ/WRITE.
+rel      | relative record number.
+rba      | relative byte address.
+
+### DCB - Data Control Block
 
 Used to create the Data Control Block
 
@@ -366,7 +377,7 @@ The address of the uncorrectable I/O error routine.
 * Can this be set in the DCB after OPEN : Yes
 * This may be overridden if DCBE is coded.
 
-### DTFSD
+### DTFSD (VSE) - Data control block
 
 !!! Info "VSE only"
 
@@ -388,7 +399,7 @@ label    DCB   DSORG=PS,                                               X
                DSNAME=0
 ```
 
-### DTFPR
+### DTFPR (VSE) - Data control block
 
 !!! Info "VSE only"
 
@@ -409,7 +420,7 @@ label    DCB   DSORG=PS,                                               X
                DSNAME=0
 ```
 
-### OPEN
+### OPEN - Open file
 
 Open one or more files.
 
@@ -449,7 +460,7 @@ The same, using register notation
 
 * S013 OPEN failed and no SYNAD exit provided
 
-### OPEN (VSE)
+### OPEN (VSE) - Open file 
 
 Open one or more files for UPDATE.
 
@@ -469,7 +480,7 @@ Open one or more files for UPDATE.
 
 * S013 OPEN failed and no SYNAD exit provided
 
-### CLOSE
+### CLOSE - Close file
 
 Close one or more files.
 
@@ -497,11 +508,11 @@ The same, using register notation
 
 * R1 = DCB addresses
 
-##### Abends
+#### Abends
 
 * S013 CLOSE failed and no SYNAD exit provided
 
-### CLOSE (VSE)
+### CLOSE (VSE) - Close file
 
 Close one or more files.
 
@@ -519,7 +530,7 @@ Close one or more files.
 
 * S013 CLOSE failed and no SYNAD exit provided
 
-### GET
+### GET - Read sequential record
 
 Read a sequential record
 
@@ -548,7 +559,7 @@ The same, using register notation
 * R0 = ioarea
 * R1 = DCB address
 
-### PUT
+### PUT - Write a sequential record
 
 Write a sequential record
 
@@ -578,7 +589,7 @@ The same, using register notation
 * R0 = ioarea
 * R1 = DCB address
 
-### READ
+### READ - Read block from file
 
  Read a block from a file.
 
@@ -618,7 +629,7 @@ The same, using register notation
 * R1 = DECB address
 * R15= DCB address
 
-### WRITE
+### WRITE - Write block to file
 
 Write a block to a file.
 
@@ -655,7 +666,7 @@ The same, using register notation
 * R1 = DECB address
 * R15= DCB address
 
-### CHECK
+### CHECK - Process EODAD/SYNAD 
 
 * Process EODAD or SYNAD on READ.
 * Process SYNAD on WRITE.
@@ -680,14 +691,14 @@ The same, using register notation
 
 * S013 READ/WRITE failed and no SYNAD exit provided
 
-### POINT
+### POINT - Position file pointer
 
- Position pointer for next READ or WRITE
+Position pointer for next READ or WRITE
 
- 1. When register notation is used for rba or rel, the register points to a field containing the value.
- 2. rel is a fullword, maximum value 2,147,483,647 (2G)<br/>
-    rel is multiplied by BLKSIZE to get the rba.
- 3. rba is signed 64-bit, maximum value...very big.
+1. When register notation is used for rba or rel, the register points to a field containing the value.
+2. rel is a fullword, maximum value 2,147,483,647 (2G)<br/>
+   rel is multiplied by BLKSIZE to get the rba.
+3. rba is signed 64-bit, maximum value...very big.
  
 #### Usage
  
@@ -716,28 +727,9 @@ The same, using register notation
 * R1 = DCB address
 * R15= Blocksize
 
-## Terminology
-
-Term     | Definition
----------|-----------
-dcbname  | the label on the DCB macro.
-reg      | general register, avoid 0, 1, 14 or 15.
-type     | INPUT, OUTPUT or UPDATE (default is INPUT).
-ioarea   | label of the I/O area for the record to be read/written.
-decbname | internal or external DECB for controlling READ/WRITE.
-rel      | relative record number.
-rba      | relative byte address.
-
-## Supporting Macros
-
-Macro   | Description
---------|------------------------
-DCBD    | DCB structure (DSECT)
-DCBE    | DCBE fields
-DECBD   | DECB structure (DSECT)
-IHADCBE | DCBE structure (DSECT)
-
 ## SVC functions
+
+The following is a list of the z390 SVC services that support the above macros.
 
 DEC | HEX | Service
 ----|-----|--------
