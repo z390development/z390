@@ -12,21 +12,20 @@ SORT.MLC utility assembler program included in the sort and linklib folders perf
 * SYSIN – sort field definitions
 * SORTWK01/SORTWK02 - sort work files
 
-## Macro reference
+## Macro Reference
 
-The ZSORT utility function can be called from z390 assembler using standard call interface with full work parameters in list pointed to by register 1.
+The ZSORT utility function can be called from z390 assembler programs using standard call interface with full work 
+parameters in list pointed to by register 1.
 
-The first positional macro parameter contains the operation code and options:  
+The first positional macro parameter contains the operation code and options.  
 
-The operations available:
+The macro operations available:
 
 * ISORT - initialize for internal sort using PUT to insert unsorted records and GET to retrieve sorted records
 * PUT - insert unsorted record following ISORT
 * GET - return sorted record following last PUT, returns RC=4 at end of sorted records
 
 ### Example usage
-
-Here is an example usage of ZSORT macro interface:
 
 ``` hlasm
 ZSORT    ISORT,LRECL=80,MEMORY=10000000,FIELDS=(1,80,CH,A)
