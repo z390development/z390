@@ -22,8 +22,8 @@ GR13 conventionally points to our save area.
 
 There are two methods of passing parameters to a program
 
-* SYSPARM on MZ390
-* PARM on EZ390
+* SYSPARM on mz390
+* PARM on ez390
 
 In either case enclose the entire parm to be passed in double quotes.
 The double quotes are required to handle commas and spaces that otherwise cause command processors to split the parm. 
@@ -137,7 +137,7 @@ BLDL2    DC    H'14',CL8'MYPROG2',XL6'00'
 ```
 
 !!! Note 
-    In Z390, there is no performance benefit in issuing a BLDL before a LOAD, DELETE, LINK or XCTL.
+    In z390, there is no performance benefit in issuing a BLDL before a LOAD, DELETE, LINK or XCTL.
 
 ### LOAD - Load a program or module
 
@@ -330,7 +330,7 @@ All registers in the range fromreg-toreg
 name     SNAP  STORAGE=(from,to),PDATA=(options, ... ),ID=,TEXT=
 ```
 
-Produces a component dump on the Z390 console without terminating the program.
+Produces a component dump on the z390 console without terminating the program.
 
 #### Parameters
 
@@ -394,7 +394,7 @@ Terminate the program.
 
 **DUMP**
 
-A dump is always produced, overrides the NODUMP parm on EZ390.
+A dump is always produced, overrides the NODUMP parm on ez390.
 
 All storage areas are dumped.
 
@@ -461,7 +461,7 @@ After processing the abend, several options are available:
     level than the latest ESTAE will be purged.
  
 !!! Note
-    * In the Z390 environment the abend code 0C5 may be caused by an internal error as well as a genuine addressing exception.
+    * In the z390 environment the abend code 0C5 may be caused by an internal error as well as a genuine addressing exception.
     * If an abend occurs after the ESTAE exit is invoked and before ESTAE 0 or BR R14 are issued, then the program will be terminated.
     
     See TESTSTA1 for an example of ESTAE usage.
@@ -544,7 +544,7 @@ When the exit is invoked, GR1 contains the address of the ESPIE control block. T
 The ESPIE control block is located in the ZCVT and may also be addressed by the ZCVT and EPIED macros.
 
 !!! Note
-    In the Z390 environment, interruption code 5 may be caused
+    In the z390 environment, interruption code 5 may be caused
     by an internal error as well as a genuine addressing exception.
 
 #### Register Usage
@@ -1022,7 +1022,7 @@ The label or the register must point to an 8-byte field containing the program n
 
 The label or the register must point to a BLDL entry.
 In all the above cases as neither DDNAME nor DSNAME are specified,
-then the Z390 search path is used. This may be overidden by the CALL EZ390 parameter SYS390.
+then the z390 search path is used. This may be overridden by the ez390 parameter SYS390.
 
 ##### EP/EPLOC/DE and DDNAME=name or EP/EPLOC/DE and DDNAME=(reg)
 
