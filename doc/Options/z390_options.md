@@ -48,7 +48,7 @@ LISTUSE | A | YES | List active USING definitions each time USING or DROP change
 LOADHIGH | E | YES | Load programs and allocate memory for GETMAIN/STORAGE from high end of first FQE large enough to satisfy request.  The ASSIST option changes this option to NOLOADHIGH causing initial program to load starting at X'10000' which simplifies relative address calculations.
 LOG(file) | MALE | pgm | Set file name for ERR, TR?, and LOG files.  The default is the program name.  This option is required when running multiple copies of the same program via CMD startup in order to create separate unique  ERR, TR?, and LOG files.  Otherwise duplicate programs running in parallel will mod the same ERR, TR?, and LOG file.
 MAXCALL(50) | M | 50 | Set limit for nested macro calls.
-MAXDISPLAY(80) | M | 80 | Use to increase zcobol DISPLAY line size up to 256 characters.
+MAXDISPLAY(80) | M | 80 | Use to increase zCOBOL DISPLAY line size up to 256 characters.
 MAXESD(1000) | AL | 1000 | Set limit for ESD sections or entries in one program.
 MAXFILE(1000) | M | 1000 | Maximum macro and copybook files.
 MAXGBL(1000000) | M | 100000 | Maximum global macro variables.

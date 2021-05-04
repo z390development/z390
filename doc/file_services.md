@@ -134,7 +134,7 @@ For execution in a Windows environment:
 
 ``` dos
 SET MYDATA=c:\path\file
-CALL EZ390 c:\path\program parms
+CALL ez390 c:\path\program parms
 ```
 
 For execution in a \*nix environment

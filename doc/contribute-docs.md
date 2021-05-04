@@ -10,6 +10,29 @@ Markdown uses simple text files with specific syntax for formatting. See [the ma
 
 You can also use functions provided by the admonition extension in mkdocs. See the [doco for admonition](https://python-markdown.github.io/extensions/admonition/)
 
+## Conventions
+
+Product names should always use a small z:
+
+* z390
+* zCOBOL  - Always capitalize COBOL
+* zVSAM   - Always capitalize VSAM
+* zCICS   - Always capitalize CICS
+
+When specifying tool and script names, always use lower case to be compatible with case sensitive environments like linux.
+
+* mz390
+* az390
+* asmlg
+
+When specifying a quantity of 1024 bytes, use {quantity}K. Bytes is assumed. Capital K is deliberate.
+
+HLASM code should be enclosed in a code block as follows:
+
+    ``` hlasm
+    LABEL    MVC  X(10),Y
+    ```
+
 ## Preview the web pages
 
 The z390 docs use the Python utility mkdocs to convert the markdown to web pages that are published to GitHub pages.
