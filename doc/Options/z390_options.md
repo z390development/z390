@@ -80,7 +80,7 @@ PRINTALL | A | NO | Suppress PRINT OFF and PRINT NOGEN commands to force all sou
 PDSMEM8 | M | NO | If PDSMEM8 option is specified, error messages will be issued for any macro or copybook file names with length greater than 8.  This option is available to provide compatibility with mainframe PDS libraries that are limited to 8 character names. Note zCOBOL and zCICS use names longer than 8 characters such as zcobol\IDENTIFICATION.MAC and cics\CICS_INQUIRE.MAC.
 PROFILE(file) | M | NO | Insert COPY file in front of MLC source file.
 PROLOG | M | YES | Generate CICS prolog macro calls DFHEIGBL, DFHEISTG, and  DFHEIENT if CICS option and PROLOG options are on.
-PROTECT | E | YES | Prevent modification of PSA in low memory 8k block.
+PROTECT | E | YES | Prevent modification of PSA in low memory 8K block.
 REFORMAT | M | NO | Reformat expanded BAL code to align all opcodes at column 10 and operands at column 16 if possible.
 REGS | E | NO | Generate GPR register trace before and after each instruction if TRACE option on.
 RMODE24 | LE | YES | Set 390 load module options to load module below the 24 bit address line.
