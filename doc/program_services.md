@@ -2,21 +2,45 @@
 
 ## Save area and linkage conventions
 
-Standard save-area is defined as follows:
+Standard save area is defined as follows:
 
 ``` hlasm
          DS   0CL72
          DS   F         +0 reserved
-         DS   F         +4 address of callers save-area
-         DS   F         +8 address of our save-area
+         DS   F         +4 address of calling savearea
+         DS   F         +8 address of called savearea
          DS   15F       +12 callers GR14 through GR12
 ```
 
-A program is invoked with entry point in GR15 and return address in GR14.
+There are normally two save areas involved when a program is called by another program:
+
+* The save area for the calling program -- the caller
+* The save area for the called program -- the callee
+
+Upon entry to the called program, GR13 contains the address of the caller's save area. 
+
+The caller:
+
+1. Saves GR14 to GR12 (registers at entry to the called program) at +12 of the caller's save area
+2. Obtains its own save area (the called program's save area)
+3. Stores the address of its save area at +8 of the caller's save area (caller's forward chain)
+4. Stores the address of the caller's save area (GR13 at entry) at +4 of its (the called program's) save area (called program's back chain)
+5. Loads GR13 with the address of its (the called program's) save area
+
+At this point the called program begins its processing. 
+
+If it calls another program steps 1--5 are repeated; this time the "caller" is the current program and there is a new called program.
+
+When the called program finishes processing, it returns to the caller as follows:
+
+6. The called program uses its back chain (+4 in its save area) to restore GR13 to caller's save area
+7. The called program restores GR14 to GR12 from that save area (restores registers at entry); there are cases when GR15, GR0, and/or GR1 are not restored -- depends on the program. 
+8. The called program returns to the caller by doing an unconditional branch to the address in GR14.
+
+This calling convention is explained in detail in the [IBM z/OS Version 2 Release 4 MVS Programming: Assembler Services
+Guide (SA23-1368-40)](https://www-01.ibm.com/servers/resourcelink/svc00100.nsf/pages/zOSV2R4sa231368/$file/ieaa600_v2r4.pdf). Refer to Chapter 2 - Linkage conventions.
 
 GR15 is expected to contain a return code upon exit by convention.
-
-GR13 conventionally points to our save area.
 
 ## Passing parameters to the initial program
 
@@ -50,13 +74,15 @@ label    DC    C'HELLO WORLD'
 
 ### PARM
 
-PARM can be accessed via GR1 at program entry and consists of a halfword length followed by the text.
+PARM can be accessed via GR1 at program entry.
+
+GR1 will contain an address that points to a fullword in storage which points to a storage location with the parm length in a halfword followed by the parm value.
 
 ``` dos
 ez390 ... "PARM(HELLO WORLD)"
 ```
 
-GR1 points to:
+The fullword pointed to by GR1 points to:
 
 ``` hlasm
          DC   H'11',C'HELLO WORLD'`
@@ -68,11 +94,22 @@ If single quotes are included around text in PARM they are removed.
 ez390 .... "PARM('HELLO WORLD')" 
 ```
 
-Will also result in GR1 pointing to:
+Will also result in the fullword pointed to by GR1 pointing to:
 
 ``` hlasm
          DC   H'11',C'HELLO WORLD'`
 ```
+
+### Usage
+
+``` hlasm
+         L    R2,0(,R1)     R2 --> PARM=value area
+         LH   R3,0(,R2)     R3  =  length of value
+```
+
+GR2 loads the word pointed to by GR1. GR3 loads the halfword value pointed to by GR2. 
+
+For your example, GR3 would contain decimal 11 and 2 bytes past the address in GR2 begins the "HELLO WORLD" value.
 
 ## Macro reference
 
@@ -316,7 +353,7 @@ include the following general registers: 0, 1, 13, 15
 name     RESTORE (fromreg,toreg)
 ```
 
-Restores the specified register range from the save-area pointed
+Restores the specified register range from the save area pointed
 to by GR13. The registers are restored from their conventional
 positions.
 
@@ -873,7 +910,7 @@ MYCALL   CALL  MYSUBR,(8,MYDATA),VL
 name     SAVE  (fromreg,toreg)
 ```
 
-Saves the specified register range in the save-area pointed to by GR13. 
+Saves the specified register range in the save area pointed to by GR13. 
 The registers are saved in their conventional positions.
 
 ### RETURN - Restore registers
@@ -882,7 +919,7 @@ The registers are saved in their conventional positions.
 name    RETURN (fromreg,toreg),flag,RC=
 ```
 
-Restores the specified register range from the save-area pointed to by GR13.
+Restores the specified register range from the save area pointed to by GR13.
 The registers are restored from their conventional positions.
 
 Return is by the restored GR14.

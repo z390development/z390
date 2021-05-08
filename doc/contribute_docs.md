@@ -50,6 +50,17 @@ HLASM code should be enclosed in a code block as follows:
     LABEL    MVC  X(10),Y
     ```
 
+### Terminology
+
+The following provides guidelines on the use of specific terminology. If not here, you should use the general 
+principle of following conventions set in IBM mainframe manuals.
+
+term      | usage
+----------|------
+word      | OK. Alternate is fullword with no space.
+halfword  | OK. No space should be used.
+save area | In any text, ensure space is included. The only exception is in code `savearea` without space is preferred 
+
 ## Preview the web pages
 
 The z390 docs use the Python utility mkdocs to convert the markdown to web pages that are published to GitHub pages.
