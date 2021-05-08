@@ -2,6 +2,9 @@
 .idea/
 *.iml
 
+# VSCode workspace settings
+.vscode/
+
 # doc python venv
 docenv/
 
