@@ -12,6 +12,8 @@ You can also use functions provided by the admonition extension in mkdocs. See t
 
 ## Conventions
 
+### Product names
+
 Product names should always use a small z:
 
 * z390
@@ -19,13 +21,28 @@ Product names should always use a small z:
 * zVSAM   - Always capitalize VSAM
 * zCICS   - Always capitalize CICS
 
+###  Program names and scripts
+
 When specifying tool and script names, always use lower case to be compatible with case sensitive environments like linux.
 
 * mz390
 * az390
 * asmlg
 
-When specifying a quantity of 1024 bytes, use {quantity}K. Bytes is assumed. Capital K is deliberate.
+### Units of measurement
+
+For Bytes:
+
+* When specifying a quantity of 1024 bytes, use {quantity}K. Bytes is assumed. Capital K is deliberate.
+* the word bytes can be added if the context does not make it clear that bytes are implied. {quantity}K bytes.
+
+For seconds:
+
+* ms = millisecond
+* &micro;s = microseconds (in markdown &micro; = `&micro;`)
+* ns = nanoseconds
+
+### Code
 
 HLASM code should be enclosed in a code block as follows:
 
