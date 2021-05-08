@@ -3,4 +3,4 @@
 !!! Note
     This is a work in progress.
     All contributions welcome to documentation
-    See [Contributing to docs](contribute-docs.md)
+    See [Contributing to docs](contribute_docs.md)
