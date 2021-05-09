@@ -19,7 +19,7 @@ There are normally two save areas involved when a program is called by another p
 
 Upon entry to the called program, GR13 contains the address of the caller's save area. 
 
-The caller:
+The callee:
 
 1. Saves GR14 to GR12 (registers at entry to the called program) at +12 of the caller's save area
 2. Obtains its own save area (the called program's save area)
@@ -42,18 +42,20 @@ Guide (SA23-1368-40)](https://www-01.ibm.com/servers/resourcelink/svc00100.nsf/p
 
 GR15 is expected to contain a return code upon exit by convention.
 
-## Passing parameters to the initial program
+## Program parameters
 
-There are two methods of passing parameters to a program
+There are two methods of passing parameters to a program.
 
-* SYSPARM on mz390
-* PARM on ez390
+* At compile time using SYSPARM
+* At run time using PARM
 
 In either case enclose the entire parm to be passed in double quotes.
-The double quotes are required to handle commas and spaces that otherwise cause command processors to split the parm. 
+
+The double quotes are required to handle commas and spaces that otherwise cause command processors to split the parm.
+
 The double quotes are not required if there are no commas or spaces in the text. 
 
-### SYSPARM
+### Compile time - SYSPARM
 
 If single quotes are included in text, they are passed on to &SYSPARM.
 
@@ -72,7 +74,7 @@ label    DC    C'&SYSPARM'
 label    DC    C'HELLO WORLD'
 ```
 
-### PARM
+### Run time - PARM
 
 PARM can be accessed via GR1 at program entry.
 
@@ -100,16 +102,28 @@ Will also result in the fullword pointed to by GR1 pointing to:
          DC   H'11',C'HELLO WORLD'`
 ```
 
-### Usage
+#### Usage
 
-``` hlasm
-         L    R2,0(,R1)     R2 --> PARM=value area
-         LH   R3,0(,R2)     R3  =  length of value
+The program is run with the parameter passed
+
+``` dos
+ez390 myprog "PARM('HELLO THERE')"
 ```
 
-GR2 loads the word pointed to by GR1. GR3 loads the halfword value pointed to by GR2. 
+The program code:
 
-For your example, GR3 would contain decimal 11 and 2 bytes past the address in GR2 begins the "HELLO WORLD" value.
+``` hlasm
+         L     R2,0(,R1)       R2=address of parm length(HW)+value
+         LH    R3,0(,R2)       R3=length of parm value
+         XGR   R0,R0           Set R0 to zero (for MVCOS instruction)
+         MVCOS PARM,2(R2),R3   Move R3 bytes at 2(R2) to PARM
+```
+* GR1 is populated by ez390 with the parm address pointer.
+* GR2 is loaded with the address of the parm length and address - fullword pointed to by GR1.
+* GR3 is loaded with the parm length - halfword value pointed to by GR2.
+* GR3 would contain decimal 11 which is the length of the parm "HELLO THERE".
+* The actual parm value of "HELLO THERE" begins 2 bytes past the address in GR2.
+* The `MVCOS` instruction will move the parm to the storage at label PARM.
 
 ## Macro reference
 
