@@ -1,0 +1,188 @@
+         ZCOBOL PGM='cics\TESTBEC7',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :47:49,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTBEC7_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * 1) HANDLE ABEND BY PROGRAM
+*      * 2) LINKED PROGRAM TO DEMO COMPLEX HANDLE ABEND
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTBEC7.
+         PROGRAM_ID TESTBEC7
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*         01  TEST1.
+         WS      01,TEST1
+*             02  FILLER  PIC X(4)  VALUE X'C311C761'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C761'
+*             02  FILLER  PIC X(35)
+*                         VALUE 'TESTBEC7 IN TRANSID BEC4 SAYS HELLO'.
+         WS        02,FILLER,PIC,X(35),VALUE,'TESTBEC7 IN TRANSID BEC4 X
+               SAYS HELLO'
+*             02  FILLER  PIC X(3)  VALUE X'114AC1'.
+         WS        02,FILLER,PIC,X(3),VALUE,X'114AC1'
+*             02  FILLER  PIC X(34)
+*                         VALUE 'BEC4 COMPLETED OK, NOW PRESS CLEAR'.
+         WS        02,FILLER,PIC,X(34),VALUE,'BEC4 COMPLETED OK, NOW PRX
+               ESS CLEAR'
+*         77  TEST1L   PIC 9(4) COMP.
+         WS      77,TEST1L,PIC,9(4),COMP
+*         01  TEST2.
+         WS      01,TEST2
+*             02  FILLER  PIC X(4)  VALUE X'C311C261'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C261'
+*             02  FILLER  PIC X(51)
+*            VALUE 'TESTBEC7 IN TRANSID BEC5 SAYS HELLO AND ABENDS ASRAX
+               '.
+         WS        02,FILLER,PIC,X(51),VALUE,'TESTBEC7 IN TRANSID BEC5 X
+               SAYS HELLO AND ABENDS ASRA'
+*         77  TEST2L   PIC 9(4) COMP.
+         WS      77,TEST2L,PIC,9(4),COMP
+*         01  TEST3.
+         WS      01,TEST3
+*             02  FILLER  PIC X(4)  VALUE X'C311C761'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C761'
+*             02  FILLER  PIC X(51)
+*            VALUE 'TESTBEC7 IN TRANSID BEC5 SAYS HELLO AND ABENDS AEI0X
+               '.
+         WS        02,FILLER,PIC,X(51),VALUE,'TESTBEC7 IN TRANSID BEC5 X
+               SAYS HELLO AND ABENDS AEI0'
+*         77  TEST3L   PIC 9(4) COMP.
+         WS      77,TEST3L,PIC,9(4),COMP
+*         77  BADFLD1  PIC 9(4) COMP VALUE 0.
+         WS      77,BADFLD1,PIC,9(4),COMP,VALUE,0
+*         77  BADFLD2  PIC S9(3) REDEFINES BADFLD1 COMP-3.
+         WS      77,BADFLD2,PIC,S9(3),REDEFINES,BADFLD1,COMP_3
+         LINKAGE SECTION
+         WS    01,DFHCOMMAREA
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*             MOVE LENGTH OF TEST1   TO TEST1L.
+*ZC     63         MOVE  LENGTH,OF,TEST1,TO,TEST1L
+         MOVE  LENGTH,OF,TEST1,TO,TEST1L
+         PERIOD 
+*             MOVE LENGTH OF TEST2   TO TEST2L.
+*ZC     64         MOVE  LENGTH,OF,TEST2,TO,TEST2L
+         MOVE  LENGTH,OF,TEST2,TO,TEST2L
+         PERIOD 
+*             MOVE LENGTH OF TEST3   TO TEST3L.
+*      *  CLC   EIBTRNID,=C'BEC5'  SECOND TEST TRANSID ?
+*      *  BE    BEC5               EXIT IF IT IS
+*ZC     65         MOVE  LENGTH,OF,TEST3,TO,TEST3L
+         MOVE  LENGTH,OF,TEST3,TO,TEST3L
+         PERIOD 
+*             IF EIBTRNID = 'BEC5' THEN GO TO BEC5.
+*ZC     68         IF    EIBTRNID,=,'BEC5',THEN
+         IF    EIBTRNID,=,'BEC5',THEN
+*      * BEC4 ABEND HANDLER
+*ZC     68         GO    TO,BEC5
+         GO    TO,BEC5
+         PERIOD 
+*             EXEC CICS SEND FROM(TEST1) LENGTH(TEST1L) END-EXEC.
+*ZC     70         EXEC  CICS,SEND,FROM(TEST1),LENGTH(TEST1L)
+         EXEC  CICS,SEND,FROM(TEST1),LENGTH(TEST1L)
+         PERIOD 
+*             EXEC CICS RETURN END-EXEC.
+*ZC     71         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+         PERIOD 
+*      * ABEND PRODUCER FOR TRANSID BEC5
+*      * BEC5     EQU   *
+*         BEC5.
+*      *  OC    DFHEICAP,DFHEICAP  ANY COMMAREA ?
+*      *  BNZ   BEC5COMM           EXIT IF WE HAVE
+         LABEL BEC5
+*             IF EIBCALEN NOT = 0 THEN GO TO BEC5COMM.
+*ZC     79         IF    EIBCALEN,NOT,=,0,THEN
+         IF    EIBCALEN,NOT,=,0,THEN
+*      * CAUSE ASRA TO BE HANDLED BY TESTBEC6
+*ZC     79         GO    TO,BEC5COMM
+         GO    TO,BEC5COMM
+         PERIOD 
+*             EXEC CICS SEND FROM(TEST2) LENGTH(TEST2L) END-EXEC.
+*ZC     81         EXEC  CICS,SEND,FROM(TEST2),LENGTH(TEST2L)
+         EXEC  CICS,SEND,FROM(TEST2),LENGTH(TEST2L)
+         PERIOD 
+*      *  DC    H'0'
+*             ADD 1 TO BADFLD2.
+*      * BEC5COMM EQU   *
+*ZC     83         ADD   1,TO,BADFLD2
+         ADD   1,TO,BADFLD2
+         PERIOD 
+*         BEC5COMM.
+         LABEL BEC5COMM
+*             EXEC CICS HANDLE ABEND PROGRAM('TESTBEC8') END-EXEC.
+*ZC     86         EXEC  CICS,HANDLE,ABEND,PROGRAM('TESTBEC8')
+         EXEC  CICS,HANDLE,ABEND,PROGRAM('TESTBEC8')
+         PERIOD 
+*             EXEC CICS SEND FROM(TEST3) LENGTH(TEST3L) END-EXEC.
+*ZC     87         EXEC  CICS,SEND,FROM(TEST3),LENGTH(TEST3L)
+         EXEC  CICS,SEND,FROM(TEST3),LENGTH(TEST3L)
+         PERIOD 
+*      * CAUSE AEI0
+*      * THIS IS 'REPLACED' BY XCTL TO TESTBEC8 WITH OUR COMMAREA
+*             EXEC CICS LOAD PROGRAM('BADPROG7') END-EXEC.
+*ZC     90         EXEC  CICS,LOAD,PROGRAM('BADPROG7')
+         EXEC  CICS,LOAD,PROGRAM('BADPROG7')
+         PERIOD 
+         PROCEDURE END
+         END   

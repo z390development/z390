@@ -1,0 +1,1021 @@
+         ZCOBOL PGM='cics\TESTICC1',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :48:23,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTICC1_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*      * 11/11/08 RPI 946 CORRECTIONS TO MESSAGES TO PREVENT 6'S       X
+               *
+*      *          DISPLAYED                                            X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * TEST INTERVAL CONTROL FUNCTIONS
+*      *  ASKTIME
+*      *     SHOW BEFORE AND AFTER EIBDATE/EIBTIME
+*      *  ASKTIME ABSTIME(STCKTIME)
+*      *     SHOW AFTER EIBDATE/EIBTIME
+*      *     SHOW DECIMAL STCK TIME IN 0.001 SECS SINCE 1/1/1900
+*      *  DELAY TO SHOW IT WORKS
+*      *     INVREQ/ 4, 5, 6
+*      *  FORMATTIME LINE 1
+*      *     DATE WITH/WITHOUT DATESEP
+*      *     FULLDATE WITH/WITHOUT DATESEP
+*      *  FORMATTIME LINE 2
+*      *     DDMMYY MMDDYY YYDDMM YYMMDD DATEFORM
+*      *  FORMATTIME LINE 3
+*      *     DDMMYYYY MMDDYYYY YYYYDDMM YYYYMMDD YYDDD YYYYDDD
+*      *     WITH DATESEP
+*      *  FORMATTIME LINE 4
+*      *     DATESTRING AND TIME WITH/WITHOUT TIMESEP
+*      *  FORMATTIME LINE 5
+*      *     INVREQ/ 1
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTICC1.
+         PROGRAM_ID TESTICC1
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*         77  STCKTIME PIC 9(15)  COMP-3.
+         WS      77,STCKTIME,PIC,9(15),COMP_3
+*         01  FILLER REDEFINES STCKTIME.
+         WS      01,FILLER,REDEFINES,STCKTIME
+*             02  STCKBAD  PIC X.
+         WS        02,STCKBAD,PIC,X
+*             02  FILLER   PIC X(7).
+         WS        02,FILLER,PIC,X(7)
+*         77  SBA3     PIC X(3)   VALUE X'11C260'.
+         WS      77,SBA3,PIC,X(3),VALUE,X'11C260'
+*         77  SBA4     PIC X(3)   VALUE X'11C3F0'.
+         WS      77,SBA4,PIC,X(3),VALUE,X'11C3F0'
+*         77  SBA5     PIC X(3)   VALUE X'11C540'.
+         WS      77,SBA5,PIC,X(3),VALUE,X'11C540'
+*         77  SBA6     PIC X(3)   VALUE X'11C650'.
+         WS      77,SBA6,PIC,X(3),VALUE,X'11C650'
+*         77  SBA7     PIC X(3)   VALUE X'11C760'.
+         WS      77,SBA7,PIC,X(3),VALUE,X'11C760'
+*         77  SBA8     PIC X(3)   VALUE X'11C8F0'.
+         WS      77,SBA8,PIC,X(3),VALUE,X'11C8F0'
+*         77  SBA9     PIC X(3)   VALUE X'114A40'.
+         WS      77,SBA9,PIC,X(3),VALUE,X'114A40'
+*         77  SBA10    PIC X(3)   VALUE X'114B50'.
+         WS      77,SBA10,PIC,X(3),VALUE,X'114B50'
+*         77  SBA11    PIC X(3)   VALUE X'114C60'.
+         WS      77,SBA11,PIC,X(3),VALUE,X'114C60'
+*         77  SBA12    PIC X(3)   VALUE X'114DF0'.
+         WS      77,SBA12,PIC,X(3),VALUE,X'114DF0'
+*         77  SBA13    PIC X(3)   VALUE X'114F40'.
+         WS      77,SBA13,PIC,X(3),VALUE,X'114F40'
+*         77  SBA14    PIC X(3)   VALUE X'115050'.
+         WS      77,SBA14,PIC,X(3),VALUE,X'115050'
+*         77  SBA15    PIC X(3)   VALUE X'11D160'.
+         WS      77,SBA15,PIC,X(3),VALUE,X'11D160'
+*         77  SBA16    PIC X(3)   VALUE X'11D2F0'.
+         WS      77,SBA16,PIC,X(3),VALUE,X'11D2F0'
+*         77  SBA17    PIC X(3)   VALUE X'11D440'.
+         WS      77,SBA17,PIC,X(3),VALUE,X'11D440'
+*         77  SBA18    PIC X(3)   VALUE X'11D550'.
+         WS      77,SBA18,PIC,X(3),VALUE,X'11D550'
+*         77  SBA19    PIC X(3)   VALUE X'11D660'.
+         WS      77,SBA19,PIC,X(3),VALUE,X'11D660'
+*         01  TDBEF.
+         WS      01,TDBEF
+*             02  FILLER   PIC X     VALUE X'C3'.
+         WS        02,FILLER,PIC,X,VALUE,X'C3'
+*             02  TDBEFSBA PIC X(3).
+         WS        02,TDBEFSBA,PIC,X(3)
+*             02  FILLER   PIC X(13) VALUE 'EIBTIME/DATE '.
+         WS        02,FILLER,PIC,X(13),VALUE,'EIBTIME/DATE '
+*             02  FILLER   PIC X(16) VALUE 'AT TASK START   '.
+         WS        02,FILLER,PIC,X(16),VALUE,'AT TASK START   '
+*             02  TIMEBEF  PIC 9(8).
+         WS        02,TIMEBEF,PIC,9(8)
+*             02  FILLER   REDEFINES TIMEBEF.
+         WS        02,FILLER,REDEFINES,TIMEBEF
+*                 03  TIMEBEFS PIC X(2).
+         WS          03,TIMEBEFS,PIC,X(2)
+*                 03  FILLER   PIC X(6).
+         WS          03,FILLER,PIC,X(6)
+*             02  DATEBEF  PIC 9(8).
+         WS        02,DATEBEF,PIC,9(8)
+*             02  FILLER   REDEFINES DATEBEF.
+         WS        02,FILLER,REDEFINES,DATEBEF
+*                 03  DATEBEFS PIC X.
+         WS          03,DATEBEFS,PIC,X
+*                 03  FILLER   PIC X(7).
+         WS          03,FILLER,PIC,X(7)
+*         77  TDBEFLEN PIC 9(4) COMP.
+         WS      77,TDBEFLEN,PIC,9(4),COMP
+*         01  TDAFT.
+         WS      01,TDAFT
+*             02  FILLER   PIC X     VALUE X'C3'.
+         WS        02,FILLER,PIC,X,VALUE,X'C3'
+*             02  TDAFTSBA PIC X(3).
+         WS        02,TDAFTSBA,PIC,X(3)
+*             02  FILLER   PIC X(13) VALUE 'EIBTIME/DATE '.
+         WS        02,FILLER,PIC,X(13),VALUE,'EIBTIME/DATE '
+*             02  TIMESPEC PIC X(16) VALUE 'AFTER TASK START'.
+         WS        02,TIMESPEC,PIC,X(16),VALUE,'AFTER TASK START'
+*             02  TIMEAFT  PIC 9(8).
+         WS        02,TIMEAFT,PIC,9(8)
+*             02  FILLER   REDEFINES TIMEAFT.
+         WS        02,FILLER,REDEFINES,TIMEAFT
+*                 03  TIMEAFTS PIC X(2)  VALUE SPACES.
+         WS          03,TIMEAFTS,PIC,X(2),VALUE,SPACES
+*                 03  TIMEAFDL PIC X(6)  VALUE SPACES.
+         WS          03,TIMEAFDL,PIC,X(6),VALUE,SPACES
+*             02  FILLER   REDEFINES TIMEAFT.
+         WS        02,FILLER,REDEFINES,TIMEAFT
+*                 03  FILLER   PIC X(6).
+         WS          03,FILLER,PIC,X(6)
+*                 03  TIMEAF59 PIC X(2).
+         WS          03,TIMEAF59,PIC,X(2)
+*             02  DATEAFT  PIC 9(8).
+         WS        02,DATEAFT,PIC,9(8)
+*             02  FILLER   REDEFINES DATEAFT.
+         WS        02,FILLER,REDEFINES,DATEAFT
+*                 03  DATEAFTS PIC X.
+         WS          03,DATEAFTS,PIC,X
+*                 03  FILLER   PIC X(7).
+         WS          03,FILLER,PIC,X(7)
+*             02  STCKAFT  PIC 9(16).
+         WS        02,STCKAFT,PIC,9(16)
+*             02  FILLER   REDEFINES STCKAFT.
+         WS        02,FILLER,REDEFINES,STCKAFT
+*                 03  STCKAFTS PIC X     VALUE SPACE.
+         WS          03,STCKAFTS,PIC,X,VALUE,SPACE
+*                 03  FILLER   PIC X(15) VALUE SPACES.
+         WS          03,FILLER,PIC,X(15),VALUE,SPACES
+*         77  TDAFTLEN PIC 9(4) COMP.
+         WS      77,TDAFTLEN,PIC,9(4),COMP
+*         01  FORMAT.
+         WS      01,FORMAT
+*             02  FILLER   PIC X     VALUE X'C3'.
+         WS        02,FILLER,PIC,X,VALUE,X'C3'
+*             02  FMTSBA   PIC X(3).
+         WS        02,FMTSBA,PIC,X(3)
+*             02  FILLER   PIC X(11) VALUE 'FORMATTIME '.
+         WS        02,FILLER,PIC,X(11),VALUE,'FORMATTIME '
+*             02  FMTDATE1 PIC X(10) VALUE SPACES.
+         WS        02,FMTDATE1,PIC,X(10),VALUE,SPACES
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FMTDATE2 PIC X(10) VALUE SPACES.
+         WS        02,FMTDATE2,PIC,X(10),VALUE,SPACES
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FMTDATE3 PIC X(10) VALUE SPACES.
+         WS        02,FMTDATE3,PIC,X(10),VALUE,SPACES
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FMTDATE4 PIC X(10) VALUE SPACES.
+         WS        02,FMTDATE4,PIC,X(10),VALUE,SPACES
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FMTDATE5 PIC X(10) VALUE SPACES.
+         WS        02,FMTDATE5,PIC,X(10),VALUE,SPACES
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FMTDATE6 PIC X(10) VALUE SPACES.
+         WS        02,FMTDATE6,PIC,X(10),VALUE,SPACES
+*         77  FORMATL  PIC 9(4) COMP.
+         WS      77,FORMATL,PIC,9(4),COMP
+*         01  FORMAT2.
+         WS      01,FORMAT2
+*             02  FILLER   PIC X     VALUE X'C3'.
+         WS        02,FILLER,PIC,X,VALUE,X'C3'
+*             02  FMT2SBA  PIC X(3).
+         WS        02,FMT2SBA,PIC,X(3)
+*             02  FILLER   PIC X(11) VALUE 'FORMATTIME '.
+         WS        02,FILLER,PIC,X(11),VALUE,'FORMATTIME '
+*             02  DAYCOUNT PIC Z(5)9.
+         WS        02,DAYCOUNT,PIC,Z(5)9
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  DAYWEEK  PIC ZZZ9.
+         WS        02,DAYWEEK,PIC,ZZZ9
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  DAYMONTH PIC ZZZ9.
+         WS        02,DAYMONTH,PIC,ZZZ9
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  MONTHYR  PIC ZZZ9.
+         WS        02,MONTHYR,PIC,ZZZ9
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  YEARNUM  PIC Z(5)9.
+         WS        02,YEARNUM,PIC,Z(5)9
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*         77  FORMAT2L PIC 9(4) COMP.
+         WS      77,FORMAT2L,PIC,9(4),COMP
+*         01  FORMAT3.
+         WS      01,FORMAT3
+*             02  FILLER   PIC X     VALUE X'C3'.
+         WS        02,FILLER,PIC,X,VALUE,X'C3'
+*             02  FMT3SBA  PIC X(3).
+         WS        02,FMT3SBA,PIC,X(3)
+*             02  FILLER   PIC X(11) VALUE 'FORMATTIME '.
+         WS        02,FILLER,PIC,X(11),VALUE,'FORMATTIME '
+*             02  DSTRING  PIC X(25) VALUE SPACES.
+         WS        02,DSTRING,PIC,X(25),VALUE,SPACES
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FMTTIME1 PIC X(6)  VALUE SPACES.
+         WS        02,FMTTIME1,PIC,X(6),VALUE,SPACES
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FMTTIME2 PIC X(8)  VALUE SPACES.
+         WS        02,FMTTIME2,PIC,X(8),VALUE,SPACES
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FMTTIME3 PIC X(8)  VALUE SPACES.
+         WS        02,FMTTIME3,PIC,X(8),VALUE,SPACES
+*         77  FORMAT3L PIC 9(4) COMP.
+         WS      77,FORMAT3L,PIC,9(4),COMP
+*         01  ICCOND.
+         WS      01,ICCOND
+*             02  FILLER   PIC X     VALUE X'C3'.
+         WS        02,FILLER,PIC,X,VALUE,X'C3'
+*             02  ICSBA    PIC X(3).
+         WS        02,ICSBA,PIC,X(3)
+*             02  ICFUNC   PIC X(10) VALUE 'DELAY     '.
+         WS        02,ICFUNC,PIC,X(10),VALUE,'DELAY     '
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FHANDCON.
+         WS        02,FHANDCON
+*                 03  FILLER   PIC X(7) VALUE SPACES.
+         WS          03,FILLER,PIC,X(7),VALUE,SPACES
+*                 03  FHAINV   PIC X(2).
+         WS          03,FHAINV,PIC,X(2)
+*                 03  FILLER   PIC X(3) VALUE SPACES.
+         WS          03,FILLER,PIC,X(3),VALUE,SPACES
+*             02  FILLER   PIC X(18) VALUE ' CONDITION RAISED '.
+         WS        02,FILLER,PIC,X(18),VALUE,' CONDITION RAISED '
+*         77  FHANDL   PIC 9(4) COMP.
+         WS      77,FHANDL,PIC,9(4),COMP
+*         01  ENDMSG.
+         WS      01,ENDMSG
+*             02  FILLER   PIC X(4)  VALUE X'C3115CF0'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3115CF0'
+*             02  FILLER   PIC X(31)
+*                          VALUE 'TESTICC1 COMPLETED, PRESS CLEAR'.
+         WS        02,FILLER,PIC,X(31),VALUE,'TESTICC1 COMPLETED, PRESSX
+                CLEAR'
+*         77  ENDMSGL  PIC 9(4) COMP.
+         WS      77,ENDMSGL,PIC,9(4),COMP
+*         01  FILLER.
+         WS      01,FILLER
+*             02  WORK1A   PIC 9(4).
+         WS        02,WORK1A,PIC,9(4)
+*             02  FILLER   REDEFINES WORK1A.
+         WS        02,FILLER,REDEFINES,WORK1A
+*                 03  FILLER   PIC X(2).
+         WS          03,FILLER,PIC,X(2)
+*                 03  WORK1B   PIC X(2).
+         WS          03,WORK1B,PIC,X(2)
+*         77  SECS19   PIC X(6)  VALUE '000019'.
+         WS      77,SECS19,PIC,X(6),VALUE,'000019'
+*         77  DAYCNT   PIC 9(9)  COMP.
+         WS      77,DAYCNT,PIC,9(9),COMP
+*         77  DAYOFWK  PIC 9(9)  COMP.
+         WS      77,DAYOFWK,PIC,9(9),COMP
+*         77  DAYOFMN  PIC 9(9)  COMP.
+         WS      77,DAYOFMN,PIC,9(9),COMP
+*         77  MONTH    PIC 9(9)  COMP.
+         WS      77,MONTH,PIC,9(9),COMP
+*         77  YEAR     PIC 9(9)  COMP.
+         WS      77,YEAR,PIC,9(9),COMP
+*         77  MYSEP    PIC X     VALUE ':'.
+*      * GO TO DEPENDING CONTROL
+*      *   1=IC01RTN1
+*      *   2=IC01RTN2
+*      *   3=IC01RTN3
+*      *   4=IC01RTN4
+*      *   5=IC01RTN5
+         WS      77,MYSEP,PIC,X,VALUE,':'
+*         77  DEPCTRL   PIC 9(4) COMP.
+         WS      77,DEPCTRL,PIC,9(4),COMP
+*         LINKAGE SECTION.
+         LINKAGE SECTION
+*         77  MYCWA    PIC X(50).
+         WS      77,MYCWA,PIC,X(50)
+         WS    01,DFHCOMMAREA
+*         PROCEDURE DIVISION USING DFHEIBLK DFHCOMMAREA.
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*             MOVE LENGTH OF TDBEF    TO TDBEFLEN.
+*ZC    203         MOVE  LENGTH,OF,TDBEF,TO,TDBEFLEN
+         MOVE  LENGTH,OF,TDBEF,TO,TDBEFLEN
+         PERIOD 
+*             MOVE LENGTH OF TDAFT    TO TDAFTLEN.
+*ZC    204         MOVE  LENGTH,OF,TDAFT,TO,TDAFTLEN
+         MOVE  LENGTH,OF,TDAFT,TO,TDAFTLEN
+         PERIOD 
+*             MOVE LENGTH OF FORMAT   TO FORMATL.
+*ZC    205         MOVE  LENGTH,OF,FORMAT,TO,FORMATL
+         MOVE  LENGTH,OF,FORMAT,TO,FORMATL
+         PERIOD 
+*             MOVE LENGTH OF FORMAT2  TO FORMAT2L.
+*ZC    206         MOVE  LENGTH,OF,FORMAT2,TO,FORMAT2L
+         MOVE  LENGTH,OF,FORMAT2,TO,FORMAT2L
+         PERIOD 
+*             MOVE LENGTH OF FORMAT3  TO FORMAT3L.
+*ZC    207         MOVE  LENGTH,OF,FORMAT3,TO,FORMAT3L
+         MOVE  LENGTH,OF,FORMAT3,TO,FORMAT3L
+         PERIOD 
+*             MOVE LENGTH OF ICCOND   TO FHANDL.
+*ZC    208         MOVE  LENGTH,OF,ICCOND,TO,FHANDL
+         MOVE  LENGTH,OF,ICCOND,TO,FHANDL
+         PERIOD 
+*             MOVE LENGTH OF ENDMSG   TO ENDMSGL.
+*      * DISPLAY TASK START TIME
+*ZC    209         MOVE  LENGTH,OF,ENDMSG,TO,ENDMSGL
+         MOVE  LENGTH,OF,ENDMSG,TO,ENDMSGL
+         PERIOD 
+*             EXEC CICS ADDRESS CWA(ADDRESS OF MYCWA) END-EXEC.
+*ZC    211         EXEC  CICS,ADDRESS,CWA(ADDRESS,OF,MYCWA)
+         EXEC  CICS,ADDRESS,CWA(ADDRESS,OF,MYCWA)
+         PERIOD 
+*      *  MVC   TDBEFSBA,SBA3      1ST SBA
+*             MOVE SBA3 TO TDBEFSBA.
+*      *  MVC   TIMEBEF,=X'F020202020202020' MOVE EDIT WORD
+*      *  ED    TIMEBEF,EIBTIME    EDIT EIBTIME
+*ZC    213         MOVE  SBA3,TO,TDBEFSBA
+         MOVE  SBA3,TO,TDBEFSBA
+         PERIOD 
+*             MOVE EIBTIME TO TIMEBEF.
+*      *  MVI   TIMEBEF,C' '       BLANK 1ST BYTE
+*      *  MVI   TIMEBEF+1,C' '     BLANK 2ND BYTE
+*ZC    216         MOVE  EIBTIME,TO,TIMEBEF
+         MOVE  EIBTIME,TO,TIMEBEF
+         PERIOD 
+*             MOVE SPACES TO TIMEBEFS
+*      *  MVC   DATEBEF,=X'F020202020202020' MOVE EDIT WORD
+*      *  ED    DATEBEF,EIBDATE    EDIT EIBDATE
+*ZC    219         MOVE  SPACES,TO,TIMEBEFS
+         MOVE  SPACES,TO,TIMEBEFS
+*             MOVE EIBDATE TO DATEBEF.
+*      *  MVI   DATEBEF,C' '       BLANK 1ST BYTE
+*ZC    222         MOVE  EIBDATE,TO,DATEBEF
+         MOVE  EIBDATE,TO,DATEBEF
+         PERIOD 
+*             MOVE SPACE TO DATEBEFS.
+*ZC    224         MOVE  SPACE,TO,DATEBEFS
+         MOVE  SPACE,TO,DATEBEFS
+         PERIOD 
+*             EXEC CICS SEND FROM(TDBEF) LENGTH(TDBEFLEN) END-EXEC.
+*ZC    225         EXEC  CICS,SEND,FROM(TDBEF),LENGTH(TDBEFLEN)
+         EXEC  CICS,SEND,FROM(TDBEF),LENGTH(TDBEFLEN)
+         PERIOD 
+*      * DISPLAY TIME NOW
+*             EXEC CICS ASKTIME END-EXEC.
+*ZC    227         EXEC  CICS,ASKTIME
+         EXEC  CICS,ASKTIME
+         PERIOD 
+*      *  MVC   TDAFTSBA,SBA4      2ND SBA
+*             MOVE SBA4 TO TDAFTSBA.
+*      *  MVC   TIMEAFT,=X'F020202020202020' MOVE EDIT WORD
+*      *  ED    TIMEAFT,EIBTIME    EDIT EIBTIME
+*ZC    229         MOVE  SBA4,TO,TDAFTSBA
+         MOVE  SBA4,TO,TDAFTSBA
+         PERIOD 
+*             MOVE EIBTIME TO TIMEAFT.
+*      *  MVI   TIMEAFT,C' '       BLANK 1ST BYTE
+*      *  MVI   TIMEAFT+1,C' '     BLANK 2ND BYTE
+*ZC    232         MOVE  EIBTIME,TO,TIMEAFT
+         MOVE  EIBTIME,TO,TIMEAFT
+         PERIOD 
+*             MOVE SPACES TO TIMEAFTS.
+*      *  MVC   DATEAFT,=X'F020202020202020' MOVE EDIT WORD
+*      *  ED    DATEAFT,EIBDATE    EDIT EIBDATE
+*ZC    235         MOVE  SPACES,TO,TIMEAFTS
+         MOVE  SPACES,TO,TIMEAFTS
+         PERIOD 
+*             MOVE EIBDATE TO DATEAFT.
+*      *  MVI   DATEAFT,C' '       BLANK 1ST BYTE
+*ZC    238         MOVE  EIBDATE,TO,DATEAFT
+         MOVE  EIBDATE,TO,DATEAFT
+         PERIOD 
+*             MOVE SPACE TO DATEAFTS.
+*      *  MVC   TIMESPEC,=C'AFTER TASK START'
+*ZC    240         MOVE  SPACE,TO,DATEAFTS
+         MOVE  SPACE,TO,DATEAFTS
+         PERIOD 
+*             MOVE 'AFTER TASK START' TO TIMESPEC.
+*ZC    242         MOVE  'AFTER TASK START',TO,TIMESPEC
+         MOVE  'AFTER TASK START',TO,TIMESPEC
+         PERIOD 
+*             EXEC CICS SEND FROM(TDAFT) LENGTH(TDAFTLEN) END-EXEC.
+*ZC    243         EXEC  CICS,SEND,FROM(TDAFT),LENGTH(TDAFTLEN)
+         EXEC  CICS,SEND,FROM(TDAFT),LENGTH(TDAFTLEN)
+         PERIOD 
+*      * DISPLAY TIME AFTER 9 SECS
+*             EXEC CICS DELAY INTERVAL(9) END-EXEC.
+*ZC    245         EXEC  CICS,DELAY,INTERVAL(9)
+         EXEC  CICS,DELAY,INTERVAL(9)
+         PERIOD 
+*             EXEC CICS ASKTIME ABSTIME(STCKTIME) END-EXEC.
+*ZC    246         EXEC  CICS,ASKTIME,ABSTIME(STCKTIME)
+         EXEC  CICS,ASKTIME,ABSTIME(STCKTIME)
+         PERIOD 
+*      *  MVC   TDAFTSBA,SBA5      2ND SBA
+*             MOVE SBA5 TO TDAFTSBA.
+*      *  MVC   TIMESPEC,=C'AFTER  9 SECONDS'
+*ZC    248         MOVE  SBA5,TO,TDAFTSBA
+         MOVE  SBA5,TO,TDAFTSBA
+         PERIOD 
+*             MOVE 'AFTER  9 SECONDS' TO TIMESPEC.
+*      *  BAL   R9,DOAFT           SHOW TIME/DATE/STCKTIME
+*ZC    250         MOVE  'AFTER  9 SECONDS',TO,TIMESPEC
+         MOVE  'AFTER  9 SECONDS',TO,TIMESPEC
+         PERIOD 
+*             PERFORM DOAFT.
+*      * DISPLAY TIME AFTER 9+12=21 SECS
+*ZC    252         PERFORM DOAFT
+         PERFORM DOAFT
+         PERIOD 
+*             EXEC CICS DELAY INTERVAL(12) END-EXEC.
+*ZC    254         EXEC  CICS,DELAY,INTERVAL(12)
+         EXEC  CICS,DELAY,INTERVAL(12)
+         PERIOD 
+*             EXEC CICS ASKTIME ABSTIME(STCKTIME) END-EXEC.
+*ZC    255         EXEC  CICS,ASKTIME,ABSTIME(STCKTIME)
+         EXEC  CICS,ASKTIME,ABSTIME(STCKTIME)
+         PERIOD 
+*      *  MVC   TDAFTSBA,SBA6      3RD SBA
+*             MOVE SBA6 TO TDAFTSBA.
+*      *  MVC   TIMESPEC,=C'AFTER 12 SECONDS'
+*ZC    257         MOVE  SBA6,TO,TDAFTSBA
+         MOVE  SBA6,TO,TDAFTSBA
+         PERIOD 
+*             MOVE 'AFTER 12 SECONDS' TO TIMESPEC.
+*      *  BAL   R9,DOAFT           SHOW TIME/DATE/STCKTIME
+*ZC    259         MOVE  'AFTER 12 SECONDS',TO,TIMESPEC
+         MOVE  'AFTER 12 SECONDS',TO,TIMESPEC
+         PERIOD 
+*             PERFORM DOAFT.
+*      * DISPLAY TIME AFTER 9+12+19=40 SECS
+*ZC    261         PERFORM DOAFT
+         PERFORM DOAFT
+         PERIOD 
+*             EXEC CICS DELAY INTERVAL(SECS19) END-EXEC.
+*ZC    263         EXEC  CICS,DELAY,INTERVAL(SECS19)
+         EXEC  CICS,DELAY,INTERVAL(SECS19)
+         PERIOD 
+*             EXEC CICS ASKTIME ABSTIME(STCKTIME) END-EXEC.
+*ZC    264         EXEC  CICS,ASKTIME,ABSTIME(STCKTIME)
+         EXEC  CICS,ASKTIME,ABSTIME(STCKTIME)
+         PERIOD 
+*      *  MVC   TDAFTSBA,SBA7      4TH SBA
+*             MOVE SBA7 TO TDAFTSBA.
+*      *  MVC   TIMESPEC,=C'AFTER 19 SECONDS'
+*ZC    266         MOVE  SBA7,TO,TDAFTSBA
+         MOVE  SBA7,TO,TDAFTSBA
+         PERIOD 
+*             MOVE 'AFTER 19 SECONDS' TO TIMESPEC.
+*      *  BAL   R9,DOAFT           SHOW TIME/DATE/STCKTIME
+*ZC    268         MOVE  'AFTER 19 SECONDS',TO,TIMESPEC
+         MOVE  'AFTER 19 SECONDS',TO,TIMESPEC
+         PERIOD 
+*             PERFORM DOAFT.
+*      * DISPLAY TIME AFTER 9+12+19+5=45 SECS
+*ZC    270         PERFORM DOAFT
+         PERFORM DOAFT
+         PERIOD 
+*             EXEC CICS DELAY FOR SECONDS(5) END-EXEC.
+*ZC    272         EXEC  CICS,DELAY,FOR,SECONDS(5)
+         EXEC  CICS,DELAY,FOR,SECONDS(5)
+         PERIOD 
+*             EXEC CICS ASKTIME ABSTIME(STCKTIME) END-EXEC.
+*ZC    273         EXEC  CICS,ASKTIME,ABSTIME(STCKTIME)
+         EXEC  CICS,ASKTIME,ABSTIME(STCKTIME)
+         PERIOD 
+*      *  MVC   TDAFTSBA,SBA8      5TH SBA
+*             MOVE SBA8 TO TDAFTSBA.
+*      *  MVC   TIMESPEC,=C'AFTER  5 SECONDS'
+*ZC    275         MOVE  SBA8,TO,TDAFTSBA
+         MOVE  SBA8,TO,TDAFTSBA
+         PERIOD 
+*             MOVE 'AFTER  5 SECONDS' TO TIMESPEC.
+*      *  BAL   R9,DOAFT           SHOW TIME/DATE/STCKTIME
+*ZC    277         MOVE  'AFTER  5 SECONDS',TO,TIMESPEC
+         MOVE  'AFTER  5 SECONDS',TO,TIMESPEC
+         PERIOD 
+*             PERFORM DOAFT.
+*      * TIMEAFT='  HHMMSS'
+*      *  MVC   TIMEAFT+6(2),=C'59' WAIT TO END OF CURRENT MINUTE
+*ZC    279         PERFORM DOAFT
+         PERFORM DOAFT
+         PERIOD 
+*             MOVE '59' TO TIMEAF59.
+*ZC    282         MOVE  '59',TO,TIMEAF59
+         MOVE  '59',TO,TIMEAF59
+         PERIOD 
+*             EXEC CICS DELAY TIME(TIMEAFDL) END-EXEC.
+*ZC    283         EXEC  CICS,DELAY,TIME(TIMEAFDL)
+         EXEC  CICS,DELAY,TIME(TIMEAFDL)
+         PERIOD 
+*             EXEC CICS ASKTIME ABSTIME(STCKTIME) END-EXEC.
+*ZC    284         EXEC  CICS,ASKTIME,ABSTIME(STCKTIME)
+         EXEC  CICS,ASKTIME,ABSTIME(STCKTIME)
+         PERIOD 
+*      *  MVC   TDAFTSBA,SBA9      6TH SBA
+*             MOVE SBA9 TO TDAFTSBA.
+*      *  MVC   TIMESPEC,=C'UNTIL HHMM59    '
+*ZC    286         MOVE  SBA9,TO,TDAFTSBA
+         MOVE  SBA9,TO,TDAFTSBA
+         PERIOD 
+*             MOVE 'UNTIL HHMM59    ' TO TIMESPEC.
+*      *  BAL   R9,DOAFT           SHOW TIME/DATE/STCKTIME
+*ZC    288         MOVE  'UNTIL HHMM59    ',TO,TIMESPEC
+         MOVE  'UNTIL HHMM59    ',TO,TIMESPEC
+         PERIOD 
+*             PERFORM DOAFT.
+*      * HANDLE ALL CONDITIONS, ALWAYS RETURN TO MAIN LINE
+*ZC    290         PERFORM DOAFT
+         PERFORM DOAFT
+         PERIOD 
+*             EXEC CICS HANDLE CONDITION
+*                       EXPIRED(IC01EXP)
+*                       INVREQ(IC01INV)
+*ZC    294         EXEC  CICS,HANDLE,CONDITION,EXPIRED(IC01EXP),INVREQ(X
+               IC01INV)
+         EXEC  CICS,HANDLE,CONDITION,EXPIRED(IC01EXP),INVREQ(IC01INV)
+         PERIOD 
+*                       END-EXEC.
+*      * INTERVAL EXPIRED, RAISE EXPIRED
+*      *  MVC   ICSBA,SBA10        7TH SBA
+*             MOVE SBA10 TO ICSBA.
+*      *  LA    R7,IC01RTN1        R7=HANDLE RETURN
+*ZC    302         MOVE  SBA10,TO,ICSBA
+         MOVE  SBA10,TO,ICSBA
+         PERIOD 
+*             MOVE 1 TO DEPCTRL.
+*ZC    304         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS DELAY INTERVAL(0) END-EXEC.
+*ZC    305         EXEC  CICS,DELAY,INTERVAL(0)
+         EXEC  CICS,DELAY,INTERVAL(0)
+         PERIOD 
+*      * BAD HOURS, RAISE INVREQ/4
+*      * IC01RTN1 DS    0H
+*         IC01RTN1.
+*      *  MVC   ICSBA,SBA11        8TH SBA
+         LABEL IC01RTN1
+*             MOVE SBA11 TO ICSBA.
+*      *  LA    R7,IC01RTN2        R7=HANDLE RETURN
+*ZC    312         MOVE  SBA11,TO,ICSBA
+         MOVE  SBA11,TO,ICSBA
+         PERIOD 
+*             MOVE 2 TO DEPCTRL.
+*ZC    314         MOVE  2,TO,DEPCTRL
+         MOVE  2,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS DELAY FOR HOURS(456) END-EXEC.
+*ZC    315         EXEC  CICS,DELAY,FOR,HOURS(456)
+         EXEC  CICS,DELAY,FOR,HOURS(456)
+         PERIOD 
+*      * BAD MINUTES, RAISE INVREQ/5
+*      * IC01RTN2 DS    0H
+*         IC01RTN2.
+*      *  MVC   ICSBA,SBA12        9TH SBA
+         LABEL IC01RTN2
+*             MOVE SBA12 TO ICSBA.
+*      *  LA    R7,IC01RTN3        R7=HANDLE RETURN
+*ZC    322         MOVE  SBA12,TO,ICSBA
+         MOVE  SBA12,TO,ICSBA
+         PERIOD 
+*             MOVE 3 TO DEPCTRL.
+*ZC    324         MOVE  3,TO,DEPCTRL
+         MOVE  3,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS DELAY TIME(128812) END-EXEC.
+*ZC    325         EXEC  CICS,DELAY,TIME(128812)
+         EXEC  CICS,DELAY,TIME(128812)
+         PERIOD 
+*      * BAD SECONDS, RAISE INVREQ/6
+*      * IC01RTN3 DS    0H
+*         IC01RTN3.
+*      *  MVC   ICSBA,SBA13        10TH SBA
+         LABEL IC01RTN3
+*             MOVE SBA13 TO ICSBA.
+*      *  LA    R7,IC01RTN4        R7=HANDLE RETURN
+*ZC    332         MOVE  SBA13,TO,ICSBA
+         MOVE  SBA13,TO,ICSBA
+         PERIOD 
+*             MOVE 4 TO DEPCTRL.
+*ZC    334         MOVE  4,TO,DEPCTRL
+         MOVE  4,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS DELAY INTERVAL(77) END-EXEC.
+*ZC    335         EXEC  CICS,DELAY,INTERVAL(77)
+         EXEC  CICS,DELAY,INTERVAL(77)
+         PERIOD 
+*      * FORMATTIME TESTS
+*      * IC01RTN4 DS    0H
+*         IC01RTN4.
+*      *  MVC   FMTSBA,SBA14       11TH SBA
+         LABEL IC01RTN4
+*             MOVE SBA14 TO FMTSBA.
+*ZC    342         MOVE  SBA14,TO,FMTSBA
+         MOVE  SBA14,TO,FMTSBA
+         PERIOD 
+*             EXEC CICS FORMATTIME ABSTIME(STCKTIME)
+*ZC    343         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DATE(FMTDATEX
+               1),FULLDATE(FMTDATE4)
+         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DATE(FMTDATE1),FULLDATX
+               E(FMTDATE4)
+         PERIOD 
+*                       DATE(FMTDATE1) FULLDATE(FMTDATE4) END-EXEC.
+*             EXEC CICS FORMATTIME ABSTIME(STCKTIME) DATE(FMTDATE2)
+*ZC    345         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DATE(FMTDATEX
+               2),FULLDATE(FMTDATE5),DATESEP
+         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DATE(FMTDATE2),FULLDATX
+               E(FMTDATE5),DATESEP
+         PERIOD 
+*                       FULLDATE(FMTDATE5) DATESEP END-EXEC.
+*             EXEC CICS FORMATTIME ABSTIME(STCKTIME) DATE(FMTDATE3)
+*ZC    347         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DATE(FMTDATEX
+               3),FULLDATE(FMTDATE6),DATESEP(MYSEP)
+         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DATE(FMTDATE3),FULLDATX
+               E(FMTDATE6),DATESEP(MYSEP)
+         PERIOD 
+*                       FULLDATE(FMTDATE6) DATESEP(MYSEP) END-EXEC.
+*             EXEC CICS SEND FROM(FORMAT) LENGTH(FORMATL) END-EXEC.
+*ZC    349         EXEC  CICS,SEND,FROM(FORMAT),LENGTH(FORMATL)
+         EXEC  CICS,SEND,FROM(FORMAT),LENGTH(FORMATL)
+         PERIOD 
+*      *  XC    FMTDATE1(FMTDATE6+10-FMTDATE1),FMTDATE1 REUSE AREA
+*             MOVE SPACES TO FMTDATE1.
+*ZC    351         MOVE  SPACES,TO,FMTDATE1
+         MOVE  SPACES,TO,FMTDATE1
+         PERIOD 
+*             MOVE SPACES TO FMTDATE2.
+*ZC    352         MOVE  SPACES,TO,FMTDATE2
+         MOVE  SPACES,TO,FMTDATE2
+         PERIOD 
+*             MOVE SPACES TO FMTDATE3.
+*ZC    353         MOVE  SPACES,TO,FMTDATE3
+         MOVE  SPACES,TO,FMTDATE3
+         PERIOD 
+*             MOVE SPACES TO FMTDATE4.
+*ZC    354         MOVE  SPACES,TO,FMTDATE4
+         MOVE  SPACES,TO,FMTDATE4
+         PERIOD 
+*             MOVE SPACES TO FMTDATE5.
+*ZC    355         MOVE  SPACES,TO,FMTDATE5
+         MOVE  SPACES,TO,FMTDATE5
+         PERIOD 
+*             MOVE SPACES TO FMTDATE6.
+*      *  MVC   FMTSBA,SBA15       12TH SBA
+*ZC    356         MOVE  SPACES,TO,FMTDATE6
+         MOVE  SPACES,TO,FMTDATE6
+         PERIOD 
+*             MOVE SBA15 TO FMTSBA.
+*ZC    358         MOVE  SBA15,TO,FMTSBA
+         MOVE  SBA15,TO,FMTSBA
+         PERIOD 
+*             EXEC CICS FORMATTIME ABSTIME(STCKTIME)
+*                       DDMMYY(FMTDATE1) MMDDYY(FMTDATE2)
+*                       YYDDMM(FMTDATE3) YYMMDD(FMTDATE4)
+*ZC    359         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DDMMYY(FMTDAX
+               TE1),MMDDYY(FMTDATE2),YYDDMM(FMTDATE3),YYMMDD(FMTDATE4),X
+               DATEFORM(FMTDATE5)
+         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DDMMYY(FMTDATE1),MMDDYX
+               Y(FMTDATE2),YYDDMM(FMTDATE3),YYMMDD(FMTDATE4),DATEFORM(FX
+               MTDATE5)
+         PERIOD 
+*                       DATEFORM(FMTDATE5) END-EXEC.
+*             EXEC CICS SEND FROM(FORMAT) LENGTH(FORMATL) END-EXEC.
+*ZC    363         EXEC  CICS,SEND,FROM(FORMAT),LENGTH(FORMATL)
+         EXEC  CICS,SEND,FROM(FORMAT),LENGTH(FORMATL)
+         PERIOD 
+*      *  XC    FMTDATE1(FMTDATE6+10-FMTDATE1),FMTDATE1 REUSE AREA
+*             MOVE SPACES TO FMTDATE1.
+*ZC    365         MOVE  SPACES,TO,FMTDATE1
+         MOVE  SPACES,TO,FMTDATE1
+         PERIOD 
+*             MOVE SPACES TO FMTDATE2.
+*ZC    366         MOVE  SPACES,TO,FMTDATE2
+         MOVE  SPACES,TO,FMTDATE2
+         PERIOD 
+*             MOVE SPACES TO FMTDATE3.
+*ZC    367         MOVE  SPACES,TO,FMTDATE3
+         MOVE  SPACES,TO,FMTDATE3
+         PERIOD 
+*             MOVE SPACES TO FMTDATE4.
+*ZC    368         MOVE  SPACES,TO,FMTDATE4
+         MOVE  SPACES,TO,FMTDATE4
+         PERIOD 
+*             MOVE SPACES TO FMTDATE5.
+*ZC    369         MOVE  SPACES,TO,FMTDATE5
+         MOVE  SPACES,TO,FMTDATE5
+         PERIOD 
+*             MOVE SPACES TO FMTDATE6.
+*      *  MVC   FMTSBA,SBA16       13TH SBA
+*ZC    370         MOVE  SPACES,TO,FMTDATE6
+         MOVE  SPACES,TO,FMTDATE6
+         PERIOD 
+*             MOVE SBA16 TO FMTSBA.
+*ZC    372         MOVE  SBA16,TO,FMTSBA
+         MOVE  SBA16,TO,FMTSBA
+         PERIOD 
+*             EXEC CICS FORMATTIME ABSTIME(STCKTIME)
+*                       DDMMYYYY(FMTDATE1) MMDDYYYY(FMTDATE2)
+*                       YYYYDDMM(FMTDATE3) YYYYMMDD(FMTDATE4)
+*                       YYDDD(FMTDATE5) YYYYDDD(FMTDATE6) DATESEP(',')
+*ZC    373         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DDMMYYYY(FMTX
+               DATE1),MMDDYYYY(FMTDATE2),YYYYDDMM(FMTDATE3),YYYYMMDD(FMX
+               TDATE4),YYDDD(FMTDATE5),YYYYDDD(FMTDATE6),DATESEP(',')
+         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DDMMYYYY(FMTDATE1),MMDX
+               DYYYY(FMTDATE2),YYYYDDMM(FMTDATE3),YYYYMMDD(FMTDATE4),YYX
+               DDD(FMTDATE5),YYYYDDD(FMTDATE6),DATESEP(',')
+         PERIOD 
+*                       END-EXEC.
+*             EXEC CICS SEND FROM(FORMAT) LENGTH(FORMATL) END-EXEC.
+*ZC    378         EXEC  CICS,SEND,FROM(FORMAT),LENGTH(FORMATL)
+         EXEC  CICS,SEND,FROM(FORMAT),LENGTH(FORMATL)
+         PERIOD 
+*      *  MVC   FMT2SBA,SBA17      14TH SBA
+*             MOVE SBA17 TO FMT2SBA.
+*ZC    380         MOVE  SBA17,TO,FMT2SBA
+         MOVE  SBA17,TO,FMT2SBA
+         PERIOD 
+*             EXEC CICS FORMATTIME ABSTIME(STCKTIME)
+*                       DAYCOUNT(DAYCNT) DAYOFWEEK(DAYOFWK)
+*                       DAYOFMONTH(DAYOFMN) MONTHOFYEAR(MONTH) YEAR(YEAX
+               R)
+*ZC    381         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DAYCOUNT(DAYX
+               CNT),DAYOFWEEK(DAYOFWK),DAYOFMONTH(DAYOFMN),MONTHOFYEAR(X
+               MONTH),YEAR(YEAR)
+         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DAYCOUNT(DAYCNT),DAYOFX
+               WEEK(DAYOFWK),DAYOFMONTH(DAYOFMN),MONTHOFYEAR(MONTH),YEAX
+               R(YEAR)
+         PERIOD 
+*                       END-EXEC.
+*      *  L     R8,DAYCNT          LOAD DAY COUNT
+*      *  CVD   R8,DEC             CONVERT TO DECIMAL
+*      *  MVC   DAYCOUNT,=X'402020202120' MOVE MASK
+*      *  ED    DAYCOUNT,DEC+5     EDIT DAY COUNT
+*             MOVE DAYCNT TO DAYCOUNT.
+*      *  L     R8,DAYOFWK         LOAD DAY OF WEEK
+*      *  CVD   R8,DEC             CONVERT TO DECIMAL
+*      *  MVC   DAYWEEK,=X'40202120' MOVE MASK
+*      *  ED    DAYWEEK,DEC+6      EDIT DAY OF WEEK
+*ZC    389         MOVE  DAYCNT,TO,DAYCOUNT
+         MOVE  DAYCNT,TO,DAYCOUNT
+         PERIOD 
+*             MOVE DAYOFWK TO DAYWEEK.
+*      *  L     R8,DAYOFMN         LOAD DAY OF MONTH
+*      *  CVD   R8,DEC             CONVERT TO DECIMAL
+*      *  MVC   DAYMONTH,=X'40202120' MOVE MASK
+*      *  ED    DAYMONTH,DEC+6      EDIT DAY OF MONTH
+*ZC    394         MOVE  DAYOFWK,TO,DAYWEEK
+         MOVE  DAYOFWK,TO,DAYWEEK
+         PERIOD 
+*             MOVE DAYOFMN TO DAYMONTH.
+*      *  L     R8,MONTH           LOAD MONTH
+*      *  CVD   R8,DEC             CONVERT TO DECIMAL
+*      *  MVC   MONTHYR,=X'40202120' MOVE MASK
+*      *  ED    MONTHYR,DEC+6      EDIT MONTH
+*ZC    399         MOVE  DAYOFMN,TO,DAYMONTH
+         MOVE  DAYOFMN,TO,DAYMONTH
+         PERIOD 
+*             MOVE MONTH TO MONTHYR.
+*      *  L     R8,YEAR            LOAD YEAR
+*      *  CVD   R8,DEC             CONVERT TO DECIMAL
+*      *  MVC   YEARNUM,=X'402020202120' MOVE MASK
+*      *  ED    YEARNUM,DEC+5      EDIT YEAR
+*ZC    404         MOVE  MONTH,TO,MONTHYR
+         MOVE  MONTH,TO,MONTHYR
+         PERIOD 
+*             MOVE YEAR TO YEARNUM.
+*ZC    409         MOVE  YEAR,TO,YEARNUM
+         MOVE  YEAR,TO,YEARNUM
+         PERIOD 
+*             EXEC CICS SEND FROM(FORMAT2) LENGTH(FORMAT2L) END-EXEC.
+*ZC    410         EXEC  CICS,SEND,FROM(FORMAT2),LENGTH(FORMAT2L)
+         EXEC  CICS,SEND,FROM(FORMAT2),LENGTH(FORMAT2L)
+         PERIOD 
+*      *  MVC   FMT3SBA,SBA18      15TH SBA
+*             MOVE SBA18 TO FMT3SBA.
+*ZC    412         MOVE  SBA18,TO,FMT3SBA
+         MOVE  SBA18,TO,FMT3SBA
+         PERIOD 
+*             EXEC CICS FORMATTIME ABSTIME(STCKTIME) DATESTRING(DSTRINGX
+               )
+*ZC    413         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DATESTRING(DX
+               STRING),TIME(FMTTIME1)
+         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),DATESTRING(DSTRING),TIX
+               ME(FMTTIME1)
+         PERIOD 
+*                       TIME(FMTTIME1) END-EXEC.
+*             EXEC CICS FORMATTIME ABSTIME(STCKTIME)
+*ZC    415         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),TIME(FMTTIMEX
+               2),TIMESEP
+         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),TIME(FMTTIME2),TIMESEP
+         PERIOD 
+*                       TIME(FMTTIME2) TIMESEP END-EXEC.
+*             EXEC CICS FORMATTIME ABSTIME(STCKTIME)
+*ZC    417         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),TIME(FMTTIMEX
+               3),TIMESEP('-')
+         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME),TIME(FMTTIME3),TIMESEPX
+               ('-')
+         PERIOD 
+*                       TIME(FMTTIME3) TIMESEP('-') END-EXEC.
+*             EXEC CICS SEND FROM(FORMAT3) LENGTH(FORMAT3L) END-EXEC.
+*ZC    419         EXEC  CICS,SEND,FROM(FORMAT3),LENGTH(FORMAT3L)
+         EXEC  CICS,SEND,FROM(FORMAT3),LENGTH(FORMAT3L)
+         PERIOD 
+*      * BAD ABSTIME, RAISE INVREQ/1
+*      *  MVC   ICSBA,SBA19        16TH SBA
+*             MOVE SBA19 TO ICSBA.
+*      *  MVC   ICFUNC(10),=C'FORMATTIME' SET FUNCTION
+*ZC    424         MOVE  SBA19,TO,ICSBA
+         MOVE  SBA19,TO,ICSBA
+         PERIOD 
+*             MOVE 'FORMATTIME' TO ICFUNC.
+*      *  LA    R7,IC01RTN5        R7=HANDLE RETURN
+*ZC    426         MOVE  'FORMATTIME',TO,ICFUNC
+         MOVE  'FORMATTIME',TO,ICFUNC
+         PERIOD 
+*             MOVE 5 TO DEPCTRL.
+*      *  MVI   STCKTIME,X'0A'     MAKE ABSTIME INVALID
+*ZC    428         MOVE  5,TO,DEPCTRL
+         MOVE  5,TO,DEPCTRL
+         PERIOD 
+*             MOVE X'0A' TO STCKBAD.
+*ZC    430         MOVE  X'0A',TO,STCKBAD
+         MOVE  X'0A',TO,STCKBAD
+         PERIOD 
+*             EXEC CICS FORMATTIME ABSTIME(STCKTIME) END-EXEC.
+*ZC    431         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME)
+         EXEC  CICS,FORMATTIME,ABSTIME(STCKTIME)
+         PERIOD 
+*      * IC01RTN5 DS    0H
+*         IC01RTN5.
+         LABEL IC01RTN5
+*             EXEC CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL) END-EXEC.
+*ZC    434         EXEC  CICS,SEND,FROM(ENDMSG),LENGTH(ENDMSGL)
+         EXEC  CICS,SEND,FROM(ENDMSG),LENGTH(ENDMSGL)
+         PERIOD 
+*             EXEC CICS RETURN END-EXEC.
+*ZC    435         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+         PERIOD 
+*      * IC01EXP  DS    0H
+*         IC01EXP.
+*      *  MVC   FHANDCON(7),=C'EXPIRED' MOVE CONDITION
+         LABEL IC01EXP
+*             MOVE 'EXPIRED     ' TO FHANDCON.
+*      *  B     ICONSEND           EXIT
+*ZC    439         MOVE  'EXPIRED     ',TO,FHANDCON
+         MOVE  'EXPIRED     ',TO,FHANDCON
+         PERIOD 
+*             GO TO ICONSEND.
+*      * IC01INV  DS    0H
+*ZC    441         GO    TO,ICONSEND
+         GO    TO,ICONSEND
+         PERIOD 
+*         IC01INV.
+*      *  L     R8,EIBRESP2        R8=RESP2
+*      *  CVD   R8,DEC             CONVERT TO DECIMAL
+*      *  XC    FHANDCON,FHANDCON  CLEAR CONDITION
+*      *  MVC   FHANDCON+5(4),=X'40202020' MOVE EDIT WORD
+*      *  ED    FHANDCON+5(4),DEC+6 EDIT RESP2
+*      *  MVC   FHANDCON(7),=C'INVREQ/' MOVE CONDITION
+         LABEL IC01INV
+*             MOVE 'INVREQ/     ' TO FHANDCON.
+*ZC    450         MOVE  'INVREQ/     ',TO,FHANDCON
+         MOVE  'INVREQ/     ',TO,FHANDCON
+         PERIOD 
+*             MOVE EIBRESP2 TO WORK1A.
+*ZC    451         MOVE  EIBRESP2,TO,WORK1A
+         MOVE  EIBRESP2,TO,WORK1A
+         PERIOD 
+*             MOVE WORK1B TO FHAINV.
+*      * ICONSEND DS    0H
+*ZC    452         MOVE  WORK1B,TO,FHAINV
+         MOVE  WORK1B,TO,FHAINV
+         PERIOD 
+*         ICONSEND.
+         LABEL ICONSEND
+*             EXEC CICS SEND FROM(ICCOND) LENGTH(FHANDL) END-EXEC.
+*ZC    455         EXEC  CICS,SEND,FROM(ICCOND),LENGTH(FHANDL)
+         EXEC  CICS,SEND,FROM(ICCOND),LENGTH(FHANDL)
+         PERIOD 
+*      *  BR    R7                 RETURN TO MAIN LINE
+*             GO TO IC01RTN1 IC01RTN2 IC01RTN3 IC01RTN4 IC01RTN5
+*                   DEPENDING ON DEPCTRL.
+*      * SUBROUTINES
+*      * DOAFT    DS    0H
+*ZC    457         GO    TO,IC01RTN1,IC01RTN2,IC01RTN3,IC01RTN4,IC01RTNX
+               5,DEPENDING,ON,DEPCTRL
+         GO    TO,IC01RTN1,IC01RTN2,IC01RTN3,IC01RTN4,IC01RTN5,DEPENDINX
+               G,ON,DEPCTRL
+         PERIOD 
+*         DOAFT.
+*      *  MVC   TIMEAFT,=X'F020202020202020' MOVE EDIT WORD
+*      *  ED    TIMEAFT,EIBTIME    EDIT EIBTIME
+         LABEL DOAFT
+*             MOVE EIBTIME TO TIMEAFT.
+*      *  MVI   TIMEAFT,C' '       BLANK 1ST BYTE
+*      *  MVI   TIMEAFT+1,C' '     BLANK 2ND BYTE
+*ZC    466         MOVE  EIBTIME,TO,TIMEAFT
+         MOVE  EIBTIME,TO,TIMEAFT
+         PERIOD 
+*             MOVE SPACES TO TIMEAFTS.
+*      *  MVC   DATEAFT,=X'F020202020202020' MOVE EDIT WORD
+*      *  ED    DATEAFT,EIBDATE    EDIT EIBDATE
+*ZC    469         MOVE  SPACES,TO,TIMEAFTS
+         MOVE  SPACES,TO,TIMEAFTS
+         PERIOD 
+*             MOVE EIBDATE TO DATEAFT.
+*      *  MVI   DATEAFT,C' '       BLANK 1ST BYTE
+*ZC    472         MOVE  EIBDATE,TO,DATEAFT
+         MOVE  EIBDATE,TO,DATEAFT
+         PERIOD 
+*             MOVE SPACE TO DATEAFTS.
+*      *  MVC   STCKAFT,=X'F0202020202020202020202020202020' MOVE EDWD
+*      *  ED    STCKAFT,STCKTIME   EDIT STCKTIME
+*ZC    474         MOVE  SPACE,TO,DATEAFTS
+         MOVE  SPACE,TO,DATEAFTS
+         PERIOD 
+*             MOVE STCKTIME TO STCKAFT.
+*      *  MVI   STCKAFT,C' '       BLANK 1ST BYTE
+*ZC    477         MOVE  STCKTIME,TO,STCKAFT
+         MOVE  STCKTIME,TO,STCKAFT
+         PERIOD 
+*             MOVE SPACE TO STCKAFTS.
+*ZC    479         MOVE  SPACE,TO,STCKAFTS
+         MOVE  SPACE,TO,STCKAFTS
+         PERIOD 
+*             EXEC CICS SEND FROM(TDAFT) LENGTH(TDAFTLEN) END-EXEC.
+*ZC    480         EXEC  CICS,SEND,FROM(TDAFT),LENGTH(TDAFTLEN)
+         EXEC  CICS,SEND,FROM(TDAFT),LENGTH(TDAFTLEN)
+         PERIOD 
+*      *  BR    R9                 RETURN
+         PROCEDURE END
+         END   
