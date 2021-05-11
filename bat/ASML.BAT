@@ -12,7 +12,12 @@ if exist %1.390 erase %1.390
 if exist %1.ERR erase %1.ERR
 if exist %1.STA erase %1.STA
 if exist %1.TR* erase %1.TR*
-call %~dps0mz390 %1  sysmac(+mac) syscpy(+mac) %2 %3 %4 %5 %6 %7 %8 %9
+
+rem get the z390 directory
+set "zdir=%~dps0..\"
+for %%f in ("%zdir%") do set "zdir=%%~ff"
+
+call %~dps0mz390 %1  sysmac(+%zdir%mac) syscpy(+%zdir%mac) %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto mzerr
 call %~dps0lz390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto lzerr
