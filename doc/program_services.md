@@ -115,15 +115,19 @@ The program code:
 ``` hlasm
          L     R2,0(,R1)       R2=address of parm length(HW)+value
          LH    R3,0(,R2)       R3=length of parm value
-         XGR   R0,R0           Set R0 to zero (for MVCOS instruction)
-         MVCOS PARM,2(R2),R3   Move R3 bytes at 2(R2) to PARM
+         BCTR  R3,0            Subtract 1 from R3 - length for use in machine code 
+         EX    R3,MOVE         Execute MOVE instruction using length code from R3
+......
+MOVE     MVC   PARM(0),2(R2)   Move instruction used by EX
+PARM     DC    CL80' '         Work area for parm value
 ```
 * GR1 is populated by ez390 with the parm address pointer.
 * GR2 is loaded with the address of the parm length and address - fullword pointed to by GR1.
 * GR3 is loaded with the parm length - halfword value pointed to by GR2.
 * GR3 would contain decimal 11 which is the length of the parm "HELLO THERE".
+* GR3 is decremented by 1, making it a length code.
 * The actual parm value of "HELLO THERE" begins 2 bytes past the address in GR2.
-* The `MVCOS` instruction will move the parm to the storage at label PARM.
+* The `EX` instruction executes the instruction at label MOVE which will move the parm to the storage at label PARM using length from R3.
 
 ## Macro reference
 
