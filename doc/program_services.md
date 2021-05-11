@@ -40,7 +40,7 @@ When the called program finishes processing, it returns to the caller as follows
 This calling convention is explained in detail in the [IBM z/OS Version 2 Release 4 MVS Programming: Assembler Services
 Guide (SA23-1368-40)](https://www-01.ibm.com/servers/resourcelink/svc00100.nsf/pages/zOSV2R4sa231368/$file/ieaa600_v2r4.pdf). Refer to Chapter 2 - Linkage conventions.
 
-GR15 is expected to contain a return code upon exit by convention.
+GR15 by convention may contain a return code upon exit.
 
 ## Program parameters
 
