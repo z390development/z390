@@ -1,0 +1,10 @@
+           1         -12         123        1234
+0000000A 000000AB 00000ABC 0000ABCD
+Line 1 of 4 rt\test\TESTAST1.XRD test input file for ASSIST XREAD
+Line 2 of 4 XREAD RXSS X'E00xbdddbddd' s1(x1),s2  reads line
+Line 3 of 4 into area at s1(x1) for length of s2 or default of 80.
+Line 4 of 4 PSW CC=0 if ok else 3 if EOD else 2 if I/O error.
+Line 1 of 4 rt\test\TESTAST1.XGT test input file for ASSIST XGET
+Line 2 of 4 XGET RXSS X'E0Axbdddbddd' s1(x1),s2  reads line
+Line 3 of 4 into area at s1(x1) for length of s2 (no default legth).
+Line 4 of 4 PSW CC=0 if ok else 3 if EOD else 2 if I/O error.
