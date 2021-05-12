@@ -1,0 +1,59 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Melvyn Maltz                                              *
+.* Date   - 03/02/19                                                  *
+.**********************************************************************
+.* 03/02/19 INITIAL CODING FOR zVSAM V2                               *
+.**********************************************************************
+         EXLSTD
+.*
+         GBLB  &Z390_EXLSTD
+         GBLC  &Z390_EXLSTD_NAME,&Z390_EXLSTD_TYPE
+.*
+.* IF EXLSTD ALREADY DEFINED EXIT NOW
+         AIF   (&Z390_EXLSTD).EXIT
+&Z390_EXLSTD SETB 1
+&Z390_EXLSTD_NAME SETC '&SYSLOC'  PROGRAM NAME
+&Z390_EXLSTD_TYPE SETC '&SYSSTYP' LAST SECTION (CSECT)
+.*
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'EXLSTD UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.* EXIT LIST CONTROL BLOCK DSECT FOR zVSAM
+.*
+IHAEXLST DSECT
+IFGEXLST EQU   IHAEXLST
+EXLEYE   DS    CL4                EYECATCHER
+EXLLEN   DS    XL2                EXLST LENGTH
+EXLLEN2  EQU   EXLLEN
+EXLSTYP  DS    X                  SUBTYPE
+EXLSVSAM EQU   X'10'                 VSAM SUBTYPE
+* EODAD
+EXLEODF  DS    X                  EODAD ROUTINE FLAGS
+EXLEODS  EQU   X'80'                 EODAD EXIT PRESENT
+EXLEODA  EQU   X'40'                 EODAD EXIT ACTIVE
+EXLEODP  DS    AL4                EODAD ADDRESS
+* LERAD
+EXLLERF  DS    X                  LERAD ROUTINE FLAGS
+EXLLERS  EQU   X'80'                 LERAD EXIT PRESENT
+EXLLERA  EQU   X'40'                 LERAD EXIT ACTIVE
+EXLLERP  DS    AL4                LERAD ADDRESS
+* SYNAD
+EXLSYNF  DS    X                  SYNAD ROUTINE FLAGS
+EXLSYNS  EQU   X'80'                 SYNAD EXIT PRESENT
+EXLSYNA  EQU   X'40'                 SYNAD EXIT ACTIVE
+EXLSYNP  DS    AL4                SYNAD ADDRESS
+         DS    XL2                ALIGN
+         DS    0D
+*
+EXLSTEND EQU   *
+EXLSTLEN EQU   EXLSTEND-IHAEXLST
+         AIF   ('&Z390_EXLSTD_NAME' EQ '' OR '&Z390_EXLSTD_TYPE' EQ '')-
+               .EXIT
+&Z390_EXLSTD_NAME &Z390_EXLSTD_TYPE
+.EXIT    ANOP
+         MEND
