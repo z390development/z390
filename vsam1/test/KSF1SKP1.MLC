@@ -1,0 +1,60 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 10/01/07 RPI 678 ADD DEMO OF POINT WITH KEY,KGE OPTIONS             
+*********************************************************************
+KSF1SKP1 SUBENTRY   
+*
+* OPEN AND READ RECORDS STARTING AT NAME AFTER "MQ"  
+*
+         WTO   'KSF1SKP1 QUERY KSF1NAME STARTING AFTER MQ'
+         OPEN  (VFILE,(INPUT))
+         LTR   R15,R15
+         BNZ   ERR1
+         MVC   KEY,=CL20'MQ'
+         POINT RPL=VRPL   POINT KGE
+         LTR   R15,R15
+         BNZ   ERR4
+LOOP     EQU   *
+         GET   RPL=VRPL   GET SEQ 
+         LTR   R15,R15
+         BNZ   EOF   
+         WTO   MF=(E,WTOREC)
+         B     LOOP
+EOF      EQU   *
+         CHI   R15,8
+         BNZ   ERR2
+         TESTCB RPL=VRPL,FDBK=4
+         BNZ   ERR2
+         CLOSE (VFILE)
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   'KSF1SKP1 ENDED OK'
+         SUBEXIT
+ERR1     WTO   'KSF1SKP1 OPEN ERROR'
+         ABEND 111,DUMP
+ERR2     WTO   'KSF1SKP1 GET SEQ ERROR'
+         ABEND 222,DUMP
+ERR3     WTO   'KSF1SKP1 CLOSE ERROR'
+         ABEND 333,DUMP
+ERR4     WTO   'KSF1SKP1 POINT KEY KGE FAILED'
+         ABEND 444,DUMP
+VFILE    ACB   DDNAME=VFILE,MACRF=(KEY,SEQ,IN)
+VRPL     RPL   ACB=VFILE,AREA=RECORD,OPTCD=(SEQ,KGE),ARG=KEY
+         LTORG
+         EQUREGS
+WTOREC   DC    AL2(WTOEND-*,0),C'REC='
+RECORD   DC    CL70' '
+WTOEND   EQU   *
+KEY      DC    CL20' '
+RECDSECT DSECT
+NAME     DS    CL20
+ADDR     DS    CL20
+CITY     DS    CL20
+STATE    DS    CL5
+ZIP      DS    CL5
+         END

@@ -1,0 +1,219 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 09/09/07 RPI 672 INITIAL CODING TO TEST ESDS SEQ,UPD AND ADR,DIR,UPD       
+* 09/24/07 RPI 702 CORRECT BUG IN PUT TO RBA VS XRBA RPL                     
+*********************************************************************
+ESF2TEST RT1   MAIN 
+VACBSEQI ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
+VACBSEQO ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
+VACBADRO ACB   DDNAME=VFILE,MACRF=(ADR,OUT)
+VRPLSEQI RPL   ACB=VACBSEQI,AREA=RECORD,OPTCD=(SEQ)
+VRPLSEQO RPL   ACB=VACBSEQO,AREA=RECORD,OPTCD=(SEQ)
+VRPLSEQU RPL   ACB=VACBSEQO,AREA=RECORD,OPTCD=(SEQ,UPD)
+VRPLRBA  RPL   ACB=VACBADRO,AREA=RECORD,OPTCD=(ADR,UPD),ARG=RBA
+VRPLXRBA RPL ACB=VACBADRO,AREA=RECORD,OPTCD=(ADR,XRBA,UPD),ARG=XRBA
+RECORD   DC    CL80' '
+RBA      DC    XL4'00'
+RBA1     DC    XL4'00'
+RBA2     DC    XL4'00'
+RBA3     DC    XL4'00'
+XRBA     DC    XL8'00'
+XRBA1    DC    XL8'00'
+XRBA2    DC    XL8'00'
+XRBA3    DC    XL8'00'
+RC_LOG   EQU   8      RPL FEEDBACK LOGICAL ERROR RETURN CODE (BYTE 2)
+RN_EOD   EQU   4      RPL FEEDBACK LOGICAL END OF DATA REASON(BYTE 4)
+FDBK     DC    X'00'  RPL FEEDBACK REASON CODE FOR LOG/PHY ERROR
+         LTORG
+         EQUREGS
+         RT1   START
+         WTO   'ESF2TEST TEST ESDS FIXED LENGTH RECORD I/O'   
+*
+* CREATE ESDS FILE WITH 3 FIXED LENGTH RECORDS 
+*
+         WTO   'ESF2TEST CREATE VFILE WITH 3 RECORDS'
+         OPEN  (VACBSEQO,(OUTPUT))
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD,=80C'1'
+         PUT   RPL=VRPLSEQO
+         LTR   R15,R15
+         RT1   CC0
+         SHOWCB RPL=VRPLSEQO,AREA=XRBA1,LENGTH=8,FIELDS=XRBA
+         MVC   RBA1,XRBA1+4
+         MVC   RECORD,=80C'2'
+         PUT   RPL=VRPLSEQO
+         LTR   R15,R15
+         RT1   CC0
+         SHOWCB RPL=VRPLSEQO,AREA=XRBA2,LENGTH=8,FIELDS=XRBA
+         MVC   RBA2,XRBA2+4
+         MVC   RECORD,=80C'3'
+         PUT   RPL=VRPLSEQO
+         LTR   R15,R15
+         RT1   CC0
+         SHOWCB RPL=VRPLSEQO,AREA=XRBA3,LENGTH=8,FIELDS=XRBA
+         MVC   RBA3,XRBA3+4
+         CLOSE (VACBSEQO)
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ SEQUENTIALL AND CHANGE FRIST BYTE IN EACH RECORD TO U
+*
+         WTO   'ESF2TEST UPDATE SEQUENTIALLY'
+         OPEN  (VACBSEQO,(OUTPUT))
+         LTR   R15,R15
+         RT1   CC0
+LOOP     EQU   *
+         BALR  R11,0
+         USING *,R11
+         GET   RPL=VRPLSEQU,RECORD
+         LTR   R15,R15
+         BNE   EOF
+         MVI   RECORD,C'U'
+         PUT   RPL=VRPLSEQU
+         LTR   R15,R15
+         RT1   CC0
+         B     LOOP
+EOF      EQU   *
+         BALR  R11,0
+         USING *,R11
+         CHI   R15,RC_LOG
+         RT1   CC0
+         SHOWCB RPL=VRPLSEQU,AREA=FDBK,LENGTH=1,FIELDS=(FDBK)
+         CLI   FDBK,RN_EOD
+         RT1   CC0
+         CLOSE (VACBSEQO)
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ AND UPDATE 3 VSAM FIXED LENGTH RECORDS SEQUENTIALLY
+*
+         WTO   'ESF2TEST READ AND VERIFY VFILE SEQUENTIALLY'
+         OPEN  (VACBSEQI,(INPUT))
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=VRPLSEQI
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(2),=C'U1'
+         RT1   CC0
+         GET   RPL=VRPLSEQI  
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(2),=C'U2'
+         RT1   CC0
+         GET   RPL=VRPLSEQI
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(2),=C'U3'
+         RT1   CC0
+         GET   RPL=VRPLSEQI
+         CHI   R15,8             VERIFY LOGIC ERROR AT EOD
+         RT1   CC0
+         TESTCB RPL=VRPLSEQI,FDBK=4 VERIFY EOD REASON CODE 
+         RT1   CC0
+         CLOSE (VACBSEQI)
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ AND UPDATE 3 RECORDS BY RBA AND BY XRBA ADDRESS
+*
+         WTO   'ESF2TEST READ AND VERIFY VFILE BY RBA AND XRBA'
+         OPEN  (VACBADRO,(OUTPUT))
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RBA,RBA1
+         GET   RPL=VRPLRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(2),=C'U1'
+         RT1   CC0
+         MVI   RECORD+2,C'R'
+         PUT   RPL=VRPLRBA
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RBA,RBA2
+         GET   RPL=VRPLRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(2),=C'U2'
+         RT1   CC0
+         MVI   RECORD+2,C'R'
+         PUT   RPL=VRPLRBA
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RBA,RBA3
+         GET   RPL=VRPLRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(2),=C'U3'
+         RT1   CC0
+         MVI   RECORD+2,C'R'
+         PUT   RPL=VRPLRBA
+         LTR   R15,R15
+         RT1   CC0
+         MVC   XRBA,XRBA1
+         GET   RPL=VRPLXRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(3),=C'U1R'
+         RT1   CC0
+         MVI   RECORD+3,C'X'
+         PUT   RPL=VRPLXRBA RPI 702 WAS VRPLXBA
+         LTR   R15,R15
+         RT1   CC0
+         MVC   XRBA,XRBA2
+         GET   RPL=VRPLXRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(3),=C'U2R'
+         RT1   CC0
+         MVI   RECORD+3,C'X'
+         PUT   RPL=VRPLXRBA RPI 702 WAS VRPLXBA
+         LTR   R15,R15
+         RT1   CC0
+         MVC   XRBA,XRBA3
+         GET   RPL=VRPLXRBA 
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(3),=C'U3R'
+         RT1   CC0
+         MVI   RECORD+3,C'X'
+         PUT   RPL=VRPLXRBA RPI 702 WAS VRPLXBA
+         LTR   R15,R15
+         RT1   CC0
+         CLOSE (VACBADRO)
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ SEQUENTIALL AND VERIFY SEQ,RBA, AND XRBA CHANGES       
+*
+         WTO   'ESF2TEST VERIFY SEQ, RBA, AND XRBA CHANGES'
+         OPEN  (VACBSEQI,(INPUT))
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=VRPLSEQI,RECORD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(4),=C'U1RX'
+         RT1   CC0
+         GET   RPL=VRPLSEQI,RECORD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(4),=C'U2RX'
+         RT1   CC0
+         GET   RPL=VRPLSEQI,RECORD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD(4),=C'U3RX'
+         RT1   CC0
+         CLOSE (VACBSEQI)
+         LTR   R15,R15
+         RT1   CC0
+         RT1   END
+         END

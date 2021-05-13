@@ -1,0 +1,1915 @@
+*   EXTRA COL IN D&L TO SHOW PARM FORMS PERMITTED
+*     THEY ARE VALUE,REG,G-REG,INDIRECT,SCON
+*     ONLY VALUE IS ALLOWED WHEN MF=L, ALL FORMS WHEN MF=(L,ADDR)
+*     FOR 8-BYTE VALUE I CAN USE FD FOR VALUE AND GRANDE REG FOR REG
+*        ZVSAM V2 EXTENSIONS
+*
+*###THESE NEED TO BE DONE IN ALL ~CB MACROS, !=TRAP AND MNOTE
+*   PARM       VALUE         ADDRESS       NOTES
+*   1234       A(1234)       SAME
+*   LABEL      A(LABEL)      SAME          VALUE IS ADDR OR EQU
+*   (R5)       R5=VALUE      R5=ADDRESS
+*!  (*,*)      FROM S(*)     SAME          BOTH FROM CBMR
+*!  (*,20)     FROM X'14'    SAME          BOTH FROM LOW STORAGE
+*   (*,20(R5)) FROM 20(R5)   SAME
+*   (*,LABEL)  FROM LABEL    SAME
+*!  (S,*)      OF S(*)       SAME          BOTH FROM CBMR
+*   (S,20)     OF A(20)      SAME          SAME AS =20
+*   (S,20(R5)) OF 20+R5      SAME
+*
+*BUILD A TABLE OF IBM VS ZVSAM DIFFS
+*   RPLLEN, ACBLEN, EXLLEN ARE NOT ALLOWED WITH THE WRONG BLOCK
+*      THIS IS INCONSISTENT WITH SHOWCB, SO I WILL ALLOW IT
+*   USE OF AN RPL/ACB/EXLST KEYWORD WITHOUT THE BLOCK ADDR DEFAULTS
+*   TO AN INTERNAL DUMMY CB
+*      I WILL ISSUE AN MNOTE
+*   RPL=/ACB=/EXLST= WITH NO PARMS RETURNS EQ
+*      I WILL ISSUE AN MNOTE
+*   OPTCD=XRBA ADDED
+*   UIW=       ADDED
+*   NUIW=      ADDED
+*   SDTASZ=    ADDED (ONLY 8-BYTE VERSION)
+*   STRMAX=    ADDED
+*   XSTRMAX=   ADDED
+*   BFRFND=    ADDED
+*   XBFRFND=   ADDED
+*   BUFUSE=    ADDED
+*   XBUFUSE=   ADDED
+*   BUFRDS=    ADDED
+*   XBUFRDS=   ADDED
+*   HALCRBA=   ADDED
+*   XHALCRBA=  ADDED
+*   HLRBA=     ADDED
+*   XHLRBA=    ADDED
+*
+*   (X)NDELR   COMPARES TO ZERO FOR OBJECT=INDEX
+*   NIXL=      COMPARES TO ZERO FOR OBJECT=DATA
+*
+*   IBM ATRB 'AND'S EVERYTHING, ONLY KSDS+ESDS MNOTES
+*   ZVSAM V2 WILL DO...
+*      KSDS,ESDS,RRDS,LDS,VRRDS CONSIDERED MUTUALLY EXCLUSIVE...MNOTE
+*      CHECK PFXFFLGS (AND PFXRFLGS FOR VRRDS)
+*      OBJECT=INDEX CAN ONLY BE KSDS
+*
+*      REPL,SSWD,COMPRESS,WCK WILL ASSUME NOT EQUAL
+*      XADDR WILL ASSUME EQUAL (SO NOT CHECKED)
+*
+*      SPAN WILL CHECK PFXRFLGS
+*
+*      UNQ WILL CHECK PFXFFLGS FOR AIX, ERR0403 IF NOT
+*      THEN PFXRFLGS
+*
+*   MF=(E,MYCBMR)
+*      MAY NEED TO EXAMINE MODCB
+*      YOU CAN BUILD A CBMR WITH MF=L WITHOUT MODIFIERS (X'00')
+*      ONCE A MODIFIER IS SET, IT CAN BE CHANGED BUT NOT RESET TO X'00'
+*      WHICH MEANS YOU CAN NO LONGER TEST AN ADDRESS FOR EQ, LO OR HI
+*
+*      LERAD=(0,A)
+*         JUST CHANGES THE MODS...OK
+*      LERAD=(00,A)
+*         CHANGES THE ADDRESS TO 0, MODS NOT CHANGED...BAD
+*         NEED TO CHECK 1ST PARM FOR NUMERIC AND ZERO
+*      LERAD=(1 TO 4095,A)
+*         CHANGES THE ADDRESS, MODS NOT CHANGED...BAD
+*         I WILL CHANGE THE MODS
+*      LERAD=(4096+,A)
+*         CHANGES THE ADDRESS AND MODS...OK
+*      LERAD=(MYLER,A)
+*         CHANGES THE ADDRESS AND MODS...OK
+*
+*      FOR OTHER BLKS, ANY NUMERIC VALUE IS OK
+*      TESTCB RPL=0,AREA=0,MF=(E,MYCBMR) WILL CHANGE THE CBMR TO 0
+*      SO WILL TEST THE RPL AT A(0) FOR AREA=0
+*
+TESTTSCB SUBENTRY BASES=(R13,R12,R2,R3,R4)
+* FIDDLE SUCCESS FOR AIXPC, ADD VALUES FOR FDBK, FTNCD, XRBA
+         LARL  R8,MYACB
+         USING IHAACB,R8
+         LARL  R14,FAKEDPFX
+         ST    R14,ACBPFX
+         LARL  R14,FAKEIPFX
+         ST    R14,ACBXPFX
+         LARL  R1,MYRPL
+         USING IHARPL,R1
+         IILF  R14,X'11223344'    FUNCD/RTNCD/CMPON/ERRCD
+         ST    R14,RPLFEEDB
+         LGFI  R14,X'1234'
+         STG   R14,RPLCXRBA
+         DROP  R1
+* GENERAL ERROR TESTS
+* NBK, POSITIONALS, BAD MF
+*        TESTCB FRED,MIKE,MF=Q
+* NBK, NO OPERANDS
+*        TESTCB MF=I
+* NBK, MORE THAN ONE OPERAND
+*        TESTCB ERROR=5,NEXT=10
+* NBK, RIGHT KEYWORDS, WRONG NUMBER
+*        TESTCB ACBLEN=5,RPLLEN=5
+* NBK, WRONG KEYWORD
+*        TESTCB ARG=MYPASS
+         SR    R9,R9              INDICATE THAT ABORT IS UNEXPECTED
+* TEST  1: NBK TEST VALUE NE OF RPLLEN INLINE MF=I
+         TESTCB RPLLEN=5          RPLLEN=5 ?
+         B     *+4(R15)           TEST RC
+         J     NBT1_0             RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+NBT1_0   JE    BADCC              ERROR IF OK
+* TEST  2: NBK TEST VALUE EQ OF RPLLEN INLINE MF=I
+         TESTCB RPLLEN=56         RPLLEN=56
+         B     *+4(R15)           TEST RC
+         J     NBT2_0             RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+NBT2_0   JNE   BADCC              ERROR IF NOT OK
+* TEST  3: NBK TEST VALUE EQ OF ACBLEN INLINE MF=I
+         TESTCB ACBLEN=64         ACBLEN=64
+         B     *+4(R15)           TEST RC
+         J     NBT3_0             RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+NBT3_0   JNE   BADCC              ERROR IF NOT OK
+* TEST  4: NBK CHANGE VALUE OF ACBLEN NE MF=E
+         TESTCB ACBLEN=64,MF=(L,MYCBMR)
+         TESTCB ACBLEN=5,MF=(E,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     NBT4_0             RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+NBT4_0   JE    BADCC              ERROR IF OK
+* TEST  5: NBK CHANGE VALUE OF ACBLEN BACK EQ MF=E
+         TESTCB ACBLEN=64,MF=(E,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     NBT5_0             RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+NBT5_0   JNE   BADCC              ERROR IF NOT OK
+* TEST  6: NBK TEST VALUE EQ OF EXLLEN MF=G
+         TESTCB EXLLEN=24,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     NBT6_0             RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+NBT6_0   JNE   BADCC              ERROR IF NOT OK
+* TEST  7: NBK CAUSE RC=8 AS CBMR WAS BUILT WITH EXLLEN
+*          THIS WILL INVOKE THE ERET ROUTINE, ABORT AND RETURN
+         LA    R9,NBKRET          RETURN AFTER ABORT
+         IIHF  R6,C'NBKR'
+         IILF  R6,C'ET  '
+         TESTCB ERET=DOERET,RPLLEN=64,MF=(E,MYCBMR)
+NBKRET   DS    0H
+*************
+* RPL TESTS *
+*************
+         SR    R9,R9              INDICATE THAT ABORT IS UNEXPECTED
+* GENERAL ERROR TESTS
+* RPL PARM WITHOUT RPL=
+*        TESTCB ECB=0
+* BAD PARM FOR RPL, BAD REG USE
+*        TESTCB RPL=(R14),BUFSP=1234
+* BAD REG FOR ACB, NO LABEL, NO 2ND PARM FOR MF=G
+*        TESTCB RPL=MYRPL,ACB=(R0),MF=G
+* BAD REG FOR MSGAREA AND MF=E
+*        TESTCB RPL=MYRPL,MSGAREA=(0),MF=(E,(R1))
+* BAD AIXFLAG
+*        TESTCB RPL=MYRPL,AIXFLAG=BADONE
+* BAD IO
+*        TESTCB RPL=MYRPL,IO=BADONE
+* OPTCD CONFLICTS FOR ALL MF=
+*        TESTCB RPL=MYRPL,OPTCD=(KEY,ADR,NUP,UPD,FKS,GEN),MF=I
+*        TESTCB RPL=MYRPL,OPTCD=(KEY,ADR,NUP,UPD,FKS,GEN),MF=L
+*        TESTCB RPL=MYRPL,OPTCD=(KEY,ADR,NUP,UPD,FKS,GEN),MF=(E,MYCBMR)
+*        TESTCB RPL=MYRPL,OPTCD=(KEY,ADR,NUP,UPD,FKS,GEN),MF=(G,MYCBMR)
+* TEST  1: RPL CAUSE RC=8 AS CBMR WAS BUILT WITH ACB
+*          THIS WILL INVOKE THE ERET ROUTINE, ABORT AND RETURN
+         LA    R9,RPLRET          RETURN AFTER ABORT
+         IIHF  R6,C'RPLR'
+         IILF  R6,C'ET  '
+         TESTCB RPL=MYRPL,ACB=MYACB,MF=(L,MYCBMR)
+         TESTCB RPL=MYRPL,ERET=DOERET,RPLLEN=64,MF=(E,MYCBMR)
+RPLRET   DS    0H
+         SR    R9,R9              INDICATE THAT ABORT IS UNEXPECTED
+* TEST  2: RPL TEST ALL KEYWORDS MF=I/G
+         TESTCB RPL=MYRPL,ACB=MYACB,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT02_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT02_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,ACB=MYACB2,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     RPT03_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT03_0  JNH   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,AIXFLAG=AIXPKP,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT04_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT04_0  JE    BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,AIXPC=X'23',MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT05_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT05_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,AREA=MYAREA,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT06_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT06_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,AREALEN=42,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     RPT07_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT07_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,ARG=MYARG,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT08_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT08_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,ECB=MYECB,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT09_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT09_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,FDBK=X'44',MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT10_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT10_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,FTNCD=X'33',MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT11_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT11_0  JNE   BADCC              ERROR IF NOT OK
+*
+* THIS TESTS THE EXTERNAL ECB (MYECB)
+         TESTCB RPL=MYRPL,IO=COMPLETE,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT12_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT12_0  JO    BADCC              ERROR IF NOT OK
+*
+* THIS TESTS THE INTERNAL ECB (RPLECB)
+         MODCB  RPL=MYRPL,ECB=0,MF=I
+         TESTCB RPL=MYRPL,IO=COMPLETE,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT13_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT13_0  JO    BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,KEYLEN=22,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT14_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT14_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,MSGAREA=MYAREA,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT15_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT15_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,MSGLEN=59,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT16_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT16_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,MSGLEN=59,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT17_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT17_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,NXTRPL=MYRPL2,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT18_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT18_0  JNE   BADCC              ERROR IF NOT OK
+*
+* DESIGNED TO FAIL, FKS REQUESTED, GEN DEFAULT
+         TESTCB RPL=MYRPL,OPTCD=(ARD,KGE,FKS),MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT19_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT19_0  JZ    BADCC              ERROR IF NOT OK
+*
+* DESIGNED TO FAIL, RBA SPECIFIED
+         TESTCB RPL=MYRPL,OPTCD=XRBA,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT20_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT20_0  JZ    BADCC              ERROR IF NOT OK
+*
+* DESIGNED TO SUCCEED, ALL DEFAULTS LISTED
+         TESTCB RPL=MYRPL,                                             X
+               OPTCD=(KEY,SEQ,ARD,FWD,SYN,NUP,KGE,GEN,MVE,RBA),        X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     RPT21_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT21_0  JNZ   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,RBA=X'1234',MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT22_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT22_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,RECLEN=42,MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT23_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT23_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,RPLLEN=X'38',MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT24_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT24_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,XRBA=X'1234',MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT25_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT25_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,ACBLEN=X'40',MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT26_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT26_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB RPL=MYRPL,EXLLEN=X'18',MF=I
+         B     *+4(R15)           TEST RC
+         J     RPT27_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+RPT27_0  JNE   BADCC              ERROR IF NOT OK
+*
+*************
+* ACB TESTS *
+*************
+* BAD PARMS, UNSUPPORTED PARM, BAD REG FOR ACB=, BAD REG FOR MF=L
+* BAD BSTRNO/BUFND/RMODE31/SHRPOOL, BAD REG FOR MF=L
+* INVALID/UNSUPPORTED MACRF PARMS
+*        TESTCB ACB=(R15),ARG=ABC,NXTRPL=ABC,OPTCD=(KEY,NUP,FKS),      X
+               MAREA=ABC,MLEN=5,RLSREAD=ABC,PASSWD=(R0),EXLST=(R1),    X
+               BSTRNO=300,BUFND=70000,RMODE31=BAD,SHRPOOL=300,         X
+               MACRF=(KEY,GOOD,BAD,UGLY,CFX,NCI,RLS),                  X
+               MF=(L,(R14))
+* BAD REG FOR ACB/PASSWD, NO 2ND PARM FOR MF=G, NO LABEL
+*        TESTCB ACB=(R0),PASSWD=(R1),MF=G
+* BAD REG FOR MF=E
+*        TESTCB ACB=MYACB,MF=(E,(R1))
+* MACRF CONFLICTS FOR ALL MF=
+*        TESTCB ACB=MYACB,MACRF=(NDF,DFR,NIS,SIS,NRM,AIX,NSR,LSR,GSR), X
+               MF=I
+*MYTESTCB TESTCB ACB=MYACB,MACRF=(NDF,DFR,NIS,SIS,NRM,AIX,NSR,LSR,GSR),X
+               MF=L
+*        TESTCB ACB=MYACB,MACRF=(NDF,DFR,NIS,SIS,NRM,AIX,NSR,LSR,GSR), X
+               MF=(E,MYCBMR)
+*        TESTCB ACB=MYACB,MACRF=(NDF,DFR,NIS,SIS,NRM,AIX,NSR,LSR,GSR), X
+               MF=(G,MYCBMR)
+*
+* TESTS FOR INVALID STMST PARM
+*        TESTCB ACB=MYACB,STMST=FRED       NOT INDIR
+*        TESTCB ACB=MYACB,STMST=(*)        NO 2ND PARM
+*        TESTCB ACB=MYACB,STMST=(*,*)      2ND * BAD
+*        TESTCB ACB=MYACB,STMST=(*,*+4)    2ND * BAD
+*        TESTCB ACB=MYACB,STMST=(*,987)    NUMERIC BAD
+*        TESTCB ACB=MYACB,STMST=(*,0()     MISSING )
+*        TESTCB ACB=MYACB,STMST=(*,0))     MISSING (
+*        TESTCB ACB=MYACB,STMST=(*,0())    EMPTY BRACKS
+*        TESTCB ACB=MYACB,STMST=(*,0)()    BRACKS WRONG
+*        TESTCB ACB=MYACB,STMST=(*,(R5))   NO DISPLACEMENT
+*        TESTCB ACB=MYACB,STMST=(*,0(R14)) BAD REG
+* TEST ERRORS IN ATRB
+*        TESTCB ACB=MYACB,ATRB=(KSDS,ESDS,LDS),MF=I
+* ASSUME OBJECT=DATA FOR MODS
+         LARL  R7,FAKEDPFX+X'30'  ADDRESS DATA PFX
+         USING ZVSAMPFX,R7
+         USING ZVSAMCTR,ZVSAMPFX+PFXLENG
+*
+* TEST 1A: ACB CAUSE ERR0800 AS CBMR WAS BUILT WITH ACBLEN
+*          THIS WILL INVOKE THE ERET ROUTINE, ABORT AND RETURN
+         LA    R9,ACBRET1         RETURN AFTER ABORT
+         IIHF  R6,C'ACBR'
+         IILF  R6,C'ET1 '
+         TESTCB ACB=MYACB,ACBLEN=64,MF=(L,MYCBMR)
+         TESTCB ACB=MYACB,ERET=DOERET,RPLLEN=64,MF=(E,MYCBMR)
+ACBRET1  DS    0H
+* TEST 1B: ACB CAUSE ERR0401 AS I ALTER CTRAVSPAC
+         LA    R9,ACBRET2         RETURN AFTER ABORT
+         IIHF  R6,C'ACBR'
+         IILF  R6,C'ET2 '
+         MVI   CTRAVSPAC,X'FF'    CHANGE TOP 4 BYTES
+         TESTCB ACB=MYACB,ERET=DOERET,AVSPAC=33554432,MF=I
+ACBRET2  DS    0H
+         SR    R9,R9              INDICATE THAT ABORT IS UNEXPECTED
+         MVI   CTRAVSPAC,X'00'    RESET CTRAVSPAC
+*
+* TEST 2: ACB TEST ALL KEYWORDS OBJECT=DATA,MF=I
+         TESTCB ACB=MYACB,ACBLEN=64,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT02_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT02_0D JNE   BADCC              ERROR IF NOT OK
+* ATRB, THESE TESTS RESULT IN NE
+         TESTCB ACB=MYACB,ATRB=REPL,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_D1           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_D1 JE    BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,ATRB=SSWD,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_D2           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_D2 JE    BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,ATRB=COMPRESS,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_D3           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_D3 JE    BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,ATRB=WCK,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_D4           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_D4 JE    BADCC              ERROR IF NOT OK
+* DATASET TYPE TESTS
+         MVI   PFXFFLGS,PFX_ESDS  FORCE ESDS
+         TESTCB ACB=MYACB,ATRB=ESDS,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_D5           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_D5 JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   PFXFFLGS,PFX_KSDS  FORCE KSDS
+         TESTCB ACB=MYACB,ATRB=KSDS,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_D6           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_D6 JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   PFXFFLGS,PFX_RRDS  FORCE RRDS
+         TESTCB ACB=MYACB,ATRB=RRDS,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_D7           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_D7 JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   PFXFFLGS,PFX_LDS   FORCE LDS
+         TESTCB ACB=MYACB,ATRB=LDS,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_D8           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_D8 JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   PFXFFLGS,PFX_RRDS  FORCE RRDS
+         MVI   PFXRFLGS,X'00'     FORCE VARIABLE
+         TESTCB ACB=MYACB,ATRB=VRRDS,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_D9           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_D9 JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   PFXFFLGS,PFX_KSDS  FORCE KSDS
+         MVI   PFXRFLGS,PFX_RSPN  FORCE SPANNED
+         TESTCB ACB=MYACB,ATRB=(KSDS,SPAN),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_DA           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_DA JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   PFXRFLGS,PFX_KUNQ  FORCE AIX UNIQUE
+         TESTCB ACB=MYACB,ATRB=UNQ,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT03_DB           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_DB JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,AVSPAC=33554432,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT04_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT04_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BFRFND=100663296,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT05_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT05_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BSTRNO=47,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT06_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT06_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFND=25,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT07_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT07_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFNI=92,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT08_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT08_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFNO=117440512,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT09_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT09_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFRDS=150994944,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT10_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT10_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFSP=1234,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT11_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT11_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFUSE=134217728,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT12_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT12_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,CINV=2883,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT13_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT13_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,DDNAME=MYACB2,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT14_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT14_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,ENDRBA=83886080,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT15_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT15_0D JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   ACBERFLG,68        FORCE ACBERFLG
+         TESTCB ACB=MYACB,ERROR=68,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT16_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT16_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,EXLST=MYEXLST1,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT17_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT17_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,FS=0,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT18_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT18_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,HALCRBA=50331648,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT19_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT19_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,KEYLEN=21,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT20_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT20_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,LRECL=563,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT21_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT21_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,                                             X
+               MACRF=(KEY,ADR,SEQ,DIR,IN,OUT,SKP,AIX,LSR,DFR,SIS),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT22_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT22_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NCIS=167772160,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT23_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT23_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NDELR=184549376,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT24_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT24_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NEXCP=201326592,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT25_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT25_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NEXT=218103808,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT26_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT26_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NINSR=234881024,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT27_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT27_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NIXL=0,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT28_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT28_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NLOGR=251658240,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT29_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT29_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NRETR=268435456,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT30_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT30_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NSSS=0,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT31_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT31_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NUIW=285212672,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT32_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT32_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NUPDR=301989888,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT33_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT33_0D JNE   BADCC              ERROR IF NOT OK
+*
+         OI    ACBOFLGS,ACBOPEN   FORCE ACB OPEN
+         TESTCB ACB=MYACB,OFLAGS=OPEN,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT34_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT34_0D JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   ACBDTYPE,ACB_PATH  FORCE PATH
+         TESTCB ACB=MYACB,OPENOBJ=PATH,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT35_O1           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT35_O1 JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   ACBDTYPE,ACB_BASE  FORCE BASE
+         TESTCB ACB=MYACB,OPENOBJ=BASE,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT35_O2           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT35_O2 JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   ACBDTYPE,ACB_AIX   FORCE AIX
+         TESTCB ACB=MYACB,OPENOBJ=AIX,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT35_O3           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT35_O3 JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,PASSWD=MYPASS,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT36_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT36_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,RKP=0,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT37_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT37_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,SHRPOOL=19,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT38_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT38_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,SDTASZ=(*,CTRSDTASZ),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT39_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT39_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,STMST=(*,CTRSTMST),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT40_S1           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT40_S1 JNE   BADCC              ERROR IF NOT OK
+*
+         LA    R5,CTRSTMST        R5=CTRSTMST ADDRESS
+         TESTCB ACB=MYACB,STMST=(*,0(R5)),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT40_S2           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT40_S2 JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,STRMAX=335544320,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT41_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT41_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,STRNO=36,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT42_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT42_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,UIW=352321536,MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT43_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT43_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XAVSPAC=(*,CTRAVSPAC),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT44_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT44_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XBFRFND=(*,CTRNBFRFND),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT45_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT45_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XBUFNO=(*,CTRNBUFNO),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT46_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT46_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XBUFRDS=(*,CTRNBUFRDS),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT47_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT47_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XBUFUSE=(*,CTRNBUFUSE),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT48_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT48_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XENDRBA=(*,CTRENDRBA),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT49_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT49_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XHALCRBA=(*,CTRHALCRBA),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT50_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT50_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNCIS=(*,CTRNCIS),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT51_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT51_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNDELR=(*,CTRNDELR),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT52_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT52_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNEXCP=(*,CTRNEXCP),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT53_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT53_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNEXT=(*,CTRNEXT),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT54_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT54_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNINSR=(*,CTRNINSR),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT55_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT55_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNLOGR=(*,CTRNLOGR),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT56_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT56_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNRETR=(*,CTRNRETR),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT57_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT57_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNUIW=(*,CTRNNUIW),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT58_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT58_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNUPDR=(*,CTRNUPDR),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT59_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT59_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XSTRMAX=(*,CTRSTRMAX),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT60_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT60_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XUIW=(*,CTRNUIW),MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT61_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT61_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,RPLLEN=X'38',MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT62_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT62_0D JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,EXLLEN=X'18',MF=I
+         B     *+4(R15)           TEST RC
+         J     ACT63_0D           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT63_0D JNE   BADCC              ERROR IF NOT OK
+*
+* TEST 3: ACB TEST ALL KEYWORDS OBJECT=INDEX,MF=(G,MYCBMR)
+         LARL  R7,FAKEIPFX+X'30'  ADDRESS INDEX PFX
+         TESTCB ACB=MYACB,ACBLEN=64,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT02_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT02_0I JNE   BADCC              ERROR IF NOT OK
+* ATRB, THESE TESTS RESULT IN NE
+         TESTCB ACB=MYACB,ATRB=REPL,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT03_I1           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_I1 JE    BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,ATRB=SSWD,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT03_I2           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_I2 JE    BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,ATRB=COMPRESS,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT03_I3           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_I3 JE    BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,ATRB=WCK,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT03_I4           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_I4 JE    BADCC              ERROR IF NOT OK
+* DATASET TYPE TESTS
+         TESTCB ACB=MYACB,ATRB=KSDS,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT03_I5           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT03_I5 JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,AVSPAC=570425344,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT04_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT04_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BFRFND=637534208,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT05_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT05_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BSTRNO=47,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT06_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT06_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFND=25,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT07_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT07_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFNI=92,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT08_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT08_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFNO=654311424,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT09_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT09_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFRDS=687865856,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT10_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT10_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFSP=1234,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT11_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT11_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,BUFUSE=671088640,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT12_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT12_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,CINV=3051,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT13_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT13_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,DDNAME=MYACB2,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT14_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT14_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,ENDRBA=620756992,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT15_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT15_0I JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   ACBERFLG,86        FORCE ACBERFLG
+         TESTCB ACB=MYACB,ERROR=86,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT16_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT16_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,EXLST=MYEXLST1,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT17_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT17_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,FS=0,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT18_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT18_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,HALCRBA=587202560,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT19_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT19_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,HLRBA=603979776,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT20_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT20_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,KEYLEN=21,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT21_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT21_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,LRECL=29,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT22_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT22_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,                                             X
+               MACRF=(KEY,ADR,SEQ,DIR,IN,OUT,SKP,AIX,LSR,DFR,SIS),     X
+               OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT23_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT23_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NCIS=0,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT24_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT24_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NDELR=0,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT25_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT25_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NEXCP=738197504,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT26_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT26_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NEXT=754974720,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT27_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT27_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NINSR=0,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT28_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT28_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NIXL=3,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT29_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT29_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NLOGR=788529152,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT30_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT30_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NRETR=0,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT31_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT31_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NSSS=0,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT32_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT32_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NUIW=822083584,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT33_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT33_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,NUPDR=838860800,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT34_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT34_0I JNE   BADCC              ERROR IF NOT OK
+*
+         OI    ACBOFLGS,ACBOPEN   FORCE ACB OPEN
+         TESTCB ACB=MYACB,OFLAGS=OPEN,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT35_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT35_0I JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   ACBDTYPE,ACB_PATH  FORCE PATH
+         TESTCB ACB=MYACB,OPENOBJ=PATH,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT36_O1           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT36_O1 JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   ACBDTYPE,ACB_BASE  FORCE BASE
+         TESTCB ACB=MYACB,OPENOBJ=BASE,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT36_O2           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT36_O2 JNE   BADCC              ERROR IF NOT OK
+*
+         MVI   ACBDTYPE,ACB_AIX   FORCE AIX
+         TESTCB ACB=MYACB,OPENOBJ=AIX,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT36_O3           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT36_O3 JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,PASSWD=MYPASS,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT37_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT37_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,RKP=0,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT38_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT38_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,SHRPOOL=19,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT39_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT39_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,SDTASZ=(*,CTRSDTASZ),OBJECT=INDEX,           X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT40_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT40_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,STMST=(*,CTRSTMST),OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT41_S1           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT41_S1 JNE   BADCC              ERROR IF NOT OK
+*
+         LA    R5,CTRSTMST        R5=CTRSTMST ADDRESS
+         TESTCB ACB=MYACB,STMST=(*,0(R5)),OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT41_S2           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT41_S2 JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,STRMAX=872415232,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT42_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT42_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,STRNO=36,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT43_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT43_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,UIW=889192448,OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT44_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT44_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XAVSPAC=(*,CTRAVSPAC),OBJECT=INDEX,          X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT45_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT45_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XBFRFND=(*,CTRNBFRFND),OBJECT=INDEX,         X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT46_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT46_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XBUFNO=(*,CTRNBUFNO),OBJECT=INDEX,           X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT47_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT47_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XBUFRDS=(*,CTRNBUFRDS),OBJECT=INDEX,         X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT48_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT48_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XBUFUSE=(*,CTRNBUFUSE),OBJECT=INDEX,         X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT49_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT49_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XENDRBA=(*,CTRENDRBA),OBJECT=INDEX,          X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT50_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT50_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XHALCRBA=(*,CTRHALCRBA),OBJECT=INDEX,        X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT51_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT51_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XHLRBA=(*,CTRHLRBA),OBJECT=INDEX,            X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT52_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT52_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNCIS=(*,CTRNCIS),OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT53_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT53_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNDELR=(*,CTRNDELR),OBJECT=INDEX,            X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT54_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT54_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNEXCP=(*,CTRNEXCP),OBJECT=INDEX,            X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT55_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT55_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNEXT=(*,CTRNEXT),OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT56_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT56_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNINSR=(*,CTRNINSR),OBJECT=INDEX,            X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT57_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT57_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNLOGR=(*,CTRNLOGR),OBJECT=INDEX,            X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT58_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT58_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNRETR=(*,CTRNRETR),OBJECT=INDEX,            X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT59_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT59_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNUIW=(*,CTRNNUIW),OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT60_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT60_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XNUPDR=(*,CTRNUPDR),OBJECT=INDEX,            X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT61_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT61_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XSTRMAX=(*,CTRSTRMAX),OBJECT=INDEX,          X
+               MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT62_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT62_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,XUIW=(*,CTRNUIW),OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT63_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT63_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,RPLLEN=X'38',OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT64_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT64_0I JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB ACB=MYACB,EXLLEN=X'18',OBJECT=INDEX,MF=(G,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     ACT65_0I           RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+ACT65_0I JNE   BADCC              ERROR IF NOT OK
+*
+***************
+* EXLST TESTS *
+***************
+* ERROR TESTS
+* EXLST BAD REG, BAD EXLST PARMS, >1 PARM, BAD MOD, MOD A & N
+* MF=L BAD REG
+*        TESTCB EXLST=(R15),JRNAD=(0),UPAD=ABC,RLSWAIT=ABC,            X
+               EODAD=(MYPASS,Q),SYNAD=(MYPASS,A,N),MF=(L,(R14),MYLEN11)
+* BAD REG FOR SYNAD, NO 2ND PARM FOR MF=G, NO LABEL FOR MF=G
+*        TESTCB EXLST=MYEXLST1,SYNAD=((R0),N),MF=G
+* BAD REG FOR MF=E
+*        TESTCB EXLST=MYEXLST1,SYNAD=(MYSYN,N),MF=(E,(R14))
+* BAD PARM
+*        TESTCB EXLST=MYEXLST1,LRECL=14,MF=I
+*
+* TEST  1: EXLST CAUSE RC=8 AS CBMR WAS BUILT WITH EODAD
+*          THIS WILL INVOKE THE ERET ROUTINE, ABORT AND RETURN
+         LA    R9,EXLRET          RETURN AFTER ABORT
+         IIHF  R6,C'EXLR'
+         IILF  R6,C'ET  '
+         TESTCB EXLST=MYEXLST1,EODAD=MYEOD,MF=(L,MYCBMR)
+         TESTCB EXLST=MYEXLST1,ERET=DOERET,RPLLEN=64,MF=(E,MYCBMR)
+EXLRET   DS    0H
+         SR    R9,R9              INDICATE THAT ABORT IS UNEXPECTED
+* TEST  2: EXLST TEST ALL KEYWORDS MF=I/G
+         TESTCB EXLST=MYEXLST1,ACBLEN=X'40',MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT02_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT02_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB EXLST=MYEXLST2,RPLLEN=X'38',MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT03_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT03_0  JNE   BADCC              ERROR IF NOT OK
+*
+         TESTCB EXLST=MYEXLST2,EXLLEN=X'18',MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT04_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT04_0  JNE   BADCC              ERROR IF NOT OK
+* JRNAD GIVES NE=LO
+         TESTCB EXLST=MYEXLST1,JRNAD=MYJRN,MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT05_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT05_0  JE    BADCC              ERROR IF NOT OK
+*
+* MOD L GIVES NE=LO
+         TESTCB EXLST=MYEXLST1,EODAD=(MYEOD,L),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT06_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT06_0  JE    BADCC              ERROR IF NOT OK
+*
+* MISSING ENTRY GIVES NE=LO
+         TESTCB EXLST=MYEXLST2,LERAD=(MYLER,A),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT07_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT07_0  JE    BADCC              ERROR IF NOT OK
+* ADDRESS ZERO AND NO MODS GIVES EQ
+         TESTCB EXLST=MYEXLST1,EODAD=(0),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT08_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT08_0  JNE   BADCC              ERROR IF NOT OK
+* ADDRESS ZERO AND MODS TRUE GIVES EQ
+         TESTCB EXLST=MYEXLST1,EODAD=(0,A),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT09_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT09_0  JNE   BADCC              ERROR IF NOT OK
+* ADDRESS OMITTED (ZERO) AND MODS FALSE GIVES NE=LO
+         TESTCB EXLST=MYEXLST1,EODAD=(,N),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT10_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT10_0  JNL   BADCC              ERROR IF NOT OK
+* ADDRESS LOWER WITHOUT MODS GIVES LO
+         TESTCB EXLST=MYEXLST3,LERAD=(MYEOD),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT11_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT11_0  JNL   BADCC              ERROR IF NOT OK
+* ADDRESS EQUAL WITHOUT MODS GIVES EQ
+         TESTCB EXLST=MYEXLST3,LERAD=(MYLER),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT12_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT12_0  JNE   BADCC              ERROR IF NOT OK
+* ADDRESS HIGHER WITHOUT MODS GIVES HI
+         TESTCB EXLST=MYEXLST3,LERAD=(MYSYN),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT13_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT13_0  JNH   BADCC              ERROR IF NOT OK
+* ADDRESS HIGHER WITHOUT MODS WHEN EXLST HAS ZERO ADDRESS GIVES HI
+         TESTCB EXLST=MYEXLST1,LERAD=(MYLER),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT14_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT14_0  JNH   BADCC              ERROR IF NOT OK
+* ADDRESS AND MODS EQ EODAD
+         TESTCB EXLST=MYEXLST1,EODAD=(MYEOD,A),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT15_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT15_0  JNE   BADCC              ERROR IF NOT OK
+* ADDRESS AND MODS EQ LERAD
+         TESTCB EXLST=MYEXLST3,LERAD=(MYLER,N),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT16_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT16_0  JNE   BADCC              ERROR IF NOT OK
+* ADDRESS AND MODS EQ SYNAD
+         TESTCB EXLST=MYEXLST2,SYNAD=(MYSYN,N),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT17_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT17_0  JNE   BADCC              ERROR IF NOT OK
+* ADDRESS AND MODS NE EODAD
+         TESTCB EXLST=MYEXLST1,EODAD=(MYEOD,N),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT18_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT18_0  JE    BADCC              ERROR IF NOT OK
+* ADDRESS AND MODS NE LERAD
+         TESTCB EXLST=MYEXLST3,LERAD=(MYLER,A),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT19_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT19_0  JE    BADCC              ERROR IF NOT OK
+* ADDRESS AND MODS NE SYNAD
+         TESTCB EXLST=MYEXLST2,SYNAD=(MYSYN,A),MF=I
+         B     *+4(R15)           TEST RC
+         J     EXT20_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT20_0  JE    BADCC              ERROR IF NOT OK
+* CBMR BUILT WITH EODAD=(MYEOD) AND NO MODS
+         TESTCB EXLST=MYEXLST1,EODAD=MYEOD,MF=(L,MYCBMR)
+* MODIFY IT TO EODAD=(4321) AND NO MODS, LO EODAD
+         TESTCB EXLST=MYEXLST1,EODAD=4321,MF=(E,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     EXT21_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT21_0  JNL   BADCC              ERROR IF NOT OK
+*
+* MODIFY IT TO EODAD=(4321,N) NE EODAD
+         TESTCB EXLST=MYEXLST1,EODAD=(0,N),MF=(E,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     EXT22_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT22_0  JE    BADCC              ERROR IF NOT OK
+*
+* MODIFY IT TO EODAD=(MYEOD,A) EQ EODAD
+         TESTCB EXLST=MYEXLST1,EODAD=(MYEOD,A),MF=(E,MYCBMR)
+         B     *+4(R15)           TEST RC
+         J     EXT23_0            RC=0
+         J     ABORT              RC=4
+         J     ABORT              RC=8
+EXT23_0  JNE   BADCC              ERROR IF NOT OK
+*
+         DROP  R7
+         J     EXIT               EXIT
+*
+DOERET   DS    0H
+         LR    R10,R15            SAVE R15
+         LR    R11,R0             SAVE R0
+         STG   R6,WTOERETL        SAVE RETURN LABEL
+         LARL  R1,WTOERET         R1=WTO MSG
+         WTO   MF=(E,(R1))        SHOW IT
+         LR    R15,R10            RESTORE R15
+         LR    R0,R11             RESTORE R0
+         J     ABORT              EXIT
+*
+BADCC    DS    0H
+         WTO   'ERR!!! BAD CC'
+         J     BADEXIT            EXIT
+*
+ABORT    DS    0H
+         STC   R15,WTOR15         SAVE RC IN WTO
+         OI    WTOR15,X'F0'       CONVERT TO DEC
+         STC   R0,WTOR0           SAVE ERRCODE IN WTO
+         OI    WTOR0,X'F0'        CONVERT TO DEC
+         LARL  R1,WTOABEND        R1=WTO MSG
+         WTO   MF=(E,(R1))        SHOW IT
+         LTR   R9,R9              ABORT EXPECTED ?
+         JZ    BADEXIT            EXIT IF NOT
+         BR    R9                 RETURN
+*
+EXIT     DS    0H
+         WTO   'TESTTSCB SUCCESSFUL'
+         SUBEXIT
+*
+BADEXIT  DS    0H
+         SUBEXIT RC=15
+*
+         DS    0H
+WTOERET  DC    AL2(WTOERETN-*,0)
+         DC    C'ERET ROUTINE ENTERED - RETURN TO '
+WTOERETL DS    CL8
+WTOERETN EQU   *
+*
+         DS    0H
+WTOABEND DC    AL2(WTOABDEN-*,0)
+         DC    C'ERR!!! R15='
+WTOR15   DC    X'00'
+         DC    C' R0='
+WTOR0    DC    X'00'
+WTOABDEN EQU   *
+*
+MYACB    ACB   AM=VSAM,                                                X
+               DDNAME=MYACB2,                                          X
+               PASSWD=MYPASS,                                          X
+               EXLST=MYEXLST1,                                         X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X
+               BUFSP=1234,                                             X
+               BUFND=25,                                               X
+               BUFNI=92,                                               X
+               RMODE31=CB,                                             X
+               STRNO=36,                                               X
+               BSTRNO=47,                                              X
+               SHRPOOL=19
+*
+MYACB2   ACB   AM=VSAM,                                                X
+               DDNAME=MYACB
+*
+MYRPL    RPL   ACB=MYACB,                                              X
+               AREA=MYAREA,                                            X
+               AREALEN=42,                                             X
+               ARG=MYARG,                                              X
+               ECB=MYECB,                                              X
+               KEYLEN=22,                                              X
+               MSGAREA=MYAREA,                                         X
+               MSGLEN=59,                                              X
+               NXTRPL=MYRPL2,                                          X
+               OPTCD=(ARD,KGE,GEN),                                    X
+               RECLEN=42
+*
+MYRPL2   RPL   ACB=MYACB,OPTCD=(ARD,KGE,GEN)
+*
+MYEXLST1 EXLST AM=VSAM,                                                X
+               EODAD=(MYEOD,A),                                        X
+               LERAD=(0,A),                                            X
+               SYNAD=(MYSYN,N)
+*
+MYEXLST2 EXLST AM=VSAM,                                                X
+               EODAD=(MYEOD,N),                                        X
+               SYNAD=(MYSYN,N)
+*
+MYEXLST3 EXLST AM=VSAM,                                                X
+               LERAD=(MYLER,N)
+*
+MYCBMR   DC    XL100'00'
+* RPL
+MYAREA   DC    XL42'00'
+MYARG    DC    XL10'00'
+MYECB    DC    X'40000000'        ECB POSTED
+* ACB
+MYPASS   DC    XL10'00'
+* EXLST
+MYEOD    BR    R14
+MYJRN    BR    R14
+MYLER    BR    R14
+MYSYN    BR    R14
+*
+         LTORG
+*
+FAKEDPFX DS    0H
+* INDIANCO.DTA HDR+PFX+CTR
+* PFX=+30  CTR=+1D0
+* PFXAIXN MODIFIED AT +1CD
+         DC    X'C8C4D9010280000000FFFFFFFFFFFFFF' +X'000'
+         DC    X'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' +X'010'
+         DC    X'FF000002A500000D5700000000000000' +X'020'
+         DC    X'A9D7C6E700000233'                 +X'030'
+         DC    X'0000001500000000FFFF024A0258FFFF' +X'038'
+         DC    X'026C027A000000000B43000000000031' +X'048'
+         DC    X'FF0000000000002C3900000000000031' +X'058'
+         DC    X'FF00000000000031FF00000000000000' +X'068'
+         DC    X'0000000000000031FE00FFFFFFFFFFFF' +X'078'
+         DC    (17*16)X'FF'                        +X'088'
+         DC    X'FFFF000001A1D5EA21432D8A0000D5EA' +X'198'
+         DC    X'21'                               +X'1A8'
+         DC    X'432D8A0000D5EA21432D8A0000D5EA21' +X'1A9'
+         DC    X'432D8A0000D5EA21432D8A0000000000' +X'1B9'
+* PFXAIXN=X'23'          ..
+         DC    X'00004080230000A9C3E3D9'           +X'1C9'
+         DC    X'01000000'         CTRAVGRL        +X'1D4'  16777216
+         DC    X'0000000002000000' CTRAVSPAC       +X'1D8'  33554432
+         DC    X'0000000003000000' CTRHALCRBA      +X'1E0'  50331648
+         DC    X'0000000004000000' CTRHLRBA        +X'1E8'  67108864 NA
+         DC    X'0000000005000000' CTRENDRBA       +X'1F0'  83886080
+         DC    X'0000000006000000' CTRNBFRFND      +X'1F8' 100663296
+         DC    X'0000000007000000' CTRNBUFNO       +X'200' 117440512
+         DC    X'0000000008000000' CTRNBUFUSE      +X'208' 134217728
+         DC    X'0000000009000000' CTRNBUFRDS      +X'210' 150994944
+         DC    X'000000000A000000' CTRNCIS         +X'218' 167772160
+         DC    X'000000000B000000' CTRNDELR        +X'220' 184549376
+         DC    X'000000000C000000' CTRNEXCP        +X'228' 201326592
+         DC    X'000000000D000000' CTRNEXT         +X'230' 218103808
+         DC    X'000000000E000000' CTRNINSR        +X'238' 234881024
+         DC    X'000000000F000000' CTRNLOGR        +X'240' 251658240
+         DC    X'0000000010000000' CTRNRETR        +X'248' 268435456
+         DC    X'0000000011000000' CTRNNUIW        +X'250' 285212672
+         DC    X'0000000012000000' CTRNUPDR        +X'258' 301989888
+         DC    X'0000000013000000' CTRSDTASZ       +X'260' 318767104
+         DC    X'D5EA21432D8A0000' CTRSTMST        +X'268' STCK
+         DC    X'0000000014000000' CTRSTRMAX       +X'270' 335544320
+         DC    X'0000000015000000' CTRNUIW         +X'278' 352321536
+         DC    X'02C6'             CTRLOKEY@       +X'280'
+         DC    X'000EC9D5C4C9'                     +X'282'
+         DC    X'C1D5C3D64BC4E3C10014C57AE0E9F3F9' +X'288'
+         DC    X'F0E0E9E5E2C1D4E0C4C1E3C1000EC9D5' +X'298'
+         DC    X'C4C9C1D5C3D64BC9C4E70014C57AE0E9' +X'2A8'
+         DC    X'F3F9F0E0E9E5E2C1D4E0C4C1E3C10017' +X'2B8'
+         DC    X'E4F5F1F1F0F1E3C7F1F9F9F5D7E3C3F0' +X'2C8'
+         DC    X'F2F1F9F0F60000000000000000000000' +X'2D8'
+         DC    8X'00'                              +X'2E8'
+         DC    (208*16)X'00'                       +X'2F0'
+         DC    X'000000000000000000000000C6E3D901' +X'FF0'
+*
+FAKEIPFX DS    0H
+* INDIANCO.IDX HDR+PFX+CTR
+* PFX=+30  CTR=+1D0
+         DC    X'C8C4D9010280000000FFFFFFFFFFFFFF' +X'000'
+         DC    X'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' +X'010'
+         DC    X'FF0000028E00000D6E00000000000000' +X'020'
+         DC    X'A9D7C6E70000001D'                 +X'030'
+         DC    X'0000001500000000FFFF024A0258FFFF' +X'038'
+         DC    X'026C027A020000000BEB000000000002' +X'048'
+         DC    X'C900000000000002C900000000000002' +X'058'
+         DC    X'C900000000000002C900FFFFFFFFFFFF' +X'068'
+         DC    X'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' +X'078'
+         DC    X'FFFFFFFFFFFFFFFFFFFF000000000002' +X'088'
+         DC    X'C8000000000000000000000000000002' +X'098'
+         DC    X'BF00000000000002C000000000000002' +X'0A8'
+         DC    X'C700000000000002C800000000000002' +X'0B8'
+         DC    X'C800FFFFFFFFFFFFFFFFFFFFFFFFFFFF' +X'0C8'
+         DC    (12*16)X'FF'                        +X'0D8'
+         DC    X'FFFF000000E2D5EA21432D8A0000D5EA' +X'198'
+         DC    X'21'                               +X'1A8'
+         DC    X'432D8A0000D5EA21432D8A0000D5EA21' +X'1A9'
+         DC    X'432D8A0000D5EA21432D8A0000000000' +X'1B9'
+         DC    X'00004180000000A9C3E3D9'           +X'1C9'
+         DC    X'21000000'         CTRAVGRL        +X'1D4' 553648128
+         DC    X'0000000022000000' CTRAVSPAC       +X'1D8' 570425344
+         DC    X'0000000023000000' CTRHALCRBA      +X'1E0' 587202560
+         DC    X'0000000024000000' CTRHLRBA        +X'1E8' 603979776
+         DC    X'0000000025000000' CTRENDRBA       +X'1F0' 620756992
+         DC    X'0000000026000000' CTRNBFRFND      +X'1F8' 637534208
+         DC    X'0000000027000000' CTRNBUFNO       +X'200' 654311424
+         DC    X'0000000028000000' CTRNBUFUSE      +X'208' 671088640
+         DC    X'0000000029000000' CTRNBUFRDS      +X'210' 687865856
+         DC    X'0000000000000000' CTRNCIS         +X'218' 0 FOR INDEX
+         DC    X'0000000000000000' CTRNDELR        +X'220' 0 FOR INDEX
+         DC    X'000000002C000000' CTRNEXCP        +X'228' 738197504
+         DC    X'000000002D000000' CTRNEXT         +X'230' 754974720
+         DC    X'0000000000000000' CTRNINSR        +X'238' 0 FOR INDEX
+         DC    X'000000002F000000' CTRNLOGR        +X'240' 788529125
+         DC    X'0000000000000000' CTRNRETR        +X'248' 0 FOR INDEX
+         DC    X'0000000031000000' CTRNNUIW        +X'250' 822083584
+         DC    X'0000000032000000' CTRNUPDR        +X'258' 838860800
+         DC    X'0000000033000000' CTRSDTASZ       +X'260' 855638016
+         DC    X'D5EA21432D8A0000' CTRSTMST        +X'268' STCK
+         DC    X'0000000034000000' CTRSTRMAX       +X'270' 872415232
+         DC    X'0000000035000000' CTRNUIW         +X'278' 889192448
+         DC    X'FFFF'             CTRLOKEY@       +X'280'
+         DC    X'000EC9D5C4C9'                     +X'282'
+         DC    X'C1D5C3D64BC4E3C10014C57AE0E9F3F9' +X'288'
+         DC    X'F0E0E9E5E2C1D4E0C4C1E3C1000EC9D5' +X'298'
+         DC    X'C4C9C1D5C3D64BC9C4E70014C57AE0E9' +X'2A8'
+         DC    X'F3F9F0E0E9E5E2C1D4E0C4C1E3C10000' +X'2B8'
+         DC    8X'00'                              +X'2C8'
+         DC    (210*16)X'00'                       +X'2D0'
+         DC    X'000000000000000000000000C6E3D901' +X'FF0'
+*
+         ZVSAMPFX
+*
+         YREGS
+         END
+

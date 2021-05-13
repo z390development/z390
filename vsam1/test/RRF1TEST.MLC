@@ -1,0 +1,76 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 08/31/07 INITIAL CODING OF RRDS FIXED LENGTH RECORD TESTS           
+* 09/21/07 RPI 702 CHANGE DIR TO KEY FOR ACCESS BY REC#               
+* 10/24/07 RPI 724 CHANGE FOR RRN STARTING AT 1                       
+*********************************************************************
+RRF1TEST RT1   MAIN 
+VACBOUT  ACB   DDNAME=VFILE,MACRF=(KEY,OUT)
+VACBIN   ACB   DDNAME=VFILE,MACRF=(KEY,IN)
+VRPLOUT  RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(KEY),ARG=REC#
+VRPLIN   RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(KEY),ARG=REC#
+RECORD   DC    CL80' '
+REC#     DC    F'00'
+         LTORG
+         EQUREGS
+         RT1   START
+*
+* BUILD VSAM RRDS FIXED LENGTH FILE WITH 3 RECORDS
+*
+         WTO   'RRF1TEST CREATE RRDS VFILE WITH 3 RECORDS'
+         OPEN  (VACBOUT,(OUTPUT))
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD,=80C'1'
+         MVC   REC#,=F'1'
+         PUT   RPL=VRPLOUT
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD,=80C'3'
+         MVC   REC#,=F'3'
+         PUT   RPL=VRPLOUT
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD,=80C'5'
+         MVC   REC#,=F'5'
+         PUT   RPL=VRPLOUT
+         LTR   R15,R15
+         RT1   CC0
+         CLOSE (VACBOUT)
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ AND VERIFY 3 VSAM RRDS FIXED LENGTH RECORDS 
+*
+         WTO   'RRF1TEST READ AND VERIFY VFILE RECORDS'
+         OPEN  (VACBIN)
+         LTR   R15,R15
+         RT1   CC0
+         MVC   REC#,=F'1'
+         GET   RPL=VRPLIN
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'1'
+         RT1   CC0
+         MVC   REC#,=F'3'
+         GET   RPL=VRPLIN
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'3'
+         RT1   CC0
+         MVC   REC#,=F'5'
+         GET   RPL=VRPLIN
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'5'
+         RT1   CC0
+         CLOSE (VACBIN)
+         LTR   R15,R15
+         RT1   CC0
+         RT1   END
+         END

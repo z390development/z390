@@ -1,0 +1,155 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 08/29/07 INITIAL CODING OF ESDS FIXED LENGTH RECORD TESTS           
+* 09/09/07 RPI 672 CHANGE RBA/XRBA VALUES TO VES RCD ADDRESSES        
+*********************************************************************
+ESF1TEST RT1   MAIN 
+QDCBIN   DCB   DDNAME=QFILE,RECFM=F,LRECL=80,MACRF=GM,EODAD=EOF
+QDCBOUT  DCB   DDNAME=QFILE,RECFM=F,LRECL=80,MACRF=PM
+VACBOUT  ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
+VACBINS  ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
+VACBINR  ACB   DDNAME=VFILE,MACRF=(ADR)
+VRPLOUTS RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(SEQ)
+VRPLINS  RPL   ACB=VACBINS,AREA=RECORD,OPTCD=(SEQ)
+VRPLRBA  RPL   ACB=VACBINR,AREA=RECORD,OPTCD=(ADR),ARG=RBA
+VRPLXRBA RPL   ACB=VACBINR,AREA=RECORD,OPTCD=(ADR,XRBA),ARG=XRBA
+RECORD   DC    CL80' '
+RBA      DC    XL4'00'
+RBA1     DC    XL4'00'
+RBA2     DC    XL4'00'
+RBA3     DC    XL4'00'
+XRBA     DC    XL8'00'
+XRBA1    DC    XL8'00'
+XRBA2    DC    XL8'00'
+XRBA3    DC    XL8'00'
+         LTORG
+         EQUREGS
+         RT1   START
+         WTO   'ESF1TEST TEST ESDS FIXED LENGTH RECORD I/O'   
+*
+* CREATE QSAM FILE WITH 3 FIXED LENGTH RECORDS 
+*
+         WTO   'ESF1TEST CREATE QFILE'
+         OPEN  (QDCBOUT,(OUTPUT))
+         PUT   QDCBOUT,=80C'1'
+         PUT   QDCBOUT,=80C'2'
+         PUT   QDCBOUT,=80C'3'
+         CLOSE (QDCBOUT)
+*
+* BUILD VSAM FIXED LENGTH FILE FROM QSAME FILE WITH 3 RECORDS
+*
+         WTO   'ESF1TEST CREATE VFILE'
+         OPEN  (QDCBIN,(INPUT),VACBOUT,(OUTPUT))
+         LTR   R15,R15
+         RT1   CC0
+LOOP     EQU   *
+         GET   QDCBIN,RECORD
+         PUT   RPL=VRPLOUTS
+         LTR   R15,R15
+         RT1   CC0
+         B     LOOP
+EOF      CLOSE (QDCBIN,,VACBOUT)
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ AND VERIFY 3 VSAM FIXED LENGTH RECORDS AND RBA'S 
+* (NOTE RBA'S POINT TO VX0 XRBA'S TO ACTUAL RECORDS IN VES)
+*
+         WTO   'ESF1TEST READ AND VERIFY VFILE SEQUENTIALLY'
+         OPEN  (VACBINS)
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=VRPLINS
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'1'
+         RT1   CC0
+         SHOWCB RPL=VRPLINS,AREA=RBA1,LENGTH=4,FIELDS=(RBA)
+         CLC   RBA1,=F'0'
+         RT1   CC0
+         SHOWCB RPL=VRPLINS,AREA=XRBA1,LENGTH=8,FIELDS=(XRBA)
+         CLC   XRBA1,=FL8'0'
+         RT1   CC0
+         GET   RPL=VRPLINS  
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'2'
+         RT1   CC0
+         SHOWCB RPL=VRPLINS,AREA=RBA2,LENGTH=4,FIELDS=(RBA)
+         CLC   RBA2,=F'80'
+         RT1   CC0
+         SHOWCB RPL=VRPLINS,AREA=XRBA2,LENGTH=8,FIELDS=(XRBA)
+         CLC   XRBA2,=FL8'80'
+         RT1   CC0
+         GET   RPL=VRPLINS
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'3'
+         RT1   CC0
+         SHOWCB RPL=VRPLINS,AREA=RBA3,LENGTH=4,FIELDS=(RBA)
+         CLC   RBA3,=F'160'
+         RT1   CC0
+         SHOWCB RPL=VRPLINS,AREA=XRBA3,LENGTH=8,FIELDS=(XRBA)
+         CLC   XRBA3,=FL8'160'
+         RT1   CC0
+         GET   RPL=VRPLINS
+         CHI   R15,8             VERIFY LOGIC ERROR AT EOD
+         RT1   CC0
+         TESTCB RPL=VRPLINS,FDBK=4 VERIFY EOD REASON CODE 
+         RT1   CC0
+         CLOSE (VACBINS)
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ AND VERIFY 3 RECORDS BY RBA AND BY XRBA ADDRESS
+*
+         WTO   'ESF1TEST READ AND VERIFY VFILE BY RBA AND XRBA'
+         OPEN  (VACBINR)
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RBA,RBA1
+         GET   RPL=VRPLRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'1'
+         RT1   CC0
+         MVC   RBA,RBA2
+         GET   RPL=VRPLRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'2'
+         RT1   CC0
+         MVC   RBA,RBA3
+         GET   RPL=VRPLRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'3'
+         RT1   CC0
+         MVC   XRBA,XRBA1
+         GET   RPL=VRPLXRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'1'
+         RT1   CC0
+         MVC   XRBA,XRBA2
+         GET   RPL=VRPLXRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'2'
+         RT1   CC0
+         MVC   XRBA,XRBA3
+         GET   RPL=VRPLXRBA
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'3'
+         RT1   CC0
+         CLOSE (VACBINR)
+         LTR   R15,R15
+         RT1   CC0
+         RT1   END
+         END

@@ -1,0 +1,89 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 09/14/07 RPI 672 CODE TEST FOR LRD,BWD SEQ,BWD BACKWARD ACCESS      
+* 09/25/07 RPI 702 USE POINT LRD AND GET,BWD,LRD FOR SAME RPL         
+*********************************************************************
+ESV4TEST RT1   MAIN 
+VACBOUT  ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
+VACBIN   ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
+VRPLOUTS RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(SEQ)
+VRPLINSB RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(SEQ,BWD,LRD)
+RECORD   DC    CL300' '
+         LTORG
+         EQUREGS
+         RT1   START
+         WTO   'ESV4TEST TEST SEQ CREATE AND READ BACKWARDS'  
+*
+* BUILD VSAM FIXED LENGTH FILE FROM QSAME FILE WITH 3 RECORDS
+*
+         WTO   'ESV4TEST CREATE VFILE'
+         OPEN  (VACBOUT,(OUTPUT))
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD(100),=100C'1'
+         MODCB RPL=VRPLOUTS,RECLEN=100
+         PUT   RPL=VRPLOUTS
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD(200),=200C'2'
+         MODCB RPL=VRPLOUTS,RECLEN=200
+         PUT   RPL=VRPLOUTS
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD(200),=200C'3'
+         MVC   RECORD+200(100),=100C'3'
+         MODCB RPL=VRPLOUTS,RECLEN=300
+         PUT   RPL=VRPLOUTS
+         LTR   R15,R15
+         RT1   CC0
+         CLOSE (VACBOUT)
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ AND VERIFY 3 VSAM RECORDS BACKWARD                    
+*
+         WTO   'ESV4TEST READ AND VERIFY VFILE BACKWARDS'
+         OPEN  (VACBIN)
+         LTR   R15,R15
+         RT1   CC0
+         POINT RPL=VRPLINSB
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=VRPLINSB
+         LTR   R15,R15
+         RT1   CC0
+         TESTCB RPL=VRPLINSB,RECLEN=300
+         RT1   CC0
+         CLC   RECORD(200),=200C'3'
+         RT1   CC0
+         CLC   RECORD+200(100),=100C'3'
+         RT1   CC0
+         GET   RPL=VRPLINSB  
+         LTR   R15,R15
+         RT1   CC0
+         TESTCB RPL=VRPLINSB,RECLEN=200
+         RT1   CC0
+         CLC   RECORD(200),=200C'2'
+         RT1   CC0
+         GET   RPL=VRPLINSB  
+         LTR   R15,R15
+         RT1   CC0
+         TESTCB RPL=VRPLINSB,RECLEN=100
+         RT1   CC0
+         CLC   RECORD(100),=100C'1'
+         RT1   CC0
+         GET   RPL=VRPLINSB  
+         CHI   R15,8
+         RT1   CC0
+         TESTCB RPL=VRPLINSB,FDBK=4 VERIFY LOGICAL EOD AT FRONT
+         RT1   CC0
+         CLOSE (VACBIN)
+         LTR   R15,R15
+         RT1   CC0
+         RT1   END
+         END

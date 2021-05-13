@@ -1,0 +1,3 @@
+REM build TESTCAT.390 VSAM catalog with all vsam\test VSAM files
+CALL ASML vsam\test\TESTCAT notiming stats %1 %2 %3 %4 %5
+IF ERRORLEVEL 1 PAUSE ERROR BUILDING TESTCAT.390 VSAM CATALOG

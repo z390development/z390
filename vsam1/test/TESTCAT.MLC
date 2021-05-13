@@ -1,0 +1,53 @@
+*
+* DEFINE VCDT CATALOG FOR VSAM TESTS IN vsam\test 
+*
+         DEFINE CATALOG,NAME=TESTCAT              
+         DEFINE CLUSTER,NAME=ESF1,                                     X
+               RECORDSIZE=80,INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESF2,                                     X
+               RECORDSIZE=80,INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESF3,                                     X
+               RECORDSIZE=80,INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESF4,                                     X
+               RECORDSIZE=80,INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESV1,RECORDSIZE=(200,400),                X
+               INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESV2,RECORDSIZE=(1,100000),               X
+               INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESV3,RECORDSIZE=(200,400),                X
+               INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESV4,RECORDSIZE=(200,400),                X
+               INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESV5,RECORDSIZE=(40,80),                  X
+               INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=RRF1,                                     X
+               RECORDSIZE=80,INDEX=NUMBERED
+         DEFINE CLUSTER,NAME=RRF2,                                     X
+               RECORDSIZE=80,INDEX=NUMBERED
+         DEFINE CLUSTER,NAME=RRV1,                                     X
+               RECORDSIZE=(300,500),INDEX=NUMBERED
+         DEFINE CLUSTER,NAME=RRV2,                                     X
+               RECORDSIZE=(300,500),INDEX=NUMBERED
+         DEFINE CLUSTER,NAME=KSF1NAME,                                 X
+               RECORDSIZE=70,KEYS=(20,0)
+         DEFINE ALTERNATEINDEX,NAME=KSF1ADDR,                          X
+               RELATE=KSF1NAME,KEYS=(20,20)
+         DEFINE ALTERNATEINDEX,NAME=KSF1CITY,                          X
+               RELATE=KSF1NAME,KEYS=(20,40)
+         DEFINE ALTERNATEINDEX,NAME=KSF1STAT,                          X
+               RELATE=KSF1NAME,KEYS=(5,60)
+         DEFINE ALTERNATEINDEX,NAME=KSF1ZIP,                           X
+               RELATE=KSF1NAME,KEYS=(5,65)
+         DEFINE PATH,NAME=NAMELIST,ENTRY=KSF1NAME,UPDATE=NO
+         DEFINE PATH,NAME=ADDRLIST,ENTRY=KSF1ADDR,UPDATE=NO
+         DEFINE PATH,NAME=CITYLIST,ENTRY=KSF1CITY,UPDATE=NO
+         DEFINE PATH,NAME=STATLIST,ENTRY=KSF1STAT,UPDATE=NO
+         DEFINE PATH,NAME=ZIPLIST,ENTRY=KSF1ZIP,UPDATE=NO
+         DEFINE CLUSTER,NAME=KSF2NAME,                                 X
+               RECORDSIZE=70,KEYS=(20,0)
+         DEFINE CLUSTER,NAME=ESF1CI2K,CONTROLINTERVALSIZE=2048,        X
+               RECORDSIZE=200,INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=LDS1CI2K,CONTROLINTERVALSIZE=2048,        X
+               INDEX=LINEAR
+         DEFINE END
+         END

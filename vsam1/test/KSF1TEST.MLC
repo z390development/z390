@@ -1,0 +1,273 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 12/05/07                                                 *
+*********************************************************************
+* 12/05/07 RPI 750 COPY FROM KSF1TEST AND ADD POINT, KGE, GENERIC TESTS                  
+* 01/08/08 RPI 779 TEST SEQ BWD FROM POINT WITH KGE DSH2 (READ DSH,AK)                                     
+* 04/23/09 RPI 1025 CLEAR RPL OPTIONS FOR REUSE                           
+*********************************************************************
+KSF1TEST SUBENTRY   
+*
+* OPEN AND READ RECORDS BY NAME KEY RANDOMLY         
+*
+         WTO   'KSF1TEST QUERY KSF1NAME BY PRIMARY NAME KEY'
+         OPEN  (VFILE,(INPUT))
+         LTR   R15,R15
+         BNZ   ERR1
+         MVC   KEY,=CL20'RM'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         MVC   KEY,=CL20'MW'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         USING RECDSECT,RECORD
+         CLC   NAME,KEY
+         BNE   ERR4   
+         MVC   KEY,=CL20'MM'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+         MVC   KEY,=CL20'MT'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+         MVC   KEY,=CL20'DSH'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+         MVC   KEY,=CL20'AK'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+*
+* CHANGE TO SKIP SEQ WITH POINT TO SPECIFIC KEYS
+*
+         WTO   'KSF1TEST POINT AND SEQ READ'
+         MVHHI VRPL+RPLOPT1-IHARPL,0 CLEAN OPT1+2  RPI 1025
+         MODCB RPL=VRPL,OPTCD=(SEQ)
+         LTR   R15,R15
+         BNZ   ERR5
+         MVC   KEY,=CL20'DSH'
+         POINT RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+         MVC   KEY,=CL20'AK'
+         POINT RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+*
+* CHANGE TO SKIP SEQ WITH POINT USING KGE FULL KEYS
+*
+         WTO   'KSF1TEST POINT AND SEQ READ WITH KGE'
+         MVHHI VRPL+RPLOPT1-IHARPL,0 CLEAN OPT1+2  RPI 1025
+         MODCB RPL=VRPL,OPTCD=(SEQ,KGE)
+         LTR   R15,R15
+         BNZ   ERR5
+         MVC   KEY,=CL20'D'
+         POINT RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'DSH'
+         BNE   ERR4   
+         MVC   KEY,=XL20'00'
+         POINT RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'AK'
+         BNE   ERR4   
+*
+* CHANGE TO SKIP SEQ BACKWARD WITH POINT USING KEQ FULL KEYS
+*
+         WTO   'KSF1TEST POINT AND SEQ READ BACKWARD WITH KEQ'
+         MVHHI VRPL+RPLOPT1-IHARPL,0 CLEAN OPT1+2  RPI 1025
+         MODCB RPL=VRPL,OPTCD=(SEQ,BWD)
+         LTR   R15,R15
+         BNZ   ERR5
+         MVC   KEY,=CL20'MM'
+         POINT RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'DSH'
+         BNE   ERR4   
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'AK'
+         BNE   ERR4   
+*
+* POINT TO EOF VIA HIGH VALUES KEY AND READ BACKWARDS
+*
+         WTO   'KSF1TEST POINT TO EOF VIA HIGH KEY SEQ READ BACKWARD'
+         MVC   KEY,=20X'FF'
+         POINT RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'RM'
+         BNE   ERR4   
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'MW'
+         BNE   ERR4   
+*
+* CHANGE TO SKIP SEQ WITH POINT USING KGE GENERIC KEYS
+*
+         WTO   'KSF1TEST POINT AND SEQ READ WITH KGE GENERIC KEYS'
+         MVHHI VRPL+RPLOPT1-IHARPL,0 CLEAN OPT1+2  RPI 1025
+         MODCB RPL=VRPL,OPTCD=(SEQ,KGE),KEYLEN=1
+         LTR   R15,R15
+         BNZ   ERR5
+         MVC   KEY,=20X'FF'
+         MVI   KEY,C'D'
+         POINT RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'DSH'
+         BNE   ERR4   
+         MVI   KEY,X'00'
+         POINT RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'AK'
+         BNE   ERR4   
+*
+* CHANGE TO KEY ACCESS WITH GEN,KGE
+*
+         WTO   'KSF1TEST KEY ACCESS WITH GENERIC KEY AND KGE'
+         MVHHI VRPL+RPLOPT1-IHARPL,0 CLEAN OPT1+2  RPI 1025
+         MODCB RPL=VRPL,OPTCD=(GEN,KGE),KEYLEN=1
+         LTR   R15,R15
+         BNZ   ERR5
+         MVC   KEY,=20X'FF'
+         MVI   KEY,C'D'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'DSH'
+         BNE   ERR4   
+         MVI   KEY,X'00'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'AK'
+         BNE   ERR4   
+*
+* CHANGE TO KEY ACCESS WITH GENERIC KEY AND KEQ
+*
+         WTO   'KSF1TEST KEY ACCESS WITH GENERIC KEYS AND KEQ'
+         MVHHI VRPL+RPLOPT1-IHARPL,0 CLEAN OPT1+2  RPI 1025
+         MODCB RPL=VRPL,OPTCD=(GEN),KEYLEN=1
+         LTR   R15,R15
+         BNZ   ERR5
+         MVC   KEY,=20X'FF'
+         MVI   KEY,C'D'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'DSH'
+         BNE   ERR4   
+         MVI   KEY,C'A'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'AK'
+         BNE   ERR4   
+*
+* CLOSE AND EXIT
+*
+DSHX     EQU   *
+         CLOSE (VFILE)
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   'KSF1TEST ENDED OK'
+         SUBEXIT
+ERR1     WTO   'KSF1TEST OPEN ERROR'
+         ABEND 111,DUMP
+ERR2     WTO   'KSF1TEST GET BY KEY ERROR'
+         ABEND 222,DUMP
+ERR3     WTO   'KSF1TEST CLOSE ERROR'
+         ABEND 333,DUMP
+ERR4     WTO   'KSF1TEST NAME NOT EQUAL KEY REQUESTED'
+         ABEND 444,DUMP
+ERR5     WTO   'KSF1TEST MODCB ERROR'
+         ABEND 555,DUMP
+ERR6     WTO   'KSF1TEST POINT ERROR'
+         ABEND 666,DUMP
+ERR7     WTO   'KSF1TEST GET SEQ ERROR'
+         ABEND 777,DUMP
+VFILE    ACB   DDNAME=VFILE,MACRF=(KEY,IN)
+VRPL     RPL   ACB=VFILE,AREA=RECORD,OPTCD=(KEY),ARG=KEY
+         LTORG
+         EQUREGS
+WTOREC   DC    AL2(WTOEND-*,0),C'REC='
+RECORD   DC    CL70' '
+WTOEND   EQU   *
+KEY      DC    CL20' '
+RECDSECT DSECT
+NAME     DS    CL20
+ADDR     DS    CL20
+CITY     DS    CL20
+STATE    DS    CL5
+ZIP      DS    CL5
+         END

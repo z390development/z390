@@ -1,0 +1,143 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/19/07                                                 *
+*********************************************************************
+* 09/19/07 INITIAL CODING OF ESDS VAR LEN SKP SEQ ACCESS USING GENCB    
+* 09/20/07 RPI 702 CHANGE TO USE POINT TO SET START FOR SEQ RWD/BWD   
+* 09/26/07 RPI 702 FOR SEQ, SKIP NULL RCDS AND RETURN ARG=REC#        
+* 10/24/07 RPI 724 CHANGE FOR RRN STARTING AT 1 AND 1,3,5 RECORDS     
+*********************************************************************
+ESV1SKP1 RT1   MAIN 
+REC#     DC    XL4'00'
+         LTORG
+         EQUREGS
+         RT1   START
+*
+* READ SEQ FWD STARTING AT REC 2 USING KEY and SEQ,FWD
+*
+         WTO   'GEN ACB/RPL AND SKP SEQ READ STARTING AT REC 2'
+         GENCB BLK=ACB,DDNAME=VFILE,MACRF=(KEY,SEQ)
+         LTR   R15,R15
+         RT1   CC0
+         LR    R2,R1             R2=ACB 
+         OPEN  ((R2),(INPUT))
+         LTR   R15,R15
+         RT1   CC0
+         GETMAIN R,LV=500
+         LR    R4,R1             R4=RECORD AREA
+         GENCB BLK=RPL,ACB=(R2),AREA=(R4),OPTCD=(KEY),ARG=REC#
+         LTR   R15,R15
+         RT1   CC0
+         LR    R3,R1             R3=RPL
+         MVC   REC#,=F'3'
+         POINT RPL=(R3)          SET CUR POS TO REC 3       
+         LTR   R15,R15
+         RT1   CC0
+         MODCB RPL=(R3),OPTCD=(SEQ,FWD)
+         LTR   R15,R15
+         RT1   CC0
+         MVC   REC#,=F'-1'        RESET REC# TO TEST SEQ GET
+         GET   RPL=(R3)           READ REC2 VIA XRBA AND SET POS FWD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   REC#,=F'3'         VERIFY REC#
+         RT1   CC0
+         CLC   0(200,R4),=200C'T' VERIFY REC 3 (SEE RRV1TEST UPDATE)
+         RT1   CC0
+         CLC   200(150,R4),=150C'T' VERIFY REC 3 (SEE RRV1TEST UPDATE)
+         RT1   CC0
+         GET   RPL=(R3)           READ REC 5 SEQUENTIALLY
+         LTR   R15,R15
+         RT1   CC0
+         CLC   REC#,=F'5'         VERIFY REC#
+         RT1   CC0
+         CLC   0(250,R4),=250C'5' VERIF REC 5
+         RT1   CC0
+         CLC   200(250,R4),=250C'5' VERIF REC 5
+         RT1   CC0
+         GET   RPL=(R3)          READ EOF                                  
+         CHI   R15,8   
+         RT1   CC0
+*
+* REPOSITION TO REC3 FOR READING BACKWARD AND SEQ READ REC 1
+*
+         WTO   'SKP SEQ READ BACKWARD STARTING AT REC 3'
+         MODCB RPL=(R3),OPTCD=(KEY)
+         LTR   R15,R15
+         RT1   CC0
+         MVC   REC#,=F'4'                                     
+         POINT RPL=(R3)          SET CUR POS TO REC 4        
+         LTR   R15,R15
+         RT1   CC0
+         MODCB RPL=(R3),OPTCD=(SEQ,BWD)
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=(R3)           READ REC2 VIA XRBA AND SET POS BWD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   REC#,=F'3'         VERIFY REC#
+         RT1   CC0
+         CLC   0(200,R4),=200C'T' VERIFY REC 3
+         RT1   CC0
+         CLC   200(150,R4),=150C'T' VERIFY REC 3
+         RT1   CC0
+         GET   RPL=(R3)           READ REC 0 SEQUENTIALLY BACKWARD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   REC#,=F'1'         VERIFY REC# 1
+         RT1   CC0
+         CLC   0(100,R4),=100C'1' VERIF REC 1
+         RT1   CC0
+         GET   RPL=(R3)          READ EOF                                  
+         CHI   R15,8   
+         RT1   CC0
+*
+* REPOSITION TO EOF FOR READING REC 4, 3, 2 BACKWARD
+*
+         WTO   'SKP SEQ READ BACKWARD STARTING AT REC 5'
+         MODCB RPL=(R3),OPTCD=(KEY)
+         LTR   R15,R15
+         RT1   CC0
+         MVC   REC#,=F'-1'                                     
+         POINT RPL=(R3)          SET CUR POS TO EOF         
+         LTR   R15,R15
+         RT1   CC0
+         MODCB RPL=(R3),OPTCD=(SEQ,BWD)
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=(R3)          READ REC4 SEQ BWD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   REC#,=F'5'         VERIFY REC#
+         RT1   CC0
+         CLC   0(250,R4),=250C'5'  VERIFY REC 5
+         RT1   CC0
+         CLC   200(250,R4),=250C'5'  VERIFY REC 5
+         RT1   CC0
+         GET   RPL=(R3)          READ REC 2 SEQUENTIALLY BACKWARD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   REC#,=F'3'          VERIFY REC#
+         RT1   CC0
+         CLC   0(200,R4),=200C'T'  VERIF REC 3
+         RT1   CC0
+         CLC   200(150,R4),=150C'T'  VERIF REC 3
+         RT1   CC0
+         GET   RPL=(R3)          READ REC 0 SEQUENTIALLY BACKWARD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   REC#,=F'1'          VERIFY REC# 1
+         RT1   CC0
+         CLC   0(100,R4),=100C'1'  VERIF REC 1
+         RT1   CC0
+         GET   RPL=(R3)          READ EOF                                  
+         CHI   R15,8   
+         RT1   CC0
+         CLOSE ((R2))
+         LTR   R15,R15
+         RT1   CC0
+         RT1   END
+         END

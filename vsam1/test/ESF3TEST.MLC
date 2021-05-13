@@ -1,0 +1,77 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 09/13/07 RPI 672 CODE TEST FOR LRD,BWD SEQ,BWD BACKWARD ACCESS      
+* 09/25/07 RPI 702 ISSUE POINT WITH LRD AND GET BWD USING SAME RPL
+*********************************************************************
+ESF3TEST RT1   MAIN 
+VACBOUT  ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
+VACBIN   ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
+VRPLOUTS RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(SEQ)
+VRPLINSB RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(SEQ,BWD,LRD)  RPI 702
+RECORD   DC    CL80' '
+         LTORG
+         EQUREGS
+         RT1   START
+         WTO   'ESF3TEST TEST SEQ CREATE AND READ BACKWARDS'  
+*
+* BUILD VSAM FIXED LENGTH FILE FROM QSAME FILE WITH 3 RECORDS
+*
+         WTO   'ESF3TEST CREATE VFILE'
+         OPEN  (VACBOUT,(OUTPUT))
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD,=80C'1'
+         PUT   RPL=VRPLOUTS
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD,=80C'2'
+         PUT   RPL=VRPLOUTS
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD,=80C'3'
+         PUT   RPL=VRPLOUTS
+         LTR   R15,R15
+         RT1   CC0
+         CLOSE (VACBOUT)
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ AND VERIFY 3 VSAM RECORDS BACKWARD                    
+*
+         WTO   'ESF3TEST READ AND VERIFY VFILE BACKWARDS'
+         OPEN  (VACBIN)
+         LTR   R15,R15
+         RT1   CC0
+         POINT RPL=VRPLINSB  RPI 702
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=VRPLINSB
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'3'
+         RT1   CC0
+         GET   RPL=VRPLINSB  
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'2'
+         RT1   CC0
+         GET   RPL=VRPLINSB  
+         LTR   R15,R15
+         RT1   CC0
+         CLC   RECORD,=80C'1'
+         RT1   CC0
+         GET   RPL=VRPLINSB  
+         CHI   R15,8
+         RT1   CC0
+         TESTCB RPL=VRPLINSB,FDBK=4 VERIFY LOGICAL EOD AT FRONT
+         RT1   CC0
+         CLOSE (VACBIN)
+         LTR   R15,R15
+         RT1   CC0
+         RT1   END
+         END

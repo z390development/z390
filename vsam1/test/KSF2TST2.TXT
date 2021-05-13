@@ -1,0 +1,56 @@
+KSF2TST2 KSIT and KSIR CB DOCS for debugging and verifying results
+of 3 inserts DSH2, DSH1, DSH3 resulting in 1 rotation.
+
+UNBALANCE AFTER INSERT OF DSH1 ON LEFT OF DSH2 WHICH HAS DSH ALREADY
+
+KSIT 1A4
+TOP  1F6
+FST  1C0
+LST  2E8
+
+     DSH  DSH2  DSH1  
+KSIR 1C0  1F6   272   
+PAR  1F6  1A4   1C0   
+LOW  -1   1C0   -1    
+HIGH 272  -1    -1    
+BWD  -1   272   1C0   
+FWD  272  -1    1F6   
+REC   46  22C   2A8   
+LH    0   1     0     
+RH    1   0     0     
+
+AFTER LR ROTATE FOLLOWING DSH1 INSERT
+
+KSIT 1A4
+TOP  272
+FST  1C0
+LST  2E8
+
+     DSH  DSH2  DSH1  
+KSIR 1C0  1F6   272   
+PAR  272  272   1A4   
+LOW  -1   -1    1C0   
+HIGH -1   -1    1F6   
+BWD  -1   272   1C0   
+FWD  272  -1    1F6   
+REC   46  22C   2A8   
+LH    0   0     1     
+RH    0   0     2     
+
+AFTER INSERT DSH3
+
+KSIT 1A4
+TOP  272
+FST  1C0
+LST  2E8
+
+     DSH  DSH2  DSH1  DSH3
+KSIR 1C0  1F6   272   2EE
+PAR  272  272   1A4   1F6
+LOW  -1   -1    1C0   -1
+HIGH -1   2EE   1F6   -1
+BWD  -1   272   1C0   1F6
+FWD  272  2EE   1F6   -1
+REC   46  22C   2A8   324
+LH    0   0     1     0
+RH    0   1     2     0

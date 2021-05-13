@@ -1,0 +1,44 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 08/10/07 CODE VSAM DEMO TO LOAD 6 VAR. RCDS FROM 1 TO 100,000
+* 08/19/07 RPI 680 REMOVE OUT FROM RPL OPTCD LIST                
+*********************************************************************
+ESV1SP   SUBENTRY                                                  
+         WTO   'ESV1SP CREATE ESV1.VES ESDS VARIABLE LENGTH VSAM FILE'
+         OPEN  (QFILE,(INPUT),VFILE,(OUTPUT))
+         LTR   R15,R15
+         BNZ   ERR1
+LOOP     EQU   *
+         GET   QFILE,PREFIX
+         LH    R0,PREFIX
+         AHI   R0,-4
+         MODCB RPL=VFILER,RECLEN=(R0)
+         PUT   RPL=VFILER
+         LTR   R15,R15
+         BNZ   ERR2
+         B     LOOP
+EOF      EQU   *
+         CLOSE (VFILE)
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   'ESV1SP ENDED OK'
+         SUBEXIT
+ERR1     WTO   'ESV1SP  OPEN FAILED'
+         ABEND 111,DUMP
+ERR2     WTO   'ESV1SP  PUT RPL FAILED'
+         ABEND 222,DUMP
+ERR3     WTO   'ESV1SP  CLOSE FAILED'
+         ABEND 333,DUMP
+VFILE    ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
+VFILER   RPL   ACB=VFILE,OPTCD=(SEQ),AREA=RECORD
+QFILE    DCB   DDNAME=QFILE,RECFM=V,LRECL=304,EODAD=EOF
+         LTORG
+         EQUREGS
+PREFIX   DS    F
+RECORD   DS    XL300
+         END

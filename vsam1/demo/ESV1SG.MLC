@@ -1,0 +1,56 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 09/01/07 INITIAL CODING TO COPY ESDS TO QSAM                       
+*********************************************************************
+ESV1SG   SUBENTRY                                                  
+         WTO   'ESV1SG COPY VAR LENGTH ESDS TO QSAM FILE'
+         OPEN  (VFILE,(INPUT),QFILE,(OUTPUT))
+         LTR   R15,R15
+         BNZ   ERR1
+LOOP     EQU   *
+         GET   RPL=VFILER
+         LTR   R15,R15
+         BZ    COPYREC
+         CHI   R15,8
+         BNE   ERR2
+         SHOWCB RPL=VFILER,AREA=FDBK,LENGTH=1,FIELDS=(FDBK)
+         CLI   FDBK,4
+         BE    EOF
+COPYREC  EQU   *
+         SHOWCB RPL=VFILER,AREA=PREFIX,LENGTH=4,FIELDS=(RECLEN)
+         L     R0,PREFIX
+         AHI   R0,4
+         CHI   R0,32764
+         BH    ERR4
+         SLL   R0,16
+         ST    R0,PREFIX
+         PUT   QFILE,PREFIX
+         B     LOOP
+EOF      EQU   *
+         CLOSE (VFILE,,QFILE)
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   'ESV1SG ENDED OK'
+         SUBEXIT
+ERR1     WTO   'ESV1SG  OPEN FAILED'
+         ABEND 111,DUMP
+ERR2     WTO   'ESV1SG  GET RPL FAILED'
+         ABEND 222,DUMP
+ERR3     WTO   'ESV1SG  CLOSE FAILED'                     
+         ABEND 333,DUMP
+ERR4     WTO   'ESV1SG VSAM RECORD TOO LONG FOR QSAM'     
+         ABEND 444,DUMP
+VFILE    ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
+VFILER   RPL   ACB=VFILE,AREA=RECORD,OPTCD=(SEQ)
+QFILE    DCB   DDNAME=QFILE,RECFM=V,LRECL=304,MACRF=PM
+FDBK     DC    X'00' VSAM FEEDBACK REASON CODE
+         LTORG
+         EQUREGS
+PREFIX   DS    F
+RECORD   DS    XL300
+         END

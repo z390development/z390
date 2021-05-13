@@ -1,0 +1,47 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 07/25/07 INITIAL CODING OF TEST TO COPY VSAM ESDS FILE TO QSAM 
+* 08/19/07 RPI 680 REMOVE IN FROM RPL OPTCD LIST                
+* 08/30/07 RPI 688 CHANGE TO USE 3 - 80 BYTE RECORDS            
+*********************************************************************
+ESF1SG   SUBENTRY                                                  
+         WTO   'ESF1SG COPY ESF1 ESDS FIXED FILE TO QSAM FILE'
+         OPEN  (VFILE,(INPUT),QFILE,(OUTPUT))
+         LTR   R15,R15
+         BNZ   ERR1
+LOOP     EQU   *
+         GET   RPL=VFILER
+         LTR   R15,R15
+         BNZ   CHKEOF
+         PUT   QFILE,RECORD
+         B     LOOP
+CHKEOF   EQU   *
+         CHI   R15,8 LOGIC ERROR
+         BNE   ERR2
+         TESTCB RPL=VFILER,FDBK=4 EOD REASON CODE 
+         BNE   ERR2
+EOF      CLOSE (VFILE,,QFILE)
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   'ESF1SG ENDED OK'
+         SUBEXIT
+ERR1     WTO   'ESF1SG OPEN FAILED'
+         ABEND 111,DUMP
+ERR2     WTO   'ESF1SG GET RPL FAILED'
+         ABEND 222,DUMP
+ERR3     WTO   'ESF1SG CLOSE FAILED'
+         ABEND 333,DUMP
+ERR4     WTO   'ESF1SG READ PAST MAX RECORDS'    
+         ABEND 444,DUMP
+VFILE    ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
+VFILER   RPL   ACB=VFILE,AREA=RECORD,OPTCD=(SEQ)
+QFILE    DCB   DDNAME=QFILE,RECFM=F,LRECL=80,MACRF=PM
+RECORD   DC    CL80' '
+         LTORG
+         EQUREGS
+         END

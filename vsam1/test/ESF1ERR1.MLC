@@ -1,0 +1,69 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/29/07                                                 *
+*********************************************************************
+* 09/29/07 RPI 706 TEST BAD RBA/XRBA FOR POINT ON FIXED ESDS          
+* 04/23/09 RPI 1025 CLEAR RPL OPTIONS FOR REUSE             
+*********************************************************************
+ESF1ERR1 RT1   MAIN 
+RBA      DC    XL4'00'
+XRBA     DC    XL8'00'
+         LTORG
+         EQUREGS
+         RT1   START
+*
+* READ SEQ FWD STARTING AT REC 2 USING ADR,DIR and SKP,SEQ
+*
+         WTO   'GEN ACB/RPL TEST BAD POINT RBA/XRBA'
+         GENCB BLK=ACB,DDNAME=VFILE,MACRF=(ADR,SEQ)
+         LTR   R15,R15
+         RT1   CC0
+         LR    R2,R1             R2=ACB 
+         OPEN  ((R2),(INPUT))
+         LTR   R15,R15
+         RT1   CC0
+         GETMAIN R,LV=80
+         LR    R4,R1             R4=RECORD AREA
+         GENCB BLK=RPL,ACB=(R2),AREA=(R4),OPTCD=(ADR,XRBA),ARG=XRBA 
+         LTR   R15,R15
+         RT1   CC0
+         LR    R3,R1             R3=RPL
+         MVC   XRBA,=FL8'80'
+         POINT RPL=(R3)          SET CUR POS TO REC 2       
+         LTR   R15,R15
+         RT1   CC0               VERIFY OK                                  
+         MVC   XRBA,=FL8'81'
+         POINT RPL=(R3)          SET CUR POS TO BAD ADDR    
+         CHI   R15,8  
+         RT1   CC0               VERIFY LOG ERROR DUE TO NOT MULT OF 80
+         MVC   XRBA,=FL8'80'
+         POINT RPL=(R3)          SET CUR POS TO REC 2       
+         LTR   R15,R15
+         RT1   CC0               VERIFY OK                                  
+*
+* REPEAT TESTS WITH RBA VS XRBA            
+*
+         MVHHI RPLOPT1-IHARPL(R3),0 CLEAN OPT1+2   RPI 1025
+         MODCB RPL=(R3),ARG=RBA,OPTCD=(ADR)
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RBA,=F'80'
+         POINT RPL=(R3)          SET CUR POS TO REC 2       
+         LTR   R15,R15
+         RT1   CC0               VERIFY OK                                  
+         MVC   RBA,=F'81'
+         POINT RPL=(R3)          SET CUR POS TO BAD ADDR    
+         CHI   R15,8  
+         RT1   CC0               VERIFY LOG ERROR DUE TO NOT MULT OF 80
+         MVC   RBA,=F'80'
+         POINT RPL=(R3)          SET CUR POS TO REC 2       
+         LTR   R15,R15
+         RT1   CC0
+         CLOSE ((R2))
+         LTR   R15,R15
+         RT1   CC0
+         RT1   END
+         END

@@ -1,0 +1,102 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 09/16/07 RPI 672 CODE TEST FOR LRD,BWD SEQ,BWD BACKWARD USING GENCB 
+*          COPY ESF3TEST.MLC AND MAKE THE FOLLOWING CHANGES:
+*            1. CHANGE ACB, RPL, AND RECORD LABELS INTO R3-R8 LABELS
+*            2. REPLACE ACB'S WITH GENCB BLK=ACB,... 
+*            3. REPLACE RPL'S WITH GENCB BLK=RPL,...
+*            4. GETMAIN RECORD AREA  AND CHANGE MVC/CLC REFERENCES 
+*            (NOTE THERE ARE NO REMAINING STATIC DATA AREAS IN PGM!)
+* 09/25/07 RPI 702 USE POINT WITH LRD FOLLOWED BY GET,BWD,LRD RPL     
+*********************************************************************
+ESF3TEST RT1   MAIN 
+VACBOUT  EQU   R3
+VACBIN   EQU   R4
+VRPLOUTS EQU   R5
+VRPLINSB EQU   R6  RPI 702
+RECORD   EQU   R7  RPI 702
+         LTORG
+         EQUREGS
+         RT1   START
+         WTO   'ESF3TEST TEST SEQ CREATE AND READ BACKWARDS'  
+*
+* BUILD VSAM FIXED LENGTH FILE FROM QSAME FILE WITH 3 RECORDS
+*
+         WTO   'ESF3TEST CREATE VFILE'
+         GENCB BLK=ACB,DDNAME=VFILE,MACRF=(SEQ,OUT)
+         LTR   R15,R15
+         RT1   CC0
+         LR    VACBOUT,R1
+         OPEN  ((VACBOUT),(OUTPUT))
+         LTR   R15,R15
+         RT1   CC0
+         GETMAIN RU,LV=80
+         LR    RECORD,R1
+         MVC   0(80,RECORD),=80C'1'
+         GENCB BLK=RPL,ACB=(VACBOUT),AREA=(RECORD),OPTCD=(SEQ)
+         LTR   R15,R15
+         RT1   CC0
+         LR    VRPLOUTS,R1
+         PUT   RPL=(VRPLOUTS)
+         LTR   R15,R15
+         RT1   CC0
+         MVC   0(80,RECORD),=80C'2'
+         PUT   RPL=(VRPLOUTS)
+         LTR   R15,R15
+         RT1   CC0
+         MVC   0(80,RECORD),=80C'3'
+         PUT   RPL=(VRPLOUTS)
+         LTR   R15,R15
+         RT1   CC0
+         CLOSE ((VACBOUT))
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ AND VERIFY 3 VSAM RECORDS BACKWARD                    
+*
+         WTO   'ESF3TEST READ AND VERIFY VFILE BACKWARDS'
+         GENCB BLK=ACB,DDNAME=VFILE,MACRF=(SEQ,IN)
+         LTR   R15,R15
+         RT1   CC0
+         LR    VACBIN,R1
+         OPEN  ((VACBIN))
+         LTR   R15,R15
+         RT1   CC0
+         GENCB BLK=RPL,ACB=(VACBIN),AREA=(RECORD),OPTCD=(SEQ,BWD,LRD)
+         LTR   R15,R15
+         RT1   CC0
+         LR    VRPLINSB,R1
+         POINT RPL=(VRPLINSB)   RPI 702
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=(VRPLINSB)
+         LTR   R15,R15
+         RT1   CC0
+         CLC   0(80,RECORD),=80C'3'
+         RT1   CC0
+         LR    VRPLINSB,R1
+         GET   RPL=(VRPLINSB)  
+         LTR   R15,R15
+         RT1   CC0
+         CLC   0(80,RECORD),=80C'2'
+         RT1   CC0
+         GET   RPL=(VRPLINSB)  
+         LTR   R15,R15
+         RT1   CC0
+         CLC   0(80,RECORD),=80C'1'
+         RT1   CC0
+         GET   RPL=(VRPLINSB)  
+         CHI   R15,8
+         RT1   CC0
+         TESTCB RPL=(VRPLINSB),FDBK=4 VERIFY LOGICAL EOD AT FRONT
+         RT1   CC0
+         CLOSE ((VACBIN))
+         LTR   R15,R15
+         RT1   CC0
+         RT1   END
+         END
