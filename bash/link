@@ -39,3 +39,5 @@ if [ "$rc" -ne "0" ]; then
     echo "link: lz390 error; see errors on lz390 generated $1.LST file and console"
 fi
 
+exit $rc
+
