@@ -44,3 +44,4 @@ if [ "$rc" -ne "0" ]; then
     if [ -f "$1.OBJ" ]; then rm $1.OBJ; fi
 fi
 
+exit $rc

@@ -53,3 +53,5 @@ else
     echo "asml: mz390 error; mz390 rc=$rc; see errors on mz390 generated $1.BAL file and console"
     if [ -f "$1.OBJ" ]; then rm $1.OBJ; fi
 fi
+
+exit $rc

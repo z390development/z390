@@ -57,3 +57,4 @@ if [ "$rc" -ne "0" ]; then
     echo "mac: mz390 error; see errors on mz390 generated $1.BAL file and console"
 fi
 
+exit $rc

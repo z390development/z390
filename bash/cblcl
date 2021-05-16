@@ -60,4 +60,7 @@ if [ -f "$1.CBL" ]; then
     fi
 else
     echo "cblcl: error; no zcobol program found: $1.CBL"
+    rc=16
 fi
+
+exit $rc

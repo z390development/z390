@@ -61,3 +61,5 @@ else
     echo "asmlg: mz390 error; mz390 rc=$rc; see errors in $1.BAL file and on console"
     if [ -f "$1.OBJ" ]; then rm $1.OBJ; fi
 fi
+
+exit $rc
