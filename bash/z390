@@ -21,7 +21,13 @@ java="java";
 
 if [ $debug -eq 1 ]; then echo "java=$java"; fi
 
-cmd="$java -jar ${jardir}/z390.jar"
+# uncomment one of method 1 code or method 2 code
 
-$cmd &
+# method 1: use nohup
+nohup &>/dev/null $java -jar ${jardir}/z390.jar &
+
+# method 2: start in background; then disown
+#$java -jar ${jardir}/z390.jar &
+#disown
+
 if [ $debug -eq 1 ]; then echo "z390 GUI started in background"; fi
