@@ -127,7 +127,7 @@ PARM     DC    CL80' '         Work area for parm value
 * GR3 would contain decimal 11 which is the length of the parm "HELLO THERE".
 * GR3 is decremented by 1, making it a length code.
 * The actual parm value of "HELLO THERE" begins 2 bytes past the address in GR2.
-* The `EX` instruction executes the instruction at label MOVE which will move the parm to the storage at label PARM using length from R3.
+* The `EX` instruction executes the instruction at label MOVE which will move the parm to the storage at label PARM using the length code in R3.
 
 ## Macro reference
 
