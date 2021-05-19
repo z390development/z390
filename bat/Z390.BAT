@@ -1,3 +1,3 @@
-rem open z390 gui
+rem open z390 gui without keeping command line 
 cd..
-z390.jar
+start z390.jar
