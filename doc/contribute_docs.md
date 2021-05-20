@@ -60,6 +60,8 @@ term      | usage
 word      | OK. Alternate is fullword with no space.
 halfword  | OK. No space should be used.
 save area | In any text, ensure space is included. The only exception is in code `savearea` without space is preferred 
+ASCII     | Always in capitals
+EBCDIC    | Always in capitals
 
 ## Preview the web pages
 
