@@ -1,0 +1,24 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 02/05/11 DSH CORRECT REGISTER PAIR TO AVOID 0C6 AND REMOVE JUNK
+*********************************************************************
+TESTBMK2 SUBENTRY
+         WTO   'TESTBMK2 BENCHMARK HFP AXR'
+         LX    R0,=LH'0'
+         LX    R1,=LH'1'      FIX R2>R1
+         L     R1,=A(100000)
+LOOP     EQU   *
+         AXR   R0,R1          FIX R2>R1
+         BCT   R1,LOOP
+         LX    R4,=LH'100000'
+         CXR   R0,R4
+         BNE   1
+         WTO   'TESTBMK2 ENDED OK'
+         SUBEXIT
+         EQUREGS
+         END         
