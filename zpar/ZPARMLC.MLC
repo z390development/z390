@@ -1,0 +1,164 @@
+         TITLE 'ZPARMLC.MLC - GENERATE SUMMARY OF MLC OPCODES'
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/10/09                                                 *
+.*********************************************************************
+.* 08/19/09 COPY AND MODIFY FROM ZPARSUM1.MLC                                             
+.*********************************************************************
+.* FILES:
+.*  SYSUT1 = INPUT  ZPAR\ZPARMLC.DAT
+.*  SYSUT2 = OUTPUT ZPAR\ZPARMLC.RPT
+.*
+.* NOTES:
+.*  1.  SUMMARIZE OPCODES BY OUTPUTING COUNT FOLLOWED BY OPCODE
+.*  2.  ADD OPCODE * TO SHOW COMMENT COUNT            
+.*********************************************************************
+         LCLA  &TOT_REC          TOTAL LOGICAL RECS
+         LCLA  &TOT_KEY          TOTAL UNIQUE KEYS
+         LCLC  &KEY              KEY TO STORE AND COUNT OCCURRANCES
+         LCLC  &KEY_NAME(1000)
+         LCLA  &KEY_COUNT(1000)
+         :&MAX_KEY SETA 20000
+         ACALL GET_REC
+         AWHILE ('&REC' NE '')
+               :&TOT_REC SETA &TOT_REC+1
+               ACALL PROCESS_REC
+               ACALL GET_REC
+         AEND
+         ACALL GEN_REPORT
+         MEXIT
+.*
+.* PROCESS REC
+.*      
+         AENTRY PROCESS_REC
+         ACALL FIND_KEY
+         AIF ('&KEY'(1,1) EQ '&&')
+             :&KEY SETC '@AMP@_'.'&KEY'(2,*)
+         AEND
+         :&I SETA ('&KEY' FIND '&&!%^*()-+=[]{}\|:;"''<>?,./')
+         AIF (&I GT 0 OR '&KEY'(1,1) GE '0')
+             :&REC SETC (DOUBLE '&REC')
+             MNOTE 8,'INVALID KEY ON LINE &TOT_REC - &REC'
+             :&KEY SETC '@ERROR@'
+         AEND
+.*   MNOTE 'KEY=&KEY'
+         LCLA &(&KEY)
+         AIF (&(&KEY) EQ 0)
+             :&TOT_KEY SETA &TOT_KEY+1
+             :&(&KEY) SETA &TOT_KEY
+             :&KEY_NAME(&TOT_KEY) SETC '&KEY'
+         AEND
+         :&CUR_KEY SETA &(&KEY)
+         :&KEY_COUNT(&CUR_KEY) SETA &KEY_COUNT(&CUR_KEY)+1
+         AEND
+.*
+.* FIND KEY IN RECORD
+.*
+         AENTRY FIND_KEY
+         AIF   ('&REC' LE ' ')
+               :&KEY SETC '@_BLANK'     SPACE OR TAB
+               AEXIT AENTRY
+         AELSEIF ('&REC'(1,1) EQ '*')
+               :&KEY SETC '@_COMMENT'
+               AEXIT AENTRY
+         AELSEIF ('&REC'(1,2) EQ '.*')
+               :&KEY SETC '@_MACRO_COMMENT'
+               AEXIT AENTRY
+         AEND
+         :&I SETA ('&REC' FIND ':')
+         AIF (&I GT 0)
+             AIF ('&REC'(1,&I-1) EQ (&I-1)' ')
+                 :&REC1 SETC '&REC'(&I+1,*)
+             AELSE
+                 :&REC1 SETC '&REC'
+             AEND
+         AELSE
+             :&REC1 SETC '&REC'
+         AEND
+         AIF   ('&REC1'(1,1) GT ' ')       SKIP LABEL
+               :&I SETA ('&REC1' FIND ' ')
+               AIF (&I EQ 0)
+                   :&I SETA ('&REC1' FIND X2C('09'))
+               AEND
+               AIF (&I EQ 0)
+                   MNOTE 8,'NO KEY FOUND ON LINE &TOT_REC - &REC'
+                   :&KEY SETC '@ERROR@'
+                   AEXIT AENTRY
+               AEND
+         AELSE     
+               :&I SETA 1
+         AEND
+         AWHILE (&I LT K'&REC1)            FIND START OF OP
+              AIF ('&REC1'(&I,1) GT ' ')
+                  :&J SETA &I
+                  AWHILE (&I LE K'&REC1)  FIND END OF OP
+                      AIF ('&REC1'(&I,1) LE ' ')
+                          :&KEY SETC (UPPER '&REC1'(&J,&I-&J))
+                          AEXIT AENTRY
+                      AEND
+                      :&I SETA &I+1
+                  AEND
+                  :&KEY SETC (UPPER '&REC1'(&J,*))
+                  AEXIT AENTRY
+             AEND
+             :&I SETA &I+1
+         AEND
+         :&KEY SETC '@_BLANK'
+         AEND
+.*
+.* GET REC
+.*
+         AENTRY GET_REC
+         ACTR 4096
+         :&REC AREAD DDNAME=SYSUT1
+         AIF ('&REC' EQ '')
+             AEXIT AENTRY
+         AEND
+         AIF  (K'&REC GT 71)
+           AIF ('&REC'(72,1) NE ' ')
+              :&CONTINUED SETB 1
+              AWHILE (&CONTINUED)
+                  :&CONT AREAD DDNAME=SYSUT1
+                  AIF ('&CONT' EQ '')
+                      :&REC SETC '' EOF ON CONT FORCES EOF ON REC
+                      :&CONTINUED SETB 0
+                  AELSEIF (K'&CONT LT 72)
+                      :&CONTINUED SETB 0
+                  AELSEIF ('&CONT'(72,1) EQ ' ')
+                      :&CONTINUED SETB 0
+                  AEND
+              AEND
+           AEND
+         AEND
+         AEND
+.*
+.* GEN REPORT
+.*
+         AENTRY GEN_REPORT
+         ACTR 4096
+         PUNCH 'G3-ZPARMLC CURRENT DATE=&SYSDATE TIME=&SYSTIME',       X
+               DDNAME=SYSUT2
+         PUNCH 'G3-ZPARMLC TOTAL OPCODES = &TOT_KEY',                  X
+               DDNAME=SYSUT2
+         PUNCH 'G3-ZPARMLC TOTAL LINES   = &TOT_REC',                  X
+               DDNAME=SYSUT2
+         PUNCH 'G3-FREQ--- OPCODE',DDNAME=SYSUT2
+         PUNCH 'G2-OPCODE------------------------- --FREQ',            X
+               DDNAME=SYSUT2
+         :&CUR_KEY SETA 1
+         AWHILE (&CUR_KEY LE &TOT_KEY)
+               :&DCOUNT SETC '      &KEY_COUNT(&CUR_KEY)'(K'&KEY_COUNT(X
+               &CUR_KEY),*)
+               :&DCOUNT SETC '&KEY_COUNT(&CUR_KEY)'
+               :&DCOUNT SETC '      &DCOUNT'(K'&DCOUNT,*)
+               :&DKEY   SETC '&KEY_NAME(&CUR_KEY)'.(30)' '
+               :&DKEY   SETC '&DKEY'(1,30)
+               PUNCH 'G2 &DCOUNT &DKEY',DDNAME=SYSUT2
+               PUNCH 'G1 &DKEY &DCOUNT',DDNAME=SYSUT3,ID=2
+               :&CUR_KEY SETA &CUR_KEY+1
+         AEND
+         AEND
+         END                          
