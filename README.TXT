@@ -1,3 +1,15 @@
+Github z390 Branch V1707 has been created from the z390_v1707.zip distribution
+described below with the following additiona changes:
+1. z90.bat has been updated to use the start z390.jar command to release command line.
+2. The following additional directories have been retained from the Github prior
+   repository version v1706:
+   a. mfacc - sample assembler programs for student exercises
+   b. mvs - MVS 3.8 public domain macros
+4. Note this V1707 repository does not have the generated file z390.jar
+   in the root z390 directory so the command bat\BLDJAR.BAT will need to be
+   executed to create it, and it will require Java 8.0 JDK.
+   A future distribution version may create it and run regression tests. 
+
 z390_v1707_readme.txt updated 2021-05-02 by don@higgins.net
 
 This zip version has the following fixes and changes:

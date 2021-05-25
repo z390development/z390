@@ -1,9 +1,0 @@
-TEST     CSECT
-         IILF 1,XUND
-         IIHF 1,XUND
-         IILF 1,YDEF
-         IIHF 1,YDEF
-         BR   14
-YDEF     CSECT
-         BR   14
-         END
