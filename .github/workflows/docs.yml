@@ -12,5 +12,7 @@ jobs:
     steps:
       - name: Checkout master
         uses: actions/checkout@v2
+      - name: Install python requirements
+        run: pip install -r doc/requirements.txt
       - name: Build docs
         uses: athackst/mkdocs-simple-plugin@v0.6.0
