@@ -6,13 +6,13 @@ on:
       - feature/z390-docs
 
 jobs:
-  build:
+  deploy:
     name: Deploy docs
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout master
-        uses: actions/checkout@v2
-      - name: Install python requirements
-        run: pip install -r doc/requirements.txt
-      - name: Build docs
-        uses: athackst/mkdocs-simple-plugin@v0.6.0
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - run: pip install -r doc/requirements.txt
+      - run: mkdocs gh-deploy --force
