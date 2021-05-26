@@ -45,7 +45,7 @@ IPL(pgm) | E | none | Execute 390 program at startup.
 LIST | ALE | YES | Generate PRN, LST, and LOG files for assembler, linker, and execution respectively.
 LISTCALL | MA | YES | Generate level macro call and exit comments in BAL file which are used by assembler to format first level macro calls preceding assembler lines with "+" for macro generated source. 
 LISTUSE | A | YES | List active USING definitions each time USING or DROP changes status in the PRN assembly listing file.
-LOADHIGH | E | YES | Load programs and allocate memory for GETMAIN/STORAGE from high end of first FQE large enough to satisfy request.  The ASSIST option changes this option to NOLOADHIGH causing initial program to load starting at X'10000' which simplifies relative address calculations.
+LOADHIGH | E | YES | Load programs and allocate memory for GETMAIN/STORAGE from high end of first FQE large enough to satisfy request.  The ASSIST option changes this option to NOLOADHIGH causing initial program to load starting at X'8000' which simplifies relative address calculations.
 LOG(file) | MALE | pgm | Set file name for ERR, TR?, and LOG files.  The default is the program name.  This option is required when running multiple copies of the same program via CMD startup in order to create separate unique  ERR, TR?, and LOG files.  Otherwise duplicate programs running in parallel will mod the same ERR, TR?, and LOG file.
 MAXCALL(50) | M | 50 | Set limit for nested macro calls.
 MAXDISPLAY(80) | M | 80 | Use to increase zCOBOL DISPLAY line size up to 256 characters.
@@ -104,7 +104,7 @@ SYSPRN(dir) | A | pgm dir | Define directory for assembler listing PRN output fi
 SYSTERM(file) | MALE | pgm.ERR | Define alternate file for all start/end messages plus any error messages, plus related source file statistics for each file containing errors.  The default is the program name with ERR suffix.
 SYSTRC(dir) | MALE | pgm dir | Define directory for output TRACE TR? files.
 TEST | E | NO | Start execution with interactive TEST mode active which prompts for commands such as T opcode or G opcode to trace or execution to the next occurrence of opcode name.
-TEST(ddname) | E | NO | Define input command file to run TEST commands. ddname is an environment variable set to the name of the command file. See regression test rt\test\TESTTST1.MLC for example.
+TEST(ddname) | E | NO | Define input command file to run TEST commands. _ddname_ is an environment variable set to the name of the command file.
 THREAD | A | NO | Assign continuing CSECT addresses for multiple CSECT's assembled in the same module to help identify location of instruction and data labels.
 TIME or TIME(seconds) | MALE | YES | Limit execution time of each program to the number of seconds specified.  The default is 15 seconds. This option is turned off if NOTIMING specified.  Use NOTIME to allow tasks such as SOA servers like z390CICS to run continuously while still supporting application use of timing functions.
 TIMING | MALE | YES | Calculate elapsed time and instructions per second statistics for display on START/END messages and STA statistics. TIMING also displays current z390 and J2SE version on start message and memory usage on ended message.  Note NOTIMING is used in regression tests to force generated files to be identical by using fixed data/time stamp using GregorianCalendar(2005,0,2,22,33,44).  NOTIMING suppresses versions on start message and memory usage on ended message.  NOTIMING also sets NOTIME which prevents application from using time functions.
