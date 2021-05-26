@@ -71,7 +71,7 @@ For variable length records the offset does not include the 4 byte prefix.
 
 #### LRECL
 
-Length of record (may be maximum length of variable length records)
+Length of record (may be maximum length of variable length records).
 
 #### MEMORY
 
@@ -90,11 +90,11 @@ ZSORT is implemented via SVC x'A1' which has 3 function calls:
 * submit unsorted record
 * retrieve sorted records.
 
-Unsorted records are loaded into dynamically allocated table in memory and sorted.
+Unsorted records are loaded into a dynamically allocated table in memory and sorted.
 
-If the unsorted records exceed size of table, then multiple blocks of sorted records are written to a work file and then merged.
+If the unsorted records exceed the size of the table, then multiple blocks of sorted records are written to a work file and then merged.
 
-If all the records fit in table, then they are sorted and returned without requiring use of sort work files.
+If all the records fit in the table, then they are sorted and returned without requiring use of sort work files.
 
 When required, the merging is performed using two dynamically allocated sort work files with DDNAME's SORTWK01 and SORTWK02. 
 
@@ -102,10 +102,6 @@ The sorted strings are merged from one work file to another doubling the size of
 
 All file I/O is blocked to minimize disk seeking on single disk systems.  
 
-User can define location of SORTWK01 and SORTWK02 if multiple physical disk drives are available.
-
-A set of regression tests are executed via rt\RTSORT.BAT including test of all 7 sort key types.
-
-The utilities sort\TESTSRT3.MLC and TESTSRT4.MLC can be used to generate, sort, and verify any number of records.  
+User can define the location of SORTWK01 and SORTWK02 if multiple physical disk drives are available.
 
 A million records can be sorted in 28 seconds.  Statistics on each sort execution are recorded on the statistics file if option STATS is specified.
