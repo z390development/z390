@@ -597,7 +597,7 @@ PARAM=(reg)
 
 When specified the address of the label or the contents of the register are made available in the ESPIE control block.
 
-When the exit is invoked, GR1 contains the address of the EPIE control block. The EPIED macro is the DSECT.
+When the exit is invoked, GR1 contains the address of the EPIE control block. The macro IHAEPIE generates the DSECT for the EPIE.
 
 The EPIE control block is located in the ZCVT and may also be addressed by the ZCVT and EPIED macros.
 
