@@ -7,7 +7,10 @@ University by Graham Campbell and John Mashey.[^1]
 [^1]:See [ASSIST (computing) at Wikipedia](https://en.wikipedia.org/wiki/ASSIST_(computing)) for more details.
 
 The ASSIST support in z390 allows you to use the I/O and debugging instructions as described in the ASSIST
-User Manual [PART II. INPUT/OUTPUT AND DEBUGGING INSTRUCTIONS](https://web.archive.org/web/20150406052304/http://faculty.cs.niu.edu/~hutchins/csci640/asusergd.html#part2).
+User Manual.
+
+See [ASSIST
+User Manual PART II. INPUT/OUTPUT AND DEBUGGING INSTRUCTIONS](http://faculty.cs.niu.edu/~byrnes/csci360/ho/asusergd.shtml#part2) for more details.
 
 ## Using ASSIST instructions with z390
 
@@ -46,7 +49,7 @@ and simplifies relative address calculations.
 
 This has the following impacts:
 
-* Programs are loaded at X'10000' instead of high end of memory.
+* Programs are loaded at X'8000' instead of high end of memory.
 * Registers are initialized to X'F4'.
 * Memory above the PSA is initialized to X'F5'.
 * Uninitialized areas of 390 load modules are initialized to X'F6'.
@@ -66,7 +69,8 @@ The PSW displayed at abnormal termination includes ILC, CC, MASK, and AMODE.
 Format: `RX X'53rxbddd' r1.s2`
 
 * Start scan for next decimal number at s2 skipping leading blanks. 
-* Convert decimal number to binary in r1 until non decimal character found.
+* Convert decimal number to binary in r1 until non decimal character found or more than nine digits.
+* When ten (or more) digits are found, the instruction does not do the conversion and condition code 3 is set.
 * Set register 1 to address of the last non decimal character found.
 * Set condition code 0 if number converted successfully else set condition code 3.
 
@@ -91,7 +95,7 @@ Format: `RXSS X'E0Axbdddbddd' s1(x1),s2`
 * Read record from ASCII file DDNAME=XGET into area s1(x1) with length of s2.
 * Requires that the environment variable `XGET` be set and point to desired input file.
 * If a file operation is successful the condition code is set to 0.
-* At end of file the condition code 1 is set.
+* At end of file, condition code 1 is set.
 * If a file open error occurs, program terminates with S013 abend with error message showing the file specification which failed.
 * If any other error occurs such as missing length, condition code 2 is set.
 
@@ -105,7 +109,7 @@ Convert hex to binary (cc3 if no hex, update field addr).
 
 Format: `RX X'62' r1,s2` 
 
-convert binary to hex (12 bytes, update field addr).
+Convert value in r1 to printable hex (8 bytes), storing value at s2.
 
 ### XLIMD - Set default dump storage area
 

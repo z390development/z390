@@ -31,7 +31,7 @@ When specifying tool and script names, always use lower case to be compatible wi
 
 ### Units of measurement
 
-For Bytes:
+For bytes:
 
 * When specifying a quantity of 1024 bytes, use {quantity}K. Bytes is assumed. Capital K is deliberate.
 * the word bytes can be added if the context does not make it clear that bytes are implied. {quantity}K bytes.
@@ -62,6 +62,7 @@ halfword  | OK. No space should be used.
 save area | In any text, ensure space is included. The only exception is in code `savearea` without space is preferred 
 ASCII     | Always in capitals
 EBCDIC    | Always in capitals
+PSW       | Program status word - Always capitals
 
 ## Preview the web pages
 
