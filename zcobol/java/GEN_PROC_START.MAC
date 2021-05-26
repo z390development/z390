@@ -1,0 +1,16 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/07/08                                                 *
+.*********************************************************************
+.* 04/09/08 initial coding to generate J2SE java
+.*********************************************************************
+         GEN_PROC_START
+         COPY  ZC_WS
+         PUNCH ' public class &ZC_PGM{',DDNAME=JAVAOUT
+         PUNCH '   public static void main(String argv[]){',           X
+               DDNAME=JAVAOUT
+         MEND
