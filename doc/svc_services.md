@@ -422,7 +422,7 @@ With the CMDPROC macro, you can issue OS shell commands, receive the replies fro
 other programs.
 
 There is a limit of 10 command processors that can be open at any time. The limit is only to protect the operating system
-from storage depletion. In all cases below, ID may be defined as a numeric value or in a general register. ie. ID=2 or ID=(R5).
+from storage depletion. In all cases below, ID may be defined as a numeric value or in a general register. For example, ID=2 or ID=(R5).
 
 #### Parameters
 
@@ -468,7 +468,7 @@ Send a command to a previously opened command processor.
 
 **label or (reg)**
 
-Points to a constant which terminates with X'00' or be defined as a double-quoted string within a standard C-type constant.
+Points to a constant which terminates with X'00' or is defined as a double-quoted string within a standard C-type constant.
 
 **literal**
 
@@ -503,7 +503,7 @@ Maximum length that is passed to your program.
 
 * The default is the implied length of the receiving field. Maximum value is 4095 bytes.
 * _len_ may be specified as _(reg)_.
-* Maximum value is 2G bytes.
+* Maximum register value is 2G - 1 bytes.
 * If _label_ is specified as _(reg)_, then _len_ is mandatory.
 
 **WAIT=**
@@ -559,7 +559,7 @@ The RDW that describes the message is generated internally.
 name     WTO   'text',MF=L
 ```
 
-No text is written to the console, only the RDW is generated.
+No text is written to the console; only the RDW and text is generated.
 
 This allows a 'collection' of messages to be constructed which can be used by the execute form.
 
@@ -603,7 +603,7 @@ _area_ may be specified as _label_ or _(reg)_.
 _len_ may be specified as a number or (reg).
 
 * Maximum numeric value is 4095 bytes.
-* Maximum register value is 2G bytes.
+* Maximum register value is 2G - 1 bytes.
 
 ##### TO
 
@@ -721,7 +721,7 @@ Wait for 2 out of 3 ECBs.
 ``` hlasm
          WAIT  2,ECBLIST
 ......
-         ECBLIST DC A(ECB1)
+ECBLIST  DC    A(ECB1)
          DC    A(ECB2)
          DC    A(X'80000000'+ECB3)
 ECB1     DC    F'0'
@@ -778,7 +778,7 @@ Equates are automatically generated. The value of type also determines the lengt
 
 _type_ may be specified in a register eg. (R5). 
 
-Value | equate        | length | description
+Value | Equate        | Length | Description
 ------|---------------|--------|------------
 1     | CTD_INT128    | 16     | binary
 2     | CTD_EH        |  4     | short HFP
@@ -798,7 +798,7 @@ or a register eg. `IN=R4`.
 
 For some types, input from a register implies the use of a register pair as follows:
 
-value | equate     | register specified
+Value | Equate     | Register specified
 ------|------------|-------------------
 1     | CTD_INT128 | Any even general register, input is from the even/odd pair.
 2     | CTD_EH     | Any floating point register.
@@ -814,7 +814,7 @@ value | equate     | register specified
 
 ##### OUT=
 
-The output field may be specified as a label or a register pointer eg. `OUT=(R4)`
+The output field may be specified as a label or a register pointer eg. `OUT=(R4)`.
 
 The output field is always 45 bytes, and is initialized to blanks. Not all 45 bytes may be used.
 
@@ -822,7 +822,7 @@ The output field will be ASCII if the ASCII option is used, otherwise EBCDIC wil
 
 The output field has the following format in this sequence: 
 
-output field | condition
+Output field | Condition
 -------------|----------
 -            | If the value is negative
 n...n        | Digits preceding the decimal point. If the value is less than 1 and there is no exponent, then 0 is output. eg. 0.04
@@ -878,7 +878,7 @@ type also determines the length of the output field.
 
 _type_ may be specified in a register eg. (R5).
 
-value | equate     | length | description
+Value | Equate     | Length | Description
 ------|------------|--------|------------
 21    | CFD_INT128 | 16     | binary
 22    | CFD_EH     |  4     | short HFP
@@ -920,7 +920,7 @@ The output field may be specified as a label, a register pointer eg. `OUT=(R4)` 
 
 For some types, output to a register implies the use of a register pair as follows:
 
-value  | equate     | register specified
+Value  | Equate     | Register specified
 -------|------------|-------------------
 21     | CTD_INT128 | Any even general register, input is from the even/odd pair.
 22     | CTD_EH     | Any floating point register.
@@ -1023,14 +1023,14 @@ COMRG Address Communications region (VSE)
 
 ### Bits 0-1
 
-* 00 - The initial state, WAIT requires both these bits to be zero.
-* 10 - After a Macro specifying an ECB is issued (eg. WTOR), this wait state is set.
-* 01 - Set to this state internally or by the POST Macro indicates that the event is complete or that the task in a wait state is to be resumed. It is valid to test for this state using a bit test instruction like TM.  
+* 00 - The initial state. WAIT requires both these bits to be zero.
+* 10 - When the WAIT macro is issued for the ECB, this wait bit is set and the program enters the wait state.
+* 01 - Set to this state internally or by the POST macro indicates that the event is complete or that the task in a wait state is to be resumed. It is valid to test for this state using a bit test instruction like TM.  
 * 11 Invalid.
 
 ### Bits 2-31
 
-Completion code, set internally or by the POST Macro.
+Completion code, set internally or by the POST macro.
 
 ## SVC functions
 

@@ -154,6 +154,6 @@ Format: `RXSS X'E00xbdddbddd' s1(x1),s2`
 * Read record from DDNAME=XREAD for length s2.
 * Requires that the environment variable `XREAD` be set and point to desired input file.
 * If a file operation is successful the condition code is set to 0.
-* At end of file, the condition code 1 is set.
+* At end of file, condition code 1 is set.
 * If a file error occurs, the program aborts with abend code S013.
 * If a file open error occurs, program terminates with S013 abend with error message showing the file specification which failed.

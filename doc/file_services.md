@@ -41,6 +41,7 @@ be set to point to the input file.
 TEACHERS DCB   LRECL=27,RECFM=FT,MACRF=R,EODAD=ATEND,                  X
                DDNAME=TEACHER,RECORD=IREC
 IREC     DS    0CL27    Teacher record
+......
 ```
 
 ### Write to a file
@@ -57,6 +58,7 @@ be set to point to the output file.
 REPORT   DCB   LRECL=60,RECFM=FT,MACRF=W,                              X
                DDNAME=REPORT
 OREC     DS    0CL60                Report output structure
+......
 ```
 
 ## Macro reference
@@ -124,7 +126,7 @@ When DDNAME is specified, an environment variable will point to the path and fil
 is to be opened.
 
 Within a program the GETENV macro can be used to extract the environment
-variable. See the [Macro and Services Guide]() for full details.
+variable. See [GETENV macro](svc_services.md#getenv-get-environment-variable) for full details.
 
 ``` hlasm
 MYDCB    DCB   DDNAME=MYDATA, ...
@@ -134,14 +136,21 @@ For execution in a Windows environment:
 
 ``` dos
 SET MYDATA=c:\path\file
-CALL ez390 c:\path\program parms
+CALL c:\path_to_z390\bat\ez390 c:\path\program parms
 ```
 
 For execution in a \*nix environment
 
 ``` sh
-MYDATA=/path/file ez390 program parms
+export MYDATA=/path/file 
+/path_to_z390/bash/ez390 /path/program parms
 ```
+
+!!! Info
+    For both Windows and *nix, the invocation of ez390 should be preceded by a path to the z390 script folder.
+
+    * bat for Windows
+    * bash for *nix
 
 DSNAME is a label defined in the program which has the file spec.
 
@@ -164,11 +173,11 @@ DSECT=DCBMACRF, Coded Default=GM
 
 Option    | Effect
 ----------|-------
- MACRF=GM | Get Move, use the GET macro to read a record<br/>Use for standard (QSAM) file read
- MACRF=PM | Put Move, use the PUT macro to write a record<br/>Use for standard (QSAM) file write
- MACRF=R  | Read Mode.<br/> Use READ/CHECK to read a record.<br/> Use POINT for positioning.
- MACRF=W  | Write Mode.<br/> Use WRITE/CHECK to write or update a record.<br/> Use POINT for positioning.
- MACRF=RW | Update Mode.<br/> Use READ/WRITE/CHECK to read, write or update a record.<br/> Use POINT for positioning.
+MACRF=GM  | Get Move, use the GET macro to read a record<br/>Use for standard (QSAM) file read
+MACRF=PM  | Put Move, use the PUT macro to write a record<br/>Use for standard (QSAM) file write
+MACRF=R   | Read Mode.<br/> Use READ/CHECK to read a record.<br/> Use POINT for positioning.
+MACRF=W   | Write Mode.<br/> Use WRITE/CHECK to write or update a record.<br/> Use POINT for positioning.
+MACRF=RW  | Update Mode.<br/> Use READ/WRITE/CHECK to read, write or update a record.<br/> Use POINT for positioning.
 
 #### DSORG - Dataset organization
 
@@ -210,7 +219,7 @@ Input:
 Output:
 
 * MACRF=PM
-    * Records are written LRECL at a time into BLKSIZE.<br/>CLOSE may write a short block.
+    * Records are written LRECL at a time into a block of size BLKSIZE.<br/>CLOSE may write a short block.
 * MACRF=W or RW
     * The whole block is written.
 
@@ -266,14 +275,14 @@ Translation:
 
 Input:
 
-* The file is assumed to be in conventional ASCII format, with each record ending in CRLF.
-* CRLF is never read as part of the record.
+* The file is assumed to be in conventional ASCII format, with each record ending in the operating system specific end-of-line (EOL) character(s).
+* EOL is never read as part of the record.
 * If the record is shorter than LRECL, then trailing blanks are inserted.
 * EODAD is invoked when all bytes have been read. 
 
 Output:
 
-* CRLF is inserted at the end of each record after trailing blanks are stripped.
+* EOL is inserted at the end of each record after trailing blanks are stripped.
 
 
 ##### RECFM=VT Variable ASCII text
@@ -285,12 +294,12 @@ Translation:
 * Non-ASCII mode input
     * ASCII chars are translated to EBCDIC after being read.
 * Non-ASCII mode output
-    * EBCDIC chars are translated to ASCII before  being written, this is an internal function  and does not affect the record in storage.  Non-EBCDIC chars may be translated to X'00'.
+    * EBCDIC chars are translated to ASCII before being written. This is an internal function and does not affect the record in storage. Non-EBCDIC chars may be translated to X'00'.
  
 Input:
 
-* The file is assumed to be in conventional ASCII format, with each record ending in CRLF.
-* CRLF is never read as part of the record.
+* The file is assumed to be in conventional ASCII format, with each record ending in the operating system specific end-of-line (EOL) character(s).
+* EOL is never read as part of the record.
 * Each record is prefixed with the RDW.
 * EODAD is invoked when all bytes have been read.
 * The receiving area must be big enough for the largest RDW+record.
@@ -299,7 +308,7 @@ Input:
 Output:
 
 * Each record must be prefixed with the RDW.
-* CRLF is inserted at the end of each record after trailing blanks are stripped.
+* EOL is inserted at the end of each record after trailing blanks are stripped.
 
 !!! Warning
     The RDW is not written.
@@ -308,12 +317,12 @@ Output:
 
 RECORD DSECT=DCBREC Type=A Default=0 (undefined)
 
-Default I/O area which can be overridden on the GET/PUT/READ/WRITE Macros.
+Default I/O area which can be overridden on the GET/PUT/READ/WRITE macros.
 
 * Can this be set in the DCB prior to OPEN: Yes
 * Can this be set in the DCB after OPEN : Yes
 
-If omitted, then the I/O area must be specified on the GET/PUT/READ/WRITE Macros.
+If omitted, then the I/O area must be specified on the GET/PUT/READ/WRITE macros.
 
 #### LRECL - Record length
 
@@ -696,7 +705,7 @@ The same, using register notation
 Position pointer for next READ or WRITE
 
 1. When register notation is used for rba or rel, the register points to a field containing the value.
-2. rel is a fullword, maximum value 2,147,483,647 (2G)<br/>
+2. rel is a fullword, maximum value 2,147,483,647 (2G - 1).<br/>
    rel is multiplied by BLKSIZE to get the rba.
 3. rba is signed 64-bit, maximum value...very big.
  
