@@ -1,0 +1,5 @@
+sysmac(zcobol+zcobol\i586) 
+syscpy(zcobol+zcobol\i586) 
+NOASM 
+NOLISTCALL
+MAXGBL(1500000)
