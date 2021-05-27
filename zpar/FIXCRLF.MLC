@@ -1,0 +1,12 @@
+         TITLE 'FIXCRLF'
+         :&TOT_REC SETA 0
+         :&REC AREAD DDNAME=SYSUT1
+         AWHILE ('&REC' NE '')
+               ACTR 4096
+               :&TOT_REC SETA &TOT_REC+1
+               :&PREC SETC (DOUBLE '&REC')
+               PUNCH '&PREC',DDNAME=SYSUT2
+               :&REC AREAD DDNAME=SYSUT1
+         AEND      
+         MNOTE 'FIXCRLF TOTAL RECORDS = &TOT_REC'
+         END

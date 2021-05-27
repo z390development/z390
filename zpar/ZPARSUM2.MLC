@@ -1,0 +1,177 @@
+         TITLE 'ZPARSUM2.MLC - SUMMARIZE BY 2 CHAR PGM ID IN TABLE'
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/10/09                                                 *
+.*********************************************************************
+.* 07/10/09 COPY AND MODIFY FROM ZPARERR                                                  
+.* 07/24/09 split assembly into RC<=4 RC=8 RC>8                                          
+.* 08/15/09 RPI 1078 move GEN_LINE after GEN_GTOT which calls it                         
+.*********************************************************************
+.* FILES:
+.*  SYSUT1 = INPUT  ZPAR\ZPARSUM1.RPT
+.*  SYSUT2 = OUTPUT ZPAR\ZPARSUM2.RPT
+.*
+.* NOTES:
+.*  1.  SUMMARIZE PROGRAMS BY FIRST 2 CHAR SHOWING RC FOR            
+.*      ZC390 TRANSLATION, MZ390 ASSEMBLY, AND EXECUTION
+.*********************************************************************
+         ACALL INIT
+         PUNCH 'ZPARSUM2 CURRENT  DATE=&SYSDATE TIME=&SYSTIME',        X
+               DDNAME=SYSUT2
+         PUNCH ' ',                                                    X
+               DDNAME=SYSUT2
+         PUNCH '         TRANSLATE  ASSEMBLY         EXECUTION',       X
+               DDNAME=SYSUT2
+         PUNCH 'ID  TOT  RC=0 RC>0  RC<=4 RC=8 RC>8  RC=0 RC>0',       X
+               DDNAME=SYSUT2
+         PUNCH ' ',                                                    X
+               DDNAME=SYSUT2
+         ACALL GET_REC
+         :&GTOT SETA 0
+         AWHILE ('&REC' NE '')
+               ACTR 4096
+               ACALL PROCESS_REC
+               ACALL GET_REC
+         AEND
+         AIF   (&PGM_TOT GT 0)
+               ACALL GEN_LINE
+         AEND
+         ACALL GEN_GTOT
+         MEXIT
+.*
+.* INIT
+.*
+         AENTRY INIT
+         :&LAST_PGM_ID  SETC ''
+         :&PGM_TOT SETA 0
+         :&T0      SETA 0   
+         :&TE      SETA 0   
+         :&A4      SETA 0   
+         :&A8      SETA 0   
+         :&AE      SETA 0   
+         :&E0      SETA 0   
+         :&EE      SETA 0   
+         AEND
+.*
+.* PROCESS REC
+.*      
+         AENTRY PROCESS_REC
+         AIF ('&LAST_PGM_ID' NE '&REC'(4,2))
+             AIF (&PGM_TOT GT 0)
+                 ACALL GEN_LINE
+             AEND
+             ACALL RESET_TOT
+         AEND
+         AIF ('&REC'(16,11) EQ 'ZC390 START')
+             ACALL CVT_DNUM
+             :&PGM_TOT SETA &NUM 
+         AELSEIF ('&REC'(16,11) EQ 'ZC390 ENDED')
+             AIF ('&REC'(30,5) EQ 'RC= 0')
+                 ACALL CVT_DNUM
+                 :&T0 SETA &NUM
+             AELSE
+                 ACALL CVT_DNUM
+                :&TE SETA &TE+&NUM 
+             AEND
+         AELSEIF ('&REC'(16,11) EQ 'MZ390 ENDED')
+             AIF ('&REC'(30,5) LE 'RC= 4')
+                 ACALL CVT_DNUM
+                 :&A4 SETA &NUM
+             AELSEIF ('&REC'(30,5) EQ 'RC= 8')
+                 ACALL CVT_DNUM
+                 :&A8 SETA &NUM
+             AELSE
+                 ACALL CVT_DNUM
+                :&AE SETA &AE+&NUM 
+             AEND
+         AELSEIF ('&REC'(16,11) EQ 'EZ390 ENDED')
+             AIF ('&REC'(30,5) EQ 'RC= 0')
+                 ACALL CVT_DNUM
+                 :&E0 SETA &NUM
+             AELSE
+                 ACALL CVT_DNUM
+                :&EE SETA &EE+&NUM 
+             AEND
+         AEND
+         AEND
+.*
+.* CVT 4 CHAR COUNT TO NUM
+.*
+         AENTRY CVT_DNUM
+         :&DNUM SETC '&REC'(8,4)
+         :&NUM SETA 0
+         :&I SETA 1
+         AWHILE (&I LT 4 AND '&DNUM'(&I,1) EQ ' ')
+             :&I SETA &I+1
+         AEND
+         :&NUM SETA '&DNUM'(&I,*)
+         AEND
+.*
+.* RESET TOT
+.*
+         AENTRY RESET_TOT
+         AIF ('&REC' NE '')
+             :&LAST_PGM_ID SETC '&REC'(4,2)
+         AEND
+         :&GTOT    SETA &GTOT+&PGM_TOT
+         :&GT0     SETA &GT0+&T0
+         :&GTE     SETA &GTE+&TE
+         :&GA4     SETA &GA4+&A4
+         :&GA8     SETA &GA8+&A8
+         :&GAE     SETA &GAE+&AE
+         :&GE0     SETA &GE0+&E0
+         :&GEE     SETA &GEE+&EE
+         :&PGM_TOT SETA 0
+         :&T0      SETA 0   
+         :&TE      SETA 0   
+         :&A4      SETA 0   
+         :&A8      SETA 0   
+         :&AE      SETA 0   
+         :&E0      SETA 0   
+         :&EE      SETA 0   
+         AEND
+.*
+.* GEN GTOT                              
+.*
+         AENTRY GEN_GTOT 
+         :&LAST_PGM_ID SETC '**'
+         :&PGM_TOT SETA &GTOT
+         :&T0      SETA &GT0
+         :&TE      SETA &GTE
+         :&A4      SETA &GA4
+         :&A8      SETA &GA8
+         :&AE      SETA &GAE
+         :&E0      SETA &GE0
+         :&EE      SETA &GEE
+         PUNCH ' ',                                                    X
+               DDNAME=SYSUT2
+         ACALL GEN_LINE
+         AEND
+.*
+.* GEN LINE
+.*
+         AENTRY GEN_LINE
+         :&DTOT SETC '   &PGM_TOT'(K'&PGM_TOT,*)
+         :&DT0  SETC '   &T0'(K'&T0,*) 
+         :&DTE  SETC '   &TE'(K'&TE,*) 
+         :&DA4  SETC '   &A4'(K'&A4,*) 
+         :&DA8  SETC '   &A8'(K'&A8,*) 
+         :&DAE  SETC '   &AE'(K'&AE,*) 
+         :&DE0  SETC '   &E0'(K'&E0,*) 
+         :&DEE  SETC '   &EE'(K'&EE,*) 
+         PUNCH '&LAST_PGM_ID &DTOT  &DT0 &DTE   &DA4 &DA8 &DAE  &DE0 &DX
+               EE',DDNAME=SYSUT2
+         AEND
+.*
+.* GET REC
+.*
+         AENTRY GET_REC
+         :&REC AREAD DDNAME=SYSUT1
+         AIF ('&REC' EQ '')
+             AEXIT AENTRY
+         AEND
+         AEND
+         END                          

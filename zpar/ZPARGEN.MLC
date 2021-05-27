@@ -1,0 +1,60 @@
+         TITLE 'ZPARGEN.MLC - ZPAR GEN ZPARGEN.BAT FROM ZPARGEN.DAT'
+.*********************************************************************
+.* Copyright 2009 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 06/05/09                                                 *
+.*********************************************************************
+.* 06/05/09 RPI 1049 INITIAL CODING                                                       
+.* 07/07/09 RPI 1064 IGNORE ENDING PERIOD ON DIR 1ST LINE FOR XP ONLY                     
+.*********************************************************************
+.* FILES:
+.*  SYSUT1 = INPUT  ZPAR\ZPARGEN.DAT
+.*  SYSUT2 = OUTPUT ZPRA\ZPARGEN.BAT
+.* PARMS:
+.*  %1     - COMMAND TO BE EXECUTED FOR EACH SOURCE FILE
+.*  %2     - SOURCE FILE SPEC (DEMO\*.MLC, ZCOBOL\DEMO\*.CBL, ETC)
+.*  %3-%9  - OPTIONAL PARMS PASSED ON TO COMMAND
+.* NOTES:
+.*  1.  PARM %1 PASSED VIA SYSPARM(%1) TO EXTRACT PATH FOR COMMAND
+.*********************************************************************
+         :&NAME_IX  SETA  0 SET TO START OF NAME 
+         :&OPTIONS  SETC  '%3 %4 %5 %6 %7 %8 %9' GEN CMD OPTIONS
+         :&PATH     SETC  '&SYSPARM'
+         PUNCH 'REM ZPARGEN FILE SPEC = &PATH',DDNAME=SYSUT2
+         PUNCH 'REM ZPARGEN DATE=&SYSDATE TIME=&SYSTIME'
+         :&SLASH_IX SETA  ('&PATH' FIND '.')
+         AWHILE (&SLASH_IX GT 0)
+             AIF ('&PATH'(&SLASH_IX,1) EQ '\')
+                 AEXIT AWHILE
+             AEND
+             :&SLASH_IX SETA &SLASH_IX-1
+         AEND
+         AIF (&SLASH_IX GT 0)
+             :&PATH SETC '&PATH'(1,&SLASH_IX)
+         AEND
+         :&TOT_CMD  SETA  0
+         :&REC      AREAD DDNAME=SYSUT1
+         AWHILE ('&REC' NE '')
+               ACTR 4096
+               :&REC SETC (UPPER '&REC')
+               :&PERIOD_IX SETA ('&REC' FIND '.')
+               AIF  (&PERIOD_IX GT 0 AND K'&REC GT &PERIOD_IX) RPI 1064
+                    AIF (&NAME_IX EQ 0)
+                        :&NAME_IX SETA &PERIOD_IX-1
+                        AWHILE ('&REC'(&NAME_IX,1) NE ' ')
+                            :&NAME_IX SETA &NAME_IX-1
+                        AEND
+                        :&NAME_IX SETA &NAME_IX+1
+                    AEND
+                    :&LNG SETA &PERIOD_IX-&NAME_IX
+                    :&NAME SETC '&REC'(&NAME_IX,&LNG)
+                    :&CMD SETC 'CALL %1 &PATH'.'&NAME &OPTIONS' 
+                    PUNCH '&CMD',DDNAME=SYSUT2
+                    :&TOT_CMD SETA &TOT_CMD+1
+               AEND
+               :&REC AREAD DDNAME=SYSUT1
+         AEND
+         PUNCH 'REM ZPARGEN TOTAL CMDS = &TOT_CMD',DDNAME=SYSUT2
+         END                          
