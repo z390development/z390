@@ -304,6 +304,8 @@ public  class  tz390 {
         * 2021-02-09 DSH V1705a RPI 2204, 2226, 2213, 2214
 	* 2021-03-09 DSH V1706 RPI 2229 QSAM LLLL large block opt
 	* 2021-04-26 DSH V1707 #239 fix missing error for underined symbol on IIHF or any RIL 
+    * 2021-04-19 JJG Replace Linux/Mac Perl usage with Linux shell; add variable procdir which
+    *                contains "bat" for Windows, "bash" for Linux/Mac.
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -440,6 +442,7 @@ public  class  tz390 {
     String z390_acrobat = null; // RPI 500
     String z390_browser = null; // RPI 500
     String z390_command = null; // RPI 500
+    String z390_procdir = null;
     String z390_editor  = null; // RPI 500
     /*
 	 * global limits with option overrides
@@ -4313,6 +4316,7 @@ private void init_os_util(){
 	z390_acrobat = System.getenv("Z390ACROBAT");;   // RPI 510
 	z390_browser = System.getenv("Z390BROWSER");;   // RPI 510
 	z390_command = System.getenv("Z390COMMAND");    // RPI 510
+    z390_procdir = System.getenv("Z390PROCDIR");
 	z390_editor  = System.getenv("Z390EDIT");       // RPI 510
 	if  (z390_os_type == z390_os_win){
 		if (z390_browser == null
@@ -4332,6 +4336,10 @@ private void init_os_util(){
 				z390_command = "cmd.exe";
 			}
 		}
+        if (z390_procdir == null
+              || z390_procdir.length() == 0){
+            z390_procdir = "bat";
+        }
 		if (z390_editor == null 
 		    || z390_editor.length() == 0){
 		    z390_editor  = "notepad.exe"; // RPI 500
@@ -4347,8 +4355,12 @@ private void init_os_util(){
 		}
 		if  (z390_command == null 
 			|| z390_command.length() == 0){
-			z390_command = "perl";
+			z390_command = "sh";
 		}
+        if (z390_procdir == null
+              || z390_procdir.length() == 0){
+            z390_procdir = "bash";
+        }
 		if (z390_editor == null 
 		    || z390_editor.length() == 0){
 		    z390_editor  = "gedit"; // RPI 500  RPI 532 
@@ -7176,6 +7188,7 @@ public void put_trace(String text){
 	     add_final_opt("Z390ACROBAT=" + z390_acrobat);
 	     add_final_opt("Z390BROWSER=" + z390_browser);
 	     add_final_opt("Z390COMMAND=" + z390_command);
+         add_final_opt("Z390PROCDIR=" + z390_procdir);
 	     add_final_opt("Z390EDITOR=" + z390_editor);
 	     /*
 	      * option directories and files

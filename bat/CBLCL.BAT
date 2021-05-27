@@ -38,4 +38,4 @@ pause see errors on mz390 generated bal file and console
 goto end
 :lzerr
 pause see errors on lz390 generated lst file and console
-:end 
+:end
