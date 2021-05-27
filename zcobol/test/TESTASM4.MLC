@@ -1,0 +1,24 @@
+
+*********************************************************************
+* PROGRAM-ID.    TESTASM4.
+* AUTHOR.        DON HIGGINS.
+* DATE-WRITTEN.  12/02/08.
+* TEST CALL TESTCAL1.CBL > TESTCAL2.CBL > TESTCAL3.CBL > TESTASM4.MLC
+*********************************************************************
+TESTASM4 SUBENTRY
+         LM    R3,R4,0(R1)  R3=A(PARM1) R4=A(PARM2)
+         WTO   'TESTASM4 STARTING'
+         MVC   PARM1,0(R3)
+         WTO   MF=(E,WTOPARM1)
+         MVC   PARM2,0(R4)
+         WTO   MF=(E,WTOPARM2)
+         WTO   'TESTASM4 ENDING OK'
+         SUBEXIT
+WTOPARM1 DC    AL2(WTOEND1-*,0),C'TESTASM4 PARM1 ='
+PARM1    DC    CL20' '
+WTOEND1  EQU   *
+WTOPARM2 DC    AL2(WTOEND2-*,0),C'TESTASM4 PARM2 ='
+PARM2    DC    CL20' '
+WTOEND2  EQU   *
+         EQUREGS
+         END

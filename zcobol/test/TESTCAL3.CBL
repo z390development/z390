@@ -1,0 +1,30 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID.    TESTCAL3.
+       AUTHOR.        DON HIGGINS.
+       DATE-WRITTEN.  12/02/08.
+      ***************************************************************
+      * REGRESSION TEST CALL 
+      *  FROM TESTCAL1.CBL TO TESTCAL2.CBL STATIC LINKED
+      *  FROM TESTCBL2.CBL TO TESTCBL3.CBL DYNAMIC LINK
+      *  FROM TESTCBL3.CBL TO TESTASM4.MLC STATIC LINK
+      * USING BY VALUE PARM1 BY REFERENCE PARM2.
+      ***************************************************************
+       ENVIRONMENT DIVISION.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       LINKAGE SECTION.
+       01 PARM1 PIC X(20).
+       01 PARM2 PIC X(20).
+       PROCEDURE DIVISION USING PARM1 PARM2.
+       MAINLINE.
+           DISPLAY 'TESTCAL3 STARTING'
+           DISPLAY 'TESTCAL3 PARM1 =' PARM1
+           DISPLAY 'TESTCAL3 PARM2 =' PARM2
+           CALL 'TESTASM4' USING BY VALUE PARM1 
+                                 BY REFERENCE PARM2.
+           CALL 'TESTASM4' USING BY VALUE PARM1 
+                                 BY REFERENCE PARM2.
+           DISPLAY 'TESTCAL3 PARM1 =' PARM1
+           DISPLAY 'TESTCAL3 PARM2 =' PARM2
+           DISPLAY 'TESTCAL3 ENDING OK'
+           GOBACK.
