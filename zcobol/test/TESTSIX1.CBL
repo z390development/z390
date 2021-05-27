@@ -1,0 +1,57 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID.    TESTSIX1.
+       AUTHOR.        DON HIGGINS.
+       DATE-WRITTEN.  01/08/09.
+      * TEST SUBSCRIPTS AND INDEXES (MORE TO COME)                              
+       ENVIRONMENT DIVISION.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       77  FLT-SRT FLOAT-SHORT OCCURS 2.
+       01  T0.
+           10  T1 OCCURS 2 TIMES.
+               15 T1-ID PIC X.
+               15 T2 OCCURS 3 TIMES.
+                  20 T2-ID PIC X.
+       77  S1 COMP PIC S9(9).
+       77  S2 COMP PIC S9(9).
+       77  NFS2 COMP   PIC S9(9)  OCCURS 2 TIMES.
+       77  NGS2 COMP   PIC S9(18) OCCURS 2 TIMES.
+       77  NHS2 COMP   PIC S9(4)  OCCURS 2 TIMES.
+       77  I    COMP   PIC S99    VALUE 1.
+       77  J    COMP   PIC S99    VALUE 2.
+       77  GOOD COMP-3 PIC S9(9) VALUE 0.
+       77  BAD  COMP-3 PIC S9(9) VALUE 0.
+       PROCEDURE DIVISION.
+       MAINLINE.
+           DISPLAY 'TESTSIX1 STARTING'
+           MOVE '1ABC2DEF' TO T0
+     1     IF T1-ID(1) = '1'   PERFORM GOOD ELSE PERFORM BAD.
+     2     IF T1-ID(2) = '2'   PERFORM GOOD ELSE PERFORM BAD.  
+     3     IF T2-ID(1 1) = 'A' PERFORM GOOD ELSE PERFORM BAD.  
+     4     IF T2-ID(2 1) = 'D' PERFORM GOOD ELSE PERFORM BAD.  
+     5     IF T2-ID(1 3) = 'C' PERFORM GOOD ELSE PERFORM BAD.  
+     6     IF T2-ID(2 3) = 'F' PERFORM GOOD ELSE PERFORM BAD.  
+           MOVE 1 TO S1 MOVE 3 TO S2
+     7     IF T2-ID(S1 S2) = 'C' PERFORM GOOD ELSE PERFORM BAD.  
+           PERFORM VARYING S1 FROM 1 BY 1 UNTIL S1 > 2
+               PERFORM VARYING S2 FROM 1 BY 1 UNTIL S2 > 3
+                  DISPLAY 'T2-ID(' S1 ',' S2 ')=' T2-ID(S1 S2).
+           MOVE 1 TO NFS2(I) NFS2(I+1)
+           ADD       NFS2(I) TO NFS2(I+1)
+     8     IF NFS2(I+1) = 2 PERFORM GOOD ELSE PERFORM BAD.
+           ADD  1 TO NFS2(I) NFS2(I+1)
+     9     IF NFS2(I)   = 2 PERFORM GOOD ELSE PERFORM BAD.
+    10     IF NFS2(I+1) = 3 PERFORM GOOD ELSE PERFORM BAD.
+      * TEST COMPUTE DFP WITH SUBSCRIPTS
+           MOVE 1.1 TO FLT-SRT(2)
+           ADD  2.2 TO FLT-SRT(2).
+    11     IF FLT-SRT(2) = 3.3 PERFORM GOOD ELSE PERFORM BAD.
+           DISPLAY 'TESTSIX1 GOOD TESTS =' GOOD ' BAD TESTS = ' BAD
+           STOP RUN.
+       GOOD.
+           ADD 1 TO GOOD.
+           DISPLAY 'GOOD'.
+       BAD.
+           ADD 1 TO BAD.
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'BAD'..

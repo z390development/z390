@@ -1,0 +1,184 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID.    TESTCMP4.
+       AUTHOR.        DON HIGGINS.
+       DATE-WRITTEN.  05/07/12.
+      * TEST COMPUTE WITH SCALING FOR IMPLIED DECIMAL                              
+       ENVIRONMENT DIVISION.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       77 EH1 FLOAT-HEX-7       VALUE 1.5.
+       77 DH1 FLOAT-HEX-15      VALUE 1.5.
+       77 LH1 FLOAT-HEX-30      VALUE 1.5.
+       77 EB1 FLOAT-BINARY-7    VALUE 1.5.
+       77 DB1 FLOAT-BINARY-16   VALUE 1.5.
+       77 LB1 FLOAT-BINARY-34   VALUE 1.5.
+       77 ED1 FLOAT-DECIMAL-7   VALUE 1.5.
+       77 DD1 FLOAT-DECIMAL-16  VALUE 1.5.
+       77 LD1 FLOAT-DECIMAL-34  VALUE 1.5.
+       77 H1      COMP PIC S9(3)V9       VALUE 1.5.
+       77 F1      COMP PIC S9(7)V99      VALUE 1.5.
+       77 G1      COMP PIC S9(15)V999    VALUE 1.5.
+       77 Q1      COMP PIC S9(35)V9(4)   VALUE 1.5.
+       77 P1      COMP-3 PIC S9(26)V9(5) VALUE 1.5.
+       77 Z1             PIC S9(25)V9(6) VALUE 1.5.
+       77 H2      COMP PIC S9(3)V9       VALUE 1.5.
+       77 F2      COMP PIC S9(7)V99      VALUE 1.5.
+       77 G2      COMP PIC S9(15)V999    VALUE 1.5.
+       77 Q2      COMP PIC S9(35)V9(4)   VALUE 1.5.
+       77 P2      COMP-3 PIC S9(26)V9(5) VALUE 1.5.
+       77 Z2             PIC S9(25)V9(6) VALUE 1.5.
+       77 ZT1            PIC S9 VALUE 5.
+       77 PT1     COMP-3 PIC S9 VALUE 5.
+       77 ZT7            PIC S9(4)V999  VALUE 5.
+       77 PT7     COMP-3 PIC S9(3)V9(4) VALUE 5.
+       77 ZT8            PIC S9(5)V999  VALUE 5.
+       77 PT8     COMP-3 PIC S9(4)V9(4) VALUE 5.
+       77 ZT16           PIC S9(13)V999 VALUE 5.
+       77 ZT31           PIC S9(31) VALUE 5.
+       77 PT31    COMP-3 PIC S9(31) VALUE 5.
+       77 ZT20           PIC S9(20) VALUE 5.
+       77 PT20    COMP-3 PIC S9(20) VALUE 5.
+       77 ZT21           PIC S9(21) VALUE 5.
+       77 PT21    COMP-3 PIC S9(21) VALUE 5.
+       77 PT16    COMP-3 PIC S9(16) VALUE 5.
+       77 LD2 FLOAT-DECIMAL-34  VALUE 1.0.
+       77 GOOD    COMP-3 PIC 9(4)   VALUE 0.
+       77 BAD     COMP-3 PIC 9(4)   VALUE 0.
+       PROCEDURE DIVISION.
+       MAINLINE.
+           DISPLAY 'TESTCMP4 TEST SCALED COMPUTE'.
+           COMPUTE ZT7 = PT7 + 1.
+           IF ZT7 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT8 = PT8 + 1.
+           IF ZT8 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT16 = PT1 + 1.
+           IF ZT16 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           MOVE 1234567890123.456 TO ZT16
+           IF ZT16 = 1234567890123.456 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT20 = 12345678901234567890
+           COMPUTE LD2  = 12345678901234567890
+           IF ZT20 = LD2 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT21 = 123456789012345678901
+           COMPUTE LD2  = 123456789012345678901
+           IF ZT21 = LD2 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE PT16 = PT1
+           IF PT16 = PT1 ERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT21 = PT21 + 1,
+           IF ZT21 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT20 = PT20 + 1,
+           IF ZT20 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT31 = PT31 + 1,
+           IF ZT31 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE ZT1 = PT1 + 1,
+           IF ZT1 = 6 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = EH1+DH1+LH1
+                       +EB1+DB1+LB1
+                       +ED1+DD1+LD1
+                       +H1+F1+G1
+                       +Q1+P1+Z1
+           IF Z2 = 22.5 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = Z1+P1+Q1
+                       +G1+F1+H1
+                       +LD1+DD1+ED1
+                       +LB1+DB1+EB1
+                       +LH1+DH1+EH1
+           IF Z2 = 22.5 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = 1.5
+           IF Z2 = 1.5  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = H1
+           IF Z2 = 1.5  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = 1.5 + 1.5
+           IF Z2 = 3    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = 1.5 - 1.5
+           IF Z2 = 0    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = 1.5 * 1.5
+           IF Z2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = 1.5 / 1.5
+           IF Z2 = 1    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE H2 = 1111 + 2222
+           IF H2 = 3333 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE F2 = 111111111 + 222222222
+           IF F2 = 333333333 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE LD2 = 111111111111111.111
+           COMPUTE G2  = LD2 + LD2
+           COMPUTE LD2 = LD2 + LD2
+           IF G2 = LD2  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE LD2 = 1111111111111111111111111111111.1111
+           COMPUTE Q2  = LD2 + LD2
+           COMPUTE LD2 = LD2 + LD2
+           IF Q2 = LD2  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE LD2 = 11111111111111111111111111.11111
+           COMPUTE P2  = LD2 + LD2
+           COMPUTE LD2 = LD2 + LD2
+           IF P2 = LD2  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE LD2 = 1111111111111111111111111.111111
+           COMPUTE Z2  = LD2 + LD2
+           COMPUTE LD2 = LD2 + LD2
+           IF Z2 = LD2  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = H1+F1+G1+Q1+P1+Z1
+           IF Z2 = 9    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = Z1+P1+Q1+G1+F1+H1
+           IF Z2 = 9    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = (H1 -F1)+(G1 -Q1)+(P1 -Z1)
+           IF Z2 = 0    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = H1*F1+G1*Q1+P1*Z1
+           IF Z2 = 6.75 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = H1/F1+G1/Q1
+           IF Z2 = 2    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE H2 = H1+H1
+           IF H2 = 3    PERFORM GOOD ELSE PERFORM BAD..
+           COMPUTE F2 = F1+F1
+           IF F2 = 3    PERFORM GOOD ELSE PERFORM BAD..
+           COMPUTE G2 = G1+G1
+           IF G2 = 3    PERFORM GOOD ELSE PERFORM BAD..
+           COMPUTE Q2 = Q1+Q1
+           IF Q2 = 3    PERFORM GOOD ELSE PERFORM BAD..
+           COMPUTE P2 = P1+P1
+           IF P2 = 3    PERFORM GOOD ELSE PERFORM BAD..
+           COMPUTE Z2 = Z1+Z1
+           IF Z2 = 3    PERFORM GOOD ELSE PERFORM BAD..
+           COMPUTE H2 = H1 -H1
+           IF H2 = 0    PERFORM GOOD ELSE PERFORM BAD..
+           COMPUTE F2 = F1 -F1
+           IF F2 = 0    PERFORM GOOD ELSE PERFORM BAD..
+           COMPUTE G2 = G1 -G1
+           IF G2 = 0    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Q2 = Q1 -Q1
+           IF Q2 = 0    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE P2 = P1 -P1
+           IF P2 = 0    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = Z1 -Z1
+           IF Z2 = 0    PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE H2 = H1*H1
+           IF H2 = 2.2  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE F2 = F1*F1
+           IF F2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE G2 = G1*G1
+           IF G2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Q2 = Q1*Q1
+           IF Q2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE P2 = P1*P1
+           IF P2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = Z1*Z1
+           IF Z2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE H2 = H1/H1
+           IF H2 = 1.0  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE F2 = F1/F1
+           IF F2 = 1.0  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE G2 = G1/G1
+           IF G2 = 1.0  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Q2 = Q1/Q1
+           IF Q2 = 1.0  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE P2 = P1/P1
+           IF P2 = 1.0  PERFORM GOOD ELSE PERFORM BAD.
+           COMPUTE Z2 = Z1/Z1
+           IF Z2 = 1.0  PERFORM GOOD ELSE PERFORM BAD.
+           DISPLAY 'TOTAL GOOD = ' GOOD ' TOTAL BAD = ' BAD.
+           STOP RUN.
+       GOOD.
+           DISPLAY 'GOOD-TEST'
+           ADD 1 TO GOOD.
+       BAD.
+           DISPLAY 'BAD-TEST'
+           MOVE 16 TO RETURN-CODE
+           ADD 1 TO BAD.
