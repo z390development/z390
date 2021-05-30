@@ -1,0 +1,49 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+DEMONUM2 SUBENTRY
+         WTO   'DEMONUM2 PRIMES FROM 1 TO 4000 USING 390 CODE'
+         LHI   N,-1
+NEXT     EQU   *
+         AHI   N,2
+         CHI   N,4000
+         BH    EXIT
+         LHI   TD,3
+TEST     EQU   *
+         LHI   TR,0    SET DIVIDEND FROM N
+         LR    TQ,N
+         DR    TR,TD   DIVIDE N GIVING REMAINDER, QUOTENT IN TR,TQ
+         CR    TQ,TD   HAVE WE PASSED SQUARE ROOT
+         BL    PRIME   YES, THEN N MUST BE PRIME
+         CHI   TR,0    IS THERE A RMAINDER
+         BZ    NEXT    NO, THEN N IS NOT PRIME
+         AHI   TD,2    TRY NEXT ODD DIVISOR
+         B     TEST
+PRIME    EQU   *
+         AHI   NP,1
+         CVD   NP,PWORK
+         MVC   DNP,=X'402020202020'
+         ED    DNP,PWORK+5
+         CVD   N,PWORK
+         MVC   DN,=X'402020202020'
+         ED    DN,PWORK+5
+         LA    1,WTOMSG
+         SVC   35
+         B     NEXT
+EXIT     EQU   *
+         SUBEXIT
+TR       EQU   0  TEST REMAINED (TR AND TQ = DIVIDEND) 
+TQ       EQU   1  TEST QUOTENT  
+NP       EQU   3  NUMBER OF PRIMES
+N        EQU   4  CURRENT PRIME
+TD       EQU   5  TRIAL DIVISOR UP TO SQUARE ROOT
+PWORK    DS    D
+WTOMSG   DC    AL2(WTOEND-*,0)
+DNP      DC    C' NNNNN'
+DN       DC    C' NNNNN'
+WTOEND   EQU   *
+         END
