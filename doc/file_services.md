@@ -634,7 +634,7 @@ The same, using register notation
 
 #### Registers
 
-* R0 = DCB and ioarea addresses...saved
+* R0 = work register
 * R1 = DECB address
 * R15= DCB address
 
@@ -671,7 +671,7 @@ The same, using register notation
 
 #### Registers
 
-* R0 = DCB and ioarea addresses...saved
+* R0 = work register
 * R1 = DECB address
 * R15= DCB address
 
@@ -707,7 +707,7 @@ Position pointer for next READ or WRITE
 1. When register notation is used for rba or rel, the register points to a field containing the value.
 2. rel is a fullword, maximum value 2,147,483,647 (2G - 1).<br/>
    rel is multiplied by BLKSIZE to get the rba.
-3. rba is signed 64-bit, maximum value...very big.
+3. rba is signed 64-bit value.
  
 #### Usage
  
