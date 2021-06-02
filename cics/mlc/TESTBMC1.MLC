@@ -1,0 +1,1552 @@
+         ZCOBOL PGM='cics\TESTBMC1',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :48:10,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTBMC1_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * TEST SEND/RECEIVE MAP AND SEND CONTROL
+*      * CODE AND DISPLAYS ARE ALMOST IDENTICAL TO GUI4/6
+*      * AFTER GUI4 IS ENDED, THE PROGRAM SWITCHES INTO GUI6
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTBMC1.
+         PROGRAM_ID TESTBMC1
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+*         COPY  MAP01C.
+         WORKING_STORAGE SECTION
+*        01  GUI4I.
+         WS      01,GUI4I
+*            02  FILLER  PIC X(12).
+         WS        02,FILLER,PIC,X(12)
+*            02  FILLER   PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER   PIC X.
+         WS        02,FILLER,PIC,X
+*            02  INPUTI   PIC X(3).
+         WS        02,INPUTI,PIC,X(3)
+*            02  FILLER   PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER   PIC X.
+         WS        02,FILLER,PIC,X
+*            02  REPLYI   PIC X(3).
+         WS        02,REPLYI,PIC,X(3)
+*            02  FILLER REDEFINES REPLYI.
+         WS        02,FILLER,REDEFINES,REPLYI
+*                03  REPLYO   PIC X(3).
+         WS          03,REPLYO,PIC,X(3)
+*        01  GUI4O REDEFINES GUI4I.
+         WS      01,GUI4O,REDEFINES,GUI4I
+*           02  FILLER PIC X(24).
+         WS        02,FILLER,PIC,X(24)
+*        01  GUI6I.
+         WS      01,GUI6I
+*            02  FILLER  PIC X(12).
+         WS        02,FILLER,PIC,X(12)
+*            02  NAMEL    PIC S9(4) COMP.
+         WS        02,NAMEL,PIC,S9(4),COMP
+*            02  NAMEF    PIC X.
+         WS        02,NAMEF,PIC,X
+*            02  NAMEI    PIC X(40).
+         WS        02,NAMEI,PIC,X(40)
+*            02  ADDRL    PIC S9(4) COMP.
+         WS        02,ADDRL,PIC,S9(4),COMP
+*            02  ADDRF    PIC X.
+         WS        02,ADDRF,PIC,X
+*            02  ADDRI    PIC X(40).
+         WS        02,ADDRI,PIC,X(40)
+*            02  ZIPL     PIC S9(4) COMP.
+         WS        02,ZIPL,PIC,S9(4),COMP
+*            02  ZIPF     PIC X.
+         WS        02,ZIPF,PIC,X
+*            02  ZIPI     PIC X(5).
+         WS        02,ZIPI,PIC,X(5)
+*            02  FILLER  PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER  PIC X.
+         WS        02,FILLER,PIC,X
+*            02  NAMEHDI  PIC X(4).
+         WS        02,NAMEHDI,PIC,X(4)
+*            02  FILLER REDEFINES NAMEHDI.
+         WS        02,FILLER,REDEFINES,NAMEHDI
+*                03  NAMEHDO  PIC X(4).
+         WS          03,NAMEHDO,PIC,X(4)
+*            02  FILLER PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER PIC X.
+         WS        02,FILLER,PIC,X
+*            02  NEWNAMEI PIC X(40).
+         WS        02,NEWNAMEI,PIC,X(40)
+*            02  FILLER REDEFINES NEWNAMEI.
+         WS        02,FILLER,REDEFINES,NEWNAMEI
+*                03  NEWNAMEO PIC X(40).
+         WS          03,NEWNAMEO,PIC,X(40)
+*            02  FILLER  PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER  PIC X.
+         WS        02,FILLER,PIC,X
+*            02  ADDRHDI  PIC X(4).
+         WS        02,ADDRHDI,PIC,X(4)
+*            02  FILLER REDEFINES ADDRHDI.
+         WS        02,FILLER,REDEFINES,ADDRHDI
+*                03  ADDRHDO  PIC X(4).
+         WS          03,ADDRHDO,PIC,X(4)
+*            02  FILLER PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER PIC X.
+         WS        02,FILLER,PIC,X
+*            02  NEWADDRI PIC X(40).
+         WS        02,NEWADDRI,PIC,X(40)
+*            02  FILLER REDEFINES NEWADDRI.
+         WS        02,FILLER,REDEFINES,NEWADDRI
+*                03  NEWADDRO PIC X(40).
+         WS          03,NEWADDRO,PIC,X(40)
+*            02  FILLER   PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER   PIC X.
+         WS        02,FILLER,PIC,X
+*            02  ZIPHDI   PIC X(4).
+         WS        02,ZIPHDI,PIC,X(4)
+*            02  FILLER REDEFINES ZIPHDI.
+         WS        02,FILLER,REDEFINES,ZIPHDI
+*                03  ZIPHDO   PIC X(4).
+         WS          03,ZIPHDO,PIC,X(4)
+*            02  FILLER  PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER  PIC X.
+         WS        02,FILLER,PIC,X
+*            02  NEWZIPI  PIC X(5).
+         WS        02,NEWZIPI,PIC,X(5)
+*            02  FILLER REDEFINES NEWZIPI.
+         WS        02,FILLER,REDEFINES,NEWZIPI
+*                03  NEWZIPO  PIC X(5).
+         WS          03,NEWZIPO,PIC,X(5)
+*            02  FILLER  PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER  PIC X.
+         WS        02,FILLER,PIC,X
+*            02  ERRMSGI  PIC X(34).
+         WS        02,ERRMSGI,PIC,X(34)
+*            02  FILLER REDEFINES ERRMSGI.
+         WS        02,FILLER,REDEFINES,ERRMSGI
+*                03  ERRMSGO  PIC X(34).
+         WS          03,ERRMSGO,PIC,X(34)
+*            02  TESTOCCD OCCURS 5 TIMES.
+         WS        02,TESTOCCD,OCCURS,5,TIMES
+*                03  FILLER PIC S9(4) COMP.
+         WS          03,FILLER,PIC,S9(4),COMP
+*                03  TESTOCCF PIC X.
+         WS          03,TESTOCCF,PIC,X
+*                03  TESTOCCI PIC 9(5).
+         WS          03,TESTOCCI,PIC,9(5)
+*            02  FILLER  PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER  PIC X.
+         WS        02,FILLER,PIC,X
+*            02  OCCSUMI  PIC X(10).
+         WS        02,OCCSUMI,PIC,X(10)
+*            02  FILLER REDEFINES OCCSUMI.
+         WS        02,FILLER,REDEFINES,OCCSUMI
+*                03  OCCSUMO  PIC ZZ,ZZZ,ZZ9.
+         WS          03,OCCSUMO,PIC,'ZZ,ZZZ,ZZ9'
+*            02  FILLER    PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  DATEF    PIC X.
+         WS        02,DATEF,PIC,X
+*            02  DATEI.
+         WS        02,DATEI
+*            02  DATEO REDEFINES DATEI.
+         WS        02,DATEO,REDEFINES,DATEI
+*                03  MOI      PIC X(2).
+         WS          03,MOI,PIC,X(2)
+*                03  FILLER REDEFINES MOI.
+         WS          03,FILLER,REDEFINES,MOI
+*                    04  MOO      PIC X(2).
+         WS            04,MOO,PIC,X(2)
+*                03  SEP1I    PIC X.
+         WS          03,SEP1I,PIC,X
+*                03  DAYI     PIC X(2).
+         WS          03,DAYI,PIC,X(2)
+*                03  FILLER REDEFINES DAYI.
+         WS          03,FILLER,REDEFINES,DAYI
+*                    04  DAYO     PIC X(2).
+         WS            04,DAYO,PIC,X(2)
+*                03  SEP2I    PIC X.
+         WS          03,SEP2I,PIC,X
+*                03  YRI      PIC X(2).
+         WS          03,YRI,PIC,X(2)
+*                03  FILLER REDEFINES YRI.
+         WS          03,FILLER,REDEFINES,YRI
+*                    04  YRO      PIC X(2).
+         WS            04,YRO,PIC,X(2)
+*            02  FILLER PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER PIC X.
+         WS        02,FILLER,PIC,X
+*            02  SHOWMDYI PIC X(18).
+         WS        02,SHOWMDYI,PIC,X(18)
+*            02  FILLER REDEFINES SHOWMDYI.
+         WS        02,FILLER,REDEFINES,SHOWMDYI
+*                03  SHOWMDYO PIC X(18).
+         WS          03,SHOWMDYO,PIC,X(18)
+*            02  TESTPCOL PIC S9(4) COMP.
+         WS        02,TESTPCOL,PIC,S9(4),COMP
+*            02  TESTPCOF PIC X.
+         WS        02,TESTPCOF,PIC,X
+*            02  TESTPCOI PIC 9(12).
+         WS        02,TESTPCOI,PIC,9(12)
+*            02  FILLER REDEFINES TESTPCOI.
+         WS        02,FILLER,REDEFINES,TESTPCOI
+*                03  TESTPCOO PIC X(12).
+         WS          03,TESTPCOO,PIC,X(12)
+*            02  FILLER   PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER   PIC X.
+         WS        02,FILLER,PIC,X
+*            02  PAYMEI   PIC X(14).
+         WS        02,PAYMEI,PIC,X(14)
+*            02  FILLER REDEFINES PAYMEI.
+         WS        02,FILLER,REDEFINES,PAYMEI
+*                03  PAYMEO   PIC X(14).
+         WS          03,PAYMEO,PIC,X(14)
+*            02  FILLER  PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER  PIC X.
+         WS        02,FILLER,PIC,X
+*            02  PAYME1I  PIC X(12).
+         WS        02,PAYME1I,PIC,X(12)
+*            02  FILLER REDEFINES PAYME1I.
+         WS        02,FILLER,REDEFINES,PAYME1I
+*                03  PAYME1O  PIC $$$$,$$$,$$9.
+         WS          03,PAYME1O,PIC,'$$$$,$$$,$$9'
+*            02  FILLER    PIC S9(4) COMP.
+         WS        02,FILLER,PIC,S9(4),COMP
+*            02  FILLER    PIC X.
+         WS        02,FILLER,PIC,X
+*            02  CURSI    PIC X(9).
+         WS        02,CURSI,PIC,X(9)
+*            02  FILLER REDEFINES CURSI.
+         WS        02,FILLER,REDEFINES,CURSI
+*                03  CURSO    PIC X(9).
+         WS          03,CURSO,PIC,X(9)
+*        01  GUI6O REDEFINES GUI6I.
+         WS      01,GUI6O,REDEFINES,GUI6I
+*           02  FILLER PIC X(402).
+         WS        02,FILLER,PIC,X(402)
+*        01  GUI6HI.
+         WS      01,GUI6HI
+*            02  FILLER  PIC X(12).
+*         COPY  DFHAID.
+*      * AID VALUES
+         WS        02,FILLER,PIC,X(12)
+*        01  DFHAID.
+         WS      01,DFHAID
+*          02  DFHNULL  PIC X VALUE X'00'.
+         WS        02,DFHNULL,PIC,X,VALUE,X'00'
+*          02  DFHENTER PIC X VALUE X'7D'.
+         WS        02,DFHENTER,PIC,X,VALUE,X'7D'
+*          02  DFHPF1   PIC X VALUE X'F1'.
+         WS        02,DFHPF1,PIC,X,VALUE,X'F1'
+*          02  DFHPF2   PIC X VALUE X'F2'.
+         WS        02,DFHPF2,PIC,X,VALUE,X'F2'
+*          02  DFHPF3   PIC X VALUE X'F3'.
+         WS        02,DFHPF3,PIC,X,VALUE,X'F3'
+*          02  DFHPF4   PIC X VALUE X'F4'.
+         WS        02,DFHPF4,PIC,X,VALUE,X'F4'
+*          02  DFHPF5   PIC X VALUE X'F5'.
+         WS        02,DFHPF5,PIC,X,VALUE,X'F5'
+*          02  DFHPF6   PIC X VALUE X'F6'.
+         WS        02,DFHPF6,PIC,X,VALUE,X'F6'
+*          02  DFHPF7   PIC X VALUE X'F7'.
+         WS        02,DFHPF7,PIC,X,VALUE,X'F7'
+*          02  DFHPF8   PIC X VALUE X'F8'.
+         WS        02,DFHPF8,PIC,X,VALUE,X'F8'
+*          02  DFHPF9   PIC X VALUE X'F9'.
+         WS        02,DFHPF9,PIC,X,VALUE,X'F9'
+*          02  DFHPF10  PIC X VALUE X'7A'.
+         WS        02,DFHPF10,PIC,X,VALUE,X'7A'
+*          02  DFHPF11  PIC X VALUE X'7B'.
+         WS        02,DFHPF11,PIC,X,VALUE,X'7B'
+*          02  DFHPF12  PIC X VALUE X'7C'.
+         WS        02,DFHPF12,PIC,X,VALUE,X'7C'
+*          02  DFHPF13  PIC X VALUE X'C1'.
+         WS        02,DFHPF13,PIC,X,VALUE,X'C1'
+*          02  DFHPF14  PIC X VALUE X'C2'.
+         WS        02,DFHPF14,PIC,X,VALUE,X'C2'
+*          02  DFHPF15  PIC X VALUE X'C3'.
+         WS        02,DFHPF15,PIC,X,VALUE,X'C3'
+*          02  DFHPF16  PIC X VALUE X'C4'.
+         WS        02,DFHPF16,PIC,X,VALUE,X'C4'
+*          02  DFHPF17  PIC X VALUE X'C5'.
+         WS        02,DFHPF17,PIC,X,VALUE,X'C5'
+*          02  DFHPF18  PIC X VALUE X'C6'.
+         WS        02,DFHPF18,PIC,X,VALUE,X'C6'
+*          02  DFHPF19  PIC X VALUE X'C7'.
+         WS        02,DFHPF19,PIC,X,VALUE,X'C7'
+*          02  DFHPF20  PIC X VALUE X'C8'.
+         WS        02,DFHPF20,PIC,X,VALUE,X'C8'
+*          02  DFHPF21  PIC X VALUE X'C9'.
+         WS        02,DFHPF21,PIC,X,VALUE,X'C9'
+*          02  DFHPF22  PIC X VALUE X'4A'.
+         WS        02,DFHPF22,PIC,X,VALUE,X'4A'
+*          02  DFHPF23  PIC X VALUE X'4B'.
+         WS        02,DFHPF23,PIC,X,VALUE,X'4B'
+*          02  DFHPF24  PIC X VALUE X'4C'.
+         WS        02,DFHPF24,PIC,X,VALUE,X'4C'
+*          02  DFHPA1   PIC X VALUE X'6C'.
+         WS        02,DFHPA1,PIC,X,VALUE,X'6C'
+*          02  DFHPA2   PIC X VALUE X'6E'.
+         WS        02,DFHPA2,PIC,X,VALUE,X'6E'
+*          02  DFHPA3   PIC X VALUE X'6B'.
+         WS        02,DFHPA3,PIC,X,VALUE,X'6B'
+*          02  DFHCLEAR PIC X VALUE X'6D'.
+* 
+*         COPY  DFHBMSCA.
+*      * Standard BMS equates
+*      * Attributes
+         WS        02,DFHCLEAR,PIC,X,VALUE,X'6D'
+*        01  DFHBMSCA.
+         WS      01,DFHBMSCA
+*          02  DFHBMUNP PIC X VALUE X'40'.
+         WS        02,DFHBMUNP,PIC,X,VALUE,X'40'
+*          02  DFHBMFSE PIC X VALUE X'C1'.
+         WS        02,DFHBMFSE,PIC,X,VALUE,X'C1'
+*          02  DFHBMBRY PIC X VALUE X'C8'.
+         WS        02,DFHBMBRY,PIC,X,VALUE,X'C8'
+*          02  DFHUNIMD PIC X VALUE X'C9'.
+         WS        02,DFHUNIMD,PIC,X,VALUE,X'C9'
+*          02  DFHBMDAR PIC X VALUE X'4C'.
+         WS        02,DFHBMDAR,PIC,X,VALUE,X'4C'
+*          02  DFHUNNOD PIC X VALUE X'4D'.
+         WS        02,DFHUNNOD,PIC,X,VALUE,X'4D'
+*          02  DFHBMUNN PIC X VALUE X'50'.
+         WS        02,DFHBMUNN,PIC,X,VALUE,X'50'
+*          02  DFHUNNUM PIC X VALUE X'D1'.
+         WS        02,DFHUNNUM,PIC,X,VALUE,X'D1'
+*          02  DFHUNNUB PIC X VALUE X'D8'.
+         WS        02,DFHUNNUB,PIC,X,VALUE,X'D8'
+*          02  DFHUNINT PIC X VALUE X'D9'.
+         WS        02,DFHUNINT,PIC,X,VALUE,X'D9'
+*          02  DFHUNNON PIC X VALUE X'5D'.
+         WS        02,DFHUNNON,PIC,X,VALUE,X'5D'
+*          02  DFHBMPRO PIC X VALUE X'60'.
+         WS        02,DFHBMPRO,PIC,X,VALUE,X'60'
+*          02  DFHBMPRF PIC X VALUE X'61'.
+         WS        02,DFHBMPRF,PIC,X,VALUE,X'61'
+*          02  DFHPROTI PIC X VALUE X'E8'.
+         WS        02,DFHPROTI,PIC,X,VALUE,X'E8'
+*          02  DFHPROTN PIC X VALUE X'6C'.
+         WS        02,DFHPROTN,PIC,X,VALUE,X'6C'
+*          02  DFHBMASK PIC X VALUE X'F0'.
+         WS        02,DFHBMASK,PIC,X,VALUE,X'F0'
+*          02  DFHBMASF PIC X VALUE X'F1'.
+         WS        02,DFHBMASF,PIC,X,VALUE,X'F1'
+*          02  DFHBMASB PIC X VALUE X'F8'.
+*      * Mapping
+         WS        02,DFHBMASB,PIC,X,VALUE,X'F8'
+*          02  DFHBMEOF PIC X VALUE X'80'.
+         WS        02,DFHBMEOF,PIC,X,VALUE,X'80'
+*          02  DFHBMCUR PIC X VALUE X'02'.
+         WS        02,DFHBMCUR,PIC,X,VALUE,X'02'
+*          02  DFHBMEF  PIC X VALUE X'82'.
+*      * Extended Attributes
+         WS        02,DFHBMEF,PIC,X,VALUE,X'82'
+*          02  DFHDFCOL PIC X VALUE X'00'.
+         WS        02,DFHDFCOL,PIC,X,VALUE,X'00'
+*          02  DFHBLUE  PIC X VALUE X'F1'.
+         WS        02,DFHBLUE,PIC,X,VALUE,X'F1'
+*          02  DFHRED   PIC X VALUE X'F2'.
+         WS        02,DFHRED,PIC,X,VALUE,X'F2'
+*          02  DFHPINK  PIC X VALUE X'F3'.
+         WS        02,DFHPINK,PIC,X,VALUE,X'F3'
+*          02  DFHGREEN PIC X VALUE X'F4'.
+         WS        02,DFHGREEN,PIC,X,VALUE,X'F4'
+*          02  DFHTURQ  PIC X VALUE X'F5'.
+         WS        02,DFHTURQ,PIC,X,VALUE,X'F5'
+*          02  DFHYELLO PIC X VALUE X'F6'.
+         WS        02,DFHYELLO,PIC,X,VALUE,X'F6'
+*          02  DFHNEUTR PIC X VALUE X'F7'.
+* 
+         WS        02,DFHNEUTR,PIC,X,VALUE,X'F7'
+*         01  MYCOMM.
+         WS      01,MYCOMM
+*             02  COMMIND  PIC X.
+         WS        02,COMMIND,PIC,X
+*             02  COMMNAME PIC X(40).
+         WS        02,COMMNAME,PIC,X(40)
+*             02  COMMADDR PIC X(40).
+         WS        02,COMMADDR,PIC,X(40)
+*             02  COMMZIP  PIC X(5).
+         WS        02,COMMZIP,PIC,X(5)
+*         77  MYGUI6   PIC X(7)  VALUE 'GUI6   '.
+         WS      77,MYGUI6,PIC,X(7),VALUE,'GUI6   '
+*         77  OCCSUM   PIC 9(7)  COMP-3.
+         WS      77,OCCSUM,PIC,9(7),COMP_3
+*         77  OCCINDX  PIC 9(2)  COMP.
+         WS      77,OCCINDX,PIC,9(2),COMP
+*         77  LOOPCTRL PIC 9(2)  COMP.
+         WS      77,LOOPCTRL,PIC,9(2),COMP
+*         77  SUMLEN   PIC 9(2)  COMP.
+         WS      77,SUMLEN,PIC,9(2),COMP
+*         01  OCCZONE  PIC 99.
+         WS      01,OCCZONE,PIC,99
+*         01  FILLER REDEFINES OCCZONE.
+         WS      01,FILLER,REDEFINES,OCCZONE
+*             02  FILLER   PIC X.
+         WS        02,FILLER,PIC,X
+*             02  OCCZONE2 PIC X.
+         WS        02,OCCZONE2,PIC,X
+*         01  OCCCURSO.
+         WS      01,OCCCURSO
+*             02  FILLER  PIC X(7)  VALUE 'OCCURS('.
+         WS        02,FILLER,PIC,X(7),VALUE,'OCCURS('
+*             02  OCCNUM  PIC X.
+         WS        02,OCCNUM,PIC,X
+*             02  FILLER  PIC X     VALUE ')'.
+         WS        02,FILLER,PIC,X,VALUE,')'
+*         01  SHOWMSG.
+         WS      01,SHOWMSG
+*             02  FILLER  PIC X(3)  VALUE 'MO='.
+         WS        02,FILLER,PIC,X(3),VALUE,'MO='
+*             02  SHOWMO  PIC XX.
+         WS        02,SHOWMO,PIC,XX
+*             02  FILLER  PIC X(5)  VALUE ' DAY='.
+         WS        02,FILLER,PIC,X(5),VALUE,' DAY='
+*             02  SHOWDAY PIC XX.
+         WS        02,SHOWDAY,PIC,XX
+*             02  FILLER  PIC X(4)  VALUE ' YR='.
+         WS        02,FILLER,PIC,X(4),VALUE,' YR='
+*             02  SHOWYR  PIC XX.
+         WS        02,SHOWYR,PIC,XX
+*         01  BADKEY.
+         WS      01,BADKEY
+*             02  FILLER  PIC X(26) VALUE 'NO ACTION FOR AID KEY HEX '.
+         WS        02,FILLER,PIC,X(26),VALUE,'NO ACTION FOR AID KEY HEXX
+                '
+*             02  HEXKEY  PIC X(2).
+         WS        02,HEXKEY,PIC,X(2)
+*             02  FILLER  PIC X(6)  VALUE SPACES.
+         WS        02,FILLER,PIC,X(6),VALUE,SPACES
+*         77  NOMODS   PIC X(34)
+*                      VALUE 'NO FIELDS CHANGED                 '.
+         WS      77,NOMODS,PIC,X(34),VALUE,'NO FIELDS CHANGED          X
+                      '
+*         01  FAILMSG.
+         WS      01,FAILMSG
+*             02  FILLER  PIC X(8)  VALUE 'MAPFAIL/'.
+         WS        02,FILLER,PIC,X(8),VALUE,'MAPFAIL/'
+*             02  FAILIND PIC X.
+         WS        02,FAILIND,PIC,X
+*             02  FILLER  PIC X(25) VALUE ' HAS OCCURRED            '.
+         WS        02,FILLER,PIC,X(25),VALUE,' HAS OCCURRED            X
+               '
+*         77  ENDMSG   PIC X(34)
+*                      VALUE 'TRANSACTION COMPLETE - PRESS CLEAR'.
+         WS      77,ENDMSG,PIC,X(34),VALUE,'TRANSACTION COMPLETE - PRESX
+               S CLEAR'
+*         01  WORK1.
+         WS      01,WORK1
+*             02  FILLER PIC X(3).
+         WS        02,FILLER,PIC,X(3)
+*             02  RESP2  PIC X.
+         WS        02,RESP2,PIC,X
+*         LINKAGE SECTION.
+         LINKAGE SECTION
+*         01  DFHCOMMAREA.
+         WS      01,DFHCOMMAREA
+*             02  FILLER PIC X(86).
+         WS        02,FILLER,PIC,X(86)
+*         PROCEDURE DIVISION USING DFHEIBLK DFHCOMMAREA.
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*      *  XC    COMMIND(86),COMMIND CLEAR COMMAREA
+*             MOVE LOW-VALUES TO MYCOMM.
+*      *  ICM   R5,15,TCTTECA      ADDRESS RECEIVED COMMAREA ?
+*      *  BNZ   NOT1ST             EXIT IF OK
+*ZC    275         MOVE  LOW_VALUES,TO,MYCOMM
+         MOVE  LOW_VALUES,TO,MYCOMM
+         PERIOD 
+*             IF EIBCALEN NOT = 0 THEN GO TO NOT1ST.
+*ZC    278         IF    EIBCALEN,NOT,=,0,THEN
+         IF    EIBCALEN,NOT,=,0,THEN
+*      * SETUP DSA COMMAREA
+*      *  LA    R5,COMMIND         ADDRESS DSA COMMAREA
+*      *  USING COMMIND,R5
+*      * RESEND4  EQU   *
+*ZC    278         GO    TO,NOT1ST
+         GO    TO,NOT1ST
+         PERIOD 
+*         RESEND4.
+*      * INITIAL GUI4 MAP
+         LABEL RESEND4
+*             EXEC CICS SEND MAP('GUI4') MAPSET('MAP01C') MAPONLY ERASE
+*ZC    285         EXEC  CICS,SEND,MAP('GUI4'),MAPSET('MAP01C'),MAPONLYX
+               ,ERASE
+         EXEC  CICS,SEND,MAP('GUI4'),MAPSET('MAP01C'),MAPONLY,ERASE
+         PERIOD 
+*                       END-EXEC.
+*      *  MVI   COMMIND,C'1'       SET GUI4 REENTRY POINT
+*             MOVE '1' TO COMMIND.
+*      *  B     RETURN             EXIT
+*ZC    288         MOVE  '1',TO,COMMIND
+         MOVE  '1',TO,COMMIND
+         PERIOD 
+*             GO TO ECRETURN.
+*      * NOT1ST   EQU   *
+*ZC    290         GO    TO,ECRETURN
+         GO    TO,ECRETURN
+         PERIOD 
+*         NOT1ST.
+*      * PROCESS INPUT
+         LABEL NOT1ST
+*             MOVE DFHCOMMAREA TO MYCOMM.
+*      *  CLI   COMMIND,C'1'       COMMAREA=1 ?
+*      *  BE    GUI4RENT           EXIT IF IT IS
+*      *  CLI   COMMIND,C'2'       COMMAREA=2 ?
+*      *  BE    GUI6RENT           EXIT IF IT IS
+*      *  CLI   COMMIND,C'3'       COMMAREA=3 ?
+*      *  BE    GUI6HRNT           EXIT IF IT IS
+*      *  DC    H'0'               BAD COMMAREA
+*ZC    294         MOVE  DFHCOMMAREA,TO,MYCOMM
+         MOVE  DFHCOMMAREA,TO,MYCOMM
+         PERIOD 
+*             IF COMMIND = '1' THEN GO TO GUI4RENT.
+*ZC    302         IF    COMMIND,=,'1',THEN
+         IF    COMMIND,=,'1',THEN
+*ZC    302         GO    TO,GUI4RENT
+         GO    TO,GUI4RENT
+         PERIOD 
+*             IF COMMIND = '2' THEN GO TO GUI6RENT.
+*ZC    303         IF    COMMIND,=,'2',THEN
+         IF    COMMIND,=,'2',THEN
+*ZC    303         GO    TO,GUI6RENT
+         GO    TO,GUI6RENT
+         PERIOD 
+*             IF COMMIND = '3' THEN GO TO GUI6HRNT.
+*ZC    304         IF    COMMIND,=,'3',THEN
+         IF    COMMIND,=,'3',THEN
+*ZC    304         GO    TO,GUI6HRNT
+         GO    TO,GUI6HRNT
+         PERIOD 
+*             GO TO ABEND.
+*      * GUI4RENT EQU   *
+*ZC    305         GO    TO,ABEND
+         GO    TO,ABEND
+         PERIOD 
+*         GUI4RENT.
+*      * PROCESS GUI4 INPUT
+         LABEL GUI4RENT
+*             EXEC CICS IGNORE CONDITION MAPFAIL END-EXEC.
+*ZC    309         EXEC  CICS,IGNORE,CONDITION,MAPFAIL
+         EXEC  CICS,IGNORE,CONDITION,MAPFAIL
+         PERIOD 
+*             EXEC CICS RECEIVE MAP('GUI4') MAPSET('MAP01C') END-EXEC.
+*ZC    310         EXEC  CICS,RECEIVE,MAP('GUI4'),MAPSET('MAP01C')
+         EXEC  CICS,RECEIVE,MAP('GUI4'),MAPSET('MAP01C')
+         PERIOD 
+*      *  CLI   EIBAID,DFHPF3      PF3 ?
+*      *  BE    GUI6               YES, EXIT TO START GUI6
+*             IF EIBAID = DFHPF3   THEN GO TO GUI6.
+*ZC    313         IF    EIBAID,=,DFHPF3,THEN
+         IF    EIBAID,=,DFHPF3,THEN
+*      *  CLI   EIBAID,DFHCLEAR    CLEAR ?
+*      *  BE    RESEND4            YES, EXIT TO REFRESH DISPLAY
+*ZC    313         GO    TO,GUI6
+         GO    TO,GUI6
+         PERIOD 
+*             IF EIBAID = DFHCLEAR THEN GO TO RESEND4.
+*ZC    316         IF    EIBAID,=,DFHCLEAR,THEN
+         IF    EIBAID,=,DFHCLEAR,THEN
+*      *  CLC   INPUTI,=C'END'     REQUEST TO END ?
+*      *  BE    GUI6               EXIT IF IT IS
+*ZC    316         GO    TO,RESEND4
+         GO    TO,RESEND4
+         PERIOD 
+*             IF INPUTI = 'END' THEN GO TO GUI6.
+*ZC    319         IF    INPUTI,=,'END',THEN
+         IF    INPUTI,=,'END',THEN
+*      *  MVC   REPLYO,INPUTI      DISPLAY THE INPUT
+*ZC    319         GO    TO,GUI6
+         GO    TO,GUI6
+         PERIOD 
+*             MOVE INPUTI TO REPLYO.
+*ZC    321         MOVE  INPUTI,TO,REPLYO
+         MOVE  INPUTI,TO,REPLYO
+         PERIOD 
+*             EXEC CICS SEND MAP('GUI4') MAPSET('MAP01C') END-EXEC.
+*ZC    322         EXEC  CICS,SEND,MAP('GUI4'),MAPSET('MAP01C')
+         EXEC  CICS,SEND,MAP('GUI4'),MAPSET('MAP01C')
+         PERIOD 
+*      *  B     RETURN             LOOP
+*             GO TO ECRETURN.
+*      * GUI6     EQU   *
+*ZC    324         GO    TO,ECRETURN
+         GO    TO,ECRETURN
+         PERIOD 
+*         GUI6.
+*      * INITIAL GUI6 MAP
+*      *  XC    COMMIND(86),COMMIND CLEAR COMMAREA
+         LABEL GUI6
+*             MOVE LOW-VALUES TO MYCOMM.
+*ZC    329         MOVE  LOW_VALUES,TO,MYCOMM
+         MOVE  LOW_VALUES,TO,MYCOMM
+         PERIOD 
+*             EXEC CICS SEND MAP('GUI6') MAPSET('MAP01C') MAPONLY ERASE
+*ZC    330         EXEC  CICS,SEND,MAP('GUI6'),MAPSET('MAP01C'),MAPONLYX
+               ,ERASE
+         EXEC  CICS,SEND,MAP('GUI6'),MAPSET('MAP01C'),MAPONLY,ERASE
+         PERIOD 
+*                       END-EXEC.
+*      *  MVI   COMMIND,C'2'       SET GUI6 REENTRY POINT
+*             MOVE '2' TO COMMIND.
+*      *  B     RETURN             EXIT
+*ZC    333         MOVE  '2',TO,COMMIND
+         MOVE  '2',TO,COMMIND
+         PERIOD 
+*             GO TO ECRETURN.
+*      * GUI6RENT EQU   *
+*ZC    335         GO    TO,ECRETURN
+         GO    TO,ECRETURN
+         PERIOD 
+*         GUI6RENT.
+         LABEL GUI6RENT
+*             EXEC  CICS HANDLE CONDITION MAPFAIL(MAPFAILS) END-EXEC.
+*ZC    338         EXEC  CICS,HANDLE,CONDITION,MAPFAIL(MAPFAILS)
+         EXEC  CICS,HANDLE,CONDITION,MAPFAIL(MAPFAILS)
+         PERIOD 
+*             EXEC  CICS RECEIVE MAP('GUI6') MAPSET('MAP01C') END-EXEC.
+*ZC    339         EXEC  CICS,RECEIVE,MAP('GUI6'),MAPSET('MAP01C')
+         EXEC  CICS,RECEIVE,MAP('GUI6'),MAPSET('MAP01C')
+         PERIOD 
+*      * SHORTRD  EQU   *
+*         SHORTRD.
+*      *  CLI   EIBAID,DFHENTER    ENTER ?
+*      *  BE    GUI6DATA           EXIT IF IT IS
+         LABEL SHORTRD
+*             IF EIBAID = DFHENTER THEN GO TO GUI6DATA.
+*ZC    344         IF    EIBAID,=,DFHENTER,THEN
+         IF    EIBAID,=,DFHENTER,THEN
+*      *  CLI   EIBAID,DFHPF1      PF1 ?
+*      *  BE    GUI6HELP           EXIT IF IT IS
+*ZC    344         GO    TO,GUI6DATA
+         GO    TO,GUI6DATA
+         PERIOD 
+*             IF EIBAID = DFHPF1   THEN GO TO GUI6HELP.
+*ZC    347         IF    EIBAID,=,DFHPF1,THEN
+         IF    EIBAID,=,DFHPF1,THEN
+*      *  CLI   EIBAID,DFHPF2      PF2 ?
+*      *  BE    EAU                EXIT IF IT IS
+*ZC    347         GO    TO,GUI6HELP
+         GO    TO,GUI6HELP
+         PERIOD 
+*             IF EIBAID = DFHPF2   THEN GO TO EAU.
+*ZC    350         IF    EIBAID,=,DFHPF2,THEN
+         IF    EIBAID,=,DFHPF2,THEN
+*      *  CLI   EIBAID,DFHPF3      PF3 ?
+*      *  BE    ALLDONE            EXIT IF IT IS
+*ZC    350         GO    TO,EAU
+         GO    TO,EAU
+         PERIOD 
+*             IF EIBAID = DFHPF3   THEN GO TO ALLDONE.
+*ZC    353         IF    EIBAID,=,DFHPF3,THEN
+         IF    EIBAID,=,DFHPF3,THEN
+*      *  CLI   EIBAID,DFHCLEAR    CLEAR ?
+*      *  BE    GUI6               YES, EXIT TO REFRESH DISPLAY
+*ZC    353         GO    TO,ALLDONE
+         GO    TO,ALLDONE
+         PERIOD 
+*             IF EIBAID = DFHCLEAR THEN GO TO GUI6.
+*ZC    356         IF    EIBAID,=,DFHCLEAR,THEN
+         IF    EIBAID,=,DFHCLEAR,THEN
+*      * BAD KEY
+*      *  UNPK  HEXKEY(3),EIBAID(2) UNPACK AID
+*      *  TR    HEXKEY(2),HEXTAB-240 TRANSLATE
+*      *  MVI   HEXKEY+2,C' '      CLEAR EXTRA BYTE
+*ZC    356         GO    TO,GUI6
+         GO    TO,GUI6
+         PERIOD 
+*             IF EIBAID = DFHPF4  THEN MOVE 'F4' TO HEXKEY.
+*ZC    361         IF    EIBAID,=,DFHPF4,THEN
+         IF    EIBAID,=,DFHPF4,THEN
+*ZC    361         MOVE  'F4',TO,HEXKEY
+         MOVE  'F4',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF5  THEN MOVE 'F5' TO HEXKEY.
+*ZC    362         IF    EIBAID,=,DFHPF5,THEN
+         IF    EIBAID,=,DFHPF5,THEN
+*ZC    362         MOVE  'F5',TO,HEXKEY
+         MOVE  'F5',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF6  THEN MOVE 'F6' TO HEXKEY.
+*ZC    363         IF    EIBAID,=,DFHPF6,THEN
+         IF    EIBAID,=,DFHPF6,THEN
+*ZC    363         MOVE  'F6',TO,HEXKEY
+         MOVE  'F6',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF7  THEN MOVE 'F7' TO HEXKEY.
+*ZC    364         IF    EIBAID,=,DFHPF7,THEN
+         IF    EIBAID,=,DFHPF7,THEN
+*ZC    364         MOVE  'F7',TO,HEXKEY
+         MOVE  'F7',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF8  THEN MOVE 'F8' TO HEXKEY.
+*ZC    365         IF    EIBAID,=,DFHPF8,THEN
+         IF    EIBAID,=,DFHPF8,THEN
+*ZC    365         MOVE  'F8',TO,HEXKEY
+         MOVE  'F8',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF9  THEN MOVE 'F9' TO HEXKEY.
+*ZC    366         IF    EIBAID,=,DFHPF9,THEN
+         IF    EIBAID,=,DFHPF9,THEN
+*ZC    366         MOVE  'F9',TO,HEXKEY
+         MOVE  'F9',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF10 THEN MOVE '7A' TO HEXKEY.
+*ZC    367         IF    EIBAID,=,DFHPF10,THEN
+         IF    EIBAID,=,DFHPF10,THEN
+*ZC    367         MOVE  '7A',TO,HEXKEY
+         MOVE  '7A',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF11 THEN MOVE '7B' TO HEXKEY.
+*ZC    368         IF    EIBAID,=,DFHPF11,THEN
+         IF    EIBAID,=,DFHPF11,THEN
+*ZC    368         MOVE  '7B',TO,HEXKEY
+         MOVE  '7B',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF12 THEN MOVE '7C' TO HEXKEY.
+*ZC    369         IF    EIBAID,=,DFHPF12,THEN
+         IF    EIBAID,=,DFHPF12,THEN
+*ZC    369         MOVE  '7C',TO,HEXKEY
+         MOVE  '7C',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF13 THEN MOVE 'C1' TO HEXKEY.
+*ZC    370         IF    EIBAID,=,DFHPF13,THEN
+         IF    EIBAID,=,DFHPF13,THEN
+*ZC    370         MOVE  'C1',TO,HEXKEY
+         MOVE  'C1',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF14 THEN MOVE 'C2' TO HEXKEY.
+*ZC    371         IF    EIBAID,=,DFHPF14,THEN
+         IF    EIBAID,=,DFHPF14,THEN
+*ZC    371         MOVE  'C2',TO,HEXKEY
+         MOVE  'C2',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF15 THEN MOVE 'C3' TO HEXKEY.
+*ZC    372         IF    EIBAID,=,DFHPF15,THEN
+         IF    EIBAID,=,DFHPF15,THEN
+*ZC    372         MOVE  'C3',TO,HEXKEY
+         MOVE  'C3',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF16 THEN MOVE 'C4' TO HEXKEY.
+*ZC    373         IF    EIBAID,=,DFHPF16,THEN
+         IF    EIBAID,=,DFHPF16,THEN
+*ZC    373         MOVE  'C4',TO,HEXKEY
+         MOVE  'C4',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF17 THEN MOVE 'C5' TO HEXKEY.
+*ZC    374         IF    EIBAID,=,DFHPF17,THEN
+         IF    EIBAID,=,DFHPF17,THEN
+*ZC    374         MOVE  'C5',TO,HEXKEY
+         MOVE  'C5',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF18 THEN MOVE 'C6' TO HEXKEY.
+*ZC    375         IF    EIBAID,=,DFHPF18,THEN
+         IF    EIBAID,=,DFHPF18,THEN
+*ZC    375         MOVE  'C6',TO,HEXKEY
+         MOVE  'C6',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF19 THEN MOVE 'C7' TO HEXKEY.
+*ZC    376         IF    EIBAID,=,DFHPF19,THEN
+         IF    EIBAID,=,DFHPF19,THEN
+*ZC    376         MOVE  'C7',TO,HEXKEY
+         MOVE  'C7',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF20 THEN MOVE 'C8' TO HEXKEY.
+*ZC    377         IF    EIBAID,=,DFHPF20,THEN
+         IF    EIBAID,=,DFHPF20,THEN
+*ZC    377         MOVE  'C8',TO,HEXKEY
+         MOVE  'C8',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF21 THEN MOVE 'C9' TO HEXKEY.
+*ZC    378         IF    EIBAID,=,DFHPF21,THEN
+         IF    EIBAID,=,DFHPF21,THEN
+*ZC    378         MOVE  'C9',TO,HEXKEY
+         MOVE  'C9',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF22 THEN MOVE '4A' TO HEXKEY.
+*ZC    379         IF    EIBAID,=,DFHPF22,THEN
+         IF    EIBAID,=,DFHPF22,THEN
+*ZC    379         MOVE  '4A',TO,HEXKEY
+         MOVE  '4A',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF23 THEN MOVE '4B' TO HEXKEY.
+*ZC    380         IF    EIBAID,=,DFHPF23,THEN
+         IF    EIBAID,=,DFHPF23,THEN
+*ZC    380         MOVE  '4B',TO,HEXKEY
+         MOVE  '4B',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPF24 THEN MOVE '4C' TO HEXKEY.
+*ZC    381         IF    EIBAID,=,DFHPF24,THEN
+         IF    EIBAID,=,DFHPF24,THEN
+*ZC    381         MOVE  '4C',TO,HEXKEY
+         MOVE  '4C',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPA1  THEN MOVE '6C' TO HEXKEY.
+*ZC    382         IF    EIBAID,=,DFHPA1,THEN
+         IF    EIBAID,=,DFHPA1,THEN
+*ZC    382         MOVE  '6C',TO,HEXKEY
+         MOVE  '6C',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPA2  THEN MOVE '6E' TO HEXKEY.
+*ZC    383         IF    EIBAID,=,DFHPA2,THEN
+         IF    EIBAID,=,DFHPA2,THEN
+*ZC    383         MOVE  '6E',TO,HEXKEY
+         MOVE  '6E',TO,HEXKEY
+         PERIOD 
+*             IF EIBAID = DFHPA3  THEN MOVE '6B' TO HEXKEY.
+*ZC    384         IF    EIBAID,=,DFHPA3,THEN
+         IF    EIBAID,=,DFHPA3,THEN
+*      *  MVC   ERRMSGO,BADKEY     MOVE BAD KEY MESSAGE
+*ZC    384         MOVE  '6B',TO,HEXKEY
+         MOVE  '6B',TO,HEXKEY
+         PERIOD 
+*             MOVE BADKEY TO ERRMSGO.
+*      *  B     REDISP             EXIT
+*ZC    386         MOVE  BADKEY,TO,ERRMSGO
+         MOVE  BADKEY,TO,ERRMSGO
+         PERIOD 
+*             GO TO REDISP.
+*      * EAU      EQU   *
+*ZC    388         GO    TO,REDISP
+         GO    TO,REDISP
+         PERIOD 
+*         EAU.
+         LABEL EAU
+*             EXEC CICS SEND CONTROL ERASEAUP CURSOR END-EXEC.
+*ZC    391         EXEC  CICS,SEND,CONTROL,ERASEAUP,CURSOR
+         EXEC  CICS,SEND,CONTROL,ERASEAUP,CURSOR
+         PERIOD 
+*      *  B     RETURN             EXIT
+*             GO TO ECRETURN.
+*      * GUI6DATA EQU   *
+*ZC    393         GO    TO,ECRETURN
+         GO    TO,ECRETURN
+         PERIOD 
+*         GUI6DATA.
+*      * ENTER PRESSED
+*      * DISPLAY CURSOR LOCATION
+*      *  MVC   CURSO,=9C'?'       MARK CURSOR LOCATION UNKNOWN
+         LABEL GUI6DATA
+*             MOVE '?????????' TO CURSO.
+*      *  TM    NAMEF,DFHBMCUR     CURSOR ON NAME ?
+*      *  BNO   CURS01             EXIT IF NOT
+*      *  MVC   CURSO,=CL9'NAME'   MARK CURSOR LOCATION
+*ZC    400         MOVE  '?????????',TO,CURSO
+         MOVE  '?????????',TO,CURSO
+         PERIOD 
+*             IF NAMEF = DFHBMCUR OR
+*                NAMEF = DFHBMEF  THEN
+*ZC    404         IF    NAMEF,=,DFHBMCUR,OR,NAMEF,=,DFHBMEF,THEN
+         IF    NAMEF,=,DFHBMCUR,OR,NAMEF,=,DFHBMEF,THEN
+*             MOVE 'NAME     ' TO CURSO
+*      *  B     GUI6PROC           EXIT
+*ZC    406         MOVE  'NAME     ',TO,CURSO
+         MOVE  'NAME     ',TO,CURSO
+*             GO TO GUI6PROC.
+*      * CURS01   EQU   *
+*      *  TM    ADDRF,DFHBMCUR     CURSOR ON ADDR ?
+*      *  BNO   CURS02             EXIT IF NOT
+*      *  MVC   CURSO,=CL9'ADDR'   MARK CURSOR LOCATION
+*ZC    408         GO    TO,GUI6PROC
+         GO    TO,GUI6PROC
+         PERIOD 
+*             IF ADDRF = DFHBMCUR OR
+*                ADDRF = DFHBMEF  THEN
+*ZC    413         IF    ADDRF,=,DFHBMCUR,OR,ADDRF,=,DFHBMEF,THEN
+         IF    ADDRF,=,DFHBMCUR,OR,ADDRF,=,DFHBMEF,THEN
+*             MOVE 'ADDR     ' TO CURSO
+*      *  B     GUI6PROC           EXIT
+*ZC    415         MOVE  'ADDR     ',TO,CURSO
+         MOVE  'ADDR     ',TO,CURSO
+*             GO TO GUI6PROC.
+*      * CURS02   EQU   *
+*      *  TM    ZIPF,DFHBMCUR      CURSOR ON ZIP ?
+*      *  BNO   CURS03             EXIT IF NOT
+*      *  MVC   CURSO,=CL9'ZIP'    MARK CURSOR LOCATION
+*ZC    417         GO    TO,GUI6PROC
+         GO    TO,GUI6PROC
+         PERIOD 
+*             IF ZIPF  = DFHBMCUR OR
+*                ZIPF  = DFHBMEF  THEN
+*ZC    422         IF    ZIPF,=,DFHBMCUR,OR,ZIPF,=,DFHBMEF,THEN
+         IF    ZIPF,=,DFHBMCUR,OR,ZIPF,=,DFHBMEF,THEN
+*             MOVE 'ZIP      ' TO CURSO
+*      *  B     GUI6PROC           EXIT
+*ZC    424         MOVE  'ZIP      ',TO,CURSO
+         MOVE  'ZIP      ',TO,CURSO
+*             GO TO GUI6PROC.
+*      * CURS03   EQU   *
+*      *  LA    R6,1               COUNT OCCURS
+*      *  LA    R7,TESTOCCF        ADDRESS OCCURS
+*ZC    426         GO    TO,GUI6PROC
+         GO    TO,GUI6PROC
+         PERIOD 
+*             MOVE 1 TO OCCINDX.
+*      * OCCLOOP  EQU   *
+*ZC    430         MOVE  1,TO,OCCINDX
+         MOVE  1,TO,OCCINDX
+         PERIOD 
+*         OCCLOOP.
+*      *  TM    0(R7),DFHBMCUR     CURSOR ON THIS OCCURS ?
+*      *  BO    CURSOCC            EXIT IF IT IS
+         LABEL OCCLOOP
+*             IF TESTOCCF IN TESTOCCD (OCCINDX) = DFHBMCUR OR
+*                TESTOCCF IN TESTOCCD (OCCINDX) = DFHBMEF  THEN
+*ZC    435         IF    TESTOCCF,IN,TESTOCCD,'(',OCCINDX,')',=,DFHBMCUX
+               R,OR,TESTOCCF,IN,TESTOCCD,'(',OCCINDX,')',=,DFHBMEF,THEN
+         IF    TESTOCCF,IN,TESTOCCD,'(',OCCINDX,')',=,DFHBMCUR,OR,TESTOX
+               CCF,IN,TESTOCCD,'(',OCCINDX,')',=,DFHBMEF,THEN
+*             GO TO CURSOCC.
+*      *  AHI   R6,1               BUMP OCCURS COUNT
+*ZC    437         GO    TO,CURSOCC
+         GO    TO,CURSOCC
+         PERIOD 
+*             ADD 1 TO OCCINDX.
+*      *  CHI   R6,6               GOT TO END ?
+*      *  BE    CURS04             EXIT
+*ZC    439         ADD   1,TO,OCCINDX
+         ADD   1,TO,OCCINDX
+         PERIOD 
+*             IF OCCINDX = 6 THEN GO TO CURS04.
+*ZC    442         IF    OCCINDX,=,6,THEN
+         IF    OCCINDX,=,6,THEN
+*      *  AHI   R7,3+5             BUMP TO NEXT OCCURS
+*      *  B     OCCLOOP            LOOP
+*ZC    442         GO    TO,CURS04
+         GO    TO,CURS04
+         PERIOD 
+*             GO TO OCCLOOP.
+*      * CURSOCC  EQU   *
+*ZC    445         GO    TO,OCCLOOP
+         GO    TO,OCCLOOP
+         PERIOD 
+*         CURSOCC.
+*      *  MVC   CURSO,=CL9'OCCURS(.)' MARK CURSOR LOCATION
+*      *  STC   R6,CURSO+7         STORE OCCURS NUMBER
+*      *  OI    CURSO+7,X'F0'      CONVERT TO CHAR
+         LABEL CURSOCC
+*             MOVE OCCINDX  TO OCCZONE.
+*ZC    451         MOVE  OCCINDX,TO,OCCZONE
+         MOVE  OCCINDX,TO,OCCZONE
+         PERIOD 
+*             MOVE OCCZONE2 TO OCCNUM.
+*ZC    452         MOVE  OCCZONE2,TO,OCCNUM
+         MOVE  OCCZONE2,TO,OCCNUM
+         PERIOD 
+*             MOVE OCCCURSO TO CURSO.
+*      *  B     GUI6PROC           EXIT
+*ZC    453         MOVE  OCCCURSO,TO,CURSO
+         MOVE  OCCCURSO,TO,CURSO
+         PERIOD 
+*             GO TO GUI6PROC.
+*      * CURS04   EQU   *
+*ZC    455         GO    TO,GUI6PROC
+         GO    TO,GUI6PROC
+         PERIOD 
+*         CURS04.
+*      *  TM    DATEF,DFHBMCUR     CURSOR ON DATE ?
+*      *  BNO   CURS05             EXIT IF NOT
+*      *  MVC   CURSO,=CL9'GRPNAME' MARK CURSOR LOCATION
+         LABEL CURS04
+*             IF DATEF = DFHBMCUR OR
+*                DATEF = DFHBMEF  THEN
+*ZC    461         IF    DATEF,=,DFHBMCUR,OR,DATEF,=,DFHBMEF,THEN
+         IF    DATEF,=,DFHBMCUR,OR,DATEF,=,DFHBMEF,THEN
+*             MOVE 'GRPNAME  ' TO CURSO
+*      *  B     GUI6PROC           EXIT
+*ZC    463         MOVE  'GRPNAME  ',TO,CURSO
+         MOVE  'GRPNAME  ',TO,CURSO
+*             GO TO GUI6PROC.
+*      * CURS05   EQU   *
+*      *  TM    TESTPCOF,DFHBMCUR  CURSOR ON TESTPCO ?
+*      *  BNO   GUI6PROC           EXIT IF NOT
+*      *  MVC   CURSO,=CL9'TESTPCO' MARK CURSOR LOCATION
+*ZC    465         GO    TO,GUI6PROC
+         GO    TO,GUI6PROC
+         PERIOD 
+*             IF TESTPCOF = DFHBMCUR OR
+*                TESTPCOF = DFHBMEF  THEN
+*ZC    470         IF    TESTPCOF,=,DFHBMCUR,OR,TESTPCOF,=,DFHBMEF,THEN
+         IF    TESTPCOF,=,DFHBMCUR,OR,TESTPCOF,=,DFHBMEF,THEN
+*             MOVE 'TESTPCO  ' TO CURSO.
+*      * GUI6PROC EQU   *
+*ZC    472         MOVE  'TESTPCO  ',TO,CURSO
+         MOVE  'TESTPCO  ',TO,CURSO
+         PERIOD 
+*         GUI6PROC.
+*      *  LH    R6,NAMEL           TOTAL
+*      *  AH    R6,ADDRL                 ALL
+*      *  AH    R6,ZIPL                      LENGTHS
+*      *  BNZ   SOMEDATA           EXIT IF NOT ZERO
+         LABEL GUI6PROC
+*             MOVE 0 TO SUMLEN.
+*ZC    479         MOVE  0,TO,SUMLEN
+         MOVE  0,TO,SUMLEN
+         PERIOD 
+*             ADD NAMEL, ADDRL, ZIPL TO SUMLEN.
+*ZC    480         ADD   NAMEL,ADDRL,ZIPL,TO,SUMLEN
+         ADD   NAMEL,ADDRL,ZIPL,TO,SUMLEN
+         PERIOD 
+*             IF SUMLEN NOT = 0 THEN GO TO SOMEDATA.
+*ZC    481         IF    SUMLEN,NOT,=,0,THEN
+         IF    SUMLEN,NOT,=,0,THEN
+*      * NO FIELDS MODIFIED
+*      *  MVC   ERRMSGO,NOMODS     MOVE NO FIELDS MESSAGE
+*ZC    481         GO    TO,SOMEDATA
+         GO    TO,SOMEDATA
+         PERIOD 
+*             MOVE NOMODS TO ERRMSGO.
+*      * REDISP   EQU   *
+*ZC    484         MOVE  NOMODS,TO,ERRMSGO
+         MOVE  NOMODS,TO,ERRMSGO
+         PERIOD 
+*         REDISP.
+*      *  CLI   COMMNAME,X'00'     ANY PREVIOUS NAME ?
+*      *  BE    TRYADDR2           EXIT IF NOT
+*      *  MVC   NAMEHDO,=C'NAME'   SHOW HEADER
+*      *  MVC   NEWNAMEO,COMMNAME  MOVE ANY PREVIOUS NAME
+         LABEL REDISP
+*             IF COMMNAME NOT = LOW-VALUES THEN
+*ZC    491         IF    COMMNAME,NOT,=,LOW_VALUES,THEN
+         IF    COMMNAME,NOT,=,LOW_VALUES,THEN
+*             MOVE 'NAME' TO NAMEHDO
+*ZC    492         MOVE  'NAME',TO,NAMEHDO
+         MOVE  'NAME',TO,NAMEHDO
+*             MOVE COMMNAME TO NEWNAMEO.
+*      * TRYADDR2 EQU   *
+*      *  CLI   COMMADDR,X'00'     ANY PREVIOUS ADDR ?
+*      *  BE    TRYZIP2            EXIT IF NOT
+*      *  MVC   ADDRHDO,=C'ADDR'   SHOW HEADER
+*      *  MVC   NEWADDRO,COMMADDR  MOVE ANY PREVIOUS ADDR
+*ZC    493         MOVE  COMMNAME,TO,NEWNAMEO
+         MOVE  COMMNAME,TO,NEWNAMEO
+         PERIOD 
+*             IF COMMADDR NOT = LOW-VALUES THEN
+*ZC    499         IF    COMMADDR,NOT,=,LOW_VALUES,THEN
+         IF    COMMADDR,NOT,=,LOW_VALUES,THEN
+*             MOVE 'ADDR' TO ADDRHDO
+*ZC    500         MOVE  'ADDR',TO,ADDRHDO
+         MOVE  'ADDR',TO,ADDRHDO
+*             MOVE COMMADDR TO NEWADDRO.
+*      * TRYZIP2  EQU   *
+*      *  CLI   COMMZIP,X'00'      ANY PREVIOUS ZIP ?
+*      *  BE    TRYPAY             EXIT IF NOT
+*      *  MVC   ZIPHDO,=C'ZIP '    SHOW HEADER
+*      *  MVC   NEWZIPO,COMMZIP    MOVE ANY PREVIOUS ZIP
+*ZC    501         MOVE  COMMADDR,TO,NEWADDRO
+         MOVE  COMMADDR,TO,NEWADDRO
+         PERIOD 
+*             IF COMMZIP NOT = LOW-VALUES THEN
+*ZC    507         IF    COMMZIP,NOT,=,LOW_VALUES,THEN
+         IF    COMMZIP,NOT,=,LOW_VALUES,THEN
+*             MOVE 'ZIP ' TO ZIPHDO
+*ZC    508         MOVE  'ZIP ',TO,ZIPHDO
+         MOVE  'ZIP ',TO,ZIPHDO
+*             MOVE COMMZIP TO NEWZIPO.
+*      *  B     TRYPAY             EXIT
+*ZC    509         MOVE  COMMZIP,TO,NEWZIPO
+         MOVE  COMMZIP,TO,NEWZIPO
+         PERIOD 
+*             GO TO TRYPAY.
+*      * SOMEDATA EQU   *
+*ZC    511         GO    TO,TRYPAY
+         GO    TO,TRYPAY
+         PERIOD 
+*         SOMEDATA.
+*      *  XC    ERRMSGO,ERRMSGO    CLEAR ERROR MESSAGE
+*      *  MVI   NAMEHDO,X'00'      ASSUME NO NAME HEADER
+*      *  MVI   NEWNAMEO,X'00'     ASSUME NO NAME
+         LABEL SOMEDATA
+*             MOVE LOW-VALUES TO ERRMSGO.
+*ZC    517         MOVE  LOW_VALUES,TO,ERRMSGO
+         MOVE  LOW_VALUES,TO,ERRMSGO
+         PERIOD 
+*             MOVE LOW-VALUES TO NAMEHDO.
+*ZC    518         MOVE  LOW_VALUES,TO,NAMEHDO
+         MOVE  LOW_VALUES,TO,NAMEHDO
+         PERIOD 
+*             MOVE LOW-VALUES TO NEWNAMEO.
+*      *  OC    NAMEL,NAMEL        ANY NAME ENTERED ?
+*      *  BZ    NONAME             EXIT IF NOT
+*ZC    519         MOVE  LOW_VALUES,TO,NEWNAMEO
+         MOVE  LOW_VALUES,TO,NEWNAMEO
+         PERIOD 
+*             IF NAMEL = 0 THEN GO TO NONAME.
+*ZC    522         IF    NAMEL,=,0,THEN
+         IF    NAMEL,=,0,THEN
+*      *  MVC   NAMEHDO,=C'NAME'   SHOW HEADER
+*      *  MVC   NEWNAMEO,NAMEI     SHOW NAME
+*      *  MVC   COMMNAME,NAMEI     SAVE NAME
+*ZC    522         GO    TO,NONAME
+         GO    TO,NONAME
+         PERIOD 
+*             MOVE 'NAME' TO NAMEHDO.
+*ZC    526         MOVE  'NAME',TO,NAMEHDO
+         MOVE  'NAME',TO,NAMEHDO
+         PERIOD 
+*             MOVE NAMEI  TO NEWNAMEO.
+*ZC    527         MOVE  NAMEI,TO,NEWNAMEO
+         MOVE  NAMEI,TO,NEWNAMEO
+         PERIOD 
+*             MOVE NAMEI  TO COMMNAME.
+*      *  B     TRYADDR            EXIT
+*ZC    528         MOVE  NAMEI,TO,COMMNAME
+         MOVE  NAMEI,TO,COMMNAME
+         PERIOD 
+*             GO TO TRYADDR.
+*      * NONAME   EQU   *
+*ZC    530         GO    TO,TRYADDR
+         GO    TO,TRYADDR
+         PERIOD 
+*         NONAME.
+*      *  CLI   COMMNAME,X'00'     ANY PREVIOUS NAME ?
+*      *  BE    TRYADDR            EXIT IF NONE
+         LABEL NONAME
+*             IF COMMNAME NOT = LOW-VALUES THEN
+*      *  MVC   NAMEHDO,=C'NAME'   SHOW HEADER
+*      *  MVC   NEWNAMEO,COMMNAME  SHOW PREVIOUS NAME
+*ZC    535         IF    COMMNAME,NOT,=,LOW_VALUES,THEN
+         IF    COMMNAME,NOT,=,LOW_VALUES,THEN
+*             MOVE 'NAME'   TO NAMEHDO
+*ZC    538         MOVE  'NAME',TO,NAMEHDO
+         MOVE  'NAME',TO,NAMEHDO
+*             MOVE COMMNAME TO NEWNAMEO.
+*      * TRYADDR  EQU   *
+*ZC    539         MOVE  COMMNAME,TO,NEWNAMEO
+         MOVE  COMMNAME,TO,NEWNAMEO
+         PERIOD 
+*         TRYADDR.
+*      *  MVI   ADDRHDO,X'00'      ASSUME NO ADDR HEADER
+*      *  MVI   NEWADDRO,X'00'     ASSUME NO ADDR
+*      *  OC    ADDRL,ADDRL        ANY ADDR ENTERED ?
+*      *  BZ    NOADDR             EXIT IF NOT
+         LABEL TRYADDR
+*             IF ADDRL = 0 THEN GO TO NOADDR.
+*ZC    546         IF    ADDRL,=,0,THEN
+         IF    ADDRL,=,0,THEN
+*      *  MVC   ADDRHDO,=C'ADDR'   SHOW HEADER
+*      *  MVC   NEWADDRO,ADDRI     SHOW ADDR
+*      *  MVC   COMMADDR,ADDRI     SAVE ADDR
+*ZC    546         GO    TO,NOADDR
+         GO    TO,NOADDR
+         PERIOD 
+*             MOVE 'ADDR' TO ADDRHDO.
+*ZC    550         MOVE  'ADDR',TO,ADDRHDO
+         MOVE  'ADDR',TO,ADDRHDO
+         PERIOD 
+*             MOVE ADDRI  TO NEWADDRO.
+*ZC    551         MOVE  ADDRI,TO,NEWADDRO
+         MOVE  ADDRI,TO,NEWADDRO
+         PERIOD 
+*             MOVE ADDRI  TO COMMADDR.
+*      *  B     TRYZIP             EXIT
+*ZC    552         MOVE  ADDRI,TO,COMMADDR
+         MOVE  ADDRI,TO,COMMADDR
+         PERIOD 
+*             GO TO TRYZIP.
+*      * NOADDR   EQU   *
+*ZC    554         GO    TO,TRYZIP
+         GO    TO,TRYZIP
+         PERIOD 
+*         NOADDR.
+*      *  CLI   COMMADDR,X'00'     ANY PREVIOUS ADDR ?
+*      *  BE    TRYZIP             EXIT IF NONE
+         LABEL NOADDR
+*             IF COMMADDR NOT = LOW-VALUES THEN
+*      *  MVC   ADDRHDO,=C'ADDR'   SHOW HEADER
+*      *  MVC   NEWADDRO,COMMADDR  SHOW PREVIOUS ADDR
+*ZC    559         IF    COMMADDR,NOT,=,LOW_VALUES,THEN
+         IF    COMMADDR,NOT,=,LOW_VALUES,THEN
+*             MOVE 'ADDR'   TO ADDRHDO
+*ZC    562         MOVE  'ADDR',TO,ADDRHDO
+         MOVE  'ADDR',TO,ADDRHDO
+*             MOVE COMMADDR TO NEWADDRO.
+*      * TRYZIP   EQU   *
+*ZC    563         MOVE  COMMADDR,TO,NEWADDRO
+         MOVE  COMMADDR,TO,NEWADDRO
+         PERIOD 
+*         TRYZIP.
+*      *  MVI   ZIPHDO,X'00'       ASSUME NO ZIP HEADER
+*      *  MVI   NEWZIPO,X'00'      ASSUME NO ZIP
+         LABEL TRYZIP
+*             MOVE LOW-VALUES TO ZIPHDO.
+*ZC    568         MOVE  LOW_VALUES,TO,ZIPHDO
+         MOVE  LOW_VALUES,TO,ZIPHDO
+         PERIOD 
+*             MOVE LOW-VALUES TO NEWZIPO.
+*      *  OC    ZIPL,ZIPL          ANY ZIP ENTERED ?
+*      *  BZ    NOZIP              EXIT IF NOT
+*ZC    569         MOVE  LOW_VALUES,TO,NEWZIPO
+         MOVE  LOW_VALUES,TO,NEWZIPO
+         PERIOD 
+*             IF ZIPL = 0 THEN GO TO NOZIP.
+*ZC    572         IF    ZIPL,=,0,THEN
+         IF    ZIPL,=,0,THEN
+*      *  MVC   ZIPHDO,=C'ZIP '    SHOW HEADER
+*      *  MVC   NEWZIPO,ZIPI       SHOW ZIP
+*      *  MVC   COMMZIP,ZIPI       SAVE ZIP
+*ZC    572         GO    TO,NOZIP
+         GO    TO,NOZIP
+         PERIOD 
+*             MOVE 'ZIP ' TO ZIPHDO.
+*ZC    576         MOVE  'ZIP ',TO,ZIPHDO
+         MOVE  'ZIP ',TO,ZIPHDO
+         PERIOD 
+*             MOVE ZIPI   TO NEWZIPO.
+*ZC    577         MOVE  ZIPI,TO,NEWZIPO
+         MOVE  ZIPI,TO,NEWZIPO
+         PERIOD 
+*             MOVE ZIPI   TO COMMZIP.
+*      *  B     TRYPAY             EXIT
+*ZC    578         MOVE  ZIPI,TO,COMMZIP
+         MOVE  ZIPI,TO,COMMZIP
+         PERIOD 
+*             GO TO TRYPAY.
+*      * NOZIP    EQU   *
+*ZC    580         GO    TO,TRYPAY
+         GO    TO,TRYPAY
+         PERIOD 
+*         NOZIP.
+*      *  CLI   COMMZIP,X'00'      ANY PREVIOUS ZIP ?
+*      *  BE    TRYPAY             EXIT IF NONE
+         LABEL NOZIP
+*             IF COMMZIP NOT = LOW-VALUES THEN
+*      *  MVC   ZIPHDO,=C'ZIP '    SHOW HEADER
+*      *  MVC   NEWZIPO,COMMZIP    SHOW PREVIOUS ZIP
+*ZC    585         IF    COMMZIP,NOT,=,LOW_VALUES,THEN
+         IF    COMMZIP,NOT,=,LOW_VALUES,THEN
+*             MOVE 'ZIP '  TO ZIPHDO
+*ZC    588         MOVE  'ZIP ',TO,ZIPHDO
+         MOVE  'ZIP ',TO,ZIPHDO
+*             MOVE COMMZIP TO NEWZIPO.
+*      * TRYPAY   EQU   *
+*ZC    589         MOVE  COMMZIP,TO,NEWZIPO
+         MOVE  COMMZIP,TO,NEWZIPO
+         PERIOD 
+*         TRYPAY.
+*      *  OC    TESTPCOL,TESTPCOL  ANY TESTPCO ?
+*      *  BZ    DOGRP              EXIT IF NONE
+         LABEL TRYPAY
+*             IF TESTPCOL = 0 THEN GO TO DOGRP.
+*ZC    594         IF    TESTPCOL,=,0,THEN
+         IF    TESTPCOL,=,0,THEN
+*      *  MVC   PAYMEO,=C'Pay the Author' MOVE MESSAGE
+*      *  MVC   PAYME1O,TESTPCOI   MOVE INPUT DATA
+*      *  XC    TESTPCOO,TESTPCOO  CLEAR THE INPUT DATA, NOT WANTED
+*ZC    594         GO    TO,DOGRP
+         GO    TO,DOGRP
+         PERIOD 
+*             MOVE 'Pay the Author' TO PAYMEO.
+*ZC    598         MOVE  'Pay the Author',TO,PAYMEO
+         MOVE  'Pay the Author',TO,PAYMEO
+         PERIOD 
+*             MOVE TESTPCOI         TO PAYME1O.
+*ZC    599         MOVE  TESTPCOI,TO,PAYME1O
+         MOVE  TESTPCOI,TO,PAYME1O
+         PERIOD 
+*             MOVE LOW-VALUES       TO TESTPCOO.
+*      * DOGRP    EQU   *
+*ZC    600         MOVE  LOW_VALUES,TO,TESTPCOO
+         MOVE  LOW_VALUES,TO,TESTPCOO
+         PERIOD 
+*         DOGRP.
+*      * PROCESS GRPNAME
+*      *  MVC   SHOWMDYO,=C'MO=.. DAY=.. YR=..' MOVE MESSAGE
+*      *  MVC   SHOWMDYO+3(2),MOO  MOVE MONTH
+*      *  MVC   SHOWMDYO+10(2),DAYO MOVE DAY
+*      *  MVC   SHOWMDYO+16(2),YRO MOVE YEAR
+         LABEL DOGRP
+*             MOVE MOO TO SHOWMO.
+*ZC    608         MOVE  MOO,TO,SHOWMO
+         MOVE  MOO,TO,SHOWMO
+         PERIOD 
+*             MOVE DAYO TO SHOWDAY.
+*ZC    609         MOVE  DAYO,TO,SHOWDAY
+         MOVE  DAYO,TO,SHOWDAY
+         PERIOD 
+*             MOVE YRO TO SHOWYR.
+*ZC    610         MOVE  YRO,TO,SHOWYR
+         MOVE  YRO,TO,SHOWYR
+         PERIOD 
+*             MOVE SHOWMSG TO SHOWMDYO.
+*      * PROCESS OCCURS
+*      *  SP    OCCSUM,OCCSUM      CLEAR OCCURS SUM
+*ZC    611         MOVE  SHOWMSG,TO,SHOWMDYO
+         MOVE  SHOWMSG,TO,SHOWMDYO
+         PERIOD 
+*             MOVE 0 TO OCCSUM.
+*      *  LA    R6,5               R6=NO. OF OCCURS
+*ZC    614         MOVE  0,TO,OCCSUM
+         MOVE  0,TO,OCCSUM
+         PERIOD 
+*             MOVE 1 TO LOOPCTRL.
+*      *  LA    R7,TESTOCCO        OCCURS DATA
+*      * OCCSUMLP EQU   *
+*ZC    616         MOVE  1,TO,LOOPCTRL
+         MOVE  1,TO,LOOPCTRL
+         PERIOD 
+*         OCCSUMLP.
+*      *  CLI   0(R7),X'00'        ANY DATA HERE ?
+*      *  BE    OCCSUMIN           EXIT IF NONE
+         LABEL OCCSUMLP
+*             IF TESTOCCI IN TESTOCCD (LOOPCTRL) NOT = LOW-VALUES THEN
+*      *  PACK  WORK,0(5,R7)       PACK DATA
+*      *  AP    OCCSUM,WORK        SUM IT
+*ZC    622         IF    TESTOCCI,IN,TESTOCCD,'(',LOOPCTRL,')',NOT,=,LOX
+               W_VALUES,THEN
+         IF    TESTOCCI,IN,TESTOCCD,'(',LOOPCTRL,')',NOT,=,LOW_VALUES,TX
+               HEN
+*             ADD TESTOCCI IN TESTOCCD (LOOPCTRL) TO OCCSUM.
+*      * OCCSUMIN EQU   *
+*      *  AHI   R7,3+5             BUMP TO NEXT OCCURS
+*      *  BCT   R6,OCCSUMLP        LOOP
+*ZC    625         ADD   TESTOCCI,IN,TESTOCCD,'(',LOOPCTRL,')',TO,OCCSUX
+               M
+         ADD   TESTOCCI,IN,TESTOCCD,'(',LOOPCTRL,')',TO,OCCSUM
+         PERIOD 
+*             ADD 1 TO LOOPCTRL.
+*ZC    629         ADD   1,TO,LOOPCTRL
+         ADD   1,TO,LOOPCTRL
+         PERIOD 
+*             IF LOOPCTRL NOT = 6 THEN GO TO OCCSUMLP.
+*ZC    630         IF    LOOPCTRL,NOT,=,6,THEN
+         IF    LOOPCTRL,NOT,=,6,THEN
+*      *  UNPK  OCCSUMO(7),OCCSUM  UNPACK RESULT
+*ZC    630         GO    TO,OCCSUMLP
+         GO    TO,OCCSUMLP
+         PERIOD 
+*             MOVE OCCSUM TO OCCSUMO.
+*      *  B     SENDIT             EXIT
+*ZC    632         MOVE  OCCSUM,TO,OCCSUMO
+         MOVE  OCCSUM,TO,OCCSUMO
+         PERIOD 
+*             GO TO SENDIT.
+*      * GUI6HELP EQU   *
+*ZC    634         GO    TO,SENDIT
+         GO    TO,SENDIT
+         PERIOD 
+*         GUI6HELP.
+*      * GUI6 HELP MAP
+         LABEL GUI6HELP
+*             EXEC CICS SEND MAP('GUI6H') MAPSET('MAP01C') MAPONLY ERASX
+               E
+*ZC    638         EXEC  CICS,SEND,MAP('GUI6H'),MAPSET('MAP01C'),MAPONLX
+               Y,ERASE
+         EXEC  CICS,SEND,MAP('GUI6H'),MAPSET('MAP01C'),MAPONLY,ERASE
+         PERIOD 
+*                       END-EXEC.
+*      *  MVI   COMMIND,C'3'       SET GUI6 REENTRY POINT
+*             MOVE '3' TO COMMIND.
+*      * RETURN   EQU   *
+*ZC    641         MOVE  '3',TO,COMMIND
+         MOVE  '3',TO,COMMIND
+         PERIOD 
+*         ECRETURN.
+         LABEL ECRETURN
+*             EXEC CICS RETURN TRANSID('BMC1') COMMAREA(MYCOMM)
+*ZC    644         EXEC  CICS,RETURN,TRANSID('BMC1'),COMMAREA(MYCOMM),LX
+               ENGTH(86)
+         EXEC  CICS,RETURN,TRANSID('BMC1'),COMMAREA(MYCOMM),LENGTH(86)
+         PERIOD 
+*                       LENGTH(86) END-EXEC.
+*      * GUI6HRNT EQU   *
+*         GUI6HRNT.
+*      * RETURN FROM HELP SCREEN
+*      *  MVI   COMMIND,C'2'       SET GUI6 REENTRY POINT
+         LABEL GUI6HRNT
+*             MOVE '2' TO COMMIND.
+*      *  CLI   EIBAID,DFHCLEAR    CLEAR ?
+*      *  BE    GUI6               YES, EXIT TO REFRESH DISPLAY
+*ZC    650         MOVE  '2',TO,COMMIND
+         MOVE  '2',TO,COMMIND
+         PERIOD 
+*             IF EIBAID = DFHCLEAR THEN GO TO GUI6.
+*ZC    653         IF    EIBAID,=,DFHCLEAR,THEN
+         IF    EIBAID,=,DFHCLEAR,THEN
+*      *  CLI   EIBAID,DFHPF3      PF3 ?
+*      *  BNE   REDISP             EXIT IF NOT
+*ZC    653         GO    TO,GUI6
+         GO    TO,GUI6
+         PERIOD 
+*             IF EIBAID NOT = DFHPF3 THEN GO TO REDISP.
+*ZC    656         IF    EIBAID,NOT,=,DFHPF3,THEN
+         IF    EIBAID,NOT,=,DFHPF3,THEN
+*      * ALLDONE  EQU   *
+*ZC    656         GO    TO,REDISP
+         GO    TO,REDISP
+         PERIOD 
+*         ALLDONE.
+*      *  MVC   ERRMSGO,ENDMSG     MOVE ENDING MESSAGE
+         LABEL ALLDONE
+*             MOVE ENDMSG TO ERRMSGO.
+*ZC    660         MOVE  ENDMSG,TO,ERRMSGO
+         MOVE  ENDMSG,TO,ERRMSGO
+         PERIOD 
+*             EXEC CICS SEND MAP('GUI6') MAPSET('MAP01C') END-EXEC.
+*ZC    661         EXEC  CICS,SEND,MAP('GUI6'),MAPSET('MAP01C')
+         EXEC  CICS,SEND,MAP('GUI6'),MAPSET('MAP01C')
+         PERIOD 
+*             EXEC CICS RETURN END-EXEC.
+*ZC    662         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+         PERIOD 
+*      * SENDIT   EQU   *
+*         SENDIT.
+*      * TEST MAP AS LABEL WITH FROM AND LENGTH
+         LABEL SENDIT
+*             EXEC CICS SEND MAP(MYGUI6) MAPSET('MAP01C') FROM(GUI6O)
+*ZC    666         EXEC  CICS,SEND,MAP(MYGUI6),MAPSET('MAP01C'),FROM(GUX
+               I6O),LENGTH(LENGTH,OF,GUI6O),ERASE
+         EXEC  CICS,SEND,MAP(MYGUI6),MAPSET('MAP01C'),FROM(GUI6O),LENGTX
+               H(LENGTH,OF,GUI6O),ERASE
+         PERIOD 
+*                       LENGTH(LENGTH OF GUI6O) ERASE END-EXEC.
+*      *  B     RETURN             EXIT
+*             GO TO ECRETURN.
+*      * MAPFAILS EQU   *
+*ZC    669         GO    TO,ECRETURN
+         GO    TO,ECRETURN
+         PERIOD 
+*         MAPFAILS.
+*      *  CLC   EIBRESP2,=F'2'     SHORT READ ?
+*      *  BE    SHORTRD            EXIT IF IT IS
+         LABEL MAPFAILS
+*             MOVE EIBRESP2 TO WORK1.
+*ZC    674         MOVE  EIBRESP2,TO,WORK1
+         MOVE  EIBRESP2,TO,WORK1
+         PERIOD 
+*             IF RESP2 = X'02' THEN GO TO SHORTRD.
+*ZC    675         IF    RESP2,=,X'02',THEN
+         IF    RESP2,=,X'02',THEN
+*      *  MVC   FAILMSG+8(1),EIBRESP2+3 SET RESP2
+*      *  OI    FAILMSG+8,X'F0'    CONVERT TO CHAR
+*ZC    675         GO    TO,SHORTRD
+         GO    TO,SHORTRD
+         PERIOD 
+*             IF RESP2 = X'01' THEN MOVE '1' TO FAILIND.
+*ZC    678         IF    RESP2,=,X'01',THEN
+         IF    RESP2,=,X'01',THEN
+*ZC    678         MOVE  '1',TO,FAILIND
+         MOVE  '1',TO,FAILIND
+         PERIOD 
+*             IF RESP2 = X'03' THEN MOVE '3' TO FAILIND.
+*ZC    679         IF    RESP2,=,X'03',THEN
+         IF    RESP2,=,X'03',THEN
+*ZC    679         MOVE  '3',TO,FAILIND
+         MOVE  '3',TO,FAILIND
+         PERIOD 
+*             IF RESP2 = X'04' THEN MOVE '4' TO FAILIND.
+*ZC    680         IF    RESP2,=,X'04',THEN
+         IF    RESP2,=,X'04',THEN
+*ZC    680         MOVE  '4',TO,FAILIND
+         MOVE  '4',TO,FAILIND
+         PERIOD 
+*             IF RESP2 = X'05' THEN MOVE '5' TO FAILIND.
+*ZC    681         IF    RESP2,=,X'05',THEN
+         IF    RESP2,=,X'05',THEN
+*ZC    681         MOVE  '5',TO,FAILIND
+         MOVE  '5',TO,FAILIND
+         PERIOD 
+*             IF RESP2 = X'06' THEN MOVE '6' TO FAILIND.
+*ZC    682         IF    RESP2,=,X'06',THEN
+         IF    RESP2,=,X'06',THEN
+*ZC    682         MOVE  '6',TO,FAILIND
+         MOVE  '6',TO,FAILIND
+         PERIOD 
+*             IF RESP2 = X'07' THEN MOVE '7' TO FAILIND.
+*ZC    683         IF    RESP2,=,X'07',THEN
+         IF    RESP2,=,X'07',THEN
+*ZC    683         MOVE  '7',TO,FAILIND
+         MOVE  '7',TO,FAILIND
+         PERIOD 
+*             IF RESP2 = X'08' THEN MOVE '8' TO FAILIND.
+*ZC    684         IF    RESP2,=,X'08',THEN
+         IF    RESP2,=,X'08',THEN
+*      *  MVC   ERRMSGO,FAILMSG    MOVE FAILURE MESSAGE
+*ZC    684         MOVE  '8',TO,FAILIND
+         MOVE  '8',TO,FAILIND
+         PERIOD 
+*             MOVE FAILMSG TO ERRMSGO.
+*      *  B     SENDIT             EXIT
+*ZC    686         MOVE  FAILMSG,TO,ERRMSGO
+         MOVE  FAILMSG,TO,ERRMSGO
+         PERIOD 
+*             GO TO SENDIT.
+*ZC    688         GO    TO,SENDIT
+         GO    TO,SENDIT
+         PERIOD 
+*         ABEND.
+         LABEL ABEND
+*             EXEC CICS ABEND ABCODE('BMC1') END-EXEC.
+*ZC    690         EXEC  CICS,ABEND,ABCODE('BMC1')
+         EXEC  CICS,ABEND,ABCODE('BMC1')
+         PERIOD 
+         PROCEDURE END
+         END   

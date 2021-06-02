@@ -1,0 +1,640 @@
+1                                         High Level Assembler Option Summary                   (PTF UI64093)   Page    1
+-                                                                                            HLASM R6.0  2021/03/26 05.18
+0  No Overriding ASMAOPT Parameters
+   No Overriding Parameters
+   No Process Statements
+
+
+   Options for this Assembly
+0                    NOADATA
+                       ALIGN
+                       ASA
+                       BATCH
+                       CODEPAGE(047C)
+                     NOCOMPAT
+                     NODATAMAP
+                     NODBCS
+                     NODECK
+                       DXREF
+                       ESD
+                     NOEXIT
+                       FAIL(NOMSG,NOMNOTE,MAXERRS(500))
+                       FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,NOSIGNED,NOSUBSTR,NOTRUNC,USING0)
+                     NOFOLD
+                     NOGOFF
+                     NOINFO
+                       ILMA
+                       LANGUAGE(EN)
+                     NOLIBMAC
+                       LINECOUNT(60)
+                       LIST(121)
+                       MACHINE(,NOLIST)
+                       MXREF(SOURCE)
+                       OBJECT
+                       OPTABLE(UNI,NOLIST)
+                     NOPCONTROL
+                     NOPESTOP
+                     NOPROFILE
+                     NORA2
+                     NORENT
+                       RLD
+                       RXREF
+                       SECTALGN(8)
+                       SIZE(MAX)
+                     NOSUPRWARN
+                       SYSPARM()
+                     NOTERM
+                     NOTEST
+                       THREAD
+                     NOTRANSLATE
+                       TYPECHECK(MAGNITUDE,REGISTER)
+                       USING(NOLIMIT,MAP,WARN(15))
+                     NOWORKFILE
+                       XREF(SHORT,UNREFS)
+
+   No Overriding DD Names
+1                                              External Symbol Dictionary                                       Page    2
+-Symbol   Type   Id     Address  Length   Owner Id Flags Alias-of                            HLASM R6.0  2021/03/26 05.18
+0          PC 00000001 00000000 00000000             00
+ DODOC     SD 00000002 00000000 000001AE             00
+ $$WA$$    ER 00000003
+ $$WA$$    SD 00000004 000001B0 000001A8             00
+1                                                                                                               Page    3
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 05.18
+0                                      1          AGO   .SKIP                                                    00010000
+                                       2 .SKIP    ANOP                                                           00060000
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    4
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 05.18
+0                                      4 *                                                                       00080000
+                       00000           5 R0       EQU   0                                                        00090000
+                       00001           6 R1       EQU   1       STANDARD                                         00100000
+                       00002           7 R2       EQU   2        EQUATES                                         00110000
+                       00003           8 R3       EQU   3         FOR                                            00120000
+                       00004           9 R4       EQU   4          GENERAL                                       00130000
+                       00005          10 R5       EQU   5           PURPOSE                                      00140000
+                       00006          11 R6       EQU   6            REGISTERS.                                  00150000
+                       00007          12 R7       EQU   7             YOU                                        00160000
+                       00008          13 R8       EQU   8              MIGHT                                     00170000
+                       00009          14 R9       EQU   9               AS                                       00180000
+                       0000A          15 R10      EQU   10               WELL                                    00190000
+                       0000B          16 R11      EQU   11                JUST                                   00200000
+                       0000C          17 R12      EQU   12                 GET                                   00210000
+                       0000D          18 R13      EQU   13                  USED                                 00220000
+                       0000E          19 R14      EQU   14                   TO                                  00230000
+                       0000F          20 R15      EQU   15                    IT.                                00240000
+                                      21 *                                                                       00250000
+ 000000                00000 001AE    22 DODOC    CSECT                                                          00260000
+                                      23          COPY  $MGBLDEF                                                 00270000
+                                      24=.*   Copyright (C) <2020>  Daniel H. Snyder
+                                      25=.*   Structured Programming Macros for the IBM® High Level Assembler
+                                      26=.*   Daniel.H.Snyder@protonmail.com
+                                      27=.*
+                                      28=.* This program is free software: you can redistribute it and/or modify
+                                      29=.* it under the terms of the GNU General Public License as published by
+                                      30=.* the Free Software Foundation, either version 3 of the License, or
+                                      31=.* any later version.
+                                      32=.*
+                                      33=.* This program is distributed in the hope that it will be useful,
+                                      34=.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                      35=.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                      36=.* GNU General Public License for more details.
+                                      37=.*
+                                      38=.* You should have received a copy of the GNU General Public License
+                                      39=.* along with this program. See <https://www.gnu.org/licenses/>.
+                                      40=.*
+                                      41=         GBLA  &$MLVL,&$MBLATH,&$MBL2,&$Y$NDX,&$MPTR
+                                      42=         GBLC  &$MTNAME(255),&$MFNAME(255),&$MCVERB(255),&$MEQ1(255)
+                                      43=         GBLC  &$MEQ2(255),&$EIUSED(255),&$BT,&$BF,&$MNAME
+                                      44=         GBLC  &$ELSETAG(255),&$CONJ(255),&$MFINI(255)
+                                      45=         GBLC  &$MLNAME(255),&$MSNAME(255),&$MENAME(255),&$ERROR
+                                      46=         GBLC  &$ERRSW
+                                      47 *                                                                       00280000
+ 000000 90EC D00C            0000C    48          STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA      00290000
+ 000004 18CF                          49          LR    R12,R15             PRIME BASE REG                       00300000
+ 000006 41B0 C800            00800    50          LA    R11,2048(,R12)      LET'S ADDRESS                        00310000
+ 00000A 41B0 B800            00800    51          LA    R11,2048(,R11)      - ANOTHER 4K                         00320000
+                 R:CB  00000          52          USING DODOC,R12,R11       SET BASE REGISTER FOR PROGRAM        00330000
+ 00000E 181D                          53          LR    R1,R13              COPY POINTER TO CALLER'S SA          00340000
+ 000010 58D0 C01C            0001C    54          L     R13,VCON$WA$        ADDRESS OF MY SAVE/WORK AREA         00350000
+                                      55          IF    (CLR,R1,R1,NE)                                           00360000
+ 000014 1511                          57+         CLR   R1,R1               TWO OPERANDS                         01-IF
+ 000016 A784 0005            00020    61+         JE    $NEXT1              BRANCH IF CC INDICATES FAIL          01-IF
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    5
+   Active Usings: DODOC,R12,R11
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 05.18
+000001A 0000
+ 00001C 00000000                      62 VCON$WA$ DC    V($$WA$$)                                                00370006
+                                      63          ENDIF                                                          00380000
+ 000020                               65+$NEXT1   DC    0H'0'                                                    01-ENDIF
+                  R:D  001B0          66          USING $$WA$$,R13          SEPARATE CSECT FOR REENTRANCY        00390000
+ 000020 5010 D004            001B4    67          ST    R1,SAVEAREA+4       BACK LINK TO CALLER'S SAVE AREA      00400000
+ 000024 50D0 1008            00008    68          ST    R13,8(,R1)          FORWARD LINK TO MY SAVE AREA         00410000
+                                      69 *                                                                       00420000
+ 0001B0                001B0 001A8    70 $$WA$$   CSECT                                                          00430000
+ 0001B0 0000000000000000              71 SAVEAREA DC    18F'0'              MY SAVE AREA                         00440000
+ 000028                00000 001AE    72 DODOC    CSECT                                                          00450000
+                                      73 *                                                                       00460000
+                                      74          OPEN  (SYSPRINT,OUTPUT)                                        00470000
+ 000028                               76+         CNOP  0,4                      Align list to word              01-OPEN
+ 000028 4D10 C030            00030    77+         BAS   1,*+8                    Load reg 1 with list address    01-OPEN
+ 00002C 8F                            78+         DC    AL1(143)                 Option byte                     01-OPEN
+ 00002D 000230                        79+         DC    AL3(SYSPRINT)            DCB or ACB address              01-OPEN
+ 000030 0A13                          80+         SVC   19                       Issue OPEN SVC                  01-OPEN
+                                      81 *                                                                       00480000
+                                      82          PRINT GEN                                                      00490000
+                                      83 *                                                                       00500000
+                                      84 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00510000
+                                      85 *                                                                     * 00520000
+                                      86 *                      THE "DO" STATEMENT                             * 00530000
+                                      87 *                                                                     * 00540000
+                                      88 *      The "DO" MACRO PROVIDES A LOOPING STRUCTURE FOR PERFORMING     * 00550000
+                                      89 *      MULTIPLE PASSES THROUGH THE DESIRED CODE. THE "DO" HAS         * 00560000
+                                      90 *      ADDITIONAL PARAMETERS OVER THE "IF", BUT USES THE SAME         * 00570000
+                                      91 *      STRUCTURE FOR CREATING THE LOGICAL REQUIREMENTS AS THE "IF"    * 00580000
+                                      92 *      MACRO (IT CALLS THE "IF" MACRO TO DO THE PROCESSING OF YOUR    * 00590000
+                                      93 *      LOGIC). THE DIFFERENCE IS THAT AN EXTRA SET OF PARENTHESES     * 00600000
+                                      94 *      MUST SURROUND YOUR ENTIRE LOGIC EXPRESSIONS, DUE TO THE        * 00610000
+                                      95 *      SPECIAL WAY OF HANDLING POSITIONAL PARAMETERS USED BY THE "IF" * 00620000
+                                      96 *      MACRO                                                          * 00630000
+                                      97 *                                                                     * 00640000
+                                      98 *      THE TWO SIMPLEST EXAMPLES ARE THE "DO WHILE" AND THE           * 00650000
+                                      99 *      "DO UNTIL":                                                    * 00660000
+                                     100 *                                                                     * 00670000
+                                     101 *       DO UNTIL=((LTR,R1,R1,NZ))                                     * 00680000
+                                     102 *                                                                     * 00690000
+                                     103 *       DO WHILE=((LTR,R1,R1,NZ))                                     * 00700000
+                                     104 *                                                                     * 00710000
+                                     105 *       THE ONLY OTHER AVAILABLE PARAMETER IS THE "TEST=". "BEFORE"   * 00720000
+                                     106 *       IS THE DEFAULT. "TEST=AFTER" CAUSES THE DO-GROUP TO BE        * 00730000
+                                     107 *       PERFORMED ONE TIME BEFORE THE FIRST TEST IS MADE.             * 00740000
+                                     108 *                                                                     * 00750000
+                                     109 *       DO UNTIL=((LTR,R1,R1,NZ)),TEST=BEFORE                         * 00760000
+                                     110 *                                                                     * 00770000
+                                     111 *       DO WHILE=((LTR,R1,R1,NZ)),TEST=BEFORE                         * 00780000
+                                     112 *                                                                     * 00790000
+                                     113 *       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          * 00800000
+                                     114 *                                                                     * 00810000
+                                     115 *       DO WHILE=((LTR,R1,R1,NZ)),TEST=AFTER                          * 00820000
+                                     116 *                                                                     * 00830000
+                                     117 *       THE DO-GROUP MUST BE TERMINATED WITH AN "ENDDO" STATEMENT:    * 00840000
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    6
+   Active Usings: DODOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 05.18
+0                                    118 *                                                                     * 00850000
+                                     119 *       FOLLOWING THE STATEMENTS TO BE EXECUTED WHEN THE "DO"         * 00860000
+                                     120 *       STATEMENT SUCCEEDS, THERE SHOULD BE AN "ENDO" TO TERMINATE    * 00870000
+                                     121 *       THE LOGIC.                                                    * 00880000
+                                     122 *                                                                     * 00890000
+                                     123 *       SPECIAL NOTE: THE "ENDIF" AND "ENDO" ARE INTERCHANGEABLE.     * 00900000
+                                     124 *       THEY ARE BOTH PROVIDED FOR DOCUMENTATION PURPOSES.            * 00910000
+                                     125 *                                                                     * 00920000
+                                     126 *       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          * 00930000
+                                     127 *                                                                     * 00940000
+                                     128 *                      ONE                                            * 00950000
+                                     129 *                    OR MORE                                          * 00960000
+                                     130 *                  INSTRUCTIONS                                       * 00970000
+                                     131 *                                                                     * 00980000
+                                     132 *       ENDDO                                                         * 00990000
+                                     133 *                                                                     * 01000000
+                                     134 *       THE DEFAULT FOR WHEN THE TEST IS PERFORMED IS BEFORE THE      * 01010000
+                                     135 *       BODY OF THE DO-GROUP IS RUN FOR THE FIRST TIME. IF THE LOGIC  * 01020000
+                                     136 *       TEST(S) FAIL, THEN THE INSTUCTIONS IN THE BODY OF THE         * 01030000
+                                     137 *       ARE BYPASSED ENTIRELY.                                        * 01040000
+                                     138 *                                                                     * 01050000
+                                     139 *       IF YOU NEED THE DO-GROUP TO BE PERFORMED AT LEAST ONCE, THEN  * 01060000
+                                     140 *       CODE THE "TEST=AFTER" PARAMETER. THE DEFAULT FOR "TEST" IS    * 01070000
+                                     141 *       "BEFORE", SO IF THAT IS WHAT YOU WANT, THEN YOU DO NOT NEED   * 01080000
+                                     142 *       TO SPECIFY IT.                                                * 01090000
+                                     143 *                                                                     * 01100000
+                                     144 *       IF YOU SPECIFY "BEFORE", OR DEFAULT TO IT, THEN THE LOGICAL   * 01110000
+                                     145 *       TEST IS DETERMINED BEFORE THE BODY OF CODE IS EXECUTED, AND   * 01120000
+                                     146 *       IF THAT TEST FAILS THEN THE BODY OF CODE IS BYPASSED WITHOUT  * 01130000
+                                     147 *       BEING EXECUTED EVEN ONCE. IF YOU SPECIFY "AFTER", THEN THE    * 01140000
+                                     148 *       CODE IS EXECUTED ONE TIME BEFORE THE LOGICAL TEST IS APPLIED. * 01150000
+                                     149 *       IF THAT TEST FAILS, THEN THAT ONE TIME IS THE ONLY TIME THAT  * 01160000
+                                     150 *       THAT CODE IS EXECUTED.                                        * 01170000
+                                     151 *                                                                     * 01180000
+                                     152 *       NOTE THAT THE ALLOWABLE STUCTURE OF THE CONDITIONAL           * 01190000
+                                     153 *       PARAMETERS INCLUDES ALL OF THE POWER OF THOSE OF THE          * 01200000
+                                     154 *       "IF" MACRO (NOTE ALSO THE REQUIRED ADDITIONAL SET OF          * 01210000
+                                     155 *       PARENTHESES SURROUNDING THE ENTIRE LOGIC STRUCTURE.)          * 01220000
+                                     156 *                                                                     * 01230000
+                                     157 *       DO    WHILE=((LTR,R1,R1,NZ),AND,                     C        * 01240000
+                                     158 *             ((CLC,B,Z,NE),OR,                              C        * 01250000
+                                     159 *             (CLC,C,Z,E))),                                 C        * 01260000
+                                     160 *             TEST=AFTER                                              * 01270000
+                                     161 *                                                                     * 01280000
+                                     162 *                      ONE                                            * 01290000
+                                     163 *                    OR MORE                                          * 01300000
+                                     164 *                  INSTRUCTIONS                                       * 01310000
+                                     165 *                                                                     * 01320000
+                                     166 *       ENDDO                                                         * 01330000
+                                     167 *                                                                     * 01340000
+                                     168 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01350000
+                                     169 * DO WHILE                                                            * 01360000
+                                     170 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01370000
+ 000032 F230 D0E0 D078 00290 00228   171          PACK  PACK1,=Z'0'                                              01380000
+ 000038 D207 D0E9 D048 00299 001F8   172          MVC   TESTNBR,=C'TEST010A'                                     01390000
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    7
+   Active Usings: DODOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 05.18
+0                                    173 TEST010A DO    WHILE=((CP,PACK1,=P'3',NH))                              01400007
+ 00003E F930 D0E0 D079 00290 00229   176+TEST010A CP    PACK1,=P'3'         TWO OPERANDS                         02-IF2
+ 000044 A724 0014            0006C   180+         JH    $FINI3                                                   01-DO
+ 000048 FA30 D0E0 D07A 00290 0022A   181            AP    PACK1,=P'1'                                            01410000
+ 00004E F333 D0F2 D0E0 002A2 00290   182            UNPK  COUNTER,PACK1                                          01420000
+ 000054 96F0 D0F5      002A5         183            OI    COUNTER+3,X'F0'                                        01430000
+                                     184            PUT   SYSPRINT,OUTPUT                                        01440000
+ 000058 4110 D080            00230   188+         LA    1,SYSPRINT                        LOAD PARAMETER REG 1   02-IHBIN
+ 00005C 4100 D0E8            00298   189+         LA    0,OUTPUT                          LOAD PARAMETER REG 0   02-IHBIN
+ 000060 1FFF                         190+         SLR   15,15               CLEAR REGISTER FOR ICM          @L1A 01-PUT
+ 000062 BFF7 1031            00031   191+         ICM   15,7,49(1)          LOAD PUT ROUTINE ADDRESS        @L1C 01-PUT
+ 000066 0DEF                         192+         BASR  14,15               LINK TO PUT ROUTINE             @L3C 01-PUT
+                                     193          ENDDO ,                                                        01450000
+ 000068 A7F4 FFEB            0003E   196+         J     TEST010A         GO BACK AND TRY AGAIN                   02-ENDIF
+ 00006C                              197+$FINI3   DC    0H'0'                                                    02-ENDIF
+                                     198 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01460000
+                                     199 * DO UNTIL                                                            * 01470000
+                                     200 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01480000
+ 00006C F230 D0E0 D078 00290 00228   201          PACK  PACK1,=Z'0'                                              01490000
+ 000072 D207 D0E9 D050 00299 00200   202          MVC   TESTNBR,=C'TEST020A'                                     01500000
+                                     203 TEST020A DO    UNTIL=((CP,PACK1,=P'3',E))                               01510008
+ 000078 F930 D0E0 D079 00290 00229   206+TEST020A CP    PACK1,=P'3'         TWO OPERANDS                         02-IF2
+ 00007E 4780 C0A6            000A6   210+         BE    $FINI5                                                   01-DO
+ 000082 FA30 D0E0 D07A 00290 0022A   211            AP    PACK1,=P'1'                                            01520000
+ 000088 F333 D0F2 D0E0 002A2 00290   212            UNPK  COUNTER,PACK1                                          01530000
+ 00008E 96F0 D0F5      002A5         213            OI    COUNTER+3,X'F0'                                        01540000
+                                     214            PUT   SYSPRINT,OUTPUT                                        01550000
+ 000092 4110 D080            00230   218+         LA    1,SYSPRINT                        LOAD PARAMETER REG 1   02-IHBIN
+ 000096 4100 D0E8            00298   219+         LA    0,OUTPUT                          LOAD PARAMETER REG 0   02-IHBIN
+ 00009A 1FFF                         220+         SLR   15,15               CLEAR REGISTER FOR ICM          @L1A 01-PUT
+ 00009C BFF7 1031            00031   221+         ICM   15,7,49(1)          LOAD PUT ROUTINE ADDRESS        @L1C 01-PUT
+ 0000A0 0DEF                         222+         BASR  14,15               LINK TO PUT ROUTINE             @L3C 01-PUT
+                                     223          ENDDO ,                                                        01560000
+ 0000A2 A7F4 FFEB            00078   226+         J     TEST020A         GO BACK AND TRY AGAIN                   02-ENDIF
+ 0000A6                              227+$FINI5   DC    0H'0'                                                    02-ENDIF
+                                     228 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01570000
+                                     229 * DO WHILE WITH TEST BEFORE                                           * 01580012
+                                     230 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01590000
+ 0000A6 F230 D0E0 D078 00290 00228   231          PACK  PACK1,=Z'0'                                              01600010
+ 0000AC D207 D0E9 D058 00299 00208   232          MVC   TESTNBR,=C'TEST030A'                                     01610000
+                                     233 TEST030A DO    WHILE=((CP,PACK1,=P'3',NH)),TEST=BEFORE                  01620012
+ 0000B2 F930 D0E0 D079 00290 00229   236+TEST030A CP    PACK1,=P'3'         TWO OPERANDS                         02-IF2
+ 0000B8 A724 0014            000E0   240+         JH    $FINI7                                                   01-DO
+ 0000BC FA30 D0E0 D07A 00290 0022A   241            AP    PACK1,=P'1'                                            01630009
+ 0000C2 F333 D0F2 D0E0 002A2 00290   242            UNPK  COUNTER,PACK1                                          01640000
+ 0000C8 96F0 D0F5      002A5         243            OI    COUNTER+3,X'F0'                                        01650000
+                                     244            PUT   SYSPRINT,OUTPUT                                        01660000
+ 0000CC 4110 D080            00230   248+         LA    1,SYSPRINT                        LOAD PARAMETER REG 1   02-IHBIN
+ 0000D0 4100 D0E8            00298   249+         LA    0,OUTPUT                          LOAD PARAMETER REG 0   02-IHBIN
+ 0000D4 1FFF                         250+         SLR   15,15               CLEAR REGISTER FOR ICM          @L1A 01-PUT
+ 0000D6 BFF7 1031            00031   251+         ICM   15,7,49(1)          LOAD PUT ROUTINE ADDRESS        @L1C 01-PUT
+ 0000DA 0DEF                         252+         BASR  14,15               LINK TO PUT ROUTINE             @L3C 01-PUT
+                                     253          ENDDO ,                                                        01670000
+ 0000DC A7F4 FFEB            000B2   256+         J     TEST030A         GO BACK AND TRY AGAIN                   02-ENDIF
+ 0000E0                              257+$FINI7   DC    0H'0'                                                    02-ENDIF
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    8
+   Active Usings: DODOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 05.18
+0                                    258 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01680000
+                                     259 * DO UNTIL WITH TEST BEFORE                                           * 01690012
+                                     260 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01700000
+ 0000E0 F230 D0E0 D078 00290 00228   261          PACK  PACK1,=Z'0'                                              01710000
+ 0000E6 D207 D0E9 D060 00299 00210   262          MVC   TESTNBR,=C'TEST040A'                                     01720000
+                                     263 TEST040A DO    UNTIL=((CP,PACK1,=P'3',E)),TEST=BEFORE                   01730012
+ 0000EC F930 D0E0 D079 00290 00229   266+TEST040A CP    PACK1,=P'3'         TWO OPERANDS                         02-IF2
+ 0000F2 4780 C11A            0011A   270+         BE    $FINI9                                                   01-DO
+ 0000F6 FA30 D0E0 D07A 00290 0022A   271            AP    PACK1,=P'1'                                            01740000
+ 0000FC F333 D0F2 D0E0 002A2 00290   272            UNPK  COUNTER,PACK1                                          01750000
+ 000102 96F0 D0F5      002A5         273            OI    COUNTER+3,X'F0'                                        01760000
+                                     274            PUT   SYSPRINT,OUTPUT                                        01770000
+ 000106 4110 D080            00230   278+         LA    1,SYSPRINT                        LOAD PARAMETER REG 1   02-IHBIN
+ 00010A 4100 D0E8            00298   279+         LA    0,OUTPUT                          LOAD PARAMETER REG 0   02-IHBIN
+ 00010E 1FFF                         280+         SLR   15,15               CLEAR REGISTER FOR ICM          @L1A 01-PUT
+ 000110 BFF7 1031            00031   281+         ICM   15,7,49(1)          LOAD PUT ROUTINE ADDRESS        @L1C 01-PUT
+ 000114 0DEF                         282+         BASR  14,15               LINK TO PUT ROUTINE             @L3C 01-PUT
+                                     283          ENDDO ,                                                        01780000
+ 000116 A7F4 FFEB            000EC   286+         J     TEST040A         GO BACK AND TRY AGAIN                   02-ENDIF
+ 00011A                              287+$FINI9   DC    0H'0'                                                    02-ENDIF
+                                     288 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01781011
+                                     289 * DO WHILE WITH TEST AFTER                                            * 01782012
+                                     290 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01783011
+ 00011A F230 D0E0 D078 00290 00228   291          PACK  PACK1,=Z'0'                                              01784011
+ 000120 D207 D0E9 D068 00299 00218   292          MVC   TESTNBR,=C'TEST050A'                                     01785011
+                                     293 TEST050A DO    WHILE=((CP,PACK1,=P'3',L)),TEST=AFTER                    01786013
+ 000126 47F0 C134            00134   294+         B     $MDE10           EXEC LOOP AT LEAST ONCE                 01-DO
+ 00012A F930 D0E0 D079 00290 00229   297+TEST050A CP    PACK1,=P'3'         TWO OPERANDS                         02-IF2
+ 000130 A7B4 0014            00158   301+         JNL   $FINI11                                                  01-DO
+ 000134                              302+$MDE10   DC    0H'0'                                                    01-DO
+ 000134 FA30 D0E0 D07A 00290 0022A   303            AP    PACK1,=P'1'                                            01787011
+ 00013A F333 D0F2 D0E0 002A2 00290   304            UNPK  COUNTER,PACK1                                          01788011
+ 000140 96F0 D0F5      002A5         305            OI    COUNTER+3,X'F0'                                        01789011
+                                     306            PUT   SYSPRINT,OUTPUT                                        01789111
+ 000144 4110 D080            00230   310+         LA    1,SYSPRINT                        LOAD PARAMETER REG 1   02-IHBIN
+ 000148 4100 D0E8            00298   311+         LA    0,OUTPUT                          LOAD PARAMETER REG 0   02-IHBIN
+ 00014C 1FFF                         312+         SLR   15,15               CLEAR REGISTER FOR ICM          @L1A 01-PUT
+ 00014E BFF7 1031            00031   313+         ICM   15,7,49(1)          LOAD PUT ROUTINE ADDRESS        @L1C 01-PUT
+ 000152 0DEF                         314+         BASR  14,15               LINK TO PUT ROUTINE             @L3C 01-PUT
+                                     315          ENDDO ,                                                        01789211
+ 000154 A7F4 FFEB            0012A   318+         J     TEST050A         GO BACK AND TRY AGAIN                   02-ENDIF
+ 000158                              319+$FINI11  DC    0H'0'                                                    02-ENDIF
+                                     320 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01789311
+                                     321 * DO UNTIL WITH TEST AFTER                                            * 01789412
+                                     322 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01789511
+ 000158 F230 D0E0 D07B 00290 0022B   323          PACK  PACK1,=Z'-1'                                             01789613
+ 00015E D207 D0E9 D070 00299 00220   324          MVC   TESTNBR,=C'TEST060A'                                     01789711
+                                     325 TEST060A DO    UNTIL=((CP,PACK1,=P'0',E)),TEST=AFTER                    01789812
+ 000164 47F0 C172            00172   326+         B     $MDE12           EXEC LOOP AT LEAST ONCE                 01-DO
+ 000168 F930 D0E0 D07C 00290 0022C   329+TEST060A CP    PACK1,=P'0'         TWO OPERANDS                         02-IF2
+ 00016E 4780 C196            00196   333+         BE    $FINI13                                                  01-DO
+ 000172                              334+$MDE12   DC    0H'0'                                                    01-DO
+ 000172 FA30 D0E0 D07A 00290 0022A   335            AP    PACK1,=P'1'                                            01789911
+ 000178 F333 D0F2 D0E0 002A2 00290   336            UNPK  COUNTER,PACK1                                          01790011
+ 00017E 96F0 D0F5      002A5         337            OI    COUNTER+3,X'F0'                                        01790111
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    9
+   Active Usings: DODOC,R12,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 05.18
+0                                    338            PUT   SYSPRINT,OUTPUT                                        01790211
+ 000182 4110 D080            00230   342+         LA    1,SYSPRINT                        LOAD PARAMETER REG 1   02-IHBIN
+ 000186 4100 D0E8            00298   343+         LA    0,OUTPUT                          LOAD PARAMETER REG 0   02-IHBIN
+ 00018A 1FFF                         344+         SLR   15,15               CLEAR REGISTER FOR ICM          @L1A 01-PUT
+ 00018C BFF7 1031            00031   345+         ICM   15,7,49(1)          LOAD PUT ROUTINE ADDRESS        @L1C 01-PUT
+ 000190 0DEF                         346+         BASR  14,15               LINK TO PUT ROUTINE             @L3C 01-PUT
+                                     347          ENDDO ,                                                        01790311
+ 000192 A7F4 FFEB            00168   350+         J     TEST060A         GO BACK AND TRY AGAIN                   02-ENDIF
+ 000196                              351+$FINI13  DC    0H'0'                                                    02-ENDIF
+                                     352 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01791000
+                                     353 *                                                                     * 01800000
+                                     354 *      THESE FOLLOWING STATEMENTS ARE NORMAL zOS TERMINATION.         * 01810000
+                                     355 *                                                                     * 01820000
+                                     356 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01830000
+                                     357 *                                                                       01840000
+                                     358          CLOSE SYSPRINT                                                 01850000
+ 000196 0700                         360+         CNOP  0,4                      ALIGN LIST TO FULLWORD          01-CLOSE
+ 000198 4D10 C1A0            001A0   361+         BAS   1,*+8                    LOAD REG1 W/LIST ADDR           01-CLOSE
+ 00019C 80                           362+         DC    AL1(128)                 OPTION BYTE                     01-CLOSE
+ 00019D 000230                       363+         DC    AL3(SYSPRINT)            DCB OR ACB ADDRESS              01-CLOSE
+ 0001A0 0A14                         364+         SVC   20                       ISSUE CLOSE SVC                 01-CLOSE
+ 0001A2 58D0 D004            001B4   365          L     R13,SAVEAREA+4      ADDRESS OF CALLER'S SAVE AREA        01860000
+ 0001A6 98EC D00C            0000C   366          LM    R14,R12,12(R13)     RESTORE R14 WRAPPED AROUND TO R12    01870000
+                                     367          DROP  R12                 NO LONGER VALID                      01880000
+ 0001AA 1FFF                         368          SLR   R15,R15             SET RETURN CODE TO ZERO              01890000
+ 0001AC 07FE                         369          BR    R14                 RETURN TO CALLER                     01900000
+                                     370 *                                                                       01910000
+ 0001F8                001B0 001A8   371 $$WA$$   CSECT                                                          01920000
+ 0001F8                              372          LTORG                                                          01930000
+ 0001F8 E3C5E2E3F0F1F0C1             373                =C'TEST010A'
+ 000200 E3C5E2E3F0F2F0C1             374                =C'TEST020A'
+ 000208 E3C5E2E3F0F3F0C1             375                =C'TEST030A'
+ 000210 E3C5E2E3F0F4F0C1             376                =C'TEST040A'
+ 000218 E3C5E2E3F0F5F0C1             377                =C'TEST050A'
+ 000220 E3C5E2E3F0F6F0C1             378                =C'TEST060A'
+ 000228 C0                           379                =Z'0'
+ 000229 3C                           380                =P'3'
+ 00022A 1C                           381                =P'1'
+ 00022B D1                           382                =Z'-1'
+ 00022C 0C                           383                =P'0'
+                                     384 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 01930103
+                                     385 SYSPRINT DCB   DDNAME=SYSPRINT,RECFM=FBA,LRECL=133,MACRF=PM,           C01931005
+                                                        DSORG=PS                                                 01932003
+0                                    388+*                       DATA CONTROL BLOCK
+                                     389+*
+ 00022D 000000
+ 000230                              390+SYSPRINT DC    0F'0'          ORIGIN ON WORD BOUNDARY                   01-DCB
+                                     391+*                       DIRECT ACCESS DEVICE INTERFACE
+ 000230 0000000000000000             392+         DC    BL16'0'        FDAD, DVTBL                               01-DCB
+ 000240 00000000                     393+         DC    A(0)           KEYLEN, DEVT, TRBAL                       01-DCB
+                                     394+*                       COMMON ACCESS METHOD INTERFACE
+ 000244 00                           395+         DC    AL1(0)         BUFNO, NUMBER OF BUFFERS                  01-DCB
+ 000245 000001                       396+         DC    AL3(1)         BUFCB, BUFFER POOL CONTROL BLOCK          01-DCB
+ 000248 0000                         397+         DC    AL2(0)         BUFL, BUFFER LENGTH                       01-DCB
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   10
+   Active Usings: DODOC,,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 05.18
+000024A 4000                         398+         DC    BL2'0100000000000000' DSORG, DATA SET ORGANIZATION       01-DCB
+ 00024C 00000001                     399+         DC    A(1)           IOBAD FOR EXCP OR RESERVED                01-DCB
+                                     400+*                       FOUNDATION EXTENSION
+ 000250 00                           401+         DC    BL1'00000000'  BFTEK, BFALN, DCBE INDICATORS             01-DCB
+ 000251 000001                       402+         DC    AL3(1)         EODAD (END OF DATA ROUTINE ADDRESS)       01-DCB
+ 000254 94                           403+         DC    BL1'10010100'  RECFM (RECORD FORMAT)                     01-DCB
+ 000255 000000                       404+         DC    AL3(0)         EXLST (EXIT LIST ADDRESS)                 01-DCB
+                                     405+*                       FOUNDATION BLOCK
+ 000258 E2E8E2D7D9C9D5E3             406+         DC    CL8'SYSPRINT'  DDNAME                                    01-DCB
+ 000260 02                           407+         DC    BL1'00000010'  OFLGS (OPEN FLAGS)                        01-DCB
+ 000261 00                           408+         DC    BL1'00000000'  IFLGS (IOS FLAGS)                         01-DCB
+ 000262 0050                         409+         DC    BL2'0000000001010000' MACR (MACRO FORMAT)                01-DCB
+                                     410+*                       BSAM-BPAM-QSAM INTERFACE
+ 000264 00                           411+         DC    BL1'00000000'  OPTCD, OPTION CODES                       01-DCB
+ 000265 000001                       412+         DC    AL3(1)         CHECK OR INTERNAL QSAM SYNCHRONIZING RTN. 01-DCB
+ 000268 00000001                     413+         DC    A(1)           SYNAD, SYNCHRONOUS ERROR RTN. (3 BYTES)   01-DCB
+ 00026C 0000                         414+         DC    H'0'           INTERNAL ACCESS METHOD FLAGS              01-DCB
+ 00026E 0000                         415+         DC    AL2(0)         BLKSIZE, BLOCK SIZE                       01-DCB
+ 000270 00000000                     416+         DC    F'0'           INTERNAL ACCESS METHOD FLAGS              01-DCB
+ 000274 00000001                     417+         DC    A(1)           INTERNAL ACCESS METHOD USE                01-DCB
+                                     418+*                            QSAM INTERFACE
+ 000278 00000001                     419+         DC    A(1)           EOBAD                                     01-DCB
+ 00027C 00000001                     420+         DC    A(1)           RECAD                                     01-DCB
+ 000280 0000                         421+         DC    H'0'           QSWS (FLAGS) AND EITHER DIRCT OR BUFOFF   01-DCB
+ 000282 0085                         422+         DC    AL2(133)       LRECL                                     01-DCB
+ 000284 00                           423+         DC    BL1'00000000'  EROPT, ERROR OPTION                       01-DCB
+ 000285 000001                       424+         DC    AL3(1)         CNTRL                                     01-DCB
+ 000288 00000000                     425+         DC    H'0,0'         RESERVED AND PRECL                        01-DCB
+ 00028C 00000001                     426+         DC    A(1)           EOB, INTERNAL ACCESS METHOD FIELD         01-DCB
+ 000290 0000000C                     427 PACK1    DC    PL4'0'                                                   01940000
+ 000294 F0F0F0C0                     428 ZONED1   DC    Z'0000'                                                  01950000
+ 000298 4040404040404040             429 OUTPUT   DC    CL133' '                                                 01960000
+ 00031D                0031D 00298   430          ORG   OUTPUT                                                   01970000
+ 000298 40                           431          DC    C' '                                                     01980000
+ 000299 4040404040404040             432 TESTNBR  DC    CL8' '                                                   01990000
+ 0002A1 40                           433          DC    C' '                                                     02000000
+ 0002A2 F0F0F0C0                     434 COUNTER  DC    ZL4'0'                                                   02010000
+ 0002A6                002A6 0031D   435          ORG   OUTPUT+133                                               02020000
+                                     436 *                                                                       02030000
+ 00031D D5                           437 EOFSW    DC    C'N'                SET END-OF-FILE SWITCH TO 'Y' AT EOF 02040000
+ 00031E 000000007C                   438 PL5      DC    PL5'7'                                                   02050000
+ 000323 00
+ 000324                              439          DC    0F'0'                                                    02060000
+                                     440 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02070000
+                                     441 *                                                                     * 02080000
+                                     442 *      THESE FOLLOWING STATEMENTS DEFINE VARIABLES REQUIRED.          * 02090000
+                                     443 *                                                                     * 02100000
+                                     444 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 02110000
+ 000324 0000000C                     445 LEVEL_ONE_PASS_COUNTER DC PL4'0'                                        02120000
+ 000328 C1C1C1C1                     446 A        DC    C'AAAA'                                                  02130000
+ 00032C C2C2C2C2                     447 B        DC    C'BBBB'                                                  02140000
+ 000330 C3C3C3C3                     448 C        DC    C'CCCC'                                                  02150000
+ 000334 C4C4C4C4                     449 D        DC    C'DDDD'                                                  02160000
+ 000338 C5C5C5C5                     450 E        DC    C'EEEE'                                                  02170000
+ 00033C C6C6C6C6                     451 F        DC    C'FFFF'                                                  02180000
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   11
+   Active Usings: DODOC,,R11  $$WA$$,R13
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2021/03/26 05.18
+0000340 C7C7C7C7                     452 G        DC    C'GGGG'                                                  02190000
+ 000344 C8C8C8C8                     453 H        DC    C'HHHH'                                                  02200000
+ 000348 E9E9E9E9                     454 Z        DC    C'ZZZZ'                                                  02210000
+ 00034C E3C5D4D7                     455 TEMP     DC    C'TEMP'                                                  02220000
+ 000350 0000000C                     456 LOOP_COUNTER DC PL4'0'             FOR TEST OF "DO UNTIL"               02230000
+ 000354 0000001C                     457 PACKED_ONE DC  PL4'1'              FOR TEST OF "DO UNTIL"               02240000
+ 0001AE                00000 001AE   458 DODOC    CSECT                                                          02250000
+ 000000                              459          END   DODOC                                                    02260000
+1                                                 Relocation Dictionary                                         Page   12
+-   Pos.Id   Rel.Id   Address  Type    Length  Action                                        HLASM R6.0  2021/03/26 05.18
+0  00000002 00000003 0000001C   V         4      ST
+   00000002 00000004 0000002D   A         3       +
+   00000002 00000004 0000019D   A         3       +
+1                               Ordinary Symbol and Literal Cross Reference                                     Page   13
+-Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2021/03/26 05.18
+0$$WA$$        1 000001B0 00000004     J                   70   66U  371
+ $$WA$$        1 00000000 00000003     T                   62   62
+ $FINI11       2 00000158 00000002     H  H               319  301B
+ $FINI13       2 00000196 00000002     H  H               351  333B
+ $FINI3        2 0000006C 00000002     H  H               197  180B
+ $FINI5        2 000000A6 00000002     H  H               227  210B
+ $FINI7        2 000000E0 00000002     H  H               257  240B
+ $FINI9        2 0000011A 00000002     H  H               287  270B
+ $MDE10        2 00000134 00000002     H  H               302  294B
+ $MDE12        2 00000172 00000002     H  H               334  326B
+ $NEXT1        2 00000020 00000002     H  H                65   61B
+ COUNTER       4 000002A2 00000004     Z  Z               434  182M  183M  212M  213M  242M  243M  272M  273M  304M  305M
+                                                               336M  337M
+ DODOC         1 00000000 00000002     J                   22   52U   72   458   459
+ OUTPUT      133 00000298 00000004     C  C               429  189   219   249   279   311   343   430   435
+ PACK1         4 00000290 00000004     P  P               427  171M  176   181M  182   201M  206   211M  212   231M  236
+                                                               241M  242   261M  266   271M  272   291M  297   303M  304
+                                                               323M  329   335M  336
+ R1            1 00000001 00000001 A   U                    6   53M   57    57    67    68
+ R11           1 0000000B 00000001 A   U                   16   50M   51M   51    52U
+ R12           1 0000000C 00000001 A   U                   17   48    49M   50    52U  366M  367D
+ R13           1 0000000D 00000001 A   U                   18   48    53    54M   66U   68   365M  366
+ R14           1 0000000E 00000001 A   U                   19   48   366M  369B
+ R15           1 0000000F 00000001 A   U                   20   49   368M  368
+ SAVEAREA      4 000001B0 00000004     F  F                71   67M  365
+ SYSPRINT      4 00000230 00000004     F  F               390   79   188   218   248   278   310   342   363
+ TESTNBR       8 00000299 00000004     C  C               432  172M  202M  232M  262M  292M  324M
+ TEST010A      6 0000003E 00000002     I                  176  196B
+ TEST020A      6 00000078 00000002     I                  206  226B
+ TEST030A      6 000000B2 00000002     I                  236  256B
+ TEST040A      6 000000EC 00000002     I                  266  286B
+ TEST050A      6 0000012A 00000002     I                  297  318B
+ TEST060A      6 00000168 00000002     I                  329  350B
+ VCON$WA$      4 0000001C 00000002     V  V                62   54
+ =C'TEST010A'
+               8 000001F8 00000004     C                  373  172
+ =C'TEST020A'
+               8 00000200 00000004     C                  374  202
+ =C'TEST030A'
+               8 00000208 00000004     C                  375  232
+ =C'TEST040A'
+               8 00000210 00000004     C                  376  262
+ =C'TEST050A'
+               8 00000218 00000004     C                  377  292
+ =C'TEST060A'
+               8 00000220 00000004     C                  378  324
+ =P'0'         1 0000022C 00000004     P                  383  329
+ =P'1'         1 0000022A 00000004     P                  381  181   211   241   271   303   335
+ =P'3'         1 00000229 00000004     P                  380  176   206   236   266   297
+ =Z'-1'        1 0000022B 00000004     Z                  382  323
+ =Z'0'         1 00000228 00000004     Z                  379  171   201   231   261   291
+1                                  Unreferenced Symbols Defined in CSECTs                                       Page   14
+-  Defn  Symbol                                                                              HLASM R6.0  2021/03/26 05.18
+0   446  A
+    447  B
+    448  C
+    449  D
+    450  E
+    437  EOFSW
+    451  F
+    452  G
+    453  H
+    445  LEVEL_ONE_PASS_COUNTER
+    456  LOOP_COUNTER
+    457  PACKED_ONE
+    438  PL5
+      5  R0
+     15  R10
+      7  R2
+      8  R3
+      9  R4
+     10  R5
+     11  R6
+     12  R7
+     13  R8
+     14  R9
+    455  TEMP
+    454  Z
+    428  ZONED1
+1                                          Macro and Copy Code Source Summary                                   Page   15
+- Con Source                                        Volume    Members                        HLASM R6.0  2021/03/26 05.18
+0  L1 IBMUSER.DHSNYDER.MACLIB                       A24SYS    $MGBLDEF DO       ENDDO    ENDIF    IF       IFCOPY   IF2
+                                                              TRD
+   L2 SYS1.MACLIB                                   A24RES    CLOSE    DCB      IHBINNRA IHB01    OPEN     PUT
+                                                              SYSSTATE
+1                                                      Using Map                                                Page   16
+-                                                                                            HLASM R6.0  2021/03/26 05.18
+   Stmt  -----Location----- Action ----------------Using----------------- Reg Max     Last Label and Using Text
+           Count      Id           Type          Value    Range     Id        Disp    Stmt
+0    52  0000000E  00000002 USING  ORDINARY    00000000 00001000 00000002  12 001A0    361 DODOC,R12,R11
+     52  0000000E  00000002 USING  ORDINARY    00001000 00001000 00000002  11 00000
+     66  00000020  00000002 USING  ORDINARY    000001B0 00001000 00000004  13 000F5    365 $$WA$$,R13
+    367  000001AA  00000002 DROP                                           12              R12
+1                                   General Purpose Register Cross Reference                                    Page   17
+- Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R6.0  2021/03/26 05.18
+0    0(0)      48   189M  219M  249M  279M  311M  343M  366M
+     1(1)      48    53M   57    57    67    68    77M  188M  191   218M  221   248M  251   278M  281   310M  313   342M
+              345   361M  366M
+     2(2)      48   366M
+     3(3)      48   366M
+     4(4)      48   366M
+     5(5)      48   366M
+     6(6)      48   366M
+     7(7)      48   366M
+     8(8)      48   366M
+     9(9)      48   366M
+    10(A)      48   366M
+    11(B)      48    50M   51M   51    52U  366M
+    12(C)      48    49M   50    52U  366M  367D
+    13(D)      48    53    54M   66U   68   365M  366
+    14(E)      48   192M  222M  252M  282M  314M  346M  366M  369B
+    15(F)      48    49   190M  190   191M  192B  220M  220   221M  222B  250M  250   251M  252B  280M  280   281M  282B
+              312M  312   313M  314B  344M  344   345M  346B  366M  368M  368
+1                                  Diagnostic Cross Reference and Assembler Summary                             Page   18
+-                                                                                            HLASM R6.0  2021/03/26 05.18
+0     No Statements Flagged in this Assembly
+ HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UI64093
+0SYSTEM: z/OS 02.04.00              JOBNAME: IBMUSERA    STEPNAME: C          PROCSTEP: (NOPROC)
+0Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1
+ Data Sets Allocated for this Assembly
+  Con DDname   Data Set Name                                Volume  Member
+   P1 SYSIN    IBMUSER.DHSNYDER.SRCLIB                      A24SYS  DOTEST
+   L1 SYSLIB   IBMUSER.DHSNYDER.MACLIB                      A24SYS
+   L2          SYS1.MACLIB                                  A24RES
+      SYSLIN   SYS21085.T051816.RA000.IBMUSERA.OBJ.H01      A24SYS
+      SYSPRINT IBMUSER.DHSNYDER.SYSPRINT                    A24RES
+
+   26812K allocated to Buffer Pool       Storage required     596K
+     251 Primary Input Records Read         4551 Library Records Read                  0 Work File Reads
+       0 ASMAOPT Records Read                621 Primary Print Records Written         0 Work File Writes
+      23 Object Records Written                0 ADATA Records Written
+0Assembly Start Time: 05.18.17 Stop Time: 05.18.17 Processor Time: 00.00.00.2460
+ Return Code 000
+ TEST010A 0001
+ TEST010A 0002
+ TEST010A 0003
+ TEST010A 0004
+ TEST020A 0001
+ TEST020A 0002
+ TEST020A 0003
+ TEST030A 0001
+ TEST030A 0002
+ TEST030A 0003
+ TEST030A 0004
+ TEST040A 0001
+ TEST040A 0002
+ TEST040A 0003
+ TEST050A 0001
+ TEST050A 0002
+ TEST050A 0003
+ TEST060A 0000
+

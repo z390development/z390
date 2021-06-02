@@ -1,0 +1,42 @@
+***********************************************************************
+* Copyright 2007 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+*                                                                     *
+* Author - Melvyn Maltz                                               *
+* Date   - 12th March 2016                                            *
+***********************************************************************
+         MACRO
+         ZVSAMCTR
+*
+* zVSAM COUNTERS BLOCK...FOLLOWS ZVSAMPFX
+*
+ZVSAMCTR DSECT
+CTREYE     DS    CL4              eyecatcher
+CTRZCTR    EQU   C'zCTR'
+CTRAVGRL   DS    XL4              average record length
+CTRAVSPAC  DS    XL8              available space
+CTRHALCRBA DS    XL8              high-allocated RBA
+CTRHLRBA   DS    XL8              high-allocated index block RBA
+CTRENDRBA  DS    XL8              high water mark for the component
+CTRNBFRFND DS    XL8              number of LSR reads
+CTRNBUFNO  DS    XL8              number of buffers allocated
+CTRNBUFUSE DS    XL8              number of buffers in use
+CTRNBUFRDS DS    XL8              number of buffer reads
+CTRNCIS    DS    XL8              number of block-split operations
+CTRNDELR   DS    XL8              number of delete operations
+CTRNEXCP   DS    XL8              number of I/O operations
+CTRNEXT    DS    XL8              number of physical files (always 1)
+CTRNINSR   DS    XL8              number of insert operations
+CTRNLOGR   DS    XL8              number of records in this component
+CTRNRETR   DS    XL8              number of retrieve operations
+CTRNNUIW   DS    XL8              number of non-user writes
+CTRNUPDR   DS    XL8              number of updates
+CTRSDTASZ  DS    XL8              uncompressed data size
+CTRSTMST   DS    XL8              STCK of last close
+CTRSTRMAX  DS    XL8              maximum number of active strings
+CTRNUIW    DS    XL8              number of user writes
+CTRLOKEY@  DS    AL2              offset of lowest valid key value
+CTRLENG    EQU   *-ZVSAMCTR       DSECT length
+         MEND
+

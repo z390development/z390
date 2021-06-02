@@ -1,0 +1,103 @@
+         TITLE 'Test BRCT, BRCTH, BRCTG'
+*
+TBRCTX   CSECT ,
+TBRCTX   AMODE 24
+TBRCTX   RMODE 24
+         STM   R14,R12,12(R13)         Save caller's registers
+         LR    R12,R15                 R12 = base register
+         USING TBRCTX,R12              Establish addressability
+         LA    R14,SaveArea            R14 --> usable save area
+         ST    R13,4(,R14)             Chain save areas
+         ST    R14,8(,R13)
+         LR    R13,R14                 R13 --> current save area
+***********************************************************************
+*
+* A7-6  BRCT   Branch Relative on Count
+* A7-7  BRCTG  Branch Relative on Count
+* CC-6  BRCTH  Branch Relative on Count High
+*
+***********************************************************************
+*
+         SGR   R2,R2               Count iterations
+         SGR   R3,R3               Initialize all 64 bits
+         LA    R3,3                Loop count
+BRCT_1   DS    0H
+         AHI   R2,1                Count iterations
+         BRCT  R3,BRCT_1           Loop
+*
+         LA    R1,LblBRCT          Label for message
+         BRAS  R10,ShowMsg         Show message
+*
+         SGR   R2,R2               Count iterations
+         SGR   R3,R3               Initialize all 64 bits
+         IIHF  R3,3                Loop count
+BRCTH_1  DS    0H
+         AHI   R2,1                Count iterations
+         BRCTH R3,BRCTH_1          Loop
+*
+         LA    R1,LblBRCTH         Label for message
+         BRAS  R10,ShowMsg         Show message
+*
+         SGR   R2,R2               Count iterations
+         SGR   R3,R3               Initialize all 64 bits
+         IIHF  R3,1                Loop count
+BRCTG_1  DS    0H
+         AGHI  R2,1                Count iterations (64-bit counter)
+         BRCTG R3,BRCTG_1          Loop
+*
+         LA    R1,LblBRCTG         Label for message
+         BRAS  R10,ShowMsg         Show message
+***********************************************************************
+EXIT     DS    0H
+         L     R13,4(,R13)         R13 --> Caller's save area
+         LM    R14,R12,12(R13)     Restore caller's registers
+         SR    R15,R15             Set return code to zero
+         BR    R14                 Return to caller
+***********************************************************************
+ShowMsg  DS    0H
+         MVC   W1Lbl,0(R1)         Copy label
+         STG   R2,DW               Convert R2
+         UNPK  QW(9),DW(5)                    to
+         UNPK  QW+8(9),DW+4(5)                   printable hex
+         TR    QW,H2P              Finish conversion
+         MVC   W1R2,QW             Copy to WTO
+         STG   R3,DW               Convert R3
+         UNPK  QW(9),DW(5)                    to
+         UNPK  QW+8(9),DW+4(5)                   printable hex
+         TR    QW,H2P              Finish conversion
+         MVC   W1R3,QW             Copy to WTO
+         LA    R1,WTO1             R1 --> WTO
+         WTO   MF=(E,(1))          Show message
+*
+         BR    R10                 Return to caller
+***********************************************************************
+*
+         LTORG
+*
+SaveArea DC    18F'-1'             Current save area
+*
+LblBRCT  DC    CL5'BRCT'
+LblBRCTH DC    CL5'BRCTH'
+LblBRCTG DC    CL5'BRCTG' 
+*
+         DS    0D
+QW       DS    XL16,Xl1            Quadword work and pad
+DW       DS    D,Xl1               Doubleword work and pad
+*
+WTO1     WTO   'After xxxxx loop; R2=xxxxxxxxxxxxxxxx  R3=xxxxxxxxxxxxxx
+               xxx',MF=L
+W1Lbl    EQU   WTO1+4+6,5,C'C'
+W1R2     EQU   WTO1+4+21,16,C'C'
+W1R3     EQU   WTO1+4+42,16,C'C'
+*
+H2P      EQU   *-240               Beginning of translate table
+         DC    C'0123456789ABCDEF' 
+*
+* Define constants DSECTs and environment
+*
+***********************************************************************
+         EQUREGS ,
+***********************************************************************
+
+***********************************************************************
+         END

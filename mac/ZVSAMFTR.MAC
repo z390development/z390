@@ -13,7 +13,7 @@
 *
 ZVSAMFTR DSECT
 BFTREYE  DS    CL3                FTR
-BFTRSEQ# DS    XL1                Write sequence number
+BFTRSEQ# DS    X                  Write control value
 BFTRLENG EQU   *-ZVSAMFTR         DSECT LENGTH
          MEND
 

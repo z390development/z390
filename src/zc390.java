@@ -105,6 +105,7 @@ public class zc390{
     * 11/03/14 RPI 1504 Final options not reported by ZC390
     * 17-01-22 RPI JH 1545 Compiler fails to flag undefined field after test on literal with embedded parenthesis
     * 17-01-22 RPI JH 1546 Test on literal with embedded parenthesis not branching correctly
+    * 2021-04-19 jjg Change way init_zc390 obtains program name to allow paths that begin with ".."
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -308,22 +309,23 @@ public class zc390{
 		if (tz390.opt_traces){
 			System.out.println("ZCOBOL " + zcobol_parms);
 		}
-		index = args[0].indexOf('.'); // RPI 1080 allow any cbl suffix
+        // args[0] may be relative path beginning with ".."
+		String wk_name = tz390.fix_file_separators(args[0]);
+		index = wk_name.indexOf('.');
 		if (index == -1){
-			zc_file_name = args[0] + ".CBL"; 
-			mlc_file_name = args[0] + ".MLC";
+			zc_file_name = wk_name + ".CBL";
+			mlc_file_name = wk_name + ".MLC";
 		} else {
-			zc_file_name = args[0]; 
-			mlc_file_name = args[0].substring(0,index) + ".MLC";
+			zc_file_name = wk_name;
+			mlc_file_name = wk_name.substring(0,index) + ".MLC";
 		}
-		lab_file_name = tz390.fix_file_separators(args[0]);  // RPI 1086
-	    index = args[0].lastIndexOf(File.separator); // RPI 1080
-	    if (index >= 0){
-	    	lab_file_dir = lab_file_name.substring(0,index+1);
-	    } else {
-	    	lab_file_dir = "";
-	    }
-	    lab_file_name = lab_file_name.substring(index+1) + "_ZC_LABELS.CPY"; // RPI 1080 
+		index = wk_name.lastIndexOf(File.separator);
+		if (index >= 0){
+			lab_file_dir = wk_name.substring(0,index+1);
+		} else {
+			lab_file_dir = "";
+		}
+		lab_file_name = wk_name.substring(index+1) + "_ZC_LABELS.CPY";
 	    mlc_file      = new File(mlc_file_name);
 		zc_file              = (File[])Array.newInstance(File.class,tz390.opt_maxfile);
 		zc_file_buff         = (BufferedReader[])Array.newInstance(BufferedReader.class,tz390.opt_maxfile);

@@ -1,0 +1,113 @@
+         ZCOBOL PGM='cics\TESTBEC8',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :47:54,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTBEC8_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * HANDLE ABEND BY PROGRAM (PART OF TRANSID BEC5)
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTBEC8.
+         PROGRAM_ID TESTBEC8
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*         01  TEST1.
+         WS      01,TEST1
+*             02  FILLER   PIC X(4)  VALUE X'C311C8F1'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C8F1'
+*             02  FILLER   PIC X(42)
+*                 VALUE 'TESTBEC8 SAYS HELLO AND THE COMMAREA SAYS '.
+         WS        02,FILLER,PIC,X(42),VALUE,'TESTBEC8 SAYS HELLO AND TX
+               HE COMMAREA SAYS '
+*             02  TESTAEI0 PIC X(4).
+         WS        02,TESTAEI0,PIC,X(4)
+*         77  TEST1L   PIC 9(4) COMP.
+         WS      77,TEST1L,PIC,9(4),COMP
+*         LINKAGE SECTION.
+         LINKAGE SECTION
+*         01  DFHCOMMAREA.
+         WS      01,DFHCOMMAREA
+*             02  COMMMSG  PIC X(4).
+         WS        02,COMMMSG,PIC,X(4)
+*         PROCEDURE DIVISION USING DFHEIBLK DFHCOMMAREA.
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*             MOVE LENGTH OF TEST1   TO TEST1L.
+*      * BEC5 ABEND HANDLER
+*      *  L     R6,DFHEICAP        R6=COMMAREA ADDRESS
+*      *  MVC   TESTAEI0,0(R6)     MOVE TO MESSAGE
+*ZC     51         MOVE  LENGTH,OF,TEST1,TO,TEST1L
+         MOVE  LENGTH,OF,TEST1,TO,TEST1L
+         PERIOD 
+*             MOVE COMMMSG TO TESTAEI0.
+*ZC     55         MOVE  COMMMSG,TO,TESTAEI0
+         MOVE  COMMMSG,TO,TESTAEI0
+         PERIOD 
+*             EXEC CICS SEND FROM(TEST1) LENGTH(TEST1L) END-EXEC.
+*ZC     56         EXEC  CICS,SEND,FROM(TEST1),LENGTH(TEST1L)
+         EXEC  CICS,SEND,FROM(TEST1),LENGTH(TEST1L)
+         PERIOD 
+*             EXEC CICS RETURN END-EXEC.
+*ZC     57         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+         PERIOD 
+         PROCEDURE END
+         END   

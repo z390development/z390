@@ -1,0 +1,117 @@
+* open source z390 regression test of opcodes
+* 2019/11/07 dsh test all z390 opcodes defined in latest POP
+* 2019/12/03 dsh macros copied from testins6.mac
+*                macro calls copied from testins6.dat
+* 2020/10/19 dsh moved to zopcheck directory and renamed
+* 2020/10/30 dsh reorganize to reduce code and labels 
+* 2020/11/08 dsh add open and close dcb for use by SNAP on mainframe
+*            snap defaults to the TRACE file output for z390
+* 2020/12/23 DSH ADD I2RLD TO TEST IILF ETC. RPI 2223
+*************************************************************
+* copyright 2020 Don Higgins
+* This program assembles all the opcodes in z15 POP
+* and verified that generated code matches expected  DC code
+* ZOPCHECK.MLC INCLUDES ZOPMACRO.CPY AND ZOPCODES.CPY
+*   ZOPCHECK ASSEMBLES EVERY OPCODE COMBINATION IN ZOPCODES
+*   ZOPMACRO INCLUDES MACROS CALLED BY ZOPCODES FOR EACH TIME
+*   ZOPCODES INCLUDES ALL POP OPCODE AND OPERAND COMBINATIONS 
+*************************************************************
+* COPY ALL THE TYPE MACROS
+         COPY ZOPMACRO.CPY
+* DEFINE MAIN PROGRAM, CHECKZOP, WRAPUP, AND SNAP ROUTINE 
+ZOPCHECK SUBENTRY
+         OPEN  (SNAPOUT,OUTPUT)
+         B     START  TABLE OF ZOPCODES AT END GT THAN 4K BASE
+* CALLED VIA BAL R12,CHECKOP BEFORE EACH 32 BYTE OBJECT CODE AREA
+CHECKZOP DS    0H
+         CLI   0(R12),X'FF'
+		 BE    UNDEFINED
+		 CLC   0(16,R12),16(R12)
+		 BNE   DIFFERENCE
+CONTINUE DS    0H
+         CLC   32(3,R12),=C'END'  END OF TABLE
+		 BE    WRAPUP
+		 B     32(R12)  PROCESS NEXT ZOPCODES.CPY ENTRY
+UNDEFINED DS   0H
+         L     R4,MISSING 
+		 LA    R4,1(R4)
+		 ST    R4,MISSING
+		 B     CONTINUE
+DIFFERENCE DS  0H
+         L     R4,SNAPS
+		 LA    R4,1(R4)
+		 ST    R4,SNAPS
+         LR    R2,R12
+         LA    R3,32(R2)
+	     SAVE  (R14,R12)
+         SNAP   STORAGE=((R2),(R3)),PDATA=,ID=(R4),DCB=SNAPOUT
+         RESTORE (R14,R12)
+	     B     CONTINUE
+WRAPUP   DS    0H
+         CLOSE SNAPOUT
+         L     R4,MISSING
+	 LTR   R4,R4
+	 BZ    NO_MISSING
+	 WTO   'ERROR RC = TOTAL MISSING GENERATED OPCODES'
+	 B     NO_SNAPS
+NO_MISSING EQU *	
+		 L     R4,SNAPS
+		 LTR   R4,R4
+		 BNE   NO_SNAPS
+		 WTO   'ERROR RC = TOTAL SNAP DUMPS OF OPCODE DIFFERENCES'
+NO_SNAPS DS    0H	
+         SUBEXIT RC=(R4) R4 = TOTAL MISSING OR TOTAL SNAPS	
+         LTORG	
+SNAPOUT  DCB   DDNAME=SNAPOUT,DSORG=PS,RECFM=VBA,BLKSIZE=882,          X
+               LRECL=125,MACRF=W	 
+SNAPS    DC    F'0' COUNT SNAPS
+MISSING  DC    F'0' COUNT MISSING OPCODE
+* DEFINE ALL THE OPERAND VARIABLES IN TYPE MACRO CALLS
+         EQUREGS 
+RXB      EQU  0 // vector RXB instruction code
+V1       EQU  21
+V2       EQU  22
+V3       EQU  23
+V4       EQU  24
+M1       EQU  11
+M2       EQU  12
+M3       EQU  13
+M4       EQU  4
+M5       EQU  5
+M6       EQU  6
+I1       EQU  1
+I2       EQU  2  
+I2RLD    DC   H'0' RPI 2220
+I3       EQU  6  RPI 2225 MUST BE EVEN VS 3
+I4       EQU  4
+I5       EQU  5
+D1       EQU  11*16
+D2       EQU  12*16
+D3       EQU  13*16
+D4       EQU  14*16
+DH1      EQU  0
+DH2      EQU  0
+B1       EQU  11
+B2       EQU  12
+B3       EQU  13
+B4       EQU  14
+X1       EQU  13
+X2       EQU  14
+L1       EQU  11*16 L-1
+LP1      EQU  11 MAX 16 FOR PD
+L2       EQU  12*16 L-1
+LP2      EQU  12
+START   DS    0H
+* COPY ALL THE TYPE MACRO CALLS FOR Z15 OPCODES
+* EACH OPCODE MACRO CALL GENERATED BAL R12,CHECKZOP FOLLOWED BY 2 16-BYTE GENEREATED AREAS
+* THE FIRST CONTAINS ASSEMBLED OPCODE INSTRUCTION OBJECT CODE
+* THE SECOND CONTAINS THE DC GENERATED EXPECTED OBJECT CODE
+* THE CHECKOP ROUTINE VERIFIES MATCH AND RETURNED TO R12+32
+* IF OBJECT CODE DOES NOT MATCH, SNAP DUMP OF 32 BYTE AREA GENERATED
+* IF NO GENERATED OBJECT CODE, MNOTE GENERATED WITH RC=12
+         COPY  ZOPCODES.CPY		
+         DC     c'END'	end of ZOPCODES.CPY table	
+         MNOTE 'ZOPCHECK TOT_OPS=&TOT_OPS TOT_UND=&TOT_UND'
+         MNOTE 'ZOPCHECK TOT_PROB=&TOT_PROB TOT_SUPR=&TOT_SUPR'
+         MNOTE 'ZOPCHECK TOT_MASK=&TOT_MASK TOT_DUP=&TOT_DUP'	 
+         END

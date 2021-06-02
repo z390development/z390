@@ -1,0 +1,100 @@
+.*   Copyright (C) <2021>  Daniel H. Snyder
+.*   Structured Programming Macros for the IBM High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    DO    &WHILE=,&UNTIL=,&TEST=BEFORE
+         COPY  $MGBLDEF
+         LCLA  &I,&J
+         LCLC  &X,&Y,&LCLTEST
+&$MLVL   SETA  &$MLVL+1 FOR HOUSEKEEPING
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MLNAME(&$MLVL) SETC '$MDL&$Y$NDX'
+         AIF   ('&NAME' EQ '').SKIP010
+&$MLNAME(&$MLVL) SETC '&NAME'
+.SKIP010 ANOP
+&$MENAME(&$MLVL) SETC '$MDE&$Y$NDX'
+&$MSNAME(&$MLVL) SETC '$MDS&$Y$NDX'
+&LCLTEST SETC  'AFTER'              FIRST ASSUMPTION
+         AIF   ('&TEST' EQ 'AFTER').NEXT030 WAS IT RIGHT?
+&LCLTEST SETC  'BEFORE'             NO - MUST BE BEFORE
+         AIF   ('&TEST' EQ 'BEFORE').NEXT030 WAS IT BEFORE?
+         MNOTE 4,'INVALID VALUE "&TEST" SPECIFIED FOR "TEST=" PARM'
+         MNOTE '"BEFORE" IS ASSUMED'
+.NEXT030 AIF   ('&TEST' NE 'AFTER').NEXT040 SPECIAL BRANCH FOR "AFTER"
+         B     &$MENAME(&$MLVL) EXEC LOOP AT LEAST ONCE
+.NEXT040 AIF   ('&WHILE' NE '').TEST050 GO IF WHILE PARM CODED
+         AIF   ('&UNTIL' EQ '').ERR080 GO IF NEITHER PARM IS CODED
+&Y       SETC  '&UNTIL'
+         AIF   ('&UNTIL'(1,2) NE '((').ERR070   MUST BE '(('
+         AGO   .UNTIL130            PARM MUST BE UNTIL
+.TEST050 AIF   ('&UNTIL' NE '').ERR090 CAN'T HAVE BOTH
+&Y       SETC  '&WHILE'
+         AIF   ('&WHILE'(1,2) NE '((').ERR070   MUST BE '(('
+         AGO   .WHILE100        "WHILE" IT IS
+.ERR070  MNOTE 12,'CONDITIONAL PHRASE MUST BEGIN WITL "(("'
+         MNOTE 'PHRASE IS "&Y"'
+         MNOTE 'MACRO EXPANSION CANCELLED'
+         MEXIT
+.ERR080  MNOTE 12,'EITHER "WHILE" OR "UNTIL" MUST BE SPECIFIED'
+         MNOTE 'MACRO EXPANSION CANCELLED'
+         MEXIT
+.ERR090  MNOTE 12,'"WHILE" AND "UNTIL" MUST NOT BOTH BE SPECIFIED'
+         MNOTE 'MACRO EXPANSION CANCELLED'
+         MEXIT
+.WHILE100 ANOP    *=*=*    &WHILE OPTION WAS SPECIFIED  *=*=*
+&X       SETC  '&$MLNAME(&$MLVL)'
+&$MLVL   SETA  &$MLVL-1 FAKE OUT "IF"
+&X       IF2    &WHILE(1),&WHILE(2),&WHILE(3),&WHILE(4),&WHILE(5),     C
+               &WHILE(6),&WHILE(7),&WHILE(8),&WHILE(9),&WHILE(10),     C
+               &WHILE(11),&WHILE(12),&WHILE(13),&WHILE(14),&WHILE(15), C
+               &WHILE(16),&WHILE(17),&WHILE(18),&WHILE(19),&WHILE(20), C
+               &WHILE(21)
+&$MLVL   SETA  &$MLVL+1
+         AIF   ('&$MFNAME(&$MLVL)' NE '').WHILE110
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MFNAME(&$MLVL) SETC '$FINI&$Y$NDX'
+.WHILE110 ANOP
+         J&$BF &$MFNAME(&$MLVL)
+         AIF   ('&$MTNAME(&$MLVL)' EQ '').CLEAN170
+&Y       SETC  '&$MTNAME(&$MLVL)'
+&Y       DC    0H'0'
+&$MTNAME(&$MLVL) SETC ''
+         AGO   .CLEAN170
+.UNTIL130 ANOP   *=*=*    &UNTIL OPTION WAS SPECIFIED  *=*=*
+&X       SETC  '&$MLNAME(&$MLVL)'
+&$MLVL   SETA  &$MLVL-1 FAKE OUT "IF"
+&X       IF2   &UNTIL(1),&UNTIL(2),&UNTIL(3),&UNTIL(4),&UNTIL(5),      C
+               &UNTIL(6),&UNTIL(7),&UNTIL(8),&UNTIL(9),&UNTIL(10),     C
+               &UNTIL(11),&UNTIL(12),&UNTIL(13),&UNTIL(14),&UNTIL(15), C
+               &UNTIL(16),&UNTIL(17),&UNTIL(18),&UNTIL(19),&UNTIL(20), C
+               &UNTIL(21)
+&$MLVL   SETA  &$MLVL+1
+         AIF   ('&$MTNAME(&$MLVL)' NE '').UNTIL140
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MTNAME(&$MLVL) SETC '$FINI&$Y$NDX'
+.UNTIL140 ANOP
+         B&$BT &$MTNAME(&$MLVL)
+         AIF   ('&$MFNAME(&$MLVL)' EQ '').CLEAN170
+&Y       SETC  '&$MFNAME(&$MLVL)'
+&Y       DC    0H'0'
+&$MFNAME(&$MLVL) SETC ''
+.CLEAN170 AIF   ('&LCLTEST' NE 'AFTER').MEND180
+&X       SETC  '&$MENAME(&$MLVL)'
+&X       DC    0H'0'
+.MEND180 ANOP
+&$MCVERB(&$MLVL) SETC  'DO'
+         MEND

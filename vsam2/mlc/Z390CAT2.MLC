@@ -1,0 +1,382 @@
+         DEFINE CATALOG,NAME=Z390CAT2
+*
+* V-ESDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE01,                                          X
+               RECORDSIZE=(1,26),                                      X
+               INDEX=NONINDEXED,                                       X
+               DATABLOCKSIZE=4K
+*
+* UNIQUEKEY AIX OVER A V-ESDS
+*
+         DEFINE AIX,                                                   X
+               NAME=MYAIX11,                                           X
+               RELATE=MYFILE01,                                        X
+               KEYS=(3,6),                                             X
+               UNIQUEKEY=YES,                                          X
+               UPGRADE=YES,                                            X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=3K,                                      X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES
+*
+         DEFINE PATH,                                                  X
+               NAME=AIX11PH,                                           X
+               ENTRY=MYAIX11,                                          X
+               UPDATE=NO
+*
+* F-ESDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE02,                                          X
+               RECORDSIZE=50,                                          X
+               INDEX=NONINDEXED,                                       X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=1K,                                      X
+               INDEXADJUST=YES
+*
+* UNIQUEKEY AIX OVER A F-ESDS
+*
+         DEFINE AIX,                                                   X
+               NAME=MYAIX21,                                           X
+               RELATE=MYFILE02,                                        X
+               KEYS=(9,7),                                             X
+               UNIQUEKEY=YES,                                          X
+               UPGRADE=YES,                                            X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=3K,                                      X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES
+*
+         DEFINE PATH,                                                  X
+               NAME=AIXSURN,                                           X
+               ENTRY=MYAIX21,                                          X
+               UPDATE=NO
+*
+* NON-UNIQUEKEY AIX OVER AN F-ESDS
+*
+         DEFINE AIX,                                                   X
+               NAME=MYAIX2U,                                           X
+               RELATE=MYFILE02,                                        X
+               KEYS=(6,0),                                             X
+               UNIQUEKEY=NO,                                           X
+               UPGRADE=YES,                                            X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=4K,                                      X
+               DATAADJUST=NO,                                          X
+               INDEXADJUST=YES,                                        X
+               DATAFREESPACE=10,                                       X
+               INDEXFREESPACE=10
+*
+         DEFINE PATH,                                                  X
+               NAME=AIX02PH,                                           X
+               ENTRY=MYAIX2U,                                          X
+               UPDATE=NO
+*
+* V-KSDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE03,                                          X
+               RECORDSIZE=(10,26),                                     X
+               INDEX=INDEXED,                                          X
+               KEYS=(3,0),                                             X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=512,                                     X
+               DATAFREESPACE=20,                                       X
+               DATAADJUST=NO,                                          X
+               INDEXADJUST=YES
+*
+* UNIQUEKEY AIX OVER A V-KSDS
+*
+         DEFINE AIX,                                                   X
+               NAME=MYAIX31,                                           X
+               RELATE=MYFILE03,                                        X
+               KEYS=(3,6),                                             X
+               UNIQUEKEY=YES,                                          X
+               UPGRADE=NO,                                             X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=3K,                                      X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES
+*
+         DEFINE PATH,                                                  X
+               NAME=AIX31PH,                                           X
+               ENTRY=MYAIX31,                                          X
+               UPDATE=NO
+*
+* F-RRDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE06,                                          X
+               RECORDSIZE=27,                                          X
+               INDEX=NUMBERED,                                         X
+               DATABLOCKSIZE=4K,                                       X
+               DATAADJUST=YES
+*
+* V-RRDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE07,                                          X
+               RECORDSIZE=(1,27),                                      X
+               INDEX=NUMBERED,                                         X
+               DATABLOCKSIZE=2K,                                       X
+               DATAADJUST=NO
+*
+* F-KSDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE08,                                          X
+               RECORDSIZE=15,                                          X
+               INDEX=INDEXED,                                          X
+               KEYS=(15,0),                                            X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=512,                                     X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES
+*
+* F-KSDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE09,                                          X
+               RECORDSIZE=18,                                          X
+               INDEX=INDEXED,                                          X
+               KEYS=(3,0),                                             X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=512,                                     X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES
+*
+* UNIQUEKEY AIX OVER A F-KSDS
+*
+         DEFINE AIX,                                                   X
+               NAME=MYAIXWD,                                           X
+               RELATE=MYFILE09,                                        X
+               KEYS=(15,3),                                            X
+               UNIQUEKEY=YES,                                          X
+               UPGRADE=NO,                                             X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=3K,                                      X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES
+*
+         DEFINE PATH,                                                  X
+               NAME=AIXWORD,                                           X
+               ENTRY=MYAIXWD,                                          X
+               UPDATE=NO
+*
+* F-KSDS INDIAN FILE
+*
+         DEFINE CLUSTER,                                               X
+               NAME=INDIANCO,                                          X
+               RECORDSIZE=563,                                         X
+               INDEX=INDEXED,                                          X
+               KEYS=(21,0),                                            X
+               DATABLOCKSIZE=3K,                                       X
+               INDEXBLOCKSIZE=3K,                                      X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES
+*
+* NON-UNIQUEKEY AIX OVER A F-KSDS
+*
+         DEFINE AIX,                                                   X
+               NAME=MYAIXIN,                                           X
+               RELATE=INDIANCO,                                        X
+               KEYS=(13,0),                                            X
+               UNIQUEKEY=NO,                                           X
+               MAXELEMENTS=2000,                                       X
+               UPGRADE=NO,                                             X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=4K,                                      X
+               DATAADJUST=NO,                                          X
+               INDEXADJUST=YES,                                        X
+               DATAFREESPACE=10,                                       X
+               INDEXFREESPACE=10
+*
+         DEFINE PATH,                                                  X
+               NAME=AIXINPH,                                           X
+               ENTRY=MYAIXIN,                                          X
+               UPDATE=NO
+*
+* VS-KSDS OVER A NON-UNIQUE AIX (READ-ONLY)
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYAIXKS,                                           X
+               RECORDSIZE=(1,32763),                                   X
+               INDEX=INDEXED,                                          X
+               KEYS=(13,0),                                            X
+               SPANNED=YES,                                            X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=4K,                                      X
+               DTADSN=E:\Z390\ZVSAM\DATA\MYAIXIN.DTA,                  X
+               IDXDSN=E:\Z390\ZVSAM\DATA\MYAIXIN.IDX
+*
+* VS-ESDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE10,                                          X
+               RECORDSIZE=(100,9000),                                  X
+               INDEX=NONINDEXED,                                       X
+               SPANNED=YES,                                            X
+               DATABLOCKSIZE=4K
+*
+* UNIQUEKEY AIX OVER A VS-ESDS
+*
+         DEFINE AIX,                                                   X
+               NAME=MYAIXA1,                                           X
+               RELATE=MYFILE10,                                        X
+               KEYS=(3,10),                                            X
+               UNIQUEKEY=YES,                                          X
+               UPGRADE=NO,                                             X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=4K,                                      X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES
+*
+         DEFINE PATH,                                                  X
+               NAME=AIXA1PH,                                           X
+               ENTRY=MYAIXA1,                                          X
+               UPDATE=NO
+*
+* NON-UNIQUEKEY AIX OVER A VS-ESDS
+*
+         DEFINE AIX,                                                   X
+               NAME=MYAIXAU,                                           X
+               RELATE=MYFILE10,                                        X
+               KEYS=(2,10),                                            X
+               UNIQUEKEY=NO,                                           X
+               UPGRADE=NO,                                             X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=4K,                                      X
+               DATAADJUST=NO,                                          X
+               INDEXADJUST=YES,                                        X
+               DATAFREESPACE=10,                                       X
+               INDEXFREESPACE=10
+*
+         DEFINE PATH,                                                  X
+               NAME=AIXAUPH,                                           X
+               ENTRY=MYAIXAU,                                          X
+               UPDATE=NO
+*
+* VS-RRDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE11,                                          X
+               RECORDSIZE=(100,9000),                                  X
+               INDEX=NUMBERED,                                         X
+               SPANNED=YES,                                            X
+               DATABLOCKSIZE=4K
+*
+* VS-KSDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE12,                                          X
+               RECORDSIZE=(100,9000),                                  X
+               INDEX=INDEXED,                                          X
+               KEYS=(10,0),                                            X
+               SPANNED=YES,                                            X
+               DATABLOCKSIZE=4K,                                       X
+               DATAFREEBLOCKS=(1,5),                                   X
+               INDEXFREEBLOCKS=(1,1)
+*
+* UNIQUEKEY AIX OVER A VS-KSDS
+*
+         DEFINE AIX,                                                   X
+               NAME=MYAIXC1,                                           X
+               RELATE=MYFILE12,                                        X
+               KEYS=(3,10),                                            X
+               UNIQUEKEY=YES,                                          X
+               UPGRADE=NO,                                             X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=4K,                                      X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES,                                        X
+               DATAFREEBLOCKS=(1,1),                                   X
+               INDEXFREEBLOCKS=(1,1)
+*
+         DEFINE PATH,                                                  X
+               NAME=AIXC1PH,                                           X
+               ENTRY=MYAIXC1,                                          X
+               UPDATE=NO
+*
+* FS-KSDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=MYFILE13,                                          X
+               RECORDSIZE=5000,                                        X
+               INDEX=INDEXED,                                          X
+               KEYS=(10,0),                                            X
+               SPANNED=YES,                                            X
+               DATABLOCKSIZE=4K
+*
+* UNIQUEKEY AIX OVER A FS-KSDS
+*
+         DEFINE AIX,                                                   X
+               NAME=MYAIXD1,                                           X
+               RELATE=MYFILE13,                                        X
+               KEYS=(3,4997),                                          X
+               UNIQUEKEY=YES,                                          X
+               UPGRADE=NO,                                             X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=4K,                                      X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES
+*
+         DEFINE PATH,                                                  X
+               NAME=AIXD1PH,                                           X
+               ENTRY=MYAIXD1,                                          X
+               UPDATE=NO
+*
+* F-KSDS TO TEST NULLFILE
+*
+         DEFINE CLUSTER,                                               X
+               NAME=NULLKSDS,                                          X
+               RECORDSIZE=15,                                          X
+               INDEX=INDEXED,                                          X
+               KEYS=(15,0),                                            X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=4K,                                      X
+               DATAFREEBLOCKS=(5,0),                                   X
+               INDEXFREEBLOCKS=(5,0)
+*
+* UNIQUEKEY AIX OVER A NULL F-KSDS
+*
+         DEFINE AIX,                                                   X
+               NAME=NULLAIX,                                           X
+               RELATE=NULLKSDS,                                        X
+               KEYS=(10,3),                                            X
+               UNIQUEKEY=YES,                                          X
+               UPGRADE=NO,                                             X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=3K,                                      X
+               DATAADJUST=YES,                                         X
+               INDEXADJUST=YES,                                        X
+               DATAFREEBLOCKS=(5,0),                                   X
+               INDEXFREEBLOCKS=(5,0)
+*
+         DEFINE PATH,                                                  X
+               NAME=NULLPATH,                                          X
+               ENTRY=NULLAIX,                                          X
+               UPDATE=NO
+*
+* F-ESDS TO TEST NULLFILE
+*
+         DEFINE CLUSTER,                                               X
+               NAME=NULLESDS,                                          X
+               RECORDSIZE=15,                                          X
+               INDEX=NONINDEXED,                                       X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=4K
+*
+* F-RRDS TO TEST NULLFILE
+*
+         DEFINE CLUSTER,                                               X
+               NAME=NULLRRDS,                                          X
+               RECORDSIZE=15,                                          X
+               INDEX=NUMBERED,                                         X
+               DATABLOCKSIZE=4K,                                       X
+               INDEXBLOCKSIZE=4K
+*
+         DEFINE END
+         END
+

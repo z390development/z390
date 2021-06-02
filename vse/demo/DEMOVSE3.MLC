@@ -14,8 +14,8 @@
 * IS "C:\PROGRAM FILES\AUTOMATED SOFTWARE TOOLS\Z390"
 * ENTER THE COMMAND:  
 *
-*   SET SYSUT1=vse\demo\DEMOVS3.TF1
-*   SET SYSUT2=vse\demo\DEMOVS3.TF2
+*   SET SYSUT1=vse\demo\DEMOVSE3.TF1
+*   SET SYSUT2=vse\demo\DEMOVSE3.TF2
 *   ASMLG vse\demo\DEMOVSE3 sysmac(vse\mac+mac)
 *
 * THE Z390 TOOLKIT IS DISTRIBUTED IN SOURCE AND EXECUTABLE
@@ -23,16 +23,21 @@
 * FOR MORE INFORMATION.
 *********************************************************************
          TITLE 'DEMOVSE3 VSE COPY DISK FILE TO PRINT FILE'
-DEMOVSE2 SUBENTRY
+DEMOVSE3 SUBENTRY
          WTO   'DEMOVSE3 VSE COPY FILE SYSDSK TO SYSLST'
          LA     2,SYSUT2
          OPEN   SYSUT1,(2)
          LTR    15,15
          BNZ    ABORT
+         LA     4,RECORD
+         LA     5,RECORD+L'RECORD
 LOOP     EQU    *
          GET    SYSUT1,RECORD
          LTR    15,15
          BNZ    ABORT
+*
+         SNAP   ID=1,PDATA=,STORAGE=((4),(5)),TEXT='EBCDIC record'
+*
          PUT    (2),RECORD
          B      LOOP
 EOF      CLOSE  SYSUT1,(2)

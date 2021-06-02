@@ -1,0 +1,40 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+BLDFTL    SUBENTRY
+         WTO   'BLDFTL CREATE RECFM=FT FILE WITH LARGE BLKS'
+         OPEN  (SYSUT2,(OUTPUT),SNAPOUT,(OUTPUT))
+         LA    R4,1
+         L     R5,SYSUT2+(DCBBLKSIF-IHADCB)
+LOOP     EQU   *
+         LA    R8,RECORD
+         LR    R9,R5
+         LA    R10,0
+         LR    R11,R4
+         O     R11,=X'000000F0' 
+         SLL   R11,24
+         MVCL  R8,R10 FILL WITH EBCIDC RECORD #
+         LA    R7,RECORD(R5)
+         PUT   SYSUT2,RECORD
+         SAVE  (R14,R12)
+         SNAP   STORAGE=(RECORD,(R7)),PDATA=,ID=(R4),DCB=SNAPOUT
+         RESTORE (R14,R12)
+         LA    R4,1(R4) 
+         C     R4,=F'4'
+         BNH   LOOP
+EOF      CLOSE (SYSUT2,,SNAPOUT)
+         WTO   'CHKF ENDED OK'
+         SUBEXIT 
+         LTORG          
+SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=PM,RECFM=FT,BLKSIZE=100000
+SNAPOUT  DCB   DDNAME=SNAPOUT,DSORG=PS,RECFM=VBA,BLKSIZE=882,          X
+               LRECL=125,MACRF=W
+RECORD   DS    0XL100000
+         DC    100000C'X'
+         DCBD
+         EQUREGS
+         END

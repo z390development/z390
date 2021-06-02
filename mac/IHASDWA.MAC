@@ -12,9 +12,10 @@
 .* 06/22/08 RPI 845 - add IHASDWA passed to ESTAE exit in R1 for  
 .*                    access to SDWAEC1 EC PSW and SDWAG64 regs 
 .*                    in SDWARC4 extension.
+.* 2021/02/28 RPI 2015 - change SDWAABSS to SDWAABCC
 .*********************************************************************
 .* SYSTEM DIAGNOSTIC WORK AREA PASSED TO ESTA EXIT IN R1
-.*  1.  Abend code stored in SDWAABSS
+.*  1.  Abend code stored in SDWAABCC
 .*  2.  PSW at abend stored in SDWAEC1 
 .*  3.  16 - 64 bit GPR regs stored in SDWAG64 in SDWARC4 extension
 .*  4.  For restart set R0 to new PSW address, and R15=4 
@@ -27,7 +28,7 @@
 .NPOK    ANOP
 SDWA     DSECT
 SDWAPARM DS    A    ESTAE PARM ADDRESS
-SDWAABSS DS    0BL4 COMPLETION CODE
+SDWAABCC DS    0BL4 COMPLETION CODE
 SDWACMPF DS    B    COMPLETION CODE FLAGS
 SDWACMPC DS    BL3  COMPLETION CODE (FIRST 12 BITS SYS,LAST 12 USER)
          ORG   SDWA+X'68'

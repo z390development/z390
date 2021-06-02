@@ -1,0 +1,780 @@
+TESTSHCB SUBENTRY BASES=(R13,R12)
+***************
+* EXLST TESTS *
+***************
+* BAD ONES
+* NO AREA/LENGTH, BAD AM, POSITIONAL, BAD MF, NO FIELDS, BAD COPIES
+*        SHOWCB EXLST=MYEXLST,AM=FRED,FRED,COPIES=A,MF=J
+* BAD FIELDS
+*        SHOWCB EXLST=MYEXLST,AREA=MYAREA,LENGTH=50,FIELDS=FRED
+* FIELDS REQUIRE EXLST, BAD FIELDS, BAD LENGTH WITH MF=I
+*        SHOWCB AREA=MYAREA,LENGTH=AA,FIELDS=(EODAD,FRED,EODAD,JRNAD)
+* FIELDS REQUIRE EXLST WITH MF=L
+*        SHOWCB AREA=MYAREA,LENGTH=4,FIELDS=(EODAD,EODAD,JRNAD),MF=L
+* FIELDS REQUIRE EXLST, BAD LENGTH WITH MF=G
+*        SHOWCB AREA=MYAREA,LENGTH=4,FIELDS=(EXLLEN,EODAD,JRNAD,EODAD),X
+*              MF=(G,MYCBMR)
+* FIELDS REQUIRE EXLST, BAD FIELDS, BAD LENGTH WITH MF=I
+*        SHOWCB AREA=MYAREA,LENGTH=AA,FIELDS=(EODAD,FRED,EODAD,JRNAD)
+* EXLST AND RPL, MISSING LENGTH, MISSING FIELDS
+*        SHOWCB EXLST=MYEXLST,AREA=MYAREA,RPL=MYRPL
+* EXLST AND ACB, MISSING LENGTH, MISSING FIELDS
+*        SHOWCB EXLST=MYEXLST,AREA=MYAREA,ACB=MYACB1
+* BAD REG WITH MF=L
+*        SHOWCB EXLST=(R5),AREA=(R5),LENGTH=4,                         X
+*              FIELDS=(EODAD,EXLLEN),MF=(L,(15))
+* NO CBMR WITH MF=E, FIELDS NOT ALLOWED, BAD REG USE
+*        SHOWCB EXLST=(R5),AREA=(R15),LENGTH=4,                        X
+*              FIELDS=(EODAD,EXLLEN),MF=E
+* INSUFFICIENT LENGTH WITH MF=I
+*        SHOWCB EXLST=MYEXLST,AREA=MYAREA,LENGTH=4,                    X
+*              FIELDS=(EODAD,EXLLEN)
+* INSUFFICIENT LENGTH WITH MF=L
+*        SHOWCB EXLST=MYEXLST,AREA=MYAREA,LENGTH=4,                    X
+*              FIELDS=(EODAD,EXLLEN),MF=(L,MYCBMR)
+* INSUFFICIENT LENGTH WITH MF=G
+*        LARL  R5,MYEXLST
+*        SHOWCB EXLST=(R5),AREA=MYAREA,LENGTH=4,                       X
+*              FIELDS=(EODAD,EXLLEN),MF=(G,MYCBMR)
+* TESTS WHICH ABEND
+* MODIFY THE CBMR TO REDUCE LENGTH, ABENDS R15=4 R0=9
+*        SHOWCB EXLST=MYEXLST,AREA=MYAREA,LENGTH=8,                    X
+*              FIELDS=(EODAD,EXLLEN),MF=(L,MYCBMR)
+*        LTR   R15,R15            OK ?
+*        JNZ   ABEND              EXIT IF NOT
+*        SHOWCB LENGTH=4,MF=(E,MYCBMR)
+*        LTR   R15,R15            OK ?
+*        JNZ   ABEND              EXIT IF NOT
+* MODIFY CBMR TO CREATE BAD EXLST, ABENDS S0C5 ON THE OI AS INTENDED
+*        SHOWCB EXLST=0,MF=(E,MYCBMR)
+*        LTR   R15,R15            OK ?
+*        JNZ   ABEND              EXIT IF NOT
+* WRECK THE CBMR, R15=8 R0=0
+*        MVI   MYCBMR,X'00'
+*        SHOWCB MF=(E,MYCBMR)
+*        LTR   R15,R15            OK ?
+*        JNZ   ABEND              EXIT IF NOT
+* TEST  1: BUILD INLINE CBMR WITH EODAD,EXLLEN
+*          MOVE EODAD,EXLLEN INTO MYAREA
+         J     BYPCBMR1           EXIT
+*
+MYCBMR1  SHOWCB EXLST=MYEXLST,AREA=MYAREA,LENGTH=8,                    X
+               FIELDS=(EODAD,EXLLEN),MF=L
+BYPCBMR1 DS    0H
+         SHOWCB MF=(E,MYCBMR1)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX01'        MARK TEST
+         CLC   TESTEX01(8),MYAREA MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST  2: GENERATE EXLST COPIES=1 INTO GETMAINED AREA
+*        : MODIFY   EXLST
+*        : SHOWCB   EXLST PARMS MULTIPLE TIMES
+         GENCB BLK=EXLST,COPIES=1,                                     X
+               EODAD=(MYEOD,N),LERAD=(MYLER,N),SYNAD=(MYSYN,N),MF=I
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         LR    R5,R1              R5=EXLST ADDRESS
+         MODCB EXLST=(R5),                                             X
+               EODAD=(MYEOD2,A),                                       X
+               LERAD=(MYLER2,A),                                       X
+               SYNAD=(MYSYN2,A)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         SHOWCB EXLST=(R5),AREA=MYAREA,LENGTH=40,                      X
+               FIELDS=(EXLLEN,EXLLEN,EODAD,EODAD,LERAD,LERAD,          X
+               SYNAD,SYNAD,JRNAD,JRNAD),MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX02'        MARK TEST
+         CLC   TESTEX02(40),MYAREA MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+******************
+* NO BLOCK TESTS *
+******************
+* TEST 1: SHOWCB NO BLOCK, MOVE 3 LENGTHS TO MYAREA
+         SHOWCB AREA=MYAREA,LENGTH=12,                                 X
+               FIELDS=(EXLLEN,RPLLEN,ACBLEN),MF=I
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'NB01'        MARK TEST
+         CLC   TESTNB01(12),MYAREA MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+*************
+* RPL TESTS *
+*************
+* BAD ONES KNOCKED OUT
+* POSITIONALS, LENGTH TOO SMALL
+*        SHOWCB RPL=MYRPL,AREA=MYAREA,LENGTH=1,FRED,BERT,              X
+               FIELDS=(ACB,AIXPC,AREA,AREALEN,ARG,ECB,FDBK,FTNCD,      X
+               KEYLEN,MSGAREA,MSGLEN,NXTRPL,RBA,RECLEN,EXLLEN,         X
+               TRANSID,XRBA,RPLLEN,ACBLEN),                            X
+               MF=I
+* FIELDS REQUIRE RPL=, NO BLOCK ONLY PROCESSES XXXLEN
+*        SHOWCB AREA=MYAREA,LENGTH=1,                                  X
+               FIELDS=(ACB,AIXPC,AREA,AREALEN,ARG,ECB,FDBK,FTNCD,      X
+               KEYLEN,MSGAREA,MSGLEN,NXTRPL,RBA,RECLEN,EXLLEN,         X
+               TRANSID,XRBA,RPLLEN,ACBLEN),                            X
+               MF=I
+* FAIL AIXPC AND ACBPFX=0
+*        SHOWCB RPL=MYRPL,AREA=MYAREA,LENGTH=76,                       X
+               FIELDS=(ACB,AIXPC,AREA,AREALEN,ARG,ECB,FDBK,FTNCD,      X
+               KEYLEN,MSGAREA,MSGLEN,NXTRPL,RBA,RECLEN,EXLLEN,         X
+               TRANSID,XRBA,RPLLEN,ACBLEN),                            X
+               MF=I
+*        LTR   R15,R15            OK ?
+*        JNZ   ABEND              EXIT IF NOT
+* NO AIXPC
+* ZAP XRBA SO THAT RBA FAILS
+*        LARL  R5,MYRPL
+*        USING IHARPL,R5
+*        MVI   RPLCXRBA,X'FF'
+*        DROP  R5
+*        SHOWCB RPL=MYRPL,AREA=MYAREA,LENGTH=76,                       X
+               FIELDS=(ACB,AREA,AREALEN,ARG,ECB,FDBK,FTNCD,            X
+               KEYLEN,MSGAREA,MSGLEN,NXTRPL,RBA,RECLEN,EXLLEN,         X
+               TRANSID,XRBA,RPLLEN,ACBLEN),                            X
+               MF=I
+*        LTR   R15,R15            OK ?
+*        JNZ   ABEND              EXIT IF NOT
+* MF=L AND BAD LENGTH
+* TECHNICALLY, MF=L SHOULDN'T TEST FOR LENGTH BUT I DO
+* IBM WOULD ABEND THE PROGRAM WHEN MF=E/G USED THE BAD CBMR
+*        SHOWCB RPL=MYRPL,AREA=MYAREA,LENGTH=2,                        X
+               FIELDS=(ACB,AREA,AREALEN,ARG,ECB,FDBK,FTNCD,            X
+               KEYLEN,MSGAREA,MSGLEN,NXTRPL,RBA,RECLEN,EXLLEN,         X
+               TRANSID,XRBA,RPLLEN,ACBLEN),                            X
+               MF=(L,MYCBMR,MYLEN4)
+* MF=L WITH 2*XRBA
+*        SHOWCB RPL=MYRPL,AREA=MYAREA,LENGTH=84,                       X
+               FIELDS=(ACB,AREA,AREALEN,ARG,ECB,FDBK,FTNCD,            X
+               KEYLEN,MSGAREA,MSGLEN,NXTRPL,RBA,RECLEN,EXLLEN,         X
+               TRANSID,XRBA,XRBA,RPLLEN,ACBLEN),                       X
+               MF=(L,MYCBMR)
+* MODIFY TO SMALLER LENGTH TO GENERATE ABEND
+*        SHOWCB LENGTH=76,MF=(E,MYCBMR)
+* MF=L BUT NO BLOCK TYPE, ONLY LENGTHS REQUIRED, XRBA IN ERROR
+*        SHOWCB AREA=MYAREA,LENGTH=12,                                 X
+               FIELDS=(EXLLEN,RPLLEN,ACBLEN,XRBA),                     X
+               MF=(L,MYCBMR)
+* MF=L BUT NO BLOCK TYPE, ONLY LENGTHS REQUIRED
+*        SHOWCB AREA=MYAREA,LENGTH=12,                                 X
+               FIELDS=(EXLLEN,RPLLEN,ACBLEN),                          X
+               MF=(L,MYCBMR)
+* TEST 1: SHOW ALL RPL FIELDS, PLUS RPL/ACB LENGTHS WITH MF=I
+* FIDDLE SUCCESS FOR AIXPC, ADD VALUES FOR FDBK, FTNCD, XRBA
+         LARL  R5,MYACB1
+         USING IHAACB,R5
+         MVC   ACBPFX,=A(FAKEDPFX)
+         DROP  R5
+         LARL  R14,MYRPL
+         USING IHARPL,R14
+         MVI   RPLCMPON,X'17'
+         MVI   RPLERRCD,X'24'
+         MVC   RPLCXRBA,=XL8'1234'
+         DROP  R14
+         SHOWCB RPL=MYRPL,AREA=MYAREA,LENGTH=80,                       X
+               FIELDS=(ACB,AIXPC,AREA,AREALEN,ARG,ECB,FDBK,FTNCD,      X
+               KEYLEN,MSGAREA,MSGLEN,NXTRPL,RBA,RECLEN,EXLLEN,         X
+               TRANSID,XRBA,RPLLEN,ACBLEN),                            X
+               MF=I
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP01'        MARK TEST
+         CLC   TESTRP01(80),MYAREA MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 2: SHOWCB MF=L WITH 2*XRBA
+         SHOWCB RPL=MYRPL,AREA=MYAREA,LENGTH=88,                       X
+               FIELDS=(ACB,AIXPC,AREA,AREALEN,ARG,ECB,FDBK,FTNCD,      X
+               KEYLEN,MSGAREA,MSGLEN,NXTRPL,RBA,RECLEN,EXLLEN,         X
+               TRANSID,XRBA,XRBA,RPLLEN,ACBLEN),                       X
+               MF=(L,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+*       : SHOWCB MF=E WITH MYCBMR, MOVE TO MYAREA2
+         SHOWCB AREA=MYAREA2,MF=(E,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP02'        MARK TEST
+         CLC   TESTRP02(88),MYAREA2 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 3: SHOWCB MF=G WITH 2*XRBA, MOVE TO MYAREA
+         SHOWCB RPL=MYRPL,AREA=MYAREA,LENGTH=88,                       X
+               FIELDS=(ACB,AIXPC,AREA,AREALEN,ARG,ECB,FDBK,FTNCD,      X
+               KEYLEN,MSGAREA,MSGLEN,NXTRPL,RBA,RECLEN,EXLLEN,         X
+               TRANSID,XRBA,XRBA,RPLLEN,ACBLEN),                       X
+               MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP03'        MARK TEST
+         CLC   TESTRP03(88),MYAREA MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+*************
+* ACB TESTS *
+*************
+         LARL  R5,MYACB1
+         USING IHAACB,R5
+         MVC   ACBPFX,=A(FAKEDPFX)
+         MVC   ACBXPFX,=A(FAKEIPFX)
+         MVI   ACBERFLG,X'34'
+         LARL  R5,MYACB2
+         MVC   ACBPFX,=A(FAKEDPFX)
+         MVC   ACBXPFX,=A(FAKEIPFX)
+         MVI   ACBERFLG,X'34'
+* TEST 1: MF=I OBJECT=DATA (NO (X)HLRBA)
+*         66 FIELDS  42*4+24*8=360
+         SHOWCB ACB=MYACB1,AREA=MYAREA,LENGTH=360,OBJECT=DATA,         X
+               FIELDS=(ACBLEN,AVSPAC,BFRFND,BSTRNO,BUFND,BUFNI,BUFNO,  X
+               BUFNOL,BUFRDS,BUFSP,BUFUSE,CDTASIZE,CINV,CIPCA,DDNAME,  X
+               ENDRBA,ERROR,EXLLEN,EXLST,FS,HALCRBA,KEYLEN,            X
+               LEVEL,LOKEY,LRECL,MAREA,MLEN,NCIS,NDELR,NEXCP,NEXT,     X
+               NINSR,NIXL,NLOGR,NRETR,NSSS,NUIW,NUPDR,PASSWD,RELEASE,  X
+               RMODE31,RPLLEN,RKP,SDTASIZE,SHRPOOL,STMST,STRMAX,STRNO, X
+               UIW,XAVSPAC,XBFRFND,XBUFNO,XBUFRDS,XBUFUSE,XENDRBA,     X
+               XHALCRBA,XNCIS,XNDELR,XNEXCP,XNINSR,XNLOGR,XNRETR,XNUIW,X
+               XNUPDR,XUIW,XSTRMAX),MF=I
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC01'        MARK TEST
+         CLC   TESTAC01(256),MYAREA MATCH PART 1 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         CLC   TESTAC01+256(104),MYAREA+256 MATCH PART 2 ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 2: MF=I OBJECT=INDEX (NO LOKEY, WITH (X)HLRBA)
+*         67 FIELDS  43*4+24*8=364
+         SHOWCB ACB=MYACB1,AREA=MYAREA,LENGTH=364,OBJECT=INDEX,        X
+               FIELDS=(ACBLEN,AVSPAC,BFRFND,BSTRNO,BUFND,BUFNI,BUFNO,  X
+               BUFNOL,BUFRDS,BUFSP,BUFUSE,CDTASIZE,CINV,CIPCA,DDNAME,  X
+               ENDRBA,ERROR,EXLLEN,EXLST,FS,HALCRBA,HLRBA,KEYLEN,      X
+               LEVEL,LRECL,MAREA,MLEN,NCIS,NDELR,NEXCP,NEXT,           X
+               NINSR,NIXL,NLOGR,NRETR,NSSS,NUIW,NUPDR,PASSWD,RELEASE,  X
+               RMODE31,RPLLEN,RKP,SDTASIZE,SHRPOOL,STMST,STRMAX,STRNO, X
+               UIW,XAVSPAC,XBFRFND,XBUFNO,XBUFRDS,XBUFUSE,XENDRBA,     X
+               XHALCRBA,XHLRBA,                                        X
+               XNCIS,XNDELR,XNEXCP,XNINSR,XNLOGR,XNRETR,XNUIW,         X
+               XNUPDR,XUIW,XSTRMAX),MF=I
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC02'        MARK TEST
+         CLC   TESTAC02(256),MYAREA MATCH PART 1 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         CLC   TESTAC02+256(108),MYAREA+256 MATCH PART 2 ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 3: MF=L BUILD CBMR, OBJECT=DATA (NO (X)HLRBA)
+*         66 FIELDS  42*4+24*8=360
+         SHOWCB ACB=MYACB1,AREA=MYAREA,LENGTH=360,OBJECT=DATA,         X
+               FIELDS=(ACBLEN,AVSPAC,BFRFND,BSTRNO,BUFND,BUFNI,BUFNO,  X
+               BUFNOL,BUFRDS,BUFSP,BUFUSE,CDTASIZE,CINV,CIPCA,DDNAME,  X
+               ENDRBA,ERROR,EXLLEN,EXLST,FS,HALCRBA,KEYLEN,            X
+               LEVEL,LOKEY,LRECL,MAREA,MLEN,NCIS,NDELR,NEXCP,NEXT,     X
+               NINSR,NIXL,NLOGR,NRETR,NSSS,NUIW,NUPDR,PASSWD,RELEASE,  X
+               RMODE31,RPLLEN,RKP,SDTASIZE,SHRPOOL,STMST,STRMAX,STRNO, X
+               UIW,XAVSPAC,XBFRFND,XBUFNO,XBUFRDS,XBUFUSE,XENDRBA,     X
+               XHALCRBA,XNCIS,XNDELR,XNEXCP,XNINSR,XNLOGR,XNRETR,XNUIW,X
+               XNUPDR,XUIW,XSTRMAX),MF=(L,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+*       : MF=E MODIFY CBMR AT MYCBMR
+         SHOWCB ACB=MYACB2,AREA=MYAREA2,LENGTH=360,OBJECT=DATA,        X
+               MF=(E,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC03'        MARK TEST
+         CLC   TESTAC03(256),MYAREA2 MATCH PART 1 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         CLC   TESTAC03+256(104),MYAREA2+256 MATCH PART 2 ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 4: MF=L BUILD CBMR, OBJECT=DATA (NO LOKEY)
+*         67 FIELDS  43*4+24*8=364
+         SHOWCB ACB=MYACB1,AREA=MYAREA,LENGTH=364,OBJECT=DATA,         X
+               FIELDS=(ACBLEN,AVSPAC,BFRFND,BSTRNO,BUFND,BUFNI,BUFNO,  X
+               BUFNOL,BUFRDS,BUFSP,BUFUSE,CDTASIZE,CINV,CIPCA,DDNAME,  X
+               ENDRBA,ERROR,EXLLEN,EXLST,FS,HALCRBA,HLRBA,KEYLEN,      X
+               LEVEL,LRECL,MAREA,MLEN,NCIS,NDELR,NEXCP,NEXT,           X
+               NINSR,NIXL,NLOGR,NRETR,NSSS,NUIW,NUPDR,PASSWD,RELEASE,  X
+               RMODE31,RPLLEN,RKP,SDTASIZE,SHRPOOL,STMST,STRMAX,STRNO, X
+               UIW,XAVSPAC,XBFRFND,XBUFNO,XBUFRDS,XBUFUSE,XENDRBA,     X
+               XHALCRBA,XHLRBA,                                        X
+               XNCIS,XNDELR,XNEXCP,XNINSR,XNLOGR,XNRETR,XNUIW,         X
+               XNUPDR,XUIW,XSTRMAX),MF=(L,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+*       : MF=E CHANGE CBMR TO OBJECT=INDEX, MOVE FIELDS TO MYAREA2
+         SHOWCB ACB=MYACB2,AREA=MYAREA2,LENGTH=364,OBJECT=INDEX,       X
+               MF=(E,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC04'        MARK TEST
+         CLC   TESTAC04(256),MYAREA2 MATCH PART 1 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         CLC   TESTAC04+256(108),MYAREA2+256 MATCH PART 2 ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 5: MF=G BUILD CBMR, OBJECT=DATA (NO (X)HLRBA)
+*         66 FIELDS  42*4+24*8=360
+         SHOWCB ACB=MYACB1,AREA=MYAREA,LENGTH=360,OBJECT=DATA,         X
+               FIELDS=(ACBLEN,AVSPAC,BFRFND,BSTRNO,BUFND,BUFNI,BUFNO,  X
+               BUFNOL,BUFRDS,BUFSP,BUFUSE,CDTASIZE,CINV,CIPCA,DDNAME,  X
+               ENDRBA,ERROR,EXLLEN,EXLST,FS,HALCRBA,KEYLEN,            X
+               LEVEL,LOKEY,LRECL,MAREA,MLEN,NCIS,NDELR,NEXCP,NEXT,     X
+               NINSR,NIXL,NLOGR,NRETR,NSSS,NUIW,NUPDR,PASSWD,RELEASE,  X
+               RMODE31,RPLLEN,RKP,SDTASIZE,SHRPOOL,STMST,STRMAX,STRNO, X
+               UIW,XAVSPAC,XBFRFND,XBUFNO,XBUFRDS,XBUFUSE,XENDRBA,     X
+               XHALCRBA,XNCIS,XNDELR,XNEXCP,XNINSR,XNLOGR,XNRETR,XNUIW,X
+               XNUPDR,XUIW,XSTRMAX),MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC05'        MARK TEST
+         CLC   TESTAC01(256),MYAREA MATCH PART 1 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         CLC   TESTAC01+256(104),MYAREA+256 MATCH PART 2 ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 6: MF=G OBJECT=INDEX (NO LOKEY, WITH (X)HLRBA)
+*         67 FIELDS  43*4+24*8=364
+         SHOWCB ACB=MYACB1,AREA=MYAREA,LENGTH=364,OBJECT=INDEX,        X
+               FIELDS=(ACBLEN,AVSPAC,BFRFND,BSTRNO,BUFND,BUFNI,BUFNO,  X
+               BUFNOL,BUFRDS,BUFSP,BUFUSE,CDTASIZE,CINV,CIPCA,DDNAME,  X
+               ENDRBA,ERROR,EXLLEN,EXLST,FS,HALCRBA,HLRBA,KEYLEN,      X
+               LEVEL,LRECL,MAREA,MLEN,NCIS,NDELR,NEXCP,NEXT,           X
+               NINSR,NIXL,NLOGR,NRETR,NSSS,NUIW,NUPDR,PASSWD,RELEASE,  X
+               RMODE31,RPLLEN,RKP,SDTASIZE,SHRPOOL,STMST,STRMAX,STRNO, X
+               UIW,XAVSPAC,XBFRFND,XBUFNO,XBUFRDS,XBUFUSE,XENDRBA,     X
+               XHALCRBA,XHLRBA,                                        X
+               XNCIS,XNDELR,XNEXCP,XNINSR,XNLOGR,XNRETR,XNUIW,         X
+               XNUPDR,XUIW,XSTRMAX),MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC06'        MARK TEST
+         CLC   TESTAC02(256),MYAREA MATCH PART 1 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         CLC   TESTAC02+256(108),MYAREA+256 MATCH PART 2 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         WTO   'TESTSHCB SUCCESSFUL'
+         J     EXIT               EXIT
+*
+ABEND    DS    0H
+         STC   R15,WTOR15         SAVE RC IN WTO
+         OI    WTOR15,X'F0'       CONVERT TO DEC
+         STC   R0,WTOR0           SAVE ERRCODE IN WTO
+         OI    WTOR0,X'F0'        CONVERT TO DEC
+         LARL  R1,WTOABEND        R1=WTO MSG
+         WTO   MF=(E,(R1))        SHOW IT
+         J     EXITBAD            EXIT RC=15
+*
+TESTFAIL DS    0H
+         ST    R15,WTOMARK        SAVE TEST ID IN WTO
+         LARL  R1,WTOFAIL         R1=WTO MSG
+         WTO   MF=(E,(R1))        SHOW IT
+EXITBAD  DS    0H
+         SUBEXIT RC=15
+*
+EXIT     DS    0H
+         SUBEXIT
+*
+         DS    0H
+WTOABEND DC    AL2(WTOABDEN-*,0)
+         DC    C'ERR!!! R15='
+WTOR15   DC    X'00'
+         DC    C' R0='
+WTOR0    DC    X'00'
+WTOABDEN EQU   *
+*
+         DS    0H
+WTOFAIL  DC    AL2(WTOFALEN-*,0)
+         DC    C'ERR!!! TEST '
+WTOMARK  DS    CL4
+         DC    C' FAILED'
+WTOFALEN EQU   *
+*
+MYEXLST  EXLST AM=VSAM,                                                X
+               EODAD=(MYEOD,A),                                        X
+               LERAD=(MYLER,A),                                        X
+               SYNAD=(MYSYN,N)
+*
+TESTEX01 DC    A(MYEOD),A(EXLSTLEN)
+TESTEX02 DC    2A(EXLSTLEN),2A(MYEOD2),2A(MYLER2),2A(MYSYN2),2A(0)
+*
+TESTNB01 DC    A(EXLSTLEN),A(RPLLEN),A(ACB_LEN)
+*
+MYRPL    RPL   ACB=MYACB1,                                             X
+               AREA=MYAREA,                                            X
+               AREALEN=50,                                             X
+               ARG=MYAREA,                                             X
+               ECB=MYAREA,                                             X
+               KEYLEN=27,                                              X
+               MSGAREA=MYAREA,                                         X
+               MSGLEN=50,                                              X
+               NXTRPL=MYAREA,                                          X
+               OPTCD=(ARD,SKP,XRBA),                                   X
+               RECLEN=77
+*
+*              ACB       AIXPC    AREA      AREALEN ARG
+TESTRP01 DC    A(MYACB1),A(X'23'),A(MYAREA),A(0050),A(MYAREA)
+*              ECB       FDBK     FTNCD    KEYLEN MSGAREA   MSGLEN
+         DC    A(MYAREA),A(X'24'),A(X'17'),A(027),A(MYAREA),A(50)
+*              NXTRPL    RBA        RECLEN EXLLEN     TRANSID
+         DC    A(MYAREA),A(X'1234'),A(077),A(EXLSTLEN),A(-1)
+*              XRBA         RPLLEN    ACBLEN
+         DC    AL8(X'1234'),A(RPLLEN),A(ACB_LEN)
+*
+*              ACB       AIXPC    AREA      AREALEN ARG
+TESTRP02 DC    A(MYACB1),A(X'23'),A(MYAREA),A(0050),A(MYAREA)
+*              ECB       FDBK     FTNCD    KEYLEN MSGAREA   MSGLEN
+         DC    A(MYAREA),A(X'24'),A(X'17'),A(027),A(MYAREA),A(50)
+*              NXTRPL    RBA        RECLEN EXLLEN      TRANSID
+         DC    A(MYAREA),A(X'1234'),A(077),A(EXLSTLEN),A(-1)
+*              XRBA         XRBA         RPLLEN    ACBLEN
+         DC    AL8(X'1234'),AL8(X'1234'),A(RPLLEN),A(ACB_LEN)
+*
+*              ACB       AIXPC    AREA      AREALEN ARG
+TESTRP03 DC    A(MYACB1),A(X'23'),A(MYAREA),A(0050),A(MYAREA)
+*              ECB       FDBK     FTNCD    KEYLEN MSGAREA   MSGLEN
+         DC    A(MYAREA),A(X'24'),A(X'17'),A(027),A(MYAREA),A(50)
+*              NXTRPL    RBA        RECLEN EXLLEN      TRANSID
+         DC    A(MYAREA),A(X'1234'),A(077),A(EXLSTLEN),A(-1)
+*              XRBA         XRBA         RPLLEN    ACBLEN
+         DC    AL8(X'1234'),AL8(X'1234'),A(RPLLEN),A(ACB_LEN)
+*
+MYACB1   ACB   AM=VSAM,                                                X
+               DDNAME=MYACB1,                                          X
+               PASSWD=MYPASS,                                          X
+               EXLST=MYEXLST,                                          X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X
+               BUFSP=1000,                                             X
+               BUFND=5,                                                X
+               BUFNI=5,                                                X
+               RMODE31=CB,                                             X
+               STRNO=5,                                                X
+               BSTRNO=5,                                               X
+               SHRPOOL=5
+*
+MYACB2   ACB   AM=VSAM,                                                X
+               DDNAME=MYACB2,                                          X
+               PASSWD=MYPASS,                                          X
+               EXLST=MYEXLST,                                          X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X
+               BUFSP=2000,                                             X
+               BUFND=6,                                                X
+               BUFNI=7,                                                X
+               RMODE31=ALL,                                            X
+               STRNO=8,                                                X
+               BSTRNO=9,                                               X
+               SHRPOOL=10
+*
+TESTAC01 DS    0F                 OBJECT=DATA, MYACB1
+*              ACBLEN     AVSPAC        BFRFND        BSTRNO BUFND
+         DC    A(ACB_LEN),A(X'2000000'),A(X'6000000'),A(005),A(5)
+*              BUFNI BUFNO         BUFNOL BUFRDS        BUFSP
+         DC    A(05),A(X'7000000'),A(000),A(X'9000000'),A(1000)
+*              BUFUSE        CDTASIZE  CINV    CIPCA DDNAME
+         DC    A(X'8000000'),AL8(0000),A(2883),A(00),CL8'MYACB1'
+*              ENDRBA        ERROR    EXLLEN      EXLST      FS
+         DC    A(X'5000000'),A(X'34'),A(EXLSTLEN),A(MYEXLST),A(0)
+*              HALCRBA
+         DC    A(X'3000000')
+********       HLRBA
+******** DC    A(X'4000000')      OBJECT=INDEX ONLY
+*              KEYLEN LEVEL
+         DC    A(021),A(MYACB1+(ACBVER-IHAACB),1)
+*              LOKEY
+         DC    A(CTRLOKEY,21)     OBJECT=DATA ONLY
+*              LRECL  MAREA MLEN NCIS          NDELR
+         DC    A(563),A(-1),A(0),A(X'A000000'),A(X'B000000')
+*              NEXCP         NEXT          NINSR         NIXL
+         DC    A(X'C000000'),A(X'D000000'),A(X'E000000'),A(0)
+*              NLOGR         NRETR          NSSS NUIW
+         DC    A(X'F000000'),A(X'10000000'),A(0),A(X'11000000')
+*              NUPDR          PASSWD    RELEASE
+         DC    A(X'12000000'),A(MYPASS),A(MYACB1+(ACBVER-IHAACB),1)
+*              RMODE31 RPLLEN
+         DC    A(0002),A(RPLLEN)
+*              RKP  SDTASIZE         SHRPOOL STMST
+         DC    A(0),AL8(X'13000000'),A(0005),X'D5EA21432D8A0000'
+*              STRMAX         STRNO UIW            XAVSPAC
+         DC    A(X'14000000'),A(05),A(X'15000000'),AL8(X'2000000')
+*              XBFRFND         XBUFNO          XBUFRDS
+         DC    AL8(X'6000000'),AL8(X'7000000'),AL8(X'9000000')
+*              XBUFUSE         XENDRBA
+         DC    AL8(X'8000000'),AL8(X'5000000')
+*              XHALCRBA
+         DC    AL8(X'3000000')
+********       XHLRBA
+******** DC    AL8(X'4000000')    OBJECT=INDEX ONLY
+*              XNCIS           XNDELR          XNEXCP
+         DC    AL8(X'A000000'),AL8(X'B000000'),AL8(X'C000000')
+*              XNINSR          XNLOGR          XNRETR
+         DC    AL8(X'E000000'),AL8(X'F000000'),AL8(X'10000000')
+*              XNUIW            XNUPDR           XUIW
+         DC    AL8(X'11000000'),AL8(X'12000000'),AL8(X'15000000')
+*              XSTRMAX
+         DC    AL8(X'14000000')
+*
+TESTAC02 DS    0F                 OBJECT=INDEX, MYACB1
+*              ACBLEN     AVSPAC         BFRFND         BSTRNO BUFND
+         DC    A(ACB_LEN),A(X'22000000'),A(X'26000000'),A(005),A(5)
+*              BUFNI BUFNO          BUFNOL BUFRDS        BUFSP
+         DC    A(05),A(X'27000000'),A(000),A(X'29000000'),A(1000)
+*              BUFUSE         CDTASIZE  CINV    CIPCA DDNAME
+         DC    A(X'28000000'),AL8(0000),A(3051),A(00),CL8'MYACB1'
+*              ENDRBA         ERROR    EXLLEN      EXLST      FS
+         DC    A(X'25000000'),A(X'34'),A(EXLSTLEN),A(MYEXLST),A(0)
+*              HALCRBA
+         DC    A(X'23000000')
+*              HLRBA
+         DC    A(X'24000000')     OBJECT=INDEX ONLY
+*              KEYLEN LEVEL
+         DC    A(021),A(MYACB1+(ACBVER-IHAACB),1)
+********       LOKEY
+******** DC    A(CTRLOKEY,21)     OBJECT=DATA ONLY
+*              LRECL MAREA MLEN NCIS NDELR
+         DC    A(29),A(-1),A(0),A(0),A(0)
+*              NEXCP          NEXT           NINSR NIXL
+         DC    A(X'2C000000'),A(X'2D000000'),A(00),A(3)
+*              NLOGR         NRETR NSSS NUIW
+         DC    A(X'2F000000'),A(0),A(0),A(X'31000000')
+*              NUPDR          PASSWD    RELEASE
+         DC    A(X'32000000'),A(MYPASS),A(MYACB1+(ACBVER-IHAACB),1)
+*              RMODE31 RPLLEN
+         DC    A(0002),A(RPLLEN)
+*              RKP  SDTASIZE         SHRPOOL STMST
+         DC    A(0),AL8(X'33000000'),A(0005),X'D5EA21432D8A0000'
+*              STRMAX         STRNO UIW            XAVSPAC
+         DC    A(X'34000000'),A(05),A(X'35000000'),AL8(X'22000000')
+*              XBFRFND          XBUFNO           XBUFRDS
+         DC    AL8(X'26000000'),AL8(X'27000000'),AL8(X'29000000')
+*              XBUFUSE          XENDRBA
+         DC    AL8(X'28000000'),AL8(X'25000000')
+*              XHALCRBA
+         DC    AL8(X'23000000')
+*              XHLRBA
+         DC    AL8(X'24000000')    OBJECT=INDEX ONLY
+*              XNCIS  XNDELR XNEXCP
+         DC    AL8(0),AL8(0),AL8(X'2C000000')
+*              XNINSR XNLOGR           XNRETR
+         DC    AL8(0),AL8(X'2F000000'),AL8(0)
+*              XNUIW            XNUPDR           XUIW
+         DC    AL8(X'31000000'),AL8(X'32000000'),AL8(X'35000000')
+*              XSTRMAX
+         DC    AL8(X'34000000')
+*
+TESTAC03 DS    0F                 OBJECT=DATA, MYACB2
+*              ACBLEN     AVSPAC        BFRFND        BSTRNO BUFND
+         DC    A(ACB_LEN),A(X'2000000'),A(X'6000000'),A(009),A(6)
+*              BUFNI BUFNO         BUFNOL BUFRDS        BUFSP
+         DC    A(07),A(X'7000000'),A(000),A(X'9000000'),A(2000)
+*              BUFUSE        CDTASIZE  CINV    CIPCA DDNAME
+         DC    A(X'8000000'),AL8(0000),A(2883),A(00),CL8'MYACB2'
+*              ENDRBA        ERROR    EXLLEN      EXLST      FS
+         DC    A(X'5000000'),A(X'34'),A(EXLSTLEN),A(MYEXLST),A(0)
+*              HALCRBA
+         DC    A(X'3000000')
+********       HLRBA
+******** DC    A(X'4000000')      OBJECT=INDEX ONLY
+*              KEYLEN LEVEL
+         DC    A(021),A(MYACB2+(ACBVER-IHAACB),1)
+*              LOKEY
+         DC    A(CTRLOKEY,21)     OBJECT=DATA ONLY
+*              LRECL  MAREA MLEN NCIS          NDELR
+         DC    A(563),A(-1),A(0),A(X'A000000'),A(X'B000000')
+*              NEXCP         NEXT          NINSR         NIXL
+         DC    A(X'C000000'),A(X'D000000'),A(X'E000000'),A(0)
+*              NLOGR         NRETR          NSSS NUIW
+         DC    A(X'F000000'),A(X'10000000'),A(0),A(X'11000000')
+*              NUPDR          PASSWD    RELEASE
+         DC    A(X'12000000'),A(MYPASS),A(MYACB2+(ACBVER-IHAACB),1)
+*              RMODE31 RPLLEN
+         DC    A(0003),A(RPLLEN)
+*              RKP  SDTASIZE         SHRPOOL STMST
+         DC    A(0),AL8(X'13000000'),A(0010),X'D5EA21432D8A0000'
+*              STRMAX         STRNO UIW            XAVSPAC
+         DC    A(X'14000000'),A(08),A(X'15000000'),AL8(X'2000000')
+*              XBFRFND         XBUFNO          XBUFRDS
+         DC    AL8(X'6000000'),AL8(X'7000000'),AL8(X'9000000')
+*              XBUFUSE         XENDRBA
+         DC    AL8(X'8000000'),AL8(X'5000000')
+*              XHALCRBA
+         DC    AL8(X'3000000')
+********       XHLRBA
+******** DC    AL8(X'4000000')    OBJECT=INDEX ONLY
+*              XNCIS           XNDELR          XNEXCP
+         DC    AL8(X'A000000'),AL8(X'B000000'),AL8(X'C000000')
+*              XNINSR          XNLOGR          XNRETR
+         DC    AL8(X'E000000'),AL8(X'F000000'),AL8(X'10000000')
+*              XNUIW            XNUPDR           XUIW
+         DC    AL8(X'11000000'),AL8(X'12000000'),AL8(X'15000000')
+*              XSTRMAX
+         DC    AL8(X'14000000')
+*
+TESTAC04 DS    0F                 OBJECT=INDEX, MYACB2
+*              ACBLEN     AVSPAC         BFRFND         BSTRNO BUFND
+         DC    A(ACB_LEN),A(X'22000000'),A(X'26000000'),A(009),A(6)
+*              BUFNI BUFNO          BUFNOL BUFRDS        BUFSP
+         DC    A(07),A(X'27000000'),A(000),A(X'29000000'),A(2000)
+*              BUFUSE         CDTASIZE  CINV    CIPCA DDNAME
+         DC    A(X'28000000'),AL8(0000),A(3051),A(00),CL8'MYACB2'
+*              ENDRBA         ERROR    EXLLEN      EXLST      FS
+         DC    A(X'25000000'),A(X'34'),A(EXLSTLEN),A(MYEXLST),A(0)
+*              HALCRBA
+         DC    A(X'23000000')
+*              HLRBA
+         DC    A(X'24000000')     OBJECT=INDEX ONLY
+*              KEYLEN LEVEL
+         DC    A(021),A(MYACB2+(ACBVER-IHAACB),1)
+********       LOKEY
+******** DC    A(CTRLOKEY,21)     OBJECT=DATA ONLY
+*              LRECL MAREA MLEN NCIS NDELR
+         DC    A(29),A(-1),A(0),A(0),A(0)
+*              NEXCP          NEXT           NINSR NIXL
+         DC    A(X'2C000000'),A(X'2D000000'),A(00),A(3)
+*              NLOGR         NRETR NSSS NUIW
+         DC    A(X'2F000000'),A(0),A(0),A(X'31000000')
+*              NUPDR          PASSWD    RELEASE
+         DC    A(X'32000000'),A(MYPASS),A(MYACB2+(ACBVER-IHAACB),1)
+*              RMODE31 RPLLEN
+         DC    A(0003),A(RPLLEN)
+*              RKP  SDTASIZE         SHRPOOL STMST
+         DC    A(0),AL8(X'33000000'),A(0010),X'D5EA21432D8A0000'
+*              STRMAX         STRNO UIW            XAVSPAC
+         DC    A(X'34000000'),A(08),A(X'35000000'),AL8(X'22000000')
+*              XBFRFND          XBUFNO           XBUFRDS
+         DC    AL8(X'26000000'),AL8(X'27000000'),AL8(X'29000000')
+*              XBUFUSE          XENDRBA
+         DC    AL8(X'28000000'),AL8(X'25000000')
+*              XHALCRBA
+         DC    AL8(X'23000000')
+*              XHLRBA
+         DC    AL8(X'24000000')    OBJECT=INDEX ONLY
+*              XNCIS  XNDELR XNEXCP
+         DC    AL8(0),AL8(0),AL8(X'2C000000')
+*              XNINSR XNLOGR           XNRETR
+         DC    AL8(0),AL8(X'2F000000'),AL8(0)
+*              XNUIW            XNUPDR           XUIW
+         DC    AL8(X'31000000'),AL8(X'32000000'),AL8(X'35000000')
+*              XSTRMAX
+         DC    AL8(X'34000000')
+*
+         DS    0D
+MYPASS   DC    XL16'00'
+MYAREA   DC    XL400'00'
+MYAREA2  DC    XL400'00'
+MYCBMR   DC    XL100'00'
+MYEOD    BR    R14
+MYLER    BR    R14
+MYSYN    BR    R14
+MYEOD2   BR    R14
+MYLER2   BR    R14
+MYSYN2   BR    R14
+*
+         LTORG
+*
+FAKEDPFX DS    0H
+* INDIANCO.DTA HDR+PFX+CTR
+* PFX=+30  CTR=+1D0
+* PFXAIXN MODIFIED AT +1CD
+         DC    X'C8C4D9010280000000FFFFFFFFFFFFFF' +X'000'
+         DC    X'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' +X'010'
+         DC    X'FF000002A500000D5700000000000000' +X'020'
+         DC    X'A9D7C6E700000233'                 +X'030'
+         DC    X'0000001500000000FFFF024A0258FFFF' +X'038'
+         DC    X'026C027A000000000B43000000000031' +X'048'
+         DC    X'FF0000000000002C3900000000000031' +X'058'
+         DC    X'FF00000000000031FF00000000000000' +X'068'
+         DC    X'0000000000000031FE00FFFFFFFFFFFF' +X'078'
+         DC    (17*16)X'FF'                        +X'088'
+         DC    X'FFFF000001A1D5EA21432D8A0000D5EA' +X'198'
+         DC    X'21'                               +X'1A8'
+         DC    X'432D8A0000D5EA21432D8A0000D5EA21' +X'1A9'
+         DC    X'432D8A0000D5EA21432D8A0000000000' +X'1B9'
+* PFXAIXN=X'23'          ..
+         DC    X'00004080230000A9C3E3D9'           +X'1C9'
+         DC    X'01000000'         CTRAVGRL        +X'1D4'  16777216
+         DC    X'0000000002000000' CTRAVSPAC       +X'1D8'  33554432
+         DC    X'0000000003000000' CTRHALCRBA      +X'1E0'  50331648
+         DC    X'0000000004000000' CTRHLRBA        +X'1E8'  67108864 NA
+         DC    X'0000000005000000' CTRENDRBA       +X'1F0'  83886080
+         DC    X'0000000006000000' CTRNBFRFND      +X'1F8' 100663296
+         DC    X'0000000007000000' CTRNBUFNO       +X'200' 117440512
+         DC    X'0000000008000000' CTRNBUFUSE      +X'208' 134217728
+         DC    X'0000000009000000' CTRNBUFRDS      +X'210' 150994944
+         DC    X'000000000A000000' CTRNCIS         +X'218' 167772160
+         DC    X'000000000B000000' CTRNDELR        +X'220' 184549376
+         DC    X'000000000C000000' CTRNEXCP        +X'228' 201326592
+         DC    X'000000000D000000' CTRNEXT         +X'230' 218103808
+         DC    X'000000000E000000' CTRNINSR        +X'238' 234881024
+         DC    X'000000000F000000' CTRNLOGR        +X'240' 251658240
+         DC    X'0000000010000000' CTRNRETR        +X'248' 268435456
+         DC    X'0000000011000000' CTRNNUIW        +X'250' 285212672
+         DC    X'0000000012000000' CTRNUPDR        +X'258' 301989888
+         DC    X'0000000013000000' CTRSDTASZ       +X'260' 318767104
+         DC    X'D5EA21432D8A0000' CTRSTMST        +X'268' STCK
+         DC    X'0000000014000000' CTRSTRMAX       +X'270' 335544320
+         DC    X'0000000015000000' CTRNUIW         +X'278' 352321536
+         DC    X'02C6'             CTRLOKEY@       +X'280'
+         DC    X'000EC9D5C4C9'                     +X'282'
+         DC    X'C1D5C3D64BC4E3C10014C57AE0E9F3F9' +X'288'
+         DC    X'F0E0E9E5E2C1D4E0C4C1E3C1000EC9D5' +X'298'
+         DC    X'C4C9C1D5C3D64BC9C4E70014C57AE0E9' +X'2A8'
+         DC    X'F3F9F0E0E9E5E2C1D4E0C4C1E3C10017' +X'2B8'
+CTRLOKEY DC    X'E4F5F1F1F0F1E3C7F1F9F9F5D7E3C3F0' +X'2C8'
+         DC    X'F2F1F9F0F60000000000000000000000' +X'2D8'
+         DC    8X'00'                              +X'2E8'
+         DC    (208*16)X'00'                       +X'2F0'
+         DC    X'000000000000000000000000C6E3D901' +X'FF0'
+*
+FAKEIPFX DS    0H
+* INDIANCO.IDX HDR+PFX+CTR
+* PFX=+30  CTR=+1D0
+         DC    X'C8C4D9010280000000FFFFFFFFFFFFFF' +X'000'
+         DC    X'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' +X'010'
+         DC    X'FF0000028E00000D6E00000000000000' +X'020'
+         DC    X'A9D7C6E70000001D'                 +X'030'
+         DC    X'0000001500000000FFFF024A0258FFFF' +X'038'
+         DC    X'026C027A020000000BEB000000000002' +X'048'
+         DC    X'C900000000000002C900000000000002' +X'058'
+         DC    X'C900000000000002C900FFFFFFFFFFFF' +X'068'
+         DC    X'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' +X'078'
+         DC    X'FFFFFFFFFFFFFFFFFFFF000000000002' +X'088'
+         DC    X'C8000000000000000000000000000002' +X'098'
+         DC    X'BF00000000000002C000000000000002' +X'0A8'
+         DC    X'C700000000000002C800000000000002' +X'0B8'
+         DC    X'C800FFFFFFFFFFFFFFFFFFFFFFFFFFFF' +X'0C8'
+         DC    (12*16)X'FF'                        +X'0D8'
+         DC    X'FFFF000000E2D5EA21432D8A0000D5EA' +X'198'
+         DC    X'21'                               +X'1A8'
+         DC    X'432D8A0000D5EA21432D8A0000D5EA21' +X'1A9'
+         DC    X'432D8A0000D5EA21432D8A0000000000' +X'1B9'
+         DC    X'00004180000000A9C3E3D9'           +X'1C9'
+         DC    X'21000000'         CTRAVGRL        +X'1D4' 553648128
+         DC    X'0000000022000000' CTRAVSPAC       +X'1D8' 570425344
+         DC    X'0000000023000000' CTRHALCRBA      +X'1E0' 587202560
+         DC    X'0000000024000000' CTRHLRBA        +X'1E8' 603979776
+         DC    X'0000000025000000' CTRENDRBA       +X'1F0' 620756992
+         DC    X'0000000026000000' CTRNBFRFND      +X'1F8' 637534208
+         DC    X'0000000027000000' CTRNBUFNO       +X'200' 654311424
+         DC    X'0000000028000000' CTRNBUFUSE      +X'208' 671088640
+         DC    X'0000000029000000' CTRNBUFRDS      +X'210' 687865856
+         DC    X'0000000000000000' CTRNCIS         +X'218' 0 FOR INDEX
+         DC    X'0000000000000000' CTRNDELR        +X'220' 0 FOR INDEX
+         DC    X'000000002C000000' CTRNEXCP        +X'228' 738197504
+         DC    X'000000002D000000' CTRNEXT         +X'230' 754974720
+         DC    X'0000000000000000' CTRNINSR        +X'238' 0 FOR INDEX
+         DC    X'000000002F000000' CTRNLOGR        +X'240' 788529125
+         DC    X'0000000000000000' CTRNRETR        +X'248' 0 FOR INDEX
+         DC    X'0000000031000000' CTRNNUIW        +X'250' 822083584
+         DC    X'0000000032000000' CTRNUPDR        +X'258' 838860800
+         DC    X'0000000033000000' CTRSDTASZ       +X'260' 855638016
+         DC    X'D5EA21432D8A0000' CTRSTMST        +X'268' STCK
+         DC    X'0000000034000000' CTRSTRMAX       +X'270' 872415232
+         DC    X'0000000035000000' CTRNUIW         +X'278' 889192448
+         DC    X'FFFF'             CTRLOKEY@       +X'280'
+         DC    X'000EC9D5C4C9'                     +X'282'
+         DC    X'C1D5C3D64BC4E3C10014C57AE0E9F3F9' +X'288'
+         DC    X'F0E0E9E5E2C1D4E0C4C1E3C1000EC9D5' +X'298'
+         DC    X'C4C9C1D5C3D64BC9C4E70014C57AE0E9' +X'2A8'
+         DC    X'F3F9F0E0E9E5E2C1D4E0C4C1E3C10000' +X'2B8'
+         DC    8X'00'                              +X'2C8'
+         DC    (210*16)X'00'                       +X'2D0'
+         DC    X'000000000000000000000000C6E3D901' +X'FF0'
+*
+         YREGS
+         END
+

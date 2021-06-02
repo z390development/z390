@@ -1,0 +1,31 @@
+         MACRO                                                          00090000
+&NAME    DCB   &DDNAME=0,&MACRF=,                      FOUNDATION BLOCK*00180000
+               &BFTEK=,&BFALN=,&EODAD=1,&RECFM=,&EXLST=0,     EXTENSION*00270000
+               &BUFNO=0,&BUFCB=1,&BUFL=0,&DSORG=,&IOBAD=1,       COMMON*00360000
+               &IMSK=,&UMSK=,&EOEA=0,&PCIA=0,                 EXCP APP1*00450000
+               &SIOA=0,&CENDA=0,&XENDA=0,&AERR=0,&PGFX=NO,    EXCP APP2*00540000
+               &HIARCHY=,                                              *00590000
+               &OPTCD=,&SYNAD=1,&BLKSIZE=0,&NCP=0,&LRECL=0,&EROPT=,    *00720000
+               &BUFRQ=0,&CLPS=1,&INTVL=0,&CPRI=,             QTAM LINE1*00810000
+               &THRESH=,&CPOLL=,&LCBAD=1,                     QTAMLINE2*00900000
+               &TRMAD=1,&SOWA=0,                             QTAM QUEUE*00990000
+               &MON=,&MONDLY=,&WRU=,&IAM=,&EOM=,&EOT=,   BTAM/QTAM WTTA*01080000
+               &LIMCT=0,                                           BDAM*01170000
+               &NTM=0,&CYLOFL=0,&RKP=0,&MSWA=1,                  ISAM 1*01260000
+               &SMSI=0,&SMSW=0,&MSHI=1,&DBUFNO=0,                ISAM 2*01350000
+               &IMGADR=0,&SSRTN=0,&DCBHDR=0,&IMGRTE=0,          YL03123,01440000
+               &QSAMEX=0,                                      @Y30GS11,01490000
+               &DEVD=,&KEYLEN=,&TRTCH=,&DEN=,&ERRCNT=0,&FRID=,  YL03127,01530000
+               &PRTSP=,&CODE=,&MODE=,&STACK=,                          *01620000
+               &GNCP=1,&POLST=0,&GTYPE=EXPRESS,&ERROPT=,&LERB=,   13549*01710000
+               &BUFCT=255,&REPOS=N,&TRANS=,&SCT=,&INVLIST=,&BUFOUT=,   *01800000
+               &MH=,&PCI=,&BUFMAX=,&BUFIN=,&BUFSIZE=,&RESERVE=,        *01890000
+               &BACKUP=NO,&BKUPDCB=0,&BRINGUP=NO,&DMPAUTO=NO,    ICB447*01900000
+               &DUMPDCB=0,&IPLAUTO=NO,&IPLTXID=,&CKPTDCB=0,      ICB447*01910000
+               &FUNC=,                                                 *01930000
+               &READYQ=,&POWERON=NO,                               @01C*01955000
+               &BUFOFF=,                                     ICBI DCB-3*01980000
+               &STOP=,                                       ICBI DCB-3*02010000
+               &DCBE=                                              @L3A 02040000
+         MNOTE *,'NO CODE GENERATED'
+         MEND

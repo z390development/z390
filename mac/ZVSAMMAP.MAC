@@ -1,11 +1,11 @@
-*********************************************************************
-* Copyright 2007 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-*                                                                   *
-* Author - Melvyn Maltz                                             *
-* Date   -  4th April 2016                                          *
-*********************************************************************
+***********************************************************************
+* Copyright 2007 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+*                                                                     *
+* Author - Melvyn Maltz                                               *
+* Date   -  4th April 2016                                            *
+***********************************************************************
          MACRO
          ZVSAMMAP
 *
@@ -15,5 +15,9 @@ ZVSAMMAP DSECT
 MAPXLRA  DS    XL8                XLRA of 1st block addressed
 *                                 by this block
 MAPBITS  DS    0B                 Bitstring
+*                                 00=unallocated
+*                                 01=enough space for a small variable
+*                                 10=has available space
+*                                 11=full
          MEND
 

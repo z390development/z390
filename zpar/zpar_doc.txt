@@ -1,0 +1,36 @@
+A utility named ZPARTRS can be used to generate COBOL, Assembler and EXEC CICS source code execution traces. The utility is documented here: www.z390.info/zpartrs and there are 4 examples with PDF source code, traces, and screen captures for COBOL, Assembler, smf EXEC CICS source code transaction traces. The utility includes options for including or excluding selected modules from trace plus option for including detail execution trace showing values for instruction operands as well as source code labels and comments. There are also options to include or exclude time stamps, messages such as WTO, traces, or errors.
+
+For example see how a 1.5 MB EXEC CICS z390 exeution TRE trace file (similar to GTF trace) can be transformed into a 3 page COBOL and EXEC CICS source statement trace for specific COBOL transaction module TESTBEC1.CBL using ZPARTRS utility. Here is the EXEC CICS COBOL source transaction program:
+
+http://www.zpar.org/TESTBEC1_CBL.pdf
+
+Here is the source only trace with COBOL line numbers:
+
+http://www.zpar.org/ZPARTRS_CICS_TESTBEC1_CBL.pdf
+
+Here is alternate COBOL source and generated assembler source trace:
+
+http://www.zpar.org/ZPARTRS_CICS_TESTBEC1_CBL_ASM.pdf
+
+And here is the CICS TN3270 screen capture for the executed transaction BEC1:
+
+http://www.zpar.org/ZPARTRS_CICS_TESTBEC1_SCREEN.pdf
+
+These and similar links for 3 othere demos can be found on www.zpar.org. The COBOL source and assembler type traces provide excellent learning tool to see what kind of mainframe z9/z10 assembler code is generated for a specific COBOL statement. For example the COBOL Hello World demo program consisting of DISPLAY 'Hellow World" and STOP RUN, generates exactly 5 assembler instructions in the procedure division as shown here:
+
+http://www.zpar.org/ZPARTRC_HELLO_CBL_ASM.pdf
+
+Of course this does not inlude the 29 initialization instructions generated for every zcobol
+program to load the zcobol runtime load module and verify version. Hee is alternative trace of the same COBOL program with DETAIL option which forces COBOL and assembler source plus execution detail line showing values of instruction operands for all instructions including the standard initializtion instructions which were skipped in prior trace:
+
+http://www.zpar.org/ZPARTRC_HELLO_CBL_DETAIL.pdf
+
+z390 v1.5.01a PTF can be downloaded from www.z390.org with InstallShield for Windows and file image for Linux. This PTF has been regression tested on Windows Vista, XP, and Ubuntu 8.o4 LTS Linux. The pre-requisites are z390 v1.5.01 base install and J2SE 1.6+. For more details on the enhancements and fixes in this PTF visit:
+
+http://www.z390.org/z390_Download_Archive.htm
+
+Don Higgins
+don@higgins.net
+link
+
+Posted by SourceForge Robot 2009-10-08

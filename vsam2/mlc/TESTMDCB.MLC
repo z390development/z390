@@ -1,0 +1,522 @@
+TESTMDCB SUBENTRY BASES=(R13,R12)
+* GENERAL ERROR TESTS
+* NO BLOCK, POSITIONALS, BAD AM, BAD MF
+*        MODCB FRED,MIKE,AM=VTAM,MF=Q
+*************
+* RPL TESTS *
+*************
+* BAD PARMS, UNSUPPORTED PARM, BAD REG FOR RPL=, BAD REG FOR MF=L
+* BAD KEYLEN/MSGLEN, BAD REG FOR MF=L
+*        MODCB RPL=(R15),DDNAME=ABC,MAREA=ABC,OPTCD=(KEY,NUP,FKS),     X
+               TRANSID=ABC,ECB=(R14),NXTRPL=(R1),KEYLEN=1234,          X
+               MSGLEN=70000,                                           X
+               MF=(L,(R14))
+* BAD REG FOR ACB/AREA, NO LABEL, NO 2ND PARM FOR MF=G
+*        MODCB RPL=MYRPL,ACB=(R0),AREA=(R1),MF=G
+* BAD REG FOR MF=E
+*        MODCB RPL=MYRPL,MF=(E,(R1))
+* OPTCD CONFLICTS FOR ALL MF=
+*        MODCB RPL=MYRPL,OPTCD=(KEY,ADR,NUP,UPD,FKS,GEN),MF=I
+*MYMODCB  MODCB RPL=MYRPL,OPTCD=(KEY,ADR,NUP,UPD,FKS,GEN),MF=L
+*        MODCB RPL=MYRPL,OPTCD=(KEY,ADR,NUP,UPD,FKS,GEN),MF=(E,MYCBMR)
+*        MODCB RPL=MYRPL,OPTCD=(KEY,ADR,NUP,UPD,FKS,GEN),MF=(G,MYCBMR)
+*
+* TEST 1: MODIFY THE RPL MYRPL INLINE MF=I
+*         OPTCD WILL BE (KGE,GEN,ARD,SKP,XRBA)
+         LA    R2,MYRPL
+         LA    R5,MYACB
+         MODCB RPL=(R2),                                               X
+               ACB=(R5),                                               X
+               AREA=MYAREA,                                            X
+               AREALEN=50,                                             X
+               ARG=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               MSGLEN=50,                                              X
+               KEYLEN=10,                                              X
+               OPTCD=(ARD,SKP,XRBA)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP01'        MARK TEST
+         CLC   MYRPL(RPLLEN),RPL01 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 2: BUILD CBMR AND MOVE IT TO MYCBMR
+         MODCB RPL=MYRPL,                                              X
+               ACB=MYACB,                                              X
+               KEYLEN=50,                                              X
+               OPTCD=(ARD,SEQ,XRBA),                                   X
+               MF=(L,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+*       : MODIFY MYCBMR AND USE IT TO MODIFY MYRPL
+*         THE OPTCD IN THE CBMR IS REPLACED
+*         COMBINED MODS TO ACB, KEYLEN AND OPTCD
+*         OPTCD WILL BE (KGE,GEN,LRD,SKP,RBA)
+         MODCB RPL=MYRPL,                                              X
+               ACB=MYACB2,                                             X
+               OPTCD=(LRD,SKP,RBA),                                    X
+               MF=(E,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP02'        MARK TEST
+         CLC   MYRPL(RPLLEN),RPL02 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 3: BUILD CBMR AND MOVE IT TO MYCBMR
+*         USE CBMR TO MODIFY MYRPL
+*         MODS TO AREALEN, NXTRPL AND OPTCD
+*         OPTCD WILL BE (DIR,KGE,GEN,LRD,RBA,ASY)
+         MODCB RPL=MYRPL,                                              X
+               AREALEN=1234,                                           X
+               NXTRPL=MYAREA,                                          X
+               OPTCD=(DIR,ASY),                                        X
+               MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP03'        MARK TEST
+         CLC   MYRPL(RPLLEN),RPL03 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 4: AS TEST 3 BUT WITH REG NOTATION AND CHANGE TO OPTCD
+*         USE CBMR TO MODIFY MYRPL
+*         MODS TO AREALEN, NXTRPL AND OPTCD
+*         OPTCD WILL BE (ADR,DIR,KGE,GEN,LRD,RBA,SYN)
+         LA    R2,MYRPL
+         LA    R5,MYPASS
+         MODCB RPL=(R2),                                               X
+               AREALEN=4321,                                           X
+               NXTRPL=(R5),                                            X
+               OPTCD=(ADR,SYN),                                        X
+               MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP04'        MARK TEST
+         CLC   MYRPL(RPLLEN),RPL04 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 5: MOD MYRPL TO ADD EXTERNAL ECB
+         MODCB RPL=MYRPL,                                              X
+               ECB=MYECB,                                              X
+               MF=I
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP05'        MARK TEST
+         CLC   MYRPL(RPLLEN),RPL05 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 6: MOD MYRPL TO REMOVE EXTERNAL ECB
+         MODCB RPL=MYRPL,                                              X
+               ECB=0,                                                  X
+               MF=I
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP06'        MARK TEST
+         CLC   MYRPL(RPLLEN),RPL06 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+*************
+* ACB TESTS *
+*************
+* BAD PARMS, UNSUPPORTED PARM, BAD REG FOR ACB=, BAD REG FOR MF=L
+* BAD BSTRNO/BUFND/RMODE31/SHRPOOL, BAD REG FOR MF=L
+* INVALID/UNSUPPORTED MACRF PARMS
+*        MODCB ACB=(R15),ARG=ABC,NXTRPL=ABC,OPTCD=(KEY,NUP,FKS),       X
+               MAREA=ABC,MLEN=5,RLSREAD=ABC,PASSWD=(R0),EXLST=(R1),    X
+               BSTRNO=300,BUFND=70000,RMODE31=BAD,SHRPOOL=300,         X
+               MACRF=(KEY,GOOD,BAD,UGLY,CFX,NCI,RLS),                  X
+               MF=(L,(R14))
+* BAD REG FOR ACB/PASSWD, NO 2ND PARM FOR MF=G, NO LABEL
+*        MODCB ACB=(R0),PASSWD=(R1),MF=G
+* BAD REG FOR MF=E
+*        MODCB ACB=MYACB,MF=(E,(R1))
+* MACRF CONFLICTS FOR ALL MF=
+*        MODCB ACB=MYACB,MACRF=(NDF,DFR,NIS,SIS,NRM,AIX,NSR,LSR,GSR),  X
+               MF=I
+*MYMODCB  MODCB ACB=MYACB,MACRF=(NDF,DFR,NIS,SIS,NRM,AIX,NSR,LSR,GSR), X
+               MF=L
+*        MODCB ACB=MYACB,MACRF=(NDF,DFR,NIS,SIS,NRM,AIX,NSR,LSR,GSR),  X
+               MF=(E,MYCBMR)
+*        MODCB ACB=MYACB,MACRF=(NDF,DFR,NIS,SIS,NRM,AIX,NSR,LSR,GSR),  X
+               MF=(G,MYCBMR)
+*
+* TEST 1: MODIFY MYACB INLINE
+*         MACRF WILL BE (KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,GSR,DFR,SIS)
+         LA    R2,MYACB
+         MODCB ACB=(R2),                                               X
+               BSTRNO=10,                                              X
+               BUFND=10,                                               X
+               BUFNI=10,                                               X
+               BUFSP=2000,                                             X
+               DDNAME=MYACB,                                           X
+               EXLST=MYAREA,                                           X
+               MACRF=(IN,GSR),                                         X
+               PASSWD=MYAREA,                                          X
+               RMODE31=NONE,                                           X
+               SHRPOOL=1,                                              X
+               STRNO=10
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC01'        MARK TEST
+         CLC   MYACB(ACB_LEN),ACB01 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 2: BUILD CBMR AND MOVE IT TO MYCBMR
+         MODCB ACB=MYACB,                                              X
+               BSTRNO=20,                                              X
+               BUFND=20,                                               X
+               BUFNI=25,                                               X
+               BUFSP=3000,                                             X
+               DDNAME=NEWACB,                                          X
+               EXLST=MYPASS,                                           X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X        X
+               PASSWD=MYPASS,                                          X
+               RMODE31=CB,                                             X
+               SHRPOOL=2,                                              X
+               STRNO=15,                                               X
+               MF=(L,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+*       : MODIFY MYCBMR AND USE IT TO MODIFY MYACB
+*         NOTE THAT THIS MACRF COMPLETELY REPLACES THE ONE ABOVE
+*         MACRF WILL BE (KEY,ADR,SEQ,SKP,DIR,IN,OUT,NRM,GSR,DFR,NIS)
+         MODCB ACB=MYACB,                                              X
+               DDNAME=NEWACB2,                                         X
+               MACRF=(NRM,NIS,IN),                                     X
+               STRNO=27,                                               X
+               MF=(E,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC02'        MARK TEST
+         CLC   MYACB(ACB_LEN),ACB02 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 3: BUILD CBMR AND MOVE IT TO MYCBMR
+*         USE CBMR TO MODIFY MYACB
+*         MACRF WILL BE (KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,GSR,DFR,SIS)
+         MODCB ACB=MYACB,                                              X
+               DDNAME=NEWACB3,                                         X
+               MACRF=(AIX,SIS,IN),                                     X
+               SHRPOOL=3,                                              X
+               MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC03'        MARK TEST
+         CLC   MYACB(ACB_LEN),ACB03 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 4: BUILD CBMR AND MOVE IT TO MYCBMR
+*         USE CBMR TO MODIFY MYACB
+*         USES REGISTER NOTATION
+*         MACRF WILL BE (KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS)
+         LA    R2,MYACB
+         LA    R3,MYPASS
+         LA    R4,MYCBMR
+         MODCB ACB=(R2),                                               X
+               BSTRNO=20,                                              X
+               BUFND=20,                                               X
+               BUFNI=25,                                               X
+               BUFSP=3000,                                             X
+               DDNAME=NEWACB,                                          X
+               EXLST=(R3),                                             X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X        X
+               PASSWD=(R3),                                            X
+               RMODE31=CB,                                             X
+               SHRPOOL=2,                                              X
+               STRNO=15,                                               X
+               MF=(G,(R4))
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC04'        MARK TEST
+         CLC   MYACB(ACB_LEN),ACB04 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+***************
+* EXLST TESTS *
+***************
+* ERROR TESTS
+* EXLST BAD REG, BAD EXLST PARMS, UNSUPPORTED PARMS, REG & MF=L,
+* BAD MOD, MOD L, MOD A & N, MF=L BAD REG
+*        MODCB EXLST=(R15),DDNAME=ABC,BUFSP=5,KEYLEN=5,JRNAD=ABC,      X
+               UPAD=ABC,RLSWAIT=ABC,AREA=(R2),EODAD=(MYPASS,Q),        X
+               LERAD=(MYPASS,L),SYNAD=(MYPASS,A,N),                    X
+               MF=(L,(R14),MYLEN11)
+* BAD REG FOR SYNAD, NO 2ND PARM FOR MF=G, NO LABEL
+*        MODCB EXLST=MYEXLST,SYNAD=((R0),N),MF=G
+* BAD REG FOR MF=E
+*        MODCB EXLST=MYEXLST,MF=(E,(R1))
+*
+* TEST 1: MODIFY THE EXLST MYEXLST INLINE MF=I
+*         FROM EXLST EODAD=(MYEOD,A)   LERAD=(0,A)  SYNAD=(MYSYN,N)
+*         TO   EXLST EODAD=(MYPASS,A)  LERAD=(0,A)  SYNAD=(MYSYN,A)
+         LA    R2,MYEXLST
+         MODCB EXLST=(R2),                                             X
+               EODAD=MYPASS,                                           X
+               LERAD=(0,A),                                            X
+               SYNAD=(MYSYN,A)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX01'        MARK TEST
+         CLC   MYEXLST(EXLSTLEN),EXLST01 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 2: BUILD CBMR AND MOVE IT TO MYCBMR
+         MODCB EXLST=MYEXLST,                                          X
+               EODAD=(MYAREA,N),                                       X
+               LERAD=(4,A),                                            X
+               SYNAD=(4,N),                                            X
+               MF=(L,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+*       : MODIFY MYCBMR AND USE IT TO MODIFY MYEXLST
+*         FROM EXLST EODAD=(MYPASS,A)  LERAD=(0,A)      SYNAD=(MYSYN,A)
+*         TO   EXLST EODAD=(MYEOD,N)   LERAD=(MYLER,N)  SYNAD=(MYSYN,N)
+         MODCB EXLST=MYEXLST,                                          X
+               EODAD=(MYEOD,N),                                        X
+               LERAD=(MYLER,N),                                        X
+               SYNAD=MYSYN,                                            X
+               MF=(E,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX02'        MARK TEST
+         CLC   MYEXLST(EXLSTLEN),EXLST02 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 3: BUILD CBMR AND MOVE IT TO MYCBMR
+*         USE CBMR TO MODIFY MYEXLST
+*         FROM EXLST EODAD=(MYEOD,N)   LERAD=(MYLER,N)  SYNAD=(MYSYN,N)
+*         TO   EXLST EODAD=(MYEOD,N)   LERAD=(MYLER,N)  SYNAD=(MYSYN,A)
+         MODCB EXLST=MYEXLST,                                          X
+               SYNAD=(,A),                                             X
+               MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX03'        MARK TEST
+         CLC   MYEXLST(EXLSTLEN),EXLST03 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 4: BUILD CBMR AND MOVE IT TO MYCBMR
+*         USE CBMR TO MODIFY MYEXLST
+*         USES REGISTER NOTATION
+*         FROM EXLST EODAD=(MYEOD,N)   LERAD=(MYLER,N)  SYNAD=(MYSYN,A)
+*         TO   EXLST EODAD=(MYEOD,A)   LERAD=(MYLER,A)  SYNAD=(MYSYN,A)
+         LA    R2,MYEXLST
+         LA    R3,MYEOD
+         LA    R4,MYLER
+         LA    R5,MYSYN
+         LA    R6,MYCBMR
+         MODCB EXLST=(R2),                                             X
+               EODAD=((R3),A),                                         X
+               LERAD=((R4),A),                                         X
+               SYNAD=((R5)),                                           X
+               MF=(G,(R6))
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX04'        MARK TEST
+         CLC   MYEXLST(EXLSTLEN),EXLST04 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+         WTO   'TESTMDCB SUCCESSFUL'
+         J     EXIT               EXIT
+*
+ABEND    DS    0H
+         STC   R15,WTOR15         SAVE RC IN WTO
+         OI    WTOR15,X'F0'       CONVERT TO DEC
+         STC   R0,WTOR0           SAVE ERRCODE IN WTO
+         OI    WTOR0,X'F0'        CONVERT TO DEC
+         LARL  R1,WTOABEND        R1=WTO MSG
+         WTO   MF=(E,(R1))        SHOW IT
+         J     EXITBAD            EXIT RC=15
+*
+TESTFAIL DS    0H
+         ST    R15,WTOMARK        SAVE TEST ID IN WTO
+         LARL  R1,WTOFAIL         R1=WTO MSG
+         WTO   MF=(E,(R1))        SHOW IT
+EXITBAD  DS    0H
+         DC    H'0'
+         SUBEXIT RC=15
+*
+EXIT     DS    0H
+         SUBEXIT
+*
+         DS    0H
+WTOABEND DC    AL2(WTOABDEN-*,0)
+         DC    C'ERR!!! R15='
+WTOR15   DC    X'00'
+         DC    C' R0='
+WTOR0    DC    X'00'
+WTOABDEN EQU   *
+*
+         DS    0H
+WTOFAIL  DC    AL2(WTOFALEN-*,0)
+         DC    C'ERR!!! TEST '
+WTOMARK  DS    CL4
+         DC    C' FAILED'
+WTOFALEN EQU   *
+*
+MYRPL    RPL   ACB=MYACB,OPTCD=(ARD,KGE,GEN)
+*
+* (ARD,KGE,GEN) MODDED BY (ARD,SKP,XRBA)=(KGE,GEN,ARD,SKP,XRBA)
+RPL01    RPL   ACB=MYACB,                                              X
+               AREA=MYAREA,                                            X
+               AREALEN=50,                                             X
+               ARG=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               MSGLEN=50,                                              X
+               KEYLEN=10,                                              X
+               OPTCD=(KGE,GEN,ARD,SKP,XRBA)
+*
+* (KGE,GEN,ARD,SKP,XRBA) MODDED BY (LRD,SKP,RBA)=(KGE,GEN,LRD,SKP,RBA)
+RPL02    RPL   ACB=MYACB2,                                             X
+               AREA=MYAREA,                                            X
+               AREALEN=50,                                             X
+               ARG=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               MSGLEN=50,                                              X
+               KEYLEN=50,                                              X
+               OPTCD=(KGE,GEN,LRD,SKP,RBA)
+*
+* (KGE,GEN,LRD,SKP,RBA) MODDED BY (DIR,ASY)=(DIR,KGE,GEN,LRD,RBA,ASY)
+RPL03    RPL   ACB=MYACB2,                                             X
+               AREA=MYAREA,                                            X
+               AREALEN=1234,                                           X
+               ARG=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               MSGLEN=50,                                              X
+               NXTRPL=MYAREA,                                          X
+               KEYLEN=50,                                              X
+               OPTCD=(DIR,KGE,GEN,LRD,RBA,ASY)
+*
+* (DIR,KGE,GEN,LRD,RBA,ASY) MODDED BY (ADR,SYN)=
+*                                     (ADR,DIR,KGE,GEN,LRD,RBA,SYN)
+RPL04    RPL   ACB=MYACB2,                                             X
+               AREA=MYAREA,                                            X
+               AREALEN=4321,                                           X
+               ARG=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               MSGLEN=50,                                              X
+               NXTRPL=MYPASS,                                          X
+               KEYLEN=50,                                              X
+               OPTCD=(ADR,DIR,KGE,GEN,LRD,RBA,SYN)
+*
+RPL05    RPL   ACB=MYACB2,                                             X
+               AREA=MYAREA,                                            X
+               AREALEN=4321,                                           X
+               ARG=MYAREA,                                             X
+               ECB=MYECB,                                              X
+               MSGAREA=MYAREA,                                         X
+               MSGLEN=50,                                              X
+               NXTRPL=MYPASS,                                          X
+               KEYLEN=50,                                              X
+               OPTCD=(ADR,DIR,KGE,GEN,LRD,RBA,SYN)
+*
+RPL06    RPL   ACB=MYACB2,                                             X
+               AREA=MYAREA,                                            X
+               AREALEN=4321,                                           X
+               ARG=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               MSGLEN=50,                                              X
+               NXTRPL=MYPASS,                                          X
+               KEYLEN=50,                                              X
+               OPTCD=(ADR,DIR,KGE,GEN,LRD,RBA,SYN)
+*
+MYACB    ACB   AM=VSAM,                                                X
+               DDNAME=MYACB2,                                          X
+               PASSWD=MYPASS,                                          X
+               EXLST=MYEXLST,                                          X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X
+               BUFSP=1000,                                             X
+               BUFND=5,                                                X
+               BUFNI=5,                                                X
+               RMODE31=CB,                                             X
+               STRNO=5,                                                X
+               BSTRNO=5,                                               X
+               SHRPOOL=5
+*
+MYACB2   ACB   AM=VSAM,                                                X
+               DDNAME=MYACB
+*
+* MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS) MODDED BY
+*       (IN,GSR)=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,GSR,DFR,SIS)
+ACB01    ACB   AM=VSAM,                                                X
+               DDNAME=MYACB,                                           X
+               PASSWD=MYAREA,                                          X
+               EXLST=MYAREA,                                           X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,GSR,DFR,SIS),     X
+               BUFSP=2000,                                             X
+               BUFND=10,                                               X
+               BUFNI=10,                                               X
+               RMODE31=NONE,                                           X
+               STRNO=10,                                               X
+               BSTRNO=10,                                              X
+               SHRPOOL=1
+*
+* MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,GSR,DFR,SIS) MODDED BY
+*       (NRM,NIS,IN)=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,NRM,GSR,DFR,NIS)
+ACB02    ACB   AM=VSAM,                                                X
+               DDNAME=NEWACB2,                                         X
+               PASSWD=MYPASS,                                          X
+               EXLST=MYPASS,                                           X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,NRM,GSR,DFR,NIS),     X
+               BUFSP=3000,                                             X
+               BUFND=20,                                               X
+               BUFNI=25,                                               X
+               RMODE31=CB,                                             X
+               STRNO=27,                                               X
+               BSTRNO=20,                                              X
+               SHRPOOL=2
+*
+* MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,NRM,GSR,DFR,NIS) MODDED BY
+*       (AIX,SIS,IN)=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,GSR,DFR,SIS)
+ACB03    ACB   AM=VSAM,                                                X
+               DDNAME=NEWACB3,                                         X
+               PASSWD=MYPASS,                                          X
+               EXLST=MYPASS,                                           X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,GSR,DFR,SIS),     X
+               BUFSP=3000,                                             X
+               BUFND=20,                                               X
+               BUFNI=25,                                               X
+               RMODE31=CB,                                             X
+               STRNO=27,                                               X
+               BSTRNO=20,                                              X
+               SHRPOOL=3
+*
+* MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,GSR,DFR,SIS) MODDED BY
+*       (KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS)=
+*       (KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS)
+ACB04    ACB   AM=VSAM,                                                X
+               DDNAME=NEWACB,                                          X
+               PASSWD=MYPASS,                                          X
+               EXLST=MYPASS,                                           X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X
+               BUFSP=3000,                                             X
+               BUFND=20,                                               X
+               BUFNI=25,                                               X
+               RMODE31=CB,                                             X
+               STRNO=15,                                               X
+               BSTRNO=20,                                              X
+               SHRPOOL=2
+*
+MYEXLST  EXLST AM=VSAM,                                                X
+               EODAD=MYEOD,                                            X
+               LERAD=(0,A),                                            X
+               SYNAD=(MYSYN,N)
+*
+EXLST01  EXLST AM=VSAM,                                                X
+               EODAD=MYPASS,                                           X
+               LERAD=(0,A),                                            X
+               SYNAD=(MYSYN,A)
+*
+EXLST02  EXLST AM=VSAM,                                                X
+               EODAD=(MYEOD,N),                                        X
+               LERAD=(MYLER,N),                                        X
+               SYNAD=(MYSYN,N)
+*
+EXLST03  EXLST AM=VSAM,                                                X
+               EODAD=(MYEOD,N),                                        X
+               LERAD=(MYLER,N),                                        X
+               SYNAD=(MYSYN,A)
+*
+EXLST04  EXLST AM=VSAM,                                                X
+               EODAD=(MYEOD,A),                                        X
+               LERAD=(MYLER,A),                                        X
+               SYNAD=(MYSYN,A)
+*
+MYPASS   DC    XL50'00'
+MYAREA   DC    XL50'00'
+MYECB    DS    XL4
+MYEOD    BR    R14
+MYLER    BR    R14
+MYSYN    BR    R14
+MYCBMR   DC    XL100'00'
+*
+         LTORG
+*
+         YREGS
+         END
+

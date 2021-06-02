@@ -1,0 +1,611 @@
+1                                         High Level Assembler Option Summary                   (PTF UK71661)   Page    1
+-                                                                                            HLASM R6.0  2020/09/06 03.42
+0  No Overriding ASMAOPT Parameters
+   No Overriding Parameters
+   No Process Statements
+
+
+   Options for this Assembly
+0  NOADATA
+     ALIGN
+     ASA
+     BATCH
+     CODEPAGE(047C)
+   NOCOMPAT
+   NODBCS
+   NODECK
+     DXREF
+     ESD
+   NOEXIT
+     FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOPAGE0,PUSH,RECORD,NOSUBSTR,USING0)
+   NOFOLD
+   NOGOFF
+   NOINFO
+     LANGUAGE(EN)
+   NOLIBMAC
+     LINECOUNT(60)
+     LIST(121)
+     MACHINE(,NOLIST)
+     MXREF(SOURCE)
+     OBJECT
+     OPTABLE(UNI,NOLIST)
+   NOPCONTROL
+   NOPESTOP
+   NOPROFILE
+   NORA2
+   NORENT
+     RLD
+     RXREF
+     SECTALGN(8)
+     SIZE(MAX)
+   NOSUPRWARN
+     SYSPARM()
+   NOTERM
+   NOTEST
+     THREAD
+   NOTRANSLATE
+     TYPECHECK(MAGNITUDE,REGISTER)
+     USING(NOLIMIT,MAP,WARN(15))
+   NOWORKFILE
+     XREF(SHORT,UNREFS)
+
+   No Overriding DD Names
+1                                              External Symbol Dictionary                                       Page    2
+-Symbol   Type   Id     Address  Length   Owner Id Flags Alias-of                            HLASM R6.0  2020/09/06 03.42
+0          PC 00000001 00000000 00000000             00
+ DODOC     SD 00000002 00000000 00000174             00
+1                                                                                                               Page    3
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.42
+0                                      1          AGO   .SKIP
+                                       2 .SKIP    ANOP
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    4
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.42
+0                                      4 *
+                       00000           5 R0       EQU   0
+                       00001           6 R1       EQU   1       STANDARD
+                       00002           7 R2       EQU   2        EQUATES
+                       00003           8 R3       EQU   3         FOR
+                       00004           9 R4       EQU   4          GENERAL
+                       00005          10 R5       EQU   5           PURPOSE
+                       00006          11 R6       EQU   6            REGISTERS.
+                       00007          12 R7       EQU   7             YOU
+                       00008          13 R8       EQU   8              MIGHT
+                       00009          14 R9       EQU   9               AS
+                       0000A          15 R10      EQU   10               WELL
+                       0000B          16 R11      EQU   11                JUST
+                       0000C          17 R12      EQU   12                 GET
+                       0000D          18 R13      EQU   13                  USED
+                       0000E          19 R14      EQU   14                   TO
+                       0000F          20 R15      EQU   15                    IT.
+                                      21 *
+ 000000                00000 00174    22 DODOC    CSECT
+                                      23 *
+                  R:C  00000          24          USING *,R12               SET BASE REGISTER FOR PROGRAM
+ 000000 90EC D00C            0000C    25          STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA
+ 000004 18CF                          26          LR    R12,R15             PRIME BASE REG
+ 000006 41E0 C0F4            000F4    27          LA    R14,SAVEAREA        ADDRESS OF MY SAVE AREA
+ 00000A 50D0 C0F8            000F8    28          ST    R13,SAVEAREA+4      BACK LINK TO CALLER'S SAVE AREA
+ 00000E 50E0 D008            00008    29          ST    R14,8(,R13)         FORWARD LINK TO MY SAVE AREA
+ 000012 18DE                          30          LR    R13,R14             R13 MUST POINT TO MY SAVE AREA
+                                      31 *
+                                      32 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                      33 *                                                                     *
+                                      34 *                      THE "DO" STATEMENT                             *
+                                      35 *                                                                     *
+                                      36 *      The "DO" MACRO PROVIDES A LOOPING STRUCTURE FOR PERFORMING     *
+                                      37 *      MULTIPLE PASSES THROUGH THE DESIRED CODE. THE "DO" HAS         *
+                                      38 *      ADDITIONAL PARAMETERS OVER THE "IF", BUT USES THE SAME         *
+                                      39 *      STRUCTURE FOR CREATING THE LOGICAL REQUIREMENTS AS THE "IF"    *
+                                      40 *      MACRO (IT CALLS THE "IF" MACRO TO DO THE PROCESSING OF YOUR    *
+                                      41 *      LOGIC). THE DIFFERENCE IS THAT AN EXTRA SET OF PARENTHESES     *
+                                      42 *      MUST SURROUND YOUR ENTIRE LOGIC EXPRESSIONS, DUE TO THE        *
+                                      43 *      SPECIAL WAY OF HANDLING POSITIONAL PARAMETERS USED BY THE "IF" *
+                                      44 *      MACRO                                                          *
+                                      45 *                                                                     *
+                                      46 *      THE TWO SIMPLEST EXAMPLES ARE THE "DO WHILE" AND THE           *
+                                      47 *      "DO UNTIL":                                                    *
+                                      48 *                                                                     *
+                                      49 *       DO UNTIL=((LTR,R1,R1,NZ))                                     *
+                                      50 *                                                                     *
+                                      51 *       DO WHILE=((LTR,R1,R1,NZ))                                     *
+                                      52 *                                                                     *
+                                      53 *       THE ONLY OTHER AVAILABLE PARAMETER IS THE "TEST=". "BEFORE"   *
+                                      54 *       IS THE DEFAULT. "TEST=AFTER" CAUSES THE DO-GROUP TO BE        *
+                                      55 *       PERFORMED ONE TIME BEFORE THE FIRST TEST IS MADE.             *
+                                      56 *                                                                     *
+                                      57 *       DO UNTIL=((LTR,R1,R1,NZ)),TEST=BEFORE                         *
+                                      58 *                                                                     *
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    5
+   Active Usings: DODOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.42
+0                                     59 *       DO WHILE=((LTR,R1,R1,NZ)),TEST=BEFORE                         *
+                                      60 *                                                                     *
+                                      61 *       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+                                      62 *                                                                     *
+                                      63 *       DO WHILE=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+                                      64 *                                                                     *
+                                      65 *       THE DO-GROUP MUST BE TERMINATED WITH AN "ENDDO" STATEMENT:    *
+                                      66 *                                                                     *
+                                      67 *       FOLLOWING THE STATEMENTS TO BE EXECUTED WHEN THE "DO"         *
+                                      68 *       STATEMENT SUCCEEDS, THERE SHOULD BE AN "ENDO" TO TERMINATE    *
+                                      69 *       THE LOGIC.                                                    *
+                                      70 *                                                                     *
+                                      71 *       SPECIAL NOTE: THE "ENDIF" AND "ENDO" ARE INTERCHANGEABLE.     *
+                                      72 *       THEY ARE BOTH PROVIDED FOR DOCUMENTATION PURPOSES.            *
+                                      73 *                                                                     *
+                                      74 *       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+                                      75 *                                                                     *
+                                      76 *                      ONE                                            *
+                                      77 *                    OR MORE                                          *
+                                      78 *                  INSTRUCTIONS                                       *
+                                      79 *                                                                     *
+                                      80 *       ENDDO                                                         *
+                                      81 *                                                                     *
+                                      82 *       THE DEFAULT FOR WHEN THE TEST IS PERFORMED IS BEFORE THE      *
+                                      83 *       BODY OF THE DO-GROUP IS RUN FOR THE FIRST TIME. IF THE LOGIC  *
+                                      84 *       TEST(S) FAIL, THEN THE INSTUCTIONS IN THE BODY OF THE         *
+                                      85 *       ARE BYPASSED ENTIRELY.                                        *
+                                      86 *                                                                     *
+                                      87 *       IF YOU NEED THE DO-GROUP TO BE PERFORMED AT LEAST ONCE, THEN  *
+                                      88 *       CODE THE "TEST=AFTER" PARAMETER. THE DEFAULT FOR "TEST" IS    *
+                                      89 *       "BEFORE", SO IF THAT IS WHAT YOU WANT, THEN YOU DO NOT NEED   *
+                                      90 *       TO SPECIFY IT.                                                *
+                                      91 *                                                                     *
+                                      92 *       IF YOU SPECIFY "BEFORE", OR DEFAULT TO IT, THEN THE LOGICAL   *
+                                      93 *       TEST IS DETERMINED BEFORE THE BODY OF CODE IS EXECUTED, AND   *
+                                      94 *       IF THAT TEST FAILS THEN THE BODY OF CODE IS BYPASSED WITHOUT  *
+                                      95 *       BEING EXECUTED EVEN ONCE. IF YOU SPECIFY "AFTER", THEN THE    *
+                                      96 *       CODE IS EXECUTED ONE TIME BEFORE THE LOGICAL TEST IS APPLIED. *
+                                      97 *       IF THAT TEST FAILS, THEN THAT ONE TIME IS THE ONLY TIME THAT  *
+                                      98 *       THAT CODE IS EXECUTED.                                        *
+                                      99 *                                                                     *
+                                     100 *       NOTE THAT THE ALLOWABLE STUCTURE OF THE CONDITIONAL           *
+                                     101 *       PARAMETERS INCLUDES ALL OF THE POWER OF THOSE OF THE          *
+                                     102 *       "IF" MACRO (NOTE ALSO THE REQUIRED ADDITIONAL SET OF          *
+                                     103 *       PARENTHESES SURROUNDING THE ENTIRE LOGIC STRUCTURE.)          *
+                                     104 *                                                                     *
+                                     105 *       DO    WHILE=((LTR,R1,R1,NZ),AND,                     C        *
+                                     106 *             ((CLC,B,Z,NE),OR,                              C        *
+                                     107 *             (CLC,C,Z,E))),                                 C        *
+                                     108 *             TEST=AFTER                                              *
+                                     109 *                                                                     *
+                                     110 *                      ONE                                            *
+                                     111 *                    OR MORE                                          *
+                                     112 *                  INSTRUCTIONS                                       *
+                                     113 *                                                                     *
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    6
+   Active Usings: DODOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.42
+0                                    114 *       ENDDO                                                         *
+                                     115 *                                                                     *
+                                     116 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     117 * DO WHILE                                                            *
+                                     118 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     119 TESTDO01 DO    WHILE=((CLC,A,Z,E)) DO AS LONG AS A = Z
+ 000014 D503 C148 C168 00148 00168   121+TESTDO01 CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 00001A A774 0007            00028   122+         JNE    $FINI2               BRANCH ON FALSE           DO 072   01-DO
+ 00001E FA30 C144 C0F0 00144 000F0   123            AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+                                     124          ENDDO ,
+ 000024 A7F4 FFF8            00014   126+         J     TESTDO01         GO BACK AND TRY AGAIN       ENDIF 005   02-ENDIF
+ 000028                              127+$FINI2   DC    0H'0'                                        ENDIF 010   02-ENDIF
+                                     128 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     129 * DO UNTIL                                                            *
+                                     130 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     131 TESTDO02 DO    UNTIL=((CLC,A,Z,E),AND,(CLC,B,Z,E))   DO UNTIL BOTH
+ 000028 D503 C148 C168 00148 00168   133+TESTDO02 CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 00002E A774 0007            0003C   134+         JNE    $MDF4                 B IF FALSE TO 'FAIL' TAG CPY 060  02-IF2
+ 000032 D503 C14C C168 0014C 00168   135+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 000038 4780 C1                                         High Level Assembler Option Summary                   (PTF UK71661)   Page    1
+-                                                                                            HLASM R6.0  2020/09/06 03.42
+0  No Overriding ASMAOPT Parameters
+   No Overriding Parameters
+   No Process Statements
+
+
+   Options for this Assembly
+0  NOADATA
+     ALIGN
+     ASA
+     BATCH
+     CODEPAGE(047C)
+   NOCOMPAT
+   NODBCS
+   NODECK
+     DXREF
+     ESD
+   NOEXIT
+     FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOPAGE0,PUSH,RECORD,NOSUBSTR,USING0)
+   NOFOLD
+   NOGOFF
+   NOINFO
+     LANGUAGE(EN)
+   NOLIBMAC
+     LINECOUNT(60)
+     LIST(121)
+     MACHINE(,NOLIST)
+     MXREF(SOURCE)
+     OBJECT
+     OPTABLE(UNI,NOLIST)
+   NOPCONTROL
+   NOPESTOP
+   NOPROFILE
+   NORA2
+   NORENT
+     RLD
+     RXREF
+     SECTALGN(8)
+     SIZE(MAX)
+   NOSUPRWARN
+     SYSPARM()
+   NOTERM
+   NOTEST
+     THREAD
+   NOTRANSLATE
+     TYPECHECK(MAGNITUDE,REGISTER)
+     USING(NOLIMIT,MAP,WARN(15))
+   NOWORKFILE
+     XREF(SHORT,UNREFS)
+
+   No Overriding DD Names
+1                                              External Symbol Dictionary                                       Page    2
+-Symbol   Type   Id     Address  Length   Owner Id Flags Alias-of                            HLASM R6.0  2020/09/06 03.42
+0          PC 00000001 00000000 00000000             00
+ DODOC     SD 00000002 00000000 00000174             00
+1                                                                                                               Page    3
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.42
+0                                      1          AGO   .SKIP
+                                       2 .SKIP    ANOP
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    4
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.42
+0                                      4 *
+                       00000           5 R0       EQU   0
+                       00001           6 R1       EQU   1       STANDARD
+                       00002           7 R2       EQU   2        EQUATES
+                       00003           8 R3       EQU   3         FOR
+                       00004           9 R4       EQU   4          GENERAL
+                       00005          10 R5       EQU   5           PURPOSE
+                       00006          11 R6       EQU   6            REGISTERS.
+                       00007          12 R7       EQU   7             YOU
+                       00008          13 R8       EQU   8              MIGHT
+                       00009          14 R9       EQU   9               AS
+                       0000A          15 R10      EQU   10               WELL
+                       0000B          16 R11      EQU   11                JUST
+                       0000C          17 R12      EQU   12                 GET
+                       0000D          18 R13      EQU   13                  USED
+                       0000E          19 R14      EQU   14                   TO
+                       0000F          20 R15      EQU   15                    IT.
+                                      21 *
+ 000000                00000 00174    22 DODOC    CSECT
+                                      23 *
+                  R:C  00000          24          USING *,R12               SET BASE REGISTER FOR PROGRAM
+ 000000 90EC D00C            0000C    25          STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA
+ 000004 18CF                          26          LR    R12,R15             PRIME BASE REG
+ 000006 41E0 C0F4            000F4    27          LA    R14,SAVEAREA        ADDRESS OF MY SAVE AREA
+ 00000A 50D0 C0F8            000F8    28          ST    R13,SAVEAREA+4      BACK LINK TO CALLER'S SAVE AREA
+ 00000E 50E0 D008            00008    29          ST    R14,8(,R13)         FORWARD LINK TO MY SAVE AREA
+ 000012 18DE                          30          LR    R13,R14             R13 MUST POINT TO MY SAVE AREA
+                                      31 *
+                                      32 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                      33 *                                                                     *
+                                      34 *                      THE "DO" STATEMENT                             *
+                                      35 *                                                                     *
+                                      36 *      The "DO" MACRO PROVIDES A LOOPING STRUCTURE FOR PERFORMING     *
+                                      37 *      MULTIPLE PASSES THROUGH THE DESIRED CODE. THE "DO" HAS         *
+                                      38 *      ADDITIONAL PARAMETERS OVER THE "IF", BUT USES THE SAME         *
+                                      39 *      STRUCTURE FOR CREATING THE LOGICAL REQUIREMENTS AS THE "IF"    *
+                                      40 *      MACRO (IT CALLS THE "IF" MACRO TO DO THE PROCESSING OF YOUR    *
+                                      41 *      LOGIC). THE DIFFERENCE IS THAT AN EXTRA SET OF PARENTHESES     *
+                                      42 *      MUST SURROUND YOUR ENTIRE LOGIC EXPRESSIONS, DUE TO THE        *
+                                      43 *      SPECIAL WAY OF HANDLING POSITIONAL PARAMETERS USED BY THE "IF" *
+                                      44 *      MACRO                                                          *
+                                      45 *                                                                     *
+                                      46 *      THE TWO SIMPLEST EXAMPLES ARE THE "DO WHILE" AND THE           *
+                                      47 *      "DO UNTIL":                                                    *
+                                      48 *                                                                     *
+                                      49 *       DO UNTIL=((LTR,R1,R1,NZ))                                     *
+                                      50 *                                                                     *
+                                      51 *       DO WHILE=((LTR,R1,R1,NZ))                                     *
+                                      52 *                                                                     *
+                                      53 *       THE ONLY OTHER AVAILABLE PARAMETER IS THE "TEST=". "BEFORE"   *
+                                      54 *       IS THE DEFAULT. "TEST=AFTER" CAUSES THE DO-GROUP TO BE        *
+                                      55 *       PERFORMED ONE TIME BEFORE THE FIRST TEST IS MADE.             *
+                                      56 *                                                                     *
+                                      57 *       DO UNTIL=((LTR,R1,R1,NZ)),TEST=BEFORE                         *
+                                      58 *                                                                     *
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    5
+   Active Usings: DODOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.42
+0                                     59 *       DO WHILE=((LTR,R1,R1,NZ)),TEST=BEFORE                         *
+                                      60 *                                                                     *
+                                      61 *       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+                                      62 *                                                                     *
+                                      63 *       DO WHILE=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+                                      64 *                                                                     *
+                                      65 *       THE DO-GROUP MUST BE TERMINATED WITH AN "ENDDO" STATEMENT:    *
+                                      66 *                                                                     *
+                                      67 *       FOLLOWING THE STATEMENTS TO BE EXECUTED WHEN THE "DO"         *
+                                      68 *       STATEMENT SUCCEEDS, THERE SHOULD BE AN "ENDO" TO TERMINATE    *
+                                      69 *       THE LOGIC.                                                    *
+                                      70 *                                                                     *
+                                      71 *       SPECIAL NOTE: THE "ENDIF" AND "ENDO" ARE INTERCHANGEABLE.     *
+                                      72 *       THEY ARE BOTH PROVIDED FOR DOCUMENTATION PURPOSES.            *
+                                      73 *                                                                     *
+                                      74 *       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+                                      75 *                                                                     *
+                                      76 *                      ONE                                            *
+                                      77 *                    OR MORE                                          *
+                                      78 *                  INSTRUCTIONS                                       *
+                                      79 *                                                                     *
+                                      80 *       ENDDO                                                         *
+                                      81 *                                                                     *
+                                      82 *       THE DEFAULT FOR WHEN THE TEST IS PERFORMED IS BEFORE THE      *
+                                      83 *       BODY OF THE DO-GROUP IS RUN FOR THE FIRST TIME. IF THE LOGIC  *
+                                      84 *       TEST(S) FAIL, THEN THE INSTUCTIONS IN THE BODY OF THE         *
+                                      85 *       ARE BYPASSED ENTIRELY.                                        *
+                                      86 *                                                                     *
+                                      87 *       IF YOU NEED THE DO-GROUP TO BE PERFORMED AT LEAST ONCE, THEN  *
+                                      88 *       CODE THE "TEST=AFTER" PARAMETER. THE DEFAULT FOR "TEST" IS    *
+                                      89 *       "BEFORE", SO IF THAT IS WHAT YOU WANT, THEN YOU DO NOT NEED   *
+                                      90 *       TO SPECIFY IT.                                                *
+                                      91 *                                                                     *
+                                      92 *       IF YOU SPECIFY "BEFORE", OR DEFAULT TO IT, THEN THE LOGICAL   *
+                                      93 *       TEST IS DETERMINED BEFORE THE BODY OF CODE IS EXECUTED, AND   *
+                                      94 *       IF THAT TEST FAILS THEN THE BODY OF CODE IS BYPASSED WITHOUT  *
+                                      95 *       BEING EXECUTED EVEN ONCE. IF YOU SPECIFY "AFTER", THEN THE    *
+                                      96 *       CODE IS EXECUTED ONE TIME BEFORE THE LOGICAL TEST IS APPLIED. *
+                                      97 *       IF THAT TEST FAILS, THEN THAT ONE TIME IS THE ONLY TIME THAT  *
+                                      98 *       THAT CODE IS EXECUTED.                                        *
+                                      99 *                                                                     *
+                                     100 *       NOTE THAT THE ALLOWABLE STUCTURE OF THE CONDITIONAL           *
+                                     101 *       PARAMETERS INCLUDES ALL OF THE POWER OF THOSE OF THE          *
+                                     102 *       "IF" MACRO (NOTE ALSO THE REQUIRED ADDITIONAL SET OF          *
+                                     103 *       PARENTHESES SURROUNDING THE ENTIRE LOGIC STRUCTURE.)          *
+                                     104 *                                                                     *
+                                     105 *       DO    WHILE=((LTR,R1,R1,NZ),AND,                     C        *
+                                     106 *             ((CLC,B,Z,NE),OR,                              C        *
+                                     107 *             (CLC,C,Z,E))),                                 C        *
+                                     108 *             TEST=AFTER                                              *
+                                     109 *                                                                     *
+                                     110 *                      ONE                                            *
+                                     111 *                    OR MORE                                          *
+                                     112 *                  INSTRUCTIONS                                       *
+                                     113 *                                                                     *
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    6
+   Active Usings: DODOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.42
+0                                    114 *       ENDDO                                                         *
+                                     115 *                                                                     *
+                                     116 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     117 * DO WHILE                                                            *
+                                     118 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     119 TESTDO01 DO    WHILE=((CLC,A,Z,E)) DO AS LONG AS A = Z
+ 000014 D503 C148 C168 00148 00168   121+TESTDO01 CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 00001A A774 0007            00028   122+         JNE    $FINI2               BRANCH ON FALSE           DO 072   01-DO
+ 00001E FA30 C144 C0F0 00144 000F0   123            AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+                                     124          ENDDO ,
+ 000024 A7F4 FFF8            00014   126+         J     TESTDO01         GO BACK AND TRY AGAIN       ENDIF 005   02-ENDIF
+ 000028                              127+$FINI2   DC    0H'0'                                        ENDIF 010   02-ENDIF
+                                     128 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     129 * DO UNTIL                                                            *
+                                     130 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     131 TESTDO02 DO    UNTIL=((CLC,A,Z,E),AND,(CLC,B,Z,E))   DO UNTIL BOTH
+ 000028 D503 C148 C168 00148 00168   133+TESTDO02 CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 00002E A774 0007            0003C   134+         JNE    $MDF4                 B IF FALSE TO 'FAIL' TAG CPY 060  02-IF2
+ 000032 D503 C14C C168 0014C 00168   135+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 000038 4780 C046            00046   136+         BE     $FINI5               BRANCH ON TRUE            DO 072   01-DO
+ 00003C                              137+$MDF4    DC    0H'0'                 TRAP BRANCH TO TRUE       DO 074   01-DO
+ 00003C FA30 C144 C0F0 00144 000F0   138            AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+                                     139          ENDDO ,
+ 000042 A7F4 FFF3            00028   141+         J     TESTDO02         GO BACK AND TRY AGAIN       ENDIF 005   02-ENDIF
+ 000046                              142+$FINI5   DC    0H'0'                                        ENDIF 020   02-ENDIF
+                                     143 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     144 * DO WHILE WITH TEST AFTER                                            *
+                                     145 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     146 TESTDO03 DO    WHILE=((CLC,A,Z,E)),TEST=AFTER DO AS LONG AS A = Z
+ 000046 47F0 C054            00054   147+         B     $MDE6            EXEC LOOP AT LEAST ONCE                 01-DO
+ 00004A D503 C148 C168 00148 00168   149+TESTDO03 CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 000050 A774 0007            0005E   150+         JNE    $FINI7               BRANCH ON FALSE           DO 072   01-DO
+ 000054                              151+$MDE6    DC    0H'0'                                             DO 100 01-DO
+ 000054 FA30 C144 C0F0 00144 000F0   152            AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+                                     153          ENDDO ,
+ 00005A A7F4 FFF8            0004A   155+         J     TESTDO03         GO BACK AND TRY AGAIN       ENDIF 005   02-ENDIF
+ 00005E                              156+$FINI7   DC    0H'0'                                        ENDIF 010   02-ENDIF
+                                     157 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     158 * IF THE THIRD PHRASE IS TRUE AND EITHER OF THE FIRST TWO PHRASES ARE *
+                                     159 * TRUE, THEN CONTINUE EXECUTING THE DO-LOOP.                          *
+                                     160 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     161 TESTDO04 DO    WHILE=(((CLC,A,Z,E),OR,(CLC,B,Z,E)),AND,(CLC,C,Z,E))
+ 00005E D503 C148 C168 00148 00168   164+TESTDO04 CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 03-IF2
+ 000064 A784 0007            00072   165+         JE     $MDT9            B IF TRUE TO 'PASS'        TAG CPY 050 03-IF2
+ 000068 D503 C14C C168 0014C 00168   166+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 03-IF2
+ 00006E A774 000C            00086   167+         JNE    $MDF10                B IF FALSE TO 'FAIL' TAG CPY 060  02-IF2
+ 000072 D503 C150 C168 00150 00168   168+$MDT9    CLC   C,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 000078 A774 0007            00086   169+         JNE    $MDF10               BRANCH ON FALSE           DO 072   01-DO
+ 00007C FA30 C144 C0F0 00144 000F0   170            AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+                                     171          ENDDO ,
+ 000082 A7F4 FFEE            0005E   173+         J     TESTDO04         GO BACK AND TRY AGAIN       ENDIF 005   02-ENDIF
+ 000086                              174+$MDF10   DC    0H'0'                                        ENDIF 010   02-ENDIF
+                                     175 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     176 *                                                                     *
+                                     177 * DO UNTIL A IS TRUE AND EITHER B OR C IS TRUE AND D IS TRUE -  OR... *
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    7
+   Active Usings: DODOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.42
+0                                    178 * E IS TRUE AND EITHER F OR G IS TRUE AND H IS TRUE, THEN END THE     *
+                                     179 * PERFORMING OF THE DO-LOOP AND BRANCH TO THE "ENDDO".                *
+                                     180 *                                                                     *
+                                     181 * IF A & ( B | C) & D | E & (F | G) & H                               *
+                                     182 *                                                                     *
+                                     183 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     184 *        1         2         3         4         5         6         7
+                                     185 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     186          DO    UNTIL=((CLC,A,Z,E),AND,((CLC,B,Z,E),OR,(CLC,C,Z,E)),AND,C
+                                                        (CLC,D,Z,E),OR,(CLC,E,Z,E),AND,((CLC,F,Z,E),OR,         C
+                                                        (CLC,G,Z,E)),AND,(CLC,H,Z,E))
+ 000086 D503 C148 C168 00148 00168   188+$MDL11   CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 00008C A774 0011            000AE   189+         JNE    $MDF12                B IF FALSE TO 'FAIL' TAG CPY 060  02-IF2
+ 000090 D503 C14C C168 0014C 00168   191+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 03-IF2
+ 000096 A784 0007            000A4   192+         JE     $MDT13           B IF TRUE TO 'PASS'        TAG CPY 050 03-IF2
+ 00009A D503 C150 C168 00150 00168   193+         CLC   C,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 03-IF2
+ 0000A0 A774 0007            000AE   194+         JNE    $MDF12                B IF FALSE TO 'FAIL' TAG CPY 060  02-IF2
+ 0000A4 D503 C154 C168 00154 00168   195+$MDT13   CLC   D,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 0000AA A784 001B            000E0   196+         JE     $MDT14           B IF TRUE TO 'PASS'        TAG CPY 050 02-IF2
+ 0000AE D503 C158 C168 00158 00168   197+$MDF12   CLC   E,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 0000B4 A774 0011            000D6   198+         JNE    $MDF15                B IF FALSE TO 'FAIL' TAG CPY 060  02-IF2
+ 0000B8 D503 C15C C168 0015C 00168   200+         CLC   F,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 03-IF2
+ 0000BE A784 0007            000CC   201+         JE     $MDT16           B IF TRUE TO 'PASS'        TAG CPY 050 03-IF2
+ 0000C2 D503 C160 C168 00160 00168   202+         CLC   G,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 03-IF2
+ 0000C8 A774 0007            000D6   203+         JNE    $MDF15                B IF FALSE TO 'FAIL' TAG CPY 060  02-IF2
+ 0000CC D503 C164 C168 00164 00168   204+$MDT16   CLC   H,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 0000D2 4780 C0E0            000E0   205+         BE     $MDT14               BRANCH ON TRUE            DO 072   01-DO
+ 0000D6                              206+$MDF15   DC    0H'0'                 TRAP BRANCH TO TRUE       DO 074   01-DO
+ 0000D6 FA30 C144 C0F0 00144 000F0   207            AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+                                     208          ENDDO
+ 0000DC A7F4 FFD5            00086   210+         J     $MDL11           GO BACK AND TRY AGAIN       ENDIF 005   02-ENDIF
+ 0000E0                              211+$MDT14   DC    0H'0'                                        ENDIF 020   02-ENDIF
+                                     212 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     213 *                                                                     *
+                                     214 *      THESE FOLLOWING STATEMENTS ARE NORMAL zOS TERMINATION.         *
+                                     215 *                                                                     *
+                                     216 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     217 *
+ 0000E0 58D0 C0F8            000F8   218          L     R13,SAVEAREA+4      ADDRESS OF CALLER'S SAVE AREA
+ 0000E4 98EC D00C            0000C   219          LM    R14,R12,12(R13)     RESTORE R14 WRAPPED AROUND TO R12
+                                     220          DROP  R12                 NO LONGER VALID
+ 0000E8 1FFF                         221          SLR   R15,R15             SET RETURN CODE TO ZERO
+ 0000EA 07FE                         222          BR    R14                 RETURN TO CALLER
+                                     223 *
+ 0000F0                              224          LTORG
+ 0000F0 1C                           225                =P'1'
+ 0000F1 000000
+ 0000F4 0000000000000000             226 SAVEAREA DC    18F'0'
+ 00013C D5                           227 EOFSW    DC    C'N'                SET END-OF-FILE SWITCH TO 'Y' AT EOF
+ 00013D 000000007C                   228 PL5      DC    PL5'7'
+ 000142 0000
+ 000144                              229          DC    0F'0'
+                                     230 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     231 *                                                                     *
+                                     232 *      THESE FOLLOWING STATEMENTS DEFINE VARIABLES REQUIRED.          *
+1         EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    8
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.42
+0                                    233 *                                                                     *
+                                     234 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+ 000144 0000000C                     235 LEVEL_ONE_PASS_COUNTER DC PL4'0'
+ 000148 C1C1C1C1                     236 A        DC    C'AAAA'
+ 00014C C2C2C2C2                     237 B        DC    C'BBBB'
+ 000150 C3C3C3C3                     238 C        DC    C'CCCC'
+ 000154 C4C4C4C4                     239 D        DC    C'DDDD'
+ 000158 C5C5C5C5                     240 E        DC    C'EEEE'
+ 00015C C6C6C6C6                     241 F        DC    C'FFFF'
+ 000160 C7C7C7C7                     242 G        DC    C'GGGG'
+ 000164 C8C8C8C8                     243 H        DC    C'HHHH'
+ 000168 E9E9E9E9                     244 Z        DC    C'ZZZZ'
+ 00016C 0000000C                     245 LOOP_COUNTER DC PL4'0'             FOR TEST OF "DO UNTIL"
+ 000170 0000001C                     246 PACKED_ONE DC  PL4'1'              FOR TEST OF "DO UNTIL"
+ 000000                              247          END   DODOC
+1                               Ordinary Symbol and Literal Cross Reference                                     Page    9
+-Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2020/09/06 03.42
+0$FINI2        2 00000028 00000002     H  H               127  122B
+ $FINI5        2 00000046 00000002     H  H               142  136B
+ $FINI7        2 0000005E 00000002     H  H               156  150B
+ $MDE6         2 00000054 00000002     H  H               151  147B
+ $MDF10        2 00000086 00000002     H  H               174  167B  169B
+ $MDF12        6 000000AE 00000002     I                  197  189B  194B
+ $MDF15        2 000000D6 00000002     H  H               206  198B  203B
+ $MDF4         2 0000003C 00000002     H  H               137  134B
+ $MDL11        6 00000086 00000002     I                  188  210B
+ $MDT13        6 000000A4 00000002     I                  195  192B
+ $MDT14        2 000000E0 00000002     H  H               211  196B  205B
+ $MDT16        6 000000CC 00000002     I                  204  201B
+ $MDT9         6 00000072 00000002     I                  168  165B
+ A             4 00000148 00000002     C  C               236  121   133   149   164   188
+ B             4 0000014C 00000002     C  C               237  135   166   191
+ C             4 00000150 00000002     C  C               238  168   193
+ D             4 00000154 00000002     C  C               239  195
+ DODOC         1 00000000 00000002     J                   22  247
+ E             4 00000158 00000002     C  C               240  197
+ F             4 0000015C 00000002     C  C               241  200
+ G             4 00000160 00000002     C  C               242  202
+ H             4 00000164 00000002     C  C               243  204
+ LEVEL_ONE_PASS_COUNTER
+               4 00000144 00000002     P  P               235  123M  138M  152M  170M  207M
+ R12           1 0000000C 00000001 A   U                   17   24U   25    26M  219M  220D
+ R13           1 0000000D 00000001 A   U                   18   25    28    29    30M  218M  219
+ R14           1 0000000E 00000001 A   U                   19   25    27M   29    30   219M  222B
+ R15           1 0000000F 00000001 A   U                   20   26   221M  221
+ SAVEAREA      4 000000F4 00000002     F  F               226   27    28M  218
+ TESTDO01      6 00000014 00000002     I                  121  126B
+ TESTDO02      6 00000028 00000002     I                  133  141B
+ TESTDO03      6 0000004A 00000002     I                  149  155B
+ TESTDO04      6 0000005E 00000002     I                  164  173B
+ Z             4 00000168 00000002     C  C               244  121   133   135   149   164   166   168   188   191   193
+                                                               195   197   200   202   204
+ =P'1'         1 000000F0 00000002     P                  225  123   138   152   170   207
+1                                  Unreferenced Symbols Defined in CSECTs                                       Page   10
+-  Defn  Symbol                                                                              HLASM R6.0  2020/09/06 03.42
+0   227  EOFSW
+    245  LOOP_COUNTER
+    246  PACKED_ONE
+    228  PL5
+      5  R0
+      6  R1
+     15  R10
+     16  R11
+      7  R2
+      8  R3
+      9  R4
+     10  R5
+     11  R6
+     12  R7
+     13  R8
+     14  R9
+1                                          Macro and Copy Code Source Summary                                   Page   11
+- Con Source                                        Volume    Members                        HLASM R6.0  2020/09/06 03.42
+0  L1 MATEDS.MACROS.MACLIB                          DEVHD4    $MGBLDEF DO       ENDDO    ENDIF    IFCOPY   IF2
+1                                                      Using Map                                                Page   12
+-                                                                                            HLASM R6.0  2020/09/06 03.42
+   Stmt  -----Location----- Action ----------------Using----------------- Reg Max     Last Label and Using Text
+           Count      Id           Type          Value    Range     Id        Disp    Stmt
+0    24  00000000  00000002 USING  ORDINARY    00000000 00001000 00000002  12 00168    218 *,R12
+    220  000000E8  00000002 DROP                                           12              R12
+1                                   General Purpose Register Cross Reference                                    Page   13
+- Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R6.0  2020/09/06 03.42
+0    0(0)      25   219M
+     1(1)      25   219M
+     2(2)      25   219M
+     3(3)      25   219M
+     4(4)      25   219M
+     5(5)      25   219M
+     6(6)      25   219M
+     7(7)      25   219M
+     8(8)      25   219M
+     9(9)      25   219M
+    10(A)      25   219M
+    11(B)      25   219M
+    12(C)      24U   25    26M  219M  220D
+    13(D)      25    28    29    30M  218M  219
+    14(E)      25    27M   29    30   219M  222B
+    15(F)      25    26   219M  221M  221
+1                                  Diagnostic Cross Reference and Assembler Summary                             Page   14
+-                                                                                            HLASM R6.0  2020/09/06 03.42
+0     No Statements Flagged in this Assembly
+ HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UK71661
+0SYSTEM: z/OS 01.13.00              JOBNAME: MATEDSC     STEPNAME: ASMLINK    PROCSTEP: C
+0Data Sets Allocated for this Assembly
+  Con DDname   Data Set Name                                Volume  Member
+   P1 SYSIN    MATEDS.MACROS.MACLIB                         DEVHD4  DODOC
+   L1 SYSLIB   MATEDS.MACROS.MACLIB                         DEVHD4
+      SYSLIN   SYS20250.T034250.RA000.MATEDSC.OBJ.H01       STRVL2
+      SYSPRINT MATEDS.MACRO.SYSPRINT                        DEVHD4  DODOC
+
+   32004K allocated to Buffer Pool       Storage required     200K
+     195 Primary Input Records Read          459 Library Records Read                  0 Work File Reads
+       0 ASMAOPT Records Read                412 Primary Print Records Written         0 Work File Writes
+      10 Object Records Written                0 ADATA Records Written
+0Assembly Start Time: 03.42.51 Stop Time: 03.42.51 Processor Time: 00.00.00.0380
+ Return Code 000
