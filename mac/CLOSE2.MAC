@@ -1,0 +1,233 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.* Date   - 04/15/08                                                  *
+.*                                                                    *
+.* Modified for zVSAM V2 by Melvyn Maltz                              *
+.* Date   - 17th March 2019                                           *
+.**********************************************************************
+.* RPIs for CLOSE                                                     *
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION *
+.*                                                                    *
+.* RPIs for ZCLOSE                                                    *
+.* 10/20/05 RPI27 - issue error for any undefined operands            *
+.* 11/13/05 RPI88 - correct error in checking for DCB register parm   *
+.* 11/26/05 RPI112- check for invalid DCB RX form (reg) vs ((reg))    *
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER                          *
+.* 04/10/06 RPI244 support (reg) and ignore other keywords            *
+.* 06/14/07 RPI 641 DEFAULT MF=I                                      *
+.* 08/03/07 RPI 668 check return code for each svc and exit if nz     *
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL *
+.* 10/14/07 RPI 718 ISSUE MNOTE ERR FOR NN OR RNN WITHOUT ((REG),OPT) *
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION *
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility           *
+.* 09/12/08 RPI 764 upgrade to ZSTRMAC and allow CLOSE (reg)          *
+.* 04/22/09 RPI 1021 add MF=L/E and cleanup reg support               *
+.* 05/19/09 RPI 1029 remove SPM macro code for compatibility          *
+.* 05/28/09 RPI 1045 change to only assume reg form if (...)          *
+.*                                                                    *
+.* Mods for zVSAM V2                                                  *
+.*    Combined CLOSE and ZCLOSE                                       *
+.*    IBM-like implementation with same block structure               *
+.**********************************************************************
+&N       CLOSE2 &DCBLIST,         (DCB,,DCB,,...) DCB (REG)            X
+               &MF=I,                                                  X
+               &MODE=24,                                               X
+               &TYPE=             TYPE= IS UNSUPPORTED
+.*
+.* ERRORS FOR UNSUPPORTED OPERANDS
+         AIF   ('&TYPE' NE '')
+               MNOTE 12,'CLOSE TYPE NOT SUPPORTED'
+         AEND
+.*
+.* SYNTAX ERRORS
+         AIF   ('&MODE' NE '24' AND '&MODE' NE '31')
+         MNOTE 15,'CLOSE INVALID MODE - &MODE'
+         AEND
+         AIF   ('&MF(1)' NE 'I' AND                                    X
+                '&MF(1)' NE 'L' AND                                    X
+                '&MF(1)' NE 'E')
+         MNOTE 15,'CLOSE INVALID MF - &MF'
+         AEND
+.*
+.* CLOSE ONE OR MORE FILES DEFINED BY DCBs/ACBs
+.*
+         AIF   ('&N' NE '')
+&N       DS    0F
+         AEND
+.*
+.* NO. OF OPERANDS IN DCB/ACB LIST
+.* IF ODD, ROUND UP TO EVEN
+&NP      SETA  N'&DCBLIST
+         AIF   ((&NP/2)*2 NE &NP)
+&NP      SETA  &NP+1
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'L')
+.* MF=L PROCESSING
+         AIF   (&NP EQ 0)
+         MNOTE 15,'CLOSE MF=L BUT NO DCBs/ACBs SPECIFIED'
+         MEXIT
+         AEND
+.*
+&I       SETA  1
+.MFLLOOP ANOP
+         AIF   (&I GT &NP).MFLDONE
+&DCB     SETC  '&DCBLIST(&I)'
+         AIF   ('&DCB' EQ '')
+         MNOTE 15,'CLOSE MISSING DCB/ACB ADDRESS'
+&DCB     SETC  '0'
+         AEND
+         AIF   ('&DCBLIST(&I+1)' NE '')
+         MNOTE 15,'CLOSE OPTION NOT SUPPORTED - &DCBLIST(&I+1)'
+         AEND
+         AIF   ('&DCB'(1,1) EQ '(')        RPI 764 RPI 1045
+         MNOTE 15,'CLOSE REGISTER FORM NOT ALLOWED WITH MF=L'
+         MEXIT
+         AEND
+.*
+&OPTBITS SETA  0
+         AIF   (&I+2 GE &NP)
+&OPTBITS SETA  128                END-OF-LIST MARKER
+         AEND
+.*
+.* GENERATE ENTRY DEPENDING ON MODE
+         AIF   ('&MODE' EQ '24')
+         DC    AL1(&OPTBITS),AL3(&DCB)
+         AELSE
+         DC    AL1(&OPTBITS),XL3'00',AL4(&DCB)
+         AEND
+&I       SETA  &I+2
+         AGO   .MFLLOOP
+.*
+.MFLDONE ANOP
+         MEXIT
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'I')
+.* MF=I PROCESSING
+         AIF   (&NP EQ 0)
+         MNOTE 15,'CLOSE MF=I BUT NO DCBs/ACBs SPECIFIED'
+         MEXIT
+         AEND
+.*
+         AIF   ('&MODE' EQ '24')
+&LENLIST SETA  4
+         AELSE
+&LENLIST SETA  8
+         AEND
+.*
+         BRAS  1,*+4+((&NP+1)/2)*&LENLIST R1=LIST POINTER
+.*
+&I       SETA  1
+.MFILOOP ANOP
+         AIF   (&I GT &NP).MFIDONE
+&DCB     SETC  '&DCBLIST(&I)'
+         AIF   ('&DCB' EQ '')
+         MNOTE 15,'CLOSE MISSING DCB/ACB ADDRESS'
+&DCB     SETC  '0'
+         AEND
+         AIF   ('&DCBLIST(&I+1)' NE '')
+         MNOTE 15,'CLOSE OPTION NOT SUPPORTED - &DCBLIST(&I+1)'
+         AEND
+.*
+&OPTBITS SETA  0
+         AIF   (&I+2 GE &NP)
+&OPTBITS SETA  128                END-OF-LIST MARKER
+         AEND
+.*
+.* GENERATE ENTRY DEPENDING ON MODE
+         AIF   ('&DCB'(1,1) EQ '(')
+&DCB     SETC  '0'
+         AEND
+         AIF   ('&MODE' EQ '24')
+         DC    AL1(&OPTBITS),AL3(&DCB)
+         AELSE
+         DC    AL1(&OPTBITS),XL3'00',AL4(&DCB)
+         AEND
+&I       SETA  &I+2
+         AGO   .MFILOOP
+.*
+.MFIDONE ANOP
+.* PROCESS REGISTER FORMS
+&I       SETA  1
+.MFILPRG ANOP
+         AIF   (&I GT &NP).MFIDNRG
+&DCB     SETC  '&DCBLIST(&I)'
+         AIF   ('&DCB'(1,1) EQ '(')
+            AIF   ('&MODE' EQ '24')
+         STCM  &DCB,B'0111',1+((&I-1)/2)*4.(1) SAVE DCB/ACB 24-BIT ADDR-
+               ESS
+            AELSE
+         ST    &DCB,4+((&I-1)/2)*8.(1) SAVE DCB/ACB 31-BIT ADDRESS
+            AEND
+         AEND
+&I       SETA  &I+2
+         AGO   .MFILPRG
+.*
+.MFIDNRG ANOP
+         AIF   ('&MODE' EQ '31')
+         LR    0,1                R0=CLOSE LIST POINTER
+         SR    1,1                CLEAR R1
+         AEND
+         SVC   20                 ISSUE CLOSE
+         MEXIT
+         AEND
+.*
+         AIF   ('&MF(1)' EQ 'E')
+.* MF=E PROCESSING
+            AIF   ('&MF(2)' EQ '')
+         MNOTE 15,'CLOSE MF=E AND ADDRESS NOT SPECIFIED'
+         MEXIT
+            AEND
+.*
+            AIF   ('&MF(2)'(1,1) EQ '(')
+         ZOPTLR 1,&MF(2)          R1=ADDRESS OF CLOSE LIST
+            AELSE
+         LA    1,&MF(2)           R1=ADDRESS OF CLOSE LIST
+            AEND
+.*
+            AIF   (&NP EQ 0).MFEDONE
+&I       SETA  1
+.MFELOOP ANOP
+               AIF   (&I GT &NP).MFEDONE
+&DCB     SETC  '&DCBLIST(&I)'
+               AIF   ('&DCBLIST(&I+1)' NE '')
+         MNOTE 15,'CLOSE OPTION NOT SUPPORTED - &DCBLIST(&I+1)'
+               AEND
+               AIF   ('&DCB' EQ '').MFEINCR
+               AIF   ('&DCB'(1,1) EQ '(')
+               AIF   ('&MODE' EQ '24')
+         STCM  &DCB,B'0111',1+((&I-1)/2)*4.(1) SAVE DCB/ACB 24-BIT ADDR-
+               ESS
+               AELSE
+         ST    &DCB,4+((&I-1)/2)*8.(1) SAVE DCB/ACB 31-BIT ADDRESS
+               AEND
+         AGO   .MFEINCR
+.*
+            AELSE
+         LA    0,&DCB             R0=DCB/ACB ADDRESS
+               AIF   ('&MODE' EQ '24')
+         STCM  0,B'0111',1+((&I-1)/2)*4.(1) SAVE DCB/ACB 24-BIT ADDRESS
+               AELSE
+         ST    0,4+((&I-1)/2)*8.(1) SAVE DCB/ACB 31-BIT ADDRESS
+               AEND
+            AEND
+.*
+.MFEINCR ANOP
+&I       SETA  &I+2
+         AGO   .MFELOOP
+.*
+.MFEDONE ANOP
+            AIF   ('&MODE' EQ '31')
+         LR    0,1                R0=CLOSE LIST POINTER
+         SR    1,1                CLEAR R1
+            AEND
+         SVC   20                 ISSUE CLOSE
+         MEXIT
+         AEND
+.*
+         MEND

@@ -1,0 +1,45 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+BLDVT    SUBENTRY
+         WTO   'BLDVT CREATE RECFM=VT FILE'
+         OPEN  (SYSUT2,(OUTPUT),SNAPOUT,(OUTPUT))
+         LA    R4,1
+         LA    R5,10
+LOOP     EQU   *
+         LA    R8,RECORD+4
+         LR    R9,R5
+         SR    R10,R10
+         LR    R11,R4
+         O     R11,=X'000000F0'
+         SLL   R11,24
+         MVCL  R8,R10
+         LA    R6,4(R5)
+         LA    R7,RECORD(R6)
+         SLL   R6,16
+         ST    R6,LLLL
+         PUT   SYSUT2,RECORD
+         SAVE  (R14,R12)
+         SNAP   STORAGE=(RECORD,(R7)),PDATA=,ID=(R4),DCB=SNAPOUT
+         RESTORE (R14,R12)
+         LA    R4,1(R4) 
+         MH    R5,=H'10'
+         C     R5,=F'10000'
+         BNH   LOOP
+EOF      CLOSE (SYSUT2,,SNAPOUT)
+         WTO   'CHKV ENDED OK'
+         SUBEXIT 
+         LTORG          
+SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=PM,RECFM=VT,BLKSIZE=10004
+SNAPOUT  DCB   DDNAME=SNAPOUT,DSORG=PS,RECFM=VBA,BLKSIZE=882,          X
+               LRECL=125,MACRF=W
+RECORD   DS    0XL100004
+LLLL     DC    XL4'00'
+         DC    100000C'X'
+         DCBD
+         EQUREGS
+         END

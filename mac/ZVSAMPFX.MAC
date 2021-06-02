@@ -8,17 +8,27 @@
 ***********************************************************************
          MACRO
          ZVSAMPFX
+.*
+         GBLB  &Z390_ZVSAMPFX
+.* IF ZVSAMPFX ALREADY DEFINED EXIT NOW
+         AIF   (&Z390_ZVSAMPFX).EXIT
+&Z390_ZVSAMPFX SETB 1
 *
 * zVSAM PREFIX BLOCK...FOLLOWS ZVSAMHDR
 *
 ZVSAMPFX DSECT
-PFXDVOL@ DS    XL3                offset to the data volume label(n/a)
-PFXDNAM@ DS    XL3                offset to the data filename
-PFXDPAT@ DS    XL3                offset to the data pathname
-PFXXVOL@ DS    XL3                offset to the index volume label(n/a)
-PFXXNAM@ DS    XL3                offset to the index filename
-PFXXPAT@ DS    XL3                offset to the index pathname
-         DS    X                  reserved
+PFXEYE   DS    CL4                eyecatcher
+PFXZPFX  EQU   C'zPFX'
+PFXRCLEN DS    XL4                record length, max length if variable
+PFXKYLEN DS    XL4                key length
+PFXKYOFF DS    XL4                key offset, excluding SDW/RLF
+PFXDVOL@ DS    XL2                offset to the data volume label(n/a)
+PFXDNAM@ DS    XL2                offset to the data filename
+PFXDPAT@ DS    XL2                offset to the data pathname
+PFXXVOL@ DS    XL2                offset to the index volume label(n/a)
+PFXXNAM@ DS    XL2                offset to the index filename
+PFXXPAT@ DS    XL2                offset to the index pathname
+PFXIXLVL DS    X                  no. of index levels
 PFXALTHR DS    X                  allocation redrive threshold
 PFXBLKSZ DS    XL4                actual Blocksize used for all Blocks
 *                                 except Prefix Block
@@ -27,10 +37,10 @@ PFXBMAP  DS    XL8                XLRA of first spacemap block
 PFXEMAP  DS    XL8                XLRA of last spacemap block
 PFXMAPNW DS    XL8                XLRA of spacemap block last used for
 *                                 allocation
-PFXBDATA DS    XL8                XLRA of first data (or index) block
-PFXEDATA DS    XL8                XLRA of last data (or index) block
-PFXBOVFL DS    XL8                XLRA of first Overflow block
-PFXEOVFL DS    XL8                XLRA of last Overflow block
+PFXBDATA DS    XL8                XLRA of first data block
+PFXEDATA DS    XL8                XLRA of last data block
+PFXBSEGM DS    XL8                XLRA of first Segment block
+PFXESEGM DS    XL8                XLRA of last Segment block
 PFXROOT  DS    XL8                XLRA of root index block
 PFXBLVL0 DS    XL8                XLRA of Header Block index level 0
 PFXELVL0 DS    XL8                XLRA of End Block index level 0
@@ -64,29 +74,33 @@ PFXBLVLE DS    XL8                XLRA of Header Block index level 14
 PFXELVLE DS    XL8                XLRA of End Block index level 14
 PFXBLVLF DS    XL8                XLRA of Header Block index level 15
 PFXELVLF DS    XL8                XLRA of End Block index level 15
-PFXMAPOF DS    XL3                offset within spacemap block to last
+PFXMAPOF DS    XL4                offset within spacemap block to last
 *                                 used byte for allocation
-PFXMAPDT DS    XL4                unsigned packed date YYYYMMDD of last
-*                                 allocation action
+PFXDTSKC DS    XL8                STCK of data creation
+PFXIXSKC DS    XL8                STCK of index creation
+PFXDTSKU DS    XL8                STCK of last data update
+PFXIXSKU DS    XL8                STCK of last index update
+PFXMAPDT DS    XL8                STCK of last allocation action
 PFXFRSPC DS    X                  initial freespace % within block
-PFXFRBLK DS    X                  initial freespace blocks
-PFXFRINT DS    X                  Initial freepace interval between
+PFXFRBLK DS    XL2                initial freespace blocks
+PFXFRINT DS    XL2                Initial freespace interval between
 *                                 free blocks
 PFXFFLGS DS    X                  file flags
 PFX_ESDS EQU   X'80'                 ESDS
 PFX_KSDS EQU   X'40'                 KSDS
 PFX_RRDS EQU   X'20'                 RRDS
 PFX_LDS  EQU   X'10'                 LDS
+PFX_AIX  EQU   X'08'                 AIX
 PFX_INDX EQU   X'01'                 index component
 PFXRFLGS DS    X                  record flags
-PFX_RFIX EQU   X'80'                 fixed
-PFX_RSEG EQU   X'40'                 spanned
-PFX_KFIX EQU   X'20'                 fixed-length keys (KSDS/AIX only)
-PFX_KUNQ EQU   X'10'                 unique key values (KSDS/AIX only)
-*                                    non-unique keys supported for AIX
-PFXRCLEN DS    F                  record length, max length if variable
-PFXKYLEN DS    F                  key length
-PFXKYOFF DS    F                  key offset, excluding SDW/RDW
-PFXLENG  EQU   *-ZVSAMPFX         DSECT LENGTH
+PFX_RFIX EQU   X'80'                 1=fixed       0=variable
+PFX_RSPN EQU   X'40'                 1=spanned     0=non-spanned
+PFX_KUNQ EQU   X'20'                 1=AIX unique  0=AIX non-unique
+PFX_AIXT EQU   X'10'                 1=AIX on KSDS 0=AIX on ESDS
+PFXAIXN  DS    X                  no. of AIX's on the upgrade set
+         DS    0D                 align for ZVSAMCTR which follows
+PFXLENG  EQU   *-ZVSAMPFX         DSECT length
+         ZVSAMCTR                 counters DSECT
+.EXIT    ANOP
          MEND
 

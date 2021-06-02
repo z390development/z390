@@ -1,0 +1,2688 @@
+»
+                                         High Level Assembler Option Summary                   (PTF UI71794)   Page    1
+                                                                                            HLASM R6.0  2020/11/07 11.03
+  No Overriding ASMAOPT Parameters
+  No Overriding Parameters
+  No Process Statements
+
+
+  Options for this Assembly
+                    NOADATA
+                      ALIGN
+                    NOASA
+                      BATCH
+                      CODEPAGE(047C)
+                    NOCOMPAT
+                    NODATAMAP
+                    NODBCS
+                    NODECK
+                      DXREF
+                      ESD
+                    NOEXIT
+                      FAIL(NOMSG,NOMNOTE,MAXERRS(500))
+                      FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,NOSIGNED,NOSUBSTR,NOTRUNC,USING0)
+                    NOFOLD
+                    NOGOFF
+                    NOINFO
+                      ILMA
+                      LANGUAGE(EN)
+                    NOLIBMAC
+                      LINECOUNT(60)
+                      LIST(121)
+                      MACHINE(,NOLIST)
+                      MXREF(SOURCE)
+                      OBJECT
+                      OPTABLE(UNI,NOLIST)
+                    NOPCONTROL
+                    NOPESTOP
+                    NOPROFILE
+                    NORA2
+                    NORENT
+                      RLD
+                      RXREF
+                      SECTALGN(8)
+                      SIZE(MAX)
+                    NOSUPRWARN
+                      SYSPARM()
+                    NOTERM
+                    NOTEST
+                      THREAD
+                    NOTRANSLATE
+                      TYPECHECK(MAGNITUDE,REGISTER)
+                      USING(NOLIMIT,MAP,WARN(15))
+                    NOWORKFILE
+                      XREF(SHORT,UNREFS)
+
+  No Overriding DD Names
+»
+                                              External Symbol Dictionary                                       Page    2
+Symbol   Type   Id     Address  Length   Owner Id Flags Alias-of                            HLASM R6.0  2020/11/07 11.03
+ZOPCHECK  SD 00000001 00000000 0000172F             00
+»
+                                                                                                               Page    3
+  Active Usings: None
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+                                      1 * open source z390 regression test of opcodes
+                                      2 * 2019/11/07 dsh test all z390 opcodes defined in latest POP
+                                      3 * 2019/12/03 dsh macros copied from testins6.mac
+                                      4 *                macro calls copied from testins6.dat
+                                      5 * 2020/10/19 dsh moved to zopcheck directory and renamed
+                                      6 * 2020/10/30 dsh reorganize to reduce code and labels
+                                      7 *************************************************************
+                                      8 * copyright 2020 Don Higgins
+                                      9 * This program assembles all the opcodes in z15 POP
+                                     10 * and verified that generated code matches expected  DC code
+                                     11 * ZOPCHECK.MLC INCLUDES ZOPMACRO.CPY AND ZOPCODES.CPY
+                                     12 *   ZOPCHECK ASSEMBLES EVERY OPCODE COMBINATION IN ZOPCODES
+                                     13 *   ZOPMACRO INCLUDES MACROS CALLED BY ZOPCODES FOR EACH TIME
+                                     14 *   ZOPCODES INCLUDES ALL POP OPCODE AND OPERAND COMBINATIONS
+                                     15 *************************************************************
+                                     16 * COPY ALL THE TYPE MACROS
+                                     17 *** DSH         COPY ZOPMACRO.CPY
+                                     18 * open source z390 regression test of opcodes
+                                     19 * 2019/11/07 dsh TESTINS6.MAC macros for TESTINS6.MLC
+                                     20 * 2020/01/03 DSH USE TEST_OP TO CALL TYPE_??? TO GEN TESTS
+                                     21 * 2020/01/23 DSH SUPRESS OP GEN IF UNDEFINED
+                                     22 * 2020/09/15 DSH RPI 2212 ADD VECTOR REGISTERS 0-31 USING RXB FIELD
+                                     23 * 2020/09/19 DSH RPI 2213 REMOVE TYPE DM, ADD DIAGNOSE/DIAG RS, SIE S
+                                     24 * 2020/10/02 DSH RPI 2212 RESTORE TYPE_VRR FROM V1700, ADD VREGS 0-31
+                                     25 *************************************************************
+                                     26 * COPYRIGHT 2020 DON HIGGINS
+                                     27 ************************************************************
+                                     28 * regression test of opcodes
+                                     29 * DEFINE MAIN PROGRAM, CHECKZOP, WRAPUP, AND SNAP ROUTINE
+                                     30 *MCALL #=     1 LV= 1 ZOPCHECK SUBENTRY
+000000                00000 0172F    31 ZOPCHECK CSECT
+000000 90EC D00C            0000C    32          STM   14,12,12(13)
+000004 45FF 0068            00068    33          BAL   15,104(15)
+000008 0000000000000000              34          DC    18F'0'
+000050 E9D6D7C3C8C5C3D2              35          DC    CL8'ZOPCHECK'
+000058 F1F161F0F761F2F0              36          DC    CL8'11/07/20'
+000060 F1F04BF2F9404040              37          DC    CL8'10.29'
+000068 50FD 0008            00008    38          ST    15,8(13)
+00006C 50DF 0004            00004    39          ST    13,4(15)
+000070 18DF                          40          LR    13,15
+                 R:D  00008          41          USING ZOPCHECK+8,13
+                                     42 *MEXIT #=     1 LV= 1 SUBENTRY
+000072 47F0 D17C            00184    43          B     START  TABLE OF ZOPCODES AT END GT THAN 4K BASE
+                                     44 * CALLED VIA BAL R12,CHECKOP BEFORE EACH 32 BYTE OBJECT CODE AREA
+000076                               45 CHECKZOP DS    0H
+000076 95FF C000      00000          46          CLI   0(R12),X'FF'
+00007A 4780 D08E            00096    47    BE    UNDEFINED
+00007E D50F C000 C010 00000 00010    48    CLC   0(16,R12),16(R12)
+000084 4770 D09E            000A6    49    BNE   DIFFERENCE
+000088                               50 CONTINUE DS    0H
+000088 D502 C020 D170 00020 00178    51          CLC   32(3,R12),=C'END'  END OF TABLE
+00008E 4780 D0CC            000D4    52    BE    WRAPUP
+000092 47FC 0020            00020    53    B     32(R12)  PROCESS NEXT ZOPCODES.CPY ENTRY
+000096                               54 UNDEFINED DS   0H
+i000096 5840 D178            00180    55          L     R4,MISSING
+                                                                                                               Page    4
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+00009A 4144 0001            00001    56    LA    R4,1(R4)
+00009E 5040 D178            00180    57    ST    R4,MISSING
+0000A2 47F0 D080            00088    58    B     CONTINUE
+0000A6                               59 DIFFERENCE DS  0H
+0000A6 5840 D174            0017C    60          L     R4,SNAPS
+0000AA 4144 0001            00001    61    LA    R4,1(R4)
+0000AE 5040 D174            0017C    62    ST    R4,SNAPS
+0000B2 182C                          63          LR    R2,R12
+0000B4 4132 0020            00020    64          LA    R3,32(R2)
+                                     65 *MCALL #=     2 LV= 1    SAVE  (R14,R12)
+0000B8 90EC D00C            0000C    66          STM   14,12,12+4*(14-14)(13)
+                                     67 *MEXIT #=     2 LV= 1 SAVE
+                                     68 *MCALL #=     3 LV= 1          SNAP   STORAGE=((R2),(R3)),PDATA=,ID=(R4X
+                                                       )
+                                     69 *MCALL #=     4 LV= 2          ZOPTLR 14,R2
+0000BC 18E2                          70          LR    14,R2
+                                     71 *MEXIT #=     4 LV= 2 ZOPTLR
+                                     72 *MCALL #=     5 LV= 2          ZOPTLR 15,R3
+0000BE 18F3                          73          LR    15,R3
+                                     74 *MEXIT #=     5 LV= 2 ZOPTLR
+                                     75 *MCALL #=     6 LV= 2          ZOPTLR 0,R4                      RPI 623
+0000C0 1804                          76          LR    0,R4
+                                     77 *MEXIT #=     6 LV= 2 ZOPTLR
+0000C2 A502 8000                     78          IILH 0,32768               RPI158
+0000C6 4110 0000            00000    79          LA    1,0
+0000CA 0A33                          80          SVC   51  SNAP DUMP R0=FLAGS,ID,R1=A(TEXT),R14-15=A(LOW,HIGH)
+                                     81 *MEXIT #=     3 LV= 1 SNAP
+                                     82 *MCALL #=     7 LV= 1          RESTORE (R14,R12)
+0000CC 98EC D00C            0000C    83          LM    14,12,12+4*(14-14)(13)
+                                     84 *MEXIT #=     7 LV= 1 RESTORE
+0000D0 47F0 D080            00088    85    B     CONTINUE
+0000D4                               86 WRAPUP   DS    0H
+0000D4 5840 D178            00180    87          L     R4,MISSING
+0000D8 1244                          88    LTR   R4,R4
+0000DA 4780 D112            0011A    89    BZ    NO_MISSING
+                                     90 *MCALL #=     8 LV= 1    WTO   'ERROR RC = TOTAL MISSING GENERATED OPCOX
+                                                       DES'
+0000DE A715 0019            00110    91          BRAS  1,*+(WTO#0008_EOT-*+1)/2*2
+0000E2 002E0000C5D9D9D6              92          DC    AL2(WTO#0008_EOT-*,0),C'ERROR RC = TOTAL MISSING GENERATX
+0000EA D940D9C3407E40E3                                ED OPCODES'
+                      00110          93 WTO#0008_EOT     EQU *
+000110 0A23                          94          SVC   35
+                                     95 *MEXIT #=     8 LV= 1 WTO
+000112 5840 D178            00180    96    L     R4,MISSING
+000116 47F0 D15C            00164    97    B     NO_SNAPS
+                      0011A          98 NO_MISSING EQU *
+00011A 5840 D174            0017C    99    L     R4,SNAPS
+00011E 1244                         100    LTR   R4,R4
+000120 4780 D15C            00164   101    BZ    NO_SNAPS
+                                    102 *MCALL #=     9 LV= 1    WTO   'ERROR RC = TOTAL SNAP DUMPS OF OPCODE DX
+                                                       IFFERENCES'
+000124 A715 001D            0015E   103          BRAS  1,*+(WTO#0009_EOT-*+1)/2*2
+000128 00350000C5D9D9D6             104          DC    AL2(WTO#0009_EOT-*,0),C'ERROR RC = TOTAL SNAP DUMPS OF OX
+000130 D940D9C3407E40E3                                PCODE DIFFERENCES'
+i                      0015D         105 WTO#0009_EOT     EQU *
+                                                                                                               Page    5
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+00015D 00
+00015E 0A23                         106          SVC   35
+                                    107 *MEXIT #=     9 LV= 1 WTO
+000160 5840 D174            0017C   108          L     R4,SNAPS
+000164                              109 NO_SNAPS DS    0H
+                                    110 *MCALL #=    10 LV= 1          SUBEXIT RC=(R4) R4 = TOTAL MISSING OR TOX
+                                                       TAL SNAPS
+                                    111 *MCALL #=    11 LV= 2          ZOPTLR 15,(R4)
+000164 18F4                         112          LR    15,(R4)
+                                    113 *MEXIT #=    11 LV= 2 ZOPTLR
+000166 58D0 D004            00004   114          L     13,4(,13)
+00016A 58E0 D00C            0000C   115          L     14,12(,13)
+00016E 982C D01C            0001C   116          LM    2,12,28(13)
+000172 07FE                         117          BR    14
+                                    118 *MEXIT #=    10 LV= 1 SUBEXIT
+000178                              119          LTORG
+000178 C5D5C4                       120                =C'END'
+00017B 00
+00017C 00000000                     121 SNAPS    DC    F'0' COUNT SNAPS
+000180 00000000                     122 MISSING  DC    F'0' COUNT MISSING OPCODE
+                                    123 * DEFINE ALL THE OPERAND VARIABLES IN TYPE MACRO CALLS
+                                    124 *MCALL #=    12 LV= 1          EQUREGS
+                      00000         125 R0     EQU 0
+                      00001         126 R1     EQU 1
+                      00002         127 R2     EQU 2
+                      00003         128 R3     EQU 3
+                      00004         129 R4     EQU 4
+                      00005         130 R5     EQU 5
+                      00006         131 R6     EQU 6
+                      00007         132 R7     EQU 7
+                      00008         133 R8     EQU 8
+                      00009         134 R9     EQU 9
+                      0000A         135 R10    EQU 10
+                      0000B         136 R11    EQU 11
+                      0000C         137 R12    EQU 12
+                      0000D         138 R13    EQU 13
+                      0000E         139 R14    EQU 14
+                      0000F         140 R15    EQU 15
+                                    141 *MEXIT #=    12 LV= 1 EQUREGS
+                      00EEE         142 RI2      EQU  X'EEE'    SEE BPP TYPE SMI, MMI
+                     FFFFFF         143 RI3      EQU  X'FFFFFF' SEE BPRP TYPES MMI
+                      00000         144 RXB      EQU  0 // vector RXB instruction code
+                      00015         145 V1       EQU  21
+                      00016         146 V2       EQU  22
+                      00017         147 V3       EQU  23
+                      00018         148 V4       EQU  24
+                      0000B         149 M1       EQU  11
+                      0000C         150 M2       EQU  12
+                      0000D         151 M3       EQU  13
+                      00004         152 M4       EQU  4
+                      00005         153 M5       EQU  5
+                      00006         154 M6       EQU  6
+                      00001         155 I1       EQU  1
+                      00002         156 I2       EQU  2
+i                      00003         157 I3       EQU  3
+                                                                                                               Page    6
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+                      00004         158 I4       EQU  4
+                      00005         159 I5       EQU  5
+                      000B0         160 D1       EQU  11*16
+                      000C0         161 D2       EQU  12*16
+                      000D0         162 D3       EQU  13*16
+                      000E0         163 D4       EQU  14*16
+                      00000         164 DH1      EQU  0
+                      00000         165 DH2      EQU  0
+                      0000B         166 B1       EQU  11
+                      0000C         167 B2       EQU  12
+                      0000D         168 B3       EQU  13
+                      0000E         169 B4       EQU  14
+                      0000D         170 X1       EQU  13
+                      0000E         171 X2       EQU  14
+                      000B0         172 L1       EQU  11*16 L-1
+                      0000B         173 LP1      EQU  11 MAX 16 FOR PD
+                      000C0         174 L2       EQU  12*16 L-1
+                      0000C         175 LP2      EQU  12
+000184                              176 START   DS    0H
+                                    177 * COPY ALL THE TYPE MACRO CALLS FOR Z15 OPCODES
+                                    178 * EACH OPCODE MACRO CALL GENERATED BAL R12,CHECKZOP FOLLOWED BY 2 16-BY
+                                    179 * THE SECOND CONTAINS THE DC GENERATED EXPECTED OBJECT CODE
+                                    180 * THE CHECKOP ROUTINE VERIFIES MATCH AND RETURNED TO R12+32
+                                    181 * IF OBJECT CODE DOES NOT MATCH, SNAP DUMP OF 32 BYTE AREA GENERATED
+                                    182 * IF NO GENERATED OBJECT CODE, MNOTE GENERATED WITH RC=12
+                                    183 *** DSH     COPY  ZOPCODES.CPY
+                                    184 *MCALL #=    13 LV= 1 P_0101 TEST_OP E,PR
+000184 45C0 D06E            00076   185          BAL   R12,CHECKZOP
+000188 FFFFFFFFFFFFFFFF             186          DC    32X'FF'
+0001A8                001A8 00188   187          ORG *-32
+                                    188 *MCALL #=    14 LV= 2 P_0101  TYPE_E     PR
+000188 0101                         189 PR_P_0101 PR
+00018A                0018A 00198   190 P_0101_PR ORG PR_P_0101+16
+000198 0101                         191  DC      X'0101'
+                                    192 *MEXIT #=    14 LV= 2 TYPE_E
+00019A                0019A 001A8   193            ORG
+                                    194 *MEXIT #=    13 LV= 1 TEST_OP
+                                    195 *MCALL #=    15 LV= 1 S_0102 TEST_OP E,UPT
+0001A8 45C0 D06E            00076   196          BAL   R12,CHECKZOP
+0001AC FFFFFFFFFFFFFFFF             197          DC    32X'FF'
+0001CC                001CC 001AC   198          ORG *-32
+                                    199 *MCALL #=    16 LV= 2 S_0102  TYPE_E     UPT
+0001AC 0102                         200 UPT_S_0102 UPT
+0001AE                001AE 001BC   201 S_0102_UPT ORG UPT_S_0102+16
+0001BC 0102                         202  DC      X'0102'
+                                    203 *MEXIT #=    16 LV= 2 TYPE_E
+0001BE                001BE 001CC   204            ORG
+                                    205 *MEXIT #=    15 LV= 1 TEST_OP
+                                    206 *MCALL #=    17 LV= 1 P_0104 TEST_OP E,PTFF
+0001CC 45C0 D06E            00076   207          BAL   R12,CHECKZOP
+0001D0 FFFFFFFFFFFFFFFF             208          DC    32X'FF'
+0001F0                001F0 001D0   209          ORG *-32
+                                    210 *MCALL #=    18 LV= 2 P_0104  TYPE_E     PTFF
+0001D0 0104                         211 PTFF_P_0104 PTFF
+i0001D2                001D2 001E0   212 P_0104_PTFF ORG PTFF_P_0104+16
+                                                                                                               Page    7
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+0001E0 0104                         213  DC      X'0104'
+                                    214 *MEXIT #=    18 LV= 2 TYPE_E
+0001E2                001E2 001F0   215            ORG
+                                    216 *MEXIT #=    17 LV= 1 TEST_OP
+                                    217 *MCALL #=    19 LV= 1 S_0107 TEST_OP E,SCKPF
+0001F0 45C0 D06E            00076   218          BAL   R12,CHECKZOP
+0001F4 FFFFFFFFFFFFFFFF             219          DC    32X'FF'
+000214                00214 001F4   220          ORG *-32
+                                    221 *MCALL #=    20 LV= 2 S_0107  TYPE_E     SCKPF
+0001F4 0107                         222 SCKPF_S_0107 SCKPF
+0001F6                001F6 00204   223 S_0107_SCKPF ORG SCKPF_S_0107+16
+000204 0107                         224  DC      X'0107'
+                                    225 *MEXIT #=    20 LV= 2 TYPE_E
+000206                00206 00214   226            ORG
+                                    227 *MEXIT #=    19 LV= 1 TEST_OP
+                                    228 *MCALL #=    21 LV= 1 P_010A TEST_OP E,PFPO
+000214 45C0 D06E            00076   229          BAL   R12,CHECKZOP
+000218 FFFFFFFFFFFFFFFF             230          DC    32X'FF'
+000238                00238 00218   231          ORG *-32
+                                    232 *MCALL #=    22 LV= 2 P_010A  TYPE_E     PFPO
+000218 010A                         233 PFPO_P_010A PFPO
+00021A                0021A 00228   234 P_010A_PFPO ORG PFPO_P_010A+16
+000228 010A                         235  DC      X'010A'
+                                    236 *MEXIT #=    22 LV= 2 TYPE_E
+00022A                0022A 00238   237            ORG
+                                    238 *MEXIT #=    21 LV= 1 TEST_OP
+                                    239 *MCALL #=    23 LV= 1 P_010B TEST_OP E,TAM
+000238 45C0 D06E            00076   240          BAL   R12,CHECKZOP
+00023C FFFFFFFFFFFFFFFF             241          DC    32X'FF'
+00025C                0025C 0023C   242          ORG *-32
+                                    243 *MCALL #=    24 LV= 2 P_010B  TYPE_E     TAM
+00023C 010B                         244 TAM_P_010B TAM
+00023E                0023E 0024C   245 P_010B_TAM ORG TAM_P_010B+16
+00024C 010B                         246  DC      X'010B'
+                                    247 *MEXIT #=    24 LV= 2 TYPE_E
+00024E                0024E 0025C   248            ORG
+                                    249 *MEXIT #=    23 LV= 1 TEST_OP
+                                    250 *MCALL #=    25 LV= 1 P_010C TEST_OP E,SAM24
+00025C 45C0 D06E            00076   251          BAL   R12,CHECKZOP
+000260 FFFFFFFFFFFFFFFF             252          DC    32X'FF'
+000280                00280 00260   253          ORG *-32
+                                    254 *MCALL #=    26 LV= 2 P_010C  TYPE_E     SAM24
+000260 010C                         255 SAM24_P_010C SAM24
+000262                00262 00270   256 P_010C_SAM24 ORG SAM24_P_010C+16
+000270 010C                         257  DC      X'010C'
+                                    258 *MEXIT #=    26 LV= 2 TYPE_E
+000272                00272 00280   259            ORG
+                                    260 *MEXIT #=    25 LV= 1 TEST_OP
+                                    261 *MCALL #=    27 LV= 1 P_010D TEST_OP E,SAM31
+000280 45C0 D06E            00076   262          BAL   R12,CHECKZOP
+000284 FFFFFFFFFFFFFFFF             263          DC    32X'FF'
+0002A4                002A4 00284   264          ORG *-32
+                                    265 *MCALL #=    28 LV= 2 P_010D  TYPE_E     SAM31
+000284 010D                         266 SAM31_P_010D SAM31
+i000286                00286 00294   267 P_010D_SAM31 ORG SAM31_P_010D+16
+                                                                                                               Page    8
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000294 010D                         268  DC      X'010D'
+                                    269 *MEXIT #=    28 LV= 2 TYPE_E
+000296                00296 002A4   270            ORG
+                                    271 *MEXIT #=    27 LV= 1 TEST_OP
+                                    272 *MCALL #=    29 LV= 1 P_010E TEST_OP E,SAM64
+0002A4 45C0 D06E            00076   273          BAL   R12,CHECKZOP
+0002A8 FFFFFFFFFFFFFFFF             274          DC    32X'FF'
+0002C8                002C8 002A8   275          ORG *-32
+                                    276 *MCALL #=    30 LV= 2 P_010E  TYPE_E     SAM64
+0002A8 010E                         277 SAM64_P_010E SAM64
+0002AA                002AA 002B8   278 P_010E_SAM64 ORG SAM64_P_010E+16
+0002B8 010E                         279  DC      X'010E'
+                                    280 *MEXIT #=    30 LV= 2 TYPE_E
+0002BA                002BA 002C8   281            ORG
+                                    282 *MEXIT #=    29 LV= 1 TEST_OP
+                                    283 *MCALL #=    31 LV= 1 S_01FF TEST_OP E,TRAP2
+0002C8 45C0 D06E            00076   284          BAL   R12,CHECKZOP
+0002CC FFFFFFFFFFFFFFFF             285          DC    32X'FF'
+0002EC                002EC 002CC   286          ORG *-32
+                                    287 *MCALL #=    32 LV= 2 S_01FF  TYPE_E     TRAP2
+0002CC 01FF                         288 TRAP2_S_01FF TRAP2
+0002CE                002CE 002DC   289 S_01FF_TRAP2 ORG TRAP2_S_01FF+16
+0002DC 01FF                         290  DC      X'01FF'
+                                    291 *MEXIT #=    32 LV= 2 TYPE_E
+0002DE                002DE 002EC   292            ORG
+                                    293 *MEXIT #=    31 LV= 1 TEST_OP
+                                    294 *MCALL #=    33 LV= 1 P_04 TEST_OP R,SPM,R1
+0002EC 45C0 D06E            00076   295          BAL   R12,CHECKZOP
+0002F0 FFFFFFFFFFFFFFFF             296          DC    32X'FF'
+000310                00310 002F0   297          ORG *-32
+                                    298 *MCALL #=    34 LV= 2 P_04    TYPE_R     SPM,R1
+0002F0 0410                         299 SPM_P_04    SPM     R1
+0002F2                002F2 00300   300 P_04_SPM ORG SPM_P_04+16
+000300 0410                         301  DC      X'04',AL1(R1*16)
+                                    302 *MEXIT #=    34 LV= 2 TYPE_R
+000302                00302 00310   303            ORG
+                                    304 *MEXIT #=    33 LV= 1 TEST_OP
+                                    305 *MCALL #=    35 LV= 1 P_05 TEST_OP RR,BALR,R1,R2
+000310 45C0 D06E            00076   306          BAL   R12,CHECKZOP
+000314 FFFFFFFFFFFFFFFF             307          DC    32X'FF'
+000334                00334 00314   308          ORG *-32
+                                    309 *MCALL #=    36 LV= 2 P_05    TYPE_RR    BALR,R1,R2
+000314 0512                         310 BALR_P_05   BALR    R1,R2
+000316                00316 00324   311 P_05_BALR ORG BALR_P_05+16
+000324 0512                         312  DC      X'05',AL1(R1*16+R2)
+                                    313 *MEXIT #=    36 LV= 2 TYPE_RR
+000326                00326 00334   314            ORG
+                                    315 *MEXIT #=    35 LV= 1 TEST_OP
+                                    316 *MCALL #=    37 LV= 1 P_06 TEST_OP RR,BCTR,R1,R2
+000334 45C0 D06E            00076   317          BAL   R12,CHECKZOP
+000338 FFFFFFFFFFFFFFFF             318          DC    32X'FF'
+000358                00358 00338   319          ORG *-32
+                                    320 *MCALL #=    38 LV= 2 P_06    TYPE_RR    BCTR,R1,R2
+000338 0612                         321 BCTR_P_06   BCTR    R1,R2
+i00033A                0033A 00348   322 P_06_BCTR ORG BCTR_P_06+16
+                                                                                                               Page    9
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000348 0612                         323  DC      X'06',AL1(R1*16+R2)
+                                    324 *MEXIT #=    38 LV= 2 TYPE_RR
+00034A                0034A 00358   325            ORG
+                                    326 *MEXIT #=    37 LV= 1 TEST_OP
+                                    327 *MCALL #=    39 LV= 1 P_07 TEST_OP RR,BCR,M1,R2
+000358 45C0 D06E            00076   328          BAL   R12,CHECKZOP
+00035C FFFFFFFFFFFFFFFF             329          DC    32X'FF'
+00037C                0037C 0035C   330          ORG *-32
+                                    331 *MCALL #=    40 LV= 2 P_07    TYPE_RR    BCR,M1,R2
+00035C 07B2                         332 BCR_P_07    BCR     M1,R2
+00035E                0035E 0036C   333 P_07_BCR ORG BCR_P_07+16
+00036C 07B2                         334  DC      X'07',AL1(M1*16+R2)
+                                    335 *MEXIT #=    40 LV= 2 TYPE_RR
+00036E                0036E 0037C   336            ORG
+                                    337 *MEXIT #=    39 LV= 1 TEST_OP
+                                    338 *MCALL #=    41 LV= 1 P_070 TEST_OP RR,NOPR,R2
+00037C 45C0 D06E            00076   339          BAL   R12,CHECKZOP
+000380 FFFFFFFFFFFFFFFF             340          DC    32X'FF'
+0003A0                003A0 00380   341          ORG *-32
+                                    342 *MCALL #=    42 LV= 2 P_070   TYPE_RR    NOPR,R2
+000380 0702                         343 NOPR_P_070  NOPR    R2
+000382                00382 00390   344 P_070_NOPR ORG NOPR_P_070+16
+000390 0702                         345  DC      X'07',AL1(0*16+R2)
+                                    346 *MEXIT #=    42 LV= 2 TYPE_RR
+000392                00392 003A0   347            ORG
+                                    348 *MEXIT #=    41 LV= 1 TEST_OP
+                                    349 *MCALL #=    43 LV= 1 P_071 TEST_OP RR,BOR,R2
+0003A0 45C0 D06E            00076   350          BAL   R12,CHECKZOP
+0003A4 FFFFFFFFFFFFFFFF             351          DC    32X'FF'
+0003C4                003C4 003A4   352          ORG *-32
+                                    353 *MCALL #=    44 LV= 2 P_071   TYPE_RR    BOR,R2
+0003A4 0712                         354 BOR_P_071   BOR     R2
+0003A6                003A6 003B4   355 P_071_BOR ORG BOR_P_071+16
+0003B4 0712                         356  DC      X'07',AL1(1*16+R2)
+                                    357 *MEXIT #=    44 LV= 2 TYPE_RR
+0003B6                003B6 003C4   358            ORG
+                                    359 *MEXIT #=    43 LV= 1 TEST_OP
+                                    360 *MCALL #=    45 LV= 1 P_072 TEST_OP RR,BHR,R2
+0003C4 45C0 D06E            00076   361          BAL   R12,CHECKZOP
+0003C8 FFFFFFFFFFFFFFFF             362          DC    32X'FF'
+0003E8                003E8 003C8   363          ORG *-32
+                                    364 *MCALL #=    46 LV= 2 P_072   TYPE_RR    BHR,R2
+0003C8 0722                         365 BHR_P_072   BHR     R2
+0003CA                003CA 003D8   366 P_072_BHR ORG BHR_P_072+16
+0003D8 0722                         367  DC      X'07',AL1(2*16+R2)
+                                    368 *MEXIT #=    46 LV= 2 TYPE_RR
+0003DA                003DA 003E8   369            ORG
+                                    370 *MEXIT #=    45 LV= 1 TEST_OP
+                                    371 *MCALL #=    47 LV= 1 P_072 TEST_OP RR,BPR,R2
+0003E8 45C0 D06E            00076   372          BAL   R12,CHECKZOP
+0003EC FFFFFFFFFFFFFFFF             373          DC    32X'FF'
+00040C                0040C 003EC   374          ORG *-32
+                                    375 *MCALL #=    48 LV= 2 P_072   TYPE_RR    BPR,R2
+0003EC 0722                         376 BPR_P_072   BPR     R2
+i0003EE                003EE 003FC   377 P_072_BPR ORG BPR_P_072+16
+                                                                                                               Page   10
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+0003FC 0722                         378  DC      X'07',AL1(2*16+R2)
+                                    379 *MEXIT #=    48 LV= 2 TYPE_RR
+0003FE                003FE 0040C   380            ORG
+                                    381 *MEXIT #=    47 LV= 1 TEST_OP
+                                    382 *MCALL #=    49 LV= 1 P_074 TEST_OP RR,BLR,R2
+00040C 45C0 D06E            00076   383          BAL   R12,CHECKZOP
+000410 FFFFFFFFFFFFFFFF             384          DC    32X'FF'
+000430                00430 00410   385          ORG *-32
+                                    386 *MCALL #=    50 LV= 2 P_074   TYPE_RR    BLR,R2
+000410 0742                         387 BLR_P_074   BLR     R2
+000412                00412 00420   388 P_074_BLR ORG BLR_P_074+16
+000420 0742                         389  DC      X'07',AL1(4*16+R2)
+                                    390 *MEXIT #=    50 LV= 2 TYPE_RR
+000422                00422 00430   391            ORG
+                                    392 *MEXIT #=    49 LV= 1 TEST_OP
+                                    393 *MCALL #=    51 LV= 1 P_074 TEST_OP RR,BMR,R2
+000430 45C0 D06E            00076   394          BAL   R12,CHECKZOP
+000434 FFFFFFFFFFFFFFFF             395          DC    32X'FF'
+000454                00454 00434   396          ORG *-32
+                                    397 *MCALL #=    52 LV= 2 P_074   TYPE_RR    BMR,R2
+000434 0742                         398 BMR_P_074   BMR     R2
+000436                00436 00444   399 P_074_BMR ORG BMR_P_074+16
+000444 0742                         400  DC      X'07',AL1(4*16+R2)
+                                    401 *MEXIT #=    52 LV= 2 TYPE_RR
+000446                00446 00454   402            ORG
+                                    403 *MEXIT #=    51 LV= 1 TEST_OP
+                                    404 *MCALL #=    53 LV= 1 P_077 TEST_OP RR,BNER,R2
+000454 45C0 D06E            00076   405          BAL   R12,CHECKZOP
+000458 FFFFFFFFFFFFFFFF             406          DC    32X'FF'
+000478                00478 00458   407          ORG *-32
+                                    408 *MCALL #=    54 LV= 2 P_077   TYPE_RR    BNER,R2
+000458 0772                         409 BNER_P_077  BNER    R2
+00045A                0045A 00468   410 P_077_BNER ORG BNER_P_077+16
+000468 0772                         411  DC      X'07',AL1(7*16+R2)
+                                    412 *MEXIT #=    54 LV= 2 TYPE_RR
+00046A                0046A 00478   413            ORG
+                                    414 *MEXIT #=    53 LV= 1 TEST_OP
+                                    415 *MCALL #=    55 LV= 1 P_077 TEST_OP RR,BNZR,R2
+000478 45C0 D06E            00076   416          BAL   R12,CHECKZOP
+00047C FFFFFFFFFFFFFFFF             417          DC    32X'FF'
+00049C                0049C 0047C   418          ORG *-32
+                                    419 *MCALL #=    56 LV= 2 P_077   TYPE_RR    BNZR,R2
+00047C 0772                         420 BNZR_P_077  BNZR    R2
+00047E                0047E 0048C   421 P_077_BNZR ORG BNZR_P_077+16
+00048C 0772                         422  DC      X'07',AL1(7*16+R2)
+                                    423 *MEXIT #=    56 LV= 2 TYPE_RR
+00048E                0048E 0049C   424            ORG
+                                    425 *MEXIT #=    55 LV= 1 TEST_OP
+                                    426 *MCALL #=    57 LV= 1 P_078 TEST_OP RR,BER,R2
+00049C 45C0 D06E            00076   427          BAL   R12,CHECKZOP
+0004A0 FFFFFFFFFFFFFFFF             428          DC    32X'FF'
+0004C0                004C0 004A0   429          ORG *-32
+                                    430 *MCALL #=    58 LV= 2 P_078   TYPE_RR    BER,R2
+0004A0 0782                         431 BER_P_078   BER     R2
+i0004A2                004A2 004B0   432 P_078_BER ORG BER_P_078+16
+                                                                                                               Page   11
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+0004B0 0782                         433  DC      X'07',AL1(8*16+R2)
+                                    434 *MEXIT #=    58 LV= 2 TYPE_RR
+0004B2                004B2 004C0   435            ORG
+                                    436 *MEXIT #=    57 LV= 1 TEST_OP
+                                    437 *MCALL #=    59 LV= 1 P_078 TEST_OP RR,BZR,R2
+0004C0 45C0 D06E            00076   438          BAL   R12,CHECKZOP
+0004C4 FFFFFFFFFFFFFFFF             439          DC    32X'FF'
+0004E4                004E4 004C4   440          ORG *-32
+                                    441 *MCALL #=    60 LV= 2 P_078   TYPE_RR    BZR,R2
+0004C4 0782                         442 BZR_P_078   BZR     R2
+0004C6                004C6 004D4   443 P_078_BZR ORG BZR_P_078+16
+0004D4 0782                         444  DC      X'07',AL1(8*16+R2)
+                                    445 *MEXIT #=    60 LV= 2 TYPE_RR
+0004D6                004D6 004E4   446            ORG
+                                    447 *MEXIT #=    59 LV= 1 TEST_OP
+                                    448 *MCALL #=    61 LV= 1 P_07B TEST_OP RR,BNLR,R2
+0004E4 45C0 D06E            00076   449          BAL   R12,CHECKZOP
+0004E8 FFFFFFFFFFFFFFFF             450          DC    32X'FF'
+000508                00508 004E8   451          ORG *-32
+                                    452 *MCALL #=    62 LV= 2 P_07B   TYPE_RR    BNLR,R2
+0004E8 07B2                         453 BNLR_P_07B  BNLR    R2
+0004EA                004EA 004F8   454 P_07B_BNLR ORG BNLR_P_07B+16
+0004F8 07B2                         455  DC      X'07',AL1(11*16+R2)
+                                    456 *MEXIT #=    62 LV= 2 TYPE_RR
+0004FA                004FA 00508   457            ORG
+                                    458 *MEXIT #=    61 LV= 1 TEST_OP
+                                    459 *MCALL #=    63 LV= 1 P_07B TEST_OP RR,BNMR,R2
+000508 45C0 D06E            00076   460          BAL   R12,CHECKZOP
+00050C FFFFFFFFFFFFFFFF             461          DC    32X'FF'
+00052C                0052C 0050C   462          ORG *-32
+                                    463 *MCALL #=    64 LV= 2 P_07B   TYPE_RR    BNMR,R2
+00050C 07B2                         464 BNMR_P_07B  BNMR    R2
+00050E                0050E 0051C   465 P_07B_BNMR ORG BNMR_P_07B+16
+00051C 07B2                         466  DC      X'07',AL1(11*16+R2)
+                                    467 *MEXIT #=    64 LV= 2 TYPE_RR
+00051E                0051E 0052C   468            ORG
+                                    469 *MEXIT #=    63 LV= 1 TEST_OP
+                                    470 *MCALL #=    65 LV= 1 P_07D TEST_OP RR,BNHR,R2
+00052C 45C0 D06E            00076   471          BAL   R12,CHECKZOP
+000530 FFFFFFFFFFFFFFFF             472          DC    32X'FF'
+000550                00550 00530   473          ORG *-32
+                                    474 *MCALL #=    66 LV= 2 P_07D   TYPE_RR    BNHR,R2
+000530 07D2                         475 BNHR_P_07D  BNHR    R2
+000532                00532 00540   476 P_07D_BNHR ORG BNHR_P_07D+16
+000540 07D2                         477  DC      X'07',AL1(13*16+R2)
+                                    478 *MEXIT #=    66 LV= 2 TYPE_RR
+000542                00542 00550   479            ORG
+                                    480 *MEXIT #=    65 LV= 1 TEST_OP
+                                    481 *MCALL #=    67 LV= 1 P_07D TEST_OP RR,BNPR,R2
+000550 45C0 D06E            00076   482          BAL   R12,CHECKZOP
+000554 FFFFFFFFFFFFFFFF             483          DC    32X'FF'
+000574                00574 00554   484          ORG *-32
+                                    485 *MCALL #=    68 LV= 2 P_07D   TYPE_RR    BNPR,R2
+000554 07D2                         486 BNPR_P_07D  BNPR    R2
+i000556                00556 00564   487 P_07D_BNPR ORG BNPR_P_07D+16
+                                                                                                               Page   12
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000564 07D2                         488  DC      X'07',AL1(13*16+R2)
+                                    489 *MEXIT #=    68 LV= 2 TYPE_RR
+000566                00566 00574   490            ORG
+                                    491 *MEXIT #=    67 LV= 1 TEST_OP
+                                    492 *MCALL #=    69 LV= 1 P_07E TEST_OP RR,BNOR,R2
+000574 45C0 D06E            00076   493          BAL   R12,CHECKZOP
+000578 FFFFFFFFFFFFFFFF             494          DC    32X'FF'
+000598                00598 00578   495          ORG *-32
+                                    496 *MCALL #=    70 LV= 2 P_07E   TYPE_RR    BNOR,R2
+000578 07E2                         497 BNOR_P_07E  BNOR    R2
+00057A                0057A 00588   498 P_07E_BNOR ORG BNOR_P_07E+16
+000588 07E2                         499  DC      X'07',AL1(14*16+R2)
+                                    500 *MEXIT #=    70 LV= 2 TYPE_RR
+00058A                0058A 00598   501            ORG
+                                    502 *MEXIT #=    69 LV= 1 TEST_OP
+                                    503 *MCALL #=    71 LV= 1 P_07F TEST_OP RR,BR,R2
+000598 45C0 D06E            00076   504          BAL   R12,CHECKZOP
+00059C FFFFFFFFFFFFFFFF             505          DC    32X'FF'
+0005BC                005BC 0059C   506          ORG *-32
+                                    507 *MCALL #=    72 LV= 2 P_07F   TYPE_RR    BR,R2
+00059C 07F2                         508 BR_P_07F    BR      R2
+00059E                0059E 005AC   509 P_07F_BR ORG BR_P_07F+16
+0005AC 07F2                         510  DC      X'07',AL1(15*16+R2)
+                                    511 *MEXIT #=    72 LV= 2 TYPE_RR
+0005AE                005AE 005BC   512            ORG
+                                    513 *MEXIT #=    71 LV= 1 TEST_OP
+                                    514 *MCALL #=    73 LV= 1 P_0A TEST_OP I,SVC,I1
+0005BC 45C0 D06E            00076   515          BAL   R12,CHECKZOP
+0005C0 FFFFFFFFFFFFFFFF             516          DC    32X'FF'
+0005E0                005E0 005C0   517          ORG *-32
+                                    518 *MCALL #=    74 LV= 2 P_0A    TYPE_I     SVC,I1
+0005C0 0A01                         519 SVC_P_0A  SVC I1
+0005C2                005C2 005D0   520 P_0A_SVC ORG SVC_P_0A+16
+0005D0 0A01                         521  DC      X'0A',AL1(I1)
+                                    522 *MEXIT #=    74 LV= 2 TYPE_I
+0005D2                005D2 005E0   523            ORG
+                                    524 *MEXIT #=    73 LV= 1 TEST_OP
+                                    525 *MCALL #=    75 LV= 1 P_0B TEST_OP RR,BSM,R1,R2
+0005E0 45C0 D06E            00076   526          BAL   R12,CHECKZOP
+0005E4 FFFFFFFFFFFFFFFF             527          DC    32X'FF'
+000604                00604 005E4   528          ORG *-32
+                                    529 *MCALL #=    76 LV= 2 P_0B    TYPE_RR    BSM,R1,R2
+0005E4 0B12                         530 BSM_P_0B    BSM     R1,R2
+0005E6                005E6 005F4   531 P_0B_BSM ORG BSM_P_0B+16
+0005F4 0B12                         532  DC      X'0B',AL1(R1*16+R2)
+                                    533 *MEXIT #=    76 LV= 2 TYPE_RR
+0005F6                005F6 00604   534            ORG
+                                    535 *MEXIT #=    75 LV= 1 TEST_OP
+                                    536 *MCALL #=    77 LV= 1 S_0C TEST_OP RR,BASSM,R1,R2
+000604 45C0 D06E            00076   537          BAL   R12,CHECKZOP
+000608 FFFFFFFFFFFFFFFF             538          DC    32X'FF'
+000628                00628 00608   539          ORG *-32
+                                    540 *MCALL #=    78 LV= 2 S_0C    TYPE_RR    BASSM,R1,R2
+000608 0C12                         541 BASSM_S_0C  BASSM   R1,R2
+i00060A                0060A 00618   542 S_0C_BASSM ORG BASSM_S_0C+16
+                                                                                                               Page   13
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000618 0C12                         543  DC      X'0C',AL1(R1*16+R2)
+                                    544 *MEXIT #=    78 LV= 2 TYPE_RR
+00061A                0061A 00628   545            ORG
+                                    546 *MEXIT #=    77 LV= 1 TEST_OP
+                                    547 *MCALL #=    79 LV= 1 P_0D TEST_OP RR,BASR,R1,R2
+000628 45C0 D06E            00076   548          BAL   R12,CHECKZOP
+00062C FFFFFFFFFFFFFFFF             549          DC    32X'FF'
+00064C                0064C 0062C   550          ORG *-32
+                                    551 *MCALL #=    80 LV= 2 P_0D    TYPE_RR    BASR,R1,R2
+00062C 0D12                         552 BASR_P_0D   BASR    R1,R2
+00062E                0062E 0063C   553 P_0D_BASR ORG BASR_P_0D+16
+00063C 0D12                         554  DC      X'0D',AL1(R1*16+R2)
+                                    555 *MEXIT #=    80 LV= 2 TYPE_RR
+00063E                0063E 0064C   556            ORG
+                                    557 *MEXIT #=    79 LV= 1 TEST_OP
+                                    558 *MCALL #=    81 LV= 1 P_0E TEST_OP RR,MVCL,R2,R4
+00064C 45C0 D06E            00076   559          BAL   R12,CHECKZOP
+000650 FFFFFFFFFFFFFFFF             560          DC    32X'FF'
+000670                00670 00650   561          ORG *-32
+                                    562 *MCALL #=    82 LV= 2 P_0E    TYPE_RR    MVCL,R2,R4
+000650 0E24                         563 MVCL_P_0E   MVCL    R2,R4
+000652                00652 00660   564 P_0E_MVCL ORG MVCL_P_0E+16
+000660 0E24                         565  DC      X'0E',AL1(R2*16+R4)
+                                    566 *MEXIT #=    82 LV= 2 TYPE_RR
+000662                00662 00670   567            ORG
+                                    568 *MEXIT #=    81 LV= 1 TEST_OP
+                                    569 *MCALL #=    83 LV= 1 P_0F TEST_OP RR,CLCL,R2,R4
+000670 45C0 D06E            00076   570          BAL   R12,CHECKZOP
+000674 FFFFFFFFFFFFFFFF             571          DC    32X'FF'
+000694                00694 00674   572          ORG *-32
+                                    573 *MCALL #=    84 LV= 2 P_0F    TYPE_RR    CLCL,R2,R4
+000674 0F24                         574 CLCL_P_0F   CLCL    R2,R4
+000676                00676 00684   575 P_0F_CLCL ORG CLCL_P_0F+16
+000684 0F24                         576  DC      X'0F',AL1(R2*16+R4)
+                                    577 *MEXIT #=    84 LV= 2 TYPE_RR
+000686                00686 00694   578            ORG
+                                    579 *MEXIT #=    83 LV= 1 TEST_OP
+                                    580 *MCALL #=    85 LV= 1 P_10 TEST_OP RR,LPR,R1,R2
+000694 45C0 D06E            00076   581          BAL   R12,CHECKZOP
+000698 FFFFFFFFFFFFFFFF             582          DC    32X'FF'
+0006B8                006B8 00698   583          ORG *-32
+                                    584 *MCALL #=    86 LV= 2 P_10    TYPE_RR    LPR,R1,R2
+000698 1012                         585 LPR_P_10    LPR     R1,R2
+00069A                0069A 006A8   586 P_10_LPR ORG LPR_P_10+16
+0006A8 1012                         587  DC      X'10',AL1(R1*16+R2)
+                                    588 *MEXIT #=    86 LV= 2 TYPE_RR
+0006AA                006AA 006B8   589            ORG
+                                    590 *MEXIT #=    85 LV= 1 TEST_OP
+                                    591 *MCALL #=    87 LV= 1 P_11 TEST_OP RR,LNR,R1,R2
+0006B8 45C0 D06E            00076   592          BAL   R12,CHECKZOP
+0006BC FFFFFFFFFFFFFFFF             593          DC    32X'FF'
+0006DC                006DC 006BC   594          ORG *-32
+                                    595 *MCALL #=    88 LV= 2 P_11    TYPE_RR    LNR,R1,R2
+0006BC 1112                         596 LNR_P_11    LNR     R1,R2
+i0006BE                006BE 006CC   597 P_11_LNR ORG LNR_P_11+16
+                                                                                                               Page   14
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+0006CC 1112                         598  DC      X'11',AL1(R1*16+R2)
+                                    599 *MEXIT #=    88 LV= 2 TYPE_RR
+0006CE                006CE 006DC   600            ORG
+                                    601 *MEXIT #=    87 LV= 1 TEST_OP
+                                    602 *MCALL #=    89 LV= 1 P_12 TEST_OP RR,LTR,R1,R2
+0006DC 45C0 D06E            00076   603          BAL   R12,CHECKZOP
+0006E0 FFFFFFFFFFFFFFFF             604          DC    32X'FF'
+000700                00700 006E0   605          ORG *-32
+                                    606 *MCALL #=    90 LV= 2 P_12    TYPE_RR    LTR,R1,R2
+0006E0 1212                         607 LTR_P_12    LTR     R1,R2
+0006E2                006E2 006F0   608 P_12_LTR ORG LTR_P_12+16
+0006F0 1212                         609  DC      X'12',AL1(R1*16+R2)
+                                    610 *MEXIT #=    90 LV= 2 TYPE_RR
+0006F2                006F2 00700   611            ORG
+                                    612 *MEXIT #=    89 LV= 1 TEST_OP
+                                    613 *MCALL #=    91 LV= 1 P_13 TEST_OP RR,LCR,R1,R2
+000700 45C0 D06E            00076   614          BAL   R12,CHECKZOP
+000704 FFFFFFFFFFFFFFFF             615          DC    32X'FF'
+000724                00724 00704   616          ORG *-32
+                                    617 *MCALL #=    92 LV= 2 P_13    TYPE_RR    LCR,R1,R2
+000704 1312                         618 LCR_P_13    LCR     R1,R2
+000706                00706 00714   619 P_13_LCR ORG LCR_P_13+16
+000714 1312                         620  DC      X'13',AL1(R1*16+R2)
+                                    621 *MEXIT #=    92 LV= 2 TYPE_RR
+000716                00716 00724   622            ORG
+                                    623 *MEXIT #=    91 LV= 1 TEST_OP
+                                    624 *MCALL #=    93 LV= 1 P_14 TEST_OP RR,NR,R1,R2
+000724 45C0 D06E            00076   625          BAL   R12,CHECKZOP
+000728 FFFFFFFFFFFFFFFF             626          DC    32X'FF'
+000748                00748 00728   627          ORG *-32
+                                    628 *MCALL #=    94 LV= 2 P_14    TYPE_RR    NR,R1,R2
+000728 1412                         629 NR_P_14     NR      R1,R2
+00072A                0072A 00738   630 P_14_NR ORG NR_P_14+16
+000738 1412                         631  DC      X'14',AL1(R1*16+R2)
+                                    632 *MEXIT #=    94 LV= 2 TYPE_RR
+00073A                0073A 00748   633            ORG
+                                    634 *MEXIT #=    93 LV= 1 TEST_OP
+                                    635 *MCALL #=    95 LV= 1 P_15 TEST_OP RR,CLR,R1,R2
+000748 45C0 D06E            00076   636          BAL   R12,CHECKZOP
+00074C FFFFFFFFFFFFFFFF             637          DC    32X'FF'
+00076C                0076C 0074C   638          ORG *-32
+                                    639 *MCALL #=    96 LV= 2 P_15    TYPE_RR    CLR,R1,R2
+00074C 1512                         640 CLR_P_15    CLR     R1,R2
+00074E                0074E 0075C   641 P_15_CLR ORG CLR_P_15+16
+00075C 1512                         642  DC      X'15',AL1(R1*16+R2)
+                                    643 *MEXIT #=    96 LV= 2 TYPE_RR
+00075E                0075E 0076C   644            ORG
+                                    645 *MEXIT #=    95 LV= 1 TEST_OP
+                                    646 *MCALL #=    97 LV= 1 P_16 TEST_OP RR,OR,R1,R2
+00076C 45C0 D06E            00076   647          BAL   R12,CHECKZOP
+000770 FFFFFFFFFFFFFFFF             648          DC    32X'FF'
+000790                00790 00770   649          ORG *-32
+                                    650 *MCALL #=    98 LV= 2 P_16    TYPE_RR    OR,R1,R2
+000770 1612                         651 OR_P_16     OR      R1,R2
+i000772                00772 00780   652 P_16_OR ORG OR_P_16+16
+                                                                                                               Page   15
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000780 1612                         653  DC      X'16',AL1(R1*16+R2)
+                                    654 *MEXIT #=    98 LV= 2 TYPE_RR
+000782                00782 00790   655            ORG
+                                    656 *MEXIT #=    97 LV= 1 TEST_OP
+                                    657 *MCALL #=    99 LV= 1 P_17 TEST_OP RR,XR,R1,R2
+000790 45C0 D06E            00076   658          BAL   R12,CHECKZOP
+000794 FFFFFFFFFFFFFFFF             659          DC    32X'FF'
+0007B4                007B4 00794   660          ORG *-32
+                                    661 *MCALL #=   100 LV= 2 P_17    TYPE_RR    XR,R1,R2
+000794 1712                         662 XR_P_17     XR      R1,R2
+000796                00796 007A4   663 P_17_XR ORG XR_P_17+16
+0007A4 1712                         664  DC      X'17',AL1(R1*16+R2)
+                                    665 *MEXIT #=   100 LV= 2 TYPE_RR
+0007A6                007A6 007B4   666            ORG
+                                    667 *MEXIT #=    99 LV= 1 TEST_OP
+                                    668 *MCALL #=   101 LV= 1 P_18 TEST_OP RR,LR,R1,R2
+0007B4 45C0 D06E            00076   669          BAL   R12,CHECKZOP
+0007B8 FFFFFFFFFFFFFFFF             670          DC    32X'FF'
+0007D8                007D8 007B8   671          ORG *-32
+                                    672 *MCALL #=   102 LV= 2 P_18    TYPE_RR    LR,R1,R2
+0007B8 1812                         673 LR_P_18     LR      R1,R2
+0007BA                007BA 007C8   674 P_18_LR ORG LR_P_18+16
+0007C8 1812                         675  DC      X'18',AL1(R1*16+R2)
+                                    676 *MEXIT #=   102 LV= 2 TYPE_RR
+0007CA                007CA 007D8   677            ORG
+                                    678 *MEXIT #=   101 LV= 1 TEST_OP
+                                    679 *MCALL #=   103 LV= 1 P_19 TEST_OP RR,CR,R1,R2
+0007D8 45C0 D06E            00076   680          BAL   R12,CHECKZOP
+0007DC FFFFFFFFFFFFFFFF             681          DC    32X'FF'
+0007FC                007FC 007DC   682          ORG *-32
+                                    683 *MCALL #=   104 LV= 2 P_19    TYPE_RR    CR,R1,R2
+0007DC 1912                         684 CR_P_19     CR      R1,R2
+0007DE                007DE 007EC   685 P_19_CR ORG CR_P_19+16
+0007EC 1912                         686  DC      X'19',AL1(R1*16+R2)
+                                    687 *MEXIT #=   104 LV= 2 TYPE_RR
+0007EE                007EE 007FC   688            ORG
+                                    689 *MEXIT #=   103 LV= 1 TEST_OP
+                                    690 *MCALL #=   105 LV= 1 P_1A TEST_OP RR,AR,R1,R2
+0007FC 45C0 D06E            00076   691          BAL   R12,CHECKZOP
+000800 FFFFFFFFFFFFFFFF             692          DC    32X'FF'
+000820                00820 00800   693          ORG *-32
+                                    694 *MCALL #=   106 LV= 2 P_1A    TYPE_RR    AR,R1,R2
+000800 1A12                         695 AR_P_1A     AR      R1,R2
+000802                00802 00810   696 P_1A_AR ORG AR_P_1A+16
+000810 1A12                         697  DC      X'1A',AL1(R1*16+R2)
+                                    698 *MEXIT #=   106 LV= 2 TYPE_RR
+000812                00812 00820   699            ORG
+                                    700 *MEXIT #=   105 LV= 1 TEST_OP
+                                    701 *MCALL #=   107 LV= 1 P_1B TEST_OP RR,SR,R1,R2
+000820 45C0 D06E            00076   702          BAL   R12,CHECKZOP
+000824 FFFFFFFFFFFFFFFF             703          DC    32X'FF'
+000844                00844 00824   704          ORG *-32
+                                    705 *MCALL #=   108 LV= 2 P_1B    TYPE_RR    SR,R1,R2
+000824 1B12                         706 SR_P_1B     SR      R1,R2
+i000826                00826 00834   707 P_1B_SR ORG SR_P_1B+16
+                                                                                                               Page   16
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000834 1B12                         708  DC      X'1B',AL1(R1*16+R2)
+                                    709 *MEXIT #=   108 LV= 2 TYPE_RR
+000836                00836 00844   710            ORG
+                                    711 *MEXIT #=   107 LV= 1 TEST_OP
+                                    712 *MCALL #=   109 LV= 1 P_1C TEST_OP RR,MR,R2,R4
+000844 45C0 D06E            00076   713          BAL   R12,CHECKZOP
+000848 FFFFFFFFFFFFFFFF             714          DC    32X'FF'
+000868                00868 00848   715          ORG *-32
+                                    716 *MCALL #=   110 LV= 2 P_1C    TYPE_RR    MR,R2,R4
+000848 1C24                         717 MR_P_1C     MR      R2,R4
+00084A                0084A 00858   718 P_1C_MR ORG MR_P_1C+16
+000858 1C24                         719  DC      X'1C',AL1(R2*16+R4)
+                                    720 *MEXIT #=   110 LV= 2 TYPE_RR
+00085A                0085A 00868   721            ORG
+                                    722 *MEXIT #=   109 LV= 1 TEST_OP
+                                    723 *MCALL #=   111 LV= 1 P_1D TEST_OP RR,DR,R2,R4
+000868 45C0 D06E            00076   724          BAL   R12,CHECKZOP
+00086C FFFFFFFFFFFFFFFF             725          DC    32X'FF'
+00088C                0088C 0086C   726          ORG *-32
+                                    727 *MCALL #=   112 LV= 2 P_1D    TYPE_RR    DR,R2,R4
+00086C 1D24                         728 DR_P_1D     DR      R2,R4
+00086E                0086E 0087C   729 P_1D_DR ORG DR_P_1D+16
+00087C 1D24                         730  DC      X'1D',AL1(R2*16+R4)
+                                    731 *MEXIT #=   112 LV= 2 TYPE_RR
+00087E                0087E 0088C   732            ORG
+                                    733 *MEXIT #=   111 LV= 1 TEST_OP
+                                    734 *MCALL #=   113 LV= 1 P_1E TEST_OP RR,ALR,R1,R2
+00088C 45C0 D06E            00076   735          BAL   R12,CHECKZOP
+000890 FFFFFFFFFFFFFFFF             736          DC    32X'FF'
+0008B0                008B0 00890   737          ORG *-32
+                                    738 *MCALL #=   114 LV= 2 P_1E    TYPE_RR    ALR,R1,R2
+000890 1E12                         739 ALR_P_1E    ALR     R1,R2
+000892                00892 008A0   740 P_1E_ALR ORG ALR_P_1E+16
+0008A0 1E12                         741  DC      X'1E',AL1(R1*16+R2)
+                                    742 *MEXIT #=   114 LV= 2 TYPE_RR
+0008A2                008A2 008B0   743            ORG
+                                    744 *MEXIT #=   113 LV= 1 TEST_OP
+                                    745 *MCALL #=   115 LV= 1 P_1F TEST_OP RR,SLR,R1,R2
+0008B0 45C0 D06E            00076   746          BAL   R12,CHECKZOP
+0008B4 FFFFFFFFFFFFFFFF             747          DC    32X'FF'
+0008D4                008D4 008B4   748          ORG *-32
+                                    749 *MCALL #=   116 LV= 2 P_1F    TYPE_RR    SLR,R1,R2
+0008B4 1F12                         750 SLR_P_1F    SLR     R1,R2
+0008B6                008B6 008C4   751 P_1F_SLR ORG SLR_P_1F+16
+0008C4 1F12                         752  DC      X'1F',AL1(R1*16+R2)
+                                    753 *MEXIT #=   116 LV= 2 TYPE_RR
+0008C6                008C6 008D4   754            ORG
+                                    755 *MEXIT #=   115 LV= 1 TEST_OP
+                                    756 *MCALL #=   117 LV= 1 P_20 TEST_OP RR,LPDR,R1,R2
+0008D4 45C0 D06E            00076   757          BAL   R12,CHECKZOP
+0008D8 FFFFFFFFFFFFFFFF             758          DC    32X'FF'
+0008F8                008F8 008D8   759          ORG *-32
+                                    760 *MCALL #=   118 LV= 2 P_20    TYPE_RR    LPDR,R1,R2
+0008D8 2012                         761 LPDR_P_20   LPDR    R1,R2
+i0008DA                008DA 008E8   762 P_20_LPDR ORG LPDR_P_20+16
+                                                                                                               Page   17
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+0008E8 2012                         763  DC      X'20',AL1(R1*16+R2)
+                                    764 *MEXIT #=   118 LV= 2 TYPE_RR
+0008EA                008EA 008F8   765            ORG
+                                    766 *MEXIT #=   117 LV= 1 TEST_OP
+                                    767 *MCALL #=   119 LV= 1 P_21 TEST_OP RR,LNDR,R1,R2
+0008F8 45C0 D06E            00076   768          BAL   R12,CHECKZOP
+0008FC FFFFFFFFFFFFFFFF             769          DC    32X'FF'
+00091C                0091C 008FC   770          ORG *-32
+                                    771 *MCALL #=   120 LV= 2 P_21    TYPE_RR    LNDR,R1,R2
+0008FC 2112                         772 LNDR_P_21   LNDR    R1,R2
+0008FE                008FE 0090C   773 P_21_LNDR ORG LNDR_P_21+16
+00090C 2112                         774  DC      X'21',AL1(R1*16+R2)
+                                    775 *MEXIT #=   120 LV= 2 TYPE_RR
+00090E                0090E 0091C   776            ORG
+                                    777 *MEXIT #=   119 LV= 1 TEST_OP
+                                    778 *MCALL #=   121 LV= 1 P_22 TEST_OP RR,LTDR,R1,R2
+00091C 45C0 D06E            00076   779          BAL   R12,CHECKZOP
+000920 FFFFFFFFFFFFFFFF             780          DC    32X'FF'
+000940                00940 00920   781          ORG *-32
+                                    782 *MCALL #=   122 LV= 2 P_22    TYPE_RR    LTDR,R1,R2
+000920 2212                         783 LTDR_P_22   LTDR    R1,R2
+000922                00922 00930   784 P_22_LTDR ORG LTDR_P_22+16
+000930 2212                         785  DC      X'22',AL1(R1*16+R2)
+                                    786 *MEXIT #=   122 LV= 2 TYPE_RR
+000932                00932 00940   787            ORG
+                                    788 *MEXIT #=   121 LV= 1 TEST_OP
+                                    789 *MCALL #=   123 LV= 1 P_23 TEST_OP RR,LCDR,R1,R2
+000940 45C0 D06E            00076   790          BAL   R12,CHECKZOP
+000944 FFFFFFFFFFFFFFFF             791          DC    32X'FF'
+000964                00964 00944   792          ORG *-32
+                                    793 *MCALL #=   124 LV= 2 P_23    TYPE_RR    LCDR,R1,R2
+000944 2312                         794 LCDR_P_23   LCDR    R1,R2
+000946                00946 00954   795 P_23_LCDR ORG LCDR_P_23+16
+000954 2312                         796  DC      X'23',AL1(R1*16+R2)
+                                    797 *MEXIT #=   124 LV= 2 TYPE_RR
+000956                00956 00964   798            ORG
+                                    799 *MEXIT #=   123 LV= 1 TEST_OP
+                                    800 *MCALL #=   125 LV= 1 P_24 TEST_OP RR,HDR,R1,R2
+000964 45C0 D06E            00076   801          BAL   R12,CHECKZOP
+000968 FFFFFFFFFFFFFFFF             802          DC    32X'FF'
+000988                00988 00968   803          ORG *-32
+                                    804 *MCALL #=   126 LV= 2 P_24    TYPE_RR    HDR,R1,R2
+000968 2412                         805 HDR_P_24    HDR     R1,R2
+00096A                0096A 00978   806 P_24_HDR ORG HDR_P_24+16
+000978 2412                         807  DC      X'24',AL1(R1*16+R2)
+                                    808 *MEXIT #=   126 LV= 2 TYPE_RR
+00097A                0097A 00988   809            ORG
+                                    810 *MEXIT #=   125 LV= 1 TEST_OP
+                                    811 *MCALL #=   127 LV= 1 P_25 TEST_OP RR,LDXR,R1,R2
+000988 45C0 D06E            00076   812          BAL   R12,CHECKZOP
+00098C FFFFFFFFFFFFFFFF             813          DC    32X'FF'
+0009AC                009AC 0098C   814          ORG *-32
+                                    815 *MCALL #=   128 LV= 2 P_25    TYPE_RR    LDXR,R1,R2
+00098C 2548                         816 LDXR_P_25   LDXR    R4,R8
+i00098E                0098E 0099C   817 P_25_LDXR ORG LDXR_P_25+16
+                                                                                                               Page   18
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+00099C 2548                         818  DC      X'25',AL1(R4*16+R8)
+                                    819 *MEXIT #=   128 LV= 2 TYPE_RR
+00099E                0099E 009AC   820            ORG
+                                    821 *MEXIT #=   127 LV= 1 TEST_OP
+                                    822 *MCALL #=   129 LV= 1 P_25 TEST_OP RR,LRDR,R1,R2
+0009AC 45C0 D06E            00076   823          BAL   R12,CHECKZOP
+0009B0 FFFFFFFFFFFFFFFF             824          DC    32X'FF'
+0009D0                009D0 009B0   825          ORG *-32
+                                    826 *MCALL #=   130 LV= 2 P_25    TYPE_RR    LRDR,R4,R8
+0009B0 2548                         827 LRDR_P_25   LRDR    R4,R8
+0009B2                009B2 009C0   828 P_25_LRDR ORG LRDR_P_25+16
+0009C0 2548                         829  DC      X'25',AL1(R4*16+R8)
+                                    830 *MEXIT #=   130 LV= 2 TYPE_RR
+0009C2                009C2 009D0   831            ORG
+                                    832 *MEXIT #=   129 LV= 1 TEST_OP
+                                    833 *MCALL #=   131 LV= 1 P_26 TEST_OP RR,MXR,R1,R2
+0009D0 45C0 D06E            00076   834          BAL   R12,CHECKZOP
+0009D4 FFFFFFFFFFFFFFFF             835          DC    32X'FF'
+0009F4                009F4 009D4   836          ORG *-32
+                                    837 *MCALL #=   132 LV= 2 P_26    TYPE_RR    MXR,R4,R8
+0009D4 2648                         838 MXR_P_26    MXR     R4,R8
+0009D6                009D6 009E4   839 P_26_MXR ORG MXR_P_26+16
+0009E4 2648                         840  DC      X'26',AL1(R4*16+R8)
+                                    841 *MEXIT #=   132 LV= 2 TYPE_RR
+0009E6                009E6 009F4   842            ORG
+                                    843 *MEXIT #=   131 LV= 1 TEST_OP
+                                    844 *MCALL #=   133 LV= 1 P_27 TEST_OP RR,MXDR,R1,R2
+0009F4 45C0 D06E            00076   845          BAL   R12,CHECKZOP
+0009F8 FFFFFFFFFFFFFFFF             846          DC    32X'FF'
+000A18                00A18 009F8   847          ORG *-32
+                                    848 *MCALL #=   134 LV= 2 P_27    TYPE_RR    MXDR,R1,R2
+0009F8 2712                         849 MXDR_P_27   MXDR    R1,R2
+0009FA                009FA 00A08   850 P_27_MXDR ORG MXDR_P_27+16
+000A08 2712                         851  DC      X'27',AL1(R1*16+R2)
+                                    852 *MEXIT #=   134 LV= 2 TYPE_RR
+000A0A                00A0A 00A18   853            ORG
+                                    854 *MEXIT #=   133 LV= 1 TEST_OP
+                                    855 *MCALL #=   135 LV= 1 P_28 TEST_OP RR,LDR,R1,R2
+000A18 45C0 D06E            00076   856          BAL   R12,CHECKZOP
+000A1C FFFFFFFFFFFFFFFF             857          DC    32X'FF'
+000A3C                00A3C 00A1C   858          ORG *-32
+                                    859 *MCALL #=   136 LV= 2 P_28    TYPE_RR    LDR,R1,R2
+000A1C 2812                         860 LDR_P_28    LDR     R1,R2
+000A1E                00A1E 00A2C   861 P_28_LDR ORG LDR_P_28+16
+000A2C 2812                         862  DC      X'28',AL1(R1*16+R2)
+                                    863 *MEXIT #=   136 LV= 2 TYPE_RR
+000A2E                00A2E 00A3C   864            ORG
+                                    865 *MEXIT #=   135 LV= 1 TEST_OP
+                                    866 *MCALL #=   137 LV= 1 P_29 TEST_OP RR,CDR,R1,R2
+000A3C 45C0 D06E            00076   867          BAL   R12,CHECKZOP
+000A40 FFFFFFFFFFFFFFFF             868          DC    32X'FF'
+000A60                00A60 00A40   869          ORG *-32
+                                    870 *MCALL #=   138 LV= 2 P_29    TYPE_RR    CDR,R1,R2
+000A40 2912                         871 CDR_P_29    CDR     R1,R2
+i000A42                00A42 00A50   872 P_29_CDR ORG CDR_P_29+16
+                                                                                                               Page   19
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000A50 2912                         873  DC      X'29',AL1(R1*16+R2)
+                                    874 *MEXIT #=   138 LV= 2 TYPE_RR
+000A52                00A52 00A60   875            ORG
+                                    876 *MEXIT #=   137 LV= 1 TEST_OP
+                                    877 *MCALL #=   139 LV= 1 P_2A TEST_OP RR,ADR,R1,R2
+000A60 45C0 D06E            00076   878          BAL   R12,CHECKZOP
+000A64 FFFFFFFFFFFFFFFF             879          DC    32X'FF'
+000A84                00A84 00A64   880          ORG *-32
+                                    881 *MCALL #=   140 LV= 2 P_2A    TYPE_RR    ADR,R1,R2
+000A64 2A12                         882 ADR_P_2A    ADR     R1,R2
+000A66                00A66 00A74   883 P_2A_ADR ORG ADR_P_2A+16
+000A74 2A12                         884  DC      X'2A',AL1(R1*16+R2)
+                                    885 *MEXIT #=   140 LV= 2 TYPE_RR
+000A76                00A76 00A84   886            ORG
+                                    887 *MEXIT #=   139 LV= 1 TEST_OP
+                                    888 *MCALL #=   141 LV= 1 P_2B TEST_OP RR,SDR,R1,R2
+000A84 45C0 D06E            00076   889          BAL   R12,CHECKZOP
+000A88 FFFFFFFFFFFFFFFF             890          DC    32X'FF'
+000AA8                00AA8 00A88   891          ORG *-32
+                                    892 *MCALL #=   142 LV= 2 P_2B    TYPE_RR    SDR,R1,R2
+000A88 2B12                         893 SDR_P_2B    SDR     R1,R2
+000A8A                00A8A 00A98   894 P_2B_SDR ORG SDR_P_2B+16
+000A98 2B12                         895  DC      X'2B',AL1(R1*16+R2)
+                                    896 *MEXIT #=   142 LV= 2 TYPE_RR
+000A9A                00A9A 00AA8   897            ORG
+                                    898 *MEXIT #=   141 LV= 1 TEST_OP
+                                    899 *MCALL #=   143 LV= 1 P_2C TEST_OP RR,MDR,R1,R2
+000AA8 45C0 D06E            00076   900          BAL   R12,CHECKZOP
+000AAC FFFFFFFFFFFFFFFF             901          DC    32X'FF'
+000ACC                00ACC 00AAC   902          ORG *-32
+                                    903 *MCALL #=   144 LV= 2 P_2C    TYPE_RR    MDR,R1,R2
+000AAC 2C12                         904 MDR_P_2C    MDR     R1,R2
+000AAE                00AAE 00ABC   905 P_2C_MDR ORG MDR_P_2C+16
+000ABC 2C12                         906  DC      X'2C',AL1(R1*16+R2)
+                                    907 *MEXIT #=   144 LV= 2 TYPE_RR
+000ABE                00ABE 00ACC   908            ORG
+                                    909 *MEXIT #=   143 LV= 1 TEST_OP
+                                    910 *MCALL #=   145 LV= 1 P_2D TEST_OP RR,DDR,R1,R2
+000ACC 45C0 D06E            00076   911          BAL   R12,CHECKZOP
+000AD0 FFFFFFFFFFFFFFFF             912          DC    32X'FF'
+000AF0                00AF0 00AD0   913          ORG *-32
+                                    914 *MCALL #=   146 LV= 2 P_2D    TYPE_RR    DDR,R1,R2
+000AD0 2D12                         915 DDR_P_2D    DDR     R1,R2
+000AD2                00AD2 00AE0   916 P_2D_DDR ORG DDR_P_2D+16
+000AE0 2D12                         917  DC      X'2D',AL1(R1*16+R2)
+                                    918 *MEXIT #=   146 LV= 2 TYPE_RR
+000AE2                00AE2 00AF0   919            ORG
+                                    920 *MEXIT #=   145 LV= 1 TEST_OP
+                                    921 *MCALL #=   147 LV= 1 P_2E TEST_OP RR,AWR,R1,R2
+000AF0 45C0 D06E            00076   922          BAL   R12,CHECKZOP
+000AF4 FFFFFFFFFFFFFFFF             923          DC    32X'FF'
+000B14                00B14 00AF4   924          ORG *-32
+                                    925 *MCALL #=   148 LV= 2 P_2E    TYPE_RR    AWR,R1,R2
+000AF4 2E12                         926 AWR_P_2E    AWR     R1,R2
+i000AF6                00AF6 00B04   927 P_2E_AWR ORG AWR_P_2E+16
+                                                                                                               Page   20
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000B04 2E12                         928  DC      X'2E',AL1(R1*16+R2)
+                                    929 *MEXIT #=   148 LV= 2 TYPE_RR
+000B06                00B06 00B14   930            ORG
+                                    931 *MEXIT #=   147 LV= 1 TEST_OP
+                                    932 *MCALL #=   149 LV= 1 P_2F TEST_OP RR,SWR,R1,R2
+000B14 45C0 D06E            00076   933          BAL   R12,CHECKZOP
+000B18 FFFFFFFFFFFFFFFF             934          DC    32X'FF'
+000B38                00B38 00B18   935          ORG *-32
+                                    936 *MCALL #=   150 LV= 2 P_2F    TYPE_RR    SWR,R1,R2
+000B18 2F12                         937 SWR_P_2F    SWR     R1,R2
+000B1A                00B1A 00B28   938 P_2F_SWR ORG SWR_P_2F+16
+000B28 2F12                         939  DC      X'2F',AL1(R1*16+R2)
+                                    940 *MEXIT #=   150 LV= 2 TYPE_RR
+000B2A                00B2A 00B38   941            ORG
+                                    942 *MEXIT #=   149 LV= 1 TEST_OP
+                                    943 *MCALL #=   151 LV= 1 P_30 TEST_OP RR,LPER,R1,R2
+000B38 45C0 D06E            00076   944          BAL   R12,CHECKZOP
+000B3C FFFFFFFFFFFFFFFF             945          DC    32X'FF'
+000B5C                00B5C 00B3C   946          ORG *-32
+                                    947 *MCALL #=   152 LV= 2 P_30    TYPE_RR    LPER,R1,R2
+000B3C 3012                         948 LPER_P_30   LPER    R1,R2
+000B3E                00B3E 00B4C   949 P_30_LPER ORG LPER_P_30+16
+000B4C 3012                         950  DC      X'30',AL1(R1*16+R2)
+                                    951 *MEXIT #=   152 LV= 2 TYPE_RR
+000B4E                00B4E 00B5C   952            ORG
+                                    953 *MEXIT #=   151 LV= 1 TEST_OP
+                                    954 *MCALL #=   153 LV= 1 P_31 TEST_OP RR,LNER,R1,R2
+000B5C 45C0 D06E            00076   955          BAL   R12,CHECKZOP
+000B60 FFFFFFFFFFFFFFFF             956          DC    32X'FF'
+000B80                00B80 00B60   957          ORG *-32
+                                    958 *MCALL #=   154 LV= 2 P_31    TYPE_RR    LNER,R1,R2
+000B60 3112                         959 LNER_P_31   LNER    R1,R2
+000B62                00B62 00B70   960 P_31_LNER ORG LNER_P_31+16
+000B70 3112                         961  DC      X'31',AL1(R1*16+R2)
+                                    962 *MEXIT #=   154 LV= 2 TYPE_RR
+000B72                00B72 00B80   963            ORG
+                                    964 *MEXIT #=   153 LV= 1 TEST_OP
+                                    965 *MCALL #=   155 LV= 1 P_32 TEST_OP RR,LTER,R1,R2
+000B80 45C0 D06E            00076   966          BAL   R12,CHECKZOP
+000B84 FFFFFFFFFFFFFFFF             967          DC    32X'FF'
+000BA4                00BA4 00B84   968          ORG *-32
+                                    969 *MCALL #=   156 LV= 2 P_32    TYPE_RR    LTER,R1,R2
+000B84 3212                         970 LTER_P_32   LTER    R1,R2
+000B86                00B86 00B94   971 P_32_LTER ORG LTER_P_32+16
+000B94 3212                         972  DC      X'32',AL1(R1*16+R2)
+                                    973 *MEXIT #=   156 LV= 2 TYPE_RR
+000B96                00B96 00BA4   974            ORG
+                                    975 *MEXIT #=   155 LV= 1 TEST_OP
+                                    976 *MCALL #=   157 LV= 1 P_33 TEST_OP RR,LCER,R1,R2
+000BA4 45C0 D06E            00076   977          BAL   R12,CHECKZOP
+000BA8 FFFFFFFFFFFFFFFF             978          DC    32X'FF'
+000BC8                00BC8 00BA8   979          ORG *-32
+                                    980 *MCALL #=   158 LV= 2 P_33    TYPE_RR    LCER,R1,R2
+000BA8 3312                         981 LCER_P_33   LCER    R1,R2
+i000BAA                00BAA 00BB8   982 P_33_LCER ORG LCER_P_33+16
+                                                                                                               Page   21
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000BB8 3312                         983  DC      X'33',AL1(R1*16+R2)
+                                    984 *MEXIT #=   158 LV= 2 TYPE_RR
+000BBA                00BBA 00BC8   985            ORG
+                                    986 *MEXIT #=   157 LV= 1 TEST_OP
+                                    987 *MCALL #=   159 LV= 1 P_34 TEST_OP RR,HER,R1,R2
+000BC8 45C0 D06E            00076   988          BAL   R12,CHECKZOP
+000BCC FFFFFFFFFFFFFFFF             989          DC    32X'FF'
+000BEC                00BEC 00BCC   990          ORG *-32
+                                    991 *MCALL #=   160 LV= 2 P_34    TYPE_RR    HER,R1,R2
+000BCC 3412                         992 HER_P_34    HER     R1,R2
+000BCE                00BCE 00BDC   993 P_34_HER ORG HER_P_34+16
+000BDC 3412                         994  DC      X'34',AL1(R1*16+R2)
+                                    995 *MEXIT #=   160 LV= 2 TYPE_RR
+000BDE                00BDE 00BEC   996            ORG
+                                    997 *MEXIT #=   159 LV= 1 TEST_OP
+                                    998 *MCALL #=   161 LV= 1 P_35 TEST_OP RR,LEDR,R1,R2
+000BEC 45C0 D06E            00076   999          BAL   R12,CHECKZOP
+000BF0 FFFFFFFFFFFFFFFF            1000          DC    32X'FF'
+000C10                00C10 00BF0  1001          ORG *-32
+                                   1002 *MCALL #=   162 LV= 2 P_35    TYPE_RR    LEDR,R1,R2
+000BF0 3512                        1003 LEDR_P_35   LEDR    R1,R2
+000BF2                00BF2 00C00  1004 P_35_LEDR ORG LEDR_P_35+16
+000C00 3512                        1005  DC      X'35',AL1(R1*16+R2)
+                                   1006 *MEXIT #=   162 LV= 2 TYPE_RR
+000C02                00C02 00C10  1007            ORG
+                                   1008 *MEXIT #=   161 LV= 1 TEST_OP
+                                   1009 *MCALL #=   163 LV= 1 P_35 TEST_OP RR,LRER,R1,R2
+000C10 45C0 D06E            00076  1010          BAL   R12,CHECKZOP
+000C14 FFFFFFFFFFFFFFFF            1011          DC    32X'FF'
+000C34                00C34 00C14  1012          ORG *-32
+                                   1013 *MCALL #=   164 LV= 2 P_35    TYPE_RR    LRER,R1,R2
+000C14 3512                        1014 LRER_P_35   LRER    R1,R2
+000C16                00C16 00C24  1015 P_35_LRER ORG LRER_P_35+16
+000C24 3512                        1016  DC      X'35',AL1(R1*16+R2)
+                                   1017 *MEXIT #=   164 LV= 2 TYPE_RR
+000C26                00C26 00C34  1018            ORG
+                                   1019 *MEXIT #=   163 LV= 1 TEST_OP
+                                   1020 *MCALL #=   165 LV= 1 P_36 TEST_OP RR,AXR,R1,R2
+000C34 45C0 D06E            00076  1021          BAL   R12,CHECKZOP
+000C38 FFFFFFFFFFFFFFFF            1022          DC    32X'FF'
+000C58                00C58 00C38  1023          ORG *-32
+                                   1024 *MCALL #=   166 LV= 2 P_36    TYPE_RR    AXR,R4,R8
+000C38 3648                        1025 AXR_P_36    AXR     R4,R8
+000C3A                00C3A 00C48  1026 P_36_AXR ORG AXR_P_36+16
+000C48 3648                        1027  DC      X'36',AL1(R4*16+R8)
+                                   1028 *MEXIT #=   166 LV= 2 TYPE_RR
+000C4A                00C4A 00C58  1029            ORG
+                                   1030 *MEXIT #=   165 LV= 1 TEST_OP
+                                   1031 *MCALL #=   167 LV= 1 P_37 TEST_OP RR,SXR,R4,R8
+000C58 45C0 D06E            00076  1032          BAL   R12,CHECKZOP
+000C5C FFFFFFFFFFFFFFFF            1033          DC    32X'FF'
+000C7C                00C7C 00C5C  1034          ORG *-32
+                                   1035 *MCALL #=   168 LV= 2 P_37    TYPE_RR    SXR,R4,R8
+000C5C 3748                        1036 SXR_P_37    SXR     R4,R8
+i000C5E                00C5E 00C6C  1037 P_37_SXR ORG SXR_P_37+16
+                                                                                                               Page   22
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000C6C 3748                        1038  DC      X'37',AL1(R4*16+R8)
+                                   1039 *MEXIT #=   168 LV= 2 TYPE_RR
+000C6E                00C6E 00C7C  1040            ORG
+                                   1041 *MEXIT #=   167 LV= 1 TEST_OP
+                                   1042 *MCALL #=   169 LV= 1 P_38 TEST_OP RR,LER,R1,R2
+000C7C 45C0 D06E            00076  1043          BAL   R12,CHECKZOP
+000C80 FFFFFFFFFFFFFFFF            1044          DC    32X'FF'
+000CA0                00CA0 00C80  1045          ORG *-32
+                                   1046 *MCALL #=   170 LV= 2 P_38    TYPE_RR    LER,R1,R2
+000C80 3812                        1047 LER_P_38    LER     R1,R2
+000C82                00C82 00C90  1048 P_38_LER ORG LER_P_38+16
+000C90 3812                        1049  DC      X'38',AL1(R1*16+R2)
+                                   1050 *MEXIT #=   170 LV= 2 TYPE_RR
+000C92                00C92 00CA0  1051            ORG
+                                   1052 *MEXIT #=   169 LV= 1 TEST_OP
+                                   1053 *MCALL #=   171 LV= 1 P_39 TEST_OP RR,CER,R1,R2
+000CA0 45C0 D06E            00076  1054          BAL   R12,CHECKZOP
+000CA4 FFFFFFFFFFFFFFFF            1055          DC    32X'FF'
+000CC4                00CC4 00CA4  1056          ORG *-32
+                                   1057 *MCALL #=   172 LV= 2 P_39    TYPE_RR    CER,R1,R2
+000CA4 3912                        1058 CER_P_39    CER     R1,R2
+000CA6                00CA6 00CB4  1059 P_39_CER ORG CER_P_39+16
+000CB4 3912                        1060  DC      X'39',AL1(R1*16+R2)
+                                   1061 *MEXIT #=   172 LV= 2 TYPE_RR
+000CB6                00CB6 00CC4  1062            ORG
+                                   1063 *MEXIT #=   171 LV= 1 TEST_OP
+                                   1064 *MCALL #=   173 LV= 1 P_3A TEST_OP RR,AER,R1,R2
+000CC4 45C0 D06E            00076  1065          BAL   R12,CHECKZOP
+000CC8 FFFFFFFFFFFFFFFF            1066          DC    32X'FF'
+000CE8                00CE8 00CC8  1067          ORG *-32
+                                   1068 *MCALL #=   174 LV= 2 P_3A    TYPE_RR    AER,R1,R2
+000CC8 3A12                        1069 AER_P_3A    AER     R1,R2
+000CCA                00CCA 00CD8  1070 P_3A_AER ORG AER_P_3A+16
+000CD8 3A12                        1071  DC      X'3A',AL1(R1*16+R2)
+                                   1072 *MEXIT #=   174 LV= 2 TYPE_RR
+000CDA                00CDA 00CE8  1073            ORG
+                                   1074 *MEXIT #=   173 LV= 1 TEST_OP
+                                   1075 *MCALL #=   175 LV= 1 P_3B TEST_OP RR,SER,R1,R2
+000CE8 45C0 D06E            00076  1076          BAL   R12,CHECKZOP
+000CEC FFFFFFFFFFFFFFFF            1077          DC    32X'FF'
+000D0C                00D0C 00CEC  1078          ORG *-32
+                                   1079 *MCALL #=   176 LV= 2 P_3B    TYPE_RR    SER,R1,R2
+000CEC 3B12                        1080 SER_P_3B    SER     R1,R2
+000CEE                00CEE 00CFC  1081 P_3B_SER ORG SER_P_3B+16
+000CFC 3B12                        1082  DC      X'3B',AL1(R1*16+R2)
+                                   1083 *MEXIT #=   176 LV= 2 TYPE_RR
+000CFE                00CFE 00D0C  1084            ORG
+                                   1085 *MEXIT #=   175 LV= 1 TEST_OP
+                                   1086 *MCALL #=   177 LV= 1 P_3C TEST_OP RR,MDER,R1,R2
+000D0C 45C0 D06E            00076  1087          BAL   R12,CHECKZOP
+000D10 FFFFFFFFFFFFFFFF            1088          DC    32X'FF'
+000D30                00D30 00D10  1089          ORG *-32
+                                   1090 *MCALL #=   178 LV= 2 P_3C    TYPE_RR    MDER,R1,R2
+000D10 3C12                        1091 MDER_P_3C   MDER    R1,R2
+i000D12                00D12 00D20  1092 P_3C_MDER ORG MDER_P_3C+16
+                                                                                                               Page   23
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000D20 3C12                        1093  DC      X'3C',AL1(R1*16+R2)
+                                   1094 *MEXIT #=   178 LV= 2 TYPE_RR
+000D22                00D22 00D30  1095            ORG
+                                   1096 *MEXIT #=   177 LV= 1 TEST_OP
+                                   1097 *MCALL #=   179 LV= 1 P_3C TEST_OP RR,MER,R1,R2
+000D30 45C0 D06E            00076  1098          BAL   R12,CHECKZOP
+000D34 FFFFFFFFFFFFFFFF            1099          DC    32X'FF'
+000D54                00D54 00D34  1100          ORG *-32
+                                   1101 *MCALL #=   180 LV= 2 P_3C    TYPE_RR    MER,R1,R2
+000D34 3C12                        1102 MER_P_3C    MER     R1,R2
+000D36                00D36 00D44  1103 P_3C_MER ORG MER_P_3C+16
+000D44 3C12                        1104  DC      X'3C',AL1(R1*16+R2)
+                                   1105 *MEXIT #=   180 LV= 2 TYPE_RR
+000D46                00D46 00D54  1106            ORG
+                                   1107 *MEXIT #=   179 LV= 1 TEST_OP
+                                   1108 *MCALL #=   181 LV= 1 P_3D TEST_OP RR,DER,R1,R2
+000D54 45C0 D06E            00076  1109          BAL   R12,CHECKZOP
+000D58 FFFFFFFFFFFFFFFF            1110          DC    32X'FF'
+000D78                00D78 00D58  1111          ORG *-32
+                                   1112 *MCALL #=   182 LV= 2 P_3D    TYPE_RR    DER,R1,R2
+000D58 3D12                        1113 DER_P_3D    DER     R1,R2
+000D5A                00D5A 00D68  1114 P_3D_DER ORG DER_P_3D+16
+000D68 3D12                        1115  DC      X'3D',AL1(R1*16+R2)
+                                   1116 *MEXIT #=   182 LV= 2 TYPE_RR
+000D6A                00D6A 00D78  1117            ORG
+                                   1118 *MEXIT #=   181 LV= 1 TEST_OP
+                                   1119 *MCALL #=   183 LV= 1 P_3E TEST_OP RR,AUR,R1,R2
+000D78 45C0 D06E            00076  1120          BAL   R12,CHECKZOP
+000D7C FFFFFFFFFFFFFFFF            1121          DC    32X'FF'
+000D9C                00D9C 00D7C  1122          ORG *-32
+                                   1123 *MCALL #=   184 LV= 2 P_3E    TYPE_RR    AUR,R1,R2
+000D7C 3E12                        1124 AUR_P_3E    AUR     R1,R2
+000D7E                00D7E 00D8C  1125 P_3E_AUR ORG AUR_P_3E+16
+000D8C 3E12                        1126  DC      X'3E',AL1(R1*16+R2)
+                                   1127 *MEXIT #=   184 LV= 2 TYPE_RR
+000D8E                00D8E 00D9C  1128            ORG
+                                   1129 *MEXIT #=   183 LV= 1 TEST_OP
+                                   1130 *MCALL #=   185 LV= 1 P_3F TEST_OP RR,SUR,R1,R2
+000D9C 45C0 D06E            00076  1131          BAL   R12,CHECKZOP
+000DA0 FFFFFFFFFFFFFFFF            1132          DC    32X'FF'
+000DC0                00DC0 00DA0  1133          ORG *-32
+                                   1134 *MCALL #=   186 LV= 2 P_3F    TYPE_RR    SUR,R1,R2
+000DA0 3F12                        1135 SUR_P_3F    SUR     R1,R2
+000DA2                00DA2 00DB0  1136 P_3F_SUR ORG SUR_P_3F+16
+000DB0 3F12                        1137  DC      X'3F',AL1(R1*16+R2)
+                                   1138 *MEXIT #=   186 LV= 2 TYPE_RR
+000DB2                00DB2 00DC0  1139            ORG
+                                   1140 *MEXIT #=   185 LV= 1 TEST_OP
+                                   1141 *MCALL #=   187 LV= 1 P_40 TEST_OP RX,STH,R1,D2(X2,B2)
+000DC0 45C0 D06E            00076  1142          BAL   R12,CHECKZOP
+000DC4 FFFFFFFFFFFFFFFF            1143          DC    32X'FF'
+000DE4                00DE4 00DC4  1144          ORG *-32
+                                   1145 *MCALL #=   188 LV= 2 P_40    TYPE_RX    STH,R1,D2(X2,B2)
+000DC4 401E C0C0            000C0  1146 STH_P_40    STH     R1,D2(X2,B2)
+i000DC8                00DC8 00DD4  1147 P_40_STH ORG STH_P_40+16
+                                                                                                               Page   24
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000DD4 401EC0C0                    1148  DC      X'40',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1149 *MEXIT #=   188 LV= 2 TYPE_RX
+000DD8                00DD8 00DE4  1150            ORG
+                                   1151 *MEXIT #=   187 LV= 1 TEST_OP
+                                   1152 *MCALL #=   189 LV= 1 P_41 TEST_OP RX,LA,R1,D2(X2,B2)
+000DE4 45C0 D06E            00076  1153          BAL   R12,CHECKZOP
+000DE8 FFFFFFFFFFFFFFFF            1154          DC    32X'FF'
+000E08                00E08 00DE8  1155          ORG *-32
+                                   1156 *MCALL #=   190 LV= 2 P_41    TYPE_RX    LA,R1,D2(X2,B2)
+000DE8 411E C0C0            000C0  1157 LA_P_41     LA      R1,D2(X2,B2)
+000DEC                00DEC 00DF8  1158 P_41_LA ORG LA_P_41+16
+000DF8 411EC0C0                    1159  DC      X'41',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1160 *MEXIT #=   190 LV= 2 TYPE_RX
+000DFC                00DFC 00E08  1161            ORG
+                                   1162 *MEXIT #=   189 LV= 1 TEST_OP
+                                   1163 *MCALL #=   191 LV= 1 P_42 TEST_OP RX,STC,R1,D2(X2,B2)
+000E08 45C0 D06E            00076  1164          BAL   R12,CHECKZOP
+000E0C FFFFFFFFFFFFFFFF            1165          DC    32X'FF'
+000E2C                00E2C 00E0C  1166          ORG *-32
+                                   1167 *MCALL #=   192 LV= 2 P_42    TYPE_RX    STC,R1,D2(X2,B2)
+000E0C 421E C0C0            000C0  1168 STC_P_42    STC     R1,D2(X2,B2)
+000E10                00E10 00E1C  1169 P_42_STC ORG STC_P_42+16
+000E1C 421EC0C0                    1170  DC      X'42',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1171 *MEXIT #=   192 LV= 2 TYPE_RX
+000E20                00E20 00E2C  1172            ORG
+                                   1173 *MEXIT #=   191 LV= 1 TEST_OP
+                                   1174 *MCALL #=   193 LV= 1 P_43 TEST_OP RX,IC,R1,D2(X2,B2)
+000E2C 45C0 D06E            00076  1175          BAL   R12,CHECKZOP
+000E30 FFFFFFFFFFFFFFFF            1176          DC    32X'FF'
+000E50                00E50 00E30  1177          ORG *-32
+                                   1178 *MCALL #=   194 LV= 2 P_43    TYPE_RX    IC,R1,D2(X2,B2)
+000E30 431E C0C0            000C0  1179 IC_P_43     IC      R1,D2(X2,B2)
+000E34                00E34 00E40  1180 P_43_IC ORG IC_P_43+16
+000E40 431EC0C0                    1181  DC      X'43',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1182 *MEXIT #=   194 LV= 2 TYPE_RX
+000E44                00E44 00E50  1183            ORG
+                                   1184 *MEXIT #=   193 LV= 1 TEST_OP
+                                   1185 *MCALL #=   195 LV= 1 P_44 TEST_OP RX,EX,R1,D2(X2,B2)
+000E50 45C0 D06E            00076  1186          BAL   R12,CHECKZOP
+000E54 FFFFFFFFFFFFFFFF            1187          DC    32X'FF'
+000E74                00E74 00E54  1188          ORG *-32
+                                   1189 *MCALL #=   196 LV= 2 P_44    TYPE_RX    EX,R1,D2(X2,B2)
+000E54 441E C0C0            000C0  1190 EX_P_44     EX      R1,D2(X2,B2)
+000E58                00E58 00E64  1191 P_44_EX ORG EX_P_44+16
+000E64 441EC0C0                    1192  DC      X'44',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1193 *MEXIT #=   196 LV= 2 TYPE_RX
+000E68                00E68 00E74  1194            ORG
+                                   1195 *MEXIT #=   195 LV= 1 TEST_OP
+                                   1196 *MCALL #=   197 LV= 1 P_45 TEST_OP RX,BAL,R1,D2(X2,B2)
+000E74 45C0 D06E            00076  1197          BAL   R12,CHECKZOP
+000E78 FFFFFFFFFFFFFFFF            1198          DC    32X'FF'
+000E98                00E98 00E78  1199          ORG *-32
+                                   1200 *MCALL #=   198 LV= 2 P_45    TYPE_RX    BAL,R1,D2(X2,B2)
+000E78 451E C0C0            000C0  1201 BAL_P_45    BAL     R1,D2(X2,B2)
+i000E7C                00E7C 00E88  1202 P_45_BAL ORG BAL_P_45+16
+                                                                                                               Page   25
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000E88 451EC0C0                    1203  DC      X'45',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1204 *MEXIT #=   198 LV= 2 TYPE_RX
+000E8C                00E8C 00E98  1205            ORG
+                                   1206 *MEXIT #=   197 LV= 1 TEST_OP
+                                   1207 *MCALL #=   199 LV= 1 P_46 TEST_OP RX,BCT,R1,D2(X2,B2)
+000E98 45C0 D06E            00076  1208          BAL   R12,CHECKZOP
+000E9C FFFFFFFFFFFFFFFF            1209          DC    32X'FF'
+000EBC                00EBC 00E9C  1210          ORG *-32
+                                   1211 *MCALL #=   200 LV= 2 P_46    TYPE_RX    BCT,R1,D2(X2,B2)
+000E9C 461E C0C0            000C0  1212 BCT_P_46    BCT     R1,D2(X2,B2)
+000EA0                00EA0 00EAC  1213 P_46_BCT ORG BCT_P_46+16
+000EAC 461EC0C0                    1214  DC      X'46',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1215 *MEXIT #=   200 LV= 2 TYPE_RX
+000EB0                00EB0 00EBC  1216            ORG
+                                   1217 *MEXIT #=   199 LV= 1 TEST_OP
+                                   1218 *MCALL #=   201 LV= 1 P_47 TEST_OP RX,BC,M1,D2(X2,B2)
+000EBC 45C0 D06E            00076  1219          BAL   R12,CHECKZOP
+000EC0 FFFFFFFFFFFFFFFF            1220          DC    32X'FF'
+000EE0                00EE0 00EC0  1221          ORG *-32
+                                   1222 *MCALL #=   202 LV= 2 P_47    TYPE_RX    BC,M1,D2(X2,B2)
+000EC0 47BE C0C0            000C0  1223 BC_P_47     BC      M1,D2(X2,B2)
+000EC4                00EC4 00ED0  1224 P_47_BC ORG BC_P_47+16
+000ED0 47BEC0C0                    1225  DC      X'47',AL1(M1*16+X2),AL2(B2*256*16+D2)
+                                   1226 *MEXIT #=   202 LV= 2 TYPE_RX
+000ED4                00ED4 00EE0  1227            ORG
+                                   1228 *MEXIT #=   201 LV= 1 TEST_OP
+                                   1229 *MCALL #=   203 LV= 1 P_470 TEST_OP RX,NOP,D2(X2,B2)
+000EE0 45C0 D06E            00076  1230          BAL   R12,CHECKZOP
+000EE4 FFFFFFFFFFFFFFFF            1231          DC    32X'FF'
+000F04                00F04 00EE4  1232          ORG *-32
+                                   1233 *MCALL #=   204 LV= 2 P_470   TYPE_RX    NOP,D2(X2,B2)
+000EE4 470E C0C0            000C0  1234 NOP_P_470   NOP     D2(X2,B2)
+000EE8                00EE8 00EF4  1235 P_470_NOP ORG NOP_P_470+16
+000EF4 470EC0C0                    1236  DC      X'47',AL1(0*16+X2),AL2(B2*256*16+D2)
+                                   1237 *MEXIT #=   204 LV= 2 TYPE_RX
+000EF8                00EF8 00F04  1238            ORG
+                                   1239 *MEXIT #=   203 LV= 1 TEST_OP
+                                   1240 *MCALL #=   205 LV= 1 P_471 TEST_OP RX,BO,D2(X2,B2)
+000F04 45C0 D06E            00076  1241          BAL   R12,CHECKZOP
+000F08 FFFFFFFFFFFFFFFF            1242          DC    32X'FF'
+000F28                00F28 00F08  1243          ORG *-32
+                                   1244 *MCALL #=   206 LV= 2 P_471   TYPE_RX    BO,D2(X2,B2)
+000F08 471E C0C0            000C0  1245 BO_P_471    BO      D2(X2,B2)
+000F0C                00F0C 00F18  1246 P_471_BO ORG BO_P_471+16
+000F18 471EC0C0                    1247  DC      X'47',AL1(1*16+X2),AL2(B2*256*16+D2)
+                                   1248 *MEXIT #=   206 LV= 2 TYPE_RX
+000F1C                00F1C 00F28  1249            ORG
+                                   1250 *MEXIT #=   205 LV= 1 TEST_OP
+                                   1251 *MCALL #=   207 LV= 1 P_472 TEST_OP RX,BH,D2(X2,B2)
+000F28 45C0 D06E            00076  1252          BAL   R12,CHECKZOP
+000F2C FFFFFFFFFFFFFFFF            1253          DC    32X'FF'
+000F4C                00F4C 00F2C  1254          ORG *-32
+                                   1255 *MCALL #=   208 LV= 2 P_472   TYPE_RX    BH,D2(X2,B2)
+000F2C 472E C0C0            000C0  1256 BH_P_472    BH      D2(X2,B2)
+i000F30                00F30 00F3C  1257 P_472_BH ORG BH_P_472+16
+                                                                                                               Page   26
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000F3C 472EC0C0                    1258  DC      X'47',AL1(2*16+X2),AL2(B2*256*16+D2)
+                                   1259 *MEXIT #=   208 LV= 2 TYPE_RX
+000F40                00F40 00F4C  1260            ORG
+                                   1261 *MEXIT #=   207 LV= 1 TEST_OP
+                                   1262 *MCALL #=   209 LV= 1 P_472 TEST_OP RX,BP,D2(X2,B2)
+000F4C 45C0 D06E            00076  1263          BAL   R12,CHECKZOP
+000F50 FFFFFFFFFFFFFFFF            1264          DC    32X'FF'
+000F70                00F70 00F50  1265          ORG *-32
+                                   1266 *MCALL #=   210 LV= 2 P_472   TYPE_RX    BP,D2(X2,B2)
+000F50 472E C0C0            000C0  1267 BP_P_472    BP      D2(X2,B2)
+000F54                00F54 00F60  1268 P_472_BP ORG BP_P_472+16
+000F60 472EC0C0                    1269  DC      X'47',AL1(2*16+X2),AL2(B2*256*16+D2)
+                                   1270 *MEXIT #=   210 LV= 2 TYPE_RX
+000F64                00F64 00F70  1271            ORG
+                                   1272 *MEXIT #=   209 LV= 1 TEST_OP
+                                   1273 *MCALL #=   211 LV= 1 P_474 TEST_OP RX,BL,D2(X2,B2)
+000F70 45C0 D06E            00076  1274          BAL   R12,CHECKZOP
+000F74 FFFFFFFFFFFFFFFF            1275          DC    32X'FF'
+000F94                00F94 00F74  1276          ORG *-32
+                                   1277 *MCALL #=   212 LV= 2 P_474   TYPE_RX    BL,D2(X2,B2)
+000F74 474E C0C0            000C0  1278 BL_P_474    BL      D2(X2,B2)
+000F78                00F78 00F84  1279 P_474_BL ORG BL_P_474+16
+000F84 474EC0C0                    1280  DC      X'47',AL1(4*16+X2),AL2(B2*256*16+D2)
+                                   1281 *MEXIT #=   212 LV= 2 TYPE_RX
+000F88                00F88 00F94  1282            ORG
+                                   1283 *MEXIT #=   211 LV= 1 TEST_OP
+                                   1284 *MCALL #=   213 LV= 1 P_474 TEST_OP RX,BM,D2(X2,B2)
+000F94 45C0 D06E            00076  1285          BAL   R12,CHECKZOP
+000F98 FFFFFFFFFFFFFFFF            1286          DC    32X'FF'
+000FB8                00FB8 00F98  1287          ORG *-32
+                                   1288 *MCALL #=   214 LV= 2 P_474   TYPE_RX    BM,D2(X2,B2)
+000F98 474E C0C0            000C0  1289 BM_P_474    BM      D2(X2,B2)
+000F9C                00F9C 00FA8  1290 P_474_BM ORG BM_P_474+16
+000FA8 474EC0C0                    1291  DC      X'47',AL1(4*16+X2),AL2(B2*256*16+D2)
+                                   1292 *MEXIT #=   214 LV= 2 TYPE_RX
+000FAC                00FAC 00FB8  1293            ORG
+                                   1294 *MEXIT #=   213 LV= 1 TEST_OP
+                                   1295 *MCALL #=   215 LV= 1 P_477 TEST_OP RX,BNE,D2(X2,B2)
+000FB8 45C0 D06E            00076  1296          BAL   R12,CHECKZOP
+000FBC FFFFFFFFFFFFFFFF            1297          DC    32X'FF'
+000FDC                00FDC 00FBC  1298          ORG *-32
+                                   1299 *MCALL #=   216 LV= 2 P_477   TYPE_RX    BNE,D2(X2,B2)
+000FBC 477E C0C0            000C0  1300 BNE_P_477   BNE     D2(X2,B2)
+000FC0                00FC0 00FCC  1301 P_477_BNE ORG BNE_P_477+16
+000FCC 477EC0C0                    1302  DC      X'47',AL1(7*16+X2),AL2(B2*256*16+D2)
+                                   1303 *MEXIT #=   216 LV= 2 TYPE_RX
+000FD0                00FD0 00FDC  1304            ORG
+                                   1305 *MEXIT #=   215 LV= 1 TEST_OP
+                                   1306 *MCALL #=   217 LV= 1 P_477 TEST_OP RX,BNZ,D2(X2,B2)
+000FDC 45C0 D06E            00076  1307          BAL   R12,CHECKZOP
+000FE0 FFFFFFFFFFFFFFFF            1308          DC    32X'FF'
+001000                01000 00FE0  1309          ORG *-32
+                                   1310 *MCALL #=   218 LV= 2 P_477   TYPE_RX    BNZ,D2(X2,B2)
+000FE0 477E C0C0            000C0  1311 BNZ_P_477   BNZ     D2(X2,B2)
+i000FE4                00FE4 00FF0  1312 P_477_BNZ ORG BNZ_P_477+16
+                                                                                                               Page   27
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+000FF0 477EC0C0                    1313  DC      X'47',AL1(7*16+X2),AL2(B2*256*16+D2)
+                                   1314 *MEXIT #=   218 LV= 2 TYPE_RX
+000FF4                00FF4 01000  1315            ORG
+                                   1316 *MEXIT #=   217 LV= 1 TEST_OP
+                                   1317 *MCALL #=   219 LV= 1 P_478 TEST_OP RX,BE,D2(X2,B2)
+001000 45C0 D06E            00076  1318          BAL   R12,CHECKZOP
+001004 FFFFFFFFFFFFFFFF            1319          DC    32X'FF'
+001024                01024 01004  1320          ORG *-32
+                                   1321 *MCALL #=   220 LV= 2 P_478   TYPE_RX    BE,D2(X2,B2)
+001004 478E C0C0            000C0  1322 BE_P_478    BE      D2(X2,B2)
+001008                01008 01014  1323 P_478_BE ORG BE_P_478+16
+001014 478EC0C0                    1324  DC      X'47',AL1(8*16+X2),AL2(B2*256*16+D2)
+                                   1325 *MEXIT #=   220 LV= 2 TYPE_RX
+001018                01018 01024  1326            ORG
+                                   1327 *MEXIT #=   219 LV= 1 TEST_OP
+                                   1328 *MCALL #=   221 LV= 1 P_478 TEST_OP RX,BZ,D2(X2,B2)
+001024 45C0 D06E            00076  1329          BAL   R12,CHECKZOP
+001028 FFFFFFFFFFFFFFFF            1330          DC    32X'FF'
+001048                01048 01028  1331          ORG *-32
+                                   1332 *MCALL #=   222 LV= 2 P_478   TYPE_RX    BZ,D2(X2,B2)
+001028 478E C0C0            000C0  1333 BZ_P_478    BZ      D2(X2,B2)
+00102C                0102C 01038  1334 P_478_BZ ORG BZ_P_478+16
+001038 478EC0C0                    1335  DC      X'47',AL1(8*16+X2),AL2(B2*256*16+D2)
+                                   1336 *MEXIT #=   222 LV= 2 TYPE_RX
+00103C                0103C 01048  1337            ORG
+                                   1338 *MEXIT #=   221 LV= 1 TEST_OP
+                                   1339 *MCALL #=   223 LV= 1 P_47B TEST_OP RX,BNL,D2(X2,B2)
+001048 45C0 D06E            00076  1340          BAL   R12,CHECKZOP
+00104C FFFFFFFFFFFFFFFF            1341          DC    32X'FF'
+00106C                0106C 0104C  1342          ORG *-32
+                                   1343 *MCALL #=   224 LV= 2 P_47B   TYPE_RX    BNL,D2(X2,B2)
+00104C 47BE C0C0            000C0  1344 BNL_P_47B   BNL     D2(X2,B2)
+001050                01050 0105C  1345 P_47B_BNL ORG BNL_P_47B+16
+00105C 47BEC0C0                    1346  DC      X'47',AL1(11*16+X2),AL2(B2*256*16+D2)
+                                   1347 *MEXIT #=   224 LV= 2 TYPE_RX
+001060                01060 0106C  1348            ORG
+                                   1349 *MEXIT #=   223 LV= 1 TEST_OP
+                                   1350 *MCALL #=   225 LV= 1 P_47B TEST_OP RX,BNM,D2(X2,B2)
+00106C 45C0 D06E            00076  1351          BAL   R12,CHECKZOP
+001070 FFFFFFFFFFFFFFFF            1352          DC    32X'FF'
+001090                01090 01070  1353          ORG *-32
+                                   1354 *MCALL #=   226 LV= 2 P_47B   TYPE_RX    BNM,D2(X2,B2)
+001070 47BE C0C0            000C0  1355 BNM_P_47B   BNM     D2(X2,B2)
+001074                01074 01080  1356 P_47B_BNM ORG BNM_P_47B+16
+001080 47BEC0C0                    1357  DC      X'47',AL1(11*16+X2),AL2(B2*256*16+D2)
+                                   1358 *MEXIT #=   226 LV= 2 TYPE_RX
+001084                01084 01090  1359            ORG
+                                   1360 *MEXIT #=   225 LV= 1 TEST_OP
+                                   1361 *MCALL #=   227 LV= 1 P_47D TEST_OP RX,BNH,D2(X2,B2)
+001090 45C0 D06E            00076  1362          BAL   R12,CHECKZOP
+001094 FFFFFFFFFFFFFFFF            1363          DC    32X'FF'
+0010B4                010B4 01094  1364          ORG *-32
+                                   1365 *MCALL #=   228 LV= 2 P_47D   TYPE_RX    BNH,D2(X2,B2)
+001094 47DE C0C0            000C0  1366 BNH_P_47D   BNH     D2(X2,B2)
+i001098                01098 010A4  1367 P_47D_BNH ORG BNH_P_47D+16
+                                                                                                               Page   28
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+0010A4 47DEC0C0                    1368  DC      X'47',AL1(13*16+X2),AL2(B2*256*16+D2)
+                                   1369 *MEXIT #=   228 LV= 2 TYPE_RX
+0010A8                010A8 010B4  1370            ORG
+                                   1371 *MEXIT #=   227 LV= 1 TEST_OP
+                                   1372 *MCALL #=   229 LV= 1 P_47D TEST_OP RX,BNP,D2(X2,B2)
+0010B4 45C0 D06E            00076  1373          BAL   R12,CHECKZOP
+0010B8 FFFFFFFFFFFFFFFF            1374          DC    32X'FF'
+0010D8                010D8 010B8  1375          ORG *-32
+                                   1376 *MCALL #=   230 LV= 2 P_47D   TYPE_RX    BNP,D2(X2,B2)
+0010B8 47DE C0C0            000C0  1377 BNP_P_47D   BNP     D2(X2,B2)
+0010BC                010BC 010C8  1378 P_47D_BNP ORG BNP_P_47D+16
+0010C8 47DEC0C0                    1379  DC      X'47',AL1(13*16+X2),AL2(B2*256*16+D2)
+                                   1380 *MEXIT #=   230 LV= 2 TYPE_RX
+0010CC                010CC 010D8  1381            ORG
+                                   1382 *MEXIT #=   229 LV= 1 TEST_OP
+                                   1383 *MCALL #=   231 LV= 1 P_47E TEST_OP RX,BNO,D2(X2,B2)
+0010D8 45C0 D06E            00076  1384          BAL   R12,CHECKZOP
+0010DC FFFFFFFFFFFFFFFF            1385          DC    32X'FF'
+0010FC                010FC 010DC  1386          ORG *-32
+                                   1387 *MCALL #=   232 LV= 2 P_47E   TYPE_RX    BNO,D2(X2,B2)
+0010DC 47EE C0C0            000C0  1388 BNO_P_47E   BNO     D2(X2,B2)
+0010E0                010E0 010EC  1389 P_47E_BNO ORG BNO_P_47E+16
+0010EC 47EEC0C0                    1390  DC      X'47',AL1(14*16+X2),AL2(B2*256*16+D2)
+                                   1391 *MEXIT #=   232 LV= 2 TYPE_RX
+0010F0                010F0 010FC  1392            ORG
+                                   1393 *MEXIT #=   231 LV= 1 TEST_OP
+                                   1394 *MCALL #=   233 LV= 1 P_47F TEST_OP RX,B,D2(X2,B2)
+0010FC 45C0 D06E            00076  1395          BAL   R12,CHECKZOP
+001100 FFFFFFFFFFFFFFFF            1396          DC    32X'FF'
+001120                01120 01100  1397          ORG *-32
+                                   1398 *MCALL #=   234 LV= 2 P_47F   TYPE_RX    B,D2(X2,B2)
+001100 47FE C0C0            000C0  1399 B_P_47F     B       D2(X2,B2)
+001104                01104 01110  1400 P_47F_B ORG B_P_47F+16
+001110 47FEC0C0                    1401  DC      X'47',AL1(15*16+X2),AL2(B2*256*16+D2)
+                                   1402 *MEXIT #=   234 LV= 2 TYPE_RX
+001114                01114 01120  1403            ORG
+                                   1404 *MEXIT #=   233 LV= 1 TEST_OP
+                                   1405 *MCALL #=   235 LV= 1 P_48 TEST_OP RX,LH,R1,D2(X2,B2)
+001120 45C0 D06E            00076  1406          BAL   R12,CHECKZOP
+001124 FFFFFFFFFFFFFFFF            1407          DC    32X'FF'
+001144                01144 01124  1408          ORG *-32
+                                   1409 *MCALL #=   236 LV= 2 P_48    TYPE_RX    LH,R1,D2(X2,B2)
+001124 481E C0C0            000C0  1410 LH_P_48     LH      R1,D2(X2,B2)
+001128                01128 01134  1411 P_48_LH ORG LH_P_48+16
+001134 481EC0C0                    1412  DC      X'48',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1413 *MEXIT #=   236 LV= 2 TYPE_RX
+001138                01138 01144  1414            ORG
+                                   1415 *MEXIT #=   235 LV= 1 TEST_OP
+                                   1416 *MCALL #=   237 LV= 1 P_49 TEST_OP RX,CH,R1,D2(X2,B2)
+001144 45C0 D06E            00076  1417          BAL   R12,CHECKZOP
+001148 FFFFFFFFFFFFFFFF            1418          DC    32X'FF'
+001168                01168 01148  1419          ORG *-32
+                                   1420 *MCALL #=   238 LV= 2 P_49    TYPE_RX    CH,R1,D2(X2,B2)
+001148 491E C0C0            000C0  1421 CH_P_49     CH      R1,D2(X2,B2)
+i00114C                0114C 01158  1422 P_49_CH ORG CH_P_49+16
+                                                                                                               Page   29
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+001158 491EC0C0                    1423  DC      X'49',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1424 *MEXIT #=   238 LV= 2 TYPE_RX
+00115C                0115C 01168  1425            ORG
+                                   1426 *MEXIT #=   237 LV= 1 TEST_OP
+                                   1427 *MCALL #=   239 LV= 1 P_4A TEST_OP RX,AH,R1,D2(X2,B2)
+001168 45C0 D06E            00076  1428          BAL   R12,CHECKZOP
+00116C FFFFFFFFFFFFFFFF            1429          DC    32X'FF'
+00118C                0118C 0116C  1430          ORG *-32
+                                   1431 *MCALL #=   240 LV= 2 P_4A    TYPE_RX    AH,R1,D2(X2,B2)
+00116C 4A1E C0C0            000C0  1432 AH_P_4A     AH      R1,D2(X2,B2)
+001170                01170 0117C  1433 P_4A_AH ORG AH_P_4A+16
+00117C 4A1EC0C0                    1434  DC      X'4A',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1435 *MEXIT #=   240 LV= 2 TYPE_RX
+001180                01180 0118C  1436            ORG
+                                   1437 *MEXIT #=   239 LV= 1 TEST_OP
+                                   1438 *MCALL #=   241 LV= 1 P_4B TEST_OP RX,SH,R1,D2(X2,B2)
+00118C 45C0 D06E            00076  1439          BAL   R12,CHECKZOP
+001190 FFFFFFFFFFFFFFFF            1440          DC    32X'FF'
+0011B0                011B0 01190  1441          ORG *-32
+                                   1442 *MCALL #=   242 LV= 2 P_4B    TYPE_RX    SH,R1,D2(X2,B2)
+001190 4B1E C0C0            000C0  1443 SH_P_4B     SH      R1,D2(X2,B2)
+001194                01194 011A0  1444 P_4B_SH ORG SH_P_4B+16
+0011A0 4B1EC0C0                    1445  DC      X'4B',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1446 *MEXIT #=   242 LV= 2 TYPE_RX
+0011A4                011A4 011B0  1447            ORG
+                                   1448 *MEXIT #=   241 LV= 1 TEST_OP
+                                   1449 *MCALL #=   243 LV= 1 P_4C TEST_OP RX,MH,R1,D2(X2,B2)
+0011B0 45C0 D06E            00076  1450          BAL   R12,CHECKZOP
+0011B4 FFFFFFFFFFFFFFFF            1451          DC    32X'FF'
+0011D4                011D4 011B4  1452          ORG *-32
+                                   1453 *MCALL #=   244 LV= 2 P_4C    TYPE_RX    MH,R1,D2(X2,B2)
+0011B4 4C1E C0C0            000C0  1454 MH_P_4C     MH      R1,D2(X2,B2)
+0011B8                011B8 011C4  1455 P_4C_MH ORG MH_P_4C+16
+0011C4 4C1EC0C0                    1456  DC      X'4C',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1457 *MEXIT #=   244 LV= 2 TYPE_RX
+0011C8                011C8 011D4  1458            ORG
+                                   1459 *MEXIT #=   243 LV= 1 TEST_OP
+                                   1460 *MCALL #=   245 LV= 1 P_4D TEST_OP RX,BAS,R1,D2(X2,B2)
+0011D4 45C0 D06E            00076  1461          BAL   R12,CHECKZOP
+0011D8 FFFFFFFFFFFFFFFF            1462          DC    32X'FF'
+0011F8                011F8 011D8  1463          ORG *-32
+                                   1464 *MCALL #=   246 LV= 2 P_4D    TYPE_RX    BAS,R1,D2(X2,B2)
+0011D8 4D1E C0C0            000C0  1465 BAS_P_4D    BAS     R1,D2(X2,B2)
+0011DC                011DC 011E8  1466 P_4D_BAS ORG BAS_P_4D+16
+0011E8 4D1EC0C0                    1467  DC      X'4D',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1468 *MEXIT #=   246 LV= 2 TYPE_RX
+0011EC                011EC 011F8  1469            ORG
+                                   1470 *MEXIT #=   245 LV= 1 TEST_OP
+                                   1471 *MCALL #=   247 LV= 1 P_4E TEST_OP RX,CVD,R1,D2(X2,B2)
+0011F8 45C0 D06E            00076  1472          BAL   R12,CHECKZOP
+0011FC FFFFFFFFFFFFFFFF            1473          DC    32X'FF'
+00121C                0121C 011FC  1474          ORG *-32
+                                   1475 *MCALL #=   248 LV= 2 P_4E    TYPE_RX    CVD,R1,D2(X2,B2)
+0011FC 4E1E C0C0            000C0  1476 CVD_P_4E    CVD     R1,D2(X2,B2)
+i001200                01200 0120C  1477 P_4E_CVD ORG CVD_P_4E+16
+                                                                                                               Page   30
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+00120C 4E1EC0C0                    1478  DC      X'4E',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1479 *MEXIT #=   248 LV= 2 TYPE_RX
+001210                01210 0121C  1480            ORG
+                                   1481 *MEXIT #=   247 LV= 1 TEST_OP
+                                   1482 *MCALL #=   249 LV= 1 P_4F TEST_OP RX,CVB,R1,D2(X2,B2)
+00121C 45C0 D06E            00076  1483          BAL   R12,CHECKZOP
+001220 FFFFFFFFFFFFFFFF            1484          DC    32X'FF'
+001240                01240 01220  1485          ORG *-32
+                                   1486 *MCALL #=   250 LV= 2 P_4F    TYPE_RX    CVB,R1,D2(X2,B2)
+001220 4F1E C0C0            000C0  1487 CVB_P_4F    CVB     R1,D2(X2,B2)
+001224                01224 01230  1488 P_4F_CVB ORG CVB_P_4F+16
+001230 4F1EC0C0                    1489  DC      X'4F',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1490 *MEXIT #=   250 LV= 2 TYPE_RX
+001234                01234 01240  1491            ORG
+                                   1492 *MEXIT #=   249 LV= 1 TEST_OP
+                                   1493 *MCALL #=   251 LV= 1 P_50 TEST_OP RX,ST,R1,D2(X2,B2)
+001240 45C0 D06E            00076  1494          BAL   R12,CHECKZOP
+001244 FFFFFFFFFFFFFFFF            1495          DC    32X'FF'
+001264                01264 01244  1496          ORG *-32
+                                   1497 *MCALL #=   252 LV= 2 P_50    TYPE_RX    ST,R1,D2(X2,B2)
+001244 501E C0C0            000C0  1498 ST_P_50     ST      R1,D2(X2,B2)
+001248                01248 01254  1499 P_50_ST ORG ST_P_50+16
+001254 501EC0C0                    1500  DC      X'50',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1501 *MEXIT #=   252 LV= 2 TYPE_RX
+001258                01258 01264  1502            ORG
+                                   1503 *MEXIT #=   251 LV= 1 TEST_OP
+                                   1504 *MCALL #=   253 LV= 1 P_51 TEST_OP RX,LAE,R1,D2(X2,B2)
+001264 45C0 D06E            00076  1505          BAL   R12,CHECKZOP
+001268 FFFFFFFFFFFFFFFF            1506          DC    32X'FF'
+001288                01288 01268  1507          ORG *-32
+                                   1508 *MCALL #=   254 LV= 2 P_51    TYPE_RX    LAE,R1,D2(X2,B2)
+001268 511E C0C0            000C0  1509 LAE_P_51    LAE     R1,D2(X2,B2)
+00126C                0126C 01278  1510 P_51_LAE ORG LAE_P_51+16
+001278 511EC0C0                    1511  DC      X'51',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1512 *MEXIT #=   254 LV= 2 TYPE_RX
+00127C                0127C 01288  1513            ORG
+                                   1514 *MEXIT #=   253 LV= 1 TEST_OP
+                                   1515 *MCALL #=   255 LV= 1 P_54 TEST_OP RX,N,R1,D2(X2,B2)
+001288 45C0 D06E            00076  1516          BAL   R12,CHECKZOP
+00128C FFFFFFFFFFFFFFFF            1517          DC    32X'FF'
+0012AC                012AC 0128C  1518          ORG *-32
+                                   1519 *MCALL #=   256 LV= 2 P_54    TYPE_RX    N,R1,D2(X2,B2)
+00128C 541E C0C0            000C0  1520 N_P_54      N       R1,D2(X2,B2)
+001290                01290 0129C  1521 P_54_N  ORG N_P_54+16
+00129C 541EC0C0                    1522  DC      X'54',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1523 *MEXIT #=   256 LV= 2 TYPE_RX
+0012A0                012A0 012AC  1524            ORG
+                                   1525 *MEXIT #=   255 LV= 1 TEST_OP
+                                   1526 *MCALL #=   257 LV= 1 P_55 TEST_OP RX,CL,R1,D2(X2,B2)
+0012AC 45C0 D06E            00076  1527          BAL   R12,CHECKZOP
+0012B0 FFFFFFFFFFFFFFFF            1528          DC    32X'FF'
+0012D0                012D0 012B0  1529          ORG *-32
+                                   1530 *MCALL #=   258 LV= 2 P_55    TYPE_RX    CL,R1,D2(X2,B2)
+0012B0 551E C0C0            000C0  1531 CL_P_55     CL      R1,D2(X2,B2)
+i0012B4                012B4 012C0  1532 P_55_CL ORG CL_P_55+16
+                                                                                                               Page   31
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+0012C0 551EC0C0                    1533  DC      X'55',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1534 *MEXIT #=   258 LV= 2 TYPE_RX
+0012C4                012C4 012D0  1535            ORG
+                                   1536 *MEXIT #=   257 LV= 1 TEST_OP
+                                   1537 *MCALL #=   259 LV= 1 P_56 TEST_OP RX,O,R1,D2(X2,B2)
+0012D0 45C0 D06E            00076  1538          BAL   R12,CHECKZOP
+0012D4 FFFFFFFFFFFFFFFF            1539          DC    32X'FF'
+0012F4                012F4 012D4  1540          ORG *-32
+                                   1541 *MCALL #=   260 LV= 2 P_56    TYPE_RX    O,R1,D2(X2,B2)
+0012D4 561E C0C0            000C0  1542 O_P_56      O       R1,D2(X2,B2)
+0012D8                012D8 012E4  1543 P_56_O  ORG O_P_56+16
+0012E4 561EC0C0                    1544  DC      X'56',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1545 *MEXIT #=   260 LV= 2 TYPE_RX
+0012E8                012E8 012F4  1546            ORG
+                                   1547 *MEXIT #=   259 LV= 1 TEST_OP
+                                   1548 *MCALL #=   261 LV= 1 P_57 TEST_OP RX,X,R1,D2(X2,B2)
+0012F4 45C0 D06E            00076  1549          BAL   R12,CHECKZOP
+0012F8 FFFFFFFFFFFFFFFF            1550          DC    32X'FF'
+001318                01318 012F8  1551          ORG *-32
+                                   1552 *MCALL #=   262 LV= 2 P_57    TYPE_RX    X,R1,D2(X2,B2)
+0012F8 571E C0C0            000C0  1553 X_P_57      X       R1,D2(X2,B2)
+0012FC                012FC 01308  1554 P_57_X  ORG X_P_57+16
+001308 571EC0C0                    1555  DC      X'57',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1556 *MEXIT #=   262 LV= 2 TYPE_RX
+00130C                0130C 01318  1557            ORG
+                                   1558 *MEXIT #=   261 LV= 1 TEST_OP
+                                   1559 *MCALL #=   263 LV= 1 P_58 TEST_OP RX,L,R1,D2(X2,B2)
+001318 45C0 D06E            00076  1560          BAL   R12,CHECKZOP
+00131C FFFFFFFFFFFFFFFF            1561          DC    32X'FF'
+00133C                0133C 0131C  1562          ORG *-32
+                                   1563 *MCALL #=   264 LV= 2 P_58    TYPE_RX    L,R1,D2(X2,B2)
+00131C 581E C0C0            000C0  1564 L_P_58      L       R1,D2(X2,B2)
+001320                01320 0132C  1565 P_58_L  ORG L_P_58+16
+00132C 581EC0C0                    1566  DC      X'58',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1567 *MEXIT #=   264 LV= 2 TYPE_RX
+001330                01330 0133C  1568            ORG
+                                   1569 *MEXIT #=   263 LV= 1 TEST_OP
+                                   1570 *MCALL #=   265 LV= 1 P_59 TEST_OP RX,C,R1,D2(X2,B2)
+00133C 45C0 D06E            00076  1571          BAL   R12,CHECKZOP
+001340 FFFFFFFFFFFFFFFF            1572          DC    32X'FF'
+001360                01360 01340  1573          ORG *-32
+                                   1574 *MCALL #=   266 LV= 2 P_59    TYPE_RX    C,R1,D2(X2,B2)
+001340 591E C0C0            000C0  1575 C_P_59      C       R1,D2(X2,B2)
+001344                01344 01350  1576 P_59_C  ORG C_P_59+16
+001350 591EC0C0                    1577  DC      X'59',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1578 *MEXIT #=   266 LV= 2 TYPE_RX
+001354                01354 01360  1579            ORG
+                                   1580 *MEXIT #=   265 LV= 1 TEST_OP
+                                   1581 *MCALL #=   267 LV= 1 P_5A TEST_OP RX,A,R1,D2(X2,B2)
+001360 45C0 D06E            00076  1582          BAL   R12,CHECKZOP
+001364 FFFFFFFFFFFFFFFF            1583          DC    32X'FF'
+001384                01384 01364  1584          ORG *-32
+                                   1585 *MCALL #=   268 LV= 2 P_5A    TYPE_RX    A,R1,D2(X2,B2)
+001364 5A1E C0C0            000C0  1586 A_P_5A      A       R1,D2(X2,B2)
+i001368                01368 01374  1587 P_5A_A  ORG A_P_5A+16
+                                                                                                               Page   32
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+001374 5A1EC0C0                    1588  DC      X'5A',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1589 *MEXIT #=   268 LV= 2 TYPE_RX
+001378                01378 01384  1590            ORG
+                                   1591 *MEXIT #=   267 LV= 1 TEST_OP
+                                   1592 *MCALL #=   269 LV= 1 P_5B TEST_OP RX,S,R1,D2(X2,B2)
+001384 45C0 D06E            00076  1593          BAL   R12,CHECKZOP
+001388 FFFFFFFFFFFFFFFF            1594          DC    32X'FF'
+0013A8                013A8 01388  1595          ORG *-32
+                                   1596 *MCALL #=   270 LV= 2 P_5B    TYPE_RX    S,R1,D2(X2,B2)
+001388 5B1E C0C0            000C0  1597 S_P_5B      S       R1,D2(X2,B2)
+00138C                0138C 01398  1598 P_5B_S  ORG S_P_5B+16
+001398 5B1EC0C0                    1599  DC      X'5B',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1600 *MEXIT #=   270 LV= 2 TYPE_RX
+00139C                0139C 013A8  1601            ORG
+                                   1602 *MEXIT #=   269 LV= 1 TEST_OP
+                                   1603 *MCALL #=   271 LV= 1 P_5C TEST_OP RX,M,R1,D2(X2,B2)
+0013A8 45C0 D06E            00076  1604          BAL   R12,CHECKZOP
+0013AC FFFFFFFFFFFFFFFF            1605          DC    32X'FF'
+0013CC                013CC 013AC  1606          ORG *-32
+                                   1607 *MCALL #=   272 LV= 2 P_5C    TYPE_RX    M,R2,D2(X2,B2)
+0013AC 5C2E C0C0            000C0  1608 M_P_5C      M       R2,D2(X2,B2)
+0013B0                013B0 013BC  1609 P_5C_M  ORG M_P_5C+16
+0013BC 5C2EC0C0                    1610  DC      X'5C',AL1(R2*16+X2),AL2(B2*256*16+D2)
+                                   1611 *MEXIT #=   272 LV= 2 TYPE_RX
+0013C0                013C0 013CC  1612            ORG
+                                   1613 *MEXIT #=   271 LV= 1 TEST_OP
+                                   1614 *MCALL #=   273 LV= 1 P_5D TEST_OP RX,D,R2,D2(X2,B2)
+0013CC 45C0 D06E            00076  1615          BAL   R12,CHECKZOP
+0013D0 FFFFFFFFFFFFFFFF            1616          DC    32X'FF'
+0013F0                013F0 013D0  1617          ORG *-32
+                                   1618 *MCALL #=   274 LV= 2 P_5D    TYPE_RX    D,R2,D2(X2,B2)
+0013D0 5D2E C0C0            000C0  1619 D_P_5D      D       R2,D2(X2,B2)
+0013D4                013D4 013E0  1620 P_5D_D  ORG D_P_5D+16
+0013E0 5D2EC0C0                    1621  DC      X'5D',AL1(R2*16+X2),AL2(B2*256*16+D2)
+                                   1622 *MEXIT #=   274 LV= 2 TYPE_RX
+0013E4                013E4 013F0  1623            ORG
+                                   1624 *MEXIT #=   273 LV= 1 TEST_OP
+                                   1625 *MCALL #=   275 LV= 1 P_5E TEST_OP RX,AL,R1,D2(X2,B2)
+0013F0 45C0 D06E            00076  1626          BAL   R12,CHECKZOP
+0013F4 FFFFFFFFFFFFFFFF            1627          DC    32X'FF'
+001414                01414 013F4  1628          ORG *-32
+                                   1629 *MCALL #=   276 LV= 2 P_5E    TYPE_RX    AL,R1,D2(X2,B2)
+0013F4 5E1E C0C0            000C0  1630 AL_P_5E     AL      R1,D2(X2,B2)
+0013F8                013F8 01404  1631 P_5E_AL ORG AL_P_5E+16
+001404 5E1EC0C0                    1632  DC      X'5E',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1633 *MEXIT #=   276 LV= 2 TYPE_RX
+001408                01408 01414  1634            ORG
+                                   1635 *MEXIT #=   275 LV= 1 TEST_OP
+                                   1636 *MCALL #=   277 LV= 1 P_5F TEST_OP RX,SL,R1,D2(X2,B2)
+001414 45C0 D06E            00076  1637          BAL   R12,CHECKZOP
+001418 FFFFFFFFFFFFFFFF            1638          DC    32X'FF'
+001438                01438 01418  1639          ORG *-32
+                                   1640 *MCALL #=   278 LV= 2 P_5F    TYPE_RX    SL,R1,D2(X2,B2)
+001418 5F1E C0C0            000C0  1641 SL_P_5F     SL      R1,D2(X2,B2)
+i00141C                0141C 01428  1642 P_5F_SL ORG SL_P_5F+16
+                                                                                                               Page   33
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+001428 5F1EC0C0                    1643  DC      X'5F',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1644 *MEXIT #=   278 LV= 2 TYPE_RX
+00142C                0142C 01438  1645            ORG
+                                   1646 *MEXIT #=   277 LV= 1 TEST_OP
+                                   1647 *MCALL #=   279 LV= 1 P_60 TEST_OP RX,STD,R1,D2(X2,B2)
+001438 45C0 D06E            00076  1648          BAL   R12,CHECKZOP
+00143C FFFFFFFFFFFFFFFF            1649          DC    32X'FF'
+00145C                0145C 0143C  1650          ORG *-32
+                                   1651 *MCALL #=   280 LV= 2 P_60    TYPE_RX    STD,R1,D2(X2,B2)
+00143C 601E C0C0            000C0  1652 STD_P_60    STD     R1,D2(X2,B2)
+001440                01440 0144C  1653 P_60_STD ORG STD_P_60+16
+00144C 601EC0C0                    1654  DC      X'60',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1655 *MEXIT #=   280 LV= 2 TYPE_RX
+001450                01450 0145C  1656            ORG
+                                   1657 *MEXIT #=   279 LV= 1 TEST_OP
+                                   1658 *MCALL #=   281 LV= 1 P_67 TEST_OP RX,MXD,R1,D2(X2,B2)
+00145C 45C0 D06E            00076  1659          BAL   R12,CHECKZOP
+001460 FFFFFFFFFFFFFFFF            1660          DC    32X'FF'
+001480                01480 01460  1661          ORG *-32
+                                   1662 *MCALL #=   282 LV= 2 P_67    TYPE_RX    MXD,R1,D2(X2,B2)
+001460 671E C0C0            000C0  1663 MXD_P_67    MXD     R1,D2(X2,B2)
+001464                01464 01470  1664 P_67_MXD ORG MXD_P_67+16
+001470 671EC0C0                    1665  DC      X'67',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1666 *MEXIT #=   282 LV= 2 TYPE_RX
+001474                01474 01480  1667            ORG
+                                   1668 *MEXIT #=   281 LV= 1 TEST_OP
+                                   1669 *MCALL #=   283 LV= 1 P_68 TEST_OP RX,LD,R1,D2(X2,B2)
+001480 45C0 D06E            00076  1670          BAL   R12,CHECKZOP
+001484 FFFFFFFFFFFFFFFF            1671          DC    32X'FF'
+0014A4                014A4 01484  1672          ORG *-32
+                                   1673 *MCALL #=   284 LV= 2 P_68    TYPE_RX    LD,R1,D2(X2,B2)
+001484 681E C0C0            000C0  1674 LD_P_68     LD      R1,D2(X2,B2)
+001488                01488 01494  1675 P_68_LD ORG LD_P_68+16
+001494 681EC0C0                    1676  DC      X'68',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1677 *MEXIT #=   284 LV= 2 TYPE_RX
+001498                01498 014A4  1678            ORG
+                                   1679 *MEXIT #=   283 LV= 1 TEST_OP
+                                   1680 *MCALL #=   285 LV= 1 P_69 TEST_OP RX,CD,R1,D2(X2,B2)
+0014A4 45C0 D06E            00076  1681          BAL   R12,CHECKZOP
+0014A8 FFFFFFFFFFFFFFFF            1682          DC    32X'FF'
+0014C8                014C8 014A8  1683          ORG *-32
+                                   1684 *MCALL #=   286 LV= 2 P_69    TYPE_RX    CD,R1,D2(X2,B2)
+0014A8 691E C0C0            000C0  1685 CD_P_69     CD      R1,D2(X2,B2)
+0014AC                014AC 014B8  1686 P_69_CD ORG CD_P_69+16
+0014B8 691EC0C0                    1687  DC      X'69',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1688 *MEXIT #=   286 LV= 2 TYPE_RX
+0014BC                014BC 014C8  1689            ORG
+                                   1690 *MEXIT #=   285 LV= 1 TEST_OP
+                                   1691 *MCALL #=   287 LV= 1 P_6A TEST_OP RX,AD,R1,D2(X2,B2)
+0014C8 45C0 D06E            00076  1692          BAL   R12,CHECKZOP
+0014CC FFFFFFFFFFFFFFFF            1693          DC    32X'FF'
+0014EC                014EC 014CC  1694          ORG *-32
+                                   1695 *MCALL #=   288 LV= 2 P_6A    TYPE_RX    AD,R1,D2(X2,B2)
+0014CC 6A1E C0C0            000C0  1696 AD_P_6A     AD      R1,D2(X2,B2)
+i0014D0                014D0 014DC  1697 P_6A_AD ORG AD_P_6A+16
+                                                                                                               Page   34
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+0014DC 6A1EC0C0                    1698  DC      X'6A',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1699 *MEXIT #=   288 LV= 2 TYPE_RX
+0014E0                014E0 014EC  1700            ORG
+                                   1701 *MEXIT #=   287 LV= 1 TEST_OP
+                                   1702 *MCALL #=   289 LV= 1 P_6B TEST_OP RX,SD,R1,D2(X2,B2)
+0014EC 45C0 D06E            00076  1703          BAL   R12,CHECKZOP
+0014F0 FFFFFFFFFFFFFFFF            1704          DC    32X'FF'
+001510                01510 014F0  1705          ORG *-32
+                                   1706 *MCALL #=   290 LV= 2 P_6B    TYPE_RX    SD,R1,D2(X2,B2)
+0014F0 6B1E C0C0            000C0  1707 SD_P_6B     SD      R1,D2(X2,B2)
+0014F4                014F4 01500  1708 P_6B_SD ORG SD_P_6B+16
+001500 6B1EC0C0                    1709  DC      X'6B',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1710 *MEXIT #=   290 LV= 2 TYPE_RX
+001504                01504 01510  1711            ORG
+                                   1712 *MEXIT #=   289 LV= 1 TEST_OP
+                                   1713 *MCALL #=   291 LV= 1 P_6C TEST_OP RX,MD,R1,D2(X2,B2)
+001510 45C0 D06E            00076  1714          BAL   R12,CHECKZOP
+001514 FFFFFFFFFFFFFFFF            1715          DC    32X'FF'
+001534                01534 01514  1716          ORG *-32
+                                   1717 *MCALL #=   292 LV= 2 P_6C    TYPE_RX    MD,R1,D2(X2,B2)
+001514 6C1E C0C0            000C0  1718 MD_P_6C     MD      R1,D2(X2,B2)
+001518                01518 01524  1719 P_6C_MD ORG MD_P_6C+16
+001524 6C1EC0C0                    1720  DC      X'6C',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1721 *MEXIT #=   292 LV= 2 TYPE_RX
+001528                01528 01534  1722            ORG
+                                   1723 *MEXIT #=   291 LV= 1 TEST_OP
+                                   1724 *MCALL #=   293 LV= 1 P_6D TEST_OP RX,DD,R1,D2(X2,B2)
+001534 45C0 D06E            00076  1725          BAL   R12,CHECKZOP
+001538 FFFFFFFFFFFFFFFF            1726          DC    32X'FF'
+001558                01558 01538  1727          ORG *-32
+                                   1728 *MCALL #=   294 LV= 2 P_6D    TYPE_RX    DD,R1,D2(X2,B2)
+001538 6D1E C0C0            000C0  1729 DD_P_6D     DD      R1,D2(X2,B2)
+00153C                0153C 01548  1730 P_6D_DD ORG DD_P_6D+16
+001548 6D1EC0C0                    1731  DC      X'6D',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1732 *MEXIT #=   294 LV= 2 TYPE_RX
+00154C                0154C 01558  1733            ORG
+                                   1734 *MEXIT #=   293 LV= 1 TEST_OP
+                                   1735 *MCALL #=   295 LV= 1 P_6E TEST_OP RX,AW,R1,D2(X2,B2)
+001558 45C0 D06E            00076  1736          BAL   R12,CHECKZOP
+00155C FFFFFFFFFFFFFFFF            1737          DC    32X'FF'
+00157C                0157C 0155C  1738          ORG *-32
+                                   1739 *MCALL #=   296 LV= 2 P_6E    TYPE_RX    AW,R1,D2(X2,B2)
+00155C 6E1E C0C0            000C0  1740 AW_P_6E     AW      R1,D2(X2,B2)
+001560                01560 0156C  1741 P_6E_AW ORG AW_P_6E+16
+00156C 6E1EC0C0                    1742  DC      X'6E',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1743 *MEXIT #=   296 LV= 2 TYPE_RX
+001570                01570 0157C  1744            ORG
+                                   1745 *MEXIT #=   295 LV= 1 TEST_OP
+                                   1746 *MCALL #=   297 LV= 1 P_6F TEST_OP RX,SW,R1,D2(X2,B2)
+00157C 45C0 D06E            00076  1747          BAL   R12,CHECKZOP
+001580 FFFFFFFFFFFFFFFF            1748          DC    32X'FF'
+0015A0                015A0 01580  1749          ORG *-32
+                                   1750 *MCALL #=   298 LV= 2 P_6F    TYPE_RX    SW,R1,D2(X2,B2)
+001580 6F1E C0C0            000C0  1751 SW_P_6F     SW      R1,D2(X2,B2)
+i001584                01584 01590  1752 P_6F_SW ORG SW_P_6F+16
+                                                                                                               Page   35
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+001590 6F1EC0C0                    1753  DC      X'6F',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1754 *MEXIT #=   298 LV= 2 TYPE_RX
+001594                01594 015A0  1755            ORG
+                                   1756 *MEXIT #=   297 LV= 1 TEST_OP
+                                   1757 *MCALL #=   299 LV= 1 P_70 TEST_OP RX,STE,R1,D2(X2,B2)
+0015A0 45C0 D06E            00076  1758          BAL   R12,CHECKZOP
+0015A4 FFFFFFFFFFFFFFFF            1759          DC    32X'FF'
+0015C4                015C4 015A4  1760          ORG *-32
+                                   1761 *MCALL #=   300 LV= 2 P_70    TYPE_RX    STE,R1,D2(X2,B2)
+0015A4 701E C0C0            000C0  1762 STE_P_70    STE     R1,D2(X2,B2)
+0015A8                015A8 015B4  1763 P_70_STE ORG STE_P_70+16
+0015B4 701EC0C0                    1764  DC      X'70',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1765 *MEXIT #=   300 LV= 2 TYPE_RX
+0015B8                015B8 015C4  1766            ORG
+                                   1767 *MEXIT #=   299 LV= 1 TEST_OP
+                                   1768 *MCALL #=   301 LV= 1 P_71 TEST_OP RX,MS,R1,D2(X2,B2)
+0015C4 45C0 D06E            00076  1769          BAL   R12,CHECKZOP
+0015C8 FFFFFFFFFFFFFFFF            1770          DC    32X'FF'
+0015E8                015E8 015C8  1771          ORG *-32
+                                   1772 *MCALL #=   302 LV= 2 P_71    TYPE_RX    MS,R1,D2(X2,B2)
+0015C8 711E C0C0            000C0  1773 MS_P_71     MS      R1,D2(X2,B2)
+0015CC                015CC 015D8  1774 P_71_MS ORG MS_P_71+16
+0015D8 711EC0C0                    1775  DC      X'71',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1776 *MEXIT #=   302 LV= 2 TYPE_RX
+0015DC                015DC 015E8  1777            ORG
+                                   1778 *MEXIT #=   301 LV= 1 TEST_OP
+                                   1779 *MCALL #=   303 LV= 1 P_78 TEST_OP RX,LE,R1,D2(X2,B2)
+0015E8 45C0 D06E            00076  1780          BAL   R12,CHECKZOP
+0015EC FFFFFFFFFFFFFFFF            1781          DC    32X'FF'
+00160C                0160C 015EC  1782          ORG *-32
+                                   1783 *MCALL #=   304 LV= 2 P_78    TYPE_RX    LE,R1,D2(X2,B2)
+0015EC 781E C0C0            000C0  1784 LE_P_78     LE      R1,D2(X2,B2)
+0015F0                015F0 015FC  1785 P_78_LE ORG LE_P_78+16
+0015FC 781EC0C0                    1786  DC      X'78',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1787 *MEXIT #=   304 LV= 2 TYPE_RX
+001600                01600 0160C  1788            ORG
+                                   1789 *MEXIT #=   303 LV= 1 TEST_OP
+                                   1790 *MCALL #=   305 LV= 1 P_79 TEST_OP RX,CE,R1,D2(X2,B2)
+00160C 45C0 D06E            00076  1791          BAL   R12,CHECKZOP
+001610 FFFFFFFFFFFFFFFF            1792          DC    32X'FF'
+001630                01630 01610  1793          ORG *-32
+                                   1794 *MCALL #=   306 LV= 2 P_79    TYPE_RX    CE,R1,D2(X2,B2)
+001610 791E C0C0            000C0  1795 CE_P_79     CE      R1,D2(X2,B2)
+001614                01614 01620  1796 P_79_CE ORG CE_P_79+16
+001620 791EC0C0                    1797  DC      X'79',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1798 *MEXIT #=   306 LV= 2 TYPE_RX
+001624                01624 01630  1799            ORG
+                                   1800 *MEXIT #=   305 LV= 1 TEST_OP
+                                   1801 *MCALL #=   307 LV= 1 P_7A TEST_OP RX,AE,R1,D2(X2,B2)
+001630 45C0 D06E            00076  1802          BAL   R12,CHECKZOP
+001634 FFFFFFFFFFFFFFFF            1803          DC    32X'FF'
+001654                01654 01634  1804          ORG *-32
+                                   1805 *MCALL #=   308 LV= 2 P_7A    TYPE_RX    AE,R1,D2(X2,B2)
+001634 7A1E C0C0            000C0  1806 AE_P_7A     AE      R1,D2(X2,B2)
+i001638                01638 01644  1807 P_7A_AE ORG AE_P_7A+16
+                                                                                                               Page   36
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+001644 7A1EC0C0                    1808  DC      X'7A',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1809 *MEXIT #=   308 LV= 2 TYPE_RX
+001648                01648 01654  1810            ORG
+                                   1811 *MEXIT #=   307 LV= 1 TEST_OP
+                                   1812 *MCALL #=   309 LV= 1 P_7B TEST_OP RX,SE,R1,D2(X2,B2)
+001654 45C0 D06E            00076  1813          BAL   R12,CHECKZOP
+001658 FFFFFFFFFFFFFFFF            1814          DC    32X'FF'
+001678                01678 01658  1815          ORG *-32
+                                   1816 *MCALL #=   310 LV= 2 P_7B    TYPE_RX    SE,R1,D2(X2,B2)
+001658 7B1E C0C0            000C0  1817 SE_P_7B     SE      R1,D2(X2,B2)
+00165C                0165C 01668  1818 P_7B_SE ORG SE_P_7B+16
+001668 7B1EC0C0                    1819  DC      X'7B',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1820 *MEXIT #=   310 LV= 2 TYPE_RX
+00166C                0166C 01678  1821            ORG
+                                   1822 *MEXIT #=   309 LV= 1 TEST_OP
+                                   1823 *MCALL #=   311 LV= 1 P_7C TEST_OP RX,MDE,R1,D2(X2,B2)
+001678 45C0 D06E            00076  1824          BAL   R12,CHECKZOP
+00167C FFFFFFFFFFFFFFFF            1825          DC    32X'FF'
+00169C                0169C 0167C  1826          ORG *-32
+                                   1827 *MCALL #=   312 LV= 2 P_7C    TYPE_RX    MDE,R1,D2(X2,B2)
+00167C 7C1E C0C0            000C0  1828 MDE_P_7C    MDE     R1,D2(X2,B2)
+001680                01680 0168C  1829 P_7C_MDE ORG MDE_P_7C+16
+00168C 7C1EC0C0                    1830  DC      X'7C',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1831 *MEXIT #=   312 LV= 2 TYPE_RX
+001690                01690 0169C  1832            ORG
+                                   1833 *MEXIT #=   311 LV= 1 TEST_OP
+                                   1834 *MCALL #=   313 LV= 1 P_7C TEST_OP RX,ME,R1,D2(X2,B2)
+00169C 45C0 D06E            00076  1835          BAL   R12,CHECKZOP
+0016A0 FFFFFFFFFFFFFFFF            1836          DC    32X'FF'
+0016C0                016C0 016A0  1837          ORG *-32
+                                   1838 *MCALL #=   314 LV= 2 P_7C    TYPE_RX    ME,R1,D2(X2,B2)
+0016A0 7C1E C0C0            000C0  1839 ME_P_7C     ME      R1,D2(X2,B2)
+0016A4                016A4 016B0  1840 P_7C_ME ORG ME_P_7C+16
+0016B0 7C1EC0C0                    1841  DC      X'7C',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1842 *MEXIT #=   314 LV= 2 TYPE_RX
+0016B4                016B4 016C0  1843            ORG
+                                   1844 *MEXIT #=   313 LV= 1 TEST_OP
+                                   1845 *MCALL #=   315 LV= 1 P_7D TEST_OP RX,DE,R1,D2(X2,B2)
+0016C0 45C0 D06E            00076  1846          BAL   R12,CHECKZOP
+0016C4 FFFFFFFFFFFFFFFF            1847          DC    32X'FF'
+0016E4                016E4 016C4  1848          ORG *-32
+                                   1849 *MCALL #=   316 LV= 2 P_7D    TYPE_RX    DE,R1,D2(X2,B2)
+0016C4 7D1E C0C0            000C0  1850 DE_P_7D     DE      R1,D2(X2,B2)
+0016C8                016C8 016D4  1851 P_7D_DE ORG DE_P_7D+16
+0016D4 7D1EC0C0                    1852  DC      X'7D',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1853 *MEXIT #=   316 LV= 2 TYPE_RX
+0016D8                016D8 016E4  1854            ORG
+                                   1855 *MEXIT #=   315 LV= 1 TEST_OP
+                                   1856 *MCALL #=   317 LV= 1 P_7E TEST_OP RX,AU,R1,D2(X2,B2)
+0016E4 45C0 D06E            00076  1857          BAL   R12,CHECKZOP
+0016E8 FFFFFFFFFFFFFFFF            1858          DC    32X'FF'
+001708                01708 016E8  1859          ORG *-32
+                                   1860 *MCALL #=   318 LV= 2 P_7E    TYPE_RX    AU,R1,D2(X2,B2)
+0016E8 7E1E C0C0            000C0  1861 AU_P_7E     AU      R1,D2(X2,B2)
+i0016EC                016EC 016F8  1862 P_7E_AU ORG AU_P_7E+16
+                                                                                                               Page   37
+  Active Usings: ZOPCHECK+X'8',R13
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/11/07 11.03
+0016F8 7E1EC0C0                    1863  DC      X'7E',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1864 *MEXIT #=   318 LV= 2 TYPE_RX
+0016FC                016FC 01708  1865            ORG
+                                   1866 *MEXIT #=   317 LV= 1 TEST_OP
+                                   1867 *MCALL #=   319 LV= 1 P_7F TEST_OP RX,SU,R1,D2(X2,B2)
+001708 45C0 D06E            00076  1868          BAL   R12,CHECKZOP
+00170C FFFFFFFFFFFFFFFF            1869          DC    32X'FF'
+00172C                0172C 0170C  1870          ORG *-32
+                                   1871 *MCALL #=   320 LV= 2 P_7F    TYPE_RX    SU,R1,D2(X2,B2)
+00170C 7F1E C0C0            000C0  1872 SU_P_7F     SU      R1,D2(X2,B2)
+001710                01710 0171C  1873 P_7F_SU ORG SU_P_7F+16
+00171C 7F1EC0C0                    1874  DC      X'7F',AL1(R1*16+X2),AL2(B2*256*16+D2)
+                                   1875 *MEXIT #=   320 LV= 2 TYPE_RX
+001720                01720 0172C  1876            ORG
+                                   1877 *MEXIT #=   319 LV= 1 TEST_OP
+00172C C5D5C4                      1878          DC C'END'
+                                   1879          END
+»
+                               Ordinary Symbol and Literal Cross Reference                                     Page   38
+Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2020/11/07 11.03
+A_P_5A        4 00001364 00000001     I                 1586 1587
+AD_P_6A       4 000014CC 00000001     I                 1696 1697
+ADR_P_2A      2 00000A64 00000001     I                  882  883
+AE_P_7A       4 00001634 00000001     I                 1806 1807
+AER_P_3A      2 00000CC8 00000001     I                 1069 1070
+AH_P_4A       4 0000116C 00000001     I                 1432 1433
+AL_P_5E       4 000013F4 00000001     I                 1630 1631
+ALR_P_1E      2 00000890 00000001     I                  739  740
+AR_P_1A       2 00000800 00000001     I                  695  696
+AU_P_7E       4 000016E8 00000001     I                 1861 1862
+AUR_P_3E      2 00000D7C 00000001     I                 1124 1125
+AW_P_6E       4 0000155C 00000001     I                 1740 1741
+AWR_P_2E      2 00000AF4 00000001     I                  926  927
+AXR_P_36      2 00000C38 00000001     I                 1025 1026
+B_P_47F       4 00001100 00000001     I                 1399 1400
+BAL_P_45      4 00000E78 00000001     I                 1201 1202
+BALR_P_05
+              2 00000314 00000001     I                  310  311
+BAS_P_4D      4 000011D8 00000001     I                 1465 1466
+BASR_P_0D
+              2 0000062C 00000001     I                  552  553
+BASSM_S_0C
+              2 00000608 00000001     I                  541  542
+BC_P_47       4 00000EC0 00000001     I                 1223 1224
+BCR_P_07      2 0000035C 00000001     I                  332  333
+BCT_P_46      4 00000E9C 00000001     I                 1212 1213
+BCTR_P_06
+              2 00000338 00000001     I                  321  322
+BE_P_478      4 00001004 00000001     I                 1322 1323
+BER_P_078
+              2 000004A0 00000001     I                  431  432
+BH_P_472      4 00000F2C 00000001     I                 1256 1257
+BHR_P_072
+              2 000003C8 00000001     I                  365  366
+BL_P_474      4 00000F74 00000001     I                 1278 1279
+BLR_P_074
+              2 00000410 00000001     I                  387  388
+BM_P_474      4 00000F98 00000001     I                 1289 1290
+BMR_P_074
+              2 00000434 00000001     I                  398  399
+BNE_P_477
+              4 00000FBC 00000001     I                 1300 1301
+BNER_P_077
+              2 00000458 00000001     I                  409  410
+BNH_P_47D
+              4 00001094 00000001     I                 1366 1367
+BNHR_P_07D
+              2 00000530 00000001     I                  475  476
+BNL_P_47B
+              4 0000104C 00000001     I                 1344 1345
+BNLR_P_07B
+              2 000004E8 00000001     I                  453  454
+BNM_P_47B
+              4 00001070 00000001     I                 1355 1356
+BNMR_P_07B
+»
+                               Ordinary Symbol and Literal Cross Reference                                     Page   39
+Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2020/11/07 11.03
+              2 0000050C 00000001     I                  464  465
+BNO_P_47E
+              4 000010DC 00000001     I                 1388 1389
+BNOR_P_07E
+              2 00000578 00000001     I                  497  498
+BNP_P_47D
+              4 000010B8 00000001     I                 1377 1378
+BNPR_P_07D
+              2 00000554 00000001     I                  486  487
+BNZ_P_477
+              4 00000FE0 00000001     I                 1311 1312
+BNZR_P_077
+              2 0000047C 00000001     I                  420  421
+BO_P_471      4 00000F08 00000001     I                 1245 1246
+BOR_P_071
+              2 000003A4 00000001     I                  354  355
+BP_P_472      4 00000F50 00000001     I                 1267 1268
+BPR_P_072
+              2 000003EC 00000001     I                  376  377
+BR_P_07F      2 0000059C 00000001     I                  508  509
+BSM_P_0B      2 000005E4 00000001     I                  530  531
+BZ_P_478      4 00001028 00000001     I                 1333 1334
+BZR_P_078
+              2 000004C4 00000001     I                  442  443
+B2            1 0000000C 00000001 A   U                  167 1146  1148  1157  1159  1168  1170  1179  1181  1190  1192
+                                                             1201B 1203  1212B 1214  1223B 1225  1234B 1236  1245B 1247
+                                                             1256B 1258  1267B 1269  1278B 1280  1289B 1291  1300B 1302
+                                                             1311B 1313  1322B 1324  1333B 1335  1344B 1346  1355B 1357
+                                                             1366B 1368  1377B 1379  1388B 1390  1399B 1401  1410  1412
+                                                             1421  1423  1432  1434  1443  1445  1454  1456  1465B 1467
+                                                             1476  1478  1487  1489  1498  1500  1509  1511  1520  1522
+                                                             1531  1533  1542  1544  1553  1555  1564  1566  1575  1577
+                                                             1586  1588  1597  1599  1608  1610  1619  1621  1630  1632
+                                                             1641  1643  1652  1654  1663  1665  1674  1676  1685  1687
+                                                             1696  1698  1707  1709  1718  1720  1729  1731  1740  1742
+                                                             1751  1753  1762  1764  1773  1775  1784  1786  1795  1797
+                                                             1806  1808  1817  1819  1828  1830  1839  1841  1850  1852
+                                                             1861  1863  1872  1874
+C_P_59        4 00001340 00000001     I                 1575 1576
+CD_P_69       4 000014A8 00000001     I                 1685 1686
+CDR_P_29      2 00000A40 00000001     I                  871  872
+CE_P_79       4 00001610 00000001     I                 1795 1796
+CER_P_39      2 00000CA4 00000001     I                 1058 1059
+CH_P_49       4 00001148 00000001     I                 1421 1422
+CHECKZOP      2 00000076 00000001     H  H                45  185B  196B  207B  218B  229B  240B  251B  262B  273B  284B
+                                                              295B  306B  317B  328B  339B  350B  361B  372B  383B  394B
+                                                              405B  416B  427B  438B  449B  460B  471B  482B  493B  504B
+                                                              515B  526B  537B  548B  559B  570B  581B  592B  603B  614B
+                                                              625B  636B  647B  658B  669B  680B  691B  702B  713B  724B
+                                                              735B  746B  757B  768B  779B  790B  801B  812B  823B  834B
+                                                              845B  856B  867B  878B  889B  900B  911B  922B  933B  944B
+                                                              955B  966B  977B  988B  999B 1010B 1021B 1032B 1043B 1054B
+                                                             1065B 1076B 1087B 1098B 1109B 1120B 1131B 1142B 1153B 1164B
+                                                             1175B 1186B 1197B 1208B 1219B 1230B 1241B 1252B 1263B 1274B
+                                                             1285B 1296B 1307B 1318B 1329B 1340B 1351B 1362B 1373B 1384B
+»
+                               Ordinary Symbol and Literal Cross Reference                                     Page   40
+Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2020/11/07 11.03
+                                                             1395B 1406B 1417B 1428B 1439B 1450B 1461B 1472B 1483B 1494B
+                                                             1505B 1516B 1527B 1538B 1549B 1560B 1571B 1582B 1593B 1604B
+                                                             1615B 1626B 1637B 1648B 1659B 1670B 1681B 1692B 1703B 1714B
+                                                             1725B 1736B 1747B 1758B 1769B 1780B 1791B 1802B 1813B 1824B
+                                                             1835B 1846B 1857B 1868B
+CL_P_55       4 000012B0 00000001     I                 1531 1532
+CLCL_P_0F
+              2 00000674 00000001     I                  574  575
+CLR_P_15      2 0000074C 00000001     I                  640  641
+CONTINUE      2 00000088 00000001     H  H                50   58B   85B
+CR_P_19       2 000007DC 00000001     I                  684  685
+CVB_P_4F      4 00001220 00000001     I                 1487 1488
+CVD_P_4E      4 000011FC 00000001     I                 1476 1477
+D_P_5D        4 000013D0 00000001     I                 1619 1620
+DD_P_6D       4 00001538 00000001     I                 1729 1730
+DDR_P_2D      2 00000AD0 00000001     I                  915  916
+DE_P_7D       4 000016C4 00000001     I                 1850 1851
+DER_P_3D      2 00000D58 00000001     I                 1113 1114
+DIFFERENCE
+              2 000000A6 00000001     H  H                59   49B
+DR_P_1D       2 0000086C 00000001     I                  728  729
+D2            1 000000C0 00000001 A   U                  161 1146M 1148  1157  1159  1168M 1170  1179  1181  1190X 1192
+                                                             1201B 1203  1212B 1214  1223B 1225  1234B 1236  1245B 1247
+                                                             1256B 1258  1267B 1269  1278B 1280  1289B 1291  1300B 1302
+                                                             1311B 1313  1322B 1324  1333B 1335  1344B 1346  1355B 1357
+                                                             1366B 1368  1377B 1379  1388B 1390  1399B 1401  1410  1412
+                                                             1421  1423  1432  1434  1443  1445  1454  1456  1465B 1467
+                                                             1476M 1478  1487  1489  1498M 1500  1509  1511  1520  1522
+                                                             1531  1533  1542  1544  1553  1555  1564  1566  1575  1577
+                                                             1586  1588  1597  1599  1608  1610  1619  1621  1630  1632
+                                                             1641  1643  1652M 1654  1663  1665  1674  1676  1685  1687
+                                                             1696  1698  1707  1709  1718  1720  1729  1731  1740  1742
+                                                             1751  1753  1762M 1764  1773  1775  1784  1786  1795  1797
+                                                             1806  1808  1817  1819  1828  1830  1839  1841  1850  1852
+                                                             1861  1863  1872  1874
+EX_P_44       4 00000E54 00000001     I                 1190 1191
+HDR_P_24      2 00000968 00000001     I                  805  806
+HER_P_34      2 00000BCC 00000001     I                  992  993
+IC_P_43       4 00000E30 00000001     I                 1179 1180
+I1            1 00000001 00000001 A   U                  155  519   521
+L_P_58        4 0000131C 00000001     I                 1564 1565
+LA_P_41       4 00000DE8 00000001     I                 1157 1158
+LAE_P_51      4 00001268 00000001     I                 1509 1510
+LCDR_P_23
+              2 00000944 00000001     I                  794  795
+LCER_P_33
+              2 00000BA8 00000001     I                  981  982
+LCR_P_13      2 00000704 00000001     I                  618  619
+LD_P_68       4 00001484 00000001     I                 1674 1675
+LDR_P_28      2 00000A1C 00000001     I                  860  861
+LDXR_P_25
+              2 0000098C 00000001     I                  816  817
+LE_P_78       4 000015EC 00000001     I                 1784 1785
+LEDR_P_35
+              2 00000BF0 00000001     I                 1003 1004
+»
+                               Ordinary Symbol and Literal Cross Reference                                     Page   41
+Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2020/11/07 11.03
+LER_P_38      2 00000C80 00000001     I                 1047 1048
+LH_P_48       4 00001124 00000001     I                 1410 1411
+LNDR_P_21
+              2 000008FC 00000001     I                  772  773
+LNER_P_31
+              2 00000B60 00000001     I                  959  960
+LNR_P_11      2 000006BC 00000001     I                  596  597
+LPDR_P_20
+              2 000008D8 00000001     I                  761  762
+LPER_P_30
+              2 00000B3C 00000001     I                  948  949
+LPR_P_10      2 00000698 00000001     I                  585  586
+LR_P_18       2 000007B8 00000001     I                  673  674
+LRDR_P_25
+              2 000009B0 00000001     I                  827  828
+LRER_P_35
+              2 00000C14 00000001     I                 1014 1015
+LTDR_P_22
+              2 00000920 00000001     I                  783  784
+LTER_P_32
+              2 00000B84 00000001     I                  970  971
+LTR_P_12      2 000006E0 00000001     I                  607  608
+M_P_5C        4 000013AC 00000001     I                 1608 1609
+MD_P_6C       4 00001514 00000001     I                 1718 1719
+MDE_P_7C      4 0000167C 00000001     I                 1828 1829
+MDER_P_3C
+              2 00000D10 00000001     I                 1091 1092
+MDR_P_2C      2 00000AAC 00000001     I                  904  905
+ME_P_7C       4 000016A0 00000001     I                 1839 1840
+MER_P_3C      2 00000D34 00000001     I                 1102 1103
+MH_P_4C       4 000011B4 00000001     I                 1454 1455
+MISSING       4 00000180 00000001     F  F               122   55    57M   87    96
+MR_P_1C       2 00000848 00000001     I                  717  718
+MS_P_71       4 000015C8 00000001     I                 1773 1774
+MVCL_P_0E
+              2 00000650 00000001     I                  563  564
+MXD_P_67      4 00001460 00000001     I                 1663 1664
+MXDR_P_27
+              2 000009F8 00000001     I                  849  850
+MXR_P_26      2 000009D4 00000001     I                  838  839
+M1            1 0000000B 00000001 A   U                  149  332   334  1223  1225
+N_P_54        4 0000128C 00000001     I                 1520 1521
+NO_MISSING
+              1 0000011A 00000001     U                   98   89B
+NO_SNAPS      2 00000164 00000001     H  H               109   97B  101B
+NOP_P_470
+              4 00000EE4 00000001     I                 1234 1235
+NOPR_P_070
+              2 00000380 00000001     I                  343  344
+NR_P_14       2 00000728 00000001     I                  629  630
+O_P_56        4 000012D4 00000001     I                 1542 1543
+OR_P_16       2 00000770 00000001     I                  651  652
+PFPO_P_010A
+              2 00000218 00000001     I                  233  234
+PR_P_0101
+»
+                               Ordinary Symbol and Literal Cross Reference                                     Page   42
+Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2020/11/07 11.03
+              2 00000188 00000001     I                  189  190
+PTFF_P_0104
+              2 000001D0 00000001     I                  211  212
+R1            1 00000001 00000001 A   U                  126  299   301   310M  312   321M  323   530M  532   541M  543
+                                                              552M  554   585M  587   596M  598   607M  609   618M  620
+                                                              629M  631   640   642   651M  653   662M  664   673M  675
+                                                              684   686   695M  697   706M  708   739M  741   750M  752
+                                                              761M  763   772M  774   783M  785   794M  796   805M  807
+                                                              849M  851   860M  862   871   873   882M  884   893M  895
+                                                              904M  906   915M  917   926M  928   937M  939   948M  950
+                                                              959M  961   970M  972   981M  983   992M  994  1003M 1005
+                                                             1014M 1016  1047M 1049  1058  1060  1069M 1071  1080M 1082
+                                                             1091M 1093  1102M 1104  1113M 1115  1124M 1126  1135M 1137
+                                                             1146  1148  1157M 1159  1168  1170  1179M 1181  1190  1192
+                                                             1201M 1203  1212M 1214  1410M 1412  1421  1423  1432M 1434
+                                                             1443M 1445  1454M 1456  1465M 1467  1476  1478  1487M 1489
+                                                             1498  1500  1509M 1511  1520M 1522  1531  1533  1542M 1544
+                                                             1553M 1555  1564M 1566  1575  1577  1586M 1588  1597M 1599
+                                                             1630M 1632  1641M 1643  1652  1654  1663M 1665  1674M 1676
+                                                             1685  1687  1696M 1698  1707M 1709  1718M 1720  1729M 1731
+                                                             1740M 1742  1751M 1753  1762  1764  1773M 1775  1784M 1786
+                                                             1795  1797  1806M 1808  1817M 1819  1828M 1830  1839M 1841
+                                                             1850M 1852  1861M 1863  1872M 1874
+R12           1 0000000C 00000001 A   U                  137   46    48    48    51    53B   63   185M  196M  207M  218M
+                                                              229M  240M  251M  262M  273M  284M  295M  306M  317M  328M
+                                                              339M  350M  361M  372M  383M  394M  405M  416M  427M  438M
+                                                              449M  460M  471M  482M  493M  504M  515M  526M  537M  548M
+                                                              559M  570M  581M  592M  603M  614M  625M  636M  647M  658M
+                                                              669M  680M  691M  702M  713M  724M  735M  746M  757M  768M
+                                                              779M  790M  801M  812M  823M  834M  845M  856M  867M  878M
+                                                              889M  900M  911M  922M  933M  944M  955M  966M  977M  988M
+                                                              999M 1010M 1021M 1032M 1043M 1054M 1065M 1076M 1087M 1098M
+                                                             1109M 1120M 1131M 1142M 1153M 1164M 1175M 1186M 1197M 1208M
+                                                             1219M 1230M 1241M 1252M 1263M 1274M 1285M 1296M 1307M 1318M
+                                                             1329M 1340M 1351M 1362M 1373M 1384M 1395M 1406M 1417M 1428M
+                                                             1439M 1450M 1461M 1472M 1483M 1494M 1505M 1516M 1527M 1538M
+                                                             1549M 1560M 1571M 1582M 1593M 1604M 1615M 1626M 1637M 1648M
+                                                             1659M 1670M 1681M 1692M 1703M 1714M 1725M 1736M 1747M 1758M
+                                                             1769M 1780M 1791M 1802M 1813M 1824M 1835M 1846M 1857M 1868M
+R2            1 00000002 00000001 A   U                  127   63M   64    70   310B  312   321B  323   332B  334   343B
+                                                              345   354B  356   365B  367   376B  378   387B  389   398B
+                                                              400   409B  411   420B  422   431B  433   442B  444   453B
+                                                              455   464B  466   475B  477   486B  488   497B  499   508B
+                                                              510   530B  532   541B  543   552B  554   563M  565   574M
+                                                              576   585   587   596   598   607   609   618   620   629
+                                                              631   640   642   651   653   662   664   673   675   684
+                                                              686   695   697   706   708   717M  719   728M  730   739
+                                                              741   750   752   761   763   772   774   783   785   794
+                                                              796   805   807   849   851   860   862   871   873   882
+                                                              884   893   895   904   906   915   917   926   928   937
+                                                              939   948   950   959   961   970   972   981   983   992
+                                                              994  1003  1005  1014  1016  1047  1049  1058  1060  1069
+                                                             1071  1080  1082  1091  1093  1102  1104  1113  1115  1124
+                                                             1126  1135  1137  1608M 1610  1619M 1621
+R3            1 00000003 00000001 A   U                  128   64M   73
+»
+                               Ordinary Symbol and Literal Cross Reference                                     Page   43
+Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2020/11/07 11.03
+R4            1 00000004 00000001 A   U                  129   55M   56M   56    57    60M   61M   61    62    76    87M
+                                                               88M   88    96M   99M  100M  100   108M  112   563M  565
+                                                              574M  576   717   719   728   730   816M  818   827M  829
+                                                              838M  840  1025M 1027  1036M 1038
+R8            1 00000008 00000001 A   U                  133  816   818   827   829   838   840  1025  1027  1036  1038
+S_P_5B        4 00001388 00000001     I                 1597 1598
+SAM24_P_010C
+              2 00000260 00000001     I                  255  256
+SAM31_P_010D
+              2 00000284 00000001     I                  266  267
+SAM64_P_010E
+              2 000002A8 00000001     I                  277  278
+SCKPF_S_0107
+              2 000001F4 00000001     I                  222  223
+SD_P_6B       4 000014F0 00000001     I                 1707 1708
+SDR_P_2B      2 00000A88 00000001     I                  893  894
+SE_P_7B       4 00001658 00000001     I                 1817 1818
+SER_P_3B      2 00000CEC 00000001     I                 1080 1081
+SH_P_4B       4 00001190 00000001     I                 1443 1444
+SL_P_5F       4 00001418 00000001     I                 1641 1642
+SLR_P_1F      2 000008B4 00000001     I                  750  751
+SNAPS         4 0000017C 00000001     F  F               121   60    62M   99   108
+SPM_P_04      2 000002F0 00000001     I                  299  300
+SR_P_1B       2 00000824 00000001     I                  706  707
+ST_P_50       4 00001244 00000001     I                 1498 1499
+START         2 00000184 00000001     H  H               176   43B
+STC_P_42      4 00000E0C 00000001     I                 1168 1169
+STD_P_60      4 0000143C 00000001     I                 1652 1653
+STE_P_70      4 000015A4 00000001     I                 1762 1763
+STH_P_40      4 00000DC4 00000001     I                 1146 1147
+SU_P_7F       4 0000170C 00000001     I                 1872 1873
+SUR_P_3F      2 00000DA0 00000001     I                 1135 1136
+SVC_P_0A      2 000005C0 00000001     I                  519  520
+SW_P_6F       4 00001580 00000001     I                 1751 1752
+SWR_P_2F      2 00000B18 00000001     I                  937  938
+SXR_P_37      2 00000C5C 00000001     I                 1036 1037
+TAM_P_010B
+              2 0000023C 00000001     I                  244  245
+TRAP2_S_01FF
+              2 000002CC 00000001     I                  288  289
+UNDEFINED
+              2 00000096 00000001     H  H                54   47B
+UPT_S_0102
+              2 000001AC 00000001     I                  200  201
+WRAPUP        2 000000D4 00000001     H  H                86   52B
+WTO#0008_EOT
+              1 00000110 00000001     U                   93   91B   92
+WTO#0009_EOT
+              1 0000015D 00000001     U                  105  103B  104
+X_P_57        4 000012F8 00000001     I                 1553 1554
+XR_P_17       2 00000794 00000001     I                  662  663
+X2            1 0000000E 00000001 A   U                  171 1146  1148  1157  1159  1168  1170  1179  1181  1190  1192
+                                                             1201B 1203  1212B 1214  1223B 1225  1234B 1236  1245B 1247
+                                                             1256B 1258  1267B 1269  1278B 1280  1289B 1291  1300B 1302
+                                                             1311B 1313  1322B 1324  1333B 1335  1344B 1346  1355B 1357
+»
+                               Ordinary Symbol and Literal Cross Reference                                     Page   44
+Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2020/11/07 11.03
+                                                             1366B 1368  1377B 1379  1388B 1390  1399B 1401  1410  1412
+                                                             1421  1423  1432  1434  1443  1445  1454  1456  1465B 1467
+                                                             1476  1478  1487  1489  1498  1500  1509  1511  1520  1522
+                                                             1531  1533  1542  1544  1553  1555  1564  1566  1575  1577
+                                                             1586  1588  1597  1599  1608  1610  1619  1621  1630  1632
+                                                             1641  1643  1652  1654  1663  1665  1674  1676  1685  1687
+                                                             1696  1698  1707  1709  1718  1720  1729  1731  1740  1742
+                                                             1751  1753  1762  1764  1773  1775  1784  1786  1795  1797
+                                                             1806  1808  1817  1819  1828  1830  1839  1841  1850  1852
+                                                             1861  1863  1872  1874
+ZOPCHECK      1 00000000 00000001     J                   31   41U
+=C'END'       3 00000178 00000001     C                  120   51
+»
+                                  Unreferenced Symbols Defined in CSECTs                                       Page   45
+  Defn  Symbol                                                                              HLASM R6.0  2020/11/07 11.03
+   166  B1
+   168  B3
+   169  B4
+   164  DH1
+   165  DH2
+   160  D1
+   162  D3
+   163  D4
+   156  I2
+   157  I3
+   158  I4
+   159  I5
+   173  LP1
+   175  LP2
+   172  L1
+   174  L2
+   150  M2
+   151  M3
+   152  M4
+   153  M5
+   154  M6
+   520  P_0A_SVC
+   531  P_0B_BSM
+   553  P_0D_BASR
+   564  P_0E_MVCL
+   575  P_0F_CLCL
+   234  P_010A_PFPO
+   245  P_010B_TAM
+   256  P_010C_SAM24
+   267  P_010D_SAM31
+   278  P_010E_SAM64
+   190  P_0101_PR
+   212  P_0104_PTFF
+   300  P_04_SPM
+   311  P_05_BALR
+   322  P_06_BCTR
+   333  P_07_BCR
+   454  P_07B_BNLR
+   465  P_07B_BNMR
+   476  P_07D_BNHR
+   487  P_07D_BNPR
+   498  P_07E_BNOR
+   509  P_07F_BR
+   344  P_070_NOPR
+   355  P_071_BOR
+   366  P_072_BHR
+   377  P_072_BPR
+   388  P_074_BLR
+   399  P_074_BMR
+   410  P_077_BNER
+   421  P_077_BNZR
+   432  P_078_BER
+   443  P_078_BZR
+   696  P_1A_AR
+   707  P_1B_SR
+»
+                                  Unreferenced Symbols Defined in CSECTs                                       Page   46
+  Defn  Symbol                                                                              HLASM R6.0  2020/11/07 11.03
+   718  P_1C_MR
+   729  P_1D_DR
+   740  P_1E_ALR
+   751  P_1F_SLR
+   586  P_10_LPR
+   597  P_11_LNR
+   608  P_12_LTR
+   619  P_13_LCR
+   630  P_14_NR
+   641  P_15_CLR
+   652  P_16_OR
+   663  P_17_XR
+   674  P_18_LR
+   685  P_19_CR
+   883  P_2A_ADR
+   894  P_2B_SDR
+   905  P_2C_MDR
+   916  P_2D_DDR
+   927  P_2E_AWR
+   938  P_2F_SWR
+   762  P_20_LPDR
+   773  P_21_LNDR
+   784  P_22_LTDR
+   795  P_23_LCDR
+   806  P_24_HDR
+   817  P_25_LDXR
+   828  P_25_LRDR
+   839  P_26_MXR
+   850  P_27_MXDR
+   861  P_28_LDR
+   872  P_29_CDR
+  1070  P_3A_AER
+  1081  P_3B_SER
+  1092  P_3C_MDER
+  1103  P_3C_MER
+  1114  P_3D_DER
+  1125  P_3E_AUR
+  1136  P_3F_SUR
+   949  P_30_LPER
+   960  P_31_LNER
+   971  P_32_LTER
+   982  P_33_LCER
+   993  P_34_HER
+  1004  P_35_LEDR
+  1015  P_35_LRER
+  1026  P_36_AXR
+  1037  P_37_SXR
+  1048  P_38_LER
+  1059  P_39_CER
+  1433  P_4A_AH
+  1444  P_4B_SH
+  1455  P_4C_MH
+  1466  P_4D_BAS
+  1477  P_4E_CVD
+  1488  P_4F_CVB
+»
+                                  Unreferenced Symbols Defined in CSECTs                                       Page   47
+  Defn  Symbol                                                                              HLASM R6.0  2020/11/07 11.03
+  1147  P_40_STH
+  1158  P_41_LA
+  1169  P_42_STC
+  1180  P_43_IC
+  1191  P_44_EX
+  1202  P_45_BAL
+  1213  P_46_BCT
+  1224  P_47_BC
+  1345  P_47B_BNL
+  1356  P_47B_BNM
+  1367  P_47D_BNH
+  1378  P_47D_BNP
+  1389  P_47E_BNO
+  1400  P_47F_B
+  1235  P_470_NOP
+  1246  P_471_BO
+  1257  P_472_BH
+  1268  P_472_BP
+  1279  P_474_BL
+  1290  P_474_BM
+  1301  P_477_BNE
+  1312  P_477_BNZ
+  1323  P_478_BE
+  1334  P_478_BZ
+  1411  P_48_LH
+  1422  P_49_CH
+  1587  P_5A_A
+  1598  P_5B_S
+  1609  P_5C_M
+  1620  P_5D_D
+  1631  P_5E_AL
+  1642  P_5F_SL
+  1499  P_50_ST
+  1510  P_51_LAE
+  1521  P_54_N
+  1532  P_55_CL
+  1543  P_56_O
+  1554  P_57_X
+  1565  P_58_L
+  1576  P_59_C
+  1697  P_6A_AD
+  1708  P_6B_SD
+  1719  P_6C_MD
+  1730  P_6D_DD
+  1741  P_6E_AW
+  1752  P_6F_SW
+  1653  P_60_STD
+  1664  P_67_MXD
+  1675  P_68_LD
+  1686  P_69_CD
+  1807  P_7A_AE
+  1818  P_7B_SE
+  1829  P_7C_MDE
+  1840  P_7C_ME
+  1851  P_7D_DE
+»
+                                  Unreferenced Symbols Defined in CSECTs                                       Page   48
+  Defn  Symbol                                                                              HLASM R6.0  2020/11/07 11.03
+  1862  P_7E_AU
+  1873  P_7F_SU
+  1763  P_70_STE
+  1774  P_71_MS
+  1785  P_78_LE
+  1796  P_79_CE
+   142  RI2
+   143  RI3
+   144  RXB
+   125  R0
+   135  R10
+   136  R11
+   138  R13
+   139  R14
+   140  R15
+   130  R5
+   131  R6
+   132  R7
+   134  R9
+   542  S_0C_BASSM
+   289  S_01FF_TRAP2
+   201  S_0102_UPT
+   223  S_0107_SCKPF
+   145  V1
+   146  V2
+   147  V3
+   148  V4
+   170  X1
+»
+                                                      Using Map                                                Page   49
+                                                                                            HLASM R6.0  2020/11/07 11.03
+  Stmt  -----Location----- Action ----------------Using----------------- Reg Max     Last Label and Using Text
+          Count      Id           Type          Value    Range     Id        Disp    Stmt
+    41  00000072  00000001 USING  ORDINARY    00000008 00001000 00000001  13 0017C   1868 ZOPCHECK+8,13
+»
+                                   General Purpose Register Cross Reference                                    Page   50
+ Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R6.0  2020/11/07 11.03
+    0(0)      32    66    76M   78M   83M  200M  211   222   233
+    1(1)      32    66    79M   83M   91M  103M  200M  211   233M  299   310M  321M  530M  541M  552M  585M  596M  607M
+             618M  629M  640   651M  662M  673M  684   695M  706M  739M  750M 1146  1157M 1168  1179M 1190  1201M 1212M
+            1410M 1421  1432M 1443M 1454M 1465M 1476  1487M 1498  1509M 1520M 1531  1542M 1553M 1564M 1575  1586M 1597M
+            1630M 1641M 1773M
+    2(2)      32    63M   64N   66    70    83M  116M  189M  200M  310B  321B  332B  343B  354B  365B  376B  387B  398B
+             409B  420B  431B  442B  453B  464B  475B  486B  497B  508B  530B  541B  552B  563M  574M  585   596   607
+             618   629   640   651   662   673   684   695   706   717M  728M  739   750  1608M 1619M
+    3(3)      32    64M   66    73    83M  116M  189M  200M  563M  574M  717M  728M 1608M 1619M
+    4(4)      32    55M   56M   56N   57    60M   61M   61N   62    66    76    83M   87M   88M   88    96M   99M  100M
+             100   108M  112   116M  189M  200   563M  574M  717   728
+    5(5)      32    66    83M  116M  189M  200M  563M  574M
+    6(6)      32    66    83M  116M  189M
+    7(7)      32    66    83M  116M  189M
+    8(8)      32    66    83M  116M  189M
+    9(9)      32    66    83M  116M  189M
+   10(A)      32    66    83M  116M  189M
+   11(B)      32    66    83M  116M  189M
+   12(C)      32    46    48    48    51    53N   63    66    83M  116M  185M  189M  196M  207M  218M  229M  240M  251M
+             262M  273M  284M  295M  306M  317M  328M  339M  350M  361M  372M  383M  394M  405M  416M  427M  438M  449M
+             460M  471M  482M  493M  504M  515M  526M  537M  548M  559M  570M  581M  592M  603M  614M  625M  636M  647M
+             658M  669M  680M  691M  702M  713M  724M  735M  746M  757M  768M  779M  790M  801M  812M  823M  834M  845M
+             856M  867M  878M  889M  900M  911M  922M  933M  944M  955M  966M  977M  988M  999M 1010M 1021M 1032M 1043M
+            1054M 1065M 1076M 1087M 1098M 1109M 1120M 1131M 1142M 1146  1153M 1157  1164M 1168  1175M 1179  1186M 1190
+            1197M 1201  1208M 1212  1219M 1223  1230M 1234  1241M 1245  1252M 1256  1263M 1267  1274M 1278  1285M 1289
+            1296M 1300  1307M 1311  1318M 1322  1329M 1333  1340M 1344  1351M 1355  1362M 1366  1373M 1377  1384M 1388
+            1395M 1399  1406M 1410  1417M 1421  1428M 1432  1439M 1443  1450M 1454  1461M 1465  1472M 1476  1483M 1487
+            1494M 1498  1505M 1509  1516M 1520  1527M 1531  1538M 1542  1549M 1553  1560M 1564  1571M 1575  1582M 1586
+            1593M 1597  1604M 1608  1615M 1619  1626M 1630  1637M 1641  1648M 1652  1659M 1663  1670M 1674  1681M 1685
+            1692M 1696  1703M 1707  1714M 1718  1725M 1729  1736M 1740  1747M 1751  1758M 1762  1769M 1773  1780M 1784
+            1791M 1795  1802M 1806  1813M 1817  1824M 1828  1835M 1839  1846M 1850  1857M 1861  1868M 1872
+   13(D)      32    38N   39    40M   41U   66    83   114M  114   115   116   189M
+   14(E)      32    66    70M   83M  115M  117B  189M 1146N 1157N 1168N 1179N 1190N 1201N 1212N 1223N 1234N 1245N 1256N
+            1267N 1278N 1289N 1300N 1311N 1322N 1333N 1344N 1355N 1366N 1377N 1388N 1399N 1410N 1421N 1432N 1443N 1454N
+            1465N 1476N 1487N 1498N 1509N 1520N 1531N 1542N 1553N 1564N 1575N 1586N 1597N 1608N 1619N 1630N 1641N 1652N
+            1663N 1674N 1685N 1696N 1707N 1718N 1729N 1740N 1751N 1762N 1773N 1784N 1795N 1806N 1817N 1828N 1839N 1850N
+            1861N 1872N
+   15(F)      32    33M   33N   38    39N   40    66    73M   83M  112M
+»
+                                  Diagnostic Cross Reference and Assembler Summary                             Page   51
+                                                                                            HLASM R6.0  2020/11/07 11.03
+     No Statements Flagged in this Assembly
+HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UI71794
+SYSTEM: z/OS 02.04.00              JOBNAME: ZOPCHK7F    STEPNAME: ASM        PROCSTEP: (NOPROC)
+Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1
+Data Sets Allocated for this Assembly
+ Con DDname   Data Set Name                                Volume  Member
+  P1 SYSIN    Z83004.ASM                                   VPWRKZ  ZOPCHK7F
+  L1 SYSLIB   SYS1.MACLIB                                  VTMVSC
+     SYSLIN   SYS20312.T110346.RA000.ZOPCHK7F.OBJ.H01      VPWRKE
+     SYSPRINT Z83004.ZOPCHK7F.JOB01219.D0000102.?
+
+  26852K allocated to Buffer Pool       Storage required     304K
+   1884 Primary Input Records Read            0 Library Records Read                  0 Work File Reads
+      0 ASMAOPT Records Read               2688 Primary Print Records Written         0 Work File Writes
+    472 Object Records Written                0 ADATA Records Written
+Assembly Start Time: 11.03.47 Stop Time: 11.03.47 Processor Time: 00.00.00.0037
+Return Code 000

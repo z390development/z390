@@ -1,0 +1,1617 @@
+         ZCOBOL PGM='cics\TESTVSC2',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :48:47,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTVSC2_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * TEST VSAM 2 (COBOL)
+*      * RRDS/FIX MYFILE06 READ/RRN  3 REC  3  Merry Wives of Windsor
+*      * RRDS/FIX MYFILE06 READ/RRN  2 REC  2  Two Gentlemen of Verona
+*      * RRDS/FIX MYFILE06 READ/RRN  1 REC  1  The Tempest
+*      * RRDS/VAR MYFILE07 READ/RRN  5 REC  1  All's Well That Ends WelX
+               l
+*      * RRDS/VAR MYFILE07 READ/RRN 10 REC  3  The Winter's Tale
+*      * NOTFND       CONDITION RAISED (READ INVALID RRN)
+*      * ILLOGIC      CONDITION RAISED (READ WITH RBA)
+*      * LENGERR      CONDITION RAISED         The Ta
+*      * RRDS/VAR MYFILE07 BROWSE FORWARD RRN 7-11 (READ RECS 2-4)
+*      *                                       The Taming of the Shrew
+*      *                                       The Winter's Tale
+*      *                                       The Comedy of Errors
+*      * RRDS/VAR MYFILE07 BROWSE BACK    RRN 11-8 (READ RECS 4-2)
+*      *                                       The Comedy of Errors
+*      *                                       The Winter's Tale
+*      *                                       The Taming of the Shrew
+*      * RRDS/VAR MYFILE07 BROWSE RANDOM  RRN 17 (REC 7) NEXT
+*      *                                       First Part of Henry IV
+*      *                                  RRN 22 (REC 6) PREV
+*      *                                       Richard II
+*      *                                  RRN 1  (REC 1)
+*      *                                       All's Well That Ends WelX
+               l
+*      * ENDFILE      CONDITION RAISED (READNEXT RRN 99 BEYOND END)
+*      * ENDFILE      CONDITION RAISED (READPREV RRN 1)
+*      * RRDS COMPLEX TEST...DONE IN THIS SEQUENCE
+*      *    BROWSE FORWARD MYFILE06 RRN 6-9  (RECS 5-7)
+*      *    BROWSE BACK    MYFILE06 RRN 10-6 (RECS 7-5)
+*      *                                       Measure for Measure
+*      *                                       A Midsummer Night's DreaX
+               m
+*      *                                       Much Ado About Nothing
+*      *                                       Much Ado About Nothing
+*      *                                       A Midsummer Night's DreaX
+               m
+*      *                                       Measure for Measure
+*      * RRDS/VAR MYFILE07, RRN 10 (RECS 3-5), RESETBR, RRN 99
+*      *                                                     (RECS 10-8X
+               )
+*      *                                       The Winter's Tale
+*      *                                       The Comedy of Errors
+*      *                                       King John
+*      *                                       Henry V
+*      *                                       Second Part of Henry IV
+*      *                                       First Part of Henry IV
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTVSC2.
+         PROGRAM_ID TESTVSC2
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*         77  MYDATA   PIC X(50).
+         WS      77,MYDATA,PIC,X(50)
+*         77  MYLEN    PIC 9(4)  COMP.
+         WS      77,MYLEN,PIC,9(4),COMP
+*         77  MYRID    PIC 9(8)  COMP.
+         WS      77,MYRID,PIC,9(8),COMP
+*         77  MYRID1   PIC 9(8)  COMP.
+         WS      77,MYRID1,PIC,9(8),COMP
+*         77  MYRID2   PIC 9(9)  COMP.
+         WS      77,MYRID2,PIC,9(9),COMP
+*         77  FOP1     PIC X(4)   VALUE X'C311C260'.
+         WS      77,FOP1,PIC,X(4),VALUE,X'C311C260'
+*         77  FOP2     PIC X(4)   VALUE X'C311C3F0'.
+         WS      77,FOP2,PIC,X(4),VALUE,X'C311C3F0'
+*         77  FOP3     PIC X(4)   VALUE X'C311C540'.
+         WS      77,FOP3,PIC,X(4),VALUE,X'C311C540'
+*         77  FOP4     PIC X(4)   VALUE X'C311C650'.
+         WS      77,FOP4,PIC,X(4),VALUE,X'C311C650'
+*         77  FOP5     PIC X(4)   VALUE X'C311C760'.
+         WS      77,FOP5,PIC,X(4),VALUE,X'C311C760'
+*         77  FOP6     PIC X(4)   VALUE X'C311C8F0'.
+         WS      77,FOP6,PIC,X(4),VALUE,X'C311C8F0'
+*         77  FOP7     PIC X(4)   VALUE X'C3114A40'.
+         WS      77,FOP7,PIC,X(4),VALUE,X'C3114A40'
+*         77  FOP8     PIC X(4)   VALUE X'C3114B50'.
+         WS      77,FOP8,PIC,X(4),VALUE,X'C3114B50'
+*         77  FOP9     PIC X(4)   VALUE X'C3114C60'.
+         WS      77,FOP9,PIC,X(4),VALUE,X'C3114C60'
+*         77  FOP10    PIC X(4)   VALUE X'C3114DF0'.
+         WS      77,FOP10,PIC,X(4),VALUE,X'C3114DF0'
+*         77  FOP11    PIC X(4)   VALUE X'C3114F40'.
+         WS      77,FOP11,PIC,X(4),VALUE,X'C3114F40'
+*         77  FOP12    PIC X(4)   VALUE X'C3115050'.
+         WS      77,FOP12,PIC,X(4),VALUE,X'C3115050'
+*         77  FOP13    PIC X(4)   VALUE X'C311D160'.
+         WS      77,FOP13,PIC,X(4),VALUE,X'C311D160'
+*         77  FOP14    PIC X(4)   VALUE X'C311D2F0'.
+         WS      77,FOP14,PIC,X(4),VALUE,X'C311D2F0'
+*         77  FOP15    PIC X(4)   VALUE X'C311D440'.
+         WS      77,FOP15,PIC,X(4),VALUE,X'C311D440'
+*         77  FOP16    PIC X(4)   VALUE X'C311D550'.
+         WS      77,FOP16,PIC,X(4),VALUE,X'C311D550'
+*         77  FOP17    PIC X(4)   VALUE X'C311D660'.
+         WS      77,FOP17,PIC,X(4),VALUE,X'C311D660'
+*         77  FOP18    PIC X(4)   VALUE X'C311D7F0'.
+         WS      77,FOP18,PIC,X(4),VALUE,X'C311D7F0'
+*         77  FOP19    PIC X(4)   VALUE X'C311D940'.
+         WS      77,FOP19,PIC,X(4),VALUE,X'C311D940'
+*         77  FOP20    PIC X(4)   VALUE X'C3115A50'.
+         WS      77,FOP20,PIC,X(4),VALUE,X'C3115A50'
+*         77  FOP21    PIC X(4)   VALUE X'C3115B60'.
+         WS      77,FOP21,PIC,X(4),VALUE,X'C3115B60'
+*         77  FOP1C2   PIC X(4)   VALUE X'C311C3C9'.
+*      * RRDS MYFILE06 READ   RBA REC  3
+         WS      77,FOP1C2,PIC,X(4),VALUE,X'C311C3C9'
+*         01  FOPLINE.
+         WS      01,FOPLINE
+*             02  FOPSBA   PIC X(4).
+         WS        02,FOPSBA,PIC,X(4)
+*             02  FOPTYPE  PIC X(4).
+         WS        02,FOPTYPE,PIC,X(4)
+*             02  FILLER   PIC X     VALUE '/'.
+         WS        02,FILLER,PIC,X,VALUE,'/'
+*             02  FOPFIXVR PIC X(3).
+         WS        02,FOPFIXVR,PIC,X(3)
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FOPNAME  PIC X(8).
+         WS        02,FOPNAME,PIC,X(8)
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FOPFUNC  PIC X(8)  VALUE 'READNEXT'.
+         WS        02,FOPFUNC,PIC,X(8),VALUE,'READNEXT'
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FOPMETH  PIC X(4)  VALUE 'XRBA'.
+         WS        02,FOPMETH,PIC,X(4),VALUE,'XRBA'
+*             02  FILLER   PIC X(4)  VALUE ' REC'.
+         WS        02,FILLER,PIC,X(4),VALUE,' REC'
+*             02  FOPRECNO PIC X(3).
+         WS        02,FOPRECNO,PIC,X(3)
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FOPSEP   PIC X     VALUE SPACE.
+         WS        02,FOPSEP,PIC,X,VALUE,SPACE
+*         77  FOPL     PIC 9(4) COMP.
+         WS      77,FOPL,PIC,9(4),COMP
+*         01  FHAND.
+         WS      01,FHAND
+*             02  FHASBA   PIC X(4).
+         WS        02,FHASBA,PIC,X(4)
+*             02  FHANDCON.
+         WS        02,FHANDCON
+*                 03  FILLER   PIC X(8) VALUE SPACES.
+         WS          03,FILLER,PIC,X(8),VALUE,SPACES
+*                 03  FHALNG   PIC X(2).
+         WS          03,FHALNG,PIC,X(2)
+*                 03  FILLER   PIC X(2) VALUE SPACES.
+         WS          03,FILLER,PIC,X(2),VALUE,SPACES
+*             02  FILLER   REDEFINES FHANDCON.
+         WS        02,FILLER,REDEFINES,FHANDCON
+*                 03  FILLER   PIC X(8) VALUE SPACES.
+         WS          03,FILLER,PIC,X(8),VALUE,SPACES
+*                 03  FHAILL   PIC X(3).
+         WS          03,FHAILL,PIC,X(3)
+*                 03  FILLER   PIC X    VALUE SPACE.
+         WS          03,FILLER,PIC,X,VALUE,SPACE
+*             02  FILLER   PIC X(18) VALUE ' CONDITION RAISED '.
+         WS        02,FILLER,PIC,X(18),VALUE,' CONDITION RAISED '
+*             02  FHFDBK1  PIC X(2).
+         WS        02,FHFDBK1,PIC,X(2)
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  FHFDBK2  PIC X(2).
+         WS        02,FHFDBK2,PIC,X(2)
+*             02  FILLER   PIC X(4)  VALUE SPACES.
+         WS        02,FILLER,PIC,X(4),VALUE,SPACES
+*             02  FHSEP    PIC X     VALUE SPACE.
+         WS        02,FHSEP,PIC,X,VALUE,SPACE
+*         77  FHANDL   PIC 9(4) COMP.
+         WS      77,FHANDL,PIC,9(4),COMP
+*         01  ENDMSG.
+         WS      01,ENDMSG
+*             02  FILLER   PIC X(4)  VALUE X'C3115CF0'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3115CF0'
+*             02  FILLER   PIC X(31)
+*                          VALUE 'TESTVSC2 COMPLETED, PRESS CLEAR'.
+         WS        02,FILLER,PIC,X(31),VALUE,'TESTVSC2 COMPLETED, PRESSX
+                CLEAR'
+*         77  ENDMSGL  PIC 9(4) COMP.
+         WS      77,ENDMSGL,PIC,9(4),COMP
+*         01  FILLER.
+         WS      01,FILLER
+*             02  WORK1A   PIC 9(4).
+         WS        02,WORK1A,PIC,9(4)
+*             02  FILLER   REDEFINES WORK1A.
+         WS        02,FILLER,REDEFINES,WORK1A
+*                 03  FILLER   PIC X(2).
+         WS          03,FILLER,PIC,X(2)
+*                 03  WORK1B   PIC X(2).
+         WS          03,WORK1B,PIC,X(2)
+*             02  FILLER   REDEFINES WORK1A.
+         WS        02,FILLER,REDEFINES,WORK1A
+*                 03  FILLER   PIC X(1).
+         WS          03,FILLER,PIC,X(1)
+*                 03  WORK1C   PIC X(3).
+         WS          03,WORK1C,PIC,X(3)
+*         01  WORK2.
+         WS      01,WORK2
+*             02  FILLER PIC X.
+         WS        02,FILLER,PIC,X
+*             02  FDBK1  PIC X.
+         WS        02,FDBK1,PIC,X
+*             02  FDBK2  PIC X.
+         WS        02,FDBK2,PIC,X
+*             02  FILLER PIC X(3).
+*      * GO TO DEPENDING CONTROL
+*      *   1=VSAMRTN1
+*      *   2=VSAMRTN2
+*      *   3=VSAMRTN3
+*      *   4=VSAMRTN4
+*      *   5=VSAMRTN5
+*      *   6=ABEND
+         WS        02,FILLER,PIC,X(3)
+*         77  DEPCTRL   PIC 9(4) COMP.
+         WS      77,DEPCTRL,PIC,9(4),COMP
+*         77  ENDFLENO  PIC 9(4) COMP.
+         WS      77,ENDFLENO,PIC,9(4),COMP
+*         77  LOOPCTRL  PIC 9(2) COMP.
+         WS      77,LOOPCTRL,PIC,9(2),COMP
+         LINKAGE SECTION
+         WS    01,DFHCOMMAREA
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*             MOVE LENGTH OF FOPLINE  TO FOPL.
+*ZC    172         MOVE  LENGTH,OF,FOPLINE,TO,FOPL
+         MOVE  LENGTH,OF,FOPLINE,TO,FOPL
+         PERIOD 
+*             SUBTRACT 1 FROM FOPL.
+*ZC    173         SUBTRACT 1,FROM,FOPL
+         SUBTRACT 1,FROM,FOPL
+         PERIOD 
+*             MOVE LENGTH OF FHAND    TO FHANDL.
+*ZC    174         MOVE  LENGTH,OF,FHAND,TO,FHANDL
+         MOVE  LENGTH,OF,FHAND,TO,FHANDL
+         PERIOD 
+*             SUBTRACT 1 FROM FHANDL.
+*ZC    175         SUBTRACT 1,FROM,FHANDL
+         SUBTRACT 1,FROM,FHANDL
+         PERIOD 
+*             MOVE LENGTH OF ENDMSG   TO ENDMSGL.
+*      *  CLI   FOPSEP+1,C' '      SEND LENGTH ADJUSTED ?
+*      *  BNE   NOTADJL            EXIT IF NOT
+*ZC    176         MOVE  LENGTH,OF,ENDMSG,TO,ENDMSGL
+         MOVE  LENGTH,OF,ENDMSG,TO,ENDMSGL
+         PERIOD 
+*             IF FOPSEP NOT = SPACE THEN GO TO NOTADJL.
+*ZC    179         IF    FOPSEP,NOT,=,SPACE,THEN
+         IF    FOPSEP,NOT,=,SPACE,THEN
+*      *  MVI   FOPSEP+1,C'|'      SET SEPARATOR
+*ZC    179         GO    TO,NOTADJL
+         GO    TO,NOTADJL
+         PERIOD 
+*             MOVE '|' TO FOPSEP.
+*      *  LH    R7,FOPL            MESSAGE LENGTH
+*      *  AHI   R7,1               LENGTHEN BY 1
+*      *  STH   R7,FOPL            STORE BACK
+*ZC    181         MOVE  '|',TO,FOPSEP
+         MOVE  '|',TO,FOPSEP
+         PERIOD 
+*             ADD 1 TO FOPL.
+*      * NOTADJL  EQU   *
+*ZC    185         ADD   1,TO,FOPL
+         ADD   1,TO,FOPL
+         PERIOD 
+*         NOTADJL.
+*      *  CLI   FHSEP,C' '         SEND CONDITION LENGTH ADJUSTED ?
+*      *  BNE   NOTADJC            EXIT IF NOT
+         LABEL NOTADJL
+*             IF FHSEP NOT = SPACE THEN GO TO NOTADJC.
+*ZC    190         IF    FHSEP,NOT,=,SPACE,THEN
+         IF    FHSEP,NOT,=,SPACE,THEN
+*      *  MVI   FHSEP,C'|'         SET SEPARATOR
+*ZC    190         GO    TO,NOTADJC
+         GO    TO,NOTADJC
+         PERIOD 
+*             MOVE '|' TO FHSEP.
+*      *  LH    R7,FHANDL          MESSAGE LENGTH
+*      *  AHI   R7,1               LENGTHEN BY 1
+*      *  STH   R7,FHANDL          STORE BACK
+*ZC    192         MOVE  '|',TO,FHSEP
+         MOVE  '|',TO,FHSEP
+         PERIOD 
+*             ADD 1 TO FHANDL.
+*      * NOTADJC  EQU   *
+*ZC    196         ADD   1,TO,FHANDL
+         ADD   1,TO,FHANDL
+         PERIOD 
+*         NOTADJC.
+*      *  MVC   FOPTYPE,=C'RRDS'   SET FILE TYPE IN MESSAGE
+*      *  MVC   FOPFIXVR,=C'FIX'   SET FIX/VAR IN MESSAGE
+*      *  MVC   FOPNAME,=C'MYFILE06' SET FILENAME IN MESSAGE
+*      *  MVC   FOPFUNC,=CL8'READ' SET FUNCTION IN MESSAGE
+*      *  MVC   FOPMETH,=CL4'RRN'  SET METHOD IN MESSAGE
+*      *  MVC   MYRID,=F'3'        RECORD 3
+*      *  MVC   MYLEN,=H'30'       SET MAXIMUM LENGTH
+         LABEL NOTADJC
+*             MOVE 'RRDS'     TO FOPTYPE.
+*ZC    206         MOVE  'RRDS',TO,FOPTYPE
+         MOVE  'RRDS',TO,FOPTYPE
+         PERIOD 
+*             MOVE 'FIX'      TO FOPFIXVR.
+*ZC    207         MOVE  'FIX',TO,FOPFIXVR
+         MOVE  'FIX',TO,FOPFIXVR
+         PERIOD 
+*             MOVE 'MYFILE06' TO FOPNAME.
+*ZC    208         MOVE  'MYFILE06',TO,FOPNAME
+         MOVE  'MYFILE06',TO,FOPNAME
+         PERIOD 
+*             MOVE 'READ    ' TO FOPFUNC.
+*ZC    209         MOVE  'READ    ',TO,FOPFUNC
+         MOVE  'READ    ',TO,FOPFUNC
+         PERIOD 
+*             MOVE 'RRN '     TO FOPMETH.
+*ZC    210         MOVE  'RRN ',TO,FOPMETH
+         MOVE  'RRN ',TO,FOPMETH
+         PERIOD 
+*             MOVE 3          TO MYRID.
+*ZC    211         MOVE  3,TO,MYRID
+         MOVE  3,TO,MYRID
+         PERIOD 
+*             MOVE 30         TO MYLEN.
+*ZC    212         MOVE  30,TO,MYLEN
+         MOVE  30,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READ FILE('MYFILE06') INTO(MYDATA) LENGTH(MYLENX
+               )
+*ZC    213         EXEC  CICS,READ,FILE('MYFILE06'),INTO(MYDATA),LENGTHX
+               (MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READ,FILE('MYFILE06'),INTO(MYDATA),LENGTH(MYLEN),RIX
+               DFLD(MYRID),RRN
+         PERIOD 
+*                       RIDFLD(MYRID) RRN END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  MVC   FWTSBA,FOP1        MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C'  3'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*ZC    216         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             MOVE FOP1  TO FOPSBA.
+*ZC    220         MOVE  FOP1,TO,FOPSBA
+         MOVE  FOP1,TO,FOPSBA
+         PERIOD 
+*             MOVE '  3' TO FOPRECNO.
+*ZC    221         MOVE  '  3',TO,FOPRECNO
+         MOVE  '  3',TO,FOPRECNO
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    222         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   MYRID,=F'2'        RECORD 2
+*      *  MVC   MYLEN,=H'30'       SET MAXIMUM LENGTH
+*             MOVE 2  TO MYRID.
+*ZC    225         MOVE  2,TO,MYRID
+         MOVE  2,TO,MYRID
+         PERIOD 
+*             MOVE 30 TO MYLEN.
+*ZC    226         MOVE  30,TO,MYLEN
+         MOVE  30,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READ FILE('MYFILE06') INTO(MYDATA) LENGTH(MYLENX
+               )
+*ZC    227         EXEC  CICS,READ,FILE('MYFILE06'),INTO(MYDATA),LENGTHX
+               (MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READ,FILE('MYFILE06'),INTO(MYDATA),LENGTH(MYLEN),RIX
+               DFLD(MYRID),RRN
+         PERIOD 
+*                       RIDFLD(MYRID) RRN END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  MVC   FWTSBA,FOP2        MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C'  2'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*ZC    230         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             MOVE FOP2  TO FOPSBA.
+*ZC    234         MOVE  FOP2,TO,FOPSBA
+         MOVE  FOP2,TO,FOPSBA
+         PERIOD 
+*             MOVE '  2' TO FOPRECNO.
+*ZC    235         MOVE  '  2',TO,FOPRECNO
+         MOVE  '  2',TO,FOPRECNO
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    236         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   MYRID,=F'1'        RECORD 1
+*      *  MVC   MYLEN,=H'30'       SET MAXIMUM LENGTH
+*             MOVE 1  TO MYRID.
+*ZC    239         MOVE  1,TO,MYRID
+         MOVE  1,TO,MYRID
+         PERIOD 
+*             MOVE 30 TO MYLEN.
+*ZC    240         MOVE  30,TO,MYLEN
+         MOVE  30,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READ FILE('MYFILE06') INTO(MYDATA) LENGTH(MYLENX
+               )
+*ZC    241         EXEC  CICS,READ,FILE('MYFILE06'),INTO(MYDATA),LENGTHX
+               (MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READ,FILE('MYFILE06'),INTO(MYDATA),LENGTH(MYLEN),RIX
+               DFLD(MYRID),RRN
+         PERIOD 
+*                       RIDFLD(MYRID) RRN END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  MVC   FWTSBA,FOP3        MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C'  1'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*ZC    244         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             MOVE FOP3  TO FOPSBA.
+*ZC    248         MOVE  FOP3,TO,FOPSBA
+         MOVE  FOP3,TO,FOPSBA
+         PERIOD 
+*             MOVE '  1' TO FOPRECNO.
+*ZC    249         MOVE  '  1',TO,FOPRECNO
+         MOVE  '  1',TO,FOPRECNO
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    250         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   FOPFIXVR,=C'VAR'   SET FIX/VAR IN MESSAGE
+*      *  MVC   FOPNAME,=C'MYFILE07' SET FILENAME IN MESSAGE
+*      *  MVC   MYRID,=F'5'        RRN 5  RECORD 1
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+*             MOVE 'VAR'      TO FOPFIXVR.
+*ZC    255         MOVE  'VAR',TO,FOPFIXVR
+         MOVE  'VAR',TO,FOPFIXVR
+         PERIOD 
+*             MOVE 'MYFILE07' TO FOPNAME.
+*ZC    256         MOVE  'MYFILE07',TO,FOPNAME
+         MOVE  'MYFILE07',TO,FOPNAME
+         PERIOD 
+*             MOVE 5          TO MYRID.
+*ZC    257         MOVE  5,TO,MYRID
+         MOVE  5,TO,MYRID
+         PERIOD 
+*             MOVE 50         TO MYLEN.
+*ZC    258         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READ FILE('MYFILE07') INTO(MYDATA) LENGTH(MYLENX
+               )
+*ZC    259         EXEC  CICS,READ,FILE('MYFILE07'),INTO(MYDATA),LENGTHX
+               (MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READ,FILE('MYFILE07'),INTO(MYDATA),LENGTH(MYLEN),RIX
+               DFLD(MYRID),RRN
+         PERIOD 
+*                       RIDFLD(MYRID) RRN END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  MVC   FWTSBA,FOP4        MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C'  5'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*ZC    262         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             MOVE FOP4  TO FOPSBA.
+*ZC    266         MOVE  FOP4,TO,FOPSBA
+         MOVE  FOP4,TO,FOPSBA
+         PERIOD 
+*             MOVE '  5' TO FOPRECNO.
+*ZC    267         MOVE  '  5',TO,FOPRECNO
+         MOVE  '  5',TO,FOPRECNO
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    268         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   MYRID,=F'10'       RRN 10  RECORD 3
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+*             MOVE 10 TO MYRID.
+*ZC    271         MOVE  10,TO,MYRID
+         MOVE  10,TO,MYRID
+         PERIOD 
+*             MOVE 50 TO MYLEN.
+*ZC    272         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READ FILE('MYFILE07') INTO(MYDATA) LENGTH(MYLENX
+               )
+*ZC    273         EXEC  CICS,READ,FILE('MYFILE07'),INTO(MYDATA),LENGTHX
+               (MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READ,FILE('MYFILE07'),INTO(MYDATA),LENGTH(MYLEN),RIX
+               DFLD(MYRID),RRN
+         PERIOD 
+*                       RIDFLD(MYRID) RRN END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  MVC   FWTSBA,FOP5        MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C' 10'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*ZC    276         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             MOVE FOP5  TO FOPSBA.
+*ZC    280         MOVE  FOP5,TO,FOPSBA
+         MOVE  FOP5,TO,FOPSBA
+         PERIOD 
+*             MOVE ' 10' TO FOPRECNO.
+*ZC    281         MOVE  ' 10',TO,FOPRECNO
+         MOVE  ' 10',TO,FOPRECNO
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    282         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      * RAISE SOME CONDITIONS, WE MAY NOT DO ALL THESE FOR EVERY
+*      * FUNCTION
+*             EXEC CICS HANDLE CONDITION
+*                  NOTFND(VSAMNOTF)
+*                  LENGERR(VSAMLNG)
+*                  ENDFILE(VSAMENDF)
+*                  ILLOGIC(VSAMILL)
+*ZC    287         EXEC  CICS,HANDLE,CONDITION,NOTFND(VSAMNOTF),LENGERRX
+               (VSAMLNG),ENDFILE(VSAMENDF),ILLOGIC(VSAMILL)
+         EXEC  CICS,HANDLE,CONDITION,NOTFND(VSAMNOTF),LENGERR(VSAMLNG),X
+               ENDFILE(VSAMENDF),ILLOGIC(VSAMILL)
+         PERIOD 
+*                  END-EXEC.
+*      * NOTFND
+*      *  MVC   FWTSBA,FOP6        MOVE WCC,SBA
+*      *  MVC   FOPNAME,=CL8'MYFILE06' SET FILENAME IN MESSAGE
+*      *  MVC   FOPRECNO,=C'  4'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*             MOVE FOP6       TO FOPSBA.
+*ZC    298         MOVE  FOP6,TO,FOPSBA
+         MOVE  FOP6,TO,FOPSBA
+         PERIOD 
+*             MOVE 'MYFILE06' TO FOPNAME.
+*ZC    299         MOVE  'MYFILE06',TO,FOPNAME
+         MOVE  'MYFILE06',TO,FOPNAME
+         PERIOD 
+*             MOVE '  4'      TO FOPRECNO.
+*ZC    300         MOVE  '  4',TO,FOPRECNO
+         MOVE  '  4',TO,FOPRECNO
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    301         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   MYRID,=F'4'        RECORD 4  EMPTY RECORD
+*      *  MVC   MYLEN,=H'30'       SET MAXIMUM LENGTH
+*             MOVE 4  TO MYRID.
+*ZC    304         MOVE  4,TO,MYRID
+         MOVE  4,TO,MYRID
+         PERIOD 
+*             MOVE 30 TO MYLEN.
+*      *  LA    R7,VSAMRTN1        R7=HANDLE RETURN
+*ZC    305         MOVE  30,TO,MYLEN
+         MOVE  30,TO,MYLEN
+         PERIOD 
+*             MOVE 1    TO DEPCTRL.
+*ZC    307         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS READ FILE('MYFILE06') INTO(MYDATA) LENGTH(MYLENX
+               )
+*ZC    308         EXEC  CICS,READ,FILE('MYFILE06'),INTO(MYDATA),LENGTHX
+               (MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READ,FILE('MYFILE06'),INTO(MYDATA),LENGTH(MYLEN),RIX
+               DFLD(MYRID),RRN
+         PERIOD 
+*                       RIDFLD(MYRID) RRN END-EXEC.
+*      * VSAMRTN1 DS    0H
+*         VSAMRTN1.
+*      * ILLOGIC
+*      *  MVC   FWTSBA,FOP8        MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C'  2'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FOPMETH,=CL4'RBA'  SET METHOD IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         LABEL VSAMRTN1
+*             MOVE FOP8   TO FOPSBA.
+*ZC    317         MOVE  FOP8,TO,FOPSBA
+         MOVE  FOP8,TO,FOPSBA
+         PERIOD 
+*             MOVE '  2'  TO FOPRECNO.
+*ZC    318         MOVE  '  2',TO,FOPRECNO
+         MOVE  '  2',TO,FOPRECNO
+         PERIOD 
+*             MOVE 'RBA ' TO FOPMETH.
+*ZC    319         MOVE  'RBA ',TO,FOPMETH
+         MOVE  'RBA ',TO,FOPMETH
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    320         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   MYRID,=F'2'        RECORD 2
+*      *  MVC   MYLEN,=H'30'       SET MAXIMUM LENGTH
+*             MOVE 2  TO MYRID.
+*ZC    323         MOVE  2,TO,MYRID
+         MOVE  2,TO,MYRID
+         PERIOD 
+*             MOVE 30 TO MYLEN.
+*      *  LA    R7,VSAMRTN2        R7=HANDLE RETURN
+*ZC    324         MOVE  30,TO,MYLEN
+         MOVE  30,TO,MYLEN
+         PERIOD 
+*             MOVE 2 TO DEPCTRL.
+*ZC    326         MOVE  2,TO,DEPCTRL
+         MOVE  2,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS READ FILE('MYFILE06') INTO(MYDATA) LENGTH(MYLENX
+               )
+*ZC    327         EXEC  CICS,READ,FILE('MYFILE06'),INTO(MYDATA),LENGTHX
+               (MYLEN),RIDFLD(MYRID),RBA
+         EXEC  CICS,READ,FILE('MYFILE06'),INTO(MYDATA),LENGTH(MYLEN),RIX
+               DFLD(MYRID),RBA
+         PERIOD 
+*                       RIDFLD(MYRID) RBA END-EXEC.
+*      * VSAMRTN2 DS    0H
+*         VSAMRTN2.
+*      * LENGERR/11
+*      *  MVC   FWTSBA,FOP10       MOVE WCC,SBA
+*      *  MVC   FOPNAME,=CL8'MYFILE07' SET FILENAME IN MESSAGE
+*      *  MVC   FOPRECNO,=C'  8'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FOPMETH,=CL4'RRN'  SET METHOD IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         LABEL VSAMRTN2
+*             MOVE FOP10      TO FOPSBA.
+*ZC    337         MOVE  FOP10,TO,FOPSBA
+         MOVE  FOP10,TO,FOPSBA
+         PERIOD 
+*             MOVE 'MYFILE07' TO FOPNAME.
+*ZC    338         MOVE  'MYFILE07',TO,FOPNAME
+         MOVE  'MYFILE07',TO,FOPNAME
+         PERIOD 
+*             MOVE '  8'      TO FOPRECNO.
+*ZC    339         MOVE  '  8',TO,FOPRECNO
+         MOVE  '  8',TO,FOPRECNO
+         PERIOD 
+*             MOVE 'RRN ' TO FOPMETH.
+*ZC    340         MOVE  'RRN ',TO,FOPMETH
+         MOVE  'RRN ',TO,FOPMETH
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    341         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   MYRID,=F'8'        RECORD 8
+*      *  MVC   MYLEN,=H'6'        LENGTH TOO SHORT
+*             MOVE 8 TO MYRID.
+*ZC    344         MOVE  8,TO,MYRID
+         MOVE  8,TO,MYRID
+         PERIOD 
+*             MOVE 6 TO MYLEN.
+*      *  LA    R7,VSAMRTN3        R7=HANDLE RETURN
+*ZC    345         MOVE  6,TO,MYLEN
+         MOVE  6,TO,MYLEN
+         PERIOD 
+*             MOVE 3 TO DEPCTRL.
+*ZC    347         MOVE  3,TO,DEPCTRL
+         MOVE  3,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS READ FILE('MYFILE07') INTO(MYDATA) LENGTH(MYLENX
+               )
+*ZC    348         EXEC  CICS,READ,FILE('MYFILE07'),INTO(MYDATA),LENGTHX
+               (MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READ,FILE('MYFILE07'),INTO(MYDATA),LENGTH(MYLEN),RIX
+               DFLD(MYRID),RRN
+         PERIOD 
+*                       RIDFLD(MYRID) RRN END-EXEC.
+*      * VSAMRTN3 DS    0H
+*         VSAMRTN3.
+*      *  MVC   MYLEN,=H'6'        LENGTH REQUESTED
+         LABEL VSAMRTN3
+*             MOVE 6 TO MYLEN.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*ZC    353         MOVE  6,TO,MYLEN
+         MOVE  6,TO,MYLEN
+         PERIOD 
+*             PERFORM WQTS.
+*      *  SR    R7,R7              NO ERROR RETURN
+*ZC    355         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             MOVE 6 TO DEPCTRL.
+*      * START BROWSE, POINT AT EMPTY SLOT 7
+*      *  MVC   FWTSBA,FOP12       MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C'  7'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FOPFUNC,=CL8'STARTBR' SET FUNCTION IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*ZC    357         MOVE  6,TO,DEPCTRL
+         MOVE  6,TO,DEPCTRL
+         PERIOD 
+*             MOVE FOP12      TO FOPSBA.
+*ZC    363         MOVE  FOP12,TO,FOPSBA
+         MOVE  FOP12,TO,FOPSBA
+         PERIOD 
+*             MOVE '  7'      TO FOPRECNO.
+*ZC    364         MOVE  '  7',TO,FOPRECNO
+         MOVE  '  7',TO,FOPRECNO
+         PERIOD 
+*             MOVE 'STARTBR ' TO FOPFUNC.
+*ZC    365         MOVE  'STARTBR ',TO,FOPFUNC
+         MOVE  'STARTBR ',TO,FOPFUNC
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    366         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   MYRID,=F'7'        RECORD 7 (EMPTY SLOT)
+*             MOVE 7 TO MYRID.
+*ZC    368         MOVE  7,TO,MYRID
+         MOVE  7,TO,MYRID
+         PERIOD 
+*             EXEC CICS STARTBR FILE('MYFILE07') RIDFLD(MYRID) RRN
+*ZC    369         EXEC  CICS,STARTBR,FILE('MYFILE07'),RIDFLD(MYRID),RRX
+               N
+         EXEC  CICS,STARTBR,FILE('MYFILE07'),RIDFLD(MYRID),RRN
+         PERIOD 
+*                       END-EXEC.
+*      * READNEXT 3 RECORDS
+*      *  MVC   FWTSBA,FOP13       MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
+*      *  MVC   FOPFUNC,=CL8'READNEXT' SET FUNCTION IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*             MOVE FOP13      TO FOPSBA.
+*ZC    376         MOVE  FOP13,TO,FOPSBA
+         MOVE  FOP13,TO,FOPSBA
+         PERIOD 
+*             MOVE 'S  '      TO FOPRECNO.
+*ZC    377         MOVE  'S  ',TO,FOPRECNO
+         MOVE  'S  ',TO,FOPRECNO
+         PERIOD 
+*             MOVE 'READNEXT' TO FOPFUNC.
+*ZC    378         MOVE  'READNEXT',TO,FOPFUNC
+         MOVE  'READNEXT',TO,FOPFUNC
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    379         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  LA    R8,3               READ 3 FORWARDS
+*             MOVE 1 TO LOOPCTRL.
+*      * RDNXLOOP EQU   *
+*ZC    381         MOVE  1,TO,LOOPCTRL
+         MOVE  1,TO,LOOPCTRL
+         PERIOD 
+*         RDNXLOOP.
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         LABEL RDNXLOOP
+*             MOVE 50 TO MYLEN.
+*ZC    385         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READNEXT FILE('MYFILE07') INTO(MYDATA)
+*ZC    386         EXEC  CICS,READNEXT,FILE('MYFILE07'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READNEXT,FILE('MYFILE07'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID),RRN
+         PERIOD 
+*                       LENGTH(MYLEN) RIDFLD(MYRID) RRN END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  BCT   R8,RDNXLOOP        LOOP
+*ZC    389         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             ADD 1 TO LOOPCTRL.
+*ZC    391         ADD   1,TO,LOOPCTRL
+         ADD   1,TO,LOOPCTRL
+         PERIOD 
+*             IF LOOPCTRL NOT = 4 THEN GO TO RDNXLOOP.
+*ZC    392         IF    LOOPCTRL,NOT,=,4,THEN
+         IF    LOOPCTRL,NOT,=,4,THEN
+*      * READPREV 3 RECORDS
+*      *  MVC   FWTSBA,FOP14       MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
+*      *  MVC   FOPFUNC,=CL8'READPREV' SET FUNCTION IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*ZC    392         GO    TO,RDNXLOOP
+         GO    TO,RDNXLOOP
+         PERIOD 
+*             MOVE FOP14      TO FOPSBA.
+*ZC    398         MOVE  FOP14,TO,FOPSBA
+         MOVE  FOP14,TO,FOPSBA
+         PERIOD 
+*             MOVE 'S  '      TO FOPRECNO.
+*ZC    399         MOVE  'S  ',TO,FOPRECNO
+         MOVE  'S  ',TO,FOPRECNO
+         PERIOD 
+*             MOVE 'READPREV' TO FOPFUNC.
+*ZC    400         MOVE  'READPREV',TO,FOPFUNC
+         MOVE  'READPREV',TO,FOPFUNC
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    401         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  LA    R8,3               READ 3 BACKWARDS
+*             MOVE 1 TO LOOPCTRL.
+*      * RDPVLOOP EQU   *
+*ZC    403         MOVE  1,TO,LOOPCTRL
+         MOVE  1,TO,LOOPCTRL
+         PERIOD 
+*         RDPVLOOP.
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         LABEL RDPVLOOP
+*             MOVE 50 TO MYLEN.
+*ZC    407         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READPREV FILE('MYFILE07') INTO(MYDATA)
+*ZC    408         EXEC  CICS,READPREV,FILE('MYFILE07'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READPREV,FILE('MYFILE07'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID),RRN
+         PERIOD 
+*                       LENGTH(MYLEN) RIDFLD(MYRID) RRN END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  BCT   R8,RDPVLOOP        LOOP
+*ZC    411         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             ADD 1 TO LOOPCTRL.
+*ZC    413         ADD   1,TO,LOOPCTRL
+         ADD   1,TO,LOOPCTRL
+         PERIOD 
+*             IF LOOPCTRL NOT = 4 THEN GO TO RDPVLOOP.
+*ZC    414         IF    LOOPCTRL,NOT,=,4,THEN
+         IF    LOOPCTRL,NOT,=,4,THEN
+*      * READ RANDOM 3 RECORDS
+*      *  MVC   FWTSBA,FOP15       MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
+*      *  MVC   FOPFUNC,=CL8'READ RND' SET FUNCTION IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*ZC    414         GO    TO,RDPVLOOP
+         GO    TO,RDPVLOOP
+         PERIOD 
+*             MOVE FOP15      TO FOPSBA.
+*ZC    420         MOVE  FOP15,TO,FOPSBA
+         MOVE  FOP15,TO,FOPSBA
+         PERIOD 
+*             MOVE 'S  '      TO FOPRECNO.
+*ZC    421         MOVE  'S  ',TO,FOPRECNO
+         MOVE  'S  ',TO,FOPRECNO
+         PERIOD 
+*             MOVE 'READ RND' TO FOPFUNC.
+*ZC    422         MOVE  'READ RND',TO,FOPFUNC
+         MOVE  'READ RND',TO,FOPFUNC
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    423         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+*      *  MVC   MYRID,=F'17'       RRN 17
+*             MOVE 50 TO MYLEN.
+*ZC    426         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             MOVE 17 TO MYRID.
+*      * POINT AT RRN 17, READ RECORD 7
+*ZC    427         MOVE  17,TO,MYRID
+         MOVE  17,TO,MYRID
+         PERIOD 
+*             EXEC CICS READNEXT FILE('MYFILE07') INTO(MYDATA)
+*ZC    429         EXEC  CICS,READNEXT,FILE('MYFILE07'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READNEXT,FILE('MYFILE07'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID),RRN
+         PERIOD 
+*                       LENGTH(MYLEN) RIDFLD(MYRID) RRN END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+*      *  MVC   MYRID,=F'22'       RRN 22
+*ZC    432         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             MOVE 50 TO MYLEN.
+*ZC    435         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             MOVE 22 TO MYRID.
+*      * POINT AT RRN 22, READ RECORD 6
+*ZC    436         MOVE  22,TO,MYRID
+         MOVE  22,TO,MYRID
+         PERIOD 
+*             EXEC CICS READPREV FILE('MYFILE07') INTO(MYDATA)
+*ZC    438         EXEC  CICS,READPREV,FILE('MYFILE07'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READPREV,FILE('MYFILE07'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID),RRN
+         PERIOD 
+*                       LENGTH(MYLEN) RIDFLD(MYRID) RRN END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+*      *  MVC   MYRID,=F'1'        RRN 1
+*ZC    441         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             MOVE 50 TO MYLEN.
+*ZC    444         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             MOVE 1  TO MYRID.
+*      * POINT AT RRN 1, READ RECORD 1
+*ZC    445         MOVE  1,TO,MYRID
+         MOVE  1,TO,MYRID
+         PERIOD 
+*             EXEC CICS READNEXT FILE('MYFILE07') INTO(MYDATA)
+*ZC    447         EXEC  CICS,READNEXT,FILE('MYFILE07'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READNEXT,FILE('MYFILE07'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID),RRN
+         PERIOD 
+*                       LENGTH(MYLEN) RIDFLD(MYRID) RRN END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      * END BROWSE
+*      *  MVC   FWTSBA,FOP16       MOVE WCC,SBA
+*      *  MVC   FOPRECNO,=C'   '   SET RECORD NUMBERS IN MESSAGE
+*      *  MVC   FOPFUNC,=CL8'ENDBR' SET FUNCTION IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*ZC    450         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             MOVE FOP16      TO FOPSBA.
+*ZC    456         MOVE  FOP16,TO,FOPSBA
+         MOVE  FOP16,TO,FOPSBA
+         PERIOD 
+*             MOVE SPACES     TO FOPRECNO.
+*ZC    457         MOVE  SPACES,TO,FOPRECNO
+         MOVE  SPACES,TO,FOPRECNO
+         PERIOD 
+*             MOVE 'ENDBR   ' TO FOPFUNC.
+*ZC    458         MOVE  'ENDBR   ',TO,FOPFUNC
+         MOVE  'ENDBR   ',TO,FOPFUNC
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    459         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*             EXEC CICS ENDBR FILE('MYFILE07') END-EXEC.
+*ZC    460         EXEC  CICS,ENDBR,FILE('MYFILE07')
+         EXEC  CICS,ENDBR,FILE('MYFILE07')
+         PERIOD 
+*      * ENDFILE 1 RAISED BY READING FORWARD FROM END
+*      *  MVC   FWTSBA,FOP17       MOVE WCC,SBA
+*      *  MVC   FOPNAME,=CL8'MYFILE06' SET FILENAME IN MESSAGE
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+*      *  MVC   MYRID,=F'99'       RRN 99   RRN BEYOND END
+*      *  MVC   FOPRECNO,=C' 99'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FOPFUNC,=CL8'READNEXT' SET FUNCTION IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*             MOVE FOP17      TO FOPSBA.
+*ZC    469         MOVE  FOP17,TO,FOPSBA
+         MOVE  FOP17,TO,FOPSBA
+         PERIOD 
+*             MOVE 'MYFILE06' TO FOPNAME.
+*ZC    470         MOVE  'MYFILE06',TO,FOPNAME
+         MOVE  'MYFILE06',TO,FOPNAME
+         PERIOD 
+*             MOVE 50         TO MYLEN.
+*ZC    471         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             MOVE 99         TO MYRID.
+*ZC    472         MOVE  99,TO,MYRID
+         MOVE  99,TO,MYRID
+         PERIOD 
+*             MOVE ' 99'      TO FOPRECNO.
+*ZC    473         MOVE  ' 99',TO,FOPRECNO
+         MOVE  ' 99',TO,FOPRECNO
+         PERIOD 
+*             MOVE 'READNEXT' TO FOPFUNC.
+*ZC    474         MOVE  'READNEXT',TO,FOPFUNC
+         MOVE  'READNEXT',TO,FOPFUNC
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    475         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVI   ENDFLENO,C'1'      SET 1ST ENDFILE
+*             MOVE 1 TO ENDFLENO.
+*      *  LA    R7,VSAMRTN4        R7=HANDLE RETURN
+*ZC    477         MOVE  1,TO,ENDFLENO
+         MOVE  1,TO,ENDFLENO
+         PERIOD 
+*             MOVE 4 TO DEPCTRL.
+*ZC    479         MOVE  4,TO,DEPCTRL
+         MOVE  4,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS STARTBR FILE('MYFILE06') RIDFLD(MYRID) RRN
+*ZC    480         EXEC  CICS,STARTBR,FILE('MYFILE06'),RIDFLD(MYRID),RRX
+               N
+         EXEC  CICS,STARTBR,FILE('MYFILE06'),RIDFLD(MYRID),RRN
+         PERIOD 
+*                       END-EXEC.
+*             EXEC CICS READNEXT FILE('MYFILE06') INTO(MYDATA)
+*ZC    482         EXEC  CICS,READNEXT,FILE('MYFILE06'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READNEXT,FILE('MYFILE06'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID),RRN
+         PERIOD 
+*                       LENGTH(MYLEN) RIDFLD(MYRID) RRN END-EXEC.
+*      * VSAMRTN4 DS    0H
+*         VSAMRTN4.
+*      * ENDFILE 2 RAISED BY READING BACK FROM START
+*      *  MVC   FWTSBA,FOP19       MOVE WCC,SBA
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+*      *  MVC   MYRID,=F'1'        RRN 1  FIRST RECORD
+*      *  MVC   FOPRECNO,=C'  1'   SET RECORD NUMBER IN MESSAGE
+*      *  MVC   FOPFUNC,=CL8'READPREV' SET FUNCTION IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         LABEL VSAMRTN4
+*             MOVE FOP19      TO FOPSBA.
+*ZC    493         MOVE  FOP19,TO,FOPSBA
+         MOVE  FOP19,TO,FOPSBA
+         PERIOD 
+*             MOVE 50         TO MYLEN.
+*ZC    494         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             MOVE 1          TO MYRID.
+*ZC    495         MOVE  1,TO,MYRID
+         MOVE  1,TO,MYRID
+         PERIOD 
+*             MOVE '  1'      TO FOPRECNO.
+*ZC    496         MOVE  '  1',TO,FOPRECNO
+         MOVE  '  1',TO,FOPRECNO
+         PERIOD 
+*             MOVE 'READPREV' TO FOPFUNC.
+*ZC    497         MOVE  'READPREV',TO,FOPFUNC
+         MOVE  'READPREV',TO,FOPFUNC
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    498         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVI   ENDFLENO,C'2'      SET 2ND ENDFILE
+*             MOVE 2 TO ENDFLENO.
+*      *  LA    R7,VSAMRTN5        R7=HANDLE RETURN
+*ZC    500         MOVE  2,TO,ENDFLENO
+         MOVE  2,TO,ENDFLENO
+         PERIOD 
+*             MOVE 5 TO DEPCTRL.
+*ZC    502         MOVE  5,TO,DEPCTRL
+         MOVE  5,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS READPREV FILE('MYFILE06') INTO(MYDATA)
+*ZC    503         EXEC  CICS,READPREV,FILE('MYFILE06'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID),RRN
+         EXEC  CICS,READPREV,FILE('MYFILE06'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID),RRN
+         PERIOD 
+*                       LENGTH(MYLEN) RIDFLD(MYRID) RRN END-EXEC.
+*      * VSAMRTN5 DS    0H
+*         VSAMRTN5.
+         LABEL VSAMRTN5
+*             EXEC CICS ENDBR FILE('MYFILE06') END-EXEC.
+*ZC    507         EXEC  CICS,ENDBR,FILE('MYFILE06')
+         EXEC  CICS,ENDBR,FILE('MYFILE06')
+         PERIOD 
+*      * COMPLEX TEST, 2 OVERLAPPING BROWSES OF SAME FILE
+*      *  MVC   FWTSBA,FOP21       MOVE WCC,SBA
+*      *  MVC   FOPNAME,=CL8'COMPLEX' SET FILENAME IN MESSAGE
+*      *  MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
+*      *  MVC   FOPFUNC,=CL8'COMPLEX' SET FUNCTION IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*             MOVE FOP21      TO FOPSBA.
+*ZC    514         MOVE  FOP21,TO,FOPSBA
+         MOVE  FOP21,TO,FOPSBA
+         PERIOD 
+*             MOVE 'COMPLEX ' TO FOPNAME.
+*ZC    515         MOVE  'COMPLEX ',TO,FOPNAME
+         MOVE  'COMPLEX ',TO,FOPNAME
+         PERIOD 
+*             MOVE 'S  '      TO FOPRECNO.
+*ZC    516         MOVE  'S  ',TO,FOPRECNO
+         MOVE  'S  ',TO,FOPRECNO
+         PERIOD 
+*             MOVE 'COMPLEX ' TO FOPFUNC.
+*ZC    517         MOVE  'COMPLEX ',TO,FOPFUNC
+         MOVE  'COMPLEX ',TO,FOPFUNC
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    518         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   MYRID1,=F'6'       RRN 6  RECORD 5
+*             MOVE 6 TO MYRID1.
+*ZC    520         MOVE  6,TO,MYRID1
+         MOVE  6,TO,MYRID1
+         PERIOD 
+*             EXEC CICS STARTBR FILE('MYFILE06') RIDFLD(MYRID1) RRN
+*ZC    521         EXEC  CICS,STARTBR,FILE('MYFILE06'),RIDFLD(MYRID1),RX
+               RN,REQID(1)
+         EXEC  CICS,STARTBR,FILE('MYFILE06'),RIDFLD(MYRID1),RRN,REQID(1X
+               )
+         PERIOD 
+*                       REQID(1) END-EXEC.
+*      *  MVC   MYRID2,=F'10'      RRN 10 RECORD 8(BACK TO 7)
+*             MOVE 10 TO MYRID2.
+*ZC    524         MOVE  10,TO,MYRID2
+         MOVE  10,TO,MYRID2
+         PERIOD 
+*             EXEC CICS STARTBR FILE('MYFILE06') RIDFLD(MYRID2) RRN
+*ZC    525         EXEC  CICS,STARTBR,FILE('MYFILE06'),RIDFLD(MYRID2),RX
+               RN,REQID(2)
+         EXEC  CICS,STARTBR,FILE('MYFILE06'),RIDFLD(MYRID2),RRN,REQID(2X
+               )
+         PERIOD 
+*                       REQID(2) END-EXEC.
+*      *  LA    R8,3               R8=LOOP LIMIT
+*             MOVE 1 TO LOOPCTRL.
+*      * PLEXLOOP EQU   *
+*ZC    528         MOVE  1,TO,LOOPCTRL
+         MOVE  1,TO,LOOPCTRL
+         PERIOD 
+*         PLEXLOOP.
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         LABEL PLEXLOOP
+*             MOVE 50 TO MYLEN.
+*ZC    532         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READNEXT FILE('MYFILE06') INTO(MYDATA)
+*                       LENGTH(MYLEN) RIDFLD(MYRID1) RRN REQID(1)
+*ZC    533         EXEC  CICS,READNEXT,FILE('MYFILE06'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID1),RRN,REQID(1)
+         EXEC  CICS,READNEXT,FILE('MYFILE06'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID1),RRN,REQID(1)
+         PERIOD 
+*                       END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+*ZC    537         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             MOVE 50 TO MYLEN.
+*ZC    539         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READPREV FILE('MYFILE06') INTO(MYDATA)
+*                       LENGTH(MYLEN) RIDFLD(MYRID2) RRN REQID(2)
+*ZC    540         EXEC  CICS,READPREV,FILE('MYFILE06'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID2),RRN,REQID(2)
+         EXEC  CICS,READPREV,FILE('MYFILE06'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID2),RRN,REQID(2)
+         PERIOD 
+*                       END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  BCT   R8,PLEXLOOP        LOOP
+*ZC    544         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             ADD 1 TO LOOPCTRL.
+*ZC    546         ADD   1,TO,LOOPCTRL
+         ADD   1,TO,LOOPCTRL
+         PERIOD 
+*             IF LOOPCTRL NOT = 4 THEN GO TO PLEXLOOP.
+*ZC    547         IF    LOOPCTRL,NOT,=,4,THEN
+         IF    LOOPCTRL,NOT,=,4,THEN
+*ZC    547         GO    TO,PLEXLOOP
+         GO    TO,PLEXLOOP
+         PERIOD 
+*             EXEC CICS ENDBR FILE('MYFILE06') REQID(1) END-EXEC.
+*ZC    548         EXEC  CICS,ENDBR,FILE('MYFILE06'),REQID(1)
+         EXEC  CICS,ENDBR,FILE('MYFILE06'),REQID(1)
+         PERIOD 
+*             EXEC CICS ENDBR FILE('MYFILE06') REQID(2) END-EXEC.
+*ZC    549         EXEC  CICS,ENDBR,FILE('MYFILE06'),REQID(2)
+         EXEC  CICS,ENDBR,FILE('MYFILE06'),REQID(2)
+         PERIOD 
+*      * MYFILE07, RRN 10 (RECS 3-5), RESETBR, RRN 99 (RECS 10-8)
+*      *  MVC   FWTSBA,FOP1C2      MOVE WCC,SBA
+*      *  MVI   FOPSEP+1,C' '      RESET SEPARATOR
+*      *  LH    R7,FOPL            MESSAGE LENGTH
+*      *  AHI   R7,-1              SHORTEN BY 1
+*      *  STH   R7,FOPL            STORE BACK
+*      *  MVC   FOPNAME,=CL8'MYFILE07' SET FILENAME IN MESSAGE
+*      *  MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
+*      *  MVC   FOPFUNC,=CL8'RESETBR' SET FUNCTION IN MESSAGE
+*      *  MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+*             MOVE FOP1C2     TO FOPSBA.
+*ZC    560         MOVE  FOP1C2,TO,FOPSBA
+         MOVE  FOP1C2,TO,FOPSBA
+         PERIOD 
+*             MOVE SPACE      TO FOPSEP
+*ZC    561         MOVE  SPACE,TO,FOPSEP
+         MOVE  SPACE,TO,FOPSEP
+*             SUBTRACT 1 FROM FOPL.
+*ZC    562         SUBTRACT 1,FROM,FOPL
+         SUBTRACT 1,FROM,FOPL
+         PERIOD 
+*             MOVE 'MYFILE07' TO FOPNAME.
+*ZC    563         MOVE  'MYFILE07',TO,FOPNAME
+         MOVE  'MYFILE07',TO,FOPNAME
+         PERIOD 
+*             MOVE 'S  '      TO FOPRECNO.
+*ZC    564         MOVE  'S  ',TO,FOPRECNO
+         MOVE  'S  ',TO,FOPRECNO
+         PERIOD 
+*             MOVE 'RESETBR ' TO FOPFUNC.
+*ZC    565         MOVE  'RESETBR ',TO,FOPFUNC
+         MOVE  'RESETBR ',TO,FOPFUNC
+         PERIOD 
+*             EXEC CICS SEND FROM(FOPLINE) LENGTH(FOPL) END-EXEC.
+*ZC    566         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         EXEC  CICS,SEND,FROM(FOPLINE),LENGTH(FOPL)
+         PERIOD 
+*      *  MVC   MYRID1,=F'10'      RRN 3  RECORD 3
+*             MOVE 10 TO MYRID1.
+*ZC    568         MOVE  10,TO,MYRID1
+         MOVE  10,TO,MYRID1
+         PERIOD 
+*             EXEC CICS STARTBR FILE('MYFILE07') RIDFLD(MYRID1) RRN
+*ZC    569         EXEC  CICS,STARTBR,FILE('MYFILE07'),RIDFLD(MYRID1),RX
+               RN,REQID(1)
+         EXEC  CICS,STARTBR,FILE('MYFILE07'),RIDFLD(MYRID1),RRN,REQID(1X
+               )
+         PERIOD 
+*                       REQID(1) END-EXEC.
+*      *  LA    R8,3               R8=LOOP LIMIT
+*             MOVE 1 TO LOOPCTRL.
+*      * RSBRLP1  EQU   *
+*ZC    572         MOVE  1,TO,LOOPCTRL
+         MOVE  1,TO,LOOPCTRL
+         PERIOD 
+*         RSBRLP1.
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         LABEL RSBRLP1
+*             MOVE 50 TO MYLEN.
+*ZC    576         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READNEXT FILE('MYFILE07') INTO(MYDATA)
+*                       LENGTH(MYLEN) RIDFLD(MYRID1) RRN REQID(1)
+*ZC    577         EXEC  CICS,READNEXT,FILE('MYFILE07'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID1),RRN,REQID(1)
+         EXEC  CICS,READNEXT,FILE('MYFILE07'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID1),RRN,REQID(1)
+         PERIOD 
+*                       END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  BCT   R8,RSBRLP1         LOOP
+*ZC    581         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             ADD 1 TO LOOPCTRL.
+*ZC    583         ADD   1,TO,LOOPCTRL
+         ADD   1,TO,LOOPCTRL
+         PERIOD 
+*             IF LOOPCTRL NOT = 4 THEN GO TO RSBRLP1.
+*ZC    584         IF    LOOPCTRL,NOT,=,4,THEN
+         IF    LOOPCTRL,NOT,=,4,THEN
+*      *  MVC   MYRID1,=F'99'      RRN 99  PAST END
+*ZC    584         GO    TO,RSBRLP1
+         GO    TO,RSBRLP1
+         PERIOD 
+*             MOVE 99 TO MYRID1.
+*ZC    586         MOVE  99,TO,MYRID1
+         MOVE  99,TO,MYRID1
+         PERIOD 
+*             EXEC CICS RESETBR FILE('MYFILE07') RIDFLD(MYRID1) RRN
+*ZC    587         EXEC  CICS,RESETBR,FILE('MYFILE07'),RIDFLD(MYRID1),RX
+               RN,REQID(1)
+         EXEC  CICS,RESETBR,FILE('MYFILE07'),RIDFLD(MYRID1),RRN,REQID(1X
+               )
+         PERIOD 
+*                       REQID(1) END-EXEC.
+*      *  LA    R8,3               R8=LOOP LIMIT
+*             MOVE 1 TO LOOPCTRL.
+*      * RSBRLP2  EQU   *
+*ZC    590         MOVE  1,TO,LOOPCTRL
+         MOVE  1,TO,LOOPCTRL
+         PERIOD 
+*         RSBRLP2.
+*      *  MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         LABEL RSBRLP2
+*             MOVE 50 TO MYLEN.
+*ZC    594         MOVE  50,TO,MYLEN
+         MOVE  50,TO,MYLEN
+         PERIOD 
+*             EXEC CICS READPREV FILE('MYFILE07') INTO(MYDATA)
+*                       LENGTH(MYLEN) RIDFLD(MYRID1) RRN REQID(1)
+*ZC    595         EXEC  CICS,READPREV,FILE('MYFILE07'),INTO(MYDATA),LEX
+               NGTH(MYLEN),RIDFLD(MYRID1),RRN,REQID(1)
+         EXEC  CICS,READPREV,FILE('MYFILE07'),INTO(MYDATA),LENGTH(MYLENX
+               ),RIDFLD(MYRID1),RRN,REQID(1)
+         PERIOD 
+*                       END-EXEC.
+*      *  BAL   R9,WQTS            WRITE IT TO TS Q
+*             PERFORM WQTS.
+*      *  BCT   R8,RSBRLP2         LOOP
+*ZC    599         PERFORM WQTS
+         PERFORM WQTS
+         PERIOD 
+*             ADD 1 TO LOOPCTRL.
+*ZC    601         ADD   1,TO,LOOPCTRL
+         ADD   1,TO,LOOPCTRL
+         PERIOD 
+*             IF LOOPCTRL NOT = 4 THEN GO TO RSBRLP2.
+*ZC    602         IF    LOOPCTRL,NOT,=,4,THEN
+         IF    LOOPCTRL,NOT,=,4,THEN
+*ZC    602         GO    TO,RSBRLP2
+         GO    TO,RSBRLP2
+         PERIOD 
+*             EXEC CICS ENDBR FILE('MYFILE07') REQID(1) END-EXEC.
+*ZC    603         EXEC  CICS,ENDBR,FILE('MYFILE07'),REQID(1)
+         EXEC  CICS,ENDBR,FILE('MYFILE07'),REQID(1)
+         PERIOD 
+*             EXEC CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL) END-EXEC.
+*ZC    604         EXEC  CICS,SEND,FROM(ENDMSG),LENGTH(ENDMSGL)
+         EXEC  CICS,SEND,FROM(ENDMSG),LENGTH(ENDMSGL)
+         PERIOD 
+*             EXEC CICS RETURN END-EXEC.
+*ZC    605         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+         PERIOD 
+*      * HANDLE ROUTINES
+*      * VSAMNOTF EQU   *
+*         VSAMNOTF.
+*      *  MVC   FWTSBA,FOP7        MOVE WCC,SBA
+*      *  MVC   FHANDCON,=CL12'NOTFND' MOVE CONDITION
+         LABEL VSAMNOTF
+*             MOVE FOP7           TO FHASBA.
+*ZC    613         MOVE  FOP7,TO,FHASBA
+         MOVE  FOP7,TO,FHASBA
+         PERIOD 
+*             MOVE 'NOTFND      ' TO FHANDCON.
+*      *  BAL   R9,HEXFDBK         DISPLAY FEEDBACK CODES
+*ZC    614         MOVE  'NOTFND      ',TO,FHANDCON
+         MOVE  'NOTFND      ',TO,FHANDCON
+         PERIOD 
+*             PERFORM HEXFDBK.
+*      *  B     FWTHSEND           EXIT
+*ZC    616         PERFORM HEXFDBK
+         PERFORM HEXFDBK
+         PERIOD 
+*             GO TO FWTHSEND.
+*      * VSAMILL  DS    0H
+*ZC    618         GO    TO,FWTHSEND
+         GO    TO,FWTHSEND
+         PERIOD 
+*         VSAMILL.
+*      *  MVC   FWTSBA,FOP9        MOVE WCC,SBA
+         LABEL VSAMILL
+*             MOVE FOP9 TO FHASBA.
+*      *  L     R8,EIBRESP2        R8=RESP2
+*      *  CVD   R8,DEC             CONVERT TO DECIMAL
+*      *  XC    FHANDCON,FHANDCON  CLEAR CONDITION
+*      *  MVC   FHANDCON+7(4),=X'40202020' MOVE EDIT WORD
+*      *  ED    FHANDCON+7(4),DEC+6 EDIT RESP2
+*      *  MVC   FHANDCON(8),=C'ILLOGIC/' MOVE CONDITION
+*ZC    622         MOVE  FOP9,TO,FHASBA
+         MOVE  FOP9,TO,FHASBA
+         PERIOD 
+*             MOVE 'ILLOGIC/    ' TO FHANDCON.
+*ZC    629         MOVE  'ILLOGIC/    ',TO,FHANDCON
+         MOVE  'ILLOGIC/    ',TO,FHANDCON
+         PERIOD 
+*             MOVE EIBRESP2 TO WORK1A.
+*ZC    630         MOVE  EIBRESP2,TO,WORK1A
+         MOVE  EIBRESP2,TO,WORK1A
+         PERIOD 
+*             MOVE WORK1C TO FHAILL.
+*      *  BAL   R9,HEXFDBK         DISPLAY FEEDBACK CODES
+*ZC    631         MOVE  WORK1C,TO,FHAILL
+         MOVE  WORK1C,TO,FHAILL
+         PERIOD 
+*             PERFORM HEXFDBK.
+*      *  B     FWTHSEND           EXIT
+*ZC    633         PERFORM HEXFDBK
+         PERFORM HEXFDBK
+         PERIOD 
+*             GO TO FWTHSEND.
+*      * VSAMLNG  DS    0H
+*ZC    635         GO    TO,FWTHSEND
+         GO    TO,FWTHSEND
+         PERIOD 
+*         VSAMLNG.
+*      *  MVC   FWTSBA,FOP11       MOVE WCC,SBA
+         LABEL VSAMLNG
+*             MOVE FOP11 TO FHASBA.
+*      *  L     R8,EIBRESP2        R8=RESP2
+*      *  CVD   R8,DEC             CONVERT TO DECIMAL
+*      *  XC    FHANDCON,FHANDCON  CLEAR CONDITION
+*      *  MVC   FHANDCON+6(4),=X'40202020' MOVE EDIT WORD
+*      *  ED    FHANDCON+6(4),DEC+6 EDIT RESP2
+*      *  MVC   FHANDCON(8),=C'LENGERR/' MOVE CONDITION
+*ZC    639         MOVE  FOP11,TO,FHASBA
+         MOVE  FOP11,TO,FHASBA
+         PERIOD 
+*             MOVE 'LENGERR/    ' TO FHANDCON.
+*ZC    646         MOVE  'LENGERR/    ',TO,FHANDCON
+         MOVE  'LENGERR/    ',TO,FHANDCON
+         PERIOD 
+*             MOVE EIBRESP2 TO WORK1A.
+*ZC    647         MOVE  EIBRESP2,TO,WORK1A
+         MOVE  EIBRESP2,TO,WORK1A
+         PERIOD 
+*             MOVE WORK1B TO FHALNG.
+*      *  BAL   R9,HEXFDBK         DISPLAY FEEDBACK CODES
+*ZC    648         MOVE  WORK1B,TO,FHALNG
+         MOVE  WORK1B,TO,FHALNG
+         PERIOD 
+*             PERFORM HEXFDBK.
+*      *  B     FWTHSEND           EXIT
+*ZC    650         PERFORM HEXFDBK
+         PERFORM HEXFDBK
+         PERIOD 
+*             GO TO FWTHSEND.
+*      * VSAMENDF DS    0H
+*ZC    652         GO    TO,FWTHSEND
+         GO    TO,FWTHSEND
+         PERIOD 
+*         VSAMENDF.
+*      *  CLI   ENDFLENO,C'1'      1ST ?
+*      *  BE    ENDFLEGO           EXIT IF IT IS
+         LABEL VSAMENDF
+*             GO TO ENDF1 ENDF2 DEPENDING ON ENDFLENO.
+*ZC    657         GO    TO,ENDF1,ENDF2,DEPENDING,ON,ENDFLENO
+         GO    TO,ENDF1,ENDF2,DEPENDING,ON,ENDFLENO
+         PERIOD 
+*             GO TO ABEND.
+*ZC    658         GO    TO,ABEND
+         GO    TO,ABEND
+         PERIOD 
+*         ENDF1.
+*      *  MVC   FWTSBA,FOP18       MOVE WCC,SBA
+         LABEL ENDF1
+*             MOVE FOP18 TO FHASBA.
+*ZC    661         MOVE  FOP18,TO,FHASBA
+         MOVE  FOP18,TO,FHASBA
+         PERIOD 
+*             GO TO ENDFEND.
+*ZC    662         GO    TO,ENDFEND
+         GO    TO,ENDFEND
+         PERIOD 
+*         ENDF2.
+*      *  MVC   FWTSBA,FOP20       MOVE WCC,SBA
+         LABEL ENDF2
+*             MOVE FOP20 TO FHASBA.
+*      * ENDFLEGO EQU   *
+*ZC    665         MOVE  FOP20,TO,FHASBA
+         MOVE  FOP20,TO,FHASBA
+         PERIOD 
+*         ENDFEND.
+*      *  MVC   FHANDCON,=CL12'ENDFILE' MOVE CONDITION
+         LABEL ENDFEND
+*             MOVE 'ENDFILE     ' TO FHANDCON.
+*      *  BAL   R9,HEXFDBK         DISPLAY FEEDBACK CODES
+*ZC    669         MOVE  'ENDFILE     ',TO,FHANDCON
+         MOVE  'ENDFILE     ',TO,FHANDCON
+         PERIOD 
+*             PERFORM HEXFDBK.
+*      * FWTHSEND EQU   *
+*ZC    671         PERFORM HEXFDBK
+         PERFORM HEXFDBK
+         PERIOD 
+*         FWTHSEND.
+*      *  MVC   FWTMSG,FHANDCON    MOVE MESSAGE TEXT
+         LABEL FWTHSEND
+*             EXEC CICS SEND FROM(FHAND) LENGTH(FHANDL) END-EXEC.
+*ZC    675         EXEC  CICS,SEND,FROM(FHAND),LENGTH(FHANDL)
+         EXEC  CICS,SEND,FROM(FHAND),LENGTH(FHANDL)
+         PERIOD 
+*      *  BR    R7                 RETURN TO MAIN LINE
+*             GO TO VSAMRTN1 VSAMRTN2 VSAMRTN3 VSAMRTN4 VSAMRTN5 ABEND
+*                   DEPENDING ON DEPCTRL.
+*ZC    677         GO    TO,VSAMRTN1,VSAMRTN2,VSAMRTN3,VSAMRTN4,VSAMRTNX
+               5,ABEND,DEPENDING,ON,DEPCTRL
+         GO    TO,VSAMRTN1,VSAMRTN2,VSAMRTN3,VSAMRTN4,VSAMRTN5,ABEND,DEX
+               PENDING,ON,DEPCTRL
+         PERIOD 
+*         ABEND.
+         LABEL ABEND
+*             EXEC CICS ABEND ABCODE('VSC2') END-EXEC.
+*ZC    680         EXEC  CICS,ABEND,ABCODE('VSC2')
+         EXEC  CICS,ABEND,ABCODE('VSC2')
+         PERIOD 
+*      * SUBROUTINES
+*      * WQTS     DS    0H
+*         WQTS.
+         LABEL WQTS
+*             EXEC CICS WRITEQ TS QUEUE('VSC2') FROM(MYDATA)
+*ZC    686         EXEC  CICS,WRITEQ,TS,QUEUE('VSC2'),FROM(MYDATA),LENGX
+               TH(MYLEN)
+         EXEC  CICS,WRITEQ,TS,QUEUE('VSC2'),FROM(MYDATA),LENGTH(MYLEN)
+         PERIOD 
+*                       LENGTH(MYLEN) END-EXEC.
+*      *  BR    R9                 RETURN
+*      * HEXFDBK  DS    0H
+*         HEXFDBK.
+*      *  UNPK  WORK(5),EIBRCODE+1(3) UNPACK VSAM FEEDBACK CODES
+*      *  TR    WORK(4),TABLE-240  TRANSLATE TO PRINTABLE HEX
+*      *  MVC   FHFDBK1,WORK       MOVE FDBK RETURN
+*      *  MVC   FHFDBK2,WORK+2     MOVE FDBK CODE
+         LABEL HEXFDBK
+*             MOVE EIBRCODE TO WORK2.
+*ZC    695         MOVE  EIBRCODE,TO,WORK2
+         MOVE  EIBRCODE,TO,WORK2
+         PERIOD 
+*             IF FDBK1 = X'00' THEN MOVE '00' TO FHFDBK1.
+*ZC    696         IF    FDBK1,=,X'00',THEN
+         IF    FDBK1,=,X'00',THEN
+*ZC    696         MOVE  '00',TO,FHFDBK1
+         MOVE  '00',TO,FHFDBK1
+         PERIOD 
+*             IF FDBK1 = X'08' THEN MOVE '08' TO FHFDBK1.
+*ZC    697         IF    FDBK1,=,X'08',THEN
+         IF    FDBK1,=,X'08',THEN
+*ZC    697         MOVE  '08',TO,FHFDBK1
+         MOVE  '08',TO,FHFDBK1
+         PERIOD 
+*             IF FDBK2 = X'00' THEN MOVE '00' TO FHFDBK2.
+*ZC    698         IF    FDBK2,=,X'00',THEN
+         IF    FDBK2,=,X'00',THEN
+*ZC    698         MOVE  '00',TO,FHFDBK2
+         MOVE  '00',TO,FHFDBK2
+         PERIOD 
+*             IF FDBK2 = X'04' THEN MOVE '04' TO FHFDBK2.
+*ZC    699         IF    FDBK2,=,X'04',THEN
+         IF    FDBK2,=,X'04',THEN
+*ZC    699         MOVE  '04',TO,FHFDBK2
+         MOVE  '04',TO,FHFDBK2
+         PERIOD 
+*             IF FDBK2 = X'10' THEN MOVE '10' TO FHFDBK2.
+*ZC    700         IF    FDBK2,=,X'10',THEN
+         IF    FDBK2,=,X'10',THEN
+*ZC    700         MOVE  '10',TO,FHFDBK2
+         MOVE  '10',TO,FHFDBK2
+         PERIOD 
+*             IF FDBK2 = X'68' THEN MOVE '68' TO FHFDBK2.
+*ZC    701         IF    FDBK2,=,X'68',THEN
+         IF    FDBK2,=,X'68',THEN
+*      *  BR    R9                 RETURN
+*ZC    701         MOVE  '68',TO,FHFDBK2
+         MOVE  '68',TO,FHFDBK2
+         PERIOD 
+         PROCEDURE END
+         END   

@@ -1,3 +1,10 @@
+z390 VSE added to z390_v1707 on 2021-04-27 by DSH
+  1. bat\runvsedemo.bat has been added
+  2. The demo does not run successfully because there are 
+     compatibility issues with the curret z390 low storage
+     mapping that has changed since 2007.
+  3. I have opened issue #244 to correct mapping errors.
+
 z390 VSE Support readme as of 03/13/07 with v1.3.02b
 
 z390 supports the assembly and execution of VSE

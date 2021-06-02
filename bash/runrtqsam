@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# runrtqsam: run RT QSAM for V,VB,VT,VL
+# BLD? creates test file
+# CHK? verifies test file
+# See the trace files for snap dumps of records
+#
+# If one of the BLD* steps times out, run with NOTIME:
+#     $ ./runrtqsam notime
+#
+# Note: run from z390/bash directory
+
+# extract longest substring that ends with "/"
+dir=${0%/*}
+
+# get the z390 directory
+zdir=$(dirname $0)
+zdir=$(cd $zdir && pwd)
+zdir=$(dirname $zdir)
+
+cd ..
+
+#if [ -f qsam/BLD*.ERR ]; then rm qsam/BLD*.ERR; fi
+shopt -s nullglob
+for f in qsam/BLD*.ERR; do
+#    echo "remove file: $f"
+    if [ -f "$f" ]; then rm "$f"; fi
+done
+shopt -u nullglob
+
+#if [ -f qsam/TEST*.TFV ]; then rm qsam/TEST*.TFV; fi
+shopt -s nullglob
+for f in qsam/TEST*.TFV; do
+#    echo "remove file: $f"
+    if [ -f "$f" ]; then rm "$f"; fi
+done
+shopt -u nullglob
+
+export SNAPOUT=DUMMY
+
+export SYSUT2=qsam/TESTV.TFV
+${dir}/bash/asmlg qsam/BLDV.MLC trace $1
+export SYSUT1=qsam/TESTV.TFV
+${dir}/bash/asmlg qsam/CHKV.MLC trace
+
+export SYSUT2=qsam/TESTVB.TFV
+${dir}/bash/asmlg qsam/BLDVB.MLC trace $1
+export SYSUT1=qsam/TESTVB.TFV
+${dir}/bash/asmlg qsam/CHKVB.MLC trace
+
+export SYSUT2=qsam/TESTVT.TFV
+${dir}/bash/asmlg qsam/BLDVT.MLC trace $1
+export SYSUT1=qsam/TESTVT.TFV
+${dir}/bash/asmlg qsam/CHKVT.MLC trace
+
+export SYSUT2=qsam/TESTVL.TFV
+${dir}/bash/asmlg qsam/BLDVL.MLC trace $1
+export SYSUT1=qsam/TESTVL.TFV
+${dir}/bash/asmlg qsam/CHKVL.MLC trace
+
+export SYSUT2=qsam/TESTVBL.TFV
+${dir}/bash/asmlg qsam/BLDVBL.MLC trace $1
+export SYSUT1=qsam/TESTVBL.TFV
+${dir}/bash/asmlg qsam/CHKVBL.MLC trace
+
+export SYSUT2=qsam/TESTVTL.TFV
+${dir}/bash/asmlg qsam/BLDVTL.MLC trace $1
+export SYSUT1=qsam/TESTVTL.TFV
+${dir}/bash/asmlg qsam/CHKVTL.MLC trace
+
+export SYSUT2=qsam/TESTF.TFV
+${dir}/bash/asmlg qsam/BLDF.MLC trace $1
+export SYSUT1=qsam/TESTF.TFV
+${dir}/bash/asmlg qsam/CHKF.MLC trace $1
+
+export SYSUT2=qsam/TESTFL.TFV
+${dir}/bash/asmlg qsam/BLDFL.MLC trace $1
+export SYSUT1=qsam/TESTFL.TFV
+${dir}/bash/asmlg qsam/CHKFL.MLC trace
+
+export SYSUT2=qsam/TESTFT.TFV
+${dir}/bash/asmlg qsam/BLDFT.MLC trace $1
+export SYSUT1=qsam/TESTFT.TFV
+${dir}/bash/asmlg qsam/CHKFT.MLC trace
+
+export SYSUT2=qsam/TESTFTL.TFV
+${dir}/bash/asmlg qsam/BLDFTL.MLC trace $1
+export SYSUT1=qsam/TESTFTL.TFV
+${dir}/bash/asmlg qsam/CHKFTL.MLC trace
+
+ls qsam/TEST*.TFV
+echo "Verify runqsamrt"

@@ -6,15 +6,17 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-.* 10/20/05 RPI27 - issue error for any undefined operands     
-.* 11/26/05 RPI111- add missing AGO      
+.* 10/20/05 RPI27 - issue error for any undefined operands
+.* 11/26/05 RPI111- add missing AGO
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
-.* 04/12/06 RPI244 SUPPORT TYPE=REL         
+.* 04/12/06 RPI244 SUPPORT TYPE=REL
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 07/11/07 RPI 654 CORRECT TO SUPPORT DCBBLKSIF
 .* 08/07/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.*
+.* 04/05/21 zVSAM Added MNOTE for ZVSAM(0)
 .*********************************************************************
 &N       POINT &DCB,         DCB                                       X
                &REL,         RELATIVE BLOCK                            X
@@ -33,7 +35,7 @@
          AIF   ('&RPL' NE '').VSAM
 .*
 .* SET FILE POINTER FOR READ/WRITE RANDOM ACCESS
-.*   DCB  - REQUIRED WITH DCBBLKSI DEFINED 
+.*   DCB  - REQUIRED WITH DCBBLKSI DEFINED
 .*   REL  - RX OF FULL WORD RELATIVE RECORD NUMBER (0-N)
 .*   RBA= - RX OF DOUBLE WORD RELATIVE BYTE POSITION (OVERRIDES REL)
 .*
@@ -66,6 +68,10 @@
          SVC   156 POINT R1=DCB R0=(64 BIT RBA)
          MEXIT
 .VSAM    ANOP
+         AIF   (&SYSZVSAM EQ 0)
+         MNOTE 15,'POINT VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM'
+         MEXIT
+         AEND
          AIF   ('&RPL'(1,1) EQ '(').RPLREG
          LA    1,&RPL
          AGO   .VSVC
@@ -74,9 +80,10 @@
 .VSVC    ANOP
          LA    0,RPLOPPNT
          SVC   121 VSAM POINT R0=4 R1=A(RPL)
-         MEXIT         
+         MEXIT
 .ERR1    MNOTE 12,'POINT ONLY TYPE=REL SUPPORTED'
          MEXIT
 .ERR2    MNOTE 12,'POINT MF= NOT SUPPORTED'
          MEXIT
          MEND
+

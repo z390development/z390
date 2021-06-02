@@ -1,0 +1,39 @@
+.*   Copyright (C) <2021>  Daniel H. Snyder
+.*   Structured Programming Macros for the IBM High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    ELSE  ,                   END OF POSITIVE TEST, START OF
+         COPY  $MGBLDEF            . NEGATIVE
+         LCLC  &X,&Y                  SET TO 'IF-FAILED' TAG
+         AIF   (&$MLVL GT 0).OK20
+         MNOTE 8,'"ELSE" INVALID OUTSIDE OF AN "IF" GROUP'
+         MNOTE ' - MACRO GENERATION TERMINATED'
+         MEXIT
+.OK20    AIF   ('&$MCVERB(&$MLVL)' EQ 'IF').OK30
+         AIF   ('&$MCVERB(&$MLVL)' EQ 'ELSEIF').OK30
+         MNOTE 8,'"ELSE" INVALID FOLLOWING "&$MCVERB(&$MLVL)"'
+         MNOTE ' - MACRO GENERATION TERMINATED'
+         MEXIT
+.OK30    AIF   ('&$MFINI(&$MLVL)' NE '').OK40
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MFINI(&$MLVL) SETC '$FINI&$Y$NDX'
+.OK40    J     &$MFINI(&$MLVL)
+&X       SETC  '&$MFNAME(&$MLVL)'
+&X       DC    0H'0'
+&$MFNAME(&$MLVL) SETC ''
+&$MCVERB(&$MLVL) SETC 'ELSE'
+         MEND

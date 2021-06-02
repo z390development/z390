@@ -1,0 +1,40 @@
+.*   Copyright (C) <2020>  Daniel H. Snyder
+.*   Sructured Programming Macros for the IBM® High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    IF    &EXP                MULTIPLE OPERANDS VIA &SYSLIST
+         COPY  IFCOPY
+.* 
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* PREPARE FOR UPCOMING "ELSEIF", "ELSE", AND "ENDIF" STATEMENTS.     *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*
+.FINISH260 AIF   ('&$ERRSW' EQ 'Y').MEND290
+         AIF ('&$MFNAME(&$MLVL)' NE '').FIN270
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MFNAME(&$MLVL) SETC '$NEXT&$Y$NDX'
+.FIN270  ANOP
+         J&$BF &$MFNAME(&$MLVL)
+         AIF   ('&$MTNAME(&$MLVL)' EQ '').MEND290
+&Y       SETC  '&$MTNAME(&$MLVL)'
+&Y       DC    0H'0'
+&$MTNAME(&$MLVL) SETC ''
+.MEND290 ANOP
+&$MCVERB(&$MLVL) SETC 'IF'
+         MEND

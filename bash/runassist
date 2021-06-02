@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# runassist: run demo and test ASSIST programs
+#
+# Note: run from z390/bash directory
+
+# debug flag; 0=no debug, 1=debug
+debug=0
+
+# extract longest substring that ends with "/"
+dir=${0%/*}
+
+# get the z390 directory
+zdir=$(dirname $0)
+zdir=$(cd $zdir && pwd)
+zdir=$(dirname $zdir)
+
+cd ..
+
+export XPRNT=assist/demo/DEMOAST1.XPR
+${dir}/bash/asmlg assist/demo/DEMOAST1 ASSIST TRACEALL
+rc=$?
+if [ $debug -eq 1 ]; then echo "DEMOAST1: rc=$rc"; fi
+if [ "$rc" -ne "0" ]; then echo "Error in DEMOAST1"; fi
+
+export XREAD=assist/test/TESTAST1.XRD
+export XPRNT=assist/test/TESTAST1.XPR
+export XPNCH=assist/test/TESTAST1.XPH
+export XGET=assist/test/TESTAST1.XGT
+export XPUT=assist/test/TESTAST1.XPT
+${dir}/bash/asmlg assist/test/TESTAST1 ASSIST TRACEALL
+rc=$?
+if [ $debug -eq 1 ]; then echo "TESTAST1: rc=$rc"; fi
+if [ "$rc" -ne "0" ]; then echo "Error in TESTAST1"; fi
+
+echo "Verify ASSIST demo and test"

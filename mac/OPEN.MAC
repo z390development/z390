@@ -1,16 +1,23 @@
          MACRO
-.*********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.* Date   - 09/30/05                                                 *
-.*********************************************************************
-.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION                     
-.*********************************************************************
-&N       OPEN  &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
-               &MF=I,      NOT SUPPORTED                               X
-               &MODE=31,   IGNORED AS IT WORKS IN BOTH                 X
-               &TYPE=      FLAG TYPE J AS UNSUPPORTED               
-&N       ZOPEN &DCBLIST,MF=&MF,MODE=&MODE,TYPE=&TYPE
+.**********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Melvyn Maltz                                              *
+.* Date   - 04/11/21                                                  *
+.**********************************************************************
+.* 04/11/21 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.*          zVSAM(0) defaults to 1                                    *
+.**********************************************************************
+&N       OPEN  &DCBLIST,&MF=I,&MODE=24,&TYPE=
+.*
+&SVSAM   SETA  &SYSZVSAM
+.******OVERRIDE CODE UNTIL ZVSAM V2 OPEN IS FULLY IMPLEMENTED
+&SVSAM   SETA  1
+.******END OF OVERRIDE
+         AIF   (&SYSZVSAM EQ 0)
+&SVSAM   SETA 1
+         AEND
+&N       OPEN&SVSAM &DCBLIST,MF=&MF,MODE=&MODE,TYPE=&TYPE
+.*
          MEND
