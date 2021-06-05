@@ -596,7 +596,7 @@ public  class  mz390 {
 	byte    zsm_type_auntil  = 10;
 	byte    zsm_type_awhile  = 11;
 	byte    zsm_type_aparm  = 12; // rpi 2220
-	String[] zsm_type_pfx = {"???", // 0
+	String[] zsm_type_pfx = {"???",   // 0
 			                 "AIF",   // 1 AELSE
 			                 "AIF",   // 2 AELSEIF
 			                 "???",   // 3 AEND
@@ -607,7 +607,7 @@ public  class  mz390 {
 			                 "ACS",   // 8 ACASE
 			                 "ACS",   // 9 AWHEN
 			                 "AUN",   //10 AUNTIL
-	                         "AWH"};   //11 AWHILE
+                             "AWH"};  //11 AWHILE
 	int     zsm_lvl_tcnt[] = new int[max_zsm_lvl]; // type instance counter
 	boolean zsm_lvl_aelse[] = new boolean[max_zsm_lvl];
 	int     zsm_aif_tot         = 0;
@@ -631,7 +631,7 @@ public  class  mz390 {
 	String  zsm_acall_parm[]     = new String[max_zsm_aentry_name]; // parms from ACALL by level NAME(p1,p2,...)
 	String acall_name = null;
 	String acall_parm = null;
-	int     zsm_acall_cnt[]       = new int[max_zsm_aentry_name]; // unique acall return counter
+    int     zsm_acall_cnt[]       = new int[max_zsm_aentry_name]; // unique acall return counter
     boolean zsm_aentry_def[]       = new boolean[max_zsm_aentry_name]; // aentry block defined  RPI 1078
 	/*
 	 * macro name table
@@ -2863,7 +2863,7 @@ public  class  mz390 {
 			zsm_lvl_tcnt[zsm_lvl] = zsm_acall_index;
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
-			  " AGO .ACL_" + zsm_acall_index + "_S"; 			
+			  " AGO .ACL_" + zsm_acall_index + "_S";
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
 				".ACL_" + zsm_acall_index 
@@ -3171,7 +3171,7 @@ public  class  mz390 {
 		 * and set &name parms else null // rpi 2220
 		 */
 		zsm_acall_index = -1;
-		if (tz390.split_parms == null){ 
+		if (tz390.split_parms == null){
 			return false;
 		}
 		acall_name = tz390.split_parms.toUpperCase();  // RPI 911
@@ -3747,7 +3747,7 @@ public  class  mz390 {
 		 */
 		var_set_array = false; // rpi 836
 		var_name = name.toUpperCase(); 
-		if  (var_name.equals("&SYSLIST")) { 
+		if  (var_name.equals("&SYSLIST")) {
 			var_type = var_sublist_type;
 			var_loc = var_syslist_loc;
 			var_name_index = -1;
@@ -9425,7 +9425,7 @@ public  class  mz390 {
 				tz390.max_key_comp = cur_key_comp;
 			}
 			if (lcl_key_hash == lcl_key_tab_hash[lcl_key_index]
-			 && user_key.equals(lcl_key_tab_key[lcl_key_index])){			
+             && user_key.equals(lcl_key_tab_key[lcl_key_index])){			
 				lcl_key_index_last = -1;
 				return lcl_key_tab_index[lcl_key_index];
 			}
@@ -9714,9 +9714,9 @@ public  class  mz390 {
 	    tot_exp_stk_var = 0;
 	    tot_pcl_exec++;
 	    pc_loc_prev = 0;
-		if (tz390.opt_pcopt 
-	       	&& pc_req_opt[pc_loc]){
-	       	opt_pcl(); // rpi 2211 remove from inside loop causing erroneous opt on trailing ops
+        if (tz390.opt_pcopt 
+            && pc_req_opt[pc_loc]){
+            opt_pcl(); // rpi 2211 remove from inside loop causing erroneous opt on trailing ops
 	    }
 		while (pc_loc > 0){
 			tot_pc_exec++;
@@ -10531,10 +10531,10 @@ public  class  mz390 {
 				exp_push_sdt();                    // RPI 2017 push sdt seta value
                 return;
 			} else {
-			    exp_stk_val_type[tot_exp_stk_var - 1] = val_setc_type; // RPI 447
-			    exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
-			    pc_push_var_setc_value = "'" + setc_value + "'";
-			}
+                exp_stk_val_type[tot_exp_stk_var - 1] = val_setc_type; // RPI 447
+                exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
+                pc_push_var_setc_value = "'" + setc_value + "'";
+            }
 			break;	                                                   
 		case 26:  // syslist
             if (setc_value == null){
@@ -10859,7 +10859,7 @@ public  class  mz390 {
 					setc_value = exp_stk_setc[tot_exp_stk_var - 1]; // get parm value set by find_var
 					setc_value = get_sublist(setc_value,set_sub);
 					break;
-				case 15: // syslist(sub) or syslist(sub, 
+				case 15: // syslist(sub) or syslist(sub,
 				case 16: // sysalist(sub) rpi 2220
 					var_type = var_parm_type;
 					val_type = val_setc_type;  

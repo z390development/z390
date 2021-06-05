@@ -2,9 +2,12 @@
 .* GET DFHRESP - SET &DFHLIT FOR &DFHRESP
 .*
 .********************************************************************
-.* 01/25/12 DSH RPI 1181 PREVENT DUP ALLOC ERROR
+.* 01/25/12   DSH RPI 1181 PREVENT DUP ALLOC ERROR
+.* 18-02-2017 JH  RPI 1501 error message generated when DFHRESP(...)
+.*                         is used in an ELSE IF clause.
 .********************************************************************
          AENTRY GET_DFHRESP
+         LCLB   &ZC_DFHRESP          RPI 1501
          :&ZC_DFHRESP SETB &ZC_DFHRESP RPI 1181 PREVENT DUP ALLOC 
          AIF   (NOT &ZC_DFHRESP)
                :&ZC_DFHRESP SETB 1
@@ -22,6 +25,7 @@
 .* GET DFHVALUE - SET &DFHLIT FOR &DFHVALUE
 .*
          AENTRY GET_DFHVALUE
+         LCLB   &ZC_DFHVALUE            RPI 1501
          &ZC_DFHVALUE SETB &ZC_DFHVALUE RPI 1181 PREVENT DUP ALLOC
          AIF   (NOT &ZC_DFHVALUE)
                :&ZC_DFHVALUE SETB 1

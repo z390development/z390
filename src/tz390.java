@@ -29,7 +29,7 @@ public  class  tz390 {
 	
     z390 portable mainframe assembler and emulator.
 	
-	Copyright 2021 Don Higgins
+    Copyright 2021 Don Higgins
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1791,14 +1791,12 @@ public  class  tz390 {
          "B278=STCKE,7,70",      //   3270 "B278"  "STCKE"    "S"     7
          "B279=SACF,7,70",       //   3280 "B279"  "SACF"     "S"     7
          "B27D=STSI,7,70",       //   3290 "B27D"  "STSI"     "S"     7
-		 
 		 "B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
          "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
          "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
 		 "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
          "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
          "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
-		 
          "B299=SRNM,7,71",       //   3300 "B299"  "SRNM"     "S"     7
          "B29C=STFPC,7,72",      //   3310 "B29C"  "STFPC"    "S"     7
          "B29D=LFPC,7,72",       //   3320 "B29D"  "LFPC"     "S"     7
@@ -1901,7 +1899,6 @@ public  class  tz390 {
          "B999=SLBR,14,144",     //   5010 "B999"  "SLBR"     "RRE"  14
          "C00=LARL,16,162",      //   5170 "C00"   "LARL"     "RIL"  16
          "C04=BRCL,16,330",      //   5180 "C04"   "BRCL"     "RIL"  16
-		
          "C05=BRASL,16,163",     //   5210 "C05"   "BRASL"    "RIL"  16
          "C05=JASL,16,163",      //   5220 "C05"   "JASL"     "RIL"  16
          "E31E=LRV,18,180",      //   5620 "E31E"  "LRV"      "RXY"  18
@@ -1912,7 +1909,7 @@ public  class  tz390 {
          "E397=DL,18,180",       //   6090 "E397"  "DL"       "RXY"  18
          "E398=ALC,18,187",      //   6100 "E398"  "ALC"      "RXY"  18
          "E399=SLB,18,187",      //   6110 "E399"  "SLB"      "RXY"  18
-         "E50E=MVCSK,19,190",   //   6150 "E50E"  "MVCSK"    "SSE"  19
+         "E50E=MVCSK,19,190",    //   6150 "E50E"  "MVCSK"    "SSE"  19
          "E50F=MVCDK,19,190",    //   6160 "E50F"  "MVCDK"    "SSE"  19
          "EB1D=RLL,20,204",      //   6280 "EB1D"  "RLL"      "RSY"  20
          "ED04=LDEB,24,240",     //   6620 "ED04"  "LDEB"     "RXE"  24
@@ -1982,6 +1979,11 @@ public  class  tz390 {
          "A7F=CGHI,73,731",      //   2490 "A7F"   "CGHI"     "RI"   12 // RPI 1522
          "B250=CSP,14,140",      //   3150 "B250"  "CSP"      "RRE"  14
          "B2B2=LPSWE,7,70",      //   3390 "B2B2"  "LPSWE"    "S"     7
+		 "B2E0=SCCTR,14,142",    //   RRE,SCCTR,R1,R2 RPI 2221
+		 "B2E1=SPCTR,14,142",    //   RRE,SPCTR,R1,R2 RPI 2221
+		 "B2E4=ECCTR,14,142",    //   RRE   B2E4 R1,R2", // RPI 2221
+         "B2E5=EPCTR,14,142",    //   RRE   B2E5 R1,R2", // RPI 2221
+         "B2ED=ECPGA,14,142",    //   RRE   B2ED R1,R2", // RPI 2221
          "B3A4=CEGBR,53,141",    //   4250 "B3A4"  "CEGBR"    "RRE"  53 RPI 1125 Z196
          "B3A5=CDGBR,53,141",    //   4260 "B3A5"  "CDGBR"    "RRE"  53 RPI 1125 Z196
          "B3A6=CXGBR,53,141",    //   4270 "B3A6"  "CXGBR"    "RRE"  53 RPI 1125 Z196
@@ -2039,13 +2041,8 @@ public  class  tz390 {
          "B992=TROT,14,143",     //   4960 "B992"  "TROT"     "RRE"  14
          "B993=TROO,14,143",     //   4970 "B993"  "TROO"     "RRE"  14
          "B99D=ESEA,14,144",     //   5040 "B99D"  "ESEA"     "RRE"  14
-         "C04m=BRmL,33,330;F=BRUL;0=", //   "C04m"  "BRmL"     "BLX"  33
          "C04=JLC,33,330", //   "C04"  "JLC"     "BLX"  33 RPI 2221
-		 "B2E0=SCCTR,14,142",  // RRE,SCCTR,R1,R2 RPI 2221
-		 "B2E1=SPCTR,14,142",  // RRE,SPCTR,R1,R2 RPI 2221
-		 "B2E4=ECCTR,14,142",  //  RRE   B2E4 R1,R2", // RPI 2221
-         "B2E5=EPCTR,14,142",  //  RRE   B2E5 R1,R2", // RPI 2221
-         "B2ED=ECPGA,14,142",  //  RRE   B2ED R1,R2", // RPI 2221
+         "C04m=BRmL,33,330;F=BRUL;0=", //   "C04m"  "BRmL"     "BLX"  33
          "C04m=JLm,33,330;F=JLU;0=JLNOP", //"C04m"  "JLm"      "BLX"  33
          "E1=PKU,17,170",        //   5380 "E1"    "PKU"      "RXSS" 17
          "E2=UNPKU,17,170",      //   5390 "E2"    "UNPKU"    "SS"   17
@@ -2315,6 +2312,7 @@ public  class  tz390 {
         {"B928=PCKMO,14,144",    //        "B928"  "PCKMO"    "RE4"  14 RPI 1125 Z196
       // dsh rpi 2202 "B960=CGRT,39,151",     //     10 "B960"  "CGRT"     "RRF5" 39 RPI 817
          "B960m=CGRTm,40,151;*Short", //   "B960m" "CGRTm"    "RRF6" 40
+      // dsh rpi 2202 "B961=CLGRT,39,151",    //     10 "B961"  "CLGRT"    "RRF5" 39 RPI 817
          "B961m=CLGRTm,40,151;*Short", //  "B961m" "CLGRTm"   "RRF6" 40
       // dsh rpi 2202 "B972=CRT,39,152",      //     80 "B972"  "CRT"      "RRF5" 39 RPI 817
          "B972m=CRTm,40,152;*Short", //    "B972m" "CRTm"     "RRF6" 40
@@ -2337,8 +2335,7 @@ public  class  tz390 {
          "C4D=LRL,16,167",       //    150 "C4D"   "LRL"      "RIL"  16 RPI 817
          "C4E=LLGFRL,16,166",    //    160 "C4E"   "LLGFRL"   "RIL"  16 RPI 817
          "C4F=STRL,16,167",      //    170 "C4F"   "STRL"     "RIL"  16 RPI 817
-         
-		 "C60=EXRL,16,163",      //    180 "C60"   "EXRL"     "RIL"  16 RPI 817
+         "C60=EXRL,16,163",      //    180 "C60"   "EXRL"     "RIL"  16 RPI 817
          "C62=PFDRL,16,169",     //    190 "C62"   "PFDRL"    "RIL"  16 RPI 817
          "C64=CGHRL,16,168",     //    200 "C64"   "CGHRL"    "RIL"  16 RPI 817
          "C65=CHRL,16,164",      //    210 "C65"   "CHRL"     "RIL"  16 RPI 817
@@ -2373,47 +2370,49 @@ public  class  tz390 {
          "EB7E=ALGSI,21,212",    //    500 "EB7E"  "ALGSI"    "SIY"  21 RPI 817
          "EC54=RNSBG,52,400",    //    510 "EC54"  "RNSBG"    "RIE8" 52 RPI 817
          "EC54T=RNSBGT,52,400",  //    520 "EC54T" "RNSBGT"   "RIE8" 52 RPI 817
+       //  "EC55=RISBG,52,400",    //    530 "EC55"  "RISBG"    "RIE8" 52 RPI 817
+       //  "EC55Z=RISBGZ,52,400",  //    540 "EC55Z" "RISBGZ"   "RIE8" 52 RPI 817
          "EC56=ROSBG,52,400",    //    550 "EC56"  "ROSBG"    "RIE8" 52 RPI 817
          "EC56T=ROSBGT,52,400",  //    560 "EC56T" "ROSBGT"   "RIE8" 52 RPI 817
          "EC57=RXSBG,52,400",    //    570 "EC57"  "RXSBG"    "RIE8" 52 RPI 817
          "EC57T=RXSBGT,52,400",  //    580 "EC57T" "RXSBGT"   "RIE8" 52 RPI 817
        // dsh rpi 2202  "EC64=CGRJ,49,234",     //     10 "EC64"  "CGRJ"     "RIE6" 49 RPI 817
          "EC64m=CGRJm,50,234;*Short", //   "EC64m" "CGRJm"    "RIE7" 50
-         // dsh rpi 2202   "EC65=CLGRJ,49,234",    //     80 "EC65"  "CLGRJ"    "RIE6" 49 RPI 817
+       // dsh rpi 2202  "EC65=CLGRJ,49,234",    //     80 "EC65"  "CLGRJ"    "RIE6" 49 RPI 817
          "EC65m=CLGRJm,50,234;*Short", //  "EC65m" "CLGRJm"   "RIE7" 50
        // dsh rpi 2202  "EC70=CGIT,41,232",     //    150 "EC70"  "CGIT"     "RIE2" 41 RPI 817
          "EC70m=CGITm,42,232;*Short", //   "EC70m" "CGITm"    "RIE3" 42
-       // dsh rpi 2202 "EC71=CLGIT,41,232",    //    150 "EC71"  "CLGIT"    "RIE2" 41 RPI 817
+       // dsh rpi 2202  "EC71=CLGIT,41,232",    //    150 "EC71"  "CLGIT"    "RIE2" 41 RPI 817
          "EC71m=CLGITm,42,232;*Short", //  "EC71m" "CLGITm"   "RIE3" 42
-      // dsh rpi 2202 "EC72=CIT,41,231",      //    220 "EC72"  "CIT"      "RIE2" 41 RPI 817
+       // dsh rpi 2202  "EC72=CIT,41,231",      //    220 "EC72"  "CIT"      "RIE2" 41 RPI 817
          "EC72m=CITm,42,231;*Short", //    "EC72m" "CITm"     "RIE3" 42
-      // dsh rpi 2202 "EC73=CLFIT,41,231",    //    220 "EC73"  "CLFIT"    "RIE2" 41 RPI 817
+       // dsh rpi 2202  "EC73=CLFIT,41,231",    //    220 "EC73"  "CLFIT"    "RIE2" 41 RPI 817
          "EC73m=CLFITm,42,231;*Short", //  "EC73m" "CLFITm"   "RIE3" 42
-      // dsh rpi 2202 "EC76=CRJ,49,235",      //    150 "EC76"  "CRJ"      "RIE6" 49 RPI 817
+       // dsh rpi 2202  "EC76=CRJ,49,235",      //    150 "EC76"  "CRJ"      "RIE6" 49 RPI 817
          "EC76m=CRJm,50,235;*Short", //    "EC76m" "CRJm"     "RIE7" 50
-      // dsh rpi 2202 "EC77=CLRJ,49,235",     //    220 "EC77"  "CLRJ"     "RIE6" 49 RPI 817
+       // dsh rpi 2202  "EC77=CLRJ,49,235",     //    220 "EC77"  "CLRJ"     "RIE6" 49 RPI 817
          "EC77m=CLRJm,50,235;*Short", //   "EC77m" "CLRJm"    "RIE7" 50
-      // dsh rpi 2202  "EC7C=CGIJ,43,233",     //    290 "EC7C"  "CGIJ"     "RIE4" 43 RPI 817
+       // dsh rpi 2202  "EC7C=CGIJ,43,233",     //    290 "EC7C"  "CGIJ"     "RIE4" 43 RPI 817
          "EC7Cm=CGIJm,43,233;*Short", //   "EC7Cm" "CGIJm"    "RIE5" 44
-      // dsh rpi 2202    "EC7D=CLGIJ,43,233",    //    360 "EC7D"  "CLGIJ"    "RIE4" 43 RPI 817
+       // dsh rpi 2202  "EC7D=CLGIJ,43,233",    //    360 "EC7D"  "CLGIJ"    "RIE4" 43 RPI 817
          "EC7Dm=CLGIJm,43,233;*Short", //  "EC7Dm" "CLGIJm"   "RIE5" 44
-      // dsh rpi 2202    "EC7E=CIJ,43,236",      //    430 "EC7E"  "CIJ"      "RIE4" 43 RPI 817
+       // dsh rpi 2202  "EC7E=CIJ,43,236",      //    430 "EC7E"  "CIJ"      "RIE4" 43 RPI 817
          "EC7Em=CIJm,43,236;*Short", //    "EC7Em" "CIJm"     "RIE5" 44
-      // dsh rpi 2202    "EC7F=CLIJ,43,236",     //    500 "EC7F"  "CLIJ"     "RIE4" 43 RPI 817
+       // dsh rpi 2202  "EC7F=CLIJ,43,236",     //    500 "EC7F"  "CLIJ"     "RIE4" 43 RPI 817
          "EC7Fm=CLIJm,43,236;*Short", //   "EC7Fm" "CLIJm"    "RIE5" 44
-      // dsh rpi 2202   "ECE4=CGRB,45,370",     //    570 "ECE4"  "CGRB"     "RRS1" 45 RPI 817
+       // dsh rpi 2202  "ECE4=CGRB,45,370",     //    570 "ECE4"  "CGRB"     "RRS1" 45 RPI 817
          "ECE4m=CGRBm,46,370;*Short", //   "ECE4m" "CGRBm"    "RRS2" 46
-      // dsh rpi 2202   "ECE5=CLGRB,45,370",    //    640 "ECE5"  "CLGRB"    "RRS1" 45 RPI 817
+       // dsh rpi 2202  "ECE5=CLGRB,45,370",    //    640 "ECE5"  "CLGRB"    "RRS1" 45 RPI 817
          "ECE5m=CLGRBm,46,370;*Short", //  "ECE5m" "CLGRBm"   "RRS2" 46
-      // dsh rpi 2202     "ECF6=CRB,45,371",      //    710 "ECF6"  "CRB"      "RRS1" 45 RPI 817
+       // dsh rpi 2202  "ECF6=CRB,45,371",      //    710 "ECF6"  "CRB"      "RRS1" 45 RPI 817
          "ECF6m=CRBm,46,371;*Short", //    "ECF6m" "CRBm"     "RRS2" 46
-      // dsh rpi 2202    "ECF7=CLRB,45,371",     //    780 "ECF7"  "CLRB"     "RRS1" 45 RPI 817
+       // dsh rpi 2202  "ECF7=CLRB,45,371",     //    780 "ECF7"  "CLRB"     "RRS1" 45 RPI 817
          "ECF7m=CLRBm,46,371;*Short", //   "ECF7m" "CLRBm"    "RRS2" 46
       // dsh rpi 2202    "ECFC=CGIB,47,380",     //    850 "ECFC"  "CGIB"     "RRS3" 47 RPI 817
          "ECFCm=CGIBm,48,380;*Short", //   "ECFCm" "CGIBm"    "RRS4" 48
-      // dsh rpi 2202   "ECFD=CLGIB,47,380",    //    920 "ECFD"  "CLGIB"    "RRS3" 47 RPI 817
+      // dsh rpi 2202    "ECFD=CLGIB,47,380",    //    920 "ECFD"  "CLGIB"    "RRS3" 47 RPI 817
          "ECFDm=CLGIBm,48,380;*Short", //  "ECFDm" "CLGIBm"   "RRS4" 48
-      // dsh rpi 2202     "ECFE=CIB,47,381",      //    990 "ECFE"  "CIB"      "RRS3" 47 RPI 817
+      // dsh rpi 2202    "ECFE=CIB,47,381",      //    990 "ECFE"  "CIB"      "RRS3" 47 RPI 817
          "ECFEm=CIBm,48,381;*Short", //    "ECFEm" "CIBm"     "RRS4" 48
       // dsh rpi 2202    "ECFF=CLIB,47,381",     //   1060 "ECFF"  "CLIB"     "RRS3" 47 RPI 817
          "ECFFm=CLIBm,48,381;*Short", //   "ECFFm" "CLIBm"    "RRS4" 48
@@ -2435,7 +2434,7 @@ public  class  tz390 {
          "CDZT     RSL-b EDAA R1,D2(L2,B2),M3", // RPI 1209K
          "CLGT     RSY-b EB2B R1,M3,D2(B2)", // RPI 1209K
          "CLT      RSY-b EB23 R1,M3,D2(B2)", // RPI 1209K
-         "CRDTE    rrfb B98F R1,R3,R2,M4", // RPI 1209K
+         "CRDTE    RRF-b B98F R1,R3,R2,M4", // RPI 1209K
          "CXZT     RSL-b EDAB R1,D2(L2,B2),M3", // RPI 1209K
          "CZDT     RSL-b EDA8 R1,D2(L2,B2),M3", // RPI 1209K
          "CZXT     RSL-b EDA9 R1,D2(L2,B2),M3", // RPI 1209K
@@ -2447,7 +2446,7 @@ public  class  tz390 {
          "LLGTAT   RXY-a E39C R1,D2(X2,B2)", // RPI 1209K
          "NIAI     IE    B2FA I1,I2", // RPI 1209K
          "NTSTG    RXY   E325 R1,D2(x2,B2)", // RPI 1209K
-         "PPA      RRFc B2E8 R1,R2,M3", // RPI 1209K
+         "PPA      RRF-c B2E8 R1,R2,M3", // RPI 1209K
          "RISBGN   RIE-f ED59 R1,R2,I3,I4,I5", // RPI 1209K
          "TABORT   S     B2FC D2(B2)", // RPI 1209K
          "TBEGIN   SIL   E560 D1(B1),I2", // RPI 1209K
@@ -3382,7 +3381,7 @@ public  class  tz390 {
          "B9DD=CHLR,39,144",     //        "B9DD"  "CHLR"     "RRE"  39 RPI 1125 Z196
          "B9DF=CLHLR,14,144",    //        "B9DF"  "CLHLR"    "RRE"  14 RPI 1125 Z196
          "B9E1=POPCNT,39,151",   //   5115 "B9E1"  "POPCNT"   "RRE"  14 RPI 1125  RPI 2202 support m3=8
-        
+      //   "B9E2=LOCGR,39,141",    //        "B9E2"  "LOCGR"    "RRF5" 39 RPI 1125 Z196
          "B9E4=NGRK,39,153",     //        "B9E4"  "NGRK"     "RRF5" 39 RPI 1125 Z196
          "B9E6=OGRK,39,153",     //        "B9E6"  "OGRK"     "RRF5" 39 RPI 1125 Z196
          "B9E7=XGRK,39,153",     //        "B9E7"  "XGRK"     "RRF5" 39 RPI 1125 Z196
@@ -3390,7 +3389,7 @@ public  class  tz390 {
          "B9E9=SGRK,39,153",     //        "B9E9"  "SGRK"     "RRF5" 39 RPI 1125 Z196
          "B9EA=ALGRK,39,153",    //        "B9EA"  "ALGRK"    "RRF5" 39 RPI 1125 Z196
          "B9EB=SLGRK,39,153",    //        "B9EB"  "SLGRK"    "RRF5" 39 RPI 1125 Z196
-         "B9F2m=LOCRm,39,142",     //        "B9F2"  "LOCR"     "RRF5" 39 RPI 1125 Z196
+         "B9F2m=LOCRm,39,142",   //        "B9F2"  "LOCR"     "RRF5" 39 RPI 1125 Z196
          "B9F4=NRK,39,154",      //        "B9F4"  "NRK"      "RRF5" 39 RPI 1125 Z196
          "B9F6=ORK,39,154",      //        "B9F6"  "ORK"      "RRF5" 39 RPI 1125 Z196
          "B9F7=XRK,39,154",      //        "B9F7"  "XRK"      "RRF5" 39 RPI 1125 Z196
@@ -3421,7 +3420,7 @@ public  class  tz390 {
          "EBDD=SLAK,20,200",     //        "EBDD"  "SLAK"     "RSY"  20 RPI 1125 Z196
          "EBDE=SRLK,20,200",     //        "EBDE"  "SRLK"     "RSY"  20 RPI 1125 Z196
          "EBDF=SLLK,20,200",     //        "EBDF"  "SLLK"     "RSY"  20 RPI 1125 Z196
-		 "EBE2=LOCG,56,207",     //        "EBE2"  "LOCG"     "RSY2" 56 RPI 1125 Z196
+         "EBE2=LOCG,56,207",     //        "EBE2"  "LOCG"     "RSY2" 56 RPI 1125 Z196
          "EBE2m=LOCGm,56,207;F=",     //        "EBE2"  "LOCG"     "RSY2" 56 RPI 1125 Z196
          "EBE3=STOCG,56,207",    //        "EBE3"  "STOCG"    "RSY2" 56 RPI 1125 Z196
 		 "EBE3m=STOCGm,56,207;F=",   //    "EBE3"  "STOCG"    "RSY2" 56 RPI 1125 Z196
@@ -3430,7 +3429,7 @@ public  class  tz390 {
          "EBE7=LAXG,20,208",     //        "EBE7"  "LAXG"     "RSY"  20 RPI 1125 Z196
          "EBE8=LAAG,20,208",     //        "EBE8"  "LAAG"     "RSY"  20 RPI 1125 Z196
          "EBEA=LAALG,20,208",    //        "EBEA"  "LAALG"    "RSY"  20 RPI 1125 Z196
-		 "EBF2=LOC,56,209",      //        "EBF2"  "LOC"      "RSY2" 56 RPI 1125 Z196
+         "EBF2=LOC,56,209",      //        "EBF2"  "LOC"      "RSY2" 56 RPI 1125 Z196
          "EBF2m=LOCm,56,209;F=",      //        "EBF2"  "LOC"      "RSY2" 56 RPI 1125 Z196
          "EBF3=STOC,56,209",     //        "EBF3"  "STOC"     "RSY2" 56 RPI 1125 Z196
 		 "EBF3m=STOCm,56,209;F=",     //        "EBF3"  "STOC"     "RSY2" 56 RPI 1125 Z196
@@ -3457,8 +3456,7 @@ public  class  tz390 {
 		 "EC55=RISBG,52,400",    //    // RPI 2202
 		 "EC59=RISBGNZ,52,400", // RPI 2202
 		 "EC59=RISBGN,52,400",     // RPI 2202
-
-		 "EC5D=RISBHG,52,400",   //        "EC5D"  "RISBHG#"  "RIE8" 52 RPI 1125 Z196 RPI 1164
+         "EC5D=RISBHG,52,400",   //        "EC5D"  "RISBHG#"  "RIE8" 52 RPI 1125 Z196 RPI 1164
          "EC5D$003100=LHHR,52,400",   //   "EC5D$003100","LOAD (HIGH && HIGH) RISBHGZ","LHHR","RIE8",52  RPI 1164
          "EC5D$003132=LHLR,52,400",   //   "EC5D$003132","LOAD (HIGH && LOW ) RISBHGZ","LHLR","RIE8",52  RPI 1164
          "EC5D$163100=LLHHHR,52,400", //   "EC5D$163100","LOAD LOG HW (HIGH && HIGH) RISBHGZ","LLHHHR","RIE8",52  RPI 1164
@@ -4513,9 +4511,9 @@ private void check_options(){
         }
     // Check requested zVSAM version                  // RPI 1598
     if (opt_zvsam != 0                                // RPI 1598
-    &&  opt_zvsam != 1                               // RPI 1598
+    &&  opt_zvsam != 1                                // RPI 1598
 	&&  opt_zvsam != 2)                                 // RPI 1628 RPI 2226
-       {abort_error(30,"option VSAM must be 0,1 or 2"); // RPI 1628 RPI 2226
+       {abort_error(30,"option VSAM must be 0, 1 or 2"); // RPI 1628 RPI 2226
         }                                             // RPI 1598
 }
 private void process_option(String opt_file_name,int opt_file_line,String token){

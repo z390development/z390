@@ -14,6 +14,9 @@
 .* 09/03/09 RPI 1065 reset ss1 length if any on &NQ and &NR for stores
 .* 05/02/12 RPI 1211 add support for implied decimal points
 .* 05/18/12 RPI 1217 replace SCALE_F with SCALE_G to prevent F/H ovf.
+.* 17-01-22 JH RPI 1559 Error in GEN_DIV where &LNQ should be &LQ
+.* 17-01-22 JH RPI 1560 Error in GEN_DIV where &LNR should be &LR
+.*                      (two locations)
 .*********************************************************************
        GEN_DIV &NDD,&TDD,&LDD,&PDD, DIVIDEND  NAME/LIT,TYPE,LEN,PLACES X                  
                &NDR,&TDR,&LDR,&PDR, DIVISOR   NAME/LIT,TYPE,LEN,PLACES X                  
@@ -1895,7 +1898,8 @@
                  ZC_CONV Q,LD
          STMG  ZC_R0,ZC_R1,&NQ_ST
                AWHEN C'Z'
-               ZC_UNPK31 &NQ,&LNQ,&SQ,ZCVT_PWORK4,&LDDP
+.***********   ZC_UNPK31 &NQ,&LNQ,&SQ,ZCVT_PWORK4,&LDDP // jclh(RPI 1559)
+               ZC_UNPK31 &NQ,&LQ,&SQ,ZCVT_PWORK4,&LDDP  // jclh(RPI 1559)
                AELSE
                    MNOTE 8,'GEN_DIV INVALID GIVING TYPE &TQ'
                    MEXIT
@@ -2025,9 +2029,11 @@
          STMG  0,1,&NR_ST
                AWHEN C'Z'
                  AIF (&LDRP EQ 16)
-                   ZC_UNPK31 &NR,&LNR,&SR,ZCVT_PWORK2,16
+.**************    ZC_UNPK31 &NR,&LNR,&SR,ZCVT_PWORK2,16    // jclh(RPI 1560)
+                   ZC_UNPK31 &NR,&LR,&SR,ZCVT_PWORK2,16     // jclh(RPI 1560)
                  AELSE
-                   ZC_UNPK31 &NR,&LNR,&SR,ZCVT_PWORK4,&LDRP
+.**************    ZC_UNPK31 &NR,&LNR,&SR,ZCVT_PWORK4,&LDRP // jclh(RPI 1560)
+                   ZC_UNPK31 &NR,&LR,&SR,ZCVT_PWORK4,&LDRP  // jclh(RPI 1560)
                  AEND
                AELSE
                    MNOTE 8,'GEN_DIV INVALID REMAINDER TYPE &TR'
