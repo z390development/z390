@@ -1,14 +1,31 @@
 # Contributing to z390 Documentation
 
-The following document will provide details on developing z390 documentation.
+The following document will provide details on how to contribute to the z390 documentation.
 
-It is expected that as part of contributing to the code base, that you also update any documentation impacted by the change.
+## Submitting changes
+
+Changes to documentation can be made by submitting a pull request to the z390 project repository.
+
+## Content
 
 All documentation will be held in the `doc` folder and be in markdown format.
 Markdown files have a `.md` extension.
 Markdown uses simple text files with specific syntax for formatting. See [the markdown guide](https://www.markdownguide.org/basic-syntax/) for syntax.
 
 You can also use functions provided by the admonition extension in mkdocs. See the [doco for admonition](https://python-markdown.github.io/extensions/admonition/)
+
+### Structure
+
+All the documentation is contained in the `doc` folder.
+
+The following is the sections of the documentation and their purpose and content:
+
+Section name    |  Folder name       | Purpose and content
+----------------|--------------------|--------------------
+Home            | index.md           | Landing page for the documentation and project. Designed for people unfamiliar with the project.
+Getting started | getting_started.md | Provides details for a new user of z390 to install and start using z390.
+Reference       | reference          | Provides details of the z390 project from a user perspective.
+Contributing    | contributing       | Provides details of the z390 project from a project contributor/developer perspective.
 
 ## Conventions
 
@@ -20,6 +37,7 @@ Product names should always use a small z:
 * zCOBOL  - Always capitalize COBOL
 * zVSAM   - Always capitalize VSAM
 * zCICS   - Always capitalize CICS
+* zSORT   - Always capitalize SORT
 
 ###  Program names and scripts
 
@@ -74,21 +92,21 @@ The following instructions will allow you to preview the published version on Gi
 
 You will need some version of Python, and the version should be 3.4 or above.
 
-#### MacOS/Unix
+=== "MacOS/Unix"
 
-``` sh
-python -m venv docenv
-source docenv/bin/activate
-pip install -r doc/requirements.txt
-```
+    ``` sh
+    python -m venv docenv
+    source docenv/bin/activate
+    pip install -r doc/requirements.txt
+    ```
 
-#### Windows
+=== "Windows"
 
-``` dos
-python -m venv docenv
-docenv\Scripts\activate
-pip install -r doc\requirements.txt
-```
+    ``` dos
+    python -m venv docenv
+    docenv\Scripts\activate
+    pip install -r doc\requirements.txt
+    ```
 
 ### Run the live web server
 
@@ -97,16 +115,16 @@ You can view the web site preview using a web browser pointed at the following a
 
 <http://localhost:8000>
 
-#### MacOS/Unix
-    
-``` sh
-source docenv/bin/activate
-mkdocs serve
-```
+=== "MacOS/Unix"
+        
+    ``` sh
+    source docenv/bin/activate
+    mkdocs serve
+    ```
 
-#### Windows
+=== "Windows"
 
-``` dos
-docenv\Scripts\activate
-mkdocs serve
-```
+    ``` dos
+    docenv\Scripts\activate
+    mkdocs serve
+    ```

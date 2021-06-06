@@ -1,9 +1,32 @@
-site_name: z390 docs
+site_name: z390
 repo_url: https://github.com/z390development/z390/
 edit_uri: edit/main/doc/
-theme: material
+plugins:
+  - search
+  - awesome-pages
+theme: 
+  name: material
+  custom_dir: doc_overrides
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
 docs_dir: doc
+
 markdown_extensions:
   - admonition
   - footnotes
+  - meta
   - attr_list
+  - pymdownx.tabbed
+  - pymdownx.superfences
+  - pymdownx.critic
+  - pymdownx.smartsymbols
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Getting started: getting_started.md
+  - ... | reference/**
+  - ... | contributing/**
