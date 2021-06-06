@@ -10,8 +10,7 @@
 *********************************************************************
 DEMOAST1 CSECT
          USING *,R15
-         XPRNT =C'           1',12 DISPLAY 1, 2, 3 AS PRIMES
-         XPRNT =C'           2',12
+         XPRNT =C'           2',12 DISPLAY FIRST TWO PRIMES
          XPRNT =C'           3',12
          LA    R3,3          R3 = NUMBER TO TEST FOR PRIME
          LA    R5,PRIMES     R5 -> LAST PRIME IN TABLE OF PRIMES
