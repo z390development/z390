@@ -1,0 +1,90 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Melvyn Maltz                                              *
+.* Date   - 10/21/20                                                  *
+.**********************************************************************
+.* Used by zVSAM V2 TESTCB                                            *
+.**********************************************************************
+         ZGENATRB &ATRB=
+.*
+         LCLA  &COUNT
+         LCLB  &KSDS,&ESDS,&RRDS,&LDS,&VRRDS
+         LCLB  &REPL,&SSWD,&COMP,&WCK
+         LCLB  &XADDR,&SPAN,&UNQ
+.*
+         GBLC  &ZGENATB1,&ZGENATB2
+.*
+&ATBS(1) SETC  'KSDS',      1                                          X
+               'ESDS',      2                                          X
+               'RRDS',      3                                          X
+               'LDS',       4                                          X
+               'VRRDS',     5                                          X
+               'REPL',      6                                          X
+               'SSWD',      7                                          X
+               'COMPRESS',  8                                          X
+               'WCK',       9                                          X
+               'XADDR',    10                                          X
+               'SPAN',     11                                          X
+               'UNQ'       12
+.*
+&I       SETA  0
+.ATBLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&ATRB).CHK_ATB
+&J       SETA  0
+.FINDATB ANOP
+&J       SETA  &J+1
+         AIF   (&J GT N'&ATBS).ATB_NOT_FND
+         AIF   ('&ATRB(&I)' EQ '&ATBS(&J)').ATB_FND
+         AGO   .FINDATB
+.*
+.ATB_NOT_FND ANOP
+         MNOTE 12,'ZGENATRB ATRB PARM NOT FOUND - &ATRB(&I)'
+         AGO   .ATBLOOP
+.*
+.ATB_FND ANOP
+&KSDS    SETB  ('&ATRB(&I)' EQ 'KSDS' OR &KSDS)
+&ESDS    SETB  ('&ATRB(&I)' EQ 'ESDS' OR &ESDS)
+&RRDS    SETB  ('&ATRB(&I)' EQ 'RRDS' OR &RRDS)
+&LDS     SETB  ('&ATRB(&I)' EQ 'LDS' OR &LDS)
+&VRRDS   SETB  ('&ATRB(&I)' EQ 'VRRDS' OR &VRRDS)
+&REPL    SETB  ('&ATRB(&I)' EQ 'REPL' OR &REPL)
+&SSWD    SETB  ('&ATRB(&I)' EQ 'SSWD' OR &SSWD)
+&COMP    SETB  ('&ATRB(&I)' EQ 'COMPRESS' OR &COMP)
+&WCK     SETB  ('&ATRB(&I)' EQ 'WCK' OR &WCK)
+&XADDR   SETB  ('&ATRB(&I)' EQ 'XADDR' OR &XADDR)
+&SPAN    SETB  ('&ATRB(&I)' EQ 'SPAN' OR &SPAN)
+&UNQ     SETB  ('&ATRB(&I)' EQ 'UNQ' OR &UNQ)
+         AGO   .ATBLOOP
+.*
+.CHK_ATB ANOP
+.*
+.* CHECK MUTUALLY EXCLUSIVE OPTIONS OF SUPPORTED OPERANDS
+.*
+         AIF   (&KSDS)
+&COUNT   SETA  &COUNT+1
+         AEND
+         AIF   (&ESDS)
+&COUNT   SETA  &COUNT+1
+         AEND
+         AIF   (&RRDS)
+&COUNT   SETA  &COUNT+1
+         AEND
+         AIF   (&LDS)
+&COUNT   SETA  &COUNT+1
+         AEND
+         AIF   (&VRRDS)
+&COUNT   SETA  &COUNT+1
+         AEND
+         AIF   (&COUNT GT 1)
+         MNOTE 12,'ZGENATRB KSDS, ESDS, RRDS, LDS AND VRRDS ARE MUTUALL-
+               Y EXCLUSIVE'
+         AEND
+.*
+.* GEN TESTCB ATRB BYTES
+&ZGENATB1 SETC '&KSDS&ESDS&RRDS&LDS&VRRDS&REPL&SSWD&COMP' ATRB BYTE 1
+&ZGENATB2 SETC '&WCK&XADDR&SPAN&UNQ.0000'                 ATRB BYTE 2
+         MEND

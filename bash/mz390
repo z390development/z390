@@ -1,0 +1,30 @@
+#!/bin/bash
+# mz390: execute mz390 runtime with java runtime options:
+# -classpath  path to jar file
+# -verbose:gc trace garbage collection to detect memory leaks
+# -XmsnK      set initial memory allocation to nK
+# -XmxnK      set max     memory allocation to nK
+# -Xrs        allow control break interruption of java tasks
+
+# debug flag; 0=no debug, 1=debug
+debug=0
+
+# get full directory path to z390.jar; assumes that this bash script is in the z390 subdirectory
+jardir=$(dirname $0)
+jardir=$(cd $jardir && pwd)
+jardir=$(dirname $jardir)
+
+if [ $debug -eq 1 ]; then
+    echo "mz390 jardir=$jardir"
+    echo "mz390 1=$1"
+    echo "mz390 2=$2"
+    echo "mz390 3=$3"
+    echo "mz390 4=$4"
+fi
+
+java -classpath ${jardir}/z390.jar -Xrs -Xms150000K -Xmx150000K $J2SEOPTIONS mz390 $1 $2 $3 $4 $5 $6 $7 $8 $9
+
+rc=$?
+if [ $debug -eq 1 ]; then echo "mz390 after java command; rc=$rc"; fi
+
+exit $rc

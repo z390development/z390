@@ -13,6 +13,7 @@ public class  test_unicode{
 	}
 public void main(){
 // System 390 EBCDIC
+// 2019-09-20 dsh fix raw interator by adding <?>
 String encoding = "Cp1047";
 
 // microsoft proprietary USA
@@ -36,9 +37,8 @@ private void list_default_charset(){
 	String name = Charset.defaultCharset().name();
 	System.out.println("default charset = " + name);
 }
-//@SuppressWarnings("unchecked") // dk get rid of warning
-private void list_available_charsets(){ // dk get rid of warning
-	Map<?, ?> map = Charset.availableCharsets(); // dk get rid of warning  RPI 1618
+private void list_available_charsets(){
+	Map<?, ?> map = Charset.availableCharsets();
 	Iterator<?> it = map.keySet().iterator();
 	while (it.hasNext()) {
     // Get charset name

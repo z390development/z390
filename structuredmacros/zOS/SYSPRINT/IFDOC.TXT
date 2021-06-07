@@ -1,0 +1,810 @@
+1                                         High Level Assembler Option Summary                   (PTF UK71661)   Page    1
+-                                                                                            HLASM R6.0  2020/09/06 03.40
+0  No Overriding ASMAOPT Parameters
+   No Overriding Parameters
+   No Process Statements
+
+
+   Options for this Assembly
+0  NOADATA
+     ALIGN
+     ASA
+     BATCH
+     CODEPAGE(047C)
+   NOCOMPAT
+   NODBCS
+   NODECK
+     DXREF
+     ESD
+   NOEXIT
+     FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOPAGE0,PUSH,RECORD,NOSUBSTR,USING0)
+   NOFOLD
+   NOGOFF
+   NOINFO
+     LANGUAGE(EN)
+   NOLIBMAC
+     LINECOUNT(60)
+     LIST(121)
+     MACHINE(,NOLIST)
+     MXREF(SOURCE)
+     OBJECT
+     OPTABLE(UNI,NOLIST)
+   NOPCONTROL
+   NOPESTOP
+   NOPROFILE
+   NORA2
+   NORENT
+     RLD
+     RXREF
+     SECTALGN(8)
+     SIZE(MAX)
+   NOSUPRWARN
+     SYSPARM()
+   NOTERM
+   NOTEST
+     THREAD
+   NOTRANSLATE
+     TYPECHECK(MAGNITUDE,REGISTER)
+     USING(NOLIMIT,MAP,WARN(15))
+   NOWORKFILE
+     XREF(SHORT,UNREFS)
+
+   No Overriding DD Names
+1IFDOC                                         External Symbol Dictionary                                       Page    2
+-Symbol   Type   Id     Address  Length   Owner Id Flags Alias-of                            HLASM R6.0  2020/09/06 03.40
+0          PC 00000001 00000000 00000000             00
+ IFDOC     SD 00000002 00000000 0000036C             00
+1IFDOC                                                                                                          Page    3
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                      1          AGO   .SKIP
+                                       2 .SKIP    ANOP
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    4
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                      4          GBLA  &$MBLATH,&$MBL2
+                                       5 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                       6 *                                                                     *
+                                       7 *      THESE FOLLOWING STATEMENTS ARE NORMAL zOS INITIALIZATION       *
+                                       8 *                                                                     *
+                                       9 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                      10 *
+                       00000          11 R0       EQU   0
+                       00001          12 R1       EQU   1       STANDARD
+                       00002          13 R2       EQU   2        EQUATES
+                       00003          14 R3       EQU   3         FOR
+                       00004          15 R4       EQU   4          GENERAL
+                       00005          16 R5       EQU   5           PURPOSE
+                       00006          17 R6       EQU   6            REGISTERS.
+                       00007          18 R7       EQU   7             YOU
+                       00008          19 R8       EQU   8              MIGHT
+                       00009          20 R9       EQU   9               AS
+                       0000A          21 R10      EQU   10               WELL
+                       0000B          22 R11      EQU   11                JUST
+                       0000C          23 R12      EQU   12                 GET
+                       0000D          24 R13      EQU   13                  USED
+                       0000E          25 R14      EQU   14                   TO
+                       0000F          26 R15      EQU   15                    IT.
+                                      27 *
+ 000000                00000 0036C    28 IFDOC    CSECT
+                  R:C  00000          29          USING *,R12               SET BASE REGISTER FOR PROGRAM
+ 000000 90EC D00C            0000C    30          STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA
+ 000004 18CF                          31          LR    R12,R15             PRIME BASE REG
+ 000006 41E0 C2B0            002B0    32          LA    R14,SAVEAREA        ADDRESS OF MY SAVE AREA
+ 00000A 50D0 C2B4            002B4    33          ST    R13,SAVEAREA+4      BACK LINK TO CALLER'S SAVE AREA
+ 00000E 50E0 D008            00008    34          ST    R14,8(,R13)         FORWARD LINK TO MY SAVE AREA
+ 000012 18DE                          35          LR    R13,R14             R13 MUST POINT TO MY SAVE AREA
+                                      36 *
+                                      37 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                      38 *                                                                     *
+                                      39 *                   THE "IF" STATEMENT                                *
+                                      40 *                                                                     *
+                                      41 *      THE FORMAT OF THE STATEMENT IS:                                *
+                                      42 *                                                                     *
+                                      43 *        IF    (CLC,A,Z,NE)                                           *
+                                      44 *                                                                     *
+                                      45 * WHERE THE 'CLC' CAN BE ANY INSTRUCTION THAT SETS THE CONDITION      *
+                                      46 * CODE, 'A' IS THE FIRST OPERAND, 'Z' THE SECOND, AND 'NE' CAN BE ANY *
+                                      47 * CONDITION WHICH IS A MEMBER OF THE EXTENDED MNEMONIC BRANCH         *
+                                      48 * INSTRUCTIONS, AND SETS THE CONDITION IN WHICH THE IF-GROUP IS TO    *
+                                      49 * BE EXECUTED. EXAMPLES INCLUDE 'E', 'NE', 'NO', ETC. THE INSTRUCTION *
+                                      50 * DOES NOT HAVE TO HAVE TWO OPERANDS. IN ANY CASE, THE OP-CODE MUST   *
+                                      51 * BE THE FIRST POSITIONAL PARAMETER WITHIN THE PARENTHESES, AND THE   *
+                                      52 * CONDITION, SUCH AS "E" OR "NE", MUST BE THE LAST.                   *
+                                      53 *                                                                     *
+                                      54 *      IF    (CLC,A,Z,NE)                                             *
+                                      55 *                                                                     *
+                                      56 *               ONE OR MORE INSTRUCTIONS                              *
+                                      57 *               TO BE EXECUTED IF THE ABOVE                           *
+                                      58 *               LOGIC GROUP EVALUATES TO "TRUE"                       *
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    5
+   Active Usings: IFDOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                     59 *                                                                     *
+                                      60 *      ENDIF                                                          *
+                                      61 *                                                                     *
+                                      62 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                      63 *        1         2         3         4         5         6         7
+                                      64 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                      65          IF    (CLC,A,Z,NE)
+ 000014 D503 C338 C368 00338 00368    66+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 00001A A784 0005            00024    67+         JE     $NEXT1                                          IF 090  01-IF
+ 00001E FA30 C308 C2F8 00308 002F8    68            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                      69          ENDIF
+ 000024                               70+$NEXT1   DC    0H'0'                                        ENDIF 010   01-ENDIF
+                                      71 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                      72 * SAME - WITH A THREE OPERAND INSTRUCTION                             *
+                                      73 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+ 000024 F236 C334 C2F9 00334 002F9    74          PACK  SHIFT_PACKED,=Z'1234567'
+                                      75 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                      76 *  "SRP" INSTRUCTION "SHIFT AND ROUND DECIMAL" - THREE OPERANDS       *
+                                      77 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                      78 SRP010   IF    (SRP,SHIFT_PACKED,5,3,P) "POSITIVE"
+ 00002A F033 C334 0005 00334 00005    79+SRP010   SRP   SHIFT_PACKED,5,3     3 OPERANDS - SET CC        CPY 040  01-IF
+ 000030 A7D4 0005            0003A    80+         JNP    $NEXT2                                          IF 090  01-IF
+ 000034 FA30 C308 C2F8 00308 002F8    81            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                      82          ENDIF  ,
+ 00003A                               83+$NEXT2   DC    0H'0'                                        ENDIF 010   01-ENDIF
+                                      84 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                      85 *                                                                     *
+                                      86 *                 THE "ELSE" STATEMENT                                *
+                                      87 *                                                                     *
+                                      88 *      THE FORMAT OF THE STATEMENT IS:                                *
+                                      89 *                                                                     *
+                                      90 *        ELSE                                                         *
+                                      91 *                                                                     *
+                                      92 * IT MUST FOLLOW AN "IF" STATEMENT AND PRECEDE ITS MATCHING "ENDIF".  *
+                                      93 * THE CODE THAT YOU PROVIDE BETWEEN THE "ELSE" AND THE "ENDIF" WILL   *
+                                      94 * BE EXECUTED IF THE "IF" CLAUSE(S) RESULT IN "NOT TRUE". THE "ELSE"  *
+                                      95 * IS OPTIONAL, AND IN ITS ABSENCE NO ACTION WILL BE TAKEN IN THE      *
+                                      96 * EVENT THAT THE EXECUTION OF THE "IF" MACRO RESULTS IN "FALSE".      *
+                                      97 *                                                                     *
+                                      98 *      IF    ...                                                      *
+                                      99 *                                                                     *
+                                     100 *               ONE OR MORE INSTRUCTIONS                              *
+                                     101 *               TO BE EXECUTED IF THE ABOVE                           *
+                                     102 *               LOGIC GROUP EVALUATES TO "TRUE"                       *
+                                     103 *                                                                     *
+                                     104 *      ELSE                                                           *
+                                     105 *                                                                     *
+                                     106 *               ONE OR MORE INSTRUCTIONS                              *
+                                     107 *               TO BE EXECUTED IF THE ABOVE                           *
+                                     108 *               LOGIC GROUP EVALUATES TO "FALSE"                      *
+                                     109 *                                                                     *
+                                     110 *      ENDIF                                                          *
+                                     111 *                                                                     *
+                                     112 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     113 *        1         2         3         4         5         6         7
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    6
+   Active Usings: IFDOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                    114 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     115          IF    (CLI,EOFSW,C'N',E)
+ 00003A 95D5 C300      00300         116+         CLI   EOFSW,C'N'     TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 00003E A774 0007            0004C   117+         JNE    $NEXT3                                          IF 090  01-IF
+ 000042 FA30 C308 C2F8 00308 002F8   118            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     119          ELSE
+ 000048 A7F4 0005            00052   120+         J     $FINI4                                         ELSE 010  01-ELSE
+ 00004C                              121+$NEXT3   DC    0H'0'                                          ELSE 020  01-ELSE
+ 00004C FA30 C310 C2F8 00310 002F8   122            AP    LEVEL1_ELSE_COUNTER,=P'1'
+                                     123          ENDIF
+ 000052                              124+$FINI4   DC    0H'0'                                        ENDIF 030   01-ENDIF
+                                     125 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     126 *                                                                     *
+                                     127 *                 THE "ELSEIF" STATEMENT                              *
+                                     128 *                                                                     *
+                                     129 *      THE FORMAT OF THE STATEMENT IS:                                *
+                                     130 *                                                                     *
+                                     131 *        ELSEIF (CLC,A,Z,E)                                           *
+                                     132 *                                                                     *
+                                     133 * IT MUST FOLLOW AN "IF" STATEMENT AND PRECEDE ITS MATCHING "ENDIF".  *
+                                     134 * IF THERE IS AN "ELSE" STATEMENT WITHIN THIS "IF" GROUP, THEN THE    *
+                                     135 * "ELSEIF" MUST PRECEDE THE "ELSE".                                   *
+                                     136 *                                                                     *
+                                     137 * THE "ELSEIF" STATEMENT SUPPORTS THE SAME RICHNESS OF FUNCTION THAT  *
+                                     138 * THE "IF" STATEMENT PROVIDES. THE "IF" STATEMENT'S FULL POWER IS     *
+                                     139 * DESCRIBED IN SOME OF THE EXAMPLES THAT FOLLOW.                      *
+                                     140 *                                                                     *
+                                     141 * THE CODE THAT YOU PROVIDE BETWEEN THE "ELSEIF" AND THE FOLLOWING    *
+                                     142 * "ELSE" OR "ENDIF" WILL BE EXECUTED IF THE "IF" CLAUSE(S) AND ALL    *
+                                     143 * PREVIOUS "ELSEIF" STATEMENTS ARE FALSE, AND THE RESULT OF THIS      *
+                                     144 * "ELSEIF" IS TRUE. THE "ELSEIF" IS OPTIONAL, MAY OCCUR MORE THAN     *
+                                     145 * ONCE, AND MUST BE CODED BETWEEN THE "IF" AND THE "ELSE" OR "ENDIF". *
+                                     146 *                                                                     *
+                                     147 *      IF       ...                                                   *
+                                     148 *                                                                     *
+                                     149 *               ONE OR MORE INSTRUCTIONS                              *
+                                     150 *               TO BE EXECUTED IF THE ABOVE                           *
+                                     151 *               LOGIC GROUP EVALUATES TO "TRUE"                       *
+                                     152 *                                                                     *
+                                     153 *      ELSEIF   ...                                                   *
+                                     154 *                                                                     *
+                                     155 *               ONE OR MORE INSTRUCTIONS TO BE EXECUTED IF THIS       *
+                                     156 *               "ELSEIF" EVALUATES TO "TRUE" AND THE PRECEDING "IF"   *
+                                     157 *               AND ANY ADDITIONAL "ELSEIF" STATEMENT(S) ALL EVALUATE *
+                                     158 *               TO "FALSE"                                            *
+                                     159 *                                                                     *
+                                     160 *      ENDIF                                                          *
+                                     161 *                                                                     *
+                                     162 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     163 *        1         2         3         4         5         6         7
+                                     164 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     165          IF    (CLC,A,Z,NE)
+ 000052 D503 C338 C368 00338 00368   166+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 000058 A784 0007            00066   167+         JE     $NEXT5                                          IF 090  01-IF
+ 00005C FA30 C308 C2F8 00308 002F8   168            AP    LEVEL1_PASS_COUNTER,=P'1'
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    7
+   Active Usings: IFDOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                    169          ELSEIF (CLC,B,Z,E)
+ 000062 A7F4 000A            00076   170+         J     $FINI6                                      ELSEIF 010   01-ELSEI
+ 000066 D503 C33C C368 0033C 00368   172+$NEXT5   CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF
+ 00006C A774 0005            00076   173+         JNE    $NEXT7                                          IF 090  02-IF
+ 000070 FA30 C30C C2F8 0030C 002F8   174            AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+                                     175          ENDIF
+ 000076                              176+$NEXT7   DC    0H'0'                                        ENDIF 010   01-ENDIF
+ 000076                              177+$FINI6   DC    0H'0'                                        ENDIF 030   01-ENDIF
+                                     178 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     179 *                                                                     *
+                                     180 *                 BOTH "ELSEIF" AND "ELSE"                            *
+                                     181 *                                                                     *
+                                     182 * NOTE: IF AN "ELSE" IS USED IN THE SAME IF-GROUP AS ONE OR MORE      *
+                                     183 *       "ELSEIF" STATEMENTS, THEN THE "ELSE" MUST BE THE LAST.        *
+                                     184 *                                                                     *
+                                     185 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     186 *        1         2         3         4         5         6         7
+                                     187 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     188          IF    (CLC,A,Z,NE)
+ 000076 D503 C338 C368 00338 00368   189+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 00007C A784 0007            0008A   190+         JE     $NEXT8                                          IF 090  01-IF
+ 000080 FA30 C308 C2F8 00308 002F8   191            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     192          ELSEIF (CLC,B,Z,E)
+ 000086 A7F4 0023            000CC   193+         J     $FINI9                                      ELSEIF 010   01-ELSEI
+ 00008A D503 C33C C368 0033C 00368   195+$NEXT8   CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF
+ 000090 A774 0007            0009E   196+         JNE    $NEXT10                                         IF 090  02-IF
+ 000094 FA30 C30C C2F8 0030C 002F8   197            AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+                                     198          ELSEIF (CLC,C,Z,E)
+ 00009A A7F4 0019            000CC   199+         J     $FINI9                                      ELSEIF 010   01-ELSEI
+ 00009E D503 C340 C368 00340 00368   201+$NEXT10  CLC   C,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF
+ 0000A4 A774 0007            000B2   202+         JNE    $NEXT11                                         IF 090  02-IF
+ 0000A8 FA30 C30C C2F8 0030C 002F8   203            AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+                                     204          ELSEIF (CLC,D,Z,E)
+ 0000AE A7F4 000F            000CC   205+         J     $FINI9                                      ELSEIF 010   01-ELSEI
+ 0000B2 D503 C344 C368 00344 00368   207+$NEXT11  CLC   D,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF
+ 0000B8 A774 0007            000C6   208+         JNE    $NEXT12                                         IF 090  02-IF
+ 0000BC FA30 C30C C2F8 0030C 002F8   209            AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+                                     210          ELSE  ,
+ 0000C2 A7F4 0005            000CC   211+         J     $FINI9                                         ELSE 010  01-ELSE
+ 0000C6                              212+$NEXT12  DC    0H'0'                                          ELSE 020  01-ELSE
+ 0000C6 FA30 C310 C2F8 00310 002F8   213            AP    LEVEL1_ELSE_COUNTER,=P'1'
+                                     214          ENDIF
+ 0000CC                              215+$FINI9   DC    0H'0'                                        ENDIF 030   01-ENDIF
+                                     216 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     217 *                                                                     *
+                                     218 *                      THE "OR" CONJUNCTION                           *
+                                     219 *                                                                     *
+                                     220 *      TO EXECUTE THE IF-GROUP IF EITHER ONE OF TWO CONDITIONS IS     *
+                                     221 * TRUE, THE FORMAT IS:                                                *
+                                     222 *                                                           72        *
+                                     223 *      IF    (CLC,A,Z,NE),OR,                                C        *
+                                     224 *            (CLC,B,Z,NE)                                             *
+                                     225 *                                                                     *
+                                     226 *               ONE OR MORE INSTRUCTIONS                              *
+                                     227 *               TO BE EXECUTED IF THE ABOVE                           *
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    8
+   Active Usings: IFDOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                    228 *               LOGIC GROUP EVALUATES TO "TRUE"                       *
+                                     229 *                                                                     *
+                                     230 *      ENDIF                                                          *
+                                     231 *                                                                     *
+                                     232 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     233 *        1         2         3         4         5         6         7
+                                     234 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     235          IF    (CLC,A,Z,NE),OR,    NOTE "C" IN COLUMN 72 ============> C
+                                                        (CLC,B,Z,NE)
+ 0000CC D503 C338 C368 00338 00368   236+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 0000D2 A774 0007            000E0   237+         JNE    $MDT13           B IF TRUE TO 'PASS'        TAG CPY 050 01-IF
+ 0000D6 D503 C33C C368 0033C 00368   238+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 0000DC A784 0005            000E6   239+         JE     $NEXT14                                         IF 090  01-IF
+ 0000E0                              240+$MDT13   DC    0H'0'                                            IF 100  01-IF
+ 0000E0 FA30 C308 C2F8 00308 002F8   241            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     242          ENDIF
+ 0000E6                              243+$NEXT14  DC    0H'0'                                        ENDIF 010   01-ENDIF
+                                     244 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     245 *                                                                     *
+                                     246 *                      THE "AND" CONJUNCTION                          *
+                                     247 *                                                                     *
+                                     248 *      TO EXECUTE THE IF-GROUP IF BOTH OF THE TWO CONDITIONS ARE      *
+                                     249 * TRUE, THE FORMAT IS:                                                *
+                                     250 *                                                                     *
+                                     251 *      IF    (CLC,A,Z,NE),AND,(LTR,R15,R15,Z)                         *
+                                     252 *                                                                     *
+                                     253 *               ONE OR MORE INSTRUCTIONS                              *
+                                     254 *               TO BE EXECUTED IF THE ABOVE                           *
+                                     255 *               LOGIC GROUP EVALUATES TO "TRUE"                       *
+                                     256 *                                                                     *
+                                     257 *      ENDIF                                                          *
+                                     258 *                                                                     *
+                                     259 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     260 *        1         2         3         4         5         6         7
+                                     261 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     262          IF    (CLC,A,Z,NE),AND,(LTR,R15,R15,Z)
+ 0000E6 D503 C338 C368 00338 00368   263+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 0000EC A784 0008            000FC   264+         JE     $MDF15                B IF FALSE TO 'FAIL' TAG CPY 060  01-IF
+ 0000F0 12FF                         265+         LTR   R15,R15        TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 0000F2 A774 0005            000FC   266+         JNZ    $MDF15                                          IF 090  01-IF
+ 0000F6 FA30 C308 C2F8 00308 002F8   267            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     268          ENDIF
+ 0000FC                              269+$MDF15   DC    0H'0'                                        ENDIF 010   01-ENDIF
+                                     270 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     271 *                                                                     *
+                                     272 *      TO EXECUTE THE IF-GROUP IF THE FIRST AND SECOND LOGICAL        *
+                                     273 * EXPRESSIONS ARE TRUE, OR THE THIRD EXPRESSION IS TRUE, THE FORMAT   *
+                                     274 * IS:                                                                 *
+                                     275 *                                                                     *
+                                     276 *      IF    (CLC,A,Z,NE),AND,(CLC,B,Z,NE),OR,(CLC,C,Z,NE)            *
+                                     277 *                                                                     *
+                                     278 *               ONE OR MORE INSTRUCTIONS                              *
+                                     279 *               TO BE EXECUTED IF THE ABOVE                           *
+                                     280 *               LOGIC GROUP EVALUATES TO "TRUE".                      *
+                                     281 *                                                                     *
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page    9
+   Active Usings: IFDOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                    282 *      ENDIF                                                          *
+                                     283 *                                                                     *
+                                     284 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     285 *        1         2         3         4         5         6         7
+                                     286 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     287          IF    (CLC,A,Z,NE),AND,(CLC,B,Z,NE),OR,(CLC,C,Z,NE)
+ 0000FC D503 C338 C368 00338 00368   288+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 000102 A784 0007            00110   289+         JE     $MDF16                B IF FALSE TO 'FAIL' TAG CPY 060  01-IF
+ 000106 D503 C33C C368 0033C 00368   290+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 00010C A774 0007            0011A   291+         JNE    $MDT17           B IF TRUE TO 'PASS'        TAG CPY 050 01-IF
+ 000110 D503 C340 C368 00340 00368   292+$MDF16   CLC   C,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 000116 A784 0005            00120   293+         JE     $NEXT18                                         IF 090  01-IF
+ 00011A                              294+$MDT17   DC    0H'0'                                            IF 100  01-IF
+ 00011A FA30 C308 C2F8 00308 002F8   295            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     296          ENDIF
+ 000120                              297+$NEXT18  DC    0H'0'                                        ENDIF 010   01-ENDIF
+                                     298 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     299 *                                                                     *
+                                     300 *      SINCE THE EVALUATION OF "AND" IN A LOGICAL EXPRESSION TAKES    *
+                                     301 * PRECEDENCE OVER "OR", YOU MAY NEED TO OVERRIDE THAT PRECEDENCE TO   *
+                                     302 * FORCE AN "OR" CONJUNCTION TO BE EVALUATED BEFORE AN "AND". YOU      *
+                                     303 * WOULD ENCLOSE THE TWO EXPRESSIONS JOINED BY AN "OR" WITH AN         *
+                                     304 * ADDITIONAL PAIR OF PARENTHESES:                                     *
+                                     305 *                                                                     *
+                                     306 *                             |                            |          *
+                                     307 *                             |                            |          *
+                                     308 *                             |                            |          *
+                                     309 *                             V                            V          *
+                                     310 *      IF    (CLC,A,Z,NE),AND,((CLC,B,Z,NE),OR,(CLC,C,Z,NE))          *
+                                     311 *                                                                     *
+                                     312 *               ONE OR MORE INSTRUCTIONS                              *
+                                     313 *               TO BE EXECUTED IF THE ABOVE                           *
+                                     314 *               LOGIC GROUP EVALUATES TO "TRUE"                       *
+                                     315 *                                                                     *
+                                     316 *      ENDIF                                                          *
+                                     317 *                                                                     *
+                                     318 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     319 *        1         2         3         4         5         6         7
+                                     320 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     321 *
+                                     322 *                               V<<<<<EXTRA PARENTHESES:>>>>>V
+                                     323 *                               V                            V
+                                     324          IF    (CLC,A,Z,NE),AND,((CLC,B,Z,NE),OR,(CLC,C,Z,NE))
+ 000120 D503 C338 C368 00338 00368   325+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 000126 A784 000F            00144   326+         JE     $MDF19                B IF FALSE TO 'FAIL' TAG CPY 060  01-IF
+ 00012A D503 C33C C368 0033C 00368   328+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 000130 A774 0007            0013E   329+         JNE    $MDT20           B IF TRUE TO 'PASS'        TAG CPY 050 02-IF2
+ 000134 D503 C340 C368 00340 00368   330+         CLC   C,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 00013A A784 0005            00144   331+         JE     $MDF19                                          IF 090  01-IF
+ 00013E                              332+$MDT20   DC    0H'0'                                            IF 100  01-IF
+ 00013E FA30 C308 C2F8 00308 002F8   333            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     334          ENDIF
+ 000144                              335+$MDF19   DC    0H'0'                                        ENDIF 010   01-ENDIF
+                                     336 *
+                                     337 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   10
+   Active Usings: IFDOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                    338 *                                                                     *
+                                     339 *      IF (A OR B) AND (C OR D)                                       *
+                                     340 *                                                                     *
+                                     341 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     342 *        1         2         3         4         5         6         7
+                                     343 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     344          IF    ((CLC,A,Z,NE),OR,(CLC,B,Z,NE)),AND,                     C
+                                                        ((CLC,C,Z,NE),OR,(CLC,D,Z,NE))
+ 000144 D503 C338 C368 00338 00368   346+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 00014A A774 0007            00158   347+         JNE    $MDT21           B IF TRUE TO 'PASS'        TAG CPY 050 02-IF2
+ 00014E D503 C33C C368 0033C 00368   348+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 000154 A784 000F            00172   349+         JE     $MDF22                B IF FALSE TO 'FAIL' TAG CPY 060  01-IF
+ 000158 D503 C340 C368 00340 00368   351+$MDT21   CLC   C,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 00015E A774 0007            0016C   352+         JNE    $MDT23           B IF TRUE TO 'PASS'        TAG CPY 050 02-IF2
+ 000162 D503 C344 C368 00344 00368   353+         CLC   D,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 000168 A784 0005            00172   354+         JE     $MDF22                                          IF 090  01-IF
+ 00016C                              355+$MDT23   DC    0H'0'                                            IF 100  01-IF
+ 00016C FA30 C308 C2F8 00308 002F8   356            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     357          ENDIF
+ 000172                              358+$MDF22   DC    0H'0'                                        ENDIF 010   01-ENDIF
+                                     359 *
+                                     360 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     361 *                                                                     *
+                                     362 * IF A IS TRUE AND EITHER B OR C IS TRUE AND D IS TRUE  -  OR...      *
+                                     363 * IF E IS TRUE AND EITHER F OR G IS TRUE AND H IS TRUE, THEN EXECUTE  *
+                                     364 * THE CODE FOLLOWING THIS "IF" STATEMENT:                             *
+                                     365 *                                                                     *
+                                     366 *      IF     A & ( B | C) & D    |    E & (F | G) & H                *
+                                     367 *                                                                     *
+                                     368 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     369 *        1         2         3         4         5         6         7
+                                     370 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     371          IF    (CLC,A,Z,E),AND,((CLC,B,Z,E),OR,(CLC,C,Z,E)),AND,       C
+                                                        (CLC,D,Z,E),OR,(CLC,E,Z,E),AND,((CLC,F,Z,E),OR,         C
+                                                        (CLC,G,Z,E)),AND,(CLC,H,Z,E)
+ 000172 D503 C338 C368 00338 00368   372+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 000178 A774 0011            0019A   373+         JNE    $MDF24                B IF FALSE TO 'FAIL' TAG CPY 060  01-IF
+ 00017C D503 C33C C368 0033C 00368   375+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 000182 A784 0007            00190   376+         JE     $MDT25           B IF TRUE TO 'PASS'        TAG CPY 050 02-IF2
+ 000186 D503 C340 C368 00340 00368   377+         CLC   C,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 00018C A774 0007            0019A   378+         JNE    $MDF24                B IF FALSE TO 'FAIL' TAG CPY 060  01-IF
+ 000190 D503 C344 C368 00344 00368   379+$MDT25   CLC   D,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 000196 A784 0016            001C2   380+         JE     $MDT26           B IF TRUE TO 'PASS'        TAG CPY 050 01-IF
+ 00019A D503 C348 C368 00348 00368   381+$MDF24   CLC   E,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 0001A0 A774 0014            001C8   382+         JNE    $MDF27                B IF FALSE TO 'FAIL' TAG CPY 060  01-IF
+ 0001A4 D503 C34C C368 0034C 00368   384+         CLC   F,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 0001AA A784 0007            001B8   385+         JE     $MDT28           B IF TRUE TO 'PASS'        TAG CPY 050 02-IF2
+ 0001AE D503 C350 C368 00350 00368   386+         CLC   G,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF2
+ 0001B4 A774 000A            001C8   387+         JNE    $MDF27                B IF FALSE TO 'FAIL' TAG CPY 060  01-IF
+ 0001B8 D503 C354 C368 00354 00368   388+$MDT28   CLC   H,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 0001BE A774 0005            001C8   389+         JNE    $MDF27                                          IF 090  01-IF
+ 0001C2                              390+$MDT26   DC    0H'0'                                            IF 100  01-IF
+ 0001C2 FA30 C308 C2F8 00308 002F8   391            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     392          ENDIF
+ 0001C8                              393+$MDF27   DC    0H'0'                                        ENDIF 010   01-ENDIF
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   11
+   Active Usings: IFDOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                    394 *
+                                     395 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     396 *                                                                     *
+                                     397 *                 THE NESTING OF MULTIPLE "IF" GROUPS                 *
+                                     398 *                                                                     *
+                                     399 * IF WITHIN THE CONFINES OF ONE "IF" GROUP YOU FIND IT NECESSARY TO   *
+                                     400 * ADD ANOTHER LEVEL OF CONDITIONAL EXECUTION, THEN YOU MAY NEST ONE   *
+                                     401 * "IF" GROUP WITHING ANOTHER. EACH SEPERATE "IF" STATEMENT WILL HAVE  *
+                                     402 * ITS OWN LOGICAL CONSTRUCT, AND MUST BE TERMINATED WITH ITS OWN      *
+                                     403 * "ENDIF" STATEMENT. THE "ELSEIF" AND "ENDIF" STATEMENTS ARE          *
+                                     404 * SUPPORTED. YOU MAY INDENT THE NESTED "IF" GROUPS, BUT DOING THAT    *
+                                     405 * WOULD BE FOR DOCUMENTATION PURPOSES ONLY.                           *
+                                     406 *      IF    (CLC,A,Z,NE)                                             *
+                                     407 *                                                                     *
+                                     408 *               ONE OR MORE INSTRUCTIONS                              *
+                                     409 *               TO BE EXECUTED IF THE ABOVE                           *
+                                     410 *               LOGIC GROUP EVALUATES TO "TRUE"                       *
+                                     411 *                                                                     *
+                                     412 *        IF    (CLC,B,Z,NE)                                           *
+                                     413 *                                                                     *
+                                     414 *               ONE OR MORE INSTRUCTIONS                              *
+                                     415 *               TO BE EXECUTED IF THE ABOVE (NESTED)                  *
+                                     416 *               LOGIC GROUP EVALUATES TO "TRUE"                       *
+                                     417 *                                                                     *
+                                     418 *        ELSE                                                         *
+                                     419 *                                                                     *
+                                     420 *               ONE OR MORE INSTRUCTIONS                              *
+                                     421 *               TO BE EXECUTED IF THE ABOVE (NESTED)                  *
+                                     422 *               LOGIC GROUP EVALUATES TO "FALSE"                      *
+                                     423 *                                                                     *
+                                     424 *        ENDIF                                                        *
+                                     425 *                                                                     *
+                                     426 *      ENDIF                                                          *
+                                     427 *                                                                     *
+                                     428 * THE "IF" MACRO SUPPORTS THE NESTING OF AS MANY "IF" GROUPS AS YOU   *
+                                     429 * REQUIRE TO SUPPORT YOUR LOGIC. HOW MANY LEVELS CAN YOU ACTUALLY     *
+                                     430 * KEEP TRACK OF?                                                      *
+                                     431 *                                                                     *
+                                     432 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     433 *        1         2         3         4         5         6         7
+                                     434 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     435          IF    (CLC,A,Z,NE)
+ 0001C8 D503 C338 C368 00338 00368   436+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 0001CE A784 0012            001F2   437+         JE     $NEXT29                                         IF 090  01-IF
+ 0001D2 FA30 C308 C2F8 00308 002F8   438            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     439            IF    (CLC,B,Z,NE)
+ 0001D8 D503 C33C C368 0033C 00368   440+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 0001DE A784 0007            001EC   441+         JE     $NEXT30                                         IF 090  01-IF
+ 0001E2 FA30 C318 C2F8 00318 002F8   442              AP    LEVEL2_PASS_COUNTER,=P'1'
+                                     443            ELSE
+ 0001E8 A7F4 0005            001F2   444+         J     $FINI31                                        ELSE 010  01-ELSE
+ 0001EC                              445+$NEXT30  DC    0H'0'                                          ELSE 020  01-ELSE
+ 0001EC FA30 C320 C2F8 00320 002F8   446              AP    LEVEL2_ELSE_COUNTER,=P'1'
+                                     447            ENDIF
+ 0001F2                              448+$FINI31  DC    0H'0'                                        ENDIF 030   01-ENDIF
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   12
+   Active Usings: IFDOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                    449          ENDIF
+ 0001F2                              450+$NEXT29  DC    0H'0'                                        ENDIF 010   01-ENDIF
+                                     451 *
+                                     452 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     453 *                                                                     *
+                                     454 *       ANOTHER EXAMPLE OF THE NESTING OF MULTIPLE "IF" GROUPS        *
+                                     455 *                                                                     *
+                                     456 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     457 *
+                                     458 *        1         2         3         4         5         6         7
+                                     459 *...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+                                     460          IF    (CLC,A,Z,E)
+ 0001F2 D503 C338 C368 00338 00368   461+         CLC   A,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 0001F8 A774 0049            0028A   462+         JNE    $NEXT32                                         IF 090  01-IF
+ 0001FC FA30 C308 C2F8 00308 002F8   463            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     464            IF    (CLC,B,Z,E)
+ 000202 D503 C33C C368 0033C 00368   465+         CLC   B,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 000208 A774 0032            0026C   466+         JNE    $NEXT33                                         IF 090  01-IF
+ 00020C FA30 C318 C2F8 00318 002F8   467              AP    LEVEL2_PASS_COUNTER,=P'1'
+                                     468              IF    (CLC,C,Z,E)
+ 000212 D503 C340 C368 00340 00368   469+         CLC   C,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 01-IF
+ 000218 A774 0007            00226   470+         JNE    $NEXT34                                         IF 090  01-IF
+ 00021C FA30 C328 C2F8 00328 002F8   471                AP    LEVEL3_PASS_COUNTER,=P'1'
+                                     472              ELSEIF (CLC,D,Z,E)
+ 000222 A7F4 0023            00268   473+         J     $FINI35                                     ELSEIF 010   01-ELSEI
+ 000226 D503 C344 C368 00344 00368   475+$NEXT34  CLC   D,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF
+ 00022C A774 0007            0023A   476+         JNE    $NEXT36                                         IF 090  02-IF
+ 000230 FA30 C32C C2F8 0032C 002F8   477                AP    LEVEL3_ELSEIF_COUNTER,=P'1'
+                                     478              ELSEIF (CLC,E,Z,E)
+ 000236 A7F4 0019            00268   479+         J     $FINI35                                     ELSEIF 010   01-ELSEI
+ 00023A D503 C348 C368 00348 00368   481+$NEXT36  CLC   E,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF
+ 000240 A774 0007            0024E   482+         JNE    $NEXT37                                         IF 090  02-IF
+ 000244 FA30 C32C C2F8 0032C 002F8   483                AP    LEVEL3_ELSEIF_COUNTER,=P'1'
+                                     484              ELSEIF (CLC,F,Z,E)
+ 00024A A7F4 000F            00268   485+         J     $FINI35                                     ELSEIF 010   01-ELSEI
+ 00024E D503 C34C C368 0034C 00368   487+$NEXT37  CLC   F,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF
+ 000254 A774 0007            00262   488+         JNE    $NEXT38                                         IF 090  02-IF
+ 000258 FA30 C32C C2F8 0032C 002F8   489                AP    LEVEL3_ELSEIF_COUNTER,=P'1'
+                                     490              ELSE
+ 00025E A7F4 0005            00268   491+         J     $FINI35                                        ELSE 010  01-ELSE
+ 000262                              492+$NEXT38  DC    0H'0'                                          ELSE 020  01-ELSE
+ 000262 FA30 C330 C2F8 00330 002F8   493                AP    LEVEL3_ELSE_COUNTER,=P'1'
+                                     494              ENDIF
+ 000268                              495+$FINI35  DC    0H'0'                                        ENDIF 030   01-ENDIF
+                                     496            ELSEIF (CLC,G,Z,E)
+ 000268 A7F4 000F            00286   497+         J     $FINI39                                     ELSEIF 010   01-ELSEI
+ 00026C D503 C350 C368 00350 00368   499+$NEXT33  CLC   G,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF
+ 000272 A774 0007            00280   500+         JNE    $NEXT40                                         IF 090  02-IF
+ 000276 FA30 C31C C2F8 0031C 002F8   501              AP    LEVEL2_ELSEIF_COUNTER,=P'1'
+                                     502            ELSE
+ 00027C A7F4 0005            00286   503+         J     $FINI39                                        ELSE 010  01-ELSE
+ 000280                              504+$NEXT40  DC    0H'0'                                          ELSE 020  01-ELSE
+ 000280 FA30 C320 C2F8 00320 002F8   505              AP    LEVEL2_ELSE_COUNTER,=P'1'
+                                     506            ENDIF
+ 000286                              507+$FINI39  DC    0H'0'                                        ENDIF 030   01-ENDIF
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   13
+   Active Usings: IFDOC,R12
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0                                    508          ELSEIF  (CLC,H,Z,E)
+ 000286 A7F4 000F            002A4   509+         J     $FINI41                                     ELSEIF 010   01-ELSEI
+ 00028A D503 C354 C368 00354 00368   511+$NEXT32  CLC   H,Z            TWO OPERANDS - SET CONDITION CODE CPY 030 02-IF
+ 000290 A774 0007            0029E   512+         JNE    $NEXT42                                         IF 090  02-IF
+ 000294 FA30 C310 C2F8 00310 002F8   513            AP    LEVEL1_ELSE_COUNTER,=P'1'
+                                     514          ELSE
+ 00029A A7F4 0005            002A4   515+         J     $FINI41                                        ELSE 010  01-ELSE
+ 00029E                              516+$NEXT42  DC    0H'0'                                          ELSE 020  01-ELSE
+ 00029E FA30 C308 C2F8 00308 002F8   517            AP    LEVEL1_PASS_COUNTER,=P'1'
+                                     518          ENDIF
+ 0002A4                              519+$FINI41  DC    0H'0'                                        ENDIF 030   01-ENDIF
+                                     520 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     521 *                                                                     *
+                                     522 *      THESE FOLLOWING STATEMENTS ARE NORMAL zOS TERMINATION.         *
+                                     523 *                                                                     *
+                                     524 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     525 *
+                                     526 .QUIT    ANOP
+ 0002A4 58D0 C2B4            002B4   527          L     R13,SAVEAREA+4      ADDRESS OF CALLER'S SAVE AREA
+ 0002A8 98EC D00C            0000C   528          LM    R14,R12,12(R13)     RESTORE R14 WRAPPED AROUND TO R12
+                                     529          DROP  R12                 NO LONGER VALID
+ 0002AC 1FFF                         530          SLR   R15,R15             SET RETURN CODE TO ZERO
+ 0002AE 07FE                         531          BR    R14                 RETURN TO CALLER
+                                     532 *
+-
+-0002B0 0000000000000000             534 SAVEAREA DC    18F'0'              MY SAVE AREA
+ 0002F8                              535          LTORG
+ 0002F8 1C                           536                =P'1'
+ 0002F9 F1F2F3F4F5F6C7               537                =Z'1234567'
+ 000300 D5                           538 EOFSW    DC    C'N'
+ 000308                              539          DS    0D
+                                     540 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+                                     541 *                                                                     *
+                                     542 *      THESE FOLLOWING STATEMENTS DEFINE VARIABLES REQUIRED.          *
+                                     543 *                                                                     *
+                                     544 *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+ 000308 0000000C                     545 LEVEL1_PASS_COUNTER DC PL4'0'
+ 00030C 0000000C                     546 LEVEL1_ELSEIF_COUNTER DC PL4'0'
+ 000310 0000000C                     547 LEVEL1_ELSE_COUNTER DC PL4'0'
+ 000314 0000000C                     548 LEVEL1_FAIL_COUNTER DC PL4'0'
+ 000318 0000000C                     549 LEVEL2_PASS_COUNTER DC PL4'0'
+ 00031C 0000000C                     550 LEVEL2_ELSEIF_COUNTER DC PL4'0'
+ 000320 0000000C                     551 LEVEL2_ELSE_COUNTER DC PL4'0'
+ 000324 0000000C                     552 LEVEL2_FAIL_COUNTER DC PL4'0'
+ 000328 0000000C                     553 LEVEL3_PASS_COUNTER DC PL4'0'
+ 00032C 0000000C                     554 LEVEL3_ELSEIF_COUNTER DC PL4'0'
+ 000330 0000000C                     555 LEVEL3_ELSE_COUNTER DC PL4'0'
+ 000334 1234567C                     556 SHIFT_PACKED DC  PL4'1234567'
+ 000338 C1C1C1C1                     557 A        DC    C'AAAA'
+ 00033C C2C2C2C2                     558 B        DC    C'BBBB'
+ 000340 C3C3C3C3                     559 C        DC    C'CCCC'
+1IFDOC    EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS                                                             Page   14
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2020/09/06 03.40
+0000344 C4C4C4C4                     560 D        DC    C'DDDD'
+ 000348 C5C5C5C5                     561 E        DC    C'EEEE'
+ 00034C C6C6C6C6                     562 F        DC    C'FFFF'
+ 000350 C7C7C7C7                     563 G        DC    C'GGGG'
+ 000354 C8C8C8C8                     564 H        DC    C'HHHH'
+ 000358 C9C9C9C9                     565 I        DC    C'IIII'
+ 00035C D1D1D1D1                     566 J        DC    C'JJJJ'
+ 000360 D2D2D2D2                     567 K        DC    C'KKKK'
+ 000364 D3D3D3D3                     568 L        DC    C'LLLL'
+ 000368 E9E9E9E9                     569 Z        DC    C'ZZZZ'
+ 000000                              570          END   IFDOC
+1IFDOC                          Ordinary Symbol and Literal Cross Reference                                     Page   15
+-Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2020/09/06 03.40
+0$FINI31       2 000001F2 00000002     H  H               448  444B
+ $FINI35       2 00000268 00000002     H  H               495  473B  479B  485B  491B
+ $FINI39       2 00000286 00000002     H  H               507  497B  503B
+ $FINI4        2 00000052 00000002     H  H               124  120B
+ $FINI41       2 000002A4 00000002     H  H               519  509B  515B
+ $FINI6        2 00000076 00000002     H  H               177  170B
+ $FINI9        2 000000CC 00000002     H  H               215  193B  199B  205B  211B
+ $MDF15        2 000000FC 00000002     H  H               269  264B  266B
+ $MDF16        6 00000110 00000002     I                  292  289B
+ $MDF19        2 00000144 00000002     H  H               335  326B  331B
+ $MDF22        2 00000172 00000002     H  H               358  349B  354B
+ $MDF24        6 0000019A 00000002     I                  381  373B  378B
+ $MDF27        2 000001C8 00000002     H  H               393  382B  387B  389B
+ $MDT13        2 000000E0 00000002     H  H               240  237B
+ $MDT17        2 0000011A 00000002     H  H               294  291B
+ $MDT20        2 0000013E 00000002     H  H               332  329B
+ $MDT21        6 00000158 00000002     I                  351  347B
+ $MDT23        2 0000016C 00000002     H  H               355  352B
+ $MDT25        6 00000190 00000002     I                  379  376B
+ $MDT26        2 000001C2 00000002     H  H               390  380B
+ $MDT28        6 000001B8 00000002     I                  388  385B
+ $NEXT1        2 00000024 00000002     H  H                70   67B
+ $NEXT10       6 0000009E 00000002     I                  201  196B
+ $NEXT11       6 000000B2 00000002     I                  207  202B
+ $NEXT12       2 000000C6 00000002     H  H               212  208B
+ $NEXT14       2 000000E6 00000002     H  H               243  239B
+ $NEXT18       2 00000120 00000002     H  H               297  293B
+ $NEXT2        2 0000003A 00000002     H  H                83   80B
+ $NEXT29       2 000001F2 00000002     H  H               450  437B
+ $NEXT3        2 0000004C 00000002     H  H               121  117B
+ $NEXT30       2 000001EC 00000002     H  H               445  441B
+ $NEXT32       6 0000028A 00000002     I                  511  462B
+ $NEXT33       6 0000026C 00000002     I                  499  466B
+ $NEXT34       6 00000226 00000002     I                  475  470B
+ $NEXT36       6 0000023A 00000002     I                  481  476B
+ $NEXT37       6 0000024E 00000002     I                  487  482B
+ $NEXT38       2 00000262 00000002     H  H               492  488B
+ $NEXT40       2 00000280 00000002     H  H               504  500B
+ $NEXT42       2 0000029E 00000002     H  H               516  512B
+ $NEXT5        6 00000066 00000002     I                  172  167B
+ $NEXT7        2 00000076 00000002     H  H               176  173B
+ $NEXT8        6 0000008A 00000002     I                  195  190B
+ A             4 00000338 00000002     C  C               557   66   166   189   236   263   288   325   346   372   436
+                                                               461
+ B             4 0000033C 00000002     C  C               558  172   195   238   290   328   348   375   440   465
+ C             4 00000340 00000002     C  C               559  201   292   330   351   377   469
+ D             4 00000344 00000002     C  C               560  207   353   379   475
+ E             4 00000348 00000002     C  C               561  381   481
+ EOFSW         1 00000300 00000002     C  C               538  116
+ F             4 0000034C 00000002     C  C               562  384   487
+ G             4 00000350 00000002     C  C               563  386   499
+ H             4 00000354 00000002     C  C               564  388   511
+ IFDOC         1 00000000 00000002     J                   28  570
+ LEVEL1_ELSE_COUNTER
+               4 00000310 00000002     P  P               547  122M  213M  513M
+1IFDOC                          Ordinary Symbol and Literal Cross Reference                                     Page   16
+-Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2020/09/06 03.40
+0LEVEL1_ELSEIF_COUNTER
+               4 0000030C 00000002     P  P               546  174M  197M  203M  209M
+ LEVEL1_PASS_COUNTER
+               4 00000308 00000002     P  P               545   68M   81M  118M  168M  191M  241M  267M  295M  333M  356M
+                                                               391M  438M  463M  517M
+ LEVEL2_ELSE_COUNTER
+               4 00000320 00000002     P  P               551  446M  505M
+ LEVEL2_ELSEIF_COUNTER
+               4 0000031C 00000002     P  P               550  501M
+ LEVEL2_PASS_COUNTER
+               4 00000318 00000002     P  P               549  442M  467M
+ LEVEL3_ELSE_COUNTER
+               4 00000330 00000002     P  P               555  493M
+ LEVEL3_ELSEIF_COUNTER
+               4 0000032C 00000002     P  P               554  477M  483M  489M
+ LEVEL3_PASS_COUNTER
+               4 00000328 00000002     P  P               553  471M
+ R12           1 0000000C 00000001 A   U                   23   29U   30    31M  528M  529D
+ R13           1 0000000D 00000001 A   U                   24   30    33    34    35M  527M  528
+ R14           1 0000000E 00000001 A   U                   25   30    32M   34    35   528M  531B
+ R15           1 0000000F 00000001 A   U                   26   31   265M  265   530M  530
+ SAVEAREA      4 000002B0 00000002     F  F               534   32    33M  527
+ SHIFT_PACKED
+               4 00000334 00000002     P  P               556   74M   79M
+ Z             4 00000368 00000002     C  C               569   66   166   172   189   195   201   207   236   238   263
+                                                               288   290   292   325   328   330   346   348   351   353
+                                                               372   375   377   379   381   384   386   388   436   440
+                                                               461   465   469   475   481   487   499   511
+ =P'1'         1 000002F8 00000002     P                  536   68    81   118   122   168   174   191   197   203   209
+                                                               213   241   267   295   333   356   391   438   442   446
+                                                               463   467   471   477   483   489   493   501   505   513
+                                                               517
+ =Z'1234567'
+               7 000002F9 00000002     Z                  537   74
+1IFDOC                             Unreferenced Symbols Defined in CSECTs                                       Page   17
+-  Defn  Symbol                                                                              HLASM R6.0  2020/09/06 03.40
+0   565  I
+    566  J
+    567  K
+    568  L
+    548  LEVEL1_FAIL_COUNTER
+    552  LEVEL2_FAIL_COUNTER
+     11  R0
+     12  R1
+     21  R10
+     22  R11
+     13  R2
+     14  R3
+     15  R4
+     16  R5
+     17  R6
+     18  R7
+     19  R8
+     20  R9
+     79  SRP010
+1IFDOC                                     Macro and Copy Code Source Summary                                   Page   18
+- Con Source                                        Volume    Members                        HLASM R6.0  2020/09/06 03.40
+0  L1 MATEDS.MACROS.MACLIB                          DEVHD4    $MGBLDEF ELSE     ELSEIF   ENDIF    IF       IFCOPY   IF2
+1IFDOC                                                 Using Map                                                Page   19
+-                                                                                            HLASM R6.0  2020/09/06 03.40
+   Stmt  -----Location----- Action ----------------Using----------------- Reg Max     Last Label and Using Text
+           Count      Id           Type          Value    Range     Id        Disp    Stmt
+0    29  00000000  00000002 USING  ORDINARY    00000000 00001000 00000002  12 00368    527 *,R12
+    529  000002AC  00000002 DROP                                           12              R12
+1                                   General Purpose Register Cross Reference                                    Page   20
+- Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R6.0  2020/09/06 03.40
+0    0(0)      30   528M
+     1(1)      30   528M
+     2(2)      30   528M
+     3(3)      30   528M
+     4(4)      30   528M
+     5(5)      30   528M
+     6(6)      30   528M
+     7(7)      30   528M
+     8(8)      30   528M
+     9(9)      30   528M
+    10(A)      30   528M
+    11(B)      30   528M
+    12(C)      29U   30    31M  528M  529D
+    13(D)      30    33    34    35M  527M  528
+    14(E)      30    32M   34    35   528M  531B
+    15(F)      30    31   265M  265   528M  530M  530
+1IFDOC                             Diagnostic Cross Reference and Assembler Summary                             Page   21
+-                                                                                            HLASM R6.0  2020/09/06 03.40
+0     No Statements Flagged in this Assembly
+ HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UK71661
+0SYSTEM: z/OS 01.13.00              JOBNAME: MATEDSC     STEPNAME: ASMLINK    PROCSTEP: C
+0Data Sets Allocated for this Assembly
+  Con DDname   Data Set Name                                Volume  Member
+   P1 SYSIN    MATEDS.MACROS.MACLIB                         DEVHD4  IFDOC
+   L1 SYSLIB   MATEDS.MACROS.MACLIB                         DEVHD4
+      SYSLIN   SYS20250.T034028.RA000.MATEDSC.OBJ.H01       STRVL2
+      SYSPRINT MATEDS.MACRO.SYSPRINT                        DEVHD4  IFDOC
+
+   32004K allocated to Buffer Pool       Storage required     200K
+     437 Primary Input Records Read          723 Library Records Read                  0 Work File Reads
+       0 ASMAOPT Records Read                810 Primary Print Records Written         0 Work File Writes
+      18 Object Records Written                0 ADATA Records Written
+0Assembly Start Time: 03.40.28 Stop Time: 03.40.28 Processor Time: 00.00.00.0795
+ Return Code 000

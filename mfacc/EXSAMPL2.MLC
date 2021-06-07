@@ -1,3 +1,4 @@
+* 2017-07-29 Abe Kornelis Storage Getmain parms adjusted
 LCDSECT  DSECT
 INBUF    DS    CL32
 OUTBUF   DS    CL32
@@ -17,7 +18,8 @@ EZSAMPLE CSECT
 *        **************************************************************
 *        *   Allocate terminal I/O Amode 24 buffers;                  *
 *        **************************************************************
-         STORAGE OBTAIN,LENGTH=LCSIZE,LOC=(BELOW,ANY),COND=NO
+*******  STORAGE OBTAIN,LENGTH=LCSIZE,LOC=(BELOW,ANY),COND=NO ** AFK
+         STORAGE OBTAIN,LENGTH=LCSIZE,LOC=(24,31),COND=NO     ** AFK
 *
          USING LCDSECT,R10
          LR    R10,R1

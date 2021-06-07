@@ -1,0 +1,206 @@
+         AGO   .SKIP
+* Copyright (C) <2020>  Daniel H. Snyder
+*                       ALL RIGHTS RESERVED
+*                       Daniel.H.Snyder@proton.com
+*
+.SKIP    ANOP
+         TITLE 'EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS'
+*
+R0       EQU   0
+R1       EQU   1       STANDARD
+R2       EQU   2        EQUATES 
+R3       EQU   3         FOR
+R4       EQU   4          GENERAL
+R5       EQU   5           PURPOSE
+R6       EQU   6            REGISTERS.
+R7       EQU   7             YOU
+R8       EQU   8              MIGHT
+R9       EQU   9               AS
+R10      EQU   10               WELL
+R11      EQU   11                JUST 
+R12      EQU   12                 GET
+R13      EQU   13                  USED
+R14      EQU   14                   TO 
+R15      EQU   15                    IT.
+*
+DODOC    CSECT
+         COPY  $MGBLDEF
+*
+         USING *,R12               SET BASE REGISTER FOR PROGRAM
+         STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA
+         LR    R12,R15             PRIME BASE REG
+         LA    R14,SAVEAREA        ADDRESS OF MY SAVE AREA
+         ST    R13,SAVEAREA+4      BACK LINK TO CALLER'S SAVE AREA
+         ST    R14,8(,R13)         FORWARD LINK TO MY SAVE AREA
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                      THE "DO" STATEMENT                             *
+*                                                                     *
+*      The "DO" MACRO PROVIDES A LOOPING STRUCTURE FOR PERFORMING     *
+*      MULTIPLE PASSES THROUGH THE DESIRED CODE. THE "DO" HAS         *
+*      ADDITIONAL PARAMETERS OVER THE "IF", BUT USES THE SAME         *
+*      STRUCTURE FOR CREATING THE LOGICAL REQUIREMENTS AS THE "IF"    *
+*      MACRO (IT CALLS THE "IF" MACRO TO DO THE PROCESSING OF YOUR    *
+*      LOGIC). THE DIFFERENCE IS THAT AN EXTRA SET OF PARENTHESES     *
+*      MUST SURROUND YOUR ENTIRE LOGIC EXPRESSIONS, DUE TO THE        *
+*      SPECIAL WAY OF HANDLING POSITIONAL PARAMETERS USED BY THE "IF" *
+*      MACRO                                                          *
+*                                                                     *
+*      THE TWO SIMPLEST EXAMPLES ARE THE "DO WHILE" AND THE           *
+*      "DO UNTIL":                                                    *
+*                                                                     *
+*       DO UNTIL=((LTR,R1,R1,NZ))                                     *
+*                                                                     *
+*       DO WHILE=((LTR,R1,R1,NZ))                                     *
+*                                                                     *
+*       THE ONLY OTHER AVAILABLE PARAMETER IS THE "TEST=". "BEFORE"   *
+*       IS THE DEFAULT. "TEST=AFTER" CAUSES THE DO-GROUP TO BE        *
+*       PERFORMED ONE TIME BEFORE THE FIRST TEST IS MADE.             *
+*                                                                     *
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=BEFORE                         *
+*                                                                     *
+*       DO WHILE=((LTR,R1,R1,NZ)),TEST=BEFORE                         *
+*                                                                     *
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+*                                                                     *
+*       DO WHILE=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+*                                                                     *
+*       THE DO-GROUP MUST BE TERMINATED WITH AN "ENDDO" STATEMENT:    *
+*                                                                     *
+*       FOLLOWING THE STATEMENTS TO BE EXECUTED WHEN THE "DO"         *
+*       STATEMENT SUCCEEDS, THERE SHOULD BE AN "ENDO" TO TERMINATE    *
+*       THE LOGIC.                                                    *
+*                                                                     *
+*       SPECIAL NOTE: THE "ENDIF" AND "ENDO" ARE INTERCHANGEABLE.     *
+*       THEY ARE BOTH PROVIDED FOR DOCUMENTATION PURPOSES.            *
+*                                                                     *
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+*                                                                     *
+*                      ONE                                            *
+*                    OR MORE                                          *
+*                  INSTRUCTIONS                                       *
+*                                                                     *
+*       ENDDO                                                         *
+*                                                                     *
+*       THE DEFAULT FOR WHEN THE TEST IS PERFORMED IS BEFORE THE      *
+*       BODY OF THE DO-GROUP IS RUN FOR THE FIRST TIME. IF THE LOGIC  *
+*       TEST(S) FAIL, THEN THE INSTUCTIONS IN THE BODY OF THE         *
+*       ARE BYPASSED ENTIRELY.                                        *
+*                                                                     *
+*       IF YOU NEED THE DO-GROUP TO BE PERFORMED AT LEAST ONCE, THEN  *
+*       CODE THE "TEST=AFTER" PARAMETER. THE DEFAULT FOR "TEST" IS    *
+*       "BEFORE", SO IF THAT IS WHAT YOU WANT, THEN YOU DO NOT NEED   *
+*       TO SPECIFY IT.                                                *
+*                                                                     *
+*       IF YOU SPECIFY "BEFORE", OR DEFAULT TO IT, THEN THE LOGICAL   *
+*       TEST IS DETERMINED BEFORE THE BODY OF CODE IS EXECUTED, AND   *
+*       IF THAT TEST FAILS THEN THE BODY OF CODE IS BYPASSED WITHOUT  *
+*       BEING EXECUTED EVEN ONCE. IF YOU SPECIFY "AFTER", THEN THE    *
+*       CODE IS EXECUTED ONE TIME BEFORE THE LOGICAL TEST IS APPLIED. *
+*       IF THAT TEST FAILS, THEN THAT ONE TIME IS THE ONLY TIME THAT  *
+*       THAT CODE IS EXECUTED.                                        *
+*                                                                     *
+*       NOTE THAT THE ALLOWABLE STUCTURE OF THE CONDITIONAL           *
+*       PARAMETERS INCLUDES ALL OF THE POWER OF THOSE OF THE          *
+*       "IF" MACRO (NOTE ALSO THE REQUIRED ADDITIONAL SET OF          *
+*       PARENTHESES SURROUNDING THE ENTIRE LOGIC STRUCTURE.)          *
+*                                                                     *
+*       DO    WHILE=((LTR,R1,R1,NZ),AND,                     C        *
+*             ((CLC,B,Z,NE),OR,                              C        *
+*             (CLC,C,Z,E))),                                 C        *
+*             TEST=AFTER                                              *
+*                                                                     *
+*                      ONE                                            *
+*                    OR MORE                                          *
+*                  INSTRUCTIONS                                       *
+*                                                                     *
+*       ENDDO                                                         *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* DO WHILE                                                            *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         PACK  COUNTER,=Z'10'
+TESTDO01 DO    WHILE=((SP,COUNTER,=P'1',NZ))
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+         ENDDO ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* DO UNTIL                                                            *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         PACK  COUNTER,=Z'10'
+TESTDO02 DO    UNTIL=((SP,COUNTER,=P'1',E),AND,                        C
+               (CLC,B,TEMP,E))   DO UNTIL BOTH
+           MVC   TEMP,=C'BBBB'
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+         ENDDO ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* DO WHILE WITH TEST AFTER                                            *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         PACK  COUNTER,=Z'10'
+TESTDO03 DO    WHILE=((SP,COUNTER,=P'1',NZ)),TEST=AFTER
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+         ENDDO ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* IF THE THIRD PHRASE IS TRUE AND EITHER OF THE FIRST TWO PHRASES ARE *
+* TRUE, THEN CONTINUE EXECUTING THE DO-LOOP.                          *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         PACK  COUNTER,=Z'10'
+TESTDO04 DO    WHILE=(((SP,COUNTER,=P'1',NZ),OR,                       C
+               (CLC,B,Z,E)),AND,(CLC,C,TEMP,E))
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+           MVC   TEMP,=C'CCCC'
+         ENDDO ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+* DO UNTIL A IS TRUE AND EITHER B OR C IS TRUE AND D IS TRUE -  OR... *
+* E IS TRUE AND EITHER F OR G IS TRUE AND H IS TRUE, THEN END THE     *
+* PERFORMING OF THE DO-LOOP AND BRANCH TO THE "ENDDO".                *
+*                                                                     *
+* IF A & ( B | C) & D | E & (F | G) & H                               *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         DO    UNTIL=((CLC,A,Z,E),AND,((CLC,B,Z,E),OR,(CLC,C,Z,E)),AND,C
+               (CLC,D,Z,E),OR,(CLC,E,Z,E),AND,((CLC,F,Z,E),OR,         C
+               (CLC,G,Z,E)),AND,(CLC,H,Z,E))
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+           SVC 13
+         ENDDO
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      THESE FOLLOWING STATEMENTS ARE NORMAL zOS TERMINATION.         *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*
+         L     R13,SAVEAREA+4      ADDRESS OF CALLER'S SAVE AREA
+         LM    R14,R12,12(R13)     RESTORE R14 WRAPPED AROUND TO R12
+         DROP  R12                 NO LONGER VALID
+         SLR   R15,R15             SET RETURN CODE TO ZERO
+         BR    R14                 RETURN TO CALLER
+*
+         LTORG
+SAVEAREA DC    18F'0'
+EOFSW    DC    C'N'                SET END-OF-FILE SWITCH TO 'Y' AT EOF
+PL5      DC    PL5'7'
+         DC    0F'0'
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      THESE FOLLOWING STATEMENTS DEFINE VARIABLES REQUIRED.          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+LEVEL_ONE_PASS_COUNTER DC PL4'0'
+A        DC    C'AAAA'
+B        DC    C'BBBB'
+C        DC    C'CCCC'
+D        DC    C'DDDD'
+E        DC    C'EEEE'
+F        DC    C'FFFF'
+G        DC    C'GGGG'
+H        DC    C'HHHH'
+Z        DC    C'ZZZZ'
+TEMP     DC    C'TEMP'
+COUNTER  DC    PL4'10'
+LOOP_COUNTER DC PL4'0'             FOR TEST OF "DO UNTIL"
+PACKED_ONE DC  PL4'1'              FOR TEST OF "DO UNTIL"
+         END   DODOC

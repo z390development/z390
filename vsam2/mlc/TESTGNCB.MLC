@@ -1,0 +1,524 @@
+TESTGNCB SUBENTRY BASES=(R13,R12,R11)
+***************
+* EXLST TESTS *
+***************
+* BAD ONES
+* BAD AM, COPIES, MF, POSITIONAL
+*        GENCB BLK=EXLST,AM=FRED,FRED,COPIES=A,MF=J
+* BAD BLK, COPIES
+*        GENCB BLK=FRED,COPIES=0,MF=I
+* NO LENGTH, BAD LOC, WAREA AND LOC FOR MF=I
+*        GENCB BLK=EXLST,WAREA=MYAREA,COPIES=1,LOC=FRED,MF=I
+* BAD LENGTH, JRNAD, NO WAREA FOR LENGTH, LENGTH TOO SHORT FOR MF=I
+*        GENCB BLK=EXLST,LENGTH=0,COPIES=1,JRNAD=MYAREA,MF=I
+* NO LENGTH, BAD LOC, WAREA AND LOC, NO LABEL FOR MF=L
+*        GENCB BLK=EXLST,WAREA=MYAREA,COPIES=1,LOC=FRED,MF=L
+* BAD LENGTH, DDNAME, NO WAREA FOR LENGTH, LENGTH TOO SHORT
+* NO LABEL FOR MF=L
+*        GENCB BLK=EXLST,LENGTH=0,COPIES=1,DDNAME=FRED,MF=L
+* NO LENGTH FOR WAREA, BAD LOC, WAREA AND LOC FOR MF=E
+*        GENCB BLK=EXLST,WAREA=MYAREA,COPIES=1,LOC=FRED,MF=(E,MYCBMR)
+* BAD LENGTH, NO WAREA FOR LENGTH, LENGTH TOO SHORT FOR MF=E
+*        GENCB BLK=EXLST,LENGTH=0,COPIES=1,MF=(E,MYCBMR)
+* NO LENGTH FOR WAREA, BAD LOC, WAREA AND LOC FOR MF=G
+*        GENCB BLK=EXLST,WAREA=MYAREA,COPIES=1,LOC=FRED,MF=(G,MYCBMR)
+* BAD LENGTH, NO WAREA FOR LENGTH, LENGTH TOO SHORT FOR MF=G
+*        GENCB BLK=EXLST,LENGTH=0,COPIES=1,MF=(G,MYCBMR)
+* BAD LENGTH FOR MF=I
+*        GENCB BLK=EXLST,WAREA=MYAREA,LENGTH=1,COPIES=50,MF=I
+* BAD LENGTH, EODMOD FOR MF=I
+*        GENCB BLK=EXLST,WAREA=MYAREA,LENGTH=1,EODAD=(MYAREA,X),MF=I
+* TEST  1: GEN EXLST COPIES=2 INTO MYAREA
+* EXLST EODAD=MYEOD   LERAD=(,A)  SYNAD=(MYSYN,N)
+         GENCB BLK=EXLST,WAREA=MYAREA,LENGTH=50,COPIES=2,              X
+               EODAD=MYEOD,LERAD=(,A),SYNAD=(MYSYN,N),MF=I
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX01'        MARK TEST
+         CLC   MYAREA(EXLSTLEN),EXLST01 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST  2: GEN EXLST COPIES=2 INTO GETMAINED AREA
+* EXLST EODAD=MYEOD   LERAD=(,A)  SYNAD=(MYSYN,N)
+         GENCB BLK=EXLST,COPIES=2,                                     X
+               EODAD=MYEOD,LERAD=(,A),SYNAD=(MYSYN,N),MF=I
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX02'        MARK TEST
+         CLC   0(EXLSTLEN,R1),EXLST01 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST  3: GEN EXLST CBMR IN-LINE AND MOVE TO MYCBMR
+* EXLST EODAD=(MYEOD,A)   LERAD=(0,A)  SYNAD=(MYSYN,N)
+         GENCB BLK=EXLST,WAREA=MYAREA,LENGTH=50,COPIES=2,              X
+               EODAD=MYEOD,LERAD=(,A),SYNAD=(MYSYN,N),                 X
+               MF=(L,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+*        : MODIFY MYCBMR AND USE IT TO GEN EXLST COPIES=3 IN MYAREA
+* EXLST EODAD=(MYEOD,A)   LERAD=(0,A)  SYNAD=(MYSYN,N)  COPIES=2
+* EXLST EODAD=(MYEOD2,A)  LERAD=(,N)   SYNAD=(MYSYN2,A) COPIES=3
+         GENCB BLK=EXLST,LENGTH=200,COPIES=3,                          X
+               EODAD=MYEOD2,LERAD=(,N),SYNAD=(MYSYN2,A),               X
+               MF=(E,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX03'        MARK TEST
+         CLC   MYAREA(EXLSTLEN),EXLST03 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+         J     EXMISS04           EXIT
+*
+* TEST  4: GEN EXLST CBMR IN-LINE COPIES=2
+* EXLST EODAD=(MYEOD,N)   LERAD=(MYLER,A)  SYNAD=(MYSYN,N)
+CBMREXL1 GENCB BLK=EXLST,COPIES=2,                                     X
+               EODAD=(MYEOD,N),LERAD=(MYLER,N),SYNAD=(MYSYN,N),MF=L
+EXMISS04 DS    0H
+*        : MODIFY CBMREXL1 AND USE IT TO GEN EXLST COPIES=3 IN
+*          GETMAINED AREA
+* EXLST EODAD=(MYEOD,N)  LERAD=(MYLER,N)  SYNAD=(MYSYN,N)  COPIES=2
+* EXLST EODAD=(MYEOD2,A) LERAD=(MYLER2,A) SYNAD=(MYSYN2,A) COPIES=3
+         GENCB BLK=EXLST,COPIES=3,                                     X
+               EODAD=(MYEOD2,A),LERAD=(MYLER2,A),SYNAD=(MYSYN2,A),     X
+               MF=(E,CBMREXL1)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX04'        MARK TEST
+         CLC   0(EXLSTLEN,R1),EXLST04 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST  5: CREATE CBMR IN-LINE AND MOVE IT TO MYCBMR,
+*          THEN USE IT TO GEN EXLST COPIES=3 IN MYAREA
+         GENCB BLK=EXLST,WAREA=MYAREA,LENGTH=100,COPIES=3,             X
+               EODAD=(MYEOD2,A),LERAD=(MYLER2,A),SYNAD=(MYSYN2,A),     X
+               MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX05'        MARK TEST
+         CLC   MYAREA(EXLSTLEN),EXLST04 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST  6: CREATE CBMR IN-LINE AND MOVE IT TO MYCBMR,
+*          THEN USE IT TO GEN EXLST COPIES=3 IN GETMAINED AREA
+         GENCB BLK=EXLST,COPIES=3,                                     X
+               EODAD=(MYEOD2,A),LERAD=(MYLER2,A),SYNAD=(MYSYN2,A),     X
+               MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX06'        MARK TEST
+         CLC   0(EXLSTLEN,R1),EXLST04 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 7: IDENTICAL TO TEST 6, BUT REG NOTATION USED
+         LA    R2,MYEOD2
+         LA    R3,MYLER2
+         LA    R4,MYSYN2
+         LA    R5,MYCBMR
+         GENCB BLK=EXLST,COPIES=3,                                     X
+               EODAD=((R2),A),LERAD=((R3),A),SYNAD=((R4),A),           X
+               MF=(G,(R5))
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX07'        MARK TEST
+         CLC   0(EXLSTLEN,R1),EXLST04 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 8: IDENTICAL TO TEST 6, BUT REG NOTATION USED AND MF=E
+         LA    R2,MYEOD2
+         LA    R3,MYLER2
+         LA    R4,MYSYN2
+         LA    R5,MYCBMR
+         GENCB BLK=EXLST,COPIES=3,                                     X
+               EODAD=((R2),A),LERAD=((R3),A),SYNAD=((R4),A),           X
+               MF=(E,(R5))
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'EX08'        MARK TEST
+         CLC   0(EXLSTLEN,R1),EXLST04 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+*
+ACBTEST  DS    0H
+*************
+* ACB TESTS *
+*************
+* BAD ONES
+* NO LENGTH, COPIES, BAD MACRF, BUFSP, BUFND, BUFNI, RMODE31, BSTRNO,
+* STRNO, SHRPOOL, MAREA, MLEN, RLSREAD
+*        GENCB BLK=ACB,
+*              WAREA=MYAREA,
+*              DDNAME=MYACB,
+*              PASSWD=MYAREA,
+*              EXLST=MYAREA,
+*              MACRF=(IN,OUT,GSR,NSR,LSR),
+*              BUFSP=16999999,
+*              BUFND=40000,
+*              BUFNI=40000,
+*              RMODE31=CRAP,
+*              STRNO=300,
+*              BSTRNO=300,
+*              MAREA=MYAREA,
+*              MLEN=999,
+*              RLSREAD=YES,
+*              SHRPOOL=999
+* AS ABOVE PLUS BAD REGS FOR WAREA, PASSWD, EXLST
+*        GENCB BLK=ACB,
+*              WAREA=(14),
+*              DDNAME=MYACB,
+*              PASSWD=(14),
+*              EXLST=(14),
+*              MACRF=(IN,OUT,GSR,NSR,LSR),
+*              BUFSP=16999999,
+*              BUFND=40000,
+*              BUFNI=40000,
+*              RMODE31=CRAP,
+*              STRNO=300,
+*              BSTRNO=300,
+*              MAREA=(14),
+*              MLEN=999,
+*              RLSREAD=YES,
+*              SHRPOOL=999
+* TEST 1: GEN ACB COPIES=2 INTO MYAREA
+         GENCB BLK=ACB,                                                X
+               WAREA=MYAREA,                                           X
+               LENGTH=200,                                             X
+               COPIES=2,                                               X
+               DDNAME=MYACB,                                           X
+               PASSWD=MYAREA,                                          X
+               EXLST=MYAREA,                                           X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X        X
+               BUFSP=2000,                                             X
+               BUFND=10,                                               X
+               BUFNI=10,                                               X
+               RMODE31=NONE,                                           X
+               STRNO=10,                                               X
+               BSTRNO=10,                                              X
+               SHRPOOL=1
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC01'        MARK TEST
+         CLC   MYAREA(ACB_LEN),ACB01 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 2: BUILD CBMR AND MOVE IT TO MYCBMR
+         GENCB BLK=ACB,                                                X
+               DDNAME=NEWACB,                                          X
+               PASSWD=MYPASS,                                          X
+               EXLST=MYPASS,                                           X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X        X
+               BUFSP=3000,                                             X
+               BUFND=20,                                               X
+               BUFNI=25,                                               X
+               RMODE31=CB,                                             X
+               STRNO=15,                                               X
+               BSTRNO=20,                                              X
+               SHRPOOL=2,                                              X
+               MF=(L,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+*        : MODIFY MYCBMR AND USE IT TO GEN AN ACB
+*          NO COPIES, WAREA OR LENGTH MEANS 1 COPY IN GETMAINED AREA
+*          NOTE THAT THIS MACRF COMPLETELY REPLACES THE ONE ABOVE
+         GENCB BLK=ACB,                                                X
+               MACRF=(NRM,NIS,IN),                                     X
+               DDNAME=NEWACB2,                                         X
+               STRNO=27,                                               X
+               RMODE31=ALL,                                            X
+               MF=(E,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC02'        MARK TEST
+         CLC   0(ACB_LEN,R1),ACB02 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 3: BUILD CBMR AND MOVE IT TO MYCBMR
+*         USE CBMR TO GEN ACB COPIES=3 INTO MYAREA
+         GENCB BLK=ACB,                                                X
+               WAREA=MYAREA,                                           X
+               LENGTH=200,                                             X
+               COPIES=3,                                               X
+               MACRF=(AIX,SIS,OUT),                                    X
+               DDNAME=NEWACB3,                                         X
+               SHRPOOL=3,                                              X
+               MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC03'        MARK TEST
+         CLC   MYAREA(ACB_LEN),ACB03 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 4: AS TEST 2, WITH REG NOTATION AND MF=G
+         LA    R2,MYAREA
+         LA    R5,MYCBMR
+         GENCB BLK=ACB,                                                X
+               WAREA=(R2),                                             X
+               LENGTH=200,                                             X
+               COPIES=2,                                               X
+               DDNAME=MYACB,                                           X
+               PASSWD=(R2),                                            X
+               EXLST=(R2),                                             X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X        X
+               BUFSP=2000,                                             X
+               BUFND=10,                                               X
+               BUFNI=10,                                               X
+               RMODE31=NONE,                                           X
+               STRNO=10,                                               X
+               BSTRNO=10,                                              X
+               SHRPOOL=1,                                              X
+               MF=(G,(R5))
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'AC04'        MARK TEST
+         CLC   MYAREA(ACB_LEN),ACB04 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+*
+*************
+* RPL TESTS *
+*************
+* BAD ONES
+* NO LENGTH, COPIES, BAD AREALEN, MSGLEN, KEYLEN, OPTCD
+*        GENCB BLK=RPL,
+*              WAREA=MYAREA,
+*              ACB=MYACB,
+*              AREA=MYAREA,
+*              AREALEN=16800000,
+*              ARG=MYAREA,
+*              ECB=MYAREA,
+*              MSGAREA=MYAREA,
+*              NXTRPL=MYAREA,
+*              MSGLEN=40000,
+*              KEYLEN=256,
+*              OPTCD=(ADR,KEY,ARD,LRD,BWD,FWD,IN,OUT,GSR,NSR,LSR)
+* AS ABOVE PLUS BAD REG FOR WAREA, ACB, AREA, MSGAREA, NXTRPL
+*        GENCB BLK=RPL,
+*              WAREA=(R15),
+*              ACB=(R1),
+*              AREA=(R15),
+*              AREALEN=16800000,
+*              ARG=(R15),
+*              ECB=(R15),
+*              MSGAREA=(R15),
+*              NXTRPL=(R15),
+*              MSGLEN=40000,
+*              KEYLEN=256,
+*              OPTCD=(ADR,KEY,ARD,LRD,BWD,FWD,IN,OUT,GSR,NSR,LSR)
+* TEST 1: GEN RPL COPIES=2 INTO MYAREA
+         GENCB BLK=RPL,                                                X
+               WAREA=MYAREA,                                           X
+               LENGTH=200,                                             X
+               COPIES=2,                                               X
+               ACB=MYACB,                                              X
+               AREA=MYAREA,                                            X
+               AREALEN=50,                                             X
+               ARG=MYAREA,                                             X
+               ECB=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               NXTRPL=MYAREA,                                          X
+               RECLEN=60,                                              X
+               MSGLEN=50,                                              X
+               KEYLEN=10,                                              X
+               OPTCD=(ARD,SKP,XRBA)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP01'        MARK TEST
+         CLC   MYAREA(RPLLEN),RPL01 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+*
+* TEST 2: BUILD CBMR AND MOVE IT TO MYCBMR
+         GENCB BLK=RPL,                                                X
+               ACB=MYACB,                                              X
+               AREA=MYAREA,                                            X
+               AREALEN=50,                                             X
+               ARG=MYAREA,                                             X
+               ECB=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               NXTRPL=MYAREA,                                          X
+               MSGLEN=50,                                              X
+               KEYLEN=10,                                              X
+               OPTCD=(LRD,SEQ,XRBA),                                   X
+               MF=(L,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+*       : MODIFY MYCBMR AND USE IT TO GEN AN RPL
+*         NO COPIES, WAREA OR LENGTH MEANS 1 COPY IN GETMAINED AREA
+*         NOTE THAT THIS OPTCD COMPLETELY REPLACES THE ONE ABOVE
+         GENCB BLK=RPL,                                                X
+               ACB=MYACB2,                                             X
+               AREA=MYAREA2,                                           X
+               AREALEN=100,                                            X
+               MSGLEN=100,                                             X
+               KEYLEN=100,                                             X
+               OPTCD=(KEY,KGE,ARD,DIR,RBA),                            X
+               MF=(E,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP02'        MARK TEST
+         CLC   0(RPLLEN,R1),RPL02 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 3: BUILD CBMR AND MOVE IT TO MYCBMR
+*         USE CBMR TO GEN RPL COPIES=3 INTO MYAREA
+         GENCB BLK=RPL,                                                X
+               WAREA=MYAREA,                                           X
+               LENGTH=200,                                             X
+               COPIES=3,                                               X
+               NXTRPL=MYAREA,                                          X
+               AREALEN=1234,                                           X
+               OPTCD=(DIR,KEQ,ASY),                                    X
+               MF=(G,MYCBMR)
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP03'        MARK TEST
+         CLC   MYAREA(RPLLEN),RPL03 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+* TEST 4: BUILD CBMR AND MOVE IT TO MYCBMR, REG NOTATION AND MF=G
+*         USE CBMR TO GEN RPL COPIES=2 INTO MYAREA
+         LA    R3,MYAREA
+         LA    R4,MYACB
+         LA    R5,MYCBMR
+         GENCB BLK=RPL,                                                X
+               WAREA=(R3),                                             X
+               LENGTH=200,                                             X
+               COPIES=2,                                               X
+               ACB=(R4),                                               X
+               AREA=(R3),                                              X
+               AREALEN=50,                                             X
+               ARG=(R3),                                               X
+               ECB=(R3),                                               X
+               MSGAREA=(R3),                                           X
+               NXTRPL=(R3),                                            X
+               RECLEN=60,                                              X
+               MSGLEN=50,                                              X
+               KEYLEN=10,                                              X
+               OPTCD=(ARD,SKP,XRBA),                                   X
+               MF=(G,(R5))
+         LTR   R15,R15            OK ?
+         JNZ   ABEND              EXIT IF NOT
+         IILF  R15,C'RP04'        MARK TEST
+         CLC   MYAREA(RPLLEN),RPL04 MATCH ?
+         JNE   TESTFAIL           EXIT IF NOT
+         WTO   'TESTGNCB SUCCESSFUL'
+         J     EXIT               EXIT
+*
+ABEND    DS    0H
+         STC   R15,WTOR15         SAVE RC IN WTO
+         OI    WTOR15,X'F0'       CONVERT TO DEC
+         STC   R0,WTOR0           SAVE ERRCODE IN WTO
+         OI    WTOR0,X'F0'        CONVERT TO DEC
+         LARL  R1,WTOABEND        R1=WTO MSG
+         WTO   MF=(E,(R1))        SHOW IT
+         J     EXITBAD            EXIT RC=15
+*
+TESTFAIL DS    0H
+         ST    R15,WTOMARK        SAVE TEST ID IN WTO
+         LARL  R1,WTOFAIL         R1=WTO MSG
+         WTO   MF=(E,(R1))        SHOW IT
+EXITBAD  DS    0H
+         SUBEXIT RC=15
+*
+EXIT     DS    0H
+         SUBEXIT
+*
+         DS    0H
+WTOABEND DC    AL2(WTOABDEN-*,0)
+         DC    C'ERR!!! R15='
+WTOR15   DC    X'00'
+         DC    C' R0='
+WTOR0    DC    X'00'
+WTOABDEN EQU   *
+*
+         DS    0H
+WTOFAIL  DC    AL2(WTOFALEN-*,0)
+         DC    C'ERR!!! TEST '
+WTOMARK  DS    CL4
+         DC    C' FAILED'
+WTOFALEN EQU   *
+*
+         DS    0H
+MYACB    DC    XL10'00'
+MYACB2   DC    XL10'00'
+MYPASS   DC    XL50'00'
+MYAREA   DC    XL200'00'
+MYAREA2  DC    XL10'00'
+MYCBMR   DC    XL100'00'
+MYEOD    BR    R14
+MYEOD2   BR    R14
+MYLER    BR    R14
+MYLER2   BR    R14
+MYSYN    BR    R14
+MYSYN2   BR    R14
+*
+EXLST01  EXLST EODAD=MYEOD,LERAD=(,A),SYNAD=(MYSYN,N)
+EXLST03  EXLST EODAD=MYEOD2,LERAD=(,N),SYNAD=(MYSYN2,A)
+EXLST04  EXLST EODAD=(MYEOD2,A),LERAD=(MYLER2,A),SYNAD=(MYSYN2,A)
+*
+ACB01    ACB   DDNAME=MYACB,                                           X
+               PASSWD=MYAREA,                                          X
+               EXLST=MYAREA,                                           X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X        X
+               BUFSP=2000,                                             X
+               BUFND=10,                                               X
+               BUFNI=10,                                               X
+               RMODE31=NONE,                                           X
+               STRNO=10,                                               X
+               BSTRNO=10,                                              X
+               SHRPOOL=1
+*
+ACB02    ACB   DDNAME=NEWACB2,                                         X
+               PASSWD=MYPASS,                                          X
+               EXLST=MYPASS,                                           X
+               MACRF=(NRM,NIS,IN),                                     X
+               BUFSP=3000,                                             X
+               BUFND=20,                                               X
+               BUFNI=25,                                               X
+               RMODE31=ALL,                                            X
+               STRNO=27,                                               X
+               BSTRNO=20,                                              X
+               SHRPOOL=2
+*
+ACB03    ACB   MACRF=(AIX,SIS,OUT),                                    X
+               DDNAME=NEWACB3,                                         X
+               SHRPOOL=3
+*
+ACB04    ACB   DDNAME=MYACB,                                           X
+               PASSWD=MYAREA,                                          X
+               EXLST=MYAREA,                                           X
+               MACRF=(KEY,ADR,SEQ,SKP,DIR,IN,OUT,AIX,LSR,DFR,SIS),     X        X
+               BUFSP=2000,                                             X
+               BUFND=10,                                               X
+               BUFNI=10,                                               X
+               RMODE31=NONE,                                           X
+               STRNO=10,                                               X
+               BSTRNO=10,                                              X
+               SHRPOOL=1
+*
+RPL01    RPL   ACB=MYACB,                                              X
+               AREA=MYAREA,                                            X
+               AREALEN=50,                                             X
+               ARG=MYAREA,                                             X
+               ECB=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               NXTRPL=MYAREA,                                          X
+               RECLEN=60,                                              X
+               MSGLEN=50,                                              X
+               KEYLEN=10,                                              X
+               OPTCD=(ARD,SKP,XRBA)
+*
+RPL02    RPL   ACB=MYACB2,                                             X
+               AREA=MYAREA2,                                           X
+               AREALEN=100,                                            X
+               ARG=MYAREA,                                             X
+               ECB=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               NXTRPL=MYAREA,                                          X
+               MSGLEN=100,                                             X
+               KEYLEN=100,                                             X
+               OPTCD=(KEY,KGE,ARD,DIR,RBA)
+*
+RPL03    RPL   NXTRPL=MYAREA,                                          X
+               AREALEN=1234,                                           X
+               OPTCD=(DIR,KEQ,ASY)
+*
+RPL04    RPL   ACB=MYACB,                                              X
+               AREA=MYAREA,                                            X
+               AREALEN=50,                                             X
+               ARG=MYAREA,                                             X
+               ECB=MYAREA,                                             X
+               MSGAREA=MYAREA,                                         X
+               NXTRPL=MYAREA,                                          X
+               RECLEN=60,                                              X
+               MSGLEN=50,                                              X
+               KEYLEN=10,                                              X
+               OPTCD=(ARD,SKP,XRBA)
+*
+         YREGS
+         END
+

@@ -208,6 +208,13 @@ public  class  sz390 implements Runnable {
     * 02/14/16 RPI 2008 Add test-mode command PSW16 to display 16 byte PSW
     * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one
     * 04/08/18 RPI 1618 Create zoutput object to separate sequential output file handling from the main body of z390 classes
+    * 2021-01-02 DSH RPI 2225 display 16 bit failing RLD address for abort error 120
+    * 2021-01-06 DSH RPI 2012 Fix to bytes_to_hex for SNAP contributed by John Ganci
+    * 2021-02-08 RPI 2014 Modify add_cde() to zero CDE before setting fields
+	* 2021-02-16 RPI 2229 add support for large QSAM blocks indicated by DCBEULBI flag in DCBEFLG1 supporting BDW field with high bit and 31 bit length
+	*            https://www.ibm.com/support/knowledgecenter/SSLTBW_2.1.0/com.ibm.zos.v2r1.idad400/bdw9.htm#bdw9
+	*            for more on large block support see here (note DCBESLBI flag not currently used)
+	*            https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.1.0/com.ibm.zos.v2r1.idad500/dcbem.htm
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -642,6 +649,7 @@ public  class  sz390 implements Runnable {
      int    cur_dcb_addr   = 0;     // mem offset to dcb from r1
      int    cur_open_opt   = 0;     // open options (GET=x'40, PUT=x'20')
      int    cur_dcbe_addr  = 0;     // dcb extension
+	
      String cur_dcb_ddnam = null;  // ascii ddname from dcb ebcdic
      String cur_dcb_file_name = null;
      int    cur_dcb_oflgs  = 0;
@@ -690,8 +698,10 @@ public  class  sz390 implements Runnable {
      int dcb_dcbe  = 0x60; // dcbe extention for eodad and synad
      int dcb_io    = 0x64; // dcb total io req since open // RPI 764
      int dcb_len   = 0x68; // length of DCB
-     int dcbe_eodad = 0;
-     int dcbe_synad = 4;
+	 int dcbe_flg1  = 0x17; // rpi 2229 new dcbeflg1 field with ULBI flag
+	 int   dcbeulbi = 0x04; // rpi 2229 flag in flg1 for BDW large blocks
+     int dcbe_eodad = 0x40; // rpi 2229 moved to correct dcbe offset
+     int dcbe_synad = 0x44; // rpi 2229 moved to correct dcbe offset
      boolean dcb_synad_recur = false; // RPI 377
      boolean[]          tiot_dcb_open   = (boolean[])Array.newInstance(boolean.class,max_tiot_files);
      String[]           tiot_ddnam      = new String[max_tiot_files];
@@ -1650,7 +1660,7 @@ private void svc_load_rlds(){
 		    	rld_field = pz390.mem.getInt();
 	    		rld_field = (rld_field >>> 16) + load_code_load;
 	    		if (rld_field > 0xffff){ // RPI 894
-	    			abort_error(120,"loader 2 byte RLD address too high in - " + tz390.pgm_name);
+	    			abort_error(120,"loader 2 byte RLD address" + tz390.get_hex(rld_loc,8) + " too high in - " + tz390.pgm_name); // RPI 2225
 	    		}
 	    		pz390.mem.position(load_code_load + rld_loc);
 	        	pz390.mem.putShort((short)(rld_field));
@@ -1682,7 +1692,7 @@ private void svc_load_rlds(){
 	        	pz390.mem.putInt(rld_field);
 	        	break;
 	    	default:
-	    		abort_error(119,"invalid RLD length in load module -" + tz390.pgm_name);
+	    		abort_error(119,"invalid RLD length in load module -" + tz390.pgm_name + " at offset " + tz390.get_hex(rld_loc,8)); // RPI 2225
 	        }
 	    	cur_rld++;
 	    }
@@ -1984,6 +1994,7 @@ private void add_cde(){
 	    } else {
 	    	abort_error(123,"error allocating CDE for LOAD");
 	    }
+		Arrays.fill(pz390.mem_byte, cde_addr[cur_cde], cde_addr[cur_cde] + cded_len, (byte)0); // RPI 2014
 	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdchain,pz390.mem.getInt(pz390.cvt_cde));
 	    pz390.mem.putInt(pz390.cvt_cde,cde_addr[cur_cde]);
 	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdentpt,load_code_ent);
@@ -2930,7 +2941,7 @@ public void dump_mem(ByteBuffer memory,int mem_addr,int mem_len){
 private String bytes_to_hex(byte[] bytes, int byte_start, int byte_length, int chunk){  // RPI 2006
 	/*                                                                                  // RPI 2006
 	 * Format bytes into hex string                                                     // RPI 2006
-	 * If chunk > 0 insert space after each chunk                                       // RPI 2006
+	 * If chunk > 0 insert space after each chunk except the last chunk                 // RPI 2006 // RPI 2012
 	 */                                                                                 // RPI 2006
 	if (byte_start < 0 || byte_start >= bytes.length) {                                 // RPI 2006
 		return "";                                                                      // RPI 2006
@@ -2949,17 +2960,17 @@ private String bytes_to_hex(byte[] bytes, int byte_start, int byte_length, int c
 		} else {                                                                        // RPI 2006
 			hex.append(temp_string);                                                    // RPI 2006
 		}                                                                               // RPI 2006
+		index1++;                                                                       // RPI 2012   
 		if (chunk > 0){                                                                 // RPI 2006
 			hex_bytes++;                                                                // RPI 2006
-			if (hex_bytes >= chunk){                                                    // RPI 2006
+			if (hex_bytes >= chunk && index1 < byte_length){                            // RPI 2006 // RPI 2012
 				hex.append(" ");                                                        // RPI 2006
 				hex_bytes = 0;                                                          // RPI 2006
 			}                                                                           // RPI 2006
 		}                                                                               // RPI 2006
-		index1++;                                                                       // RPI 2006
 	}                                                                                   // RPI 2006
-	return hex.toString().toUpperCase();                                                // RPI 2006
-}                                                                                       // RPI 2006
+    return (hex.length() > 0 ? hex.toString().toUpperCase() : "");                      // RPI 2012
+}                                                                                         // RPI 2006
 private void put_dump(String text){
 	/*
 	 * route dump lines to LOG file
@@ -3027,6 +3038,7 @@ public void svc_open_dcb(String dsnam_path){
 	tot_dcb_open++;
 	tot_dcb_oper++;
 	check_dcb_addr();
+	cur_dcbe_addr  = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe); // RPI 2229 set dcbe addr for get/put bdw to chk lbi flag
 	get_cur_tiot_index();
 	if (cur_tiot_index != -1){
 		pz390.mem.putInt(cur_dcb_addr + dcb_io,0); // reset RPI 764
@@ -3053,8 +3065,8 @@ public void svc_open_dcb(String dsnam_path){
 		switch (cur_dcb_oflgs){
 		case 0x20: // write - dcb_oflgs_w (note NIO does not support write only)
 			try {
-	            tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw"); // dk RPI 1618
-				if (cur_dcb_macrf == dcb_macrf_pm){
+	             tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw");
+				 if (cur_dcb_macrf == dcb_macrf_pm){
 	            	 tiot_file[cur_tiot_index].setLength(0);
 	             }
 	             tiot_eof_rba[cur_tiot_index] = tiot_file[cur_tiot_index].length();
@@ -3082,8 +3094,8 @@ public void svc_open_dcb(String dsnam_path){
 		    break;
 		case 0x60: // update - dcb_oflgs_rw
 			try {
-	            tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw"); // dk RPI 1618
-				tiot_eof_rba[cur_tiot_index] = tiot_file[cur_tiot_index].length();
+	             tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw");
+				 tiot_eof_rba[cur_tiot_index] = tiot_file[cur_tiot_index].length();
 			} catch (Exception e){
 				dcb_synad_error(23,"i/o error on open - " + e.toString());
 				return;
@@ -3183,6 +3195,7 @@ public void svc_close_dcb(){
 	tot_dcb_close++;
 	tot_dcb_oper++;
 	check_dcb_addr();
+	cur_dcbe_addr  = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe); // RPI 2229 set dcbe addr for get/put bdw to chk lbi flag
 	get_cur_tiot_index();
 	if (cur_tiot_index != -1){
 		cur_dcb_oflgs = pz390.mem_byte[cur_dcb_addr+dcb_oflgs] & 0xff;
@@ -3194,9 +3207,9 @@ public void svc_close_dcb(){
             if (tiot_vrec_blksi[cur_tiot_index] > 0){
             	tiot_file[cur_tiot_index].seek(tiot_cur_rba[cur_tiot_index]);
             	tz390.systerm_io++;
-            	tiot_file[cur_tiot_index].writeInt((tiot_vrec_blksi[cur_tiot_index]+4) << 16);
+            	tiot_file[cur_tiot_index].writeInt((put_bdw_len(tiot_vrec_blksi[cur_tiot_index]+4))); // RPI 2229 set last vb length
             }
-            tiot_file[cur_tiot_index].close(); // dk RPI 1618
+            tiot_file[cur_tiot_index].close();
             pz390.mem_byte[cur_dcb_addr+dcb_oflgs] = (byte)(pz390.mem_byte[cur_dcb_addr+dcb_oflgs] & (0xff ^ dcb_oflgs_open)); // RPI110
             pz390.mem.putInt(cur_dcb_addr + dcb_iobad,0); //RPI110
             tiot_dcb_open[cur_tiot_index] = false;  //RPI110
@@ -3221,6 +3234,7 @@ private void svc_get(){
 	tot_dcb_oper++;
 	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	check_dcb_addr();
+	cur_dcbe_addr  = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe); // RPI 2229 set dcbe addr for get/put bdw to chk lbi flag
 	get_cur_tiot_index();
 	if (cur_tiot_index != -1){
 		cur_dcb_recfm = pz390.mem_byte[cur_dcb_addr+dcb_recfm] & 0xff;
@@ -3263,16 +3277,15 @@ private void svc_get(){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
 				}
 				tz390.systerm_io++;
-                cur_vrec_lrecl = tiot_file[cur_tiot_index].readInt();
-                check_mem_area(cur_dcb_area,cur_vrec_lrecl >> 16); // RPI 668
-                pz390.mem.putInt(cur_dcb_area,cur_vrec_lrecl);
-                cur_vrec_lrecl = cur_vrec_lrecl >> 16;
+                cur_vrec_lrecl = (get_bdw_len(tiot_file[cur_tiot_index].readInt())); // RPI 2229 get LBI or LL00 len
+                check_mem_area(cur_dcb_area,cur_vrec_lrecl); // RPI 668 RPI 2229
+                pz390.mem.putInt(cur_dcb_area,put_bdw_len(cur_vrec_lrecl)); // RPI 2229 put LBI or LL00 back in area
                 if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){ // RPI 697
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
             	}
                 tz390.systerm_io++;
-                tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area + 4,cur_vrec_lrecl - 4);
+                tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area + 4,cur_vrec_lrecl - 4); // read record
 				if (tz390.opt_traceq){
 					tz390.put_trace("QSAM EXCP READ  VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_vrec_lrecl,8));
 					dump_mem(pz390.mem,cur_dcb_area,cur_vrec_lrecl);
@@ -3290,17 +3303,16 @@ private void svc_get(){
 				}
 				if (tiot_vrec_blksi[cur_tiot_index] == 0){
 					tz390.systerm_io++;
-					tiot_vrec_blksi[cur_tiot_index] = (tiot_file[cur_tiot_index].readInt() >>> 16)-4;
+					tiot_vrec_blksi[cur_tiot_index] = (get_bdw_len(tiot_file[cur_tiot_index].readInt()))-4; // RPI 2229 VB
                     if (tiot_vrec_blksi[cur_tiot_index] < 5 || tiot_vrec_blksi[cur_tiot_index] > cur_dcb_blksi_f-4){
                     	dcb_synad_error(30,"invalid variable block size - " + tiot_vrec_blksi[cur_tiot_index]);
                     	return;
                     }
 				}
 				tz390.systerm_io++;
-                cur_vrec_lrecl = tiot_file[cur_tiot_index].readInt();
-                check_mem_area(cur_dcb_area,cur_vrec_lrecl >> 16); // RPI 668
-                pz390.mem.putInt(cur_dcb_area,cur_vrec_lrecl);
-                cur_vrec_lrecl = cur_vrec_lrecl >> 16;
+                cur_vrec_lrecl = get_bdw_len(tiot_file[cur_tiot_index].readInt()); // RPI 2229 VB lrecl
+                check_mem_area(cur_dcb_area,cur_vrec_lrecl); // RPI 668  RPI 2229 ?
+                pz390.mem.putInt(cur_dcb_area,put_bdw_len(cur_vrec_lrecl)); // RPI 2229 dsh1
                 if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){ // RPI 697
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
@@ -3441,6 +3453,7 @@ private void svc_put(){
 	tot_dcb_oper++;
 	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	check_dcb_addr();
+	cur_dcbe_addr  = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe); // RPI 2229 set dcbe addr for get/put bdw to chk lbi flag
 	get_cur_tiot_index();
 	if (cur_tiot_index != -1){
 		cur_dcb_oflgs = pz390.mem_byte[cur_dcb_addr + dcb_oflgs] & 0xff;
@@ -3495,8 +3508,8 @@ private void svc_put(){
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f;
 				}
-                cur_vrec_lrecl = pz390.mem.getInt(cur_dcb_area) >>> 16;
-                if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){  // RPI 697
+                cur_vrec_lrecl = get_bdw_len(pz390.mem.getInt(cur_dcb_area)); // RPI 2229 put variable
+                if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){  // RPI 697 
     	            dcb_synad_error(35,"invalid variable record length - " + cur_vrec_lrecl);
                     return;
                 }
@@ -3524,10 +3537,10 @@ private void svc_put(){
 				if (tiot_vrec_blksi[cur_tiot_index] == 0){
 					tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
 					tz390.systerm_io++;
-					tiot_file[cur_tiot_index].writeInt(-1); // place holder for vb LLZZ
+					tiot_file[cur_tiot_index].writeInt(-1); // place holder for vb LLZZ/LLLL RPI 2229
 				}
                 check_mem_area(cur_dcb_area,4); // RPI 668
-				cur_vrec_lrecl = pz390.mem.getShort(cur_dcb_area); // RPI 668
+				cur_vrec_lrecl = get_bdw_len(pz390.mem.getInt(cur_dcb_area)); // RPI 668 RPI 2229 was getShort now get_bdw int len
                 if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
                    	dcb_synad_error(37,"invalid variable record size - " + cur_vrec_lrecl);
                     return;
@@ -3537,7 +3550,7 @@ private void svc_put(){
                 	tiot_vrec_blksi[cur_tiot_index] = tiot_vrec_blksi[cur_tiot_index] - cur_vrec_lrecl;
                 	tiot_file[cur_tiot_index].seek(tiot_cur_rba[cur_tiot_index]);
                 	tz390.systerm_io++;
-                	tiot_file[cur_tiot_index].writeInt((tiot_vrec_blksi[cur_tiot_index]+4) << 16);
+                	tiot_file[cur_tiot_index].writeInt(put_bdw_len((tiot_vrec_blksi[cur_tiot_index]+4))); // RPI 2229 reset block length
                 	tiot_file[cur_tiot_index].seek(tiot_cur_rba[cur_tiot_index] + tiot_vrec_blksi[cur_tiot_index]+4);
                 	tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
                 	tz390.systerm_io++;
@@ -3565,7 +3578,7 @@ private void svc_put(){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f;
 				}
                 check_mem_area(cur_dcb_area,4); // RPI 668  RPI 677
-                cur_rec_len = (pz390.mem.getInt(cur_dcb_area) >> 16)-4;
+                cur_rec_len = get_bdw_len((pz390.mem.getInt(cur_dcb_area)))-4; // RPI 2229 get bdw len
                 check_mem_area(cur_dcb_area,cur_rec_len+4); // RPI 668 RPI 677
                 if (cur_rec_len < 1 || cur_rec_len > (cur_dcb_lrecl_f - 4)){
                 	dcb_synad_error(48,"variable record too long - " + cur_rec_len);
@@ -3631,6 +3644,7 @@ private void svc_read(){
 	cur_decb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	cur_dcb_addr  = pz390.mem.getInt(cur_decb_addr + decb_dcb) & pz390.psw_amode;
 	check_dcb_addr();
+	cur_dcbe_addr  = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe); // RPI 2229 set dcbe addr for get/put bdw to chk lbi flag
 	get_cur_tiot_index();
 	if (cur_tiot_index != -1){
 		if (tiot_cur_rba[cur_tiot_index] >= tiot_eof_rba[cur_tiot_index]){
@@ -3670,6 +3684,7 @@ private void svc_write(){
 	cur_decb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	cur_dcb_addr  = pz390.mem.getInt(cur_decb_addr + decb_dcb) & pz390.psw_amode;
 	check_dcb_addr();
+	cur_dcbe_addr  = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe); // RPI 2229 set dcbe addr for get/put bdw to chk lbi flag
 	get_cur_tiot_index();
 	if (cur_tiot_index != -1){
 		cur_dcb_area  = pz390.mem.getInt(cur_decb_addr + decb_area) & pz390.psw_amode;
@@ -3708,6 +3723,7 @@ private void svc_check(){
 	cur_decb_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	cur_dcb_addr  = pz390.mem.getInt(cur_decb_addr + decb_dcb) & pz390.psw_amode;
 	check_dcb_addr();
+	cur_dcbe_addr  = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe); // RPI 2229 set dcbe addr for get/put bdw to chk lbi flag
 	cur_ecb = pz390.mem_byte[cur_decb_addr + decb_ecb];
 	if (cur_ecb == 0x40){
 		return;
@@ -3726,6 +3742,7 @@ private void svc_point(){
 	 */
 	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	check_dcb_addr();
+	cur_dcbe_addr  = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe); // RPI 2229 set dcbe addr for get/put bdw to chk lbi flag
 	get_cur_tiot_index();
 	if (cur_tiot_index != -1){
 		try {
@@ -7520,7 +7537,25 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
 		return false;
 	}
 }
-
+    private int get_bdw_len(int len){
+		// RPI 2229 if BDW high bit on return len = bits 1-31
+		if (cur_dcbe_addr > 0
+		&& (pz390.mem_byte[cur_dcbe_addr+dcbe_flg1] & dcbeulbi) > 0 // is dcbe large block indicator on
+		&& len < 0){
+			return (len & 0x7fffffff);
+		} else {
+			return (len >>> 16); // else return len = bits 1-15
+		}
+	}
+    private int put_bdw_len(int len){
+		// RPI 2229 if DCBEFLG1 LBI bit x'04' on return len with high bit on
+		if (cur_dcbe_addr > 0
+		&& (pz390.mem_byte[cur_dcbe_addr+dcbe_flg1] & dcbeulbi) > 0){ // is dcbe large block indicator on
+			return (len | 0x80000000);
+		} else {
+			return (len << 16); // else return len in bits 1-15
+		}
+	}
  	private void check_mem_area(int addr, int len){
 		/*
 		 * check area start end and abort S0C5
@@ -7561,7 +7596,7 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
  			    }
  		    } else {
  		    	try {
- 		    		tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw"); // dk RPI 1618
+ 		    		tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw");
  		    		tiot_file[cur_tiot_index].setLength(0);
  				} catch (Exception e){
  				    dcb_synad_error(23,"i/o error on open - " + e.toString());

@@ -1,0 +1,1341 @@
+//IEBUPDTE EXEC PGM=IEBUPDTE,PARM=NEW
+//SYSPRINT DD  SYSOUT=*
+//SYSUT1 DD    DUMMY
+//SYSUT2 DD    DSN=<USERID.STRUCT.MACLIB>,DISP=(,CATLG),UNIT=SYSDA,
+//             SPACE=(TRK,(8,12,20)),RECFM=(FB,LRECL=80,BLKSIZE=3120)
+//SYSIN  DD    *
+./ ADD NAME=$MGBLDEF
+.*   Copyright (C) <2020>  Daniel H. Snyder
+.*   Sructured Programming Macros for the IBM® High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         GBLA  &$MLVL,&$MBLATH,&$MBL2,&$Y$NDX,&$MPTR
+         GBLC  &$MTNAME(255),&$MFNAME(255),&$MCVERB(255),&$MEQ1(255)
+         GBLC  &$MEQ2(255),&$EIUSED(255),&$BT,&$BF,&$MNAME
+         GBLC  &$ELSETAG(255),&$CONJ(255),&$MFINI(255)
+         GBLC  &$MLNAME(255),&$MSNAME(255),&$MENAME(255),&$ERROR
+         GBLC  &$ERRSW
+./ ADD NAME=DO
+.*   Copyright (C) <2020>  Daniel H. Snyder
+.*   Sructured Programming Macros for the IBM® High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    DO    &WHILE=,&UNTIL=,&TEST=BEFORE
+         COPY  $MGBLDEF
+         LCLA  &I,&J
+         LCLC  &X,&Y,&LCLTEST
+&$MLVL   SETA  &$MLVL+1 FOR HOUSEKEEPING
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MLNAME(&$MLVL) SETC '$MDL&$Y$NDX'
+         AIF   ('&NAME' EQ '').SKIP010
+&$MLNAME(&$MLVL) SETC '&NAME'
+.SKIP010 ANOP
+&$MENAME(&$MLVL) SETC '$MDE&$Y$NDX'
+&$MSNAME(&$MLVL) SETC '$MDS&$Y$NDX'
+&LCLTEST SETC  'AFTER'              FIRST ASSUMPTION
+         AIF   ('&TEST' EQ 'AFTER').NEXT030 WAS IT RIGHT?
+&LCLTEST SETC  'BEFORE'             NO - MUST BE BEFORE
+         AIF   ('&TEST' EQ 'BEFORE').NEXT030 WAS IT BEFORE?
+         MNOTE 4,'INVALID VALUE "&TEST" SPECIFIED FOR "TEST=" PARM'
+         MNOTE '"BEFORE" IS ASSUMED'
+.NEXT030 AIF   ('&TEST' NE 'AFTER').NEXT040 SPECIAL BRANCH FOR "AFTER"
+         B     &$MENAME(&$MLVL)
+.NEXT040 AIF   ('&WHILE' NE '').TEST050 GO IF WHILE PARM CODED
+         AIF   ('&UNTIL' EQ '').ERR080 GO IF NEITHER PARM IS CODED
+&Y       SETC  '&UNTIL'
+         AIF   ('&UNTIL'(1,2) NE '((').ERR070   MUST BE '(('
+         AGO   .UNTIL130            PARM MUST BE UNTIL
+.TEST050 AIF   ('&UNTIL' NE '').ERR090 CAN'T HAVE BOTH
+&Y       SETC  '&WHILE'
+         AIF   ('&WHILE'(1,2) NE '((').ERR070   MUST BE '(('
+         AGO   .WHILE100        "WHILE" IT IS
+.ERR070  MNOTE 12,'CONDITIONAL PHRASE MUST BEGIN WITL "(("'
+         MNOTE 'PHRASE IS "&Y"'
+         MNOTE 'MACRO EXPANSION CANCELLED'
+         MEXIT
+.ERR080  MNOTE 12,'EITHER "WHILE" OR "UNTIL" MUST BE SPECIFIED'
+         MNOTE 'MACRO EXPANSION CANCELLED'
+         MEXIT
+.ERR090  MNOTE 12,'"WHILE" AND "UNTIL" MUST NOT BOTH BE SPECIFIED'
+         MNOTE 'MACRO EXPANSION CANCELLED'
+         MEXIT
+.WHILE100 ANOP    *=*=*    &WHILE OPTION WAS SPECIFIED  *=*=*
+&X       SETC  '&$MLNAME(&$MLVL)'
+&$MLVL   SETA  &$MLVL-1 FAKE OUT "IF"
+&X       IF2    &WHILE(1),&WHILE(2),&WHILE(3),&WHILE(4),&WHILE(5),     C
+               &WHILE(6),&WHILE(7),&WHILE(8),&WHILE(9),&WHILE(10),     C
+               &WHILE(11),&WHILE(12),&WHILE(13),&WHILE(14),&WHILE(15), C
+               &WHILE(16),&WHILE(17),&WHILE(18),&WHILE(19),&WHILE(20), C
+               &WHILE(21)
+&$MLVL   SETA  &$MLVL+1
+         AIF   ('&$MFNAME(&$MLVL)' NE '').WHILE110
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MFNAME(&$MLVL) SETC '$FINI&$Y$NDX'
+.WHILE110 ANOP
+         J&$BF &$MFNAME(&$MLVL)
+         AIF   ('&$MTNAME(&$MLVL)' EQ '').CLEAN170
+&Y       SETC  '&$MTNAME(&$MLVL)'
+&Y       DC    0H'0'
+&$MTNAME(&$MLVL) SETC ''
+         AGO   .CLEAN170
+.UNTIL130 ANOP   *=*=*    &UNTIL OPTION WAS SPECIFIED  *=*=*
+&X       SETC  '&$MLNAME(&$MLVL)'
+&$MLVL   SETA  &$MLVL-1 FAKE OUT "IF"
+&X       IF2   &UNTIL(1),&UNTIL(2),&UNTIL(3),&UNTIL(4),&UNTIL(5),      C
+               &UNTIL(6),&UNTIL(7),&UNTIL(8),&UNTIL(9),&UNTIL(10),     C
+               &UNTIL(11),&UNTIL(12),&UNTIL(13),&UNTIL(14),&UNTIL(15), C
+               &UNTIL(16),&UNTIL(17),&UNTIL(18),&UNTIL(19),&UNTIL(20), C
+               &UNTIL(21)
+&$MLVL   SETA  &$MLVL+1
+         AIF   ('&$MTNAME(&$MLVL)' NE '').UNTIL140
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MTNAME(&$MLVL) SETC '$FINI&$Y$NDX'
+.UNTIL140 ANOP
+         B&$BT &$MTNAME(&$MLVL)
+         AIF   ('&$MFNAME(&$MLVL)' EQ '').CLEAN170
+&Y       SETC  '&$MFNAME(&$MLVL)'
+&Y       DC    0H'0'
+&$MFNAME(&$MLVL) SETC ''
+.CLEAN170 AIF   ('&LCLTEST' NE 'AFTER').MEND180
+&X       SETC  '&$MENAME(&$MLVL)'
+&X       DC    0H'0'
+.MEND180 ANOP
+&$MCVERB(&$MLVL) SETC  'DO'
+         MEND
+./ ADD NAME=DODOC
+         TITLE 'EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS'
+*
+R0       EQU   0
+R1       EQU   1       STANDARD
+R2       EQU   2        EQUATES 
+R3       EQU   3         FOR
+R4       EQU   4          GENERAL
+R5       EQU   5           PURPOSE
+R6       EQU   6            REGISTERS.
+R7       EQU   7             YOU
+R8       EQU   8              MIGHT
+R9       EQU   9               AS
+R10      EQU   10               WELL
+R11      EQU   11                JUST 
+R12      EQU   12                 GET
+R13      EQU   13                  USED
+R14      EQU   14                   TO 
+R15      EQU   15                    IT.
+*
+DODOC    CSECT
+         COPY  $MGBLDEF
+*
+         USING *,R12               SET BASE REGISTER FOR PROGRAM
+         STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA
+         LR    R12,R15             PRIME BASE REG
+         LA    R14,SAVEAREA        ADDRESS OF MY SAVE AREA
+         ST    R13,SAVEAREA+4      BACK LINK TO CALLER'S SAVE AREA
+         ST    R14,8(,R13)         FORWARD LINK TO MY SAVE AREA
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                      THE "DO" STATEMENT                             *
+*                                                                     *
+*      The "DO" MACRO PROVIDES A LOOPING STRUCTURE FOR PERFORMING     *
+*      MULTIPLE PASSES THROUGH THE DESIRED CODE. THE "DO" HAS         *
+*      ADDITIONAL PARAMETERS OVER THE "IF", BUT USES THE SAME         *
+*      STRUCTURE FOR CREATING THE LOGICAL REQUIREMENTS AS THE "IF"    *
+*      MACRO (IT CALLS THE "IF" MACRO TO DO THE PROCESSING OF YOUR    *
+*      LOGIC). THE DIFFERENCE IS THAT AN EXTRA SET OF PARENTHESES     *
+*      MUST SURROUND YOUR ENTIRE LOGIC EXPRESSIONS, DUE TO THE        *
+*      SPECIAL WAY OF HANDLING POSITIONAL PARAMETERS USED BY THE "IF" *
+*      MACRO                                                          *
+*                                                                     *
+*      THE TWO SIMPLEST EXAMPLES ARE THE "DO WHILE" AND THE           *
+*      "DO UNTIL":                                                    *
+*                                                                     *
+*       DO UNTIL=((LTR,R1,R1,NZ))                                     *
+*                                                                     *
+*       DO WHILE=((LTR,R1,R1,NZ))                                     *
+*                                                                     *
+*       THE ONLY OTHER AVAILABLE PARAMETER IS THE "TEST=". "BEFORE"   *
+*       IS THE DEFAULT. "TEST=AFTER" CAUSES THE DO-GROUP TO BE        *
+*       PERFORMED ONE TIME BEFORE THE FIRST TEST IS MADE.             *
+*                                                                     *
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=BEFORE                         *
+*                                                                     *
+*       DO WHILE=((LTR,R1,R1,NZ)),TEST=BEFORE                         *
+*                                                                     *
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+*                                                                     *
+*       DO WHILE=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+*                                                                     *
+*       THE DO-GROUP MUST BE TERMINATED WITH AN "ENDDO" STATEMENT:    *
+*                                                                     *
+*       FOLLOWING THE STATEMENTS TO BE EXECUTED WHEN THE "DO"         *
+*       STATEMENT SUCCEEDS, THERE SHOULD BE AN "ENDO" TO TERMINATE    *
+*       THE LOGIC.                                                    *
+*                                                                     *
+*       SPECIAL NOTE: THE "ENDIF" AND "ENDO" ARE INTERCHANGEABLE.     *
+*       THEY ARE BOTH PROVIDED FOR DOCUMENTATION PURPOSES.            *
+*                                                                     *
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          *
+*                                                                     *
+*                      ONE                                            *
+*                    OR MORE                                          *
+*                  INSTRUCTIONS                                       *
+*                                                                     *
+*       ENDDO                                                         *
+*                                                                     *
+*       THE DEFAULT FOR WHEN THE TEST IS PERFORMED IS BEFORE THE      *
+*       BODY OF THE DO-GROUP IS RUN FOR THE FIRST TIME. IF THE LOGIC  *
+*       TEST(S) FAIL, THEN THE INSTUCTIONS IN THE BODY OF THE         *
+*       ARE BYPASSED ENTIRELY.                                        *
+*                                                                     *
+*       IF YOU NEED THE DO-GROUP TO BE PERFORMED AT LEAST ONCE, THEN  *
+*       CODE THE "TEST=AFTER" PARAMETER. THE DEFAULT FOR "TEST" IS    *
+*       "BEFORE", SO IF THAT IS WHAT YOU WANT, THEN YOU DO NOT NEED   *
+*       TO SPECIFY IT.                                                *
+*                                                                     *
+*       IF YOU SPECIFY "BEFORE", OR DEFAULT TO IT, THEN THE LOGICAL   *
+*       TEST IS DETERMINED BEFORE THE BODY OF CODE IS EXECUTED, AND   *
+*       IF THAT TEST FAILS THEN THE BODY OF CODE IS BYPASSED WITHOUT  *
+*       BEING EXECUTED EVEN ONCE. IF YOU SPECIFY "AFTER", THEN THE    *
+*       CODE IS EXECUTED ONE TIME BEFORE THE LOGICAL TEST IS APPLIED. *
+*       IF THAT TEST FAILS, THEN THAT ONE TIME IS THE ONLY TIME THAT  *
+*       THAT CODE IS EXECUTED.                                        *
+*                                                                     *
+*       NOTE THAT THE ALLOWABLE STUCTURE OF THE CONDITIONAL           *
+*       PARAMETERS INCLUDES ALL OF THE POWER OF THOSE OF THE          *
+*       "IF" MACRO (NOTE ALSO THE REQUIRED ADDITIONAL SET OF          *
+*       PARENTHESES SURROUNDING THE ENTIRE LOGIC STRUCTURE.)          *
+*                                                                     *
+*       DO    WHILE=((LTR,R1,R1,NZ),AND,                     C        *
+*             ((CLC,B,Z,NE),OR,                              C        *
+*             (CLC,C,Z,E))),                                 C        *
+*             TEST=AFTER                                              *
+*                                                                     *
+*                      ONE                                            *
+*                    OR MORE                                          *
+*                  INSTRUCTIONS                                       *
+*                                                                     *
+*       ENDDO                                                         *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* DO WHILE                                                            *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         PACK  COUNTER,=Z'10'
+TESTDO01 DO    WHILE=((SP,COUNTER,=P'1',NZ))
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+         ENDDO ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* DO UNTIL                                                            *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         PACK  COUNTER,=Z'10'
+TESTDO02 DO    UNTIL=((SP,COUNTER,=P'1',E),AND,                        C
+               (CLC,B,TEMP,E))   DO UNTIL BOTH
+           MVC   TEMP,=C'BBBB'
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+         ENDDO ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* DO WHILE WITH TEST AFTER                                            *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         PACK  COUNTER,=Z'10'
+TESTDO03 DO    WHILE=((SP,COUNTER,=P'1',NZ)),TEST=AFTER
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+         ENDDO ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* IF THE THIRD PHRASE IS TRUE AND EITHER OF THE FIRST TWO PHRASES ARE *
+* TRUE, THEN CONTINUE EXECUTING THE DO-LOOP.                          *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         PACK  COUNTER,=Z'10'
+TESTDO04 DO    WHILE=(((SP,COUNTER,=P'1',NZ),OR,                       C
+               (CLC,B,Z,E)),AND,(CLC,C,TEMP,E))
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+           MVC   TEMP,=C'CCCC'
+         ENDDO ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+* DO UNTIL A IS TRUE AND EITHER B OR C IS TRUE AND D IS TRUE -  OR... *
+* E IS TRUE AND EITHER F OR G IS TRUE AND H IS TRUE, THEN END THE     *
+* PERFORMING OF THE DO-LOOP AND BRANCH TO THE "ENDDO".                *
+*                                                                     *
+* IF A & ( B | C) & D | E & (F | G) & H                               *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         DO    UNTIL=((CLC,A,Z,E),AND,((CLC,B,Z,E),OR,(CLC,C,Z,E)),AND,C
+               (CLC,D,Z,E),OR,(CLC,E,Z,E),AND,((CLC,F,Z,E),OR,         C
+               (CLC,G,Z,E)),AND,(CLC,H,Z,E))
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER
+           SVC 13
+         ENDDO
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      THESE FOLLOWING STATEMENTS ARE NORMAL zOS TERMINATION.         *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*
+         L     R13,SAVEAREA+4      ADDRESS OF CALLER'S SAVE AREA
+         LM    R14,R12,12(R13)     RESTORE R14 WRAPPED AROUND TO R12
+         DROP  R12                 NO LONGER VALID
+         SLR   R15,R15             SET RETURN CODE TO ZERO
+         BR    R14                 RETURN TO CALLER
+*
+         LTORG
+SAVEAREA DC    18F'0'
+EOFSW    DC    C'N'                SET END-OF-FILE SWITCH TO 'Y' AT EOF
+PL5      DC    PL5'7'
+         DC    0F'0'
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      THESE FOLLOWING STATEMENTS DEFINE VARIABLES REQUIRED.          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+LEVEL_ONE_PASS_COUNTER DC PL4'0'
+A        DC    C'AAAA'
+B        DC    C'BBBB'
+C        DC    C'CCCC'
+D        DC    C'DDDD'
+E        DC    C'EEEE'
+F        DC    C'FFFF'
+G        DC    C'GGGG'
+H        DC    C'HHHH'
+Z        DC    C'ZZZZ'
+TEMP     DC    C'TEMP'
+COUNTER  DC    PL4'10'
+LOOP_COUNTER DC PL4'0'             FOR TEST OF "DO UNTIL"
+PACKED_ONE DC  PL4'1'              FOR TEST OF "DO UNTIL"
+         END   DODOC
+./ ADD NAME=ELSE
+.*   Copyright (C) <2020>  Daniel H. Snyder
+.*   Sructured Programming Macros for the IBM® High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    ELSE  ,                   END OF POSITIVE TEST, START OF
+         COPY  $MGBLDEF            . NEGATIVE
+         LCLC  &X,&Y                  SET TO 'IF-FAILED' TAG
+         AIF   (&$MLVL GT 0).OK20
+         MNOTE 8,'"ELSEIF" INVALID OUTSIDE OF AN "IF" GROUP'
+         MNOTE ' - MACRO GENERATION TERMINATED'
+         MEXIT
+.OK20    AIF   ('&$MCVERB(&$MLVL)' EQ 'IF').OK30
+         AIF   ('&$MCVERB(&$MLVL)' EQ 'ELSEIF').OK30
+         MNOTE 8,'"ELSE" INVALID FOLLOWING "&$MCVERB(&$MLVL)"'
+         MNOTE ' - MACRO GENERATION TERMINATED'
+         MEXIT
+.OK30    AIF   ('&$MFINI(&$MLVL)' NE '').OK40
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MFINI(&$MLVL) SETC '$FINI&$Y$NDX'
+.OK40    J     &$MFINI(&$MLVL)
+&X       SETC  '&$MFNAME(&$MLVL)'
+&X       DC    0H'0'
+&$MFNAME(&$MLVL) SETC ''
+&$MCVERB(&$MLVL) SETC 'ELSE'
+         MEND
+./ ADD NAME=ELSEIF
+.*   Copyright (C) <2020>  Daniel H. Snyder
+.*   Sructured Programming Macros for the IBM® High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    ELSEIF &EXP
+         COPY  $MGBLDEF
+         LCLC  &X,&Y
+         AIF   (&$MLVL GT 0).OK20
+         MNOTE 8,'"ELSEIF" INVALID OUTSIDE OF AN "IF" GROUP'
+         MNOTE ' - MACRO GENERATION TERMINATED'
+         MEXIT
+.OK20    ANOP
+         AIF   ('&$MCVERB(&$MLVL)' EQ 'IF').OK30
+         AIF   ('&$MCVERB(&$MLVL)' EQ 'ELSEIF').OK30
+         MNOTE 8,'"ELSEIF" INVALID FOLLOWING "&$MCVERB(&$MLVL)"'
+         MNOTE ' - MACRO GENERATION TERMINATED'
+         MEXIT
+.OK30    AIF   ('&$MFINI(&$MLVL)' NE '').OK40
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MFINI(&$MLVL) SETC '$FINI&$Y$NDX'
+.OK40    J     &$MFINI(&$MLVL)
+&X       SETC  '&$MFNAME(&$MLVL)'
+&$MFNAME(&$MLVL) SETC ''
+&$MLVL   SETA  &$MLVL-1          SO 'IF' CAN BUMP IT UP AGAIN
+&X       IF    &SYSLIST(1),&SYSLIST(2),&SYSLIST(3),&SYSLIST(4),        C
+               &SYSLIST(5),&SYSLIST(6),&SYSLIST(7),&SYSLIST(8),        C
+               &SYSLIST(9),&SYSLIST(10),&SYSLIST(11),&SYSLIST(12),     C
+               &SYSLIST(13),&SYSLIST(14),&SYSLIST(15),&SYSLIST(16),    C
+               &SYSLIST(17),&SYSLIST(18),&SYSLIST(19),&SYSLIST(20),    C
+               &SYSLIST(21),&SYSLIST(22),&SYSLIST(23),&SYSLIST(24),    C
+               &SYSLIST(25),&SYSLIST(26),&SYSLIST(27),&SYSLIST(28),    C
+               &SYSLIST(29),&SYSLIST(30),&SYSLIST(31),&SYSLIST(32)
+&$MCVERB(&$MLVL) SETC 'ELSEIF'
+         MEND
+./ ADD NAME=ENDDO
+.*   Copyright (C) <2020>  Daniel H. Snyder
+.*   Sructured Programming Macros for the IBM® High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    ENDDO , STUB FOR "ENDIF"
+         ENDIF ,
+         MEND
+./ ADD NAME=ENDIF
+.*   Copyright (C) <2020>  Daniel H. Snyder
+.*   Sructured Programming Macros for the IBM® High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    ENDIF &ELSE,&DOGROUP=
+         COPY  $MGBLDEF
+         LCLC  &X,&Y
+&X       SETC  '&$MCVERB(&$MLVL)'
+         AIF   ('&X' EQ 'DO').CONT005
+         AIF   ('&X' EQ 'IF').CONT010
+         AIF   ('&X' EQ 'ELSE').CONT010
+         AIF   ('&X' EQ 'ELSEIF').CONT010
+         MNOTE 4,'"ENDIF" USED TO TERMINATE UNKNOWN GROUP'
+         AGO   .CONT010
+.CONT005 J     &$MLNAME(&$MLVL)
+.CONT010 AIF   ('&$MFNAME(&$MLVL)' EQ '').NEXT015
+&X       SETC  '&$MFNAME(&$MLVL)'
+&X       DC    0H'0'
+&$MFNAME(&$MLVL) SETC ''
+.NEXT015 AIF   ('&$MTNAME(&$MLVL)' EQ '').NEXT020
+&X       SETC  '&$MTNAME(&$MLVL)'
+&X       DC    0H'0'
+&$MTNAME(&$MLVL) SETC ''
+.NEXT020 AIF   ('&$MFINI(&$MLVL)' EQ '').LOOP027
+&X       SETC  '&$MFINI(&$MLVL)'
+&X       DC    0H'0'
+&$MFINI(&$MLVL) SETC ''
+.LOOP027 AIF   (&$MPTR EQ 0).MEND030
+&X       SETC  '&$MEQ1(&$MPTR)'
+&Y       SETC  '&$MEQ2(&$MPTR)'
+         AIF   ('&X' EQ '').SKIP028
+&X       EQU   &Y
+&$MEQ1(&$MPTR) SETC ''
+.SKIP028 ANOP
+&$MEQ2(&$MPTR) SETC ''
+&$MPTR   SETA  &$MPTR-1
+         AGO   .LOOP027
+.MEND030 ANOP
+&$MCVERB(&$MLVL) SETC 'ASTRONOMY'
+&$MLVL   SETA  &$MLVL-1
+         MEND
+./ ADD NAME=IF
+.*   Copyright (C) <2020>  Daniel H. Snyder
+.*   Sructured Programming Macros for the IBM® High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    IF    &EXP                MULTIPLE OPERANDS VIA &SYSLIST
+         COPY  IFCOPY
+.* 
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* PREPARE FOR UPCOMING "ELSEIF", "ELSE", AND "ENDIF" STATEMENTS.     *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*
+.FINISH260 AIF   ('&$ERRSW' EQ 'Y').MEND290
+         AIF ('&$MFNAME(&$MLVL)' NE '').FIN270
+&$Y$NDX  SETA  &$Y$NDX+1
+&$MFNAME(&$MLVL) SETC '$NEXT&$Y$NDX'
+.FIN270  ANOP
+         J&$BF &$MFNAME(&$MLVL)
+         AIF   ('&$MTNAME(&$MLVL)' EQ '').MEND290
+&Y       SETC  '&$MTNAME(&$MLVL)'
+&Y       DC    0H'0'
+&$MTNAME(&$MLVL) SETC ''
+.MEND290 ANOP
+&$MCVERB(&$MLVL) SETC 'IF'
+         MEND
+./ ADD NAME=IF2
+.*   Copyright (C) <2020>  Daniel H. Snyder
+.*   Sructured Programming Macros for the IBM® High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         MACRO
+&NAME    IF2   &EXP                MULTIPLE OPERANDS VIA &SYSLIST
+         COPY  IFCOPY
+.FINISH260 ANOP
+&$MLVL   SETA  &$MLVL-1   SUBTRACT THE "1" THAT WAS ADDED
+.MEND290 ANOP
+         MEND
+./ ADD NAME=IFCOPY
+.*   Copyright (C) <2020>  Daniel H. Snyder
+.*   Sructured Programming Macros for the IBM® High Level Assembler
+.*   Daniel.H.Snyder@protonmail.com
+.*
+.* This program is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* any later version.
+.*
+.* This program is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program. See <https://www.gnu.org/licenses/>.
+.*
+         COPY  $MGBLDEF            BRING IN GLOBAL SYMBOLS
+         LCLA  &I,&J,&K
+         LCLC  &LENGTH1,&LENGTH2,&LENGTH3 ANALYZE &$BT
+         LCLC  &X,&Y,&OP,&OPND1,&OPND2,&OPND3,&C,&NC,&TSTCOND
+         LCLC  &OPND4,&OPND5,&OPND6
+.*
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* IMPORTANT SET SYMBOL NAMES                                         *
+.*                                                                    *
+.* &$MFNAME WILL CONTAIN THE UNIQUE TAG FOR THE CONDITION WHERE A     *
+.*          BRANCH ON FALSE WILL OCCUR.                               *
+.* &$MTNAME WILL CONTAIN THE UNIQUE TAG FOR THE CONDITION WHERE A     *
+.*          BRANCH ON TRUE WILL OCCUR.                                *
+.* &$BT     IS THE EXTENDED CONDITION CODE MNEMONIC SPECIFIED IN THE  *
+.*          MACRO CALL STATING THE CONDITION IN WHICH THE PREMISE OF  *
+.*          THE LOGIC PHRASE IS TRUE.                                 *
+.* &$BF     IS THE EXTENDED CONDITION CODE MNEMONIC CALCULATED WITHIN *
+.*          THE MACRO GENERATION STATING THE CONDITION IN WHICH THE   *
+.*          PREMISE OF THE LOGIC PHRASE IS FALSE.                     *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* INITIALIZATION.                                                    *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*
+&$MLVL   SETA  &$MLVL+1            INCREASE RECURSION/NESTING COUNT
+&I       SETA  1                   SET TO FIRST POSITIONAL
+&$MNAME  SETC  '&NAME'             TAG FOR FIRST TEST
+.* 
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* PROCESS THE LOGIC PACK FOR OP-CODE, OPERAND(S), AND THE CONDITION  *
+.* UNDER WHICH THE FOLLOWING CODE IS TO BE EXECUTED.                  *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.* 
+.LOOP020 ANOP  START THE PROCESS (MAYBE) AGAIN
+         AIF   ('&SYSLIST(&I)' EQ '').FINISH260  GO TO FINISH IF DONE
+&$ERRSW  SETC  'N'                 NO ERROR EXISTS AT THIS POINT     
+         AIF   ('&SYSLIST(&I)'(1,1) NE '(').FATAL180   MUST BE '('
+         AIF   ('&SYSLIST(&I)'(2,1) EQ '(').RECURS120 GO IF NESTED
+&OP      SETC  '&SYSLIST(&I,1)'    OP-CODE IS ALWAYS 1ST SUB-OPERAND
+&J       SETA  (N'&SYSLIST(&I))    NUMBER OF SUBPARAMETERS FOR THIS ONE
+         AIF   (&J NE 2).TEST030     GO TEST FOR 1-OPERAND INST
+&$MNAME  &OP   ,
+&$BT     SETC  '&SYSLIST(&I,2)'    CONDITION IS ALWAYS LAST SUB-OPERAND
+         AGO   .FINGEN070             GO SET UP BRANCH INST
+.TEST030 ANOP  ,
+&OPND1   SETC  '&SYSLIST(&I,2)'    FIRST (ONLY?) OPERAND
+         AIF   (&J NE 3).TEST040     GO TEST FOR 2-OPERAND INST
+&$MNAME  &OP   &OPND1
+&$BT     SETC  '&SYSLIST(&I,3)'    CONDITION IS ALWAYS LAST SUB-OPERAND
+         AGO   .FINGEN070             GO SET UP BRANCH INST
+.TEST040 ANOP  ,
+&OPND2   SETC  '&SYSLIST(&I,3)'    SECOND OPERAND
+         AIF   (&J NE 4).TEST050     GO TEST FOR 3-OPERAND INST
+&$MNAME  &OP   &OPND1,&OPND2
+&$BT     SETC  '&SYSLIST(&I,4)'    CONDITION IS ALWAYS LAST SUB-OPERAND
+         AGO   .FINGEN070             GO SET UP BRANCH INST
+.TEST050 ANOP  ,
+&OPND3   SETC  '&SYSLIST(&I,4)'    THIRD OPERAND
+         AIF   (&J NE 5).TEST052
+&$MNAME  &OP   &OPND1,&OPND2,&OPND3
+&$BT     SETC  '&SYSLIST(&I,5)'   CONDITION IS ALWAYS LAST SUB-OPERAND
+         AGO   .FINGEN070            GO SET UP BRANCH INST
+.TEST052 ANOP
+&OPND4   SETC  '&SYSLIST(&I,5)'    FOURTH OPERAND
+         AIF   (&J NE 6).TEST054
+&$MNAME  &OP   &OPND1,&OPND2,&OPND3,&OPND4
+&$BT     SETC  '&SYSLIST(&I,6)'   CONDITION IS ALWAYS LAST SUB-OPERAND
+         AGO   .FINGEN070            GO SET UP BRANCH INST
+.TEST054 ANOP
+&OPND5   SETC  '&SYSLIST(&I,6)'    FIFTH OPERAND
+         AIF   (&J NE 7).TEST056
+&$MNAME  &OP   &OPND1,&OPND2,&OPND3,&OPND4,&OPND5
+&$BT     SETC  '&SYSLIST(&I,7)'   CONDITION IS ALWAYS LAST SUB-OPERAND
+         AGO   .FINGEN070            GO SET UP BRANCH INST
+.TEST056 ANOP
+&OPND6   SETC  '&SYSLIST(&I,7)'    SIXTH OPERAND
+         AIF   (&J NE 8).ERROR060
+&$MNAME  &OP   &OPND1,&OPND2,&OPND3,&OPND4,&OPND5,&OPND6
+&$BT     SETC  '&SYSLIST(&I,8)'   CONDITION IS ALWAYS LAST SUB-OPERAND
+         AGO   .FINGEN070            GO SET UP B
+.ERROR060 ANOP ,
+&K       SETA  ((&I+3)/2)          GET SEQUENCE # OF PHRASE IN ERROR
+         MNOTE 08,'INVALID NUMBER OF PARMS (&J) IN CONDITIONAL PHRASE #*
+               &K &SYSLIST(&I); IT WILL BE DELETED FROM THE MACRO EXPAN*
+               SION'
+&I       SETA  &I+2                INCREMENT
+         AGO   .LOOP020             BACK FOR MORE
+.* 
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* THE TEST INSTRUCTION THAT SETS THE CONDITION CODE HAS BEEN         *
+.* GENERATED; NOW SET UP FOR CREATING THE BRANCH-ON-CONDITION.        *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.* 
+.FINGEN070 ANOP
+&$MNAME  SETC  ''                  PREVENT DUPLICATE TAG
+.* 
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* &$BT IS THE VALUE OF THE CONDITION SPECIFIED IN THE MACRO CALL.    *
+.* &$BT IS THE MNEMONIC PORTION OF THE BRANCH INSTRUCTION THAT WILL   *
+.* GENERATE A BRANCH CONDITION THAT WILL BRANCH IF THE CONDITION      *
+.* BEING TESTED IS TRUE. IF &$BT HAS THE VALUE OF "NE", THAT MEANS    *
+.* THAT THE BODY OF THE IF-GROUP WILL BE EXECUTED IF THE RESULT OF    *
+.* PREVIOUSLY GENERATED INSTRUCTION IS "NE", AND THE INSTRUCTION      *
+.* GENERATED WILL NORMALLY BE "JE" TO BRANCH AROUND THE EXECUTABLE    *
+.* BODY OF THE IF-GROUP. THE ONLY EXCEPTION IS IF THE LOGIC AROSE     *
+.* FROM A "DO UNTIL=..." MACRO CALL, WHERE THE BRANCH AROUND THE      *
+.* EXECUTABLE BODY OF THE DO-GROUP WOULD BE "JNE".                    *
+.*                                                                    *
+.* &$BF (BRANCH ON FALSE) WILL HAVE THE OPPOSITE VALUE TO &$BT; IN    *
+.* THIS INSTANCE, IT WOULD BE "E".                                    *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.* 
+&LENGTH1 SETC  '&$BT'(1,1)        1ST CHAR OF USER-SPECIFIED CONDITION
+&LENGTH2 SETC  '&$BT'(1,2)        FIRST TWO CHARACTERS
+&LENGTH3 SETC  '&$BT'             ALL CHARACTERS
+         AIF ('&LENGTH2' NE '&LENGTH3').ERR100 LENGTH OF COND PARM > 2?
+         AIF   ('&LENGTH1' EQ '&LENGTH2').ONE080 ONE CHAR CONDITION 
+         AIF   ('&LENGTH1' NE 'N').ERR100 IF 2 CHAR 1ST MUST BE "N"
+&$BF     SETC  '&LENGTH2'(2,1) &$BT 1ST CHAR IS "N", 2ND IS CONDITION
+&TSTCOND SETC  '&$BF'   FOR VALIDATING CONDITION
+         AGO   .FIRST090
+.ONE080  ANOP
+&$BF     SETC  'N&LENGTH1' 1 CHAR CONDITION; "N" WILL BE 1ST CHAR
+&TSTCOND SETC  '&$BT'   FOR VALIDATING CONDITION
+.FIRST090 ANOP , MNOTE '$BT "&$BT" $BF "&$BF"'
+         AIF   ('&TSTCOND' EQ 'E').OK065
+         AIF   ('&TSTCOND' EQ 'H').OK065
+         AIF   ('&TSTCOND' EQ 'L').OK065
+         AIF   ('&TSTCOND' EQ 'M').OK065
+         AIF   ('&TSTCOND' EQ 'O').OK065
+         AIF   ('&TSTCOND' EQ 'P').OK065
+         AIF   ('&TSTCOND' EQ 'Z').OK065
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.ERR100  MNOTE 8,'INVALID CONDITION REQUESTED: "&LENGTH3"'
+         MNOTE 'THIS CLAUSE DELETED FROM ASSEMBLY'
+&$ERRSW  SETC  'Y'                 FLAG ERROR
+&$BT     SETC  'NOP'               FLAG ERROR
+&$BF     SETC  'NOP'               FLAG ERROR
+.OK065   AIF   ('&$ERRSW' EQ 'N').DISTR175
+&I       SETA  &I+2
+         AGO   .LOOP020
+.* 
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* PROCESS A NEW LOGIC PACK OPENED WITH MULTIPLE PARENTHESES, MEANING *
+.* THAT "OR" CONJUNCTIONS MAY BE FORCED TO HIGHER PRIORITIES THAN THE *
+.* "AND" CONJUNCTIONS.                                                *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.* 
+.RECURS120 ANOP                    HERE FOR RECURSIVE CALL
+&$MNAME  IF2   &SYSLIST(&I,1),&SYSLIST(&I,2),&SYSLIST(&I,3),           C
+               &SYSLIST(&I,4),&SYSLIST(&I,5),&SYSLIST(&I,6),           C
+               &SYSLIST(&I,7),&SYSLIST(&I,8),&SYSLIST(&I,9),           C
+               &SYSLIST(&I,10),&SYSLIST(&I,11),&SYSLIST(&I,12),        C
+               &SYSLIST(&I,13),&SYSLIST(&I,14),&SYSLIST(&I,15),        C
+               &SYSLIST(&I,16),&SYSLIST(&I,17),&SYSLIST(&I,18),        C
+               &SYSLIST(&I,19),&SYSLIST(&I,20),&SYSLIST(&I,21)
+&J       SETA  &$MLVL+1              VALUE OF LEVEL JUST RETURNED FROM
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.* RESOLVE THE TWO POSSIBLE &$FNAME VALUES FROM RECURSIVE LEVEL AND   *
+.* THIS LEVEL.                                                        *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         AIF   ('&$MFNAME(&J)' EQ '').RECURS150
+         AIF   ('&$MFNAME(&$MLVL)' EQ '').RECURS140
+&$MPTR   SETA  &$MPTR+1
+&$MEQ1(&$MPTR) SETC '&$MFNAME(&J)'
+&$MEQ2(&$MPTR) SETC '&$MFNAME(&$MLVL)'
+         AGO   .RECURS150
+.RECURS140 ANOP
+&$MFNAME(&$MLVL) SETC '&$MFNAME(&J)'
+.RECURS150 ANOP
+&$MFNAME(&J) SETC ''
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.* IF THERE IS AN "AND" CONJUNCTION AS THE NEXT PHRASE, THEN DO NOT   *
+.* MIGRATE THE MTNAME VALUES; THE &$MTNAME PASSED FROM THE RECURSIVE  *
+.* LEVEL WILL BE TRAPPED FOLLOWING THE BRANCH-ON-FALSE GENERATED IN   *
+.* THE ".AND220" ROUTINE.                                             *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         AIF   ('&SYSLIST(&I+1)' EQ 'AND').AND220
+         AIF   ('&$MTNAME(&J)' EQ '').RECURS170
+         AIF   ('&$MTNAME(&$MLVL)' EQ '').RECURS160
+&$MPTR   SETA  &$MPTR+1
+&$MEQ1(&$MPTR) SETC '&$MTNAME(&J)'
+&$MEQ2(&$MPTR) SETC '&$MTNAME(&$MLVL)'
+         AGO   .RECURS170
+.RECURS160 ANOP
+&$MTNAME(&$MLVL) SETC '&$MTNAME(&J)'
+.RECURS170 ANOP
+&$MTNAME(&J) SETC ''
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.DISTR175 AIF ('&SYSLIST(&I+1)' EQ 'OR').OR190
+         AIF   ('&SYSLIST(&I+1)' EQ 'AND').AND220
+         AIF   ('&SYSLIST(&I+1)' EQ '').FINISH260 GO IF NO CONJUNCTION
+         MNOTE 8,'INVALID CONJUNCTION "&SYSLIST(&I+1)"'
+         MNOTE 'THIS PHRASE DELETED FROM MACRO EXPANSION'         
+&I       SETA  &I+2                BUMP TO NEXT CLAUSE
+         AGO   .LOOP020
+.* 
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* A LOGIC PACK DID NOT OPEN WITH A "(". ===> FATAL MISTAKE <===      *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.* 
+.FATAL180   MNOTE 8,'MISSING PARENS AT "&SYSLIST(&I)" - TERMINATED'
+         MEXIT
+.* 
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* PROCESS A CLAUSE THAT IS FOLLOWED BY AN "OR" CONJUNCTION.          *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.* 
+.OR190   AIF   ('&SYSLIST(&I+2)'(1,1) NE '(').ERROR255 MUST BE '('
+         AIF   ('&$MTNAME(&$MLVL)' NE '').OR200 SKIP IF NOT NEEDED
+&$Y$NDX  SETA  &$Y$NDX+1           BUMP FOR UNIQUENESS       
+&$MTNAME(&$MLVL) SETC '$MDT&$Y$NDX' CREATE UNIQUE TAG
+.OR200   J&$BT &$MTNAME(&$MLVL)
+&$MNAME  SETC  '&$MFNAME(&$MLVL)'      QUEUE NAME FOR USE IN .LOOP020
+&$MFNAME(&$MLVL) SETC  ''
+&I       SETA  &I+2                BUMP TO NEXT CLAUSE
+         AGO   .LOOP020
+.* 
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* PROCESS A CLAUSE THAT IS FOLLOWED BY AN "AND" CONJUNCTION.         *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.* 
+.AND220  ANOP
+         AIF   ('&SYSLIST(&I+2)'(1,1) NE '(').ERROR255 MUST BE '('
+         AIF   ('&$MFNAME(&$MLVL)' NE '').AND230
+&$Y$NDX  SETA  &$Y$NDX+1           MUST HAVE A UNIQUE -
+&$MFNAME(&$MLVL) SETC '$MDF&$Y$NDX'  TAG TO BRANCH TO
+.AND230  J&$BF &$MFNAME(&$MLVL)
+&J       SETA  &$MLVL+1            INDEX OF POSSIBLE RECURSIVE NAME
+&$MNAME  SETC  '&$MTNAME(&J)'      QUEUE NAME FOR USE IN .LOOP020
+&$MTNAME(&J) SETC  ''
+&I       SETA  &I+2                BUMP TO NEXT
+         AGO   .LOOP020             AND BACK
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.ERROR255 ANOP
+         MNOTE 8,'NO VALID PHRASE FOLLOWING THE "&SYSLIST(&I+1)"'
+&$ERRSW  SETC  'Y'                 FLAG ERROR
+.* 
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*                                                                    *
+.* THIS IS THE END OF CONDITIONAL PHRASES AT THIS RECURSIVE LEVEL.    *
+.*                                                                    *
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+.*
+./ ADD NAME=IFDOC
+IFDOC    TITLE 'EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS'
+         GBLA  &$MBLATH,&$MBL2
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      THESE FOLLOWING STATEMENTS ARE NORMAL zOS INITIALIZATION       *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*
+R0       EQU   0
+R1       EQU   1       STANDARD
+R2       EQU   2        EQUATES 
+R3       EQU   3         FOR
+R4       EQU   4          GENERAL
+R5       EQU   5           PURPOSE
+R6       EQU   6            REGISTERS.
+R7       EQU   7             YOU
+R8       EQU   8              MIGHT
+R9       EQU   9               AS
+R10      EQU   10               WELL
+R11      EQU   11                JUST 
+R12      EQU   12                 GET
+R13      EQU   13                  USED
+R14      EQU   14                   TO 
+R15      EQU   15                    IT.
+*
+IFDOC    CSECT
+         USING *,R12               SET BASE REGISTER FOR PROGRAM
+         STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA
+         LR    R12,R15             PRIME BASE REG
+         LA    R14,SAVEAREA        ADDRESS OF MY SAVE AREA
+         ST    R13,SAVEAREA+4      BACK LINK TO CALLER'S SAVE AREA
+         ST    R14,8(,R13)         FORWARD LINK TO MY SAVE AREA
+         LR    R13,R14             R13 MUST POINT TO MY SAVE AREA
+*
+         PRINT GEN
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                   THE "IF" STATEMENT                                *
+*                                                                     *
+*      THE FORMAT OF THE STATEMENT IS:                                *
+*                                                                     *
+*        IF    (CLC,A,Z,NE)                                           *
+*                                                                     *
+* WHERE THE 'CLC' CAN BE ANY INSTRUCTION THAT SETS THE CONDITION      *
+* CODE, 'A' IS THE FIRST OPERAND, 'Z' THE SECOND, AND 'NE' CAN BE ANY *
+* CONDITION WHICH IS A MEMBER OF THE EXTENDED MNEMONIC BRANCH         *
+* INSTRUCTIONS, AND SETS THE CONDITION IN WHICH THE IF-GROUP IS TO    *
+* BE EXECUTED. EXAMPLES INCLUDE 'E', 'NE', 'NO', ETC. THE INSTRUCTION *
+* DOES NOT HAVE TO HAVE TWO OPERANDS. IN ANY CASE, THE OP-CODE MUST   *
+* BE THE FIRST POSITIONAL PARAMETER WITHIN THE PARENTHESES, AND THE   *
+* CONDITION, SUCH AS "E" OR "NE", MUST BE THE LAST.                   *
+*                                                                     *
+*      IF    (CLC,A,Z,NE)                                             *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+         LA    R10,A
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,0(4,R10),=C'ZZZZ',NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* SAME - WITH A ONE OPERAND INSTRUCTION                               *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+TS010    IF    (TS,SPECIAL,Z)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF  ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* SAME - WITH A THREE OPERAND INSTRUCTION                             *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         PACK  SHIFT_PACKED,=Z'1234567'
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*  "SRP" INSTRUCTION "SHIFT AND ROUND DECIMAL" - THREE OPERANDS       *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+SRP010   IF    (SRP,SHIFT_PACKED,5,3,P) "POSITIVE"
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF  ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                 THE "ELSE" STATEMENT                                *
+*                                                                     *
+*      THE FORMAT OF THE STATEMENT IS:                                *
+*                                                                     *
+*        ELSE                                                         *
+*                                                                     *
+* IT MUST FOLLOW AN "IF" STATEMENT AND PRECEDE ITS MATCHING "ENDIF".  *
+* THE CODE THAT YOU PROVIDE BETWEEN THE "ELSE" AND THE "ENDIF" WILL   *
+* BE EXECUTED IF THE "IF" CLAUSE(S) RESULT IN "NOT TRUE". THE "ELSE"  *
+* IS OPTIONAL, AND IN ITS ABSENCE NO ACTION WILL BE TAKEN IN THE      *
+* EVENT THAT THE EXECUTION OF THE "IF" MACRO RESULTS IN "FALSE".      *
+*                                                                     *
+*      IF    ...                                                      *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ELSE                                                           *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "FALSE"                      *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLI,EOFSW,C'N',E)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ELSE
+           AP    LEVEL1_ELSE_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                 THE "ELSEIF" STATEMENT                              *
+*                                                                     *
+*      THE FORMAT OF THE STATEMENT IS:                                *
+*                                                                     *
+*        ELSEIF (CLC,A,Z,E)                                           *
+*                                                                     *
+* IT MUST FOLLOW AN "IF" STATEMENT AND PRECEDE ITS MATCHING "ENDIF".  *
+* IF THERE IS AN "ELSE" STATEMENT WITHIN THIS "IF" GROUP, THEN THE    *
+* "ELSEIF" MUST PRECEDE THE "ELSE".                                   *
+*                                                                     *
+* THE "ELSEIF" STATEMENT SUPPORTS THE SAME RICHNESS OF FUNCTION THAT  *
+* THE "IF" STATEMENT PROVIDES. THE "IF" STATEMENT'S FULL POWER IS     *
+* DESCRIBED IN SOME OF THE EXAMPLES THAT FOLLOW.                      *
+*                                                                     *
+* THE CODE THAT YOU PROVIDE BETWEEN THE "ELSEIF" AND THE FOLLOWING    *
+* "ELSE" OR "ENDIF" WILL BE EXECUTED IF THE "IF" CLAUSE(S) AND ALL    *
+* PREVIOUS "ELSEIF" STATEMENTS ARE FALSE, AND THE RESULT OF THIS      *
+* "ELSEIF" IS TRUE. THE "ELSEIF" IS OPTIONAL, MAY OCCUR MORE THAN     *
+* ONCE, AND MUST BE CODED BETWEEN THE "IF" AND THE "ELSE" OR "ENDIF". *
+*                                                                     *
+*      IF       ...                                                   *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ELSEIF   ...                                                   *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS TO BE EXECUTED IF THIS       *
+*               "ELSEIF" EVALUATES TO "TRUE" AND THE PRECEDING "IF"   *
+*               AND ANY ADDITIONAL "ELSEIF" STATEMENT(S) ALL EVALUATE *
+*               TO "FALSE"                                            *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ELSEIF (CLC,B,Z,E)
+           AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                 BOTH "ELSEIF" AND "ELSE"                            *
+*                                                                     *
+* NOTE: IF AN "ELSE" IS USED IN THE SAME IF-GROUP AS ONE OR MORE      *
+*       "ELSEIF" STATEMENTS, THEN THE "ELSE" MUST BE THE LAST.        *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ELSEIF (CLC,B,Z,E)
+           AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+         ELSEIF (CLC,C,Z,E)
+           AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+         ELSEIF (CLC,D,Z,E)
+           AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+         ELSE  ,
+           AP    LEVEL1_ELSE_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                      THE "OR" CONJUNCTION                           *
+*                                                                     *
+*      TO EXECUTE THE IF-GROUP IF EITHER ONE OF TWO CONDITIONS IS     *
+* TRUE, THE FORMAT IS:                                                *
+*                                                           72        *
+*      IF    (CLC,A,Z,NE),OR,                                C        *
+*            (CLC,B,Z,NE)                                             *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE),OR,    NOTE "C" IN COLUMN 72 ============> C
+               (CLC,B,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                      THE "AND" CONJUNCTION                          *
+*                                                                     *
+*      TO EXECUTE THE IF-GROUP IF BOTH OF THE TWO CONDITIONS ARE      *
+* TRUE, THE FORMAT IS:                                                *
+*                                                                     *
+*      IF    (CLC,A,Z,NE),AND,(LTR,R15,R15,Z)                         *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE),AND,(LTR,R15,R15,Z)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      TO EXECUTE THE IF-GROUP IF THE FIRST AND SECOND LOGICAL        *
+* EXPRESSIONS ARE TRUE, OR THE THIRD EXPRESSION IS TRUE, THE FORMAT   *
+* IS:                                                                 *
+*                                                                     *
+*      IF    (CLC,A,Z,NE),AND,(CLC,B,Z,NE),OR,(CLC,C,Z,NE)            *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE".                      *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE),AND,(CLC,B,Z,NE),OR,(CLC,C,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      SINCE THE EVALUATION OF "AND" IN A LOGICAL EXPRESSION TAKES    *
+* PRECEDENCE OVER "OR", YOU MAY NEED TO OVERRIDE THAT PRECEDENCE TO   *
+* FORCE AN "OR" CONJUNCTION TO BE EVALUATED BEFORE AN "AND". YOU      *
+* WOULD ENCLOSE THE TWO EXPRESSIONS JOINED BY AN "OR" WITH AN         *
+* ADDITIONAL PAIR OF PARENTHESES. HERE THE BODY OF THE IF-GROUP WILL  *
+* EXECUTE IF THE FIRST PHRASE IS TRUE AND EITHER OF THE OTHER TWO     *
+* PHRASES IS TRUE.                                                    *
+*                             |                            |          *
+*                             |                            |          *
+*                             |                            |          *
+*                             V                            V          *
+*      IF    (CLC,A,Z,NE),AND,((CLC,B,Z,NE),OR,(CLC,C,Z,NE))          *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+*
+*                               V<<<< EXTRA PARENTHESES: >>>>V
+*                               V                            V
+         IF    (CLC,A,Z,NE),AND,((CLC,B,Z,NE),OR,(CLC,C,Z,NE))
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      IF (A OR B) AND (C OR D)                                       *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    ((CLC,A,Z,NE),OR,(CLC,B,Z,NE)),AND,                     C
+               ((CLC,C,Z,NE),OR,(CLC,D,Z,NE))
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      IF A OR B AND ( C OR D AND (E OR F))                           *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,E),OR,(CLC,B,Z,E),AND,                         C
+               ((CLC,C,Z,E),OR,(CLC,D,Z,E),AND,                        C
+               ((CLC,E,Z,E),OR,(CLC,F,Z,E)))
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+* IF A IS TRUE AND EITHER B OR C IS TRUE AND D IS TRUE  -  OR...      *
+* IF E IS TRUE AND EITHER F OR G IS TRUE AND H IS TRUE, THEN EXECUTE  *
+* THE CODE FOLLOWING THIS "IF" STATEMENT:                             *
+*                                                                     *
+*      IF     A & ( B | C) & D    |    E & (F | G) & H                *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,E),AND,                                        C
+               ((CLC,B,Z,E),OR,(CLC,C,Z,E)),AND,                       C
+               (CLC,D,Z,E),OR,                                         C
+               (CLC,E,Z,E),AND,                                        C
+               ((CLC,F,Z,E),OR,(CLC,G,Z,E)),AND,                       C
+               (CLC,H,Z,E)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+* IF A | B & ( C | D & ( E | F & G ) & H ) & J                        *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,E),OR,(CLC,B,Z,E),AND,((CLC,C,Z,E),OR,         C
+               (CLC,D,Z,E),AND,((CLC,E,Z,E),OR,                        C
+               (CLC,F,Z,E),AND,(CLC,G,Z,E)),AND,                       C
+               (CLC,H,Z,E)),AND,(CLC,J,Z,E)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+* IF A | B & ( C | D & ( E | F & G ) | H ) | J                        *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,E),OR,(CLC,B,Z,E),AND,((CLC,C,Z,E),OR,         C
+               (CLC,D,Z,E),AND,((CLC,E,Z,E),OR,                        C
+               (CLC,F,Z,E),AND,(CLC,G,Z,E)),OR,                        C
+               (CLC,H,Z,E)),OR,(CLC,J,Z,E)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                 THE NESTING OF MULTIPLE "IF" GROUPS                 *
+*                                                                     *
+* IF WITHIN THE CONFINES OF ONE "IF" GROUP YOU FIND IT NECESSARY TO   *
+* ADD ANOTHER LEVEL OF CONDITIONAL EXECUTION, THEN YOU MAY NEST ONE   *
+* "IF" GROUP WITHING ANOTHER. EACH SEPERATE "IF" STATEMENT WILL HAVE  *
+* ITS OWN LOGICAL CONSTRUCT, AND MUST BE TERMINATED WITH ITS OWN      *
+* "ENDIF" STATEMENT. THE "ELSEIF" AND "ENDIF" STATEMENTS ARE          *
+* SUPPORTED. YOU MAY INDENT THE NESTED "IF" GROUPS, BUT DOING THAT    *
+* WOULD BE FOR DOCUMENTATION PURPOSES ONLY.                           *
+*      IF    (CLC,A,Z,NE)                                             *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*        IF    (CLC,B,Z,NE)                                           *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE (NESTED)                  *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*        ELSE                                                         *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE (NESTED)                  *
+*               LOGIC GROUP EVALUATES TO "FALSE"                      *
+*                                                                     *
+*        ENDIF                                                        *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+* THE "IF" MACRO SUPPORTS THE NESTING OF AS MANY "IF" GROUPS AS YOU   *
+* REQUIRE TO SUPPORT YOUR LOGIC. HOW MANY LEVELS CAN YOU ACTUALLY     *
+* KEEP TRACK OF?                                                      *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+           IF    (CLC,B,Z,NE)
+             AP    LEVEL2_PASS_COUNTER,=P'1'
+           ELSE
+             AP    LEVEL2_ELSE_COUNTER,=P'1'
+           ENDIF
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*       ANOTHER EXAMPLE OF THE NESTING OF MULTIPLE "IF" GROUPS        *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,E)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+           IF    (CLC,B,Z,E)
+             AP    LEVEL2_PASS_COUNTER,=P'1'
+             IF    (CLC,C,Z,E)
+               AP    LEVEL3_PASS_COUNTER,=P'1'
+             ELSEIF (CLC,D,Z,E)
+               AP    LEVEL3_ELSEIF_COUNTER,=P'1'
+             ELSEIF (CLC,E,Z,E)
+               AP    LEVEL3_ELSEIF_COUNTER,=P'1'
+             ELSEIF (CLC,F,Z,E)
+               AP    LEVEL3_ELSEIF_COUNTER,=P'1'
+             ELSE
+               AP    LEVEL3_ELSE_COUNTER,=P'1'
+             ENDIF
+           ELSEIF (CLC,G,Z,E)
+             AP    LEVEL2_ELSEIF_COUNTER,=P'1'
+           ELSE
+             AP    LEVEL2_ELSE_COUNTER,=P'1'
+           ENDIF
+         ELSEIF  (CLC,H,Z,E)
+           AP    LEVEL1_ELSE_COUNTER,=P'1'
+         ELSE
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      THESE FOLLOWING STATEMENTS ARE NORMAL zOS TERMINATION.         *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*
+.QUIT    ANOP
+         L     R13,SAVEAREA+4      ADDRESS OF CALLER'S SAVE AREA
+         LM    R14,R12,12(R13)     RESTORE R14 WRAPPED AROUND TO R12
+         DROP  R12                 NO LONGER VALID
+         SLR   R15,R15             SET RETURN CODE TO ZERO
+         BR    R14                 RETURN TO CALLER
+*
+         SPACE 5
+SAVEAREA DC    18F'0'              MY SAVE AREA
+         LTORG
+EOFSW    DC    C'N'
+         DS    0D
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      THESE FOLLOWING STATEMENTS DEFINE VARIABLES REQUIRED.          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+LEVEL1_PASS_COUNTER DC PL4'0'
+LEVEL1_ELSEIF_COUNTER DC PL4'0'
+LEVEL1_ELSE_COUNTER DC PL4'0'
+LEVEL1_FAIL_COUNTER DC PL4'0'
+LEVEL2_PASS_COUNTER DC PL4'0'
+LEVEL2_ELSEIF_COUNTER DC PL4'0'
+LEVEL2_ELSE_COUNTER DC PL4'0'
+LEVEL2_FAIL_COUNTER DC PL4'0'
+LEVEL3_PASS_COUNTER DC PL4'0'
+LEVEL3_ELSEIF_COUNTER DC PL4'0'
+LEVEL3_ELSE_COUNTER DC PL4'0'
+SHIFT_PACKED DC  PL4'1234567'
+SPECIAL  DC    X'C0'
+A        DC    C'AAAA'
+B        DC    C'BBBB'
+C        DC    C'CCCC'
+D        DC    C'DDDD'
+E        DC    C'EEEE'
+F        DC    C'FFFF'
+G        DC    C'GGGG'
+H        DC    C'HHHH'
+I        DC    C'IIII'
+J        DC    C'JJJJ'
+K        DC    C'KKKK'
+L        DC    C'LLLL'
+Z        DC    C'ZZZZ'
+         END   IFDOC
+./ ENDUP
+/*

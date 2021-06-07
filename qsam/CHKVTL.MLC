@@ -1,0 +1,49 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+* 2021-02-26 DSH CHKV READ V FILE VIA SYSUT1 AND SNAP DUMP ON TRE
+*********************************************************************
+CHKVTL    SUBENTRY
+         WTO   'CHKVTL READ RECFM=VT FILE WITH LBI BLK=100004'
+         OPEN  (SYSUT1,(INPUT),SNAPOUT,(OUTPUT))
+         LA    R4,1
+LOOP     EQU   *
+         GET   SYSUT1,RECORD
+         LA    R8,RECORD+4
+         L     R9,LLLL
+         N     R9,=X'7FFFFFFF' TURN OFF LBI HIGH BIT
+         SH    R9,=H'4'
+         LA    R10,0
+         LR    R11,R4
+         O     R11,=X'000000F0' EBCDIC RCD # PAD
+         SLL   R11,24
+         CLCL  R8,R10
+         BNE   ABEND
+         L     R7,LLLL
+         N     R7,=X'7FFFFFFF' TURN OFF LBI HIGH BIT
+         LA    R7,RECORD(R7)   R7=END OF RECORD+1 FOR SNAP
+         SAVE  (R14,R12)
+         SNAP   STORAGE=(RECORD,(R7)),PDATA=,ID=(R4),DCB=SNAPOUT
+         RESTORE (R14,R12)
+         LA    R4,1(R4) 
+         B     LOOP
+EOF      CLOSE (SYSUT1,,SNAPOUT)
+         WTO   'CHKVL ENDED OK'
+         SUBEXIT 
+ABEND    ABEND 111,DUMP
+         LTORG          
+SYSUT1   DCB   DSORG=PS,DDNAME=SYSUT1,MACRF=GM,RECFM=V,BLKSIZE=100004, X
+               DCBE=SYSUT1E
+SYSUT1E  DCBE  EODAD=EOF,SYNAD=ABEND,BLKSIZE=1 (BLKSIZE=1 SETS LBI)
+SNAPOUT  DCB   DDNAME=SNAPOUT,DSORG=PS,RECFM=VBA,BLKSIZE=882,          X
+               LRECL=125,MACRF=W
+         DC    C'*** RECORD ***'
+RECORD   DS    0XL100004
+LLLL     DC    XL4'00'
+         DC    100000C'X'
+         DCBD
+         EQUREGS
+         END

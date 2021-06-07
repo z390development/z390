@@ -41,6 +41,13 @@ JOBDATE  DC    C'MM/DD/YY'
 TIME     DC    C'  HH:MM:SS'
 WTOEND   EQU   *
 TIMEMASK DC    C' ',X'202120',C':',X'2020',C':',X'2020' HH:MM:SS
+**********************************************************************
+*        DSECT for ZCVT
+**********************************************************************
+         ZCVTD ,
+**********************************************************************
+*        DSECT for VSE communicatons area
+**********************************************************************
 IHACOMRG      DSECT
 COMRG_JOBDATE DS    CL8            0  8 MM/DD/YY (SET IF TIMING)
 COMRG_RESV1   DS    XL4            8  4 RESERVED
@@ -53,4 +60,5 @@ COMRG_HTPROG  DS    A             40  4 ADDR HIGH MAX  PH ID4
 COMRG_LABLEN  DS    H             44  2 LENGTH OF LABEL
 COMRG_RESV2   DS    XL2           46  2 RESERVERD LENGTH ?????
 COMRG_IJBHPHLA DS   A             48  4 ADDR HIGH MAX  PH ANY
+*
          END 

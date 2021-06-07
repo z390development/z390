@@ -136,6 +136,10 @@ public  class  gz390
 	 * 01/01/10 RPI 1094 skip unprotected fields on tab, abort if timeout
 	 * 05/10/11 RPI 1151 correct set field attribute higlight & color
 	 * 07/30/11 RPI 1175 use tz390.check_java_version()
+	 * 2019-09-20 dsh fix depreciated ALT_MASK to ALT_DOWN_MASK
+	 *                and CTRL_MASK to CTRL_DOWN_MASK
+	 * 2019-09-21 dsh remove getContentPane
+	 *                            replace getModifiers() with getModifiersEx()
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -1467,14 +1471,14 @@ public  class  gz390
         */
            //dsh displayInfo(e, "KEY PRESSED: "); 
            int key_code = e.getKeyCode();
-           int key_mods = e.getModifiers();
+           int key_mods = e.getModifiersEx();
            if  (e.isActionKey()){
                process_action_key_pressed(key_code,key_mods,e);
            } else {  // not action key
         	   process_non_action_key_pressed(key_code,key_mods,e);        	   
            }
      	   if (key_code == KeyEvent.VK_CLEAR
-     			   || (key_code == KeyEvent.VK_C && key_mods == KeyEvent.CTRL_MASK)){
+     			   || (key_code == KeyEvent.VK_C && key_mods == KeyEvent.CTRL_DOWN_MASK)){
          	  if (!tn_kb_lock){
          	  	  tn_aid = tn_clear_code; // clear key
          	  	  tn_attn = true;
@@ -1524,7 +1528,7 @@ public  class  gz390
         	   	   		return;
         		   }
         	   }
-          	   if (key_mods == KeyEvent.CTRL_MASK){
+          	   if (key_mods == KeyEvent.CTRL_DOWN_MASK){
           		   switch (key_code){
           		   case KeyEvent.VK_F1: 
               		  // CTRL-F1 = PA1
@@ -1566,7 +1570,7 @@ public  class  gz390
                	   }
                	   return;
           	   }
-          	   if (key_mods == (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK)){ 
+          	   if (key_mods == (KeyEvent.ALT_DOWN_MASK | KeyEvent.CTRL_DOWN_MASK)){ 
           		   // RPI 216  CTRL-ALT-F1-12 = F13-24
           		   if (key_code >= KeyEvent.VK_F1
           			   && key_code <= KeyEvent.VK_F9){

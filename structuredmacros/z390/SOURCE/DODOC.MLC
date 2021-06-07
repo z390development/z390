@@ -1,0 +1,206 @@
+         AGO   .SKIP                                                    00000100
+* Copyright (C) <2021>  Daniel H. Snyder                                00000200
+*                       ALL RIGHTS RESERVED                             00000300
+*                       Daniel.H.Snyder@proton.com                      00000400
+*                                                                       00000500
+.SKIP    ANOP                                                           00000600
+         TITLE 'EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS'              00000700
+*                                                                       00000800
+R0       EQU   0                                                        00000900
+R1       EQU   1       STANDARD                                         00001000
+R2       EQU   2        EQUATES                                         00001100
+R3       EQU   3         FOR                                            00001200
+R4       EQU   4          GENERAL                                       00001300
+R5       EQU   5           PURPOSE                                      00001400
+R6       EQU   6            REGISTERS.                                  00001500
+R7       EQU   7             YOU                                        00001600
+R8       EQU   8              MIGHT                                     00001700
+R9       EQU   9               AS                                       00001800
+R10      EQU   10               WELL                                    00001900
+R11      EQU   11                JUST                                   00002000
+R12      EQU   12                 GET                                   00002100
+R13      EQU   13                  USED                                 00002200
+R14      EQU   14                   TO                                  00002300
+R15      EQU   15                    IT.                                00002400
+*                                                                       00002500
+DODOC    CSECT                                                          00002600
+         COPY  $MGBLDEF                                                 00002700
+*                                                                       00002800
+         USING *,R12               SET BASE REGISTER FOR PROGRAM        00002900
+         STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA      00003000
+         LR    R12,R15             PRIME BASE REG                       00003100
+         LA    R14,SAVEAREA        ADDRESS OF MY SAVE AREA              00003200
+         ST    R13,SAVEAREA+4      BACK LINK TO CALLER'S SAVE AREA      00003300
+         ST    R14,8(,R13)         FORWARD LINK TO MY SAVE AREA         00003400
+*                                                                       00003500
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00003600
+*                                                                     * 00003700
+*                      THE "DO" STATEMENT                             * 00003800
+*                                                                     * 00003900
+*      The "DO" MACRO PROVIDES A LOOPING STRUCTURE FOR PERFORMING     * 00004000
+*      MULTIPLE PASSES THROUGH THE DESIRED CODE. THE "DO" HAS         * 00004100
+*      ADDITIONAL PARAMETERS OVER THE "IF", BUT USES THE SAME         * 00004200
+*      STRUCTURE FOR CREATING THE LOGICAL REQUIREMENTS AS THE "IF"    * 00004300
+*      MACRO (IT CALLS THE "IF" MACRO TO DO THE PROCESSING OF YOUR    * 00004400
+*      LOGIC). THE DIFFERENCE IS THAT AN EXTRA SET OF PARENTHESES     * 00004500
+*      MUST SURROUND YOUR ENTIRE LOGIC EXPRESSIONS, DUE TO THE        * 00004600
+*      SPECIAL WAY OF HANDLING POSITIONAL PARAMETERS USED BY THE "IF" * 00004700
+*      MACRO                                                          * 00004800
+*                                                                     * 00004900
+*      THE TWO SIMPLEST EXAMPLES ARE THE "DO WHILE" AND THE           * 00005000
+*      "DO UNTIL":                                                    * 00005100
+*                                                                     * 00005200
+*       DO UNTIL=((LTR,R1,R1,NZ))                                     * 00005300
+*                                                                     * 00005400
+*       DO WHILE=((LTR,R1,R1,NZ))                                     * 00005500
+*                                                                     * 00005600
+*       THE ONLY OTHER AVAILABLE PARAMETER IS THE "TEST=". "BEFORE"   * 00005700
+*       IS THE DEFAULT. "TEST=AFTER" CAUSES THE DO-GROUP TO BE        * 00005800
+*       PERFORMED ONE TIME BEFORE THE FIRST TEST IS MADE.             * 00005900
+*                                                                     * 00006000
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=BEFORE                         * 00006100
+*                                                                     * 00006200
+*       DO WHILE=((LTR,R1,R1,NZ)),TEST=BEFORE                         * 00006300
+*                                                                     * 00006400
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          * 00006500
+*                                                                     * 00006600
+*       DO WHILE=((LTR,R1,R1,NZ)),TEST=AFTER                          * 00006700
+*                                                                     * 00006800
+*       THE DO-GROUP MUST BE TERMINATED WITH AN "ENDDO" STATEMENT:    * 00006900
+*                                                                     * 00007000
+*       FOLLOWING THE STATEMENTS TO BE EXECUTED WHEN THE "DO"         * 00007100
+*       STATEMENT SUCCEEDS, THERE SHOULD BE AN "ENDO" TO TERMINATE    * 00007200
+*       THE LOGIC.                                                    * 00007300
+*                                                                     * 00007400
+*       SPECIAL NOTE: THE "ENDIF" AND "ENDO" ARE INTERCHANGEABLE.     * 00007500
+*       THEY ARE BOTH PROVIDED FOR DOCUMENTATION PURPOSES.            * 00007600
+*                                                                     * 00007700
+*       DO UNTIL=((LTR,R1,R1,NZ)),TEST=AFTER                          * 00007800
+*                                                                     * 00007900
+*                      ONE                                            * 00008000
+*                    OR MORE                                          * 00008100
+*                  INSTRUCTIONS                                       * 00008200
+*                                                                     * 00008300
+*       ENDDO                                                         * 00008400
+*                                                                     * 00008500
+*       THE DEFAULT FOR WHEN THE TEST IS PERFORMED IS BEFORE THE      * 00008600
+*       BODY OF THE DO-GROUP IS RUN FOR THE FIRST TIME. IF THE LOGIC  * 00008700
+*       TEST(S) FAIL, THEN THE INSTUCTIONS IN THE BODY OF THE         * 00008800
+*       ARE BYPASSED ENTIRELY.                                        * 00008900
+*                                                                     * 00009000
+*       IF YOU NEED THE DO-GROUP TO BE PERFORMED AT LEAST ONCE, THEN  * 00009100
+*       CODE THE "TEST=AFTER" PARAMETER. THE DEFAULT FOR "TEST" IS    * 00009200
+*       "BEFORE", SO IF THAT IS WHAT YOU WANT, THEN YOU DO NOT NEED   * 00009300
+*       TO SPECIFY IT.                                                * 00009400
+*                                                                     * 00009500
+*       IF YOU SPECIFY "BEFORE", OR DEFAULT TO IT, THEN THE LOGICAL   * 00009600
+*       TEST IS DETERMINED BEFORE THE BODY OF CODE IS EXECUTED, AND   * 00009700
+*       IF THAT TEST FAILS THEN THE BODY OF CODE IS BYPASSED WITHOUT  * 00009800
+*       BEING EXECUTED EVEN ONCE. IF YOU SPECIFY "AFTER", THEN THE    * 00009900
+*       CODE IS EXECUTED ONE TIME BEFORE THE LOGICAL TEST IS APPLIED. * 00010000
+*       IF THAT TEST FAILS, THEN THAT ONE TIME IS THE ONLY TIME THAT  * 00010100
+*       THAT CODE IS EXECUTED.                                        * 00010200
+*                                                                     * 00010300
+*       NOTE THAT THE ALLOWABLE STUCTURE OF THE CONDITIONAL           * 00010400
+*       PARAMETERS INCLUDES ALL OF THE POWER OF THOSE OF THE          * 00010500
+*       "IF" MACRO (NOTE ALSO THE REQUIRED ADDITIONAL SET OF          * 00010600
+*       PARENTHESES SURROUNDING THE ENTIRE LOGIC STRUCTURE.)          * 00010700
+*                                                                     * 00010800
+*       DO    WHILE=((LTR,R1,R1,NZ),AND,                     C        * 00010900
+*             ((CLC,B,Z,NE),OR,                              C        * 00011000
+*             (CLC,C,Z,E))),                                 C        * 00011100
+*             TEST=AFTER                                              * 00011200
+*                                                                     * 00011300
+*                      ONE                                            * 00011400
+*                    OR MORE                                          * 00011500
+*                  INSTRUCTIONS                                       * 00011600
+*                                                                     * 00011700
+*       ENDDO                                                         * 00011800
+*                                                                     * 00011900
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00012000
+* DO WHILE                                                            * 00012100
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00012200
+         PACK  COUNTER,=Z'10'                                           00012300
+TESTDO01 DO    WHILE=((SP,COUNTER,=P'1',NZ))                            00012400
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER              00012500
+         ENDDO ,                                                        00012600
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00012700
+* DO UNTIL                                                            * 00012800
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00012900
+         PACK  COUNTER,=Z'10'                                           00013000
+TESTDO02 DO    UNTIL=((SP,COUNTER,=P'1',E),AND,                        C00013100
+               (CLC,B,TEMP,E))   DO UNTIL BOTH                          00013200
+           MVC   TEMP,=C'BBBB'                                          00013300
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER              00013400
+         ENDDO ,                                                        00013500
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00013600
+* DO WHILE WITH TEST AFTER                                            * 00013700
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00013800
+         PACK  COUNTER,=Z'10'                                           00013900
+TESTDO03 DO    WHILE=((SP,COUNTER,=P'1',NZ)),TEST=AFTER                 00014000
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER              00014100
+         ENDDO ,                                                        00014200
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00014300
+* IF THE THIRD PHRASE IS TRUE AND EITHER OF THE FIRST TWO PHRASES ARE * 00014400
+* TRUE, THEN CONTINUE EXECUTING THE DO-LOOP.                          * 00014500
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00014600
+         PACK  COUNTER,=Z'10'                                           00014700
+TESTDO04 DO    WHILE=(((SP,COUNTER,=P'1',NZ),OR,                       C00014800
+               (CLC,B,Z,E)),AND,(CLC,C,TEMP,E))                         00014900
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER              00015000
+           MVC   TEMP,=C'CCCC'                                          00015100
+         ENDDO ,                                                        00015200
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00015300
+*                                                                     * 00015400
+* DO UNTIL A IS TRUE AND EITHER B OR C IS TRUE AND D IS TRUE -  OR... * 00015500
+* E IS TRUE AND EITHER F OR G IS TRUE AND H IS TRUE, THEN END THE     * 00015600
+* PERFORMING OF THE DO-LOOP AND BRANCH TO THE "ENDDO".                * 00015700
+*                                                                     * 00015800
+* IF A & ( B | C) & D | E & (F | G) & H                               * 00015900
+*                                                                     * 00016000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00016100
+*        1         2         3         4         5         6         7  00016200
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0. 00016300
+         DO    UNTIL=((CLC,A,Z,E),AND,((CLC,B,Z,E),OR,(CLC,C,Z,E)),AND,C00016400
+               (CLC,D,Z,E),OR,(CLC,E,Z,E),AND,((CLC,F,Z,E),OR,         C00016500
+               (CLC,G,Z,E)),AND,(CLC,H,Z,E))                            00016600
+           AP    LEVEL_ONE_PASS_COUNTER,=P'1' BUMP COUNTER              00016700
+           SVC 13                                                       00016800
+         ENDDO                                                          00016900
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00017000
+*                                                                     * 00017100
+*      THESE FOLLOWING STATEMENTS ARE NORMAL zOS TERMINATION.         * 00017200
+*                                                                     * 00017300
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00017400
+*                                                                       00017500
+         L     R13,SAVEAREA+4      ADDRESS OF CALLER'S SAVE AREA        00017600
+         LM    R14,R12,12(R13)     RESTORE R14 WRAPPED AROUND TO R12    00017700
+         DROP  R12                 NO LONGER VALID                      00017800
+         SLR   R15,R15             SET RETURN CODE TO ZERO              00017900
+         BR    R14                 RETURN TO CALLER                     00018000
+*                                                                       00018100
+         LTORG                                                          00018200
+SAVEAREA DC    18F'0'                                                   00018300
+EOFSW    DC    C'N'                SET END-OF-FILE SWITCH TO 'Y' AT EOF 00018400
+PL5      DC    PL5'7'                                                   00018500
+         DC    0F'0'                                                    00018600
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00018700
+*                                                                     * 00018800
+*      THESE FOLLOWING STATEMENTS DEFINE VARIABLES REQUIRED.          * 00018900
+*                                                                     * 00019000
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00019100
+LEVEL_ONE_PASS_COUNTER DC PL4'0'                                        00019200
+A        DC    C'AAAA'                                                  00019300
+B        DC    C'BBBB'                                                  00019400
+C        DC    C'CCCC'                                                  00019500
+D        DC    C'DDDD'                                                  00019600
+E        DC    C'EEEE'                                                  00019700
+F        DC    C'FFFF'                                                  00019800
+G        DC    C'GGGG'                                                  00019900
+H        DC    C'HHHH'                                                  00020000
+Z        DC    C'ZZZZ'                                                  00020100
+TEMP     DC    C'TEMP'                                                  00020200
+COUNTER  DC    PL4'10'                                                  00020300
+LOOP_COUNTER DC PL4'0'             FOR TEST OF "DO UNTIL"               00020400
+PACKED_ONE DC  PL4'1'              FOR TEST OF "DO UNTIL"               00020500
+         END   DODOC                                                    00020600

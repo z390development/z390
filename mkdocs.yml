@@ -1,0 +1,8 @@
+site_name: z390 docs
+repo_url: https://github.com/z390development/z390/
+edit_uri: edit/main/doc/
+theme: material
+docs_dir: doc
+markdown_extensions:
+  - admonition
+  - footnotes

@@ -1,0 +1,20 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+         TITLE 'Z390 HELLO WORLD DEMO'
+* YOU CAN ASSEMBLE, LINK, AND EXECUTE THIS DEMO
+* USING Z390 GUI INTERFACE BY ENTERING DEMO IN COMMAND BOX
+* OR BY EXECUTING DEMO FROM WINDOWS COMMAND LINE 
+* WITH CURRENT DIRECTORY SET TO Z390 INSTALL DIRECTORY WHICH
+* IS "C:\PROGRAM FILES\AUTOMATED SOFTWARE TOOLS\Z390"
+* THE Z390 TOOLKIT IS DISTRIBUTED IN SOURCE AND EXECUTABLE
+* FORMAT UNDER OPEN SOURCE GPL LICENSE.  VISIT WWW.Z390.ORG
+* FOR MORE INFORMATION.
+DEMO     SUBENTRY
+         WTO   'HELLO WORLD'
+         SUBEXIT
+         END

@@ -1,0 +1,514 @@
+         AGO   .SKIP
+* Copyright (C) <2020>  Daniel H. Snyder
+*                       ALL RIGHTS RESERVED
+*                       Daniel.H.Snyder@proton.com
+*
+.SKIP    ANOP
+IFDOC    TITLE 'EXAMPLES OF "IF" LOGIC MACRO INSTRUCTIONS'
+         GBLA  &$MBLATH,&$MBL2
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      THESE FOLLOWING STATEMENTS ARE NORMAL zOS INITIALIZATION       *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*
+R0       EQU   0
+R1       EQU   1       STANDARD
+R2       EQU   2        EQUATES 
+R3       EQU   3         FOR
+R4       EQU   4          GENERAL
+R5       EQU   5           PURPOSE
+R6       EQU   6            REGISTERS.
+R7       EQU   7             YOU
+R8       EQU   8              MIGHT
+R9       EQU   9               AS
+R10      EQU   10               WELL
+R11      EQU   11                JUST 
+R12      EQU   12                 GET
+R13      EQU   13                  USED
+R14      EQU   14                   TO 
+R15      EQU   15                    IT.
+*
+IFDOC    CSECT
+         USING *,R12               SET BASE REGISTER FOR PROGRAM
+         STM   R14,R12,12(R13)     SAVE REGS IN CALLER'S SAVE AREA
+         LR    R12,R15             PRIME BASE REG
+         LA    R14,SAVEAREA        ADDRESS OF MY SAVE AREA
+         ST    R13,SAVEAREA+4      BACK LINK TO CALLER'S SAVE AREA
+         ST    R14,8(,R13)         FORWARD LINK TO MY SAVE AREA
+         LR    R13,R14             R13 MUST POINT TO MY SAVE AREA
+*
+         PRINT GEN
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                   THE "IF" STATEMENT                                *
+*                                                                     *
+*      THE FORMAT OF THE STATEMENT IS:                                *
+*                                                                     *
+*        IF    (CLC,A,Z,NE)                                           *
+*                                                                     *
+* WHERE THE 'CLC' CAN BE ANY INSTRUCTION THAT SETS THE CONDITION      *
+* CODE, 'A' IS THE FIRST OPERAND, 'Z' THE SECOND, AND 'NE' CAN BE ANY *
+* CONDITION WHICH IS A MEMBER OF THE EXTENDED MNEMONIC BRANCH         *
+* INSTRUCTIONS, AND SETS THE CONDITION IN WHICH THE IF-GROUP IS TO    *
+* BE EXECUTED. EXAMPLES INCLUDE 'E', 'NE', 'NO', ETC. THE INSTRUCTION *
+* DOES NOT HAVE TO HAVE TWO OPERANDS. IN ANY CASE, THE OP-CODE MUST   *
+* BE THE FIRST POSITIONAL PARAMETER WITHIN THE PARENTHESES, AND THE   *
+* CONDITION, SUCH AS "E" OR "NE", MUST BE THE LAST.                   *
+*                                                                     *
+*      IF    (CLC,A,Z,NE)                                             *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+         LA    R10,A
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,0(4,R10),=C'ZZZZ',NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* SAME - WITH A ONE OPERAND INSTRUCTION                               *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+TS010    IF    (TS,SPECIAL,Z)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF  ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* SAME - WITH A THREE OPERAND INSTRUCTION                             *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         PACK  SHIFT_PACKED,=Z'1234567'
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*  "SRP" INSTRUCTION "SHIFT AND ROUND DECIMAL" - THREE OPERANDS       *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+SRP010   IF    (SRP,SHIFT_PACKED,5,3,P) "POSITIVE"
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF  ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+* "RISBHGZ" - A FOUR OPERAND INSTRUCTION                              *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         LG    R1,=X'0123456789ABCDEF'
+         LG    R2,=X'FEDCBA9876543210'
+RISBHGZ010 IF (RISBHGZ,R1,R2,16,31,Z)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF  ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*  "RNSBG" INSTRUCTION  - FIVE OPERANDS                               *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+RNSBG010 IF    (RNSBG,R5,R6,56,7,0,P) "POSITIVE"
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF  ,
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                 THE "ELSE" STATEMENT                                *
+*                                                                     *
+*      THE FORMAT OF THE STATEMENT IS:                                *
+*                                                                     *
+*        ELSE                                                         *
+*                                                                     *
+* IT MUST FOLLOW AN "IF" STATEMENT AND PRECEDE ITS MATCHING "ENDIF".  *
+* THE CODE THAT YOU PROVIDE BETWEEN THE "ELSE" AND THE "ENDIF" WILL   *
+* BE EXECUTED IF THE "IF" CLAUSE(S) RESULT IN "NOT TRUE". THE "ELSE"  *
+* IS OPTIONAL, AND IN ITS ABSENCE NO ACTION WILL BE TAKEN IN THE      *
+* EVENT THAT THE EXECUTION OF THE "IF" MACRO RESULTS IN "FALSE".      *
+*                                                                     *
+*      IF    ...                                                      *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ELSE                                                           *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "FALSE"                      *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLI,EOFSW,C'N',E)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ELSE
+           AP    LEVEL1_ELSE_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                 THE "ELSEIF" STATEMENT                              *
+*                                                                     *
+*      THE FORMAT OF THE STATEMENT IS:                                *
+*                                                                     *
+*        ELSEIF (CLC,A,Z,E)                                           *
+*                                                                     *
+* IT MUST FOLLOW AN "IF" STATEMENT AND PRECEDE ITS MATCHING "ENDIF".  *
+* IF THERE IS AN "ELSE" STATEMENT WITHIN THIS "IF" GROUP, THEN THE    *
+* "ELSEIF" MUST PRECEDE THE "ELSE".                                   *
+*                                                                     *
+* THE "ELSEIF" STATEMENT SUPPORTS THE SAME RICHNESS OF FUNCTION THAT  *
+* THE "IF" STATEMENT PROVIDES. THE "IF" STATEMENT'S FULL POWER IS     *
+* DESCRIBED IN SOME OF THE EXAMPLES THAT FOLLOW.                      *
+*                                                                     *
+* THE CODE THAT YOU PROVIDE BETWEEN THE "ELSEIF" AND THE FOLLOWING    *
+* "ELSE" OR "ENDIF" WILL BE EXECUTED IF THE "IF" CLAUSE(S) AND ALL    *
+* PREVIOUS "ELSEIF" STATEMENTS ARE FALSE, AND THE RESULT OF THIS      *
+* "ELSEIF" IS TRUE. THE "ELSEIF" IS OPTIONAL, MAY OCCUR MORE THAN     *
+* ONCE, AND MUST BE CODED BETWEEN THE "IF" AND THE "ELSE" OR "ENDIF". *
+*                                                                     *
+*      IF       ...                                                   *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ELSEIF   ...                                                   *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS TO BE EXECUTED IF THIS       *
+*               "ELSEIF" EVALUATES TO "TRUE" AND THE PRECEDING "IF"   *
+*               AND ANY ADDITIONAL "ELSEIF" STATEMENT(S) ALL EVALUATE *
+*               TO "FALSE"                                            *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ELSEIF (CLC,B,Z,E)
+           AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                 BOTH "ELSEIF" AND "ELSE"                            *
+*                                                                     *
+* NOTE: IF AN "ELSE" IS USED IN THE SAME IF-GROUP AS ONE OR MORE      *
+*       "ELSEIF" STATEMENTS, THEN THE "ELSE" MUST BE THE LAST.        *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ELSEIF (CLC,B,Z,E)
+           AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+         ELSEIF (CLC,C,Z,E)
+           AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+         ELSEIF (CLC,D,Z,E)
+           AP    LEVEL1_ELSEIF_COUNTER,=P'1'
+         ELSE  ,
+           AP    LEVEL1_ELSE_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                      THE "OR" CONJUNCTION                           *
+*                                                                     *
+*      TO EXECUTE THE IF-GROUP IF EITHER ONE OF TWO CONDITIONS IS     *
+* TRUE, THE FORMAT IS:                                                *
+*                                                           72        *
+*      IF    (CLC,A,Z,NE),OR,                                C        *
+*            (CLC,B,Z,NE)                                             *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE),OR,    NOTE "C" IN COLUMN 72 ============> C
+               (CLC,B,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                      THE "AND" CONJUNCTION                          *
+*                                                                     *
+*      TO EXECUTE THE IF-GROUP IF BOTH OF THE TWO CONDITIONS ARE      *
+* TRUE, THE FORMAT IS:                                                *
+*                                                                     *
+*      IF    (CLC,A,Z,NE),AND,(LTR,R15,R15,Z)                         *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE),AND,(LTR,R15,R15,Z)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      TO EXECUTE THE IF-GROUP IF THE FIRST AND SECOND LOGICAL        *
+* EXPRESSIONS ARE TRUE, OR THE THIRD EXPRESSION IS TRUE, THE FORMAT   *
+* IS:                                                                 *
+*                                                                     *
+*      IF    (CLC,A,Z,NE),AND,(CLC,B,Z,NE),OR,(CLC,C,Z,NE)            *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE".                      *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE),AND,(CLC,B,Z,NE),OR,(CLC,C,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      SINCE THE EVALUATION OF "AND" IN A LOGICAL EXPRESSION TAKES    *
+* PRECEDENCE OVER "OR", YOU MAY NEED TO OVERRIDE THAT PRECEDENCE TO   *
+* FORCE AN "OR" CONJUNCTION TO BE EVALUATED BEFORE AN "AND". YOU      *
+* WOULD ENCLOSE THE TWO EXPRESSIONS JOINED BY AN "OR" WITH AN         *
+* ADDITIONAL PAIR OF PARENTHESES. HERE THE BODY OF THE IF-GROUP WILL  *
+* EXECUTE IF THE FIRST PHRASE IS TRUE AND EITHER OF THE OTHER TWO     *
+* PHRASES IS TRUE.                                                    *
+*                             |                            |          *
+*                             |                            |          *
+*                             |                            |          *
+*                             V                            V          *
+*      IF    (CLC,A,Z,NE),AND,((CLC,B,Z,NE),OR,(CLC,C,Z,NE))          *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+*
+*                               V<<<< EXTRA PARENTHESES: >>>>V
+*                               V                            V
+         IF    (CLC,A,Z,NE),AND,((CLC,B,Z,NE),OR,(CLC,C,Z,NE))
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      IF (A OR B) AND (C OR D)                                       *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    ((CLC,A,Z,NE),OR,(CLC,B,Z,NE)),AND,                     C
+               ((CLC,C,Z,NE),OR,(CLC,D,Z,NE))
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      IF A OR B AND ( C OR D AND (E OR F))                           *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,E),OR,(CLC,B,Z,E),AND,                         C
+               ((CLC,C,Z,E),OR,(CLC,D,Z,E),AND,                        C
+               ((CLC,E,Z,E),OR,(CLC,F,Z,E)))
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+* IF A IS TRUE AND EITHER B OR C IS TRUE AND D IS TRUE  -  OR...      *
+* IF E IS TRUE AND EITHER F OR G IS TRUE AND H IS TRUE, THEN EXECUTE  *
+* THE CODE FOLLOWING THIS "IF" STATEMENT:                             *
+*                                                                     *
+*      IF     A & ( B | C) & D    |    E & (F | G) & H                *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,E),AND,                                        C
+               ((CLC,B,Z,E),OR,(CLC,C,Z,E)),AND,                       C
+               (CLC,D,Z,E),OR,                                         C
+               (CLC,E,Z,E),AND,                                        C
+               ((CLC,F,Z,E),OR,(CLC,G,Z,E)),AND,                       C
+               (CLC,H,Z,E)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+* IF A | B & ( C | D & ( E | F & G ) & H ) & J                        *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,E),OR,(CLC,B,Z,E),AND,((CLC,C,Z,E),OR,         C
+               (CLC,D,Z,E),AND,((CLC,E,Z,E),OR,                        C
+               (CLC,F,Z,E),AND,(CLC,G,Z,E)),AND,                       C
+               (CLC,H,Z,E)),AND,(CLC,J,Z,E)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+* IF A | B & ( C | D & ( E | F & G ) | H ) | J                        *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,E),OR,(CLC,B,Z,E),AND,((CLC,C,Z,E),OR,         C
+               (CLC,D,Z,E),AND,((CLC,E,Z,E),OR,                        C
+               (CLC,F,Z,E),AND,(CLC,G,Z,E)),OR,                        C
+               (CLC,H,Z,E)),OR,(CLC,J,Z,E)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*                 THE NESTING OF MULTIPLE "IF" GROUPS                 *
+*                                                                     *
+* IF WITHIN THE CONFINES OF ONE "IF" GROUP YOU FIND IT NECESSARY TO   *
+* ADD ANOTHER LEVEL OF CONDITIONAL EXECUTION, THEN YOU MAY NEST ONE   *
+* "IF" GROUP WITHING ANOTHER. EACH SEPERATE "IF" STATEMENT WILL HAVE  *
+* ITS OWN LOGICAL CONSTRUCT, AND MUST BE TERMINATED WITH ITS OWN      *
+* "ENDIF" STATEMENT. THE "ELSEIF" AND "ENDIF" STATEMENTS ARE          *
+* SUPPORTED. YOU MAY INDENT THE NESTED "IF" GROUPS, BUT DOING THAT    *
+* WOULD BE FOR DOCUMENTATION PURPOSES ONLY.                           *
+*      IF    (CLC,A,Z,NE)                                             *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE                           *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*        IF    (CLC,B,Z,NE)                                           *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE (NESTED)                  *
+*               LOGIC GROUP EVALUATES TO "TRUE"                       *
+*                                                                     *
+*        ELSE                                                         *
+*                                                                     *
+*               ONE OR MORE INSTRUCTIONS                              *
+*               TO BE EXECUTED IF THE ABOVE (NESTED)                  *
+*               LOGIC GROUP EVALUATES TO "FALSE"                      *
+*                                                                     *
+*        ENDIF                                                        *
+*                                                                     *
+*      ENDIF                                                          *
+*                                                                     *
+* THE "IF" MACRO SUPPORTS THE NESTING OF AS MANY "IF" GROUPS AS YOU   *
+* REQUIRE TO SUPPORT YOUR LOGIC. HOW MANY LEVELS CAN YOU ACTUALLY     *
+* KEEP TRACK OF?                                                      *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,NE)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+           IF    (CLC,B,Z,NE)
+             AP    LEVEL2_PASS_COUNTER,=P'1'
+           ELSE
+             AP    LEVEL2_ELSE_COUNTER,=P'1'
+           ENDIF
+         ENDIF
+*
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*       ANOTHER EXAMPLE OF THE NESTING OF MULTIPLE "IF" GROUPS        *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*
+*        1         2         3         4         5         6         7
+*...V....0....V....0....V....0....V....0....V....0....V....0....V....0.
+         IF    (CLC,A,Z,E)
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+           IF    (CLC,B,Z,E)
+             AP    LEVEL2_PASS_COUNTER,=P'1'
+             IF    (CLC,C,Z,E)
+               AP    LEVEL3_PASS_COUNTER,=P'1'
+             ELSEIF (CLC,D,Z,E)
+               AP    LEVEL3_ELSEIF_COUNTER,=P'1'
+             ELSEIF (CLC,E,Z,E)
+               AP    LEVEL3_ELSEIF_COUNTER,=P'1'
+             ELSEIF (CLC,F,Z,E)
+               AP    LEVEL3_ELSEIF_COUNTER,=P'1'
+             ELSE
+               AP    LEVEL3_ELSE_COUNTER,=P'1'
+             ENDIF
+           ELSEIF (CLC,G,Z,E)
+             AP    LEVEL2_ELSEIF_COUNTER,=P'1'
+           ELSE
+             AP    LEVEL2_ELSE_COUNTER,=P'1'
+           ENDIF
+         ELSEIF  (CLC,H,Z,E)
+           AP    LEVEL1_ELSE_COUNTER,=P'1'
+         ELSE
+           AP    LEVEL1_PASS_COUNTER,=P'1'
+         ENDIF
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      THESE FOLLOWING STATEMENTS ARE NORMAL zOS TERMINATION.         *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*
+.QUIT    ANOP
+         L     R13,SAVEAREA+4      ADDRESS OF CALLER'S SAVE AREA
+         LM    R14,R12,12(R13)     RESTORE R14 WRAPPED AROUND TO R12
+         DROP  R12                 NO LONGER VALID
+         SLR   R15,R15             SET RETURN CODE TO ZERO
+         BR    R14                 RETURN TO CALLER
+*
+         SPACE 5
+SAVEAREA DC    18F'0'              MY SAVE AREA
+         LTORG
+EOFSW    DC    C'N'
+         DS    0D
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+*                                                                     *
+*      THESE FOLLOWING STATEMENTS DEFINE VARIABLES REQUIRED.          *
+*                                                                     *
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+LEVEL1_PASS_COUNTER DC PL4'0'
+LEVEL1_ELSEIF_COUNTER DC PL4'0'
+LEVEL1_ELSE_COUNTER DC PL4'0'
+LEVEL1_FAIL_COUNTER DC PL4'0'
+LEVEL2_PASS_COUNTER DC PL4'0'
+LEVEL2_ELSEIF_COUNTER DC PL4'0'
+LEVEL2_ELSE_COUNTER DC PL4'0'
+LEVEL2_FAIL_COUNTER DC PL4'0'
+LEVEL3_PASS_COUNTER DC PL4'0'
+LEVEL3_ELSEIF_COUNTER DC PL4'0'
+LEVEL3_ELSE_COUNTER DC PL4'0'
+SHIFT_PACKED DC  PL4'1234567'
+SPECIAL  DC    X'C0'
+A        DC    C'AAAA'
+B        DC    C'BBBB'
+C        DC    C'CCCC'
+D        DC    C'DDDD'
+E        DC    C'EEEE'
+F        DC    C'FFFF'
+G        DC    C'GGGG'
+H        DC    C'HHHH'
+I        DC    C'IIII'
+J        DC    C'JJJJ'
+K        DC    C'KKKK'
+L        DC    C'LLLL'
+Z        DC    C'ZZZZ'
+         END   IFDOC

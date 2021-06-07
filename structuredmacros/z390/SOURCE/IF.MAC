@@ -1,0 +1,40 @@
+.*   Copyright (C) <2021>  Daniel H. Snyder                             00010000
+.*   Structured Programming Macros for the IBM High Level Assembler     00020000
+.*   Daniel.H.Snyder@protonmail.com                                     00030000
+.*                                                                      00040000
+.* This program is free software: you can redistribute it and/or modify 00050000
+.* it under the terms of the GNU General Public License as published by 00060000
+.* the Free Software Foundation, either version 3 of the License, or    00070000
+.* any later version.                                                   00080000
+.*                                                                      00090000
+.* This program is distributed in the hope that it will be useful,      00100000
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of       00110000
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        00120000
+.* GNU General Public License for more details.                         00130000
+.*                                                                      00140000
+.* You should have received a copy of the GNU General Public License    00150000
+.* along with this program. See <https://www.gnu.org/licenses/>.        00160000
+.*                                                                      00170000
+         MACRO                                                          00180000
+&NAME    IF    &EXP                MULTIPLE OPERANDS VIA &SYSLIST       00190000
+         COPY  IFCOPY                                                   00200000
+.*                                                                      00210000
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00220000
+.*                                                                    * 00230000
+.* PREPARE FOR UPCOMING "ELSEIF", "ELSE", AND "ENDIF" STATEMENTS.     * 00240000
+.*                                                                    * 00250000
+.* =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* 00260000
+.*                                                                      00270000
+.FINISH260 AIF   ('&$ERRSW' EQ 'Y').MEND290                             00280000
+         AIF ('&$MFNAME(&$MLVL)' NE '').FIN270                          00300000
+&$Y$NDX  SETA  &$Y$NDX+1                                                00310000
+&$MFNAME(&$MLVL) SETC '$NEXT&$Y$NDX'                                    00320000
+.FIN270  ANOP                                                           00330000
+         J&$BF &$MFNAME(&$MLVL)    BRANCH IF CC INDICATES FAIL          00350002
+         AIF   ('&$MTNAME(&$MLVL)' EQ '').MEND290                       00360000
+&Y       SETC  '&$MTNAME(&$MLVL)'                                       00370000
+&Y       DC    0H'0'               END RESULT WAS PASS - DO THE EXECUTE 00380000
+&$MTNAME(&$MLVL) SETC ''                                                00390000
+.MEND290 ANOP                                                           00400000
+&$MCVERB(&$MLVL) SETC 'IF'                                              00410000
+         MEND                                                           00420000

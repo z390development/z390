@@ -1,0 +1,244 @@
+         MACRO
+.**********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.* Date   - 09/16/07                                                  *
+.**********************************************************************
+.* 09/16/07 RPI 687  INITIAL CODING TO GEN RPL OPTCD BITS             *
+.* 04/19/08 RPI 833  add SETC quotes for HLASM compatibility          *
+.* 04/23/09 RPI 1024 jm2 MODCB generates OI and NI instead of MVI     *
+.* 04/07/11 RPI 1158 REMOVE DUPLICATE LCLB ASY,XASY                   *
+.*                                                                    *
+.* 12/31/18 Updated for zVSAM V2 by Melvyn Maltz                      *
+.*          Removed option CRE, not found in Manual                   *
+.*          Added exclusive test RBA/XRBA                             *
+.*          Added MNOTEs for unsupported parms                        *
+.*          Removed RPLERR, not used anywhere                         *
+.*          Added default settings when none in group specified       *
+.*          Added &MODE=                                              *
+.*                RPL   generates &ZGENOPT1-2 with default bits set   *
+.*                      in the form stored in the RPL (12 options)    *
+.*                CBMR  generates &ZGENOPT1-4 with only bits set      *
+.*                      that are in &OPTCD (22 options)               *
+.* 12/20/20 RENAMED TO ZGENOPT2 FOR HYBRID \MAC                       *
+.**********************************************************************
+         ZGENOPT2 &OPTCD=,&MODE=
+.*
+         LCLB  &KEY,&ADR,&CNV,&SEQ,&DIR,&SKP
+         LCLB  &SYN,&ASY,&NUP,&UPD,&NSP,&KEQ  RPI 1158 ASY
+         LCLB  &KGE,&FKS,&GEN,&MVE,&LOC,&LRD
+         LCLB  &WAITX,&NWAITX,&ARD,&BWD,&CR,&FWD,&NRI,&RBA,&XRBA,&ECB
+.*
+         GBLC  &ZGENOPT1,&ZGENOPT2,&ZGENOPT3,&ZGENOPT4,&ZGENECB
+.*
+         AIF   (T'&MODE EQ 'O')
+         MNOTE 12,'ZGENOPTD MODE= NOT SPECIFIED'
+         MEXIT
+         AEND
+         AIF   ('&MODE' EQ 'RPL' OR '&MODE' EQ 'CBMR').MODEOK
+         MNOTE 12,'ZGENOPTD MODE= HAS INCORRECT VALUE'
+         MEXIT
+.*
+.MODEOK  ANOP
+.*
+.* DEFAULT IS THE LAST ONE, SUPPORTED SETS ONLY
+.* ADR   | KEY
+.* DIR   | SKP | SEQ
+.* LRD   | ARD
+.* BWD   | FWD
+.* ASY   | SYN
+.* NSP   | UPD | NUP
+.* KGE   | KEQ
+.* GEN   | FKS
+.* LOC   | MVE
+.* XRBA  | RBA
+.*
+&OPTS(1) SETC  'ADR',     1                                            X
+               'ARD',     2                                            X
+               'ASY',     3                                            X
+               'BWD',     4                                            X
+               'CNV',     5  NOT SUPPORTED                             X
+               'CR',      6  NOT SUPPORTED                             X
+               'DIR',     7                                            X
+               'FKS',     8                                            X
+               'FWD',     9                                            X
+               'GEN',    10                                            X
+               'KEQ',    11                                            X
+               'KEY',    12                                            X
+               'KGE',    13                                            X
+               'LOC',    14                                            X
+               'LRD',    15                                            X
+               'MVE',    16                                            X
+               'NRI',    17  NOT SUPPORTED                             X
+               'NSP',    18                                            X
+               'NUP',    19                                            X
+               'NWAITX', 20  NOT SUPPORTED                             X
+               'RBA',    21                                            X
+               'SEQ',    22                                            X
+               'SKP',    23                                            X
+               'SYN',    24                                            X
+               'UPD',    25                                            X
+               'WAITX',  26  NOT SUPPORTED                             X
+               'XRBA'    27
+.*
+&I       SETA  0
+.OPTLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&OPTCD).CHK_OPT  RPI 680
+&J       SETA  0
+.FINDOPT ANOP
+&J       SETA  &J+1
+         AIF   (&J GT N'&OPTS).OPT_NOT_FND
+         AIF   ('&OPTCD(&I)' EQ '&OPTS(&J)').OPT_FND
+         AGO   .FINDOPT
+.*
+.OPT_NOT_FND ANOP
+         MNOTE 12,'ZGENOPTD OPTCD PARM NOT FOUND - &OPTCD(&I)'
+         AGO   .OPTLOOP
+.*
+.OPT_FND ANOP
+&ADR     SETB  ('&OPTCD(&I)' EQ 'ADR' OR &ADR)
+&ARD     SETB  ('&OPTCD(&I)' EQ 'ARD' OR &ARD)
+&ASY     SETB  ('&OPTCD(&I)' EQ 'ASY' OR &ASY)
+&BWD     SETB  ('&OPTCD(&I)' EQ 'BWD' OR &BWD)
+&CNV     SETB  ('&OPTCD(&I)' EQ 'CNV' OR &CNV)
+&CR      SETB  ('&OPTCD(&I)' EQ 'CR'  OR &CR)
+&DIR     SETB  ('&OPTCD(&I)' EQ 'DIR' OR &DIR)
+&FKS     SETB  ('&OPTCD(&I)' EQ 'FKS' OR &FKS)
+&FWD     SETB  ('&OPTCD(&I)' EQ 'FWD' OR &FWD)
+&GEN     SETB  ('&OPTCD(&I)' EQ 'GEN' OR &GEN)
+&KEQ     SETB  ('&OPTCD(&I)' EQ 'KEQ' OR &KEQ)
+&KEY     SETB  ('&OPTCD(&I)' EQ 'KEY' OR &KEY)
+&KGE     SETB  ('&OPTCD(&I)' EQ 'KGE' OR &KGE)
+&LOC     SETB  ('&OPTCD(&I)' EQ 'LOC' OR &LOC)
+&LRD     SETB  ('&OPTCD(&I)' EQ 'LRD' OR &LRD)
+&MVE     SETB  ('&OPTCD(&I)' EQ 'MVE' OR &MVE)
+&NRI     SETB  ('&OPTCD(&I)' EQ 'NRI' OR &NRI)
+&NSP     SETB  ('&OPTCD(&I)' EQ 'NSP' OR &NSP)
+&NUP     SETB  ('&OPTCD(&I)' EQ 'NUP' OR &NUP)
+&NWAITX  SETB  ('&OPTCD(&I)' EQ 'NWAITX' OR &NWAITX)
+&RBA     SETB  ('&OPTCD(&I)' EQ 'RBA' OR &RBA)
+&SEQ     SETB  ('&OPTCD(&I)' EQ 'SEQ' OR &SEQ)
+&SKP     SETB  ('&OPTCD(&I)' EQ 'SKP' OR &SKP)
+&SYN     SETB  ('&OPTCD(&I)' EQ 'SYN' OR &SYN)
+&UPD     SETB  ('&OPTCD(&I)' EQ 'UPD' OR &UPD)
+&WAITX   SETB  ('&OPTCD(&I)' EQ 'WAITX' OR &WAITX)
+&XRBA    SETB  ('&OPTCD(&I)' EQ 'XRBA' OR &XRBA)
+         AGO   .OPTLOOP
+.*
+.CHK_OPT ANOP
+.* CHECK FOR UNSUPPORTED OPERANDS
+         AIF   (&CNV)
+         MNOTE 4,'ZGENOPTD RPL CNV NOT SUPPORTED'
+         AEND
+         AIF   (&WAITX)
+         MNOTE 4,'ZGENOPTD RPL WAITX NOT SUPPORTED'
+         AEND
+         AIF   (&NWAITX)
+         MNOTE 4,'ZGENOPTD RPL NWAITX NOT SUPPORTED'
+         AEND
+         AIF   (&CR)
+         MNOTE 4,'ZGENOPTD RPL CR NOT SUPPORTED'
+         AEND
+         AIF   (&NRI)
+         MNOTE 4,'ZGENOPTD RPL NRI NOT SUPPORTED'
+         AEND
+.*
+.* CHECK MUTUALLY EXCLUSIVE OPTIONS OF SUPPORTED OPERANDS
+.*
+         AIF   (&KEY AND &ADR)
+         MNOTE 12,'ZGENOPTD KEY AND ADR MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&SEQ AND &DIR)
+         MNOTE 12,'ZGENOPTD SEQ AND DIR MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&SEQ AND &SKP)
+         MNOTE 12,'ZGENOPTD SEQ AND SKP MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&DIR AND &SKP)
+         MNOTE 12,'ZGENOPTD DIR AND SKP MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&SYN AND &ASY)
+         MNOTE 12,'ZGENOPTD SYN AND ASY MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&NUP AND &UPD)
+         MNOTE 12,'ZGENOPTD NUP AND UPD MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&NUP AND &NSP)
+         MNOTE 12,'ZGENOPTD NUP AND NSP MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&UPD AND &NSP)
+         MNOTE 12,'ZGENOPTD UPD AND NSP MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&KEQ AND &KGE)
+         MNOTE 12,'ZGENOPTD KEY AND KGE MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&FKS AND &GEN)
+         MNOTE 12,'ZGENOPTD FKS AND GEN MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&MVE AND &LOC)
+         MNOTE 12,'ZGENOPTD MVE AND LOC MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&BWD AND &FWD)
+         MNOTE 12,'ZGENOPTD FWD AND BWD MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&ARD AND &LRD)
+         MNOTE 12,'ZGENOPTD ARD AND LRD MUTUALLY EXCLUSIVE'
+         AEND
+         AIF   (&RBA AND &XRBA)
+         MNOTE 12,'ZGENOPTD RBA AND XRBA MUTUALLY EXCLUSIVE'
+         AEND
+.*
+         AIF   ('&MODE' EQ 'CBMR').CBMR
+.*
+.* SET DEFAULTS, SUPPORTED OPERANDS ONLY
+.*
+         AIF   (NOT(&ADR OR &KEY))
+&KEY     SETB  1
+         AEND
+         AIF   (NOT(&DIR OR &SKP OR &SEQ))
+&SEQ     SETB  1
+         AEND
+         AIF   (NOT(&LRD OR &ARD))
+&ARD     SETB  1
+         AEND
+         AIF   (NOT(&BWD OR &FWD))
+&FWD     SETB  1
+         AEND
+         AIF   (NOT(&ASY OR &SYN))
+&SYN     SETB  1
+         AEND
+         AIF   (NOT(&NSP OR &UPD OR &NUP))
+&NUP     SETB  1
+         AEND
+         AIF   (NOT(&KGE OR &KEQ))
+&KEQ     SETB  1
+         AEND
+         AIF   (NOT(&GEN OR &FKS))
+&FKS     SETB  1
+         AEND
+         AIF   (NOT(&LOC OR &MVE))
+&MVE     SETB  1
+         AEND
+         AIF   (NOT(&RBA OR &XRBA))
+&RBA     SETB  1
+         AEND
+.*
+         AIF   ('&ZGENECB' NE '0')
+&ECB     SETB  1
+         AEND
+.* GEN RPL FLAG BYTES
+&ZGENOPT1 SETC '&KEY&SEQ&SKP&ARD&FWD&SYN&NUP&NSP' OPTCD BYTE 1
+&ZGENOPT2 SETC '&KEQ&FKS&MVE&RBA&ECB.000'         OPTCD BYTE 2
+         MEXIT
+.*
+.CBMR    ANOP
+.* GEN CBMR FLAG BYTES
+&ZGENOPT1 SETC '&KEY&ADR&SKP&SEQ&DIR&ARD&LRD&FWD' OPTCD BYTE 1
+&ZGENOPT2 SETC '&BWD&SYN&ASY&NSP&NUP&UPD&KEQ&KGE' OPTCD BYTE 2
+&ZGENOPT3 SETC '&FKS&GEN&MVE&LOC&RBA&XRBA.00'     OPTCD BYTE 3
+&ZGENOPT4 SETC '00000000'                         OPTCD BYTE 4
+         MEXIT
+         MEND

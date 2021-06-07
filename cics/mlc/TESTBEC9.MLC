@@ -1,0 +1,1551 @@
+         ZCOBOL PGM='cics\TESTBEC9',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
+               :47:58,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
+               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
+               bol\z390+MAC+.))
+         COPY  TESTBEC9_ZC_LABELS.CPY
+*      ****************************************************************X
+               *
+*      * Copyright 2006 Automated Software Tools Corporation           X
+               *
+*      * This source code is part of z390 assembler/emulator package   X
+               *
+*      * The z390 package is distributed under GNU general public      X
+               *
+*      * license                                                       X
+               *
+*      * Author - Don Higgins                                          X
+               *
+*      ****************************************************************X
+               *
+*         IDENTIFICATION DIVISION.
+*      * TEMPORARY STORAGE TESTER
+*      *    MYQUEUEA      WRITE ITEM 1
+*      *    MYQUEUEA      WRITE ITEM 2
+*      *    MYLONGQUEUEA  WRITE ITEM 1
+*      *    MYQUEUEA      REWRITE ITEM 1
+*      *    RAISE QIDERR
+*      *    RAISE ITEMERR
+*      *    RAISE LENGERR
+*      *    MYLONGQUEUEB  WRITE ITEM 1
+*      *    MYLONGQUEUEA  DELETED
+*      *    RAISE QIDERR
+*      *    RAISE INVREQ
+*      *    MYQUEUEA      READ ITEM 1
+*      *    MYQUEUEA      READ ITEM NEXT(2)
+*      *    RAISE ITEMERR
+*      *    RAISE QIDERR
+*      *    RAISE LENGERR
+*      *    MYQUEUEA      DELETED
+*      *    MYLONGQUEUEB  DELETED
+*      * CEBR TESTS
+*      *    MYQUEUEA      BUILD 16 ITEMS
+*      *    MYQUEUEB      BUILD 50 ITEMS
+*      *    X'02CB458F'   BUILD 80 ITEMS
+         IDENTIFICATION DIVISION
+*         PROGRAM-ID. TESTBEC9.
+         PROGRAM_ID TESTBEC9
+*         ENVIRONMENT DIVISION.
+         ENVIRONMENT DIVISION
+*         DATA DIVISION.
+         DATA  DIVISION
+*         WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*         77  TSREC    PIC X(200).
+         WS      77,TSREC,PIC,X(200)
+*         77  TSNUMIT  PIC 9(4) COMP.
+         WS      77,TSNUMIT,PIC,9(4),COMP
+*         01  QWT.
+         WS      01,QWT
+*             02   QWTSBA  PIC X(4).
+         WS        02,QWTSBA,PIC,X(4)
+*             02   QWTMSG  PIC X(39).
+         WS        02,QWTMSG,PIC,X(39)
+*         77  QOP1     PIC X(4)    VALUE X'C311C260'.
+         WS      77,QOP1,PIC,X(4),VALUE,X'C311C260'
+*         77  QOP2     PIC X(4)    VALUE X'C311C3F0'.
+         WS      77,QOP2,PIC,X(4),VALUE,X'C311C3F0'
+*         77  QOP3     PIC X(4)    VALUE X'C311C540'.
+         WS      77,QOP3,PIC,X(4),VALUE,X'C311C540'
+*         77  QOP4     PIC X(4)    VALUE X'C311C650'.
+         WS      77,QOP4,PIC,X(4),VALUE,X'C311C650'
+*         77  QOP5     PIC X(4)    VALUE X'C311C760'.
+         WS      77,QOP5,PIC,X(4),VALUE,X'C311C760'
+*         77  QOP6     PIC X(4)    VALUE X'C311C8F0'.
+         WS      77,QOP6,PIC,X(4),VALUE,X'C311C8F0'
+*         77  QOP7     PIC X(4)    VALUE X'C3114A40'.
+         WS      77,QOP7,PIC,X(4),VALUE,X'C3114A40'
+*         77  QOP8     PIC X(4)    VALUE X'C3114B50'.
+         WS      77,QOP8,PIC,X(4),VALUE,X'C3114B50'
+*         77  QOP9     PIC X(4)    VALUE X'C3114C60'.
+         WS      77,QOP9,PIC,X(4),VALUE,X'C3114C60'
+*         77  QOP10    PIC X(4)    VALUE X'C3114DF0'.
+         WS      77,QOP10,PIC,X(4),VALUE,X'C3114DF0'
+*         77  QOP11    PIC X(4)    VALUE X'C3114F40'.
+         WS      77,QOP11,PIC,X(4),VALUE,X'C3114F40'
+*         77  QOP12    PIC X(4)    VALUE X'C3115050'.
+         WS      77,QOP12,PIC,X(4),VALUE,X'C3115050'
+*         77  QOP13    PIC X(4)    VALUE X'C311D160'.
+         WS      77,QOP13,PIC,X(4),VALUE,X'C311D160'
+*         77  QOP14    PIC X(4)    VALUE X'C311D2F0'.
+         WS      77,QOP14,PIC,X(4),VALUE,X'C311D2F0'
+*         77  QOP15    PIC X(4)    VALUE X'C311D440'.
+         WS      77,QOP15,PIC,X(4),VALUE,X'C311D440'
+*         77  QOP16    PIC X(4)    VALUE X'C311D550'.
+         WS      77,QOP16,PIC,X(4),VALUE,X'C311D550'
+*         77  QOP17    PIC X(4)    VALUE X'C311D660'.
+         WS      77,QOP17,PIC,X(4),VALUE,X'C311D660'
+*         77  QOP18    PIC X(4)    VALUE X'C311D7F0'.
+         WS      77,QOP18,PIC,X(4),VALUE,X'C311D7F0'
+*         77  QOP19    PIC X(4)    VALUE X'C311D940'.
+         WS      77,QOP19,PIC,X(4),VALUE,X'C311D940'
+*         77  QOP20    PIC X(4)    VALUE X'C3115A50'.
+         WS      77,QOP20,PIC,X(4),VALUE,X'C3115A50'
+*         77  QOP1C2   PIC X(4)    VALUE X'C311C3C8'.
+         WS      77,QOP1C2,PIC,X(4),VALUE,X'C311C3C8'
+*         77  QOP2C2   PIC X(4)    VALUE X'C311C4D8'.
+         WS      77,QOP2C2,PIC,X(4),VALUE,X'C311C4D8'
+*         77  QOP3C2   PIC X(4)    VALUE X'C311C5E8'.
+         WS      77,QOP3C2,PIC,X(4),VALUE,X'C311C5E8'
+*         77  QOP4C2   PIC X(4)    VALUE X'C311C6F8'.
+         WS      77,QOP4C2,PIC,X(4),VALUE,X'C311C6F8'
+*         01  QOP.
+         WS      01,QOP
+*             02  FILLER   PIC X(6)  VALUE 'QUEUE '.
+         WS        02,FILLER,PIC,X(6),VALUE,'QUEUE '
+*             02  QOPNAME  PIC X(16).
+         WS        02,QOPNAME,PIC,X(16)
+*             02  FILLER   PIC X(6)  VALUE ' ITEM '.
+         WS        02,FILLER,PIC,X(6),VALUE,' ITEM '
+*             02  QOPITEM  PIC X.
+         WS        02,QOPITEM,PIC,X
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  QOPTYPE  PIC X(7)  VALUE 'WRITE  '.
+         WS        02,QOPTYPE,PIC,X(7),VALUE,'WRITE  '
+*             02  FILLER   PIC X     VALUE SPACE.
+         WS        02,FILLER,PIC,X,VALUE,SPACE
+*             02  QOPSEP   PIC X     VALUE '|'.
+         WS        02,QOPSEP,PIC,X,VALUE,'|'
+*         01  QHAND.
+         WS      01,QHAND
+*             02  QHANDCON PIC X(7)  VALUE SPACES.
+         WS        02,QHANDCON,PIC,X(7),VALUE,SPACES
+*             02  FILLER   PIC X(31)
+*                          VALUE ' CONDITION RAISED              '.
+         WS        02,FILLER,PIC,X(31),VALUE,' CONDITION RAISED        X
+                     '
+*             02  QHSEP    PIC X     VALUE '|'.
+         WS        02,QHSEP,PIC,X,VALUE,'|'
+*         77  QHANDL   PIC 9(4) COMP.
+         WS      77,QHANDL,PIC,9(4),COMP
+*         01  CEBRMSG1.
+         WS      01,CEBRMSG1
+*             02  FILLER   PIC X(4)  VALUE X'C311C8C8'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C8C8'
+*             02  FILLER   PIC X(27) VALUE 'CEBR QUEUE BUILDING STARTEDX
+               '.
+         WS        02,FILLER,PIC,X(27),VALUE,'CEBR QUEUE BUILDING STARTX
+               ED'
+*         77  CEBR1LEN PIC 9(4) COMP.
+         WS      77,CEBR1LEN,PIC,9(4),COMP
+*         01  CEBRMSG2.
+         WS      01,CEBRMSG2
+*             02  FILLER   PIC X(4)  VALUE X'C311C9D8'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C311C9D8'
+*             02  FILLER   PIC X(25) VALUE 'CEBR QUEUE BUILDING ENDED'.
+         WS        02,FILLER,PIC,X(25),VALUE,'CEBR QUEUE BUILDING ENDEDX
+               '
+*         77  CEBR2LEN PIC 9(4) COMP.
+         WS      77,CEBR2LEN,PIC,9(4),COMP
+*         01  ENDMSG.
+         WS      01,ENDMSG
+*             02  FILLER   PIC X(4)  VALUE X'C3115CF0'.
+         WS        02,FILLER,PIC,X(4),VALUE,X'C3115CF0'
+*             02  FILLER   PIC X(31)
+*                          VALUE 'TESTBEC9 COMPLETED, PRESS CLEAR'.
+         WS        02,FILLER,PIC,X(31),VALUE,'TESTBEC9 COMPLETED, PRESSX
+                CLEAR'
+*         77  ENDMSGL  PIC 9(4) COMP.
+         WS      77,ENDMSGL,PIC,9(4),COMP
+*         77  LEN      PIC 9(4) COMP  VALUE 0.
+         WS      77,LEN,PIC,9(4),COMP,VALUE,0
+*         77  HEXQNAME PIC X(8)       VALUE X'02CB458F40404040'.
+         WS      77,HEXQNAME,PIC,X(8),VALUE,X'02CB458F40404040'
+*         01  HWORLD.
+         WS      01,HWORLD
+*             02  HWORLDEX PIC 9(4)  COMP VALUE 0.
+         WS        02,HWORLDEX,PIC,9(4),COMP,VALUE,0
+*             02  FILLER   PIC X(11) VALUE 'HELLO WORLD'.
+         WS        02,FILLER,PIC,X(11),VALUE,'HELLO WORLD'
+*         01  HWORLDAS.
+         WS      01,HWORLDAS
+*             02  HWORLDAX PIC 9(4)  COMP VALUE 0.
+         WS        02,HWORLDAX,PIC,9(4),COMP,VALUE,0
+*             02  FILLER   PIC X(11) VALUE X'48454C4C4F20574F524C44'.
+*      * GO TO DEPENDING CONTROL
+*      *   1=ABEND
+*      *   2=BEC9RTN1
+*      *   3=BEC9RTN2
+*      *   4=BEC9RTN3
+*      *   5=BEC9RTN4
+*      *   6=BEC9RTN5
+*      *   7=BEC9RTN6
+*      *   8=BEC9RTN7
+*      *   9=BEC9RTN8
+         WS        02,FILLER,PIC,X(11),VALUE,X'48454C4C4F20574F524C44'
+*         77  DEPCTRL   PIC 9(4) COMP.
+         WS      77,DEPCTRL,PIC,9(4),COMP
+*         77  HEXCOUNT  PIC 9(4) COMP.
+*         01  HEXTAB  PIC X(256)  VALUE X'000102030405060708090A0B0C0D0X
+               E0F
+         WS      77,HEXCOUNT,PIC,9(4),COMP
+*       -                                '101112131415161718191A1B1C1D1X
+               E1F
+*       -                                '101112131415161718191A1B1C1D1X
+               E1F
+*       -                                '202122232425262728292A2B2C2D2X
+               E2F
+*       -                                '303132333435363738393A3B3C3D3X
+               E3F
+*       -                                '404142434445464748494A4B4C4D4X
+               E4F
+*       -                                '505152535455565758595A5B5C5D5X
+               E5F
+*       -                                '606162636465666768696A6B6C6D6X
+               E6F
+*       -                                '707172737475767778797A7B7C7D7X
+               E7F
+*       -                                '808182838485868788898A8B8C8D8X
+               E8F
+*       -                                '909192939495969798999A9B9C9D9X
+               E9F
+*       -                                'A0A1A2A3A4A5A6A7A8A9AAABACADAX
+               EAF
+*       -                                'B0B1B2B3B4B5B6B7B8B9BABBBCBDBX
+               EBF
+*       -                                'C0C1C2C3C4C5C6C7C8C9CACBCCCDCX
+               ECF
+*       -                                'D0D1D2D3D4D5D6D7D8D9DADBDCDDDX
+               EDF
+*       -                                'E0E1E2E3E4E5E6E7E8E9EAEBECEDEX
+               EEF
+*       -                             'F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFFX
+               '.
+         WS      01,HEXTAB,PIC,X(256),VALUE,X,'000102030405060708090A0BX
+               0C0D0E0F101112131415161718191A1B1C1D1E1F2021222324252627X
+               28292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F40414243X
+               4445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5FX
+               606162636465666768696A6B6C6D6E6F707172737475767778797A7BX
+               7C7D7E7F808182838485868788898A8B8C8D8E8F9091929394959697X
+               98999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3X
+               B4B5B6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFX
+               D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFE0E1E2E3E4E5E6E7E8E9EAEBX
+               ECEDEEEFF0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF'
+*         01  HEXINTAB REDEFINES HEXTAB OCCURS 16 TIMES PIC X(16).
+         WS      01,HEXINTAB,REDEFINES,HEXTAB,OCCURS,16,TIMES,PIC,X(16)
+*         01  HEXTAB16  PIC X(16).
+         WS      01,HEXTAB16,PIC,X(16)
+*         77  QIDNUM    PIC 9(4) COMP.
+         WS      77,QIDNUM,PIC,9(4),COMP
+*         77  ITMNUM    PIC 9(4) COMP.
+         WS      77,ITMNUM,PIC,9(4),COMP
+*         77  LNGNUM    PIC 9(4) COMP.
+         WS      77,LNGNUM,PIC,9(4),COMP
+*         LINKAGE SECTION.
+         LINKAGE SECTION
+*         01  TSRECLK PIC X(200).
+         WS      01,TSRECLK,PIC,X(200)
+         WS    01,DFHCOMMAREA
+*         PROCEDURE DIVISION USING DFHEIBLK DFHCOMMAREA.
+*      * EXEC INTERFACE BLOCK
+         WS      01,DFHEIBLK
+*            02  EIBHEAD  PIC X(8).
+         WS        02,EIBHEAD,PIC,X(8)
+*            02  EIBTIME  PIC 9(7) COMP-3.
+         WS        02,EIBTIME,PIC,9(7),COMP_3
+*            02  EIBDATE  PIC 9(7) COMP-3.
+         WS        02,EIBDATE,PIC,9(7),COMP_3
+*            02  EIBTRNID PIC X(4).
+         WS        02,EIBTRNID,PIC,X(4)
+*            02  EIBTASKN PIC 9(7) COMP-3.
+         WS        02,EIBTASKN,PIC,9(7),COMP_3
+*            02  EIBTRMID PIC X(4).
+         WS        02,EIBTRMID,PIC,X(4)
+*            02  FILLER   PIC X(2).
+         WS        02,FILLER,PIC,X(2)
+*            02  EIBCPOSN PIC 9(4) COMP.
+         WS        02,EIBCPOSN,PIC,9(4),COMP
+*            02  EIBCALEN PIC 9(4) COMP.
+         WS        02,EIBCALEN,PIC,9(4),COMP
+*            02  EIBAID   PIC X.
+         WS        02,EIBAID,PIC,X
+*            02  EIBFN    PIC 9(4) COMP.
+         WS        02,EIBFN,PIC,9(4),COMP
+*            02  EIBRCODE PIC X(6).
+         WS        02,EIBRCODE,PIC,X(6)
+*            02  EIBREQID PIC X(8).
+         WS        02,EIBREQID,PIC,X(8)
+*            02  EIBDS    PIC X(8).
+         WS        02,EIBDS,PIC,X(8)
+*            02  EIBRSRCE PIC X(8).
+         WS        02,EIBRSRCE,PIC,X(8)
+*            02  EIBRESP  PIC 9(9) COMP.
+         WS        02,EIBRESP,PIC,9(9),COMP
+*            02  EIBRESP2 PIC 9(9) COMP.
+         WS        02,EIBRESP2,PIC,9(9),COMP
+*            02  EIBPROG  PIC X(8).
+         WS        02,EIBPROG,PIC,X(8)
+*            02  EIBDTFRM PIC X.
+         WS        02,EIBDTFRM,PIC,X
+         DATA  END
+         PROCEDURE DIVISION,USING,DFHEIBLK,DFHCOMMAREA
+* 
+*             MOVE LENGTH OF QWT      TO QHANDL.
+*ZC    166         MOVE  LENGTH,OF,QWT,TO,QHANDL
+         MOVE  LENGTH,OF,QWT,TO,QHANDL
+         PERIOD 
+*             MOVE LENGTH OF CEBRMSG1 TO CEBR1LEN.
+*ZC    167         MOVE  LENGTH,OF,CEBRMSG1,TO,CEBR1LEN
+         MOVE  LENGTH,OF,CEBRMSG1,TO,CEBR1LEN
+         PERIOD 
+*             MOVE LENGTH OF CEBRMSG2 TO CEBR2LEN.
+*ZC    168         MOVE  LENGTH,OF,CEBRMSG2,TO,CEBR2LEN
+         MOVE  LENGTH,OF,CEBRMSG2,TO,CEBR2LEN
+         PERIOD 
+*             MOVE LENGTH OF ENDMSG   TO ENDMSGL.
+*ZC    169         MOVE  LENGTH,OF,ENDMSG,TO,ENDMSGL
+         MOVE  LENGTH,OF,ENDMSG,TO,ENDMSGL
+         PERIOD 
+*             EXEC CICS GETMAIN SET(ADDRESS OF TSRECLK)
+*ZC    170         EXEC  CICS,GETMAIN,SET(ADDRESS,OF,TSRECLK),LENGTH(LEX
+               NGTH,OF,TSRECLK)
+         EXEC  CICS,GETMAIN,SET(ADDRESS,OF,TSRECLK),LENGTH(LENGTH,OF,TSX
+               RECLK)
+         PERIOD 
+*                       LENGTH(LENGTH OF TSRECLK) END-EXEC.
+*      *  MVI   QOPSEP+1,C'|'      SET COL MARKER
+*      *  MVI   QHSEP,C'|'         SET COL MARKER
+*             MOVE '|' TO QOPSEP.
+*ZC    174         MOVE  '|',TO,QOPSEP
+         MOVE  '|',TO,QOPSEP
+         PERIOD 
+*             MOVE '|' TO QHSEP.
+*      *  MVI   QIDNUM,C'1'        RESET QIDERR NUMBER
+*      *  MVI   ITMNUM,C'1'        RESET ITEMERR NUMBER
+*      *  MVI   LNGNUM,C'1'        RESET LENGERR NUMBER
+*ZC    175         MOVE  '|',TO,QHSEP
+         MOVE  '|',TO,QHSEP
+         PERIOD 
+*             MOVE 1 TO QIDNUM.
+*ZC    179         MOVE  1,TO,QIDNUM
+         MOVE  1,TO,QIDNUM
+         PERIOD 
+*             MOVE 1 TO ITMNUM.
+*ZC    180         MOVE  1,TO,ITMNUM
+         MOVE  1,TO,ITMNUM
+         PERIOD 
+*             MOVE 1 TO LNGNUM.
+*      * 1ST Q NAME, 1ST ITEM, SHORT DATA
+*      *  MVC   QWTSBA,QOP1        MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'1'       SET ITEM IN MESSAGE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+*ZC    181         MOVE  1,TO,LNGNUM
+         MOVE  1,TO,LNGNUM
+         PERIOD 
+*             MOVE QOP1 TO QWTSBA.
+*ZC    189         MOVE  QOP1,TO,QWTSBA
+         MOVE  QOP1,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYQUEUEA        ' TO QOPNAME.
+*ZC    190         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         PERIOD 
+*             MOVE '1' TO QOPITEM.
+*ZC    191         MOVE  '1',TO,QOPITEM
+         MOVE  '1',TO,QOPITEM
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    192         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    193         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  MVI   TSREC,X'AB'        BYTE TO PROPAGATE
+*      *  MVC   TSREC+1(49),TSREC  MAKE 50
+*             MOVE LOW-VALUES TO TSREC.
+*ZC    196         MOVE  LOW_VALUES,TO,TSREC
+         MOVE  LOW_VALUES,TO,TSREC
+         PERIOD 
+*             INSPECT TSREC CONVERTING LOW-VALUES TO X'AB'.
+*ZC    197         INSPECT TSREC,CONVERTING,LOW_VALUES,TO,X'AB'
+         INSPECT TSREC,CONVERTING,LOW_VALUES,TO,X'AB'
+         PERIOD 
+*             MOVE 1 TO DEPCTRL.
+*ZC    198         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS WRITEQ TS QUEUE('MYQUEUEA') FROM(TSREC)
+*ZC    199         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(TSREC),LX
+               ENGTH(50),NUMITEMS(TSNUMIT)
+         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(TSREC),LENGTH(50),X
+               NUMITEMS(TSNUMIT)
+         PERIOD 
+*                       LENGTH(50) NUMITEMS(TSNUMIT) END-EXEC.
+*      * 1ST Q NAME, 2ND ITEM, LONG DATA
+*      *  MVC   QWTSBA,QOP2        MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'2'       SET ITEM IN MESSAGE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+*             MOVE QOP2 TO QWTSBA.
+*ZC    208         MOVE  QOP2,TO,QWTSBA
+         MOVE  QOP2,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYQUEUEA        ' TO QOPNAME.
+*ZC    209         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         PERIOD 
+*             MOVE '2' TO QOPITEM.
+*ZC    210         MOVE  '2',TO,QOPITEM
+         MOVE  '2',TO,QOPITEM
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    211         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    212         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  MVI   TSREC,X'CD'        BYTE TO PROPAGATE
+*      *  MVC   TSREC+1(199),TSREC MAKE 200
+*             MOVE LOW-VALUES TO TSREC.
+*ZC    215         MOVE  LOW_VALUES,TO,TSREC
+         MOVE  LOW_VALUES,TO,TSREC
+         PERIOD 
+*             INSPECT TSREC CONVERTING LOW-VALUES TO X'CD'.
+*ZC    216         INSPECT TSREC,CONVERTING,LOW_VALUES,TO,X'CD'
+         INSPECT TSREC,CONVERTING,LOW_VALUES,TO,X'CD'
+         PERIOD 
+*             MOVE 1 TO DEPCTRL.
+*ZC    217         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS WRITEQ TS QUEUE('MYQUEUEA') FROM(TSREC)        X
+                   X
+*ZC    218         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(TSREC),NX
+               UMITEMS(TSNUMIT)
+         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(TSREC),NUMITEMS(TSX
+               NUMIT)
+         PERIOD 
+*                       NUMITEMS(TSNUMIT) END-EXEC.
+*      * 2ND Q NAME, 1ST ITEM, USING QNAME, LONG DATA
+*      *  MVC   QWTSBA,QOP3        MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYLONGQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'1'       SET ITEM IN MESSAGE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+*             MOVE QOP3 TO QWTSBA.
+*ZC    227         MOVE  QOP3,TO,QWTSBA
+         MOVE  QOP3,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYLONGQUEUEA    ' TO QOPNAME.
+*ZC    228         MOVE  'MYLONGQUEUEA    ',TO,QOPNAME
+         MOVE  'MYLONGQUEUEA    ',TO,QOPNAME
+         PERIOD 
+*             MOVE '1' TO QOPITEM.
+*ZC    229         MOVE  '1',TO,QOPITEM
+         MOVE  '1',TO,QOPITEM
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    230         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    231         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  MVI   TSREC,X'EF'        BYTE TO PROPAGATE
+*      *  MVC   TSREC+1(149),TSREC MAKE 150
+*             MOVE LOW-VALUES TO TSREC.
+*ZC    234         MOVE  LOW_VALUES,TO,TSREC
+         MOVE  LOW_VALUES,TO,TSREC
+         PERIOD 
+*             INSPECT TSREC CONVERTING LOW-VALUES TO X'EF'.
+*ZC    235         INSPECT TSREC,CONVERTING,LOW_VALUES,TO,X'EF'
+         INSPECT TSREC,CONVERTING,LOW_VALUES,TO,X'EF'
+         PERIOD 
+*             MOVE 1 TO DEPCTRL.
+*ZC    236         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS WRITEQ TS QNAME('MYLONGQUEUEA') FROM(TSREC)
+*ZC    237         EXEC  CICS,WRITEQ,TS,QNAME('MYLONGQUEUEA'),FROM(TSREX
+               C),NUMITEMS(TSNUMIT),LENGTH(150)
+         EXEC  CICS,WRITEQ,TS,QNAME('MYLONGQUEUEA'),FROM(TSREC),NUMITEMX
+               S(TSNUMIT),LENGTH(150)
+         PERIOD 
+*                       NUMITEMS(TSNUMIT) LENGTH(150) END-EXEC.
+*      * 1ST Q NAME, REWRITE 1ST ITEM
+*      *  MVC   QWTSBA,QOP4        MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'1'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'REWRITE' SET TYPE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+*             MOVE QOP4 TO QWTSBA.
+*ZC    247         MOVE  QOP4,TO,QWTSBA
+         MOVE  QOP4,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYQUEUEA        ' TO QOPNAME.
+*ZC    248         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         PERIOD 
+*             MOVE '1' TO QOPITEM.
+*ZC    249         MOVE  '1',TO,QOPITEM
+         MOVE  '1',TO,QOPITEM
+         PERIOD 
+*             MOVE 'REWRITE' TO QOPTYPE.
+*ZC    250         MOVE  'REWRITE',TO,QOPTYPE
+         MOVE  'REWRITE',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    251         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    252         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  MVC   TSREC(10),=10X'01' MOVE NEW ITEM
+*             MOVE LOW-VALUES TO TSREC.
+*ZC    254         MOVE  LOW_VALUES,TO,TSREC
+         MOVE  LOW_VALUES,TO,TSREC
+         PERIOD 
+*             INSPECT TSREC CONVERTING LOW-VALUES TO X'01'.
+*ZC    255         INSPECT TSREC,CONVERTING,LOW_VALUES,TO,X'01'
+         INSPECT TSREC,CONVERTING,LOW_VALUES,TO,X'01'
+         PERIOD 
+*             MOVE 1 TO DEPCTRL.
+*ZC    256         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS WRITEQ TS QUEUE('MYQUEUEA') FROM(TSREC)
+*ZC    257         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(TSREC),LX
+               ENGTH(10),ITEM(1),REWRITE
+         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(TSREC),LENGTH(10),X
+               ITEM(1),REWRITE
+         PERIOD 
+*                       LENGTH(10) ITEM(1) REWRITE END-EXEC.
+*      * HANDLE ALL CONDITIONS, ALWAYS RETURN TO MAIN LINE
+*             EXEC CICS HANDLE CONDITION                               X
+                   X
+*                  QIDERR(BEC9QID)                                     X
+                   X
+*                  ITEMERR(BEC9ITM)                                    X
+                   X
+*                  LENGERR(BEC9LNG)                                    X
+                   X
+*                  INVREQ(BEC9INV)
+*ZC    262         EXEC  CICS,HANDLE,CONDITION,QIDERR(BEC9QID),ITEMERR(X
+               BEC9ITM),LENGERR(BEC9LNG),INVREQ(BEC9INV)
+         EXEC  CICS,HANDLE,CONDITION,QIDERR(BEC9QID),ITEMERR(BEC9ITM),LX
+               ENGERR(BEC9LNG),INVREQ(BEC9INV)
+         PERIOD 
+*                  END-EXEC.
+*      * BAD REWRITE, BAD Q NAME, RAISE QIDERR 1
+*      *  MVC   QWTSBA,QOP5        MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'DUMMY' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'1'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'REWRITE' SET TYPE IN MESSAGE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+*             MOVE QOP5 TO QWTSBA.
+*ZC    276         MOVE  QOP5,TO,QWTSBA
+         MOVE  QOP5,TO,QWTSBA
+         PERIOD 
+*             MOVE 'DUMMY           ' TO QOPNAME.
+*ZC    277         MOVE  'DUMMY           ',TO,QOPNAME
+         MOVE  'DUMMY           ',TO,QOPNAME
+         PERIOD 
+*             MOVE '1' TO QOPITEM.
+*ZC    278         MOVE  '1',TO,QOPITEM
+         MOVE  '1',TO,QOPITEM
+         PERIOD 
+*             MOVE 'REWRITE' TO QOPTYPE.
+*ZC    279         MOVE  'REWRITE',TO,QOPTYPE
+         MOVE  'REWRITE',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    280         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    281         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  LA    R7,BED9RTN1        R7=HANDLE RETURN
+*             MOVE 2 TO DEPCTRL.
+*ZC    283         MOVE  2,TO,DEPCTRL
+         MOVE  2,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS WRITEQ TS QUEUE('DUMMY') FROM(TSREC)
+*ZC    284         EXEC  CICS,WRITEQ,TS,QUEUE('DUMMY'),FROM(TSREC),LENGX
+               TH(10),ITEM(1),REWRITE
+         EXEC  CICS,WRITEQ,TS,QUEUE('DUMMY'),FROM(TSREC),LENGTH(10),ITEX
+               M(1),REWRITE
+         PERIOD 
+*                       LENGTH(10) ITEM(1) REWRITE END-EXEC.
+*      * BED9RTN1 EQU   *
+*         BEC9RTN1.
+*      * BAD REWRITE, BAD ITEM, RAISE ITEMERR 1
+*      *  MVC   QWTSBA,QOP7        MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'5'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'REWRITE' SET TYPE IN MESSAGE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+         LABEL BEC9RTN1
+*             MOVE QOP7 TO QWTSBA.
+*ZC    296         MOVE  QOP7,TO,QWTSBA
+         MOVE  QOP7,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYQUEUEA        ' TO QOPNAME.
+*ZC    297         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         PERIOD 
+*             MOVE '5' TO QOPITEM.
+*ZC    298         MOVE  '5',TO,QOPITEM
+         MOVE  '5',TO,QOPITEM
+         PERIOD 
+*             MOVE 'REWRITE' TO QOPTYPE.
+*ZC    299         MOVE  'REWRITE',TO,QOPTYPE
+         MOVE  'REWRITE',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    300         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    301         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  LA    R7,BED9RTN2        R7=HANDLE RETURN
+*             MOVE 3 TO DEPCTRL.
+*ZC    303         MOVE  3,TO,DEPCTRL
+         MOVE  3,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS WRITEQ TS QUEUE('MYQUEUEA') FROM(TSREC)
+*ZC    304         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(TSREC),LX
+               ENGTH(10),ITEM(5),REWRITE
+         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(TSREC),LENGTH(10),X
+               ITEM(5),REWRITE
+         PERIOD 
+*                       LENGTH(10) ITEM(5) REWRITE END-EXEC.
+*      * BED9RTN2 EQU   *
+*         BEC9RTN2.
+*      * BAD WRITE, RAISE LENGERR
+*      *  MVC   QWTSBA,QOP9        MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'3'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'WRITE  ' SET TYPE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+         LABEL BEC9RTN2
+*             MOVE QOP9 TO QWTSBA.
+*ZC    316         MOVE  QOP9,TO,QWTSBA
+         MOVE  QOP9,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYQUEUEA        ' TO QOPNAME.
+*ZC    317         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         PERIOD 
+*             MOVE '3' TO QOPITEM.
+*ZC    318         MOVE  '3',TO,QOPITEM
+         MOVE  '3',TO,QOPITEM
+         PERIOD 
+*             MOVE 'WRITE  ' TO QOPTYPE.
+*ZC    319         MOVE  'WRITE  ',TO,QOPTYPE
+         MOVE  'WRITE  ',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    320         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    321         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  LA    R7,BED9RTN3        R7=HANDLE RETURN
+*             MOVE 4 TO DEPCTRL.
+*ZC    323         MOVE  4,TO,DEPCTRL
+         MOVE  4,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS WRITEQ TS QUEUE('MYQUEUEA') FROM(TSREC)
+*                       LENGTH(LEN) END-EXEC
+*      * BED9RTN3 EQU   *
+*ZC    324         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(TSREC),LX
+               ENGTH(LEN)
+         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(TSREC),LENGTH(LEN)
+*         BEC9RTN3.
+*      * 3RD Q NAME, 1ST ITEM, SHORT DATA
+*      *  MVC   QWTSBA,QOP11       MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYLONGQUEUEB' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'1'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'WRITE  ' SET TYPE IN MESSAGE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+         LABEL BEC9RTN3
+*             MOVE QOP11 TO QWTSBA.
+*ZC    336         MOVE  QOP11,TO,QWTSBA
+         MOVE  QOP11,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYLONGQUEUEB    ' TO QOPNAME.
+*ZC    337         MOVE  'MYLONGQUEUEB    ',TO,QOPNAME
+         MOVE  'MYLONGQUEUEB    ',TO,QOPNAME
+         PERIOD 
+*             MOVE '1' TO QOPITEM.
+*ZC    338         MOVE  '1',TO,QOPITEM
+         MOVE  '1',TO,QOPITEM
+         PERIOD 
+*             MOVE 'WRITE  ' TO QOPTYPE.
+*ZC    339         MOVE  'WRITE  ',TO,QOPTYPE
+         MOVE  'WRITE  ',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    340         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    341         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  MVI   TSREC,X'45'        BYTE TO PROPAGATE
+*      *  MVC   TSREC+1(49),TSREC  MAKE 50
+*             MOVE LOW-VALUES TO TSREC.
+*ZC    344         MOVE  LOW_VALUES,TO,TSREC
+         MOVE  LOW_VALUES,TO,TSREC
+         PERIOD 
+*             INSPECT TSREC CONVERTING LOW-VALUES TO X'45'.
+*      *  SR    R7,R7              DUMP IF CONDITION RAISED
+*ZC    345         INSPECT TSREC,CONVERTING,LOW_VALUES,TO,X'45'
+         INSPECT TSREC,CONVERTING,LOW_VALUES,TO,X'45'
+         PERIOD 
+*             MOVE 1 TO DEPCTRL.
+*ZC    347         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS WRITEQ TS QNAME('MYLONGQUEUEB') FROM(TSREC)
+*ZC    348         EXEC  CICS,WRITEQ,TS,QNAME('MYLONGQUEUEB'),FROM(TSREX
+               C),NUMITEMS(TSNUMIT),LENGTH(50)
+         EXEC  CICS,WRITEQ,TS,QNAME('MYLONGQUEUEB'),FROM(TSREC),NUMITEMX
+               S(TSNUMIT),LENGTH(50)
+         PERIOD 
+*                       NUMITEMS(TSNUMIT) LENGTH(50) END-EXEC.
+*      * DELETE 2ND Q NAME
+*      *  MVC   QWTSBA,QOP12       MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYLONGQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C' '       NO ITEM
+*      *  MVC   QOPTYPE,=C'DELETE ' SET TYPE IN MESSAGE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+*             MOVE QOP12 TO QWTSBA.
+*ZC    358         MOVE  QOP12,TO,QWTSBA
+         MOVE  QOP12,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYLONGQUEUEA    ' TO QOPNAME.
+*ZC    359         MOVE  'MYLONGQUEUEA    ',TO,QOPNAME
+         MOVE  'MYLONGQUEUEA    ',TO,QOPNAME
+         PERIOD 
+*             MOVE SPACE TO QOPITEM.
+*ZC    360         MOVE  SPACE,TO,QOPITEM
+         MOVE  SPACE,TO,QOPITEM
+         PERIOD 
+*             MOVE 'DELETE ' TO QOPTYPE.
+*ZC    361         MOVE  'DELETE ',TO,QOPTYPE
+         MOVE  'DELETE ',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    362         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    363         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  SR    R7,R7              DUMP IF CONDITION RAISED
+*             MOVE 1 TO DEPCTRL.
+*ZC    365         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS DELETEQ TS QNAME('MYLONGQUEUEA') END-EXEC.
+*ZC    366         EXEC  CICS,DELETEQ,TS,QNAME('MYLONGQUEUEA')
+         EXEC  CICS,DELETEQ,TS,QNAME('MYLONGQUEUEA')
+         PERIOD 
+*      * BAD DELETE, RAISE QIDERR 2
+*      *  MVC   QWTSBA,QOP13       MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'FRED' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C' '       NO ITEM
+*      *  MVC   QOPTYPE,=C'DELETE ' SET TYPE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+*             MOVE QOP13 TO QWTSBA.
+*ZC    375         MOVE  QOP13,TO,QWTSBA
+         MOVE  QOP13,TO,QWTSBA
+         PERIOD 
+*             MOVE 'FRED            ' TO QOPNAME.
+*ZC    376         MOVE  'FRED            ',TO,QOPNAME
+         MOVE  'FRED            ',TO,QOPNAME
+         PERIOD 
+*             MOVE SPACE TO QOPITEM.
+*ZC    377         MOVE  SPACE,TO,QOPITEM
+         MOVE  SPACE,TO,QOPITEM
+         PERIOD 
+*             MOVE 'DELETE ' TO QOPTYPE.
+*ZC    378         MOVE  'DELETE ',TO,QOPTYPE
+         MOVE  'DELETE ',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    379         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    380         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  LA    R7,BED9RTN4        R7=HANDLE RETURN
+*             MOVE 5 TO DEPCTRL.
+*      *  MVI   QIDNUM,C'2'        SET QIDERR 2
+*ZC    382         MOVE  5,TO,DEPCTRL
+         MOVE  5,TO,DEPCTRL
+         PERIOD 
+*             MOVE 2 TO QIDNUM.
+*ZC    384         MOVE  2,TO,QIDNUM
+         MOVE  2,TO,QIDNUM
+         PERIOD 
+*             EXEC CICS DELETEQ TS QUEUE('FRED') END-EXEC.
+*ZC    385         EXEC  CICS,DELETEQ,TS,QUEUE('FRED')
+         EXEC  CICS,DELETEQ,TS,QUEUE('FRED')
+         PERIOD 
+*      * BED9RTN4 EQU   *
+*         BEC9RTN4.
+*      * BAD WRITE, RAISE INVREQ
+*      *  MVC   QWTSBA,QOP15       MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'DFNAME' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'1'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'WRITE  ' SET TYPE IN MESSAGE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+         LABEL BEC9RTN4
+*             MOVE QOP15 TO QWTSBA.
+*ZC    396         MOVE  QOP15,TO,QWTSBA
+         MOVE  QOP15,TO,QWTSBA
+         PERIOD 
+*             MOVE 'DFNAME          ' TO QOPNAME.
+*ZC    397         MOVE  'DFNAME          ',TO,QOPNAME
+         MOVE  'DFNAME          ',TO,QOPNAME
+         PERIOD 
+*             MOVE '1' TO QOPITEM.
+*ZC    398         MOVE  '1',TO,QOPITEM
+         MOVE  '1',TO,QOPITEM
+         PERIOD 
+*             MOVE 'WRITE  ' TO QOPTYPE.
+*ZC    399         MOVE  'WRITE  ',TO,QOPTYPE
+         MOVE  'WRITE  ',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    400         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    401         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  LA    R7,BED9RTN5        R7=HANDLE RETURN
+*             MOVE 6 TO DEPCTRL.
+*ZC    403         MOVE  6,TO,DEPCTRL
+         MOVE  6,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS WRITEQ TS QUEUE('DFNAME') FROM(TSREC)
+*ZC    404         EXEC  CICS,WRITEQ,TS,QUEUE('DFNAME'),FROM(TSREC),LENX
+               GTH(10)
+         EXEC  CICS,WRITEQ,TS,QUEUE('DFNAME'),FROM(TSREC),LENGTH(10)
+         PERIOD 
+*                       LENGTH(10) END-EXEC.
+*      * BED9RTN5 EQU   *
+*         BEC9RTN5.
+*      * 1ST Q NAME, READ 1ST ITEM
+*      *  MVC   QWTSBA,QOP17       MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'1'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'READ   ' SET TYPE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+         LABEL BEC9RTN5
+*             MOVE QOP17 TO QWTSBA.
+*ZC    416         MOVE  QOP17,TO,QWTSBA
+         MOVE  QOP17,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYQUEUEA        ' TO QOPNAME.
+*ZC    417         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         PERIOD 
+*             MOVE '1' TO QOPITEM.
+*ZC    418         MOVE  '1',TO,QOPITEM
+         MOVE  '1',TO,QOPITEM
+         PERIOD 
+*             MOVE 'READ   ' TO QOPTYPE.
+*ZC    419         MOVE  'READ   ',TO,QOPTYPE
+         MOVE  'READ   ',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    420         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    421         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  SR    R7,R7              DUMP IF CONDITION RAISED
+*             MOVE 1 TO DEPCTRL.
+*ZC    423         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS READQ TS QUEUE('MYQUEUEA') INTO(TSREC)
+*ZC    424         EXEC  CICS,READQ,TS,QUEUE('MYQUEUEA'),INTO(TSREC),LEX
+               NGTH(10),ITEM(1)
+         EXEC  CICS,READQ,TS,QUEUE('MYQUEUEA'),INTO(TSREC),LENGTH(10),IX
+               TEM(1)
+         PERIOD 
+*                       LENGTH(10) ITEM(1) END-EXEC.
+*      * 1ST Q NAME, READ NEXT (2ND) ITEM
+*      *  MVC   QWTSBA,QOP18       MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'2'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'READ   ' SET TYPE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+*             MOVE QOP18 TO QWTSBA.
+*ZC    434         MOVE  QOP18,TO,QWTSBA
+         MOVE  QOP18,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYQUEUEA        ' TO QOPNAME.
+*ZC    435         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         PERIOD 
+*             MOVE '2' TO QOPITEM.
+*ZC    436         MOVE  '2',TO,QOPITEM
+         MOVE  '2',TO,QOPITEM
+         PERIOD 
+*             MOVE 'READ   ' TO QOPTYPE.
+*ZC    437         MOVE  'READ   ',TO,QOPTYPE
+         MOVE  'READ   ',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    438         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    439         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  SR    R7,R7              DUMP IF CONDITION RAISED
+*             MOVE 1 TO DEPCTRL.
+*ZC    441         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS READQ TS QUEUE('MYQUEUEA')
+*                       SET(ADDRESS OF TSRECLK)
+*ZC    442         EXEC  CICS,READQ,TS,QUEUE('MYQUEUEA'),SET(ADDRESS,OFX
+               ,TSRECLK),LENGTH(200),NEXT
+         EXEC  CICS,READQ,TS,QUEUE('MYQUEUEA'),SET(ADDRESS,OF,TSRECLK),X
+               LENGTH(200),NEXT
+         PERIOD 
+*                       LENGTH(200) NEXT END-EXEC.
+*      * 1ST Q NAME, READ NEXT (3RD) ITEM, RAISE ITEMERR 2
+*      *  MVC   QWTSBA,QOP19       MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'3'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'READ   ' SET TYPE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+*             MOVE QOP19 TO QWTSBA.
+*ZC    453         MOVE  QOP19,TO,QWTSBA
+         MOVE  QOP19,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYQUEUEA        ' TO QOPNAME.
+*ZC    454         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         PERIOD 
+*             MOVE '3' TO QOPITEM.
+*ZC    455         MOVE  '3',TO,QOPITEM
+         MOVE  '3',TO,QOPITEM
+         PERIOD 
+*             MOVE 'READ   ' TO QOPTYPE.
+*ZC    456         MOVE  'READ   ',TO,QOPTYPE
+         MOVE  'READ   ',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    457         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    458         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  LA    R7,BED9RTN6        R7=HANDLE RETURN
+*             MOVE 7 TO DEPCTRL.
+*      *  MVI   ITMNUM,C'2'        SET ITEMERR 2
+*ZC    460         MOVE  7,TO,DEPCTRL
+         MOVE  7,TO,DEPCTRL
+         PERIOD 
+*             MOVE 2 TO ITMNUM.
+*ZC    462         MOVE  2,TO,ITMNUM
+         MOVE  2,TO,ITMNUM
+         PERIOD 
+*             EXEC CICS READQ TS QUEUE('MYQUEUEA')
+*                       SET(ADDRESS OF TSRECLK)
+*ZC    463         EXEC  CICS,READQ,TS,QUEUE('MYQUEUEA'),SET(ADDRESS,OFX
+               ,TSRECLK),LENGTH(200),NEXT
+         EXEC  CICS,READQ,TS,QUEUE('MYQUEUEA'),SET(ADDRESS,OF,TSRECLK),X
+               LENGTH(200),NEXT
+         PERIOD 
+*                       LENGTH(200) NEXT END-EXEC.
+*      * BED9RTN6 EQU   *
+*         BEC9RTN6.
+*      *  MVI   QOPSEP+1,C' '      NO COL MARKER NOW
+*      *  MVI   QHSEP,C' '         NO COL MARKER NOW
+         LABEL BEC9RTN6
+*             MOVE SPACE TO QOPSEP.
+*ZC    470         MOVE  SPACE,TO,QOPSEP
+         MOVE  SPACE,TO,QOPSEP
+         PERIOD 
+*             MOVE SPACE TO QHSEP.
+*      * BAD Q NAME, READ ITEM, RAISE QIDERR 3
+*      *  MVC   QWTSBA,QOP1C2      MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'BERT' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'1'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'READ   ' SET TYPE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+*ZC    471         MOVE  SPACE,TO,QHSEP
+         MOVE  SPACE,TO,QHSEP
+         PERIOD 
+*             MOVE QOP1C2 TO QWTSBA.
+*ZC    480         MOVE  QOP1C2,TO,QWTSBA
+         MOVE  QOP1C2,TO,QWTSBA
+         PERIOD 
+*             MOVE 'BERT            ' TO QOPNAME.
+*ZC    481         MOVE  'BERT            ',TO,QOPNAME
+         MOVE  'BERT            ',TO,QOPNAME
+         PERIOD 
+*             MOVE '1' TO QOPITEM.
+*ZC    482         MOVE  '1',TO,QOPITEM
+         MOVE  '1',TO,QOPITEM
+         PERIOD 
+*             MOVE 'READ   ' TO QOPTYPE.
+*ZC    483         MOVE  'READ   ',TO,QOPTYPE
+         MOVE  'READ   ',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    484         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    485         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  LA    R7,BED9RTN7        R7=HANDLE RETURN
+*             MOVE 8 TO DEPCTRL.
+*      *  MVI   QIDNUM,C'3'        SET QIDERR 3
+*ZC    487         MOVE  8,TO,DEPCTRL
+         MOVE  8,TO,DEPCTRL
+         PERIOD 
+*             MOVE 3 TO QIDNUM.
+*ZC    489         MOVE  3,TO,QIDNUM
+         MOVE  3,TO,QIDNUM
+         PERIOD 
+*             EXEC CICS READQ TS QUEUE('BERT') SET(ADDRESS OF TSRECLK)
+*ZC    490         EXEC  CICS,READQ,TS,QUEUE('BERT'),SET(ADDRESS,OF,TSRX
+               ECLK),LENGTH(200),ITEM(1)
+         EXEC  CICS,READQ,TS,QUEUE('BERT'),SET(ADDRESS,OF,TSRECLK),LENGX
+               TH(200),ITEM(1)
+         PERIOD 
+*                       LENGTH(200) ITEM(1) END-EXEC.
+*      * BED9RTN7 EQU   *
+*         BEC9RTN7.
+*      * 1ST Q NAME, READ 2ND ITEM, LENGTH TRUNCATED, RAISE LENGERR
+*      *  MVC   QWTSBA,QOP3C2      MOVE WCC,SBA
+*      *  MVC   QOPNAME,=CL16'MYQUEUEA' SET Q NAME IN MSG
+*      *  MVI   QOPITEM,C'2'       SET ITEM IN MESSAGE
+*      *  MVC   QOPTYPE,=C'READ   ' SET TYPE
+*      *  MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
+         LABEL BEC9RTN7
+*             MOVE QOP3C2 TO QWTSBA.
+*ZC    502         MOVE  QOP3C2,TO,QWTSBA
+         MOVE  QOP3C2,TO,QWTSBA
+         PERIOD 
+*             MOVE 'MYQUEUEA        ' TO QOPNAME.
+*ZC    503         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         MOVE  'MYQUEUEA        ',TO,QOPNAME
+         PERIOD 
+*             MOVE '2' TO QOPITEM.
+*ZC    504         MOVE  '2',TO,QOPITEM
+         MOVE  '2',TO,QOPITEM
+         PERIOD 
+*             MOVE 'READ   ' TO QOPTYPE.
+*ZC    505         MOVE  'READ   ',TO,QOPTYPE
+         MOVE  'READ   ',TO,QOPTYPE
+         PERIOD 
+*             MOVE QOP TO QWTMSG.
+*ZC    506         MOVE  QOP,TO,QWTMSG
+         MOVE  QOP,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    507         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*      *  LA    R7,BED9RTN8        R7=HANDLE RETURN
+*             MOVE 9 TO DEPCTRL.
+*      *  MVI   LNGNUM,C'2'        SET LENGERR 2
+*ZC    509         MOVE  9,TO,DEPCTRL
+         MOVE  9,TO,DEPCTRL
+         PERIOD 
+*             MOVE 2 TO LNGNUM.
+*ZC    511         MOVE  2,TO,LNGNUM
+         MOVE  2,TO,LNGNUM
+         PERIOD 
+*             EXEC CICS READQ TS QUEUE('MYQUEUEA')
+*                       INTO(TSREC)
+*ZC    512         EXEC  CICS,READQ,TS,QUEUE('MYQUEUEA'),INTO(TSREC),LEX
+               NGTH(20),ITEM(2)
+         EXEC  CICS,READQ,TS,QUEUE('MYQUEUEA'),INTO(TSREC),LENGTH(20),IX
+               TEM(2)
+         PERIOD 
+*                       LENGTH(20) ITEM(2) END-EXEC.
+*      * BED9RTN8 EQU   *
+*         BEC9RTN8.
+*      * CLEAN UP AND BUILD QUEUES TO TEST CEBR
+         LABEL BEC9RTN8
+*             EXEC CICS SEND FROM(CEBRMSG1) LENGTH(CEBR1LEN) END-EXEC.
+*ZC    520         EXEC  CICS,SEND,FROM(CEBRMSG1),LENGTH(CEBR1LEN)
+         EXEC  CICS,SEND,FROM(CEBRMSG1),LENGTH(CEBR1LEN)
+         PERIOD 
+*      *  SR    R7,R7              DUMP IF CONDITION RAISED
+*             MOVE 1 TO DEPCTRL.
+*ZC    522         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             EXEC CICS DELETEQ TS QUEUE('MYQUEUEA') END-EXEC.
+*ZC    523         EXEC  CICS,DELETEQ,TS,QUEUE('MYQUEUEA')
+         EXEC  CICS,DELETEQ,TS,QUEUE('MYQUEUEA')
+         PERIOD 
+*             EXEC CICS DELETEQ TS QNAME('MYLONGQUEUEB') END-EXEC.
+*ZC    524         EXEC  CICS,DELETEQ,TS,QNAME('MYLONGQUEUEB')
+         EXEC  CICS,DELETEQ,TS,QNAME('MYLONGQUEUEB')
+         PERIOD 
+*      * MYQUEUEA IS HEX TABLE IN 16 ROWS OF 16
+*      *  LA    R6,HEXTAB          R6=HEX TABLE
+*      *  LA    R8,256             ALL THE HEX CHARS
+*      *  HEXLOOP  EQU   *
+*      *  STC   R7,0(R6)           SAVE IT
+*      *  AHI   R6,1               BUMP HEX TABLE POINTER
+*      *  AHI   R7,1               NEXT HEX
+*      *  BCT   R8,HEXLOOP         LOOP
+*      * WRITEQ ALL THE HEX CHARS FOR LATER TRANSLATION
+*      *  LA    R6,HEXTAB          R6=HEX TABLE
+*      *  LA    R8,16              R8=ITEMS TO WRITE
+*      *  SR    R7,R7              DUMP IF CONDITION RAISED
+*      *  HEXQ     EQU   *
+*      *  EXEC  CICS WRITEQ TS QUEUE('MYQUEUEA') FROM(0(R6)) LENGTH(16)
+*      *  AHI   R6,16              BUMP POINTER
+*      *  BCT   R8,HEXQ            LOOP
+*             MOVE 1 TO DEPCTRL.
+*ZC    543         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             MOVE 1 TO HEXCOUNT.
+*ZC    544         MOVE  1,TO,HEXCOUNT
+         MOVE  1,TO,HEXCOUNT
+         PERIOD 
+*         HEXQ.
+         LABEL HEXQ
+*             MOVE HEXINTAB (HEXCOUNT) TO HEXTAB16.
+*ZC    546         MOVE  HEXINTAB,'(',HEXCOUNT,')',TO,HEXTAB16
+         MOVE  HEXINTAB,'(',HEXCOUNT,')',TO,HEXTAB16
+         PERIOD 
+*             EXEC CICS WRITEQ TS QUEUE('MYQUEUEA')
+*ZC    547         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(HEXTAB16X
+               ),LENGTH(16)
+         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEA'),FROM(HEXTAB16),LENGTH(1X
+               6)
+         PERIOD 
+*                       FROM(HEXTAB16) LENGTH(16) END-EXEC.
+*             ADD 1 TO HEXCOUNT.
+*ZC    549         ADD   1,TO,HEXCOUNT
+         ADD   1,TO,HEXCOUNT
+         PERIOD 
+*             IF HEXCOUNT NOT = 17 THEN GO TO HEXQ.
+*ZC    550         IF    HEXCOUNT,NOT,=,17,THEN
+         IF    HEXCOUNT,NOT,=,17,THEN
+*      * MYQUEUEB IS 50 ROWS OF THE WHOLE HEX TABLE
+*      *  LA    R8,50              R8=ITEMS TO WRITE
+*      *  SR    R7,R7              DUMP IF CONDITION RAISED
+*      *  HEXBIGQ  EQU   *
+*      *  EXEC  CICS WRITEQ TS QUEUE('MYQUEUEB') FROM(HEXTAB)
+*      *        LENGTH(256)
+*      *  BCT   R8,HEXBIGQ         LOOP
+*ZC    550         GO    TO,HEXQ
+         GO    TO,HEXQ
+         PERIOD 
+*             MOVE 1 TO DEPCTRL.
+*ZC    558         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             MOVE 1 TO HEXCOUNT.
+*ZC    559         MOVE  1,TO,HEXCOUNT
+         MOVE  1,TO,HEXCOUNT
+         PERIOD 
+*         HEXBIGQ.
+         LABEL HEXBIGQ
+*             EXEC CICS WRITEQ TS QUEUE('MYQUEUEB') FROM(HEXTAB)
+*ZC    561         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEB'),FROM(HEXTAB),X
+               LENGTH(256)
+         EXEC  CICS,WRITEQ,TS,QUEUE('MYQUEUEB'),FROM(HEXTAB),LENGTH(256X
+               )
+         PERIOD 
+*                       LENGTH(256) END-EXEC.
+*             ADD 1 TO HEXCOUNT.
+*ZC    563         ADD   1,TO,HEXCOUNT
+         ADD   1,TO,HEXCOUNT
+         PERIOD 
+*             IF HEXCOUNT NOT = 51 THEN GO TO HEXBIGQ.
+*ZC    564         IF    HEXCOUNT,NOT,=,51,THEN
+         IF    HEXCOUNT,NOT,=,51,THEN
+*      * X'02CB458F' IS HEX QUEUE NAME
+*      * 20 LINES OF HELLO WORLD
+*      * 20 LINES OF ASCII HELLO WORLD
+*      * 20 LINES OF 72 BYTES OF HEXTAB
+*      * 20 LINES OF 36 BYTES OF HEXTAB
+*      *  SR    R7,R7              DUMP IF CONDITION RAISED
+*ZC    564         GO    TO,HEXBIGQ
+         GO    TO,HEXBIGQ
+         PERIOD 
+*             MOVE 1 TO DEPCTRL.
+*      *  LA    R6,1               CROSS CHECK ITEM NUMBER
+*      *  LA    R8,20              R8=ITEMS TO WRITE
+*      *  HEXQ1    EQU   *
+*      *  STH   R6,HWORLD          SAVE ITEM NUMBER
+*      *  EXEC  CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HWORLD) LENGTH(13)
+*      *  AHI   R6,1               ITEM COUNT
+*      *  BCT   R8,HEXQ1           LOOP
+*ZC    571         MOVE  1,TO,DEPCTRL
+         MOVE  1,TO,DEPCTRL
+         PERIOD 
+*             MOVE 1 TO HEXCOUNT.
+*ZC    579         MOVE  1,TO,HEXCOUNT
+         MOVE  1,TO,HEXCOUNT
+         PERIOD 
+*         HEXQ1.
+         LABEL HEXQ1
+*             MOVE HEXCOUNT TO HWORLDEX.
+*ZC    581         MOVE  HEXCOUNT,TO,HWORLDEX
+         MOVE  HEXCOUNT,TO,HWORLDEX
+         PERIOD 
+*             EXEC CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HWORLD)
+*ZC    582         EXEC  CICS,WRITEQ,TS,QUEUE(HEXQNAME),FROM(HWORLD),LEX
+               NGTH(13)
+         EXEC  CICS,WRITEQ,TS,QUEUE(HEXQNAME),FROM(HWORLD),LENGTH(13)
+         PERIOD 
+*                       LENGTH(13) END-EXEC.
+*             ADD 1 TO HEXCOUNT.
+*ZC    584         ADD   1,TO,HEXCOUNT
+         ADD   1,TO,HEXCOUNT
+         PERIOD 
+*             IF HEXCOUNT NOT = 21 THEN GO TO HEXQ1.
+*ZC    585         IF    HEXCOUNT,NOT,=,21,THEN
+         IF    HEXCOUNT,NOT,=,21,THEN
+*      *  LA    R8,20              R8=ITEMS TO WRITE
+*      * HEXQ2    EQU   *
+*      *  STH   R6,HWORLDAS        SAVE ITEM NUMBER
+*      *  EXEC  CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HWORLDAS) LENGTH(13X
+               )
+*      *  AHI   R6,1               ITEM COUNT
+*      *  BCT   R8,HEXQ2           LOOP
+*ZC    585         GO    TO,HEXQ1
+         GO    TO,HEXQ1
+         PERIOD 
+*             MOVE 1 TO HEXCOUNT.
+*ZC    592         MOVE  1,TO,HEXCOUNT
+         MOVE  1,TO,HEXCOUNT
+         PERIOD 
+*         HEXQ2.
+         LABEL HEXQ2
+*             MOVE HEXCOUNT TO HWORLDAX.
+*ZC    594         MOVE  HEXCOUNT,TO,HWORLDAX
+         MOVE  HEXCOUNT,TO,HWORLDAX
+         PERIOD 
+*             EXEC CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HWORLDAS)
+*ZC    595         EXEC  CICS,WRITEQ,TS,QUEUE(HEXQNAME),FROM(HWORLDAS),X
+               LENGTH(13)
+         EXEC  CICS,WRITEQ,TS,QUEUE(HEXQNAME),FROM(HWORLDAS),LENGTH(13)
+         PERIOD 
+*                       LENGTH(13) END-EXEC.
+*             ADD 1 TO HEXCOUNT.
+*ZC    597         ADD   1,TO,HEXCOUNT
+         ADD   1,TO,HEXCOUNT
+         PERIOD 
+*             IF HEXCOUNT NOT = 21 THEN GO TO HEXQ2.
+*ZC    598         IF    HEXCOUNT,NOT,=,21,THEN
+         IF    HEXCOUNT,NOT,=,21,THEN
+*      *  LA    R8,20              R8=ITEMS TO WRITE
+*      *  HEXQ3    EQU   *
+*      *  STH   R6,HEXCOUNT        SAVE ITEM NUMBER
+*      *  EXEC  CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HEXCOUNT) LENGTH(72X
+               )
+*      *  AHI   R6,1               ITEM COUNT
+*      *  BCT   R8,HEXQ3           LOOP
+*ZC    598         GO    TO,HEXQ2
+         GO    TO,HEXQ2
+         PERIOD 
+*             MOVE 1 TO HEXCOUNT.
+*ZC    605         MOVE  1,TO,HEXCOUNT
+         MOVE  1,TO,HEXCOUNT
+         PERIOD 
+*         HEXQ3.
+         LABEL HEXQ3
+*             EXEC CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HEXCOUNT)
+*ZC    607         EXEC  CICS,WRITEQ,TS,QUEUE(HEXQNAME),FROM(HEXCOUNT),X
+               LENGTH(72)
+         EXEC  CICS,WRITEQ,TS,QUEUE(HEXQNAME),FROM(HEXCOUNT),LENGTH(72)
+         PERIOD 
+*                       LENGTH(72) END-EXEC.
+*             ADD 1 TO HEXCOUNT.
+*ZC    609         ADD   1,TO,HEXCOUNT
+         ADD   1,TO,HEXCOUNT
+         PERIOD 
+*             IF HEXCOUNT NOT = 21 THEN GO TO HEXQ3.
+*ZC    610         IF    HEXCOUNT,NOT,=,21,THEN
+         IF    HEXCOUNT,NOT,=,21,THEN
+*      *  LA    R8,20              R8=ITEMS TO WRITE
+*      *  HEXQ4    EQU   *
+*      *  STH   R6,HEXCOUNT        SAVE ITEM NUMBER
+*      *  EXEC  CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HEXCOUNT) LENGTH(36X
+               )
+*      *  AHI   R6,1               ITEM COUNT
+*      *  BCT   R8,HEXQ4           LOOP
+*ZC    610         GO    TO,HEXQ3
+         GO    TO,HEXQ3
+         PERIOD 
+*             MOVE 1 TO HEXCOUNT.
+*ZC    617         MOVE  1,TO,HEXCOUNT
+         MOVE  1,TO,HEXCOUNT
+         PERIOD 
+*         HEXQ4.
+         LABEL HEXQ4
+*             EXEC CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HEXCOUNT)
+*ZC    619         EXEC  CICS,WRITEQ,TS,QUEUE(HEXQNAME),FROM(HEXCOUNT),X
+               LENGTH(36)
+         EXEC  CICS,WRITEQ,TS,QUEUE(HEXQNAME),FROM(HEXCOUNT),LENGTH(36)
+         PERIOD 
+*                       LENGTH(36) END-EXEC.
+*             ADD 1 TO HEXCOUNT.
+*ZC    621         ADD   1,TO,HEXCOUNT
+         ADD   1,TO,HEXCOUNT
+         PERIOD 
+*             IF HEXCOUNT NOT = 21 THEN GO TO HEXQ4.
+*ZC    622         IF    HEXCOUNT,NOT,=,21,THEN
+         IF    HEXCOUNT,NOT,=,21,THEN
+*ZC    622         GO    TO,HEXQ4
+         GO    TO,HEXQ4
+         PERIOD 
+*             EXEC CICS SEND FROM(CEBRMSG2) LENGTH(CEBR2LEN) END-EXEC.
+*ZC    623         EXEC  CICS,SEND,FROM(CEBRMSG2),LENGTH(CEBR2LEN)
+         EXEC  CICS,SEND,FROM(CEBRMSG2),LENGTH(CEBR2LEN)
+         PERIOD 
+*             EXEC CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL) END-EXEC.
+*ZC    624         EXEC  CICS,SEND,FROM(ENDMSG),LENGTH(ENDMSGL)
+         EXEC  CICS,SEND,FROM(ENDMSG),LENGTH(ENDMSGL)
+         PERIOD 
+*             EXEC CICS RETURN END-EXEC.
+*ZC    625         EXEC  CICS,RETURN
+         EXEC  CICS,RETURN
+         PERIOD 
+*      * HANDLE ROUTINES
+*      * BED9QID  DS    0H
+*      *  MVC   QWTSBA,QOP6        MOVE WCC,SBA FOR QIDERR 1
+*      *  CLI   QIDNUM,C'1'        1ST QIDERR ?
+*      *  BE    BED9QDOK           EXIT IF IT IS
+*      *  MVC   QWTSBA,QOP14       MOVE WCC,SBA FOR QIDERR 2
+*      *  CLI   QIDNUM,C'2'        2ND QIDERR ?
+*      *  BE    BED9QDOK           EXIT IF IT IS
+*      *  MVC   QWTSBA,QOP2C2      MOVE WCC,SBA FOR QIDERR 3
+*      *  BED9QDOK EQU   *
+*      *  MVC   QHANDCON,=C'QIDERR ' MOVE CONDITION
+*      *  B     QWTHSEND           EXIT
+*         BEC9QID.
+         LABEL BEC9QID
+*             GO TO QID1 QID2 QID3 DEPENDING ON QIDNUM.
+*ZC    641         GO    TO,QID1,QID2,QID3,DEPENDING,ON,QIDNUM
+         GO    TO,QID1,QID2,QID3,DEPENDING,ON,QIDNUM
+         PERIOD 
+*             GO TO ABEND.
+*ZC    642         GO    TO,ABEND
+         GO    TO,ABEND
+         PERIOD 
+*         QID1.
+         LABEL QID1
+*             MOVE QOP6 TO QWTSBA.
+*ZC    644         MOVE  QOP6,TO,QWTSBA
+         MOVE  QOP6,TO,QWTSBA
+         PERIOD 
+*             GO TO QIDEND.
+*ZC    645         GO    TO,QIDEND
+         GO    TO,QIDEND
+         PERIOD 
+*         QID2.
+         LABEL QID2
+*             MOVE QOP14 TO QWTSBA.
+*ZC    647         MOVE  QOP14,TO,QWTSBA
+         MOVE  QOP14,TO,QWTSBA
+         PERIOD 
+*             GO TO QIDEND.
+*ZC    648         GO    TO,QIDEND
+         GO    TO,QIDEND
+         PERIOD 
+*         QID3.
+         LABEL QID3
+*             MOVE QOP2C2 TO QWTSBA.
+*ZC    650         MOVE  QOP2C2,TO,QWTSBA
+         MOVE  QOP2C2,TO,QWTSBA
+         PERIOD 
+*         QIDEND.
+         LABEL QIDEND
+*             MOVE 'QIDERR ' TO QHANDCON.
+*ZC    652         MOVE  'QIDERR ',TO,QHANDCON
+         MOVE  'QIDERR ',TO,QHANDCON
+         PERIOD 
+*             GO TO QWTHSEND.
+*      *  BED9ITM  DS    0H
+*      *  MVC   QWTSBA,QOP8        MOVE WCC,SBA FOR ITEMERR 1
+*      *  CLI   ITMNUM,C'2'        2ND ITMERR ?
+*      *  BNE   BED9ITOK           EXIT IF NOT
+*      *  MVC   QWTSBA,QOP20       MOVE WCC,SBA FOR ITEMERR 2
+*      *  BED9ITOK EQU   *
+*      *  MVC   QHANDCON,=C'ITEMERR' MOVE CONDITION
+*      *  B     QWTHSEND           EXIT
+*ZC    653         GO    TO,QWTHSEND
+         GO    TO,QWTHSEND
+         PERIOD 
+*         BEC9ITM.
+         LABEL BEC9ITM
+*             GO TO ITM1 ITM2 DEPENDING ON ITMNUM.
+*ZC    663         GO    TO,ITM1,ITM2,DEPENDING,ON,ITMNUM
+         GO    TO,ITM1,ITM2,DEPENDING,ON,ITMNUM
+         PERIOD 
+*             GO TO ABEND.
+*ZC    664         GO    TO,ABEND
+         GO    TO,ABEND
+         PERIOD 
+*         ITM1.
+         LABEL ITM1
+*             MOVE QOP8 TO QWTSBA.
+*ZC    666         MOVE  QOP8,TO,QWTSBA
+         MOVE  QOP8,TO,QWTSBA
+         PERIOD 
+*             GO TO ITMEND.
+*ZC    667         GO    TO,ITMEND
+         GO    TO,ITMEND
+         PERIOD 
+*         ITM2.
+         LABEL ITM2
+*             MOVE QOP20 TO QWTSBA.
+*ZC    669         MOVE  QOP20,TO,QWTSBA
+         MOVE  QOP20,TO,QWTSBA
+         PERIOD 
+*         ITMEND.
+         LABEL ITMEND
+*             MOVE 'ITEMERR' TO QHANDCON.
+*ZC    671         MOVE  'ITEMERR',TO,QHANDCON
+         MOVE  'ITEMERR',TO,QHANDCON
+         PERIOD 
+*             GO TO QWTHSEND.
+*      *  BED9LNG  DS    0H
+*      *  MVC   QWTSBA,QOP10       MOVE WCC,SBA FOR LENGERR 1
+*      *  CLI   LNGNUM,C'2'        2ND LENGERR ?
+*      *  BNE   BED9LNOK           EXIT IF NOT
+*      *  MVC   QWTSBA,QOP4C2      MOVE WCC,SBA FOR ITEMERR 2
+*      *  BED9LNOK EQU   *
+*      *  MVC   QHANDCON,=C'LENGERR' MOVE CONDITION
+*      *  B     QWTHSEND           EXIT
+*ZC    672         GO    TO,QWTHSEND
+         GO    TO,QWTHSEND
+         PERIOD 
+*         BEC9LNG.
+         LABEL BEC9LNG
+*             GO TO LNG1 LNG2 DEPENDING ON LNGNUM.
+*ZC    682         GO    TO,LNG1,LNG2,DEPENDING,ON,LNGNUM
+         GO    TO,LNG1,LNG2,DEPENDING,ON,LNGNUM
+         PERIOD 
+*             GO TO ABEND.
+*ZC    683         GO    TO,ABEND
+         GO    TO,ABEND
+         PERIOD 
+*         LNG1.
+         LABEL LNG1
+*             MOVE QOP10 TO QWTSBA.
+*ZC    685         MOVE  QOP10,TO,QWTSBA
+         MOVE  QOP10,TO,QWTSBA
+         PERIOD 
+*             GO TO LNGEND.
+*ZC    686         GO    TO,LNGEND
+         GO    TO,LNGEND
+         PERIOD 
+*         LNG2.
+         LABEL LNG2
+*             MOVE QOP4C2 TO QWTSBA.
+*ZC    688         MOVE  QOP4C2,TO,QWTSBA
+         MOVE  QOP4C2,TO,QWTSBA
+         PERIOD 
+*         LNGEND.
+         LABEL LNGEND
+*             MOVE 'LENGERR' TO QHANDCON.
+*ZC    690         MOVE  'LENGERR',TO,QHANDCON
+         MOVE  'LENGERR',TO,QHANDCON
+         PERIOD 
+*             GO TO QWTHSEND.
+*      *  BED9INV  DS    0H
+*      *  MVC   QWTSBA,QOP16       MOVE WCC,SBA
+*      *  MVC   QHANDCON,=C'INVREQ ' MOVE CONDITION
+*ZC    691         GO    TO,QWTHSEND
+         GO    TO,QWTHSEND
+         PERIOD 
+*         BEC9INV.
+         LABEL BEC9INV
+*             MOVE QOP16 TO QWTSBA.
+*ZC    696         MOVE  QOP16,TO,QWTSBA
+         MOVE  QOP16,TO,QWTSBA
+         PERIOD 
+*             MOVE 'INVREQ ' TO QHANDCON.
+*      *  QWTHSEND EQU   *
+*      *  MVC   QWTMSG,QHANDCON    MOVE MESSAGE TEXT
+*      *  EXEC  CICS SEND FROM(QWT) LENGTH(QHANDL)
+*      *  BR    R7                 RETURN TO MAIN LINE
+*ZC    697         MOVE  'INVREQ ',TO,QHANDCON
+         MOVE  'INVREQ ',TO,QHANDCON
+         PERIOD 
+*         QWTHSEND.
+         LABEL QWTHSEND
+*             MOVE QHAND TO QWTMSG.
+*ZC    703         MOVE  QHAND,TO,QWTMSG
+         MOVE  QHAND,TO,QWTMSG
+         PERIOD 
+*             EXEC CICS SEND FROM(QWT) LENGTH(QHANDL) END-EXEC.
+*ZC    704         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         EXEC  CICS,SEND,FROM(QWT),LENGTH(QHANDL)
+         PERIOD 
+*             GO TO ABEND BEC9RTN1 BEC9RTN2 BEC9RTN3 BEC9RTN4
+*                         BEC9RTN5 BEC9RTN6 BEC9RTN7 BEC9RTN8
+*                   DEPENDING ON DEPCTRL.
+*ZC    705         GO    TO,ABEND,BEC9RTN1,BEC9RTN2,BEC9RTN3,BEC9RTN4,BX
+               EC9RTN5,BEC9RTN6,BEC9RTN7,BEC9RTN8,DEPENDING,ON,DEPCTRL
+         GO    TO,ABEND,BEC9RTN1,BEC9RTN2,BEC9RTN3,BEC9RTN4,BEC9RTN5,BEX
+               C9RTN6,BEC9RTN7,BEC9RTN8,DEPENDING,ON,DEPCTRL
+         PERIOD 
+*         ABEND.
+         LABEL ABEND
+*             EXEC CICS ABEND ABCODE('BEC9') END-EXEC.
+*ZC    709         EXEC  CICS,ABEND,ABCODE('BEC9')
+         EXEC  CICS,ABEND,ABCODE('BEC9')
+         PERIOD 
+         PROCEDURE END
+         END   
