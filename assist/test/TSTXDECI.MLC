@@ -1,0 +1,345 @@
+**********************************************************************
+*
+* TSTXDECI: Tests ASSIST XDECI instruction
+*
+* All tests should succeed.
+*
+**********************************************************************
+*
+TSTXDECI CSECT
+         STM   14,12,12(13)    Save caller's registers
+         LR    12,15           R12 = base register
+         USING TSTXDECI,12     Establish addressability
+         LA    14,SA           R14 --> usable save area
+         ST    14,8(,13)       Set caller's forward chain
+         ST    13,4(,14)       Set current back chain
+         LR    13,14           R13 = current save area
+*
+         SR    0,0             Initialize
+         ST    0,#Pass         ... number of passed tests
+         ST    0,#Fail         ... number of failed tests
+*
+         LM    3,5,TESTS       R3 --> 1st, R4 = len 1, R5 --> last
+LOOP     DS    0H
+         BAS   14,CHKXDECI     Perform one test
+         BXLE  3,4,LOOP        Perform all tests
+*
+         L     0,#Pass         Number of tests that passed
+         CVD   0,DW            Convert # passes to decimal
+         MVC   TL#Pass,Patt1   Copy edit pattern
+         ED    TL#Pass,DW+6    Put # passes in print line
+         L     0,#Fail         Number of tests that failed
+         CVD   0,DW            Convert # fails to decimal
+         MVC   TL#Fail,Patt1   Copy edit pattern
+         ED    TL#Fail,DW+6    Put # fails in print line
+         XPRNT TotLine,TLLen   Print totals
+*
+         L     13,4(,13)       Caller's save area
+         LM    14,12,12(13)    Restore caller's registers
+         SR    15,15           Return code always zero
+         BR    14              Return to caller
+*
+**********************************************************************
+*
+* CHKXDECI: Perform one test
+*
+* Input: R3 --> test case; DSECT TESTDATA
+*        R7  =  count successful tests
+*        R8  =  count failed tests
+*        R14 =  return address
+*
+**********************************************************************
+*
+CHKXDECI DS    0H
+         STM   14,12,12(13)        Save caller's registers
+*
+*        WARNING: no save area
+*
+         USING TESTDATA,3          Overlay test data
+*
+         MVI   ErrFlag,X'00'       No error yet
+*
+         MVC   Desc,TESTDESC       Copy test description to message
+         LA    0,INPUTVAL          Address of XDECI input
+         ST    0,FW                Convert
+         UNPK  DW(9),FW(5)         ... to printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   Addr,DW+4           Copy low 4 digits of address
+         MVC   Input,INPUTVAL      Copy input for XDECI
+         XPRNT InfoLine,ILLen      Show information for test
+*
+         SR    1,1                 Clear R1
+         SR    5,5                 Clear R5; XDECI output
+*
+         MVC   INPUTWK,INPUTVAL    Ensure sentinel value follows input
+*
+         XDECI 5,INPUTWK           Perform XDECI instruction
+*
+         IPM   0                   Get CC, pgm mask
+         SRL   0,28                Isolate CC
+*
+         LA    15,INPUTVAL         Relocate
+         LA    14,INPUTWK          ... R1
+         SR    15,14               ... from INPUTWK
+         AR    1,15                ... back to INPUTVAL
+*
+*        Check CC
+*
+         C     0,EXPCC             Is CC the expected CC?
+         BE    CCCKEND             Yes; next check         
+*
+*        Unexpected CC value
+*
+         STC   0,CCACT             Put CC in message
+         OI    CCACT,X'F0'         Make it printable
+         MVC   CCEXP,EXPCC+3
+         OI    CCEXP,X'F0'         Make it printable
+         XPRNT PCCERR,PCCERRL      Print error message
+         OI    ErrFlag,EFCC        CC error       
+*NSI     B     CCCKEND             Continue checks
+CCCKEND  DS    0H
+*
+*        Check output
+*
+         C     5,EXPOUT        Compare output to expected
+         BE    OUTCKEND        Equal; next check
+*
+*        Wrong output
+*
+         ST    5,FW            Convert actual value 
+         UNPK  DW(9),FW(5)     ... to printable hex
+         TR    DW,H2P          Finish conversion
+         MVC   VALACT,DW       Copy to print line
+         UNPK  DW(9),EXPOUT(5) Convert expected value to prt hex
+         TR    DW,H2P          Finish conversion
+         MVC   VALEXP,DW       Copy to print line
+         XPRNT PVALERR,PVALERRL    Print error message
+         OI    ErrFlag,EFOut   Output error
+*NSI     B     OUTCKEND        Continue checks
+OUTCKEND DS    0H
+*
+*        Check R1 value
+*
+CHKR1    DS    0H
+         C     1,EXPR1         Compare R1 to expected R1
+         BE    R1CKEND         Equal; next check
+*
+*        Wrong R1 value
+*
+         ST    1,FW            Convert actual value 
+         UNPK  DW(9),FW(5)     ... to printable hex
+         TR    DW,H2P          Finish conversion
+         MVC   R1ACT,DW        Copy to print line
+         UNPK  DW(9),EXPR1(5)  Convert expected value to prt hex
+         TR    DW,H2P          Finish conversion
+         MVC   R1EXP,DW        Copy to print line
+         XPRNT PR1ERR,PR1ERRL  Print error message
+         OI    ErrFlag,EFR1    R1 error
+*NSI     B     R1CKEND         Continue checks
+R1CKEND  DS    0H
+*
+*        Done with checks
+*
+CHKDone  DS    0H
+         CLI   ErrFlag,X'00'   Any errors?
+         BE    CHKPass         No; test was successful
+         L     0,#Fail         Yes; count
+         AHI   0,1             ... failed
+         ST    0,#Fail         ... test
+         B     CHKExit         Done
+CHKPass  DS    0H
+         L     0,#Pass         Count
+         AHI   0,1             ... passed
+         ST    0,#Pass         ... test
+*NSI     B     CHKExit         Done
+CHKExit  DS    0H
+         LM    14,12,12(13)    Restore caller's registers
+         BR    14              Return to caller
+*
+         LTORG ,
+*
+SA       DC    18F'-1'         Current save area
+*
+**********************************************************************
+*        Error flag
+**********************************************************************
+ErrFlag  DS    XL1             Error flag
+EFCC     EQU   X'80'           CC error
+EFOut    EQU   X'40'           Output error
+EFR1     EQU   X'20'           R1 error
+*
+**********************************************************************
+*        Counts and edit pattern
+**********************************************************************
+*
+#Pass    DS    F               Number of tests that passed
+#Fail    DS    F               Number of tests that failed
+*
+Patt1    DC    X'40202120'     Edit pattern for 3-digit number
+*
+**********************************************************************
+*        Messages
+**********************************************************************
+InfoLine DS    0C
+         DC    C' '
+         DC    C'***'
+         DC    C' '
+Desc     DS    CL(L'TESTDESC)  Test description 
+         DC    CL4' '
+         DC    C'InAddr '
+Addr     DS    CL4             Last four bytes of A(INPUTVAL)
+         DC    C'  InData '
+         DC    C'C'''
+Input    DS    CL(L'INPUTVAL)  Input data
+         DC    C''',C''$'''    Added sentinel byte
+ILLen    EQU   *-InfoLine
+*
+TotLine  DS    0C
+         DC    C' '
+         DC    C'Number of passed tests ='
+TL#Pass  DS    CL(L'Patt1)                     Num tests that passed
+         DC    C'   Number of failed tests ='
+TL#Fail  DS    CL(L'Patt1)                     Num tests that failed
+TLLen    EQU   *-TotLine
+*
+**********************************************************************
+*        Error messages
+**********************************************************************
+PCCERR   DS    0C
+         DC    C' '
+         DC    C'ERROR: CC = '
+CCACT    DS    CL1           Actual CC
+         DC    C'  Expected CC = '
+CCEXP    DS    CL1           Expected CC
+PCCERRL  EQU   *-PCCERR      Length of line
+*
+PVALERR  DS    0C
+         DC    C' '
+         DC    C'ERROR: Value = '
+VALACT   DS    CL8           Actual value
+         DC    C'  Expected value = '
+VALEXP   DS    CL8           Excected value
+PVALERRL EQU   *-PVALERR     Length of line
+*
+PR1ERR   DS    0C
+         DC    C' '
+         DC    C'ERROR: R1 = '
+R1ACT    DS    CL8           Actual R1
+         DC    C'  Expected R1 = '
+R1EXP    DS    CL8           Excected R1
+PR1ERRL  EQU   *-PR1ERR      Length of line
+*
+**********************************************************************
+*        Input work area; sentinel byte at end
+**********************************************************************
+INPUTWK  DS    CL(L'INPUTVAL)
+         DC    C'$'          Sentinel byte
+*
+**********************************************************************
+*        Storage used to convert to printable hexadecimal
+**********************************************************************
+DW       DS    D,XL1         Doubleword work and pad
+FW       DS    F,XL1         Fullword work and pad
+H2P      EQU   *-240         Convert to printable hex
+         DC    C'0123456789ABCDEF'
+*
+**********************************************************************
+*        Test conditions table - specify input and expected output
+**********************************************************************
+*
+         PRINT DATA
+TESTS    DC    A(TEST1,TDATALEN,TESTN,0)   A(1st,len 1,last,0)
+*
+TEST1    DS    0D
+*        Test 1
+         DC    F'0'                                Exp output
+         DC    F'0'                                Exp CC
+         DC    A(*+4+1)                            Exp R1
+         DC    CL(L'INPUTVAL)'0 '                  Input
+         DC    CL(L'TESTDESC)'Check "0"'
+*
+*        Test 2
+         DC    F'1234'                             Exp output
+         DC    F'2'                                Exp CC
+         DC    A(*+4+5)                            Exp R1
+         DC    CL(L'INPUTVAL)'+1234 '              Input  
+         DC    CL(L'TESTDESC)'Check "+1234"'
+*
+*        Test 3
+         DC    F'-1234'                            Exp output
+         DC    F'1'                                Exp CC
+         DC    A(*+4+5)                            Exp R1
+         DC    CL(L'INPUTVAL)'-1234 '              Input 
+         DC    CL(L'TESTDESC)'Check "-1234"'
+*
+*        Test 4
+         DC    F'1234'                             Exp output
+         DC    F'2'                                Exp CC
+         DC    A(*+4+7)                            Exp R1
+         DC    CL(L'INPUTVAL)'  +1234 '            Input  
+         DC    CL(L'TESTDESC)'Check "  +1234"'
+*
+*        Test 6
+         DC    F'123'                              Exp output
+         DC    F'2'                                Exp CC
+         DC    A(*+4+5)                            Exp R1
+         DC    CL(L'INPUTVAL)'  123+456 '          Input 
+         DC    CL(L'TESTDESC)'Check "  123+456"'
+*
+*        Test 7
+         DC    F'0'                                Exp output
+         DC    F'3'                                Exp CC
+         DC    A(*+4+1)                            Exp R1
+         DC    CL(L'INPUTVAL)' X'                  Input
+         DC    CL(L'TESTDESC)'Check no valid chars'
+*
+*        Test 8
+         DC    F'123456789'                        Exp output
+         DC    F'2'                                Exp CC
+         DC    A(*+4+12)                           Exp R1
+         DC    CL(L'INPUTVAL)'   123456789 '       Input
+         DC    CL(L'TESTDESC)'Check max digits (9)'
+*
+*        Test 9
+         DC    F'0'                                Exp output
+         DC    F'3'                                Exp CC
+         DC    A(*+4+13)                           Exp R1
+         DC    CL(L'INPUTVAL)'   1234567890 '      Input
+         DC    CL(L'TESTDESC)'Check 10 digits ERR'
+*
+*        Test 10
+         DC    F'0'                                Exp output
+         DC    F'3'                                Exp CC
+         DC    A(*+4+16)                           Exp R1
+         DC    CL(L'INPUTVAL)'   1234567890123 '   Input
+         DC    CL(L'TESTDESC)'Check 13 digits ERR'
+*
+*        Test 11
+         DC    F'0'                                Exp output
+         DC    F'3'                                Exp CC
+         DC    A(*+4+4)                            Exp R1
+         DC    CL(L'INPUTVAL)'   +'                Input
+         DC    CL(L'TESTDESC)'Check only plus ERR'
+*
+*        Test 12
+         DC    F'0'                                Exp output
+         DC    F'3'                                Exp CC
+         DC    A(*+4+20)                           Exp R1
+         DC    CL(L'INPUTVAL)' '                   Input
+         DC    CL(L'TESTDESC)'Check all blanks ERR'
+**********************************************************************
+*        Add new tests above this line
+**********************************************************************
+TESTN    EQU   *-TDATALEN      Last test
+*
+**********************************************************************
+*        DSECT for one test
+**********************************************************************
+TESTDATA DSECT ,
+EXPOUT   DS    F               Expected output
+EXPCC    DS    F               Expected condition code
+EXPR1    DS    F               Expected R1 value
+INPUTVAL DS    CL20            Input value
+TESTDESC DS    CL20            Test description
+TDATALEN EQU   *-TESTDATA      Length of test data
+         END

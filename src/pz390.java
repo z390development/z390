@@ -2355,24 +2355,37 @@ public class pz390 {
 				psw_check = false;
 				ins_setup_rx();
 				rv1 = 0;
-				boolean digit_found = false;
 				boolean minus = false;
+				int     numDigits = 0;
 				int     digit=0;
 				if (!tz390.opt_ascii){ // RPI 878
 					while (mem.get(xbd2_loc) == 0x40){
 						xbd2_loc++;
 					}
+					// check for leading plus or minus; get first possible digit
 					digit = mem.get(xbd2_loc) & 0xff;
-					while ((digit >= 0xf0 
-							&& digit <= 0xf9) // ASCII digit RPI 1179
-							|| digit == 0x4E  // EBCDIC +
-				            || digit == 0x60  // EBCDIC -
-				            ){
-						if (digit == 0x60){
-							minus = true;
-						} else if (digit != 0x4E){
-						    digit_found = true;
-						    rv1 = rv1*10 + (digit & 0xf);
+					if (digit == 0x4e || digit == 0x60) { // EBCDIC '+' or '-'
+						minus = (digit == 0x60);
+						// advance to first possible digit
+						xbd2_loc++;
+						digit = mem.get(xbd2_loc) & 0xff;
+					}
+
+					while (digit >= 0xf0 && digit <= 0xf9) { // EBCDIC '0' - '9'
+						numDigits++;
+						if (numDigits < 10) {
+							rv1 = rv1 * 10 + (digit & 0x0f);
+						} else {
+							// 10 or more digits; skip to next non-digit
+							xbd2_loc++;
+							digit = mem.get(xbd2_loc) & 0xff;
+							while (digit >= 0xf0 && digit <= 0xf9) {
+								numDigits++;
+								xbd2_loc++;
+								digit = mem.get(xbd2_loc) & 0xff;
+							}
+							// break out of loop
+							break;
 						}
 						xbd2_loc++;
 						digit = mem.get(xbd2_loc) & 0xff;
@@ -2381,29 +2394,45 @@ public class pz390 {
 					while (mem.get(xbd2_loc) == 0x20){
 						xbd2_loc++;
 					}
+					// check for leading plus or minus; get first possible digit
 					digit = mem.get(xbd2_loc) & 0xff;
-					while ((digit >= 0x30 
-							&& digit <= 0x39) // ASCII digit RPI 1179
-							|| digit == 0x2b  // ASCII +
-				            || digit == 0x2d  // ASCII -
-				            ){
-						if (digit == 0x2d){
-							minus = true;
-						} else if (digit != 0x2b){
-						    digit_found = true;
-						    rv1 = rv1*10 + (digit & 0XF);
+					if (digit == 0x2b || digit == 0x2d) { // ASCII '+' or '-'
+						minus = (digit == 0x2d);
+						// advance to first possible digit
+						xbd2_loc++;
+						digit = mem.get(xbd2_loc) & 0xff;
+					}
+
+					while (digit >= 0x30 && digit <= 0x39) { // ASCII '0' - '9'
+						numDigits++;
+						if (numDigits < 10) {
+							rv1 = rv1 * 10 + (digit & 0x0f);
+						} else {
+							// 10 or more digits; skip to next non-digit
+							xbd2_loc++;
+							digit = mem.get(xbd2_loc) & 0xff;
+							while (digit >= 0x30 && digit <= 0x39) {
+								numDigits++;
+								xbd2_loc++;
+								digit = mem.get(xbd2_loc) & 0xff;
+							}
+							// break out of loop
+							break;
 						}
 						xbd2_loc++;
 						digit = mem.get(xbd2_loc) & 0xff;
 					}
 				}
-				if (digit_found){
-					if (minus){     // RPI 1179
-				       rv1 = -rv1;
+				// number conversion complete; set GR1 value
+				reg.putInt(r1,xbd2_loc);
+
+				// set condition code (and register value if no error)
+				if (numDigits > 0 && numDigits < 10) {
+					if (minus) {
+						rv1 = -rv1;
 					}
 					reg.putInt(rf1+4,rv1);
-					reg.putInt(r1,xbd2_loc);
-					psw_cc = psw_cc0;
+					psw_cc = (rv1 > 0 ? psw_cc2 : (rv1 < 0 ? psw_cc1 : psw_cc0));
 				} else {
 					psw_cc = psw_cc3;
 				}
