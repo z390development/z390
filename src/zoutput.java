@@ -39,7 +39,7 @@ public class zoutput {
 	boolean debugtrace = false; // this, if true will show who called the method
 	boolean debug = false; // this, if true will show some debugging messages
 
-	// TODO - these lines are not needed when we don't need debug=true anymore
+	// the following two statements are needed only to support debug=true processing
 	StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 	String ste = "1 " + stackTraceElements[1].toString() + ": " + System.currentTimeMillis() + "\n" + "2 " + stackTraceElements[2].toString() + ": "
 					+ System.currentTimeMillis() + "\n" + "3 " + stackTraceElements[3].toString() + ": " + System.currentTimeMillis() + "\n" + "4 "

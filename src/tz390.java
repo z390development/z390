@@ -533,7 +533,7 @@ public  class  tz390 {
 	int filesopen = 0;
 	boolean debugtrace = false; // this, if true will show who called the method
 	boolean debug = false; // this, if true will show some debugging messages
-	// TODO - these lines are not needed when we don't need debug=true anymore
+	// the following two statements are needed only to support debug=true processing
 	StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 	String ste = ""; /*"1 " + stackTraceElements[1].toString() + ": " + System.currentTimeMillis() + "\n" + "2 " + stackTraceElements[2].toString() + ": "
 					+ System.currentTimeMillis() + "\n" + "3 " + stackTraceElements[3].toString() + ": " + System.currentTimeMillis() + "\n" + "4 "
@@ -5322,7 +5322,6 @@ private void process_options_file(String file_name,boolean required){ // RPI 115
 	 * 4.  @file option can be nested.
 	 */
     String opt_file_name = find_file_name(dir_opt,file_name,opt_type,dir_cur); // rpi 880
-	// TODO - make sure to only process filenames only once
     // RPI 1606   Circular reference of options file causes unspecified exception in tz390
     int    opt_file_line = 0; // rpi 880
     if (opt_file_name != null){
