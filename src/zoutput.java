@@ -36,8 +36,8 @@ public class zoutput {
 	LinkedList<String> filenames;
 	LinkedList<String> filenamesraf;
 	int filesopen = 0;
-	boolean debugtrace = true; // this, if true will show who called the method
-	boolean debug = true; // this, if true will show some debugging messages
+	boolean debugtrace = false; // this, if true will show who called the method
+	boolean debug = false; // this, if true will show some debugging messages
 
 	// TODO - these lines are not needed when we don't need debug=true anymore
 	StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
