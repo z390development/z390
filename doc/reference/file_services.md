@@ -132,19 +132,17 @@ variable. See [GETENV macro](svc_services.md#getenv-get-environment-variable) fo
 MYDCB    DCB   DDNAME=MYDATA, ...
 ```
 
-For execution in a Windows environment:
-
-``` dos
-SET MYDATA=c:\path\file
-CALL c:\path_to_z390\bat\ez390 c:\path\program parms
-```
-
-For execution in a \*nix environment
-
-``` sh
-export MYDATA=/path/file 
-/path_to_z390/bash/ez390 /path/program parms
-```
+Run using the following commands:
+=== "Windows"
+    ``` dos
+    SET MYDATA=c:\path\file
+    CALL c:\path_to_z390\bat\ez390 c:\path\program parms
+    ```
+=== "MacOS/Unix"
+    ``` sh
+    export MYDATA=/path/file 
+    /path_to_z390/bash/ez390 /path/program parms
+    ```
 
 !!! Info
     For both Windows and *nix, the invocation of ez390 should be preceded by a path to the z390 script folder.
