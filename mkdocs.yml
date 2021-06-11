@@ -28,5 +28,6 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting started: getting_started.md
+  - User guide: user_guide.md
   - ... | reference/**
   - ... | contributing/**

@@ -10,7 +10,7 @@ title: Welcome
 * Common z/OS(tm) and VSE compatible macros
 * TN3270 data streams
 * CICS compatible transaction processor
-* VSAM compatible file processing
+* QSAM/VSAM compatible file processing
 * Structured programming macros compatible with IBM HLASM Toolkit
 * GPLv2 licensed
 
