@@ -6,6 +6,9 @@ set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 cd ..               # go to root
 
+sysmac='sysmac(mac)'
+syscpy='syscpy(mac+zcobol/lib)'
+sys390='sys390(zcobol/lib)'
 
 bash/asm zcobol/lib/ABORT $sysmac $syscpy $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/asm zcobol/lib/ACCEPT $sysmac $syscpy $1 $2 $3 $4 $5 $6 $7 $8 $9
