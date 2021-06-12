@@ -1,0 +1,9 @@
+# action.yml
+name: 'z390 build'
+description: 'Build z390'
+outputs:
+  javaversion: # version of java
+    description: 'The version of java used'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
