@@ -1,4 +1,4 @@
-#!/bin/sh -l
+#!/bin/bash
 set -e
 echo "::set-output name=javaversion::$(java -version)"
 
