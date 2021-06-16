@@ -1,4 +1,6 @@
-cd..
+@setlocal
+@pushd %~dp0
+cd ..
 
 rem both the compiler javac.exe and jar builder jar.exe must be on sdk path
 rem note you can use current z390.jar with compatible java runtime with sdk
@@ -14,9 +16,12 @@ javac.exe -g:none *.java
 if errorlevel 1 pause jdk compiler error
 rem build z390.jar with sdk utility
 jar.exe cmf z390.man z390.jar *.class 
-if errorlevel 1 pause error building z390.jar
+if errorlevel 1 (
+    @echo error building z390.jar
+    exit \b %ERRORLEVEL%
+)
 dir 
-pause press ok to copy back test\z390.jar
+@REM pause press ok to copy back test\z390.jar
 cd..
 copy  jar\z390.jar
 dir z390.jar
