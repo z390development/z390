@@ -1,14 +1,16 @@
+@echo off
 rem CBLCLG translate CBL to MLC, assemble, link, and exec using z390 
-echo off
+setlocal
+pushd %~dp0
+cd ..
 if %1 == tron ECHO ON
 if %1 == tron shift
 if %1 == TRON ECHO ON
 if %1 == TRON shift
-if exist %1.CBL goto erase
-echo on
-pause no zcobol program found %1.CBL
-goto end
-:erase
+if not exist %1.CBL (
+    echo CBLCLG   ERROR: zCOBOL program not found %1.CBL
+    exit /b 1
+)
 if exist %1.MLC erase %1.MLC
 if exist %1.390 erase %1.390
 if exist %1.BAL erase %1.BAL
@@ -22,25 +24,28 @@ if exist %1.cpp erase %1.cpp
 if exist %1.java  erase %1.java    
 if exist %1.class erase %1.class   
 call %~dps0ZC390 %1 %2 %3 %4 %5 %6 %7 %8 %9
-if errorlevel 5 goto mzerr
-
+if %ERRORLEVEL% NEQ 0 (
+    echo CBLCLG   ERROR: COBOL compile error
+    exit /b %ERRORLEVEL%
+)
 rem get the z390 directory
 set "zdir=%~dps0..\"
 for %%f in ("%zdir%") do set "zdir=%%~ff"
 
 call %~dps0MZ390 %1  @%zdir%zcobol\opt\CBLOPT sysmac(%zdir%zcobol\mac+mac) syscpy(+%zdir%zcobol\cpy) %2 %3 %4 %5 %6 %7 %8 %9
-if errorlevel 5 goto mzerr
+if %ERRORLEVEL% NEQ 0 (
+    echo CBLCLG   ERROR: See errors on mz390 generated bal file and console
+    exit /b %ERRORLEVEL%
+)
+
 call %~dps0LZ390 %1 %2 %3 %4 %5 %6 %7 %8 %9
-if errorlevel 5 goto lzerr
+if %ERRORLEVEL% NEQ 0 (
+    echo CBLCLG   ERROR: See errors on lz390 generated lst file and console
+    exit /b %ERRORLEVEL%
+)
+
 call %~dps0EZ390 %1 sys390(+%zdir%zcobol\lib) %2 %3 %4 %5 %6 %7 %8 %9
-if errorlevel 5 goto ezerr
-goto end
-:mzerr
-pause see errors on mz390 generated bal file and console
-goto end
-:lzerr
-pause see errors on lz390 generated lst file and console
-goto end
-:ezerr
-pause see errors on ez390 generated log file and console
-:end
+if %ERRORLEVEL% NEQ 0 (
+    echo CBLCLG   ERROR: See errors on ez390 generated log file and console
+    exit /b %ERRORLEVEL%
+)
