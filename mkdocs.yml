@@ -1,6 +1,7 @@
 site_name: z390
 repo_url: https://github.com/z390development/z390/
 edit_uri: edit/main/doc/
+remote_branch: gh-pages-beta
 plugins:
   - search
   - awesome-pages
