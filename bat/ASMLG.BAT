@@ -24,15 +24,15 @@ for %%f in ("%zdir%") do set "zdir=%%~ff"
 call %~dps0mz390 %1  sysmac(+%zdir%mac) syscpy(+%zdir%mac) %2 %3 %4 %5 %6 %7 %8 %9
 if %ERRORLEVEL% NEQ 0 (
     echo ASMLG    ERROR: See errors on mz390 generated bal file and console
-    return /b %ERRORLEVEL%
+    exit /b %ERRORLEVEL%
 )
 call %~dps0LZ390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 if %ERRORLEVEL% NEQ 0 (
     echo ASMLG    ERROR: see errors on lz390 generated lst file and console
-    return /b %ERRORLEVEL%
+    exit /b %ERRORLEVEL%
 )
 call %~dps0EZ390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 if %ERRORLEVEL% NEQ 0 (
     echo ASMLG    ERROR: see errors on ez390 generated log file and console
-    return /b %ERRORLEVEL%
+    exit /b %ERRORLEVEL%
 )
