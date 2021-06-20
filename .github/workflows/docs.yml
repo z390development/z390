@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-      - feature/z390-docs
+      - feature/**
 
 jobs:
   deploy:

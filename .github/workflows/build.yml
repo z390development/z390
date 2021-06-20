@@ -2,9 +2,8 @@ name: Build z390
 on:
   push:
     branches:
-      - 'main'
-      - 'feature/**'
-      - '!**-nobuild'
+      - main
+      - feature/**
 
 jobs:
   build:
