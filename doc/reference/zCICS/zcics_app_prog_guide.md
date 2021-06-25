@@ -102,7 +102,7 @@ There is no cross-checking for register conflicts.
 
 ## Assembler EXEC CICS command syntax
 
-There is no formal definition of an EXEC CICS command in any IBM Manual.
+There is no formal definition of an EXEC CICS command in any IBM CICS(r) Manual.
 
 These assembler syntaxes are currently supported.
 
@@ -434,7 +434,7 @@ The parameters TERMINAL, WAIT, DEFAULT and TEXT are discarded.
 #### Conditions (RESP/RESP2)
 
 * INVREQ/0 - Attempt to execute this in a non-terminal attached task.
-  This is not documented in the IBM CICS Manuals.
+  This is not documented in the IBM CICS(r) Manuals.
 * LENGERR/E1
 
 #### Errors
@@ -465,7 +465,7 @@ name     EXEC  CICS SEND CONTROL
 #### Conditions (RESP/RESP2)
 
 * INVREQ/0 - Attempt to execute this in a non-terminal attached task.
-  This is not documented in the IBM CICS Manual.
+  This is not documented in the IBM CICS(r) Manual.
 
 #### Errors
 
@@ -588,7 +588,7 @@ The parameter is ignored for ESDS and RRDS.
     RBA access to a KSDS is not supported.
     
     DATASET is supported for legacy applications. It is noted that this parameter
-    no longer appears in the IBM(r) CICS Manuals.
+    no longer appears in the IBM CICS(r) Manuals.
     
     When conditions are raised as a result of a VSAM error, the RPL feedback codes
     (2nd and 4th bytes) are placed in EIBRCODE +1 and +2.
@@ -1646,631 +1646,780 @@ Return is to the last linker.
     likely to be ported back to a mainframe environment.
 
 ### ASKTIME 
-ABSTIME()
+```hlasm
+name     EXEC  CICS ASKTIME                                           X
+                    ABSTIME()
+```
 
-a) ASKTIME
-Name Operation Operands
-name EXEC CICS ASKTIME
-ABSTIME()
-Errors
-BAD PARM
+#### Errors
+
+* BAD PARM
 
 
 ### DELAY 
-REQID()/INTERVAL()/TIME() FOR/UNTIL HOURS() MINUTES() SECONDS()
 
-b) DELAY
-Name Operation Operands
-name EXEC CICS DELAY
-REQID()
-INTERVAL()/TIME()
-FOR/UNTIL
-HOURS()
-MINUTES()
-SECONDS()
-INTERVAL
-Can be specified as INTERVAL(s) through to INTERVAL(hhmmss).
-i.e. INTERVAL(234) means wait for 2 minutes 34 seconds.
-INTERVAL(label) is also permitted (extension).
-label must point to a 6-byte character field with leading character zeros
-as needed.
-e.g. INTERVAL(MYTIME)
-...
-MYTIME DC C'000234'
-TIME
-Can be specified as TIME(s) through to TIME(hhmmss).
-i.e. TIME(234) means resume the task at 2 minutes 34 seconds after
-midnight. Expiration time rules apply; see the IBM Application
-Programming Guide.
-TIME(label) is also permitted (extension).
-label must point to a 6-byte character field with leading character zeros
-as needed.
-e.g. TIME(MYTIME)
-...
-MYTIME DC C'000234'
-FOR HOURS() MINUTES() SECONDS()
-FOR is an alternative to INTERVAL.
-HOURS/MINUTES/SECONDS must be numeric values.
-UNTIL HOURS() MINUTES() SECONDS()
-UNTIL is an alternative to TIME.
-HOURS/MINUTES/SECONDS must be numeric values.
-The result from the parameters is a time-of-day.
-e.g. UNTIL SECONDS(10000) means resume the task at 02:46:40.
-Expiration time rules apply; see the IBM Application Programming Guide.
-If no parameters are specified, then DELAY INTERVAL(0) is assumed.
-Errors
-BAD PARM
-BOTH FOR AND UNTIL ARE SPECIFIED
-BOTH INTERVAL AND TIME ARE SPECIFIED
-FOR/UNTIL SPECIFIED, BUT NO TIME PARMS
-HOURS/MINUTES/SECONDS ARE INVALID WITH INTERVAL OR TIME
-HOURS/MINUTES/SECONDS ARE SPECIFIED WITHOUT FOR/UNTIL
-INTERVAL/TIME CANNOT BE SPECIFIED WITH FOR/UNTIL
-INTERVAL/TIME MUST BE 1 TO 6 BYTES
-INVALID REQID
-Conditions (RESP/RESP2)
-INVREQ/4
-INVREQ/5
-INVREQ/6
+```hlasm
+name     EXEC  CICS DELAY
+                    REQID()
+                    INTERVAL()/TIME()
+                    FOR/UNTIL
+                    HOURS()
+                    MINUTES()
+                    SECONDS()
+                    INTERVAL
+```
+
+#### Parameters
+##### INTERVAL
+
+* Can be specified as INTERVAL(s) through to INTERVAL(hhmmss).
+    * `INTERVAL(234)` means wait for 2 minutes 34 seconds.
+* INTERVAL(label) is also permitted (extension).
+    * _label_ must point to a 6-byte character field with leading character zeros
+      as needed.
+      ```hlasm
+      name     EXEC  CICS DELAY
+                          INTERVAL(MYTIME)
+      ......
+      MYTIME DC C'000234'
+      ```
+##### TIME
+
+* Can be specified as TIME(s) through to TIME(hhmmss).
+    * `TIME(234)` means resume the task at 2 minutes 34 seconds after
+      midnight. Expiration time rules apply; see the IBM CICS(r) Application
+      Programming Guide.
+* TIME(label) is also permitted (extension).
+    * label must point to a 6-byte character field with leading character zeros
+      as needed.
+      ```hlasm
+      name     EXEC  CICS DELAY
+                          TIME(MYTIME)
+      ......
+      MYTIME   DC    C'000234'
+      ```
+##### FOR HOURS() MINUTES() SECONDS()
+
+* FOR is an alternative to INTERVAL.
+* HOURS/MINUTES/SECONDS must be numeric values.
+
+##### UNTIL HOURS() MINUTES() SECONDS()
+
+* UNTIL is an alternative to TIME.
+* HOURS/MINUTES/SECONDS must be numeric values.
+* The result from the parameters is a time-of-day.
+    * `UNTIL SECONDS(10000)` means resume the task at 02:46:40.
+* Expiration time rules apply; see the IBM CICS(r) Application Programming Guide.
+* If no parameters are specified, then DELAY INTERVAL(0) is assumed.
+
+#### Errors
+
+* BAD PARM
+* BOTH FOR AND UNTIL ARE SPECIFIED
+* BOTH INTERVAL AND TIME ARE SPECIFIED
+* FOR/UNTIL SPECIFIED, BUT NO TIME PARMS
+* HOURS/MINUTES/SECONDS ARE INVALID WITH INTERVAL OR TIME
+* HOURS/MINUTES/SECONDS ARE SPECIFIED WITHOUT FOR/UNTIL
+* INTERVAL/TIME CANNOT BE SPECIFIED WITH FOR/UNTIL
+* INTERVAL/TIME MUST BE 1 TO 6 BYTES
+* INVALID REQID
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/4
+* INVREQ/5
+* INVREQ/6
 
 
 ### FORMATTIME 
-all parameters
 
-c) FORMATTIME
-Name Operation Operands
-name EXEC CICS FORMATTIME
-all parameters
-Notes:
-STRINGFORMAT is discarded as there is only one option.
-DATESEP(label) and TIMESEP(label) are added as extensions.
-Only the first byte is used.
-DATESTRING returns the following 25-byte string.
-The time zone (e.g. GMT) is not returned.
-e.g. "Mon, 17 Dec 2007 10:20:30"
-Errors
-ABSTIME IS MANDATORY
-BAD PARM
-Conditions (RESP/RESP2)
-INVREQ/1
+```hlasm
+name     EXEC  CICS FORMATTIME
+```
+
+Refer to IBM CICS(r) Application Programming reference for available parameters.
+
+!!! Note
+    * STRINGFORMAT is discarded as there is only one option.
+    * DATESEP(label) and TIMESEP(label) are added as extensions.
+      Only the first byte is used.
+    * DATESTRING returns the following 25-byte string.
+      "Mon, 17 Dec 2007 10:20:30". The time zone (e.g. GMT) is not returned.
+#### Errors
+
+* ABSTIME IS MANDATORY
+* BAD PARM
+#### Conditions (RESP/RESP2)
+
+* INVREQ/1
+
+### START
+
+``` hlasm
+name     EXEC  CICS START
+                    TRANSID()
+                    INTERVAL()/TIME()
+                    TERMID()
+                    REQID()
+                    FROM()
+                    LENGTH()/FLENGTH()
+                    CHANNEL()
+                    QUEUE()
+                    RTRANSID()
+                    RTERMID()
+                    AFTER/AT
+                    HOURS()
+                    MINUTES()
+                    SECONDS()
+```
+
+!!! Warning
+    * USERID is not supported.
+
+#### Parameters
+
+* In zCICS both CHANNEL and other parms may be specified.
+    * A warning MNOTE is issued.
+* INTERVAL and TIME follow the same syntax and rules as for DELAY.
+* AFTER and AT follow the same syntax and rules as FOR and UNTIL in
+  DELAY above.
+#### Errors
+
+* AFTER/AT SPECIFIED, BUT NO TIME PARAMETERS
+* BAD PARM
+* BOTH AFTER AND AT ARE SPECIFIED
+* BOTH INTERVAL AND TIME ARE SPECIFIED
+* BOTH LENGTH AND FLENGTH ARE SPECIFIED
+* FROM/(F)LENGTH MUST BOTH BE MISSING OR BOTH SPECIFIED
+* HOURS/MINUTES/SECONDS ARE INVALID WITH INTERVAL OR TIME
+* HOURS/MINUTES/SECONDS ARE SPECIFIED WITHOUT AFTER/AT
+* INTERVAL/TIME CANNOT BE SPECIFIED WITH AFTER/AT
+* INTERVAL/TIME MUST BE 1 TO 6 BYTES
+* INVALID CHANNEL
+* INVALID QUEUE
+* INVALID REQID
+* INVALID RTERMID
+* INVALID RTRANSID
+* INVALID TERMID
+* INVALID TRANSID
+* TRANSID IS MANDATORY
+
+#### Warning
+
+* CHANNEL AND OTHER PARMS SPECIFIED BUT ALLOWED
+
+#### Conditions (RESP/RESP2)
+
+* CHANNELERR/1
+* INVREQ/0
+* INVREQ/4
+* INVREQ/5
+* INVREQ/6
+* IOERR
+* LENGERR
+* TERMIDERR
+* TRANSIDERR
 
 
-### START 
-TRANSID() INTERVAL()/TIME() TERMID() CHANNEL() REQID() FROM() LENGTH() QUEUE() RTRANSID() RTERMID() AFTER/AT HOURS() MINUTES() SECONDS()
+### RETRIEVE
 
-d) START
-Name Operation Operands
-name EXEC CICS START
-TRANSID()
-INTERVAL()/TIME()
-TERMID()
-REQID()
-FROM()
-LENGTH()/FLENGTH()
-CHANNEL()
-QUEUE()
-RTRANSID()
-RTERMID()
-AFTER/AT
-HOURS()
-MINUTES()
-SECONDS()
-USERID is not supported.
-In zCICS both CHANNEL and other parms may be specified.
-A warning MNOTE is issued.
-INTERVAL and TIME follow the same syntax and rules as for DELAY.
-AFTER and AT follow the same syntax and rules as FOR and UNTIL in
-DELAY above.
-Errors
-AFTER/AT SPECIFIED, BUT NO TIME PARAMETERS
-BAD PARM
-BOTH AFTER AND AT ARE SPECIFIED
-BOTH INTERVAL AND TIME ARE SPECIFIED
-BOTH LENGTH AND FLENGTH ARE SPECIFIED
-FROM/(F)LENGTH MUST BOTH BE MISSING OR BOTH SPECIFIED
-HOURS/MINUTES/SECONDS ARE INVALID WITH INTERVAL OR TIME
-HOURS/MINUTES/SECONDS ARE SPECIFIED WITHOUT AFTER/AT
-INTERVAL/TIME CANNOT BE SPECIFIED WITH AFTER/AT
-INTERVAL/TIME MUST BE 1 TO 6 BYTES
-INVALID CHANNEL
-INVALID QUEUE
-INVALID REQID
-INVALID RTERMID
-INVALID RTRANSID
-INVALID TERMID
-INVALID TRANSID
-TRANSID IS MANDATORY
-Warning
- CHANNEL AND OTHER PARMS SPECIFIED BUT ALLOWED
-Conditions (RESP/RESP2)
- CHANNELERR/1
-INVREQ/0
-INVREQ/4
-INVREQ/5
-INVREQ/6
-IOERR
-LENGERR
-TERMIDERR
-TRANSIDERR
+```hlasm
+name     EXEC  CICS RETRIEVE
+                    INTO()/SET()
+                    LENGTH()/FLENGTH()
+                    RTRANSID()
+                    RTERMID()
+                    QUEUE()
+```
 
+!!! Warning
+    WAIT is not supported.
 
-### RETRIEVE 
-INTO()/SET() LENGTH() RTRANSID() RTERMID() QUEUE()
+#### Errors
 
-e) RETRIEVE
-Name Operation Operands
-name EXEC CICS RETRIEVE
-INTO()/SET()
-LENGTH()/FLENGTH()
-RTRANSID()
-RTERMID()
-QUEUE()
-WAIT is not supported.
-Errors
-BAD PARM
-BOTH INTO AND SET ARE SPECIFIED
-BOTH LENGTH AND FLENGTH ARE SPECIFIED
-INTO OR SET MUST BE SPECIFIED
-INVALID QUEUE
-INVALID RTERMID
-INVALID RTRANSID
-LENGTH OR FLENGTH MUST BE A LABEL
-SET REQUIRES LENGTH OR FLENGTH
-Conditions (RESP/RESP2)
-INVREQ/0
-ENDDATA
-ENVDEFERR
-LENGERR
+* BAD PARM
+* BOTH INTO AND SET ARE SPECIFIED
+* BOTH LENGTH AND FLENGTH ARE SPECIFIED
+* INTO OR SET MUST BE SPECIFIED
+* INVALID QUEUE
+* INVALID RTERMID
+* INVALID RTRANSID
+* LENGTH OR FLENGTH MUST BE A LABEL
+* SET REQUIRES LENGTH OR FLENGTH
 
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0
+* ENDDATA
+* ENVDEFERR
+* LENGERR
 
 ### CANCEL 
-REQID()
 
-f) CANCEL
-Name Operation Operands
-name EXEC CICS CANCEL
-REQID()
-TRANSID is not supported.
-Errors
-BAD PARM
-INVALID REQID
-REQID IS MANDATORY
-Conditions (RESP/RESP2)
-INVREQ
-NOTFND
+```hlasm
+name     EXEC  CICS CANCEL
+                    REQID()
+```
 
+!!! Warning
+    TRANSID is not supported.
+
+#### Errors
+
+* BAD PARM
+* INVALID REQID
+* REQID IS MANDATORY
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ
+* NOTFND
 
 ## Command reference - Task Control
 
-### ENQ 
-RESOURCE() LENGTH() NOSUSPEND
+### ENQ
 
-a) ENQ
-Name Operation Operands
-name EXEC CICS ENQ
-RESOURCE()
-LENGTH()
-NOSUSPEND
-LENGTH
- Can be specified as LENGTH(value) or LENGTH(label)
-LENGTH(value) supports the use of the length attribute.
-Errors
-BAD PARM
-RESOURCE IS MANDATORY
-*** ENQ ON ADDRESS MAY NOT WORK IN zCICS
-*** BUT THE COMMAND WILL BE PROCESSED
-*** PLEASE CONTACT THE AUTHOR FOR ADVICE
-Conditions (RESP/RESP2)
-ENQBUSY
-LENGERR/1
+```hlasm
+name     EXEC  CICS ENQ
+                    RESOURCE()
+                    LENGTH()
+                    NOSUSPEND
+```
 
+#### Parameters
+
+##### LENGTH
+
+* Can be specified as LENGTH(value) or LENGTH(label)
+* LENGTH(value) supports the use of the length attribute.
+
+#### Errors
+
+* BAD PARM
+* RESOURCE IS MANDATORY
+
+!!! Warning
+    ENQ on address may not work in zCICS
+    but the command will be processed.
+
+#### Conditions (RESP/RESP2)
+
+* ENQBUSY
+* LENGERR/1
 
 ### DEQ 
-RESOURCE() LENGTH()
 
-b) DEQ
-Name Operation Operands
-name EXEC CICS DEQ
-RESOURCE()
-LENGTH()
-LENGTH
- Can be specified as LENGTH(value) or LENGTH(label)
-LENGTH(value) supports the use of the length attribute.
-Errors
-BAD PARM
-RESOURCE IS MANDATORY
-Conditions (RESP/RESP2)
-LENGERR/1
+```hlasm
+name     EXEC  CICS DEQ
+                    RESOURCE()
+                    LENGTH()
+```
+
+#### Parameters
+
+##### LENGTH
+
+* Can be specified as LENGTH(value) or LENGTH(label)
+* LENGTH(value) supports the use of the length attribute.
+
+#### Errors
+
+* BAD PARM
+* RESOURCE IS MANDATORY
+
+#### Conditions (RESP/RESP2)
+
+* LENGERR/1
 
 ## Command reference - BMS
 
 ### RECEIVE 
-MAP(name) MAPSET(name) INTO()
 
-a) RECEIVE MAP
-Name Operation Operands
-name EXEC CICS RECEIVE MAP()
-MAPSET()
-INTO()
-TERMINAL and ASIS are accepted and discarded.
-SET, FROM and LENGTH are not supported.
-MAP can be a quoted string, maximum 7 characters or a label pointing to a
-7-byte field.
-If MAP is a label, then INTO is mandatory.
-Note: The map structure will not be cleared before the mapping takes
-place.
-If MAP is a string, then INTO is optional...
-If INTO is omitted, the default is map.I
-Note: The map structure will be cleared before the mapping takes place.
+```hlasm
+name     EXEC  CICS RECEIVE MAP()
+                    MAPSET()
+                    INTO()
+```
+
+#### Parameters
+
+!!! Warning
+    * TERMINAL and ASIS are accepted and discarded.
+    * SET, FROM and LENGTH are not supported.
+
+##### MAP
+
+* MAP can be a quoted string, maximum 7 characters or a label pointing to a
+  7-byte field.
+* If MAP is a label, then INTO is mandatory.
+    * The map structure will not be cleared before the mapping takes
+      place.
+* If MAP is a string, then INTO is optional.
+    * If INTO is omitted, the default is map.I
+    * The map structure will be cleared before the mapping takes place.
+
+##### MAPSET
+
 MAPSET can be a quoted string, maximum 7 characters or an address
 pointing to an 8-byte field containing no more than 7 characters.
+
 If MAPSET is omitted, then the MAPname is used.
-Errors
-BAD PARM
-FROM NOT SUPPORTED
-INTO IS REQUIRED WHEN MAP IS A LABEL
-INVALID MAP NAME
-INVALID MAPSET NAME
-LENGTH NOT SUPPORTED
-MAP IS MANDATORY
-Conditions (RESP/RESP2)
-Note: EIBRESP2 is an extension for MAPFAIL; please see the zCICS BMS
-Guide for more information.
-Many of the conditions can arise through a mismatch of map and
-structure. Typically a map is re-assembled but the programs using it
-are not.
-INVMPSZ/0
-MAPFAIL/1 The map cannot be found in the mapset.
-MAPFAIL/2 A short read key (CLEAR or PA) has been pressed or there
-are no modified fields.
-MAPFAIL/3 Data has been received, but there are no named fields in the
-map.
-MAPFAIL/4 An SBA has been located, but there is no field in the map
-that matches.
-MAPFAIL/5 An SBA has been located, but it matches an unnamed field.
-MAPFAIL/6 The data received for this field is longer than the DFHMDF
-LENGTH= parameter.
-MAPFAIL/7 There has been a mismatch between the physical map and
-the DSECT.
-MAPFAIL/8 Data to be processed by PICIN is over 31 digits.
-Data is not numeric after being PACKed.
-Data length is greater than the edit pattern allows.
-INVREQ/0
+#### Errors
 
-### SEND 
-MAP(name) MAPSET(name) CURSOR/CURSOR() DATAONLY/MAPONLY ERASE/ERASEAUP FROM() LENGTH() ALARM FREEKB FRSET SET()
+* BAD PARM
+* FROM NOT SUPPORTED
+* INTO IS REQUIRED WHEN MAP IS A LABEL
+* INVALID MAP NAME
+* INVALID MAPSET NAME
+* LENGTH NOT SUPPORTED
+* MAP IS MANDATORY
 
-b) SEND MAP
-Name Operation Operands
-name EXEC CICS SEND MAP()
-MAPSET()
-CURSOR/CURSOR()
-DATAONLY/MAPONLY
-ERASE/ERASEAUP
-FROM()
-LENGTH()
-ALARM
-FREEKB
-FRSET
-SET()
-TERMINAL and WAIT are accepted and discarded.
-ACCUM is not supported.
-MAP can be a quoted string, maximum 7 characters or a label pointing to a
-7-byte field.
-If MAP is a label, then FROM is mandatory.
-If MAP is a string, then FROM and/or LENGTH are optional...
-If FROM is omitted, the default is map.O
-If LENGTH is omitted, the default is map.L
-LENGTH
- LENGTH is supported but the value used is always that of the structure
- length. 
-Can be specified as LENGTH(value) or LENGTH(label)
-LENGTH(value) supports the use of the length attribute.
-label must point to a 2-byte hex value.
-MAPSET can be a quoted string, maximum 7 characters or a label pointing
-to an 8-byte field containing no more than 7 characters.
-If MAPSET is omitted, then MAP is used.
+#### Conditions (RESP/RESP2)
+
+!!! Note 
+    EIBRESP2 is an extension for MAPFAIL; 
+    please see the [zCICS BMS Guide]() for more information.
+
+    Many of the conditions can arise through a mismatch of map and
+    structure. Typically a map is re-assembled but the programs using it
+    are not.
+
+* INVMPSZ/0
+* MAPFAIL/1 The map cannot be found in the mapset.
+* MAPFAIL/2 A short read key (CLEAR or PA) has been pressed or there
+  are no modified fields.
+* MAPFAIL/3 Data has been received, but there are no named fields in the map.
+* MAPFAIL/4 An SBA has been located, but there is no field in the map that matches.
+* MAPFAIL/5 An SBA has been located, but it matches an unnamed field.
+* MAPFAIL/6 The data received for this field is longer than the DFHMDF
+  LENGTH= parameter.
+* MAPFAIL/7 There has been a mismatch between the physical map and
+  the DSECT.
+* MAPFAIL/8 
+    * Data to be processed by PICIN is over 31 digits.
+    * Data is not numeric after being PACKed.
+    * Data length is greater than the edit pattern allows.
+* INVREQ/0
+
+### SEND
+
+```hlasm
+name     EXEC  CICS SEND MAP()
+                    MAPSET()
+                    CURSOR/CURSOR()
+                    DATAONLY/MAPONLY
+                    ERASE/ERASEAUP
+                    FROM()
+                    LENGTH()
+                    ALARM
+                    FREEKB
+                    FRSET
+                    SET()
+```
+#### Parameters
+
+!!! Warning
+    * TERMINAL and WAIT are accepted and discarded.
+    * ACCUM is not supported.
+
+##### MAP
+
+* MAP can be a quoted string, maximum 7 characters or a label pointing to a
+  7-byte field.
+* If MAP is a label, then FROM is mandatory.
+* If MAP is a string, then FROM and/or LENGTH are optional.
+    * If FROM is omitted, the default is map.O
+    * If LENGTH is omitted, the default is map.L
+
+##### LENGTH
+
+* LENGTH is supported but the value used is always that of the structure length. 
+* Can be specified as LENGTH(value) or LENGTH(label)
+* LENGTH(value) supports the use of the length attribute.
+* _label_ must point to a 2-byte hex value.
+
+##### MAPSET
+
+* MAPSET can be a quoted string, maximum 7 characters or a label pointing
+  to an 8-byte field containing no more than 7 characters.
+* If MAPSET is omitted, then MAP is used.
+
+##### SET
+
 SET() is currently intended to be an internal parameter.
-It does not conform to the standard used for BMS PAGING.
-Errors
-BAD PARM
-CONTROL IS NOT COMPATABLE WITH SEND MAP
-CURSOR POSITION AND SYMBOLIC CURSOR SPECIFIED
-DATAONLY AND MAPONLY SPECIFIED
-ERASE AND ERASEAUP SPECIFIED
-FROM IS REQUIRED WHEN MAP IS A LABEL
-INVALID MAP NAME
-INVALID MAPSET NAME
-MAP IS MANDATORY
-Conditions (RESP/RESP2)
-Note: EIBRESP2 is an extension for MAPFAIL, please see the zCICS BMS
-Guide for more information.
-INVMPSZ/0
-MAPFAIL/1 The map cannot be found in the mapset.
-MAPFAIL/8 Data to be processed by PICOUT is over 31 digits.
-Data is not numeric after being PACKed.
- Data length is greater than the edit pattern allows.
-MAPFAIL/9 Override field or colour attribute is invalid
-INVREQ/0
- Note: Attempt to execute this in a non-terminal attached task.
- This is not documented in the Manual.
+
+!!! Warning
+    SET does not conform to the standard used for BMS PAGING.
+
+#### Errors
+
+* BAD PARM
+* CONTROL IS NOT COMPATABLE WITH SEND MAP
+* CURSOR POSITION AND SYMBOLIC CURSOR SPECIFIED
+* DATAONLY AND MAPONLY SPECIFIED
+* ERASE AND ERASEAUP SPECIFIED
+* FROM IS REQUIRED WHEN MAP IS A LABEL
+* INVALID MAP NAME
+* INVALID MAPSET NAME
+* MAP IS MANDATORY
+
+#### Conditions (RESP/RESP2)
+
+!!! Note 
+    EIBRESP2 is an extension for MAPFAIL
+    See [zCICS BMS Guide]() for more information.
+
+* INVMPSZ/0
+* MAPFAIL/1 The map cannot be found in the mapset.
+* MAPFAIL/8 
+    * Data to be processed by PICOUT is over 31 digits.
+    * Data is not numeric after being PACKed.
+    * Data length is greater than the edit pattern allows.
+* MAPFAIL/9 Override field or colour attribute is invalid
+* INVREQ/0
+    * Attempt to execute this in a non-terminal attached task.
+      This is not documented in the IBM CICS(r) Manuals.
 
 ### SEND CONTROL CURSOR/CURSOR() ERASE/ERASEAUP ALARM FREEKB FRSET
 
 ## Command reference - Dump Control
 
 ### DUMP 
-TRANSACTION DUMPCODE() COMPLETE FROM() LENGTH()/FLENGTH() SEGMENTLIST() LENGTHLIST() NUMSEGMENTS()
 
-a) DUMP
-Name Operation Operands
-name EXEC CICS DUMP
-TRANSACTION
-DUMPCODE()
-COMPLETE
-FROM()
-LENGTH()/FLENGTH()
-SEGMENTLIST()
-LENGTHLIST()
-NUMSEGMENTS()
-TRANSACTION is mandatory.
-DUMPCODE is mandatory and can be a constant or label.
-label must point to a 4-byte field.
-No syntax checking is done.
-COMPLETE
-If there are no storage area parameters then COMPLETE is the default.
-Produces a SNAP dump ID=997,TEXT='DUMP dddd COMPLETE'
-If there are storage area parameters and COMPLETE is not specified,
-only the storage areas are dumped.
-FROM() LENGTH()/FLENGTH()
+```hlasm
+name     EXEC  CICS DUMP
+                    TRANSACTION
+                    DUMPCODE()
+                    COMPLETE
+                    FROM()
+                    LENGTH()/FLENGTH()
+                    SEGMENTLIST()
+                    LENGTHLIST()
+                    NUMSEGMENTS()
+```
+
+#### Parameters
+
+* TRANSACTION is mandatory.
+* DUMPCODE is mandatory and can be a constant or label.
+    * _label_ must point to a 4-byte field.
+    * No syntax checking is done.
+
+##### COMPLETE
+
+* If there are no storage area parameters then COMPLETE is the default.
+* Produces a SNAP dump ID=997,TEXT='DUMP dddd COMPLETE'
+* If there are storage area parameters and COMPLETE is not specified,
+  only the storage areas are dumped.
+
+##### FROM() LENGTH()/FLENGTH()
+
 Produces a SNAP dump ID=997,TEXT='DUMP dddd AREA'
-LENGTH
-Can be specified as a constant or label.
-A constant must not exceed 32767.
-A label must be 2 bytes and must not exceed 32767.
-FLENGTH
-Can be specified as a constant or label.
-A constant must not exceed 2G-1.
-A label must be 4 bytes and must not exceed 2G-1.
-SEGMENTLIST/LENGTHLIST/NUMSEGMENTS
-Produces multiple SNAP dumps ID=997,TEXT='DUMP dddd SEGMENT
-nnn'
-NUMSEGMENTS
-Can be specified as a constant or label.
-A constant must not exceed 2G-1.
-A label must be 4 bytes and must not exceed 2G-1.
-Errors
-BAD PARM
-BOTH LENGTH AND FLENGTH ARE SPECIFIED
-DUMPCODE IS GREATER THAN 4 BYTES
-DUMPCODE MUST BE SPECIFIED
-LENGTH OR FLENGTH REQUIRES FROM
-LENGTH OR FLENGTH MUST BE SPECIFIED
-SEGMENTLIST, LENGTHLIST AND NUMSEGMENTS MUST
- ALL BE SPECIFIED OR ALL ABSENT
-TRANSACTION MUST BE SPECIFIED 
+
+##### LENGTH
+
+* Can be specified as a constant or label.
+    * A constant must not exceed 32767.
+    * A label must be 2 bytes and must not exceed 32767.
+
+##### FLENGTH
+
+* Can be specified as a constant or label.
+    * A constant must not exceed 2G-1.
+    * A label must be 4 bytes and must not exceed 2G-1.
+
+##### SEGMENTLIST/LENGTHLIST/NUMSEGMENTS
+
+Produces multiple SNAP dumps ID=997,TEXT='DUMP dddd SEGMENT nnn'
+
+##### NUMSEGMENTS
+
+* Can be specified as a constant or label.
+    * A constant must not exceed 2G-1.
+    * A label must be 4 bytes and must not exceed 2G-1.
+
+#### Errors
+
+* BAD PARM
+* BOTH LENGTH AND FLENGTH ARE SPECIFIED
+* DUMPCODE IS GREATER THAN 4 BYTES
+* DUMPCODE MUST BE SPECIFIED
+* LENGTH OR FLENGTH REQUIRES FROM
+* LENGTH OR FLENGTH MUST BE SPECIFIED
+* SEGMENTLIST, LENGTHLIST AND NUMSEGMENTS MUST ALL BE SPECIFIED OR ALL ABSENT
+* TRANSACTION MUST BE SPECIFIED 
 
 ## Command reference - Inquire
 
 ### INQUIRE FILE
 
-a) INQUIRE FILE 
- The following formats are supported:
-Name Operation Operands
-name EXEC CICS INQUIRE FILE START
-name EXEC CICS INQUIRE FILE START AT()
-name EXEC CICS INQUIRE FILE END
-name EXEC CICS INQUIRE FILE() NEXT ...
-See parameter list below
-name EXEC CICS INQUIRE FILE() ...
-See parameter list below
- The following parameters are supported:
-ACCESSMETHOD, ADD, BASEDSNAME, BROWSE, DELETE,
-DSNAME, ENABLESTATUS, KEYLENGTH ,KEYPOSITION, OBJECT,
-OPENSTATUS, READ, RECORDFORMAT,
- RECORDSIZE, TYPE, UPDATE
- BASEDSNAME() and DSNAME() parameters:
- The length of data returned is the implied length of the data
- area to a maximum of 128 bytes. This can be extended on
- request.
- Errors
- AT() IS SPECIFIED WITHOUT START
- BAD PARM
- FILE DOES NOT PRECEDE END
- FILE DOES NOT PRECEDE START
- FILE() CANNOT BE A STRING WHEN NEXT IS SPECIFIED
- FILE() IS MISSING
- INQUIRE TYPE NOT RECOGNIZED
- INVALID AT()
- INVALID FILE()
- NEXT AND END ARE SPECIFIED
- START AND END ARE SPECIFIED
+```hlasm
+name     EXEC  CICS INQUIRE FILE START
+name     EXEC  CICS INQUIRE FILE START AT()
+name     EXEC  CICS INQUIRE FILE END
+name     EXEC  CICS INQUIRE FILE() NEXT ...
+name     EXEC  CICS INQUIRE FILE() ...
+```
+
+#### Parameters
+
+The following parameters are supported:
+
+* ACCESSMETHOD
+* ADD
+* BASEDSNAME
+* BROWSE
+* DELETE
+* DSNAME
+* ENABLESTATUS
+* KEYLENGTH
+* KEYPOSITION
+* OBJECT
+* OPENSTATUS
+* READ
+* RECORDFORMAT
+* RECORDSIZE
+* TYPE
+* UPDATE
+* BASEDSNAME()
+* DSNAME()
+ 
+The length of data returned is the implied length of the data
+area to a maximum of 128 bytes.
+
+#### Errors
+
+* AT() IS SPECIFIED WITHOUT START
+* BAD PARM
+* FILE DOES NOT PRECEDE END
+* FILE DOES NOT PRECEDE START
+* FILE() CANNOT BE A STRING WHEN NEXT IS SPECIFIED
+* FILE() IS MISSING
+* INQUIRE TYPE NOT RECOGNIZED
+* INVALID AT()
+* INVALID FILE()
+* NEXT AND END ARE SPECIFIED
+* START AND END ARE SPECIFIED
 
 ### SET FILE
 
-b) SET FILE 
- The following formats are supported:
-Name Operation Operands
-name EXEC CICS SET FILE()/DATASET() ...
-See parameter list below
- The following parameters are supported:
-ADD(), ADDABLE, NOTADDABLE, BROWSE(), BROWSABLE,
-NOTBROWSABLE, DELETE(), DELETABLE, NOTDELETABLE,
-ENABLESTATUS(), ENABLED, DISABLED, OPENSTATUS(), OPEN,
-CLOSED, READ(), READABLE, NOTREADABLE, UPDATE(),
-UPDATABLE, NOTUPDATABLE
- Errors
-BAD PARM
-BOTH FILE AND DATASET SPECIFIED
- FILE OR DATASET MUST BE SPECIFIED
- INVALID FILE OR DATASET
-MORE THAN ONE ADD PARAMETER
-MORE THAN ONE BROWSE PARAMETER
-MORE THAN ONE DELETE PARAMETER
-MORE THAN ONE ENABLESTATUS PARAMETER
-MORE THAN ONE OPEN STATUS PARAMETER
-MORE THAN ONE READ PARAMETER
-MORE THAN ONE UPDATE PARAMETER
-Conditions (RESP/RESP2)
- FILENOTFOUND
-INVREQ/2
-INVREQ/3
-INVREQ/4
-INVREQ/5
-INVREQ/7
-INVREQ/12
-INVREQ/14
-INVREQ/16
-INVREQ/17
-IOERR
+```hlasm
+name     EXEC  CICS SET FILE()/DATASET() ...
+```
+#### Parameters
+
+The following parameters are supported:
+
+* ADD()
+* ADDABLE
+* NOTADDABLE
+* BROWSE()
+* BROWSABLE
+* NOTBROWSABLE
+* DELETE()
+* DELETABLE
+* NOTDELETABLE
+* ENABLESTATUS()
+* ENABLED
+* DISABLED
+* OPENSTATUS()
+* OPEN
+* CLOSED
+* READ()
+* READABLE
+* NOTREADABLE
+* UPDATE()
+* UPDATABLE
+* NOTUPDATABLE
+
+#### Errors
+
+* BAD PARM
+* BOTH FILE AND DATASET SPECIFIED
+* FILE OR DATASET MUST BE SPECIFIED
+* INVALID FILE OR DATASET
+* MORE THAN ONE ADD PARAMETER
+* MORE THAN ONE BROWSE PARAMETER
+* MORE THAN ONE DELETE PARAMETER
+* MORE THAN ONE ENABLESTATUS PARAMETER
+* MORE THAN ONE OPEN STATUS PARAMETER
+* MORE THAN ONE READ PARAMETER
+* MORE THAN ONE UPDATE PARAMETER
+
+#### Conditions (RESP/RESP2)
+
+* FILENOTFOUND
+* INVREQ/2
+* INVREQ/3
+* INVREQ/4
+* INVREQ/5
+* INVREQ/7
+* INVREQ/12
+* INVREQ/14
+* INVREQ/16
+* INVREQ/17
+* IOERR
 
 ## Command reference - Channel and containers
 
 ### GET 
-CONTAINER() CHANNEL() INTO()/SET()/NODATA FLENGTH()
 
- a) GET
-Name Operation Operands
-name EXEC CICS GET
-CONTAINER()
-CHANNEL()
-INTO()/FLENGTH()
-SET()/FLENGTH()
-NODATA/FLENGTH()
-Errors
- BAD PARM
- BOTH INTO AND SET SPECIFIED
- CONTAINER IS MANDATORY 
- INTO AND NODATA SPECIFIED
- INTO OR SET OR NODATA IS REQUIRED
- INVALID CHANNEL
- INVALID CONTAINER 
- NODATA REQUIRES FLENGTH
- SET AND NODATA SPECIFIED
- SET OR NODATA REQUIRES FLENGTH AS LABEL
- SET REQUIRES FLENGTH
-Conditions (RESP/RESP2)
- CHANNELERR/2
- INVREQ/4
- LENGERR/11 
+```hlasm
+name     EXEC  CICS GET
+                    CONTAINER()
+                    CHANNEL()
+                    INTO()/FLENGTH()
+                    SET()/FLENGTH()
+                    NODATA/FLENGTH()
+```
+
+#### Errors
+
+* BAD PARM
+* BOTH INTO AND SET SPECIFIED
+* CONTAINER IS MANDATORY 
+* INTO AND NODATA SPECIFIED
+* INTO OR SET OR NODATA IS REQUIRED
+* INVALID CHANNEL
+* INVALID CONTAINER 
+* NODATA REQUIRES FLENGTH
+* SET AND NODATA SPECIFIED
+* SET OR NODATA REQUIRES FLENGTH AS LABEL
+* SET REQUIRES FLENGTH
+
+#### Conditions (RESP/RESP2)
+
+* CHANNELERR/2
+* INVREQ/4
+* LENGERR/11 
 
 ### PUT 
-CONTAINER() CHANNEL() FROM() FLENGTH()
 
- b) PUT 
-Name Operation Operands
-name EXEC CICS PUT
-CONTAINER()
-CHANNEL()
-FROM()/FLENGTH()
-Errors
- BAD PARM
- CONTAINER IS MANDATORY 
- FLENGTH IS MANDATORY FOR INDIRECT FROM
- FLENGTH WITHOUT FROM
- FROM IS MANDATORY
- INVALID CHANNEL
- INVALID CONTAINER 
- 
-Conditions (RESP/RESP2)
- CHANNELERR/1
- CONTAINERERR/18
- INVREQ/4
- LENGERR/1 
+```hlasm
+name     EXEC  CICS PUT
+                    CONTAINER()
+                    CHANNEL()
+                    FROM()/FLENGTH()
+```
+
+#### Errors
+
+* BAD PARM
+* CONTAINER IS MANDATORY 
+* FLENGTH IS MANDATORY FOR INDIRECT FROM
+* FLENGTH WITHOUT FROM
+* FROM IS MANDATORY
+* INVALID CHANNEL
+* INVALID CONTAINER 
+
+#### Conditions (RESP/RESP2)
+
+* CHANNELERR/1
+* CONTAINERERR/18
+* INVREQ/4
+* LENGERR/1 
 
 
 ### DELETE 
-CONTAINER() CHANNEL()
+```hlasm
+name     EXEC  CICS DELETE
+                    CONTAINER()
+                    CHANNEL()
+```
 
- c) DELETE 
-Name Operation Operands
-name EXEC CICS DELETE
-CONTAINER()
-CHANNEL()
-Errors
- BAD PARM
- CONTAINER IS MANDATORY 
- INVALID CHANNEL
- INVALID CONTAINER 
- 
-Conditions (RESP/RESP2)
- CHANNELERR/2
- CONTAINERERR/10
+#### Errors
 
-### MOVE 
-CONTAINER() AS() CHANNEL() TOCHANNEL()
+* BAD PARM
+* CONTAINER IS MANDATORY 
+* INVALID CHANNEL
+* INVALID CONTAINER 
 
- d) MOVE 
-Name Operation Operands
-name EXEC CICS MOVE
-CONTAINER()
-AS()
-CHANNEL()
-TOCHANNEL()
-Errors
- BAD PARM
- CONTAINER AND/OR AS ARE MISSING 
- INVALID AS
- INVALID CHANNEL
- INVALID CONTAINER 
- INVALID TOCHANNEL
- 
-Conditions (RESP/RESP2)
- CHANNELERR/1
- CHANNELERR/2 
- CONTAINERERR/10
- CONTAINERERR/18 
- INVREQ/4
+#### Conditions (RESP/RESP2)
 
+* CHANNELERR/2
+* CONTAINERERR/10
+
+### MOVE
+
+```hlasm
+name     EXEC  CICS MOVE
+                    CONTAINER()
+                    AS()
+                    CHANNEL()
+                    TOCHANNEL()
+```
+
+#### Errors
+
+* BAD PARM
+* CONTAINER AND/OR AS ARE MISSING 
+* INVALID AS
+* INVALID CHANNEL
+* INVALID CONTAINER 
+* INVALID TOCHANNEL
+
+#### Conditions (RESP/RESP2)
+
+* CHANNELERR/1
+* CHANNELERR/2 
+* CONTAINERERR/10
+* CONTAINERERR/18 
+* INVREQ/4
 
 ### STARTBROWSE 
-CONTAINER CHANNEL() BROWSETOKEN() 
 
-e) STARTBROWSE
-Name Operation Operands
-name EXEC CICS STARTBROWSE
-CONTAINER
-CHANNEL()
-BROWSETOKEN()
-Errors
- BAD PARM
- INVALID CHANNEL 
- BROWSETOKEN IS MANDATORY
- STARTBROWSE TYPE NOT RECOGNISED 
+```hlasm
+name     EXEC  CICS STARTBROWSE
+                    CONTAINER
+                    CHANNEL()
+                    BROWSETOKEN()
+```
+
+#### Errors
+
+* BAD PARM
+* INVALID CHANNEL 
+* BROWSETOKEN IS MANDATORY
+* STARTBROWSE TYPE NOT RECOGNISED 
  
-Conditions (RESP/RESP2)
- ACTIVITYERR/2 
- CHANNELERR/2 
+#### Conditions (RESP/RESP2)
+
+ * ACTIVITYERR/2 
+ * CHANNELERR/2 
 
 ### GETNEXT 
-CONTAINER() BROWSETOKEN() 
 
- f) GETNEXT
-Name Operation Operands
-name EXEC CICS GETNEXT
-CONTAINER()
-BROWSETOKEN()
-Errors
- BAD PARM
- BROWSETOKEN IS MANDATORY
- CONTAINER IS MANDATORY 
+```hlasm
+name     EXEC  CICS GETNEXT
+                    CONTAINER()
+                    BROWSETOKEN()
+```
+
+#### Errors
+
+* BAD PARM
+* BROWSETOKEN IS MANDATORY
+* CONTAINER IS MANDATORY 
  
-Conditions (RESP/RESP2)
- END/2 
- TOKENERR/3 
+#### Conditions (RESP/RESP2)
+
+* END/2 
+* TOKENERR/3 
 
 
 ### ENDBROWSE 
-CONTAINER BROWSETOKEN()
 
- g) ENDBROWSE
-Name Operation Operands
-name EXEC CICS ENDBROWSE
-CONTAINER
-BROWSETOKEN()
-Errors
- BAD PARM
- BROWSETOKEN IS MANDATORY
- ENDBROWSE TYPE NOT RECOGNISED 
-Condition (RESP/RESP2)
- TOKENERR/3 
+```hlasm
+name     EXEC  CICS ENDBROWSE
+                    CONTAINER
+                    BROWSETOKEN()
+```
+#### Errors
+
+* BAD PARM
+* BROWSETOKEN IS MANDATORY
+* ENDBROWSE TYPE NOT RECOGNISED 
+
+#### Condition (RESP/RESP2)
+
+* TOKENERR/3 
