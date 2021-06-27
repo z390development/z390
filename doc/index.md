@@ -6,12 +6,13 @@ title: Welcome
 
 *Develop, test, and deploy mainframe assembler and COBOL programs on your PC*
 
-* HLASM compatible macro assembler
-* Common z/OS(tm) and VSE compatible macros
-* TN3270 data streams
-* CICS compatible transaction processor
+* IBM(r) HLASM compatible macro assembler
+    * Common z/OS(r) and z/VSE(r) compatible macros
+    * Structured programming macros compatible with IBM HLASM Toolkit
+* IBM Enterprise COBOL compatible compiler
 * QSAM/VSAM compatible file processing
-* Structured programming macros compatible with IBM HLASM Toolkit
+* TN3270 data streams
+* CICS(r) compatible transaction processor
 * GPLv2 licensed
 
 Ideal for a number of use cases:
@@ -21,3 +22,8 @@ Ideal for a number of use cases:
 * Run your mainframe applications in the cloud on commodity hardware.
 
 [Get started](getting_started){ .md-button .md-button--primary }
+
+
+---
+IBM, CICS, z/OS and z/VSE are trademarks of IBM Corp., registered in the U.S. and other countries.
+The use of IBM Trademarks complies with the Fair use guidelines for use and reference of IBM trademarks.
