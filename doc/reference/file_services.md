@@ -63,19 +63,24 @@ OREC     DS    0CL60                Report output structure
 
 ## Macro reference
 
-### Terminology
+### SVC functions
 
-Term     | Definition
----------|-----------
-dcbname  | the label on the DCB macro.
-reg      | general register, avoid 0, 1, 14 or 15.
-type     | INPUT, OUTPUT or UPDATE (default is INPUT).
-ioarea   | label of the I/O area for the record to be read/written.
-decbname | internal or external DECB for controlling READ/WRITE.
-rel      | relative record number.
-rba      | relative byte address.
+The following is a list of the z390 SVC services that support the above macros.
 
-### DCB - Data Control Block
+DEC | HEX | Service
+----|-----|--------
+19  | 13  | [OPEN](#open)
+19  | 13  | [OPEN (VSE)](#open-vse)
+20  | 14  | [CLOSE](#close)
+20  | 14  | [CLOSE (VSE)](#close-vse)
+151 | 97  | [GET](#get)
+152 | 98  | [PUT](#put)
+153 | 99  | [READ](#read)
+154 | 9A  | [WRITE](#write)
+155 | 9B  | [CHECK](#check)
+156 | 9C  | [POINT](#point)
+
+### DCB - Data Control Block {#dcb}
 
 Used to create the Data Control Block
 
@@ -126,7 +131,7 @@ When DDNAME is specified, an environment variable will point to the path and fil
 is to be opened.
 
 Within a program the GETENV macro can be used to extract the environment
-variable. See [GETENV macro](svc_services.md#getenv-get-environment-variable) for full details.
+variable. See [GETENV macro](svc_services.md#getenv) for full details.
 
 ``` hlasm
 MYDCB    DCB   DDNAME=MYDATA, ...
@@ -384,7 +389,7 @@ The address of the uncorrectable I/O error routine.
 * Can this be set in the DCB after OPEN : Yes
 * This may be overridden if DCBE is coded.
 
-### DTFSD (VSE) - Data control block
+### DTFSD (VSE) - Data control block {#dtfsd}
 
 !!! Info "VSE only"
 
@@ -406,7 +411,7 @@ label    DCB   DSORG=PS,                                               X
                DSNAME=0
 ```
 
-### DTFPR (VSE) - Data control block
+### DTFPR (VSE) - Data control block {#dtfpr}
 
 !!! Info "VSE only"
 
@@ -427,7 +432,7 @@ label    DCB   DSORG=PS,                                               X
                DSNAME=0
 ```
 
-### OPEN - Open file
+### OPEN - Open file {#open}
 
 Open one or more files.
 
@@ -467,7 +472,7 @@ The same, using register notation
 
 * S013 OPEN failed and no SYNAD exit provided
 
-### OPEN (VSE) - Open file 
+### OPEN (VSE) - Open file {#open-vse}
 
 Open one or more files for UPDATE.
 
@@ -487,7 +492,7 @@ Open one or more files for UPDATE.
 
 * S013 OPEN failed and no SYNAD exit provided
 
-### CLOSE - Close file
+### CLOSE - Close file {#close}
 
 Close one or more files.
 
@@ -519,7 +524,7 @@ The same, using register notation
 
 * S013 CLOSE failed and no SYNAD exit provided
 
-### CLOSE (VSE) - Close file
+### CLOSE (VSE) - Close file {#close-vse}
 
 Close one or more files.
 
@@ -537,7 +542,7 @@ Close one or more files.
 
 * S013 CLOSE failed and no SYNAD exit provided
 
-### GET - Read sequential record
+### GET - Read sequential record {#get}
 
 Read a sequential record
 
@@ -566,7 +571,7 @@ The same, using register notation
 * R0 = ioarea
 * R1 = DCB address
 
-### PUT - Write a sequential record
+### PUT - Write a sequential record {#put}
 
 Write a sequential record
 
@@ -596,7 +601,7 @@ The same, using register notation
 * R0 = ioarea
 * R1 = DCB address
 
-### READ - Read block from file
+### READ - Read block from file {#read}
 
  Read a block from a file.
 
@@ -636,7 +641,7 @@ The same, using register notation
 * R1 = DECB address
 * R15= DCB address
 
-### WRITE - Write block to file
+### WRITE - Write block to file {#write}
 
 Write a block to a file.
 
@@ -673,7 +678,7 @@ The same, using register notation
 * R1 = DECB address
 * R15= DCB address
 
-### CHECK - Process EODAD/SYNAD 
+### CHECK - Process EODAD/SYNAD {#check}
 
 * Process EODAD or SYNAD on READ.
 * Process SYNAD on WRITE.
@@ -698,7 +703,7 @@ The same, using register notation
 
 * S013 READ/WRITE failed and no SYNAD exit provided
 
-### POINT - Position file pointer
+### POINT - Position file pointer {#point}
 
 Position pointer for next READ or WRITE
 
@@ -734,19 +739,14 @@ The same, using register notation
 * R1 = DCB address
 * R15= Blocksize
 
-## SVC functions
+### Terminology
 
-The following is a list of the z390 SVC services that support the above macros.
-
-DEC | HEX | Service
-----|-----|--------
-19  | 13  | OPEN
-19  | 13  | OPEN (VSE)
-20  | 14  | CLOSE
-20  | 14  | CLOSE (VSE)
-151 | 97  | GET
-152 | 98  | PUT
-153 | 99  | READ
-154 | 9A  | WRITE
-155 | 9B  | CHECK
-156 | 9C  | POINT
+Term     | Definition
+---------|-----------
+dcbname  | the label on the DCB macro.
+reg      | general register, avoid 0, 1, 14 or 15.
+type     | INPUT, OUTPUT or UPDATE (default is INPUT).
+ioarea   | label of the I/O area for the record to be read/written.
+decbname | internal or external DECB for controlling READ/WRITE.
+rel      | relative record number.
+rba      | relative byte address.
