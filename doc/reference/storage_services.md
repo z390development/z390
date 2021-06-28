@@ -2,7 +2,23 @@
 
 ## Macro reference
 
-### STORAGE - Obtain/release storage
+### SVC functions
+
+The following is a list of the z390 SVC services that support the macros.
+
+DEC | HEX | Service
+----|-----|--------
+4   | 04  | [GETMAIN](#getmain)
+4   | 04  | [GETVIS (VSE)](#getvis)
+5   | 05  | [FREEMAIN](#freemain)
+5   | 05  | [FREEVIS (VSE)](#freevis)
+
+### Supporting macros
+
+* [STORAGE](#storage) - Obtain/release storage
+* [CPOOL](#cpool) - Obtain a storage area
+
+### STORAGE - Obtain/release storage {#storage}
 
 ``` hlasm
 name     STORAGE OBTAIN,LENGTH=,LOC=,COND=  Acquire storage
@@ -17,7 +33,7 @@ An alternative to [GETMAIN](#getmain-acquire-storage) and [FREEMAIN](#freemain-f
 * COND=YES is the GETMAIN type RC
 * ADDR= becomes the GETMAIN/FREEMAIN parameter [A](#a-optional)
 
-### GETMAIN - Acquire storage
+### GETMAIN - Acquire storage {#getmain}
 
 ```
 name     GETMAIN type,LV=,LOC=,A=
@@ -114,7 +130,7 @@ GR15 has a return code:
 * S804 Invalid request - Can occur if LRECL/BLKSIZE on a DCB are both zero
 * S80A Unconditional out of memory
 
-### GETVIS - Acquire storage (VSE)
+### GETVIS - Acquire storage (VSE) {#getvis}
 
 ``` hlasm
 name     GETVIS LENGTH=,ADDRESS=,LOC=
@@ -150,7 +166,7 @@ GR15 has a return code:
 * S804 Invalid request - Can occur if LRECL/BLKSIZE on a DCB are both zero
 * S80A Unconditional out of memory
 
-### FREEMAIN - Free storage
+### FREEMAIN - Free storage {#freemain}
 
 ``` hlasm
 name     FREEMAIN LV=,LA=,A=
@@ -210,7 +226,7 @@ GR15 has a return code:
 * S90A Attempt to FREEMAIN an area which is not on a doubleword boundary
 * SA0A Attempt to FREEMAIN an area already free
 
-### FREEVIS - Free storage (VSE)
+### FREEVIS - Free storage (VSE) {#freevis}
 
 ``` hlasm
 name     FREEVIS LENGTH=,ADDRESS=
@@ -243,7 +259,7 @@ GR15 has a return code:
  
 * S804 Invalid request
 
-### CPOOL - Obtain a storage area
+### CPOOL - Obtain a storage area {#cpool}
 
 ``` hlasm
          CPOOL BUILD,CPID=label,PCELLCT=nnn, SCELLCT=nnn,CSIZE=nnn,HDR='...'

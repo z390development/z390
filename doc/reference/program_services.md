@@ -132,7 +132,23 @@ PARM     DC    CL80' '         Work area for parm value
 
 ## Macro reference
 
-### BLDL - Build a directory list
+### SVC functions
+
+The following is a list of the z390 SVC services that support the macros.
+
+DEC | HEX | Service
+----|-----|--------
+3   | 03  | [EXIT](#exit)
+3   | 03  | [EXIT (VSE)](#exit)
+6   | 06  | [LINK](#link)
+7   | 07  | [XCTL](#xctl)
+8   | 08  | [LOAD](#load)
+8   | 08  | [CDLOAD (VSE)](#cdload)
+9   | 09  | [DELETE](#delete)
+9   | 09  | [CDDELETE (VSE)](#cddelete)
+13  | 0D  | [ABEND](#abend)
+
+### BLDL - Build a directory list {#bldl}
 
 ``` hlasm
 name     BLDL  0,list
@@ -195,7 +211,7 @@ BLDL2    DC    H'14',CL8'MYPROG2',XL6'00'
 !!! Note 
     In z390, there is no performance benefit in issuing a BLDL before a LOAD, DELETE, LINK or XCTL.
 
-### LOAD - Load a program or module
+### LOAD - Load a program or module {#load}
 
 ``` hlasm
 name     LOAD  EP=,EPLOC=,DDNAME=,DSNAME=,DE=,LOADPT=
@@ -232,7 +248,7 @@ GR15 has a return code:
 
 * S80A - Out of memory
 
-### CDLOAD - Load a program or module (VSE)
+### CDLOAD - Load a program or module (VSE) {#cdload}
 
 ``` hlasm
 name     CDLOAD phasename  Maps to LOAD EP=phasename
@@ -264,7 +280,7 @@ GR15 has a return code:
 
 * S80A - Out of memory
 
-### DELETE - Delete a program or module
+### DELETE - Delete a program or module {#delete}
 
 ``` hlasm
 name     DELETE EP=,EPLOC=,DDNAME=,DSNAME=,DE=
@@ -288,7 +304,7 @@ GR15 has a return code:
 * 0 - Load ok
 * 4 - Module not found
 
-### CDDELETE - Delete a program or module (VSE)
+### CDDELETE - Delete a program or module (VSE) {#cddelete}
 
 ``` hlasm
 name     CDDELETE phasename       Maps to DELETE EP=phasename
@@ -312,7 +328,7 @@ GR15 has a return code:
 * 0 - Load ok
 * 4 - Module not found
 
-### LINK - Load and pass control
+### LINK - Load and pass control {#link}
 
 ``` hlasm
 name     LINK  EP=,EPLOC=,DDNAME=,DSNAME=,DE=,PARAM=,VL=
@@ -335,7 +351,7 @@ See [Common Program load parameters](#common-program-load-parameters).
 * S806 - Module not found
 * S80A - Out of memory
 
-### XCTL - Load and pass control
+### XCTL - Load and pass control {#xctl}
 
 ``` hlasm
 name     XCTL  (fromreg,toreg),EP=,EPLOC=,DDNAME=,DSNAME=,DE=,PARAM=,VL=
@@ -366,7 +382,7 @@ include the following general registers: 0, 1, 13, 15
 * S806 - Module not found
 * S80A - Out of memory
 
-### RESTORE - Restores registers
+### RESTORE - Restores registers {#restore}
 
 ``` hlasm
 name     RESTORE (fromreg,toreg)
@@ -380,7 +396,7 @@ positions.
 
 All registers in the range fromreg-toreg
 
-### SNAP - Produces a component dump
+### SNAP - Produces a component dump {#snap}
 
 ``` hlasm
 name     SNAP  STORAGE=(from,to),PDATA=(options, ... ),ID=,TEXT=
@@ -432,7 +448,7 @@ The string in all cases is limited to 60 bytes.
 * R14= STORAGE from
 * R15= STORAGE to
 
-### ABEND - Terminate program
+### ABEND - Terminate program {#abend}
 
 ``` hlasm
 name ABEND id,DUMP
@@ -458,7 +474,7 @@ All storage areas are dumped.
 
 * R1 = id and flags
 
-### ESTAE, ESTAEX - Define Abend exit processing
+### ESTAE, ESTAEX - Define Abend exit processing {#estae}
 
 !!! Info
     ESTAEX is provided for compatibility, only ESTAE is described here.
@@ -541,7 +557,7 @@ GR15 has a return code:
 
 * SFFF - ESTAE stack exceeded
 
-### ESPIE - Interrupt exit processing
+### ESPIE - Interrupt exit processing {#espie}
 
 ``` hlasm
 name     ESPIE  SET,addr,list,PARAM=
@@ -612,7 +628,7 @@ The EPIE control block is located in the ZCVT and may also be addressed by the Z
 * R1 = exit address
 * R15= parameter list
 
-### SUBENTRY - Program entry
+### SUBENTRY - Program entry {#subentry}
 
 ``` hlasm
 name     SUBENTRY CSECT=,BASES=,RENT=,RWA=,RWALNG=,STACK=,PSTACK=,PCHECK=
@@ -707,7 +723,7 @@ Otherwise the user area address is not stored at offset +80, but loaded into the
 
 * R0,1,2,13,14,15 have multiple uses
  
-### SUBEXIT - Program exit
+### SUBEXIT - Program exit {#subexit}
 
 ``` hlasm
 name     SUBEXIT RC=returncode
@@ -727,7 +743,7 @@ RC will return the value in GR15, zero is the default.
 
 All registers may be affected
  
-### PERFORM or PM - Branch to local procedure
+### PERFORM or PM - Branch to local procedure {#perform}
 
 ``` hlasm
 name     PERFORM procedure
@@ -745,7 +761,7 @@ Uses MVC and B if [SUBENTRY](#subentry-program-entry) RENT=NO or push/pop stack 
 * R14=Return address
 * R15=Linkage register
 
-### PENTRY - Define local procedure
+### PENTRY - Define local procedure {#pentry}
 
 ``` hlasm
 name     PENTRY
@@ -755,7 +771,7 @@ Define local procedure using name.
 
 Generates an entry-point for a local procedure preceded with a branch instruction if [SUBENTRY](#subentry-program-entry) RENT=NO.
 
-### PEXIT - Exit local procedure
+### PEXIT - Exit local procedure {#pexit}
 
 ``` hlasm
 name     PEXIT
@@ -771,7 +787,7 @@ If SUBENTRY RENT=NO or generate decrement stack pointer, load, and branch if REN
 * R14=Stack address
 * R15=Saved linkage register
 
-### EXIT - Return to last caller
+### EXIT - Return to last caller {#exit}
 
 ``` hlasm
 name     EXIT
@@ -786,7 +802,7 @@ Returns immediately to the last caller.
 
 No registers affected
 
-### EOJ (VSE only)
+### EOJ (VSE only) {#eoj}
 
 ``` hlasm
 name     EOJ  RC=returncode
@@ -804,7 +820,7 @@ RC will return the value in GR15, zero is the default.
 
 * R15= Return code
 
-### CALL (list form) - Internal/external subroutine call
+### CALL (list form) - Internal/external subroutine call {#call-list}
 
 ``` hlasm
 name     CALL  ,(parm1,parm2,...),VL,MF=L
@@ -824,7 +840,7 @@ but as constants.
 
 If the called program can accept a variable parameter list, then VL will turn on the senior bit (bit 0) of the last parameter.
 
-### CALL (execute form) - Internal/external subroutine call
+### CALL (execute form) - Internal/external subroutine call {#call-exec}
 
 ``` hlasm
 name     CALL  routine,(parm1,parm2,...),VL,LINKINST=,MF=(E,parms)
@@ -879,7 +895,7 @@ MYCALL   CALL  MYSUBR,(8,MYDATA),VL,MF=(E,PARMS)
 PARMS    CALL  ,(7,OLDDATA),VL,MF=L
 ```
 
-### CALL (standard form) - Internal/external subroutine call
+### CALL (standard form) - Internal/external subroutine call {#call-std}
 
 ``` hlasm
 name     CALL  routine,(parm1,parm2,...),VL,LINKINST=,MF=I
@@ -927,7 +943,7 @@ MYCALL   CALL  MYSUBR,(8,MYDATA),VL
 * R14= linkage
 * R15= program location
  
-### SAVE - Save registers
+### SAVE - Save registers {#save}
 
 ``` hlasm
 name     SAVE  (fromreg,toreg)
@@ -936,7 +952,7 @@ name     SAVE  (fromreg,toreg)
 Saves the specified register range in the save area pointed to by GR13. 
 The registers are saved in their conventional positions.
 
-### RETURN - Restore registers
+### RETURN - Restore registers {#return}
 
 ``` hlasm
 name    RETURN (fromreg,toreg),flag,RC=
@@ -977,11 +993,11 @@ MYRET    RETURN (14,12),T,RC=12
 Restore registers 14 through 12. After the register restore, flag the savearea to indicate return 
 to caller and set return code to 12.
 
-### PSAD - PSA structure
+### PSAD - PSA structure {#psad}
 
 Provides a DSECT for the limited fields available in the first 8K of memory (PSA). The CVT may be addressed from here.
 
-### ZCVTD - ZCVT structure
+### ZCVTD - ZCVT structure {#zcvt}
 
 Provides a DSECT for the limited fields available in the ZCVT. This follows the PSA and may be addressed as follows:
 
@@ -992,7 +1008,7 @@ Provides a DSECT for the limited fields available in the ZCVT. This follows the 
          ZCVTD
 ```
 
-### CVTD - CVT structure
+### CVTD - CVT structure {#cvt}
 
 Provides a DSECT for the limited fields available in the Communications Vector Table. This may be addressed as follows:
 
@@ -1003,7 +1019,7 @@ Provides a DSECT for the limited fields available in the Communications Vector T
          CVTD
 ```
 
-### EQUREGS - Register equates
+### EQUREGS - Register equates {#equregs}
 
 ``` hlasm
          EQUREGS REGS=option,TYPE=option
@@ -1042,7 +1058,7 @@ F0       EQU   0
 FF       EQU   15
 ```
 
-### YREGS - General register equates
+### YREGS - General register equates {#yregs}
 
 YREGS is identical to [EQUREGS](#equregs-register-equates) with default parameters which will generate general register equates.
 
@@ -1166,19 +1182,3 @@ See [Use counts and parameter passing](#use-counts-and-parameter-passing) below 
 
 If the called program can accept a variable parameter list, then VL=1 will turn on the senior bit (bit 0) of the last
 parameter.
-
-## SVC functions
-
-The following is a list of the z390 SVC services that support the macros.
-
-DEC | HEX | Service
-----|-----|--------
-3   | 03  | EXIT
-3   | 03  | EXIT (VSE)
-6   | 06  | LINK
-7   | 07  | XCTL
-8   | 08  | LOAD
-8   | 08  | CDLOAD (VSE)
-9   | 09  | DELETE
-9   | 09  | CDDELETE (VSE)
-13  | 0D  | ABEND
