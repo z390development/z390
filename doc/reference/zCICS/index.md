@@ -2,7 +2,7 @@
 
 * <http://www.z390.org/cics/z390_EXEC_CICS_Assembler_and_COBOL_Support.pdf>
 * <http://www.z390.org/cics/zCICS_Readme.pdf>
-* <http://www.z390.org/cics/zCICS_Application_Programming_Guide.pdf>
+* [zCICS Application Programming Guide](zcics_app_prog_guide.md)
 * <http://www.z390.org/cics/zCICS_Basic_Mapping_Support.pdf>
 * <http://www.z390.org/cics/zCICS_Diagnosis_Reference.pdf>
 * <http://www.z390.org/cics/zCICS_History.pdf>
