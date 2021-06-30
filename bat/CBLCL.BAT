@@ -1,5 +1,6 @@
-rem CBLCL translate CBL to MLC, assemble, and link using z390 
-echo off
+@echo off
+setlocal
+rem CBLCL translate CBL to MLC, assemble, and link using z390
 if %1 == tron ECHO ON
 if %1 == tron shift
 if %1 == TRON ECHO ON

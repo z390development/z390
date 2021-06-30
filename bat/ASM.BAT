@@ -1,7 +1,5 @@
 @echo off
 setlocal
-pushd %~dp0
-cd ..
 rem asm run macro assembly to generate relocatible obj from mlc source 
 if %1 == tron ECHO ON
 if %1 == tron shift

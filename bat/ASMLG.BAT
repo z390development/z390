@@ -1,8 +1,6 @@
 @echo off
 rem asmlg assemble, link, and go from mlc to 390 execution
 setlocal
-pushd %~dp0
-cd ..
 if %1 == tron ECHO ON
 if %1 == tron shift
 if %1 == TRON ECHO ON

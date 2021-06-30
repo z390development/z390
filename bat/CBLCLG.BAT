@@ -1,8 +1,6 @@
 @echo off
 rem CBLCLG translate CBL to MLC, assemble, link, and exec using z390 
 setlocal
-pushd %~dp0
-cd ..
 if %1 == tron ECHO ON
 if %1 == tron shift
 if %1 == TRON ECHO ON

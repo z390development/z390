@@ -1,8 +1,6 @@
 @echo off
 rem CBLC translate CBL to MLC using zc390 and assemble using mz390 
 setlocal
-pushd %~dp0
-cd ..
 if %1 == tron ECHO ON
 if %1 == tron shift
 if %1 == TRON ECHO ON
