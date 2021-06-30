@@ -25,7 +25,7 @@ name     STORAGE OBTAIN,LENGTH=,LOC=,COND=  Acquire storage
 name     STORAGE RELEASE,ADDR=,LENGTH=      Free storage
 ```
 
-An alternative to [GETMAIN](#getmain-acquire-storage) and [FREEMAIN](#freemain-free-storage).
+An alternative to [GETMAIN](#getmain) and [FREEMAIN](#freemain).
 
 * LENGTH= becomes the GETMAIN/FREEMAIN parameter LV=
 * LOC= is the same
