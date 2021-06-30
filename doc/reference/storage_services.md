@@ -268,7 +268,7 @@ GR15 has a return code:
 BUILD obtains a storage area divided into cells.
 Each subsequent GET retrieves the next cell. 
 
-!!! Warn
+!!! Warning
     FREE and DELETE are not yet implemented.
 
 * CPID will contain the address of the GET routine for this cell
