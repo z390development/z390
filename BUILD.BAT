@@ -1,8 +1,10 @@
 @echo off
 setlocal
 pushd %~dp0
+
 REM Run the tests
 call bat\bldjar || goto error
+call bat\bldlib || goto error
 call bat\bldcbllib || goto error
 call rt\bat\zopcheck || goto error
 call bat\runasmdemos || goto error
@@ -15,8 +17,8 @@ call rt\bat\runzpar || goto error
 call bat\runassist || goto error
 call bat\runvsedemos || goto error
 
-goto:eof
+goto eof
 
 :error
-echo.BUILD    ERROR: Encountered RC %ERRORLEVEL% - exiting
+echo BUILD    ERROR: Encountered RC %ERRORLEVEL% - exiting
 exit /b %ERRORLEVEL%
