@@ -19,7 +19,7 @@ CALL bat\asmlg linklib\TESTFPC2 sysobj(+linklib) || goto error
 CALL bat\asm  linklib\RTGENDIR noasm bal notiming stats sysparm(RTGENDIR) || goto error
 CALL bat\asm  linklib\RTGENCMP noasm bal notiming stats sysparm(RTGENCMP) || goto error
 
-goto eof
+goto:eof
 
 :error
 echo BLDLIB   ERROR: Encountered RC %ERRORLEVEL% - exiting

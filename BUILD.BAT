@@ -17,7 +17,7 @@ call rt\bat\runzpar || goto error
 call bat\runassist || goto error
 call bat\runvsedemos || goto error
 
-goto eof
+goto:eof
 
 :error
 echo BUILD    ERROR: Encountered RC %ERRORLEVEL% - exiting
