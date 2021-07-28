@@ -1,5 +1,6 @@
+@echo off
+setlocal
 rem asm run macro assembly to generate relocatible obj from mlc source 
-echo off
 if %1 == tron ECHO ON
 if %1 == tron shift
 if %1 == TRON ECHO ON
@@ -16,9 +17,9 @@ set "zdir=%~dps0..\"
 for %%f in ("%zdir%") do set "zdir=%%~ff"
 
 call %~dps0mz390 %1  sysmac(+%zdir%mac) syscpy(+%zdir%mac) %2 %3 %4 %5 %6 %7 %8 %9
-if errorlevel 5 goto mzerr
-goto end
-:mzerr
-erase %1.OBJ
-pause see errors on mz390 generated bal file and console
-:end
+if %ERRORLEVEL% NEQ 0 (
+    set RC=%ERRORLEVEL%
+    erase %1.OBJ
+    echo ASM      ERROR: See errors on mz390 generated bal file and console
+    exit /b %RC%
+)
