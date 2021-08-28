@@ -1,3 +1,9 @@
+// **!! TO DO:
+// **!! set_path_option     can be removed ?
+// **!! get_file_name       can be removed ?
+// **!! fix_file_separators can be removed ?
+// **!!
+
 import java.awt.GraphicsEnvironment;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -319,7 +325,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.7.07";  //dsh + afk
+    String version    = "V1.7.07+dk";  //dsh + afk
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644
 	/*
@@ -506,7 +512,7 @@ public  class  tz390 {
     String dir_dat = null; // SYSDAT() mz390 AREAD extended option
     String dir_err = null; // SYSERR() ?z390 systerm error file directory
     String dir_log = null; // SYSLOG() ez390 log // RPI 243
-    String dir_lst = null; // SYSLST() lz390 listing
+    zFile  lst_File = new zFile(lst_type); // SYSLST() lz390 listing file
     String dir_mac = null; // SYSMAC() mz390 macro lib
     String dir_mlc = null; // SYSMLC() mz390 source input
     String dir_pch = null; // SYSPCH() mz390 punch output dir
@@ -4411,7 +4417,7 @@ public void init_options(String[] args,String pgm_type){
         dir_dat = dir_pgm;
         dir_err = dir_pgm;
         dir_log = dir_pgm;
-        dir_lst = dir_pgm;
+        lst_File.Set_Name(dir_pgm);
         dir_mac = dir_pgm;
     	dir_mlc = dir_pgm;
     	dir_obj = dir_pgm;
@@ -5023,7 +5029,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	dir_log = set_path_option(dir_log,token.substring(7,token.length()-1));
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("SYSLST(")){  // RPI 866
-      	dir_lst = set_path_option(dir_lst,token.substring(7,token.length()-1));
+      	lst_File.Add_Path(token.substring(7,token.length()-1));
     } else if (token.length() > 7
        		&& token.substring(0,7).toUpperCase().equals("SYSMAC(")){
        	dir_mac = set_path_option(dir_mac,token.substring(7,token.length()-1));
@@ -7235,7 +7241,7 @@ public void put_trace(String text){
 	     add_final_opt("SYSDAT=" + dir_dat); // SYSDAT() mz390 AREAD extended option
 	     add_final_opt("SYSERR=" + dir_err); // SYSERR() ?z390 systerm error file directory
 	     add_final_opt("SYSLOG=" + dir_log); // SYSLOG() ez390 log // RPI 243
-	     add_final_opt("SYSLST=" + dir_lst); // SYSLST() lz390 listing
+	     add_final_opt("SYSLST=" + lst_File.Get_Path()); // SYSLST() lz390 listing
 	     add_final_opt("SYSMAC=" + dir_mac); // SYSMAC() mz390 macro lib
 	     add_final_opt("SYSMLC=" + dir_mlc); // SYSMLC() mz390 source input
 	     add_final_opt("SYSPCH=" + dir_pch); // SYSPCH() mz390 punch output dir

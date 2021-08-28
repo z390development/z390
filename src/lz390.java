@@ -521,7 +521,7 @@ private void open_files(){
 	    	tz390.trace_file_name = tz390.trace_file_name + tz390.trl_type;
 	    }
        	if (tz390.opt_list){
-       		String lst_file_name = tz390.get_file_name(tz390.dir_lst,tz390.pgm_name,tz390.lst_type); // RPI 866
+       		String lst_file_name = tz390.lst_File.Get_FileSpec("", tz390.pgm_name, tz390.lst_type);
          	try {
                lst_file = new File(lst_file_name); // RPI 908
                lst_file_buff = tz390.open(lst_file.toString(), "lst_file_buff"); // dk RPI 1618
