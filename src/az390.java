@@ -410,7 +410,9 @@ public  class  az390 implements Runnable {
 		*            note this is documented in IBM APAR PH30740 dated 2020-11-03 
 		* 2020-12-31 RPI 2225 add STCCTM, use get_hex_relative_offset(bits) and get_hex_int(bits), and fix BPRP, BPPm, fix vcp, etc.
 		* 2021-02-07 RPI 2226 correct RSYb EB17 STCCTM R1,M3,D2(B2) and fix VNOT not setting v3=v2
-        * 2821-04-26 Uaayw #239 fix no error on undefined sym for RIL i2 operand		
+        * 2821-04-26 Issue #239 fix no error on undefined sym for RIL i2 operand
+        * 2021-08-20 DSH issue #230 correct vector instruction erros reported by Dan Greiner
+        * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand m4 or m6		
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -4577,11 +4579,26 @@ private void process_bal_op(){
 				}
           }
 		  if ((tz390.op_code[bal_op_index].length() >= 6)) {
-           	  get_hex_op(6,1);    // M4
+           	  get_hex_op(6,1);    // M4 option
+              if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7C0")
+				  || tz390.op_code[bal_op_index].substring(0,4).equals("E7C1")
+			      || tz390.op_code[bal_op_index].substring(0,4).equals("E7C2")
+				  || tz390.op_code[bal_op_index].substring(0,4).equals("E7C3")
+			      || tz390.op_code[bal_op_index].substring(0,4).equals("E7C5")
+				  || tz390.op_code[bal_op_index].substring(0,4).equals("E7C7")
+			     ){ // #230 OR option with M4
+			     if (!bal_abort && exp_next_char(',')){
+       		        skip_comma();
+       		        get_hex_reg();   // M4			
+                 } else {
+                    get_hex_zero(1);   
+				 }	                 
+			     or_last_op();    // OR last op with prev op and remove last op
+			  }					  
           } else { 
 		     if (!bal_abort && exp_next_char(',')){
        		    skip_comma();
-       		    get_hex_reg();   // M4
+       		    get_hex_reg();   // M4			
              } else {
                 get_hex_zero(1);    // M4
              } 
@@ -4687,9 +4704,14 @@ private void process_bal_op(){
    	           get_hex_zero(1);   // M5 = 0 
              }
 		  }
-		  if (!bal_abort && exp_next_char(',')){ // FOR VFAE
+		  if (!bal_abort && exp_next_char(',')){ 
        		 skip_comma();
              get_hex_reg();   // M6
+			 if (tz390.op_code[bal_op_index].substring(0,4).equals("E78A")
+			  && tz390.op_code[bal_op_index].length() > 5){ // #230 OR option with VSTRC? P6
+			  get_hex_op(6,1); // get constant to OR with m6
+			  or_last_op();    // OR last op with prev op and remove last op
+		     }
 		  } else {
 		     if (tz390.op_code[bal_op_index].length() > 5) {
        		    get_hex_op(6,1); // M6
@@ -4708,7 +4730,7 @@ private void process_bal_op(){
 		  + obj_code.substring(6,7)           // m5 rpi 2225
     	  + obj_code.substring(5,6);          // v4
 		   } else {		   
-		  // map oo123456 to oo1235604xoo
+		  // map oo123456 to oo1235604xoo  E78A VSTRC?
           obj_code = obj_code.substring(0,5)  // op1+v1,v2,v3
  	      + obj_code.substring(6,8)           // m5,m6
 		  + "0"                               // 0
@@ -7940,6 +7962,19 @@ private void get_hex_op(int op_offset, int op_len){
 	   exp_text = bal_parms;
 	   exp_index = 0;
 	}
+}
+private void or_last_op(){
+	// dsh for issue #230 or last op added to prev op added and remove last op (see operation E78A
+    int obj_len = obj_code.length();
+    if (tz390.opt_traceall){ // dsh issue #230
+	   tz390.put_trace("obj_len=" + obj_len + "p6=" + obj_code.substring(obj_len-2,obj_len-1));
+    }
+    obj_code = obj_code.substring(0,obj_len-2)
+          	 + tz390.get_hex(
+          	    Integer.parseInt(obj_code.substring(obj_len-2,obj_len-1),16)
+			    | 
+				Integer.parseInt(obj_code.substring(obj_len-1,obj_len),16)
+			   ,1);	
 }
 private String get_hex_nib(){
 	/*
