@@ -1173,6 +1173,9 @@ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
   		     AIF ('&LAB'(7,1) NE '_')
 &M5            SETA X2A('&LAB'(7,1))
 &M6            SETA &P5
+               AIF (K'&LAB GE 8 AND '&LAB'(8,1) NE '_')
+&M6                SETA (&P5 OR X2A('&LAB'(8,1))) DSH #230
+               AEND 			   
              AEND	
            AEND	   
  DC X'&HEX',AL1(&V1*16+&V2,&V3*16+&M5,&M6*16+0,&V4*16+&VREG_RXB)
@@ -1198,7 +1201,7 @@ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
  DC X'&HEX',AL1(&V1*16+&V2,&V3*16+&M5,&M6*16+0,&V4*16+&VREG_RXB),X'&H2'  
   AELSEIF (N'&SYSLIST EQ 6 AND '&LAB'(3,3) GE 'E7C' AND                X
                                '&LAB'(3,3) LE 'E7D') 
-	  VREGS VP1=&P1,VP2=&P2 E7C0 VCLGD V1,V2,M3,M4,M5
+	  VREGS VP1=&P1,VP2=&P2 E7C0 VCLGD V1,V2,M3,M4,M5	       
 &OP_LAB     &OP &P1,&P2,&P3,&P4,&P5
 &LAB_OP ORG &OP_LAB+16
  DC X'&HEX',AL1(&V1*16+&V2,0,&P5*16+&P4,&P3*16+&VREG_RXB),X'&H2' 
@@ -1333,6 +1336,10 @@ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
 &M3    SETA X2A('&LAB'(7,1))
 &M4    SETA &P3
 &M5    SETA &P4  
+      AELSEIF (K'&LAB EQ 8) #230 E7C3 WCEFB OR 8 WITH M4
+&M3    SETA X2A('&LAB'(7,1))
+&M4    SETA (&P3 OR X2A('&LAB'(8,1))) 
+&M5    SETA &P4 	  
       AELSE
 &M3    SETA &P3
 &M4    SETA &P4
