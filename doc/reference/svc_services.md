@@ -1,8 +1,30 @@
 # SVC services
 
+## SVC functions
+
+DEC | HEX | Service
+----|-----|--------
+  1 | 01  | [WAIT](#wait)
+  2 | 02  | [POST](#post)
+ 11 | 0B  | [TIME(and date)](#time-svc)
+ 11 | 0B  | [GETIME (VSE)](#gettime)
+ 40 | 28  | [GETENV](#getenv)
+ 46 | 2E  | [TTIMER](#ttimer)
+ 47 | 2F  | [STIMER](#stimer)
+ 52 | 34  | [CMDPROC](#cmdproc)
+ 53 | 35  | [WTO](#wto)
+103 | 67  | [XLATE](#xlate)
+160 | A0  | [WTOR](#wtor)
+170 | AA  | [CTD](#ctd)
+171 | AB  | [CFD](#cfd)
+
+## Supporting Macros
+
+* [COMRG](#comrg) - Address Communications region (VSE)
+
 ## Macro reference
 
-### TIME(SVC) - Obtain the time and date
+### TIME(SVC) - Obtain the time and date {#time-svc}
 
 ``` hlasm
 name     TIME  type,addr,LINKAGE=SVC,DATETYPE=,CLOCKTYPE=
@@ -161,7 +183,7 @@ GR15 has a return code:
 * 0 - TIME ok
 * 4 - Invalid request
 
-### TIME(SYSTEM) - Obtain the time and date
+### TIME(SYSTEM) - Obtain the time and date {#time-system}
 
 ``` hlasm
 name     TIME  type,addr,LINKAGE=SYSTEM,DATETYPE=,CLOCKTYPE=
@@ -277,7 +299,7 @@ GR15 has a return code:
 * 0 - TIME ok
 * 4 - Invalid request
  
-### GETIME - Obtain time and date (VSE)
+### GETIME - Obtain time and date (VSE) {#gettime}
 
 ``` hlasm
          GETIME type
@@ -314,7 +336,7 @@ GR15 has a return code:
 * 0 - GETIME ok
 * 4 - Invalid request
  
-### STIMER - Wait for an interval of time
+### STIMER - Wait for an interval of time {#stimer}
 
 Wait for an interval of time.
 
@@ -363,7 +385,7 @@ Can be label or (reg).
 * R1 = Address of the timer units
 * R15 = By implication, exit routine address
 
-### TTIMER - Test or cancel STIMER REAL
+### TTIMER - Test or cancel STIMER REAL {#ttimer}
 
 Test or cancel a previously set STIMER REAL
 
@@ -414,7 +436,7 @@ GR15 has a return code:
 * 4 TU units remaining exceed 31 bits
 
 
-### CMDPROC - execute host OS commands
+### CMDPROC - execute host OS commands {#cmdproc}
 
 Open, close, read and write from the host command processor or shell.
 
@@ -531,7 +553,7 @@ GR15 has a return code:
 * 8 - READ terminated because the command processor has ended
 * 16 - Command Processor abnormally ended (see log message)
 
-### WTO - Write to operator
+### WTO - Write to operator {#wto}
 
 Display a message on the GUI console.
 
@@ -584,7 +606,7 @@ name     WTO   MF=(E,(reg))
 
 * R1 = Branch around RDW or parm pointer
 
-### XLATE - EBCDIC to ASCII
+### XLATE - EBCDIC to ASCII {#xlate}
 
 ``` hlasm
 name     XLATE area,len,TO=
@@ -617,7 +639,7 @@ Type of conversion to perform:
 * R0 = Area address and codes
 * R1 = Length
 
-### WTOR - Write to operator
+### WTOR - Write to operator {#wtor}
 
 Display a message on the GUI console and receive a response.
 
@@ -678,7 +700,7 @@ MYECB    DC    F'0'
 * R14 = Reply length
 * R15 = ECB address
 
-### WAIT - Wait for ECB completion
+### WAIT - Wait for ECB completion {#wait}
 
 ``` hlasm
 name WAIT num,ECB=
@@ -734,7 +756,7 @@ ECB3     DC    F'0'
 * R0 = Number of ECBs
 * R1 = ECB address
 
-### POST - Signal ECB completion
+### POST - Signal ECB completion {#post}
 
 Signal the completion of one ECB.
 
@@ -761,7 +783,7 @@ The completion code is placed in bits 2-31 of the ECB.
 * R0 = Event completion code
 * R1 = ECB address
 
-### CTD - Convert binary or FP value
+### CTD - Convert binary or FP value {#ctd}
 
 ``` hlasm
 name     CTD   type,IN=input,OUT=output,LINKAGE=
@@ -861,7 +883,7 @@ GR15 has a return code:
 * 0 - CTD ok
 * 8 - Invalid data address
 
-### CFD - Convert to binary or FP value
+### CFD - Convert to binary or FP value {#cfd}
 
 Convert a printable format number to a binary or floating point value.
 
@@ -952,7 +974,7 @@ GR15 has a return code:
 * 8 - Invalid data address
 * 12 - invalid input data or number too large for format type
 
-### GETENV - Get environment variable
+### GETENV - Get environment variable {#getenv}
 
 Get an environment variable from the OS command environment.
 
@@ -989,7 +1011,7 @@ GR15 has a return code:
 * 4 - setname is null
 * 8 - variable is null
 
-### COMRG - Comm region addressability
+### COMRG - Comm region addressability {#comrg}
 
 !!! Note
     VSE only
@@ -1008,10 +1030,6 @@ Establish addressability to the Communications region in the ZCVT.
 * R1 = Address the ZCVT
 
 _reg_ used in REG parm.
-
-## Supporting Macros
-
-COMRG Address Communications region (VSE)
 
 ## Time periods
 
@@ -1032,20 +1050,3 @@ COMRG Address Communications region (VSE)
 
 Completion code, set internally or by the POST macro.
 
-## SVC functions
-
-DEC | HEX | Service
-----|-----|--------
-  1 | 01  | WAIT
-  2 | 02  | POST
- 11 | 0B  | TIME (and date)
- 11 | 0B  | GETIME (VSE)
- 40 | 28  | GETENV
- 46 | 2E  | TTIMER
- 47 | 2F  | STIMER
- 52 | 34  | CMDPROC
- 53 | 35  | WTO
-103 | 67  | XLATE
-160 | A0  | WTOR
-170 | AA  | CTD
-171 | AB  | CFD

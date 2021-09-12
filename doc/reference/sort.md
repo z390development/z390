@@ -1,8 +1,8 @@
-# z390 ZSORT
+# zSORT
 
-The z390 ZSORT internal sort facility is a component of z390 which supports sorting of any number of fixed or variable length records of any size up to the limits of memory and 64 bit file system.
+The zSORT internal sort facility is a component of z390 which supports sorting of any number of fixed or variable length records of any size up to the limits of memory and 64 bit file system.
 
-ZSORT is implemented with the intent of being compatible with IBM&reg; DFSORT.
+zSORT is implemented with the intent of being compatible with IBM&reg; DFSORT.
 ## SORT utility program
 
 SORT.MLC utility assembler program included in the sort and linklib folders performs a sort with the following input files:
@@ -14,7 +14,7 @@ SORT.MLC utility assembler program included in the sort and linklib folders perf
 
 ## Macro Reference
 
-The ZSORT utility function can be called from z390 assembler programs using standard call interface with full work 
+The zSORT utility function can be called from z390 assembler programs using standard call interface with full work 
 parameters in list pointed to by register 1.
 
 The first positional macro parameter contains the operation code and options.  
@@ -84,7 +84,7 @@ Alternatively the execute form `MF=(E,addr)` can be used.  See linklib\SORT.MLC 
 
 ## Technical details
 
-ZSORT is implemented via SVC x'A1' which has 3 function calls:
+zSORT is implemented via SVC x'A1' which has 3 function calls:
 
 * initialize internal sort request
 * submit unsorted record
@@ -104,4 +104,4 @@ All file I/O is blocked to minimize disk seeking on single disk systems.
 
 User can define the location of SORTWK01 and SORTWK02 if multiple physical disk drives are available.
 
-A million records can be sorted in 28 seconds.  Statistics on each sort execution are recorded on the statistics file if option STATS is specified.
+A million records can be sorted in 28 seconds. Statistics on each sort execution are recorded on the statistics file if option STATS is specified.

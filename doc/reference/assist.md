@@ -16,7 +16,7 @@ User Manual PART II. INPUT/OUTPUT AND DEBUGGING INSTRUCTIONS](http://faculty.cs.
 
 ### `ASSIST` option
 
-The ASSIST option must be provided to use the ASSIST instructions. See [z390 Options](Options/z390_options.md) for details.
+The ASSIST option must be provided to use the ASSIST instructions. See [z390 Options](options/z390_options.md) for details.
 
 ### `assist` command script
 
@@ -54,7 +54,7 @@ This has the following impacts:
 * Memory above the PSA is initialized to X'F5'.
 * Uninitialized areas of 390 load modules are initialized to X'F6'.
 
-You can use the options LOADHIGH and INIT to override this behavior. See [z390 Options](Options/z390_options.md) for more information.
+You can use the options LOADHIGH and INIT to override this behavior. See [z390 Options](options/z390_options.md) for more information.
 
 ## Error handling
 
