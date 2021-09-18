@@ -5,9 +5,10 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 * 2021-02-26 DSH CHKV READ V FILE VIA SYSUT1 AND SNAP DUMP ON TRE
+* 2021-09-16 DSH COPYRIGHT, CHKVT
 *********************************************************************
 CHKVT    SUBENTRY
-         WTO   'CHKVT READ RECFM=VT FILE VIA SYSUT1 AND SNAP DUMP'
+         WTO   'CHKVT READ RECFM=VT FILE WITHOUT LBI'
          OPEN  (SYSUT1,(INPUT),SNAPOUT,(OUTPUT))
          LA    R4,1
 LOOP     EQU   *
@@ -30,7 +31,7 @@ LOOP     EQU   *
          LA    R4,1(R4) 
          BNH   LOOP
 EOF      CLOSE (SYSUT1,,SNAPOUT)
-         WTO   'CHKV ENDED OK'
+         WTO   'CHKVT ENDED OK'
          SUBEXIT 
 ABORT    ABEND 111,DUMP
          LTORG          
