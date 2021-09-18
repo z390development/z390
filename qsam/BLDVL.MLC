@@ -1,9 +1,11 @@
 *********************************************************************
-* Copyright 2005 Automated Software Tools Corporation               *
+* Copyright 2021 Don Higgins                *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
+*********************************************************************
+* 09/16/2021 DSH COPYRIGHT, BLDVL
 *********************************************************************
 BLDVL     SUBENTRY
          WTO   'BLDVL CREATE RECFM=V FILE WITH LBI'
@@ -31,7 +33,7 @@ LOOP     EQU   *
          C     R5,=F'100000'
          BNH   LOOP
 EOF      CLOSE (SYSUT2,,SNAPOUT)
-         WTO   'CHKVL ENDED OK'
+         WTO   'BLDVL ENDED OK'
          SUBEXIT 
 ABEND    ABEND 111,DUMP
          LTORG          

@@ -1,12 +1,14 @@
 *********************************************************************
-* Copyright 2005 Automated Software Tools Corporation               *
+* Copyright 2021 Don Higgins               *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 2021/09/16 DSH COPYRIGHT AND CORRECT BLDF WITHOUT LBI
+*********************************************************************
 BLDF     SUBENTRY
-         WTO   'BLDF CREATE RECFM=F FILE'
+         WTO   'BLDF CREATE RECFM=F FILE WITHOUT LBI'
          OPEN  (SYSUT2,(OUTPUT),SNAPOUT,(OUTPUT))
          LA    R4,1
          L     R5,SYSUT2+(DCBBLKSIF-IHADCB)
@@ -27,7 +29,7 @@ LOOP     EQU   *
          C     R4,=F'4'
          BNH   LOOP
 EOF      CLOSE (SYSUT2,,SNAPOUT)
-         WTO   'CHKF ENDED OK'
+         WTO   'BLDF ENDED OK'
          SUBEXIT 
          LTORG          
 SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=PM,RECFM=F,BLKSIZE=10000
