@@ -1,10 +1,11 @@
 *********************************************************************
-* Copyright 2005 Automated Software Tools Corporation               *
+* Copyright 2021 Don Higgins              *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 09/16/2021 DSH COPYRIGHT, BLDVTL
 BLDVTL     SUBENTRY
          WTO   'BLDVTL CREATE RECFM=VT FILE WITH LBI'
          OPEN  (SYSUT2,(OUTPUT),SNAPOUT,(OUTPUT))
@@ -31,11 +32,11 @@ LOOP     EQU   *
          C     R5,=F'100000'
          BNH   LOOP
 EOF      CLOSE (SYSUT2,,SNAPOUT)
-         WTO   'CHKVTL ENDED OK'
+         WTO   'BLDVTL ENDED OK'
          SUBEXIT 
 ABEND    ABEND 111,DUMP
          LTORG          
-SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=PM,RECFM=V,BLKSIZE=100004, X
+SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=PM,RECFM=VT,BLKSIZE=100004,X
                DCBE=SYSUT2E
 SYSUT2E  DCBE  SYNAD=ABEND,BLKSIZE=1  (1=LBI LARGE BLK BWD)
 SNAPOUT  DCB   DDNAME=SNAPOUT,DSORG=PS,RECFM=VBA,BLKSIZE=882,          X
