@@ -1,10 +1,11 @@
 *********************************************************************
-* Copyright 2005 Automated Software Tools Corporation               *
+* Copyright 2021 Don Higgins               *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 09/16/2021 DSH COPYRIGHT, CHKFL
 CHKFL     SUBENTRY
          WTO   'CHKFL VERIFY RECFM=F FILE WITH LARGE BLKS'
          OPEN  (SYSUT1,(INPUT),SNAPOUT,(OUTPUT))
@@ -27,7 +28,7 @@ LOOP     EQU   *
          LA    R4,1(R4)
          B     LOOP
 EOF      CLOSE (SYSUT1,,SNAPOUT)
-         WTO   'CHKF ENDED OK'
+         WTO   'CHKFL ENDED OK'
          SUBEXIT 
 ABEND    ABEND 111,DUMP
          LTORG          

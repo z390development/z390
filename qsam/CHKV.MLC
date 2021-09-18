@@ -1,13 +1,14 @@
 *********************************************************************
-* Copyright 2005 Automated Software Tools Corporation               *
+* Copyright 2021 Don Higgins              *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 * 2021-02-26 DSH CHKV READ V FILE VIA SYSUT1 AND SNAP DUMP ON TRE
+* 2021-09-16 DSH COPYRIGHT, CHKV
 *********************************************************************
 CHKV     SUBENTRY
-         WTO   'CHKV READ RECFM=V FILE VIA SYSUT1 AND SNAP DUMP'
+         WTO   'CHKV READ RECFM=V FILE WITHOUT LIB'
          OPEN  (SYSUT1,(INPUT),SNAPOUT,(OUTPUT))
          LA    R4,1
 LOOP     EQU   *

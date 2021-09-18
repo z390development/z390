@@ -215,7 +215,8 @@ public  class  sz390 implements Runnable {
 	*            https://www.ibm.com/support/knowledgecenter/SSLTBW_2.1.0/com.ibm.zos.v2r1.idad400/bdw9.htm#bdw9
 	*            for more on large block support see here (note DCBESLBI flag not currently used)
 	*            https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.1.0/com.ibm.zos.v2r1.idad500/dcbem.htm
-    ********************************************************
+    * 2021-09-17 DSH issue #321 fix qsam get vt to correctly set LBI length in area
+	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
     /*
@@ -3309,7 +3310,7 @@ private void svc_get(){
 				tz390.systerm_io++;
                 cur_vrec_lrecl = get_bdw_len(tiot_file[cur_tiot_index].readInt()); // RPI 2229 VB lrecl
                 check_mem_area(cur_dcb_area,cur_vrec_lrecl); // RPI 668  RPI 2229 ?
-                pz390.mem.putInt(cur_dcb_area,put_bdw_len(cur_vrec_lrecl)); // RPI 2229 dsh1
+                pz390.mem.putInt(cur_dcb_area,put_bdw_len(cur_vrec_lrecl)); // RPI 2229 
                 if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){ // RPI 697
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
@@ -3338,7 +3339,7 @@ private void svc_get(){
 				}
 				tz390.systerm_io++;
                 cur_rec_text = tiot_file[cur_tiot_index].readLine();
-                cur_rec_len  = cur_rec_text.length();
+                cur_rec_len  = cur_rec_text.length(); 
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
                 if (cur_rec_len > cur_dcb_lrecl_f - 4){ // rpi 697
                 	dcb_synad_error(46,"variable record too long");
@@ -3348,7 +3349,8 @@ private void svc_get(){
                 	cur_rec_text = " ";
                 }
                 check_mem_area(cur_dcb_area,cur_rec_len+4); // RPI 668
-                pz390.mem.putInt(cur_dcb_area,(cur_rec_len+4) << 16);
+				pz390.mem.putInt(cur_dcb_area,put_bdw_len(cur_rec_len+4)); // issue #321 put LBI or LL00 back in area 
+                // dsh #321 pz390.mem.putInt(cur_dcb_area,(cur_rec_len+4) << 16); 
                 int index = 0;
                 while (index < cur_rec_len){
                 	if (tz390.opt_ascii){

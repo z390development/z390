@@ -1,9 +1,11 @@
 *********************************************************************
-* Copyright 2005 Automated Software Tools Corporation               *
+* Copyright 2021 Don Higgins                *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
+*********************************************************************
+* 09/16/2021 DSH ADD DECB WITH LBI FLAG
 *********************************************************************
 BLDFL    SUBENTRY
          WTO   'BLDFL CREATE RECFM=F FILE WITH LARGE BLKS'
@@ -27,10 +29,13 @@ LOOP     EQU   *
          C     R4,=F'4'
          BNH   LOOP
 EOF      CLOSE (SYSUT2,,SNAPOUT)
-         WTO   'CHKF ENDED OK'
+         WTO   'BLDFL ENDED OK'
          SUBEXIT 
+ABEND    ABEND 111,DUMP
          LTORG          
-SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=PM,RECFM=F,BLKSIZE=100000
+SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=PM,RECFM=F,BLKSIZE=100000, X
+               DCBE=SYSUT2E
+SYSUT2E  DCBE  SYNAD=ABEND,BLKSIZE=1  (1=LBI LARGE BLK BWD)
 SNAPOUT  DCB   DDNAME=SNAPOUT,DSORG=PS,RECFM=VBA,BLKSIZE=882,          X
                LRECL=125,MACRF=W
 RECORD   DS    0XL100000
