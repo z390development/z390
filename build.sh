@@ -3,6 +3,7 @@ set -e
 echo "::set-output name=javaversion::$(java -version)"
 
 bash/bldjar
+bash/bldlib
 bash/bldcbllib
 bash/zopcheck
 bash/runasmdemos
