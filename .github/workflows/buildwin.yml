@@ -1,10 +1,5 @@
 name: Build z390 (Windows)
-on:
-  push:
-    branches:
-      - 'main'
-      - 'feature/**'
-      - '!**-nobuild'
+on: [push]
 
 jobs:
   build:
