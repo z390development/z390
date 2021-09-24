@@ -4,7 +4,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.reflect.Array;
@@ -18,6 +20,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -314,7 +317,8 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.7.07";  //dsh + afk
+    // String version    = "V1.7.07";  //dsh + afk
+    String version = getVersion();
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -7683,5 +7687,29 @@ public boolean check_java_version(){
 			return false;
 		}
 		return true;
+}
+public String getVersion() {
+
+    try (InputStream input = getClass().getClassLoader().getResourceAsStream("z390.properties")) {
+
+            Properties prop = new Properties();
+
+            if (input == null) {
+                System.out.println("Sorry, unable to find z390.properties");
+                return null;
+            }
+
+            //load a properties file from class path, inside static method
+            prop.load(input);
+
+            //get the property value and print it out
+            System.out.println(prop.getProperty("version"));
+            return prop.getProperty("version");
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
+        }
+
 }
 }

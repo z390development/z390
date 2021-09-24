@@ -8,6 +8,9 @@
 # doc python venv
 docenv/
 
+# z390.properties file (use relver to create)
+z390.properties
+
 # Java compiler output stuff
 **/*.[jJ][aA][rR]
 **/*.[eEe][xX][eE]

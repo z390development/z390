@@ -17,9 +17,12 @@ javac -d . -g:none ../src/*.java
 ec=$?
 echo "The exit code of the javac command is $ec"
 
+# create z390.properties file
+../bash/relver
+
 # build z390.jar with the JDK jar utility
 echo "Build z390.jar"
-jar cmf ../src/Z390.MAN z390.jar *.class
+jar cmf ../src/Z390.MAN z390.jar *.class ../*.properties
 ec=$?
 echo "The exit code of the jar command is $ec"
 
