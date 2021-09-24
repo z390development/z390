@@ -7703,7 +7703,6 @@ public String getVersion() {
             prop.load(input);
 
             //get the property value and print it out
-            System.out.println(prop.getProperty("version"));
             return prop.getProperty("version");
 
         } catch (IOException ex) {

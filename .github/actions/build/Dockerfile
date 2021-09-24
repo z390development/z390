@@ -1,5 +1,8 @@
 # Container image that runs your code
-FROM adoptopenjdk/openjdk15
+FROM adoptopenjdk/openjdk8
+
+# install git so we can get version label
+RUN apt -y update;apt -y install git
 
 # Copies your code file from your action repository to the filesystem path `/` of the container
 COPY entrypoint.sh /entrypoint.sh
