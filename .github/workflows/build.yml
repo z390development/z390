@@ -1,0 +1,18 @@
+name: Build z390
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Build z390
+        uses: ./.github/actions/build 
+      - name: Upload z390.jar artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: z390.jar
+          path: z390.jar

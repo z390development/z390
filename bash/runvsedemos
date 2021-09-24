@@ -1,31 +1,22 @@
 #!/bin/bash
 
 # runvsedemos: run vse demos under z390
-#
-# Note: run from z390/bash directory
 
 # debug flag; 0=no debug, 1=debug
 debug=0
 
-# extract longest substring that ends with "/"
-dir=${0%/*}
-
-# get the z390 directory
-zdir=$(dirname $0)
-zdir=$(cd $zdir && pwd)
-zdir=$(dirname $zdir)
-
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script
 cd ..
 
-#sysmac='sysmac('$zdir'/vse/mac+'$zdir'/mac)'
 sysmac='sysmac(vse/mac+mac)'
 
-${dir}/bash/asmlg vse/demo/DEMOVSE1 $sysmac
+bash/asmlg vse/demo/DEMOVSE1 $sysmac
 rc=$?
 if [ $debug -eq 1 ]; then echo "DEMOVSE1: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then echo "Error in DEMOVSE1"; fi
 
-${dir}/bash/asmlg vse/demo/DEMOVSE2 $sysmac
+bash/asmlg vse/demo/DEMOVSE2 $sysmac
 rc=$?
 if [ $debug -eq 1 ]; then echo "DEMOVSE2: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then echo "Error in DEMOVSE2"; fi
@@ -33,7 +24,7 @@ if [ "$rc" -ne "0" ]; then echo "Error in DEMOVSE2"; fi
 export SYSUT1=vse/demo/DEMOVSE3.TF1
 export SYSUT2=vse/demo/DEMOVSE3.TF2
 
-${dir}/bash/asmlg vse/demo/DEMOVSE3 $sysmac
+bash/asmlg vse/demo/DEMOVSE3 $sysmac
 rc=$?
 if [ $debug -eq 1 ]; then echo "DEMOVSE3: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then echo "Error in DEMOVSE3"; fi

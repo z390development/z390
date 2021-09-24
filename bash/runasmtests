@@ -1,27 +1,19 @@
 #!/bin/bash
 
 # runasmtests: regression test z390 instructions
-#
-# Note: run from z390/bash directory
 
-# extract longest substring that ends with "/"
-dir=${0%/*}
-
-# get the z390 directory
-zdir=$(dirname $0)
-zdir=$(cd $zdir && pwd)
-zdir=$(dirname $zdir)
-
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script
 cd ..
 
-sysmac='sysmac('$zdir'/mac)'
+sysmac='sysmac(mac)'
 optable='optable(z390)'
 
-${dir}/bash/asm tests/TESTINS1 trace $sysmac
-${dir}/bash/asmlg tests/TESTINS2 trace $sysmac
-${dir}/bash/asmlg tests/TESTINS3 trace $sysmac
-${dir}/bash/asmlg tests/TESTINS4 trace $sysmac
-${dir}/bash/asmlg tests/TESTINS5 trace $sysmac $optable
-${dir}/bash/asmlg tests/TESTDFP1 trace $sysmac $optable
-${dir}/bash/asmlg tests/TESTDFP2 trace $sysmac $optable
+bash/asm tests/TESTINS1 trace $sysmac
+bash/asmlg tests/TESTINS2 trace $sysmac
+bash/asmlg tests/TESTINS3 trace $sysmac
+bash/asmlg tests/TESTINS4 trace $sysmac
+bash/asmlg tests/TESTINS5 trace $sysmac $optable
+bash/asmlg tests/TESTDFP1 trace $sysmac $optable
+bash/asmlg tests/TESTDFP2 trace $sysmac $optable
 echo "Verify tests ran without errors"

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# relver: use git to set z390.properties version details
+
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script
+cd ..
+echo "version=$(git describe)" > z390.properties
