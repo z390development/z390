@@ -7,6 +7,8 @@ jobs:
     steps:
       - name: Checkout main
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Build z390
         uses: ./.github/actions/build 
       - name: Upload z390.jar artifact
