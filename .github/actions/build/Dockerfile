@@ -2,7 +2,7 @@
 FROM adoptopenjdk/openjdk8
 
 # install git so we can get version label
-RUN apt -y update;apt -y install git
+RUN apt -y update;apt -y install git zip
 
 # Copies your code file from your action repository to the filesystem path `/` of the container
 COPY entrypoint.sh /entrypoint.sh
