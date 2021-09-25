@@ -1,0 +1,38 @@
+*********************************************************************
+* Copyright 2021 Don Higgins             *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 09/20/2021 DSH modify BLDVT to CPYVT1 to read ascii and create vt
+*********************************************************************
+CPYVT1   SUBENTRY
+         WTO   'CPYVT1 COPY RECFM=VT FILE WITHOUT LBI'
+         OPEN  (SYSUT1,(INPUT),SYSUT2,(OUTPUT),SNAPOUT,(OUTPUT))
+         LA    R4,1 SNAP DUMP ID
+LOOP     EQU   *
+         GET   SYSUT1,RECORD
+         PUT   SYSUT2,RECORD 
+         LA    R7,RECORD
+         AH    R7,LLLL END OF RECORD
+         SAVE  (R14,R12)
+         SNAP   STORAGE=(RECORD,(R7)),PDATA=,ID=(R4),DCB=SNAPOUT
+         RESTORE (R14,R12)
+         LA    R4,1(R4)
+         B     LOOP
+EOF      CLOSE (SYSUT2,,SNAPOUT)
+         WTO   'CPYVT1 ENDED OK'
+         SUBEXIT 
+         LTORG  
+SYSUT1   DCB   DSORG=PS,DDNAME=SYSUT1,MACRF=GM,RECFM=VT,BLKSIZE=10004, X
+               EODAD=EOF        
+SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=PM,RECFM=VT,BLKSIZE=10004
+SNAPOUT  DCB   DDNAME=SNAPOUT,DSORG=PS,RECFM=VBA,BLKSIZE=882,          X
+               LRECL=125,MACRF=W
+RECORD   DS    0XL100004
+LLLL     DC    XL4'00'
+         DC    100000C'X'
+         DCBD
+         EQUREGS
+         END
