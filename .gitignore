@@ -5,8 +5,9 @@
 # VSCode workspace settings
 .vscode/
 
-# doc python venv
+# doc working areas
 docenv/
+site/
 
 # z390.properties file (use relver to create)
 z390.properties

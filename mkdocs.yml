@@ -1,16 +1,26 @@
 site_name: z390
+site_author: z390 Development team
+copyright: "&copy; 2021 Don Higgins. All rights reserved"
+
 repo_url: https://github.com/z390development/z390/
 edit_uri: edit/main/doc/
 remote_branch: gh-pages-beta
+
 plugins:
   - search
   - awesome-pages
+  - with-pdf:
+      cover_subtitle: Mainframe assembler and emulator toolkit
+      enabled_if_env: ENABLE_PDF_EXPORT
+      output_path: pdf/z390.pdf
+
 theme: 
   name: material
   custom_dir: doc_overrides
   features:
     - navigation.tabs
     - navigation.tabs.sticky
+
 docs_dir: doc
 
 markdown_extensions:

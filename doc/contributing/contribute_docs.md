@@ -82,7 +82,7 @@ ASCII     | Always in capitals
 EBCDIC    | Always in capitals
 PSW       | Program status word - Always capitals
 
-## Preview the web pages
+## Generate the web site
 
 The z390 docs use the Python utility mkdocs to convert the markdown to web pages that are published to GitHub pages.
 
@@ -90,7 +90,7 @@ The following instructions will allow you to preview the published version on Gi
 
 ### Installation
 
-You will need some version of Python, and the version should be 3.4 or above.
+You will need Python version 3.4 or above installed.
 
 === "MacOS/Unix"
 
@@ -128,3 +128,22 @@ You can view the web site preview using a web browser pointed at the following a
     docenv\Scripts\activate
     mkdocs serve
     ```
+
+## Generate the PDF
+
+The distribution will include a PDF with the documentation. 
+
+To build the PDF version of the documentation
+you will need the [pango](https://pango.org) library installed.
+
+You can use the following commands to generate the PDF.
+
+=== "MacOS/Unix"
+        
+    ``` sh
+    source docenv/bin/activate
+    ENABLE_PDF_EXPORT=1 mkdocs build
+    ```
+
+The generated PDF document will be placed in the file `/site/pdf/z390.pdf`
+
