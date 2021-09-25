@@ -126,4 +126,3 @@ VPTH     CSECT
          AGO   .GEN_PTH_LOOP
 .GEN_END ANOP
          MEND
-

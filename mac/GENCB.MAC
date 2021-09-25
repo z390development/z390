@@ -7,6 +7,7 @@
 .* Date   - 12/20/20                                                  *
 .**********************************************************************
 .* 12/20/20 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.* 05/17/21 Set proper defaults for zVSAM V1                          *
 .**********************************************************************
 &N       GENCB &AM=VSAM,          VSAM                                 X
                &BLK=,             ACB, RPL OR EXLST                    X
@@ -49,31 +50,89 @@
                &RLSWAIT=,         EXLST NOT SUPPORTED                  X
                &MF=I
 .*
+&SYSZVSAM SETA 1
          AIF   (&SYSZVSAM EQ 0)
          MNOTE 15,'GENCB VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM'
          MEXIT
          AEND
 .*
          AIF   (&SYSZVSAM EQ 1)
+         LCLC  &EXLST1,&AREA1,&DSNAME1,&LOC1,&BUFSP1,&AREALN1,&ARG1
+         LCLC  &ECB1,&KEYLEN1,&RECLEN1,&ACB1
+         AIF   ('&EXLST' EQ '')
+&EXLST1  SETC  '0'
+         AELSE
+&EXLST1  SETC  '&EXLST'
+         AEND
+         AIF   ('&AREA' EQ '')
+&AREA1   SETC  '0'
+         AELSE
+&AREA1   SETC  '&AREA'
+         AEND
+         AIF   ('&DSNAME' EQ '')
+&DSNAME1 SETC  '0'
+         AELSE
+&DSNAME1 SETC  '&DSNAME'
+         AEND
+         AIF   ('&LOC' EQ '')
+&LOC1    SETC  'BELOW'
+         AELSE
+&LOC1    SETC  '&LOC'
+         AEND
+         AIF   ('&BUFSP' EQ '')
+&BUFSP1  SETC  '0'
+         AELSE
+&BUFSP1  SETC  '&BUFSP'
+         AEND
+         AIF   ('&AREALEN' EQ '')
+&AREALN1 SETC  '0'
+         AELSE
+&AREALN1 SETC  '&AREALEN'
+         AEND
+         AIF   ('&ARG' EQ '')
+&ARG1    SETC  '0'
+         AELSE
+&ARG1    SETC  '&ARG'
+         AEND
+         AIF   ('&ECB' EQ '')
+&ECB1    SETC  '0'
+         AELSE
+&ECB1    SETC  '&ECB'
+         AEND
+         AIF   ('&KEYLEN' EQ '')
+&KEYLEN1 SETC  '0'
+         AELSE
+&KEYLEN1 SETC  '&KEYLEN'
+         AEND
+         AIF   ('&RECLEN' EQ '')
+&RECLEN1 SETC  '0'
+         AELSE
+&RECLEN1 SETC  '&RECLEN'
+         AEND
+         AIF   ('&ACB' EQ '')
+&ACB1    SETC  '0'
+         AELSE
+&ACB1    SETC  '&ACB'
+         AEND
 &N       GENCB1 AM=&AM,           VSAM                                 X
                BLK=&BLK,          ACB OR RPL                           X
                COPIES=&COPIES,    NUMBER OF COPIES                     X
                LENGTH=&LENGTH,    LENGTH OF WAREA                      X
-               LOC=&LOC,          AREA BELOW OR ANY                    X
+               LOC=&LOC1,         AREA BELOW OR ANY                    X
                WAREA=&WAREA,      USER WORK AREA FOR ACB/RPL COPIES    X
-               BUFSP=&BUFSP,      ACB MAXIMUM BUFFER SPACE FOR CLUSTER X
+               BUFSP=&BUFSP1,     ACB MAXIMUM BUFFER SPACE FOR CLUSTER X
                DDNAME=&DDNAME,    ACB DDNAME FOR CLUSTER DEF TABLE     X
-               DSNAME=&DSNAME,    ACB DSNAME FOR CLUSTER DEF TABLE     X
-               EXLST=&EXLST,      ACB NOT SUPPORTED                    X
+               DSNAME=&DSNAME1,   ACB DSNAME FOR CLUSTER DEF TABLE     X
+               EXLST=&EXLST1,     ACB NOT SUPPORTED                    X
                MACRF=&MACRF,      ACBMACR1-4                           X
-               ACB=&ACB,          RPLDACB                              X
-               AREA=&AREA,        RPLAREA                              X
-               AREALEN=&AREALEN,  RPLAREAL                             X
-               ARG=&ARG,          RPLARG                               X
-               ECB=&ECB,          RPLECB                               X
-               KEYLEN=&KEYLEN,    RPLKEYLN                             X
+               ACB=&ACB1,         RPLDACB                              X
+               AREA=&AREA1,       RPLAREA                              X
+               AREALEN=&AREALN1,  RPLAREAL                             X
+               ARG=&ARG1,         RPLARG                               X
+               ECB=&ECB1,         RPLECB                               X
+               KEYLEN=&KEYLEN1,   RPLKEYLN                             X
                OPTCD=&OPTCD,      RPLOPT1-2                            X
-               RECLEN=&RECLEN     RPLRECLN
+               RECLEN=&RECLEN1    RPLRECLN
          AEND
 .*
          AIF   (&SYSZVSAM EQ 2)
@@ -119,3 +178,4 @@
          AEND
 .*
          MEND
+

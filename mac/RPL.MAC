@@ -7,6 +7,8 @@
 .* Date   - 12/20/20                                                  *
 .**********************************************************************
 .* 12/20/20 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.* 05/01/21 Changed to split RPL into RPL1 and 2 instead of           *
+.*          RPL&SYSZVSAM                                              *  *
 .**********************************************************************
 &N       RPL   &AM=VSAM,          VSAM                                 X
                &ACB=0,            VSAM ACB ADDRESS                     X

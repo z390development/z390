@@ -5,6 +5,8 @@
 *                                                                     *
 * Author - Melvyn Maltz                                               *
 * Date   - 12th March 2016                                            *
+*                                                                     *
+* 05/16/21 Added field CTRTOTRL                                       *
 ***********************************************************************
          MACRO
          ZVSAMCTR
@@ -36,7 +38,7 @@ CTRSDTASZ  DS    XL8              uncompressed data size
 CTRSTMST   DS    XL8              STCK of last close
 CTRSTRMAX  DS    XL8              maximum number of active strings
 CTRNUIW    DS    XL8              number of user writes
+CTRTOTRL   DS    XL8              total record lengths (variable only)
 CTRLOKEY@  DS    AL2              offset of lowest valid key value
 CTRLENG    EQU   *-ZVSAMCTR       DSECT length
          MEND
-
