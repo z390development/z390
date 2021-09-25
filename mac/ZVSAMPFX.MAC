@@ -5,6 +5,9 @@
 *                                                                     *
 * Author - Melvyn Maltz                                               *
 * Date   - 12th March 2016                                            *
+*                                                                     *
+* 06/05/21 PFXMAPDT renamed to PFXDTMAP                               *
+*          PFXIXMAP added                                             *
 ***********************************************************************
          MACRO
          ZVSAMPFX
@@ -80,7 +83,8 @@ PFXDTSKC DS    XL8                STCK of data creation
 PFXIXSKC DS    XL8                STCK of index creation
 PFXDTSKU DS    XL8                STCK of last data update
 PFXIXSKU DS    XL8                STCK of last index update
-PFXMAPDT DS    XL8                STCK of last allocation action
+PFXDTMAP DS    XL8                STCK of last data spacemap update
+PFXIXMAP DS    XL8                STCK OF last index spacemap update
 PFXFRSPC DS    X                  initial freespace % within block
 PFXFRBLK DS    XL2                initial freespace blocks
 PFXFRINT DS    XL2                Initial freespace interval between
@@ -103,4 +107,3 @@ PFXLENG  EQU   *-ZVSAMPFX         DSECT length
          ZVSAMCTR                 counters DSECT
 .EXIT    ANOP
          MEND
-
