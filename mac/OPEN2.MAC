@@ -38,6 +38,18 @@
 .*    MF= is coded                                                    *
 .*    Default MODE=24 (MODE not implemented in V1)                    *
 .*    IBM-like implementation with same block structure               *
+.*    V1 implements option UPDATE incorrectly, it should be UPDAT     *
+.*    V2 allows both                                                  *
+.* Mods after V1.07.06                                                *
+.*    Header added to OPEN list (zOPC, no. of entries)                *
+.*    Code added to MF=E to stop storage overlay when no. of entries  *
+.*    in the MF=E exceeds the no. in the list                         *
+.*                                                                    *
+.*    no. of entries will have the senior bit turned on for MODE=31   *
+.*    This enables a check to make sure that MF=E,MODE= matches the   *
+.*    MF=L,MODE=. IBM permits mixed MODEs causing damage to the list  *
+.*    This simplifies the interface as now R1 can point to the list   *
+.*    and R0 isn't needed                                             *
 .**********************************************************************
 &N       OPEN2 &DCBLIST,          (DCB,OPT,DCB,OPT,...,) DCB (REG)     X
                &MF=I,                                                  X
@@ -82,6 +94,13 @@
             AIF (&NP EQ 0)
          MNOTE 15,'OPEN MF=L BUT NO DCBs/ACBs SPECIFIED'
          MEXIT
+            AEND
+.* GENERATE HEADER
+         DC    C'zOPC'
+            AIF ('&MODE' EQ '24')
+         DC    AL2(&NP/2)
+            AELSE
+         DC    AL2(X'8000'+&NP/2)
             AEND
 .*
 &I       SETA  1
@@ -140,7 +159,14 @@
 &LENLIST SETA  8
             AEND
 .*
-         BRAS  1,*+4+((&NP+1)/2)*&LENLIST R1=LIST POINTER
+         BRAS  1,*+4+6+((&NP+1)/2)*&LENLIST R1=LIST POINTER
+.* GENERATE HEADER
+         DC    C'zOPC'
+            AIF ('&MODE' EQ '24')
+         DC    AL2(&NP/2)
+            AELSE
+         DC    AL2(X'8000'+&NP/2)
+            AEND
 .*
 &I       SETA  1
 .MFILOOP ANOP
@@ -188,21 +214,17 @@
 &DCB     SETC  '&DCBLIST(&I)'
             AIF ('&DCB'(1,1) EQ '(')
                AIF ('&MODE' EQ '24')
-         STCM  &DCB,B'0111',1+((&I-1)/2)*4.(1) SAVE DCB/ACB 24-BIT ADDR-
+         STCM  &DCB,B'0111',7+((&I-1)/2)*4.(1) SAVE DCB/ACB 24-BIT ADDR-
                ESS
                AELSE
-         ST    &DCB,4+((&I-1)/2)*8.(1) SAVE DCB/ACB 31-BIT ADDRESS
+         ST    &DCB,10+((&I-1)/2)*8.(1) SAVE DCB/ACB 31-BIT ADDRESS
                AEND
             AEND
 &I       SETA  &I+2
          AGO   .MFILPRG
 .*
 .MFIDNRG ANOP
-            AIF   ('&MODE' EQ '31')
-         LR    0,1                R0=OPEN LIST POINTER
-         SR    1,1                CLEAR R1
-            AEND
-         SVC   19                 ISSUE OPEN
+         SVC   19                ISSUE OPEN
          MEXIT
          AEND
 .*
@@ -214,10 +236,30 @@
             AEND
 .*
             AIF ('&MF(2)'(1,1) EQ '(')
-         ZOPTLR 1,&MF(2)          R1=ADDRESS OF OPEN LIST
+         ZOPTLR 1,&MF(2)         R1=ADDRESS OF OPEN LIST
             AELSE
-         LA    1,&MF(2)           R1=ADDRESS OF OPEN LIST
+         LA    1,&MF(2)          R1=ADDRESS OF OPEN LIST
             AEND
+.* CODE TO PREVENT MODS BEYOND END-OF-PARMS
+.* AND STOP AN MF=E MODIFYING AN MF=L WITH A DIFFERENT MODE
+         LLH   0,4(1)            R0=NO. IN OPEN LIST
+         NILL  0,X'7FFF'         KILL THE MODE BIT
+         CHI   0,&NP/2           TOO MANY PARMS ?
+         JNL   MFEOK1&SYSNDX     EXIT IF NOT
+         J     MFERC8&SYSNDX     EXIT
+*
+MFEOK1&SYSNDX DS 0H
+         TM    4(1),X'80'        TEST MF=L MODE
+            AIF ('&MODE' EQ '24')
+         JZ    MFEOK2&SYSNDX     EXIT IF MODES MATCH
+            AELSE
+         JO    MFEOK2&SYSNDX     EXIT IF MODES MATCH
+            AEND
+MFERC8&SYSNDX DS 0H
+         LA    15,8              SET RC=8
+         J     MFEBAD&SYSNDX     EXIT
+*
+MFEOK2&SYSNDX DS 0H
 .*
             AIF (&NP EQ 0).MFEDONE
 &I       SETA  1
@@ -229,19 +271,19 @@
             AIF ('&DCB' EQ '').MFEOPT
             AIF ('&DCB'(1,1) EQ '(')
                AIF ('&MODE' EQ '24')
-         STCM  &DCB,B'0111',1+((&I-1)/2)*4.(1) SAVE DCB/ACB 24-BIT ADDR-
+         STCM  &DCB,B'0111',7+((&I-1)/2)*4.(1) SAVE DCB/ACB 24-BIT ADDR-
                ESS
                AELSE
-         ST    &DCB,4+((&I-1)/2)*8.(1) SAVE DCB/ACB 31-BIT ADDRESS
+         ST    &DCB,10+((&I-1)/2)*8.(1) SAVE DCB/ACB 31-BIT ADDRESS
                AEND
             AGO .MFEOPT
 .*
             AELSE
-         LA    0,&DCB             R0=DCB/ACB ADDRESS
+         LA    0,&DCB            R0=DCB/ACB ADDRESS
                AIF ('&MODE' EQ '24')
-         STCM  0,B'0111',1+((&I-1)/2)*4.(1) SAVE DCB/ACB 24-BIT ADDRESS
+         STCM  0,B'0111',7+((&I-1)/2)*4.(1) SAVE DCB/ACB 24-BIT ADDRESS
                AELSE
-         ST    0,4+((&I-1)/2)*8.(1) SAVE DCB/ACB 31-BIT ADDRESS
+         ST    0,10+((&I-1)/2)*8.(1) SAVE DCB/ACB 31-BIT ADDRESS
                AEND
             AEND
 .*
@@ -260,13 +302,13 @@
             AEND
 .*
             AIF ('&MODE' EQ '24')
-         NI    ((&I-1)/2)*4.(1),255-(DCBOFLGS_GM+DCBOFLGS_PM) RESET OPT-
-               ION BITS
-         OI    ((&I-1)/2)*4.(1),&OPTBITS SET NEW OPTION BITS
+         NI    6+((&I-1)/2)*4.(1),255-(DCBOFLGS_GM+DCBOFLGS_PM) RESET O-
+               PTION BITS
+         OI    6+((&I-1)/2)*4.(1),&OPTBITS SET NEW OPTION BITS
             AELSE
-         NI    ((&I-1)/2)*8.(1),255-(DCBOFLGS_GM+DCBOFLGS_PM) RESET OPT-
-               ION BITS
-         OI    ((&I-1)/2)*8.(1),&OPTBITS SET NEW OPTION BITS
+         NI    6+((&I-1)/2)*8.(1),255-(DCBOFLGS_GM+DCBOFLGS_PM) RESET O-
+               PTION BITS
+         OI    6+((&I-1)/2)*8.(1),&OPTBITS SET NEW OPTION BITS
             AEND
 .*
 .MFEINCR ANOP
@@ -274,11 +316,8 @@
          AGO   .MFELOOP
 .*
 .MFEDONE ANOP
-            AIF ('&MODE' EQ '31')
-         LR    0,1                R0=OPEN LIST POINTER
-         SR    1,1                CLEAR R1
-            AEND
-         SVC   19                 ISSUE OPEN
+         SVC   19                ISSUE OPEN
+MFEBAD&SYSNDX DS 0H
          MEXIT
          AEND
 .*

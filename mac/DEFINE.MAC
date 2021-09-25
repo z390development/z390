@@ -7,6 +7,10 @@
 .* Date   - 12/20/20                                                  *
 .**********************************************************************
 .* 12/20/20 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
+.* 05/01/21 DEFINE1--Changed comment after &RECORDSIZE as it was      *
+.*          causing MNOTEs                                            *
+.*          DEFINE --Changed default &INDEX to FIXED and &KEYS to     *
+.*          (64,0)                                                    *
 .**********************************************************************
          DEFINE &TYPE,           CATALOG,CLUSTER,ALTERNATEINDEX,PATH   X
                &NAME=,           NAME OF CATALOG, CLUSTER, AIX, OR PATHX

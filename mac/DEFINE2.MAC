@@ -8,30 +8,31 @@
 .* Modified by Melvyn Maltz                                           *
 .* Date   - 02/16/16                                                  *
 .**********************************************************************
-.* 07/31/07 RPI 668 INITIAL CODING
-.* 08/04/07 RPI 668 ADD VCDTTIOT FOR ACCESSING TIOT PATH/FILE
-.* 09/02/07 RPI 681 EXPAND DEFINE TO DEFINE ENTIRE VSAM CATALOG
-.* 09/23/07 RPI 704 ADD CLUSTER SUPPORT FOR CONTROLINTERVALSIZE=
-.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
-.* 10/14/10 RPI 1130 change keyword parms and check for errors:
-.*             REUSE=NO,UNIQUEKEY=YES,UPGRADE=YES,UPDATE=YES
-.* 02/16/16 ZVSAM rewrite
-.*          Bugs VSEDSN s/be VESDSN
-.*          VX0DSN removed
-.*          VXNDSN replaced with VESDSN
-.*          DCB, MODELDCB and VCDTDCBA removed
-.*          DATABLOCKSIZE/INDEXBLOCKSIZE added to CLUSTER and AIX
-.*             in bytes or nK
-.*             to replace CONTROLINTERVALSIZE
-.*          DATAFREESPACE=(n%)/INDEXFREESPACE=(n%)
-.*          DATAFREEBLOCKS=(x,y)/INDEXFREEBLOCKS=(x,y)
-.*          SPANNED=YES/NO (default NO)
-.*          DATAADJUST/INDEXADJUST=YES/NO (default NO)
-.*             This optimizes DATABLOCKSIZE/INDEXBLOCKSIZE (if YES)
-.*             DATAADJUST only applicable to FIXED datasets/unique AIX
-.*          Not supporting DISP=MOD overrides
-.*          VES now changed to DTA
-.*********************************************************************
+.* 07/31/07 RPI 668 INITIAL CODING                                    *
+.* 08/04/07 RPI 668 ADD VCDTTIOT FOR ACCESSING TIOT PATH/FILE         *
+.* 09/02/07 RPI 681 EXPAND DEFINE TO DEFINE ENTIRE VSAM CATALOG       *
+.* 09/23/07 RPI 704 ADD CLUSTER SUPPORT FOR CONTROLINTERVALSIZE=      *
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility           *
+.* 10/14/10 RPI 1130 change keyword parms and check for errors:       *
+.*             REUSE=NO,UNIQUEKEY=YES,UPGRADE=YES,UPDATE=YES          *
+.* 02/16/21 ZVSAM rewrite                                             *
+.*          Bugs VSEDSN s/be VESDSN                                   *
+.*          VX0DSN removed                                            *
+.*          VXNDSN replaced with VESDSN                               *
+.*          DCB, MODELDCB and VCDTDCBA removed                        *
+.*          DATABLOCKSIZE/INDEXBLOCKSIZE added to CLUSTER and AIX     *
+.*             in bytes or nK                                         *
+.*             to replace CONTROLINTERVALSIZE                         *
+.*          DATAFREESPACE=(n%)/INDEXFREESPACE=(n%)                    *
+.*          DATAFREEBLOCKS=(x,y)/INDEXFREEBLOCKS=(x,y)                *
+.*          SPANNED=YES/NO (default NO)                               *
+.*          DATAADJUST/INDEXADJUST=YES/NO (default NO)                *
+.*             This optimizes DATABLOCKSIZE/INDEXBLOCKSIZE (if YES)   *
+.*             DATAADJUST only applicable to FIXED datasets/unique AIX*
+.*          Not supporting DISP=MOD overrides                         *
+.*          VES now changed to DTA                                    *
+.* 05/04/21 REUSE=NOREUSE allowed for DEFINE AIX for IBM compatability*
+.**********************************************************************
 .*
 .* DEFINE - define z390 VSAM catalog loadable table entries:
 .*
@@ -434,8 +435,9 @@
 .* SET AIX REUSE
 .*
          AIF   ('&REUSE' EQ 'NO').SET_AIX_UNIQUEKEY
+         AIF   ('&REUSE' EQ 'NOREUSE').SET_AIX_UNIQUEKEY
          AIF   ('&REUSE' EQ 'YES').SET_REUSE
-         MNOTE 12,'AIX REUSE MUST BE YES/NO - &REUSE'
+         MNOTE 12,'AIX REUSE MUST BE YES/NO/NOREUSE - &REUSE'
 .*
 .SET_REUSE ANOP
 &AIX_REUSE(&AIX_TOT) SETB 1
@@ -694,3 +696,4 @@
          VCDTD2   , GENERATE VCDT DSECTS
          MEXIT
          MEND
+
