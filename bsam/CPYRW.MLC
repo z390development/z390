@@ -1,0 +1,45 @@
+*********************************************************************
+* Copyright 2021 Don Higgins             *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 09/20/2021 DSH modify CPYVT1 to CPYRW to read ascii and create vt
+*********************************************************************
+CPYRW    SUBENTRY
+         WTO   'CPYRW COPY RECFM=T FILE WITHOUT LBI'
+         OPEN  (SYSUT1,(INPUT),SYSUT2,(OUTPUT),SNAPOUT,(OUTPUT))
+         LA    R4,1 SNAP DUMP ID
+LOOP     EQU   *
+         READ  SYSUT1DECB,SF,SYSUT1,RECORD
+         CHECK SYSUT1DECB
+         WRITE SYSUT2DECB,SF,SYSUT2,RECORD
+         CHECK SYSUT2DECB
+         LA    R7,RECORD
+         A    R7,SYSUT1+(DCBBLKSIF-IHADCB) SNAP RECORD LENGTH
+         SAVE  (R14,R12)
+         SNAP   STORAGE=(RECORD,(R7)),PDATA=,ID=(R4),DCB=SNAPOUT
+         RESTORE (R14,R12)
+         LA    R4,1(R4)
+         B     LOOP
+EOF      CLOSE (SYSUT1,,SYSUT2,,SNAPOUT)
+         WTO   'CPYRW ENDED OK'
+         SUBEXIT 
+ABEND    ABEND 111,DUMP
+         LTORG  
+SYSUT1   DCB   DSORG=PS,DDNAME=SYSUT1,MACRF=R,RECFM=F,BLKSIZE=10000,   X
+               DCBE=SYSUT1E  
+SYSUT1E  DCBE  EODAD=EOF,SYNAD=ABEND,BLKSIZE=0  (1=LBI LARGE BLK BWD)      
+SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=W,RECFM=F,BLKSIZE=10000,   X
+               DCBE=SYSUT2E
+SYSUT2E  DCBE  SYNAD=ABEND,BLKSIZE=0  (1=LBI LARGE BLK BWD) 
+SNAPOUT  DCB   DDNAME=SNAPOUT,DSORG=PS,RECFM=VBA,BLKSIZE=882,          X
+               LRECL=125,MACRF=W
+RECORD   DS    0XL100004
+LLLL     DC    XL4'00'
+         DC    100000C'X'
+         DCBD
+         DECBD
+         EQUREGS
+         END
