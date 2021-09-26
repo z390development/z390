@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# runrtbsam: run RT QSAM for V,VB,VT,VL
+# BLD? creates test file
+# CHK? verifies test file
+# See the trace files for snap dumps of records
+#
+# If one of the BLD* steps times out, run with NOTIME:
+#     $ ./runrtqsam notime
+#
+# Note: run from z390/bash directory
+
+# extract longest substring that ends with "/"
+dir=${0%/*}
+
+# get the z390 directory
+zdir=$(dirname $0)
+zdir=$(cd $zdir && pwd)
+zdir=$(dirname $zdir)
+
+cd ..
+
+echo $(pwd)
+
+shopt -s nullglob
+for f in bsam/BLD*.ERR; do
+    if [ -f "$f" ]; then rm "$f"; fi
+done
+shopt -u nullglob
+
+shopt -s nullglob
+for f in bsam/TEST*.TFV; do
+    if [ -f "$f" ]; then rm "$f"; fi
+done
+shopt -u nullglob
+
+export SNAPOUT=DUMMY
+export SYSUT2=bsam/TESTW.TFV
+${dir}/bash/asmlg bsam/BLDW.MLC trace $1
+export SYSUT1=bsam/TESTW.TFV
+${dir}/bash/asmlg bsam/CHKW.MLC trace
+
+export SYSUT2=bsam/TESTWL.TFV
+${dir}/bash/asmlg bsam/BLDWL.MLC trace $1
+export SYSUT1=bsam/TESTWL.TFV
+${dir}/bash/asmlg bsam/CHKWL.MLC trace
+
+export SYSUT1=bsam/TESTW.TFV
+export SYSUT2=bsam/CPYRW.VES
+${dir}/bash/asmlg bsam/CPYRW.MLC trace $1
+export SYSUT1=bsam/TESTWL.TFV
+export SYSUT2=bsam/CPYRWL.VES
+${dir}/bash/asmlg bsam/CPYRWL.MLC trace
+
+ls bsam/TEST*.TFV
