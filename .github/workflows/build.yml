@@ -16,6 +16,8 @@ jobs:
         uses: ./.github/actions/build
       - name: release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         id: create_release
         with:
           draft: false
@@ -25,6 +27,8 @@ jobs:
           # body_path: CHANGELOG.md
       - name: upload dist artifact
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./z390_${{ steps.version.outputs.version }}/z390_${{ steps.version.outputs.version }}.zip
