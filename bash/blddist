@@ -16,13 +16,13 @@ then
 fi
 
 mkdir -p build                  # create build folder if does not exist
-rm -rf build/${version_tag}     # delete version build directory
+rm -rf build/z390_${version_tag}    # delete version build directory
 
 bash/bldjar                     # create the z390 jar
 
 cd build
-mkdir ${version_tag}
-cd ${version_tag}
+mkdir z390_${version_tag}
+cd z390_${version_tag}
 
 # add core files to the build dir
 cp ${root_dir}/z390.jar .       # jar
@@ -39,4 +39,4 @@ done
 
 # create zip package
 cd ..
-zip -r ${version_tag}.zip ${version_tag}
+zip -r z390_${version_tag}.zip z390_${version_tag}
