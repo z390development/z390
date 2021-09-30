@@ -216,6 +216,7 @@ public  class  sz390 implements Runnable {
 	*            for more on large block support see here (note DCBESLBI flag not currently used)
 	*            https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.1.0/com.ibm.zos.v2r1.idad500/dcbem.htm
     * 2021-09-17 DSH issue #321 fix qsam get vt to correctly set LBI length in area
+    * 2021-09-29 DSH git issue#245 fix RPI 1598 to only use zvsam2 if opt_zvsam = 2
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -2999,7 +3000,7 @@ private void svc_open(){
 	if (cur_acb_id == tz390.acb_id_ver){
 		vz390.cur_vsam_op = vz390.vsam_op_open;
 		vz390.svc_vsam();  // RPI 644
-        if (tz390.opt_zvsam > 0)                   // RPI 1598
+        if (tz390.opt_zvsam == 2)                   // RPI 1598 // #245
            {zACB TempACB = new zACB(cur_dcb_addr); // RPI 1598
             TempACB.Open();                        // RPI 1598
             zACB_list.add(TempACB);                // RPI 1598
@@ -3177,8 +3178,8 @@ private void svc_close(){
 	if (cur_acb_id == tz390.acb_id_ver){
 		vz390.cur_vsam_op = vz390.vsam_op_close;
 		vz390.svc_vsam();  // RPI 644
-        if (tz390.opt_zvsam > 0)                   // RPI 1598
-           {zACB TempACB = new zACB(cur_dcb_addr); // RPI 1598
+        if (tz390.opt_zvsam == 2)                  // RPI 1598 #245
+           {zACB TempACB = new zACB(cur_dcb_addr); // RPI 1598 
             TempACB.Close();                       // RPI 1598
             zACB_list.remove(TempACB);             // RPI 1598
             }                                      // RPI 1598
@@ -3350,7 +3351,6 @@ private void svc_get(){
                 }
                 check_mem_area(cur_dcb_area,cur_rec_len+4); // RPI 668
 				pz390.mem.putInt(cur_dcb_area,put_bdw_len(cur_rec_len+4)); // issue #321 put LBI or LL00 back in area 
-                // dsh #321 pz390.mem.putInt(cur_dcb_area,(cur_rec_len+4) << 16); 
                 int index = 0;
                 while (index < cur_rec_len){
                 	if (tz390.opt_ascii){

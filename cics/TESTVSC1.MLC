@@ -1,7 +1,6 @@
-         ZCOBOL PGM='cics\TESTVSC1',VER=V1.5.06,CDATE=05/21/12,CTIME=13X
-               :48:33,OPTIONS=(SYSCPY(+zcobol+zcobol\z390),CICS,SYSMAC(X
-               cics+ZCOBOL+zcobol\z390+CICS+MAC),SYSCPY(cics+ZCOBOL+zcoX
-               bol\z390+MAC+.))
+         ZCOBOL PGM='cics\TESTVSC1',VER=V1.7.07,CDATE=09/29/21,CTIME=18X
+               :24:33,OPTIONS=(CICS,SYSMAC(cics+ZCOBOL\MAC+zcobol\z390+X
+               CICS+MAC),SYSCPY(cics+ZCOBOL\CPY+zcobol\z390+MAC+.))
          COPY  TESTVSC1_ZC_LABELS.CPY
 *      ****************************************************************X
                *
