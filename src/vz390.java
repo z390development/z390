@@ -67,6 +67,7 @@ public class vz390 {
 	 * 04/06/09 RPI 1016 prevent error on generic POINT to 1 record KSDS file
 	 * 04/23/09 RPI 1024 prevent null field trap by JM
 	 * 07/17/10 RPI 865 fix open for path to correctly set path/dsn
+	 * 2021/09/30 DSH #245 add traceall display of vclr name search to help debug cics startup
 	 **************************************************************************
 	 *  Global variables                  (last RPI)
 	 **************************************************************************/
@@ -1025,6 +1026,10 @@ public class vz390 {
 		while (cur_vcdt_clrt > 0) {
 			cur_vclr_name = sz390.get_ascii_string(cur_acb_vclra + vclr_name,
 					8, false);
+			if (tz390.opt_traceall) { // DSH #245 to help debug cics startup
+			   tz390.put_trace("FIND VCLR = +VCB INDEX=" + cur_vclr_name
+                            + "MATCHING VCDT ENTRY =" + sz390.load_vcdt_entry); 
+			}			   
 			if (sz390.load_vcdt_entry.equals(cur_vclr_name)) {
 				pz390.mem.putInt(cur_acb_addr + acb_vclra, cur_acb_vclra);
 				fetch_vclr_fields();
