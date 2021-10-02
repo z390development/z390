@@ -352,7 +352,7 @@ BLKSIZE DSECT=DCBBLKSIF Type=F Default=0
 * For all other RECFM, sets the maximum block size.
 * The field DCBBLKSI (Type=H) is retained for compatibility.
 
-#### DCBE - Data control block extension
+#### DCBE - Data control block extension {#DCB-DCBE-PARM}
 
 DCBE DSECT=DCBDCBE Type=A Default=0 (undefined)
 
@@ -363,11 +363,10 @@ The DCBE is a control block defined by the DCBE macro.
 * When defined, the addresses of the end-of-file (EODAD) and the I/O error routine (SYNAD) 
   may be defined.  When set, these addresses override the DCB EODAD and SYNAD parameters.
 * The DSECT IHADCBE maps the DCBE control block.
-* The DCBE macro is DCBE EODAD=,SYNAD= with both parameters defaulting to 0 (undefined).
 
-#### EODAD - End of file routine
+#### EODAD - End of file routine {#DCB-EODAD}
 
-EODAD DSECT=DCBEODAD Type=A Default=0 (undefined)
+EODAD DSECT=DCBEODAD Type=Address Default=0 (no routine defined)
 
 The address of the end-of-file routine.
 
@@ -376,15 +375,45 @@ The address of the end-of-file routine.
 * This may be overridden if DCBE is coded.
 * If a further GET is done after end-of-file, then the program is terminated.
 
-#### SYNAD - Error analysis routine
+#### SYNAD - Error analysis routine {#DCB-SYNAD}
 
-SYNAD DSECT=DCBSYNAD Type=A Default=0 (undefined)
+SYNAD DSECT=DCBSYNAD Type=Address Default=0 (no routine defined)
 
 The address of the uncorrectable I/O error routine.
 
 * Can this be set in the DCB prior to OPEN: Yes
 * Can this be set in the DCB after OPEN : Yes
 * This may be overridden if DCBE is coded.
+
+### DCBE - Data Control Block Extended
+
+```
+label    DCBE  EODAD=0,SYNAD=0,BLKSIZE=0
+```
+
+#### EODAD - End of data routine address
+
+Address of End of data routine. 
+
+Default=0 = no routine
+
+When set, will override address provided in the [DCB EODAD](#DCB-EODAD) parameter.
+
+#### SYNAD - IO error routine address
+
+Address of IO Error routine. 
+
+Default=0 - no routine
+
+When set, will override address provided in the [DCB SYNAD](#DCB-SYNAD) parameter.
+
+#### BLKSIZE - Large block interface
+
+* Default is zero meaning Large Block support is not enabled. 
+* When set, the large block interface (LBI) is enabled.
+* This causes BDW and RDW fields in variable length files to use an alternative format:
+
+    LLLL where high bit is on and the remaining 31 bits are length.
 
 ### DTFSD (VSE) - Data control block
 
