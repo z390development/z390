@@ -6,3 +6,4 @@ docs_dir: doc
 markdown_extensions:
   - admonition
   - footnotes
+  - attr_list
