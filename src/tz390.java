@@ -7688,27 +7688,36 @@ public boolean check_java_version(){
 		}
 		return true;
 }
+
 public String getVersion() {
+
+    String result = "Uncontrolled";
 
     try (InputStream input = getClass().getClassLoader().getResourceAsStream("z390.properties")) {
 
-            Properties prop = new Properties();
+        Properties prop = new Properties();
 
-            if (input == null) {
-                System.out.println("Sorry, unable to find z390.properties");
-                return null;
-            }
-
-            //load a properties file from class path, inside static method
+        if (input != null) {
             prop.load(input);
-
-            //get the property value and print it out
-            return prop.getProperty("version");
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            return null;
+            result = prop.getProperty("version");
+            if (result == null) {
+                System.out.println("Unable to set version - property version not set");
+                result = "Uncontrolled";                
+            } else if (result.isEmpty()) {
+                System.out.println("Unable to set version - no value set");
+                result = "Uncontrolled";
+            } 
+        } else {
+            System.out.println("Unable to set version - z390.properties file not found");
         }
+
+    } catch (IOException ex) {
+        System.out.println("Unable to set version - unexpected exception");
+        result =  "Uncontrolled";
+        ex.printStackTrace();
+    }
+    
+    return result;
 
 }
 }
