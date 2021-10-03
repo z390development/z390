@@ -81,4 +81,4 @@ export SYSUT1=qsam/TESTFTL.TFV
 bash/asmlg qsam/CHKFTL.MLC trace
 
 ls qsam/TEST*.TFV
-echo "Verify runqsamrt"
+echo "Verify runrtqsam"
