@@ -15,7 +15,7 @@ bash/runasmdemos
 bash/runcbldemos
 bash/runasmtests
 bash/runcbltests
-bash/runrtqsam
+bash/runrtqsam "TIME(30)"
 bash/runsort
 bash/runzpar
 bash/runassist
