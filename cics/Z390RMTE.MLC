@@ -16,7 +16,7 @@ NOPARM   EQU   *
          B     ISSUESET           EXIT
 *
 GETPARM  EQU   *
-         SR    R6,R6              CLEAR R5
+         SR    R6,R6              CLEAR R6
          IC    R6,ZCVTPARM+2      INSERT REMOTE COUNT
          NILL  R6,X'FF0F'         CONVERT TO BINARY
 *

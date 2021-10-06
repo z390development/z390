@@ -138,7 +138,9 @@ ALLDONE  EQU   *
          LA    R1,P0E02EIB        R1=POINTER TO A(EIB,COMMAREA)
          LA    R2,P0E02PTR        R2=POINTER TO P0E02 PARMS
          L     R12,SAVER12        RESTORE ORIGINAL R12
-         BR    R0                 GO TO ENTRYPOINT
+         LR    R15,R0             SAVE ENTRYPOINT
+******** BR    R0                 GO TO ENTRYPOINT
+         BR    R15                GO TO ENTRYPOINT
 *
 PGMIDERR EQU   *
 * INVOKE PGMIDERR
