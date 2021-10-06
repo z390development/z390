@@ -22,7 +22,7 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b %ERRORLEVEL%
 )
 rem create z390.properties file
-CALL ..\BAT\RELVER.BAT
+CALL ..\BAT\RELVER.BAT %1
 
 rem build z390.jar with sdk utility
 jar.exe cmf z390.man z390.jar *.class ..\*.properties
