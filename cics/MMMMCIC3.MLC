@@ -1,0 +1,59 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+DFHEISTG DSECT        DSA STORAGE
+*
+MMMMCIC3 CSECT
+*
+* TEST EXTENDED ATTRIBUTES
+*
+* INITIAL MESSAGE
+         EXEC  CICS SEND FROM(MSG1) LENGTH(MSG1L)
+*
+         EXEC  CICS SEND FROM(NOTE1) LENGTH(NOTE1L)
+         EXEC  CICS RECEIVE INTO(INPUT) LENGTH(LENINPUT)
+* MODIFY CHAR 1 TO GREEN
+         EXEC  CICS SEND FROM(NOTE2) LENGTH(NOTE2L)
+         EXEC  CICS SEND FROM(MSG2) LENGTH(MSG2L)
+         EXEC  CICS RECEIVE INTO(INPUT) LENGTH(LENINPUT)
+* MODIFY CHAR 2 TO BLUE
+         EXEC  CICS SEND FROM(NOTE3) LENGTH(NOTE3L)
+         EXEC  CICS SEND FROM(MSG3) LENGTH(MSG3L)
+         EXEC  CICS RECEIVE INTO(INPUT) LENGTH(LENINPUT)
+*
+         EXEC  CICS SEND FROM(NOTEEND) LENGTH(NOTEENDL)
+         EXEC  CICS RETURN
+*
+INPUT    DS    XL50
+LENINPUT DS    H                  RECEIVED LENGTH
+*
+NOTE1    TN3270 WCC_KD,(SBA,2,1),CL60'MESSAGE IS YELLOW...PRESS ENTER'
+NOTE1L   DC    AL2(*-NOTE1)
+*
+MSG1     TN3270 ESC,WRT_EW,WCC_KD,(SBA,10,1),(SF,ATT_PA)
+         TN3270 C'A NICE MESSAGE',(SBA,10,30),(SF,ATT_PA)
+MSG1L    DC    AL2(*-MSG1)
+*
+NOTE2    TN3270 WCC_KD,(SBA,2,1),                                      X
+               CL60'MESSAGE CHAR 1 IS GREEN...PRESS ENTER'
+NOTE2L   DC    AL2(*-NOTE2)
+*
+MSG2     TN3270 WCC_KD,(SBA,10,2),(SA,SFE_COLOR,SFE_GREEN)
+MSG2L    DC    AL2(*-MSG2)
+*
+NOTE3    TN3270 WCC_KD,(SBA,2,1),                                      X
+               CL60'MESSAGE CHAR 2 IS BLUE...PRESS ENTER'
+NOTE3L   DC    AL2(*-NOTE3)
+*
+MSG3     TN3270 WCC_KD,(SBA,10,3),(SA,SFE_COLOR,SFE_BLUE)
+MSG3L    DC    AL2(*-MSG3)
+*
+NOTEEND  TN3270 WCC_KD,(SBA,2,1),CL60'TEST COMPLETE-PRESS CLEAR'
+NOTEENDL DC    AL2(*-NOTEEND)
+*
+         TN3270 SYMBOLS
+         END
+

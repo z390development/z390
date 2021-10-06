@@ -14,7 +14,7 @@ MYKL2    DS    XL2                KEYLENGTH
 FWTSBA   DS    XL4                WCC,SBA FOR FOP MSG
 FWTMSG   DS    CL(FOPLN)          FOP MESSAGE
 *
-TESTVSM4 DFHEIENT CODEREG=(R12,R3)
+TESTVSM4 DFHEIENT CODEREG=(R12,R3,R4)
 *
 * TEST VSAM 4
 *
@@ -29,8 +29,8 @@ TESTVSM4 DFHEIENT CODEREG=(R12,R3)
 * POINT AT Hm to get Hawk, FULLKEY, KGE READ BACK 4 RECS
 *    Hawk
 *    Gurney
+*    Gibson
 *    Doe
-*    Davy
 * CHANGE FULL KEY TO END AND READ BACK 2
 *    Whiddon
 *    Stoppard
@@ -41,16 +41,16 @@ TESTVSM4 DFHEIENT CODEREG=(R12,R3)
 *    Cobley    1
 *    Brewer    2
 *    Davy      1
-*    Buffalo   2
+*    Brooks    2
 *    Doe       1
-*    Cobley    2
+*    Buffalo   2
 * 1.CHANGE GENERIC KEYS  KEY=Doe to get Doe
 * 2.CHANGE GENERIC KEYS  KEY=Spot to get Stewer
 *    Doe       1
 *    Stewer    2
-*    Gurney    1
+*    Gibson    1
 *    Stoppard  2
-*    Hawk      1
+*    Gurney    1
 *    Whiddon   2
 * 1.CHANGE GENERIC KEYS AND KEYLENGTHS  KEY=Buffa to get Buffalo
 * 2.CHANGE GENERIC KEYS AND KEYLENGTHS  KEY=Aaaaaa to get Bloggs
@@ -59,32 +59,26 @@ TESTVSM4 DFHEIENT CODEREG=(R12,R3)
 *    Cobley    1
 *    Brewer    2
 *    Davy      1
-*    Buffalo   2
+*    Brooks    2
 * 1.CHANGE TO GTEQ USING RESETBR  KEY=Ppppp to get Smith
 * 2.                              KEY=Hhhhhh to get Houdini
 *    Smith     1
 *    Houdini   2
 *    Stewer    1
-*    Pierce    2
+*    Maltz     2
 *    Stoppard  1
-*    Smith     2
-         AGO   .BYP               ###
-* ### next tests are for non unique when we've sorted out the rules
-         CLI   FOPSEP+1,C' '      SEND LENGTH ADJUSTED ?
-         BNE   NOTADJL            EXIT IF NOT
-         MVI   FOPSEP+1,C'|'      SET SEPARATOR
-         LH    R7,FOPL            MESSAGE LENGTH
-         AHI   R7,1               LENGTHEN BY 1
-         STH   R7,FOPL            STORE BACK
-NOTADJL  EQU   *
-         CLI   FHSEP,C' '         SEND CONDITION LENGTH ADJUSTED ?
-         BNE   NOTADJC            EXIT IF NOT
-         MVI   FHSEP,C'|'         SET SEPARATOR
-         LH    R7,FHANDL          MESSAGE LENGTH
-         AHI   R7,1               LENGTHEN BY 1
-         STH   R7,FHANDL          STORE BACK
-NOTADJC  EQU   *
-.BYP     ANOP                     ###
+*    Pierce    2
+*
+* TESTS ON AIXNAME (NON-UNIQUE)
+* 1.KSDS/FIX AIXNAME BROWSE FORWARD GENERIC EQUAL KEY=Ma to get Mel
+* FULLKEY READNEXT WORKS, BUT DOESN'T RAISE DUPKEY
+* GENERIC READNEXT RAISES NOTFND
+*
+*
+*
+*
+*
+*
 * KSDS/FIX AIXSURN  READ/KEY/FKS/KEQ  Brewer and Davy
          MVC   FOPTYPE,=C'KSDS'   SET FILE TYPE IN MESSAGE
          MVC   FOPFIXVR,=C'FIX'   SET FIX/VAR IN MESSAGE
@@ -234,6 +228,31 @@ RDCXTST4 EQU   *
          EXEC  CICS ENDBR FILE('AIXSURN') REQID(2)
          EXEC  CICS ENDBR FILE('AIXSURN') REQID(1)
 *
+* KSDS/FIX AIXNAME BROWSE FORWARD GENERIC EQUAL KEY=Ma to get Mel
+         MVC   FWTSBA,FOP8        MOVE WCC,SBA
+         MVC   FOPNAME,=C'AIXNAME ' SET FILENAME IN MESSAGE
+         MVC   FOPFIXVR,=C'FIX'   SET FIXED
+         MVC   FOPGNFL,=CL4'FKS'  SET FULL KEY
+         MVC   FOPMTYP,=C'KEQ'    SET KEQ
+         MVC   FOPFUNC,=CL8'READNEXT' SET FUNCTION IN MESSAGE
+         MVC   MYRID,=CL8'Mel'    RECORD BY KEY
+         MVC   MYLEN,=H'17'       SET MAXIMUM LENGTH
+         EXEC  CICS STARTBR FILE('AIXNAME') RIDFLD(MYRID)              X
+               EQUAL REQID(1)
+         EXEC  CICS READNEXT FILE('AIXNAME') INTO(MYDATA)              X
+               LENGTH(MYLEN) RIDFLD(MYRID) REQID(1)
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         EXEC  CICS READNEXT FILE('AIXNAME') INTO(MYDATA)              X
+               LENGTH(MYLEN) RIDFLD(MYRID) REQID(1)
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         EXEC  CICS ENDBR FILE('AIXNAME') REQID(1)
+         MVC   MYRID,=CL8'Ma'     RECORD BY KEY
+         EXEC  CICS READ FILE('AIXNAME') INTO(MYDATA) LENGTH(MYLEN)    X
+               RIDFLD(MYRID) KEYLENGTH(2) GENERIC
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         BAL   R9,SENDIT          SCREEN DISPLAY
+*
          EXEC  CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL)
 *
          EXEC  CICS RETURN
@@ -289,7 +308,7 @@ FOPTYPE  DS    CL4
          DC    C'/'
 FOPFIXVR DS    CL3                FIX OR VAR
          DC    C' '
-FOPNAME  DS    CL8
+FOPNAME  DS    CL8                FILENAME
          DC    C' '
 FOPFUNC  DC    C'READNEXT'
          DC    C' '
