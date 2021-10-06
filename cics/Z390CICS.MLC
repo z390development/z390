@@ -5,7 +5,7 @@
 * Author - Don Higgins                                                *
 ***********************************************************************
 * 04/22/08 RPI 837 ADD NOTIME TO PREVENT 422 ABEND IN 15 SECONDS      *
-* 2021/10/02 DSH #245 MOD TO KCPSTART \BAT\EZ390 AND SYS390(+zcobol\lib)
+* 09/21/21         MOD TO KCPSTART \BAT\EZ390
 ***********************************************************************
 Z390CICS SUBENTRY BASES=(R13)
          LA    R3,SECTOR2         BASE 2
@@ -1311,8 +1311,10 @@ CICSENV  DC    C'CICSPATH',X'00'  CICSPATH ENV VARIABLE
 CICSADDR DC    F'0'               CICSPATH ADDRESS
 *
 * CALL BAT\EZ390 %CICSPATH%\Z390KCP NOTIME GUAM PARM(LTERMTRANK)
-KCPSTART DC    C'CALL BAT\EZ390 %CICSPATH%\Z390KCP SYS390(+zcobol\lib) X
+KCPSTART DC    C'CALL BAT\EZ390 %CICSPATH%\Z390KCP SYS390(+ZCOBOL\LIB) -
                NOTIME GUAM PARM('
+*KCPSTART DC    C'CALL BAT\EZ390 %CICSPATH%\390\Z390KCP NOTIME GUAM
+*               SYS390(+ZCOBOL\LIB) PARM('
 KCPTRMTP DS    C                  LOCAL TERMINAL
 KCPTRMID DS    CL4                TERMINAL ID
 KCPTRNID DS    CL4                INITIAL TRANSID

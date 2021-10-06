@@ -233,7 +233,9 @@ FREEDSA  EQU   *
          L     R1,PARMADDR        R1=PARM ADDRESS
          LA    R2,P0E04PTR        R2=POINTER TO P0E04 PARMS
          L     R12,SAVER12        RESTORE ORIGINAL R12
-         BR    R0                 GO TO ENTRYPOINT
+         LR    R15,R0             SAVE ENTRYPOINT
+******** BR    R0                 GO TO ENTRYPOINT
+         BR    R15                GO TO ENTRYPOINT
 *
 CHANCLC  CLC   0(0,R15),=15C' '   TEST FOR TRAILING BLANKS
 *
