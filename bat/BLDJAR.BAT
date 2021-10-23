@@ -2,6 +2,7 @@
 setlocal
 pushd %~dp0
 cd ..
+
 rem Make jar directory if does not exist
 if not exist ".\jar\" mkdir jar
 rem both the compiler javac.exe and jar builder jar.exe must be on sdk path
@@ -20,8 +21,11 @@ if %ERRORLEVEL% NEQ 0 (
     echo BLDJAR   ERROR: Error compiling z390
     exit /b %ERRORLEVEL%
 )
+rem create z390.properties file
+CALL ..\BAT\RELVER.BAT %1
+
 rem build z390.jar with sdk utility
-jar.exe cmf z390.man z390.jar *.class 
+jar.exe cmf z390.man z390.jar *.class ..\*.properties
 if %ERRORLEVEL% NEQ 0 (
     echo BLDJAR   ERROR: Error building z390.jar
     exit /b %ERRORLEVEL%

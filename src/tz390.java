@@ -4,7 +4,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.reflect.Array;
@@ -18,6 +20,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -314,7 +317,8 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.7.07";  //dsh + afk
+    // String version    = "V1.7.07";  //dsh + afk
+    String version = getVersion();
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -7683,5 +7687,38 @@ public boolean check_java_version(){
 			return false;
 		}
 		return true;
+}
+
+public String getVersion() {
+
+    String result;
+
+    try (InputStream input = getClass().getClassLoader().getResourceAsStream("z390.properties")) {
+
+        Properties prop = new Properties();
+
+        if (input != null) {
+            prop.load(input);
+            result = prop.getProperty("version");
+            if (result == null) {
+                System.out.println("Unable to set version - property version not set");
+                result = "NO_VER:MISSING";                
+            } else if (result.isEmpty()) {
+                System.out.println("Unable to set version - version empty");
+                result = "NO_VER:EMPTY";
+            } 
+        } else {
+            System.out.println("Unable to set version - z390.properties file not found");
+            result = "NO_VER:NO_PROP_FILE";
+        }
+
+    } catch (IOException ex) {
+        System.out.println("Unable to set version - unexpected exception");
+        result =  "NO_VER:EXCEPTION";
+        ex.printStackTrace();
+    }
+    
+    return result;
+
 }
 }

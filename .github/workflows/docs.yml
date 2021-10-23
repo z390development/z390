@@ -1,9 +1,5 @@
 name: Publish docs via GitHub Pages
-on:
-  push:
-    branches:
-      - main
-      - feature/z390-docs
+on: [push]
 
 jobs:
   deploy:
