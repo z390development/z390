@@ -6,9 +6,17 @@ jobs:
     name: Deploy docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: checkout
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 0
+      - name: version
+        run: echo "::set-output name=version::$(git describe)"
+        id: version
       - uses: actions/setup-python@v2
         with:
           python-version: 3.8
       - run: pip install -r doc/requirements.txt
       - run: mkdocs gh-deploy --force
+        env:
+          Z390_VERSION: ${{ steps.version.outputs.version }}
