@@ -8,6 +8,7 @@ remote_branch: gh-pages-beta
 
 plugins:
   - search
+  - macros
   - awesome-pages
   - with-pdf:
       cover_subtitle: Mainframe assembler and emulator toolkit
@@ -44,3 +45,6 @@ nav:
   - User guide: user_guide.md
   - ... | reference/**
   - ... | contributing/**
+
+extra:
+  version: !ENV [Z390_VERSION, 'Undefined']

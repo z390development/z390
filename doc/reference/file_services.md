@@ -80,7 +80,7 @@ DEC | HEX | Service
 155 | 9B  | [CHECK](#check)
 156 | 9C  | [POINT](#point)
 
-### DCB - Data Control Block {#dcb}
+### DCB - Data Control Block {: #dcb}
 
 Used to create the Data Control Block
 
@@ -418,7 +418,7 @@ When set, will override address provided in the [DCB SYNAD](#DCB-SYNAD) paramete
 
     LLLL where high bit is on and the remaining 31 bits are length.
 
-### DTFSD (VSE) - Data control block {#dtfsd}
+### DTFSD (VSE) - Data control block {: #dtfsd}
 
 !!! Info "VSE only"
 
@@ -440,7 +440,7 @@ label    DCB   DSORG=PS,                                               X
                DSNAME=0
 ```
 
-### DTFPR (VSE) - Data control block {#dtfpr}
+### DTFPR (VSE) - Data control block {: #dtfpr}
 
 !!! Info "VSE only"
 
@@ -461,7 +461,7 @@ label    DCB   DSORG=PS,                                               X
                DSNAME=0
 ```
 
-### OPEN - Open file {#open}
+### OPEN - Open file {: #open}
 
 Open one or more files.
 
@@ -501,7 +501,7 @@ The same, using register notation
 
 * S013 OPEN failed and no SYNAD exit provided
 
-### OPEN (VSE) - Open file {#open-vse}
+### OPEN (VSE) - Open file {: #open-vse}
 
 Open one or more files for UPDATE.
 
@@ -521,7 +521,7 @@ Open one or more files for UPDATE.
 
 * S013 OPEN failed and no SYNAD exit provided
 
-### CLOSE - Close file {#close}
+### CLOSE - Close file {: #close}
 
 Close one or more files.
 
@@ -553,7 +553,7 @@ The same, using register notation
 
 * S013 CLOSE failed and no SYNAD exit provided
 
-### CLOSE (VSE) - Close file {#close-vse}
+### CLOSE (VSE) - Close file {: #close-vse}
 
 Close one or more files.
 
@@ -571,7 +571,7 @@ Close one or more files.
 
 * S013 CLOSE failed and no SYNAD exit provided
 
-### GET - Read sequential record {#get}
+### GET - Read sequential record {: #get}
 
 Read a sequential record
 
@@ -600,7 +600,7 @@ The same, using register notation
 * R0 = ioarea
 * R1 = DCB address
 
-### PUT - Write a sequential record {#put}
+### PUT - Write a sequential record {: #put}
 
 Write a sequential record
 
@@ -630,7 +630,7 @@ The same, using register notation
 * R0 = ioarea
 * R1 = DCB address
 
-### READ - Read block from file {#read}
+### READ - Read block from file {: #read}
 
  Read a block from a file.
 
@@ -670,7 +670,7 @@ The same, using register notation
 * R1 = DECB address
 * R15= DCB address
 
-### WRITE - Write block to file {#write}
+### WRITE - Write block to file {: #write}
 
 Write a block to a file.
 
@@ -707,7 +707,7 @@ The same, using register notation
 * R1 = DECB address
 * R15= DCB address
 
-### CHECK - Process EODAD/SYNAD {#check}
+### CHECK - Process EODAD/SYNAD {: #check}
 
 * Process EODAD or SYNAD on READ.
 * Process SYNAD on WRITE.
@@ -732,7 +732,7 @@ The same, using register notation
 
 * S013 READ/WRITE failed and no SYNAD exit provided
 
-### POINT - Position file pointer {#point}
+### POINT - Position file pointer {: #point}
 
 Position pointer for next READ or WRITE
 

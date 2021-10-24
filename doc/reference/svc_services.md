@@ -24,7 +24,7 @@ DEC | HEX | Service
 
 ## Macro reference
 
-### TIME(SVC) - Obtain the time and date {#time-svc}
+### TIME(SVC) - Obtain the time and date {: #time-svc}
 
 ``` hlasm
 name     TIME  type,addr,LINKAGE=SVC,DATETYPE=,CLOCKTYPE=
@@ -183,7 +183,7 @@ GR15 has a return code:
 * 0 - TIME ok
 * 4 - Invalid request
 
-### TIME(SYSTEM) - Obtain the time and date {#time-system}
+### TIME(SYSTEM) - Obtain the time and date {: #time-system}
 
 ``` hlasm
 name     TIME  type,addr,LINKAGE=SYSTEM,DATETYPE=,CLOCKTYPE=
@@ -299,7 +299,7 @@ GR15 has a return code:
 * 0 - TIME ok
 * 4 - Invalid request
  
-### GETIME - Obtain time and date (VSE) {#gettime}
+### GETIME - Obtain time and date (VSE) {: #gettime}
 
 ``` hlasm
          GETIME type
@@ -336,7 +336,7 @@ GR15 has a return code:
 * 0 - GETIME ok
 * 4 - Invalid request
  
-### STIMER - Wait for an interval of time {#stimer}
+### STIMER - Wait for an interval of time {: #stimer}
 
 Wait for an interval of time.
 
@@ -385,7 +385,7 @@ Can be label or (reg).
 * R1 = Address of the timer units
 * R15 = By implication, exit routine address
 
-### TTIMER - Test or cancel STIMER REAL {#ttimer}
+### TTIMER - Test or cancel STIMER REAL {: #ttimer}
 
 Test or cancel a previously set STIMER REAL
 
@@ -436,7 +436,7 @@ GR15 has a return code:
 * 4 TU units remaining exceed 31 bits
 
 
-### CMDPROC - execute host OS commands {#cmdproc}
+### CMDPROC - execute host OS commands {: #cmdproc}
 
 Open, close, read and write from the host command processor or shell.
 
@@ -553,7 +553,7 @@ GR15 has a return code:
 * 8 - READ terminated because the command processor has ended
 * 16 - Command Processor abnormally ended (see log message)
 
-### WTO - Write to operator {#wto}
+### WTO - Write to operator {: #wto}
 
 Display a message on the GUI console.
 
@@ -606,7 +606,7 @@ name     WTO   MF=(E,(reg))
 
 * R1 = Branch around RDW or parm pointer
 
-### XLATE - EBCDIC to ASCII {#xlate}
+### XLATE - EBCDIC to ASCII {: #xlate}
 
 ``` hlasm
 name     XLATE area,len,TO=
@@ -639,7 +639,7 @@ Type of conversion to perform:
 * R0 = Area address and codes
 * R1 = Length
 
-### WTOR - Write to operator {#wtor}
+### WTOR - Write to operator {: #wtor}
 
 Display a message on the GUI console and receive a response.
 
@@ -700,7 +700,7 @@ MYECB    DC    F'0'
 * R14 = Reply length
 * R15 = ECB address
 
-### WAIT - Wait for ECB completion {#wait}
+### WAIT - Wait for ECB completion {: #wait}
 
 ``` hlasm
 name WAIT num,ECB=
@@ -756,7 +756,7 @@ ECB3     DC    F'0'
 * R0 = Number of ECBs
 * R1 = ECB address
 
-### POST - Signal ECB completion {#post}
+### POST - Signal ECB completion {: #post}
 
 Signal the completion of one ECB.
 
@@ -783,7 +783,7 @@ The completion code is placed in bits 2-31 of the ECB.
 * R0 = Event completion code
 * R1 = ECB address
 
-### CTD - Convert binary or FP value {#ctd}
+### CTD - Convert binary or FP value {: #ctd}
 
 ``` hlasm
 name     CTD   type,IN=input,OUT=output,LINKAGE=
@@ -883,7 +883,7 @@ GR15 has a return code:
 * 0 - CTD ok
 * 8 - Invalid data address
 
-### CFD - Convert to binary or FP value {#cfd}
+### CFD - Convert to binary or FP value {: #cfd}
 
 Convert a printable format number to a binary or floating point value.
 
@@ -974,7 +974,7 @@ GR15 has a return code:
 * 8 - Invalid data address
 * 12 - invalid input data or number too large for format type
 
-### GETENV - Get environment variable {#getenv}
+### GETENV - Get environment variable {: #getenv}
 
 Get an environment variable from the OS command environment.
 
@@ -1011,7 +1011,7 @@ GR15 has a return code:
 * 4 - setname is null
 * 8 - variable is null
 
-### COMRG - Comm region addressability {#comrg}
+### COMRG - Comm region addressability {: #comrg}
 
 !!! Note
     VSE only
