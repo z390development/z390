@@ -754,7 +754,7 @@ Generate a branch to a local procedure with base addressability.
 
 PERFORM and PM are identical macros.
  
-Uses MVC and B if [SUBENTRY](#subentry-program-entry) RENT=NO or push/pop stack if RENT=YES.
+Uses MVC and B if [SUBENTRY](#subentry) RENT=NO or push/pop stack if RENT=YES.
 
 #### Register Usage
 
@@ -769,7 +769,7 @@ name     PENTRY
 
 Define local procedure using name.
 
-Generates an entry-point for a local procedure preceded with a branch instruction if [SUBENTRY](#subentry-program-entry) RENT=NO.
+Generates an entry-point for a local procedure preceded with a branch instruction if [SUBENTRY](#subentry) RENT=NO.
 
 ### PEXIT - Exit local procedure {: #pexit}
 
@@ -779,7 +779,7 @@ name     PEXIT
 
 Branch to last caller of local procedure.
 
-Generate branch to last [PENTRY](#pentry-define-local-procedure) name address - 4.
+Generate branch to last [PENTRY](#pentry) name address - 4.
 If SUBENTRY RENT=NO or generate decrement stack pointer, load, and branch if RENT=YES.
 
 #### Register Usage
@@ -796,7 +796,7 @@ name     EXIT
 Returns immediately to the last caller.
 
 * No registers are restored.
-* Use of [SUBEXIT](#subexit-program-exit) is preferred.
+* Use of [SUBEXIT](#subexit) is preferred.
 
 #### Register Usage
 
@@ -1060,14 +1060,14 @@ FF       EQU   15
 
 ### YREGS - General register equates {: #yregs}
 
-YREGS is identical to [EQUREGS](#equregs-register-equates) with default parameters which will generate general register equates.
+YREGS is identical to [EQUREGS](#equregs) with default parameters which will generate general register equates.
 
 
 ### Additional information
 
 #### Use counts and parameter passing
 
-On the first invocation and after a [LOAD](#load-load-a-program-or-module), [LINK](#link-load-and-pass-control) or [XCTL](#xctl-load-and-pass-control), the program receiving control has its use 
+On the first invocation and after a [LOAD](#load), [LINK](#link) or [XCTL](#xctl), the program receiving control has its use 
 count incremented.
 
 When a program is DELETEd, it terminates or loses control via an XCTL, then the use count is 
@@ -1077,8 +1077,8 @@ storage may be reused. If in doubt, place parameters for passing on, in a separa
 
 #### Common program load parameters
 
-The following parameter descriptions apply to the [LOAD](#load-load-a-program-or-module), [CDLOAD](#cdload-load-a-program-or-module-vse), [DELETE](#delete-delete-a-program-or-module), [CDDELETE](#cddelete-delete-a-program-or-module-vse), 
-[LINK](#link-load-and-pass-control), [XCTL](#xctl-load-and-pass-control) and [RESTORE](#restore-restores-registers) macros.
+The following parameter descriptions apply to the [LOAD](#load), [CDLOAD](#cdload), [DELETE](#delete), [CDDELETE](#cddelete), 
+[LINK](#link), [XCTL](#xctl) and [RESTORE](#restore) macros.
 
 When a program is loaded (with suffix .390) then relocation takes place.
 
@@ -1158,12 +1158,12 @@ MYPATH   DC C'"c:\path1;c:\path2"'
 !!! Note
     In the above cases where the filename is specified in the environment variable or 
     the DC constant, then the .390 suffix should be omitted.
-    The exceptions to this are [LOAD](#load-load-a-program-or-module) and [DELETE](#delete-delete-a-program-or-module), which may be used to
+    The exceptions to this are [LOAD](#load) and [DELETE](#delete), which may be used to
     load or delete a non-program module and may have any suffix appended.
 
 ##### PARAM= and VL=
 
-Only available on [LINK](#link-load-and-pass-control) and [XCTL](#xctl-load-and-pass-control).
+Only available on [LINK](#link) and [XCTL](#xctl).
 
 Used for passing a fixed or variable parameter list to a program.
 

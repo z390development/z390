@@ -1,5 +1,8 @@
 ---
 title: Welcome
+hide:
+- navigation
+- toc
 ---
 
 # z390 - Mainframe Assembler and Emulator toolkit
@@ -21,7 +24,7 @@ Ideal for a number of use cases:
 * Develop your mainframe application using modern tooling.
 * Run your mainframe applications in the cloud on commodity hardware.
 
-[Get started](getting_started){ .md-button .md-button--primary }
+[Get started](getting_started/01_install.md){ .md-button .md-button--primary }
 
 
 ---
