@@ -101,6 +101,10 @@ You will need Python version 3.4 or above installed.
     ```
 
 === "Windows"
+    !!! Note
+        You will require the GTK runtime installed on your system.
+
+        See <https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases>
 
     ``` dos
     python -m venv docenv
@@ -133,16 +137,33 @@ You can view the web site preview using a web browser pointed at the following a
 
 The distribution will include a PDF with the documentation. 
 
-To build the PDF version of the documentation
-you will need the [pango](https://pango.org) library installed.
-
 You can use the following commands to generate the PDF.
 
-=== "MacOS/Unix"
-        
+=== "Ubuntu Linux"
+       
     ``` sh
+    apt update && apt install -y libsdl-pango-dev
     source docenv/bin/activate
     ENABLE_PDF_EXPORT=1 mkdocs build
+    ```
+
+=== "MacOS"
+
+
+
+    ``` sh
+    brew install pango
+    source docenv/bin/activate
+    ENABLE_PDF_EXPORT=1 mkdocs build
+    ```
+
+
+=== "Windows"
+
+    ``` dos
+    docenv\Scripts\activate
+    set ENABLE_PDF_EXPORT=1 
+    mkdocs build
     ```
 
 The generated PDF document will be placed in the file `/site/pdf/z390.pdf`
