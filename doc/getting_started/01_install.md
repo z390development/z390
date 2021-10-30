@@ -12,11 +12,11 @@ You will need a Java(tm) runtime environment version 8 or above installed on you
 
 [:material-link: Get Eclipse Adoptium Java](https://adoptium.net/){ .md-button .md-button--primary }
 
-## Get the latest z390 distribution
+### Get the latest z390 distribution
 
-Download the latest version of the z390 distribution (Version {{ version }}).
+Download the latest version of the z390 distribution.
 
-[:material-download: Download z390](){ .md-button .md-button--primary }
+[:material-download: Download z390](https://github.com/{{repo}}/releases/download/{{version}}/z390_{{version}}.zip){ .md-button .md-button--primary }
 
 ## Install z390
 

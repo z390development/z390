@@ -53,3 +53,4 @@ nav:
 
 extra:
   version: !ENV [Z390_VERSION, 'Undefined']
+  repo: !ENV [GITHUB_REPOSITORY, 'z390development/z390']
