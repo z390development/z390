@@ -40,6 +40,7 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.critic
   - pymdownx.smartsymbols
+  - pymdownx.keys
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
