@@ -386,6 +386,9 @@ public class pz390 {
 	 *                     3. DP: delete setting psw_cc
      *                     4. Add missing else clause to get_pdf_ints().
      * 2021-10-29 Issue 291. Fix XDECI logic so that it matches ASSIST documentation.
+     * 2021-10-29 Issue 305. Fix XHEXI logic so that it matches ASSIST documentation.
+     *                       NB: RPI 878 added ASCII support for XDECI but not XHEXI.
+     *                           Not added here either.
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -2572,30 +2575,37 @@ public class pz390 {
 				psw_check = false;
 				ins_setup_rx();
 				rv1 = 0;
-				boolean hex_digit_found = false;
+				int num_hex_digits = 0;
+				int hex_digit = 0;
 				while (mem.get(xbd2_loc) == 0x40){
 					xbd2_loc++;
 				}
-				while (((mem.get(xbd2_loc) & 0xff) >= 0xf0
-						&& (mem.get(xbd2_loc) & 0xff) <= 0xf9)
-						||
-						((mem.get(xbd2_loc) & 0xff) >= 0xc1
-								&& (mem.get(xbd2_loc) & 0xff) <= 0xc6)
-				       ){
-					hex_digit_found = true;
-					int hex_digit = mem.get(xbd2_loc) & 0xff;
-					if (hex_digit >= 0xf0){
-						hex_digit = hex_digit - 0xf0;
+				hex_digit = mem.get(xbd2_loc) & 0xff;
+				while (    (hex_digit >= 0xF0 && hex_digit <= 0xF9)
+						|| (hex_digit >= 0xC1 && hex_digit <= 0xC6) )
+				{
+					num_hex_digits++;
+					if (num_hex_digits < 9){
+						if (hex_digit >= 0xF0){
+							hex_digit &= 0x0F;
+						} else {
+							hex_digit = (hex_digit & 0x0F) + 9;
+						}
+						rv1 = rv1 * 16 + hex_digit;
 					} else {
-						hex_digit = hex_digit - 0xc1 + 10;
+						// 9 or more digits; break out of loop
+						break;
 					}
-					rv1 = rv1*16 + hex_digit;
 					xbd2_loc++;
+					hex_digit = mem.get(xbd2_loc) & 0xff;
 				}
-				if (hex_digit_found){
+				// number conversion complete; set GR1 value
+				reg.putInt(r1,xbd2_loc);
+
+				// set value if hex digit(s) found; else set condition code 3
+				if (num_hex_digits > 0){
 					reg.putInt(rf1+4,rv1);
-					reg.putInt(r1,xbd2_loc);
-					psw_cc = psw_cc0;
+					// condition code not set in this case!
 				} else {
 					psw_cc = psw_cc3;
 				}
