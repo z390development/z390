@@ -1,5 +1,5 @@
 # Container image that runs your code
-FROM adoptopenjdk/openjdk8
+FROM eclipse-temurin:11
 
 # install git so we can get version label
 RUN apt -y update;apt -y install git zip
