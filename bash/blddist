@@ -16,7 +16,8 @@ then
 fi
 
 mkdir -p build                  # create build folder if does not exist
-rm -rf build/z390_${version_tag}    # delete version build directory
+rm -rf build/z390_${version_tag}      # delete version build directory
+rm -f build/z390_${version_tag}.zip  # delete the zip
 
 bash/bldjar                     # create the z390 jar
 
@@ -26,15 +27,22 @@ cd z390_${version_tag}
 
 # add core files to the build dir
 cp ${root_dir}/z390.jar .       # jar
-core_dirs=( bash bat mac zcobol cics vse linklib )
+core_dirs=( bash bat mac zcobol cics vse linklib README.txt)
 for dir in ${core_dirs[@]}; do
     cp -R ${root_dir}/${dir} .        # unix bash scripts
 done
 
 # add test and supplimental components
-supp_dirs=( assist demo guam qsam rt soa sort structuredmacros tests vsam1 vsam2 zopcheck zpar )
+supp_dirs=( assist demo guam qsam bsam rt soa sort structuredmacros tests vsam1 vsam2 zopcheck zpar )
 for dir in ${supp_dirs[@]}; do
     cp -R ${root_dir}/${dir} .        # unix bash scripts
+done
+
+# remove components not required for distribution
+del_items=('bash/bldjar' 'bat/BLDJAR.BAT')
+for item in ${del_items[@]}; do
+    echo "rm ${item}"        # unix bash scripts
+    rm ${item}        # unix bash scripts
 done
 
 # create zip package

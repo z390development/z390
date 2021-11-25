@@ -1,0 +1,84 @@
+z390 distribution
+=================
+
+The z390 distribution zip contains everything you need to install and run z390 Portable Mainframe Assembler and zCOBOL.
+
+This distribution can be downloaded from GitHub at https://github.com/z390development/z390/releases
+
+Regression tested performed on Windows Server and Ubuntu Linux using GitHub hosted machines.
+Java runtime: Eclipse Adoptium OpenJDK 8 https://adoptium.net/?variant=openjdk8 is used.
+
+This distribution includes a prebuilt z390.jar file and scripts which is all you need to run z390.
+
+This distribution does not include the z390 Java sources.
+If you wish to rebuild the jar from source, please refer to the GitHub page https://github.com/z390development/z390
+
+Installation
+------------
+Unzip this directory and copy it to any drive you like.
+* For Windows users, you can add the bat folder to your Windows Path
+* For Linux/MacOS users, you can add the bash folder to your Windows Path
+
+Verification
+------------
+Run rt\bat\ZOPCHECK.BAT on Windows | bash/zopcheck on Linux/MacOS
+   to assemble, link, and execute assembler program zopcheck.mlc which verifies all z390 assembler instruction opcodes.
+
+Run rt\bat\RUNSORT.BAT on Windows | bash/runsort on Linux/MacOS 
+   to assemble, link, and execute z390 sort utility including demo sort merge of 100,000 records.  See doc\z390_Sort_Utility.pdf
+for documention on sort and demos. 
+
+Run bat\RUNASMDEMOS.BAT on Windows | bash/runasmdemos on Linux/MacOS 
+   to assemble, link, and execute assembler demo programs: 
+    1. DEMO\HELLO.MLC     - Display "Hello World" via WTO macro
+    2. DEMO\DEMOM8Q1.MLC  - Solve 8 Queens Problem written as structured macro
+    3. DEMO\TESTDCB1.MLC  - Copy sequential ASCII text file using QSAM.
+
+Run bat\BLDCBLLIB.BAT on Windows | bash/bldcbllib on Linux/MacOS 
+   to compile and link zcobol runtime zc390lib.390.
+
+Run bat\RUNCBLDEMOS.BAT on Windows | bash/runcbldemos on Linux/MacOS
+   to compile, link,and execute 5 zcobol programs:
+    1. ZCOBOL\DEMO\HELLO.CBL    - Display "Hello World"
+    2. ZCOBOL\DEMO\DATETIME.CBL - Display current date, day of week, and time of day
+    3. ZCOBOL\DEMO\POWERS.CBL   - Display powers of 2 up to 128
+    4. ZCOBOL\DEMO\COPYFILE.CBL - Copy sequential ASCII file using QSAM
+    5. ZCOBOL\DEMO\CALLCOMP.MLC - Call COMPSUM.CBL to COMPUTE sun of 15 different field types
+        ZCOBOL\DEMO\COMPSUM.CBL  - Use COMPUTE to sum 15 different data type fields
+        (See generated COMPSUM.BAL for 173 instructions generated for COMPUTE statement)
+
+Run rt\bat\RUNASMTESTS.BAT on Windows | bash/runasmtests on Linux/MacOS
+   to run sample regression tests of z390 assembler and emulator:
+    1. TESTS\TESTINS2.MLC  - verify non supervisor instructions
+    2. TESTS\TESTINS3.MLC - verify HFP, BFP, and DFP floating point instructions
+    3. TESTS\TESTINS4.MLC - verify new z196 non-supervisor instructions
+    4. TESTS\TESTINS5.MLC - verify new after z196 non-supervisor instructions
+    5. TESTS\TESTDFP1.MLC - verify new DFP instructions
+    6. TESTS\TESTDFP2.MLC - verify DFP assembler data definitions
+
+Run rt\bat\RUNCBLTESTS.BAT on Windows | bash/runcbltests on Linux/MacOS
+   to compile, link, and execute sample zcobol regression tests.
+
+Run rt\bat\RUNZPAR.BAT on Windows | bash/runzpar on Linux/MacOS
+   to create source execution trace TRS files showing source program
+   lines and execution instruction trace for both assembler and zCOBOL.
+
+You can also run the demos from the z390 GUI command line which you can start by
+running `java -jar z390.jar` or by running bat\Z390.BAT on Windows | bash/z390 on Linux/MacOS  
+
+For example start the GUI and enter the command:
+(Windows)     bat\asmlg demo\hello.mlc
+(Linux/MacOS) bash\asmlg demo\hello.mlc
+
+More information
+----------------
+
+See more documentation on www.z390.info and history up to 2012 on www.z390.org
+Here is link to last z390 SHARE presentation Melvyn and I did together:
+   http://z390.org/SHARE/SHARE_8194_z390_February_2008.pdf
+
+Join the z390 user group here: https://groups.google.com/g/z390
+Join the z390 developer group here: https://groups.google.com/g/z390development
+
+Don Higgins
+don@higgins.net
