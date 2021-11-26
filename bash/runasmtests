@@ -16,4 +16,5 @@ bash/asmlg tests/TESTINS4 trace $sysmac
 bash/asmlg tests/TESTINS5 trace $sysmac $optable
 bash/asmlg tests/TESTDFP1 trace $sysmac $optable
 bash/asmlg tests/TESTDFP2 trace $sysmac $optable
+bash/zopcheck
 echo "Verify tests ran without errors"
