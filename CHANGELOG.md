@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.7.8-beta.1] - 2021-11-23
+## [1.7.8] - 2021-11-26
 ### Added
 - First release hosted and built on Github.
 - Initial support for zVSAM version 2
