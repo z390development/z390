@@ -27,21 +27,21 @@ cd z390_${version_tag}
 
 # add core files to the build dir
 cp ${root_dir}/z390.jar .       # jar
-core_dirs=( bash bat mac zcobol cics vse linklib README.txt)
+core_dirs=( bash bat mac zcobol cics vse linklib README.txt LICENSE )
 for dir in ${core_dirs[@]}; do
     cp -R ${root_dir}/${dir} .        # unix bash scripts
 done
 
 # add test and supplimental components
-supp_dirs=( assist demo guam qsam bsam rt soa sort structuredmacros tests vsam1 vsam2 zopcheck zpar )
+supp_dirs=( assist demo guam qsam bsam rt soa sort structuredmacros tests vsam1 
+vsam2 zopcheck zpar )
 for dir in ${supp_dirs[@]}; do
     cp -R ${root_dir}/${dir} .        # unix bash scripts
 done
 
 # remove components not required for distribution
-del_items=('bash/bldjar' 'bat/BLDJAR.BAT')
+del_items=('bash/bldjar' 'bat/BLDJAR.BAT' 'bash/blddist' 'bash/relver' 'bat/RELVER.BAT')
 for item in ${del_items[@]}; do
-    echo "rm ${item}"        # unix bash scripts
     rm ${item}        # unix bash scripts
 done
 
