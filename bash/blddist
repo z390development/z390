@@ -9,19 +9,21 @@ cd ..                           # cd back to root
 
 root_dir=$(pwd)
 version_tag=$(git describe)
+dist_folder=dist
 
 if [ "$1" == "clean" ];         # if "clean" parm passed
 then
     git clean -dfX              # delete all git ignored files
 fi
 
-mkdir -p build                  # create build folder if does not exist
-rm -rf build/z390_${version_tag}      # delete version build directory
-rm -f build/z390_${version_tag}.zip  # delete the zip
+mkdir -p ${dist_folder}                       # create dist folder if does not exist
+echo "/**" > ${dist_folder}/.gitignore        # ignore the dist folder
+rm -rf ${dist_folder}/z390_${version_tag}     # delete version dist directory
+rm -f ${dist_folder}/z390_${version_tag}.zip  # delete the zip
 
 bash/bldjar                     # create the z390 jar
 
-cd build
+cd ${dist_folder}
 mkdir z390_${version_tag}
 cd z390_${version_tag}
 
