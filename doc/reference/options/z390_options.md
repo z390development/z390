@@ -1,3 +1,7 @@
+---
+hide:
+- toc
+---
 # z390 Options
 
 The scope value details where the option is used.

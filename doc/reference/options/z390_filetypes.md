@@ -1,3 +1,7 @@
+---
+hide:
+- toc
+---
 # z390 File types
 
 The scope value details where the option is used.

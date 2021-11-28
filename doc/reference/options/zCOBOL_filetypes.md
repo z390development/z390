@@ -1,3 +1,7 @@
+---
+hide:
+- toc
+---
 # zCOBOL file types
 
 TYPE | Format | File Description       | File or Report Format Description
