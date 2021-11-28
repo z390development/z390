@@ -18,7 +18,8 @@ Add the contents of this to a file named 'HELLO.MLC'.
 Now run the following z390 command to assemble, link and run the program.
 
 === "Windows"
-    :information_source: Assumes z390 has been installed in `c:\z390`. Substitute for your local install location.
+    :information_source: Assumes z390 has been installed in `c:\z390`. 
+    Substitute for your local install location.
 
     ``` dos
     c:\z390\bat\asmlg HELLO.MLC SYSMAC(c:\z390\mac+)
@@ -67,7 +68,7 @@ Now run the following z390 command to assemble, link and run the COBOL program.
     ```
 
 === "MacOS/Unix"
-`    :information_source: Assumes z390 has been installed in `/usr/local/z390`. Substitute for your local install location.
+    :information_source: Assumes z390 has been installed in `/usr/local/z390`. Substitute for your local install location.
     ```
     /usr/local/z390/bash/cblclg HELLO
     ```
