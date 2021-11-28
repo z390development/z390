@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ## Installation
 
-See [Install](getting_started/01_install.md) for installation instructions.
+See [Install](getting_started/install.md) for installation instructions.
 
 ## Command reference
 
