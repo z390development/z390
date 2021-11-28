@@ -8,8 +8,8 @@ remote_branch: gh-pages-beta
 
 plugins:
   - search
-  - macros
   - awesome-pages
+  - macros
   - with-pdf:
       cover_subtitle: Mainframe assembler and emulator toolkit
       enabled_if_env: ENABLE_PDF_EXPORT
@@ -25,7 +25,7 @@ theme:
     - navigation.tabs.sticky
     - navigation.sections
     - navigation.top
-    - toc.integrate
+    # - toc.integrate
 
 docs_dir: doc
 
@@ -35,6 +35,8 @@ markdown_extensions:
   - meta
   - attr_list
   - def_list
+  - toc:
+      toc_depth: 3
   - pymdownx.highlight
   - pymdownx.tabbed
   - pymdownx.superfences
