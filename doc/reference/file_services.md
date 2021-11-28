@@ -355,7 +355,7 @@ BLKSIZE DSECT=DCBBLKSIF Type=F Default=0
 * For all other RECFM, sets the maximum block size.
 * The field DCBBLKSI (Type=H) is retained for compatibility.
 
-#### DCBE - Data control block extension {#DCB-DCBE-PARM}
+#### DCBE - Data control block extension {: #DCB-DCBE-PARM}
 
 DCBE DSECT=DCBDCBE Type=A Default=0 (undefined)
 
@@ -367,7 +367,7 @@ The DCBE is a control block defined by the DCBE macro.
   may be defined.  When set, these addresses override the DCB EODAD and SYNAD parameters.
 * The DSECT IHADCBE maps the DCBE control block.
 
-#### EODAD - End of file routine {#DCB-EODAD}
+#### EODAD - End of file routine {: #DCB-EODAD}
 
 EODAD DSECT=DCBEODAD Type=Address Default=0 (no routine defined)
 
@@ -378,7 +378,7 @@ The address of the end-of-file routine.
 * This may be overridden if DCBE is coded.
 * If a further GET is done after end-of-file, then the program is terminated.
 
-#### SYNAD - Error analysis routine {#DCB-SYNAD}
+#### SYNAD - Error analysis routine {: #DCB-SYNAD}
 
 SYNAD DSECT=DCBSYNAD Type=Address Default=0 (no routine defined)
 
