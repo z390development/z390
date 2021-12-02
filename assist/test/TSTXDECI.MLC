@@ -9,6 +9,13 @@
 *
 * --------------------------------------------------------------------
 *
+* Return codes: Value  Meaning
+*               -----  -------------------------
+*                 0    All tests were successful
+*                 8    At least one test failed
+*
+* --------------------------------------------------------------------
+*
 * Information from the ASSIST User's Manual for "XDECI REG,ADDRESS"
 *
 * 1. Beginning at the location given by ADDRESS, memory is scanned for
@@ -82,9 +89,13 @@ LOOP     DS    0H
          ED    TL#Fail,DW+6    Put # fails in print line
          XPRNT TotLine,TLLen   Print totals
 *
+         LT    15,#Fail        Number of tests that failed
+         BZ    RetCdSet        None; return code is zero
+         LA    15,8            At least 1; return code is eight
+RetCdSet DS    0H
          L     13,4(,13)       Caller's save area
-         LM    14,12,12(13)    Restore caller's registers
-         SR    15,15           Return code always zero
+         L     14,12(,13)      Restore caller's registers
+         LM    0,12,20(13)     ... except R15
          BR    14              Return to caller
 *
 **********************************************************************
