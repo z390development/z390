@@ -24,7 +24,8 @@ Section name    |  Folder name       | Purpose and content
 ----------------|--------------------|--------------------
 Home            | index.md           | Landing page for the documentation and project. Designed for people unfamiliar with the project.
 Getting started | getting_started.md | Provides details for a new user of z390 to install and start using z390.
-Reference       | reference          | Provides details of the z390 project from a user perspective.
+User guide      | user_guide         | Provides details about how to use the z390 toolset
+Reference       | reference          | Provides details relating to the z390 supplied macros.
 Contributing    | contributing       | Provides details of the z390 project from a project contributor/developer perspective.
 
 ## Conventions

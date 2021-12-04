@@ -1,36 +1,23 @@
-# User guide
-
-## Introduction
-
-The z390 macro assembler, linker, and emulator toolkit provides a way to develop, test, and deploy mainframe compatible assembler programs using any computer that supports a Java runtime environment.
-
-## Licence
-
-z390 macro assembler, linker and emulator toolkit.
-
-Copyright (c) 2021 Don Higgins
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-## Installation
-
-See [Install](getting_started/install.md) for installation instructions.
-
-## Command reference
+# Commands
 
 The following is a list of commands available as part of the z390 toolkit.
+
+These commands are scripts that are included in the z390 source and distribution
+and can be enabled by including the script directory in your system path.
+
+Alternatively you can reference the scripts directly from the command line by
+specifying the full path.
+
+=== "Windows"
+
+    `(z390 install dir)\bat`
+
+=== "MacOS/Unix"
+        
+    `(z390 install dir)/bash`
+
+
+## Command reference
 
 ### z390
 
@@ -40,18 +27,18 @@ Start the GUI interface with optional startup command file input.
 
 Run mz390 macro processor to expand MLC macro source file to BAL assembler source file. 
 
-#### Read and write text files
-
-See regression test TESTPCH2.MLC and RTTEST.BAT for example of how mz390 can be used to read and/or write any text file.   
-
 ### asm
 
-Run mz390 and az390 assembler to expand MLC macro assembler source file and generate relocatable OBJ relocatable object file.  
+Run mz390 and az390 assembler to expand MLC macro assembler source file and 
+generate relocatable OBJ relocatable object file.  
 
 !!! Note 
-    The default object file format is binary 80 byte record mainframe compatible format.  
-    Use option OBJHEX for ASCII text format containing hex format for object code.  The OBJHEX format supports single CSECT’s over 16 MB and you can read the OBJ file for debugging purposes. 
-    See [Z390 options](reference/options/z390_options.md) for more details.
+    The default object file format is binary 80 byte record mainframe compatible 
+    format.  
+    Use option OBJHEX for ASCII text format containing hex format for object 
+    code.  The OBJHEX format supports single CSECT’s over 16 MB and you can read 
+    the OBJ file for debugging purposes. 
+    See [Z390 options](/user_guide/options/z390_options) for more details.
     
 ### asml 
 
@@ -65,7 +52,7 @@ Run mz390, az390, lz390 and ez390 to expand MLC macro source, assemble, link, an
 
 Run lz390 linker to read one or more relocatable OBJ files and create binary relocatable 390 load module file.  
 
-If the linker option AUTOLINK is on, the linker will search SYSLIB OBJ file directory for external references to be statically linked. See [z390 options](reference/options/z390_options.md) for more details. 
+If the linker option AUTOLINK is on, the linker will search SYSLIB OBJ file directory for external references to be statically linked. See [z390 options](/user_guide/options/z390_options) for more details. 
 
 The linker includes options for AMODE and RMODE to control loading and execution modes.  
 The linker also has optional input command file with suffix LKD which may contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.  
@@ -76,7 +63,7 @@ Run ez390 emulator to execute 390 load module.
 
 #### Interactive debugger
 
-The ez390 emulator supports the following interactive test commands when the [TEST option](reference/options/z390_options.md) is specified:
+The ez390 emulator supports the following interactive test commands when the [TEST option](/user_guide/options/z390_options) is specified:
 
 * `addr=sdt` – set memory value  (i.e. 1r?=x'80' changes mem at (r1) 31 bit
 * `reg=sdt` - set register value (i.e. 15r=8 changes reg 15 to 8)
