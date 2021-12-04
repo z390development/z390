@@ -10,6 +10,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          lfs: true
       - name: version
         run: echo "::set-output name=version::$(git describe)"
         id: version
