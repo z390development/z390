@@ -1,5 +1,5 @@
 mkdocs
-mkdocs-material<8
+mkdocs-material
 mkdocs-awesome-pages-plugin
 mkdocs-with-pdf
 mkdocs-macros-plugin
