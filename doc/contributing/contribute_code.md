@@ -4,7 +4,130 @@ The following document will provide details on how to contribute to the z390
 project. For how to contribute to the documentation, see 
 [contributing to documentation](/contributing/contribute_docs)
 
-## Technical details
+## Setup and build
+
+### Install Java SDK
+
+Make sure you have a Java SDK available to compile the application.
+
+The project has moved to the [Apache Adoptium Java SDK](https://adoptium.net) 
+(previously AdoptOpenJDK) for distribution builds.
+
+z390 requires Java 1.8 or greater.
+
+You can check if this is available by running the following command:
+
+    shell> javac -version
+    javac 1.8.0_312`   # you should receive a message like this
+
+### Clone the code
+
+Start with a clone of the main repository.
+
+    shell> git clone https://github.com/z390development/z390.git
+    shell> cd z390
+
+Once you are ready to submit changes, you will need a fork of the z390 
+repository. See <https://docs.github.com/en/get-started/quickstart/fork-a-repo>
+for more details.
+
+### Build the code
+
+=== "Windows"
+
+    `bat> BUILD.BAT`
+
+=== "MacOS/Unix"
+        
+    `bash> ./build.sh`
+
+If the job successfully runs, it means you are ready to start development.
+
+### Rebuild the JAR
+
+You can just recompile the JAR without running the full build job by running
+the bldjar script.
+
+=== "Windows"
+
+    `bat> bat\BLDJAR.BAT`
+
+=== "MacOS/Unix"
+        
+    `bash> bash/bldjar`
+
+## Proposing new functionality
+
+Enhancements are welcome, but be aware that you are stepping into 
+an existing and well established project. 
+
+Before you spend time on an enhancement, we __strongly__ suggest
+that you first discuss your proposal with the core team and get their 
+buy-in before progressing.
+
+The best place to have these discussions is on the 
+[z390 developer Google group](https://groups.google.com/g/z390development).
+
+Once you get approval from the group, you can work on your change via the 
+standard GitHub pull request model.
+
+## Submitting changes
+
+Changes can be submitted to the project by creating a pull request on the 
+[z390 project repository](https://github.com/z390development/z390).
+
+
+## Useful technical details
+
+The following section is to provide some technical background for new developers.
+
+### Project structure
+
+The following directories are the core directories for the z390 project
+
+Directory     | Description
+--------------|------------
+src           | Java source for z390 JAR
+bat           | Windows bat scripts for running z390 tools
+bash          | *nix bash shell scripts for running z390 tools
+demo          | Demo assembler programs
+tests         | Tests for z/Arch instructions
+zopcheck      | Comprehensive instruction check
+mac           | Primary maclib folder for z390
+doc+doc_overrides | z390 Markdown documentation
+.github       | Scripts and config for GitHub build actions
+
+
+The following directories provide additional features using the z390 toolkit.
+
+Directory     | Description
+--------------|------------
+zcobol        | zCOBOL support
+cics          | zCICS source, tests and demos
+structuredmacros | Alternative Structured Programming Macros from Daniel H. Snyder
+sort          | Sort utility
+zpar          | Generate program execution traces
+
+
+The following directories provide tests and demos for various features 
+available in z390.
+
+Directory     | Description
+--------------|------------
+assist        | ASSIST instruction support
+barcode       | 
+bsam          | BSAM sequential file support
+guam          | Graphic User Access method support
+linklib       | ???
+mfacc         | Mainframe assembler coding contest
+mvs           | IBM MVS 3.8j sys1.maclib macros
+perl          | (Deprecated) Scipts to run Win BAT files on *nix. Use bash 
+qsam          | QSAM sequential file support
+rt            | Various regression tests for z390
+soa           | Service Orientated Architecture (SOA) and TCP/IP support
+vsam1         | VSAM file support (version 1)
+vsam2         | VSAM file support (version 2)
+vse           | VSE OS support
 
 ### Compatibility macros
 
@@ -36,27 +159,6 @@ moving between the mainframe and z390 has some challenges.
 The project is looking at how to make this transition easier as it understands
 z390 users come here because they want to write and run HLASM programs and 
 macros.
-
-## Proposing new functionality
-
-Enhancements are welcome, but be aware that you are stepping into 
-an existing and well established project. 
-
-Before you spend time on an enhancement, we __strongly__ suggest
-that you first discuss your proposal with the core team and get their 
-buy-in before progressing.
-
-The best place to have these discussions is on the z390 developer Google group.
-
-[z390development](https://groups.google.com/g/z390development)
-
-Once you get approval from the group, you can work on your change via the 
-standard git/GitHub pull request model.
-
-## Submitting changes
-
-Changes can be submitted to the project by creating a pull request on the 
-[z390 project repository](https://github.com/z390development/z390).
 
 ### License
 

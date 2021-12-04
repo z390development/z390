@@ -32,3 +32,4 @@ on the command line.
     If z390 is installed in `/usr/local/z390`, then add `/usr/local/z390/bash` to your system path.
 
 
+[:material-run-fast: Continue with Quick Starts](quickstart.md){ .md-button .md-button--primary }
