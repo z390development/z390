@@ -1,19 +1,20 @@
 # SOA services
 
-The z390 project supports low level Service Oriented Architecture (SOA) type application 
-generation and execution.
+The z390 project supports low level Service Oriented Architecture (SOA) type 
+application generation and execution.
 
 The advantage of using the SOA architecture is that services are more easily shared
 across diverse applications and user networks and maintenance is simpler since server
 code does not need to be statically linked into client application code.
 
-Any z390 application program can open up to 10 different client TCP/IP ports and 10 different 
-TCP/IP server ports. 
+Any z390 application program can open up to 10 different client TCP/IP ports and 
+10 different TCP/IP server ports. 
 
 The server can support up to a total of 20 concurrent connections from client. 
 
-z390 TCP/IP client and server programs can interact with clients or server applications
-written in any language supporting compatible messaging via TCP/IP sockets.
+z390 TCP/IP client and server programs can interact with clients or server 
+applications written in any language supporting compatible messaging via TCP/IP 
+sockets.
 
 ## Macro reference
 
@@ -27,11 +28,13 @@ between client and server components.
 The TCPIO macro operations OPEN, CLOSE, SEND, and RECEIVE support
 messaging between client and server programs using TCP/IP sockets. 
 
-* Messages of any length can be exchanges between any client and server programs on a TCP/IP network.
+* Messages of any length can be exchanges between any client and server programs 
+  on a TCP/IP network.
 * The server program must first open a socket port. 
 * Up to 20 concurrent clients can open connections to any server port. 
 * The same program can have up to 10 server ports and 10 client ports open.
-* This command is similar to the functions provided by the IBM z/OS Communication Server macro `EZASMI`
+* This command is similar to the functions provided by the IBM z/OS Communication 
+  Server macro `EZASMI`
 
 ####  OPEN
 
@@ -39,16 +42,20 @@ messaging between client and server programs using TCP/IP sockets.
 label    TCPIO OPEN,PORT=port,HOST=host
 ```
 
-* The port can be any standard port number less than 1024 or any private port number above 1024.
-* The port number can be numeric constant, symbolic absolute value, or can be specified in (register). 
-* The only requirement is that port numbers not conflict with other port numbers being used on the same
-  network with the same processor hosts. 
-* If the HOST= keyword parameter is coded specifying a specific host IP address such as 162.692.1.3 or * for the
-  current processor, then a client port will be opened with a connection to the
-  server port on the indicated processor. 
-* If a connection to the specified server port cannot be made, then a return code of 12 will be set. 
-* If the HOST= parameter is omitted, then a server port will be opened on the current
-  processor which can handle up to 20 concurrent connections from client ports on the network.
+* The port can be any standard port number less than 1024 or any private port 
+  number above 1024.
+* The port number can be numeric constant, symbolic absolute value, or can be 
+  specified in (register). 
+* The only requirement is that port numbers not conflict with other port numbers 
+  being used on the same network with the same processor hosts. 
+* If the HOST= keyword parameter is coded specifying a specific host IP address 
+  such as 162.692.1.3 or * for the current processor, then a client port will be 
+  opened with a connection to the server port on the indicated processor. 
+* If a connection to the specified server port cannot be made, then a return 
+  code of 12 will be set. 
+* If the HOST= parameter is omitted, then a server port will be opened on the 
+  current processor which can handle up to 20 concurrent connections from client 
+  ports on the network.
 
 #### CLOSE 
 
@@ -62,8 +69,10 @@ Close the specified port.
     You cannot open a client and sever port with the same number so 
     there is no need to indicate which type it is. 
 
-* When a server port is closed, all associated port and connection threads are also terminated. 
-* All ports are automatically closed at program termination if not closed explicitly.
+* When a server port is closed, all associated port and connection threads are 
+  also terminated. 
+* All ports are automatically closed at program termination if not closed 
+  explicitly.
 
 #### SEND
 
@@ -87,67 +96,73 @@ Receive a message from the specified port starting at address with length up to 
 
 * The message starting address can be RX type label or can be specified as (register).
 * The message maximum length can be absolute value or (register).
-* If the optional second positional parameter NOWAIT is specified, a return code of 4 will 
-  be returned if no message is ready otherwise the RECEIVE will wait until at least 1
-  byte of the message is available.
-* If the port is a server port then the optional keyword parameter CONN=id may be specified 
-  indicating a specific connection that was previously returned by prior TCPIO RECEIVE in register 2.
-* If a CONN value of -1 is specified or the parameter is omitted, the next message from any connection
-  will be returned along with the connection id in register 2.
-* At least 1 byte will be returned on a successful RECEIVE with return code 0 along with the number of
-  bytes returned in register 1. Up to the max-length bytes may be returned. 
-* If more than one message arrives prior to RECEIVE, it is up to the user to determine where
-  one message ends and next message starts. 
+* If the optional second positional parameter NOWAIT is specified, a return code 
+  of 4 will be returned if no message is ready otherwise the RECEIVE will wait 
+  until at least 1 byte of the message is available.
+* If the port is a server port then the optional keyword parameter CONN=id may 
+  be specified indicating a specific connection that was previously returned by 
+  prior TCPIO RECEIVE in register 2.
+* If a CONN value of -1 is specified or the parameter is omitted, the next 
+  message from any connection will be returned along with the connection id in 
+  register 2.
+* At least 1 byte will be returned on a successful RECEIVE with return code 0 
+  along with the number of bytes returned in register 1. Up to the max-length 
+  bytes may be returned. 
+* If more than one message arrives prior to RECEIVE, it is up to the user to 
+  determine where one message ends and next message starts. 
     * A 4 byte message length prefix can be used to determine each message length. 
     * If passing ASCII text, use ending line feed character (hex x’0A’).
 
 !!! Note 
     More than one RECEIVE operation may be required
     to retrieve an entire logical message since the TCP/IP network may not transfer
-    the entire message in one packet on the network and a portion of the logical message
-    may be ready whereas the next RECEIVE may have to wait for the next part of the message.
+    the entire message in one packet on the network and a portion of the logical 
+    message may be ready whereas the next RECEIVE may have to wait for the next 
+    part of the message.
 
-The TCPIO service is not sensitive to any special characters and all byte values are 
-allowed anywhere in messages. 
+The TCPIO service is not sensitive to any special characters and all byte values 
+are allowed anywhere in messages. 
 
 If any TCPIO operation fails for any reason on the client or server, a non-zero
 return code is returned. 
 
 The TCPIO server port support includes multiple threads to support concurrent
 connections. There is one thread for each open server port which waits for new
-connections on the server port, starts new connection thread, and then returns to
-wait for another connection. 
+connections on the server port, starts new connection thread, and then returns 
+to wait for another connection. 
 
 Each connection thread waits for any current available messages to be read from 
 that connection input buffer by the main TPCIO user thread. 
 
-When all messages have been retrieved, then the connection thread issues a connection 
-client socket read for first byte of the next input message. 
+When all messages have been retrieved, then the connection thread issues a 
+connection client socket read for first byte of the next input message. 
    
-The connection thread will wait for the next message to arrive in the input buffer or for
-a disconnect. If a disconnect occurs, the connection thread is cancelled. 
+The connection thread will wait for the next message to arrive in the input 
+buffer or for a disconnect. If a disconnect occurs, the connection thread is 
+cancelled. 
 
-If a pending RECEIVE is waiting on the connection which disconnected, a return code
-of 12 is returned. 
+If a pending RECEIVE is waiting on the connection which disconnected, a return 
+code of 12 is returned. 
 
-If the read of first byte is successful the thread returns to wait for
-the main TCPIO user thread to retrieve the full or partial message available in the
+If the read of first byte is successful the thread returns to wait for the main 
+TCPIO user thread to retrieve the full or partial message available in the
 connection input buffer. 
 
-Since partial messages can arrive from multiple connections in any sequence, the server 
-must be sure to retrieve a complete message from a specific connection prior to returning 
-to non-specific RECEIVE for the next message.
+Since partial messages can arrive from multiple connections in any sequence, the 
+server must be sure to retrieve a complete message from a specific connection 
+prior to returning to non-specific RECEIVE for the next message.
 
 ### SOAGEN - SOA app gen support {: #SOAGEN}
 
 The macro SOAGEN can be used to generate customized client and server message 
 managers plus stubs for each service called by the client application. 
    
-In addition the SOAGEN macro generates two batch commands to build the SOA application 
-and to execute the client server SOA application. 
+In addition the SOAGEN macro generates two batch commands to build the SOA 
+application and to execute the client server SOA application. 
 
-The SOAGEN macro uses the z390 PUNCH extension operands `DSNAME=` and `FORMAT` to generate 3 
-or more source MLC files plus the two BAT files in one macro expansion execution. 
+The SOAGEN macro uses the z390 PUNCH extension operands `DSNAME=` and `FORMAT` 
+to generate 3 or more source MLC files plus the two BAT files in one macro 
+expansion execution. 
 
 #### Parameters
 
@@ -189,14 +204,20 @@ host, change the HOST= parameter to specify the IP address of the
 desired server. 
 
 The above SOAGEN macro call generates the following source files 
-using z390 PUNCH extended operands DSNAME= and FORMAT to control PUNCH output files:
+using z390 PUNCH extended operands DSNAME= and FORMAT to control PUNCH output 
+files:
 
-* DEMOCMGR.MLC – source macro call to SOACMGR to generate SOA client message manager for the demo application.
-* DEMOSMGR.MLC – source macro call to SOASMGR to generate SOA server message manager for the demo application.
-* SOA_STUB_DEMOSUB1.MLC - source macro call to SOASTUB to generate SOA stub for DEMOSUB1 service call.
-* SOA_STUB_DEMOSUB2.MLC – source macro call to SOASTUB to generate SOA stub for DEMOSUB2 service call.
+* DEMOCMGR.MLC – source macro call to SOACMGR to generate SOA client message 
+  manager for the demo application.
+* DEMOSMGR.MLC – source macro call to SOASMGR to generate SOA server message 
+  manager for the demo application.
+* SOA_STUB_DEMOSUB1.MLC - source macro call to SOASTUB to generate SOA stub for 
+  DEMOSUB1 service call.
+* SOA_STUB_DEMOSUB2.MLC – source macro call to SOASTUB to generate SOA stub for 
+  DEMOSUB2 service call.
 * DEMOBLD.BAT – generated command file to build the SOA demo application.
-* DEMORUN.BAT – generated command file to start the DEMOSMGR server on the same processor and then run the DEMOMAIN client application.
+* DEMORUN.BAT – generated command file to start the DEMOSMGR server on the same 
+  processor and then run the DEMOMAIN client application.
 
 #### Technical Notes
 
@@ -264,16 +285,17 @@ a batch command file which assembles each of the above source programs to create
 an executable SOA type client server application.
 
 If the GENRUN parameter specifies a name, then the SOAGEN macro will generate
-a batch command to start the named SOA server message manager on the same processor,
-and then run the client application. If the HOST parameter specifies a different
-processor, the generated server message manager will need to be copied to that processor and
-started prior to running the client application.
+a batch command to start the named SOA server message manager on the same 
+processor, and then run the client application. If the HOST parameter specifies 
+a different processor, the generated server message manager will need to be 
+copied to that processor and started prior to running the client application.
 
 #### Demonstration
 
-z390 distribution includes `soa` directory with SOA generation macro library and a demo
-application which can be generated and executed as either a classic statically linked
-application or an SOA generated client server application using TCP/IP sockets.
+z390 distribution includes `soa` directory with SOA generation macro library and 
+a demo application which can be generated and executed as either a classic 
+statically linked application or an SOA generated client server application 
+using TCP/IP sockets.
 
 Refer to README.TXT in SOA folder for more details.
 

@@ -99,14 +99,17 @@ GETMAIN number of bytes in GR3 below 16M, conditionally,
 
 #### Memory allocation
 
-Storage is limited by the `MEM(nnn)` parameter on *ez390* with nnn in megabytes. The default is `MEM(1)`.
+Storage is limited by the `MEM(nnn)` parameter on *ez390* with nnn in megabytes. 
+The default is `MEM(1)`.
 
 When the value is 16 or less then all GETMAINs will allocate storage LOC=BELOW. 
 
-When the value is above 16, then 16M bytes is available LOC=BELOW and the rest LOC=ABOVE.
+When the value is above 16, then 16M bytes is available LOC=BELOW and the rest 
+LOC=ABOVE.
 
 There is a preset maximum of `MEM(50)` set by Java. If this is insufficient, 
-then code `-Xmx nnnnnnnnn` after the `-Xrs` option on *ez390* to extend the MEM limit.
+then code `-Xmx nnnnnnnnn` after the `-Xrs` option on *ez390* to extend the MEM 
+limit.
 
 !!! Warning
     Over-extending memory this way may degrade the performance of your
@@ -283,5 +286,5 @@ The GETMAIN size will be (PCELLCT+SCELLCT)*CSIZE
          CPOOL GET,CPID=label
 ```
 
-Get the next cell in this pool, GR1 contains the address or zero if all cells have been
-read. 
+Get the next cell in this pool, GR1 contains the address or zero if all cells 
+have been read. 

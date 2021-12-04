@@ -28,5 +28,6 @@ Ideal for a number of use cases:
 
 
 ---
-IBM, CICS, z/OS and z/VSE are trademarks of IBM Corp., registered in the U.S. and other countries.
-The use of IBM Trademarks complies with the Fair use guidelines for use and reference of IBM trademarks.
+IBM, CICS, z/OS and z/VSE are trademarks of IBM Corp., registered in the U.S. 
+and other countries. The use of IBM Trademarks complies with the Fair use 
+guidelines for use and reference of IBM trademarks.

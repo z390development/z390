@@ -1,8 +1,8 @@
 # zVSAM services
 
-With the exception of the DDNAME parameter explained below, all supported parameters are implemented 
-compatibly with IBM's VSAM implementation. For details, please refer to 
-[_z/OS DFSMS Macro Instructions for Data Sets_ (SC23-6852-02)](https://www.ibm.com/docs/en/zos/2.1.0?topic=instructions-vsam-macro-descriptions-examples).
+With the exception of the DDNAME parameter explained below, all supported 
+parameters are implemented compatibly with IBM's VSAM implementation. For 
+details, please refer to [_z/OS DFSMS Macro Instructions for Data Sets_ (SC23-6852-02)](https://www.ibm.com/docs/en/zos/2.1.0?topic=instructions-vsam-macro-descriptions-examples).
 
 ## Macro reference
 
@@ -27,13 +27,16 @@ label    ACB   AM=VSAM,                                      X
 ```
 
 
-The ACB macro will generate an ACB and initialize it according to the parameters specified on the macro invocation.
+The ACB macro will generate an ACB and initialize it according to the parameters 
+specified on the macro invocation.
 
-Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or MODCB ACB= to inspect, test, and/or modify the ACB's content.
+Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB=, TESTCB 
+ACB= and/or MODCB ACB= to inspect, test, and/or modify the ACB's content.
 
-All keywords on the ACB macro are optional. Before the cluster is opened, all ACB values can be modified 
-using MODCB ACB=, or by changing the ACB directly. The latter is not recommended, as it is not 
-guaranteed to be portable or compatible with future versions of zVSAM.
+All keywords on the ACB macro are optional. Before the cluster is opened, all 
+ACB values can be modified using MODCB ACB=, or by changing the ACB directly. 
+The latter is not recommended, as it is not guaranteed to be portable or 
+compatible with future versions of zVSAM.
 
 #### Parameters
 
@@ -45,8 +48,9 @@ Designates this ACB as a zVSAM ACB.
 
 DDNAME refers to the name of an environment variable in the host OS. 
 
-This variable in turn should contain the path and qualified filename of the cluster to be opened. 
-The qualifier is the name of an environment variable in the host OS and is the path to the assembled catalog.
+This variable in turn should contain the path and qualified filename of the 
+cluster to be opened. The qualifier is the name of an environment variable in 
+the host OS and is the path to the assembled catalog.
 
 ```dos
 SET ddname=drive:\path\catalog.filename
@@ -107,9 +111,10 @@ Max amount of storage (in bytes) to use for buffers.
 
 Maximum buffer space in virtual storage for this cluster.
 
-This is the combined size in bytes of all buffers allocated for this cluster. If (BUFND + BUFNI) * Block_size
-exceeds the value specified for BUFSP, then BUFND and BUFNI will be reduced proportionally to keep the 
-total allocation below the limit specified in the BUFSP parameter.
+This is the combined size in bytes of all buffers allocated for this cluster. 
+If (BUFND + BUFNI) * Block_size exceeds the value specified for BUFSP, then 
+BUFND and BUFNI will be reduced proportionally to keep the total allocation 
+below the limit specified in the BUFSP parameter.
 
 ##### BUFND - Data buffers
 
@@ -127,7 +132,8 @@ Specify a number between 1 and 65535.
 
 The default value for RMODE31 is NONE.
 
-Specifies whether buffers and/or control blocks should be allocated below or above the 16M line:
+Specifies whether buffers and/or control blocks should be allocated below or 
+above the 16M line:
 
 option | effect
 -------|-------
@@ -144,8 +150,8 @@ Specify a number between 1 and 255.
 
 ##### BSTRNO - Initial allocated requests
 
-Beginning number of concurrent requests allocated to this ACB when a path is opened. 
-Only applies if MACRF=NSR. 
+Beginning number of concurrent requests allocated to this ACB when a path is 
+opened. Only applies if MACRF=NSR. 
 
 Specify a number between 0 and 255.
 
@@ -168,7 +174,8 @@ label    OPEN  (entry[,entry]...),
          MF=,
 ```
 
-The open macro is used to open one or more clusters and/or one or more sequential files in a single call.
+The open macro is used to open one or more clusters and/or one or more 
+sequential files in a single call.
 
 A cluster needs to be opened before it can be processed. 
 
@@ -180,13 +187,14 @@ A cluster needs to be opened before it can be processed.
 addr[,options],[...]
 ```
 
-The OPEN macro accepts a list of entries. Each entry consists of two consecutive parameters, address and options.
+The OPEN macro accepts a list of entries. Each entry consists of two consecutive 
+parameters, address and options.
 
 **addr - Address of ACB or DCB**
 
-The address can be specified as an A-type address or as a register. If a register is
-coded the register number or name must be enclosed in parentheses. The address can
-be either the address of a DCB or the address of an ACB
+The address can be specified as an A-type address or as a register. If a register 
+is coded the register number or name must be enclosed in parentheses. The address 
+can be either the address of a DCB or the address of an ACB
 
 **options**
 
@@ -195,7 +203,8 @@ be either the address of a DCB or the address of an ACB
 
 For ACB's, all options are taken from the ACB, not the open parm list.
 
-Open parameter list entries have two different formats depending on the [MODE](#mode-residence-mode) parameter.
+Open parameter list entries have two different formats depending on the 
+[MODE](#mode-residence-mode) parameter.
 
 * MODE=24 `AL1(option),AL3(DCB/ACB address)` R1 points to the list.
 * MODE=31 `AL1(option),XL3'00',AL4(DCB/ACB address)` R0 points to the list and R1=0.
@@ -237,16 +246,22 @@ label    EXLST AM=VSAM,
          RLSWAIT=(addr[,mod])
 ```
 
-The EXLST macro will generate an exit list control block and initialize it according to the parameters specified on the macro invocation.
+The EXLST macro will generate an exit list control block and initialize it 
+according to the parameters specified on the macro invocation.
 
 !!! Info
-    The structure and layout of the generated EXLST are not part of the interface and are therefore not shown. Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST=, TESTCB EXLST= and/or MODCB EXLST= to inspect, test, and/or modify the EXLST's content.
+    The structure and layout of the generated EXLST are not part of the 
+    interface and are therefore not shown. Direct access to subfields in the 
+    EXLST is discouraged. Use SHOWCB EXLST=, TESTCB EXLST= and/or MODCB EXLST= 
+    to inspect, test, and/or modify the EXLST's content.
 
-All keywords on the EXLST macro are optional. Before the cluster is opened, all EXLST values can be 
-modified using [MODCB EXLST=](), or by changing the EXLST directly. The latter is not recommended, as it 
-is not guaranteed to be portable or compatible with future versions of zVSAM.
+All keywords on the EXLST macro are optional. Before the cluster is opened, all 
+EXLST values can be modified using [MODCB EXLST=](), or by changing the EXLST 
+directly. The latter is not recommended, as it is not guaranteed to be portable 
+or compatible with future versions of zVSAM.
 
-The AMODE for the exit routines is encoded in the address using the common convention.
+The AMODE for the exit routines is encoded in the address using the common 
+convention.
 
 For exit modifiers, if a routine is not active it will not be called by zVSAM.
 
@@ -267,7 +282,8 @@ EODAD=(addr[,mod])
 
 **addr - entry address** 
 
-Optional parameter to specify the entry address of an exit that handles an end-of-data condition during sequential access.
+Optional parameter to specify the entry address of an exit that handles an 
+end-of-data condition during sequential access.
 
 **mod - modifier**
 
@@ -307,7 +323,8 @@ SYNAD=(addr[,mod])
 
 **addr - entry address** 
 
-Optional parameter to specify the entry address of an exit that handles physical errors.
+Optional parameter to specify the entry address of an exit that handles physical 
+errors.
 
 **mod - modifier**
 

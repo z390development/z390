@@ -2,7 +2,8 @@
 
 ## Hello z390
 
-The following is a simple *Hello world* application written in mainframe assembler language.
+The following is a simple *Hello world* application written in mainframe 
+assembler language.
 
 ``` hlasm
 HELLO    CSECT
@@ -26,12 +27,14 @@ Now run the following z390 command to assemble, link and run the program.
     ```
 
 === "MacOS/Unix"
-    :information_source: Assumes z390 has been installed in `/usr/local/z390`. Substitute for your local install location.
+    :information_source: Assumes z390 has been installed in `/usr/local/z390`. 
+    Substitute for your local install location.
     ```
     /usr/local/z390/bash/asmlg HELLO.MLC "SYSMAC(/usr/local/z390/mac+)"
     ```
 
-If you have successfully run the sample program, the output to the console will be similar to the following:
+If you have successfully run the sample program, the output to the console will 
+be similar to the following:
 
 ``` text
 09:37:54 HELLO     MZ390 START USING z390 V1.7.03 ON J2SE 14.0.2 06/05/21
@@ -61,19 +64,22 @@ Add the contents of this to a file named 'HELLO.MLC'.
 Now run the following z390 command to assemble, link and run the COBOL program.
 
 === "Windows"
-    :information_source: Assumes z390 has been installed in `c:\z390`. Substitute for your local install location.
+    :information_source: Assumes z390 has been installed in `c:\z390`. 
+    Substitute for your local install location.
 
     ``` dos
     c:\z390\bat\cblclg HELLO
     ```
 
 === "MacOS/Unix"
-    :information_source: Assumes z390 has been installed in `/usr/local/z390`. Substitute for your local install location.
+    :information_source: Assumes z390 has been installed in `/usr/local/z390`. 
+    Substitute for your local install location.
     ```
     /usr/local/z390/bash/cblclg HELLO
     ```
 
-If you have successfully run the sample COBOL program, the output to the console will be similar to the following:
+If you have successfully run the sample COBOL program, the output to the console 
+will be similar to the following:
 
 ``` text
 21:13:17 hello     ZC390 START USING z390 V1.7.07 ON J2SE 16.0.1 06/27/21

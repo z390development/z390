@@ -36,7 +36,7 @@ Write to operator via GUAM GUI MCS console scrolling log view.
 ```hlasm
 label    WTO   ‘msg’
 ```
-See [WTO in SVC services](/reference/svc_services#wto)
+See [WTO in SVC services](svc_services.md#wto)
 ### WOTR
 
 Write to operator with reply via GUAM GUI MCS console scrolling log view.
@@ -44,7 +44,7 @@ Write to operator with reply via GUAM GUI MCS console scrolling log view.
 ```hlasm
 label    WTOR  ‘msg’,reply,reply_length,ecb
 ```  
-See [WTOR in SVC services](/reference/svc_services#wtor)
+See [WTOR in SVC services](svc_services.md#wtor)
 ### WAIT
 
 Wait for WTOR reply from GUI interface and post ecb.
@@ -53,7 +53,7 @@ Wait for WTOR reply from GUI interface and post ecb.
 label    WAIT  ECB=ecb 
 ```
 
-See [WAIT in SVC services](/reference/svc_services#wait)
+See [WAIT in SVC services](svc_services.md#wait)
 
 ### TGET
 
@@ -104,7 +104,8 @@ label    TPUT  buffer,buffer_len,FULLSCR
 Macro to generate native TN3270 data streams including SBA addresses 
 using symbolic references for control codes. 
 
-The following keyboard input keystrokes can be used to generate TN3270 compatible input data codes:
+The following keyboard input keystrokes can be used to generate TN3270 
+compatible input data codes:
 
  key        | hex | alternate keys
  -----------|-----|---------------

@@ -38,24 +38,33 @@ generate relocatable OBJ relocatable object file.
     Use option OBJHEX for ASCII text format containing hex format for object 
     code.  The OBJHEX format supports single CSECT’s over 16 MB and you can read 
     the OBJ file for debugging purposes. 
-    See [Z390 options](/user_guide/options/z390_options) for more details.
+    See [Z390 options](options/z390_options.md) for more details.
     
 ### asml 
 
-Run mz390, az390, and lz390 to expand MLC macro assembler source, assemble, and link to generate 390 load module.
+Run mz390, az390, and lz390 to expand MLC macro assembler source, assemble, and 
+link to generate 390 load module.
 
 ###	asmlg
 
-Run mz390, az390, lz390 and ez390 to expand MLC macro source, assemble, link, and execute 390 load module.
+Run mz390, az390, lz390 and ez390 to expand MLC macro source, assemble, link, 
+and execute 390 load module.
 
 ### link
 
-Run lz390 linker to read one or more relocatable OBJ files and create binary relocatable 390 load module file.  
+Run lz390 linker to read one or more relocatable OBJ files and create binary 
+relocatable 390 load module file.  
 
-If the linker option AUTOLINK is on, the linker will search SYSLIB OBJ file directory for external references to be statically linked. See [z390 options](/user_guide/options/z390_options) for more details. 
+If the linker option AUTOLINK is on, the linker will search SYSLIB OBJ file 
+directory for external references to be statically linked. 
 
-The linker includes options for AMODE and RMODE to control loading and execution modes.  
-The linker also has optional input command file with suffix LKD which may contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.  
+See [z390 options](options/z390_options.md) for more details. 
+
+The linker includes options for AMODE and RMODE to control loading and execution 
+modes.  
+
+The linker also has optional input command file with suffix LKD which may 
+contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.  
 
 ### exec
 
@@ -63,7 +72,8 @@ Run ez390 emulator to execute 390 load module.
 
 #### Interactive debugger
 
-The ez390 emulator supports the following interactive test commands when the [TEST option](/user_guide/options/z390_options) is specified:
+The ez390 emulator supports the following interactive test commands when the 
+[TEST option](options/z390_options.md) is specified:
 
 * `addr=sdt` – set memory value  (i.e. 1r?=x'80' changes mem at (r1) 31 bit
 * `reg=sdt` - set register value (i.e. 15r=8 changes reg 15 to 8)

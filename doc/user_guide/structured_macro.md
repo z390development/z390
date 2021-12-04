@@ -1,7 +1,8 @@
 # Structured Macro Extensions
 
 z390 has extended the HLASM macro syntax to add support for structured macro 
-code. This is sometimes referred to as _Structured Programming Extensions_ or SPE.
+code. This is sometimes referred to as _Structured Programming Extensions_ or 
+SPE.
 
 !!! Warning
     z390 structured macro extensions are not supported by IBM HLASM.
@@ -13,13 +14,16 @@ code. This is sometimes referred to as _Structured Programming Extensions_ or SP
 ### Alternate selection of code blocks
 
 * AIF  (expression) - execute the following block of code if expression is true
-* AELSEIF (expression) - end prior block and execute following block if expression is true
-* AELSE - end prior block and execute following block if prior AIF and AELSEIF false
+* AELSEIF (expression) - end prior block and execute following block if 
+  expression is true
+* AELSE - end prior block and execute following block if prior AIF and AELSEIF 
+  false
 * AEND - end last block for AIF at current level of nesting
 
 ### Repeat execution of code block
 
-* AWHILE (expression) - repeat following code block while expression is true (test at beginning)
+* AWHILE (expression) - repeat following code block while expression is true 
+  (test at beginning)
 * AEXIT AWHILE - exit to end of inner most AWHILE (for exceptions within nested AIF)
 * AEND - end block of code for AWHILE at current level of nesting
 * AUNTIL (expression) - repeat following code block until expression is true (test at end)
@@ -29,7 +33,8 @@ code. This is sometimes referred to as _Structured Programming Extensions_ or SP
 ### Perform code block
 
 * ACALL name - call the named code block and return to next instruction
-* AENTRY name - define start of performed block of code (skip over if entered sequentially)
+* AENTRY name - define start of performed block of code (skip over if entered 
+  sequentially)
 * AEXIT AENTRY - exit from AENTRY block of code (for exceptions within nested AIF)
 * AEND - end the current performed code block and exit to next statement after APM
 
@@ -53,12 +58,15 @@ The following source programs are included for general use:
 
 * linklib\ZSTRMAC.ZSM - structured translator which can be translated to standard 
   HLASM compatible code using itself.
-* :question: rt\test\STRMAC1.MLC  - bootstrap structured translator which is HLASM compatible .  
+* :question: rt\test\STRMAC1.MLC  - bootstrap structured translator which is 
+  HLASM compatible.  
 * linklib\zstrmac.txt - the generated HLASM compatible translator.
-* :question: ZSTRMAC.BAT - command using %1 to set SYSUT1 input and %2 to set SYSUT2 output and translate 
+* :question: ZSTRMAC.BAT - command using %1 to set SYSUT1 input and %2 to set 
+  SYSUT2 output and translate 
   structured macro assembler to standard HLASM macro assembler.
-* :question: ZSTRSPM.BAT - command to translate all the SPM's in z390\mac directory to HLASM compatible
-  code versions in z390\mac\spm directory using calls to the ZSTRMAC.BAT translator command.
+* :question: ZSTRSPM.BAT - command to translate all the SPM's in z390\mac 
+  directory to HLASM compatible code versions in z390\mac\spm directory using 
+  calls to the ZSTRMAC.BAT translator command.
 
 ## Regression tests
 
@@ -82,8 +90,10 @@ The following demo programs using the macro extensions are include:
 The following z390 utility programs using the macro extensions are included:
 
 * linklib\RTGENDIR.MLC - read file system directory and create list of file names
-* linklib\RTGENCMP.MLC - read merged list of files from 2 directories and generate compare commands
-* linklib\RTGENDIF.MLC - read difference files and generate erase commands for identical files
+* linklib\RTGENCMP.MLC - read merged list of files from 2 directories and 
+  generate compare commands
+* linklib\RTGENDIF.MLC - read difference files and generate erase commands for 
+  identical files
 
 The following system macros use the macro extensions:
 

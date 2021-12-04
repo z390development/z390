@@ -2,7 +2,7 @@
 
 The following document will provide details on how to contribute to the z390
 project. For how to contribute to the documentation, see 
-[contributing to documentation](/contributing/contribute_docs)
+[contributing to documentation](contribute_docs.md)
 
 ## Setup and build
 
@@ -148,7 +148,7 @@ same.
 z390 extends the standard HLASM syntax with additional keywords that allow you 
 to write structured macro code.
 
-See [Structured Macro Extensions](/user_guide/structured_macro) for more details.
+See [Structured Macro Extensions](../user_guide/structured_macro.md) for more details.
 
 This makes writing macros easier but structured macros are NOT compatible 
 with HLASM.
