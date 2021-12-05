@@ -58,13 +58,13 @@ The following source programs are included for general use:
 
 * linklib\ZSTRMAC.ZSM - structured translator which can be translated to standard 
   HLASM compatible code using itself.
-* :question: rt\test\STRMAC1.MLC  - bootstrap structured translator which is 
+* :material-file-question: rt\test\STRMAC1.MLC  - bootstrap structured translator which is 
   HLASM compatible.  
 * linklib\zstrmac.txt - the generated HLASM compatible translator.
-* :question: ZSTRMAC.BAT - command using %1 to set SYSUT1 input and %2 to set 
+* :material-file-question: ZSTRMAC.BAT - command using %1 to set SYSUT1 input and %2 to set 
   SYSUT2 output and translate 
   structured macro assembler to standard HLASM macro assembler.
-* :question: ZSTRSPM.BAT - command to translate all the SPM's in z390\mac 
+* :material-file-question: ZSTRSPM.BAT - command to translate all the SPM's in z390\mac 
   directory to HLASM compatible code versions in z390\mac\spm directory using 
   calls to the ZSTRMAC.BAT translator command.
 
