@@ -11,7 +11,8 @@ docenv/
 # z390.properties file (use relver to create)
 z390.properties
 
-# z390 dist build
+# z390 dist and build
+dist/
 build/
 
 # Java compiler output stuff

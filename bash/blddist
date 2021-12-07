@@ -9,32 +9,42 @@ cd ..                           # cd back to root
 
 root_dir=$(pwd)
 version_tag=$(git describe)
+dist_folder=dist
 
 if [ "$1" == "clean" ];         # if "clean" parm passed
 then
     git clean -dfX              # delete all git ignored files
 fi
 
-mkdir -p build                  # create build folder if does not exist
-rm -rf build/z390_${version_tag}    # delete version build directory
+mkdir -p ${dist_folder}                       # create dist folder if does not exist
+echo "/**" > ${dist_folder}/.gitignore        # ignore the dist folder
+rm -rf ${dist_folder}/z390_${version_tag}     # delete version dist directory
+rm -f ${dist_folder}/z390_${version_tag}.zip  # delete the zip
 
 bash/bldjar                     # create the z390 jar
 
-cd build
+cd ${dist_folder}
 mkdir z390_${version_tag}
 cd z390_${version_tag}
 
 # add core files to the build dir
 cp ${root_dir}/z390.jar .       # jar
-core_dirs=( bash bat mac zcobol cics vse linklib )
+core_dirs=( bash bat mac zcobol cics vse linklib README.txt LICENSE )
 for dir in ${core_dirs[@]}; do
     cp -R ${root_dir}/${dir} .        # unix bash scripts
 done
 
 # add test and supplimental components
-supp_dirs=( assist demo guam qsam rt soa sort structuredmacros tests vsam1 vsam2 zopcheck zpar )
+supp_dirs=( assist demo guam qsam bsam rt soa sort structuredmacros tests vsam1 
+vsam2 zopcheck zpar )
 for dir in ${supp_dirs[@]}; do
     cp -R ${root_dir}/${dir} .        # unix bash scripts
+done
+
+# remove components not required for distribution
+del_items=('bash/bldjar' 'bat/BLDJAR.BAT' 'bash/blddist' 'bash/relver' 'bat/RELVER.BAT')
+for item in ${del_items[@]}; do
+    rm ${item}        # unix bash scripts
 done
 
 # create zip package
