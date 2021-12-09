@@ -1,19 +1,33 @@
+         MACRO
+         MACRO
 .*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .*********************************************************************
+.*          INITIAL CODING BY DON HIGGINS         
 .* 05/05/06 RPI 281 ADD DCBE SUPPORT FOR EODAD= AND SYNAD=
-.* 2021/02/16 DSH RPI 2229 ADD DCBEFLG1(DCBELBI) FOR LARGE BLOCKSIZES
+.* 02/16/21 DSH RPI 2229 ADD DCBEFLG1(DCBELBI) FOR LARGE BLOCKSIZES
 .*            NOTE ONLY SUPPORTED FIELDS ARE DEFINED
 .*            SET KEYWORD BLKSIZE=1 ON DCBE TO TURN ON BDW LBI 
 .*            SEE: https://www.ibm.com/support/knowledgecenter
-                   /en/SSLTBW_2.1.0/com.ibm.zos.v2r1.idad500/dcbem.htm
+.*                 /en/SSLTBW_2.1.0/com.ibm.zos.v2r1.idad500/dcbem.htm
 .*********************************************************************
-.* See DCB DCBE= and DCBD  DCBDCBE field
+.* See DCB DCBE= and DCBD DCBDCBE field
 .*********************************************************************
-         MACRO
          IHADCBE
 		 ORG   IHADCBE+X'17'                         
 DCBEFLG1 DS    X
