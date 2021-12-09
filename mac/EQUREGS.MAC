@@ -1,10 +1,26 @@
         MACRO
 .*********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.* Date   - 09/30/05                                                 *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+.* 09/30/05 INITIAL CODING BY DON HIGGINS
+.* 10/20/05 RPI27  - issue error for any undefined operands     
+.* 12/07/05 RPI119 - add FPR and hex options                     
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .*  EQUREGS ,        - default to R0 - R15 symbols for 0-15 general
 .*                     purpose register references
@@ -13,10 +29,6 @@
 .*  EQUREGS TYPE=HEX - generate R0 - RF symbols for 0-15 general
 .*                     purpose registers      
 .*  EQUREGS REGS=FPC,TYPE=HEX - generate F0 - FF symbols for FPR's
-.*********************************************************************
-.* 10/20/05 RPI27  - issue error for any undefined operands     
-.* 12/07/05 RPI119 - add FPR and hex options                     
-.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
         EQUREGS &REGS=GPR,&TYPE=DEC
         GBLB  &EQUREGS_GPR_DEC(16),&EQUREGS_GPR_HEX(16)
