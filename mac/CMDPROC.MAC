@@ -1,12 +1,24 @@
          MACRO
 .*********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.* Date   - 10/29/05                                                 *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .*********************************************************************
 .* MAINTENANCE
+.* 10/29/05 INITIAL CODING BY DON HIGGINS
 .* 11/09/05 ADD &ID=0 TASK ID AND &WAIT=500 MILLISECONDS WAIT FOR READ 
 .* 11/11/05 FIX INCORRECT LENGHT IN R2                                 
 .* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
@@ -14,7 +26,8 @@
 .* 02/20/07 RPI 551 ADD SUPPORT FOR IP=(REG)                       
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 10/29/07 RPI 731 ADD CMDLOG=YES TO COPY ALL CMD STD OUTPUT TO LOG
-.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 03/17/19 Modified for zVSAM V2 by Melvyn Maltz       
 .*********************************************************************
 .*
 .* CMDPROC PROVIDES INTERFACE TO SUPPORT UP TO 10 CONCURRENT 

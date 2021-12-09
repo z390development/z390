@@ -1,11 +1,23 @@
          MACRO
 .**********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation                *
-.* This source code is part of z390 assembler/emulator package        *
-.* The z390 package is distributed under GNU general public license   *
-.* Author - Melvyn Maltz                                              *
-.* Date   - 12/20/20                                                  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .**********************************************************************
+.* 12/20/20 INITIAL CODING BY MELVYN MALTZ
 .* 12/20/20 zVSAM Dummy front end for hybrid \MAC using ZVSAM(n)      *
 .* 05/01/21 DEFINE1--Changed comment after &RECORDSIZE as it was      *
 .*          causing MNOTEs                                            *

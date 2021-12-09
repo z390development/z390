@@ -1,16 +1,32 @@
          MACRO                                                             
 .********************************************************************
-.*             AUTHOR.   DON HIGGINS.                                      
-.*             DATE.     03/27/74.                                         
-.*             REMARKS.  MACRO TO ALLOW STRUCTURED PROGRAMMING USING       
-.*                       IF, THEN, ELSE, AND DO UP TO TEN LEVELS DEEP      
-.*                       AND NO BRANCH INSTRUCTIONS. SEE IF MACRO.         
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .********************************************************************
+.* 03/27/74 INITIAL CODING BY DON HIGGINS
 .* 05/14/06 DSH Z390 RPI 316 UPDATED FOR COMPAT.
 .* 07/21/06 DSH Z390 RPI 379 USE IF TO SUPPORT COMPOUND WHILE/UNTIL
 .* 04/11/07 DSH Z390 RPI 589 USE ZSTRGBL AND EXPAND LEVELS TO 100   
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .* 09/23/08 RPI 909 upgrade to use ZSTRMAC SPE's and extend compat.
+.********************************************************************
+.* MACRO TO ALLOW STRUCTURED PROGRAMMING USING       
+.* IF, THEN, ELSE, AND DO UP TO TEN LEVELS DEEP      
+.* AND NO BRANCH INSTRUCTIONS. SEE IF MACRO.         
 .********************************************************************
          DO    &END,&WHILE=,&UNTIL=                                                            
          COPY  ZSTRGBL
