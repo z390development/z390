@@ -1,32 +1,33 @@
+/*
+z390 - Mainframe assembler emulator and run-time engine
+Copyright (C) 2021 z390 Assembler LLC
+
+This file is part of z390.
+z390 is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+z390 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <https://www.gnu.org/licenses/>.
+*/
+
 import java.io.File;
 import java.nio.ByteBuffer;
 
 public class vz390 {
-	/***************************************************************************
+	/* 
+	vz390 is the emulator component of z390 called from sz390 to perform which
+	VSAM access method services.
 	 * 
-	 * z390 portable mainframe assembler and emulator.
-	 * 
-	 * Copyright 2008 Automated Software Tools Corporation
-	 * 
-	 * z390 is free software; you can redistribute it and/or modify it under the
-	 * terms of the GNU General Public License as published by the Free Software
-	 * Foundation; either version 2 of the License, or (at your option) any
-	 * later version.
-	 * 
-	 * z390 is distributed in the hope that it will be useful, but WITHOUT ANY
-	 * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-	 * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-	 * details.
-	 * 
-	 * You should have received a copy of the GNU General Public License along
-	 * with z390; if not, write to the Free Software Foundation, Inc., 59 Temple
-	 * Place, Suite 330, Boston, MA 02111-1307 USA
-	 * 
-	 * vz390 is the emulator component of z390 called from sz390 to performwhich
-	 * VSAM access method services.
-	 * 
-	 * *************************************************** Maintenance
-	 * *************************************************** 
+	 **************************************************** 
+	 * Maintenance
+	 **************************************************** 
 	 * 06/22/07 initial coding 
 	 * 08/27/07 RPI 688 misc. fixes: 
 	 *          1) return code 8 if open ACB fails

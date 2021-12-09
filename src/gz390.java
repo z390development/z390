@@ -1,3 +1,22 @@
+/*
+z390 - Mainframe assembler emulator and run-time engine
+Copyright (C) 2021 z390 Assembler LLC
+
+This file is part of z390.
+z390 is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+z390 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <https://www.gnu.org/licenses/>.
+*/
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -52,32 +71,8 @@ public  class  gz390
 	           ActionListener, 
 			   ComponentListener,
 			   FocusListener {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
-	/*****************************************************
-	
-    z390 portable mainframe assembler and emulator.
-	
-    Copyright 2011 Automated Software Tools Corporation
-	 
-    z390 is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    z390 is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with z390; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-
-	 ****************************************************
+  	 /****************************************************
 	 * Maintenance
 	 * ***************************************************
 	 * 11/26/05 RPI47 gz390 copied from z390
