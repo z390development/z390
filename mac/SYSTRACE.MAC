@@ -1,8 +1,25 @@
          MACRO
-&NAME    SYSTRACE &TRACE_OPTIONS
+.*********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
 .*
-.* AUTHOR. DON HIGGINS
-.* DATE.   05/07/11
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+.* 05/07/11 INITIAL CODING BY DON HIGGINS
+.*          4 lines added by Melvyn Maltz (RPI 1217)
+.*********************************************************************
 .* REMARKS. SET EZ390 TRACE OPTIONS FROM STRING
 .*          TERMINATED BY SPACE.  THE EXECUTION TIME
 .*          OPTIONS INCLUDE:
@@ -12,13 +29,12 @@
 .*            4. Q - QVSAM I/O
 .*            5. T - TCPIO I/O
 .*            6. V - VSAM  I/O
-.*
-.* Next 4 lines added by MM (RPI 1217)
+.*********************************************************************
+&NAME    SYSTRACE &TRACE_OPTIONS
          AIF  ('&TRACE_OPTIONS' EQ '(1)' OR '&TRACE_OPTIONS' EQ '(R1)')
 &NAME    SVC  X'AC' SET EZ390 TRACE OPTIONS FROM STRING
          MEXIT
          AEND
-.* End of fix for RPI 1217
 &TEXT    SETC '&TRACE_OPTIONS'(2,K'&TRACE_OPTIONS-2)
 &NAME    LA   1,=C'&TEXT '
          SVC  X'AC' SET EZ390 TRACE OPTIONS FROM STRING

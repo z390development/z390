@@ -1,5 +1,23 @@
          MACRO
-&N       SQXTR &FR1,&FR2
+.*********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+.* 04/25/11 RPI 1161 correct FP2 > FR2
 .*********************************************************************
 .* CALCULATE DFP LD EXTENED SQUARE ROOT OF FR2 IN FR1
 .* (THIS INSTRUCTION IS MISSING FROM POP - SEE HFP SQXR AND BFP SQXBR)
@@ -7,8 +25,7 @@
 .* (RESULT IS RETURNED AT +8 ELSE PGM EXCEPTION FOR NEG VALUE ETC.)
 .* (SQXTR.OBJ IS LOCATED IN LINKLIB ALONG WITH SQXTR.MLC)
 .*********************************************************************
-.* 04/25/11 RPI 1161 correct FP2 > FR2
-.*********************************************************************
+&N       SQXTR &FR1,&FR2
 &N       DS   0H
          L    15,=V(SQXTR)
          STD  &FR2,8+0(15)
