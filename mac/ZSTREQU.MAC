@@ -1,4 +1,26 @@
          MACRO
+.********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.********************************************************************
+.* 09/27/08 RPI 909 CHANGED FROM CPY TO MAC CALLED BY ZSTRGBL.CPY
+.********************************************************************
+.* EQUBC - DEFINE COMMON EQU SYMBOLS FOR USE IN STRUCTURED MACROS
+.********************************************************************
          ZSTREQU
          GBLB  &ZSTR_EQU
          AIF   (&ZSTR_EQU)
@@ -7,11 +29,6 @@
          :&ZSTR_EQU SETB 1
          PUSH  PRINT,NOPRINT
          PRINT OFF,NOPRINT
-.********************************************************************
-.* EQUBC - DEFINE COMMON EQU SYMBOLS FOR USE IN STRUCTURED MACROS
-.********************************************************************
-.* 09/27/08 RPI 909 CHANGED FROM CPY TO MAC CALLED BY ZSTRGBL.CPY
-.********************************************************************
 H        EQU   2                                                           
 L        EQU   4                                                           
 E        EQU   8                                                           
