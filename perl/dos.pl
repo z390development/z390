@@ -1,4 +1,37 @@
 #!/usr/bin/perl --
+##################################################################
+# z390 - Mainframe assembler emulator and run-time engine
+# Copyright (C) 2021 z390 Assembler LLC
+#
+# This file is part of z390.
+#
+# z390 is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# z390 is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License 
+# along with this program; if not, see https://www.gnu.org/licenses.
+##################################################################
+# Author Don Higgins www.z390.org  don@higgins.net
+# Maintenace Log 
+# 02/08/07 RPI 532 add dos command processor support
+#          (Note Linux requires first line path to end with
+#           LF line feed only so do not edit perl scripts
+#           with notepad or any Windows editor that adds
+#           CR,LF carriage return and line feed.  This only
+#           applies to first line of perl scripts as BAT
+#           files edited on Windows work fine.)
+# 02/09/07 RPI 548 add -- to first line to allow Windows editing
+# 2020/10/12 RPI 2011 Changes for z390 version 1.7.
+#              1. Find z390 base directory same way as cmd.pl and z390.pl.
+#              2. Perl scripts now in perl subdirectory.
+#            Complete source replacement so only one line has RPI 2011.
+###########################################################
 # dos.pl perl bat file and dos command processor for use with z390 on Linux
 # 
 # Installation:
@@ -17,25 +50,6 @@
 #         soa\demo\DEMOSTOP (stop the SOA demo server from anywhere on  network)
 #         z390              (start z390 GUI interface from this window)
 #         exit              (exit z390 dos command processor)
-###########################################################
-# Author Don Higgins www.z390.org  don@higgins.net
-###########################################################
-# Maintenace Log 
-# Copyright 2007 Automated Software Tools Corporation
-# z390 is licensed under GPL General Public License
-###########################################################
-# 02/08/07 RPI 532 add dos command processor support
-#          (Note Linux requires first line path to end with
-#           LF line feed only so do not edit perl scripts
-#           with notepad or any Windows editor that adds
-#           CR,LF carriage return and line feed.  This only
-#           applies to first line of perl scripts as BAT
-#           files edited on Windows work fine.)
-# 02/09/07 RPI 548 add -- to first line to allow Windows editing
-# 2020/10/12 RPI 2011 Changes for z390 version 1.7.
-#              1. Find z390 base directory same way as cmd.pl and z390.pl.
-#              2. Perl scripts now in perl subdirectory.
-#            Complete source replacement so only one line has RPI 2011.
 ###########################################################
 use strict;
 use warnings;

@@ -1,19 +1,24 @@
 #!/usr/bin/perl --
-# cmd.pl perl script for emulation of cmd.exe
-# for handling DOS BAT file command
-#
-# The support files (z390.jar etc.) are searched for in the following places:
-# (1) The directory given in the Z390 environment variable
-# (2) $HOME/lib/z390
-# (3) /usr/local/lib/z390
-# (4) /usr/lib/z390
 ##################################################################
-# Author Martin Ward http://www.cse.dmu.ac.uk/~mward/
+# z390 - Mainframe assembler emulator and run-time engine
+# Copyright (C) 2021 z390 Assembler LLC
+#
+# This file is part of z390.
+#
+# z390 is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# z390 is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License 
+# along with this program; if not, see https://www.gnu.org/licenses.
 ##################################################################
 # Maintenace Log of changes for z390 by Don Higgins www.z390.org
-# Copyright 2007 Automated Software Tools Corporation
-##################################################################
-# z390 is licensed under GPL General Public License
+# Author Martin Ward http://www.cse.dmu.ac.uk/~mward/
 # 02/06/07 DSH RPI 532 -  changes to support z390 on Ubuntu 6.06 LTS Linux
 #   1) Set first line to  point  to Unbuntu perl install
 #   2) Support erase command with /q for quiet mode
@@ -57,6 +62,15 @@
 #            comments. Item 3 was done as part of RPI 2011. It does have
 #            an RPI comment.
 ##################################################################
+# cmd.pl perl script for emulation of cmd.exe
+# for handling DOS BAT file command
+#
+# The support files (z390.jar etc.) are searched for in the following places:
+# (1) The directory given in the Z390 environment variable
+# (2) $HOME/lib/z390
+# (3) /usr/local/lib/z390
+# (4) /usr/lib/z390
+#
 # Notes:
 #   1. Paths must be correct case with \ separators
 #   2. BAT files must be uppercase and the default added extension  is .BAT
