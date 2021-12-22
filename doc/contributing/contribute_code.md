@@ -163,7 +163,7 @@ macros.
 ### License
 
 By contributing to the z390 project, you agree to assign all copyright
-to Don Higgins, the original author. 
+to z390 Assembler LLC. 
 
 This allows the project to operate and change without the consultation 
 of all copyright holders. This has not presented itself as an issue to
@@ -175,7 +175,7 @@ and create your own version under the GNU 2 license conditions.
 The following preamble should be applied to all programs
 
     z390 - Mainframe assembler emulator and run-time engine
-    Copyright (C) 2021 Don Higgins
+    Copyright (C) 2021 z390 Assembler LLC
 
     This file is part of z390.
     z390 is free software; you can redistribute it and/or modify
@@ -197,7 +197,7 @@ The following preamble should be applied to all programs
          MACRO
 .**********************************************************************
 .* z390 - Mainframe assembler emulator and run-time engine
-.* Copyright (C) 2021 Don Higgins
+.* Copyright (C) 2021 z390 Assembler LLC
 .*
 .* This file is part of z390.
 .*
