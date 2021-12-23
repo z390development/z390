@@ -5487,6 +5487,7 @@
 .AIF_236_E ANOP
          MEND
          MACRO
+.*********************************************************************
 .* z390 - Mainframe assembler emulator and run-time engine
 .* Copyright (C) 2021 z390 Assembler LLC
 .*
@@ -5528,9 +5529,22 @@
          MEND
          MACRO
 .*********************************************************************
-.* Copyright 2009 Automated Software Tools Corporation               *
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
-.* The z390 package is distributed under GNU general public license  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .* Author - Don Higgins                                              *
 .* Date   - 08/02/09                                                 *
 .*********************************************************************
@@ -6198,9 +6212,22 @@
          MEND
          MACRO
 .*********************************************************************
-.* Copyright 2009 Automated Software Tools Corporation               *
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
-.* The z390 package is distributed under GNU general public license  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .* Author - Don Higgins                                              *
 .* Date   - 08/02/09                                                 *
 .*********************************************************************
@@ -7110,9 +7137,22 @@
          MEND
          MACRO
 .*********************************************************************
-.* Copyright 2009 Automated Software Tools Corporation               *
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
-.* The z390 package is distributed under GNU general public license  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .* Author - Don Higgins                                              *
 .* Date   - 08/18/09                                                 *
 .*********************************************************************
@@ -8211,9 +8251,22 @@
          MEND
          MACRO
 .*********************************************************************
-.* Copyright 2009 Automated Software Tools Corporation               *
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
-.* The z390 package is distributed under GNU general public license  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .* Author - Don Higgins                                              *
 .* Date   - 08/02/09                                                 *
 .*********************************************************************
@@ -10173,9 +10226,22 @@
          MEND
          MACRO
 .*********************************************************************
-.* Copyright 2009 Automated Software Tools Corporation               *
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
-.* The z390 package is distributed under GNU general public license  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .* Author - Don Higgins                                              *
 .* Date   - 09/12/09                                                 *
 .*********************************************************************
@@ -10438,9 +10504,22 @@
          MEND
         MACRO
 .*********************************************************************
-.* Copyright 2009 Automated Software Tools Corporation               *
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
-.* The z390 package is distributed under GNU general public license  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .* Author - Don Higgins                                              *
 .* Date   - 03/04/09                                                 *
 .*********************************************************************
@@ -12181,9 +12260,22 @@
         MEND
          MACRO
 .*********************************************************************
-.* Copyright 2009 Automated Software Tools Corporation               *
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
-.* The z390 package is distributed under GNU general public license  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .* Author - Don Higgins                                              *
 .* Date   - 07/17/09                                                 *
 .*********************************************************************
@@ -12243,9 +12335,22 @@
          MEND
          MACRO
 .*********************************************************************
-.* Copyright 2009 Automated Software Tools Corporation               *
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
-.* The z390 package is distributed under GNU general public license  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .* Author - Don Higgins                                              *
 .* Date   - 01/26/09                                                 *
 .*********************************************************************
@@ -13052,9 +13157,22 @@
 .* END OF ZCGETFLD.CPY
 .*
 .*********************************************************************
-.* Copyright 2009 Automated Software Tools Corporation               *
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
-.* The z390 package is distributed under GNU general public license  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .* Author - Don Higgins                                              *
 .* Date   - 08/16/09                                                 *
 .*********************************************************************
@@ -13387,9 +13505,22 @@
 &(DFHVALUE_NOTDELETABLE) SETC   '44'
 &(DFHVALUE_VRRDS) SETC   '732'
 .*********************************************************************
-.* Copyright 2009 Automated Software Tools Corporation               *
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
-.* The z390 package is distributed under GNU general public license  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .* Author - Don Higgins                                              *
 .* Date   - 08/15/09                                                 *
 .*********************************************************************
