@@ -899,11 +899,10 @@ public  class  gz390
 	   private void about_command(){
 		    guam_put_log("\nz390 GUAM GUI gz390 Graphical User Access Method "
 				  + tz390.version); 
- 	   	    guam_put_log("Copyright 2011 Automated Software Tools Corporation");
-			guam_put_log("z390 is licensed under GNU General Public License");
-	   	    guam_put_log("gz390 supports MCS, TN3270, and Graphic panel views");
-	   	    guam_put_log("gz390 J2SE Java source is distributed as part of z390");
-	   	    guam_put_log("Visit www.z390.org for additional information and support");
+			guam_put_log("Copyright (c) 2021 z390 Assembler LLC");
+			guam_put_log("z390 comes with ABSOLUTELY NO WARRANTY;");   
+			guam_put_log("This is free software, and you are welcome to redistribute it");
+			guam_put_log("under certain conditions; see included LICENSE file for details.");
 	   }
 	   private void font_command(int new_font_size){
 	   /* 

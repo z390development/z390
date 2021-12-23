@@ -738,9 +738,10 @@ public  class  z390
 	   /*
 	    * display z390 version and copyright
 	    */
-	   	put_log("Z390I " + tz390.version);
-	   	put_log("Copyright 2011 Automated Software Tools Corporation");
-	   	put_log("z390 is licensed under GNU General Public License");
+	   	put_log("Z390I " + tz390.version + " Copyright (C) 2021 z390 Assembler");
+		put_log("z390 comes with ABSOLUTELY NO WARRANTY;");   
+		put_log("This is free software, and you are welcome to redistribute it");
+		put_log("under certain conditions; see included LICENSE file for details.");
 	   	if  (mode_msg1 != null){
 	   		put_log(mode_msg1);
 	   	}

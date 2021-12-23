@@ -550,14 +550,18 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true;  // RPI 755
 	   	if  (z390_log_text == null){
-	   		sz390.put_log("EZ390I Copyright 2011 Automated Software Tools Corporation");
-	   		sz390.put_log("EZ390I z390 is licensed under GNU General Public License");
+	   		sz390.put_log("EZ390I Copyright (c) 2021 z390 Assembler LLC");
+			sz390.put_log("z390 comes with ABSOLUTELY NO WARRANTY;");   
+			sz390.put_log("This is free software, and you are welcome to redistribute it");
+			sz390.put_log("under certain conditions; see included LICENSE file for details.");
 	   	}
 	   	sz390.put_log("EZ390I program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 	   	sz390.put_log("EZ390I options = " + tz390.cmd_parms);
 		if (tz390.opt_stats){
-			tz390.put_stat_line("Copyright 2011 Automated Software Tools Corporation");
-			tz390.put_stat_line("z390 is licensed under GNU General Public License");
+			tz390.put_stat_line("Copyright (c) 2021 z390 Assembler LLC");
+			tz390.put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");   
+			tz390.put_stat_line("This is free software, and you are welcome to redistribute it");
+			tz390.put_stat_line("under certain conditions; see included LICENSE file for details.");
 			tz390.put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			tz390.put_stat_line("options = " + tz390.cmd_parms);
 		}

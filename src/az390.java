@@ -7244,8 +7244,10 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true; // RPI 755
 	   	if  (z390_log_text == null){
-	   	    put_log(msg_id + "Copyright 2021 Don Higgins");
-	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
+			put_log(msg_id + "Copyright (c) 2021 z390 Assembler LLC");
+			put_log(msg_id + "z390 comes with ABSOLUTELY NO WARRANTY;");   
+			put_log(msg_id + "This is free software, and you are welcome to redistribute it");
+			put_log(msg_id + "under certain conditions; see included LICENSE file for details.");
 	   	}
 	   	put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name);
 	   	put_log(msg_id + "options = " + tz390.cmd_parms);

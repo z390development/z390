@@ -458,12 +458,17 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true; // RPI 755
 	   	if  (z390_log_text == null){
-	   	    put_log(msg_id + "Copyright 2011 Automated Software Tools Corporation");
-	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
+			put_log(msg_id + "Copyright (c) 2021 z390 Assembler LLC");
+			put_log(msg_id + "z390 comes with ABSOLUTELY NO WARRANTY;");   
+			put_log(msg_id + "This is free software, and you are welcome to redistribute it");
+			put_log(msg_id + "under certain conditions; see included LICENSE file for details.");
+
 	   	}
 		if (tz390.opt_stats){
-			put_stat_line("Copyright 2011 Automated Software Tools Corporation");
-			put_stat_line("z390 is licensed under GNU General Public License");
+			put_stat_line("Copyright (c) 2021 z390 Assembler LLC");
+			put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");   
+			put_stat_line("This is free software, and you are welcome to redistribute it");
+			put_stat_line("under certain conditions; see included LICENSE file for details.");
 			put_stat_line("options = " + tz390.cmd_parms);
 			put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 		}

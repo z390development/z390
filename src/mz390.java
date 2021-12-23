@@ -9361,14 +9361,18 @@ public  class  mz390 {
 			cur_date = new Date();
 		}
 		if (tz390.opt_stats){
-			put_stat_line("Copyright 2021 Don Higgins");
-			put_stat_line("z390 is licensed under GNU General Public License");
+			put_stat_line("Copyright (c) 2021 z390 Assembler LLC");
+			put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");   
+			put_stat_line("This is free software, and you are welcome to redistribute it");
+			put_stat_line("under certain conditions; see included LICENSE file for details.");
 			put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			put_stat_line("options = " + tz390.cmd_parms);
 		}
 		if (tz390.opt_tracem){
-			tz390.put_trace(msg_id + "Copyright 2011 Automated Software Tools Corporation");
-			tz390.put_trace(msg_id + "z390 is licensed under GNU General Public License");
+			tz390.put_trace(msg_id + "Copyright (c) 2021 z390 Assembler LLC");
+			tz390.put_trace(msg_id + "z390 comes with ABSOLUTELY NO WARRANTY;");   
+			tz390.put_trace(msg_id + "This is free software, and you are welcome to redistribute it");
+			tz390.put_trace(msg_id + "under certain conditions; see included LICENSE file for details.");
 			tz390.put_trace(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			tz390.put_trace(msg_id + "options = " + tz390.cmd_parms);
 		}

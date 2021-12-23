@@ -441,8 +441,10 @@ public class zc390{
 		    * and copyright on statstics file
 		    */
 		   	if  (tz390.opt_stats){
-		   	    tz390.put_stat_line("Copyright 2011 Automated Software Tools Corporation");
-		   	    tz390.put_stat_line("z390 is licensed under GNU General Public License");
+				tz390.put_stat_line("Copyright (c) 2021 z390 Assembler LLC");
+				tz390.put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");   
+				tz390.put_stat_line("This is free software, and you are welcome to redistribute it");
+				tz390.put_stat_line("under certain conditions; see included LICENSE file for details.");
 		   	    tz390.put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name);
 		   	    tz390.put_stat_line("options = " + tz390.cmd_parms);
 		   	}
