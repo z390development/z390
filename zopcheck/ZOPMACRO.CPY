@@ -1,4 +1,21 @@
-* open source z390 regression test of opcodes
+*************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*************************************************************
 * 2019/11/07 dsh TESTINS6.MAC macros for TESTINS6.MLC
 * 2020/01/03 DSH USE TEST_OP TO CALL TYPE_??? TO GEN TESTS
 * 2020/01/23 DSH SUPRESS OP GEN IF UNDEFINED
@@ -6,8 +23,6 @@
 * 2020/09/19 DSH RPI 2213 REMOVE TYPE DM, ADD DIAGNOSE/DIAG RS, SIE S
 * 2020/10/02 DSH RPI 2212 RESTORE TYPE_VRR FROM V1700, ADD VREGS 0-31
 * 2021/02/08 DSH RPI 2226 FIX VNOT TO GENERATE V3=V2 FOR VNOT V1,V2
-*************************************************************
-* COPYRIGHT 2020 DON HIGGINS
 ************************************************************
         GBLA &TOT_OPS,&TOT_MASK,&TOT_DUP,&TOT_UND
         GBLA &TOT_PROB,&TOT_SUPR,&TOT_MISSING
