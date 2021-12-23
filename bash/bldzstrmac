@@ -1,0 +1,12 @@
+#!/bin/bash
+# Regenerate the zSPM macros for use on HLASM (Convert structured macros)
+
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script
+cd ..               # go to root
+
+macs=(CASE CASEENTRY DO ELSE ELSEIF ENDCASE ENDDO ENDIF ENDSEL IF OTHRWISE SELECT WHEN ZSTREQU)
+for mac in ${macs[@]}; do
+    echo "SYSUT1="mac/${mac}.mac" SYSUT2="mac/spm/${mac}.mac" bash/mz390 linklib/ZSTRMAC.ZSM NOASM STATS"
+    SYSUT1="mac/${mac}.mac" SYSUT2="mac/spm/${mac}.mac" bash/mz390 linklib/ZSTRMAC.ZSM NOASM STATS
+done
