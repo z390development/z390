@@ -15,6 +15,7 @@
 .*
 .* You should have received a copy of the GNU General Public License 
 .* along with this program; if not, see https://www.gnu.org/licenses.
+.**********************************************************************
 .* Author - Don Higgins                                               *
 .**********************************************************************
 .* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS PROLOG  
