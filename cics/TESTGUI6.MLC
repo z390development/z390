@@ -15,8 +15,8 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
 * 05/08/06 RPI 308 CONVERT DEMOGUI6 APPLICATION TO EXEC CICS TESTGUI6
 *********************************************************************
 DFHEISTG DSECT

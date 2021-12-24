@@ -15,8 +15,8 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
 * 05/05/06 RPI 280 test ECBLIST using 2 command processes                                 
 *********************************************************************
          TITLE 'TESTECB1 TEST WAIT ECBLIST USING STIMER EXIT'

@@ -15,8 +15,8 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
 * 09/17/08 RPI 911 CHANGE ASELECT TO ACASE AND APM TO ACALL
 * 09/23/08 RPI 911 new regression test for SPM's                    
 *********************************************************************

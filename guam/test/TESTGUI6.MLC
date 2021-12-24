@@ -16,8 +16,8 @@
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
 *
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
 * 05/08/06 RPI 308 CONVERT DEMOGUI6 APPLICATION TO EXEC CICS TESTGUI6
 * 06/16/08 RPI 861 CORRECT TO HANDLE NO NULLS VARIABLE INPUT         
 * 06/17/08 RPI 861 FIX SBA ADDRESS FOR END OF ZIP 22+5 = 27          

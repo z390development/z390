@@ -21,6 +21,7 @@
 * 01/01/87 CHANGE SVC 16 TO USE CONTENTS OF R1 FOR COUNT IN R2.0
 * 10/06/09 UPDATE TO RUN ON Z390
 **********************************************************************
+         TITLE 'PET - PRINT ELAPSED TIME IN SECONDS SINCE LAST CALL'
 PET      SUBENTRY
 	L     R15,=V(DAT)       DISPLAY DATE AND TIME
 	BALR  R14,R15

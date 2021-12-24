@@ -15,9 +15,8 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
 * DEMO DISPLAY OF APL GRAPHICS UNICODE CHARACTERS USING GE GRAPHIC
 * ESCAPE X'08' FOLLOWED BY BYTE INDEX TO APL CODE TABLE.           
 *********************************************************************

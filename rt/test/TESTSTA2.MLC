@@ -15,8 +15,8 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
 * 06/10/07 RPI 636 TEST R15=0 FOR PERCOLATE AND CANCEL LINKS
 * 07/18/07 RPI 659 TEST RESTART EXIT WITH R15=4 AND R0=NEW RESTART PSW
 * 06/22/08 RPI 845 CHANGE ESTAE EXIT TO USE R1=SDWA, R2=ESAEPARM        

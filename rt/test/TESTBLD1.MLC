@@ -15,8 +15,8 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
 * 04/12/06 RPI 244 TEST BLDL SUPPORT                                   
 * 05/07/06 RPI 311 CORRECT BLDL ENTRY LEN TO EXCLUDE LEN FIELD AND     
 *          CORRECT NAMES TO BE IN ALPHA SEQ ELSE RC=8

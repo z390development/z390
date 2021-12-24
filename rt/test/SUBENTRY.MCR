@@ -16,9 +16,9 @@
 .*
 .* You should have received a copy of the GNU General Public License 
 .* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
 .* Author - Don Higgins                                              *
 .* Date   - 04/12/07                                                 *
-.*********************************************************************
 .* 04/12/07 RPI 590 COPIED FROM FPC SHARE SPLA FILE 178 CONTRIBUTION
 .*          TO SUPPORT MULTIPLE BASES AND RENT OPTIONS
 .* 04/26/07 RPI 601 CHANGE BASE OFFSETS FROM 4095 TO STD 4096        

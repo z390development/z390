@@ -15,8 +15,8 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
 * 06/10/07 RPI 636 TEST R15=0 FOR PERCOLATE IN TESTSTA2
 * 07/18/07 RPI 659 TEST RESTART R15=0 WITH NEW R0=NEW RESTART PSW
 * 06/21/08 RPI 845 change ESTAD to IHAEPIE and remove ESTAPSW ref.                                 

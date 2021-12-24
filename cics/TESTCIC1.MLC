@@ -15,8 +15,9 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
+***********************************************************************
 DFHEISTG DSECT                    DSA STORAGE
 SENDMSG  DS    CL200              MESSAGE BUFFER
 RECAREA  DS    CL80               RECEIVE AREA

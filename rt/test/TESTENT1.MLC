@@ -15,8 +15,8 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
 * 04/21/06 RPI 288 - test ENTRY defined as both CSECT and label
 *********************************************************************
 TESTENT1 SUBENTRY

@@ -15,8 +15,8 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                              *
-*********************************************************************
+***********************************************************************
+* Author - Don Higgins                                                *
 * 06/13/07 RPI 640 TEST QUOTED STRINGS IN EXEC CICS
 * 02/01/08 RPI 805 TEST EXEC CICS COMMENTS WITH LEADING COMMA/PERIOD
 * 06/13/08 RPI 860 ALLOW COMMAS TO SEPARATE OPERANDS AS WELL AS SPACES

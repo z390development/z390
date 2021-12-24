@@ -1,41 +1,41 @@
         MACRO
+.*********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.**********************************************************************
+.* Author - Don Higgins                                               *
+.* Date   - 01/01/07                                                  *
+.*  01/05/07 RPI 524 ADD MSGTIME FOR SOA CLIENT SERVER APPLICATIONS 
+.*  01/06/07 RPI 524 ADD SEND/RECEIVE TCPIO LMSG PARM                     
+.*  01/22/07 RPI 542 CORRECT R1=ADDR FOR GETMAIN                          
+.*  02/21/07 RPI 553 REMOVE LMAX FROM TCPIO OPEN AND USE R5 FOR LMSG      
+.*  02/26/07 RPI 553 ADD CONN= PARM FOR SERVER RESPONSE AND HANDLE
+.*           VARIABLE LENGTH RECEIVE MSGS UP TO LMSG              
+.*  07/27/11 DSH1 REMOVE UNDEFINED &CLIENT FROM WTO, FIX &NS.1 TO &NS,1
+.**********************************************************************
+.* GENERATE AN SOA SERVER TO HANDLE SERVICES DEFINED USING HOST
+.* AND PORT SPECIFIED.ERVICE REQUEST MESSAGE
+.*  2. SOASPUT - PUT SERVICE RESPONSE MESSAGE
+.**********************************************************************
        SOASMGR &SERVER=,     NAME OF SOA SERVER MESSAGE MANAGER        X
                &HOST=,       URL  OF SOA SERVER                        X
                &PORT=,       PORT NUMBER OF SOA SERVER                 X
                &SERVICES=    SERVICE DEFINITION SUBLISTS WITH          X
                              NAME AND PARM LENGTHS (NEG FOR READ ONLY)
-*********************************************************************
-* z390 - Mainframe assembler emulator and run-time engine
-* Copyright (C) 2021 z390 Assembler LLC
-*
-* This file is part of z390.
-*
-* z390 is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-* z390 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License 
-* along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                              *
-* Date   - 01/01/07                                                 *
-**********************************************************************
-*  01/05/07 RPI 524 ADD MSGTIME FOR SOA CLIENT SERVER APPLICATIONS 
-*  01/06/07 RPI 524 ADD SEND/RECEIVE TCPIO LMSG PARM                     
-*  01/22/07 RPI 542 CORRECT R1=ADDR FOR GETMAIN                          
-*  02/21/07 RPI 553 REMOVE LMAX FROM TCPIO OPEN AND USE R5 FOR LMSG      
-*  02/26/07 RPI 553 ADD CONN= PARM FOR SERVER RESPONSE AND HANDLE
-*           VARIABLE LENGTH RECEIVE MSGS UP TO LMSG              
-*  07/27/11 DSH1 REMOVE UNDEFINED &CLIENT FROM WTO, FIX &NS.1 TO &NS,1
-**********************************************************************
-* GENERATE AN SOA SERVER TO HANDLE SERVICES DEFINED USING HOST
-* AND PORT SPECIFIED.ERVICE REQUEST MESSAGE
-*  2. SOASPUT - PUT SERVICE RESPONSE MESSAGE
-**********************************************************************
 &SERVER  SUBENTRY
          WTO   '&SERVER STARTED'
          COPY  ASMMSP

@@ -15,8 +15,8 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
-* Author - Don Higgins                                                *
 ***********************************************************************
+* Author - Don Higgins                                                *
 * 05/08/06 RPI 308 CONVERT DEMOGUI4 TO TESTGUI4 EXEC CICS TN3270      *
 ***********************************************************************
 DFHEISTG DSECT
