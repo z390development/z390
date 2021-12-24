@@ -15,7 +15,7 @@
 .*
 .* You should have received a copy of the GNU General Public License 
 .* along with this program; if not, see https://www.gnu.org/licenses.
-.* This source code is part of z390 zCOBOL/assembler/emulator package*
+.*********************************************************************
 .* Author - Don Higgins                                              *
 .* Date   - 04/07/08                                                 *
 .*********************************************************************

@@ -16,8 +16,6 @@
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
 *********************************************************************
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 * Date   - 2019/10/07
 * Tests for new problem state instructions since z196 in 2011
