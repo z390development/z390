@@ -1,4 +1,4 @@
-*TODO*
+         MACRO
 ***********************************************************************
 * z390 - Mainframe assembler emulator and run-time engine
 * Copyright (C) 2021 z390 Assembler LLC
@@ -19,7 +19,6 @@
 ***********************************************************************
 * 01/07/19 INITIAL CODING BY MELVYN MALTZ
 ***********************************************************************
-         MACRO
          CBMR
 .*
 .* CONTROL BLOCK MANAGEMENT RECORD HEADER
