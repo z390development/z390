@@ -15,6 +15,7 @@
 *
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
+**********************************************************************
         SOAGEN CTYPE=CBL,               GENERATE COBOL STUBS AND CMGR  X
                MAIN=DEMOMAIN,           MAIN CLIENT APPLICATION PGM    X
                CLIENT=DEMOCMGR,         SOA CLIENT MSG MGR NAME        X
