@@ -15,13 +15,14 @@
 .*
 .* You should have received a copy of the GNU General Public License 
 .* along with this program; if not, see https://www.gnu.org/licenses.
-.*
-.* GET DFHRESP - SET &DFHLIT FOR &DFHRESP
-.*
 .********************************************************************
 .* 01/25/12   DSH RPI 1181 PREVENT DUP ALLOC ERROR
 .* 18-02-2017 JH  RPI 1501 error message generated when DFHRESP(...)
 .*                         is used in an ELSE IF clause.
+.********************************************************************
+.*
+.* GET DFHRESP - SET &DFHLIT FOR &DFHRESP
+.*
 .********************************************************************
          AENTRY GET_DFHRESP
          LCLB   &ZC_DFHRESP          RPI 1501
