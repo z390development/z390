@@ -1,0 +1,262 @@
+***********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine             *
+* Copyright (C) 2021 z390 Assembler LLC                               *
+*                                                                     *
+* This file is part of z390.                                          *
+* z390 is free software; you can redistribute it and/or modify        *
+* it under the terms of the GNU General Public License as published   *
+* by the Free Software Foundation; either version 2 of the License,   *
+* or (at your option) any later version.                              *
+*                                                                     *
+* z390 is distributed in the hope that it will be useful,             *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of      *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the       *
+* GNU General Public License for more details.                        *
+*                                                                     *
+* You should have received a copy of the GNU General Public License   *
+* along with this program; if not, see                                *
+* <https://www.gnu.org/licenses/>.                                    *
+***********************************************************************
+*                                                                     *
+* Function: CMDPROC test for Windows or Linux/Mac                     *
+*                                                                     *
+*---------------------------------------------------------------------*
+*                                                                     *
+* Return codes: Value    Meaning                                      *
+*               -----    -------                                      *
+*                 0      Program ended without any errors             *
+*                 4      Command Processor unexpectedly ended; most   *
+*                        likely, the "EOF" message was not found      *
+*                16      Command Processor abnormally ended           *
+*                20      Number of CP read attempts exceeds           *
+*                        maximum value                                *
+*                24      Unable to verify run environment is          *
+*                        Windows or Linux/Mac                         *
+*                                                                     *
+***********************************************************************
+         TITLE 'TESTCMD3 TEST USE OF SVC 34 COMMAND PROCESSOR'
+TESTCMD3 CSECT
+         STM   R14,R12,12(R13)     Save caller's registers
+         LR    R12,R15             R12 = base register
+         USING TESTCMD3,R12        Establish addressability
+         LA    R14,SA              Usable save area
+         ST    R14,8(,R13)         Chain
+         ST    R13,4(,R14)               save areas
+         LR    R13,R14             R13 --> current save area
+*
+         SR    R11,R11             R11 will be the return code
+*
+         BAS   R14,SetupCmd        Set up command -- Windows or Linux
+         LTR   R15,R15             Setup successful?
+         BZ    SetupOK             Yes; continue
+         WTO   'TESTCMD3: Error: cannot verify Windows or Linux/Mac'
+         LA    R11,24              Return code
+         B     Exit                Can't continue; exit
+SetupOK  DS    0H
+         CLI   ENVFlag,ENVWin      Windows environment?
+         BE    CmdWin              Yes
+         WTO   'TESTCMD3 Linux/Mac test of SVC 34 (Command Processor)'
+         B     CmdStart            Start the command
+CmdWin   DS    0H
+         WTO   'TESTCMD3 Windows test of SVC 34 (Command Processor)'
+CmdStart DS    0H
+*
+         CMDPROC START,CMDLOG=NO   Start the CP
+*
+         LA    R1,MsgStart         Message to show
+         BAS   R14,ShowRC          Show return code and message
+*
+         L     R3,TestCmd@         R3 --> the command for the CP
+         CMDPROC WRITE,(3)         Send the command to the CP
+*
+         LA    R1,MsgWrite         Message to show
+         BAS   R14,ShowRC          Show return code and message
+*
+         LA    R4,MAXLPCNT         Stop possible infinite loop
+         LA    R6,1                BXLE index increment
+CmdLoop  DS    0H
+         AHI   R4,-1               Decrement runaway count
+         BZ    Error2              Error if reach zero
+         CMDPROC READ,MSG          Get one response line
+*
+         LA    R1,MsgRead          Message to show
+         BAS   R14,ShowRC          Show return code and message
+*
+         CHI   R15,4               Wait time expired?
+         BE    CmdLoop             Yes: try to read next line
+         CHI   R15,8               Command processor ended?
+         BE    Error1              Yes: error
+         CHI   R15,16              Command processor abnormally ended?
+         BE    Error1              Yes: error
+*
+         WTO   MF=(E,WTOCMD)       Echo response
+*
+         LA    R1,MSG              R1 --> output from CP command
+         LA    R7,MSG+L'MSG-10     R7 --> near end of the output
+Chk4Last DS    0H
+         CLC   =C'/* END',0(R1)    Response contains "EOF" msg?
+         BE    CmdEnd              Yes: then this is last response
+         BXLE  R1,R6,Chk4Last      No: continue looking for "EOF" msg
+         B     CmdLoop             Not last line; Continue reading
+CmdEnd   DS    0H
+         CMDPROC STOP              Stop the CP
+*
+         LA    R1,MsgStop          Message to show
+         BAS   R14,ShowRC          Show return code and message
+*
+         WTO   'TESTCMD3 ending OK'
+         B     Exit                    Exit; R11 already set
+Error1   DS    0H
+         LR    R11,R15                 Save return code
+         WTO   'TESTCMD3 READ error'
+         B     Exit                    Exit
+Error2   DS    0H
+         WTO   'TESTCMD3 command error'
+         LA    R11,20              Error return code
+*NSI     B     Exit                Exit
+Exit     DS    0H
+         LR    R15,R11             Set return code
+         L     R13,4(,R13)         Caller's save area
+         L     R14,12(,R13)        Restore caller's registers
+         LM    R0,R12,20(R13)      ... except R15
+         BR    R14                 Return to caller
+*
+***********************************************************************
+*        Display debug info
+*
+*        R1 --> message
+*        R13 -> usable save area
+*        R14 =  return address
+*        R15 =  return code
+***********************************************************************
+*
+ShowRC   DS    0H
+         BR    R14                 Return to caller
+         STM   R14,R1,12(R13)      Save altered registers
+         MVC   W1Msg,0(R1)         Copy message to WTO
+         UNPK  DW(9),16(5,R13)     Convert RC to printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   W1RC,DW             Copy to WTO
+         LA    R1,WTO1             R1 --> WTO
+         WTO   MF=(E,(1))          Show message and return code
+         LM    R14,R1,12(R13)      Restore altered registers
+         BR    R14                 Return to caller
+*
+***********************************************************************
+*        Set up command and set ENVFlag
+*
+*        R13 -> usable save area
+*        R14 =  return address
+*        R15 =  return code; 0 = setup successful; 4 = setup failed
+*
+***********************************************************************
+*
+SetUpCmd DS    0H
+         STM   R14,R12,12(R13)     Save caller's registers
+*
+*        WARNING: no save area
+*
+         MVI   ENVFlag,ENVUnkn     Unknown environment
+*
+         GETENV COMSPEC            Check for Windows
+         LTR   R15,R15             Found COMSPEC?
+         BNZ   SC1000              No; check for Linux/Mac
+         MVI   ENVFlag,ENVWin      Yes; Indicate Windows
+         LA    R0,TestCmdW         Windows test command
+         ST    R0,TestCmd@         Save the address
+*     LA    R3,63(,R2)
+*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='Windows COMSPEC'
+         B     SC8000              All done; free GETENV storage
+SC1000   DS    0H
+         GETENV SHELL              Check for Linux/Mac
+         LTR   R15,R15             Found SHELL?
+         BNZ   SC2000              No; error
+         MVI   ENVFlag,ENVLinux    Yes; Indicate Linux/Mac
+         LA    R0,TestCmdL         Linux/Mac test command
+         ST    R0,TestCmd@         Save the address
+*     LA    R3,63(,R2)
+*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='Linux/Mac SHELL'
+*NSI     B     SC8000              All done; free GETENV storage
+SC8000   DS    0H
+         LR    R1,R2               R1 -> null-terminated ENV string
+SC8100   DS    0H
+         LA    R2,1(,R2)           R2 -> next byte; at least 1 non-null
+         CLI   0(R2),X'00'         Found null?
+         BNE   SC8100              No; continue search; must be found
+         AHI   R2,1                One byte beyond the null byte
+         SR    R2,R1               Length to free
+         FREEMAIN R,LV=(2),A=(1)   Free the GETENV storage
+         SR    R15,R15             Set return code
+         B     SC9000              Return
+SC2000   DS    0H
+         LA    R15,4               Set return code
+*NSI     B     SC9000              Return
+SC9000   DS    0H
+         L     R14,12(,R13)        Restore caller's registers
+         LM    R0,R12,20(R13)      ... except for R15
+         BR    R14                 Return to caller
+*
+         LTORG ,
+*
+SA       DC    18F'0'              Save area for TESTCMD3
+*
+MAXLPCNT EQU   60                  Maximum loop count
+*
+***********************************************************************
+*        Fields use to query the runtime environment
+***********************************************************************
+*
+ENVFlag  DS    CL1                 Environment flag
+ENVWin   EQU   C'W'                Windows
+ENVLinux EQU   C'L'                Linux/Mac
+ENVUnkn  EQU   C'Z'                Unknown
+*
+COMSPEC  DC    C'COMSPEC',X'00'    Windows environment variable
+*
+*        Sample: COMSPEC=C:\WINDOWS\system32\cmd.exe
+*
+SHELL    DC    C'SHELL',X'00'      Linux/MacOS environment variable
+*
+*        Sample: SHELL=/bin/bash
+*
+***********************************************************************
+*        Test commands; one for Windows, one for Linux/MacOS
+***********************************************************************
+*
+TestCmd@ DC    A(0)                Address of test command to issue
+*
+TestCmdW DC    C'rt\test\bat\TESTCMD3.BAT',X'00'   Windows command
+*
+TestCmdL DC    C'rt/test/bash/testcmd3',X'00'      Linux/Mac command
+*
+***********************************************************************
+*        WTOs
+***********************************************************************
+*
+WTO1     WTO   'After xxxxx; RC=xxxxxxxx',MF=L
+W1Msg    EQU   WTO1+4+6,5,C'C'
+W1RC     EQU   WTO1+4+16,8,C'C'
+*
+MsgStart DC    CL5'START'
+MsgWrite DC    CL5'WRITE'
+MsgRead  DC    CL5'READ'
+MsgStop  DC    CL5'STOP'
+*
+WTOCMD   DC    AL2(WTOEND-*,0)
+         DC    C'MSG FROM CMD='
+MSG      DC    CL80' '
+WTOEND   EQU   *
+*
+***********************************************************************
+*        Storage used to convert to printable hex
+***********************************************************************
+*
+DW       DS    D,XL1               Doubleword work plus pad
+FW       DS    F,XL1               Fullword work plus pad
+*
+H2P      EQU   *-240               Hex to printable hex
+         DC    C'0123456789ABCDEF'
+*
+         EQUREGS
+*
+         END
