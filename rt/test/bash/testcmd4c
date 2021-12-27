@@ -1,0 +1,27 @@
+#!/bin/bash
+#######################################################################
+# z390 - Mainframe assembler emulator and run-time engine
+# Copyright (C) 2021 z390 Assembler LLC
+#
+# This file is part of z390.
+# z390 is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# z390 is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
+#######################################################################
+echo "echo testcmd4c: executed by TESTCMD4.MLC via SVC 34"
+echo "echo testcmd4c says hello"
+echo "echo testcmd4c says hello again"
+echo "echo testcmd4c says hello for the last time"
+echo "echo testcmd4c 1 of 3 extra hellos"
+echo "echo testcmd4c  2 of 3 extra hellos"
+echo "echo testcmd4c   3 of 3 extra hellos"
+echo "REM /* END testcmd4c command executed by TESTCMD4.MLC"

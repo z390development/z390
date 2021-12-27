@@ -217,6 +217,7 @@ public  class  sz390 implements Runnable {
 	*            https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.1.0/com.ibm.zos.v2r1.idad500/dcbem.htm
     * 2021-09-17 DSH issue #321 fix qsam get vt to correctly set LBI length in area
     * 2021-09-29 DSH git issue#245 fix RPI 1598 to only use zvsam2 if opt_zvsam = 2
+    * 2021-12-27 Issue #337 remove Perl reference from CMDPROC (SVC 34) processing
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -4040,14 +4041,8 @@ private int cmd_startup(int cmd_id){
 	 int rc;
 	 String[] cmd_parms;
 	 try {
-       	if (tz390.z390_os_type == tz390.z390_os_linux){
-           	cmd_parms = new String[2];
-       		cmd_parms[0] = tz390.z390_command;
-       		cmd_parms[1] = tz390.jar_file_dir() + "/cmd.pl"; // RPI 500
-       	} else {
-       		cmd_parms = new String[1];
-       		cmd_parms[0] = tz390.z390_command;
-       	}
+       	cmd_parms = new String[1];
+       	cmd_parms[0] = tz390.z390_command;
        	rc = cmd_proc_start(cmd_id,cmd_parms);
         if  (rc != 0){
         	log_error(67,"CMD task startup error rc = " + rc);

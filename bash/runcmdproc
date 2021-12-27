@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# runcmdproc: run programs that test CMDPROC (SVC 34)
+
+# debug flag; 0=no debug, 1=debug
+debug=0
+
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script
+cd ..
+
+# Test one Command Processor
+
+bash/asmlg rt/test/TESTCMD3
+rc=$?
+if [ $debug -eq 1 ]; then echo "TESTCMD3: rc=$rc"; fi
+if [ "$rc" -ne "0" ]; then echo "Error in TESTCMD3"; fi
+
+# Test two command processors (3 tests)
+# 1. Both have same number of lines of output
+# 2. Second CP has more lines of output
+# 3. First CP has more lines of output
+
+bash/asmlg rt/test/TESTCMD4 'PARM(1)'
+rc=$?
+if [ $debug -eq 1 ]; then echo "TESTCMD4 PARM(1): rc=$rc"; fi
+if [ "$rc" -ne "0" ]; then echo "Error in TESTCMD4 PARM(1)"; fi
+
+bash/asmlg rt/test/TESTCMD4 'PARM(2)'
+rc=$?
+if [ $debug -eq 1 ]; then echo "TESTCMD4 PARM(2): rc=$rc"; fi
+if [ "$rc" -ne "0" ]; then echo "Error in TESTCMD4 PARM(2)"; fi
+
+bash/asmlg rt/test/TESTCMD4 'PARM(3)'
+rc=$?
+if [ $debug -eq 1 ]; then echo "TESTCMD4 PARM(3): rc=$rc"; fi
+if [ "$rc" -ne "0" ]; then echo "Error in TESTCMD4 PARM(3)"; fi
+
+echo "Verify CMDPROC tests"

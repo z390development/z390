@@ -1,0 +1,448 @@
+***********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine             *
+* Copyright (C) 2021 z390 Assembler LLC                               *
+*                                                                     *
+* This file is part of z390.                                          *
+* z390 is free software; you can redistribute it and/or modify        *
+* it under the terms of the GNU General Public License as published   *
+* by the Free Software Foundation; either version 2 of the License,   *
+* or (at your option) any later version.                              *
+*                                                                     *
+* z390 is distributed in the hope that it will be useful,             *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of      *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the       *
+* GNU General Public License for more details.                        *
+*                                                                     *
+* You should have received a copy of the GNU General Public License   *
+* along with this program; if not, see                                *
+* <https://www.gnu.org/licenses/>.                                    *
+***********************************************************************
+*                                                                     *
+* Function: CMDPROC test for Windows or Linux/Mac                     *
+*                                                                     *
+*           Tests two Command Processors running at the same time     *
+*                                                                     *
+*---------------------------------------------------------------------*
+*                                                                     *
+* Input: The PARM=value is a test number; valid values are 1, 2, or 3 *
+*                                                                     *
+*        Test    What is tested                                       *
+*        ----    -----------------------------------------------------*
+*         1      Both CPs produce the same number of lines of output  *
+*         2      Second CP produces more lines than first CP          *
+*         3      First CP produces more lines than second CP          *
+*                                                                     *
+*---------------------------------------------------------------------*
+*                                                                     *
+* Return codes: Value    Meaning                                      *
+*               -----    -------                                      *
+*                 0      Program ended without any errors             *
+*                 4      A Command Processor unexpectedly ended; most *
+*                        likely, the "EOF" message was not found      *    
+*                16      A Command Processor abnormally ended         *
+*                20      Number of CP read attempts exceeds           *
+*                        maximum value                                *
+*                24      Unable to verify run environment is          *
+*                        Windows or Linux/Mac                         *
+*                28      Invalid/missing PARM=value                   *
+*                                                                     *
+***********************************************************************
+         TITLE 'TESTCMD4 TEST USE OF SVC 34 COMMAND PROCESSOR'
+TESTCMD4 CSECT
+         STM   R14,R12,12(R13)     Save caller's registers
+         LR    R12,R15             R12 = base register
+         USING TESTCMD4,R12        Establish addressability
+         LA    R14,SA              Usable save area
+         ST    R14,8(,R13)         Chain
+         ST    R13,4(,R14)               save areas
+         LR    R13,R14             R13 --> current save area
+*
+         SR    R11,R11             R11 will be the return code
+*
+         BAS   R14,GetParm         Get and verify PARM=value
+         LTR   R15,R15             Valid value?
+         BZ    ParmOK              Yes; continue
+         WTO   'TESTCMD4: Error: invalid PARM value; must be 1,2 or 3'
+         LA    R11,28              Return code
+         B     Exit                Can't continue; exit
+ParmOK   DS    0H
+         BAS   R14,SetupCmd        Set up command -- Windows or Linux
+         LTR   R15,R15             Setup successful?
+         BZ    SetupOK             Yes; continue
+         WTO   'TESTCMD4: Error: cannot verify Windows or Linux/Mac'
+         LA    R11,24              Return code
+         B     Exit                Can't continue; exit
+SetupOK  DS    0H
+         CLI   ENVFlag,ENVWin      Windows environment?
+         BE    CmdWin              Yes
+         WTO   'TESTCMD4 Linux/Mac test of SVC 34 CMDPROC multitask supp
+               port'
+         B     SetupEnd            Begin testing
+CmdWin   DS    0H
+         WTO   'TESTCMD4 Windows test of SVC 34 CMDPROC multitask suppor
+               rt'
+SetupEnd DS    0H
+*
+CmdStart DS    0H
+         MVI   EOFFlag,X'00'           Initialize EOF flags
+*
+*        Start first Command Processor
+*
+         CMDPROC START,CMDLOG=NO,ID=0  Start first CP
+*
+         LA    R0,CPID1                CP ID
+         LA    R1,MsgStart             Message to show
+         BAS   R14,ShowRC              Show return code and message
+*
+         L     R1,TstCmd@1             R1 --> first command
+         CMDPROC WRITE,(1),ID=0        Command for first CP
+*
+         LA    R0,CPID1                CP ID
+         LA    R1,MsgWrite             Message to show
+         BAS   R14,ShowRC              Show return code and message
+*
+*        Start second Command Processor
+*
+         CMDPROC START,CMDLOG=NO,ID=1  Start second CP
+*
+         LA    R0,CPID2                CP ID
+         LA    R1,MsgStart             Message to show
+         BAS   R14,ShowRC              Show return code and message
+*
+         L     R1,TstCmd@2             R1 --> second command
+         CMDPROC WRITE,(1),ID=1        Command for second CP
+*
+         LA    R0,CPID2                CP ID
+         LA    R1,MsgWrite             Message to show
+         BAS   R14,ShowRC              Show return code and message
+*
+         LA    R10,MAXLPCNT            Stop infinite loop
+         LA    R6,1                    BXLE index increment
+CmdLoop  DS    0H
+         TM    EOFFlag,EOF1            Has first CP already ended?
+         BO    Done1                   Yes; skip reading from it
+CmdRead1 DS    0H
+         AHI   R10,-1                  Decrement runaway count
+         BZ    Error1a                 Error if reach zero
+         CMDPROC READ,MSG,ID=0         Get one response line
+*
+         LA    R0,CPID1                CP ID
+         LA    R1,MsgRead              Message to show
+         BAS   R14,ShowRC              Show return code and message
+*
+         CHI   R15,4                   Wait time expired?
+         BE    CmdRead1                Yes: try to read next line
+         CHI   R15,8                   CP ended?
+         BE    Error1                  Yes: end loop
+         CHI   R15,16                  CP abnormally ended?
+         BE    Error1                  Yes: end loop
+*
+         MVI   CPID,CPID1              Set CP ID in WTO
+         WTO   MF=(E,WTOCMD)           Echo response
+*
+         LA    R1,MSG                  R1 --> output from CP command
+         LA    R7,MSG+L'MSG-10         R7 --> near end of the output
+ChkLast1 DS    0H
+         CLC   =C'/* END',0(R1)        Response contains "last" msg?
+         BNE   Next1                   No: continue looking
+         OI    EOFFlag,EOF1            Yes: set EOF for first CP
+         B     Done1                   Done with first CP
+Next1    DS    0H
+         BXLE  R1,R6,ChkLast1          Continue looking for "EOF" msg
+Done1    DS    0H
+         TM    EOFFlag,EOF2            Has second CP already ended?
+         BO    Done2                   Yes: skip reading from it
+CmdRead2 DS    0H
+         AHI   R10,-1                  Decrement runaway count
+         BZ    Error2a                 Error if reach zero
+         CMDPROC READ,MSG,ID=1         Get one response line
+*
+         LA    R0,CPID2                CP ID
+         LA    R1,MsgRead              Message to show
+         BAS   R14,ShowRC              Show return code and message
+*
+         CHI   R15,4                   Wait time expired?
+         BE    CmdRead2                Yes: try to read next line
+         CHI   R15,8                   CP ended?
+         BE    Error2                  Yes: end loop
+         CHI   R15,16                  CP abnormally ended?
+         BE    Error2                  Yes: end loop
+*
+         MVI   CPID,CPID2              Set CP ID in WTO
+         WTO   MF=(E,WTOCMD)           Echo response
+*
+         LA    R1,MSG                  R1 --> output from CP command
+         LA    R7,MSG+L'MSG-10         R7 --> near end of the output
+ChkLast2 DS    0H
+         CLC   =C'/* END',0(R1)        Response contains "last" msg?
+         BNE   Next2                   No: continue looking
+         OI    EOFFlag,EOF2            Yes: set EOF for first CP
+         B     Done2                   Done with first CP
+Next2    DS    0H
+         BXLE  R1,R6,ChkLast2          Continue looking for "EOF" msg
+Done2    DS    0H
+         TM    EOFFlag,EOF1+EOF2       Have both CPs ended?
+         BNO   CmdLoop                 No; continue reading
+CmdEnd   DS    0H
+*
+         CMDPROC STOP,ID=0             Stop first CP
+*
+         LA    R0,CPID1                CP ID
+         LA    R1,MsgStop              Message to show
+         BAS   R14,ShowRC              Show return code and message
+*
+         CMDPROC STOP,ID=1             Stop second CP
+*
+         LA    R0,CPID2                CP ID
+         LA    R1,MsgStop              Message to show
+         BAS   R14,ShowRC              Show return code and message
+*         
+         WTO   'TESTCMD4 ending OK'
+         B     Exit                    Exit; R11 already set
+Error1   DS    0H
+         LR    R11,R15                 Save return code
+         WTO   'TESTCMD4 CMD1 READ error'
+         B     Exit                    Exit
+Error1a  DS    0H
+         WTO   'TESTCMD4 CMD1 command error'
+         LA    R11,20                  Return code
+         B     Exit       
+Error2   DS    0H
+         LR    R11,R15                 Save return code
+         WTO   'TESTCMD4 CMD2 READ error'
+         B     Exit
+Error2a  DS    0H
+         WTO   'TESTCMD4 CMD2 command error'
+         LA    R11,20                  Return code
+*NSI     B     Exit                    Exit
+Exit     DS    0H
+         LR    R15,R11                 Set return code
+         L     R13,4(,R13)             Caller's save area
+         L     R14,12(,R13)            Restore caller's registers
+         LM    R0,R12,20(R13)          ... except R15
+         BR    R14                     Return to caller
+*
+***********************************************************************
+*        Display debug info
+*
+*        R0  =  Command Processor ID
+*        R1 --> message
+*        R13 -> usable save area
+*        R14 =  return address
+*        R15 =  return code
+***********************************************************************
+*
+ShowRC   DS    0H
+         BR    R14                     Return to caller
+         STM   R14,R1,12(R13)          Save altered registers
+         STC   R0,W1CPID               Set CP ID in WTO
+         MVC   W1Msg,0(R1)             Copy message to WTO
+         ST    R15,FW                  Convert RC
+         UNPK  DW(9),16(5,R13)         Convert RC to printable hex
+         TR    DW,H2P                  Finish conversion
+         MVC   W1RC,DW                 Copy to WTO
+         LA    R1,WTO1                 R1 --> WTO
+         WTO   MF=(E,(1))              Show message and return code
+         LM    R14,R1,12(R13)          Restore altered registers
+         BR    R14                     Return to caller
+*
+***********************************************************************
+*        Set up the two commands and set ENVFlag
+*
+*        ParmVal already set to valid Parm=value in binary
+*
+*        R13 -> usable save area
+*        R14 =  return address
+*        R15 =  return code; 0 = setup successful; 4 = setup failed
+*
+***********************************************************************
+*
+SetUpCmd DS    0H
+         STM   R14,R12,12(R13)     Save caller's registers
+*
+*        WARNING: no save area
+*
+         MVI   ENVFlag,ENVUnkn     Unknown environment
+*
+         GETENV COMSPEC            Check for Windows
+         LTR   R15,R15             Found COMSPEC?
+         BNZ   SC1000              No; check for Linux/Mac
+         MVI   ENVFlag,ENVWin      Yes; Indicate Windows
+         L     R3,ParmVal          ParmVal is the test number
+         SLL   R3,3                Convert to offset relative to 1
+         LA    R1,TstW-8(R3)       R1 -> A(1st test cmd, 2nd test cmd)
+         LM    R0,R1,0(R1)         R1 -> 1st tst cmd, R1 -> 2nd tst cmd
+         ST    R0,TstCmd@1         Save Windows 1st test cmd address
+         ST    R1,TstCmd@2         Save Windows 2nd test cmd address
+*     LA    R3,63(,R2)
+*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='Windows COMSPEC'
+         B     SC8000              All done; free GETENV storage
+SC1000   DS    0H
+         GETENV SHELL              Check for Linux/Mac
+         LTR   R15,R15             Found SHELL?
+         BNZ   SC2000              No; error
+         MVI   ENVFlag,ENVLinux    Yes; Indicate Linux/Mac
+         L     R3,ParmVal          ParmVal is the test number
+         SLL   R3,3                Convert to offset relative to 1
+         LA    R1,TstL-8(R3)       R1 -> A(1st test cmd, 2nd test cmd)
+         LM    R0,R1,0(R1)         R1 -> 1st tst cmd, R1 -> 2nd tst cmd
+         ST    R0,TstCmd@1         Save Linux/Mac 1st test cmd address
+         ST    R1,TstCmd@2         Save Linux/Mac 2nd test cmd address
+*     LA    R3,63(,R2)
+*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='Linux/Mac SHELL'
+*NSI     B     SC8000              All done; free GETENV storage
+SC8000   DS    0H
+         LR    R1,R2               R1 -> null-terminated ENV string
+SC8100   DS    0H
+         LA    R2,1(,R2)           R2 -> next byte; at least 1 non-null
+         CLI   0(R2),X'00'         Found null?
+         BNE   SC8100              No; continue search; must be found
+         AHI   R2,1                One byte beyond the null byte
+         SR    R2,R1               Length to free
+         FREEMAIN R,LV=(2),A=(1)   Free the GETENV storage
+         SR    R15,R15             Set return code
+         B     SC9000              Return
+SC2000   DS    0H
+         LA    R15,4               Set return code
+*NSI     B     SC9000              Return
+SC9000   DS    0H
+         L     R14,12(,R13)        Restore caller's registers
+         LM    R0,R12,20(R13)      ... except for R15
+         BR    R14                 Return to caller
+*
+***********************************************************************
+*        Get and validate value from PARM=value
+*
+*        R1  -> word -> halfword || value
+*        R13 -> usable save area
+*        R14 =  return address
+*        R15 =  return code; 0 = value valid; 4 = value invalid/missing
+*
+***********************************************************************
+*
+GetParm  DS    0H
+         STM   R14,R12,12(R13)     Save caller's registers
+*
+*        WARNING: no save area
+*
+         L     R2,0(,R1)           R2 --> halfword length
+         LH    R3,0(,R2)           R3 = length of value
+         LTR   R3,R3               Parm supplied?
+         BNP   GP1000              No; parm is invalid
+         CHI   R3,3                At most 3?
+         BH    GP1000              No; parm is invalid
+         SR    R3,R3               Get the
+         IC    R3,2(,R2)           ... parm value
+         CHI   R3,X'F1'            Smaller than C'1'?
+         BL    GP1000              Yes; invalid
+         CHI   R3,X'F3'            Larger than C'3'?
+         BH    GP1000              Yes; invalid
+         NILL  R3,X'000F'          Valid; remove high nibble
+         ST    R3,ParmVal          Save the value
+         SR    R15,R15             Set return code
+         B     GP9000              Return
+GP1000   DS    0H
+         LA    R15,4               Set return code
+*NSI     B     GP9000              Return
+GP9000   DS    0H
+         L     R14,12(,R13)        Restore caller's registers
+         LM    R0,R12,20(R13)      ... except for R15
+         BR    R14                 Return to caller
+*
+         LTORG ,
+*
+SA       DC    18F'0'              Current save area
+*
+MAXLPCNT EQU   60                  Maximum loop count
+*
+***********************************************************************
+*        PARM=value converted to binary
+***********************************************************************
+*
+ParmVal  DS    F                   Value is the test number (1,2 or 3)
+*
+***********************************************************************
+*        Fields use to query the runtime environment
+***********************************************************************
+*
+ENVFlag  DS    CL1                 Environment flag
+ENVWin   EQU   C'W'                Windows
+ENVLinux EQU   C'L'                Linux/Mac
+ENVUnkn  EQU   C'Z'                Unknown
+*
+COMSPEC  DC    C'COMSPEC',X'00'    Windows environment variable
+*
+*        Sample: COMSPEC=C:\WINDOWS\system32\cmd.exe
+*
+SHELL    DC    C'SHELL',X'00'      Linux/MacOS environment variable
+*
+*        Sample: SHELL=/bin/bash
+*
+***********************************************************************
+*        Test commands: three for Windows, three for Linux/MacOS
+***********************************************************************
+TstCmd@1 DC    A(0)                Address of first command to issue
+TstCmd@2 DC    A(0)                Address of second command to issue
+*
+TstW     DS    0D                              Windows tests
+         DC    A(TstCmdW1,TstCmdW2)            Test 1
+         DC    A(TstCmdW1,TstCmdW3)            Test 2
+         DC    A(TstCmdW3,TstCmdW2)            Test 3
+*
+TstCmdW1 DC    C'"rt\test\bat\TESTCMD4A.BAT"'  Windows command 1
+TstCmdW2 DC    C'"rt\test\bat\TESTCMD4B.BAT"'  Windows command 2
+TstCmdW3 DC    C'"rt\test\bat\TESTCMD4C.BAT"'  Windows command 3
+*
+TstL     DS    0D                              Linux/Mac tests
+         DC    A(TstCmdL1,TstCmdL2)            Test 1
+         DC    A(TstCmdL1,TstCmdL3)            Test 2
+         DC    A(TstCmdL3,TstCmdL2)            Test 3
+*
+TstCmdL1 DC    C'"rt/test/bash/testcmd4a"'     Linux/Mac command 1
+TstCmdL2 DC    C'"rt/test/bash/testcmd4b"'     Linux/Mac command 2
+TstCmdL3 DC    C'"rt/test/bash/testcmd4c"'     Linux/Mac command 3
+*
+***********************************************************************
+*        WTOs
+***********************************************************************
+*
+WTO1     WTO   'CMDx after xxxxx; RC=xxxxxxxx',MF=L
+W1CPID   EQU   WTO1+4+3,1,C'C'
+W1Msg    EQU   WTO1+4+11,5,C'C'
+W1RC     EQU   WTO1+4+21,8,C'C'
+*
+CPID1    EQU   C'0'                    First CP ID
+CPID2    EQU   C'1'                    Second CP ID
+*
+MsgStart DC    CL5'START'
+MsgWrite DC    CL5'WRITE'
+MsgRead  DC    CL5'READ'
+MsgStop  DC    CL5'STOP'
+*
+WTOCMD   DC    AL2(WTOEND-*,0)
+         DC    C'MSG FROM CMDx='
+CPID     EQU   WTOCMD+4+12,1,C'C'
+MSG      DC    CL80' '
+WTOEND   EQU   *
+*
+***********************************************************************
+*        End of file flag for the two Command Processors
+***********************************************************************
+*
+EOFFlag  DC    X'00'               EOF flags
+EOF1     EQU   B'10000000'         EOF for CP 1
+EOF2     EQU   B'01000000'         EOF for CP 2
+*
+***********************************************************************
+*        Storage used to convert to printable hex
+***********************************************************************
+*
+DW       DS    D,XL1               Doubleword work plus pad
+FW       DS    F,XL1               Fullword work plus pad
+*
+H2P      EQU   *-240               Hex to printable hex
+         DC    C'0123456789ABCDEF'
+*
+         EQUREGS
+*
+         END
