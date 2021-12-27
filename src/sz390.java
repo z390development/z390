@@ -4024,35 +4024,35 @@ private void svc_cmd(){
 	}
 }
 private int cmd_startup(int cmd_id){
-	/*
-	 * start Windows command processer with 
-	 * synchronized buffered output.  
+    /*
+     * start Windows command processer with 
+     * synchronized buffered output.  
      * Notes:
      *   1.  Start process cmd_id
      *   2.  Send input commands via cmd_input(id,msg)
      *   3.  Retrieve output from cmd_output_queue
      *   4.  Cancel via cmd_cancel(cur_id);
-	 */
-	 if (pz390.reg.get(pz390.r0+1) == 1){ // RPI 731 default is copy output to log
-		 cmd_proc_cmdlog[cmd_id] = true;
-	 } else {
-		 cmd_proc_cmdlog[cmd_id] = false;
-	 }
-	 int rc;
-	 String[] cmd_parms;
-	 try {
+     */
+    if (pz390.reg.get(pz390.r0+1) == 1){ // RPI 731 default is copy output to log
+        cmd_proc_cmdlog[cmd_id] = true;
+    } else {
+        cmd_proc_cmdlog[cmd_id] = false;
+    }
+    int rc;
+    String[] cmd_parms;
+    try {
        	cmd_parms = new String[1];
        	cmd_parms[0] = tz390.z390_command;
        	rc = cmd_proc_start(cmd_id,cmd_parms);
         if  (rc != 0){
-        	log_error(67,"CMD task startup error rc = " + rc);
- 	 	    cmd_cancel(cmd_id);
-	   	}
+            log_error(67,"CMD task startup error rc = " + rc);
+            cmd_cancel(cmd_id);
+        }
         return rc;
-	 } catch (Exception e) {
-	    log_error(66,"execution startup error - " + e.toString());
+     } catch (Exception e) {
+        log_error(66,"execution startup error - " + e.toString());
         cmd_cancel(cmd_id);
-	   	return 16;
+        return 16;
  	 }
 }
 public int cmd_proc_start(int cmd_id,String[] exec_cmd){
