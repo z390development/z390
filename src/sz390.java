@@ -4049,11 +4049,11 @@ private int cmd_startup(int cmd_id){
             cmd_cancel(cmd_id);
         }
         return rc;
-     } catch (Exception e) {
+    } catch (Exception e) {
         log_error(66,"execution startup error - " + e.toString());
         cmd_cancel(cmd_id);
         return 16;
- 	 }
+    }
 }
 public int cmd_proc_start(int cmd_id,String[] exec_cmd){
     /*
