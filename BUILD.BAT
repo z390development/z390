@@ -16,6 +16,7 @@ call rt\bat\runrtbsam || goto error
 call rt\bat\runsort || goto error
 call rt\bat\runzpar || goto error
 call bat\runassist || goto error
+call bat\runcmdproc || goto error
 call bat\runvsedemos || goto error
 
 goto:eof

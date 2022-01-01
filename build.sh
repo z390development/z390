@@ -19,6 +19,7 @@ bash/runrtqsam "TIME(30)"
 bash/runsort
 bash/runzpar
 bash/runassist
+bash/runcmdproc
 bash/runvsedemos
 
 bash/blddist
