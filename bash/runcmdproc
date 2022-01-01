@@ -32,7 +32,10 @@ cd ..
 bash/asmlg rt/test/TESTCMD3
 rc=$?
 if [ $debug -eq 1 ]; then echo "TESTCMD3: rc=$rc"; fi
-if [ "$rc" -ne "0" ]; then echo "Error in TESTCMD3"; fi
+if [ "$rc" -ne "0" ]; then
+    echo "Error in TESTCMD3 rc=$rc - exiting"
+    exit $rc
+fi
 
 # Test two command processors (3 tests)
 # 1. Both have same number of lines of output
@@ -42,16 +45,25 @@ if [ "$rc" -ne "0" ]; then echo "Error in TESTCMD3"; fi
 bash/asmlg rt/test/TESTCMD4 'PARM(1)'
 rc=$?
 if [ $debug -eq 1 ]; then echo "TESTCMD4 PARM(1): rc=$rc"; fi
-if [ "$rc" -ne "0" ]; then echo "Error in TESTCMD4 PARM(1)"; fi
+if [ "$rc" -ne "0" ]; then
+    echo "Error in TESTCMD4 PARM(1) rc=$rc - exiting"
+    exit $rc
+fi
 
 bash/asmlg rt/test/TESTCMD4 'PARM(2)'
 rc=$?
 if [ $debug -eq 1 ]; then echo "TESTCMD4 PARM(2): rc=$rc"; fi
-if [ "$rc" -ne "0" ]; then echo "Error in TESTCMD4 PARM(2)"; fi
+if [ "$rc" -ne "0" ]; then
+    echo "Error in TESTCMD4 PARM(2) rc=$rc - exiting"
+    exit $rc
+fi
 
 bash/asmlg rt/test/TESTCMD4 'PARM(3)'
 rc=$?
 if [ $debug -eq 1 ]; then echo "TESTCMD4 PARM(3): rc=$rc"; fi
-if [ "$rc" -ne "0" ]; then echo "Error in TESTCMD4 PARM(3)"; fi
+if [ "$rc" -ne "0" ]; then
+    echo "Error in TESTCMD4 PARM(3) rc=$rc - exiting"
+    exit $rc
+fi
 
 echo "Verify CMDPROC tests"
