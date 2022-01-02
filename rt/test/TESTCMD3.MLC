@@ -46,13 +46,15 @@ TESTCMD3 CSECT
 *
          SR    R11,R11             R11 will be the return code
 *
-         BAS   R14,SetupCmd        Set up command -- Windows or Linux
-         LTR   R15,R15             Setup successful?
-         BZ    SetupOK             Yes; continue
+         BAS   R14,GetEnv          Get runtime environment
+         LTR   R15,R15             Windows or Linux/Mac found?
+         BZ    GetEnvOK            Yes; continue
          WTO   'TESTCMD3: Error: cannot verify Windows or Linux/Mac'
          LA    R11,24              Return code
          B     Exit                Can't continue; exit
-SetupOK  DS    0H
+GetEnvOK DS    0H
+         BAS   R14,SetCmd          Set appropriate command to run
+*
          CLI   ENVFlag,ENVWin      Windows environment?
          BE    CmdWin              Yes
          WTO   'TESTCMD3 Linux/Mac test of SVC 34 (Command Processor)'
@@ -143,15 +145,48 @@ ShowRC   DS    0H
          BR    R14                 Return to caller
 *
 ***********************************************************************
-*        Set up command and set ENVFlag
+*        Set command to run -- Windows or Linux
+*
+*        ENVFlag has been set to Windows or Linux
 *
 *        R13 -> usable save area
 *        R14 =  return address
-*        R15 =  return code; 0 = setup successful; 4 = setup failed
+*        R15 =  return code; always 0
 *
 ***********************************************************************
 *
-SetUpCmd DS    0H
+SetCmd   DS    0H
+         STM   R14,R12,12(R13)     Save caller's registers
+*
+*        WARNING: no save area
+*
+         CLI   ENVFlag,ENVWin      Windows environment?
+         BE    SCWin               Yes; set Windows command
+*                                  No; must be Linux/Mac
+         LA    R0,TestCmdL         Linux/Mac test command
+         ST    R0,TestCmd@         Save the address
+         B     SCExit              All done
+SCWin    DS    0H
+         LA    R0,TestCmdW         Windows test command
+         ST    R0,TestCmd@         Save the address
+*NSI     B     SCExit              All done
+SCExit   DS    0H
+         SR    R15,R15             Set return code; always zero
+*
+         L     R14,12(,R13)        Restore caller's registers
+         LM    R0,R12,20(R13)      ... except for R15
+         BR    R14                 Return to caller
+*
+***********************************************************************
+*        Get runtime environment (set ENVFlag)
+*
+*        R13 -> usable save area
+*        R14 =  return address
+*        R15 =  return code; 0 = env found; 4 = unable to find env
+*
+***********************************************************************
+*
+GetEnv   DS    0H
          STM   R14,R12,12(R13)     Save caller's registers
 *
 *        WARNING: no save area
@@ -160,38 +195,46 @@ SetUpCmd DS    0H
 *
          GETENV COMSPEC            Check for Windows
          LTR   R15,R15             Found COMSPEC?
-         BNZ   SC1000              No; check for Linux/Mac
+         BNZ   GE1000              No; check for Linux/Mac
          MVI   ENVFlag,ENVWin      Yes; Indicate Windows
-         LA    R0,TestCmdW         Windows test command
-         ST    R0,TestCmd@         Save the address
 *     LA    R3,63(,R2)
 *     SNAP STORAGE=((2),(3)),PDATA=,TEXT='Windows COMSPEC'
-         B     SC8000              All done; free GETENV storage
-SC1000   DS    0H
+         B     GE7000              All done; free GETENV storage
+GE1000   DS    0H
+***********************************************************************
+*        SHELL was not found in Github build environment (Linux)
+*        so the build failed. For now, assume environment is
+*        Linux/Mac if not Windows.
+***********************************************************************
+         MVI   ENVFlag,ENVLinux    Indicate Linux/Mac
+         SR    R15,R15             Set return code
+         B     GE9000              Done; no GETENV storage to free
+*
+         AGO   .skplin             Skip over the Linux check
          GETENV SHELL              Check for Linux/Mac
          LTR   R15,R15             Found SHELL?
-         BNZ   SC2000              No; error
+         BNZ   GE8000              No; error
          MVI   ENVFlag,ENVLinux    Yes; Indicate Linux/Mac
-         LA    R0,TestCmdL         Linux/Mac test command
-         ST    R0,TestCmd@         Save the address
 *     LA    R3,63(,R2)
 *     SNAP STORAGE=((2),(3)),PDATA=,TEXT='Linux/Mac SHELL'
-*NSI     B     SC8000              All done; free GETENV storage
-SC8000   DS    0H
+*NSI     B     GE7000              All done; free GETENV storage
+.skplin  ANOP
+*
+GE7000   DS    0H
          LR    R1,R2               R1 -> null-terminated ENV string
-SC8100   DS    0H
+GE7100   DS    0H
          LA    R2,1(,R2)           R2 -> next byte; at least 1 non-null
          CLI   0(R2),X'00'         Found null?
-         BNE   SC8100              No; continue search; must be found
+         BNE   GE7100              No; continue search; must be found
          AHI   R2,1                One byte beyond the null byte
          SR    R2,R1               Length to free
          FREEMAIN R,LV=(2),A=(1)   Free the GETENV storage
          SR    R15,R15             Set return code
-         B     SC9000              Return
-SC2000   DS    0H
+         B     GE9000              Return
+GE8000   DS    0H
          LA    R15,4               Set return code
-*NSI     B     SC9000              Return
-SC9000   DS    0H
+*NSI     B     GE9000              Return
+GE9000   DS    0H
          L     R14,12(,R13)        Restore caller's registers
          LM    R0,R12,20(R13)      ... except for R15
          BR    R14                 Return to caller
