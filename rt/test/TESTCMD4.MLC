@@ -73,6 +73,18 @@ ParmOK   DS    0H
          LA    R11,24              Return code
          B     Exit                Can't continue; exit
 GetEnvOK DS    0H
+***********************************************************************
+*        Begin jjg debug
+***********************************************************************
+         LR    R4,R1               Save R1
+         LR    R2,R12              Begin TESTCMD4
+         LA    R3,H2P+256          Past end of TESTCMD4
+         BASR  R5,0                Check AMODE
+         SNAP STORAGE=((2),(3)),PDATA=(GPR),TEXT='TESTCMD4 B4 SetCmd'
+         LR    R1,R4               Restore R1
+***********************************************************************
+*        End   jjg debug
+***********************************************************************
          BAS   R14,SetCmd          Set appropriate commands to run
 *
          CLI   ENVFlag,ENVWin      Windows environment?
