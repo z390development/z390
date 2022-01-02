@@ -13,7 +13,10 @@ export XPRNT=assist/demo/DEMOAST1.XPR
 bash/asmlg assist/demo/DEMOAST1 ASSIST TRACEALL
 rc=$?
 if [ $debug -eq 1 ]; then echo "DEMOAST1: rc=$rc"; fi
-if [ "$rc" -ne "0" ]; then echo "Error in DEMOAST1"; fi
+if [ "$rc" -ne "0" ]; then
+    echo "Error in DEMOAST1 rc=$rc - exiting"
+    exit $rc
+fi
 
 export XREAD=assist/test/TESTAST1.XRD
 export XPRNT=assist/test/TESTAST1.XPR
@@ -23,18 +26,27 @@ export XPUT=assist/test/TESTAST1.XPT
 bash/asmlg assist/test/TESTAST1 ASSIST TRACEALL
 rc=$?
 if [ $debug -eq 1 ]; then echo "TESTAST1: rc=$rc"; fi
-if [ "$rc" -ne "0" ]; then echo "Error in TESTAST1"; fi
+if [ "$rc" -ne "0" ]; then
+    echo "Error in TESTAST1 rc=$rc - exiting"
+    exit $rc
+fi
 
 export XPRNT=assist/test/TSTXDECI.XPR
 bash/asmlg assist/test/TSTXDECI ASSIST 'PARM(v)'
 rc=$?
 if [ $debug -eq 1 ]; then echo "TSTXDECI: rc=$rc"; fi
-if [ "$rc" -ne "0" ]; then echo "Error in TSTXDECI"; fi
+if [ "$rc" -ne "0" ]; then
+    echo "Error in TSTXDECI rc=$rc - exiting"
+    exit $rc
+fi
 
 export XPRNT=assist/test/TSTXHEXI.XPR
 bash/asmlg assist/test/TSTXHEXI ASSIST 'PARM(v)'
 rc=$?
 if [ $debug -eq 1 ]; then echo "TSTXHEXI: rc=$rc"; fi
-if [ "$rc" -ne "0" ]; then echo "Error in TSTXHEXI"; fi
+if [ "$rc" -ne "0" ]; then
+    echo "Error in TSTXHEXI rc=$rc - exiting"
+    exit $rc
+fi
 
 echo "Verify ASSIST demo and test"
