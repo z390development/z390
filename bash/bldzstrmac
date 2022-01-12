@@ -1,12 +1,50 @@
 #!/bin/bash
-# Regenerate the zSPM macros for use on HLASM (Convert structured macros)
-
+#######################################################################
+# z390 - Mainframe assembler emulator and run-time engine
+# Copyright (C) 2021 z390 Assembler LLC
+#
+# This file is part of z390.
+# z390 is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# z390 is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
+#######################################################################
+# This script builds HLASM compatible structured programming macros
+# Usage: bldzstrmac <output dir>
+#        If no output dir is provided, defaults to build/zstrmac
+#######################################################################
 set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 cd ..               # go to root
 
-macs=(CASE CASEENTRY DO ELSE ELSEIF ENDCASE ENDDO ENDIF ENDSEL IF OTHRWISE SELECT WHEN ZSTREQU)
+DEST=$1
+if [ -z "${DEST}" ]; then 
+    DEST="build/zstrmac"
+fi
+mkdir -p "${DEST}"   # create folder if does not exist
+rm -f ${DEST}/*.MAC    # clear previous macros
+rm -f ${DEST}/*.CPY    # clear previous copys
+
+ZSTR="rt/test/ZSTRMAC2.ZSM"
+
+# generate the HLASM versions of the macros
+macs=(CASE CASENTRY DO ELSE ELSEIF ENDCASE ENDDO ENDIF ENDSEL IF OTHRWISE SELECT WHEN ZSTREQU)
 for mac in ${macs[@]}; do
-    echo "SYSUT1="mac/${mac}.mac" SYSUT2="mac/spm/${mac}.mac" bash/mz390 linklib/ZSTRMAC.ZSM NOASM STATS"
-    SYSUT1="mac/${mac}.mac" SYSUT2="mac/spm/${mac}.mac" bash/mz390 linklib/ZSTRMAC.ZSM NOASM STATS
+    echo "SYSUT1="mac/${mac}.MAC" SYSUT2="${DEST}/${mac}.MAC" bash/mz390 ${ZSTR} NOASM STATS"
+    SYSUT1="mac/${mac}.MAC" SYSUT2="${DEST}/${mac}.MAC" bash/mz390 ${ZSTR} NOASM STATS
+done
+
+# copy the static copy files
+cpys=(mac/ASMMSP.CPY mac/ZSTRGBL.CPY mac/ZSTRMAC.CPY)
+for cpy in ${cpys[@]}; do
+    echo "Adding ${cpy} to ${DEST}"
+    cp -R ${cpy} ${DEST}
 done

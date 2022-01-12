@@ -21,7 +21,8 @@ echo "/**" > ${dist_folder}/.gitignore        # ignore the dist folder
 rm -rf ${dist_folder}/z390_${version_tag}     # delete version dist directory
 rm -f ${dist_folder}/z390_${version_tag}.zip  # delete the zip
 
-bash/bldjar                     # create the z390 jar
+bash/bldjar                                   # create the z390 jar
+bash/bldzstrmac 'build/zstrmac'               # generate HLASM compatible SPM's
 
 cd ${dist_folder}
 mkdir z390_${version_tag}
@@ -40,6 +41,10 @@ vsam2 zopcheck zpar )
 for dir in ${supp_dirs[@]}; do
     cp -R ${root_dir}/${dir} .        # unix bash scripts
 done
+
+# add structured programming macros to mac/spm folder
+mkdir mac/spm
+cp -R ${root_dir}/build/zstrmac/* mac/spm
 
 # remove components not required for distribution
 del_items=('bash/bldjar' 'bat/BLDJAR.BAT' 'bash/blddist' 'bash/relver' 'bat/RELVER.BAT')
