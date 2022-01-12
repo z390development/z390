@@ -43,7 +43,7 @@ for dir in ${supp_dirs[@]}; do
 done
 
 # add structured programming macros to mac/spm folder
-mkdir mac/spm
+mkdir -p mac/spm
 cp -R ${root_dir}/build/zstrmac/* mac/spm
 
 # remove components not required for distribution
