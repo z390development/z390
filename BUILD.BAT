@@ -18,6 +18,7 @@ call rt\bat\runzpar || goto error
 call bat\runassist || goto error
 call bat\runcmdproc || goto error
 call bat\runvsedemos || goto error
+call bat\runzstrmactest || goto error
 
 goto:eof
 
