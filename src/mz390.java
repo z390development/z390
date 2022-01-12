@@ -1,3 +1,22 @@
+/*
+z390 - Mainframe assembler emulator and run-time engine
+Copyright (C) 2021 z390 Assembler LLC
+
+This file is part of z390.
+z390 is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+z390 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <https://www.gnu.org/licenses/>.
+*/
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -15,33 +34,14 @@ import java.util.regex.Pattern;
 import javax.swing.JTextArea;
 
 public  class  mz390 {
-	/*****************************************************
-	 
-	 z390 portable mainframe assembler and emulator.
-	 
-	 Copyright 2021 Don Higgins
-	 
-	 z390 is free software; you can redistribute it and/or modify
-	 it under the terms of the GNU General Public License as published by
-	 the Free Software Foundation; either version 2 of the License, or
-	 (at your option) any later version.
-	 
-	 z390 is distributed in the hope that it will be useful,
-	 but WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	 GNU General Public License for more details.
-	 
-	 You should have received a copy of the GNU General Public License
-	 along with z390; if not, write to the Free Software
-	 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-	 
+	/*
 	 mz390 is the macro processor component of z390 which can be called from
 	 z390 GUI interface or from command line to read mlc macro source and
 	 any referenced macros and copybooks to generate expanded BAL source file.
 	 
 	 ****************************************************
 	 * Maintenance
-	 * ***************************************************
+	 ****************************************************
 	 * 03/09/05 copied from z390.java and modified
 	 * 03/25/05 debug seta support, add error 35
 	 * 05/09/05 completed expression substring support
@@ -9361,14 +9361,18 @@ public  class  mz390 {
 			cur_date = new Date();
 		}
 		if (tz390.opt_stats){
-			put_stat_line("Copyright 2021 Don Higgins");
-			put_stat_line("z390 is licensed under GNU General Public License");
+			put_stat_line("Copyright (c) 2021 z390 Assembler LLC");
+			put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");   
+			put_stat_line("This is free software, and you are welcome to redistribute it");
+			put_stat_line("under certain conditions; see included LICENSE file for details.");
 			put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			put_stat_line("options = " + tz390.cmd_parms);
 		}
 		if (tz390.opt_tracem){
-			tz390.put_trace(msg_id + "Copyright 2011 Automated Software Tools Corporation");
-			tz390.put_trace(msg_id + "z390 is licensed under GNU General Public License");
+			tz390.put_trace(msg_id + "Copyright (c) 2021 z390 Assembler LLC");
+			tz390.put_trace(msg_id + "z390 comes with ABSOLUTELY NO WARRANTY;");   
+			tz390.put_trace(msg_id + "This is free software, and you are welcome to redistribute it");
+			tz390.put_trace(msg_id + "under certain conditions; see included LICENSE file for details.");
 			tz390.put_trace(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			tz390.put_trace(msg_id + "options = " + tz390.cmd_parms);
 		}

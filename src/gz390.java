@@ -1,3 +1,22 @@
+/*
+z390 - Mainframe assembler emulator and run-time engine
+Copyright (C) 2021 z390 Assembler LLC
+
+This file is part of z390.
+z390 is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+z390 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <https://www.gnu.org/licenses/>.
+*/
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -52,32 +71,8 @@ public  class  gz390
 	           ActionListener, 
 			   ComponentListener,
 			   FocusListener {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
-	/*****************************************************
-	
-    z390 portable mainframe assembler and emulator.
-	
-    Copyright 2011 Automated Software Tools Corporation
-	 
-    z390 is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    z390 is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with z390; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-
-	 ****************************************************
+  	 /****************************************************
 	 * Maintenance
 	 * ***************************************************
 	 * 11/26/05 RPI47 gz390 copied from z390
@@ -904,11 +899,10 @@ public  class  gz390
 	   private void about_command(){
 		    guam_put_log("\nz390 GUAM GUI gz390 Graphical User Access Method "
 				  + tz390.version); 
- 	   	    guam_put_log("Copyright 2011 Automated Software Tools Corporation");
-			guam_put_log("z390 is licensed under GNU General Public License");
-	   	    guam_put_log("gz390 supports MCS, TN3270, and Graphic panel views");
-	   	    guam_put_log("gz390 J2SE Java source is distributed as part of z390");
-	   	    guam_put_log("Visit www.z390.org for additional information and support");
+			guam_put_log("Copyright (c) 2021 z390 Assembler LLC");
+			guam_put_log("z390 comes with ABSOLUTELY NO WARRANTY;");   
+			guam_put_log("This is free software, and you are welcome to redistribute it");
+			guam_put_log("under certain conditions; see included LICENSE file for details.");
 	   }
 	   private void font_command(int new_font_size){
 	   /* 

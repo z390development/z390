@@ -1,3 +1,22 @@
+/*
+z390 - Mainframe assembler emulator and run-time engine
+Copyright (C) 2021 z390 Assembler LLC
+
+This file is part of z390.
+z390 is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+z390 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <https://www.gnu.org/licenses/>.
+*/
+
 import java.lang.reflect.Array;
 
 import java.math.BigDecimal;
@@ -9,30 +28,11 @@ import java.util.Arrays;
 import java.util.Date;
 
 public class pz390 {
-	/***************************************************************************
-	 * 
-	 * z390 portable mainframe assembler and emulator.
-	 * 
-	 * Copyright 2011 Automated Software Tools Corporation
-	 * 
-	 * z390 is free software; you can redistribute it and/or modify it under the
-	 * terms of the GNU General Public License as published by the Free Software
-	 * Foundation; either version 2 of the License, or (at your option) any
-	 * later version.
-	 * 
-	 * z390 is distributed in the hope that it will be useful, but WITHOUT ANY
-	 * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-	 * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-	 * details.
-	 * 
-	 * You should have received a copy of the GNU General Public License along
-	 * with z390; if not, write to the Free Software Foundation, Inc., 59 Temple
-	 * Place, Suite 330, Boston, MA 02111-1307 USA
-	 * 
-	 * pz390 is the processor emulator component of z390 which is called from
-	 * ez390 to execute 390 code loaded in memory. Both ez390 and pz390 call
-	 * sz390 svc component to perform os functions such as memory allocation and
-	 * loading.
+	/* 
+	pz390 is the processor emulator component of z390 which is called from
+	ez390 to execute 390 code loaded in memory. Both ez390 and pz390 call
+	sz390 svc component to perform os functions such as memory allocation and
+	loading.
 	 * 
 	 * *************************************************** Maintenance
 	 * *************************************************** 04/18/05 copied from

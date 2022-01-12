@@ -1,35 +1,48 @@
         MACRO
+.*********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+.* Author - Don Higgins                                              *
+.* Date   - 12/26/06                                                 *
+.* 12/28/06 RPI 523 GEN SOURCE CODE FOR SOA CLIENT MSG MANAGER
+.* 01/05/07 RPI 524 ADD MSGTIME FOR SOA CLIENT SERVER APPLICATIONS 
+.* 01/22/07 RPI 542 CORRECT R1ADDR FROM GETMAIN FOR BUFFER         
+.* 02/21/07 RPI 553 REMOVE TCPIO LMAX AND USE R5 VS R2 FOR LMSG CALC     
+.*          AND HANDLE VARIABLE LENGTH MSGS UP TO LMSG
+.* 04/22/08 RPI 833 ADD SETC QUOTES FOR HLASM COMPATIBILITY
+.* 07/27/11 DSH1 corrent misspelled &CLEINT in WTO error message
+.*********************************************************************
+.* SOACMGR IS DYNAMICALLY CALLED FROM SOASTUB2 STUB WITH NAME/PARMS
+.*
+.*   INPUT PARMS 
+.*     1  NAME OF SERVICE TO BE CALLED
+.*     2  PARAMETER LIST ADDRESS
+.*   ACTION
+.*     1  BUILD MSG WITH LENGTH, NAME, AND PARM VALUES              
+.*     2  SEND MSG TO SOA SERVER SOASMGR LISTENING FOR SOA MESSAGES                                        
+.*     3  RECEIVE RESPONSE MSG FROM SOASMGR
+.*     4  MOVE UPDATED PARMS FROM MESSAGE TO ADDRESSES IN PARMLIST                                                        
+.*     5  RETURN TO CALLER
+.*********************************************************************
        SOACMGR &CLIENT=,    CLIENT SOA MESSAGE MANAGER NAME            X
                &HOST=,      HOST SERVER URL (*=LOCAL)                  X
                &PORT=,      HOST SERVER PORT NUMBER                    X
                &SERVICES=   DEFINE NAME AND LENGTH OF SERVICE PARMS    
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-* Date   - 12/26/06                                                 *
-*********************************************************************
-* 12/28/06 RPI 523 GEN SOURCE CODE FOR SOA CLIENT MSG MANAGER
-* 01/05/07 RPI 524 ADD MSGTIME FOR SOA CLIENT SERVER APPLICATIONS 
-* 01/22/07 RPI 542 CORRECT R1ADDR FROM GETMAIN FOR BUFFER         
-* 02/21/07 RPI 553 REMOVE TCPIO LMAX AND USE R5 VS R2 FOR LMSG CALC     
-*          AND HANDLE VARIABLE LENGTH MSGS UP TO LMSG
-* 04/22/08 RPI 833 ADD SETC QUOTES FOR HLASM COMPATIBILITY
-* 07/27/11 DSH1 corrent misspelled &CLEINT in WTO error message
-*********************************************************************
-* SOACMGR IS DYNAMICALLY CALLED FROM SOASTUB2 STUB WITH NAME/PARMS
-*
-*   INPUT PARMS 
-*     1  NAME OF SERVICE TO BE CALLED
-*     2  PARAMETER LIST ADDRESS
-*   ACTION
-*     1  BUILD MSG WITH LENGTH, NAME, AND PARM VALUES              
-*     2  SEND MSG TO SOA SERVER SOASMGR LISTENING FOR SOA MESSAGES                                        
-*     3  RECEIVE RESPONSE MSG FROM SOASMGR
-*     4  MOVE UPDATED PARMS FROM MESSAGE TO ADDRESSES IN PARMLIST                                                        
-*     5  RETURN TO CALLER
-*********************************************************************
          COPY  ASMMSP
 &CLIENT  SUBENTRY
          LR    R2,R1             SAVE PARM LIST FROM SOA STUB CALL

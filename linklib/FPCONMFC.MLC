@@ -1,9 +1,31 @@
 *********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
 * Author - Don Higgins                                              *
 * Date   - 07/17/07                                                 *
+* 07/17/06 RPI 374 - add FPCONMFC interface to FPCONVRT routines
+* 07/21/06 RPI 379 - use compound DO conditions in (...)        
+* 08/04/06 RPI 391 - replace trailing output nulls with spaces  
+* 12/11/06 RPI 514 - add DD, ED, and LD DFP conversion support  
+* 04/27/07 RPI 600 - add GBLA &ARCHLVL to FPCON_CALL  
+* 12/07/07 RPI 749 - move LBUFF to front of pgm to avoid lit errors
+* 03/27/08 RPI 829 - clearn high bits of 64 bit register parm 
+* 04/25/11 RPI 1161 - remove & from ARCHLVL macro comments      
 *********************************************************************
 * FPCONMFC IS LINKAGE=MF INTERFACE CALLED BY CTD AND CFD MACROS TO
 * TO CALL FPCONVRT TO PERFORM FP CONVERSIONS USING MAINFRAME 
@@ -17,15 +39,6 @@
 * GENERATION MACRO CALL.  THE &ARCHLVL IS ALSO USED TO SWITCH 
 * BETWEEN 31 BIT AND 64 BIT SAVE AREA AND PARM ADDRESS FIELDS.
 *
-*********************************************************************
-* 07/17/06 RPI 374 - add FPCONMFC interface to FPCONVRT routines
-* 07/21/06 RPI 379 - use compound DO conditions in (...)        
-* 08/04/06 RPI 391 - replace trailing output nulls with spaces  
-* 12/11/06 RPI 514 - add DD, ED, and LD DFP conversion support  
-* 04/27/07 RPI 600 - add GBLA &ARCHLVL to FPCON_CALL  
-* 12/07/07 RPI 749 - move LBUFF to front of pgm to avoid lit errors
-* 03/27/08 RPI 829 - clearn high bits of 64 bit register parm 
-* 04/25/11 RPI 1161 - remove & from ARCHLVL macro comments      
 *********************************************************************
          PRINT DATA
          COPY  ASMMSP       STRUCTURED PROGRAM MACROS AND EQUS

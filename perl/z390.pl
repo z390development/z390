@@ -1,4 +1,33 @@
 #!/usr/bin/perl --
+##################################################################
+# z390 - Mainframe assembler emulator and run-time engine
+# Copyright (C) 2021 z390 Assembler LLC
+#
+# This file is part of z390.
+#
+# z390 is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# z390 is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License 
+# along with this program; if not, see https://www.gnu.org/licenses.
+##################################################################
+# Author Martin Ward http://www.gkc.org.uk
+# Maintenace Log of changes for z390 by Don Higgins www.z390.org
+# 01/28/07 RPI 542 change path to perl for Ubuntu on 1st line
+#          (Note Linux requires first line path to end with
+#           LF line feed only so do not edit perl scripts
+#           with notepad or any Windows editor that adds
+#           CR,LF carriage return and line feed.  This only
+#           applies to first line of perl scripts as BAT
+#           files edited on Windows work fine.)
+# 02/09/07 RPI 548 add -- on first line to allow Windows editing
+###########################################################
 # z390 IBM assembler control program
 # Usage: z390 [-X...] [options] file [assembler options]
 #
@@ -24,27 +53,13 @@
 # (2) $HOME/lib/z390
 # (3) /usr/local/lib/z390
 # (4) /usr/lib/z390
-###########################################################
-# Author Martin Ward http://www.gkc.org.uk
-###########################################################
-# Maintenace Log of changes for z390 by Don Higgins www.z390.org
-# Copyright 2007 Automated Software Tools Corporation
-# z390 is licensed under GPL General Public License
-###########################################################
-# 01/28/07 RPI 542 change path to perl for Ubuntu on 1st line
-#          (Note Linux requires first line path to end with
-#           LF line feed only so do not edit perl scripts
-#           with notepad or any Windows editor that adds
-#           CR,LF carriage return and line feed.  This only
-#           applies to first line of perl scripts as BAT
-#           files edited on Windows work fine.)
-# 02/09/07 RPI 548 add -- on first line to allow Windows editing
-###########################################################
+#
 # To recompile source files and rebuild z390.jar:
 # cd ~/lib/z390/src
 # javac *.java
 # jar cmvf Z390.MAN z390.jar *.class
 # cp z390.jar ../z390.jar
+###########################################################
 
 use strict;
 use warnings;

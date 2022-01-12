@@ -1,21 +1,34 @@
          MACRO
+.*********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+.* Author - Don Higgins                                              *
+.* Date   - 12/28/06                                                 *
+.* 01/01/07 RPI 523 GENERATE SOURCE CODE FOR SERVICE CALL STUB     
+.*********************************************************************
+.* THIS CODE GENERATES RELOCATABLE OBJECT CODE TO BE LINKED WITH 
+.* CLIENT SOA APPLICATION FOR EACH SERVICE CALL.  THE CODE LINKS
+.* TO SOA CLIENT MESSAGE MANAGER SOACMGR TO REQUEST SERVICE FROM
+.* SOA SERVER MESSAGE MANAGER VIA TCP/IP MESSAGING AND THEN UPDATE
+.* USERS CALL PARMS FROM RESPONSE MESSAGE AND RETURN TO CALLER
+.* WITH RETURN CODE.  SEE Z390\SOA\DEMO\DEMOSOA.MLC/BAT
+.*********************************************************************
          SOASTUB &SERVICE=,&CLIENT=SOACMGR 
-*********************************************************************
-* Copyright 2006 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-* Date   - 12/28/06                                                 *
-*********************************************************************
-* 01/01/07 RPI 523 GENERATE SOURCE CODE FOR SERVICE CALL STUB     
-*********************************************************************
-* THIS CODE GENERATES RELOCATABLE OBJECT CODE TO BE LINKED WITH 
-* CLIENT SOA APPLICATION FOR EACH SERVICE CALL.  THE CODE LINKS
-* TO SOA CLIENT MESSAGE MANAGER SOACMGR TO REQUEST SERVICE FROM
-* SOA SERVER MESSAGE MANAGER VIA TCP/IP MESSAGING AND THEN UPDATE
-* USERS CALL PARMS FROM RESPONSE MESSAGE AND RETURN TO CALLER
-* WITH RETURN CODE.  SEE Z390\SOA\DEMO\DEMOSOA.MLC/BAT
-*********************************************************************
 &SERVICE CSECT                  DEFINE SERVICE CSECT FOR USER CALLS
          USING *,15             DEFINE ENTRY AS BASE 
          ST    12,SAVER12       SAVE BASE REG

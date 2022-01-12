@@ -1,11 +1,23 @@
          MACRO
 .*********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.* Date   - 04/15/08                                                 *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .*********************************************************************
+.*          INITIAL CODING BY DON HIGGINS
 .* 10/20/05 RPI27 - issue error for any undefined operands   
 .* 11/13/05 RPI88 - correct test for DCB register parm  
 .* 11/13/05 RPI96 - add additional validity checking for parms
@@ -17,7 +29,7 @@
 .* 09/16/07 RPI 697 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 09/16/07 RPI 682 CHANGE TO GEN DCBD REQUIRED FOR OPEN FLAG REFS  
 .* 10/14/07 RPI 718 ISSUE MNOTE ERR FOR NN OR RNN WITHOUT ((REG),OPT)   
-.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION                     
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .* 09/11/08 RPI 764 allow OPEN (reg) for input, use ZSTRMAC     
 .* 04/19/09 RPI 1021 support MF=L/E                             

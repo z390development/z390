@@ -1,22 +1,24 @@
         MACRO
-&NAME   SOAGEN &CTYPE=MLC,  SET CLIENT LANGUAGE CBL OR MLC             X
-               &MAIN=,      OPTIONAL GEN &MAIN.390 WITH STUBS          X
-               &CLIENT=,    CLIENT SOA MESSAGE MANAGER NAME            X
-               &SERVER=,    SERVER SOA MESSAGE MANAGER NAME            X
-               &HOST=,      HOST SERVER URL                            X
-               &PORT=,      HOST SERVER PORT NUMBER                    X
-               &SERVICES=,  DEFINE NAME AND LENGTH OF SERVICE PARMS    X
-               &MACDIR=,    DIRECTORY WITH SOA GEN MACROS              X
-               &GENDIR=,    DIRECTORY TO PLACE GENERATED SOURCE CODE   X
-               &GENBLD=,    NAME OF GENERATED BUILD BAT FILE           X
-               &GENRUN=     NAME OF GENERATED RUN BAT                   
-*********************************************************************
-* Copyright 2008 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
-* Author - Don Higgins                                              *
-* Date   - 12/28/06                                                 *
 .********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.********************************************************************
+.* Author - Don Higgins                                              *
+.* Date   - 12/28/06                                                 *
 .* MAINTENANCE: 
 .* 12/28/06 RPI 524 ADD SUPPORT FOR SOA CLIENT SERVER APPLICATIONS 
 .* 02/05/07 RPI 532 ADD DEMORUNS & DEMORUNC.BAT AND FIX PATH CASE
@@ -69,6 +71,17 @@
 .*      IN MEMORY PRIOR TO RETURNING FROM CLIENT MESSAGE MANAGER.
 .*   3. DYNAMIC MSG BUFFER SIZE = LARGEST SERVICE SEND MESSAGE        
 .********************************************************************
+&NAME   SOAGEN &CTYPE=MLC,  SET CLIENT LANGUAGE CBL OR MLC             X
+               &MAIN=,      OPTIONAL GEN &MAIN.390 WITH STUBS          X
+               &CLIENT=,    CLIENT SOA MESSAGE MANAGER NAME            X
+               &SERVER=,    SERVER SOA MESSAGE MANAGER NAME            X
+               &HOST=,      HOST SERVER URL                            X
+               &PORT=,      HOST SERVER PORT NUMBER                    X
+               &SERVICES=,  DEFINE NAME AND LENGTH OF SERVICE PARMS    X
+               &MACDIR=,    DIRECTORY WITH SOA GEN MACROS              X
+               &GENDIR=,    DIRECTORY TO PLACE GENERATED SOURCE CODE   X
+               &GENBLD=,    NAME OF GENERATED BUILD BAT FILE           X
+               &GENRUN=     NAME OF GENERATED RUN BAT                   
 .*
 .* COLLECT ALL Z390 OPTIONS IN &ZOPT
 .*

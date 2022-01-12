@@ -1,11 +1,24 @@
          TITLE 'SUPERZAP - Z390 UTILITY TO VER/REP/DUMP ANY FILE'
 *********************************************************************
-* Copyright 2007 Automated Software Tools Corporation               *
-* This source code is part of z390 assembler/emulator package       *
-* The z390 package is distributed under GNU general public license  *
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
 * Author - Don Higgins                                              *
 * Date   - 04/07/07                                                 *
-*********************************************************************
 * 04/13/07 INITIAL CODING OF SUPERZAP V1,0               
 * 07/11/07 RPI 654 REMOVE LOCAL PM, PENTRY, PEXIT AND USE MAC VERSIONS
 * 10/01/07 RPI 684 TEST FOR SYSIN DD AND IF NONE, DEFAULT TO CONSOLE.  
@@ -64,7 +77,7 @@
 *            VER  * 'AAA'
 *            REP  * 'BBB'  CHANGE AAA TEXT IN COMMENT TO BBB
 *            DUMP * 3      DUMP CHANGED SECTION OF FILE
-*********************************************************************
+*
 * REGISTER USAGE
 *  R0-R6 WORK
 *  R7-R8 EXTENDED BASE REGISTERS

@@ -1,33 +1,46 @@
 .*********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.* Date   - 11/07/09                                                 *
-.*********************************************************************
-.* 11/07/09 RPI 800 ADD INTERNAL AND FILE SORT UTILITY SUPPORT
-.* 02/12/10 RPI 800 ADD PARM SUPPORT FOR PARM='N' TO SET MEM=N*LRECL
-.*********************************************************************
-.* SORT IS A FILE SORTING UTILITY DESIGNED TO BE COMPATIBLE WITH
-.* DFSORT AND SYNCSORT.
-.*
-.* SORTIN  = INPUT  UNSORTED RECORDS
-.* SORTOUT - OUTPUT SORTED RECORDS
-.* SYSIN   - COMMAND INPUT WITH SORT FIELDS(OFF,LEN,CH,A/D)
-.* SORTWK01 - OPTIONAL WORK FILE 1 (DYNAMICALLY ALLOC IF REQ)
-.* SORTWK02 - OPTIONAL WORK FILE 2 (DYNAMICALLY ALLOC IF REQ)
-.*
-.* RETURN CODE:
-.*   0  - OPERATION SUCCESSFUL
-.*  16  - SEE ERROR MESSAGE IF ZSORT ABORTS
-.*
-.* NOTES:
-.*   1.  ONLY RECFM=F/FB/FT/V/VB RECORD FORMATS SUPPORTED.
-.*   2.  VARIABLE RECORDS ARE PROCESSED AS IF THEY WERE MAX LENGTH
-.*       INCLUDING 4 BYTE LL00 PREFIX.  KEY OFFSET DOES NOT INCLUDE PFX
-.*   3.  MAX MEMORY USED FOR TABLE IS MEM OPTION IF AVAILABLE.
-.*
-.*********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
+* Author - Don Higgins                                              *
+* Date   - 11/07/09                                                 *
+* 11/07/09 RPI 800 ADD INTERNAL AND FILE SORT UTILITY SUPPORT
+* 02/12/10 RPI 800 ADD PARM SUPPORT FOR PARM='N' TO SET MEM=N*LRECL
+*********************************************************************
+* SORT IS A FILE SORTING UTILITY DESIGNED TO BE COMPATIBLE WITH
+* DFSORT AND SYNCSORT.
+*
+* SORTIN  = INPUT  UNSORTED RECORDS
+* SORTOUT - OUTPUT SORTED RECORDS
+* SYSIN   - COMMAND INPUT WITH SORT FIELDS(OFF,LEN,CH,A/D)
+* SORTWK01 - OPTIONAL WORK FILE 1 (DYNAMICALLY ALLOC IF REQ)
+* SORTWK02 - OPTIONAL WORK FILE 2 (DYNAMICALLY ALLOC IF REQ)
+*
+* RETURN CODE:
+*   0  - OPERATION SUCCESSFUL
+*  16  - SEE ERROR MESSAGE IF ZSORT ABORTS
+*
+* NOTES:
+*   1.  ONLY RECFM=F/FB/FT/V/VB RECORD FORMATS SUPPORTED.
+*   2.  VARIABLE RECORDS ARE PROCESSED AS IF THEY WERE MAX LENGTH
+*       INCLUDING 4 BYTE LL00 PREFIX.  KEY OFFSET DOES NOT INCLUDE PFX
+*   3.  MAX MEMORY USED FOR TABLE IS MEM OPTION IF AVAILABLE.
+*
+*********************************************************************
 SORT     SUBENTRY BASES=(R13,R12)
          ST    R1,SAVEPARM
          PM    INIT

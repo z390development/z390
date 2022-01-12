@@ -1,11 +1,27 @@
          MACRO                                                             
 .********************************************************************
-.*             AUTHOR.   DON HIGGINS.                                      
-.*             DATE.     09/23/08.                                         
-.*             REMARKS.  ADD SPMS FOR SELECT,WHEN,OTHRWISE,ENDSEL             
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .********************************************************************
+.* 09/23/08 INITIAL CODING BY DON HIGGINS
 .* 09/23/08 RPI 909 upgrade to use ZSTRMAC SPE's and extend compat.
 .* 02/19/12 RPI 1192 remove dup )) from AIF 
+.********************************************************************
+.* SPMS FOR SELECT,WHEN,OTHRWISE,ENDSEL             
 .********************************************************************
          ENDSEL                                                              
          COPY  ZSTRGBL

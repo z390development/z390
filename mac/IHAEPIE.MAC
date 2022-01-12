@@ -1,14 +1,27 @@
+         MACRO
 .*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .*********************************************************************
+.*          INITIAL CODING BY DON HIGGINS
 .* 05/01/06 RPI 305 - define DSECT for ESPIE PIE control block    
 .* 06/17/08 RPI 845 - rename from EPIED to IHAEPIE macro and change
 .*          offsets to be z/OS compatible with 64 bit reg flag on.
 .*********************************************************************
-         MACRO
          IHAEPIE
          AIF   (N'&SYSLIST EQ 0).NPOK
          MNOTE 12,'IHAEPIE UNSUPPORTED OPERANDS - &SYSLIST(1)'

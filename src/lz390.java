@@ -1,3 +1,22 @@
+/*
+z390 - Mainframe assembler emulator and run-time engine
+Copyright (C) 2021 z390 Assembler LLC
+
+This file is part of z390.
+z390 is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+z390 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <https://www.gnu.org/licenses/>.
+*/
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -12,29 +31,12 @@ import java.util.Date;
 import javax.swing.JTextArea;
 
 public  class  lz390 {
-   /*****************************************************
-	
-    z390 portable mainframe assembler and emulator.
-	
-    Copyright 2011 Automated Software Tools Corporation
-	 
-    z390 is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    z390 is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with z390; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
+   /*
     lz390 is the linker component of z390 which can be called from
-    z390 GUI interface or from command line to read obj     relocatble object code files and generate single 390 load
-    module file.  Both obj and 390 files are in ascii text     file format with hex codes for all binary data.
+    z390 GUI interface or from command line to read obj     
+	relocatable object code files and generate single 390 load
+    module file.  Both obj and 390 files are in ascii text     
+	file format with hex codes for all binary data.
 
     ****************************************************
     * Maintenance
@@ -456,12 +458,17 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true; // RPI 755
 	   	if  (z390_log_text == null){
-	   	    put_log(msg_id + "Copyright 2011 Automated Software Tools Corporation");
-	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
+			put_log(msg_id + "Copyright (c) 2021 z390 Assembler LLC");
+			put_log(msg_id + "z390 comes with ABSOLUTELY NO WARRANTY;");   
+			put_log(msg_id + "This is free software, and you are welcome to redistribute it");
+			put_log(msg_id + "under certain conditions; see included LICENSE file for details.");
+
 	   	}
 		if (tz390.opt_stats){
-			put_stat_line("Copyright 2011 Automated Software Tools Corporation");
-			put_stat_line("z390 is licensed under GNU General Public License");
+			put_stat_line("Copyright (c) 2021 z390 Assembler LLC");
+			put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");   
+			put_stat_line("This is free software, and you are welcome to redistribute it");
+			put_stat_line("under certain conditions; see included LICENSE file for details.");
 			put_stat_line("options = " + tz390.cmd_parms);
 			put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 		}

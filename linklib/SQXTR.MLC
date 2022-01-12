@@ -1,4 +1,22 @@
-         TITLE 'SQXTR - CALC LD EXTENDED DFP SQUARE ROOT'
+**********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
+* 02/28/08 DSH RPI 814 ADD SQXTR.MAC AND SQXTR.MLC AS EXTENDED INS.
 *********************************************************************
 * 1.  ROUTINE CALLED BY SQXTR.MAC AFTER STORING ARG AT SQXTR+8 
 * 2.  CALCULATES SQUARE ROOT OF ARG AND REPLACES ARG   
@@ -9,8 +27,7 @@
 *                 3.5  1.87...   7
 * 5. FIRST GUESS CAN STILL BE IMPROVED BUT MAY NOT BE WORTH OVERHEAD?
 *********************************************************************
-* 02/28/08 DSH RPI 814 ADD SQXTR.MAC AND SQXTR.MLC AS EXTENDED INS.
-*********************************************************************
+         TITLE 'SQXTR - CALC LD EXTENDED DFP SQUARE ROOT'
 SQXTR    CSECT
          USING SQXTR,R15
          ST    R14,SAVER14

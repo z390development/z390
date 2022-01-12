@@ -1,3 +1,22 @@
+/*
+z390 - Mainframe assembler emulator and run-time engine
+Copyright (C) 2021 z390 Assembler LLC
+
+This file is part of z390.
+z390 is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+z390 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <https://www.gnu.org/licenses/>.
+*/
+
 import java.awt.BorderLayout;
 
 import java.awt.Component;
@@ -60,34 +79,10 @@ public  class  z390
 			   ComponentListener,
 			   Runnable,
 			   FocusListener {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 	/*****************************************************
-	
-    z390 portable mainframe assembler and emulator.
-	
-    Copyright 2011 Automated Software Tools Corporation
-	 
-    z390 is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    z390 is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with z390; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-
-	 ****************************************************
 	 * Maintenance
-	 * ***************************************************
+	 ****************************************************
 	 * 03/05/05 copied from superzap, update menus, cmds
 	 * 09/26/05 replace z390 dialog with batch_cmds and options
 	 * 10/02/05 RPI   8 fix "compatible java" in about desc. 
@@ -743,9 +738,10 @@ public  class  z390
 	   /*
 	    * display z390 version and copyright
 	    */
-	   	put_log("Z390I " + tz390.version);
-	   	put_log("Copyright 2011 Automated Software Tools Corporation");
-	   	put_log("z390 is licensed under GNU General Public License");
+	   	put_log("Z390I " + tz390.version + " Copyright (C) 2021 z390 Assembler");
+		put_log("z390 comes with ABSOLUTELY NO WARRANTY;");   
+		put_log("This is free software, and you are welcome to redistribute it");
+		put_log("under certain conditions; see included LICENSE file for details.");
 	   	if  (mode_msg1 != null){
 	   		put_log(mode_msg1);
 	   	}

@@ -1,19 +1,24 @@
          MACRO
-&N       TCPIO &OP,         OPERATION - OPEN, CLOSE, SEND, RECEIVE     X
-               &OPTION,     NOWAIT OPTION FOR RECIEVE                  X
-               &MSG=,       RX/REG ADDRESS OF MESSAGE TO SEND/RECEIVE  X
-               &LMSG=,      RX,REG MSG SEND LENGTH OR RECEIVE MAX LEN  X
-               &HOST=,      RX/REG ADDR OF HOST IP ADDRESS (*=LOCAL)   X
-               &PORT=,      PORT NUMBER FOR ALL OPERATIONS             X
-               &CONN=-1     CONNECTION NUMBER FOR SERVER SEND/RECEIVE
 .*********************************************************************
-.* Copyright 2007 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.* Date   - 01/01/07                                                 *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .*********************************************************************
 .* MAINTENANCE
+.* 01/01/07 INITIAL CODING BY DON HIGGINS
 .* 01/01/07 RPI 524 ADD TCPIO MACRO AND SVC X'7C' SUPPORT FOR SOCKETS
 .* 02/21/07 RPI 554 ADD TCPIO NOWAIT OPTION FOR RECEIVE   
 .*                  REMOVE LMAX AND USE LMSG FOR SEND/RECEIVE
@@ -40,14 +45,21 @@
 .*     R1  PORT # 
 .*     R2  CONN # (IF -1 THEN NEXT MSG FROM ANY CONNECTION)
 .*     R14 MSG ADDRESS                                        
-.*     R15 MAX MESSAGE LENGTH FOR RECEOVE (ACTUAL RETURNED IN R1)                                        
+.*     R15 MAX MESSAGE LENGTH FOR RECEOVE (ACTUAL RETURNED IN R1)
 .* SVC OUTPUT
 .*     R15 =  0 OK 
 .*     R15 =  4 NOWAIT SPECIFIED ON RECEIVE AND NO MSG READY
 .*     R15 = 12 ERROR OCCURRED (SEE ERROR MESSAGES)       
 .*     R1  = ACTUAL MESSAGE LENGTH RETURNED FOR RECEIVE        
-.*     R2  = CONNECTION ID FOR SERVER PORT RECEIVE (REQUIRED FOR SEND)                          
+.*     R2  = CONNECTION ID FOR SERVER PORT RECEIVE (REQUIRED FOR SEND)
 .*********************************************************************
+&N       TCPIO &OP,         OPERATION - OPEN, CLOSE, SEND, RECEIVE     X
+               &OPTION,     NOWAIT OPTION FOR RECIEVE                  X
+               &MSG=,       RX/REG ADDRESS OF MESSAGE TO SEND/RECEIVE  X
+               &LMSG=,      RX,REG MSG SEND LENGTH OR RECEIVE MAX LEN  X
+               &HOST=,      RX/REG ADDR OF HOST IP ADDRESS (*=LOCAL)   X
+               &PORT=,      PORT NUMBER FOR ALL OPERATIONS             X
+               &CONN=-1     CONNECTION NUMBER FOR SERVER SEND/RECEIVE
          AIF   ('&OP' EQ 'OPEN').OPEN
          AIF   ('&OP' EQ 'CLOSE').CLOSE
          AIF   ('&OP' EQ 'SEND').SEND

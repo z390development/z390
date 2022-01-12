@@ -1,14 +1,23 @@
          MACRO
 .**********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation                *
-.* This source code is part of z390 assembler/emulator package        *
-.* The z390 package is distributed under GNU general public license   *
-.* Author - Don Higgins                                               *
-.* Date   - 09/30/05                                                  *
-.*                                                                    *
-.* Modified for zVSAM V2 by Melvyn Maltz                              *
-.* Date   - 13th March 2019                                           *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .**********************************************************************
+.* 09/30/05 INITIAL CODING BY DON HIGGINS                             *
 .* RPIs for OPEN                                                      *
 .* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION *
 .*                                                                    *
@@ -33,7 +42,7 @@
 .* 05/28/09 RPI 1045 change to only assume register form if (..)      *
 .* 01/26/11 RPI 1139 remove space from SETC expression                *
 .*                                                                    *
-.* Mods for zVSAM V2                                                  *
+.* 03/13/19 Mods for zVSAM V2 - Melvyn Maltz                                   *
 .*    Combined OPEN and ZOPEN                                         *
 .*    MF= is coded                                                    *
 .*    Default MODE=24 (MODE not implemented in V1)                    *

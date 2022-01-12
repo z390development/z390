@@ -10,3 +10,15 @@ The z390 program product is a Java-based portable environment that supports:
 5) zVSAM component to emulate VSAM operation
 6) zCICS support for emulated interactive programs
 7) Scripted Regression Testing facility
+
+## Licenses and copyright
+
+There are a number of licenses and copyrights used by z390.
+Unless provided below, z390 is GPL v2 and copyright z390 Assembler LLC
+
+* structuredmacros/ - GPL v3 (c) Daniel H. Snyder
+* barcode/ - GPL v3 (c) ABA Inc
+* src/zACB.java - GPL v2 (c) Abe Kornelis
+* src/zCatVAIX.java - GPL v2 (c) Abe Kornelis
+* src/zCatVCLR.java - GPL v2 (c) Abe Kornelis
+

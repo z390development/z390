@@ -1,3 +1,22 @@
+/*
+z390 - Mainframe assembler emulator and run-time engine
+Copyright (C) 2021 z390 Assembler LLC
+
+This file is part of z390.
+z390 is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+z390 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <https://www.gnu.org/licenses/>.
+*/
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -10,26 +29,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.Timer;
 ;public  class  ez390 implements Runnable {
-   /*****************************************************
-	
-    z390 portable mainframe assembler and emulator.
-	
-    Copyright 2011 Automated Software Tools Corporation
-	 
-    z390 is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    z390 is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with z390; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
+   /*
     ez390 is the emulator component of z390 which can be called from
     z390 gui interface or from command line to execute 390 load
     module files.  
@@ -550,14 +550,18 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true;  // RPI 755
 	   	if  (z390_log_text == null){
-	   		sz390.put_log("EZ390I Copyright 2011 Automated Software Tools Corporation");
-	   		sz390.put_log("EZ390I z390 is licensed under GNU General Public License");
+	   		sz390.put_log("EZ390I Copyright (c) 2021 z390 Assembler LLC");
+			sz390.put_log("z390 comes with ABSOLUTELY NO WARRANTY;");   
+			sz390.put_log("This is free software, and you are welcome to redistribute it");
+			sz390.put_log("under certain conditions; see included LICENSE file for details.");
 	   	}
 	   	sz390.put_log("EZ390I program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 	   	sz390.put_log("EZ390I options = " + tz390.cmd_parms);
 		if (tz390.opt_stats){
-			tz390.put_stat_line("Copyright 2011 Automated Software Tools Corporation");
-			tz390.put_stat_line("z390 is licensed under GNU General Public License");
+			tz390.put_stat_line("Copyright (c) 2021 z390 Assembler LLC");
+			tz390.put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");   
+			tz390.put_stat_line("This is free software, and you are welcome to redistribute it");
+			tz390.put_stat_line("under certain conditions; see included LICENSE file for details.");
 			tz390.put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			tz390.put_stat_line("options = " + tz390.cmd_parms);
 		}

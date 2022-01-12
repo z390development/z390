@@ -1,11 +1,23 @@
          MACRO
 .**********************************************************************
-.* Copyright 2007 Automated Software Tools Corporation                *
-.* This source code is part of z390 assembler/emulator package        *
-.* The z390 package is distributed under GNU general public license   *
-.* Author - Don Higgins                                               *
-.* Date   - 06/22/07                                                  *
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
 .**********************************************************************
+.* 06/22/07 INITIAL CODING BY DON HIGGINS
 .* 07/28/07 RPI 644 INITIAL CODING OF RPL OPTIONS                     *
 .* 08/04/07 RPI 644 UPDATE RPLFEEDB TO 4 BYTE CODES                   *
 .* 08/19/07 RPI 680 CORRECT LOOP GE TO GT, ADD LCLB &LRD              *

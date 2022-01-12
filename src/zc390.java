@@ -1,3 +1,22 @@
+/*
+z390 - Mainframe assembler emulator and run-time engine
+Copyright (C) 2021 z390 Assembler LLC
+
+This file is part of z390.
+z390 is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+z390 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <https://www.gnu.org/licenses/>.
+*/
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -11,29 +30,7 @@ import javax.swing.JTextArea;
 
 
 public class zc390{
-	/*****************************************************
-	
-    ZC390 zcobol COBOL translator to z390 macro assembler
-    meta language which can then be expanded to
-    z390 mainframe assembler, i586 Intel assembler,
-    MS VCE++, or J2SE Java using macro libraries.
-	
-    Copyright 2011 Automated Software Tools Corporation
-	 
-    z390 is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    z390 is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with z390; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
+	/*
     zc390 is the component of z390 used to translate
     COBOL source programs (.CBL) to
     z390 assembler source programs (.MLC).
@@ -444,8 +441,10 @@ public class zc390{
 		    * and copyright on statstics file
 		    */
 		   	if  (tz390.opt_stats){
-		   	    tz390.put_stat_line("Copyright 2011 Automated Software Tools Corporation");
-		   	    tz390.put_stat_line("z390 is licensed under GNU General Public License");
+				tz390.put_stat_line("Copyright (c) 2021 z390 Assembler LLC");
+				tz390.put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");   
+				tz390.put_stat_line("This is free software, and you are welcome to redistribute it");
+				tz390.put_stat_line("under certain conditions; see included LICENSE file for details.");
 		   	    tz390.put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name);
 		   	    tz390.put_stat_line("options = " + tz390.cmd_parms);
 		   	}
