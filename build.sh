@@ -21,5 +21,6 @@ bash/runzpar
 bash/runassist
 bash/runcmdproc
 bash/runvsedemos
+bash/runzstrmactest
 
 bash/blddist

@@ -1,0 +1,59 @@
+#!/bin/bash
+#######################################################################
+# z390 - Mainframe assembler emulator and run-time engine
+# Copyright (C) 2021 z390 Assembler LLC
+#
+# This file is part of z390.
+# z390 is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# z390 is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
+#######################################################################
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script
+cd ..               # go to root
+
+echo "Test zstrmac basic structures using bootstrap version 1"
+SYSUT1=rt/test/TESTSPE1.ZSM SYSUT2=rt/test/TESTSPE1.MLC bash/mz390 rt/test/ZSTRMAC1 NOASM STATS NOTIMING 
+bash/asmlg rt/test/TESTSPE1 BAL NOTIMING STATS
+
+SYSUT1=rt/test/TESTSPE2.ZSM SYSUT2=rt/test/TESTSPE2.MLC bash/mz390 rt/test/ZSTRMAC1 NOASM STATS NOTIMING
+bash/asmlg rt/test/TESTSPE2 BAL NOTIMING STATS
+
+echo "Translate structured version 2 using bootstrap version 1"
+SYSUT1=rt/test/ZSTRMAC2.ZSM SYSUT2=rt/test/ZSTRMAC2.MLC bash/mz390 rt/test/ZSTRMAC1 NOASM STATS NOTIMING
+
+echo "Verify TESTSPE1.ZSM translation using zstrmac2 matches zstrmac1"
+SYSUT1=rt/test/TESTSPE1.ZSM SYSUT2=rt/test/TESTSPE1.TXT bash/mz390 rt/test/ZSTRMAC2 NOASM STATS NOTIMING
+
+# use cmp to compare two files. If variations, will return non zero
+cmp rt/test/TESTSPE1.MLC rt/test/TESTSPE1.TXT
+
+echo "Regen ZSTRMAC2 using mz390 support to ver zstrmac2.txt = mlc"
+SYSUT1=rt/test/ZSTRMAC2.ZSM SYSUT2=rt/test/ZSTRMAC2.MLC bash/mz390 rt/test/ZSTRMAC2.ZSM NOASM STATS NOTIMING
+SYSUT1=rt/test/TESTSPE1.ZSM SYSUT2=rt/test/TESTSPE1.TXT bash/mz390 rt/test/ZSTRMAC2 NOASM STATS NOTIMING
+cmp rt/test/TESTSPE1.MLC rt/test/TESTSPE1.TXT
+
+echo "Test extensions to ACASE added in zstrmac2 C,X,(v1,v2)"
+SYSUT1=rt/test/TESTSPE3.ZSM SYSUT2=rt/test/TESTSPE3.MLC bash/mz390 rt/test/ZSTRMAC2.ZSM NOASM STATS NOTIMING
+bash/asmlg rt/test/TESTSPE3 BAL NOTIMING STATS
+
+echo "Test zstrmac error messages"
+set +e  # turn off error trap as expected to fail
+SYSUT1=rt/test/TESTSPE4.ZSM SYSUT2=rt/test/TESTSPE4.MLC bash/mz390 rt/test/ZSTRMAC2.ZSM NOASM STATS NOTIMING
+set -e
+
+echo "Test ZSTRMAC SPM's using z390 SPE"
+bash/asmlg rt/test/TESTSPM1 BAL NOTIMING STATS
+
+echo "Test ZSTRMAC SPM's macros using gene./rated HLASM compatabile macros"
+bash/bldzstrmac build/zstrmac
+bash/asmlg rt/test/TESTSPM1 'SYSMAC(build/zstrmac+mac)' 'SYSCPY(build/zstrmac+mac)' BAL NOTIMING STATS

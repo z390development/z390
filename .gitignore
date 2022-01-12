@@ -15,6 +15,10 @@ z390.properties
 dist/
 build/
 
+# generated spm files in mac/spm except readme
+mac/spm/*
+!mac/spm/README.md
+
 # Java compiler output stuff
 **/*.[jJ][aA][rR]
 **/*.[eEe][xX][eE]
