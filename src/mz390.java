@@ -433,6 +433,7 @@ public  class  mz390 {
 	 * 2020-12-28 dsh rpi 2226 change sysvsam default to 1 see tz390 zvsam option
 	 * 2021-01-07 dsh rpi 2228 supress error searching for symbol with option NOASM for ZPARTRS
 	 * 2021-08-11 dsh issue #318 dup of 261 fix identified by John Ganci, let az390 convert sdts to numeric as macro may test for sdt strings
+	 * 2022-01-17 dsh issue #343 abort if maxline exceeded
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -559,6 +560,7 @@ public  class  mz390 {
 	int[]        mac_ictl_cont  = null; // RPI 728
 	int cur_mac_line_num = 0;
 	int cur_mac_file_num = 0;
+	int tot_get_mac = 0; // #343 count bal lines generated and chk opt_maxline
 	boolean mac_mend_eof = false;  // RPI 740
 	String mac_line = null;
 	String mac_label = null;
@@ -2484,6 +2486,10 @@ public  class  mz390 {
 			while (retry){
 				retry = false;  
 				tz390.systerm_io++;
+				tot_get_mac++; // issue #343 count bal lines 
+				if (tot_get_mac > tz390.opt_maxline){
+				   abort_error(270,"maxium bal lines exceeded");
+				}
 				temp_line = mac_file_buff[cur_mac_file].readLine();
 				if (temp_line != null && tz390.opt_chksrc >= 3){
 					temp_line = tz390.trim_trailing_spaces(temp_line,0); // RPI 1143 
@@ -3486,7 +3492,7 @@ public  class  mz390 {
 		 * pass text_line to az390 and update
 		 * the az390 copy of mz390_errors
 		 */
-		if (az390 != null){
+		if (az390 != null){ 
 			if (az390.lookahead_mode){
 				if (text_line == null || text_line.length() == 0 || text_line.charAt(0) != '*'){
 					abort_error(193,"invalid pass request during lookahead");
@@ -12578,7 +12584,7 @@ public  class  mz390 {
     	 */
     	last_ainsert--;
     	if (tot_mac_line >= last_ainsert){
-    		abort_error(270,"maximum source lines MAXLINE exceeded");
+    		abort_error(270,"maximum ainsert source lines MAXLINE exceeded");
     		return;
     	}
     	mac_file_prev_line[last_ainsert] = mac_file_prev_line[mac_line_index];

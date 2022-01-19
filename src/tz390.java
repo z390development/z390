@@ -310,6 +310,7 @@ public  class  tz390 {
     * 2021-04-19 JJG Replace Linux/Mac Perl usage with Linux shell; add variable procdir which
     *                contains "bat" for Windows, "bash" for Linux/Mac.
     * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand
+	* 2022-01-16 dsh #343 increase maxline from 200000 to 400000 for rpi\zivp.asm from Dan Greiner
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -432,7 +433,7 @@ public  class  tz390 {
     int opt_maxfile = 1000;     // RPI 707 max concourrent files open
     int opt_maxgbl  = 100000;   // RPI 284
     int opt_maxlcl  = 100000;   
-    int opt_maxline = 200000;
+    int opt_maxline = 400000;  // issue #343 increased from 200000 to 400000
     int opt_maxlog  = 1000000; // RPI 731
     int opt_maxparm = 10000;
     int opt_maxpass = 2;       // RPI 920 maximum az390 passes for nested symbol refs

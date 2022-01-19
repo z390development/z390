@@ -412,7 +412,8 @@ public  class  az390 implements Runnable {
 		* 2021-02-07 RPI 2226 correct RSYb EB17 STCCTM R1,M3,D2(B2) and fix VNOT not setting v3=v2
         * 2821-04-26 Issue #239 fix no error on undefined sym for RIL i2 operand
         * 2021-08-20 DSH issue #230 correct vector instruction erros reported by Dan Greiner
-        * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand m4 or m6		
+        * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand m4 or m6	
+        ^ 2022-01-16 dsh #343 move abort for exceeding maxline 		
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -5445,8 +5446,7 @@ private void load_bal(){
      	    }
 	    }
 		get_bal_line();
-		while (!bal_eof && bal_line != null
-				&& tot_bal_line < tz390.opt_maxline){
+		while (!bal_eof && bal_line != null){
             save_bal_line();
 			parse_bal_line();
             bal_op_index = find_bal_op();
@@ -5455,15 +5455,15 @@ private void load_bal(){
 	        }
  			if  (bal_line != null){
 				tot_bal_line++;
+				if (tot_bal_line >= tz390.opt_maxline){ // issue #343 moved here to catch before end
+			        abort_error(83,"maximum source lines exceeded");
+		        }
 	            get_bal_line();
 			}
 		}
 		if (!end_found){
 			process_end();
-		}
-		if (tot_bal_line >= tz390.opt_maxline){
-			abort_error(83,"maximum source lines exceeded");
-		}
+		}		
         if (tz390.opt_tracea){
         	tz390.put_trace("PASS " + cur_pass + " TOTAL ERRORS = " + az390_errors);
         }
