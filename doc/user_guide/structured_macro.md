@@ -54,21 +54,19 @@ SPE.
 
 ## Translating to standard
 
-The following source programs are included for general use:
+The following items are included for general use:
 
-* linklib\ZSTRMAC.ZSM - structured translator which can be translated to standard 
+* :material-file-question: zstrmac - script to convert macro to standard HLASM format
+* bldzstrmacs - script to translate all the SPM's in z390\mac 
+  directory to HLASM compatible format 
+* rt\test\ZSTRMAC2.ZSM - structured translator which can be translated to standard 
   HLASM compatible code using itself.
-* :material-file-question: rt\test\STRMAC1.MLC  - bootstrap structured translator which is 
-  HLASM compatible.  
-* linklib\zstrmac.txt - the generated HLASM compatible translator.
-* :material-file-question: ZSTRMAC.BAT - command using %1 to set SYSUT1 input and %2 to set 
-  SYSUT2 output and translate 
-  structured macro assembler to standard HLASM macro assembler.
-* :material-file-question: ZSTRSPM.BAT - command to translate all the SPM's in z390\mac 
-  directory to HLASM compatible code versions in z390\mac\spm directory using 
-  calls to the ZSTRMAC.BAT translator command.
+* rt\test\ZSTRMAC1.MLC - bootstrap structured translator which is HLASM compatible.  
+* :material-file-question: linklib\zstrmac.txt - the generated HLASM compatible translator.
 
 ## Regression tests
+
+You can execute the regression tests by using the script `runzstrmactests`.
 
 The following regression test programs are included:
 
@@ -78,6 +76,7 @@ The following regression test programs are included:
 * rt\test\TESTSPE2.ZSM - test program for ZSTRMAC2 with all the basic structures in lower case
 * rt\test\TESTSPE3.ZSM - test of all 256 ACASE values using all forms of AWHEN operands
 * rt\test\TESTSPE4.ZSM - test error messages
+* rt\test\TESTSPM1.MLC - test program for structured programming macros
 
 ## Demo
 
@@ -100,4 +99,3 @@ The following system macros use the macro extensions:
 * EQUREGS.MAC - generate EQU symbols if not already generated for GPR and FPR registers
 * ZCLOSE.MAC - close files (called from CLOSE and other user macros in concatenated directories)
 * ZOPEN.MAC - open files (called from OPEN and other user macros in concatenated directories)
-
