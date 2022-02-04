@@ -311,6 +311,7 @@ public  class  tz390 {
     *                contains "bat" for Windows, "bash" for Linux/Mac.
     * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand
 	* 2022-01-16 dsh #343 increase maxline from 200000 to 400000 for rpi\zivp.asm from Dan Greiner
+	* 2022-01-22 dsh #335 acall - restored aparm used to set &(acall)(n) just before aentry
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -1682,7 +1683,7 @@ public  class  tz390 {
          "--=AINSERT,204,--",    //   7630         "AINSERT"        204
          "--=ALIAS,106,--",      //   7190         "ALIAS"          106
          "--=AMODE,107,--",      //   7200         "AMODE"          107
-		 "--=APARM,228,--",      //                "APARM" RPI 2220 resets ACALL parms just before AENTRY
+		 "--=APARM,228,--",      //                "APARM" RPI 2220 resets ACALL parms just before AENTRY // dsh #335 restored
          "--=AREAD,206,--",      //   7650         "AREAD"          206
          "--=ASPACE,126,--",     //   7390         "ASPACE"         126
          "--=CATTR,108,--",      //   7210         "CATTR"          108
