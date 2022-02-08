@@ -436,6 +436,7 @@ public  class  mz390 {
 	 * 2022-01-17 dsh issue #343 abort if maxline exceeded
 	 * 2022-01-25 dsh issue #335 set &(acall)(n) parms at aparm call using zam insert MLC line just before aentry for acall
 	 *            dsh #335 make find_acall_name separate from fine_var using ACALL_ prefix
+	 * 2022-02-08 dsh #335 fix bug in insert_acall_parms not checking for no parms and returning
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -3223,6 +3224,7 @@ public  class  mz390 {
 		/*
 		/* insert &(acall_name)(parm#) SETC 'parm' for each parm in acall name(p1,p2,,pn)	
 		 */
+		 if (acall_parm.length() < 3)return; // #335 last fix for v1.8.1
 		 String acall_arg = acall_parm.substring(1,acall_parm.length()-1);
 		 String acall_arg_insert = "";
 		 int acall_arg_comma = 0;
