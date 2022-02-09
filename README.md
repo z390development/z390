@@ -18,7 +18,4 @@ Unless provided below, z390 is GPL v2 and copyright z390 Assembler LLC
 
 * structuredmacros/ - GPL v3 (c) Daniel H. Snyder
 * barcode/ - GPL v3 (c) ABA Inc
-* src/zACB.java - GPL v2 (c) Abe Kornelis
-* src/zCatVAIX.java - GPL v2 (c) Abe Kornelis
-* src/zCatVCLR.java - GPL v2 (c) Abe Kornelis
 
