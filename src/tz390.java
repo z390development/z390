@@ -310,6 +310,8 @@ public  class  tz390 {
     * 2021-04-19 JJG Replace Linux/Mac Perl usage with Linux shell; add variable procdir which
     *                contains "bat" for Windows, "bash" for Linux/Mac.
     * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand
+	* 2022-01-16 dsh #343 increase maxline from 200000 to 400000 for rpi\zivp.asm from Dan Greiner
+	* 2022-01-22 dsh #335 acall - restored aparm used to set &(acall)(n) just before aentry
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -432,7 +434,7 @@ public  class  tz390 {
     int opt_maxfile = 1000;     // RPI 707 max concourrent files open
     int opt_maxgbl  = 100000;   // RPI 284
     int opt_maxlcl  = 100000;   
-    int opt_maxline = 200000;
+    int opt_maxline = 400000;  // issue #343 increased from 200000 to 400000
     int opt_maxlog  = 1000000; // RPI 731
     int opt_maxparm = 10000;
     int opt_maxpass = 2;       // RPI 920 maximum az390 passes for nested symbol refs
@@ -1681,7 +1683,7 @@ public  class  tz390 {
          "--=AINSERT,204,--",    //   7630         "AINSERT"        204
          "--=ALIAS,106,--",      //   7190         "ALIAS"          106
          "--=AMODE,107,--",      //   7200         "AMODE"          107
-		 "--=APARM,228,--",      //                "APARM" RPI 2220 resets ACALL parms just before AENTRY
+		 "--=APARM,228,--",      //                "APARM" RPI 2220 resets ACALL parms just before AENTRY // dsh #335 restored
          "--=AREAD,206,--",      //   7650         "AREAD"          206
          "--=ASPACE,126,--",     //   7390         "ASPACE"         126
          "--=CATTR,108,--",      //   7210         "CATTR"          108
