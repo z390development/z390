@@ -9,12 +9,12 @@ cd ..
 sysmac='sysmac(mac)'
 optable='optable(z390)'
 
-bash/asm tests/TESTINS1 trace $sysmac
-bash/asmlg tests/TESTINS2 trace $sysmac
-bash/asmlg tests/TESTINS3 trace $sysmac
-bash/asmlg tests/TESTINS4 trace $sysmac
-bash/asmlg tests/TESTINS5 trace $sysmac $optable
-bash/asmlg tests/TESTDFP1 trace $sysmac $optable
-bash/asmlg tests/TESTDFP2 trace $sysmac $optable
+bash/asm   tests/TESTINS1 trace noloadhigh $sysmac
+bash/asmlg tests/TESTINS2 trace noloadhigh $sysmac
+bash/asmlg tests/TESTINS3 trace noloadhigh $sysmac
+bash/asmlg tests/TESTINS4 trace noloadhigh $sysmac
+bash/asmlg tests/TESTINS5 trace noloadhigh $sysmac $optable
+bash/asmlg tests/TESTDFP1 trace noloadhigh $sysmac $optable
+bash/asmlg tests/TESTDFP2 trace noloadhigh $sysmac $optable
 bash/zopcheck
 echo "Verify tests ran without errors"

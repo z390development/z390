@@ -3924,8 +3924,8 @@ public class pz390 {
             if (psw_problem_state == psw_problem_mode)
                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
                 } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else {
-				ins_setup_e();
+			ins_setup_e();
+            if (psw_problem_state == psw_supervisor_mode){
 				reg.put(rf1 + 7, (byte) (reg.get(rf1 + 7) | 0x80 - 0x80));
 				sz390.svc(11);
 				}
@@ -4416,7 +4416,6 @@ public class pz390 {
              if (psw_problem_state == psw_problem_mode)
                 {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
                  } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
 			ins_setup_rre();
 			break;
 		case 0x2A: // 2820 "B22A" "RRBE" "RRE"
@@ -4464,54 +4463,81 @@ public class pz390 {
 			ins_setup_rre();
 			break;
 		case 0x30: // 2880 "B230" "CSCH" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x31: // 2890 "B231" "HSCH" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x32: // 2900 "B232" "MSCH" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x33: // 2910 "B233" "SSCH" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x34: // 2920 "B234" "STSCH" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x35: // 2930 "B235" "TSCH" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x36: // 2940 "B236" "TPI" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x37: // 2950 "B237" "SAL" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x38: // 2960 "B238" "RSCH" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x39: // 2970 "B239" "STCRW" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x3A: // 2980 "B23A" "STCPS" "S"
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x3B: // 2990 "B23B" "RCHP" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x3C: // 3000 "B23C" "SCHM" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x40: // 3010 "B240" "BAKR" "RRE"
@@ -4668,15 +4694,15 @@ public class pz390 {
 			exec_cuse();
 			break;
 		case 0x58: // 3200 "B258" "BSG" "RRE"
-             if (psw_problem_state == psw_problem_mode)
-                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                 } // in problem state issue privileged-operation exception, otherwise no-op as we have no subspaces groups
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no subspaces groups
 			ins_setup_rre();
 			break;
 		case 0x5A: // 3210 "B25A" "BSA" "RRE"
-             if (psw_problem_state == psw_problem_mode)
-                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                 } // in problem state issue privileged-operation exception, otherwise no-op as we have no DUCT
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no DUCT
 			ins_setup_rre();
 			break;
 		case 0x5D: // 3220 "B25D" "CLST" "RRE"
@@ -4693,7 +4719,9 @@ public class pz390 {
 			ins_setup_rre();
 			break;
 		case 0x76: // 3250 "B276" "XSCH" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
 			ins_setup_s();
 			break;
 		case 0x77: // 3260 "B277" "RP" "S"
@@ -4797,7 +4825,6 @@ public class pz390 {
 			ins_setup_rre();
 			break;
 		case 0xB0: // 3400 "B2B0" "STFLE" "S" Z9-3
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
 			psw_check = false;
 			ins_setup_s();
 			/*
@@ -4814,14 +4841,13 @@ public class pz390 {
 			ins_setup_s();
 			break;
 		case 0xB2: // 3390 "B2B2" "LPSWE" "S"
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
 			ins_setup_s();
 			break;
 		case 0xB8: // 3300 "B2B8" "SRNMB" "S" RPI 1125
 			psw_check = false;
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception
 			ins_setup_s();
 			fp_bfp_rnd = (bd2_loc & 0x7); // set bfp rounding mode
 			fp_bfp_rnd_default = fp_bfp_rnd; // RPI 1125
@@ -4851,12 +4877,16 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			reg.putInt(rf1 + 4, 0);  // force nesting to 0 
-			break;	
+			break;
+		case 0xF8: // "B2F8" "TEND" "S"
+			set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
+			ins_setup_s0();
+			break;
 		case 0xFA: // "B2FA" "IE NIAI I1,I2" z15
 			ins_setup_ie();
-			break;		
+			break;
 		case 0xFC: // "B2FC S 7,72 TABORT D2(B2) z15
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+			set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
 			ins_setup_s();
 			break;		
 		case 0xFF: // 3400 "B2FF" "TRAP4" "S"
@@ -6763,7 +6793,7 @@ public class pz390 {
 			ins_setup_rre();
 			break;
 		case 0x29: //  "B929=KMA,54,340", // B929 RRFb 54,340 KMA R1,M3,R2 RPI 2202
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+			set_psw_check(psw_pic_spec); // RPI 1622 DK specification exception
 			ins_setup_rrfb();
 			break;	
 		case 0x2A: // "B92A" "KMF" "RRE" RPI 1125
@@ -7183,7 +7213,6 @@ public class pz390 {
                 {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
                  } // in problem state issue privileged-operation exception, otherwise no-op as we have no ALB
                    // But we could  implement this instruction as a compare-and-swap
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
 			ins_setup_rre();
 			break;
 		case 0x8D: // 4920 "B98D" "EPSW" "RRE"
@@ -7193,7 +7222,6 @@ public class pz390 {
              if (psw_problem_state == psw_problem_mode)
                 {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
                  } // in problem state issue privileged-operation exception, otherwise no-op as we have no DAT
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
 			ins_setup_rrfe();
 			break;
 		case 0x8F: // 	"B98F=CRDTE,54,344", // B98F rrfb 54,344 CRDTE R1,R3,R2[,M4] RPI 2202
@@ -8827,7 +8855,7 @@ public class pz390 {
 			reg.put(rf1+4,(byte)(reg.get(rf1+4) & 0x7f)); // turn off high 31 bit
 			break;
 		case 0x49: // "E349=STGSC,18,180", // E349 RXYa STGSC R1,D2(X2,B2) RPI 2202
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+			set_psw_check(psw_pic_spec); // RPI 1622 DK specification exception
 			ins_setup_rxy();
 			break;
 		case 0x4C: // "E34C=LGG,18,180", // E34C RXYa LGG R1,D2(X2,B2) RPI 2202
@@ -8838,7 +8866,7 @@ public class pz390 {
 			reg.put(rf1+4,(byte)(reg.get(rf1+4) & 0x7f)); // turn off high 31 bit 
 			break;
 		case 0x4D: // "E34D=LGSC,18,180", // E34D RXYa LGSC R1,D2(X2,B2) RPI 2202
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+			set_psw_check(psw_pic_spec); // RPI 1622 DK specification exception
 			ins_setup_rxy();
 			break;
 		case 0x50: // 5750 "E350" "STY" "RXY"
@@ -9416,11 +9444,11 @@ public class pz390 {
 			psw_cc = get_int_log_comp_cc(mem.getInt(bd1_loc), if2 & 0xffff);
 		    break;
 	     case 0x60:  // E560 SIL TBEGIN D1(B1),I2 RPI 2202
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+			set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
 			ins_setup_sil();
 		    break;
 	     case 0x61:  // E561 SIL TBEGINC D1(B1),I2 RPI 2202
-			set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+			set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
 			ins_setup_sil();
 		    break;
 		}
@@ -11611,7 +11639,6 @@ public class pz390 {
 	 * ********************************************
 	 */
 	private void ins_setup_dm() { // "DM" 1 DIAGNOSE 83000000
-		set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
 		psw_ins_len = 4;
 		if (tz390.opt_trace) {
 			trace_ins();
@@ -12416,6 +12443,17 @@ public class pz390 {
 		if (bd2_loc >= tot_mem) { // RPI 299
 			set_psw_check(psw_pic_addr);
 		}
+	}
+
+	private void ins_setup_s0() { // "S" B2F8 TEND oo00----
+		psw_ins_len = 4;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 4;
 	}
 
 	private void ins_setup_si() { // "SI" 9 CLI ooiibddd
