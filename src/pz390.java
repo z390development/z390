@@ -663,7 +663,7 @@ public class pz390 {
 
 	int psw_pic_addr = 0x0c5;
 
-	int psw_pic_spec = 0x0c6;
+	int psw_pic_spec = 0x0c6; // specification exception
 
 	int psw_pic_data = 0x0c7;
 
@@ -2799,22 +2799,23 @@ public class pz390 {
 		switch (opcode1) {
 		case 0x80: // 1530 "8000" "SSM" "S"
 			psw_check = false;
+			ins_setup_s();
             if (psw_problem_state == psw_problem_mode)
                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
                 } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-			ins_setup_s();
 			break;
 		case 0x82: // 1540 "8200" "LPSW" "S"
 			psw_check = false;
+			ins_setup_s();
             if (psw_problem_state == psw_problem_mode)
                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
                 } // in problem state issue privileged-operation exception
-			ins_setup_s();
             if (psw_problem_state == psw_supervisor_mode)
 			   {set_psw_loc(mem.getInt(bd2_loc + 4));
 			    }
 			break;
 		case 0x83: // 1550 "83" "DIAGNOSE" "DM"
+			// psw_check is left on true causing a S0C1 abend to be generated (Diagnose is not a supported instruction on z390)
 			ins_setup_dm();
 			break;
 		case 0x84: // 1560 "84" "BRXH" "RSI"
