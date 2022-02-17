@@ -2798,9 +2798,10 @@ public class pz390 {
 		 */
 		switch (opcode1) {
 		case 0x80: // 1530 "8000" "SSM" "S"
-             if (psw_problem_state == psw_problem_mode)
-                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                 } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			psw_check = false;
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
 			ins_setup_s();
 			break;
 		case 0x82: // 1540 "8200" "LPSW" "S"
@@ -2809,7 +2810,9 @@ public class pz390 {
                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
                 } // in problem state issue privileged-operation exception
 			ins_setup_s();
-			set_psw_loc(mem.getInt(bd2_loc + 4));
+            if (psw_problem_state == psw_supervisor_mode)
+			   {set_psw_loc(mem.getInt(bd2_loc + 4));
+			    }
 			break;
 		case 0x83: // 1550 "83" "DIAGNOSE" "DM"
 			ins_setup_dm();
@@ -7503,7 +7506,7 @@ public class pz390 {
 	     case 0xA2:  // 10 "B9A2" "PTF" "RRE" 14 RPI 817
             if (psw_problem_state == psw_problem_mode)
                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no support for ulti-cpu topology
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no support for multi-cpu topology
 	        ins_setup_rre();
 	        break;
 		case 0xAA: // 5250 "B9AA" "LPTEA" "RRF-b" Z9-19
