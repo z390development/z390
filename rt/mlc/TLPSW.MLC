@@ -45,7 +45,6 @@ RET1A1   DS    0H
          WTO   MF=(E,WTO3)         'LPSW S0C2 trapped'
          SNAP  STORAGE=(C,D),PDATA=,TEXT='CODE'
          SNAP  STORAGE=(A,B),PDATA=,TEXT='ESTAE RETURN'
-*NSI     B     END1A
 END1A    DS    0H
 *
          ESTAE 0                   Cancel ESTAE
@@ -113,69 +112,6 @@ ESTAEEX  DS    0H
          BR    14                  Return to operating system
 *
          POP   USING               Restore USING state
-         TITLE 'Display CC, program mask and GPRs via WTO'
-*
-* Display all 16 GPRs via WTO
-*
-* Caller restores registers
-*
-DUMPREGS DS    0H
-         ST    14,DRR14            Save return address
-*
-         UNPK  DW2(3),XCCPM(2)     Convert CC and program mask
-         TR    DW2(2),H2P          ... to printable hex
-         MVC   W2CCPM,DW2          Copy to WTO
-         WTO   MF=(E,WTOCC)        Dump CC and program mask
-*
-         LA    3,XREGS             Beginning of register area
-         LA    8,XREGS+L'XREGS-1   Last byte of register area
-         LA    6,WTOLIT1-L'WTOLIT1 Before first literal
-DRLP1    DS    0H                  One line
-         LA    6,L'WTOLIT(,6)      Next literal
-         MVC   WTOLIT,0(6)         Copy literal for line
-         LA    7,WTOR1             First register on output line
-         LA    5,4*8(,3)           Past group of 4 registers
-DRLP2    DS    0H
-         UNPK  DW2(9),0(5,3)       Convert one register
-         UNPK  DW2+8(9),4(5,3)     ... to printable hex
-         TR    DW2(16),H2P         Finish conversion
-         MVC   0(16,7),DW2         Copy to WTO
-         LA    7,L'WTOR1+1(,7)     Next register on output line
-         LA    3,8(,3)             Next register to dump
-         CR    3,5                 Finished line?
-         BL    DRLP2               No; continue on line
-*
-         WTO   MF=(E,WTO0)         Dump one line of registers
-*
-         CR    5,8                 More registers?
-         BL    DRLP1               Yes; do next group
-*
-         L     14,DRR14            Restore return address
-         BR    14                  Return to caller
-DRR14    DS    F                   Save return address
-WTOLIT1  DS    0CL(L'WTOLIT03)     Beginning of literals for lines
-WTOLIT03 DC    C'R0-R3'
-WTOLIT47 DC    C'R4-R7'
-WTOLIT8B DC    C'R8-RB'
-WTOLITCF DC    C'RC-RF'
-*
-WTO0     WTO   'xxxxx  xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxx*
-               xx xxxxxxxxxxxxxxxx',MF=L
-WTOLIT   EQU   WTO0+4,5
-WTOR1    EQU   WTO0+4+7,16
-WTOR2    EQU   WTO0+4+24,16
-WTOR3    EQU   WTO0+4+41,16
-WTOR4    EQU   WTO0+4+58,16
-*
-WTOCC    WTO   'CCPM   xx',MF=L
-W2CCPM   EQU   WTOCC+4+7,2
-*
-DW2      DS    2D,Xl1
-*
-         DS    0D
-         DS    F
-XCCPM    DS    XL4                 Condition code and program mask
-XREGS    DS    XL128,Xl1           Registers: 0--15
 *
 DW       DS    D,XL1               Doubleword work and pad
 FW       DS    F,XL1               Fullword work and pad
