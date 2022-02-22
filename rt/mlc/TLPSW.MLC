@@ -1,0 +1,198 @@
+         Title 'Test LPSW with S0C2 handled by ESTAE'
+         MACRO
+         XDUMP
+         STMG  0,15,XREGS          Save registers
+         IPM   0                   Get CC and program mask
+         ST    0,XCCPM             Save CC and program mask
+         BAS   14,DUMPREGS         Dump the registers and CC, pgm mask
+         L     0,XCCPM             Saved CC and program mask
+         SPM   0                   Restore CC and program mask
+         LMG   0,15,XREGS          Restore registers
+         MEND
+TLPSW    CSECT
+TLPSW    AMODE 31
+TLPSW    RMODE 24
+         SAVE  (14,12),,*
+         LR    12,15               R12 = base register
+         USING TLPSW,12            Establish addressability
+*
+         WTO   'TLPSW entered'
+*
+         LA    3,ESPARM            Parm list for ESTAE exit
+         ESTAEX ESTAEEX,PARAM=(3)  Set ESTAE
+*
+         LA    11,LPSW             The LPSW
+         LA    10,AFTLPSW          After the LPSW
+         ST    11,FW               Convert to printable hex
+         UNPK  DW(9),FW(5)
+         TR    DW,H2P              Finish conversion
+         MVC   W1@1,DW             Copy to WTO
+         ST    10,FW               Convert to printable hex
+         UNPK  DW(9),FW(5)
+         TR    DW,H2P              Finish conversion
+         MVC   W1@2,DW             Copy to WTO
+         WTO   MF=(E,WTO1)
+*
+         LA    0,RET1A             Return address
+         ST    0,ESRET@            Save for ESPIE exit
+*
+         B     C1
+C        DS    0D
+         DC    CL8'BEG CODE'
+C1       DS    0H
+         SR    0,0
+LPSW     LPSW  DW1                 Try LPSW
+         DC    H'0,1'              Should not occur
+AFTLPSW  SR    1,1
+         WTO   MF=(E,WTO2)         'LPSW successful; not trapped'
+         B     END1A               End test 1a
+RET1A    DS    0H
+         B     RET1A1
+         DS    0D
+         DC    CL8'END CODE'
+D        DS    0D
+RET1A1   DS    0H
+         WTO   MF=(E,WTO3)         'LPSW S0C2 trapped'
+         SNAP  STORAGE=(C,D),PDATA=,TEXT='CODE'
+         SNAP  STORAGE=(A,B),PDATA=,TEXT='ESTAE RETURN'
+*NSI     B     END1A
+END1A    DS    0H
+*
+         ESTAE 0                   Cancel ESTAE
+*
+         LM    14,12,12(13)        Restore caller's registers
+         SR    15,15               Set return code to zero
+         BR    14                  Return to caller
+*
+         LTORG
+*
+*                         1         2         3
+*               01234567890123456789012345678901234567890
+WTO1     WTO   'Address of LPSW xxxxxxxx  After LPSW xxxxxxxx',MF=L
+W1@1     EQU   WTO1+4+16,8
+W1@2     EQU   WTO1+4+37,8
+*
+WTO2     WTO   'LPSW successful; not trapped',MF=L
+*
+WTO3     WTO   'LPSW S0C2 trapped',MF=L
+*
+DW1      DS    0D
+         DC    A(0)
+         DC    A(AFTLPSW)
+*
+         DS    0D
+ESPARM   DS    0A                  Parameter list for ESTAE exit
+         DC    A(ESRET@)           A(Return address for ESTAE exit)
+         DC    A(ESCOMP)           Completion code from ESTAE exit
+         DC    A(ESPSW)            EC mode PSW from ESTAE exit
+         DS    0D
+A        DS    0D
+         DC    CL8'AAAAAAAA'
+         DS    0D
+         DC    CL4'RETA'           Eyecatcher
+ESRET@   DC    A(0)                Return address for ESPIE exit
+         DC    CL4'CMPC'           Eyecatcher
+ESCOMP   DC    F'0'                Completion code from exit
+         DC    CL8'     PSW'       Eyecatcher
+ESPSW    DC    AD(0)               PSW from exit
+*
+         DS    0D
+         DC    CL8'BBBBBBBB'
+B        DS    0D
+*
+         TITLE 'ESTAE exit'
+         PUSH  USING               Save USING state
+         DROP  ,                   End all addressability
+ESTAEEX  DS    0H
+         LR    12,15               R12 = base register
+         USING ESTAEEX,12          Establish addressability
+*
+         USING SDWA,1              Overlay SDWA
+         L     2,SDWAPARM          ESTAE parm list
+         LM    2,4,0(2)            R2: A(return address)
+*                                  R3: word for completion code
+*                                  R4: doubleword for EC mode PSW
+*
+         L     0,0(,2)             Retry address
+         L     7,SDWAABCC          Completion code
+         ST    7,0(,3)             Return the completion code
+         MVC   0(8,4),SDWAEC1      Return EC PSW at error
+*
+         SETRP ,
+         LA    15,4                Retry
+         BR    14                  Return to operating system
+*
+         POP   USING               Restore USING state
+         TITLE 'Display CC, program mask and GPRs via WTO'
+*
+* Display all 16 GPRs via WTO
+*
+* Caller restores registers
+*
+DUMPREGS DS    0H
+         ST    14,DRR14            Save return address
+*
+         UNPK  DW2(3),XCCPM(2)     Convert CC and program mask
+         TR    DW2(2),H2P          ... to printable hex
+         MVC   W2CCPM,DW2          Copy to WTO
+         WTO   MF=(E,WTOCC)        Dump CC and program mask
+*
+         LA    3,XREGS             Beginning of register area
+         LA    8,XREGS+L'XREGS-1   Last byte of register area
+         LA    6,WTOLIT1-L'WTOLIT1 Before first literal
+DRLP1    DS    0H                  One line
+         LA    6,L'WTOLIT(,6)      Next literal
+         MVC   WTOLIT,0(6)         Copy literal for line
+         LA    7,WTOR1             First register on output line
+         LA    5,4*8(,3)           Past group of 4 registers
+DRLP2    DS    0H
+         UNPK  DW2(9),0(5,3)       Convert one register
+         UNPK  DW2+8(9),4(5,3)     ... to printable hex
+         TR    DW2(16),H2P         Finish conversion
+         MVC   0(16,7),DW2         Copy to WTO
+         LA    7,L'WTOR1+1(,7)     Next register on output line
+         LA    3,8(,3)             Next register to dump
+         CR    3,5                 Finished line?
+         BL    DRLP2               No; continue on line
+*
+         WTO   MF=(E,WTO0)         Dump one line of registers
+*
+         CR    5,8                 More registers?
+         BL    DRLP1               Yes; do next group
+*
+         L     14,DRR14            Restore return address
+         BR    14                  Return to caller
+DRR14    DS    F                   Save return address
+WTOLIT1  DS    0CL(L'WTOLIT03)     Beginning of literals for lines
+WTOLIT03 DC    C'R0-R3'
+WTOLIT47 DC    C'R4-R7'
+WTOLIT8B DC    C'R8-RB'
+WTOLITCF DC    C'RC-RF'
+*
+WTO0     WTO   'xxxxx  xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxx*
+               xx xxxxxxxxxxxxxxxx',MF=L
+WTOLIT   EQU   WTO0+4,5
+WTOR1    EQU   WTO0+4+7,16
+WTOR2    EQU   WTO0+4+24,16
+WTOR3    EQU   WTO0+4+41,16
+WTOR4    EQU   WTO0+4+58,16
+*
+WTOCC    WTO   'CCPM   xx',MF=L
+W2CCPM   EQU   WTOCC+4+7,2
+*
+DW2      DS    2D,Xl1
+*
+         DS    0D
+         DS    F
+XCCPM    DS    XL4                 Condition code and program mask
+XREGS    DS    XL128,Xl1           Registers: 0--15
+*
+DW       DS    D,XL1               Doubleword work and pad
+FW       DS    F,XL1               Fullword work and pad
+H2P      EQU   *-240
+         DC    C'0123456789ABCDEF'
+*
+         TITLE 'DSECTs'
+         IHASDWA ,
+*
+         END   TLPSW

@@ -218,6 +218,8 @@ public  class  sz390 implements Runnable {
     * 2021-09-17 DSH issue #321 fix qsam get vt to correctly set LBI length in area
     * 2021-09-29 DSH git issue#245 fix RPI 1598 to only use zvsam2 if opt_zvsam = 2
     * 2021-12-27 Issue #337 remove Perl reference from CMDPROC (SVC 34) processing
+    * 2022-02-12 Issue 195. Problem mode bit in PSW now coded as variable, though in practice
+    *            Problem mode always applies - Supervisor mode not supported in z390 yet
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -2720,9 +2722,9 @@ private String dump_psw(){ // RPI 819
 	 *   1. bits 0-7 x'07' translation, 
 	 *      I/O interrupts, and external
 	 *      interrupts enabled.
-	 *   2. Bits 8-15 x'85' key eight, machine                        // RPI 1544
-	 *      checks enabled, and problem state
-	 *      enabled.
+	 *   2. Bits 8-15 x'85' key eight, machine checks enabled                      // RPI 1544
+	 *      and problem state enabled.
+     *      Bit 15: Problem state (should be on: no SVC mode in z390)              // #195
 	 *   3. Bits 16-23 AS(2),CC(2),MASK(4)
 	 *      AS   - translation mode zeros
 	 *      CC   - condition code 0=CC8, 1=CC4, 2=CC2, 3=CC1
@@ -2735,8 +2737,9 @@ private String dump_psw(){ // RPI 819
      * return 32 character hex PSW in format as definde by z-POP:     // RPI 1506
      *   1. bits 0-7 x'07' PER disabled, DAT enabled                  // RPI 1506
      *      I/O and external interrupts enabled                       // RPI 1506
-     *   2. Bits 8-15 x'85' key eight, machine check enabled          // RPI 1506 RPI 1544
-     *      No Wait state, Problem state                              // RPI 1506
+     *   2. Bits 8-15 x'85' key eight, machine checks enabled         // RPI 1506 RPI 1544 #195
+     *      No Wait state                                             // RPI 1506          #195
+     *      Bit 15: Problem state (should be on: no SVC mode in z390) // RPI 1506          #195
      *   3. Bits 16-23 AS(2),CC(2),MASK(4)                            // RPI 1506
      *      AS   - Address Space control: zero                        // RPI 1506
      *      CC   - condition code 0=CC8, 1=CC4, 2=CC2, 3=CC1          // RPI 1506
@@ -2746,12 +2749,14 @@ private String dump_psw(){ // RPI 819
      *   6. Bits 64-95 x'00000000' High word of PSW address always 0  // RPI 1506
      *   7. Bits 96-127: next sequential instruction address          // RPI 1506
 	 */
+    int   prob  = pz390.psw_problem_state ? 1 : 0;                    // #195
 	int   cc    = pz390.psw_cc_code[pz390.psw_cc];
 	int   mask  = pz390.psw_pgm_mask;
 	int   amode_and_addr;
     int   psw1;                                                       // RPI 1506
     String formatted_psw;                                             // RPI 1506
-    psw1 = 0x07850000   // bits  0-15                                 // RPI 1544
+    psw1 = 0x07840000   // bits 0-14                                  // RPI 1544 #195
+           | prob << 16 // bit  15                                    // #195
            | cc   << 12 // bits 18-19
            | mask <<  8; // bits 20-23
     if(pz390.psw_extended_amode_bit == pz390.psw_extended_amode64_on) // RPI 1506
@@ -2779,6 +2784,7 @@ private String dump_psw16(){                                          // RPI 200
      *      I/O and external interrupts enabled                       // RPI 2008
      *   2. Bits 8-15 x'85' key eight, machine check enabled,         // RPI 2008
      *      not wait state, problem state                             // RPI 2008
+     *      Bit 15: Problem state (should be on: no SVC mode in z390) // RPI #195
      *   3. Bits 16-23 AS(2),CC(2),MASK(4)                            // RPI 2008
      *      AS   - Address Space control: zero                        // RPI 2008
      *      CC   - condition code 0=CC8, 1=CC4, 2=CC2, 3=CC1          // RPI 2008
@@ -2788,11 +2794,13 @@ private String dump_psw16(){                                          // RPI 200
      *   6. Bits 64-95 x'00000000' High word of PSW address always 0  // RPI 2008
      *   7. Bits 96-127: next sequential instruction address          // RPI 2008
      */                                                               // RPI 2008
+    int   prob  = pz390.psw_problem_state ? 1 : 0;                    // #195
     int   cc = pz390.psw_cc_code[pz390.psw_cc];                       // RPI 2008
     int   mask = pz390.psw_pgm_mask;                                  // RPI 2008
     int   psw1, psw2, psw3, psw4;                                     // RPI 2008
     String formatted_psw;                                             // RPI 2008
-    psw1= 0x07850000    // bits  0-15                                 // RPI 2008
+    psw1= 0x07840000    // bits 0-14                                  // RPI 2008 #195
+          | prob << 16  // bit  15                                    // #195
           | cc << 12    // bits 18-19                                 // RPI 2008
           | mask << 8;  // bits 20-23                                 // RPI 2008
     psw2 = psw3 = 0;                                                  // RPI 2008
@@ -5958,7 +5966,12 @@ private void exec_test_cmd(){
                 String mask  = tz390.get_hex(pz390.psw_pgm_mask, 1);                          // RPI 1507
                 String mask_descr;                                                            // RPI 1507
                 tz390.put_trace(" PSW  "+dump_psw());                                         // RPI 1507
-                tz390.put_trace("      KEY   8     MODE: Problem");                           // RPI 1514
+                if (pz390.psw_problem_state == psw_problem_mode)                              //          #195
+                   {tz390.put_trace("      KEY   8     MODE: Problem");                       // RPI 1514 #195
+                    }                                                                         //          #195
+                else                                                                          //          #195
+                   {tz390.put_trace("      KEY   8     MODE: Supervisor");                    //          #195
+                    }                                                                         //          #195
                 if (pz390.psw_extended_amode_bit == pz390.psw_extended_amode64_on)            // RPI 1507
                    {tz390.put_trace("      AMODE 64");                                        // RPI 1507
                     }                                                                         // RPI 1507
