@@ -1,14 +1,4 @@
          Title 'Test LPSW with S0C2 handled by ESTAE'
-         MACRO
-         XDUMP
-         STMG  0,15,XREGS          Save registers
-         IPM   0                   Get CC and program mask
-         ST    0,XCCPM             Save CC and program mask
-         BAS   14,DUMPREGS         Dump the registers and CC, pgm mask
-         L     0,XCCPM             Saved CC and program mask
-         SPM   0                   Restore CC and program mask
-         LMG   0,15,XREGS          Restore registers
-         MEND
 TLPSW    CSECT
 TLPSW    AMODE 31
 TLPSW    RMODE 24
