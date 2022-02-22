@@ -2722,32 +2722,31 @@ private String dump_psw(){ // RPI 819
 	 *   1. bits 0-7 x'07' translation, 
 	 *      I/O interrupts, and external
 	 *      interrupts enabled.
-	 *   2. Bits 8-15 x'85' key eight, machine checks enabled                      // RPI 1544
-	 *      and problem state enabled.
-     *      Bit 15: Problem state (should be on: no SVC mode in z390)              // #195
-	 *   3. Bits 16-23 AS(2),CC(2),MASK(4)
+	 *   2. Bits 8-14 x'84' key eight, machine checks enabled                      // RPI 1544 #195
+     *   3. Bit 15: Problem state (should be on: no SVC mode in z390)              // #195
+	 *   4. Bits 16-23 AS(2),CC(2),MASK(4)
 	 *      AS   - translation mode zeros
 	 *      CC   - condition code 0=CC8, 1=CC4, 2=CC2, 3=CC1
 	 *      MASK - fixed, decimal, HFP exp, HFP sig. 
-	 *   4. Bits 24-31 zeros (64 bit addressing if 31 & 32 are one)
-	 *   5. Bit  31    basic addressing mode 0=24, 1=31
-	 *   6. Bits 32-63 - address of next instruction       
+	 *   5. Bits 24-31 zeros (64 bit addressing if 31 & 32 are one)
+	 *   6. Bit  31    basic addressing mode 0=24, 1=31
+	 *   7. Bits 32-63 - address of next instruction       
      *
      * in amode64: // RPI 1506
      * return 32 character hex PSW in format as definde by z-POP:     // RPI 1506
      *   1. bits 0-7 x'07' PER disabled, DAT enabled                  // RPI 1506
      *      I/O and external interrupts enabled                       // RPI 1506
-     *   2. Bits 8-15 x'85' key eight, machine checks enabled         // RPI 1506 RPI 1544 #195
+     *   2. Bits 8-14 x'84' key eight, machine checks enabled         // RPI 1506 RPI 1544 #195
      *      No Wait state                                             // RPI 1506          #195
-     *      Bit 15: Problem state (should be on: no SVC mode in z390) // RPI 1506          #195
-     *   3. Bits 16-23 AS(2),CC(2),MASK(4)                            // RPI 1506
+     *   3. Bit 15: Problem state (should be on: no SVC mode in z390) // RPI 1506          #195
+     *   4. Bits 16-23 AS(2),CC(2),MASK(4)                            // RPI 1506
      *      AS   - Address Space control: zero                        // RPI 1506
      *      CC   - condition code 0=CC8, 1=CC4, 2=CC2, 3=CC1          // RPI 1506
      *      MASK - fixed, decimal, HFP exp, HFP significance          // RPI 1506
-     *   4. Bits 24-31 x'01' Amode64 enabled                          // RPI 1506
-     *   5. Bits 32-63 x'80000000' Amode 64 requires amode31 on       // RPI 1506
-     *   6. Bits 64-95 x'00000000' High word of PSW address always 0  // RPI 1506
-     *   7. Bits 96-127: next sequential instruction address          // RPI 1506
+     *   5. Bits 24-31 x'01' Amode64 enabled                          // RPI 1506
+     *   6. Bits 32-63 x'80000000' Amode 64 requires amode31 on       // RPI 1506
+     *   7. Bits 64-95 x'00000000' High word of PSW address always 0  // RPI 1506
+     *   8. Bits 96-127: next sequential instruction address          // RPI 1506
 	 */
     int   prob  = pz390.psw_problem_state ? 1 : 0;                    // #195
 	int   cc    = pz390.psw_cc_code[pz390.psw_cc];
@@ -2782,17 +2781,17 @@ private String dump_psw16(){                                          // RPI 200
      * return 32 character PSW in format as defined by z-PoP:         // RPI 2008
      *   1. bits 0-7 x'07' PER disabled, DAT enabled                  // RPI 2008
      *      I/O and external interrupts enabled                       // RPI 2008
-     *   2. Bits 8-15 x'85' key eight, machine check enabled,         // RPI 2008
-     *      not wait state, problem state                             // RPI 2008
-     *      Bit 15: Problem state (should be on: no SVC mode in z390) // RPI #195
-     *   3. Bits 16-23 AS(2),CC(2),MASK(4)                            // RPI 2008
+     *   2. Bits 8-14 x'84' key eight, machine check enabled,         // RPI 2008 #195
+     *      not wait state                                            // RPI 2008 #195
+     *   3. Bit 15: Problem state (should be on: no SVC mode in z390) // RPI 2008 #195
+     *   4. Bits 16-23 AS(2),CC(2),MASK(4)                            // RPI 2008
      *      AS   - Address Space control: zero                        // RPI 2008
      *      CC   - condition code 0=CC8, 1=CC4, 2=CC2, 3=CC1          // RPI 2008
      *      MASK - fixed, decimal, HFP exp, HFP significance          // RPI 2008
-     *   4. Bits 24-31 x'01' Amode64 enabled                          // RPI 2008
-     *   5. Bits 32-63 x'80000000' Amode 64 requires amode31 on       // RPI 2008
-     *   6. Bits 64-95 x'00000000' High word of PSW address always 0  // RPI 2008
-     *   7. Bits 96-127: next sequential instruction address          // RPI 2008
+     *   5. Bits 24-31 x'01' Amode64 enabled                          // RPI 2008
+     *   6. Bits 32-63 x'80000000' Amode 64 requires amode31 on       // RPI 2008
+     *   7. Bits 64-95 x'00000000' High word of PSW address always 0  // RPI 2008
+     *   8. Bits 96-127: next sequential instruction address          // RPI 2008
      */                                                               // RPI 2008
     int   prob  = pz390.psw_problem_state ? 1 : 0;                    // #195
     int   cc = pz390.psw_cc_code[pz390.psw_cc];                       // RPI 2008
