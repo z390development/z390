@@ -5966,7 +5966,7 @@ private void exec_test_cmd(){
                 String mask  = tz390.get_hex(pz390.psw_pgm_mask, 1);                          // RPI 1507
                 String mask_descr;                                                            // RPI 1507
                 tz390.put_trace(" PSW  "+dump_psw());                                         // RPI 1507
-                if (pz390.psw_problem_state == psw_problem_mode)                              //          #195
+                if (pz390.psw_problem_state == pz390.psw_problem_mode)                        //          #195
                    {tz390.put_trace("      KEY   8     MODE: Problem");                       // RPI 1514 #195
                     }                                                                         //          #195
                 else                                                                          //          #195
