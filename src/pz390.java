@@ -4032,7 +4032,7 @@ public class pz390 {
 		case 0xFF: // 80 "01FF" "TRAP2" "E"
             psw_check = false;
             ins_setup_e();
-            set_psw_check(psw_pic_spec); // RPI 1622 DK Special operation exception as we have no DUCT
+            set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception as we have no DUCT
             break;
 		}
 	}
@@ -5159,7 +5159,7 @@ public class pz390 {
 		case 0xFF: // 3400 "B2FF" "TRAP4" "S"
             psw_check = false;
             ins_setup_s();
-            set_psw_check(psw_pic_spec); // RPI 1622 DK Special operation exception as we have no DUCT
+            set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception as we have no DUCT
             break;
 		}
 	}
