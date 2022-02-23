@@ -93,6 +93,7 @@
 * 04/02/12 RPI 1200 TEST LRVGR AND LRVR WITH SAME REG
 * 2019/10/12 dsh prevent LPR, SLA fixed overflow S0C8
 *                after RPI #2009 fix by AK
+* 2022/02/13 afk STIDP now implemented as privileged instruction - prevent S0C2
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -1934,9 +1935,9 @@ BRCTG1   LA    R2,1(R2)
          CL    R3,=A(0)
          RT1   CCE
 * B202 STIDP
-         STIDP PWORK
-         CLC   PWORK,=XL8'390' VERIFY CPU ID
-         RT1   CCE
+**       STIDP PWORK
+**       CLC   PWORK,=XL8'390' VERIFY CPU ID
+**       RT1   CCE
 * B205 STCK
          STCK  PWORK  STORES J2SE MILLISECONDS FROM JAN 1, 1970
          LG    R0,PWORK

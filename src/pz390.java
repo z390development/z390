@@ -363,6 +363,7 @@ public class pz390 {
      *                         fixed-point-overflow exceptions
      *                    Remove invalid call to get_int_add_cc() in ALSIHN instruction emulation
      * 03/29/17 RPI 2010 Save and restore field psw_ins_len in method trace_psw()
+	 * 2018-07-30 RPI 1622 Issue S0D3 if any of the privileged instructions are used
      * 2019-09-22 RPI 2201 dsh use math.RoundingMode(int) to fix depreciated setScale(int,int)
      * 2019-09-29 RPI 2202 dsh add new instructions documented in SA22-7832-12 dated 2019-09  pg 79 summary
      *   AND WITH COMPLEMENT (NCRK, NCGRK)
@@ -389,6 +390,10 @@ public class pz390 {
      * 2021-10-29 Issue 305. Fix XHEXI logic so that it matches ASSIST documentation.
      *                       NB: RPI 878 added ASCII support for XDECI but not XHEXI.
      *                           Not added here either.
+     * 2022-02-12 Issue 195. For all privileged instructions issue the proper exception according PoP
+	 *                       Being S0C2 for privileged-operation exception when executed in problem state
+	 *                       Other exceptions as defined in PoP
+	 *                       And implement as a no-op if all tests are passed
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -430,6 +435,10 @@ public class pz390 {
 	long cpu_id = 0x390;
 
 	int psw_loc = 0;
+
+    boolean psw_problem_state   = true; /* z390 is always in problem state, supervisor state is not supported */
+    boolean psw_problem_mode    = true;
+    boolean psw_supervisor_mode = false;
 
 	int psw_short = 0;
 
@@ -654,7 +663,7 @@ public class pz390 {
 
 	int psw_pic_addr = 0x0c5;
 
-	int psw_pic_spec = 0x0c6;
+	int psw_pic_spec = 0x0c6; // specification exception
 
 	int psw_pic_data = 0x0c7;
 
@@ -673,6 +682,8 @@ public class pz390 {
 	int psw_pic_fp_sig = 0x0ce;
 
 	int psw_pic_fp_div = 0x0cf;
+
+	int psw_pic_spec_op = 0x0d3; // RPI 1622 DK Special Operation Exception
 
 	int psw_pic_timeout = 0x422;
     int psw_pic_gm_err = 0x804; // getmain request invalid
@@ -824,7 +835,6 @@ public class pz390 {
 	int mf3 = 0;
 
 	int mf4 = 0;
-	
 
 	int[] mask_bits = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
@@ -2788,16 +2798,30 @@ public class pz390 {
 		 */
 		switch (opcode1) {
 		case 0x80: // 1530 "8000" "SSM" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x82: // 1540 "8200" "LPSW" "S"
-			psw_check = false;
-			ins_setup_s();
-			set_psw_loc(mem.getInt(bd2_loc + 4));
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception
+            else // supervisor mode
+               {set_psw_loc(mem.getInt(bd2_loc + 4)); // incomplete implementation
+                }
+            break;
 		case 0x83: // 1550 "83" "DIAGNOSE" "DM"
-			ins_setup_dm();
-			break;
+            psw_check = false;
+            ins_setup_dm();
+            psw_check = true; // force S0C1: Diagnose is not a supported instruction on z390
+            break;
 		case 0x84: // 1560 "84" "BRXH" "RSI"
 			psw_check = false;
 			ins_setup_rsi();
@@ -3040,8 +3064,15 @@ public class pz390 {
 			}
 			break;
 		case 0x99: // 1790 "99" "TRACE" "RS"
-			ins_setup_rs();
-			break;
+            psw_check = false;
+            ins_setup_rs();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x9A: // 1800 "9A" "LAM" "RS"
             psw_check = false;                                       // RPI 2003
 			ins_setup_rs();
@@ -3115,20 +3146,48 @@ public class pz390 {
 			exec_clcle();
 			break;
 		case 0xAC: // 2520 "AC" "STNSM" "SI"
-			ins_setup_si();
-			break;
+            psw_check = false;
+            ins_setup_si();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xAD: // 2530 "AD" "STOSM" "SI"
-			ins_setup_si();
-			break;
+            psw_check = false;
+            ins_setup_si();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xAE: // 2540 "AE" "SIGP" "RS"
-			ins_setup_rs();
-			break;
+            psw_check = false;
+            ins_setup_rs();
+             if (psw_problem_state == psw_problem_mode)
+                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                 } // in problem state issue privileged-operation exception, otherwise no-op as we do not support multiple CPUs
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xAF: // 2550 "AF" "MC" "SI"
 			ins_setup_si();
 			break;
 		case 0xB1: // 2560 "B1" "LRA" "RX"
-			ins_setup_rx();
-			break;
+            psw_check = false;
+            ins_setup_rx();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xB2:
 			ins_B2XX();
 			break;
@@ -3136,11 +3195,25 @@ public class pz390 {
 			ins_B3XX();
 			break;
 		case 0xB6: // 4430 "B6" "STCTL" "RS"
-			ins_setup_rs();
-			break;
+            psw_check = false;
+            ins_setup_rs();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xB7: // 4440 "B7" "LCTL" "RS"
-			ins_setup_rs();
-			break;
+            psw_check = false;
+            ins_setup_rs();
+             if (psw_problem_state == psw_problem_mode)
+                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                 } // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xB9:
 			ins_B9XX();
 			break;
@@ -3469,14 +3542,35 @@ public class pz390 {
 			}
 			break;
 		case 0xD9: // 5310 "D9" "MVCK" "SS"
-			ins_setup_ss();
-			break;
+            psw_check = false;
+            ins_setup_ss();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xDA: // 5320 "DA" "MVCP" "SS"
-			ins_setup_ss();
-			break;
+            psw_check = false;
+            ins_setup_ss();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xDB: // 5330 "DB" "MVCS" "SS"
-			ins_setup_ss();
-			break;
+            psw_check = false;
+            ins_setup_ss();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xDC: // 5340 "DC" "TR" "SS"
 			psw_check = false;
 			ins_setup_ss();
@@ -3874,14 +3968,26 @@ public class pz390 {
 			 * block address Notes: 1. Map functions 0x00-0x43 to timing
 			 * functions 0x80-C3 in svc 11
 			 */
-			psw_check = false;
-			ins_setup_e();
-			reg.put(rf1 + 7, (byte) (reg.get(rf1 + 7) | 0x80 - 0x80));
-			sz390.svc(11);
-			break;
+            psw_check = false;
+            ins_setup_e();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {reg.put(rf1 + 7, (byte) (reg.get(rf1 + 7) | 0x80 - 0x80));
+                sz390.svc(11);
+                }
+                break;
 		case 0x07: // 30 "0107" "SCKPF" "E"
-			ins_setup_e();
-			break;
+            psw_check = false;
+            ins_setup_e();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x0A: // 40 "010A" "PFPO" "E"   RPI 1013
 			psw_check = false;
 			ins_setup_e();
@@ -3924,8 +4030,10 @@ public class pz390 {
 			set_psw_amode(psw_amode31_bit | psw_extended_amode64_bit); // RPI 1506
 			break;
 		case 0xFF: // 80 "01FF" "TRAP2" "E"
-			ins_setup_e();
-			break;
+            psw_check = false;
+            ins_setup_e();
+            set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception as we have no DUCT
+            break;
 		}
 	}
     private void ins_A4XX_VF(){ // RPI VF01 new routine to support A4xx opcodes for vector facility
@@ -4196,13 +4304,25 @@ public class pz390 {
 		opcode2 = mem_byte[psw_loc + opcode2_offset_s] & 0xff;
 		switch (opcode2) {
 		case 0x02: // 2570 "B202" "STIDP" "S"
-			psw_check = false;
-			ins_setup_s();
-			mem.putLong(bd2_loc, cpu_id);
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception
+            else // supervisor mode applies
+               {mem.putLong(bd2_loc, cpu_id);
+                }
+            break;
 		case 0x04: // 2580 "B204" "SCK" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x05: // 2590 "B205" "STCK" "S"
 			psw_check = false;
 			ins_setup_s();
@@ -4229,35 +4349,105 @@ public class pz390 {
 			mem.putLong(bd2_loc, last_stck);
 			break;
 		case 0x06: // 2600 "B206" "SCKC" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x07: // 2610 "B207" "STCKC" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x08: // 2620 "B208" "SPT" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x09: // 2630 "B209" "STPT" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement thsi instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x0A: // 2640 "B20A" "SPKA" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x0B: // 2650 "B20B" "IPK" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage protection
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x0D: // 2660 "B20D" "PTLB" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no TLB implemented
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x10: // 2670 "B210" "SPX" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no real/absolute storage distinction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x11: // 2680 "B211" "STPX" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no support for real vs. absolute storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x12: // 2690 "B212" "STAP" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no CPU address
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x18: // 2700 "B218" "PC" "S"
 			psw_check = false;
 			ins_setup_s();
@@ -4265,14 +4455,30 @@ public class pz390 {
 			set_psw_loc(bd2_loc);
 			break;
 		case 0x19: // 2710 "B219" "SAC" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x1A: // 2720 "B21A" "CFC" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            psw_check = true; // force S0C1 until we have a proper implementation
+            break;
 		case 0x21: // 2730 "B221" "IPTE" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x22: // 2740 "B222" "IPM" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -4281,35 +4487,100 @@ public class pz390 {
 			reg.putInt(rf1 + 4, rv1 | (int_work << 24)); // RPI106
 			break;
 		case 0x23: // 2750 "B223" "IVSK" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x24: // 2760 "B224" "IAC" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x25: // 2770 "B225" "SSAR" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception
+            break;
 		case 0x26: // 2780 "B226" "EPAR" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x27: // 2790 "B227" "ESAR" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x28: // 2800 "B228" "PT" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception when attempting to set supervisor mode
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x29: // 2810 "B229" "ISKE" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x2A: // 2820 "B22A" "RRBE" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x2B: // 2830 "B22B" "SSKE" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x2C: // 2840 "B22C" "TB" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x2D: // 2850 "B22D" "DXR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -4325,50 +4596,155 @@ public class pz390 {
 			check_lh_div();
 			break;
 		case 0x2E: // 2860 "B22E" "PGIN" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x2F: // 2870 "B22F" "PGOUT" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x30: // 2880 "B230" "CSCH" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x31: // 2890 "B231" "HSCH" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x32: // 2900 "B232" "MSCH" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x33: // 2910 "B233" "SSCH" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x34: // 2920 "B234" "STSCH" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x35: // 2930 "B235" "TSCH" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x36: // 2940 "B236" "TPI" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x37: // 2950 "B237" "SAL" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x38: // 2960 "B238" "RSCH" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x39: // 2970 "B239" "STCRW" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x3A: // 2980 "B23A" "STCPS" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x3B: // 2990 "B23B" "RCHP" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x3C: // 3000 "B23C" "SCHM" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x40: // 3010 "B240" "BAKR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -4398,14 +4774,30 @@ public class pz390 {
 			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
 			break;
 		case 0x46: // 3050 "B246" "STURA" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x47: // 3060 "B247" "MSTA" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            set_psw_check(psw_pic_spec_op); // force special-operation exception until we have a proper implementation
+            break;
 		case 0x48: // 3070 "B248" "PALB" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no ALB implemented
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x49: // 3080 "B249" "EREG" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -4450,11 +4842,20 @@ public class pz390 {
 			}
 			break;
 		case 0x4B: // 3100 "B24B" "LURA" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x4C: // 3110 "B24C" "TAR" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            psw_check = true; // force S0C1 until we have a proper implementation
+            break;
 		case 0x4D: // 3120 "B24D" "CPYA" "RRE"
 			psw_check = false; // RPI 1055
 			ins_setup_rre();
@@ -4471,16 +4872,31 @@ public class pz390 {
 			reg.putInt(rf1 + 4,ar_reg.getInt(rf2 >> 1)); // RPI 1055
 			break;
 		case 0x50: // 3150 "B250" "CSP" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no ALB
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                // We could  implement this instruction as a compare-and-swap
+                }
+            break;
 		case 0x52: // 3160 "B252" "MSR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
 			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) * reg.getInt(rf2 + 4));
 			break;
 		case 0x54: // 3170 "B254" "MVPG" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x55: // 3180 "B255" "MVST" "RRE"
 			psw_check = false; // RPI 441
 			ins_setup_rre();
@@ -4507,11 +4923,25 @@ public class pz390 {
 			exec_cuse();
 			break;
 		case 0x58: // 3200 "B258" "BSG" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no subspaces groups
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x5A: // 3210 "B25A" "BSA" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no DUCT
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x5D: // 3220 "B25D" "CLST" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -4523,14 +4953,30 @@ public class pz390 {
 			exec_srst();
 			break;
 		case 0x63: // 3240 "B263" "CMPSC" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            psw_check = true; // force S0C1 until we have a proper implementation
+            break;
 		case 0x76: // 3250 "B276" "XSCH" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x77: // 3260 "B277" "RP" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x78: // 3270 "B278" "STCKE" "S"
 			psw_check = false;
 			ins_setup_s();
@@ -4550,8 +4996,15 @@ public class pz390 {
 			mem.putLong(bd2_loc + 8, 0);
 			break;
 		case 0x79: // 3280 "B279" "SACF" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x7C: // 3300 "B27C" "STCKF" "S" Z9-2
 			psw_check = false;
 			ins_setup_s();
@@ -4571,8 +5024,15 @@ public class pz390 {
 			psw_cc = psw_cc0;
 			break;
 		case 0x7D: // 3290 "B27D" "STSI" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x99: // 3300 "B299" "SRNM" "S"
 			psw_check = false;
 			ins_setup_s();
@@ -4626,15 +5086,29 @@ public class pz390 {
 			 * store feature bit list
 			 */
 			mem.putLong(bd2_loc, sz390.get_feature_bits());
-			reg.put(r0 + 7, (byte) 0); // number of feature doulbe words-1
+			reg.put(r0 + 7, (byte) 0); // number of feature double words-1
 			psw_cc = psw_cc0;
 			break;
 		case 0xB1: // 3380 "B2B1" "STFL" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xB2: // 3390 "B2B2" "LPSWE" "S"
-			ins_setup_s();
-			break;
+            psw_check = false;
+            ins_setup_s();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xB8: // 3300 "B2B8" "SRNMB" "S" RPI 1125
 			psw_check = false;
 			ins_setup_s();
@@ -4666,16 +5140,27 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			reg.putInt(rf1 + 4, 0);  // force nesting to 0 
-			break;	
-		case 0xFA: // "B2FA" "IE NIAI I1,I2" z15
-			ins_setup_ie();
-			break;		
-		case 0xFC: // "B2FC S 7,72 TABORT D2(B2) z15
-			ins_setup_s();
-			break;		
-		case 0xFF: // 3400 "B2FF" "TRAP4" "S"
-			ins_setup_s();
 			break;
+		case 0xF8: // "B2F8" "TEND" "S"
+            psw_check = false;
+            ins_setup_s0();
+            set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
+            break;
+		case 0xFA: // "B2FA" "IE NIAI I1,I2" z15
+            psw_check = false;
+            ins_setup_ie();
+            psw_check = false; // Force S0C1 for unsupported opcode
+            break;
+		case 0xFC: // "B2FC S 7,72 TABORT D2(B2) z15
+            psw_check = false;
+            ins_setup_s();
+			set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
+            break;
+		case 0xFF: // 3400 "B2FF" "TRAP4" "S"
+            psw_check = false;
+            ins_setup_s();
+            set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception as we have no DUCT
+            break;
 		}
 	}
 	private void ins_B3XX(){
@@ -6314,8 +6799,15 @@ public class pz390 {
 			reg.putLong(rf1, reg.getLong(rf2));
 			break;
 		case 0x05: // 4500 "B905" "LURAG" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x06: // 4600 "B906" "LGBR" "RRE" Z9-10
 			psw_check = false;
 			ins_setup_rre();
@@ -6551,8 +7043,15 @@ public class pz390 {
 					.getLong(rf2));
 			break;
 		case 0x25: // 4760 "B925" "STURG" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x26: // 4880 "B926" "LBR" "RRE" Z9-12
 			psw_check = false;
 			ins_setup_rre();
@@ -6564,11 +7063,20 @@ public class pz390 {
 			reg.putInt(rf1 + 4, reg.getShort(rf2 + 6));
 			break;
 		case 0x28: // "B928" "PCKMO" "RRE" RPI 1125
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x29: //  "B929=KMA,54,340", // B929 RRFb 54,340 KMA R1,M3,R2 RPI 2202
-			ins_setup_rrfb();
-			break;	
+            psw_check = false;
+            ins_setup_rrfb();
+            psw_check = true; // force S0C1 for unsupported opcode
+            break;
 		case 0x2A: // "B92A" "KMF" "RRE" RPI 1125
 			ins_setup_rre();
 			break;
@@ -6599,13 +7107,13 @@ public class pz390 {
 			psw_cc = get_long_log_comp_cc(reg.getLong(rf1), (long) reg
 					.getInt(rf2 + 4));
 			break;
-		case 0x39: // B929 RRFa 36,360 DFLTCC R1,R2,R3 RPI 2202
+		case 0x39: // B939 RRFa 36,360 DFLTCC R1,R2,R3 RPI 2202
 			ins_setup_rrfa();
 			break;			
 		case 0x3A: //  "B93A RRE 14,144 KDSA R1,R2 RPI 2202"
 			ins_setup_rre();
 			break;	
-		case 0x3C:  // B93C RRE 14,144 O=PRNO R1,R2 RPI 2202
+		case 0x3C:  // B93C RRE 14,144 PRNO R1,R2 RPI 2202
 			ins_setup_rre();
 			break;	
 		case 0x3E: // 4810 "B93E" "KIMD" "RRE"
@@ -6982,17 +7490,40 @@ public class pz390 {
 			psw_cc = get_long_log_sub_cc();
 			break;
 		case 0x8A: // 4910 "B98A" "CSPG" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no ALB
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                } // We could  implement this instruction as a compare-and-swap
+            break;
 		case 0x8D: // 4920 "B98D" "EPSW" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            psw_check = true; // Force S0C1 for unsupported opcode
+            break;
 		case 0x8E: // 4930 "B98E" "IDTE" "RRF"
-			ins_setup_rrfe();
-			break;
+            psw_check = false;
+            ins_setup_rrfe();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no DAT
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x8F: // 	"B98F=CRDTE,54,344", // B98F rrfb 54,344 CRDTE R1,R3,R2[,M4] RPI 2202
-			ins_setup_rrfb();
-			break;
+            psw_check = false;
+            ins_setup_rrfb();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no DAT
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x90: // 4940 "B990" "TRTT" "RRE"
 			psw_check = false; // RPI 454
 			ins_setup_rre();
@@ -7231,50 +7762,130 @@ public class pz390 {
 			psw_cc = get_int_log_sub_cc();
 			break;
 		case 0x9A: // 5020 "B99A" "EPAIR" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x9B: // 5030 "B99B" "ESAIR" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x9D: // 5040 "B99D" "ESEA" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no DUCT
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x9E: // 5050 "B99E" "PTI" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception when attempting to set supervisor mode
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x9F: // 5060 "B99F" "SSAIR" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            psw_check = true; // force S0C1 for unsupported opcode
+            break;
 		case 0xA1:  // B9A1 RRE 14,144 TPEI R1,R2 RPI 2202
-			ins_setup_rre();
-			break;	
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 	     case 0xA2:  // 10 "B9A2" "PTF" "RRE" 14 RPI 817
-	         ins_setup_rre();
-	         break;
-		case 0xAC:  // "B9AC=IRBM,14,144", // B9AC RRE 14,144 IRBM R1,R2 RPI 2202
-				ins_setup_rre();
-				break;	
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no support for multi-cpu topology
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xAA: // 5250 "B9AA" "LPTEA" "RRF-b" Z9-19
-			ins_setup_rrf3(); // dsh rpi 2202
-			break;
+            psw_check = false;
+            ins_setup_rrf3(); // dsh rpi 2202
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
+		case 0xAC:  // "B9AC=IRBM,14,144", // B9AC RRE 14,144 IRBM R1,R2 RPI 2202
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no reference bits
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xAE: // "B9AE" "RRBM" "RRE" RPI 1125 Z196
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xAF:  // 20 "B9AF" "PFMF" "RRFc" 39 RPI 817
-	         ins_setup_RRFc();
-	         break;
+            psw_check = false;
+            ins_setup_RRFc();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0xB0: // 5070 "B9B0" "CU14" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            psw_check = true; // Force S0C1 for unsupported opcode
+            break;
 		case 0xB1: // 5080 "B9B1" "CU24" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            psw_check = true; // Force S0C1 for unsupported opcode
+            break;
 		case 0xB2: // 5090 "B9B2" "CU41" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            psw_check = true; // Force S0C1 for unsupported opcode
+            break;
 		case 0xB3: // 5100 "B9B3" "CU42" "RRE"
-			ins_setup_rre();
-			break;
+            psw_check = false;
+            ins_setup_rre();
+            psw_check = true; // Force S0C1 for unsupported opcode
+            break;
 	     case 0xBD:  // 30 "B9BD" "TRTRE" "RRFc" 39 RPI 817
 	         psw_check = false;
 	    	 ins_setup_RRFc();
@@ -8200,8 +8811,15 @@ public class pz390 {
 			psw_cc = get_long_comp_cc(rlv1, 0);
 			break;
 		case 0x03: // 5400 "E303" "LRAG" "RXY"
-			ins_setup_rxy();
-			break;
+            psw_check = false;
+            ins_setup_rxy();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x04: // 5410 "E304" "LG" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -8319,8 +8937,15 @@ public class pz390 {
 			psw_cc = get_int_comp_cc(rv1, 0);
 			break;
 		case 0x13: // 5510 "E313" "LRAY" "RXY"
-			ins_setup_rxy();
-			break;
+            psw_check = false;
+            ins_setup_rxy();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x14: // 5520 "E314" "LGF" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -8582,8 +9207,10 @@ public class pz390 {
 			reg.put(rf1+4,(byte)(reg.get(rf1+4) & 0x7f)); // turn off high 31 bit
 			break;
 		case 0x49: // "E349=STGSC,18,180", // E349 RXYa STGSC R1,D2(X2,B2) RPI 2202
-			ins_setup_rxy();
-			break;
+            psw_check = false;
+            ins_setup_rxy();
+            set_psw_check(psw_pic_spec_op); // RPI 1622 DK special operation exception
+            break;
 		case 0x4C: // "E34C=LGG,18,180", // E34C RXYa LGG R1,D2(X2,B2) RPI 2202
 			psw_check = false;
 			ins_setup_rxy();
@@ -8592,8 +9219,10 @@ public class pz390 {
 			reg.put(rf1+4,(byte)(reg.get(rf1+4) & 0x7f)); // turn off high 31 bit 
 			break;
 		case 0x4D: // "E34D=LGSC,18,180", // E34D RXYa LGSC R1,D2(X2,B2) RPI 2202
-			ins_setup_rxy();
-			break;
+            psw_check = false;
+            ins_setup_rxy();
+            set_psw_check(psw_pic_spec_op); // RPI 1622 DK special operation exception
+            break;
 		case 0x50: // 5750 "E350" "STY" "RXY"
 			ins_setup_rxy();
 			psw_check = false;
@@ -9081,14 +9710,35 @@ public class pz390 {
     	opcode2 = mem_byte[psw_loc + opcode2_offset_sse] & 0xff;
 		switch (opcode2) {
 		case 0x00: // 6120 "E500" "LASP" "SSE"
-			ins_setup_sse();
-			break;
+            psw_check = false;
+            ins_setup_sse();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x01: // 6130 "E501" "TPROT" "SSE"
-			ins_setup_sse();
-			break;
+            psw_check = false;
+            ins_setup_sse();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x02: // 6140 "E502" "STRAG" "SSE"
-			ins_setup_sse();
-			break;
+            psw_check = false;
+            ins_setup_sse();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x0A: // E50A MVCRL,19,192 RPI 2202
 			psw_check = false; 
 			ins_setup_sse();
@@ -9103,11 +9753,25 @@ public class pz390 {
 			}
 			break;
 		case 0x0E: // 6150 "E50E" "MVCSK" "SSE"
-			ins_setup_sse();
-			break;
+            psw_check = false;
+            ins_setup_sse();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage protection
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x0F: // 6160 "E50F" "MVCDK" "SSE"
-			ins_setup_sse();
-			break;
+            psw_check = false;
+            ins_setup_sse();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x44:  // 370 "E544" "MVHHI" "SIL" 51 RPI 817
 			psw_check = false; 
 			ins_setup_sil();
@@ -9154,11 +9818,15 @@ public class pz390 {
 			psw_cc = get_int_log_comp_cc(mem.getInt(bd1_loc), if2 & 0xffff);
 		    break;
 	     case 0x60:  // E560 SIL TBEGIN D1(B1),I2 RPI 2202
-			ins_setup_sil();
-		    break;
+            psw_check = false;
+            ins_setup_sil();
+            set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
+            break;
 	     case 0x61:  // E561 SIL TBEGINC D1(B1),I2 RPI 2202
-			ins_setup_sil();
-		    break;
+            psw_check = false;
+            ins_setup_sil();
+            set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
+            break;
 		}
     }
     private void ins_E6XX(){  // vector instructions RPI 2202
@@ -9212,8 +9880,15 @@ public class pz390 {
 			reg.putLong(rf1, reg.getLong(rf3) << (bd2_loc & 0x3f));
 			break;
 		case 0x0F: // 6250 "EB0F" "TRACG" "RSY"
-			ins_setup_rsy();
-			break;
+            psw_check = false;
+            ins_setup_rsy();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x14: // 6260 "EB14" "CSY" "RSY"
 			psw_check = false;
 			ins_setup_rsy();
@@ -9265,8 +9940,15 @@ public class pz390 {
 			}
 			break;
 		case 0x25: // 6320 "EB25" "STCTG" "RSY"
-			ins_setup_rsy();
-			break;
+            psw_check = false;
+            ins_setup_rsy();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x26: // 6330 "EB26" "STMH" "RSY"
 			psw_check = false;
 			ins_setup_rsy();
@@ -9297,8 +9979,15 @@ public class pz390 {
 			exec_stcm();
 			break;
 		case 0x2F: // 6360 "EB2F" "LCTLG" "RSY"
-			ins_setup_rsy();
-			break;
+            psw_check = false;
+            ins_setup_rsy();
+            if (psw_problem_state == psw_problem_mode)
+               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+                } // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
+            else // supervisor mode applies
+               {psw_check = true; // force S0C1 until we have a proper implementation
+                }
+            break;
 		case 0x30: // 6370 "EB30" "CSG" "RSY"
 			psw_check = false;
 			ins_setup_rsy();
@@ -12144,6 +12833,17 @@ public class pz390 {
 		}
 	}
 
+	private void ins_setup_s0() { // "S" B2F8 TEND oo00----
+		psw_ins_len = 4;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 4;
+	}
+
 	private void ins_setup_si() { // "SI" 9 CLI ooiibddd
 		/*
 		 * fetch bd1,if2
@@ -14045,8 +14745,8 @@ public class pz390 {
 			ins_setup_s();
 			break;
 		case 8:// "DM" 1 DIAGNOSE 83000000
-			ins_setup_dm();
-			break;
+            ins_setup_dm();
+            break;
 		case 9:// "RSI" 4 BRXH oorriiii
 			ins_setup_rsi();
 			break;
