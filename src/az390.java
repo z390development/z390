@@ -413,7 +413,7 @@ public  class  az390 implements Runnable {
         * 2821-04-26 Issue #239 fix no error on undefined sym for RIL i2 operand
         * 2021-08-20 DSH issue #230 correct vector instruction erros reported by Dan Greiner
         * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand m4 or m6	
-        ^ 2022-01-16 dsh #343 move abort for exceeding maxline 		
+        * 2022-01-16 dsh #343 move abort for exceeding maxline
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -8291,7 +8291,6 @@ private void get_hex_xbddd(){
 			hex_bddd2 = get_exp_bddd(); // RPI 1148
 			hex_xbddd = get_exp_x() +hex_bddd2;
 		} else {
-			
 		 	hex_xbddd = get_exp_abs_xbddd();
 		}
 	}

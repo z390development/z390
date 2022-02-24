@@ -1,0 +1,3 @@
+* Test with a circular reference
+  chksrc(2)  * Check sources for illegal characters
+@..\rt\opt\testopt5

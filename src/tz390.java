@@ -36,6 +36,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap; // dk RPI 1606
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -292,6 +293,7 @@ public  class  tz390 {
     * 10/03/15 RPI 1533  Invalid codepage option is not flagged as an error. Should cause abortion
     * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
     * 12/24/16 RPI 1598  Provide a means to select either original VSAM or the new one
+    * 05/21/18 RPI 1606  Circular reference of options file causes unspecified exception in tz390
     * 2019-09-22 RPI 2201 dsh fix depreciated static decode by changing to Integer.decode
     * 2019-10-01 RPI 2202 dsh add new instructions up to z15 including NCRK, NCGRK, MVCRL
 	* 2020-08-29 RPI 2202 dsh TESTINS6.MLC complete with 2121 opcode+operand tests for POP SA22-7832-12
@@ -3591,6 +3593,10 @@ public  class  tz390 {
       int[]     key_tab_index = (int[])Array.newInstance(int.class,max_key_tab);
       int[]     key_tab_low   = (int[])Array.newInstance(int.class,max_key_tab);
       int[]     key_tab_high  = (int[])Array.newInstance(int.class,max_key_tab);
+      // dk RPI 1606
+      HashMap<String, String> optfilenames = new HashMap<String, String>(); // dk RPI 1606
+      String prevoptfilename = ""; // dk RPI 1606
+
 public void init_tz390(){
 	/*
 	 * initialize shared data and tables
@@ -4406,6 +4412,7 @@ public void init_options(String[] args,String pgm_type){
     } else {
 	    abort_error(5,"missing file option");
     }
+    prevoptfilename = dir_cur + "z390.OPT";
     process_options_file(dir_cur + "z390.OPT",false); // RPI 1156 optional opt init
     String token = null;
     int index1 = 1;
@@ -4551,6 +4558,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     		token = token.substring(1,token.length()-1);
     }
 	if (token.charAt(0) == '@'){
+		prevoptfilename = token.substring(1);
 		process_options_file(token.substring(1),true);  // RPI 742 RPI 1156
 	} else if (token.toUpperCase().equals("ALIGN")){
 		opt_align = true; // RPI 1073
@@ -5304,8 +5312,16 @@ private void process_options_file(String file_name,boolean required){ // RPI 115
 	 * 4.  @file option can be nested.
 	 */
     String opt_file_name = find_file_name(dir_opt,file_name,opt_type,dir_cur); // rpi 880
+    // RPI 1606   Circular reference of options file causes unspecified exception in tz390
 	int    opt_file_line = 0; // rpi 880
     if (opt_file_name != null){
+    	// dk RPI 1606
+    	if (optfilenames.containsKey(opt_file_name)) { // dk RPI 1606
+    		System.out.println("TZ390E "+opt_file_name+" has already been processed as an option file,"+
+    			" referenced in "+optfilenames.get(opt_file_name)+" is ignored"); // dk RPI 1606
+    		return; // dk RPI 1606
+    	} // dk RPI 1606
+    	optfilenames.put(opt_file_name, prevoptfilename);
 		try {
 			File opt_file = new File(opt_file_name);
 			BufferedReader opt_file_buff = new BufferedReader(new FileReader(opt_file));       

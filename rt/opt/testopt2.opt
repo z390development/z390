@@ -1,0 +1,3 @@
+* Test with a valid subfile
+  chksrc(2)  * Check sources for illegal characters
+@..\rt\opt\testopt0
