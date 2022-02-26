@@ -32,6 +32,7 @@
 * 2020/01/29 LLGTAT, LGHAT, LLGFAT, LFHAT
 * 2020/12/02 dsh add Insert Immediate LGFI, IILF, IIHF with relocation
 *            IIHH, IIHL, IILH, IILL half word inserts
+* 2022/02/22 DSH add MGRK,  MSGRKC, MSGRKC, MSRKC plus MG
 *********************************************************************
 
          PRINT DATACD
@@ -51,6 +52,7 @@
 *********************************************************************
 TESTINS5 RT1   MAIN
          EQUREGS REGS=GPR  
+DWORK DC XL16'00'
 *********************************************************************
 * START INSTRUCTION TESTS
 *********************************************************************
@@ -279,7 +281,19 @@ BIC_OK2  EQU    *
          RT1    CC0
 * MSG
          LG     R1,=FL8'2'
-         MSGC   R1,=FL8'3'
+         MSG   R1,=FL8'3'
+         CLG    R1,=FL8'6'
+         RT1    CC0
+         LG     R1,=FL8'2'
+         MSG  R1,=FL8'-3'
+         CLG    R1,=FL8'-6'
+         RT1    CC0
+         LG     R1,=FL8'-2'
+         MSG  R1,=FL8'3'
+         CLG    R1,=FL8'-6'
+         RT1    CC0
+         LG     R1,=FL8'-2'
+         MSG  R1,=FL8'-3'
          CLG    R1,=FL8'6'
          RT1    CC0
 * MG
@@ -287,6 +301,24 @@ BIC_OK2  EQU    *
          MG     R2,=FL8'3'
          CLG    R2,=FL8'0'
          RT1    CC0
+         CLG    R3,=FL8'6'
+         RT1    CC0
+         LMG    R2,R3,=FL8'-1,-2'  ADD NEG TEST FOR ISSUE #300
+         MG     R2,=FL8'3'
+         CLG    R2,=FL8'-1'
+         RT1    CC0
+         CLG    R3,=FL8'-6'
+         RT1    CC0
+         LMG    R2,R3,=FL8'-1,2'  ADD NEG TEST FOR ISSUE #300
+         MG     R2,=FL8'-3'
+         CLG    R2,=FL8'-1'
+         RT1    CC0
+         CLG    R3,=FL8'-6'
+         RT1     CC0
+         LMG    R2,R3,=FL8'-1,-2'  ADD NEG TEST FOR ISSUE #300
+         MG     R2,=FL8'-3'
+         CLG    R2,=FL8'0'
+         RT1    CC0 
          CLG    R3,=FL8'6'
          RT1    CC0
 * LGAT NO TRAP TEST
@@ -341,6 +373,146 @@ BIC_OK2  EQU    *
          IILL   R3,4
          CLG    R3,=AL2(1,2,3,4)
          RT1    CC0
+* MGRK
+         LMG   R5,R6,=FL8'2,3'
+         MGRK  R2,R5,R6
+         STMG  R2,R3,DWORK
+         CLC   DWORK,=FL16'6'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'2,-3'
+         MGRK  R2,R5,R6
+         STMG  R2,R3,DWORK
+         CLC   DWORK,=FL16'-6'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'-2,3'
+         MGRK  R2,R5,R6
+         STMG  R2,R3,DWORK
+         CLC   DWORK,=FL16'-6'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'-2,-3'
+         MGRK  R2,R5,R6
+         STMG  R2,R3,DWORK
+         CLC   DWORK,=FL16'6'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'123456,10000000'
+         MGRK  R2,R5,R6
+         STMG  R2,R3,DWORK
+         CLC   DWORK,=FL16'1234560000000'
+         RT1    CC0 
+* MS
+         L      R1,=F'2'
+         MS    R1,=F'3'
+         CL     R1,=F'6'
+         RT1  CC0
+         L       R1,=F'2'
+         MS    R1,=F'-3'
+         CL     R1,=F'-6'
+         RT1  CC0
+         L       R1,=F'-2'
+         MS    R1,=F'-3'
+         CL     R1,=F'6'
+         RT1  CC0
+* MSY
+         L      R1,=F'2'
+         MSY    R1,=F'3'
+         CL     R1,=F'6'
+         RT1  CC0
+         L       R1,=F'2'
+         MSY    R1,=F'-3'
+         CL     R1,=F'-6'
+         RT1  CC0
+         L       R1,=F'-2'
+         MSY    R1,=F'-3'
+          CL     R1,=F'6'
+          RT1  CC0
+* MSGRKC
+         LMG   R5,R6,=FL8'2,3'
+         MSGRKC  R2,R5,R6
+         CLG    R2,=FL8'6'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'2,-3'
+         MSGRKC  R2,R5,R6
+         CLG    R2,=FL8'-6'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'-2,3'
+         MSGRKC  R2,R5,R6
+         CLG    R2,=FL8'-6'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'-2,-3'
+         MSGRKC  R2,R5,R6
+         CLG   R2,=FL8'6'
+         RT1    CC0 
+         LMG   R5,R6,=XL8'7FFFFFFFFFFFFFFF,2'
+         MSGRKC  R2,R5,R6
+          RT1    CC3  
+* MSRKC
+         LM    R5,R6,=F'2,3'
+         MSRKC  R2,R5,R6
+         CL      R2,=F'6'
+         RT1    CC0 
+         LM     R5,R6,=F'2,-3'
+         MSRKC  R2,R5,R6
+         CL      R2,=F'-6'
+         RT1    CC0 
+         LM     R5,R6,=F'-2,3'
+         MSRKC  R2,R5,R6
+         CL      R2,=F'-6'
+         RT1    CC0 
+         LM     R5,R6,=F'-2,-3'
+         MSRKC  R2,R5,R6
+         CL     R2,=F'6'
+         RT1    CC0 
+         LM   R5,R6,=XL4'7FFFFFFF,2'
+         MSRKC  R2,R5,R6
+         RT1    CC3  
+* MSC
+         L	R2,=F'2'
+	MSC R2,=F'3'
+          RT1  CC2
+          CL    R2,=F'6'
+	RT1	CC0
+         L	R2,=F'2'
+	MSC R2,=F'-3'
+          RT1  CC1
+          CL    R2,=F'-6'
+         RT1  CC0
+         L	R2,=F'-2'
+	MSC R2,=F'3'
+          RT1  CC1
+          CL    R2,=F'-6'
+	RT1	CC0
+         L	R2,=F'-2'
+	MSC R2,=F'-3'
+          RT1  CC2
+          CL    R2,=F'6'
+	RT1	CC0
+         L	R2,=X'7FFFFFFF'
+	MSC R2,=F'2'
+          RT1  CC3
+* MSGC
+         LG	R2,=FL8'2'
+	MSGC R2,=FL8'3'
+          RT1  CC2
+          CLG    R2,=FL8'6'
+	RT1	CC0
+         LG	R2,=FL8'2'
+	MSGC R2,=FL8'-3'
+          RT1  CC1
+          CLG    R2,=FL8'-6'
+         RT1  CC0
+         LG	R2,=FL8'-2'
+	MSGC R2,=FL8'3'
+          RT1  CC1
+          CLG    R2,=FL8'-6'
+	RT1	CC0
+         LG	R2,=FL8'-2'
+	MSGC R2,=FL8'-3'
+          RT1  CC2
+          CLG    R2,=FL8'6'
+	RT1	CC0
+         LG	R2,=X'7FFFFFFFFFFFFFFF'
+	MSGC R2,=FL8'2'
+          RT1  CC3
 *****************************************************************************
 * END
          RT1   END
