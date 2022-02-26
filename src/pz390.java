@@ -389,6 +389,7 @@ public class pz390 {
      * 2021-10-29 Issue 305. Fix XHEXI logic so that it matches ASSIST documentation.
      *                       NB: RPI 878 added ASCII support for XDECI but not XHEXI.
      *                           Not added here either.
+	 * 2022-02-24 DSH ISSUE 330 add support for MGRK, MSGRKC, MSRKC, MSC
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -4336,7 +4337,7 @@ public class pz390 {
 		case 0x31: // 2890 "B231" "HSCH" "S"
 			ins_setup_s();
 			break;
-		case 0x32: // 2900 "B232" "MSCH" "S"
+		case 0x32: // 2900 "B232" "MSCH" "S" 
 			ins_setup_s();
 			break;
 		case 0x33: // 2910 "B233" "SSCH" "S"
@@ -6936,9 +6937,9 @@ public class pz390 {
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
-			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 8, 8)); // RPI
+			big_int1 = new BigInteger(get_unsigned_bytes(reg_byte, rf1 + 8, 8)); // RPI
 																			// 383
-			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2, 8));
+			big_int2 = new BigInteger(get_unsigned_bytes(reg_byte, rf2, 8));
 			big_int1 = big_int1
 			         .multiply(big_int2);
 			fp_bi_to_wreg(reg_byte,rf1,big_int1, 16); // RPI 540
@@ -6949,8 +6950,8 @@ public class pz390 {
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
-			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1, 16)); // RPI 540
-			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2, 8));
+			big_int1 = new BigInteger(get_unsigned_bytes(reg_byte, rf1, 16)); // RPI 540
+			big_int2 = new BigInteger(get_unsigned_bytes(reg_byte, rf2, 8));
 			if (big_int2.signum() == 0) {
 				set_psw_check(psw_pic_fx_div);
 				break;
@@ -7185,9 +7186,9 @@ public class pz390 {
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
-			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 12, 4)); // RPI
+			big_int1 = new BigInteger(get_unsigned_bytes(reg_byte, rf1 + 12, 4)); // RPI
 																				// 275
-			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2 + 4, 4));
+			big_int2 = new BigInteger(get_unsigned_bytes(reg_byte, rf2 + 4, 4));
 			big_int1 = big_int1
 			         .multiply(big_int2);
 			fp_bi_to_wreg(work_reg_byte,0,big_int1, 8);
@@ -7202,8 +7203,8 @@ public class pz390 {
 			}
 			work_reg.putInt(0, reg.getInt(rf1 + 4));
 			work_reg.putInt(4, reg.getInt(rf1 + 12));
-			big_int1 = new BigInteger(get_log_bytes(work_reg_byte, 0, 8));
-			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2 + 4, 4));
+			big_int1 = new BigInteger(get_unsigned_bytes(work_reg_byte, 0, 8));
+			big_int2 = new BigInteger(get_unsigned_bytes(reg_byte, rf2 + 4, 4));
 			if (big_int2.signum() == 0) {
 				set_psw_check(psw_pic_fx_div);
 				break;
@@ -7518,12 +7519,34 @@ public class pz390 {
 				reg.putLong(rf1, rlv3);
 				psw_cc = get_long_log_sub_cc();
 				break;
-	     case 0xEC: // "B9EC=MGRK,54,340", // B9EC rrfa MGRK R1,R2,R3 RPI 2202
+	     case 0xEC: // "B9EC=MGRK,54,340", // B9EC rrfa MGRK R1,R2,R3 RPI 2202 #300
+		     psw_check = false;
 	    	 ins_setup_rrfa();
+			 if ((mf1 & 1) != 0){ // issue 300 add MGRK, MSGRKC, MSRKC
+				set_psw_check(psw_pic_spec);
+			}
+			big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf2, 8)); 
+																			
+			big_int2 = new BigInteger(get_signed_bytes(reg_byte, rf3, 8));
+			big_int1 = big_int1
+			         .multiply(big_int2);
+			fp_bi_to_wreg(reg_byte,rf1,big_int1, 16); 
 	    	 break;
-	    case 0xED: // "B9ED=MSGRKC,54,340", // B9ED rrfa MSGRKC R1,R2,R3 RPI 2202
+	    case 0xED: // "B9ED=MSGRKC,54,340", // B9ED rrfa MSGRKC R1,R2,R3 RPI 2202 #300
+			 psw_check =false;
 	    	 ins_setup_rrfa();
-	    	 break;
+			 big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf2, 8)); 
+																			
+			big_int2 = new BigInteger(get_signed_bytes(reg_byte, rf3, 8));
+			big_int1 = big_int1
+			         .multiply(big_int2);
+					 if (big_int1.compareTo(bi_max_pos_long) == 1
+					     || big_int1.compareTo(bi_min_neg_long) == -1) {                  
+				psw_cc = psw_cc3;                          
+				break;                                     
+			} 
+			fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
+	    	break;
 	     case 0xF2: // "B9F2" "LOCR" R1,R2,M3 RPI 1125
 				psw_check = false;
 				ins_setup_RRFc();
@@ -7622,7 +7645,20 @@ public class pz390 {
 				psw_cc = get_int_log_sub_cc();
 				break;		
 	       case 0xFD: // "B9FD=MSRKC,54,340", // B9FD rrfa MSRKC R1,R2,R3 RPI 2202
+		          psw_check = false;
 	    	      ins_setup_rrfa();
+				  rlv1 = (long)reg.getInt(rf2 + 4) * (long)reg.getInt(rf3 + 4);
+				  rv1  = (int)rlv1;
+				  reg.putInt(rf1 + 4, rv1);
+				  if (rlv1 != (long)rv1){
+					  psw_cc = psw_cc3;
+				  } else if (rv1 > 0){
+					  psw_cc = psw_cc2;
+				  } else if (rv1 == 0) {
+					  psw_cc = psw_cc0;
+				  } else {
+                      psw_cc = psw_cc1;
+				  }
 	    	     break;		
 		}
 	}
@@ -8604,6 +8640,22 @@ public class pz390 {
 			ins_setup_rxy();
 			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) * mem.getInt(xbd2_loc));
 			break;
+		case 0x53: // "E353" "MSC" "RXY" // #330
+		    psw_check = false;
+		    ins_setup_rxy();
+			rlv1 = (long)reg.getInt(rf1 + 4) * (long)mem.getInt(xbd2_loc);
+			rv1  = (int)rlv1;
+			reg.putInt(rf1 + 4, rv1);
+			if (rlv1 != (long)rv1){
+			  psw_cc = psw_cc3;
+			} else if (rv1 > 0){
+			  psw_cc = psw_cc2;
+			} else if (rv1 == 0) {
+			  psw_cc = psw_cc0;
+			} else {
+              psw_cc = psw_cc1;
+			}
+		    break; 
 		case 0x54: // 5770 "E354" "NY" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -8807,23 +8859,32 @@ public class pz390 {
 		case 0x83: //  E383 RXYa MSGC R1,D2(X2,B2) RPI 2202 
 			psw_check = false;
 			ins_setup_rxy();
-			rlv1 = reg.getLong(rf1) * mem.getLong(xbd2_loc);
-			reg.putLong(rf1, rlv1);
-			if (rlv1 != reg.getLong(rf1) * mem.getLong(xbd2_loc) ) {
-				psw_cc = psw_cc3;
+			big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf1, 8)); 
+																			
+			big_int2 = new BigInteger(get_signed_bytes(mem_byte, xbd2_loc, 8));
+			big_int1 = big_int1
+			         .multiply(big_int2);
+			rlv1 = big_int1.longValue();
+			fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
+			if (big_int1.compareTo(bi_max_pos_long) == 1
+			|| big_int1.compareTo(bi_min_neg_long) == -1) {                  
+                psw_cc = psw_cc3; 
+			} else if (rlv1 > 0){
+				psw_cc = psw_cc2;
+			} else if (rlv1 == 0) {
+				psw_cc = psw_cc0;
 			} else {
-				psw_cc = get_long_comp_cc(rlv1, 0);
-			}
-			break;
+				psw_cc = psw_cc1;
+			}               
+ 			break;
 		case 0x84: // E384 RXYa MG RPI 2202
 			psw_check = false;
 			ins_setup_rxy();
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
-			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 8, 8)); // RPI
-																			// 383
-			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 8));
+			big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf1 + 8, 8)); // RPI 383 #300 was unsigned
+			big_int2 = new BigInteger(get_signed_bytes(mem_byte, xbd2_loc, 8));
 			big_int1 = big_int1
 			         .multiply(big_int2);
 			fp_bi_to_wreg(reg_byte,rf1,big_int1, 16); // RPI 540
@@ -8843,9 +8904,9 @@ public class pz390 {
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
-			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 8, 8)); // RPI
+			big_int1 = new BigInteger(get_unsigned_bytes(reg_byte, rf1 + 8, 8)); // RPI
 																			// 383
-			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 8));
+			big_int2 = new BigInteger(get_unsigned_bytes(mem_byte, xbd2_loc, 8));
 			big_int1 = big_int1
 			         .multiply(big_int2);
 			fp_bi_to_wreg(reg_byte,rf1,big_int1, 16); // RPI 540
@@ -8856,8 +8917,8 @@ public class pz390 {
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
-			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1, 16)); // RPI 540
-			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 8));
+			big_int1 = new BigInteger(get_unsigned_bytes(reg_byte, rf1, 16)); // RPI 540
+			big_int2 = new BigInteger(get_unsigned_bytes(mem_byte, xbd2_loc, 8));
 			if (big_int2.signum() == 0) { // RPI 540
 				set_psw_check(psw_pic_fx_div);
 				break;
@@ -8932,9 +8993,9 @@ public class pz390 {
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
-			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 12, 4)); // RPI
+			big_int1 = new BigInteger(get_unsigned_bytes(reg_byte, rf1 + 12, 4)); // RPI
 																				// 275
-			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 4));
+			big_int2 = new BigInteger(get_unsigned_bytes(mem_byte, xbd2_loc, 4));
 			big_int1 = big_int1
 			         .multiply(big_int2);
 			fp_bi_to_wreg(work_reg_byte,0,big_int1, 8);
@@ -8949,8 +9010,8 @@ public class pz390 {
 			}
 			work_reg.putInt(0, reg.getInt(rf1 + 4));
 			work_reg.putInt(4, reg.getInt(rf1 + 12));
-			big_int1 = new BigInteger(get_log_bytes(work_reg_byte, 0, 8));
-			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 4));
+			big_int1 = new BigInteger(get_unsigned_bytes(work_reg_byte, 0, 8));
+			big_int2 = new BigInteger(get_unsigned_bytes(mem_byte, xbd2_loc, 4));
 			if (big_int2.signum() == 0) { // RPI 540
 				set_psw_check(psw_pic_fx_div);
 				break;
@@ -13175,14 +13236,28 @@ public class pz390 {
 			}
 		}
 	}
-
-	private byte[] get_log_bytes(byte[] data_byte, int data_offset, int data_len) {
+	private byte[] get_unsigned_bytes(byte[] data_byte, int data_offset, int data_len) {  // #300
 		/*
 		 * return byte array with leading 0 byte followed by data bytes. This
 		 * array format is used to initialize BigInteger with logical unsigned
-		 * value.
+		 * value.  
+		 * 2022-02-21 dsh issue 300 support unsigned and signed 2s compliment negative numbers with leading x'ff' vs x'00'
+		 */
+		byte[] new_byte = new byte[data_len + 1]; // default all 0x00
+		System.arraycopy(data_byte, data_offset, new_byte, 1, data_len); // RPI 411
+		return new_byte;
+	}
+	private byte[] get_signed_bytes(byte[] data_byte, int data_offset, int data_len) {  // #300
+		/*
+		 * return byte array with leading 0 byte followed by data bytes. This
+		 * array format is used to initialize BigInteger with logical unsigned
+		 * value.  
+		 * 2022-02-21 dsh issue 300 fix to support 2s compliment negative numbers with leading x'ff' vs x'00'
 		 */
 		byte[] new_byte = new byte[data_len + 1];
+		if (data_byte[data_offset] < 0) {
+			new_byte[0] = (byte)0xff; // issue 300 support 2s compliment negative integers
+		}
 		System.arraycopy(data_byte, data_offset, new_byte, 1, data_len); // RPI
 																			// 411
 		return new_byte;
