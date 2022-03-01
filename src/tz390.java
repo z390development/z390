@@ -5317,8 +5317,8 @@ private void process_options_file(String file_name,boolean required){ // RPI 115
     if (opt_file_name != null){
     	// dk RPI 1606
     	if (optfilenames.containsKey(opt_file_name)) { // dk RPI 1606
-    		System.out.println("TZ390E "+opt_file_name+" has already been processed as an option file,"+
-    			" referenced in "+optfilenames.get(opt_file_name)+" is ignored"); // dk RPI 1606
+            abort_error(21,"ignoring "+opt_file_name+" as it has already been processed as an option file,"+
+    			" referenced in "+optfilenames.get(opt_file_name)); // dk RPI 1606
     		return; // dk RPI 1606
     	} // dk RPI 1606
     	optfilenames.put(opt_file_name, prevoptfilename);

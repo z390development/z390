@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# runtestopt: verify indirection usage in options files
+
+#set -e             # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+#
+# this one should assemble okay
+echo " "
+echo test 1
+opt='@'rt/opt/testopt0.OPT
+bash/asm rt/mlc/TESTOPT $opt
+
+#
+# this one should assemble with error for invalid option
+echo " "
+echo test 2
+opt='@'rt/opt/testopt1.OPT
+bash/asm rt/mlc/TESTOPT $opt
+
+#
+# this one should assemble okay with valid reference
+echo " "
+echo test 3
+opt='@'rt/opt/testopt2L.OPT
+bash/asm rt/mlc/TESTOPT $opt
+
+#
+# this one should assemble with error for incorrect reference
+echo " "
+echo test 4
+opt='@'rt/opt/testopt3L.OPT
+bash/asm rt/mlc/TESTOPT $opt
+
+#
+# this one should assemble with error for self-reference
+echo " "
+echo test 5
+opt='@'rt/opt/testopt4L.OPT
+bash/asm rt/mlc/TESTOPT $opt
+
+#
+# this one should assemble with error for circular reference
+echo " "
+echo test 6
+opt='@'rt/opt/testopt5L.OPT
+bash/asm rt/mlc/TESTOPT $opt
+
