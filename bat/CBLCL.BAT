@@ -1,14 +1,18 @@
 @echo off
 setlocal
 rem CBLCL translate CBL to MLC, assemble, and link using z390
-if %1 == tron ECHO ON
-if %1 == tron shift
-if %1 == TRON ECHO ON
-if %1 == TRON shift
+if %1.   == .    (echo %0 ERROR: missing file name
+                  exit /b 16
+                  )
+if /I %1 == tron (echo on
+                  shift /1
+                  )
+
 if exist %1.CBL goto erase
 echo on
 pause no zcobol program found %1.CBL
 goto end
+
 :erase
 if exist %1.MLC erase %1.MLC
 if exist %1.390 erase %1.390
