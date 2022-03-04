@@ -1,0 +1,36 @@
+RT#357   TITLE     'RT program for testing continuation in macro ZOPEN' 00020000
+         ISEQ  73,78                                                    00040000
+RT#357   START                                                          00360000
+*
+        CLOSE (SYSTERM,LEAVE,          SYSTERM                         X01580000
+               SYSUP,DISP,             SYSUP                           X01584000
+               SYSLIB,DISP,            SYSLIB                          X01588000
+               SYSIN,DISP,             SYSIN                           X01592000
+               SYSLIN,DISP,            SYSLIN                          X01596000
+               SYSPRINT,LEAVE,         SYSPRINT                        X01600000
+               SYSPUNCH,LEAVE,         SYSPUNCH                        X01604000
+               SYSUT1,REREAD,          SYSUT1                          X01608000
+               SYSUT2,REREAD,          SYSUT2                          X01612000
+               SYSUT3,REREAD)          SYSUT3                           01616000
+*
+SYSUT1   DCB       DDNAME=SYSUT1,MACRF=(RP,WP),RECFM=U,DSORG=PS,       X08180000
+               SYNAD=IOERR,EXLST=EXITLIST                               08200000
+SYSUT2   DCB       DDNAME=SYSUT2,MACRF=(RP,WP),RECFM=U,DSORG=PS,       X08280000
+               SYNAD=IOERR,EXLST=EXITLIST                               08300000
+SYSUT3   DCB       DDNAME=SYSUT3,MACRF=(RP,WP),RECFM=U,DSORG=PS,       X08380000
+               SYNAD=IOERR,EXLST=EXITLIST                               08400000
+SYSLIB   DCB       DDNAME=SYSLIB,MACRF=(R),RECFM=F,DSORG=PO,           X08480000
+               LRECL=80,SYNAD=IOERR,EXLST=EXITLIST                      08500000
+SYSPUNCH DCB       DDNAME=SYSPUNCH,MACRF=(PL),RECFM=F,DSORG=PS,        X08580000
+               LRECL=80,SYNAD=IOERR,EXLST=EXITLIST                      08600000
+SYSPRINT DCB       DDNAME=SYSPRINT,MACRF=(PL),RECFM=FM,DSORG=PS,       X08680000
+               LRECL=0,EROPT=ACC,SYNAD=IOERR,EXLST=EXITLIST             08700000
+SYSIN    DCB       DDNAME=SYSIN,MACRF=(GL),RECFM=F,DSORG=PS,           X08780000
+               LRECL=80,SYNAD=IOERR,EXLST=EXITLIST                      08800000
+SYSLIN   DCB       DDNAME=SYSLIN,MACRF=(PL),RECFM=F,DSORG=PS,          X08880000
+               LRECL=80,SYNAD=IOERR,EXLST=EXITLIST                      08900000
+SYSTERM  DCB       DDNAME=SYSTERM,MACRF=(PL),RECFM=FM,DSORG=PS,        X08904000
+               LRECL=0,SYNAD=IOERR,EXLST=EXITLIST                       08905000
+SYSUP    DCB       DDNAME=SYSUP,MACRF=(GL),RECFM=F,DSORG=PS,           X08909000
+               LRECL=80,SYNAD=IOERR,EXLST=EXITLIST                      08910000
+         END       RT#357                                               08960000
