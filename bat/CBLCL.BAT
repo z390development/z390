@@ -1,12 +1,12 @@
 @echo off
 setlocal
 rem CBLCL translate CBL to MLC, assemble, and link using z390
-if %1.   == .    (echo %0 ERROR: missing file name
-                  exit /b 16
-                  )
-if /I %1 == tron (echo on
-                  shift /1
-                  )
+if /I %1. == tron. (echo on
+                    shift /1
+                    )
+if /I %1. == .     (echo %0 ERROR: missing file name
+                    exit /b 16
+                    )
 
 if exist %1.CBL goto erase
 echo on

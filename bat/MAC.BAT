@@ -1,12 +1,12 @@
 @echo off
 setlocal
 rem mac run mz390 macro processor to expand mlc to bal with nomlc
-if %1.   == .    (echo %0 ERROR: missing file name
-                  exit /b 16
-                  )
-if /I %1 == tron (echo on
-                  shift /1
-                  )
+if /I %1. == tron. (echo on
+                    shift /1
+                    )
+if /I %1. == .     (echo %0 ERROR: missing file name
+                    exit /b 16
+                    )
 
 if exist %1.BAL erase %1.BAL
 if exist %1.ERR erase %1.ERR

@@ -1,12 +1,12 @@
 @echo off
 rem CBLCLG translate CBL to MLC, assemble, link, and exec using z390 
 setlocal
-if %1.   == .    (echo %0 ERROR: missing file name
-                  exit /b 16
-                  )
-if /I %1 == tron (echo on
-                  shift /1
-                  )
+if /I %1. == tron. (echo on
+                    shift /1
+                    )
+if /I %1. == .     (echo %0 ERROR: missing file name
+                    exit /b 16
+                    )
 
 if not exist %1.CBL (
     echo CBLCLG   ERROR: zCOBOL program not found %1.CBL

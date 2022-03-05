@@ -1,12 +1,12 @@
 @echo off
 setlocal
 rem link to generate 390 load module from 1 or more obj files
-if %1.   == .    (echo %0 ERROR: missing file name
-                  exit /b 16
-                  )
-if /I %1 == tron (echo on
-                  shift /1
-                  )
+if /I %1. == tron. (echo on
+                    shift /1
+                    )
+if /I %1. == .     (echo %0 ERROR: missing file name
+                    exit /b 16
+                    )
 
 if exist %1.390 erase %1.390
 if exist %1.LST erase %1.LST

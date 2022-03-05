@@ -1,11 +1,11 @@
 @echo off
 setlocal
-if %1.   == .    (echo %0 ERROR: missing file name
-                  exit /b 16
-                  )
-if /I %1 == tron (echo on
-                  shift /1
-                  )
+if /I %1. == tron. (echo on
+                    shift /1
+                    )
+if /I %1. == .     (echo %0 ERROR: missing file name
+                    exit /b 16
+                    )
 
 rem exec execute 390 load module
 if exist %1.LOG erase %1.LOG
