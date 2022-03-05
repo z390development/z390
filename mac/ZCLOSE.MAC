@@ -112,7 +112,8 @@ ZCLOSE_DO_EXIT&SYSNDX DS 0H
                        LA     1,&DCB
                    AEND
                    AIF   ('&OPTION' NE '')
-                         MNOTE 12,'CLOSE OPTION NOT SUPPORTED - &OPTION'
+                         MNOTE 12,'CLOSE OPTION NOT SUPPORTED - &OPTIONX
+               '
                          MEXIT
                    AEND
                    SVC   20 CLOSE R1=DCB/ACB
