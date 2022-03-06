@@ -220,6 +220,7 @@ public  class  sz390 implements Runnable {
     * 2021-12-27 Issue #337 remove Perl reference from CMDPROC (SVC 34) processing
     * 2022-02-12 Issue 195. Problem mode bit in PSW now coded as variable, though in practice
     *            Problem mode always applies - Supervisor mode not supported in z390 yet
+    * 2022-03-04 Issue 358. Incorrect breakpoint info displayed in test mode.
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -432,7 +433,7 @@ public  class  sz390 implements Runnable {
     int     max_break_addr = 100;
     int[]   test_break_addr      = new int[max_break_addr];
     long    test_break_op_ins    = 0; // RPI 825
-    String  test_break_addr_cmd  = null;
+    String[]  test_break_addr_cmd  = new String[max_break_addr];
     String  test_break_reg_cmd   = null;
     String  test_break_mem_cmd   = null;
     String  test_break_op_cmd    = null;
@@ -5587,7 +5588,7 @@ private void check_test_break_addr(){
 	while (index < tot_test_break_addr){
 		if (pz390.psw_loc == test_break_addr[index]){
 			pz390.test_trace_count = 0;
-			tz390.put_trace("test break on " + test_break_addr_cmd);
+			tz390.put_trace("test break on " + test_break_addr_cmd[index]);
 			pz390.trace_psw();
 			return;
 		}
@@ -6495,7 +6496,7 @@ private void set_test_break_addr(int addr){
 	if (tot_test_break_addr == test_break_addr.length){
 		test_error("max addr breaks exceeded - remove one or clear");
 	}
-	test_break_addr_cmd  = test_cmd;
+	test_break_addr_cmd[tot_test_break_addr]  = test_cmd;
 	test_break_addr[tot_test_break_addr] = addr & 0x7fffffff; // RPI 428
 	tot_test_break_addr++;
 	dump_mem(pz390.mem,test_break_addr[tot_test_break_addr-1],16);
