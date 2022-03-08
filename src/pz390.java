@@ -390,11 +390,14 @@ public class pz390 {
      * 2021-10-29 Issue 305. Fix XHEXI logic so that it matches ASSIST documentation.
      *                       NB: RPI 878 added ASCII support for XDECI but not XHEXI.
      *                           Not added here either.
-	 * 2022-02-24 DSH ISSUE 330 add support for MGRK, MSGRKC, MSRKC, MSC
-   * 2022-02-12 Issue 195. For all privileged instructions issue the proper exception according PoP
+     * 2022-02-12 Issue 195. For all privileged instructions issue the proper exception according PoP
 	 *                       Being S0C2 for privileged-operation exception when executed in problem state
 	 *                       Other exceptions as defined in PoP
 	 *                       And implement as a no-op if all tests are passed
+	 * 2022-02-24 DSH ISSUE #300 add support for MGRK, MSGRKC, MSRKC, MSC
+           * 2022-03-05 DSH issue #300 updated based on review by John Yanci
+           *                     1) Simplify get_signed_bytes by dropping extra leading byte
+           *                     2) cleanup comments
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -8133,7 +8136,7 @@ public class pz390 {
 	     case 0xEC: // "B9EC=MGRK,54,340", // B9EC rrfa MGRK R1,R2,R3 RPI 2202 #300
 		     psw_check = false;
 	    	 ins_setup_rrfa();
-			 if ((mf1 & 1) != 0){ // issue 300 add MGRK, MSGRKC, MSRKC
+			 if ((mf1 & 1) != 0){ // issue 300 add MGRK
 				set_psw_check(psw_pic_spec);
 			}
 			big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf2, 8)); 
@@ -8151,13 +8154,18 @@ public class pz390 {
 			big_int2 = new BigInteger(get_signed_bytes(reg_byte, rf3, 8));
 			big_int1 = big_int1
 			         .multiply(big_int2);
-					 if (big_int1.compareTo(bi_max_pos_long) == 1
-					     || big_int1.compareTo(bi_min_neg_long) == -1) {                  
-				psw_cc = psw_cc3;                          
-				break;                                     
+                             fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
+			 if (big_int1.compareTo(bi_max_pos_long) == 1
+			     || big_int1.compareTo(bi_min_neg_long) == -1) {                  
+			     psw_cc = psw_cc3;                          
+			 } else if (big_int1.compareTo(BigInteger.ZERO) == 1){
+                                  psw_cc = psw_cc2;
+                              } else if (big_int1.compareTo(BigInteger.ZERO) == -1){
+                                  psw_cc = psw_cc1;
+                              } else {
+                                  psw_cc = psw_cc0;
 			} 
-			fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
-	    	break;
+                             break;
 	     case 0xF2: // "B9F2" "LOCR" R1,R2,M3 RPI 1125
 				psw_check = false;
 				ins_setup_RRFc();
@@ -9269,7 +9277,7 @@ public class pz390 {
 			ins_setup_rxy();
 			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) * mem.getInt(xbd2_loc));
 			break;
-		case 0x53: // "E353" "MSC" "RXY" // #330
+		case 0x53: // "E353" "MSC" "RXY" // #300
 		    psw_check = false;
 		    ins_setup_rxy();
 			rlv1 = (long)reg.getInt(rf1 + 4) * (long)mem.getInt(xbd2_loc);
@@ -13949,16 +13957,12 @@ public class pz390 {
 	}
 	private byte[] get_signed_bytes(byte[] data_byte, int data_offset, int data_len) {  // #300
 		/*
-		 * return byte array with leading 0 byte followed by data bytes. This
-		 * array format is used to initialize BigInteger with logical unsigned
-		 * value.  
-		 * 2022-02-21 dsh issue 300 fix to support 2s compliment negative numbers with leading x'ff' vs x'00'
+		 * return byte array with signed 2's compliment. This
+		 * array format is used to initialize BigInteger value.  
+		 * 2022-02-21 dsh issue 300 fix to support 2s compliment negative numbers
 		 */
-		byte[] new_byte = new byte[data_len + 1];
-		if (data_byte[data_offset] < 0) {
-			new_byte[0] = (byte)0xff; // issue 300 support 2s compliment negative integers
-		}
-		System.arraycopy(data_byte, data_offset, new_byte, 1, data_len); // RPI
+		byte[] new_byte = new byte[data_len];
+		System.arraycopy(data_byte, data_offset, new_byte, 0, data_len); // RPI
 																			// 411
 		return new_byte;
 	}
