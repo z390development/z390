@@ -1,12 +1,20 @@
-@echo off
-setlocal
+@if /I %1. == tron. (echo on) else (echo off)
 rem asml assemble and link to generate load module 390 from mlc
-if /I %1. == tron. (echo on
+
+setlocal
+if /I %1. == tron. (set z_TraceMode=tron
                     shift /1
+            ) else (if /I %1. == troff. (set z_TraceMode=troff
+                                         shift /1
+                                 ) else (set z_TraceMode=)
                     )
-if /I %1. == .     (echo %0 ERROR: missing file name
-                    exit /b 16
-                    )
+set /A z_NestLevel=%z_NestLevel%+1
+rem ----- Lvl(%z_NestLevel%) Start %0 %2 %3 %4 %5 %6 %7 %8 %9
+
+if /I %1. == . (echo %0 ERROR: missing file name
+                set z_ReturnCode=16
+                goto return
+                )
 
 if exist %1.BAL erase %1.BAL
 if exist %1.PRN erase %1.PRN
@@ -18,18 +26,22 @@ if exist %1.STA erase %1.STA
 if exist %1.TR* erase %1.TR*
 
 rem get the z390 directory
-set "zdir=%~dps0..\"
-for %%f in ("%zdir%") do set "zdir=%%~ff"
+set "z_HomeDir=%~dps0..\"
+for %%f in ("%z_HomeDir%") do set "z_HomeDir=%%~ff"
 
-call %~dps0mz390 %1  sysmac(+%zdir%mac) syscpy(+%zdir%mac) %2 %3 %4 %5 %6 %7 %8 %9
-if %ERRORLEVEL% NEQ 0 (
-    echo ASML     ERROR: See errors on mz390 generated bal file and console
-    exit /b %ERRORLEVEL%
-)
-call %~dps0lz390 %1 %2 %3 %4 %5 %6 %7 %8 %9
-if %ERRORLEVEL% NEQ 0 (
-    set RC=%ERRORLEVEL%
-    echo ASML     ERROR: See errors on lz390 generated lst file and console
-    erase %1.390
-    exit /b %RC%
-)
+call %~dps0mz390 %z_TraceMode% %1 sysmac(+%z_HomeDir%mac) syscpy(+%z_HomeDir%mac) %2 %3 %4 %5 %6 %7 %8 %9
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% NEQ 0 (erase %1.OBJ
+                         echo %0 ERROR: See errors on mz390 generated bal file and console
+                         goto return
+                         )
+
+call %~dps0lz390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% NEQ 0 (erase %1.390
+                         echo %0 ERROR: See errors on lz390 generated lst file and console
+                         goto return
+                         )
+:return
+rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8
+exit /b %z_ReturnCode%
