@@ -8136,7 +8136,7 @@ public class pz390 {
 	     case 0xEC: // "B9EC=MGRK,54,340", // B9EC rrfa MGRK R1,R2,R3 RPI 2202 #300
 		     psw_check = false;
 	    	 ins_setup_rrfa();
-			 if ((mf1 & 1) != 0){ // issue 300 add MGRK
+			 if ((mf1 & 1) != 0){ // issue 300 add MGRK, MSGRKC, MSRKC
 				set_psw_check(psw_pic_spec);
 			}
 			big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf2, 8)); 
@@ -8154,7 +8154,8 @@ public class pz390 {
 			big_int2 = new BigInteger(get_signed_bytes(reg_byte, rf3, 8));
 			big_int1 = big_int1
 			         .multiply(big_int2);
-                             fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
+
+       fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
 			 if (big_int1.compareTo(bi_max_pos_long) == 1
 			     || big_int1.compareTo(bi_min_neg_long) == -1) {                  
 			     psw_cc = psw_cc3;                          
@@ -13956,14 +13957,12 @@ public class pz390 {
 		return new_byte;
 	}
 	private byte[] get_signed_bytes(byte[] data_byte, int data_offset, int data_len) {  // #300
-		/*
-		 * return byte array with signed 2's compliment. This
-		 * array format is used to initialize BigInteger value.  
+
 		 * 2022-02-21 dsh issue 300 fix to support 2s compliment negative numbers
 		 */
+		
 		byte[] new_byte = new byte[data_len];
-		System.arraycopy(data_byte, data_offset, new_byte, 0, data_len); // RPI
-																			// 411
+		System.arraycopy(data_byte, data_offset, new_byte, 0, data_len);																			// 411
 		return new_byte;
 	}
 

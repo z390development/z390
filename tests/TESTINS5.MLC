@@ -428,6 +428,49 @@ BIC_OK2  EQU    *
           RT1  CC0
 * MSGRKC
          LMG   R5,R6,=FL8'2,3'
+         SR    R0,R0
+         MSGRKC  R2,R5,R6
+         RT1    CC2
+         CLG    R2,=FL8'6'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'2,-3'
+         MSGRKC  R2,R5,R6
+         CLG    R2,=FL8'-6'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'-2,3'
+         MSGRKC  R2,R5,R6
+         CLG    R2,=FL8'-6'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'-2,-3'
+         MSGRKC  R2,R5,R6
+         CLG   R2,=FL8'6'
+         RT1    CC0 
+         LMG   R5,R6,=XL8'7FFFFFFFFFFFFFFF,2'
+         MSGRKC  R2,R5,R6
+          RT1    CC3  
+* MSRKC
+         LM    R5,R6,=F'2,3'
+         MSRKC  R2,R5,R6
+         CL      R2,=F'6'
+         RT1    CC0 
+         LM     R5,R6,=F'2,-3'
+         MSRKC  R2,R5,R6
+         CL      R2,=F'-6'
+         RT1    CC0 
+         LM     R5,R6,=F'-2,3'
+         MSRKC  R2,R5,R6
+         CL      R2,=F'-6'
+         RT1    CC0 
+         LM     R5,R6,=F'-2,-3'
+         MSRKC  R2,R5,R6
+         CL     R2,=F'6'
+         RT1    CC0 
+         LM   R5,R6,=XL4'7FFFFFFF,2'
+         MSRKC  R2,R5,R6
+         RT1    CC3  
+* MSGRKC
+         LMG   R5,R6,=FL8'2,-3'
+         L	R2,=F'2'
          SR       R0,R0
          MSGRKC  R2,R5,R6
          RT1 CC2
@@ -510,6 +553,10 @@ BIC_OK2  EQU    *
           CL    R2,=F'6'
 	RT1	CC0
          L	R2,=X'7FFFFFFF'
+	MSC R2,=F'2'
+          RT1  CC3
+* MSGC
+         LG	R2,=FL8'2'
          SR       R0,R0
 	MSC R2,=F'2'
           RT1  CC3
