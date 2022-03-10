@@ -12,8 +12,7 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dp0
-cd..
-cd..
+cd ..\..
 
 set SNAPOUT=ZOPCHECK\SNAPOUT.TXT
 call bat\asmlg %z_TraceMode% zopcheck\ZOPCHECK bal trace sysmac(mac) syscpy(zopcheck+mac) optable(z390) %1 %2 %3

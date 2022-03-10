@@ -1,52 +1,41 @@
-::========================================================================
-:: z390 - Mainframe assembler emulator and run-time engine
-:: Copyright (C) 2021 z390 Assembler LLC
-::
-:: This file is part of z390.
-:: z390 is free software; you can redistribute it and/or modify
-:: it under the terms of the GNU General Public License as published by
-:: the Free Software Foundation; either version 2 of the License, or
-:: (at your option) any later version.
-::
-:: z390 is distributed in the hope that it will be useful,
-:: but WITHOUT ANY WARRANTY; without even the implied warranty of
-:: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-:: GNU General Public License for more details.
-::
-:: You should have received a copy of the GNU General Public License along
-:: with this program; if not, see <https://www.gnu.org/licenses/>.
-::========================================================================
+@if /I %1. == tron. (echo on) else (echo off)
 rem run programs that test CMDPROC (SVC 34)
-@setlocal
-@pushd %~dp0
-cd..
 
-:: Test one Command Processor
-call bat\asmlg rt\test\TESTCMD3
-IF %ERRORLEVEL% NEQ 0 (
-    echo RUNCMDPR.ERROR: ERROR IN TESTCMD3 RC=%ERRORLEVEL% - exiting
-    EXIT /B %ERRORLEVEL%
-)
+setlocal
+if /I %1. == tron. (set z_TraceMode=tron
+                    shift /1
+            ) else (if /I %1. == troff. (set z_TraceMode=troff
+                                         shift /1
+                                 ) else (set z_TraceMode=)
+                    )
+set /A z_NestLevel=%z_NestLevel%+1
+rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-:: Test two Command Processors (3 tests)
-:: 1. Both have same number of lines of output
-:: 2. Second CP has more lines of output
-:: 3. First CP has more lines of output
+pushd %~dp0
+if exist runcmdproc.bat cd ..
 
-call bat\asmlg rt\test\TESTCMD4 PARM(1)
-IF %ERRORLEVEL% NEQ 0 (
-    echo RUNCMDPR.ERROR: ERROR IN TESTCMD4 PARM^(1^) RC=%ERRORLEVEL% - exiting
-    EXIT /B %ERRORLEVEL%
-)
+rem Test one Command Processor
+set z_testID=1
+call bat\asmlg %z_TraceMode% rt\test\TESTCMD3 || goto error
 
-call bat\asmlg rt\test\TESTCMD4 PARM(2)
-IF %ERRORLEVEL% NEQ 0 (
-    echo RUNCMDPR.ERROR: ERROR IN TESTCMD4 PARM^(2^) RC=%ERRORLEVEL% - exiting
-    EXIT /B %ERRORLEVEL%
-)
+rem Test two Command Processors (3 tests)
+rem A. Both have same number of lines of output
+rem B Second CP has more lines of output
+rem C. First CP has more lines of output
 
-call bat\asmlg rt\test\TESTCMD4 PARM(3)
-IF %ERRORLEVEL% NEQ 0 (
-    echo RUNCMDPR.ERROR: ERROR IN TESTCMD4 PARM^(3^) RC=%ERRORLEVEL% - exiting
-    EXIT /B %ERRORLEVEL%
-)
+set z_testID=2A
+call bat\asmlg %z_TraceMode% rt\test\TESTCMD4 PARM(1) || goto error
+set z_testID=2B
+call bat\asmlg %z_TraceMode% rt\test\TESTCMD4 PARM(2) || goto error
+set z_testID=2C
+call bat\asmlg %z_TraceMode% rt\test\TESTCMD4 PARM(3) || goto error
+set z_ReturnCode=0
+goto return
+
+:error
+set z_ReturnCode=%ERRORLEVEL%
+echo %0 ERROR: Encountered RC %z_ReturnCode% in test %z_testID% - exiting
+:return
+popd
+rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+exit /b %z_ReturnCode%

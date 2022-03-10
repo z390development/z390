@@ -1,5 +1,6 @@
 @if /I %1. == tron. (echo on) else (echo off)
 rem Assemble, link, and exec ASSIST program %1
+
 setlocal
 if /I %1. == tron. (set z_TraceMode=tron
                     shift /1

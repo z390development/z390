@@ -21,6 +21,7 @@ if exist %1.PRN erase %1.PRN
 if exist %1.OBJ erase %1.OBJ
 if exist %1.LST erase %1.LST
 if exist %1.390 erase %1.390
+if exist %1.LOG erase %1.LOG
 if exist %1.ERR erase %1.ERR
 if exist %1.STA erase %1.STA
 if exist %1.TR* erase %1.TR*
@@ -31,14 +32,14 @@ for %%f in ("%z_HomeDir%") do set "z_HomeDir=%%~ff"
 
 call %~dps0mz390 %z_TraceMode% %1 sysmac(+%z_HomeDir%mac) syscpy(+%z_HomeDir%mac) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% NEQ 0 (erase %1.OBJ
+if %z_ReturnCode% GTR 4 (erase %1.OBJ
                          echo %0 ERROR: See errors on mz390 generated bal file and console
                          goto return
                          )
 
 call %~dps0lz390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% NEQ 0 (erase %1.390
+if %z_ReturnCode% GTR 4 (erase %1.390
                          echo %0 ERROR: See errors on lz390 generated lst file and console
                          goto return
                          )

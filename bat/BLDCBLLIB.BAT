@@ -12,16 +12,16 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dp0
-cd..
-call bat\asm  %z_TraceMode% zcobol\lib\ABORT    sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-call bat\asm  %z_TraceMode% zcobol\lib\ACCEPT   sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-call bat\asm  %z_TraceMode% zcobol\lib\CVTTOHEX sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-call bat\asm  %z_TraceMode% zcobol\lib\DISPLAY  sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-call bat\asm  %z_TraceMode% zcobol\lib\INSPECT  sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-call bat\asm  %z_TraceMode% zcobol\lib\ZC390NUC sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-call bat\asml %z_TraceMode% zcobol\lib\ZC390LIB sysmac(mac) syscpy(mac+zcobol\lib) sys390(zcobol\lib) rmode24 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
+cd ..
+call bat\asm  %z_TraceMode% zcobol\lib\ABORT    sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\ACCEPT   sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\CVTTOHEX sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\DISPLAY  sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\INSPECT  sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\ZC390NUC sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% zcobol\lib\ZC390LIB sysmac(mac) syscpy(mac+zcobol\lib) sys390(zcobol\lib) rmode24 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 if not exist zcobol\lib\ZC390LIB.390 (set z_ReturnCode=12
-                                      ecgo %0 ERROR: ZC390LIB.390 was not created
+                                      echo %0 ERROR: ZC390LIB.390 was not created
                                       goto return)
 set z_ReturnCode=0
 goto return

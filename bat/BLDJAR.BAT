@@ -12,7 +12,7 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dp0
-cd..
+cd ..
 
 rem Make jar directory if does not exist
 if not exist ".\jar\" mkdir jar
