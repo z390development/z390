@@ -1,15 +1,15 @@
-@if /I %1. == tron. (echo on) else (echo off)
+@if /I "%1" == "tron" (echo on) else (echo off)
 rem RUN RT QSAM FOR V,VB,VT,VL
 rem BLD? CREATES TEST FILE, CHK? VERIFIES TEST FILE
 rem SEE TRE TRACE FILES FOR SNAP DUMPS OF RECORDS
 
 setlocal
-if /I %1. == tron. (set z_TraceMode=tron
-                    shift /1
-            ) else (if /I %1. == troff. (set z_TraceMode=troff
-                                         shift /1
-                                 ) else (set z_TraceMode=)
-                    )
+if /I "%1" == "tron" (set z_TraceMode=tron
+                      shift /1
+              ) else (if /I "%1" == "troff" (set z_TraceMode=troff
+                                             shift /1
+                                     ) else (set z_TraceMode=)
+                      )
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
