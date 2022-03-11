@@ -10,8 +10,7 @@ if /I %1. == tron. (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-pushd %~dp0
-if exist z390.bat cd ..
+pushd %~dp0\..
 
 start javaw -jar z390.jar
 

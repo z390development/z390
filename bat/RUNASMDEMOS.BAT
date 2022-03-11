@@ -11,9 +11,7 @@ if /I %1. == tron. (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-pushd %~dp0
-if exist runasmdemos.bat cd ..
-
+pushd %~dp0\..
 call bat\ASMLG %z_TraceMode% demo\HELLO    %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASM   %z_TraceMode% demo\DEMOM8Q1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 set sysut1=demo\TESTDCB1.TF1

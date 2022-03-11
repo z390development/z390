@@ -21,7 +21,7 @@ if exist %1.LST erase %1.LST
 if exist %1.ERR erase %1.ERR
 if exist %1.STA erase %1.STA
 if exist %1.TR* erase %1.TR*
-call %~dps0LZ390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dp0\LZ390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: see errors on lz390 generated lst file and console
                          goto return

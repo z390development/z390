@@ -11,8 +11,7 @@ if /I %1. == tron. (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-pushd %~dp0
-cd ..
+pushd %~dp0\..
 call bat\asm  %z_TraceMode% zcobol\lib\ABORT    sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\asm  %z_TraceMode% zcobol\lib\ACCEPT   sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\asm  %z_TraceMode% zcobol\lib\CVTTOHEX sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error

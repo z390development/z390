@@ -20,7 +20,7 @@ if exist %1.LOG erase %1.LOG
 if exist %1.ERR erase %1.ERR
 if exist %1.STA erase %1.STA
 if exist %1.TR* erase %1.TR*
-call %~dps0ez390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dp0\ez390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 4 (echo %0 ERROR: see errors on ez390 generated log file and console
                          goto return

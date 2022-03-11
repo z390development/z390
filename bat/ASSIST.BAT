@@ -21,7 +21,7 @@ set XPRNT=%1.XPR
 set XPNCH=%1.XPH
 set XGET=%1.XGT
 set XPUT=%1.XPT
-call %~dps0ASMLG %z_TraceMode% %1 assist %2 %3 %4 %5 %6 %7 %8 %9
+call %~dp0\ASMLG %z_TraceMode% %1 assist %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
                          goto return

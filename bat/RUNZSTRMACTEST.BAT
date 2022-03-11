@@ -15,9 +15,7 @@ if /I %1. == tron. (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-pushd %~dp0
-if exist runzstrmactest.bat cd ..
-
+pushd %~dp0\..
 echo Test zstrmac basic structures using bootstrap version 1
 set SYSUT1=rt\test\TESTSPE1.ZSM 
 set SYSUT2=rt\test\TESTSPE1.MLC 

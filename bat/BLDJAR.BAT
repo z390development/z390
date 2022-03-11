@@ -11,11 +11,9 @@ if /I %1. == tron. (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-pushd %~dp0
-cd ..
-
-rem Make jar directory if does not exist
+pushd %~dp0\..
 if not exist ".\jar\" mkdir jar
+
 rem both the compiler javac.exe and jar builder jar.exe must be on sdk path
 rem note you can use current z390.jar with compatible java runtime with sdk
 erase jar\*.java
@@ -50,7 +48,7 @@ if not exist z390.jar   (echo %0 ERROR: Error z390.jar file failed to be created
                          goto return
                          )
 
-cd..
+cd ..
 copy jar\z390.jar
 dir z390.jar
 set z_ReturnCode=0

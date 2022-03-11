@@ -11,23 +11,21 @@ if /I %1. == tron. (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-pushd %~dp0
-cd ..
+pushd %~dp0\..
+call bat\asml  %z_TraceMode% linklib\REPRO    bal notiming stats       || goto error
+call bat\asml  %z_TraceMode% linklib\SUPERZAP bal notiming stats       || goto error
+call bat\asml  %z_TraceMode% linklib\UNREF    bal notiming stats ascii || goto error
+call bat\asm   %z_TraceMode% linklib\FPCONVRT bal notiming stats       || goto error
+call bat\asm   %z_TraceMode% linklib\FPCONMFC bal notiming stats       || goto error
+call bat\asm   %z_TraceMode% linklib\CVTTOHEX bal notiming stats       || goto error
+call bat\asm   %z_TraceMode% linklib\SQXTR    bal notiming stats       || goto error
+call bat\asm   %z_TraceMode% linklib\DAT      bal notiming stats       || goto error
+call bat\asmlg %z_TraceMode% linklib\IEFBR14  sysobj(+linklib)         || goto error
+call bat\asmlg %z_TraceMode% linklib\TESTFPC1 sysobj(+linklib)         || goto error
+call bat\asmlg %z_TraceMode% linklib\TESTFPC2 sysobj(+linklib)         || goto error
 
-CALL bat\asml  %z_TraceMode% linklib\REPRO    bal notiming stats       || goto error
-CALL bat\asml  %z_TraceMode% linklib\SUPERZAP bal notiming stats       || goto error
-CALL bat\asml  %z_TraceMode% linklib\UNREF    bal notiming stats ascii || goto error
-CALL bat\asm   %z_TraceMode% linklib\FPCONVRT bal notiming stats       || goto error
-CALL bat\asm   %z_TraceMode% linklib\FPCONMFC bal notiming stats       || goto error
-CALL bat\asm   %z_TraceMode% linklib\CVTTOHEX bal notiming stats       || goto error
-CALL bat\asm   %z_TraceMode% linklib\SQXTR    bal notiming stats       || goto error
-CALL bat\asm   %z_TraceMode% linklib\DAT      bal notiming stats       || goto error
-CALL bat\asmlg %z_TraceMode% linklib\IEFBR14  sysobj(+linklib)         || goto error
-CALL bat\asmlg %z_TraceMode% linklib\TESTFPC1 sysobj(+linklib)         || goto error
-CALL bat\asmlg %z_TraceMode% linklib\TESTFPC2 sysobj(+linklib)         || goto error
-
-CALL bat\asm   %z_TraceMode% linklib\RTGENDIR noasm bal notiming stats sysparm(RTGENDIR) || goto error
-CALL bat\asm   %z_TraceMode% linklib\RTGENCMP noasm bal notiming stats sysparm(RTGENCMP) || goto error
+call bat\asm   %z_TraceMode% linklib\RTGENDIR noasm bal notiming stats sysparm(RTGENDIR) || goto error
+call bat\asm   %z_TraceMode% linklib\RTGENCMP noasm bal notiming stats sysparm(RTGENCMP) || goto error
 set z_ReturnCode=0
 goto return
 
