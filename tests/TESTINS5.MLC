@@ -32,8 +32,9 @@
 * 2020/01/29 LLGTAT, LGHAT, LLGFAT, LFHAT
 * 2020/12/02 dsh add Insert Immediate LGFI, IILF, IIHF with relocation
 *            IIHH, IIHL, IILH, IILL half word inserts
-* 2022/02/22 DSH issue #300 add MGRK,  MSGRKC, MSGRKC, MSRKC, MSGC, MSC
+* 2022/02/22 DSH issue #300 add MGRK,  MSGRKC, MSRKC, MSGC, MSC
 * 2022-03-06 DSH issue #300 reset CC before testing CC for aLL mpy with cc
+* 2022-03-12 DSH issue #300 add tests for zero
 *********************************************************************
 
          PRINT DATACD
@@ -410,6 +411,10 @@ BIC_OK2  EQU    *
          CL     R1,=F'-6'
          RT1  CC0
          L       R1,=F'-2'
+         MS    R1,=F'3'    #300 ADDED TEST
+         CL     R1,=F'-6'
+         RT1  CC0
+         L       R1,=F'-2'
          MS    R1,=F'-3'
          CL     R1,=F'6'
          RT1  CC0
@@ -420,6 +425,10 @@ BIC_OK2  EQU    *
          RT1  CC0
          L       R1,=F'2'
          MSY    R1,=F'-3'
+         CL     R1,=F'-6'
+         RT1  CC0
+         L       R1,=F'-2'
+         MSY    R1,=F'3'  #300 ADDED TEST
          CL     R1,=F'-6'
          RT1  CC0
          L       R1,=F'-2'
@@ -445,6 +454,27 @@ BIC_OK2  EQU    *
          RT1     CC1
          CLG    R2,=FL8'-6'
          RT1    CC0 
+        LMG   R5,R6,=FL8'0,3'
+         SR      R0,R0
+         AHI    R0,1    NOT ZERO     
+         MSGRKC  R2,R5,R6
+         RT1     CC0
+         CLG    R2,=FL8'0'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'3,0'
+         SR      R0,R0
+         AHI    R0,1    NOT ZERO     
+         MSGRKC  R2,R5,R6
+         RT1     CC0
+         CLG    R2,=FL8'0'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'0,0'
+         SR      R0,R0
+         AHI    R0,1    NOT ZERO     
+         MSGRKC  R2,R5,R6
+         RT1     CC0
+         CLG    R2,=FL8'0'
+         RT1    CC0 
          LMG   R5,R6,=FL8'-2,-3'
          SR       R0,R0
          MSGRKC  R2,R5,R6
@@ -455,6 +485,8 @@ BIC_OK2  EQU    *
          SR       R0,R0
          MSGRKC  R2,R5,R6
           RT1    CC3  
+          CLG   R2,=FL8'-2'  #300 CHK RESULT AFTER OVERFLOW
+          RT1    CC0
 * MSRKC #300
          LM    R5,R6,=F'2,3'
          SR     R0,R0
@@ -484,6 +516,8 @@ BIC_OK2  EQU    *
          SR       R0,R0
          MSRKC  R2,R5,R6
          RT1    CC3  
+          CL     R2,=F'-2'
+          RT1   CC0  #300 CHECK OVERFLOW RESULT
 * MSC #300 
          L	R2,=F'2'
          SR       R0,R0
@@ -513,6 +547,8 @@ BIC_OK2  EQU    *
          SR       R0,R0
 	MSC R2,=F'2'
           RT1  CC3
+           CL   R2,=F'-2'
+           RT1 CC0          #300 CHK RESULT AFTER OVERFLOW
 * MSGC #300
          LG	R2,=FL8'2'
          SR       R0,R0
@@ -538,10 +574,16 @@ BIC_OK2  EQU    *
           RT1  CC2
           CLG    R2,=FL8'6'
 	RT1	CC0
+        LG	R2,=FL8'0'   #300 TEST ZERO RESULT
+         SR       R0,R0
+	MSGC R2,=FL8'2'
+          RT1  CC0
          LG	R2,=X'7FFFFFFFFFFFFFFF'
          SR       R0,R0
 	MSGC R2,=FL8'2'
           RT1  CC3
+          CLG    R2,=FL8'-2'  #300 TEST RESULT AFTER OVERFLOW
+          RT1  CC0
 *****************************************************************************
 * END
          RT1   END

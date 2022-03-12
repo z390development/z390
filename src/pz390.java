@@ -398,6 +398,7 @@ public class pz390 {
            * 2022-03-05 DSH issue #300 updated based on review by John Yanci
            *                     1) Simplify get_signed_bytes by dropping extra leading byte
            *                     2) cleanup comments
+          * 2022-03-12 DSH fixed overflow for cc3 MSC, MSGC, MSGRKC, MSRKC
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -8148,23 +8149,30 @@ public class pz390 {
 	    	 break;
 	    case 0xED: // "B9ED=MSGRKC,54,340", // B9ED rrfa MSGRKC R1,R2,R3 RPI 2202 #300
 			 psw_check =false;
-	    	 ins_setup_rrfa();
-			 big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf2, 8)); 
-																			
+	    	           ins_setup_rrfa();
+			 big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf2, 8));												
 			big_int2 = new BigInteger(get_signed_bytes(reg_byte, rf3, 8));
 			big_int1 = big_int1
 			         .multiply(big_int2);
                              fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
 			 if (big_int1.compareTo(bi_max_pos_long) == 1
 			     || big_int1.compareTo(bi_min_neg_long) == -1) {                  
-			     psw_cc = psw_cc3;                          
-			 } else if (big_int1.compareTo(BigInteger.ZERO) == 1){
-                                  psw_cc = psw_cc2;
-                              } else if (big_int1.compareTo(BigInteger.ZERO) == -1){
-                                  psw_cc = psw_cc1;
-                              } else {
-                                  psw_cc = psw_cc0;
-			} 
+			     psw_cc = psw_cc3;   
+                                  set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow                     
+			 } else {
+				switch (big_int1.compareTo(BigInteger.ZERO)) // #300 opt by John G
+				{
+				case 1:
+					psw_cc = psw_cc2;
+					break;
+				case -1:
+					psw_cc = psw_cc1;
+					break;
+				default:
+					psw_cc = psw_cc0;
+					break;
+				}
+                             } 
                              break;
 	     case 0xF2: // "B9F2" "LOCR" R1,R2,M3 RPI 1125
 				psw_check = false;
@@ -8271,6 +8279,7 @@ public class pz390 {
 				  reg.putInt(rf1 + 4, rv1);
 				  if (rlv1 != (long)rv1){
 					  psw_cc = psw_cc3;
+                                                  set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow 
 				  } else if (rv1 > 0){
 					  psw_cc = psw_cc2;
 				  } else if (rv1 == 0) {
@@ -9285,6 +9294,7 @@ public class pz390 {
 			reg.putInt(rf1 + 4, rv1);
 			if (rlv1 != (long)rv1){
 			  psw_cc = psw_cc3;
+                               set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow
 			} else if (rv1 > 0){
 			  psw_cc = psw_cc2;
 			} else if (rv1 == 0) {
@@ -9493,7 +9503,7 @@ public class pz390 {
 				psw_cc = psw_cc1;
 			}
 			break;
-		case 0x83: //  E383 RXYa MSGC R1,D2(X2,B2) RPI 2202 
+		case 0x83: //  E383 RXYa MSGC R1,D2(X2,B2) RPI 2202 #300
 			psw_check = false;
 			ins_setup_rxy();
 			big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf1, 8)); 
@@ -9505,7 +9515,8 @@ public class pz390 {
 			fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
 			if (big_int1.compareTo(bi_max_pos_long) == 1
 			|| big_int1.compareTo(bi_min_neg_long) == -1) {                  
-                psw_cc = psw_cc3; 
+                                      psw_cc = psw_cc3; 
+                                      set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow
 			} else if (rlv1 > 0){
 				psw_cc = psw_cc2;
 			} else if (rlv1 == 0) {
@@ -13949,7 +13960,7 @@ public class pz390 {
 		 * return byte array with leading 0 byte followed by data bytes. This
 		 * array format is used to initialize BigInteger with logical unsigned
 		 * value.  
-		 * 2022-02-21 dsh issue 300 support unsigned and signed 2s compliment negative numbers with leading x'ff' vs x'00'
+		 * 2022-02-21 dsh issue 300 support unsigned with leading x'00'
 		 */
 		byte[] new_byte = new byte[data_len + 1]; // default all 0x00
 		System.arraycopy(data_byte, data_offset, new_byte, 1, data_len); // RPI 411
@@ -13957,9 +13968,9 @@ public class pz390 {
 	}
 	private byte[] get_signed_bytes(byte[] data_byte, int data_offset, int data_len) {  // #300
 		/*
-		 * return byte array with signed 2's compliment. This
+		 * return byte array with signed 2's complement. This
 		 * array format is used to initialize BigInteger value.  
-		 * 2022-02-21 dsh issue 300 fix to support 2s compliment negative numbers
+		 * 2022-02-21 dsh issue 300 fix to support 2s complement negative numbers
 		 */
 		byte[] new_byte = new byte[data_len];
 		System.arraycopy(data_byte, data_offset, new_byte, 0, data_len); // RPI
