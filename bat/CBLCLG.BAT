@@ -36,28 +36,28 @@ if exist %1.class erase %1.class
 if exist %1_ZC_LABELS.CPY erase %1_ZC_LABELS.CPY
 
 rem get the z390 directory
-set "z_HomeDir=%~dp0\..\"
+set "z_HomeDir=%~dps0..\"
 for %%f in ("%z_HomeDir%") do set "z_HomeDir=%%~ff"
 
-call %~dp0\ZC390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0ZC390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 4 (echo %0 ERROR: Cobol compile error
                          goto return
                          )
 
-call %~dp0\MZ390 %z_TraceMode% %1 @%z_HomeDir%zcobol\opt\CBLOPT sysmac(%z_HomeDir%zcobol\mac+mac) syscpy(+%z_HomeDir%zcobol\cpy) %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0MZ390 %z_TraceMode% %1 @%z_HomeDir%zcobol\opt\CBLOPT sysmac(%z_HomeDir%zcobol\mac+mac) syscpy(+%z_HomeDir%zcobol\cpy) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 4 (echo %0 ERROR: see errors on mz390 generated bal file and console
                          goto return
                          )
 
-call %~dp0\LZ390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0LZ390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 4 (echo %0 ERROR: see errors on lz390 generated lst file and console
                          goto return
                          )
 
-call %~dp0\EZ390 %z_TraceMode% %1 sys390(+%z_HomeDir%zcobol\lib) %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0EZ390 %z_TraceMode% %1 sys390(+%z_HomeDir%zcobol\lib) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 4 (echo %0 ERROR: see errors on ez390 generated log file and console
                          goto return

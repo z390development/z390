@@ -11,7 +11,7 @@ if /I "%1" == "tron" (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-pushd %~dp0\..\..
+pushd %~dps0..\..
 call bat\asm   %z_TraceMode% tests\testins1 trace sysmac(mac) noloadhigh               || goto error
 call bat\asmlg %z_TraceMode% tests\testins2 trace sysmac(mac) noloadhigh               || goto error
 call bat\asmlg %z_TraceMode% tests\testins3 trace sysmac(mac) noloadhigh               || goto error

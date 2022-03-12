@@ -11,7 +11,7 @@ if /I "%1" == "tron" (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-pushd %~dp0\..
+pushd %~dps0..
 set XPRNT=assist\demo\DEMOAST1.XPR
 call bat\asmlg %z_TraceMode% assist\demo\DEMOAST1 ASSIST TRACEALL || goto error
 

@@ -27,17 +27,17 @@ if exist %1.STA erase %1.STA
 if exist %1.TR* erase %1.TR*
 
 rem get the z390 directory
-set "z_HomeDir=%~dp0\..\"
+set "z_HomeDir=%~dps0..\"
 for %%f in ("%z_HomeDir%") do set "z_HomeDir=%%~ff"
 
-call %~dp0\mz390 %z_TraceMode% %1 sysmac(+%z_HomeDir%mac) syscpy(+%z_HomeDir%mac) %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0mz390 %z_TraceMode% %1 sysmac(+%z_HomeDir%mac) syscpy(+%z_HomeDir%mac) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 4 (erase %1.OBJ
                          echo %0 ERROR: See errors on mz390 generated bal file and console
                          goto return
                          )
 
-call %~dp0\lz390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0lz390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 4 (erase %1.390
                          echo %0 ERROR: See errors on lz390 generated lst file and console

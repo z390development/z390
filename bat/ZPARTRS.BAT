@@ -18,7 +18,7 @@ if /I %1. == . (echo %0 ERROR: missing file name
                 )
 
 erase %1.TRS
-call %~dp0\MAC %z_TraceMode% zpar\ZPARTRS SYSPARM(%1+%2+%3+%4+%5+%6+%7+%8+%9) @ZPAR\ZPARTRS
+call %~dps0MAC %z_TraceMode% zpar\ZPARTRS SYSPARM(%1+%2+%3+%4+%5+%6+%7+%8+%9) @ZPAR\ZPARTRS
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 4 (echo %0 ERROR: see errors on mz390 generated bal file and console
                          goto return
