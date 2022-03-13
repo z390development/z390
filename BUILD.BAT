@@ -27,6 +27,7 @@ call bat\runassist      %z_TraceMode%          || goto error
 call bat\runcmdproc     %z_TraceMode%          || goto error
 call bat\runvsedemos    %z_TraceMode%          || goto error
 call bat\runzstrmactest %z_TraceMode%          || goto error
+call rt\bat\runtbrctx   %z_TraceMode%          || goto error
 set z_ReturnCode=0
 goto return
 
