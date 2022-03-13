@@ -1,24 +1,3 @@
-@echo off
-setlocal
-pushd %~dp0
-cd ..
-cd ..
-REM RUN ZPAR ASM AND CBL DEMOS
-CALL BAT\ASMLG DEMO\HELLO TRACE || goto error
-CALL BAT\MAC ZPAR\ZPARTRS SYSPARM(DEMO\HELLO) || goto error
-CALL BAT\CBLCLG ZCOBOL\DEMO\HELLO TRACE || goto error
-CALL BAT\MAC ZPAR\ZPARTRS SYSPARM(ZCOBOL\DEMO\HELLO) || goto error
-@REM PAUSE SEE GENERATED TRS FILES TO VERIFY ZPAR DEMOS OK
-
-goto:eof
-
-:error
-echo.RUNZPAR  ERROR: Encountered RC %ERRORLEVEL% - exiting
-exit /b %ERRORLEVEL%
-
-rem ======================================================================================
-:new
-
 @if /I "%1" == "tron" (echo on) else (echo off)
 rem RUN ZPAR ASM AND CBL DEMOS
 setlocal
@@ -32,11 +11,17 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..\..
-call bat\ASMLG  %z_TraceMode% demo\HELLO                                   || goto error
-call bat\MAC    %z_TraceMode% zpar\ZPARTRS      SYSPARM(demo\HELLO)        || goto error
-call bat\CBLCLG %z_TraceMode% zcobol\demo\HELLO TRACE                      || goto error
-call bat\MAC    %z_TraceMode% zpar\ZPARTRS      SYSPARM(zcobol\demo\HELLO) || goto error
-@REM PAUSE SEE GENERATED TRS FILES TO VERIFY ZPAR DEMOS OK
+rem -- sorry TRON mode not fully supported
+CALL BAT\ASMLG  %z_TraceMode% DEMO\HELLO        TRACE                      || goto error
+CALL BAT\MAC    troff         ZPAR\ZPARTRS      SYSPARM(DEMO\HELLO)        || goto error
+CALL BAT\CBLCLG %z_TraceMode% ZCOBOL\DEMO\HELLO TRACE                      || goto error
+CALL BAT\MAC    troff         ZPAR\ZPARTRS      SYSPARM(ZCOBOL\DEMO\HELLO) || goto error
+REM PAUSE SEE GENERATED TRS FILES TO VERIFY ZPAR DEMOS OK
+
+rem -- resume tron mode if relevant
+if /I "%z_TraceMode%" == "tron" echo on
+rem -- tron mode now activated again
+
 set z_ReturnCode=0
 goto return
 
