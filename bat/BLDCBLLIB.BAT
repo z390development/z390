@@ -1,19 +1,34 @@
-@echo off
-setlocal
-pushd %~dp0
-cd ..
-REM REBUILD ZCOBOL\Z390\ZC390LIB.390
-CALL BAT\ASM  ZCOBOL\LIB\ABORT    SYSMAC(MAC) SYSCPY(MAC+ZCOBOL\LIB) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-CALL BAT\ASM  ZCOBOL\LIB\ACCEPT   SYSMAC(MAC) SYSCPY(MAC+ZCOBOL\LIB) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-CALL BAT\ASM  ZCOBOL\LIB\CVTTOHEX SYSMAC(MAC) SYSCPY(MAC+ZCOBOL\LIB) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-CALL BAT\ASM  ZCOBOL\LIB\DISPLAY  SYSMAC(MAC) SYSCPY(MAC+ZCOBOL\LIB) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-CALL BAT\ASM  ZCOBOL\LIB\INSPECT  SYSMAC(MAC) SYSCPY(MAC+ZCOBOL\LIB) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-CALL BAT\ASM  ZCOBOL\LIB\ZC390NUC SYSMAC(MAC) SYSCPY(MAC+ZCOBOL\LIB) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-CALL BAT\ASML ZCOBOL\LIB\ZC390LIB SYSMAC(MAC) SYSCPY(MAC+ZCOBOL\LIB) SYS390(ZCOBOL\LIB) RMODE24 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto:error
-@REM PAUSE VERIFY ZC390LIB.390 BUILD OK
+@if /I "%1" == "tron" (echo on) else (echo off)
+rem rebuild zcobol\z390\zc390lib.390
 
-goto:eof
+setlocal
+if /I "%1" == "tron" (set z_TraceMode=tron
+                      shift /1
+              ) else (if /I "%1" == "troff" (set z_TraceMode=troff
+                                             shift /1
+                                     ) else (set z_TraceMode=)
+                      )
+set /A z_NestLevel=%z_NestLevel%+1
+rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+
+pushd %~dps0..
+call bat\asm  %z_TraceMode% zcobol\lib\ABORT    sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\ACCEPT   sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\CVTTOHEX sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\DISPLAY  sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\INSPECT  sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\ZC390NUC sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% zcobol\lib\ZC390LIB sysmac(mac) syscpy(mac+zcobol\lib) sys390(zcobol\lib) rmode24 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+if not exist zcobol\lib\ZC390LIB.390 (set z_ReturnCode=12
+                                      echo %0 ERROR: ZC390LIB.390 was not created
+                                      goto return)
+set z_ReturnCode=0
+goto return
 
 :error
-echo BLDCBLLI.ERROR: Encountered RC %ERRORLEVEL% - exiting
-exit /b %ERRORLEVEL%
+set z_ReturnCode=%ERRORLEVEL%
+echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
+:return
+popd
+rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+exit /b %z_ReturnCode%

@@ -1,20 +1,32 @@
-@echo off
-echo run z390 zcobol sample regression tests
-setlocal
-pushd %~dp0
-cd..
-cd..
-CALL BAT\CBLCLG ZCOBOL\tests\testadd1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-CALL BAT\CBLCLG ZCOBOL\tests\testadd2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-CALL BAT\CBLCLG ZCOBOL\tests\testif1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-CALL BAT\CBLCLG ZCOBOL\tests\testif2  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-CALL BAT\CBLCLG ZCOBOL\tests\testif3  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-CALL BAT\CBLCLG ZCOBOL\tests\testmov1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-CALL BAT\CBLClG ZCOBOL\tests\testmov2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-CALL BAT\CBLCLG ZCOBOL\tests\testmov3 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+@if /I "%1" == "tron" (echo on) else (echo off)
+rem run z390 zcobol sample regression tests
 
-goto:eof
+setlocal
+if /I "%1" == "tron" (set z_TraceMode=tron
+                      shift /1
+              ) else (if /I "%1" == "troff" (set z_TraceMode=troff
+                                             shift /1
+                                     ) else (set z_TraceMode=)
+                      )
+set /A z_NestLevel=%z_NestLevel%+1
+rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+
+pushd %~dps0..\..
+call bat\CBLCLG %z_TraceMode% zcobol\tests\testadd1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\testadd2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\testif1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\testif2  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\testif3  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\testmov1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLClG %z_TraceMode% zcobol\tests\testmov2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\testmov3 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set z_ReturnCode=0
+goto return
 
 :error
-echo RUNCBLTE.ERROR: Encountered RC %ERRORLEVEL% - exiting
-exit /b %ERRORLEVEL%
+set z_ReturnCode=%ERRORLEVEL%
+echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
+:return
+popd
+rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+exit /b %z_ReturnCode%
