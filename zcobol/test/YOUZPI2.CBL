@@ -5,6 +5,10 @@
       * THIS PROGRAM CALCULATES YOUZPI FOR YOU
       * YOUZPI FROM 4(1 - 1/3 + 1/5 - 1/7 …ETC.)
       *
+      * 2022-03-17 Abe Kornelis: this program incurs S0C7 when run
+      *                          Quite likely a compiler bug
+      *                          No time now to investigate & fix
+      *
        DATA DIVISION.
        WORKING-STORAGE SECTION.
        01  COUNTER        PIC 9(05)      VALUE 1.
