@@ -24,9 +24,13 @@ rem -Xrs        allow control break interruption of java tasks
 java -classpath %~dps0..\z390.jar -Xrs %J2SEOPTIONS% ez390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% NEQ 0 (echo %0 ERROR: See errors on ez390 generated log file and console
+if %z_ReturnCode% EQU 0  goto return
+if %z_ReturnCode% EQU 4 (echo %0 WARNING: See warnings on ez390 generated log file and console
                          goto return
                          )
+rem ErrorLevel 1 for Java issues or ErrorLevel 8 / 12 for execution issues. Application may return anything ...
+echo %0 ERROR: See errors on ez390 generated log file and console
+
 :return
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%

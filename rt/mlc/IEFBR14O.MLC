@@ -1,0 +1,16 @@
+IEFBR14O TITLE 'Dummy program'
+***********************************************************************
+* Start create : 18-03-2022
+* 1st delivery :
+* Designer     : AF Kornelis
+* Programmer   : AF Kornelis
+* Purpose      : For testing assembly
+***********************************************************************
+
+IEFBR14O RSECT ,                       *
+IEFBR14O AMODE 24
+IEFBR14O RMODE 24
+***********************************************************************
+         XR    15,15                   * Set RC=0
+         BR    14                      * Return
+         END
