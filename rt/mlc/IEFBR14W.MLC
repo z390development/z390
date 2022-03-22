@@ -1,0 +1,20 @@
+IEFBR14W TITLE 'Dummy program'
+***********************************************************************
+* Start create : 18-03-2022
+* 1st delivery :
+* Designer     : AF Kornelis
+* Programmer   : AF Kornelis
+* Purpose      : For testing warning issues from assembly
+***********************************************************************
+
+IEFBR14W RSECT ,                       *
+IEFBR14W AMODE 24
+IEFBR14W RMODE 24
+***********************************************************************
+         USING *,15
+         USING *,12
+         LA    12,*                    * Should issue warning
+
+         XR    15,15                   * Set RC=0
+         BR    14                      * Return
+         END

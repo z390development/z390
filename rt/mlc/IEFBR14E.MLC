@@ -1,0 +1,18 @@
+IEFBR14E TITLE 'Dummy program'
+***********************************************************************
+* Start create : 18-03-2022
+* 1st delivery :
+* Designer     : AF Kornelis
+* Programmer   : AF Kornelis
+* Purpose      : For testing error issues from assembly
+***********************************************************************
+
+IEFBR14E RSECT ,                       *
+IEFBR14E AMODE 24
+IEFBR14E RMODE 24
+***********************************************************************
+         USING *,R15                   * Should issue error
+
+         XR    15,15                   * Set RC=0
+         BR    14                      * Return
+         END

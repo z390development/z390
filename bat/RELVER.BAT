@@ -1,35 +1,42 @@
-@echo off
-setlocal
-pushd %~dp0
-cd ..
+@if /I "%1" == "tron" (echo on) else (echo off)
+rem create/update file z390.properties with z390 version from git repository
 
-SET VER="Uncontrolled"
+setlocal
+if /I "%1" == "tron" (set z_TraceMode=tron
+                      shift /1
+              ) else (if /I "%1" == "troff" (set z_TraceMode=troff
+                                             shift /1
+                                     ) else (set z_TraceMode=)
+                      )
+set /A z_NestLevel=%z_NestLevel%+1
+rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+pushd %~dps0..
+set z_Version="Uncontrolled"
 
 git --man-path >NUL
 
-SET GIT_INSTALLED=%ERRORLEVEL%
-if %GIT_INSTALLED% NEQ 0 (
-    echo Git is not installed
-    goto :final
-) 
+set z_Git_Installed=%ERRORLEVEL%
+if %z_Git_Installed% NEQ 0 (echo Git is not installed
+                            goto final
+                            ) 
 
-FOR /F "tokens=* USEBACKQ" %%F IN (`git rev-parse --is-inside-work-tree`) DO (SET GIT_REPO=%%F)
-
-if "%GIT_REPO%" NEQ "true" (
-    echo Not a git repo
-    goto :final
-) ELSE (
-    FOR /F "tokens=* USEBACKQ" %%I IN (`git describe`) DO set VER=%%I
-)
+for /F "tokens=* USEBACKQ" %%F in (`git rev-parse --is-inside-work-tree`) do (set z_Git_Repo=%%F)
+if "%z_Git_Repo%" NEQ "true" (echo Not a git repository
+                              goto final)
+for /F "tokens=* USEBACKQ" %%I in (`git describe`) do set z_Version=%%I
 
 :final
-if %VER% EQU "Uncontrolled" (
-    if /I "%1" NEQ "FORCE" (
-        echo Version is uncontrolled - add FORCE parm to ignore
-        exit /b 8
-    ) ELSE (
-        echo Version is Uncontrolled - FORCE enabled
-    )
-)
+if %z_Version% EQU "Uncontrolled" (if /I "%1" NEQ "FORCE" (echo Version is uncontrolled - add FORCE parm to ignore
+                                                           set z_ReturnCode=8
+                                                           goto return
+                                                   ) else (echo Version is uncontrolled - FORCE enabled
+                                   )                       )
 rem relver: use git to set z390.properties version details
-echo version=%VER% > z390.properties
+echo z390 version "%z_Version%"
+echo version=%z_Version% > z390.properties
+set z_ReturnCode=%ERRORLEVEL%
+
+:return
+popd
+rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+exit /b %z_ReturnCode%
