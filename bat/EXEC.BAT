@@ -22,12 +22,8 @@ if exist %1.STA erase %1.STA
 if exist %1.TR* erase %1.TR*
 call %~dps0ez390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% GTR 4 (echo %0 ERROR: see errors on ez390 generated log file and console
-                         goto return
-                         )
-if %z_ReturnCode% NEQ 0 (echo %0 WARNING: see messages on ez390 generated log file and console
-                         goto return
-                         )
+rem any error or warning message has been issued by ez390
+
 :return
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%

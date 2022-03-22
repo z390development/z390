@@ -23,9 +23,8 @@ set XGET=%1.XGT
 set XPUT=%1.XPT
 call %~dps0ASMLG %z_TraceMode% %1 assist %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
-                         goto return
-                         )
+rem any error or warning message has been issued by asmlg
+
 :return
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%
