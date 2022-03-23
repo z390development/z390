@@ -18,45 +18,45 @@ erase QSAM\BLD*.ERR
 erase QSAM\TEST*.TFV
 set SNAPOUT=DUMMY
 set SYSUT2=QSAM\TESTV.TFV
-call bat\ASMLG %z_TraceMode% QSAM\BLDV.MLC   TRACE %1 || goto error
+call bat\ASMLG %z_TraceMode% QSAM\BLDV.MLC   TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTV.TFV
-call bat\ASMLG %z_TraceMode% QSAM\CHKV.MLC   TRACE    || goto error
+call bat\ASMLG %z_TraceMode% QSAM\CHKV.MLC   TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTVB.TFV
-call bat\ASMLG %z_TraceMode% QSAM\BLDVB.MLC  TRACE %1 || goto error
+call bat\ASMLG %z_TraceMode% QSAM\BLDVB.MLC  TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTVB.TFV
-call bat\ASMLG %z_TraceMode% QSAM\CHKVB.MLC  TRACE    || goto error
+call bat\ASMLG %z_TraceMode% QSAM\CHKVB.MLC  TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTVT.TFV
-call bat\ASMLG %z_TraceMode% QSAM\BLDVT.MLC  TRACE %1 || goto error
+call bat\ASMLG %z_TraceMode% QSAM\BLDVT.MLC  TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTVT.TFV
-call bat\ASMLG %z_TraceMode% QSAM\CHKVT.MLC  TRACE    || goto error
+call bat\ASMLG %z_TraceMode% QSAM\CHKVT.MLC  TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTVL.TFV
-call bat\ASMLG %z_TraceMode% QSAM\BLDVL.MLC  TRACE %1 || goto error
+call bat\ASMLG %z_TraceMode% QSAM\BLDVL.MLC  TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTVL.TFV
-call bat\ASMLG %z_TraceMode% QSAM\CHKVL.MLC  TRACE    || goto error
+call bat\ASMLG %z_TraceMode% QSAM\CHKVL.MLC  TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTVBL.TFV
-call bat\ASMLG %z_TraceMode% QSAM\BLDVBL.MLC TRACE %1 || goto error
+call bat\ASMLG %z_TraceMode% QSAM\BLDVBL.MLC TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTVBL.TFV
-call bat\ASMLG %z_TraceMode% QSAM\CHKVBL.MLC TRACE    || goto error
+call bat\ASMLG %z_TraceMode% QSAM\CHKVBL.MLC TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTVTL.TFV
-call bat\ASMLG %z_TraceMode% QSAM\BLDVTL.MLC TRACE %1 || goto error
+call bat\ASMLG %z_TraceMode% QSAM\BLDVTL.MLC TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTVTL.TFV
-call bat\ASMLG %z_TraceMode% QSAM\CHKVTL.MLC TRACE    || goto error
+call bat\ASMLG %z_TraceMode% QSAM\CHKVTL.MLC TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTF.TFV
-call bat\ASMLG %z_TraceMode% QSAM\BLDF.MLC   TRACE %1 || goto error
+call bat\ASMLG %z_TraceMode% QSAM\BLDF.MLC   TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTF.TFV
-call bat\ASMLG %z_TraceMode% QSAM\CHKF.MLC   TRACE    || goto error
+call bat\ASMLG %z_TraceMode% QSAM\CHKF.MLC   TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTFL.TFV
-call bat\ASMLG %z_TraceMode% QSAM\BLDFL.MLC  TRACE %1 || goto error
+call bat\ASMLG %z_TraceMode% QSAM\BLDFL.MLC  TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTFL.TFV
-call bat\ASMLG %z_TraceMode% QSAM\CHKFL.MLC  TRACE    || goto error
+call bat\ASMLG %z_TraceMode% QSAM\CHKFL.MLC  TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTFT.TFV
-call bat\ASMLG %z_TraceMode% QSAM\BLDFT.MLC  TRACE %1 || goto error
+call bat\ASMLG %z_TraceMode% QSAM\BLDFT.MLC  TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTFT.TFV
-call bat\ASMLG %z_TraceMode% QSAM\CHKFT.MLC  TRACE    || goto error
+call bat\ASMLG %z_TraceMode% QSAM\CHKFT.MLC  TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTFTL.TFV
-call bat\ASMLG %z_TraceMode% QSAM\BLDFTL.MLC TRACE %1 || goto error
+call bat\ASMLG %z_TraceMode% QSAM\BLDFTL.MLC TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTFTL.TFV
-call bat\ASMLG %z_TraceMode% QSAM\CHKFTL.MLC TRACE    || goto error
+call bat\ASMLG %z_TraceMode% QSAM\CHKFTL.MLC TRACE TIME(300)    || goto error
 dir QSAM\TEST*.TFV
 set z_ReturnCode=0
 goto return

@@ -41,30 +41,26 @@ for %%f in ("%z_HomeDir%") do set "z_HomeDir=%%~ff"
 
 call %~dps0ZC390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% GTR 4 (echo %0 ERROR: Cobol compile error
-                         goto return
-                         )
+rem any error or warning message has been issued by zc390
+if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (erase %1.MLC
+                                                  goto return))
 
 call %~dps0MZ390 %z_TraceMode% %1 @%z_HomeDir%zcobol\opt\CBLOPT sysmac(%z_HomeDir%zcobol\mac+mac) syscpy(+%z_HomeDir%zcobol\cpy) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% GTR 4 (echo %0 ERROR: see errors on mz390 generated bal file and console
-                         goto return
-                         )
+rem any error or warning message has been issued by mz390
+if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (erase %1.OBJ
+                                                  goto return))
 
 call %~dps0LZ390 %z_TraceMode% %1 %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% GTR 4 (echo %0 ERROR: see errors on lz390 generated lst file and console
-                         goto return
-                         )
+rem any error or warning message has been issued by lz390
+if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (erase %1.390
+                                                  goto return))
 
 call %~dps0EZ390 %z_TraceMode% %1 sys390(+%z_HomeDir%zcobol\lib) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% GTR 4 (echo %0 ERROR: see errors on ez390 generated log file and console
-                         goto return
-                         )
-if %z_ReturnCode% GTR 0 (echo %0 WARNING: see messages on ez390 generated log file and console
-                         goto return
-                         )
+rem any error or warning message has been issued by ez390
+
 :return
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%

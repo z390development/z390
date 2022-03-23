@@ -15,8 +15,7 @@ pushd %~dps0..\..
 set SNAPOUT=ZOPCHECK\SNAPOUT.TXT
 call bat\asmlg %z_TraceMode% zopcheck\ZOPCHECK bal trace sysmac(mac) syscpy(zopcheck+mac) optable(z390) %1 %2 %3
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% NEQ 0 (
-                         echo %0 ERROR: ASMLG returned non-zero result
+if %z_ReturnCode% NEQ 0 (echo %0 ERROR: ASMLG returned non-zero result
                          goto return
                          )
 :return
