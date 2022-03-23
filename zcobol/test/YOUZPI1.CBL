@@ -1,0 +1,45 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID.    YOUZPI1.
+       AUTHOR.        JAMES FRANCIS CRAY.
+      *
+      * THIS PROGRAM CALCULATES zPI FOR zCOBOL
+      * zPI FROM 4(1 - 1/3 + 1/5 - 1/7 ETC.)
+      *
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01  COUNTER        PIC S9(05)     VALUE +1     COMP.
+       01  ITERATIONS     PIC S9(05)     VALUE +9999  COMP.
+       01  TERM           PIC S9999V9999 VALUE +0     COMP.
+       01  TEMP1          PIC S9999V9999 VALUE +0     COMP.
+       01  TEMP2          PIC S9999V9999 VALUE +0     COMP.
+       01  TEMP3          PIC S9999V9999 VALUE +0     COMP.
+       01  TEMP4          PIC S9999V9999 VALUE +0     COMP.
+       01  FAC            PIC S9         VALUE +1     COMP.
+       01  FAC1           PIC S9         VALUE +0     COMP.
+       01  MYSUM          PIC S9999V9999 VALUE +0     COMP.
+       01  MYSUM1         PIC S9999V9999 VALUE +0     COMP.
+       01  MYPI           PIC ZZZ.ZZZZ.
+       01  THANKS         PIC X(50)      VALUE
+           'zCOBOL THANKS FOR WATCHING zPI Calculation'.
+       
+       PROCEDURE DIVISION.
+       BEGIN.
+           DISPLAY 'zCOBOL HELLO DOING zPI Calculation'.
+           PERFORM MYLOOP WITH TEST AFTER
+               VARYING COUNTER FROM 1 BY 1
+               UNTIL COUNTER GREATER THAN ITERATIONS.
+           MULTIPLY MYSUM BY +4 GIVING MYSUM1.
+           DISPLAY 'zCOBOL zPI WAS CALCULATED TO BE:'.
+           MOVE MYSUM1 TO MYPI.
+           DISPLAY MYPI.
+           DISPLAY THANKS.
+           STOP RUN.
+
+       MYLOOP.
+           MULTIPLY COUNTER BY +2 GIVING TEMP1.
+           SUBTRACT +1 FROM TEMP1 GIVING TEMP2.
+           DIVIDE +1 BY TEMP2 GIVING TEMP3.
+           MULTIPLY TEMP3 BY FAC GIVING TEMP4.
+           SUBTRACT FAC FROM +0 GIVING FAC1.
+           MOVE FAC1 TO FAC.
+           ADD TEMP4 TO MYSUM.
