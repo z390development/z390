@@ -28,12 +28,9 @@ call bat\runcmdproc     %z_TraceMode%          || goto error
 call bat\runvsedemos    %z_TraceMode%          || goto error
 call bat\runzstrmactest %z_TraceMode%          || goto error
 call rt\bat\runtbrctx   %z_TraceMode%          || goto error
-<<<<<<< HEAD
 call rt\bat\runtestopt  %z_TraceMode%          || goto error
 echo .
 echo all RT scripts for z390 ended okay
-=======
->>>>>>> main
 set z_ReturnCode=0
 goto return
 
