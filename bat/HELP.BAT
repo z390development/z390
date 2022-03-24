@@ -36,7 +36,8 @@ echo .
 echo All these commands (with the exception of HELP and Z390) require as their first argument
 echo     the path and name of the file to be processed. The following rules apply:
 echo - all output files will appear in the same directory as the input file you specified
-echo - path can be absolute or relative, relative means starting from %z_HomeDir%
+echo - path can be absolute or relative, relative means starting from your current working directory
+echo - path can be specified using either forward or backward slashes
 echo - extension must be omitted; the following default extensions will be used:
 echo     for assembler  files the extension is MLC
 echo     for cobol      files the extension is CBL

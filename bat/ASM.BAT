@@ -15,6 +15,8 @@ if /I %1. == . (set /P z_file=Hit Enter for help or suppply name of mlc file to 
         ) else (set z_file=%1)
 if /I %z_file%. == . goto help
 :chkfile
+rem convert Unix path notation to Windows before checking the file
+set z_file=%z_file:/=\%
 if not exist %z_file%.MLC (echo %0 ERROR: %z_file%.MLC was not found
                            set z_ReturnCode=16
                            goto return)
