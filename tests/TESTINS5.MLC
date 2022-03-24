@@ -35,6 +35,8 @@
 * 2022/02/22 DSH issue #300 add MGRK,  MSGRKC, MSRKC, MSGC, MSC
 * 2022-03-06 DSH issue #300 reset CC before testing CC for aLL mpy with cc
 * 2022-03-12 DSH issue #300 add tests for zero
+* 2022-03-17 DSH add tests for each CC3 causing S0C8 overflow exception
+* 2022-03-23 DSH add spie to verify fixed point overflow test occurred
 *********************************************************************
 
          PRINT DATACD
@@ -53,7 +55,14 @@
 * SEE TESTDFP1 FOR DFP FLOATING POINT INSTR TESTS
 *********************************************************************
 TESTINS5 RT1   MAIN
-         EQUREGS REGS=GPR  
+         EQUREGS REGS=GPR
+ESPIE_EXIT DS  0H          #300 DSH ADDED TO TEST MPY OVERFLOW
+         USING *,R15
+         USING EPIE,R1         RPI 845 NEW DSECT NAME
+         L     R0,EPIEPARM                            
+         ST    R0,EPIEPSW+4
+         BR    R14
+         DROP  R15,R1
 DWORK DC XL16'00'
 *********************************************************************
 * START INSTRUCTION TESTS
@@ -481,9 +490,13 @@ BIC_OK2  EQU    *
          RT1   CC2
          CLG   R2,=FL8'6'
          RT1    CC0 
+         ESPIE SET,ESPIE_EXIT,8,PARAM=MSGRKC_CC3
          LMG   R5,R6,=XL8'7FFFFFFFFFFFFFFF,2'
          SR       R0,R0
          MSGRKC  R2,R5,R6
+         RT1    ABORT
+MSGRKC_CC3 EQU *
+          WTO  'MSGRKC_CC3 OVERFLOW TEST OK'
           RT1    CC3  
           CLG   R2,=FL8'-2'  #300 CHK RESULT AFTER OVERFLOW
           RT1    CC0
@@ -512,9 +525,13 @@ BIC_OK2  EQU    *
          RT1   CC2
          CL     R2,=F'6'
          RT1    CC0 
+         ESPIE SET,ESPIE_EXIT,8,PARAM=MSRKC_CC3
          LM   R5,R6,=XL4'7FFFFFFF,2'
          SR       R0,R0
          MSRKC  R2,R5,R6
+         RT1    ABORT
+MSRKC_CC3 EQU *
+          WTO  'MSRKC_CC3 OVERFLOW TEST OK'
          RT1    CC3  
           CL     R2,=F'-2'
           RT1   CC0  #300 CHECK OVERFLOW RESULT
@@ -543,9 +560,13 @@ BIC_OK2  EQU    *
           RT1  CC2
           CL    R2,=F'6'
 	RT1	CC0
+         ESPIE SET,ESPIE_EXIT,8,PARAM=MSC_CC3
          L	R2,=X'7FFFFFFF'
          SR       R0,R0
 	MSC R2,=F'2'
+         RT1    ABORT
+MSC_CC3 EQU *
+          WTO  'MSC_CC3 OVERFLOW TEST OK'
           RT1  CC3
            CL   R2,=F'-2'
            RT1 CC0          #300 CHK RESULT AFTER OVERFLOW
@@ -577,10 +598,16 @@ BIC_OK2  EQU    *
         LG	R2,=FL8'0'   #300 TEST ZERO RESULT
          SR       R0,R0
 	MSGC R2,=FL8'2'
-          RT1  CC0
+          RT1    CC0
+          CLG    R2,=FL8'0'
+          RT1     CC0
+         ESPIE SET,ESPIE_EXIT,8,PARAM=MSGC_CC3
          LG	R2,=X'7FFFFFFFFFFFFFFF'
          SR       R0,R0
 	MSGC R2,=FL8'2'
+         RT1    ABORT
+MSGC_CC3 EQU *
+          WTO  'MSGC_CC3 OVERFLOW TEST OK'
           RT1  CC3
           CLG    R2,=FL8'-2'  #300 TEST RESULT AFTER OVERFLOW
           RT1  CC0
@@ -590,5 +617,6 @@ BIC_OK2  EQU    *
 EXTSUB   CSECT
          LA    R15,999
          BR    R14
+         IHAEPIE
          END         
 
