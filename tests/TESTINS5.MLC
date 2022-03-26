@@ -38,7 +38,7 @@
 * 2022-03-17 DSH add tests for each CC3 causing S0C8 overflow exception
 * 2022-03-23 DSH add spie to verify fixed point overflow test occurred
 * 2022-03-24 DSH add ESPIE RESET and move CC3 chk before WTO
-* 2022-03-25 DSH add additional 0 tests
+* 2022-03-26 DSH add additional 0 tests
 *********************************************************************
 
          PRINT DATACD
@@ -699,6 +699,7 @@ MSC_CC3 EQU *
 	RT1	CC0
         LG	R2,=FL8'0'   #300 TEST ZERO RESULT
          SR       R0,R0
+         AHI    R0,1    NOT ZERO
 	MSGC R2,=FL8'2'
           RT1    CC0
           CLG    R2,=FL8'0'
