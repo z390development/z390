@@ -591,12 +591,14 @@ MSGRKC_CC3 EQU *
          RT1    CC0 
          LM     R5,R6,=F'0,-3' #300 ADD 0 TESTS
          SR      R0,R0
+         AHI    R0,1    NOT ZERO
          MSRKC  R2,R5,R6
          RT1   CC0
          CL     R2,=F'0'
          RT1    CC0 
          LM     R5,R6,=F'-2,0' #300 ADD 0 TESTS
          SR      R0,R0
+         AHI    R0,1    NOT ZERO
          MSRKC  R2,R5,R6
          RT1   CC0
          CL     R2,=F'0'
@@ -633,12 +635,14 @@ MSRKC_CC3 EQU *
 	RT1	CC0
          L	R2,=F'0'  #300 ADD 0 TESTS
          SR       R0,R0
+         AHI    R0,1    NOT ZERO
 	MSC R2,=F'-3'
           RT1  CC0
           CL    R2,=F'0'
 	RT1	CC0
          L	R2,=F'-2'  #300 ADD 0 TESTS
          SR       R0,R0
+         AHI    R0,1    NOT ZERO
 	MSC R2,=F'0'
           RT1  CC0
           CL    R2,=F'0'
@@ -681,12 +685,14 @@ MSC_CC3 EQU *
 	RT1	CC0
          LG	R2,=FL8'-0'  #300 ADD 0 TESTS
          SR       R0,R0
+         AHI    R0,1    NOT ZERO
 	MSGC R2,=FL8'3'
           RT1  CC0
           CLG    R2,=FL8'0'
 	RT1	CC0
          LG	R2,=FL8'-2'  #300 ADD 0 TESTS
          SR       R0,R0
+         AHI    R0,1    NOT ZERO
 	MSGC R2,=FL8'0'
           RT1  CC0
           CLG    R2,=FL8'0'
