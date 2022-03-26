@@ -437,6 +437,7 @@ public  class  mz390 {
 	 * 2022-01-25 dsh issue #335 set &(acall)(n) parms at aparm call using zam insert MLC line just before aentry for acall
 	 *            dsh #335 make find_acall_name separate from fine_var using ACALL_ prefix
 	 * 2022-02-08 dsh #335 fix bug in insert_acall_parms not checking for no parms and returning
+          * 2022-02-26 DSH #335 rename opcode APARM to ACALLPRM to allow APARM macro
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -601,7 +602,7 @@ public  class  mz390 {
 	byte    zsm_type_awhen   = 9;
 	byte    zsm_type_auntil  = 10;
 	byte    zsm_type_awhile  = 11;
-	byte    zsm_type_aparm  = 12; // rpi 2220
+	byte    zsm_type_acallprm  = 12; // rpi 2220
 	String[] zsm_type_pfx = {"???",   // 0
 			                 "AIF",   // 1 AELSE
 			                 "AIF",   // 2 AELSEIF
@@ -622,7 +623,7 @@ public  class  mz390 {
 	int     zsm_acase_tot     = 0;
 	int     zsm_awhile_tot      = 0;
 	int     zsm_auntil_tot      = 0;
-	int     zsm_aparm_tot      = 0; // RPI 2220
+	int     zsm_acallprm_tot      = 0; // RPI 2220
 	int     zsm_lvl_bcnt[] = new int[max_zsm_lvl]; // type block counter for AIF, ACASE
     boolean zsm_lvl_tend[] = new boolean[max_zsm_lvl]; // req END label for type
     String  zsm_lvl_ase_ago[]   = new String[max_zsm_lvl]; // ACASE computed AGO with expression
@@ -1764,10 +1765,10 @@ public  class  mz390 {
 		 *     PROFILE(copybook) specified.
 		 * 9.  Expand the following structured macro code extensions if ZSTRMAC:
 		 *     a.  AIF, AELSE, AELSEIF, AEND
-		 *     b.  ACALL, APARM, AENTRY, AEXIT. AEND // RPI 2220 add APARM
+		 *     b.  ACALL, ACALLPRM, AENTRY, AEXIT. AEND // RPI 2220 add ACALLPRM
 		 *     c.  AWHILE, AUNTIL, AEXIT, AEND
 		 *     d.  ACASE, AWHEN, AELSE, AEXIT, AEND
-		 *     e.  Note ACALL generates APARM call to reset parms for AENTRY  RPI 2220
+		 *     e.  Note ACALL generates ACALLPRM call to reset parms for AENTRY  RPI 2220
 		 *
 		 * Notes:
 		 *   1.  At end of MLC load, turn off
@@ -2949,10 +2950,10 @@ public  class  mz390 {
 				+ "_" + zsm_acall_name[zsm_acall_index]
 				+ " SETA " + zsm_acall_cnt[zsm_acall_index];
 				
-			// call aparm to set current parms for acall entry RPI 2220
+			// call acallprm to set current parms for acall entry RPI 2220
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
-				"    APARM " + zsm_acall_name[zsm_acall_index] + zsm_acall_parm[zsm_acall_index]; // RPI 2220 
+				"    acallprm " + zsm_acall_name[zsm_acall_index] + zsm_acall_parm[zsm_acall_index]; // RPI 2220 
 			
 			
 			zsm_line_tot++;
@@ -4397,13 +4398,13 @@ public  class  mz390 {
 				abort_error(224,"OPSYN table exceeded"); // RPI 773
 			}
 			break;
-		case 228: // APARM RPI 2220 see tz390 op_table_directives added for APARM call before aentry for acall
-		    zsm_aparm_tot++;
+		case 228: // acallprm RPI 2220 see tz390 op_table_directives added for acallprm call before aentry for acall
+		    zsm_acallprm_tot++;
 		    if (!zsm_find_acall_name()){
-				log_error(249,"ZSM APARM name error - " + tz390.split_parms);
+				log_error(249,"ZSM acallprm name error - " + tz390.split_parms);
 				return;
 			}
-			zsm_acall_parm[zsm_acall_index] = acall_parm; // reset acall parm to current aparm set by zsm_find_acall_name just before aentry
+			zsm_acall_parm[zsm_acall_index] = acall_parm; // reset acall parm to current acallprm set by zsm_find_acall_name just before aentry
 			insert_acall_parms(); // #335// #335 set &(acall_name)(1-n) to acall_parm(1-n)
 			bal_op_ok = true;
 		    break;
@@ -9044,7 +9045,7 @@ public  class  mz390 {
 			put_stat_line("total ACASE  blocks   = " + zsm_acase_tot); // RPI 1078
 			put_stat_line("total AWHILE calls    = " + zsm_awhile_tot); // RPI 1078
 			put_stat_line("total AUNTIL blocks   = " + zsm_auntil_tot); // RPI 1078
-			put_stat_line("total APARM calls    = " + zsm_aparm_tot); // RPI 2220
+			put_stat_line("total acallprm calls    = " + zsm_acallprm_tot); // RPI 2220
 			put_stat_line("total global set names= " + tot_gbl_name);
 			put_stat_line("tot global seta cells = " + tot_gbl_seta);
 			put_stat_line("tot global setb cells = " + tot_gbl_setb);
