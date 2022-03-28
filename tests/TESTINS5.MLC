@@ -35,6 +35,10 @@
 * 2022/02/22 DSH issue #300 add MGRK,  MSGRKC, MSRKC, MSGC, MSC
 * 2022-03-06 DSH issue #300 reset CC before testing CC for aLL mpy with cc
 * 2022-03-12 DSH issue #300 add tests for zero
+* 2022-03-17 DSH add tests for each CC3 causing S0C8 overflow exception
+* 2022-03-23 DSH add spie to verify fixed point overflow test occurred
+* 2022-03-24 DSH add ESPIE RESET and move CC3 chk before WTO
+* 2022-03-26 DSH add additional 0 tests
 *********************************************************************
 
          PRINT DATACD
@@ -53,7 +57,14 @@
 * SEE TESTDFP1 FOR DFP FLOATING POINT INSTR TESTS
 *********************************************************************
 TESTINS5 RT1   MAIN
-         EQUREGS REGS=GPR  
+         EQUREGS REGS=GPR
+ESPIE_EXIT DS  0H          #300 DSH ADDED TO TEST MPY OVERFLOW
+         USING *,R15
+         USING EPIE,R1         RPI 845 NEW DSECT NAME
+         L     R0,EPIEPARM                            
+         ST    R0,EPIEPSW+4
+         BR    R14
+         DROP  R15,R1
 DWORK DC XL16'00'
 *********************************************************************
 * START INSTRUCTION TESTS
@@ -298,6 +309,14 @@ BIC_OK2  EQU    *
          MSG  R1,=FL8'-3'
          CLG    R1,=FL8'6'
          RT1    CC0
+         LG     R1,=FL8'0'
+         MSG  R1,=FL8'-3'
+         CLG    R1,=FL8'0'
+         RT1    CC0
+         LG     R1,=FL8'-2'
+         MSG  R1,=FL8'0'
+         CLG    R1,=FL8'0'
+         RT1    CC0
 * MG
          LMG    R2,R3,=FL8'-1,2'
          MG     R2,=FL8'3'
@@ -322,6 +341,18 @@ BIC_OK2  EQU    *
          CLG    R2,=FL8'0'
          RT1    CC0 
          CLG    R3,=FL8'6'
+         RT1    CC0
+         LMG    R2,R3,=FL8'-1,0'  ADD 0 TEST FOR ISSUE #300
+         MG     R2,=FL8'-3'
+         CLG    R2,=FL8'0'
+         RT1    CC0 
+         CLG    R3,=FL8'0'
+         RT1    CC0
+         LMG    R2,R3,=FL8'-1,-2'  ADD 0 TEST FOR ISSUE #300
+         MG     R2,=FL8'0'
+         CLG    R2,=FL8'0'
+         RT1    CC0 
+         CLG    R3,=FL8'0'
          RT1    CC0
 * LGAT NO TRAP TEST
          LG     R1,=FL8'0'
@@ -396,6 +427,16 @@ BIC_OK2  EQU    *
          STMG  R2,R3,DWORK
          CLC   DWORK,=FL16'6'
          RT1    CC0 
+         LMG   R5,R6,=FL8'0,-3'  #200 ADD 0 TESTS
+         MGRK  R2,R5,R6
+         STMG  R2,R3,DWORK
+         CLC   DWORK,=FL16'0'
+         RT1    CC0 
+         LMG   R5,R6,=FL8'-2,0'  #200 ADD 0 TESTS
+         MGRK  R2,R5,R6
+         STMG  R2,R3,DWORK
+         CLC   DWORK,=FL16'0'
+         RT1    CC0 
          LMG   R5,R6,=FL8'123456,10000000'
          MGRK  R2,R5,R6
          STMG  R2,R3,DWORK
@@ -418,6 +459,14 @@ BIC_OK2  EQU    *
          MS    R1,=F'-3'
          CL     R1,=F'6'
          RT1  CC0
+         L       R1,=F'0'  #300 ADDED 0 TESTS
+         MS    R1,=F'-3'
+         CL     R1,=F'0'
+         RT1  CC0
+         L       R1,=F'-2'  #300 ADDED 0 TESTS
+         MS    R1,=F'0'
+         CL     R1,=F'0'
+         RT1  CC0
 * MSY
          L      R1,=F'2'
          MSY    R1,=F'3'
@@ -435,6 +484,15 @@ BIC_OK2  EQU    *
          MSY    R1,=F'-3'
           CL     R1,=F'6'
           RT1  CC0
+         L       R1,=F'0'     #300 ADDED 0 TESTS
+         MSY    R1,=F'3'
+         CL     R1,=F'0'
+         RT1  CC0
+         L       R1,=F'-2'    #300 ADDED 0 TESTS
+         MSY    R1,=F'0'
+          CL     R1,=F'0'
+          RT1  CC0
+
 * MSGRKC
          LMG   R5,R6,=FL8'2,3'
          SR       R0,R0
@@ -475,18 +533,37 @@ BIC_OK2  EQU    *
          RT1     CC0
          CLG    R2,=FL8'0'
          RT1    CC0 
+         LMG   R5,R6,=FL8'2,0'  #300 ADD 0 TESTS
+         SR      R0,R0
+         AHI    R0,1    NOT ZERO     
+         MSGRKC  R2,R5,R6
+         RT1     CC0
+         CLG    R2,=FL8'0'
+         RT1    CC0  
+         LMG   R5,R6,=FL8'0,2'  #300 ADD 0 TESTS
+         SR      R0,R0
+         AHI    R0,1    NOT ZERO     
+         MSGRKC  R2,R5,R6
+         RT1     CC0
+         CLG    R2,=FL8'0'
+         RT1    CC0 
          LMG   R5,R6,=FL8'-2,-3'
          SR       R0,R0
          MSGRKC  R2,R5,R6
          RT1   CC2
          CLG   R2,=FL8'6'
          RT1    CC0 
+         ESPIE SET,ESPIE_EXIT,8,PARAM=MSGRKC_CC3
          LMG   R5,R6,=XL8'7FFFFFFFFFFFFFFF,2'
          SR       R0,R0
          MSGRKC  R2,R5,R6
-          RT1    CC3  
+         RT1    ABORT
+MSGRKC_CC3 EQU *
+          RT1    CC3
+          WTO  'MSGRKC_CC3 OVERFLOW TEST OK' 
           CLG   R2,=FL8'-2'  #300 CHK RESULT AFTER OVERFLOW
           RT1    CC0
+          ESPIE RESET
 * MSRKC #300
          LM    R5,R6,=F'2,3'
          SR     R0,R0
@@ -512,12 +589,31 @@ BIC_OK2  EQU    *
          RT1   CC2
          CL     R2,=F'6'
          RT1    CC0 
+         LM     R5,R6,=F'0,-3' #300 ADD 0 TESTS
+         SR      R0,R0
+         AHI    R0,1    NOT ZERO
+         MSRKC  R2,R5,R6
+         RT1   CC0
+         CL     R2,=F'0'
+         RT1    CC0 
+         LM     R5,R6,=F'-2,0' #300 ADD 0 TESTS
+         SR      R0,R0
+         AHI    R0,1    NOT ZERO
+         MSRKC  R2,R5,R6
+         RT1   CC0
+         CL     R2,=F'0'
+         RT1    CC0 
+         ESPIE SET,ESPIE_EXIT,8,PARAM=MSRKC_CC3
          LM   R5,R6,=XL4'7FFFFFFF,2'
          SR       R0,R0
          MSRKC  R2,R5,R6
-         RT1    CC3  
-          CL     R2,=F'-2'
-          RT1   CC0  #300 CHECK OVERFLOW RESULT
+         RT1    ABORT
+MSRKC_CC3 EQU *
+          RT1   CC3
+          WTO  'MSRKC_CC3 OVERFLOW TEST OK'  
+          CL     R2,=F'-2'  #300 CHK RESULT AFTER OVERFLOW
+          RT1   CC0 
+          ESPIE RESET
 * MSC #300 
          L	R2,=F'2'
          SR       R0,R0
@@ -537,18 +633,31 @@ BIC_OK2  EQU    *
           RT1  CC1
           CL    R2,=F'-6'
 	RT1	CC0
-         L	R2,=F'-2'
+         L	R2,=F'0'  #300 ADD 0 TESTS
          SR       R0,R0
+         AHI    R0,1    NOT ZERO
 	MSC R2,=F'-3'
-          RT1  CC2
-          CL    R2,=F'6'
+          RT1  CC0
+          CL    R2,=F'0'
 	RT1	CC0
+         L	R2,=F'-2'  #300 ADD 0 TESTS
+         SR       R0,R0
+         AHI    R0,1    NOT ZERO
+	MSC R2,=F'0'
+          RT1  CC0
+          CL    R2,=F'0'
+	RT1	CC0
+         ESPIE SET,ESPIE_EXIT,8,PARAM=MSC_CC3
          L	R2,=X'7FFFFFFF'
          SR       R0,R0
 	MSC R2,=F'2'
-          RT1  CC3
+         RT1    ABORT
+MSC_CC3 EQU *
+          RT1    CC3
+          WTO  'MSC_CC3 OVERFLOW TEST OK'
            CL   R2,=F'-2'
            RT1 CC0          #300 CHK RESULT AFTER OVERFLOW
+           ESPIE RESET
 * MSGC #300
          LG	R2,=FL8'2'
          SR       R0,R0
@@ -574,21 +683,44 @@ BIC_OK2  EQU    *
           RT1  CC2
           CLG    R2,=FL8'6'
 	RT1	CC0
+         LG	R2,=FL8'-0'  #300 ADD 0 TESTS
+         SR       R0,R0
+         AHI    R0,1    NOT ZERO
+	MSGC R2,=FL8'3'
+          RT1  CC0
+          CLG    R2,=FL8'0'
+	RT1	CC0
+         LG	R2,=FL8'-2'  #300 ADD 0 TESTS
+         SR       R0,R0
+         AHI    R0,1    NOT ZERO
+	MSGC R2,=FL8'0'
+          RT1  CC0
+          CLG    R2,=FL8'0'
+	RT1	CC0
         LG	R2,=FL8'0'   #300 TEST ZERO RESULT
          SR       R0,R0
+         AHI    R0,1    NOT ZERO
 	MSGC R2,=FL8'2'
-          RT1  CC0
+          RT1    CC0
+          CLG    R2,=FL8'0'
+          RT1     CC0
+         ESPIE SET,ESPIE_EXIT,8,PARAM=MSGC_CC3
          LG	R2,=X'7FFFFFFFFFFFFFFF'
          SR       R0,R0
 	MSGC R2,=FL8'2'
-          RT1  CC3
+         RT1    ABORT
+MSGC_CC3 EQU *
+          RT1    CC3
+          WTO  'MSGC_CC3 OVERFLOW TEST OK'
           CLG    R2,=FL8'-2'  #300 TEST RESULT AFTER OVERFLOW
           RT1  CC0
+          ESPIE RESET
 *****************************************************************************
 * END
          RT1   END
 EXTSUB   CSECT
          LA    R15,999
          BR    R14
+         IHAEPIE
          END         
 
