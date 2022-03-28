@@ -434,10 +434,10 @@ public  class  mz390 {
 	 * 2021-01-07 dsh rpi 2228 supress error searching for symbol with option NOASM for ZPARTRS
 	 * 2021-08-11 dsh issue #318 dup of 261 fix identified by John Ganci, let az390 convert sdts to numeric as macro may test for sdt strings
 	 * 2022-01-17 dsh issue #343 abort if maxline exceeded
-	 * 2022-01-25 dsh issue #335 set &(acall)(n) parms at aparm call using zam insert MLC line just before aentry for acall
+	 * 2022-01-25 dsh issue #335 set &(acall)(n) parms at APARM call using zam insert MLC line just before aentry for acall
 	 *            dsh #335 make find_acall_name separate from fine_var using ACALL_ prefix
 	 * 2022-02-08 dsh #335 fix bug in insert_acall_parms not checking for no parms and returning
-          * 2022-02-26 DSH #335 rename opcode APARM to ACALLPRM to allow APARM macro
+          * 2022-03-26 DSH #335 rename opcode APARM to ACALLPRM to allow APARM macro
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -2950,10 +2950,10 @@ public  class  mz390 {
 				+ "_" + zsm_acall_name[zsm_acall_index]
 				+ " SETA " + zsm_acall_cnt[zsm_acall_index];
 				
-			// call acallprm to set current parms for acall entry RPI 2220
+			// call ACALLPRM to set current parms for acall entry RPI 2220
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
-				"    acallprm " + zsm_acall_name[zsm_acall_index] + zsm_acall_parm[zsm_acall_index]; // RPI 2220 
+				"    ACALLPRM " + zsm_acall_name[zsm_acall_index] + zsm_acall_parm[zsm_acall_index]; // RPI 2220 
 			
 			
 			zsm_line_tot++;
@@ -4398,13 +4398,13 @@ public  class  mz390 {
 				abort_error(224,"OPSYN table exceeded"); // RPI 773
 			}
 			break;
-		case 228: // acallprm RPI 2220 see tz390 op_table_directives added for acallprm call before aentry for acall
+		case 228: // ACALLPRM RPI 2220 see tz390 op_table_directives added for ACALLPRM call before aentry for acall
 		    zsm_acallprm_tot++;
 		    if (!zsm_find_acall_name()){
-				log_error(249,"ZSM acallprm name error - " + tz390.split_parms);
+				log_error(249,"ZSM ACALLPRM name error - " + tz390.split_parms);
 				return;
 			}
-			zsm_acall_parm[zsm_acall_index] = acall_parm; // reset acall parm to current acallprm set by zsm_find_acall_name just before aentry
+			zsm_acall_parm[zsm_acall_index] = acall_parm; // reset acall parm to current ACALLPRM set by zsm_find_acall_name just before aentry
 			insert_acall_parms(); // #335// #335 set &(acall_name)(1-n) to acall_parm(1-n)
 			bal_op_ok = true;
 		    break;
@@ -9045,7 +9045,7 @@ public  class  mz390 {
 			put_stat_line("total ACASE  blocks   = " + zsm_acase_tot); // RPI 1078
 			put_stat_line("total AWHILE calls    = " + zsm_awhile_tot); // RPI 1078
 			put_stat_line("total AUNTIL blocks   = " + zsm_auntil_tot); // RPI 1078
-			put_stat_line("total acallprm calls    = " + zsm_acallprm_tot); // RPI 2220
+			put_stat_line("total ACALLPRM calls    = " + zsm_acallprm_tot); // RPI 2220
 			put_stat_line("total global set names= " + tot_gbl_name);
 			put_stat_line("tot global seta cells = " + tot_gbl_seta);
 			put_stat_line("tot global setb cells = " + tot_gbl_setb);
