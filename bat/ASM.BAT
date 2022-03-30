@@ -15,9 +15,18 @@ if /I %1. == . (set /P z_file=Hit Enter for help or suppply name of mlc file to 
         ) else (set z_file=%1)
 if /I %z_file%. == . goto help
 :chkfile
-if not exist %z_file%.MLC (echo %0 ERROR: %z_file%.MLC was not found
-                           set z_ReturnCode=16
-                           goto return)
+rem convert Unix path notation to Windows before checking the file
+set z_file=%z_file:/=\%
+if exist %z_file%.MLC goto file_ok
+rem if user specified valid extension, strip it off
+if /I %z_file:~-4%. NEQ .MLC. goto help
+set z_file=%z_file:~0,-4%
+if exist %z_file%.MLC goto file_ok
+echo %0 ERROR: %z_file%.MLC was not found
+set z_ReturnCode=16
+goto return
+
+:file_ok
 if exist %z_file%.BAL erase %z_file%.BAL
 if exist %z_file%.PRN erase %z_file%.PRN
 if exist %z_file%.OBJ erase %z_file%.OBJ
