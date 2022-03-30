@@ -413,7 +413,8 @@ public  class  az390 implements Runnable {
         * 2821-04-26 Issue #239 fix no error on undefined sym for RIL i2 operand
         * 2021-08-20 DSH issue #230 correct vector instruction erros reported by Dan Greiner
         * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand m4 or m6	
-        ^ 2022-01-16 dsh #343 move abort for exceeding maxline 		
+        * 2022-01-16 DSH #343 move abort for exceeding maxline 
+        * 2022-03-28 DSH #327 fix az390 to force odd literals to even address for access by relative halfword offset counts	
     *****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -10589,6 +10590,8 @@ private void gen_ltorg(){
 private void gen_lit_size(int size){
 	/*
 	 * generate literal dc's of specified size
+           * force all length 1 lits to even addr for access by relative halfword offsets in LARL etc.  per issue #327
+           * see regression test rt\test\TESTLITS.MLC which fails on previous releases
 	 */
 	cur_lit = 0;
 	while (cur_lit < tot_lit){
@@ -10598,6 +10601,9 @@ private void gen_lit_size(int size){
 				){			
 			lit_gen[cur_lit] = 1;
 			lit_esd[cur_lit] = esd_base[cur_esd]; // RPI 457
+                             if   (size == 1 && loc_ctr != (loc_ctr/2*2)){
+                                  loc_ctr = loc_ctr + 1;  // issue #327 force lits on even addr for ref by halfword offset counts
+                             }
 			process_dc(3);
 			if (gen_obj_code && tz390.opt_list){ // RPI 484
 				if (list_obj_code.length() < 16){
