@@ -22,7 +22,6 @@ Ideal for a number of use cases:
 
 * Learning IBM mainframe assembler programming without access to a mainframe.
 * Develop your mainframe application using modern tooling.
-* Run your mainframe applications in the cloud on commodity hardware.
 
 [Get started](getting_started/install.md){ .md-button .md-button--primary }
 
