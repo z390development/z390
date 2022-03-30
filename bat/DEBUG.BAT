@@ -1,5 +1,5 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
-rem mac run mz390 macro processor to expand mlc to bal with nomlc
+rem Execute program %1 in test/debug mode
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
@@ -11,25 +11,19 @@ if /I "%1" == "tron" (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-if /I %1. == . (set /P z_file=Hit Enter for help or suppply name of mlc file to expand: 
+if /I %1. == . (set /P z_file=Hit Enter for help or suppply name of 390 file to debug: 
         ) else (set z_file=%1)
 if /I %z_file%. == . goto help
 :chkfile
 rem convert Unix path notation to Windows before checking the file
 set z_file=%z_file:/=\%
-if not exist %z_file%.MLC (echo %0 ERROR: %z_file%.MLC was not found
+if not exist %z_file%.390 (echo %0 ERROR: %z_file%.390 was not found
                            set z_ReturnCode=16
                            goto return)
 
-if exist %z_file%.BAL erase %z_file%.BAL
-if exist %z_file%.ERR erase %z_file%.ERR
-if exist %z_file%.STA erase %z_file%.STA
-if exist %z_file%.TR* erase %z_file%.TR*
-call %~dps0mz390 %z_TraceMode% %z_file% bal noasm sysmac(%z_HomeDir%mac+.) syscpy(%z_HomeDir%mac+.) chksrc(0) chkmac(0) %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0EXEC %z_TraceMode% %z_file% test %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
-rem any error or warning message has been issued by mz390
-if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (erase %1.OBJ
-                                                  goto return))
+rem any error or warning message has been issued by exec
 
 :return
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -37,9 +31,9 @@ exit /b %z_ReturnCode%
 
 :help
 echo .
-echo the MAC.BAT procedure is intended to expand a single assembler program by running the macro processor
+echo the DEBUG.BAT procedure is intended to execute a single program in debug mode
 echo .
-set /P z_file=Hit Enter for more help or suppply name of mlc file to expand: 
+set /P z_file=Hit Enter for more help or suppply name of 390 file to debug: 
 if /I %z_file%. NEQ . goto chkfile
 
 call %~dps0help %z_TraceMode%

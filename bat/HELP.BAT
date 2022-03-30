@@ -27,6 +27,7 @@ echo ASSIST - Assemble, Link and Go (execute) an assembler source file having AS
 echo CBLC   - Assemble a cobol source file
 echo CBLCL  - Assemble and link a cobol source file
 echo CBLCLG - Assemble, Link and Go (execute) a cobol source file
+echo DEBUG  - Execute a previously linked program in interactive debugger
 echo EXEC   - Execute a previously linked program
 echo HELP   - This help overview
 echo LINK   - Link a previously assembled or compiled program
@@ -51,6 +52,8 @@ echo If you need additional macro and/or copybook libraries, or you need any oth
 echo non-default parameter for your user program, please use an options file to define these.
 echo To make use of an options file, specify optional parm @path/file
 echo     for options    files the extension is OPT
+echo .
+echo For more information please visit http://www.z390.info
 echo .
 if /I "%1" == "tron" (echo on) else (echo off)
 
