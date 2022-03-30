@@ -14,7 +14,7 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0..\..
 
 rem
-rem test 1 - should assemble okay
+echo %0: test 1 - should assemble okay
 call bat\asm   %z_TraceMode% rt\mlc\testopt @rt\opt\testopt0.opt
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR on test 1: Encountered RC %z_ReturnCode% - exiting
@@ -23,7 +23,7 @@ if %z_ReturnCode% NEQ 0 (echo %0 ERROR on test 1: Encountered RC %z_ReturnCode% 
                          )
 
 rem
-rem test 2 - should assemble with error for invalid option
+echo %0: test 2 - should assemble with error for invalid option
 call bat\asm   %z_TraceMode% rt\mlc\testopt @rt\opt\testopt1.opt
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 16 (echo %0 ERROR on test 2: invalid option not detected
@@ -32,7 +32,7 @@ if %z_ReturnCode% NEQ 16 (echo %0 ERROR on test 2: invalid option not detected
                           )
 
 rem
-rem test 3 - should assemble okay with valid reference
+echo %0: test 3 - should assemble okay with valid reference
 call bat\asm   %z_TraceMode% rt\mlc\testopt @rt\opt\testopt2.opt
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR on test 3: Encountered RC %z_ReturnCode% - exiting
@@ -41,7 +41,7 @@ if %z_ReturnCode% NEQ 0 (echo %0 ERROR on test 3: Encountered RC %z_ReturnCode% 
                          )
 
 rem
-rem test 4 - should assemble with error for incorrect reference
+echo %0: test 4 - should assemble with error for incorrect reference
 call bat\asm   %z_TraceMode% rt\mlc\testopt @rt\opt\testopt3.opt
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 16 (echo %0 ERROR on test 4: incorrect reference not detected
@@ -50,7 +50,7 @@ if %z_ReturnCode% NEQ 16 (echo %0 ERROR on test 4: incorrect reference not detec
                           )
 
 rem
-rem test 5 - should assemble with error for self-reference
+echo %0: test 5 - should assemble with error for self-reference
 call bat\asm   %z_TraceMode% rt\mlc\testopt @rt\opt\testopt4.opt
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 16 (echo %0 ERROR on test 5: incorrect self-reference not detected
@@ -59,7 +59,7 @@ if %z_ReturnCode% NEQ 16 (echo %0 ERROR on test 5: incorrect self-reference not 
                           )
 
 rem
-rem test 6 - should assemble with error for circular reference
+echo %0: test 6 - should assemble with error for circular reference
 call bat\asm   %z_TraceMode% rt\mlc\testopt @rt\opt\testopt5.opt
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 16 (echo %0 ERROR on test 6: circular reference not detected
@@ -68,7 +68,7 @@ if %z_ReturnCode% NEQ 16 (echo %0 ERROR on test 6: circular reference not detect
                           )
 
 rem
-rem all tests passed okay
+echo %0: all tests passed okay
 set z_ReturnCode=0
 goto return
 
