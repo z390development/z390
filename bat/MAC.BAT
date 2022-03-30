@@ -17,10 +17,16 @@ if /I %z_file%. == . goto help
 :chkfile
 rem convert Unix path notation to Windows before checking the file
 set z_file=%z_file:/=\%
-if not exist %z_file%.MLC (echo %0 ERROR: %z_file%.MLC was not found
-                           set z_ReturnCode=16
-                           goto return)
+if exist %z_file%.MLC goto file_ok
+rem if user specified valid extension, strip it off
+if /I %z_file:~-4%. NEQ .MLC. goto help
+set z_file=%z_file:~0,-4%
+if exist %z_file%.MLC goto file_ok
+echo %0 ERROR: %z_file%.MLC was not found
+set z_ReturnCode=16
+goto return
 
+:file_ok
 if exist %z_file%.BAL erase %z_file%.BAL
 if exist %z_file%.ERR erase %z_file%.ERR
 if exist %z_file%.STA erase %z_file%.STA

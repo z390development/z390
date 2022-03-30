@@ -17,9 +17,16 @@ if /I %z_file%. == . goto help
 :chkfile
 rem convert Unix path notation to Windows before checking the file
 set z_file=%z_file:/=\%
-if not exist %z_file%.obj (echo %0 ERROR: %z_file%.obj was not found
-                           set z_ReturnCode=16
-                           goto return)
+if exist %z_file%.OBJ goto file_ok
+rem if user specified valid extension, strip it off
+if /I %z_file:~-4%. NEQ .OBJ. goto help
+set z_file=%z_file:~0,-4%
+if exist %z_file%.OBJ goto file_ok
+echo %0 ERROR: %z_file%.OBJ was not found
+set z_ReturnCode=16
+goto return
+
+:file_ok
 if exist %z_file%.390 erase %z_file%.390
 if exist %z_file%.LST erase %z_file%.LST
 if exist %z_file%.ERR erase %z_file%.ERR

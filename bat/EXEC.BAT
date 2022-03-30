@@ -17,13 +17,16 @@ if /I %z_file%. == . goto help
 :chkfile
 rem convert Unix path notation to Windows before checking the file
 set z_file=%z_file:/=\%
-if not exist %z_file%.390 (echo %0 ERROR: %z_file%.390 was not found
-                           set z_ReturnCode=16
-                           goto return)
-if exist %z_file%.LOG erase %z_file%.LOG
-if exist %z_file%.ERR erase %z_file%.ERR
-if exist %z_file%.STA erase %z_file%.STA
-if exist %z_file%.TR* erase %z_file%.TR*
+if exist %z_file%.390 goto file_ok
+rem if user specified valid extension, strip it off
+if /I %z_file:~-4%. NEQ .390. goto help
+set z_file=%z_file:~0,-4%
+if exist %z_file%.390 goto file_ok
+echo %0 ERROR: %z_file%.390 was not found
+set z_ReturnCode=16
+goto return
+
+:file_ok
 call %~dps0ez390 %z_TraceMode% %z_file% %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by ez390

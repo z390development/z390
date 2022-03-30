@@ -17,11 +17,17 @@ if /I %z_file%. == . goto help
 :chkfile
 rem convert Unix path notation to Windows before checking the file
 set z_file=%z_file:/=\%
-if not exist %z_file%.390 (echo %0 ERROR: %z_file%.390 was not found
-                           set z_ReturnCode=16
-                           goto return)
+if exist %z_file%.390 goto file_ok
+rem if user specified valid extension, strip it off
+if /I %z_file:~-4%. NEQ .390. goto help
+set z_file=%z_file:~0,-4%
+if exist %z_file%.390 goto file_ok
+echo %0 ERROR: %z_file%.390 was not found
+set z_ReturnCode=16
+goto return
 
-call %~dps0EXEC %z_TraceMode% %z_file% test %2 %3 %4 %5 %6 %7 %8 %9
+:file_ok
+call %~dps0EXEC %z_TraceMode% %z_file% noloadhigh test %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by exec
 
