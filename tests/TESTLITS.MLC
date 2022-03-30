@@ -1,0 +1,24 @@
+*********************************************************************
+* Copyright 2021 Don Higgins               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 2021/11/10    
+*********************************************************************
+* 2022-03-28 DSH RENAME AND VERIFY LITERAL ADDR AND VALUE                                            *
+*********************************************************************
+         TITLE 'TESTLITS TEST LARL REF TO OLD LENGTH LIT'
+TESTLITS SUBENTRY
+          LARL   R0,=C'A'        FIRST ODD LIT ON EVEN BOUNDARY
+          LARL   R1,=C'ABC'   SECOND ODD LIT WAS ON ODD BOUND
+           CLC 0(3,R1),=C'ABC'
+           BNE     BADLIT           VERIFY VALUE OF LITERAL
+           N           R1,=F'1'
+           BNZ     BADADDR      VERIFY EVEN ADDRESS FOR USE BY LARL    
+           SUBEXIT RC=0
+BADADDR WTO    'ERROR - LITERAL AT ODD ADDRESS'
+          SUBEXIT RC=16
+BADLIT      WTO    'ERROR - LITERAL DOES NOT MATCH'
+           SUBEXIT RC=16
+           EQUREGS                              
+           END
