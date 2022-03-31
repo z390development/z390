@@ -8,8 +8,8 @@ RUNRTQSAM   - verifies QSAM support for large blocks over 32k
 RUNSORT     - verifies sort merge
 RUNZPAR     - verify Zcobol Program Analysis Report
 ZOPCHECK    - verify all z390 assembler instructions generate correct code
-RUNTBRCTX   = verify issue #238 which has been closed.
-RUNTESTOPT  = verify indirection usage in options files
+RUNTBRCTX   - verify issue #238 which has been closed.
+RUNTESTOPT  - verify indirection usage in options files
 
 Double click on above commands to run them.
 
