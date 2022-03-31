@@ -53,13 +53,13 @@ if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (erase %z_file%.MLC
 call %~dps0MZ390 %z_TraceMode% %z_file% @%z_HomeDir%zcobol\opt\CBLOPT sysmac(%z_HomeDir%zcobol\mac+mac) syscpy(+%z_HomeDir%zcobol\cpy) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by mz390
-if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (erase %z_file%.OBJ
+if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (if exist %z_file%.OBJ (erase %z_file%.OBJ)
                                                   goto return))
 
 call %~dps0LZ390 %z_TraceMode% %z_file% %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by lz390
-if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (erase %z_file%.390
+if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (if exist %z_file%.390 (erase %z_file%.390)
                                                   goto return))
 
 call %~dps0EZ390 %z_TraceMode% %z_file% sys390(+%z_HomeDir%zcobol\lib) %2 %3 %4 %5 %6 %7 %8 %9

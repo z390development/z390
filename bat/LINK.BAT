@@ -35,7 +35,7 @@ if exist %z_file%.TR* erase %z_file%.TR*
 call %~dps0LZ390 %z_TraceMode% %z_file% %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by lz390
-if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (erase %z_file%.390
+if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (if exist %z_file%.390 (erase %z_file%.390)
                                                   goto return))
 
 :return

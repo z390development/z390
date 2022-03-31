@@ -3009,7 +3009,7 @@ private void svc_open(){
 	if (cur_acb_id == tz390.acb_id_ver){
 		vz390.cur_vsam_op = vz390.vsam_op_open;
 		vz390.svc_vsam();  // RPI 644
-        if (tz390.opt_zvsam == 2)                   // RPI 1598 // #245
+        if (tz390.opt_zvsam == 2)                  // RPI 1598 // #245
            {zACB TempACB = new zACB(cur_dcb_addr); // RPI 1598
             TempACB.Open();                        // RPI 1598
             zACB_list.add(TempACB);                // RPI 1598

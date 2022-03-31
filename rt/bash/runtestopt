@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# runtestopt: validate detection of circular references in options files
+
+######################################################################
+# internal functions
+######################################################################
+
+######################################################################
+# print error message and exit with return code
+#   $1 = the error message
+#   $2 = the return code
+#
+# sample: msg="Hello World"; rc=4; error "$msg" $rc;
+######################################################################
+
+function error {
+    local msg=$1
+    local rc=$2
+    echo "$0 ERROR: $msg"
+    exit $rc
+}
+
+######################################################################
+# main
+######################################################################
+
+#set -e             # exit on all errors; not for this script
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+# this one should assemble okay
+echo " "
+echo test 1 - should assemble okay
+opt='@'rt/opt/testopt0.OPT
+bash/asm rt/mlc/TESTOPT $opt
+rc=$?
+if [ $rc -ne 0 ]; then msg="Encountered RC $rc - exiting"; error "$msg" $rc; fi
+echo "runtestopt test 1 okay"
+
+# this one should assemble with error for invalid option
+echo " "
+echo test 2 - should assemble with error for invalid option
+opt='@'rt/opt/testopt1.OPT
+bash/asm rt/mlc/TESTOPT $opt
+rc=$?
+if [ $rc -ne 16 ]; then msg="Invalid option not detected"; error "$msg" 8; fi
+echo "runtestopt test 2 okay"
+
+# this one should assemble okay with valid reference
+echo " "
+echo test 3 - should assemble okay with valid reference
+opt='@'rt/opt/testopt2L.OPT
+bash/asm rt/mlc/TESTOPT $opt
+rc=$?
+if [ $rc -ne 0 ]; then msg="Encountered RC $rc - exiting"; error "$msg" $rc; fi
+echo "runtestopt test 3 okay"
+
+# this one should assemble with error for incorrect reference
+echo " "
+echo test 4 - should assemble with error for incorrect reference
+opt='@'rt/opt/testopt3L.OPT
+bash/asm rt/mlc/TESTOPT $opt
+rc=$?
+if [ $rc -ne 16 ]; then msg="Incorrect reference not detected"; error "$msg" 8; fi
+echo "runtestopt test 4 okay"
+
+# this one should assemble with error for self-reference
+echo " "
+echo test 5 - should assemble with error for self-reference
+opt='@'rt/opt/testopt4L.OPT
+bash/asm rt/mlc/TESTOPT $opt
+rc=$?
+if [ $rc -ne 16 ]; then msg="Incorrect self-reference not detected"; error "$msg" 8; fi
+echo "runtestopt test 5 okay"
+
+# this one should assemble with error for circular reference
+echo " "
+echo test 6 - should assemble with error for circular reference
+opt='@'rt/opt/testopt5L.OPT
+bash/asm rt/mlc/TESTOPT $opt
+rc=$?
+if [ $rc -ne 16 ]; then msg="Incorrect circular reference not detected"; error "$msg" 8; fi
+echo "runtestopt test 6 okay"
+
+# all done
+
+echo " "
+echo "all tests passed"
+exit 0

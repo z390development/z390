@@ -8292,7 +8292,6 @@ private void get_hex_xbddd(){
 			hex_bddd2 = get_exp_bddd(); // RPI 1148
 			hex_xbddd = get_exp_x() +hex_bddd2;
 		} else {
-			
 		 	hex_xbddd = get_exp_abs_xbddd();
 		}
 	}

@@ -1,0 +1,16 @@
+TESTOPT  TITLE 'Dummy program'
+***********************************************************************
+* Start create : 17-09-2015
+* 1st delivery :
+* Designer     : AF Kornelis
+* Programmer   : AF Kornelis
+* Purpose      : For testing
+***********************************************************************
+
+TESTOPT  RSECT ,                       *
+TESTOPT  AMODE 24
+TESTOPT  RMODE 24
+***********************************************************************
+         XR    15,15                   * Set RC=0
+         BR    14                      * Return
+         END
