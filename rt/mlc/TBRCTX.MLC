@@ -3,7 +3,8 @@
 * z390 - Mainframe assembler emulator and run-time engine
 * Copyright (C) 2021 z390 Assembler LLC
 ***************************************
-* 2022-03-12 DSH FIX INIT FOR BRCTG
+* 2022-04-04 DSH ADD BRCTG RESET LOW R3 TO SKIP ITERATIONS
+*                             TO PREVENT S422 TIME LIMIT EXCEPTION
 ***************************************
 *
 * This file is part of z390.
@@ -60,15 +61,26 @@ BRCTH_1  DS    0H
 *
          SGR   R2,R2               Count iterations
          SGR   R3,R3               Initialize all 64 bits
-         LG      R3,=FL8'3'    Loop count  #370 DSH REP IIHF WITH LG
+         IIHF    R3,3                 Loop count
 BRCTG_1  DS    0H
          AGHI  R2,1                Count iterations (64-bit counter)
+*
+* CODE ADDED BY DSH TO SPEED UP BRCTG TEST
+*
+         LTR   R3,R3               IS LOW R3 ZERO   
+         BZ    SKIP_RESET          YES, SKIP RESET AND PRINT
+         LA    R3,1                NO, RESET TO 1 FOR LAST ITERATION
+         LA    R1,LblBRCTG         Label for message
+         BRAS  R10,ShowMsg         Show message
+SKIP_RESET EQU *
+*
          BRCTG R3,BRCTG_1          Loop
 *
+PRINT3 EQU *
          LA    R1,LblBRCTG         Label for message
          BRAS  R10,ShowMsg         Show message
 ***********************************************************************
-EXIT     DS    0H
+XIT     DS    0H
          L     R13,4(,R13)         R13 --> Caller's save area
          LM    R14,R12,12(R13)     Restore caller's registers
          SR    R15,R15             Set return code to zero
