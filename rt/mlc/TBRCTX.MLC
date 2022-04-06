@@ -4,7 +4,7 @@
 * Copyright (C) 2021 z390 Assembler LLC
 ***************************************
 * 2022-04-04 DSH ADD BRCTG RESET LOW R3 TO SKIP ITERATIONS
-*                             TO PREVENT S422 TIME LIMIT EXCEPTION
+* 2022-04-05 DSH CHANGE COMMENTS AND REMOVE "After" from WTO                           TO PREVENT S422 TIME LIMIT EXCEPTION
 ***************************************
 *
 * This file is part of z390.
@@ -65,7 +65,7 @@ BRCTH_1  DS    0H
 BRCTG_1  DS    0H
          AGHI  R2,1                Count iterations (64-bit counter)
 *
-* CODE ADDED BY DSH TO SPEED UP BRCTG TEST
+* CODE ADDED BY DSH TO SHORTEN BRCTG TEST
 *
          LTR   R3,R3               IS LOW R3 ZERO   
          BZ    SKIP_RESET          YES, SKIP RESET AND PRINT
@@ -76,7 +76,6 @@ SKIP_RESET EQU *
 *
          BRCTG R3,BRCTG_1          Loop
 *
-PRINT3 EQU *
          LA    R1,LblBRCTG         Label for message
          BRAS  R10,ShowMsg         Show message
 ***********************************************************************
@@ -116,11 +115,11 @@ LblBRCTG DC    CL5'BRCTG'
 QW       DS    XL16,Xl1            Quadword work and pad
 DW       DS    D,Xl1               Doubleword work and pad
 *
-WTO1     WTO   'After xxxxx loop; R2=xxxxxxxxxxxxxxxx  R3=xxxxxxxxxxxxxx
-               xxx',MF=L
-W1Lbl    EQU   WTO1+4+6,5,C'C'
-W1R2     EQU   WTO1+4+21,16,C'C'
-W1R3     EQU   WTO1+4+42,16,C'C'
+WTO1     WTO   ' xxxxx loop; R2=xxxxxxxxxxxxxxxx  R3=xxxxxxxxxxxxxxxx',X
+               MF=L              DSH REMOVE "After" AND CORRECT CONT
+W1Lbl    EQU   WTO1+4+1,5,C'C'    DSH REMOVE "After"
+W1R2     EQU   WTO1+4+16,16,C'C'  DSH REMOVE "After"
+W1R3     EQU   WTO1+4+37,16,C'C'  DSH REMOVE "After"
 *
 H2P      EQU   *-240               Beginning of translate table
          DC    C'0123456789ABCDEF' 
