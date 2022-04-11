@@ -17,5 +17,7 @@ bash/asmlg tests/TESTINS5 trace noloadhigh $sysmac $optable
 bash/asmlg tests/TESTDFP1 trace noloadhigh $sysmac $optable
 bash/asmlg tests/TESTDFP2 trace noloadhigh $sysmac $optable
 bash/asmlg tests/TESTLITS trace noloadhigh $sysmac
+bash/asmlg rt/mlc/TESTAMPS trace noloadhigh $sysmac $optable
+bash/asmlg rt/mlc/IS215 trace noloadhigh $sysmac $optable
 bash/zopcheck
 echo "Verify tests ran without errors"
