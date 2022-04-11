@@ -437,7 +437,8 @@ public  class  mz390 {
 	 * 2022-01-25 dsh issue #335 set &(acall)(n) parms at APARM call using zam insert MLC line just before aentry for acall
 	 *            dsh #335 make find_acall_name separate from fine_var using ACALL_ prefix
 	 * 2022-02-08 dsh #335 fix bug in insert_acall_parms not checking for no parms and returning
-          * 2022-03-26 DSH #335 rename opcode APARM to ACALLPRM to allow APARM macro
+     * 2022-03-26 DSH #335 rename opcode APARM to ACALLPRM to allow APARM macro
+	 * 2022-04-07 DSH #215 prevent SETC statement character string processing from reducing && to &
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -3721,8 +3722,8 @@ public  class  mz390 {
 				bal_text_index2 = bal_text_index1 + 1;
 			} else if (parm_value.equals("&&")
 					|| parm_value.equals("''")){
-				if (reduce){ //RPI192 leave ?? and '' for BAL compatibility in az390
-					// reduce ?? and '' for mnote and punch output
+				if (reduce){ //RPI192 leave && and '' for BAL compatibility in az390
+					// reduce && and '' for mnote and punch output
 					parm_value = parm_value.substring(1);
 				}
 				bal_text_index2 = bal_text_index1 + 2;
@@ -5261,11 +5262,11 @@ public  class  mz390 {
 					} else {
 						exp_push_var();
 					}
-				} else if (exp_token.equals("&&") 
+				} else if ((exp_token.equals("&&") || exp_token.equals("&")) // dsh either ok 
 						&& (exp_prev_first == exp_string_op
 								|| exp_prev_first == exp_create_set_op)){
-					// RPI192 substitute & for && in setc strings
-                    setc_value = "&";
+					// RPI192 substitute & for && in setc strings DSH reversed by #215 change
+                    setc_value = exp_token; // DSH #215 changed to && or & for setc string reversing RPI 192 in 2005
                     opt_gen_pc_concat(pc_op_pushc);
                     setc_value = exp_stk_setc[tot_exp_stk_var - 1].concat(setc_value); 
 					exp_stk_setc[tot_exp_stk_var - 1] = setc_value;

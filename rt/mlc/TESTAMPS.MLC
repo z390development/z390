@@ -1,0 +1,45 @@
+*********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
+* Author - Don Higgins                                              *
+* Date   - 2022-04-09                                                 *
+*********************************************************************
+* 2022-04-09 DSH #215 test replacement of && with single '&' in DC
+*                     but not in SETC character strings
+*********************************************************************
+   MACRO
+    GENCHR  
+DC1 DC C'&&' MACRO DC AMPAMP
+DC1X DC X'50'
+&AMPAMP SETC '&&' NOTE PRIOR TO #215 THIS REDUCED TO &
+DC2 DC C'&AMPAMP' MACRO DC WITH SETC AMPAMP'S
+DC2X DC X'50'
+    MEND
+TESTAMPS SUBENTRY
+    CLC  DC1,DC1X
+    BNE  ERROR
+    CLC  DC2,DC2X
+    BNE  ERROR
+    CLC  DC3,DC3X
+    BNE  ERROR
+    SUBEXIT
+ERROR SUBEXIT RC=12
+    GENCHR
+DC3 DC  C'&&' ALC AMPAMP OUTSIDE MACRO
+DC3X DC X'50'
+    END

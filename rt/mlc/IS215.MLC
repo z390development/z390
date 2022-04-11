@@ -1,0 +1,127 @@
+
+***********************************************************************
+* 2022-04-07 DSH test for Github issue 215 developed by John Ganci from
+*            Fred's inital problem report of z390 not handling && the
+*            the same way HLASM does.  The fix is to not reduce && 
+*            within SETC statement strings but replace with & elsewhere
+***********************************************************************
+*        Fred van der Windt's macro
+***********************************************************************
+*
+         MACRO                                                      
+&LBL     FQ507ENT &ENT,&JNK
+.*                                                                   
+.*       /**********/                                               
+.*       /* Checks */                                               
+.*       /**********/                                               
+.*                                                                   
+.*       /*======*/                                                 
+.*       /* Junk */                                                 
+.*       /*======*/                                                 
+.*                                                                   
+         AIF   (K'&JNK EQ 0).JNKOK                                  
+         MNOTE 8,'FQ507 Invalid parameter "&JNK"'                   
+         MEXIT                                                       
+.*                                                                  
+.JNKOK   ANOP                                                       
+.*                                                                   
+.*       /*********/                                                
+.*       /* Entry */                                                
+.*       /*********/                                                
+.*                                                                   
+         DC    AL2(#&SYSNDX-*-2)                                    
+.*                                                                  
+&F       SETA  1                                                     
+.FRG     ANOP                                                       
+.*                                                                  
+.*       /*=========================*/                              
+.*       /* Determine fragment type */                               
+.*       /*=========================*/                              
+.*                                                                  
+         AIF   ('&ENT(&F)'(1,1) EQ '''').STRING                     
+         AGO   .DC                                                   
+.*                                                                  
+.*       /*==========*/                                             
+.*       /* Constant */                                              
+.*       /*==========*/                                             
+.*                               
+.DC      ANOP                    
+         DC    &ENT(&F)          
+         AGO   .FRGNEXT          
+.*                               
+.*       /*========*/            
+.*       /* String */            
+.*       /*========*/            
+.*                               
+.STRING  ANOP                    
+         DC    C&ENT(&F)         
+         AGO   .FRGNEXT          
+.*                               
+.*       /*===============*/     
+.*       /* Next fragment */     
+.*       /*===============*/     
+.*                               
+.FRGNEXT ANOP                    
+&F       SETA  &F+1              
+         AIF   (&F LE N'&ENT).FRG
+.*                               
+#&SYSNDX EQU   *                 
+.*                               
+         MEND         
+*
+IS215    CSECT
+         STM   R14,R12,12(R13)     Save caller's registers
+         LR    R12,R15             R12 = base register
+         USING IS215,R12           Establish addressability
+         SR    R15,R15             Assume test is successful
+*
+         LHI   R2,zLen-1           Get length code of z390 data
+         CHI   R2,hLen-1           Same as length code of HLASM data?
+         BNE   Error               No; then test failed
+         EX    R2,Compare          Is z390 data same as HLASM data?
+         BE    Exit                Yes; then test successful
+Error    DS    0H
+         LA    R15,8               Test failed
+Exit     DS    0H
+         L     R14,12(,R13)        Restore caller's registers
+         LM    R0,R12,20(R13)      ... except R15
+         BR    R14                 Return to caller
+*
+Compare  CLC   zData(*-*),hData    z390 data : HLASM data
+*
+***********************************************************************
+*
+*        Fred van der Windt's SETC variables
+*
+&CHR_MEMBER   SETC  '$#@A-IJ-RS-Z0-9'
+&CHR_DATASET  SETC  '.$#@A-IJ-RS-Z0-9' 
+&CHR_VARIABLE SETC  '&&[\](,).'          
+*
+zData    DS    0H                  Fred's data generated using z390
+         FQ507ENT ('Target *= *[&CHR_VARIABLE&CHR_DATASET]{2,44}#1',   +
+               '\([&CHR_VARIABLE&CHR_MEMBER]{1,8}#2) +')               
+zLen     EQU   *-zData             Data length
+*
+***********************************************************************
+*
+hData    DS    0H                  Fred's data generated using HLASM
+         DC    AL2(#0046-*-2)                                          
+         DC    C'Target *= *[&&[\](,)..$#@A-IJ-RS-Z0-9]{2,44}#1'
+         DC    C'\([&&[\](,).$#@A-IJ-RS-Z0-9]{1,8}#2) +'             
+#0046    EQU   *       
+hLen     EQU   *-hData             Data length
+*
+*======================================================================
+*
+*   HLASM produces
+* 
+*        DC    AL2(#0046-*-2)                                          
+*        DC    C'Target *= *[&&[\](,)..$#@A-IJ-RS-Z0-9]{2,44}#1'
+*        DC    C'\([&&[\](,).$#@A-IJ-RS-Z0-9]{1,8}#2) +'             
+* #0046  EQU   *                
+*
+*======================================================================
+*
+         YREGS ,
+*
+         END
