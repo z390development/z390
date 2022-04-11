@@ -26,6 +26,8 @@
 *                  SUPPORT LOWER CASE
 * 02/19/12 RPI 1192 USE D2A(...) FOR &DIGIT SETA, REMOVE DUP )), 
 *                   FIX CONTINUE CONCAT
+* 2022-04-10 DSH #215 replace && with '&' issue fixed SETC to no 
+*                     longer reduce && to & in character strings
 *********************************************************************
 * ZSTRMAC READS SYSUT1 SOURCE FILE AND OUTPUTS SYSUT2 SOURCE FILE
 * WITH TRANSLATION OF FOLLOWING Z390 ZSTRMAC EXTENSIONS TO STD HLASM:
@@ -400,8 +402,9 @@
                     :&PCH_REC SETC '.ACL_&ACALL_INDEX._E'
                     ACALL PUNCH_LAB
                AEND
-               :&PCH_REC SETC (&IS_OP+1)' '.'AGO   (&&ACALL_&ACALL_INDEX
-               X._&ACALL_NAME(&ACALL_INDEX)).ACL_&ACALL_INDEX._1'
+               :&PCH_REC SETC (&IS_OP+1)' '.'AGO ('.'&'.'ACALL_&ACALL_IX
+               NDEX._&ACALL_NAME(&ACALL_INDEX)).ACL_&ACALL_INDEX._1'   X
+                DSH #215 replace && with '&' 
                :&I SETA 2
                AWHILE (&I LE &ACALL_CNT(&ACALL_INDEX))
                   :&PCH_REC SETC '&PCH_REC,.ACL_&ACALL_INDEX._&I'
@@ -604,8 +607,8 @@
          AELSE
                :&ACALL_CNT(&ACALL_INDEX) SETA &ACALL_CNT(&ACALL_INDEX)+X
                1
-               :&PCH_REC SETC '&&ACALL_&ACALL_INDEX._&ACALL_NAME(&ACALLX
-               _INDEX)'
+               :&PCH_REC SETC '&'.'ACALL_&ACALL_INDEX._&ACALL_NAME(&ACAX
+               LL_INDEX)' DSH #215 replae && with '&' 
                :&SPACES SETA &IS_OP-K'&PCH_REC+1
                AIF (&SPACES LE 0)
                    :&SPACES SETA 1
