@@ -1,21 +1,7 @@
 ***********************************************************************
-* z390 - Mainframe assembler emulator and run-time engine
-* Copyright (C) 2021 z390 Assembler LLC
-*
-* This file is part of z390.
-*
-* z390 is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-* z390 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License 
-* along with this program; if not, see https://www.gnu.org/licenses.
-***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
 * Author - Don Higgins                                                *
 ***********************************************************************
          DFHEISTG
@@ -84,6 +70,27 @@ TESTNT01 DFHEIENT CODEREG=(R12,R3,R6)
 *
 *       NT01 ENDED     21:47:43.46  ELAPSED   38:23.93
 *
+*    LATEST RESULTS (FASTER CPU)
+*             SORTTIME  CYCS  --SWAPS-
+*       NT01  0:35.08   5671  20944476
+*
+*       NTS1  0:10.95   4786   4973332
+*       NTS2  0:25.467  5672  15981143
+*             --------        --------
+*             0:36.417        20954475
+*
+*       NT01 STARTED   15:19:02.78
+*       MYWORD01 OPEN  15:19:02.89
+*       MYWORD02 OPEN  15:35:45.05  READ 10000      16:42.16
+*       NTS1 START     15:52:46.36
+*       NTS1 ENDED     16:01:49.35  ELAPSED          9:02.99
+*                                   -SORT            0:10.95
+*                                   =BROWSE 10000    8:52.04
+*       NTS2 START     15:52:46.92
+*       NTS2 ENDED     16:03:34.50  ELAPSED   10:47.58
+*
+*       NT01 ENDED     16:03:44.27  ELAPSED   44:41.49
+*
          XC    SORTDATA(SORTDEND-SORTDATA),SORTDATA CLEAR SORTDATA
          CLC   EIBTRNID,=C'NTS1'  1ST NON-TERM TRANSID ?
          BE    NTS1               EXIT IF IT IS
@@ -104,7 +111,6 @@ LOOP1    EQU   *
 *
 WORD01   EQU   *
          EXEC  CICS ENDBR FILE('MYWORD01')
-*
          XC    MYRID,MYRID        SET START OF FILE
          EXEC  CICS HANDLE CONDITION ENDFILE(WORD02)
 * APPEND MYWORD02 TO GETMAINED AREA
@@ -124,6 +130,7 @@ WORD02   EQU   *
          EXEC  CICS WRITEQ TS QUEUE('NT01') FROM(STCK2) LENGTH(16)
 * VERIFICATION
          L     R4,LOWDATA         SORTED DATA START
+         ASI   HIDATA,-15         POINT TO LAST RECORD
 LOOP3    EQU   *
          CLC   0(15,R4),15(R4)    IN SEQUENCE ?
          BNL   VERBAD             ERROR IF NOT
@@ -201,7 +208,6 @@ LOOPS1   EQU   *
 *
 WORDS1   EQU   *
          EXEC  CICS ENDBR FILE('MYWORD01')
-*
          ST    R4,HIDATA          END DATA ADDRESS
          ST    R4,HISWAP          END SWAP SCAN ADDRESS
 * SORT THE DATA - OPTIMISED BUBBLE
@@ -209,6 +215,7 @@ WORDS1   EQU   *
          EXEC  CICS WRITEQ TS QUEUE('NT01') FROM(STCK2) LENGTH(16)
 * VERIFICATION
          L     R4,LOWDATA         SORTED DATA START
+         ASI   HIDATA,-15         POINT TO LAST RECORD
 LOOPS3   EQU   *
          CLC   0(15,R4),15(R4)    IN SEQUENCE ?
          BNL   VERBAD             ERROR IF NOT
@@ -233,7 +240,6 @@ LOOPS2   EQU   *
 *
 WORDS2   EQU   *
          EXEC  CICS ENDBR FILE('MYWORD02')
-*
          ST    R4,HIDATA          END DATA ADDRESS
          ST    R4,HISWAP          END SWAP SCAN ADDRESS
 * SORT THE DATA - OPTIMISED BUBBLE
@@ -241,6 +247,7 @@ WORDS2   EQU   *
          EXEC  CICS WRITEQ TS QUEUE('NT01') FROM(STCK2) LENGTH(16)
 * VERIFICATION
          L     R4,LOWDATA         SORTED DATA START
+         ASI   HIDATA,-15         POINT TO LAST RECORD
 LOOPS4   EQU   *
          CLC   0(15,R4),15(R4)    IN SEQUENCE ?
          BNL   VERBAD             ERROR IF NOT
@@ -299,7 +306,6 @@ SORTCEND EQU   *
          SGR   R5,R4              R5=ELAPSED TIME
          STG   R5,STCK2           SAVE IT
          L     R4,LOWDATA         ADDRESS TO FREEMAIN
-         EXEC  CICS FREEMAIN DATAPOINTER(R4)
          BR    R9                 RETURN
 *
 TIMEOUT  EQU   *

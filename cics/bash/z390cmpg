@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# z390cmpg: run sequential terminal comparator
+
+###############################
+# print error message and exit
+###############################
+
+function wrong {
+    echo ERROR ERROR ERROR
+    exit 8
+}
+
+####################
+# path
+####################
+
+cicspath=cics
+
+program=Z390COMP
+export SEQCMP=${cicspath}/seq/SEQC0001.TXT
+export SEQNEW=${cicspath}/seq/SEQO0001.TXT
+export SEQOUT=${cicspath}/seq/SEQCOMP.TXT
+export SEQEXC=${cicspath}/seq/SEQEXCL.TXT
+
+bash/ez390 ${cicspath}/${program} NOTIME $1 $2 $3 $4 ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+exit 0

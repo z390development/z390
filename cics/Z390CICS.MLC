@@ -1,26 +1,33 @@
 ***********************************************************************
-* z390 - Mainframe assembler emulator and run-time engine
-* Copyright (C) 2021 z390 Assembler LLC
-*
-* This file is part of z390.
-*
-* z390 is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-* z390 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License 
-* along with this program; if not, see https://www.gnu.org/licenses.
+* z390 - Mainframe assembler emulator and run-time engine             *
+* Copyright (C) 2021 z390 Assembler LLC                               *
+*                                                                     *
+* This file is part of z390.                                          *
+*                                                                     *
+* z390 is free software; you can redistribute it and/or modify        *
+* it under the terms of the GNU General Public License as published   *
+* by the Free Software Foundation; either version 2 of the License,   *
+* or (at your option) any later version.                              *
+*                                                                     *
+* z390 is distributed in the hope that it will be useful,             *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of      *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the       *
+* GNU General Public License for more details.                        *
+*                                                                     *
+* You should have received a copy of the GNU General Public License   *
+* along with this program; if not, see                                *
+* <https://www.gnu.org/licenses/>.                                    *
 ***********************************************************************
 * Author - Don Higgins                                                *
 ***********************************************************************
+* Change History                                                      *
+*                                                                     *
 * 04/22/08 RPI 837 ADD NOTIME TO PREVENT 422 ABEND IN 15 SECONDS      *
-* 09/21/21         MOD TO KCPSTART \BAT\EZ390
+* 09/21/21         MOD TO KCPSTART \BAT\EZ390                         *
+* 2922-92-28 jjg Issue #356 Linux/MacOS support                       *
+*                                                                     *
 ***********************************************************************
+*
 Z390CICS SUBENTRY BASES=(R13)
          LA    R3,SECTOR2         BASE 2
          LAY   R4,R3(4096)        BASE 3
@@ -37,6 +44,8 @@ Z390CICS SUBENTRY BASES=(R13)
 * JUST AFTER LABEL NOSEQTR
 *
 * THE GLOBAL MANAGER OF zCICS
+*
+         MVI   RunFlag,X'00'      Initialize runtime flags
 *
 * READ Z390CICS.INI FILE AND SET ALL PARMS
 *
@@ -143,7 +152,10 @@ PROCLTRC EQU   *
          BE    INIGET             EXIT IF IT IS
          CLI   INIAREA+13,C'Y'    =YES ?
          BNE   BADPARM            ERROR IF NOT
-         MVC   KCPTRPOS,KCPTRACE  SET TRACE PARMS
+*
+*del         MVC   KCPTRPOS,KCPTRACE  SET TRACE PARMS
+*
+         OI    RunFlag,RFTRCON    Trace should be on; set parms later
          B     INIGET             LOOP
 *
 PROCZTRC EQU   *
@@ -190,6 +202,9 @@ PROCCWAS EQU   *
 *
 EOFINI   EQU   *
          CLOSE Z390INI            CLOSE INI FILE
+*
+         BAL   R12,GetEnvZ        Get z390 operating environment
+*                                 (Windows or Linux/Mac)
          L     R6,MAXLOCS         R6=LOCALS
          CLI   INISEQT,C'T'       SEQUENTIAL TERMINAL TRACE MODE ?
          BNE   NOSEQTR            EXIT IF NOT
@@ -197,7 +212,8 @@ EOFINI   EQU   *
          MVC   INITRAN,=4C'-'     RESET INITIAL_TRANSID
          MVC   MAXLOCS,=F'1'      FORCE LOCAL_TERMINALS=1
          LA    R6,1               MAXLOCS=1
-         MVC   KCPTRPOS,KCPTRACE  FORCE TRACE_LOCALS=YES
+         OI    RunFlag,RFTRCON    Force TRACE_LOCALS=YES
+*del         MVC   KCPTRPOS,KCPTRACE  FORCE TRACE_LOCALS=YES
          B     NOSEQT             EXIT
 *
 NOSEQTR  EQU   *
@@ -206,10 +222,13 @@ NOSEQTR  EQU   *
          AHI   R6,1               EXTRA TERMINAL
          XC    MAXLOCS,MAXLOCS    FORCE LOCAL_TERMINALS=0
          MVC   INITRAN,=4C'-'     RESET INITIAL_TRANSID
-* IF WE NEED TO TRACE WHILE SEQ_TERM=YES, UNCOMMENT THE MVC
-* BE CAREFUL, THE TRACE MIGHT ABORT EARLY OWING TO SIZE
-         XC    KCPTRPOS,KCPTRPOS  FORCE TRACE_LOCALS=NO
-******** MVC   KCPTRPOS,KCPTRACE  FORCE TRACE_LOCALS=YES
+*
+* If we need to trace while SEQ_TERM=YES, uncomment the OI.
+* Be careful, the trace might abort early owing to size.
+*del         XC    KCPTRPOS,KCPTRPOS  FORCE TRACE_LOCALS=NO
+*del ******** MVC   KCPTRPOS,KCPTRACE  FORCE TRACE_LOCALS=YES
+******** OI    RunFlag,RFTRCON   Force TRACE_LOCALS=YES
+*
 NOSEQT   EQU   *
 * CHECK LOCAL AND REMOTE NUMBERS ARE SENSIBLE
          A     R6,MAXREMS         R6=LOCALS+REMOTES
@@ -311,20 +330,99 @@ MISSDRVE EQU   *
          LTR   R15,R15            CHECK RC ?
          BNZ   ABEND666           EXIT IF BAD
 MISSPATH EQU   *
-         CLI   SEQSWTCH+1,X'F0'   2ND CYCLE IN PROGRESS ?
-         BNE   MISSCMD2           EXIT IF NOT
-         CMDPROC WRITE,CMD2,ID=(R7) SEND SET Z390SEQ=
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND666           EXIT IF BAD
+*        Now set in bash/bat startup script z390cicg
+*        CLI   SEQSWTCH+1,X'F0'   2ND CYCLE IN PROGRESS ?
+*        BNE   MISSCMD2           EXIT IF NOT
+*        CMDPROC WRITE,CMD2,ID=(R7) SEND SET Z390SEQ=
+*        LTR   R15,R15            CHECK RC ?
+*        BNZ   ABEND666           EXIT IF BAD
 MISSCMD2 EQU   *
          MVI   KCPTRMTP,C'L'      TELL Z390KCP LOCAL
          MVC   KCPTRMID,WTOTERM   TELL Z390KCP THE TERMID
          MVC   KCPTRNID,WTOTRAN   TELL Z390KCP THE INITIAL TRANSID
          MVC   KCPDATFM,INIDATE   TELL Z390KCP THE DATE FORMAT
-         CLI   KCPTRPOS,C'L'      IS TRACE SET ?
-         BNE   NOLOG              EXIT IF NOT
-         MVC   KCPTRPOS+4(4),KCPTRMID ALL TRACES GO TO TERMID
-NOLOG    EQU   *
+*
+*        Now ready to fill in KCPSTART with appropriate data
+*
+         XC    KCPSTART,KCPSTART   Initialize storage
+         MVI   KCPTRPOS,X'00'      Start off assuming trace is off
+*         
+         LA    R15,KCPSTART        R15 -> KCPSTART area
+         USING KCPSTRTD,R15        Overlay the storage
+         CLI   EnvFlag,ENVWin      Windows runtime environment?
+         BE    RT_Win              Yes: set up for Windows
+*         
+*        Copy Linux/MacOS skeleton for start cmd through parm value
+*
+         MVC   LinStrt($LinTrPos-$LinStrt),$LinStrt         
+*         
+*        Copy fields into the copied skeleton
+*
+         MVC   LinTRMTP,KCPTRMTP   Local terminal
+         MVC   LinTRMID,KCPTRMID   Terminal ID
+         MVC   LinTRNID,KCPTRNID   Initial transaction ID
+         MVC   LinDATFM,KCPDATFM   Date format
+*
+         TM    RunFlag,RFTRCON     Should trace be turned on?
+         BZ    RT_Done             No; then done
+*         
+*        Copy Linux/MacOS trace parms skeleton
+*
+         MVC   LinTRPOS(L'LinTrce),$LinTrce
+*
+         LA    R14,LinTRPOS        R14 -> copy of trace parms skel
+         USING KCPTRCED,R14        Overlay the copy
+*         
+*        Copy terminal ID to LOG(....) area         
+*
+         MVC   LinTRLOG,KCPTRMID   All traces go to term ID
+*
+*        Set KCP flag indicating that trace is active;
+*        needed as parameter when calling GBLFE01
+*
+         MVI   KCPTRPOS,C'L'       Flag indicating trace is on 
+*
+         DROP  R14                 End trace parms skel overlay
+*         
+         B     RT_Done             Done
+RT_Win   DS    0H
+*
+*        Copy Windows skeleton for start cmd through parm value
+*
+         MVC   WinStrt($WinTrPos-$WinStrt),$WinStrt
+*         
+*        Copy fields into the copied skeleton
+*
+         MVC   WinTRMTP,KCPTRMTP   Local terminal
+         MVC   WinTRMID,KCPTRMID   Terminal ID
+         MVC   WinTRNID,KCPTRNID   Initial transaction ID
+         MVC   WinDATFM,KCPDATFM   Date format
+*
+         TM    RunFlag,RFTRCON     Is trace on?
+         BZ    RT_Done             No; then done
+*         
+*        Copy Windows trace parms skeleton
+*
+         MVC   WinTRPOS(L'WinTrce),$WinTrce
+*
+         LA    R14,WinTRPOS        R14 -> copy of trace parms skel
+         USING KCPTRCED,R14        Overlay the copy
+*         
+*        Copy terminal ID to LOG(....) area         
+*
+         MVC   WinTRLOG,KCPTRMID   All traces go to term ID
+*
+*        Set KCP flag indicating that trace is active
+*        Needed as parameter when calling GBLFE01
+*
+         MVI   KCPTRPOS,C'L'       Flag indicating trace is on
+*
+         DROP  R14                 End trace parms skel overlay
+*
+*NSI     B     RT_Done             Done here
+RT_Done  DS    0H
+         DROP  R15                 End storage overlay
+*
          CMDPROC WRITE,KCPSTART,ID=(R7) START Z390KCP
          LTR   R15,R15            CHECK RC ?
          BNZ   ABEND666           EXIT IF BAD
@@ -703,6 +801,52 @@ VSWCNONE EQU   *
          DROP  R6,R9
          BR    R12                RETURN
 *
+***********************************************************************
+*        Get z390 operating environment
+*
+*        R12 =  return address
+*        R15 =  return code; 0 = get environment successful
+*                            4 = get environment failed; assume Windows
+*
+*        EnvFlag set to Windows or Linux/Mac; default Windows
+***********************************************************************
+*
+GetEnvZ  DS   0H
+         STM   R14,R12,12(R13)     Save caller's registers
+*
+*        WARNING: no save area
+*
+         MVI   ENVFlag,ENVUnkn     Unknown environment
+*
+         GETENV COMSPEC            Check for Windows
+         LTR   R15,R15             Found COMSPEC?
+         BNZ   GE1000              No; check for Linux/Mac
+         MVI   ENVFlag,ENVWin      Yes; Indicate Windows
+         B     GE8000              All done; free GETENV storage
+GE1000   DS    0H
+         GETENV SHELL              Check for Linux/Mac
+         LTR   R15,R15             Found SHELL?
+         BNZ   GE2000              No; error
+         MVI   ENVFlag,ENVLinux    Yes; Indicate Linux/Mac
+*NSI     B     GE8000              All done; free GETENV storage
+GE8000   DS    0H
+         LR    R1,R2               R1 -> null-terminated ENV string
+GE8100   DS    0H
+         LA    R2,1(,R2)           R2 -> next byte; at least 1 non-null
+         CLI   0(R2),X'00'         Found null?
+         BNE   GE8100              No; continue search; must be found
+         AHI   R2,1                One byte beyond the null byte
+         SR    R2,R1               Length to free
+         FREEMAIN R,LV=(2),A=(1)   Free the GETENV storage
+         SR    R15,R15             Set return code
+         B     GE9000              Return
+GE2000   DS    0H
+         MVI   EnvFlag,EnvWin      Assume Windows; hope for the best
+         LA    R15,4               Set return code
+*NSI     B     GE9000              Return
+GE9000   DS    0H
+         BR    R12                 Return to caller
+*
 REQHANDL DS    0H
 * PROCESS CLIENTS REQUESTS
 * R2=CONN ID
@@ -1079,6 +1223,13 @@ CEMTPSHT DS    0H
          BAL   R12,SENDSHUT       SEND SHUTDOWN TO ALL ACTIVE TERMINALS
          J     REQRETRN           EXIT
 *
+***********************************************************************
+* Begin jjg changes x of y for Windows, Linux/Mac
+***********************************************************************
+SECTOR2  DS    0H
+***********************************************************************
+* End   jjg changes x of y for Windows, Linux/Mac
+***********************************************************************
 CEMTPSHI DS    0H
 * FN=FE03  CEMT P SHUT IMM REQUESTED
          OI    REQTERM+3,X'F0'    RESET TERMID
@@ -1101,7 +1252,13 @@ SHUTPREP EQU   *
          AHI   R13,-4096                       1ST BASE
          J     SHUTSERV           EXIT TO SHUT SERVER
 *
-SECTOR2  DS    0H
+***********************************************************************
+* Begin jjg changes x of y for Windows, Linux/Mac
+***********************************************************************
+*SECTOR2  DS    0H
+***********************************************************************
+* End   jjg changes x of y for Windows, Linux/Mac
+***********************************************************************
 *
 READFILE DS    0H
 * FN=0602  READ FILE
@@ -1214,8 +1371,10 @@ ICEXICE  DS    0H
 * FN=10FF  ICE SCAN
          ST    R13,SUBRSAVE       SAVE BASE REG R13
          LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+*
          CALL  GBL10FF,(WTOMSG,(R11),ICEANCHR,TRCEZ390,THRDCNTL,       X
-               NONTERMS,MAXNONT,KCPSTART),MF=I
+               NONTERMS,MAXNONT,KCPSTART,EnvFlag),MF=I
+*      
          L     R13,SUBRSAVE       RESTORE BASE REG R13
          J     REQRETRN           EXIT
 *
@@ -1313,9 +1472,9 @@ ABEND778 ABEND 778,DUMP           TCPIO RECEIVE FAILED
 ABEND780 ABEND 780,DUMP           TCPIO SEND FAILED
 *
 CMD0     DC    C'"  "'            "DRIVE ID"
-CMD1     DC    CL84'"CD '         "PATH"
+CMD1     DC    CL84'"cd '         "PATH"
 CMD1LEN  DC    H'0'               LENGTH OF PATH
-CMD2     DC    C'SET Z390SEQ=%CICSPATH%\SEQ\',X'00'
+*CMD2     DC    C'SET Z390SEQ=%CICSPATH%\SEQ\',X'00'
 TRMPREFX DS    CL3                TERMINAL ID PREFIX
 INITRAN  DC    C'----'            INITIAL TRANSID
 INIDATE  DC    C'K'               DATE FORMAT  K=DMY  S=MDY  R=YMD
@@ -1324,21 +1483,59 @@ JARENV   DC    C'JARPATH',X'00'   JARPATH ENV VARIABLE
 CICSENV  DC    C'CICSPATH',X'00'  CICSPATH ENV VARIABLE
 CICSADDR DC    F'0'               CICSPATH ADDRESS
 *
-* CALL BAT\EZ390 %CICSPATH%\Z390KCP NOTIME GUAM PARM(LTERMTRANK)
-KCPSTART DC    C'CALL BAT\EZ390 %CICSPATH%\Z390KCP SYS390(+ZCOBOL\LIB) -
-               NOTIME GUAM PARM('
-*KCPSTART DC    C'CALL BAT\EZ390 %CICSPATH%\390\Z390KCP NOTIME GUAM
-*               SYS390(+ZCOBOL\LIB) PARM('
+***********************************************************************
+*        Runtime flag
+***********************************************************************
+*
+RunFlag  DS    XL1                 Runtime flags
+RFTRCON  EQU   B'10000000'         Trace should be activated
+*
+***********************************************************************
+*        Fields used to query the runtime environment
+***********************************************************************
+*
+ENVFlag  DS    CL1                 Environment flag
+ENVWin   EQU   C'W'                Windows
+ENVLinux EQU   C'L'                Linux/Mac
+ENVUnkn  EQU   C'Z'                Unknown
+*
+COMSPEC  DC    C'COMSPEC',X'00'    Windows environment variable
+*
+*        Sample: COMSPEC=C:\WINDOWS\system32\cmd.exe
+*
+SHELL    DC    C'SHELL',X'00'      Linux/MacOS environment variable
+*
+*        Sample: SHELL=/bin/bash
+*
+***********************************************************************
+*        Storage used to build appropriate KCP start command
+***********************************************************************
+*
+KCPSTART DS    CL256              Area for KCP start and trace data
+*
 KCPTRMTP DS    C                  LOCAL TERMINAL
 KCPTRMID DS    CL4                TERMINAL ID
 KCPTRNID DS    CL4                INITIAL TRANSID
 KCPDATFM DS    C                  DATE FORMAT
-         DC    C') '              END BRACKET
-KCPTRPOS DC    CL(L'KCPTRACE)' '  TRACE PARMS
-         DC    X'00'              NULL TERMINATOR
 *
-KCPTRACE DC    C'LOG(....) TRACE(EGQT) TS MAXSIZE(60) DUMP'
+KCPTRPOS DS    C                  Now a flag; L = trace is on
 *
+***********************************************************************
+*        Windows and Linux/Mac skeletons for KCP START command
+*
+*        Use same prefix (PFX) value for the trace parms skeletons
+***********************************************************************
+*
+         KCPSTRTD TYPE=STOR,PFX=$
+*
+***********************************************************************
+*        Windows and Linux/Mac skeletons for KCP START trace parms
+*
+*        Use same prefix (PFX) value for the KCP START command
+***********************************************************************
+*
+         KCPTRCED TYPE=STOR,PFX=$
+*         
 * TCPIO SEND MESSAGE AREA
 *
 MSGLEN   DC    A(300)             LENGTH OF PARMS
@@ -1565,6 +1762,9 @@ REQABCDE DS    CL4                ABEND CODE
 REQABEND DS    CL4                INTERNAL ABEND CODE
          ORG
 *
+         KCPSTRTD ,               DSECT for KCPSTRTD TYPE=STOR,PFX=$
+         KCPTRCED ,               DSECT for KCPTRCED TYPE=STOR,PFX=$
+*
          THRDDSCT                 TERMINAL THREAD CONTROL AREA
          ACBD  ,                  VSAM ACB
          DFHFCTDS                 FILE CONTROL TABLE
@@ -1585,4 +1785,3 @@ REQABEND DS    CL4                INTERNAL ABEND CODE
 * R13  BASE 1
 *
          END
-

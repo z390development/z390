@@ -1,0 +1,134 @@
+         MACRO
+.**********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine            *
+.* Copyright (C) 2021 z390 Assembler LLC                              *
+.*                                                                    *
+.* This file is part of z390.                                         *
+.*                                                                    *
+.* z390 is free software; you can redistribute it and/or modify       *
+.* it under the terms of the GNU General Public License as published  *
+.* by the Free Software Foundation; either version 2 of the License,  *
+.* or (at your option) any later version.                             *
+.*                                                                    *
+.* z390 is distributed in the hope that it will be useful,            *
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of     *
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+.* GNU General Public License for more details.                       *
+.*                                                                    *
+.* You should have received a copy of the GNU General Public License  *
+.* along with this program; if not, see                               *
+.* <https://www.gnu.org/licenses/>.                                   *
+.**********************************************************************
+.*         
+         KCPSTRTD &TYPE=DSECT,&PFX=
+.*         
+.**********************************************************************
+.* Generate DSECT or storage for KCP start command.
+.* Both Windows and Linux/MacOS definitions are done.
+.*---------------------------------------------------------------------
+.* Operands:
+.*
+.*     ----------------------------------------------------------------
+.*     TYPE    DSECT or STOR; default is DSECT.
+.*     ----------------------------------------------------------------
+.*     PFX     Prefix for storage fields when TYPE=STOR.
+.*             Required when TYPE=STOR. Ignored when TYPE=DSECT.
+.**********************************************************************
+.*
+         LCLC  &P
+.*
+.*       Validate TYPE
+.*
+         AIF   (T'&TYPE EQ 'O').ERR1           TYPE omitted
+         AIF   ('&TYPE' EQ 'DSECT').TYOK       TYPE valid
+         AIF   ('&TYPE' EQ 'STOR').TYOK        TYPE valid
+         AGO   .ERR1                           TYPE invalid
+.TYOK    ANOP
+         AIF   ('&TYPE' EQ 'DSECT').GENDS1     Generate DSECT
+         AIF   ('&TYPE' EQ 'STOR').GENST1      Generate storage
+         AGO   .ERR1                           Otherwise TYPE invalid
+.GENST1  ANOP         
+.*
+.*       Generate storage, part 1: set prefix value
+.*
+         AIF   (T'&PFX EQ 'O').ERR2            PFX omitted
+         AIF   ('&PFX' EQ '').ERR2             PFX empty
+.*  
+&P       SETC  '&PFX'                          Set prefix for labels
+.*
+***********************************************************************
+*        Storage for KCP start command
+*
+*        Both Windows and Linux/MacOS definitions
+***********************************************************************
+*
+         AGO   .DSST1                          Generate the storage
+.GENDS1  ANOP         
+.*
+.*       Generate DSECT
+.*         
+***********************************************************************
+*        DSECT for KCP start command
+*
+*        Both Windows and Linux/MacOS definitions
+***********************************************************************
+*
+KCPSTRTD DSECT
+         ORG   KCPSTRTD
+.DSST1   ANOP                                  DSECT/STOR     
+***********************************************************************
+*        Windows start command
+***********************************************************************
+*
+&P.WinStrt0 DS    0C
+         DC    C'CALL BAT\EZ390 %CICSPATH%\Z390KCP SYS390(+ZCOBOL\LIB) X
+               NOTIME GUAM PARM('
+&P.WinTRMTP DS    C                   LOCAL TERMINAL
+&P.WinTRMID DS    CL4                 TERMINAL ID
+&P.WinTRNID DS    CL4                 INITIAL TRANSID
+&P.WinDATFM DS    C                   DATE FORMAT
+         DC    C') '               END BRACKET
+&P.WinTRPOS DC    CL(L'&P.WinTrce)' '   TRACE PARMS
+         DC    X'00'               NULL TERMINATOR
+&P.WinStrt1 DS    0C
+&P.WinStrt  EQU   &P.WinStrt0,&P.WinStrt1-&P.WinStrt0,C'C'
+*
+         AIF   ('&TYPE' EQ 'STOR').DSST2       Continue with DSECT/STOR        
+         ORG   ,
+         ORG   KCPSTRTD
+.DSST2   ANOP
+***********************************************************************
+*        Linux/MacOS start command
+***********************************************************************
+*
+&P.LinStrt0 DS    0C
+         DC    C'bash/ez390 $CICSPATH/Z390KCP'
+.*         DC    C' ''sys390(+zcobol/lib)'' NOTIME GUAM'
+         DC    C' NOTIME GUAM ''sys390(+zcobol/lib)'''
+         DC    C' ''parm('
+&P.LinTRMTP DS    C                   LOCAL TERMINAL
+&P.LinTRMID DS    CL4                 TERMINAL ID
+&P.LinTRNID DS    CL4                 INITIAL TRANSID
+&P.LinDATFM DS    C                   DATE FORMAT
+         DC    C')'' '             END BRACKET
+&P.LinTRPOS DC    CL(L'&P.LinTrce)' ' TRACE PARMS
+         DC    X'00'               NULL TERMINATOR
+&P.LinStrt1 DS    0C
+&P.LinStrt  EQU   &P.LinStrt0,&P.LinStrt1-&P.LinStrt0,C'C'
+*
+         AIF   ('&TYPE' EQ 'STOR').EXIT
+         ORG   ,
+.*
+         AGO   .EXIT               Done
+.**********************************************************************
+.*       Error messages
+.**********************************************************************
+.*         
+.ERR1    ANOP
+         MNOTE 8,'INVALID/MISSING TYPE -- &TYPE'
+         AGO   .EXIT               Done
+.ERR2    ANOP
+         MNOTE 8,'INVALID/MISSING PFX -- &PFX'
+         AGO   .EXIT               Done                  
+.EXIT    ANOP
+         MEND
