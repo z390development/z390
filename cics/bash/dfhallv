@@ -1,0 +1,279 @@
+#!/bin/bash
+
+# dfhallv: build all VSAM programs and data into cics/vsam directory
+
+########################################
+# print error message and exit
+########################################
+
+function wrong {
+    echo ERROR ERROR ERROR
+    exit 8
+}
+
+########################################
+# path
+########################################
+
+cicspath=cics/vsam
+
+########################################
+# build the VSAM catalog
+########################################
+
+sysmac='sysmac('${cicspath}'+mac)'
+syscpy='syscpy('${cicspath}'+mac)'
+
+program=Z390CAT1
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# build the variable ESDS
+########################################
+
+export INFILE=${cicspath}/MYFILE1V.TXT[RECFM=VT]
+export OUTFILE=${cicspath}/Z390CAT1.MYFILE01
+bash/ez390 linklib/REPRO $1
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to unload from .VES to .TF2
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYFILE01
+export OUTFILE=${cicspath}/MYFILE1V.TF2[RECFM=VT]
+bash/ez390 linklib/REPRO $1
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# build the fixed ESDS
+########################################
+
+export INFILE=${cicspath}/MYFILE2F.TXT[RECFM=FT]
+export OUTFILE=${cicspath}/Z390CAT1.MYFILE02
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to unload from .VES to .TF2
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYFILE02
+export OUTFILE=${cicspath}/MYFILE2F.TF2[RECFM=FT]
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# build the fixed RRDS
+########################################
+
+export INFILE=${cicspath}/MYFILE6F.TF1
+export OUTFILE=${cicspath}/Z390CAT1.MYFILE06
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to unload from .VES to .TF2
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYFILE06
+export OUTFILE=${cicspath}/MYFILE6F.TF2
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# build the variable RRDS
+########################################
+
+export INFILE=${cicspath}/MYFILE7V.TF1
+export OUTFILE=${cicspath}/Z390CAT1.MYFILE07
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to unload from .VES to .TF2
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYFILE07
+export OUTFILE=${cicspath}/MYFILE7V.TF2
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# build the fixed KSDS
+########################################
+
+export INFILE=${cicspath}/MYFILE8F.TXT[RECFM=FT]
+export OUTFILE=${cicspath}/Z390CAT1.MYFILE08
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to unload from .VES to .TF2
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYFILE08
+export OUTFILE=${cicspath}/MYFILE8F.TF2[RECFM=FT]
+bash/ez390 linklib/REPRO $1
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# build the variable KSDS
+########################################
+
+export INFILE=${cicspath}/MYFILE9V.TXT[RECFM=VT]
+export OUTFILE=${cicspath}/Z390CAT1.MYFILE09
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to unload from .VES to .TF2
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYFILE09
+export OUTFILE=${cicspath}/MYFILE9V.TF2[RECFM=VT]
+bash/ez390 linklib/REPRO $1
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# build the fixed ESDS MYWORD01
+########################################
+
+export INFILE=${cicspath}/MYWORD1F.TXT[RECFM=FT]
+export OUTFILE=${cicspath}/Z390CAT1.MYWORD01
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to unload from .VES to .TF2
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYWORD01
+export OUTFILE=${cicspath}/MYWORD1F.TF2[RECFM=FT]
+bash/ez390 linklib/REPRO $1
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to build AIX03
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYWORD01
+export OUTFILE=${cicspath}/Z390CAT1.MYAIX03
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to dump AIX03 via PATH
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.AIXESDS
+export OUTFILE=${cicspath}/MYAIX03.TXT
+bash/ez390 linklib/REPRO $1
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# build the fixed ESDS MYWORD02
+########################################
+
+export INFILE=${cicspath}/MYWORD2F.TXT[RECFM=FT]
+export OUTFILE=${cicspath}/Z390CAT1.MYWORD02
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to unload from .VES to .TF2
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYWORD02
+export OUTFILE=${cicspath}/MYWORD2F.TF2[RECFM=FT]
+bash/ez390 linklib/REPRO $1
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# build the fixed KSDS MYKSDS01
+########################################
+
+export INFILE=${cicspath}/MYKSDS1F.TXT[RECFM=FT]
+export OUTFILE=${cicspath}/Z390CAT1.MYKSDS01
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to unload from .VES to .TF2
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYKSDS01
+export OUTFILE=${cicspath}/MYKSDS1F.TF2[RECFM=FT]
+bash/ez390 linklib/REPRO $1
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to build AIX01
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYKSDS01
+export OUTFILE=${cicspath}/Z390CAT1.MYAIX01
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to build AIX02
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.MYKSDS01
+export OUTFILE=${cicspath}/Z390CAT1.MYAIX02
+bash/ez390 linklib/REPRO
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to dump AIX01 via PATH
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.AIXSURN
+export OUTFILE=${cicspath}/MYAIX01.TXT
+bash/ez390 linklib/REPRO $1
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# run REPRO to dump AIX02 via PATH
+########################################
+
+export INFILE=${cicspath}/Z390CAT1.AIXNAME
+export OUTFILE=${cicspath}/MYAIX02.TXT
+bash/ez390 linklib/REPRO $1
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+########################################
+# all done
+########################################
+
+exit 0

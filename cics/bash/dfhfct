@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# dfhfct: assemble and link cics file control table
+
+###############################
+# print error message and exit
+###############################
+
+function wrong {
+    echo ERROR ERROR ERROR
+    exit 8
+}
+
+####################
+# path
+####################
+
+cicspath=cics
+
+sysmac='sysmac('${cicspath}'+mac)'
+syscpy='syscpy('${cicspath}'+mac)'
+
+program=DFHFCT
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+####################
+# all done
+####################
+
+exit 0

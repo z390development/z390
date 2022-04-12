@@ -1,0 +1,24 @@
+         TITLE 'Hello World program for zCICS'
+DFHEISTG DSECT
+*
+TESTGUI7 CSECT         
+         EXEC CICS SEND FROM(MSG) LENGTH(MSGL)
+         EXEC CICS RETURN
+*
+***********************************************************************
+*        Screen data; use SBA to position text
+***********************************************************************
+*
+MSG0     DS    0C
+         DC    X'27'               Escape
+         DC    X'F5'               Erase Write
+         DC    X'C3'               WCC: reset keyboard, reset MDT
+         DC    X'114DC2'           Set Buffer Address: Row 11, Col 35
+         DC    C'Hello World!'
+         DC    X'1150E8'           Set Buffer Address: Row 14, Col 25
+         DC    C'Press Ctrl+C to clear the screen'
+MSG1     DS    0C
+MSG      EQU   MSG0,MSG1-MSG0,C'C' Message
+MSGL     DC    AL2(L'MSG)          Length of the message
+* 
+         END

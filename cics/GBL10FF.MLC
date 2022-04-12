@@ -1,23 +1,31 @@
 ***********************************************************************
-* z390 - Mainframe assembler emulator and run-time engine
-* Copyright (C) 2021 z390 Assembler LLC
-*
-* This file is part of z390.
-*
-* z390 is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-* z390 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License 
-* along with this program; if not, see https://www.gnu.org/licenses.
+* z390 - Mainframe assembler emulator and run-time engine             *
+* Copyright (C) 2021 z390 Assembler LLC                               *
+*                                                                     *
+* This file is part of z390.                                          *
+*                                                                     *
+* z390 is free software; you can redistribute it and/or modify        *
+* it under the terms of the GNU General Public License as published   *
+* by the Free Software Foundation; either version 2 of the License,   *
+* or (at your option) any later version.                              *
+*                                                                     *
+* z390 is distributed in the hope that it will be useful,             *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of      *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the       *
+* GNU General Public License for more details.                        *
+*                                                                     *
+* You should have received a copy of the GNU General Public License   *
+* along with this program; if not, see                                *
+* <https://www.gnu.org/licenses/>.                                    *
 ***********************************************************************
 * Author - Don Higgins                                                *
 ***********************************************************************
+* Change History                                                      *
+*                                                                     *
+* 2022-02-28 jjg Issue #356 Linux/MacOS support                       *
+*                                                                     *
+***********************************************************************
+*
 GBL10FF  SUBENTRY
 *
 * FN=10FF  ICE SCAN REQUEST
@@ -27,8 +35,8 @@ GBL10FF  SUBENTRY
 *
 *         +0/DSCT +4/DSECT +8/IND   +12      +16      +20
 * R1  >>> WTOMSG, REQDSECT,ICEANCHR,TRCEZ390,THRDCNTL,NONTERMS,
-*         +24     +28
-*         MAXNONT,KCPSTART
+*         +24     +28      +32
+*         MAXNONT,KCPSTART,EnvFlag
 * R14 = RETURN ADDRESS
          LR    R3,R1              SAVE PARM POINTER
          L     R4,12(R3)          ADDRESS OF TRCEZ390
@@ -145,21 +153,48 @@ ICGOTNT  EQU   *
          FREEMAIN LV=ICELEN,A=(R7) FREE ICE
          MVI   ICEFREE,X'FF'      MARK ICE FREED
 * START A NEW THREAD
-         L     R10,28(R3)         ADDRESS KCPSTART
-         USING KCPSTART,R10
-         MVI   KCPTRMTP,C'!'      SET NON-TERMINAL TYPE
-         MVC   KCPTRMID(3),=C'!!0' TERMID PREFIX
-         STC   R11,KCPTRMID+3     SAVE TERMID NUMBER
-         OI    KCPTRMID+3,X'F0'   CONVERT TO CHAR
-         L     R5,KCPTRNID        SAVE INITIAL TRANSID
-         MVC   KCPTRNID,ICETRNID  SET TRANSID TO FIRE
-         CLI   KCPTRPOS,C'L'      IS TRACE SET ?
-         BNE   NOLOG              EXIT IF NOT
-         MVC   KCPTRPOS+4(4),KCPTRMID ALL TRACES GO TO TERMID
+         L     R10,28(R3)          R10->KCPSTART (Linux/Mac or Windows)
+         MVC   KCPSTART,0(R10)     Copy here so can modify
+         LA    R10,KCPSTART        Point to the copy
+         USING KCPSTRTD,R10        Overlay with DSECT
+         L     R15,32(,R3)         EnvFlag
+         CLI   0(R15),C'W'         Windows runtime environment?
+         BE    RT_Win              Yes; set up for Windows
+         MVI   LinTRMTP,C'!'       Set non-terminal type
+         MVC   LinTRMID(3),=C'!!0' Terminal id prefix
+         STC   R11,LinTRMID+3      Save terminal id number
+         OI    LinTRMID+3,X'F0'    Convert to character
+         MVC   LinTRNID,ICETRNID   Set transaction id to fire
+         LA    R15,LinTRPOS        R15 -> possible trace parms
+         USING KCPTRCED,R15        Overlay possible trace parms
+         CLI   LinLGLIT,C'L'       Is trace set? (start of LOG(....))
+         BNE   RT_Done             Done here if not
+         MVC   LinTRLOG,LinTRMID   All traces go to term ID
 * TO KNOCK OUT TRACING OF NON-TERMINAL ATTACHED TASKS
 * AND RETAIN TRACING OF TERMINAL-ATTACHED TASKS
 * UNCOMMENT THE NEXT LINE
-******** MVI   KCPTRPOS,X'00'     KNOCK OUT NON-TERM TRACE
+******** MVI   LinTRPOS,X'00'      Knock out non-term trace
+         DROP  R15                 End trace parms overlay
+         B     RT_Done             Done here
+RT_Win   DS    0H
+         MVI   WinTRMTP,C'!'       Set non-terminal type
+         MVC   WinTRMID(3),=C'!!0' Terminal id prefix
+         STC   R11,WinTRMID+3      Save terminal id number
+         OI    WinTRMID+3,X'F0'    Convert to character
+         MVC   WinTRNID,ICETRNID   Set transaction id to fire
+         LA    R15,WinTRPOS        R15 -> possible trace parms
+         USING KCPTRCED,R15        Overlay possible trace parms
+         CLI   WinLGLIT,C'L'       Is trace set? (start of LOG(....))
+         BNE   RT_Done             Done here if not
+         MVC   WinTRLOG,WinTRMID   All traces go to term ID
+* TO KNOCK OUT TRACING OF NON-TERMINAL ATTACHED TASKS
+* AND RETAIN TRACING OF TERMINAL-ATTACHED TASKS
+* UNCOMMENT THE NEXT LINE
+******** MVI   WinTRPOS,X'00'      Knock out non-term trace
+         DROP  R15                 End trace parms overlay
+*NSI     B     RT_Done             Done here
+RT_Done  DS    0H         
+         DROP  R10                 End local KCPSTART storage overlay
 NOLOG    EQU   *
 * FIRE UP THE NON-TERM
          CMDPROC START,ID=(R11)   START THREAD
@@ -168,8 +203,6 @@ NOLOG    EQU   *
          CMDPROC WRITE,KCPSTART,ID=(R11) START Z390KCP
          LTR   R15,R15            CHECK RC ?
          BNZ   ABEND666           EXIT IF BAD
-         ST    R5,KCPTRNID        RESTORE INITIAL TRANSID
-         DROP  R10
          B     ICDONE             EXIT
 *
 ICGO     EQU   *
@@ -304,16 +337,17 @@ S1004    DC    A(S1004LEN)        LENGTH
          DC    X'00'              FF=TURN EDF OFF
 S1004LEN EQU   *-S1004
 *
-* CALL EZ390 %CICSPATH%\Z390KCP NOTIME GUAM PARM(LTERMTRANK)
-* SPECIFICALLY FOR NON-TERMINAL ATTACHED TASKS
-KCPSTART DSECT
-         DC    C'CALL EZ390 %CICSPATH%\Z390KCP NOTIME GUAM PARM('
-KCPTRMTP DS    C                  NON-TERMINAL
-KCPTRMID DS    CL4                TERMINAL ID
-KCPTRNID DS    CL4                INITIAL TRANSID
-         DS    C                  DATE FORMAT
-         DC    C') '              END BRACKET
-KCPTRPOS DS    C                  TRACE PARMS START HERE
+* Windows:
+*     CALL BAT\EZ390 %CICSPATH%\Z390KCP NOTIME GUAM PARM(LTERMTRANK)
+*     SPECIFICALLY FOR NON-TERMINAL ATTACHED TASKS
+* Linux/Mac:
+*     bash/ez390 $cicspath/Z390KCP NOTIME GUAM 'PARM(LTERMTRANK)'
+*
+KCPSTART DS    CL256               Contains copy from caller
+*                                  Lengths are assumed to be the same!
+*
+         KCPSTRTD ,                DSECT for KCPSTART primary
+         KCPTRCED ,                DSECT for TRACE portion of KCPSTART 
 *
 * WTO AREA DSECT
 *
@@ -350,4 +384,3 @@ REQTERM  DS    CL4                TERMINAL ID
 * R9  WTODSECT
 *
          END
-

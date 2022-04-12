@@ -1,0 +1,1694 @@
+#!/bin/bash
+
+# dfhall: build all CICS mlc and cbl programs into cics directory
+
+###############################
+# print error message and exit
+###############################
+
+function wrong {
+    echo ERROR ERROR ERROR
+    exit 8
+}
+
+####################
+# paths
+####################
+
+cicspath=cics
+zc39path=zcobol    # was zcobol/z390
+progpath=linklib
+
+####################
+# subprograms
+####################
+
+sysmac='sysmac('${cicspath}'+mac)'
+syscpy='syscpy('${cicspath}'+mac)'
+
+program=GBL0602
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL060C
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL060E
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL0610
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL0612
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL0614
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL0A02
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL0A04
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL0A06
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL0AFF
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL1004
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL1008
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL100C
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL10FF
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL1204
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL1206
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL12FC
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL4C02
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBL4C04
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBLFE00
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBLFE01
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBLFE06
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=GBLFE07
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0202
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0204
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0206
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0208
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL020A
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL020C
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL020E
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0402
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0404
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0602
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL060C
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL060E
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0610
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0612
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0614
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0A02
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0A04
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0A06
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0C02
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0C04
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0E02
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0E04
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0E06
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0E08
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0E0A
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0E0C
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL0E0E
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL1002
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL1004
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL1008
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL100A
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL100C
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL1204
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL1206
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL1802
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL1804
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL1812
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL1C02
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL3412
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL3414
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL3416
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL3440
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL4A02
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL4A04
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL4C02
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL4C04
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL9626
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL9628
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=LCL962A
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=CEMTIENQ
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=CEMTISYS
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=CEMTITER
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=CEMTITRN
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=CEMTFILE
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+####################
+# tables
+####################
+
+program=DFHPCT
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=DFHFCT
+bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+####################
+# maps
+####################
+
+syscpyMAC='syscpy(mac)'
+
+sysparmMAP='sysparm(MAP)'
+sysparmDSECT='sysparm(DSECT)'
+
+program=MAPLOGO
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmMAP
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=MAP01
+sysprn='sysprn('${cicspath}'/'${program}'.PR1)'
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmDSECT $sysprn
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmMAP
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=MAP02
+sysprn='sysprn('${cicspath}'/'${program}'.PR1)'
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmDSECT $sysprn
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmMAP
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=MAP01C
+sysprn='sysprn('${cicspath}'/'${program}'.PR1)'
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmDSECT $sysprn
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmMAP
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=MAPCEMT
+sysprn='sysprn('${cicspath}'/'${program}'.PR1)'
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmDSECT $sysprn
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmMAP
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=MAPEDF
+sysprn='sysprn('${cicspath}'/'${program}'.PR1)'
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmDSECT $sysprn NOTIME
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/mz390 ${cicspath}/${program} $sysmac $syscpyMAC $sysparmMAP NOTIME
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII NOTIME
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+####################
+# asm programs
+####################
+
+program=LCLCEDF
+sysprn='sysprn('${cicspath}'/'${program}'.PR1)'
+bash/mz390 ${cicspath}/${program} NOEDF $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII NOTIME
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=MMMMCIC2
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTASGN
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBED1
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBED2
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBED3
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBED4
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBED5
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBED6
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBED7
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBED8
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBED9
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBMS1
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBMS2
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTCHN1
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTCHN2
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTVSM1
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTVSM2
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTVSM3
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTCIC1
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTCIC2
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTGUI4
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTGUI6
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTGUI7
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTIC01
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTIC02
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTIC03
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTIC04
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTENQ1
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTNT01
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTNT02
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTSETF
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+syscpyDOT='syscpy('${cicspath}'+mac+.)'
+
+program=Z390CEBR
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpyDOT
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=Z390CEDF
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG NOEDF $sysmac $syscpyDOT NOTIME
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=Z390CEMT
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpyDOT
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+sysmacDOT='sysmac('${cicspath}'+mac+.)'
+
+program=Z390CICS
+bash/mz390 ${cicspath}/${program} $sysmacDOT $syscpyDOT
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=Z390COMP
+bash/mz390 ${cicspath}/${program} $sysmacDOT $syscpyDOT ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=Z390KCP
+bash/mz390 ${cicspath}/${program} GUAM NOEDF $sysmac $syscpyDOT
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=Z390LCL
+bash/mz390 ${cicspath}/${program} GUAM $sysmac $syscpyDOT
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=Z390LOGO
+bash/mz390 ${cicspath}/${program} CICS $sysmac $syscpyDOT
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+sysmacMAC='sysmac(mac)'
+syscpyMAC='syscpy(mac)'
+
+program=Z390RMTE
+bash/mz390 ${cicspath}/${program} ASCII $sysmacMAC $syscpyMAC
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+syscpyMACDOT='syscpy(mac+.)'
+
+program=Z390SEQ
+bash/mz390 ${cicspath}/${program} $sysmacDOT $syscpyMACDOT ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+####################
+# cobol programs
+####################
+
+sysmac='sysmac('${cicspath}'+'$zc39path'/mac+mac)'
+syscpy='syscpy('${cicspath}'+'$zc39path'/cpy+'$zc39path'/mac+mac+.)'
+
+program=TESTGUIC
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBEC1
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBEC2
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBEC4
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBEC5
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBEC6
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBEC7
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBEC8
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBEC9
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTBMC1
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTICC1
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTVSC1
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTVSC2
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTVSC3
+bash/cblcl ${cicspath}/${program} CICS $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+#bash/lz390 ${cicspath}/${program}
+#rc=$?
+#if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+####################
+# all done
+####################
+
+exit 0
