@@ -21,12 +21,23 @@ export CICSPATH=cics
 program=Z390CICS
 export Z390INI=${cicspath}/${program}.INI
 
+# get the z390 directory
+zdir=$(dirname $0)
+zdir=$(cd $zdir && pwd)
+# go up two levels from z390/cics/bash
+zdir=$(dirname $zdir)
+zdir=$(dirname $zdir)
+
+# z390.jar in z390 directory
+export JARPATH=${zdir}
+
+export Z390SEQ=${cicspath}/seq/
+
 #${cicspath}/bash/z390file
 # z390file uses the $CICSPATH environment variable and
 # echos export statements for all zCICS file definitions.
 # Evaluate the export statements so environment
 # variables are accessible here.
-
 eval $(${cicspath}/bash/z390file)
 
 bash/ez390 ${cicspath}/${program} NOTIME $1 $2 $3 $4 $5 CON
