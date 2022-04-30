@@ -12,8 +12,8 @@ docenv/
 z390.properties
 
 # z390 dist and build
-dist/
-build/
+/dist/
+/build/
 
 # generated spm files in mac/spm except readme
 mac/spm/*
