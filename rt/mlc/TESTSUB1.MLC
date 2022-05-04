@@ -1,0 +1,32 @@
+*********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTSUB1 SUBENTRY
+         WTO   'TESTSUB1 CSECT HELLO WORLD'
+         SUBEXIT
+TESTSUB2 SUBENTRY
+         WTO   'TESTSUB2 CSECT HELLO WORLD'
+         SUBEXIT
+TESTSUB3 SUBENTRY NOCSECT
+         WTO   'TESTSUB3 ENTRY HELLO WORLD'
+         SUBEXIT
+         ENTRY  TESTSUB3
+         END
