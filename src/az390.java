@@ -8169,7 +8169,7 @@ private void get_hex_relative_offset(int bits){
 		}
 	} else {
 		obj_code = obj_code + "iiiiiiii";		
-		log_error(42,"invalid relatvie offset expression");
+		log_error(42,"invalid relative offset expression");
 	}
 }
 private void get_hex_byte_signed(){
