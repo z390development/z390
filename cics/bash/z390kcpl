@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# z390kcpl: start launcher of z390/cics remote terminals
+
+###############################
+# print error message and exit
+###############################
+
+function wrong {
+    echo ERROR ERROR ERROR
+    exit 8
+}
+
+####################
+# path
+####################
+
+cicspath=cics
+
+sys390='sys390(+zcobol/lib)'
+parm='parm('$1')'
+
+program=Z390RMTE
+bash/ez390 ${cicspath}/${program} $sys390 ASCII NOTIME $parm $2 $3
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+exit 0

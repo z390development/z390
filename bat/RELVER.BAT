@@ -33,7 +33,7 @@ if %z_Version% EQU "Uncontrolled" (if /I "%1" NEQ "FORCE" (echo Version is uncon
                                    )                       )
 rem relver: use git to set z390.properties version details
 echo z390 version "%z_Version%"
-echo version=%z_Version% > z390.properties
+echo version=%z_Version%> z390.properties
 set z_ReturnCode=%ERRORLEVEL%
 
 :return

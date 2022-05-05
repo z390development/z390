@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# z390kcpr: start remote terminal for CICS transaction server
+
+# parm set to R7 to match KCPSTART in Z390CICS.MLC by DSH 2021-10-08
+
+###############################
+# print error message and exit
+###############################
+
+function wrong {
+    echo ERROR ERROR ERROR
+    exit 8
+}
+
+####################
+# path
+####################
+
+cicspath=cics
+
+sys390='sys390(+zcobol/lib)'
+parm='parm(R7)'
+
+program=Z390KCP
+bash/ez390 ${cicspath}/${program} $sys390 GUAM NOTIME NOCODEPAGE $parm $1 $2 $3 $4
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+exit 0

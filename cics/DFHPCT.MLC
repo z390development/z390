@@ -1,20 +1,22 @@
 ***********************************************************************
-* z390 - Mainframe assembler emulator and run-time engine
-* Copyright (C) 2021 z390 Assembler LLC
-*
-* This file is part of z390.
-*
-* z390 is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-* z390 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License 
-* along with this program; if not, see https://www.gnu.org/licenses.
+* z390 - Mainframe assembler emulator and run-time engine             *
+* Copyright (C) 2021 z390 Assembler LLC                               *
+*                                                                     *
+* This file is part of z390.                                          *
+*                                                                     *
+* z390 is free software; you can redistribute it and/or modify        *
+* it under the terms of the GNU General Public License as published   *
+* by the Free Software Foundation; either version 2 of the License,   *
+* or (at your option) any later version.                              *
+*                                                                     *
+* z390 is distributed in the hope that it will be useful,             *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of      *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the       *
+* GNU General Public License for more details.                        *
+*                                                                     *
+* You should have received a copy of the GNU General Public License   *
+* along with this program; if not, see                                *
+* <https://www.gnu.org/licenses/>.                                    *
 ***********************************************************************
 * Author - Don Higgins                                                *
 ***********************************************************************
@@ -25,6 +27,8 @@
          DFHPCT TYPE=ENTRY,TRANSID=TST1,PROGRAM=TESTCIC1 DON'S TEST 1
          DFHPCT TYPE=ENTRY,TRANSID=GUI4,PROGRAM=TESTGUI4 DON'S GUAM 4
          DFHPCT TYPE=ENTRY,TRANSID=GUI6,PROGRAM=TESTGUI6 DON'S GUAM 6
+         DFHPCT TYPE=ENTRY,TRANSID=GUI7,PROGRAM=TESTGUI7 HELLO ASM
+         DFHPCT TYPE=ENTRY,TRANSID=GUIC,PROGRAM=TESTGUIC HELLO CBL
 *
          DFHPCT TYPE=ENTRY,TRANSID=BED1,PROGRAM=TESTBED1 TESTBED
          DFHPCT TYPE=ENTRY,TRANSID=BED2,PROGRAM=TESTBED4 TESTBED

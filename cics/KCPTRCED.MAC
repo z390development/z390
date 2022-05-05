@@ -1,0 +1,134 @@
+         MACRO
+.*
+.**********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine            *
+.* Copyright (C) 2021 z390 Assembler LLC                              *
+.*                                                                    *
+.* This file is part of z390.                                         *
+.*                                                                    *
+.* z390 is free software; you can redistribute it and/or modify       *
+.* it under the terms of the GNU General Public License as published  *
+.* by the Free Software Foundation; either version 2 of the License,  *
+.* or (at your option) any later version.                             *
+.*                                                                    *
+.* z390 is distributed in the hope that it will be useful,            *
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of     *
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+.* GNU General Public License for more details.                       *
+.*                                                                    *
+.* You should have received a copy of the GNU General Public License  *
+.* along with this program; if not, see                               *
+.* <https://www.gnu.org/licenses/>.                                   *
+.**********************************************************************
+.*         
+         KCPTRCED &TYPE=DSECT,&PFX=
+.*         
+.**********************************************************************
+.* Generate DSECT or storage for KCP start command trace parameters.
+.* Both Windows and Linux/MacOS definitions are done.
+.*---------------------------------------------------------------------
+.* Operands:
+.*
+.*     ----------------------------------------------------------------
+.*     TYPE    DSECT or STOR; default is DSECT.
+.*     ----------------------------------------------------------------
+.*     PFX     Prefix for storage fields when TYPE=STOR.
+.*             Required when TYPE=STOR. Ignored when TYPE=DSECT.
+.**********************************************************************
+.*
+         LCLC  &P
+.*
+.*       Validate TYPE
+.*
+         AIF   (T'&TYPE EQ 'O').ERR1           TYPE omitted
+         AIF   ('&TYPE' EQ 'DSECT').TYOK       TYPE valid
+         AIF   ('&TYPE' EQ 'STOR').TYOK        TYPE valid
+         AGO   .ERR1                           TYPE invalid
+.TYOK    ANOP
+         AIF   ('&TYPE' EQ 'DSECT').GENDS1     Generate DSECT
+         AIF   ('&TYPE' EQ 'STOR').GENST1      Generate storage
+         AGO   .ERR1                           Otherwise TYPE invalid
+.GENST1  ANOP         
+.*
+.*       Generate storage, part 1: set prefix value
+.*
+         AIF   (T'&PFX EQ 'O').ERR2            PFX omitted
+         AIF   ('&PFX' EQ '').ERR2             PFX empty
+.*         
+&P       SETC  '&PFX'                          Set prefix for labels
+.*
+***********************************************************************
+*        Storage for trace parameters used for KCP start command
+*
+*        Both Windows and Linux/MacOS definitions
+***********************************************************************
+*
+         AGO   .DSST1                          Generate the storage
+.GENDS1  ANOP
+.*
+.*       Generate DSECT
+.*
+***********************************************************************
+*        DSECT for trace parameters used for KCP start command
+*
+*        Both Windows and Linux/MacOS definitions
+***********************************************************************
+*
+KCPTRCED DSECT
+         ORG   KCPTRCED
+.DSST1   ANOP                                  DSECT/STOR
+***********************************************************************
+*        Windows trace parameters
+***********************************************************************
+*
+&P.WinTrce0 DS    0C
+&P.WinLGLIT DC    C'LOG'
+         DC    C'('
+&P.WinTRLOG DC    C'....'
+         DC    C')'
+         DC    C' TRACE(EGQT)'
+***         DC    C' TS'
+         DC    C' MAXSIZE(60)'
+         DC    C' DUMP'
+&P.WinTrce1 DS    0C
+&P.WinTrce  EQU   &P.WinTrce0,&P.WinTrce1-&P.WinTrce0,C'C'
+*
+.*&P.WinTrceL EQU   L'&P.WinTrce
+*
+         AIF   ('&TYPE' EQ 'STOR').DSST2       Continue with DSECT/STOR         
+         ORG   ,
+         ORG   KCPTRCED
+.DSST2   ANOP
+***********************************************************************
+*        Linux/MacOS trace parameters
+***********************************************************************
+*
+&P.LinTrce0 DS    0C
+         DC    C''''
+&P.LinLGLIT DC    C'LOG'
+         DC    C'('
+&P.LinTRLOG DC    C'....'
+         DC    C')'''
+         DC    C' ''TRACE(EGQT)'''
+***         DC    C' TS'
+         DC    C' ''MAXSIZE(60)'''
+         DC    C' DUMP'
+&P.LinTrce1 DS    0C
+&P.LinTrce  EQU   &P.LinTrce0,&P.LinTrce1-&P.LinTrce0,C'C'
+*
+         AIF   ('&TYPE' EQ 'STOR').EXIT
+         ORG   ,
+.*
+         AGO   .EXIT  
+.**********************************************************************
+.*       Error messages
+.**********************************************************************
+.*         
+.ERR1    ANOP
+         MNOTE 8,'INVALID/MISSING TYPE -- &TYPE'
+         AGO   .EXIT               Done
+.ERR2    ANOP
+         MNOTE 8,'INVALID/MISSING PFX -- &PFX'
+         AGO   .EXIT               Done         
+.EXIT    ANOP                
+         MEND
