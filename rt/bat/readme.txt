@@ -13,6 +13,6 @@ RUNTESTOPT  - verify indirection usage in options files
 
 Double click on above commands to run them.
 
-See issue #
+CHKASMERR   - used to verify error output after an assembly that fails (on purpose)
 
 don@higgins.net 2021-04-29

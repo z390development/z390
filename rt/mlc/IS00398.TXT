@@ -1,0 +1,5 @@
+IS00398   MZ390 START
+IS00398   AZ390 AZ390E error  42         (1/7)7            J 
+IS00398   AZ390 AZ390I invalid relative offset expression
+IS00398   AZ390 AZ390I FID=  1 ERR=   1 D:\z390dev\z390\rt\mlc\IS00398.MLC
+IS00398   MZ390 ENDED   RC=12 MEM(MB)= MB IO=381
