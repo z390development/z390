@@ -28,12 +28,12 @@ goto return
 
 :error
 set z_ReturnCode=%ERRORLEVEL%
+echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
+:return
 echo %1.TXT
 type %1.TXT
 echo %1.ERR
 type %1.ERR
-echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
-:return
 popd
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%
