@@ -1,7 +1,7 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
 rem regression test z390 instructions
 rem 2022-03-28 DSH TESTLITS added for issue #327
-rem 2022-05-04 DSH TESTSIB1, TESTDC1-3 for issue #233
+rem 2022-05-07 DSH TESTDC1-3, TESTASC1 for issue #233
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
                       shift /1
@@ -23,8 +23,8 @@ call bat\asmlg %z_TraceMode% tests\testdfp2 trace sysmac(mac) noloadhigh optable
 call bat\asmlg %z_TraceMode% tests\testlits trace sysmac(mac) noloadhigh optable(z390) || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTAMPS trace sysmac(mac) noloadhigh optable(z390) || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\IS215 trace sysmac(mac) noloadhigh optable(z390) || goto error
-call bat\asmlg %z_TraceMode% rt\mlc\TESTSUB1 trace sysmac(mac) noloadhigh optable(z390) || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC1 trace sysmac(mac) noloadhigh optable(z390) || goto error
+call bat\asmlg %z_TraceMode% rt\mlc\TESTASC1 ASCII trace sysmac(mac) noloadhigh optable(z390) || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC2 trace sysmac(mac) noloadhigh optable(z390) || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC3 trace sysmac(mac) noloadhigh optable(z390) || goto error
 call rt\bat\ZOPCHECK %z_TraceMode%                                                     || goto error

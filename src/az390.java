@@ -415,7 +415,7 @@ public  class  az390 implements Runnable {
         * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand m4 or m6	
         * 2022-01-16 DSH #343 move abort for exceeding maxline 
         * 2022-03-28 DSH #327 fix az390 to force odd literals to even address for access by relative halfword offset counts	
-        * 2022-05-03 DSH #233 allow spaces within DC numberic values for BDEFHLPXZ such as DC F'123 456' same as F'123456'
+        * 2022-05-07 DSH #233 allow spaces within DC numberic values for BDEFHLPXZ such as DC F'123 456' same as F'123456'
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -9159,7 +9159,7 @@ private void gen_dcb_bits(){
 	try {
 		exp_val = Integer.valueOf(dcb_bin,2);
 	} catch (Exception e){
-		log_error(171,"invalid binary constant");
+		log_error(171,"invalid binary constant= " + dcb_bin); // DSH #233 fix
 		return;
 	}
 	gen_dca_bits();
@@ -9454,18 +9454,8 @@ private boolean get_dc_bd_val(){
 	return false;
 }
 private String remove_blanks(String text_in){
-	// DSH #233 remove blanks allowed within numberic DC fields BDEFHLPXZ 
-	// for readability
-	// remove blanks within numeric DC fields per 
-	int index = 0;
-	String text_out = "";
-	while (index < text_in.length()){
-		if (text_in.charAt(index) != ' '){
-			text_out = text_out.concat(text_in.substring(index, index+1));
-		}
-		index = index +1;
-	}
-	return text_out;
+	// DSH #233 remove blanks allowed within numeric DC fields BDEFHLPXZ 
+	return text_in.replace(" ", ""); // #233 optimization by John Ganci
 }
 private String get_dc_fh_hex_val(){
 	/*
@@ -10924,7 +10914,7 @@ private void fp_get_hex(){
 	try { // RPI 424
 		fp_big_dec1 = new BigDecimal(fp_text,fp_context);
 	} catch (Exception e){
-		log_error(162,"invalid decimal floating point constant" + fp_text); // #233 show text
+		log_error(162,"invalid decimal floating point constant= " + fp_text); // #233 show text fix
 		fp_big_dec1 = BigDecimal.ZERO;
 	}
 	if (dc_exp > 0){ // RPI 368 adj by DC E modifer

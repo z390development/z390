@@ -48,7 +48,7 @@
 * 06/30/09 RPI 1044 CHANGE VDX DC VD(VDX) TO USE TESTSUB1                     
 * 01/09/10 RPI 1101 AFHY OVERFLOW WITH NO ERRORS
 * 01/25/11 RPI 1139 C2X ARG IN QUOTES FOR NOALLOW
-* 2022-05-03 update copyright, add to z390\tests, fix SETC '&&' to '&'
+* 2022-05-03 update copyright, add to z390\rt\mlc, fix SETC '&&' to '&'
 * 2022-05-07 replace TESTSUB1 with CVTTOHEX to remove dependency
 *********************************************************************
          PRINT DATA
