@@ -17,8 +17,8 @@ call bat\asm %z_TraceMode% %1 nocon notiming errsum >%1.tmp
 rem -- compare error summary with the expected error summary output - which is saved in the .txt file
 FC %1.ERR %1.TXT                                   >>%1.tmp
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 OKAY for %1 - error output matches expectations
-                 ) else (echo %0 ERROR on %1 - error output does not match expectations
+if %z_ReturnCode% EQU 0 (echo %0 OKAY for %1 - actual output matches expectations
+                 ) else (echo %0 ERROR on %1 - actual output does not match expectations
                          echo %0 ERROR on %1 - to analyze please compare %1.ERR with %1.TXT
                          set z_ReturnCode=8
                          goto return
