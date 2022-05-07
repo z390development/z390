@@ -1,20 +1,22 @@
 ***********************************************************************
-* z390 - Mainframe assembler emulator and run-time engine
-* Copyright (C) 2021 z390 Assembler LLC
-*
-* This file is part of z390.
-*
-* z390 is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-* z390 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License 
-* along with this program; if not, see https://www.gnu.org/licenses.
+* z390 - Mainframe assembler emulator and run-time engine             *
+* Copyright (C) 2021 z390 Assembler LLC                               *
+*                                                                     *
+* This file is part of z390.                                          *
+*                                                                     *
+* z390 is free software; you can redistribute it and/or modify        *
+* it under the terms of the GNU General Public License as published   *
+* by the Free Software Foundation; either version 2 of the License,   *
+* or (at your option) any later version.                              *
+*                                                                     *
+* z390 is distributed in the hope that it will be useful,             *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of      *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the       *
+* GNU General Public License for more details.                        *
+*                                                                     *
+* You should have received a copy of the GNU General Public License   *
+* along with this program; if not, see                                *
+* <https://www.gnu.org/licenses/>.                                    *
 ***********************************************************************
 * Author - Don Higgins                                                *
 ***********************************************************************
@@ -63,7 +65,7 @@ TESTNT02 DFHEIENT CODEREG=(R12,R3,R6)
 *       NT02 STARTED   15:46:27.42
 *       MYWORD01 OPEN  15:46:27.42
 *       MYWORD02 OPEN  16:01:57.17  READ 10000      15:29.75
-*       NTS3 START     16:18:06.48
+*       NTS3 START     16:18:06.48                  16:09.31
 *       NTS3 ENDED     16:21:29.53  ELAPSED          3:23.05
 *                                   -SORT            0:00.078
 *                                   =BROWSE 10000    3:22.97
@@ -71,6 +73,27 @@ TESTNT02 DFHEIENT CODEREG=(R12,R3,R6)
 *       NTS4 ENDED     16:20:29.68  ELAPSED    2:23.31
 *
 *       NT02 ENDED     16:21:34.82  ELAPSED   35:07.4
+*
+*    LATEST RESULTS (FASTER CPU)
+*             SORTTIME
+*       NT02  0:00.093
+*
+*       NTS3  0:00.062
+*       NTS4  0:00.047
+*             --------
+*             0:00.109
+*
+*       NT02 STARTED   16:18:14.59
+*       MYWORD01 OPEN  16:18:14.69
+*       MYWORD02 OPEN  16:34:54.25  READ 10000      16:39.56
+*       NTS3 START     16:51:58.86                  17:46.1
+*       NTS3 ENDED     17:02:19.66  ELAPSED         10:20.8
+*                                   -SORT            0:00.062
+*                                   =BROWSE 10000   10:20.738
+*       NTS4 START     16:51:59.42
+*       NTS4 ENDED     17:04:07.15  ELAPSED   12:07.73
+*
+*       NT02 ENDED     17:04:10.00  ELAPSED   45:55.41
 *
          XC    MYRID,MYRID        SET START OF FILE
          CLC   EIBTRNID,=C'NTS3'  1ST NON-TERM TRANSID ?

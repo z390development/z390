@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# z390seqg: start sequential terminal datastream builder
+
+###############################
+# print error message and exit
+###############################
+
+function wrong {
+    echo ERROR ERROR ERROR
+    exit 8
+}
+
+####################
+# path
+####################
+
+cicspath=cics
+
+sys390='sys390(zcobol/lib)'
+parm='parm(R7)'
+
+program=Z390SEQ
+export Z390TRE=${cicspath}/DON0.TRE
+export SEQIN=${cicspath}/seq/SEQI0001.TXT
+export SEQOUT=${cicspath}/seq/SEQC0001.TXT
+bash/ez390 ${cicspath}/${program} NOTIME $parm $1 $2 $3 $4 ASCII CON
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+exit 0

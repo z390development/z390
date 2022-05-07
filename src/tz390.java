@@ -7738,7 +7738,7 @@ public String getVersion() {
         ex.printStackTrace();
     }
     
-    return result;
+    return result.trim();
 
 }
 }
