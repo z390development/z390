@@ -28,6 +28,10 @@ goto return
 
 :error
 set z_ReturnCode=%ERRORLEVEL%
+echo %1.TXT
+type %1.TXT
+echo %1.ERR
+type %1.ERR
 echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd
