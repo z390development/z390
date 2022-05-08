@@ -1,0 +1,57 @@
+*********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
+* Author - Don Higgins                                              *
+* Date   - 2022-05-01                                                *
+*********************************************************************
+* 2022-05-03 TEST SPACES IN NUMERIC DC FIELDS FOR DC BDEFHLPXZ
+*********************************************************************
+         PRINT DATA
+TESTDC3 SUBENTRY
+         CLC  DCB1,=B'11110000'
+         BNE  ERROR
+         CLC  DCD1,=D'123456'
+         BNE  ERROR
+         CLC  DCE1,=E'123456'
+         BNE  ERROR
+         CLC  DCF1,=F'1234'
+         BNE  ERROR
+         CLC  DCH1,=H'1234'
+         BNE  ERROR
+         CLC  DCL1,=L'123456'
+         BNE  ERROR
+         CLC  DCP1,=P'123456'
+         BNE  ERROR
+         CLC  DCX1,=X'123456'
+         BNE  ERROR
+         CLC  DCZ1,=Z'123456'
+         BNE  ERROR
+         WTO 'DC3 TEST DC NUMERIC SPACES OK'
+         SUBEXIT      
+ERROR WTO 'DC3 ERROR ON DC NUMERIC SPACES'
+         SUBEXIT RC=12
+DCB1 DC B'1111 0000'
+DCD1 DC D'123 456'
+DCE1 DC E'123 456'
+DCF1 DC F'12 34'
+DCH1 DC H'12 34'
+DCL1 DC L'123 456'
+DCP1 DC P'123 456'
+DCX1 DC X'123 456'
+DCZ1  DC Z'123 456'
+         END         
