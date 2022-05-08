@@ -25,7 +25,6 @@ call bat\asmlg %z_TraceMode% rt\mlc\IS215    trace sysmac(mac) noloadhigh optabl
 call rt\bat\ZOPCHECK %z_TraceMode%                                                      || goto error
 
 rem -- checking error paths
-git config --list
 call rt\bat\CHKASMERR %z_TraceMode% rt\mlc\IS00398 nocon notiming errsum                || goto error
 
 rem -- all checks passed without issue

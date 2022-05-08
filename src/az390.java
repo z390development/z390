@@ -7064,8 +7064,21 @@ public void put_stats(){
 	while (index < tot_xref_files){
 		if (mz390_call && xref_file_errors[index] > 0){  // RPI 935
 			String xref_msg = "FID=" + tz390.right_justify(""+(index+1),3) 
-					        + " ERR=" + tz390.right_justify(""+xref_file_errors[index],4) 
- 	                        + " " + xref_file_name[index];
+					        + " ERR=" + tz390.right_justify(""+xref_file_errors[index],4);
+        // Add file with absolute path - only in RT mode as indicated by option notiming use relative path
+        if (tz390.opt_timing                                         // timing: absolute path
+         || xref_file_name[index].length() <= tz390.dir_cur.length() // not subdir of current directory
+            )
+           {xref_msg = xref_msg + " " + xref_file_name[index];
+            }
+        else
+           {if (xref_file_name[index].substring(0,tz390.dir_cur.length()).equals(tz390.dir_cur)) // leading part of path matches current dir
+               {xref_msg = xref_msg + " ." + xref_file_name[index].substring(tz390.dir_cur.length()-1);
+                }
+            else // no match - use full path anyway
+               {xref_msg = xref_msg + " " + xref_file_name[index];
+                }
+            } //**!! tz390.dir_cur 
 			put_log(msg_id + xref_msg);
 		    tz390.put_systerm(msg_id + xref_msg);
 		}
