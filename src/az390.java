@@ -415,7 +415,8 @@ public  class  az390 implements Runnable {
         * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand m4 or m6	
         * 2022-01-16 DSH #343 move abort for exceeding maxline 
         * 2022-03-28 DSH #327 fix az390 to force odd literals to even address for access by relative halfword offset counts	
-    *****************************************************
+        * 2022-05-07 DSH #233 allow spaces within DC numberic values for BDEFHLPXZ such as DC F'123 456' same as F'123456'
+	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
 	tz390 tz390 = null;
@@ -9119,7 +9120,7 @@ private void process_dcb_data(){
 	 *       explicit length fields.
 	 */
 	dc_index++;   // start inside 'bin1,bin2,,'
-	dc_data_start = dc_index; 
+    dc_data_start = dc_index; 
 	while (!dc_eod && !bal_abort){
 		int dcb_start = dc_index;
 		while (!dc_eod && !bal_abort
@@ -9128,22 +9129,20 @@ private void process_dcb_data(){
 				&& dc_field.charAt(dc_index) != ','){
 			    dc_index++;
 		}
-		if (dc_index >= dc_field.length()){
+		if (dc_index >= dc_field.length()){ 
 			log_error(65,"invalid binary dc data " + dc_field.substring(dc_data_start));
 			return;
 		}
-		dcb_len = dc_index - dcb_start;
+		dcb_bin = remove_blanks(dc_field.substring(dcb_start,dc_index)); // #233
+		dcb_len = dcb_bin.length();
 		dcb_pad = 8 - (dcb_len - dcb_len/8*8);
-		dcb_bin = "";
 		if (dcb_pad != 8){
-			dcb_bin = "00000000".substring(0,dcb_pad) + dc_field.substring(dcb_start,dc_index);
-		} else {
-			dcb_bin = dc_field.substring(dcb_start,dc_index);
-		}		
+			dcb_bin = "00000000".substring(0,dcb_pad) + dcb_bin; // #233 
+		}
         if (dc_bit_len){
-        	gen_dcb_bits();
+           gen_dcb_bits();
         } else {
-        	gen_dcb_bytes();
+           gen_dcb_bytes();
         }
 		if (dc_field.charAt(dc_index) == ','){
 		   	dc_index++;
@@ -9173,7 +9172,7 @@ private void gen_dcb_bits(){
 	try {
 		exp_val = Integer.valueOf(dcb_bin,2);
 	} catch (Exception e){
-		log_error(171,"invalid binary constant");
+		log_error(171,"invalid binary constant= " + dcb_bin); // DSH #233 fix
 		return;
 	}
 	gen_dca_bits();
@@ -9343,7 +9342,7 @@ private void gen_dcc_bytes(){
 }
 private void process_dc_fp_data(){
 	/*
-	 * alloc or gen DS/DC D, E, or F type data using
+	 * alloc or gen DS/DC D, E, or L type data using
 	 * prev settings for dc_type, dc_type_sfx,
 	 * dc_dup and dc_len.  Also save
 	 * first field dc_type, dc_len
@@ -9444,7 +9443,7 @@ private boolean get_dc_bd_val(){
 		if (dc_field.charAt(dc_index) == '\''
 			|| dc_field.charAt(dc_index) == ','){
 			try { // 
-				dc_bd_val = new BigDecimal(dc_field.substring(fp_bd_start,dc_index));
+				dc_bd_val = new BigDecimal(remove_blanks(dc_field.substring(fp_bd_start,dc_index))); // DSH #233
 			} catch (Exception e){
 				log_error(161,"invalid decimal constant - " + dc_field.substring(fp_bd_start,dc_index));
 				dc_bd_val = BigDecimal.ZERO;
@@ -9466,6 +9465,10 @@ private boolean get_dc_bd_val(){
 		}
 	}
 	return false;
+}
+private String remove_blanks(String text_in){
+	// DSH #233 remove blanks allowed within numeric DC fields BDEFHLPXZ 
+	return text_in.replace(" ", ""); // #233 optimization by John Ganci
 }
 private String get_dc_fh_hex_val(){
 	/*
@@ -9512,7 +9515,7 @@ private String get_dc_fh_hex_val(){
 }
 private void get_dc_fp_hex(String text,int index){
 	/*
-	 * set dc_hex for D, E, or F 
+	 * set dc_hex for D, E, or L 
 	 * floating point sdt starting at text index
 	 */
 	if (text.charAt(index) == ','){
@@ -10047,7 +10050,7 @@ private int get_dc_int(int index){
  		dc_index++;
  	}
  	if (dc_index > index){
- 		return Integer.valueOf(dc_field.substring(index,dc_index)).intValue();
+ 		return Integer.valueOf(dc_field.substring(index,dc_index)).intValue(); // DSH #233
  	} else {
  		return 1;
  	}
@@ -10840,6 +10843,7 @@ private void fp_get_hex(){
 		fp_sign = '-';
 		fp_text = fp_text.substring(1);
 	}
+	fp_text = remove_blanks(fp_text); // #233 
 	if (fp_text.charAt(0) == '('){ // RPI 367 support (MIN) and (MAX)
 		if (fp_text.toUpperCase().equals("(MAX)")){
 			switch (tz390.fp_type){  // gen (max) hex for tz390.fp_type
@@ -10923,7 +10927,7 @@ private void fp_get_hex(){
 	try { // RPI 424
 		fp_big_dec1 = new BigDecimal(fp_text,fp_context);
 	} catch (Exception e){
-		log_error(162,"invalid decimal floating point constant");
+		log_error(162,"invalid decimal floating point constant= " + fp_text); // #233 show text fix
 		fp_big_dec1 = BigDecimal.ZERO;
 	}
 	if (dc_exp > 0){ // RPI 368 adj by DC E modifer
