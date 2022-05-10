@@ -416,6 +416,7 @@ public  class  az390 implements Runnable {
         * 2022-01-16 DSH #343 move abort for exceeding maxline 
         * 2022-03-28 DSH #327 fix az390 to force odd literals to even address for access by relative halfword offset counts	
         * 2022-05-07 DSH #233 allow spaces within DC numberic values for BDEFHLPXZ such as DC F'123 456' same as F'123456'
+        * 2022-05-10 AFK #398 fix typo in error message and report relative paths (rather than absolute ones) when in RT mode (NOTIMING option in effect)
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
