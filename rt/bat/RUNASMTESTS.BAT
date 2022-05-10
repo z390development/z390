@@ -29,9 +29,6 @@ call bat\asmlg %z_TraceMode% rt\mlc\TESTDC2  trace sysmac(mac) noloadhigh optabl
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC3  trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call rt\bat\ZOPCHECK %z_TraceMode%                                                            || goto error
 
-rem -- checking error paths
-call rt\bat\CHKASMERR %z_TraceMode% rt\mlc\IS00398 nocon notiming errsum                      || goto error
-
 rem -- all checks passed without issue
 set z_ReturnCode=0
 goto return
