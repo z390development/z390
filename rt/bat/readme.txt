@@ -13,6 +13,4 @@ RUNTESTOPT  - verify indirection usage in options files
 
 Double click on above commands to run them.
 
-See issue #
-
 don@higgins.net 2021-04-29
