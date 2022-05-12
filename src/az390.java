@@ -416,7 +416,7 @@ public  class  az390 implements Runnable {
         * 2022-01-16 DSH #343 move abort for exceeding maxline 
         * 2022-03-28 DSH #327 fix az390 to force odd literals to even address for access by relative halfword offset counts	
         * 2022-05-07 DSH #233 allow spaces within DC numberic values for BDEFHLPXZ such as DC F'123 456' same as F'123456'
-	*****************************************************
+		* 2022-05-12 DSH #325 issue error 54 invalid DC field terminator if not '..' for BDEFHLPXZ
     * Global variables                        last rpi
     *****************************************************/
 	tz390 tz390 = null;
@@ -6266,13 +6266,24 @@ public void process_dc(int request_type){ // RPI 415
 	       }
 	       if (!(dc_index < dc_field.length()) 
 	       		|| dc_field.charAt(dc_index) <= ' '  //RPI181
-	       		|| dc_field.charAt(dc_index) == dc_type_delimiter[dc_type_index]){
+	       		|| dc_field.charAt(dc_index) == dc_type_delimiter[dc_type_index]
+			  ){
 	    	  if (dc_bit_len){
 	            	 flush_dc_bits(); // RPI 417
 	          }
 	       	  return;
-	       }
-	 }
+
+			 // #325 code added to detect invalid connector/terminator on DC
+			} else if (dc_field.charAt(dc_index) != ','
+		               && dc_field.charAt(dc_index) != '\''){
+			        log_error(54,"invalid dc field terminator =" + dc_field
+					  + " len=" + dc_field.length()
+					  + " char=" + dc_field.charAt(dc_index)
+					  ); 
+		            }
+			}
+			// #325 end of code
+	
 	 if (dc_bit_len){
      	 flush_dc_bits(); // RPI 417
 	 }
@@ -9159,7 +9170,7 @@ private void gen_dcb_bits(){
 	try {
 		exp_val = Integer.valueOf(dcb_bin,2);
 	} catch (Exception e){
-		log_error(171,"invalid binary constant= " + dcb_bin); // DSH #233 fix
+		log_error(171,"invalid binary constant= " + dcb_bin); // DSH #233
 		return;
 	}
 	gen_dca_bits();
@@ -9430,7 +9441,7 @@ private boolean get_dc_bd_val(){
 		if (dc_field.charAt(dc_index) == '\''
 			|| dc_field.charAt(dc_index) == ','){
 			try { // 
-				dc_bd_val = new BigDecimal(remove_blanks(dc_field.substring(fp_bd_start,dc_index))); // DSH #233
+				dc_bd_val = new BigDecimal(remove_blanks(dc_field.substring(fp_bd_start,dc_index))); // #233
 			} catch (Exception e){
 				log_error(161,"invalid decimal constant - " + dc_field.substring(fp_bd_start,dc_index));
 				dc_bd_val = BigDecimal.ZERO;
@@ -9455,7 +9466,7 @@ private boolean get_dc_bd_val(){
 }
 private String remove_blanks(String text_in){
 	// DSH #233 remove blanks allowed within numeric DC fields BDEFHLPXZ 
-	return text_in.replace(" ", ""); // #233 optimization by John Ganci
+	return text_in.replace(" ", ""); // #233
 }
 private String get_dc_fh_hex_val(){
 	/*
@@ -10037,7 +10048,7 @@ private int get_dc_int(int index){
  		dc_index++;
  	}
  	if (dc_index > index){
- 		return Integer.valueOf(dc_field.substring(index,dc_index)).intValue(); // DSH #233
+ 		return Integer.valueOf(dc_field.substring(index,dc_index)).intValue(); // #233
  	} else {
  		return 1;
  	}
