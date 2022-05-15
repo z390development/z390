@@ -1,0 +1,3423 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.15">
+    
+    
+      
+        <title>SVC services - z390 docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.c382b1dc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.cc9b2e1e.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#svc-services" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="z390 docs" class="md-header__button md-logo" aria-label="z390 docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            z390 docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              SVC services
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/z390development/z390/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="z390 docs" class="md-nav__button md-logo" aria-label="z390 docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    z390 docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/z390development/z390/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        z390 Docs Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assist/" class="md-nav__link">
+        ASSIST support
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute_docs/" class="md-nav__link">
+        Contributing to z390 Documentation
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../file_services/" class="md-nav__link">
+        Non-VSAM File Services
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../program_services/" class="md-nav__link">
+        Program Services
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          SVC services
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        SVC services
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#macro-reference" class="md-nav__link">
+    Macro reference
+  </a>
+  
+    <nav class="md-nav" aria-label="Macro reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timesvc-obtain-the-time-and-date" class="md-nav__link">
+    TIME(SVC) - Obtain the time and date
+  </a>
+  
+    <nav class="md-nav" aria-label="TIME(SVC) - Obtain the time and date">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type" class="md-nav__link">
+    Type
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timesystem-obtain-the-time-and-date" class="md-nav__link">
+    TIME(SYSTEM) - Obtain the time and date
+  </a>
+  
+    <nav class="md-nav" aria-label="TIME(SYSTEM) - Obtain the time and date">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_1" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#datetype" class="md-nav__link">
+    DATETYPE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type_1" class="md-nav__link">
+    Type
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_1" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_1" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getime-obtain-time-and-date-vse" class="md-nav__link">
+    GETIME - Obtain time and date (VSE)
+  </a>
+  
+    <nav class="md-nav" aria-label="GETIME - Obtain time and date (VSE)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_2" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type-date-type" class="md-nav__link">
+    type - date type
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_2" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stimer-wait-for-an-interval-of-time" class="md-nav__link">
+    STIMER - Wait for an interval of time
+  </a>
+  
+    <nav class="md-nav" aria-label="STIMER - Wait for an interval of time">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_3" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exit" class="md-nav__link">
+    exit
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_2" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ttimer-test-or-cancel-stimer-real" class="md-nav__link">
+    TTIMER - Test or cancel STIMER REAL
+  </a>
+  
+    <nav class="md-nav" aria-label="TTIMER - Test or cancel STIMER REAL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_4" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cancel" class="md-nav__link">
+    CANCEL
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type_2" class="md-nav__link">
+    type
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_3" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_3" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cmdproc-execute-host-os-commands" class="md-nav__link">
+    CMDPROC - execute host OS commands
+  </a>
+  
+    <nav class="md-nav" aria-label="CMDPROC - execute host OS commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_5" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#id" class="md-nav__link">
+    ID
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subcommands" class="md-nav__link">
+    Subcommands
+  </a>
+  
+    <nav class="md-nav" aria-label="Subcommands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#start" class="md-nav__link">
+    START
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop" class="md-nav__link">
+    STOP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write" class="md-nav__link">
+    WRITE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read" class="md-nav__link">
+    READ
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_4" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_4" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wto-write-to-operator" class="md-nav__link">
+    WTO - Write to operator
+  </a>
+  
+    <nav class="md-nav" aria-label="WTO - Write to operator">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#formats" class="md-nav__link">
+    Formats
+  </a>
+  
+    <nav class="md-nav" aria-label="Formats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#text" class="md-nav__link">
+    Text
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list" class="md-nav__link">
+    List
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-1" class="md-nav__link">
+    Execute 1
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-2" class="md-nav__link">
+    Execute 2
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_5" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xlate-ebcdic-to-ascii" class="md-nav__link">
+    XLATE - EBCDIC to ASCII
+  </a>
+  
+    <nav class="md-nav" aria-label="XLATE - EBCDIC to ASCII">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_6" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#area" class="md-nav__link">
+    area
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#len" class="md-nav__link">
+    len
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#to" class="md-nav__link">
+    TO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_6" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wtor-write-to-operator" class="md-nav__link">
+    WTOR - Write to operator
+  </a>
+  
+    <nav class="md-nav" aria-label="WTOR - Write to operator">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_7" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reply" class="md-nav__link">
+    reply
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#len_1" class="md-nav__link">
+    len
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ecb" class="md-nav__link">
+    ecb
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_7" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wait-wait-for-ecb-completion" class="md-nav__link">
+    WAIT - Wait for ECB completion
+  </a>
+  
+    <nav class="md-nav" aria-label="WAIT - Wait for ECB completion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_8" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#num" class="md-nav__link">
+    num
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ecb_1" class="md-nav__link">
+    ECB=
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ecblist" class="md-nav__link">
+    ECBLIST=
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_1" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_8" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-signal-ecb-completion" class="md-nav__link">
+    POST - Signal ECB completion
+  </a>
+  
+    <nav class="md-nav" aria-label="POST - Signal ECB completion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_9" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ecb_2" class="md-nav__link">
+    ecb
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code" class="md-nav__link">
+    code
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_5" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_9" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ctd-convert-binary-or-fp-value" class="md-nav__link">
+    CTD - Convert binary or FP value
+  </a>
+  
+    <nav class="md-nav" aria-label="CTD - Convert binary or FP value">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_10" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type_3" class="md-nav__link">
+    type
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in" class="md-nav__link">
+    IN=
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#out" class="md-nav__link">
+    OUT=
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linkage" class="md-nav__link">
+    LINKAGE=
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_10" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_6" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cfd-convert-to-binary-or-fp-value" class="md-nav__link">
+    CFD - Convert to binary or FP value
+  </a>
+  
+    <nav class="md-nav" aria-label="CFD - Convert to binary or FP value">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_11" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type_4" class="md-nav__link">
+    type
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in_1" class="md-nav__link">
+    IN=
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#out_1" class="md-nav__link">
+    OUT=
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linkage_1" class="md-nav__link">
+    LINKAGE=
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_11" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_7" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getenv-get-environment-variable" class="md-nav__link">
+    GETENV - Get environment variable
+  </a>
+  
+    <nav class="md-nav" aria-label="GETENV - Get environment variable">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_12" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setname" class="md-nav__link">
+    setname
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_12" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_8" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comrg-comm-region-addressability" class="md-nav__link">
+    COMRG - Comm region addressability
+  </a>
+  
+    <nav class="md-nav" aria-label="COMRG - Comm region addressability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_13" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supporting-macros" class="md-nav__link">
+    Supporting Macros
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#time-periods" class="md-nav__link">
+    Time periods
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-control-block" class="md-nav__link">
+    Event Control Block
+  </a>
+  
+    <nav class="md-nav" aria-label="Event Control Block">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bits-0-1" class="md-nav__link">
+    Bits 0-1
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bits-2-31" class="md-nav__link">
+    Bits 2-31
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#svc-functions" class="md-nav__link">
+    SVC functions
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../z390_Sort_Utility/" class="md-nav__link">
+        z390 ZSORT
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Options
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Options" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Options
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Options/z390_filetypes/" class="md-nav__link">
+        z390 File types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Options/z390_options/" class="md-nav__link">
+        z390 Options
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Options/zCOBOL_filetypes/" class="md-nav__link">
+        zCOBOL file types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Options/zCOBOL_options/" class="md-nav__link">
+        zCOBOL options
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#macro-reference" class="md-nav__link">
+    Macro reference
+  </a>
+  
+    <nav class="md-nav" aria-label="Macro reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timesvc-obtain-the-time-and-date" class="md-nav__link">
+    TIME(SVC) - Obtain the time and date
+  </a>
+  
+    <nav class="md-nav" aria-label="TIME(SVC) - Obtain the time and date">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type" class="md-nav__link">
+    Type
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timesystem-obtain-the-time-and-date" class="md-nav__link">
+    TIME(SYSTEM) - Obtain the time and date
+  </a>
+  
+    <nav class="md-nav" aria-label="TIME(SYSTEM) - Obtain the time and date">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_1" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#datetype" class="md-nav__link">
+    DATETYPE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type_1" class="md-nav__link">
+    Type
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_1" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_1" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getime-obtain-time-and-date-vse" class="md-nav__link">
+    GETIME - Obtain time and date (VSE)
+  </a>
+  
+    <nav class="md-nav" aria-label="GETIME - Obtain time and date (VSE)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_2" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type-date-type" class="md-nav__link">
+    type - date type
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_2" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stimer-wait-for-an-interval-of-time" class="md-nav__link">
+    STIMER - Wait for an interval of time
+  </a>
+  
+    <nav class="md-nav" aria-label="STIMER - Wait for an interval of time">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_3" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exit" class="md-nav__link">
+    exit
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_2" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ttimer-test-or-cancel-stimer-real" class="md-nav__link">
+    TTIMER - Test or cancel STIMER REAL
+  </a>
+  
+    <nav class="md-nav" aria-label="TTIMER - Test or cancel STIMER REAL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_4" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cancel" class="md-nav__link">
+    CANCEL
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type_2" class="md-nav__link">
+    type
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_3" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_3" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cmdproc-execute-host-os-commands" class="md-nav__link">
+    CMDPROC - execute host OS commands
+  </a>
+  
+    <nav class="md-nav" aria-label="CMDPROC - execute host OS commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_5" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#id" class="md-nav__link">
+    ID
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subcommands" class="md-nav__link">
+    Subcommands
+  </a>
+  
+    <nav class="md-nav" aria-label="Subcommands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#start" class="md-nav__link">
+    START
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop" class="md-nav__link">
+    STOP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write" class="md-nav__link">
+    WRITE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read" class="md-nav__link">
+    READ
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_4" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_4" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wto-write-to-operator" class="md-nav__link">
+    WTO - Write to operator
+  </a>
+  
+    <nav class="md-nav" aria-label="WTO - Write to operator">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#formats" class="md-nav__link">
+    Formats
+  </a>
+  
+    <nav class="md-nav" aria-label="Formats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#text" class="md-nav__link">
+    Text
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list" class="md-nav__link">
+    List
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-1" class="md-nav__link">
+    Execute 1
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-2" class="md-nav__link">
+    Execute 2
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_5" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xlate-ebcdic-to-ascii" class="md-nav__link">
+    XLATE - EBCDIC to ASCII
+  </a>
+  
+    <nav class="md-nav" aria-label="XLATE - EBCDIC to ASCII">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_6" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#area" class="md-nav__link">
+    area
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#len" class="md-nav__link">
+    len
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#to" class="md-nav__link">
+    TO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_6" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wtor-write-to-operator" class="md-nav__link">
+    WTOR - Write to operator
+  </a>
+  
+    <nav class="md-nav" aria-label="WTOR - Write to operator">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_7" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reply" class="md-nav__link">
+    reply
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#len_1" class="md-nav__link">
+    len
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ecb" class="md-nav__link">
+    ecb
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_7" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wait-wait-for-ecb-completion" class="md-nav__link">
+    WAIT - Wait for ECB completion
+  </a>
+  
+    <nav class="md-nav" aria-label="WAIT - Wait for ECB completion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_8" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#num" class="md-nav__link">
+    num
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ecb_1" class="md-nav__link">
+    ECB=
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ecblist" class="md-nav__link">
+    ECBLIST=
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_1" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_8" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-signal-ecb-completion" class="md-nav__link">
+    POST - Signal ECB completion
+  </a>
+  
+    <nav class="md-nav" aria-label="POST - Signal ECB completion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_9" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ecb_2" class="md-nav__link">
+    ecb
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code" class="md-nav__link">
+    code
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_5" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_9" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ctd-convert-binary-or-fp-value" class="md-nav__link">
+    CTD - Convert binary or FP value
+  </a>
+  
+    <nav class="md-nav" aria-label="CTD - Convert binary or FP value">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_10" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type_3" class="md-nav__link">
+    type
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in" class="md-nav__link">
+    IN=
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#out" class="md-nav__link">
+    OUT=
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linkage" class="md-nav__link">
+    LINKAGE=
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_10" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_6" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cfd-convert-to-binary-or-fp-value" class="md-nav__link">
+    CFD - Convert to binary or FP value
+  </a>
+  
+    <nav class="md-nav" aria-label="CFD - Convert to binary or FP value">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_11" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type_4" class="md-nav__link">
+    type
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in_1" class="md-nav__link">
+    IN=
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#out_1" class="md-nav__link">
+    OUT=
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linkage_1" class="md-nav__link">
+    LINKAGE=
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_11" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_7" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getenv-get-environment-variable" class="md-nav__link">
+    GETENV - Get environment variable
+  </a>
+  
+    <nav class="md-nav" aria-label="GETENV - Get environment variable">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_12" class="md-nav__link">
+    Parameters
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setname" class="md-nav__link">
+    setname
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_12" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return_8" class="md-nav__link">
+    Return
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comrg-comm-region-addressability" class="md-nav__link">
+    COMRG - Comm region addressability
+  </a>
+  
+    <nav class="md-nav" aria-label="COMRG - Comm region addressability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#register-usage_13" class="md-nav__link">
+    Register Usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supporting-macros" class="md-nav__link">
+    Supporting Macros
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#time-periods" class="md-nav__link">
+    Time periods
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-control-block" class="md-nav__link">
+    Event Control Block
+  </a>
+  
+    <nav class="md-nav" aria-label="Event Control Block">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bits-0-1" class="md-nav__link">
+    Bits 0-1
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bits-2-31" class="md-nav__link">
+    Bits 2-31
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#svc-functions" class="md-nav__link">
+    SVC functions
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/z390development/z390/edit/main/doc/svc_services.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="svc-services">SVC services</h1>
+<h2 id="macro-reference">Macro reference</h2>
+<h3 id="timesvc-obtain-the-time-and-date">TIME(SVC) - Obtain the time and date</h3>
+<pre><code class="language-hlasm">name     TIME  type,addr,LINKAGE=SVC,DATETYPE=,CLOCKTYPE=
+</code></pre>
+<p>Obtain the time and/or date in various formats.</p>
+<h4 id="parameters">Parameters</h4>
+<h5 id="type">Type</h5>
+<p><strong>DEC - Decimal</strong></p>
+<pre><code class="language-hlasm">name     TIME
+name     TIME  DEC
+</code></pre>
+<p>Returns: Time in GR0 as HHMMSSTH</p>
+<p>Hours, mins and secs to 2 decimal places.</p>
+<p>The values are unsigned packed decimal:</p>
+<pre><code>X'21420654' = 21:42:06.54
+</code></pre>
+<p>The MVO instruction can be used after storing the register to convert it to standard packed decimal format.</p>
+<p>Date in GR1 as CCYYDDDF - Century, year, day number and sign. </p>
+<p>The values are signed decimal:</p>
+<ul>
+<li>CC is (almost) the century number.</li>
+<li>YY the year number.</li>
+<li>DDD the day number within the year.</li>
+<li>
+<p>F the positive sign.</p>
+<p>X'0106003F' = 3rd January 2006</p>
+</li>
+</ul>
+<p>After storing, <code>AP DATE,=P'1900000'</code> can be used to convert to a 4-digit year.</p>
+<p><strong>BIN - Binary</strong></p>
+<pre><code class="language-hlasm">name     TIME  BIN
+</code></pre>
+<p>Returns: Time in GR0 in hundredths of a second since midnight in binary.</p>
+<p>Date in GR1 as CCYYDDDF - Century, year, day number and sign. </p>
+<p><strong>TU - Time units</strong></p>
+<pre><code class="language-hlasm">name     TIME  TU
+</code></pre>
+<p>Returns: Time in GR0 in timer units of 26.04166&micro;s since midnight in binary.</p>
+<p>Date in GR1 as CCYYDDDF - Century, year, day number and sign. </p>
+<p><strong>INS - Instruction count</strong></p>
+<pre><code class="language-hlasm">name     TIME  INS
+</code></pre>
+<p>Returns: Instruction count in GR1 (64 bit value).</p>
+<p><strong>MIC - Microseconds</strong></p>
+<pre><code class="language-hlasm">name     TIME  MIC,label
+name     TIME  MIC,(reg)
+</code></pre>
+<p>Returns: Time in units of 1&micro;s in binary since midnight.</p>
+<p>The time is stored at the 8 bytes specified.
+Date in GR1 as CCYYDDDF - Century, year, day number and sign. </p>
+<p><strong>NS - Nanoseconds</strong></p>
+<pre><code class="language-hlasm">name     TIME  NS,label
+name     TIME  NS,(reg)
+</code></pre>
+<p>Returns: Time in units of 1ns in binary since midnight.</p>
+<p>The time is stored at the 8 bytes specified.</p>
+<p><strong>STCK - Microseconds bits 0-51</strong></p>
+<pre><code class="language-hlasm">name     TIME  STCK,label
+name     TIME  STCK,(reg)
+</code></pre>
+<p>Returns: Time in units of 1&micro;s in binary since midnight.</p>
+<p>The time is stored at the 8 bytes specified and uses only bits 0-51 of the 8-byte field.
+Date in GR1 as above.</p>
+<p><strong>TS - Timestamp</strong></p>
+<pre><code class="language-hlasm">name     TIME  TS,label
+name     TIME  TS,(reg)
+</code></pre>
+<p>Returns: A string of 29 bytes at the label or pointed to by reg.</p>
+<p>The format is "YYYY-MM-DD HH:MM:SS.NNNNNNNNN".</p>
+<p><strong>CLOCK - Microseconds since 1/1/1900</strong></p>
+<p><em>CLOCKTYPE=STCK</em></p>
+<pre><code class="language-hlasm">name     TIME  CLOCK,label,CLOCKTYPE=STCK
+name     TIME  CLOCK,(reg),CLOCKTYPE=STCK
+</code></pre>
+<p>Returns: Time in units of 1&micro;s in binary since 1st January 1900.</p>
+<p>The time is stored at the 8 bytes specified and uses only bits 0-51 of the 8-byte field.</p>
+<p><em>CLOCKTYPE=STCKE</em></p>
+<pre><code class="language-hlasm">name     TIME  CLOCK,label,CLOCKTYPE=STCKE
+name     TIME  CLOCK,(reg),CLOCKTYPE=STCKE
+</code></pre>
+<p>Returns: Time in units of 1&micro;s in binary since 1st January 1900.</p>
+<p>The time is stored at the 16 bytes specified:</p>
+<ul>
+<li>Byte 0 : Zero</li>
+<li>Bytes 1-13 : The time</li>
+<li>Bytes 14-15 : Programmable field set by the SCKPF instruction and not currently implemented.</li>
+</ul>
+<p>The time uses only bits 8-111 of the 16-byte field with bits 8-59 being the value in microseconds.</p>
+<p><em>CLOCKTYPE=JAVA</em></p>
+<pre><code class="language-hlasm">name     TIME  CLOCK,label,CLOCKTYPE=JAVA
+name     TIME  CLOCK,(reg),CLOCKTYPE=JAVA
+</code></pre>
+<p>Returns: Time in units of 1ms in binary since 1st January 1970.</p>
+<p>The time is stored at the 8 bytes specified.</p>
+<h4 id="register-usage">Register Usage</h4>
+<ul>
+<li>R0 = Code for units and date type</li>
+<li>R1 = Result area</li>
+</ul>
+<h4 id="return">Return</h4>
+<p>GR15 has a return code:</p>
+<ul>
+<li>0 - TIME ok</li>
+<li>4 - Invalid request</li>
+</ul>
+<h3 id="timesystem-obtain-the-time-and-date">TIME(SYSTEM) - Obtain the time and date</h3>
+<pre><code class="language-hlasm">name     TIME  type,addr,LINKAGE=SYSTEM,DATETYPE=,CLOCKTYPE=
+</code></pre>
+<h4 id="parameters_1">Parameters</h4>
+<h5 id="datetype">DATETYPE</h5>
+<p>Specify the date format returned.</p>
+<p>All the formats are 4 bytes and the values are unsigned packed decimal.</p>
+<p>The MVO instruction can be used to convert it to standard packed decimal format.</p>
+<ul>
+<li>YYYY the year number.</li>
+<li>DDD the day number within the year.</li>
+<li>DD the day number within the month.</li>
+<li>MM the month number.</li>
+</ul>
+<pre><code class="language-text">YYYYDDD (default) stored as 0YYYYDDD
+MMDDYYYY
+DDMMYYYY
+YYYYMMDD
+</code></pre>
+<h5 id="type_1">Type</h5>
+<p><strong>DEC - Decimal</strong></p>
+<pre><code class="language-hlasm">name     TIME  ,label,LINKAGE=SYSTEM
+name     TIME  ,(reg),LINKAGE=SYSTEM
+name     TIME  DEC,label,LINKAGE=SYSTEM
+name     TIME  DEC,(reg),LINKAGE=SYSTEM
+</code></pre>
+<p>Returns: Time as HHMMSSTH</p>
+<p>The time is stored at the 4 bytes specified. 
+Hours, mins and secs to 2 decimal places.</p>
+<p>The values are unsigned packed decimal:</p>
+<pre><code>X'21420654' = 21:42:06.54
+</code></pre>
+<p>The MVO instruction can be used to convert it to standard packed decimal format.</p>
+<p>The date is stored at label+8 or 8(reg).</p>
+<p><strong>BIN - Binary</strong></p>
+<pre><code class="language-hlasm">name     TIME  BIN,label,LINKAGE=SYSTEM
+name     TIME  BIN,(reg),LINKAGE=SYSTEM
+</code></pre>
+<p>Returns: The time is stored at the 4 bytes specified in hundredths of a second since midnight</p>
+<p>The date is stored at label+8 or 8(reg).</p>
+<p><strong>MIC - Microseconds</strong></p>
+<pre><code class="language-hlasm">name     TIME  MIC,label,LINKAGE=SYSTEM
+name     TIME  MIC,(reg),LINKAGE=SYSTEM
+</code></pre>
+<p>Returns: Time in units of 1&micro;s in binary since midnight.</p>
+<ul>
+<li>The time is stored at the 8 bytes specified.</li>
+<li>The date is stored at label+8 or 8(reg).</li>
+</ul>
+<p><strong>STCK - Microseconds 0-51 bits only</strong></p>
+<pre><code class="language-hlasm">name     TIME  STCK,label.LINKAGE=SYSTEM
+name     TIME  STCK,(reg),LINKAGE=SYSTEM
+</code></pre>
+<p>Returns: Time in units of 1&micro;s in binary since midnight.</p>
+<p>The time is stored at the 8 bytes specified and uses only bits 0-51 of the 8-byte field.
+The date is stored at label+8 or 8(reg).</p>
+<p><strong>STCKE - Microseconds 16 byte</strong></p>
+<pre><code class="language-hlasm">name     TIME  STCKE,label.LINKAGE=SYSTEM
+name     TIME  STCKE,(reg),LINKAGE=SYSTEM
+</code></pre>
+<p>Returns: Time in units of 1&micro;s in binary since midnight.</p>
+<p>The time is stored at the 16 bytes specified:</p>
+<ul>
+<li>Byte 0 : Zero</li>
+<li>Bytes 1-13 : The time</li>
+<li>Bytes 14-15 : Programmable field set by the SCKPF instruction and not currently implemented.</li>
+</ul>
+<p>The time uses only bits 8-111 of the 16-byte field with bits 8-59 being the value in microseconds.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The DATETYPE parameter is ignored.</p>
+</div>
+<h4 id="register-usage_1">Register Usage</h4>
+<ul>
+<li>R0 = Code for units and date type</li>
+<li>R1 = Result area</li>
+</ul>
+<h4 id="return_1">Return</h4>
+<p>GR15 has a return code:</p>
+<ul>
+<li>0 - TIME ok</li>
+<li>4 - Invalid request</li>
+</ul>
+<h3 id="getime-obtain-time-and-date-vse">GETIME - Obtain time and date (VSE)</h3>
+<pre><code class="language-hlasm">         GETIME type
+</code></pre>
+<p>Obtain the time in various formats (VSE only). 
+The time is stored in the GR0/GR1 register pair.</p>
+<h4 id="parameters_2">Parameters</h4>
+<h5 id="type-date-type">type - date type</h5>
+<p><strong>STANDARD (default)</strong></p>
+<p>Time in GR1 as <code>0HHMMSSc</code>. Hours, mins and secs in packed format.</p>
+<p><strong>BIN - Binary</strong></p>
+<p>Time in GR1 in seconds since midnight in binary.</p>
+<p><strong>TU - Time unit</strong></p>
+<p>Time in GR1 in timer units of 26.04166&micro;s since midnight in binary.</p>
+<p><strong>MIC - Microseconds</strong></p>
+<p>Time in units of 1&micro;s in binary since midnight.</p>
+<h4 id="return_2">Return</h4>
+<p>GR15 has a return code:</p>
+<ul>
+<li>0 - GETIME ok</li>
+<li>4 - Invalid request</li>
+</ul>
+<h3 id="stimer-wait-for-an-interval-of-time">STIMER - Wait for an interval of time</h3>
+<p>Wait for an interval of time.</p>
+<pre><code class="language-hlasm">name     STIMER WAIT,BINTVL=label
+name     STIMER WAIT,DINTVL=label
+name     STIMER WAIT,MICVL=label
+name     STIMER WAIT,TUINTVL=label
+</code></pre>
+<p>Start a timer and continue. When the time expires the exit routine is invoked.</p>
+<pre><code class="language-hlasm">name     STIMER REAL,exit,BINTVL=label
+name     STIMER REAL,exit,DINTVL=label
+name     STIMER REAL,exit,MICVL=label
+name     STIMER REAL,exit,TUINTVL=label
+</code></pre>
+<p>Only one STIMER can be waiting for expiry at any moment.</p>
+<p>In each case the label points to a number of timer units.</p>
+<table>
+<thead>
+<tr>
+<th>value</th>
+<th>effect</th>
+<th>Maximum value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BINTVL</td>
+<td>Fullword with 100th of a second units.</td>
+<td>X'7FFFFFFF' is approx. 249 days.</td>
+</tr>
+<tr>
+<td>DINTVL</td>
+<td>Doubleword PL8'HHMMSSth', where th is 2 decimal positions of seconds.</td>
+<td>99595999, approximately 4 days.</td>
+</tr>
+<tr>
+<td>MICVL</td>
+<td>Doubleword with microsecond units</td>
+<td>X'7FFFFFFFFFFFFFFF', or nearly 300000 years</td>
+</tr>
+<tr>
+<td>TUINTVL</td>
+<td>Fullword with 26.04166&micro;s units</td>
+<td>X'7FFFFFFF', approximately 16 hours.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="parameters_3">Parameters</h4>
+<h5 id="exit">exit</h5>
+<p>Can be label or (reg).</p>
+<ul>
+<li>When the time expires, the exit routine is invoked.</li>
+<li>GR15 has the address of the exit routine.</li>
+<li>Other registers must be assumed to be destroyed.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>STIMER REAL is measuring clock time, and not the time that the Z390 program is executing.</p>
+</div>
+<h4 id="register-usage_2">Register Usage</h4>
+<ul>
+<li>R0 = Code for timer units and exit address</li>
+<li>R1 = Address of the timer units</li>
+<li>R15 = By implication, exit routine address</li>
+</ul>
+<h3 id="ttimer-test-or-cancel-stimer-real">TTIMER - Test or cancel STIMER REAL</h3>
+<p>Test or cancel a previously set STIMER REAL</p>
+<pre><code class="language-hlasm">name     TTIMER CANCEL,type,addr
+</code></pre>
+<h4 id="parameters_4">Parameters</h4>
+<h5 id="cancel">CANCEL</h5>
+<p>CANCEL means that the STIMER timing is terminated.</p>
+<h5 id="type_2">type</h5>
+<p><strong>TU (default)</strong></p>
+<p>Returns the remaining time in GR0 as 4 bytes in timer units of 26.04166&micro;s. addr is ignored.</p>
+<p><strong>MIC,addr</strong></p>
+<p>Using MIC requires addr which may be specified as label or (reg). The remaining time is returned at the doubleword address in microseconds.</p>
+<h4 id="usage">Usage</h4>
+<p>Cancel the current STIMER REAL, return the remaining time in GR0 in timer units.</p>
+<pre><code class="language-hlasm">         TTIMER CANCEL
+</code></pre>
+<p>Return the remaining time in microseconds at REMAIN.</p>
+<pre><code class="language-hlasm">         TTIMER ,MIC,REMAIN
+......
+REMAIN   DS     D
+</code></pre>
+<h4 id="register-usage_3">Register Usage</h4>
+<ul>
+<li>R0 = Code for timer units, returned value</li>
+<li>R1 = Address of returned timer units</li>
+</ul>
+<h4 id="return_3">Return</h4>
+<p>GR15 has a return code:
+* 0 TTIMER ok
+* 4 TU units remaining exceed 31 bits</p>
+<h3 id="cmdproc-execute-host-os-commands">CMDPROC - execute host OS commands</h3>
+<p>Open, close, read and write from the host command processor or shell.</p>
+<p>With the CMDPROC macro, you can issue OS shell commands, receive the replies from those commands line by line and start
+other programs.</p>
+<p>There is a limit of 10 command processors that can be open at any time. The limit is only to protect the operating system
+from storage depletion. In all cases below, ID may be defined as a numeric value or in a general register. For example, ID=2 or ID=(R5).</p>
+<h4 id="parameters_5">Parameters</h4>
+<h5 id="id">ID</h5>
+<ul>
+<li>ID may range from 0 (default) to 9.</li>
+<li>If the ID exceeds 9 then an abend SFFF will occur</li>
+</ul>
+<h4 id="subcommands">Subcommands</h4>
+<h5 id="start">START</h5>
+<pre><code class="language-hlasm">name      CMDPROC START,ID=,CMDLOG=
+</code></pre>
+<p>Start a command processor and assign an identifier.</p>
+<p>If the memory queue exceeds the MAXQUE value (default 1000) then the memory queue is written to the log and CMDPROC=YES is assumed. 
+An error message is generated.</p>
+<p><strong>CMDLOG</strong></p>
+<ul>
+<li>CMDLOG=YES (Default) -  All output from the command processor is written to the log.</li>
+<li>CMDLOG=NO -  All output is saved in a memory queue. Use this option if you intend to use CMDPROC READ to retrieve command processor messages.</li>
+</ul>
+<h5 id="stop">STOP</h5>
+<pre><code class="language-hlasm">name     CMDPROC STOP,ID=
+</code></pre>
+<p>Close a previously opened command processor.</p>
+<h5 id="write">WRITE</h5>
+<pre><code class="language-hlasm">name     CMDPROC WRITE,label,ID=
+name     CMDPROC WRITE,literal,ID=
+name     CMDPROC WRITE,(reg),ID=
+</code></pre>
+<p>Send a command to a previously opened command processor.</p>
+<p><strong>label or (reg)</strong></p>
+<p>Points to a constant which terminates with X'00' or is defined as a double-quoted string within a standard C-type constant.</p>
+<p><strong>literal</strong></p>
+<p>Double-quoted string within a standard C-type constant preceded by an equals sign.</p>
+<pre><code class="language-hlasm">name     CMDPROC WRITE,CMD1,ID=5
+......
+CMD1     DC    C'DIR /X',X'00'
+</code></pre>
+<pre><code class="language-hlasm">name     CMDPROC WRITE,CMD1,ID=5
+......
+CMD1     DC    C'&quot;DIR /X&quot;'
+</code></pre>
+<h5 id="read">READ</h5>
+<pre><code class="language-hlasm">name     CMDPROC READ,label,len,ID=,WAIT=
+</code></pre>
+<p>Obtain the output, a line at a time, from the result of a command issued by CMDPROC WRITE from a previously
+opened command processor. </p>
+<p><em>label</em> is the receiving area and may be specified as (reg).</p>
+<p><strong>len</strong></p>
+<p>Maximum length that is passed to your program. </p>
+<ul>
+<li>The default is the implied length of the receiving field. Maximum value is 4095 bytes.</li>
+<li><em>len</em> may be specified as <em>(reg)</em>.</li>
+<li>Maximum register value is 2G - 1 bytes.</li>
+<li>If <em>label</em> is specified as <em>(reg)</em>, then <em>len</em> is mandatory.</li>
+</ul>
+<p><strong>WAIT=</strong></p>
+<p>Time in milliseconds before the READ will terminate if no output from the command processor is available to be read.</p>
+<ul>
+<li>Default is 500 milliseconds.</li>
+<li>Maximum value is 4095 (4 seconds).</li>
+<li>WAIT may be specified as (reg).  Maximum value is X'7FFFFFFF' (about 24 days).</li>
+</ul>
+<h4 id="register-usage_4">Register Usage</h4>
+<ul>
+<li>R0 = Operation code and ID</li>
+<li>R1 = Command area</li>
+<li>R2 = Length</li>
+<li>R3 = Wait value</li>
+<li>R15 = Formation of ID and return code</li>
+</ul>
+<h4 id="return_4">Return</h4>
+<p>GR15 has a return code:</p>
+<ul>
+<li>0 - CMDPROC ok</li>
+<li>4 - READ terminated as WAIT time has expired</li>
+<li>8 - READ terminated because the command processor has ended</li>
+<li>16 - Command Processor abnormally ended (see log message)</li>
+</ul>
+<h3 id="wto-write-to-operator">WTO - Write to operator</h3>
+<p>Display a message on the GUI console.</p>
+<p>The record descriptor word (RDW) defines the variable length text message generated by the WTO macro.</p>
+<pre><code class="language-hlasm">         DC    AL2(len,0),C'text'
+</code></pre>
+<p>len includes the 4 bytes for the RDW.</p>
+<h4 id="formats">Formats</h4>
+<h5 id="text">Text</h5>
+<pre><code class="language-hlasm">name     WTO   'text'
+</code></pre>
+<p>The RDW that describes the message is generated internally.</p>
+<h5 id="list">List</h5>
+<pre><code class="language-hlasm">name     WTO   'text',MF=L
+</code></pre>
+<p>No text is written to the console; only the RDW and text is generated.</p>
+<p>This allows a 'collection' of messages to be constructed which can be used by the execute form.</p>
+<h5 id="execute-1">Execute 1</h5>
+<pre><code class="language-hlasm">name     WTO   MF=E
+</code></pre>
+<p>GR1 must be preloaded with the address of an RDW previously generated with the list form of WTO.</p>
+<h5 id="execute-2">Execute 2</h5>
+<pre><code class="language-hlasm">name     WTO   MF=(E,label)
+name     WTO   MF=(E,(reg))
+</code></pre>
+<p><em>label</em> or <em>(reg)</em> points to an RDW previously generated with the list form of the WTO.</p>
+<h4 id="register-usage_5">Register Usage</h4>
+<ul>
+<li>R1 = Branch around RDW or parm pointer</li>
+</ul>
+<h3 id="xlate-ebcdic-to-ascii">XLATE - EBCDIC to ASCII</h3>
+<pre><code class="language-hlasm">name     XLATE area,len,TO=
+</code></pre>
+<p>Translates data to EBCDIC or ASCII.</p>
+<h4 id="parameters_6">Parameters</h4>
+<h5 id="area">area</h5>
+<p><em>area</em> may be specified as <em>label</em> or <em>(reg)</em>.</p>
+<h5 id="len">len</h5>
+<p><em>len</em> may be specified as a number or (reg).</p>
+<ul>
+<li>Maximum numeric value is 4095 bytes.</li>
+<li>Maximum register value is 2G - 1 bytes.</li>
+</ul>
+<h5 id="to">TO</h5>
+<p>Type of conversion to perform:</p>
+<ul>
+<li>TO=A - convert area to ASCII.</li>
+<li>TO=E - convert area to EBCDIC.</li>
+</ul>
+<h4 id="register-usage_6">Register Usage</h4>
+<ul>
+<li>R0 = Area address and codes</li>
+<li>R1 = Length</li>
+</ul>
+<h3 id="wtor-write-to-operator">WTOR - Write to operator</h3>
+<p>Display a message on the GUI console and receive a response.</p>
+<pre><code class="language-hlasm">name     WTOR  'text',reply,len,ecb
+name     WTOR  &quot;text&quot;,reply,len,ecb
+</code></pre>
+<p>The RDW (see WTO) that describes the message is generated internally. The text appears on the console.</p>
+<h4 id="parameters_7">Parameters</h4>
+<h5 id="reply">reply</h5>
+<p>Specified as label or (reg), is the field into which the reply is put. The reply appears on the console.</p>
+<h5 id="len_1">len</h5>
+<p>Maximum length of reply.</p>
+<ul>
+<li>If reply is specified as (reg) then len is mandatory.</li>
+<li>If len is omitted, then the implied length of reply is used. </li>
+</ul>
+<h5 id="ecb">ecb</h5>
+<p>Specified as label or (reg), by convention defined as DC F'0'.</p>
+<p>After the WTOR macro, instruction execution can proceed until the reply is completed by the user (commonly the Return key).</p>
+<p>Usage: Implied length, named ECB, wait for reply immediately.</p>
+<pre><code class="language-hlasm">         WTOR  'Enter your name',NAME,,MYECB
+         WAIT  ECB=MYECB
+......
+NAME     DC    CL40' '
+MYECB    DC    F'0'
+</code></pre>
+<p>Usage: Register notation, maximum length, no wait for reply.</p>
+<pre><code class="language-hlasm">         LA    R5,NAME
+         LA    R6,MYECB
+         WTOR  'Enter your name',(R5),40,(R6)
+......
+         TM    MYECB,X'40'
+         BO    GOTREPLY
+......
+NAME     DC    CL40' '
+MYECB    DC    F'0'
+</code></pre>
+<h4 id="register-usage_7">Register Usage</h4>
+<ul>
+<li>R0 = Reply address</li>
+<li>R1 = Branch around RDW</li>
+<li>R14 = Reply length</li>
+<li>R15 = ECB address</li>
+</ul>
+<h3 id="wait-wait-for-ecb-completion">WAIT - Wait for ECB completion</h3>
+<pre><code class="language-hlasm">name WAIT num,ECB=
+name WAIT num,ECBLIST=
+</code></pre>
+<p>ECB or ECBLIST must be specified.</p>
+<h4 id="parameters_8">Parameters</h4>
+<h5 id="num">num</h5>
+<p><em>num</em> is optional and defaults to 1.</p>
+<p>For ECB= <em>num</em> must be 1 or omitted.</p>
+<p>For ECBLIST= <em>num</em> is the minimum number of ECBs that must be posted before the WAIT is complete. This value must, of 
+course, be less or equal to the number of ECBs in the list. An abend SF05 will occur if this is not the case.</p>
+<h5 id="ecb_1">ECB=</h5>
+<p>Specified as label or (reg).</p>
+<p>The location of a single 4-byte ECB.</p>
+<h5 id="ecblist">ECBLIST=</h5>
+<p>Specified as label or (reg).
+The location of a sequence of 4-byte addresses, each of which points to a 4-byte ECB. The last 4-byte address must have 
+bit 0 set to 1.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For DECBs, use the CHECK macro rather than WAIT, otherwise error routines may not be correctly invoked.</p>
+</div>
+<h4 id="usage_1">Usage</h4>
+<p>Wait for 2 out of 3 ECBs.</p>
+<pre><code class="language-hlasm">         WAIT  2,ECBLIST
+......
+ECBLIST  DC    A(ECB1)
+         DC    A(ECB2)
+         DC    A(X'80000000'+ECB3)
+ECB1     DC    F'0'
+ECB2     DC    F'0'
+ECB3     DC    F'0'
+</code></pre>
+<h4 id="register-usage_8">Register Usage</h4>
+<ul>
+<li>R0 = Number of ECBs</li>
+<li>R1 = ECB address</li>
+</ul>
+<h3 id="post-signal-ecb-completion">POST - Signal ECB completion</h3>
+<p>Signal the completion of one ECB.</p>
+<pre><code class="language-hlasm">name     POST  ecb,code
+</code></pre>
+<h4 id="parameters_9">Parameters</h4>
+<h5 id="ecb_2">ecb</h5>
+<p><em>ecb</em> is required. Specified as label or (reg). The location of a single 4-byte ECB.</p>
+<h5 id="code">code</h5>
+<p><em>code</em> is optional and defaults to zero. Specified as a value (eg. 14 or X'123') or as (reg).</p>
+<h4 id="return_5">Return</h4>
+<p>The completion code is placed in bits 2-31 of the ECB.</p>
+<h4 id="register-usage_9">Register Usage</h4>
+<ul>
+<li>R0 = Event completion code</li>
+<li>R1 = ECB address</li>
+</ul>
+<h3 id="ctd-convert-binary-or-fp-value">CTD - Convert binary or FP value</h3>
+<pre><code class="language-hlasm">name     CTD   type,IN=input,OUT=output,LINKAGE=
+</code></pre>
+<p>Convert a binary or floating point value to a printable format.</p>
+<h4 id="parameters_10">Parameters</h4>
+<h5 id="type_3">type</h5>
+<p>This is a numeric value which determines the operation to be carried out. 
+Equates are automatically generated. The value of type also determines the length of the input field.</p>
+<p><em>type</em> may be specified in a register eg. (R5). </p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Equate</th>
+<th>Length</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>CTD_INT128</td>
+<td>16</td>
+<td>binary</td>
+</tr>
+<tr>
+<td>2</td>
+<td>CTD_EH</td>
+<td>4</td>
+<td>short HFP</td>
+</tr>
+<tr>
+<td>3</td>
+<td>CTD_EB</td>
+<td>4</td>
+<td>short BFP</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CTD_DH</td>
+<td>8</td>
+<td>long HFP</td>
+</tr>
+<tr>
+<td>5</td>
+<td>CTD_DB</td>
+<td>8</td>
+<td>long BFP</td>
+</tr>
+<tr>
+<td>6</td>
+<td>CTD_LH</td>
+<td>16</td>
+<td>extended HFP</td>
+</tr>
+<tr>
+<td>7</td>
+<td>CTD_LB</td>
+<td>16</td>
+<td>extended BFP</td>
+</tr>
+<tr>
+<td>8</td>
+<td>CTD_DD</td>
+<td>8</td>
+<td>long DFP</td>
+</tr>
+<tr>
+<td>9</td>
+<td>CTD_ED</td>
+<td>4</td>
+<td>short DFP</td>
+</tr>
+<tr>
+<td>10</td>
+<td>CTD_LD</td>
+<td>16</td>
+<td>extended DFP</td>
+</tr>
+</tbody>
+</table>
+<h5 id="in">IN=</h5>
+<p>The input field may be specified as a literal eg. <code>IN==DH'3.8'</code>, a label, a register pointer eg. <code>IN=(R4)</code> 
+or a register eg. <code>IN=R4</code>.</p>
+<p>For some types, input from a register implies the use of a register pair as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Equate</th>
+<th>Register specified</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>CTD_INT128</td>
+<td>Any even general register, input is from the even/odd pair.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>CTD_EH</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>CTD_EB</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CTD_DH</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>CTD_DB</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>CTD_DD</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>CTD_ED</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>CTD_LH</td>
+<td>The first floating point register of a valid pair, input is from the the register pair.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>CTD_LB</td>
+<td>The first floating point register of a valid pair, input is from the the register pair.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>CTD_LD</td>
+<td>The first floating point register of a valid pair, input is from the the register pair.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="out">OUT=</h5>
+<p>The output field may be specified as a label or a register pointer eg. <code>OUT=(R4)</code>.</p>
+<p>The output field is always 45 bytes, and is initialized to blanks. Not all 45 bytes may be used.</p>
+<p>The output field will be ASCII if the ASCII option is used, otherwise EBCDIC will be used.</p>
+<p>The output field has the following format in this sequence: </p>
+<table>
+<thead>
+<tr>
+<th>Output field</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-</td>
+<td>If the value is negative</td>
+</tr>
+<tr>
+<td>n...n</td>
+<td>Digits preceding the decimal point. If the value is less than 1 and there is no exponent, then 0 is output. eg. 0.04</td>
+</tr>
+<tr>
+<td>.</td>
+<td>Decimal point if there are decimal positions</td>
+</tr>
+<tr>
+<td>n...n</td>
+<td>Digits following the decimal point if the value is not a whole number</td>
+</tr>
+<tr>
+<td>E</td>
+<td>Indicates an exponent follows</td>
+</tr>
+<tr>
+<td>-</td>
+<td>Indicates a negative exponent</td>
+</tr>
+<tr>
+<td>nnnn</td>
+<td>The exponent value, 1-4 digits</td>
+</tr>
+</tbody>
+</table>
+<p>Examples:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>zero</td>
+<td>0</td>
+</tr>
+<tr>
+<td>root2</td>
+<td>1.4142...</td>
+</tr>
+<tr>
+<td>-root2</td>
+<td>-1.4142...</td>
+</tr>
+<tr>
+<td>50!</td>
+<td>3.0414...E64</td>
+</tr>
+<tr>
+<td>2 power -50</td>
+<td>8.8817...E-16</td>
+</tr>
+</tbody>
+</table>
+<h5 id="linkage">LINKAGE=</h5>
+<ul>
+<li>SVC (default) invokes SVC 170</li>
+<li>CALL generates a CALL to module FPCONMFC</li>
+</ul>
+<h4 id="register-usage_10">Register Usage</h4>
+<ul>
+<li>R0 = Parameter formation</li>
+<li>R1 = Parameter list</li>
+<li>R14 = Subroutine call</li>
+<li>R15 = Subroutine address and return code</li>
+</ul>
+<h4 id="return_6">Return</h4>
+<p>GR15 has a return code:</p>
+<ul>
+<li>0 - CTD ok</li>
+<li>8 - Invalid data address</li>
+</ul>
+<h3 id="cfd-convert-to-binary-or-fp-value">CFD - Convert to binary or FP value</h3>
+<p>Convert a printable format number to a binary or floating point value.</p>
+<pre><code class="language-hlasm">name     CFD   type,IN=input,OUT=output,LINKAGE=
+</code></pre>
+<h4 id="parameters_11">Parameters</h4>
+<h5 id="type_4">type</h5>
+<p>This is a numeric value which determines the operation to be carried out. Equates are automatically generated. The value of
+type also determines the length of the output field. </p>
+<p><em>type</em> may be specified in a register eg. (R5).</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Equate</th>
+<th>Length</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>21</td>
+<td>CFD_INT128</td>
+<td>16</td>
+<td>binary</td>
+</tr>
+<tr>
+<td>22</td>
+<td>CFD_EH</td>
+<td>4</td>
+<td>short HFP</td>
+</tr>
+<tr>
+<td>23</td>
+<td>CFD_EB</td>
+<td>4</td>
+<td>short BFP</td>
+</tr>
+<tr>
+<td>24</td>
+<td>CFD_DH</td>
+<td>8</td>
+<td>long HFP</td>
+</tr>
+<tr>
+<td>25</td>
+<td>CFD_DB</td>
+<td>8</td>
+<td>long BFP</td>
+</tr>
+<tr>
+<td>26</td>
+<td>CFD_LH</td>
+<td>16</td>
+<td>extended HFP</td>
+</tr>
+<tr>
+<td>27</td>
+<td>CFD_LB</td>
+<td>16</td>
+<td>extended BFP</td>
+</tr>
+<tr>
+<td>28</td>
+<td>CFD_DD</td>
+<td>8</td>
+<td>long DFP</td>
+</tr>
+<tr>
+<td>29</td>
+<td>CFD_ED</td>
+<td>4</td>
+<td>short DFP</td>
+</tr>
+<tr>
+<td>30</td>
+<td>CFD_LD</td>
+<td>16</td>
+<td>extended DFP</td>
+</tr>
+</tbody>
+</table>
+<h5 id="in_1">IN=</h5>
+<p>The input field may be specified as a label or a register pointer eg. (R4).</p>
+<p>The input field must be in ASCII if the ASCII option is used, otherwise EBCDIC.</p>
+<p>The input field is always 45 bytes, and has the following format in this sequence:</p>
+<table>
+<thead>
+<tr>
+<th>output field</th>
+<th>condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>Optional preceding blanks</td>
+</tr>
+<tr>
+<td>-</td>
+<td>If the value is negative</td>
+</tr>
+<tr>
+<td>n...n</td>
+<td>Digits preceding the decimal point.</td>
+</tr>
+<tr>
+<td>.</td>
+<td>Decimal point if there are decimal positions</td>
+</tr>
+<tr>
+<td>n...n</td>
+<td>Digits following the decimal point if the value is not a whole number</td>
+</tr>
+<tr>
+<td>E</td>
+<td>Indicates an exponent follows</td>
+</tr>
+<tr>
+<td>-</td>
+<td>Indicates a negative exponent</td>
+</tr>
+<tr>
+<td>nnnn</td>
+<td>The exponent value, 1-4 digits</td>
+</tr>
+</tbody>
+</table>
+<p>For CFD_INT128, all correct forms are accepted and any decimal places are discarded:</p>
+<pre><code>129E-1 = 12
+</code></pre>
+<h5 id="out_1">OUT=</h5>
+<p>The output field may be specified as a label, a register pointer eg. <code>OUT=(R4)</code> or a register eg. <code>OUT=R4</code></p>
+<p>For some types, output to a register implies the use of a register pair as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Equate</th>
+<th>Register specified</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>21</td>
+<td>CTD_INT128</td>
+<td>Any even general register, input is from the even/odd pair.</td>
+</tr>
+<tr>
+<td>22</td>
+<td>CTD_EH</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>23</td>
+<td>CTD_EB</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>24</td>
+<td>CTD_DH</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>25</td>
+<td>CTD_DB</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>28</td>
+<td>CTD_DD</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>29</td>
+<td>CTD_ED</td>
+<td>Any floating point register.</td>
+</tr>
+<tr>
+<td>26</td>
+<td>CTD_LH</td>
+<td>The first floating point register of a valid pair, input is from the the register pair.</td>
+</tr>
+<tr>
+<td>27</td>
+<td>CTD_LB</td>
+<td>The first floating point register of a valid pair, input is from the the register pair.</td>
+</tr>
+<tr>
+<td>30</td>
+<td>CTD_LD</td>
+<td>The first floating point register of a valid pair, input is from the the register pair.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="linkage_1">LINKAGE=</h5>
+<ul>
+<li>SVC (default) invokes SVC 171</li>
+<li>CALL generates a CALL to module FPCONMFC</li>
+</ul>
+<h4 id="register-usage_11">Register Usage</h4>
+<ul>
+<li>R1 = Parameter list</li>
+<li>R14 = Subroutine call</li>
+<li>R15 = Subroutine address and return code</li>
+</ul>
+<h4 id="return_7">Return</h4>
+<p>GR15 has a return code:</p>
+<ul>
+<li>0 - CFD ok</li>
+<li>8 - Invalid data address</li>
+<li>12 - invalid input data or number too large for format type</li>
+</ul>
+<h3 id="getenv-get-environment-variable">GETENV - Get environment variable</h3>
+<p>Get an environment variable from the OS command environment.</p>
+<p>GETENV extracts the string in a program.</p>
+<pre><code class="language-hlasm">name     GETENV setname
+name     GETENV (reg)
+</code></pre>
+<h4 id="parameters_12">Parameters</h4>
+<h5 id="setname">setname</h5>
+<p><em>setname</em> is the label of a null terminated string or the string can be pointed to by reg.</p>
+<pre><code class="language-hlasm">SETNAME  DC    C'MYDATA',X'00'
+</code></pre>
+<p>GETENV acquires a storage area for the variable and sets the address in GR2. The string is terminated with X'00'.</p>
+<h4 id="register-usage_12">Register Usage</h4>
+<ul>
+<li>R0 = Function code</li>
+<li>R1 = setname pointer</li>
+<li>R2 = Address of variable</li>
+<li>R15 = Return code</li>
+</ul>
+<h4 id="return_8">Return</h4>
+<p>GR15 has a return code:</p>
+<ul>
+<li>0 - GETENV ok</li>
+<li>4 - setname is null</li>
+<li>8 - variable is null</li>
+</ul>
+<h3 id="comrg-comm-region-addressability">COMRG - Comm region addressability</h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>VSE only</p>
+</div>
+<p>Establish addressability to the Communications region in the ZCVT.</p>
+<pre><code class="language-hlasm">         COMRG REG=(reg)
+</code></pre>
+<ul>
+<li>If REG is omitted it defaults to GR1.</li>
+<li>It is the users responsibility to provide a DSECT to map the COMRG.</li>
+</ul>
+<h4 id="register-usage_13">Register Usage</h4>
+<ul>
+<li>R1 = Address the ZCVT</li>
+</ul>
+<p><em>reg</em> used in REG parm.</p>
+<h2 id="supporting-macros">Supporting Macros</h2>
+<p>COMRG Address Communications region (VSE)</p>
+<h2 id="time-periods">Time periods</h2>
+<ul>
+<li>ms - milliseconds 0.001 seconds (one thousandth)</li>
+<li>&micro;s - microseconds 0.000001 seconds (one millionth)</li>
+<li>ns - nanoseconds 0.000000001 seconds (one billionth)</li>
+</ul>
+<h2 id="event-control-block">Event Control Block</h2>
+<h3 id="bits-0-1">Bits 0-1</h3>
+<ul>
+<li>00 - The initial state. WAIT requires both these bits to be zero.</li>
+<li>10 - When the WAIT macro is issued for the ECB, this wait bit is set and the program enters the wait state.</li>
+<li>01 - Set to this state internally or by the POST macro indicates that the event is complete or that the task in a wait state is to be resumed. It is valid to test for this state using a bit test instruction like TM.  </li>
+<li>11 Invalid.</li>
+</ul>
+<h3 id="bits-2-31">Bits 2-31</h3>
+<p>Completion code, set internally or by the POST macro.</p>
+<h2 id="svc-functions">SVC functions</h2>
+<table>
+<thead>
+<tr>
+<th>DEC</th>
+<th>HEX</th>
+<th>Service</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>01</td>
+<td>WAIT</td>
+</tr>
+<tr>
+<td>2</td>
+<td>02</td>
+<td>POST</td>
+</tr>
+<tr>
+<td>11</td>
+<td>0B</td>
+<td>TIME (and date)</td>
+</tr>
+<tr>
+<td>11</td>
+<td>0B</td>
+<td>GETIME (VSE)</td>
+</tr>
+<tr>
+<td>40</td>
+<td>28</td>
+<td>GETENV</td>
+</tr>
+<tr>
+<td>46</td>
+<td>2E</td>
+<td>TTIMER</td>
+</tr>
+<tr>
+<td>47</td>
+<td>2F</td>
+<td>STIMER</td>
+</tr>
+<tr>
+<td>52</td>
+<td>34</td>
+<td>CMDPROC</td>
+</tr>
+<tr>
+<td>53</td>
+<td>35</td>
+<td>WTO</td>
+</tr>
+<tr>
+<td>103</td>
+<td>67</td>
+<td>XLATE</td>
+</tr>
+<tr>
+<td>160</td>
+<td>A0</td>
+<td>WTOR</td>
+</tr>
+<tr>
+<td>170</td>
+<td>AA</td>
+<td>CTD</td>
+</tr>
+<tr>
+<td>171</td>
+<td>AB</td>
+<td>CFD</td>
+</tr>
+</tbody>
+</table>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../program_services/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Program Services" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Program Services
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../z390_Sort_Utility/" class="md-footer__link md-footer__link--next" aria-label="Next: z390 ZSORT" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              z390 ZSORT
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a6c66575.min.js"></script>
+      
+    
+  </body>
+</html>
