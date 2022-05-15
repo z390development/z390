@@ -416,7 +416,7 @@ public  class  az390 implements Runnable {
         * 2022-01-16 DSH #343 move abort for exceeding maxline 
         * 2022-03-28 DSH #327 fix az390 to force odd literals to even address for access by relative halfword offset counts	
         * 2022-05-07 DSH #233 allow spaces within DC numberic values for BDEFHLPXZ such as DC F'123 456' same as F'123456'
-		* 2022-05-10 AFK #398 fix typo in error message and report relative paths (rather than absolute ones) when in RT mode (NOTIMING option in effect)
+		* 2022-05-10 AFK #398 fix typo in error message
     * 2022-05-12 DSH #325 issue error 54 invalid DC field terminator if not '..' for BDEFHLPXZ
 	*****************************************************
     * Global variables                        last rpi
@@ -7078,21 +7078,8 @@ public void put_stats(){
 	while (index < tot_xref_files){
 		if (mz390_call && xref_file_errors[index] > 0){  // RPI 935
 			String xref_msg = "FID=" + tz390.right_justify(""+(index+1),3) 
-					        + " ERR=" + tz390.right_justify(""+xref_file_errors[index],4);
-        // Add file with absolute path - only in RT mode as indicated by option notiming use relative path
-        if (tz390.opt_timing                                         // timing: absolute path
-         || xref_file_name[index].length() <= tz390.dir_cur.length() // not subdir of current directory
-            )
-           {xref_msg = xref_msg + " " + xref_file_name[index];
-            }
-        else
-           {if (xref_file_name[index].substring(0,tz390.dir_cur.length()).equals(tz390.dir_cur)) // leading part of path matches current dir
-               {xref_msg = xref_msg + " ." + xref_file_name[index].substring(tz390.dir_cur.length()-1);
-                }
-            else // no match - use full path anyway
-               {xref_msg = xref_msg + " " + xref_file_name[index];
-                }
-            } //**!! tz390.dir_cur 
+					        + " ERR=" + tz390.right_justify(""+xref_file_errors[index],4) 
+ 	                        + " " + xref_file_name[index];
 			put_log(msg_id + xref_msg);
 		    tz390.put_systerm(msg_id + xref_msg);
 		}
