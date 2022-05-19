@@ -13,7 +13,7 @@ your system.
 
 Download the latest version of the z390 distribution.
 
-[:material-download: Download z390](https://github.com/{{repo}}/releases/download/{{version}}/z390_{{version}}.zip){ .md-button .md-button--primary }
+[:material-download: Download z390](https://github.com/{{repo}}/releases/latest){ .md-button .md-button--primary }
 
 ## Install z390
 
