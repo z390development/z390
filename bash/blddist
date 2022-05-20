@@ -3,19 +3,38 @@
 # blddist: Script to create z390 distribution zip file
 # passing parm "clean" will remove repo ignored files and rebuild prior to dist build
 
-set -e                          # exit on all errors
-cd $(dirname $0)                # set to directory of script
-cd ..                           # cd back to root       
+set -e                                  # exit on all errors
+cd $(dirname $0)                        # set to directory of script
+cd ..                                   # cd back to root       
 
 root_dir=$(pwd)
 version_tag=$(git describe)
 dist_folder=dist
 
-if [ "$1" == "clean" ];         # if "clean" parm passed
+if [ "$1" == "clean" ];                 # if "clean" parm passed
 then
-    git clean -dfX              # delete all git ignored files
+    git clean -dfX                      # delete all git ignored files
 fi
 
+# do the jar build
+bash/bldjar                             # create the z390 jar
+
+# Create pdf doc - available in <root>/site/pdf/z390.pdf
+if [ -d "/opt/docenv" ]
+then
+    # the GitHub docker image has the python virtenv prebuilt at this location
+    source /opt/docenv/bin/activate
+else
+    # otherwise create the environment
+    rm -rf docenv/
+    python -m venv docenv
+    source docenv/bin/activate
+    pip install wheel
+    pip install -r doc/requirements.txt
+fi
+ENABLE_PDF_EXPORT=1 Z390_VERSION=${version_tag} mkdocs build
+
+# Create/clean build folder
 mkdir -p ${dist_folder}                       # create dist folder if does not exist
 echo "/**" > ${dist_folder}/.gitignore        # ignore the dist folder
 rm -rf ${dist_folder}/z390_${version_tag}     # delete version dist directory
@@ -29,17 +48,18 @@ mkdir z390_${version_tag}
 cd z390_${version_tag}
 
 # add core files to the build dir
-cp ${root_dir}/z390.jar .       # jar
-core_dirs=( bash bat mac zcobol cics vse linklib README.txt LICENSE )
+cp ${root_dir}/z390.jar .               # jar
+cp ${root_dir}/site/pdf/z390.pdf .      # pdf doc
+core_dirs=( bash bat mac zcobol cics linklib README.txt LICENSE )
 for dir in ${core_dirs[@]}; do
-    cp -R ${root_dir}/${dir} .        # unix bash scripts
+    cp -R ${root_dir}/${dir} .          # unix bash scripts
 done
 
 # add test and supplimental components
 supp_dirs=( assist demo guam qsam bsam rt soa sort structuredmacros tests vsam1 
-vsam2 zopcheck zpar )
+vsam2 vse zopcheck zpar )
 for dir in ${supp_dirs[@]}; do
-    cp -R ${root_dir}/${dir} .        # unix bash scripts
+    cp -R ${root_dir}/${dir} .          # unix bash scripts
 done
 
 # add structured programming macros to mac/spm folder

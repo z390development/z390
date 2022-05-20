@@ -5,8 +5,9 @@
 # VSCode workspace settings
 .vscode/
 
-# doc python venv
+# doc working areas
 docenv/
+site/
 
 # z390.properties file (use relver to create)
 z390.properties
@@ -688,3 +689,7 @@ rt/test/save/TESTTXT1
 rt/test/save/TESTUSE1
 rt/test/save/TESTUSE2
 rt/test/save/TESTWXT1
+
+# Start ignore rules for docs here
+!doc/**
+!doc_overrides/**

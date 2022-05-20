@@ -1,3 +1,7 @@
+---
+hide:
+- toc
+---
 # zCOBOL options
 
 !!! Note "Use of parameters with parentheses in *nix shells"

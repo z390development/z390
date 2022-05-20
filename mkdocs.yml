@@ -1,9 +1,60 @@
-site_name: z390 docs
-repo_url: https://github.com/z390development/z390/
+site_name: z390
+site_author: z390 Development team
+copyright: "&copy; 2022 z390 Assembler LLC. All rights reserved"
+repo_name: z390development/z390
+repo_url: https://github.com/z390development/z390
 edit_uri: edit/main/doc/
-theme: material
+remote_branch: gh-pages
+
+plugins:
+  - search
+  - awesome-pages
+  - macros
+  - with-pdf:
+      enabled_if_env: ENABLE_PDF_EXPORT
+      output_path: pdf/z390.pdf
+      custom_template_path: doc/templates
+
+theme: 
+  name: material
+  custom_dir: doc_overrides
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    # - toc.integrate
+
 docs_dir: doc
+
 markdown_extensions:
   - admonition
   - footnotes
+  - meta
   - attr_list
+  - def_list
+  - toc:
+      toc_depth: 3
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      # alternate_style: true 
+  - pymdownx.critic
+  - pymdownx.smartsymbols
+  - pymdownx.keys
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - ... | getting_started/**
+  - ... | user_guide/**
+  - ... | reference/**
+  - ... | contributing/**
+
+extra:
+  version: !ENV [Z390_VERSION, 'Undefined']
+  repo: !ENV [GITHUB_REPOSITORY, 'z390development/z390']

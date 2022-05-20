@@ -1,8 +1,30 @@
 # SVC services
 
+## SVC functions
+
+DEC | HEX | Service
+----|-----|--------
+  1 | 01  | [WAIT](#wait)
+  2 | 02  | [POST](#post)
+ 11 | 0B  | [TIME(and date)](#time-svc)
+ 11 | 0B  | [GETIME (VSE)](#gettime)
+ 40 | 28  | [GETENV](#getenv)
+ 46 | 2E  | [TTIMER](#ttimer)
+ 47 | 2F  | [STIMER](#stimer)
+ 52 | 34  | [CMDPROC](#cmdproc)
+ 53 | 35  | [WTO](#wto)
+103 | 67  | [XLATE](#xlate)
+160 | A0  | [WTOR](#wtor)
+170 | AA  | [CTD](#ctd)
+171 | AB  | [CFD](#cfd)
+
+## Supporting Macros
+
+* [COMRG](#comrg) - Address Communications region (VSE)
+
 ## Macro reference
 
-### TIME(SVC) - Obtain the time and date
+### TIME(SVC) - Obtain the time and date {: #time-svc}
 
 ``` hlasm
 name     TIME  type,addr,LINKAGE=SVC,DATETYPE=,CLOCKTYPE=
@@ -29,7 +51,8 @@ The values are unsigned packed decimal:
 
     X'21420654' = 21:42:06.54
 
-The MVO instruction can be used after storing the register to convert it to standard packed decimal format.
+The MVO instruction can be used after storing the register to convert it to 
+standard packed decimal format.
 
 Date in GR1 as CCYYDDDF - Century, year, day number and sign. 
 
@@ -98,8 +121,8 @@ name     TIME  STCK,(reg)
 ```
 Returns: Time in units of 1&micro;s in binary since midnight.
 
-The time is stored at the 8 bytes specified and uses only bits 0-51 of the 8-byte field.
-Date in GR1 as above.
+The time is stored at the 8 bytes specified and uses only bits 0-51 of the 
+8-byte field. Date in GR1 as above.
 
 **TS - Timestamp**
 
@@ -121,7 +144,8 @@ name     TIME  CLOCK,(reg),CLOCKTYPE=STCK
 ```
 Returns: Time in units of 1&micro;s in binary since 1st January 1900.
 
-The time is stored at the 8 bytes specified and uses only bits 0-51 of the 8-byte field.
+The time is stored at the 8 bytes specified and uses only bits 0-51 of the 
+8-byte field.
 
 *CLOCKTYPE=STCKE*
 
@@ -135,9 +159,11 @@ The time is stored at the 16 bytes specified:
 
 * Byte 0 : Zero
 * Bytes 1-13 : The time
-* Bytes 14-15 : Programmable field set by the SCKPF instruction and not currently implemented.
+* Bytes 14-15 : Programmable field set by the SCKPF instruction and not 
+  currently implemented.
 
-The time uses only bits 8-111 of the 16-byte field with bits 8-59 being the value in microseconds.
+The time uses only bits 8-111 of the 16-byte field with bits 8-59 being the 
+value in microseconds.
 
 *CLOCKTYPE=JAVA*
 
@@ -161,7 +187,7 @@ GR15 has a return code:
 * 0 - TIME ok
 * 4 - Invalid request
 
-### TIME(SYSTEM) - Obtain the time and date
+### TIME(SYSTEM) - Obtain the time and date {: #time-system}
 
 ``` hlasm
 name     TIME  type,addr,LINKAGE=SYSTEM,DATETYPE=,CLOCKTYPE=
@@ -219,7 +245,8 @@ The date is stored at label+8 or 8(reg).
 name     TIME  BIN,label,LINKAGE=SYSTEM
 name     TIME  BIN,(reg),LINKAGE=SYSTEM
 ```
-Returns: The time is stored at the 4 bytes specified in hundredths of a second since midnight
+Returns: The time is stored at the 4 bytes specified in hundredths of a second 
+since midnight
 
 The date is stored at label+8 or 8(reg).
 
@@ -242,8 +269,8 @@ name     TIME  STCK,(reg),LINKAGE=SYSTEM
 ```
 Returns: Time in units of 1&micro;s in binary since midnight.
 
-The time is stored at the 8 bytes specified and uses only bits 0-51 of the 8-byte field.
-The date is stored at label+8 or 8(reg).
+The time is stored at the 8 bytes specified and uses only bits 0-51 of the 
+8-byte field. The date is stored at label+8 or 8(reg).
 
 **STCKE - Microseconds 16 byte**
 
@@ -258,9 +285,11 @@ The time is stored at the 16 bytes specified:
 
 * Byte 0 : Zero
 * Bytes 1-13 : The time
-* Bytes 14-15 : Programmable field set by the SCKPF instruction and not currently implemented.
+* Bytes 14-15 : Programmable field set by the SCKPF instruction and not 
+  currently implemented.
 
-The time uses only bits 8-111 of the 16-byte field with bits 8-59 being the value in microseconds.
+The time uses only bits 8-111 of the 16-byte field with bits 8-59 being the 
+value in microseconds.
 
 !!! Note
     The DATETYPE parameter is ignored.
@@ -277,7 +306,7 @@ GR15 has a return code:
 * 0 - TIME ok
 * 4 - Invalid request
  
-### GETIME - Obtain time and date (VSE)
+### GETIME - Obtain time and date (VSE) {: #gettime}
 
 ``` hlasm
          GETIME type
@@ -314,7 +343,7 @@ GR15 has a return code:
 * 0 - GETIME ok
 * 4 - Invalid request
  
-### STIMER - Wait for an interval of time
+### STIMER - Wait for an interval of time {: #stimer}
 
 Wait for an interval of time.
 
@@ -355,7 +384,8 @@ Can be label or (reg).
 * Other registers must be assumed to be destroyed.
 
 !!! Note
-    STIMER REAL is measuring clock time, and not the time that the Z390 program is executing.
+    STIMER REAL is measuring clock time, and not the time that the Z390 program 
+    is executing.
 
 #### Register Usage
 
@@ -363,7 +393,7 @@ Can be label or (reg).
 * R1 = Address of the timer units
 * R15 = By implication, exit routine address
 
-### TTIMER - Test or cancel STIMER REAL
+### TTIMER - Test or cancel STIMER REAL {: #ttimer}
 
 Test or cancel a previously set STIMER REAL
 
@@ -381,11 +411,13 @@ CANCEL means that the STIMER timing is terminated.
 
 **TU (default)**
 
-Returns the remaining time in GR0 as 4 bytes in timer units of 26.04166&micro;s. addr is ignored.
+Returns the remaining time in GR0 as 4 bytes in timer units of 26.04166&micro;s. 
+addr is ignored.
 
 **MIC,addr**
 
-Using MIC requires addr which may be specified as label or (reg). The remaining time is returned at the doubleword address in microseconds.
+Using MIC requires addr which may be specified as label or (reg). The remaining 
+time is returned at the doubleword address in microseconds.
  
 #### Usage
 
@@ -414,15 +446,17 @@ GR15 has a return code:
 * 4 TU units remaining exceed 31 bits
 
 
-### CMDPROC - execute host OS commands
+### CMDPROC - execute host OS commands {: #cmdproc}
 
 Open, close, read and write from the host command processor or shell.
 
-With the CMDPROC macro, you can issue OS shell commands, receive the replies from those commands line by line and start
-other programs.
+With the CMDPROC macro, you can issue OS shell commands, receive the replies 
+from those commands line by line and start other programs.
 
-There is a limit of 10 command processors that can be open at any time. The limit is only to protect the operating system
-from storage depletion. In all cases below, ID may be defined as a numeric value or in a general register. For example, ID=2 or ID=(R5).
+There is a limit of 10 command processors that can be open at any time. The 
+limit is only to protect the operating system from storage depletion. In all 
+cases below, ID may be defined as a numeric value or in a general register. 
+For example, ID=2 or ID=(R5).
 
 #### Parameters
 
@@ -441,13 +475,17 @@ name      CMDPROC START,ID=,CMDLOG=
 
 Start a command processor and assign an identifier.
 
-If the memory queue exceeds the MAXQUE value (default 1000) then the memory queue is written to the log and CMDPROC=YES is assumed. 
+If the memory queue exceeds the MAXQUE value (default 1000) then the memory 
+queue is written to the log and CMDPROC=YES is assumed. 
+
 An error message is generated.
 
 **CMDLOG**
 
-* CMDLOG=YES (Default) -  All output from the command processor is written to the log.
-* CMDLOG=NO -  All output is saved in a memory queue. Use this option if you intend to use CMDPROC READ to retrieve command processor messages.
+* CMDLOG=YES (Default) - All output from the command processor is written to 
+  the log.
+* CMDLOG=NO - All output is saved in a memory queue. Use this option if you 
+  intend to use CMDPROC READ to retrieve command processor messages.
 
 ##### STOP
 
@@ -468,11 +506,13 @@ Send a command to a previously opened command processor.
 
 **label or (reg)**
 
-Points to a constant which terminates with X'00' or is defined as a double-quoted string within a standard C-type constant.
+Points to a constant which terminates with X'00' or is defined as a 
+double-quoted string within a standard C-type constant.
 
 **literal**
 
-Double-quoted string within a standard C-type constant preceded by an equals sign.
+Double-quoted string within a standard C-type constant preceded by an equals 
+sign.
 
 ``` hlasm
 name     CMDPROC WRITE,CMD1,ID=5
@@ -492,8 +532,8 @@ CMD1     DC    C'"DIR /X"'
 name     CMDPROC READ,label,len,ID=,WAIT=
 ```
 
-Obtain the output, a line at a time, from the result of a command issued by CMDPROC WRITE from a previously
-opened command processor. 
+Obtain the output, a line at a time, from the result of a command issued by 
+CMDPROC WRITE from a previously opened command processor. 
  
 _label_ is the receiving area and may be specified as (reg).
 
@@ -501,14 +541,16 @@ _label_ is the receiving area and may be specified as (reg).
 
 Maximum length that is passed to your program. 
 
-* The default is the implied length of the receiving field. Maximum value is 4095 bytes.
+* The default is the implied length of the receiving field. Maximum value is 
+  4095 bytes.
 * _len_ may be specified as _(reg)_.
 * Maximum register value is 2G - 1 bytes.
 * If _label_ is specified as _(reg)_, then _len_ is mandatory.
 
 **WAIT=**
 
-Time in milliseconds before the READ will terminate if no output from the command processor is available to be read.
+Time in milliseconds before the READ will terminate if no output from the 
+command processor is available to be read.
 
 * Default is 500 milliseconds.
 * Maximum value is 4095 (4 seconds).
@@ -531,11 +573,12 @@ GR15 has a return code:
 * 8 - READ terminated because the command processor has ended
 * 16 - Command Processor abnormally ended (see log message)
 
-### WTO - Write to operator
+### WTO - Write to operator {: #wto}
 
 Display a message on the GUI console.
 
-The record descriptor word (RDW) defines the variable length text message generated by the WTO macro.
+The record descriptor word (RDW) defines the variable length text message 
+generated by the WTO macro.
 
 ``` hlasm
          DC    AL2(len,0),C'text'
@@ -561,7 +604,8 @@ name     WTO   'text',MF=L
 
 No text is written to the console; only the RDW and text is generated.
 
-This allows a 'collection' of messages to be constructed which can be used by the execute form.
+This allows a 'collection' of messages to be constructed which can be used by 
+the execute form.
 
 ##### Execute 1
 
@@ -569,7 +613,8 @@ This allows a 'collection' of messages to be constructed which can be used by th
 name     WTO   MF=E
 ```
 
-GR1 must be preloaded with the address of an RDW previously generated with the list form of WTO.
+GR1 must be preloaded with the address of an RDW previously generated with the 
+list form of WTO.
 
 ##### Execute 2
 
@@ -578,13 +623,14 @@ name     WTO   MF=(E,label)
 name     WTO   MF=(E,(reg))
 ```
 
-*label* or *(reg)* points to an RDW previously generated with the list form of the WTO.
+*label* or *(reg)* points to an RDW previously generated with the list form of 
+the WTO.
 
 #### Register Usage
 
 * R1 = Branch around RDW or parm pointer
 
-### XLATE - EBCDIC to ASCII
+### XLATE - EBCDIC to ASCII {: #xlate}
 
 ``` hlasm
 name     XLATE area,len,TO=
@@ -617,7 +663,7 @@ Type of conversion to perform:
 * R0 = Area address and codes
 * R1 = Length
 
-### WTOR - Write to operator
+### WTOR - Write to operator {: #wtor}
 
 Display a message on the GUI console and receive a response.
 
@@ -626,13 +672,15 @@ name     WTOR  'text',reply,len,ecb
 name     WTOR  "text",reply,len,ecb
 ```
 
-The RDW (see WTO) that describes the message is generated internally. The text appears on the console.
+The RDW (see WTO) that describes the message is generated internally. The text 
+appears on the console.
 
 #### Parameters
 
 ##### reply
 
-Specified as label or (reg), is the field into which the reply is put. The reply appears on the console.
+Specified as label or (reg), is the field into which the reply is put. The reply
+appears on the console.
 
 ##### len
 
@@ -645,7 +693,8 @@ Maximum length of reply.
 
 Specified as label or (reg), by convention defined as DC F'0'.
 
-After the WTOR macro, instruction execution can proceed until the reply is completed by the user (commonly the Return key).
+After the WTOR macro, instruction execution can proceed until the reply is 
+completed by the user (commonly the Return key).
 
 Usage: Implied length, named ECB, wait for reply immediately.
 
@@ -678,7 +727,7 @@ MYECB    DC    F'0'
 * R14 = Reply length
 * R15 = ECB address
 
-### WAIT - Wait for ECB completion
+### WAIT - Wait for ECB completion {: #wait}
 
 ``` hlasm
 name WAIT num,ECB=
@@ -695,8 +744,9 @@ _num_ is optional and defaults to 1.
 
 For ECB= _num_ must be 1 or omitted.
 
-For ECBLIST= _num_ is the minimum number of ECBs that must be posted before the WAIT is complete. This value must, of 
-course, be less or equal to the number of ECBs in the list. An abend SF05 will occur if this is not the case.
+For ECBLIST= _num_ is the minimum number of ECBs that must be posted before the 
+WAIT is complete. This value must, of course, be less or equal to the number of 
+ECBs in the list. An abend SF05 will occur if this is not the case.
 
 
 ##### ECB=
@@ -708,11 +758,12 @@ The location of a single 4-byte ECB.
 ##### ECBLIST=
 
 Specified as label or (reg).
-The location of a sequence of 4-byte addresses, each of which points to a 4-byte ECB. The last 4-byte address must have 
-bit 0 set to 1.
+The location of a sequence of 4-byte addresses, each of which points to a 4-byte 
+ECB. The last 4-byte address must have bit 0 set to 1.
 
 !!! Note
-    For DECBs, use the CHECK macro rather than WAIT, otherwise error routines may not be correctly invoked.
+    For DECBs, use the CHECK macro rather than WAIT, otherwise error routines 
+    may not be correctly invoked.
 
 #### Usage
 
@@ -734,7 +785,7 @@ ECB3     DC    F'0'
 * R0 = Number of ECBs
 * R1 = ECB address
 
-### POST - Signal ECB completion
+### POST - Signal ECB completion {: #post}
 
 Signal the completion of one ECB.
 
@@ -746,11 +797,13 @@ name     POST  ecb,code
 
 ##### ecb
 
-_ecb_ is required. Specified as label or (reg). The location of a single 4-byte ECB.
+_ecb_ is required. Specified as label or (reg). The location of a single 4-byte 
+ECB.
 
 ##### code
 
-_code_ is optional and defaults to zero. Specified as a value (eg. 14 or X'123') or as (reg).
+_code_ is optional and defaults to zero. Specified as a value (eg. 14 or X'123') 
+or as (reg).
 
 #### Return
 
@@ -761,7 +814,7 @@ The completion code is placed in bits 2-31 of the ECB.
 * R0 = Event completion code
 * R1 = ECB address
 
-### CTD - Convert binary or FP value
+### CTD - Convert binary or FP value {: #ctd}
 
 ``` hlasm
 name     CTD   type,IN=input,OUT=output,LINKAGE=
@@ -774,7 +827,8 @@ Convert a binary or floating point value to a printable format.
 ##### type
 
 This is a numeric value which determines the operation to be carried out. 
-Equates are automatically generated. The value of type also determines the length of the input field.
+Equates are automatically generated. The value of type also determines the 
+length of the input field.
 
 _type_ may be specified in a register eg. (R5). 
 
@@ -793,8 +847,8 @@ Value | Equate        | Length | Description
 
 ##### IN=
 
-The input field may be specified as a literal eg. `IN==DH'3.8'`, a label, a register pointer eg. `IN=(R4)` 
-or a register eg. `IN=R4`.
+The input field may be specified as a literal eg. `IN==DH'3.8'`, a label, a 
+register pointer eg. `IN=(R4)` or a register eg. `IN=R4`.
 
 For some types, input from a register implies the use of a register pair as follows:
 
@@ -816,9 +870,11 @@ Value | Equate     | Register specified
 
 The output field may be specified as a label or a register pointer eg. `OUT=(R4)`.
 
-The output field is always 45 bytes, and is initialized to blanks. Not all 45 bytes may be used.
+The output field is always 45 bytes, and is initialized to blanks. Not all 45 
+bytes may be used.
 
-The output field will be ASCII if the ASCII option is used, otherwise EBCDIC will be used.
+The output field will be ASCII if the ASCII option is used, otherwise EBCDIC 
+will be used.
 
 The output field has the following format in this sequence: 
 
@@ -861,7 +917,7 @@ GR15 has a return code:
 * 0 - CTD ok
 * 8 - Invalid data address
 
-### CFD - Convert to binary or FP value
+### CFD - Convert to binary or FP value {: #cfd}
 
 Convert a printable format number to a binary or floating point value.
 
@@ -873,8 +929,9 @@ name     CFD   type,IN=input,OUT=output,LINKAGE=
 
 ##### type
 
-This is a numeric value which determines the operation to be carried out. Equates are automatically generated. The value of
-type also determines the length of the output field. 
+This is a numeric value which determines the operation to be carried out. 
+Equates are automatically generated. The value of type also determines the 
+length of the output field. 
 
 _type_ may be specified in a register eg. (R5).
 
@@ -916,7 +973,8 @@ For CFD_INT128, all correct forms are accepted and any decimal places are discar
 
 ##### OUT=
 
-The output field may be specified as a label, a register pointer eg. `OUT=(R4)` or a register eg. `OUT=R4`
+The output field may be specified as a label, a register pointer eg. `OUT=(R4)` 
+or a register eg. `OUT=R4`
 
 For some types, output to a register implies the use of a register pair as follows:
 
@@ -952,7 +1010,7 @@ GR15 has a return code:
 * 8 - Invalid data address
 * 12 - invalid input data or number too large for format type
 
-### GETENV - Get environment variable
+### GETENV - Get environment variable {: #getenv}
 
 Get an environment variable from the OS command environment.
 
@@ -966,13 +1024,15 @@ name     GETENV (reg)
 
 ##### setname
 
-_setname_ is the label of a null terminated string or the string can be pointed to by reg.
+_setname_ is the label of a null terminated string or the string can be pointed 
+to by reg.
 
 ``` hlasm
 SETNAME  DC    C'MYDATA',X'00'
 ```
 
-GETENV acquires a storage area for the variable and sets the address in GR2. The string is terminated with X'00'.
+GETENV acquires a storage area for the variable and sets the address in GR2. The 
+string is terminated with X'00'.
 
 #### Register Usage
 
@@ -989,7 +1049,7 @@ GR15 has a return code:
 * 4 - setname is null
 * 8 - variable is null
 
-### COMRG - Comm region addressability
+### COMRG - Comm region addressability {: #comrg}
 
 !!! Note
     VSE only
@@ -1009,10 +1069,6 @@ Establish addressability to the Communications region in the ZCVT.
 
 _reg_ used in REG parm.
 
-## Supporting Macros
-
-COMRG Address Communications region (VSE)
-
 ## Time periods
 
 * ms - milliseconds 0.001 seconds (one thousandth)
@@ -1024,28 +1080,14 @@ COMRG Address Communications region (VSE)
 ### Bits 0-1
 
 * 00 - The initial state. WAIT requires both these bits to be zero.
-* 10 - When the WAIT macro is issued for the ECB, this wait bit is set and the program enters the wait state.
-* 01 - Set to this state internally or by the POST macro indicates that the event is complete or that the task in a wait state is to be resumed. It is valid to test for this state using a bit test instruction like TM.  
+* 10 - When the WAIT macro is issued for the ECB, this wait bit is set and the 
+  program enters the wait state.
+* 01 - Set to this state internally or by the POST macro indicates that the 
+  event is complete or that the task in a wait state is to be resumed. It is 
+  valid to test for this state using a bit test instruction like TM.  
 * 11 Invalid.
 
 ### Bits 2-31
 
 Completion code, set internally or by the POST macro.
 
-## SVC functions
-
-DEC | HEX | Service
-----|-----|--------
-  1 | 01  | WAIT
-  2 | 02  | POST
- 11 | 0B  | TIME (and date)
- 11 | 0B  | GETIME (VSE)
- 40 | 28  | GETENV
- 46 | 2E  | TTIMER
- 47 | 2F  | STIMER
- 52 | 34  | CMDPROC
- 53 | 35  | WTO
-103 | 67  | XLATE
-160 | A0  | WTOR
-170 | AA  | CTD
-171 | AB  | CFD

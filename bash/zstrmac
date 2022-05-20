@@ -17,32 +17,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://www.gnu.org/licenses/>.
 #######################################################################
-# This script builds HLASM compatible structured programming macros
-# Usage: bldzstrmac <output dir>
-#        If no output dir is provided, defaults to build/zstrmac
-#######################################################################
 set -e              # exit on all errors
-cd $(dirname $0)    # set to directory of script
-cd ..               # go to root
 
-DEST=$1
-if [ -z "${DEST}" ]; then 
-    DEST="build/zstrmac"
+pushd $(dirname $0) > /dev/null
+cd ..    # get z390 base
+Z390BASE=$(pwd)
+popd > /dev/null
+
+SRC=$1
+DEST=$2
+if [ -z "${DEST}" ]; then
+    echo "Usage: zstrmac <source> <dest>"
+    exit 1
 fi
-mkdir -p "${DEST}"   # create folder if does not exist
-find build/zstrmac -type f -not -name 'README.md' -delete  # clear previous 
 
-ZSTR="rt/test/ZSTRMAC2.ZSM"
-
-# generate the HLASM versions of the macros
-macs=(CASE CASENTRY DO ELSE ELSEIF ENDCASE ENDDO ENDIF ENDSEL IF OTHRWISE SELECT WHEN ZSTREQU)
-for mac in ${macs[@]}; do
-    bash/zstrmac mac/${mac}.MAC ${DEST}/${mac}.MAC
-done
-
-# copy the static copy files
-cpys=(mac/ASMMSP.CPY mac/ZSTRGBL.CPY mac/ZSTRMAC.CPY)
-for cpy in ${cpys[@]}; do
-    echo "Adding ${cpy} to ${DEST}"
-    cp -R ${cpy} ${DEST}
-done
+ZSTR="${Z390BASE}/rt/test/ZSTRMAC2.ZSM"
+SYSUT1=${SRC} SYSUT2=${DEST} ${Z390BASE}/bash/mz390 ${ZSTR} NOASM STATS
