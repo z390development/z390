@@ -1,0 +1,1529 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <meta name="author" content="z390 Development team">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.3.6">
+    
+    
+      
+        <title>SOA services - z390</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a57b2b03.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.3f5d1f46.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    <script>function __prefix(e){return new URL("../..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#soa-services" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner md-announce">
+          <div class="md-banner__inner md-announce__inner md-grid md-typeset">
+            
+  <p>This is a work in progress. Contributions to the documentation are welcome. See <a
+    href="../../contributing/contribute_docs">Contributing</a> for more information.</p>
+
+          </div>
+        </aside>
+      
+    </div>
+    
+      
+
+  
+
+<header class="md-header md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="z390" class="md-header__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            z390
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              SOA services
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting_started/install/" class="md-tabs__link">
+        Getting started
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../user_guide/commands/" class="md-tabs__link">
+        User guide
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../svc_services/" class="md-tabs__link md-tabs__link--active">
+        Reference
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/contribute_code/" class="md-tabs__link">
+        Contributing
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="z390" class="md-nav__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    z390
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Getting started
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Getting started" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Getting started
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstart/" class="md-nav__link">
+        Quick starts
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/learning/" class="md-nav__link">
+        Learning resources
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/macro_index/" class="md-nav__link">
+        z/OS compatible macros
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          User guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="User guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          User guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/commands/" class="md-nav__link">
+        Commands
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/structured_macro/" class="md-nav__link">
+        Structured Macro Extensions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3" type="checkbox" id="__nav_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_3">
+          Options
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Options" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Options
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/z390_filetypes/" class="md-nav__link">
+        z390 File types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/z390_options/" class="md-nav__link">
+        z390 Options
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/zCOBOL_filetypes/" class="md-nav__link">
+        zCOBOL file types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/zCOBOL_options/" class="md-nav__link">
+        zCOBOL options
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../svc_services/" class="md-nav__link">
+        SVC services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../program_services/" class="md-nav__link">
+        Program Services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage_services/" class="md-nav__link">
+        Storage services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../file_services/" class="md-nav__link">
+        Non-VSAM File Services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guam_services/" class="md-nav__link">
+        GUAM services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          SOA services
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        SOA services
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#macro-reference" class="md-nav__link">
+    Macro reference
+  </a>
+  
+    <nav class="md-nav" aria-label="Macro reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#svc-functions" class="md-nav__link">
+    SVC functions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#TCPIO" class="md-nav__link">
+    TCPIO - TCP/IP operations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#SOAGEN" class="md-nav__link">
+    SOAGEN - SOA app gen support
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    References
+  </a>
+  
+    <nav class="md-nav" aria-label="References">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#original-z390-soa-documents" class="md-nav__link">
+    Original z390 SOA documents
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tcpip" class="md-nav__link">
+    TCP/IP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#host-ip-addressing" class="md-nav__link">
+    Host IP Addressing
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#socket-ports" class="md-nav__link">
+    Socket Ports
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../structured_program/" class="md-nav__link">
+        Structured programming macros
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vsam_file_services/" class="md-nav__link">
+        zVSAM services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zpar/" class="md-nav__link">
+        zPAR and zPARTRS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sort/" class="md-nav__link">
+        zSORT
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assist/" class="md-nav__link">
+        ASSIST support
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_12" type="checkbox" id="__nav_4_12" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_12">
+          zCICS
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="zCICS" data-md-level="2">
+        <label class="md-nav__title" for="__nav_4_12">
+          <span class="md-nav__icon md-icon"></span>
+          zCICS
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zCICS/" class="md-nav__link">
+        Manuals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zCICS/zcics_app_prog_guide/" class="md-nav__link">
+        zCICS Application Programming Guide
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Contributing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contribute_code/" class="md-nav__link">
+        Contributing to z390
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contribute_docs/" class="md-nav__link">
+        Contributing to z390 Documentation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#macro-reference" class="md-nav__link">
+    Macro reference
+  </a>
+  
+    <nav class="md-nav" aria-label="Macro reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#svc-functions" class="md-nav__link">
+    SVC functions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#TCPIO" class="md-nav__link">
+    TCPIO - TCP/IP operations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#SOAGEN" class="md-nav__link">
+    SOAGEN - SOA app gen support
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    References
+  </a>
+  
+    <nav class="md-nav" aria-label="References">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#original-z390-soa-documents" class="md-nav__link">
+    Original z390 SOA documents
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tcpip" class="md-nav__link">
+    TCP/IP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#host-ip-addressing" class="md-nav__link">
+    Host IP Addressing
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#socket-ports" class="md-nav__link">
+    Socket Ports
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/z390development/z390/edit/main/doc/reference/soa_services.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="soa-services">SOA services</h1>
+<p>The z390 project supports low level Service Oriented Architecture (SOA) type 
+application generation and execution.</p>
+<p>The advantage of using the SOA architecture is that services are more easily shared
+across diverse applications and user networks and maintenance is simpler since server
+code does not need to be statically linked into client application code.</p>
+<p>Any z390 application program can open up to 10 different client TCP/IP ports and 
+10 different TCP/IP server ports. </p>
+<p>The server can support up to a total of 20 concurrent connections from client. </p>
+<p>z390 TCP/IP client and server programs can interact with clients or server 
+applications written in any language supporting compatible messaging via TCP/IP 
+sockets.</p>
+<h2 id="macro-reference">Macro reference</h2>
+<h3 id="svc-functions">SVC functions</h3>
+<p>The z390 macro TCPIO invoking svc x’7C’ supports TCP/IP sockets messaging
+between client and server components.</p>
+<h3 id="TCPIO">TCPIO - TCP/IP operations</h3>
+<p>The TCPIO macro operations OPEN, CLOSE, SEND, and RECEIVE support
+messaging between client and server programs using TCP/IP sockets. </p>
+<ul>
+<li>Messages of any length can be exchanges between any client and server programs 
+  on a TCP/IP network.</li>
+<li>The server program must first open a socket port. </li>
+<li>Up to 20 concurrent clients can open connections to any server port. </li>
+<li>The same program can have up to 10 server ports and 10 client ports open.</li>
+<li>This command is similar to the functions provided by the IBM z/OS Communication 
+  Server macro <code>EZASMI</code></li>
+</ul>
+<h4 id="open">OPEN</h4>
+<div class="highlight"><pre><span></span><code>label    TCPIO OPEN,PORT=port,HOST=host
+</code></pre></div>
+<ul>
+<li>The port can be any standard port number less than 1024 or any private port 
+  number above 1024.</li>
+<li>The port number can be numeric constant, symbolic absolute value, or can be 
+  specified in (register). </li>
+<li>The only requirement is that port numbers not conflict with other port numbers 
+  being used on the same network with the same processor hosts. </li>
+<li>If the HOST= keyword parameter is coded specifying a specific host IP address 
+  such as 162.692.1.3 or * for the current processor, then a client port will be 
+  opened with a connection to the server port on the indicated processor. </li>
+<li>If a connection to the specified server port cannot be made, then a return 
+  code of 12 will be set. </li>
+<li>If the HOST= parameter is omitted, then a server port will be opened on the 
+  current processor which can handle up to 20 concurrent connections from client 
+  ports on the network.</li>
+</ul>
+<h4 id="close">CLOSE</h4>
+<div class="highlight"><pre><span></span><code>label    TCPIO CLOSE,PORT=port
+</code></pre></div>
+<p>Close the specified port. </p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>You cannot open a client and sever port with the same number so 
+there is no need to indicate which type it is. </p>
+</div>
+<ul>
+<li>When a server port is closed, all associated port and connection threads are 
+  also terminated. </li>
+<li>All ports are automatically closed at program termination if not closed 
+  explicitly.</li>
+</ul>
+<h4 id="send">SEND</h4>
+<div class="highlight"><pre><span></span><code>label    TCPIO SEND,PORT=port,MSG=addr,LMSG=length
+</code></pre></div>
+<p>Send the message with specified address and length to the specified port.</p>
+<ul>
+<li>The message starting address can be RX type label or can be specified as (register).</li>
+<li>The message length can be absolute value or (register).</li>
+<li>If the send fails, a return code of 12 will be set.</li>
+</ul>
+<h4 id="receive">RECEIVE</h4>
+<div class="highlight"><pre><span></span><code>label    TCPIO RECEIVE[,NOWAIT],PORT=port,MSG=addr,LMSG=max-length[,CONN=id]
+</code></pre></div>
+<p>Receive a message from the specified port starting at address with length up to max length. </p>
+<ul>
+<li>The message starting address can be RX type label or can be specified as (register).</li>
+<li>The message maximum length can be absolute value or (register).</li>
+<li>If the optional second positional parameter NOWAIT is specified, a return code 
+  of 4 will be returned if no message is ready otherwise the RECEIVE will wait 
+  until at least 1 byte of the message is available.</li>
+<li>If the port is a server port then the optional keyword parameter CONN=id may 
+  be specified indicating a specific connection that was previously returned by 
+  prior TCPIO RECEIVE in register 2.</li>
+<li>If a CONN value of -1 is specified or the parameter is omitted, the next 
+  message from any connection will be returned along with the connection id in 
+  register 2.</li>
+<li>At least 1 byte will be returned on a successful RECEIVE with return code 0 
+  along with the number of bytes returned in register 1. Up to the max-length 
+  bytes may be returned. </li>
+<li>If more than one message arrives prior to RECEIVE, it is up to the user to 
+  determine where one message ends and next message starts. <ul>
+<li>A 4 byte message length prefix can be used to determine each message length. </li>
+<li>If passing ASCII text, use ending line feed character (hex x’0A’).</li>
+</ul>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>More than one RECEIVE operation may be required
+to retrieve an entire logical message since the TCP/IP network may not transfer
+the entire message in one packet on the network and a portion of the logical 
+message may be ready whereas the next RECEIVE may have to wait for the next 
+part of the message.</p>
+</div>
+<p>The TCPIO service is not sensitive to any special characters and all byte values 
+are allowed anywhere in messages. </p>
+<p>If any TCPIO operation fails for any reason on the client or server, a non-zero
+return code is returned. </p>
+<p>The TCPIO server port support includes multiple threads to support concurrent
+connections. There is one thread for each open server port which waits for new
+connections on the server port, starts new connection thread, and then returns 
+to wait for another connection. </p>
+<p>Each connection thread waits for any current available messages to be read from 
+that connection input buffer by the main TPCIO user thread. </p>
+<p>When all messages have been retrieved, then the connection thread issues a 
+connection client socket read for first byte of the next input message. </p>
+<p>The connection thread will wait for the next message to arrive in the input 
+buffer or for a disconnect. If a disconnect occurs, the connection thread is 
+cancelled. </p>
+<p>If a pending RECEIVE is waiting on the connection which disconnected, a return 
+code of 12 is returned. </p>
+<p>If the read of first byte is successful the thread returns to wait for the main 
+TCPIO user thread to retrieve the full or partial message available in the
+connection input buffer. </p>
+<p>Since partial messages can arrive from multiple connections in any sequence, the 
+server must be sure to retrieve a complete message from a specific connection 
+prior to returning to non-specific RECEIVE for the next message.</p>
+<h3 id="SOAGEN">SOAGEN - SOA app gen support</h3>
+<p>The macro SOAGEN can be used to generate customized client and server message 
+managers plus stubs for each service called by the client application. </p>
+<p>In addition the SOAGEN macro generates two batch commands to build the SOA 
+application and to execute the client server SOA application. </p>
+<p>The SOAGEN macro uses the z390 PUNCH extension operands <code>DSNAME=</code> and <code>FORMAT</code> 
+to generate 3 or more source MLC files plus the two BAT files in one macro 
+expansion execution. </p>
+<h4 id="parameters">Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Usage</th>
+<th>Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MAIN=</td>
+<td>name of main client program</td>
+<td>If specified, an assembly and link of the main program with the generated service call stubs will be generated.</td>
+</tr>
+<tr>
+<td>CTYPE=MLC/CBL</td>
+<td>define language type for client</td>
+<td>COBOL clients generate IBM standard EZASOKET calls to TCP/IP to connect to services.</td>
+</tr>
+<tr>
+<td>CLIENT=</td>
+<td>name of the generated client message manager called from stubs.</td>
+<td></td>
+</tr>
+<tr>
+<td>SERVER=</td>
+<td>name of the generated service message manager which loads and calls services based on service request messages.</td>
+<td></td>
+</tr>
+<tr>
+<td>HOST=</td>
+<td>IP address of server</td>
+<td>host processor or * for local processor</td>
+</tr>
+<tr>
+<td>PORT=</td>
+<td>port # for this application (must be greater than 1023)</td>
+<td></td>
+</tr>
+<tr>
+<td>SERVICES=</td>
+<td>one or more sublists defining the name of each called service and the length of each parameter being passed to service. If the length is negative, that indicates the parameter is read only and the updated parameter will not be returned in response message.</td>
+<td></td>
+</tr>
+<tr>
+<td>MACDIR=</td>
+<td>directory containing the SOAGEN macros</td>
+<td></td>
+</tr>
+<tr>
+<td>GENDIR=</td>
+<td>directory to contain the generated source files and command files</td>
+<td></td>
+</tr>
+<tr>
+<td>GENBLD=</td>
+<td>name of the generated build command file</td>
+<td></td>
+</tr>
+<tr>
+<td>GENRUN=</td>
+<td>name of the generated run command file</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="usage">Usage</h4>
+<div class="highlight"><pre><span></span><code>         SOAGEN MAIN=DEMOMAIN,    MAIN CLIENT APPLICATION PGM          X
+                CLIENT=DEMOCMGR,  SOA CLIENT MSG MGR NAME              X
+                SERVER=DEMOSMGR,  SOA SERVER MSG MGR NAME              X 
+                HOST=*, (192.168.1.3)  HOST SERVER NAME (*=LOCAL)      X
+                PORT=3900,        HOST SERVER PORT                     X
+                SERVICES=((DEMOSUB1,-45,-45,45), SERVICES WITH PARM LENX
+                     (DEMOSUB2,-4,-4,4)), (NOTE -LENGTH FOR READ ONLY) X
+                MACDIR=&lt;z390_path&gt;\SOA\MACLIB, SOA GEN MACRO DIRECTORY X
+                GENDIR=&lt;z390_path&gt;\SOA\DEMO, DIRECTORY FOR SOA APPL    X
+                GENBLD=DEMOBLD,   GENERATED BUILD BAT FILE             X
+                GENRUN=DEMORUN    GENERATED RUN BAT FILE
+         END
+</code></pre></div>
+<p>The above SOA application generation macro call generates server
+message manager DEMOSMGR to run on the same host as client using
+HOST=*. </p>
+<p>To generate the same application to run server on a specific
+host, change the HOST= parameter to specify the IP address of the
+desired server. </p>
+<p>The above SOAGEN macro call generates the following source files 
+using z390 PUNCH extended operands DSNAME= and FORMAT to control PUNCH output 
+files:</p>
+<ul>
+<li>DEMOCMGR.MLC – source macro call to SOACMGR to generate SOA client message 
+  manager for the demo application.</li>
+<li>DEMOSMGR.MLC – source macro call to SOASMGR to generate SOA server message 
+  manager for the demo application.</li>
+<li>SOA_STUB_DEMOSUB1.MLC - source macro call to SOASTUB to generate SOA stub for 
+  DEMOSUB1 service call.</li>
+<li>SOA_STUB_DEMOSUB2.MLC – source macro call to SOASTUB to generate SOA stub for 
+  DEMOSUB2 service call.</li>
+<li>DEMOBLD.BAT – generated command file to build the SOA demo application.</li>
+<li>DEMORUN.BAT – generated command file to start the DEMOSMGR server on the same 
+  processor and then run the DEMOMAIN client application.</li>
+</ul>
+<h4 id="technical-notes">Technical Notes</h4>
+<p>The client message manager is generated using a call to the SOACMGR macro with
+the required parameters from the SOAGEN macro call.</p>
+<p>The client message manager performs the following functions when called from a
+client source call stub:</p>
+<ul>
+<li>On first call, dynamically allocate the required message buffer based on the
+  maximum service message required.</li>
+<li>On first call open a TCP/IP socket connection to the server message manager
+  using the port and IP address specified.</li>
+<li>Build a send message with message length, time stamp, service name, and all
+  the parameters required by the service. Note the service can only access the
+  parameters passed with the length specified. If a service needs to access
+  additional parameters such as control blocks in memory, they need to all be
+  passed to the service.</li>
+<li>Send the message from client to server message manager using specified port</li>
+<li>Wait for response from the server with matching time stamp and service
+  name plus updated parameters, and return code from service. Note the
+  generated client message manager has logic to issue more than 1 RECEIVE
+  to fetch the entire variable length response message if necessary.</li>
+<li>Move the returned updated parameters to the original calling list addresses.
+  exit to calling stub which exits to the calling client main application program.</li>
+</ul>
+<p>The server message manager is generated using a call to the SOASMGR macro with
+the required parameters from the SOAGEN macro call. The server message
+manager performs the following functions:</p>
+<ul>
+<li>Opens server socket for specified port which starts thread which listens for
+  new connections from clients and starts new connection threads as required.
+  The server port and listens for incoming messages from clients.</li>
+<li>Issues receive on the server port to receive all or part of a message from a
+  client on an open connection. The server logic fetches at least 4 bytes and
+  uses the message length in the first 4 bytes to determine how many bytes
+  must be read to complete the variable length message which may require
+  additional receive commands.</li>
+<li>Look up the service name specified. If service not found, an error is
+  generated on server log and server returns to get next message.</li>
+<li>Build call parameter address less pointing to the parameters in the received
+  message. Note this implies that all updates by the service will be made to
+  parameter areas in the message buffer.</li>
+<li>Load the service on the first call and save entry address.</li>
+<li>Call the service to update parameters in the message buffer.</li>
+<li>Store the service return code in the message buffer.</li>
+<li>Build return message truncated to just the updated parameters as indicated
+  by positive lengths in the SOAGEN SERVICES parameter.</li>
+<li>Send response message back to client message manager using same
+  connection as request message.</li>
+<li>Return to wait for next service request message from any client connection.</li>
+<li>If client disconnect occurs, the disconnect is logged and server returns to wait
+  for next request message from any other client connections.</li>
+</ul>
+<p>Stubs for each service name called by the client application are generated using calls
+to the macro SOASTUB. The functions performed by the generated stubs are:</p>
+<ul>
+<li>On first call load the client message manager and save address.</li>
+<li>Call the client message manager passing the name of the service and the
+  calling parameter list.</li>
+<li>Upon return, exit to caller with return code.</li>
+</ul>
+<p>If the GENBLD parameter specifies a name, then the SOAGEN macro will generate
+a batch command file which assembles each of the above source programs to create
+an executable SOA type client server application.</p>
+<p>If the GENRUN parameter specifies a name, then the SOAGEN macro will generate
+a batch command to start the named SOA server message manager on the same 
+processor, and then run the client application. If the HOST parameter specifies 
+a different processor, the generated server message manager will need to be 
+copied to that processor and started prior to running the client application.</p>
+<h4 id="demonstration">Demonstration</h4>
+<p>z390 distribution includes <code>soa</code> directory with SOA generation macro library and 
+a demo application which can be generated and executed as either a classic 
+statically linked application or an SOA generated client server application 
+using TCP/IP sockets.</p>
+<p>Refer to README.TXT in SOA folder for more details.</p>
+<h2 id="references">References</h2>
+<h3 id="original-z390-soa-documents">Original z390 SOA documents</h3>
+<ul>
+<li><a href="http://www.z390.org/z390_SOA_User_Guide.pdf">http://www.z390.org/z390_SOA_User_Guide.pdf</a></li>
+<li><a href="http://www.z390.org/z390_SOA_Support_for_COBOL_and_Assembler.htm">http://www.z390.org/z390_SOA_Support_for_COBOL_and_Assembler.htm</a></li>
+<li><a href="http://www.z390.org/z390_SOA_Client_Server_Overview.pdf">http://www.z390.org/z390_SOA_Client_Server_Overview.pdf</a></li>
+</ul>
+<h3 id="tcpip">TCP/IP</h3>
+<ul>
+<li><a href="http://www.faqs.org/rfcs/rfc793.html">TCP/IP Transmission Control Protocol RFP</a></li>
+<li><a href="https://docs.oracle.com/javase/1.5.0/docs/api/java/net/ServerSocket.html">J2SE ServerSocket Class</a></li>
+<li><a href="https://docs.oracle.com/javase/1.5.0/docs/api/java/net/Socket.html">J2SE Socket Class</a></li>
+<li><a href="https://www-01.ibm.com/servers/resourcelink/svc00100.nsf/pages/zOSV2R3sc273660/$file/hala001_v2r3.pdf">z/OS Communication server IP Sockets Application Programming Interface Guide and Reference</a></li>
+</ul>
+<h3 id="host-ip-addressing">Host IP Addressing</h3>
+<ul>
+<li><a href="https://docs.oracle.com/javase/1.5.0/docs/api/java/net/InetAddress.html">J2SE InetAddress Class</a></li>
+<li><a href="https://www.ietf.org/rfc/rfc2373.txt">IP Addressing RFC</a></li>
+</ul>
+<h3 id="socket-ports">Socket Ports</h3>
+<ul>
+<li><a href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml">Registered Ports</a></li>
+<li><a href="https://www.iana.org/form/ports-services">Register a Port</a></li>
+</ul>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../guam_services/" class="md-footer__link md-footer__link--prev" aria-label="Previous: GUAM services" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              GUAM services
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../structured_program/" class="md-footer__link md-footer__link--next" aria-label="Next: Structured programming macros" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Structured programming macros
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            &copy; 2022 z390 Assembler LLC. All rights reserved
+          </div>
+        
+        
+          Made with
+          <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+            Material for MkDocs
+          </a>
+        
+        
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.0-66-g1d1015a"}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b1047164.min.js"></script>
+      
+    
+  </body>
+</html>

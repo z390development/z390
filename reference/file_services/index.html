@@ -1,0 +1,2106 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <meta name="author" content="z390 Development team">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.3.6">
+    
+    
+      
+        <title>Non-VSAM File Services - z390</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a57b2b03.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.3f5d1f46.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    <script>function __prefix(e){return new URL("../..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#non-vsam-file-services" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner md-announce">
+          <div class="md-banner__inner md-announce__inner md-grid md-typeset">
+            
+  <p>This is a work in progress. Contributions to the documentation are welcome. See <a
+    href="../../contributing/contribute_docs">Contributing</a> for more information.</p>
+
+          </div>
+        </aside>
+      
+    </div>
+    
+      
+
+  
+
+<header class="md-header md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="z390" class="md-header__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            z390
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Non-VSAM File Services
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting_started/install/" class="md-tabs__link">
+        Getting started
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../user_guide/commands/" class="md-tabs__link">
+        User guide
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../svc_services/" class="md-tabs__link md-tabs__link--active">
+        Reference
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/contribute_code/" class="md-tabs__link">
+        Contributing
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="z390" class="md-nav__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    z390
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Getting started
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Getting started" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Getting started
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstart/" class="md-nav__link">
+        Quick starts
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/learning/" class="md-nav__link">
+        Learning resources
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/macro_index/" class="md-nav__link">
+        z/OS compatible macros
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          User guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="User guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          User guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/commands/" class="md-nav__link">
+        Commands
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/structured_macro/" class="md-nav__link">
+        Structured Macro Extensions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3" type="checkbox" id="__nav_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_3">
+          Options
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Options" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Options
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/z390_filetypes/" class="md-nav__link">
+        z390 File types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/z390_options/" class="md-nav__link">
+        z390 Options
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/zCOBOL_filetypes/" class="md-nav__link">
+        zCOBOL file types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/zCOBOL_options/" class="md-nav__link">
+        zCOBOL options
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../svc_services/" class="md-nav__link">
+        SVC services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../program_services/" class="md-nav__link">
+        Program Services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage_services/" class="md-nav__link">
+        Storage services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Non-VSAM File Services
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Non-VSAM File Services
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-starts" class="md-nav__link">
+    Quick starts
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick starts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-a-file" class="md-nav__link">
+    Read a file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-to-a-file" class="md-nav__link">
+    Write to a file
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#macro-reference" class="md-nav__link">
+    Macro reference
+  </a>
+  
+    <nav class="md-nav" aria-label="Macro reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#svc-functions" class="md-nav__link">
+    SVC functions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dcb" class="md-nav__link">
+    DCB - Data Control Block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dcbe-data-control-block-extended" class="md-nav__link">
+    DCBE - Data Control Block Extended
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dtfsd" class="md-nav__link">
+    DTFSD (VSE) - Data control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dtfpr" class="md-nav__link">
+    DTFPR (VSE) - Data control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open" class="md-nav__link">
+    OPEN - Open file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-vse" class="md-nav__link">
+    OPEN (VSE) - Open file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close" class="md-nav__link">
+    CLOSE - Close file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close-vse" class="md-nav__link">
+    CLOSE (VSE) - Close file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get" class="md-nav__link">
+    GET - Read sequential record
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put" class="md-nav__link">
+    PUT - Write a sequential record
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read" class="md-nav__link">
+    READ - Read block from file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write" class="md-nav__link">
+    WRITE - Write block to file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check" class="md-nav__link">
+    CHECK - Process EODAD/SYNAD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#point" class="md-nav__link">
+    POINT - Position file pointer
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminology" class="md-nav__link">
+    Terminology
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guam_services/" class="md-nav__link">
+        GUAM services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../soa_services/" class="md-nav__link">
+        SOA services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../structured_program/" class="md-nav__link">
+        Structured programming macros
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vsam_file_services/" class="md-nav__link">
+        zVSAM services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zpar/" class="md-nav__link">
+        zPAR and zPARTRS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sort/" class="md-nav__link">
+        zSORT
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assist/" class="md-nav__link">
+        ASSIST support
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_12" type="checkbox" id="__nav_4_12" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_12">
+          zCICS
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="zCICS" data-md-level="2">
+        <label class="md-nav__title" for="__nav_4_12">
+          <span class="md-nav__icon md-icon"></span>
+          zCICS
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zCICS/" class="md-nav__link">
+        Manuals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zCICS/zcics_app_prog_guide/" class="md-nav__link">
+        zCICS Application Programming Guide
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Contributing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contribute_code/" class="md-nav__link">
+        Contributing to z390
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contribute_docs/" class="md-nav__link">
+        Contributing to z390 Documentation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-starts" class="md-nav__link">
+    Quick starts
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick starts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-a-file" class="md-nav__link">
+    Read a file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-to-a-file" class="md-nav__link">
+    Write to a file
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#macro-reference" class="md-nav__link">
+    Macro reference
+  </a>
+  
+    <nav class="md-nav" aria-label="Macro reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#svc-functions" class="md-nav__link">
+    SVC functions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dcb" class="md-nav__link">
+    DCB - Data Control Block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dcbe-data-control-block-extended" class="md-nav__link">
+    DCBE - Data Control Block Extended
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dtfsd" class="md-nav__link">
+    DTFSD (VSE) - Data control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dtfpr" class="md-nav__link">
+    DTFPR (VSE) - Data control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open" class="md-nav__link">
+    OPEN - Open file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-vse" class="md-nav__link">
+    OPEN (VSE) - Open file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close" class="md-nav__link">
+    CLOSE - Close file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close-vse" class="md-nav__link">
+    CLOSE (VSE) - Close file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get" class="md-nav__link">
+    GET - Read sequential record
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put" class="md-nav__link">
+    PUT - Write a sequential record
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read" class="md-nav__link">
+    READ - Read block from file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write" class="md-nav__link">
+    WRITE - Write block to file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check" class="md-nav__link">
+    CHECK - Process EODAD/SYNAD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#point" class="md-nav__link">
+    POINT - Position file pointer
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminology" class="md-nav__link">
+    Terminology
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/z390development/z390/edit/main/doc/reference/file_services.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="non-vsam-file-services">Non-VSAM File Services</h1>
+<p>z390 supports sequential and random access to files through the provision of SVC 
+functions and assembler macros.</p>
+<p>The macros described here seek to emulate those provided by IBM&reg; as part of 
+their operating system macro services where it makes sense in the context of 
+z390 runtime environments. </p>
+<ul>
+<li><a href="https://www-01.ibm.com/servers/resourcelink/svc00100.nsf/pages/zOSV2R4sc236852/$file/idad500_v2r4.pdf">z/OS: DFSMS Macro Instructions for Data Sets</a> - Part 2 Non-VSAM macro instructions.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">VSAM support</p>
+<p>The macros GET, PUT and POINT can be used for VSAM access with the
+parameter RPL=rpladdress. VSAM usage is not documented here. Please refer
+to <a href="">VSAM file services</a>.</p>
+</div>
+<h2 id="quick-starts">Quick starts</h2>
+<p>To access a file, a data control block (DCB) must be defined.</p>
+<p>Programs that use the File I/O macros must include a DSECT for the DCB. The 
+DSECT is generated by the DCBD macro, so a typical program structure would be:</p>
+<div class="highlight"><pre><span></span><code>         DCBD
+         EQUREGS
+         END
+</code></pre></div>
+<p>Include the DSECT for the DECB, which is generated by the DECBD macro, if you 
+are using READ or WRITE.</p>
+<h3 id="read-a-file">Read a file</h3>
+<p>The following code demonstrates the read of a file <code>TEACHERS</code> with a
+layout as described as <code>IREC</code>. The environment variable <code>TEACHER</code> should
+be set to point to the input file.</p>
+<div class="highlight"><pre><span></span><code>         OPEN  (TEACHERS,INPUT)    Opens the file
+         GET   TEACHERS            Reads record
+         CLOSE TEACHERS            Closes the file
+......
+TEACHERS DCB   LRECL=27,RECFM=FT,MACRF=R,EODAD=ATEND,                  X
+               DDNAME=TEACHER,RECORD=IREC
+IREC     DS    0CL27    Teacher record
+......
+</code></pre></div>
+<h3 id="write-to-a-file">Write to a file</h3>
+<p>The following code demonstrates the write to a file <code>REPORT</code> with a
+layout as described as <code>OREC</code>. The environment variable <code>REPORT</code> should
+be set to point to the output file.</p>
+<div class="highlight"><pre><span></span><code>         OPEN  (REPORT,OUTPUT)     Opens the file
+         PUT   REPORT,OREC         Write OREC to record
+         CLOSE REPORT              Closes the file
+......
+REPORT   DCB   LRECL=60,RECFM=FT,MACRF=W,                              X
+               DDNAME=REPORT
+OREC     DS    0CL60                Report output structure
+......
+</code></pre></div>
+<h2 id="macro-reference">Macro reference</h2>
+<h3 id="svc-functions">SVC functions</h3>
+<p>The following is a list of the z390 SVC services that support the above macros.</p>
+<table>
+<thead>
+<tr>
+<th>DEC</th>
+<th>HEX</th>
+<th>Service</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>19</td>
+<td>13</td>
+<td><a href="#open">OPEN</a></td>
+</tr>
+<tr>
+<td>19</td>
+<td>13</td>
+<td><a href="#open-vse">OPEN (VSE)</a></td>
+</tr>
+<tr>
+<td>20</td>
+<td>14</td>
+<td><a href="#close">CLOSE</a></td>
+</tr>
+<tr>
+<td>20</td>
+<td>14</td>
+<td><a href="#close-vse">CLOSE (VSE)</a></td>
+</tr>
+<tr>
+<td>151</td>
+<td>97</td>
+<td><a href="#get">GET</a></td>
+</tr>
+<tr>
+<td>152</td>
+<td>98</td>
+<td><a href="#put">PUT</a></td>
+</tr>
+<tr>
+<td>153</td>
+<td>99</td>
+<td><a href="#read">READ</a></td>
+</tr>
+<tr>
+<td>154</td>
+<td>9A</td>
+<td><a href="#write">WRITE</a></td>
+</tr>
+<tr>
+<td>155</td>
+<td>9B</td>
+<td><a href="#check">CHECK</a></td>
+</tr>
+<tr>
+<td>156</td>
+<td>9C</td>
+<td><a href="#point">POINT</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="dcb">DCB - Data Control Block</h3>
+<p>Used to create the Data Control Block</p>
+<p>Some of the parameters may be set before and/or after OPEN.</p>
+<p>The individual descriptions indicate this.</p>
+<div class="highlight"><pre><span></span><code>label    DCB   DSORG=PS,                                               X
+               EODAD=0,                                                X
+               RECFM=FB,                                               X
+               DDNAME=,                                                X
+               MACRF=GM,                                               X
+               SYNAD=0,                                                X
+               BLKSIZE=0,                                              X
+               LRECL=0,                                                X
+               DCBE=,                                                  X
+               RECORD=0,                                               X
+               DSNAME=0
+</code></pre></div>
+<p>EXLST is currently unsupported.</p>
+<p>'label' is the file identifier, the DCB name, which is used in all
+the file I/O macros.</p>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BDW</td>
+<td>Block Descriptor Word</td>
+<td>Only used for RECFM=VB files. <br/>A 4-byte field of the form  'blocklength',H'0'<br/>The blocklength includes the length of the BDW.</td>
+</tr>
+<tr>
+<td>RDW</td>
+<td>Record Descriptor Word</td>
+<td>Used for all variable files.<br/> A 4-byte field of the form H'recordlength',H'0'<br/>The recordlength includes the length of the RDW.<br/> The program must set this field correctly for output, and expect it on input.</td>
+</tr>
+<tr>
+<td>CRLF</td>
+<td>Carriage Return, Line Feed</td>
+<td>A term for the hex string X'0D0A' (ASCII) or X'0D25' (EBCDIC).<br/>Now commonly used to terminate a text record.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="ddname-and-dsname-dd-statementdataset-name">DDNAME and DSNAME - DD statement/Dataset name</h4>
+<p>DDNAME DSECT=DCBDDNAM Type=CL8 Default=CL8'label'</p>
+<p>DSNAME DSECT=DCBDSNAM Type=A No default</p>
+<ul>
+<li>Can these be set in the DCB prior to OPEN: Yes</li>
+<li>Can these be set in the DCB after OPEN : No</li>
+</ul>
+<p>Only one of these parameters may be set in the DCB.</p>
+<p>If both parameters are set in the program prior to open, the DSNAME will take 
+precedence.</p>
+<p>When DDNAME is specified, an environment variable will point to the path and 
+file that is to be opened.</p>
+<p>Within a program the GETENV macro can be used to extract the environment
+variable. See <a href="../svc_services/#getenv">GETENV macro</a> for full details.</p>
+<div class="highlight"><pre><span></span><code>MYDCB    DCB   DDNAME=MYDATA, ...
+</code></pre></div>
+<p>Run using the following commands:</p>
+<div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Windows</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>SET MYDATA=c:\path\file
+CALL c:\path_to_z390\bat\ez390 c:\path\program parms
+</code></pre></div>
+</div>
+<input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">MacOS/Unix</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">MYDATA</span><span class="o">=</span>/path/file 
+/path_to_z390/bash/ez390 /path/program parms
+</code></pre></div>
+</div>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>For both Windows and *nix, the invocation of ez390 should be preceded by a 
+path to the z390 script folder.</p>
+<ul>
+<li>bat for Windows</li>
+<li>bash for *nix</li>
+</ul>
+</div>
+<p>DSNAME is a label defined in the program which has the file spec.</p>
+<p>The file spec must terminate with X'00' or be defined as a double-quoted string 
+within a standard C-type constant.</p>
+<div class="highlight"><pre><span></span><code>MYDCB    DCB   DSNAME=MYDATA, ...
+......
+MYDATA   DC    C&#39;drive:\path\file&#39;,X&#39;00&#39;
+MYDATA   DC    C&#39;&quot;drive:\path\file&quot;&#39;
+</code></pre></div>
+<h4 id="macrf-macro-type">MACRF - Macro type</h4>
+<p>DSECT=DCBMACRF, Coded Default=GM</p>
+<ul>
+<li>Can this be set in the DCB prior to OPEN: Yes, but not recommended</li>
+<li>Can this be set in the DCB after OPEN : No</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MACRF=GM</td>
+<td>Get Move, use the GET macro to read a record<br/>Use for standard (QSAM) file read</td>
+</tr>
+<tr>
+<td>MACRF=PM</td>
+<td>Put Move, use the PUT macro to write a record<br/>Use for standard (QSAM) file write</td>
+</tr>
+<tr>
+<td>MACRF=R</td>
+<td>Read Mode.<br/> Use READ/CHECK to read a record.<br/> Use POINT for positioning.</td>
+</tr>
+<tr>
+<td>MACRF=W</td>
+<td>Write Mode.<br/> Use WRITE/CHECK to write or update a record.<br/> Use POINT for positioning.</td>
+</tr>
+<tr>
+<td>MACRF=RW</td>
+<td>Update Mode.<br/> Use READ/WRITE/CHECK to read, write or update a record.<br/> Use POINT for positioning.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="dsorg-dataset-organization">DSORG - Dataset organization</h4>
+<p>DSORG DSECT=DCBDSORG Coded Default=PS</p>
+<ul>
+<li>Can this be set in the DCB prior to OPEN: Yes, but not recommended</li>
+<li>Can this be set in the DCB after OPEN : No</li>
+</ul>
+<h5 id="dsorgps-physical-sequential">DSORG=PS Physical Sequential</h5>
+<p>The only option at present, can be omitted.</p>
+<h4 id="recfm-record-format">RECFM - Record format</h4>
+<p>RECFM DSECT=DCBRECFM Coded Default=FB</p>
+<ul>
+<li>Can this be set in the DCB prior to OPEN: Yes, but not recommended</li>
+<li>Can this be set in the DCB after OPEN : No</li>
+</ul>
+<h5 id="recfmf-fixed">RECFM=F Fixed</h5>
+<p>Translation: None</p>
+<p>Input: Records are read LRECL at a time.</p>
+<p>Output: Records are written LRECL at a time.</p>
+<h5 id="recfmfb-fixed-blocked">RECFM=FB Fixed Blocked</h5>
+<p>Translation: None</p>
+<p>Input:</p>
+<ul>
+<li>MACRF=GM<ul>
+<li>Records are read LRECL at a time out of BLKSIZE.</li>
+</ul>
+</li>
+<li>MACRF=R or RW<ul>
+<li>The whole block is read.</li>
+</ul>
+</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>MACRF=PM<ul>
+<li>Records are written LRECL at a time into a block of size BLKSIZE.<br/>
+CLOSE may write a short block.</li>
+</ul>
+</li>
+<li>MACRF=W or RW<ul>
+<li>The whole block is written.</li>
+</ul>
+</li>
+</ul>
+<h5 id="recfmv-variable">RECFM=V Variable</h5>
+<p>Translation: None</p>
+<p>Input:</p>
+<ul>
+<li>Each record is prefixed by the RDW.</li>
+<li>The receiving area must be big enough for the largest RDW+record.</li>
+<li>If the RDW indicates a record size larger than LRECL, abend S013 will occur.</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Each record must be prefixed by the RDW.</li>
+</ul>
+<h5 id="recfmvb-variable-blocked">RECFM=VB Variable Blocked</h5>
+<p>Translation: None</p>
+<p>Input:</p>
+<ul>
+<li>MACRF=GM<ul>
+<li>Each record is prefixed by the RDW.</li>
+<li>The receiving area must be big enough for the largest RDW+record.</li>
+<li>If the RDW indicates a record size larger than LRECL, abend S013 will occur.</li>
+</ul>
+</li>
+<li>MACRF=R or RW<ul>
+<li>The whole block is read, prefixed by the BDW.</li>
+<li>The receiving area must be big enough for the largest BDW+block.</li>
+<li>If the BDW indicates a block size larger than BLKSIZE, abend S013 will occur.</li>
+</ul>
+</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>MACRF=PM<ul>
+<li>Each record must be prefixed by the RDW.</li>
+<li>CLOSE will write the last block.</li>
+<li>Each block written will have the BDW automatically inserted at the start.</li>
+</ul>
+</li>
+<li>MACRF=W or RW<ul>
+<li>Each block must be prefixed by the BDW.</li>
+</ul>
+</li>
+</ul>
+<h5 id="recfmft-fixed-ascii-text">RECFM=FT Fixed ASCII text</h5>
+<p>Translation:</p>
+<ul>
+<li>ASCII mode:<ul>
+<li>None</li>
+</ul>
+</li>
+<li>Non-ASCII mode input<ul>
+<li>ASCII chars are translated to EBCDIC after being read.</li>
+</ul>
+</li>
+<li>Non-ASCII mode output<ul>
+<li>EBCDIC chars are translated to ASCII before being written, this is an 
+  internal function and does not affect the record in storage. Non-EBCDIC 
+  chars may be translated to X'00'.</li>
+</ul>
+</li>
+</ul>
+<p>Input:</p>
+<ul>
+<li>The file is assumed to be in conventional ASCII format, with each record 
+  ending in the operating system specific end-of-line (EOL) character(s).</li>
+<li>EOL is never read as part of the record.</li>
+<li>If the record is shorter than LRECL, then trailing blanks are inserted.</li>
+<li>EODAD is invoked when all bytes have been read. </li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>EOL is inserted at the end of each record after trailing blanks are stripped.</li>
+</ul>
+<h5 id="recfmvt-variable-ascii-text">RECFM=VT Variable ASCII text</h5>
+<p>Translation: </p>
+<ul>
+<li>ASCII mode<ul>
+<li>None</li>
+</ul>
+</li>
+<li>Non-ASCII mode input<ul>
+<li>ASCII chars are translated to EBCDIC after being read.</li>
+</ul>
+</li>
+<li>Non-ASCII mode output<ul>
+<li>EBCDIC chars are translated to ASCII before being written. This is an 
+  internal function and does not affect the record in storage. Non-EBCDIC 
+  chars may be translated to X'00'.</li>
+</ul>
+</li>
+</ul>
+<p>Input:</p>
+<ul>
+<li>The file is assumed to be in conventional ASCII format, with each record 
+  ending in the operating system specific end-of-line (EOL) character(s).</li>
+<li>EOL is never read as part of the record.</li>
+<li>Each record is prefixed with the RDW.</li>
+<li>EODAD is invoked when all bytes have been read.</li>
+<li>The receiving area must be big enough for the largest RDW+record.</li>
+<li>If the RDW indicates a record size larger than LRECL, abend S013 will occur.</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Each record must be prefixed with the RDW.</li>
+<li>EOL is inserted at the end of each record after trailing blanks are stripped.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The RDW is not written.</p>
+</div>
+<h4 id="record-record-address">RECORD - Record address</h4>
+<p>RECORD DSECT=DCBREC Type=A Default=0 (undefined)</p>
+<p>Default I/O area which can be overridden on the GET/PUT/READ/WRITE macros.</p>
+<ul>
+<li>Can this be set in the DCB prior to OPEN: Yes</li>
+<li>Can this be set in the DCB after OPEN : Yes</li>
+</ul>
+<p>If omitted, then the I/O area must be specified on the GET/PUT/READ/WRITE macros.</p>
+<h4 id="lrecl-record-length">LRECL - Record length</h4>
+<p>LRECL DSECT=DCBLRECLF Type=F Default=0</p>
+<ul>
+<li>Can this be set in the DCB prior to OPEN: Yes</li>
+<li>Can this be set in the DCB after OPEN : Yes</li>
+<li>Maximum value is 2G-1.</li>
+<li>For RECFM=F or FB, sets the record size.</li>
+<li>For all other RECFM, sets the maximum record size.</li>
+<li>For RECFM=F, LRECL=0 is valid, provided that BLKSIZE is set.</li>
+<li>For RECFM=FB, LRECL must be a multiple of BLKSIZE.</li>
+<li>For variable records, include 4 for the RDW.</li>
+<li>The field DCBLRECL (Type=H) is retained for compatibility.</li>
+</ul>
+<h4 id="blksize-block-size">BLKSIZE - Block size</h4>
+<p>BLKSIZE DSECT=DCBBLKSIF Type=F Default=0</p>
+<ul>
+<li>Can this be set in the DCB prior to OPEN: Yes</li>
+<li>Can this be set in the DCB after OPEN : Yes</li>
+<li>Maximum value is 2G-1.</li>
+<li>LRECL and BLKSIZE cannot both be zero.</li>
+<li>For RECFM=F sets the record size if LRECL=0.</li>
+<li>For RECFM=FB, sets the block size and LRECL must be a multiple of BLKSIZE.</li>
+<li>For RECFM=VB, BLKSIZE must be at least 4 greater than LRECL.</li>
+<li>For all other RECFM, sets the maximum block size.</li>
+<li>The field DCBBLKSI (Type=H) is retained for compatibility.</li>
+</ul>
+<h4 id="DCB-DCBE-PARM">DCBE - Data control block extension</h4>
+<p>DCBE DSECT=DCBDCBE Type=A Default=0 (undefined)</p>
+<p>The DCBE is a control block defined by the DCBE macro.</p>
+<ul>
+<li>Can this be set in the DCB prior to OPEN: Yes</li>
+<li>Can this be set in the DCB after OPEN : Yes</li>
+<li>When defined, the addresses of the end-of-file (EODAD) and the I/O error routine (SYNAD) 
+  may be defined.  When set, these addresses override the DCB EODAD and SYNAD parameters.</li>
+<li>The DSECT IHADCBE maps the DCBE control block.</li>
+</ul>
+<h4 id="DCB-EODAD">EODAD - End of file routine</h4>
+<p>EODAD DSECT=DCBEODAD Type=Address Default=0 (no routine defined)</p>
+<p>The address of the end-of-file routine.</p>
+<ul>
+<li>Can this be set in the DCB prior to OPEN: Yes</li>
+<li>Can this be set in the DCB after OPEN : Yes</li>
+<li>This may be overridden if DCBE is coded.</li>
+<li>If a further GET is done after end-of-file, then the program is terminated.</li>
+</ul>
+<h4 id="DCB-SYNAD">SYNAD - Error analysis routine</h4>
+<p>SYNAD DSECT=DCBSYNAD Type=Address Default=0 (no routine defined)</p>
+<p>The address of the uncorrectable I/O error routine.</p>
+<ul>
+<li>Can this be set in the DCB prior to OPEN: Yes</li>
+<li>Can this be set in the DCB after OPEN : Yes</li>
+<li>This may be overridden if DCBE is coded.</li>
+</ul>
+<h3 id="dcbe-data-control-block-extended">DCBE - Data Control Block Extended</h3>
+<div class="highlight"><pre><span></span><code>label    DCBE  EODAD=0,SYNAD=0,BLKSIZE=0
+</code></pre></div>
+<h4 id="eodad-end-of-data-routine-address">EODAD - End of data routine address</h4>
+<p>Address of End of data routine. </p>
+<p>Default=0 = no routine</p>
+<p>When set, will override address provided in the <a href="#DCB-EODAD">DCB EODAD</a> parameter.</p>
+<h4 id="synad-io-error-routine-address">SYNAD - IO error routine address</h4>
+<p>Address of IO Error routine. </p>
+<p>Default=0 - no routine</p>
+<p>When set, will override address provided in the <a href="#DCB-SYNAD">DCB SYNAD</a> parameter.</p>
+<h4 id="blksize-large-block-interface">BLKSIZE - Large block interface</h4>
+<ul>
+<li>Default is zero meaning Large Block support is not enabled. </li>
+<li>When set, the large block interface (LBI) is enabled.</li>
+<li>
+<p>This causes BDW and RDW fields in variable length files to use an alternative 
+  format:</p>
+<p>LLLL where high bit is on and the remaining 31 bits are length.</p>
+</li>
+</ul>
+<h3 id="dtfsd">DTFSD (VSE) - Data control block</h3>
+<div class="admonition info">
+<p class="admonition-title">VSE only</p>
+</div>
+<p>DTFSD maps to the standard DCB as follows:</p>
+<div class="highlight"><pre><span></span><code>label    DTFSD BLKSIZE=n,                                              X
+               EOFADDR=
+label    DCB   DSORG=PS,                                               X
+               EODAD=,   maps from EOFADDR                             X
+               RECFM=F,                                                X
+               DDNAME=,  label if it exists, otherwise blank           X
+               MACRF=RW,                                               X
+               SYNAD=0,                                                X
+               BLKSIZE=, maps from BLKSIZE                             X
+               LRECL=,   maps from BLKSIZE                             X
+               DCBE=0,                                                 X
+               RECORD=0,                                               X
+               DSNAME=0
+</code></pre></div>
+<h3 id="dtfpr">DTFPR (VSE) - Data control block</h3>
+<div class="admonition info">
+<p class="admonition-title">VSE only</p>
+</div>
+<p>DTFPR maps to the standard DCB as follows:</p>
+<div class="highlight"><pre><span></span><code>label    DTFPR BLKSIZE=n
+label    DCB   DSORG=PS,                                               X
+               EODAD=,   maps from EOFADDR                             X
+               RECFM=F,                                                X
+               DDNAME=,  label if it exists, otherwise blank           X
+               MACRF=RW,                                               X
+               SYNAD=0,                                                X
+               BLKSIZE=, maps from BLKSIZE                             X
+               LRECL=,   maps from BLKSIZE                             X
+               DCBE=0,                                                 X
+               RECORD=0,                                               X
+               DSNAME=0
+</code></pre></div>
+<h3 id="open">OPEN - Open file</h3>
+<p>Open one or more files.</p>
+<h4 id="usage">Usage</h4>
+<p>Open one file for INPUT</p>
+<div class="highlight"><pre><span></span><code>         OPEN  dcbname
+</code></pre></div>
+<p>Open one file for non-INPUT</p>
+<div class="highlight"><pre><span></span><code>         OPEN  (dcbname,type)
+</code></pre></div>
+<p>Open multiple files</p>
+<div class="highlight"><pre><span></span><code>         OPEN  (dcbname1,type,dcbname2,type)
+</code></pre></div>
+<p>The same, using register notation</p>
+<div class="highlight"><pre><span></span><code>         OPEN  ((reg),type)
+         OPEN  ((reg1),type,(reg2),type)
+</code></pre></div>
+<h4 id="registers">Registers</h4>
+<ul>
+<li>R0 = Flags</li>
+<li>R1 = DCB addresses</li>
+</ul>
+<h4 id="abends">Abends</h4>
+<ul>
+<li>S013 OPEN failed and no SYNAD exit provided</li>
+</ul>
+<h3 id="open-vse">OPEN (VSE) - Open file</h3>
+<p>Open one or more files for UPDATE.</p>
+<h4 id="usage_1">Usage</h4>
+<div class="highlight"><pre><span></span><code>         OPEN dtfname
+         OPEN (dtfname1,dtfname2,...)
+</code></pre></div>
+<h4 id="registers_1">Registers</h4>
+<ul>
+<li>R0 = Flags</li>
+<li>R1 = DTF addresses</li>
+</ul>
+<h4 id="abends_1">Abends</h4>
+<ul>
+<li>S013 OPEN failed and no SYNAD exit provided</li>
+</ul>
+<h3 id="close">CLOSE - Close file</h3>
+<p>Close one or more files.</p>
+<h4 id="usage_2">Usage</h4>
+<p>Close one file</p>
+<div class="highlight"><pre><span></span><code>         CLOSE dcbname
+</code></pre></div>
+<p>Close multiple files</p>
+<div class="highlight"><pre><span></span><code>         CLOSE (dcbname1,,dcbname2)
+</code></pre></div>
+<p>The same, using register notation</p>
+<div class="highlight"><pre><span></span><code>         CLOSE ((reg1),,(reg2))
+</code></pre></div>
+<h4 id="registers_2">Registers</h4>
+<ul>
+<li>R1 = DCB addresses</li>
+</ul>
+<h4 id="abends_2">Abends</h4>
+<ul>
+<li>S013 CLOSE failed and no SYNAD exit provided</li>
+</ul>
+<h3 id="close-vse">CLOSE (VSE) - Close file</h3>
+<p>Close one or more files.</p>
+<h4 id="usage_3">Usage</h4>
+<div class="highlight"><pre><span></span><code>         CLOSE (dtfname1,dtfname2,...)
+</code></pre></div>
+<h4 id="registers_3">Registers</h4>
+<ul>
+<li>R1 = DTF addresses</li>
+</ul>
+<h4 id="abends_3">Abends</h4>
+<ul>
+<li>S013 CLOSE failed and no SYNAD exit provided</li>
+</ul>
+<h3 id="get">GET - Read sequential record</h3>
+<p>Read a sequential record</p>
+<h4 id="usage_4">Usage</h4>
+<p>Read a record into an I/O area supplied on DCB RECORD=ioarea</p>
+<div class="highlight"><pre><span></span><code>         GET dcbname
+</code></pre></div>
+<p>Read a record into an I/O area</p>
+<div class="highlight"><pre><span></span><code>         GET dcbname,ioarea
+</code></pre></div>
+<p>The same, using register notation</p>
+<div class="highlight"><pre><span></span><code>         GET (reg)
+         GET (reg1),(reg2)
+</code></pre></div>
+<h4 id="registers_4">Registers</h4>
+<ul>
+<li>R0 = ioarea</li>
+<li>R1 = DCB address</li>
+</ul>
+<h3 id="put">PUT - Write a sequential record</h3>
+<p>Write a sequential record</p>
+<h4 id="usage_5">Usage</h4>
+<p>Write a record from an I/O area supplied on the DCB RECORD=ioarea</p>
+<div class="highlight"><pre><span></span><code>         PUT dcbname
+</code></pre></div>
+<p>Write a record from an I/O area</p>
+<div class="highlight"><pre><span></span><code>         PUT dcbname,ioarea
+</code></pre></div>
+<p>The same, using register notation</p>
+<div class="highlight"><pre><span></span><code>         PUT (reg)
+         PUT (reg1),(reg2)
+</code></pre></div>
+<h4 id="registers_5">Registers</h4>
+<ul>
+<li>R0 = ioarea</li>
+<li>R1 = DCB address</li>
+</ul>
+<h3 id="read">READ - Read block from file</h3>
+<p>Read a block from a file.</p>
+<ol>
+<li>If EODAD or SYNAD result from the READ, they will only be
+   processed by the CHECK macro.</li>
+<li>If the decbname parameter is specified in register notation,
+   no internal DECB is generated. It is the programmer's
+   responsibility to create and address the 16-byte DECB.</li>
+</ol>
+<h4 id="usage_6">Usage</h4>
+<p>Read a block using an internal DECB, into an I/O area
+supplied on the DCB RECORD=ioarea</p>
+<div class="highlight"><pre><span></span><code>         READ decbname,,dcbname
+</code></pre></div>
+<p>Read a block using an internal DECB into an I/O area.
+The I/O area must be at least as large as DCB BLKSIZE</p>
+<div class="highlight"><pre><span></span><code>         READ decbname,,dcbname,ioarea
+</code></pre></div>
+<p>The same, using register notation</p>
+<div class="highlight"><pre><span></span><code>         READ (reg1),,(reg2)
+         READ (reg1),,(reg2),(reg3)
+</code></pre></div>
+<h4 id="registers_6">Registers</h4>
+<ul>
+<li>R0 = work register</li>
+<li>R1 = DECB address</li>
+<li>R15= DCB address</li>
+</ul>
+<h3 id="write">WRITE - Write block to file</h3>
+<p>Write a block to a file.</p>
+<ol>
+<li>If SYNAD results from the WRITE, it will only be processed
+   by the CHECK macro.</li>
+<li>If the decbname parameter is specified in register notation,
+   no internal DECB is generated. It is the programmer's
+   responsibility to create and address the 16-byte DECB.</li>
+</ol>
+<h4 id="usage_7">Usage</h4>
+<p>Write a block using an internal DECB, from an I/O area supplied on the DCB RECORD=ioarea</p>
+<div class="highlight"><pre><span></span><code>         WRITE decbname,,dcbname
+</code></pre></div>
+<p>Write a block using an internal DECB from an I/O area</p>
+<div class="highlight"><pre><span></span><code>         WRITE decbname,,dcbname,ioarea
+</code></pre></div>
+<p>The same, using register notation</p>
+<div class="highlight"><pre><span></span><code>         WRITE (reg1),,(reg2)
+         WRITE (reg1),,(reg2),(reg3)
+</code></pre></div>
+<h4 id="registers_7">Registers</h4>
+<ul>
+<li>R0 = work register</li>
+<li>R1 = DECB address</li>
+<li>R15= DCB address</li>
+</ul>
+<h3 id="check">CHECK - Process EODAD/SYNAD</h3>
+<ul>
+<li>Process EODAD or SYNAD on READ.</li>
+<li>Process SYNAD on WRITE.</li>
+</ul>
+<h4 id="usage_8">Usage</h4>
+<div class="highlight"><pre><span></span><code>         CHECK decbname
+</code></pre></div>
+<p>The same, using register notation</p>
+<div class="highlight"><pre><span></span><code>         CHECK (reg)
+</code></pre></div>
+<h4 id="registers_8">Registers</h4>
+<ul>
+<li>R1 = DECB address</li>
+</ul>
+<h4 id="abends_4">Abends</h4>
+<ul>
+<li>S013 READ/WRITE failed and no SYNAD exit provided</li>
+</ul>
+<h3 id="point">POINT - Position file pointer</h3>
+<p>Position pointer for next READ or WRITE</p>
+<ol>
+<li>When register notation is used for rba or rel, the register points to a field 
+   containing the value.</li>
+<li>rel is a fullword, maximum value 2,147,483,647 (2G - 1).<br/>
+   rel is multiplied by BLKSIZE to get the rba.</li>
+<li>rba is signed 64-bit value.</li>
+</ol>
+<h4 id="usage_9">Usage</h4>
+<p>Point to a record using relative record number</p>
+<div class="highlight"><pre><span></span><code>         POINT dcbname,rel
+</code></pre></div>
+<p>Point to a record using relative byte address</p>
+<div class="highlight"><pre><span></span><code>         POINT dcbname,,RBA=rba
+</code></pre></div>
+<p>The same, using register notation</p>
+<div class="highlight"><pre><span></span><code>         POINT (reg1),(reg2)
+         POINT (reg1),,RBA=(reg2)
+</code></pre></div>
+<h4 id="registers_9">Registers</h4>
+<ul>
+<li>R0 = rel or RBA</li>
+<li>R1 = DCB address</li>
+<li>R15= Blocksize</li>
+</ul>
+<h3 id="terminology">Terminology</h3>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dcbname</td>
+<td>the label on the DCB macro.</td>
+</tr>
+<tr>
+<td>reg</td>
+<td>general register, avoid 0, 1, 14 or 15.</td>
+</tr>
+<tr>
+<td>type</td>
+<td>INPUT, OUTPUT or UPDATE (default is INPUT).</td>
+</tr>
+<tr>
+<td>ioarea</td>
+<td>label of the I/O area for the record to be read/written.</td>
+</tr>
+<tr>
+<td>decbname</td>
+<td>internal or external DECB for controlling READ/WRITE.</td>
+</tr>
+<tr>
+<td>rel</td>
+<td>relative record number.</td>
+</tr>
+<tr>
+<td>rba</td>
+<td>relative byte address.</td>
+</tr>
+</tbody>
+</table>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../storage_services/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Storage services" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Storage services
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../guam_services/" class="md-footer__link md-footer__link--next" aria-label="Next: GUAM services" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              GUAM services
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            &copy; 2022 z390 Assembler LLC. All rights reserved
+          </div>
+        
+        
+          Made with
+          <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+            Material for MkDocs
+          </a>
+        
+        
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.0-66-g1d1015a"}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b1047164.min.js"></script>
+      
+    
+  </body>
+</html>

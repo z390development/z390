@@ -1,0 +1,1670 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <meta name="author" content="z390 Development team">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.3.6">
+    
+    
+      
+        <title>zVSAM services - z390</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a57b2b03.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.3f5d1f46.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    <script>function __prefix(e){return new URL("../..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#zvsam-services" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner md-announce">
+          <div class="md-banner__inner md-announce__inner md-grid md-typeset">
+            
+  <p>This is a work in progress. Contributions to the documentation are welcome. See <a
+    href="../../contributing/contribute_docs">Contributing</a> for more information.</p>
+
+          </div>
+        </aside>
+      
+    </div>
+    
+      
+
+  
+
+<header class="md-header md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="z390" class="md-header__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            z390
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              zVSAM services
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting_started/install/" class="md-tabs__link">
+        Getting started
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../user_guide/commands/" class="md-tabs__link">
+        User guide
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../svc_services/" class="md-tabs__link md-tabs__link--active">
+        Reference
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/contribute_code/" class="md-tabs__link">
+        Contributing
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="z390" class="md-nav__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    z390
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Getting started
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Getting started" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Getting started
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstart/" class="md-nav__link">
+        Quick starts
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/learning/" class="md-nav__link">
+        Learning resources
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/macro_index/" class="md-nav__link">
+        z/OS compatible macros
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          User guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="User guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          User guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/commands/" class="md-nav__link">
+        Commands
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/structured_macro/" class="md-nav__link">
+        Structured Macro Extensions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3" type="checkbox" id="__nav_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_3">
+          Options
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Options" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Options
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/z390_filetypes/" class="md-nav__link">
+        z390 File types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/z390_options/" class="md-nav__link">
+        z390 Options
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/zCOBOL_filetypes/" class="md-nav__link">
+        zCOBOL file types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/options/zCOBOL_options/" class="md-nav__link">
+        zCOBOL options
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../svc_services/" class="md-nav__link">
+        SVC services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../program_services/" class="md-nav__link">
+        Program Services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage_services/" class="md-nav__link">
+        Storage services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../file_services/" class="md-nav__link">
+        Non-VSAM File Services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guam_services/" class="md-nav__link">
+        GUAM services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../soa_services/" class="md-nav__link">
+        SOA services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../structured_program/" class="md-nav__link">
+        Structured programming macros
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          zVSAM services
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        zVSAM services
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#macro-reference" class="md-nav__link">
+    Macro reference
+  </a>
+  
+    <nav class="md-nav" aria-label="Macro reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#acb-access-control-block" class="md-nav__link">
+    ACB - Access control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-open-cluster" class="md-nav__link">
+    OPEN - Open cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exlst-exit-list-control-block" class="md-nav__link">
+    EXLST - Exit list control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close-close-cluster" class="md-nav__link">
+    CLOSE - Close cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rpl-request-parameter-list" class="md-nav__link">
+    RPL - Request parameter list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#point" class="md-nav__link">
+    POINT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get" class="md-nav__link">
+    GET
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put" class="md-nav__link">
+    PUT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#erase" class="md-nav__link">
+    ERASE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check" class="md-nav__link">
+    CHECK
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endreq" class="md-nav__link">
+    ENDREQ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    VERIFY
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gencb-generate-control-block" class="md-nav__link">
+    GENCB - Generate control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-modify-control-block" class="md-nav__link">
+    MODCB - Modify control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-test-control-block" class="md-nav__link">
+    TESTCB - Test control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-show-control-block" class="md-nav__link">
+    SHOWCB - Show control block
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zpar/" class="md-nav__link">
+        zPAR and zPARTRS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sort/" class="md-nav__link">
+        zSORT
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assist/" class="md-nav__link">
+        ASSIST support
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_12" type="checkbox" id="__nav_4_12" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_12">
+          zCICS
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="zCICS" data-md-level="2">
+        <label class="md-nav__title" for="__nav_4_12">
+          <span class="md-nav__icon md-icon"></span>
+          zCICS
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zCICS/" class="md-nav__link">
+        Manuals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zCICS/zcics_app_prog_guide/" class="md-nav__link">
+        zCICS Application Programming Guide
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Contributing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contribute_code/" class="md-nav__link">
+        Contributing to z390
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contribute_docs/" class="md-nav__link">
+        Contributing to z390 Documentation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#macro-reference" class="md-nav__link">
+    Macro reference
+  </a>
+  
+    <nav class="md-nav" aria-label="Macro reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#acb-access-control-block" class="md-nav__link">
+    ACB - Access control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-open-cluster" class="md-nav__link">
+    OPEN - Open cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exlst-exit-list-control-block" class="md-nav__link">
+    EXLST - Exit list control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close-close-cluster" class="md-nav__link">
+    CLOSE - Close cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rpl-request-parameter-list" class="md-nav__link">
+    RPL - Request parameter list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#point" class="md-nav__link">
+    POINT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get" class="md-nav__link">
+    GET
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put" class="md-nav__link">
+    PUT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#erase" class="md-nav__link">
+    ERASE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check" class="md-nav__link">
+    CHECK
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endreq" class="md-nav__link">
+    ENDREQ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    VERIFY
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gencb-generate-control-block" class="md-nav__link">
+    GENCB - Generate control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-modify-control-block" class="md-nav__link">
+    MODCB - Modify control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-test-control-block" class="md-nav__link">
+    TESTCB - Test control block
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-show-control-block" class="md-nav__link">
+    SHOWCB - Show control block
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/z390development/z390/edit/main/doc/reference/vsam_file_services.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="zvsam-services">zVSAM services</h1>
+<p>With the exception of the DDNAME parameter explained below, all supported 
+parameters are implemented compatibly with IBM's VSAM implementation. For 
+details, please refer to <a href="https://www.ibm.com/docs/en/zos/2.1.0?topic=instructions-vsam-macro-descriptions-examples"><em>z/OS DFSMS Macro Instructions for Data Sets</em> (SC23-6852-02)</a>.</p>
+<h2 id="macro-reference">Macro reference</h2>
+<h3 id="acb-access-control-block">ACB - Access control block</h3>
+<div class="highlight"><pre><span></span><code>label    ACB   AM=VSAM,                                      X
+               DDNAME=ddname,                                X
+               PASSWD=ptr,                                   X
+               EXLST=ptr,                                    X
+               MACRF=(keyword list),                         X
+               BUFSP=nr,                                     X
+               BUFND=nr,                                     X
+               BUFNI=nr,                                     X
+               RMODE31=keyword,                              X
+               STRNO=1,                                      X
+               BSTRNO=nr,                                    X
+               MAREA=ptr,                                    X
+               MLEN=nr,                                      X
+               RLSREAD=keyword,                              X
+               SHRPOOL=nr
+</code></pre></div>
+<p>The ACB macro will generate an ACB and initialize it according to the parameters 
+specified on the macro invocation.</p>
+<p>Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB=, TESTCB 
+ACB= and/or MODCB ACB= to inspect, test, and/or modify the ACB's content.</p>
+<p>All keywords on the ACB macro are optional. Before the cluster is opened, all 
+ACB values can be modified using MODCB ACB=, or by changing the ACB directly. 
+The latter is not recommended, as it is not guaranteed to be portable or 
+compatible with future versions of zVSAM.</p>
+<h4 id="parameters">Parameters</h4>
+<h5 id="am-access-method">AM - Access method</h5>
+<p>Designates this ACB as a zVSAM ACB.</p>
+<h5 id="ddname-data-name">DDNAME - Data name</h5>
+<p>DDNAME refers to the name of an environment variable in the host OS. </p>
+<p>This variable in turn should contain the path and qualified filename of the 
+cluster to be opened. The qualifier is the name of an environment variable in 
+the host OS and is the path to the assembled catalog.</p>
+<div class="highlight"><pre><span></span><code>SET ddname=drive:\path\catalog.filename
+SET catalog=drive:\path 
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The ddname variable may only contain one dot</p>
+</div>
+<h5 id="passwd-password-pointer">PASSWD - Password pointer</h5>
+<p>Pointer to password for the cluster.
+Points to a single byte length followed by the password. </p>
+<div class="highlight"><pre><span></span><code>X&#39;05&#39;,C&#39;ABCDE&#39;
+</code></pre></div>
+<h5 id="exlst-exit-list-pointer">EXLST - Exit list pointer</h5>
+<p>Pointer to an exit list.  See <a href="">EXLST macro</a> for more details.</p>
+<h5 id="macrf-processing-options">MACRF - Processing options</h5>
+<p>A list of keywords is provided.</p>
+<div class="highlight"><pre><span></span><code>MACRF=(KEY,DIR)
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Keyword group</th>
+<th>Keyword</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[ADR, KEY, CNV]</td>
+<td>ADR</td>
+<td>Addressed access to ESDS by (X)RBA. Using (X)RBA to access a KSDS is not supported.</td>
+</tr>
+<tr>
+<td></td>
+<td>KEY</td>
+<td>Keyed access to a KSDS. RRN access to an RRDS.</td>
+</tr>
+<tr>
+<td></td>
+<td>CNV</td>
+<td>Not supported. Keyword is flagged with a warning message.</td>
+</tr>
+<tr>
+<td>[DFR | NDF]</td>
+<td>DFR</td>
+<td>Allow writes to be deferred</td>
+</tr>
+<tr>
+<td></td>
+<td>NDF</td>
+<td>Do not defer writes</td>
+</tr>
+<tr>
+<td>[DIR, SEQ, SKP]</td>
+<td>DIR</td>
+<td>Direct access to ESDS, KSDS or RRDS</td>
+</tr>
+<tr>
+<td></td>
+<td>SEQ</td>
+<td>Sequential access to ESDS, KSDS or RRDS</td>
+</tr>
+<tr>
+<td></td>
+<td>SKP</td>
+<td>Skip sequential access to KSDS or RRDS. Only for keyed access. Allows the use of POINT.</td>
+</tr>
+<tr>
+<td>[IN, OUT]</td>
+<td>IN</td>
+<td>Read only access for ESDS, KSDS or RRDS</td>
+</tr>
+<tr>
+<td></td>
+<td>OUT</td>
+<td>Both read and write access for ESDS, KSDS or RRDS</td>
+</tr>
+<tr>
+<td>[NIS | SIS]</td>
+<td>NIS</td>
+<td>Normal Insert Strategy for KSDS</td>
+</tr>
+<tr>
+<td></td>
+<td>SIS</td>
+<td>Sequential Insert Strategy for KSDS</td>
+</tr>
+<tr>
+<td>[NRM | AIX]</td>
+<td>NRM</td>
+<td>DDNAME indicates cluster to be processed</td>
+</tr>
+<tr>
+<td></td>
+<td>AIX</td>
+<td>DDNAME of a path to access an AIX directly, rather than using it to access records in the underlying base cluster.</td>
+</tr>
+<tr>
+<td>[NRS | RST]</td>
+<td></td>
+<td>Not supported. Keyword is flagged with a warning message</td>
+</tr>
+<tr>
+<td>[LSR | GSR | NSR | RLS]</td>
+<td></td>
+<td>Local, Global or no Shared Buffers. RLS is not supported</td>
+</tr>
+<tr>
+<td>[NUB | UBF]</td>
+<td></td>
+<td>Not supported. Keyword is flagged with a warning message</td>
+</tr>
+<tr>
+<td>[CFX | NFX]</td>
+<td></td>
+<td>Not supported. Keyword is flagged with a warning message</td>
+</tr>
+<tr>
+<td>[DDN | DSN]</td>
+<td></td>
+<td>Not supported. Keyword is flagged with a warning message</td>
+</tr>
+<tr>
+<td>[ICI | NCI]</td>
+<td></td>
+<td>Not supported. Keyword is flagged with a warning message</td>
+</tr>
+<tr>
+<td>[LEW | NLW]</td>
+<td></td>
+<td>Not supported. Keyword is flagged with a warning message</td>
+</tr>
+</tbody>
+</table>
+<h5 id="bufsp-buffer-storage">BUFSP - Buffer storage</h5>
+<p>Max amount of storage (in bytes) to use for buffers. </p>
+<p>Maximum buffer space in virtual storage for this cluster.</p>
+<p>This is the combined size in bytes of all buffers allocated for this cluster. 
+If (BUFND + BUFNI) * Block_size exceeds the value specified for BUFSP, then 
+BUFND and BUFNI will be reduced proportionally to keep the total allocation 
+below the limit specified in the BUFSP parameter.</p>
+<h5 id="bufnd-data-buffers">BUFND - Data buffers</h5>
+<p>Number of data buffers to allocate for this ACB.</p>
+<p>Specify a number between 1 and 65535.</p>
+<h5 id="bufni-index-buffers">BUFNI - Index buffers</h5>
+<p>Number of index buffers to allocate for this ACB.</p>
+<p>Specify a number between 1 and 65535.</p>
+<h5 id="rmode31-above-the-line-storage-usage">RMODE31 - Above the line storage usage</h5>
+<p>The default value for RMODE31 is NONE.</p>
+<p>Specifies whether buffers and/or control blocks should be allocated below or 
+above the 16M line:</p>
+<table>
+<thead>
+<tr>
+<th>option</th>
+<th>effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NONE</td>
+<td>Control Blocks and buffers below 16M</td>
+</tr>
+<tr>
+<td>CB</td>
+<td>Control Blocks above or below 16M, buffers below 16M</td>
+</tr>
+<tr>
+<td>BUFF</td>
+<td>Control Blocks below 16M, buffers above or below 16M</td>
+</tr>
+<tr>
+<td>ALL</td>
+<td>Control Blocks and buffers above 16M or below 16M</td>
+</tr>
+</tbody>
+</table>
+<h5 id="strno-concurrent-requests">STRNO - Concurrent requests</h5>
+<p>Number of concurrent requests allowable for this ACB. </p>
+<p>Specify a number between 1 and 255.</p>
+<h5 id="bstrno-initial-allocated-requests">BSTRNO - Initial allocated requests</h5>
+<p>Beginning number of concurrent requests allocated to this ACB when a path is 
+opened. Only applies if MACRF=NSR. </p>
+<p>Specify a number between 0 and 255.</p>
+<h5 id="unsupported-options">Unsupported options</h5>
+<p>The following options are currently not supported.
+If used, the keyword is flagged as ignored with a warning message.</p>
+<ul>
+<li>MAREA</li>
+<li>MLEN</li>
+<li>RLSREAD</li>
+<li>SHRPOOL</li>
+</ul>
+<h3 id="open-open-cluster">OPEN - Open cluster</h3>
+<div class="highlight"><pre><span></span><code>label    OPEN  (entry[,entry]...),
+         MODE=,
+         MF=,
+</code></pre></div>
+<p>The open macro is used to open one or more clusters and/or one or more 
+sequential files in a single call.</p>
+<p>A cluster needs to be opened before it can be processed. </p>
+<h4 id="parameters_1">Parameters</h4>
+<h5 id="entry-acbdcb-address">entry - ACB/DCB address</h5>
+<div class="highlight"><pre><span></span><code>addr[,options],[...]
+</code></pre></div>
+<p>The OPEN macro accepts a list of entries. Each entry consists of two consecutive 
+parameters, address and options.</p>
+<p><strong>addr - Address of ACB or DCB</strong></p>
+<p>The address can be specified as an A-type address or as a register. If a register 
+is coded the register number or name must be enclosed in parentheses. The address 
+can be either the address of a DCB or the address of an ACB</p>
+<p><strong>options</strong></p>
+<ul>
+<li>For DCB, options may be encoded according to the <a href="../file_services/">z390 File Services</a>.</li>
+<li>For ACB, options list is ignored and should be coded as an omitted parameter.</li>
+</ul>
+<p>For ACB's, all options are taken from the ACB, not the open parm list.</p>
+<p>Open parameter list entries have two different formats depending on the 
+<a href="#mode-residence-mode">MODE</a> parameter.</p>
+<ul>
+<li>MODE=24 <code>AL1(option),AL3(DCB/ACB address)</code> R1 points to the list.</li>
+<li>MODE=31 <code>AL1(option),XL3'00',AL4(DCB/ACB address)</code> R0 points to the list and R1=0.</li>
+</ul>
+<p>Available option values:</p>
+<ul>
+<li>INPUT - X'40'</li>
+<li>OUTPUT - X'20'</li>
+<li>UPDATE - X'60'</li>
+</ul>
+<p>The last entry has the X'80' bit on in option.</p>
+<h5 id="mf-parm">MF - Parm</h5>
+<p>Available options:</p>
+<table>
+<thead>
+<tr>
+<th>option</th>
+<th>effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MF=I or omitted</td>
+<td>An open parmlist is generated inline, plus a call to the OPEN SVC using the parmlist.</td>
+</tr>
+<tr>
+<td>MF=L</td>
+<td>An open parmlist is generated inline.</td>
+</tr>
+<tr>
+<td>MF=(E,addr)</td>
+<td>Code to modify/populate the open parameter list at the indicated address, which may be a relocatable constant or a (register), plus a call to the OPEN SVC using the parmlist.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="mode-residence-mode">MODE - Residence mode</h5>
+<p>Residency mode of all control blocks involved. </p>
+<ul>
+<li>MODE=24 - Use below the line only </li>
+<li>MODE=31 (Default) - if any resides above the line.</li>
+</ul>
+<h3 id="exlst-exit-list-control-block">EXLST - Exit list control block</h3>
+<div class="highlight"><pre><span></span><code>label    EXLST AM=VSAM, 
+         EODAD=(addr[,mod]),
+         LERAD=(addr[,mod]),
+         SYNAD=(addr[,mod]),
+         JRNAD=(addr[,mod]),
+         UPAD=(addr[,mod]),
+         RLSWAIT=(addr[,mod])
+</code></pre></div>
+<p>The EXLST macro will generate an exit list control block and initialize it 
+according to the parameters specified on the macro invocation.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The structure and layout of the generated EXLST are not part of the 
+interface and are therefore not shown. Direct access to subfields in the 
+EXLST is discouraged. Use SHOWCB EXLST=, TESTCB EXLST= and/or MODCB EXLST= 
+to inspect, test, and/or modify the EXLST's content.</p>
+</div>
+<p>All keywords on the EXLST macro are optional. Before the cluster is opened, all 
+EXLST values can be modified using <a href="">MODCB EXLST=</a>, or by changing the EXLST 
+directly. The latter is not recommended, as it is not guaranteed to be portable 
+or compatible with future versions of zVSAM.</p>
+<p>The AMODE for the exit routines is encoded in the address using the common 
+convention.</p>
+<p>For exit modifiers, if a routine is not active it will not be called by zVSAM.</p>
+<p>The secondary modifier of <code>L</code> (for Load from linklib) is not currently supported.</p>
+<h4 id="parameters_2">Parameters</h4>
+<h5 id="am-access-method_1">AM - Access method</h5>
+<p>AM=VSAM - Designates this EXLST as a zVSAM EXLST.</p>
+<h5 id="eodad-end-of-data-exit">EODAD - End of data exit</h5>
+<div class="highlight"><pre><span></span><code>EODAD=(addr[,mod])
+</code></pre></div>
+<p><strong>addr - entry address</strong> </p>
+<p>Optional parameter to specify the entry address of an exit that handles an 
+end-of-data condition during sequential access.</p>
+<p><strong>mod - modifier</strong></p>
+<ul>
+<li>A - Active </li>
+<li>N - Not active</li>
+</ul>
+<p>As long as the routine is not active it will not be called by zVSAM.</p>
+<p>The secondary modifier of <code>L</code> (for Load from linklib) is not currently supported.</p>
+<h5 id="lerad-logical-error-analysis-exit">LERAD - Logical error analysis exit</h5>
+<div class="highlight"><pre><span></span><code>LERAD=(addr[,mod])
+</code></pre></div>
+<p><strong>addr - entry address</strong> </p>
+<p>Entry address of an exit routine that handles logic errors.</p>
+<p>The AMODE for the routine is encoded in the address using the common convention.</p>
+<p><strong>mod - modifier</strong></p>
+<ul>
+<li>A - Active </li>
+<li>N - Not active</li>
+</ul>
+<p>As long as the routine is not active it will not be called by zVSAM.</p>
+<p>The secondary modifier of <code>L</code> (for Load from linklib) is not currently supported.</p>
+<h5 id="synad-physical-error-analysis-exit">SYNAD - Physical error analysis exit</h5>
+<div class="highlight"><pre><span></span><code>SYNAD=(addr[,mod])
+</code></pre></div>
+<p><strong>addr - entry address</strong> </p>
+<p>Optional parameter to specify the entry address of an exit that handles physical 
+errors.</p>
+<p><strong>mod - modifier</strong></p>
+<ul>
+<li>A - Active </li>
+<li>N - Not-active</li>
+</ul>
+<h3 id="close-close-cluster">CLOSE - Close cluster</h3>
+<h3 id="rpl-request-parameter-list">RPL - Request parameter list</h3>
+<h3 id="point">POINT</h3>
+<h3 id="get">GET</h3>
+<h3 id="put">PUT</h3>
+<h3 id="erase">ERASE</h3>
+<h3 id="check">CHECK</h3>
+<h3 id="endreq">ENDREQ</h3>
+<h3 id="verify">VERIFY</h3>
+<h3 id="gencb-generate-control-block">GENCB - Generate control block</h3>
+<h3 id="modcb-modify-control-block">MODCB - Modify control block</h3>
+<h3 id="testcb-test-control-block">TESTCB - Test control block</h3>
+<h3 id="showcb-show-control-block">SHOWCB - Show control block</h3>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../structured_program/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Structured programming macros" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Structured programming macros
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../zpar/" class="md-footer__link md-footer__link--next" aria-label="Next: zPAR and zPARTRS" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              zPAR and zPARTRS
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            &copy; 2022 z390 Assembler LLC. All rights reserved
+          </div>
+        
+        
+          Made with
+          <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+            Material for MkDocs
+          </a>
+        
+        
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.0-66-g1d1015a"}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b1047164.min.js"></script>
+      
+    
+  </body>
+</html>

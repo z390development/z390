@@ -1,0 +1,4500 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <meta name="author" content="z390 Development team">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.3.6">
+    
+    
+      
+        <title>zCICS Application Programming Guide - z390</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.a57b2b03.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.3f5d1f46.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    <script>function __prefix(e){return new URL("../../..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#zcics-application-programming-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner md-announce">
+          <div class="md-banner__inner md-announce__inner md-grid md-typeset">
+            
+  <p>This is a work in progress. Contributions to the documentation are welcome. See <a
+    href="../../../contributing/contribute_docs">Contributing</a> for more information.</p>
+
+          </div>
+        </aside>
+      
+    </div>
+    
+      
+
+  
+
+<header class="md-header md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="z390" class="md-header__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            z390
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              zCICS Application Programming Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../getting_started/install/" class="md-tabs__link">
+        Getting started
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../user_guide/commands/" class="md-tabs__link">
+        User guide
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../svc_services/" class="md-tabs__link md-tabs__link--active">
+        Reference
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../contributing/contribute_code/" class="md-tabs__link">
+        Contributing
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="z390" class="md-nav__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    z390
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Getting started
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Getting started" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Getting started
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstart/" class="md-nav__link">
+        Quick starts
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/learning/" class="md-nav__link">
+        Learning resources
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/macro_index/" class="md-nav__link">
+        z/OS compatible macros
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          User guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="User guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          User guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user_guide/commands/" class="md-nav__link">
+        Commands
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user_guide/structured_macro/" class="md-nav__link">
+        Structured Macro Extensions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3" type="checkbox" id="__nav_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_3">
+          Options
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Options" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Options
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user_guide/options/z390_filetypes/" class="md-nav__link">
+        z390 File types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user_guide/options/z390_options/" class="md-nav__link">
+        z390 Options
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user_guide/options/zCOBOL_filetypes/" class="md-nav__link">
+        zCOBOL file types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user_guide/options/zCOBOL_options/" class="md-nav__link">
+        zCOBOL options
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../svc_services/" class="md-nav__link">
+        SVC services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../program_services/" class="md-nav__link">
+        Program Services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../storage_services/" class="md-nav__link">
+        Storage services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../file_services/" class="md-nav__link">
+        Non-VSAM File Services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guam_services/" class="md-nav__link">
+        GUAM services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../soa_services/" class="md-nav__link">
+        SOA services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../structured_program/" class="md-nav__link">
+        Structured programming macros
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vsam_file_services/" class="md-nav__link">
+        zVSAM services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zpar/" class="md-nav__link">
+        zPAR and zPARTRS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sort/" class="md-nav__link">
+        zSORT
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assist/" class="md-nav__link">
+        ASSIST support
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_12" type="checkbox" id="__nav_4_12" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_12">
+          zCICS
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="zCICS" data-md-level="2">
+        <label class="md-nav__title" for="__nav_4_12">
+          <span class="md-nav__icon md-icon"></span>
+          zCICS
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        Manuals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          zCICS Application Programming Guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        zCICS Application Programming Guide
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    Introduction
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-macros" class="md-nav__link">
+    Other macros
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#copy-books" class="md-nav__link">
+    Copy books
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#register-usage" class="md-nav__link">
+    Register Usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Register Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multiple-base-registers-assembler-only" class="md-nav__link">
+    Multiple base registers (assembler only)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assembler-exec-cics-command-syntax" class="md-nav__link">
+    Assembler EXEC CICS command syntax
+  </a>
+  
+    <nav class="md-nav" aria-label="Assembler EXEC CICS command syntax">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#in-line-space-separated" class="md-nav__link">
+    In-line space separated
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-line-comma-separated" class="md-nav__link">
+    In-line comma separated
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#split-space-separated" class="md-nav__link">
+    Split, space separated
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#split-comma-separated" class="md-nav__link">
+    Split, comma separated
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vsam-support" class="md-nav__link">
+    VSAM support
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-mapping-support" class="md-nav__link">
+    Basic Mapping Support
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zcobol-support" class="md-nav__link">
+    zCOBOL support
+  </a>
+  
+    <nav class="md-nav" aria-label="zCOBOL support">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extra-parameters" class="md-nav__link">
+    Extra Parameters
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-general-commands" class="md-nav__link">
+    Command reference - General Commands
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - General Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#handle-aid" class="md-nav__link">
+    HANDLE AID
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-condition" class="md-nav__link">
+    HANDLE CONDITION
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ignore-condition" class="md-nav__link">
+    IGNORE CONDITION
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pop-handle" class="md-nav__link">
+    POP HANDLE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#push-handle" class="md-nav__link">
+    PUSH HANDLE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#address" class="md-nav__link">
+    ADDRESS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assign" class="md-nav__link">
+    ASSIGN
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-terminal-control" class="md-nav__link">
+    Command reference - Terminal Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Terminal Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#receive" class="md-nav__link">
+    RECEIVE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send" class="md-nav__link">
+    SEND
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send-control" class="md-nav__link">
+    SEND CONTROL
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-file-control" class="md-nav__link">
+    Command reference - File control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - File control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read" class="md-nav__link">
+    READ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#startbr" class="md-nav__link">
+    STARTBR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#readnext" class="md-nav__link">
+    READNEXT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#readprev" class="md-nav__link">
+    READPREV
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endbr" class="md-nav__link">
+    ENDBR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resetbr" class="md-nav__link">
+    RESETBR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-storage-control" class="md-nav__link">
+    Command reference - Storage Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Storage Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#freemain" class="md-nav__link">
+    FREEMAIN
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getmain" class="md-nav__link">
+    GETMAIN
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-temporary-storage-control" class="md-nav__link">
+    Command reference - Temporary Storage Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Temporary Storage Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deleteq" class="md-nav__link">
+    DELETEQ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#readq" class="md-nav__link">
+    READQ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writeq" class="md-nav__link">
+    WRITEQ
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-program-control" class="md-nav__link">
+    Command reference - Program Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Program Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abend" class="md-nav__link">
+    ABEND
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-abend" class="md-nav__link">
+    HANDLE ABEND
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link" class="md-nav__link">
+    LINK
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load" class="md-nav__link">
+    LOAD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release" class="md-nav__link">
+    RELEASE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return" class="md-nav__link">
+    RETURN
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xctl" class="md-nav__link">
+    XCTL
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-interval-control" class="md-nav__link">
+    Command reference - Interval control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Interval control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#asktime" class="md-nav__link">
+    ASKTIME
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delay" class="md-nav__link">
+    DELAY
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formattime" class="md-nav__link">
+    FORMATTIME
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start" class="md-nav__link">
+    START
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieve" class="md-nav__link">
+    RETRIEVE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancel" class="md-nav__link">
+    CANCEL
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-task-control" class="md-nav__link">
+    Command reference - Task Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Task Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enq" class="md-nav__link">
+    ENQ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deq" class="md-nav__link">
+    DEQ
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-bms" class="md-nav__link">
+    Command reference - BMS
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - BMS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#receive_1" class="md-nav__link">
+    RECEIVE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send_1" class="md-nav__link">
+    SEND
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send-control-cursorcursor-eraseeraseaup-alarm-freekb-frset" class="md-nav__link">
+    SEND CONTROL CURSOR/CURSOR() ERASE/ERASEAUP ALARM FREEKB FRSET
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-dump-control" class="md-nav__link">
+    Command reference - Dump Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Dump Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dump" class="md-nav__link">
+    DUMP
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-inquire" class="md-nav__link">
+    Command reference - Inquire
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Inquire">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inquire-file" class="md-nav__link">
+    INQUIRE FILE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-file" class="md-nav__link">
+    SET FILE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-channel-and-containers" class="md-nav__link">
+    Command reference - Channel and containers
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Channel and containers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get" class="md-nav__link">
+    GET
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put" class="md-nav__link">
+    PUT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete" class="md-nav__link">
+    DELETE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#move" class="md-nav__link">
+    MOVE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#startbrowse" class="md-nav__link">
+    STARTBROWSE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getnext" class="md-nav__link">
+    GETNEXT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endbrowse" class="md-nav__link">
+    ENDBROWSE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Contributing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/contribute_code/" class="md-nav__link">
+        Contributing to z390
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/contribute_docs/" class="md-nav__link">
+        Contributing to z390 Documentation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    Introduction
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-macros" class="md-nav__link">
+    Other macros
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#copy-books" class="md-nav__link">
+    Copy books
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#register-usage" class="md-nav__link">
+    Register Usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Register Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multiple-base-registers-assembler-only" class="md-nav__link">
+    Multiple base registers (assembler only)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assembler-exec-cics-command-syntax" class="md-nav__link">
+    Assembler EXEC CICS command syntax
+  </a>
+  
+    <nav class="md-nav" aria-label="Assembler EXEC CICS command syntax">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#in-line-space-separated" class="md-nav__link">
+    In-line space separated
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-line-comma-separated" class="md-nav__link">
+    In-line comma separated
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#split-space-separated" class="md-nav__link">
+    Split, space separated
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#split-comma-separated" class="md-nav__link">
+    Split, comma separated
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vsam-support" class="md-nav__link">
+    VSAM support
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-mapping-support" class="md-nav__link">
+    Basic Mapping Support
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zcobol-support" class="md-nav__link">
+    zCOBOL support
+  </a>
+  
+    <nav class="md-nav" aria-label="zCOBOL support">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extra-parameters" class="md-nav__link">
+    Extra Parameters
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-general-commands" class="md-nav__link">
+    Command reference - General Commands
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - General Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#handle-aid" class="md-nav__link">
+    HANDLE AID
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-condition" class="md-nav__link">
+    HANDLE CONDITION
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ignore-condition" class="md-nav__link">
+    IGNORE CONDITION
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pop-handle" class="md-nav__link">
+    POP HANDLE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#push-handle" class="md-nav__link">
+    PUSH HANDLE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#address" class="md-nav__link">
+    ADDRESS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assign" class="md-nav__link">
+    ASSIGN
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-terminal-control" class="md-nav__link">
+    Command reference - Terminal Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Terminal Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#receive" class="md-nav__link">
+    RECEIVE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send" class="md-nav__link">
+    SEND
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send-control" class="md-nav__link">
+    SEND CONTROL
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-file-control" class="md-nav__link">
+    Command reference - File control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - File control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read" class="md-nav__link">
+    READ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#startbr" class="md-nav__link">
+    STARTBR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#readnext" class="md-nav__link">
+    READNEXT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#readprev" class="md-nav__link">
+    READPREV
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endbr" class="md-nav__link">
+    ENDBR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resetbr" class="md-nav__link">
+    RESETBR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-storage-control" class="md-nav__link">
+    Command reference - Storage Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Storage Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#freemain" class="md-nav__link">
+    FREEMAIN
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getmain" class="md-nav__link">
+    GETMAIN
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-temporary-storage-control" class="md-nav__link">
+    Command reference - Temporary Storage Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Temporary Storage Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deleteq" class="md-nav__link">
+    DELETEQ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#readq" class="md-nav__link">
+    READQ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writeq" class="md-nav__link">
+    WRITEQ
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-program-control" class="md-nav__link">
+    Command reference - Program Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Program Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abend" class="md-nav__link">
+    ABEND
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-abend" class="md-nav__link">
+    HANDLE ABEND
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link" class="md-nav__link">
+    LINK
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load" class="md-nav__link">
+    LOAD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release" class="md-nav__link">
+    RELEASE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return" class="md-nav__link">
+    RETURN
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xctl" class="md-nav__link">
+    XCTL
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-interval-control" class="md-nav__link">
+    Command reference - Interval control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Interval control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#asktime" class="md-nav__link">
+    ASKTIME
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delay" class="md-nav__link">
+    DELAY
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formattime" class="md-nav__link">
+    FORMATTIME
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start" class="md-nav__link">
+    START
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieve" class="md-nav__link">
+    RETRIEVE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancel" class="md-nav__link">
+    CANCEL
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-task-control" class="md-nav__link">
+    Command reference - Task Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Task Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enq" class="md-nav__link">
+    ENQ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deq" class="md-nav__link">
+    DEQ
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-bms" class="md-nav__link">
+    Command reference - BMS
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - BMS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#receive_1" class="md-nav__link">
+    RECEIVE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send_1" class="md-nav__link">
+    SEND
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send-control-cursorcursor-eraseeraseaup-alarm-freekb-frset" class="md-nav__link">
+    SEND CONTROL CURSOR/CURSOR() ERASE/ERASEAUP ALARM FREEKB FRSET
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-dump-control" class="md-nav__link">
+    Command reference - Dump Control
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Dump Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dump" class="md-nav__link">
+    DUMP
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-inquire" class="md-nav__link">
+    Command reference - Inquire
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Inquire">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inquire-file" class="md-nav__link">
+    INQUIRE FILE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-file" class="md-nav__link">
+    SET FILE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference-channel-and-containers" class="md-nav__link">
+    Command reference - Channel and containers
+  </a>
+  
+    <nav class="md-nav" aria-label="Command reference - Channel and containers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get" class="md-nav__link">
+    GET
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put" class="md-nav__link">
+    PUT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete" class="md-nav__link">
+    DELETE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#move" class="md-nav__link">
+    MOVE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#startbrowse" class="md-nav__link">
+    STARTBROWSE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getnext" class="md-nav__link">
+    GETNEXT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endbrowse" class="md-nav__link">
+    ENDBROWSE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/z390development/z390/edit/main/doc/reference/zCICS/zcics_app_prog_guide.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="zcics-application-programming-guide">zCICS Application Programming Guide</h1>
+<h2 id="introduction">Introduction</h2>
+<p>The EXEC CICS commands and parameters listed here are the only ones currently
+supported in the zCICS environment.</p>
+<p>Differences between mainframe operation and zCICS are explained.</p>
+<p>For the operation of each command and parameter please refer to the Manuals
+listed in the Reference section at the end of this document.</p>
+<p>If you create your own zCICS applications, it would be wise to create a .BAT file that
+re-assembles them all in one go. The internal interfaces are volatile at present and
+this will be a frequent instruction.</p>
+<p>The current zCICS environment and all test programs can be re-assembled using
+DFHALL.BAT. The test VSAM catalog and files can be rebuilt using DFHALLV.BAT.
+Assembly notes</p>
+<p>The <code>CICS</code> option must be used when executing <code>mz390</code> command.</p>
+<p>PROLOG and EPILOG are defaults.</p>
+<p>NOEPILOG is supported but not fully tested, testing and correct usage is scheduled
+for a future release of zCICS.</p>
+<p>PROLOG inserts the following:</p>
+<dl>
+<dt>DFHEISTG</dt>
+<dd>Define the prefix areas of the Dynamic Storage Area (DSA).</dd>
+<dt>DFHEIEND</dt>
+<dd>Replaces the END statement and defines the end of the DSA.</dd>
+<dt>DFHEIENT</dt>
+<dd>Replaces the first CSECT statement</dd>
+<dd>Establish linkage and base registers</dd>
+<dd>GETMAIN the DSA</dd>
+<dd>Establish addressability to the EIB and TCTTE</dd>
+<dd>Some COMMAREA management</dd>
+</dl>
+<h2 id="other-macros">Other macros</h2>
+<ul>
+<li>DFHEIBLK - EIB DSECT</li>
+<li>DFHPCT - Transaction definition</li>
+<li>DFHFCT – File definitions and options</li>
+<li>EXEC - Converts EXEC CICS statements into a unique macro call with a parameter list</li>
+<li>DFHREGS – A synonym for EQUREGS</li>
+</ul>
+<h2 id="copy-books">Copy books</h2>
+<ul>
+<li>DFHAID - Standard CICS equates for AID keys</li>
+<li>DFHBMSCA - Mapping support equates</li>
+<li>DFHPCTUS - User transaction codes</li>
+<li>DFHFCTUS - User file definitions</li>
+</ul>
+<p>Inclusion of the macro DFHREGS/EQUREGS is mandatory.</p>
+<h2 id="register-usage">Register Usage</h2>
+<ul>
+<li>R0 - Reserved for internal use</li>
+<li>R1 - Reserved for internal use</li>
+<li>R10 - TCTTE address, must not be modified</li>
+<li>R11 - EIB address, must not be modified</li>
+<li>R12 - Default base register</li>
+<li>R13 - DSA address, must not be modified</li>
+<li>R14 - Reserved for internal use</li>
+<li>R15 - Reserved for internal use</li>
+</ul>
+<h3 id="multiple-base-registers-assembler-only">Multiple base registers (assembler only)</h3>
+<p>The standard entry for a CICS program is as follows:
+e.g. DFHEISTG DSECT</p>
+<div class="highlight"><pre><span></span><code>MYFIELD  DS    CL100 demo user field
+......
+MYPROG   CSECT
+</code></pre></div>
+<p>This standard method with the PROLOG option (default) will generate a single code
+base of R12 and a single DSA base of R13.</p>
+<p>If you want to extend the code base and/or the DSA base registers, convert your
+code in line with the sample given and include the <code>NOPROLOG</code> option in mz390 command.</p>
+<p>e.g. DFHEISTG</p>
+<div class="highlight"><pre><span></span><code>MYFIELD  DS    CL100 demo user field
+......
+MYPROG   DFHEIENT CODEREG=(R8,R5),DATAREG=(R13,R6,R7)
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You cannot override the first DATAREG value, it will always be R13.
+i.e. if you code <code>DATAREG=(R6,R7)</code> you will get <code>DATAREG=(R13,R7)</code>.</p>
+</div>
+<p>There is no cross-checking for register conflicts.</p>
+<h2 id="assembler-exec-cics-command-syntax">Assembler EXEC CICS command syntax</h2>
+<p>There is no formal definition of an EXEC CICS command in any IBM CICS&reg; Manual.</p>
+<p>These assembler syntaxes are currently supported.</p>
+<h3 id="in-line-space-separated">In-line space separated</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS function subfunction parm parm()
+</code></pre></div>
+<h3 id="in-line-comma-separated">In-line comma separated</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS function,subfunction,parm,parm(), parm ()
+</code></pre></div>
+<h3 id="split-space-separated">Split, space separated</h3>
+<p>Non-blank in column 72 is assumed for all lines except the last.</p>
+<p>Comments are only allowed following a dot or comma delimiter on the last line.
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS function                                          X
+         subfunction                                                  X
+         parm                                                         X
+         parm() parm (). a nice comment
+</code></pre></div></p>
+<h3 id="split-comma-separated">Split, comma separated</h3>
+<p>Comments are allowed on all lines that end with comma+space.</p>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS function, some                                    X
+         subfunction, very                                            X
+         parm, nice                                                   X
+         parm(),parm (), comments
+</code></pre></div>
+<p><em>name</em> is supported and optional.</p>
+<p><code>EXEC CICS</code> is expected, <code>EXECUTE CICS</code> is not currently supported.</p>
+<p><code>subfunction</code> is optional and depends on the function but must follow function, 
+e.g. <code>EXEC CICS WRITEQ TS</code></p>
+<p><code>parm()</code> without spacing and <code>parm ()</code> with spacing are allowed.</p>
+<h2 id="vsam-support">VSAM support</h2>
+<p>See the <a href="">zCICS VSAM Guide</a> for guidance in the setup of a VSAM environment.</p>
+<p>This document also contains extensions to the VSAM facilities currently available.</p>
+<h2 id="basic-mapping-support">Basic Mapping Support</h2>
+<p>The <code>EXEC CICS</code> commands <code>RECEIVE MAP</code>, <code>SEND MAP</code> and <code>SEND CONTROL</code> are documented
+here.</p>
+<p>For general BMS documentation and the mapping macros DFHMSD, DFHMDI and
+DFHMDF see the <a href="">zCICS BMS Guide</a>.</p>
+<h2 id="zcobol-support">zCOBOL support</h2>
+<p>EXEC CICS command format follows the rules for COBOL.</p>
+<p>Each command must end END-EXEC (a following dot may affect the logic).</p>
+<p>Parameters like <code>SET()</code> which address imported structures may use the ADDRESS
+OF special register.</p>
+<p><code>LENGTH</code>, <code>FLENGTH</code> and <code>KEYLENGTH</code> which would normally allow a numeric option
+may use the <code>LENGTH OF</code> special register.</p>
+<h3 id="extra-parameters">Extra Parameters</h3>
+<p>You can add <code>NOEDF</code> to any <code>EXEC CICS</code> command if you wish that command to be
+excluded from a CEDF session.</p>
+<p>You can add <code>NOEDF</code> to the mz390 command if you wish all CEDF intercepts in that
+program excluded.</p>
+<h2 id="command-reference-general-commands">Command reference - General Commands</h2>
+<h3 id="handle-aid">HANDLE AID</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS HANDLE AID key(label) key
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The following parameters are not supported.</p>
+<ul>
+<li>CLRPARTN</li>
+<li>LIGHTPEN</li>
+<li>OPERID</li>
+<li>TRIGGER</li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>ANYKEY (no label) clears all settings for CLEAR, PA and PF keys.</p>
+</div>
+<h4 id="parameters">Parameters</h4>
+<h5 id="key">key</h5>
+<p>The key</p>
+<h5 id="label">label</h5>
+<p><em>label</em> may take three forms:</p>
+<ul>
+<li>Direct reference</li>
+<li>Indirect reference</li>
+<li>Adcon literal</li>
+</ul>
+<div class="highlight"><pre><span></span><code>         EXEC  CICS HANDLE AID PA1(GOPA1) PA2(INDGOPA1) PA3(=A(GOPA1))
+......
+GOPA1    DS    0H
+......
+INDGOPA1 DC    A(GOPA1)
+</code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>There is a current limit of 30 AIDs.</p>
+</div>
+<h4 id="errors">Errors</h4>
+<ul>
+<li>AN INTERNAL ERROR HAS OCCURRED</li>
+<li>NO PARAMETERS SPECIFIED</li>
+<li>NUMBER OF AIDS EXCEEDS 30</li>
+<li>BAD PARM</li>
+<li>HANDLE TYPE NOT RECOGNISED</li>
+</ul>
+<h3 id="handle-condition">HANDLE CONDITION</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS HANDLE CONDITION condition(label) condition
+</code></pre></div>
+<h4 id="parameters_1">Parameters</h4>
+<h5 id="condition">condition</h5>
+<p>Name of the condition to handle</p>
+<h5 id="label_1">label</h5>
+<p>Location in program to branch to when condition occurs.</p>
+<p><em>label</em> may take three forms:</p>
+<ul>
+<li>Direct reference</li>
+<li>Indirect reference</li>
+<li>Adcon literal</li>
+</ul>
+<div class="highlight"><pre><span></span><code>         EXEC  CICS HANDLE CONDITION EOF(ISEOF)
+......
+ISEOF    DS    0H
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>There is a current limit of 30 conditions.
+<code>DSIDERR</code> is supported as a synonym to <code>FILENOTFOUND</code>.</p>
+</div>
+<h4 id="errors_1">Errors</h4>
+<ul>
+<li>AN INTERNAL ERROR HAS OCCURRED</li>
+<li>NUMBER OF CONDITIONS EXCEEDS 30</li>
+<li>BAD PARM</li>
+<li>HANDLE TYPE NOT RECOGNISED</li>
+</ul>
+<h3 id="ignore-condition">IGNORE CONDITION</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS IGNORE CONDITION condition
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Ignoring an error may lead to unpredictable abends.
+There is a current limit of 30 conditions.</p>
+</div>
+<h4 id="parameters_2">Parameters</h4>
+<p>INVREQ, PGMIDERR or ERROR by default.</p>
+<p>The EXEC CICS command treated as never existed.
+INVREQ on EXEC CICS RETURN will abend the task ASRA as z390 cannot ignore a RETURN.</p>
+<p>LENGERR or ERROR by default...
+NOHANDLE and any outstanding HANDLE AID will not invoke this condition.
+DSIDERR is supported as a synonym to FILENOTFOUND.</p>
+<h4 id="errors_2">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>IGNORE TYPE NOT RECOGNISED</li>
+<li>AN INTERNAL ERROR HAS OCCURRED</li>
+<li>NO PARAMETERS SPECIFIED</li>
+<li>NUMBER OF CONDITIONS EXCEEDS 30</li>
+</ul>
+<h3 id="pop-handle">POP HANDLE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS POP HANDLE
+</code></pre></div>
+<p>For the HANDLE ABEND, a POP is the equivalent of a HANDLE ABEND RESET.</p>
+<h4 id="errors_3">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>POP TYPE NOT RECOGNISED</li>
+</ul>
+<h4 id="conditions-respresp2">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/0</li>
+</ul>
+<h3 id="push-handle">PUSH HANDLE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS PUSH HANDLE
+</code></pre></div>
+<p>For the HANDLE ABEND, a PUSH is the equivalent of a <code>HANDLE ABEND CANCEL</code>.</p>
+<h4 id="errors_4">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>PUSH TYPE NOT RECOGNISED</li>
+</ul>
+<h3 id="address">ADDRESS</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS ADDRESS                                           X
+                    COMMAREA(label)                                   X
+                    CWA(label)                                        X
+                    EIB(label)
+</code></pre></div>
+<p>CWA has a different implementation in zCICS.</p>
+<p>See <a href="">CWA Management in zCICS Diagnosis Reference</a> for more information.</p>
+<h4 id="errors_5">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+</ul>
+<h3 id="assign">ASSIGN</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS ASSIGN
+</code></pre></div>
+<p>The following parameters are not supported:</p>
+<p>ACTIVITY,ACTIVITYID,ALTSCRNHT,ALTSCRNWD,APPLID,ASRAINTRPT,ASRAKEY,ASRASPC,ASRASTG,BRIDGE,
+DELIMITER,DESTCOUNT,DESTID,DESTIDLENG,GCHARS,GCODES,INITPARM,INITPARMLEN,INPARTN,
+LDCMNEM,LDCNUM,NETNAME,NUMTAB,OPCLASS,OPERKEYS,OPID,OPSECURITY,ORGABCODE,PAGENUM,
+PARTNPAGE,PARTNPAGE,PRINSYSID,PROCESS,PROCESSTYPE,QNAME,SIGDATA,STATIONID,SYSID,
+TELLERID,USERID,USERNAME</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>zCICS allows a CWA size greater than 32K. If the CWA
+does exceed 32K, then ASSIGN CWALENG() will return an
+incorrect value.</p>
+</div>
+<h4 id="conditions-respresp2_1">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/2</li>
+<li>INVREQ/5 </li>
+</ul>
+<h4 id="errors_6">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+</ul>
+<h2 id="command-reference-terminal-control">Command reference - Terminal Control</h2>
+<h3 id="receive">RECEIVE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS RECEIVE                                           X
+                    INTO(label)                                       X
+                    LENGTH(label)                                     X
+                    NOHANDLE
+</code></pre></div>
+<h4 id="parameters_3">Parameters</h4>
+<ul>
+<li>INTO(label) and LENGTH(label) are mandatory.</li>
+<li>LENGTH must point to a 2-byte field.</li>
+<li>Although MAXLENGTH is not implemented yet, there is an internal 
+  maximum length set to the implied length of the INTO label.</li>
+<li>NOHANDLE is optional.</li>
+</ul>
+<h4 id="conditions-respresp2_2">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>NOTALLOC/0</li>
+<li>LENGERR/0</li>
+</ul>
+<h4 id="errors_7">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH INTO AND LENGTH ARE REQUIRED</li>
+<li>LENGTH ERROR</li>
+</ul>
+<h3 id="send">SEND</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS SEND
+                    FROM(label)
+                    LENGTH()
+</code></pre></div>
+<h4 id="parameters_4">Parameters</h4>
+<p>FROM(label) is mandatory.</p>
+<p><em>label</em> must point to a 2-byte hex value.</p>
+<p><em>label</em> may take three forms:</p>
+<ul>
+<li>Direct reference</li>
+<li>Indirect reference</li>
+<li>Adcon literal</li>
+</ul>
+<p>LENGTH can be specified as LENGTH(value) or LENGTH(label) </p>
+<p>LENGTH(value) supports the use of the length attribute.</p>
+<p>The parameters TERMINAL, WAIT, DEFAULT and TEXT are discarded.</p>
+<h4 id="conditions-respresp2_3">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/0 - Attempt to execute this in a non-terminal attached task.
+  This is not documented in the IBM CICS&reg; Manuals.</li>
+<li>LENGERR/E1</li>
+</ul>
+<h4 id="errors_8">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>FROM IS MANDATORY</li>
+<li>LENGTH IS MANDATORY</li>
+</ul>
+<h3 id="send-control">SEND CONTROL</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS SEND CONTROL
+                    CURSOR/CURSOR()
+                    ERASE/ERASEAUP
+                    ALARM
+                    FREEKB
+                    FRSET
+</code></pre></div>
+<h4 id="parameters_5">Parameters</h4>
+<ul>
+<li>TERMINAL and WAIT are accepted and discarded.</li>
+<li>ACCUM and SET are not supported.</li>
+<li>CURSOR() refers to the 24x80 screen.</li>
+<li>CURSOR is not documented.</li>
+<li>SEND CONTROL CURSOR ERASEAUP means erase all input fields
+  and don't move the cursor.</li>
+</ul>
+<h4 id="conditions-respresp2_4">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/0 - Attempt to execute this in a non-terminal attached task.
+  This is not documented in the IBM CICS&reg; Manual.</li>
+</ul>
+<h4 id="errors_9">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>CURSOR POSITION AND SYMBOLIC CURSOR SPECIFIED</li>
+<li>ERASE AND ERASEAUP SPECIFIED</li>
+</ul>
+<h2 id="command-reference-file-control">Command reference - File control</h2>
+<h3 id="read">READ</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS READ
+                    FILE()/DATASET()
+                    INTO()/SET()
+                    LENGTH()/FLENGTH()
+                    RIDFLD()
+                    RBA/XRBA/RRN/GENERIC
+                    GTEQ/EQUAL
+                    KEYLENGTH()
+</code></pre></div>
+<h4 id="parameters_6">Parameters</h4>
+<h5 id="length">LENGTH</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>constant must not exceed 32767.</li>
+<li>A literal or label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+</ul>
+<h5 id="flength">FLENGTH</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 2G-1.</li>
+<li>A literal or label must be 4 bytes and must not exceed 2G-1.</li>
+</ul>
+</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p><strong>LENGTH/FLENGTH</strong>:</p>
+<ul>
+<li>If SET is specified, LENGTH/FLENGTH are ignored and LENGERR
+  cannot occur.</li>
+<li>If INTO is specified and LENGTH/FLENGTH are not, then the implied
+  length of INTO is used. This may raise the LENGERR condition if the
+  data length is larger.</li>
+<li>If LENGTH/FLENGTH is numeric then it specifies the maximum data
+  length that can be received. LENGERR can be raised if the data length
+  is larger.</li>
+<li>If LENGTH/FLENGTH is a label then it specifies the maximum data
+  length that can be received. LENGERR can be raised if the data length
+  is larger. The true data length is returned in label.</li>
+</ul>
+</div>
+<h5 id="keylength">KEYLENGTH</h5>
+<ul>
+<li>Can be specified as a constant or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+<li>Keylengths greater than 128 are ignored.</li>
+<li>The parameter is ignored for ESDS and RRDS.</li>
+<li>KEYLENGTH and GENERIC must be paired.</li>
+<li>If KEYLENGTH is zero by constant or label then parameters are
+  changed internally:
+    <div class="highlight"><pre><span></span><code>GENERIC/EQUAL or GENERIC/GTEQ
+Becomes 
+KEYLENGTH(1) Key=X&#39;00&#39; GENERIC GTEQ
+</code></pre></div></li>
+</ul>
+<h5 id="rba">RBA</h5>
+<p>RIDFLD has a 4-byte RBA</p>
+<h5 id="xrba">XRBA</h5>
+<p>RIDFLD has an 8-byte RBA</p>
+<h5 id="rrn">RRN</h5>
+<p>RIDFLD has a 4-byte relative record number</p>
+<h5 id="gteqequal">GTEQ/EQUAL</h5>
+<p>The parameter is ignored for ESDS and RRDS.</p>
+<h5 id="generic">GENERIC</h5>
+<p>KEYLENGTH must be specified.
+The parameter is ignored for ESDS and RRDS.</p>
+<h4 id="errors_10">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH FILE AND DATASET ARE SPECIFIED</li>
+<li>BOTH GTEQ AND EQUAL ARE SPECIFIED</li>
+<li>BOTH INTO AND SET ARE SPECIFIED</li>
+<li>BOTH LENGTH AND FLENGTH ARE SPECIFIED</li>
+<li>BOTH RBA AND XRBA ARE SPECIFIED</li>
+<li>BOTH RRN AND (X)RBA ARE SPECIFIED</li>
+<li>FILE OR DATASET MUST BE SPECIFIED</li>
+<li>GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA</li>
+<li>GENERIC REQUIRES KEYLENGTH</li>
+<li>INTO OR SET MUST BE SPECIFIED</li>
+<li>INVALID FILE OR DATASET</li>
+<li>KEYLENGTH REQUIRES GENERIC</li>
+<li>RIDFLD IS MANDATORY</li>
+</ul>
+<h4 id="conditions-respresp2_5">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>FILENOTFOUND/1</li>
+<li>DISABLED/50</li>
+<li>ILLOGIC/110</li>
+<li>INVREQ/20</li>
+<li>INVREQ/25</li>
+<li>INVREQ/42</li>
+<li>LENGERR/E1</li>
+<li>NOTFND/80</li>
+<li>NOTOPEN/60</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>FLENGTH and XRBA are extensions; do not use these parameters if the
+source code is likely to be ported back to a mainframe environment.
+RBA access to a KSDS is not supported.</p>
+<p>DATASET is supported for legacy applications. It is noted that this parameter
+no longer appears in the IBM CICS&reg; Manuals.</p>
+<p>When conditions are raised as a result of a VSAM error, the RPL feedback codes
+(2<sup>nd</sup> and 4<sup>th</sup> bytes) are placed in EIBRCODE +1 and +2.</p>
+</div>
+<h3 id="startbr">STARTBR</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS STARTBR
+                    FILE()/DATASET()
+                    RIDFLD()
+                    REQID()
+                    RBA/XRBA/RRN/GENERIC
+                    GTEQ/EQUAL
+                    KEYLENGTH()
+</code></pre></div>
+<h4 id="parameters_7">Parameters</h4>
+<h5 id="reqid">REQID</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A literal or label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+<li>If omitted, zero is assumed.</li>
+</ul>
+<h5 id="rba_1">RBA</h5>
+<p>RIDFLD has a 4-byte RBA</p>
+<h5 id="xrba_1">XRBA</h5>
+<p>RIDFLD has an 8-byte RBA</p>
+<h5 id="rrn_1">RRN</h5>
+<p>RIDFLD has a 4-byte relative record number</p>
+<h5 id="keylength_1">KEYLENGTH</h5>
+<ul>
+<li>Can be specified as a constant or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A label must be 2 bytes and must not exceed 32767.</li>
+<li>Keylengths greater than 128 are ignored.</li>
+</ul>
+</li>
+<li>The parameter is ignored for ESDS and RRDS.</li>
+<li>KEYLENGTH and GENERIC must be paired.</li>
+<li>If KEYLENGTH is zero by constant or label then parameters are
+  changed internally:
+    <div class="highlight"><pre><span></span><code>  GENERIC/EQUAL or GENERIC/GTEQ
+  Becomes 
+  KEYLENGTH(1) Key=X&#39;00&#39; GENERIC GTEQ
+</code></pre></div></li>
+</ul>
+<h5 id="gteqequal_1">GTEQ/EQUAL</h5>
+<p>The parameter is ignored for ESDS and RRDS.</p>
+<h5 id="generic_1">GENERIC</h5>
+<p>KEYLENGTH must be specified.</p>
+<p>The parameter is ignored for ESDS and RRDS.</p>
+<h4 id="conditions-respresp2_6">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>DISABLED/50</li>
+<li>FILENOTFOUND/1</li>
+<li>ILLOGIC/110</li>
+<li>INVREQ/20</li>
+<li>INVREQ/25</li>
+<li>INVREQ/33</li>
+<li>INVREQ/42</li>
+<li>NOTFND/80</li>
+<li>NOTOPEN/60</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>NOTFND cannot occur for an ESDS or RRDS</p>
+</div>
+<h4 id="errors_11">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH FILE AND DATASET ARE SPECIFIED</li>
+<li>BOTH GTEQ AND EQUAL ARE SPECIFIED</li>
+<li>BOTH RBA AND XRBA ARE SPECIFIED</li>
+<li>BOTH RRN AND (X)RBA ARE SPECIFIED</li>
+<li>FILE OR DATASET MUST BE SPECIFIED</li>
+<li>GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA</li>
+<li>GENERIC REQUIRES KEYLENGTH</li>
+<li>INVALID FILE OR DATASET</li>
+<li>KEYLENGTH REQUIRES GENERIC</li>
+<li>RIDFLD IS MANDATORY</li>
+</ul>
+<h3 id="readnext">READNEXT</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS READNEXT
+                    FILE()/DATASET()
+                    INTO()/SET()
+                    LENGTH()/FLENGTH()
+                    RIDFLD()
+                    REQID()
+                    RBA/XRBA/RRN
+                    KEYLENGTH()
+</code></pre></div>
+<h4 id="parameters_8">Parameters</h4>
+<h5 id="length_1">LENGTH</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A literal or label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+</ul>
+<h5 id="flength_1">FLENGTH</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 2G-1.</li>
+<li>A literal or label must be 4 bytes and must not exceed 2G-1.</li>
+</ul>
+</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p><strong>LENGTH/FLENGTH</strong></p>
+<p>If either is not a label then:</p>
+<ul>
+<li>If INTO is specified, then the length received is the implied length of
+  INTO. This may raise the LENGERR condition if the data length is
+  larger.</li>
+<li>If SET is specified, the complete record is returned and LENGERR
+  cannot occur.</li>
+</ul>
+<p>If either is a label then:</p>
+<ul>
+<li>If INTO or SET is specified, then it specifies the maximum data
+  length that can be received. LENGERR can be raised if the data
+  length is larger. The true data length is returned in label.</li>
+</ul>
+</div>
+<h5 id="reqid_1">REQID</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A literal or label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+<li>If omitted, zero is assumed.</li>
+</ul>
+<h5 id="rba_2">RBA</h5>
+<p>RIDFLD has a 4-byte RBA</p>
+<h5 id="xrba_2">XRBA</h5>
+<p>RIDFLD has an 8-byte RBA</p>
+<h5 id="rrn_2">RRN</h5>
+<p>RIDFLD has a 4-byte relative record number</p>
+<h5 id="keylength_2">KEYLENGTH</h5>
+<ul>
+<li>Can be specified as a constant or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+<li>Keylengths greater than 128 are ignored.</li>
+<li>The parameter is ignored for ESDS and RRDS.</li>
+<li>If KEYLENGTH is zero by constant or label then parameters are
+  changed internally:
+    <div class="highlight"><pre><span></span><code>GENERIC/EQUAL or GENERIC/GTEQ
+Becomes 
+KEYLENGTH(1) Key=X&#39;00&#39; GENERIC GTEQ
+</code></pre></div></li>
+</ul>
+<h4 id="errors_12">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH FILE AND DATASET ARE SPECIFIED</li>
+<li>BOTH INTO AND SET ARE SPECIFIED</li>
+<li>BOTH LENGTH AND FLENGTH ARE SPECIFIED</li>
+<li>BOTH RBA AND XRBA ARE SPECIFIED</li>
+<li>BOTH RRN AND (X)RBA ARE SPECIFIED</li>
+<li>FILE OR DATASET MUST BE SPECIFIED</li>
+<li>INTO OR SET MUST BE SPECIFIED</li>
+<li>INVALID FILE OR DATASET</li>
+<li>RIDFLD IS MANDATORY</li>
+<li>THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH</li>
+</ul>
+<h4 id="conditions-respresp2_7">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>DISABLED/50</li>
+<li>ENDFILE/90</li>
+<li>FILENOTFOUND/1</li>
+<li>ILLOGIC/110</li>
+<li>INVREQ/20</li>
+<li>INVREQ/25</li>
+<li>INVREQ/26</li>
+<li>INVREQ/34</li>
+<li>INVREQ/42</li>
+<li>LENGERR/E1</li>
+<li>NOTFND/80</li>
+<li>NOTOPEN/60</li>
+</ul>
+<h3 id="readprev">READPREV</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS READPREV
+                    FILE()/DATASET()
+                    INTO()/SET()
+                    LENGTH()/FLENGTH()
+                    RIDFLD()
+                    REQID()
+                    RBA/XRBA/RRN
+                    KEYLENGTH()
+</code></pre></div>
+<h4 id="parameters_9">Parameters</h4>
+<h5 id="length_2">LENGTH</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A literal or label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+</ul>
+<h5 id="flength_2">FLENGTH</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 2G-1.</li>
+<li>A literal or label must be 4 bytes and must not exceed 2G-1.</li>
+</ul>
+</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p><strong>LENGTH/FLENGTH</strong></p>
+<p>If either is not a label then:</p>
+<ul>
+<li>If INTO is specified, then the length received is the implied length of
+  INTO. This may raise the LENGERR condition if the data length is
+  larger.</li>
+<li>If SET is specified, the complete record is returned and LENGERR
+  cannot occur.</li>
+</ul>
+<p>If either is a label then:</p>
+<ul>
+<li>If INTO or SET is specified, then it specifies the maximum data
+  length that can be received. LENGERR can be raised if the data
+  length is larger. The true data length is returned in label.</li>
+</ul>
+</div>
+<h5 id="reqid_2">REQID</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A literal or label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+<li>If omitted, zero is assumed.</li>
+</ul>
+<h5 id="rba_3">RBA</h5>
+<p>RIDFLD has a 4-byte RBA</p>
+<h5 id="xrba_3">XRBA</h5>
+<p>RIDFLD has an 8-byte RBA</p>
+<h5 id="rrn_3">RRN</h5>
+<p>RIDFLD has a 4-byte relative record number</p>
+<h5 id="keylength_3">KEYLENGTH</h5>
+<ul>
+<li>Can be specified as a constant or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+<li>Keylengths greater than 128 are ignored.</li>
+<li>The parameter is ignored for ESDS and RRDS.</li>
+<li>If KEYLENGTH is specified, the value must be equal to the keylength
+  defined for the file.</li>
+</ul>
+<h4 id="errors_13">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH FILE AND DATASET ARE SPECIFIED</li>
+<li>BOTH INTO AND SET ARE SPECIFIED</li>
+<li>BOTH LENGTH AND FLENGTH ARE SPECIFIED</li>
+<li>BOTH RBA AND XRBA ARE SPECIFIED</li>
+<li>BOTH RRN AND (X)RBA ARE SPECIFIED</li>
+<li>FILE OR DATASET MUST BE SPECIFIED</li>
+<li>INTO OR SET MUST BE SPECIFIED</li>
+<li>INVALID FILE OR DATASET</li>
+<li>RIDFLD IS MANDATORY</li>
+<li>THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH</li>
+</ul>
+<h4 id="conditions-respresp2_8">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>DISABLED/50</li>
+<li>ENDFILE/90</li>
+<li>FILENOTFOUND/1</li>
+<li>ILLOGIC/110</li>
+<li>INVREQ/20</li>
+<li>INVREQ/24</li>
+<li>INVREQ/26</li>
+<li>INVREQ/41</li>
+<li>LENGERR/E1</li>
+<li>NOTFND/80</li>
+<li>NOTOPEN/60</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>ENDFILE can occur when a READPREV attempts to read past
+the beginning of the file.</p>
+</div>
+<h3 id="endbr">ENDBR</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS ENDBR                                             X
+                    FILE()/DATASET()                                  X
+                    REQID()
+</code></pre></div>
+<h4 id="parameters_10">Parameters</h4>
+<h5 id="reqid_3">REQID</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A literal or label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+<li>If omitted, zero is assumed.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In real CICS, ENDBR cannot cause a file to open, but it will in zCICS.</p>
+<p>The ENDBR command will be invalid, and may result in a transaction
+abend.</p>
+</div>
+<h4 id="errors_14">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH FILE AND DATASET ARE SPECIFIED</li>
+<li>FILE OR DATASET MUST BE SPECIFIED</li>
+<li>INVALID FILE OR DATASET</li>
+</ul>
+<h4 id="conditions-respresp2_9">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>DISABLED/50</li>
+<li>FILENOTFOUND/1</li>
+<li>ILLOGIC/110</li>
+<li>INVREQ/20</li>
+<li>INVREQ/35</li>
+<li>NOTOPEN/60</li>
+</ul>
+<h3 id="resetbr">RESETBR</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS RESETBR
+                    FILE()/DATASET()
+                    RIDFLD()
+                    REQID()
+                    RBA/XRBA/RRN/GENERIC
+                    GTEQ/EQUAL
+                    KEYLENGTH()
+</code></pre></div>
+<h4 id="parameters_11">Parameters</h4>
+<h5 id="reqid_4">REQID</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A literal or label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+<li>If omitted, zero is assumed.</li>
+</ul>
+<h5 id="rba_4">RBA</h5>
+<p>RIDFLD has a 4-byte RBA</p>
+<h5 id="xrba_4">XRBA</h5>
+<p>RIDFLD has an 8-byte RBA</p>
+<h5 id="rrn_4">RRN</h5>
+<p>RIDFLD has a 4-byte relative record number</p>
+<h5 id="keylength_4">KEYLENGTH</h5>
+<ul>
+<li>Can be specified as a constant or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+<li>Keylengths greater than 128 are ignored.</li>
+<li>The parameter is ignored for ESDS and RRDS.</li>
+<li>KEYLENGTH and GENERIC must be paired.</li>
+<li>If KEYLENGTH is zero by constant or label then parameters are
+  changed internally:
+    <div class="highlight"><pre><span></span><code>GENERIC/EQUAL or GENERIC/GTEQ
+Becomes 
+KEYLENGTH(1) Key=X&#39;00&#39; GENERIC GTEQ
+</code></pre></div></li>
+</ul>
+<h5 id="gteqequal_2">GTEQ/EQUAL</h5>
+<p>The parameter is ignored for ESDS and RRDS.</p>
+<h5 id="generic_2">GENERIC</h5>
+<p>KEYLENGTH must be specified.</p>
+<p>The parameter is ignored for ESDS and RRDS.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In real CICS, RESETBR cannot cause a file to open, but it will in
+zCICS. The RESETBR command will be invalid, and may result in a
+transaction abend.</p>
+</div>
+<h4 id="errors_15">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH FILE AND DATASET ARE SPECIFIED</li>
+<li>BOTH GTEQ AND EQUAL ARE SPECIFIED</li>
+<li>BOTH RBA AND XRBA ARE SPECIFIED</li>
+<li>BOTH RRN AND (X)RBA ARE SPECIFIED</li>
+<li>FILE OR DATASET MUST BE SPECIFIED</li>
+<li>GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA</li>
+<li>GENERIC REQUIRES KEYLENGTH</li>
+<li>INVALID FILE OR DATASET</li>
+<li>KEYLENGTH REQUIRES GENERIC</li>
+<li>RIDFLD IS MANDATORY</li>
+</ul>
+<h4 id="conditions-respresp2_10">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>DISABLED/50</li>
+<li>FILENOTFOUND/1</li>
+<li>ILLOGIC/110</li>
+<li>INVREQ/20</li>
+<li>INVREQ/25</li>
+<li>INVREQ/36</li>
+<li>INVREQ/42</li>
+<li>NOTFND/80</li>
+<li>NOTOPEN/60</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>NOTFND cannot occur for an ESDS or RRDS</p>
+</div>
+<h2 id="command-reference-storage-control">Command reference - Storage Control</h2>
+<h3 id="freemain">FREEMAIN</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS FREEMAIN                                          X
+                    DATA()/DATAPOINTER()                              X
+                    DATA(label)
+</code></pre></div>
+<h4 id="parameters_12">Parameters</h4>
+<p><em>label</em> may only be an indirect reference to the address.</p>
+<h5 id="datapointer">DATAPOINTER</h5>
+<p>Must be specified as a permitted general register value.</p>
+<h4 id="errors_16">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH DATA AND DATAPOINTER ARE SPECIFIED</li>
+<li>DATA OR DATAPOINTER MUST BE SPECIFIED</li>
+</ul>
+<h4 id="conditions-respresp2_11">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/1</li>
+</ul>
+<h3 id="getmain">GETMAIN</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS GETMAIN                                           X
+                    SET()                                             X
+                    LENGTH()/FLENGTH()                                X
+                    INITIMG()
+</code></pre></div>
+<h4 id="parameters_13">Parameters</h4>
+<h5 id="set">SET</h5>
+<ul>
+<li>SET is mandatory</li>
+<li>Must be specified as a permitted general register value.</li>
+</ul>
+<h5 id="length_3">LENGTH</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A literal or label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+</ul>
+<h5 id="flength_3">FLENGTH</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.</li>
+<li>A constant must not exceed 2G-1.</li>
+<li>A literal or label must be 4 bytes and must not exceed 2G-1.</li>
+</ul>
+<h5 id="initimg">INITIMG</h5>
+<ul>
+<li>Is optional</li>
+<li>If omitted, the storage contents are not predictable.</li>
+<li>Can be specified as a constant, literal or label.</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>zCOBOL supports all 3 data types, but for mainframe COBOL programs
+only label is supported.</p>
+<p>Only the first byte generated by the parameter is used.</p>
+</div>
+<h4 id="errors_17">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH LENGTH AND FLENGTH ARE SPECIFIED</li>
+<li>LENGTH OR FLENGTH MUST BE SPECIFIED</li>
+<li>SET IS MANDATORY</li>
+</ul>
+<h2 id="command-reference-temporary-storage-control">Command reference - Temporary Storage Control</h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>FLENGTH is an extension; do not use this parameter if the source code is
+likely to be ported back to a mainframe environment.</p>
+</div>
+<h3 id="deleteq">DELETEQ</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS DELETEQ TS
+                    QUEUE()/QNAME()
+</code></pre></div>
+<h4 id="parameters_14">Parameters</h4>
+<p>The parameters MAIN and AUXILIARY are accepted and discarded.</p>
+<h5 id="queue">QUEUE</h5>
+<p><code>QUEUE</code> may be specified as:</p>
+<ul>
+<li>A quoted string which must not exceed 8 bytes.</li>
+<li>A label which points to an 8-byte field.</li>
+<li>A literal not exceeding 8 bytes.</li>
+</ul>
+<p>Only label or literal may be used to specify a QUEUE with hex characters.</p>
+<h5 id="qname">QNAME</h5>
+<p><code>QNAME</code> may be specified as:</p>
+<ul>
+<li>A quoted string which must not exceed 16 bytes.</li>
+<li>A label which points to a 16-byte field.</li>
+<li>A literal not exceeding 16 bytes.</li>
+</ul>
+<p>Only label or literal may be used to specify a QNAME with hex characters.</p>
+<h4 id="errors_18">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH QUEUE AND QNAME ARE SPECIFIED</li>
+<li>DELETEQ TYPE NOT RECOGNIZED</li>
+<li>INVALID QUEUE OR QNAME</li>
+<li>QUEUE OR QNAME MUST BE SPECIFIED</li>
+</ul>
+<h4 id="conditions-respresp2_12">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/0</li>
+<li>QIDERR/0</li>
+</ul>
+<h3 id="readq">READQ</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS READQ TS
+                    QUEUE()/QNAME()
+                    INTO()/SET()
+                    LENGTH()/FLENGTH()
+                    NUMITEMS()
+                    ITEM()/NEXT
+</code></pre></div>
+<h4 id="parameters_15">Parameters</h4>
+<p>The parameters MAIN and AUXILIARY are accepted and discarded.</p>
+<h5 id="queue_1">QUEUE</h5>
+<p><code>QUEUE</code> may be specified as:</p>
+<ul>
+<li>A quoted string which must not exceed 8 bytes.</li>
+<li>A label which points to an 8-byte field.</li>
+<li>A literal not exceeding 8 bytes.</li>
+</ul>
+<p>Only label or literal may be used to specify a QUEUE with hex characters.</p>
+<h5 id="qname_1">QNAME</h5>
+<p>QNAME may be specified as:</p>
+<ul>
+<li>A quoted string which must not exceed 16 bytes.</li>
+<li>A label which points to a 16-byte field.</li>
+<li>A literal not exceeding 16 bytes.</li>
+</ul>
+<p>Only label or literal may be used to specify a QNAME with hex characters.</p>
+<h5 id="length_4">LENGTH</h5>
+<ul>
+<li>May be specified as LENGTH(value) or LENGTH(label)<ul>
+<li>LENGTH(value) supports the use of the length attribute.</li>
+<li>label must point to a 2-byte hex value.</li>
+</ul>
+</li>
+</ul>
+<h5 id="flength_4">FLENGTH</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 2G-1.</li>
+<li>A literal or label must be 4 bytes and must not exceed 2G-1.</li>
+</ul>
+</li>
+<li>LENGTH/FLENGTH can be omitted. When they are, the implied length
+  of INTO is used. LENGTH/FLENGTH is mandatory when SET is used.
+  ITEM</li>
+<li>May be specified as ITEM(value) or ITEM(label)<ul>
+<li><em>label</em> must point to a 2-byte hex value.</li>
+</ul>
+</li>
+</ul>
+<h4 id="errors_19">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH INTO AND SET ARE SPECIFIED</li>
+<li>BOTH ITEM AND NEXT ARE SPECIFIED</li>
+<li>BOTH LENGTH AND FLENGTH ARE SPECIFIED</li>
+<li>BOTH QUEUE AND QNAME ARE SPECIFIED</li>
+<li>INTO OR SET MUST BE SPECIFIED</li>
+<li>INVALID QUEUE OR QNAME</li>
+<li>ITEM OR NEXT MUST BE SPECIFIED</li>
+<li>QUEUE OR QNAME MUST BE SPECIFIED</li>
+<li>READQ TYPE NOT RECOGNIZED</li>
+<li>SET REQUIRES LENGTH</li>
+</ul>
+<h4 id="conditions-respresp2_13">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/0</li>
+<li>LENGERR/0</li>
+<li>ITEMERR/0</li>
+<li>QIDERR/0</li>
+</ul>
+<h3 id="writeq">WRITEQ</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS WRITEQ TS
+                    QUEUE()/QNAME()
+                    FROM()
+                    LENGTH()/FLENGTH()
+                    NUMITEMS()
+                    ITEM()
+                    REWRITE
+</code></pre></div>
+<h4 id="parameters_16">Parameters</h4>
+<p>The parameters MAIN and AUXILIARY are accepted and discarded.</p>
+<h5 id="queue_2">QUEUE</h5>
+<p>QUEUE may be specified as:</p>
+<ul>
+<li>A quoted string which must not exceed 8 bytes.</li>
+<li>A label which points to an 8-byte field.</li>
+<li>A literal not exceeding 8 bytes.</li>
+</ul>
+<p>Only label or literal may be used to specify a QUEUE with hex characters.</p>
+<h5 id="qname_2">QNAME</h5>
+<p>QNAME may be specified as:</p>
+<ul>
+<li>A quoted string which must not exceed 16 bytes.</li>
+<li>A label which points to a 16-byte field.</li>
+<li>A literal not exceeding 16 bytes.</li>
+</ul>
+<p>Only label or literal may be used to specify a QNAME with hex characters.</p>
+<h5 id="from">FROM</h5>
+<p><code>FROM(label)</code> is mandatory.</p>
+<p><em>label</em> may take three forms:</p>
+<ul>
+<li>Direct reference</li>
+<li>Indirect reference</li>
+<li>Adcon literal</li>
+</ul>
+<h5 id="length_5">LENGTH</h5>
+<ul>
+<li>May be specified as LENGTH(value) or LENGTH(label)<ul>
+<li>LENGTH(value) supports the use of the length attribute.</li>
+<li>label must point to a 2-byte hex value.</li>
+</ul>
+</li>
+<li>LENGTH can be omitted. When they are, the implied length of FROM is used. </li>
+<li>LENGTH is mandatory when FROM is an indirect reference.</li>
+</ul>
+<h5 id="flength_5">FLENGTH</h5>
+<ul>
+<li>Can be specified as a constant, literal or label.<ul>
+<li>A constant must not exceed 2G-1.</li>
+<li>A literal or label must be 4 bytes and must not exceed 2G-1.</li>
+</ul>
+</li>
+<li>FLENGTH can be omitted. When they are, the implied length of FROM is used. </li>
+<li>FLENGTH is mandatory when FROM is an indirect reference.</li>
+</ul>
+<h5 id="item">ITEM</h5>
+<ul>
+<li>May be specified as ITEM(value) or ITEM(label)</li>
+<li>label must point to a 2-byte hex value.</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>For compatibility with old releases of CICS, ITEM is accepted
+without REWRITE and becomes NUMITEMS. ITEM must be a
+label in this case.</p>
+</div>
+<h4 id="errors_20">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH LENGTH AND FLENGTH ARE SPECIFIED</li>
+<li>BOTH QUEUE AND QNAME ARE SPECIFIED</li>
+<li>FROM IS MANDATORY</li>
+<li>IF NUMITEMS IS SPECIFIED, ITEM AND REWRITE ARE INVALID</li>
+<li>INVALID QUEUE OR QNAME</li>
+<li>LENGTH/FLENGTH IS MANDATORY FOR INDIRECT FROM</li>
+<li>LENGTH WITHOUT FROM</li>
+<li>NUMITEMS MUST BE A LABEL (MAY HAVE ORIGINATED AS ITEM)</li>
+<li>QUEUE OR QNAME MUST BE SPECIFIED</li>
+<li>REWRITE REQUIRES ITEM</li>
+<li>WRITEQ TYPE NOT RECOGNIZED</li>
+</ul>
+<h4 id="conditions-respresp2_14">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/0</li>
+<li>LENGERR/0</li>
+<li>ITEMERR/0</li>
+<li>QIDERR/0</li>
+</ul>
+<h2 id="command-reference-program-control">Command reference - Program Control</h2>
+<h3 id="abend">ABEND</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS ABEND
+                    ABCODE()
+                    CANCEL
+                    NODUMP
+</code></pre></div>
+<h4 id="parameters_17">Parameters</h4>
+<h5 id="abcode">ABCODE</h5>
+<ul>
+<li>ABCODE can be specified as ABCODE('xxxx') or ABCODE(label)</li>
+<li>label must point to a 4-byte field.</li>
+</ul>
+<h4 id="errors_21">Errors</h4>
+<ul>
+<li>ABCODE MUST NOT BEGIN WITH 'A'</li>
+<li>ABCODE IS INVALID</li>
+<li>BAD PARM</li>
+</ul>
+<h3 id="handle-abend">HANDLE ABEND</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS HANDLE ABEND CANCEL
+name     EXEC  CICS HANDLE ABEND RESET
+name     EXEC  CICS HANDLE ABEND LABEL(label)
+name     EXEC  CICS HANDLE ABEND PROGRAM()
+</code></pre></div>
+<h4 id="parameters_18">Parameters</h4>
+<h5 id="label_2">LABEL</h5>
+<p><em>label</em> may take three forms:</p>
+<ul>
+<li>Direct reference</li>
+<li>Indirect reference</li>
+<li>Adcon literal</li>
+</ul>
+<h5 id="program">PROGRAM</h5>
+<ul>
+<li>Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)<ul>
+<li><em>label</em> must point to an 8-byte field.</li>
+</ul>
+</li>
+<li>Any received COMMAREA when the EXEC CICS HANDLE ABEND is
+  issued is passed to the handling program when an abend occurs.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When an XCTL is executed, any HANDLE ABEND LABEL at the
+current logical level is cleared as the current program is no longer in
+use. HANDLE ABEND PROGRAMs are not cleared.</p>
+</div>
+<h4 id="errors_22">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>HANDLE TYPE NOT RECOGNISED</li>
+<li>INVALID PROGRAM</li>
+<li>NO PARAMETERS SPECIFIED </li>
+<li>PARMS MISSING OR TOO MANY PARMS</li>
+</ul>
+<h3 id="link">LINK</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS LINK
+                    PROGRAM()
+                    COMMAREA(label)
+                    LENGTH()
+                    CHANNEL()
+</code></pre></div>
+<p>Executes another CICS program.</p>
+<ul>
+<li>Return is to the linker.</li>
+</ul>
+<p>In zCICS both CHANNEL and COMMAREA may be specified.
+A warning MNOTE is issued.</p>
+<h4 id="parameters_19">Parameters</h4>
+<h5 id="program_1">PROGRAM</h5>
+<ul>
+<li>PROGRAM is mandatory</li>
+<li>Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)<ul>
+<li>label must point to an 8-byte field.</li>
+</ul>
+</li>
+</ul>
+<h5 id="commarea">COMMAREA</h5>
+<ul>
+<li>COMMAREA(label) is optional</li>
+<li>If COMMAREA is present, the address/length are passed.</li>
+<li>label may take three forms:<ul>
+<li>Direct reference</li>
+<li>Indirect reference</li>
+<li>Adcon literal</li>
+</ul>
+</li>
+</ul>
+<h5 id="length_6">LENGTH</h5>
+<ul>
+<li>Can be specified as LENGTH(value) or LENGTH(label)<ul>
+<li>LENGTH(value) supports the use of the length attribute.</li>
+<li>label must point to a 2-byte hex value.</li>
+</ul>
+</li>
+<li>LENGTH can be omitted. When it is, the implied length of the
+  COMMAREA is used. LENGTH is mandatory when COMMAREA is an
+  indirect reference.</li>
+</ul>
+<h4 id="errors_23">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>INVALID CHANNEL</li>
+<li>INVALID PROGRAM</li>
+<li>PROGRAM IS MISSING</li>
+<li>LENGTH IS MANDATORY FOR INDIRECT COMMAREA</li>
+<li>LENGTH WITHOUT COMMAREA</li>
+</ul>
+<h4 id="warning">Warning</h4>
+<ul>
+<li>CHANNEL and COMMAREA specified</li>
+</ul>
+<h4 id="conditions-respresp2_15">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>CHANNELERR/1</li>
+<li>PGMIDERR/3</li>
+</ul>
+<h3 id="load">LOAD</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS LOAD
+                    PROGRAM()
+                    ENTRY()/SET()
+                    LENGTH(label)
+                    FLENGTH(label)
+</code></pre></div>
+<p>Loads a module.</p>
+<p>The intention in the zCICS environment is to load a table or some other data,
+not an executable program.</p>
+<h4 id="parameters_20">Parameters</h4>
+<h5 id="program_2">PROGRAM</h5>
+<ul>
+<li>PROGRAM is mandatory</li>
+<li>Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)<ul>
+<li>label must point to an 8-byte field.</li>
+</ul>
+</li>
+<li>At present, only modules with a suffix of .390 may be LOADed.</li>
+</ul>
+<h5 id="entryset">ENTRY/SET</h5>
+<ul>
+<li>ENTRY and SET are optional</li>
+<li>Must be specified as a permitted general register value.<ul>
+<li>Both are equivalent in zCICS.</li>
+</ul>
+</li>
+</ul>
+<h5 id="length_7">LENGTH</h5>
+<ul>
+<li>LENGTH is optional</li>
+<li>LENGTH(label) is the only format.</li>
+<li>label must point to a 2-byte field.</li>
+</ul>
+<h5 id="flength_6">FLENGTH</h5>
+<ul>
+<li>FLENGTH is optional</li>
+<li>FLENGTH(label) is the only format.</li>
+<li>label must point to a 4-byte field.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>At task end the LOADed module is not RELEASEd.</p>
+</div>
+<h4 id="errors_24">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>INVALID PROGRAM</li>
+<li>LENGTH AND FLENGTH SPECIFIED</li>
+<li>PROGRAM IS MISSING</li>
+</ul>
+<h4 id="conditions-respresp2_16">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>PGMIDERR/3</li>
+</ul>
+<h3 id="release">RELEASE</h3>
+<p><div class="highlight"><pre><span></span><code>name     EXEC  CICS RELEASE
+                    PROGRAM()
+</code></pre></div>
+Releases a previously loaded module.</p>
+<h4 id="parameters_21">Parameters</h4>
+<h5 id="program_3">PROGRAM</h5>
+<ul>
+<li>PROGRAM is mandatory</li>
+<li>Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)<ul>
+<li>label must point to an 8-byte field.</li>
+</ul>
+</li>
+</ul>
+<h4 id="errors_25">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>INVALID PROGRAM</li>
+<li>PROGRAM IS MISSING</li>
+</ul>
+<h4 id="conditions-respresp2_17">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/5</li>
+<li>INVREQ/6</li>
+</ul>
+<h3 id="return">RETURN</h3>
+<p><div class="highlight"><pre><span></span><code>name     EXEC  CICS RETURN
+                    TRANSID()
+                    COMMAREA(label)
+                    LENGTH()
+                    CHANNEL()
+                    IMMEDIATE
+</code></pre></div>
+Returns to the last caller.</p>
+<p>In zCICS both CHANNEL and COMMAREA may be specified. A warning MNOTE is issued.</p>
+<h4 id="parameters_22">Parameters</h4>
+<h5 id="transid">TRANSID</h5>
+<ul>
+<li>Optional, but when COMMAREA is specified, TRANSID is mandatory.</li>
+<li>Can be specified as TRANSID('xxxx') or TRANSID(label)<ul>
+<li><em>label</em> must point to a 4-byte field.</li>
+</ul>
+</li>
+</ul>
+<h5 id="commarea_1">COMMAREA</h5>
+<p>COMMAREA(label) is optional</p>
+<p><em>label</em> may take three forms:</p>
+<div class="highlight"><pre><span></span><code>* Direct reference
+* Indirect reference
+* Adcon literal
+</code></pre></div>
+<h5 id="length_8">LENGTH</h5>
+<ul>
+<li>Can be specified as LENGTH(value) or LENGTH(label)</li>
+<li>LENGTH(value) supports the use of the length attribute.<ul>
+<li><em>label</em> must point to a 2-byte hex value.</li>
+</ul>
+</li>
+<li>LENGTH can be omitted. When it is, the implied length of the
+  COMMAREA is used. LENGTH is mandatory when COMMAREA is an 
+  indirect reference.</li>
+</ul>
+<h4 id="errors_26">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>IMMEDIATE REQUIRES TRANSID</li>
+<li>INVALID CHANNEL</li>
+<li>INVALID TRANSID</li>
+<li>TRANSID IS MISSING</li>
+<li>LENGTH IS MANDATORY FOR INDIRECT COMMAREA</li>
+<li>LENGTH WITHOUT COMMAREA</li>
+</ul>
+<h4 id="warning_1">Warning</h4>
+<ul>
+<li>CHANNEL and COMMAREA specified</li>
+</ul>
+<h4 id="conditions-respresp2_18">Conditions (RESP/RESP2)</h4>
+<p>See the section on <a href="#ignore-condition">IGNORE CONDITION</a> for these conditions.</p>
+<ul>
+<li>CHANNELERR/1</li>
+<li>INVREQ/1 </li>
+<li>INVREQ/2 </li>
+</ul>
+<h3 id="xctl">XCTL</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS XCTL
+                    PROGRAM()
+                    COMMAREA(label)
+                    LENGTH()
+                    CHANNEL()
+</code></pre></div>
+<p>Executes another CICS program.</p>
+<p>In zCICS both CHANNEL and COMMAREA may be specified. A warning MNOTE is issued.</p>
+<p>If COMMAREA is present and both the address and length are the same as
+passed to the current program, then address/length are passed to the new
+program.</p>
+<p>If the address or length differs, then a copy of the COMMAREA is taken and
+the new address/length are passed to the new program.</p>
+<p>Return is to the last linker.</p>
+<h4 id="parameters_23">Parameters</h4>
+<h5 id="program_4">PROGRAM</h5>
+<ul>
+<li>PROGRAM is mandatory</li>
+<li>Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)<ul>
+<li>label must point to an 8-byte field.</li>
+</ul>
+</li>
+</ul>
+<h5 id="commarea_2">COMMAREA</h5>
+<ul>
+<li>COMMAREA(label) is optional</li>
+<li>label may take three forms:<ul>
+<li>Direct reference</li>
+<li>Indirect reference</li>
+<li>Adcon literal</li>
+</ul>
+</li>
+</ul>
+<h5 id="length_9">LENGTH</h5>
+<ul>
+<li>Can be specified as LENGTH(value) or LENGTH(label)<ul>
+<li>LENGTH(value) supports the use of the length attribute.</li>
+<li>label must point to a 2-byte hex value.</li>
+</ul>
+</li>
+<li>LENGTH can be omitted. When it is, the implied length of the
+  COMMAREA is used. LENGTH is mandatory when COMMAREA is an
+  indirect reference.</li>
+</ul>
+<h4 id="errors_27">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>INVALID CHANNEL</li>
+<li>INVALID PROGRAM</li>
+<li>PROGRAM IS MISSING</li>
+<li>LENGTH IS MANDATORY FOR INDIRECT COMMAREA</li>
+<li>LENGTH WITHOUT COMMAREA</li>
+</ul>
+<h4 id="warning_2">Warning</h4>
+<ul>
+<li>CHANNEL and COMMAREA specified</li>
+</ul>
+<h4 id="conditions-respresp2_19">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>CHANNELERR/1 </li>
+<li>PGMIDERR/3</li>
+</ul>
+<h2 id="command-reference-interval-control">Command reference - Interval control</h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>FLENGTH is an extension; do not use this parameter if the source code is 
+likely to be ported back to a mainframe environment.</p>
+</div>
+<h3 id="asktime">ASKTIME</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS ASKTIME                                           X
+                    ABSTIME()
+</code></pre></div>
+<h4 id="errors_28">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+</ul>
+<h3 id="delay">DELAY</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS DELAY
+                    REQID()
+                    INTERVAL()/TIME()
+                    FOR/UNTIL
+                    HOURS()
+                    MINUTES()
+                    SECONDS()
+                    INTERVAL
+</code></pre></div>
+<h4 id="parameters_24">Parameters</h4>
+<h5 id="interval">INTERVAL</h5>
+<ul>
+<li>Can be specified as INTERVAL(s) through to INTERVAL(hhmmss).<ul>
+<li><code>INTERVAL(234)</code> means wait for 2 minutes 34 seconds.</li>
+</ul>
+</li>
+<li>INTERVAL(label) is also permitted (extension).<ul>
+<li><em>label</em> must point to a 6-byte character field with leading character zeros
+  as needed.
+  <div class="highlight"><pre><span></span><code>name     EXEC  CICS DELAY
+                    INTERVAL(MYTIME)
+......
+MYTIME DC C&#39;000234&#39;
+</code></pre></div></li>
+</ul>
+</li>
+</ul>
+<h5 id="time">TIME</h5>
+<ul>
+<li>Can be specified as TIME(s) through to TIME(hhmmss).<ul>
+<li><code>TIME(234)</code> means resume the task at 2 minutes 34 seconds after
+  midnight. Expiration time rules apply; see the IBM CICS&reg; Application
+  Programming Guide.</li>
+</ul>
+</li>
+<li>TIME(label) is also permitted (extension).<ul>
+<li>label must point to a 6-byte character field with leading character zeros
+  as needed.
+  <div class="highlight"><pre><span></span><code>name     EXEC  CICS DELAY
+                    TIME(MYTIME)
+......
+MYTIME   DC    C&#39;000234&#39;
+</code></pre></div></li>
+</ul>
+</li>
+</ul>
+<h5 id="for-hours-minutes-seconds">FOR HOURS() MINUTES() SECONDS()</h5>
+<ul>
+<li>FOR is an alternative to INTERVAL.</li>
+<li>HOURS/MINUTES/SECONDS must be numeric values.</li>
+</ul>
+<h5 id="until-hours-minutes-seconds">UNTIL HOURS() MINUTES() SECONDS()</h5>
+<ul>
+<li>UNTIL is an alternative to TIME.</li>
+<li>HOURS/MINUTES/SECONDS must be numeric values.</li>
+<li>The result from the parameters is a time-of-day.<ul>
+<li><code>UNTIL SECONDS(10000)</code> means resume the task at 02:46:40.</li>
+</ul>
+</li>
+<li>Expiration time rules apply; see the IBM CICS&reg; Application Programming Guide.</li>
+<li>If no parameters are specified, then DELAY INTERVAL(0) is assumed.</li>
+</ul>
+<h4 id="errors_29">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH FOR AND UNTIL ARE SPECIFIED</li>
+<li>BOTH INTERVAL AND TIME ARE SPECIFIED</li>
+<li>FOR/UNTIL SPECIFIED, BUT NO TIME PARMS</li>
+<li>HOURS/MINUTES/SECONDS ARE INVALID WITH INTERVAL OR TIME</li>
+<li>HOURS/MINUTES/SECONDS ARE SPECIFIED WITHOUT FOR/UNTIL</li>
+<li>INTERVAL/TIME CANNOT BE SPECIFIED WITH FOR/UNTIL</li>
+<li>INTERVAL/TIME MUST BE 1 TO 6 BYTES</li>
+<li>INVALID REQID</li>
+</ul>
+<h4 id="conditions-respresp2_20">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/4</li>
+<li>INVREQ/5</li>
+<li>INVREQ/6</li>
+</ul>
+<h3 id="formattime">FORMATTIME</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS FORMATTIME
+</code></pre></div>
+<p>Refer to IBM CICS&reg; Application Programming reference for available parameters.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul>
+<li>STRINGFORMAT is discarded as there is only one option.</li>
+<li>DATESEP(label) and TIMESEP(label) are added as extensions.
+  Only the first byte is used.</li>
+<li>DATESTRING returns the following 25-byte string.
+  "Mon, 17 Dec 2007 10:20:30". The time zone (e.g. GMT) is not returned.</li>
+</ul>
+</div>
+<h4 id="errors_30">Errors</h4>
+<ul>
+<li>ABSTIME IS MANDATORY</li>
+<li>BAD PARM</li>
+</ul>
+<h4 id="conditions-respresp2_21">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/1</li>
+</ul>
+<h3 id="start">START</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS START
+                    TRANSID()
+                    INTERVAL()/TIME()
+                    TERMID()
+                    REQID()
+                    FROM()
+                    LENGTH()/FLENGTH()
+                    CHANNEL()
+                    QUEUE()
+                    RTRANSID()
+                    RTERMID()
+                    AFTER/AT
+                    HOURS()
+                    MINUTES()
+                    SECONDS()
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul>
+<li>USERID is not supported.</li>
+</ul>
+</div>
+<h4 id="parameters_25">Parameters</h4>
+<ul>
+<li>In zCICS both CHANNEL and other parms may be specified.<ul>
+<li>A warning MNOTE is issued.</li>
+</ul>
+</li>
+<li>INTERVAL and TIME follow the same syntax and rules as for DELAY.</li>
+<li>AFTER and AT follow the same syntax and rules as FOR and UNTIL in
+  DELAY above.</li>
+</ul>
+<h4 id="errors_31">Errors</h4>
+<ul>
+<li>AFTER/AT SPECIFIED, BUT NO TIME PARAMETERS</li>
+<li>BAD PARM</li>
+<li>BOTH AFTER AND AT ARE SPECIFIED</li>
+<li>BOTH INTERVAL AND TIME ARE SPECIFIED</li>
+<li>BOTH LENGTH AND FLENGTH ARE SPECIFIED</li>
+<li>FROM/(F)LENGTH MUST BOTH BE MISSING OR BOTH SPECIFIED</li>
+<li>HOURS/MINUTES/SECONDS ARE INVALID WITH INTERVAL OR TIME</li>
+<li>HOURS/MINUTES/SECONDS ARE SPECIFIED WITHOUT AFTER/AT</li>
+<li>INTERVAL/TIME CANNOT BE SPECIFIED WITH AFTER/AT</li>
+<li>INTERVAL/TIME MUST BE 1 TO 6 BYTES</li>
+<li>INVALID CHANNEL</li>
+<li>INVALID QUEUE</li>
+<li>INVALID REQID</li>
+<li>INVALID RTERMID</li>
+<li>INVALID RTRANSID</li>
+<li>INVALID TERMID</li>
+<li>INVALID TRANSID</li>
+<li>TRANSID IS MANDATORY</li>
+</ul>
+<h4 id="warning_3">Warning</h4>
+<ul>
+<li>CHANNEL AND OTHER PARMS SPECIFIED BUT ALLOWED</li>
+</ul>
+<h4 id="conditions-respresp2_22">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>CHANNELERR/1</li>
+<li>INVREQ/0</li>
+<li>INVREQ/4</li>
+<li>INVREQ/5</li>
+<li>INVREQ/6</li>
+<li>IOERR</li>
+<li>LENGERR</li>
+<li>TERMIDERR</li>
+<li>TRANSIDERR</li>
+</ul>
+<h3 id="retrieve">RETRIEVE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS RETRIEVE
+                    INTO()/SET()
+                    LENGTH()/FLENGTH()
+                    RTRANSID()
+                    RTERMID()
+                    QUEUE()
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>WAIT is not supported.</p>
+</div>
+<h4 id="errors_32">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH INTO AND SET ARE SPECIFIED</li>
+<li>BOTH LENGTH AND FLENGTH ARE SPECIFIED</li>
+<li>INTO OR SET MUST BE SPECIFIED</li>
+<li>INVALID QUEUE</li>
+<li>INVALID RTERMID</li>
+<li>INVALID RTRANSID</li>
+<li>LENGTH OR FLENGTH MUST BE A LABEL</li>
+<li>SET REQUIRES LENGTH OR FLENGTH</li>
+</ul>
+<h4 id="conditions-respresp2_23">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ/0</li>
+<li>ENDDATA</li>
+<li>ENVDEFERR</li>
+<li>LENGERR</li>
+</ul>
+<h3 id="cancel">CANCEL</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS CANCEL
+                    REQID()
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>TRANSID is not supported.</p>
+</div>
+<h4 id="errors_33">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>INVALID REQID</li>
+<li>REQID IS MANDATORY</li>
+</ul>
+<h4 id="conditions-respresp2_24">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>INVREQ</li>
+<li>NOTFND</li>
+</ul>
+<h2 id="command-reference-task-control">Command reference - Task Control</h2>
+<h3 id="enq">ENQ</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS ENQ
+                    RESOURCE()
+                    LENGTH()
+                    NOSUSPEND
+</code></pre></div>
+<h4 id="parameters_26">Parameters</h4>
+<h5 id="length_10">LENGTH</h5>
+<ul>
+<li>Can be specified as LENGTH(value) or LENGTH(label)</li>
+<li>LENGTH(value) supports the use of the length attribute.</li>
+</ul>
+<h4 id="errors_34">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>RESOURCE IS MANDATORY</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>ENQ on address may not work in zCICS
+but the command will be processed.</p>
+</div>
+<h4 id="conditions-respresp2_25">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>ENQBUSY</li>
+<li>LENGERR/1</li>
+</ul>
+<h3 id="deq">DEQ</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS DEQ
+                    RESOURCE()
+                    LENGTH()
+</code></pre></div>
+<h4 id="parameters_27">Parameters</h4>
+<h5 id="length_11">LENGTH</h5>
+<ul>
+<li>Can be specified as LENGTH(value) or LENGTH(label)</li>
+<li>LENGTH(value) supports the use of the length attribute.</li>
+</ul>
+<h4 id="errors_35">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>RESOURCE IS MANDATORY</li>
+</ul>
+<h4 id="conditions-respresp2_26">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>LENGERR/1</li>
+</ul>
+<h2 id="command-reference-bms">Command reference - BMS</h2>
+<h3 id="receive_1">RECEIVE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS RECEIVE MAP()
+                    MAPSET()
+                    INTO()
+</code></pre></div>
+<h4 id="parameters_28">Parameters</h4>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul>
+<li>TERMINAL and ASIS are accepted and discarded.</li>
+<li>SET, FROM and LENGTH are not supported.</li>
+</ul>
+</div>
+<h5 id="map">MAP</h5>
+<ul>
+<li>MAP can be a quoted string, maximum 7 characters or a label pointing to a
+  7-byte field.</li>
+<li>If MAP is a label, then INTO is mandatory.<ul>
+<li>The map structure will not be cleared before the mapping takes
+  place.</li>
+</ul>
+</li>
+<li>If MAP is a string, then INTO is optional.<ul>
+<li>If INTO is omitted, the default is map.I</li>
+<li>The map structure will be cleared before the mapping takes place.</li>
+</ul>
+</li>
+</ul>
+<h5 id="mapset">MAPSET</h5>
+<p>MAPSET can be a quoted string, maximum 7 characters or an address
+pointing to an 8-byte field containing no more than 7 characters.</p>
+<p>If MAPSET is omitted, then the MAPname is used.</p>
+<h4 id="errors_36">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>FROM NOT SUPPORTED</li>
+<li>INTO IS REQUIRED WHEN MAP IS A LABEL</li>
+<li>INVALID MAP NAME</li>
+<li>INVALID MAPSET NAME</li>
+<li>LENGTH NOT SUPPORTED</li>
+<li>MAP IS MANDATORY</li>
+</ul>
+<h4 id="conditions-respresp2_27">Conditions (RESP/RESP2)</h4>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>EIBRESP2 is an extension for MAPFAIL; 
+please see the <a href="">zCICS BMS Guide</a> for more information.</p>
+<p>Many of the conditions can arise through a mismatch of map and
+structure. Typically a map is re-assembled but the programs using it
+are not.</p>
+</div>
+<ul>
+<li>INVMPSZ/0</li>
+<li>MAPFAIL/1 The map cannot be found in the mapset.</li>
+<li>MAPFAIL/2 A short read key (CLEAR or PA) has been pressed or there
+  are no modified fields.</li>
+<li>MAPFAIL/3 Data has been received, but there are no named fields in the map.</li>
+<li>MAPFAIL/4 An SBA has been located, but there is no field in the map that matches.</li>
+<li>MAPFAIL/5 An SBA has been located, but it matches an unnamed field.</li>
+<li>MAPFAIL/6 The data received for this field is longer than the DFHMDF
+  LENGTH= parameter.</li>
+<li>MAPFAIL/7 There has been a mismatch between the physical map and
+  the DSECT.</li>
+<li>MAPFAIL/8 <ul>
+<li>Data to be processed by PICIN is over 31 digits.</li>
+<li>Data is not numeric after being PACKed.</li>
+<li>Data length is greater than the edit pattern allows.</li>
+</ul>
+</li>
+<li>INVREQ/0</li>
+</ul>
+<h3 id="send_1">SEND</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS SEND MAP()
+                    MAPSET()
+                    CURSOR/CURSOR()
+                    DATAONLY/MAPONLY
+                    ERASE/ERASEAUP
+                    FROM()
+                    LENGTH()
+                    ALARM
+                    FREEKB
+                    FRSET
+                    SET()
+</code></pre></div>
+<h4 id="parameters_29">Parameters</h4>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul>
+<li>TERMINAL and WAIT are accepted and discarded.</li>
+<li>ACCUM is not supported.</li>
+</ul>
+</div>
+<h5 id="map_1">MAP</h5>
+<ul>
+<li>MAP can be a quoted string, maximum 7 characters or a label pointing to a
+  7-byte field.</li>
+<li>If MAP is a label, then FROM is mandatory.</li>
+<li>If MAP is a string, then FROM and/or LENGTH are optional.<ul>
+<li>If FROM is omitted, the default is map.O</li>
+<li>If LENGTH is omitted, the default is map.L</li>
+</ul>
+</li>
+</ul>
+<h5 id="length_12">LENGTH</h5>
+<ul>
+<li>LENGTH is supported but the value used is always that of the structure length. </li>
+<li>Can be specified as LENGTH(value) or LENGTH(label)</li>
+<li>LENGTH(value) supports the use of the length attribute.</li>
+<li><em>label</em> must point to a 2-byte hex value.</li>
+</ul>
+<h5 id="mapset_1">MAPSET</h5>
+<ul>
+<li>MAPSET can be a quoted string, maximum 7 characters or a label pointing
+  to an 8-byte field containing no more than 7 characters.</li>
+<li>If MAPSET is omitted, then MAP is used.</li>
+</ul>
+<h5 id="set_1">SET</h5>
+<p>SET() is currently intended to be an internal parameter.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>SET does not conform to the standard used for BMS PAGING.</p>
+</div>
+<h4 id="errors_37">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>CONTROL IS NOT COMPATABLE WITH SEND MAP</li>
+<li>CURSOR POSITION AND SYMBOLIC CURSOR SPECIFIED</li>
+<li>DATAONLY AND MAPONLY SPECIFIED</li>
+<li>ERASE AND ERASEAUP SPECIFIED</li>
+<li>FROM IS REQUIRED WHEN MAP IS A LABEL</li>
+<li>INVALID MAP NAME</li>
+<li>INVALID MAPSET NAME</li>
+<li>MAP IS MANDATORY</li>
+</ul>
+<h4 id="conditions-respresp2_28">Conditions (RESP/RESP2)</h4>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>EIBRESP2 is an extension for MAPFAIL
+See <a href="">zCICS BMS Guide</a> for more information.</p>
+</div>
+<ul>
+<li>INVMPSZ/0</li>
+<li>MAPFAIL/1 The map cannot be found in the mapset.</li>
+<li>MAPFAIL/8 <ul>
+<li>Data to be processed by PICOUT is over 31 digits.</li>
+<li>Data is not numeric after being PACKed.</li>
+<li>Data length is greater than the edit pattern allows.</li>
+</ul>
+</li>
+<li>MAPFAIL/9 Override field or colour attribute is invalid</li>
+<li>INVREQ/0<ul>
+<li>Attempt to execute this in a non-terminal attached task.
+  This is not documented in the IBM CICS&reg; Manuals.</li>
+</ul>
+</li>
+</ul>
+<h3 id="send-control-cursorcursor-eraseeraseaup-alarm-freekb-frset">SEND CONTROL CURSOR/CURSOR() ERASE/ERASEAUP ALARM FREEKB FRSET</h3>
+<h2 id="command-reference-dump-control">Command reference - Dump Control</h2>
+<h3 id="dump">DUMP</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS DUMP
+                    TRANSACTION
+                    DUMPCODE()
+                    COMPLETE
+                    FROM()
+                    LENGTH()/FLENGTH()
+                    SEGMENTLIST()
+                    LENGTHLIST()
+                    NUMSEGMENTS()
+</code></pre></div>
+<h4 id="parameters_30">Parameters</h4>
+<ul>
+<li>TRANSACTION is mandatory.</li>
+<li>DUMPCODE is mandatory and can be a constant or label.<ul>
+<li><em>label</em> must point to a 4-byte field.</li>
+<li>No syntax checking is done.</li>
+</ul>
+</li>
+</ul>
+<h5 id="complete">COMPLETE</h5>
+<ul>
+<li>If there are no storage area parameters then COMPLETE is the default.</li>
+<li>Produces a SNAP dump ID=997,TEXT='DUMP dddd COMPLETE'</li>
+<li>If there are storage area parameters and COMPLETE is not specified,
+  only the storage areas are dumped.</li>
+</ul>
+<h5 id="from-lengthflength">FROM() LENGTH()/FLENGTH()</h5>
+<p>Produces a SNAP dump ID=997,TEXT='DUMP dddd AREA'</p>
+<h5 id="length_13">LENGTH</h5>
+<ul>
+<li>Can be specified as a constant or label.<ul>
+<li>A constant must not exceed 32767.</li>
+<li>A label must be 2 bytes and must not exceed 32767.</li>
+</ul>
+</li>
+</ul>
+<h5 id="flength_7">FLENGTH</h5>
+<ul>
+<li>Can be specified as a constant or label.<ul>
+<li>A constant must not exceed 2G-1.</li>
+<li>A label must be 4 bytes and must not exceed 2G-1.</li>
+</ul>
+</li>
+</ul>
+<h5 id="segmentlistlengthlistnumsegments">SEGMENTLIST/LENGTHLIST/NUMSEGMENTS</h5>
+<p>Produces multiple SNAP dumps ID=997,TEXT='DUMP dddd SEGMENT nnn'</p>
+<h5 id="numsegments">NUMSEGMENTS</h5>
+<ul>
+<li>Can be specified as a constant or label.<ul>
+<li>A constant must not exceed 2G-1.</li>
+<li>A label must be 4 bytes and must not exceed 2G-1.</li>
+</ul>
+</li>
+</ul>
+<h4 id="errors_38">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH LENGTH AND FLENGTH ARE SPECIFIED</li>
+<li>DUMPCODE IS GREATER THAN 4 BYTES</li>
+<li>DUMPCODE MUST BE SPECIFIED</li>
+<li>LENGTH OR FLENGTH REQUIRES FROM</li>
+<li>LENGTH OR FLENGTH MUST BE SPECIFIED</li>
+<li>SEGMENTLIST, LENGTHLIST AND NUMSEGMENTS MUST ALL BE SPECIFIED OR ALL ABSENT</li>
+<li>TRANSACTION MUST BE SPECIFIED </li>
+</ul>
+<h2 id="command-reference-inquire">Command reference - Inquire</h2>
+<h3 id="inquire-file">INQUIRE FILE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS INQUIRE FILE START
+name     EXEC  CICS INQUIRE FILE START AT()
+name     EXEC  CICS INQUIRE FILE END
+name     EXEC  CICS INQUIRE FILE() NEXT ...
+name     EXEC  CICS INQUIRE FILE() ...
+</code></pre></div>
+<h4 id="parameters_31">Parameters</h4>
+<p>The following parameters are supported:</p>
+<ul>
+<li>ACCESSMETHOD</li>
+<li>ADD</li>
+<li>BASEDSNAME</li>
+<li>BROWSE</li>
+<li>DELETE</li>
+<li>DSNAME</li>
+<li>ENABLESTATUS</li>
+<li>KEYLENGTH</li>
+<li>KEYPOSITION</li>
+<li>OBJECT</li>
+<li>OPENSTATUS</li>
+<li>READ</li>
+<li>RECORDFORMAT</li>
+<li>RECORDSIZE</li>
+<li>TYPE</li>
+<li>UPDATE</li>
+<li>BASEDSNAME()</li>
+<li>DSNAME()</li>
+</ul>
+<p>The length of data returned is the implied length of the data
+area to a maximum of 128 bytes.</p>
+<h4 id="errors_39">Errors</h4>
+<ul>
+<li>AT() IS SPECIFIED WITHOUT START</li>
+<li>BAD PARM</li>
+<li>FILE DOES NOT PRECEDE END</li>
+<li>FILE DOES NOT PRECEDE START</li>
+<li>FILE() CANNOT BE A STRING WHEN NEXT IS SPECIFIED</li>
+<li>FILE() IS MISSING</li>
+<li>INQUIRE TYPE NOT RECOGNIZED</li>
+<li>INVALID AT()</li>
+<li>INVALID FILE()</li>
+<li>NEXT AND END ARE SPECIFIED</li>
+<li>START AND END ARE SPECIFIED</li>
+</ul>
+<h3 id="set-file">SET FILE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS SET FILE()/DATASET() ...
+</code></pre></div>
+<h4 id="parameters_32">Parameters</h4>
+<p>The following parameters are supported:</p>
+<ul>
+<li>ADD()</li>
+<li>ADDABLE</li>
+<li>NOTADDABLE</li>
+<li>BROWSE()</li>
+<li>BROWSABLE</li>
+<li>NOTBROWSABLE</li>
+<li>DELETE()</li>
+<li>DELETABLE</li>
+<li>NOTDELETABLE</li>
+<li>ENABLESTATUS()</li>
+<li>ENABLED</li>
+<li>DISABLED</li>
+<li>OPENSTATUS()</li>
+<li>OPEN</li>
+<li>CLOSED</li>
+<li>READ()</li>
+<li>READABLE</li>
+<li>NOTREADABLE</li>
+<li>UPDATE()</li>
+<li>UPDATABLE</li>
+<li>NOTUPDATABLE</li>
+</ul>
+<h4 id="errors_40">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH FILE AND DATASET SPECIFIED</li>
+<li>FILE OR DATASET MUST BE SPECIFIED</li>
+<li>INVALID FILE OR DATASET</li>
+<li>MORE THAN ONE ADD PARAMETER</li>
+<li>MORE THAN ONE BROWSE PARAMETER</li>
+<li>MORE THAN ONE DELETE PARAMETER</li>
+<li>MORE THAN ONE ENABLESTATUS PARAMETER</li>
+<li>MORE THAN ONE OPEN STATUS PARAMETER</li>
+<li>MORE THAN ONE READ PARAMETER</li>
+<li>MORE THAN ONE UPDATE PARAMETER</li>
+</ul>
+<h4 id="conditions-respresp2_29">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>FILENOTFOUND</li>
+<li>INVREQ/2</li>
+<li>INVREQ/3</li>
+<li>INVREQ/4</li>
+<li>INVREQ/5</li>
+<li>INVREQ/7</li>
+<li>INVREQ/12</li>
+<li>INVREQ/14</li>
+<li>INVREQ/16</li>
+<li>INVREQ/17</li>
+<li>IOERR</li>
+</ul>
+<h2 id="command-reference-channel-and-containers">Command reference - Channel and containers</h2>
+<h3 id="get">GET</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS GET
+                    CONTAINER()
+                    CHANNEL()
+                    INTO()/FLENGTH()
+                    SET()/FLENGTH()
+                    NODATA/FLENGTH()
+</code></pre></div>
+<h4 id="errors_41">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BOTH INTO AND SET SPECIFIED</li>
+<li>CONTAINER IS MANDATORY </li>
+<li>INTO AND NODATA SPECIFIED</li>
+<li>INTO OR SET OR NODATA IS REQUIRED</li>
+<li>INVALID CHANNEL</li>
+<li>INVALID CONTAINER </li>
+<li>NODATA REQUIRES FLENGTH</li>
+<li>SET AND NODATA SPECIFIED</li>
+<li>SET OR NODATA REQUIRES FLENGTH AS LABEL</li>
+<li>SET REQUIRES FLENGTH</li>
+</ul>
+<h4 id="conditions-respresp2_30">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>CHANNELERR/2</li>
+<li>INVREQ/4</li>
+<li>LENGERR/11 </li>
+</ul>
+<h3 id="put">PUT</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS PUT
+                    CONTAINER()
+                    CHANNEL()
+                    FROM()/FLENGTH()
+</code></pre></div>
+<h4 id="errors_42">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>CONTAINER IS MANDATORY </li>
+<li>FLENGTH IS MANDATORY FOR INDIRECT FROM</li>
+<li>FLENGTH WITHOUT FROM</li>
+<li>FROM IS MANDATORY</li>
+<li>INVALID CHANNEL</li>
+<li>INVALID CONTAINER </li>
+</ul>
+<h4 id="conditions-respresp2_31">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>CHANNELERR/1</li>
+<li>CONTAINERERR/18</li>
+<li>INVREQ/4</li>
+<li>LENGERR/1 </li>
+</ul>
+<h3 id="delete">DELETE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS DELETE
+                    CONTAINER()
+                    CHANNEL()
+</code></pre></div>
+<h4 id="errors_43">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>CONTAINER IS MANDATORY </li>
+<li>INVALID CHANNEL</li>
+<li>INVALID CONTAINER </li>
+</ul>
+<h4 id="conditions-respresp2_32">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>CHANNELERR/2</li>
+<li>CONTAINERERR/10</li>
+</ul>
+<h3 id="move">MOVE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS MOVE
+                    CONTAINER()
+                    AS()
+                    CHANNEL()
+                    TOCHANNEL()
+</code></pre></div>
+<h4 id="errors_44">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>CONTAINER AND/OR AS ARE MISSING </li>
+<li>INVALID AS</li>
+<li>INVALID CHANNEL</li>
+<li>INVALID CONTAINER </li>
+<li>INVALID TOCHANNEL</li>
+</ul>
+<h4 id="conditions-respresp2_33">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>CHANNELERR/1</li>
+<li>CHANNELERR/2 </li>
+<li>CONTAINERERR/10</li>
+<li>CONTAINERERR/18 </li>
+<li>INVREQ/4</li>
+</ul>
+<h3 id="startbrowse">STARTBROWSE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS STARTBROWSE
+                    CONTAINER
+                    CHANNEL()
+                    BROWSETOKEN()
+</code></pre></div>
+<h4 id="errors_45">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>INVALID CHANNEL </li>
+<li>BROWSETOKEN IS MANDATORY</li>
+<li>STARTBROWSE TYPE NOT RECOGNISED </li>
+</ul>
+<h4 id="conditions-respresp2_34">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>ACTIVITYERR/2 </li>
+<li>CHANNELERR/2 </li>
+</ul>
+<h3 id="getnext">GETNEXT</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS GETNEXT
+                    CONTAINER()
+                    BROWSETOKEN()
+</code></pre></div>
+<h4 id="errors_46">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BROWSETOKEN IS MANDATORY</li>
+<li>CONTAINER IS MANDATORY </li>
+</ul>
+<h4 id="conditions-respresp2_35">Conditions (RESP/RESP2)</h4>
+<ul>
+<li>END/2 </li>
+<li>TOKENERR/3 </li>
+</ul>
+<h3 id="endbrowse">ENDBROWSE</h3>
+<div class="highlight"><pre><span></span><code>name     EXEC  CICS ENDBROWSE
+                    CONTAINER
+                    BROWSETOKEN()
+</code></pre></div>
+<h4 id="errors_47">Errors</h4>
+<ul>
+<li>BAD PARM</li>
+<li>BROWSETOKEN IS MANDATORY</li>
+<li>ENDBROWSE TYPE NOT RECOGNISED </li>
+</ul>
+<h4 id="condition-respresp2">Condition (RESP/RESP2)</h4>
+<ul>
+<li>TOKENERR/3 </li>
+</ul>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Manuals" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Manuals
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../../../contributing/contribute_code/" class="md-footer__link md-footer__link--next" aria-label="Next: Contributing to z390" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Contributing to z390
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            &copy; 2022 z390 Assembler LLC. All rights reserved
+          </div>
+        
+        
+          Made with
+          <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+            Material for MkDocs
+          </a>
+        
+        
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.0-66-g1d1015a"}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.b1047164.min.js"></script>
+      
+    
+  </body>
+</html>
