@@ -14,7 +14,7 @@ hide:
     * Structured programming macros compatible with IBM HLASM Toolkit
 * IBM Enterprise COBOL compatible compiler
 * QSAM/VSAM compatible file processing
-* TN3270 data streams
+* TN3270 compatible data streams
 * CICS(r) compatible transaction processor
 * GPLv2 licensed
 
