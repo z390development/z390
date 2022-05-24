@@ -16,7 +16,7 @@
     
     
       
-        <title>z/OS compatible macros - z390</title>
+        <title>Mainframe OS compatible macros - z390</title>
       
     
     
@@ -63,7 +63,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#zos-compatible-macros" class="md-skip">
+        <a href="#mainframe-os-compatible-macros" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              z/OS compatible macros
+              Mainframe OS compatible macros
             
           </span>
         </div>
@@ -403,7 +403,7 @@
       
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        z/OS compatible macros
+        Mainframe OS compatible macros
       </a>
       
     </li>
@@ -919,7 +919,10 @@
                   </a>
                 
                 
-                <h1 id="zos-compatible-macros">z/OS compatible macros</h1>
+                <h1 id="mainframe-os-compatible-macros">Mainframe OS compatible macros</h1>
+<p>z390 provides some mainframe OS compatible macros (MVS, Z/OS, VSE) for use in your programs.</p>
+<p>SVC calls are not compatible. Z390 implements its own OS services which are different to the mainframe.</p>
+<p>If your program needs to access OS services, then your programs should use the provided OS based macros.</p>
 <table>
 <thead>
 <tr>
@@ -937,8 +940,8 @@
 <td>VSAM access control block</td>
 </tr>
 <tr>
-<td><strong>*</strong>ACBD</td>
-<td>VSAM ACB DSECT???</td>
+<td>ACBD<sup id="fnref10:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
+<td>VSAM ACB DSECT</td>
 </tr>
 <tr>
 <td>BLDL</td>
@@ -965,10 +968,6 @@
 <td>DSECT of limited CVT fields supported</td>
 </tr>
 <tr>
-<td></td>
-<td>CVTDCB field set to x’9B’ indicating 31 bit OS</td>
-</tr>
-<tr>
 <td>DCB</td>
 <td>Data control block for file (supports 31 bit DCBLRECLF field as extension to DCBLRECL.   See SUPERZAP utility for example of how to read or write up to 2 GB file with 1 I/O operation.)</td>
 </tr>
@@ -981,15 +980,15 @@
 <td>Define EODAD and SYNAD for DCB</td>
 </tr>
 <tr>
-<td>*** DECBD</td>
+<td>DECBD<sup id="fnref9:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
 <td>DSECT of limited DECB fields</td>
 </tr>
 <tr>
-<td>** DEFINE</td>
+<td>DEFINE<sup id="fnref8:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
 <td>Define VSAM Cluster Definition Table</td>
 </tr>
 <tr>
-<td>** DEQ</td>
+<td>DEQ<sup id="fnref7:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
 <td>Release a resource lock set by ENQ</td>
 </tr>
 <tr>
@@ -997,7 +996,7 @@
 <td>Freemain 390 load module if use count 0</td>
 </tr>
 <tr>
-<td>** ENQ</td>
+<td>ENQ<sup id="fnref6:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
 <td>request lock on a resource</td>
 </tr>
 <tr>
@@ -1033,12 +1032,12 @@
 <td>allocate memory area</td>
 </tr>
 <tr>
-<td>** IHAEPIE</td>
+<td>IHAEPIE<sup id="fnref5:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
 <td>DSECT for ESPIE exits</td>
 </tr>
 <tr>
-<td>** IHASDWA</td>
-<td>DSECT for SDWA ESTAE exits</td>
+<td>IHASDWA<sup id="fnref4:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
+<td>DSECT for SDWA ESTAE exits                                                                                                                                          m</td>
 </tr>
 <tr>
 <td>LINK</td>
@@ -1081,7 +1080,7 @@
 <td>VSAM request parameter list</td>
 </tr>
 <tr>
-<td>** RPLD</td>
+<td>RPLD<sup id="fnref3:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
 <td>VSAM RPL DSECT</td>
 </tr>
 <tr>
@@ -1089,7 +1088,7 @@
 <td>save specified registers</td>
 </tr>
 <tr>
-<td>** SETRP</td>
+<td>SETRP<sup id="fnref2:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
 <td>set register options for ESTAE exits</td>
 </tr>
 <tr>
@@ -1113,7 +1112,7 @@
 <td>test current value of ACB or RPL field</td>
 </tr>
 <tr>
-<td>** TGET</td>
+<td>TGET</td>
 <td>read from GUI TN3270 interface</td>
 </tr>
 <tr>
@@ -1125,11 +1124,11 @@
 <td>test and/or cancel STIMER event</td>
 </tr>
 <tr>
-<td>** TPUT</td>
+<td>TPUT</td>
 <td>write to GUI TN3270 display</td>
 </tr>
 <tr>
-<td>** VCDTD</td>
+<td>VCDTD<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
 <td>VSAM Catalog Definition Table DSECT</td>
 </tr>
 <tr>
@@ -1158,6 +1157,14 @@
 </tr>
 </tbody>
 </table>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Requires documentation.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref4:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref5:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref6:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref7:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref8:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref9:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref10:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
                 
               
               
@@ -1239,7 +1246,7 @@
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.0-68-g4645d71"}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-rc.1-1-g501d326"}</script>
     
     
       <script src="../../assets/javascripts/bundle.b1047164.min.js"></script>
