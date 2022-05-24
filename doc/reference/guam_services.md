@@ -37,7 +37,7 @@ Write to operator via GUAM GUI MCS console scrolling log view.
 label    WTO   ‘msg’
 ```
 See [WTO in SVC services](svc_services.md#wto)
-### WOTR
+### WTOR
 
 Write to operator with reply via GUAM GUI MCS console scrolling log view.
 
@@ -107,17 +107,17 @@ using symbolic references for control codes.
 The following keyboard input keystrokes can be used to generate TN3270 
 compatible input data codes:
 
- key        | hex | alternate keys
- -----------|-----|---------------
-++"ENTER"++ | 7D  | 
-++"PF1"++ to ++"PF9"++ | F1-F9 |
-++"PF10"++ to ++"PF12"++ | 7A-7C | 
-++"PF13"++ to ++"PF21"++ | C1-C9 | ++ctrl+alt+f1++ to ++ctrl+alt+f9++ 
-++"PF22"++ to ++"PF24"++ | 4A-4C |++ctrl+alt+f10++ to ++ctrl+alt+f12++ 
-++"PA1"++   | 6C   | ++ctrl+f1++ 
-++"PA2"++   | 6E   | ++ctrl+f2++ 
-++"PA3"++   | 6B   | ++ctrl+f3++ 
-++"CLEAR"++   | 6D   | ++ctrl+c++
+| key                      | hex   | alternate keys                       |
+|--------------------------|-------|--------------------------------------|
+| ++"ENTER"++              | 7D    |                                      |
+| ++"PF1"++ to ++"PF9"++   | F1-F9 |                                      |
+| ++"PF10"++ to ++"PF12"++ | 7A-7C |                                      |
+| ++"PF13"++ to ++"PF21"++ | C1-C9 | ++ctrl+alt+f1++ to ++ctrl+alt+f9++   |
+| ++"PF22"++ to ++"PF24"++ | 4A-4C | ++ctrl+alt+f10++ to ++ctrl+alt+f12++ |
+| ++"PA1"++                | 6C    | ++ctrl+f1++                          |
+| ++"PA2"++                | 6E    | ++ctrl+f2++                          |
+| ++"PA3"++                | 6B    | ++ctrl+f3++                          |
+| ++"CLEAR"++              | 6D    | ++ctrl+c++                           |
 
 ### GUAM 
 
