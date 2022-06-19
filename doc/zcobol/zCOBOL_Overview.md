@@ -1,4 +1,4 @@
-# zCOBOL_Overview
+# zCOBOL Overview
 
 **v1.5.06**
 
@@ -34,7 +34,7 @@ runtime, then you can start the z390 GUI interface or command line interface and
 enter the following command to compile, link, and execute the COBOL hello world demo
 on Windows or Linux:
 
-`ZC390CLG zcobol\demo\HELLO`
+    `ZC390CLG zcobol\demo\HELLO`
 
 The zCOBOL compiler has been developed as a new flexible tool for testing and
 modernizing COBOL applications without requiring rewriting existing programs.
@@ -87,31 +87,19 @@ and z390 development.
 
 ## zCOBOL Compiler Commands {#Commands}
 
-ZC390 : convert CBL source file to macro assembler MLC source file
-
-ZC390C : compile CBL to HLASM BAL and assemble to relocatable object code
-
-ZC390CL : compile CBL to HLASM BAL, assemble, and link to z390 load module
-
-ZC390CLG : compile CBL to HLASM BAL, assemble, link, and execute z390 load module
-
-ZCJAVCLG : compile CBL toJ2SE java and execute class
-
-ZCVCECLG : compile CBL to MS Visual C++, link, and execute exe
-
-ZC586CLG : compile CBL to HLA/ASM, link, and execute exe
-
-ZCRT390.BAT : run zCOBOL to HLASM demos
-
-ZCRTJAV.BAT : run zCOBOL to Java demo
-
-ZCRTVCE.BAT : run zCOBOL to C++ demo (requires MS Visual Express 2008 install)
-
-ZCRT586.BAT : run zCOBOL to HLA/masm demo (requires HLA and MASM installs)
-
-ZCRTTEST.BAT : run zCOBOL to HLASM regression tests
-
-ZCRTSAVE.BAT : save regression test generated files after any changes have been verified
+* ZC390 - convert CBL source file to macro assembler MLC source file
+* ZC390C - compile CBL to HLASM BAL and assemble to relocatable object code
+* ZC390CL - compile CBL to HLASM BAL, assemble, and link to z390 load module
+* ZC390CLG - compile CBL to HLASM BAL, assemble, link, and execute z390 load module
+* ZCJAVCLG - compile CBL toJ2SE java and execute class
+* ZCVCECLG - compile CBL to MS Visual C++, link, and execute exe
+* ZC586CLG - compile CBL to HLA/ASM, link, and execute exe
+* ZCRT390.BAT - run zCOBOL to HLASM demos
+* ZCRTJAV.BAT - run zCOBOL to Java demo
+* ZCRTVCE.BAT - run zCOBOL to C++ demo (requires MS Visual Express 2008 install)
+* ZCRT586.BAT - run zCOBOL to HLA/masm demo (requires HLA and MASM installs)
+* ZCRTTEST.BAT - run zCOBOL to HLASM regression tests
+* ZCRTSAVE.BAT - save regression test generated files after any changes have been verified
 
 All zCOBOL commands start with ZC and are located in the zcobol\bat directory
 and the z390 root directory for ease of use. All commands require z390 v1.5.06+
