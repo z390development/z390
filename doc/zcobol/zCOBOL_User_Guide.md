@@ -35,7 +35,9 @@ version.
 Now you should have a z390 desktop icon which you can double click to start
 the z390 GUI Interface. And now you can compile, link, and execute your first
 zCOBOL program by entering the following zCOBOL command:
-    `zc390clg zcobol\demo\HELLO`
+    ``` dos
+    zc390clg zcobol\demo\HELLO
+    ```
 
 The above command uses the zCOBOL to HLASM compile, link, and execute command
 to compile the COBOL hello world program zcobol\demo\HELLO.CBL into an
@@ -69,64 +71,63 @@ z390 user guide.
 
 The following zCOBOL Demo Programs can be found in zcobol\demo
 
-| Program | Notes |
-| ------- | ----- |
-| HELLO | Display "Hello World" and STOP RUN |
-| DATETIME | ACCEPT current date and time and display month, day of week, and year |
+| Program  | Notes                                                                          |
+| -------  | ------------------------------------------------------------------------------ |
+| HELLO    | Display "Hello World" and STOP RUN                                             |
+| DATETIME | ACCEPT current date and time and display month, day of week, and year          |
 | COPYFILE | Read line sequential ASCII file and copy it to new output line sequential file |
-| POWERS | Calculate and display powers of 2 up to 2^31^ |
-| | |
+| POWERS   | Calculate and display powers of 2 up to 2^31^                                  |
 
 The following zCOBOL Regression Test Programs can be found in zcobol\test
 
-| Program | Notes |
-| ------- | ----- |
-| TESTADD1 | Test 225 combinations of ADD |
-| TESTADD2 | Test 225 combinations of ADD with different implied decimals |
-| TESTASM4 | Assembler module statically linked with TESTCAL3.CBL |
-| TESTBFP1 | Test Binary Floating Point support |
-| TESTCAL1 | CALL TESTCAL2 statically linked |
-| TESTCAL2 | CALL TESTCAL3 dynamically |
-| TESTCAL3 | Dynamically loaded zcobol module which calls statically linked TESTASM4 assembler routine |
-| TESTCMP1 | ADD, SUBTRACT, MULTIPLY, and DIVIDE all formats |
-| TESTCMP2 | Test ADD, SUBTRACT, MULTIPLY, and DIVIDE |
-| TESTCMP3 | Test COMPUTE with implied decimal points for data type F, G, H, P, Q, and Z |
-| TESTCMP4 | Test COMPUTE with literals and different numberic values and implied decimals |
-| TESTCMP5 | Test 225 combinations of COMPUTE |
-| TESTCMP6 | Test 225 combinations of COMPUTE with different implied decimals |
-| TESTCPY1 | COPY |
-| TESTCPY2 | nested COPY |
-| TESTDFP1 | Test Decimal Floating Point )DFP) support |
-| TESTDIV1 | Test 225 combinations of DIVIDE |
-| TESTDIV2 | Test 225 combinations of DIVIDE with different implied decimals |
-| TESTDSP1 | DISPLAY all formats |
-| TESTFIL1 | Test file access |
-| TESTFIL2 | Test file access |
-| TESTFUN1 | ACCEPT, TRANSFORM, NUMERIC, etc. |
-| TESTGO1  | GO TO DEPENDING ON |
-| TESTHFP1 | Test Hexidecimal Floating Point (HFP) support |
-| TESTIF1 | Compound IF requiring use of intermediate T/F flags |
-| TESTIF2 | Test IF with omitted operands such as IF A = B OR C |
-| TESTIF3 | Test IF with parenthesis |
-| TESTINT1 | Test integer data types H, F, G, Q, P, and Z |
-| TESTISP1 | INSPECT TALLYING, REPLACING, TRANSFORMING |
-| TESTMOV1 | MOVE all formats |
-| TESTMOV2 | Test alignment for non-floating point moves |
-| TESTMOV3 | Test scaling for implied decimal for non-floating point moves |
-| TESTMPY1 | Test 225 combinations of MULTIPLY |
-| TESTMPY2 | Test 225 combinations of MULTIPLY with different implied decimals |
-| TESTPM1 | PERFORM VARYING and PERFORM TIMES |
-| TESTPM2 | Test PERFORM with duplicate paragraph names in different sections |
-| TESTPM3 | Test reading file using nested PERFORM VARYING |
+| Program  | Notes                                                                                      |
+| -------  | ------------------------------------------------------------------------------------------ |
+| TESTADD1 | Test 225 combinations of ADD                                                               |
+| TESTADD2 | Test 225 combinations of ADD with different implied decimals                               |
+| TESTASM4 | Assembler module statically linked with TESTCAL3.CBL                                       |
+| TESTBFP1 | Test Binary Floating Point support                                                         |
+| TESTCAL1 | CALL TESTCAL2 statically linked                                                            |
+| TESTCAL2 | CALL TESTCAL3 dynamically                                                                  |
+| TESTCAL3 | Dynamically loaded zcobol module which calls statically linked TESTASM4 assembler routine  |
+| TESTCMP1 | ADD, SUBTRACT, MULTIPLY, and DIVIDE all formats                                            |
+| TESTCMP2 | Test ADD, SUBTRACT, MULTIPLY, and DIVIDE                                                   |
+| TESTCMP3 | Test COMPUTE with implied decimal points for data type F, G, H, P, Q, and Z                |
+| TESTCMP4 | Test COMPUTE with literals and different numberic values and implied decimals              |
+| TESTCMP5 | Test 225 combinations of COMPUTE                                                           |
+| TESTCMP6 | Test 225 combinations of COMPUTE with different implied decimals                           |
+| TESTCPY1 | COPY                                                                                       |
+| TESTCPY2 | nested COPY                                                                                |
+| TESTDFP1 | Test Decimal Floating Point )DFP) support                                                  |
+| TESTDIV1 | Test 225 combinations of DIVIDE                                                            |
+| TESTDIV2 | Test 225 combinations of DIVIDE with different implied decimals                            |
+| TESTDSP1 | DISPLAY all formats                                                                        |
+| TESTFIL1 | Test file access                                                                           |
+| TESTFIL2 | Test file access                                                                           |
+| TESTFUN1 | ACCEPT, TRANSFORM, NUMERIC, etc.                                                           |
+| TESTGO1  | GO TO DEPENDING ON                                                                         |
+| TESTHFP1 | Test Hexidecimal Floating Point (HFP) support                                              |
+| TESTIF1  | Compound IF requiring use of intermediate T/F flags                                        |
+| TESTIF2  | Test IF with omitted operands such as IF A = B OR C                                        |
+| TESTIF3  | Test IF with parenthesis                                                                   |
+| TESTINT1 | Test integer data types H, F, G, Q, P, and Z                                               |
+| TESTISP1 | INSPECT TALLYING, REPLACING, TRANSFORMING                                                  |
+| TESTMOV1 | MOVE all formats                                                                           |
+| TESTMOV2 | Test alignment for non-floating point moves                                                |
+| TESTMOV3 | Test scaling for implied decimal for non-floating point moves                              |
+| TESTMPY1 | Test 225 combinations of MULTIPLY                                                          |
+| TESTMPY2 | Test 225 combinations of MULTIPLY with different implied decimals                          |
+| TESTPM1  | PERFORM VARYING and PERFORM TIMES                                                          |
+| TESTPM2  | Test PERFORM with duplicate paragraph names in different sections                          |
+| TESTPM3  | Test reading file using nested PERFORM VARYING                                             |
 | TESTRMD1 | Test move reference modification of the form MOVE F1(var1+lit1:len1) TO F2(var2+lit2:len2) |
-| TESTSIX1 | Test multiple subscripts |
-| TESTSIX2 | Test SET and INDEXED form of subscripting |
-| TESTSUB1 | Test 225 combinations of SUBTRACT |
-| TESTSUB2 | Test 225 combinations of SUBTRACT with different implied decimals |
-| TESTTRC1 | TRUNC |
-| TESTTRC2 | NOTRUNC with ONSIZE |
-| TESTTRC3 | TRUNC and NOR64 to test use of DXR versus DSG |
-| TESTWS1 | Working storage REDEFINE and OCCURS with padding |
+| TESTSIX1 | Test multiple subscripts                                                                   |
+| TESTSIX2 | Test SET and INDEXED form of subscripting                                                  |
+| TESTSUB1 | Test 225 combinations of SUBTRACT                                                          |
+| TESTSUB2 | Test 225 combinations of SUBTRACT with different implied decimals                          |
+| TESTTRC1 | TRUNC                                                                                      |
+| TESTTRC2 | NOTRUNC with ONSIZE                                                                        |
+| TESTTRC3 | TRUNC and NOR64 to test use of DXR versus DSG                                              |
+| TESTWS1  | Working storage REDEFINE and OCCURS with padding                                           |
 
 ## zCOBOL Compiler Errors (#Errors)
 

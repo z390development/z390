@@ -34,7 +34,9 @@ runtime, then you can start the z390 GUI interface or command line interface and
 enter the following command to compile, link, and execute the COBOL hello world demo
 on Windows or Linux:
 
-    `ZC390CLG zcobol\demo\HELLO`
+    ``` dos
+    ZC390CLG zcobol\demo\HELLO
+    ```
 
 The zCOBOL compiler has been developed as a new flexible tool for testing and
 modernizing COBOL applications without requiring rewriting existing programs.
@@ -131,14 +133,14 @@ should continue to significantly improve. The plan is to achieve 100% within
 the next few releases of zCOBOL and then provide optional regression test
 download for the NIST test suite for zCOBOL. These statistics were extracted from:
 
-| Description | V1.5.00 | V1.5.00a | Notes |
-| ----------- | ------- | -------- | ----- |
-| NIST programs with parsing errors | 140 | 43 | RPI 1012 corrections to zc390 parser |
-| NIST Programs Compiled | 319 | 416 | RPI 1012 corrections to zc390 parser |
-| Total minutes | 26 | 44 | 33% increase in number of programs compiled |
-| RC=0 No errors | 11 | 12 | most programs are still missing one or more items |
-| RC=8 MNOTE support warning | 19 | 151 | Warning for unsupported items pending implementation |
-| RC=16 At least 1 error message | 249 | 160 | Error messages from mz390 or az390 macro assembler |
+| Description                       | V1.5.00 | V1.5.00a | Notes                                                |
+| --------------------------------- | ------- | -------- | ---------------------------------------------------- |
+| NIST programs with parsing errors |     140 |       43 | RPI 1012 corrections to zc390 parser                 |
+| NIST Programs Compiled            |     319 |      416 | RPI 1012 corrections to zc390 parser                 |
+| Total minutes                     |      26 |       44 | 33% increase in number of programs compiled          |
+| RC=0 No errors                    |      11 |       12 | most programs are still missing one or more items    |
+| RC=8 MNOTE support warning        |      19 |      151 | Warning for unsupported items pending implementation |
+| RC=16 At least 1 error message    |     249 |      160 | Error messages from mz390 or az390 macro assembler   |
 
 ## Trademarks {#Trademarks}
 

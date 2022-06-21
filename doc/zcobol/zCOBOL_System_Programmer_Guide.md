@@ -62,13 +62,17 @@ The COBOL compute statement now supported in v1.5.00d is a good example to study
 to understand how the zCOBOL compiler works. The steps followed to compile the
 following MOVE and COMPUTE statements are as follows:
 
-    `77 FLT-SRT USAGE FLOAT-SHORT OCCURS 2.   
-    MOVE 1.1 TO FLT-SRT(2).   
-    COMPUTE FLT-SRT(2) = FLT-SRT(2)+2.2.`   
+    ``` cobol
+    77 FLT-SRT USAGE FLOAT-SHORT OCCURS 2.
+    MOVE 1.1 TO FLT-SRT(2).
+    COMPUTE FLT-SRT(2) = FLT-SRT(2)+2.2.
+    ```
 
 1. zc390 translator generates the following 2 zCOBOL verb macro call statements:
-    - `MOVE 1.1,'TO',FLT_SRT,"(',2,')'`   
-    - `COMPUTE FLT_SRT,'(',2,')',=,FLT_SRT,'(",2,')',+,2.2`
+    ```
+    MOVE  1.1,'TO',FLT_SRT,"(',2,')'`   
+    COMPUTE FLT_SRT,'(',2,')',=,FLT_SRT,'(",2,')',+,2.2
+    ```
 2. The MOVE macro uses shared copybook routine GET_FIELD_PARM to parse the two
 fields for MOVE and store resulting field name and symbol table index.
 For the literal 1.1 the index is 0, for the subscripted field, the name is set
@@ -125,12 +129,12 @@ http://www.z390.org/zcobol\demo\callcomp\zcobol_COMPUTE.pdf
 All the target source language generation macros called by the COBOL verb macros
 in z390\zcobol are stored in the following directories by target language:
 
-| Directory | Notes |
-| ------- | ------- |
+| Directory        | Notes                                                        |
+| ---------------- | ------------------------------------------------------------ |
 | z390\zcobol\z390 | Generate HLASM compatible mainframe assembler source program |
-| z390\zcobol\java | Generate J2SE java compatible source program |
-| z390\zcobol\vce | Generate MS Visual Express C compatible source program |
-| z390\zcobol\i586 | Generate HLA/MASM Intel assembler compatible source program |
+| z390\zcobol\java | Generate J2SE java compatible source program                 |
+| z390\zcobol\vce  | Generate MS Visual Express C compatible source program       |
+| z390\zcobol\i586 | Generate HLA/MASM Intel assembler compatible source program  |
 
 Current only the z390 HLASM compatible source generation macros are being
 fully developed along with the required runtime support functions stored
@@ -142,12 +146,12 @@ source program.
 The following commands generate the corresponding source language equivalent
 and executable:
 
-| Command | Generated Source Code Target | Generated Executable Code | Notes |
-| ------- | ---------------------------- | ------------------------- | ----- |
-| ZC390CLG zcobol\demo\HELLO | zcobol\demo\HELLO.MLC/BAL | zcobol\demo\HELLO.390 | requires z390 and J2SE on Windows/Linux |
-| ZCJAVCLG zcobol\demo\HELLO | zcobol\demo\HELLO.java | zcobol\demo\HELLO.class | requires J2SE on Windows/Linux |
-| ZCVCECLG zcobol\demo\HELLO | zcobol\demo\HELLO.ccp | zcobol\demo\HELLO.exe | requires MS VCE runtime on Windows |
-| ZC586CLG zcobol\demo\HELLO | zcobol\demo\HELLO.HLA/ASM | zcobol\demo\HELLO.exe | requires HLA, MASM, and MS VCE runtime on Windows |
+| Command                    | Generated Source Code Target | Generated Executable Code | Notes                                             |
+| -------------------------- | ---------------------------- | ------------------------- | ------------------------------------------------- |
+| ZC390CLG zcobol\demo\HELLO | zcobol\demo\HELLO.MLC/BAL    | zcobol\demo\HELLO.390     | requires z390 and J2SE on Windows/Linux           |
+| ZCJAVCLG zcobol\demo\HELLO | zcobol\demo\HELLO.java       | zcobol\demo\HELLO.class   | requires J2SE on Windows/Linux                    |
+| ZCVCECLG zcobol\demo\HELLO | zcobol\demo\HELLO.ccp        | zcobol\demo\HELLO.exe     | requires MS VCE runtime on Windows                |
+| ZC586CLG zcobol\demo\HELLO | zcobol\demo\HELLO.HLA/ASM    | zcobol\demo\HELLO.exe     | requires HLA, MASM, and MS VCE runtime on Windows |
 
 If you are interested in joining in the open source zCOBOL development effort
 in any of the 4 target language environments or want to add another target
@@ -169,14 +173,14 @@ the CVT at the beginning of the ZC390LIB.390 runtime load module
 with addresses of all the entries followed by work areas used by
 the code generation macros.
 
-| Library Element | Notes |
-| --------------- | ----- |
-| ZC390LIB.MLC | Contains ZC390LIB CSECT and COPY ZC390CVT to include all object modules following the CVT at the beginning |
-| ZC390NUC.MLC | Included module with system function routines such as CALL, GOBACK, STOPRUN, PERFORM, and PMCHECK to check for end of current performed paragraph or section |
-| ABORT.MLC | Contains module called to abort execution with reason code |
-| ACCEPT.MLC | Contains support for ACCEPT date, time, day of week |
-| DISPLAY.MLC | Display any type field or literal |
-| INSPECT.MLC | Inspect field tallying, replacing, or transforming |
+| Library Element | Notes                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ZC390LIB.MLC    | Contains ZC390LIB CSECT and COPY ZC390CVT to include all object modules following the CVT at the beginning                                                   |
+| ZC390NUC.MLC    | Included module with system function routines such as CALL, GOBACK, STOPRUN, PERFORM, and PMCHECK to check for end of current performed paragraph or section |
+| ABORT.MLC       | Contains module called to abort execution with reason code                                                                                                   |
+| ACCEPT.MLC      | Contains support for ACCEPT date, time, day of week                                                                                                          |
+| DISPLAY.MLC     | Display any type field or literal                                                                                                                            |
+| INSPECT.MLC     | Inspect field tallying, replacing, or transforming                                                                                                           |
 
 ## Base Free Code Generation (#BaseFree)
 
@@ -217,30 +221,30 @@ FLOAT-LONG, and FLOAT-EXTENDED.
 standard unless option EXTEND is set allowing up to 31 digits for both packed
 decimal and zoned decimal fields.
 
-| USAGE | PICTURE | Z390 Assembler Type | Description |
-| ----- | ------- | ------------------- | ----------- |
-| COMP | S9(4) | H | 16 bit binary |
-| COMP | S9(9) | F | 32 bit binary |
-| COMP | S9(18) | G | 64 bit binary |
-| COMP | S9(39) | Q | 128 bit binary |
-| FLOAT-HEX-7 | COMP-1 | EH | HFP short 7 digits |
-| FLOAT-HEX-15 | COMP-2 | DH | HFP long - 15 digits |
-| FLOAT-HEX-30 | LH | HFP extended - 30 digits |
-| FLOAT-BINARY-7 | EB | BFP short 7 digits |
-| FLOAT-BINARY-16 | DB | BFP long - 16 digits |
-| FLOAT-BINARY-34 | LB | BFP extended - 34 digits |
-| FLOAT-DECIMAL-7 | FLOAT-SHORT | EB | DFP short 7 digits |
-| FLOAT-DECIMAL-16 | FLOAT-LONG | DB | DFP long - 16 digits |
-| FLOAT-DECIMAL-34 | FLOAT-EXTENDED | LB | DFP extended - 34 digits |
-| FLOAT-DECIMAL-7 | FLOAT-SHORT | EB | DFP short 7 digits |
-| FLOAT-DECIMAL-16 | FLOAT-LONG | DB | DFP long - 16 digits |
-| FLOAT-DECIMAL-34 | FLOAT-EXTENDE | D | LB | DFP extended - 34 digits |
-| COMP-3 | S9(31) | P(3) | Packed decimal up to 31 digits with option EXTEND |
-| | S9(31) | Z(3) | Zoned Decimal up to 31 digits with option EXTEND (uses PD support) |
-| | X | X | Characters |
-| FLOAT-SHORT | EH,EB,ED | Use option FLOAT(HFP/BFP/DFP) |
-| FLOAT-LONG | DH,DB,DD | Use option FLOAT(HFP/BFP/DFP) |
-| FLOAT-EXTENDED | LH,LB,LD | Use option FLOAT(HFP/BFP/DFP) |
+| USAGE            | PICTURE        | Z390 Assembler Type | Description                                                        |
+| ---------------- | -------------- | ------------------- | ------------------------------------------------------------------ |
+| COMP             | S9(4)          | H                   | 16 bit binary                                                      |
+| COMP             | S9(9)          | F                   | 32 bit binary                                                      |
+| COMP             | S9(18)         | G                   | 64 bit binary                                                      |
+| COMP             | S9(39)         | Q                   | 128 bit binary                                                     |
+| FLOAT-HEX-7      | COMP-1         | EH                  | HFP short 7 digits                                                 |
+| FLOAT-HEX-15     | COMP-2         | DH                  | HFP long - 15 digits                                               |
+| FLOAT-HEX-30     |                | LH                  | HFP extended - 30 digits                                           |
+| FLOAT-BINARY-7   |                | EB                  | BFP short 7 digits                                                 |
+| FLOAT-BINARY-16  |                | DB                  | BFP long - 16 digits                                               |
+| FLOAT-BINARY-34  |                | LB                  | BFP extended - 34 digits                                           |
+| FLOAT-DECIMAL-7  | FLOAT-SHORT    | EB                  | DFP short 7 digits                                                 |
+| FLOAT-DECIMAL-16 | FLOAT-LONG     | DB                  | DFP long - 16 digits                                               |
+| FLOAT-DECIMAL-34 | FLOAT-EXTENDED | LB                  | DFP extended - 34 digits                                           |
+| FLOAT-DECIMAL-7  | FLOAT-SHORT    | EB                  | DFP short 7 digits                                                 |
+| FLOAT-DECIMAL-16 | FLOAT-LONG     | DB                  | DFP long - 16 digits                                               |
+| FLOAT-DECIMAL-34 | FLOAT-EXTENDED | D                   | LB | DFP extended - 34 digits                                      |
+| COMP-3           | S9(31)         | P(3)                | Packed decimal up to 31 digits with option EXTEND                  |
+|                  | S9(31)         | Z(3)                | Zoned Decimal up to 31 digits with option EXTEND (uses PD support) |
+|                  | X              | X                   | Characters                                                         |
+| FLOAT-SHORT      |                | EH,EB,ED            | Use option FLOAT(HFP/BFP/DFP)                                      |
+| FLOAT-LONG       |                | DH,DB,DD            | Use option FLOAT(HFP/BFP/DFP)                                      |
+| FLOAT-EXTENDED   |                | LH,LB,LD            | Use option FLOAT(HFP/BFP/DFP)                                      |
 
 ## Command Line options for zCOBOL Compiler (#Options)
 
