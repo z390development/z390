@@ -24,8 +24,9 @@ This is part of z390 distributed under open source GPL License* ==
 zCOBOL is an open source portable mainframe COBOL compiler available as part of
 the z390 open source portable mainframe assembler for Windows or Linux starting
 with z390 v1.5.00. You can download z390 and zCOBOL in InstallShield format for
-Windows for file image format for Linux from www.z390.org. You will also need
-the J2SE Java runtime which you can download from Sun Developer Network.
+Windows for file image format for Linux from [www.z390.org](http://www.z390.org).
+You will also need the J2SE Java runtime which you can download from
+[Sun Developer Network](https://www.oracle.com/java/technologies/).
 This release of zCOBOL has been regression tested with J2SE 1.6.0_31.
 
 Be sure to remove any old obsolete versions of J2SE such as 1.4 or 1.5 which may
@@ -41,7 +42,7 @@ on Windows or Linux:
 The zCOBOL compiler has been developed as a new flexible tool for testing and
 modernizing COBOL applications without requiring rewriting existing programs.
 With the recent addition of z390 structured conditional macro assembler extensions,
-the development of zCOBOL became feasible and has evolved rapidly. As the recent
+the development of zCOBOL became feasible and has evolved rapidly. As the
 article in the z/System Journal titled, "Easy COBOL Modernization for SOA"
 by L. H. Couch and Charles F. Townsend, November 2008 indicates there is
 a growing demand for tools such as zCOBOL to help seamlessly bridge legacy
@@ -75,14 +76,15 @@ the initial zCOBOL release. The following libraries are available:
     - z390\zcobol\vce - zCOBOL code generation macros for MS Visual Express C++
     - z390\zcobol\i586 - zCOBOL code generation macros for HLA and MASM native Intel code
 
-Once the z390 HLASM code generation macros are complete and all
-the NIST COBOL 1985 standards tests have been completed successfully
-as a first milestone, then these macros can be copied to the other libraries
-and modified to replace HLASM source code model statements with the
-other target language statements.
+Once the z390 HLASM code generation macros are complete and all the
+[NIST COBOL 1985 standards tests](https://www.itl.nist.gov/div897/ctg/cobol_form.htm)
+have been completed successfully as a first milestone, then these macros can
+be copied to the other libraries and modified to replace HLASM source code
+model statements with the other target language statements.
 
 If you are an assembler or COBOL developer who would like to contribute
-to the zCOBOL open source project, join the zCOBOL group and indicate
+to the zCOBOL open source project, join the [zCOBOL group](???)
+and indicate
 your specific interests. All users are welcome and are encouraged to submit
 bug reports and requests for priority on future open source zCOBOL
 and z390 development.
@@ -96,16 +98,19 @@ and z390 development.
 * ZCJAVCLG - compile CBL toJ2SE java and execute class
 * ZCVCECLG - compile CBL to MS Visual C++, link, and execute exe
 * ZC586CLG - compile CBL to HLA/ASM, link, and execute exe
-* ZCRT390.BAT - run zCOBOL to HLASM demos
+* ZCRT390.BAT - run [zCOBOL to HLASM demos](zCOBOL_Demos_and_Regression_Tests.htm)
 * ZCRTJAV.BAT - run zCOBOL to Java demo
-* ZCRTVCE.BAT - run zCOBOL to C++ demo (requires MS Visual Express 2008 install)
-* ZCRT586.BAT - run zCOBOL to HLA/masm demo (requires HLA and MASM installs)
+* ZCRTVCE.BAT - run zCOBOL to C++ demo (requires
+[MS Visual Express 2008](https://visualstudio.microsoft.com/) install)
+* ZCRT586.BAT - run zCOBOL to HLA/masm demo (requires [HLA](https://www.plantation-productions.com/Webster/)
+and [MASM](https://www.microsoft.com/en-us/download/) installs)
 * ZCRTTEST.BAT - run zCOBOL to HLASM regression tests
 * ZCRTSAVE.BAT - save regression test generated files after any changes have been verified
 
 All zCOBOL commands start with ZC and are located in the zcobol\bat directory
-and the z390 root directory for ease of use. All commands require z390 v1.5.06+
-and J2SE 6.0+. 
+and the z390 root directory for ease of use. All commands require
+[z390 v1.5.06](http://www.z390.org) or above
+and [J2SE 6.0](https://www.oracle.com/java/technologies/downloads/) or above. 
 
 ## Project {#Project}
 
@@ -115,12 +120,14 @@ but the self actualization rewards can be very satisfying. And there is always
 the possibility of future paying jobs helping companies use zCOBOL.
 Current jobs available include writing COBOL verb macros for currently unsupported
 verbs including SORT, MERGE. Optimizing the code generation macros
-to produce more efficient code and optional code based on zCOBOL options such as
+to produce more efficient code and optional code based on
+[zCOBOL options](zcobol_options.htm) such as
 TRUNC, R64, etc. In addition major effort is still required to covert the
 HLASM code generation macros to generated java, C, or MASM.
 
 For COBOL programmers there is the constant need to extend
-the zCOBOL regression tests written in zCOBOL which verify that zCOBOL statements
+the [zCOBOL regression tests](zCOBOL_Demos_and_Regression_Tests.htm)
+written in zCOBOL which verify that zCOBOL statements
 produce the expected results. And finally there is a need to develop documentation
 on the zCOBOL project as it evolves.
 
