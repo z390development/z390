@@ -419,7 +419,10 @@ public  class  az390 implements Runnable {
 		* 2022-05-10 AFK #398 fix typo in error message
         * 2022-05-12 DSH #325 issue error 54 invalid DC field terminator if not '..' for BDEFHLPXZ
 		* 2022-06-10 DSH z16 #423 correct rotate instruction errors reported by Dan Greiner
-	*****************************************************
+	    * 2022-06-27 DSH z16 #424 add BFP constants INF, NAN, QNAN, SNAN, DMIN
+	    *                             See POP 13 pages 9-5 and 19-4
+		* 2022-07-03 DSH #414 add 30 new z16 instructions also see
+		*****************************************************
     * Global variables                        last rpi
     *****************************************************/
 	tz390 tz390 = null;
@@ -1788,7 +1791,9 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     &&  !tz390.op_name[index].equals("RSCH")
                     &&  !tz390.op_name[index].equals("SCHM")
                     &&  !tz390.op_name[index].equals("SAL")
-                    &&  !tz390.op_name[index].equals("XSCH"))
+                    &&  !tz390.op_name[index].equals("XSCH")
+					&&  !tz390.op_name[index].equals("LBEAR") // DSH #414 z16
+					)
                        {entry=entry+" D2(B2)";
                         }
                     break;
@@ -2629,7 +2634,9 @@ private void process_bal_op(){
     	loc_len = 4;
     	get_hex_op(1,4);
     	get_hex_zero(2);
-    	if (bal_op.equals("PALB") // RPI 277
+		if (bal_op.equals("NNPA")){ // DSH #414 z16
+			get_hex_zero(2);
+		} else if (bal_op.equals("PALB") // RPI 277
     		|| bal_op.equals("PCKMO") // RPI 1125
 	        || bal_op.equals("PCC")){ // RPI 1125
     		get_hex_zero(2);
@@ -2815,8 +2822,12 @@ private void process_bal_op(){
     	loc_len = 6;
     	get_hex_op(1,2);
     	get_hex_bdddhh2();
-    	skip_comma();
-    	get_hex_byte();
+		if (!bal_abort && exp_next_char(',')){ // DSH #414 z16 add support for EB71 LPSWEY D1(B1) witn no second opr
+      	   skip_comma();
+    	   get_hex_byte();
+		} else {
+		   get_hex_zero(2);
+		}
     	obj_code = obj_code.substring(0,2) + obj_code.substring(8,10) + obj_code.substring(2,8); 
        	get_hex_op(3,2);
     	check_end_parms();
@@ -3023,13 +3034,17 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 4;
     	get_hex_op(1,4);
-    	get_hex_reg();
+    	get_hex_reg(); // r1
     	skip_comma();
-    	get_hex_reg();
+    	get_hex_reg(); // r3
 		skip_comma();
-    	get_hex_reg();
-    	skip_comma();
-    	get_hex_reg();
+    	get_hex_reg(); // r2
+		if (!bal_abort && exp_next_char(',')){ // DSH #414 z16 make M4 optional for RDP
+			skip_comma();
+			get_hex_reg();  // M4
+		} else {
+    	    get_hex_zero(1);
+		}
        	obj_code = obj_code.substring(0,4)  // oooo 
         + obj_code.substring(5,6)  // r3
 		+ obj_code.substring(7,8)  // m4
@@ -4159,7 +4174,9 @@ private void process_bal_op(){
     	loc_len = 6;
     	get_hex_op(1,2);   //  oo
     	get_hex_vreg(1);       //  V1
-	     if (tz390.op_code[bal_op_index].substring(0,4).equals("E772")     // E772 VRId VERIM V1,V2,V3,I4,M5 RPI 2202
+	     if (tz390.op_code[bal_op_index].substring(0,4).equals("E672")     // E672 VRIf VSRPR V1,V2,V3,I4,M5 DSH #414 z16
+		  || tz390.op_code[bal_op_index].substring(0,4).equals("E670")     // E670 VRIf VPKZR V1,V2,V3,I4,M5 DSH #414 z16
+		  || tz390.op_code[bal_op_index].substring(0,4).equals("E772")     // E772 VRId VERIM V1,V2,V3,I4,M5 RPI 2202
 		  || tz390.op_code[bal_op_index].substring(0,4).equals("E786")     // E786 VRId VSLD  V1,V2,V3,I4 RPI 2202
 		  || tz390.op_code[bal_op_index].substring(0,4).equals("E787")) {  // E787 VRId VSRD  V1,V2,V3,I4 RPI 2202
          skip_comma();   
@@ -4348,7 +4365,10 @@ private void process_bal_op(){
           skip_comma();
           get_hex_reg();        // M3
           get_hex_zero(2);
-      } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E750")         // E750 VRRa VPOPCT V1,V2,M3
+      } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E654")         // E654 VRRk VUPKZH V1,V2,M3 DSH #414 z16
+                 || tz390.op_code[bal_op_index].substring(0,4).equals("E65C")         // E65C VRRk VUPKZL V1,V2,M3 DSH #414 z16
+	             || tz390.op_code[bal_op_index].substring(0,4).equals("E651")         // E651 VRRk VCLZDP V1,V2,M3 DSH #414 z16
+	             || tz390.op_code[bal_op_index].substring(0,4).equals("E750")         // E750 VRRa VPOPCT V1,V2,M3
     		     ||  tz390.op_code[bal_op_index].substring(0,4).equals("E752")     // E752 VRRa VCTZ V1,V2,M3
     		     ||  tz390.op_code[bal_op_index].substring(0,4).equals("E753")     // E752 VRRa VCLZ V1,V2,M3
     	         ||  tz390.op_code[bal_op_index].substring(0,4).equals("E75F")){   // E75F VRRa VSEG V1,V2,M3 
@@ -4362,7 +4382,8 @@ private void process_bal_op(){
        	  } else {
         	get_hex_op(5,1);   //  M3
        	  }
-      } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E760")           // E760 VRRc VMRL V1,V2,V3,M4
+      } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E67D")           // E67D VRRj VCSPH V1,V2,V3,M4 DSH #414 z16
+		         || tz390.op_code[bal_op_index].substring(0,4).equals("E760")           // E760 VRRc VMRL V1,V2,V3,M4
  	             ||  tz390.op_code[bal_op_index].substring(0,4).equals("E761")       // E761 VRRc VMRH V1,V2,V3,M4
  	             ||  tz390.op_code[bal_op_index].substring(0,4).equals("E764")       // E764 VRRc VSUM V1,V2,V3,M4
     	         ||  tz390.op_code[bal_op_index].substring(0,4).equals("E765")       // E765 VRRc VSUMG V1,V2,V3,M4
@@ -4408,7 +4429,8 @@ private void process_bal_op(){
 				get_hex_zero(1);
 			}
     	}
-	  } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E7E2")    // E7E2 VRRc VFS V1,V2,V3,M4,M5
+	  } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E675")    // E675 VRRc VCRNF V1,V2,V3,M4,M5 DSH #414 z16
+		      || tz390.op_code[bal_op_index].substring(0,4).equals("E7E2")    // E7E2 VRRc VFS V1,V2,V3,M4,M5
 	          || tz390.op_code[bal_op_index].substring(0,4).equals("E7E3")    // E7E3 VRRc VFA V1,V2,V3,M4,M5
 			  || tz390.op_code[bal_op_index].substring(0,4).equals("E7E5")    // E7E5 VRRc VFD V1,V2,V3,M4,M5
 			  || tz390.op_code[bal_op_index].substring(0,4).equals("E7E7")) { // E7E7 VRRc VFM V1,V2,V3,M4,M5
@@ -4488,7 +4510,8 @@ private void process_bal_op(){
  	      + obj_code.substring(8,9)           // m6
     	  + obj_code.substring(7,8)           // m5
 		  + obj_code.substring(6,7);          // m4		  
-      } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E762")                // E762 VRRf VLVGP V1,R2,R3 RPI 2202 
+      } else if (    tz390.op_code[bal_op_index].substring(0,4).equals("E67C")            // E67C VRRf VSCSHP V1,V2,V3 DSH #414 z16 
+		      ||     tz390.op_code[bal_op_index].substring(0,4).equals("E762")            // E762 VRRf VLVGP V1,R2,R3 RPI 2202 
     	      ||     tz390.op_code[bal_op_index].substring(0,4).equals("E766")            // E766 VRRc VCKSM V1,V2,V3 RPI 2202  
     	      ||     tz390.op_code[bal_op_index].substring(0,4).equals("E768")            // E768 VRRc VN V1,V2,V3 RPI 2202  
     	      ||     tz390.op_code[bal_op_index].substring(0,4).equals("E769")            // E769 VRRc VNC V1,V2,V3 RPI 2202   
@@ -4553,7 +4576,11 @@ private void process_bal_op(){
  	      + obj_code.substring(8,9)           // m5
     	  + obj_code.substring(7,8)           // m4
 		  + obj_code.substring(6,7);          // m3
-	  } else  if (  tz390.op_code[bal_op_index].substring(0,4).equals("E7C0")        // E7C0 VRRa VCLFP/VCLGD V1,V2,M3,M4,M5 
+	  } else  if (  tz390.op_code[bal_op_index].substring(0,4).equals("E655")  // DSH #414 VCNF V1,V2,M3,M4
+		         || tz390.op_code[bal_op_index].substring(0,4).equals("E65D")  // DSH #414 VCFN V1,V2,M3,M4
+	             || tz390.op_code[bal_op_index].substring(0,4).equals("E656")  // DSH #414 VCLFNH V1,V2,M3,M4
+				 || tz390.op_code[bal_op_index].substring(0,4).equals("E65E") // DSH #414 VCLFNL V1,V2,M3,M4
+		         || tz390.op_code[bal_op_index].substring(0,4).equals("E7C0")        // E7C0 VRRa VCLFP/VCLGD V1,V2,M3,M4,M5 
 	             || tz390.op_code[bal_op_index].substring(0,4).equals("E7C1")        // E7C1 VRRa VCDLG V1,V2,M3,M4,M5
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7C2")        // E7C2 VRRa VCGD  V1,V2,M3,M4,M5
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7C3")        // E7C3 VRRa VCDG  V1,V2,M3,M4,M5
@@ -4572,7 +4599,8 @@ private void process_bal_op(){
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7D9")        // E7D9 VRRa VECL  V1,V2,M3
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7DB")        // E7DB VRRa VEC   V1,V2,M3
 				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7DE")        // E7DE VRRa VLC   V1,V2,M3
-				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7DF")) {     // E7DF VRRa VLP   V1,V2,M3
+				 || tz390.op_code[bal_op_index].substring(0,4).equals("E7DF")
+				 ) {     // E7DF VRRa VLP   V1,V2,M3
     	  get_hex_vreg(1);        // V1
           skip_comma();
           get_hex_vreg(2);        // V2
@@ -4627,7 +4655,8 @@ private void process_bal_op(){
  	      + obj_code.substring(8,9)           // m5
     	  + obj_code.substring(7,8)           // m4
 		  + obj_code.substring(6,7);          // m3
-      } else  if (tz390.op_code[bal_op_index].substring(0,4).equals("E780")        // E780 VRRb VFEE  V1,V2,V3,M4,M5
+      } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E674")        // E674 VRRb VSCHP V1,V2,V3,M4,M5 DSH #414 z16
+	              || tz390.op_code[bal_op_index].substring(0,4).equals("E780")        // E780 VRRb VFEE  V1,V2,V3,M4,M5
                   || tz390.op_code[bal_op_index].substring(0,4).equals("E781")     // E781 VRRb VFENE V1,V2,V3,M4,M5
 				  || tz390.op_code[bal_op_index].substring(0,4).equals("E782")     // E782 VRRb VFAE  V1,V2,V3,M4,M5
 				  || tz390.op_code[bal_op_index].substring(0,4).equals("E795")     // E795 VRRb VPKLS V1,V2,V3,M4,M5
@@ -10837,6 +10866,8 @@ private void fp_get_hex(){
 	 *       set based on explicit decimal poiint
 	 *       with significant trailing decimal places
 	 *       including zeros else use 0. RPI 790
+     *   5.  Add issue #424 BFP constants INF, NAN, QNAN, SNAN, DMIN
+	 *       See POP 13 pages 9-5 and 19-4
 	 * 
 	 * First convert string constant to positive
 	 * big_dec1 value with sufficent sig. bits.
@@ -10923,6 +10954,196 @@ private void fp_get_hex(){
 				dc_hex = "8" + dc_hex.substring(1);
 			}
 			return;
+
+		} else if (fp_text.toUpperCase().equals("(INF)")){ // #423
+			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = "7FF0000000000000";
+			    break;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
+				dc_hex = "EEEEEEEEEEEEEEEE"; 
+				break;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+				dc_hex = "EEEEEEEEEEEEEEEE";
+				break;
+			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	            dc_hex = "7F000000";
+	            break;
+			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+				dc_hex = "EEEEEEEE"; 
+				break;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+				dc_hex = "EEEEEEEE";
+				break;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = "7FFF0000000000000000000000000000";
+				break;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"; // RPI 407
+				break;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
+				break;
+			case 9: // tz390.fp_lq_type quad word RPI 1108
+				dc_hex = "00000000000000000000000000000000";
+				break;	
+			}
+			if (fp_sign == '-'){
+				dc_hex = "8" + dc_hex.substring(1);
+			}
+			return;
+
+		} else if (fp_text.toUpperCase().equals("(NAN)")){ // #423
+			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = "7FF8000000000000";
+			    break;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
+				dc_hex = "EEEEEEEEEEEEEEEE"; 
+				break;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+				dc_hex = "EEEEEEEEEEEEEEEE";
+				break;
+			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	            dc_hex = "7F800000";
+	            break;
+			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+				dc_hex = "EEEEEEEE"; // RPI 407
+				break;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+				dc_hex = "EEEEEEEE";
+				break;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = "7FFF8000000000000000000000000000";
+				break;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"; // RPI 407
+				break;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
+				break;
+			case 9: // tz390.fp_lq_type quad word RPI 1108
+				dc_hex = "00000000000000000000000000000000";
+				break;	
+			}
+			if (fp_sign == '-'){
+				dc_hex = "8" + dc_hex.substring(1);
+			}
+			return;
+
+		} else if (fp_text.toUpperCase().equals("(QNAN)")){ // #423
+			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = "7FF8000000000000";
+			    break;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
+				dc_hex = "EEEEEEEEEEEEEEEE"; 
+				break;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+				dc_hex = "EEEEEEEEEEEEEEEE";
+				break;
+			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	            dc_hex = "7F800000";
+	            break;
+			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+				dc_hex = "EEEEEEEE"; 
+				break;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+				dc_hex = "EEEEEEEE";
+				break;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = "7FFF8000000000000000000000000000";
+				break;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"; 
+				break;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
+				break;
+			case 9: // tz390.fp_lq_type quad word RPI 1108
+				dc_hex = "00000000000000000000000000000000";
+				break;	
+			}
+			if (fp_sign == '-'){
+				dc_hex = "8" + dc_hex.substring(1);
+			}
+			return;
+			
+		} else if (fp_text.toUpperCase().equals("(SNAN)")){ // #423
+			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = "7FFF7FFFFFFFFFFF";
+			    break;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
+				dc_hex = "EEEEEEEEEEEEEEEE";
+				break;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+				dc_hex = "EEEEEEEEEEEEEEEE";
+				break;
+			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	            dc_hex = "7F7FFFFF";
+	            break;
+			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+				dc_hex = "EEEEEEEE"; // RPI 407
+				break;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+				dc_hex = "EEEEEEEE";
+				break;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = "7FFF7FFFFFFFFFFFFFFFFFFFFFFFFFFF";
+				break;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"; // RPI 407
+				break;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
+				break;
+			case 9: // tz390.fp_lq_type quad word RPI 1108
+				dc_hex = "00000000000000000000000000000000";
+				break;	
+			}
+			if (fp_sign == '-'){
+				dc_hex = "8" + dc_hex.substring(1);
+			}
+			return;			
+
+		} else if (fp_text.toUpperCase().equals("(DMIN)")){
+			switch (tz390.fp_type){  // gen (DMIN) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = "0000000000000001";
+			    break;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
+				dc_hex = "0000000000000001"; // RPI 407
+				break;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+				dc_hex = "0000000000000001";
+				break;
+			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	            dc_hex = "00000001";
+	            break;
+			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+				dc_hex = "00000001"; // RPI 407
+				break;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+				dc_hex = "00000001";
+				break;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = "00000000000000000000000000000001";
+				break;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+				dc_hex = "00000000000000000000000000000001"; // RPI 407
+				break;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+				dc_hex = "00000000000000007200000000000001";
+				break;
+			case 9: // tz390.fp_lq_type quad word RPI 1108
+				dc_hex = "00000000000000000000000000000000";
+				break;	
+			}
+			if (fp_sign == '-'){
+				dc_hex = "8" + dc_hex.substring(1);
+			}
+			return;	
 		} else {
 			log_error(112,"unrecognized floating point constant " + fp_text);
 		}
