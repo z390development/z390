@@ -422,6 +422,7 @@ public  class  az390 implements Runnable {
 	    * 2022-06-27 DSH z16 #424 add BFP constants INF, NAN, QNAN, SNAN, DMIN
 	    *                             See POP 13 pages 9-5 and 19-4
 		* 2022-07-03 DSH #414 add 30 new z16 instructions also see
+		* 2022-08-01 DSH #414 correct instruction formats VRI-f VRR-j and VRR-k 
 		*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -3595,27 +3596,36 @@ private void process_bal_op(){
        		skip_comma();
        		get_hex_byte();   // I3
 			if (tz390.opt_traceall){ // DSHX debug RXSBGT
-				tz390.put_trace("RNSBG/RXSBG I3=" + exp_val + "obj_code=" + obj_code);
+				tz390.put_trace("RISBG/RNSBG/RXSBG I3=" + exp_val + "obj_code=" + obj_code);
 			}
        		if (!bal_abort 
        			&& bal_op.length() == 6 
        			&& bal_op.charAt(5) == 'T'){ // turn on test bit if OP=?????T
        			obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(((int)exp_val | (int)0x80),2); // DSH z16 #423 change + to |
        		}
-       		skip_comma();
-       		get_hex_byte();   // I4
-       		if (!bal_abort                                          // RPI 1164 WAS 6
-       			&& bal_op.charAt(bal_op.length()-1) == 'Z'){ // turn on XZERO bit if OP=??????Z  // RPI 1164 RISBG/RISBGN
-       			obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(((int)exp_val | (int)0x80),2); // DSH z16 #423 change + to |
-       		}
-       		if (exp_text.length() > exp_index 
-       			&& exp_text.charAt(exp_index) == ','){
-       			skip_comma();
-       			get_hex_byte();   // I5
-       		} else {
-       			get_hex_zero(2);  // I5 default 0 rotate RPI 1164 was 1
-       		}
-       	}
+
+			if (tz390.op_code[bal_op_index].length() == 9){ //$i4i5 extension for SLLHH etc. DSH #414 z16
+				// extended op (get i4,i5 from op_code "oooo33i4i5" 
+				int i4 = Integer.valueOf(tz390.op_code[bal_op_index].substring(5,7));
+				int i5 = Integer.valueOf(tz390.op_code[bal_op_index].substring(7,9));
+				obj_code = obj_code + tz390.get_hex(i4,2);
+				obj_code = obj_code + tz390.get_hex(i5,2);
+			} else {
+       		    skip_comma();
+       		    get_hex_byte();   // I4
+       		    if (!bal_abort                                          // RPI 1164 WAS 6
+       			    && bal_op.charAt(bal_op.length()-1) == 'Z'){ // turn on XZERO bit if OP=??????Z  // RPI 1164 RISBG/RISBGN
+       			    obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(((int)exp_val | (int)0x80),2); // DSH z16 #423 change + to |
+       		    }
+       		    if (exp_text.length() > exp_index 
+       			    && exp_text.charAt(exp_index) == ','){
+       			    skip_comma();
+       			    get_hex_byte();   // I5
+       		    } else {
+       			    get_hex_zero(2);  // I5 default 0 rotate RPI 1164 was 1
+       		    }
+			}
+		}
        	get_hex_op(3,2);  // OP2
        	check_end_parms();
        	put_obj_text();
@@ -4167,6 +4177,8 @@ private void process_bal_op(){
     	put_obj_text();
     	break;
     case 81: // "E649=VLIP,81,737", // E649 VRIh VLIP V1,I2,I3 RPI 2202
+	    // map E672 and E670    VRIf into oo1230miixoo
+		// map E772, e786, e787 VRId into oo1230iimxoo
     	// map V1,R3,D2(B2)  into oo03bddd1x00
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
@@ -4185,17 +4197,25 @@ private void process_bal_op(){
          get_hex_vreg(3);      // V3
          get_hex_zero(1);  
          skip_comma();
-         get_hex_byte();      // I4
-        	if ((tz390.op_code[bal_op_index].length() == 5)) {
-        		get_hex_op(5,1); // M5
-        	} else {
-				if (!bal_abort && exp_next_char(',')){
-      		       skip_comma();
-      		       get_hex_reg();   // M4
-      	        } else {
-      	     	   get_hex_zero(1);       
-      	        }
-        	}
+		 get_hex_byte(); 
+		 if ((tz390.op_code[bal_op_index].length() == 5)) {
+			get_hex_op(5,1); // M5
+		 } else {    // I4
+		    if (!bal_abort && exp_next_char(',')){
+			   skip_comma();
+			   get_hex_reg();   // M5
+		    } else {
+			   get_hex_zero(1);    // M5   
+			}
+		 }
+		 if (tz390.op_code[bal_op_index].substring(0,4).equals("E672")     // E672 VRIf VSRPR V1,V2,V3,I4,M5 DSH #414 z16
+		  || tz390.op_code[bal_op_index].substring(0,4).equals("E670")){     // E670 VRIf VPKZR V1,V2,V3,I4,M5 DSH #414 z16
+            // VRIf so reverse i4 and m5
+            // map E672 and E670    VRIf into oo1230miixoo  
+				obj_code = obj_code.substring(0,6)  // oo1230
+				 + obj_code.substring(8,9)          // M3
+				 + obj_code.substring(6,8);         // I3
+		  }	
 	     } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E777")) {  // E777 VLId VSLDB V1,V2,V3,I4 RPI 2202
    	         skip_comma();   
    	         get_hex_vreg(2);      // V2
@@ -4374,14 +4394,28 @@ private void process_bal_op(){
     	         ||  tz390.op_code[bal_op_index].substring(0,4).equals("E75F")){   // E75F VRRa VSEG V1,V2,M3 
     	  get_hex_vreg(1);        // V1
           skip_comma();
-          get_hex_vreg(2);        // V2
-          get_hex_zero(4);
-          if (!bal_abort && exp_next_char(',')){
-       		skip_comma();
-       		get_hex_reg();   // M3
-       	  } else {
-        	get_hex_op(5,1);   //  M3
-       	  }
+          get_hex_vreg(2); // V2
+		  // DSH #414 if VRRk format oo1200m00xoo vs oo120000mx00
+		  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E654")         // E654 VRRk VUPKZH V1,V2,M3 DSH #414 z16
+                 || tz390.op_code[bal_op_index].substring(0,4).equals("E65C")         // E65C VRRk VUPKZL V1,V2,M3 DSH #414 z16
+	             || tz390.op_code[bal_op_index].substring(0,4).equals("E651")){          // E651 VRRk VCLZDP V1,V2,M3 DSH #414 z16
+              get_hex_zero(2);
+              if (!bal_abort && exp_next_char(',')){
+       		     skip_comma();
+       		     get_hex_reg();   // M3
+			     get_hex_zero(2);
+       	      } else {
+        	     get_hex_op(5,1);   //  M3
+       	      }
+			} else {
+				get_hex_zero(4);
+                if (!bal_abort && exp_next_char(',')){
+       		       skip_comma();
+       		       get_hex_reg();   // M3
+       	        } else {
+        	       get_hex_op(5,1);   //  M3
+       	        }
+			}
       } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E67D")           // E67D VRRj VCSPH V1,V2,V3,M4 DSH #414 z16
 		         || tz390.op_code[bal_op_index].substring(0,4).equals("E760")           // E760 VRRc VMRL V1,V2,V3,M4
  	             ||  tz390.op_code[bal_op_index].substring(0,4).equals("E761")       // E761 VRRc VMRH V1,V2,V3,M4
@@ -4418,17 +4452,34 @@ private void process_bal_op(){
        get_hex_vreg(2);        // V2
        skip_comma();
        get_hex_vreg(3);        // V3
-       get_hex_zero(3);
-       if (!bal_abort && exp_next_char(',')){
-    		skip_comma();
+	   if (   tz390.op_code[bal_op_index].substring(0,4).equals("E67D")){
+		 // VRRj map oo1230m00xoo DSH #414
+         get_hex_zero(1);
+         if (!bal_abort && exp_next_char(',')){
+    	 	skip_comma();
     		get_hex_reg();   // M4
-       } else {
+         } else {
 			if ((tz390.op_code[bal_op_index].length() == 5)) {
      	       get_hex_op(5,1);   //  M4
 			} else {
 				get_hex_zero(1);
 			}
-    	}
+    	  }
+		  get_hex_zero(2);
+		} else {
+		 // VRRc map oo123000mxoo
+         get_hex_zero(3);
+         if (!bal_abort && exp_next_char(',')){
+    	 	skip_comma();
+    		get_hex_reg();   // M4
+         } else {
+			if ((tz390.op_code[bal_op_index].length() == 5)) {
+     	       get_hex_op(5,1);   //  M4
+			} else {
+				get_hex_zero(1);
+			}
+    	 }
+		}
 	  } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E675")    // E675 VRRc VCRNF V1,V2,V3,M4,M5 DSH #414 z16
 		      || tz390.op_code[bal_op_index].substring(0,4).equals("E7E2")    // E7E2 VRRc VFS V1,V2,V3,M4,M5
 	          || tz390.op_code[bal_op_index].substring(0,4).equals("E7E3")    // E7E3 VRRc VFA V1,V2,V3,M4,M5

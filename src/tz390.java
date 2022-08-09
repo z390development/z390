@@ -1711,7 +1711,7 @@ public  class  tz390 {
      String[]   op_table_370_notsupported = // Table added for RPI 1209A
         {"RIO      S    9C02 D2(B2)",
          "CLRCH    S    9F01 D2(B2)",
-         // DSH #414 new z16 LBEAR "CONCS    S    B200 D2(B2)",
+         // DSH #414 new z16 LBEAR replaces old nonsupported "CONCS    S    B200 D2(B2)",
          "DISCS    S    B201 D2(B2)",
          };
      String[]   op_table_XA =    // Table added for RPI 1209A
@@ -2473,12 +2473,12 @@ public  class  tz390 {
     "B93B=NNPA,14,144",
     "B28F=QPACI,7,70",
     "B98B=RDP,30,300",
-    "EC5D$003100=SLLHH,52,400",
-    "EC5D$003132=SLLHL,52,400",
-    "EC51$003132=SLLLH,52,400",
-    "EC5D$003100=SRLHH,52,400",
-    "EC5D$003132=SRLHL,52,400",
-    "EC51$003132=SRLLH,52,400",
+    "EC5D$3100=SLLHH,52,400",
+    "EC5D$3132=SLLHL,52,400",
+    "EC51$3132=SLLLH,52,400",
+    "EC5D$3100=SRLHH,52,400",
+    "EC5D$3132=SRLHL,52,400",
+    "EC51$3132=SRLLH,52,400",
     "B201=STBEAR,7,70",
     "E65D=VCFN,82,738",
     "E656=VCLFNH,82,738",
@@ -3875,7 +3875,7 @@ public void create_opcodes()  // Routine added for RPI 1209
          process_opcodes(op_table_ZS3);
          process_opcodes(op_table_ZS4);
          process_opcodes(op_table_Z15);  // rpi 2202
-         process_opcodes(op_table_z16); // DSH #414
+         // no z16 for z15 process_opcodes(op_table_z16); // DSH2 #414
          process_opcodes(op_table_DOS_directives);
          process_opcodes(op_table_370_directives);
          }
@@ -4952,7 +4952,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                &&  opt_optable.equals("ZS3") != true
                &&  opt_optable.equals("ZS4") != true
                &&  opt_optable.contentEquals("Z15") != true  // rpi 2202
-               &&  opt_optable.contentEquals("Z15") != true  // DSH #414
+               &&  opt_optable.contentEquals("Z16") != true  // DSH2 #414
                &&  opt_optable.equals("Z390") != true
                    )
                    {add_invalid_option(opt_file_name,opt_file_line,token);
