@@ -28,88 +28,88 @@ import java.util.Arrays;
 import java.util.Date;
 
 public class pz390 {
-	/* 
+	/*
 	pz390 is the processor emulator component of z390 which is called from
 	ez390 to execute 390 code loaded in memory. Both ez390 and pz390 call
 	sz390 svc component to perform os functions such as memory allocation and
 	loading.
-	 * 
+	 *
 	 * *************************************************** Maintenance
 	 * *************************************************** 04/18/05 copied from
 	 * lz390.java and modified 06/20/05 start adding and testing common instr.
-	 * 06/25/05 add opcodes to trace 
+	 * 06/25/05 add opcodes to trace
 	 * 07/11/05 add floating point instructions
-	 * 08/20/05 add svc 6 link, fix svc 8 to use r0 pgm name 
+	 * 08/20/05 add svc 6 link, fix svc 8 to use r0 pgm name
 	 * 08/22/05 add SYS390
-	 *   and SYSLOG dir options 
+	 *   and SYSLOG dir options
 	 * 09/04/05 add sequential and random DCB file I/O
-	 * support 
-	 * 09/16/05 fix DSG, DSGR, DSGF, DSGFR to use R1+1 dividend 
-	 * 09/18/05 add CDE with usage and freemain info for DELETE 
-	 * 09/18/05 add link svc amode support 
-	 * 09/19/05 add TEST option interactive debug 
-	 * 09/27/05 add MEM(MB) option and reduce default to MEM(1) 
-	 * 09/27/05 fix 0C5 at end of mem using work_mem 
+	 * support
+	 * 09/16/05 fix DSG, DSGR, DSGF, DSGFR to use R1+1 dividend
+	 * 09/18/05 add CDE with usage and freemain info for DELETE
+	 * 09/18/05 add link svc amode support
+	 * 09/19/05 add TEST option interactive debug
+	 * 09/27/05 add MEM(MB) option and reduce default to MEM(1)
+	 * 09/27/05 fix 0C5 at end of mem using work_mem
 	 * 10/04/05 RPI5 - option ASCII use ASCII vs EBCDIC
 	 *          zcvt_ipl_pgm = ascii name DCB DDNAME field ascii DCB FT RCDS = ascii SVC
 	 * LOAD, LINK, DELETE EP/EPLOC ASCII dump text = ascii TEST C'...' SDT =
 	 * ASCII ED/EDMK remove high bit on chars SSP type instr. allow 0x3 sign
-	 * UNPK gen 0x3 zone 
-	 * 10/04/05 RPI6 - option ERR(nn) limit errors 
-	 * 10/05/05 RPI5 - add test C"..." sdt support 
-	 * 10/12/05 suppress stats if NOSTATS option on 
+	 * UNPK gen 0x3 zone
+	 * 10/04/05 RPI6 - option ERR(nn) limit errors
+	 * 10/05/05 RPI5 - add test C"..." sdt support
+	 * 10/12/05 suppress stats if NOSTATS option on
 	 * 10/12/05 RPI20 fix error 62 on open of output file 10/14/05
-	 * RPI21 0C5 on PSW addr > mem 
+	 * RPI21 0C5 on PSW addr > mem
 	 * 10/14/05 RPI22 turn off time limit if test
 	 * 10/14/05 RPI15 req z390 to issue exit at end of test 10/16/05 force
 	 * console output of msgs after abort 10/16/05 RPI23 add CLST, CUSE, and
-	 * SRST instructions 
+	 * SRST instructions
 	 * 10/18/05 RPI28 change DSNAM field to EBCDIC unless
-	 * ASCII mode 
+	 * ASCII mode
 	 * 10/18/05 RPI29 use EZ390E and EZ390I prefixes 10/18/05 RPI31
 	 * set r15 to 0 on successful svc 10/19/05 RPI33 only enable PD and exponent
-	 * overflow 
+	 * overflow
 	 * 10/19/05 RPI32 add SYS390 dir list support 10/19/05 RPI34 full
-	 * ebcdic / ascii translation 
+	 * ebcdic / ascii translation
 	 * 10/20/05 RPI35 prevent exit loop in test
-	 * filling log 
+	 * filling log
 	 * 10/20/05 RPI37 use "I:" and "H:" to separate op/hex keys
 	 * 10/20/05 RPI39 set rc=r15 on normal exit 10/22/05 RPI44 fix TM to set CC3
 	 * when OR'd byte = mask rather than = to test memory byte 10/23/05 RPI43
-	 * correct ED/EDMK sif. 1 byte early 
+	 * correct ED/EDMK sif. 1 byte early
 	 * 10/23/05 RPI42 use full EBCDIC to ASCII
 	 * translate for PGMNAME, DDNAM, DSNAM, GET/PUT 10/24/05 RPI46 add svc 34 to
-	 * issue OS command 
+	 * issue OS command
 	 * 10/25/05 RPI47 add svc 93 to support application window
 	 * 10/26/05 RPI49 10/27/05 RPI53 set r15 to error # in synad 10/27/05 RPI56
 	 * add dump of first pgm memory if dump req 11/01/05 RPI65 fix BALR, BASR,
-	 * BASSM when R1=R2 
+	 * BASSM when R1=R2
 	 * 11/02/05 RPI66 correct padding spaces in ASCII mode
 	 * 11/02/05 RPI69 change ED/EDMK to map X'40'for ASCII 11/03/05 RPI71 add
-	 * missing AL3 relocation code 
+	 * missing AL3 relocation code
 	 * 11/03/05 RPI63 handle x'1a' eof marker in gm
-	 * RT/VT 
+	 * RT/VT
 	 * 11/03/05 RPI64 issue abend S013 if no synad after io err 11/07/05
 	 * RPI73 remove PACK/UNPK mode changes and add PKA/UNPKA 11/08/05 RPI73
 	 * change ED/EDMK to require EBCDIC mask and then translate output if ascii
 	 * 11/08/05 RPI76 end cmd processes at exit 11/08/05 RPI77 add cmd read and
-	 * wait controls 
+	 * wait controls
 	 * 11/08/05 RPI79 add mult. cmd task support 11/11/05 RPI73
 	 * restore PACK, UNPK ASCII mode support (allow 3/b sign and unpk to f/s or
-	 * 3/s zone) 
+	 * 3/s zone)
 	 * 11/11/05 RPI75 add SNAP dump support svc 51 11/13/05 RPI88 add
-	 * DCB validation 
+	 * DCB validation
 	 * 11/15/05 RPI92 correct trace format in test 11/15/05 RPI93
 	 * correct SNAP svc to use memory range instead of address and length
 	 * 11/15/05 RPI94 add svc_timer nano-sec counter 11/18/05 RPI98 ignore cr,lf
-	 * TEST commands 
+	 * TEST commands
 	 * 11/19/05 RPI100 reformat abend dump and include before
-	 * continuing in test 
+	 * continuing in test
 	 * 11/19/05 RPI101 correct open error causing erroneous
 	 * eof error after reuse of tiot entry 11/19/05 RPI102 add LOAD extension to
 	 * support loading and deleting file in addition to 390's. 11/20/05 RPI106
 	 * correct SPM, IPM field position also NR, OR, and XR not setting CC also
-	 * PR only restore 2-14 
+	 * PR only restore 2-14
 	 * 11/20/05 RPI82 replace MVC loop with copy & fill
 	 * 11/21/05 add LinkedList string type checking 11/21/05 RPI108 speed up BC
 	 * by 140 NS when branch not taken by skipping RX address fetch 11/23/05
@@ -117,15 +117,15 @@ public class pz390 {
 	 * removing mem_work and using int vs BigInteger when possible 11/25/05
 	 * RPI111 trim spaces from DDNAME and DSNAME file 11/26/05 RPI47 add inital
 	 * gz390 GUAM GUI window option for WTO and WTOR support 11/27/05 RPI112 correct
-	 * error 90 I/O error 
+	 * error 90 I/O error
 	 * 11/27/05 RPI108 replace byte buffer mem.get, mem.put
 	 * reg.get and reg.put with direct byte array. 11/28/05 RPI113 file path
-	 * with drive: and no separator 
+	 * with drive: and no separator
 	 * 11/29/05 RPI47 add svc 1 wait and svc 160
-	 * wtor request 
+	 * wtor request
 	 * 12/04/05 RPI108 speed up MVCLE, CLC, MVZ, MVN OC, NC, XC.
 	 * 12/07/05 RPI123 fix multiple path support 12/08/05 RPI121 abort ez390 on
-	 * test q command 
+	 * test q command
 	 * 12/15/05 RPI135 use tz390 shared tables 12/18/05 RPI142
 	 * use init_opcode_name_keys in tz390 and document all key codes in tz390.
 	 * 12/20/05 RPI103 add multiple +- test addr operands 12/23/05 RPI127 strip
@@ -133,54 +133,54 @@ public class pz390 {
 	 * limit file output to maxfile(mb) 01/04/06 RPI107 split ez390 into ez390,
 	 * pz390 01/06/06 RPI158 clear remainder of register for LL???? 01/08/06
 	 * RPI160 correct LLGT loading from loc + 4 01/12/06 RPI 151 add LPSW
-	 * support as branch. 
+	 * support as branch.
 	 * 01/15/06 RPI 173 add LRV, STPQ, LPQ support. 01/26/06
 	 * RPI 172 move options to tz390, svc > sz390 02/02/06 RPI 175 rewrite AL???
-	 * SL??? using long vs bigint 
+	 * SL??? using long vs bigint
 	 * 02/02/06 RPI 185 add z9 opcodes AFI, AGFI,
-	 * etc. 
+	 * etc.
 	 * 02/04/06 RPI 197 remove test_or_trace interrupts 02/08/06 RPI 185
 	 * add STCKF and fix STCK to be unique 02/09/06 RPI 185 add remainder of z9
-	 * opcodes 
+	 * opcodes
 	 * 02/16/06 RPI 202 correct 2nd opcode mask for z9 instr. 02/18/06
 	 * RPI 206 support 3 flavors of RRF format 03/14/06 RPI 228 add CVTDCB OS
-	 * flags 
+	 * flags
 	 * 03/15/06 RPI 229 verify correct even/odd fp pairs 04/05/06 RPI 272
 	 * correct MR to only use low 32 bits of r1+1 04/07/06 RPI 275 correct MLR
 	 * and ML to only use low 32 bits of r1+1 04/10/06 RPI 276 add zcvt_user_pgm
 	 * 04/12/06 RPI 244 support ESPIE/ESTAE PARAM, CT,OV 04/21/06 RPI 279 stimer
-	 * real exit support 
+	 * real exit support
 	 * 04/23/06 RPI 295 correct ICM, ICMH, ICMY, OIHL, and
-	 * OILH CC values. 
+	 * OILH CC values.
 	 * 04/26/06 RPI 299 check for 0C5 in setups 04/27/06 RPI 298
 	 * add MAYLR MYLR MAYHR MYHR, MAYL MYL MAYH MYH 04/28/06 RPI 301 force 0C7
 	 * on PD zero sign was checking was checking first non-zero byte beyond in
-	 * error. 
+	 * error.
 	 * 05/02/06 RPI 305 update ESPIE and ESTAE support and fix get_pd for
 	 * pd instr. to avoid recursive program checks 05/02/06 RPI 307 correct MAYL
 	 * and MAYLR to remove duplicate setup call corrupting next instruction, and
 	 * correct IPM trace format. 06/03/06 RPI 323 allow opcode break on first
-	 * stimer exit instr. 
+	 * stimer exit instr.
 	 * 06/03/06 RPI 325 allow KEB and KDD exact 0 07/03/06
 	 * RPI 326 add TCEB, TCDB, and TCXB test data class 07/03/06 RPI 333 add
 	 * SRNM and support rounding modes 07/05/06 RPI 335 correct TBEDR and other
 	 * users of RRFe setup to caculate rf3 and mf3 correctly 07/05/06 RPI 348
 	 * only show 2 bytes for halfword instr. 07/06/06 RPI 357 impove speed using
 	 * short, int, and long buffers 07/17/06 RPI 370 make zcvt conversion rtns
-	 * public for svc_cfd 
+	 * public for svc_cfd
 	 * 07/20/06 RPI 376 CORRECT AL?? CC1 for high bit set
-	 * with no carry 
+	 * with no carry
 	 * 07/24/06 RPI 383 CORRECT MLG AND MLGR R1+1 * S2/R2 07/26/06
 	 * RPI 384 fix HFP true zero 07/30/06 RPI 386 fix MVCL trap when data length =
-	 * 0. 
+	 * 0.
 	 * 07/30/06 RPI 387 Fix RXY, RSY, and SIY to support 20 bit signed disp.
 	 * 08/06/06 RPI 397 S0C5 on memory violations 08/06/06 RPI 398 fix D and DR
 	 * truncated dividend error. 08/27/06 RPI 411 replace while loops with
 	 * Arrays.fill and arraycopy 09/06/06 RPI 395 fix IC,STC,SS trace data
-	 * lengths 
+	 * lengths
 	 * 09/08/06 RPI 441 add MVST move string and speed up TRT 09/18/06
 	 * RPI 453 speedup MVST with byte memory access 09/19/06 RPI 454 add TRE,
-	 * TROT, TRTO, TRTT 
+	 * TROT, TRTO, TRTT
 	 * 11/04/06 RPI 484 support TRE trace file for TRACE,
 	 * TRACEALL 11/10/06 RPI 474 trace invalid opcode if trace on 11/10/06 RPI
 	 * 487 speed up MVST using scan and arraycopy 12/06/06 RPI 407 add DFP CSDTR
@@ -188,19 +188,19 @@ public class pz390 {
 	 * 12/13/06 RPI 407 add DFP initial instruction support
 	 * 12/16/06 RPI 517 correct inexact result trap on DDTR etc.
 	 * 12/17/06 RPI 518 correct HFP, BFP, and DFP 0C6 on invalid fetch pair
-	 * 23/28/06 RPI 526 add missing DFP instr. 
-	 *          and fix CGDTR, CGXTR, IEDTR, IEXTR rounding/sign 
+	 * 23/28/06 RPI 526 add missing DFP instr.
+	 *          and fix CGDTR, CGXTR, IEDTR, IEXTR rounding/sign
 	 * 01/06/07 RPI 524 add TCPIO svc x'7C' support
 	 * 01/10/07 RPI 533 correct CGDTR/CGXTR rounding
 	 * 01/16/07 RPI 536 issue 0C7 if DFP infinity or NaN used in calc
 	 * 01/19/07 RPI 538 fix TEST single step through EX target.
 	 * 01/19/07 RPI 540 fix DLG to prevent erroneous divide by 0 trap
 	 *          and optimizie DLG, DLGR by removing work reg copy
-	 * 01/23/07 RPI 544 corect trace format 183 for DLG, MLG to show r1+1   
-	 * 03/12/07 RPI 558 init ZCVT VSE COMRG JOBDATE and COMNAME 
-	 * 03/17/07 RPI 579 correct SRST to stop on = vs >=  
-	 * 03/18/07 RPI 580 correct TR?? test code compares   
-	 * 04/03/07 RPI 584 fix trap at startup with option ASCII and pgmname < 8 
+	 * 01/23/07 RPI 544 corect trace format 183 for DLG, MLG to show r1+1
+	 * 03/12/07 RPI 558 init ZCVT VSE COMRG JOBDATE and COMNAME
+	 * 03/17/07 RPI 579 correct SRST to stop on = vs >=
+	 * 03/18/07 RPI 580 correct TR?? test code compares
+	 * 04/03/07 RPI 584 fix trap at startup with option ASCII and pgmname < 8
 	 * 04/07/07 RPI 582 set R1 to addr of addr of PARM
 	 * 04/16/07 RPI 588 correct trace for CVB, CVBG, CVBY, CVD, CVDG, CVDY
 	 * 05/07/07 RPI 606 add MVCOS  support per SHARE HLASM info.
@@ -212,80 +212,80 @@ public class pz390 {
 	 * 06/21/07 RPI 643 fix CEFBR, CDFBR, CXFBR, CEGBR, CDGBR, CXGBR trace
 	 * 08/09/07 RPI 672 prevent trace_psw switch being left on during
 	 *          trace of undefined opcode causing EX target instruction
-	 *          to be left modified.   
-	 * 08/30/07 RPI 689 route all TRACE output to TRE vs LOG 
-	 * 12/17/07 RPI 758 add specification exception for M, D, etc.  
-	 *          and fix MVST to store ending address in first oper reg vs R1 
-	 * 12/22/07 RPI 768 fix setting fp_ctl_bd2 for LXR 
-	 *          and fix setscale rounding for SQRT   
+	 *          to be left modified.
+	 * 08/30/07 RPI 689 route all TRACE output to TRE vs LOG
+	 * 12/17/07 RPI 758 add specification exception for M, D, etc.
+	 *          and fix MVST to store ending address in first oper reg vs R1
+	 * 12/22/07 RPI 768 fix setting fp_ctl_bd2 for LXR
+	 *          and fix setscale rounding for SQRT
 	 * 12/23/07 rpi 767 enable unnormalized instr with normalization if option NORM
-	 * 01/02/08 RPI 767 add IEXTR, IEDTR, LXDTR, LEDTR, 
-	 *          LDXTR, LEDTR, SLXT, SLDT, SRXT, SRDT   
+	 * 01/02/08 RPI 767 add IEXTR, IEDTR, LXDTR, LEDTR,
+	 *          LDXTR, LEDTR, SLXT, SLDT, SRXT, SRDT
 	 * 01/07/08 RPI 781 switch PD long to BigInt to prevent overflow
-	 *          and detect overflow for DLG, DLGR   
+	 *          and detect overflow for DLG, DLGR
 	 * 01/14/08 RPI 786 support DFP preferred exp.
 	 * 01/14/08 RPI 787 support DFP unnormalized instructions.
-	 * 01/14/08 RPI 788 correct overflow on DFP packed conversion 
-     * 01/17/08 RPI 790 remove DFP normalization, add fp_normalization for HFP 
-     * 01/22/08 RPI 791 set cc3 for CGDTR and CGXTR if too big 
-     * 01/25/08 RPI 798 correct RRDTR/RRXTR to remove exact check
-     *          fix trace format, and fix ESDTR/ESXTR to include trailing zeros 
-     * 02/20/08 RPI 808 prevent trap on LA for addr > max memory
-     *          prevent underflow if value exactly zero  
-     * 02/27/08 rpi 811 fix CSDTR high digit 0 if negative 
-     *                  fix SLDT/SRDT/SLXT/SRXT to handle pos exp. 
-     * 02/27/08 RPI 815 correct support for negative index register
-     * 02/27/08 RPI 816 correct LDR and LXR to simply copy ctl registers 
-     * 03/03/08 RPI 817 add 226 z10 instructions 
-     * 03/12/08 RPI 820 misc. fixes:
-     *   1.  Prevent S0C5 for neg SRP b2 reg, and optimize
-     *       performance of RLL/RLLG using int/long rotate function.
-     *   2.  Honor DD/LD IEEE de, ue, oe exception on DDTR,MDTR
-     *   3.  Support un-normalized HFP input values 
-     *   4.  Allow replacement of 2nd reg for cached LB/LD/LH   
-     * 03/15/08 RPI 823 correct MVCIN to use right most source addr  
-     * 03/19/08 RPI 819 add trace table for last 10 instr. at abend 
-     *          init memory to x'F5' and registers to x'F4'
-     * 03/20/08 RPI 809 restore psw cc and amode for SPIE and ESTAE exits
-     * 03/20/08 RPI 824 flush LB/LD/LH value before rplacing 2nd reg 
-     *          and correct DDTR, DXTR, DXR, and DXBR
-     *          to prevent null value stored in register cache  
-     * 03/21/08 RPI 822 fix trace for LGFR type instr. using case 148 
-     * 03/27/08 RPI 827 add opt_init support  
-     * 03/27/08 RPI 828 fix TRT and EDMK to set high bit r1 = 0 in AMODE31  
-     * 03/27/08 RPI 831 fix SLR,SL, SLY, SLGR, SLG, SLGFR, SLGF
-     *          to set CC1 when 2 neg values & result neg. 
-     * 04/06/08 RPI 834 fix MSE?? and MSD?? to subtract rf1 from product rf2*rf3
-     *          and fix TCEB, TCDB, TCXB to detect -0
-     *          and fix LE RX type traces to show 4 byte target and source
-     * 05/10/08 RPI 821 switch DH from double to BigDecimal cache 
-     * 05/10/08 RPI 849 use shared abort_case to catch logic errors
-     * 05/29/08 RPI 767 add HFP unnormalized support 
-     *  AW, AWR, SW, SWR, AU, AUR, SU, SUR
-     *  MY, MYR, MAY, MAYR  
-     *  MYH, MYHR, MYL, MYLR
-     *  MAYH, MAYHR, MAYL, MAYLR  
-     * 06/04/08 RPI 842 check LD regs for IEXTR and RRXTR and ifx RRXTR.  
-     * 06/06/08 RPI 843 round half-even for FP default  
-     * 06/07/08 RPI 844 compatibility fixes for z9/z10 testins2
-     *          1) Raise spec error for TR?? table not on dword 
-     *          2) Correct TMXX for high bit mixed tests 
-     * 06/09/08 RPI 859 correct ALSI and ALGSI immediate sign extension 
-     * 06/17/08 RPI 845 change EPIE offsets to match z/OS
-     * 06/21/08 RPI 845 replace ESTAD.MAC with IHASDWA passed in R1 
-     * 06/23/08 RPI 866 init mem to F5 starting at mem24_start  
-     * 07/05/08 RPI 875 correct CLIY error introduced by RPI 859 
-     *          and masked by incorrect CLIY test in TESTINS2
-     * 07/23/08 RPI 878 fix XDECI to support ASCII mode 
-     * 07/23/08 RPI 879 fix SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
-     *          to set CC3 when both neg and no borrow  
-     * 08/13/08 RPI 894 change low DSA addr from 64k to 32k for testing AL2 RLD 
-     * 09/12/08 RPI 764	change trace info for GL/PL svcs 
-     * 11/06/08 rpi 947 add ascii printable text display of MVC data moved  
-     * 12/13/08 RPI 975 prevent SFFF on dirty high addr bit for printable hex 
-     * 01/12/09 RPI 981 prevent PD target update after data exception   
-     * 01/18/09 RPI 985 optimize XC instruction for S1=S2  
-     * 03/09/09 RPI 1013 add PFPO, CSTG, and CSST opcodes per POP V7      
+	 * 01/14/08 RPI 788 correct overflow on DFP packed conversion
+	 * 01/17/08 RPI 790 remove DFP normalization, add fp_normalization for HFP
+	 * 01/22/08 RPI 791 set cc3 for CGDTR and CGXTR if too big
+	 * 01/25/08 RPI 798 correct RRDTR/RRXTR to remove exact check
+	 *          fix trace format, and fix ESDTR/ESXTR to include trailing zeros
+	 * 02/20/08 RPI 808 prevent trap on LA for addr > max memory
+	 *          prevent underflow if value exactly zero
+	 * 02/27/08 rpi 811 fix CSDTR high digit 0 if negative
+	 *                  fix SLDT/SRDT/SLXT/SRXT to handle pos exp.
+	 * 02/27/08 RPI 815 correct support for negative index register
+	 * 02/27/08 RPI 816 correct LDR and LXR to simply copy ctl registers
+	 * 03/03/08 RPI 817 add 226 z10 instructions
+	 * 03/12/08 RPI 820 misc. fixes:
+	 *   1.  Prevent S0C5 for neg SRP b2 reg, and optimize
+	 *       performance of RLL/RLLG using int/long rotate function.
+	 *   2.  Honor DD/LD IEEE de, ue, oe exception on DDTR,MDTR
+	 *   3.  Support un-normalized HFP input values
+	 *   4.  Allow replacement of 2nd reg for cached LB/LD/LH
+	 * 03/15/08 RPI 823 correct MVCIN to use right most source addr
+	 * 03/19/08 RPI 819 add trace table for last 10 instr. at abend
+	 *          init memory to x'F5' and registers to x'F4'
+	 * 03/20/08 RPI 809 restore psw cc and amode for SPIE and ESTAE exits
+	 * 03/20/08 RPI 824 flush LB/LD/LH value before rplacing 2nd reg
+	 *          and correct DDTR, DXTR, DXR, and DXBR
+	 *          to prevent null value stored in register cache
+	 * 03/21/08 RPI 822 fix trace for LGFR type instr. using case 148
+	 * 03/27/08 RPI 827 add opt_init support
+	 * 03/27/08 RPI 828 fix TRT and EDMK to set high bit r1 = 0 in AMODE31
+	 * 03/27/08 RPI 831 fix SLR,SL, SLY, SLGR, SLG, SLGFR, SLGF
+	 *          to set CC1 when 2 neg values & result neg.
+	 * 04/06/08 RPI 834 fix MSE?? and MSD?? to subtract rf1 from product rf2*rf3
+	 *          and fix TCEB, TCDB, TCXB to detect -0
+	 *          and fix LE RX type traces to show 4 byte target and source
+	 * 05/10/08 RPI 821 switch DH from double to BigDecimal cache
+	 * 05/10/08 RPI 849 use shared abort_case to catch logic errors
+	 * 05/29/08 RPI 767 add HFP unnormalized support
+	 *  AW, AWR, SW, SWR, AU, AUR, SU, SUR
+	 *  MY, MYR, MAY, MAYR
+	 *  MYH, MYHR, MYL, MYLR
+	 *  MAYH, MAYHR, MAYL, MAYLR
+	 * 06/04/08 RPI 842 check LD regs for IEXTR and RRXTR and ifx RRXTR.
+	 * 06/06/08 RPI 843 round half-even for FP default
+	 * 06/07/08 RPI 844 compatibility fixes for z9/z10 testins2
+	 *          1) Raise spec error for TR?? table not on dword
+	 *          2) Correct TMXX for high bit mixed tests
+	 * 06/09/08 RPI 859 correct ALSI and ALGSI immediate sign extension
+	 * 06/17/08 RPI 845 change EPIE offsets to match z/OS
+	 * 06/21/08 RPI 845 replace ESTAD.MAC with IHASDWA passed in R1
+	 * 06/23/08 RPI 866 init mem to F5 starting at mem24_start
+	 * 07/05/08 RPI 875 correct CLIY error introduced by RPI 859
+	 *          and masked by incorrect CLIY test in TESTINS2
+	 * 07/23/08 RPI 878 fix XDECI to support ASCII mode
+	 * 07/23/08 RPI 879 fix SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
+	 *          to set CC3 when both neg and no borrow
+	 * 08/13/08 RPI 894 change low DSA addr from 64k to 32k for testing AL2 RLD
+	 * 09/12/08 RPI 764	change trace info for GL/PL svcs
+	 * 11/06/08 rpi 947 add ascii printable text display of MVC data moved
+	 * 12/13/08 RPI 975 prevent SFFF on dirty high addr bit for printable hex
+	 * 01/12/09 RPI 981 prevent PD target update after data exception
+	 * 01/18/09 RPI 985 optimize XC instruction for S1=S2
+	 * 03/09/09 RPI 1013 add PFPO, CSTG, and CSST opcodes per POP V7
 	 * 03/17/09 RPI 1015 prevent S0C5 on SRAG,SLAG,SRLG,SLLG,SRXT,SLXT
 	 * 04/20/09 RPI 1026 add ESTA extract PC/BAKR PSW/CC
 	 * 04/26/09 RPI 1030 verify zeros in R0 for SRST
@@ -308,14 +308,14 @@ public class pz390 {
 	 * 11/24/10 RPI 1125 ADD B39C-B3A2 CLFEBR-CXLGBR
 	 * 11/29/10 RPI 1125 ADD B3A4-B3AE CEGBRA, CGEBRA, CLGEBR
 	 * 12/01/10 RPI 1125 ADD B3D0-B3DB MDTRA-SXTRA
-	 * 12/02/10 RPI 1125 ADD B3E1-BEF9 CGDTRA-CXGTRA 
+	 * 12/02/10 RPI 1125 ADD B3E1-BEF9 CGDTRA-CXGTRA
 	 * 12/03/10 RPI 1125 ADD B928-B92D PCKMO KMOTR
-	 * 12/04/10 RPI 1125 ADD B941-B95B CFDTR - CXLFTR, FIX MDTRA DFP/BFP RND 
-	 * 12/06/10 RPI 1125 ADD B9AE-B9CB RRBM-SLHHHR  
-	 * 12/08/10 RPI 1125 ADD B9CD-B9DF CHHR-CLHHLR 
-	 * 12/09/10 RPI 1125 ADD B9E2-B9FB LOCGR-SLRK 
-	 * 12/09/10 RPI 1125 ADD C84-C85 LPD-LPDG 
-	 * 12/11/10 RPI 1125 ADD CC6-CCF BRCTH - CLIH 
+	 * 12/04/10 RPI 1125 ADD B941-B95B CFDTR - CXLFTR, FIX MDTRA DFP/BFP RND
+	 * 12/06/10 RPI 1125 ADD B9AE-B9CB RRBM-SLHHHR
+	 * 12/08/10 RPI 1125 ADD B9CD-B9DF CHHR-CLHHLR
+	 * 12/09/10 RPI 1125 ADD B9E2-B9FB LOCGR-SLRK
+	 * 12/09/10 RPI 1125 ADD C84-C85 LPD-LPDG
+	 * 12/11/10 RPI 1125 ADD CC6-CCF BRCTH - CLIH
 	 * 12/18/10 RPI 1125 ADD E3C0-E3CF LBH - CLHF
 	 * 12/19/10 RPI 1125 ADD EBDC-EBFA SRAK - LAAL
 	 * 12/21/10 RPI 1125 ADD EC51-ECDB RISBLG - ALGSIK
@@ -326,79 +326,79 @@ public class pz390 {
 	 * 09/27/11 RPI 1180 fix trace format for SRXT/SLXT etc.
 	 * 03/04/12 RPI 1195 issue spec error if CUSE r2 odd
 	 * 04/02/12 RPI 1200 correct LRVGR and LRVR when same reg.
-	 * 04/14/12 RPI 1207 correct E2xx() to E3xx() 
+	 * 04/14/12 RPI 1207 correct E2xx() to E3xx()
 	 * 04/30/12 RPI 1211 round L? and D? when trunc BD
 	 * 05/10/12 RPI 1214 fix DXTR fp_rbdv2 to prevent S0C5
-     * 04/19/12 RPI 1209 Move array op_trace_type to tz390
-     * 07/20/14 RPI VF01 add vector operations
-     * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
-     * 12/26/14 RPI 1505  BALR in amode 24 fails to construct correct high-order word in return address
-     * 01/05/15 RPI 1506  Execution of SAM64 acts as no-op / basic support for Amode64
-     * 01/31/15 RPI 1509  BALR in amode64 turns on amode31 bit generated in return address
-     * 02/01/15 RPI 1510  BALR when EXecuted generates return address from target BALR instruction
-     *                    Return address should be generated from EX/EXRL instruction location
-     * 02/05/15 RPI 1511  BCR should not branch when target address is contained in R0
-     * 02/14/15 RPI 1512  BASSM with odd target address should set amode64, not jump to odd address
-     * 02/14/15 RPI 1513  BASSM should set return address from EX/EXRL when executed
-     * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
-     * 01/09/15 RPI 1527  TROO, TRTO, TROT, TRTT will process 1 character if length 0 is specified
-     * 11/09/15 RPI 1531  MVCL and MVCLE with source length zero abend
-     * 02/08/16 RPI 1540  CLIJ/CLGIJ incorrectly test their operands
-     * 02/10/16 RPI 2002  BASR, BAL, BAS: make EXecute aware and amode 64 aware;
-     *                    BAL: cc,ilc,pgm mask put in return address for amode 24
-     * 02/16/16 RPI 2001  BSM: changes for set branch address & amode 64;
-     *                    BASSM: remove redundant if statement
-     * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
-     * 03/01/16 RPI 2004  Add support for TAM instruction
-     * 02/26/17 RPI 2009  Fix condition code 3 errors
-     *                      1. Add (AR, AGR, A, etc) instructions and subtract
-     *                         (SR, SGR, S, etc) instructions do not set CC=3 and do not set
-     *                         destination value when (fixed-point) overflow occurs; also, if
-     *                         overflow occurs and the program mask fixed-point-overflow bit
-     *                         is one, the CC in the PSW at abend is not set
-     *                      2. LCR, LCGR, LPR, and LPGR do not set the destination
-     *                         register when CC=3; also, none of these check for
-     *                         fixed-point-overflow exceptions
-     *                      3. SLA, SLAK, SLDA, and SLAG do not check for
-     *                         fixed-point-overflow exceptions
-     *                    Remove invalid call to get_int_add_cc() in ALSIHN instruction emulation
-     * 03/29/17 RPI 2010 Save and restore field psw_ins_len in method trace_psw()
+	 * 04/19/12 RPI 1209 Move array op_trace_type to tz390
+	 * 07/20/14 RPI VF01 add vector operations
+	 * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
+	 * 12/26/14 RPI 1505  BALR in amode 24 fails to construct correct high-order word in return address
+	 * 01/05/15 RPI 1506  Execution of SAM64 acts as no-op / basic support for Amode64
+	 * 01/31/15 RPI 1509  BALR in amode64 turns on amode31 bit generated in return address
+	 * 02/01/15 RPI 1510  BALR when EXecuted generates return address from target BALR instruction
+	 *                    Return address should be generated from EX/EXRL instruction location
+	 * 02/05/15 RPI 1511  BCR should not branch when target address is contained in R0
+	 * 02/14/15 RPI 1512  BASSM with odd target address should set amode64, not jump to odd address
+	 * 02/14/15 RPI 1513  BASSM should set return address from EX/EXRL when executed
+	 * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
+	 * 01/09/15 RPI 1527  TROO, TRTO, TROT, TRTT will process 1 character if length 0 is specified
+	 * 11/09/15 RPI 1531  MVCL and MVCLE with source length zero abend
+	 * 02/08/16 RPI 1540  CLIJ/CLGIJ incorrectly test their operands
+	 * 02/10/16 RPI 2002  BASR, BAL, BAS: make EXecute aware and amode 64 aware;
+	 *                    BAL: cc,ilc,pgm mask put in return address for amode 24
+	 * 02/16/16 RPI 2001  BSM: changes for set branch address & amode 64;
+	 *                    BASSM: remove redundant if statement
+	 * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
+	 * 03/01/16 RPI 2004  Add support for TAM instruction
+	 * 02/26/17 RPI 2009  Fix condition code 3 errors
+	 *                      1. Add (AR, AGR, A, etc) instructions and subtract
+	 *                         (SR, SGR, S, etc) instructions do not set CC=3 and do not set
+	 *                         destination value when (fixed-point) overflow occurs; also, if
+	 *                         overflow occurs and the program mask fixed-point-overflow bit
+	 *                         is one, the CC in the PSW at abend is not set
+	 *                      2. LCR, LCGR, LPR, and LPGR do not set the destination
+	 *                         register when CC=3; also, none of these check for
+	 *                         fixed-point-overflow exceptions
+	 *                      3. SLA, SLAK, SLDA, and SLAG do not check for
+	 *                         fixed-point-overflow exceptions
+	 *                    Remove invalid call to get_int_add_cc() in ALSIHN instruction emulation
+	 * 03/29/17 RPI 2010 Save and restore field psw_ins_len in method trace_psw()
 	 * 2018-07-30 RPI 1622 Issue S0D3 if any of the privileged instructions are used
-     * 2019-09-22 RPI 2201 dsh use math.RoundingMode(int) to fix depreciated setScale(int,int)
-     * 2019-09-29 RPI 2202 dsh add new instructions documented in SA22-7832-12 dated 2019-09  pg 79 summary
-     *   AND WITH COMPLEMENT (NCRK, NCGRK)
-     *   MOVE RIGHT TO LEFT
-     *   NAND (NNRK, NNGRK)
-     *   NOT EXCLUSIVE OR (NXRK, NXGRK)
-     *   NOR (NORK, NOGRK)
-     *   OR WITH COMPLEMENT (OCRK, OCGRK)
-     *   SELECT (SEL, SELGR)
-     *   SELECT HIGH (SELFHR)
-     *  2019-10-01 RPI 2202 dsh fix trace case 154 for NRK etc to show R vs F for regs
-     *  2019-10-26 RPI 2202 add POPCNT high mask bit support to return total one bits
-     *  2021-01-06 RPI 2227 add 16 byte memory buffer to prevent pd fetch exception 
+	 * 2019-09-22 RPI 2201 dsh use math.RoundingMode(int) to fix depreciated setScale(int,int)
+	 * 2019-09-29 RPI 2202 dsh add new instructions documented in SA22-7832-12 dated 2019-09  pg 79 summary
+	 *   AND WITH COMPLEMENT (NCRK, NCGRK)
+	 *   MOVE RIGHT TO LEFT
+	 *   NAND (NNRK, NNGRK)
+	 *   NOT EXCLUSIVE OR (NXRK, NXGRK)
+	 *   NOR (NORK, NOGRK)
+	 *   OR WITH COMPLEMENT (OCRK, OCGRK)
+	 *   SELECT (SEL, SELGR)
+	 *   SELECT HIGH (SELFHR)
+	 *  2019-10-01 RPI 2202 dsh fix trace case 154 for NRK etc to show R vs F for regs
+	 *  2019-10-26 RPI 2202 add POPCNT high mask bit support to return total one bits
+	 *  2021-01-06 RPI 2227 add 16 byte memory buffer to prevent pd fetch exception
 	 * 2021-01-10 RPI 2204 add CDPT, CXPT, CZDT, CZXT; change to RPI 2227 - add 32 bytes
 	 * 2021-01-10 RPI 2013 Modify MP, DP to verify operands.
-     *                     1. MP and DP: 2nd op len <= 8 and < 1st op len;
-     *                        else specification exception.
-     *                     2. MP: 1st op has at least as many bytes of
-     *                        leftmost zeros as 2nd op len; else
-     *                        general-purpose data exception.
+	 *                     1. MP and DP: 2nd op len <= 8 and < 1st op len;
+	 *                        else specification exception.
+	 *                     2. MP: 1st op has at least as many bytes of
+	 *                        leftmost zeros as 2nd op len; else
+	 *                        general-purpose data exception.
 	 *                     3. DP: delete setting psw_cc
-     *                     4. Add missing else clause to get_pdf_ints().
-     * 2021-10-29 Issue 291. Fix XDECI logic so that it matches ASSIST documentation.
-     * 2021-10-29 Issue 305. Fix XHEXI logic so that it matches ASSIST documentation.
-     *                       NB: RPI 878 added ASCII support for XDECI but not XHEXI.
-     *                           Not added here either.
-     * 2022-02-12 Issue 195. For all privileged instructions issue the proper exception according PoP
+	 *                     4. Add missing else clause to get_pdf_ints().
+	 * 2021-10-29 Issue 291. Fix XDECI logic so that it matches ASSIST documentation.
+	 * 2021-10-29 Issue 305. Fix XHEXI logic so that it matches ASSIST documentation.
+	 *                       NB: RPI 878 added ASCII support for XDECI but not XHEXI.
+	 *                           Not added here either.
+	 * 2022-02-12 Issue 195. For all privileged instructions issue the proper exception according PoP
 	 *                       Being S0C2 for privileged-operation exception when executed in problem state
 	 *                       Other exceptions as defined in PoP
 	 *                       And implement as a no-op if all tests are passed
 	 * 2022-02-24 DSH ISSUE #300 add support for MGRK, MSGRKC, MSRKC, MSC
-           * 2022-03-05 DSH issue #300 updated based on review by John Yanci
-           *                     1) Simplify get_signed_bytes by dropping extra leading byte
-           *                     2) cleanup comments
-          * 2022-03-12 DSH fixed overflow for cc3 MSC, MSGC, MSGRKC, MSRKC
+		   * 2022-03-05 DSH issue #300 updated based on review by John Yanci
+		   *                     1) Simplify get_signed_bytes by dropping extra leading byte
+		   *                     2) cleanup comments
+		  * 2022-03-12 DSH fixed overflow for cc3 MSC, MSGC, MSGRKC, MSRKC
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -441,9 +441,9 @@ public class pz390 {
 
 	int psw_loc = 0;
 
-    boolean psw_problem_state   = true; /* z390 is always in problem state, supervisor state is not supported */
-    boolean psw_problem_mode    = true;
-    boolean psw_supervisor_mode = false;
+	boolean psw_problem_state   = true; /* z390 is always in problem state, supervisor state is not supported */
+	boolean psw_problem_mode    = true;
+	boolean psw_supervisor_mode = false;
 
 	int psw_short = 0;
 
@@ -464,14 +464,14 @@ public class pz390 {
 	long max_pos_long = ((long) -1) >>> 1;
 
 	long min_neg_long = ((long) 1) << 63;
-    long max_srp_long = max_pos_long / 10; // RPI 781
-    long min_srp_long = min_neg_long / 10; // RPI 781
+	long max_srp_long = max_pos_long / 10; // RPI 781
+	long min_srp_long = min_neg_long / 10; // RPI 781
 	BigInteger bi_max_pos_long = BigInteger.valueOf(max_pos_long);
-    BigDecimal bd_max_pos_long = BigDecimal.valueOf(max_pos_long); // RPI 791
-    BigDecimal bd_min_neg_long = BigDecimal.valueOf(min_neg_long); // RPI 791
+	BigDecimal bd_max_pos_long = BigDecimal.valueOf(max_pos_long); // RPI 791
+	BigDecimal bd_min_neg_long = BigDecimal.valueOf(min_neg_long); // RPI 791
 	BigDecimal bd_max_log_long = bd_max_pos_long.add(BigDecimal.ONE).multiply(BigDecimal.valueOf(2)); // rpi 1125
-    
-    BigInteger bi_min_neg_long = BigInteger.valueOf(min_neg_long);
+
+	BigInteger bi_min_neg_long = BigInteger.valueOf(min_neg_long);
 	BigInteger bi_max_pos_int = BigInteger.valueOf(max_pos_int); // rpi 781
 
 	BigInteger bi_min_neg_int = BigInteger.valueOf(min_neg_int); // rpi 781
@@ -494,9 +494,9 @@ public class pz390 {
 
 	int psw_amode31 = 0x7fffffff;
 
-    /* psw address fields all 4 bytes long currnetly. */                       // RPI 2001
-    /* Needs to be extended to 8 bytes when amode64 is more fully supported */ // RPI 2001
-    int psw_amode64 = 0xfffffffe;                                              // RPI 2001
+	/* psw address fields all 4 bytes long currnetly. */                       // RPI 2001
+	/* Needs to be extended to 8 bytes when amode64 is more fully supported */ // RPI 2001
+	int psw_amode64 = 0xfffffffe;                                              // RPI 2001
 
 	int psw_amode = psw_amode31;
 	int psw_amode24_high_bits = 0xff000000;          // RPI 828
@@ -509,10 +509,10 @@ public class pz390 {
 
 	int psw_amode_bit = psw_amode31_bit;
 
-    int psw_extended_amode64_bit = 1;                      // RPI 1506
-    int psw_extended_amode64_on = 1;                       // RPI 1506
-    int psw_extended_amode64_off = 0;                      // RPI 1506
-    int psw_extended_amode_bit = psw_extended_amode64_off; // RPI 1506
+	int psw_extended_amode64_bit = 1;                      // RPI 1506
+	int psw_extended_amode64_on = 1;                       // RPI 1506
+	int psw_extended_amode64_off = 0;                      // RPI 1506
+	int psw_extended_amode_bit = psw_extended_amode64_off; // RPI 1506
 
 	long cur_stck = 0;
 
@@ -556,13 +556,13 @@ public class pz390 {
 	int psw_pgm_mask_sig = 0x1; // fp significance
 
 	int psw_pgm_mask = 0x6; // enable all but fixed and fp sig.//RPI33
-    /*
-     * psw trace table
-     */
+	/*
+	 * psw trace table
+	 */
 	byte   max_trace_table   = 10; // also change trace_table_next RPI 819
 	byte   trace_table_index = 9;
 	int[]  trace_table_addr  = new int[max_trace_table];
-    byte[] trace_table_next  = {1,2,3,4,5,6,7,8,9,0};
+	byte[] trace_table_next  = {1,2,3,4,5,6,7,8,9,0};
 	/*
 	 * FPC IEEE BFP/DFP control registers
 	 */
@@ -575,13 +575,13 @@ public class pz390 {
 	int fp_fpc_mask_unf = 0x10000000;
 
 	int fp_fpc_mask_sig = 0x08000000;
-	// fp_dd_mod_bi to truncate digits         1234567890123456    
-    BigInteger fp_dd_mod_bi = new BigInteger("10000000000000000");
-	// fp_ld_mod_bi to truncate digits         1234567890123456789012345678901234    
-    BigInteger fp_ld_mod_bi = new BigInteger("10000000000000000000000000000000000");
-    int alt_rnd_mode = 0; // RPI 1125 set alternate round mode if ?=A
-    int alt_fpe_mode = 0; // RPI 1125 set alt FP extension if bits 20-23 set
-    int fp_bfp_rnd_mask = 0x00000007; // bfp rounding mode  RPI 1125 was 3
+	// fp_dd_mod_bi to truncate digits         1234567890123456
+	BigInteger fp_dd_mod_bi = new BigInteger("10000000000000000");
+	// fp_ld_mod_bi to truncate digits         1234567890123456789012345678901234
+	BigInteger fp_ld_mod_bi = new BigInteger("10000000000000000000000000000000000");
+	int alt_rnd_mode = 0; // RPI 1125 set alternate round mode if ?=A
+	int alt_fpe_mode = 0; // RPI 1125 set alt FP extension if bits 20-23 set
+	int fp_bfp_rnd_mask = 0x00000007; // bfp rounding mode  RPI 1125 was 3
 	int fp_bfp_rnd_not = 0xfffffff8; // not round mode bits RPI 1125 was c
 	int fp_bfp_rnd_even = 0x0; // round to nearest (default)
 	int fp_bfp_rnd_zero = 0x1; // round toward zero (discard bits to right)
@@ -595,10 +595,10 @@ public class pz390 {
 	int fp_rnd_zero       = 0x1; // round toward zero (discard bits to right)
 	int fp_rnd_pi         = 0x2; // round toward plus infinity
 	int fp_rnd_ni         = 0x3; // round toward negative infinity
-	int fp_rnd_near_nzero = 0x4; // round to hearest with ties to not zero 
+	int fp_rnd_near_nzero = 0x4; // round to hearest with ties to not zero
 	int fp_rnd_near_zero  = 0x5; // round to nearest with ties to zero
 	int fp_rnd_nzero      = 0x6; // round to not zero
-	int fp_rnd_shorter    = 0x7; // round to shorter precision 
+	int fp_rnd_shorter    = 0x7; // round to shorter precision
 	int fp_sig_req = 0; // dfp significant digits requested
 	int fp_sig_dig = 0; // dfp significant digits found
 	int fp_dfp_rnd = fp_rnd_near_even; // default rounding mode
@@ -628,25 +628,25 @@ public class pz390 {
 	int fp_dxc_oper = 0x80; // IEEE invalid operation
 	int fp_dxc_trap = 0xff; // compare and trap exception RPI 817
 	int fp_dxc = 0; // byte 2 of fp_fpc_reg with IEEE exceptions
-    String fp_dfp_digits = null;
-	
-    /*
-     * ASSIST global execution data areas RPI 812
-     */
-    int ast_xdump_addr = 0; // default xdump area
-    int ast_xdump_len  = 0; // default xdump area length
-    int ast_xread_tiot = -1;
-    int ast_xprnt_tiot = -1;
-    int ast_xpnch_tiot = -1;
-    int ast_xget_tiot  = -1;
-    int ast_xput_tiot  = -1; 
-    int ast_xread_dcb = 0xe00;
-    int ast_xprnt_dcb = 0xe02;
-    int ast_xpnch_dcb = 0xe04;
-    int ast_xget_dcb  = 0xe0a;
-    int ast_xput_dcb  = 0xe0c;
-    String ast_file_line;
-    /*
+	String fp_dfp_digits = null;
+
+	/*
+	 * ASSIST global execution data areas RPI 812
+	 */
+	int ast_xdump_addr = 0; // default xdump area
+	int ast_xdump_len  = 0; // default xdump area length
+	int ast_xread_tiot = -1;
+	int ast_xprnt_tiot = -1;
+	int ast_xpnch_tiot = -1;
+	int ast_xget_tiot  = -1;
+	int ast_xput_tiot  = -1;
+	int ast_xread_dcb = 0xe00;
+	int ast_xprnt_dcb = 0xe02;
+	int ast_xpnch_dcb = 0xe04;
+	int ast_xget_dcb  = 0xe0a;
+	int ast_xput_dcb  = 0xe0c;
+	String ast_file_line;
+	/*
 	 * program check and program interruption fields
 	 */
 	boolean psw_check = false;
@@ -691,7 +691,7 @@ public class pz390 {
 	int psw_pic_spec_op = 0x0d3; // RPI 1622 DK Special Operation Exception
 
 	int psw_pic_timeout = 0x422;
-    int psw_pic_gm_err = 0x804; // getmain request invalid
+	int psw_pic_gm_err = 0x804; // getmain request invalid
 
 	int psw_pic_link_err = 0x806; // link failed
 
@@ -720,12 +720,12 @@ public class pz390 {
 	int[] psw_borrow = { -1, 0, 0, -1, 1, -1, -1, -1, 1 }; // index by psw_cc
 
 	byte psw_ins_len = 0;
-    byte last_psw_ins_len = 0; // RPI 845
+	byte last_psw_ins_len = 0; // RPI 845
 	int opcode1 = 0;
 
 	int opcode2 = -1;
 	int opcode_clc = 0xd5; // allow psw clc RPI 538
-    int opcode_srp = 0xf0; // RPI 820 don't S0c5 on neg shift
+	int opcode_srp = 0xf0; // RPI 820 don't S0c5 on neg shift
 	int opcode2_offset_e = 1; // E PR oooo
 
 	int opcode2_offset_ri = 1; // RI IIHH ooroiiii
@@ -756,16 +756,16 @@ public class pz390 {
 
 	int opcode2_offset_ssf = 1; // SSF MVCOS oorobdddbddd
 
-    int opcode2_offset_vqst = 1; // V-QST VAS   RPI VF01
-    int opcode2_offset_vqv  = 1; // V-QV        RPI VF01
-    int opcode2_offset_vst  = 1; // V-VST       RPI VF01
-    int opcode2_offset_vv   = 1; // V-VV        RPI VF01
-    int opcode2_offset_vrre = 1; // V-RRE       RPI VF01
-    int opcode2_offset_vrse = 1; // V-RSE       RPI VF01
-    int opcode2_offset_vrx  = 5;  // RPI 2202
-    int opcode2_offset_vs   = 1; // V-S   VRCL  RPI VF01
-    int opcode2_offset_vvr  = 1; // V-VR        RPI VF01
-    int opcode2_offset_vvs  = 1; // V-VS        RPI VF01
+	int opcode2_offset_vqst = 1; // V-QST VAS   RPI VF01
+	int opcode2_offset_vqv  = 1; // V-QV        RPI VF01
+	int opcode2_offset_vst  = 1; // V-VST       RPI VF01
+	int opcode2_offset_vv   = 1; // V-VV        RPI VF01
+	int opcode2_offset_vrre = 1; // V-RRE       RPI VF01
+	int opcode2_offset_vrse = 1; // V-RSE       RPI VF01
+	int opcode2_offset_vrx  = 5;  // RPI 2202
+	int opcode2_offset_vs   = 1; // V-S   VRCL  RPI VF01
+	int opcode2_offset_vvr  = 1; // V-VR        RPI VF01
+	int opcode2_offset_vvs  = 1; // V-VS        RPI VF01
 
 		int dup_opcodes = 0; // count of duplicate opcodes
 
@@ -812,14 +812,14 @@ public class pz390 {
 
 	int[] estae_exit = (int[]) Array.newInstance(int.class, max_estae);
 	int[] estae_parm = (int[]) Array.newInstance(int.class, max_estae);
-    int[] estae_link = (int[]) Array.newInstance(int.class, max_estae);
+	int[] estae_link = (int[]) Array.newInstance(int.class, max_estae);
 	int if1 = 0;
 
 	int if2 = 0;
 	int if3 = 0; // RIE8 RNSBG RPI 817
-    int if4 = 0; // RIE4 RNSBG and CGIJ  RPI 817
+	int if4 = 0; // RIE4 RNSBG and CGIJ  RPI 817
 	int if5 = 0; // RIE8 RNSBG RPI 817
-	int sv1 = 0; 
+	int sv1 = 0;
 
 	int rflen = 0;
 
@@ -862,7 +862,7 @@ public class pz390 {
 	int bf1 = 0;
 
 	int df1 = 0;
-    int xf1 = 0; // RPI 812 for ASSIST
+	int xf1 = 0; // RPI 812 for ASSIST
 	int xf2 = 0;
 
 	int bf2 = 0;
@@ -877,7 +877,7 @@ public class pz390 {
 	int bd2_loc = 0;
 	int bf4     = 0;
 	int df4     = 0;
-    int bd4_loc = 0;  // RRS1/RRS3 RPI 817
+	int bd4_loc = 0;  // RRS1/RRS3 RPI 817
 	int bd1_start = 0;
 
 	int bd2_start = 0;
@@ -915,22 +915,22 @@ public class pz390 {
 
 	int ex_opcode1 = 0x44;   // EX   "44"   RPI 817
 	int exrl_opcode1 = 0xc6; // EXRL "C6x0" RPI 817
-    int exrl_opcode2 = 0x00; // EXR: "C6x0" RPI 817
+	int exrl_opcode2 = 0x00; // EXR: "C6x0" RPI 817
 	byte ex_mod_byte = 0; // save targe+1 byte
 
 	int ex_psw_return = 0; // return from ex
-    int ex_psw_ilc =0; // length of ex instruction in halfwords // RPI 1505
+	int ex_psw_ilc =0; // length of ex instruction in halfwords // RPI 1505
 
 	byte[] pd_bytes = (byte[]) Array.newInstance(byte.class, 16);
 
 	ByteBuffer pd_byte = ByteBuffer.wrap(pd_bytes, 0, 16);
 
-    byte[] zone_bytes = null;
+	byte[] zone_bytes = null;
 	byte zone_byte_zone = (byte)0xf0;
 	int    zone_len = 0;
 	int    zone_index = 0;
 	boolean zone_sign_zero = true;
-	
+
 	String pdf_str = null;
 
 	int pdf_str_len = 0;
@@ -942,7 +942,7 @@ public class pz390 {
 	int pdf_leftmost_zeros1 = 0; // RPI 2013
 
 	char pdf_sign = '+';
-    boolean pdf_trunc = false; // RPI 788
+	boolean pdf_trunc = false; // RPI 788
 	int pdf_zone = 0xf0;
 
 	byte pdf_next_out = 0;
@@ -976,16 +976,16 @@ public class pz390 {
 	BigInteger[] big_int_array = null;
 
 	int pd_cc = 0;
-    /*
-     * R?SBG rotate selected bits data RPI 817  
-     */
+	/*
+	 * R?SBG rotate selected bits data RPI 817
+	 */
 	boolean rsbg_test = false;
 	boolean rsbg_zero = false;
 	long rsbg_mask_zeros = 0;
 	long rsbg_mask_ones = 0;
 	boolean risb_zero = false; // RPI 1125
 	int  risb_mask_zeros = 0; // RPI 1125
-	int  risb_mask_ones = 0;  // RPI 1125	
+	int  risb_mask_ones = 0;  // RPI 1125
 	/*
 	 * 16 gpr registers
 	 */
@@ -1076,10 +1076,10 @@ public class pz390 {
 	byte[] work_fp_reg_byte = (byte[]) Array.newInstance(byte.class, 16);
 
 	ByteBuffer work_fp_reg = ByteBuffer.wrap(work_fp_reg_byte, 0, 16);
-    boolean[] fp_pair_type  = {
-    		false, false, false, // DB, DD, DH
-    		false, false, false, // EB, ED, EH
-    		true,  true,  true};  // LB, LD, LH
+	boolean[] fp_pair_type  = {
+			false, false, false, // DB, DD, DH
+			false, false, false, // EB, ED, EH
+			true,  true,  true};  // LB, LD, LH
 	boolean[] fp_pair_valid = { // RPI 229
 	/* 0 1 2 3 */
 	        true, true, false, false, // 0 - 3 (0,2) (1,3)
@@ -1090,7 +1090,7 @@ public class pz390 {
 
 	ByteBuffer ar_reg = ByteBuffer.wrap(ar_reg_byte, 0, 16 * 4); // RPI 1055
 
-    int ar_reg_len = 64;                                         // RPI 2003
+	int ar_reg_len = 64;                                         // RPI 2003
 	/*
 	 * fp work variables
 	 */
@@ -1165,7 +1165,7 @@ public class pz390 {
 	int int_man = 0;
 
 	int int_eh_man_bits = 0xffffff;
-    MathContext fp_dhg_context = null; // RPI 821 for DH
+	MathContext fp_dhg_context = null; // RPI 821 for DH
 	MathContext fp_lxg_context = null; // RPI 821 for LB/LH
 	MathContext fp_dbg_context = null; //         for EH, DB
 	MathContext fp_ebg_context = null; //         for EB
@@ -1299,29 +1299,29 @@ public class pz390 {
 
 	long fp_long1 = 0;
 	long fp_long2 = 0; // RPI 767
-    long fp_long3 = 0; // RPI 767
+	long fp_long3 = 0; // RPI 767
 	byte fp_exp1 = 0;
-    byte fp_exp2 = 0;
-    byte fp_exp3 = 0;
-    byte fp_sign1 = 0;
-    byte fp_sign2 = 0;
-    byte fp_sign3 = 0;
+	byte fp_exp2 = 0;
+	byte fp_exp3 = 0;
+	byte fp_sign1 = 0;
+	byte fp_sign2 = 0;
+	byte fp_sign3 = 0;
 	long fp_long_db_one_bits = ((long) (1) << 53) - 1;
 
 	long fp_long_db_man_bits = ((long) (1) << 52) - 1;
 
 	long fp_long_dh_man_bits = ((long) (1) << 56) - 1;
-    int     fp_eb_pos_inf = 0x7f8 << 23; // RPI 830
-    int     fp_eb_neg_inf = 0xff8 << 23; // RPI 830
+	int     fp_eb_pos_inf = 0x7f8 << 23; // RPI 830
+	int     fp_eb_neg_inf = 0xff8 << 23; // RPI 830
 	long    fp_db_pos_inf = (long)(0x7ff) << 52; // RPI 830
-    long    fp_db_neg_inf = (long)(0xfff) << 52; // RPI 830
-    long    fp_dd_pos_inf = (long)(0x7a) << 56;
-    long    fp_dd_neg_inf = (long)(0xfa) << 56;
+	long    fp_db_neg_inf = (long)(0xfff) << 52; // RPI 830
+	long    fp_dd_pos_inf = (long)(0x7a) << 56;
+	long    fp_dd_neg_inf = (long)(0xfa) << 56;
 	long    fp_lb_pos_inf = (long)(0x7a) << 56; // RPI 830
-    long    fp_lb_neg_inf = (long)(0xfa) << 56; // RPI 830
-    long    fp_ld_pos_inf = (long)(0x7fff) << 48;
-    long    fp_ld_neg_inf = (long)(0xffff) << 48;
-    float fp_eb_min = (float) 1.2e-38; // BFP range ref. pop 19-5
+	long    fp_lb_neg_inf = (long)(0xfa) << 56; // RPI 830
+	long    fp_ld_pos_inf = (long)(0x7fff) << 48;
+	long    fp_ld_neg_inf = (long)(0xffff) << 48;
+	float fp_eb_min = (float) 1.2e-38; // BFP range ref. pop 19-5
 
 	float fp_eb_max = (float) 3.4e+38;
 
@@ -1356,12 +1356,12 @@ public class pz390 {
 	BigDecimal fp_ld_pos_min = null;
 	BigDecimal fp_ld_neg_max = null;
 	BigDecimal fp_ld_neg_min = null;
-    int fp_dd_exp_min = -398;
-    int fp_dd_exp_max =  369;
-    int fp_ed_exp_min = -101;
-    int fp_ed_exp_max =   90;
-    int fp_ld_exp_min = -6178;
-    int fp_ld_exp_max =  6111;
+	int fp_dd_exp_min = -398;
+	int fp_dd_exp_max =  369;
+	int fp_ed_exp_min = -101;
+	int fp_ed_exp_max =   90;
+	int fp_ld_exp_min = -6178;
+	int fp_ld_exp_max =  6111;
 	/*
 	 * PC, PR, PT stack for psw and regs
 	 */
@@ -1378,7 +1378,7 @@ public class pz390 {
 	int[] pc_stk_psw_loc = (int[]) Array.newInstance(int.class, max_pc_stk);
 
 	int[] pc_stk_psw_cc = (int[]) Array.newInstance(int.class, max_pc_stk);
-    boolean[] pc_stk_type_pc = (boolean[]) Array.newInstance(boolean.class,max_pc_stk); // RPI 1026 PC vs BAKR
+	boolean[] pc_stk_type_pc = (boolean[]) Array.newInstance(boolean.class,max_pc_stk); // RPI 1026 PC vs BAKR
 	/*
 	 * virtual memory with 24 bit and 31 bit fqes all initialized by init_mem()
 	 */
@@ -1411,7 +1411,7 @@ public class pz390 {
 	int psa_pgm_old_psw = 0x28; // RPI 1063 see update_psa
 	int psa_pgm_nwq_paq = 0x68; // RPI `063
 	int psa_cvt2 = 0x4c;   // pointer to os cvt
-    int psa_psw_ins_len = 0x8d; // RPI 1063 see update_psa
+	int psa_psw_ins_len = 0x8d; // RPI 1063 see update_psa
 	int psa_len  = 0x2000; // length of PSA (see PSAD macro) RPI 538
 	/*
 	 * z390 communication vector table at x'2000';
@@ -1434,14 +1434,14 @@ public class pz390 {
 	int zcvt_save = zcvt_start + 0x100; // user save
 
 	int zcvt_stimer_save = zcvt_start + 0x200;
-    int zcvt_exec_parma = zcvt_start + 0x300; // address of exec_parm RPI 582
+	int zcvt_exec_parma = zcvt_start + 0x300; // address of exec_parm RPI 582
 	int zcvt_exec_parm  = zcvt_start + 0x304; // half word length followed by
 												// EBCDIC/ASCII value of PARM(.)
 
 	int zcvt_epie = zcvt_start + 0x400; // espie passed in r1
 
 	int zcvt_sdwa = zcvt_start + 0x500; // sdwa passed in r1 to ESTAE exit RPI 845
-    int zcvt_comrg = zcvt_start + 0x600; // start of VSE COMRG area RPI 558
+	int zcvt_comrg = zcvt_start + 0x600; // start of VSE COMRG area RPI 558
 	/*
 	 * OS/MVS compatible CVT with pointer at x'10'
 	 */
@@ -1460,12 +1460,12 @@ public class pz390 {
 	int cde_cdloadpt  = 32;  // load address
 	int cde_cdmodlen  = 36;  // module length
 	int cde_len       = 40;  // length of CDE entry block
-	
-    /*
-     * VSE COMRG data fields
-     */
+
+	/*
+	 * VSE COMRG data fields
+	 */
 	int zcvt_comrg_jobdate = zcvt_comrg +  0; // COMRG JOBDATE  0  8 MM/DD/YY
-	int zcvt_comrg_comname = zcvt_comrg + 24; // COMRG COMNAME 24  8 JOB NAME 
+	int zcvt_comrg_comname = zcvt_comrg + 24; // COMRG COMNAME 24  8 JOB NAME
 	/*
 	 * epie fields
 	 */
@@ -1474,44 +1474,44 @@ public class pz390 {
 	int epie_parm  = zcvt_epie + 0x04; // ESPIE PARAM addr
 
 	int epie_psw   = zcvt_epie + 0x48; // PSW int,addr RPI 845
-    int epie_ilc   = zcvt_epie + 0x51; // RPI 845 last instruction length byte (2,4,6)
+	int epie_ilc   = zcvt_epie + 0x51; // RPI 845 last instruction length byte (2,4,6)
 	int epie_inc   = zcvt_epie + 0x52; // RPI 845 interruption code (2 bytes)
-    int epie_flags = zcvt_epie + 0x99; // RPI 845 set X'40' 64 bit reg flag
+	int epie_flags = zcvt_epie + 0x99; // RPI 845 set X'40' 64 bit reg flag
 	int epie_gpr   = zcvt_epie + 0xA0; // GPR 64 bit regs R0-R15 RPI 845
 
 	/*
-	 * sdwa dsect fields (r1 at exit entry) 
+	 * sdwa dsect fields (r1 at exit entry)
 	 */
 	int sdwa_parm = zcvt_sdwa + 0x00; // SDWA ESPIE PARAM addr
-    int sdwa_cmp  = zcvt_sdwa + 0x04; // SDWA SDWAABSS completion code FFSSSUUU RPI 845
+	int sdwa_cmp  = zcvt_sdwa + 0x04; // SDWA SDWAABSS completion code FFSSSUUU RPI 845
 	int sdwa_psw  = zcvt_sdwa + 0x68; // SDWA SDWAEC1 PSW at error RPI 845
-    int sdwa_xpad = zcvt_sdwa + 0x170; // SDWA addr extensions RPI 845
-    int sdwa_ptrs = zcvt_sdwa + 0x200; // SDWA address for extensions RPI 845
-    int sdwa_xeme = sdwa_ptrs + 0x18;  // SDWA PTRS addr of SDWARC4 regs RPI 845
-    int sdwa_rc4  = zcvt_sdwa + 0x300; // SDWA RC4 registers extension RPI 834
-    int sdwa_g64  = sdwa_rc4  + 0x00;  // SDWA RC4 extension 16 - 64 bit regs at error RPI 845
+	int sdwa_xpad = zcvt_sdwa + 0x170; // SDWA addr extensions RPI 845
+	int sdwa_ptrs = zcvt_sdwa + 0x200; // SDWA address for extensions RPI 845
+	int sdwa_xeme = sdwa_ptrs + 0x18;  // SDWA PTRS addr of SDWARC4 regs RPI 845
+	int sdwa_rc4  = zcvt_sdwa + 0x300; // SDWA RC4 registers extension RPI 834
+	int sdwa_g64  = sdwa_rc4  + 0x00;  // SDWA RC4 extension 16 - 64 bit regs at error RPI 845
 	/*
 	 * byte bit count lookup table
 	 */
-    byte[] bit_cnt = {  // RPI 1125 for use by POPCNT instr
-            00,01,01,02,01,02,02,03,01,02,02,03,02,03,03,04, //  0
-            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  1
-            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  2
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  3
-            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  4
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  5
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  6
-            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  7
-            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  8
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  9
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  A
-            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  B
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  C
-            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  D
-            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  E
-            04,05,05,06,05,06,06,07,05,06,06,07,06,07,07,8  //  F
-    };
-    /*
+	byte[] bit_cnt = {  // RPI 1125 for use by POPCNT instr
+			00,01,01,02,01,02,02,03,01,02,02,03,02,03,03,04, //  0
+			01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  1
+			01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  2
+			02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  3
+			01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  4
+			02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  5
+			02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  6
+			03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  7
+			01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  8
+			02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  9
+			02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  A
+			03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  B
+			02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  C
+			03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  D
+			03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  E
+			04,05,05,06,05,06,06,07,05,06,06,07,06,07,07,8  //  F
+	};
+	/*
 	 * opcode lookup tables unique to ez390
 	 */
 	int[] op_type_offset = new int[256];
@@ -1521,10 +1521,10 @@ public class pz390 {
 	int[] opcode2_offset = new int[256];
 
 	int[] opcode2_mask = new int[256];
-    // array op_trace_type moved to tz390 RPI 1209
+	// array op_trace_type moved to tz390 RPI 1209
 
-    // retaddr holds return address for instructions that form a return address
-    int retaddr = 0; // RPI 1510
+	// retaddr holds return address for instructions that form a return address
+	int retaddr = 0; // RPI 1510
 	/*
 	 * end of pz390 global variables
 	 */
@@ -1544,12 +1544,12 @@ public class pz390 {
 			tz390.systerm_ins++;
 			trace_table_index = trace_table_next[trace_table_index];
 			if (psw_amode == psw_amode31){
-				trace_table_addr[trace_table_index] = 
+				trace_table_addr[trace_table_index] =
 					      psw_loc | int_high_bit;
 			} else {
 				trace_table_addr[trace_table_index] = psw_loc;
 			}
-			last_psw_ins_len = psw_ins_len; // RPI 845 
+			last_psw_ins_len = psw_ins_len; // RPI 845
 			opcode1 = mem_byte[psw_loc] & 0xff;
 			opcode2 = -1;
 			psw_check = true;
@@ -1578,10 +1578,10 @@ public class pz390 {
 					set_psw_check(psw_pic_oper);
 				}
 			}
-			if (ex_mode 
+			if (ex_mode
 				&& !(opcode1 == ex_opcode1)
 				&& !((opcode1 == exrl_opcode1)
-					&& opcode2 == exrl_opcode2) 
+					&& opcode2 == exrl_opcode2)
 				){
 				set_psw_loc(ex_psw_return);
 			}
@@ -1606,24 +1606,24 @@ public class pz390 {
 		case 0x05: // 100 "05" "BALR" "RR"
 			psw_check = false;
 			ins_setup_rr();
-            retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 1510
+			retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 1510
 			if (rf2 != 0) {
 				rv2 = reg.getInt(rf2 + 4); // RPI65
 			}
-            if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 1509
-               {reg.putLong(rf1, retaddr);                          // RPI 1509 RPI 1510
-                }                                                   // RPI 1509
-            else // either amode31 or amode24                       // RPI 1509
-               {if (psw_amode_bit == psw_amode24_bit)               // RPI 1505
-                   {int ilc = (ex_mode) ? ex_psw_ilc : 1;           // RPI 1505
-                    reg.putInt(rf1 + 4, (ilc << 30)                 // RPI 1505
-                                      | (psw_cc_code[psw_cc] << 28) // RPI 1505
-                                      | (psw_pgm_mask << 24)        // RPI 1505
-                                      | (retaddr & psw_amode24));   // RPI 1505 RPI 1510
-                    }                                               // RPI 1505
-                else // Amode31                                     // RPI 1505
-                   {reg.putInt(rf1 + 4, retaddr | psw_amode_bit);   // RPI 1510
-                }   }                                               // RPI 1505
+			if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 1509
+			   {reg.putLong(rf1, retaddr);                          // RPI 1509 RPI 1510
+				}                                                   // RPI 1509
+			else // either amode31 or amode24                       // RPI 1509
+			   {if (psw_amode_bit == psw_amode24_bit)               // RPI 1505
+				   {int ilc = (ex_mode) ? ex_psw_ilc : 1;           // RPI 1505
+					reg.putInt(rf1 + 4, (ilc << 30)                 // RPI 1505
+									  | (psw_cc_code[psw_cc] << 28) // RPI 1505
+									  | (psw_pgm_mask << 24)        // RPI 1505
+									  | (retaddr & psw_amode24));   // RPI 1505 RPI 1510
+					}                                               // RPI 1505
+				else // Amode31                                     // RPI 1505
+				   {reg.putInt(rf1 + 4, retaddr | psw_amode_bit);   // RPI 1510
+				}   }                                               // RPI 1505
 			if (rf2 != 0) {
 				set_psw_loc(rv2); // RPI65
 			}
@@ -1641,7 +1641,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rr();
 			// if ((psw_cc & mf1) > 0 && (rf1 != 0)) { // RPI 1511
-            if ((psw_cc & mf1) > 0 && (rf2 != 0)) {    // RPI 1511
+			if ((psw_cc & mf1) > 0 && (rf2 != 0)) {    // RPI 1511
 				set_psw_loc(reg.getInt(rf2 + 4));
 			}
 			break;
@@ -1659,78 +1659,78 @@ public class pz390 {
 		case 0x0B: // 300 "0B" "BSM" "RR"
 			psw_check = false;
 			ins_setup_rr();
-            if (rf2 != 0) {                                                     // RPI 2001
-                rv2 = reg.getInt(rf2 + 4);                                      // RPI 2001
-            }                                                                   // RPI 2001
+			if (rf2 != 0) {                                                     // RPI 2001
+				rv2 = reg.getInt(rf2 + 4);                                      // RPI 2001
+			}                                                                   // RPI 2001
 			if (rf1 != 0) {
-                if (psw_extended_amode_bit == psw_extended_amode64_on) {        // RPI 2001
-                    reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) | 1);               // RPI 2001
-                }                                                               // RPI 2001
-                else                                                            // RPI 2001
-    				if (psw_amode == psw_amode31) {
-    					reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) | psw_amode31_bit);
-    				} else {
-    					reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) & psw_amode31);
+				if (psw_extended_amode_bit == psw_extended_amode64_on) {        // RPI 2001
+					reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) | 1);               // RPI 2001
+				}                                                               // RPI 2001
+				else                                                            // RPI 2001
+					if (psw_amode == psw_amode31) {
+						reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) | psw_amode31_bit);
+					} else {
+						reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) & psw_amode31);
 				}
 			}
 			if (rf2 != 0) {
-                if ((rv2 & psw_extended_amode64_on) != 0) {                     // RPI 2001
-                    set_psw_amode(psw_extended_amode64_on);                     // RPI 2001
-                    rv2 = (rv2 & psw_amode64); // zero the odd bit              // RPI 2001
-                }                                                               // RPI 2001
-                else                                                            // RPI 2001
-    				if ((rv2 & psw_amode31_bit) != 0) {
-    					set_psw_amode(psw_amode31_bit);
-    				} else {
-    					set_psw_amode(psw_amode24_bit);
-    				}
+				if ((rv2 & psw_extended_amode64_on) != 0) {                     // RPI 2001
+					set_psw_amode(psw_extended_amode64_on);                     // RPI 2001
+					rv2 = (rv2 & psw_amode64); // zero the odd bit              // RPI 2001
+				}                                                               // RPI 2001
+				else                                                            // RPI 2001
+					if ((rv2 & psw_amode31_bit) != 0) {
+						set_psw_amode(psw_amode31_bit);
+					} else {
+						set_psw_amode(psw_amode24_bit);
+					}
 				set_psw_loc(rv2);
 			}
 			break;
 		case 0x0C: // 310 "0C" "BASSM" "RR"
 			psw_check = false;
 			ins_setup_rr();
-            retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 1513
+			retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 1513
 			if (rf2 != 0) {
 				rv2 = reg.getInt(rf2 + 4); // RPI65
 			}
-            if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 1512
-               {reg.putLong(rf1, retaddr+1);                        // RPI 1512
-                }                                                   // RPI 1512
-            else // either amode31 or amode24                       // RPI 1512
-               {reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 1512 RPI 1513
-                }                                                   // RPI 1512
+			if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 1512
+			   {reg.putLong(rf1, retaddr+1);                        // RPI 1512
+				}                                                   // RPI 1512
+			else // either amode31 or amode24                       // RPI 1512
+			   {reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 1512 RPI 1513
+				}                                                   // RPI 1512
 			if (rf2 != 0) {
-                if ((rv2 & 1) != 0)                                 // RPI 1512
-                   {set_psw_amode(psw_extended_amode64_on);         // RPI 1512
-                    rv2 = rv2>>1; // shift odd bit oou              // RPI 1512
-                    rv2 = rv2<<1; // repair target address          // RPI 1512
-                    }                                               // RPI 1512
-                else                                                // RPI 1512
-                   {if ((rv2 & psw_amode31_bit) != 0) {
+				if ((rv2 & 1) != 0)                                 // RPI 1512
+				   {set_psw_amode(psw_extended_amode64_on);         // RPI 1512
+					rv2 = rv2>>1; // shift odd bit oou              // RPI 1512
+					rv2 = rv2<<1; // repair target address          // RPI 1512
+					}                                               // RPI 1512
+				else                                                // RPI 1512
+				   {if ((rv2 & psw_amode31_bit) != 0) {
 						set_psw_amode(psw_amode31_bit);
 					} else {
 						set_psw_amode(psw_amode24_bit);
 					}
-                    }                                               // RPI 1512
-                set_psw_loc(rv2);
+					}                                               // RPI 1512
+				set_psw_loc(rv2);
 			}
 			break;
 		case 0x0D: // 320 "0D" "BASR" "RR"
 			psw_check = false;
 			ins_setup_rr();
-            retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 2002
+			retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 2002
 			if (rf2 != 0) {
 				rv2 = reg.getInt(rf2 + 4); // RPI65
 			}
-            if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 2002
-            {                                                       // RPI 2002
-                reg.putLong(rf1, retaddr);                          // RPI 2002
-            }                                                       // RPI 2002
-            else // either amode31 or amode 24                      // RPI 2002
-            {                                                       // RPI 2002
-                reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 2002
-            }                                                       // RPI 2002
+			if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 2002
+			{                                                       // RPI 2002
+				reg.putLong(rf1, retaddr);                          // RPI 2002
+			}                                                       // RPI 2002
+			else // either amode31 or amode 24                      // RPI 2002
+			{                                                       // RPI 2002
+				reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 2002
+			}                                                       // RPI 2002
 			if (rf2 != 0) {
 				set_psw_loc(rv2); // RPI65
 			}
@@ -1979,7 +1979,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rr();
 			fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf1)
-			         .multiply(fp_get_bd_from_lh(fp_reg, rf2), fp_lxg_context); // RPI 821 
+			         .multiply(fp_get_bd_from_lh(fp_reg, rf2), fp_lxg_context); // RPI 821
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
 			break;
@@ -1987,7 +1987,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rr();
 			fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf1).round(fp_dh_context)
-			         .multiply(fp_get_bd_from_dh(fp_reg, rf2).round(fp_dh_context), fp_lxg_context); // RPI 821 
+			         .multiply(fp_get_bd_from_dh(fp_reg, rf2).round(fp_dh_context), fp_lxg_context); // RPI 821
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
 			break;
@@ -2045,7 +2045,7 @@ public class pz390 {
 		case 0x2E: // 660 "2E" "AWR" "RR"
 			psw_check = false;
 			ins_setup_rr();
-            // unnormalized HFP RPI 767 
+			// unnormalized HFP RPI 767
 			fp_store_reg(fp_reg,rf1);
 			fp_long1 = fp_reg.getLong(rf1);
 			fp_long2 = fp_reg.getLong(rf2);
@@ -2055,7 +2055,7 @@ public class pz390 {
 		case 0x2F: // 670 "2F" "SWR" "RR"
 			psw_check = false;
 			ins_setup_rr();
-            // unnormalized HFP RPI 767
+			// unnormalized HFP RPI 767
 			fp_store_reg(fp_reg,rf1);
 			fp_long1 = fp_reg.getLong(rf1);
 			fp_long2 = fp_reg.getLong(rf2) ^ long_high_bit;
@@ -2108,7 +2108,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rr();
 			fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf1)
-			         .add(fp_get_bd_from_lh(fp_reg, rf2), fp_lxg_context); // RPI 821 
+			         .add(fp_get_bd_from_lh(fp_reg, rf2), fp_lxg_context); // RPI 821
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			psw_cc = fp_get_lh_add_sub_cc();
 			break;
@@ -2116,13 +2116,13 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rr();
 			fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf1)
-			         .subtract(fp_get_bd_from_lh(fp_reg, rf2), fp_lxg_context);  // RPI 821 
+			         .subtract(fp_get_bd_from_lh(fp_reg, rf2), fp_lxg_context);  // RPI 821
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			psw_cc = fp_get_lh_add_sub_cc();
 			break;
 		case 0x38: // 770 "38" "LER" "RR"
 			psw_check = false;
-			ins_setup_rr();  
+			ins_setup_rr();
 			fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2, tz390.fp_eh_type);
 			break;
 		case 0x39: // 780 "39" "CER" "RR"
@@ -2150,7 +2150,7 @@ public class pz390 {
 		case 0x3C: // 810 "3C" "MDER" "RR"
 			psw_check = false;
 			ins_setup_rr();
-			fp_rbdv1 = BigDecimal.valueOf(fp_get_db_from_eh(fp_reg, rf1))  
+			fp_rbdv1 = BigDecimal.valueOf(fp_get_db_from_eh(fp_reg, rf1))
 					 .multiply(BigDecimal.valueOf(fp_get_db_from_eh(fp_reg, rf2)));
 			fp_put_bd(rf1, tz390.fp_dh_type, fp_rbdv1);
 			check_dh_mpy();
@@ -2195,7 +2195,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rx();
 			if (tz390.opt_protect // RPI 538
-					&& xbd2_loc < psa_len){ 
+					&& xbd2_loc < psa_len){
 					set_psw_check(psw_pic_addr);
 					break;
 			}
@@ -2210,7 +2210,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rx();
 			if (tz390.opt_protect // RPI 538
-					&& xbd2_loc < psa_len){ 
+					&& xbd2_loc < psa_len){
 					set_psw_check(psw_pic_addr);
 					break;
 			}
@@ -2224,28 +2224,28 @@ public class pz390 {
 		case 0x44: // 900 "44" "EX" "RX"
 			psw_check = false;
 			ins_setup_rx();
-            exec_ex(xbd2_loc, 2); // RPI 1505
+			exec_ex(xbd2_loc, 2); // RPI 1505
 			break;
 		case 0x45: // 910 "45" "BAL" "RX"
 			psw_check = false;
 			ins_setup_rx();
-            retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 2002
-            if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 2002
-            {                                                       // RPI 2002
-                reg.putLong(rf1, retaddr);                          // RPI 2002
-            }                                                       // RPI 2002
-            else if (psw_amode_bit == psw_amode31_bit)              // RPI 2002
-            {                                                       // RPI 2002
-                reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 2002
-            }                                                       // RPI 2002
-            else // amode24                                         // RPI 2002
-            {                                                       // RPI 2002
-                int ilc = (ex_mode ? ex_psw_ilc : 2);               // RPI 2002
-                reg.putInt(rf1 + 4, (ilc << 30)                     // RPI 2002
-                                  | (psw_cc_code[psw_cc] << 28)     // RPI 2002
-                                  | (psw_pgm_mask << 24)            // RPI 2002
-                                  | (retaddr & psw_amode24));       // RPI 2002
-            }                                                       // RPI 2002
+			retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 2002
+			if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 2002
+			{                                                       // RPI 2002
+				reg.putLong(rf1, retaddr);                          // RPI 2002
+			}                                                       // RPI 2002
+			else if (psw_amode_bit == psw_amode31_bit)              // RPI 2002
+			{                                                       // RPI 2002
+				reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 2002
+			}                                                       // RPI 2002
+			else // amode24                                         // RPI 2002
+			{                                                       // RPI 2002
+				int ilc = (ex_mode ? ex_psw_ilc : 2);               // RPI 2002
+				reg.putInt(rf1 + 4, (ilc << 30)                     // RPI 2002
+								  | (psw_cc_code[psw_cc] << 28)     // RPI 2002
+								  | (psw_pgm_mask << 24)            // RPI 2002
+								  | (retaddr & psw_amode24));       // RPI 2002
+			}                                                       // RPI 2002
 			set_psw_loc(xbd2_loc);
 			break;
 		case 0x46: // 920 "46" "BCT" "RX"
@@ -2302,22 +2302,22 @@ public class pz390 {
 		case 0x4D: // 1150 "4D" "BAS" "RX"
 			psw_check = false;
 			ins_setup_rx();
-            retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 2002
-            if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 2002
-            {                                                       // RPI 2002
-                reg.putLong(rf1, retaddr);                          // RPI 2002
-            }                                                       // RPI 2002
-            else  // amode31 or amode24                             // RPI 2002
-            {                                                       // RPI 2002
-                reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 2002
-            }                                                       // RPI 2002
+			retaddr = (ex_mode) ? ex_psw_return : psw_loc;          // RPI 2002
+			if (psw_extended_amode_bit == psw_extended_amode64_on)  // RPI 2002
+			{                                                       // RPI 2002
+				reg.putLong(rf1, retaddr);                          // RPI 2002
+			}                                                       // RPI 2002
+			else  // amode31 or amode24                             // RPI 2002
+			{                                                       // RPI 2002
+				reg.putInt(rf1 + 4, retaddr | psw_amode_bit);       // RPI 2002
+			}                                                       // RPI 2002
 			set_psw_loc(xbd2_loc);
 			break;
 		case 0x4E: // 1160 "4E" "CVD" "RX"
 			psw_check = false;
 			ins_setup_rx();
 			if (tz390.opt_protect // RPI 538
-					&& xbd2_loc < psa_len){ 
+					&& xbd2_loc < psa_len){
 					set_psw_check(psw_pic_addr);
 					break;
 			}
@@ -2349,7 +2349,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rx();
 			if (tz390.opt_protect // RPI 538
-				&& xbd2_loc < psa_len){ 
+				&& xbd2_loc < psa_len){
 				set_psw_check(psw_pic_addr);
 				break;
 			}
@@ -2366,7 +2366,7 @@ public class pz390 {
 				ins_setup_rx();
 				sz390.put_ascii_string(
 				    tz390.right_justify("" + reg.getInt(rf1+4),12)
-	                ,xbd2_loc,12,' ');				
+	                ,xbd2_loc,12,' ');
 			}
 			break;
 		case 0x53: // 1196 "53" "XDECI" "RX" 37 RPI 812
@@ -2576,7 +2576,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rx();
 			if (tz390.opt_protect // RPI 538
-					&& xbd2_loc < psa_len){ 
+					&& xbd2_loc < psa_len){
 					set_psw_check(psw_pic_addr);
 					break;
 				}
@@ -2632,14 +2632,14 @@ public class pz390 {
 				ins_setup_rx();
 				sz390.put_ascii_string(
 				    tz390.get_hex(reg.getInt(rf1+4),8)
-	                ,xbd2_loc,8,' ');				
+	                ,xbd2_loc,8,' ');
 			}
-			break;	
+			break;
 		case 0x67: // 1330 "67" "MXD" "RX"
 			psw_check = false;
 			ins_setup_rx();
 			fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf1).round(fp_dh_context)
-			         .multiply(fp_get_bd_from_dh(mem, xbd2_loc).round(fp_dh_context), fp_lxg_context); // RPI 821 
+			         .multiply(fp_get_bd_from_dh(mem, xbd2_loc).round(fp_dh_context), fp_lxg_context); // RPI 821
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
 			break;
@@ -2658,7 +2658,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rx();
 			fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf1)
-					 .add(fp_get_bd_from_dh(mem, xbd2_loc),fp_dhg_context);  // RPI 821 
+					 .add(fp_get_bd_from_dh(mem, xbd2_loc),fp_dhg_context);  // RPI 821
 			fp_put_bd(rf1, tz390.fp_dh_type, fp_rbdv1);// RPI 821
 			psw_cc = fp_get_dh_add_sub_cc();
 			break;
@@ -2666,7 +2666,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rx();
 			fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf1)
-					 .subtract(fp_get_bd_from_dh(mem, xbd2_loc),fp_dhg_context);  // RPI 821 
+					 .subtract(fp_get_bd_from_dh(mem, xbd2_loc),fp_dhg_context);  // RPI 821
 			fp_put_bd(rf1, tz390.fp_dh_type, fp_rbdv1);  // RPI 821
 			psw_cc = fp_get_dh_add_sub_cc();
 			break;
@@ -2696,7 +2696,7 @@ public class pz390 {
 		case 0x6E: // 1400 "6E" "AW" "RX"
 			psw_check = false;
 			ins_setup_rx();
-            // unnormalized HFP RPI 767
+			// unnormalized HFP RPI 767
 			fp_store_reg(fp_reg,rf1);
 			fp_long1 = fp_reg.getLong(rf1);
 			fp_long2 = mem.getLong(xbd2_loc);
@@ -2706,7 +2706,7 @@ public class pz390 {
 		case 0x6F: // 1410 "6F" "SW" "RX"
 			psw_check = false;
 			ins_setup_rx();
-            // unnormalized HFP RPI 767
+			// unnormalized HFP RPI 767
 			fp_store_reg(fp_reg,rf1);
 			fp_long1 = fp_reg.getLong(rf1);
 			fp_long2 = mem.getLong(xbd2_loc) ^ long_high_bit;
@@ -2717,7 +2717,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rx();
 			if (tz390.opt_protect // RPI 538
-					&& xbd2_loc < psa_len){ 
+					&& xbd2_loc < psa_len){
 					set_psw_check(psw_pic_addr);
 					break;
 				}
@@ -2761,9 +2761,9 @@ public class pz390 {
 		case 0x7C: // 1480 "7C" "MDE" "RX"
 			psw_check = false;
 			ins_setup_rx();
-			fp_rbdv1 = fp_get_bd_from_eh(fp_reg, rf1)    // RPI 1003 
+			fp_rbdv1 = fp_get_bd_from_eh(fp_reg, rf1)    // RPI 1003
 					.multiply(fp_get_bd_from_eh(mem, xbd2_loc),fp_dh_context);
-			fp_put_bd(rf1, tz390.fp_dh_type,fp_rbdv1); // RPI 821 RPI 1003 
+			fp_put_bd(rf1, tz390.fp_dh_type,fp_rbdv1); // RPI 821 RPI 1003
 			check_dh_mpy();
 			break;
 		case 0x7D: // 1500 "7D" "DE" "RX"
@@ -2803,30 +2803,30 @@ public class pz390 {
 		 */
 		switch (opcode1) {
 		case 0x80: // 1530 "8000" "SSM" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x82: // 1540 "8200" "LPSW" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception
-            else // supervisor mode
-               {set_psw_loc(mem.getInt(bd2_loc + 4)); // incomplete implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception
+			else // supervisor mode
+			   {set_psw_loc(mem.getInt(bd2_loc + 4)); // incomplete implementation
+				}
+			break;
 		case 0x83: // 1550 "83" "DIAGNOSE" "DM"
-            psw_check = false;
-            ins_setup_dm();
-            psw_check = true; // force S0C1: Diagnose is not a supported instruction on z390
-            break;
+			psw_check = false;
+			ins_setup_dm();
+			psw_check = true; // force S0C1: Diagnose is not a supported instruction on z390
+			break;
 		case 0x84: // 1560 "84" "BRXH" "RSI"
 			psw_check = false;
 			ins_setup_rsi();
@@ -2982,7 +2982,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_si();
 			if (tz390.opt_protect // RPI 538
-					&& bd1_loc < psa_len){ 
+					&& bd1_loc < psa_len){
 					set_psw_check(psw_pic_addr);
 					break;
 				}
@@ -3002,7 +3002,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_si();
 			if (tz390.opt_protect // RPI 538
-					&& bd1_loc < psa_len){ 
+					&& bd1_loc < psa_len){
 					set_psw_check(psw_pic_addr);
 					break;
 			}
@@ -3023,7 +3023,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_si();
 			if (tz390.opt_protect // RPI 538
-					&& bd1_loc < psa_len){ 
+					&& bd1_loc < psa_len){
 					set_psw_check(psw_pic_addr);
 					break;
 				}
@@ -3039,7 +3039,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_si();
 			if (tz390.opt_protect // RPI 538
-					&& bd1_loc < psa_len){ 
+					&& bd1_loc < psa_len){
 					set_psw_check(psw_pic_addr);
 					break;
 				}
@@ -3069,62 +3069,62 @@ public class pz390 {
 			}
 			break;
 		case 0x99: // 1790 "99" "TRACE" "RS"
-            psw_check = false;
-            ins_setup_rs();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
-		case 0x9A: // 1800 "9A" "LAM" "RS"
-            psw_check = false;                                       // RPI 2003
+			psw_check = false;
 			ins_setup_rs();
-            rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
-            rf3 >>= 1;                                               // RPI 2003
-            if (rf1 > rf3) {                                         // RPI 2003
-                while (rf1 < ar_reg_len) {                           // RPI 2003
-                    ar_reg.putInt(rf1, mem.getInt(bd2_loc));         // RPI 2003
-                    bd2_loc = bd2_loc + 4;                           // RPI 2003
-                    rf1 = rf1 + 4;                                   // RPI 2003
-                }                                                    // RPI 2003
-                rf1 = 0;                                             // RPI 2003
-            }                                                        // RPI 2003
-            while (rf1 <= rf3) {                                     // RPI 2003
-                ar_reg.putInt(rf1, mem.getInt(bd2_loc));             // RPI 2003
-                bd2_loc = bd2_loc + 4;                               // RPI 2003
-                rf1 = rf1 + 4;                                       // RPI 2003
-            }                                                        // RPI 2003
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
+		case 0x9A: // 1800 "9A" "LAM" "RS"
+			psw_check = false;                                       // RPI 2003
+			ins_setup_rs();
+			rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
+			rf3 >>= 1;                                               // RPI 2003
+			if (rf1 > rf3) {                                         // RPI 2003
+				while (rf1 < ar_reg_len) {                           // RPI 2003
+					ar_reg.putInt(rf1, mem.getInt(bd2_loc));         // RPI 2003
+					bd2_loc = bd2_loc + 4;                           // RPI 2003
+					rf1 = rf1 + 4;                                   // RPI 2003
+				}                                                    // RPI 2003
+				rf1 = 0;                                             // RPI 2003
+			}                                                        // RPI 2003
+			while (rf1 <= rf3) {                                     // RPI 2003
+				ar_reg.putInt(rf1, mem.getInt(bd2_loc));             // RPI 2003
+				bd2_loc = bd2_loc + 4;                               // RPI 2003
+				rf1 = rf1 + 4;                                       // RPI 2003
+			}                                                        // RPI 2003
 			break;
 		case 0x9B: // 1810 "9B" "STAM" "RS"
-            psw_check = false;                                       // RPI 2003
+			psw_check = false;                                       // RPI 2003
 			ins_setup_rs();
-            rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
-            rf3 >>= 1;                                               // RPI 2003
-            if (rf1 > rf3) {                                         // RPI 2003
-                while (rf1 < ar_reg_len) {                           // RPI 2003
-                    mem.putInt(bd2_loc, ar_reg.getInt(rf1));         // RPI 2003
-                    bd2_loc = bd2_loc + 4;                           // RPI 2003
-                    rf1 = rf1 + 4;                                   // RPI 2003
-                }                                                    // RPI 2003
-                rf1 = 0;                                             // RPI 2003
-            }                                                        // RPI 2003
-            while (rf1 <= rf3) {                                     // RPI 2003
-                mem.putInt(bd2_loc, ar_reg.getInt(rf1));             // RPI 2003
-                bd2_loc = bd2_loc + 4;                               // RPI 2003
-                rf1 = rf1 + 4;                                       // RPI 2003
-            }                                                        // RPI 2003
+			rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
+			rf3 >>= 1;                                               // RPI 2003
+			if (rf1 > rf3) {                                         // RPI 2003
+				while (rf1 < ar_reg_len) {                           // RPI 2003
+					mem.putInt(bd2_loc, ar_reg.getInt(rf1));         // RPI 2003
+					bd2_loc = bd2_loc + 4;                           // RPI 2003
+					rf1 = rf1 + 4;                                   // RPI 2003
+				}                                                    // RPI 2003
+				rf1 = 0;                                             // RPI 2003
+			}                                                        // RPI 2003
+			while (rf1 <= rf3) {                                     // RPI 2003
+				mem.putInt(bd2_loc, ar_reg.getInt(rf1));             // RPI 2003
+				bd2_loc = bd2_loc + 4;                               // RPI 2003
+				rf1 = rf1 + 4;                                       // RPI 2003
+			}                                                        // RPI 2003
 			break;
-        case 0xA4:               // RPI VF01
-                ins_A4XX_VF();   // RPI VF01
-                break;           // RPI VF01
+		case 0xA4:               // RPI VF01
+				ins_A4XX_VF();   // RPI VF01
+				break;           // RPI VF01
 		case 0xA5:
 			ins_A5XX();
 			break;
-        case 0xA6:               // RPI VF01
-                ins_A6XX_VF();   // RPI VF01
-                break;           // RPI VF01
+		case 0xA6:               // RPI VF01
+				ins_A6XX_VF();   // RPI VF01
+				break;           // RPI VF01
 		case 0xA7:
 			ins_A7XX();
 			break;
@@ -3151,48 +3151,48 @@ public class pz390 {
 			exec_clcle();
 			break;
 		case 0xAC: // 2520 "AC" "STNSM" "SI"
-            psw_check = false;
-            ins_setup_si();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_si();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xAD: // 2530 "AD" "STOSM" "SI"
-            psw_check = false;
-            ins_setup_si();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_si();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xAE: // 2540 "AE" "SIGP" "RS"
-            psw_check = false;
-            ins_setup_rs();
-             if (psw_problem_state == psw_problem_mode)
-                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                 } // in problem state issue privileged-operation exception, otherwise no-op as we do not support multiple CPUs
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rs();
+			 if (psw_problem_state == psw_problem_mode)
+				{set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				 } // in problem state issue privileged-operation exception, otherwise no-op as we do not support multiple CPUs
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xAF: // 2550 "AF" "MC" "SI"
 			ins_setup_si();
 			break;
 		case 0xB1: // 2560 "B1" "LRA" "RX"
-            psw_check = false;
-            ins_setup_rx();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rx();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xB2:
 			ins_B2XX();
 			break;
@@ -3200,25 +3200,25 @@ public class pz390 {
 			ins_B3XX();
 			break;
 		case 0xB6: // 4430 "B6" "STCTL" "RS"
-            psw_check = false;
-            ins_setup_rs();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rs();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xB7: // 4440 "B7" "LCTL" "RS"
-            psw_check = false;
-            ins_setup_rs();
-             if (psw_problem_state == psw_problem_mode)
-                {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                 } // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rs();
+			 if (psw_problem_state == psw_problem_mode)
+				{set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				 } // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xB9:
 			ins_B9XX();
 			break;
@@ -3300,7 +3300,7 @@ public class pz390 {
 			break; // RPI 606
 		case 0xCC: // "CC6" "BRCTH" "RIL" RPI 1125 Z196
 			ins_CCXX();
-			break; 	
+			break;
 		case 0xD0: // 5230 "D0" "TRTR" "SS"
 			psw_check = false;
 			ins_setup_ss();
@@ -3547,35 +3547,35 @@ public class pz390 {
 			}
 			break;
 		case 0xD9: // 5310 "D9" "MVCK" "SS"
-            psw_check = false;
-            ins_setup_ss();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_ss();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xDA: // 5320 "DA" "MVCP" "SS"
-            psw_check = false;
-            ins_setup_ss();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_ss();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xDB: // 5330 "DB" "MVCS" "SS"
-            psw_check = false;
-            ins_setup_ss();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_ss();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xDC: // 5340 "DC" "TR" "SS"
 			psw_check = false;
 			ins_setup_ss();
@@ -3631,9 +3631,9 @@ public class pz390 {
 		case 0xE3:
 			ins_E3XX();  // RPI 1207
 			break;
-        case 0xE4:               // RPI VF01
-                ins_E4XX_VF();   // RPI VF01
-                break;           // RPI VF01
+		case 0xE4:               // RPI VF01
+				ins_E4XX_VF();   // RPI VF01
+				break;           // RPI VF01
 		case 0xE5:
 			ins_E5XX();
 			break;
@@ -3973,51 +3973,51 @@ public class pz390 {
 			 * block address Notes: 1. Map functions 0x00-0x43 to timing
 			 * functions 0x80-C3 in svc 11
 			 */
-            psw_check = false;
-            ins_setup_e();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {reg.put(rf1 + 7, (byte) (reg.get(rf1 + 7) | 0x80 - 0x80));
-                sz390.svc(11);
-                }
-                break;
+			psw_check = false;
+			ins_setup_e();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {reg.put(rf1 + 7, (byte) (reg.get(rf1 + 7) | 0x80 - 0x80));
+				sz390.svc(11);
+				}
+				break;
 		case 0x07: // 30 "0107" "SCKPF" "E"
-            psw_check = false;
-            ins_setup_e();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_e();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x0A: // 40 "010A" "PFPO" "E"   RPI 1013
 			psw_check = false;
 			ins_setup_e();
 			exec_pfpo();
-			break;	
+			break;
 		case 0x0B: // 40 "010B" "TAM" "E"
-            psw_check = false;                                       // RPI 2004
+			psw_check = false;                                       // RPI 2004
 			ins_setup_e();
-            if (psw_extended_amode_bit == psw_extended_amode64_on)   // RPI 2004
-            {                                                        // RPI 2004
-                psw_cc = psw_cc3;  // amode 64                       // RPI 2004
-            }                                                        // RPI 2004
-            else if (psw_amode_bit == psw_amode31_bit)               // RPI 2004
-            {                                                        // RPI 2004
-                psw_cc = psw_cc1;  // amode 31                       // RPI 2004
-            }                                                        // RPI 2004
-            else if (psw_amode_bit == psw_amode24_bit)               // RPI 2004
-            {                                                        // RPI 2004
-                psw_cc = psw_cc0;  // amode 24                       // RPI 2004
-            }                                                        // RPI 2004
-            else // invalid amode setting; PoO says causes an early  // RPI 2004
-                 // PSW specification exception to be recognized     // RPI 2004
-            {                                                        // RPI 2004
-                psw_check = true;  // S0C1                           // RPI 2004
-            }                                                        // RPI 2004
+			if (psw_extended_amode_bit == psw_extended_amode64_on)   // RPI 2004
+			{                                                        // RPI 2004
+				psw_cc = psw_cc3;  // amode 64                       // RPI 2004
+			}                                                        // RPI 2004
+			else if (psw_amode_bit == psw_amode31_bit)               // RPI 2004
+			{                                                        // RPI 2004
+				psw_cc = psw_cc1;  // amode 31                       // RPI 2004
+			}                                                        // RPI 2004
+			else if (psw_amode_bit == psw_amode24_bit)               // RPI 2004
+			{                                                        // RPI 2004
+				psw_cc = psw_cc0;  // amode 24                       // RPI 2004
+			}                                                        // RPI 2004
+			else // invalid amode setting; PoO says causes an early  // RPI 2004
+				 // PSW specification exception to be recognized     // RPI 2004
+			{                                                        // RPI 2004
+				psw_check = true;  // S0C1                           // RPI 2004
+			}                                                        // RPI 2004
 			break;
 		case 0x0C: // 50 "010C" "SAM24" "E"
 			psw_check = false;
@@ -4035,21 +4035,21 @@ public class pz390 {
 			set_psw_amode(psw_amode31_bit | psw_extended_amode64_bit); // RPI 1506
 			break;
 		case 0xFF: // 80 "01FF" "TRAP2" "E"
-            psw_check = false;
-            ins_setup_e();
-            set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception as we have no DUCT
-            break;
+			psw_check = false;
+			ins_setup_e();
+			set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception as we have no DUCT
+			break;
 		}
 	}
-    private void ins_A4XX_VF(){ // RPI VF01 new routine to support A4xx opcodes for vector facility
-            opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
-            switch (opcode2) {
-            case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
-                    psw_check = false;
-                    ins_setup_vs();
-                    break;
-            }
-    } // RPI VF01 end of new routine to support A4xx opcodes for vector facility
+	private void ins_A4XX_VF(){ // RPI VF01 new routine to support A4xx opcodes for vector facility
+			opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
+			switch (opcode2) {
+			case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
+					psw_check = false;
+					ins_setup_vs();
+					break;
+			}
+	} // RPI VF01 end of new routine to support A4xx opcodes for vector facility
 	private void ins_A5XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ri] & 0x0f;
 		switch (opcode2) {
@@ -4183,24 +4183,24 @@ public class pz390 {
 			break;
 		}
 	}
-    private void ins_A5XX_VF(){ // RPI VF01 new routine to support A5xx opcodes for vector facility
-            opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
-            switch (opcode2) {
-            case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
-                    psw_check = false;
-                    ins_setup_vs();
-                    break;
-            }
-    } // RPI VF01 end of new routine to support A5xx opcodes for vector facility
-    private void ins_A6XX_VF(){ // RPI VF01 new routine to support A6xx opcodes for vector facility
-            opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
-            switch (opcode2) {
-            case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
-                    psw_check = false;
-                    ins_setup_vs();
-                    break;
-            }
-    } // RPI VF01 end of new routine to support A6xx opcodes for vector facility
+	private void ins_A5XX_VF(){ // RPI VF01 new routine to support A5xx opcodes for vector facility
+			opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
+			switch (opcode2) {
+			case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
+					psw_check = false;
+					ins_setup_vs();
+					break;
+			}
+	} // RPI VF01 end of new routine to support A5xx opcodes for vector facility
+	private void ins_A6XX_VF(){ // RPI VF01 new routine to support A6xx opcodes for vector facility
+			opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
+			switch (opcode2) {
+			case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
+					psw_check = false;
+					ins_setup_vs();
+					break;
+			}
+	} // RPI VF01 end of new routine to support A6xx opcodes for vector facility
 	private void ins_A7XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ri] & 0x0f;
 		switch (opcode2) {
@@ -4309,25 +4309,25 @@ public class pz390 {
 		opcode2 = mem_byte[psw_loc + opcode2_offset_s] & 0xff;
 		switch (opcode2) {
 		case 0x02: // 2570 "B202" "STIDP" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception
-            else // supervisor mode applies
-               {mem.putLong(bd2_loc, cpu_id);
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception
+			else // supervisor mode applies
+			   {mem.putLong(bd2_loc, cpu_id);
+				}
+			break;
 		case 0x04: // 2580 "B204" "SCK" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x05: // 2590 "B205" "STCK" "S"
 			psw_check = false;
 			ins_setup_s();
@@ -4354,105 +4354,105 @@ public class pz390 {
 			mem.putLong(bd2_loc, last_stck);
 			break;
 		case 0x06: // 2600 "B206" "SCKC" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x07: // 2610 "B207" "STCKC" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x08: // 2620 "B208" "SPT" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x09: // 2630 "B209" "STPT" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement thsi instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement thsi instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x0A: // 2640 "B20A" "SPKA" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x0B: // 2650 "B20B" "IPK" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage protection
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no storage protection
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x0D: // 2660 "B20D" "PTLB" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no TLB implemented
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no TLB implemented
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x10: // 2670 "B210" "SPX" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no real/absolute storage distinction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no real/absolute storage distinction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x11: // 2680 "B211" "STPX" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no support for real vs. absolute storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no support for real vs. absolute storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x12: // 2690 "B212" "STAP" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no CPU address
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no CPU address
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x18: // 2700 "B218" "PC" "S"
 			psw_check = false;
 			ins_setup_s();
@@ -4460,30 +4460,30 @@ public class pz390 {
 			set_psw_loc(bd2_loc);
 			break;
 		case 0x19: // 2710 "B219" "SAC" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x1A: // 2720 "B21A" "CFC" "S"
-            psw_check = false;
-            ins_setup_s();
-            psw_check = true; // force S0C1 until we have a proper implementation
-            break;
+			psw_check = false;
+			ins_setup_s();
+			psw_check = true; // force S0C1 until we have a proper implementation
+			break;
 		case 0x21: // 2730 "B221" "IPTE" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x22: // 2740 "B222" "IPM" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -4492,100 +4492,100 @@ public class pz390 {
 			reg.putInt(rf1 + 4, rv1 | (int_work << 24)); // RPI106
 			break;
 		case 0x23: // 2750 "B223" "IVSK" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x24: // 2760 "B224" "IAC" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x25: // 2770 "B225" "SSAR" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception
+			break;
 		case 0x26: // 2780 "B226" "EPAR" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x27: // 2790 "B227" "ESAR" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x28: // 2800 "B228" "PT" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception when attempting to set supervisor mode
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception when attempting to set supervisor mode
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x29: // 2810 "B229" "ISKE" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x2A: // 2820 "B22A" "RRBE" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x2B: // 2830 "B22B" "SSKE" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x2C: // 2840 "B22C" "TB" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x2D: // 2850 "B22D" "DXR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -4593,7 +4593,7 @@ public class pz390 {
 			fp_rbdv2 = fp_get_bd_from_lh(fp_reg, rf2);
 			if (fp_rbdv2.signum() != 0) {
 				fp_rbdv1 = fp_rbdv1
-				         .divide(fp_rbdv2, fp_lxg_context); // RPI 821 
+				         .divide(fp_rbdv2, fp_lxg_context); // RPI 821
 			} else {
 				fp_rbdv1 = BigDecimal.ZERO; // RPI 824
 			}
@@ -4601,155 +4601,155 @@ public class pz390 {
 			check_lh_div();
 			break;
 		case 0x2E: // 2860 "B22E" "PGIN" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x2F: // 2870 "B22F" "PGOUT" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x30: // 2880 "B230" "CSCH" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x31: // 2890 "B231" "HSCH" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x32: // 2900 "B232" "MSCH" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x33: // 2910 "B233" "SSCH" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x34: // 2920 "B234" "STSCH" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x35: // 2930 "B235" "TSCH" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x36: // 2940 "B236" "TPI" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x37: // 2950 "B237" "SAL" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x38: // 2960 "B238" "RSCH" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x39: // 2970 "B239" "STCRW" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x3A: // 2980 "B23A" "STCPS" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x3B: // 2990 "B23B" "RCHP" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x3C: // 3000 "B23C" "SCHM" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x40: // 3010 "B240" "BAKR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -4779,30 +4779,30 @@ public class pz390 {
 			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
 			break;
 		case 0x46: // 3050 "B246" "STURA" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x47: // 3060 "B247" "MSTA" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            set_psw_check(psw_pic_spec_op); // force special-operation exception until we have a proper implementation
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			set_psw_check(psw_pic_spec_op); // force special-operation exception until we have a proper implementation
+			break;
 		case 0x48: // 3070 "B248" "PALB" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no ALB implemented
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no ALB implemented
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x49: // 3080 "B249" "EREG" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -4847,20 +4847,20 @@ public class pz390 {
 			}
 			break;
 		case 0x4B: // 3100 "B24B" "LURA" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x4C: // 3110 "B24C" "TAR" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            psw_check = true; // force S0C1 until we have a proper implementation
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			psw_check = true; // force S0C1 until we have a proper implementation
+			break;
 		case 0x4D: // 3120 "B24D" "CPYA" "RRE"
 			psw_check = false; // RPI 1055
 			ins_setup_rre();
@@ -4877,31 +4877,31 @@ public class pz390 {
 			reg.putInt(rf1 + 4,ar_reg.getInt(rf2 >> 1)); // RPI 1055
 			break;
 		case 0x50: // 3150 "B250" "CSP" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no ALB
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                // We could  implement this instruction as a compare-and-swap
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no ALB
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				// We could  implement this instruction as a compare-and-swap
+				}
+			break;
 		case 0x52: // 3160 "B252" "MSR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
 			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) * reg.getInt(rf2 + 4));
 			break;
 		case 0x54: // 3170 "B254" "MVPG" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x55: // 3180 "B255" "MVST" "RRE"
 			psw_check = false; // RPI 441
 			ins_setup_rre();
@@ -4928,25 +4928,25 @@ public class pz390 {
 			exec_cuse();
 			break;
 		case 0x58: // 3200 "B258" "BSG" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no subspaces groups
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no subspaces groups
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x5A: // 3210 "B25A" "BSA" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no DUCT
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no DUCT
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x5D: // 3220 "B25D" "CLST" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -4958,30 +4958,30 @@ public class pz390 {
 			exec_srst();
 			break;
 		case 0x63: // 3240 "B263" "CMPSC" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            psw_check = true; // force S0C1 until we have a proper implementation
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			psw_check = true; // force S0C1 until we have a proper implementation
+			break;
 		case 0x76: // 3250 "B276" "XSCH" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as all I/O support is done i the java layer
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x77: // 3260 "B277" "RP" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x78: // 3270 "B278" "STCKE" "S"
 			psw_check = false;
 			ins_setup_s();
@@ -5001,15 +5001,15 @@ public class pz390 {
 			mem.putLong(bd2_loc + 8, 0);
 			break;
 		case 0x79: // 3280 "B279" "SACF" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x7C: // 3300 "B27C" "STCKF" "S" Z9-2
 			psw_check = false;
 			ins_setup_s();
@@ -5029,15 +5029,15 @@ public class pz390 {
 			psw_cc = psw_cc0;
 			break;
 		case 0x7D: // 3290 "B27D" "STSI" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x99: // 3300 "B299" "SRNM" "S"
 			psw_check = false;
 			ins_setup_s();
@@ -5053,7 +5053,7 @@ public class pz390 {
 		case 0x9D: // 3320 "B29D" "LFPC" "S"
 			psw_check = false;
 			ins_setup_s();
-            set_fpc_reg(mem.getInt(bd2_loc));
+			set_fpc_reg(mem.getInt(bd2_loc));
 			break;
 		case 0xA5: // 3330 "B2A5" "TRE" "RRE"
 			psw_check = false; // RPI 454
@@ -5095,25 +5095,25 @@ public class pz390 {
 			psw_cc = psw_cc0;
 			break;
 		case 0xB1: // 3380 "B2B1" "STFL" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xB2: // 3390 "B2B2" "LPSWE" "S"
-            psw_check = false;
-            ins_setup_s();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_s();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xB8: // 3300 "B2B8" "SRNMB" "S" RPI 1125
 			psw_check = false;
 			ins_setup_s();
@@ -5123,7 +5123,7 @@ public class pz390 {
 			if (fp_bfp_rnd > 3 && fp_bfp_rnd < 7){
 				set_psw_check(psw_pic_spec);
 			}
-			break;	
+			break;
 		case 0xB9: // 3395 "B2B9" "SRNMT" "S" DFP 56
 			psw_check = false;
 			ins_setup_s();
@@ -5135,37 +5135,37 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_s();
 			set_fpc_reg(mem.getInt(bd2_loc));
-			break;		
+			break;
 		case 0xE8: // "B2E8" "RRFc PPA R1,R2,M3" z15
 			psw_check = false;
 			ins_setup_RRFc();
 			set_fpc_reg(mem.getInt(bd2_loc));
-			break;	
+			break;
 		case 0xEC: // "B2EC" "RRE ETND R1" z15 RPI 2202
 			psw_check = false;
 			ins_setup_rre();
-			reg.putInt(rf1 + 4, 0);  // force nesting to 0 
+			reg.putInt(rf1 + 4, 0);  // force nesting to 0
 			break;
 		case 0xF8: // "B2F8" "TEND" "S"
-            psw_check = false;
-            ins_setup_s0();
-            set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
-            break;
-		case 0xFA: // "B2FA" "IE NIAI I1,I2" z15
-            psw_check = false;
-            ins_setup_ie();
-            psw_check = false; // Force S0C1 for unsupported opcode
-            break;
-		case 0xFC: // "B2FC S 7,72 TABORT D2(B2) z15
-            psw_check = false;
-            ins_setup_s();
+			psw_check = false;
+			ins_setup_s0();
 			set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
-            break;
+			break;
+		case 0xFA: // "B2FA" "IE NIAI I1,I2" z15
+			psw_check = false;
+			ins_setup_ie();
+			psw_check = false; // Force S0C1 for unsupported opcode
+			break;
+		case 0xFC: // "B2FC S 7,72 TABORT D2(B2) z15
+			psw_check = false;
+			ins_setup_s();
+			set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
+			break;
 		case 0xFF: // 3400 "B2FF" "TRAP4" "S"
-            psw_check = false;
-            ins_setup_s();
-            set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception as we have no DUCT
-            break;
+			psw_check = false;
+			ins_setup_s();
+			set_psw_check(psw_pic_spec_op); // RPI 1622 DK Special operation exception as we have no DUCT
+			break;
 		}
 	}
 	private void ins_B3XX(){
@@ -5228,7 +5228,7 @@ public class pz390 {
 			ins_setup_rre();
 			fp_rbdv1 = fp_get_bd_from_db(fp_reg, rf1)
 			         .multiply(fp_get_bd_from_db(fp_reg, rf2), fp_dbg_context).round(
-					           fp_lxg_context); // RPI 821 
+					           fp_lxg_context); // RPI 821
 			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
 			check_lb_mpy();
 			break;
@@ -5412,7 +5412,7 @@ public class pz390 {
 			fp_rdv1 = fp_get_db_from_db(fp_reg, rf2)
 					* fp_get_db_from_db(fp_reg, rf3)
 					- fp_get_db_from_db(fp_reg, rf1); // RPI 834
-			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);			    
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
 			check_db_mpy();
 			break;
 		case 0x24: // 3730 "B324" "LDER" "RRE"
@@ -5476,7 +5476,7 @@ public class pz390 {
 			fp_mpy_unnorm_dh(); // rpi 767 big_int1=long2*long3
 			tz390.fp_exp = tz390.fp_exp - 14; // use low half exponent
 			fp_get_bi_unnorm_dh();
-			fp_add_bi_unnorm_dh(); 
+			fp_add_bi_unnorm_dh();
 			tz390.fp_exp = tz390.fp_exp + 14; // restore exp for LH store
 			fp_put_bi_to_lh_wreg();
 			fp_reg.putLong(rf1,tz390.fp_work_reg.getLong(8));
@@ -5505,7 +5505,7 @@ public class pz390 {
 			fp_long3 = fp_reg.getLong(rf3);
 			fp_mpy_unnorm_dh(); // rpi 767 big_int1=long2*long3
 			fp_get_bi_unnorm_lh();
-			fp_add_bi_unnorm_dh(); 
+			fp_add_bi_unnorm_dh();
 			fp_put_bi_to_lh_wreg();
 			fp_reg.putLong(rf1,tz390.fp_work_reg.getLong(0));
 			fp_reg.putLong(rf1+16,tz390.fp_work_reg.getLong(8));
@@ -5536,7 +5536,7 @@ public class pz390 {
 			fp_mpy_unnorm_dh(); // rpi 767 big_int1=long2*long3
 			fp_get_bi_unnorm_dh();
 			tz390.fp_exp = tz390.fp_exp - 14; // use low half exponent
-			fp_add_bi_unnorm_dh(); 
+			fp_add_bi_unnorm_dh();
 			tz390.fp_exp = tz390.fp_exp + 14; // use low half exponent
 			fp_put_bi_to_lh_wreg();
 			fp_reg.putLong(rf1,tz390.fp_work_reg.getLong(0));
@@ -5638,7 +5638,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			psw_cc = fp_get_lb_comp_cc(fp_get_bd_from_lb(fp_reg, rf1),
-					fp_get_bd_from_lb(fp_reg, rf2)); 
+					fp_get_bd_from_lb(fp_reg, rf2));
 			break;
 		case 0x4A: // 3920 "B34A" "AXBR" "RRE"
 			psw_check = false;
@@ -5648,7 +5648,7 @@ public class pz390 {
 			}
 			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1);
 			fp_rbdv2 = fp_get_bd_from_lb(fp_reg, rf2);
-			fp_rbdv1 = fp_rbdv1.add(fp_rbdv2, fp_lxg_context); // RPI 821 
+			fp_rbdv1 = fp_rbdv1.add(fp_rbdv2, fp_lxg_context); // RPI 821
 			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
 			psw_cc = fp_get_lb_add_sub_cc();
 			break;
@@ -5664,7 +5664,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1).round(fp_lb_rnd_context[fp_bfp_rnd])
-			         .multiply(fp_get_bd_from_lb(fp_reg, rf2).round(fp_lb_rnd_context[fp_bfp_rnd]), fp_lxg_context); // RPI 821 
+			         .multiply(fp_get_bd_from_lb(fp_reg, rf2).round(fp_lb_rnd_context[fp_bfp_rnd]), fp_lxg_context); // RPI 821
 			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
 			check_lb_mpy();
 			break;
@@ -5674,7 +5674,7 @@ public class pz390 {
 			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1);
 			fp_rbdv2 = fp_get_bd_from_lb(fp_reg, rf2);
 			if (fp_rbdv2.signum() != 0) {
-				fp_rbdv1 = fp_rbdv1.divide(fp_rbdv2, fp_lxg_context); // RPI 821 
+				fp_rbdv1 = fp_rbdv1.divide(fp_rbdv2, fp_lxg_context); // RPI 821
 			} else {
 				fp_rbdv1 = BigDecimal.ZERO; // RPI 824
 			}
@@ -5726,16 +5726,16 @@ public class pz390 {
 		case 0x58: // 4000 "B358" "THDER" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			fp_rbdv1 = BigDecimal.valueOf(fp_get_db_from_eb(fp_reg, rf2)); // RPI 821 
-			fp_put_bd(rf1, tz390.fp_dh_type, fp_rbdv1);                // RPI 821 
-			psw_cc = fp_get_dh_comp_cc(fp_rbdv1,BigDecimal.ZERO);      // RPI 821 
+			fp_rbdv1 = BigDecimal.valueOf(fp_get_db_from_eb(fp_reg, rf2)); // RPI 821
+			fp_put_bd(rf1, tz390.fp_dh_type, fp_rbdv1);                // RPI 821
+			psw_cc = fp_get_dh_comp_cc(fp_rbdv1,BigDecimal.ZERO);      // RPI 821
 			break;
 		case 0x59: // 4010 "B359" "THDR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			fp_rbdv1 = BigDecimal.valueOf(fp_get_db_from_db(fp_reg, rf2));// RPI 821 
-			fp_put_bd(rf1, tz390.fp_dh_type, fp_rbdv1);          	  // RPI 821 
-			psw_cc = fp_get_dh_comp_cc(fp_rbdv1,BigDecimal.ZERO);     // RPI 821 
+			fp_rbdv1 = BigDecimal.valueOf(fp_get_db_from_db(fp_reg, rf2));// RPI 821
+			fp_put_bd(rf1, tz390.fp_dh_type, fp_rbdv1);          	  // RPI 821
+			psw_cc = fp_get_dh_comp_cc(fp_rbdv1,BigDecimal.ZERO);     // RPI 821
 			break;
 		case 0x5B: // 4020 "B35B" "DIDBR" "RR4"
 			psw_check = false;
@@ -5817,7 +5817,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			psw_cc = fp_get_lh_comp_cc(fp_get_bd_from_lh(fp_reg, rf1),
-					fp_get_bd_from_lh(fp_reg, rf2)); // RPI 821 
+					fp_get_bd_from_lh(fp_reg, rf2)); // RPI 821
 			break;
 		case 0x70: // 4115 "B370" "LPDFR" "RRE"  14 DFP
 		    psw_check = false;
@@ -5836,7 +5836,7 @@ public class pz390 {
 		    	fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).abs());
 		    } else {
 		    	fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).abs().negate());
-		    }			
+		    }
 			break;
 		case 0x73: // 4115 "B373" "LCDFR" "RRE"  14 DFP
 		    psw_check = false;
@@ -5851,7 +5851,7 @@ public class pz390 {
 		case 0x75: // 4130 "B375" "LZDR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			fp_put_bd(rf1, tz390.fp_dh_type,BigDecimal.ZERO);// RPI 821 
+			fp_put_bd(rf1, tz390.fp_dh_type,BigDecimal.ZERO);// RPI 821
 			break;
 		case 0x76: // 4140 "B376" "LZXR" "RRE"
 			psw_check = false;
@@ -5916,7 +5916,7 @@ public class pz390 {
 			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
 			reset_bfp_alt_mode(); // RPI 1125
-			break;			
+			break;
 		case 0x94: // 4190 "B394" "CEFBR" "RRE"
 			psw_check = false;
 			set_bfp_alt_mode_rr(); // RPI 1125
@@ -6002,7 +6002,7 @@ public class pz390 {
 			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
 			reset_bfp_alt_mode(); // RPI 1125
-			break;				
+			break;
 		case 0x9A: // 4240 "B39A" "CFXBR" "RRF"
 			psw_check = false;
 			set_bfp_alt_mode_rr(); // RPI 1125
@@ -6046,7 +6046,7 @@ public class pz390 {
 			reg.putInt(rf1 + 4, fp_rbdv1.abs().intValue());
 			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
 			reset_bfp_alt_mode(); // RPI 1125
-			break;	
+			break;
 		case 0xA4: // 4250 "B3A4" "CEGBR" "RRE"
 			psw_check = false;
 			set_bfp_alt_mode_rr(); // RPI 1125
@@ -6134,7 +6134,7 @@ public class pz390 {
 			reg.putLong(rf1, fp_rbdv1.abs().longValue());
 			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
 			reset_bfp_alt_mode(); // RPI 1125
-			break;		
+			break;
 		case 0xB4: // 4310 "B3B4" "CEFR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -6143,7 +6143,7 @@ public class pz390 {
 		case 0xB5: // 4320 "B3B5" "CDFR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			fp_put_bd(rf1, tz390.fp_dh_type,BigDecimal.valueOf(reg.getInt(rf2 + 4)));// RPI 821 
+			fp_put_bd(rf1, tz390.fp_dh_type,BigDecimal.valueOf(reg.getInt(rf2 + 4)));// RPI 821
 			break;
 		case 0xB6: // 4330 "B3B6" "CXFR" "RRE"
 			psw_check = false;
@@ -6196,7 +6196,7 @@ public class pz390 {
 		case 0xC6: // 4390 "B3C6" "CXGR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			fp_put_bd(rf1, tz390.fp_lh_type, BigDecimal.valueOf(reg.getLong(rf2))); // RPI 821 
+			fp_put_bd(rf1, tz390.fp_lh_type, BigDecimal.valueOf(reg.getLong(rf2))); // RPI 821
 			break;
 		case 0xC8: // 4400 "B3C8" "CGER" "RRF"
 			psw_check = false;
@@ -6238,10 +6238,10 @@ public class pz390 {
 			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-                     .multiply(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_rnd_context[fp_dfp_rnd]); // RPI 517
-            fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-            check_dd_mpy(); // RPI 820
-            reset_dfp_alt_mode(); // RPI 1125
+					 .multiply(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_rnd_context[fp_dfp_rnd]); // RPI 517
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			check_dd_mpy(); // RPI 820
+			reset_dfp_alt_mode(); // RPI 1125
 			break;
 		case 0xD1: // "DDTR" "B3D1" "RRR" DFP 2
 			psw_check = false;
@@ -6254,16 +6254,16 @@ public class pz390 {
 			} else {
 				fp_rbdv1 = BigDecimal.ZERO; // RPI 824
 			}
-            fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			check_dd_div(); // RPI 820
 			reset_dfp_alt_mode(); // RPI 1125
-            break;
+			break;
 		case 0xD2: // "ADTR" "B3D2" "RRR" DFP 3
 			psw_check = false;
 			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-                       .add(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_rnd_context[fp_dfp_rnd]); // RPI 517
+					   .add(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_rnd_context[fp_dfp_rnd]); // RPI 517
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			psw_cc = fp_get_dfp_add_sub_cc();
 			reset_dfp_alt_mode(); // RPI 1125
@@ -6273,18 +6273,18 @@ public class pz390 {
 			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-                     .subtract(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_rnd_context[fp_dfp_rnd]); // RPI 517
+					 .subtract(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_rnd_context[fp_dfp_rnd]); // RPI 517
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			psw_cc = fp_get_dfp_add_sub_cc();
 			reset_dfp_alt_mode(); // RPI 1125
 			break;
 		case 0xD4: // "LDETR" "B3D4" "RRF4" DFP 5
 			psw_check = false;
-			ins_setup_rrf4();			
+			ins_setup_rrf4();
 			fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf2);
-           	fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
-           	break;
+			break;
 		case 0xD5: // "LEDTR" "B3D5" "RRF4" DFP 6
 			psw_check = false;
 			ins_setup_rrf3();
@@ -6312,7 +6312,7 @@ public class pz390 {
 				fp_rbdv1 = fp_get_bd_rnd_int(fp_dfp_class,mf3);
 				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 				if ((mf4 & 0x2) == 1){
-                   check_bd12_exact();
+				   check_bd12_exact();
 				}
 			}
 			break;
@@ -6321,7 +6321,7 @@ public class pz390 {
 			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-                     .multiply(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_rnd_context[fp_dfp_rnd]);  // RPI 517
+					 .multiply(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_rnd_context[fp_dfp_rnd]);  // RPI 517
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			check_ld_mpy(); // RPI 820
 			reset_dfp_alt_mode(); // RPI 1125
@@ -6347,7 +6347,7 @@ public class pz390 {
 			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-            .add(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_rnd_context[fp_dfp_rnd]); // RPI 517
+			.add(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_rnd_context[fp_dfp_rnd]); // RPI 517
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			psw_cc = fp_get_dfp_add_sub_cc();
 			reset_dfp_alt_mode(); // RPI 1125
@@ -6357,7 +6357,7 @@ public class pz390 {
 			set_dfp_alt_mode_rrr(); // RPI 1125
 			ins_setup_rrr();
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-            .subtract(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_rnd_context[fp_dfp_rnd]); // RPI 517
+			.subtract(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_rnd_context[fp_dfp_rnd]); // RPI 517
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			psw_cc = fp_get_dfp_add_sub_cc();
 			reset_dfp_alt_mode(); // RPI 1125
@@ -6366,9 +6366,9 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rrf4();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2);
-           	fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
-           	break;
+			break;
 		case 0xDD: // "LDXTR" "B3DD" "RRF4" DFP 14
 			psw_check = false;
 			ins_setup_rrf3();
@@ -6395,7 +6395,7 @@ public class pz390 {
 				.divideAndRemainder(BigDecimal.ONE);
 				fp_rbdv1 = fp_get_bd_rnd_int(fp_dfp_class,mf3);
 				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-				if ((mf4 & 0x2) == 1 
+				if ((mf4 & 0x2) == 1
 					&& fp_rbdv1.compareTo(fp_rbdv2) != 0){
 					fp_dxc = fp_dxc_it; // raise inexact
 					set_psw_check(psw_pic_data);
@@ -6405,7 +6405,7 @@ public class pz390 {
 		case 0xE0: // "KDTR" "B3E0" "RRE" DFP 17
 			psw_check = false;
 			ins_setup_rre();
-            fp_signal = true;
+			fp_signal = true;
 			psw_cc = fp_get_dd_comp_cc(
 				fp_get_bd_from_dd(fp_reg, rf1),
 				fp_get_bd_from_dd(fp_reg, rf2));
@@ -6418,8 +6418,8 @@ public class pz390 {
 			                .divideAndRemainder(BigDecimal.ONE);
 			if (fp_bd_int_rem[0].compareTo(bd_max_pos_long) != 1
 			 && fp_bd_int_rem[0].compareTo(bd_min_neg_long) != -1){ // RPI 791
-				big_int1 = fp_get_bd_rnd_int(fp_dfp_class,mf3) 
-			           .toBigInteger();	// RPI 527			
+				big_int1 = fp_get_bd_rnd_int(fp_dfp_class,mf3)
+			           .toBigInteger();	// RPI 527
 				rlv1 = big_int1.longValue(); // RPI 540
 				reg.putLong(rf1, rlv1);
 				psw_cc = get_long_comp_cc(rlv1,0);
@@ -6453,7 +6453,7 @@ public class pz390 {
 		case 0xE4: // "CDTR" "B3E4" "RRE" DFP 21
 			psw_check = false;
 			ins_setup_rre();
-            fp_signal = false;
+			fp_signal = false;
 			psw_cc = fp_get_dd_comp_cc(
 				fp_get_bd_from_dd(fp_reg, rf1),
 				fp_get_bd_from_dd(fp_reg, rf2));
@@ -6462,9 +6462,9 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2);
-            reg.putLong(rf1,tz390.fp_exp_bias[tz390.fp_dd_type]
-                        - fp_rbdv1.scale()); 
-            break;
+			reg.putLong(rf1,tz390.fp_exp_bias[tz390.fp_dd_type]
+						- fp_rbdv1.scale());
+			break;
 		case 0xE7: // "ESDTR" "B3E7" "RRE" DFP 23
 			psw_check = false;
 			ins_setup_rre();
@@ -6476,12 +6476,12 @@ public class pz390 {
 			if (rv1 == 1 && tz390.dfp_digits.charAt(0) == '0'){
 				rv1 = 0;
 			}
-            reg.putLong(rf1,rv1);
+			reg.putLong(rf1,rv1);
 			break;
 		case 0xE8: // "KXTR" "B3E8" "RRE" DFP 24
 			psw_check = false;
 			ins_setup_rre();
-            fp_signal = true;
+			fp_signal = true;
 			psw_cc = fp_get_ld_comp_cc(
 				fp_get_bd_from_ld(fp_reg, rf1),
 				fp_get_bd_from_ld(fp_reg, rf2));
@@ -6491,11 +6491,11 @@ public class pz390 {
 			set_dfp_alt_mode_rr(); // RPI 1125 RPI 1158
 			ins_setup_rrfe();
 			fp_bd_int_rem = fp_get_bd_from_ld(fp_reg, rf2)
-            .divideAndRemainder(BigDecimal.ONE);
+			.divideAndRemainder(BigDecimal.ONE);
 			if (fp_bd_int_rem[0].compareTo(bd_max_pos_long) != 1
-             && fp_bd_int_rem[0].compareTo(bd_min_neg_long) != -1){ // RPI 791
-				big_int1 = fp_get_bd_rnd_int(fp_dfp_class,mf3) 
-				           .toBigInteger();	// RPI 527			
+			 && fp_bd_int_rem[0].compareTo(bd_min_neg_long) != -1){ // RPI 791
+				big_int1 = fp_get_bd_rnd_int(fp_dfp_class,mf3)
+				           .toBigInteger();	// RPI 527
 				rlv1 = big_int1.longValue(); // RPI 540
 				reg.putLong(rf1, rlv1);
 				psw_cc = get_long_comp_cc(rlv1,0);
@@ -6529,7 +6529,7 @@ public class pz390 {
 		case 0xEC: // "CXTR" "B3EC" "RRE" DFP 28
 			psw_check = false;
 			ins_setup_rre();
-            fp_signal = false;
+			fp_signal = false;
 			psw_cc = fp_get_ld_comp_cc(
 				fp_get_bd_from_ld(fp_reg, rf1),
 				fp_get_bd_from_ld(fp_reg, rf2));
@@ -6538,8 +6538,8 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2);
-            reg.putLong(rf1,tz390.fp_exp_bias[tz390.fp_ld_type]
-                        - fp_rbdv1.scale());  
+			reg.putLong(rf1,tz390.fp_exp_bias[tz390.fp_ld_type]
+						- fp_rbdv1.scale());
 			break;
 		case 0xEF: // "ESXTR" "B3EF" "RRE" DFP 30
 			psw_check = false;
@@ -6562,7 +6562,7 @@ public class pz390 {
 			fp_rbdv1 = fp_rbdv2.round(fp_dd_rnd_context[fp_dfp_rnd]);
 			if (fp_rbdv1.compareTo(fp_rbdv2) != 0){
 				fp_dxc = fp_dxc_it;
-				set_psw_check(psw_pic_data);	
+				set_psw_check(psw_pic_data);
 			}
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			reset_dfp_alt_mode(); // RPI 1125 RPI 1158
@@ -6607,7 +6607,7 @@ public class pz390 {
 	        } else {
 	        	fp_rbdv1 = fp_rbdv1.round(fp_dd_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf4)]);
 	        }
-            check_bd12_exact();
+			check_bd12_exact();
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			break;
 		case 0xF6: // "IEDTR" "B3F6" "RRFe" DFP 36
@@ -6693,7 +6693,7 @@ public class pz390 {
 	        } else {
 	        	fp_rbdv1 = fp_rbdv1.round(fp_dd_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf4)]);
 	        }
-            check_bd12_exact();
+			check_bd12_exact();
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			break;
 		case 0xFE: // "IEXTR" "B3FE" "RRFe" DFP 43
@@ -6804,15 +6804,15 @@ public class pz390 {
 			reg.putLong(rf1, reg.getLong(rf2));
 			break;
 		case 0x05: // 4500 "B905" "LURAG" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x06: // 4600 "B906" "LGBR" "RRE" Z9-10
 			psw_check = false;
 			ins_setup_rre();
@@ -6906,8 +6906,8 @@ public class pz390 {
 		case 0x0F: // 4580 "B90F" "LRVGR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			
-			work_reg.putLong(0, reg.getLong(rf2)); // RPI 1200			
+
+			work_reg.putLong(0, reg.getLong(rf2)); // RPI 1200
 			rflen = 7;
 			while (rflen >= 0) {
 				reg.put(rf1 + rflen, work_reg.get(7 - rflen)); // RPI 1200
@@ -7029,7 +7029,7 @@ public class pz390 {
 		case 0x1F: // 4730 "B91F" "LRVR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			work_reg.putInt(0, reg.getInt(rf2 + 4)); // RPI 1200			
+			work_reg.putInt(0, reg.getInt(rf2 + 4)); // RPI 1200
 			rflen = 3;
 			while (rflen >= 0) {
 				reg.put(rf1 + 4 + rflen, work_reg.get(3 - rflen)); // rpi 1200
@@ -7048,15 +7048,15 @@ public class pz390 {
 					.getLong(rf2));
 			break;
 		case 0x25: // 4760 "B925" "STURG" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x26: // 4880 "B926" "LBR" "RRE" Z9-12
 			psw_check = false;
 			ins_setup_rre();
@@ -7068,20 +7068,20 @@ public class pz390 {
 			reg.putInt(rf1 + 4, reg.getShort(rf2 + 6));
 			break;
 		case 0x28: // "B928" "PCKMO" "RRE" RPI 1125
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x29: //  "B929=KMA,54,340", // B929 RRFb 54,340 KMA R1,M3,R2 RPI 2202
-            psw_check = false;
-            ins_setup_rrfb();
-            psw_check = true; // force S0C1 for unsupported opcode
-            break;
+			psw_check = false;
+			ins_setup_rrfb();
+			psw_check = true; // force S0C1 for unsupported opcode
+			break;
 		case 0x2A: // "B92A" "KMF" "RRE" RPI 1125
 			ins_setup_rre();
 			break;
@@ -7093,7 +7093,7 @@ public class pz390 {
 			break;
 		case 0x2D: // "B92D" "KMCTR" "RRF" RPI 1125
 			ins_setup_rrd();
-			break;	
+			break;
 		case 0x2E: // 4770 "B92E" "KM" "RRE"
 			ins_setup_rre();
 			break;
@@ -7114,13 +7114,13 @@ public class pz390 {
 			break;
 		case 0x39: // B939 RRFa 36,360 DFLTCC R1,R2,R3 RPI 2202
 			ins_setup_rrfa();
-			break;			
+			break;
 		case 0x3A: //  "B93A RRE 14,144 KDSA R1,R2 RPI 2202"
 			ins_setup_rre();
-			break;	
+			break;
 		case 0x3C:  // B93C RRE 14,144 PRNO R1,R2 RPI 2202
 			ins_setup_rre();
-			break;	
+			break;
 		case 0x3E: // 4810 "B93E" "KIMD" "RRE"
 			ins_setup_rre();
 			break;
@@ -7137,7 +7137,7 @@ public class pz390 {
 			reg.putInt(rf1 + 4, fp_get_bd_rnd_int(fp_dfp_class,mf3).intValue());
 			psw_cc = get_int_comp_cc(fp_rbdv1.signum(), 0);
 			reset_dfp_alt_mode(); // RPI 1125
-			break;	
+			break;
 		case 0x42: // "B942" "CLGDTR" "RRF3" r1,m4,r2,m4 RPI 1125
 			psw_check = false;
 			set_dfp_alt_mode_rr(); // RPI 1125
@@ -7229,7 +7229,7 @@ public class pz390 {
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
 			reset_dfp_alt_mode(); // RPI 1125
-			break;	
+			break;
 		case 0x59: // "B959" "CXFTR" "RRF3" r1,m4,r2,m4 RPI 1125
 			psw_check = false;
 			set_dfp_alt_mode_rr(); // RPI 1125
@@ -7260,9 +7260,9 @@ public class pz390 {
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
 			reset_dfp_alt_mode(); // RPI 1125
-			break;		
+			break;
 		case 0x60:  // 10 "B960" "CGRT" "RRFc" RPI 817
-			psw_check = false; 
+			psw_check = false;
 			ins_setup_RRFc();
 			 if ((mf3 & get_long_comp_cc(reg.getLong(rf1), reg.getLong(rf2)))
 					!= 0){
@@ -7362,7 +7362,7 @@ public class pz390 {
 				} else {
 					psw_cc = psw_cc1;
 				}
-				break;		
+				break;
 	     case 0x76: // "B976" "NORK" R1,R2,R3 RPI 2202
 				psw_check = false;
 				ins_setup_rrr(); // dsh rpi 2202
@@ -7495,40 +7495,40 @@ public class pz390 {
 			psw_cc = get_long_log_sub_cc();
 			break;
 		case 0x8A: // 4910 "B98A" "CSPG" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no ALB
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                } // We could  implement this instruction as a compare-and-swap
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no ALB
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				} // We could  implement this instruction as a compare-and-swap
+			break;
 		case 0x8D: // 4920 "B98D" "EPSW" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            psw_check = true; // Force S0C1 for unsupported opcode
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			psw_check = true; // Force S0C1 for unsupported opcode
+			break;
 		case 0x8E: // 4930 "B98E" "IDTE" "RRF"
-            psw_check = false;
-            ins_setup_rrfe();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no DAT
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rrfe();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no DAT
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x8F: // 	"B98F=CRDTE,54,344", // B98F rrfb 54,344 CRDTE R1,R3,R2[,M4] RPI 2202
-            psw_check = false;
-            ins_setup_rrfb();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no DAT
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rrfb();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no DAT
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x90: // 4940 "B990" "TRTT" "RRE"
 			psw_check = false; // RPI 454
 			ins_setup_rre();
@@ -7550,15 +7550,15 @@ public class pz390 {
 			}
 			psw_cc = psw_cc3;
 			while (psw_cc == psw_cc3) {
-                if (bd2_loc >= bd2_end)                    // RPI 1527
-                  {psw_cc = psw_cc0;                       // RPI 1527
-                   }                                       // RPI 1527
-                else {                                     // RPI 1527
+				if (bd2_loc >= bd2_end)                    // RPI 1527
+				  {psw_cc = psw_cc0;                       // RPI 1527
+				   }                                       // RPI 1527
+				else {                                     // RPI 1527
 				int index = xbd2_loc
 				+ ((mem.getShort(bd2_loc) & 0xffff) << 1); // RPI 580
 				function_byte1 = mem_byte[index];          // RPI 580
 				function_byte2 = mem_byte[index + 1];      // RPI 580
-				if (test_control == 0 
+				if (test_control == 0
 						&& test_byte1 == function_byte1
 						&& test_byte2 == function_byte2) {
 					psw_cc = psw_cc1;
@@ -7597,13 +7597,13 @@ public class pz390 {
 			}
 			psw_cc = psw_cc3;
 			while (psw_cc == psw_cc3) {
-                if (bd2_loc >= bd2_end)             // RPI 1527
-                  {psw_cc = psw_cc0;                // RPI 1527
-                   }                                // RPI 1527
-                else {                              // RPI 1527
+				if (bd2_loc >= bd2_end)             // RPI 1527
+				  {psw_cc = psw_cc0;                // RPI 1527
+				   }                                // RPI 1527
+				else {                              // RPI 1527
 				int index = xbd2_loc + (mem.getShort(bd2_loc) & 0xffff);
 				function_byte1 = mem_byte[index];
-				if (test_control == 0 
+				if (test_control == 0
 					&& test_byte1 == function_byte1) {
 					psw_cc = psw_cc1;
 				} else {
@@ -7638,14 +7638,14 @@ public class pz390 {
 			bd2_end = bd2_loc + reg.getInt(rf1 + 12);
 			psw_cc = psw_cc3;
 			while (psw_cc == psw_cc3) {
-                if (bd2_loc >= bd2_end)              // RPI 1527
-                  {psw_cc = psw_cc0;                 // RPI 1527
-                   }                                 // RPI 1527
-                else {                               // RPI 1527
+				if (bd2_loc >= bd2_end)              // RPI 1527
+				  {psw_cc = psw_cc0;                 // RPI 1527
+				   }                                 // RPI 1527
+				else {                               // RPI 1527
 				int index = xbd2_loc
 				+ ((mem_byte[bd2_loc] & 0xff) << 1); // RPI 580
 		        function_byte1 = mem_byte[index];    // RPI 580
-		        function_byte2 = mem_byte[index+1];  // RPI 580                               
+		        function_byte2 = mem_byte[index+1];  // RPI 580
 				if (test_control == 0
 					&& test_byte1 == function_byte1
 					&& test_byte2 == function_byte2) {  // RPI 580
@@ -7682,10 +7682,10 @@ public class pz390 {
 			bd2_end = bd2_loc + reg.getInt(rf1 + 12);
 			psw_cc = psw_cc3;
 			while (psw_cc == psw_cc3) {
-                if (bd2_loc >= bd2_end)             // RPI 1527
-                  {psw_cc = psw_cc0;                // RPI 1527
-                   }                                // RPI 1527
-                else {                              // RPI 1527
+				if (bd2_loc >= bd2_end)             // RPI 1527
+				  {psw_cc = psw_cc0;                // RPI 1527
+				   }                                // RPI 1527
+				else {                              // RPI 1527
 				function_byte1 = mem_byte[xbd2_loc  // RPI 580
 												+ (mem_byte[bd2_loc] & 0xff)];
 				if (test_control == 0
@@ -7767,135 +7767,135 @@ public class pz390 {
 			psw_cc = get_int_log_sub_cc();
 			break;
 		case 0x9A: // 5020 "B99A" "EPAIR" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x9B: // 5030 "B99B" "ESAIR" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x9D: // 5040 "B99D" "ESEA" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no DUCT
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no DUCT
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x9E: // 5050 "B99E" "PTI" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception when attempting to set supervisor mode
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception when attempting to set supervisor mode
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x9F: // 5060 "B99F" "SSAIR" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            psw_check = true; // force S0C1 for unsupported opcode
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			psw_check = true; // force S0C1 for unsupported opcode
+			break;
 		case 0xA1:  // B9A1 RRE 14,144 TPEI R1,R2 RPI 2202
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 	     case 0xA2:  // 10 "B9A2" "PTF" "RRE" 14 RPI 817
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no support for multi-cpu topology
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no support for multi-cpu topology
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xAA: // 5250 "B9AA" "LPTEA" "RRF-b" Z9-19
-            psw_check = false;
-            ins_setup_rrf3(); // dsh rpi 2202
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rrf3(); // dsh rpi 2202
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xAC:  // "B9AC=IRBM,14,144", // B9AC RRE 14,144 IRBM R1,R2 RPI 2202
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no reference bits
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no reference bits
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xAE: // "B9AE" "RRBM" "RRE" RPI 1125 Z196
-            psw_check = false;
-            ins_setup_rre();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xAF:  // 20 "B9AF" "PFMF" "RRFc" 39 RPI 817
-            psw_check = false;
-            ins_setup_RRFc();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_RRFc();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0xB0: // 5070 "B9B0" "CU14" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            psw_check = true; // Force S0C1 for unsupported opcode
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			psw_check = true; // Force S0C1 for unsupported opcode
+			break;
 		case 0xB1: // 5080 "B9B1" "CU24" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            psw_check = true; // Force S0C1 for unsupported opcode
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			psw_check = true; // Force S0C1 for unsupported opcode
+			break;
 		case 0xB2: // 5090 "B9B2" "CU41" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            psw_check = true; // Force S0C1 for unsupported opcode
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			psw_check = true; // Force S0C1 for unsupported opcode
+			break;
 		case 0xB3: // 5100 "B9B3" "CU42" "RRE"
-            psw_check = false;
-            ins_setup_rre();
-            psw_check = true; // Force S0C1 for unsupported opcode
-            break;
+			psw_check = false;
+			ins_setup_rre();
+			psw_check = true; // Force S0C1 for unsupported opcode
+			break;
 	     case 0xBD:  // 30 "B9BD" "TRTRE" "RRFc" 39 RPI 817
 	         psw_check = false;
 	    	 ins_setup_RRFc();
 	    	 exec_trt_ext(true);
-	         break;	
+	         break;
 		 case 0xBE: // 5110 "B9BE" "SRSTU" "RRE"
 			ins_setup_rre();
 			break;
@@ -7931,7 +7931,7 @@ public class pz390 {
 				rv3 = rv1 - rv2;
 				reg.putInt(rf1, rv3);
 				psw_cc = get_int_sub_cc();
-				break;		
+				break;
 	     case 0xCA:  // "B9CA" "ALHHHR" R1,R2,R3 RPI 1125 z196
 				psw_check = false;
 				ins_setup_rrr(); // dsh rpi 2202
@@ -7954,7 +7954,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			psw_cc = get_int_comp_cc(reg.getInt(rf1), reg.getInt(rf2));
-			break;	
+			break;
 		case 0xCF: // "B9CF" "CLHHR" "RRE" RPI 1125
 			psw_check = false;
 			ins_setup_rre();
@@ -7970,7 +7970,7 @@ public class pz390 {
 			reg.putInt(rf1, rv3);
 			psw_cc = get_int_add_cc();
 			break;
-     case 0xD9:  // "B9D9" "SHHLR" R1,R2,R3 RPI 1125 z196
+	 case 0xD9:  // "B9D9" "SHHLR" R1,R2,R3 RPI 1125 z196
 			psw_check = false;
 			ins_setup_rrr(); // dsh rpi 2202
 			rv1 = reg.getInt(rf2);
@@ -7978,8 +7978,8 @@ public class pz390 {
 			rv3 = rv1 - rv2;
 			reg.putInt(rf1, rv3);
 			psw_cc = get_int_sub_cc();
-			break;		
-     case 0xDA:  // "B9DA" "ALHHLR" R1,R2,R3 RPI 1125 z196
+			break;
+	 case 0xDA:  // "B9DA" "ALHHLR" R1,R2,R3 RPI 1125 z196
 			psw_check = false;
 			ins_setup_rrr(); // dsh rpi 2202
 			rvw = reg.getInt(rf2);
@@ -7988,7 +7988,7 @@ public class pz390 {
 			reg.putInt(rf1, rv1);
 			psw_cc = get_int_log_add_cc();
 			break;
-     case 0xDB:  // "B9DB" "SLHHLR" R1,R2,R3 RPI 1125 z196
+	 case 0xDB:  // "B9DB" "SLHHLR" R1,R2,R3 RPI 1125 z196
 			psw_check = false;
 			ins_setup_rrr(); // dsh rpi 2202
 			rvw = reg.getInt(rf2);
@@ -7996,18 +7996,18 @@ public class pz390 {
 			rv1 = rvw - rv2;
 			reg.putInt(rf1, rv1);
 			psw_cc = get_int_log_sub_cc();
-			break;	
+			break;
 		case 0xDD: // "B9DD" "CHLR" "RRE" RPI 1125
 			psw_check = false;
 			ins_setup_rre();
 			psw_cc = get_int_comp_cc(reg.getInt(rf1), reg.getInt(rf2+4));
-			break;	
+			break;
 		case 0xDF: // "B9DF" "CLHLR" "RRE" RPI 1125
 			psw_check = false;
 			ins_setup_rre();
 			psw_cc = get_int_log_comp_cc(reg.getInt(rf1), reg
 					.getInt(rf2+4));
-			break;	
+			break;
 	     case 0xE1:  // 5115 "B9E1" "POPCNT" "RRE" 14 RPI 1125
 		     psw_check = false;
 			 ins_setup_RRFc();  // dsh RPI 2202 support optional m3 in format oooom012
@@ -8043,7 +8043,7 @@ public class pz390 {
 				if ((psw_cc & mf3) > 0) {
 					reg.putLong(rf1, reg.getLong(rf2));
 				}
-				break; 
+				break;
 	     case 0xE3: // "B9E3" "SELGR" R1,R2,R3.M4 RPI 2202
 				psw_check = false;
 				ins_setup_rrr(); // dsh rpi 2202
@@ -8053,7 +8053,7 @@ public class pz390 {
 					rlv1 = reg.getLong(rf3);
 				}
 				reg.putLong(rf1, rlv1);
-				break;		
+				break;
 	     case 0xE4: // "B9E4" "NGRK" R1,R2,R3 RPI 1125
 				psw_check = false;
 				ins_setup_rrr(); // dsh rpi 2202
@@ -8140,25 +8140,25 @@ public class pz390 {
 			 if ((mf1 & 1) != 0){ // issue 300 add MGRK
 				set_psw_check(psw_pic_spec);
 			}
-			big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf2, 8)); 
-																			
+			big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf2, 8));
+
 			big_int2 = new BigInteger(get_signed_bytes(reg_byte, rf3, 8));
 			big_int1 = big_int1
 			         .multiply(big_int2);
-			fp_bi_to_wreg(reg_byte,rf1,big_int1, 16); 
+			fp_bi_to_wreg(reg_byte,rf1,big_int1, 16);
 	    	 break;
 	    case 0xED: // "B9ED=MSGRKC,54,340", // B9ED rrfa MSGRKC R1,R2,R3 RPI 2202 #300
 			 psw_check =false;
 	    	           ins_setup_rrfa();
-			 big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf2, 8));												
+			 big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf2, 8));
 			big_int2 = new BigInteger(get_signed_bytes(reg_byte, rf3, 8));
 			big_int1 = big_int1
 			         .multiply(big_int2);
-                             fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
+							 fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
 			 if (big_int1.compareTo(bi_max_pos_long) == 1
-			     || big_int1.compareTo(bi_min_neg_long) == -1) {                  
-			     psw_cc = psw_cc3;   
-                                  set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow                     
+			     || big_int1.compareTo(bi_min_neg_long) == -1) {
+			     psw_cc = psw_cc3;
+								  set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow
 			 } else {
 				switch (big_int1.compareTo(BigInteger.ZERO)) // #300 opt by John G
 				{
@@ -8172,8 +8172,8 @@ public class pz390 {
 					psw_cc = psw_cc0;
 					break;
 				}
-                             } 
-                             break;
+							 }
+							 break;
 	     case 0xF2: // "B9F2" "LOCR" R1,R2,M3 RPI 1125
 				psw_check = false;
 				ins_setup_RRFc();
@@ -8270,7 +8270,7 @@ public class pz390 {
 				rv3 = rv1 - rv2;
 				reg.putInt(rf1+4, rv3);
 				psw_cc = get_int_log_sub_cc();
-				break;		
+				break;
 	       case 0xFD: // "B9FD=MSRKC,54,340", // B9FD rrfa MSRKC R1,R2,R3 RPI 2202
 		          psw_check = false;
 	    	      ins_setup_rrfa();
@@ -8279,15 +8279,15 @@ public class pz390 {
 				  reg.putInt(rf1 + 4, rv1);
 				  if (rlv1 != (long)rv1){
 					  psw_cc = psw_cc3;
-                                                  set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow 
+												  set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow
 				  } else if (rv1 > 0){
 					  psw_cc = psw_cc2;
 				  } else if (rv1 == 0) {
 					  psw_cc = psw_cc0;
 				  } else {
-                      psw_cc = psw_cc1;
+					  psw_cc = psw_cc1;
 				  }
-	    	     break;		
+	    	     break;
 		}
 	}
 	private void ins_C0XX(){
@@ -8376,7 +8376,7 @@ public class pz390 {
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f; // RPI202
 		switch (opcode2) {
 		case 0x0:  // 50 "C20" "MSGFI" "RIL" 16 RPI 817
-	         psw_check = false; 
+	         psw_check = false;
 			 ins_setup_ril();
 			 reg.putLong(rf1, reg.getLong(rf1) * if2);
 	         break;
@@ -8597,10 +8597,10 @@ public class pz390 {
 	     }
 	}
 	private void ins_CCXX(){ // RPI 1125
-		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f; 
+		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f;
 		switch (opcode2) {
 		case 0x6: // "CC6" "BRCTH" "RIL" R1,S2
-			psw_check = false; 
+			psw_check = false;
 			ins_setup_ril();
 			rv1 = reg.getInt(rf1) - 1;
 			reg.putInt(rf1, rv1);
@@ -8609,7 +8609,7 @@ public class pz390 {
 			}
 			break;
 		case 0x8: // "CC8" "AIH" "RIL" R1,S2
-			psw_check = false; 
+			psw_check = false;
 			ins_setup_ril();
 			rv1 = reg.getInt(rf1);
 			rv2 = if2;
@@ -8618,7 +8618,7 @@ public class pz390 {
 			psw_cc = get_int_add_cc();
 			break;
 		case 0xA: // "CC6" "ALSIH" "RIL" R1,S2
-			psw_check = false; 
+			psw_check = false;
 			ins_setup_ril();
 			rvw = reg.getInt(rf1);
 			rv2 = if2;
@@ -8627,7 +8627,7 @@ public class pz390 {
 			psw_cc = get_int_lsi_add_cc();
 			break;
 		case 0xB: // "CC6" "ALSIHN" "RIL" R1,S2
-			psw_check = false; 
+			psw_check = false;
 			ins_setup_ril();
 			rvw = reg.getInt(rf1);
 			rv2 = if2;
@@ -8635,12 +8635,12 @@ public class pz390 {
 			reg.putInt(rf1, rv1);                          // RPI 2009
 			break;
 		case 0xD: // "CC6" "CIH" "RIL" R1,S2
-			psw_check = false; 
+			psw_check = false;
 			ins_setup_ril();
 			psw_cc = get_int_comp_cc(reg.getInt(rf1), if2);
 			break;
 		case 0xF: // "CC6" "CLIH" "RIL" R1,S2
-			psw_check = false; 
+			psw_check = false;
 			ins_setup_ril();
 			psw_cc = get_int_log_comp_cc(reg.getInt(rf1), if2);
 			break;
@@ -8653,7 +8653,7 @@ public class pz390 {
 			psw_check = false; // RPI 606
 			ins_setup_ssf();   // RPI 606
 			if (reg.getInt(r0) == 0){
-				if (rflen > 0 
+				if (rflen > 0
 					&& bd1_loc > bd2_loc
 				    && bd1_loc < bd2_loc + rflen
 				    ){
@@ -8683,25 +8683,25 @@ public class pz390 {
 			if ((mf3 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
-            reg.putInt(rf3+4,mem.getInt(bd1_loc));
-            reg.putInt(rf3+4+8,mem.getInt(bd2_loc));
-		    break;	
+			reg.putInt(rf3+4,mem.getInt(bd1_loc));
+			reg.putInt(rf3+4+8,mem.getInt(bd2_loc));
+		    break;
 		case 0x5: // "C85" "LPDG" "SSF2" RPI 1125
 			psw_check = false; // RPI 606
 			ins_setup_ssf2();   // RPI 606
 			if ((mf3 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
-            reg.putLong(rf3,mem.getLong(bd1_loc));
-            reg.putLong(rf3+8,mem.getLong(bd2_loc));
-		    break;    
+			reg.putLong(rf3,mem.getLong(bd1_loc));
+			reg.putLong(rf3+8,mem.getLong(bd2_loc));
+		    break;
 		}
 	}
 	private void ins_E0X(){
 		/*
 		 * ASSIST extended I/O instructions RPI 812
 		 */
-    	opcode2 = (mem_byte[psw_loc + 1] & 0xf0) >>> 4;
+		opcode2 = (mem_byte[psw_loc + 1] & 0xf0) >>> 4;
 		switch (opcode2) {
 		case 0x00:  // 5375 "E00" "XREAD" "RXSS" 38 RPI 812
 			psw_check = false;
@@ -8741,7 +8741,7 @@ public class pz390 {
 				if (ast_xprnt_tiot == -1){
 					set_psw_check(psw_pic_io);
 				}
-			} 
+			}
 			if (ast_xprnt_tiot >= 0){
 				try {
 					sz390.tiot_file[ast_xprnt_tiot].writeBytes(ast_file_line + tz390.newline);
@@ -8762,7 +8762,7 @@ public class pz390 {
 				if (ast_xpnch_tiot == -1){
 					set_psw_check(psw_pic_io);
 				}
-			} 
+			}
 			if (ast_xpnch_tiot >= 0){
 				try {
 					sz390.tiot_file[ast_xpnch_tiot].writeBytes(ast_file_line + tz390.newline);
@@ -8783,7 +8783,7 @@ public class pz390 {
 				} else {
 					sz390.dump_mem(mem,0,tot_mem);
 				}
-			} else {			
+			} else {
 				sz390.dump_mem(mem,xbd1_loc,bd2_loc);
 			}
 			break;
@@ -8842,7 +8842,7 @@ public class pz390 {
 					psw_cc = psw_cc3;
 					ast_xput_tiot = -2; // prevent opens and just log
 				}
-			} 
+			}
 			if (ast_xput_tiot >= 0){
 				try {
 					sz390.tiot_file[ast_xput_tiot].writeBytes(ast_file_line + tz390.newline);
@@ -8853,8 +8853,8 @@ public class pz390 {
 			break;
 		}
 	}
-    private void ins_E3XX(){   // RPI 1207
-    	opcode2 = mem_byte[psw_loc + opcode2_offset_rxy] & 0xff;
+	private void ins_E3XX(){   // RPI 1207
+		opcode2 = mem_byte[psw_loc + opcode2_offset_rxy] & 0xff;
 		switch (opcode2) {
 		case 0x02: // 5810 "E302" "LTG" "RXY" Z9-42
 			psw_check = false;
@@ -8864,15 +8864,15 @@ public class pz390 {
 			psw_cc = get_long_comp_cc(rlv1, 0);
 			break;
 		case 0x03: // 5400 "E303" "LRAG" "RXY"
-            psw_check = false;
-            ins_setup_rxy();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rxy();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x04: // 5410 "E304" "LG" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -8990,15 +8990,15 @@ public class pz390 {
 			psw_cc = get_int_comp_cc(rv1, 0);
 			break;
 		case 0x13: // 5510 "E313" "LRAY" "RXY"
-            psw_check = false;
-            ins_setup_rxy();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rxy();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x14: // 5520 "E314" "LGF" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -9119,7 +9119,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rxy();
 			mem.putLong(xbd2_loc & psw_amode, reg.getLong(rf1));
-			break;	
+			break;
 		case 0x26: // 5670 "E326" "CVDY" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -9162,7 +9162,7 @@ public class pz390 {
 					& long_low32_bits);
 			break;
 		case 0x32:  // 310 "E332" "LTGF" "RXY" 18 RPI 817
-	        psw_check = false; 
+	        psw_check = false;
 			ins_setup_rxy();
 			rv1 = mem.getInt(xbd2_loc);
 			reg.putLong(rf1,rv1);
@@ -9176,42 +9176,42 @@ public class pz390 {
 	    	 break;
 	     case 0x36:  // 330 "E336" "PFD" "RXY" 18 RPI 817
 	         psw_check = false;
-	    	 ins_setup_rxy(); // othing to do but trace	         
+	    	 ins_setup_rxy(); // othing to do but trace
 	         break;
-	     case 0x38:  // "E338 RXY AGH R1,D2(X2,B2) RPI 2202" 
+	     case 0x38:  // "E338 RXY AGH R1,D2(X2,B2) RPI 2202"
 	         psw_check = false;
-	    	 ins_setup_rxy(); 
+	    	 ins_setup_rxy();
 				rlv1 = reg.getLong(rf1);
 				rlv2 = mem.getShort(xbd2_loc);
 				rlv3 = rlv1 + rlv2;
 				reg.putLong(rf1, rlv3);
 				psw_cc = get_long_add_cc();
 	         break;
-	     case 0x39:  // "E339 RXY SGH R1,D2(X2,B2) RPI 2202" 
+	     case 0x39:  // "E339 RXY SGH R1,D2(X2,B2) RPI 2202"
 	         psw_check = false;
-	    	 ins_setup_rxy(); 
+	    	 ins_setup_rxy();
 				rlv1 = reg.getLong(rf1);
 				rlv2 = mem.getShort(xbd2_loc);
 				rlv3 = rlv1 - rlv2;
 				reg.putLong(rf1, rlv3);
 				psw_cc = get_long_sub_cc();
 	         break;
-	     case 0x3A:  // "E33A RXYa LLZRGF R1,D2(X2,B2) RPI 2202" 
+	     case 0x3A:  // "E33A RXYa LLZRGF R1,D2(X2,B2) RPI 2202"
 	         psw_check = false;
-	    	 ins_setup_rxy(); 
+	    	 ins_setup_rxy();
 				reg.putInt(rf1+4, mem.getInt(xbd2_loc));
 				reg.put(rf1 + 7, (byte)0);
 				reg.putInt(rf1, (int)0);
 	         break;
-	     case 0x3B:  // "E33B RXYa LZRF R1,D2(X2,B2) RPI 2202" 
+	     case 0x3B:  // "E33B RXYa LZRF R1,D2(X2,B2) RPI 2202"
 	         psw_check = false;
-	    	 ins_setup_rxy(); 
+	    	 ins_setup_rxy();
 				reg.putInt(rf1+4, mem.getInt(xbd2_loc));
 				reg.put(rf1 + 7, (byte)0);
 	         break;
-	     case 0x3C:  // "E33C RXYa MGH R1,D2(X2,B2) RPI 2202" 
+	     case 0x3C:  // "E33C RXYa MGH R1,D2(X2,B2) RPI 2202"
 	         psw_check = false;
-	    	 ins_setup_rxy(); 
+	    	 ins_setup_rxy();
 				rlv1 = reg.getLong(rf1);
 				rlv2 = mem.getShort(xbd2_loc);
 				rlv3 = rlv1 * rlv2;
@@ -9260,22 +9260,22 @@ public class pz390 {
 			reg.put(rf1+4,(byte)(reg.get(rf1+4) & 0x7f)); // turn off high 31 bit
 			break;
 		case 0x49: // "E349=STGSC,18,180", // E349 RXYa STGSC R1,D2(X2,B2) RPI 2202
-            psw_check = false;
-            ins_setup_rxy();
-            set_psw_check(psw_pic_spec_op); // RPI 1622 DK special operation exception
-            break;
+			psw_check = false;
+			ins_setup_rxy();
+			set_psw_check(psw_pic_spec_op); // RPI 1622 DK special operation exception
+			break;
 		case 0x4C: // "E34C=LGG,18,180", // E34C RXYa LGG R1,D2(X2,B2) RPI 2202
 			psw_check = false;
 			ins_setup_rxy();
 			reg.putInt(rf1+4, mem.getInt(xbd2_loc+4));
 			reg.putInt(rf1, (int)0);
-			reg.put(rf1+4,(byte)(reg.get(rf1+4) & 0x7f)); // turn off high 31 bit 
+			reg.put(rf1+4,(byte)(reg.get(rf1+4) & 0x7f)); // turn off high 31 bit
 			break;
 		case 0x4D: // "E34D=LGSC,18,180", // E34D RXYa LGSC R1,D2(X2,B2) RPI 2202
-            psw_check = false;
-            ins_setup_rxy();
-            set_psw_check(psw_pic_spec_op); // RPI 1622 DK special operation exception
-            break;
+			psw_check = false;
+			ins_setup_rxy();
+			set_psw_check(psw_pic_spec_op); // RPI 1622 DK special operation exception
+			break;
 		case 0x50: // 5750 "E350" "STY" "RXY"
 			ins_setup_rxy();
 			psw_check = false;
@@ -9294,15 +9294,15 @@ public class pz390 {
 			reg.putInt(rf1 + 4, rv1);
 			if (rlv1 != (long)rv1){
 			  psw_cc = psw_cc3;
-                               set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow
+							   set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow
 			} else if (rv1 > 0){
 			  psw_cc = psw_cc2;
 			} else if (rv1 == 0) {
 			  psw_cc = psw_cc0;
 			} else {
-              psw_cc = psw_cc1;
+			  psw_cc = psw_cc1;
 			}
-		    break; 
+		    break;
 		case 0x54: // 5770 "E354" "NY" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -9372,7 +9372,7 @@ public class pz390 {
 			psw_cc = get_int_sub_cc();
 			break;
 		case 0x5C:  // 340 "E35C" "MFY" "RXY" 18 RPI 817
-	        psw_check = false; 
+	        psw_check = false;
 			ins_setup_rxy();
 			if ((mf1 & 0x1) != 0){
 				set_psw_check(psw_pic_spec);
@@ -9506,25 +9506,25 @@ public class pz390 {
 		case 0x83: //  E383 RXYa MSGC R1,D2(X2,B2) RPI 2202 #300
 			psw_check = false;
 			ins_setup_rxy();
-			big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf1, 8)); 
-																			
+			big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf1, 8));
+
 			big_int2 = new BigInteger(get_signed_bytes(mem_byte, xbd2_loc, 8));
 			big_int1 = big_int1
 			         .multiply(big_int2);
 			rlv1 = big_int1.longValue();
 			fp_bi_to_wreg(reg_byte,rf1,big_int1, 8);
 			if (big_int1.compareTo(bi_max_pos_long) == 1
-			|| big_int1.compareTo(bi_min_neg_long) == -1) {                  
-                                      psw_cc = psw_cc3; 
-                                      set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow
+			|| big_int1.compareTo(bi_min_neg_long) == -1) {
+									  psw_cc = psw_cc3;
+									  set_psw_check(psw_pic_fx_ovf); // #300 fixed overflow
 			} else if (rlv1 > 0){
 				psw_cc = psw_cc2;
 			} else if (rlv1 == 0) {
 				psw_cc = psw_cc0;
 			} else {
 				psw_cc = psw_cc1;
-			}               
- 			break;
+			}
+			break;
 		case 0x84: // E384 RXYa MG RPI 2202
 			psw_check = false;
 			ins_setup_rxy();
@@ -9691,21 +9691,21 @@ public class pz390 {
 			ins_setup_rxy();
 			rv1 = mem.getInt(xbd2_loc) & 0x7FFFFFFF;
 			reg.putInt(rf1 + 4, rv1);
-            reg.putInt(rf1,0);
+			reg.putInt(rf1,0);
 			if (rv1 == 0) {
 				set_psw_check(fp_dxc_trap);
 			}
-			break;	
+			break;
 		case 0x9D: // E39D RXYa LLGFAT R1,D2(X2,B2) RPI 2202
 			psw_check = false;
 			ins_setup_rxy();
 			rv1 = mem.getInt(xbd2_loc);
 			reg.putInt(rf1+4, rv1);
-            reg.putInt(rf1,0);
+			reg.putInt(rf1,0);
 			if (rv1 == 0) {
 				set_psw_check(fp_dxc_trap);
 			}
-			break;	
+			break;
 		case 0x9F: // E39F RXYa LAT R1,D2(X3,B2) RPI 2202
 			psw_check = false;
 			ins_setup_rxy();
@@ -9724,7 +9724,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rxy();
 			reg.putInt(rf1, mem.get(xbd2_loc) & 0xff);
-			break;	
+			break;
 		case 0xC3: // "E3C3" "STCH" "RXY" 18 RPI 1125
 			psw_check = false;
 			ins_setup_rxy();
@@ -9734,7 +9734,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rxy();
 			reg.putInt(rf1, mem.getShort(xbd2_loc));
-			break;	
+			break;
 		case 0xC6: // "E3C6" "LLHH" "RXY" 18 RPI 1125
 			psw_check = false;
 			ins_setup_rxy();
@@ -9744,7 +9744,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rxy();
 			mem.putShort(xbd2_loc, reg.getShort(rf1+2));
-			break;	
+			break;
 		case 0xC8: // E3C8 RXYa LFHAT R1,D2(X2,B2) RPI 2202
 			psw_check = false;
 			ins_setup_rxy();
@@ -9763,158 +9763,158 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rxy();
 			mem.putInt(xbd2_loc, reg.getInt(rf1));
-			break;	
+			break;
 		case 0xCD: // "E3CD" "CHF" "RXY" 18 RPI 1125
 			psw_check = false;
 			ins_setup_rxy();
 			psw_cc = get_int_comp_cc(reg.getInt(rf1), mem.getInt(xbd2_loc));
-			break;	
+			break;
 		case 0xCF: // "E3CF" "CLHF" "RXY" 18 RPI 1125
 			psw_check = false;
 			ins_setup_rxy();
 			psw_cc = get_int_log_comp_cc(reg.getInt(rf1), mem
 					.getInt(xbd2_loc));
-			break;		
+			break;
 		}
-    }
-    private void ins_E4XX_VF(){ // RPI VF01 new routine to support E4xx opcodes for vector facility
-            opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
-            switch (opcode2) {
-            case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
-                    psw_check = false;
-                    ins_setup_vs();
-                    break;
-            }
-    } // RPI VF01 end of new routine to support E4xx opcodes for vector facility
-    private void ins_E5XX(){
-    	opcode2 = mem_byte[psw_loc + opcode2_offset_sse] & 0xff;
+	}
+	private void ins_E4XX_VF(){ // RPI VF01 new routine to support E4xx opcodes for vector facility
+			opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
+			switch (opcode2) {
+			case 0xc5: // "A6C5" "VRCL" "V-S" 64 RPI VF01
+					psw_check = false;
+					ins_setup_vs();
+					break;
+			}
+	} // RPI VF01 end of new routine to support E4xx opcodes for vector facility
+	private void ins_E5XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_sse] & 0xff;
 		switch (opcode2) {
 		case 0x00: // 6120 "E500" "LASP" "SSE"
-            psw_check = false;
-            ins_setup_sse();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_sse();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no address spaces
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x01: // 6130 "E501" "TPROT" "SSE"
-            psw_check = false;
-            ins_setup_sse();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_sse();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x02: // 6140 "E502" "STRAG" "SSE"
-            psw_check = false;
-            ins_setup_sse();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_sse();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no virtual storage
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x0A: // E50A MVCRL,19,192 RPI 2202
-			psw_check = false; 
+			psw_check = false;
 			ins_setup_sse();
 			rflen = reg.getInt(r0) & 0xff;
 			if (bd1_loc + rflen > tot_mem) {
 				set_psw_check(psw_pic_addr); // RPI 397
 				break;
 			}
-			while (rflen >= 0) { 
-				mem_byte[bd1_loc + rflen] = mem_byte[bd2_loc + rflen]; 
+			while (rflen >= 0) {
+				mem_byte[bd1_loc + rflen] = mem_byte[bd2_loc + rflen];
 				rflen--;
 			}
 			break;
 		case 0x0E: // 6150 "E50E" "MVCSK" "SSE"
-            psw_check = false;
-            ins_setup_sse();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage protection
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_sse();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no storage protection
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x0F: // 6160 "E50F" "MVCDK" "SSE"
-            psw_check = false;
-            ins_setup_sse();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_sse();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no storage keys
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x44:  // 370 "E544" "MVHHI" "SIL" 51 RPI 817
-			psw_check = false; 
+			psw_check = false;
 			ins_setup_sil();
 			mem.putShort(bd1_loc,(short)if2);
 	        break;
 	     case 0x48:  // 380 "E548" "MVGHI" "SIL" 51 RPI 817
-	    	psw_check = false; 
+	    	psw_check = false;
 	    	ins_setup_sil();
 	    	mem.putLong(bd1_loc,if2);
 	    	break;
 	     case 0x4C:  // 390 "E54C" "MVHI" "SIL" 51 RPI 817
-	    	psw_check = false; 
+	    	psw_check = false;
 	    	ins_setup_sil();
 	    	mem.putInt(bd1_loc,if2);
 	    	break;
 	     case 0x54:  // 400 "E554" "CHHSI" "SIL" 51 RPI 817
-	    	psw_check = false; 
+	    	psw_check = false;
 			ins_setup_sil();
 			psw_cc = get_int_comp_cc(mem.getShort(bd1_loc), if2);
 		    break;
 	     case 0x55:  // 410 "E555" "CLHHSI" "SIL" 51 RPI 817
-		    psw_check = false; 
+		    psw_check = false;
 			ins_setup_sil();
 			psw_cc = get_int_log_comp_cc(mem.getShort(bd1_loc) & 0xffff, if2 & 0xffff);
 		    break;
 	     case 0x58:  // 420 "E558" "CGHSI" "SIL" 51 RPI 817
-	    	psw_check = false; 
+	    	psw_check = false;
 	    	ins_setup_sil();
 			psw_cc = get_long_comp_cc(mem.getLong(bd1_loc), if2);
 	    	break;
 	     case 0x59:  // 430 "E559" "CLGHSI" "SIL" 51 RPI 817
-	    	psw_check = false; 
+	    	psw_check = false;
 			ins_setup_sil();
 			psw_cc = get_long_log_comp_cc(mem.getLong(bd1_loc), if2 & 0xffff);
 			break;
 	     case 0x5C:  // 440 "E55C" "CHSI" "SIL" 51 RPI 817
-		    psw_check = false; 
+		    psw_check = false;
 			ins_setup_sil();
 			psw_cc = get_int_comp_cc(mem.getInt(bd1_loc), if2);
 		    break;
 	     case 0x5D:  // 450 "E55D" "CLFHSI" "SIL" 51 RPI 817
-		    psw_check = false; 
+		    psw_check = false;
 			ins_setup_sil();
 			psw_cc = get_int_log_comp_cc(mem.getInt(bd1_loc), if2 & 0xffff);
 		    break;
 	     case 0x60:  // E560 SIL TBEGIN D1(B1),I2 RPI 2202
-            psw_check = false;
-            ins_setup_sil();
-            set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
-            break;
+			psw_check = false;
+			ins_setup_sil();
+			set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
+			break;
 	     case 0x61:  // E561 SIL TBEGINC D1(B1),I2 RPI 2202
-            psw_check = false;
-            ins_setup_sil();
-            set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
-            break;
+			psw_check = false;
+			ins_setup_sil();
+			set_psw_check(psw_pic_spec); // RPI 1622 DK Specification exception
+			break;
 		}
-    }
-    private void ins_E6XX(){  // vector instructions RPI 2202
-    	opcode2 = mem_byte[psw_loc + opcode2_offset_vrx] & 0xff;
+	}
+	private void ins_E6XX(){  // vector instructions RPI 2202
+		opcode2 = mem_byte[psw_loc + opcode2_offset_vrx] & 0xff;
 		ins_setup_vrx(); // D1(B1),I2 RPI 2202
-    }
-    private void ins_EBXX(){
-    	opcode2 = mem_byte[psw_loc + opcode2_offset_rsy] & 0xff;
+	}
+	private void ins_EBXX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_rsy] & 0xff;
 		switch (opcode2) {
 		case 0x04: // 6200 "EB04" "LMG" "RSY"
 			psw_check = false;
@@ -9937,7 +9937,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rsy_shift(); // RPI 1015
 			rlv1 = reg.getLong(rf3) >> (bd2_loc & 0x3f);
-			reg.putLong(rf1, rlv1); 
+			reg.putLong(rf1, rlv1);
 			psw_cc = get_long_comp_cc(rlv1, 0);
 			break;
 		case 0x0B: // 6220 "EB0B" "SLAG" "RSY"
@@ -9960,15 +9960,15 @@ public class pz390 {
 			reg.putLong(rf1, reg.getLong(rf3) << (bd2_loc & 0x3f));
 			break;
 		case 0x0F: // 6250 "EB0F" "TRACG" "RSY"
-            psw_check = false;
-            ins_setup_rsy();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rsy();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op until we implement this instruction
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x14: // 6260 "EB14" "CSY" "RSY"
 			psw_check = false;
 			ins_setup_rsy();
@@ -10020,15 +10020,15 @@ public class pz390 {
 			}
 			break;
 		case 0x25: // 6320 "EB25" "STCTG" "RSY"
-            psw_check = false;
-            ins_setup_rsy();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rsy();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x26: // 6330 "EB26" "STMH" "RSY"
 			psw_check = false;
 			ins_setup_rsy();
@@ -10059,15 +10059,15 @@ public class pz390 {
 			exec_stcm();
 			break;
 		case 0x2F: // 6360 "EB2F" "LCTLG" "RSY"
-            psw_check = false;
-            ins_setup_rsy();
-            if (psw_problem_state == psw_problem_mode)
-               {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
-                } // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
-            else // supervisor mode applies
-               {psw_check = true; // force S0C1 until we have a proper implementation
-                }
-            break;
+			psw_check = false;
+			ins_setup_rsy();
+			if (psw_problem_state == psw_problem_mode)
+			   {set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
+				} // in problem state issue privileged-operation exception, otherwise no-op as we have no control registers
+			else // supervisor mode applies
+			   {psw_check = true; // force S0C1 until we have a proper implementation
+				}
+			break;
 		case 0x30: // 6370 "EB30" "CSG" "RSY"
 			psw_check = false;
 			ins_setup_rsy();
@@ -10141,7 +10141,7 @@ public class pz390 {
 			break;
 	     case 0x4C:  // 460 "EB4C" "ECAG" "RSY" 20 RPI 817
 	         ins_setup_rsy();
-	         break;	
+	         break;
 		case 0x51: // 6420 "EB51" "TMY" "SIY"
 			psw_check = false;
 			ins_setup_siy();
@@ -10191,7 +10191,7 @@ public class pz390 {
 			}
 			break;
 		case 0x6A:  // 470 "EB6A" "ASI" "SIY" 21 RPI 817
-	        psw_check = false; 
+	        psw_check = false;
 			ins_setup_siy();
 			rv1 = mem.getInt(bd1_loc);
 			rv2 = if2;
@@ -10200,7 +10200,7 @@ public class pz390 {
 			psw_cc = get_int_add_cc();
 	        break;
 	     case 0x6E:  // 480 "EB6E" "ALSI" "SIY" 21 RPI 817
-		    psw_check = false; 
+		    psw_check = false;
 			ins_setup_siy();
 			rvw = mem.getInt(bd1_loc);
 			rv2 = if2; // RPI 859
@@ -10209,7 +10209,7 @@ public class pz390 {
 			psw_cc = get_int_lsi_add_cc(); // RPI 1125
 		    break;
 	     case 0x7A:  // 490 "EB7A" "AGSI" "SIY" 21 RPI 817
-		    psw_check = false; 
+		    psw_check = false;
 			ins_setup_siy();
 			rlv1 = mem.getLong(bd1_loc);
 			rlv2 = if2;
@@ -10218,7 +10218,7 @@ public class pz390 {
 			psw_cc = get_long_add_cc();
 		    break;
 	     case 0x7E:  // 500 "EB7E" "ALGSI" "SIY" 21 RPI 817
-		    psw_check = false; 
+		    psw_check = false;
 			ins_setup_siy();
 			rlvw = mem.getLong(bd1_loc);
 			rlv2 = if2; // RPI 859
@@ -10298,42 +10298,42 @@ public class pz390 {
 			}
 			break;
 		case 0x9A: // 6550 "EB9A" "LAMY" "RSY"
-            psw_check = false;                                       // RPI 2003
+			psw_check = false;                                       // RPI 2003
 			ins_setup_rsy();
-            rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
-            rf3 >>= 1;                                               // RPI 2003
-            if (rf1 > rf3) {                                         // RPI 2003
-                while (rf1 < ar_reg_len) {                           // RPI 2003
-                    ar_reg.putInt(rf1, mem.getInt(bd2_loc));         // RPI 2003
-                    bd2_loc = bd2_loc + 4;                           // RPI 2003
-                    rf1 = rf1 + 4;                                   // RPI 2003
-                }                                                    // RPI 2003
-                rf1 = 0;                                             // RPI 2003
-            }                                                        // RPI 2003
-            while (rf1 <= rf3) {                                     // RPI 2003
-                ar_reg.putInt(rf1, mem.getInt(bd2_loc));             // RPI 2003
-                bd2_loc = bd2_loc + 4;                               // RPI 2003
-                rf1 = rf1 + 4;                                       // RPI 2003
-            }                                                        // RPI 2003
+			rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
+			rf3 >>= 1;                                               // RPI 2003
+			if (rf1 > rf3) {                                         // RPI 2003
+				while (rf1 < ar_reg_len) {                           // RPI 2003
+					ar_reg.putInt(rf1, mem.getInt(bd2_loc));         // RPI 2003
+					bd2_loc = bd2_loc + 4;                           // RPI 2003
+					rf1 = rf1 + 4;                                   // RPI 2003
+				}                                                    // RPI 2003
+				rf1 = 0;                                             // RPI 2003
+			}                                                        // RPI 2003
+			while (rf1 <= rf3) {                                     // RPI 2003
+				ar_reg.putInt(rf1, mem.getInt(bd2_loc));             // RPI 2003
+				bd2_loc = bd2_loc + 4;                               // RPI 2003
+				rf1 = rf1 + 4;                                       // RPI 2003
+			}                                                        // RPI 2003
 			break;
 		case 0x9B: // 6560 "EB9B" "STAMY" "RSY"
-            psw_check = false;                                       // RPI 2003
+			psw_check = false;                                       // RPI 2003
 			ins_setup_rsy();
-            rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
-            rf3 >>= 1;                                               // RPI 2003
-            if (rf1 > rf3) {                                         // RPI 2003
-                while (rf1 < ar_reg_len) {                           // RPI 2003
-                    mem.putInt(bd2_loc, ar_reg.getInt(rf1));         // RPI 2003
-                    bd2_loc = bd2_loc + 4;                           // RPI 2003
-                    rf1 = rf1 + 4;                                   // RPI 2003
-                }                                                    // RPI 2003
-                rf1 = 0;                                             // RPI 2003
-            }                                                        // RPI 2003
-            while (rf1 <= rf3) {                                     // RPI 2003
-                mem.putInt(bd2_loc, ar_reg.getInt(rf1));             // RPI 2003
-                bd2_loc = bd2_loc + 4;                               // RPI 2003
-                rf1 = rf1 + 4;                                       // RPI 2003
-            }                                                        // RPI 2003
+			rf1 >>= 1;          // rf1, rf3 now multiples of 4       // RPI 2003
+			rf3 >>= 1;                                               // RPI 2003
+			if (rf1 > rf3) {                                         // RPI 2003
+				while (rf1 < ar_reg_len) {                           // RPI 2003
+					mem.putInt(bd2_loc, ar_reg.getInt(rf1));         // RPI 2003
+					bd2_loc = bd2_loc + 4;                           // RPI 2003
+					rf1 = rf1 + 4;                                   // RPI 2003
+				}                                                    // RPI 2003
+				rf1 = 0;                                             // RPI 2003
+			}                                                        // RPI 2003
+			while (rf1 <= rf3) {                                     // RPI 2003
+				mem.putInt(bd2_loc, ar_reg.getInt(rf1));             // RPI 2003
+				bd2_loc = bd2_loc + 4;                               // RPI 2003
+				rf1 = rf1 + 4;                                       // RPI 2003
+			}                                                        // RPI 2003
 			break;
 		case 0xC0: // 6570 "EBC0" "TP" "RSL"
 			psw_check = false;
@@ -10345,7 +10345,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rsy_shift(); // RPI 1015
 			rv1 = reg.getInt(rf3+4) >> (bd2_loc & 0x3f);
-			reg.putInt(rf1+4, rv1); 
+			reg.putInt(rf1+4, rv1);
 			psw_cc = get_int_comp_cc(rv1, 0);
 			break;
 			case 0xDD: //  "EBDD","SLAK","RSY  "  20 RPI 1125 Z196
@@ -10366,23 +10366,23 @@ public class pz390 {
 				psw_check = false;
 				ins_setup_rsy_shift(); // RPI 1015
 				reg.putInt(rf1+4, reg.getInt(rf3+4) << (bd2_loc & 0x3f));
-				break;	
+				break;
 			case 0xE2: //  "EBE2","LOCG","RSY2 "  20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((psw_cc & mf3) > 0) {
 					reg.putLong(rf1, mem.getLong(bd2_loc));
 				}
 				break;
 			case 0xE3: //  "EBE3","STOCG","RSY2 " 20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((psw_cc & mf3) > 0) {
 					mem.putLong(bd2_loc, reg.getLong(rf1));
 				}
 				break;
 			case 0xE4: //  "EBE4","LANG","RSY  "  20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((bd2_loc & 0x7) != 0){
 					set_psw_check(psw_pic_spec);
@@ -10399,7 +10399,7 @@ public class pz390 {
 				}
 				break;
 			case 0xE6: //  "EBE6","LAOG","RSY  "  20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((bd2_loc & 0x7) != 0){
 					set_psw_check(psw_pic_spec);
@@ -10416,7 +10416,7 @@ public class pz390 {
 				}
 				break;
 			case 0xE7: //  "EBE7","LAXG","RSY  "  20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((bd2_loc & 0x7) != 0){
 					set_psw_check(psw_pic_spec);
@@ -10433,7 +10433,7 @@ public class pz390 {
 				}
 				break;
 			case 0xE8: //  "EBE8","LAAG","RSY  "  20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((bd2_loc & 0x7) != 0){
 					set_psw_check(psw_pic_spec);
@@ -10446,7 +10446,7 @@ public class pz390 {
 				psw_cc = get_long_add_cc();
 				break;
 			case 0xEA: //  "EBEA","LAALG","RSY  " 20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((bd2_loc & 0x7) != 0){
 					set_psw_check(psw_pic_spec);
@@ -10459,21 +10459,21 @@ public class pz390 {
 				psw_cc = get_long_log_add_cc();
 				break;
 			case 0xF2: //  "EBF2","LOC","RSY2 "   20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((psw_cc & mf3) > 0) {
 					reg.putInt(rf1+4, mem.getInt(bd2_loc));
 				}
 				break;
 			case 0xF3: //  "EBF3","STOC","RSY2 "  20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((psw_cc & mf3) > 0) {
 					mem.putInt(bd2_loc, reg.getInt(rf1+4));
 				}
 				break;
 			case 0xF4: //  "EBF4","LAN","RSY  "   20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((bd2_loc & 0x3) != 0){
 					set_psw_check(psw_pic_spec);
@@ -10490,7 +10490,7 @@ public class pz390 {
 				}
 				break;
 			case 0xF6: //  "EBF6","LAO","RSY  "   20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((bd2_loc & 0x3) != 0){
 					set_psw_check(psw_pic_spec);
@@ -10507,7 +10507,7 @@ public class pz390 {
 				}
 				break;
 			case 0xF7: //  "EBF7","LAX","RSY  "   20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((bd2_loc & 0x3) != 0){
 					set_psw_check(psw_pic_spec);
@@ -10524,7 +10524,7 @@ public class pz390 {
 				}
 				break;
 			case 0xF8: //  "EBF8","LAA","RSY  "   20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((bd2_loc & 0x3) != 0){
 					set_psw_check(psw_pic_spec);
@@ -10537,7 +10537,7 @@ public class pz390 {
 				psw_cc = get_int_add_cc();
 				break;
 			case 0xFA: //  "EBFA","LAAL","RSY  "  20 RPI 1125 Z196
-				psw_check = false; 
+				psw_check = false;
 				ins_setup_rsy();
 				if ((bd2_loc & 0x3) != 0){
 					set_psw_check(psw_pic_spec);
@@ -10548,11 +10548,11 @@ public class pz390 {
 				mem.putInt(bd2_loc,rv3);
 				reg.putInt(rf1+4,rv2);
 				psw_cc = get_int_log_add_cc();
-				break;	
+				break;
 		}
-    }
-    private void ins_ECXX(){
-    	opcode2 = mem_byte[psw_loc + opcode2_offset_rie] & 0xff;
+	}
+	private void ins_ECXX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_rie] & 0xff;
 		switch (opcode2) {
 		case 0x44: // 6580 "EC44" "BRXHG" "RIE"
 			psw_check = false;
@@ -10622,7 +10622,7 @@ public class pz390 {
 	     case 0x56:  // 550 "EC56" "ROSBG" "RIE8" 52 RPI 817
 	        psw_check = false;
 	    	ins_setup_rie8();
-	    	rsbg_setup_and_rotate();   	
+	    	rsbg_setup_and_rotate();
 	    	rlv1 = rlv1 | (rlv2 & rsbg_mask_ones);
 	    	if (!rsbg_test){
 	    		reg.putLong(rf1,rlv1);
@@ -10636,7 +10636,7 @@ public class pz390 {
 	     case 0x57:  // 570 "EC57" "RXSBG" "RIE8" 52 RPI 817
 	        psw_check = false;
 	    	ins_setup_rie8();
-	    	rsbg_setup_and_rotate();   	
+	    	rsbg_setup_and_rotate();
 	    	rlv1 = rlv1 ^ (rlv2 & rsbg_mask_ones);
 	    	if (!rsbg_test){
 	    		reg.putLong(rf1,rlv1);
@@ -10652,7 +10652,7 @@ public class pz390 {
 			    set_risb_zero(); // RPI 1164
 			    ins_setup_rie8();
 			    risb_rotate_insert_high(true); // not high = store low 32 bits
-			    break;   
+			    break;
 	     case 0x64:  // 10 "EC64" "CGRJ" "RIE6"
 	         psw_check = false;
 	    	 ins_setup_rie6();
@@ -10668,7 +10668,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;	
+	         break;
 		 case 0x70:  // 150 "EC70" "CGIT" "RIE2" RPI 817
 			 psw_check = false;
 			 ins_setup_rie2();
@@ -10712,7 +10712,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0x77:  // 220 "EC77" "CLRJ" "RIE6"
 	         psw_check = false;
 	    	 ins_setup_rie6();
@@ -10720,7 +10720,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0x7C:  // 290 "EC7C" "CGIJ" "RIE4"
 	         psw_check = false;
 	    	 ins_setup_rie4();
@@ -10728,7 +10728,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0x7D:  // 360 "EC7D" "CLGIJ" "RIE4"
 	         psw_check = false;
 	    	 ins_setup_rie4();
@@ -10736,7 +10736,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0x7E:  // 430 "EC7E" "CIJ" "RIE4"
 	         psw_check = false;
 	    	 ins_setup_rie4();
@@ -10744,7 +10744,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0x7F:  // 500 "EC7F" "CLIJ" "RIE4"
 	         psw_check = false;
 	    	 ins_setup_rie4();
@@ -10752,7 +10752,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break; 
+	         break;
 	     case 0xD8: // "ECD8","AHIK","RIE9"    57 RPI 1125 Z196
 	    	 psw_check = false;
 	    	 ins_setup_rie9();
@@ -10775,16 +10775,16 @@ public class pz390 {
 	    	 psw_check = false;
 	    	 ins_setup_rie9();
 	    	 rvw = reg.getInt(rf3+4);
-			 rv2 = if2; 
+			 rv2 = if2;
 			 rv1 = rvw + rv2;
 			 reg.putInt(rf1+4, rv1);
 			 psw_cc = get_int_lsi_add_cc(); // RPI 1125
 	    	 break;
-	     case 0xDB: // "ECDB","ALGHSIK","RIE9" 57 RPI 1125 Z196    
+	     case 0xDB: // "ECDB","ALGHSIK","RIE9" 57 RPI 1125 Z196
 	    	 psw_check = false;
 	    	 ins_setup_rie9();
 	    	 rlvw = reg.getLong(rf3);
-			 rlv2 = if2; 
+			 rlv2 = if2;
 			 rlv1 = rlvw + rlv2;
 			 reg.putLong(rf1, rlv1);
 			 psw_cc = get_long_lsi_add_cc(); // RPI 1125
@@ -10796,7 +10796,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0xE5:  // 640 "ECE5" "CLGRB" "RRS1"
 	         psw_check = false;
 	    	 ins_setup_rrs1();
@@ -10804,7 +10804,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0xF6:  // 710 "ECF6" "CRB" "RRS1"
 	         psw_check = false;
 	    	 ins_setup_rrs1();
@@ -10820,7 +10820,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0xFC:  // 850 "ECFC" "CGIB" "RRS3"
 	         psw_check = false;
 	    	 ins_setup_rrs3();
@@ -10828,7 +10828,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0xFD:  // 920 "ECFD" "CLGIB" "RRS3"
 	         psw_check = false;
 	    	 ins_setup_rrs3();
@@ -10836,7 +10836,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0xFE:  // 990 "ECFE" "CIB" "RRS3"
 	         psw_check = false;
 	    	 ins_setup_rrs3();
@@ -10844,7 +10844,7 @@ public class pz390 {
 						!= 0){
 						set_psw_loc(bd4_loc);
 			 }
-	         break;     
+	         break;
 	     case 0xFF:  // 1060 "ECFF" "CLIB" "RRS3"
 	         psw_check = false;
 	    	 ins_setup_rrs3();
@@ -10854,10 +10854,10 @@ public class pz390 {
 			 }
 	         break;
 		}
-		
-    }
-    private void ins_EDXX(){
-    	opcode2 = mem_byte[psw_loc + opcode2_offset_rxe] & 0xff;
+
+	}
+	private void ins_EDXX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_rxe] & 0xff;
 		switch (opcode2) {
 		case 0x04: // 6620 "ED04" "LDEB" "RXE"
 			psw_check = false;
@@ -10881,7 +10881,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rxe();
 			fp_rbdv1 = fp_get_bd_from_db(fp_reg, rf1)
-			         .multiply(fp_get_bd_from_db(mem, xbd2_loc), fp_lxg_context); // RPI 821 
+			         .multiply(fp_get_bd_from_db(mem, xbd2_loc), fp_lxg_context); // RPI 821
 			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
 			check_lb_mpy();
 			break;
@@ -10956,9 +10956,9 @@ public class pz390 {
 			if ((xbd2_loc & 0x800) != 0 && fp_rev1 == 0) {
 				psw_cc = psw_cc1; // +0
 			}
-			if ((xbd2_loc & 0x400) != 0 
+			if ((xbd2_loc & 0x400) != 0
 				&& Math.copySign(1,fp_rev1) == -1  // RPI 834
-				&& Math.abs(fp_rev1) == 0) { 
+				&& Math.abs(fp_rev1) == 0) {
 				psw_cc = psw_cc1; // -0
 			}
 			if ((xbd2_loc & 0x200) != 0 && fp_rev1 > 0) {
@@ -10997,18 +10997,18 @@ public class pz390 {
 			ins_setup_rxe();
 			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1); // RPI 326 RPI 849
 			psw_cc = psw_cc0;
-			if ((xbd2_loc & 0x800) != 0 && fp_rdv1 == 0) {  
+			if ((xbd2_loc & 0x800) != 0 && fp_rdv1 == 0) {
 				psw_cc = psw_cc1; // +0
 			}
-			if ((xbd2_loc & 0x400) != 0 
+			if ((xbd2_loc & 0x400) != 0
 				&& Math.copySign(1,fp_rdv1) == -1  // RPI 834
-                && Math.abs(fp_rdv1) == 0){
+				&& Math.abs(fp_rdv1) == 0){
 				psw_cc = psw_cc1; // -0
 			}
-			if ((xbd2_loc & 0x200) != 0 && fp_rdv1 > 0) { 
+			if ((xbd2_loc & 0x200) != 0 && fp_rdv1 > 0) {
 				psw_cc = psw_cc1; // +normalized
 			}
-			if ((xbd2_loc & 0x100) != 0 && fp_rdv1 < 0) {  
+			if ((xbd2_loc & 0x100) != 0 && fp_rdv1 < 0) {
 				psw_cc = psw_cc1; // -normalized
 			}
 			if ((xbd2_loc & 0x080) != 0) {
@@ -11154,8 +11154,8 @@ public class pz390 {
 			ins_setup_rxf();
 			fp_rdv1 = fp_get_db_from_db(mem, xbd2_loc)
 					* fp_get_db_from_db(fp_reg, rf3)
-					+ fp_get_db_from_db(fp_reg, rf1); // RPI 821 
-			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1); // RPI 821 
+					+ fp_get_db_from_db(fp_reg, rf1); // RPI 821
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1); // RPI 821
 			check_db_mpy();
 			break;
 		case 0x1F: // 6870 "ED1F" "MSDB" "RXF"
@@ -11164,7 +11164,7 @@ public class pz390 {
 			fp_rdv1 = fp_get_db_from_db(mem, xbd2_loc)
 					* fp_get_db_from_db(fp_reg, rf3)
 					- fp_get_db_from_db(fp_reg, rf1);  // RPI 834
-			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1); // RPI 821 
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1); // RPI 821
 			check_db_mpy();
 			break;
 		case 0x24: // 6880 "ED24" "LDE" "RXE"
@@ -11183,7 +11183,7 @@ public class pz390 {
 		case 0x26: // 6900 "ED26" "LXE" "RXE"
 			psw_check = false;
 			ins_setup_rxe();
-			
+
 			fp_load_reg(rf1, tz390.fp_lh_type, mem, xbd2_loc,
 					tz390.fp_eh_type);
 			fp_reg.putLong(rf1+16,0); // RPI 1015
@@ -11237,7 +11237,7 @@ public class pz390 {
 			fp_mpy_unnorm_dh(); // rpi 767 big_int1=long2*long3
 			tz390.fp_exp = tz390.fp_exp - 14; // use low half exponent
 			fp_get_bi_unnorm_dh();
-			fp_add_bi_unnorm_dh(); 
+			fp_add_bi_unnorm_dh();
 			tz390.fp_exp = tz390.fp_exp + 14; // restore exp for LH store
 			fp_put_bi_to_lh_wreg();
 			fp_reg.putLong(rf1,tz390.fp_work_reg.getLong(8));
@@ -11266,7 +11266,7 @@ public class pz390 {
 			fp_long3 = fp_reg.getLong(rf3);
 			fp_mpy_unnorm_dh(); // rpi 767 big_int1=long2*long3
 			fp_get_bi_unnorm_lh();
-			fp_add_bi_unnorm_dh(); 
+			fp_add_bi_unnorm_dh();
 			fp_put_bi_to_lh_wreg();
 			fp_reg.putLong(rf1,tz390.fp_work_reg.getLong(0));
 			fp_reg.putLong(rf1+16,tz390.fp_work_reg.getLong(8));
@@ -11298,7 +11298,7 @@ public class pz390 {
 			fp_get_bi_unnorm_dh();
 			fp_get_bi_unnorm_dh();
 			tz390.fp_exp = tz390.fp_exp - 14; // use low half exponent
-			fp_add_bi_unnorm_dh(); 
+			fp_add_bi_unnorm_dh();
 			tz390.fp_exp = tz390.fp_exp + 14; // use low half exponent
 			fp_put_bi_to_lh_wreg();
 			fp_reg.putLong(rf1,tz390.fp_work_reg.getLong(0));
@@ -11336,7 +11336,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rxf();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf3);
-			if ((xbd2_loc & 0x3f) != 0){  // RPI 1015 
+			if ((xbd2_loc & 0x3f) != 0){  // RPI 1015
 				work_fp_bi1 = fp_rbdv1
 			              .unscaledValue()
 			              .multiply(BigInteger.TEN.pow(xbd2_loc & 0x3f))
@@ -11361,7 +11361,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rxf_shift(); // RPI 1015
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
-			if ((xbd2_loc & 0x3f) != 0){  // RPI 1015 
+			if ((xbd2_loc & 0x3f) != 0){  // RPI 1015
 				work_fp_bi1 = fp_rbdv1
 			              .unscaledValue()
 			              .multiply(BigInteger.TEN.pow(xbd2_loc & 0x3f))
@@ -11385,7 +11385,7 @@ public class pz390 {
 		case 0x50: // "TDCET" "ED50" "RXE" DFP 49
 			psw_check = false;
 			ins_setup_rxe();
-			fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf1); 
+			fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf1);
 			psw_cc = psw_cc0;
 			if ((xbd2_loc & 0x800) != 0 && fp_rbdv1.signum() == 0) {
 				psw_cc = psw_cc1; // +0
@@ -11400,7 +11400,7 @@ public class pz390 {
 				) {
 				psw_cc = psw_cc1; // +subnormal
 			}
-			if ((xbd2_loc & 0x100) != 0 
+			if ((xbd2_loc & 0x100) != 0
 				&& fp_rdv1 < 0
 				&& (fp_rbdv1.compareTo(fp_ed_neg_min) > 0
 						|| fp_rbdv1.compareTo(fp_ed_neg_max) < 0)
@@ -11443,7 +11443,7 @@ public class pz390 {
 		case 0x51: // "TDGET" "ED51" "RXE" DFP 50
 			psw_check = false;
 			ins_setup_rxe();
-			fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf1); 
+			fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf1);
 			psw_cc = psw_cc0;
 			if ((xbd2_loc & 0x800) != 0
 				&& fp_rbdv1.signum() == 0
@@ -11452,10 +11452,10 @@ public class pz390 {
 			    ) {
 				psw_cc = psw_cc1; // + safe 0
 			}
-			if ((xbd2_loc & 0x400) != 0 
+			if ((xbd2_loc & 0x400) != 0
 				&& fp_rbdv1.signum() == 0
 				&& fp_rbdv1.scale() >= fp_ed_exp_min
-				&& fp_rbdv1.scale() <= fp_ed_exp_max	
+				&& fp_rbdv1.scale() <= fp_ed_exp_max
 			) {
 				psw_cc = psw_cc1; // - safe 0
 			}
@@ -11466,7 +11466,7 @@ public class pz390 {
 				) {
 				psw_cc = psw_cc1; // + extreme zero
 			}
-			if ((xbd2_loc & 0x100) != 0 
+			if ((xbd2_loc & 0x100) != 0
 				&& fp_rdv1 < 0
 				&& (fp_rbdv1.scale() < fp_ed_exp_min
 					|| fp_rbdv1.scale() > fp_ed_exp_max)
@@ -11501,7 +11501,7 @@ public class pz390 {
 				&& fp_rbdv1.scale() >= fp_ed_exp_min
 				&& fp_rbdv1.scale() <= fp_ed_exp_max
 				&& fp_rbdv1.abs().unscaledValue()
-				   .toString().length() < tz390.fp_ed_digits	
+				   .toString().length() < tz390.fp_ed_digits
 			    ) {
 				psw_cc = psw_cc1; // - safe finite
 			}
@@ -11510,7 +11510,7 @@ public class pz390 {
 				&& fp_rbdv1.scale() >= fp_ed_exp_min
 				&& fp_rbdv1.scale() <= fp_ed_exp_max
 				&& fp_rbdv1.abs().unscaledValue()
-				   .toString().length() >= tz390.fp_ed_digits	
+				   .toString().length() >= tz390.fp_ed_digits
 			    ) {
 				psw_cc = psw_cc1; // + non zero lmd non extreem exp
 			}
@@ -11519,7 +11519,7 @@ public class pz390 {
 					&& fp_rbdv1.scale() >= fp_ed_exp_min
 					&& fp_rbdv1.scale() <= fp_ed_exp_max
 					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() >= tz390.fp_ed_digits		
+					   .toString().length() >= tz390.fp_ed_digits
 				) {
 				psw_cc = psw_cc1; // - non zero lmd non extreme exp
 			}
@@ -11533,7 +11533,7 @@ public class pz390 {
 		case 0x54: // "TDCDT" "ED54" "RXE" DFP 51
 			psw_check = false;
 			ins_setup_rxe();
-			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf1); 
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf1);
 			psw_cc = psw_cc0;
 			if ((xbd2_loc & 0x800) != 0 && fp_rbdv1.signum() == 0) {
 				psw_cc = psw_cc1; // +0
@@ -11548,7 +11548,7 @@ public class pz390 {
 				) {
 				psw_cc = psw_cc1; // +subnormal
 			}
-			if ((xbd2_loc & 0x100) != 0 
+			if ((xbd2_loc & 0x100) != 0
 				&& fp_rdv1 < 0
 				&& (fp_rbdv1.compareTo(fp_dd_neg_min) > 0
 						|| fp_rbdv1.compareTo(fp_dd_neg_max) < 0)
@@ -11591,7 +11591,7 @@ public class pz390 {
 		case 0x55: // "TDGDT" "ED55" "RXE" DFP 52
 			psw_check = false;
 			ins_setup_rxe();
-			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf1); 
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf1);
 			psw_cc = psw_cc0;
 			if ((xbd2_loc & 0x800) != 0
 				&& fp_rbdv1.signum() == 0
@@ -11600,10 +11600,10 @@ public class pz390 {
 			    ) {
 				psw_cc = psw_cc1; // + safe 0
 			}
-			if ((xbd2_loc & 0x400) != 0 
+			if ((xbd2_loc & 0x400) != 0
 				&& fp_rbdv1.signum() == 0
 				&& fp_rbdv1.scale() >= fp_dd_exp_min
-				&& fp_rbdv1.scale() <= fp_dd_exp_max	
+				&& fp_rbdv1.scale() <= fp_dd_exp_max
 			) {
 				psw_cc = psw_cc1; // - safe 0
 			}
@@ -11614,7 +11614,7 @@ public class pz390 {
 				) {
 				psw_cc = psw_cc1; // + extreme zero
 			}
-			if ((xbd2_loc & 0x100) != 0 
+			if ((xbd2_loc & 0x100) != 0
 				&& fp_rdv1 < 0
 				&& (fp_rbdv1.scale() < fp_dd_exp_min
 					|| fp_rbdv1.scale() > fp_dd_exp_max)
@@ -11649,7 +11649,7 @@ public class pz390 {
 				&& fp_rbdv1.scale() >= fp_dd_exp_min
 				&& fp_rbdv1.scale() <= fp_dd_exp_max
 				&& fp_rbdv1.abs().unscaledValue()
-				   .toString().length() < tz390.fp_dd_digits	
+				   .toString().length() < tz390.fp_dd_digits
 			    ) {
 				psw_cc = psw_cc1; // - safe finite
 			}
@@ -11658,7 +11658,7 @@ public class pz390 {
 				&& fp_rbdv1.scale() >= fp_dd_exp_min
 				&& fp_rbdv1.scale() <= fp_dd_exp_max
 				&& fp_rbdv1.abs().unscaledValue()
-				   .toString().length() >= tz390.fp_dd_digits	
+				   .toString().length() >= tz390.fp_dd_digits
 			    ) {
 				psw_cc = psw_cc1; // + non zero lmd non extreem exp
 			}
@@ -11667,7 +11667,7 @@ public class pz390 {
 					&& fp_rbdv1.scale() >= fp_dd_exp_min
 					&& fp_rbdv1.scale() <= fp_dd_exp_max
 					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() >= tz390.fp_dd_digits		
+					   .toString().length() >= tz390.fp_dd_digits
 				) {
 				psw_cc = psw_cc1; // - non zero lmd non extreme exp
 			}
@@ -11681,7 +11681,7 @@ public class pz390 {
 		case 0x58: // "" "ED58" "RXE" DFP 53
 			psw_check = false;
 			ins_setup_rxe();
-			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf1); 
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf1);
 			psw_cc = psw_cc0;
 			if ((xbd2_loc & 0x800) != 0 && fp_rbdv1.signum() == 0) {
 				psw_cc = psw_cc1; // +0
@@ -11696,7 +11696,7 @@ public class pz390 {
 				) {
 				psw_cc = psw_cc1; // +subnormal
 			}
-			if ((xbd2_loc & 0x100) != 0 
+			if ((xbd2_loc & 0x100) != 0
 				&& fp_rdv1 < 0
 				&& (fp_rbdv1.compareTo(fp_ld_neg_min) > 0
 					|| fp_rbdv1.compareTo(fp_ld_neg_max) < 0)
@@ -11739,7 +11739,7 @@ public class pz390 {
 		case 0x59: // "TDGXT" "ED59" "RXE" DFP 54
 			psw_check = false;
 			ins_setup_rxe();
-			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf1); 
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf1);
 			psw_cc = psw_cc0;
 			if ((xbd2_loc & 0x800) != 0
 				&& fp_rbdv1.signum() == 0
@@ -11748,10 +11748,10 @@ public class pz390 {
 			    ) {
 				psw_cc = psw_cc1; // + safe 0
 			}
-			if ((xbd2_loc & 0x400) != 0 
+			if ((xbd2_loc & 0x400) != 0
 				&& fp_rbdv1.signum() == 0
 				&& fp_rbdv1.scale() >= fp_ld_exp_min
-				&& fp_rbdv1.scale() <= fp_ld_exp_max	
+				&& fp_rbdv1.scale() <= fp_ld_exp_max
 			) {
 				psw_cc = psw_cc1; // - safe 0
 			}
@@ -11762,7 +11762,7 @@ public class pz390 {
 				) {
 				psw_cc = psw_cc1; // + extreme zero
 			}
-			if ((xbd2_loc & 0x100) != 0 
+			if ((xbd2_loc & 0x100) != 0
 				&& fp_rdv1 < 0
 				&& (fp_rbdv1.scale() < fp_ld_exp_min
 					|| fp_rbdv1.scale() > fp_ld_exp_max)
@@ -11797,7 +11797,7 @@ public class pz390 {
 				&& fp_rbdv1.scale() >= fp_ld_exp_min
 				&& fp_rbdv1.scale() <= fp_ld_exp_max
 				&& fp_rbdv1.abs().unscaledValue()
-				   .toString().length() < tz390.fp_ld_digits	
+				   .toString().length() < tz390.fp_ld_digits
 			    ) {
 				psw_cc = psw_cc1; // - safe finite
 			}
@@ -11806,7 +11806,7 @@ public class pz390 {
 				&& fp_rbdv1.scale() >= fp_ld_exp_min
 				&& fp_rbdv1.scale() <= fp_ld_exp_max
 				&& fp_rbdv1.abs().unscaledValue()
-				   .toString().length() >= tz390.fp_ld_digits	
+				   .toString().length() >= tz390.fp_ld_digits
 			    ) {
 				psw_cc = psw_cc1; // + non zero lmd non extreem exp
 			}
@@ -11815,7 +11815,7 @@ public class pz390 {
 					&& fp_rbdv1.scale() >= fp_ld_exp_min
 					&& fp_rbdv1.scale() <= fp_ld_exp_max
 					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() >= tz390.fp_ld_digits		
+					   .toString().length() >= tz390.fp_ld_digits
 				) {
 				psw_cc = psw_cc1; // - non zero lmd non extreme exp
 			}
@@ -11856,7 +11856,7 @@ public class pz390 {
 			break;
 		case 0xA8: // EDA8 CZDT R1,D2(l2,B2),M3  RPI 2204 convert long DFP to zoned
 			psw_check = false;
-			ins_setup_rslb(); 
+			ins_setup_rslb();
 			if (rflen2 > 16)set_psw_check(psw_pic_spec); // spec abort if over 16 digit zone
 			work_fp_bi1 = fp_get_bd_from_dd(fp_reg,rf1).toBigInteger();
 			zone_bytes = work_fp_bi1.abs().toString().getBytes();
@@ -11871,7 +11871,7 @@ public class pz390 {
 			}
 			psw_cc = psw_cc_equal; // not overflow
 			while (zone_index < zone_len){
-				zone_bytes[zone_index] = (byte)(zone_bytes[zone_index] & (byte)0x0f); // clear default ascii zone 
+				zone_bytes[zone_index] = (byte)(zone_bytes[zone_index] & (byte)0x0f); // clear default ascii zone
 				if (zone_bytes[zone_index] > 0){
 				   if ((zone_len - rflen2) > zone_index){ // check for overflow digit > 0 being truncated
 				      set_psw_check(psw_pic_fx_ovf);
@@ -11884,30 +11884,30 @@ public class pz390 {
 			}
 			if (zone_len > rflen2){
 				zone_index = zone_len - rflen2 - 1;
-				zone_len = rflen2;				
+				zone_len = rflen2;
 			} else if (zone_len < rflen2){
 				//dsh2 chk rflen2 > 16
 				if (rflen2 > 16)set_psw_check(psw_pic_spec);
 				// dsh pad with zeros if short
 				while (rflen2 > zone_len){
-					mem_byte[bd2_loc] = zone_byte_zone; 
+					mem_byte[bd2_loc] = zone_byte_zone;
 			        bd2_loc++;
 					rflen2--;
 				}
 			} else {
 				zone_index = 0; // start at 0 if equal
-			}	
+			}
 			//dsh3 set zone sign
 			if ((mf3 & 0x8) > 0){ // check signed s bit from szpf mask
-			   zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] & (byte)0x0f); // clear zone to add sign			   
+			   zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] & (byte)0x0f); // clear zone to add sign
 		       if (zone_sign_zero){
 			      if ((mf3 & 0x1) > 0){ // s+f force plus sign
-                     if ((mf3 & 0x2) > 0){ // if p is 1 then sign 0xc0 else 0xf0
+					 if ((mf3 & 0x2) > 0){ // if p is 1 then sign 0xc0 else 0xf0
 					    zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
 					 } else {
 					    zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xf0);
-					 }				
-			      } else { // set sign based on P 
+					 }
+			      } else { // set sign based on P
 				     if ((mf3 & 0x2) > 0){ // if p is 1 then sign 0xc0 else 0xf0
 				        if  (work_fp_bi1.signum() == 1){
 					        zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
@@ -11917,7 +11917,7 @@ public class pz390 {
 				     } else {
 				        zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xf0);
 				     }
-				  }				  				   
+				  }
 			   } else { // signed and not zero
 	              if  (work_fp_bi1.signum() == 1){
 				      zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
@@ -11940,7 +11940,7 @@ public class pz390 {
 			break;
 		case 0xA9: // EDA9 CZXT R1,D2(l2,B2),M3  RPI 2204 convert extended DFP to zoned
 			psw_check = false;
-			ins_setup_rslb(); 
+			ins_setup_rslb();
 			if (rflen2 > 34)set_psw_check(psw_pic_spec); // spec abort if over 34 digit zone
 			work_fp_bi1 = fp_get_bd_from_ld(fp_reg,rf1).toBigInteger();
 			zone_bytes = work_fp_bi1.abs().toString().getBytes();
@@ -11955,7 +11955,7 @@ public class pz390 {
 			}
 			psw_cc = psw_cc_equal; // not overflow
 			while (zone_index < zone_len){
-				zone_bytes[zone_index] = (byte)(zone_bytes[zone_index] & (byte)0x0f); // clear default ascii zone 
+				zone_bytes[zone_index] = (byte)(zone_bytes[zone_index] & (byte)0x0f); // clear default ascii zone
 				if (zone_bytes[zone_index] > 0){
 				   if ((zone_len - rflen2) > zone_index){ // check for overflow digit > 0 being truncated
 				      set_psw_check(psw_pic_fx_ovf);
@@ -11968,30 +11968,30 @@ public class pz390 {
 			}
 			if (zone_len > rflen2){
 				zone_index = zone_len - rflen2 - 1;
-				zone_len = rflen2;				
+				zone_len = rflen2;
 			} else if (zone_len < rflen2){
 				//dsh2 chk rflen2 > 16
 				if (rflen2 > 16)set_psw_check(psw_pic_spec);
 				// dsh pad with zeros if short
 				while (rflen2 > zone_len){
-					mem_byte[bd2_loc] = zone_byte_zone; 
+					mem_byte[bd2_loc] = zone_byte_zone;
 			        bd2_loc++;
 					rflen2--;
 				}
 			} else {
 				zone_index = 0; // start at 0 if equal
-			}	
+			}
 			//dsh3 set zone sign
 			if ((mf3 & 0x8) > 0){ // check signed s bit from szpf mask
-			   zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] & (byte)0x0f); // clear zone to add sign			   
+			   zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] & (byte)0x0f); // clear zone to add sign
 		       if (zone_sign_zero){
 			      if ((mf3 & 0x1) > 0){ // s+f force plus sign
-                     if ((mf3 & 0x2) > 0){ // if p is 1 then sign 0xc0 else 0xf0
+					 if ((mf3 & 0x2) > 0){ // if p is 1 then sign 0xc0 else 0xf0
 					    zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
 					 } else {
 					    zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xf0);
-					 }				
-			      } else { // set sign based on P 
+					 }
+			      } else { // set sign based on P
 				     if ((mf3 & 0x2) > 0){ // if p is 1 then sign 0xc0 else 0xf0
 				        if  (work_fp_bi1.signum() == 1){
 					        zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
@@ -12001,7 +12001,7 @@ public class pz390 {
 				     } else {
 				        zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xf0);
 				     }
-				  }				  				   
+				  }
 			   } else { // signed and not zero
 	              if  (work_fp_bi1.signum() == 1){
 				      zone_bytes[zone_len-1] = (byte)(zone_bytes[zone_len-1] | (byte)0xc0);
@@ -12039,17 +12039,17 @@ public class pz390 {
 			if (rflen2 > 9
 	            || (rflen2 == 9 && (!pdf_signed || mem_byte[bd2_loc] > 15))
 		       ){
-               set_psw_check(psw_pic_fx_ovf);
-               break;
-			} 
-			if (get_pd(mem,bd2_loc,rflen2)) { 
-				if (pdf_is_big) { 
+			   set_psw_check(psw_pic_fx_ovf);
+			   break;
+			}
+			if (get_pd(mem,bd2_loc,rflen2)) {
+				if (pdf_is_big) {
 					fp_put_bd(rf1, tz390.fp_dd_type, new BigDecimal(pdf_big_int,0));
-			        fp_store_reg(fp_reg, rf1); 
+			        fp_store_reg(fp_reg, rf1);
 				} else {
 					if (pdf_long <= max_pos_int && pdf_long >= min_neg_int) {
 						fp_put_bd(rf1, tz390.fp_dd_type, BigDecimal.valueOf(pdf_long));
-			            fp_store_reg(fp_reg, rf1); 
+			            fp_store_reg(fp_reg, rf1);
 					} else {
 						set_psw_check(psw_pic_fx_div);
 					}
@@ -12076,18 +12076,18 @@ public class pz390 {
 			if (rflen2 > 18
 	            || (rflen2 == 18 && (!pdf_signed || mem_byte[bd2_loc] > 15))
 		       ){
-               set_psw_check(psw_pic_fx_ovf);
-               break;
+			   set_psw_check(psw_pic_fx_ovf);
+			   break;
 			}
-			
-			if (get_pd(mem,bd2_loc,rflen2)) { 
-				if (pdf_is_big) { 
+
+			if (get_pd(mem,bd2_loc,rflen2)) {
+				if (pdf_is_big) {
 					fp_put_bd(rf1, tz390.fp_ld_type, new BigDecimal(pdf_big_int,0));
-		            fp_store_reg(fp_reg, rf1); 
+		            fp_store_reg(fp_reg, rf1);
 				} else {
 					if (pdf_long <= max_pos_int && pdf_long >= min_neg_int) {
 						fp_put_bd(rf1, tz390.fp_ld_type, BigDecimal.valueOf(pdf_long));
-			            fp_store_reg(fp_reg, rf1); 
+			            fp_store_reg(fp_reg, rf1);
 					} else {
 						set_psw_check(psw_pic_fx_div);
 					}
@@ -12097,8 +12097,8 @@ public class pz390 {
 				fp_store_reg(fp_reg, rf1);
 			}
 			break;
-		}	
-    }
+		}
+	}
 	/*
 	 * end of ez390 emulator while switch code
 	 */
@@ -12134,7 +12134,7 @@ public class pz390 {
 		if (tz390.opt_trace
 			|| (tz390.opt_tracet // RPI 689 TRACET TCPIO and TGET/TPUT
 				&& (if1 == 93 || if1 == 0x7c))) {
-           trace_ins();
+		   trace_ins();
 		}
 		if (ex_mode) {
 			ex_restore();
@@ -12249,7 +12249,7 @@ public class pz390 {
 		rlv1 = reg.getLong(rf1);
 		rlv2 = reg.getLong(rf2);
 		if3 = mem.get(psw_loc + 2);
-		if4 = mem.get(psw_loc + 3);		
+		if4 = mem.get(psw_loc + 3);
 		if5 = mem.get(psw_loc + 4) & 0x3f;
 		if (tz390.opt_trace) {
 			trace_ins();
@@ -12384,7 +12384,7 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
-	private void ins_setup_rrd() { // RPI 206 "RRF1" 28 MAER oooor0rr 
+	private void ins_setup_rrd() { // RPI 206 "RRF1" 28 MAER oooor0rr
 		// maps r1,r3,r2 to oooo1032
 		psw_ins_len = 4;
 		rf1 = (mem_byte[psw_loc + 2] & 0xf0) >> 1;
@@ -12395,7 +12395,7 @@ public class pz390 {
 		rf3 = (rf3 & 0xf0) >> 1;
 		mf3 = rf3 >> 3;
 		if (tz390.opt_trace) {
-           trace_ins();
+		   trace_ins();
 		}
 		if (ex_mode) {
 			ex_restore();
@@ -12403,7 +12403,7 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 	private void ins_setup_rrfa() { // "B939=DFLTCC,54,340", // B929 RRFa 54,340 KMA R1,R2,R3 RPI 2202
-		// maps r1,r2,r3 to 3012  
+		// maps r1,r2,r3 to 3012
 		psw_ins_len = 4;
 		rf3 = (mem_byte[psw_loc + 2] & 0xf0) >> 1; // RPI 206 RPI 335
 		mf3 = rf3 >> 3; // RPI 335
@@ -12627,8 +12627,8 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
-	
-	private void ins_setup_rslb() { // "RSLb" CZDT, CZXT, CDPT, CXPT oollbdddrmoo RPI 2204 
+
+	private void ins_setup_rslb() { // "RSLb" CZDT, CZXT, CDPT, CXPT oollbdddrmoo RPI 2204
 		psw_ins_len = 6;
 		rflen2 = (mem_byte[psw_loc + 1] & 0xff) + 1;
 		bf2 = mem.getShort(psw_loc + 2) & 0xffff;
@@ -13051,12 +13051,12 @@ public class pz390 {
 			ex_restore();
 		}
 		psw_loc = psw_loc + 6;
-		if (bd1_loc + rflen1 > tot_mem 
+		if (bd1_loc + rflen1 > tot_mem
 			|| (opcode1 != opcode_srp && bd2_loc + rflen2 > tot_mem)) { // RPI 299, RPI 820
 			set_psw_check(psw_pic_addr);
 		}
 		if (tz390.opt_protect // RPI 538
-			&& bd1_loc < psa_len){ 
+			&& bd1_loc < psa_len){
 			set_psw_check(psw_pic_addr);
 		}
 	}
@@ -13095,7 +13095,7 @@ public class pz390 {
 		}
 		if (tz390.opt_protect // RPI 538
 				&& opcode1 != opcode_clc
-				&& bd1_loc < psa_len){ 
+				&& bd1_loc < psa_len){
 				set_psw_check(psw_pic_addr);
 		}
 	}
@@ -13130,7 +13130,7 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 		if (tz390.opt_protect // RPI 538
-			&& bd1_loc < psa_len){ 
+			&& bd1_loc < psa_len){
 			set_psw_check(psw_pic_addr);
 		}
 	}
@@ -13170,7 +13170,7 @@ public class pz390 {
 		}
 		if (tz390.opt_protect // RPI 538
 				&& opcode1 != opcode_clc
-				&& bd1_loc < psa_len){ 
+				&& bd1_loc < psa_len){
 				set_psw_check(psw_pic_addr);
 		}
 	}
@@ -13208,61 +13208,61 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
-    private void ins_setup_vrx() { // VRX vector instructions RPI 2202
-        /*
-         * fetch ??? **!!
-         */
-        psw_ins_len = 6;
-        if (tz390.opt_trace) {
-                trace_ins();
-        }
-        if (ex_mode) {
-                ex_restore();
-        }
-        psw_loc = psw_loc + 6;
-        set_psw_check(psw_pic_oper);  // force S0C1 for all VRX for now RPI 2202
-    }
-    private void ins_setup_vs() { // RPI VF01 routine added for support of vector instructions
-        /*
-         * fetch ??? **!!
-         */
-        psw_ins_len = 4;
-        if (tz390.opt_trace) {
-                trace_ins();
-        }
-        if (ex_mode) {
-                ex_restore();
-        }
-        psw_loc = psw_loc + 4;
-    }
-    private void ins_setup_vsi() { // VSI vector instructions RPI 2202
-        /*
-         * fetch ??? **!!
-         */
-        psw_ins_len = 6;
-        if (tz390.opt_trace) {
-                trace_ins();
-        }
-        if (ex_mode) {
-                ex_restore();
-        }
-        psw_loc = psw_loc + 6;
-        set_psw_check(psw_pic_oper);  // force S0C1 for all VSI for now RPI 2202
-    }
-    private void ins_setup_vrs() { // VRS vector instructions RPI 2202
-        /*
-         * fetch ??? **!!
-         */
-        psw_ins_len = 6;
-        if (tz390.opt_trace) {
-                trace_ins();
-        }
-        if (ex_mode) {
-                ex_restore();
-        }
-        psw_loc = psw_loc + 6;
-        set_psw_check(psw_pic_oper);  // force S0C1 for all VRS for now RPI 2202
-    }
+	private void ins_setup_vrx() { // VRX vector instructions RPI 2202
+		/*
+		 * fetch ??? **!!
+		 */
+		psw_ins_len = 6;
+		if (tz390.opt_trace) {
+				trace_ins();
+		}
+		if (ex_mode) {
+				ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+		set_psw_check(psw_pic_oper);  // force S0C1 for all VRX for now RPI 2202
+	}
+	private void ins_setup_vs() { // RPI VF01 routine added for support of vector instructions
+		/*
+		 * fetch ??? **!!
+		 */
+		psw_ins_len = 4;
+		if (tz390.opt_trace) {
+				trace_ins();
+		}
+		if (ex_mode) {
+				ex_restore();
+		}
+		psw_loc = psw_loc + 4;
+	}
+	private void ins_setup_vsi() { // VSI vector instructions RPI 2202
+		/*
+		 * fetch ??? **!!
+		 */
+		psw_ins_len = 6;
+		if (tz390.opt_trace) {
+				trace_ins();
+		}
+		if (ex_mode) {
+				ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+		set_psw_check(psw_pic_oper);  // force S0C1 for all VSI for now RPI 2202
+	}
+	private void ins_setup_vrs() { // VRS vector instructions RPI 2202
+		/*
+		 * fetch ??? **!!
+		 */
+		psw_ins_len = 6;
+		if (tz390.opt_trace) {
+				trace_ins();
+		}
+		if (ex_mode) {
+				ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+		set_psw_check(psw_pic_oper);  // force S0C1 for all VRS for now RPI 2202
+	}
 	public String get_ins_name(int ins_loc) {
 		/*
 		 * return opcode or ????? for given op1 and op2
@@ -13328,7 +13328,7 @@ public class pz390 {
 				} else {
 					ins_name = ins_name.substring(0,ins_name.length()-1).concat("A");
 				}
-			}	
+			}
 			if (ins_name.length() < 5) {
 				ins_name = (ins_name + "     ").substring(0, 5);
 			}
@@ -13491,10 +13491,10 @@ public class pz390 {
 		 */
 		mem.putInt(epie_id, 0xc5d7c9c5); // id=c'EPIE'
 		mem.putInt(epie_parm, espie_parm[tot_espie - 1]);
-		mem.putShort(epie_psw,(short) 0x07ED); // EC PSW 7=dat,I/O,ext E=key D=EMWP 
+		mem.putShort(epie_psw,(short) 0x07ED); // EC PSW 7=dat,I/O,ext E=key D=EMWP
 		mem_byte[epie_psw+2] = (byte)(psw_cc_code[psw_cc] << 4 | psw_pgm_mask); // PRI 845 00ccmmmm
 		update_psa();  // RPI 1063
-		mem.putInt(epie_psw + 4, psw_loc); // EC PSW amode bit and 24/31 bit addr 
+		mem.putInt(epie_psw + 4, psw_loc); // EC PSW amode bit and 24/31 bit addr
 		mem_byte[epie_ilc] = last_psw_ins_len; // RPI 845 last instruction length 2,4, 6
 		mem.putShort(epie_inc,(short)psw_pic); // RPI 845 interrupt code
 		mem_byte[epie_flags] = 0x40; // RPI 845 set 64 bit reg flag
@@ -13505,7 +13505,7 @@ public class pz390 {
 		reg.putInt(r14, zcvt_exit); // r14 = exit
 		reg.putInt(r15, espie_exit[tot_espie - 1]);
 		set_psw_loc(espie_exit[tot_espie - 1]);
-		espie_psw_cc        = psw_cc;        // RPI 809  
+		espie_psw_cc        = psw_cc;        // RPI 809
 		espie_psw_amode     = psw_amode;     // RPI 809
 		espie_psw_amode_bit = psw_amode_bit; // RPI 809
 		espie_exit_running = true;
@@ -13514,20 +13514,20 @@ public class pz390 {
 			tz390.put_trace("ESPIE EXIT STARTING");
 		}
 	}
-    public void update_psa(){
-    	/*
-    	 * called for ESPIE and ABEND  RPI 1063
-    	 * to update PSA pgm old psw and instr. len
-    	 * store FLCPOPSW+2=00CCMMMM
-    	 * store FLCPOPSW+3=interrupt code
-    	 * store FLCPOPSW+4=addr with amode high bit
-    	 * store FLCPIILC+0=instruction length
-    	 */
-    	mem_byte[psa_pgm_old_psw+2]= (byte)(psw_cc_code[psw_cc] << 4 | psw_pgm_mask); // PRI 845 00ccmmmm
+	public void update_psa(){
+		/*
+		 * called for ESPIE and ABEND  RPI 1063
+		 * to update PSA pgm old psw and instr. len
+		 * store FLCPOPSW+2=00CCMMMM
+		 * store FLCPOPSW+3=interrupt code
+		 * store FLCPOPSW+4=addr with amode high bit
+		 * store FLCPIILC+0=instruction length
+		 */
+		mem_byte[psa_pgm_old_psw+2]= (byte)(psw_cc_code[psw_cc] << 4 | psw_pgm_mask); // PRI 845 00ccmmmm
 		mem_byte[psa_pgm_old_psw+3]= (byte)psw_pic;
-    	mem.putInt(psa_pgm_old_psw + 4, psw_loc); // EC PSW amode bit and 24/31 bit addr 
-        mem_byte[psa_psw_ins_len] = (byte) psw_ins_len;
-    }
+		mem.putInt(psa_pgm_old_psw + 4, psw_loc); // EC PSW amode bit and 24/31 bit addr
+		mem_byte[psa_psw_ins_len] = (byte) psw_ins_len;
+	}
 	public void setup_estae_exit() { // RPI 636 used by sz390 percolate
 		/*
 		 * initialize zcvt_sdwa and pass addr to estae exit via r1
@@ -13536,18 +13536,18 @@ public class pz390 {
 		mem.putInt(sdwa_cmp,psw_pic); // RPI 845
 		mem.putShort(sdwa_psw,(short) 0x07ED); // EC PSW 7=dat,I/O,ext E=key D=EMWP RPI 845
 		mem_byte[sdwa_psw+2] = (byte)(psw_cc_code[psw_cc] << 4 | psw_pgm_mask); // PRI 845 00ccmmmm
-        mem.putInt(sdwa_psw + 4, psw_loc); // psw addr
-        mem.putInt(sdwa_xpad,sdwa_ptrs); // addr extension ptrs RPI 845
-        mem.putInt(sdwa_xeme,sdwa_g64); // addr RC4 regsiter extension RPI 845
-        mem.position(sdwa_g64); // gpr64 r0-r15
-        reg.position(0); // RPI 357
-        mem.put(reg);
+		mem.putInt(sdwa_psw + 4, psw_loc); // psw addr
+		mem.putInt(sdwa_xpad,sdwa_ptrs); // addr extension ptrs RPI 845
+		mem.putInt(sdwa_xeme,sdwa_g64); // addr RC4 regsiter extension RPI 845
+		mem.position(sdwa_g64); // gpr64 r0-r15
+		reg.position(0); // RPI 357
+		mem.put(reg);
 		reg.putInt(r1, zcvt_sdwa);                 // r1 = sdwa RPI 845
 		reg.putInt(r2, estae_parm[tot_estae - 1]); // r2 = ESTAE PARM RPI 845
 		reg.putInt(r14, zcvt_exit); // r14 = exit
 		reg.putInt(r15, estae_exit[tot_estae - 1]);
 		set_psw_loc(estae_exit[tot_estae - 1]);
-		estae_psw_cc        = psw_cc;        // RPI 809  
+		estae_psw_cc        = psw_cc;        // RPI 809
 		estae_psw_amode     = psw_amode;     // RPI 809
 		estae_psw_amode_bit = psw_amode_bit; // RPI 809
 		estae_exit_running = true;
@@ -13561,30 +13561,30 @@ public class pz390 {
 		/*
 		 * set psw_amode based on amode low bit and high bit  // RPI 1506
 		 */
-        if((amode_bit & psw_extended_amode64_bit) == 1)       // RPI 1506
-          {psw_extended_amode_bit = psw_extended_amode64_on;  // RPI 1506
-           psw_amode = psw_amode31;                           // RPI 1506
-           psw_amode_bit = psw_amode31_bit;                   // RPI 1506
-           psw_amode_high_bits = psw_amode31_high_bits;       // RPI 1506
-           }                                                  // RPI 1506
-        else                                                  // RPI 1506
-          {psw_extended_amode_bit = psw_extended_amode64_off; // RPI 1506
-           if ((amode_bit & psw_amode31_bit) != 0) {
-              psw_amode = psw_amode31;
-              psw_amode_bit = psw_amode31_bit;
-              psw_amode_high_bits = psw_amode31_high_bits;
-              } else {
-              psw_amode = psw_amode24;
-              psw_amode_bit = psw_amode24_bit;
-              psw_amode_high_bits = psw_amode24_high_bits;
-              }
-           }                                                  // RPI 1506
-    }
+		if((amode_bit & psw_extended_amode64_bit) == 1)       // RPI 1506
+		  {psw_extended_amode_bit = psw_extended_amode64_on;  // RPI 1506
+		   psw_amode = psw_amode31;                           // RPI 1506
+		   psw_amode_bit = psw_amode31_bit;                   // RPI 1506
+		   psw_amode_high_bits = psw_amode31_high_bits;       // RPI 1506
+		   }                                                  // RPI 1506
+		else                                                  // RPI 1506
+		  {psw_extended_amode_bit = psw_extended_amode64_off; // RPI 1506
+		   if ((amode_bit & psw_amode31_bit) != 0) {
+			  psw_amode = psw_amode31;
+			  psw_amode_bit = psw_amode31_bit;
+			  psw_amode_high_bits = psw_amode31_high_bits;
+			  } else {
+			  psw_amode = psw_amode24;
+			  psw_amode_bit = psw_amode24_bit;
+			  psw_amode_high_bits = psw_amode24_high_bits;
+			  }
+		   }                                                  // RPI 1506
+	}
 
 	public void set_psw_loc(int addr) {
 		/*
-		 * set psw_loc based on psw_amode 
-		 * and turn off ex_mode 
+		 * set psw_loc based on psw_amode
+		 * and turn off ex_mode
 		 * and add space if
 		 * trace on
 		 */
@@ -13597,12 +13597,12 @@ public class pz390 {
 		}
 		ex_mode = false;
 	}
-    private int get_tm_mem_cc(int mem, int mask){
-    	/*
-    	 * return psw_cc dor TM, TMY
-    	 */
-    	mask = mask & 0xff;
-    	int bits = mem & mask;
+	private int get_tm_mem_cc(int mem, int mask){
+		/*
+		 * return psw_cc dor TM, TMY
+		 */
+		mask = mask & 0xff;
+		int bits = mem & mask;
 		if (bits == 0) {
 			return psw_cc0;
 		} else if (bits == mask) {
@@ -13610,10 +13610,10 @@ public class pz390 {
 		} else {
 			return psw_cc1;
 		}
-    }
+	}
 	private int get_tm_reg_cc(int reg, int mask) {
 		/*
-		 * return psw_cc for 
+		 * return psw_cc for
 		 * TMHH, THHL, TMLH, TMLL
 		 */
 		mask = mask &0xffff; // RPI 844
@@ -13621,7 +13621,7 @@ public class pz390 {
 		if (bits == 0) {
 			// all selected bits or mask 0
 			return psw_cc0;
-		} else if (bits == mask) { // RPI 844 was reg vs mask  
+		} else if (bits == mask) { // RPI 844 was reg vs mask
 			// all selected bits 1
 			return psw_cc3;
 		} else if (bits > (mask >>> 1)) { // RPI 844
@@ -13695,28 +13695,28 @@ public class pz390 {
 
 	private int get_int_log_add_cc() {
 		/*
-		 * set psw_carry and return cc for logical add as follows: 
+		 * set psw_carry and return cc for logical add as follows:
 		 *   rv1 carry
 		 *    0 0 - cc0
 		 *   !0 0 cc1
 		 *    0 1 cc2
 		 *   !0 1 cc3
-		 * Notes: 
-		 *   1. rvw = r1 input 
-		 *   2. rv2 = r2 input 
+		 * Notes:
+		 *   1. rvw = r1 input
+		 *   2. rv2 = r2 input
 		 *   3. rv1 = result r1
-		 * 
+		 *
 		 *   R1 = RW + R2
-		 *   
-         *R1      RW        R2       RPI 1125 DOC
-         * +       +         +   NC
-         * +       +         -   C
-         * +       -         +   C
-         * +       -         -   C
-         * -       +         +   NC
-         * -       +         -   NC
-         * -       -         +   NC
-         * -       -         -   C
+		 *
+		 *R1      RW        R2       RPI 1125 DOC
+		 * +       +         +   NC
+		 * +       +         -   C
+		 * +       -         +   C
+		 * +       -         -   C
+		 * -       +         +   NC
+		 * -       +         -   NC
+		 * -       -         +   NC
+		 * -       -         -   C
 		 */
 		boolean rv1_carry = false;
 		if (rv1 >= 0) { // RPI 376
@@ -13739,39 +13739,39 @@ public class pz390 {
 				return psw_cc3;
 			}
 		}
-	}	
-    private int get_int_lsi_add_cc() { // RPI 1125 ALSIH and ALSI
+	}
+	private int get_int_lsi_add_cc() { // RPI 1125 ALSIH and ALSI
 		/*
 		 * set psw_carry and return cc for logical add
 		 * with signed value in rv2.  For negative rv2,
 		 * the carry bit may indicate borrow.
-		 *  
+		 *
 		 *   rv1 carry/borrow
 		 *    0  0 - cc0
 		 *   !0  0 cc1
 		 *    0  1 cc2
 		 *   !0  1 cc3
-		 * Notes: 
-		 *   1. rvw = r1 input 
-		 *   2. rv2 = r2 input 
+		 * Notes:
+		 *   1. rvw = r1 input
+		 *   2. rv2 = r2 input
 		 *   3. rv1 = result r1
-		 * 
+		 *
 		 *   R1 = RW + R2
-		 *   
-         *R1      RW        R2       RPI 1125 DOC
-         * +       +         +   NC
-         * +       +         -   NB
-         * +       -         +   C
-         * +       -         -   NB
-         * -       +         +   NC
-         * -       +         -   B
-         * -       -         +   NC
-         * -       -         -   NB
+		 *
+		 *R1      RW        R2       RPI 1125 DOC
+		 * +       +         +   NC
+		 * +       +         -   NB
+		 * +       -         +   C
+		 * +       -         -   NB
+		 * -       +         +   NC
+		 * -       +         -   B
+		 * -       -         +   NC
+		 * -       -         -   NB
 		 */
 		boolean rv1_carry = false;
 		if (rv1 >= 0) { // RPI 376
 			if (rvw < 0 && rv2 > 0) {
-				rv1_carry = true; 
+				rv1_carry = true;
 			}
 		} else if (rvw >= 0 && rv2 < 0) {
 			rv1_carry = true; // borrow
@@ -13789,39 +13789,39 @@ public class pz390 {
 				return psw_cc3;
 			}
 		}
-    }
-    private int get_long_lsi_add_cc() { // RPI 1125 ALGSI
+	}
+	private int get_long_lsi_add_cc() { // RPI 1125 ALGSI
 		/*
 		 * set psw_carry and return cc for logical add
 		 * with signed value in rv2.  For negative rv2,
 		 * the carry bit may indicate borrow.
-		 *  
+		 *
 		 *   rlv1 carry/borrow
 		 *    0  0 - cc0
 		 *   !0  0 cc1
 		 *    0  1 cc2
 		 *   !0  1 cc3
-		 * Notes: 
-		 *   1. rlvw = r1 input 
-		 *   2. rlv2 = r2 input 
+		 * Notes:
+		 *   1. rlvw = r1 input
+		 *   2. rlv2 = r2 input
 		 *   3. rlv1 = result r1
-		 * 
+		 *
 		 *   R1 = RW + R2
-		 *   
-         *R1      RW        R2       RPI 1125 DOC
-         * +       +         +   NC
-         * +       +         -   NB
-         * +       -         +   C
-         * +       -         -   NB
-         * -       +         +   NC
-         * -       +         -   B
-         * -       -         +   NC
-         * -       -         -   NB
+		 *
+		 *R1      RW        R2       RPI 1125 DOC
+		 * +       +         +   NC
+		 * +       +         -   NB
+		 * +       -         +   C
+		 * +       -         -   NB
+		 * -       +         +   NC
+		 * -       +         -   B
+		 * -       -         +   NC
+		 * -       -         -   NB
 		 */
 		boolean rlv1_carry = false;
 		if (rlv1 >= 0) { // RPI 376
 			if (rlvw < 0 && rlv2 > 0) {
-				rlv1_carry = true; 
+				rlv1_carry = true;
 			}
 		} else if (rlvw >= 0 && rlv2 < 0) {
 			rlv1_carry = true; // borrow
@@ -13839,8 +13839,8 @@ public class pz390 {
 				return psw_cc3;
 			}
 		}
-    }
-	
+	}
+
 
 	private int get_long_log_add_cc() {
 		/*
@@ -13856,7 +13856,7 @@ public class pz390 {
 			if (rlvw < 0 || rlv2 < 0) {
 				rlv1_carry = true;
 			}
-		} else if (rlvw < 0 && rlv2 < 0) { 
+		} else if (rlvw < 0 && rlv2 < 0) {
 			rlv1_carry = true;
 		}
 		if (rlv1 == 0) {
@@ -13876,30 +13876,30 @@ public class pz390 {
 
 	private int get_int_log_sub_cc() {
 		/*
-		 * return cc for logical subtract as follows: 
-		 * rv1 borrow 
+		 * return cc for logical subtract as follows:
+		 * rv1 borrow
 		 *   0 1 cc0 (slb only)
-		 *  !0 1 cc1 
-		 *   0 0 cc2 
-		 *  !0 0 cc3 
+		 *  !0 1 cc1
+		 *   0 0 cc2
+		 *  !0 0 cc3
 		 * Notes:
 		 *  1. rvw = r1 input
-		 *  2. rv2 = r2 input 
+		 *  2. rv2 = r2 input
 		 *  3. rv1 = result
 		 */
 		boolean rv1_borrow = false;
 		int signs = rvw ^ rv2; // RPI 879
-        if (signs >= 0){
-        	// signs same
-        	if (rvw < rv2){
-        		rv1_borrow = true; // RPI 879
-        	}
-        } else {
-        	// signs different
-        	if (rvw > rv2){
-        		rv1_borrow = true;  // RPI 879
-        	}
-        }
+		if (signs >= 0){
+			// signs same
+			if (rvw < rv2){
+				rv1_borrow = true; // RPI 879
+			}
+		} else {
+			// signs different
+			if (rvw > rv2){
+				rv1_borrow = true;  // RPI 879
+			}
+		}
 		if (rv1 == 0) {
 			if (!rv1_borrow) {
 				return psw_cc2; // Z,NB
@@ -13918,10 +13918,10 @@ public class pz390 {
 	private int get_long_log_sub_cc() {
 		/*
 		 * return cc for logical subtract as follows:
-		 *  rlv borrow 
+		 *  rlv borrow
 		 *    0 1 cc0 (slb only)
-		 *   !0 1 cc1 
-		 *    0 0 cc2 
+		 *   !0 1 cc1
+		 *    0 0 cc2
 		 *   !0 0 cc3
 		 * Notes:
 		 *   1.  rlvw = orig. rlv1
@@ -13930,17 +13930,17 @@ public class pz390 {
 		 */
 		boolean rlv1_borrow = false;
 		long signs = rlvw ^ rlv2; // RPI 879
-        if (signs >= 0){
-        	// same signs
-        	if (rlvw < rlv2){
-        		rlv1_borrow = true; // RPI 879
-        	}
-        } else {
-        	// diffent signs
-        	if (rlvw > rlv2){
-        		rlv1_borrow = true;  // RPI 879
-        	}
-        }
+		if (signs >= 0){
+			// same signs
+			if (rlvw < rlv2){
+				rlv1_borrow = true; // RPI 879
+			}
+		} else {
+			// diffent signs
+			if (rlvw > rlv2){
+				rlv1_borrow = true;  // RPI 879
+			}
+		}
 		if (rlv1 == 0) {
 			if (!rlv1_borrow) {
 				return psw_cc2; // Z,NB
@@ -13959,7 +13959,7 @@ public class pz390 {
 		/*
 		 * return byte array with leading 0 byte followed by data bytes. This
 		 * array format is used to initialize BigInteger with logical unsigned
-		 * value.  
+		 * value.
 		 * 2022-02-21 dsh issue 300 support unsigned with leading x'00'
 		 */
 		byte[] new_byte = new byte[data_len + 1]; // default all 0x00
@@ -13969,7 +13969,7 @@ public class pz390 {
 	private byte[] get_signed_bytes(byte[] data_byte, int data_offset, int data_len) {  // #300
 		/*
 		 * return byte array with signed 2's complement. This
-		 * array format is used to initialize BigInteger value.  
+		 * array format is used to initialize BigInteger value.
 		 * 2022-02-21 dsh issue 300 fix to support 2s complement negative numbers
 		 */
 		byte[] new_byte = new byte[data_len];
@@ -14072,8 +14072,8 @@ public class pz390 {
 		reg.putInt(rf2 + 12, (reg.getInt(rf2 + 12) & psw_amode24_high_bits)
 				| (rflen2 - (bd2_loc - bd2_start)));
 	}
-    private void exec_clcle(){
-    	fill_char = (byte) bd2_loc;
+	private void exec_clcle(){
+		fill_char = (byte) bd2_loc;
 		bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
 		bd2_loc = reg.getInt(rf3 + 4) & psw_amode;
 		bd1_start = bd1_loc;
@@ -14145,7 +14145,7 @@ public class pz390 {
 		reg.putInt(rf3 + 4, (reg.getInt(rf3 + 4) & psw_amode_high_bits)
 				| bd2_loc);
 		reg.putInt(rf3 + 12, rflen2 - (bd2_loc - bd2_start));
-    }
+	}
 	private void exec_clm() {
 		/*
 		 * exec clmh or clm using rv1, db2_loc
@@ -14348,7 +14348,7 @@ public class pz390 {
 		/*
 		 * perform TRTE or TRTRE
 		 */
-		if ((mf1 & 1) != 0){ 
+		if ((mf1 & 1) != 0){
 			// check even/odd arg register pair
 			set_psw_check(psw_pic_spec);
 		}
@@ -14357,121 +14357,121 @@ public class pz390 {
 		// get table addr forcing double word bound
 		bd2_loc = reg.getInt(r1) & psw_amode & 0xfffffff8;
 		boolean limit = (mf3 & 2) != 0;
-        int incr;
-        int bd1_end;
-        int arg_val;
-        int funct_val;
-        try { // catch S0C5 on table accesses
-        	if ((mf3 & 8) == 0){     // 1 byte arg ent
-        		if (reversed){
-        			incr = -1;
-        			bd1_end = bd1_loc - rflen1;
-        		} else {
-        			incr = 1;
-        			bd1_end = bd1_loc + rflen1;
-        		}
-        		if ((mf3 & 4) == 0){ // 1 byte tab ent
-        			while (bd1_loc != bd1_end){
-        				funct_val = mem_byte[bd2_loc + (mem.get(bd1_loc) & 0xff)];
-        				if (funct_val != 0){
-        					psw_cc = psw_cc1;
-        					reg.putInt(rf2+4,funct_val & 0xff);
-        					reg.putInt(rf1+4,bd1_loc);
-        					if (reversed){
-        						reg.putInt(rf1+12,bd1_loc - bd1_end);
-        					} else {
-        						reg.putInt(rf1+12,bd1_end - bd1_loc);
-        					}
-        					return;
-        				}
-        				bd1_loc = bd1_loc + incr;
-        			}
-        		} else { 
-        			// 1 byte arg
-        			// 2 byte fun in 512 table
-        			while (bd1_loc != bd1_end){
-        				funct_val = mem.getShort(bd2_loc + ((mem.get(bd1_loc) & 0xff) << 1));
-        				if (funct_val != 0){
-        					psw_cc = psw_cc1;
-        					reg.putInt(rf2+4,funct_val & 0xffff);
-        					reg.putInt(rf1+4,bd1_loc);
-        					if (reversed){
-        						reg.putInt(rf1+12,bd1_loc - bd1_end);
-        					} else {
-        						reg.putInt(rf1+12,bd1_end - bd1_loc);
-        					}
-        					return;
-        				}
-        				bd1_loc = bd1_loc + incr;
-        			}
-        		}
-        	} else { 
-        		// 2 byte arugments
-        		if ((rflen1 & 1) != 0){ 
-        			// check for odd length 
-        			set_psw_check(psw_pic_spec);
-        		}
-        		if (reversed){
-        			incr = -2;
-        			bd1_end = bd1_loc - rflen1;
-        		} else {
-        			incr = 2;
-        			bd1_end = bd1_loc + rflen1;
-        		}
-        		if ((mf3 & 4) == 0){
-        			// 2 byte argument
-        			// 1 byte function in 65k table
-        			while (bd1_loc != bd1_end){
-        				arg_val   = mem.getShort(bd1_loc) & 0xffff;
-        				if (!limit || arg_val <= 255){
-        					funct_val = mem_byte[bd2_loc + (arg_val & 0xffff)];
-        					if (funct_val != 0){
-        						psw_cc = psw_cc1;
-        						reg.putInt(rf2+4,funct_val &0xff);
-        						reg.putInt(rf1+4,bd1_loc);
-        						if (reversed){
-        							reg.putInt(rf1+12,bd1_loc - bd1_end);
-        						} else {
-        							reg.putInt(rf1+12,bd1_end - bd1_loc);
-        						}
-        						return;
-        					}
-        				}
-        				bd1_loc = bd1_loc + incr;
-        			}
-        		} else {
-        			// 2 byte arg
-        			// 2 byte function 128k table
-        			while (bd1_loc != bd1_end){
-        				arg_val   = mem.getShort(bd1_loc) & 0xffff;
-        				if (!limit || arg_val <= 255){
-        					funct_val = mem.getShort(bd2_loc + ((mem.getShort(bd1_loc) & 0xff) << 1));
-        					if (funct_val != 0){
-        						psw_cc = psw_cc1;
-        						reg.putInt(rf2+4,funct_val);
-        						reg.putInt(rf1+4,bd1_loc);
-        						if (reversed){
-        							reg.putInt(rf1+12,bd1_loc - bd1_end);
-        						} else {
-        							reg.putInt(rf1+12,bd1_end - bd1_loc);
-        						}
-        						return;
-        					}
-        				}
-        				bd1_loc = bd1_loc + incr;
-        			}
-        		}
-        	}
-        } catch (Exception e){
-        	set_psw_check(psw_pic_addr);
-        }
+		int incr;
+		int bd1_end;
+		int arg_val;
+		int funct_val;
+		try { // catch S0C5 on table accesses
+			if ((mf3 & 8) == 0){     // 1 byte arg ent
+				if (reversed){
+					incr = -1;
+					bd1_end = bd1_loc - rflen1;
+				} else {
+					incr = 1;
+					bd1_end = bd1_loc + rflen1;
+				}
+				if ((mf3 & 4) == 0){ // 1 byte tab ent
+					while (bd1_loc != bd1_end){
+						funct_val = mem_byte[bd2_loc + (mem.get(bd1_loc) & 0xff)];
+						if (funct_val != 0){
+							psw_cc = psw_cc1;
+							reg.putInt(rf2+4,funct_val & 0xff);
+							reg.putInt(rf1+4,bd1_loc);
+							if (reversed){
+								reg.putInt(rf1+12,bd1_loc - bd1_end);
+							} else {
+								reg.putInt(rf1+12,bd1_end - bd1_loc);
+							}
+							return;
+						}
+						bd1_loc = bd1_loc + incr;
+					}
+				} else {
+					// 1 byte arg
+					// 2 byte fun in 512 table
+					while (bd1_loc != bd1_end){
+						funct_val = mem.getShort(bd2_loc + ((mem.get(bd1_loc) & 0xff) << 1));
+						if (funct_val != 0){
+							psw_cc = psw_cc1;
+							reg.putInt(rf2+4,funct_val & 0xffff);
+							reg.putInt(rf1+4,bd1_loc);
+							if (reversed){
+								reg.putInt(rf1+12,bd1_loc - bd1_end);
+							} else {
+								reg.putInt(rf1+12,bd1_end - bd1_loc);
+							}
+							return;
+						}
+						bd1_loc = bd1_loc + incr;
+					}
+				}
+			} else {
+				// 2 byte arugments
+				if ((rflen1 & 1) != 0){
+					// check for odd length
+					set_psw_check(psw_pic_spec);
+				}
+				if (reversed){
+					incr = -2;
+					bd1_end = bd1_loc - rflen1;
+				} else {
+					incr = 2;
+					bd1_end = bd1_loc + rflen1;
+				}
+				if ((mf3 & 4) == 0){
+					// 2 byte argument
+					// 1 byte function in 65k table
+					while (bd1_loc != bd1_end){
+						arg_val   = mem.getShort(bd1_loc) & 0xffff;
+						if (!limit || arg_val <= 255){
+							funct_val = mem_byte[bd2_loc + (arg_val & 0xffff)];
+							if (funct_val != 0){
+								psw_cc = psw_cc1;
+								reg.putInt(rf2+4,funct_val &0xff);
+								reg.putInt(rf1+4,bd1_loc);
+								if (reversed){
+									reg.putInt(rf1+12,bd1_loc - bd1_end);
+								} else {
+									reg.putInt(rf1+12,bd1_end - bd1_loc);
+								}
+								return;
+							}
+						}
+						bd1_loc = bd1_loc + incr;
+					}
+				} else {
+					// 2 byte arg
+					// 2 byte function 128k table
+					while (bd1_loc != bd1_end){
+						arg_val   = mem.getShort(bd1_loc) & 0xffff;
+						if (!limit || arg_val <= 255){
+							funct_val = mem.getShort(bd2_loc + ((mem.getShort(bd1_loc) & 0xff) << 1));
+							if (funct_val != 0){
+								psw_cc = psw_cc1;
+								reg.putInt(rf2+4,funct_val);
+								reg.putInt(rf1+4,bd1_loc);
+								if (reversed){
+									reg.putInt(rf1+12,bd1_loc - bd1_end);
+								} else {
+									reg.putInt(rf1+12,bd1_end - bd1_loc);
+								}
+								return;
+							}
+						}
+						bd1_loc = bd1_loc + incr;
+					}
+				}
+			}
+		} catch (Exception e){
+			set_psw_check(psw_pic_addr);
+		}
 		psw_cc = psw_cc0;
 		reg.putInt(rf2+4,0);
 		reg.putInt(rf1+4,bd1_loc);
 		reg.putInt(rf1+12,0);
 	}
-    private void exec_unpka(){
-    	if (rflen <= 32) {
+	private void exec_unpka(){
+		if (rflen <= 32) {
 			rflen1 = rflen;
 		} else {
 			set_psw_check(psw_pic_spec);
@@ -14519,7 +14519,7 @@ public class pz390 {
 		default:
 			psw_cc = psw_cc3;
 		}
-    }
+	}
 	private void exec_icm() {
 		/*
 		 * exec icmh, icmy, or icm using rv1, db2_loc Notes: 1. psw_cc =
@@ -14587,8 +14587,8 @@ public class pz390 {
 			}
 		}
 	}
-    private void exec_mvcl(){
-    	bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+	private void exec_mvcl(){
+		bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
 		bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
 		rflen1 = reg.getInt(rf1 + 12) & psw_amode24;
 		rflen2 = reg.getInt(rf2 + 12) & psw_amode24;
@@ -14630,9 +14630,9 @@ public class pz390 {
 				| bd2_loc);
 		reg.putInt(rf2 + 12, (reg.getInt(rf2 + 12) & psw_amode24_high_bits)
 				| (rflen2 - data_len));
-    }
-    private void exec_mvcle(){
-    	fill_char = (byte) bd2_loc;
+	}
+	private void exec_mvcle(){
+		fill_char = (byte) bd2_loc;
 		bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
 		bd2_loc = reg.getInt(rf3 + 4) & psw_amode;
 		rflen1 = reg.getInt(rf1 + 12) & max_pos_int;
@@ -14651,10 +14651,10 @@ public class pz390 {
 			set_psw_check(psw_pic_addr); // RPI 397
 			return;
 		}
-         if (data_len == 0)            // RPI 1531
-            {// Only padding is needed // RPI 1523
-             }                         // RPI 1531
-        else                           // RPI 1531
+		 if (data_len == 0)            // RPI 1531
+			{// Only padding is needed // RPI 1523
+			 }                         // RPI 1531
+		else                           // RPI 1531
 		if (bd1_loc + data_len <= bd2_loc || bd2_loc + data_len <= bd1_loc) {
 			System
 					.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc,
@@ -14687,15 +14687,15 @@ public class pz390 {
 		reg.putInt(rf3 + 4, (reg.getInt(rf3 + 4) & psw_amode_high_bits)
 				| bd2_loc);
 		reg.putInt(rf3 + 12, rflen2 - data_len);
-    }
-    private void exec_mvc_rflen(){
-    	/*
-    	 * move from bd2_loc to bd1_loc
-    	 * for length rflen 
-    	 * Notes:
-    	 *   1.  Used by MVC and MVCOS
-    	 */
-    	if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
+	}
+	private void exec_mvc_rflen(){
+		/*
+		 * move from bd2_loc to bd1_loc
+		 * for length rflen
+		 * Notes:
+		 *   1.  Used by MVC and MVCOS
+		 */
+		if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
 			System.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc, rflen); // RPI
 																			// 411
 		} else if (bd2_loc + 1 == bd1_loc) {
@@ -14710,7 +14710,7 @@ public class pz390 {
 				bd2_loc++;
 			}
 		}
-    }
+	}
 	private void push_pc_stack(boolean pc_type,int link_addr) {
 		/*
 		 * push psw and regs on PC stack
@@ -14835,8 +14835,8 @@ public class pz390 {
 			ins_setup_s();
 			break;
 		case 8:// "DM" 1 DIAGNOSE 83000000
-            ins_setup_dm();
-            break;
+			ins_setup_dm();
+			break;
 		case 9:// "RSI" 4 BRXH oorriiii
 			ins_setup_rsi();
 			break;
@@ -14925,7 +14925,7 @@ public class pz390 {
 		case 37: // RPI 812 ASSIST "XDECO"
 			ins_setup_rx();
 			break;
-		case 38: // RPI 812 ASSIST "XREAD" 	
+		case 38: // RPI 812 ASSIST "XREAD"
 			ins_setup_rxss();
 			break;
 		case 39: // RPI 817 "CGRT"
@@ -14958,51 +14958,51 @@ public class pz390 {
 		case 52: // RPI 1125 "RNSBG" RPI 1125
 			ins_setup_rie8();
 			break;
-		case 53: // RPI 1125 "LEDBR?" RPI 1125 
+		case 53: // RPI 1125 "LEDBR?" RPI 1125
 			ins_setup_rre();
 			break;
-		case 54: // RPI 1125 "FIXBR?" RPI 1125 
+		case 54: // RPI 1125 "FIXBR?" RPI 1125
 			ins_setup_rrfe();
-			break;	
-		case 55: // RPI 1125 "LPD" RPI 1125 
+			break;
+		case 55: // RPI 1125 "LPD" RPI 1125
 			ins_setup_ssf2();
 			break;
-		case 56: // RPI 1125 "LOC"  
+		case 56: // RPI 1125 "LOC"
 			ins_setup_rsy();
 			break;
-		case 57: // RPI 1125 "AHIK"  
+		case 57: // RPI 1125 "AHIK"
 			ins_setup_rie9();
-			break;	
-        case 67: // RR with 2 GPRs                // RPI 1209N
-            ins_setup_rr();
-            break;
-        case 68: // RR with 2 FPRs                // RPI 1209N
-            ins_setup_rr();
-            break;
-        case 69: // RR with 1 mask and 1 GPR      // RPI 1209N
-            ins_setup_rr();
-            break;
-        case 70: // RR with 1 GPR                 // RPI 1209N
-            ins_setup_rr();
-            break;
-        case 71: // RR with 2 pairs of GPRs       // RPI 1209N
-            ins_setup_rr();
-            break;
-        case 72:// RR with implied mask and 1 GPR // RPI 1209N
-            ins_setup_rr();
-            break;
-        case 73:// RI-a // RPI 1522
-            ins_setup_ri();
-            break;
-         // update max_op_type_setup and add cases to match
-        default: 
-            trace_ins(); // unknown op RPI 527
-        }
-        tz390.opt_trace = save_opt_trace;
-        psw_loc = save_psw_loc;
+			break;
+		case 67: // RR with 2 GPRs                // RPI 1209N
+			ins_setup_rr();
+			break;
+		case 68: // RR with 2 FPRs                // RPI 1209N
+			ins_setup_rr();
+			break;
+		case 69: // RR with 1 mask and 1 GPR      // RPI 1209N
+			ins_setup_rr();
+			break;
+		case 70: // RR with 1 GPR                 // RPI 1209N
+			ins_setup_rr();
+			break;
+		case 71: // RR with 2 pairs of GPRs       // RPI 1209N
+			ins_setup_rr();
+			break;
+		case 72:// RR with implied mask and 1 GPR // RPI 1209N
+			ins_setup_rr();
+			break;
+		case 73:// RI-a // RPI 1522
+			ins_setup_ri();
+			break;
+		 // update max_op_type_setup and add cases to match
+		default:
+			trace_ins(); // unknown op RPI 527
+		}
+		tz390.opt_trace = save_opt_trace;
+		psw_loc = save_psw_loc;
 		psw_ins_len = save_psw_ins_len;           // RPI 2010
-        trace_psw = false;  // RPI 538
-    }
+		trace_psw = false;  // RPI 538
+	}
 	private String trace_svc() { // RPI 312
 		/*
 		 * return extended svc trace information including svc function name and
@@ -15073,11 +15073,11 @@ public class pz390 {
 			int vsam_op = reg.get(r0+3);
 			switch (vsam_op){
 			case 1:
-				return "VSAM GET   R1=A(RPL)"; 
+				return "VSAM GET   R1=A(RPL)";
 			case 2:
 				return "VSAM PUT   R1=A(RPL)";
 			case 3:
-				return "VSAM ERASE R1=A(RPL)"; 
+				return "VSAM ERASE R1=A(RPL)";
 			case 4:
 				return "VSAM POINT R1=A(RPL)";
 			default:
@@ -15314,11 +15314,11 @@ public class pz390 {
 			}
 		}
 	}
-    private void check_bd12_exact(){
-    	/*
-    	 * raise ineact exception if
-    	 * fp_rbdv1 not = fp_rbdv2
-    	 */
+	private void check_bd12_exact(){
+		/*
+		 * raise ineact exception if
+		 * fp_rbdv1 not = fp_rbdv2
+		 */
 		int comp12 = fp_rbdv1.compareTo(fp_rbdv2);
 	    if (comp12 != 0){
 	    	if (comp12 > 0){
@@ -15328,7 +15328,7 @@ public class pz390 {
 	    	}
 	    	set_psw_check(psw_pic_data);
 	    }
-    }
+	}
 	private void check_eb_mpy() {
 		/*
 		 * check for EB overflow or underflow
@@ -15727,15 +15727,15 @@ public class pz390 {
 				return psw_cc_low;
 			}
 		}
-	}	
+	}
 	private int fp_get_dd_comp_cc(BigDecimal dd1, BigDecimal dd2) {
 		/*
 		 * return psw_cc for DD compare
 		 * with or without signal
-		 */		
+		 */
 		if (fp_signal) {
 			fp_signal = false;
-			if (dd1.abs().compareTo(fp_dd_pos_max) > 0 
+			if (dd1.abs().compareTo(fp_dd_pos_max) > 0
 				|| dd2.abs().compareTo(fp_dd_pos_max) > 0) {
 				fp_dxc = fp_dxc_oe;
 				set_psw_check(psw_pic_data);
@@ -15762,7 +15762,7 @@ public class pz390 {
 		 */
 		if (fp_signal) {
 			fp_signal = false;
-			if (ld1.abs().compareTo(fp_ld_pos_max) > 0 
+			if (ld1.abs().compareTo(fp_ld_pos_max) > 0
 				|| ld2.abs().compareTo(fp_ld_pos_max) > 0) {
 				fp_dxc = fp_dxc_oe;
 				set_psw_check(psw_pic_data);
@@ -15869,8 +15869,8 @@ public class pz390 {
 		/*
 		 * return psw_cc for big decimal compare
 		 */
-		bd1 = bd1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
-		bd2 = bd2.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
+		bd1 = bd1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821
+		bd2 = bd2.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821
 		if (fp_signal) {
 			fp_signal = false;
 			if (bd1.abs().compareTo(fp_lb_max) >= 0
@@ -15879,7 +15879,7 @@ public class pz390 {
 				set_psw_check(psw_pic_data);
 			} else if ((bd1.abs().compareTo(fp_lb_min) <= 0 // RPI 325
 					&& !(bd1.signum() == 0))
-					|| (bd2.abs().compareTo(fp_lb_min) <= 0 
+					|| (bd2.abs().compareTo(fp_lb_min) <= 0
 						&& !(bd2.signum() == 0))) {
 				fp_dxc = fp_dxc_ue;
 				set_psw_check(psw_pic_data);
@@ -15900,8 +15900,8 @@ public class pz390 {
 		/*
 		 * return psw_cc for DH big decimal compare
 		 */
-		bd1 = bd1.round(fp_dh_context); // RPI 821 
-		bd2 = bd2.round(fp_dh_context); // RPI 821 
+		bd1 = bd1.round(fp_dh_context); // RPI 821
+		bd2 = bd2.round(fp_dh_context); // RPI 821
 		int_work = bd1.compareTo(bd2);
 		if (int_work == 0) {
 			return psw_cc_equal;
@@ -15917,8 +15917,8 @@ public class pz390 {
 		/*
 		 * return psw_cc for LH big decimal compare
 		 */
-		bd1 = bd1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
-		bd2 = bd2.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
+		bd1 = bd1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821
+		bd2 = bd2.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821
 		int_work = bd1.compareTo(bd2);
 		if (int_work == 0) {
 			return psw_cc_equal;
@@ -15960,11 +15960,11 @@ public class pz390 {
 
 	private int fp_get_lb_add_sub_cc() {
 		/*
-		 * return psw_cc for lb add/sub result fp_rbdv1 
+		 * return psw_cc for lb add/sub result fp_rbdv1
 		 * and raise BFP sig, ovf,
 		 * or unf exceptions
 		 */
-		fp_rbdv1 = fp_rbdv1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
+		fp_rbdv1 = fp_rbdv1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821
 		int int_work = fp_rbdv1.signum();
 		if (int_work == 0) {
 			fp_dxc = fp_dxc_it;
@@ -15975,7 +15975,7 @@ public class pz390 {
 				if (fp_rbdv1.compareTo(fp_lb_max) >= 0) {
 					fp_dxc = fp_dxc_oe;
 					set_psw_check(psw_pic_data);
-				} else if (fp_rbdv1.compareTo(fp_lb_min) <= 0) {  
+				} else if (fp_rbdv1.compareTo(fp_lb_min) <= 0) {
 					fp_dxc = fp_dxc_ue;
 					set_psw_check(psw_pic_data);
 				}
@@ -15994,7 +15994,7 @@ public class pz390 {
 	}
 	private int fp_get_dfp_add_sub_cc() {
 		/*
-		 * return psw_cc for bd add/sub result fp_rdv1 
+		 * return psw_cc for bd add/sub result fp_rdv1
 		 * and raise sig, ovf,
 		 * or unf exceptions
 		 */
@@ -16002,10 +16002,10 @@ public class pz390 {
 			return psw_cc_equal;
 		} else {
 			if (fp_rbdv1.signum() > 0) {
-				if (fp_rbdv1.compareTo(fp_dd_pos_max) >= 0){ 
+				if (fp_rbdv1.compareTo(fp_dd_pos_max) >= 0){
 					fp_dxc = fp_dxc_oe;
 					set_psw_check(psw_pic_data);
-				} else if (fp_rbdv1.compareTo(fp_dd_pos_min) <= 0) { 
+				} else if (fp_rbdv1.compareTo(fp_dd_pos_min) <= 0) {
 					fp_dxc = fp_dxc_ue;
 					set_psw_check(psw_pic_data);
 				}
@@ -16101,7 +16101,7 @@ public class pz390 {
 		}
 		return fp_eh_reg_to_db(fp_buff.getInt(fp_index));
 	}
-	
+
 	private double fp_get_db_from_eb(ByteBuffer fp_buff, int fp_index) {
 		/*
 		 * get double from EB short binary in fp_reg or mem 1. If fp_reg, then
@@ -16149,186 +16149,186 @@ public class pz390 {
 		}
 		return fp_lh_to_bd(fp_buff, fp_index).doubleValue();
 	}
-    private void fp_add_unnorm_dh(){
-    	/*
-    	 * add unnormalized HFP DH
-    	 * fp_long1 = fp_long1 + fp_long2
-    	 * and set psw_cc
-    	 */
-    	
-    	if (fp_long1 >= 0){
-    		fp_sign1 = 0x00;
-    	} else {
-    		fp_sign1 = (byte)0x80;
-    	}
-    	if (fp_long2 >= 0){
-    		fp_sign2 = 0x00;
-    	} else {
-    		fp_sign2 = (byte)0x80;
-    	}
-    	fp_exp1 =(byte)((fp_long1 >>> 56) & 0x7f);
-    	fp_exp2 =(byte)((fp_long2 >>> 56) & 0x7f);
-    	if (fp_exp1 >= fp_exp2){
-    		fp_long1 = (fp_long1 & long_dh_man_bits);
-    		fp_long2 = (fp_long2 & long_dh_man_bits) >>> ((fp_exp1-fp_exp2)*4);
-    	} else if (fp_exp1 < fp_exp2){
-    		fp_long1 = (fp_long1 & long_dh_man_bits) >>> ((fp_exp2-fp_exp1)*4);
-    		fp_long2 = (fp_long2 & long_dh_man_bits);
-    		fp_exp1  = fp_exp2;
-    	} 
-    	if (fp_sign1 == fp_sign2){
-    		fp_long1 = fp_long1 + fp_long2;
-    	} else {
-    		if (fp_long1 >= fp_long2){
-    			fp_long1 = fp_long1 - fp_long2;
-    		} else {
-    			fp_sign1 = fp_sign2;
-    			fp_long1 = fp_long2 - fp_long1;
-    		}
-    	}
-    	if (fp_long1 == 0){
-    		psw_cc = psw_cc0;
-    	} else {
-    		if (fp_sign1 == 0){
-        		fp_long1 = fp_long1 | ((long)(fp_exp1) << 56);
-    			psw_cc = psw_cc2;
-    		} else {
-        		fp_long1 = fp_long1 | ((long)(fp_exp1 | fp_sign1) << 56);
-    			psw_cc = psw_cc1;
-    		}
-    	}
-    }
-    private void fp_add_unnorm_eh(){
-    	/*
-    	 * add unnormalized HFP DH
-    	 * fp_long1 = fp_long1 + fp_long2
-    	 * and set psw=cc
-    	 */
-    	
-    	if (fp_int1 >= 0){
-    		fp_sign1 = 0x00;
-    	} else {
-    		fp_sign1 = (byte)0x80;
-    	}
-    	if (fp_int2 >= 0){
-    		fp_sign2 = 0x00;
-    	} else {
-    		fp_sign2 = (byte)0x80;
-    	}
-    	fp_exp1 =(byte)((fp_int1 >>> 24) & 0x7f);
-    	fp_exp2 =(byte)((fp_int2 >>> 24) & 0x7f);
-    	if (fp_exp1 >= fp_exp2){
-    		fp_int1 = (fp_int1 & int_eh_man_bits);
-    		fp_int2 = (fp_int2 & int_eh_man_bits) >>> ((fp_exp1-fp_exp2)*4);
-    	} else if (fp_exp1 < fp_exp2){
-    		fp_int1 = (fp_int1 & int_eh_man_bits) >>> ((fp_exp2-fp_exp1)*4);
-    		fp_int2 = (fp_int2 & int_eh_man_bits);
-    		fp_exp1  = fp_exp2;
-    	} 
-    	if (fp_sign1 == fp_sign2){
-    		fp_int1 = fp_int1 + fp_int2;
-    	} else {
-    		if (fp_int1 >= fp_int2){
-    			fp_int1 = fp_int1 - fp_int2;
-    		} else {
-    			fp_sign1 = fp_sign2;
-    			fp_int1 = fp_int2 - fp_int1;
-    		}
-    	}
-    	if (fp_int1 == 0){
-    		psw_cc = psw_cc0;
-    	} else {
-    		if (fp_sign1 == 0){
-        		fp_int1 = fp_int1 
-        		 | ((int)(fp_exp1) << 24);
-    			psw_cc = psw_cc2;
-    		} else {
-        		fp_int1 = fp_int1 
-        		 | ((int)(fp_exp1 | fp_sign1) << 24);
-    			psw_cc = psw_cc1;
-    		}
-    	}
-    }
-    private void fp_mpy_unnorm_dh(){
-    	/*
-    	 * multiply fp_long2 and fp_long3 dh
-    	 * unnormalized and set
-    	 * fp_big_int1 and 
-    	 * tz390.fp_exp and tz390.fp_sign high bit
-    	 */
-    	tz390.fp_sign = (int)((fp_long1 ^ fp_long2) >>> 32) & int_high_bit;
-    	fp_exp2 =(byte)((fp_long2 >>> 56) & 0x7f);
-    	fp_exp3 =(byte)((fp_long3 >>> 56) & 0x7f);
-    	tz390.fp_exp = (fp_exp2 + fp_exp3 - 0x40) & 0x7f;
-    	fp_big_int1 = BigInteger.valueOf(fp_long2 & long_dh_man_bits)
-    	            .multiply(BigInteger.valueOf(fp_long3 & long_dh_man_bits));
-    	
-    }
-    private void fp_add_bi_unnorm_dh(){
-    	/*
-    	 * add LH at rf1 to fp_big_int1
-    	 * unnormalized and update
-         * tz390.fp_sign high bit if change
-         * Notes:
-         *   1.  LH at rf1 stored in fp_big_int2 and fp_exp2 for add
-    	 */
-    	
-    	if (tz390.fp_exp > fp_exp2){
-    		fp_big_int2 = fp_big_int2.shiftRight((tz390.fp_exp-fp_exp2)*4);
-    	} else if (tz390.fp_exp < fp_exp2){
-    		fp_big_int1 = fp_big_int1.shiftRight((fp_exp2-tz390.fp_exp)*4);
-    		tz390.fp_exp = fp_exp2;
-    	}
-    	if (fp_sign1 == fp_sign2){
-    		fp_big_int1 = fp_big_int1
-    		   .add(fp_big_int2);
-    	} else {
-    		if (fp_big_int1.compareTo(fp_big_int2) >= 0){
-    			fp_big_int1 = fp_big_int1
-    			  .subtract(fp_big_int2);
-    		} else {
-    			tz390.fp_sign = fp_sign2;
-    			fp_big_int1 = fp_big_int2
-    			  .subtract(fp_big_int1);
-    		}
-    	}   	
-    }
-    private void fp_get_bi_unnorm_lh(){
-    	/*
-    	 * set fp_big_int2, fp_exp2, fp_sign2
-    	 * from rf1 LH
-    	 */
-    	fp_exp2 = fp_reg.get(rf1);
-    	if (fp_exp2 >= 0){
-    		fp_sign2 = 0;
-    	} else {
-    		fp_sign2 = (byte)0x80;
-    		fp_exp2 = (byte)(fp_exp2 & 0x7f);
-    	}
-     	fp_big_int2 = BigInteger
-     	  .valueOf(fp_reg.getLong(rf1) & long_dh_man_bits)
-     	  .shiftLeft(56)
-     	  .add(BigInteger.valueOf(fp_reg.getLong(rf1+16) & long_dh_man_bits));
-    }
-    private void fp_get_bi_unnorm_dh(){
-    	/*
-    	 * set fp_big_int2, fp_exp2, fp_sign2
-    	 * from rf1 DH
-    	 */
-    	fp_exp2 = fp_reg.get(rf1);
-    	if (fp_exp2 >= 0){
-    		fp_sign2 = 0;
-    	} else {
-    		fp_sign2 = (byte)0x80;
-    		fp_exp2 = (byte)(fp_exp2 & 0x7f);
-    	}
-     	fp_big_int2 = BigInteger
-     	  .valueOf(fp_reg.getLong(rf1) & long_dh_man_bits);
-    }
+	private void fp_add_unnorm_dh(){
+		/*
+		 * add unnormalized HFP DH
+		 * fp_long1 = fp_long1 + fp_long2
+		 * and set psw_cc
+		 */
+
+		if (fp_long1 >= 0){
+			fp_sign1 = 0x00;
+		} else {
+			fp_sign1 = (byte)0x80;
+		}
+		if (fp_long2 >= 0){
+			fp_sign2 = 0x00;
+		} else {
+			fp_sign2 = (byte)0x80;
+		}
+		fp_exp1 =(byte)((fp_long1 >>> 56) & 0x7f);
+		fp_exp2 =(byte)((fp_long2 >>> 56) & 0x7f);
+		if (fp_exp1 >= fp_exp2){
+			fp_long1 = (fp_long1 & long_dh_man_bits);
+			fp_long2 = (fp_long2 & long_dh_man_bits) >>> ((fp_exp1-fp_exp2)*4);
+		} else if (fp_exp1 < fp_exp2){
+			fp_long1 = (fp_long1 & long_dh_man_bits) >>> ((fp_exp2-fp_exp1)*4);
+			fp_long2 = (fp_long2 & long_dh_man_bits);
+			fp_exp1  = fp_exp2;
+		}
+		if (fp_sign1 == fp_sign2){
+			fp_long1 = fp_long1 + fp_long2;
+		} else {
+			if (fp_long1 >= fp_long2){
+				fp_long1 = fp_long1 - fp_long2;
+			} else {
+				fp_sign1 = fp_sign2;
+				fp_long1 = fp_long2 - fp_long1;
+			}
+		}
+		if (fp_long1 == 0){
+			psw_cc = psw_cc0;
+		} else {
+			if (fp_sign1 == 0){
+				fp_long1 = fp_long1 | ((long)(fp_exp1) << 56);
+				psw_cc = psw_cc2;
+			} else {
+				fp_long1 = fp_long1 | ((long)(fp_exp1 | fp_sign1) << 56);
+				psw_cc = psw_cc1;
+			}
+		}
+	}
+	private void fp_add_unnorm_eh(){
+		/*
+		 * add unnormalized HFP DH
+		 * fp_long1 = fp_long1 + fp_long2
+		 * and set psw=cc
+		 */
+
+		if (fp_int1 >= 0){
+			fp_sign1 = 0x00;
+		} else {
+			fp_sign1 = (byte)0x80;
+		}
+		if (fp_int2 >= 0){
+			fp_sign2 = 0x00;
+		} else {
+			fp_sign2 = (byte)0x80;
+		}
+		fp_exp1 =(byte)((fp_int1 >>> 24) & 0x7f);
+		fp_exp2 =(byte)((fp_int2 >>> 24) & 0x7f);
+		if (fp_exp1 >= fp_exp2){
+			fp_int1 = (fp_int1 & int_eh_man_bits);
+			fp_int2 = (fp_int2 & int_eh_man_bits) >>> ((fp_exp1-fp_exp2)*4);
+		} else if (fp_exp1 < fp_exp2){
+			fp_int1 = (fp_int1 & int_eh_man_bits) >>> ((fp_exp2-fp_exp1)*4);
+			fp_int2 = (fp_int2 & int_eh_man_bits);
+			fp_exp1  = fp_exp2;
+		}
+		if (fp_sign1 == fp_sign2){
+			fp_int1 = fp_int1 + fp_int2;
+		} else {
+			if (fp_int1 >= fp_int2){
+				fp_int1 = fp_int1 - fp_int2;
+			} else {
+				fp_sign1 = fp_sign2;
+				fp_int1 = fp_int2 - fp_int1;
+			}
+		}
+		if (fp_int1 == 0){
+			psw_cc = psw_cc0;
+		} else {
+			if (fp_sign1 == 0){
+				fp_int1 = fp_int1
+				 | ((int)(fp_exp1) << 24);
+				psw_cc = psw_cc2;
+			} else {
+				fp_int1 = fp_int1
+				 | ((int)(fp_exp1 | fp_sign1) << 24);
+				psw_cc = psw_cc1;
+			}
+		}
+	}
+	private void fp_mpy_unnorm_dh(){
+		/*
+		 * multiply fp_long2 and fp_long3 dh
+		 * unnormalized and set
+		 * fp_big_int1 and
+		 * tz390.fp_exp and tz390.fp_sign high bit
+		 */
+		tz390.fp_sign = (int)((fp_long1 ^ fp_long2) >>> 32) & int_high_bit;
+		fp_exp2 =(byte)((fp_long2 >>> 56) & 0x7f);
+		fp_exp3 =(byte)((fp_long3 >>> 56) & 0x7f);
+		tz390.fp_exp = (fp_exp2 + fp_exp3 - 0x40) & 0x7f;
+		fp_big_int1 = BigInteger.valueOf(fp_long2 & long_dh_man_bits)
+		            .multiply(BigInteger.valueOf(fp_long3 & long_dh_man_bits));
+
+	}
+	private void fp_add_bi_unnorm_dh(){
+		/*
+		 * add LH at rf1 to fp_big_int1
+		 * unnormalized and update
+		 * tz390.fp_sign high bit if change
+		 * Notes:
+		 *   1.  LH at rf1 stored in fp_big_int2 and fp_exp2 for add
+		 */
+
+		if (tz390.fp_exp > fp_exp2){
+			fp_big_int2 = fp_big_int2.shiftRight((tz390.fp_exp-fp_exp2)*4);
+		} else if (tz390.fp_exp < fp_exp2){
+			fp_big_int1 = fp_big_int1.shiftRight((fp_exp2-tz390.fp_exp)*4);
+			tz390.fp_exp = fp_exp2;
+		}
+		if (fp_sign1 == fp_sign2){
+			fp_big_int1 = fp_big_int1
+			   .add(fp_big_int2);
+		} else {
+			if (fp_big_int1.compareTo(fp_big_int2) >= 0){
+				fp_big_int1 = fp_big_int1
+				  .subtract(fp_big_int2);
+			} else {
+				tz390.fp_sign = fp_sign2;
+				fp_big_int1 = fp_big_int2
+				  .subtract(fp_big_int1);
+			}
+		}
+	}
+	private void fp_get_bi_unnorm_lh(){
+		/*
+		 * set fp_big_int2, fp_exp2, fp_sign2
+		 * from rf1 LH
+		 */
+		fp_exp2 = fp_reg.get(rf1);
+		if (fp_exp2 >= 0){
+			fp_sign2 = 0;
+		} else {
+			fp_sign2 = (byte)0x80;
+			fp_exp2 = (byte)(fp_exp2 & 0x7f);
+		}
+		fp_big_int2 = BigInteger
+		  .valueOf(fp_reg.getLong(rf1) & long_dh_man_bits)
+		  .shiftLeft(56)
+		  .add(BigInteger.valueOf(fp_reg.getLong(rf1+16) & long_dh_man_bits));
+	}
+	private void fp_get_bi_unnorm_dh(){
+		/*
+		 * set fp_big_int2, fp_exp2, fp_sign2
+		 * from rf1 DH
+		 */
+		fp_exp2 = fp_reg.get(rf1);
+		if (fp_exp2 >= 0){
+			fp_sign2 = 0;
+		} else {
+			fp_sign2 = (byte)0x80;
+			fp_exp2 = (byte)(fp_exp2 & 0x7f);
+		}
+		fp_big_int2 = BigInteger
+		  .valueOf(fp_reg.getLong(rf1) & long_dh_man_bits);
+	}
 	private void fp_get_bd_sqrt() {
 		/*
 		 * set fp_rbdv1 to square root of fp_rbdv2
-		 * 
+		 *
 		 * Notes: 1. Return 0 for 0 and issue data exception if negative. 2.
 		 * Scale number to within double range to calc estimate to 14 decimal
 		 * places. 2. Use Newton Rapson iteration to reduce error to
@@ -16350,7 +16350,7 @@ public class pz390 {
 		 */
 		int fp_bd_sqrt_scale = fp_rbdv2.scale();
 		if ((fp_bd_sqrt_scale & 1) != 0) {
-			fp_rbdv2 = fp_rbdv2.setScale(fp_bd_sqrt_scale - 1,fp_lxg_context.getRoundingMode());  // RPI 768 
+			fp_rbdv2 = fp_rbdv2.setScale(fp_bd_sqrt_scale - 1,fp_lxg_context.getRoundingMode());  // RPI 768
 			fp_bd_sqrt_scale--;
 		}
 		fp_rbdv2 = fp_rbdv2.multiply(BigDecimal.TEN.pow(fp_bd_sqrt_scale,
@@ -16379,7 +16379,7 @@ public class pz390 {
 		 * get big decimal from LH extended hex in fp_reg or mem 1. If fp_reg,
 		 * then check for big dec co-reg to avoid conversion
 		 */
-		int fp_ctl_index = fp_index >> 3;	
+		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
 				return fp_ctl_reg_to_bd(fp_ctl_index).round(fp_lh_context); // RPI 821
@@ -16398,7 +16398,7 @@ public class pz390 {
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
-				return fp_ctl_reg_to_bd(fp_ctl_index).round(fp_lb_rnd_context[fp_dfp_rnd]); // RPI 1211			
+				return fp_ctl_reg_to_bd(fp_ctl_index).round(fp_lb_rnd_context[fp_dfp_rnd]); // RPI 1211
 			} else {
 				fp_store_reg(fp_reg, (fp_ctl_index -2) << 3); // RPI 824
 			}
@@ -16484,7 +16484,7 @@ public class pz390 {
 			return fp_reg_bd[fp_ctl_index].doubleValue();
 		default:
 			set_psw_check(psw_pic_spec);
-			return (double) 0;  
+			return (double) 0;
 		}
 	}
 
@@ -16507,15 +16507,15 @@ public class pz390 {
 
 	public BigDecimal fp_get_bd_from_dh(ByteBuffer fp_buff, int fp_index) {
 		/*
-		 * get big decimal from DH long hex in fp_reg or mem 
-		 * 1. If fp_reg, then check for big dec 
+		 * get big decimal from DH long hex in fp_reg or mem
+		 * 1. If fp_reg, then check for big dec
 		 *    co-reg to avoid conversion
 		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
 				return fp_ctl_reg_to_bd(fp_ctl_index).round(fp_dh_rnd_context[fp_dfp_rnd]); // RPI 1211
-				 
+
 			} else {
 				fp_store_reg(fp_reg, (fp_ctl_index -2) << 3); // RPI 824
 			}
@@ -16553,13 +16553,13 @@ public class pz390 {
 			break;
 		}
 	}
-    private void set_fpc_reg(int fpc_reg){
-    	/*
-    	 * set fpc reg and bfp/dfp rounding
-    	 * for LFPC, LFAS, and SFASR
-    	 * Notes:
-    	 *   1.  LFAS and SFASR signalling not supported for now
-    	 */
+	private void set_fpc_reg(int fpc_reg){
+		/*
+		 * set fpc reg and bfp/dfp rounding
+		 * for LFPC, LFAS, and SFASR
+		 * Notes:
+		 *   1.  LFAS and SFASR signalling not supported for now
+		 */
 		fp_fpc_reg = fpc_reg;
 		fp_dxc = (fp_fpc_reg & 0xff00) >>> 8;
 		fp_dfp_rnd = (fp_fpc_reg & fp_dfp_rnd_mask) >> 4;
@@ -16567,7 +16567,7 @@ public class pz390 {
 			fp_bfp_rnd = fp_fpc_reg & fp_bfp_rnd_mask;
 		fp_bfp_rnd_default = fp_bfp_rnd; // RPI 1125
 		fp_fpc_reg = fp_fpc_reg & 0xffff00ff;
-    }
+	}
 	private BigDecimal fp_get_bd_rnd_int(byte fp_class,int rnd_mode) {
 		/*
 		 * get bd rounded to integer
@@ -16623,19 +16623,19 @@ public class pz390 {
 				return fp_bd_int_rem[0].add(fp_bd_inc);
 			} else {
 				return fp_bd_int_rem[0];
-			}	
+			}
 		case 6: // round away from zero
 			if (fp_bd_int_rem[1].signum() != 0) {  // RPI 533
 				return fp_bd_int_rem[0].add(fp_bd_inc);
 			} else {
 				return fp_bd_int_rem[0];
 			}
-		case 7: // prepare for shorter (round to nearest with ties away from 0 for now) 
+		case 7: // prepare for shorter (round to nearest with ties away from 0 for now)
 			if (rem_comp_half >= 0) {
 				return fp_bd_int_rem[0].add(fp_bd_inc);
 			} else {
 				return fp_bd_int_rem[0];
-			}	
+			}
 		default:
 			set_psw_check(psw_pic_spec);
 			return fp_bd_int_rem[0];
@@ -16734,10 +16734,10 @@ public class pz390 {
 		/*
 		 * Load fp_ctl from fp_reg or fp_ctl Load fp_reg from memory with no
 		 * conversion
-		 * 
-		 * Notes: 
+		 *
+		 * Notes:
 		 * 1. bd1/bd2 co-reg pair being partially replaced is discarded
-		 *    without conversion. 
+		 *    without conversion.
 		 * 2. This function is called recursively when two
 		 *    co-registers of different types are involved.
 		 */
@@ -16754,9 +16754,9 @@ public class pz390 {
 			}
 		}
 		fp_reset_reg(fp_ctl_index1, fp_ctl_ld, reg_type1);
-		if (reg_buff2 == fp_reg 
+		if (reg_buff2 == fp_reg
 				&& (fp_reg_ctl2 != fp_ctl_ld
-					|| (opcode1 != 0x28 && opcode1 != 0x38))) { // RPI 1003 
+					|| (opcode1 != 0x28 && opcode1 != 0x38))) { // RPI 1003
 			// load fp_ctl reg from reg or other fp_ctl reg
 			fp_load_ctl(fp_ctl_index1, reg_type1, fp_reg_ctl2, reg_buff_index2,
 					fp_reg_type2);
@@ -16839,18 +16839,18 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 						.valueOf(fp_reg_eb[fp_ctl_index2]);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
 				return;
 			case 7: // tz390.fp_lH_type // RPI 1013 missing
 				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
 				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 						.valueOf(fp_reg_eb[fp_ctl_index2]);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
 				return;
 			}
 			break;
@@ -16863,11 +16863,11 @@ public class pz390 {
 			case 1: // tz390.fp_dd_type RPI 1003
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 				.valueOf(fp_reg_db[fp_ctl_index2]);
-				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; 
-				return; 
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				return;
 			case 2: // tz390.fp_dh_type
-				fp_reg_bd[fp_ctl_index1] = BigDecimal.valueOf(fp_reg_db[fp_ctl_index2]); // RPI 1003 
-				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1003 
+				fp_reg_bd[fp_ctl_index1] = BigDecimal.valueOf(fp_reg_db[fp_ctl_index2]); // RPI 1003
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1003
 				return;
 			case 3: // tz390.fp_eb_type
 				fp_reg_eb[fp_ctl_index1] = (float) fp_reg_db[fp_ctl_index2];
@@ -16876,7 +16876,7 @@ public class pz390 {
 			case 4: // tz390.fp_ed_type RPI 1003
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 				.valueOf(fp_reg_db[fp_ctl_index2]);
-				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; 
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 5: // tz390.fp_eh_type
 				fp_reg_db[fp_ctl_index1] = fp_reg_db[fp_ctl_index2];
@@ -16886,19 +16886,19 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 						.valueOf(fp_reg_db[fp_ctl_index2]);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
 				return;
 			case 7: // tz390.fp_ld_type   // RPI 1003
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 						.valueOf(fp_reg_db[fp_ctl_index2]);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
-				return;	
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
+				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 						.valueOf(fp_reg_db[fp_ctl_index2]);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
 				return;
 			}
 			break;
@@ -16909,20 +16909,20 @@ public class pz390 {
 						.doubleValue();
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
 				return;
-			case 1: // tz390.fp_dd_type 
+			case 1: // tz390.fp_dd_type
 				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 2: // tz390.fp_dh_type
-				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2]; // RPI 1003 
-				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1003 
+				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2]; // RPI 1003
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1003
 				return;
 			case 3: // tz390.fp_eb_type
 				fp_reg_eb[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2]
 						.floatValue();
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
 				return;
-			case 4: // tz390.fp_ed_type // RPI 1015 was missing 
+			case 4: // tz390.fp_ed_type // RPI 1015 was missing
 				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
@@ -16934,17 +16934,17 @@ public class pz390 {
 			case 6: // tz390.fp_lb_type
 				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
 				return;
-			case 7: // tz390.fp_ld_type // RPI 1013 missing 
+			case 7: // tz390.fp_ld_type // RPI 1013 missing
 				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
-				return;	
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
+				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
 				return;
 			}
 			break;
@@ -16996,7 +16996,7 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_db(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; //rpi 1003 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; //rpi 1003
 				return;
 			case 7: // DB to LD  RPI 1013
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_db(reg_buff2,
@@ -17014,7 +17014,7 @@ public class pz390 {
 			break;
 		case 1: // tz390.fp_dd_type
 			switch (reg_type1) {
-			case 0: // DD to DB  RPI 1013				
+			case 0: // DD to DB  RPI 1013
 				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
 						reg_buff_index2).doubleValue();
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
@@ -17033,7 +17033,7 @@ public class pz390 {
 				fp_reg_eb[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
 						reg_buff_index2).floatValue();
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
-				return;	
+				return;
 			case 4: // to tz390.fp_ed_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
 						reg_buff_index2);
@@ -17053,8 +17053,8 @@ public class pz390 {
 			case 7: // tz390.fp_ld_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
 						reg_buff_index2);
-				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1013 was fp_ctl_db 
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013 was missing 
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1013 was fp_ctl_db
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013 was missing
 				return;
 			case 8: // DD to LH  RPI 1013
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dd(reg_buff2,
@@ -17093,14 +17093,14 @@ public class pz390 {
 				return;
 			case 5: // tz390.fp_eh_type
 				fp_reg_db[fp_ctl_index1] = fp_get_db_from_eh(reg_buff2, // RPI 849
-						reg_buff_index2);  
+						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
 				return;
 			case 6: // tz390.fp_lb_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // rpi 1013 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // rpi 1013
 				return;
 			case 7: // DH to LD  RPI 1013
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,
@@ -17131,7 +17131,7 @@ public class pz390 {
 			case 2: //
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eb(reg_buff2,
 						reg_buff_index2);
-				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1003 
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1003
 				return;
 			case 3: // tz390.fp_eb_type
 				fp_reg_eb[fp_ctl_index1] = fp_get_eb_from_eb(reg_buff2,
@@ -17155,7 +17155,7 @@ public class pz390 {
 				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			case 7: // EB to LD  RPI 1013
-				
+
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eb(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
@@ -17205,7 +17205,7 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1003 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1003
 				return;
 			case 7: // tz390.fp_ld_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_ed(reg_buff2,
@@ -17220,7 +17220,7 @@ public class pz390 {
 				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2; // RPI 1013
 				return;
 			}
-            break;
+			break;
 		case 5: // tz390.fp_eh_type
 			switch (reg_type1) {
 			case 0: // tz390.fp_db_type
@@ -17251,7 +17251,7 @@ public class pz390 {
 			case 5: // tz390.fp_eh_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eh(reg_buff2,
 						reg_buff_index2);
-				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1003 
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1003
 				return;
 			case 6: // tz390.fp_lb_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eh(reg_buff2,
@@ -17287,7 +17287,7 @@ public class pz390 {
 				return;
 			case 2: // tz390.fp_dh_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,
-						reg_buff_index2); // RPI 1003 
+						reg_buff_index2); // RPI 1003
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
 				return;
 			case 3: // tz390.fp_eb_type
@@ -17325,7 +17325,7 @@ public class pz390 {
 				return;
 			}
 			break;
-		case 7: // tz390.fp_ld_type	
+		case 7: // tz390.fp_ld_type
 			switch (reg_type1) {
 			case 0: // LD to DB  RPI 1013
 				fp_reg_db[fp_ctl_index1] = fp_get_bd_from_ld(reg_buff2,
@@ -17392,7 +17392,7 @@ public class pz390 {
 			case 2: // tz390.fp_dh_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
 						reg_buff_index2);
-				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1003 was db 
+				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1; // RPI 1003 was db
 				return;
 			case 3: // tz390.fp_eb_type
 				fp_reg_eb[fp_ctl_index1] = (float) fp_get_db_from_lh(reg_buff2,
@@ -17413,7 +17413,7 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
 				return;
 			case 7: // LH to LD  RPI 1013
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
@@ -17425,7 +17425,7 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768
 				return;
 			}
 			break;
@@ -17441,7 +17441,7 @@ public class pz390 {
 			&& fp_pair_type[fp_reg_type[reg_ctl_index]]) { // RPI 229
 			fp_reg_ctl[reg_ctl_index + 2] = fp_ctl_ld; // cancel replaced bd
 		} else if (fp_reg_ctl[reg_ctl_index] == fp_ctl_bd2
-            && fp_pair_type[fp_reg_type[reg_ctl_index]]) { // RPI 229
+			&& fp_pair_type[fp_reg_type[reg_ctl_index]]) { // RPI 229
 			fp_reg_ctl[reg_ctl_index - 2] = fp_ctl_ld; // cancel replaced bd
 		}
 		fp_reg_ctl[reg_ctl_index] = ctl_type;
@@ -17460,7 +17460,7 @@ public class pz390 {
 		 * store fp zero in tz390.fp_workreg
 		 */
 		tz390.fp_work_reg.putLong(0,0);
-		tz390.fp_work_reg.putLong(8,0);		
+		tz390.fp_work_reg.putLong(8,0);
 	}
 	public void fp_store_reg(ByteBuffer reg_buff, int reg_index) {
 		/*
@@ -17477,8 +17477,8 @@ public class pz390 {
 			break;
 		case 1: // fp_ctl_eb
 			reg_buff.putFloat(reg_index, fp_reg_eb[fp_ctl_index]);
-			if (reg_buff == fp_reg) {  // RPI 767 
-				fp_reg_ctl[fp_ctl_index] = fp_ctl_ld; 
+			if (reg_buff == fp_reg) {  // RPI 767
+				fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 			}
 			break;
 		case 2: // fp_ctl_db
@@ -17491,39 +17491,39 @@ public class pz390 {
 						fp_db_to_eh(fp_reg_db[fp_ctl_index]));
 				break;
 			}
-			if (reg_buff == fp_reg) {  // RPI 767 
-				fp_reg_ctl[fp_ctl_index] = fp_ctl_ld; 
+			if (reg_buff == fp_reg) {  // RPI 767
+				fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 			}
 			break;
 		case 3: // fp_ctl_bd1
-			switch (fp_reg_type[fp_ctl_index]) { 
+			switch (fp_reg_type[fp_ctl_index]) {
 			case 1: // tz390.fp_dd_type
 				fp_bd_to_wreg(tz390.fp_dd_type, fp_reg_bd[fp_ctl_index]);
 				reg_buff.putLong(reg_index, tz390.fp_work_reg.getLong(0));
-				if (reg_buff == fp_reg) {  // RPI 767 
-					fp_reg_ctl[fp_ctl_index] = fp_ctl_ld; 
+				if (reg_buff == fp_reg) {  // RPI 767
+					fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 				}
 				break;
 			case 2: // tz390.fp_dh_type
 				fp_bd_to_wreg(tz390.fp_dh_type, fp_reg_bd[fp_ctl_index]);
 				reg_buff.putLong(reg_index, tz390.fp_work_reg.getLong(0));
-				if (reg_buff == fp_reg) {  // RPI 767 
-					fp_reg_ctl[fp_ctl_index] = fp_ctl_ld; 
+				if (reg_buff == fp_reg) {  // RPI 767
+					fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 				}
 				break;
 			case 4: // tz390.fp_ed_type
 				fp_bd_to_wreg(tz390.fp_ed_type, fp_reg_bd[fp_ctl_index]);
 				reg_buff.putInt(reg_index, tz390.fp_work_reg.getInt(0));
-				if (reg_buff == fp_reg) {  // RPI 767 
-					fp_reg_ctl[fp_ctl_index] = fp_ctl_ld; 
+				if (reg_buff == fp_reg) {  // RPI 767
+					fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 				}
-				break;	
+				break;
 			case 6: // tz390.fp_lb_type
 				if (fp_reg_ctl[fp_ctl_index + 2] == fp_ctl_bd2) {
 					fp_bd_to_wreg(tz390.fp_lb_type, fp_reg_bd[fp_ctl_index]);
 					reg_buff.putLong(reg_index, tz390.fp_work_reg.getLong(0));
 					reg_buff.putLong(reg_index+16, tz390.fp_work_reg.getLong(8));  // RPI 767
-					if (reg_buff == fp_reg) {  // RPI 767 
+					if (reg_buff == fp_reg) {  // RPI 767
 						fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 						fp_reg_ctl[fp_ctl_index+2] = fp_ctl_ld;
 					}
@@ -17534,7 +17534,7 @@ public class pz390 {
 					fp_bd_to_wreg(tz390.fp_ld_type, fp_reg_bd[fp_ctl_index]);
 					reg_buff.putLong(reg_index, tz390.fp_work_reg.getLong(0));
 					reg_buff.putLong(reg_index+16, tz390.fp_work_reg.getLong(8));  // RPI 767
-					if (reg_buff == fp_reg) {  // RPI 767 
+					if (reg_buff == fp_reg) {  // RPI 767
 						fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 						fp_reg_ctl[fp_ctl_index+2] = fp_ctl_ld;
 					}
@@ -17545,7 +17545,7 @@ public class pz390 {
 					fp_bd_to_wreg(tz390.fp_lh_type, fp_reg_bd[fp_ctl_index]);
 					reg_buff.putLong(reg_index, tz390.fp_work_reg.getLong(0));
 					reg_buff.putLong(reg_index+16, tz390.fp_work_reg.getLong(8));  // RPI 767
-					if (reg_buff == fp_reg) {  // RPI 767 
+					if (reg_buff == fp_reg) {  // RPI 767
 						fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 						fp_reg_ctl[fp_ctl_index+2] = fp_ctl_ld;
 					}
@@ -17560,7 +17560,7 @@ public class pz390 {
 					fp_bd_to_wreg(tz390.fp_lb_type, fp_reg_bd[fp_ctl_index - 2]); // RPI 229
 					reg_buff.putLong(reg_index, tz390.fp_work_reg.getLong(8));
 					reg_buff.putLong(reg_index-16, tz390.fp_work_reg.getLong(0));  // RPI 767
-					if (reg_buff == fp_reg) {  // RPI 767 
+					if (reg_buff == fp_reg) {  // RPI 767
 						fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 						fp_reg_ctl[fp_ctl_index-2] = fp_ctl_ld;
 					}
@@ -17571,7 +17571,7 @@ public class pz390 {
 					fp_bd_to_wreg(tz390.fp_ld_type, fp_reg_bd[fp_ctl_index - 2]); // RPI 229
 					reg_buff.putLong(reg_index, tz390.fp_work_reg.getLong(8));
 					reg_buff.putLong(reg_index-16, tz390.fp_work_reg.getLong(0));  // RPI 767
-					if (reg_buff == fp_reg) {  // RPI 767 
+					if (reg_buff == fp_reg) {  // RPI 767
 						fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 						fp_reg_ctl[fp_ctl_index-2] = fp_ctl_ld;
 					}
@@ -17582,7 +17582,7 @@ public class pz390 {
 					fp_bd_to_wreg(tz390.fp_lh_type, fp_reg_bd[fp_ctl_index - 2]); // RPI 229
 					reg_buff.putLong(reg_index, tz390.fp_work_reg.getLong(8));
 					reg_buff.putLong(reg_index-16, tz390.fp_work_reg.getLong(0));  // RPI 767
-					if (reg_buff == fp_reg) {  // RPI 767 
+					if (reg_buff == fp_reg) {  // RPI 767
 						fp_reg_ctl[fp_ctl_index] = fp_ctl_ld;
 						fp_reg_ctl[fp_ctl_index-2] = fp_ctl_ld;
 					}
@@ -17631,10 +17631,10 @@ public class pz390 {
 		int exp = ((exp2 << 8) | bxcf8) // or in 2 high bits of exp from cf5
 				- tz390.fp_exp_bias[tz390.fp_dd_type]; // adjust exp by bias
 		long digits = tz390.dfp_dpd_to_bcd[(int) (dd1 & 0x3ff)]
-				    + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 10) & 0x3ff)] 
-				    + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 20) & 0x3ff)] 
-				    + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 30) & 0x3ff)] 
-	                + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 40) & 0x3ff)] 
+				    + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 10) & 0x3ff)]
+				    + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 20) & 0x3ff)]
+				    + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 30) & 0x3ff)]
+	                + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 40) & 0x3ff)]
 	                + 1000 * (tz390.dfp_cf5_to_bcd[cf5])))));
 		if (dd1 < 0) {
 			digits = -digits;
@@ -17665,19 +17665,19 @@ public class pz390 {
 		int exp = ((tz390.dfp_cf5_to_exp2[cf5] << 12) + bxcf12)
 				- tz390.fp_exp_bias[tz390.fp_ld_type];
 		long digits1 = tz390.dfp_dpd_to_bcd[(int) (((ld1 & 0x3f) << 4) | (ld2 >>> 60))]
-				+ 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld1 >>>  6) & 0x3ff)] 
-                + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld1 >>> 16) & 0x3ff)] 
-                + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld1 >>> 26) & 0x3ff)] 
-                + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld1 >>> 36) & 0x3ff)]
-                + 1000 * tz390.dfp_cf5_to_bcd[cf5]   // RPI 518                                            
-                         ))));
+				+ 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld1 >>>  6) & 0x3ff)]
+				+ 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld1 >>> 16) & 0x3ff)]
+				+ 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld1 >>> 26) & 0x3ff)]
+				+ 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld1 >>> 36) & 0x3ff)]
+				+ 1000 * tz390.dfp_cf5_to_bcd[cf5]   // RPI 518
+						 ))));
 		long digits2 = tz390.dfp_dpd_to_bcd[(int) (ld2 & 0x3ff)]
 				+ 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld2 >>> 10) & 0x3ff)]
 	            + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld2 >>> 20) & 0x3ff)]
-                + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld2 >>> 30) & 0x3ff)]
-                + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld2 >>> 40) & 0x3ff)]
-                + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld2 >>> 50) & 0x3ff)]
-                         )))));
+				+ 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld2 >>> 30) & 0x3ff)]
+				+ 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld2 >>> 40) & 0x3ff)]
+				+ 1000 * (tz390.dfp_dpd_to_bcd[(int) ((ld2 >>> 50) & 0x3ff)]
+						 )))));
 		if (ld1 < 0) {
 			return BigDecimal.valueOf(digits1).scaleByPowerOfTen(18).add(
 					BigDecimal.valueOf(digits2)).scaleByPowerOfTen(exp)
@@ -17716,30 +17716,30 @@ public class pz390 {
 		 * RPI 821
 		 */
 		int int_exp = (int) (
-			(((dh1 & long_dh_exp_bits) >>> 56) 
-			   - 0x40) << 2) - 56; // RPI 821 
+			(((dh1 & long_dh_exp_bits) >>> 56)
+			   - 0x40) << 2) - 56; // RPI 821
 		long_man = dh1 & long_dh_man_bits;
 		if (long_man == 0) {
 			return BigDecimal.ZERO; // 821
 		}
 		if (dh1 > 0){
-			return new BigDecimal(long_man).multiply( // rpi 821 
+			return new BigDecimal(long_man).multiply( // rpi 821
 				BigDecimal.valueOf(2).pow(int_exp, fp_dhg_context), // RPI 821
-				fp_dhg_context); // RPI 821 
+				fp_dhg_context); // RPI 821
 		} else {
 			return new BigDecimal(long_man).multiply(
 					BigDecimal.valueOf(2).pow(int_exp, fp_dhg_context),
-					fp_dhg_context).negate(); // rpi 821 
+					fp_dhg_context).negate(); // rpi 821
 		}
 	}
-	
-    private void align_db_first_bit(){
-    	/* 
-    	 * shift right or left to align
-    	 * unnormailized mantissa to db 
-    	 * normalized format where first 
-    	 * bit is assumed. 
-    	 */
+
+	private void align_db_first_bit(){
+		/*
+		 * shift right or left to align
+		 * unnormailized mantissa to db
+		 * normalized format where first
+		 * bit is assumed.
+		 */
 		if (long_man >= long_db_one_bit){ // RPI 820
 			// shift right to align 1st bit
 			fp_round = 0;
@@ -17758,7 +17758,7 @@ public class pz390 {
 				long_exp--;
 			}
 		}
-    }
+	}
 	public int fp_db_to_eh(double db1) {
 		/*
 		 * convert db float to eh int
@@ -17791,11 +17791,11 @@ public class pz390 {
 		return tz390.fp_sign | (((tz390.fp_exp >> 2) + 0x40) << 24) | int_man;
 	}
 
-	
+
 	private BigDecimal fp_eh_to_bd(ByteBuffer eh1_buff, int eh1_index) {
 		/*
 		 * convert EH in fp_reg or mem to big_dec
-		 * 
+		 *
 		 */
 		return new BigDecimal(fp_eh_reg_to_db(eh1_buff.getInt(eh1_index)),
 				fp_eb_rnd_context[fp_bfp_rnd]);
@@ -17803,7 +17803,7 @@ public class pz390 {
 	private BigDecimal fp_lh_to_bd(ByteBuffer lh1_buff, int lh1_index) {
 		/*
 		 * convert LH in fp_reg or mem to big_dec
-		 * 
+		 *
 		 * first copy 112 bit mantissa into 15 byte array with leading 0 byte
 		 * and convert to bd1 big decimal with 128 bit precision
 		 */
@@ -17824,7 +17824,7 @@ public class pz390 {
 		}
 		work_fp_bi1_bytes[0] = 0;
 		work_fp_bd1 = new BigDecimal(new BigInteger(1, work_fp_bi1_bytes),
-				fp_lxg_context);  // RPI 821 
+				fp_lxg_context);  // RPI 821
 		/*
 		 * if mantinssa zero exit with big decimal zero
 		 */
@@ -17841,14 +17841,14 @@ public class pz390 {
 		 */
 		work_fp_bd1 = work_fp_bd1.multiply(
 				BigDecimal.valueOf(2).pow(tz390.fp_exp, fp_lxg_context),
-				fp_lxg_context); // RPI 821 
+				fp_lxg_context); // RPI 821
 		/*
 		 * return pos or neg big decimal value
 		 */
 		if (int_work >= 0) {
-			return work_fp_bd1; 
+			return work_fp_bd1;
 		} else {
-			return work_fp_bd1.negate(); 
+			return work_fp_bd1.negate();
 		}
 	}
 
@@ -17856,11 +17856,11 @@ public class pz390 {
 		/*
 		 * convert LB in fp_reg or mem to big_dec
 		 *
-		 * first get sign bit and 
+		 * first get sign bit and
 		 * 15 bit exponent
 		 */
 		int_work = lb1_buff.getShort(lb1_index);
-		/* 
+		/*
 		 * next copy 112 bit mantissa into
 		 * 15 byte array with leading 0 byte
 		 */
@@ -17893,7 +17893,7 @@ public class pz390 {
 			}
 		}
 		/*
-		 * convert to bd1 big decimal with 
+		 * convert to bd1 big decimal with
 		 * assumed 1 bit plus 112 bits
 		 */
 		work_fp_bi1_bytes[0] = 1;
@@ -17907,7 +17907,7 @@ public class pz390 {
 		 */
 		work_fp_bd1 = work_fp_bd1.multiply(
 				BigDecimal.valueOf(2).pow(tz390.fp_exp, fp_lxg_context),
-				fp_lxg_context).round(fp_lxg_context); // RPI 821 
+				fp_lxg_context).round(fp_lxg_context); // RPI 821
 		/*
 		 * return pos or neg big decimal value
 		 */
@@ -17935,17 +17935,17 @@ public class pz390 {
 		}
 		switch (fp_type) {
 		case 1: // fp_dd_type
-			fp_bd = fp_bd.round(fp_dd_rnd_context[fp_dfp_rnd]); 
+			fp_bd = fp_bd.round(fp_dd_rnd_context[fp_dfp_rnd]);
 			if (!tz390.fp_get_dfp_bin(tz390.fp_dd_type, fp_bd)) { // rpi 786
 				set_psw_check(psw_pic_fp_ovf);
 				return;
 			}
 			break;
 		case 2: // fp_dh_type  // RPI 821
-			fp_bd_to_dh_wreg(fp_bd.round(fp_dh_context)); // RPI 821 
-			break;	
+			fp_bd_to_dh_wreg(fp_bd.round(fp_dh_context)); // RPI 821
+			break;
 		case 4: // fp_ed_type
-			fp_bd = fp_bd.round(fp_ed_rnd_context[fp_dfp_rnd]); 
+			fp_bd = fp_bd.round(fp_ed_rnd_context[fp_dfp_rnd]);
 			if (!tz390.fp_get_dfp_bin(tz390.fp_ed_type, fp_bd)){  // RPI 786
 				set_psw_check(psw_pic_fp_ovf);
 				return;
@@ -17955,13 +17955,13 @@ public class pz390 {
 			fp_bd_to_lx_wreg(fp_type,fp_bd.round(fp_lb_rnd_context[fp_bfp_rnd])); // RPI 821
 			break;
 		case 7: // fp_ld_type
-			fp_bd = fp_bd.round(fp_ld_rnd_context[fp_dfp_rnd]); 
+			fp_bd = fp_bd.round(fp_ld_rnd_context[fp_dfp_rnd]);
 			if (!tz390.fp_get_dfp_bin(tz390.fp_ld_type, fp_bd)) { // RPI 786
 				set_psw_check(psw_pic_fp_ovf);
 			}
 			break;
 		case 8: // fp_lh_type
-			fp_bd_to_lx_wreg(fp_type, fp_bd.round(fp_lh_context));  // RPI 821 
+			fp_bd_to_lx_wreg(fp_type, fp_bd.round(fp_lh_context));  // RPI 821
 			break;
 		default:
 			tz390.abort_case(); // RPI 849
@@ -17974,23 +17974,23 @@ public class pz390 {
 		 */
 		/***********************************************************************
 		 * calc tz390.fp_exp and big_dec2 such that:
-		 * big_dec1 = big_dec2 * 2 ** tz390.fp_exp 
+		 * big_dec1 = big_dec2 * 2 ** tz390.fp_exp
 		 ****************************************
-		 * 
+		 *
 		 * tz390.fp_exp = log(big_dec1) / log(2)
-		 * 
+		 *
 		 * Since the exponent of LH/LB values can exceed the range of double,
 		 * the log of big_dec1 is calculated using equivalent form
 		 * log(x*10*scale) = log(x_man) + scale * log(10)
-		 * 
+		 *
 		 * tz390.fp_exp must then be offset by the number of bits in the
 		 * required mantissa in order to retain significant bits when big_dec2
 		 * is converted to big_int format. The exponent is also reduced by 1 for
 		 * assumed bit in binary formats plus 1 additional to insure rounding
 		 * for irrational values is done by shifting right.
-		 * 
+		 *
 		 */
-		fp_bd = fp_bd.stripTrailingZeros(); // RPI 821 
+		fp_bd = fp_bd.stripTrailingZeros(); // RPI 821
 		int work_scale = -fp_bd.scale();
 		double work_man = fp_bd.multiply(
 				BigDecimal.TEN.pow(-work_scale, fp_dhg_context), fp_dhg_context) // RPI 821
@@ -18006,10 +18006,10 @@ public class pz390 {
 		 */
 		/*
 		 * big_dec2 = f[_bd / 2 ** tz390.fp_exp/
-		 * 
+		 *
 		 */
 		fp_big_dec2 = fp_bd.multiply(BigDecimal.valueOf(2).pow(-tz390.fp_exp,
-				fp_dhg_context), fp_dhg_context); // RPI 821 
+				fp_dhg_context), fp_dhg_context); // RPI 821
 		/*
 		 * retrieve fp_big_dec2 mantissa bits as big_int and adjust tz390.fp_exp
 		 * by mantissa bits
@@ -18020,7 +18020,7 @@ public class pz390 {
 		 * adjust mantiss and base 2 exponent to align for assumed 1 bit for
 		 * IEEE binary or IBM base 16 hex exponent and return hex sign bit,
 		 * exponent, and mantissa bytes
-		 */		
+		 */
 			fp_round = 0;
 			while ((tz390.fp_exp & 0x3) != 0  // RPI 821
 					|| fp_big_int1.compareTo(fp_big_int_dh_man_bits) > 0
@@ -18047,11 +18047,11 @@ public class pz390 {
 				if (tz390.fp_work_reg.get(2) == 0) { // check 0 lead byte
 					tz390.fp_work_reg.position(1);
 					tz390.fp_work_reg.put(fp_big_int1.toByteArray());
-					
+
 				}
 				tz390.fp_work_reg.putLong(0 + 1, tz390.fp_work_reg
 						.getLong(0 + 2));
-				
+
 			} else {
 				set_psw_check(psw_pic_fp_sig);
 				fp_store_work_zero();
@@ -18060,25 +18060,25 @@ public class pz390 {
 	private void fp_bd_to_lx_wreg(int fp_type,BigDecimal fp_bd) {
 		/*
 		 * convert fp_bd to lh/lb format
-		 * based ib fp_type  
+		 * based ib fp_type
 		 * in work_reg binary format
 		 */
 		/***********************************************************************
 		 * calc tz390.fp_exp and big_dec2 such that: * big_dec1 = big_dec2 * 2 **
 		 * tz390.fp_exp * **************************************
-		 * 
+		 *
 		 * tz390.fp_exp = log(big_dec1) / log(2)
-		 * 
+		 *
 		 * Since the exponent of LH/LB values can exceed the range of double,
 		 * the log of big_dec1 is calculated using equivalent form
 		 * log(x*10*scale) = log(x_man) + scale * log(10)
-		 * 
+		 *
 		 * tz390.fp_exp must then be offset by the number of bits in the
 		 * required mantissa in order to retain significant bits when big_dec2
 		 * is converted to big_int format. The exponent is also reduced by 1 for
 		 * assumed bit in binary formats plus 1 additional to insure rounding
 		 * for irrational values is done by shifting right.
-		 * 
+		 *
 		 */
 		int work_scale = -fp_bd.stripTrailingZeros().scale();
 		double work_man = fp_bd.multiply(
@@ -18093,7 +18093,7 @@ public class pz390 {
 		 */
 		/*
 		 * big_dec2 = f[_bd / 2 ** tz390.fp_exp/
-		 * 
+		 *
 		 */
 		fp_big_dec2 = fp_bd.multiply(BigDecimal.valueOf(2).pow(-tz390.fp_exp,
 				fp_lxg_context), fp_lxg_context); // RPI 821
@@ -18167,7 +18167,7 @@ public class pz390 {
 		}
 	}
 	private void fp_put_bi_to_lh_wreg(){
-		/* store tz390 fp_big_int1 
+		/* store tz390 fp_big_int1
 		 * with tz390.fp_exp and tz390.fp_sign high bit
 		 * in tz390 fp_work_reg in LH format
 		 */
@@ -18182,7 +18182,7 @@ public class pz390 {
 		tz390.fp_work_reg.put(fp_big_int1.toByteArray());
 		// put exp and first 7 bytes of main at 0
 		tz390.fp_work_reg.put(0,(byte)(tz390.fp_sign | tz390.fp_exp));
-		tz390.fp_work_reg.putLong(1, 
+		tz390.fp_work_reg.putLong(1,
 				tz390.fp_work_reg.getLong(2));
 		tz390.fp_work_reg.put(8, (byte)(tz390.fp_sign | ((tz390.fp_exp-14) & 0x7f))); // RPI 767
 	}
@@ -18259,12 +18259,12 @@ public class pz390 {
 			rflen--;
 		}
 	}
-    private void exec_ex(int target_addr, int ilc){ // RPI 1505
-    	/*
-    	 * share code for EX and EXRL RPI 817
-    	 */
+	private void exec_ex(int target_addr, int ilc){ // RPI 1505
+		/*
+		 * share code for EX and EXRL RPI 817
+		 */
 		if (!ex_mode) {
-            ex_psw_ilc = ilc; // RPI 1505
+			ex_psw_ilc = ilc; // RPI 1505
 			ex_psw_return = psw_loc;
 			set_psw_loc(target_addr);
 			ex_mode = true;
@@ -18275,7 +18275,7 @@ public class pz390 {
 			} else {
 			set_psw_check(psw_pic_exec);
 		}
-    }
+	}
 	public boolean get_pdf_ints() {  // RPI 981, RPI 1092
 		/*
 		 * 1.  Return true if ok else false.  RPI 981
@@ -18324,7 +18324,7 @@ public class pz390 {
 		 * in pdf_big_int or pdf_long.
 		 * Notes:
 		 *   1.  Set true if ok
-		 *   2.  Set pd_cc 
+		 *   2.  Set pd_cc
 		 *       0 = ok
 		 *       1 = sign invalid
 		 *       2 = digit invalid
@@ -18333,13 +18333,13 @@ public class pz390 {
 		 ^   5.  if pdf_signed = true and pdf_ignore_sign = true then ignore sign and set positive, RPI 2204
 		 *   6.  Add support for up to 34 digits using 3 segments (16+16+2) RPI 2204
 		 *   7.  Calculate number of leftmost zeros RPI 2013
-		 * 
-		 * 
+		 *
+		 *
 		 */
 		pdf_is_big = false; // RPI 389
 		pd_cc = psw_cc0;
 		pdf_leftmost_zeros = -1; // RPI 2013
-		if (pdf_len <= 4) { 
+		if (pdf_len <= 4) {
 			pdf_str = Integer.toHexString(pd_buff.getInt(pdf_loc));
 			pdf_zeros = 8 - pdf_str.length();
 			pdf_leftmost_zeros = (pdf_str.length() == 1 && pdf_str.charAt(0) == '0' ? 8 : pdf_zeros);  // RPI 2013
@@ -18622,18 +18622,18 @@ public class pz390 {
 			pdf_zone = 0x30; // zone for UNPK
 		}
 	}
-    private void init_gpr(){
-    	/*
-    	 * init gpr regs to x'F4'  RPI 819
-    	 */
-    	Arrays.fill(reg_byte, 0, reg_byte.length, fill_reg_char);
-    }
-    private void init_ar(){ // RPI 1055
-    	/*
-    	 * init ar regs to x'F4'  RPI 819
-    	 */
-    	Arrays.fill(ar_reg_byte, 0, ar_reg_byte.length, fill_reg_char);
-    }
+	private void init_gpr(){
+		/*
+		 * init gpr regs to x'F4'  RPI 819
+		 */
+		Arrays.fill(reg_byte, 0, reg_byte.length, fill_reg_char);
+	}
+	private void init_ar(){ // RPI 1055
+		/*
+		 * init ar regs to x'F4'  RPI 819
+		 */
+		Arrays.fill(ar_reg_byte, 0, ar_reg_byte.length, fill_reg_char);
+	}
 	private void init_fpr() {
 		/*
 		 * init fpr regs to x'F5' RPI 819
@@ -18670,14 +18670,14 @@ public class pz390 {
 		/*
 		 * add all opcodes to key index table for use by trace and test options
 		 * Notes:
-		 * 1. Verify tz390 and ptz390 trace type tables match 
-		 * 2. trace and test do lookup by hex for display 
+		 * 1. Verify tz390 and ptz390 trace type tables match
+		 * 2. trace and test do lookup by hex for display
 		 * 3. test break on opcode does lookup
-		 *    by name to get hex code for break 
+		 *    by name to get hex code for break
 		 * 4. op_type_index is used by test break
 		 *    on opcode to get opcode2 offset
 		 *    and mask
-		 * 
+		 *
 		 */
 		tz390.init_opcode_name_keys();
 		if (tz390.op_code.length != tz390.op_trace_type.length){                // RPI 1209
@@ -18754,32 +18754,32 @@ public class pz390 {
 		op_type_offset[55] = 1; // SSF LDP/LDPR RPI 1125
 		op_type_offset[56] = 5; // RSY LOC/LOCG RPI 1125
 		op_type_offset[57] = 5; // RIE AHIK RPI 1125
-        op_type_offset[58] = 1; // RPI VF01
-        op_type_offset[59] = 1; // RPI VF01
-        op_type_offset[60] = 1; // RPI VF01
-        op_type_offset[61] = 1; // RPI VF01
-        op_type_offset[62] = 1; // RPI VF01
-        op_type_offset[63] = 1; // RPI VF01
-        op_type_offset[64] = 1; // "V-S" VRCL RPI VF01
-        op_type_offset[65] = 1; // RPI VF01
-        op_type_offset[66] = 1; // RPI VF01
-        op_type_offset[67] = 0; // 67 RR with 2 GPRs                 // RPI 1209N
-        op_type_offset[68] = 0; // 68 RR with 2 FPRs                 // RPI 1209N
-        op_type_offset[69] = 0; // 69 RR with 1 mask and 1 GPR       // RPI 1209N
-        op_type_offset[70] = 0; // 70 RR with 1 GPR                  // RPI 1209N
-        op_type_offset[71] = 0; // 71 RR with 2 pairs of GPRs        // RPI 1209N
-        op_type_offset[72] = 0; // 72 RR with implied mask and 1 GPR // RPI 1209N
-        op_type_offset[73] = 1; // 73 RI-a with implied mask and 1 GPR // RPI 1522
-        op_type_offset[74] = 1; // 74 RRR with implied mask  // RPI 2202 SELRm
-        op_type_offset[75] = 1; // 75 ie NIAI
-        op_type_offset[76] = 0; // 76 mii BPRP
-        op_type_offset[77] = 0; // 77 smi BPP
-        op_type_offset[78] = 5; // VRX   VLEBRH   V1,D2(X2,B2),M3 RPI 2202
-        op_type_offset[79] = 5; // VSI VPKZ v1,D2(B2),I3 RPI 2202
-        op_type_offset[81] = 5; // VRI VLIP V1,I2,I3 RPI 2202
-        op_type_offset[82] = 5; // VRR VCVB R1,V2,M3,M4 RPI 2202
-        op_type_offset[83] = 5; // VRX VGEG V1,D2(V2,B2),M3 RPI 2202
-        int max_op_type_offset = 83;   // RPI 1125 RPI VF01 RPI 1209N RPI 1522 RPI 2202
+		op_type_offset[58] = 1; // RPI VF01
+		op_type_offset[59] = 1; // RPI VF01
+		op_type_offset[60] = 1; // RPI VF01
+		op_type_offset[61] = 1; // RPI VF01
+		op_type_offset[62] = 1; // RPI VF01
+		op_type_offset[63] = 1; // RPI VF01
+		op_type_offset[64] = 1; // "V-S" VRCL RPI VF01
+		op_type_offset[65] = 1; // RPI VF01
+		op_type_offset[66] = 1; // RPI VF01
+		op_type_offset[67] = 0; // 67 RR with 2 GPRs                 // RPI 1209N
+		op_type_offset[68] = 0; // 68 RR with 2 FPRs                 // RPI 1209N
+		op_type_offset[69] = 0; // 69 RR with 1 mask and 1 GPR       // RPI 1209N
+		op_type_offset[70] = 0; // 70 RR with 1 GPR                  // RPI 1209N
+		op_type_offset[71] = 0; // 71 RR with 2 pairs of GPRs        // RPI 1209N
+		op_type_offset[72] = 0; // 72 RR with implied mask and 1 GPR // RPI 1209N
+		op_type_offset[73] = 1; // 73 RI-a with implied mask and 1 GPR // RPI 1522
+		op_type_offset[74] = 1; // 74 RRR with implied mask  // RPI 2202 SELRm
+		op_type_offset[75] = 1; // 75 ie NIAI
+		op_type_offset[76] = 0; // 76 mii BPRP
+		op_type_offset[77] = 0; // 77 smi BPP
+		op_type_offset[78] = 5; // VRX   VLEBRH   V1,D2(X2,B2),M3 RPI 2202
+		op_type_offset[79] = 5; // VSI VPKZ v1,D2(B2),I3 RPI 2202
+		op_type_offset[81] = 5; // VRI VLIP V1,I2,I3 RPI 2202
+		op_type_offset[82] = 5; // VRR VCVB R1,V2,M3,M4 RPI 2202
+		op_type_offset[83] = 5; // VRX VGEG V1,D2(V2,B2),M3 RPI 2202
+		int max_op_type_offset = 83;   // RPI 1125 RPI VF01 RPI 1209N RPI 1522 RPI 2202
 		op_type_mask[1] = 0xff; // E PR oooo
 		op_type_mask[7] = 0xff; // S SSM oooobddd
 		op_type_mask[12] = 0x0f; // RI IIHH ooroiiii
@@ -18821,33 +18821,33 @@ public class pz390 {
 		op_type_mask[55] = 0xff; // SSF2 LDP/LDPR RPI 1125
 		op_type_mask[56] = 0xff; // RSY2 LOC/LOCG RPI 1125
 		op_type_mask[57] = 0xff; // RIE9 AHIK RPI 1125
-        op_type_mask[58] = 0xff; // RPI VF01
-        op_type_mask[59] = 0xff; // RPI VF01
-        op_type_mask[60] = 0xff; // RPI VF01
-        op_type_mask[61] = 0xff; // RPI VF01
-        op_type_mask[62] = 0xff; // RPI VF01
-        op_type_mask[63] = 0xff; // RPI VF01
-        op_type_mask[64] = 0xff; // "V-S" VRCL RPI VF01
-        op_type_mask[65] = 0xff; // RPI VF01
-        op_type_mask[66] = 0xff; // RPI VF01
-        op_type_mask[67] = 0x00; // 67 RR with 2 GPRs                 // RPI 1209N
-        op_type_mask[68] = 0x00; // 68 RR with 2 FPRs                 // RPI 1209N
-        op_type_mask[69] = 0x00; // 69 RR with 1 mask and 1 GPR       // RPI 1209N
-        op_type_mask[70] = 0x00; // 70 RR with 1 GPR                  // RPI 1209N
-        op_type_mask[71] = 0x00; // 71 RR with 2 pairs of GPRs        // RPI 1209N
-        op_type_mask[72] = 0x00; // 72 RR with implied mask and 1 GPR // RPI 1209N
-        op_type_mask[73] = 0x0f; // 73 RI                             // RPI 1522
-        op_type_mask[74] = 0xff;  // 74 RPI 2202 SELRm
-        op_type_mask[75] = 0x0f; // 75 RPI 2202 NIAI
-        op_type_mask[76] = 0x00; // 76 BPRP rpi 2202
-        op_type_mask[77] = 0x00; // 77 BPP rpi 2202
-        op_type_mask[78] = 0xff; // VRX RPI 2202
-        op_type_mask[79] = 0xff; // VSI RPI 2202
-        op_type_mask[80] = 0xff; // VRS RPI 2202
-        op_type_mask[81] = 0xff; // VRI RPI 2202
-        op_type_mask[82] = 0xff; // VRR RPI 2202
-        op_type_mask[83] = 0xff; // VRV RPI 2202
-        int max_op_type_mask = 83; // VSI RPI 2202                                    // RPI 1125 RPI VF01 RPI 1209N RPI 1522 RPI 2202
+		op_type_mask[58] = 0xff; // RPI VF01
+		op_type_mask[59] = 0xff; // RPI VF01
+		op_type_mask[60] = 0xff; // RPI VF01
+		op_type_mask[61] = 0xff; // RPI VF01
+		op_type_mask[62] = 0xff; // RPI VF01
+		op_type_mask[63] = 0xff; // RPI VF01
+		op_type_mask[64] = 0xff; // "V-S" VRCL RPI VF01
+		op_type_mask[65] = 0xff; // RPI VF01
+		op_type_mask[66] = 0xff; // RPI VF01
+		op_type_mask[67] = 0x00; // 67 RR with 2 GPRs                 // RPI 1209N
+		op_type_mask[68] = 0x00; // 68 RR with 2 FPRs                 // RPI 1209N
+		op_type_mask[69] = 0x00; // 69 RR with 1 mask and 1 GPR       // RPI 1209N
+		op_type_mask[70] = 0x00; // 70 RR with 1 GPR                  // RPI 1209N
+		op_type_mask[71] = 0x00; // 71 RR with 2 pairs of GPRs        // RPI 1209N
+		op_type_mask[72] = 0x00; // 72 RR with implied mask and 1 GPR // RPI 1209N
+		op_type_mask[73] = 0x0f; // 73 RI                             // RPI 1522
+		op_type_mask[74] = 0xff;  // 74 RPI 2202 SELRm
+		op_type_mask[75] = 0x0f; // 75 RPI 2202 NIAI
+		op_type_mask[76] = 0x00; // 76 BPRP rpi 2202
+		op_type_mask[77] = 0x00; // 77 BPP rpi 2202
+		op_type_mask[78] = 0xff; // VRX RPI 2202
+		op_type_mask[79] = 0xff; // VSI RPI 2202
+		op_type_mask[80] = 0xff; // VRS RPI 2202
+		op_type_mask[81] = 0xff; // VRI RPI 2202
+		op_type_mask[82] = 0xff; // VRR RPI 2202
+		op_type_mask[83] = 0xff; // VRV RPI 2202
+		int max_op_type_mask = 83; // VSI RPI 2202                                    // RPI 1125 RPI VF01 RPI 1209N RPI 1522 RPI 2202
 		// init op2 offset and mask arrays indexed by op1
 		int max_op_type_setup = 83; // VSI RPI 2202                                   // RPI 1125 RPI 1209N RPI 1522 RPI 2202 NIAI
 		// add setup case for each new op type - see case 55 etc.
@@ -18857,11 +18857,11 @@ public class pz390 {
 		}
 		if (max_op_type_offset != tz390.max_op_type_offset){
 			tz390.abort_error(22,"max op type offset tables out of sync "
-				+ tz390.max_op_type_offset + " vs " + max_op_type_offset);			
+				+ tz390.max_op_type_offset + " vs " + max_op_type_offset);
 		}
 		if (max_op_type_mask != tz390.max_op_type_offset){
 			tz390.abort_error(22,"max op type offset and max op type mask tables out of sync "
-				+ tz390.max_op_type_offset + " vs " + max_op_type_mask);			
+				+ tz390.max_op_type_offset + " vs " + max_op_type_mask);
 		}
 		index = 1; // skip 0 comment code entry
 		while (index < tz390.op_code.length) {
@@ -18998,73 +18998,73 @@ public class pz390 {
 		case 10: // "E" 8 PR oooo
 			break;
 		case 20: // "RR" 60 LR oorr
-			if (mf2 == 0                 // RPI 1149 
-				&& (opcode1 == 0x0D      // BASR,BALR,BCTR,BCR 
+			if (mf2 == 0                 // RPI 1149
+				&& (opcode1 == 0x0D      // BASR,BALR,BCTR,BCR
 					|| (opcode1 >= 0x05
 					    && opcode1 <= 0x07))){ // RPI 1149
-				trace_parms = " R" + tz390.get_hex(mf1, 1) 
-                        + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8);
+				trace_parms = " R" + tz390.get_hex(mf1, 1)
+						+ "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8);
 			} else {
-				trace_parms = " R" + tz390.get_hex(mf1, 1) 
-                + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8) 
-                + " R" + tz390.get_hex(mf2, 1)
-                + "="  + tz390.get_hex(reg.getInt(rf2 + 4), 8);
+				trace_parms = " R" + tz390.get_hex(mf1, 1)
+				+ "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8)
+				+ " R" + tz390.get_hex(mf2, 1)
+				+ "="  + tz390.get_hex(reg.getInt(rf2 + 4), 8);
 			}
 		    break;
 		case 21: // x20-3f HFP RR
-			trace_parms =" F" + tz390.get_hex(mf1, 1) 
+			trace_parms =" F" + tz390.get_hex(mf1, 1)
 				        + "=" + get_fp_long_hex(rf1) + " F" + tz390.get_hex(mf2, 1)
 						+ "=" + get_fp_long_hex(rf2);
 			break;
 		case 22: // x0e, x0f clcl, mvcl
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-			            + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8) 
-			            + " R" + tz390.get_hex(mf1 + 1, 1) 
-			            + "="  + tz390.get_hex(reg.getInt(rf1 + 12), 8) 
-			            + " R" + tz390.get_hex(mf2, 1) 
-			            + "="  + tz390.get_hex(reg.getInt(rf2 + 4), 8) 
-			            + " R" + tz390.get_hex(mf2 + 1, 1) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			            + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8)
+			            + " R" + tz390.get_hex(mf1 + 1, 1)
+			            + "="  + tz390.get_hex(reg.getInt(rf1 + 12), 8)
+			            + " R" + tz390.get_hex(mf2, 1)
+			            + "="  + tz390.get_hex(reg.getInt(rf2 + 4), 8)
+			            + " R" + tz390.get_hex(mf2 + 1, 1)
 			            + "="  + tz390.get_hex(reg.getInt(rf2 + 12), 8);
 			break;
 		case 23: // 1c,1d mr,dr
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-			            + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8) 
-			            + " R" + tz390.get_hex(mf1 + 1, 1) 
-			            + "="  + tz390.get_hex(reg.getInt(rf1 + 12), 8) 
-			            + " R" + tz390.get_hex(mf2, 1) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			            + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8)
+			            + " R" + tz390.get_hex(mf1 + 1, 1)
+			            + "="  + tz390.get_hex(reg.getInt(rf1 + 12), 8)
+			            + " R" + tz390.get_hex(mf2, 1)
 			            + "="  + tz390.get_hex(reg.getInt(rf2 + 4), 8);
 			break;
-		case 30:// "BRX" 16 BER oomr	
+		case 30:// "BRX" 16 BER oomr
 			rv2 = reg.getInt(rf2 + 4);
 			trace_parms = " R" + tz390.get_hex(mf2, 1) + "("
 			            + tz390.get_hex(rv2, 8) + ")="
 			            + get_ins_target(rv2 & psw_amode);
 			break;
 		case 40:// "I" 1 SVC 00ii
-			trace_parms = " I1=" + tz390.get_hex(if1, 2) 
+			trace_parms = " I1=" + tz390.get_hex(if1, 2)
 			            + " " + trace_svc();
 			break;
 		case 50:// "RX" 52 L oorxbddd
-			trace_parms = " R"   + tz390.get_hex(mf1, 1) 
-			            + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8) 
-			            + " S2(" + tz390.get_hex(xbd2_loc, 8) 
+			trace_parms = " R"   + tz390.get_hex(mf1, 1)
+			            + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8)
+			            + " S2(" + tz390.get_hex(xbd2_loc, 8)
 			            + ")="   + bytes_to_hex(mem, xbd2_loc, 4, 0);
 		    break;
 		case 51: // 45 BAL
-			trace_parms = " R"   + tz390.get_hex(mf1, 1) 
-			            + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8) 
-			            + " S2(" + tz390.get_hex(xbd2_loc, 8) 
+			trace_parms = " R"   + tz390.get_hex(mf1, 1)
+			            + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8)
+			            + " S2(" + tz390.get_hex(xbd2_loc, 8)
 			            + ")="   + get_ins_target(xbd2_loc);
 			break;
 		case 52: // 41 LA
-			trace_parms = " R"   + tz390.get_hex(mf1, 1) 
-			            + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8) 
+			trace_parms = " R"   + tz390.get_hex(mf1, 1)
+			            + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8)
 			            + " S2(" + tz390.get_hex(xbd2_loc & psw_amode, 8) + ")";
 			break;
 		case 53: // 40, 48-4c rx half word
-			trace_parms =  " R"  + tz390.get_hex(mf1, 1) 
-			            + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8) 
-			            + " S2(" + tz390.get_hex(xbd2_loc & psw_amode, 8) 
+			trace_parms =  " R"  + tz390.get_hex(mf1, 1)
+			            + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8)
+			            + " S2(" + tz390.get_hex(xbd2_loc & psw_amode, 8)
 			            + ")="   + bytes_to_hex(mem, xbd2_loc, 2, 0);
 			break;
 		case 54: // 60-7f RX HFP LD
@@ -19115,7 +19115,7 @@ public class pz390 {
 						+ hex_ins; // RPI 1035
 			break;
 		case 60:// "BCX" 16 BE oomxbddd
-			trace_parms = " S2(" + tz390.get_hex(xbd2_loc, 8) 
+			trace_parms = " S2(" + tz390.get_hex(xbd2_loc, 8)
 			            + ")="   + get_ins_target(xbd2_loc);
 			break;
 		case 70:// "S" 43 SPM oo00bddd
@@ -19124,11 +19124,11 @@ public class pz390 {
 			break;
 		case 71:// "S"  SRNM, SRNMT oo00bddd
 			trace_parms = " S2(" + tz390.get_hex(bd2_loc, 8) + ")";
-			break;	
+			break;
 		case 72:// "S" LFPC, STFPC, LFAS
 			trace_parms = " S2(" + tz390.get_hex(bd2_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd2_loc, 4, 0);
-			break;	
+			break;
 		case 80:// "DM" 1 DIAGNOSE 83000000
 			trace_parms = " DIAGNOSE";
 			break;
@@ -19146,7 +19146,7 @@ public class pz390 {
 						+ tz390.get_hex(mf3, 1) + "="
 						+ tz390.get_hex(reg.getInt(rf3 + 4), 8) + " S2("
 						+ tz390.get_hex(rf2, 8) + ")=" + get_ins_target(rf2);
-			break;	
+			break;
 		case 100:// "RS" 25 oorrbddd
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 					+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " R"
@@ -19186,14 +19186,14 @@ public class pz390 {
 			+ tz390.get_hex(reg.getInt(rf3 + 12), 8)
 			+ " PAD=" + tz390.get_hex(bd2_loc, 2);
 			break;
-        case 105:// "RS" 9a, 9b  oorrbddd  LAM and STAM                   // RPI 2003
-            trace_parms = " AR" + tz390.get_hex(mf1, 1) + "="             // RPI 2003
-                    + tz390.get_hex(ar_reg.getInt(rf1 >> 1), 8) + " AR"   // RPI 2003
-                    + tz390.get_hex(mf3, 1) + "="                         // RPI 2003
-                    + tz390.get_hex(ar_reg.getInt(rf3 >> 1), 8) + " S2("  // RPI 2003
-                    + tz390.get_hex(bd2_loc, 8) + ")="                    // RPI 2003
-                    + bytes_to_hex(mem, bd2_loc, 4, 0);                   // RPI 2003
-            break;                                                        // RPI 2003
+		case 105:// "RS" 9a, 9b  oorrbddd  LAM and STAM                   // RPI 2003
+			trace_parms = " AR" + tz390.get_hex(mf1, 1) + "="             // RPI 2003
+					+ tz390.get_hex(ar_reg.getInt(rf1 >> 1), 8) + " AR"   // RPI 2003
+					+ tz390.get_hex(mf3, 1) + "="                         // RPI 2003
+					+ tz390.get_hex(ar_reg.getInt(rf3 >> 1), 8) + " S2("  // RPI 2003
+					+ tz390.get_hex(bd2_loc, 8) + ")="                    // RPI 2003
+					+ bytes_to_hex(mem, bd2_loc, 4, 0);                   // RPI 2003
+			break;                                                        // RPI 2003
 		case 110:// "SI" 9 CLI ooiibddd
 			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, 1, 0) + " I2="
@@ -19229,96 +19229,96 @@ public class pz390 {
 			break;
 		case 140:// "RRE" 185 MSR oooo00rr  R32,R32
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-					+ tz390.get_hex(reg.getInt(rf1 + 4), 8) 
+					+ tz390.get_hex(reg.getInt(rf1 + 4), 8)
 					+ " R" 	+ tz390.get_hex(mf2, 1) + "="
 					+ tz390.get_hex(reg.getInt(rf2 + 4), 8);
 			break;
 		case 141: // b3c4-b3c6  CEGR etc.F64,R64
 			if (alt_rnd_mode != 0 || alt_fpe_mode != 0){ // RPI 1125 CEGBRA
-				trace_parms = " F" + tz390.get_hex(mf1, 1) 
+				trace_parms = " F" + tz390.get_hex(mf1, 1)
 	            + "="  + get_fp_long_hex(rf1) + " M3=" + tz390.get_hex(mf3, 1)
 	            + " F" + tz390.get_hex(mf2, 1)
 				+ "="  + get_long_hex(reg.getLong(rf2)) + " M4=" + tz390.get_hex(mf4, 1);
 			} else {
-				trace_parms = " F" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_fp_long_hex(rf1) 
+				trace_parms = " F" + tz390.get_hex(mf1, 1)
+			            + "="  + get_fp_long_hex(rf1)
 					    + " R" + tz390.get_hex(mf2, 1)
 					    + "="  + get_long_hex(reg.getLong(rf2));
 			}
 			break;
-		case 142: // b3??,b22d,b244,b245 DXR, SQDR F64,F64			
+		case 142: // b3??,b22d,b244,b245 DXR, SQDR F64,F64
 			if (alt_rnd_mode != 0 || alt_fpe_mode != 0){ // RPI 1125
-				trace_parms = " F" + tz390.get_hex(mf1, 1) 
+				trace_parms = " F" + tz390.get_hex(mf1, 1)
 	            + "="  + get_fp_long_hex(rf1) + " M3=" + tz390.get_hex(mf3, 1)
 	            + " F" + tz390.get_hex(mf2, 1)
 				+ "="  + get_fp_long_hex(rf2) + " M4=" + tz390.get_hex(mf4, 1);
 			} else {
-				trace_parms = " F" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_fp_long_hex(rf1) 
+				trace_parms = " F" + tz390.get_hex(mf1, 1)
+			            + "="  + get_fp_long_hex(rf1)
 			            + " F" + tz390.get_hex(mf2, 1)
 						+ "="  + get_fp_long_hex(rf2);
 			}
 			break;
 		case 143: // b990-b993  R1,R1+1,R2,M
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-			            + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8) 
-			            + " R" + tz390.get_hex(mf1 + 1, 1) 
-			            + "="  + tz390.get_hex(reg.getInt(rf1 + 12), 8) 
-						+ " R" + tz390.get_hex(mf2, 1) 
-						+ "="  + tz390.get_hex(reg.getInt(rf2 + 4), 8) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			            + "="  + tz390.get_hex(reg.getInt(rf1 + 4), 8)
+			            + " R" + tz390.get_hex(mf1 + 1, 1)
+			            + "="  + tz390.get_hex(reg.getInt(rf1 + 12), 8)
+						+ " R" + tz390.get_hex(mf2, 1)
+						+ "="  + tz390.get_hex(reg.getInt(rf2 + 4), 8)
 						+ " M="+ tz390.get_hex(mem.get(psw_loc + 2) >> 4, 1);
 			break;
 		case 144: // b9??  LPGR etc.  R64,r64
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_long_hex(reg.getLong(rf1)) 
-			            + " R" + tz390.get_hex(mf2, 1) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			            + "="  + get_long_hex(reg.getLong(rf1))
+			            + " R" + tz390.get_hex(mf2, 1)
 			            + "="  + get_long_hex(reg.getLong(rf2));
 			break;
 		case 145: // LGDR etc.  R64,F64
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_long_hex(reg.getLong(rf1)) 
-			            + " F" + tz390.get_hex(mf2, 1) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			            + "="  + get_long_hex(reg.getLong(rf1))
+			            + " F" + tz390.get_hex(mf2, 1)
 			            + "="  + get_fp_long_hex(rf2);
 			break;
 		case 146: // b3b4-b3b6,CEFR etc.F64,R64
 			if (alt_rnd_mode != 0 || alt_fpe_mode != 0){ // RPI 1125
-				trace_parms = " F" + tz390.get_hex(mf1, 1) 
+				trace_parms = " F" + tz390.get_hex(mf1, 1)
 	            + "="  + get_fp_long_hex(rf1) + " M3=" + tz390.get_hex(mf3, 1)
 	            + " F" + tz390.get_hex(mf2, 1)
 				+ "="  + tz390.get_hex(reg.getInt(rf2+4),8) + " M4=" + tz390.get_hex(mf4, 1);
 			} else {
-				trace_parms = " F" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_fp_long_hex(rf1) 
+				trace_parms = " F" + tz390.get_hex(mf1, 1)
+			            + "="  + get_fp_long_hex(rf1)
 					    + " R" + tz390.get_hex(mf2, 1)
 					    + "="  + tz390.get_hex(reg.getInt(rf2+4),8);
 			}
-			break;	
+			break;
 		case 147: // b9A2 ptf R64 rpi 817
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_fp_long_hex(rf1);				    
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			            + "="  + get_fp_long_hex(rf1);
 			break;
 		case 148: // b9??  LGFR etc.  R64,R32  RPI 822
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_long_hex(reg.getLong(rf1)) 
-			            + " R" + tz390.get_hex(mf2, 1) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			            + "="  + get_long_hex(reg.getLong(rf1))
+			            + " R" + tz390.get_hex(mf2, 1)
 			            + "="  + tz390.get_hex(reg.getInt(rf2+4),8);
 			break;
 		case 149: // b9??  CPYA,EAR,SAR
 			if (opcode2 == 0x4d){ // CPYA RPI 1055
-				trace_parms = " AR" + tz390.get_hex(mf1, 1) 
-			      + "="  + tz390.get_hex(ar_reg.getInt(rf1 >> 1),8) 
-			      + " AR" + tz390.get_hex(mf2, 1) 
+				trace_parms = " AR" + tz390.get_hex(mf1, 1)
+			      + "="  + tz390.get_hex(ar_reg.getInt(rf1 >> 1),8)
+			      + " AR" + tz390.get_hex(mf2, 1)
 			      + "="  + tz390.get_hex(ar_reg.getInt(rf2 >> 1),8);
 			} else if (opcode2 == 0x4e){ // SAR RPI 1055
-				trace_parms = " AR" + tz390.get_hex(mf1, 1) 
-                  + "="  + tz390.get_hex(ar_reg.getInt(rf1 >> 1),8) 
-                  + " R" + tz390.get_hex(mf2, 1) 
-                  + "="  + tz390.get_hex(reg.getInt(rf2+4),8);
+				trace_parms = " AR" + tz390.get_hex(mf1, 1)
+				  + "="  + tz390.get_hex(ar_reg.getInt(rf1 >> 1),8)
+				  + " R" + tz390.get_hex(mf2, 1)
+				  + "="  + tz390.get_hex(reg.getInt(rf2+4),8);
 			} else if (opcode2 == 0x4f){ // EAR RPI 1055
-				trace_parms = " R" + tz390.get_hex(mf1, 1) 
-                  + "="  + tz390.get_hex(reg.getInt(rf1 + 4),8) 
-                  + " AR" + tz390.get_hex(mf2, 1) 
-                  + "="  + tz390.get_hex(ar_reg.getInt(rf2 >> 1),8);
+				trace_parms = " R" + tz390.get_hex(mf1, 1)
+				  + "="  + tz390.get_hex(reg.getInt(rf1 + 4),8)
+				  + " AR" + tz390.get_hex(mf2, 1)
+				  + "="  + tz390.get_hex(ar_reg.getInt(rf2 >> 1),8);
 			}
 		    break;
 		case 150:// "RRF1" 28 MAER oooor0rr
@@ -19343,32 +19343,32 @@ public class pz390 {
 					             + " F" + tz390.get_hex(mf3, 1) + "=" + tz390.get_long_hex(reg.getLong(rf3), 16);
 			break;
 		case 154:// "RRFc" 39 NRK R1,R2,R3 oooor0rr  // dsh rpi 2202 correct 32 bit reg format
-			trace_parms = " R" + tz390.get_hex(mf1, 1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8) 
-					             + " R" + tz390.get_hex(mf2, 1) + "=" + tz390.get_hex(reg.getInt(rf2+4),8) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)
+					             + " R" + tz390.get_hex(mf2, 1) + "=" + tz390.get_hex(reg.getInt(rf2+4),8)
 					             + " R" + tz390.get_hex(mf3, 1) + "=" + tz390.get_hex(reg.getInt(rf3+4),8);
 			break;
-		case 155:// "RRF6" 39 SELR R1,R2,R3,M4 oooo3m12  // dsh rpi 2202 
-			trace_parms = " R" + tz390.get_hex(mf1, 1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8) 
-					             + " R" + tz390.get_hex(mf2, 1) + "=" + tz390.get_hex(reg.getInt(rf2+4),8) 
+		case 155:// "RRF6" 39 SELR R1,R2,R3,M4 oooo3m12  // dsh rpi 2202
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)
+					             + " R" + tz390.get_hex(mf2, 1) + "=" + tz390.get_hex(reg.getInt(rf2+4),8)
 					             + " R" + tz390.get_hex(mf3, 1) + "=" + tz390.get_hex(reg.getInt(rf3+4),8)
 			                     + " M4=" + tz390.get_hex(mf4, 1);
 			break;
-		case 156:// "RRF6" 39 SELGR R1,R2,R3,M4 oooo3m12  // dsh rpi 2202 
-			trace_parms = " R" + tz390.get_hex(mf1, 1) + "=" + tz390.get_long_hex(reg.getLong(rf1), 16) 
+		case 156:// "RRF6" 39 SELGR R1,R2,R3,M4 oooo3m12  // dsh rpi 2202
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "=" + tz390.get_long_hex(reg.getLong(rf1), 16)
 					             + " R" + tz390.get_hex(mf2, 1) + "=" + tz390.get_long_hex(reg.getLong(rf2), 16)
 					             + " R" + tz390.get_hex(mf3, 1) + "=" + tz390.get_long_hex(reg.getLong(rf3), 16)
 			                     + " M4=" + tz390.get_hex(mf4, 1);
-			break;	
+			break;
 		case 160: // c2?? AGFI etc., C01 LGFI, C06 LXHI  RPI 200
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-						+ get_long_hex(reg.getLong(rf1)) 
+						+ get_long_hex(reg.getLong(rf1))
 						+ " I2=" + tz390.get_hex(if2, 8);
 			break;
 		case 161: // c2?? MSFI RPI 817
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-						+ tz390.get_hex(reg.getInt(rf1+4),8) 
+						+ tz390.get_hex(reg.getInt(rf1+4),8)
 						+ " I2=" + tz390.get_hex(if2, 8);
-			break;	
+			break;
 		case 162: // C00 LARL
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 						+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " S2("
@@ -19389,29 +19389,29 @@ break;
 		case 165: // C48 LGRL
 			trace_parms =" R" + tz390.get_hex(mf1, 1) + "="
 						+ tz390.get_long_hex(reg.getLong(rf1), 16)
-						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+						+ " S2(" + tz390.get_hex(bd2_loc, 8)
 						+ ")="   + bytes_to_hex(mem, bd2_loc, 8, 0);
-			break;	
+			break;
 		case 166: // C4C LGFRL
 			trace_parms =" R" + tz390.get_hex(mf1, 1) + "="
 						+ tz390.get_long_hex(reg.getLong(rf1), 16)
-						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+						+ " S2(" + tz390.get_hex(bd2_loc, 8)
 						+ ")="   + bytes_to_hex(mem, bd2_loc, 4, 0);
 			break;
 		case 167: // C4D LRL
 			trace_parms =" R" + tz390.get_hex(mf1, 1) + "="
 						+ tz390.get_hex(reg.getInt(rf1+4), 8)
-						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+						+ " S2(" + tz390.get_hex(bd2_loc, 8)
 						+ ")="   + bytes_to_hex(mem, bd2_loc, 4, 0);
 			break;
 		case 168: // C44 LGHRL
 			trace_parms =" R" + tz390.get_hex(mf1, 1) + "="
 						+ tz390.get_long_hex(reg.getLong(rf1), 16)
-						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+						+ " S2(" + tz390.get_hex(bd2_loc, 8)
 						+ ")="   + bytes_to_hex(mem, bd2_loc, 2, 0);
 			break;
 		case 169: // C62 PFDRL
-			trace_parms = " M" + tz390.get_hex(mf1, 1) 
+			trace_parms = " M" + tz390.get_hex(mf1, 1)
 			            + " S2(" + tz390.get_hex(bd2_loc & psw_amode, 8) + ")";
 			break;
 		case 170:// "SS" 32 MVC oollbdddbddd
@@ -19426,7 +19426,7 @@ break;
 			trace_parms = " S1(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, maxlen, 0) + " S2("
 					+ tz390.get_hex(bd2_loc, 8) + ")="
-					+ bytes_to_hex(mem, bd2_loc, maxlen, 0) 
+					+ bytes_to_hex(mem, bd2_loc, maxlen, 0)
 					+ "='" + tz390.get_ascii_printable_string(mem_byte,mem_loc,maxlen) + "'"; // RPI 947
 			break;
 		case 171: // ASSIST RXSS I/O Instructions RPI 812
@@ -19434,14 +19434,14 @@ break;
 			if (maxlen <= 0 || maxlen > 8){
 				maxlen = 8; // RPI 395
 			}
-			trace_parms = 
-				" S1(X1)(" + tz390.get_hex(xbd1_loc, 8) 
-                + ")="   + bytes_to_hex(mem, xbd1_loc, maxlen, 0)
-                + " S2(" + tz390.get_hex(bd2_loc, 8) + ")";
+			trace_parms =
+				" S1(X1)(" + tz390.get_hex(xbd1_loc, 8)
+				+ ")="   + bytes_to_hex(mem, xbd1_loc, maxlen, 0)
+				+ " S2(" + tz390.get_hex(bd2_loc, 8) + ")";
 			break;
 		case 180:// "RXY" LTG oorxbdddhhoo
 			if (opcode2 == 0x47) {
-				trace_parms = " M1=" + tz390.get_hex(mf1,1) 
+				trace_parms = " M1=" + tz390.get_hex(mf1,1)
 					    + " S2("
 						+ tz390.get_hex(xbd2_loc, 8) + ")="
 						+ get_long_hex(get_long_xbd2()); // RPI 588
@@ -19466,23 +19466,23 @@ break;
 					+ " S2("
 					+ tz390.get_hex(xbd2_loc, 8) + ")="
 					+ get_long_hex(get_long_xbd2()); // RPI 588
-			break;	
+			break;
 		case 184: // LLGF
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 							+ get_long_hex(reg.getLong(rf1)) + " S2("
 							+ tz390.get_hex(xbd2_loc, 8) + ")="
 							+ bytes_to_hex(mem, xbd2_loc, 4, 0);
-			break;	
+			break;
 		case 185: // LLGB
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 							+ get_long_hex(reg.getLong(rf1)) + " S2("
 							+ tz390.get_hex(xbd2_loc, 8) + ")="
 							+ bytes_to_hex(mem, xbd2_loc, 1, 0);
-			break;	
+			break;
 		case 186: // LLC
-			trace_parms = " R"   + tz390.get_hex(mf1, 1) 
+			trace_parms = " R"   + tz390.get_hex(mf1, 1)
 			            + "="    + tz390.get_hex(reg.getInt(rf1+4),8)
-						+ " S2(" + tz390.get_hex(xbd2_loc, 8) 
+						+ " S2(" + tz390.get_hex(xbd2_loc, 8)
 						+ ")="	 + bytes_to_hex(mem, xbd2_loc, 1, 0);
 			break;
 		case 187: // SLB
@@ -19514,14 +19514,14 @@ break;
 					+ tz390.get_hex(bd2_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd2_loc, 4, 0) + " R0=" + tz390.get_hex(reg.getInt(r0), 8);
 			break;
-        case 199:// eb9a, eb9b  oorrbdddhhpp  LAMY and STAMY              // RPI 2003
-            trace_parms = " AR" + tz390.get_hex(mf1, 1) + "="             // RPI 2003
-                    + tz390.get_hex(ar_reg.getInt(rf1 >> 1), 8) + " AR"   // RPI 2003
-                    + tz390.get_hex(mf3, 1) + "="                         // RPI 2003
-                    + tz390.get_hex(ar_reg.getInt(rf3 >> 1), 8) + " S2("  // RPI 2003
-                    + tz390.get_hex(bd2_loc, 8) + ")="                    // RPI 2003
-                    + bytes_to_hex(mem, bd2_loc, 4, 0);                   // RPI 2003
-            break;                                                        // RPI 2003
+		case 199:// eb9a, eb9b  oorrbdddhhpp  LAMY and STAMY              // RPI 2003
+			trace_parms = " AR" + tz390.get_hex(mf1, 1) + "="             // RPI 2003
+					+ tz390.get_hex(ar_reg.getInt(rf1 >> 1), 8) + " AR"   // RPI 2003
+					+ tz390.get_hex(mf3, 1) + "="                         // RPI 2003
+					+ tz390.get_hex(ar_reg.getInt(rf3 >> 1), 8) + " S2("  // RPI 2003
+					+ tz390.get_hex(bd2_loc, 8) + ")="                    // RPI 2003
+					+ bytes_to_hex(mem, bd2_loc, 4, 0);                   // RPI 2003
+			break;                                                        // RPI 2003
 		case 200:// "RSY" 31 CSY  oorrbdddhhoo
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 					+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " R"
@@ -19531,10 +19531,10 @@ break;
 					+ bytes_to_hex(mem, bd2_loc, 4, 0);
 			break;
 		case 201: // eb20, eb2c, eb80 CLMH, STCM, ICMH
-			trace_parms = " R"   + tz390.get_hex(mf1, 1) 
-			            + "="    + get_long_hex(reg.getLong(rf1)) 
-						+ " M3=" + tz390.get_hex(mf3, 1) 
-						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+			trace_parms = " R"   + tz390.get_hex(mf1, 1)
+			            + "="    + get_long_hex(reg.getLong(rf1))
+						+ " M3=" + tz390.get_hex(mf3, 1)
+						+ " S2(" + tz390.get_hex(bd2_loc, 8)
 						+ ")="   + bytes_to_hex(mem, bd2_loc, mask_bits[mf3], 0);
 			break;
 		case 202: // eb21, eb2d, eb81 CLMY, STCY, ICMY
@@ -19568,19 +19568,19 @@ break;
 			break;
 		case 206:// "RSY" 31 LMG oorrbdddhhoo
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-					    + get_long_hex(reg.getLong(rf1)) 
-					    + " R" + tz390.get_hex(mf3, 1) 
-					    + "="  + get_long_hex(reg.getLong(rf3)) 
-					    + " S2(" + tz390.get_hex(bd2_loc, 8) 
+					    + get_long_hex(reg.getLong(rf1))
+					    + " R" + tz390.get_hex(mf3, 1)
+					    + "="  + get_long_hex(reg.getLong(rf3))
+					    + " S2(" + tz390.get_hex(bd2_loc, 8)
 					    + ")=" + bytes_to_hex(mem, bd2_loc, 8, 0);
-			break;	
+			break;
 		case 207: // EBE2 LOCG R1,S2,M3
-			trace_parms = " R"   + tz390.get_hex(mf1, 1) 
-			            + "="    + get_long_hex(reg.getLong(rf1))  
-						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+			trace_parms = " R"   + tz390.get_hex(mf1, 1)
+			            + "="    + get_long_hex(reg.getLong(rf1))
+						+ " S2(" + tz390.get_hex(bd2_loc, 8)
 						+ ")="   + bytes_to_hex(mem, bd2_loc, 8, 0)
 						+ " M3=" + tz390.get_hex(mf3, 1);
-			break;	
+			break;
 		case 208://  "EBE4","LANG","RSY  "  20 RPI 1125 Z196
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 					+ get_long_hex(reg.getLong(rf1)) + " R"
@@ -19592,11 +19592,11 @@ break;
 			break;
 		case 209: //  "EBF2","LOC","RSY2 "   20 RPI 1125 Z196
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-						+ tz390.get_hex(reg.getInt(rf1 + 4), 8) 
+						+ tz390.get_hex(reg.getInt(rf1 + 4), 8)
 						+ " S2("
 						+ tz390.get_hex(bd2_loc, 8) + ")="
 						+ bytes_to_hex(mem, bd2_loc, 4, 0)
-						+ " M3=" + tz390.get_hex(mf3, 1);	
+						+ " M3=" + tz390.get_hex(mf3, 1);
 		case 210:// "SIY" 6 TMY ooiibdddhhoo
 			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, 1, 0) + " I2="
@@ -19611,7 +19611,7 @@ break;
 			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, 8, 0) + " I2="
 					+ tz390.get_hex(if2, 2);
-			break;	
+			break;
 		case 220:// "RSL" 1 TP oor0bddd00oo
 			trace_parms = " S1(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, rflen1, 0);
@@ -19640,7 +19640,7 @@ break;
 					+ tz390.get_long_hex(reg.getLong(rf1), 16) + " I2="
 					+ tz390.get_hex(if2, 2)
 					+ " M3=" + tz390.get_hex(mf3, 1)
-			            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+			            + " S4(" + tz390.get_hex(bd4_loc, 8)
 			            + ")="   + get_ins_target(bd4_loc);
 			break;
 		case 234:// "RIE6" CGRB oorriiiim0oo
@@ -19650,8 +19650,8 @@ break;
 					+ tz390.get_long_hex(reg.getLong(rf2), 16)
 					+ " M=" + tz390.get_hex(mf3,1)
 					+ " S4(" + tz390.get_hex(bd4_loc,8)
-					+ "=" + get_ins_target(bd4_loc); 
-			break;	
+					+ "=" + get_ins_target(bd4_loc);
+			break;
 		case 235:// "RIE6" CRB oorriiiim0oo
 			trace_parms = " R" + tz390.get_hex(mf1, 1)
 			        + "=" + tz390.get_hex(reg.getInt(rf1+4), 8)
@@ -19659,14 +19659,14 @@ break;
 					+ tz390.get_hex(reg.getInt(rf2+4), 8)
 					+ " M=" + tz390.get_hex(mf3,1)
 					+ " S4(" + tz390.get_hex(bd4_loc,8)
-					+ "=" + get_ins_target(bd4_loc); 
-			break;	
+					+ "=" + get_ins_target(bd4_loc);
+			break;
 		case 236:// "RIE4" CIJ oorm444422oo  RPI 817
 			trace_parms = " R" + tz390.get_hex(mf1, 1)
 			        + "=" + tz390.get_hex(reg.getInt(rf1+4), 8)
 					+ " I2=" + tz390.get_hex(if2, 2)
 					+ " M3=" + tz390.get_hex(mf3, 1)
-			            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+			            + " S4(" + tz390.get_hex(bd4_loc, 8)
 			            + ")="   + get_ins_target(bd4_loc);
 			break;
 		case 240:// "RXE" 28 ADB oorxbddd00oo
@@ -19679,7 +19679,7 @@ break;
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 					+ get_fp_long_hex(rf1) + " S2("
 					+ tz390.get_hex(xbd2_loc, 8) + ")";
-			break;	
+			break;
 		case 250:// "RXF" 8 MAE oorxbdddr0oo (note r3 before r1)
 			trace_parms =  " F" + tz390.get_hex(mf1, 1) + "="
 					+ get_fp_long_hex(rf1) + " F" + tz390.get_hex(mf3, 1) + "="
@@ -19687,13 +19687,13 @@ break;
 					+ ")=" + bytes_to_hex(mem, bd2_loc, 4, 0);
 			break;
 		case 251:// SLDT shifts
-			trace_parms =  " F"   + tz390.get_hex(mf1, 1) 
+			trace_parms =  " F"   + tz390.get_hex(mf1, 1)
 			             + "="	  + get_fp_long_hex(rf1)
 			             + " F"   + tz390.get_hex(mf3, 1)
-			             + "="    + get_fp_long_hex(rf3) 
+			             + "="    + get_fp_long_hex(rf3)
 			             + " S2(" + tz390.get_hex(xbd2_loc, 8) // RPI 1180
 					+ ")";
-			break;	
+			break;
 		case 260:// AP SS2 oollbdddbddd
 			int maxlen1 = rflen1;
 			int maxlen2 = rflen2;
@@ -19738,64 +19738,64 @@ break;
 			break;
 		case 300:// RPI 206 "RRF3" 30 DIEBR/DIDBR oooormrr (r1,r3,r2,m4 maps to
 				// oooo3412)
-			trace_parms = " F" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_fp_long_hex(rf1) 
-			            + " F" + tz390.get_hex(mf3, 1) 
-			            + "="  + get_fp_long_hex(rf3) 
-					    + " F" + tz390.get_hex(mf2, 1) 
-					    + "="  + get_fp_long_hex(rf2) 
+			trace_parms = " F" + tz390.get_hex(mf1, 1)
+			            + "="  + get_fp_long_hex(rf1)
+			            + " F" + tz390.get_hex(mf3, 1)
+			            + "="  + get_fp_long_hex(rf3)
+					    + " F" + tz390.get_hex(mf2, 1)
+					    + "="  + get_fp_long_hex(rf2)
 					    + " M4=" + tz390.get_hex(mf4, 1);
 			break;
 		case 301:// FIDTR, DIXTR (r1,m3,r2,m4 - oooo3412)
-			trace_parms = " F" + tz390.get_hex(mf1, 1) 
-		            + "="  + get_fp_long_hex(rf1) 
-		            + " M3=" + tz390.get_hex(mf3, 1) 
-		            + " F" + tz390.get_hex(mf2, 1) 
-				    + "="  + get_fp_long_hex(rf2) 
+			trace_parms = " F" + tz390.get_hex(mf1, 1)
+		            + "="  + get_fp_long_hex(rf1)
+		            + " M3=" + tz390.get_hex(mf3, 1)
+		            + " F" + tz390.get_hex(mf2, 1)
+				    + "="  + get_fp_long_hex(rf2)
 				    + " M4=" + tz390.get_hex(mf4, 1);
 			break;
 		case 302:// RRF3" RRDTR/RRXTR oooormrr (r1,r3,r2,m4 maps to
 			// oooo3412)  RPI 798
-			trace_parms = " F" + tz390.get_hex(mf1, 1) 
-		            + "="  + get_fp_long_hex(rf1) 
-		            + " F" + tz390.get_hex(mf3, 1) 
-		            + "="  + get_fp_long_hex(rf3) 
-				    + " R" + tz390.get_hex(mf2, 1) 
+			trace_parms = " F" + tz390.get_hex(mf1, 1)
+		            + "="  + get_fp_long_hex(rf1)
+		            + " F" + tz390.get_hex(mf3, 1)
+		            + "="  + get_fp_long_hex(rf3)
+				    + " R" + tz390.get_hex(mf2, 1)
 				    + "="  + get_long_hex(reg.getLong(rf2)) // RPI 798
 				    + " M4=" + tz390.get_hex(mf4, 1);
 			break;
 		case 303:// CLFEBR (r1,m3,r2,m4 - oooo3412)
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-			            + "="  + tz390.get_hex(reg.getInt(rf1+4),8) 
-			            + " M3=" + tz390.get_hex(mf3, 1) 
-			            + " F" + tz390.get_hex(mf2, 1) 
-					    + "="  + get_fp_long_hex(rf2) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			            + "="  + tz390.get_hex(reg.getInt(rf1+4),8)
+			            + " M3=" + tz390.get_hex(mf3, 1)
+			            + " F" + tz390.get_hex(mf2, 1)
+					    + "="  + get_fp_long_hex(rf2)
 					    + " M4=" + tz390.get_hex(mf4, 1);
 			break;
 		case 304:// CELGBR (r1,m3,r2,m4 - oooo3412)
-			trace_parms = " F" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_fp_long_hex(rf1) 
-			            + " M3=" + tz390.get_hex(mf3, 1) 
-			            + " R" + tz390.get_hex(mf2, 1) 
-					    + "="  + get_long_hex(reg.getLong(rf2)) 
-					    + " M4=" + tz390.get_hex(mf4, 1);	
+			trace_parms = " F" + tz390.get_hex(mf1, 1)
+			            + "="  + get_fp_long_hex(rf1)
+			            + " M3=" + tz390.get_hex(mf3, 1)
+			            + " R" + tz390.get_hex(mf2, 1)
+					    + "="  + get_long_hex(reg.getLong(rf2))
+					    + " M4=" + tz390.get_hex(mf4, 1);
 			 break;
 		case 305:// CLGDTR (r1,m3,r2,m4 - oooo3412) RPI 1125
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_long_hex(reg.getLong(rf1)) 
-			            + " M3=" + tz390.get_hex(mf3, 1) 
-			            + " F" + tz390.get_hex(mf2, 1) 
-					    + "="  + get_fp_long_hex(rf2) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			            + "="  + get_long_hex(reg.getLong(rf1))
+			            + " M3=" + tz390.get_hex(mf3, 1)
+			            + " F" + tz390.get_hex(mf2, 1)
+					    + "="  + get_fp_long_hex(rf2)
 					    + " M4=" + tz390.get_hex(mf4, 1);
 			break;
 		case 306:// CDFTR (r1,m3,r2,m4 - oooo3412) RPI 1125
-			trace_parms = " F" + tz390.get_hex(mf1, 1) 
-			            + "="  + get_fp_long_hex(rf1) 
-			            + " M3=" + tz390.get_hex(mf3, 1) 
-			            + " R" + tz390.get_hex(mf2, 1) 
-					    + "="  + tz390.get_hex(reg.getInt(rf2+4),8) 
+			trace_parms = " F" + tz390.get_hex(mf1, 1)
+			            + "="  + get_fp_long_hex(rf1)
+			            + " M3=" + tz390.get_hex(mf3, 1)
+			            + " R" + tz390.get_hex(mf2, 1)
+					    + "="  + tz390.get_hex(reg.getInt(rf2+4),8)
 					    + " M4=" + tz390.get_hex(mf4, 1);
-			break;	
+			break;
 		case 310:// "SS" PKA oollbdddbddd ll from S2
 		case 320: // "SSF" MVCOS oor0bdddbddd (s1,s2,r3) z9-41
 			maxlen = rflen;
@@ -19806,21 +19806,21 @@ break;
 					+ bytes_to_hex(mem, bd1_loc, maxlen, 0) + " S2("
 					+ tz390.get_hex(bd2_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd2_loc, maxlen, 0)
-                    + " R" + tz390.get_hex(mf3,1)  // RPI 606
-                    + "=" + tz390.get_hex(reg.getInt(rf3 + 4),8);
+					+ " R" + tz390.get_hex(mf3,1)  // RPI 606
+					+ "=" + tz390.get_hex(reg.getInt(rf3 + 4),8);
 			break;
 		case 321: // "SSF" LDP/LDPG oor0bdddbddd (r3,s1,s2) RPI 1125
 			maxlen = rflen;
 			if (maxlen > 16){
 				maxlen = 16; // RPI 395
 			}
-			trace_parms = " R" + tz390.get_hex(mf3,1)  
-            		+ "=" + tz390.get_hex(reg.getInt(rf3 + 4),8)
+			trace_parms = " R" + tz390.get_hex(mf3,1)
+					+ "=" + tz390.get_hex(reg.getInt(rf3 + 4),8)
 				    + " S1(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, maxlen, 0) + " S2("
 					+ tz390.get_hex(bd2_loc, 8) + ")="
-					+ bytes_to_hex(mem, bd2_loc, maxlen, 0); // RPI 1125                  
-			break;	
+					+ bytes_to_hex(mem, bd2_loc, maxlen, 0); // RPI 1125
+			break;
 		case 330: // "BLX" BRCL extended mnemonics
 			trace_parms = " S2(" + tz390.get_hex(bd2_loc, 8) + ")="
 			            + get_ins_target(bd2_loc);
@@ -19841,13 +19841,13 @@ break;
 		case 341: // b398-b39a,b3b8-b3ba  32 bit reg
 			if (alt_fpe_mode != 0){ // RPI 1125
 				trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-				+ tz390.get_hex(reg.getInt(rf1 + 4), 8) 
+				+ tz390.get_hex(reg.getInt(rf1 + 4), 8)
 				+ " M3=" + tz390.get_hex(mf3, 1)
 				+ " F" + tz390.get_hex(mf2, 1)
 				+ "=" + get_fp_long_hex(rf2) + " M4=" + tz390.get_hex(mf4, 1);
 			} else {
 				trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-						+ tz390.get_hex(reg.getInt(rf1 + 4), 8) 
+						+ tz390.get_hex(reg.getInt(rf1 + 4), 8)
 						+ " M3=" + tz390.get_hex(mf3, 1)
 						+ " F" + tz390.get_hex(mf2, 1)
 						+ "=" + get_fp_long_hex(rf2);
@@ -19856,42 +19856,42 @@ break;
 		case 342: // b3a8-aa, b3c8-b3ca  64 bit reg
 			if (alt_fpe_mode != 0){ // RPI 1125 CGEBRA
 				trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-				+ get_long_hex(reg.getLong(rf1)) 
+				+ get_long_hex(reg.getLong(rf1))
 				+ " M3=" + tz390.get_hex(mf3, 1)
 				+ " F" + tz390.get_hex(mf2, 1)
 				+ "=" + get_fp_long_hex(rf2) + " M4=" + tz390.get_hex(mf4, 1);
 			} else {
 				trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-						+ get_long_hex(reg.getLong(rf1)) 
-						+ " M3=" + tz390.get_hex(mf3, 1) 
+						+ get_long_hex(reg.getLong(rf1))
+						+ " M3=" + tz390.get_hex(mf3, 1)
 						+ " F" + tz390.get_hex(mf2, 1)
 						+ "=" + get_fp_long_hex(rf2);
 			}
 			break;
 		case 343: // b3f1-beff
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
-						+ get_fp_long_hex(rf1) 
-						+ " F" + tz390.get_hex(mf3, 1) + "=" 
+						+ get_fp_long_hex(rf1)
+						+ " F" + tz390.get_hex(mf3, 1) + "="
 					    + get_fp_long_hex(rf3)
 						+ " R" + tz390.get_hex(mf2,1) + "="
-			            + get_long_hex(reg.getLong(rf2)			
+			            + get_long_hex(reg.getLong(rf2)
 				        );
 			break;
 		case 344: // "B98F=CRDTE,54,344", // B93C RRFb CRDTE R1,R3,R2[,M4] RPI 2202
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
-						+ get_fp_long_hex(rf1) 
-						+ " F" + tz390.get_hex(mf3, 1) + "=" 
+						+ get_fp_long_hex(rf1)
+						+ " F" + tz390.get_hex(mf3, 1) + "="
 					    + get_fp_long_hex(rf3)
 						+ " R" + tz390.get_hex(mf2,1) + "=" + get_long_hex(reg.getLong(rf2))
-						+ "M4=" + tz390.get_hex(mf4,1) 		
+						+ "M4=" + tz390.get_hex(mf4,1)
 				        ;
-			break;	
+			break;
 		case 350: // b3d4, b3dc  LDETR, LXDTR
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
-						       + get_fp_long_hex(rf1) 
+						       + get_fp_long_hex(rf1)
 						+ " F" + tz390.get_hex(mf2, 1) + "=" + get_fp_long_hex(rf2)
 						+ " M4=" + tz390.get_hex(mf4, 1);
-			break;	
+			break;
 		case 351: // b3e3, b3ed  CSDTR, CSXTR  RPI 798
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 						       + get_long_hex(reg.getLong(rf1))   // RPI 798
@@ -19917,7 +19917,7 @@ break;
 			+ " R" + tz390.get_hex(mf2,1)
 			+ "=" + tz390.get_long_hex(reg.getLong(rf2), 16)
 			+ " M3=" + tz390.get_hex(mf3, 1)
-	            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+	            + " S4(" + tz390.get_hex(bd4_loc, 8)
 	            + ")="   + get_ins_target(bd4_loc);
 			break;
 		case 371: // "RRS1" "CRB" r1,r2,m3,s4 oorrbdddm0oo RPI 817
@@ -19926,7 +19926,7 @@ break;
 			+ " R" + tz390.get_hex(mf2,1)
 			+ "=" + tz390.get_hex(reg.getInt(rf2+4), 8)
 			+ " M3=" + tz390.get_hex(mf3, 1)
-	            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+	            + " S4(" + tz390.get_hex(bd4_loc, 8)
 	            + ")="   + get_ins_target(bd4_loc);
 			break;
 		case 380: // "RRS3" "CGIB" r1,i2,m3,i4 oorm444422oo RPI 817
@@ -19934,7 +19934,7 @@ break;
 			+ "=" + tz390.get_long_hex(reg.getLong(rf1), 16)
 			+ " I2=" + tz390.get_hex(if2, 2)
 			+ " M3=" + tz390.get_hex(mf3, 1)
-	            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+	            + " S4(" + tz390.get_hex(bd4_loc, 8)
 	            + ")="   + get_ins_target(bd4_loc);
 			break;
 		case 381: // "RRS3" "CIB" r1,i2,m3,i4 oorm444422oo RPI 817
@@ -19942,7 +19942,7 @@ break;
 			+ "=" + tz390.get_hex(reg.getInt(rf1+4), 8)
 			+ " I2=" + tz390.get_hex(if2, 2)
 			+ " M3=" + tz390.get_hex(mf3, 1)
-	            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+	            + " S4(" + tz390.get_hex(bd4_loc, 8)
 	            + ")="   + get_ins_target(bd4_loc);
 			break;
 		case 390: // "SIL" "MVHHI" d1(b1),i2
@@ -19961,8 +19961,8 @@ break;
 			+ tz390.get_hex(if2, 4);
 			break;
 		case 400: // "RIE8" "RNSBG" r1,r2,i3,i4,i5
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-			+ "=" + tz390.get_long_hex(reg.getLong(rf1),16) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			+ "=" + tz390.get_long_hex(reg.getLong(rf1),16)
 			+ " R" + tz390.get_hex(mf2, 1)
 			+ "=" + tz390.get_long_hex(reg.getLong(rf2),16)
 			+ " I3=" + tz390.get_hex(if3,2)
@@ -19970,84 +19970,84 @@ break;
 			+ " I5=" + tz390.get_hex(if5,2);
 		    break;
 		case 410: // "AHHHR" R1,R2,R3
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-            + "="  + tz390.get_long_hex(reg.getLong(rf1),16) 
-            + " R" + tz390.get_hex(mf2, 1) 
-            + "="  + tz390.get_long_hex(reg.getLong(rf2),16) 
-			+ " R" + tz390.get_hex(mf3, 1) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			+ "="  + tz390.get_long_hex(reg.getLong(rf1),16)
+			+ " R" + tz390.get_hex(mf2, 1)
+			+ "="  + tz390.get_long_hex(reg.getLong(rf2),16)
+			+ " R" + tz390.get_hex(mf3, 1)
 			+ "="  + tz390.get_long_hex(reg.getLong(rf3),16);
 		case 420: // "AHIK" R1,R3,I2
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-            + "="  + tz390.get_hex(reg.getInt(rf1+4),8) 
-            + " R" + tz390.get_hex(mf3, 1) 
-            + "="  + tz390.get_hex(reg.getInt(rf3+4),8) 
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			+ "="  + tz390.get_hex(reg.getInt(rf1+4),8)
+			+ " R" + tz390.get_hex(mf3, 1)
+			+ "="  + tz390.get_hex(reg.getInt(rf3+4),8)
 			+ " I2="  + tz390.get_hex(if2,4);
 		case 430: // "AGHIK" R1,R3,I2
-			trace_parms = " R" + tz390.get_hex(mf1, 1) 
-            + "="  + tz390.get_long_hex(reg.getLong(rf1),16) 
-            + " R" + tz390.get_hex(mf3, 1) 
-            + "="  + tz390.get_long_hex(reg.getLong(rf3),16) 
-			+ " I2="  + tz390.get_hex(if2,4);	
-        case 560: // "V-S" oooobddd VRCL RPI VF01
-                trace_parms = " R"   + tz390.get_hex(mf1, 1)
-                            + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8)
-                            + " S2(" + tz390.get_hex(xbd2_loc, 8)
-                            + ")="   + bytes_to_hex(mem, xbd2_loc, 4, 0);
-            break;
-        case 710: // IE NIAI I1,I2 RPI 2202
-            trace_parms = " I1="   + tz390.get_hex(if1,2) + " I2="  + tz390.get_hex(if2, 2);                     // RPI 1522
-            break;           
-        case 730: // RI-a with unsigned immediate operand        // RPI 1522
-            trace_parms = " R" + tz390.get_hex(mf1, 1) + "="     // RPI 1522
-                    + get_long_hex(reg.getLong(rf1)) + " I2="    // RPI 1522
-                    + tz390.get_hex(if2, 4);                     // RPI 1522
-            break;                                               // RPI 1522
-        case 731: // RI-a with signed immediate operand          // RPI 1522
-            trace_parms = " R" + tz390.get_hex(mf1, 1) + "="     // RPI 1522
-                    + get_long_hex(reg.getLong(rf1)) + " I2="    // RPI 1522
-                    + tz390.get_hex(if2, 4);                     // RPI 1522
-            break;  
-        case 732: // MII BPRP m1,i2,i3 with signed immediate halfword operands RPI 2202
-        	trace_parms = " M1=" + tz390.get_hex(mf1, 1)
-                    + "I2=" + tz390.get_hex(if2,4) 
-                    + "I3=" + tz390.get_hex(if3,4);                     // RPI 1522
-            break;   
-        case 733: // SMI BPP m1,i2,d3(b3) RPI 2202
-        	trace_parms = " M1=" + tz390.get_hex(mf1, 1)
-                    + "I2=" + tz390.get_hex(if2,4) 
-                    + " S3(" + tz390.get_hex(bd3_loc, 8)
-                    + ")="   + bytes_to_hex(mem, bd3_loc, 4, 0);
-            break;  
-        case 734: // "E601=VLEBRH,78,734", // E601 VRX VLEBRH V1,D2(X2,B2),M3 RPI 2202
-        	 trace_parms = " V"   + tz390.get_hex(mf1, 1)
-             + "="    + tz390.get_hex(reg.getInt(rf1), 16)
-             + " S2(" + tz390.get_hex(xbd2_loc, 8)
-             + ")="   + bytes_to_hex(mem, xbd2_loc, 8, 0)
-             + " M3=" + tz390.get_hex(mf3, 1);
-            break;  
-        }                                                       
-	} catch (Exception e){ // RPI 1054 
-        if (tz390.opt_trace){
-            if(psw_extended_amode_bit == psw_extended_amode64_on)                // RPI 1506
-              {ins_trace_line = " 00000000" + tz390.get_hex(psw_loc, 8);        // RPI 1506
-               }                                                                 // RPI 1506
-            else                                                                 // RPI 1506
-              {ins_trace_line = " " + tz390.get_hex(psw_loc | psw_amode_bit, 8); // RPI 1506
-               }                                                                 // RPI 1506
-        	tz390.put_trace(ins_trace_line + " "                                 // RPI 1506
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			+ "="  + tz390.get_long_hex(reg.getLong(rf1),16)
+			+ " R" + tz390.get_hex(mf3, 1)
+			+ "="  + tz390.get_long_hex(reg.getLong(rf3),16)
+			+ " I2="  + tz390.get_hex(if2,4);
+		case 560: // "V-S" oooobddd VRCL RPI VF01
+				trace_parms = " R"   + tz390.get_hex(mf1, 1)
+							+ "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8)
+							+ " S2(" + tz390.get_hex(xbd2_loc, 8)
+							+ ")="   + bytes_to_hex(mem, xbd2_loc, 4, 0);
+			break;
+		case 710: // IE NIAI I1,I2 RPI 2202
+			trace_parms = " I1="   + tz390.get_hex(if1,2) + " I2="  + tz390.get_hex(if2, 2);                     // RPI 1522
+			break;
+		case 730: // RI-a with unsigned immediate operand        // RPI 1522
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="     // RPI 1522
+					+ get_long_hex(reg.getLong(rf1)) + " I2="    // RPI 1522
+					+ tz390.get_hex(if2, 4);                     // RPI 1522
+			break;                                               // RPI 1522
+		case 731: // RI-a with signed immediate operand          // RPI 1522
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="     // RPI 1522
+					+ get_long_hex(reg.getLong(rf1)) + " I2="    // RPI 1522
+					+ tz390.get_hex(if2, 4);                     // RPI 1522
+			break;
+		case 732: // MII BPRP m1,i2,i3 with signed immediate halfword operands RPI 2202
+			trace_parms = " M1=" + tz390.get_hex(mf1, 1)
+					+ "I2=" + tz390.get_hex(if2,4)
+					+ "I3=" + tz390.get_hex(if3,4);                     // RPI 1522
+			break;
+		case 733: // SMI BPP m1,i2,d3(b3) RPI 2202
+			trace_parms = " M1=" + tz390.get_hex(mf1, 1)
+					+ "I2=" + tz390.get_hex(if2,4)
+					+ " S3(" + tz390.get_hex(bd3_loc, 8)
+					+ ")="   + bytes_to_hex(mem, bd3_loc, 4, 0);
+			break;
+		case 734: // "E601=VLEBRH,78,734", // E601 VRX VLEBRH V1,D2(X2,B2),M3 RPI 2202
+			 trace_parms = " V"   + tz390.get_hex(mf1, 1)
+			 + "="    + tz390.get_hex(reg.getInt(rf1), 16)
+			 + " S2(" + tz390.get_hex(xbd2_loc, 8)
+			 + ")="   + bytes_to_hex(mem, xbd2_loc, 8, 0)
+			 + " M3=" + tz390.get_hex(mf3, 1);
+			break;
+		}
+	} catch (Exception e){ // RPI 1054
+		if (tz390.opt_trace){
+			if(psw_extended_amode_bit == psw_extended_amode64_on)                // RPI 1506
+			  {ins_trace_line = " 00000000" + tz390.get_hex(psw_loc, 8);        // RPI 1506
+			   }                                                                 // RPI 1506
+			else                                                                 // RPI 1506
+			  {ins_trace_line = " " + tz390.get_hex(psw_loc | psw_amode_bit, 8); // RPI 1506
+			   }                                                                 // RPI 1506
+			tz390.put_trace(ins_trace_line + " "                                 // RPI 1506
 		               + psw_cc_code[psw_cc] + " TRACE EXCEPTION"); // RPI 1054
-        }
-        return;
+		}
+		return;
 	}
-     if(psw_extended_amode_bit == psw_extended_amode64_on)                // RPI 1506
-       {ins_trace_line = " 00000000" + tz390.get_hex(psw_loc, 8);        // RPI 1506
-        }                                                                 // RPI 1506
-     else                                                                 // RPI 1506
-       {ins_trace_line = " " + tz390.get_hex(psw_loc | psw_amode_bit, 8); // RPI 1506
-        }                                                                 // RPI 1506
-     ins_trace_line = ins_trace_line + " "                                // RPI 1506
+	 if(psw_extended_amode_bit == psw_extended_amode64_on)                // RPI 1506
+	   {ins_trace_line = " 00000000" + tz390.get_hex(psw_loc, 8);        // RPI 1506
+		}                                                                 // RPI 1506
+	 else                                                                 // RPI 1506
+	   {ins_trace_line = " " + tz390.get_hex(psw_loc | psw_amode_bit, 8); // RPI 1506
+		}                                                                 // RPI 1506
+	 ins_trace_line = ins_trace_line + " "                                // RPI 1506
 		               + psw_cc_code[psw_cc] + " " + get_ins_hex(psw_loc) + " "
-		               + trace_name 
+		               + trace_name
 		               + trace_parms;
 		tz390.put_trace(ins_trace_line);  // RPI 689
 	}
@@ -20090,22 +20090,22 @@ break;
 			} else {
 				rsbg_mask_ones = -1;
 			}
-		    rsbg_mask_ones = (rsbg_mask_ones >>> (63-if4)) << (63-if4);	    	
+		    rsbg_mask_ones = (rsbg_mask_ones >>> (63-if4)) << (63-if4);
 		    rsbg_mask_zeros = rsbg_mask_ones ^ -1;
 		} else { // selected field wraps 63-0
-			rsbg_mask_zeros = (((long)(-1) >>> (if4+1)) >>> (64-if3)) << (64-if3);	
+			rsbg_mask_zeros = (((long)(-1) >>> (if4+1)) >>> (64-if3)) << (64-if3);
 			rsbg_mask_ones = rsbg_mask_zeros ^ -1;
 		}
 		/*
-		 * rotate rlv1 left or right 
+		 * rotate rlv1 left or right
 		 */
-    	if (if5 != 0){
-    		if (if5 < 32){
-    			rlv2 = long_rotate_left(rlv2,if5);
-    		} else {
-    			rlv2 = long_rotate_right(rlv2,64 - if5);
-    		}
-    	}
+		if (if5 != 0){
+			if (if5 < 32){
+				rlv2 = long_rotate_left(rlv2,if5);
+			} else {
+				rlv2 = long_rotate_right(rlv2,64 - if5);
+			}
+		}
 	}
 	private void risb_rotate_insert_high(boolean high){
 		/*
@@ -20113,25 +20113,25 @@ break;
 		 * with optional zeros for non select bits
 		 */
 		/*
-		 * rotate rlv1 left or right 
+		 * rotate rlv1 left or right
 		 */
-    	if (if5 != 0){
-    		if (if5 < 32){
-    			rlv2 = long_rotate_left(rlv2,if5);
-    		} else {
-    			rlv2 = long_rotate_right(rlv2,64 - if5);
-    		}
-    	}
-    	/*
-    	 * set rv1 and rv2 to high or low 
-    	 */
-    	if (high){
-    		rv1 = (int)(rlv1 >>> 32);
-    		rv2 = (int)(rlv2 >>> 32);
-    	} else {
-    		rv1 = (int) rlv1;
-    		rv2 = (int) rlv2;
-    	}
+		if (if5 != 0){
+			if (if5 < 32){
+				rlv2 = long_rotate_left(rlv2,if5);
+			} else {
+				rlv2 = long_rotate_right(rlv2,64 - if5);
+			}
+		}
+		/*
+		 * set rv1 and rv2 to high or low
+		 */
+		if (high){
+			rv1 = (int)(rlv1 >>> 32);
+			rv2 = (int)(rlv2 >>> 32);
+		} else {
+			rv1 = (int) rlv1;
+			rv2 = (int) rlv2;
+		}
 		if4 = if4 & 0x3f;
 		/*
 		 * 1.  Set rsbg_mask_ones to all 0's
@@ -20145,10 +20145,10 @@ break;
 			} else {
 				risb_mask_ones = -1;
 			}
-		    risb_mask_ones = (risb_mask_ones >>> (31-if4)) << (31-if4);	    	
+		    risb_mask_ones = (risb_mask_ones >>> (31-if4)) << (31-if4);
 		    risb_mask_zeros = risb_mask_ones ^ -1;
 		} else { // selected field wraps 63-0
-			risb_mask_zeros = (((int)(-1) >>> (if4+1)) >>> (32-if3)) << (32-if3);	
+			risb_mask_zeros = (((int)(-1) >>> (if4+1)) >>> (32-if3)) << (32-if3);
 			risb_mask_ones = risb_mask_zeros ^ -1;
 		}
 		if (risb_zero){
@@ -20183,10 +20183,10 @@ break;
 	private void exec_pfpo(){
 		/*
 		 * perform floating point operation
-		 *  1.  If r0 bit 32 is on, 
+		 *  1.  If r0 bit 32 is on,
 		 *      check if function supported
 		 *      and set r1 rc = 0 else r1 = 3.
-		 *  2.  if r0 bit 32 zero, perform 
+		 *  2.  if r0 bit 32 zero, perform
 		 *      floating point function:
 		 *      a. bits 33-39 = operation
 		 *         x'01' = convert radix (FP0+2 = FP4+6)
@@ -20195,9 +20195,9 @@ break;
 		 *      d. bit  56    = inexact suppression control
 		 *      e. bit  57    = alternate exception action control
 		 *      f. bits 58-59 = target radix dependent controls
-		 *      g. bits 60-63 = rounding method  
-		 *      
-		 *        
+		 *      g. bits 60-63 = rounding method
+		 *
+		 *
 		 */
 		int pfpo_op    = (int)reg.get(r0);
 		int pfpo_type1 = (int)reg.get(r0+1);
@@ -20525,7 +20525,7 @@ break;
 	        return;
 		}
 	}
-	private void set_risb_zero(){ // RPI 1164 
+	private void set_risb_zero(){ // RPI 1164
 		/*
 		 * set risb_zero true if r4 high bit on (bit 24)
 		 */
@@ -20541,7 +20541,7 @@ break;
 		// issue S0c4 if alt_fpe_mode for now
 		int ins_loc = psw_loc & psw_amode;
 		alt_rnd_mode = mem_byte[ins_loc+2] >>> 4;
-		alt_fpe_mode = mem_byte[ins_loc+2] & 0xf;		
+		alt_fpe_mode = mem_byte[ins_loc+2] & 0xf;
 		if (alt_rnd_mode != 0){ // RPI 1125
 		   fp_bfp_rnd = alt_rnd_mode;
 		}
@@ -20559,7 +20559,7 @@ break;
 		// issue S0c4 if alt_fpe_mode for now
 		int ins_loc = psw_loc & psw_amode;
 		alt_rnd_mode = mem_byte[ins_loc+2] >>> 4;
-		alt_fpe_mode = mem_byte[ins_loc+2] & 0xf;		
+		alt_fpe_mode = mem_byte[ins_loc+2] & 0xf;
 		if (alt_rnd_mode != 0){ // RPI 1125
 		   fp_dfp_rnd = alt_rnd_mode;
 		}
@@ -20577,7 +20577,7 @@ break;
 		if (alt_rnd_mode != 0){ // RPI 1125
 		   fp_dfp_rnd = alt_rnd_mode;
 		}
-	}	
+	}
 	private void reset_dfp_alt_mode(){
 		// rpi 1125 rtn for rrr op type A instr.
 		fp_dfp_rnd = fp_dfp_rnd_default; // RPI 1125

@@ -18,12 +18,12 @@ with this program; if not, see <https://www.gnu.org/licenses/>.
 */
 public class zACB
 {/***************************************************************************
-  * 
+  *
   * The zACB object is the Java-level representation of an ACB
   * The zACB class handles all ACB-based requests: Openn and Close
-  * 
+  *
   * *************************************************** Maintenance
-  * 2016-12-24 initial coding 
+  * 2016-12-24 initial coding
   *****************************************************/
   private int acb_pointer;
   private String ddname;
@@ -41,31 +41,31 @@ public class zACB
   /* Constructor for new ACB */
   public zACB(int acb_addr)
    {acb_pointer = acb_addr;
-    ddname = "";
-    create_count = 0;
-    open_count = 0;
-    point_count = 0;
-    get_count = 0;
-    insert_count = 0;
-    update_count = 0;
-    erase_count = 0;
-    close_count = 0;
-    eof_count = 0;
-    error_count = 0;
-    System.out.println("zACB constructed");
-    }
+	ddname = "";
+	create_count = 0;
+	open_count = 0;
+	point_count = 0;
+	get_count = 0;
+	insert_count = 0;
+	update_count = 0;
+	erase_count = 0;
+	close_count = 0;
+	eof_count = 0;
+	error_count = 0;
+	System.out.println("zACB constructed");
+	}
 
   /* Open new ACB */
   public int Open()
    {System.out.println("Open invoked");
-    return 0;
-    }
+	return 0;
+	}
 
   /* Close ACB */
   public int Close()
    {System.out.println("Close invoked");
-    return 0;
-    }
+	return 0;
+	}
 
  /* end of module zACB */
  }

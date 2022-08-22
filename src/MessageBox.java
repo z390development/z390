@@ -30,7 +30,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
-public class MessageBox implements 
+public class MessageBox implements
   ActionListener, WindowListener, KeyListener {
 	Frame frame = null;
 	public void messageBox(String title,String message) {
@@ -39,37 +39,37 @@ public class MessageBox implements
    * and exit when ok button clicked
    */
 		frame  = new Frame();
-        Dialog dialog = new Dialog(frame, true); // Modal
-        dialog.addWindowListener(this);
-        dialog.addKeyListener(this);
-        frame.setTitle(title);
-        Panel messagePanel = new Panel();
-        Label messageLabel = new Label(message);
-        messagePanel.add(messageLabel);
-        dialog.add("Center", messagePanel);
-        Button button = new Button("OK");
-        button.addKeyListener(this);
-        button.addActionListener(this);
-        dialog.add("South", button);
-        dialog.pack();
-        Toolkit.getDefaultToolkit().beep();
-        dialog.setLocation(100,100);
-        dialog.toFront();
-        dialog.setVisible(true);
+		Dialog dialog = new Dialog(frame, true); // Modal
+		dialog.addWindowListener(this);
+		dialog.addKeyListener(this);
+		frame.setTitle(title);
+		Panel messagePanel = new Panel();
+		Label messageLabel = new Label(message);
+		messagePanel.add(messageLabel);
+		dialog.add("Center", messagePanel);
+		Button button = new Button("OK");
+		button.addKeyListener(this);
+		button.addActionListener(this);
+		dialog.add("South", button);
+		dialog.pack();
+		Toolkit.getDefaultToolkit().beep();
+		dialog.setLocation(100,100);
+		dialog.toFront();
+		dialog.setVisible(true);
   }
   private void cancel_message(){
-  	  frame.dispose();
+	  frame.dispose();
   }
   public void windowActivated(WindowEvent e) {
   }
   public void windowDeactivated(WindowEvent e) {
-  	cancel_message();
+	cancel_message();
   }
   public void windowClosed(WindowEvent e) {
-  	cancel_message();
+	cancel_message();
   }
   public void windowClosing(WindowEvent e) {
-  	cancel_message();
+	cancel_message();
   }
   public void windowIconified(WindowEvent e) {
   }
@@ -78,13 +78,13 @@ public class MessageBox implements
   public void windowOpened(WindowEvent e) {
   }
   public void actionPerformed(ActionEvent event){
-  	cancel_message();
+	cancel_message();
   }
   public void keyPressed(KeyEvent event){
-  	cancel_message();
+	cancel_message();
   }
   public void keyTyped(KeyEvent event){
-  	cancel_message();
+	cancel_message();
   }
   public void keyReleased(KeyEvent event){
   }

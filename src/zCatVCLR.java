@@ -20,12 +20,12 @@ import java.util.LinkedList;
 
 public class zCatVCLR
 {/***************************************************************************
-  * 
+  *
   * The zCatVCLR object is the Java-level representation of a Catalog definition
   *              for a zVSAM base cluster
-  * 
+  *
   * *************************************************** Maintenance
-  * 2016-12-28 initial coding 
+  * 2016-12-28 initial coding
   *****************************************************/
   private String   VCLRID;   // DS    CL4   ID C'VCLR'
   private String   VCLRNAME; // DS    CL8   NAME OF BASE CLUSTER
@@ -58,53 +58,53 @@ public class zCatVCLR
   private int      VCLRICI;  // DS    X     INDEX CI PERCENT
   private int      VCLRAIXN; // DS    F     NUMBER OF AIX'S WITH UPGRADE FOR THIS CLUSTER
   private LinkedList<zCatVAIX> VCLRAIX_list;
-                             // DS    A     ADDR AIX UPGRADE TABLE OF VAIX ADDRESSES
+							 // DS    A     ADDR AIX UPGRADE TABLE OF VAIX ADDRESSES
 
   /* Constructor for new Base Cluster definition */
   public zCatVCLR(sz390 sz390
-                , tz390 tz390
-                , int VCLR_ptr
-                  )
+				, tz390 tz390
+				, int VCLR_ptr
+				  )
    {VCLRID   = sz390.get_ascii_string(VCLR_ptr +  0, 4, true);
-               if (tz390.opt_tracev)
-                  {//tz390.put_trace("VCLRID  =" + VCLRID);
-                   System.out.println("VCLRID  =" + VCLRID);
-                   }
-    VCLRNAME = sz390.get_ascii_string(VCLR_ptr +  4, 8, true);
-               if (tz390.opt_tracev)
-                  {//tz390.put_trace("VCLRNAME=" + VCLRNAME);
-                   System.out.println("VCLRNAME=" + VCLRNAME);
-                   }
-    VCLRTYPE = sz390.get_ascii_string(VCLR_ptr + 12, 4, true);
-               if (tz390.opt_tracev)
-                  {//tz390.put_trace("VCLRTYPE=" + VCLRTYPE);
-                   System.out.println("VCLRTYPE=" + VCLRTYPE);
-                   }
-    VCLRVREC = false;
-    VCLRRUSE = false;
-    VCLRSPAN = false;
-    VCLRKSDS = false;
-    VCLRRRDS = false;
-    VCLRESDS = false;
-    VCLRLDS  = false;
-    VCLRDADJ = false;
-    VCLRIADJ = false;
-    VCLRLAVG = 0;
-    VCLRLMAX = 0;
-    VCLRKLEN = 0;
-    VCLRKOFF = 0;
-    VCLRDTA  = null;
-    VCLRIDX  = null;
-    VCLRDBS  = 0;
-    VCLRIBS  = 0;
-    VCLRDCA  = 0;
-    VCLRDCI  = 0;
-    VCLRICA  = 0;
-    VCLRICI  = 0;
-    VCLRAIXN = 0;
-    VCLRAIX_list = null;
-    System.out.println("zCatVCLR constructed");
-    }
+			   if (tz390.opt_tracev)
+				  {//tz390.put_trace("VCLRID  =" + VCLRID);
+				   System.out.println("VCLRID  =" + VCLRID);
+				   }
+	VCLRNAME = sz390.get_ascii_string(VCLR_ptr +  4, 8, true);
+			   if (tz390.opt_tracev)
+				  {//tz390.put_trace("VCLRNAME=" + VCLRNAME);
+				   System.out.println("VCLRNAME=" + VCLRNAME);
+				   }
+	VCLRTYPE = sz390.get_ascii_string(VCLR_ptr + 12, 4, true);
+			   if (tz390.opt_tracev)
+				  {//tz390.put_trace("VCLRTYPE=" + VCLRTYPE);
+				   System.out.println("VCLRTYPE=" + VCLRTYPE);
+				   }
+	VCLRVREC = false;
+	VCLRRUSE = false;
+	VCLRSPAN = false;
+	VCLRKSDS = false;
+	VCLRRRDS = false;
+	VCLRESDS = false;
+	VCLRLDS  = false;
+	VCLRDADJ = false;
+	VCLRIADJ = false;
+	VCLRLAVG = 0;
+	VCLRLMAX = 0;
+	VCLRKLEN = 0;
+	VCLRKOFF = 0;
+	VCLRDTA  = null;
+	VCLRIDX  = null;
+	VCLRDBS  = 0;
+	VCLRIBS  = 0;
+	VCLRDCA  = 0;
+	VCLRDCI  = 0;
+	VCLRICA  = 0;
+	VCLRICI  = 0;
+	VCLRAIXN = 0;
+	VCLRAIX_list = null;
+	System.out.println("zCatVCLR constructed");
+	}
 
  /* end of module zCatVCLR */
  }

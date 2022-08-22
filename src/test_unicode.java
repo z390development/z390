@@ -23,7 +23,7 @@ import java.util.Map;
 
 
 public class  test_unicode{
-	public static void main(String argv[]) {		
+	public static void main(String argv[]) {
 	      /*
 	       * start instance of zcobol class
 	       */
@@ -60,10 +60,10 @@ private void list_available_charsets(){
 	Map<?, ?> map = Charset.availableCharsets();
 	Iterator<?> it = map.keySet().iterator();
 	while (it.hasNext()) {
-    // Get charset name
+	// Get charset name
 		String charsetName = (String)it.next();
 
-    // Get charset
+	// Get charset
 		Charset charset = Charset.forName(charsetName);
 		System.out.println(charset);
 	}

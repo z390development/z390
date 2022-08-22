@@ -21,47 +21,47 @@ import java.io.File;
 import java.nio.ByteBuffer;
 
 public class vz390 {
-	/* 
+	/*
 	vz390 is the emulator component of z390 called from sz390 to perform which
 	VSAM access method services.
-	 * 
-	 **************************************************** 
+	 *
+	 ****************************************************
 	 * Maintenance
-	 **************************************************** 
-	 * 06/22/07 initial coding 
-	 * 08/27/07 RPI 688 misc. fixes: 
+	 ****************************************************
+	 * 06/22/07 initial coding
+	 * 08/27/07 RPI 688 misc. fixes:
 	 *          1) return code 8 if open ACB fails
-	 *          2) return code 4 if close fails 
-	 *          3) set RPLXRBA field to last VX0 read offset 
-	 * 09/07/07 RPI 681 support new VCDT catalog with entries: 
-	 *          1) VCLR - base clusters 
-	 *          2) VAIX - alternate indexes 
-	 *          3) VPTH - path to vaix or alias 
+	 *          2) return code 4 if close fails
+	 *          3) set RPLXRBA field to last VX0 read offset
+	 * 09/07/07 RPI 681 support new VCDT catalog with entries:
+	 *          1) VCLR - base clusters
+	 *          2) VAIX - alternate indexes
+	 *          3) VPTH - path to vaix or alias
 	 *             vclr Dynamically allocate DCB's for
 	 *             ACB Use ACB DDNAME file spec to load
 	 *             catalog and use option .name suffix to specify entry name else use ACB
-	 *             name to find entry in catalog. 
-	 * 09/10/07 RPI 672 changes to ESDS/RRDS support 
+	 *             name to find entry in catalog.
+	 * 09/10/07 RPI 672 changes to ESDS/RRDS support
 	 *          1) remove use of VX0 for ESDS and fixed RRDS and return VES
-	 *             RBA/XRBA for ESDS. 
+	 *             RBA/XRBA for ESDS.
 	 * 09/17/07 RPI 697 correct FDBK for rba error (x'32'
-	 *          ESDS, x'c3' RRDS) add set position for ESDS ADR with SKP. 
+	 *          ESDS, x'c3' RRDS) add set position for ESDS ADR with SKP.
 	 * 09/21/07 RPI 702 support POINT for ESDS and RRDS/VRRDS seq access set RPLXRBA to
-	 *          current VES or VX0 position and return KEY, RBA/XRBA, or REC# in ARG field. * 
+	 *          current VES or VX0 position and return KEY, RBA/XRBA, or REC# in ARG field. *
 	 * 09/22/07 RPI 701 reset VSAM ves, vx0 files if opened for output
-	 *          by REPRO (VSAM OUTPUT treated like UPDATE for other programs) 
-	 * 09/28/07 RPI 706 set FDBK and RC for POINT. 
-	 * 10/22/07 RPI 723 add KSDS insert support using ZKSITD and ZKSIRD DSECT blocks 
-	 * 10/25/07 RPI 724 start RRDS/VRRDS rel rcd at 1 
+	 *          by REPRO (VSAM OUTPUT treated like UPDATE for other programs)
+	 * 09/28/07 RPI 706 set FDBK and RC for POINT.
+	 * 10/22/07 RPI 723 add KSDS insert support using ZKSITD and ZKSIRD DSECT blocks
+	 * 10/25/07 RPI 724 start RRDS/VRRDS rel rcd at 1
 	 * 11/13/07 RPI 739 change RRDS and KSDS seq/key to
-	 *          test opt_seq 
+	 *          test opt_seq
 	 * 12/05/07 RPI 750 add RPL, RPLARG, and RPLAREA tracev at
-	 *          feedback add support for KSDS KGE search 
+	 *          feedback add support for KSDS KGE search
 	 * 12/19/07 RPI 757 support POINT
-	 *          and GET with GEN, KGE generic key 
+	 *          and GET with GEN, KGE generic key
 	 * 01/08/08 RPI 779 1) return key in RPLARG for gen key access 2)correct TRACEV to show RPL KLEN and VCLR KLEN
 	 *          and full key 3)show 4 or 8 byte RPLARG RBA for ESDS/RRDS 4)set POINT with
-	 *          KSDS high value key to EOF 
+	 *          KSDS high value key to EOF
 	 * 02/08/08 RPI 723 add insert and key/seq access
 	 * 02/10/08 RPI 806 add balance KSIT using AVT method and add statistics/tracev
 	 * 09/12/08 RPI 764 change oflgs_pm to oflgs_w
@@ -667,7 +667,7 @@ public class vz390 {
 	int tot_avl_find   = 0; // RPI 806 KSIR finds in AVL tree
 	int max_avl_height = 0; // RPI 806 max height of AVL tree
 	int tot_avl_insert_ksit = 0; // RPI 806 KSIT inserts trees
-	int tot_avl_insert_ksir = 0; // RPI 806 KSIR insert record in tree 
+	int tot_avl_insert_ksir = 0; // RPI 806 KSIR insert record in tree
 	int tot_avl_rotate    = 0; // RPI 806 KSIR rotates to bal AVL tree
 	int tot_avl_rotate_ll = 0; // RPI 806 KSIR rotates to bal AVL tree
 	int tot_avl_rotate_lr = 0; // RPI 806 KSIR rotates to bal AVL tree
@@ -757,7 +757,7 @@ public class vz390 {
 	long cur_ksir_rec = 0; // xrba of cur record (may change for var update)
 	byte cur_ksir_low_height  = 0; // max height of low  node
 	byte cur_ksir_high_height = 0; // max height of high node
-    int ksir_id = 0; // id C'KSIR'
+	int ksir_id = 0; // id C'KSIR'
 
 	int ksir_par = 4; // parent KSIR or KSIT
 
@@ -770,12 +770,12 @@ public class vz390 {
 	int ksir_fwd = 36; // next foward KSIR or -1
 
 	int ksir_rec = 44; // xrba of cur record (may change for var update)
-    int ksir_low_height  = 52; // max height of low node
+	int ksir_low_height  = 52; // max height of low node
 	int ksir_high_height = 53; // max height of high node
-    int ksir_len = 54; // KSIR length
-    /*
-     * AVT Balance KSIT variables - RPI 806
-     */
+	int ksir_len = 54; // KSIR length
+	/*
+	 * AVT Balance KSIT variables - RPI 806
+	 */
 	long cur_node_xrba  = 0; // current node on path to insert
 	long prev_node_xrba = 0; // prev ksir on path
 	boolean avl_left       = false;    // rotate left or right side
@@ -783,12 +783,12 @@ public class vz390 {
 	long avl_r_xrba; // AVL rotation ksir
 	long avl_r_par;  // r parent
 	long avl_r_low;  // r lower left
-	long avl_r_high; // r higher right 
+	long avl_r_high; // r higher right
 	byte avl_r_low_height; // r low branch height
 	byte avl_r_high_height; // r high branch height
 	long avl_x_xrba; // AVL next lower/higher ksir to move up
 	long avl_x_low;  // x lower left
-	long avl_x_high; // x higher right	
+	long avl_x_high; // x higher right
 	byte avl_x_low_height; // r low branch height
 	byte avl_x_high_height; // r high branch height
 	long avl_w_xrba; // AVL next lower/higher ksir from x for LR/RL rotate
@@ -802,7 +802,7 @@ public class vz390 {
 	boolean vcb_alloc = false;
 
 	int max_vcb = 10000; // max vcb alloc allowed
-    int max_vcb_hash = 40003; // hash index with no dup allowed 
+	int max_vcb_hash = 40003; // hash index with no dup allowed
 	int max_vcb_lrec = 64; // max vcb record size allowed
 
 	int tot_vcb = 1; // total vcb allocated + 1 to skip 0 index
@@ -872,7 +872,7 @@ public class vz390 {
 		/*
 		 * init logical and physical reason codes for use in set_feedback
 		 * tracing
-		 * 
+		 *
 		 */
 		rn_log_reason[4] = "end of data";
 		rn_log_reason[8] = "duplicate key";
@@ -898,7 +898,7 @@ public class vz390 {
 	public void svc_vsam() {
 		/*
 		 * execute VSAM access method service requested
-		 * 
+		 *
 		 */
 		switch (cur_vsam_op) {
 		case 1: // GET R1=A(RPL)
@@ -1029,24 +1029,24 @@ public class vz390 {
 					8, false);
 			if (tz390.opt_traceall) { // DSH #245 to help debug cics startup
 			   tz390.put_trace("FIND VCLR = +VCB INDEX=" + cur_vclr_name
-                            + "MATCHING VCDT ENTRY =" + sz390.load_vcdt_entry); 
-			}			   
+							+ "MATCHING VCDT ENTRY =" + sz390.load_vcdt_entry);
+			}
 			if (sz390.load_vcdt_entry.equals(cur_vclr_name)) {
 				pz390.mem.putInt(cur_acb_addr + acb_vclra, cur_acb_vclra);
 				fetch_vclr_fields();
-				cur_vcdt_ptha = 0; // no path RPI 865 
+				cur_vcdt_ptha = 0; // no path RPI 865
 				return true;
 			}
 			cur_acb_vclra = cur_acb_vclra + vclr_len;
 			cur_vcdt_clrt--;
 		}
-		cur_vcdt_ptht = pz390.mem.getInt(cur_vcdt_addr + vcdt_ptht);  // RPI 965 
-		cur_vcdt_ptha = pz390.mem.getInt(cur_vcdt_addr + vcdt_ptha);  // RPI 865 
+		cur_vcdt_ptht = pz390.mem.getInt(cur_vcdt_addr + vcdt_ptht);  // RPI 965
+		cur_vcdt_ptha = pz390.mem.getInt(cur_vcdt_addr + vcdt_ptha);  // RPI 865
 		while (cur_vcdt_ptht > 0) {
 			if (sz390.load_vcdt_entry.equals(sz390.get_ascii_string(
 					cur_vcdt_ptha + vpth_name, 8, false))) {
-				cur_vpth_flag = pz390.mem.getInt(cur_vcdt_ptha + vpth_flag); // RPI 865 
-				cur_vaix_addr = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta); // RPI 865 
+				cur_vpth_flag = pz390.mem.getInt(cur_vcdt_ptha + vpth_flag); // RPI 865
+				cur_vaix_addr = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta); // RPI 865
 				if ((cur_vpth_flag & vpth_flag_aixp) != 0) {
 					cur_acb_vaixa = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta);
 					cur_acb_oflgs = (byte) (cur_acb_oflgs | acb_oflgs_aixp); // use
@@ -1057,7 +1057,7 @@ public class vz390 {
 																				// primary
 					cur_acb_vclra = pz390.mem.getInt(cur_acb_vaixa + vaix_rela);
 				} else {
-					cur_acb_vclra = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta); // RPI 865 
+					cur_acb_vclra = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta); // RPI 865
 					cur_acb_vaixa = 0;
 				}
 				pz390.mem.putInt(cur_acb_addr + acb_vclra, cur_acb_vclra);
@@ -1115,7 +1115,7 @@ public class vz390 {
 		 */
 		cur_vclr_flag = pz390.mem.getInt(cur_acb_vclra + vclr_flag);
 		cur_vclr_lrec = pz390.mem.getInt(cur_acb_vclra + vclr_lrec);
-		if (cur_vcdt_ptha != 0){  // RPI 865 
+		if (cur_vcdt_ptha != 0){  // RPI 865
 			cur_vclr_klen = pz390.mem.getInt(cur_vaix_addr + vaix_klen);
 		} else {
 			cur_vclr_klen = pz390.mem.getInt(cur_acb_vclra + vclr_klen);
@@ -1218,12 +1218,12 @@ public class vz390 {
 			return false;
 		}
 		if (cur_acb_dcbt > 1) {
-			if (cur_vcdt_ptha != 0 && cur_vaix_addr != 0){  // RPI 865  
+			if (cur_vcdt_ptha != 0 && cur_vaix_addr != 0){  // RPI 865
 				// open aix if pat
 				init_acb_dcb(cur_acb_dcba + sz390.dcb_len, 8 + pz390.mem.getInt(cur_vaix_addr + vaix_klen),
 					pz390.mem.getInt(cur_vaix_addr + vaix_vxna), "VXN#");
-				
-			
+
+
 			} else {
 				cur_vclr_vx0a = pz390.mem.getInt(cur_acb_vclra + vclr_vx0a);
 				init_acb_dcb(cur_acb_dcba + sz390.dcb_len, 8 + cur_vclr_klen,
@@ -1600,10 +1600,10 @@ public class vz390 {
 	}
 	private void broken_ksir_link(String type, long xrba1, long xrba2){
 		/*
-		 * display error message for KSIR 
+		 * display error message for KSIR
 		 * broken links and set feedback ves data error
 		 */
-		sz390.put_log("VSAM KSIR BROKEN LINK " + type 
+		sz390.put_log("VSAM KSIR BROKEN LINK " + type
 				+ " XRBA1=" + tz390.get_long_hex(xrba1,16)
 				+ " XRBA1=" + tz390.get_long_hex(xrba2,16));
 		set_feedback(pdf_def, rc_phy, cmp_ves, rn_read_data_err);
@@ -1925,8 +1925,8 @@ public class vz390 {
 
 	private boolean find_ksir() {
 		/*
-		 * search ksit binary tree at cur_vx0_xrba (negative) 
-		 * 1. Set cur_ves_xrba to record if found 
+		 * search ksit binary tree at cur_vx0_xrba (negative)
+		 * 1. Set cur_ves_xrba to record if found
 		 * 2. Set cur_rpl_ksir to last ksir for
 		 *    use by insert_ksir
 		 * 3. Set avl_r_xrba/par/low/high
@@ -2242,7 +2242,7 @@ public class vz390 {
 		/*
 		 * rewrite RRDS or KSDS record at cur_ves_xrba and update index xrba if
 		 * it changed due to variable length change.
-		 * 
+		 *
 		 */
 		try {
 			if ((cur_vclr_flag & vclr_flag_vrec) == 0) {
@@ -2459,7 +2459,7 @@ public class vz390 {
 		 * store RPLFEEDB 4 byte field with: 0 - pdf_ Problem Determination
 		 * Field 1 - rc_ return code (also stored in R15) 2 - cmp_ component
 		 * code 3 - rn_ reason code for corresponding rc_
-		 * 
+		 *
 		 */
 		int feedback = ((pdf << 8 | rc) << 8 | cmp) << 8 | (rn & 0xff);
 		pz390.mem.putInt(cur_rpl_addr + rpl_feedb, feedback);
@@ -2528,7 +2528,7 @@ public class vz390 {
 			}
 			return false;
 		}
-		set_rpl_lxrba(cur_ves_xrba); // RPI 865 
+		set_rpl_lxrba(cur_ves_xrba); // RPI 865
 		if ((cur_vclr_flag & vclr_flag_vrec) != 0) {
 			// read variable length record putting
 			// 4 length prefix into RPLLREC and the remainer in RPLAREA
@@ -2824,7 +2824,7 @@ public class vz390 {
 		/*
 		 * read ksds index entry with key at cur_vx0_xrba and set cur_ves_xrba
 		 * and cur_key
-		 * 
+		 *
 		 */
 		if (!read_xrba_ptr()) {
 			return false;
@@ -2872,7 +2872,7 @@ public class vz390 {
 	private boolean read_ksir_key() {
 		/*
 		 * read ksir key at cur_ksir_rec + cur_vclr_koff into cur_key
-		 * 
+		 *
 		 */
 		cur_ves_xrba = cur_ksir_rec;
 		if (cur_ves_xrba < 0) {
@@ -2921,7 +2921,7 @@ public class vz390 {
 	private boolean read_xrba_ptr() {
 		/*
 		 * read ves xrba prt in vx0 at cur_vx0_xrba and set cur_ves_xrba
-		 * 
+		 *
 		 */
 		if (cur_vx0_xrba > tz390.max_file_size) {
 			set_feedback(pdf_def, rc_log, cmp_ves, rn_inv_rba_req);
@@ -3166,11 +3166,11 @@ public class vz390 {
 
 	private boolean get_vcb_buff(int tiot_index, long xrba, int rec_len) {
 		/*
-		 * get VSAM Cache Buffer (VCB) for file tiot_index, xrba, rec_len 
+		 * get VSAM Cache Buffer (VCB) for file tiot_index, xrba, rec_len
 		 * 1. If rec_len > max_vcb_lrec return false.
-		 * 2. search for allocated vcb If not found add new vcb up to 
+		 * 2. search for allocated vcb If not found add new vcb up to
 		 *    max_vcb else replace least recently used
-		 *    allocated vcb. 
+		 *    allocated vcb.
 		 * 3. Set vcb_index and return true.
 		 */
 		vcb_alloc = false;
@@ -3242,7 +3242,7 @@ public class vz390 {
 	private boolean find_vcb() {
 		/*
 		 * find matching vcb with same tiot, xrba, and record length
-		 * 
+		 *
 		 * if found set vcb_index and return true else false
 		 */
 		vcb_index = -1;
@@ -3413,7 +3413,7 @@ public class vz390 {
 		if (comp_key(cur_rpl_arg, cur_key) > 0) {
 			// write low ksir with existing index rec
 			cur_ksir_xrba = cur_ksit_fst;
-			cur_ksir_par = cur_ksit_lst; 
+			cur_ksir_par = cur_ksit_lst;
 			cur_ksir_low = -1;
 			cur_ksir_high = -1;
 			cur_ksir_bwd = -1;
@@ -3426,7 +3426,7 @@ public class vz390 {
 			}
 			// write new high ksir with existing index rec
 			cur_ksir_xrba = cur_ksit_lst;
-			cur_ksir_par = cur_ksit_xrba; 
+			cur_ksir_par = cur_ksit_xrba;
 			cur_ksir_low = cur_ksit_fst;
 			cur_ksir_high = -1;
 			cur_ksir_bwd = cur_ksit_fst;
@@ -3444,7 +3444,7 @@ public class vz390 {
 				return false;
 			}
 			// rewrite the new vx0 neg ksit pointer
-			if (!write_xrba_ptr(cur_vx0_tiot_index, cur_vx0_xrba, 
+			if (!write_xrba_ptr(cur_vx0_tiot_index, cur_vx0_xrba,
 					xrba_high_bit | cur_ksit_xrba)) {
 				return false;
 			}
@@ -3501,7 +3501,7 @@ public class vz390 {
 
 	private boolean insert_ksir() {
 		/*
-		 * insert new KSIR to existing KSIT 
+		 * insert new KSIR to existing KSIT
 		 * at current KSIR and balance AVT
 		 * tree by rotating KSIR's if needed.
 		 */
@@ -3510,9 +3510,9 @@ public class vz390 {
 		long prev_ksir_bwd = 0;
 		long prev_ksir_fwd = 0;
 		tot_avl_insert_ksir++;
-    	if (tz390.opt_tracev){
-    		tz390.put_trace("VSAM AVL INSERT KSIR");
-    	}
+		if (tz390.opt_tracev){
+			tz390.put_trace("VSAM AVL INSERT KSIR");
+		}
 		if (!read_ksir(cur_rpl_ksir)) {
 			return false;
 		}
@@ -3525,7 +3525,7 @@ public class vz390 {
 			prev_ksir_bwd = cur_ksir_bwd;
 			// rewrite cur ksir with ptrs to
 			// new lower ksir
-			cur_ksir_low = alloc_ves(ksir_len);			
+			cur_ksir_low = alloc_ves(ksir_len);
 			cur_ksir_bwd = cur_ksir_low;
 			if (!write_ksir()) {
 				return false;
@@ -3534,7 +3534,7 @@ public class vz390 {
 			if (!add_ves_rec(-1, -1)) { // RPI 723
 				return false;
 			}
-			cur_ksir_rec = last_ves_xrba; // RPI 723			
+			cur_ksir_rec = last_ves_xrba; // RPI 723
 			// write new inserted ksir
 			cur_ksir_xrba = cur_ksir_low;
 			cur_ksir_par = prev_ksir_xrba;
@@ -3574,7 +3574,7 @@ public class vz390 {
 			// insert on high side
 			prev_ksir_xrba = cur_ksir_xrba;
 			prev_ksir_fwd = cur_ksir_fwd;
-			cur_ksir_high = alloc_ves(ksir_len);		
+			cur_ksir_high = alloc_ves(ksir_len);
 			cur_ksir_fwd = cur_ksir_high;
 			// rewrite cur with new KSIR on high side
 			if (!write_ksir()) {
@@ -3634,127 +3634,127 @@ public class vz390 {
 		}
 		return true;
 	}
-    private boolean avl_update_height(){
-    	/*
-    	 * search up KSIR nodes from insertion
-    	 * and perform the following steps:
-    	 *   1.  Increment height of all nodes
-    	 *       on path prior to unbalanced node.
-    	 *   2.  Find first (and only) node which may 
-    	 *       be unbalanced (left vs right height
-    	 *       differs by 2).
-    	 *   3.  If unbalanced node found, 
-    	 *       set avl_unbalanced and avl_r_xrba 
-    	 * Notes:
-    	 *   1.  Only returns false if I/O error
-    	 */
-    	avl_unbalanced = false;
-    	long save_ksir_xrba = cur_ksir_xrba; // save insert
+	private boolean avl_update_height(){
+		/*
+		 * search up KSIR nodes from insertion
+		 * and perform the following steps:
+		 *   1.  Increment height of all nodes
+		 *       on path prior to unbalanced node.
+		 *   2.  Find first (and only) node which may
+		 *       be unbalanced (left vs right height
+		 *       differs by 2).
+		 *   3.  If unbalanced node found,
+		 *       set avl_unbalanced and avl_r_xrba
+		 * Notes:
+		 *   1.  Only returns false if I/O error
+		 */
+		avl_unbalanced = false;
+		long save_ksir_xrba = cur_ksir_xrba; // save insert
 		// start with node above inserted record
-    	prev_node_xrba = cur_ksir_xrba;
-    	byte cur_node_height = 0;
-    	cur_node_xrba  = cur_ksir_par;
-    	if (tz390.opt_tracev){
-    		tz390.put_trace("VSAM AVL UPDATE HEIGHT");
-    	}
-    	while (cur_node_xrba != cur_ksit_xrba){
-    		// read next node to update height
-    		if (!read_ksir(cur_node_xrba)){
-    			return false;
-    		}
+		prev_node_xrba = cur_ksir_xrba;
+		byte cur_node_height = 0;
+		cur_node_xrba  = cur_ksir_par;
+		if (tz390.opt_tracev){
+			tz390.put_trace("VSAM AVL UPDATE HEIGHT");
+		}
+		while (cur_node_xrba != cur_ksit_xrba){
+			// read next node to update height
+			if (!read_ksir(cur_node_xrba)){
+				return false;
+			}
 			if (cur_ksir_low != prev_node_xrba
 				&& cur_ksir_high != prev_node_xrba){
 				broken_ksir_link("PAR",cur_ksir_xrba,prev_node_xrba);
 				return false;
 			}
-    		if (cur_ksir_low == prev_node_xrba){
-    			// update height on low side if cur node
-    			if (cur_ksir_low_height - cur_ksir_high_height >= 1){
-    				// node unbalanced - rotate left
-    				avl_unbalanced = true;
-    				avl_left = true;
-    				avl_r_xrba = cur_node_xrba;
-    				cur_ksir_xrba = save_ksir_xrba;
-    				// exit with updated r to rotate
-    				// in cur ksir (not written)
-    				return true;
-    			}
-   				cur_ksir_low_height++;
-   				if (cur_ksir_low_height > max_avl_height){
-   					max_avl_height = cur_ksir_low_height;
-   				}
-    			if (!write_ksir()){
-    				// write updated node heights
-    				return false;
-    			}
-    			if (cur_ksir_low_height == cur_ksir_high_height){
-    				// done with upudates if not high
-    				cur_ksir_xrba = save_ksir_xrba;
-    				return true;
-    			} else if (cur_ksir_low_height < cur_ksir_high_height){
-    				unbalanced_ksir_error("LEFT UPDATE ");
-    				return false;
-    			}
-    		} else {
-    			// update height on high side
-    			if (cur_ksir_high_height - cur_ksir_low_height >= 1){
-    				// node unbalanced - rotate right
-    				avl_unbalanced = true;
-    				avl_left = false;
-    				avl_r_xrba = cur_node_xrba;
-    				cur_ksir_xrba = save_ksir_xrba;
-    				// exit with updated r to rotate
-    				// note not written yet
-    				return true;
-    			}
-   				cur_ksir_high_height++;
-   				if (cur_ksir_high_height > max_avl_height){
-   					max_avl_height = cur_ksir_high_height;
-   				}
-    			if (!write_ksir()){
-    				// write updated node heights
-    				return false;
-    			}
-    			if (cur_ksir_low_height == cur_ksir_high_height){
-    				// done with update if equal
-    				cur_ksir_xrba = save_ksir_xrba;
-    				return true;
-    			} else if (cur_ksir_high_height < cur_ksir_low_height){
-    				unbalanced_ksir_error("RIGHT UPDATE");
-    				return false;
-    			}
-    		}
-        	prev_node_xrba = cur_ksir_xrba;
-        	cur_node_xrba = cur_ksir_par;
-        	cur_node_height++;
-    	}
-    	cur_ksir_xrba = save_ksir_xrba;
-    	return true;
-    }
-    private boolean check_heights(String type,
-    		byte t1, byte t2, byte t3, byte t4){
-    	/*
-    	 * verify updated T1-T4 within +-1
-    	 */
-    	if (   Math.abs(t1-t2) > 1
-    		|| Math.abs(t1-t3) > 1
-            || Math.abs(t1-t4) > 1
-            || Math.abs(t2-t3) > 1
-            || Math.abs(t2-t4) > 1
-            || Math.abs(t3-t4) > 1){
-    		unbalanced_ksir_error(type);
-    		return false;
-    	}
-    	 return true;  
-    }
-    private void unbalanced_ksir_error(String type){
-    	/*
-    	 * display unbalanced KSIR found
-    	 * 
-    	 */
-    	sz390.put_log("VSAM AVL UNBALANCED KSIR ERROR TYPE " + type);
-    	set_feedback(pdf_def, rc_phy, cmp_ves, rn_read_data_err);
-    }
+			if (cur_ksir_low == prev_node_xrba){
+				// update height on low side if cur node
+				if (cur_ksir_low_height - cur_ksir_high_height >= 1){
+					// node unbalanced - rotate left
+					avl_unbalanced = true;
+					avl_left = true;
+					avl_r_xrba = cur_node_xrba;
+					cur_ksir_xrba = save_ksir_xrba;
+					// exit with updated r to rotate
+					// in cur ksir (not written)
+					return true;
+				}
+				cur_ksir_low_height++;
+				if (cur_ksir_low_height > max_avl_height){
+					max_avl_height = cur_ksir_low_height;
+				}
+				if (!write_ksir()){
+					// write updated node heights
+					return false;
+				}
+				if (cur_ksir_low_height == cur_ksir_high_height){
+					// done with upudates if not high
+					cur_ksir_xrba = save_ksir_xrba;
+					return true;
+				} else if (cur_ksir_low_height < cur_ksir_high_height){
+					unbalanced_ksir_error("LEFT UPDATE ");
+					return false;
+				}
+			} else {
+				// update height on high side
+				if (cur_ksir_high_height - cur_ksir_low_height >= 1){
+					// node unbalanced - rotate right
+					avl_unbalanced = true;
+					avl_left = false;
+					avl_r_xrba = cur_node_xrba;
+					cur_ksir_xrba = save_ksir_xrba;
+					// exit with updated r to rotate
+					// note not written yet
+					return true;
+				}
+				cur_ksir_high_height++;
+				if (cur_ksir_high_height > max_avl_height){
+					max_avl_height = cur_ksir_high_height;
+				}
+				if (!write_ksir()){
+					// write updated node heights
+					return false;
+				}
+				if (cur_ksir_low_height == cur_ksir_high_height){
+					// done with update if equal
+					cur_ksir_xrba = save_ksir_xrba;
+					return true;
+				} else if (cur_ksir_high_height < cur_ksir_low_height){
+					unbalanced_ksir_error("RIGHT UPDATE");
+					return false;
+				}
+			}
+			prev_node_xrba = cur_ksir_xrba;
+			cur_node_xrba = cur_ksir_par;
+			cur_node_height++;
+		}
+		cur_ksir_xrba = save_ksir_xrba;
+		return true;
+	}
+	private boolean check_heights(String type,
+			byte t1, byte t2, byte t3, byte t4){
+		/*
+		 * verify updated T1-T4 within +-1
+		 */
+		if (   Math.abs(t1-t2) > 1
+			|| Math.abs(t1-t3) > 1
+			|| Math.abs(t1-t4) > 1
+			|| Math.abs(t2-t3) > 1
+			|| Math.abs(t2-t4) > 1
+			|| Math.abs(t3-t4) > 1){
+			unbalanced_ksir_error(type);
+			return false;
+		}
+		 return true;
+	}
+	private void unbalanced_ksir_error(String type){
+		/*
+		 * display unbalanced KSIR found
+		 *
+		 */
+		sz390.put_log("VSAM AVL UNBALANCED KSIR ERROR TYPE " + type);
+		set_feedback(pdf_def, rc_phy, cmp_ves, rn_read_data_err);
+	}
 	private boolean avl_rotate_ksir() {
 		/*
 		 * perform AVL rotation around the last
@@ -3763,28 +3763,28 @@ public class vz390 {
 		 * may be anywhere between the inserted KSIR
 		 * and the KSIT.  Only one rotation is
 		 * required per insert.
-		 * 
+		 *
 		 * The AVL tree is named after its two inventors
 		 * G.M. Adelson-Velsky and E.M. Landis. who published it in their 1962
 		 * paper "An algorithm for the organization of information."
-		 * 
+		 *
 		 * For good overview of the process to maintain balanced tree during
 		 * random insertions, see * *
 		 * http://sky.fit.qut.edu.au/~maire/avl/System/AVLTree.html
-		 * In summary the process is as follows: 
+		 * In summary the process is as follows:
 		 * 1. Following binary search of tree to
 		 *    insert record at correct node, update current and parent nodes to 1
-		 *    of 3 possible states: 
+		 *    of 3 possible states:
 		 *    a. left/low side +1 depth (high bit in
-		 *       cur_ksir_low) 
-		 *    b. even 
+		 *       cur_ksir_low)
+		 *    b. even
 		 *    c. right/high side +1 depth (high bit in
-		 *       cur_ksir_high) 
+		 *       cur_ksir_high)
 		 * 2. If node found with new +2 state, rotate as follows
-		 *    to rebalance which ends the update process. 
+		 *    to rebalance which ends the update process.
 		 *    a. LL - move left left
-		 *       node up one level by swapping n ode with left node. 
-		 *    b. RR - move right right node up one level by swapping node with right node 
+		 *       node up one level by swapping n ode with left node.
+		 *    b. RR - move right right node up one level by swapping node with right node
 		 *    c. LR - move left right node up one level by swapping node with left right node.
 		 *    d. RL - move right left node up one level by swapping mode with right
 		 *       left node.
@@ -3847,394 +3847,394 @@ public class vz390 {
 		cur_ksir_xrba = save_ksir_xrba; // restore to inserted ksir
 		return true;
 	}
-    private boolean avl_rotate_left_left(){
-    	/*
-    	 * avl rotate x to r, and r to x_high,
-    	 * and x_high to r_low. 
-    	 */
-    	tot_avl_rotate_ll++;
-    	if (tz390.opt_tracev){
-    		tz390.put_trace("VSAM AVL ROTATE LEFT LEFT");
-    	}
-    	/*
-    	 * verify heights T1=T2=T3-1
-    	 */
-    	if (!check_heights("LEFT LEFT"
-    			             ,(byte)(avl_x_low_height -1)
-    		                 ,avl_r_high_height
-    		                 ,avl_x_high_height
-    		                 ,avl_x_high_height)){
+	private boolean avl_rotate_left_left(){
+		/*
+		 * avl rotate x to r, and r to x_high,
+		 * and x_high to r_low.
+		 */
+		tot_avl_rotate_ll++;
+		if (tz390.opt_tracev){
+			tz390.put_trace("VSAM AVL ROTATE LEFT LEFT");
+		}
+		/*
+		 * verify heights T1=T2=T3-1
+		 */
+		if (!check_heights("LEFT LEFT"
+				             ,(byte)(avl_x_low_height -1)
+			                 ,avl_r_high_height
+			                 ,avl_x_high_height
+			                 ,avl_x_high_height)){
 			return false;
-    	}
-    	/*
-    	 * update x which is current ksir
-    	 * with new parent and new high ptr to r
-    	 */
-    	cur_ksir_par = avl_r_par;
-    	cur_ksir_high = avl_r_xrba;
-    	cur_ksir_high_height = (byte)(Math.max(avl_r_high_height,avl_x_high_height) + 1); // max T2,T3 +1
-    	if (!write_ksir()){
-    		return false;
-        }
-    	/*
-    	 * update parent KSIR or KSIT
-    	 */
-    	if (avl_r_par == cur_ksit_xrba){
-    		// update KSIT with ptr to x
-    		cur_ksit_top = avl_x_xrba;
-    		if (!write_ksit()){
-    			return false;
-    		}
-    	} else {
-    		// update parent KSIR with ptr to x
-    		if (!read_ksir(avl_r_par)){
-    			return false;
-    		}
-    		if (cur_ksir_low == avl_r_xrba){
-    			cur_ksir_low = avl_x_xrba;
-    		} else if (cur_ksir_high == avl_r_xrba){
-    			cur_ksir_high = avl_x_xrba;
-    		} else {
+		}
+		/*
+		 * update x which is current ksir
+		 * with new parent and new high ptr to r
+		 */
+		cur_ksir_par = avl_r_par;
+		cur_ksir_high = avl_r_xrba;
+		cur_ksir_high_height = (byte)(Math.max(avl_r_high_height,avl_x_high_height) + 1); // max T2,T3 +1
+		if (!write_ksir()){
+			return false;
+		}
+		/*
+		 * update parent KSIR or KSIT
+		 */
+		if (avl_r_par == cur_ksit_xrba){
+			// update KSIT with ptr to x
+			cur_ksit_top = avl_x_xrba;
+			if (!write_ksit()){
+				return false;
+			}
+		} else {
+			// update parent KSIR with ptr to x
+			if (!read_ksir(avl_r_par)){
+				return false;
+			}
+			if (cur_ksir_low == avl_r_xrba){
+				cur_ksir_low = avl_x_xrba;
+			} else if (cur_ksir_high == avl_r_xrba){
+				cur_ksir_high = avl_x_xrba;
+			} else {
 				broken_ksir_link("PAR",cur_ksir_xrba,avl_r_xrba);
 				return false;
-    		}
-    		if (!write_ksir()){
-    			return false;
-    		}
-    	}
-    	/*
-    	 * update r with new x par and
-    	 * new x high replacing r low
-    	 */
-    	if (!read_ksir(avl_r_xrba)){
-    		return false;
-    	}
-    	cur_ksir_par = avl_x_xrba;
-    	cur_ksir_low = avl_x_high; 
-    	cur_ksir_low_height = avl_x_high_height; // copy T2
-    	if (!write_ksir()){
-    		return false;
-    	}
-    	// update x_high (T2) par to r
-    	if (avl_x_high != -1){
-    		if (!read_ksir(avl_x_high)){
-    			return false;
-    		}
-    		cur_ksir_par = avl_r_xrba;
-    		if (!write_ksir()){
-    			return false;
-    		}
-    	}
-    	return true;
-    }
-    private boolean avl_rotate_left_right(){
-    	/*
-    	 * avl rotate w (x_high) to r,
-    	 * r to w_high, w_low to x_high,
-    	 * and w_high to r_low.
-    	 */
-    	tot_avl_rotate_lr++;
-    	if (tz390.opt_tracev){
-    		tz390.put_trace("VSAM AVL ROTATE LEFT RIGHT");
-    	}
-    	/*
-    	 * read and update w first
-    	 * with new r parent, x low, r high
-    	 */
-    	if (!read_ksir(avl_x_high)){
-    		return false;
-    	}
-    	avl_w_xrba = cur_ksir_xrba;
-    	avl_w_low  = cur_ksir_low;
-    	avl_w_high = cur_ksir_high;
-    	avl_w_low_height  = cur_ksir_low_height;
-    	avl_w_high_height = cur_ksir_high_height;
-    	/*
-    	 * verify heights T1=T2=T3=T4
-    	 */
-    	if (!check_heights("LEFT RIGHT"
+			}
+			if (!write_ksir()){
+				return false;
+			}
+		}
+		/*
+		 * update r with new x par and
+		 * new x high replacing r low
+		 */
+		if (!read_ksir(avl_r_xrba)){
+			return false;
+		}
+		cur_ksir_par = avl_x_xrba;
+		cur_ksir_low = avl_x_high;
+		cur_ksir_low_height = avl_x_high_height; // copy T2
+		if (!write_ksir()){
+			return false;
+		}
+		// update x_high (T2) par to r
+		if (avl_x_high != -1){
+			if (!read_ksir(avl_x_high)){
+				return false;
+			}
+			cur_ksir_par = avl_r_xrba;
+			if (!write_ksir()){
+				return false;
+			}
+		}
+		return true;
+	}
+	private boolean avl_rotate_left_right(){
+		/*
+		 * avl rotate w (x_high) to r,
+		 * r to w_high, w_low to x_high,
+		 * and w_high to r_low.
+		 */
+		tot_avl_rotate_lr++;
+		if (tz390.opt_tracev){
+			tz390.put_trace("VSAM AVL ROTATE LEFT RIGHT");
+		}
+		/*
+		 * read and update w first
+		 * with new r parent, x low, r high
+		 */
+		if (!read_ksir(avl_x_high)){
+			return false;
+		}
+		avl_w_xrba = cur_ksir_xrba;
+		avl_w_low  = cur_ksir_low;
+		avl_w_high = cur_ksir_high;
+		avl_w_low_height  = cur_ksir_low_height;
+		avl_w_high_height = cur_ksir_high_height;
+		/*
+		 * verify heights T1=T2=T3=T4
+		 */
+		if (!check_heights("LEFT RIGHT"
 	           	,avl_x_low_height
-                ,avl_w_low_height
-                ,avl_w_high_height
-                ,avl_r_high_height)){
-    		return false;
-    	}
-    	cur_ksir_par  = avl_r_par;
-    	cur_ksir_low  = avl_x_xrba;
-    	cur_ksir_high = avl_r_xrba;
-    	cur_ksir_low_height  = (byte)(Math.max(avl_x_low_height,avl_w_low_height) + 1); 
-    	cur_ksir_high_height = (byte)(Math.max(avl_w_high_height,avl_r_high_height) + 1);
-    	if (!write_ksir()){
-    		return false;
-        }
-    	/*
-    	 * update parent KSIR or KSIT
-    	 */
-    	if (avl_r_par == cur_ksit_xrba){
-    		// update KSIT with ptr to x
-    		cur_ksit_top = avl_w_xrba;
-    		if (!write_ksit()){
-    			return false;
-    		}
-    	} else {
-    		// update parent KSIR with ptr to x
-    		if (!read_ksir(avl_r_par)){
-    			return false;
-    		}
-    		if (cur_ksir_low == avl_r_xrba){
-    			cur_ksir_low = avl_w_xrba;
-    		} else if (cur_ksir_high == avl_r_xrba){
-    			cur_ksir_high = avl_w_xrba;
-    		} else {
+				,avl_w_low_height
+				,avl_w_high_height
+				,avl_r_high_height)){
+			return false;
+		}
+		cur_ksir_par  = avl_r_par;
+		cur_ksir_low  = avl_x_xrba;
+		cur_ksir_high = avl_r_xrba;
+		cur_ksir_low_height  = (byte)(Math.max(avl_x_low_height,avl_w_low_height) + 1);
+		cur_ksir_high_height = (byte)(Math.max(avl_w_high_height,avl_r_high_height) + 1);
+		if (!write_ksir()){
+			return false;
+		}
+		/*
+		 * update parent KSIR or KSIT
+		 */
+		if (avl_r_par == cur_ksit_xrba){
+			// update KSIT with ptr to x
+			cur_ksit_top = avl_w_xrba;
+			if (!write_ksit()){
+				return false;
+			}
+		} else {
+			// update parent KSIR with ptr to x
+			if (!read_ksir(avl_r_par)){
+				return false;
+			}
+			if (cur_ksir_low == avl_r_xrba){
+				cur_ksir_low = avl_w_xrba;
+			} else if (cur_ksir_high == avl_r_xrba){
+				cur_ksir_high = avl_w_xrba;
+			} else {
 				broken_ksir_link("PAR",cur_ksir_xrba,avl_r_xrba);
 				return false;
-    		}
-    		if (!write_ksir()){
-    			return false;
-    		}
-    	}
-    	// update w_high (T3) par to r
-    	if (avl_w_high != -1){
-    		if (!read_ksir(avl_w_high)){
-    			return false;
-    		}
-    		cur_ksir_par = avl_r_xrba;
-    		if (!write_ksir()){
-    			return false;
-    		}
-    	}
-    	/*
-    	 * update r with new w par and
-    	 * new w high replacing r low
-    	 */
-    	if (!read_ksir(avl_r_xrba)){
-    		return false;
-    	}
-    	cur_ksir_par = avl_w_xrba;
-    	cur_ksir_low = avl_w_high;
-    	cur_ksir_low_height = avl_w_high_height; // copy T3
-    	if (!write_ksir()){
-    		return false;
-    	}
-    	/*
-    	 * update x with new w parent
-    	 * and new w low replacing x high
-    	 */
-    	if (!read_ksir(avl_x_xrba)){
-    		return false;
-    	}
-    	cur_ksir_par  = avl_w_xrba;
-    	cur_ksir_high = avl_w_low;
-    	cur_ksir_high_height = avl_w_low_height; // copy T2`
-    	if (!write_ksir()){
-    		return false;
-    	}
-    	// update w_low (T2) par to x
-    	if (avl_w_low != -1){
-    		if (!read_ksir(avl_w_low)){
-    			return false;
-    		}
-    		cur_ksir_par = avl_x_xrba;
-    		if (!write_ksir()){
-    			return false;
-    		}
-    	}
-    	return true;
-    }
-    private boolean avl_rotate_right_right(){
-    	/*
-    	 * avl rotate x to r, and r to x_low,
-    	 * and x_low to r_high.
-    	 */
-    	tot_avl_rotate_rr++;
-    	if (tz390.opt_tracev){
-    		tz390.put_trace("VSAM AVL ROTATE RIGHT RIGHT");
-    	}
-    	/*
-    	 * verify heights T1=T2=T3-1
-    	 */
-    	if (!check_heights("RIGHT RIGHT"
-	                      ,avl_r_low_height                          
+			}
+			if (!write_ksir()){
+				return false;
+			}
+		}
+		// update w_high (T3) par to r
+		if (avl_w_high != -1){
+			if (!read_ksir(avl_w_high)){
+				return false;
+			}
+			cur_ksir_par = avl_r_xrba;
+			if (!write_ksir()){
+				return false;
+			}
+		}
+		/*
+		 * update r with new w par and
+		 * new w high replacing r low
+		 */
+		if (!read_ksir(avl_r_xrba)){
+			return false;
+		}
+		cur_ksir_par = avl_w_xrba;
+		cur_ksir_low = avl_w_high;
+		cur_ksir_low_height = avl_w_high_height; // copy T3
+		if (!write_ksir()){
+			return false;
+		}
+		/*
+		 * update x with new w parent
+		 * and new w low replacing x high
+		 */
+		if (!read_ksir(avl_x_xrba)){
+			return false;
+		}
+		cur_ksir_par  = avl_w_xrba;
+		cur_ksir_high = avl_w_low;
+		cur_ksir_high_height = avl_w_low_height; // copy T2`
+		if (!write_ksir()){
+			return false;
+		}
+		// update w_low (T2) par to x
+		if (avl_w_low != -1){
+			if (!read_ksir(avl_w_low)){
+				return false;
+			}
+			cur_ksir_par = avl_x_xrba;
+			if (!write_ksir()){
+				return false;
+			}
+		}
+		return true;
+	}
+	private boolean avl_rotate_right_right(){
+		/*
+		 * avl rotate x to r, and r to x_low,
+		 * and x_low to r_high.
+		 */
+		tot_avl_rotate_rr++;
+		if (tz390.opt_tracev){
+			tz390.put_trace("VSAM AVL ROTATE RIGHT RIGHT");
+		}
+		/*
+		 * verify heights T1=T2=T3-1
+		 */
+		if (!check_heights("RIGHT RIGHT"
+	                      ,avl_r_low_height
 	                      ,avl_x_low_height
-                          ,(byte)(avl_x_high_height -1)
-                          ,(byte)(avl_x_high_height -1))){
-    		return false;
-    	}
-    	/*
-    	 * update x which is current ksir
-    	 * with new parent and new high ptr to r
-    	 */
-    	cur_ksir_par = avl_r_par;
-    	cur_ksir_low = avl_r_xrba;
-    	cur_ksir_low_height = (byte)(Math.max(avl_r_low_height,avl_x_low_height) + 1); // max T1,T2 +1
-    	if (!write_ksir()){
-    		return false;
-        }
-    	/*
-    	 * update parent KSIR or KSIT
-    	 */
-    	if (avl_r_par == cur_ksit_xrba){
-    		// update KSIT with ptr to x
-    		cur_ksit_top = avl_x_xrba;
-    		if (!write_ksit()){
-    			return false;
-    		}
-    	} else {
-    		// update parent KSIR with ptr to x
-    		if (!read_ksir(avl_r_par)){
-    			return false;
-    		}
-    		if (cur_ksir_low == avl_r_xrba){
-    			cur_ksir_low = avl_x_xrba;
-    		} else if(cur_ksir_high == avl_r_xrba) {
-    			cur_ksir_high = avl_x_xrba;
-    		} else {
+						  ,(byte)(avl_x_high_height -1)
+						  ,(byte)(avl_x_high_height -1))){
+			return false;
+		}
+		/*
+		 * update x which is current ksir
+		 * with new parent and new high ptr to r
+		 */
+		cur_ksir_par = avl_r_par;
+		cur_ksir_low = avl_r_xrba;
+		cur_ksir_low_height = (byte)(Math.max(avl_r_low_height,avl_x_low_height) + 1); // max T1,T2 +1
+		if (!write_ksir()){
+			return false;
+		}
+		/*
+		 * update parent KSIR or KSIT
+		 */
+		if (avl_r_par == cur_ksit_xrba){
+			// update KSIT with ptr to x
+			cur_ksit_top = avl_x_xrba;
+			if (!write_ksit()){
+				return false;
+			}
+		} else {
+			// update parent KSIR with ptr to x
+			if (!read_ksir(avl_r_par)){
+				return false;
+			}
+			if (cur_ksir_low == avl_r_xrba){
+				cur_ksir_low = avl_x_xrba;
+			} else if(cur_ksir_high == avl_r_xrba) {
+				cur_ksir_high = avl_x_xrba;
+			} else {
 				broken_ksir_link("PAR",cur_ksir_xrba,avl_r_xrba);
 				return false;
-    		}
-    		if (!write_ksir()){
-    			return false;
-    		}
-    	}
-    	// update x_low (T2) par to r
-    	if (avl_x_low != -1){
-    		if (!read_ksir(avl_x_low)){
-    			return false;
-    		}
-    		cur_ksir_par = avl_r_xrba;
-    		if (!write_ksir()){
-    			return false;
-    		}
-    	}
-    	/*
-    	 * update r with new x par and
-    	 * new x low replacing r high
-    	 */
-    	if (!read_ksir(avl_r_xrba)){
-    		return false;
-    	}
-    	cur_ksir_par = avl_x_xrba;
-    	cur_ksir_high = avl_x_low;
-    	cur_ksir_high_height = avl_x_low_height; // copy T2
-    	if (!write_ksir()){
-    		return false;
-    	}
-    	return true;
-    }
-    private boolean avl_rotate_right_left(){
-    	/*
-    	 * avl rotate w (x_low) to r,
-    	 * r to w_low, w_high to x_low,
-    	 * and w_low to r_high.
-    	 */
-    	tot_avl_rotate_rl++;
-    	if (tz390.opt_tracev){
-    		tz390.put_trace("VSAM AVL ROTATE RIGHT LEFT");
-    	}
-    	/*
-    	 * read and update w first
-    	 * with new r parent, r low, x high
-    	 */
-    	if (!read_ksir(avl_x_low)){
-    		return false;
-    	}
-    	avl_w_xrba = cur_ksir_xrba;
-    	avl_w_low  = cur_ksir_low;
-    	avl_w_high = cur_ksir_high;
-    	avl_w_low_height  = cur_ksir_low_height;
-    	avl_w_high_height = cur_ksir_high_height;
-    	/*
-    	 * verify heights T1=T2=T3=T4
-    	 */
-    	if (!check_heights("RIGHT LEFT"
-                ,avl_r_low_height
-                ,avl_w_low_height
-                ,avl_w_high_height
-                ,avl_x_high_height)){
-    		return false;
-    	}
-    	cur_ksir_par  = avl_r_par;
-    	cur_ksir_low  = avl_r_xrba;
-    	cur_ksir_high = avl_x_xrba;
-    	cur_ksir_low_height  = (byte)(Math.max(avl_r_low_height,avl_w_low_height) + 1); 
-    	cur_ksir_high_height = (byte)(Math.max(avl_w_high_height,avl_x_high_height) + 1);
-    	if (!write_ksir()){
-    		return false;
-        }
-    	/*
-    	 * update parent KSIR or KSIT
-    	 */
-    	if (avl_r_par == cur_ksit_xrba){
-    		// update KSIT with ptr to x
-    		cur_ksit_top = avl_w_xrba;
-    		if (!write_ksit()){
-    			return false;
-    		}
-    	} else {
-    		// update parent KSIR with ptr to x
-    		if (!read_ksir(avl_r_par)){
-    			return false;
-    		}
-    		if (cur_ksir_low == avl_r_xrba){
-    			cur_ksir_low = avl_w_xrba;
-    		} else if (cur_ksir_high == avl_r_xrba){
-    			cur_ksir_high = avl_w_xrba;
-    		} else {
+			}
+			if (!write_ksir()){
+				return false;
+			}
+		}
+		// update x_low (T2) par to r
+		if (avl_x_low != -1){
+			if (!read_ksir(avl_x_low)){
+				return false;
+			}
+			cur_ksir_par = avl_r_xrba;
+			if (!write_ksir()){
+				return false;
+			}
+		}
+		/*
+		 * update r with new x par and
+		 * new x low replacing r high
+		 */
+		if (!read_ksir(avl_r_xrba)){
+			return false;
+		}
+		cur_ksir_par = avl_x_xrba;
+		cur_ksir_high = avl_x_low;
+		cur_ksir_high_height = avl_x_low_height; // copy T2
+		if (!write_ksir()){
+			return false;
+		}
+		return true;
+	}
+	private boolean avl_rotate_right_left(){
+		/*
+		 * avl rotate w (x_low) to r,
+		 * r to w_low, w_high to x_low,
+		 * and w_low to r_high.
+		 */
+		tot_avl_rotate_rl++;
+		if (tz390.opt_tracev){
+			tz390.put_trace("VSAM AVL ROTATE RIGHT LEFT");
+		}
+		/*
+		 * read and update w first
+		 * with new r parent, r low, x high
+		 */
+		if (!read_ksir(avl_x_low)){
+			return false;
+		}
+		avl_w_xrba = cur_ksir_xrba;
+		avl_w_low  = cur_ksir_low;
+		avl_w_high = cur_ksir_high;
+		avl_w_low_height  = cur_ksir_low_height;
+		avl_w_high_height = cur_ksir_high_height;
+		/*
+		 * verify heights T1=T2=T3=T4
+		 */
+		if (!check_heights("RIGHT LEFT"
+				,avl_r_low_height
+				,avl_w_low_height
+				,avl_w_high_height
+				,avl_x_high_height)){
+			return false;
+		}
+		cur_ksir_par  = avl_r_par;
+		cur_ksir_low  = avl_r_xrba;
+		cur_ksir_high = avl_x_xrba;
+		cur_ksir_low_height  = (byte)(Math.max(avl_r_low_height,avl_w_low_height) + 1);
+		cur_ksir_high_height = (byte)(Math.max(avl_w_high_height,avl_x_high_height) + 1);
+		if (!write_ksir()){
+			return false;
+		}
+		/*
+		 * update parent KSIR or KSIT
+		 */
+		if (avl_r_par == cur_ksit_xrba){
+			// update KSIT with ptr to x
+			cur_ksit_top = avl_w_xrba;
+			if (!write_ksit()){
+				return false;
+			}
+		} else {
+			// update parent KSIR with ptr to x
+			if (!read_ksir(avl_r_par)){
+				return false;
+			}
+			if (cur_ksir_low == avl_r_xrba){
+				cur_ksir_low = avl_w_xrba;
+			} else if (cur_ksir_high == avl_r_xrba){
+				cur_ksir_high = avl_w_xrba;
+			} else {
 				broken_ksir_link("PAR",cur_ksir_xrba,avl_r_xrba);
 				return false;
-    		}
-    		if (!write_ksir()){
-    			return false;
-    		}
-    	}
-    	/*
-    	 * update r with new w par and
-    	 * new w low replacing r high
-    	 */
-    	if (!read_ksir(avl_r_xrba)){
-    		return false;
-    	}
-    	cur_ksir_par  = avl_w_xrba;
-    	cur_ksir_high = avl_w_low;
-    	cur_ksir_high_height = avl_w_low_height; // copy T2
-    	if (!write_ksir()){
-    		return false;
-    	}
-    	// update w_low (T2) par to r
-    	if (avl_w_low != -1){
-    		if (!read_ksir(avl_w_low)){
-    			return false;
-    		}
-    		cur_ksir_par = avl_r_xrba;
-    		if (!write_ksir()){
-    			return false;
-    		}
-    	}
-    	/*
-    	 * update x with new w parent
-    	 * and new w high replacing x low
-    	 */
-    	if (!read_ksir(avl_x_xrba)){
-    		return false;
-    	}
-    	cur_ksir_par  = avl_w_xrba;
-    	cur_ksir_low  = avl_w_high;
-    	cur_ksir_low_height = avl_w_high_height; // copy T3
-    	if (!write_ksir()){
-    		return false;
-    	}
-    	// update w_high (T3) par to x
-    	if (avl_w_high != -1){
-    		if (!read_ksir(avl_w_high)){
-    			return false;
-    		}
-    		cur_ksir_par = avl_x_xrba;
-    		if (!write_ksir()){
-    			return false;
-    		}
-    	}
-    	return true;
-    }
+			}
+			if (!write_ksir()){
+				return false;
+			}
+		}
+		/*
+		 * update r with new w par and
+		 * new w low replacing r high
+		 */
+		if (!read_ksir(avl_r_xrba)){
+			return false;
+		}
+		cur_ksir_par  = avl_w_xrba;
+		cur_ksir_high = avl_w_low;
+		cur_ksir_high_height = avl_w_low_height; // copy T2
+		if (!write_ksir()){
+			return false;
+		}
+		// update w_low (T2) par to r
+		if (avl_w_low != -1){
+			if (!read_ksir(avl_w_low)){
+				return false;
+			}
+			cur_ksir_par = avl_r_xrba;
+			if (!write_ksir()){
+				return false;
+			}
+		}
+		/*
+		 * update x with new w parent
+		 * and new w high replacing x low
+		 */
+		if (!read_ksir(avl_x_xrba)){
+			return false;
+		}
+		cur_ksir_par  = avl_w_xrba;
+		cur_ksir_low  = avl_w_high;
+		cur_ksir_low_height = avl_w_high_height; // copy T3
+		if (!write_ksir()){
+			return false;
+		}
+		// update w_high (T3) par to x
+		if (avl_w_high != -1){
+			if (!read_ksir(avl_w_high)){
+				return false;
+			}
+			cur_ksir_par = avl_x_xrba;
+			if (!write_ksir()){
+				return false;
+			}
+		}
+		return true;
+	}
 	private boolean write_ksit() {
 		/*
 		 * write new KSIT at ves eof xrba

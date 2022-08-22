@@ -31,87 +31,87 @@ import javax.swing.JTextArea;
 
 public class zc390{
 	/*
-    zc390 is the component of z390 used to translate
-    COBOL source programs (.CBL) to
-    z390 assembler source programs (.MLC).
-    
-    zcoboljava is a COBOL source translator
-    which does the following
-      1. read source ascii cobol from parm1
-         with CBL default file type.
-      2. parse space delimited COBOL into
-         comma delimited z390 macro assembler
-         source statements using MLC default file type.
-         a.  New macro for each new COBOL verb.
-         b.  labels with dashes converted to underscores.     
-         c.  Continuation of words and literals
-             handled. 
-         d.  Periods and commas allowed within parms which
-             are then enclosed in single quotes to avoid
-             conflict with macro assembler parm parsing.
-         e.  Open/close () put in single quotes to avoid 
-             conflict with macro assembler parm parsing.
-         f.  Literals with single or double quotes allowed
-             with double single/double quotes inclosed.
-         g.  Single '" wrapped in
-             opposite type quotes.  
-         h.  Single () wrapped in single quotes.
-         i.  Single . generates PERIOD vero in Proc. Div. 
-         j.  Generate DATA END, PROCEDURE END,and END  
-         k.  Treat verbs as parms within EXEC to END-EXEC.
-             
-    ****************************************************
-    * Maintenance
-    ****************************************************
-    * 04/06/08 initial coding
-    * 04/11/08 add continuation line support and
-    *          verb lookup for mult verbs on a line.
-    * 04/28/08 allow period within pictures.
-    * 06/10/08 truncate source to 72 characters, add EXEC verb
-    * 11/11/08 pass parms to CBL macro call
-    * 11/21/08 rename to zc390 and add ERR/STA START/STOP, copyright, stats
-    * 12/01/08 add COPY support using mz390 as model
-    * 02/20/09 ignore AUTHOR, SECURITY, DATE-WRITTEN,
-    *          and INSTALLATION pg.
-    * 02/26/09 RPI 1012 force END DECLARATIVES into END_DECLARATIVES.  
-    * 07/10/09 RPI 1062 replace START with ZCSTART to avoid HLASM conflist 
-    * 07/11/09 RPI 1062 set RC=12 for errors and RC=16 for abort 
-    * 07/14/09 RPI 1062 use init_pat() for use by options  
-    * 07/18/09 RPI 1062 add abort msg
-    * 07/19/09 RPI 1062 convert data names starting with 0-9 to #name 
-    * 07/21/09 RPI 1062 replace SD with ZCSD to  avoid SD instr. conflict 
-    * 07/21/09 RPI 1062 ignore semicolons in addition to commas  
-    * 07/24/09 RPI 1062 support lower case, DISPLAY verb only in Proc. Div.
-    * 07/29/09 RPI 1062 fix mult split lines followed by tokens
-    * 07/31/09 RPI 1062 fix continued ""..." or ''...' (see NC215A ALPHABET)
-    * 08/02/09 RPI 1062 fix "."".' to '.".'. ".'." to '.''.', and & to &&
-    * 08/03/09 RPI 1062 support special names verbs
-    * 08/06/09 RPI 1062 wrote LABEL macros to pgm_ZC_LABELS.CPY
-    *          and generate COPY after ZCOBOL macro call to init SN/PG counts
-    * 08/09/09 RPI 1062 comment lines must have * or / in position 
-    * 08/10/09 RPI 1062 use look-ahead in get_zc_line to append 
-    *          continued text not in split literals.      
-    * 09/03/09 RPI 1062 WHEN verb only in proc div.   
-    * 09/12/09 RPI 1062 END to ZCEND for DECLARIVES and PROGRAM   
-    * 09/18/09 RPI 1074 put path and name in quotes for LSN support 
-    * 09/26/09 RPI 1080 use compiled patterns for replace all
-    *          allow any cbl suffix to mlc, use init_tzz390
-    * 09/29/09 RPI 1086 add *ZC NNNNNN IIIIII MLC SOURCE comment
-    * 07/25/10 RPI 1126 prevent replacing - with _ in floating point exp constant
-    * 03/04/12 RPI 1182 don't allow embedded commas in parms for proc div
-    * 11/03/14 RPI 1504 Final options not reported by ZC390
-    * 17-01-22 RPI JH 1545 Compiler fails to flag undefined field after test on literal with embedded parenthesis
-    * 17-01-22 RPI JH 1546 Test on literal with embedded parenthesis not branching correctly
-    * 2021-04-19 jjg Change way init_zc390 obtains program name to allow paths that begin with ".."
-    ****************************************************
-    *                                         last RPI *
+	zc390 is the component of z390 used to translate
+	COBOL source programs (.CBL) to
+	z390 assembler source programs (.MLC).
+
+	zcoboljava is a COBOL source translator
+	which does the following
+	  1. read source ascii cobol from parm1
+		 with CBL default file type.
+	  2. parse space delimited COBOL into
+		 comma delimited z390 macro assembler
+		 source statements using MLC default file type.
+		 a.  New macro for each new COBOL verb.
+		 b.  labels with dashes converted to underscores.
+		 c.  Continuation of words and literals
+			 handled.
+		 d.  Periods and commas allowed within parms which
+			 are then enclosed in single quotes to avoid
+			 conflict with macro assembler parm parsing.
+		 e.  Open/close () put in single quotes to avoid
+			 conflict with macro assembler parm parsing.
+		 f.  Literals with single or double quotes allowed
+			 with double single/double quotes inclosed.
+		 g.  Single '" wrapped in
+			 opposite type quotes.
+		 h.  Single () wrapped in single quotes.
+		 i.  Single . generates PERIOD vero in Proc. Div.
+		 j.  Generate DATA END, PROCEDURE END,and END
+		 k.  Treat verbs as parms within EXEC to END-EXEC.
+
+	****************************************************
+	* Maintenance
+	****************************************************
+	* 04/06/08 initial coding
+	* 04/11/08 add continuation line support and
+	*          verb lookup for mult verbs on a line.
+	* 04/28/08 allow period within pictures.
+	* 06/10/08 truncate source to 72 characters, add EXEC verb
+	* 11/11/08 pass parms to CBL macro call
+	* 11/21/08 rename to zc390 and add ERR/STA START/STOP, copyright, stats
+	* 12/01/08 add COPY support using mz390 as model
+	* 02/20/09 ignore AUTHOR, SECURITY, DATE-WRITTEN,
+	*          and INSTALLATION pg.
+	* 02/26/09 RPI 1012 force END DECLARATIVES into END_DECLARATIVES.
+	* 07/10/09 RPI 1062 replace START with ZCSTART to avoid HLASM conflist
+	* 07/11/09 RPI 1062 set RC=12 for errors and RC=16 for abort
+	* 07/14/09 RPI 1062 use init_pat() for use by options
+	* 07/18/09 RPI 1062 add abort msg
+	* 07/19/09 RPI 1062 convert data names starting with 0-9 to #name
+	* 07/21/09 RPI 1062 replace SD with ZCSD to  avoid SD instr. conflict
+	* 07/21/09 RPI 1062 ignore semicolons in addition to commas
+	* 07/24/09 RPI 1062 support lower case, DISPLAY verb only in Proc. Div.
+	* 07/29/09 RPI 1062 fix mult split lines followed by tokens
+	* 07/31/09 RPI 1062 fix continued ""..." or ''...' (see NC215A ALPHABET)
+	* 08/02/09 RPI 1062 fix "."".' to '.".'. ".'." to '.''.', and & to &&
+	* 08/03/09 RPI 1062 support special names verbs
+	* 08/06/09 RPI 1062 wrote LABEL macros to pgm_ZC_LABELS.CPY
+	*          and generate COPY after ZCOBOL macro call to init SN/PG counts
+	* 08/09/09 RPI 1062 comment lines must have * or / in position
+	* 08/10/09 RPI 1062 use look-ahead in get_zc_line to append
+	*          continued text not in split literals.
+	* 09/03/09 RPI 1062 WHEN verb only in proc div.
+	* 09/12/09 RPI 1062 END to ZCEND for DECLARIVES and PROGRAM
+	* 09/18/09 RPI 1074 put path and name in quotes for LSN support
+	* 09/26/09 RPI 1080 use compiled patterns for replace all
+	*          allow any cbl suffix to mlc, use init_tzz390
+	* 09/29/09 RPI 1086 add *ZC NNNNNN IIIIII MLC SOURCE comment
+	* 07/25/10 RPI 1126 prevent replacing - with _ in floating point exp constant
+	* 03/04/12 RPI 1182 don't allow embedded commas in parms for proc div
+	* 11/03/14 RPI 1504 Final options not reported by ZC390
+	* 17-01-22 RPI JH 1545 Compiler fails to flag undefined field after test on literal with embedded parenthesis
+	* 17-01-22 RPI JH 1546 Test on literal with embedded parenthesis not branching correctly
+	* 2021-04-19 jjg Change way init_zc390 obtains program name to allow paths that begin with ".."
+	****************************************************
+	*                                         last RPI *
 	****************************************************
 	*/
 	/*
 	 * Global variables
-	 */    
-	int    zc390_rc = 0; // return code 
-    tz390  tz390;        // shared z390 routines   
+	 */
+	int    zc390_rc = 0; // return code
+	tz390  tz390;        // shared z390 routines
 	int    tot_cbl = 0;  // total CBL lines read
 	int    tot_mlc  = 0; // total MLC lines written
 	int    tot_lab  = 0; // total LABEL lines for SN/PG labels
@@ -124,7 +124,7 @@ public class zc390{
 	String  zc_line = null;      // logical line with continuations added
 	String  zc_line_lookahead;   // lookahead rec for non split lit continuations
 	String  zc_file_name = null;
-	boolean zc_comment = true; 
+	boolean zc_comment = true;
 	boolean zc_comment_copy = false; // RPI 1062 comment COPY except for ZC_LABELS.CPY
 	boolean zc_pg_comment_mode = false;
 	boolean zc_cics = false;
@@ -168,8 +168,8 @@ public class zc390{
 	String zc_copy_member = null;
 	String zc_copy_ddname = null;
 	String cpz_type = ".CPZ";
-    int     tot_cpz_file_name = 0;
-    String[] cpz_file_name = null;
+	int     tot_cpz_file_name = 0;
+	String[] cpz_file_name = null;
 	int cur_zc_file = 0; // 0 is primary CBL input
 	File[] zc_file                = null;
 	BufferedReader[] zc_file_buff = null;
@@ -182,9 +182,9 @@ public class zc390{
 	int[]    zc_copy_rep_lst_ix   = null; // RPI 1062 next token on  line index
 	String[] zc_copy_rep_lit1     = null; // RPI 1062 replacing lit1
 	String[] zc_copy_rep_lit2     = null; // RPI 1062 replacing lit2
-    /*
-     * zcob token variables
-     */
+	/*
+	 * zcob token variables
+	 */
 	int     zc_token_count = 0;
 	int     zc_token_line_cnt = 0;
 	int     zc_prev_line_cnt = 0;
@@ -215,7 +215,7 @@ public class zc390{
 	String mlc_lab = null;
 	String mlc_op  = null;
 	String mlc_parms = "";
-	int mlc_parm_cnt = 0; // mlc parm count 
+	int mlc_parm_cnt = 0; // mlc parm count
 	int zc_level = 0; // parm (...) level used to allow verbs in DFHRESP/DFHVALUE etc.
 	/*
 	 * working storage global data
@@ -227,7 +227,7 @@ public class zc390{
 	/*
 	 * end of global data
 	 */
-	public static void main(String argv[]) {		
+	public static void main(String argv[]) {
 	      /*
 	       * start instance of zcobol class
 	       */
@@ -236,32 +236,32 @@ public class zc390{
 	}
 	private void translate_cbl_to_mlc(String[] args,JTextArea log_text){
 	    /*
-		 * translate cobol (CBL) to 
+		 * translate cobol (CBL) to
 		 * z390 macro assembler (.MLC)
 		 */
 		init_zc390(args);
 		if (tz390.opt_trap){ // RPI 1058
-            try {
-                    process_cbl();
-            } catch (Exception e){
-                    abort_error("zc390 exception - " + e.toString());
-            }
+			try {
+					process_cbl();
+			} catch (Exception e){
+					abort_error("zc390 exception - " + e.toString());
+			}
 		} else {
-            process_cbl();
+			process_cbl();
 		}
 	}
 	private void process_cbl(){
-    /*
-     * process cbl to mlc with or 
-     * without trap exception handler
-     */
+	/*
+	 * process cbl to mlc with or
+	 * without trap exception handler
+	 */
 		get_zc_token();
 		while (zc_token != null){
 			process_zc_token();
 			get_zc_token();
 		}
 		if (mlc_op != null){
-            put_zc_line(); // RPI 1086
+			put_zc_line(); // RPI 1086
 			put_mlc_line(" ",mlc_op,mlc_parms);
 		}
 		term_zc();
@@ -275,28 +275,28 @@ public class zc390{
 		tz390 = new tz390();
 		tz390.init_tz390();   // RPI 1080
 		tz390.init_tz390();   // RPI 1080
-    	tz390.init_options(args,tz390.mlc_type);
+		tz390.init_options(args,tz390.mlc_type);
 		tz390.open_systerm("ZC390");
-       	put_copyright();
+		put_copyright();
 		String zcobol_options = "";
-        String comma = "";
-       	int index = 1;
-       	while (index < args.length){
-       		zcobol_options = zcobol_options + comma + args[index];
-       		comma = ",";
-   		    if (args[index].toUpperCase().equals("NOEXTEND")){
-   			zc_extend = false;
-   		    } else if (args[index].toUpperCase().equals("NOTIMING")){
-       			tz390.opt_timing = false; // turn off timing for CDATE/CTIME
-       		} else if (args[index].toUpperCase().equals("NOCOMMENT")){
-       			zc_comment = false;
-       		} else if (args[index].toUpperCase().equals("CICS")){
-       			zc_cics = true;
-       		} else if (args[index].toUpperCase().equals("TRUNC")){
-       			zc_trunc = true;
-       		}
-       		index++;
-       	}
+		String comma = "";
+		int index = 1;
+		while (index < args.length){
+			zcobol_options = zcobol_options + comma + args[index];
+			comma = ",";
+		    if (args[index].toUpperCase().equals("NOEXTEND")){
+			zc_extend = false;
+		    } else if (args[index].toUpperCase().equals("NOTIMING")){
+				tz390.opt_timing = false; // turn off timing for CDATE/CTIME
+			} else if (args[index].toUpperCase().equals("NOCOMMENT")){
+				zc_comment = false;
+			} else if (args[index].toUpperCase().equals("CICS")){
+				zc_cics = true;
+			} else if (args[index].toUpperCase().equals("TRUNC")){
+				zc_trunc = true;
+			}
+			index++;
+		}
 		String zcobol_parms =
 			"PGM='"    + args[0]   // RPI 1074
 		  + "',VER="    + tz390.version
@@ -306,7 +306,7 @@ public class zc390{
 		if (tz390.opt_traces){
 			System.out.println("ZCOBOL " + zcobol_parms);
 		}
-        // args[0] may be relative path beginning with ".."
+		// args[0] may be relative path beginning with ".."
 		String wk_name = tz390.fix_file_separators(args[0]);
 		index = wk_name.indexOf('.');
 		if (index == -1){
@@ -326,7 +326,7 @@ public class zc390{
 	    mlc_file      = new File(mlc_file_name);
 		zc_file              = (File[])Array.newInstance(File.class,tz390.opt_maxfile);
 		zc_file_buff         = (BufferedReader[])Array.newInstance(BufferedReader.class,tz390.opt_maxfile);
-        cpz_file_name        = new String[tz390.opt_maxfile];
+		cpz_file_name        = new String[tz390.opt_maxfile];
 		zc_copy_line         = (String[])Array.newInstance(String.class,tz390.opt_maxfile);
 		zc_copy_line_ix      = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		zc_copy_rep_fst_ix   = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
@@ -334,17 +334,17 @@ public class zc390{
 		zc_copy_rep_lit1     = (String[])Array.newInstance(String.class,tz390.opt_maxfile);
 		zc_copy_rep_lit2     = (String[])Array.newInstance(String.class,tz390.opt_maxfile);
 		try {
-       		mlc_file_buff  = new BufferedWriter(new FileWriter(mlc_file_name));
-       		lab_file_buff  = new BufferedWriter(new FileWriter(lab_file_dir + lab_file_name)); // RPI 1062
+			mlc_file_buff  = new BufferedWriter(new FileWriter(mlc_file_name));
+			lab_file_buff  = new BufferedWriter(new FileWriter(lab_file_dir + lab_file_name)); // RPI 1062
 			zc_file[cur_zc_file] = new File(zc_file_name);
-			zc_file_buff[cur_zc_file] = new BufferedReader(new FileReader(zc_file[cur_zc_file]));			
-       	} catch (Exception e){
-   			abort_error("zcobol file I/O error - " + e.toString());
-       	}
-       	put_mlc_line(" ","ZCOBOL",zcobol_parms);
-       	put_mlc_line(" ","COPY",lab_file_name); // RPI 1062  RPI 1074 RPI 1080
-       	zc_comment_copy = true;
-       	try {
+			zc_file_buff[cur_zc_file] = new BufferedReader(new FileReader(zc_file[cur_zc_file]));
+		} catch (Exception e){
+			abort_error("zcobol file I/O error - " + e.toString());
+		}
+		put_mlc_line(" ","ZCOBOL",zcobol_parms);
+		put_mlc_line(" ","COPY",lab_file_name); // RPI 1062  RPI 1074 RPI 1080
+		zc_comment_copy = true;
+		try {
 			zc_data_token_pattern = Pattern.compile(
 				  	 // parm in single or double quotes
 				   	"([']([^']|(['][']))*['])"  // parm in single quotes // RPI 1062
@@ -354,16 +354,16 @@ public class zc390{
 		    	  +	"|([bB][\"][01]+[\"])" // binary value b"??"
 		    	  +	"|([\"]([^\"]|([\"][\"]))*[\"])"  // parm in double quotes // RPI 1062
 					 // any parm such as PIC may have leading period and embedded .,- but not '"()=+/*
-				  +	"|([\\.]*[^\\s\\.\\,:;\\'\"()=<>\\+\\-\\*\\/]+(([^\\s\\.\\,:;\\'\"()=<>\\+\\*\\/]+)|([\\.\\,][^\\s\\.\\,:;\\'\"()=<>\\+\\-\\*\\/]+))*)"	
+				  +	"|([\\.]*[^\\s\\.\\,:;\\'\"()=<>\\+\\-\\*\\/]+(([^\\s\\.\\,:;\\'\"()=<>\\+\\*\\/]+)|([\\.\\,][^\\s\\.\\,:;\\'\"()=<>\\+\\-\\*\\/]+))*)"
 				     // COPY REPLACE lit ==???==
 				  + "|([=][=][.]+[=][=])"
 				     // .,:'"() single special char requiring processing
-				  + "|([=][=])|([\\.\\,:;\\'\"()=<>\\+\\-\\*\\/])"            
+				  + "|([=][=])|([\\.\\,:;\\'\"()=<>\\+\\-\\*\\/])"
 			);
 		} catch (Exception e){
 			abort_error("zcobol cbl data token pattern errror - " + e.toString());
 		}
-       	try {
+		try {
 			zc_proc_token_pattern = Pattern.compile(
 				  	 // parm in single or double quotes
 				   	"([']([^']|(['][']))*['])"  // parm in single quotes // RPI 1062
@@ -373,11 +373,11 @@ public class zc390{
 		    	  +	"|([bB][\"][01]+[\"])" // binary value b"??"
 		    	  +	"|([\"]([^\"]|([\"][\"]))*[\"])"  // parm in double quotes // RPI 1062
 					 // any parm similar to data but without embedded commas
-				  +	"|([\\.]*[^\\s\\.\\,:;\\'\"()=<>\\+\\-\\*\\/]+(([^\\s\\.\\,:;\\'\"()=<>\\+\\*\\/]+)|([\\.][^\\s\\.\\,:;\\'\"()=<>\\+\\-\\*\\/]+))*)"	
+				  +	"|([\\.]*[^\\s\\.\\,:;\\'\"()=<>\\+\\-\\*\\/]+(([^\\s\\.\\,:;\\'\"()=<>\\+\\*\\/]+)|([\\.][^\\s\\.\\,:;\\'\"()=<>\\+\\-\\*\\/]+))*)"
 				     // COPY REPLACE lit ==???==
 				  + "|([=][=][.]+[=][=])"
 				     // .,:'"() single special char requiring processing
-				  + "|([=][=])|([\\.\\,:;\\'\"()=<>\\+\\-\\*\\/])"            
+				  + "|([=][=])|([\\.\\,:;\\'\"()=<>\\+\\-\\*\\/])"
 			);
 		} catch (Exception e){
 			abort_error("zcobol cbl proc token pattern errror - " + e.toString());
@@ -389,8 +389,8 @@ public class zc390{
 					 // but no dashes on end
 					 // note 1E1 etc. is allowed in PIC mode
 					 // any parm such as PIC may have leading period and embedded .,- but not '"()=+/*
-				   	"[0-9]+(([a-zA-Z]+)|([\\-]+[a-zA-Z0-9]+))+"	
-           
+				   	"[0-9]+(([a-zA-Z]+)|([\\-]+[a-zA-Z0-9]+))+"
+
 			);
 		} catch (Exception e){
 			abort_error("zcobol cbl data name pattern errror - " + e.toString());
@@ -401,14 +401,14 @@ public class zc390{
 			ws_indent[index] = ws_indent[index-1] + "  ";
 		    index++;
 		}
-	}	
+	}
 	private void term_zc(){
 		/*
 		 * 1.  Add PROCEDURE END and END
 		 *     to mlc meta file.
 		 * 2.  Display statistics.
 		 * 3.  Exit
-		 * 
+		 *
 		 */
 		put_mlc_line(" ","PROCEDURE","END");
 		put_mlc_line(" ","END","");
@@ -416,24 +416,24 @@ public class zc390{
 			zc_file_buff[0].close();
 			mlc_file_buff.close();
 			lab_file_buff.close(); // RPI 1062
-    	} catch (Exception e){
-    		abort_error("zcobol file close error " + zc_file_name);
-    	}
-        if (tz390.opt_stats){
-            tz390.put_stat_final_options(); // RPI 1504
-            int index = 0;
-            while (index < tot_cpz_file_name){
-                    String xref_msg = "FID=" + tz390.right_justify(""+(index+1),3)
-                                                    + " " + cpz_file_name[index];
-                    tz390.put_stat_line(xref_msg);
-                    index++;
-            }
-    		tz390.put_stat_line("total CBL lines in  =" + tot_cbl);
-    		tz390.put_stat_line("total MLC lines out =" + tot_mlc);
-    		tz390.put_stat_line("total errors        =" + tot_err);
-    	}
-  		tz390.close_systerm(zc390_rc);
-        System.exit(zc390_rc);
+		} catch (Exception e){
+			abort_error("zcobol file close error " + zc_file_name);
+		}
+		if (tz390.opt_stats){
+			tz390.put_stat_final_options(); // RPI 1504
+			int index = 0;
+			while (index < tot_cpz_file_name){
+					String xref_msg = "FID=" + tz390.right_justify(""+(index+1),3)
+													+ " " + cpz_file_name[index];
+					tz390.put_stat_line(xref_msg);
+					index++;
+			}
+			tz390.put_stat_line("total CBL lines in  =" + tot_cbl);
+			tz390.put_stat_line("total MLC lines out =" + tot_mlc);
+			tz390.put_stat_line("total errors        =" + tot_err);
+		}
+		tz390.close_systerm(zc390_rc);
+		System.exit(zc390_rc);
 	}
 	private void put_copyright(){
 		   /*
@@ -442,7 +442,7 @@ public class zc390{
 		    */
 		   	if  (tz390.opt_stats){
 				tz390.put_stat_line("Copyright (c) 2021 z390 Assembler LLC");
-				tz390.put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");   
+				tz390.put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");
 				tz390.put_stat_line("This is free software, and you are welcome to redistribute it");
 				tz390.put_stat_line("under certain conditions; see included LICENSE file for details.");
 		   	    tz390.put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name);
@@ -454,10 +454,10 @@ public class zc390{
 		 * 1.  write line to MLC file
 		 * 2.  if LABEL macros for PROCEDURE DIVISION
 		 *     section and paraggraph names,
-		 *     write to CPY file concatenated 
+		 *     write to CPY file concatenated
 		 *     in front of MLC to preload all
 		 *     label definitions for compile.
-		 * 
+		 *
 		 * Notes:
 		 *   1.  If first char is " and not data_div
 		 *       assume comment-entry and make comment line
@@ -479,11 +479,11 @@ public class zc390{
 		if (tz390.opt_traces){
 			System.out.println("put mlc " + put_line);
 		}
-        put_text_rec(mlc_file_buff,put_line);
-        tot_mlc++;
+		put_text_rec(mlc_file_buff,put_line);
+		tot_mlc++;
 ;	}
 	private void put_text_rec(BufferedWriter file_buff,String text){
-		/* 
+		/*
 		 * write text record to MLC or CPY file
 		 */
 		try {
@@ -498,7 +498,7 @@ public class zc390{
 			} else {
 				file_buff.write(text + "\r\n");
 			}
-            tot_mlc++;
+			tot_mlc++;
 		} catch (Exception e){
 			abort_error("write MLC file error - " + e.toString());
 		}
@@ -507,12 +507,12 @@ public class zc390{
 		/*
 		 * display error and terminate
 		 */
-        tot_err++;
+		tot_err++;
 		zc390_rc = 16;
 		msg = "ZC390E abort " + msg + " on line " + tot_cbl;
 		System.out.println(msg);
-        tz390.put_systerm(msg);
-        put_mlc_line("* " + msg,"",""); // RPI 1042
+		tz390.put_systerm(msg);
+		put_mlc_line("* " + msg,"",""); // RPI 1042
 		tz390.close_systerm(zc390_rc);
 		System.exit(zc390_rc);
 	}
@@ -520,10 +520,10 @@ public class zc390{
 		/*
 		 * display error and terminate
 		 */
-        tot_err++;
-        if (zc390_rc < 12){
-        	zc390_rc = 12;
-        }
+		tot_err++;
+		if (zc390_rc < 12){
+			zc390_rc = 12;
+		}
 		msg = "ZC390E " + msg + " on line " + tot_cbl;
 		System.out.println(msg);
 		tz390.put_systerm(msg);
@@ -531,7 +531,7 @@ public class zc390{
 	}
 	private void get_zc_token(){
 		/*
-		 * 1.  Set zc_token to next logical 
+		 * 1.  Set zc_token to next logical
 		 *     cobol token including continued literal token
 		 *     split across 1 or more lines and non-literal
 		 *     tokens continued at next non-blank char on
@@ -551,14 +551,14 @@ public class zc390{
 			zc_flush_cont_token = false;
 			if (!zc_eof){
 				set_next_token();
-                next_to_prev();
+				next_to_prev();
 			}
 			if (zc_eof){
 				// return null at eof
 				zc_token = null;
 				return;
 			}
-		} else if (zc_next_token.equals("''") 
+		} else if (zc_next_token.equals("''")
 				   && zc_line.length() > 7
 				   && zc_line.charAt(6) == '-'){
 			// append ""..." or ''...' to prior token on mlc_line
@@ -571,7 +571,7 @@ public class zc390{
 			}
 			rep_amp_sq_dq();
 			mlc_parms = mlc_parms.substring(0,mlc_parms.length()-1) + zc_prev_token.substring(1);
-			// restart matcher after ending "/' 
+			// restart matcher after ending "/'
 			// and exit split mode
 			if (zc_proc_div){
 			   zc_token_match = zc_proc_token_pattern
@@ -586,13 +586,13 @@ public class zc390{
 			set_next_token();
 			next_to_prev();
 		} else {
-            next_to_prev();
+			next_to_prev();
 		}
 		if (zc_prev_token != null
-			&& zc_prev_token.equals("'")){ 
-			// start split literal with single " or ' 
+			&& zc_prev_token.equals("'")){
+			// start split literal with single " or '
 			zc_split_lit  = true;
-			zc_prev_token = "'" + zc_line.substring(zc_prev_index);	
+			zc_prev_token = "'" + zc_line.substring(zc_prev_index);
 			zc_line = null;
 			set_next_token();
 			while (zc_split_lit
@@ -601,13 +601,13 @@ public class zc390{
 				&& zc_line.charAt(6) == '-'
 				&& zc_next_token != null
 				&& (zc_next_token.charAt(0) == '\''
-		            || zc_next_token.charAt(0) == '=') ){ 
+		            || zc_next_token.charAt(0) == '=') ){
 				// we have continuation of literal '..' ".." or ==..==
 				// in zc_next_token from next line
 				if (zc_next_token.length() == 1){
 					// add rest of continued line
 					index = zc_line.lastIndexOf(zc_split_char);
-				    zc_prev_token = zc_prev_token + zc_line.substring(index+1); 
+				    zc_prev_token = zc_prev_token + zc_line.substring(index+1);
 					zc_line = null;
 					set_next_token();
 				} else if (zc_next_token.length() == 2){ // RPI 1062 support - ""..." or ''...'
@@ -620,7 +620,7 @@ public class zc390{
 					} else {
 						zc_prev_token = zc_prev_token + "'";
 					}
-					// restart matcher after ending "/' 
+					// restart matcher after ending "/'
 					// and exit split mode
 					if (zc_proc_div){
 					   zc_token_match = zc_proc_token_pattern
@@ -628,11 +628,11 @@ public class zc390{
 					} else {
 						zc_token_match = zc_data_token_pattern
 						.matcher(zc_line.substring(index+1));
-					}					
+					}
 					zc_match_offset = index+1;
 					zc_split_lit  = false;  // end split lit at quote
 					zc_split_char = '\'';   // reset to default
-					zc_flush_cont_token = true; // flush continue token appended to prev.	
+					zc_flush_cont_token = true; // flush continue token appended to prev.
 				} else {
 					// add to end of literal
 					if (zc_prev_token.charAt(zc_prev_token.length()-1) == '\''){
@@ -642,8 +642,8 @@ public class zc390{
 					}
 					zc_split_lit  = false;  // end split lit at quote
 					zc_split_char = '\''; // RPI 1062 reset to default
-					zc_flush_cont_token = true; // flush continue token appended to prev.									
-				}	
+					zc_flush_cont_token = true; // flush continue token appended to prev.
+				}
 			}
 	        if (zc_split_lit){
 	        	log_error("zcob split literal format error");
@@ -654,7 +654,7 @@ public class zc390{
 		} else {
 			// prev token not split literal
 			if (!pic_mode){
-				if  (zc_prev_token != null 
+				if  (zc_prev_token != null
 				     && (zc_prev_token.toUpperCase().equals("PIC")
 					     || zc_prev_token.toUpperCase().equals("PICTURE"))){
 				     pic_mode = true;
@@ -664,7 +664,7 @@ public class zc390{
 				pic_mode = false; // turn off after processing token after pic
 			}
 			if (!value_mode){
-				if  (zc_prev_token != null 
+				if  (zc_prev_token != null
 				     && (zc_prev_token.toUpperCase().equals("VALUE"))){
 				     value_mode = true;
 				}
@@ -674,9 +674,9 @@ public class zc390{
 		if (zc_prev_token.charAt(0) != '\'' ){
 			zc_prev_token = zc_prev_token.toUpperCase();
 		} else if (zc_prev_token.length() > 2){
-            rep_amp_sq_dq();
+			rep_amp_sq_dq();
 		}
-        // we now have a complete prev token
+		// we now have a complete prev token
 		zc_token      = zc_prev_token;
 		zc_token_index = zc_prev_index;
 		zc_token_area = zc_prev_area;
@@ -717,10 +717,10 @@ public class zc390{
 				find_next_token();
 			}
 		}
-		while (!zc_eof 
+		while (!zc_eof
 				&& zc_line == null){
 			get_zc_line();
-			if (!zc_eof){ 
+			if (!zc_eof){
 				if (zc_line.length() < 8){
 					// ignore short lines
 					zc_line = null;
@@ -728,11 +728,11 @@ public class zc390{
 					if (zc_line.length() > 72){
 				    	zc_line = zc_line.substring(0,72);
 					}
-					if  (zc_line.charAt(6) == '*'      
+					if  (zc_line.charAt(6) == '*'
 						|| zc_line.charAt(6) == '/'
 						|| zc_line.charAt(6) == 'D'){ // RPI 1062
-                         put_mlc_comment();
-					} else if ((zc_line.length() >= 14 
+						 put_mlc_comment();
+					} else if ((zc_line.length() >= 14
 							    && zc_line.substring(7).toUpperCase().equals("AUTHOR."))
 							 || (zc_line.length() >= 16
 								&& zc_line.substring(7).toUpperCase().equals("SECURITY."))
@@ -761,7 +761,7 @@ public class zc390{
 							}
 						}
 					}
-				} 
+				}
 			}
 			if  (zc_line != null){
 				if (zc_copy_trailer){
@@ -805,7 +805,7 @@ public class zc390{
 			 * 3.  write each line as comment on MLC
 			 * 4.  ignore lines < 8 or blank
 			 * 5.  ignore comment lines with non-space in 7
-			 */			
+			 */
 		get_next_zc_line();
 		boolean zc_line_blank = true;
 		while (zc_line != null && zc_line_blank) {
@@ -828,9 +828,9 @@ public class zc390{
 		/*
 		 * display CBL as comments if ZC_COMMENT
 		 */
-		if (text != null 
+		if (text != null
 			&& zc_comment // request to gen CBL comments
-			&& (text.length() < 7 
+			&& (text.length() < 7
 				|| text.charAt(6) != '*')) {
 			if (zc_comment_pending) {
 				put_mlc_line(zc_comment_line,"","");
@@ -852,7 +852,7 @@ public class zc390{
 			if (zc_copy_trailer){
 				zc_copy_trailer = false;
 			} else {
-                get_zc_read_cont();
+				get_zc_read_cont();
 				if (zc_line != null){
 					cur_rep_ix = zc_copy_rep_fst_ix[cur_zc_file];
 					if (cur_rep_ix > 0){
@@ -861,7 +861,7 @@ public class zc390{
 							cur_rep_ix++;
 						}
 					}
-				} else if (zc_copy_line[cur_zc_file] != null){ 
+				} else if (zc_copy_line[cur_zc_file] != null){
 					zc_copy_trailer = true;
 					zc_line = zc_copy_line[cur_zc_file]; // RPI 1062 add +1 for all 3
 					zc_copy_line[cur_zc_file] =null;
@@ -892,10 +892,10 @@ public class zc390{
 					flush_last_mlc_line();
 					dfheiblk = true;
 				}
-			    if (request_proc){   	
+			    if (request_proc){
 			    	gen_data_end();  // RPI 1086
 		    	}
-			    get_zc_read_cont();			    
+			    get_zc_read_cont();
 			}
 			if (zc_line != null && zc_line.length() > 72){
 				zc_line = zc_line.substring(0,72);
@@ -907,15 +907,15 @@ public class zc390{
 		 * non split lit continuations
 		 */
 		try {
-    	    zc_line = zc_file_buff[cur_zc_file].readLine();
-    	    zc_cbl_comment(zc_line);
+		    zc_line = zc_file_buff[cur_zc_file].readLine();
+		    zc_cbl_comment(zc_line);
 	    	if (zc_line != null && !zc_split_lit){
 	    		zc_file_buff[cur_zc_file].mark(100);
 	    		zc_line_lookahead = zc_file_buff[cur_zc_file].readLine();
 	    		boolean cont_split_lit = false;
 	    		while (zc_line_lookahead != null
 	    				&& !cont_split_lit
-	    				&& zc_line_lookahead.length() > 7 
+	    				&& zc_line_lookahead.length() > 7
 	    			    && zc_line_lookahead.charAt(6) == '-'){
 	    			zc_cbl_comment(zc_line_lookahead);
 	    			if (zc_line_lookahead.length() > 72){
@@ -933,7 +933,7 @@ public class zc390{
 	    		    	zc_line = zc_line.concat(zc_line_lookahead.substring(index));
 	    		    	tot_cbl++;
 	    		    	zc_file_buff[cur_zc_file].mark(100);
-	    		    	zc_line_lookahead = zc_file_buff[cur_zc_file].readLine();	    
+	    		    	zc_line_lookahead = zc_file_buff[cur_zc_file].readLine();
 	    		    } else {
 	    		    	cont_split_lit = true;
 	    		    }
@@ -982,10 +982,10 @@ public class zc390{
 			} else {
 				zc_next_area = 'B';
 			}
-			if (zc_next_token.length() >= 2 
+			if (zc_next_token.length() >= 2
 				&& zc_next_token.charAt(0) == '"'){
 				zc_split_char = '"'; // RPI 1062
-				zc_next_token = "'" + zc_next_token.substring(1,zc_next_token.length()-1)+"'"; // cvt ".." to '..'					
+				zc_next_token = "'" + zc_next_token.substring(1,zc_next_token.length()-1)+"'"; // cvt ".." to '..'
 			} else if (zc_next_token.equals("\"")){
 				zc_split_char = '"'; // RPI 1062
 				zc_next_token = "'";
@@ -996,17 +996,17 @@ public class zc390{
 				int index2 = zc_next_index + zc_token_match.group().length()-1;
 				while (zc_line.length() > index2
 					   && zc_line.charAt(index2) > ' '
-				       && (zc_line.charAt(index2) != '.' 
-				    	   || (zc_line.length() > index2+1 
+				       && (zc_line.charAt(index2) != '.'
+				    	   || (zc_line.length() > index2+1
 			    			   && zc_line.charAt(index2+1) > ' '
 				    	      )
-				    	   )    
+				    	   )
 				    	&& zc_token_match.find()){
 					  zc_next_token = zc_next_token + zc_token_match.group();
 				      zc_next_index = zc_token_match.start() + zc_match_offset;
 				      index2 = zc_next_index + zc_token_match.group().length()-1;
 				}
-			} else if (zc_next_token.charAt(0) <= '9' 
+			} else if (zc_next_token.charAt(0) <= '9'
 				       && zc_next_token.charAt(0) >= '0'){
 				// convert data names starting with digit to #name
 				zc_name_match = zc_name_pattern
@@ -1028,39 +1028,39 @@ public class zc390{
 		 *           else ignore period.
 		 *       b.  Ignore commas.
 		 *       c.  If '" wrap in opposite quotes
-		 *       d.  If () wrap in single quotes. 
-		 *       e.  comma or semicolon ignored         
+		 *       d.  If () wrap in single quotes.
+		 *       e.  comma or semicolon ignored
 		 */
 		if (zc_token.length() > 1){
 			if (zc_token.charAt(0) != '\''
 				&& zc_token.charAt(0) != '"'){
-				if (zc_token.indexOf(',') >= 0){// ALLOW . IN OPEN PARMS zc_token.indexOf('.') >= 0 
+				if (zc_token.indexOf(',') >= 0){// ALLOW . IN OPEN PARMS zc_token.indexOf('.') >= 0
 					// wrap strings with ., in quotes to make single parm
-					zc_token = "'" + zc_token + "'";				
+					zc_token = "'" + zc_token + "'";
 				} else if (!pic_mode && !value_mode && zc_token.indexOf('-') >= 0){ // RPI 1126 allow nE-n value
 			    	// replace token "-" with "_"
 			    	// for z390 meta macro assembler compatiblity
 		    		zc_token = tz390.find_dash.matcher(zc_token).replaceAll("_");  // RPI 1080
-				} 			    
+				}
 			}
-                        if (mlc_op != null) {                               // jclh(RPI 1545 RPI 1546)
-                            if (!mlc_op.equals("WS")) {                     // jclh(RPI 1545 RPI 1546)
-                                if ((zc_token.charAt(0) == '\'')            // jclh(RPI 1545 RPI 1546)
-                                &&  (zc_token.charAt(1) == '(')             // jclh(RPI 1545 RPI 1546)
-                                &&  (zc_token.charAt(2) == '\'')) {         // jclh(RPI 1545 RPI 1546)
-                                     log_error("only use lit ( in WS");     // jclh(RPI 1545 RPI 1546)
-                                }                                           // jclh(RPI 1545 RPI 1546)
-                            }                                               // jclh(RPI 1545 RPI 1546)
-                        }                                                   // jclh(RPI 1545 RPI 1546)
-                        if (mlc_op != null) {                               // jclh(RPI 1545 RPI 1546)
-                            if (!mlc_op.equals("WS")) {                     // jclh(RPI 1545 RPI 1546)
-                                if ((zc_token.charAt(0) == '\'')            // jclh(RPI 1545 RPI 1546)
-                                &&  (zc_token.charAt(1) == ')')             // jclh(RPI 1545 RPI 1546)
-                                &&  (zc_token.charAt(2) == '\'')) {         // jclh(RPI 1545 RPI 1546)
-                                     log_error("only use lit ) in WS");     // jclh(RPI 1545 RPI 1546)
-                                }                                           // jclh(RPI 1545 RPI 1546)
-                            }                                               // jclh(RPI 1545 RPI 1546)
-                        }                                                   // jclh(RPI 1545 RPI 1546)
+						if (mlc_op != null) {                               // jclh(RPI 1545 RPI 1546)
+							if (!mlc_op.equals("WS")) {                     // jclh(RPI 1545 RPI 1546)
+								if ((zc_token.charAt(0) == '\'')            // jclh(RPI 1545 RPI 1546)
+								&&  (zc_token.charAt(1) == '(')             // jclh(RPI 1545 RPI 1546)
+								&&  (zc_token.charAt(2) == '\'')) {         // jclh(RPI 1545 RPI 1546)
+									 log_error("only use lit ( in WS");     // jclh(RPI 1545 RPI 1546)
+								}                                           // jclh(RPI 1545 RPI 1546)
+							}                                               // jclh(RPI 1545 RPI 1546)
+						}                                                   // jclh(RPI 1545 RPI 1546)
+						if (mlc_op != null) {                               // jclh(RPI 1545 RPI 1546)
+							if (!mlc_op.equals("WS")) {                     // jclh(RPI 1545 RPI 1546)
+								if ((zc_token.charAt(0) == '\'')            // jclh(RPI 1545 RPI 1546)
+								&&  (zc_token.charAt(1) == ')')             // jclh(RPI 1545 RPI 1546)
+								&&  (zc_token.charAt(2) == '\'')) {         // jclh(RPI 1545 RPI 1546)
+									 log_error("only use lit ) in WS");     // jclh(RPI 1545 RPI 1546)
+								}                                           // jclh(RPI 1545 RPI 1546)
+							}                                               // jclh(RPI 1545 RPI 1546)
+						}                                                   // jclh(RPI 1545 RPI 1546)
 		} else if (zc_token.length() == 1){
 			// single char token . or ,
 			if (zc_token.charAt(0) == '.'){
@@ -1090,30 +1090,30 @@ public class zc390{
 				zc_token = "'" + zc_token + "'";
 			} else if (zc_token.charAt(0) == '"'){
 				zc_token = "\"" + zc_token + "\"";
- 			} else if (zc_token.charAt(0) == '('){
- 				zc_level++;
- 				zc_token = "'('";
+			} else if (zc_token.charAt(0) == '('){
+				zc_level++;
+				zc_token = "'('";
 		    } else if (zc_token.charAt(0) == ')'){
- 				zc_level--;
-		    	zc_token = "')'";	
+				zc_level--;
+		    	zc_token = "')'";
 		    }
-			// may be single char label 
+			// may be single char label
 		} else {
 			abort_error("zero length token parsing error");
 		}
 		if (zc_token_area == 'A'){
 			// non procedure division section operation
 			// or procedure division label
-			if (zc_proc_div 
+			if (zc_proc_div
 				&& zc_next_token != null // RPI 1062
 				&& (zc_next_token.equals(".")            // RPI 1012
-					|| zc_next_token.toUpperCase().equals("SECTION"))){ // RPI 1012	RPI 1063			
+					|| zc_next_token.toUpperCase().equals("SECTION"))){ // RPI 1012	RPI 1063
 				// gen procedure div label
 				new_mlc_line(" ","LABEL",zc_token); // RPI 1086
 				mlc_parm_cnt = 1;  // RPI 1062 append SECTION if present to first parm anme
 				skip_period = true;
 			} else {
-				if  (zc_token.charAt(0) >= '0' 
+				if  (zc_token.charAt(0) >= '0'
 					 && zc_token.charAt(0) <= '9'){
 					new_ws_line();
 				} else {
@@ -1123,13 +1123,13 @@ public class zc390{
 						linkage_sect = true;
 					} else if (zc_token.equals("PROCEDURE")){
 						if (!data_div){
-                            zc_comment_pending = false; // cancel proc div comment
+							zc_comment_pending = false; // cancel proc div comment
 							data_div = true;
 							put_mlc_line(" ","DATA","DIVISION");
 						}
 						if (zc_cics){
 							// check if PROCEDURE statement needs
-							// to be preceeded by generated 
+							// to be preceeded by generated
 							// DFHEIBLK and DFHCOMMAREA linkage sections
 							if (!linkage_sect){
 	                            zc_comment_pending = false;
@@ -1149,12 +1149,12 @@ public class zc390{
 								request_proc = true;
 								return;
 							}
-						} 
+						}
 						gen_data_end();  // RPI 1086
 					} else if (zc_token.equals("SD")){
 						zc_token = "ZCSD"; // RPI 1062
 					} else if (zc_token.equals("END")){ // RPI 1062
-                        zc_token = "ZCEND";
+						zc_token = "ZCEND";
 					}
 					new_mlc_line(" ",zc_token,"");
 				}
@@ -1164,18 +1164,18 @@ public class zc390{
 				flush_last_mlc_line();
 				flush_comment_line();
 			}
-            set_zc_line_id_num(); // RPI 1086
-			new_mlc_line(" ",zc_token,"");	
+			set_zc_line_id_num(); // RPI 1086
+			new_mlc_line(" ",zc_token,"");
 			if (zc_next_token.equals(".")){
-				new_mlc_line(" ","PERIOD","");	
-			}		
+				new_mlc_line(" ","PERIOD","");
+			}
 		} else {
 			// assume parm for prior verb
 			if (mlc_op == null){
 				// assume unknown verb starting new line
 				flush_comment_line();
-				if (!zc_proc_div 
-					&& zc_token.charAt(0) >= '0' 
+				if (!zc_proc_div
+					&& zc_token.charAt(0) >= '0'
 					&& zc_token.charAt(0) <= '9'){
 					new_ws_line();
 				} else {
@@ -1192,7 +1192,7 @@ public class zc390{
 		 * gen DATA END after any cics generated COPY
 		 * for DFHEIBLK or DFHCOMMAREA
 		 */
-		put_mlc_line(" ","DATA","END");	
+		put_mlc_line(" ","DATA","END");
 		if (request_proc){
 			request_proc = false;
 			if (proc_using_parms.length() > 0){
@@ -1218,7 +1218,7 @@ public class zc390{
 		 * 3.  flush through period.
 		 */
 		proc_using_parms = "";
-		get_zc_token(); 
+		get_zc_token();
 		while (!zc_token.equals(".")){
 			if (   !zc_token.equals("DIVISION")
 				&& !zc_token.equals("USING")
@@ -1233,12 +1233,12 @@ public class zc390{
 	private void new_ws_line(){
 		/*
 		 * 1.  If new level # less than
-		 *     current level #, 
+		 *     current level #,
 		 *     decrement group level #.
 		 * 2.  Generate new WS verb with
 		 *     level # as first parm
 		 *     indented to current group level.
-		 * 
+		 *
 		 */
 		int ws_item_lvl = 0;
 		try {
@@ -1260,13 +1260,13 @@ public class zc390{
 			ws_lvl[0] = ws_item_lvl;
 			break;
 		case 77:  // item
-			ws_lvl_index = 0;	
+			ws_lvl_index = 0;
 			ws_lvl[0] = ws_item_lvl;
 			break;
-		case 88:  // value 
+		case 88:  // value
 			// use current level / indent
 			break;
-		default: // 02-49 
+		default: // 02-49
 			if (ws_item_lvl < 1 || ws_item_lvl > 49){
 				log_error("zcobol invalid ws level " + ws_item_lvl);
 			}
@@ -1286,48 +1286,48 @@ public class zc390{
 			dfhcommarea = true;
 		}
 	}
-    private void new_mlc_line(String new_lab, String new_op, String new_parms){
-    	/*
-    	 * write pending mlc line
-    	 * and start new line
-    	 * and reset parm count
-    	 */
-        flush_last_mlc_line();
+	private void new_mlc_line(String new_lab, String new_op, String new_parms){
+		/*
+		 * write pending mlc line
+		 * and start new line
+		 * and reset parm count
+		 */
+		flush_last_mlc_line();
 		mlc_lab   = new_lab;
 		mlc_op    = new_op;
 		mlc_parms = new_parms;
 		mlc_parm_cnt = 0;
-    }
-    private void flush_last_mlc_line(){
-    	/*
-    	 * write pending mlc_line if any
-    	 */
-    	if (mlc_op != null){
-            put_zc_line();  // RPI 1086
-    		put_mlc_line(mlc_lab,mlc_op,mlc_parms);
-    	}
-    	mlc_op = null;
-    }
-    private void put_zc_line(){
-    	/*
-    	 * put zcobol call source comment 
-    	 */
-		if (zc_proc_div){ 
-    		if (zc_comment
-    			&& !mlc_op.equals("PERIOD")
-    			&& !mlc_op.equals("LABEL")
-    			){
-    			put_mlc_line("*ZC " + zc_line_num + " " + zc_line_id + " " + tz390.left_justify(mlc_op,5) + " " + mlc_parms,"",""); // RPI 1086
-    		}
-    	}
-    }
-    private void add_mlc_parm(String token){
-    	/*
-    	 * add token parm to mlc_line
-    	 * Notes:
-    	 *   1.  If exec_mode and parm,
-    	 */
-    	if (mlc_parm_cnt == 0) {
+	}
+	private void flush_last_mlc_line(){
+		/*
+		 * write pending mlc_line if any
+		 */
+		if (mlc_op != null){
+			put_zc_line();  // RPI 1086
+			put_mlc_line(mlc_lab,mlc_op,mlc_parms);
+		}
+		mlc_op = null;
+	}
+	private void put_zc_line(){
+		/*
+		 * put zcobol call source comment
+		 */
+		if (zc_proc_div){
+			if (zc_comment
+				&& !mlc_op.equals("PERIOD")
+				&& !mlc_op.equals("LABEL")
+				){
+				put_mlc_line("*ZC " + zc_line_num + " " + zc_line_id + " " + tz390.left_justify(mlc_op,5) + " " + mlc_parms,"",""); // RPI 1086
+			}
+		}
+	}
+	private void add_mlc_parm(String token){
+		/*
+		 * add token parm to mlc_line
+		 * Notes:
+		 *   1.  If exec_mode and parm,
+		 */
+		if (mlc_parm_cnt == 0) {
 			mlc_parms = zc_token;
 		} else if (!exec_mode){
 			mlc_parms = mlc_parms + "," + zc_token;
@@ -1337,22 +1337,22 @@ public class zc390{
 				zc_token_first = true;
 			} else {
 		        exec_parm[exec_parm_index] = zc_token;
-				exec_parm_index++;						
+				exec_parm_index++;
 			}
 		}
-    	mlc_parm_cnt++;
-    }
-    private void gen_exec_stmt(){
-    	/*
-    	 * generate EXEC call with parm(value)
-    	 * parameters combined
-    	 */
-    	int index = 0;
-    	while (index < exec_parm_index){
+		mlc_parm_cnt++;
+	}
+	private void gen_exec_stmt(){
+		/*
+		 * generate EXEC call with parm(value)
+		 * parameters combined
+		 */
+		int index = 0;
+		while (index < exec_parm_index){
 			if (exec_parm[index].equals("'('")){
 				mlc_parms = mlc_parms + "(" + exec_parm[index+1];
 				index = index + 2;
-				while (index < exec_parm_index 
+				while (index < exec_parm_index
 					&& exec_parm[index] != "')'"){
 					mlc_parms = mlc_parms + "," + exec_parm[index];
 					index++;
@@ -1361,24 +1361,24 @@ public class zc390{
 			    index = index + 1;
 			} else {
 				mlc_parms = mlc_parms + "," + exec_parm[index];
-                index++;
+				index++;
 			}
-    	}  
+		}
 		put_mlc_line("*ZC " + zc_line_num + " " + zc_line_id + " " + tz390.left_justify(mlc_op,5) + " " + mlc_parms,"",""); // RPI 1086
-    	put_mlc_line(mlc_lab,mlc_op,mlc_parms);
-    	if (zc_next_token.equals(".")){
-    		put_mlc_line(" ","PERIOD","");
-    	}
-		if (!zc_cics 
+		put_mlc_line(mlc_lab,mlc_op,mlc_parms);
+		if (zc_next_token.equals(".")){
+			put_mlc_line(" ","PERIOD","");
+		}
+		if (!zc_cics
 			&& mlc_op.equals("EXEC")
 			&& mlc_parms.length() > 4
 			&& mlc_parms.substring(0,4).equals("CICS")){
 			abort_error("EXEC CICS statements require CICS option");
 		}
-    	mlc_op = null;
-    	exec_mode = false;
-    	exec_parm_index = 0;
-    }
+		mlc_op = null;
+		exec_mode = false;
+		exec_parm_index = 0;
+	}
 	private boolean find_verb(){
 		/*
 		 * return true if zc_token
@@ -1401,9 +1401,9 @@ public class zc390{
 		        || key.equals("ALTER")
 		        ){
 				return true;
-			}		
+			}
 			return false;
-		case 'C': 
+		case 'C':
 			if (key.equals("CALL")
 			        || key.equals("CANCEL")
 			        || key.equals("CLOSE")
@@ -1415,9 +1415,9 @@ public class zc390{
 			        || key.equals("CRT") // RPI 1062 spec names
 			        ){
 					return true;
-				}		
-				return false;	
-		case 'D': 
+				}
+				return false;
+		case 'D':
 			if (key.equals("DIVIDE")  // most frequent
 					|| key.equals("DELETE")
 					|| key.equals("DISABLE")
@@ -1428,12 +1428,12 @@ public class zc390{
 				    	return false; // RPI 1062
 				    }
 					return true;
-				}		
+				}
 				return false;
 		case 'E':
 			if (key.equals("EXEC")
 			    ){
-				exec_mode = true;				
+				exec_mode = true;
 				return true;
 			}
 			if (key.equals("END_EXEC")){
@@ -1460,38 +1460,38 @@ public class zc390{
 				return true;
 			}
 			return false;
-		case 'G': 
+		case 'G':
 			if (key.equals("GENERATE")
 					|| key.equals("GO")
 					|| key.equals("GOBACK")
 			        ){
 					return true;
-				}		
+				}
 				return false;
-		case 'I': 
+		case 'I':
 			if (key.equals("IF")
 			        || key.equals("INITIALIZE")
 			        || key.equals("INITIATE")
 			        || key.equals("INSPECT")
 			        ){
 					return true;
-				}		
+				}
 				return false;
-		case 'L': 
+		case 'L':
 			if (key.equals("LOCALE")
 			        ){
 					return true;
-				}		
+				}
 				return false;
-		case 'M': 
+		case 'M':
 			if (key.equals("MERGE")
 			        || key.equals("MOVE")
 			        || key.equals("MULTIPLY")
 			        ){
 					return true;
-				}		
+				}
 				return false;
-		case 'N': 
+		case 'N':
 			if (key.equals("NEXT")
 				|| key.equals("NOTE")
 				|| key.equals("NOT")
@@ -1502,23 +1502,23 @@ public class zc390{
 					} else {
 						return false;
 					}
-				}		
+				}
 				return true;
 			}
 			return false;
-		case 'O': 
+		case 'O':
 			if (key.equals("OPEN")
 				|| key.equals("ORDER") // RPI 1062 spec names
 			    ){
 					return true;
-				}		
+				}
 				return false;
-		case 'P': 
+		case 'P':
 			if (key.equals("PERFORM")){
 				return true;
 			}
 			return false;
-		case 'R': 
+		case 'R':
 			if (key.equals("READ")
 					|| key.equals("READY")   // OS/VS READY TRACE
 					|| key.equals("RECEIVE")
@@ -1529,9 +1529,9 @@ public class zc390{
 			        || key.equals("REWRITE")
 			        ){
 					return true;
-				}		
-				return false;	
-		case 'S': 
+				}
+				return false;
+		case 'S':
 			if (key.equals("SUBTRACT") // MFU first for speed
 					|| key.equals("SEARCH")
 					|| key.equals("SELECT")
@@ -1547,31 +1547,31 @@ public class zc390{
 				    	zc_token = "ZCSTART"; // avoid assembler START conflist
 				    }
 					return true;
-				}		
+				}
 				return false;
-		case 'T': 
+		case 'T':
 			if (key.equals("TERMINATE")
 				|| key.equals("TRANSFORM") // OS/VS REPLACED BY INSPECT
 			    ){
 				return true;
-			}		
-			return false;				
-		case 'U': 
+			}
+			return false;
+		case 'U':
 			if (key.equals("UNSTRING")
 			       ){
 				return true;
-			}		
-			return false;	
-		case 'W': 
-			if (key.equals("WHEN") 
+			}
+			return false;
+		case 'W':
+			if (key.equals("WHEN")
 				|| key.equals("WRITE")
 			    ){
 			    if (!zc_proc_div && key.equals("WHEN")){
 			    	return false; // RPI 1062
 			    }
 				return true;
-			}		
-			return false;	
+			}
+			return false;
 		}
 		return false;  // UNDEFINED WORD
 	}
@@ -1593,11 +1593,11 @@ public class zc390{
 			set_next_token();
 			return;
 		}
-		zc_copy_line[cur_zc_file]       = null; // assume  no trailing tokens 
+		zc_copy_line[cur_zc_file]       = null; // assume  no trailing tokens
 		zc_copy_rep_fst_ix[cur_zc_file] = 0; // assume  no REPLACING
 		zc_copy_rep_lst_ix[cur_zc_file] = 0; // force exit from while loop when index high
 		set_next_token();
-		while (!zc_eof 
+		while (!zc_eof
 				&& !zc_next_token.equals(".")){
 			switch (parm){
 			case 0: // member name
@@ -1639,16 +1639,16 @@ public class zc390{
 				} else if (zc_next_token.equals("==")){
 					copy_error("split pseudo COPY replacement not supported");
 				}
-                if (zc_copy_rep_fst_ix[cur_zc_file+1] == 0){
-                	zc_copy_rep_fst_ix[cur_zc_file+1] = zc_copy_rep_ix;
-                }
-                zc_copy_rep_lst_ix[cur_zc_file+1] = zc_copy_rep_ix;
+				if (zc_copy_rep_fst_ix[cur_zc_file+1] == 0){
+					zc_copy_rep_fst_ix[cur_zc_file+1] = zc_copy_rep_ix;
+				}
+				zc_copy_rep_lst_ix[cur_zc_file+1] = zc_copy_rep_ix;
 				zc_copy_rep_lit1[zc_copy_rep_lst_ix[cur_zc_file+1]] = zc_next_token;
-                zc_copy_rep_ix++;
-        		if (zc_copy_rep_ix >= tz390.opt_maxfile){
-        			copy_error("maximum nested copy reps exceeded");
-        			return;
-        		}
+				zc_copy_rep_ix++;
+				if (zc_copy_rep_ix >= tz390.opt_maxfile){
+					copy_error("maximum nested copy reps exceeded");
+					return;
+				}
 				parm = 5;
 			    break;
 			case 5:
@@ -1666,29 +1666,29 @@ public class zc390{
 			case 7: // append OF/IN field to lit2
 				zc_copy_rep_lit2[zc_copy_rep_lst_ix[cur_zc_file+1]] = zc_copy_rep_lit2[zc_copy_rep_lst_ix[cur_zc_file+1]] + " " + zc_next_token;
 			    parm = 4;
-			    break;    
+			    break;
 			default:
 		    	copy_error("unknown COPY parm - " + zc_next_token);
 	    		return;
 			}
 			set_next_token();
 		}
-        if (zc_copy_member == null){
+		if (zc_copy_member == null){
 	    	copy_error("missing COPY member");
-    	   	return;
-        } else if (zc_copy_ddname != null){
-        	zc_copy_file_name = System.getenv(zc_copy_ddname); 
-        	if (zc_copy_file_name == null){
-        		copy_error("copy ddname not found - " + zc_copy_ddname);
-        		return;
-        	}
-        	zc_copy_file_name = zc_copy_file_name + File.separator + zc_copy_member + cpz_type;
-        } else {
+		   	return;
+		} else if (zc_copy_ddname != null){
+			zc_copy_file_name = System.getenv(zc_copy_ddname);
+			if (zc_copy_file_name == null){
+				copy_error("copy ddname not found - " + zc_copy_ddname);
+				return;
+			}
+			zc_copy_file_name = zc_copy_file_name + File.separator + zc_copy_member + cpz_type;
+		} else {
 		    zc_copy_file_name = tz390.find_file_name(tz390.dir_cpy,zc_copy_member,cpz_type,tz390.dir_cur);
 		    if (zc_copy_file_name == null){ // RPI 970 add key if found
 		    	copy_error("COPY file not found - " + zc_copy_file_name);
 		    	return;
-		    } else if (zc_cics){ 
+		    } else if (zc_cics){
 		    	if (zc_copy_member.equals("DFHEIBLK")){
 		    		if (!dfheiblk){
 		    			dfheiblk_loading = true;
@@ -1699,9 +1699,9 @@ public class zc390{
 		    		}
 		    	}
 		    }
-        }
-        cur_zc_file++;
-        add_cpz_file();
+		}
+		cur_zc_file++;
+		add_cpz_file();
 		try {
 			zc_file[cur_zc_file] = new File(zc_copy_file_name);
 			zc_file_buff[cur_zc_file] = new BufferedReader(new FileReader(zc_file[cur_zc_file]));
@@ -1711,15 +1711,15 @@ public class zc390{
 		    return;
 		}
 		if (zc_line != null && zc_token_match.find()){
-			zc_copy_line[cur_zc_file]    = zc_line; 
-			zc_copy_line_ix[cur_zc_file] = zc_token_match.start()+ zc_match_offset - 1; // RPI 1062 
+			zc_copy_line[cur_zc_file]    = zc_line;
+			zc_copy_line_ix[cur_zc_file] = zc_token_match.start()+ zc_match_offset - 1; // RPI 1062
 			zc_line = null; // RPI 1062
 		}
 		set_next_token(); // RPI 1062 get next token from copy file
 	}
 	private void copy_error(String msg){
 		/*
-		 * terminate COPY with error and 
+		 * terminate COPY with error and
 	 	* dec cur_zc_file and flush line
 	 	*/
 		log_error(msg + "\r" + zc_line);
@@ -1727,22 +1727,22 @@ public class zc390{
 		zc_copy_trailer = false;
 	}
 	private void add_cpz_file(){
-        /*
-         * add cpz file for stats list  RPI 1042
-         */
-        if (!tz390.opt_stats){
-                return;
-        }
-        int index = tz390.find_key_index(
-                        'F',zc_copy_file_name);         
-        if (index == -1){
-                if (tot_cpz_file_name < tz390.opt_maxfile){
-                        if (!tz390.add_key_index(tot_cpz_file_name)){
-                                abort_error("key search table exceeded adding " + tot_cpz_file_name);
-                        }
-                        cpz_file_name[tot_cpz_file_name] = zc_copy_file_name;
-                        tot_cpz_file_name++;
-                }
-        }
+		/*
+		 * add cpz file for stats list  RPI 1042
+		 */
+		if (!tz390.opt_stats){
+				return;
+		}
+		int index = tz390.find_key_index(
+						'F',zc_copy_file_name);
+		if (index == -1){
+				if (tot_cpz_file_name < tz390.opt_maxfile){
+						if (!tz390.add_key_index(tot_cpz_file_name)){
+								abort_error("key search table exceeded adding " + tot_cpz_file_name);
+						}
+						cpz_file_name[tot_cpz_file_name] = zc_copy_file_name;
+						tot_cpz_file_name++;
+				}
+		}
 }
 }

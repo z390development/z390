@@ -18,12 +18,12 @@ with this program; if not, see <https://www.gnu.org/licenses/>.
 */
 public class zCatVAIX
 {/***************************************************************************
-  * 
+  *
   * The zCatVAIX object is the Java-level representation of a Catalog definition
   *              for a zVSAM Alternate IndeX
-  * 
+  *
   * *************************************************** Maintenance
-  * 2016-12-28 initial coding 
+  * 2016-12-28 initial coding
   *****************************************************/
   private String  VAIXID;   // DS    CL4   ID C'VAIX'
   private String  VAIXNAME; // DS    CL8   NAME OF ALTERNATE INDEX
@@ -54,26 +54,26 @@ public class zCatVAIX
   /* Constructor for new AIX definition */
   public zCatVAIX(sz390 sz390, int VAIX_ptr)
    {VAIXID   = sz390.get_ascii_string(VAIX_ptr + 0, 4, true);
-    VAIXNAME = null;
-    VAIXRELN = null;
-    VAIXRUSE = false;
-    VAIXUKEY = false;
-    VAIXUAIX = false;
-    VAIXSPAN = false;
-    VAIXDADJ = false;
-    VAIXIADJ = false;
-    VAIXKLEN = 0;
-    VAIXKOFF = 0;
-    VAIXDTA  = null;
-    VAIXIDX  = null;
-    VAIXDBS  = 0;
-    VAIXIBS  = 0;
-    VAIXDCA  = 0;
-    VAIXDCI  = 0;
-    VAIXICA  = 0;
-    VAIXICI  = 0;
-    System.out.println("zCatVAIX constructed");
-    }
+	VAIXNAME = null;
+	VAIXRELN = null;
+	VAIXRUSE = false;
+	VAIXUKEY = false;
+	VAIXUAIX = false;
+	VAIXSPAN = false;
+	VAIXDADJ = false;
+	VAIXIADJ = false;
+	VAIXKLEN = 0;
+	VAIXKOFF = 0;
+	VAIXDTA  = null;
+	VAIXIDX  = null;
+	VAIXDBS  = 0;
+	VAIXIBS  = 0;
+	VAIXDCA  = 0;
+	VAIXDCI  = 0;
+	VAIXICA  = 0;
+	VAIXICI  = 0;
+	System.out.println("zCatVAIX constructed");
+	}
 
  /* end of module zCatVAIX */
  }
