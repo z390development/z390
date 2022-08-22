@@ -439,6 +439,7 @@ public  class  mz390 {
 	 * 2022-02-08 dsh #335 fix bug in insert_acall_parms not checking for no parms and returning
 	 * 2022-03-26 DSH #335 rename opcode APARM to ACALLPRM to allow APARM macro
 	 * 2022-04-07 DSH #215 prevent SETC statement character string processing from reducing && to &
+	 * 2022-08-07 #439 INDEX issue
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -989,21 +990,21 @@ public  class  mz390 {
 	 */
 	int tot_classes = 15;
 	int[] exp_action = {
-			1, 3, 3, 1, 0, 1, 1, 8, 1, 3, 1, 1, 1, 1, 3, // 1 +-  prev add/sub
-			2, 2, 3, 2, 0, 2, 2, 8, 2, 3, 2, 2, 2, 2, 3, // 2 * / prev mpy/div  RPI 214
-			3, 3, 3, 4, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 3 (   prev open (...) RPI 274, RPI 647
-			3, 3, 3,11, 3, 3, 3, 8,11, 3, 3, 3, 3, 3, 3, // 4 )   prev var subscript RPI 559
-			0, 0, 3, 5, 5, 5, 5, 8, 0, 3, 0, 0, 0, 0, 3, // 5 .   prev concat
-			3, 3, 3, 6, 3, 6, 3, 8, 3, 3, 3, 3, 3, 3, 3, // 6 ~   prev terminator
-			3, 3, 3, 7, 3, 7, 7, 8, 0, 3, 7, 7, 7, 7, 3, // 7 LL  logical compares //RPI144 (was 1,2 now 3,3)
-			3, 3, 3, 0, 0, 0, 0, 8, 0, 3, 0, 0, 0, 0, 3, // 8 '   string '....'
-			3, 3, 3,10, 0, 0, 0, 0, 9, 3, 0, 0, 0, 0, 3, // 9 ,   substring '...'(e1,e2)
+			 1, 3, 3, 1, 0, 1, 1, 8, 1, 3, 1, 1, 1, 1, 3, // 1 +-  prev add/sub
+			 2, 2, 3, 2, 0, 2, 2, 8, 2, 3, 2, 2, 2, 2, 3, // 2 * / prev mpy/div  RPI 214
+			 3, 3, 3, 4, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 3 (   prev open (...) RPI 274, RPI 647
+			 3, 3, 3,11, 3, 3, 3, 8,11, 3, 3, 3, 3, 3, 3, // 4 )   prev var subscript RPI 559
+			 5, 5, 3, 5, 5, 5, 5, 8, 0, 3, 0, 0, 0, 0, 3, // 5 .   prev concat
+			 3, 3, 3, 6, 3, 6, 3, 8, 3, 3, 3, 3, 3, 3, 3, // 6 ~   prev terminator
+			 3, 3, 3, 7, 3, 7, 7, 8, 0, 3, 7, 7, 7, 7, 3, // 7 LL  logical compares //RPI144 (was 1,2 now 3,3)
+			 3, 3, 3, 0, 0, 0, 0, 8, 0, 3, 0, 0, 0, 0, 3, // 8 '   string '....'
+			 3, 3, 3,10, 0, 0, 0, 0, 9, 3, 0, 0, 0, 0, 3, // 9 ,   substring '...'(e1,e2)
 			12,12, 3,12,12,12,12, 3,12,03,12,12,12,12, 3, //10 ?'  prefix operator  //RPI145, RPI196, RPI 353 rpi 938 O3 FOR DOUBLE ?' etc
-			3, 3, 3,13, 3, 0, 3, 3, 0, 3,13,13,13,13, 3, //11 NOT logical
-			3, 3, 3,14, 3, 0, 3, 3, 0, 3, 3,14,14,14, 3, //11 AND logical
-			3, 3, 3,15, 3, 0, 3, 3, 0, 3, 3, 3,15,15, 3, //11 OR  logical
-			3, 3, 3,16, 3, 0, 3, 3, 0, 3, 3, 3, 3,16, 3, //11 XOR logical
-			0, 0, 0,17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3 //10 ?'  prefix operator
+			 3, 3, 3,13, 3, 0, 3, 3, 0, 3,13,13,13,13, 3, //11 NOT logical
+			 3, 3, 3,14, 3, 0, 3, 3, 0, 3, 3,14,14,14, 3, //11 AND logical
+			 3, 3, 3,15, 3, 0, 3, 3, 0, 3, 3, 3,15,15, 3, //11 OR  logical
+			 3, 3, 3,16, 3, 0, 3, 3, 0, 3, 3, 3, 3,16, 3, //11 XOR logical
+			 0, 0, 0,17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3  //10 ?'  prefix operator
 	};
 	/* action code routines:
 	 *   0 error
