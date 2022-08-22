@@ -174,49 +174,49 @@ public  class  mz390 {
 	 * 07/14/06 RPI 369 skip null 3rd EQU parm and ignore 4th and 5th
 	 * 08/07/06 RPI 401 expand array for mult values, fix gbl stats
 	 * 08/09/06 RPI 404 add remaining missing operators in HLASM V5
-	 *  A2B - convert value to binary string (3 = '00000011')
-	 *  A2C - convert value to character string (240 = '1')
-	 *  A2D-  convert value to decimal string (1 = '1')
-	 *  A2X - convert value to hex string (240 = 'F0')
-	 *  AND - logical and (NC)
-	 *  B2A - convert binary string to value (B2A('100') = 4)
-	 *  B2C - convert binary string to character string ('11110000' = '1')
-	 *  B2D-  convert binary string to decimal string ('100'  = '4')
-	 *  B2X - convert binary string to hex string ('11110000' = 'F0')
-	 *  C2A - convert 0-4 characters to value (C2A('0') = 240)
-	 *  C2B - convert character string to binary string ('1' = '11110000')
-	 *  C2D-  convert character string to decimal string ('1'  = '240')
-	 *  C2X - convert character string to hex string ('1' = 'F0')
-	 *  D2A - convert decimal string to value (D2A('-2') = -2
-	 *  D2B - convert decimal string to binary string ('4' = '100')
-	 *  D2C-  convert decimal string to character string('240'  = '1')
-	 *  D2X - convert decimal string to hex string ('240' = 'F0')
-	 *  DCLEN - length of string after reducing double ' and &
-	 *  DCVAL - return string with double ' and & reduced
-	 *  DEQUOTE - return string without first and last ' if any // RPI 886
-	 *  DOUBLE - double quotes and & in string (NC)
-	 *  FIND - return index of any char in string2 found in string1 (NC)
-	 *  INDEX - return index of string2 found in string1 else 0 (NC)
-	 *  ISBIN - return 1 if valid binary string else 0
-	 *  ISDEC - return 1 if valid decimal string else 0
-	 *  ISHEX - return 1 if valid hex string else 0
-	 *  ISSYM - return 1 if valid character string for symbol else 0
-	 *  LOWER - return lower case string (NC)
-	 *  NOT - logical or arithmetic not (NC)
-	 *  OR - logical or (NC)
-	 *  UPPER - return upper case string (NC)
-	 *  SIGNED - return decimal string with minus sign if negative
-	 *  SLA - shift left arithmetic (2 SLA 1 = 4)
-	 *  SLL - shift left logical (2 SLL 1 = 4)
-	 *  SRA - shift right arithmetic (4 SRA 1 = 2)
-	 *  SRL - shift right logical (4 SRL 1 = 2)
-	 *  SYSATTRA - return assembler attribute for symbol (EQU 4th)
-	 *  SYSATTRP - return program attribute for symbol (EQU 5th)
-	 *  X2A = convert hex string to value (X2A('F0') = 240)
-	 *  X2B - convert hex string to binary string ('F0' = '11110000')
-	 *  X2C-  convert hex string to character string('F0'  = '1')
-	 *  X2D - convert hex string to decimal string ('F0' = '240')
-	 *  XOR - logical exclusive or (NC)
+	 *          A2B - convert value to binary string (3 = '00000011')
+	 *          A2C - convert value to character string (240 = '1')
+	 *          A2D-  convert value to decimal string (1 = '1')
+	 *          A2X - convert value to hex string (240 = 'F0')
+	 *          AND - logical and (NC)
+	 *          B2A - convert binary string to value (B2A('100') = 4)
+	 *          B2C - convert binary string to character string ('11110000' = '1')
+	 *          B2D-  convert binary string to decimal string ('100'  = '4')
+	 *          B2X - convert binary string to hex string ('11110000' = 'F0')
+	 *          C2A - convert 0-4 characters to value (C2A('0') = 240)
+	 *          C2B - convert character string to binary string ('1' = '11110000')
+	 *          C2D-  convert character string to decimal string ('1'  = '240')
+	 *          C2X - convert character string to hex string ('1' = 'F0')
+	 *          D2A - convert decimal string to value (D2A('-2') = -2
+	 *          D2B - convert decimal string to binary string ('4' = '100')
+	 *          D2C-  convert decimal string to character string('240'  = '1')
+	 *          D2X - convert decimal string to hex string ('240' = 'F0')
+	 *          DCLEN - length of string after reducing double ' and &
+	 *          DCVAL - return string with double ' and & reduced
+	 *          DEQUOTE - return string without first and last ' if any // RPI 886
+	 *          DOUBLE - double quotes and & in string (NC)
+	 *          FIND - return index of any char in string2 found in string1 (NC)
+	 *          INDEX - return index of string2 found in string1 else 0 (NC)
+	 *          ISBIN - return 1 if valid binary string else 0
+	 *          ISDEC - return 1 if valid decimal string else 0
+	 *          ISHEX - return 1 if valid hex string else 0
+	 *          ISSYM - return 1 if valid character string for symbol else 0
+	 *          LOWER - return lower case string (NC)
+	 *          NOT - logical or arithmetic not (NC)
+	 *          OR - logical or (NC)
+	 *          UPPER - return upper case string (NC)
+	 *          SIGNED - return decimal string with minus sign if negative
+	 *          SLA - shift left arithmetic (2 SLA 1 = 4)
+	 *          SLL - shift left logical (2 SLL 1 = 4)
+	 *          SRA - shift right arithmetic (4 SRA 1 = 2)
+	 *          SRL - shift right logical (4 SRL 1 = 2)
+	 *          SYSATTRA - return assembler attribute for symbol (EQU 4th)
+	 *          SYSATTRP - return program attribute for symbol (EQU 5th)
+	 *          X2A = convert hex string to value (X2A('F0') = 240)
+	 *          X2B - convert hex string to binary string ('F0' = '11110000')
+	 *          X2C-  convert hex string to character string('F0'  = '1')
+	 *          X2D - convert hex string to decimal string ('F0' = '240')
+	 *          XOR - logical exclusive or (NC)
 	 * 08/09/06 RPI 405 add O'opcode support returning A,E,M,O,S,or U
 	 * 08/13/06 RPI 410 fix AREAD to only return "" for eof, add stats
 	 * 08/14/06 RPI 414 recognize ERR(nnn) limit override
@@ -439,6 +439,7 @@ public  class  mz390 {
 	 * 2022-02-08 dsh #335 fix bug in insert_acall_parms not checking for no parms and returning
 	 * 2022-03-26 DSH #335 rename opcode APARM to ACALLPRM to allow APARM macro
 	 * 2022-04-07 DSH #215 prevent SETC statement character string processing from reducing && to &
+	 * 2022-08-22 #438 X2C issue
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -12315,21 +12316,20 @@ public  class  mz390 {
 		}
 		put_setc_stack_var();
 	}
-	private void exec_pc_x2c(){
-		/*
-		 * convert hex string to char string
-		 */
-		check_setc_quotes(1); // RPI 1139
-		setc_value1 = get_setc_stack_value();
-		seta_value = Integer.valueOf(setc_value1,16);
-		setc_value = ""
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 24]
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 16 & 0xff]
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 8  & 0xff]
-			       + (char)tz390.ebcdic_to_ascii[seta_value        & 0xff]
-			       ;
-		put_setc_stack_var();
-	}
+    private void exec_pc_x2c(){
+    	/*
+    	 * convert hex string to char string
+    	 */
+         check_setc_quotes(1);
+         setc_value1 = get_setc_stack_value();
+         StringBuilder stb = new StringBuilder("");
+         for (int i = 0; i < setc_value1.length(); i += 2) {
+            String str = setc_value1.substring(i, i + 2);
+            stb.append((char) Integer.parseInt(str, 16));
+         }
+         setc_value = stb.toString();  	
+         put_setc_stack_var();
+    }
 	private void exec_pc_x2d(){
 		/*
 		 * convert hex string to decimal string
