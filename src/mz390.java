@@ -440,6 +440,7 @@ public  class  mz390 {
      * 2022-03-26 DSH #335 rename opcode APARM to ACALLPRM to allow APARM macro
 	 * 2022-04-07 DSH #215 prevent SETC statement character string processing from reducing && to &
 	 * 2022-08-07 #439 INDEX issue
+	 * 2022-08-22 #438 X2C issue
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -12316,21 +12317,20 @@ public  class  mz390 {
 		}
 		put_setc_stack_var();
     }
-    private void exec_pc_x2c(){
-    	/*
-    	 * convert hex string to char string
-    	 */
-    	check_setc_quotes(1); // RPI 1139
-    	setc_value1 = get_setc_stack_value();
-    	seta_value = Integer.valueOf(setc_value1,16);
-		setc_value = ""
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 24]
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 16 & 0xff]         
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 8  & 0xff]
-			       + (char)tz390.ebcdic_to_ascii[seta_value        & 0xff]					                               
-			       ;
+	private void exec_pc_x2c(){
+		/*
+		 * convert hex string to char string
+		 */
+		check_setc_quotes(1); // RPI 1139
+		setc_value1 = get_setc_stack_value();
+		StringBuilder stb = new StringBuilder("");
+		for (int i = 0; i < setc_value1.length(); i += 2) {
+			String str = setc_value1.substring(i, i + 2);
+			stb.append((char) Integer.parseInt(str, 16));
+		}
+		setc_value = stb.toString();
 		put_setc_stack_var();
-    }
+	}
     private void exec_pc_x2d(){
     	/*
     	 * convert hex string to decimal string
