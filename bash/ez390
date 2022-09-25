@@ -25,6 +25,9 @@ fi
 java -classpath ${jardir}/z390.jar -Xrs $J2SEOPTIONS ez390 $1 $2 $3 $4 $5 $6 $7 $8 $9
 
 rc=$?
+# executed program: rc = any value (R15 at exit; set in sz390)
+# ez390: rc = 1 for Java issues; 16 for GUAM GUI window closed due to timeout
+#        rc = 16 for execution errors; 4,8 when using TEST (set in sz390)
 if [ $debug -eq 1 ]; then echo "ez390 after java command; rc=$rc"; fi
 
 exit $rc

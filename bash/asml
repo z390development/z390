@@ -5,27 +5,51 @@
 # debug flag; 0=no debug, 1=debug
 debug=0
 
-ECHO=0
-if [ "$1" = "tron" ] || [ "$1" = "TRON" ]; then
-#    echo "setting echo to 1"
-	ECHO=1
-	shift
+rc=0
+trace=0
+
+if [ $# -gt 0 ]; then
+    # save current nocasematch setting
+    SHELLNOCASEMATCH=$(shopt -p nocasematch)
+    shopt -s nocasematch
+    case $1 in
+        "tron")
+            shift
+            trace=1
+            ;;
+        "troff")
+            shift
+            trace=0
+            ;;
+    esac
+    # restore nocasematch setting
+    $SHELLNOCASEMATCH
 fi
 
-if [ -f "$1.BAL" ]; then rm $1.BAL; fi
-if [ -f "$1.PRN" ]; then rm $1.PRN; fi
-if [ -f "$1.OBJ" ]; then rm $1.OBJ; fi
-if [ -f "$1.LST" ]; then rm $1.LST; fi
-if [ -f "$1.390" ]; then rm $1.390; fi
-if [ -f "$1.ERR" ]; then rm $1.ERR; fi
-if [ -f "$1.STA" ]; then rm $1.STA; fi
-#if [ -f $1.TR* ]; then rm $1.TR*; fi
-shopt -s nullglob
-for f in $1.TR*; do
-#    echo "remove file: $f"
-    if [ -f "$f" ]; then rm "$f"; fi
-done
-shopt -u nullglob
+if [ $trace -eq 1 ]; then set -x; fi
+
+if [ $# -eq 0 ] || [ -z "$1" ]; then echo "asml ERROR: missing file name"; exit 16; fi
+
+# remove trailing ".MLC", if any
+zFile="${1%.MLC}"
+
+# error if missing name to left of ".MLC"
+if [ -z "$zFile" ]; then echo "asml ERROR: invalid file name $1"; exit 16; fi
+# error if input file with MLC extension does not exist
+if [ ! -f "$zFile".MLC ]; then echo "asml ERROR: file $zFile.MLC not found"; exit 16; fi
+
+# remove previously created files, if any
+if [ -f "$zFile.BAL" ]; then rm $zFile.BAL; fi
+if [ -f "$zFile.PRN" ]; then rm $zFile.PRN; fi
+if [ -f "$zFile.OBJ" ]; then rm $zFile.OBJ; fi
+if [ -f "$zFile.LST" ]; then rm $zFile.LST; fi
+if [ -f "$zFile.390" ]; then rm $zFile.390; fi
+if [ -f "$zFile.LOG" ]; then rm $zFile.LOG; fi
+if [ -f "$zFile.ERR" ]; then rm $zFile.ERR; fi
+if [ -f "$zFile.STA" ]; then rm $zFile.STA; fi
+#if [ -f $zFile.TR* ]; then rm $zFile.TR*; fi
+# .TR* file(s) exist if "ls" exit status is 0
+if ls $zFile.TR* 1>/dev/null 2>&1; then rm -f $zFile.TR*; fi
 
 # extract longest substring that ends with "/"
 dir=${0%/*}
@@ -38,19 +62,28 @@ zdir=$(dirname $zdir)
 sysmac='sysmac(+'$zdir'/mac)'
 syscpy='syscpy(+'$zdir'/mac)'
 
-${dir}/mz390 $1 $sysmac $syscpy $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/mz390 $zFile $sysmac $syscpy $2 $3 $4 $5 $6 $7 $8 $9
 rc=$?
 if [ $debug -eq 1 ]; then echo "asml: mz390 rc=$rc"; fi
-if [ "$rc" -eq "0" ]; then
+
+if [ $rc -eq 0 ] || [ $rc -eq 4 ]; then
+    if [ $rc -eq 4 ]; then
+        echo "asml WARNING: mz390 rc=$rc; see warnings in mz390 generated $zFile.BAL/ERR/PRN file(s) and on console"    
+    fi 
     ${dir}/lz390 $1 $2 $3 $4 $5 $6 $7 $8 $9
     rc=$?
     if [ $debug -eq 1 ]; then echo "asml: lz390 rc=$rc"; fi
-    if [ "$rc" -ne "0" ]; then
-        echo "asml: lz390 error; lz390 rc=$rc; see errors on lz390 generated $1.LST file and console"
-        if [ -f "$1.390" ]; then rm $1.390; fi
-    fi
+    
+    if [ $rc -ne 0 ]; then
+        if [ $rc -eq 4 ]; then
+                echo "asml WARNING: lz390 rc=$rc; see warnings in lz390 generated $zFile.LST file  and on console"
+        else
+            echo "asml ERROR: lz390 rc=$rc; see errors in lz390 generated $zFile.LST file and on console"
+            if [ -f "$zFile.390" ]; then rm $zFile.390; fi
+        fi
+    fi    
 else
-    echo "asml: mz390 error; mz390 rc=$rc; see errors on mz390 generated $1.BAL file and console"
+    echo "asml ERROR: mz390 rc=$rc; see errors in mz390 generated $zFile.BAL/ERR/PRN file(s) and on console"
     if [ -f "$1.OBJ" ]; then rm $1.OBJ; fi
 fi
 
