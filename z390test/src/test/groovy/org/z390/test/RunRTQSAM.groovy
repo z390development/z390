@@ -6,7 +6,7 @@ import org.junit.jupiter.api.TestFactory
 
 class RunRTQSAM extends z390Test {
 
-    var options = ["SYSMAC(${basePath("mac")})"]
+    var options = ["SYSMAC(${basePath("mac")})", "TIME(30)"]
 
     void run_test(String postfix) {
         env = ['SNAPOUT': 'DUMMY', 'SYSUT2': basePath('qsam', "TEST${postfix}.TFV")]
