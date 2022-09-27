@@ -25,6 +25,6 @@ bash/runvsedemos
 bash/runzstrmactest
 rt/bash/runtbrctx
 rt/bash/runtestopt
-rt/bash/runbr14owe
+#rt/bash/runbr14owe
 
 bash/blddist
