@@ -10,18 +10,21 @@ fi
 bash/bldjar
 bash/bldlib
 bash/bldcbllib
-bash/zopcheck
+rt/bash/zopcheck
 bash/runasmdemos
 bash/runcbldemos
-bash/runasmtests
-bash/runcbltests
-bash/runrtqsam "TIME(30)"
-bash/runsort
-bash/runzpar
+rt/bash/runasmtests
+rt/bash/runcbltests
+rt/bash/runrtqsam "TIME(30)"
+rt/bash/runrtbsam
+rt/bash/runsort
+rt/bash/runzpar
 bash/runassist
 bash/runcmdproc
 bash/runvsedemos
 bash/runzstrmactest
+rt/bash/runtbrctx
 rt/bash/runtestopt
+rt/bash/runbr14owe
 
 bash/blddist
