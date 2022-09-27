@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# runtbrctx: run test program for issue #287
+
+#set -e             # exit on all errors; not for this script
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+bash/asmlg rt/mlc/TBRCTX
+rc=$?
+if [ $rc -ne 0 ]; then echo  "runtbrctx ERROR: Encountered RC $rc - exiting"; fi
+
+exit $rc
