@@ -1,0 +1,20 @@
+TESTX2C  CSECT
+         GBLC &SRC
+*
+*        Test X2C with EBCDIC '2' - hex byte F2
+&SRC     SETC X2C('F2')
+         DC    C'&SRC'
+*
+*        Test X2C with EBCDIC 'A2' - hex bytes C1F2
+&SRC     SETC X2C('C1F2')
+         DC    C'&SRC'
+*
+*        Test X2C with ASCII '2' - hex byte 32
+&SRC     SETC X2C('32')
+         DC    C'&SRC'
+*
+*        Test X2C with ASCII 'A2' - hex bytes 4132
+&SRC     SETC X2C('4132')
+         DC    C'&SRC'
+*
+         END
