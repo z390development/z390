@@ -12326,7 +12326,7 @@ public  class  mz390 {
 		StringBuilder stb = new StringBuilder("");
 		for (int i = 0; i < setc_value1.length(); i += 2) {
 			String str = setc_value1.substring(i, i + 2);
-			stb.append((char) Integer.parseInt(str, 16));
+			stb.append((char) tz390.ebcdic_to_ascii[Integer.parseInt(str, 16)]);
 		}
 		setc_value = stb.toString();
 		put_setc_stack_var();
