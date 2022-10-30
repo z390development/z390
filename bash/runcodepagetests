@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# runcodepagetests: run CODEPAGE related tests
+#                   1. EBCDIC values for ISO-8859-1 A0-FF
+#                        inline DC statements
+#                        COPY DC statements
+#                        AREAD from DAT file of values
+#                        AREAD from PUNCH generated file of DC statements
+#                   2. all 256 EBCDIC characters created using X2C
+#                   3. no scraggly lines in SNAP output of all 256 EBCDIC chars
+#                   4. non-printable chars replaced by '.' in PRN, BAL, PCH
+
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script
+cd ..
+
+bash/asml tests/T1P#451 bal $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asml tests/T1#451 bal $1 $2 $3 $4 $5 $6 $7 $8 $9
+
+bash/exec tests/T1#451 $1 $2 $3 $4 $5 $6 $7 $8 $9
+
+echo "Verify tests/T1P#451.BAL and tests/T1#451 look okay"
+echo "Verify console SNAP output does not contain scraggly lines"
+
+exit 0

@@ -441,6 +441,8 @@ public  class  mz390 {
 	 * 2022-04-07 DSH #215 prevent SETC statement character string processing from reducing && to &
 	 * 2022-08-07 #439 INDEX issue
 	 * 2022-08-22 #438 X2C issue
+	 * 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
+	 *                     replace non-printable with '.' in PRN, BAL, PCH
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1532,7 +1534,7 @@ public  class  mz390 {
 		String bal_file_name = tz390.get_file_name(tz390.dir_bal,tz390.pgm_name,tz390.bal_type); // RPI 866
 		try {
 			bal_file = new File(bal_file_name); // rpi 880 trap null error
-			bal_file_buff = new BufferedWriter(new FileWriter(bal_file));
+			bal_file_buff = tz390.getWriterForDefaultCharset(bal_file);
 		} catch (Exception e){
 			abort_error(8,"I/O error on BAL open - " + e.toString());
 		}
@@ -2025,7 +2027,8 @@ public  class  mz390 {
 		add_mac(load_macro_name);
 		try {
 			cur_mac_file = 0;
-			mac_file_buff[cur_mac_file] = new BufferedReader(new FileReader(mac_file[cur_mac_file]));
+			mac_file_buff[cur_mac_file] =
+			    tz390.getReaderForDefaultCharset(mac_file[cur_mac_file]);
 			set_mac_file_num();
 		} catch (Exception e){
 			abort_error(26,"I/O error opening file - " + e.toString());
@@ -3443,7 +3446,8 @@ public  class  mz390 {
 		 */
 		mac_file[cur_mac_file] = new File(new_mac_name);
 		try {
-			mac_file_buff[cur_mac_file] = new BufferedReader(new FileReader(mac_file[cur_mac_file]));
+			mac_file_buff[cur_mac_file] =
+			    tz390.getReaderForDefaultCharset(mac_file[cur_mac_file]);
 			set_sys_dsn_mem_vol(mac_file[cur_mac_file].getCanonicalPath()); // RPI 259
 			gbl_setc[gbl_syslib_index] = sys_dsn;
 			gbl_setc[gbl_syslib_index+1] = sys_mem;
@@ -4833,7 +4837,8 @@ public  class  mz390 {
 				}
 				try {
 					dat_file[dat_file_index] = new File(ap_file_name);
-					dat_file_buff[dat_file_index] = new BufferedReader(new FileReader(dat_file[dat_file_index]));
+					dat_file_buff[dat_file_index] =
+					    tz390.getReaderForDefaultCharset(dat_file[dat_file_index]);
 				} catch (Exception e){
 					dat_file[dat_file_index] = null;	
 					aread_text = ""; // RPI 443 return eof if no file
@@ -5107,7 +5112,8 @@ public  class  mz390 {
 				}
 				try {
 					pch_file[pch_file_index] = new File(ap_file_name);
-					pch_file_buff[pch_file_index] = new BufferedWriter(new FileWriter(pch_file[pch_file_index]));
+					pch_file_buff[pch_file_index] =
+					    tz390.getWriterForDefaultCharset(pch_file[pch_file_index]);
 				} catch (Exception e){
 					abort_error(75,"I/O error on PUNCH open - " + e.toString());
 				}
@@ -12459,13 +12465,21 @@ public  class  mz390 {
     	 *      extended FORMAT option specified.
     	 */
     	try {
+    	    String text_work;  // replace non-printable with '.'
+			if (tz390.opt_writenonprintable) {
+				text_work = text;
+			} else {
+				text_work = tz390.replaceNonPrintableChars(text, tz390.ascii_charset_name);				
+			}
     		if  (text.length() < tz390.bal_ictl_end + 1){ // RPI 264, RPI 437 RPI 728
     			tz390.systerm_io++;
-    			file_buff.write(text + tz390.newline); // RPI 500
+				// HLASM LR says PUNCH can write all 256 EBCDIC characters.
+				// Decide if put_bal_line keeps non-printable text.
+				file_buff.write(text_work + tz390.newline); // RPI 500
     		} else {
     			tz390.systerm_io++;
-    			file_buff.write(text.substring(0,tz390.bal_ictl_end) + "X" + tz390.newline); // RPI 500 RPI 728
-    			String text_left = text.substring(tz390.bal_ictl_end);  // RPI 728
+    			file_buff.write(text_work.substring(0,tz390.bal_ictl_end) + "X" + tz390.newline); // RPI 500 RPI 728
+    			String text_left = text_work.substring(tz390.bal_ictl_end);  // RPI 728
     			while (text_left.length() > 0){
     				if  (text_left.length() > tz390.bal_ictl_cont_tot){  // RPI 728
     					String cont_line = "               "   // RPI 728 - 16 blanks

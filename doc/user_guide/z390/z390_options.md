@@ -128,6 +128,7 @@ TRACEV or TRACE(V) | E | NO | Turn on ez390 emulator VSAM ACB/RPL I/O trace gene
 TRAP | E | YES | Trap any unexpected J2SE program exceptions and generate emulator 0C5 exception which can be handled by SPIE/STAE exits if defined.  NOTRAP can be used with Eclipse source debugger to stop at J2SE statement causing exception.
 TS | MALE | NO | Generate JDBC compatible time-stamp on all TRACE and ERR file records for use in debugging time dependent issue.
 VCB | E | YES | Generate VSAM cache buffer for improving VSAM performance by storing most recently accessed records and indexes.
+WRITENONPRINTABLE | MA | NO | Write non-printable characters to PRN, BAL and PCH files. The default value NOWRITENONPRINTABLE replaces all non-printable characters with the '.' character. This avoids issues caused by writing control characters such as 0x0A (Line Feed) or 0x0D (Carriage Return).
 XREF | A | YES | Cross reference symbols to source lines in PRN assembly listing.
 ZSTRMAC | M | YES | Support expansion of ZSTRMAC structured conditional macro code instructions during loading of MLC, MAC, and CPY files.   Note z390 macros in z390\mac directory now are using zstrmac for structured coding. NOZSTRMAC can only be used with MVS, VSE, or other non-structured macro libraries.
 ZVSAM | E | 0 | ZVSAM 0=no vsam, 1=zvsam1 support, 2=zvsam2 support.
