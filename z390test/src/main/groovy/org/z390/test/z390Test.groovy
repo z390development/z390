@@ -54,6 +54,7 @@ class z390Test {
         var fullFileName = pathJoin(tempDir.absolutePath, fileName)
         println("Creating temp source: ${fullFileName}")
         // to allow files to reference themselves, include {{fullFileName}} in contents
+        fullFileName = fullFileName.replace("\\", "\\\\")  // support windows files
         fileContents = fileContents.replaceAll(/\{\{fullFileName}}/, fullFileName)
         new File(fullFileName).with {
             createNewFile()
