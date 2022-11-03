@@ -20,38 +20,23 @@
          MEND
 *
 ***********************************************************************
-*        Global variables and open code
+*        Global variables
 ***********************************************************************
+*
          GBLC  &DATDSN         AREAD data file
          GBLC  &PCHDSN         PUNCH data file
          GBLC  &ARVAL          ARMAC return value
 *
-&DATDSN  SETC  './T1#451.DAT'  Value for Linux/Mac (default)
-&PCHDSN  SETC  './T1P#451.PCH' Value for Linux/Mac (default)
+***********************************************************************
+*        File names used by AREAD
+*
+*        Note that "exec T1#451" on Windows changes '/' to '\'
+***********************************************************************
+*
+&DATDSN  SETC  './T1#451.DAT'  Value for Linux/Mac
+&PCHDSN  SETC  './T1P#451.PCH' Value for Linux/Mac
 *
          MNOTE 0,'DATDSN >&DATDSN<  PCHDSN >&PCHDSN<'
-*
-         AGO   .SKPCHK         Skip; AREAD code sets proper file sep
-         MNOTE 0,'SYSPARM >&SYSPARM<'
-*
-         AIF   (T'&SYSPARM EQ 'O').USAGE
-         AIF   (K'&SYSPARM NE 1).USAGE
-         AIF   ('&SYSPARM' EQ 'W').WIN
-         AIF   ('&SYSPARM' eq 'L').DDSET
-         AGO   .USAGE
-.WIN     ANOP
-&DATDSN  SETC  '.\T1#451.DAT'
-&PCHDSN  SETC  '.\T1P#451.PCH'
-.DDSET   ANOP
-         MNOTE 0,'DATDSN >&DATDSN<  PCHDSN >&PCHDSN<'
-         AGO   .USAGEX
-.USAGE   ANOP
-         MNOTE 8,'ERROR: Missing SYSPARM(value)'
-         MNOTE 8,'       You must assemble T1#451 with SYSPARM(value)'
-         MNOTE 8,'         Windows:   value = W'
-         MNOTE 8,'         Linux/Mac: value = L'
-.USAGEX  ANOP
-.SKPCHK  ANOP
 *
 ***********************************************************************
 *        Begin program
