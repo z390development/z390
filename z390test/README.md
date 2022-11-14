@@ -38,8 +38,8 @@ https://www.jetbrains.com/help/idea/work-with-tests-in-gradle.html
     
 ## Writing test cases
 
-The following is a basic test case that executes an assembly of a module in the z390 codebase 
-and checks the return code.
+Module `TESTINS1.MLC` resides in the z390 tests subdirectory. The following is a basic test 
+case that executes an assembly of the module and checks the return code.
 
 ```groovy
 import org.junit.jupiter.api.Test
@@ -93,15 +93,10 @@ Methods available :
 ### assemble from inline source
 
 ```groovy
-var source = """TESTB    START 0
-     USING *,13
-     STM   14,12,12(13)
-     ST    13,8(13)
-     ST    15,4(15)
-     LR    13,15
-     J
-     RETURN (14,12)
-     END   TESTB
+var source = """TESTBR14 CSECT
+         SR    15,15
+         BR    14
+         END
 """
 String sourceFilename = createTempFile("INLINE.MLC", source)
 int rc = this.asm(sourceFilename, *options)
@@ -115,13 +110,14 @@ used in the assembly.
 ```groovy
 this.env = ['SNAPOUT': basePath('zopcheck', 'SNAPOUT.TXT')]
 ```
-The env property can be set with a hashlist of environment variable that will be passed
-to the z390 calls.
+The env property is a set of key value pairs within a Java or [Groovy map](https://docs.groovy-lang.org/latest/html/groovy-jdk/java/util/Map.html). 
+These will be passed as environment variables for the z390 calls.
 
-To just add a single envvar without replacing the existing:
+To add a single envvar without replacing any previously set environment variables:
 ```groovy
 this.env.put('SNAPOUT', basePath('zopcheck', 'SNAPOUT.TXT'))
 ```
+
 
 ### loadFile -- loads content of a file into fileData
 

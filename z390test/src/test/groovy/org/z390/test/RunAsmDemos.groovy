@@ -4,9 +4,7 @@ import org.junit.jupiter.api.Test
 
 class RunAsmDemos extends z390Test {
 
-    var options = ['trace', 'noloadhigh',
-                   "SYSMAC(${basePath("mac")})",
-                   "SYSOBJ(${basePath("linklib")})"]
+    var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})"]
 
     @Test
     void test_HELLO() {
@@ -21,7 +19,7 @@ class RunAsmDemos extends z390Test {
         assert rc == 0
     }
     @Test
-    void test_DEMODCB1() {
+    void test_TESTDCB1() {
         // Set input files
         env.put('SYSUT1', basePath('demo', 'TESTDCB1.TF1'))
         env.put('SYSUT2', basePath('demo', 'TESTDCB1.TF2'))

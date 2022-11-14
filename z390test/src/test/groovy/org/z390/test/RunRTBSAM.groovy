@@ -18,10 +18,7 @@ class RunRTBSAM extends z390Test {
         rc = asmlg(basePath('bsam', "CHK${postfix}"), *options)
         printOutput()
         assert rc == 0
-        env = ['SNAPOUT': 'DUMMY',
-               'SYSUT1': basePath('bsam', "TEST${postfix}.TFV"),
-               'SYSUT2': basePath('bsam', "CPYR${postfix}.VES")
-        ]
+        env.put('SYSUT2', basePath('bsam', "CPYR${postfix}.VES"))
         rc = asmlg(basePath('bsam', "CPYR${postfix}"), *options)
         printOutput()
         assert rc == 0

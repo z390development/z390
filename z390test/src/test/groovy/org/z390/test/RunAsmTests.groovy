@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 
 class RunAsmTests extends z390Test {
 
-    var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})", "SYSOBJ(${basePath("linklib")})"]
+    var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})"]
 
     @Test
     void test_TESTINS1() {
@@ -50,7 +50,7 @@ class RunAsmTests extends z390Test {
     }
     @Test
     void test_TESTLITS() {
-        int rc = this.asmlg(basePath("tests", "TESTLITS"), *options, 'trace', 'noloadhigh')
+        int rc = this.asmlg(basePath("tests", "TESTLITS"), *options)
         this.printOutput()
         assert rc == 0
     }
@@ -68,13 +68,13 @@ class RunAsmTests extends z390Test {
     }
     @Test
     void test_TESTDC1() {
-        int rc = this.asmlg(basePath("rt", "mlc", "TESTDC1"), *options, 'optable(z390)')
+        int rc = this.asmlg(basePath("rt", "mlc", "TESTDC1"), *options, 'optable(z390)', "SYSOBJ(${basePath("linklib")})")
         this.printOutput()
         assert rc == 0
     }
     @Test
     void test_TESTASC1() {
-        int rc = this.asmlg(basePath("rt", "mlc", "TESTASC1"), *options, 'ASCII', 'optable(z390)')
+        int rc = this.asmlg(basePath("rt", "mlc", "TESTASC1"), *options, 'ASCII', 'optable(z390)', "SYSOBJ(${basePath("linklib")})")
         this.printOutput()
         assert rc == 0
     }
@@ -94,7 +94,7 @@ class RunAsmTests extends z390Test {
     void test_ZOPCHECK() {
         var syscpyOption = "SYSCPY(${basePath('zopcheck')}+${basePath('mac')})"
         this.env = ['SNAPOUT': basePath('zopcheck', 'SNAPOUT.TXT')]
-        int rc = this.asmlg(basePath("zopcheck", "ZOPCHECK"), *options, syscpyOption, 'optable(z390)')
+        int rc = this.asmlg(basePath("zopcheck", "ZOPCHECK"), *options, 'bal', syscpyOption, 'optable(z390)')
         this.printOutput()
         assert rc == 0
     }

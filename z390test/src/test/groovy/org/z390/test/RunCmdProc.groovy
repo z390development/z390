@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 class RunCmdProc extends z390Test {
     /*
     Because the source contains hard coded file paths, we need to replace these with a path using basePath method.
-    We load the source into a variable and the update the file paths using a series of regex replacements
+    We load the source into a variable and then update the file paths using a series of regex replacements
     We then load the source into a temporary file and run it as per inline source process
      */
 

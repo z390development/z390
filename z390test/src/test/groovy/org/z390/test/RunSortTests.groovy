@@ -57,10 +57,6 @@ class RunSortTests extends z390Test {
         rc = this.asmlg(basePath("sort", "TESTSRT2"), *options)
         assert rc == 0
 
-        env.put("SYSUT2", basePath('sort', 'TESTSRT1.IN'))
-        rc = this.asmlg(basePath("sort", "TESTSRT1"), *options)
-        assert rc == 0
-
         env.put("SYSUT2", basePath('sort', 'TESTSRT3.IN'))
         rc = this.asmlg(basePath("sort", "TESTSRT3"), 'PARM(100000)', *options)
         printOutput()

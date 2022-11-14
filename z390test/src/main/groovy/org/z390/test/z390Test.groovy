@@ -107,7 +107,7 @@ class z390Test {
 
     def callZ390(String asmFileExcludingExtension, String command, String... args) {
         println("Executing ${command}: ${asmFileExcludingExtension}")
-        var cmd = ["java", "-classpath", basePath('jar', 'z390.jar'),
+        var cmd = ["java", "-classpath", basePath('z390.jar'),
                    '-Xrs', '-Xms150000K', '-Xmx150000K', command, asmFileExcludingExtension, *args].join(" ")
         println(cmd)
         var proc = cmd.execute(this.getEnvList(), null)   // , workDir);

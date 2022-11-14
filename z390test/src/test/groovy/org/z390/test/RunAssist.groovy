@@ -5,18 +5,18 @@ import org.junit.jupiter.api.Test
 
 class RunAssist extends z390Test {
 
-    var options = ['ASSIST', 'TRACEALL', "SYSMAC(${basePath("mac")})", "SYSOBJ(${basePath("linklib")})"]
+    var options = ['ASSIST', "SYSMAC(${basePath("mac")})"]
 
     @Test
     void test_DEMOAST1() {
         this.env.put('XPRNT', basePath('assist', 'demo', 'DEMOAST1.XPR'))
-        int rc = this.asmlg(basePath("assist", "demo", "DEMOAST1"), *options)
+        int rc = this.asmlg(basePath("assist", "demo", "DEMOAST1"), 'TRACEALL', *options)
         this.printOutput()
         assert rc == 0
     }
 
     @Test
-    void test_TESTINS1() {
+    void test_TESTAST1() {
         this.env = [
             'XREAD': basePath('assist', 'test', 'TESTAST1.XRD'),
             'XPRNT': basePath('assist', 'test', 'TESTAST1.XPR'),
@@ -24,7 +24,7 @@ class RunAssist extends z390Test {
             'XGET': basePath('assist', 'test', 'TESTAST1.XGT'),
             'XPUT': basePath('assist', 'test', 'TESTAST1.XPT')
         ]
-        int rc = this.asmlg(basePath("assist", "test", "TESTAST1"), *options)
+        int rc = this.asmlg(basePath("assist", "test", "TESTAST1"), 'TRACEALL', *options)
         this.printOutput()
         assert rc == 0
     }
