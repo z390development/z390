@@ -13,11 +13,9 @@ class RunSortTests extends z390Test {
             'noloadhigh',
             "SYSMAC(${basePath("mac")})",
             "SYSCPY(${basePath("mac")})",
-            "SYSOBJ(${basePath("linklib")})"
     ]
 
     var runOptions = [
-//            'STATS',
             "SYS390(${basePath('sort')})",
     ]
 

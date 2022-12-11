@@ -168,7 +168,10 @@ println(tempFilename)
 
 Use this to create temp files used in your tests. Returns full path to temp filename.
 
-Note - Temp directory is deleted at end of testcase.
+If you need to include the name of the generated file in the file, use `{{fullFileName}}` placeholder in
+file contents and the function will replace this with the actual filename created.
+
+Note - The temporary file and generated temporary directory will be deleted at end of testcase.
 
 
 ## Hints and tips

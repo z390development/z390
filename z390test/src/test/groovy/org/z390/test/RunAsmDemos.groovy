@@ -23,13 +23,13 @@ class RunAsmDemos extends z390Test {
         // Set input files
         env.put('SYSUT1', basePath('demo', 'TESTDCB1.TF1'))
         env.put('SYSUT2', basePath('demo', 'TESTDCB1.TF2'))
-        env.put('SYSUT3', basePath('demo', 'TESTDCB1.TF3'))
+        env.put('SYSOUT', basePath('demo', 'TESTDCB1.TF3'))
         // run the job
-        int rc = this.asm(basePath("demo", "TESTDCB1"), *options)
+        int rc = this.asmlg(basePath("demo", "TESTDCB1"), *options)
         // Load files to fileData
         loadFile(basePath('demo', 'TESTDCB1.TF1'), 'TF1')
         loadFile(basePath('demo', 'TESTDCB1.TF2'), 'TF2')
-        loadFile(basePath('demo', 'TESTDCB1.TF3'), 'TF3')
+        loadFile(basePath('demo', 'TESTDCB1.TF3'), 'SYSOUT')
         // print the fileData
         this.printOutput()
         // Check files equal

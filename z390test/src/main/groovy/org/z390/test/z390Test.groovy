@@ -37,11 +37,11 @@ class z390Test {
         this.stderr = ""
         this.fileData = [:]
     }
-    @AfterEach
-    void cleanUp() {
-        if (this.tempDir)
-            this.tempDir.deleteDir()
-    }
+        @AfterEach
+        void cleanUp() {
+            if (this.tempDir)
+                this.tempDir.deleteDir()
+        }
 
     def createTempFile(String fileName, String fileContents, boolean returnExt=true) {
         /**
@@ -61,7 +61,7 @@ class z390Test {
             write(fileContents)
         }
         String ext = fullFileName.substring(fullFileName.lastIndexOf("."))
-       if (!returnExt || ext.toUpperCase() in ['.MLC', '.CBL'])
+        if (!returnExt || ext.toUpperCase() in ['.MLC', '.CBL'])
             fullFileName = filenameWithoutExtension(fullFileName)
         return fullFileName
     }
@@ -78,7 +78,6 @@ class z390Test {
 
     static String filenameWithoutExtension(String filename) {
         String result = filename[0..<filename.lastIndexOf('.')]
-        println(result)
         return result
     }
 

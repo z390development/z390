@@ -32,13 +32,17 @@ class TestZ390Test extends z390Test {
     void testInlineSource() {
 
         var source = """TESTB    START 0
-         USING *,13
          STM   14,12,12(13)
-         ST    13,8(13)
-         ST    15,4(15)
+         BAS   15,8+72(15)
+         USING *,13
+         DC    18F'0'
+         ST    13,4(15)
+         ST    15,8(13)
          LR    13,15
          J
+         L     13,4(13)
          RETURN (14,12)
+ 
          END   TESTB
     """
         String sourceFile = this.createTempFile("INLINE.MLC", source)
