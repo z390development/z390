@@ -51,4 +51,12 @@ class TestZ390Test extends z390Test {
         assert rc == 12   // Check return code
         assert this.fileData['ERR'] =~ /AZ390 AZ390I invalid relative offset expression/  // check error present
     }
+
+    @Test
+    void testCblclg() {
+        int rc = this.cblclg(basePath("zcobol", "demo", "HELLO"))
+        this.printOutput()
+        assert rc == 0
+    }
+
 }

@@ -12,11 +12,11 @@ class RunSortTests extends z390Test {
     var options = [
             'noloadhigh',
             "SYSMAC(${basePath("mac")})",
-            "SYSCPY(${basePath("mac")})",
+            "SYSCPY(${basePath("mac")})"
     ]
 
     var runOptions = [
-            "SYS390(${basePath('sort')})",
+            "SYS390(${basePath('sort')})"
     ]
 
     @BeforeAll

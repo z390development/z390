@@ -5,13 +5,13 @@ import org.junit.jupiter.api.Test
 class RunRtTests extends z390Test {
     var sysmac = basePath("mac")
     var syscpy = basePath("mac")
-    var libs = ["SYSMAC(${sysmac}+)", "SYSCPY(${syscpy}+)"]
+    var libs = ["SYSMAC(+${sysmac})", "SYSCPY(+${syscpy})"]
     // rt1 = asmlg
     var rt1Options = ['bal', 'notiming', 'stats', *libs]
     // rt3 = mz390
     var rt3Options = ['noasm', 'bal', 'notiming', 'stats', *libs]
     // rt4 = mz390
-    var rt4Options = ['noasm',  'bal', 'notiming', 'stats', *libs]
+    var rt4Options = ['bal', 'notiming', 'stats', *libs]
     // rt7 = asml + ez390
     var rt7AsmlOptions = ['bal', 'notiming', *libs]
     var rt7Ez390Options = ['notiming', 'stats', *libs]
@@ -19,8 +19,7 @@ class RunRtTests extends z390Test {
     @Test
     void test_TESTERR1() {
         // rt3 = mz390
-        var syscpyRtTest = "SYSCPY(${basePath('rt', 'test')})"
-        int rc = this.mz390(basePath("rt", "test", "TESTERR1"), *rt3Options, syscpyRtTest)
+        int rc = this.mz390(basePath("rt", "test", "TESTERR1"), *rt3Options)
         this.printOutput()
         assert rc == 16
     }
@@ -76,6 +75,10 @@ class RunRtTests extends z390Test {
         rc = this.ez390(basePath("rt", "test", "TESTERR7"), *rt7Ez390Options)
         this.printOutput()
         assert rc == 16
+        assert this.stdout =~ /TESTERR7 TEST MISSING DDNAME AND NO SYNAD ERROR/
+        assert this.stdout =~ /EZ390E error\s{2}12 program aborting due to abend S013/
+        assert this.fileData['LOG'] =~ /TESTERR7 TEST MISSING DDNAME AND NO SYNAD ERROR/
+        assert this.fileData['LOG'] =~ /EZ390E error\s{2}12 program aborting due to abend S013/
     }
     @Test
     void test_TESTERR8() {

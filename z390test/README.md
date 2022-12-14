@@ -85,8 +85,8 @@ Methods available :
 * asml - Assemble and link. Any non zero RC on assemble will exit with RC
 * asmlg - Assemble, link and go. Any non zero RC on assemble and link will exit with RC
 * mz390 - Assemble only
-* cblc - COBOL assemble only
-* cblclg - COBOL assemble, link and go. Any non-zero return will exist with RC
+* cblc - COBOL compile only
+* cblclg - COBOL compile, link and go. Any non-zero return will exist with RC
 * lz390 - Link only. Output not cleared prior to run
 * ez390 - Run only. Output not cleared prior to run
 

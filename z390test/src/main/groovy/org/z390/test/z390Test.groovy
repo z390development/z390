@@ -37,11 +37,11 @@ class z390Test {
         this.stderr = ""
         this.fileData = [:]
     }
-        @AfterEach
-        void cleanUp() {
-            if (this.tempDir)
-                this.tempDir.deleteDir()
-        }
+    @AfterEach
+    void cleanUp() {
+        if (this.tempDir)
+            this.tempDir.deleteDir()
+    }
 
     def createTempFile(String fileName, String fileContents, boolean returnExt=true) {
         /**
@@ -95,6 +95,14 @@ class z390Test {
         /**
          * clear files for module
          */
+        var filename_only = new File(asmFileExcludingExtension).name
+        var regex = "${filename_only}\\.TR."
+        var dirName = new File(asmFileExcludingExtension).getParent().toString()
+        var traceFiles = new FileNameByRegexFinder().getFileNames(dirName, regex)
+        for (filename in traceFiles) {
+            new File(filename).delete()
+        }
+
         for (ext in ["PRN", "ERR", "OBJ", "390", "OBJ", "LOG", "LST", "STA"]) {
             var filename = asmFileExcludingExtension + '.' + ext
             var deleteFile = new File(filename)
@@ -245,7 +253,7 @@ class z390Test {
         this.clean(cobFilename)
         int rc
         rc = this.callZ390(cobFilename, 'zc390', *args)
-        if (rc != 0) return rc  // exit if issue
+        if (![0, 4].contains(rc)) return rc  // exit if issue
 
         var cobfiledir = new File(cobFilename).getParent()
         var cobOptions = ['BAL', 'NOLISTCALL', 'MAXGBL(1500000)',
