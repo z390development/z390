@@ -1,49 +1,64 @@
-# zCOBOL System Programmer’s Guide
+# zCOBOL System Programmer's Guide
 
-**v1.5.06**
+!!! Warning
+    There are still a number of missing functions in zCOBOL, and until such time
+    as zCOBOL successfully passes the NIST ANSI COBOL 1985 Test Suite, zCOBOL
+    should be considered to still be in a beta test state.
 
-*Automated Software Tools Corporation*
+## zCOBOL internals
 
-[zc390 Translator](#Translator)
+The zCOBOL compiler translates COBOL source language programs into executable code
+using the following 3 major components:
 
-[COBOL Language Verb Macros](#Macros)
+* The java program `zc390.class` in z390.jar reads COBOL language source program
+  with file extension CBL and generates a z390 HLASM compatible mainframe assembler
+  source program with MLC extension.
 
-[COMPUTE Statement Example](#Compute)
+* Each COBOL verb becomes a macro call opcode and all the words following up to
+  the next verb or period become positional parameters for the macro call.
+* Periods generate a PERIOD macro call to terminate all structures which may be
+  missing the optional END-IF type words.
+* All dashes in words are converted to underscores unless in quotes.
+* The level numbers in data division statements are mapped to WS macro call with
+  level as first positional operand.
 
-[zCOBOL Target Source Language Generation Macros](#TargetMacros)
+* The macros in COBOL verb macro library z390\zcobol\*.mac parse the parameters
+  for each verb, access global macro symbol table, and call code generation macros
+  to generated executable code. For example the IF macro issues calls to GEN_COMP
+  macro to generate executable source code to compare two fields,
+  and issues call to GEN_BC to generate executable source code to branch on condition.
+* There are currently 4 optional zCOBOL executable code generation macro libraries.
+  The z390\zcobol\z390 HLASM code generation library is the primary focus currently.
+  There is a COBOL demo program z390\zcobol\demo\HELLO.CBL which can be
+  compiled and executed in all 4 different target language environments using
+  the initial zCOBOL release. The following libraries are available:
+    - z390\zcobol\z390 - zCOBOL code generation macros for HLASM native z9/10 code
+    - z390\zcobol\java - zCOBOL code generation macros for J2SE Java
+    - z390\zcobol\vce - zCOBOL code generation macros for MS Visual Express C++
+    - z390\zcobol\i586 - zCOBOL code generation macros for HLA and MASM native Intel code
 
-[ZC390LIB Runtime Library](#Runtime)
+Once the z390 HLASM code generation macros are complete and all the
+[NIST COBOL 1985 standards tests](https://www.itl.nist.gov/div897/ctg/cobol_form.htm)
+have been completed successfully as a first milestone, then these macros can
+be copied to the other libraries and modified to replace HLASM source code
+model statements with the other target language statements.
 
-[Base Free Code Generation](#BaseFree)
-
-[zCOBOL EXEC CICS Support](#CICS)
-
-[zCOBOL Data Types](#DataTypes)
-
-[Command Line options for zCOBOL Compiler](#Options)
-
-[zCOBOL File Types](#FileTypes)
-
-[Trademarks](#Trademarks)
-
-[Credits](#Credits)
-
-== *(C) Copyright 2011 Automated Software Tools Corporation.
-This is part of z390 distributed under open source GPL License* ==
-
-## zc390 Translator (#Translator)
+## zc390 Translator
 
 The zc390 translator is a java regular expression based parser which reads
 COBOL source program and generates HLASM compatible mainframe assembler
-source program in one pass. Each recognized COBOL verb starts a new assembler
-macro call statement with all the parameters up to the next verb, period,
-or paragraph label passed as positional parameters. Periods generate a separate
-macro call to PERIOD to generate end to all the structures in the previous sentence.
+source program in one pass. 
+
+Each recognized COBOL verb starts a new assembler macro call statement with all 
+the parameters up to the next verb, period, or paragraph label passed as positional 
+parameters. Periods generate a separate macro call to PERIOD to generate end to all 
+the structures in the previous sentence.
+
 Paragraph and section labels generate call to LABEL with the name and type of
 label to generate. All hyphens in names are translated to underscores for
 HLASM compatibility.
 
-## COBOL Language Verb Macros (#Macros)
+## COBOL Language Verb Macros
 
 All the macros for the COBOL language verbs and section headings are stored
 in the macro library z390\zcobol. These macros parse the parameters, validate
@@ -56,23 +71,23 @@ are written in structured form using the z390 ZSTRMAC SPE structured programming
 extensions such as AIF, AELSEIF, AELSE, AEND, AWHILE, etc. As a result there are
 no explicit AGO or AIF labels in these macros.
 
-## COMPUTE Statement Example (#Compute)
+## COMPUTE Statement Example
 
 The COBOL compute statement now supported in v1.5.00d is a good example to study
 to understand how the zCOBOL compiler works. The steps followed to compile the
 following MOVE and COMPUTE statements are as follows:
 
-    ``` cobol
-    77 FLT-SRT USAGE FLOAT-SHORT OCCURS 2.
-    MOVE 1.1 TO FLT-SRT(2).
-    COMPUTE FLT-SRT(2) = FLT-SRT(2)+2.2.
-    ```
+```cobol
+77 FLT-SRT USAGE FLOAT-SHORT OCCURS 2.
+MOVE 1.1 TO FLT-SRT(2).
+COMPUTE FLT-SRT(2) = FLT-SRT(2)+2.2.
+```
 
 1. zc390 translator generates the following 2 zCOBOL verb macro call statements:
-    ```
-    MOVE  1.1,'TO',FLT_SRT,"(',2,')'`   
-    COMPUTE FLT_SRT,'(',2,')',=,FLT_SRT,'(",2,')',+,2.2
-    ```
+```cobol
+MOVE  1.1,'TO',FLT_SRT,"(',2,')'`   
+COMPUTE FLT_SRT,'(',2,')',=,FLT_SRT,'(",2,')',+,2.2
+```
 2. The MOVE macro uses shared copybook routine GET_FIELD_PARM to parse the two
 fields for MOVE and store resulting field name and symbol table index.
 For the literal 1.1 the index is 0, for the subscripted field, the name is set
@@ -124,17 +139,17 @@ and returns sum as packed decimal for editing and display by calling program.
 There is a paper about this demo here:
 http://www.z390.org/zcobol\demo\callcomp\zcobol_COMPUTE.pdf
 
-## zCOBOL Target Source Language Generation Macros (#TargetMacros)
+## zCOBOL Target Source Language Generation Macros
 
 All the target source language generation macros called by the COBOL verb macros
-in z390\zcobol are stored in the following directories by target language:
+in z390/zcobol are stored in the following directories by target language:
 
-| Directory        | Notes                                                        |
-| ---------------- | ------------------------------------------------------------ |
-| z390\zcobol\z390 | Generate HLASM compatible mainframe assembler source program |
-| z390\zcobol\java | Generate J2SE java compatible source program                 |
-| z390\zcobol\vce  | Generate MS Visual Express C compatible source program       |
-| z390\zcobol\i586 | Generate HLA/MASM Intel assembler compatible source program  |
+| Directory         | Notes                                                        |
+|-------------------|--------------------------------------------------------------|
+| z390\zcobol\z390  | Generate HLASM compatible mainframe assembler source program |
+| z390\zcobol\java  | Generate J2SE java compatible source program                 |
+| z390\zcobol\vce   | Generate MS Visual Express C compatible source program       |
+| z390\zcobol\i586  | Generate HLA/MASM Intel assembler compatible source program  |
 
 Current only the z390 HLASM compatible source generation macros are being
 fully developed along with the required runtime support functions stored
@@ -159,7 +174,7 @@ language environment, join the zcobol development email discussion group
 and make your interests known. Melvyn Maltz is currently developing additional
 EXEC CICS support for zCOBOL programs.
 
-## ZC390LIB Runtime Library (#Runtime)
+## ZC390LIB Runtime Library
 
 The z390\zcobol\z390 code generation macro directory also contains all the
 source code and the ZC390CVT.CPY copybook required to build
@@ -174,7 +189,7 @@ with addresses of all the entries followed by work areas used by
 the code generation macros.
 
 | Library Element | Notes                                                                                                                                                        |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ZC390LIB.MLC    | Contains ZC390LIB CSECT and COPY ZC390CVT to include all object modules following the CVT at the beginning                                                   |
 | ZC390NUC.MLC    | Included module with system function routines such as CALL, GOBACK, STOPRUN, PERFORM, and PMCHECK to check for end of current performed paragraph or section |
 | ABORT.MLC       | Contains module called to abort execution with reason code                                                                                                   |
@@ -182,7 +197,7 @@ the code generation macros.
 | DISPLAY.MLC     | Display any type field or literal                                                                                                                            |
 | INSPECT.MLC     | Inspect field tallying, replacing, or transforming                                                                                                           |
 
-## Base Free Code Generation (#BaseFree)
+## Base Free Code Generation
 
 The zCOBOL code generation macros in zcobol\z390 generate base free code
 for the procedure division using relative instructions for both
@@ -200,7 +215,7 @@ Since R13 always points to the beginning of working-storage, no dynamic
 base registers are required for access to data items in the first 4K of
 working storage.
 
-## zCOBOL EXEC CICS Support (#CICS)
+## zCOBOL EXEC CICS Support
 
 When the option CICS is specified on the command line for ZC390C, ZC390CL,
 or ZC390CLG, then the zcobol\ZCOBOL MAC global option &ZC_CICS is set on
@@ -212,7 +227,7 @@ prior to executing user code starting at the first program CSECT.
 instead of WSLOC LOCTR and warnings are generated for any data VALUE clauses
 defined in working-storage section.
 
-## zCOBOL Data Types (#DataTypes)
+## zCOBOL Data Types
 
 1. The zCOBOL option FLOAT(HEX/BINARY/DECIMAL) can be used to change the
 default from DECIMAL to HEX or BINARY for the generic types FLOAT-SHORT,
@@ -222,7 +237,7 @@ standard unless option EXTEND is set allowing up to 31 digits for both packed
 decimal and zoned decimal fields.
 
 | USAGE            | PICTURE        | Z390 Assembler Type | Description                                                        |
-| ---------------- | -------------- | ------------------- | ------------------------------------------------------------------ |
+|------------------|----------------|---------------------|--------------------------------------------------------------------|
 | COMP             | S9(4)          | H                   | 16 bit binary                                                      |
 | COMP             | S9(9)          | F                   | 32 bit binary                                                      |
 | COMP             | S9(18)         | G                   | 64 bit binary                                                      |
@@ -238,7 +253,7 @@ decimal and zoned decimal fields.
 | FLOAT-DECIMAL-34 | FLOAT-EXTENDED | LB                  | DFP extended - 34 digits                                           |
 | FLOAT-DECIMAL-7  | FLOAT-SHORT    | EB                  | DFP short 7 digits                                                 |
 | FLOAT-DECIMAL-16 | FLOAT-LONG     | DB                  | DFP long - 16 digits                                               |
-| FLOAT-DECIMAL-34 | FLOAT-EXTENDED | D                   | LB | DFP extended - 34 digits                                      |
+| FLOAT-DECIMAL-34 | FLOAT-EXTENDED | D                   | LB                                                                 | DFP extended - 34 digits                                      |
 | COMP-3           | S9(31)         | P(3)                | Packed decimal up to 31 digits with option EXTEND                  |
 |                  | S9(31)         | Z(3)                | Zoned Decimal up to 31 digits with option EXTEND (uses PD support) |
 |                  | X              | X                   | Characters                                                         |
@@ -246,23 +261,10 @@ decimal and zoned decimal fields.
 | FLOAT-LONG       |                | DH,DB,DD            | Use option FLOAT(HFP/BFP/DFP)                                      |
 | FLOAT-EXTENDED   |                | LH,LB,LD            | Use option FLOAT(HFP/BFP/DFP)                                      |
 
-## Command Line options for zCOBOL Compiler (#Options)
+## Command Line options for zCOBOL Compiler
 
 Options are passed to the zCOBOL macro stage via CBL macro call with the
 options defined as positional parameters.
 
 To turn off an option that is on, prefix the option name with NO on command line
 or in OPT options file.
-
-z390 and zCOBOL options include the following:
-
-## zCOBOL File Types (#FileTypes)
-
-## Trademarks {#Trademarks}
-
-IBM, CICS, MVS, OS/390, VSAM, z9, z10, and z/OS are registered trademarks of
-International Business Machines Corporation
-
-## Credits {#Credits}
-
-Author : Don Higgins
