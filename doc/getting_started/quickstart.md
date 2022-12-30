@@ -59,7 +59,7 @@ The following is a simple *Hello world* application written in COBOL.
             STOP RUN.
 ```
 
-Add the contents of this to a file named 'HELLO.MLC'.
+Add the contents of this to a file named 'HELLO.CBL'.
 
 Now run the following z390 command to assemble, link and run the COBOL program.
 
