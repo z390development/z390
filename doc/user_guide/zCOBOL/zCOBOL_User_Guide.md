@@ -10,7 +10,7 @@
 zCOBOL is an open source portable mainframe COBOL compiler available as part of
 the z390 open source portable mainframe assembler.
 
-The zCOBOL compiler has been developed as a new flexible tool for testing and
+The zCOBOL compiler has been developed as a flexible tool for testing and
 modernizing COBOL applications without requiring rewriting existing programs.
 
 ## Getting Started
@@ -55,19 +55,20 @@ Once the programs have been successfully linked, then you can use the
 z390 `exec` command to execute a load module.
 
 For more about all the options available for z390 executable programs
-see the [z390 User Guide](/user_guide/commands)
+see the [z390 User Guide](/user_guide/z390/commands)
 
 ## Debugging your program
 
 Once you have successfully compiled a COBOL program into a z390 load module,
-you can run it with the command EXEC filename.
+you can run it with the command `EXEC <filename>`.
 
 If the program aborts or fails to produce the expected results, the next step
 is to debug the problem.
 
-The zCOBOL option [TRACE](/user_guide/options/zCOBOL_options#TRACE) can be specified to generate a WTO display of the name
-of each COBOL paragraph when it is entered. Along with listing of the program
-That sometimes is enough to figure out why the program did not work.
+The zCOBOL option [TRACE](/user_guide/zCOBOL/zCOBOL_options#TRACE) can be specified 
+to generate a WTO display of the name of each COBOL paragraph when it is entered. 
+Along with listing of the program, this is sometimes enough to figure out why the 
+program did not work.
 
 If it is necessary to examine the generated HLASM compatible assembler code,
 there are several steps that can be taken:
@@ -88,43 +89,6 @@ there are several steps that can be taken:
 * If the execution trace fails to pinpoint the problem, another option is
   to include debug test and display statements in the program to further
   isolate where the problem is occurring.
-
-## zCOBOL Compiler Commands
-
-The following is a list of commands available as part of zCOBOL.
-
-These commands are scripts that are included in the z390 source and distribution
-and can be enabled by including the script directory in your system path.
-
-Alternatively you can reference the scripts directly from the command line by
-specifying the full path.
-
-=== "Windows"
-
-    `(z390 install dir)\bat`
-
-=== "MacOS/Unix"
-
-    `(z390 install dir)/bash`
-
-### Command reference
-
-#### zc390
-
-Convert CBL source file to macro assembler MLC source file
-
-#### cblc
-
-Compile CBL to HLASM BAL and assemble to relocatable object code
-
-#### cblcl
-
-Compile CBL to HLASM BAL, assemble, and link to z390 load module
-
-#### zc390clg
-
-Compile CBL to HLASM BAL, assemble, link, and execute z390 load module
-
 
 ## zCOBOL demos and regression tests
 
@@ -198,13 +162,3 @@ The following zCOBOL regression test programs can be found in `zcobol/test`
 | TESTTRC2 | NOTRUNC with ONSIZE                                                                        |
 | TESTTRC3 | TRUNC and NOR64 to test use of DXR versus DSG                                              |
 | TESTWS1  | Working storage REDEFINE and OCCURS with padding                                           |
-
-
-## z390 IDE
-
-Now you should have a z390 desktop icon which you can double click to start
-the z390 GUI Interface. And now you can compile, link, and execute your first
-zCOBOL program by entering the following zCOBOL command:
-    ``` dos
-    zc390clg zcobol\demo\HELLO
-    ```
