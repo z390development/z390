@@ -2,6 +2,16 @@
 
 # assist: assemble, link, and exec ASSIST program $1.MLC 
 
+if [ $# -eq 0 ] || [ -z "$1" ]; then echo "assist ERROR: missing file name"; exit 12; fi
+
+# remove trailing ".MLC", if any
+zFile="${1%.MLC}"
+
+# error if missing name to left of ".MLC"
+if [ -z "$zFile" ]; then echo "assist ERROR: invalid file name $1"; exit 16; fi
+# error if input file with MLC extension does not exist
+if [ ! -f "$zFile".MLC ]; then echo "assist ERROR: file $zFile.MLC not found"; exit 16; fi
+
 # extract longest substring that ends with "/"
 dir=${0%/*}
 
@@ -11,5 +21,8 @@ export XPNCH=$1.XPH
 export XGET=$1.XGT
 export XPUT=$1.XPT
 
-${dir}/asmlg $1 ASSIST $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/asmlg $zFile ASSIST $2 $3 $4 $5 $6 $7 $8 $9
+rc=$?
+# error or warning messages issued by asmlg
 
+exit $rc

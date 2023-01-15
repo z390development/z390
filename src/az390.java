@@ -417,7 +417,8 @@ public  class  az390 implements Runnable {
         * 2022-03-28 DSH #327 fix az390 to force odd literals to even address for access by relative halfword offset counts	
         * 2022-05-07 DSH #233 allow spaces within DC numberic values for BDEFHLPXZ such as DC F'123 456' same as F'123456'
 		* 2022-05-10 AFK #398 fix typo in error message
-    * 2022-05-12 DSH #325 issue error 54 invalid DC field terminator if not '..' for BDEFHLPXZ
+        * 2022-05-12 DSH #325 issue error 54 invalid DC field terminator if not '..' for BDEFHLPXZ
+		* 2022-06-10 DSH z16 #423 correct rotate instruction errors reported by Dan Greiner
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -3553,7 +3554,7 @@ private void process_bal_op(){
     	break;
     case 52: // "RIE8" "RNSBG" oo12334455oo RPI 817
         // r1,r2,i3,i4[,i5] or extended op r1,r2 RPI 1164
-    	// i3 high bit for test RNSBGT
+    	// i3 high bit for test RNSBGT, RXSBGT
     	// i4 high bit for zero RISBGZ
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
@@ -3563,7 +3564,7 @@ private void process_bal_op(){
     	get_hex_reg();    // R1
        	skip_comma();
        	get_hex_reg();    // R2
-       	if (tz390.op_code[bal_op_index].length() == 11){
+       	if (tz390.op_code[bal_op_index].length() == 11){ //$i3i4i5 extension
        		// extended op (get i3,i4,i5 from op_code "oooo$i3i4i5" RPI 1164
        		int i3 = Integer.valueOf(tz390.op_code[bal_op_index].substring(5,7));
        		int i4 = Integer.valueOf(tz390.op_code[bal_op_index].substring(7,9));
@@ -3578,16 +3579,19 @@ private void process_bal_op(){
        	} else {
        		skip_comma();
        		get_hex_byte();   // I3
+			if (tz390.opt_traceall){ // DSHX debug RXSBGT
+				tz390.put_trace("RNSBG/RXSBG I3=" + exp_val + "obj_code=" + obj_code);
+			}
        		if (!bal_abort 
        			&& bal_op.length() == 6 
        			&& bal_op.charAt(5) == 'T'){ // turn on test bit if OP=?????T
-       			obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(exp_val + 0x80,2);
+       			obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(((int)exp_val | (int)0x80),2); // DSH z16 #423 change + to |
        		}
        		skip_comma();
        		get_hex_byte();   // I4
        		if (!bal_abort                                          // RPI 1164 WAS 6
        			&& bal_op.charAt(bal_op.length()-1) == 'Z'){ // turn on XZERO bit if OP=??????Z  // RPI 1164 RISBG/RISBGN
-       			obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(exp_val + 0x80,2);
+       			obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(((int)exp_val | (int)0x80),2); // DSH z16 #423 change + to |
        		}
        		if (exp_text.length() > exp_index 
        			&& exp_text.charAt(exp_index) == ','){

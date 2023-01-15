@@ -439,6 +439,8 @@ public  class  mz390 {
 	 * 2022-02-08 dsh #335 fix bug in insert_acall_parms not checking for no parms and returning
      * 2022-03-26 DSH #335 rename opcode APARM to ACALLPRM to allow APARM macro
 	 * 2022-04-07 DSH #215 prevent SETC statement character string processing from reducing && to &
+	 * 2022-08-07 #439 INDEX issue
+	 * 2022-08-22 #438 X2C issue
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -993,7 +995,7 @@ public  class  mz390 {
 			2, 2, 3, 2, 0, 2, 2, 8, 2, 3, 2, 2, 2, 2, 3, // 2 * / prev mpy/div  RPI 214
 			3, 3, 3, 4, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 3 (   prev open (...) RPI 274, RPI 647
 			3, 3, 3,11, 3, 3, 3, 8,11, 3, 3, 3, 3, 3, 3, // 4 )   prev var subscript RPI 559
-			0, 0, 3, 5, 5, 5, 5, 8, 0, 3, 0, 0, 0, 0, 3, // 5 .   prev concat
+			5, 5, 3, 5, 5, 5, 5, 8, 0, 3, 0, 0, 0, 0, 3, // 5 .   prev concat
 			3, 3, 3, 6, 3, 6, 3, 8, 3, 3, 3, 3, 3, 3, 3, // 6 ~   prev terminator
 			3, 3, 3, 7, 3, 7, 7, 8, 0, 3, 7, 7, 7, 7, 3, // 7 LL  logical compares //RPI144 (was 1,2 now 3,3)
 			3, 3, 3, 0, 0, 0, 0, 8, 0, 3, 0, 0, 0, 0, 3, // 8 '   string '....'
@@ -12315,21 +12317,20 @@ public  class  mz390 {
 		}
 		put_setc_stack_var();
     }
-    private void exec_pc_x2c(){
-    	/*
-    	 * convert hex string to char string
-    	 */
-    	check_setc_quotes(1); // RPI 1139
-    	setc_value1 = get_setc_stack_value();
-    	seta_value = Integer.valueOf(setc_value1,16);
-		setc_value = ""
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 24]
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 16 & 0xff]         
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 8  & 0xff]
-			       + (char)tz390.ebcdic_to_ascii[seta_value        & 0xff]					                               
-			       ;
+	private void exec_pc_x2c(){
+		/*
+		 * convert hex string to char string
+		 */
+		check_setc_quotes(1); // RPI 1139
+		setc_value1 = get_setc_stack_value();
+		StringBuilder stb = new StringBuilder("");
+		for (int i = 0; i < setc_value1.length(); i += 2) {
+			String str = setc_value1.substring(i, i + 2);
+			stb.append((char)(((int)tz390.ebcdic_to_ascii[Integer.parseInt(str, 16)]) & 0xff));
+		}
+		setc_value = stb.toString();
 		put_setc_stack_var();
-    }
+	}
     private void exec_pc_x2d(){
     	/*
     	 * convert hex string to decimal string

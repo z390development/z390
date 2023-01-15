@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# debug: execute program in test/debug mode 
+
+# debug flag; 0=no debug, 1=debug
+debug=0
+
+rc=0
+trace=0
+
+if [ $# -gt 0 ]; then
+    # save current nocasematch setting
+    SHELLNOCASEMATCH=$(shopt -p nocasematch)
+    shopt -s nocasematch
+    case $1 in
+        "tron")
+            shift
+            trace=1
+            ;;
+        "troff")
+            shift
+            trace=0
+            ;;
+    esac
+    # restore nocasematch setting
+    $SHELLNOCASEMATCH
+fi
+
+if [ $trace -eq 1 ]; then set -x; fi
+
+if [ $# -eq 0 ] || [ -z "$1" ]; then echo "debug ERROR: missing file name"; exit 16; fi
+
+# remove trailing ".390", if any
+zFile="${1%.390}"
+
+# error if missing name to left of ".390"
+if [ -z "$zFile" ]; then echo "debug ERROR: invalid file name $1"; exit 16; fi
+# error if input file with MLC extension does not exist
+if [ ! -f "$zFile".390 ]; then echo "debug ERROR: file $zFile.390 not found"; exit 16; fi
+
+# extract longest substring that ends with "/"
+dir=${0%/*}
+
+# get the z390 directory
+zdir=$(dirname $0)
+zdir=$(cd $zdir && pwd)
+zdir=$(dirname $zdir)
+
+${dir}/ez390 $zFile noloadhigh test $2 $3 $4 $5 $6 $7 $8 $9
+rc=$?
+if [ $debug -eq 1 ]; then echo "debug: ez390 rc=$rc"; fi
+if [ $rc -ne 0 ]; then
+    echo "debug ERROR: ez390 rc=$rc; see errors in $zFile.LOG file and on console"
+fi
+
+exit $rc

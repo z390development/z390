@@ -1,27 +1,49 @@
 #!/bin/bash
 
-# mac: run mz390 macro processor to expand mlc to bal with nomlc 
+# mac: run mz390 macro processor to expand mlc to bal with noasm 
 
 # debug flag; 0=no debug, 1=debug
 debug=0
 
-ECHO=0
-if [ "$1" = "tron" ] || [ "$1" = "TRON" ]; then
-#    echo "setting echo to 1"
-	ECHO=1
-	shift
+rc=0
+trace=0
+
+if [ $# -gt 0 ]; then
+    # save current nocasematch setting
+    SHELLNOCASEMATCH=$(shopt -p nocasematch)
+    shopt -s nocasematch
+    case $1 in
+        "tron")
+            shift
+            trace=1
+            ;;
+        "troff")
+            shift
+            trace=0
+            ;;
+    esac
+    # restore nocasematch setting
+    $SHELLNOCASEMATCH
 fi
 
-if [ -f "$1.BAL" ]; then rm $1.BAL; fi
-if [ -f "$1.ERR" ]; then rm $1.ERR; fi
-if [ -f "$1.STA" ]; then rm $1.STA; fi
-#if [ -f $1.TR* ]; then rm $1.TR*; fi
-shopt -s nullglob
-for f in $1.TR*; do
-#    echo "remove file: $f"
-    if [ -f "$f" ]; then rm "$f"; fi
-done
-shopt -u nullglob
+if [ $trace -eq 1 ]; then set -x; fi
+
+if [ $# -eq 0 ] || [ -z "$1" ]; then echo "mac ERROR: missing file name"; exit 16; fi
+
+# remove trailing ".MLC", if any
+zFile="${1%.MLC}"
+
+# error if missing name to left of ".MLC"
+if [ -z "$zFile" ]; then echo "mac ERROR: invalid file name $1"; exit 16; fi
+# error if input file with MLC extension does not exist
+if [ ! -f "$zFile".MLC ]; then echo "mac ERROR: file $zFile.MLC not found"; exit 16; fi
+
+# remove previously created files, if any
+if [ -f "$zFile.BAL" ]; then rm $zFile.BAL; fi
+if [ -f "$zFile.ERR" ]; then rm $zFile.ERR; fi
+if [ -f "$zFile.STA" ]; then rm $zFile.STA; fi
+#if [ -f $zFile.TR* ]; then rm $zFile.TR*; fi
+if ls $zFile.TR* 1>/dev/null 2>&1; then rm -f $zFile.TR*; fi
 
 # extract longest substring that ends with "/"
 dir=${0%/*}
@@ -50,11 +72,15 @@ if [ $debug -eq 1 ]; then
     echo "mac chkmac=$chkmac"
 fi
 
-${dir}/mz390 $1 bal noasm $sysmac $syscpy $chksrc $chkmac $2 $3 $4 $5 $6 $7 $8 $9
+${dir}/mz390 $zFile bal noasm $sysmac $syscpy $chksrc $chkmac $2 $3 $4 $5 $6 $7 $8 $9
 rc=$?
 if [ $debug -eq 1 ]; then echo "mac: mz390 rc=$rc"; fi
-if [ "$rc" -ne "0" ]; then
-    echo "mac: mz390 error; see errors on mz390 generated $1.BAL file and console"
+if [ $rc -ne 0 ]; then
+    if [ $rc -eq 4 ]; then
+        echo "mac WARNING: mz390 rc=$rc; see warnings in mz390 generated $zFile.BAL/ERR file(s) and on console"
+    else
+        echo "mac ERROR: mz390 rc=$rc; see errors in mz390 generated $zFile.BAL/ERR file(s) and on console"
+    fi
 fi
 
 exit $rc

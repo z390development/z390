@@ -59,7 +59,7 @@ The following is a simple *Hello world* application written in COBOL.
             STOP RUN.
 ```
 
-Add the contents of this to a file named 'HELLO.MLC'.
+Add the contents of this to a file named 'HELLO.CBL'.
 
 Now run the following z390 command to assemble, link and run the COBOL program.
 
@@ -92,6 +92,9 @@ will be similar to the following:
 {==HELLO ZCOBOL==}
 21:13:19 hello     EZ390 ENDED   RC= 0 SEC= 0 MEM(MB)= 17 IO=185 INS=41
 ```
+
+Learn more in the [zCOBOL user guide](/user_guide/zCOBOL/zCOBOL_User_Guide)
+
 ## Hello zCICS
 
 TODO
