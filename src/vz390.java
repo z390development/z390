@@ -68,7 +68,9 @@ public class vz390 {
 	 * 04/06/09 RPI 1016 prevent error on generic POINT to 1 record KSDS file
 	 * 04/23/09 RPI 1024 prevent null field trap by JM
 	 * 07/17/10 RPI 865 fix open for path to correctly set path/dsn
+	 * 24/01/19 RPI 1627 Make comments compatible with Javadoc. HS
 	 * 2021/09/30 DSH #245 add traceall display of vclr name search to help debug cics startup
+     * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
 	 **************************************************************************
 	 *  Global variables                  (last RPI)
 	 **************************************************************************/
@@ -128,7 +130,7 @@ public class vz390 {
 
 	int cur_vcdt_tiot = 0; // index of tiot entry + 1
 
-	/*
+	/**
 	 * VCLR - VSAM Cluster entry in VCDT catalog
 	 */
 	String cur_vcltr_id; // VCLRID C"VCLR"
@@ -164,7 +166,7 @@ public class vz390 {
 
 	int vclr_flag = 16; // VCLRFLAG option flags
 
-	/*
+	/**
 	 * cur_vclr_flag bits
 	 */
 	int vclr_flag_vrec = 0x80000000; // VCLRVREC variable record length
@@ -200,7 +202,7 @@ public class vz390 {
 
 	int vclr_len = 56; // VCLRLEN length of VCLR catalog entry
 
-	/*
+	/**
 	 * VAIX alternate index VCDT catalog entries
 	 */
 	int cur_vaix_addr = 0; // cur aix section addr
@@ -248,7 +250,7 @@ public class vz390 {
 
 	int vaix_len = 40; // VAIXLEN length of VAIX catalog entry RPI 865
 
-	/*
+	/**
 	 * VPTH path VCDT catalog entry
 	 */
 	String cur_vpth_id; // VPTHID C'VPTH'
@@ -279,7 +281,7 @@ public class vz390 {
 
 	int vpth_len = 28; // VPTHLEN length of VPTH catalog entry
 
-	/*
+	/**
 	 * ACB
 	 */
 	boolean open_acb_mod = true; // RPI 701 true unless REPRO output
@@ -402,7 +404,7 @@ public class vz390 {
 
 	int acb_openc = 56; // ACBOPENC unique open ACB ocunt RPI 702
 
-	/*
+	/**
 	 * RPL request list
 	 */
 	int cur_rpl_addr = 0; // cur RPL address
@@ -419,7 +421,7 @@ public class vz390 {
 
 	int cur_rpl_opt = 0; // RPL option flags
 
-	/*
+	/**
 	 * cur_rpl_opt flag bits
 	 */
 	int rpl_opt_loc = 0x8000; // RPL option leave rec in buffer
@@ -474,7 +476,7 @@ public class vz390 {
 
 	long cur_rpl_ksir = 0; // XRBA of current KSIR
 
-	/*
+	/**
 	 * cur_rpl_flag bits
 	 */
 	int rpl_flag_getok = 0x80000000; // prev RPL GET successful
@@ -483,7 +485,7 @@ public class vz390 {
 
 	int rpl_flag_ksit = 0x20000000; // get/put in KSIT
 
-	/*
+	/**
 	 * RPL field offsets
 	 */
 	int rpl_ecb = 4; // RPL address ecb to post
@@ -520,7 +522,7 @@ public class vz390 {
 
 	int rpl_len = 84; // RPI 750
 
-	/*
+	/**
 	 * VSAM RPL feedback codes 4 bytes (PDF,RC,CC,RNC)
 	 */
 	byte pdf_def = 0; // default Problem Determination Field
@@ -537,10 +539,10 @@ public class vz390 {
 
 	byte cmp_vx0 = 1; // primary KSDS ro VRRDS index
 
-	// rc_ok reason codes (see MVS 3.8 IDARMRCD.MAC)
+	/* rc_ok reason codes (see MVS 3.8 IDARMRCD.MAC) */
 	byte rn_ok = 0; // ok
 
-	// rc_log logical error reason codes
+	/* rc_log logical error reason codes */
 	byte rn_eod = 4; // RPLEODER end of data
 
 	byte rn_dup_key = 8; // RPLDUP attempt to write dup pri or unique aix key
@@ -571,7 +573,7 @@ public class vz390 {
 
 	String rn_log_reason[] = new String[256];
 
-	// rc_phy physical read/write error reason codes
+	/* rc_phy physical read/write error reason codes */
 	byte rn_read_data_err = 4; // RPLRDERD data read error
 
 	byte rn_read_index_err = 8; // RPLRDERI index read error
@@ -617,9 +619,9 @@ public class vz390 {
 
 	long bwd_xrba = 0;
 
-	/*
-	 * find ksds key variables
-	 */
+     /*_                                                      (RPI 1627)
+      * find ksds key variables
+      */
 	byte[] cur_key;
 
 	ByteBuffer cur_key_buff; // RPI 750
@@ -652,7 +654,7 @@ public class vz390 {
 
 	int prev_key_gen_rc = 0;
 
-	/*
+	/**
 	 * stats option statistics for log
 	 */
 	int tot_vsam_oper = 0;
@@ -691,14 +693,14 @@ public class vz390 {
 	int tot_vxn_find  = 0;
 	int max_vxn_height = 0;
 
-	/*
-	 * KSDS work areas
-	 */
+     /*_                                                      (RPI 1627)
+      * KSDS work areas
+      */
 	int comp_rc = 0; // result of last key compare
 
 	int comp_key_gen_rc = 0; // RPI 757
 
-	/*
+	/**
 	 * KSDS insert top control block ZKSITD
 	 */
 	byte[] cb_byte = null;
@@ -731,7 +733,7 @@ public class vz390 {
 
 	byte[] cbksit_byte = new byte[ksit_len];
 
-	/*
+	/**
 	 * KSDS insert record control block ZKSIRD
 	 */
 	long cur_ksir_xrba = 0;
@@ -773,7 +775,8 @@ public class vz390 {
     int ksir_low_height  = 52; // max height of low node
 	int ksir_high_height = 53; // max height of high node
     int ksir_len = 54; // KSIR length
-    /*
+
+    /**
      * AVT Balance KSIT variables - RPI 806
      */
 	long cur_node_xrba  = 0; // current node on path to insert
@@ -796,7 +799,8 @@ public class vz390 {
 	long avl_w_high; // x higher right
 	byte avl_w_low_height; // r low branch height
 	byte avl_w_high_height; // r high branch height
-	/*
+
+	/**
 	 * VSAM Cache Buffer (vcb_) data areas
 	 */
 	boolean vcb_alloc = false;
@@ -839,7 +843,7 @@ public class vz390 {
 
 	int[] vcb_hash_index = new int[max_vcb_hash];
 
-	/*
+	/**
 	 * VSAM cache buffer Least recently used and most recently used queues
 	 */
 	int vcb_lru = 0;
@@ -854,7 +858,7 @@ public class vz390 {
 
 	int[] vcb_mru_next = new int[max_vcb];
 
-	/***************************************************************************
+	/* **************************************************************************
 	 * end of global variables
 	 **************************************************************************/
 	public void init_vz390(tz390 shared_tz390, pz390 shared_pz390,
@@ -868,12 +872,15 @@ public class vz390 {
 		init_rn_codes();
 	}
 
+
+
+    /**
+     * init logical and physical reason codes for use in set_feedback
+     * tracing
+     * 
+     */
 	private void init_rn_codes() {
-		/*
-		 * init logical and physical reason codes for use in set_feedback
-		 * tracing
-		 * 
-		 */
+
 		rn_log_reason[4] = "end of data";
 		rn_log_reason[8] = "duplicate key";
 		rn_log_reason[12] = "out of seq";
@@ -895,11 +902,14 @@ public class vz390 {
 		rn_phy_reason[20] = "write index error";
 	}
 
-	public void svc_vsam() {
-		/*
-		 * execute VSAM access method service requested
+
+
+		/**
+		 * Execute VSAM access method service requested
 		 * 
 		 */
+	public void svc_vsam() {
+
 		switch (cur_vsam_op) {
 		case 1: // GET R1=A(RPL)
 			svc_rpl_get();
@@ -924,14 +934,21 @@ public class vz390 {
 		}
 	}
 
+
+
+   /**
+     * Open ACB defining VSAM ESDS, RRDS, or KSDS
+     * <ol>
+     * <li> Use DDNAME/DSNAME to load VCDT and find VCLR entry based
+     *      on cat.name or search for VCLR with matching ACBNAME. RPI 681 </li> 
+     * <li> Verify ACB vs VCDT options </li> 
+     * <li> Open VES, VX0, and any upgrade VXN's </li> 
+     * <li> If REPRO and OUTPUT, then reset ves/vx0 eof RPI 701 </li> 
+     * </ol>
+     * Notes: 1. Issue ABEND 013 if open fails.
+     */
 	public void svc_open_acb() {
-		/*
-		 * open ACB defining VSAM ESDS, RRDS, or KSDS 1. Use DDNAME/DSNAME to
-		 * load VCDT and find VCLR entry based on cat.name or search for VCLR
-		 * with matching ACBNAME. RPI 681 2. Verify ACB vs VCDT options 3. Open
-		 * VES, VX0, and any upgrade VXN's 4. If REPRO and OUTPUT, then reset
-		 * ves/vx0 eof RPI 701 Notes: 1. Issue ABEND 013 if open fails.
-		 */
+
 		tot_acb_open++;
 		tot_vsam_oper++;
 		if (pz390.reg.get(pz390.r0 + 3) == sz390.dcb_oflgs_w  // RPI 764
@@ -963,12 +980,18 @@ public class vz390 {
 		}
 	}
 
+
+
+    /**
+     * Close open acb.
+     * <ol>
+     * <li> Close VESDCB </li> 
+     * <li> Close VX0 if not ESDS or fixed RRDS </li> 
+     * <li> If KSDS index updates pending, rewrite VXNDCB's from key index trees. </li> 
+     * </ol>
+     */
 	public void svc_close_acb() {
-		/*
-		 * close open acb 1. Close VESDCB 2. Close VX0 if not ESDS or fixed RRDS
-		 * 2. If KSDS index updates pending, rewrite VXNDCB's from key index
-		 * trees.
-		 */
+
 		tot_acb_close++;
 		tot_vsam_oper++;
 		cur_acb_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
@@ -986,12 +1009,17 @@ public class vz390 {
 		}
 	}
 
+
+
+    /**
+     * load VCDT using ACB DSNAME or DDNAME
+     * <ol>
+     * <li> If file spec includes dot, use suffix to find VCDT entry else use ACBNAME field. </li> 
+     * <li> Set ACBDCBN, and ACBDCBA from VCDT VCLR or VPTH entry. </li> 
+     * </ol>
+     */
 	private boolean load_vcdt() {
-		/*
-		 * load VCDT using ACB DSNAME or DDNAME 1. If file spec includes dot,
-		 * use suffix to find VCDT entry else use ACBNAME field. 2. Set ACBDCBN,
-		 * and ACBDCBA from VCDT VCLR or VPTH entry.
-		 */
+
 		int cur_dsn_addr = pz390.mem.getInt(cur_acb_addr + acb_dsnam);
 		if (cur_dsn_addr == 0) {
 			pz390.reg
@@ -1014,13 +1042,22 @@ public class vz390 {
 		return false;
 	}
 
+
+
+    /**
+     * find VCLR/VPTH entry in VCDT
+     * <ol>
+     * <li> Set cur_vclra_addr </li> 
+     * <li> Set cur_vptha_addr or 0 </li> 
+     *    <ol>
+     *    <li> If vpth_flag_aixp, set acb_oflgs_aixp else 0 </li> 
+     *    <li> If vpth_flag_aixu, set acb_oflgs_aixu else 0 </li> 
+     *    </ol> </li>
+     * <li> Set cur_vcdt_dcba for use by init_acb_dcb. </li> 
+     * </ol>
+     */
 	private boolean find_vclr() {
-		/*
-		 * find VCLR/VPTH entry in VCDT 1. Set cur_vclra_addr 2. Set
-		 * cur_vptha_addr or 0 a. If vpth_flag_aixp, set acb_oflgs_aixp else 0
-		 * b. If vpth_flag_aixu, set acb_oflgs_aixu else 0 3. Set cur_vcdt_dcba
-		 * for use by init_acb_dcb.
-		 */
+
 		cur_vcdt_dcba = pz390.mem.getInt(cur_vcdt_addr + vcdt_dcba);
 		cur_vcdt_clrt = pz390.mem.getInt(cur_vcdt_addr + vcdt_clrt);
 		cur_acb_vclra = pz390.mem.getInt(cur_vcdt_addr + vcdt_clra);
@@ -1080,10 +1117,13 @@ public class vz390 {
 		return false;
 	}
 
-	private void fetch_acb_fields() {
-		/*
-		 * fetch acb fields from cur_acb_addr
-		 */
+
+
+    /**
+     * fetch acb fields from cur_acb_addr
+     */
+    private void fetch_acb_fields() {
+
 		cur_acb_macrf = pz390.mem.getInt(cur_acb_addr + acb_macrf);
 		cur_acb_oflgs = pz390.mem.get(cur_acb_addr + acb_oflgs);
 		cur_acb_vclra = pz390.mem.getInt(cur_acb_addr + acb_vclra);
@@ -1108,11 +1148,14 @@ public class vz390 {
 		}
 	}
 
-	private void fetch_vclr_fields() {
-		/*
-		 * fetch current vclr fields used by rpl_get/put. Note open_acb does
-		 * additional vclr field fetches,
-		 */
+
+
+    /*
+     * fetch current vclr fields used by rpl_get/put. Note open_acb does
+     * additional vclr field fetches,
+     */
+    private void fetch_vclr_fields() {
+
 		cur_vclr_flag = pz390.mem.getInt(cur_acb_vclra + vclr_flag);
 		cur_vclr_lrec = pz390.mem.getInt(cur_acb_vclra + vclr_lrec);
 		if (cur_vcdt_ptha != 0){  // RPI 865 
@@ -1122,10 +1165,13 @@ public class vz390 {
 		}
 	}
 
-	private void fetch_rpl_fields() {
-		/*
-		 * fetch RPL, ACB, and VCDT fields for GET, PUT, etc.
-		 */
+
+
+    /**
+     * fetch RPL, ACB, and VCDT fields for GET, PUT, etc.
+     */
+    private void fetch_rpl_fields() {
+
 		cur_rpl_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 		cur_rpl_ecb = pz390.mem.getInt(cur_rpl_addr + rpl_ecb);
 		cur_rpl_lkey = pz390.mem.getInt(cur_rpl_addr + rpl_lkey);
@@ -1170,10 +1216,13 @@ public class vz390 {
 		}
 	}
 
-	private boolean check_acb_macrf() {
-		/*
-		 * check for consistency between VCDT and ACB options and if
-		 */
+
+
+    /**
+     * check for consistency between VCDT and ACB options and if
+     */
+    private boolean check_acb_macrf() {
+
 		if ((cur_vclr_flag & vclr_flag_esds) != 0) {
 			// ESDS
 		} else if ((cur_vclr_flag & vclr_flag_rrds) != 0) {
@@ -1188,11 +1237,16 @@ public class vz390 {
 		return true;
 	}
 
-	private boolean open_acb_dcbs() {
-		/*
-		 * 1. dynamically allocate and open dcbs required for VES, VX0, and any
-		 * upgrade VXN's. 2. Alloc memory for last key if KSDS.
-		 */
+
+
+    /**
+     * <ol>
+     * <li> dynamically allocate and open dcbs required for VES, VX0, and any upgrade VXN's. </li> 
+     * <li> Alloc memory for last key if KSDS. </li> 
+     * </ol>
+     */
+    private boolean open_acb_dcbs() {
+
 		int save_open_flags = pz390.reg.getInt(pz390.r0);
 		if ((cur_acb_oflgs & acb_oflgs_aixu) != 0) {
 			cur_acb_dcbt = pz390.mem.getInt(cur_acb_addr + acb_dcbt);
@@ -1252,12 +1306,14 @@ public class vz390 {
 		return true;
 	}
 
-	private void init_acb_dcb(int dcb_addr, int dcb_lrecl_f, int dcb_dsname,
-			String dcb_ddname) {
-		/*
-		 * copy model dcb from vcdt_dcba to new dynamcially allocated dcb
-		 * address and set DCBLRECLF and DCBDSNAM fields
-		 */
+
+
+    /**
+     * copy model dcb from vcdt_dcba to new dynamcially allocated dcb
+     * address and set DCBLRECLF and DCBDSNAM fields
+     */
+    private void init_acb_dcb(int dcb_addr, int dcb_lrecl_f, int dcb_dsname, String dcb_ddname) {
+
 		System.arraycopy(pz390.mem_byte, cur_vcdt_dcba, pz390.mem_byte,
 				dcb_addr, sz390.dcb_len);
 		pz390.mem.putInt(dcb_addr + sz390.dcb_lrecl_f, dcb_lrecl_f);
@@ -1268,10 +1324,13 @@ public class vz390 {
 				+ sz390.dcb_ddnam, 8, ' ');
 	}
 
-	private boolean open_acb_dcb(int dcb_addr) {
-		/*
-		 * dynamically allocate and open DCB for VES, VX0, VXN's
-		 */
+
+
+    /**
+     * dynamically allocate and open DCB for VES, VX0, VXN's
+     */
+    private boolean open_acb_dcb(int dcb_addr) {
+
 		// use same flags in r0 for open acb and dcb's
 		sz390.cur_dcb_addr = dcb_addr;
 		get_vcdt_path();
@@ -1287,10 +1346,13 @@ public class vz390 {
 		}
 	}
 
-	private boolean close_acb_dcbs() {
-		/*
-		 * close dynamically allocated ACB DCB's
-		 */
+
+
+    /**
+     * close dynamically allocated ACB DCB's
+     */
+    private boolean close_acb_dcbs() {
+
 		if ((cur_acb_oflgs & acb_oflgs_aixu) != 0) {
 			cur_acb_dcbt = pz390.mem.getInt(cur_acb_addr + acb_dcbt);
 		} else if ((cur_vclr_flag & vclr_flag_esds) != 0
@@ -1319,10 +1381,13 @@ public class vz390 {
 		return true;
 	}
 
-	private void get_vcdt_path() {
-		/*
-		 * get VCDT path for use in VX?DCB file opens
-		 */
+
+
+    /**
+     * get VCDT path for use in VX?DCB file opens
+     */
+    private void get_vcdt_path() {
+
 		int index = sz390.cde_file[cur_vcdt_tiot - 1]
 				.lastIndexOf(File.separator);
 		if (index > 0) {
@@ -1333,10 +1398,13 @@ public class vz390 {
 		}
 	}
 
-	private void svc_rpl_get() {
-		/*
-		 * retrieve record from open VSAM ACB/VCDT cluster.
-		 */
+
+
+    /**
+     * retrieve record from open VSAM ACB/VCDT cluster.
+     */
+    private void svc_rpl_get() {
+
 		tot_rpl_get++;
 		tot_vsam_oper++;
 		fetch_rpl_fields();
@@ -1393,10 +1461,13 @@ public class vz390 {
 		}
 	}
 
-	private void rpl_get_esds_seq() {
-		/*
-		 * ESDS seq get
-		 */
+
+
+    /*
+     * ESDS seq get
+     */
+    private void rpl_get_esds_seq() {
+
 		if ((cur_rpl_opt & rpl_opt_bwd) != 0) {
 			if (!set_esds_bwd_next()) {
 				return; // RPI 672 error or eod
@@ -1425,10 +1496,13 @@ public class vz390 {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-	private void rpl_get_esds_adr() {
-		/*
-		 * ESDS get by rba or xrba
-		 */
+
+
+    /*
+     * ESDS get by rba or xrba
+     */
+    private void rpl_get_esds_adr() {
+
 		// get ves rba or xrba from RPLARG addr
 		if ((cur_rpl_opt & rpl_opt_xrba) != 0) {
 			cur_ves_xrba = pz390.mem.getLong(cur_rpl_arg);
@@ -1457,26 +1531,42 @@ public class vz390 {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-	private void set_rpl_lxrba(long xrba) {
-		/*
-		 * set RPLLXRBA last rec XRBA 1. VES for ESDS/RRDS 2. VX0 for KSDS/VRRDS
-		 */
+
+
+    /**
+     * <ol>
+     * set RPLLXRBA last rec XRBA
+     * <li> VES for ESDS/RRDS </li>
+     * <li> VX0 for KSDS/VRRDS </li>
+     * </ol>
+     */
+    private void set_rpl_lxrba(long xrba) {
 		cur_rpl_lxrba = xrba;
 		pz390.mem.putLong(cur_rpl_addr + rpl_lxrba, cur_rpl_lxrba);
 	}
 
-	private void set_rpl_cxrba(long xrba) {
-		/*
-		 * set RPL cur pos xrba 1. VES for ESDS/RRDS 2. VX0 for KSDS/VRRDS
-		 */
+
+
+    /**
+     * set RPL cur pos xrba 1. VES for ESDS/RRDS 2. VX0 for KSDS/VRRDS
+     */
+    private void set_rpl_cxrba(long xrba) {
+
 		cur_rpl_cxrba = xrba;
 		pz390.mem.putLong(cur_rpl_addr + rpl_cxrba, cur_rpl_cxrba);
 	}
 
-	private void set_rpl_ksit() {
-		/*
-		 * set RPLLXRBA last rec XRBA 1. VES for ESDS/RRDS 2. VX0 for KSDS/VRRDS
-		 */
+
+
+    /**
+     * <ol>
+     * set RPLLXRBA last rec XRBA
+     * <li> VES for ESDS/RRDS </li>
+     * <li> VX0 for KSDS/VRRDS </li>
+     * </ol>
+     */
+    private void set_rpl_ksit() {
+
 		if (tz390.opt_tracev) {
 			tz390.put_trace("VSAM RPL KSIT XRBA="
 					+ tz390.get_long_hex(cur_ksit_xrba, 16));
@@ -1487,10 +1577,13 @@ public class vz390 {
 		pz390.mem.putLong(cur_rpl_addr + rpl_ksir, cur_ksir_xrba);
 	}
 
-	private void set_rpl_arg_rba() {
-		/*
-		 * store cur_ves_xrba as RBA or XRBA in RPLARG and limit check
-		 */
+
+
+    /**
+     * store cur_ves_xrba as RBA or XRBA in RPLARG and limit check
+     */
+    private void set_rpl_arg_rba() {
+
 		if ((cur_rpl_opt & rpl_opt_xrba) != 0) {
 			if (cur_ves_xrba > tz390.max_file_size || cur_ves_xrba < 0) {
 				set_feedback(pdf_def, rc_log, cmp_ves, rn_inv_rba_req);
@@ -1507,10 +1600,13 @@ public class vz390 {
 		}
 	}
 
-	private void rpl_get_ksds_seq() {
-		/*
-		 * get next KSDS seq. rcd else eof/error
-		 */
+
+
+    /**
+     * get next KSDS seq. rcd else eof/error
+     */
+    private void rpl_get_ksds_seq() {
+
 		if ((cur_rpl_flag & rpl_flag_ksit) != 0) {
 			// read rec for cur ksir in ksit
 			// and pos to next ksir or next index
@@ -1554,10 +1650,13 @@ public class vz390 {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-	private boolean get_first_seq_ksir() {
-		/*
-		 * position to first KSIR in KSIT for either FWD or BWD seq. access.
-		 */
+
+
+    /**
+     * position to first KSIR in KSIT for either FWD or BWD seq. access.
+     */
+    private boolean get_first_seq_ksir() {
+
 		if (!read_ksit()) {
 			return false;
 		}
@@ -1569,11 +1668,14 @@ public class vz390 {
 		return true;
 	}
 
-	private boolean read_ksir_cur_rec() {
-		/*
-		 * read record from current KSIR and postion to next KSIR or index entry
-		 * or return eod
-		 */
+
+
+    /**
+     * read record from current KSIR and postion to next KSIR or index entry
+     * or return eod
+     */
+    private boolean read_ksir_cur_rec() {
+
 		// read cur KSIR in KSIT
 		if (!read_ksir(cur_rpl_ksir)) {
 			return false;
@@ -1598,22 +1700,27 @@ public class vz390 {
 		set_rpl_cur_rec(true);
 		return true;
 	}
-	private void broken_ksir_link(String type, long xrba1, long xrba2){
-		/*
-		 * display error message for KSIR 
-		 * broken links and set feedback ves data error
-		 */
+
+
+
+    /*
+     * display error message for KSIR 
+     * broken links and set feedback ves data error
+     */
+    private void broken_ksir_link(String type, long xrba1, long xrba2){
 		sz390.put_log("VSAM KSIR BROKEN LINK " + type 
 				+ " XRBA1=" + tz390.get_long_hex(xrba1,16)
 				+ " XRBA1=" + tz390.get_long_hex(xrba2,16));
 		set_feedback(pdf_def, rc_phy, cmp_ves, rn_read_data_err);
 	}
 
-	private boolean set_ksds_next_index() {
-		/*
-		 * set cur_vx0_xrba to next ksds index going forward or backward else
-		 * set eod
-		 */
+
+
+    /**
+     * set cur_vx0_xrba to next ksds index going forward or backward else
+     * set eod
+     */
+    private boolean set_ksds_next_index() {
 		if ((cur_rpl_opt & rpl_opt_bwd) != 0) {
 			cur_vx0_xrba = cur_rpl_cxrba;
 			if (cur_vx0_xrba == 0) {
@@ -1638,11 +1745,14 @@ public class vz390 {
 		return true;
 	}
 
-	private void set_rpl_ksds_next() {
-		/*
-		 * setup for next seq record either in KSIT or VX0 index and turn off
-		 * rpl_flag_ksit if done
-		 */
+
+
+    /**
+     * setup for next seq record either in KSIT or VX0 index and turn off
+     * rpl_flag_ksit if done
+     */
+    private void set_rpl_ksds_next() {
+
 		if ((cur_rpl_flag & rpl_flag_ksit) != 0) {
 			if (cur_rpl_ksir != -1) {
 				cur_rpl_flag = cur_rpl_flag ^ rpl_flag_ksit;
@@ -1658,20 +1768,24 @@ public class vz390 {
 		set_rpl_cxrba(cur_vx0_xrba);
 	}
 
-	private void set_rpl_flag() {
-		/*
-		 * store rpl_flag
-		 */
+
+
+    /**
+     * store rpl_flag
+     */
+    private void set_rpl_flag() {
 		if (tz390.opt_tracev) {
 			tz390.put_trace("VSAM RPL FLAG=" + tz390.get_hex(cur_rpl_flag, 8));
 		}
 		pz390.mem.putLong(cur_rpl_addr + rpl_flag, cur_rpl_flag);
 	}
 
-	private void set_vx0_ksds_next() {
-		/*
-		 * inc or dec vx0 for next key index entry
-		 */
+
+
+    /**
+     * inc or dec vx0 for next key index entry
+     */
+    private void set_vx0_ksds_next() {
 		if ((cur_rpl_opt & rpl_opt_bwd) != 0) {
 			cur_vx0_xrba = cur_vx0_xrba - 8 - cur_vclr_klen;
 		} else {
@@ -1679,10 +1793,13 @@ public class vz390 {
 		}
 	}
 
-	private void rpl_get_ksds_key() {
-		/*
-		 * get KSDS get by key
-		 */
+
+
+    /**
+     * get KSDS get by key
+     */
+    private void rpl_get_ksds_key() {
+
 		reset_rpl_cur_rec_flags();
 		if (!find_ksds_key()) {
 			// key not found - set get not found flag for possible UPD insert
@@ -1706,10 +1823,17 @@ public class vz390 {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-	private void rpl_get_rrds_key() {
-		/*
-		 * get for open RRDS file Notes: 1. Read vx0 XRBA for rel. rcd #
-		 */
+
+
+    /**
+     * get for open RRDS file
+     * Notes:
+     * <ol>
+     * <li> Read vx0 XRBA for rel. rcd # </li>
+     * </ol>
+     */
+    private void rpl_get_rrds_key() {
+
 		if ((cur_rpl_opt & rpl_opt_kge) != 0) {
 			while (cur_vx0_xrba < sz390.tiot_eof_rba[cur_vx0_tiot_index]
 					&& !get_rrds_ves_xrba(true)) {
@@ -1734,10 +1858,17 @@ public class vz390 {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-	private void rpl_get_rrds_seq() {
-		/*
-		 * get seq for RRDS file Notes: 1. Read vx0 at rpl_cxrba to get ves xrba
-		 */
+
+
+    /**
+     * get seq for RRDS file
+     * Notes:
+     * <ol>
+     * <li> Read vx0 at rpl_cxrba to get ves xrba </li>
+     * </ol>
+     */
+    private void rpl_get_rrds_seq() {
+
 		cur_vx0_xrba = cur_rpl_cxrba;
 		if ((cur_rpl_opt & rpl_opt_bwd) != 0) {
 			// read vrrds index backward
@@ -1787,11 +1918,14 @@ public class vz390 {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-	private boolean find_ksds_key() {
-		/*
-		 * search vx0 for ksds key in rplarg and set cur_vx0_xrba entry if found
-		 * else false.
-		 */
+
+
+    /**
+     * search vx0 for ksds key in rplarg and set cur_vx0_xrba entry if found
+     * else false.
+     */
+    private boolean find_ksds_key() {
+
 		tot_vxn_find++;
 		vx0_lrec = 8 + cur_vclr_klen;
 		high_key_rec = sz390.tiot_eof_rba[cur_vx0_tiot_index] / vx0_lrec;
@@ -1899,11 +2033,14 @@ public class vz390 {
 		return false;
 	}
 
-	private void set_rpl_cur_rec(boolean found) {
-		/*
-		 * set rpl_flag_getok or rpl_flag_getnf and save along with
-		 * rpl_flag_ksit possible following put or insert.
-		 */
+
+
+    /**
+     * set rpl_flag_getok or rpl_flag_getnf and save along with
+     * rpl_flag_ksit possible following put or insert.
+     */
+    private void set_rpl_cur_rec(boolean found) {
+
 		if (found) {
 			cur_rpl_flag = cur_rpl_flag | rpl_flag_getok;
 		} else {
@@ -1914,26 +2051,30 @@ public class vz390 {
 		pz390.mem.putLong(cur_rpl_addr + rpl_ksir, cur_rpl_ksir);
 	}
 
-	private void reset_rpl_cur_rec_flags() {
-		/*
-		 * reset flags for RPL current record
-		 */
+
+
+    /**
+     * reset flags for RPL current record
+     */
+    private void reset_rpl_cur_rec_flags() {
+
 		cur_rpl_flag = cur_rpl_flag
 				& (-1 ^ (rpl_flag_ksit | rpl_flag_getok | rpl_flag_getnf));
 		pz390.mem.putInt(cur_rpl_addr + rpl_flag, cur_rpl_flag);
 	}
 
-	private boolean find_ksir() {
-		/*
-		 * search ksit binary tree at cur_vx0_xrba (negative) 
-		 * 1. Set cur_ves_xrba to record if found 
-		 * 2. Set cur_rpl_ksir to last ksir for
-		 *    use by insert_ksir
-		 * 3. Set avl_r_xrba/par/low/high
-		 *    if ksir found requiring AVL
-		 *    rotation to keep tree balanced
-		 *    after KSIR is inserted.
-		 */
+
+
+    /**
+     * search ksit binary tree at cur_vx0_xrba (negative) 
+     * <ol>
+     * <li> Set cur_ves_xrba to record if found </li>
+     * <li> Set cur_rpl_ksir to last ksir for use by insert_ksir </li>
+     * <li> Set avl_r_xrba/par/low/high if ksir found requiring AVL
+     *    rotation to keep tree balanced after KSIR is inserted. </li>
+     * </ol>
+     */
+    private boolean find_ksir() {
 		tot_avl_find++;
 		if (tz390.opt_tracev){
 			tz390.put_trace("VSAM AVL FIND KSIR");
@@ -1989,10 +2130,13 @@ public class vz390 {
 		return false;
 	}
 
-	private boolean get_ksir_rec() {
-		/*
-		 * set cur_ves_xrba to ksir rec unless deleted
-		 */
+
+
+    /**
+     * set cur_ves_xrba to ksir rec unless deleted
+     */
+private boolean get_ksir_rec() {
+
 		if (cur_ksir_rec > 0) {
 			// KSIR with matching record found
 			cur_ves_xrba = cur_ksir_rec;
@@ -2002,15 +2146,25 @@ public class vz390 {
 		}
 	}
 
-	private boolean get_rrds_ves_xrba(boolean key) {
-		/*
-		 * 1. if random access by key rec #, then cur_vx0_rba = rec# * 8 else
-		 * cur_vx0_xrba = cur_rpl_cxrba. 2. Set cur_ves_xrba as follows if
-		 * cur_vx0_xrba > eod set cur_vx0_xrba = -1 (not found) and return false
-		 * 2. Set cur_ves_xrba as follows: a. -1 if 0 return false (no rec
-		 * found) b. xrba and return true. Note: 1. VX0 XRBA's for valid records
-		 * are stored +1. to distinguish 0 as unwritten VES XRBA.
-		 */
+
+
+     /**
+      * <ol>
+      * <li> if random access by key rec #, then cur_vx0_rba = rec# * 8 else cur_vx0_xrba = cur_rpl_cxrba. </li>
+      * <li> Set cur_ves_xrba as follows if cur_vx0_xrba > eod set cur_vx0_xrba = -1 (not found) and return false </li>
+      * <li> Set cur_ves_xrba as follows:
+      *    <ol>
+      *    <li> -1 if 0 return false (no rec found) </li>
+      *    <li> xrba and return true. </li> </li>
+      *    </ol> </li>
+      * </ol>
+      * Note:
+      * <ol>
+      * <li> VX0 XRBA's for valid records are stored +1. to distinguish 0 as unwritten VES XRBA. </li>
+      * </ol>
+      */
+    private boolean get_rrds_ves_xrba(boolean key) {
+
 		if (key) {
 			long rrn = (long) pz390.mem.getInt(cur_rpl_arg); // RPI 724
 			if (rrn == -1) {
@@ -2054,10 +2208,13 @@ public class vz390 {
 		return true;
 	}
 
-	private void svc_rpl_put() {
-		/*
-		 * update or write new record in open VSAM ACB/VCDT cluster.
-		 */
+
+
+    /**
+     * update or write new record in open VSAM ACB/VCDT cluster.
+     */
+    private void svc_rpl_put() {
+
 		tot_rpl_put++;
 		tot_vsam_oper++;
 		fetch_rpl_fields();
@@ -2088,10 +2245,13 @@ public class vz390 {
 		}
 	}
 
-	private void rpl_put_esds() {
-		/*
-		 * put for open ESDS output file
-		 */
+
+
+    /**
+     * put for open ESDS output file
+     */
+    private void rpl_put_esds() {
+
 		if ((cur_rpl_opt & rpl_opt_key) != 0) {
 			set_feedback(pdf_def, rc_log, cmp_ves, rn_inv_rpl_opt);
 			return;
@@ -2130,10 +2290,12 @@ public class vz390 {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-	private void rpl_put_ksds() {
-		/*
-		 * put for open KSDS output file
-		 */
+
+
+    /**
+     * put for open KSDS output file
+     */
+    private void rpl_put_ksds() {
 		if ((cur_rpl_opt & rpl_opt_upd) != 0) {
 			if ((cur_rpl_flag & rpl_flag_getok) != 0) {
 				if (!update_ksds_rec()) {
@@ -2205,12 +2367,19 @@ public class vz390 {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-	private void rpl_put_rrds() {
-		/*
-		 * put for open RRDS output file Notes: 1. Always use rel rec # to calc
-		 * XRBA. 1. Read vx0 XRBA for rel. rcd # 2. If XRBA = 0, add rec to VES
-		 * else rewrite
-		 */
+
+
+    /**
+     * put for open RRDS output file
+     * Notes:
+     * <ol>
+     * <li> Always use rel rec # to calc </li>
+     * <li> Read vx0 XRBA for rel. rcd # </li>
+     * <li> If XRBA = 0, add rec to VES else rewrite </li>
+     * </ol>
+     */
+    private void rpl_put_rrds() {
+
 		if ((cur_rpl_opt & rpl_opt_adr) != 0) {
 			set_feedback(pdf_def, rc_log, cmp_ves, rn_inv_rpl_opt);
 			return;
@@ -2238,12 +2407,13 @@ public class vz390 {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-	private boolean rewrite_ves_rec(int tiot_index, long xrba_index) {
-		/*
-		 * rewrite RRDS or KSDS record at cur_ves_xrba and update index xrba if
-		 * it changed due to variable length change.
-		 * 
-		 */
+    /**
+     * rewrite RRDS or KSDS record at cur_ves_xrba and update index xrba if
+     * it changed due to variable length change.
+     * 
+     */
+    private boolean rewrite_ves_rec(int tiot_index, long xrba_index) {
+
 		try {
 			if ((cur_vclr_flag & vclr_flag_vrec) == 0) {
 				// fixed length
@@ -2277,11 +2447,14 @@ public class vz390 {
 		return true;
 	}
 
-	private boolean add_ves_rec(int tiot_index, long index_xrba) {
-		/*
-		 * add RRDS or KSDS record to VES and update index XRBA address which
-		 * may be in VX0 or in VES KSIR.
-		 */
+
+
+    /**
+     * add RRDS or KSDS record to VES and update index XRBA address which
+     * may be in VX0 or in VES KSIR.
+     */
+    private boolean add_ves_rec(int tiot_index, long index_xrba) {
+
 		cur_ves_xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
 		if (!write_ves_rec()) {
 			return false;
@@ -2314,12 +2487,17 @@ public class vz390 {
 		return true;
 	}
 
-	private void svc_rpl_erase() {
-		/*
-		 * erase current record retrieved from open VSAM ACB/VCDT cluster.
-		 * Notes: 1. The current XRBA in VX0 primary index is set to high
-		 * values.
-		 */
+
+
+    /**
+     * erase current record retrieved from open VSAM ACB/VCDT cluster.
+     * Notes:
+     * <ol>
+     * <li> The current XRBA in VX0 primary index is set to high values. </li>
+     * </ol>
+     */
+    private void svc_rpl_erase() {
+
 		tot_rpl_erase++;
 		fetch_rpl_fields();
 		if (tz390.opt_tracev) {
@@ -2331,10 +2509,13 @@ public class vz390 {
 		}
 	}
 
-	private void svc_rpl_point() {
-		/*
-		 * set current position to specified key, record, or RBA in ESDS base
-		 */
+
+
+    /**
+     * set current position to specified key, record, or RBA in ESDS base
+     */
+    private void svc_rpl_point() {
+
 		tot_rpl_point++;
 		fetch_rpl_fields();
 		if (tz390.opt_tracev) {
@@ -2454,13 +2635,16 @@ public class vz390 {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-	private void set_feedback(byte pdf, byte rc, byte cmp, byte rn) {
-		/*
-		 * store RPLFEEDB 4 byte field with: 0 - pdf_ Problem Determination
-		 * Field 1 - rc_ return code (also stored in R15) 2 - cmp_ component
-		 * code 3 - rn_ reason code for corresponding rc_
-		 * 
-		 */
+
+
+    /**
+     * store RPLFEEDB 4 byte field with: 0 - pdf_ Problem Determination
+     * Field 1 - rc_ return code (also stored in R15) 2 - cmp_ component
+     * code 3 - rn_ reason code for corresponding rc_
+     * 
+     */
+    private void set_feedback(byte pdf, byte rc, byte cmp, byte rn) {
+
 		int feedback = ((pdf << 8 | rc) << 8 | cmp) << 8 | (rn & 0xff);
 		pz390.mem.putInt(cur_rpl_addr + rpl_feedb, feedback);
 		pz390.reg.putInt(pz390.r15, rc & 0xff);
@@ -2507,12 +2691,15 @@ public class vz390 {
 		}
 	}
 
-	private boolean read_ves_rec() {
-		/*
-		 * read record from VES into RPLAREA and set length in RPLLREC to the
-		 * VES ESDS base cluster data file at specified xrba. Notes: 1. If ESDS,
-		 * skip duplicate length after record. // RPI 672
-		 */
+
+
+    /**
+     * read record from VES into RPLAREA and set length in RPLLREC to the
+     * VES ESDS base cluster data file at specified xrba. Notes: 1. If ESDS,
+     * skip duplicate length after record. // RPI 672
+     */
+    private boolean read_ves_rec() {
+
 		if (cur_ves_xrba >= sz390.tiot_eof_rba[cur_ves_tiot_index]
 				|| cur_ves_xrba < 0) {
 			// return logical invalid rba request error
@@ -2653,15 +2840,21 @@ public class vz390 {
 		}
 	}
 
-	private boolean write_ves_rec() {
-		/*
-		 * write current RPL record in RPLAREA with length RPLLREC to the VES
-		 * base cluster data file at specified xrba. Notes: 1. Variable length
-		 * records have 4 byte length preceeding record. 2. ESDS variable length
-		 * records also have 4 byte length following record to support BWD read
-		 * backward option without any index. 3. Used by ESDS, RRDS, and KSDS
-		 * when not inserted record
-		 */
+
+
+    /**
+     * write current RPL record in RPLAREA with length RPLLREC to the VES
+     * base cluster data file at specified xrba.
+     * Notes:
+     * <ol>
+     * <li> Variable length records have 4 byte length preceeding record. </li>
+     * <li> ESDS variable length records also have 4 byte length following record
+     *      to support BWD read backward option without any index. </li>
+     * <li> Used by ESDS, RRDS, and KSDS when not inserted record </li>
+     * </ol>
+     */
+    private boolean write_ves_rec() {
+
 		if (cur_ves_xrba > tz390.max_file_size || cur_ves_xrba < 0) {
 			set_feedback(pdf_def, rc_log, cmp_ves, rn_rba_not_rcd); // RPI 697
 			return false;
@@ -2747,10 +2940,13 @@ public class vz390 {
 		}
 	}
 
-	private boolean write_ves_cb(long cb_xrba, int cb_len) {
-		/*
-		 * write control block in ves at xrba into cb byte array Notes:
-		 */
+
+
+    /**
+     * write control block in ves at xrba into cb byte array Notes:
+     */
+    private boolean write_ves_cb(long cb_xrba, int cb_len) {
+
 		if (cb_xrba > tz390.max_file_size) {
 			set_feedback(pdf_def, rc_log, cmp_ves, rn_inv_rba_req);
 			return false;
@@ -2778,10 +2974,13 @@ public class vz390 {
 		}
 	}
 
-	private boolean read_ves_cb(long cb_xrba, int cb_len) {
-		/*
-		 * read control block in ves at xrba into cb byte array Notes:
-		 */
+
+
+    /**
+     * read control block in ves at xrba into cb byte array Notes:
+     */
+    private boolean read_ves_cb(long cb_xrba, int cb_len) {
+
 		if (cb_xrba > tz390.max_file_size) {
 			set_feedback(pdf_def, rc_log, cmp_ves, rn_inv_rba_req);
 			return false;
@@ -2820,12 +3019,15 @@ public class vz390 {
 		}
 	}
 
-	private boolean read_ksds_index() {
-		/*
-		 * read ksds index entry with key at cur_vx0_xrba and set cur_ves_xrba
-		 * and cur_key
-		 * 
-		 */
+
+
+    /**
+     * read ksds index entry with key at cur_vx0_xrba and set cur_ves_xrba
+     * and cur_key
+     * 
+     */
+    private boolean read_ksds_index() {
+
 		if (!read_xrba_ptr()) {
 			return false;
 		}
@@ -2869,11 +3071,14 @@ public class vz390 {
 		}
 	}
 
-	private boolean read_ksir_key() {
-		/*
-		 * read ksir key at cur_ksir_rec + cur_vclr_koff into cur_key
-		 * 
-		 */
+
+
+    /**
+     * read ksir key at cur_ksir_rec + cur_vclr_koff into cur_key
+     * 
+     */
+    private boolean read_ksir_key() {
+
 		cur_ves_xrba = cur_ksir_rec;
 		if (cur_ves_xrba < 0) {
 			// read key even if rec deleted
@@ -2918,11 +3123,14 @@ public class vz390 {
 		}
 	}
 
-	private boolean read_xrba_ptr() {
-		/*
-		 * read ves xrba prt in vx0 at cur_vx0_xrba and set cur_ves_xrba
-		 * 
-		 */
+
+
+    /**
+     * read ves xrba prt in vx0 at cur_vx0_xrba and set cur_ves_xrba
+     * 
+     */
+    private boolean read_xrba_ptr() {
+
 		if (cur_vx0_xrba > tz390.max_file_size) {
 			set_feedback(pdf_def, rc_log, cmp_ves, rn_inv_rba_req);
 			return false;
@@ -2954,10 +3162,13 @@ public class vz390 {
 		}
 	}
 
-	private boolean write_ksds_index() {
-		/*
-		 * write ksds primary index entry with last_ves_xrba ptr and key.
-		 */
+
+
+    /**
+     * write ksds primary index entry with last_ves_xrba ptr and key.
+     */
+    private boolean write_ksds_index() {
+
 		if (!write_xrba_ptr(cur_vx0_tiot_index, cur_vx0_xrba, last_ves_xrba)) {
 			return false;
 		}
@@ -2993,12 +3204,14 @@ public class vz390 {
 		}
 	}
 
-	private boolean write_xrba_ptr(int tiot_index, long xrba_index,
-			long xrba_rec) {
-		/*
-		 * write ves rcd xrba ptr at vx0/ves(KSIR) index xrba in and update
-		 * cache for reuse
-		 */
+
+
+    /**
+     * write ves rcd xrba ptr at vx0/ves(KSIR) index xrba in and update
+     * cache for reuse
+     */
+    private boolean write_xrba_ptr(int tiot_index, long xrba_index, long xrba_rec) {
+
 		if (xrba_index > tz390.max_file_size) {
 			set_feedback(pdf_def, rc_log, cmp_ves, rn_inv_rba_req);
 			return false;
@@ -3025,11 +3238,14 @@ public class vz390 {
 		}
 	}
 
-	private boolean reuse_file(int adcb) {
-		/*
-		 * reset file length and tiot_eof addr for files being resused either
-		 * due to reuse option or REPRO seq out options..
-		 */
+
+
+    /**
+     * reset file length and tiot_eof addr for files being resused either
+     * due to reuse option or REPRO seq out options..
+     */
+    private boolean reuse_file(int adcb) {
+
 		int tiot_index = pz390.mem.getInt(adcb + sz390.dcb_iobad) - 1;
 		try {
 			sz390.tiot_file[tiot_index].setLength(0);
@@ -3041,11 +3257,14 @@ public class vz390 {
 		}
 	}
 
-	private boolean set_esds_bwd_next() {
-		/*
-		 * backup to next record for ESDS SEQ BWD retrieval and return logical
-		 * EOD error if at front of file.
-		 */
+
+
+    /**
+     * backup to next record for ESDS SEQ BWD retrieval and return logical
+     * EOD error if at front of file.
+     */
+    private boolean set_esds_bwd_next() {
+
 		cur_ves_xrba = cur_rpl_cxrba;
 		if (cur_ves_xrba == 0) {
 			set_feedback(pdf_def, rc_log, cmp_ves, rn_eod);
@@ -3109,12 +3328,18 @@ public class vz390 {
 		return true;
 	}
 
-	private int comp_key(int key1_loc, byte[] key_byte) {
-		/*
-		 * compare key in RPLAREA+KEYOFF with key in last_vx0_key or cur_vx0_key
-		 * array using comp_key_len set by rpl fetch -1, 0, 1 for low, equal,
-		 * high. Notes: 1. Set matching_key_bytes for generic key processing
-		 */
+
+
+    /**
+     * compare key in RPLAREA+KEYOFF with key in last_vx0_key or cur_vx0_key
+     * array using comp_key_len set by rpl fetch -1, 0, 1 for low, equal, high
+     * Notes:
+     * <ol>
+     * <li> Set matching_key_bytes for generic key processing </li>
+     * </ol>
+     */
+    private int comp_key(int key1_loc, byte[] key_byte) {
+
 		int key1_end = key1_loc + cur_vclr_klen;
 		int comp_key_end = key1_loc + comp_key_len;
 		byte arg_key_byte = 0;
@@ -3146,11 +3371,14 @@ public class vz390 {
 		return comp_rc;
 	}
 
-	private boolean rpl_key_high_values() {
-		/*
-		 * compare key in RPLAREA+KEYOFF with high values RPI 779 using
-		 * cur_vclr_klen -1, 0, 1 for low, equal, high.
-		 */
+
+
+    /**
+     * compare key in RPLAREA+KEYOFF with high values RPI 779 using
+     * cur_vclr_klen -1, 0, 1 for low, equal, high.
+     */
+    private boolean rpl_key_high_values() {
+
 		int index = 0;
 		while (index < cur_vclr_klen
 				&& (pz390.mem_byte[cur_rpl_arg + index] & 0xff) == 0xff) {
@@ -3164,15 +3392,19 @@ public class vz390 {
 		}
 	}
 
-	private boolean get_vcb_buff(int tiot_index, long xrba, int rec_len) {
-		/*
-		 * get VSAM Cache Buffer (VCB) for file tiot_index, xrba, rec_len 
-		 * 1. If rec_len > max_vcb_lrec return false.
-		 * 2. search for allocated vcb If not found add new vcb up to 
-		 *    max_vcb else replace least recently used
-		 *    allocated vcb. 
-		 * 3. Set vcb_index and return true.
-		 */
+
+
+    /**
+     * get VSAM Cache Buffer (VCB) for file tiot_index, xrba, rec_len 
+     * <ol>
+     * <li> If rec_len > max_vcb_lrec return false. </li>
+     * <li> search for allocated vcb If not found add new vcb up to  </li>
+     *      max_vcb else replace least recently used allocated vcb. 
+     * <li> Set vcb_index and return true. </li>
+     * </ol>
+     */
+    private boolean get_vcb_buff(int tiot_index, long xrba, int rec_len) {
+
 		vcb_alloc = false;
 		vcb_index = -1;
 		if (!tz390.opt_vcb) {
@@ -3212,10 +3444,13 @@ public class vz390 {
 		return false;
 	}
 
-	private void update_vcb_mru() {
-		/*
-		 * move current vcb at vcb_index to most recently used (vcb_mru).
-		 */
+
+
+    /**
+     * move current vcb at vcb_index to most recently used (vcb_mru).
+     */
+    private void update_vcb_mru() {
+
 		// remove current vcb from
 		// mru list to allow moving it to top
 		prev_vcb = vcb_mru_prev[vcb_index];
@@ -3239,12 +3474,15 @@ public class vz390 {
 		vcb_mru = vcb_index;
 	}
 
-	private boolean find_vcb() {
-		/*
-		 * find matching vcb with same tiot, xrba, and record length
-		 * 
-		 * if found set vcb_index and return true else false
-		 */
+
+
+    /**
+     * find matching vcb with same tiot, xrba, and record length
+     * 
+     * if found set vcb_index and return true else false
+     */
+    private boolean find_vcb() {
+
 		vcb_index = -1;
 		vcb_alloc = false;
 		if (tot_vcb == 1) {
@@ -3262,12 +3500,17 @@ public class vz390 {
 		}
 	}
 
-	private int calc_vcb_hash() {
-		/*
-		 * calc vcb hash index from tiot + xrba + lrec Notes: 1. If two vcb
-		 * requests geenrate same hash only the latest will be found and the
-		 * prior one will eventually be replaced via lru.
-		 */
+
+
+/**
+ * calc vcb hash index from tiot + xrba + lrec
+ * Notes:
+ * <ol>
+ * <li> If two vcb requests geenrate same hash only the latest will be found and the
+ *      prior one will eventually be replaced via lru. </li>
+ * </ol>
+ */
+    private int calc_vcb_hash() {
 		// return remander using % mod operator
 		int hash = ((int) ((cur_vcb_tiot + cur_vcb_xrba + cur_vcb_lrec) % max_vcb_hash));
 		if (tz390.opt_traceall) {
@@ -3281,10 +3524,13 @@ public class vz390 {
 		return hash;
 	}
 
-	private boolean read_ksit() {
-		/*
-		 * read KSIT into cb array and set cur_ksit xrbas
-		 */
+
+
+    /**
+     * read KSIT into cb array and set cur_ksit xrbas
+     */
+    private boolean read_ksit() {
+
 		cur_rpl_flag = cur_rpl_flag | rpl_flag_ksit;
 		cur_ksit_xrba = xrba_max_pos & cur_ves_xrba;
 		if (read_ves_cb(cur_ksit_xrba, ksit_len)) {
@@ -3303,10 +3549,13 @@ public class vz390 {
 		}
 	}
 
-	private boolean read_ksir(long xrba) {
-		/*
-		 * read KSIR int cb and set cur_ksit xrba's
-		 */
+
+
+    /**
+     * read KSIR int cb and set cur_ksit xrba's
+     */
+    private boolean read_ksir(long xrba) {
+
 		cur_ksir_xrba = xrba;
 		if (cur_ksir_xrba < cur_ksit_xrba) {
 			// file corruption error as
@@ -3336,10 +3585,13 @@ public class vz390 {
 		}
 	}
 
-	private boolean update_ksds_rec() {
-		/*
-		 * rewrite ksds record following successful GET with UPD
-		 */
+
+
+    /**
+     * rewrite ksds record following successful GET with UPD
+     */
+    private boolean update_ksds_rec() {
+
 		cur_vx0_xrba = cur_rpl_lxrba;
 		if (!read_ksds_index()) {
 			return false;
@@ -3366,10 +3618,13 @@ public class vz390 {
 		return true;
 	}
 
-	private boolean insert_ksds_rec() {
-		/*
-		 * insert ksds record following unsuccessful GET with UPD
-		 */
+
+
+    /**
+     * insert ksds record following unsuccessful GET with UPD
+     */
+    private boolean insert_ksds_rec() {
+
 		if ((cur_rpl_flag & rpl_flag_ksit) != 0) {
 			// insert in current KSIT
 			if (!insert_ksir()) {
@@ -3390,11 +3645,14 @@ public class vz390 {
 		return true;
 	}
 
-	private boolean insert_ksit() {
-		/*
-		 * insert new KSIT for cur_vx0 entry with KSIR for existing record and
-		 * KSIR for new inserted record
-		 */
+
+
+    /**
+     * insert new KSIT for cur_vx0 entry with KSIR for existing record and
+     * KSIR for new inserted record
+     */
+    private boolean insert_ksit() {
+
 		tot_avl_insert_ksit++;
 		tot_avl_insert_ksir = tot_avl_insert_ksir + 2;
 		if (tz390.opt_tracev){
@@ -3490,21 +3748,28 @@ public class vz390 {
 		}
 		return true;
 	}
-	private long alloc_ves(int cb_len) {
-		/*
-		 * return xrba of new ves cb/rec area and update eof xrba
-		 */
+
+
+
+    /**
+     * return xrba of new ves cb/rec area and update eof xrba
+     */
+    private long alloc_ves(int cb_len) {
+
 		long xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
 		sz390.tiot_eof_rba[cur_ves_tiot_index] = xrba + cb_len;
 		return xrba;
 	}
 
-	private boolean insert_ksir() {
-		/*
-		 * insert new KSIR to existing KSIT 
-		 * at current KSIR and balance AVT
-		 * tree by rotating KSIR's if needed.
-		 */
+
+
+    /**
+     * insert new KSIR to existing KSIT 
+     * at current KSIR and balance AVT
+     * tree by rotating KSIR's if needed.
+     */
+    private boolean insert_ksir() {
+
 		long save_ksir_xrba = -1;
 		long prev_ksir_xrba = 0;
 		long prev_ksir_bwd = 0;
@@ -3634,20 +3899,24 @@ public class vz390 {
 		}
 		return true;
 	}
+
+
+
+    /**
+     * search up KSIR nodes from insertion and perform the following steps:
+     * <ol>
+     * <li> Increment height of all nodes on path prior to unbalanced node. </li>
+     * <li> Find first (and only) node which may be unbalanced
+     *      (left vs right height differs by 2). </li>
+     * <li> If unbalanced node found, set avl_unbalanced and avl_r_xrba </li>
+     * </ol>
+     * Notes:
+     * <ol>
+     * <li> Only returns false if I/O error </li>
+     * </ol>
+     */
     private boolean avl_update_height(){
-    	/*
-    	 * search up KSIR nodes from insertion
-    	 * and perform the following steps:
-    	 *   1.  Increment height of all nodes
-    	 *       on path prior to unbalanced node.
-    	 *   2.  Find first (and only) node which may 
-    	 *       be unbalanced (left vs right height
-    	 *       differs by 2).
-    	 *   3.  If unbalanced node found, 
-    	 *       set avl_unbalanced and avl_r_xrba 
-    	 * Notes:
-    	 *   1.  Only returns false if I/O error
-    	 */
+
     	avl_unbalanced = false;
     	long save_ksir_xrba = cur_ksir_xrba; // save insert
 		// start with node above inserted record
@@ -3731,11 +4000,13 @@ public class vz390 {
     	cur_ksir_xrba = save_ksir_xrba;
     	return true;
     }
-    private boolean check_heights(String type,
-    		byte t1, byte t2, byte t3, byte t4){
-    	/*
-    	 * verify updated T1-T4 within +-1
-    	 */
+
+
+
+    /**
+     * verify updated T1-T4 within +-1
+     */
+    private boolean check_heights(String type, byte t1, byte t2, byte t3, byte t4){
     	if (   Math.abs(t1-t2) > 1
     		|| Math.abs(t1-t3) > 1
             || Math.abs(t1-t4) > 1
@@ -3747,48 +4018,59 @@ public class vz390 {
     	}
     	 return true;  
     }
+
+
+
+    /**
+     * display unbalanced KSIR found
+     * 
+     */
     private void unbalanced_ksir_error(String type){
-    	/*
-    	 * display unbalanced KSIR found
-    	 * 
-    	 */
+
     	sz390.put_log("VSAM AVL UNBALANCED KSIR ERROR TYPE " + type);
     	set_feedback(pdf_def, rc_phy, cmp_ves, rn_read_data_err);
     }
-	private boolean avl_rotate_ksir() {
-		/*
-		 * perform AVL rotation around the last
-		 * avl_r_xrba found during find_ksir prior
-		 * to insert.  Note the KSIR to be rotated
-		 * may be anywhere between the inserted KSIR
-		 * and the KSIT.  Only one rotation is
-		 * required per insert.
-		 * 
-		 * The AVL tree is named after its two inventors
-		 * G.M. Adelson-Velsky and E.M. Landis. who published it in their 1962
-		 * paper "An algorithm for the organization of information."
-		 * 
-		 * For good overview of the process to maintain balanced tree during
-		 * random insertions, see * *
-		 * http://sky.fit.qut.edu.au/~maire/avl/System/AVLTree.html
-		 * In summary the process is as follows: 
-		 * 1. Following binary search of tree to
-		 *    insert record at correct node, update current and parent nodes to 1
-		 *    of 3 possible states: 
-		 *    a. left/low side +1 depth (high bit in
-		 *       cur_ksir_low) 
-		 *    b. even 
-		 *    c. right/high side +1 depth (high bit in
-		 *       cur_ksir_high) 
-		 * 2. If node found with new +2 state, rotate as follows
-		 *    to rebalance which ends the update process. 
-		 *    a. LL - move left left
-		 *       node up one level by swapping n ode with left node. 
-		 *    b. RR - move right right node up one level by swapping node with right node 
-		 *    c. LR - move left right node up one level by swapping node with left right node.
-		 *    d. RL - move right left node up one level by swapping mode with right
-		 *       left node.
-		 */
+
+
+
+    /**
+     * perform AVL rotation around the last
+     * avl_r_xrba found during find_ksir prior
+     * to insert.  Note the KSIR to be rotated
+     * may be anywhere between the inserted KSIR
+     * and the KSIT.  Only one rotation is
+     * required per insert.
+     * 
+     * The AVL tree is named after its two inventors
+     * G.M. Adelson-Velsky and E.M. Landis. who published it in their 1962
+     * paper "An algorithm for the organization of information."
+     * 
+     * For good overview of the process to maintain balanced tree during
+     * random insertions, see * *
+     * http://sky.fit.qut.edu.au/~maire/avl/System/AVLTree.html
+     *
+     * In summary the process is as follows: 
+     * <ol>
+     * <li> Following binary search of tree to
+     *      insert record at correct node, update current and parent nodes to 1
+     *      of 3 possible states: 
+     *      <ol>
+     *      <li> left/low side +1 depth (high bit in cur_ksir_low) </li>
+     *      <li> even </li>
+     *      <li> right/high side +1 depth (high bit in cur_ksir_high) </li>
+     *      </ol> </li>
+     * <li> If node found with new +2 state, rotate as follows
+     *      to rebalance which ends the update process.
+     *      <ol>
+     *      <li> LL - move left left node up one level by swapping n ode with left node. </li>
+     *      <li> RR - move right right node up one level by swapping node with right node </li>
+     *      <li> LR - move left right node up one level by swapping node with left right node </li>
+     *      <li> RL - move right left node up one level by swapping mode with right left node. </li>
+     *      </ol> </li>
+     * </ol>
+     */
+    private boolean avl_rotate_ksir() {
+
 		tot_avl_rotate++;
 		long save_ksir_xrba = cur_ksir_xrba; // save insert ksir
 		if (!read_ksir(avl_r_xrba)){
@@ -3847,11 +4129,15 @@ public class vz390 {
 		cur_ksir_xrba = save_ksir_xrba; // restore to inserted ksir
 		return true;
 	}
+
+
+
+    /**
+     * avl rotate x to r, and r to x_high,
+     * and x_high to r_low. 
+     */
     private boolean avl_rotate_left_left(){
-    	/*
-    	 * avl rotate x to r, and r to x_high,
-    	 * and x_high to r_low. 
-    	 */
+
     	tot_avl_rotate_ll++;
     	if (tz390.opt_tracev){
     		tz390.put_trace("VSAM AVL ROTATE LEFT LEFT");
@@ -3927,12 +4213,16 @@ public class vz390 {
     	}
     	return true;
     }
+
+
+
+    /**
+     * avl rotate w (x_high) to r,
+     * r to w_high, w_low to x_high,
+     * and w_high to r_low.
+     */
     private boolean avl_rotate_left_right(){
-    	/*
-    	 * avl rotate w (x_high) to r,
-    	 * r to w_high, w_low to x_high,
-    	 * and w_high to r_low.
-    	 */
+
     	tot_avl_rotate_lr++;
     	if (tz390.opt_tracev){
     		tz390.put_trace("VSAM AVL ROTATE LEFT RIGHT");
@@ -4041,11 +4331,15 @@ public class vz390 {
     	}
     	return true;
     }
+
+
+
+    /**
+     * avl rotate x to r, and r to x_low,
+     * and x_low to r_high.
+     */
     private boolean avl_rotate_right_right(){
-    	/*
-    	 * avl rotate x to r, and r to x_low,
-    	 * and x_low to r_high.
-    	 */
+
     	tot_avl_rotate_rr++;
     	if (tz390.opt_tracev){
     		tz390.put_trace("VSAM AVL ROTATE RIGHT RIGHT");
@@ -4121,12 +4415,16 @@ public class vz390 {
     	}
     	return true;
     }
+
+
+
+    /**
+     * avl rotate w (x_low) to r,
+     * r to w_low, w_high to x_low,
+     * and w_low to r_high.
+     */
     private boolean avl_rotate_right_left(){
-    	/*
-    	 * avl rotate w (x_low) to r,
-    	 * r to w_low, w_high to x_low,
-    	 * and w_low to r_high.
-    	 */
+
     	tot_avl_rotate_rl++;
     	if (tz390.opt_tracev){
     		tz390.put_trace("VSAM AVL ROTATE RIGHT LEFT");
@@ -4235,10 +4533,14 @@ public class vz390 {
     	}
     	return true;
     }
-	private boolean write_ksit() {
-		/*
-		 * write new KSIT at ves eof xrba
-		 */
+
+
+
+    /**
+     * write new KSIT at ves eof xrba
+     */
+    private boolean write_ksit() {
+
 		if (cb_byte == null || cb_byte.length < ksit_len) {
 			cb_byte = new byte[ksit_len];
 			cb = ByteBuffer.wrap(cb_byte, 0, ksit_len);
@@ -4254,10 +4556,12 @@ public class vz390 {
 		return true;
 	}
 
-	private boolean write_ksir() {
-		/*
-		 * write ves KSIR at cur_ksir_xrba
-		 */
+
+
+    /**
+     * write ves KSIR at cur_ksir_xrba
+     */
+    private boolean write_ksir() {
 		if (cb_byte == null || cb_byte.length < ksir_len) {
 			cb_byte = new byte[ksir_len];
 			cb = ByteBuffer.wrap(cb_byte, 0, ksir_len);

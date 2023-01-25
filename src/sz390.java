@@ -221,6 +221,7 @@ public  class  sz390 implements Runnable {
     * 2022-02-12 Issue 195. Problem mode bit in PSW now coded as variable, though in practice
     *            Problem mode always applies - Supervisor mode not supported in z390 yet
     * 2022-03-04 Issue 358. Incorrect breakpoint info displayed in test mode.
+    * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -852,11 +853,16 @@ public  class  sz390 implements Runnable {
   /*
    * end of global ez390 class data and start of procs
    */
-public void svc(int svc_id){
-	/*
+
+
+  /* ************************************************************* */
+
+
+	/**
 	 * execute supervisor call using
 	 * mem and regs for data transfer
 	 */
+public void svc(int svc_id){
 	switch (svc_id){
 	case 0x01:  // WAIT
 		svc_wait();
@@ -992,12 +998,15 @@ public void svc(int svc_id){
 		break;
 	}
 }
-public synchronized void put_log(String msg) {
-   	/*
+
+
+
+   	/**
    	 * Write message to z390_log_text and/or con
    	 * if running standalone
    	 * 
    	 */
+public synchronized void put_log(String msg) {
 	put_log_line(msg);
 	if (tz390.force_nocon){
 		return;  // RPI 755
@@ -1020,10 +1029,13 @@ public synchronized void put_log(String msg) {
     	put_con(msg); // RPI 731
     }
 }
-private void put_log_line(String msg){
-	   /*
+
+
+
+	   /**
 	    * put line to listing file
 	    */
+private void put_log_line(String msg){
 	   	   if (tz390.opt_list){
 	   		   if (log_file.canWrite()){ // RPI 661
 	   	   	      try {
@@ -1040,22 +1052,30 @@ private void put_log_line(String msg){
 	   		   }
 	   	   }
 	   }
-private void put_con(String msg){
-	/*
+
+
+
+	/**
 	 * put msg to console or cmd process output
 	 * and yield to let parent process m
 	 */
+
+private void put_con(String msg){
 	if (!tz390.force_nocon){ // RPI 1050 for future use
 		System.out.println(msg);
 		Thread.yield();
 	}
 }
-public void log_error(int error,String msg){
-	/*
+
+
+
+	/**
 	 * issue error msg to log with prefix and
 	 * inc error total
 	 * 1.  supress if not gen_obj and not trace
 	 */
+
+public void log_error(int error,String msg){
 	  String error_msg = "EZ390E error " + tz390.right_justify("" + error,3) + " " + msg;
       put_log(error_msg);
       tz390.put_systerm(error_msg);
@@ -1064,11 +1084,15 @@ public void log_error(int error,String msg){
 	  	 abort_error(5,"max errors exceeded");	 
 	  }
 }
-public synchronized void abort_error(int error,String msg){  // RPI 646
-	/*
+
+
+
+	/**
 	 * issue error msg to log with prefix and
 	 * inc error total
 	 */
+
+public synchronized void abort_error(int error,String msg){  // RPI 646
 	if (ez390_recursive_abort){ // RPI 935
 		System.out.println("EZ390E abort recersive exit");
 		System.exit(16);
@@ -1103,11 +1127,15 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 	  }
       exit_ez390();
 }
-public void exit_ez390(){
-	/*
+
+
+
+	/**
 	 * display total errors
 	 * close files and exit
 	 */
+
+public void exit_ez390(){
 	  int r15_rc = pz390.reg.getInt(pz390.r15); //RPI39
 	  if (r15_rc > ez390_rc){
 		  ez390_rc = r15_rc;
@@ -1138,11 +1166,15 @@ public void exit_ez390(){
 	  }  
       System.exit(ez390_rc); //RPI39
 }
-private synchronized void close_z390_guam(){  // RPI 397
-	/*
+
+
+
+	/**
 	 * if exit request, send shutdown request
 	 * to z390 GUI via the sysout queue
 	 */
+
+private synchronized void close_z390_guam(){  // RPI 397
     if (exit_request){
   	  tz390.opt_trace = false;     //RPI35
   	  tz390.z390_abort = true;     //RPI208
@@ -1150,10 +1182,14 @@ private synchronized void close_z390_guam(){  // RPI 397
   	  put_con("exit_request");
     }
 }
-private void put_stats(){
-	/*
+
+
+
+	/**
 	 * display statistics as comments at end of bal
 	 */
+
+private void put_stats(){
 	if (tz390.opt_stats){
 		tz390.put_stat_final_options(); // rpi 755
 		put_stat_line("TCPIO operations      = " + tot_tcpio_oper);
@@ -1225,21 +1261,29 @@ private void put_stats(){
 	put_log(msg_id + "total errors         = " + ez390_errors);
 	tz390.force_nocon = false; // RPI 755
 }
-public void put_stat_line(String msg){
-	/*
+
+
+
+	/**
 	 * routine statistics line to LOG or STATS(file)
 	 */
+
+public void put_stat_line(String msg){
 	if (tz390.stats_file != null){
 		tz390.put_stat_line(msg);
 	} else {
 		put_log(msg_id + msg);
 	}
 }
-private synchronized void close_files(){  // RPI 661
-	/*
+
+
+
+	/**
 	 * close log, err, tre, 
 	 * xrd, xpr, xph, xgt, and xpt Assist files RPI 812
 	 */
+
+private synchronized void close_files(){  // RPI 661
 	  tz390.force_nocon = true;
 	  tz390.set_ended_msg(ez390_rc); // RPI 837
 	  put_log(tz390.ended_msg);
@@ -1262,10 +1306,14 @@ private synchronized void close_files(){  // RPI 661
 	  tz390.close_trace_file();
 	  tz390.close_systerm(ez390_rc);
 }
-private void close_cmd(){
-	/*
+
+
+
+	/**
 	 * cancel all active cmd processes
 	 */
+
+private void close_cmd(){
 	int cmd_id = 0;
 	while (cmd_id < max_cmd_proc){
 		if (cmd_proc_running[cmd_id]){  // RPI 592
@@ -1274,8 +1322,10 @@ private void close_cmd(){
 		cmd_id++;
 	}
 }
-public void init_time(){
-	/*
+
+
+
+	/**
 	 * init pz390.cur_date and calendar with
 	 * current time and date or force
 	 * fixed time if NOTIMING option set.
@@ -1284,6 +1334,8 @@ public void init_time(){
 	 *       regression testing timing functions
 	 *       for repeatable results.
 	 */
+
+public void init_time(){
     cur_date_cal = new GregorianCalendar(1900,0,1);
     pz390.ibm_mil = - cur_date_cal.getTime().getTime(); // millisecons from 1900 to 1970
 	if (tz390.opt_timing){ // measure and display timing
@@ -1316,8 +1368,10 @@ public void init_time(){
 	    tod_start_pgm = pz390.cur_date.getTime();
 	}
 }
-public void init_test(){
-	/*
+
+
+
+   /** <pre>
 	 * 1. init test regular expression parser
 	 * 2. init optional test=ddname file for batch input 
 	 *    else init test_cmd_file which is also used
@@ -1344,7 +1398,10 @@ public void init_test(){
      *   3. test commands (b,g,h,l,m,q,t)
      *   4. test break opcode names
      *   5. set operator =
+     * </pre>
      */
+
+public void init_test(){
    	try {
    	    test_pattern = Pattern.compile(
 		    "([bB]['][0|1]+['])"            // sdt 
@@ -1375,11 +1432,15 @@ public void init_test(){
 		test_cmd_file = new BufferedReader (new InputStreamReader(System.in));
 	}
 }
-public void open_files(){
-	/*
+
+
+
+	/**
 	 * 1.  Set trace file for TRACE and TRACEALL
 	 * 2.  Open 390 and lst files
 	 */
+
+public void open_files(){
     	if (tz390.log_file_name.length() == 0){ // RPI 719  RPI 755    		
     		tz390.log_file_name = tz390.get_file_name(tz390.dir_log,tz390.pgm_name,tz390.log_type); // RPI 866
     	} else {
@@ -1399,8 +1460,11 @@ public void open_files(){
        	    }
        	}
 }
- private void svc_exit(){
- 	/*
+
+
+
+ 	/**
+     * <pre>
  	 * 1.  If stimer_exit_running then restore
  	 *     r13-r15 and exit to saved psw
  	 * 2.  If stae exit running, restore
@@ -1409,7 +1473,10 @@ public void open_files(){
  	 *     psw and regs from zcvt_epie    
  	 * 4.  exit to prev link return address
  	 *     or exit ez390 if none.
+     * </pre>
  	 */
+
+private void svc_exit(){
 	if (stimer_exit_running){
 		stimer_exit_running = false;
 		pz390.reg.putInt(pz390.r13,stimer_save_r13);
@@ -1475,14 +1542,18 @@ public void open_files(){
  		}
  	}
  }
-private void svc_extract(){ // RPI 413
-	/*
+
+
+
+	/**
 	 * extract svc supports the following functions
 	 *   r0 function
 	 *    1 - GETENV get environment variable
 	 *            input  r1=name with null terminator
 	 *            output r2=getmain'd area value and null terminator
 	 */
+
+private void svc_extract(){ // RPI 413
 	int op = pz390.reg.getInt(pz390.r0);
 	switch (op){
 	case 1: // GETENV r1=name, r2 set to getmain'd value with null term
@@ -1515,8 +1586,11 @@ private void svc_extract(){ // RPI 413
 		pz390.set_psw_check(pz390.psw_pic_spec);
 	}
 }
-public void svc_load(){
-	/*
+
+
+
+	/**
+     * <pre>
 	 * load 390 load module into virtual memory
 	 * 
 	 * Input regs
@@ -1542,7 +1616,10 @@ public void svc_load(){
 	 *   1.  Add CDE entry for new entry else if already
 	 *       loaded, increment cde_use and return 
 	 *       existing load address.
+     * </pre>
 	 */
+
+public void svc_load(){
 	load_dsn_addr = pz390.reg.getInt(pz390.r15);
 	load_pgm_dir =  tz390.dir_390; // RPI 244
 	load_pgm_type = tz390.pgm_type;
@@ -1577,10 +1654,14 @@ public void svc_load(){
        	svc_load_file();
     }
 }
-private void svc_load_set_regs(){
-	/*
+
+
+
+	/**
 	 * set r0, r1, and r15 for load
 	 */
+
+private void svc_load_set_regs(){
 	pz390.reg.putInt(pz390.r0,cde_ent[cur_cde]);  // RPI 732
 	if (cde_ent[cur_cde] != -1){
 		pz390.reg.putInt(pz390.r1,cde_len[cur_cde] >>> 3); // RPI 102 390 double words
@@ -1589,11 +1670,15 @@ private void svc_load_set_regs(){
 	}
 	pz390.reg.putInt(pz390.r15,0);
 }
-private void svc_load_390(){
-	/*
+
+
+
+	/**
 	 * load 390 file, relocate, and 
 	 * set r1 lenght in double words
 	 */
+
+private void svc_load_390(){
   try {
     z390_file = new RandomAccessFile(load_file_name,"r");
     if (z390_file.length() <= 10){
@@ -1645,11 +1730,15 @@ private void svc_load_390(){
 	abort_error(18,"I/O error on 390 load module file - " + e.toString());
   }
 }
-private void svc_load_rlds(){
-	/*
+
+
+
+	/**
 	 * read and apply rld records at end
 	 * of 390 file.
 	 */
+
+private void svc_load_rlds(){
 	int rld_field = 0;
 	try {
 	    int cur_rld = 0;
@@ -1704,8 +1793,11 @@ private void svc_load_rlds(){
 		abort_error(86,"svc 8 I/O error reading RLD");
 	}
 }
-private void svc_load_file(){
-	/*
+
+
+
+	/**
+     * <pre>
 	 * 1. Load non 390 file
 	 * 2. Set cde_pgm to file_name
 	 * 3. Set cde_loc to load address
@@ -1713,7 +1805,10 @@ private void svc_load_file(){
 	 * 5. Set cde_ent to -1
 	 * 6. Set R0 to load address 
 	 * 7. Set r1 to length in bytes
+     * </pre>
 	 */
+
+private void svc_load_file(){
   try {
     z390_file = new RandomAccessFile(load_file_name,"r");
     if (z390_file.length() > pz390.tot_mem - pz390.tot_mem_alloc){
@@ -1746,8 +1841,11 @@ private void svc_load_file(){
 	abort_error(18,"I/O error on 390 load module file - " + e.toString());
   }
 }
-private void svc_xctl(){
-	/*
+
+
+
+	/**
+     * <pre>
 	 * delete current module and then 
 	 * load and then balr to 390 load module
 	 * Input:
@@ -1759,7 +1857,10 @@ private void svc_xctl(){
 	 * Output:
 	 *   1. r15 = user pgm return code if call ok
 	 *   2. abend s106
+     * </pre>
 	 */
+
+private void svc_xctl(){
 	int user_parm = pz390.reg.getInt(pz390.r1); // RPI 596 RPI 598
 	svc_load();
 	if (pz390.reg.getInt(pz390.r15) != 0){
@@ -1786,8 +1887,11 @@ private void svc_xctl(){
         }
 	}
 }
-public boolean get_load_dsn(int dd_dsn_addr){
-	/*
+
+
+
+	/**
+     * <pre>
 	 * Set DSN from addr DDNAM with high bit
 	 * or from addr DSNAM.
 	 * 
@@ -1804,7 +1908,10 @@ public boolean get_load_dsn(int dd_dsn_addr){
 	 *       from 8 byte ddname env. var. at dir_addr
 	 *       else get user list from dir_addr with
 	 *       null delimited or double quote delimiter.
+     * </pre>
 	 */
+
+public boolean get_load_dsn(int dd_dsn_addr){
 	load_pgm_type = tz390.z390_type;
  	if (dd_dsn_addr < 0){
  		String ddname = get_ascii_string(dd_dsn_addr & 0x7fffffff,8,true);
@@ -1871,6 +1978,9 @@ public boolean get_load_dsn(int dd_dsn_addr){
  	}
  	return true;
 }
+
+
+
 private boolean get_eploc_pgm_name(){
 	/*
 	 * set load_pgm_name from r0 else error
@@ -1884,6 +1994,9 @@ private boolean get_eploc_pgm_name(){
  		    return false;
  		}
 }
+
+
+
 private void svc_delete(){
 	/*
 	 * delete loaded pgm/dsn from irtual memory
@@ -5855,7 +5968,7 @@ private void exec_test_cmd(){
 	    tz390.put_trace("  addr=sdt    set memory value  (ie 1r?=x'80' changes mem at (r1) 31 bit");
 	    tz390.put_trace("  reg=sdt     set register value (ie 15r=8 changes reg 15 to 8)");
 	    tz390.put_trace("  A addr      add/remove address stop (ie A FF348. or A *+4 etc.)");  // RPI 395
-		tz390.put_trace("  AR nn       display specified access register else all AR0-AR15");  // RPI 2000
+	    tz390.put_trace("  AR nn       display specified access register else all AR0-AR15");  // RPI 2000
 	    tz390.put_trace("  B=addr      set base for rel addr (ie B=15r% sets base to (r15) 24 bit");
 	    tz390.put_trace("  D           display DCB file status, DDNAME, and DSNAME information");
 	    tz390.put_trace("  E           toggle EBCDIC/ASCII mode for dumping storage etc.");
@@ -5866,8 +5979,8 @@ private void exec_test_cmd(){
 	    tz390.put_trace("  L addr len  list contents of memory area (ie l 10. 4 dumps cvt addr");
 	    tz390.put_trace("  M           display memory total allocated and free");
 	    tz390.put_trace("  P           display program information from CDE");
-	    tz390.put_trace("  PSW         display current PSW");
-	    tz390.put_trace("  PSW+        display current PSW in verbose mode");
+        tz390.put_trace("  PSW         display current PSW");
+        tz390.put_trace("  PSW+        display current PSW in verbose mode");
         tz390.put_trace("  PSW16       display 16 byte current PSW");                          // RPI 2008
 	    tz390.put_trace("  R nn        display specified general purpose register else all R0-RF");
 	    tz390.put_trace("  S           clear all breaks");

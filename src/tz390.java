@@ -315,6 +315,7 @@ public  class  tz390 {
 	* 2022-01-16 DSH #343 increase maxline from 200000 to 400000 for rpi\zivp.asm from Dan Greiner
 	* 2022-01-22 DSH #335 acall - restored APARM used to set &(acall)(n) just before aentry
          * 2022-03-26 DSH #375 change APARM opcode directive from APARM to ACALLPRM
+    * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -3598,10 +3599,13 @@ public  class  tz390 {
       HashMap<String, String> optfilenames = new HashMap<String, String>(); // dk RPI 1606
       String prevoptfilename = ""; // dk RPI 1606
 
-public void init_tz390(){
-	/*
+
+
+	/**
 	 * initialize shared data and tables
 	 */
+
+public void init_tz390(){
 	dir_cur = System.getProperty("user.dir") + File.separator; // RPI 499 drop upper case
 	ts_nano_start = System.nanoTime();          // RPI 662
 	ts_mic_start  = System.currentTimeMillis(); // RPI 662
@@ -3610,7 +3614,11 @@ public void init_tz390(){
 	init_os_util();  // set os utilities (overides from env var)
         // init_opcodes();  // verify opcode tables - moved to init_options RPI 1209A
 }
-/*
+
+
+
+/**
+ * <pre>
  * Create_opcodes builds the following arrays to define opcode formats:
  * op_type_name
  * op_type_len
@@ -3622,7 +3630,9 @@ public void init_tz390(){
  * - op_type
  * - op_trace_type
  * The content of the arrays is determined by the assembler options OPTABLE/MACHINE
+ * </pre>
  */
+
 public void create_opcodes()  // Routine added for RPI 1209
    {int     index, index2;
     int     i, j;
@@ -3895,6 +3905,9 @@ public void create_opcodes()  // Routine added for RPI 1209
         index2++; // indicate this pass is done
         }
     }
+
+
+
 public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
    {int     index, index2;
     int     i, j;
@@ -4149,10 +4162,14 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
         }
     op_code_count = index2-op_directives_count;
     }
+
+
+
+   /**
+    * init opcodes 
+    */
+
 private void init_opcodes(){
-	/*
-	 * init opcodes 
-	 */
 	if (op_name.length != op_type.length){
 		abort_error(1,"opcode tables out of sync - aborting");
 	}
@@ -4175,10 +4192,14 @@ private void init_opcodes(){
 		abort_error(3,"opcode total out of sync - aborting");
 	}
 }
-private void init_pat(){
-	/*
+
+
+
+	/**
 	 * init patterns for use by opcode and options routines
 	 */
+
+private void init_pat(){
     /*
      * find_non_space_pattern tokens:
      * skip while space and return next non-white space token
@@ -4309,10 +4330,14 @@ private void init_pat(){
 		  abort_error(14,"parm pattern errror - " + e.toString());
 	}
 }
-private void init_os_type(){
-	/*
+
+
+
+	/**
 	 * init os type RPI 1080
 	 */
+
+private void init_os_type(){
 	String os_name = System.getProperty("os.name"); 
 	if  (os_name.substring(0,3).equals("Win")){
 		z390_os_type = z390_os_win;        // RPI 499
@@ -4321,10 +4346,14 @@ private void init_os_type(){
     	z390_os_type = z390_os_linux; 
     }
 }
-private void init_os_util(){
-	/*
+
+
+
+	/**
 	 * init os dependant utilities RPI 1080
 	 */
+
+private void init_os_util(){
 	z390_acrobat = System.getenv("Z390ACROBAT");;   // RPI 510
 	z390_browser = System.getenv("Z390BROWSER");;   // RPI 510
 	z390_command = System.getenv("Z390COMMAND");    // RPI 510
@@ -4379,8 +4408,11 @@ private void init_os_util(){
 		}
     }
 }
-public void init_options(String[] args,String pgm_type){
-	/*
+
+
+
+	/**
+	 * <pre>
 	 * parse and set options
 	 * Notes:
 	 *   1.  These use () vs = because bat removes =
@@ -4391,7 +4423,10 @@ public void init_options(String[] args,String pgm_type){
 	 *        time(seconds)
 	 *   2.  Add options check for consistency
 	 *       a.  NOASM - requires chkmac(0)   - RPI 1053   
+	 * </pre>
 	 */
+
+public void init_options(String[] args,String pgm_type){
     if  (args.length >= 1){
     	if (!set_pgm_dir_name_type(args[0],pgm_type)){
     		abort_error(4,"invalid input file option - " + args[0]);
@@ -4444,10 +4479,14 @@ public void init_options(String[] args,String pgm_type){
     create_opcodes(); // Create correct opcodes table; routine added for RPI 1209A
     init_opcodes();  // verify opcode tables RPI 1209A
 }
-private void check_options(){
-        /*
+
+
+
+        /**
          * check options for consistency
          */
+
+private void check_options(){
         if (!opt_asm){
                 if(opt_chkmac != 0){
                         abort_error(26,"NOASM requires CHKMAC(0)"); // RPI 1053
@@ -4531,11 +4570,15 @@ private void check_options(){
        {abort_error(30,"option VSAM must be 0, 1 or 2"); // RPI 1628 RPI 2226
         }                                             // RPI 1598
 }
-private void process_option(String opt_file_name,int opt_file_line,String token){
-	/*
+
+
+
+	/**
 	 * process option from command line or
 	 * from @file optionsfile line.
 	 */
+
+private void process_option(String opt_file_name,int opt_file_line,String token){
   try {
 	if (cmd_parms_len + token.length() + 1 > max_cmd_parms_line){
 		String temp_token = token;
@@ -5232,11 +5275,15 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
 	  add_invalid_option(opt_file_name,opt_file_line,token);
   }
 }
-public  void set_trace_options(String trace_options){
-	/*
+
+
+
+	/**
 	 * set trace options (called by init and 
 	 * by mz390 when SYSTRACE is updated.
 	 */
+
+public  void set_trace_options(String trace_options){
 	opt_traceall = false;
    	opt_trace    = false;
   	opt_tracea   = false;
@@ -5297,21 +5344,29 @@ public  void set_trace_options(String trace_options){
    		index++;
    	}
 }
-private void add_invalid_option(String opt_file_name,int opt_file_line,String option){
-	/*
+
+
+
+	/**
 	 * collect invalid options for single error
 	 */
+
+private void add_invalid_option(String opt_file_name,int opt_file_line,String option){
 	invalid_options = invalid_options + " " + option; // RPI 880
 	System.out.println("TZ390E invalid option=" + option + "  (" + opt_file_name + "/" + opt_file_line + ")");
 }
-private void process_options_file(String file_name,boolean required){ // RPI 1156
-	/*
+
+
+
+	/**
 	 * process option file as follows:
 	 * 1.  Default suffix .OPT
 	 * 2.  Uses SYSOPT path which defaults to program path
 	 * 3.  Comments starting with * to end of line
 	 * 4.  @file option can be nested.
 	 */
+
+private void process_options_file(String file_name,boolean required){ // RPI 1156
     String opt_file_name = find_file_name(dir_opt,file_name,opt_type,dir_cur); // rpi 880
     // RPI 1606   Circular reference of options file causes unspecified exception in tz390
 	int    opt_file_line = 0; // rpi 880
@@ -5352,11 +5407,15 @@ private void process_options_file(String file_name,boolean required){ // RPI 115
 		add_invalid_option(opt_file_name,opt_file_line,"@" + file_name); // RPI 880
 	}
 }
-public void open_systerm(String z390_pgm){
-	/*
+
+
+
+	/**
 	 * open systerm file and sta statistics file
 	 * positions to add to end of existing files.
 	 */
+
+public void open_systerm(String z390_pgm){
 	systerm_prefix = left_justify(pgm_name,9) + " " + z390_pgm + " ";
     if (stats_file == null 
     	&& stats_file_name != null){
@@ -5413,10 +5472,14 @@ public void open_systerm(String z390_pgm){
         abort_error(11,"I/O error on systerm file " + e.toString());
 	}
 }
-public synchronized void put_systerm(String msg){ // RPI 397
-	/*
+
+
+
+	/**
 	 * log error to systerm file
 	 */
+
+public synchronized void put_systerm(String msg){ // RPI 397
 	if (systerm_file != null){ // rpi 935
 		try {
 			systerm_io++;
@@ -5428,10 +5491,14 @@ public synchronized void put_systerm(String msg){ // RPI 397
 		System.out.println(systerm_prefix + msg); //RPI 1069 codepage prior to setting systerm
 	}
 }
-public synchronized void put_stat_line(String msg){ // RPI 397
-	/*
+
+
+
+	/**
 	 * mod stat record on stats.sta file
 	 */
+
+public synchronized void put_stat_line(String msg){ // RPI 397
 	if (stats_file != null){ // RPI 935
 		try {
 			systerm_io++;
@@ -5442,11 +5509,15 @@ public synchronized void put_stat_line(String msg){ // RPI 397
 		}
 	}
 }
-public synchronized void close_systerm(int rc){ // RPI 397
-	/*
+
+
+
+	/**
 	 * close systerm error file if open
 	 * 
 	 */
+
+public synchronized void close_systerm(int rc){ // RPI 397
      if (systerm_file != null){
 		 systerm_io++;
      	 set_ended_msg(rc);
@@ -5480,11 +5551,15 @@ public synchronized void close_systerm(int rc){ // RPI 397
     	 stats_file = null;   
      }
 }
-public void set_ended_msg(int rc){
-	/*
+
+
+
+	/**
 	 * set ended_msg for use by mz390, az390,
 	 * lz390, and ez390.
 	 */
+
+public void set_ended_msg(int rc){
 	if (ended_msg.length() > 0){ // RPI 837
 		return;
 	}
@@ -5503,10 +5578,14 @@ public void set_ended_msg(int rc){
 	    + " IO=" + systerm_io 
 	    + systerm_ins_text;
 }
-public void close_trace_file(){
-	/*
+
+
+
+	/**
 	 * close trace file if open RPI 484
 	 */
+
+public void close_trace_file(){
      if (trace_file_buff != null){
     	 try {
     		 trace_file_buff.close();
@@ -5515,10 +5594,14 @@ public void close_trace_file(){
     	 }
      }
 }
-public int get_mem_usage(){
-	/*
+
+
+
+	/**
 	 * return max memory usage by J2SE in MB
 	 */
+
+public int get_mem_usage(){
 	long mem_tot = 0;
     List<MemoryPoolMXBean> pools = ManagementFactory.getMemoryPoolMXBeans();
     for (MemoryPoolMXBean p: pools) {
@@ -5526,11 +5609,15 @@ public int get_mem_usage(){
     }
     return (int)(mem_tot >> 20);
 }
-private String get_short_file_name(String file_name){
-	/*
+
+
+
+	/**
 	 * return shortest file name possible
 	 * with quotes if LSN
 	 */
+
+private String get_short_file_name(String file_name){
 	if (file_name.length() > dir_cur.length()
 		&& file_name.substring(0,dir_cur.length()).equals(dir_cur)){
 		if (file_name.substring(dir_cur.length(),dir_cur.length()+1).equals(File.separator)){
@@ -5546,11 +5633,15 @@ private String get_short_file_name(String file_name){
 	}
 	return file_name;
 }
-public synchronized void abort_error(int error,String msg){ // RPI 397
-	/*
+
+
+
+	/**
 	 * display options error on system out
 	 * and exit with rc 16.
 	 */
+
+public synchronized void abort_error(int error,String msg){ // RPI 397
 	if (tz390_recursive_abort){ // RPI 935
 		System.out.println("TZ390E recurive abort exit");
 		System.exit(16);
@@ -5567,10 +5658,13 @@ public synchronized void abort_error(int error,String msg){ // RPI 397
 	System.exit(16);
 }
 
-private void init_ascii_ebcdic(){
-	/*
+
+
+	/**
 	 * init ascii/ebcdic conversion tables
 	 */	
+
+private void init_ascii_ebcdic(){
     int index = 0;
 	while (index < 256){
 	  ascii_to_ebcdic[index] = (byte) Integer.valueOf(ascii_to_ebcdic_hex.substring(index*2,index*2+2),16).intValue();
@@ -5578,8 +5672,11 @@ private void init_ascii_ebcdic(){
 	  index++;
 	}
 }
-public int find_key_index(char user_key_type,String user_key){
-	/*
+
+
+
+	/**
+    * <pre>
 	 * return user_key_index for user_key else -1
 	 * and set following for possible add_key_index:
 	 *    1.  key_text = user_key
@@ -5617,7 +5714,10 @@ public int find_key_index(char user_key_type,String user_key){
 	 *   6.  Optimize by using separate user_key_type char
 	 *       to avoid extra string concat and avoid string compare if not 
 	 *       desired type.  RPI 409 (all calls changed)
+    * </pre>
 	 */
+
+public int find_key_index(char user_key_type,String user_key){
 	tot_key_search++;
 	key_type = user_key_type;
 	key_text = user_key;
@@ -5654,13 +5754,17 @@ public int find_key_index(char user_key_type,String user_key){
 	last_key_op = key_not_found;
 	return -1;
 }
-public boolean add_key_index(int user_index){
-	/*
+
+
+
+	/**
 	 * add user_index entry based on
 	 * key_text, key_hash, and key_index_last
 	 * set by prior find_key_index
 	 * 
 	 */
+
+public boolean add_key_index(int user_index){
 	if (last_key_op != key_not_found){
 		return false;
 	}
@@ -5686,25 +5790,35 @@ public boolean add_key_index(int user_index){
 	key_tab_index[key_index] = user_index;
 	return true;
 }
-public boolean update_key_index(int user_key){
-	/*
+
+
+
+	/**
 	 * update previously found key index
 	 */
+
+public boolean update_key_index(int user_key){
 	if (last_key_op != key_found){
 		return false;
 	}
 	key_tab_index[key_index] = user_key;
 	return true;
 }
-public String get_file_name(String file_dir,String file_name,String file_type){
-	   /*
+
+
+
+	   /**
+       * <pre>
 	    * 1.  Strip long spacey name quotes if found from path and file.
 	    * 2.  Replace . and ..\ with current directory  RPI 866
 	    * 3.  Check for overriding path in filename and ignore default path RPI 866
 	    * 4.  Check for overriding filename in path and ignore default filename RPI 866
 	    * 2.  Add directory, name, and/or type if not specified  
 	    * 3.  Replace \ with / if Linux
+       * </pre>
 	    */
+
+public String get_file_name(String file_dir,String file_name,String file_type){
 	        if (file_dir == null 
 	        	|| file_name == null 
 	        	|| file_type == null
@@ -5769,12 +5883,18 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	    	}
 	    	return file_name;
 }
-public String fix_file_separators(String name){
-	/*
+
+
+
+	/**
+    * <pre>
 	 * 1.  Replace \ with / if Linux else / with |
 	 * 2.  Replace ..\ or ../ with parent path
 	 * 3.  Remove embedded ./ or .\
+    * </pre>
 	 */
+
+public String fix_file_separators(String name){
     if (z390_os_type == z390_os_linux){ // RPI 532 file separator fix
     	name = find_bslash.matcher(name).replaceAll("/");  // RPI 1080
     } else {
@@ -5815,8 +5935,11 @@ public String fix_file_separators(String name){
 	}
 	return name;
 }
-public String find_file_name(String parm_dir_list, String file_name, String file_type_def, String dir_cur){
-	/*
+
+
+
+	/**
+    * <pre>
 	 * search for existing file in one or more dirs
 	 * and return file name or null if not found
 	 * Note:
@@ -5826,7 +5949,10 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 	 *   2.  If file_name has type use it.
 	 *       else if directory path has *.type use
 	 *       the type instead of default file_type. 
+    * <pre>
 	 */
+
+public String find_file_name(String parm_dir_list, String file_name, String file_type_def, String dir_cur){
 	boolean explicit_type = false;
 	File    temp_file;
 	if (file_name == null)return null; // RPI 459
@@ -5898,10 +6024,14 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 	}
 	return null;
 }
-public boolean exec_cmd(String cmd){
-     /*
+
+
+
+     /**
       * exec command as separate task
       */
+
+public boolean exec_cmd(String cmd){
            try {
   	           Runtime.getRuntime().exec(cmd);
   	           return true;
@@ -5909,10 +6039,14 @@ public boolean exec_cmd(String cmd){
   	   	       return false;
   	       }
   	  }
-public boolean init_opcode_name_keys(){
-	/*
+
+
+
+	/**
 	 * add all opcodes to key index table
 	 */
+
+public boolean init_opcode_name_keys(){
 	int index = 0;
 	while (index < op_name.length){
 	  if (op_name[index].length() > 4 && op_name[index].substring(op_name[index].length()-1).equals("?")){	
@@ -5950,13 +6084,19 @@ public boolean init_opcode_name_keys(){
 	}
 	return true;
 }
-public boolean set_pgm_dir_name_type(String file_name,String file_type){
-	/*
+
+
+
+	/**
+    * <pre>
 	 * set pgm_dir, pgm_name, pgm_type from parm 
 	 * Notes:
 	 *   1.  Only allow file type override for MLC.
 	 *   2.  Set lkd_ignore true if explicit .OBJ found RPI 735
+    * </pre>
 	 */
+
+public boolean set_pgm_dir_name_type(String file_name,String file_type){
 	lkd_ignore = false;
 	if (file_name.charAt(0) == '\"'   // strip lsn quotes
 		|| file_name.charAt(0) == '\''){
@@ -5997,19 +6137,26 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
     }
     return true;
 }
-public void reset_opsyn(){
-	/*
+
+
+
+	/**
 	 * reset op_code key table indexes changed
 	 * by opsyn during previous pass if any.
 	 */
+
+public void reset_opsyn(){
 	int index = 0;
 	while (index < tot_opsyn){
 		opsyn_old_name[index] = opsyn_new_name[index]; // RPI 403
 		index++;
 	}
 }
-public boolean update_opsyn(String new_name,String old_name){
-	/*
+
+
+
+	/**
+    * <pre>
 	 * Update opsyn table as follows:
 	 *   1.  Add new alias name for opcode
 	 *   2.  Add null entry to cancel opcode  // RPI 306
@@ -6022,7 +6169,10 @@ public boolean update_opsyn(String new_name,String old_name){
 	 *       for multiple passes so opcodes prior to first
 	 *       OPSYN statement will map to std. opcode. mz390
 	 *       only makes one pass so its not an issue.     
+    * </pre>
 	 */
+
+public boolean update_opsyn(String new_name,String old_name){
 	int index = -1;
 	if (old_name != null){
 		index = old_name.indexOf(" ");
@@ -6064,10 +6214,14 @@ public boolean update_opsyn(String new_name,String old_name){
 	}
 	return true;
 }
-public String get_hex(int work_int,int req_hex_digits) {
-   	/*
+
+
+
+   	/**
    	 * Format int into 1-16 hex digit string
    	 */
+
+public String get_hex(int work_int,int req_hex_digits) {
    	    String work_hex = Integer.toHexString(work_int);
    	    if (req_hex_digits <= 8 || (work_int >= 0 && req_hex_digits <= 16)){
    			return ("0000000000000000" + work_hex).substring(work_hex.length() + 16 - req_hex_digits).toUpperCase();
@@ -6077,10 +6231,14 @@ public String get_hex(int work_int,int req_hex_digits) {
    	    	return null; // force error
    	    }
 }
-public String get_long_hex(long work_long,int req_hex_digits) {
-   	/*
+
+
+
+   	/**
    	 * Format long into 1-16 hex digit string
    	 */
+
+public String get_long_hex(long work_long,int req_hex_digits) {
    	    String work_hex = Long.toHexString(work_long);
    	    if (req_hex_digits <= 16) {
    			return ("0000000000000000" + work_hex).substring(work_hex.length() + 16 - req_hex_digits).toUpperCase();
@@ -6088,8 +6246,11 @@ public String get_long_hex(long work_long,int req_hex_digits) {
    	    	return null; // force error
    	    }
 }
-public boolean get_sdt_char_int(String sdt){
-	   /*
+
+
+
+	   /**
+       *  <pre>
 	    *  set sdt_char_int to
 	    *  value of character string else false
 	    *  
@@ -6098,7 +6259,10 @@ public boolean get_sdt_char_int(String sdt){
 	    *  C!....! EBCDIC       (rep !!|''|&& with !|'|&) 
 	    *  CA'...' ASCII
 	    *  CE'...' EBCDIC
+       *  </pre>
 	    */
+
+public boolean get_sdt_char_int(String sdt){
 	   boolean ebcdic = true;
 	   int index = 2;
 	   int bytes = 0; // RPI 1205
@@ -6150,12 +6314,16 @@ public boolean get_sdt_char_int(String sdt){
 	   }
 	   return true;
 }
-public boolean verify_ascii_source(String temp_line){
-	/*
+
+
+
+	/**
 	 * 1.  Verify ascii source code and
 	 *     length <= 80 if not * in col 1.
 	 *
 	 */
+
+public boolean verify_ascii_source(String temp_line){
 	if (temp_line.length() > max_line_len){ // RPI 437
 		return false; 
 	}
@@ -6172,11 +6340,15 @@ public boolean verify_ascii_source(String temp_line){
     }
     return true;
 }
-public String left_justify(String text,int padded_len){
-	/*
+
+
+
+	/**
 	 * return text left justified in field
 	 * if field larger than text
 	 */
+
+public String left_justify(String text,int padded_len){
 	if (text == null){
 		return "";
 	}
@@ -6187,20 +6359,28 @@ public String left_justify(String text,int padded_len){
 		return text;
 	}
 }
-public String pad_spaces(int n){ // RPI 902
-	/*
+
+
+
+	/**
 	 * return n space characters
 	 */
+
+public String pad_spaces(int n){ // RPI 902
 	if (n > pad_spaces_len){
         init_pad_spaces(n);  
 	}
 	return String.valueOf(pad_spaces,0,n);
 }
-public String right_justify(String text,int padded_len){
-	/*
+
+
+
+	/**
 	 * return text right justified in field
 	 * if field larger than text
 	 */
+
+public String right_justify(String text,int padded_len){
 	int pad_len = padded_len - text.length();
 	if (pad_len > 0){
 		return pad_spaces(pad_len) + text; // RPI 902
@@ -6208,11 +6388,15 @@ public String right_justify(String text,int padded_len){
 		return text;
 	}
 }
-private void init_pad_spaces(int new_pad_len){
-	/*
+
+
+
+	/**
 	 * initialize new pad_spaces byte array
 	 * used by left and right justify
 	 */
+
+private void init_pad_spaces(int new_pad_len){
 	pad_spaces_len = new_pad_len;
 	if (pad_spaces_len < 4096){
 		pad_spaces_len = 4096;
@@ -6220,11 +6404,15 @@ private void init_pad_spaces(int new_pad_len){
     pad_spaces = new char[pad_spaces_len];
     Arrays.fill(pad_spaces,0,pad_spaces_len,' ');
 }
-public String get_dup_string(String text,int dup_count){
+
+
+
 	/*
 	 * return string with text dupicated
 	 * dup_count times
 	 */
+
+public String get_dup_string(String text,int dup_count){
 	if (dup_count <= 0){
 		return ""; // RPI 774
 	}
@@ -6248,19 +6436,26 @@ public String get_dup_string(String text,int dup_count){
 	}
 	return String.valueOf(dup_char,0,tot_char);
 }
-public String trim_trailing_spaces(String line,int max_text){ // RPI 437
-	/*
+
+
+
+	/**
 	 * remove trailing spaces from non-continued
 	 * source line
 	 */
+
+public String trim_trailing_spaces(String line,int max_text){ // RPI 437
 	if (max_text > 0 && line.length() > max_text){
 	    return ("X" + line.substring(0,max_text)).trim().substring(1);  //RPI124
 	} else {
 		return ("X" + line).trim().substring(1);
 	}
 }
-public String trim_continue(String line, boolean first_line,int ictl_end,int ictl_cont){
-	/*
+
+
+
+	/**
+     * <pre>
      * Trim line to comma delimiter or end of line
      * recognizing whether line is continuation of 
      * quoted string or not..
@@ -6272,7 +6467,10 @@ public String trim_continue(String line, boolean first_line,int ictl_end,int ict
 	 *   3.  Handle quoted string continued on one
 	 *       or more continuation lines. RPI 463.
 	 *   4.  Remove leading spaces from continuations.    
+    * </pre>
 	 */
+
+public String trim_continue(String line, boolean first_line,int ictl_end,int ictl_cont){
 	int index;
 	int eol_index = line.length();
 	if (eol_index >= ictl_end+1){  // RPI 728
@@ -6398,8 +6596,11 @@ public String trim_continue(String line, boolean first_line,int ictl_end,int ict
 	}
 	return split_quote_text + line.substring(split_parms_index,eol_index); // return line with no comma,space
 }
-public void split_line(String line){  // RPI 313
-	/*
+
+
+
+	/**
+    * <pre>
 	 * split line into 4 strings:
 	 *   split_label
 	 *   split_op
@@ -6408,7 +6609,10 @@ public void split_line(String line){  // RPI 313
 	 * 
 	 * 4 fields are null if none
 	 * 
+    * </pre>
 	 */
+
+public void split_line(String line){  // RPI 313
 	split_label = null;
 	split_op    = null;
 	split_parms = null;
@@ -6431,10 +6635,14 @@ public void split_line(String line){  // RPI 313
 		}
 	}
 }
-public String get_first_dir(String dirs){
-	/*
+
+
+
+	/**
 	 * return first directory in list
 	 */
+
+public String get_first_dir(String dirs){
 	    String first_dir;
 		int index_first = dirs.indexOf("+");
    		if (index_first == -1){
@@ -6450,10 +6658,14 @@ public String get_first_dir(String dirs){
    		}
    		return first_dir;
 }
-public void put_trace(String text){
-	/*
+
+
+
+	/**
 	 * open trace file if trace options on for M, A, L, E
 	 */
+
+public void put_trace(String text){
 	if (text != null 
 		&& text.length() > 13
 	    && text.substring(0,6).equals(text.substring(7,13))){ // RPI 659
@@ -6483,12 +6695,18 @@ public void put_trace(String text){
 		abort_error(18,"maximum trace file size exceeded"); // RPI 731
 	}
 }
-    public void inc_cur_bal_line_num(String text_line){
-	/*
+
+
+
+	/**
+    * <pre>
 	 * 1.  inc cur_bal_line_num by 1 plus
 	 *     previous continuations.
 	 * 2.  Set number of continuation lines for next call.
+    * </pre>
 	 */
+
+public void inc_cur_bal_line_num(String text_line){
     	if (text_line == null)return;
 	    	cur_bal_line_num = cur_bal_line_num + 1 + prev_bal_cont_lines;
 	    if (text_line != null && text_line.length() > 71){ // RPI 415 adj for continuations for xref
@@ -6497,8 +6715,11 @@ public void put_trace(String text){
 	    	prev_bal_cont_lines = 0; // RPI 550
 	    }
     }
-    public String get_cur_bal_line_id(int file_num, int file_line_num, int bal_line_num, boolean mac_gen, char line_type){
-    	/*
+
+
+
+    	/**
+    * <pre>
     	 * return unique BAL line id consisting of:  // RPI 549
     	 *   1.  FID file id number (See list of files in stats at end of BAL)
     	 *   2.  FLN file Line number within file
@@ -6510,7 +6731,10 @@ public void put_trace(String text){
     	 * Notes:
     	 *   1.  If FLN is 0 only GSN is returned for az standalone mode.
     	 *   2.  If GSN is 0 only (FID/FLN) is returned for mz trace..
+    * </pre>
     	 */
+
+public String get_cur_bal_line_id(int file_num, int file_line_num, int bal_line_num, boolean mac_gen, char line_type){
     	if (file_line_num == 0){
     		return right_justify("" + bal_line_num + line_type,10);
     	}
@@ -6529,18 +6753,24 @@ public void put_trace(String text){
     			                 + ")" + bal_line_num 
     			                 + line_type,15); // RPI 549
     }
-    public String jar_file_dir(){
-     	/*
+
+
+
+     	/**
      	 *  Return the directory containing the jar file 
      	 *  (Contributed by Martin Ward)
      	 */
+
+public String jar_file_dir(){
      	StringBuffer path = new StringBuffer(System.getProperty("java.class.path"));
         /* Delete everything from the last directory separator onwards: */
      	path.delete(path.lastIndexOf(File.separator), path.length());
         return path.toString();
     }
-    public boolean fp_get_dfp_bin(int dfp_type,BigDecimal dfp_bd){
-    	/*
+
+
+
+    	/**
     	 * store binary DD,ED, or LD format
     	 * in fp_work_reg.  Return true if value within range.
     	 * 
@@ -6548,6 +6778,8 @@ public void put_trace(String text){
          *   1.  Set DFP exponent to explicit decimal point
          *       else preferred exponent is 0.
     	 */
+
+public boolean fp_get_dfp_bin(int dfp_type,BigDecimal dfp_bd){
     	/*
     	 * round to specified precision using default 
     	 */
@@ -6649,11 +6881,15 @@ public void put_trace(String text){
     	}
     	return false;
     }
-    private long get_dfp_ccf_digits(int tot_digits,int digit_offset, int digit_count){
-    	/*
+
+
+
+    	/**
     	 * return long with 1 to 6 DPD densly packed deciaml
     	 * truples of 10 bits representing 3 digits.
     	 */
+
+private long get_dfp_ccf_digits(int tot_digits,int digit_offset, int digit_count){
     	long dfp_bits = 0;
     	int index = digit_offset;
     	while (index < digit_offset + digit_count){
@@ -6663,17 +6899,21 @@ public void put_trace(String text){
     	return dfp_bits;
     	
     }
-    public String get_timestamp(){  // RPI 662
-    	/*
+
+
+
+    	/**
     	 * return current JDBC time stamp string 
     	 * with 9 digit fractional nanosecond forrmat:
     	 * yyyy-mm-dd hh:mm:ss.nnnnnnnnn (29 characters)
-    	 * 
+       * <p> 
     	 * Note only thefirst 3 millisecond digits are
     	 * returned by current JDBC TimeStamp constructor so
     	 * System.nanotime() method is used to add 
     	 * remaining 6 digits of nanosecond fraction.
     	 */
+
+public String get_timestamp(){  // RPI 662
     	ts_nano_now    = System.nanoTime();
     	ts_mic_dif    = (ts_nano_now - ts_nano_start)/1000000;
     	ts_mic_now     = ts_mic_start + ts_mic_dif;
@@ -6682,10 +6922,14 @@ public void put_trace(String text){
     	            + ("000000" + ts_nano_digits).substring(ts_nano_digits.length())
     	            + " ";
    }
-    public void get_window_size(){
-    	/*
+
+
+
+    	/**
     	 * set max_main_height and max_main_width
     	 */
+
+public void get_window_size(){
         int start_bar_height = 36; //windows start bar
         try {
             max_main_height = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getHeight() 
@@ -6695,8 +6939,11 @@ public void put_trace(String text){
 
         }
     }
-    public void init_errsum(){
-    	/*
+
+
+
+    	/**
+       * <pre>
     	 * turn on ERRSUM option either
     	 * by user request or
     	 * if missing COPY or MACRO error
@@ -6709,7 +6956,10 @@ public void put_trace(String text){
     	 *       There may still be additional nesting missing
     	 *       macros and copybooks requiring multiple
     	 *       passes after including missing files listed.
+       * </pre>
     	 */
+
+public void init_errsum(){
     	if (opt_asm){
     		opt_errsum = true;
   			max_errors = 0;
@@ -6717,21 +6967,29 @@ public void put_trace(String text){
     		abort_error(30,"ERRSUM requires option ASM");
     	}
     }
-    public char ascii_printable_char(int mem_byte){
-    	/*
+
+
+
+    	/**
     	 * return printable ascii char from byte RPI 947
     	 */
+
+public char ascii_printable_char(int mem_byte){
 		if (opt_ascii){
 			return ascii_table.charAt(mem_byte & 0xff);
 		} else {
 			return ebcdic_table.charAt(mem_byte & 0xff);
 		}
     }
-    public String ascii_printable_string(String text){
-    	/*
+
+
+
+    	/**
     	 * return printable ascii string from string that
     	 * may have non-printable ascii codes RPI 938
     	 */
+
+public String ascii_printable_string(String text){
     	int index = 0;
     	String ascii_text = "";
 		while (index < text.length()){
@@ -6740,10 +6998,14 @@ public void put_trace(String text){
 		}
 		return ascii_text;
     }
-    public String get_ascii_printable_string(byte[] byte_array, int addr, int len){
-    	/*
+
+
+
+    	/**
     	 * return printable ascii string from byte array RPI 947
     	 */
+
+public String get_ascii_printable_string(byte[] byte_array, int addr, int len){
     	int index = 0;
     	String text = "";
 		while (index < len){
@@ -6756,13 +7018,17 @@ public void put_trace(String text){
 		}
 		return text;
     }
-    public String get_ascii_var_string(byte[] byte_array,int mem_addr,int max_len){
-    	/*
+
+
+
+    	/**
     	 * return ascii variable length string 
     	 * delimited by null or double quotes which
     	 * are stripped off along with leading or traling 
     	 * spaces.
     	 */
+
+public String get_ascii_var_string(byte[] byte_array,int mem_addr,int max_len){
     	String text = "";
     	int index = 0;
     	while (index < max_len){
@@ -6787,12 +7053,16 @@ public void put_trace(String text){
     	}
         return text.trim();  //RPI111
     }
-    public void log_text_append(JTextArea log_text, String msg){
-		   /* 
+
+
+
+		   /**
 		    * append msg to visible log textarea
 		    * and reduce size by 50% when it exceeds
 		    * opt_maxlog byte limit.
 		    */
+
+public void log_text_append(JTextArea log_text, String msg){
     	   tot_log_msg++;
 		   if (tot_log_text > opt_maxlog){
 			   log_text.replaceRange(" Z390 visible log truncated at msg #" + tot_log_msg + "\n",0,opt_maxlog/2);
@@ -6802,10 +7072,14 @@ public void put_trace(String text){
 		   log_text.append(msg + "\n");
     	   log_text_added = true;
 	   }
-    public void sleep_now(long mills){
-    	/*
+
+
+
+    	/**
     	 * sleep for 1 monitor wait interval
     	 */
+
+public void sleep_now(long mills){
     	try {
     		Thread.sleep(mills);
     	} catch (Exception e){
@@ -6814,22 +7088,30 @@ public void put_trace(String text){
     	    Thread.yield();
     	}
     }
-	private String set_path_option(String old_path,String new_path){
-		/*
+
+
+
+		/**
 		 * 1.  if new path starts with +, concat with existing path
 		 *     else replace existing path option.
 		 */
+
+private String set_path_option(String old_path,String new_path){
 		if (new_path.charAt(0) == '+'){
 			return old_path + new_path;  
 		} else {
 			return new_path; 
 		}
 	}
-	public void put_stat_final_options(){
-		/*
+
+
+
+		/**
 		 * list final value of all changed 
 		 * options on stats file
 		 */
+
+public void put_stat_final_options(){
 		/*
 		 * option flags
 		 */
@@ -7234,11 +7516,15 @@ public void put_trace(String text){
 	     add_final_opt("SYSOPT=" + dir_opt); // SYSOPT() OPT options @file path defaults to dir_mac RPI 742
 	     add_final_opt("SYSTRC=" + dir_trc); // SYSTRC() trace file directory
 	}
-	private void add_final_opt(String token){
-		/*
+
+
+
+		/**
 		 * add final option value to final_option
 		 * formatted string.
 		 */
+
+private void add_final_opt(String token){
 		while (token.length() > max_cmd_parms_line - 2){
 			put_stat_line("final options=" + token.substring(0,max_cmd_parms_line - 2));
 			token = token.substring(max_cmd_parms_line - 2);
@@ -7247,31 +7533,43 @@ public void put_trace(String text){
 			put_stat_line("final_options=" + token);
 		}
 	}
-	public synchronized void abort_case(){ // RPI 646
-		/*
+
+
+
+		/**
 		 * abort case with invalide index
 		 * RPI 849 used by pz390, mz390
 		 */
+
+public synchronized void abort_case(){ // RPI 646
 		abort_error(22,"internal error - invalid case index");
 	}
-	public String cur_date(){
-		/*
+
+
+
+		/**
 		 * return MM/DD/YY 
 		 * or constant if notiming
 		 *      
 		 */
+
+public String cur_date(){
 		if (opt_timing){
 			return sdf_MMddyy.format(new Date());
 		} else {
 			return "MM/DD/YY";
 		}
 	}
-	public String cur_time(boolean space_pad){
-		/*
+
+
+
+		/**
 		 * return HH:MM:SS with or without space 
 		 * or 0 length string if notiming
 		 *      
 		 */
+
+public String cur_time(boolean space_pad){
 		if (opt_timing){
 			if (space_pad){
 				return sdf_HHmmss.format(new Date()) + " ";
@@ -7282,8 +7580,11 @@ public void put_trace(String text){
 			return "";
 		}
 	}
-	public void init_codepage(String codepage_parm){
-		/*
+
+
+
+		/**
+       * <pre>
 		 * initialize ascii and ebcdic translate tables 
 		 * using specified Unicode codepages.  If list is on display
 		 * mapping between ascii Unicode table and the corresponding
@@ -7295,7 +7596,10 @@ public void put_trace(String text){
 		 * ebcdic code mapping for z390 assembler A-Z,a-z,0-9,@#$,
 		 * blank, and &'()*+-./:=_.  Any characters that have mapping // RPI 1529
 		 * will attempt to print otherwise they will appear as periods.
+       * </pre>
 		 */
+
+public void init_codepage(String codepage_parm){
 		// init hardcoded ascii/ebcdic tables if no codepage
 	    if (codepage_parm.length() == 0){   // RPI 1069
     		init_ascii_ebcdic();
@@ -7370,12 +7674,16 @@ public void put_trace(String text){
              return;
 		}
 	}
-	private void init_charset_tables(){
-		/*
+
+
+
+		/**
 		 * 1.  copy test tables to live tables
 		 * 2.  initialize translate tables
 		 * 3.  initialize printable character table
 		 */
+
+private void init_charset_tables(){
 		// copy charsets
 		ascii_table = test_ascii;
 		ebcdic_table = test_ebcdic;
@@ -7442,10 +7750,14 @@ public void put_trace(String text){
 			index++;
 		}
 	}
-	private void report_codepage_error(String msg){
-		/*
+
+
+
+		/**
 		 * report codepage parm error
 		 */		
+
+private void report_codepage_error(String msg){
 		put_systerm("CODEPAGE option error - " + msg);
 		put_systerm("z390 default ascii/ebcdic tables used");
 		put_systerm("Default ascii Charset codepage is - " + default_charset_name);
@@ -7454,10 +7766,14 @@ public void put_trace(String text){
 		init_ascii_ebcdic();
         abort_error(793,"CODEPAGE option error - " + msg); // RPI 1533
 		}
-	private void list_ebcdic_ascii_unicode(){
-		/* 
+
+
+
+		/**
 		 * list unicode, char, ascii hex, ebcdic hex
 		 */
+
+private void list_ebcdic_ascii_unicode(){
 		put_systerm("hex-ebcdic/hex-ascii/print-char/unicode listing");
    	 int index = 0;
    	 while (index < 64){
@@ -7469,10 +7785,14 @@ public void put_trace(String text){
    		 index++;
    	 }
 	}
-   	 private String map_text(int index){
-   		 /*
+
+
+
+   		 /**
    		  * return text index,hex-ebcdic,hex-ascii,char,U+hex
    		  */
+
+private String map_text(int index){
    		 String codepoint = "000"+Integer.toHexString(test_ascii.codePointAt(index));
    		 codepoint = codepoint.substring(codepoint.length()-4);
    		 char test_char;
@@ -7492,6 +7812,8 @@ public void put_trace(String text){
    				     + "/U" + codepoint + "  ";
    	     return text;
 	}
+
+
 
 	private void list_available_charsets(){
 		put_systerm("available ascii and ebcdic charset codepages");
@@ -7521,8 +7843,11 @@ public void put_trace(String text){
 		}
 		put_systerm("total charsets=" + tot_charset + "  total ebcdic=" + tot_ebcdic + "  total ascii=" + tot_ascii);
 	}
-	private boolean check_test_ascii(){
-		/*
+
+
+
+		/**
+       * <pre>
 		 * return true if test_ascii charset
 		 * meets the following  tests:
 		 *   1.  Length 256
@@ -7534,7 +7859,10 @@ public void put_trace(String text){
 		 *       5A  Z
 		 *       61  a
 		 *       7A  z
+       * </pre>
 		 */
+
+private boolean check_test_ascii(){
 		if (test_ascii.length() != 256
 				|| test_ascii.charAt(0x30) != '0'
 				|| test_ascii.charAt(0x39) != '9'
@@ -7564,11 +7892,15 @@ public void put_trace(String text){
 		}
 		return true;
 	}
-	private boolean check_test_ebcdic(){
-		/*
+
+
+
+		/**
 		 * return true if test_ebcdic charset
 		 * meets minimum character requirements
 		 */
+
+private boolean check_test_ebcdic(){
 		if (test_ebcdic.length() != 256
 			|| test_ebcdic.charAt(0xF0) != '0'
 			|| test_ebcdic.charAt(0xF9) != '9'
@@ -7598,12 +7930,16 @@ public void put_trace(String text){
 		}
 		return true;
 	}
-	public void list_hex_ascii_ebcdic(){
-		/*
+
+
+
+		/**
 		 * list ascii to ebcdic and ebcdic to aascii
 		 * conversion tables in hex for debugging
 		 * 
 		 */
+
+public void list_hex_ascii_ebcdic(){
 		put_systerm("hex ascii Charset - " + ascii_charset_name);
 		int i = 0;
 		String hexline = "";
@@ -7652,11 +7988,15 @@ public void put_trace(String text){
 			i++;
 		}
 	}
-	private boolean load_ebcdic_charset_hex_file(){
-		/*
+
+
+
+		/**
 		 * load ebcdic_charset_name as alternate
 		 * source for system defiend ebcdic_charset_name
 		 */
+
+private boolean load_ebcdic_charset_hex_file(){
 		try {
 			BufferedReader ebcdic_hex_buff = new BufferedReader(new FileReader(new File(ebcdic_charset_name)));
 		    String hex_rec = ebcdic_hex_buff.readLine();
@@ -7691,11 +8031,15 @@ public void put_trace(String text){
 		}
 		return true;
 	}
-public boolean check_java_version(){
-	/*
+
+
+
+	/**
 	 * verify version is from known vendor 
 	 * and version is 1.6+
 	 */
+
+public boolean check_java_version(){
 	    if (1 != 0)return true; // force ok to test open jdk by 2020/08/11
 		if (java_vendor.equals("Sun Microsystems Inc.") 
 			|| java_vendor.equals("Oracle Corporation") // RPI 1175
