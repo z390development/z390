@@ -250,39 +250,43 @@ import javax.swing.Timer;
 
 
 
-  /**
-   * main is entry when executed from command line
-   * Create instance of ez390 class and pass
-   * parms to ez390 like z390 does.
-   */
-
+   /**
+    * main is entry when executed from command line
+    * Create instance of ez390 class and pass
+    * parms to ez390 like z390 does.
+    * @param args - argument string - same as z390
+    */
 public static void main(String[] args) {
-      ez390 pgm = new ez390();
-      pgm.process_ez390(args,null,null);
+
+  ez390 pgm = new ez390();
+  pgm.process_ez390(args,null,null);
 }
 
 
 
    /**
-    *  execute 390 load module file passed as first arg
+    * execute 390 load module file passed as first arg
     *
-    *  Note this may be called directly from z390 GUI or
-    *  from main when lz370 run from windows command line.
-    *  if called from main, the log_text balect will be null
-    *  and local put_log function will route to console instead
-    *  of the z390 log window.
+    * Note this may be called directly from z390 GUI or
+    * from main when lz370 run from windows command line.
+    * if called from main, the log_text balect will be null
+    * and local put_log function will route to console instead
+    * of the z390 log window.
+    * @param args - argument string (same as z390)
+    * @param log_text - 
+    * @param command_text - 
     */
-    
 public void process_ez390(String[] args,JTextArea log_text,JTextField command_text){
-	init_ez390(args,log_text,command_text);
+
+    init_ez390(args,log_text,command_text);
     if (tz390.opt_ipl.length() > 0){
-    	run_pgm(pz390.zcvt_ipl_pgm);
-    	sz390.ez390_pgm = null;
-    	sz390.tot_link_stk = 0;
+        run_pgm(pz390.zcvt_ipl_pgm);
+        sz390.ez390_pgm = null;
+        sz390.tot_link_stk = 0;
     }
     run_pgm(pz390.zcvt_user_pgm);
     monitor_timer.stop();  // RPI 782
-	sz390.exit_ez390();
+    sz390.exit_ez390();
 }
 
 

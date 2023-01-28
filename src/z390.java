@@ -3269,9 +3269,14 @@ public  class  z390
 	    	put_log("TIMEOUT  seconds         set command timeout seconds or 0 for no limit (default");
 	    	put_log("TRACE    ON/OFF          set trace for BAL, PRN, LST, and/or LOG file cmds");
 	    }
-	    /** Returns an ImageIcon, or null if the path was invalid. */
-	    protected static ImageIcon createImageIcon(String path,
-	                                               String description) {
+
+    /** Returns an ImageIcon, or null if the path was invalid.
+     * @param path - full path and file name
+     * @param description - description to add to ImageIcon
+     * @return ImageIcon
+     */
+    protected static ImageIcon createImageIcon(String path, String description) {
+
 	        java.net.URL imgURL = z390.class.getResource(path);
 	        if (imgURL != null) {
 	            return new ImageIcon(imgURL, description);
@@ -3280,6 +3285,9 @@ public  class  z390
 	            return null;
 	        }
 	    }
+
+
+
 	    private void check_main_view(){
 	    /*
 	     * if main window size has changed due to

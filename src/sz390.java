@@ -858,11 +858,14 @@ public  class  sz390 implements Runnable {
   /* ************************************************************* */
 
 
-	/**
-	 * execute supervisor call using
-	 * mem and regs for data transfer
-	 */
+
+    /**
+     * execute supervisor call using
+     * mem and regs for data transfer
+     * @param svc_id - SVC number, can be different from MVS assignment
+     */
 public void svc(int svc_id){
+
 	switch (svc_id){
 	case 0x01:  // WAIT
 		svc_wait();
@@ -1004,9 +1007,10 @@ public void svc(int svc_id){
    	/**
    	 * Write message to z390_log_text and/or con
    	 * if running standalone
-   	 * 
+   	 * @param msg - text of message to be logged
    	 */
 public synchronized void put_log(String msg) {
+
 	put_log_line(msg);
 	if (tz390.force_nocon){
 		return;  // RPI 755
@@ -1032,10 +1036,11 @@ public synchronized void put_log(String msg) {
 
 
 
-	   /**
-	    * put line to listing file
-	    */
-private void put_log_line(String msg){
+   /**
+    * put line to listing file
+    */
+    private void put_log_line(String msg){
+
 	   	   if (tz390.opt_list){
 	   		   if (log_file.canWrite()){ // RPI 661
 	   	   	      try {
@@ -1055,11 +1060,10 @@ private void put_log_line(String msg){
 
 
 
-	/**
-	 * put msg to console or cmd process output
-	 * and yield to let parent process m
-	 */
-
+    /**
+     * put msg to console or cmd process output
+     * and yield to let parent process m
+     */
 private void put_con(String msg){
 	if (!tz390.force_nocon){ // RPI 1050 for future use
 		System.out.println(msg);
@@ -1069,11 +1073,13 @@ private void put_con(String msg){
 
 
 
-	/**
-	 * issue error msg to log with prefix and
-	 * inc error total
-	 * 1.  supress if not gen_obj and not trace
-	 */
+    /**
+     * issue error msg to log with prefix and
+     * inc error total
+     * 1.  supress if not gen_obj and not trace
+     * @param error - error code
+     * @param msg - text of error message
+     */
 
 public void log_error(int error,String msg){
 	  String error_msg = "EZ390E error " + tz390.right_justify("" + error,3) + " " + msg;
@@ -1087,14 +1093,16 @@ public void log_error(int error,String msg){
 
 
 
-	/**
-	 * issue error msg to log with prefix and
-	 * inc error total
-	 */
-
+    /**
+     * issue error msg to log with prefix and
+     * inc error total
+     * @param error - error number
+     * @param msg - error message
+     */
 public synchronized void abort_error(int error,String msg){  // RPI 646
+
 	if (ez390_recursive_abort){ // RPI 935
-		System.out.println("EZ390E abort recersive exit");
+		System.out.println("EZ390E abort recursive exit");
 		System.exit(16);
 	}
 	ez390_recursive_abort = true;
@@ -1130,12 +1138,12 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 
 
 
-	/**
-	 * display total errors
-	 * close files and exit
-	 */
-
+    /**
+     * display total errors
+     * close files and exit
+     */
 public void exit_ez390(){
+
 	  int r15_rc = pz390.reg.getInt(pz390.r15); //RPI39
 	  if (r15_rc > ez390_rc){
 		  ez390_rc = r15_rc;
@@ -1169,12 +1177,12 @@ public void exit_ez390(){
 
 
 
-	/**
-	 * if exit request, send shutdown request
-	 * to z390 GUI via the sysout queue
-	 */
-
+    /**
+     * if exit request, send shutdown request
+     * to z390 GUI via the sysout queue
+     */
 private synchronized void close_z390_guam(){  // RPI 397
+
     if (exit_request){
   	  tz390.opt_trace = false;     //RPI35
   	  tz390.z390_abort = true;     //RPI208
@@ -1185,11 +1193,11 @@ private synchronized void close_z390_guam(){  // RPI 397
 
 
 
-	/**
-	 * display statistics as comments at end of bal
-	 */
-
+    /**
+     * display statistics as comments at end of bal
+     */
 private void put_stats(){
+
 	if (tz390.opt_stats){
 		tz390.put_stat_final_options(); // rpi 755
 		put_stat_line("TCPIO operations      = " + tot_tcpio_oper);
@@ -1264,11 +1272,12 @@ private void put_stats(){
 
 
 
-	/**
-	 * routine statistics line to LOG or STATS(file)
-	 */
-
+    /**
+     * routine statistics line to LOG or STATS(file)
+     * @param msg - message text
+     */
 public void put_stat_line(String msg){
+
 	if (tz390.stats_file != null){
 		tz390.put_stat_line(msg);
 	} else {
@@ -1278,12 +1287,12 @@ public void put_stat_line(String msg){
 
 
 
-	/**
-	 * close log, err, tre, 
-	 * xrd, xpr, xph, xgt, and xpt Assist files RPI 812
-	 */
-
+    /**
+     * close log, err, tre, 
+     * xrd, xpr, xph, xgt, and xpt Assist files RPI 812
+     */
 private synchronized void close_files(){  // RPI 661
+
 	  tz390.force_nocon = true;
 	  tz390.set_ended_msg(ez390_rc); // RPI 837
 	  put_log(tz390.ended_msg);
@@ -1309,11 +1318,11 @@ private synchronized void close_files(){  // RPI 661
 
 
 
-	/**
-	 * cancel all active cmd processes
-	 */
-
+    /**
+     * cancel all active cmd processes
+     */
 private void close_cmd(){
+
 	int cmd_id = 0;
 	while (cmd_id < max_cmd_proc){
 		if (cmd_proc_running[cmd_id]){  // RPI 592
@@ -1325,17 +1334,17 @@ private void close_cmd(){
 
 
 
-	/**
-	 * init pz390.cur_date and calendar with
-	 * current time and date or force
-	 * fixed time if NOTIMING option set.
-	 * Notes:
-	 *   1.  This NOTTIMING option is used in
-	 *       regression testing timing functions
-	 *       for repeatable results.
-	 */
-
+    /**
+     * init pz390.cur_date and calendar with
+     * current time and date or force
+     * fixed time if NOTIMING option set.
+     * Notes:
+     *   1.  This NOTTIMING option is used in
+     *       regression testing timing functions
+     *       for repeatable results.
+     */
 public void init_time(){
+
     cur_date_cal = new GregorianCalendar(1900,0,1);
     pz390.ibm_mil = - cur_date_cal.getTime().getTime(); // millisecons from 1900 to 1970
 	if (tz390.opt_timing){ // measure and display timing
@@ -1371,37 +1380,49 @@ public void init_time(){
 
 
 
-   /** <pre>
-	 * 1. init test regular expression parser
-	 * 2. init optional test=ddname file for batch input 
-	 *    else init test_cmd_file which is also used
-	 *    for wtor replies when not in GUAM GUI mode
+   /**
+     * <ol>
+     * <li> init test regular expression parser </li>
+     * <li> init optional test=ddname file for batch input
+     *    else init test_cmd_file which is also used
+     *    for wtor replies when not in GUAM GUI mode </li>
+     * </ol>
      *
      * expression pattern
-     *   1. self defining terms 
-     *         B'01'
-     *         C'ABC'
-     *         F'nnn'
-     *         H'nnn'
-     *         X'0F' 
-     *   2. register
-     *         nr or nR
-     *   3. memory address
-     *         hex. for absolute memory address
-     *         dec  for decimal addr (for list len)
-     *         +hex or -hex for rel base address
-     *         *+hex or *-hex for rel instr. addr
-     *         nnr% for 24 bit indirect reg addr
-     *         nnR& for 31 bit indirect reg addr
-     *   3. break compare operators
-     *         =,<,>,!=,>=,<=      
-     *   3. test commands (b,g,h,l,m,q,t)
-     *   4. test break opcode names
-     *   5. set operator =
-     * </pre>
+     * <ol>
+     * <li> self defining terms 
+     *     <ol>
+     *     <li> B'01' </li>
+     *     <li> C'ABC' </li>
+     *     <li> F'nnn' </li>
+     *     <li> H'nnn' </li>
+     *     <li> X'0F'  </li>
+     *     </ol> </li>
+     * <li> register
+     *     <ol>
+     *     <li>nr or nR
+     *     </ol> </li>
+     * <li> memory address
+     *     <ol>
+     *     <li> hex. for absolute memory address </li>
+     *     <li> dec  for decimal addr (for list len) </li>
+     *     <li> +hex or -hex for rel base address </li>
+     *     <li> *+hex or *-hex for rel instr. addr </li>
+     *     <li> nnr% for 24 bit indirect reg addr </li>
+     *     <li> nnR&amp; for 31 bit indirect reg addr </li>
+     *     </ol> </li>
+     * <li> break compare operators
+     *     <ol>
+     *     <li> =, &lt;, &gt;, !=, &gt;=, &lt;= </li>
+     *     </ol> </li>
+     * <li> test commands (b,g,h,l,m,q,t) </li>
+     * <li> test break opcode names </li>
+     * <li> set operator = </li>
+     * </ol>
+     *
      */
-
 public void init_test(){
+
    	try {
    	    test_pattern = Pattern.compile(
 		    "([bB]['][0|1]+['])"            // sdt 
@@ -1435,12 +1456,12 @@ public void init_test(){
 
 
 
-	/**
-	 * 1.  Set trace file for TRACE and TRACEALL
-	 * 2.  Open 390 and lst files
-	 */
-
+    /**
+     * 1.  Set trace file for TRACE and TRACEALL
+     * 2.  Open 390 and lst files
+     */
 public void open_files(){
+
     	if (tz390.log_file_name.length() == 0){ // RPI 719  RPI 755    		
     		tz390.log_file_name = tz390.get_file_name(tz390.dir_log,tz390.pgm_name,tz390.log_type); // RPI 866
     	} else {
@@ -1463,20 +1484,20 @@ public void open_files(){
 
 
 
- 	/**
+    /**
      * <pre>
- 	 * 1.  If stimer_exit_running then restore
- 	 *     r13-r15 and exit to saved psw
- 	 * 2.  If stae exit running, restore
- 	 *     psw and regs from zcvt_stae.
- 	 * 3.  If spie exit running, restore
- 	 *     psw and regs from zcvt_epie    
- 	 * 4.  exit to prev link return address
- 	 *     or exit ez390 if none.
+     * 1.  If stimer_exit_running then restore
+     *     r13-r15 and exit to saved psw
+     * 2.  If stae exit running, restore
+     *     psw and regs from zcvt_stae.
+     * 3.  If spie exit running, restore
+     *     psw and regs from zcvt_epie    
+     * 4.  exit to prev link return address
+     *     or exit ez390 if none.
      * </pre>
- 	 */
-
+     */
 private void svc_exit(){
+
 	if (stimer_exit_running){
 		stimer_exit_running = false;
 		pz390.reg.putInt(pz390.r13,stimer_save_r13);
@@ -1545,15 +1566,15 @@ private void svc_exit(){
 
 
 
-	/**
-	 * extract svc supports the following functions
-	 *   r0 function
-	 *    1 - GETENV get environment variable
-	 *            input  r1=name with null terminator
-	 *            output r2=getmain'd area value and null terminator
-	 */
-
+    /**
+     * extract svc supports the following functions
+     *   r0 function
+     *    1 - GETENV get environment variable
+     *            input  r1=name with null terminator
+     *            output r2=getmain'd area value and null terminator
+     */
 private void svc_extract(){ // RPI 413
+
 	int op = pz390.reg.getInt(pz390.r0);
 	switch (op){
 	case 1: // GETENV r1=name, r2 set to getmain'd value with null term
@@ -1589,37 +1610,40 @@ private void svc_extract(){ // RPI 413
 
 
 
-	/**
-     * <pre>
-	 * load 390 load module into virtual memory
-	 * 
-	 * Input regs
-	 *   1. r0  = 8 byte pgm name padded with spaces
-	 *   2. r15 = 0 use SYS390 default path search
-	 *   3. r15 = addr dsname if high bit off
-	 *   4. r15 = addr ddname if high bit on
-	 * Output regs:
-	 *   1. r0  = address of 390 program entry
-	 *            above or below line based on
-	 *            lz390 rmode option and with 
-	 *            high bit indicating amode
-	 *            based on lz390 amode option.
-	 *            If not 390 file, r0 = load address
-	 *   2. r1  = length of 390 file loaded in doubleword 
-	 *      count for OS compatiblity.  
-	 *      Length in bytes if not 390 file.
-	 *   3. r15 = return code 0 ok or 4 if notfound
-	 *   4. Add CDE to chian from CVTCDE else inc CVTUSE
-	 *      for access by user pgms RPI 1063
-     *
-	 * Notes:
-	 *   1.  Add CDE entry for new entry else if already
-	 *       loaded, increment cde_use and return 
-	 *       existing load address.
-     * </pre>
-	 */
-
+    /**
+     * load 390 load module into virtual memory
+     * <p>
+     * Input regs
+     * <ol>
+     * <li> r0  = 8 byte pgm name padded with spaces </li>
+     * <li> r15 = 0 use SYS390 default path search </li>
+     * <li> r15 = addr dsname if high bit off </li>
+     * <li> r15 = addr ddname if high bit on </li>
+     * </ol>
+     * Output regs:
+     * <ol>
+     * <li> r0  = address of 390 program entry
+     *            above or below line based on
+     *            lz390 rmode option and with 
+     *            high bit indicating amode
+     *            based on lz390 amode option.
+     *            If not 390 file, r0 = load address </li>
+     * <li> r1  = length of 390 file loaded in doubleword 
+     *      count for OS compatiblity.  
+     *      Length in bytes if not 390 file. </li>
+     * <li> r15 = return code 0 ok or 4 if notfound </li>
+     * <li> Add CDE to chian from CVTCDE else inc CVTUSE
+     *      for access by user pgms RPI 1063 </li>
+     * </ol>
+     * Notes:
+     * <ol>
+     * <li> Add CDE entry for new entry else if already
+     *      loaded, increment cde_use and return 
+     *      existing load address. </li>
+     * </ol>
+     */
 public void svc_load(){
+
 	load_dsn_addr = pz390.reg.getInt(pz390.r15);
 	load_pgm_dir =  tz390.dir_390; // RPI 244
 	load_pgm_type = tz390.pgm_type;
@@ -1657,11 +1681,11 @@ public void svc_load(){
 
 
 
-	/**
-	 * set r0, r1, and r15 for load
-	 */
-
+    /**
+     * set r0, r1, and r15 for load
+     */
 private void svc_load_set_regs(){
+
 	pz390.reg.putInt(pz390.r0,cde_ent[cur_cde]);  // RPI 732
 	if (cde_ent[cur_cde] != -1){
 		pz390.reg.putInt(pz390.r1,cde_len[cur_cde] >>> 3); // RPI 102 390 double words
@@ -1673,12 +1697,12 @@ private void svc_load_set_regs(){
 
 
 
-	/**
-	 * load 390 file, relocate, and 
-	 * set r1 lenght in double words
-	 */
-
+    /**
+     * load 390 file, relocate, and 
+     * set r1 lenght in double words
+     */
 private void svc_load_390(){
+
   try {
     z390_file = new RandomAccessFile(load_file_name,"r");
     if (z390_file.length() <= 10){
@@ -1733,12 +1757,12 @@ private void svc_load_390(){
 
 
 
-	/**
-	 * read and apply rld records at end
-	 * of 390 file.
-	 */
-
+    /**
+     * read and apply rld records at end
+     * of 390 file.
+     */
 private void svc_load_rlds(){
+
 	int rld_field = 0;
 	try {
 	    int cur_rld = 0;
@@ -1796,19 +1820,19 @@ private void svc_load_rlds(){
 
 
 
-	/**
-     * <pre>
-	 * 1. Load non 390 file
-	 * 2. Set cde_pgm to file_name
-	 * 3. Set cde_loc to load address
-	 * 4. Set cde_len to length in bytes
-	 * 5. Set cde_ent to -1
-	 * 6. Set R0 to load address 
-	 * 7. Set r1 to length in bytes
-     * </pre>
-	 */
-
+    /**
+     * <ol>
+     * <li> Load non 390 file </li>
+     * <li> Set cde_pgm to file_name </li>
+     * <li> Set cde_loc to load address </li>
+     * <li> Set cde_len to length in bytes </li>
+     * <li> Set cde_ent to -1 </li>
+     * <li> Set R0 to load address </li>
+     * <li> Set r1 to length in bytes </li>
+     * </ol>
+     */
 private void svc_load_file(){
+
   try {
     z390_file = new RandomAccessFile(load_file_name,"r");
     if (z390_file.length() > pz390.tot_mem - pz390.tot_mem_alloc){
@@ -1844,23 +1868,25 @@ private void svc_load_file(){
 
 
 
-	/**
-     * <pre>
-	 * delete current module and then 
-	 * load and then balr to 390 load module
-	 * Input:
-	 *   1. r0  = addr pgm name
-	 *   2. r1  = user parms
-	 * 	 2. r15 = 0 use SYS390 default path search
-	 *   3. r15 = addr dsname if high bit off
-	 *   4. r15 = addr ddname if high bit on
-	 * Output:
-	 *   1. r15 = user pgm return code if call ok
-	 *   2. abend s106
-     * </pre>
-	 */
-
+    /**
+     * delete current module and then 
+     * load and then balr to 390 load module
+     * Input:
+     * <ol>
+     * <li> r0  = addr pgm name </li>
+     * <li> r1  = user parms </li>
+     * <li> r15 = 0 use SYS390 default path search </li>
+     * <li> r15 = addr dsname if high bit off </li>
+     * <li> r15 = addr ddname if high bit on </li>
+     * </ol>
+     * Output:
+     * <ol>
+     * <li> r15 = user pgm return code if call ok </li>
+     * <li> abend s106 </li>
+     * </ol>
+     */
 private void svc_xctl(){
+
 	int user_parm = pz390.reg.getInt(pz390.r1); // RPI 596 RPI 598
 	svc_load();
 	if (pz390.reg.getInt(pz390.r15) != 0){
@@ -1890,28 +1916,33 @@ private void svc_xctl(){
 
 
 
-	/**
-     * <pre>
-	 * Set DSN from addr DDNAM with high bit
-	 * or from addr DSNAM.
-	 * 
-	 * 1.  If vcdt_load then strip .xxx and set
-	 *     vcdt_entry = xxx else set to ACBNAME 
-	 *     RPI 691
-	 * 2.  Set following from ddname/dsname
-	 *     load_pgm_dir (overrides dir_390 default) RPI 244
-	 *    load_pgm_name
-	 *    load_pgm_type
-	 * 3. Return true if ok else false.
-	 * Notes:
-	 *   1.  If dir_addr high bit on, get user list
-	 *       from 8 byte ddname env. var. at dir_addr
-	 *       else get user list from dir_addr with
-	 *       null delimited or double quote delimiter.
-     * </pre>
-	 */
-
+    /**
+     * Set DSN from addr DDNAM with high bit
+     * or from addr DSNAM.
+     * <ol>
+     * <li> If vcdt_load then strip .xxx and set
+     *      vcdt_entry = xxx else set to ACBNAME 
+     *      RPI 691 </li>
+     * <li> Set following from ddname/dsname:
+     *     <ol>
+     *     <li> load_pgm_dir (overrides dir_390 default) RPI 244 </li>
+     *     <li> load_pgm_name </li>
+     *     <li> load_pgm_type </li>
+     *     </ol> </li>
+     * <li> Return true if ok else false. </li>
+     * </ol>
+     * Notes:
+     * <ol>
+     * <li> If dir_addr high bit on, get user list
+     *      from 8 byte ddname env. var. at dir_addr
+     *      else get user list from dir_addr with
+     *      null delimited or double quote delimiter. </li>
+     * </ol>
+     * @param dd_dsn_addr = pointer to DD or DSN
+     * @return boolean
+     */
 public boolean get_load_dsn(int dd_dsn_addr){
+
 	load_pgm_type = tz390.z390_type;
  	if (dd_dsn_addr < 0){
  		String ddname = get_ascii_string(dd_dsn_addr & 0x7fffffff,8,true);

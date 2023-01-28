@@ -3148,7 +3148,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 	}
 	return text;
 }
-     /***********************************************
+     /* *********************************************
       * Public GUAM GUI application interfaces for
       *   WTO/WTOR   - MCS view
       *   TPUT/TGET  - Screen view
