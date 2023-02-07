@@ -18,7 +18,7 @@ See [ASSIST User Manual PART II. INPUT/OUTPUT AND DEBUGGING INSTRUCTIONS](http:/
 ### `ASSIST` option
 
 The ASSIST option must be provided to use the ASSIST instructions. 
-See [z390 Options](../user_guide/options/z390_options.md) for details.
+See [z390 Options](../user_guide/z390/z390_options.md) for details.
 
 ### `assist` command script
 
@@ -63,7 +63,7 @@ This has the following impacts:
 
 You can use the options LOADHIGH and INIT to override this behavior. 
 
-See [z390 Options](../user_guide/options/z390_options.md) for more information.
+See [z390 Options](../user_guide/z390/z390_options.md) for more information.
 
 ## Error handling
 

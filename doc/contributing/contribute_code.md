@@ -148,7 +148,7 @@ same.
 z390 extends the standard HLASM syntax with additional keywords that allow you 
 to write structured macro code.
 
-See [Structured Macro Extensions](../user_guide/structured_macro.md) for more details.
+See [Structured Macro Extensions](../user_guide/z390/structured_macro.md) for more details.
 
 This makes writing macros easier but structured macros are NOT compatible 
 with HLASM.
