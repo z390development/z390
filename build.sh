@@ -7,21 +7,13 @@ then
     git clean -dfX              # delete all git ignored files
 fi
 
+# build the jar and required libs
 bash/bldjar
 bash/bldlib
 bash/bldcbllib
-bash/zopcheck
-bash/runasmdemos
-bash/runcbldemos
-bash/runasmtests
-bash/runcbltests
-bash/runrtqsam "TIME(30)"
-bash/runsort
-bash/runzpar
-bash/runassist
-bash/runcmdproc
-bash/runvsedemos
-bash/runzstrmactest
-rt/bash/runtestopt
 
+# run the tests
+z390test/gradlew -p z390test test
+
+# build the package
 bash/blddist
