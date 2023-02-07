@@ -1296,9 +1296,9 @@ principle of following conventions set in IBM mainframe manuals.</p>
 <h3 id="installation">Installation</h3>
 <p>You will need Python version 3.4 or above installed.</p>
 <div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">MacOS/Unix</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>python -m venv docenv
-<span class="nb">source</span> docenv/bin/activate
-pip install -r doc/requirements.txt
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>docenv
+<span class="nb">source</span><span class="w"> </span>docenv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>doc/requirements.txt
 </code></pre></div>
 </div>
 <input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Windows</label><div class="tabbed-content">
@@ -1318,8 +1318,8 @@ pip install -r doc\requirements.txt
 You can view the web site preview using a web browser pointed at the following address:</p>
 <p><a href="http://localhost:8000">http://localhost:8000</a></p>
 <div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">MacOS/Unix</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code><span class="nb">source</span> docenv/bin/activate
-mkdocs serve
+<div class="highlight"><pre><span></span><code><span class="nb">source</span><span class="w"> </span>docenv/bin/activate
+mkdocs<span class="w"> </span>serve
 </code></pre></div>
 </div>
 <input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><label for="__tabbed_2_2">Windows</label><div class="tabbed-content">
@@ -1332,15 +1332,15 @@ mkdocs serve
 <p>The distribution will include a PDF with the documentation. </p>
 <p>You can use the following commands to generate the PDF.</p>
 <div class="tabbed-set" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Ubuntu Linux</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>apt update <span class="o">&amp;&amp;</span> apt install -y libsdl-pango-dev
-<span class="nb">source</span> docenv/bin/activate
-<span class="nv">ENABLE_PDF_EXPORT</span><span class="o">=</span><span class="m">1</span> mkdocs build
+<div class="highlight"><pre><span></span><code>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>libsdl-pango-dev
+<span class="nb">source</span><span class="w"> </span>docenv/bin/activate
+<span class="nv">ENABLE_PDF_EXPORT</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>mkdocs<span class="w"> </span>build
 </code></pre></div>
 </div>
 <input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><label for="__tabbed_3_2">MacOS</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>brew install pango
-<span class="nb">source</span> docenv/bin/activate
-<span class="nv">ENABLE_PDF_EXPORT</span><span class="o">=</span><span class="m">1</span> mkdocs build
+<div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>pango
+<span class="nb">source</span><span class="w"> </span>docenv/bin/activate
+<span class="nv">ENABLE_PDF_EXPORT</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>mkdocs<span class="w"> </span>build
 </code></pre></div>
 </div>
 <input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><label for="__tabbed_3_3">Windows</label><div class="tabbed-content">
@@ -1417,7 +1417,7 @@ mkdocs build
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-5-g0f9cdbd"}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-6-g69f0d6b"}</script>
     
     
       <script src="../../assets/javascripts/bundle.b1047164.min.js"></script>
