@@ -12,7 +12,7 @@ jobs:
           fetch-depth: 0
           lfs: true
       - name: version
-        run: echo "::set-output name=version::$(git describe)"
+        run: echo "version=$(git describe)" >> $GITHUB_OUTPUT
         id: version
       - uses: actions/setup-python@v2
         with:

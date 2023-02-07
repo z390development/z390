@@ -10,7 +10,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: version
-        run: echo "::set-output name=version::$(git describe)"
+        run: echo "version=$(git describe)" >> $GITHUB_OUTPUT
         id: version
       - name: Build z390
         uses: ./.github/actions/build
