@@ -1,0 +1,1785 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <meta name="author" content="z390 Development team">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-7.3.6">
+    
+    
+      
+        <title>zCOBOL System Programmer's Guide - z390</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.a57b2b03.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.3f5d1f46.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    <script>function __prefix(e){return new URL("../../..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#zcobol-system-programmers-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner md-announce">
+          <div class="md-banner__inner md-announce__inner md-grid md-typeset">
+            
+  <p>This is a work in progress. Contributions to the documentation are welcome. See <a
+    href="../../../contributing/contribute_docs">Contributing</a> for more information.</p>
+
+          </div>
+        </aside>
+      
+    </div>
+    
+      
+
+  
+
+<header class="md-header md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="z390" class="md-header__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            z390
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              zCOBOL System Programmer's Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../getting_started/install/" class="md-tabs__link">
+        Getting started
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../z390/commands/" class="md-tabs__link md-tabs__link--active">
+        User guide
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../reference/svc_services/" class="md-tabs__link">
+        Reference
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../contributing/contribute_code/" class="md-tabs__link">
+        Contributing
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="z390" class="md-nav__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    z390
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Getting started
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Getting started" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Getting started
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstart/" class="md-nav__link">
+        Quick starts
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/learning/" class="md-nav__link">
+        Learning resources
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/macro_index/" class="md-nav__link">
+        Mainframe OS compatible macros
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/zCOBOL_Overview/" class="md-nav__link">
+        zCOBOL Overview
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          User guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="User guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          User guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_1" type="checkbox" id="__nav_3_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_1">
+          Z390
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Z390" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_1">
+          <span class="md-nav__icon md-icon"></span>
+          Z390
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../z390/commands/" class="md-nav__link">
+        Commands
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../z390/structured_macro/" class="md-nav__link">
+        Structured Macro Extensions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../z390/z390_filetypes/" class="md-nav__link">
+        z390 File types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../z390/z390_options/" class="md-nav__link">
+        z390 Options
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2">
+          zCOBOL
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="zCOBOL" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          zCOBOL
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/" class="md-nav__link">
+        Commands
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zCOBOL_User_Guide/" class="md-nav__link">
+        zCOBOL User Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          zCOBOL System Programmer's Guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        zCOBOL System Programmer's Guide
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#zcobol-internals" class="md-nav__link">
+    zCOBOL internals
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zc390-translator" class="md-nav__link">
+    zc390 Translator
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cobol-language-verb-macros" class="md-nav__link">
+    COBOL Language Verb Macros
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compute-statement-example" class="md-nav__link">
+    COMPUTE Statement Example
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zcobol-target-source-language-generation-macros" class="md-nav__link">
+    zCOBOL Target Source Language Generation Macros
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zc390lib-runtime-library" class="md-nav__link">
+    ZC390LIB Runtime Library
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#base-free-code-generation" class="md-nav__link">
+    Base Free Code Generation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zcobol-exec-cics-support" class="md-nav__link">
+    zCOBOL EXEC CICS Support
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zcobol-data-types" class="md-nav__link">
+    zCOBOL Data Types
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-line-options-for-zcobol-compiler" class="md-nav__link">
+    Command Line options for zCOBOL Compiler
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zCOBOL_filetypes/" class="md-nav__link">
+        zCOBOL file types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zCOBOL_options/" class="md-nav__link">
+        zCOBOL options
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCOBOL_User_Guide/" class="md-nav__link">
+        zCOBOL User Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_4" type="checkbox" id="__nav_3_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_4">
+          zCICS
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="zCICS" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          zCICS
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCICS/" class="md-nav__link">
+        Manuals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCICS/zcics_app_prog_guide/" class="md-nav__link">
+        zCICS Application Programming Guide
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/svc_services/" class="md-nav__link">
+        SVC services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/program_services/" class="md-nav__link">
+        Program Services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/storage_services/" class="md-nav__link">
+        Storage services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/file_services/" class="md-nav__link">
+        Non-VSAM File Services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/guam_services/" class="md-nav__link">
+        GUAM services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/soa_services/" class="md-nav__link">
+        SOA services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/structured_program/" class="md-nav__link">
+        Structured programming macros
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/vsam_file_services/" class="md-nav__link">
+        zVSAM services
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/zCOBOL_NIST_COBOL_1985_Test_Results/" class="md-nav__link">
+        zCOBOL NIST COBOL 1985 Test Results
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/zCOBOL_System_Programmer_Guide/" class="md-nav__link">
+        zCOBOL System Programmer’s Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/zpar/" class="md-nav__link">
+        zPAR and zPARTRS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/sort/" class="md-nav__link">
+        zSORT
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/assist/" class="md-nav__link">
+        ASSIST support
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Contributing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/contribute_code/" class="md-nav__link">
+        Contributing to z390
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/contribute_docs/" class="md-nav__link">
+        Contributing to z390 Documentation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/contributing_zcobol/" class="md-nav__link">
+        Contributing to zCOBOL
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#zcobol-internals" class="md-nav__link">
+    zCOBOL internals
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zc390-translator" class="md-nav__link">
+    zc390 Translator
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cobol-language-verb-macros" class="md-nav__link">
+    COBOL Language Verb Macros
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compute-statement-example" class="md-nav__link">
+    COMPUTE Statement Example
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zcobol-target-source-language-generation-macros" class="md-nav__link">
+    zCOBOL Target Source Language Generation Macros
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zc390lib-runtime-library" class="md-nav__link">
+    ZC390LIB Runtime Library
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#base-free-code-generation" class="md-nav__link">
+    Base Free Code Generation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zcobol-exec-cics-support" class="md-nav__link">
+    zCOBOL EXEC CICS Support
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zcobol-data-types" class="md-nav__link">
+    zCOBOL Data Types
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-line-options-for-zcobol-compiler" class="md-nav__link">
+    Command Line options for zCOBOL Compiler
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/z390development/z390/edit/main/doc/user_guide/zCOBOL/zCOBOL_System_Programmer_Guide.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="zcobol-system-programmers-guide">zCOBOL System Programmer's Guide</h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>There are still a number of missing functions in zCOBOL, and until such time
+as zCOBOL successfully passes the NIST ANSI COBOL 1985 Test Suite, zCOBOL
+should be considered to still be in a beta test state.</p>
+</div>
+<h2 id="zcobol-internals">zCOBOL internals</h2>
+<p>The zCOBOL compiler translates COBOL source language programs into executable code
+using the following 3 major components:</p>
+<ul>
+<li>
+<p>The java program <code>zc390.class</code> in z390.jar reads COBOL language source program
+  with file extension CBL and generates a z390 HLASM compatible mainframe assembler
+  source program with MLC extension.</p>
+</li>
+<li>
+<p>Each COBOL verb becomes a macro call opcode and all the words following up to
+  the next verb or period become positional parameters for the macro call.</p>
+</li>
+<li>Periods generate a PERIOD macro call to terminate all structures which may be
+  missing the optional END-IF type words.</li>
+<li>All dashes in words are converted to underscores unless in quotes.</li>
+<li>
+<p>The level numbers in data division statements are mapped to WS macro call with
+  level as first positional operand.</p>
+</li>
+<li>
+<p>The macros in COBOL verb macro library <code>zcobol/*.mac</code> parse the parameters
+  for each verb, access global macro symbol table, and call code generation macros
+  to generated executable code. For example the IF macro issues calls to GEN_COMP
+  macro to generate executable source code to compare two fields,
+  and issues call to GEN_BC to generate executable source code to branch on condition.</p>
+</li>
+<li>There are currently 4 optional zCOBOL executable code generation macro libraries.
+  The <code>zcobol/z390</code> HLASM code generation library is the primary focus currently.
+  There is a COBOL demo program <code>zcobol/demo/HELLO.CBL</code> which can be
+  compiled and executed in all 4 different target language environments using
+  the initial zCOBOL release. The following libraries are available:<ul>
+<li><code>zcobol/z390</code> - zCOBOL code generation macros for HLASM native z9/10 code</li>
+<li><code>zcobol/java</code> - zCOBOL code generation macros for J2SE Java</li>
+<li><code>zcobol/vce</code> - zCOBOL code generation macros for MS Visual Express C++</li>
+<li><code>zcobol/i586</code> - zCOBOL code generation macros for HLA and MASM native Intel code</li>
+</ul>
+</li>
+</ul>
+<p>Once the z390 HLASM code generation macros are complete and all the
+<a href="https://www.itl.nist.gov/div897/ctg/cobol_form.htm">NIST COBOL 1985 standards tests</a>
+have been completed successfully as a first milestone, then these macros can
+be copied to the other libraries and modified to replace HLASM source code
+model statements with the other target language statements.</p>
+<h2 id="zc390-translator">zc390 Translator</h2>
+<p>The zc390 translator is a java regular expression based parser which reads
+COBOL source program and generates HLASM compatible mainframe assembler
+source program in one pass. </p>
+<p>Each recognized COBOL verb starts a new assembler macro call statement with all 
+the parameters up to the next verb, period, or paragraph label passed as positional 
+parameters. Periods generate a separate macro call to PERIOD to generate end to all 
+the structures in the previous sentence.</p>
+<p>Paragraph and section labels generate call to LABEL with the name and type of
+label to generate. All hyphens in names are translated to underscores for
+HLASM compatibility.</p>
+<h2 id="cobol-language-verb-macros">COBOL Language Verb Macros</h2>
+<p>All the macros for the COBOL language verbs and section headings are stored
+in the macro library <code>zcobol/mac</code>. These macros parse the parameters, validate
+them for any syntax errors, and issue calls to generation macros in separate
+directory as described below. For example, the <code>zcobol/mac/IF.MAC</code> macro generates
+multiple calls to the generation macros <code>GEN_COMP</code>, <code>GEN_BC</code>,  <code>GEN_B</code>, and <code>GEN_LABEL</code>.</p>
+<p>There are no language specific code generation macros in the zCOBOL directory
+so it is shared across multiple target language environments. All the macros
+are written in structured form using the z390 ZSTRMAC SPE structured programming
+extensions such as AIF, AELSEIF, AELSE, AEND, AWHILE, etc. As a result there are
+no explicit AGO or AIF labels in these macros. 
+See <a href="/user_guide/z390/structured_macro">Structured Macro Entensions documentation</a> for more details.</p>
+<h2 id="compute-statement-example">COMPUTE Statement Example</h2>
+<p>The COBOL compute statement is a good example to study to understand how the zCOBOL 
+compiler works. The steps followed to compile the following MOVE and COMPUTE 
+statements are as follows:</p>
+<div class="highlight"><pre><span></span><code><span class="c">77 FLT</span><span class="o">-</span><span class="nv">SRT</span><span class="w"> </span><span class="kp">USAGE</span><span class="w"> </span><span class="kp">FLOAT-SHORT</span><span class="w"> </span><span class="kp">OCCURS</span><span class="w"> </span><span class="mi">2</span><span class="p">.</span>
+<span class="c">MOVE 1</span><span class="p">.</span><span class="mi">1 </span><span class="kp">TO</span><span class="w"> </span><span class="nv">FLT-SRT</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span>
+<span class="c">COMPUT</span><span class="nv">E</span><span class="w"> </span><span class="nv">FLT-SRT</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">FLT-SRT</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="p">.</span><span class="mi">2</span><span class="p">.</span>
+</code></pre></div>
+<ol>
+<li>zc390 translator generates the following 2 zCOBOL verb macro call statements:
+<div class="highlight"><pre><span></span><code><span class="c">MOVE  </span><span class="mi">1</span><span class="p">.</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;TO&#39;</span><span class="p">,</span><span class="nv">FLT_SRT</span><span class="p">,</span><span class="s2">&quot;(&#39;,2,&#39;)&#39;`   </span>
+<span class="c">COMPUT</span><span class="nv">E</span><span class="w"> </span><span class="nv">FLT_SRT</span><span class="p">,</span><span class="s1">&#39;(&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="s1">&#39;)&#39;</span><span class="p">,</span><span class="o">=</span><span class="p">,</span><span class="nv">FLT_SRT</span><span class="p">,</span><span class="s1">&#39;(&quot;,2,&#39;</span><span class="p">)</span><span class="s1">&#39;,+,2.2</span>
+</code></pre></div></li>
+<li>The MOVE macro uses shared copybook routine GET_FIELD_PARM to parse the two
+fields for MOVE and store resulting field name and symbol table index.
+For the literal 1.1 the index is 0, for the subscripted field, the name is set
+to explicit register reference including length offset(length,register)
+and the code is generated to set the register to address of the subscripted field.</li>
+<li>The MOVE macro next issues call to GEN_MOVE with the source and target
+field names and system table indexes.</li>
+<li>The GEN_MOVE macro checks the type of each field and generates appropriate
+code to move value from source to target field. In this case it uses LARL
+to set register to address of DFP short value of 1.1 in literal table and then
+generates MVC to move the literal to the target subscripted field.</li>
+<li>The COMPUTE uses GET_FIELD_PARM to obtain name and index of target field
+and then extracts parms in expression following the = and then calls
+ZC_CALC macro to generate code for expression and store result in specified
+target field. This macro can be used by IF and other verb macros to calculate
+expression for loop etc.</li>
+</ol>
+<p>The ZC_CALC macro parses the expression parameters into Backus Normal Form
+using two stacks. One stack has the operators in expression and the other has
+the field parm index pointers. Following the rules of precedence, the operators
+and associated parameter pointers are removed from the stacks and stored
+sequentially in an operation table containing the operators, 2 operands,
+and the target field for each operation.   </p>
+<p>Temporary storage fields are represented using negative indexes instead of
+position and a table of temporary fields created along with their type
+is maintained. A queue of free temporary fields is maintained and once
+a temporary field has been used in an operation, that temporary field is
+on the free queue for reuse rather than allocating a new temporary storage field.</p>
+<p>Once the expression has been parsed and all the operation table entries
+have been generated, the last target field is replaced with the result field
+passed to ZC_CALC and then the operation table is scanned and the generation
+macros for each operation are called to generate code to perform the operation.</p>
+<p>Just prior to generating code for an operation, the two input parameter types
+are used to determine the required type of result to minimize any loss
+of precision during the calculations. A call to GEN_MOVE is made to move
+the first operand field to the target field prior to performing
+add, subtract, etc. on the target field for operation. If the first operand is
+the same as the target field, the move can be omitted but that is not always
+possible to determine in the case of subscripting and indexing where
+different variables may just happen to have the same value.</p>
+<p>The called generation macros GEN_ADD, GEN_SUB, GEN_MPY, and GEN_DIV check
+the field types and perform the necessary conversion when types do not match.</p>
+<p>See demo added in <code>zcobol/demo/callcomp</code> directory which contains CALLCALC.MLC
+main assembler program which calls subroutine COMPSUM.CBL which uses
+COMPUTE statement to calculate sum of 15 different numeric data field types
+and returns sum as packed decimal for editing and display by calling program.</p>
+<p>There is a paper about this demo here:
+<a href="http://www.z390.org/zcobol/demo/callcomp/zcobol_COMPUTE.pdf">zcobol_COMPUTE.pdf -- Dead link</a></p>
+<h2 id="zcobol-target-source-language-generation-macros">zCOBOL Target Source Language Generation Macros</h2>
+<p>All the target source language generation macros called by the COBOL verb macros
+in z390/zcobol are stored in the following directories by target language:</p>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>zcobol/z390</td>
+<td>Generate HLASM compatible mainframe assembler source program</td>
+</tr>
+<tr>
+<td>zcobol/java</td>
+<td>Generate J2SE java compatible source program</td>
+</tr>
+<tr>
+<td>zcobol/vce</td>
+<td>Generate MS Visual Express C compatible source program</td>
+</tr>
+<tr>
+<td>zcobol/i586</td>
+<td>Generate HLA/MASM Intel assembler compatible source program</td>
+</tr>
+</tbody>
+</table>
+<p>Current only the z390 HLASM compatible source generation macros are being
+fully developed along with the required runtime support functions stored
+in the <code>zcobol/lib/ZC390LIB.390</code> dynamically loaded runtime module.</p>
+<p>zCOBOL demos include a hello world COBOL program which can be compiled
+and executed in each of the target environments form the same <code>zcobol/demo/HELLO.CBL</code>
+source program.   </p>
+<p>The following commands generate the corresponding source language equivalent
+and executable:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Generated Source Code Target</th>
+<th>Generated Executable Code</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cblclg zcobol/demo/HELLO</td>
+<td>zcobol/demo/HELLO.MLC/BAL</td>
+<td>zcobol/demo/HELLO.390</td>
+<td>requires z390 and J2SE on Windows/Linux</td>
+</tr>
+<tr>
+<td>ZCJAVCLG zcobol/demo/HELLO</td>
+<td>zcobol/demo/HELLO.java</td>
+<td>zcobol/demo/HELLO.class</td>
+<td>requires J2SE on Windows/Linux</td>
+</tr>
+<tr>
+<td>ZCVCECLG zcobol/demo/HELLO</td>
+<td>zcobol/demo/HELLO.ccp</td>
+<td>zcobol/demo/HELLO.exe</td>
+<td>requires MS VCE runtime on Windows</td>
+</tr>
+<tr>
+<td>ZC586CLG zcobol/demo/HELLO</td>
+<td>zcobol/demo/HELLO.HLA/ASM</td>
+<td>zcobol/demo/HELLO.exe</td>
+<td>requires HLA, MASM, and MS VCE runtime on Windows</td>
+</tr>
+</tbody>
+</table>
+<p>If you are interested in joining in the open source zCOBOL development effort
+in any of the 4 target language environments or want to add another target
+language environment, join the zcobol development email discussion group
+and make your interests known. Melvyn Maltz is currently developing additional
+EXEC CICS support for zCOBOL programs.</p>
+<h2 id="zc390lib-runtime-library">ZC390LIB Runtime Library</h2>
+<p>The <code>zcobol\lib</code> code generation macro directory also contains all the
+source code and the ZC390CVT.CPY copybook required to build
+the <code>linklib\ZC390LIB.390</code> runtime load module which is dynamically loaded
+by all generated z390 zCOBOL programs. </p>
+<p>This module contains the following components:</p>
+<ul>
+<li>The ZC390CVT.CPY copybook is used in every zCOBOL generated program
+  to define the DSECT addressed by register 9.</li>
+<li>The same copybook is also used in ZC390LIB.MLC to generate
+  the CVT at the beginning of the ZC390LIB.390 runtime load module
+  with addresses of all the entries followed by work areas used by
+  the code generation macros.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Library Element</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZC390LIB.MLC</td>
+<td>Contains ZC390LIB CSECT and COPY ZC390CVT to include all object modules following the CVT at the beginning</td>
+</tr>
+<tr>
+<td>ZC390NUC.MLC</td>
+<td>Included module with system function routines such as CALL, GOBACK, STOPRUN, PERFORM, and PMCHECK to check for end of current performed paragraph or section</td>
+</tr>
+<tr>
+<td>ABORT.MLC</td>
+<td>Contains module called to abort execution with reason code</td>
+</tr>
+<tr>
+<td>ACCEPT.MLC</td>
+<td>Contains support for ACCEPT date, time, day of week</td>
+</tr>
+<tr>
+<td>DISPLAY.MLC</td>
+<td>Display any type field or literal</td>
+</tr>
+<tr>
+<td>INSPECT.MLC</td>
+<td>Inspect field tallying, replacing, or transforming</td>
+</tr>
+</tbody>
+</table>
+<h2 id="base-free-code-generation">Base Free Code Generation</h2>
+<p>The zCOBOL code generation macros in <code>zcobol/lib</code> generate base free code
+for the procedure division using relative instructions for both
+branch addressing and for literal addressing as required.</p>
+<p>The only address constants generated in zCOBOL programs are for statically
+linked CALL's to other zCOBOL or assembler programs. The only limit on
+the combined size of working storage and the procedure division is 16MB.<br />
+In order to use relative addressing for literals, all odd length literals
+are padded to even lengths.   </p>
+<p>The LARL instruction is used to set address of data field or literal field
+as required for use in following RX type instructions. To address working storage
+and linkage section data fields, conventional base registers are dynamically
+allocated as required for use in RX type instructions.   </p>
+<p>Since R13 always points to the beginning of working-storage, no dynamic
+base registers are required for access to data items in the first 4K of
+working storage.</p>
+<h2 id="zcobol-exec-cics-support">zCOBOL EXEC CICS Support</h2>
+<p>When the option CICS is specified on the command line for ZC390C, ZC390CL,
+or ZC390CLG, then the zcobol\ZCOBOL MAC global option &amp;ZC_CICS is set on
+and the following changes in code generation are made:</p>
+<ol>
+<li>The CICS option will generate call to DFHEIENT to initialize CICS
+prior to executing user code starting at the first program CSECT.</li>
+<li>A DFHEISTG DSECT is generated at the beginning of working-storage
+instead of WSLOC LOCTR and warnings are generated for any data VALUE clauses
+defined in working-storage section.</li>
+</ol>
+<h2 id="zcobol-data-types">zCOBOL Data Types</h2>
+<ol>
+<li>The zCOBOL option FLOAT(HEX/BINARY/DECIMAL) can be used to change the
+default from DECIMAL to HEX or BINARY for the generic types FLOAT-SHORT,
+FLOAT-LONG, and FLOAT-EXTENDED.
+2  COMP-3 packed and also zoned decimal are limited to 18 digits per COBOL
+standard unless option EXTEND is set allowing up to 31 digits for both packed
+decimal and zoned decimal fields.</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>USAGE</th>
+<th>PICTURE</th>
+<th>Z390 Assembler Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>COMP</td>
+<td>S9(4)</td>
+<td>H</td>
+<td>16 bit binary</td>
+</tr>
+<tr>
+<td>COMP</td>
+<td>S9(9)</td>
+<td>F</td>
+<td>32 bit binary</td>
+</tr>
+<tr>
+<td>COMP</td>
+<td>S9(18)</td>
+<td>G</td>
+<td>64 bit binary</td>
+</tr>
+<tr>
+<td>COMP</td>
+<td>S9(39)</td>
+<td>Q</td>
+<td>128 bit binary</td>
+</tr>
+<tr>
+<td>FLOAT-HEX-7</td>
+<td>COMP-1</td>
+<td>EH</td>
+<td>HFP short 7 digits</td>
+</tr>
+<tr>
+<td>FLOAT-HEX-15</td>
+<td>COMP-2</td>
+<td>DH</td>
+<td>HFP long - 15 digits</td>
+</tr>
+<tr>
+<td>FLOAT-HEX-30</td>
+<td></td>
+<td>LH</td>
+<td>HFP extended - 30 digits</td>
+</tr>
+<tr>
+<td>FLOAT-BINARY-7</td>
+<td></td>
+<td>EB</td>
+<td>BFP short 7 digits</td>
+</tr>
+<tr>
+<td>FLOAT-BINARY-16</td>
+<td></td>
+<td>DB</td>
+<td>BFP long - 16 digits</td>
+</tr>
+<tr>
+<td>FLOAT-BINARY-34</td>
+<td></td>
+<td>LB</td>
+<td>BFP extended - 34 digits</td>
+</tr>
+<tr>
+<td>FLOAT-DECIMAL-7</td>
+<td>FLOAT-SHORT</td>
+<td>EB</td>
+<td>DFP short 7 digits</td>
+</tr>
+<tr>
+<td>FLOAT-DECIMAL-16</td>
+<td>FLOAT-LONG</td>
+<td>DB</td>
+<td>DFP long - 16 digits</td>
+</tr>
+<tr>
+<td>FLOAT-DECIMAL-34</td>
+<td>FLOAT-EXTENDED</td>
+<td>LB</td>
+<td>DFP extended - 34 digits</td>
+</tr>
+<tr>
+<td>FLOAT-DECIMAL-7</td>
+<td>FLOAT-SHORT</td>
+<td>EB</td>
+<td>DFP short 7 digits</td>
+</tr>
+<tr>
+<td>FLOAT-DECIMAL-16</td>
+<td>FLOAT-LONG</td>
+<td>DB</td>
+<td>DFP long - 16 digits</td>
+</tr>
+<tr>
+<td>FLOAT-DECIMAL-34</td>
+<td>FLOAT-EXTENDED</td>
+<td>D</td>
+<td>LB</td>
+</tr>
+<tr>
+<td>COMP-3</td>
+<td>S9(31)</td>
+<td>P(3)</td>
+<td>Packed decimal up to 31 digits with option EXTEND</td>
+</tr>
+<tr>
+<td></td>
+<td>S9(31)</td>
+<td>Z(3)</td>
+<td>Zoned Decimal up to 31 digits with option EXTEND (uses PD support)</td>
+</tr>
+<tr>
+<td></td>
+<td>X</td>
+<td>X</td>
+<td>Characters</td>
+</tr>
+<tr>
+<td>FLOAT-SHORT</td>
+<td></td>
+<td>EH,EB,ED</td>
+<td>Use option FLOAT(HFP/BFP/DFP)</td>
+</tr>
+<tr>
+<td>FLOAT-LONG</td>
+<td></td>
+<td>DH,DB,DD</td>
+<td>Use option FLOAT(HFP/BFP/DFP)</td>
+</tr>
+<tr>
+<td>FLOAT-EXTENDED</td>
+<td></td>
+<td>LH,LB,LD</td>
+<td>Use option FLOAT(HFP/BFP/DFP)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="command-line-options-for-zcobol-compiler">Command Line options for zCOBOL Compiler</h2>
+<p>Options are passed to the zCOBOL macro stage via CBL macro call with the
+options defined as positional parameters.</p>
+<p>To turn off an option that is on, prefix the option name with NO on command line
+or in OPT options file.</p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../zCOBOL_User_Guide/" class="md-footer__link md-footer__link--prev" aria-label="Previous: zCOBOL User Guide" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              zCOBOL User Guide
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../zCOBOL_filetypes/" class="md-footer__link md-footer__link--next" aria-label="Next: zCOBOL file types" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              zCOBOL file types
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            &copy; 2022 z390 Assembler LLC. All rights reserved
+          </div>
+        
+        
+          Made with
+          <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+            Material for MkDocs
+          </a>
+        
+        
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-7-gb68df64"}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.b1047164.min.js"></script>
+      
+    
+  </body>
+</html>

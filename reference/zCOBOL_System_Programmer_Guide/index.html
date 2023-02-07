@@ -16,7 +16,7 @@
     
     
       
-        <title>Structured Macro Extensions - z390</title>
+        <title>zCOBOL System Programmer’s Guide - z390</title>
       
     
     
@@ -63,7 +63,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#structured-macro-extensions" class="md-skip">
+        <a href="#macro-syntax-error" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Structured Macro Extensions
+              zCOBOL System Programmer’s Guide
             
           </span>
         </div>
@@ -202,6 +202,29 @@
         
   
   
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../user_guide/z390/commands/" class="md-tabs__link">
+        User guide
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
     
   
 
@@ -210,23 +233,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../commands/" class="md-tabs__link md-tabs__link--active">
-        User guide
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-
-
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../../reference/svc_services/" class="md-tabs__link">
+      <a href="../svc_services/" class="md-tabs__link md-tabs__link--active">
         Reference
       </a>
     </li>
@@ -399,260 +406,15 @@
 
             
           
-        </ul>
-      </nav>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-    
-  
-  
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
-      
-      
-      
-      
-        <label class="md-nav__link" for="__nav_3">
-          User guide
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" aria-label="User guide" data-md-level="1">
-        <label class="md-nav__title" for="__nav_3">
-          <span class="md-nav__icon md-icon"></span>
-          User guide
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
             
               
   
   
   
     <li class="md-nav__item">
-      <a href="../commands/" class="md-nav__link">
-        Commands
+      <a href="../../getting_started/zCOBOL_Overview/" class="md-nav__link">
+        zCOBOL Overview
       </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-    
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Structured Macro Extensions
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        Structured Macro Extensions
-      </a>
-      
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#instructions" class="md-nav__link">
-    Instructions
-  </a>
-  
-    <nav class="md-nav" aria-label="Instructions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#alternate-selection-of-code-blocks" class="md-nav__link">
-    Alternate selection of code blocks
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#repeat-execution-of-code-block" class="md-nav__link">
-    Repeat execution of code block
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#perform-code-block" class="md-nav__link">
-    Perform code block
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#perform-selection-of-code-blocks-based-on-index-from-0-to-255" class="md-nav__link">
-    Perform selection of code blocks based on index from 0 to 255
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#translating-to-standard" class="md-nav__link">
-    Translating to standard
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#regression-tests" class="md-nav__link">
-    Regression tests
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#demo" class="md-nav__link">
-    Demo
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#utilities" class="md-nav__link">
-    Utilities
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    
-      
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3" type="checkbox" id="__nav_3_3" >
-      
-      
-      
-      
-        <label class="md-nav__link" for="__nav_3_3">
-          Options
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" aria-label="Options" data-md-level="2">
-        <label class="md-nav__title" for="__nav_3_3">
-          <span class="md-nav__icon md-icon"></span>
-          Options
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../options/z390_filetypes/" class="md-nav__link">
-        z390 File types
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../options/z390_options/" class="md-nav__link">
-        z390 Options
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../options/zCOBOL_filetypes/" class="md-nav__link">
-        zCOBOL file types
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../options/zCOBOL_options/" class="md-nav__link">
-        zCOBOL options
-      </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
     </li>
   
 
@@ -675,7 +437,316 @@
     <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          User guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="User guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          User guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_1" type="checkbox" id="__nav_3_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_1">
+          Z390
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Z390" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_1">
+          <span class="md-nav__icon md-icon"></span>
+          Z390
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/commands/" class="md-nav__link">
+        Commands
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/structured_macro/" class="md-nav__link">
+        Structured Macro Extensions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/z390_filetypes/" class="md-nav__link">
+        z390 File types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/z390_options/" class="md-nav__link">
+        z390 Options
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2">
+          zCOBOL
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="zCOBOL" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          zCOBOL
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/commands/" class="md-nav__link">
+        Commands
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_User_Guide/" class="md-nav__link">
+        zCOBOL User Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_System_Programmer_Guide/" class="md-nav__link">
+        zCOBOL System Programmer's Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_filetypes/" class="md-nav__link">
+        zCOBOL file types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_options/" class="md-nav__link">
+        zCOBOL options
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL_User_Guide/" class="md-nav__link">
+        zCOBOL User Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_4" type="checkbox" id="__nav_3_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_4">
+          zCICS
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="zCICS" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          zCICS
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCICS/" class="md-nav__link">
+        Manuals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCICS/zcics_app_prog_guide/" class="md-nav__link">
+        zCICS Application Programming Guide
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
       
       
       
@@ -698,7 +769,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/svc_services/" class="md-nav__link">
+      <a href="../svc_services/" class="md-nav__link">
         SVC services
       </a>
     </li>
@@ -712,7 +783,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/program_services/" class="md-nav__link">
+      <a href="../program_services/" class="md-nav__link">
         Program Services
       </a>
     </li>
@@ -726,7 +797,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/storage_services/" class="md-nav__link">
+      <a href="../storage_services/" class="md-nav__link">
         Storage services
       </a>
     </li>
@@ -740,7 +811,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/file_services/" class="md-nav__link">
+      <a href="../file_services/" class="md-nav__link">
         Non-VSAM File Services
       </a>
     </li>
@@ -754,7 +825,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/guam_services/" class="md-nav__link">
+      <a href="../guam_services/" class="md-nav__link">
         GUAM services
       </a>
     </li>
@@ -768,7 +839,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/soa_services/" class="md-nav__link">
+      <a href="../soa_services/" class="md-nav__link">
         SOA services
       </a>
     </li>
@@ -782,7 +853,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/structured_program/" class="md-nav__link">
+      <a href="../structured_program/" class="md-nav__link">
         Structured programming macros
       </a>
     </li>
@@ -796,7 +867,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/vsam_file_services/" class="md-nav__link">
+      <a href="../vsam_file_services/" class="md-nav__link">
         zVSAM services
       </a>
     </li>
@@ -810,7 +881,45 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/zpar/" class="md-nav__link">
+      <a href="../zCOBOL_NIST_COBOL_1985_Test_Results/" class="md-nav__link">
+        zCOBOL NIST COBOL 1985 Test Results
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        zCOBOL System Programmer’s Guide
+      </a>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zpar/" class="md-nav__link">
         zPAR and zPARTRS
       </a>
     </li>
@@ -824,7 +933,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/sort/" class="md-nav__link">
+      <a href="../sort/" class="md-nav__link">
         zSORT
       </a>
     </li>
@@ -838,72 +947,9 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/assist/" class="md-nav__link">
+      <a href="../assist/" class="md-nav__link">
         ASSIST support
       </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    
-      
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_12" type="checkbox" id="__nav_4_12" >
-      
-      
-      
-      
-        <label class="md-nav__link" for="__nav_4_12">
-          zCICS
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" aria-label="zCICS" data-md-level="2">
-        <label class="md-nav__title" for="__nav_4_12">
-          <span class="md-nav__icon md-icon"></span>
-          zCICS
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/zCICS/" class="md-nav__link">
-        Manuals
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/zCICS/zcics_app_prog_guide/" class="md-nav__link">
-        zCICS Application Programming Guide
-      </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
     </li>
   
 
@@ -971,6 +1017,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contributing_zcobol/" class="md-nav__link">
+        Contributing to zCOBOL
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -998,83 +1058,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#instructions" class="md-nav__link">
-    Instructions
-  </a>
-  
-    <nav class="md-nav" aria-label="Instructions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#alternate-selection-of-code-blocks" class="md-nav__link">
-    Alternate selection of code blocks
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#repeat-execution-of-code-block" class="md-nav__link">
-    Repeat execution of code block
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#perform-code-block" class="md-nav__link">
-    Perform code block
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#perform-selection-of-code-blocks-based-on-index-from-0-to-255" class="md-nav__link">
-    Perform selection of code blocks based on index from 0 to 255
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#translating-to-standard" class="md-nav__link">
-    Translating to standard
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#regression-tests" class="md-nav__link">
-    Regression tests
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#demo" class="md-nav__link">
-    Demo
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#utilities" class="md-nav__link">
-    Utilities
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1085,110 +1068,15 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/z390development/z390/edit/main/doc/user_guide/structured_macro.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/z390development/z390/edit/main/doc/reference/zCOBOL_System_Programmer_Guide.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="structured-macro-extensions">Structured Macro Extensions</h1>
-<p>z390 has extended the HLASM macro syntax to add support for structured macro 
-code. This is sometimes referred to as <em>Structured Programming Extensions</em> or 
-SPE.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>z390 structured macro extensions are not supported by IBM HLASM.
-You need to translate the macros from structured to standard first.</p>
-</div>
-<h2 id="instructions">Instructions</h2>
-<h3 id="alternate-selection-of-code-blocks">Alternate selection of code blocks</h3>
-<ul>
-<li>AIF  (expression) - execute the following block of code if expression is true</li>
-<li>AELSEIF (expression) - end prior block and execute following block if 
-  expression is true</li>
-<li>AELSE - end prior block and execute following block if prior AIF and AELSEIF 
-  false</li>
-<li>AEND - end last block for AIF at current level of nesting</li>
-</ul>
-<h3 id="repeat-execution-of-code-block">Repeat execution of code block</h3>
-<ul>
-<li>AWHILE (expression) - repeat following code block while expression is true 
-  (test at beginning)</li>
-<li>AEXIT AWHILE - exit to end of inner most AWHILE (for exceptions within nested AIF)</li>
-<li>AEND - end block of code for AWHILE at current level of nesting</li>
-<li>AUNTIL (expression) - repeat following code block until expression is true (test at end)</li>
-<li>AEXIT AUNTIL - exit to end of inner most AUNTIL (for exceptions within nested AIF)</li>
-<li>AEND - end block of code for AUNTIL at current level of nesting</li>
-</ul>
-<h3 id="perform-code-block">Perform code block</h3>
-<ul>
-<li>ACALL name - call the named code block and return to next instruction</li>
-<li>AENTRY name - define start of performed block of code (skip over if entered 
-  sequentially)</li>
-<li>AEXIT AENTRY - exit from AENTRY block of code (for exceptions within nested AIF)</li>
-<li>AEND - end the current performed code block and exit to next statement after APM</li>
-</ul>
-<h3 id="perform-selection-of-code-blocks-based-on-index-from-0-to-255">Perform selection of code blocks based on index from 0 to 255</h3>
-<ul>
-<li>ACASE (expression) - execute selected block based on value of index expression</li>
-<li>AWHEN values - define end of previous block and start of code block for index values<ul>
-<li>values can be decimal (0-255), character C'?', or hex X'??'</li>
-<li>one or more values may be specified separated by commas</li>
-<li>a range of values may be specified as (value1,value2)</li>
-<li>for example AWHEN (C'0',C'9') defines EBCDIC digits 240-249</li>
-</ul>
-</li>
-<li>AEXIT ACASE - exit to end of current ACASE (for exceptions within nested AIF)</li>
-<li>AELSE - define optional code block if no AWHEN block defined for current index</li>
-<li>
-<p>AEND - end code block for ACASE</p>
-</li>
-<li>
-<p>Additional extension to indent label field by preceding with colon (:)</p>
-</li>
-</ul>
-<h2 id="translating-to-standard">Translating to standard</h2>
-<p>The following items are included for general use:</p>
-<ul>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 2c-1.11 0-2 .89-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6m7 1.5L18.5 9H13V3.5M12 11a3 3 0 0 1 3 3c0 1.88-2.25 2.06-2.25 3.75h-1.5c0-2.44 2.25-2.25 2.25-3.75a1.5 1.5 0 0 0-1.5-1.5 1.5 1.5 0 0 0-1.5 1.5H9a3 3 0 0 1 3-3m-.75 7.5h1.5V20h-1.5v-1.5z"/></svg></span> zstrmac - script to convert macro to standard HLASM format</li>
-<li>bldzstrmacs - script to translate all the SPM's in z390\mac 
-  directory to HLASM compatible format </li>
-<li>rt\test\ZSTRMAC2.ZSM - structured translator which can be translated to standard 
-  HLASM compatible code using itself.</li>
-<li>rt\test\ZSTRMAC1.MLC - bootstrap structured translator which is HLASM compatible.  </li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 2c-1.11 0-2 .89-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6m7 1.5L18.5 9H13V3.5M12 11a3 3 0 0 1 3 3c0 1.88-2.25 2.06-2.25 3.75h-1.5c0-2.44 2.25-2.25 2.25-3.75a1.5 1.5 0 0 0-1.5-1.5 1.5 1.5 0 0 0-1.5 1.5H9a3 3 0 0 1 3-3m-.75 7.5h1.5V20h-1.5v-1.5z"/></svg></span> linklib\zstrmac.txt - the generated HLASM compatible translator.</li>
-</ul>
-<h2 id="regression-tests">Regression tests</h2>
-<p>You can execute the regression tests by using the script <code>runzstrmactests</code>.</p>
-<p>The following regression test programs are included:</p>
-<ul>
-<li>rt\test\ZSTRMAC1.MLC - bootstrap version of translator written in standard HLASM.</li>
-<li>rt\test\ZSTRMAC2.ZSM - structured version of the translator which uses all the structures.</li>
-<li>rt\test\TESTSPE1.ZSM - test program for ZSTRMAC1 with all the basic structures.</li>
-<li>rt\test\TESTSPE2.ZSM - test program for ZSTRMAC2 with all the basic structures in lower case</li>
-<li>rt\test\TESTSPE3.ZSM - test of all 256 ACASE values using all forms of AWHEN operands</li>
-<li>rt\test\TESTSPE4.ZSM - test error messages</li>
-<li>rt\test\TESTSPM1.MLC - test program for structured programming macros</li>
-</ul>
-<h2 id="demo">Demo</h2>
-<p>The following demo programs using the macro extensions are include:</p>
-<ul>
-<li>demo\DEMOM8Q1.MLC - solve 8 queens chess problem suing recursive structured macro</li>
-</ul>
-<h2 id="utilities">Utilities</h2>
-<p>The following z390 utility programs using the macro extensions are included:</p>
-<ul>
-<li>linklib\RTGENDIR.MLC - read file system directory and create list of file names</li>
-<li>linklib\RTGENCMP.MLC - read merged list of files from 2 directories and 
-  generate compare commands</li>
-<li>linklib\RTGENDIF.MLC - read difference files and generate erase commands for 
-  identical files</li>
-</ul>
-<p>The following system macros use the macro extensions:</p>
-<ul>
-<li>EQUREGS.MAC - generate EQU symbols if not already generated for GPR and FPR registers</li>
-<li>ZCLOSE.MAC - close files (called from CLOSE and other user macros in concatenated directories)</li>
-<li>ZOPEN.MAC - open files (called from OPEN and other user macros in concatenated directories)</li>
-</ul>
+                <h1 id="macro-syntax-error"><em>Macro Syntax Error</em></h1>
+<p><em>Line 261 in Markdown file:</em> <strong>Missing end of comment tag</strong> 
+<div class="highlight"><pre><span></span><code><span class="c1">## Trademarks {#Trademarks}</span>
+</code></pre></div></p>
                 
               
               
@@ -1213,7 +1101,7 @@ You need to translate the macros from structured to standard first.</p>
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../commands/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Commands" rel="prev">
+        <a href="../zCOBOL_NIST_COBOL_1985_Test_Results/" class="md-footer__link md-footer__link--prev" aria-label="Previous: zCOBOL NIST COBOL 1985 Test Results" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1222,20 +1110,20 @@ You need to translate the macros from structured to standard first.</p>
               <span class="md-footer__direction">
                 Previous
               </span>
-              Commands
+              zCOBOL NIST COBOL 1985 Test Results
             </div>
           </div>
         </a>
       
       
         
-        <a href="../options/z390_filetypes/" class="md-footer__link md-footer__link--next" aria-label="Next: z390 File types" rel="next">
+        <a href="../zpar/" class="md-footer__link md-footer__link--next" aria-label="Next: zPAR and zPARTRS" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              z390 File types
+              zPAR and zPARTRS
             </div>
           </div>
           <div class="md-footer__button md-icon">
@@ -1270,7 +1158,7 @@ You need to translate the macros from structured to standard first.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-6-g69f0d6b"}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-7-gb68df64"}</script>
     
     
       <script src="../../assets/javascripts/bundle.b1047164.min.js"></script>

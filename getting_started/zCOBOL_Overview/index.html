@@ -16,7 +16,7 @@
     
     
       
-        <title>Structured programming macros - z390</title>
+        <title>zCOBOL Overview - z390</title>
       
     
     
@@ -63,7 +63,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#structured-programming-macros" class="md-skip">
+        <a href="#macro-syntax-error" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Structured programming macros
+              zCOBOL Overview
             
           </span>
         </div>
@@ -186,13 +186,15 @@
         
   
   
+    
+  
 
 
   
   
   
     <li class="md-tabs__item">
-      <a href="../../getting_started/install/" class="md-tabs__link">
+      <a href="../install/" class="md-tabs__link md-tabs__link--active">
         Getting started
       </a>
     </li>
@@ -225,15 +227,13 @@
         
   
   
-    
-  
 
 
   
   
   
     <li class="md-tabs__item">
-      <a href="../svc_services/" class="md-tabs__link md-tabs__link--active">
+      <a href="../../reference/svc_services/" class="md-tabs__link">
         Reference
       </a>
     </li>
@@ -328,12 +328,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
       
       
       
@@ -356,7 +358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting_started/install/" class="md-nav__link">
+      <a href="../install/" class="md-nav__link">
         Installation
       </a>
     </li>
@@ -370,7 +372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting_started/quickstart/" class="md-nav__link">
+      <a href="../quickstart/" class="md-nav__link">
         Quick starts
       </a>
     </li>
@@ -384,7 +386,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting_started/learning/" class="md-nav__link">
+      <a href="../learning/" class="md-nav__link">
         Learning resources
       </a>
     </li>
@@ -398,7 +400,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting_started/macro_index/" class="md-nav__link">
+      <a href="../macro_index/" class="md-nav__link">
         Mainframe OS compatible macros
       </a>
     </li>
@@ -410,11 +412,21 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../../getting_started/zCOBOL_Overview/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         zCOBOL Overview
       </a>
+      
     </li>
   
 
@@ -739,14 +751,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
       
       
       
@@ -769,7 +779,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../svc_services/" class="md-nav__link">
+      <a href="../../reference/svc_services/" class="md-nav__link">
         SVC services
       </a>
     </li>
@@ -783,7 +793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../program_services/" class="md-nav__link">
+      <a href="../../reference/program_services/" class="md-nav__link">
         Program Services
       </a>
     </li>
@@ -797,7 +807,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../storage_services/" class="md-nav__link">
+      <a href="../../reference/storage_services/" class="md-nav__link">
         Storage services
       </a>
     </li>
@@ -811,7 +821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../file_services/" class="md-nav__link">
+      <a href="../../reference/file_services/" class="md-nav__link">
         Non-VSAM File Services
       </a>
     </li>
@@ -825,7 +835,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guam_services/" class="md-nav__link">
+      <a href="../../reference/guam_services/" class="md-nav__link">
         GUAM services
       </a>
     </li>
@@ -839,7 +849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../soa_services/" class="md-nav__link">
+      <a href="../../reference/soa_services/" class="md-nav__link">
         SOA services
       </a>
     </li>
@@ -851,60 +861,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Structured programming macros
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../reference/structured_program/" class="md-nav__link">
         Structured programming macros
       </a>
-      
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#macro-reference" class="md-nav__link">
-    Macro reference
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#hlasm-compatible-versions" class="md-nav__link">
-    HLASM compatible versions
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -916,7 +877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vsam_file_services/" class="md-nav__link">
+      <a href="../../reference/vsam_file_services/" class="md-nav__link">
         zVSAM services
       </a>
     </li>
@@ -930,7 +891,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../zCOBOL_NIST_COBOL_1985_Test_Results/" class="md-nav__link">
+      <a href="../../reference/zCOBOL_NIST_COBOL_1985_Test_Results/" class="md-nav__link">
         zCOBOL NIST COBOL 1985 Test Results
       </a>
     </li>
@@ -944,7 +905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../zCOBOL_System_Programmer_Guide/" class="md-nav__link">
+      <a href="../../reference/zCOBOL_System_Programmer_Guide/" class="md-nav__link">
         zCOBOL System Programmer’s Guide
       </a>
     </li>
@@ -958,7 +919,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../zpar/" class="md-nav__link">
+      <a href="../../reference/zpar/" class="md-nav__link">
         zPAR and zPARTRS
       </a>
     </li>
@@ -972,7 +933,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sort/" class="md-nav__link">
+      <a href="../../reference/sort/" class="md-nav__link">
         zSORT
       </a>
     </li>
@@ -986,7 +947,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../assist/" class="md-nav__link">
+      <a href="../../reference/assist/" class="md-nav__link">
         ASSIST support
       </a>
     </li>
@@ -1097,28 +1058,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#macro-reference" class="md-nav__link">
-    Macro reference
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#hlasm-compatible-versions" class="md-nav__link">
-    HLASM compatible versions
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1129,52 +1068,15 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/z390development/z390/edit/main/doc/reference/structured_program.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/z390development/z390/edit/main/doc/getting_started/zCOBOL_Overview.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="structured-programming-macros">Structured programming macros</h1>
-<p>Structured Programming Macros (SPM) provide a compatible subset of the macros 
-that IBM supplies as part of its licensed HLASM Toolkit product.</p>
-<p>These macros are based on the original 1978 public domain structure programming
-macros distributed as SHARE CBT tape #177. They have been enhanced to use 
-<a href="../../user_guide/z390/structured_macro/">structured macro extensions</a>.</p>
-<h2 id="macro-reference">Macro reference</h2>
-<ul>
-<li>IF, ELSEIF, ELSE, ENDIF - alternate selection</li>
-<li>DO, ENDDO - iteration</li>
-<li>SELECT, WHEN, OTHRWISE, ENDSEL - selection by value using compares</li>
-<li>CASENTRY, CASE, ENDCASE - selection by value using branch table</li>
-<li>
-<p>PM, PENTRY, PEXIT - perform block of code and return to next instruction</p>
-</li>
-<li>
-<p>ASMMSP.CPY  - copybook for compatibility with HLASM Toolkit programs that 
-  require this copybook</p>
-</li>
-<li>ZSTRGBL.CPY - copybook included in each structured programming macros (SPM) with 
-  shared global variables</li>
-<li>ZSTREQU - macro called from ZSTRGBL to define shared EQU's for condition code 
-  operands</li>
-</ul>
-<h2 id="hlasm-compatible-versions">HLASM compatible versions</h2>
-<p>Also included are translated versions of all the structured SPM's in the 
-z390\mac\spm directory. The translated version are for use on systems with 
-HLASM or other mainframe assemblers which do not yet support the SPE's.</p>
-<p>The following regression test programs are included:</p>
-<ul>
-<li>rt\test\TESTSPM1.MLC - test IF, DO, SELECT, and CASENTRY structures</li>
-</ul>
-<p>The following z390 utilities are written in structured form using these 
-structured macro:</p>
-<ul>
-<li>linklib\REPRO.MLC - VSAM load and unload utility</li>
-<li>linklib\SUPERZAP.MLC - dump and path file utility</li>
-<li>linklib\FPCONMFC.MLC - interface between z390 BFP/DFP/HFP regression tests and 
-  the mainframe compatible  external format conversion routine 
-  linklib\FPCONVRT.MAC.</li>
-</ul>
+                <h1 id="macro-syntax-error"><em>Macro Syntax Error</em></h1>
+<p><em>Line 92 in Markdown file:</em> <strong>Missing end of comment tag</strong> 
+<div class="highlight"><pre><span></span><code><span class="c1">## zCOBOL Compiler Commands {#Commands}</span>
+</code></pre></div></p>
                 
               
               
@@ -1199,7 +1101,7 @@ structured macro:</p>
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../soa_services/" class="md-footer__link md-footer__link--prev" aria-label="Previous: SOA services" rel="prev">
+        <a href="../macro_index/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Mainframe OS compatible macros" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1208,20 +1110,20 @@ structured macro:</p>
               <span class="md-footer__direction">
                 Previous
               </span>
-              SOA services
+              Mainframe OS compatible macros
             </div>
           </div>
         </a>
       
       
         
-        <a href="../vsam_file_services/" class="md-footer__link md-footer__link--next" aria-label="Next: zVSAM services" rel="next">
+        <a href="../../user_guide/z390/commands/" class="md-footer__link md-footer__link--next" aria-label="Next: Commands" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              zVSAM services
+              Commands
             </div>
           </div>
           <div class="md-footer__button md-icon">
