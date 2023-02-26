@@ -1,0 +1,35 @@
+@echo off
+REM ESV1TEST TEST ESDS VAR LENGTH VSAM FILE SEQ AND RANDOM RBA/XRBA
+rem %0 in z390\vsam1\test\bat; switch to z390
+pushd %~dps0..\..\..
+
+SET VSAMPATH=vsam1\test
+SET ZVSAM=ZVSAM(1)
+SET TRACE=%
+IF /I "%1" == "traceall" (
+    SET TRACE=TRACEALL
+    shift /1
+)
+
+SET RC=0
+
+REM RUN ESV1TEST TO CREATE AND TEST ESDS WITH 3 80 BYTE RCDS
+SET QFILE=%VSAMPATH%\ESV1.TQ1
+SET VFILE=%VSAMPATH%\TESTCAT.ESV1
+if exist %VSAMPATH%\ESV1.TQ1 erase %VSAMPATH%\ESV1.TQ1
+if exist %VSAMPATH%\ESV1.VES erase %VSAMPATH%\ESV1.VES
+REM file does not exist if exist %VSAMPATH%\ESV1.VX0 erase %VSAMPATH%\ESV1.VX0
+CALL bat\ASMLG %VSAMPATH%\ESV1TEST %1 %2 %3 %4 %5 %ZVSAM% %TRACE%
+SET RC=%ERRORLEVEL%
+IF %RC% NEQ 0 (
+    SET ERRMSG=ERROR IN ESV1TEST
+	GOTO errmsg
+)
+
+:return
+popd
+exit /b %RC%
+:errmsg
+echo ERROR: %ERRMSG%
+SET RC=8
+GOTO return

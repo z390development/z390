@@ -1,0 +1,31 @@
+@echo off
+REM ESF1ERR1 TEST ESDS FIXED LENGTH POINT ERROR WITH BAD XRBA 
+rem %0 in z390\vsam1\test\bat; switch to z390
+pushd %~dps0..\..\..
+
+SET VSAMPATH=vsam1\test
+SET ZVSAM=ZVSAM(1)
+SET TRACE=%
+IF /I "%1" == "traceall" (
+    SET TRACE=TRACEALL
+    shift /1
+)
+
+SET RC=0
+
+REM RUN ESF1ERR1 TO TEST ERROR ON BAD XRBA POINT               
+SET VFILE=%VSAMPATH%\TESTCAT.ESF1
+CALL bat\ASMLG %VSAMPATH%\ESF1ERR1 %1 %2 %3 %4 %5 %ZVSAM% %TRACE%
+SET RC=%ERRORLEVEL%
+IF %RC% NEQ 0 (
+    SET ERRMSG=ERROR IN ESF1ERR1
+	GOTO errmsg
+)
+
+:return
+popd
+exit /b %RC%
+:errmsg
+echo ERROR: %ERRMSG%
+SET RC=8
+GOTO return

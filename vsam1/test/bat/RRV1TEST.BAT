@@ -1,0 +1,33 @@
+@echo off
+REM ESF1TEST TEST RRDS VARIABLE LENGTH VSAM FILE
+rem %0 in z390\vsam1\test\bat; switch to z390
+pushd %~dps0..\..\..
+
+SET VSAMPATH=vsam1\test
+SET ZVSAM=ZVSAM(1)
+SET TRACE=%
+IF /I "%1" == "traceall" (
+    SET TRACE=TRACEALL
+    shift /1
+)
+
+SET RC=0
+ 
+REM RUN RRF1TEST TO CREATE AND TEST RRDS WITH 3 VAR RCDS
+SET VFILE=%VSAMPATH%\TESTCAT.RRV1
+if exist %VSAMPATH%\RRV1.VES erase %VSAMPATH%\RRV1.VES
+if exist %VSAMPATH%\RRV1.VX0 erase %VSAMPATH%\RRV1.VX0
+CALL bat\ASMLG %VSAMPATH%\RRV1TEST %1 %2 %3 %4 %5 %ZVSAM% %TRACE%
+SET RC=%ERRORLEVEL%
+IF %RC% NEQ 0 (
+    SET ERRMSG=ERROR IN RRV1TEST
+	GOTO errmsg
+)
+
+:return
+popd
+exit /b %RC%
+:errmsg
+echo ERROR: %ERRMSG%
+SET RC=8
+GOTO return
