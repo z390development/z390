@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# testcat: build TESTCAT.390 with all VSAM catalog entries for vsam1/test pgms
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/test/bash
+cd ../../..          # up to z390
+
+vsampath=vsam1/test
+zvsam="zvsam(1)"
+
+########################################
+# code
+########################################
+
+rc=0
+
+bash/asml ${vsampath}/TESTCAT $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "unable to build TESTCAT.390"; fi
+
+exit $rc

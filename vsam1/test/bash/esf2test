@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# esf2test: read ESDS fixed length VSAM file SEQ and random RBA/XRBA
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/test/bash
+cd ../../..          # up to z390
+
+vsampath=vsam1/test
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+# run ESF2TEST to create and test ESDS with 3 80 byte records
+
+export VFILE=${vsampath}/TESTCAT.ESF2
+rm -f ${vsampath}/ESF2.VES
+bash/asmlg ${vsampath}/ESF2TEST $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in ESF2TEST"; fi
+
+exit $rc
