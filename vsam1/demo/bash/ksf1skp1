@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# ksf1skp1: read KSDS KSF1NAME starting at key >= "MQ" (skip MM, get MT next)
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)    # set to directory of script - z390/vsam1/demo/bash
+cd ../../..         # up to z390
+
+vsampath=vsam1/demo
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+# run KSF1SKP1 to read KSDS KSF1NAME starting at key >= "MQ"
+
+export VFILE=${vsampath}/DEMOCAT.KSF1NAME
+bash/asmlg ${vsampath}/KSF1SKP1 $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in KSF1SKP1"; fi
+
+exit $rc

@@ -1,0 +1,182 @@
+#!/bin/bash
+
+# ksf1rpo2: load KSDS KSF1NAME cluster and alternate indexes, unload, and verify
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)    # set to directory of script - z390/vsam1/demo/bash
+cd ../../..         # up to z390
+
+pgmname=ksf1rpo2
+vsampath=vsam1/demo
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+# load KSDS KSF1NAME
+
+export INFILE=${vsampath}/KSF1NAME.TF1[RECFM=FT]
+export OUTFILE=${vsampath}/DEMOCAT.KSF1NAME
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in load of KSDS KSF1NAME"; fi
+
+# build AIX KSF1ADDR
+
+export INFILE=${vsampath}/DEMOCAT.KSF1NAME
+export OUTFILE=${vsampath}/DEMOCAT.KSF1ADDR
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in buildaix KSF1ADDR"; fi
+
+# build AIX KSF1CITY
+
+export INFILE=${vsampath}/DEMOCAT.KSF1NAME
+export OUTFILE=${vsampath}/DEMOCAT.KSF1CITY
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in buildaix KSF1CITY"; fi
+
+# build AIX KSF1STAT
+
+export INFILE=${vsampath}/DEMOCAT.KSF1NAME
+export OUTFILE=${vsampath}/DEMOCAT.KSF1STAT
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in buildaix KSF1STAT"; fi
+
+# build AIX KSF1ZIP
+
+export INFILE=${vsampath}/DEMOCAT.KSF1NAME
+export OUTFILE=${vsampath}/DEMOCAT.KSF1ZIP
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in buildaix KSF1ZIP"; fi
+
+################################################################################
+
+# unload KSDS KSF1NAME
+
+rm -f ${vsampath}/KSF1NAME.TF2
+export INFILE=${vsampath}/DEMOCAT.KSF1NAME
+export OUTFILE=${vsampath}/KSF1NAME.TF2[RECFM=FT]
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in unload of KSDS KSF1NAME"; fi
+
+# compare input and output QSAM files
+
+diff ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "KSF1NAME: KSF1NAME.TF1 not equal to KSF1NAME.TF2"; fi
+
+################################################################################
+
+# unload NAMELIST
+
+# REPRO abends with S013. Problem with zVSAM code.
+# See additional comments in vsam1/bat/KSF1RPO2.BAT.
+
+#rm -f ${vsampath}/KSF1NAME.TF2
+#export INFILE=${vsampath}/DEMOCAT.NAMELIST
+#export OUTFILE=${vsampath}/KSF1NAME.TF2[RECFM=FT]
+#bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+#rc=$?
+#if [ $rc -ne 0 ]; then errmsg "error in unload of NAMELIST"; fi
+
+# compare input and output QSAM files
+
+#diff ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
+#rc=$?
+#if [ $rc -ne 0 ]; then errmsg "NAMELIST: KSF1NAME.TF1 not equal to KSF1NAME.TF2"; fi
+
+################################################################################
+
+# unload ADDRLIST
+
+rm -f ${vsampath}/KSF1ADDR.TF2
+export INFILE=${vsampath}/DEMOCAT.ADDRLIST
+export OUTFILE=${vsampath}/KSF1ADDR.TF2[RECFM=FT]
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in unload of ADDRLIST"; fi
+
+# compare input and output QSAM files
+
+diff ${vsampath}/KSF1ADDR.TF1 ${vsampath}/KSF1ADDR.TF2 > ${vsampath}/${pgmname}.DIF
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "KSF1ADDR.TF1 not equal to KSF1ADDR.TF2"; fi
+
+################################################################################
+
+# unload CITYLIST
+
+rm -f ${vsampath}/KSF1CITY.TF2
+export INFILE=${vsampath}/DEMOCAT.CITYLIST
+export OUTFILE=${vsampath}/KSF1CITY.TF2[RECFM=FT]
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in unload of CITYLIST"; fi
+
+# compare input and output QSAM files
+
+diff ${vsampath}/KSF1CITY.TF1 ${vsampath}/KSF1CITY.TF2 > ${vsampath}/${pgmname}.DIF
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "KSF1CITY.TF1 not equal to KSF1CITY.TF2"; fi
+
+################################################################################
+
+# unload STATLIST
+
+rm -f ${vsampath}/KSF1STAT.TF2
+export INFILE=${vsampath}/DEMOCAT.STATLIST
+export OUTFILE=${vsampath}/KSF1STAT.TF2[RECFM=FT]
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in unload of STATLIST"; fi
+
+# compare input and output QSAM files
+
+diff ${vsampath}/KSF1STAT.TF1 ${vsampath}/KSF1STAT.TF2 > ${vsampath}/${pgmname}.DIF
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "KSF1STAT.TF1 not equal to KSF1STAT.TF2"; fi
+
+################################################################################
+
+# unload ZIPLIST
+
+rm -f ${vsampath}/KSF1ZIP.TF2
+export INFILE=${vsampath}/DEMOCAT.ZIPLIST
+export OUTFILE=${vsampath}/KSF1ZIP.TF2[RECFM=FT]
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in unload of ZIPLIST"; fi
+
+# compare input and output QSAM files
+
+diff ${vsampath}/KSF1ZIP.TF1 ${vsampath}/KSF1ZIP.TF2 > ${vsampath}/${pgmname}.DIF
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "KSF1ZIP.TF1 not equal to KSF1ZIP.TF2"; fi
+
+################################################################################
+
+# all done
+
+exit $rc

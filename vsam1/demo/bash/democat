@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# democat: build DEMOCAT.390 with all VSAM catalog entries for vsam1/demo pgms
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/demo/bash
+cd ../../..          # up to z390
+
+vsampath=vsam1/demo
+zvsam="zvsam(1)"
+
+########################################
+# code
+########################################
+
+rc=0
+
+bash/asml ${vsampath}/DEMOCAT $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "error: unable to build DEMOCAT.390 VSAM catalog"    
+fi 
+exit $rc
