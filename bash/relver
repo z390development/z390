@@ -9,6 +9,13 @@ cd ..
 
 VER="Uncontrolled";
 
+get_tags() {
+    if ! git config remote.upstream.url > /dev/null; then
+        git remote add upstream https://github.com/z390development/z390.git
+    fi
+    git fetch -p upstream
+}
+
 # is git installed
 $(git --version > /dev/null 2>&1)
 GIT_INSTALLED=$?
@@ -21,6 +28,12 @@ else
     if [ ${GIT_REPO} != 0 ]; then
         echo >&2 "Not a git repo.";
     else
+        $(git describe > /dev/null 2>&1)
+        GIT_DESCRIBE=$?
+        if [ ${GIT_DESCRIBE} != 0 ]; then
+            echo >&2 "Unable to git describe - fetching tags from upstream"
+            get_tags
+        fi
         VER=$(git describe);
     fi    
 fi
