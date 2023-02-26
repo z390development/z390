@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# zvsam19c: assemble, link zVSAM V2 OPEN module
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam2/bash
+cd ../..             # up to z390
+
+vsampath=vsam2
+zvsam="zvsam(2)"
+
+########################################
+# code
+########################################
+
+rc=0
+
+# run build ZVSAM19C.390
+
+bash/asml ${vsampath}/mlc/ZVSAM19C $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then echo "error in zvsam19c"; fi
+
+exit $rc

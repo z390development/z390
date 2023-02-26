@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# runtests: assemble, link  programs and files for zVSAM V2
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam2/bash
+cd ../..             # up to z390
+
+vsampath=vsam2
+zvsam="zvsam(2)"
+
+########################################
+# code
+########################################
+
+rc=0
+
+# assemble and link a VSAM catalog for vsam2 test programs
+${vsampath}/bash/z390cat2 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "z390cat2 assembly/link error"; fi
+
+# assemble and link zVSAM OPEN module
+${vsampath}/bash/zvsam19c $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "zvsam19c assembly/link error"; fi
+
+# GENCB test
+${vsampath}/bash/testgncb $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "testgncb assembly/link error"; fi
+
+# MODCB test
+${vsampath}/bash/testmdcb $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "testmdcb assembly/link error"; fi
+
+# SHOWCB test
+${vsampath}/bash/testshcb $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "testshcb assembly/link error"; fi
+
+# TESTCB test
+${vsampath}/bash/testtscb $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "testtscb assembly/link error"; fi
+
+exit $rc
