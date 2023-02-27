@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# esv5rpo1: load/unload ESV5 using default EV, LLLL record format
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/test/bash
+cd ../../..          # up to z390
+
+pgmname=esv5rpo1
+vsampath=vsam1/test
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+# load ESV5.VES from ESV5.TF1
+
+export INFILE=${vsampath}/ESV5.TF1
+export OUTFILE=${vsampath}/TESTCAT.ESV5
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in REPRO load of ESV5"; fi
+
+# save REPRO load stats
+
+cp linklib/REPRO.LOG ${vsampath}/${pgmname}.RLG
+if [ "$trace" = "traceall" ]; then cp linklib/REPRO.TRE ${vsampath}/${pgmname}.RLE; fi
+
+# unload ESV5.VES to ESV5.TF2
+
+rm -f ${vsampath}/ESV5.TF2
+export INFILE=${vsampath}/TESTCAT.ESV5
+export OUTFILE=${vsampath}/ESV5.TF2
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in REPRO unload of ESV5"; fi
+
+# save REPRO unload stats
+
+cp linklib/REPRO.LOG ${vsampath}/${pgmname}.RUG
+if [ "$trace" = "traceall" ]; then cp linklib/REPRO.TRE ${vsampath}/${pgmname}.RUE; fi
+
+# compare input and output QSAM files
+
+diff ${vsampath}/ESV5.TF1 ${vsampath}/ESV5.TF2 > ${vsampath}/${pgmname}.DIF
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ESV5.TF1 not equal to ESV5.TF2"; fi
+
+exit $rc

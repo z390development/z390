@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# ksf2rest: restore KSF2NAME for debugging KSF2TEST via Eclipse
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/test/bash
+cd ../../..          # up to z390
+
+vsampath=vsam1/test
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+# load KSDS KSF2NAME
+
+export INFILE=${vsampath}/KSF1NAME.TF1[RECFM=FT]
+export OUTFILE=${vsampath}/TESTCAT.KSF2NAME
+rm -f ${vsampath}/KSF2NAME.VX0
+rm -f ${vsampath}/KSF2NAME.VES
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in load of KSDS KSF2NAME"; fi
+exit $rc

@@ -1,0 +1,227 @@
+#!/bin/bash
+
+# runtests: assemble, link and execute VSAM test pgms
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/test/bash
+cd ../../..          # up to z390
+
+vsampath=vsam1/test
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+########################################
+# build TESTCAT
+########################################
+
+${vsampath}/bash/testcat $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "testcat unable to build DEMOCAT.390"; fi
+
+########################################
+# ESFx tests
+########################################
+
+${vsampath}/bash/esf1rpo1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf1rpo1 failed"; fi
+
+${vsampath}/bash/esf1rpq1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf1rpq1 failed"; fi
+
+${vsampath}/bash/esf1err1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf1err1 failed"; fi
+
+${vsampath}/bash/esf1skp1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf1skp1 failed"; fi
+
+${vsampath}/bash/esf1test $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf1test failed"; fi
+
+${vsampath}/bash/esf2test $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf2test failed"; fi
+
+${vsampath}/bash/esf3gen1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf3gen1 failed"; fi
+
+${vsampath}/bash/esf3test $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf3test failed"; fi
+
+${vsampath}/bash/esf4rpo1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf4rpo1 failed"; fi
+
+${vsampath}/bash/esf4rpq1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf4rpq1 failed"; fi
+
+########################################
+# ESVx tests
+########################################
+
+${vsampath}/bash/esv1rpo1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esv1rpo1 failed"; fi
+
+${vsampath}/bash/esv1rpq1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esv1rpq1 failed"; fi
+
+${vsampath}/bash/esv1skp1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esv1skp1 failed"; fi
+
+${vsampath}/bash/esv1test $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esv1test failed"; fi
+
+${vsampath}/bash/esv2test $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esv2test failed"; fi
+
+${vsampath}/bash/esv3test $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esv3test failed"; fi
+
+${vsampath}/bash/esv4test $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esv4test failed"; fi
+
+${vsampath}/bash/esv5rpo1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esv5rpo1 failed"; fi
+
+${vsampath}/bash/esv5rpq1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esv5rpq1 failed"; fi
+
+########################################
+# KSF1x tests
+########################################
+
+${vsampath}/bash/ksf1rpo1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf1rpo1 failed"; fi
+
+${vsampath}/bash/ksf1test $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf1test failed"; fi
+
+${vsampath}/bash/ksf1aixa $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf1aixa failed"; fi
+
+${vsampath}/bash/ksf1aixc $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf1aixc failed"; fi
+
+${vsampath}/bash/ksf1aixs $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf1aixs failed"; fi
+
+${vsampath}/bash/ksf1aixz $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf1aixz failed"; fi
+
+########################################
+# KSF2x tests for DSH
+########################################
+
+${vsampath}/bash/ksf2rest $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf2rest failed"; fi
+
+${vsampath}/bash/ksf2tst1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf2tst1 failed"; fi
+
+${vsampath}/bash/ksf2tst2 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf2tst2 failed"; fi
+
+${vsampath}/bash/ksf2tst3 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf2tst3 failed"; fi
+
+${vsampath}/bash/ksf2tst4 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf2tst4 failed"; fi
+
+
+########################################
+# RRFx tests
+########################################
+
+${vsampath}/bash/rrf1rpo1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrf1rpo1 failed"; fi
+
+${vsampath}/bash/rrf1skp1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrf1skp1 failed"; fi
+
+${vsampath}/bash/rrf1test $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrf1test failed"; fi
+
+${vsampath}/bash/rrf2rpo1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrf2rpo1 failed"; fi
+
+${vsampath}/bash/rrf2rpq1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrf2rpq1 failed"; fi
+
+########################################
+# RRVx tests
+########################################
+
+${vsampath}/bash/rrv1rpo1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrv1rpo1 failed"; fi
+
+${vsampath}/bash/rrv1rpq1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrv1rpq1 failed"; fi
+
+${vsampath}/bash/rrf1test $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrv1test failed"; fi
+
+${vsampath}/bash/rrf1skp1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrv1skp1 failed"; fi
+
+########################################
+# done
+########################################
+
+echo "All tests ran successfully"
+
+exit $rc

@@ -62,7 +62,6 @@
                &RLSWAIT=,         EXLST NOT SUPPORTED                  X
                &MF=I
 .*
-&SYSZVSAM SETA 1
          AIF   (&SYSZVSAM EQ 0)
          MNOTE 15,'GENCB VSAM MACROS ARE NOT PERMITTED IN THIS PROGRAM'
          MEXIT

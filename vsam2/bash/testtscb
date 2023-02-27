@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# testtscb: assemble, link module using TESTCB macro
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam2/bash
+cd ../..             # up to z390
+
+vsampath=vsam2
+zvsam="zvsam(2)"
+
+########################################
+# code
+########################################
+
+rc=0
+
+# run build TESTTSCB.390
+
+bash/asml ${vsampath}/mlc/TESTTSCB $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then echo "error in testtscb"; fi
+
+exit $rc

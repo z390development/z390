@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# rundemos: assemble, link and execute VSAM demo pgms
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/demo/bash
+cd ../../..          # up to z390
+
+vsampath=vsam1/demo
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+${vsampath}/bash/democat $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "democat unable to build DEMOCAT.390"; fi
+
+${vsampath}/bash/esf1demo $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esf1demo failed"; fi
+
+${vsampath}/bash/esv1demo $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "esv1demo failed"; fi
+
+${vsampath}/bash/rrf1demo $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrf1demo failed"; fi
+
+${vsampath}/bash/rrv1demo $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "rrv1demo failed"; fi
+
+${vsampath}/bash/ksf1rpo1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf1rpo1 failed"; fi
+
+${vsampath}/bash/ksf1demo $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf1demo failed"; fi
+
+${vsampath}/bash/ksf1skp1 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf1skp1 failed"; fi
+
+${vsampath}/bash/ksf1rpo2 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ksf1rpo2 failed"; fi
+
+echo "All demos ran successfully"
+
+exit $rc

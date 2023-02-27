@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# rrf1demo: write and read RRDS var length records by relative record number
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)    # set to directory of script - z390/vsam1/demo/bash
+cd ../../..         # up to z390
+
+vsampath=vsam1/demo
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+# run RRF1DEMO to write and read RRDS by relative record number
+
+export VFILE=${vsampath}/DEMOCAT.RRF1
+bash/asmlg ${vsampath}/RRF1DEMO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in RRF1DEMO"; fi
+
+exit $rc

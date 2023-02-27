@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# esv1skp1: read ESDS variable length VSAM file SKP SEQ access using GENCB
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/test/bash
+cd ../../..          # up to z390
+
+vsampath=vsam1/test
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+# run ESV1SKP1 to create and test ESDS with 3 80 byte records
+
+export VFILE=${vsampath}/TESTCAT.ESV1
+bash/asmlg ${vsampath}/ESV1SKP1 $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in ESV1SKP1"; fi
+
+exit $rc

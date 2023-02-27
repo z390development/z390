@@ -24,7 +24,7 @@
 * 09/26/07 RPI 702 FOR SEQ, SKIP NULL RCDS AND RETURN ARG=REC#        
 * 10/24/07 RPI 724 CHANGE FOR RRN STARTING AT 1 AND 1,3,5 RECORDS     
 *********************************************************************
-ESV1SKP1 RT1   MAIN 
+RRV1SKP1 RT1   MAIN 
 REC#     DC    XL4'00'
          LTORG
          EQUREGS

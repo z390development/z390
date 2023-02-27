@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# ksf2tst2: insert DSH1,DSH2,DSH3 and retrieve by key
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/test/bash
+cd ../../..          # up to z390
+
+vsampath=vsam1/test
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+# rebuild KSDS KSF2NAME
+
+export INFILE=${vsampath}/KSF1NAME.TF1[RECFM=FT]
+export OUTFILE=${vsampath}/TESTCAT.KSF2NAME
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in load of KSDS KSF2NAME"; fi
+
+# run KSF2TST2 to insert DSH1,DSH2,DSH3 by key and display records
+
+export VFILE=${vsampath}/TESTCAT.KSF2NAME
+bash/asmlg ${vsampath}/KSF2TST2 $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in KSF2TST2 insert 3 and get 3 by key"; fi
+
+exit $rc
