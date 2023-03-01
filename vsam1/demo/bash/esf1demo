@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# esf1demo: build VSAM ESDS cluster VCDT ESF1.390 and run ESF1SP, ESF1SG, diff
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/demo/bash
+cd ../../..          # up to z390
+
+pgmname=esf1demo
+vsampath=vsam1/demo
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+# run ESF1SP seq put to build ESF1.VES
+
+export QFILE=${vsampath}/ESF1.TF1
+export VFILE=${vsampath}/DEMOCAT.ESF1
+rm -f ${vsampath}/ESF1.VES
+bash/asmlg ${vsampath}/ESF1SP $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in ESF1SP"; fi
+
+# run ESF1SG seq get from ESF1.VES to ESF1.TF2
+
+rm -r ${vsampath}/ESF1.TF2
+export QFILE=${vsampath}/ESF1.TF2
+export VFILE=${vsampath}/DEMOCAT.ESF1
+bash/asmlg ${vsampath}/ESF1SG $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in ESF1SG"; fi
+
+# compare input and output QSAM files
+
+diff ${vsampath}/ESF1.TF1 ${vsampath}/ESF1.TF2 > ${vsampath}/${pgmname}.DIF
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "ESF1.TF1 not equal to ESF1.TF2"; fi
+
+exit $rc

@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# ksf1aixz: create KSF1ZIP alternate index for KSDS KSF1NAME
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/test/bash
+cd ../../..          # up to z390
+
+vsampath=vsam1/test
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+# build AIX KSF1STAT
+
+export INFILE=${vsampath}/TESTCAT.KSF1NAME
+export OUTFILE=${vsampath}/TESTCAT.KSF1ZIP
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in buildaix KSF1ZIP"; fi
+
+# read KSDS ADDRLIST PATH and compare records
+
+export QFILE=${vsampath}/KSF1ZIP.TF1
+export VFILE=${vsampath}/TESTCAT.ZIPLIST
+bash/asmlg ${vsampath}/KSF1COMP $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in read ZIPLIST PATH recs by key"; fi
+
+exit $rc

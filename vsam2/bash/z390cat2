@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# z390cat2: assemble, link a zVSAM V2 catalog for vsam2 test pgms
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam2/bash
+cd ../..             # up to z390
+
+vsampath=vsam2
+zvsam="zvsam(2)"
+
+########################################
+# code
+########################################
+
+rc=0
+
+# run build Z390CAT2.390
+
+bash/asml ${vsampath}/mlc/Z390CAT2 $1 $2 $3 $4 $5 $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then echo "error in z390cat2"; fi
+
+exit $rc

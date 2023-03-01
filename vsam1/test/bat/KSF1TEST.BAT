@@ -1,0 +1,30 @@
+@echo off
+REM READ KSDS KSF1NAME CLUSTER BY KEY AND DISPLAY RECORDS
+rem %0 in z390\vsam1\test\bat; switch to z390
+pushd %~dps0..\..\..
+
+SET VSAMPATH=vsam1\test
+SET ZVSAM=ZVSAM(1)
+SET TRACE=%
+IF /I "%1" == "traceall" (
+    SET TRACE=TRACEALL
+    shift /1
+)
+
+SET RC=0
+
+SET VFILE=%VSAMPATH%\TESTCAT.KSF1NAME
+CALL bat\ASMLG %VSAMPATH%\KSF1TEST %1 %2 %3 %4 %5 %ZVSAM% %TRACE%
+SET RC=%ERRORLEVEL%
+IF %RC% NEQ 0 (
+    SET ERRMSG=ERROR IN READ KSF1NAME RECS BY KEY
+	GOTO errmsg
+)
+
+:return
+popd
+exit /b %RC%
+:errmsg
+echo ERROR: %ERRMSG%
+SET RC=8
+GOTO return

@@ -1,0 +1,32 @@
+@echo off
+REM ESV4TEST TEST ESDS VAR LEN CREATE AND READ BACKWARDS 3 RCDS
+rem %0 in z390\vsam1\test\bat; switch to z390
+pushd %~dps0..\..\..
+
+SET VSAMPATH=vsam1\test
+SET ZVSAM=ZVSAM(1)
+SET TRACE=%
+IF /I "%1" == "traceall" (
+    SET TRACE=TRACEALL
+    shift /1
+)
+
+SET RC=0
+
+REM RUN ESV4TEST TO CREATE AND TEST ESDS WITH 3 80 BYTE RCDS
+SET VFILE=%VSAMPATH%\TESTCAT.ESV4
+if exist %VSAMPATH%\ESV4.VES erase %VSAMPATH%\ESV4.VES
+CALL bat\ASMLG %VSAMPATH%\ESV4TEST %1 %2 %3 %4 %5 %ZVSAM% %TRACE%
+SET RC=%ERRORLEVEL%
+IF %RC% NEQ 0 (
+    SET ERRMSG=ERROR IN ESV4TEST
+	GOTO errmsg
+)
+
+:return
+popd
+exit /b %RC%
+:errmsg
+echo ERROR: %ERRMSG%
+SET RC=8
+GOTO return

@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# ksf2tst3: retrieve inserted DSH1,DSH2,DSH3 records by key and seq fwd and bwd
+
+########################################
+# print error message and exit
+########################################
+
+function errmsg {
+    echo ERROR: $1\; exiting
+    exit 8
+}
+
+########################################
+# setup
+########################################
+
+cd $(dirname $0)     # set to directory of script - z390/vsam1/test/bash
+cd ../../..          # up to z390
+
+vsampath=vsam1/test
+zvsam="zvsam(1)"
+trace=""
+if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+# run KSF2TST3 to retrieve DSH1,DSH2,DSH3 records by key, seq fwd and bwd
+
+export VFILE=${vsampath}/TESTCAT.KSF2NAME
+bash/asmlg ${vsampath}/KSF2TST3 $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in KSF2TST3 insert and get by key"; fi
+
+exit $rc
