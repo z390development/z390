@@ -3,8 +3,9 @@
 # zopcheck: regression test z390 instructions
 
 set -e              # exit on all errors
-cd $(dirname $0)    # set to directory of script
-cd ..
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
 
 export SNAPOUT=zopcheck/SNAPOUT.TXT
 
@@ -12,7 +13,8 @@ sysmac='sysmac(mac)'
 syscpy='syscpy(zopcheck+mac)'
 optable='optable(z390)'
 
-bash/asmlg zopcheck/ZOPCHECK trace $sysmac $syscpy $optable
+bash/asmlg zopcheck/ZOPCHECK trace bal $sysmac $syscpy $optable $1 $2 $3
 
-# done with tests
+# if we get here, there were no errors
 echo "Verify zopcheck ran without errors"
+exit 0

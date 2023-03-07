@@ -3,8 +3,10 @@
 # runzpar: run ZPAR asm and cbl demos
 #
 set -e              # exit on all errors
-cd $(dirname $0)    # set to directory of script
-cd ..
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
 
 bash/asmlg demo/HELLO trace
 
@@ -17,4 +19,6 @@ sysparm="SYSPARM(zcobol/demo/HELLO)"
 bash/mac zpar/ZPARTRS $sysparm
 
 # done with tests
+# if we get here, there were no errors
 echo "See generated TRS files to verify ZPAR demos ok"
+exit 0

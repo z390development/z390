@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# runsort: 
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+# rebuild sort/SORT, sort/TESTSRT[1-4]
+bash/asml sort/SORT $1 $2 $3 $4 $5
+bash/asml sort/TESTSRT1 $1 $2 $3 $4 $5
+bash/asml sort/TESTSRT2 $1 $2 $3 $4 $5
+bash/asml sort/TESTSRT3 $1 $2 $3 $4 $5
+bash/asml sort/TESTSRT4 $1 $2 $3 $4 $5
+
+# Test 1: TESTSORT = sort ASCII 21 record simple sort
+export SORTIN=sort/TESTSORT.IN[RECFM=FT,LRECL=80]
+export SORTOUT=sort/TESTSORT.OUT[RECFM=FT]
+export SYSIN=sort/TESTSORT.INI
+if [ -f sort/TESTSORT.OUT ]; then rm sort/TESTSORT.OUT; fi
+bash/exec sort/SORT STATS $1 $2 $3 $4 $5
+rc=$?
+if [ "$rc" -ne "0" ]; then
+    echo "runsort ERROR: SORT failure in sort test 1"
+fi
+
+cp sort/SORT.STA sort/SORT1.STA
+
+# Test 2: TESTSRT1/2  Test all key types with 21 20 byte records
+#                     Generate data to sort
+export SYSUT2=sort/TESTSRT1.IN
+bash/exec sort/TESTSRT1 $1 $2 $3 $4 $5
+rc=$?
+if [ "$rc" -ne "0" ]; then
+    echo "runsort ERROR: TESTSRT1 failure generating data in sort test 2"
+fi
+
+# Test 3: TESTSRT1/2  Test all key types with 21 20 byte records
+#                     Sort the data generated in Test 2
+export SORTIN=sort/TESTSRT1.IN[RECFM=F,LRECL=20]
+export SORTOUT=sort/TESTSRT1.OUT
+export SYSIN=sort/TESTSRT1.INI
+if [ -f sort/TESTSRT1.OUT ]; then rm sort/TESTSRT1.OUT; fi
+bash/exec sort/SORT STATS $1 $2 $3 $4 $5
+rc=$?
+if [ "$rc" -ne "0" ]; then
+    echo "runsort ERROR: SORT failure in sort test 3"
+fi
+
+cp sort/SORT.STA sort/SORT2.STA
+
+# Test 4: TESTSRT1/2  Test all key types with 21 20 byte records
+#                     Verify sorted file from TESTSRT1
+export SYSUT1=sort/TESTSRT1.OUT
+bash/exec sort/TESTSRT2 $1 $2 $3 $4 $5
+rc=$?
+if [ "$rc" -ne "0" ]; then
+    echo "runsort ERROR: test 4 TESTSRT2 failure verifying TESTSRT1.OUT from test 3"
+fi
+
+
+#export SYSUT2=sort/TESTSRT1.IN
+#bash/asmlg sort/TESTSRT1 $1 $2 $3 $4 $5
+#rc=$?
+#if [ "$rc" -ne "0" ]; then
+#    echo "Error in TESTSRT1 32 record gen"
+#    read -s -p "Press any key to continue ..."
+#    echo ""
+#fi
+
+# Test 5: TESTSRT3/4  Test sorting 100000 recs using 1000 rec table
+#                     Generate test file to be sorted;
+#
+#                       100,000 4-byte records:
+#
+#                       record #       record data
+#                       --------  ---------------------
+#                              1   100,000 = 0x000186A0
+#                              2    99,999 = 0x0001069F
+#                               ...
+#                        100,000         1 = 0x00000001
+
+export SYSUT2=sort/TESTSRT3.IN
+parm="PARM(100000)"
+bash/exec sort/TESTSRT3 $parm $1 $2 $3 $4 $5
+rc=$?
+if [ "$rc" -ne "0" ]; then
+    echo "runsort ERROR: TESTSRT3 failure generating data in test 5"
+fi
+
+# Test 6: TESTSRT3/4  Test sorting 100000 recs using 1000 rec table
+#                     Sort the file generated in test 5
+export SORTIN=sort/TESTSRT3.IN[RECFM=F,LRECL=4]
+export SORTOUT=sort/TESTSRT3.OUT
+export SYSIN=sort/TESTSRT3.INI
+if [ -f sort/TESTSRT3.OUT ]; then rm sort/TESTSRT3.OUT; fi
+sortparm="PARM(1000)"
+bash/exec sort/SORT STATS $sortparm $1 $2 $3 $4 $5
+rc=$?
+if [ "$rc" -ne "0" ]; then
+    echo "runsort ERROR: SORT failure in test 6"
+fi
+
+cp sort/SORT.STA sort/SORT3.STA
+
+# Test 7: TESTSRT3/4  Test sorting 100000 recs using 1000 rec table
+#                     Verify sorted file from TESTSRT3
+export SYSUT1=sort/TESTSRT3.OUT
+bash/exec sort/TESTSRT4 $parm $1 $2 $3 $4 $5
+rc=$?
+if [ "$rc" -ne "0" ]; then
+    echo "runsort ERROR: test 7 TESTSRT4 failure verifying TESTSRT3.OUT from test 6"
+fi
+
+# done with tests
+
+# if we get here, there were no errors
+echo "Verify all sort tests ok"
+exit 0

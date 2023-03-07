@@ -3,8 +3,9 @@
 # runasmtests: regression test z390 instructions
 # 2022-05-07 DSH add TESTDC1-3, TESTASC1 tests for #233 blanks in DC nominal values
 set -e              # exit on all errors
-cd $(dirname $0)    # set to directory of script
-cd ..
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
 
 sysmac='sysmac(mac)'
 optable='optable(z390)'
@@ -23,5 +24,8 @@ bash/asmlg rt/mlc/TESTDC1  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTASC1 ASCII trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC2  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC3  trace noloadhigh $sysmac $optable
-bash/zopcheck
+rt/bash/zopcheck
+
+# if we get here, there were no errors
 echo "Verify tests ran without errors"
+exit 0

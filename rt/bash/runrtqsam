@@ -9,8 +9,9 @@
 #     $ ./runrtqsam notime
 #
 set -e              # exit on all errors
-cd $(dirname $0)    # set to directory of script
-cd ..
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
 
 #if [ -f qsam/BLD*.ERR ]; then rm qsam/BLD*.ERR; fi
 shopt -s nullglob
@@ -81,4 +82,6 @@ export SYSUT1=qsam/TESTFTL.TFV
 bash/asmlg qsam/CHKFTL.MLC trace $1
 
 ls qsam/TEST*.TFV
-echo "Verify runrtqsam"
+
+# if we get here, there were no errors
+exit 0
