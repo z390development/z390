@@ -314,7 +314,8 @@ public  class  tz390 {
     * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand
 	* 2022-01-16 DSH #343 increase maxline from 200000 to 400000 for rpi\zivp.asm from Dan Greiner
 	* 2022-01-22 DSH #335 acall - restored APARM used to set &(acall)(n) just before aentry
-         * 2022-03-26 DSH #375 change APARM opcode directive from APARM to ACALLPRM
+    * 2022-03-26 DSH #375 change APARM opcode directive from APARM to ACALLPRM
+    * 2022-07-03 DSH #414 add 30 new z16 instructions with Z16, ZSA, and UNI optables 
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -1710,7 +1711,7 @@ public  class  tz390 {
      String[]   op_table_370_notsupported = // Table added for RPI 1209A
         {"RIO      S    9C02 D2(B2)",
          "CLRCH    S    9F01 D2(B2)",
-         "CONCS    S    B200 D2(B2)",
+         // DSH #414 new z16 LBEAR replaces old nonsupported "CONCS    S    B200 D2(B2)",
          "DISCS    S    B201 D2(B2)",
          };
      String[]   op_table_XA =    // Table added for RPI 1209A
@@ -2463,6 +2464,39 @@ public  class  tz390 {
          "TBEGINC  SIL   E561 D1(B1),I2", // RPI 1209K
          "TEND     S     B2F8 --", // RPI 1209K
          };
+     String[] op_table_z16 = // DSH #414 30 new opcodes for z16
+         {
+    "B200=LBEAR,7,70",
+    "C09=LFI,16,160",
+    "C0F=LLGFI,16,160",
+    "EB71=LPSWEY,21,212",
+    "B93B=NNPA,14,144",
+    "B28F=QPACI,7,70",
+    "B98B=RDP,30,300",
+    "EC5D$3100=SLLHH,52,400",
+    "EC5D$3132=SLLHL,52,400",
+    "EC51$3132=SLLLH,52,400",
+    "EC5D$3100=SRLHH,52,400",
+    "EC5D$3132=SRLHL,52,400",
+    "EC51$3132=SRLLH,52,400",
+    "B201=STBEAR,7,70",
+    "E65D=VCFN,82,738",
+    "E656=VCLFNH,82,738",
+    "E65E=VCLFNL,82,738",
+    "E651=VCLZDP,82,738",
+    "E655=VCNF,82,738",
+    "E675=VCRNF,82,738",
+    "E67D=VCSPH,82,738",
+    "E670=VPKZR,81,737",
+    "E6743=VSCHDP,82,738",
+    "E674=VSCHP,82,738",
+    "E6742=VSCHSP,82,738",
+    "E6744=VSCHXP,82,738",
+    "E67C=VSCSHP,82,738",
+    "E672=VSRPR,81,737",
+    "E654=VUPKZH,82,738",
+    "E65C=VUPKZL,82,738",
+     };
      String[]   op_table_Z15 =   //  dsh table added for RPI 2202
          {
             "B2E8=PPA,40,151", // B2E8 RRFc 40,151 PPA R1,R2,M3 2202
@@ -3075,7 +3109,7 @@ public  class  tz390 {
             "E7D72=VUPHF,82,738",   // E7D72 VRRa VUPHF  V1,V2 RPI 2202
 			"E7D8=VTM,82,738",      // E7D8  VRRa VTM    V1,V2 RPI 2202
             "E7D9=VECL,82,738",     // E7D9  VRRa VECL   V1,V2,M3 RPI 2202
-			"E7D90=VECLB,82,738",   // E7D90 VRRa VECLB  V1,V2 RPI 2202
+			"E7D90=VECLB,82,738",   // E7D90 VRRa VECLB  V1,V2 RPI 2202v1,v2,m3 
             "E7D91=VECLH,82,738",   // E7D91 VRRa VECLH  V1,V2 RPI 2202
             "E7D92=VECLF,82,738",   // E7D92 VRRa VECLF  V1,V2 RPI 2202
 			"E7D93=VECLG,82,738",   // E7D93 VRRa VECLG  V1,V2 RPI 2202
@@ -3841,6 +3875,25 @@ public void create_opcodes()  // Routine added for RPI 1209
          process_opcodes(op_table_ZS3);
          process_opcodes(op_table_ZS4);
          process_opcodes(op_table_Z15);  // rpi 2202
+         // no z16 for z15 process_opcodes(op_table_z16); // DSH2 #414
+         process_opcodes(op_table_DOS_directives);
+         process_opcodes(op_table_370_directives);
+         }
+         if ((opt_optable.equals("Z16"))
+            |(opt_optable.equals("ZSA")))  // DSH #414
+        {process_opcodes(op_table_DOS);
+         if (opt_allow)                              // RPI 1209N
+            {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
+             }                                       // RPI 1209N
+         process_opcodes(op_table_370);
+         process_opcodes(op_table_XA);
+         process_opcodes(op_table_ESA);
+         process_opcodes(op_table_ZOP);
+         process_opcodes(op_table_YOP);
+         process_opcodes(op_table_ZS3);
+         process_opcodes(op_table_ZS4);
+         process_opcodes(op_table_Z15);  // rpi 2202
+         process_opcodes(op_table_z16); // DSH #414
          process_opcodes(op_table_DOS_directives);
          process_opcodes(op_table_370_directives);
          }
@@ -3860,6 +3913,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
             process_opcodes(op_table_Z15); // rpi 2202
+            process_opcodes(op_table_z16); // DSH #414
             process_opcodes(op_table_UNI);
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
@@ -3880,6 +3934,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
             process_opcodes(op_table_Z15); // rpi 2202
+            process_opcodes(op_table_z16); // DSH #414
             process_opcodes(op_table_UNI);
 //          process_opcodes(op_table_ASSIST); // RPI 1209M
             process_opcodes(op_table_z390);
@@ -4505,6 +4560,8 @@ private void check_options(){
                  }
         else if (opt_machine.equals("Z15")) // rpi 2202
                 {}
+        else if (opt_machine.equals("Z16")) // DSH #414
+                {}       
         else
            {abort_error(778,"MACHINE("+opt_machine+") not supported");
             }
@@ -4770,6 +4827,9 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                else if (opt_machine.contentEquals("Z15"))
                		{opt_optable = "Z15";  // rpi 2202
                      }
+                else if (opt_machine.contentEquals("Z16")) // DSH #414
+                     {opt_optable = "Z16";  // DSH #414
+                   }       
                else
                    {add_invalid_option(opt_file_name,opt_file_line,token);
                     }
@@ -4892,6 +4952,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                &&  opt_optable.equals("ZS3") != true
                &&  opt_optable.equals("ZS4") != true
                &&  opt_optable.contentEquals("Z15") != true  // rpi 2202
+               &&  opt_optable.contentEquals("Z16") != true  // DSH2 #414
                &&  opt_optable.equals("Z390") != true
                    )
                    {add_invalid_option(opt_file_name,opt_file_line,token);
