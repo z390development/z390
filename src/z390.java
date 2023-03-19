@@ -79,10 +79,13 @@ public  class  z390
 			   ComponentListener,
 			   Runnable,
 			   FocusListener {
+	/**
+	 * 
+	 */
 	private static final long serialVersionUID = 1L;
 	/*****************************************************
 	 * Maintenance
-	 ****************************************************
+	 * ***************************************************
 	 * 03/05/05 copied from superzap, update menus, cmds
 	 * 09/26/05 replace z390 dialog with batch_cmds and options
 	 * 10/02/05 RPI   8 fix "compatible java" in about desc. 
@@ -139,6 +142,7 @@ public  class  z390
 	 * 2020-10-12 John Ganci RPI 2011 Perl scripts in z390 version 1.7  are in perl subdirectory.
      * 2021-04-19 jjg Replace Linux/Mac Perl usage with Linux shell
      * 2021-04-21 jjg Add CBLC, CBLCL, CBLCLG as commands
+     * 2023-01-25 RPI 1598 re-implement javadoc changes by Hugh Sweeney
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -3265,9 +3269,14 @@ public  class  z390
 	    	put_log("TIMEOUT  seconds         set command timeout seconds or 0 for no limit (default");
 	    	put_log("TRACE    ON/OFF          set trace for BAL, PRN, LST, and/or LOG file cmds");
 	    }
-	    /** Returns an ImageIcon, or null if the path was invalid. */
-	    protected static ImageIcon createImageIcon(String path,
-	                                               String description) {
+
+    /** Returns an ImageIcon, or null if the path was invalid.
+     * @param path - full path and file name
+     * @param description - description to add to ImageIcon
+     * @return ImageIcon
+     */
+    protected static ImageIcon createImageIcon(String path, String description) {
+
 	        java.net.URL imgURL = z390.class.getResource(path);
 	        if (imgURL != null) {
 	            return new ImageIcon(imgURL, description);
@@ -3276,6 +3285,9 @@ public  class  z390
 	            return null;
 	        }
 	    }
+
+
+
 	    private void check_main_view(){
 	    /*
 	     * if main window size has changed due to

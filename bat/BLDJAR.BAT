@@ -12,10 +12,18 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
-if not exist ".\jar\" mkdir jar
-
 rem both the compiler javac.exe and jar builder jar.exe must be on sdk path
 rem note you can use current z390.jar with compatible java runtime with sdk
+
+rem first generate javadoc
+if not exist ".\docenv\javadoc\" mkdir docenv\javadoc
+cd docenv\javadoc
+call javadoc.exe ..\..\src\*.java
+cd ..\..
+
+rem compile java code and create jar file
+if not exist ".\jar\" mkdir jar
+
 erase jar\*.java
 erase jar\*.class
 erase jar\z390.jar
