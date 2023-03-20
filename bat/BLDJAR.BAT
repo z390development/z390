@@ -1,5 +1,6 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
 rem create z390 jar file from sources
+rem unless NoDocs is specified as an argument, generate javadoc files
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
@@ -15,11 +16,8 @@ pushd %~dps0..
 rem both the compiler javac.exe and jar builder jar.exe must be on sdk path
 rem note you can use current z390.jar with compatible java runtime with sdk
 
-rem first generate javadoc
-if not exist ".\docenv\javadoc\" mkdir docenv\javadoc
-cd docenv\javadoc
-call javadoc.exe ..\..\src\*.java
-cd ..\..
+rem unless suppressed, generate javadoc. Ignore any errors
+if /I %1. NEQ Nodocs. call bat\BLDJVDOC.BAT
 
 rem compile java code and create jar file
 if not exist ".\jar\" mkdir jar
