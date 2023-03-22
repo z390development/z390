@@ -3148,11 +3148,14 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 	}
 	return text;
 }
-     /***********************************************
+     /** *********************************************
       * Public GUAM GUI application interfaces for
       *   WTO/WTOR   - MCS view
       *   TPUT/TGET  - Screen view
       *   GUAM MACRO - graphic view and window commands
+      *
+      * @param ecb_addr - int - address of ECB
+      * @return boolean to indicate success (true) of failure (false)
       ***********************************************/
 	 public boolean wtor_request_reply(int ecb_addr){
 		 /*

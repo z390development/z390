@@ -174,6 +174,7 @@ import javax.swing.Timer;
     * 01/04/10 RPI 1094 move timeout to tz390 to share with gz390
     * 05/10/11 RPI 1149 move started msg to put_trace
     * 07/30/11 RPI 1175 use tz390.check_java_version()
+    * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -246,39 +247,56 @@ import javax.swing.Timer;
   /*
    * end of global ez390 class data and start of procs
    */
-public static void main(String[] args) {
-  /*
-   * main is entry when executed from command line
-   * Create instance of ez390 class and pass
-   * parms to ez390 like z390 does.
-   */
-      ez390 pgm = new ez390();
-      pgm.process_ez390(args,null,null);
-}
-public void process_ez390(String[] args,JTextArea log_text,JTextField command_text){
-   /*
-    *  execute 390 load module file passed as first arg
-    *
-    *  Note this may be called directly from z390 GUI or
-    *  from main when lz370 run from windows command line.
-    *  if called from main, the log_text balect will be null
-    *  and local put_log function will route to console instead
-    *  of the z390 log window.
+
+
+
+   /**
+    * main is entry when executed from command line
+    * Create instance of ez390 class and pass
+    * parms to ez390 like z390 does.
+    * @param args - argument string - same as z390
     */
-	init_ez390(args,log_text,command_text);
+public static void main(String[] args) {
+
+  ez390 pgm = new ez390();
+  pgm.process_ez390(args,null,null);
+}
+
+
+
+   /**
+    * execute 390 load module file passed as first arg
+    *
+    * Note this may be called directly from z390 GUI or
+    * from main when lz370 run from windows command line.
+    * if called from main, the log_text balect will be null
+    * and local put_log function will route to console instead
+    * of the z390 log window.
+    * @param args - argument string (same as z390)
+    * @param log_text - 
+    * @param command_text - 
+    */
+public void process_ez390(String[] args,JTextArea log_text,JTextField command_text){
+
+    init_ez390(args,log_text,command_text);
     if (tz390.opt_ipl.length() > 0){
-    	run_pgm(pz390.zcvt_ipl_pgm);
-    	sz390.ez390_pgm = null;
-    	sz390.tot_link_stk = 0;
+        run_pgm(pz390.zcvt_ipl_pgm);
+        sz390.ez390_pgm = null;
+        sz390.tot_link_stk = 0;
     }
     run_pgm(pz390.zcvt_user_pgm);
     monitor_timer.stop();  // RPI 782
-	sz390.exit_ez390();
+    sz390.exit_ez390();
 }
+
+
+
+    /**
+     * execute IPL pgm and/or application pgm
+     *
+     * @param zcvt_pgm_addr
+     */
 private void run_pgm(int zcvt_pgm_addr){
-	/*
-	 * execute IPL pgm and/or application pgm
-	 */
 	pz390.reg.putInt(pz390.r13,pz390.zcvt_save);
 	pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
 	pz390.reg.putInt(pz390.r15,0); // RPI 819 
@@ -303,20 +321,24 @@ private void run_pgm(int zcvt_pgm_addr){
        	sz390.svc_abend(pz390.psw_pic,sz390.svc_abend_type,sz390.svc_req_dump);
     }
 }
+
+
+
+    /** 
+     * <pre>
+     * 1.  Check for trace msg and log if found
+     * 2.  Execute test commands if test mode
+     * 3.  Dump registers if reqister trace option
+     * 4.  Run pz390 to next interrupt
+     * 5.  Check for trace msg and log if found
+     * 6.  If svc interrupt, exec svc
+     * 7.  else if psw_check 
+     *             if svc_exit exit normally
+     *             else psw_handler for abend
+     *                  or espie/estae restart
+     * </pre>
+     */
 private void exec_pz390(){
-	/* 
-	 * 1.  Check for trace msg and log if found
-	 * 2.  Execute test commands if test mode
-	 * 3.  Dump registers if reqister trace option
-	 * 4.  Run pz390 to next interrupt
-	 * 5.  Check for trace msg and log if found
-	 * 6.  If svc interrupt, exec svc
-	 * 7.  else if psw_check 
-	 *             if svc_exit exit normally
-	 *             else psw_handler for abend
-	 *                  or espie/estae restart
-	 * 
-	 */
     pz390_thread = new Thread(this);
     pz390_running = true;
 	pz390_thread.start();
@@ -332,19 +354,26 @@ private void exec_pz390(){
 		sz390.abort_error(202,"pz390 processor error " + e.toString());
 	}
 }
+
+
+
+    /**
+     * Logic:
+     * <pre>
+     * 1.  initialize log routing
+     * 2.  init ascii to ebcdic table
+     * 3.  init reqular expression paser for test
+     * 4.  set options
+     * 5.  initialize memory
+     * 6.  set runtime hooks for cancel
+     * 7.  start monitor for cmd processor and
+     *     timeout, and cpu rate statistics
+     * </pre>
+     * @param args - text - argument string
+     * @param log_text - JTextArea -
+     * @param command_text - JTextField - 
+     */
 private void init_ez390(String[] args, JTextArea log_text, JTextField command_text){
-	/*
-	 * 1.  initialize log routing
-	 * 2.  init ascii to ebcdic table
-	 * 3.  init reqular expression paser for test
-	 * 4.  set options
-	 * 5.  initialize memory
-	 * 6.  set runtime hooks for cancel
-	 * 7.  start monitor for cmd processor and
-	 *     timeout, and cpu rate statistics
-	 * 
-	 * 
-	 */
 	    if  (log_text != null){
 	    	z390_log_text = log_text;
 	    }
@@ -376,11 +405,15 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
         monitor_startup();
         sz390.ez390_startup = false;
 }
-private void monitor_startup(){
-	/*
+
+
+
+	/**
 	 * start monitor to terminate cmd 
 	 * command if timeout limit reached
 	 */
+
+private void monitor_startup(){
     monitor_last_time = System.currentTimeMillis();
     monitor_last_ins_count = ins_count;
     try {
@@ -395,8 +428,11 @@ private void monitor_startup(){
 		sz390.log_error(66,"execution startup error " + e.toString());
 	}
 }
-private void monitor_update(){
-	/*
+
+
+
+	/**
+     *     <pre>
 	 * 1.  At monitor_wait intervals, update the
 	 *     the cpu instruction rate and monitor
 	 *     cmd processes if running with timeout
@@ -417,7 +453,10 @@ private void monitor_update(){
 	 *     d.  change PSW to r15 exit addr
 	 * 6.  If GUAM TN3270 screen active, 
 	 *     process pending typed keys    
+     *     </pre>
 	 */
+
+private void monitor_update(){
 	monitor_next_time = System.currentTimeMillis();
 	monitor_next_ins_count = ins_count;
 	monitor_next_io_count = io_count;
@@ -508,6 +547,10 @@ private void monitor_update(){
 	monitor_last_ins_count  = monitor_next_ins_count;
 	monitor_last_io_count   = monitor_next_io_count;
 }
+
+
+
+
 public void run() {
 	if (pz390_thread == Thread.currentThread()){
 		if (tz390.opt_trap){ // RPI 423
@@ -543,6 +586,10 @@ public void run() {
 		cmd_id++;
 	}
 }
+
+
+
+
 private void put_copyright(){
 	   /*
 	    * display ez390 version, timestamp,
