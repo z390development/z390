@@ -1,0 +1,108 @@
+         TITLE 'Test ED instruction fix for issue 434'
+TEDIT    CSECT ,
+         STM   14,12,12(13)        Save caller's registers
+         LR    12,15               R12 = base register
+         USING TEDIT,12            Establish addressability
+         LA    14,SA               New save area
+         ST    14,8(,13)           Chain
+         ST    13,4(,14)                 save areas
+         LR    13,14               Current save area
+*
+         LM    7,9,PDT@            R7 -> 1st, R8 = len 1, R9 -> last
+         USING PDTDS,7             Overlay test
+         SR    4,4                 R4 will contain CC after edit
+LP1      DS    0H       
+         MVC   EDWk,Pat1           Copy edit pattern to work area
+         MVC   PDWk,PDTNum         Copy packed number to work area
+         ED    EDWk,PDWk           Edit number
+         IPM   4                   Get CC, Pgm Mask
+         SRL   4,28                Isolate CC
+         OILL  4,X'00F0'           Convert to printable hex
+         STC   4,W1ActCC           Put in output area
+         MVC   FW(L'PDWk),PDTNum   Copy packed decimal to work
+         UNPK  DW(9),FW(5)         Convert to printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   W1ActPD,DW          Copy to message
+         MVC   W1ActED,EDWk        Copy edited number to message
+*
+         MVC   W1ExpCC,PDTCC       Copy expected Condition Code
+         MVC   W1ExpPD,PDTPHNum    Copy expected prt hex number
+         MVC   W1ExpED,PDTEDNum    Copy expected edited number
+         WTO   MF=(E,WTO1)         Show result
+*
+         CLC   W1ActCC,PDTCC       Actual CC = Expected CC?
+         BNE   ErrCC               No; error
+         CLC   W1ActED,PDTEDNum    Actual edited num = expected?
+         BNE   ErrEDNum            No; Error
+         BXLE  7,8,LP1             Test successful; next test
+         WTO   'All tests were successful'
+         SR    15,15               Set good return code
+         B     TExit               All done
+         DROP  7                   End test overlay
+ErrCC    DS    0H
+         WTO   'Error: CC actual, expected differ'
+         LA    15,8                Error return code
+         B     TExit               All done
+ErrEDNum DS    0H
+         WTO   'Error: Edited number actual, expected differ'
+         LA    15,8                Error return code
+*NSI     B     TExit               All done
+TExit    DS    0H
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+         LTORG
+*
+SA       DC    18F'-1'             Current save area
+*
+Pat1     DC    X'4020212060'       Edit pattern
+*
+PDWk     DS    PL(L'PDTNum)        Packed decimal work area
+EDWk     DS    CL(L'Pat1)          Edit work area
+*
+WTO1     WTO   'Act: PDNum xxxx CC x EDNum >xxxxx<  Exp: PDNum xxxx CC x X
+               x EdNum >xxxxx<',MF=L
+W1ActCC  EQU   WTO1+4+19,1
+W1ActPD  EQU   WTO1+4+11,4
+W1ActED  EQU   WTO1+4+28,5
+W1ExpCC  EQU   WTO1+4+55,1
+W1ExpPD  EQU   WTO1+4+47,4
+W1ExpED  EQU   WTO1+4+64,5
+*
+PDT@     DC    A(PDT1,PDTLen,PDTN,0)
+*
+PDT1     DC    X'300A',C'2 300A  > 300 <' Packed +300
+         DC    X'300B',C'1 300B  > 300-<' Packed -300
+         DC    X'300C',C'2 300C  > 300 <' Packed +300
+         DC    X'300D',C'1 300D  > 300-<' Packed -300
+         DC    X'300E',C'2 300E  > 300 <' Packed +300
+         DC    X'300F',C'2 300F  > 300 <' Packed +300
+         DC    X'000A',C'0 000A  >   0 <' Packed +000
+         DC    X'000B',C'0 000B  >   0-<' Packed -000
+         DC    X'000C',C'0 000C  >   0 <' Packed +000
+         DC    X'000D',C'0 000D  >   0-<' Packed -000
+         DC    X'000E',C'0 000E  >   0 <' Packed +000
+         DC    X'000F',C'0 000F  >   0 <' Packed +000
+***********************************************************************
+*        Put new entries above this line
+***********************************************************************
+PDTN     EQU   *-PDTLen            Last entry
+*
+DW       DS    D,XL1               Doubleword work, pad
+FW       DS    F,XL1               Fullword work, pad
+H2P      EQU   *-240               Hex to printable hex
+         DC    C'0123456789ABCDEF'
+*
+PDTDS    DSECT
+PDTNum   DS    XL2                 Packed decial number
+PDTCC    DS    CL1                 Condition Code
+         DS    CL1                 Filler
+PDTPHNum DS    CL4                 Number in printable hex
+         DS    CL3                 Filler
+PDTEDNum DS    CL5                 Edited number
+         DS    CL1                 Filler
+PDTLen   EQU   *-PDTDS             Length of test entry
+*
+         END

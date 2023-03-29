@@ -25,6 +25,7 @@ bash/asmlg rt/mlc/TESTASC1 ASCII trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC2  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC3  trace noloadhigh $sysmac $optable
 rt/bash/zopcheck
+bash/asmlg tests/TEDIT trace noloadhigh
 
 # if we get here, there were no errors
 echo "Verify tests ran without errors"
