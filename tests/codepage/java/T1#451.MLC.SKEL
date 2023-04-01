@@ -32,7 +32,7 @@
          MNOTE 0,'DATDSN >&DATDSN<  PCHDSN >&PCHDSN<'
 *
 *        Note: z390 AREAD code sets proper file separators when
-*              referencing ./T1#451.DAT and T1P#451.PCH
+*              referencing ./T1#451.DAT and ./T1P#451.PCH
 *
 ***********************************************************************
 *        Begin program
