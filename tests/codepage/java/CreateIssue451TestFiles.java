@@ -32,7 +32,7 @@ import java.io.OutputStreamWriter;
  * that makes use of the first three files. It is
  * created using a "skeleton" version of itself.
  * 
- * The "skeleton" version of T1@451.MLC, T1#451.MLC.SKEL,
+ * The "skeleton" version of T1#451.MLC, T1#451.MLC.SKEL,
  * resides in the build directory,
  */
 public class CreateIssue451TestFiles
