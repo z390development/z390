@@ -12,6 +12,7 @@ ZOPCHECK    - verify all z390 assembler instructions generate correct code
 RUNTBRCTX   - verify issue #238 which has been closed.
 RUNTESTOPT  - verify indirection usage in options files
 RUNBR14OWE  - verifies test IEFBR14 asm[l[g]] with Okay, Warning, Error variants
+RUNCODEPAGETESTS - verifies usage of CODEPAGE issue #451
 
 Double click on above commands to run them.
 
