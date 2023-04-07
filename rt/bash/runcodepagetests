@@ -14,7 +14,7 @@
 debug=1
 
 cd $(dirname $0)    # set to directory of script
-cd ..               # up one directory; the z390 directory
+cd ../..            # up two directories; the z390 directory
 
 codepagedir=tests/codepage         # tests/codepage
 javadir=${codepagedir}/java        # tests/codepage/java
