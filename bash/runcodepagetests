@@ -28,25 +28,13 @@ echo "javadir=${javadir}"
 echo "workdir=${workdir}"
 echo "javapgm=${javapgm}.java"
 
-compile="y"
-if [ $# -gt 0 ] && [ "$1" = "-nc" ]; then compile=n; shift; fi
-
-if [ $debug -eq 1 ]; then echo "compile=$compile"; fi
-
-if [ $compile = "y" ]; then
-    if [ $debug -eq 1 ]; then echo "Compile program that creates test files ..."; fi
-    javac ${javadir}/${javapgm}.java
-    rc=$?
-    if [ $debug -eq 1 ]; then echo "javac rc=$rc"; fi
-    if [ $rc -ne 0 ]; then
-        echo "Error compiling ${javapgm}.java; rc=$rc"
-        exit $rc
-    fi
-else
-    if [ $debug -eq 1 ]; then echo "Skip compile"; fi
-    if [ ! -f ${javadir}/${javapgm}.class ]; then
-        echo "WARNING: skipping compile but ${javapgm}.class file does not exist"
-    fi
+if [ $debug -eq 1 ]; then echo "Compile program that creates test files ..."; fi
+javac ${javadir}/${javapgm}.java
+rc=$?
+if [ $debug -eq 1 ]; then echo "javac rc=$rc"; fi
+if [ $rc -ne 0 ]; then
+    echo "Error compiling ${javapgm}.java; rc=$rc"
+    exit $rc
 fi
 
 # empty work directory and copy skeleton file to it
