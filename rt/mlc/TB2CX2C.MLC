@@ -10,27 +10,32 @@ LP1      DS    0H
          LM    6,9,0(3)            R6 --> gen val, R7 --> gen val len,
 *                                  R8 --> exp val, R9 = exp val len
          C     9,0(,7)             Exp val len = gen val len?
-         BNE   Error1              No; error
+         BNE   ErrorLen            No; error
          LTR   9,9                 Length 0?
          BZ    NX1                 Yes; next test
          BCTR  9,0                 Length code
          EX    9,Compare           Gen val = exp val?
-         BNE   Error2              No; error
+         BNE   ErrorVal            No; error
 NX1      DS    0H
          BXLE  3,4,LP1             Next test
          WTO   'All tests successful'
          SR    15,15               All tests okay
          B     Exit                Exit with return code
-Error1   DS    0H
-         SNAP  ID=1,PDATA=(GPR),                                       X
-               TEXT='Length error; R2 = failing test number'
+ErrorLen DS    0H
+         LA    1,W1LenLit          Literal for WTO
+         B     Error               Show error
+ErrorVal DS    0H
+         LA    1,W1ValLit          Literal for WTO
+*NSI     B     Error               Show error
+Error    DS    0H
+         MVC   W1Lit,0(1)          Copy literal to WTO
+         ST    2,FW                Convert test number
+         UNPK  DW(9),FW(5)         ... to printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   W1TstNum,DW         Copy to WTO
+         WTO   MF=(E,WTO1)         Show error message
          LA    15,8                Set error return code
-         B     Exit                Exit with return code
-Error2   DS    0H
-         SNAP  ID=2,PDATA=(GPR),                                       X
-               TEXT='Value error; R2 = failing test number'
-         LA    15,8                Set error return code
-         B     Exit                Exit with return code
+*NSI     B     Exit                Exit with return code
 Exit     DS    0H
          L     14,12(,13)          Restore caller's registers
          LM    0,12,20(13)         ... except R15
@@ -40,13 +45,20 @@ Exit     DS    0H
 *
 Compare  CLC   0(*-*,6),0(8)       Compare gen val to exp val
 *
+W1ValLit DC    C'Value '
+W1LenLit DC    C'Length'
+*
+WTO1     WTO   'Error: xxxxxx  test number xxxxxxxx',MF=L
+W1Lit    EQU   WTO1+4+7,6
+W1TstNum EQU   WTO1+4+27,8
+*
          DS    0D
 TTbl     DC    A(T1,16,TN,0)           Table of tests
 T1       DS    0D
-         DC    A(B1,B1L,B1V,L'B1V)     1
+         DC    A(B1,B1L,0,0)           1
          DC    A(B2,B2L,B2V,L'B2V)     2
          DC    A(B3,B3L,B3V,L'B3V)     3
-         DC    A(X1,X1L,X1V,L'X1V)     4
+         DC    A(X1,X1L,0,0)           4
          DC    A(X2,X2L,X2V,L'X2V)     5
          DC    A(X3,X3L,X3V,L'X3V)     6
          DC    A(X4,X4L,X4V,L'X4V)     7
@@ -54,21 +66,34 @@ T1       DS    0D
 *        Put new tests above this line
 ***********************************************************************
 TN       EQU   *-16                Last test
-B1V      DC    C''
+*
+***********************************************************************
+*        Expected values
+***********************************************************************
+*
+*B1V      DC    C''                error on z/OS HLASM
 B2V      DC    C'3'
 B3V      DC    C'*1'
-X1V      DC    C''
+*X1V      DC    C''                error on z/OS HLASM
 X2V      DC    X'F3'
 X3V      DC    X'F1F2F3F4F5'
 X4V      DC    X'00F1F2'
 *
+***********************************************************************
+*        Generated values and lengths
+***********************************************************************
+*
          GBLC  &C
          GBLA  &A
-***********************************************************************
+*
 ***      B2C('')
 &C       SETC B2C('')
-B1       DC    C'&C'               '' C''
-B1L      DC    AL4(L'B1)
+&A       SETA  K'&C
+*B1       DC    C'&C'               '' C''  error on z/OS HLASM
+*B1L      DC    AL4(L'B1)
+B1       DS    0C
+B1L      DC    AL4(&A)
+*
 ***      B2C('11110011')
 &C       SETC B2C('11110011')
 B2       DC    C'&C'               '11110011' C'3'
@@ -78,11 +103,16 @@ B2L      DC    AL4(L'B2)
 &C       SETC B2C('101110011110001')
 B3       DC    C'&C'               '101110011110001' C'*1'
 B3L      DC    AL4(L'B3)
-***********************************************************************
+*
+*
+*
 ***      X2C('')
 &C       SETC X2C('')
-X1       DC    C'&C'               '' C''
-X1L      DC    AL4(L'X1)
+&A       SETA  K'&C
+*X1       DC    C'&C'               '' C''  error on z/OS HLASM
+*X1L      DC    AL4L'X1)
+X1       DS    0C
+X1L      DC    AL4(&A)
 *
 ***      X2C('F3')
 &C       SETC X2C('F3')
@@ -100,5 +130,10 @@ X4       DC    C'&C'               '0F1F2' C'n12' n=X'00'
 X4L      DC    AL4(L'X4)
 ***********************************************************************
 *
+DW       DS    D,XL1                Doubleword work and pad
+FW       DS    F,XL1                Fullword work and pad
+*
+H2P      EQU   *-240                Hex to printable hex
+         DC    C'0123456789ABCDEF'
+*
          END
-
