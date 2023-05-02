@@ -316,6 +316,7 @@ public  class  tz390 {
 	* 2022-01-22 DSH #335 acall - restored APARM used to set &(acall)(n) just before aentry
          * 2022-03-26 DSH #375 change APARM opcode directive from APARM to ACALLPRM
     * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
+    * 2023-05-02 AFK #??? fix O attribute value for extended mnemonics
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -1016,6 +1017,7 @@ public  class  tz390 {
     String[] op_type_obj_format = null; // See process_opcodes() RPI 1209G
   //String[] op_name = // Static content removed, content now generated RPI 1209
     String[] op_name  = null; // See process_opcodes() RPI 1209
+    char[]   op_type_otype = null; // See process_opcodes() (fix #???)
 //    int[]    op_type_len = { // old definition commented out RPI 1209G
 //    	 0, // 0 comment place holder	
 //         2,	// 1 "E" 8 PR oooo
@@ -3900,6 +3902,7 @@ public void create_opcodes()  // Routine added for RPI 1209
            {op_code       = new String[op_code_count];
             op_name       = new String[op_code_count+op_directives_count];
             op_type       = new int[op_code_count+op_directives_count];
+            op_type_otype = new char[op_code_count+op_directives_count]; // fix #???
             op_trace_type = new int[op_code_count];
             }
         index2++; // indicate this pass is done
@@ -4052,9 +4055,11 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
             if (op_code != null) // insert data only if arrays allocated
                {op_name[index2]       = mnemonic;
                 op_type[index2]       = optype_nr;
+                op_type_otype[index2] = 'O'; // this is a machine operation code (fix #???)
                 if (opcode.equals("--") == false)
                    {op_code[index2]       = opcode;
                     op_trace_type[index2] = tracetype_nr;
+                    op_type_otype[index2] = 'A'; // this is a assembler operation code (fix #???)
                     }
                 }
             index2++;
@@ -4151,6 +4156,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                            {op_name[index2]   = override_mnemon2;
                             }
                         op_type[index2]       = optype_nr;
+                        op_type_otype[index2] = 'E'; // this is an extended mnemonic operation code (fix #???)
                         op_trace_type[index2] = tracetype_nr;
                         }
                     index2++;
