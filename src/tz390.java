@@ -3734,7 +3734,8 @@ public void create_opcodes()  // Routine added for RPI 1209
     // WARNING: take heed to define all opcodes BEFORE defining any directives!    <<<<<<-------
     index2=0;
     while (index2 <= 1)
-       {op_code_count = 0;
+       {//System.out.println("afk tz390 main loop start pass " + index2); // #???
+        op_code_count = 0;
         op_directives_count = 0;
         process_opcodes(op_table_start);
         if (opt_assist == true)               // RPI 1209M
@@ -3898,12 +3899,14 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
+        //System.out.println("afk tz390 main loop end pass " + index2); // #???
         if (index2 == 0) // only on first pass: allocate tables
-           {op_code       = new String[op_code_count];
+           {op_code       = new String[op_code_count]; // no entries allocated for directives
             op_name       = new String[op_code_count+op_directives_count];
             op_type       = new int[op_code_count+op_directives_count];
-            op_type_otype = new char[op_code_count+op_directives_count]; // fix #???
             op_trace_type = new int[op_code_count];
+            op_type_otype = new char[op_code_count+op_directives_count]; // fix #???
+            //System.out.println("afk tz390 main loop allocation done, size " + (op_code_count+op_directives_count)); // #???
             }
         index2++; // indicate this pass is done
         }
@@ -3979,6 +3982,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
         catch (Exception e)
            {abort_error(47,"Error in opcode definition " + op_tables[index] + " - " + e.toString());
             }
+        //System.out.println("afk tz390 inner loop " + index + " " + entry + " --> " + opcode + "," + mnemonic + "," + optype + "," + tracetype + "," + entry + '.'); // #???
         // convert op_type to an integer value and check its validity
         try                                                     // convert op_type to Integer
            {optype_nr=Integer.decode(optype);
@@ -4055,11 +4059,15 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
             if (op_code != null) // insert data only if arrays allocated
                {op_name[index2]       = mnemonic;
                 op_type[index2]       = optype_nr;
-                op_type_otype[index2] = 'O'; // this is a machine operation code (fix #???)
                 if (opcode.equals("--") == false)
                    {op_code[index2]       = opcode;
                     op_trace_type[index2] = tracetype_nr;
-                    op_type_otype[index2] = 'A'; // this is a assembler operation code (fix #???)
+                    op_type_otype[index2] = 'O'; // this is a machine operation code (fix #???)
+                    //System.out.println("afk tz390 " + index2 + " " + mnemonic + " type O"); // #???
+                    }
+                else
+                   {op_type_otype[index2] = 'A'; // this is an assembler operation code (fix #???)
+                    //System.out.println("afk tz390 " + index2 + " " + mnemonic + " type A"); // #???
                     }
                 }
             index2++;
@@ -4157,6 +4165,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                             }
                         op_type[index2]       = optype_nr;
                         op_type_otype[index2] = 'E'; // this is an extended mnemonic operation code (fix #???)
+                        //System.out.println("afk tz390 " + index2 + " " + mnemonic + " type E"); // #???
                         op_trace_type[index2] = tracetype_nr;
                         }
                     index2++;
