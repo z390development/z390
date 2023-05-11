@@ -441,6 +441,7 @@ public  class  mz390 {
 	 * 2022-04-07 DSH #215 prevent SETC statement character string processing from reducing && to &
 	 * 2022-08-07 #439 INDEX issue
 	 * 2022-08-22 #438 X2C issue
+     * 2023-05-05 AFK #485 fix O attribute value for extended mnemonics
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -11643,6 +11644,7 @@ public  class  mz390 {
 			int opcode_type = find_opcode_type(setc_value1);
 			if (opcode_type >= 0){
 				if (opcode_type <= tz390.max_ins_type){
+                    // Distinction between values O and E now hardcoded - replace with table lookup // #485
 					if (opcode_type == 3
 							|| opcode_type == 6
 							|| opcode_type == 13){

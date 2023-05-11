@@ -1,0 +1,36 @@
+ATTRIB$O TITLE 'Test O attribute values'
+***********************************************************************
+* Start create : 05-05-2023
+* 1st delivery :
+* Designer     : AF Kornelis
+* Programmer   : AF Kornelis
+* Purpose      : Test value of O attribute
+***********************************************************************
+
+ATTRIB$O RSECT ,                       *
+ATTRIB$O AMODE 24
+ATTRIB$O RMODE 24
+***********************************************************************
+         USING *,15                    * Start addressability
+
+         MACRO
+         SHOWOP &MNE
+&OT      SETC  O'&MNE
+         MNOTE 'O''&MNE = &OT'
+         MEND
+
+TESTOT1  CSECT
+         SHOWOP PUSH
+         SHOWOP BCR
+         SHOWOP BER
+         SHOWOP BC
+         SHOWOP BE
+         SHOWOP JE
+         SHOWOP BRC
+         SHOWOP SRNM
+         SHOWOP SAVE
+         SHOWOP XXXXX
+
+         XR    15,15                   * Set RC=0
+         BR    14                      * Return
+         END
