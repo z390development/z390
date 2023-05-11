@@ -35,12 +35,11 @@ if %z_ReturnCode% NEQ 0 (echo %0 Error compiling %javapgm%.java
                          goto return
                          )
 
-:: empty work directory then copy skeleton file to it
+:: empty work directory
 erase /q %workdir%\*.*
-copy %javadir%\T1#451.MLC.SKEL %workdir%\
 
 :: create T1#451.CPY, T1#451.DAT, T1#451.MLC and T1P#451.MLC
-java -cp %javadir%\ %javapgm% %workdir%
+java -cp %javadir%\ %javapgm% %workdir% %javadir%
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 Error creating test files
                          goto return

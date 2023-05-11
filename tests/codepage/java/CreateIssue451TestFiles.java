@@ -32,8 +32,10 @@ import java.io.OutputStreamWriter;
  * that makes use of the first three files. It is
  * created using a "skeleton" version of itself.
  * 
+ * All four files are created in a work directory.
+ *
  * The "skeleton" version of T1#451.MLC, T1#451.MLC.SKEL,
- * resides in the build directory,
+ * resides in a separate "skeleton" directory.
  */
 public class CreateIssue451TestFiles
 {
@@ -41,7 +43,8 @@ public class CreateIssue451TestFiles
     static final String codepage="ISO-8859-1";
     static final String skelLiteral = "*SKELETON>";
     
-    static String dir = null; //"/home/john/z390/temp/mlc/";
+    static String workDir = null;
+    static String skelDir = null;
     static String cpyFile = "T1#451.CPY";
     static String datFile = "T1#451.DAT";
     static String pchFile = "T1P#451.MLC";
@@ -51,15 +54,17 @@ public class CreateIssue451TestFiles
     /**
      * Create test files for issue #451.
      * 
-     * @param args args[0] full path to build directory
+     * @param args args[0] path of work directory
+     *             args[1] path of skeleton directory
      * 
      */
     public static void main(String[] args)
     {
         // args[0] is directory to contain files
-        if (args.length != 1 || args[0].length() < 2)
+        // args[1] is directory containing skeleton file
+        if (args.length != 2 || args[0].length() < 2 || args[1].length() < 2)
         {
-            System.out.println("Usage: java CreateIssue451TestFiles <full path to build directory>");
+            System.out.println("Usage: java CreateIssue451TestFiles <path to build directory> <path to skeleton directory>");
             System.exit(4);
         }
         
@@ -68,12 +73,20 @@ public class CreateIssue451TestFiles
         {
             d = d+File.separator;
         }
-        dir = d;
+        workDir = d;
         
-        System.out.println("Using build directory "+dir);
+        d = args[1];
+        if( !d.substring(d.length()-1).equals(File.separator) )
+        {
+            d = d+File.separator;
+        }
+        skelDir = d;
         
-        System.out.println("User directory is "+System.getProperty("user.dir"));
+        System.out.println("Using work directory "+workDir);
+        System.out.println("Using skeleton directory "+skelDir);
         
+//       System.out.println("class path is "+System.getProperty("java.class.path"));
+                
         /*
          *  build 2-dim array of integers for
          *  the extended ASCII characters 
@@ -85,7 +98,7 @@ public class CreateIssue451TestFiles
         int[][] v = buildIntegerArray();
         int numErrors = 0;
         
-        if (createCpyFile(v, dir+cpyFile))
+        if (createCpyFile(v, workDir+cpyFile))
         {
             System.out.println("Successfully created " + cpyFile);
         }
@@ -94,7 +107,7 @@ public class CreateIssue451TestFiles
             numErrors++;
         }
         
-        if (createDatFile(v, dir+datFile))
+        if (createDatFile(v, workDir+datFile))
         {
             System.out.println("Successfully created " + datFile);
         }
@@ -103,7 +116,7 @@ public class CreateIssue451TestFiles
             numErrors++;
         }
         
-        if (createPchFile(v, dir+pchFile))
+        if (createPchFile(v, workDir+pchFile))
         {
             System.out.println("Successfully created " + pchFile);
         }
@@ -112,7 +125,7 @@ public class CreateIssue451TestFiles
             numErrors++;
         }
         
-        if (createMlcFile(v, dir+mlcFile, dir+mlcFileSkeleton))
+        if (createMlcFile(v, workDir+mlcFile, skelDir+mlcFileSkeleton))
         {
             System.out.println("Successfully created " + mlcFile);
         }
@@ -138,7 +151,7 @@ public class CreateIssue451TestFiles
      * Create T1#451.CPY file
      * 
      * @param v 2-dimensional array of extended ASCII values
-     * @param fileName full path name of the file
+     * @param fileName name of the file
      * @return true if file created, false otherwise
      */
     public static boolean createCpyFile(int[][] v, String fileName)
@@ -196,7 +209,7 @@ public class CreateIssue451TestFiles
      * Create T1#451.DAT file
      * 
      * @param v 2-dimensional array of extended ASCII values
-     * @param fileName full path name of the file
+     * @param fileName name of the file
      * @return true if file created, false otherwise
      */
     public static boolean createDatFile(int[][] v, String fileName)
@@ -254,7 +267,7 @@ public class CreateIssue451TestFiles
      * Create T1P#451.MLC file of PUNCH statements
      * 
      * @param v 2-dimensional array of extended ASCII values
-     * @param fileName full path name of the file
+     * @param fileName name of the file
      * @return true if file created, false otherwise
      */
     public static boolean createPchFile(int[][] v, String fileName)
@@ -323,7 +336,7 @@ public class CreateIssue451TestFiles
     }
     
     /**
-     * Create T1#451.MLC file using file T1#451.MLC.SKELETON
+     * Create T1#451.MLC file using file skeleton
      * 
      * @param v 2-dimensional array of extended ASCII values
      * @param fileName name of the created file
@@ -340,9 +353,7 @@ public class CreateIssue451TestFiles
         File fSkel;
         BufferedReader br;
         
-        // create T1#451.MLC file using T1#451.MLC.SKELETON file
-        
-        // input file is the file skeleton, T1#451.MLC.SKELETON
+        // input file is the file skeleton
         fSkel = new File(skelFileName);
         
         try

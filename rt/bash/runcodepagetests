@@ -37,13 +37,12 @@ if [ $rc -ne 0 ]; then
     exit $rc
 fi
 
-# empty work directory and copy skeleton file to it
+# empty work directory
 rm -f ${workdir}/*
-cp ${javadir}/T1#451.MLC.SKEL ${workdir}
 
 if [ $debug -eq 1 ]; then echo "Create test program and data ..."; fi
 # create T1#451.CPY, T1#451.DAT, T1#451.MLC and T1P#451.MLC
-java -cp ${javadir} ${javapgm} ${workdir}
+java -cp ${javadir} ${javapgm} ${workdir} ${javadir}
 rc=$?
 if [ $rc -ne 0 ]; then
     echo "Error creating test files; rc=$rc"
