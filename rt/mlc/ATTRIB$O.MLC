@@ -20,17 +20,141 @@ ATTRIB$O RMODE 24
          MEND
 
 TESTOT1  CSECT
-         SHOWOP PUSH
-         SHOWOP BCR
-         SHOWOP BER
-         SHOWOP BC
-         SHOWOP BE
-         SHOWOP JE
-         SHOWOP BRC
-         SHOWOP SRNM
-         SHOWOP SAVE
-         SHOWOP XXXXX
-
+*
+* Validate O attribute for some sample menmonics:
+* A Assembler operation code
+* E Extended mnemonic operation code
+* M Macro definition O Machine operation code
+* S Macro definition found in library
+* U Undefined, unknown, unassigned, or deleted operation code
+*
+*        SHOWOP PUSH                   * A
+*        SHOWOP BCR                    * O
+*        SHOWOP BER                    * E
+*        SHOWOP BC                     * O
+*        SHOWOP BE                     * E
+*        SHOWOP JE                     * E
+*        SHOWOP BRC                    * O
+*        SHOWOP SRNM                   * O
+*        SHOWOP SHOWOP                 * M
+*        SHOWOP SAVE                   * S
+*        SHOWOP XXXXX                  * U
+*
          XR    15,15                   * Set RC=0
          BR    14                      * Return
+*
+* Validate assembly of mnemonics with changed definitions
+*
+CLT      CLT      1,B'1010',7(5)       * EB1A 5007 0023
+         CLTH     1,7(5)               * EB12 5007 0023
+         CLTL     1,7(5)               * EB14 5007 0023
+         CLTNE    1,7(5)               * EB16 5007 0023
+         CLTE     1,7(5)               * EB18 5007 0023
+         CLTNL    1,7(5)               * EB1A 5007 0023
+         CLTNH    1,7(5)               * EB1C 5007 0023
+*
+CLGT     CLGT     1,B'1010',7(5)       * EB1A 5007 002B
+         CLGTH    1,7(5)               * EB12 5007 002B
+         CLGTL    1,7(5)               * EB14 5007 002B
+         CLGTNE   1,7(5)               * EB16 5007 002B
+         CLGTE    1,7(5)               * EB18 5007 002B
+         CLGTNL   1,7(5)               * EB1A 5007 002B
+         CLGTNH   1,7(5)               * EB1C 5007 002B
+*
+LOCFHR   LOCFHR   1,2,B'1010'          * B9E0 A012
+         LOCFHRO  1,2                  * B9E0 1012
+         LOCFHRH  1,2                  * B9E0 2012
+         LOCFHRP  1,2                  * B9E0 2012
+         LOCFHRL  1,2                  * B9E0 4012
+         LOCFHRM  1,2                  * B9E0 4012
+         LOCFHRNE 1,2                  * B9E0 7012
+         LOCFHRNZ 1,2                  * B9E0 7012
+         LOCFHRE  1,2                  * B9E0 8012
+         LOCFHRZ  1,2                  * B9E0 8012
+         LOCFHRNL 1,2                  * B9E0 B012
+         LOCFHRNM 1,2                  * B9E0 B012
+         LOCFHRNH 1,2                  * B9E0 D012
+         LOCFHRNP 1,2                  * B9E0 D012
+         LOCFHRNO 1,2                  * B9E0 E012
+*
+LOCGR    LOCGR    1,2,B'1010'          * B9E2 A012
+         LOCGRO   1,2                  * B9E2 1012
+         LOCGRH   1,2                  * B9E2 2012
+         LOCGRP   1,2                  * B9E2 2012
+         LOCGRL   1,2                  * B9E2 4012
+         LOCGRM   1,2                  * B9E2 4012
+         LOCGRNE  1,2                  * B9E2 7012
+         LOCGRNZ  1,2                  * B9E2 7012
+         LOCGRE   1,2                  * B9E2 8012
+         LOCGRZ   1,2                  * B9E2 8012
+         LOCGRNL  1,2                  * B9E2 B012
+         LOCGRNM  1,2                  * B9E2 B012
+         LOCGRNH  1,2                  * B9E2 D012
+         LOCGRNP  1,2                  * B9E2 D012
+         LOCGRNO  1,2                  * B9E2 E012
+*
+LOCR     LOCR     1,2,B'1010'          * B9F2 A012
+         LOCRO    1,2                  * B9F2 1012
+         LOCRH    1,2                  * B9F2 2012
+         LOCRP    1,2                  * B9F2 2012
+         LOCRL    1,2                  * B9F2 4012
+         LOCRM    1,2                  * B9F2 4012
+         LOCRNE   1,2                  * B9F2 7012
+         LOCRNZ   1,2                  * B9F2 7012
+         LOCRE    1,2                  * B9F2 8012
+         LOCRZ    1,2                  * B9F2 8012
+         LOCRNL   1,2                  * B9F2 B012
+         LOCRNM   1,2                  * B9F2 B012
+         LOCRNH   1,2                  * B9F2 D012
+         LOCRNP   1,2                  * B9F2 D012
+         LOCRNO   1,2                  * B9F2 E012
+*
+SELFHR   SELFHR   1,2,3,B'1010'        * B9C0 3A12
+         SELFHRO  1,2,3                * B9C0 3112
+         SELFHRH  1,2,3                * B9C0 3212
+         SELFHRP  1,2,3                * B9C0 3212
+         SELFHRL  1,2,3                * B9C0 3412
+         SELFHRM  1,2,3                * B9C0 3412
+         SELFHRNE 1,2,3                * B9C0 3712
+         SELFHRNZ 1,2,3                * B9C0 3712
+         SELFHRE  1,2,3                * B9C0 3812
+         SELFHRZ  1,2,3                * B9C0 3812
+         SELFHRNL 1,2,3                * B9C0 3B12
+         SELFHRNM 1,2,3                * B9C0 3B12
+         SELFHRNH 1,2,3                * B9C0 3D12
+         SELFHRNP 1,2,3                * B9C0 3D12
+         SELFHRNO 1,2,3                * B9C0 3E12
+*
+SELGR    SELGR    1,2,3,B'1010'        * B9E3 3A12
+         SELGRO   1,2,3                * B9E3 3112
+         SELGRH   1,2,3                * B9E3 3212
+         SELGRP   1,2,3                * B9E3 3212
+         SELGRL   1,2,3                * B9E3 3412
+         SELGRM   1,2,3                * B9E3 3412
+         SELGRNE  1,2,3                * B9E3 3712
+         SELGRNZ  1,2,3                * B9E3 3712
+         SELGRE   1,2,3                * B9E3 3812
+         SELGRZ   1,2,3                * B9E3 3812
+         SELGRNL  1,2,3                * B9E3 3B12
+         SELGRNM  1,2,3                * B9E3 3B12
+         SELGRNH  1,2,3                * B9E3 3D12
+         SELGRNP  1,2,3                * B9E3 3D12
+         SELGRNO  1,2,3                * B9E3 3E12
+*
+SELR     SELR     1,2,3,B'1010'        * B9F0 3A12
+         SELRO    1,2,3                * B9F0 3112
+         SELRH    1,2,3                * B9F0 3212
+         SELRP    1,2,3                * B9F0 3212
+         SELRL    1,2,3                * B9F0 3412
+         SELRM    1,2,3                * B9F0 3412
+         SELRNE   1,2,3                * B9F0 3712
+         SELRNZ   1,2,3                * B9F0 3712
+         SELRE    1,2,3                * B9F0 3812
+         SELRZ    1,2,3                * B9F0 3812
+         SELRNL   1,2,3                * B9F0 3B12
+         SELRNM   1,2,3                * B9F0 3B12
+         SELRNH   1,2,3                * B9F0 3D12
+         SELRNP   1,2,3                * B9F0 3D12
+         SELRNO   1,2,3                * B9F0 3E12
+*
          END

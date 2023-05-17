@@ -4103,9 +4103,9 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                        {op_type_oattribute[index2] = override_oattribute; // treat as an extended mnemonic #485
                         }                                                                     // #485
                     }
-                else
+                else                                                                      // #485
                    {op_type_oattribute[index2] = "A"; // this is an assembler operation code #485
-                    }
+                    }                                                                     // #485
                 //System.out.println("afk tz390 " + op_type_oattribute[index2] + " entry " + index2 + " --> " + opcode + "," + mnemonic + "," + optype + "," + tracetype + "," + entry + '.'); // #485
                 }
             index2++;
