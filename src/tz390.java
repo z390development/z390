@@ -2515,7 +2515,7 @@ public  class  tz390 {
             "B9A1=TPEI,14,144", // B9A1 RRE 14,144 TPEI R1,R2 RPI 2202 
             "B9AC=IRBM,14,144", // B9AC RRE 14,144 IRBM R1,R2 RPI 2202
 			"B9E0=LOCFHR,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
-            "B9E0m=LOCFHRm,39,153;F=", // B9E0 RRF LOCFHR R1,R2    RPI 2202 #485
+            "B9E0m=LOCFHRm,39,153;0=;F=", // B9E0 RRF LOCFHR R1,R2 RPI 2202 #485
 			//"B9E01=LOCFHRO,39,153", // B9E0 RRF LOCFHR R1,R2,M3  RPI 2202 #485
 			//"B9E02=LOCFHRH,39,153", // B9E0 RRF LOCFHR R1,R2     RPI 2202 #485
 			//"B9E02=LOCFHRP,39,153", // B9E0 RRF LOCFHR R1,R2     RPI 2202 #485
@@ -2568,7 +2568,7 @@ public  class  tz390 {
             "E33B=LZRF,18,180", // E33B RXYa LLZRF,R1,D2(X2,B2) Z15?
             "E33C=MGH,18,180", // E33C RXYa MGH R1,D2(X2,B2) RPI 2202
             "E347=BIC,18,180", // E347 RXYb BIC M1,D2(X2,B2) RPI 2202
-			"E347m=BIm,18,180", // E347 RXYb BIC M1,D2(X2,B2) RPI 2202
+			"E347m=BIm,18,180;0=", // E347 RXYb BIC M1,D2(X2,B2) RPI 2202 #485
             "E348=LLGFSG,18,180", // E348 RXYa LLGFSG R1,D2(X2,B2) RPI 2202
             "E349=STGSC,18,180", // E349 RXYa STGSC R1,D2(X2,B2) RPI 2202
             "E34C=LGG,18,180", // E34C RXYa LGG R1,D2(X2,B2) RPI 2202
@@ -4106,7 +4106,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                 else                                                                      // #485
                    {op_type_oattribute[index2] = "A"; // this is an assembler operation code #485
                     }                                                                     // #485
-                //System.out.println("afk tz390 " + op_type_oattribute[index2] + " entry " + index2 + " --> " + opcode + "," + mnemonic + "," + optype + "," + tracetype + "," + entry + '.'); // #485
+                System.out.println("afk tz390 " + op_type_oattribute[index2] + " entry " + index2 + " --> " + opcode + "," + mnemonic + "," + optype + "," + tracetype + "," + entry + '.'); // #485
                 }
             index2++;
             if (opcode.equals("--")) // Need to count directives separately!
@@ -4208,7 +4208,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                             }
                         op_type[index2]       = optype_nr;
                         op_type_oattribute[index2] = "E"; // this is an extended mnemonic operation code #485
-                        //System.out.println("afk tz390 E entry " + index2 + " --> " + op_code[index2] + "," + op_name[index2] + "," + op_type[index2]); // #485
+                        System.out.println("afk tz390 E entry " + index2 + " --> " + op_code[index2] + "," + op_name[index2] + "," + op_type[index2]); // #485
                         op_trace_type[index2] = tracetype_nr;
                         }
                     index2++;
