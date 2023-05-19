@@ -71,6 +71,10 @@ public class vz390 {
 	 * 24/01/19 RPI 1627 Make comments compatible with Javadoc. HS
 	 * 2021/09/30 DSH #245 add traceall display of vclr name search to help debug cics startup
      * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
+     * 2023-05-18 #476 vsam1/demo/bash/ksf1rpo2 abend trying to unload PATH NAMELIST
+     *            1. Correct three VCLR "control block" offset values to match VCLR DSECT.
+     *            2. Add initialization code for all "control blocks". Invoked in open and close.
+     *            3, Modify find_vclr() and fetch_vclr_fields() to correctly process "PATH NAMELIST".
 	 **************************************************************************
 	 *  Global variables                  (last RPI)
 	 **************************************************************************/
@@ -133,7 +137,7 @@ public class vz390 {
 	/**
 	 * VCLR - VSAM Cluster entry in VCDT catalog
 	 */
-	String cur_vcltr_id; // VCLRID C"VCLR"
+	String cur_vclr_id; // VCLRID C"VCLR"  is476
 
 	String cur_vclr_name; // VCLRNAME name of base cluster
 
@@ -193,12 +197,12 @@ public class vz390 {
 
 	int vclr_vx0a = 40; // VCLRVX0A addr optional VX0 DSNAME (Def NAME.VX0)
 
-	int vclr_aixt = 44; // VCLRAIXT total AIX with upgrade for cluster changes
+	int vclr_ci = 44; // VCLRCI optional CI size RPI 704                         is476
 
-	int vclr_aixa = 48; // VCLRAIXA addr of table with AIX upgrade catalog
+	int vclr_aixn = 48; // VCLRAIXN total AIX with upgrade for cluster changes   is476
+
+	int vclr_aixa = 52; // VCLRAIXA addr of table with AIX upgrade catalog       is476
 						// entries
-
-	int vclr_ci = 52; // VCLRCI optional CI size RPI 704
 
 	int vclr_len = 56; // VCLRLEN length of VCLR catalog entry
 
@@ -488,6 +492,12 @@ public class vz390 {
 	/**
 	 * RPL field offsets
 	 */
+	int rpl_id  = 0; // RPL ID           is476
+
+	int rpl_stype = 1; // RPL type VSAM  is476
+
+	int rpl_len = 2; // RPL length       is476
+
 	int rpl_ecb = 4; // RPL address ecb to post
 
 	int rpl_feedb = 8; // RPL feedback
@@ -520,7 +530,7 @@ public class vz390 {
 
 	int rpl_ksir = 76; // RPL current KSIR XRBA
 
-	int rpl_len = 84; // RPI 750
+	int rpl_length = 84; // RPI 750  is476
 
 	/**
 	 * VSAM RPL feedback codes 4 bytes (PDF,RC,CC,RNC)
@@ -957,6 +967,7 @@ public class vz390 {
 		} else {
 			open_acb_mod = true;
 		}
+		init_fields();    // initialize all VSAM control block fields is476
 		cur_acb_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 		fetch_acb_fields();
 		if (cur_acb_oflgs != 0) {
@@ -968,6 +979,7 @@ public class vz390 {
 				&& check_acb_macrf() // check VCLR/ACB options
 				&& open_acb_dcbs()) { // open DCB's for VES,VX0,VXN's
 			// set acb oflg open flag and in/out flags
+			cur_acb_oflgs |= acb_oflgs_open;                                  // is476
 			pz390.mem.put(cur_acb_addr + acb_oflgs,
 					(byte) (sz390.cur_open_opt | acb_oflgs_open));
 			pz390.mem.putInt(cur_acb_addr + acb_vclra, cur_acb_vclra);
@@ -994,6 +1006,7 @@ public class vz390 {
 
 		tot_acb_close++;
 		tot_vsam_oper++;
+		init_fields();    // initialize all VSAM control block fields is476
 		cur_acb_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 		fetch_acb_fields();
 		if ((cur_acb_oflgs & acb_oflgs_open) == 0) {
@@ -1009,7 +1022,133 @@ public class vz390 {
 		}
 	}
 
+	/**
+	 * Initialize VSAM "control block" fields
+	 */
+	private void init_fields() {                 // is476
+		init_vcdt_fields();
+		init_vclr_fields();
+		init_vaix_fields();
+		init_vpth_fields();
+		init_acb_fields();
+	}
+	
+	/**
+	 * Initialize VCDT fields
+	 */
+	private void init_vcdt_fields() {            // is476
+		cur_vcdt_addr = 0;
+		
+		cur_vcdt_id  = null;
+		cur_vcdt_name = null;
+		cur_vcdt_clrt = 0;
+		// cur_vcdt_clra = 0;
+		cur_vcdt_aixt = 0;
+		// cur_vcdt_aixa = 0;
+		cur_vcdt_ptht = 0;
+		cur_vcdt_ptha = 0;
+		cur_vcdt_dcba = 0;
+	}
 
+	/**
+	 * Initialize VCLR fields
+	 */
+	private void init_vclr_fields() {            // is476
+		//cur_vclr_addr = 0;
+		
+		cur_vclr_id = null;
+		cur_vcdt_name = null;
+		cur_vclr_type = null;
+		cur_vclr_flag = 0;
+		cur_vclr_lavg = 0;
+		cur_vclr_lrec = 0;
+		cur_vclr_klen = 0;
+		cur_vclr_koff = 0;
+		cur_vclr_vesa = 0;
+		cur_vclr_vx0a = 0;
+		//cur_vclr_ci = 0;
+		cur_vclr_aixn = 0;
+		cur_vclr_aixa = 0;
+	}
+	
+	/**
+	 * Initialize VAIX fields
+	 */
+	private void init_vaix_fields() {            // is476
+		cur_vaix_addr = 0;
+		
+		cur_vaix_id = null;
+		cur_vaix_name = null;
+		cur_vaix_reln = null;
+		cur_vaix_flag = 0;
+		cur_vaix_klen = 0;
+		cur_vaix_koff = 0;
+		cur_vaix_vxna = 0;
+		cur_vaix_rela = 0;
+	}
+
+	/**
+	 * Initialize VPTH fields
+	 */
+	private void init_vpth_fields() {            // is476
+		//cur_vpth_addr = 0;
+		
+		cur_vpth_id = null;
+		cur_vpth_name = null;
+		cur_vpth_entn = null;
+		cur_vpth_flag = 0;
+		cur_vpth_enta = 0;
+	}
+
+	/**
+	 * Initialize ACB fields
+	 */
+	private void init_acb_fields() {             // is476
+		cur_acb_addr = 0;
+		
+		//cur_acb_id = 0;
+		cur_acb_stype = 0;
+		cur_acb_len = 0;
+		cur_acb_ambl = 0;
+		cur_acb_ifr = 0;
+		cur_acb_macrf = 0;
+		cur_acb_oflgs = 0;
+		//cur_acb_ddnam = null;
+		//cur_acb_dsnam = 0;
+		cur_acb_vclrn = null;
+		cur_acb_vclra = 0;
+		cur_acb_vaixa = 0;
+		cur_acb_dcbt = 0;
+		cur_acb_dcba = 0;
+		cur_acb_openc = 0;
+	}
+
+	/**
+	 * Initialzie RPL fields
+	 */
+	private void init_rpl_fields() {             // is476
+		cur_rpl_addr = 0;
+		
+		//cur_rpl_id = 0;
+		//cur_rpl_stype = 0;
+		//cur_rpl_len = 0;
+		cur_rpl_ecb = 0;
+		cur_rpl_feedb = 0;
+		cur_rpl_lkey = 0;
+		//cur_rpl_acb = 0;
+		cur_rpl_area = 0;
+		cur_rpl_arg = 0;
+		cur_rpl_opt = 0;
+		cur_rpl_next = 0;
+		cur_rpl_lrec = 0;
+		cur_rpl_lxrba = 0;
+		cur_rpl_cxrba = 0;
+		cur_rpl_openc = 0;
+		cur_rpl_larea = 0;
+		cur_rpl_flag = 0;
+		cur_rpl_ksit = 0;
+		cur_rpl_ksir = 0;
+	}
 
     /**
      * load VCDT using ACB DSNAME or DDNAME
@@ -1068,7 +1207,7 @@ public class vz390 {
 					8, false);
 			if (tz390.opt_traceall) { // DSH #245 to help debug cics startup
 			   tz390.put_trace("FIND VCLR = +VCB INDEX=" + cur_vclr_name
-                            + "MATCHING VCDT ENTRY =" + sz390.load_vcdt_entry); 
+                            + " MATCHING VCDT ENTRY =" + sz390.load_vcdt_entry); 
 			}			   
 			if (sz390.load_vcdt_entry.equals(cur_vclr_name)) {
 				pz390.mem.putInt(cur_acb_addr + acb_vclra, cur_acb_vclra);
@@ -1085,32 +1224,21 @@ public class vz390 {
 			if (sz390.load_vcdt_entry.equals(sz390.get_ascii_string(
 					cur_vcdt_ptha + vpth_name, 8, false))) {
 				cur_vpth_flag = pz390.mem.getInt(cur_vcdt_ptha + vpth_flag); // RPI 865 
-				cur_vaix_addr = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta); // RPI 865 
 				if ((cur_vpth_flag & vpth_flag_aixp) != 0) {
 					cur_acb_vaixa = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta);
-					cur_acb_oflgs = (byte) (cur_acb_oflgs | acb_oflgs_aixp); // use
-																				// aix
-																				// path
-																				// access
-																				// vs
-																				// primary
+					cur_acb_oflgs |= acb_oflgs_aixp; // use aix path access vs primary  is476
 					cur_acb_vclra = pz390.mem.getInt(cur_acb_vaixa + vaix_rela);
 				} else {
 					cur_acb_vclra = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta); // RPI 865 
 					cur_acb_vaixa = 0;
 				}
+				cur_vaix_addr = cur_acb_vaixa;  // is476
 				pz390.mem.putInt(cur_acb_addr + acb_vclra, cur_acb_vclra);
 				pz390.mem.putInt(cur_acb_addr + acb_vaixa, cur_acb_vaixa);
 				if ((cur_vpth_flag & vpth_flag_aixu) != 0) {
-					cur_acb_oflgs = (byte) (cur_acb_oflgs | acb_oflgs_aixp); // allow
-																				// aix
-																				// ugrades
-																				// if
-																				// any
+					cur_acb_oflgs |= acb_oflgs_aixu; // allow aix upgrades if any  is476
 				}
-				pz390.mem.putInt(cur_acb_addr + acb_vclra, cur_acb_vclra);
 				fetch_vclr_fields();
-				pz390.mem.putInt(cur_acb_addr + acb_vaixa, cur_vaix_addr);
 				return true;
 			}
 			cur_vcdt_ptha = cur_vcdt_ptha + vpth_len;
@@ -1160,7 +1288,7 @@ public class vz390 {
 
 		cur_vclr_flag = pz390.mem.getInt(cur_acb_vclra + vclr_flag);
 		cur_vclr_lrec = pz390.mem.getInt(cur_acb_vclra + vclr_lrec);
-		if (cur_vcdt_ptha != 0){  // RPI 865 
+		if (cur_vcdt_ptha != 0 && (cur_vpth_flag & vpth_flag_aixp) != 0){  // RPI 865 is476 
 			cur_vclr_klen = pz390.mem.getInt(cur_vaix_addr + vaix_klen);
 		} else {
 			cur_vclr_klen = pz390.mem.getInt(cur_acb_vclra + vclr_klen);
