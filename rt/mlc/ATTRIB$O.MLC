@@ -28,17 +28,37 @@ TESTOT1  CSECT
 * S Macro definition found in library
 * U Undefined, unknown, unassigned, or deleted operation code
 *
-*        SHOWOP PUSH                   * A
-*        SHOWOP BCR                    * O
-*        SHOWOP BER                    * E
-*        SHOWOP BC                     * O
-*        SHOWOP BE                     * E
-*        SHOWOP JE                     * E
-*        SHOWOP BRC                    * O
-*        SHOWOP SRNM                   * O
-*        SHOWOP SHOWOP                 * M
-*        SHOWOP SAVE                   * S
-*        SHOWOP XXXXX                  * U
+         SHOWOP PUSH                   * A
+         SHOWOP BCR                    * O
+         SHOWOP BER                    * E
+         SHOWOP BC                     * O
+         SHOWOP BE                     * E
+         SHOWOP JE                     * E
+         SHOWOP BRC                    * O
+         SHOWOP SRNM                   * O
+         SHOWOP SHOWOP                 * M
+         SHOWOP SAVE                   * S
+         SHOWOP XXXXX                  * U
+*
+APUSH    OPSYN  PUSH
+PUSH     OPSYN  
+         SHOWOP APUSH                  * A
+         SHOWOP PUSH                   * U
+*
+ALT_BCR  OPSYN  BCR
+BCR      OPSYN  
+         SHOWOP ALT_BCR                * O
+         SHOWOP BCR                    * U
+*
+ALT_BER  OPSYN  BER
+BER      OPSYN  
+         SHOWOP ALT_BER                * E
+         SHOWOP BER                    * U
+*
+SHOWTYPE OPSYN  SHOWOP
+SHOWOP   OPSYN  
+         SHOWTYPE SHOWTYPE             * M
+         SHOWTYPE SHOWOP               * U
 *
          XR    15,15                   * Set RC=0
          BR    14                      * Return

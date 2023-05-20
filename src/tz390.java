@@ -4106,7 +4106,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                 else                                                                      // #485
                    {op_type_oattribute[index2] = "A"; // this is an assembler operation code #485
                     }                                                                     // #485
-                System.out.println("afk tz390 " + op_type_oattribute[index2] + " entry " + index2 + " --> " + opcode + "," + mnemonic + "," + optype + "," + tracetype + "," + entry + '.'); // #485
+                //System.out.println("afk tz390 " + op_type_oattribute[index2] + " entry " + index2 + " --> " + opcode + "," + mnemonic + "," + optype + "," + tracetype + "," + entry + '.'); // #485
                 }
             index2++;
             if (opcode.equals("--")) // Need to count directives separately!
@@ -4120,11 +4120,6 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
             override_mask2="";
             override_mnemon2="";
             override_short="";
-            // extract and verify override for *Short (if present)                   #485
-            // if (entry.equals("*Short")) // only if entry contains *Short override #485
-            //   {override_short=entry;                                              #485
-            //    entry="";                                                          #485
-            //    }                                                                  #485
             // extract and verify first override (if present)
             if (entry.equals("") == false) // only if entry contains override(s)
                {i=entry.indexOf(";");     // more overrides?
@@ -4208,7 +4203,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                             }
                         op_type[index2]       = optype_nr;
                         op_type_oattribute[index2] = "E"; // this is an extended mnemonic operation code #485
-                        System.out.println("afk tz390 E entry " + index2 + " --> " + op_code[index2] + "," + op_name[index2] + "," + op_type[index2]); // #485
+                        //System.out.println("afk tz390 E entry " + index2 + " --> " + op_code[index2] + "," + op_name[index2] + "," + op_type[index2]); // #485
                         op_trace_type[index2] = tracetype_nr;
                         }
                     index2++;
