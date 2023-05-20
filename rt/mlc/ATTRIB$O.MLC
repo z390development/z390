@@ -60,6 +60,11 @@ SHOWOP   OPSYN
          SHOWTYPE SHOWTYPE             * M
          SHOWTYPE SHOWOP               * U
 *
+SAVREGS  OPSYN  SAVE
+SAVE     OPSYN  
+         SHOWTYPE SAVREGS              * S
+         SHOWTYPE SAVE                 * U
+*
          XR    15,15                   * Set RC=0
          BR    14                      * Return
 *
