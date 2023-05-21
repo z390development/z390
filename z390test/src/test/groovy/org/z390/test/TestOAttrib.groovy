@@ -1,0 +1,35 @@
+package org.z390.test
+
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions
+
+
+class TestOAttrib extends z390Test {
+
+    @Test
+    void test_OAttrib() {
+        this.printOutput = true
+        int rc = this.asm(basePath('rt', 'mlc', 'ATTRIB$O'))
+        this.printOutput()
+        assert rc == 0
+
+        // Check that expected OpCodes for each instruction are generated using PRN data
+        // Comment at end of assembler line indicates expected opcode output.
+        // Comment must be in format of OPC=<expected OpCode> - no spaces in opcode
+        // LOCGR    LOCGR    1,2,B'1010'          * OPC=B9E2A012
+        // In this example, assertion will check that OpCode B9E2A012 is assigned to this instruction
+
+        var prnData = (String)this.fileData['PRN']
+        var opcodeRegex = /^[A-F0-9]{6} (?<actual>[A-F0-9]{4,12})\s*\(\d*\\/\d*\)\d{1,6} .{3,7}\s*(?<code>[A-Z]{3,8}).*\* OPC=(?<expected>[swA-F0-9]{4,12})$/
+        var linesToTest = prnData.readLines().grep( ~opcodeRegex )
+        println("Found ${linesToTest.size()} opcode tests")
+        linesToTest.each {
+            var matcher = it =~ opcodeRegex
+            matcher.matches()
+            Assertions.assertEquals(
+                    matcher.group("expected"),
+                    matcher.group("actual"),
+                    "Check that ${matcher.group("code")} opcode is ${matcher.group("expected")}")
+        }
+    }
+}

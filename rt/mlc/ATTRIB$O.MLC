@@ -70,116 +70,116 @@ SAVE     OPSYN
 *
 * Validate assembly of mnemonics with changed definitions
 *
-CLT      CLT      1,B'1010',7(5)       * EB1A 5007 0023
-         CLTH     1,7(5)               * EB12 5007 0023
-         CLTL     1,7(5)               * EB14 5007 0023
-         CLTNE    1,7(5)               * EB16 5007 0023
-         CLTE     1,7(5)               * EB18 5007 0023
-         CLTNL    1,7(5)               * EB1A 5007 0023
-         CLTNH    1,7(5)               * EB1C 5007 0023
+CLT      CLT      1,B'1010',7(5)       * OPC=EB1A50070023
+         CLTH     1,7(5)               * OPC=EB1250070023
+         CLTL     1,7(5)               * OPC=EB1450070023
+         CLTNE    1,7(5)               * OPC=EB1650070023
+         CLTE     1,7(5)               * OPC=EB1850070023
+         CLTNL    1,7(5)               * OPC=EB1A50070023
+         CLTNH    1,7(5)               * OPC=EB1C50070023
 *
-CLGT     CLGT     1,B'1010',7(5)       * EB1A 5007 002B
-         CLGTH    1,7(5)               * EB12 5007 002B
-         CLGTL    1,7(5)               * EB14 5007 002B
-         CLGTNE   1,7(5)               * EB16 5007 002B
-         CLGTE    1,7(5)               * EB18 5007 002B
-         CLGTNL   1,7(5)               * EB1A 5007 002B
-         CLGTNH   1,7(5)               * EB1C 5007 002B
+CLGT     CLGT     1,B'1010',7(5)       * OPC=EB1A5007002B
+         CLGTH    1,7(5)               * OPC=EB125007002B
+         CLGTL    1,7(5)               * OPC=EB145007002B
+         CLGTNE   1,7(5)               * OPC=EB165007002B
+         CLGTE    1,7(5)               * OPC=EB185007002B
+         CLGTNL   1,7(5)               * OPC=EB1A5007002B
+         CLGTNH   1,7(5)               * OPC=EB1C5007002B
 *
-LOCFHR   LOCFHR   1,2,B'1010'          * B9E0 A012
-         LOCFHRO  1,2                  * B9E0 1012
-         LOCFHRH  1,2                  * B9E0 2012
-         LOCFHRP  1,2                  * B9E0 2012
-         LOCFHRL  1,2                  * B9E0 4012
-         LOCFHRM  1,2                  * B9E0 4012
-         LOCFHRNE 1,2                  * B9E0 7012
-         LOCFHRNZ 1,2                  * B9E0 7012
-         LOCFHRE  1,2                  * B9E0 8012
-         LOCFHRZ  1,2                  * B9E0 8012
-         LOCFHRNL 1,2                  * B9E0 B012
-         LOCFHRNM 1,2                  * B9E0 B012
-         LOCFHRNH 1,2                  * B9E0 D012
-         LOCFHRNP 1,2                  * B9E0 D012
-         LOCFHRNO 1,2                  * B9E0 E012
+LOCFHR   LOCFHR   1,2,B'1010'          * OPC=B9E0A012
+         LOCFHRO  1,2                  * OPC=B9E01012
+         LOCFHRH  1,2                  * OPC=B9E02012
+         LOCFHRP  1,2                  * OPC=B9E02012
+         LOCFHRL  1,2                  * OPC=B9E04012
+         LOCFHRM  1,2                  * OPC=B9E04012
+         LOCFHRNE 1,2                  * OPC=B9E07012
+         LOCFHRNZ 1,2                  * OPC=B9E07012
+         LOCFHRE  1,2                  * OPC=B9E08012
+         LOCFHRZ  1,2                  * OPC=B9E08012
+         LOCFHRNL 1,2                  * OPC=B9E0B012
+         LOCFHRNM 1,2                  * OPC=B9E0B012
+         LOCFHRNH 1,2                  * OPC=B9E0D012
+         LOCFHRNP 1,2                  * OPC=B9E0D012
+         LOCFHRNO 1,2                  * OPC=B9E0E012
 *
-LOCGR    LOCGR    1,2,B'1010'          * B9E2 A012
-         LOCGRO   1,2                  * B9E2 1012
-         LOCGRH   1,2                  * B9E2 2012
-         LOCGRP   1,2                  * B9E2 2012
-         LOCGRL   1,2                  * B9E2 4012
-         LOCGRM   1,2                  * B9E2 4012
-         LOCGRNE  1,2                  * B9E2 7012
-         LOCGRNZ  1,2                  * B9E2 7012
-         LOCGRE   1,2                  * B9E2 8012
-         LOCGRZ   1,2                  * B9E2 8012
-         LOCGRNL  1,2                  * B9E2 B012
-         LOCGRNM  1,2                  * B9E2 B012
-         LOCGRNH  1,2                  * B9E2 D012
-         LOCGRNP  1,2                  * B9E2 D012
-         LOCGRNO  1,2                  * B9E2 E012
+LOCGR    LOCGR    1,2,B'1010'          * OPC=B9E2A012
+         LOCGRO   1,2                  * OPC=B9E21012
+         LOCGRH   1,2                  * OPC=B9E22012
+         LOCGRP   1,2                  * OPC=B9E22012
+         LOCGRL   1,2                  * OPC=B9E24012
+         LOCGRM   1,2                  * OPC=B9E24012
+         LOCGRNE  1,2                  * OPC=B9E27012
+         LOCGRNZ  1,2                  * OPC=B9E27012
+         LOCGRE   1,2                  * OPC=B9E28012
+         LOCGRZ   1,2                  * OPC=B9E28012
+         LOCGRNL  1,2                  * OPC=B9E2B012
+         LOCGRNM  1,2                  * OPC=B9E2B012
+         LOCGRNH  1,2                  * OPC=B9E2D012
+         LOCGRNP  1,2                  * OPC=B9E2D012
+         LOCGRNO  1,2                  * OPC=B9E2E012
 *
-LOCR     LOCR     1,2,B'1010'          * B9F2 A012
-         LOCRO    1,2                  * B9F2 1012
-         LOCRH    1,2                  * B9F2 2012
-         LOCRP    1,2                  * B9F2 2012
-         LOCRL    1,2                  * B9F2 4012
-         LOCRM    1,2                  * B9F2 4012
-         LOCRNE   1,2                  * B9F2 7012
-         LOCRNZ   1,2                  * B9F2 7012
-         LOCRE    1,2                  * B9F2 8012
-         LOCRZ    1,2                  * B9F2 8012
-         LOCRNL   1,2                  * B9F2 B012
-         LOCRNM   1,2                  * B9F2 B012
-         LOCRNH   1,2                  * B9F2 D012
-         LOCRNP   1,2                  * B9F2 D012
-         LOCRNO   1,2                  * B9F2 E012
+LOCR     LOCR     1,2,B'1010'          * OPC=B9F2A012
+         LOCRO    1,2                  * OPC=B9F21012
+         LOCRH    1,2                  * OPC=B9F22012
+         LOCRP    1,2                  * OPC=B9F22012
+         LOCRL    1,2                  * OPC=B9F24012
+         LOCRM    1,2                  * OPC=B9F24012
+         LOCRNE   1,2                  * OPC=B9F27012
+         LOCRNZ   1,2                  * OPC=B9F27012
+         LOCRE    1,2                  * OPC=B9F28012
+         LOCRZ    1,2                  * OPC=B9F28012
+         LOCRNL   1,2                  * OPC=B9F2B012
+         LOCRNM   1,2                  * OPC=B9F2B012
+         LOCRNH   1,2                  * OPC=B9F2D012
+         LOCRNP   1,2                  * OPC=B9F2D012
+         LOCRNO   1,2                  * OPC=B9F2E012
 *
-SELFHR   SELFHR   1,2,3,B'1010'        * B9C0 3A12
-         SELFHRO  1,2,3                * B9C0 3112
-         SELFHRH  1,2,3                * B9C0 3212
-         SELFHRP  1,2,3                * B9C0 3212
-         SELFHRL  1,2,3                * B9C0 3412
-         SELFHRM  1,2,3                * B9C0 3412
-         SELFHRNE 1,2,3                * B9C0 3712
-         SELFHRNZ 1,2,3                * B9C0 3712
-         SELFHRE  1,2,3                * B9C0 3812
-         SELFHRZ  1,2,3                * B9C0 3812
-         SELFHRNL 1,2,3                * B9C0 3B12
-         SELFHRNM 1,2,3                * B9C0 3B12
-         SELFHRNH 1,2,3                * B9C0 3D12
-         SELFHRNP 1,2,3                * B9C0 3D12
-         SELFHRNO 1,2,3                * B9C0 3E12
+SELFHR   SELFHR   1,2,3,B'1010'        * OPC=B9C03A12
+         SELFHRO  1,2,3                * OPC=B9C03112
+         SELFHRH  1,2,3                * OPC=B9C03212
+         SELFHRP  1,2,3                * OPC=B9C03212
+         SELFHRL  1,2,3                * OPC=B9C03412
+         SELFHRM  1,2,3                * OPC=B9C03412
+         SELFHRNE 1,2,3                * OPC=B9C03712
+         SELFHRNZ 1,2,3                * OPC=B9C03712
+         SELFHRE  1,2,3                * OPC=B9C03812
+         SELFHRZ  1,2,3                * OPC=B9C03812
+         SELFHRNL 1,2,3                * OPC=B9C03B12
+         SELFHRNM 1,2,3                * OPC=B9C03B12
+         SELFHRNH 1,2,3                * OPC=B9C03D12
+         SELFHRNP 1,2,3                * OPC=B9C03D12
+         SELFHRNO 1,2,3                * OPC=B9C03E12
 *
-SELGR    SELGR    1,2,3,B'1010'        * B9E3 3A12
-         SELGRO   1,2,3                * B9E3 3112
-         SELGRH   1,2,3                * B9E3 3212
-         SELGRP   1,2,3                * B9E3 3212
-         SELGRL   1,2,3                * B9E3 3412
-         SELGRM   1,2,3                * B9E3 3412
-         SELGRNE  1,2,3                * B9E3 3712
-         SELGRNZ  1,2,3                * B9E3 3712
-         SELGRE   1,2,3                * B9E3 3812
-         SELGRZ   1,2,3                * B9E3 3812
-         SELGRNL  1,2,3                * B9E3 3B12
-         SELGRNM  1,2,3                * B9E3 3B12
-         SELGRNH  1,2,3                * B9E3 3D12
-         SELGRNP  1,2,3                * B9E3 3D12
-         SELGRNO  1,2,3                * B9E3 3E12
+SELGR    SELGR    1,2,3,B'1010'        * OPC=B9E33A12
+         SELGRO   1,2,3                * OPC=B9E33112
+         SELGRH   1,2,3                * OPC=B9E33212
+         SELGRP   1,2,3                * OPC=B9E33212
+         SELGRL   1,2,3                * OPC=B9E33412
+         SELGRM   1,2,3                * OPC=B9E33412
+         SELGRNE  1,2,3                * OPC=B9E33712
+         SELGRNZ  1,2,3                * OPC=B9E33712
+         SELGRE   1,2,3                * OPC=B9E33812
+         SELGRZ   1,2,3                * OPC=B9E33812
+         SELGRNL  1,2,3                * OPC=B9E33B12
+         SELGRNM  1,2,3                * OPC=B9E33B12
+         SELGRNH  1,2,3                * OPC=B9E33D12
+         SELGRNP  1,2,3                * OPC=B9E33D12
+         SELGRNO  1,2,3                * OPC=B9E33E12
 *
-SELR     SELR     1,2,3,B'1010'        * B9F0 3A12
-         SELRO    1,2,3                * B9F0 3112
-         SELRH    1,2,3                * B9F0 3212
-         SELRP    1,2,3                * B9F0 3212
-         SELRL    1,2,3                * B9F0 3412
-         SELRM    1,2,3                * B9F0 3412
-         SELRNE   1,2,3                * B9F0 3712
-         SELRNZ   1,2,3                * B9F0 3712
-         SELRE    1,2,3                * B9F0 3812
-         SELRZ    1,2,3                * B9F0 3812
-         SELRNL   1,2,3                * B9F0 3B12
-         SELRNM   1,2,3                * B9F0 3B12
-         SELRNH   1,2,3                * B9F0 3D12
-         SELRNP   1,2,3                * B9F0 3D12
-         SELRNO   1,2,3                * B9F0 3E12
+SELR     SELR     1,2,3,B'1010'        * OPC=B9F03A12
+         SELRO    1,2,3                * OPC=B9F03112
+         SELRH    1,2,3                * OPC=B9F03212
+         SELRP    1,2,3                * OPC=B9F03212
+         SELRL    1,2,3                * OPC=B9F03412
+         SELRM    1,2,3                * OPC=B9F03412
+         SELRNE   1,2,3                * OPC=B9F03712
+         SELRNZ   1,2,3                * OPC=B9F03712
+         SELRE    1,2,3                * OPC=B9F03812
+         SELRZ    1,2,3                * OPC=B9F03812
+         SELRNL   1,2,3                * OPC=B9F03B12
+         SELRNM   1,2,3                * OPC=B9F03B12
+         SELRNH   1,2,3                * OPC=B9F03D12
+         SELRNP   1,2,3                * OPC=B9F03D12
+         SELRNO   1,2,3                * OPC=B9F03E12
 *
          END
