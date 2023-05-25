@@ -28,6 +28,8 @@ TESTOT1  CSECT
 * S Macro definition found in library
 * U Undefined, unknown, unassigned, or deleted operation code
 *
+* In the lines below, the expected value is defined in the comments
+* This value is checked/validated in the groovy test script
          SHOWOP PUSH                   * A
          SHOWOP BCR                    * O
          SHOWOP BER                    * E
@@ -40,28 +42,28 @@ TESTOT1  CSECT
          SHOWOP SAVE                   * S
          SHOWOP XXXXX                  * U
 *
-APUSH    OPSYN  PUSH
-PUSH     OPSYN  
+APUSH    OPSYN  PUSH                   * Define APUSH
+PUSH     OPSYN                         * Undefine PUSH
          SHOWOP APUSH                  * A
          SHOWOP PUSH                   * U
 *
-ALT_BCR  OPSYN  BCR
-BCR      OPSYN  
+ALT_BCR  OPSYN  BCR                    * Define ALT_BCR
+BCR      OPSYN                         * Undefine BCR
          SHOWOP ALT_BCR                * O
          SHOWOP BCR                    * U
 *
-ALT_BER  OPSYN  BER
-BER      OPSYN  
+ALT_BER  OPSYN  BER                    * Define ALT_BER
+BER      OPSYN                         * Undefine BER
          SHOWOP ALT_BER                * E
          SHOWOP BER                    * U
 *
-SHOWTYPE OPSYN  SHOWOP
-SHOWOP   OPSYN  
+SHOWTYPE OPSYN  SHOWOP                 * Define SHOWTYPE
+SHOWOP   OPSYN                         * Undefine SHOWOP
          SHOWTYPE SHOWTYPE             * M
          SHOWTYPE SHOWOP               * U
 *
-SAVREGS  OPSYN  SAVE
-SAVE     OPSYN  
+SAVREGS  OPSYN  SAVE                   * Define SAVREGS
+SAVE     OPSYN                         * Undefine SAVE
          SHOWTYPE SAVREGS              * S
          SHOWTYPE SAVE                 * U
 *

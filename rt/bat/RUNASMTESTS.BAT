@@ -27,6 +27,7 @@ call bat\asmlg %z_TraceMode% rt\mlc\TESTDC1  trace sysmac(mac) noloadhigh optabl
 call bat\asmlg %z_TraceMode% rt\mlc\TESTASC1 trace sysmac(mac) noloadhigh optable(z390) ASCII || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC2  trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC3  trace sysmac(mac) noloadhigh optable(z390)       || goto error
+call bat\asm   %z_TraceMode% rt\mlc\ATTRIB$O trace sysmac(mac)                                || goto error
 call rt\bat\ZOPCHECK %z_TraceMode%                                                            || goto error
 
 rem -- all checks passed without issue

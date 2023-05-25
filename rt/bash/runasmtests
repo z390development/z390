@@ -24,6 +24,7 @@ bash/asmlg rt/mlc/TESTDC1  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTASC1 ASCII trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC2  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC3  trace noloadhigh $sysmac $optable
+bash/asm   rt/mlc/ATTRIB\$O trace noloadhigh $sysmac
 rt/bash/zopcheck
 
 # if we get here, there were no errors
