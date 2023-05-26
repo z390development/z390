@@ -6,10 +6,12 @@ import org.junit.jupiter.api.Assertions
 
 class TestOAttrib extends z390Test {
 
+    var options = ["SYSMAC(${basePath("mac")})"]
+
     @Test
     void test_OAttrib() {
         this.printOutput = true
-        int rc = this.asm(basePath('rt', 'mlc', 'ATTRIB$O'))
+        int rc = this.asm(basePath('rt', 'mlc', 'ATTRIB$O'), *options)
         this.printOutput()
         assert rc == 0
 
