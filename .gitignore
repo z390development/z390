@@ -20,6 +20,9 @@ z390.properties
 mac/spm/*
 !mac/spm/README.md
 
+# work files created for codepage tests
+tests/codepage/mlcwork/*
+
 # Java compiler output stuff
 **/*.[jJ][aA][rR]
 **/*.[eEe][xX][eE]
