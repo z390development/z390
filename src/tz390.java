@@ -8022,12 +8022,15 @@ public void init_codepage(String codepage_parm){
      * @param charsetName the name of the Charset to use. If null or empty string,
                           no Charset is used.
      * @return the BufferedWriter
+     * @throws IOException (FileWriter) if {@code file} exists but
+     *         is a directory; does not exist but cannot be created;
+     *         or cannot be opened for any other reason
      * @throws FileNotFoundException if {@code file} does not exist.
      * @throws UnsupportedEncodingException if {@code charsetName} encoding
      *         is not supported.
      */
     public BufferedWriter getWriterForCharset(File file, String charsetName)
-            throws FileNotFoundException, UnsupportedEncodingException
+            throws FileNotFoundException, UnsupportedEncodingException, IOException
     {
         BufferedWriter bw = null;
         if (charsetName != null && charsetName.length() > 0)
