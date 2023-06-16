@@ -12,7 +12,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-7.3.6">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-7.3.6">
     
     
       
@@ -1747,6 +1747,12 @@ parentheses, then that parameter should be quoted. </p>
 <td>Generate VSAM cache buffer for improving VSAM performance by storing most recently accessed records and indexes.</td>
 </tr>
 <tr>
+<td>WRITENONPRINTABLE</td>
+<td>MA</td>
+<td>NO</td>
+<td>Write non-printable characters to PRN, BAL and PCH files. The default value NOWRITENONPRINTABLE replaces all non-printable characters with the '.' character. This avoids issues caused by writing control characters such as 0x0A (Line Feed) or 0x0D (Carriage Return).</td>
+</tr>
+<tr>
 <td>XREF</td>
 <td>A</td>
 <td>YES</td>
@@ -1849,7 +1855,7 @@ parentheses, then that parameter should be quoted. </p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-13-g40ad038"}</script>
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-14-g4f398d3"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.b1047164.min.js"></script>
