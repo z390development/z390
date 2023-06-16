@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# runcodepagetests: run CODEPAGE related tests
+#                   1. EBCDIC values for ISO-8859-1 A0-FF
+#                        inline DC statements
+#                        COPY DC statements
+#                        AREAD from DAT file of values
+#                        AREAD from PUNCH generated file of DC statements
+#                   2. all 256 EBCDIC characters created using X2C
+#                   3. no scraggly lines in SNAP output of all 256 EBCDIC chars
+#                   4. non-printable chars replaced by '.' in PRN, BAL, PCH
+
+# debug flag; 0=no debug, 1=debug
+debug=1
+
+cd $(dirname $0)    # set to directory of script
+cd ../..            # up two directories; the z390 directory
+
+codepagedir=tests/codepage         # tests/codepage
+javadir=${codepagedir}/java        # tests/codepage/java
+workdir=${codepagedir}/mlcwork     # tests/codepage/mlcwork
+javapgm=CreateIssue451TestFiles    # java program name
+
+mkdir -p ${workdir}                # create work directory if it does not exist
+
+pwd
+echo "javadir=${javadir}"
+echo "workdir=${workdir}"
+echo "javapgm=${javapgm}.java"
+
+if [ $debug -eq 1 ]; then echo "Compile program that creates test files ..."; fi
+javac ${javadir}/${javapgm}.java
+rc=$?
+if [ $debug -eq 1 ]; then echo "javac rc=$rc"; fi
+if [ $rc -ne 0 ]; then
+    echo "Error compiling ${javapgm}.java; rc=$rc"
+    exit $rc
+fi
+
+# empty work directory
+rm -f ${workdir}/*
+
+if [ $debug -eq 1 ]; then echo "Create test program and data ..."; fi
+# create T1#451.CPY, T1#451.DAT, T1#451.MLC and T1P#451.MLC
+java -cp ${javadir} ${javapgm} ${workdir} ${javadir}
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Error creating test files; rc=$rc"
+    exit $rc
+fi
+
+set -e              # exit on all errors
+
+if [ $debug -eq 1 ]; then echo "Run codepage tests ... "; fi
+
+# build PUNCH load module and test program load module
+bash/asml ${workdir}/T1P#451 bal $1 $2 $3 $4 $5
+bash/asml ${workdir}/T1#451 bal $1 $2 $3 $4 $5
+
+# run the test program
+bash/exec ${workdir}/T1#451 $1 $2 $3 $4 $5
+
+# get number of SNAP output lines that match search criteria
+x=$(grep '^ 00.\{62\}\*$' ${workdir}/T1#451.LOG | wc -l)
+
+if [ $debug -eq 1 ]; then echo "after grep x=$x"; fi
+# if all 16 lines of SNAP output have same length and end with "*"
+if [ $x -eq 16 ]; then
+    echo "No scraggly lines in the SNAP output"
+    rc=0
+else
+    echo "Error: There are scraggly lines in the SNAP output"
+    rc=8
+fi
+
+echo "Verify ${workdir}/T1P#451.BAL and ${workdir}/T1#451.BAL look okay"
+
+exit $rc

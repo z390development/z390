@@ -21,10 +21,16 @@ import java.awt.GraphicsEnvironment;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
@@ -316,6 +322,8 @@ public  class  tz390 {
 	* 2022-01-22 DSH #335 acall - restored APARM used to set &(acall)(n) just before aentry
          * 2022-03-26 DSH #375 change APARM opcode directive from APARM to ACALLPRM
     * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
+    * 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
+    *                     replace non-printable with '.' in PRN, BAL, PCH
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -420,6 +428,7 @@ public  class  tz390 {
     int     opt_vsectsize= 64;    // vector section size RPI VF01
     int     opt_vpartsums= 16;    // vector partial sums number RPI VF01
     boolean opt_warn     = true;  // issue zcobol warnings RPI 986
+    boolean opt_writenonprintable  = false; // write non-printable characters in PRN, BAL, PCH files #451
     boolean opt_xref     = true;  // cross reference symbols
     boolean opt_zstrmac  = true;  // allow ZSTRMAC extensions
     int     opt_zvsam    = 1;     // Default to Don's zVSAM implementation RPI 1598 RPI 2226
@@ -650,6 +659,7 @@ public  class  tz390 {
         "................" + //D0
         "................" + //E0
         "................";  //F0
+        String ascii_dump_table = ascii_table; // for dump storage prt char portion
         String ebcdic_table =
         "................" + //00
         "................" + //10
@@ -667,6 +677,7 @@ public  class  tz390 {
         "}JKLMNOPQR......" + //D0
         "\\.STUVWXYZ......" + //E0 with \
         "0123456789......";   //F0
+        String ebcdic_dump_table = ebcdic_table; // for dump storage prt char portion
         byte[] ascii_to_ebcdic = new byte[256];
         String ascii_to_ebcdic_hex = 
                         "00010203372D2E2F1605250B0C0D0E0F" + //00 ................ 
@@ -704,6 +715,73 @@ public  class  tz390 {
                         "004A4B4C4D4E4F505152000000000000" + //D0 .JKLMNOPQR...... 
                         "5C00535455565758595A000000000000" + //E0 \.STUVWXYZ...... 
                         "30313233343536373839000000000000";  //F0 0123456789......  
+
+        // Printable ASCII table and printable EBCIC table; for SNAP/dump output
+         
+        String prtAscii =  " !\"#$%&'()*+,-./"  // 20-2F
+                          +"0123456789:;<=>?"   // 30-3F
+                          +"@ABCDEFGHIJKLMNO"   // 40-4F
+                          +"PQRSTUVWXYZ[\\]^_"  // 50-5F includes 5B=[, 5D=], 5E=^
+                          +"`abcdefghijklmno"   // 60-6F includes 60=`
+                          +"pqrstuvwxyz{|}~"    // 70-7E includes 7E=~
+                        ;
+
+        // IBM1947 and IBM037 common values; omit cent sign, caret, and not sign
+        String prtEbcdic =  " "            // 40
+                           +".<(+!"        // 4B-4F; omit 4A=cent sign
+                           +"&"            // 50
+                           +"!$*);"        // 5A-5E; omit 5F=caret or not sign
+                           +"-/"           // 60-61
+                           +",%_>?"        // 6B-6F
+                           +":#@'="+"\""   // 7A-7F
+                           +"abcdefghi"    // 81-89
+                           +"jklmnopqr"    // 91-99
+                           +"~stuvwxyz"    // A2-A9  omit B0=not sign or caret
+                           +"{ABCDEFGHI"   // C0-C9
+                           +"}JKLMNOPQR"   // D0-D9
+                           +"\\"           // E0
+                           +"STUVWXYZ"     // E2-E9
+                           +"0123456789"   // F0-F9
+                         ;
+        /*
+           Begin document IBM1047 and IBM037 tables
+        // IBM1047 codepage values
+        String prt_IBM1047    = " "            // 40
+                               +".<(+!"        // 4B-4F; omit 4A=cent sign
+                               +"&"            // 50
+                               +"!$*);^"       // 5A-5F; 5F=caret
+                               +"-/"           // 60-61
+                               +",%_>?"        // 6B-6F
+                               +":#@'="+"\""   // 7A-7F
+                               +"abcdefghi"    // 81-89
+                               +"jklmnopqr"    // 91-99
+                               +"~stuvwxyz"    // A2-A9  omit B0=not sign
+                               +"{ABCDEFGHI"   // C0-C9
+                               +"}JKLMNOPQR"   // D0-D9
+                               +"\\"           // E0
+                               +"STUVWXYZ"     // E2-E9
+                               +"0123456789"   // F0-F9
+                             ;
+        // IBM037 codepage values
+        String prt_IBM037     = " "            // 40
+                               +".<(+!"        // 4B-4F; omit 4A=cent sign
+                               +"&"            // 50
+                               +"!$*);¬"       // 5A-5F; 5F=not sign
+                               +"-/"           // 60-61
+                               +",%_>?"        // 6B-6F
+                               +":#@'="+"\""   // 7A-7F
+                               +"abcdefghi"    // 81-89
+                               +"jklmnopqr"    // 91-99
+                               +"~stuvwxyz"    // A2-A9  omit B0=caret
+                               +"{ABCDEFGHI"   // C0-C9
+                               +"}JKLMNOPQR"   // D0-D9
+                               +"\\"           // E0
+                               +"STUVWXYZ"     // E2-E9
+                               +"0123456789"   // F0-F9
+                             ;
+           End   document IBM1947 and IBM037 tables
+        */
+
   /*
    * CODEPAGE(ascii,ebcdic,LIST) option data 
    */
@@ -5261,6 +5339,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     	opt_warn = true; // VSAM Cache Buffering to reduce I/O
     } else if (token.toUpperCase().equals("NOWARN")){
     	opt_warn = false;
+    } else if (token.toUpperCase().equals("WRITENONPRINTABLE")){   // #451
+        opt_writenonprintable = true;
+    } else if (token.toUpperCase().equals("NOWRITENONPRINTABLE")){ // #451
+        opt_writenonprintable = false;
     } else if (token.toUpperCase().equals("XREF")){
        	opt_xref = true;
        	opt_list = true;
@@ -7150,6 +7232,32 @@ public String get_ascii_printable_string(byte[] byte_array, int addr, int len){
 
 
     /**
+     * Return printable ascii string from byte array.
+     * <p>
+     * Restricted set of ascii characters used for "printable char"
+     * portion of dump output.
+     * @param byte_array virtual memory byte array
+     * @param addr start address of string in byte array
+     * @param len length of string
+     * @return printable ascii string string from byte array
+     */
+public String get_ascii_dump_printable_string(byte[] byte_array, int addr, int len){
+
+    	int index = 0;
+    	StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < len; i++) {
+			if (opt_ascii){
+				sb.append(ascii_dump_table.charAt(byte_array[addr+i] & 0xff));
+			} else {
+				sb.append(ebcdic_dump_table.charAt(byte_array[addr+i] & 0xff));
+			}
+		}
+		return sb.toString();
+    }
+
+
+
+    /**
      * return ascii variable length string
      * delimited by null or double quotes which
      * are stripped off along with leading or trailing
@@ -7579,6 +7687,11 @@ public void put_stat_final_options(){
 		     } else {
 		        add_final_opt("NOWARN");
 		     }
+	     if (opt_writenonprintable){ // print non-printable on PRN, BAL, PCH #451
+		        add_final_opt("WRITENONPRINTABLE");
+		     } else {
+		        add_final_opt("NOWRITENONPRINTABLE");
+		     }
 	     if (opt_xref    ){ // cross reference symbols
 	        add_final_opt("XREF");
 	     } else {
@@ -7791,6 +7904,8 @@ public void init_codepage(String codepage_parm){
 		    	 report_codepage_error("ebcdic codepage validation error on " + ebcdic_charset_name);
 		    	 return;		    	 
 		     }
+		     // Fix Charset if necessary (IBM037 requires a fix)
+		     test_ebcdic = fixCharset(test_ebcdic, ebcdic_charset_name);
 		} catch (Exception e){
 			if (!load_ebcdic_charset_hex_file()){
 				report_codepage_error("codepage charset load error on " + ebcdic_charset_name);
@@ -7815,6 +7930,258 @@ public void init_codepage(String codepage_parm){
              return;
 		}
 	}
+
+
+
+    /**
+     * Some Charsets have errors not fixed by Oracle. Fix them here.
+     * <p>
+     * List of Charsets requiring changes.
+     * <p>
+     * 1. IBM037
+     *
+     * @param charset     the 256 character string of characters
+     *                    that might need fixing
+     * @param charsetName the name of the Charset
+     * @return the fixed 256 character string of characters;
+     *         the original string if no fix is needed
+     */
+    private String fixCharset(String charset, String charsetName)
+    {
+        String s;
+        if (charsetName.toUpperCase().equals("IBM037"))
+        {
+            // offset 0x15 has 0x0A; should be 0x85
+            s = charset.substring(0,0x15)+(char)0x85+charset.substring(0x16);
+        }
+        // add other cases as necessary
+        else
+        {
+            s = charset;
+        }
+        return s;
+    }
+    //****************************************************************
+    // Begin common BufferedReader/BufferedWriter code using Charsets
+    //****************************************************************
+
+    /**
+     * Gets a BufferedReader for a file using specified Charset name.
+     * <p>
+     * <p>No Charset is used if {@code charsetName} is null or the empty string.
+     *
+     * @param file        existing File object
+     * @param charsetName the name of the Charset to use. If null or empty string,
+                          no Charset is used.
+     * @return the BufferedReader
+     * @throws FileNotFoundException if {@code file} does not exist.
+     * @throws UnsupportedEncodingException if {@code charsetName} encoding
+     *         is not supported
+     */
+    public BufferedReader getReaderForCharset(File file, String charsetName)
+            throws FileNotFoundException, UnsupportedEncodingException
+    {
+        BufferedReader br = null;
+        if (charsetName != null && charsetName.length() > 0)
+        {
+            br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(file),
+                    charsetName));
+        }
+        else
+        {
+            br = new BufferedReader(new FileReader(file));
+        }
+        return br;
+    }
+    
+    /**
+     * Gets a BufferedReader for a file using the default Charset name.
+     * <p>
+     * <p>The default Charset name is in variable {@code ascii_charset_name}.
+     * It is possible that the default Charset name is the empty string.
+     *
+     * @param file existing file object
+     * @return the BufferedReader
+     * @throws Exception if an error occurs creating the BufferedReader
+     * @see getReaderForCharset
+     *
+     */
+    public BufferedReader getReaderForDefaultCharset(File file)
+            throws Exception
+    {
+        return getReaderForCharset(file, ascii_charset_name);
+    }
+
+    /**
+     * Gets a BufferedWriter for a file using specified Charset name.
+     * <p>
+     * <p>No Charset is used if {@code charsetName} is null or the empty string.
+     *
+     * @param file        existing File object for the BufferedWriter
+     * @param charsetName the name of the Charset to use. If null or empty string,
+                          no Charset is used.
+     * @return the BufferedWriter
+     * @throws IOException (FileWriter) if {@code file} exists but
+     *         is a directory; does not exist but cannot be created;
+     *         or cannot be opened for any other reason
+     * @throws FileNotFoundException if {@code file} does not exist.
+     * @throws UnsupportedEncodingException if {@code charsetName} encoding
+     *         is not supported.
+     */
+    public BufferedWriter getWriterForCharset(File file, String charsetName)
+            throws FileNotFoundException, UnsupportedEncodingException, IOException
+    {
+        BufferedWriter bw = null;
+        if (charsetName != null && charsetName.length() > 0)
+        {
+            bw = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(file),
+                    charsetName));
+        }
+        else
+        {
+            bw = new BufferedWriter(new FileWriter(file));
+        }
+        return bw;
+    }
+    
+    /**
+     * Gets a BufferedWriter for a file using the default Charset name.
+     * <p>
+     * <p>The default Charset name is in variable {@code ascii_charset_name}.
+     *
+     * @param file  existing File object for the BUfferedWriter
+     * @throws Exception if an error occurs creating the BufferedWriter
+     * @see getWriterForCharset
+     */
+    public BufferedWriter getWriterForDefaultCharset(File file)
+            throws Exception
+    {
+        return getWriterForCharset(file, ascii_charset_name);
+    }
+
+    //****************************************************************
+    // End   common BufferedReader/BufferedWriter code using Charsets
+    //****************************************************************
+
+    //****************************************************************
+    // Begin code to replace non-printable characters with '.'
+    //****************************************************************
+
+    /*
+     * Methods:
+     *
+     *   private boolean isPrintableChar
+     *   private boolean isPrintableChar_ISO-8859-1
+     *   private boolean isPrintableChar_US_ASCII
+     *   public String replaceNonPrintableChars
+     *   private String replaceNonPrintableDumpChars
+     */
+
+    /**
+     * Determines whether a character is a printable character.
+     * <p>
+     * Returns {@code true} if the character is printable and
+     * {@code false} if the character is non-printable. The
+     * determination is done using the Charset whose name is the
+     * charsetName argument. If {@code charsetName} is not one of
+     * the checked names, US-ASCII is used.
+     *
+     * @param  c           character to check
+     * @param  charsetName the name of the charset to use for check
+     * @return             {@code true} if the character is printable
+     *                     and {@code false} if the character is non-printable.
+     */
+    private boolean isPrintableChar(char c, String charsetName)
+    {
+        if (charsetName.equalsIgnoreCase("ISO-8859-1")) {
+            return isPrintableChar_ISO_8859_1(c);
+        }
+        // TODO: add other charsetName checks and methods
+        else
+        {
+            return isPrintableChar_US_ASCII(c);
+        }
+    }
+    
+    /**
+     * Replaces non-printable characters with '.'.
+     *
+     * @param text string of characters
+     * @param prtChar string of all printable characters allowed in dumps
+     * @return the input string with non-printable characters changed to '.'
+     */
+    private String replaceNonPrintableDumpChars(String text, String prtChar)
+    {
+        StringBuilder sb = new StringBuilder(text);
+        
+        for (int i = 0; i < sb.length(); i++)                     
+        {                                                    
+            if (prtChar.indexOf(sb.charAt(i)) == -1)      
+            {                                                
+                sb.setCharAt(i, '.');
+            }                                                
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * Returns a string that is the input text with non-printable
+     * characters replaced by '.'. The text argument is a string
+     * containing possible non-printable characters. The charsetName
+     * argument contains the name of the Charset used for the text
+     * argument. If no Charset was used, an empty string, "", must be used.
+     * <p>
+     * @param  text         string containing possible non-printable characters
+     * @param  charsetName  name of the Charset to use for the string; "" if none
+     * @return              the input string with all non-printable characters
+     *                      replaced by '.'.
+     */
+    public String replaceNonPrintableChars(String text, String charsetName)
+    {
+        StringBuilder sb = new StringBuilder(text);
+        int npCount =  0;
+        for (int i = 0; i < sb.length(); i++)
+        {
+            char ch = sb.charAt(i);
+            if ( !isPrintableChar(ch, charsetName) )
+            {
+                sb.setCharAt(i, '.');
+                npCount++;
+            }
+        }
+        return (npCount == 0 ? text : sb.toString());
+    }
+
+    /**
+     * Determines whether a character is a printable character
+     * when using the ISO-8859-1 Charset.
+     *
+     * @param  c  character to check
+     * @return {@code true} if printable, {@code false} if non-printable.
+     */
+    private boolean isPrintableChar_ISO_8859_1(char c)
+    {
+        int i = c;
+        return ( (i < 0x20) || ( (i >= 0x7F) && (i <= 0x9F) ) ) ? false : true;
+    }
+    /**
+     * Determines whether a character is a printable character
+     * when using the US-ASCII Charset.
+     *
+     * @param    c  character to check
+     * @returns  {@code true} if printable, {@code false} if non-printable.
+     */
+    private boolean isPrintableChar_US_ASCII(char c)
+    {
+        int i = c;
+        return ( (i < 0x20) || (i >= 0x7F) ) ? false : true;
+    }
+    
+    //****************************************************************
+    // End   code to replace non-printable characters with '.'
+    //****************************************************************
 
 
 
@@ -7869,29 +8236,11 @@ private void init_charset_tables(){
 		if (list_charset_map){
            	list_hex_ascii_ebcdic();
 		}
-		// replace control characters with period for printing
-		int index = 0;
-		while (index < 256){
-			if ((ascii_table.charAt(index) & 0xff) < 0x20){
-				if (index == 0){
-					ascii_table = "." + ascii_table.substring(index+1);
-				} else if (index == 255){
-					ascii_table = ascii_table.substring(0,255)+".";
-				} else {
-					ascii_table = ascii_table.substring(0,index)+"."+ascii_table.substring(index+1);
-				}
-			}
-			if ((ebcdic_table.charAt(index) & 0xff) < 0x20){
-				if (index == 0){
-					ebcdic_table = "." + ebcdic_table.substring(index+1);
-				} else if (index == 255){
-					ebcdic_table = ebcdic_table.substring(0,255)+".";
-				} else {
-					ebcdic_table = ebcdic_table.substring(0,index)+"."+ebcdic_table.substring(index+1);
-				}
-			}
-			index++;
-		}
+		// replace control characters with '.' for printing
+		ascii_table = replaceNonPrintableChars(ascii_table, ascii_charset_name);
+		ebcdic_table = replaceNonPrintableChars(ebcdic_table, ascii_charset_name);
+		ascii_dump_table = replaceNonPrintableDumpChars(ascii_table, prtAscii);
+		ebcdic_dump_table = replaceNonPrintableDumpChars(ebcdic_table, prtEbcdic);
 	}
 
 

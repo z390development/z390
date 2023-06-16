@@ -419,6 +419,8 @@ public  class  az390 implements Runnable {
 		* 2022-05-10 AFK #398 fix typo in error message
         * 2022-05-12 DSH #325 issue error 54 invalid DC field terminator if not '..' for BDEFHLPXZ
 		* 2022-06-10 DSH z16 #423 correct rotate instruction errors reported by Dan Greiner
+		* 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
+		*                     replace non-printable with '.' in PRN, BAL, PCH
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1135,7 +1137,7 @@ public static void main(String[] args) {
    * parms to az390 like z390 does.
    */
       az390 pgm = new az390();
-	  pgm.init_az390(args,null);
+	  pgm.init_az390(args,null,null,null);
       pgm.process_az390();
 }
 public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFile mz390_systerm_file,RandomAccessFile mz390_stats_file){
@@ -1145,11 +1147,7 @@ public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFil
 	 * symbol table with mz390.
 	 */
 	mz390_call = true;
-	init_az390(args,null);
-	tz390.systerm_file = mz390_systerm_file; // share the ERR file
-    tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " AZ390 ";
-	tz390.stats_file = mz390_stats_file; // RPI 737
-    tz390.init_codepage(tz390.codepage);  // RPI 1069
+	init_az390(args, null, mz390_systerm_file, mz390_stats_file);
 	az390_thread = new Thread(this);
     az390_running = true;
     az390_thread.start();
@@ -1224,7 +1222,9 @@ private void process_az390(){
      	}
 	    exit_az390();
 }
-private void init_az390(String[] args, JTextArea log_text){
+private void init_az390(String[] args, JTextArea log_text,
+                        RandomAccessFile systerm,
+                        RandomAccessFile stats) {
 	/*
 	 * 1.  initialize log routing
 	 * 2.  set options
@@ -1242,13 +1242,16 @@ private void init_az390(String[] args, JTextArea log_text){
     	    + tz390.java_vendor + " " + tz390.java_version);  
     	}
     	tz390.init_options(args,tz390.bal_type);
+    	tz390.systerm_file = systerm;  // share the mz390 ERR file
+    	tz390.stats_file = stats;  // RPI 737
+    	tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " AZ390 ";
     	if (!mz390_call){
    			tz390.open_systerm("AZ390");
-   			tz390.init_codepage(tz390.codepage);  // RPI 1069
    		} else {
    			tz390.systerm_start = System.currentTimeMillis();
    			tz390.started_msg = mz390_started_msg;
    		}
+   		tz390.init_codepage(tz390.codepage);  // RPI 1069
 	    if (!tz390.init_opcode_name_keys()){
 	    	abort_error(87,"opcode key search table exceeded");
 	    }
@@ -1489,7 +1492,7 @@ private void open_files(){
        		String prn_file_name = tz390.get_file_name(tz390.dir_prn,tz390.pgm_name,tz390.prn_type); // RPI 866
             try {
             	prn_file = new File(prn_file_name); // RPI 908 catch null error
-       	        prn_file_buff = new BufferedWriter(new FileWriter(prn_file));
+       	        prn_file_buff = tz390.getWriterForDefaultCharset(prn_file);
        	    } catch (Exception e){
        		    abort_error(4,"I/O error on prn open - " + e.toString());
        	    }
@@ -5448,7 +5451,7 @@ private void load_bal(){
        		String bal_file_name = tz390.get_file_name(tz390.dir_bal,tz390.pgm_name,tz390.pgm_type); // RPI 866
 	    	bal_file = new File(bal_file_name);
      	    try {
-     	    	bal_file_buff = new BufferedReader(new FileReader(bal_file));
+     	    	bal_file_buff = tz390.getReaderForDefaultCharset(bal_file);
      	    } catch (Exception e){
      	    	abort_error(6,"I/O error on bal open - " + e.toString());
      	    }
@@ -7301,9 +7304,15 @@ private void put_copyright(){
 		   	   tz390.put_trace(msg); // RPI 564 additional tracea info
 		   }
 	   	   if (check_list_bal_line()){ // RPI 484  RPI 694 RPI 891
+               String str;  // replace non-printable chars with '.'
 	   	       try {
 	   	    	  tz390.systerm_io++;
-	   	          prn_file_buff.write(msg + tz390.newline); // RPI 500
+				  if (tz390.opt_writenonprintable) { // write all characters
+	   	    	      prn_file_buff.write(msg + tz390.newline); // RPI 500
+	   	    	  } else {
+	   	    	      str = tz390.replaceNonPrintableChars(msg, tz390.ascii_charset_name);
+	   	    	      prn_file_buff.write(str + tz390.newline);
+	   	    	  }
 	   	          if (prn_file.length() > tz390.max_file_size){
 	   	        	  abort_error(118,"maximum prn file size exceeded");
 	   	          }
@@ -7321,7 +7330,9 @@ private void put_copyright(){
 	   	        		  tz390.put_trace(data_line); // RPI 564 additional tracea info
 	   	        	  }
 	   	        	  tz390.systerm_io++;
-	   	        	  prn_file_buff.write(data_line + tz390.newline); // RPI 500
+	   	        	  // no non-printable characters on these lines
+   	    	          str = tz390.replaceNonPrintableChars(data_line, tz390.ascii_charset_name);
+	   	    	      prn_file_buff.write(str + tz390.newline);  // RPI 500
 		   	          if (prn_file.length() > tz390.max_file_size){
 		   	        	  abort_error(118,"maximum prn file size exceeded");
 		   	          }
@@ -7329,7 +7340,12 @@ private void put_copyright(){
 	   	          }
 	   	       if (mnote_warning_msg.length() > 0){ // RPI 1056
                    mnote_warning_msg = "AZ390E " + mnote_warning_msg;
-                   prn_file_buff.write(mnote_warning_msg + tz390.newline); 
+				   if (tz390.opt_writenonprintable) { // write all characters
+	   	    	       prn_file_buff.write(mnote_warning_msg + tz390.newline); // RPI 500
+	   	    	   } else {
+	   	    	       str = tz390.replaceNonPrintableChars(mnote_warning_msg, tz390.ascii_charset_name);
+	   	    	       prn_file_buff.write(str + tz390.newline);
+	   	    	   }
                    tot_mnote_warning++;
                    if (az390_rc < 4){
                            az390_rc = 4;

@@ -1,0 +1,375 @@
+         TITLE 'Test CODEPAGE changes'
+*
+         MACRO
+         ARMAC &OPT
+         GBLC &DATDSN
+         GBLC &ARVAL
+         AIF   (T'&OPT EQ 'O').INLINE  Default is INLINE
+         AIF   ('&OPT' EQ 'DAT').DAT
+         MNOTE 8,'INVALID OPTION &OPT'
+         MEXIT
+.*
+.DAT     ANOP
+&ARVAL   AREAD DSN=&DATDSN
+         AGO   .EXIT                   Return &ARVAL
+.INLINE  ANOP
+&ARVAL   AREAD
+.*       AGO   .EXIT                   Return &ARVAL
+.EXIT    ANOP
+.*       &ARVAL returned to caller
+         MEND
+*
+***********************************************************************
+*        Global variables and open code
+***********************************************************************
+         GBLC  &DATDSN         AREAD data file
+         GBLC  &PCHDSN         PUNCH data file
+         GBLC  &ARVAL          ARMAC return value
+*
+&DATDSN  SETC  './T1#451.DAT'  Value for Linux/Mac (default)
+&PCHDSN  SETC  './T1P#451.PCH' Value for Linux/Mac (default)
+*
+         MNOTE 0,'DATDSN >&DATDSN<  PCHDSN >&PCHDSN<'
+*
+*        Note: z390 AREAD code sets proper file separators when
+*              referencing ./T1#451.DAT and ./T1P#451.PCH
+*
+***********************************************************************
+*        Begin program
+***********************************************************************
+*
+T1#451   CSECT
+         STM   14,12,12(13)        Save caller's registers
+         LR    12,15               R12 = base register
+         USING T1#451,12           Establish addressability
+         LA    14,SA               Usable save area
+         ST    14,8(,13)           Chain
+         ST    13,4(,14)                 save areas
+         LR    13,14               Current save area
+***********************************************************************
+*        Verify generated areas match the expected areas
+*          1. EBCDIC values for ISO-8859-1 A0-FF
+*               inline DC statements
+*               via COPY of DC statements
+*               via AREAD from DAT file of values
+*               via AREAD from PUNCH generated file of DC statements
+*          2, All 256 EBCDIC characters created using X2C
+***********************************************************************
+         LHI   0,L'EXPA0FF         Length of A0-FF expected table
+*
+         CHI   0,L'ILA0FF          Lengths of areas must match
+         BE    T10100              Okay; check data
+         MVC   M1AT,ATIL           Wrong; copy area type to message
+         LA    1,Msg1              R1 -> error message
+         BAS   14,Error            Write error message
+         B     ErrExit             Error exit
+T10100   DS    0H
+         CLC   EXPA0FF,ILA0FF      Expected area same as inline area?
+         BE    T10110              Okay; check next area
+         MVC   M2AT,ATIL           Wrong; copy area type to message
+         LA    1,Msg2              R1 -> error message
+         BAS   14,Error            Write error message
+         B     ErrExit             Error exit
+T10110   DS    0H
+         MVC   M11AT,ATIL          Copy area type to message
+         WTO   MF=(E,Msg11)        Test successful message
+*
+         CHI   0,L'CPA0FF          Lengths of areas must match
+         BE    T10200              Okay; check data
+         MVC   M1AT,ATCP           Wrong; copy area type to message
+         LA    1,Msg1              R1 -> error message
+         BAS   14,Error            Write error message
+         B     ErrExit             Error exit
+T10200   DS    0H
+         CLC   EXPA0FF,CPA0FF      Expected area same as copy area?
+         BE    T11210              Okay; check next area
+         MVC   M2AT,ATCP           Wrong; copy area type to message
+         LA    1,Msg2              R1 -> error message
+         BAS   14,Error            Write error message
+         B     ErrExit             Error exit
+T11210   DS    0H
+         MVC   M11AT,ATCP          Copy area type to message
+         WTO   MF=(E,Msg11)        Test successful message
+*
+         CHI   0,L'ARA0FF          Lengths of areas must match
+         BE    T10300              Okay; check data
+         MVC   M1AT,ATAR           Wrong; copy area type to message
+         LA    1,Msg1              R1 -> error message
+         BAS   14,Error            Write error message
+         B     ErrExit             Error exit
+T10300   DS    0H
+         CLC   EXPA0FF,ARA0FF      Expected area same as aread area?
+         BE    T10310              Okay; check next area
+         MVC   M2AT,ATAR           Wrong; copy area type to message
+         LA    1,Msg2              R1 -> error message
+         BAS   14,Error            Write error message
+         B     ErrExit             Error exit
+T10310   DS    0H
+         MVC   M11AT,ATAR          Copy area type to message
+         WTO   MF=(E,Msg11)        Test successful message
+*
+         CHI   0,L'ARPA0FF         Lengths of areas must match
+         BE    T10400              Okay; check data
+         MVC   M1AT,ATARPCH        Wrong; copy area type to message
+         LA    1,Msg1              R1 -> error message
+         BAS   14,Error            Write error message
+         B     ErrExit             Error exit
+T10400   DS    0H
+         CLC   EXPA0FF,ARPA0FF     Expected area = aread pch area?
+         BE    T10410              Okay; check next area
+         MVC   M2AT,ATARPCH        Wrong; copy area type to message
+         LA    1,Msg2              R1 -> error message
+         BAS   14,Error            Write error message
+         B     ErrExit             Error exit
+T10410   DS    0H
+         MVC   M11AT,ATARPCH       Copy area type to message
+         WTO   MF=(E,Msg11)        Test successful message
+*
+         LHI   0,L'EXPALLC         Length of all EBCDIC table
+*
+         CHI   0,L'X2CALLC         Lengths of areas must match
+         BE    T10500              Okay; check data
+         MVC   M3AT,ATX2CALL       Wrong; copy area type to message
+         LA    1,Msg3              R1 -> error message
+         BAS   14,Error            Write error message
+         B     ErrExit             Error exit
+T10500   DS    0H
+         CLC   EXPALLC,X2CALLC     Expected area same as X2C area?
+         BE    T10510              Okay; check next area
+         MVC   M4AT,ATX2CALL       Wrong; copy area type to message
+         LA    1,Msg4              R1 -> error message
+         BAS   14,Error            Write error message
+         B     ErrExit             Error exit
+T10510   DS    0H
+         MVC   M12AT,ATX2CALL      Copy area type to message
+         WTO   MF=(E,Msg12)        Test successful message
+*
+*        End verifications of generated storage areas
+*
+         WTO   MF=(E,MsgA)         All verifications okay
+***********************************************************************
+*        SNAP all EBCDIC characters to verify no scraggly lines
+***********************************************************************
+         LA    2,EXPALLC           Begin all EBCDIC characters
+         LA    3,L'EXPALLC(,2)     Past end
+       SNAP  ID=1,PDATA=,STORAGE=((2),(3)),TEXT='All EBCDIC characters'
+*
+         WTO   MF=(E,MsgB)         Verify no scraglly lines
+***********************************************************************
+*        All done
+***********************************************************************
+         SR    15,15               All checks okay; set return code
+         B     Exit                All done
+*
+ErrExit  DS    0H
+         LA    15,20               Set error return code
+*NSI     B     Exit                Done
+Exit     DS    0H
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except for R15
+         BR    14                  Return to caller
+*
+***********************************************************************
+*        Issue error message via WTO pointed to by R1
+***********************************************************************
+Error    DS    0H
+         STM   14,1,12(13)         Save altered registers
+         WTO   MF=(E,(1))          Write error message
+         LM    14,1,12(13)         Restore altered registers
+         BR    14                  Return to caller
+*
+* Messages
+*
+ATIL     DC    C'inline  '
+ATCP     DC    C'copy    '
+ATAR     DC    C'aread   '
+ATARPCH  DC    C'areadPch'
+ATX2CALL DC    C'x2cAll  '
+*
+Msg1     WTO   'ERROR: invalid xxxxxxxx A0-FF area length',MF=L
+M1AT     EQU   Msg1+4+15,8
+*
+Msg2     WTO   'ERROR: invalid xxxxxxxx A0-FF area data',MF=L
+M2AT     EQU   Msg2+4+15,8
+*
+Msg3     WTO   'ERROR: invalid xxxxxxxx area length',MF=L
+M3AT     EQU   Msg3+4+15,8
+*
+Msg4     WTO   'ERROR: invalid xxxxxxxx area data',MF=L
+M4AT     EQU   Msg4+4+15,8
+*
+Msg11    WTO   'xxxxxxxx A0-FF area test okay',MF=L
+M11AT    EQU   MSG11+4+0,8
+*
+Msg12    WTO   'xxxxxxxx area test okay',MF=L
+M12AT    EQU   MSG12+4+0,8
+*
+MsgA     WTO   'All generated areas passed verification',MF=L
+*
+MsgB     WTO   'Verify no scraggly lines in SNAP output',MF=L
+*
+         LTORG
+*
+SA       DC    18F'-1'             Current save area
+*
+         PUSH  PRINT
+         PRINT DATA
+***********************************************************************
+*        Expected hexadecimal values for ISO-8859-1 X'A0' - X'FF'
+***********************************************************************
+EXPA0FF0 DS    0C
+*                 0 1 2 3 4 5 6 7 8 9 A B C D E F
+         DC    X'41AA4AB19FB26AB5BBB49A8AB0CAAFBC' A0-AF
+*
+         DC    X'908FEAFABEA0B6B39DDA9B8BB7B8B9AB' B0-BF
+*
+         DC    X'6465626663679E687471727378757677' C0-CF
+*
+         DC    X'AC69EDEEEBEFECBF80FDFEFBFCBAAE59' D0-DF
+*
+         DC    X'4445424643479C485451525358555657' E0-EF
+*
+         DC    X'8C49CDCECBCFCCE170DDDEDBDC8D8EDF' F0-FF
+EXPA0FF1 DS    0C
+EXPA0FF  EQU   EXPA0FF0,EXPA0FF1-EXPA0FF0,C'X'
+***********************************************************************
+*        Inline character values for ISO-8859-1 X'A0' - X'FF'
+***********************************************************************
+ILA0FF0  DS    0C
+*                0123456789ABCDEF
+*SKELETON>     A0-AF Special Characters
+*SKELETON>    B0-BF Special Characters
+*SKELETON>    C0-CF Upper Case Latin-1 Letters
+*SKELETON>    D0-DF Upper Case Latin-1 Letters
+*SKELETON>    E0-EF Lower Case Latin-1 Letters
+*SKELETON>    F0-FF Lower Case Latin-1 Letters
+ILA0FF1  DS    0C
+ILA0FF   EQU   ILA0FF0,ILA0FF1-ILA0FF0,C'C'
+***********************************************************************
+*        COPY same thing as ILA0FF area
+***********************************************************************
+CPA0FF0  DS    0C
+         COPY  T1#451
+CPA0FF1  DS    0C
+CPA0FF   EQU   CPA0FF0,CPA0FF1-CPA0FF0,C'C'
+***********************************************************************
+*        AREAD same thing as ILA0FF area
+***********************************************************************
+ARA0FF0  DS    0C
+         MNOTE 0,'AREAD DAT DATDSN >&DATDSN<'
+         ARMAC DAT             A0 - AF
+         DC    C'&ARVAL'
+*
+         ARMAC DAT             B0 - BF
+         DC    C'&ARVAL'
+*
+         ARMAC DAT             C0 - CF
+         DC    C'&ARVAL'
+*
+         ARMAC DAT             D0 - DF
+         DC    C'&ARVAL'
+*
+         ARMAC DAT             E0 - EF
+         DC    C'&ARVAL'
+*
+         ARMAC DAT             F0 - FF
+         DC    C'&ARVAL'
+ARA0FF1  DS    0C
+ARA0FF   EQU   ARA0FF0,ARA0FF1-ARA0FF0,C'C'
+*
+***********************************************************************
+*        AREAD T1P#451 PUNCH data; same thing as ILA0FF area
+***********************************************************************
+&DATDSN  SETC  '&PCHDSN'
+         MNOTE 0,'AREAD PCH DATDSN >&DATDSN<'
+ARPA0FF0 DS    0C
+         ARMAC  DAT            A0 - AF
+ &ARVAL
+*
+         ARMAC  DAT            B0 - BF
+ &ARVAL
+*
+         ARMAC  DAT            C0 - CF
+  &ARVAL
+*
+         ARMAC  DAT            D0 - DF
+  &ARVAL
+*
+         ARMAC  DAT            E0 - EF
+  &ARVAL
+*
+         ARMAC  DAT            F0 - FF
+  &ARVAL
+ARPA0FF1 DS    0C
+ARPA0FF  EQU   ARPA0FF0,ARPA0FF1-ARPA0FF0,C'C'
+*
+***********************************************************************
+*        All EBCDIC characters
+***********************************************************************
+         DS    0D
+EXPALLC  DS    0Xl256
+         DC    256AL1(*-EXPALLC)
+***********************************************************************
+*        X2C-generated all EBCDIC characters
+***********************************************************************
+X2CALLC0 DS    0X
+         GBLC  &SRC
+*
+&SRC     SETC  X2C('000102030405060708090A0B0C0D0E0F')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('101112131415161718191A1B1C1D1E1F')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('202122232425262728292A2B2C2D2E2F')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('303132333435363738393A3B3C3D3E3F')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('404142434445464748494A4B4C4D4E4F')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('50505152535455565758595A5B5C5D5E5F')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('606162636465666768696A6B6C6D6E6F')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('707172737475767778797A7B7C7D7D7E7F')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('808182838485868788898A8B8C8D8E8F')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('909192939495969798999A9B9C9D9E9F')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('A0A1A2A3A4A5A6A7A8A9AAABACADAEAF')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF')
+         DC    C'&SRC'
+*
+&SRC     SETC  X2C('F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF')
+         DC    C'&SRC'
+*
+X2CALLC1 DS    0X
+X2CALLC  EQU   X2CALLC0,X2CALLC1-X2CALLC0,C'X'
+*
+         POP   PRINT
+***********************************************************************
+*        End test data
+***********************************************************************
+*
+         END
