@@ -55,6 +55,12 @@ class RunAsmTests extends z390Test {
         assert rc == 0
     }
     @Test
+    void test_TEDIT() {
+        int rc = this.asmlg(basePath("tests", "TEDIT"), *options, 'optable(z390)')
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
     void test_TESTAMPS() {
         int rc = this.asmlg(basePath("rt", "mlc", "TESTAMPS"), *options, 'optable(z390)')
         this.printOutput()

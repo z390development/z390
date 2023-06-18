@@ -399,6 +399,7 @@ public class pz390 {
            *                     1) Simplify get_signed_bytes by dropping extra leading byte
            *                     2) cleanup comments
           * 2022-03-12 DSH fixed overflow for cc3 MSC, MSGC, MSGRKC, MSRKC
+     * 2023-03-29 Issue 434 ED instruction handles alternate signs incorrectly
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -18234,7 +18235,7 @@ public class pz390 {
 					}
 				}
 				if (source_sign > 9) {
-					if (source_sign == 0xc || source_sign >= 0xe) {
+					if (source_sign != 0xd && source_sign != 0xb) {  // is434
 						sig_digit = false;
 					} else if (psw_cc == psw_cc_high) {
 						psw_cc = psw_cc_low;
