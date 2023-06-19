@@ -443,6 +443,7 @@ public  class  mz390 {
 	 * 2022-08-22 #438 X2C issue
 	 * 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
 	 *                     replace non-printable with '.' in PRN, BAL, PCH
+	 * 2023-04-12 #458 B2C issue; insure X2C length is multiple of 2
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -11899,13 +11900,20 @@ public  class  mz390 {
     	 * convert binary string to char string
     	 */
     	check_setc_quotes(1); // RPI 1139
-    	seta_value = Integer.valueOf(get_setc_stack_value(),2);
-		setc_value = ""
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 24]
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 16 & 0xff]         
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 8  & 0xff]
-			       + (char)tz390.ebcdic_to_ascii[seta_value        & 0xff]					                               
-			       ;
+		setc_value1 = get_setc_stack_value();
+		int j = setc_value1.length();
+		if (j != 0)	{
+		    j = j % 8;
+		    if (j != 0) {
+		    	setc_value1 = "00000000".substring(0,8 - j)+setc_value1;
+	        }
+		}
+		StringBuilder stb = new StringBuilder("");
+		for (int i = 0; i < setc_value1.length(); i += 8) {
+		    String str = setc_value1.substring(i, i + 8);
+			stb.append((char)(((int)tz390.ebcdic_to_ascii[Integer.parseInt(str, 2)]) & 0xff));
+		}
+		setc_value = stb.toString();
 		put_setc_stack_var();
     }
     private void exec_pc_b2d(){
@@ -12329,6 +12337,8 @@ public  class  mz390 {
 		 */
 		check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
+		int j = setc_value1.length();
+		if (j != 0 && (j % 2) != 0) setc_value1 = "0"+setc_value1;
 		StringBuilder stb = new StringBuilder("");
 		for (int i = 0; i < setc_value1.length(); i += 2) {
 			String str = setc_value1.substring(i, i + 2);

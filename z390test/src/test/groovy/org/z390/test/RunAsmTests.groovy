@@ -97,6 +97,12 @@ class RunAsmTests extends z390Test {
         assert rc == 0
     }
     @Test
+    void test_TB2CX2C() {
+        int rc = this.asmlg(basePath("rt", "mlc", "TB2CX2C"), *options, 'optable(z390)')
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
     void test_ZOPCHECK() {
         var syscpyOption = "SYSCPY(${basePath('zopcheck')}+${basePath('mac')})"
         this.env = ['SNAPOUT': basePath('zopcheck', 'SNAPOUT.TXT')]
