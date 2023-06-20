@@ -11662,7 +11662,7 @@ public  class  mz390 {
 				if (opcode_type <= tz390.max_ins_type){
                     index = tz390.find_key_index('O',key);                                          // #485
                     //System.out.println("afk mz390.exec_pc_pfx_o OPCODE index=" + index);          // #485 **!!
-                    if (index > -1)                                                                 // #485
+                    if (index >= 0)                                                                 // #485
                        {//System.out.println("afk mz390.exec_pc_pfx_o op_name=" + tz390.op_name[index] + " --> " + tz390.op_type_oattribute[index]); // #485 **!!
                         setc_value = tz390.op_type_oattribute[index];                               // #485
                         }                                                                           // #485

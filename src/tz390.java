@@ -1229,13 +1229,13 @@ public  class  tz390 {
 // Example3: definition of instruction BC:          "47=BC,5,50"        --> opcode 47,  mnemonic BC,   opcode type  5 (see table opcode_formats above), trace type  50 #485
 // Example4: definition of B, BE, BNZ, etc:         "47m=Bm,6,60;0=NOP" --> opcode 47m, ext.mnemonics, opcode type  6 (see table opcode_formats above), trace type  60 #485
 //                                                                          generated extended mnemonics are Bx, BNx except for mask=0 mnemonic NOP is forced          #485
-// Example5: definition of instruction JLC:         "C04=JLC,33,330"    --> opcode C04, mnemonnic JLC, opcode type 33 (see table opcode_formats above), trace type 330 #485
+// Example5: definition of instruction JLC:         "C04=JLC,33,330;*Extended"      --> opcode C04m, ext.mnemonics JLC, opcode type 33 (see table opcode_formats above), trace type 330 #485
 // Example6: definition of BROL, BRNZL, etc:        "C04m=BRmL,33,330;F=BRUL;0="    --> opcode C04m, ext.mnemonics, opcode type 33,                     trace type 330 #485
-//                                                                          generated extended mnemonics are BRxL, BRNxL except for mask=F mnemonic BRUL is forced     #485
+//                                                                          generated extended mnemonics are BRxL, BRNxL except for mask=F ext.mnemonic BRUL is forced #485
 //                                                                                                                          and for mask=0 no mnemonic is defined      #485
 // Example7: definition of JLO, JLNZ, etc:          "C04m=JLm,33,330;F=JLU;0=JLNOP" --> opcode C04m, ext.mnemonics, opcode type 33,                     trace type 330 #485
-//                                                                          generated extended mnemonics are JLx, JLNx   except for mask=F mnemonic JLU   is forced    #485
-//                                                                                                                          and for mask=0 mnemonic JLNOP is forced    #485
+//                                                                          generated extended mnemonics are JLx, JLNx   except for mask=F ext.mnemonic JLU   is forced#485
+//                                                                                                                          and for mask=0 ext.mnemonic JLNOP is forced#485
 // Example8: definition of CGRTE, CGRTNH, etc:      "B960m=CGRTm,40,151;*Short"     --> opcode B960m,ext.mnemonics, opcode type 40,                     trace type 151 #485
 //                                                                          generated extended mnemonics are CGRTx, CGRTNx, only for x in {H, L, E}                    #485
      String[]   op_table_start = // Table added for RPI 1209A
@@ -3739,7 +3739,7 @@ public void create_opcodes()  // Routine added for RPI 1209
     index=0;
     while (index < opcode_masks_short.length) // for each mask (opcode nibble + mnemonic letters) defined in opcode_masks_short
        {entry=opcode_masks_short[index];
-        try                             // separate entry into opcode part and menmonic part
+        try                             // separate entry into opcode part and mnemonic part
            {i=entry.indexOf("=");
             if (i == -1)
                {abort_error(42,"Missing equal-sign in mask definition " + opcode_masks_short[index]);
