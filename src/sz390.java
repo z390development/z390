@@ -222,6 +222,8 @@ public  class  sz390 implements Runnable {
     *            Problem mode always applies - Supervisor mode not supported in z390 yet
     * 2022-03-04 Issue 358. Incorrect breakpoint info displayed in test mode.
     * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
+    * 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
+    *                     replace non-printable with '.' in PRN, BAL, PCH
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -3056,7 +3058,7 @@ public void dump_mem(ByteBuffer memory,int mem_addr,int mem_len){
 		} else {
 			dump_len = mem_len;
 		}
-		dump_text = tz390.get_ascii_printable_string(memory.array(),mem_addr,dump_len); // RPI 947
+		dump_text = tz390.get_ascii_dump_printable_string(memory.array(),mem_addr,dump_len); // RPI 947
 		
 		dump_text = tz390.left_justify(dump_text,16); // RPI 411
         dump_hex = bytes_to_hex(memory.array(),mem_addr,dump_len,4); // RPI 2006

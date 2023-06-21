@@ -13,5 +13,6 @@ zopcheck    - verify all z390 assembler instructions generate correct code
 runtbrctx   - verify closed issue #238
 runtestopt  - verify indirection usage in options files
 runbr14owe  - verifies test IEFBR14 asm[l[g]] with Okay, Warning, Error variants
+runcodepagetests - verifies usage of CODEPAGE issue #451
 
 End regression test commands
