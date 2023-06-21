@@ -8020,7 +8020,6 @@ public void init_codepage(String codepage_parm){
 
     /**
      * Gets a BufferedReader for a file using specified Charset name.
-     * <p>
      * <p>No Charset is used if {@code charsetName} is null or the empty string.
      *
      * @param file        existing File object
@@ -8050,7 +8049,6 @@ public void init_codepage(String codepage_parm){
     
     /**
      * Gets a BufferedReader for a file using the default Charset name.
-     * <p>
      * <p>The default Charset name is in variable {@code ascii_charset_name}.
      * It is possible that the default Charset name is the empty string.
      *
@@ -8068,7 +8066,6 @@ public void init_codepage(String codepage_parm){
 
     /**
      * Gets a BufferedWriter for a file using specified Charset name.
-     * <p>
      * <p>No Charset is used if {@code charsetName} is null or the empty string.
      *
      * @param file        existing File object for the BufferedWriter
@@ -8101,12 +8098,12 @@ public void init_codepage(String codepage_parm){
     
     /**
      * Gets a BufferedWriter for a file using the default Charset name.
-     * <p>
      * <p>The default Charset name is in variable {@code ascii_charset_name}.
      *
      * @param file  existing File object for the BUfferedWriter
      * @throws Exception if an error occurs creating the BufferedWriter
      * @see getWriterForCharset
+     * @return BufferedWriter handle
      */
     public BufferedWriter getWriterForDefaultCharset(File file)
             throws Exception
