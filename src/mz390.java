@@ -444,6 +444,7 @@ public  class  mz390 {
 	 * 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
 	 *                     replace non-printable with '.' in PRN, BAL, PCH
 	 * 2023-04-12 #458 B2C issue; insure X2C length is multiple of 2
+     * 2023-06-21 #485 fix O attribute value for extended mnemonics
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -11645,27 +11646,46 @@ public  class  mz390 {
     	 *   S = macro found in sysmac dir
     	 *   U = unknown
     	 */
+        //System.out.println("afk mz390.exec_pc_pfx_o tot_exp_stk_var=" + tot_exp_stk_var);         // #485 **!!
     	if (tot_exp_stk_var > 0){
 			setc_value1 = get_setc_stack_value().toUpperCase();
-			int opcode_type = find_opcode_type(setc_value1);
+            //System.out.println("afk mz390.exec_pc_pfx_o setc_value1=" + setc_value1);             // #485 **!!
+            int index = 0;                                                                          // #485
+            String key = setc_value1;                                                               // #485
+            index = tz390.find_key_index('R',key);                                                  // #485
+            //System.out.println("afk mz390.exec_pc_pfx_o OPSYN index=" + index);                   // #485 **!!
+            if (index >= 0) // OPSYN defined:                                                       // #485
+               {if (tz390.opsyn_old_name[index] == null) // OPSYN deletes mnemonic                  // #485
+                   {key = "  Undefined Mnemonic  ";                                                 // #485
+                    }                                                                               // #485
+                else // OPSYN defines alternate mnemonic                                            // #485
+                   {key = tz390.opsyn_old_name[index];                                              // #485
+                    }                                                                               // #485
+                //System.out.println("afk mz390.exec_pc_pfx_o Base mnemonic=" + key);               // #485 **!!
+                }                                                                                   // #485
+            int opcode_type = find_opcode_type(key);                                                // #485
+            //System.out.println("afk mz390.exec_pc_pfx_o opcode_type=" + opcode_type);             // #485 **!!
 			if (opcode_type >= 0){
 				if (opcode_type <= tz390.max_ins_type){
-					if (opcode_type == 3
-							|| opcode_type == 6
-							|| opcode_type == 13){
-						setc_value = "E"; // BRX, BCX, BRCX extended mnemonic
-					} else {
-						setc_value = "O"; // machine opcode
-					}
+                    index = tz390.find_key_index('O',key);                                          // #485
+                    //System.out.println("afk mz390.exec_pc_pfx_o OPCODE index=" + index);          // #485 **!!
+                    if (index >= 0)                                                                 // #485
+                       {//System.out.println("afk mz390.exec_pc_pfx_o op_name=" + tz390.op_name[index] + " --> " + tz390.op_type_oattribute[index]); // #485 **!!
+                        setc_value = tz390.op_type_oattribute[index];                               // #485
+                        }                                                                           // #485
+                    else // not defined                                                             // #485
+                       {//System.out.println("afk mz390.exec_pc_pfx_o returning value U");          // #485 **!!
+                        setc_value = "U";                                                           // #485
+                        }                                                                           // #485
 				} else {
 					setc_value = "A"; // assembler opcode
 				}
 			} else if (opcode_type == -1){
-				int macro_index = find_mac_entry(setc_value1);
+				int macro_index = find_mac_entry(key);                                              // #485
 				if (macro_index > 0){
 					setc_value = "M";
 				} else if (macro_index == -1 
-						&& tz390.find_file_name(tz390.dir_mac,setc_value,tz390.mac_type,tz390.dir_cur) != null){
+						&& tz390.find_file_name(tz390.dir_mac,key,tz390.mac_type,tz390.dir_cur) != null){ // #485
 					setc_value = "S";
 				} else {
 					setc_value = "U";
