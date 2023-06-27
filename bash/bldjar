@@ -8,6 +8,7 @@ cd $(dirname $0)    # set to directory of script
 # if not suppressed ($1 = nodocs), generate javadoc; ignore any errors
 case $1 in
     [Nn][Oo][Dd][Oo][Cc][Ss])
+        shift
         ;;
     *)
         ./bldjavadoc
