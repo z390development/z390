@@ -30,7 +30,7 @@ echo "The exit code of the javac command is $ec"
 if [ $ec -ne 0 ]; then echo "bldjar: Error compiling Java sources"; exit $ec; fi
 
 # create z390.properties file
-#jg../bash/relver $1
+../bash/relver $1
 if [ $ec -ne 0 ]; then echo "bldjar: Error finding z390 version number"; exit $ec; fi
 
 # build z390.jar with the JDK jar utility
