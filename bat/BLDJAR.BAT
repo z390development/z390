@@ -17,7 +17,9 @@ rem both the compiler javac.exe and jar builder jar.exe must be on sdk path
 rem note you can use current z390.jar with compatible java runtime with sdk
 
 rem unless suppressed, generate javadoc. Ignore any errors
-if /I %1. NEQ Nodocs. call bat\BLDJVDOC.BAT
+if /I %1. NEQ Nodocs. (call bat\BLDJVDOC.BAT
+               ) else (shift /1
+                       )
 
 rem compile java code and create jar file
 if not exist ".\jar\" mkdir jar
